@@ -14,6 +14,7 @@ import {
   checkIssueStatuses,
   checkReviewDocLimit,
   checkSpecs,
+  clampIssueBranchRange,
   classify,
   commitsNeedingIssueStatus,
   commitsNeedingTargetValidation,
@@ -405,6 +406,104 @@ test('the CLI exits 0 on a clean range and 1 on a broken one', (t) => {
       [gate, '--repo', dir, '--range', `${devTip}..HEAD`, '--json'], { encoding: 'utf8' });
     const wrongReport = JSON.parse(wrong.stdout);
     assert.equal(wrongReport.findings.some((f) => f.rule === 2), true, wrong.stdout);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('an issue-branch range is clamped to its own commits only when the base is stale', () => {
+  // #190: после обязательного ребейза remote_old..local_new втягивает историю
+  // dev. Сужение включается только для issue-веток и только когда база
+  // перестала быть предком вершины — fast-forward остаётся точным.
+  const deps = (ancestor, mb = 'MB') => ({
+    targetRef: 'refs/heads/issue/117-registryless-opening',
+    isAncestor: () => ancestor,
+    mergeBaseWithDev: () => mb,
+  });
+  assert.equal(clampIssueBranchRange('OLD..NEW', deps(false)), 'MB..NEW');
+  assert.equal(clampIssueBranchRange('OLD..NEW', deps(true)), 'OLD..NEW');
+  // Не issue-ветка — не трогаем: dev и main живут по своим правилам.
+  assert.equal(
+    clampIssueBranchRange('OLD..NEW', { ...deps(false), targetRef: 'refs/heads/dev' }),
+    'OLD..NEW',
+  );
+  // Без origin/dev сужать не во что — fail closed остаётся за широким диапазоном.
+  assert.equal(clampIssueBranchRange('OLD..NEW', deps(false, null)), 'OLD..NEW');
+  // Тройная точка и не-диапазон проходят насквозь.
+  assert.equal(clampIssueBranchRange('OLD...NEW', deps(false)), 'OLD...NEW');
+  assert.equal(clampIssueBranchRange('HEAD', deps(false)), 'HEAD');
+});
+
+// AC #190: опубликованная issue-ветка от старого dev -> dev ушёл вперёд ->
+// обязательный rebase -> push старым диапазоном remote_old..local_new. Гейт
+// обязан судить только собственные коммиты ветки, но реальное нарушение в
+// post-rebase коммите — по-прежнему ловить.
+test('the CLI judges a rebased issue branch by its own commits (#190)', (t) => {
+  const probe = spawnSync('git', ['--version'], { encoding: 'utf8' });
+  if (probe.status !== 0) {
+    t.skip('git недоступен');
+    return;
+  }
+  const dir = mkdtempSync(join(tmpdir(), 'hp-gate-190-'));
+  const gate = fileURLToPath(new URL('../scripts/process-gate.mjs', import.meta.url));
+  const git = (...args) => {
+    const r = spawnSync('git', ['-C', dir, ...args], { encoding: 'utf8' });
+    assert.equal(r.status, 0, `git ${args.join(' ')}: ${r.stderr}`);
+    return r.stdout;
+  };
+  const write = (rel, text) => {
+    const full = join(dir, rel);
+    mkdirSync(join(full, '..'), { recursive: true });
+    writeFileSync(full, text);
+  };
+  const commitAll = (message) => {
+    git('add', '-A');
+    git('-c', 'user.name=t', '-c', 'user.email=t@t', '-c', 'core.hooksPath=/dev/null',
+      'commit', '-q', '-m', message);
+  };
+  const runGate = (range, targetRef) => spawnSync(process.execPath,
+    [gate, '--repo', dir, '--range', range, '--target-ref', targetRef, '--json'],
+    { encoding: 'utf8' });
+  const targetRef = 'refs/heads/issue/7-own-work';
+
+  try {
+    git('init', '-q', '-b', 'dev');
+    write('README.md', 'base\n');
+    commitAll('Base');
+
+    // Опубликованная issue-ветка от старого dev.
+    git('checkout', '-q', '-b', 'issue/7-own-work');
+    write('scripts/w.mjs', 'export const w = 1;\n');
+    commitAll('Own work\n\nIssue: #7\nUser-Visible: no');
+    const publishedTip = git('rev-parse', 'HEAD').trim();
+
+    // dev ушёл вперёд коммитом с чужим номером issue — под старым диапазоном
+    // он выглядел бы нарушением проверки 2.
+    git('checkout', '-q', 'dev');
+    write('src/d.ts', 'export const d = 1;\n');
+    write('docs/CHANGELOG.md', 'ru\n');
+    write('docs/CHANGELOG.ru.md', 'en\n');
+    commitAll('Land on dev\n\nIssue: #1\nUser-Visible: yes');
+    git('update-ref', 'refs/remotes/origin/dev', git('rev-parse', 'HEAD').trim());
+
+    // Обязательный rebase issue-ветки (сценарий возврата из конфликтного слияния).
+    git('checkout', '-q', 'issue/7-own-work');
+    git('-c', 'user.name=t', '-c', 'user.email=t@t',
+      'rebase', '-q', 'refs/remotes/origin/dev');
+
+    // Диапазон ровно тот, что строит pre-push: старая вершина..новая.
+    const clamped = JSON.parse(runGate(`${publishedTip}..HEAD`, targetRef).stdout);
+    assert.equal(clamped.commits, 1, JSON.stringify(clamped));
+    assert.equal(clamped.ok, true, JSON.stringify(clamped.findings));
+
+    // Реальное нарушение в post-rebase коммите по-прежнему блокируется.
+    write('scripts/broken.mjs', 'export const b = 1;\n');
+    commitAll('Broken work without provenance');
+    const held = runGate(`${publishedTip}..HEAD`, targetRef);
+    const report = JSON.parse(held.stdout);
+    assert.equal(held.status, 1, held.stdout + held.stderr);
+    assert.equal(report.commits, 2);
+    assert.equal(report.findings.some((f) => f.rule === 1), true, held.stdout);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

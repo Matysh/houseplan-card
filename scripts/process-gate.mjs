@@ -405,6 +405,33 @@ function ghRunner(nwo, bin) {
   };
 }
 
+// Диапазон issue-ветки приводится к её собственным коммитам (#190).
+//
+// pre-push передаёт remote_old..local_new. Для fast-forward это ровно новые
+// коммиты, но после обязательного ребейза issue-ветки (возврат из конфликтного
+// слияния, §10.4) remote_old перестаёт быть предком local_new, и git log
+// показывает всё, что недостижимо из старой вершины, — включая ушедшую вперёд
+// историю dev. На #117 это дало 84 чужих коммита и 20 ложных отказов п.8 по
+// уже закрытым issue, а единственным выходом оставался `--no-verify`.
+//
+// Правится здесь, а не в самом хуке: `.githooks/pre-push` несёт бит исполнения,
+// который публикация через MCP сбрасывает (прецедент commit-msg), — правка хука
+// потребовала бы локального коммита владельца. Заодно это второй страховочный
+// слой для любого вызывающего с широким диапазоном, включая CI.
+//
+// Fail-closed сохраняется: собственные коммиты ветки относительно origin/dev
+// проверяются все до одного, сужается только чужая история.
+export function clampIssueBranchRange(range, { targetRef = '', isAncestor, mergeBaseWithDev } = {}) {
+  if (!/^(?:refs\/heads\/)?issue\/\d+-/.test(targetRef ?? '')) return range;
+  const m = /^([^.\s]+)\.\.([^.\s]+)$/.exec(range ?? '');
+  if (!m) return range;
+  const [, base, head] = m;
+  if (isAncestor(base, head)) return range;
+  const mergeBase = mergeBaseWithDev(head);
+  if (!mergeBase) return range;
+  return `${mergeBase}..${head}`;
+}
+
 function main(argv) {
   const flag = (name) => argv.includes(`--${name}`);
   const value = (name, dflt = null) => {
@@ -433,6 +460,17 @@ function main(argv) {
       { encoding: 'utf8' }).status === 0;
     range = hasDev ? 'origin/dev..HEAD' : 'HEAD~20..HEAD';
   }
+  range = clampIssueBranchRange(range, {
+    targetRef,
+    isAncestor: (base, head) => spawnSync(
+      'git', ['-C', repo, 'merge-base', '--is-ancestor', base, head], { encoding: 'utf8' },
+    ).status === 0,
+    mergeBaseWithDev: (head) => {
+      const r = spawnSync('git', ['-C', repo, 'merge-base', head, 'refs/remotes/origin/dev'],
+        { encoding: 'utf8' });
+      return r.status === 0 ? r.stdout.trim() : null;
+    },
+  });
 
   const filesOf = (sha) =>
     git(['show', '--name-only', '--pretty=format:', sha], repo)
