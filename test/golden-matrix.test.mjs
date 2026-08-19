@@ -482,6 +482,14 @@ test('device dialog goldens expose the complete light-source controls at desktop
     'the harness must activate the declared light-controls scenario flag');
 });
 
+test('golden harness neutralizes the shared pointer before every scenario', () => {
+  const harness = readFileSync(new URL('../demo/golden/harness.mjs', import.meta.url), 'utf8');
+  const reset = harness.indexOf('await page.mouse.move(0, 0);');
+  const fixture = harness.indexOf('const fixture = prepareGoldenFixture(scenario);', reset);
+  assert.equal(reset >= 0, true, 'the shared Playwright pointer must be reset');
+  assert.equal(fixture > reset, true, 'pointer reset must happen before fixture adoption');
+});
+
 test('toggle-entity dialog goldens cover selected and stale states across themes and widths', () => {
   const dialogs = GOLDEN_SCENARIOS.filter((scenario) =>
     scenario.id.startsWith('toggle-entity-dialog-'));

@@ -313,6 +313,10 @@ export function prepareGoldenFixture(scenario) {
 
 export async function prepareGoldenScenario(page, scenario) {
   await stableEnvironment(page, scenario);
+  // Scenarios share one Playwright page, including its pointer position. A
+  // scenario that deliberately hovers a marker must not leave the next one
+  // capturing an unrelated room hover at the same viewport coordinates.
+  await page.mouse.move(0, 0);
   const fixture = prepareGoldenFixture(scenario);
 
   const result = await page.evaluate(async ({ fixture, scenario }) => {
