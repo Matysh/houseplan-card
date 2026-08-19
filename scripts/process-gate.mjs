@@ -289,6 +289,21 @@ export function commitsUnderRuleOne(commits) {
   );
 }
 
+// Инфраструктурная работа по решению владельца #118: признак механический —
+// в диапазоне НЕТ ни одного файла класса A. Такая задача идёт вне продуктового
+// флоу и по построению не имеет статусной метки, поэтому проверка 8 требовала у
+// неё невозможного и краснела на каждом инфра-коммите (#207): Validate на dev
+// был красным систематически, и сигнал догоняющей проверки обесценился.
+//
+// Исключение опирается на diff, а не на метку-разрешение: метку `infra` можно
+// поставить продуктовой задаче и увести продуктовый коммит от проверки статуса,
+// а перестать трогать класс A, не перестав быть инфраструктурной задачей,
+// нельзя. Существование issue, его открытость и `blocked` проверяются всё равно.
+export function isInfrastructureRange(commits) {
+  if (!commits.length) return false;
+  return !commits.some((c) => c.classes.has('A'));
+}
+
 export function isStableTarget(targetRef) {
   return /^(?:refs\/heads\/)?main$/.test(targetRef ?? '');
 }
@@ -325,7 +340,9 @@ export function commitsNeedingIssueStatus(
 
 // 8. статус issue. Fail closed: недоступный или закрытый issue — отказ, а не
 // пропуск. Гейт, который молчит при недоступном источнике правды, бесполезен.
-export function checkIssueStatuses(numbers, runner, { allowed = ALLOWED_STATUS } = {}) {
+export function checkIssueStatuses(
+  numbers, runner, { allowed = ALLOWED_STATUS, statusOptional = false } = {},
+) {
   const out = [];
   for (const nn of numbers) {
     const r = runner(nn);
@@ -355,7 +372,7 @@ export function checkIssueStatuses(numbers, runner, { allowed = ALLOWED_STATUS }
       continue;
     }
     const names = (issue.labels ?? []).map((l) => (typeof l === 'string' ? l : l.name));
-    if (!names.some((n) => allowed.includes(n))) {
+    if (!statusOptional && !names.some((n) => allowed.includes(n))) {
       const status = names.filter((n) => /^S\d-/.test(n));
       out.push({
         level: 'fail', rule: 8, sha: '-',
@@ -544,7 +561,16 @@ function main(argv) {
       if (!cache.has(nn)) cache.set(nn, runner(nn));
       return cache.get(nn);
     };
-    findings.push(...checkIssueStatuses(numbers, cached, { allowed }));
+    const statusOptional = isInfrastructureRange(checkedCommits);
+    if (statusOptional && numbers.length) {
+      // Пропуск обязан быть виден: иначе исключение однажды скроет настоящее
+      // нарушение и никто не узнает, что проверка не выполнялась.
+      findings.push({
+        level: 'warn', rule: 8, sha: '-',
+        msg: `инфраструктурный диапазон (#118): файлов класса A нет, статусная метка issue не требуется`,
+      });
+    }
+    findings.push(...checkIssueStatuses(numbers, cached, { allowed, statusOptional }));
     labelsOf = (nn) => {
       const r = cached(nn);
       if (!r || r.ok !== true) return null;

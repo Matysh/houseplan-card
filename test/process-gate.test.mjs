@@ -20,6 +20,7 @@ import {
   commitsNeedingTargetValidation,
   commitsUnderRuleOne,
   evaluateCommit,
+  isInfrastructureRange,
   makeCommit,
   parseRecords,
   FS,
@@ -504,6 +505,124 @@ test('the CLI judges a rebased issue branch by its own commits (#190)', (t) => {
     assert.equal(held.status, 1, held.stdout + held.stderr);
     assert.equal(report.commits, 2);
     assert.equal(report.findings.some((f) => f.rule === 1), true, held.stdout);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('an infrastructure range is recognised by the absence of class A files (#207)', () => {
+  const infra = makeCommit({
+    sha: 'a'.repeat(40), subject: 'Tune CI', body: 'Issue: #206\nUser-Visible: no',
+    files: ['.github/workflows/validate.yml'],
+  });
+  const docs = makeCommit({
+    sha: 'b'.repeat(40), subject: 'Reword', body: '', files: ['docs/PROCESS.md'],
+  });
+  const product = makeCommit({
+    sha: 'c'.repeat(40), subject: 'Fix render', body: 'Issue: #150\nUser-Visible: yes',
+    files: ['src/a.ts', 'docs/CHANGELOG.md', 'docs/CHANGELOG.ru.md'],
+  });
+
+  assert.equal(isInfrastructureRange([infra]), true);
+  assert.equal(isInfrastructureRange([infra, docs]), true);
+  // Один файл класса A лишает диапазон исключения целиком: «в основном
+  // инфраструктурная» не бывает, иначе продуктовая правка минует проверку.
+  assert.equal(isInfrastructureRange([infra, product]), false);
+  assert.equal(isInfrastructureRange([product]), false);
+  // Пустой диапазон исключением не пользуется — нечему быть инфраструктурным.
+  assert.equal(isInfrastructureRange([]), false);
+});
+
+test('statusOptional waives the status label but keeps every other rule-8 refusal (#207)', () => {
+  // Метки инфраструктурного issue по #118: тип, приоритет, тема — без S*.
+  const infraIssue = () => ({
+    ok: true, json: JSON.stringify({ state: 'OPEN', labels: [
+      { name: 'bug' }, { name: 'P2' }, { name: 'infra' },
+    ] }),
+  });
+  assert.deepEqual(rules(checkIssueStatuses(['206'], infraIssue)), [8]);
+  assert.deepEqual(
+    rules(checkIssueStatuses(['206'], infraIssue, { statusOptional: true })), [],
+  );
+
+  // Исключение снимает ТОЛЬКО требование статуса.
+  const closed = () => ({ ok: true, json: JSON.stringify({ state: 'CLOSED', labels: [{ name: 'infra' }] }) });
+  assert.deepEqual(rules(checkIssueStatuses(['206'], closed, { statusOptional: true })), [8]);
+
+  const blocked = () => ({ ok: true, json: JSON.stringify({ state: 'OPEN', labels: [
+    { name: 'infra' }, { name: 'blocked' },
+  ] }) });
+  assert.deepEqual(rules(checkIssueStatuses(['206'], blocked, { statusOptional: true })), [8]);
+
+  const unreachable = () => ({ ok: false, error: 'gh: could not resolve to a Repository' });
+  const found = checkIssueStatuses(['206'], unreachable, { statusOptional: true });
+  assert.deepEqual(rules(found), [8]);
+  assert.match(found[0].msg, /fail closed/);
+
+  const garbage = () => ({ ok: true, json: 'not json at all' });
+  assert.deepEqual(rules(checkIssueStatuses(['206'], garbage, { statusOptional: true })), [8]);
+});
+
+// AC #207: сквозной прогон CLI по настоящему репозиторию с подставным gh.
+// Диапазон без класса A и с issue без статусной метки обязан быть зелёным;
+// тот же диапазон плюс один файл `src/**` — красным по проверке 8.
+test('the CLI waives the issue status for a class-B-only range but not with class A (#207)', (t) => {
+  if (process.platform === 'win32') {
+    t.skip('нужен исполняемый stub gh — прогон в Linux CI');
+    return;
+  }
+  const probe = spawnSync('git', ['--version'], { encoding: 'utf8' });
+  if (probe.status !== 0) {
+    t.skip('git недоступен');
+    return;
+  }
+  const dir = mkdtempSync(join(tmpdir(), 'hp-gate-207-'));
+  const gate = fileURLToPath(new URL('../scripts/process-gate.mjs', import.meta.url));
+  const git = (...args) => {
+    const r = spawnSync('git', ['-C', dir, ...args], { encoding: 'utf8' });
+    assert.equal(r.status, 0, `git ${args.join(' ')}: ${r.stderr}`);
+    return r.stdout;
+  };
+  const write = (rel, text) => {
+    const full = join(dir, rel);
+    mkdirSync(join(full, '..'), { recursive: true });
+    writeFileSync(full, text);
+  };
+  const commitAll = (message) => {
+    git('add', '-A');
+    git('-c', 'user.name=t', '-c', 'user.email=t@t', '-c', 'core.hooksPath=/dev/null',
+      'commit', '-q', '-m', message);
+  };
+  // Подставной gh: инфраструктурный issue по #118 — тип, приоритет, тема, без S*.
+  const ghStub = join(dir, 'gh-stub.mjs');
+  writeFileSync(ghStub, '#!/usr/bin/env node\n'
+    + 'process.stdout.write(JSON.stringify({ number: 206, state: "OPEN", labels: '
+    + '[{ name: "bug" }, { name: "P2" }, { name: "infra" }] }));\n', { mode: 0o755 });
+  const runGate = (range) => spawnSync(process.execPath,
+    [gate, '--repo', dir, '--range', range, '--issues'],
+    { encoding: 'utf8', env: { ...process.env, GH_BIN: ghStub } });
+
+  try {
+    git('init', '-q', '-b', 'dev');
+    write('README.md', 'base\n');
+    commitAll('Base');
+    const base = git('rev-parse', 'HEAD').trim();
+
+    write('.github/workflows/validate.yml', 'name: Validate\n');
+    commitAll('Tune CI\n\nIssue: #206\nUser-Visible: no');
+    const infraOnly = runGate(`${base}..HEAD`);
+    assert.equal(infraOnly.status, 0, infraOnly.stdout + infraOnly.stderr);
+    // Пропуск виден в выводе, а не молчалив.
+    assert.match(infraOnly.stdout, /инфраструктурный диапазон/);
+
+    // Один продуктовый файл — и требование статуса возвращается.
+    write('src/a.ts', 'export const a = 1;\n');
+    write('docs/CHANGELOG.md', 'ru\n');
+    write('docs/CHANGELOG.ru.md', 'en\n');
+    commitAll('Fix render\n\nIssue: #206\nUser-Visible: yes');
+    const withProduct = runGate(`${base}..HEAD`);
+    assert.equal(withProduct.status, 1, withProduct.stdout + withProduct.stderr);
+    assert.match(withProduct.stdout, /FAIL п\.8/);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
