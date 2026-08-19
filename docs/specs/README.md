@@ -111,6 +111,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | Issue | ТЗ |
 |---|---|
 | [#57](https://github.com/Matysh/houseplan-card/issues/57) Единый выбор цвета и прозрачности | [057-color-opacity-picker.md](057-color-opacity-picker.md) |
+| [#180](https://github.com/Matysh/houseplan-card/issues/180) Единый picker во всех местах выбора цвета | [180-all-color-call-sites.md](180-all-color-call-sites.md) |
 
 ## Правило актуализации
 
