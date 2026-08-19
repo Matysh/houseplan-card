@@ -249,7 +249,8 @@ import {
   type OpeningFaceOffset, type OpeningVisibleSpec,
 } from './render/opening-symbol';
 import {
-  openingDefaultLengthCm, openingPlacementPreset, resolveOpeningPlacement, sameOpeningPlacementInput,
+  openingDefaultLengthCm, openingPlacementPreset, passagePlacementPreviewGeometry,
+  resolveOpeningPlacement, sameOpeningPlacementInput,
   type OpeningPlacementCore, type OpeningPlacementPreset, type OpeningPlacementType,
 } from './opening-placement';
 import { safeStoredColor } from './color';
@@ -17363,10 +17364,21 @@ class HouseplanCard extends LitElement {
       gridPitch: this._gridPitch,
       face: candidate.face,
     };
+    const passageGeometry = candidate.type === 'passage'
+      ? passagePlacementPreviewGeometry(candidate, this._gridPitch)
+      : null;
     return svg`<g class="opening-preview" data-kind=${candidate.type}
       aria-hidden="true" pointer-events="none"
       transform="translate(${candidate.x} ${candidate.y}) rotate(${candidate.angle})">
-      ${renderOpeningVisibleGeometry(visibleSpec)}
+      ${passageGeometry ? svg`
+        <rect class="passage-preview-cut" pointer-events="none"
+          x=${passageGeometry.rect.x} y=${passageGeometry.rect.y}
+          width=${passageGeometry.rect.width} height=${passageGeometry.rect.height}></rect>
+        ${passageGeometry.boundaries.map((boundary) => svg`
+          <line class="passage-preview-boundary" pointer-events="none"
+            x1=${boundary.x1} y1=${boundary.y1}
+            x2=${boundary.x2} y2=${boundary.y2}></line>`)}
+      ` : renderOpeningVisibleGeometry(visibleSpec)}
     </g>
     <circle class="opening-preview-dot opghost-dot" aria-hidden="true" pointer-events="none"
       cx=${candidate.x} cy=${candidate.y} r=${this._gridPitch * 0.18}></circle>` as unknown as TemplateResult;

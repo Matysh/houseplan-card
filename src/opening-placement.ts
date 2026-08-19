@@ -47,6 +47,14 @@ export interface OpeningPlacementCore {
   measure: OpeningPlacementMeasureGeometry;
 }
 
+export interface PassagePlacementPreviewGeometry {
+  rect: { x: number; y: number; width: number; height: number };
+  boundaries: readonly [
+    { x1: number; y1: number; x2: number; y2: number },
+    { x1: number; y1: number; x2: number; y2: number },
+  ];
+}
+
 export interface ResolveOpeningPlacementInput {
   pointer: readonly [number, number];
   preset: OpeningPlacementPreset;
@@ -75,6 +83,29 @@ export function openingPlacementPreset(
   revision: number,
 ): OpeningPlacementPreset {
   return { type, lengthCm: openingDefaultLengthCm(type), flipH: false, flipV: false, revision };
+}
+
+/** Local SVG geometry for the passage-only placement overlay. The candidate
+ * remains the authority for both the future wall cut and the preview. */
+export function passagePlacementPreviewGeometry(
+  candidate: Pick<OpeningPlacementCore, 'renderedLength' | 'target'>,
+  gridPitch: number,
+): PassagePlacementPreviewGeometry {
+  const halfLength = Math.max(0, candidate.renderedLength) / 2;
+  const halfDepth = Math.max(0, candidate.target.physicalHalfWidth);
+  const boundaryHalfLength = halfDepth + Math.max(0, gridPitch) * 0.18;
+  const boundary = (x: number) => ({
+    x1: x, y1: -boundaryHalfLength, x2: x, y2: boundaryHalfLength,
+  });
+  return {
+    rect: {
+      x: -halfLength,
+      y: halfDepth ? -halfDepth : 0,
+      width: halfLength * 2,
+      height: halfDepth * 2,
+    },
+    boundaries: [boundary(-halfLength), boundary(halfLength)],
+  };
 }
 
 function pointOrder(a: readonly number[], b: readonly number[]): number {

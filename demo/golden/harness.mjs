@@ -447,7 +447,7 @@ export async function prepareGoldenScenario(page, scenario) {
     }
     if (scenario.openingPreview) {
       const { type, pointer } = scenario.openingPreview;
-      if (!['window', 'door', 'gate'].includes(type)
+      if (!['window', 'door', 'passage', 'gate'].includes(type)
         || !Array.isArray(pointer) || pointer.length !== 2
         || !pointer.every(Number.isFinite)) {
         throw new Error(`invalid golden openingPreview: ${scenario.id}`);
@@ -471,7 +471,11 @@ export async function prepareGoldenScenario(page, scenario) {
       await card.updateComplete;
       await frame();
       const preview = card.renderRoot.querySelector(`.opening-preview[data-kind="${type}"]`);
-      if (!preview || !preview.querySelector('.op-leaf')) {
+      const expectedGeometry = type === 'passage'
+        ? !!preview?.querySelector('.passage-preview-cut')
+          && preview.querySelectorAll('.passage-preview-boundary').length === 2
+        : !!preview?.querySelector('.op-leaf');
+      if (!preview || !expectedGeometry) {
         const intervals = card._openingPlacementIntervalsCache?.value || [];
         const nearest = intervals.map((interval) => {
           const [px, py] = card._cursorPt || [0, 0];

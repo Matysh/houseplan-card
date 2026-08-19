@@ -288,8 +288,12 @@ still contain manually assigned devices and explicit measurement sources.
 
 ## 9. Doors, windows, gates and locks
 
-Choose Opening, select door/window/gate, and click a wall. Defaults are 90 cm,
-120 cm and 300 cm. The complete opening must fit on the wall.
+Choose Opening, select door/window/open passage/gate, and click a wall. Defaults
+are 90 cm, 120 cm, 90 cm and 300 cm. The complete opening must fit on the wall.
+Before the click, door, window and gate show their translucent architectural
+symbol. An open passage instead shows the exact future wall cut as a translucent
+wall-coloured segment with an orange boundary mark at each end. Its depth follows
+the real wall thickness; after saving it has no standalone symbol.
 
 An opening may bind a contact; doors and gates may also bind a lock. View paints
 the moving leaf and state. A lock badge is green when locked and orange when

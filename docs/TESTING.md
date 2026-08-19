@@ -1103,6 +1103,13 @@ separately promised workflows:
       absent far from walls, on virtual spans, over an existing opening, before
       a type is selected, or in other tools [auto: smoke_opening_preview;
       golden: opening-placement-door-thick-wall-dark]
+- [ ] Open-passage placement preview: hover paints one wall-coloured cut segment
+      at effective opacity 0.35 plus exactly two orange boundary marks. Its
+      length and depth come from the resolved candidate, ruler labels remain
+      visible, and save leaves no preview-only symbol in the committed passage
+      [unit: opening-placement, open-passage-contract; auto:
+      smoke_opening_preview; golden:
+      opening-placement-passage-thick-wall-dark/light]
 - [ ] Split polyline + cursors + Esc (v1.32.0): Merge shows a pointer cursor,
       Split shows pointer until a room is picked then crosshair; the cut can be
       a polyline — start on a wall, intermediate clicks inside the room, finish

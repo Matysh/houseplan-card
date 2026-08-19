@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   openingPlacementPreset,
   openingPlacementTargets,
+  passagePlacementPreviewGeometry,
   resolveOpeningPlacement,
   sameOpeningPlacementInput,
 } from '../test-build/opening-placement.js';
@@ -40,6 +41,45 @@ test('Opening presets use the agreed type-specific defaults', () => {
     type: 'passage', lengthCm: 90, flipH: false, flipV: false, revision: 3,
   });
   assert.equal(openingPlacementPreset('gate', 3).lengthCm, 300);
+});
+
+test('passage preview geometry follows the resolved length and standard wall depth', () => {
+  const geometry = passagePlacementPreviewGeometry({
+    renderedLength: 90,
+    target: { physicalHalfWidth: 7.5 },
+  }, 10);
+  assert.deepEqual(geometry, {
+    rect: { x: -45, y: -7.5, width: 90, height: 15 },
+    boundaries: [
+      { x1: -45, y1: -9.3, x2: -45, y2: 9.3 },
+      { x1: 45, y1: -9.3, x2: 45, y2: 9.3 },
+    ],
+  });
+});
+
+test('passage preview wall depth changes only its rect height and boundary span', () => {
+  const geometry = passagePlacementPreviewGeometry({
+    renderedLength: 90,
+    target: { physicalHalfWidth: 12.5 },
+  }, 10);
+  assert.deepEqual(geometry.rect, { x: -45, y: -12.5, width: 90, height: 25 });
+  assert.deepEqual(geometry.boundaries, [
+    { x1: -45, y1: -14.3, x2: -45, y2: 14.3 },
+    { x1: 45, y1: -14.3, x2: 45, y2: 14.3 },
+  ]);
+});
+
+test('passage preview preserves boundary marks when physical wall depth is zero', () => {
+  const geometry = passagePlacementPreviewGeometry({
+    renderedLength: 60,
+    target: { physicalHalfWidth: 0 },
+  }, 5);
+  assert.deepEqual(geometry.rect, { x: -30, y: 0, width: 60, height: 0 });
+  const boundaryHalf = 5 * 0.18;
+  assert.deepEqual(geometry.boundaries, [
+    { x1: -30, y1: -boundaryHalf, x2: -30, y2: boundaryHalf },
+    { x1: 30, y1: -boundaryHalf, x2: 30, y2: boundaryHalf },
+  ]);
 });
 
 test('Shared room-owned copies collapse to one physical target', () => {

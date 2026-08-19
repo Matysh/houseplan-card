@@ -1373,6 +1373,20 @@ export const cardStyles = css`
       opacity: 0.5;
       pointer-events: none;
     }
+    .opening-preview[data-kind="passage"] {
+      opacity: 1;
+    }
+    .passage-preview-cut {
+      fill: var(--wall-fill, #ffffff);
+      fill-opacity: 0.35;
+      stroke: none;
+      pointer-events: none;
+    }
+    .passage-preview-boundary {
+      stroke: var(--hp-open, #ff9800);
+      stroke-width: 2.5;
+      pointer-events: none;
+    }
     .opening-preview .op-leaf,
     .opening-preview .op-arc {
       transition: none;

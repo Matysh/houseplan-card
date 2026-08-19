@@ -2,6 +2,10 @@
 
 ## v1.65.0-beta.3 — 2026-08-19
 
+- Open-passage placement now previews the exact future wall cut before the
+  click: a translucent wall-coloured segment shows its real length and depth,
+  with two orange boundary marks at its ends. The saved passage remains a
+  symbol-free physical opening ([#193](https://github.com/Matysh/houseplan-card/issues/193)).
 - The House Plan color picker now draws the full spectrum directly on the Hue
   track, so the target colour family is visible before moving the slider. Mouse,
   touch and keyboard values remain unchanged, and a contrasting ring keeps the

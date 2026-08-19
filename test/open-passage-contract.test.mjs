@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 const card = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
+const styles = readFileSync(new URL('../src/styles.ts', import.meta.url), 'utf8');
 const staticRender = readFileSync(new URL('../src/space-render.ts', import.meta.url), 'utf8');
 const backend = readFileSync(new URL('../custom_components/houseplan/websocket_api.py', import.meta.url), 'utf8');
 const importer = readFileSync(new URL('../custom_components/houseplan/import_export.py', import.meta.url), 'utf8');
@@ -49,6 +50,21 @@ test('static passage cuts and tunnels are passage-only additions', () => {
   assert.match(staticRender, /renderOpeningTunnelFills/);
   assert.match(staticRender, /passageDataTunnels/);
   assert.match(staticRender, /passageGlowTunnels/);
+});
+
+test('placement preview adds passage-only cut geometry without changing saved symbols', () => {
+  const start = card.indexOf('private _renderOpeningPlacementPreview()');
+  const preview = card.slice(start, card.indexOf('private _renderOpenings(', start));
+  assert.match(preview, /candidate\.type === 'passage'/);
+  assert.match(preview, /passagePlacementPreviewGeometry\(candidate, this\._gridPitch\)/);
+  assert.equal((preview.match(/class="passage-preview-cut"/g) || []).length, 1);
+  assert.equal((preview.match(/class="passage-preview-boundary"/g) || []).length, 1,
+    'one mapped template emits exactly two resolved boundary records');
+  assert.match(preview, /: renderOpeningVisibleGeometry\(visibleSpec\)/);
+  assert.match(preview, /aria-hidden="true" pointer-events="none"/);
+  assert.match(styles, /\.opening-preview\[data-kind="passage"\][\s\S]*opacity: 1/);
+  assert.match(styles, /\.passage-preview-cut[\s\S]*fill-opacity: 0\.35/);
+  assert.match(styles, /\.passage-preview-boundary[\s\S]*stroke: var\(--hp-open/);
 });
 
 test('all write/import paths invoke the semantic passage validator', () => {

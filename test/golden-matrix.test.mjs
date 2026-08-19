@@ -46,6 +46,8 @@ test('golden matrix has stable unique ids and bounded comparison thresholds', ()
       assert.equal(Number.isInteger(scenario.openingPreviewPixels.minChannelDelta)
         && scenario.openingPreviewPixels.minChannelDelta > 0
         && scenario.openingPreviewPixels.minChannelDelta <= 32, true, scenario.id);
+      assert.equal(Number.isInteger(scenario.openingPreviewPixels.minInsideWallPixels)
+        && scenario.openingPreviewPixels.minInsideWallPixels > 0, true, scenario.id);
     }
     if (scenario.openingGeometry) {
       assert.match(scenario.openingGeometry.id, /^[a-z0-9-]+$/, scenario.id);
@@ -209,7 +211,7 @@ test('sun-ray golden requires browser-painted light from a state-only sun entity
   assert.ok(scenario);
   const fixture = prepareGoldenFixture(scenario);
   const space = fixture.config.spaces.find((item) => item.id === scenario.space);
-  assert.equal(GOLDEN_MATRIX_VERSION, 27);
+  assert.equal(GOLDEN_MATRIX_VERSION, 28);
   assert.equal(space.settings.sun_rays, true);
   assert.equal(scenario.northDeg, 90,
     'the sign-sensitive golden must keep a non-zero north direction');
@@ -256,15 +258,28 @@ test('value badge golden covers four positions and bottom badge with separate LQ
 });
 
 test('opening placement golden requires browser-painted preview pixels', () => {
-  const scenario = GOLDEN_SCENARIOS.find(
+  const door = GOLDEN_SCENARIOS.find(
     (item) => item.id === 'opening-placement-door-thick-wall-dark',
   );
-  assert.ok(scenario);
-  assert.equal(scenario.mode, 'plan');
-  assert.equal(scenario.openingPreview?.type, 'door');
-  assert.deepEqual(scenario.openingPreview?.pointer, [0.48, 0.65]);
-  assert.equal(scenario.openingPreviewPixels.minPixels >= 150, true);
-  assert.equal(scenario.openingPreviewPixels.minChannelDelta >= 4, true);
+  assert.ok(door);
+  assert.equal(door.mode, 'plan');
+  assert.equal(door.openingPreview?.type, 'door');
+  assert.deepEqual(door.openingPreview?.pointer, [0.48, 0.65]);
+  assert.equal(door.openingPreviewPixels.minPixels >= 150, true);
+  assert.equal(door.openingPreviewPixels.minChannelDelta >= 4, true);
+
+  const passages = GOLDEN_SCENARIOS.filter(
+    (item) => item.id.startsWith('opening-placement-passage-thick-wall-'),
+  );
+  assert.deepEqual(passages.map((scenario) => scenario.theme), ['dark', 'light']);
+  for (const scenario of passages) {
+    assert.equal(scenario.mode, 'plan');
+    assert.equal(scenario.openingPreview?.type, 'passage');
+    assert.deepEqual(scenario.openingPreview?.pointer, [0.48, 0.65]);
+    assert.equal(scenario.openingPreviewPixels.minPixels >= 150, true);
+    assert.equal(scenario.openingPreviewPixels.minInsideWallPixels >= 8, true);
+    assert.equal(scenario.openingPreviewPixels.minChannelDelta >= 4, true);
+  }
 });
 
 test('diagonal opening golden asserts a real painted 45 degree symbol', () => {

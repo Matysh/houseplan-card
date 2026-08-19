@@ -1,7 +1,7 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 27;
+export const GOLDEN_MATRIX_VERSION = 28;
 
 const stage = { capture: 'stage', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0005 } };
 const page = { capture: 'page', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0008 } };
@@ -104,6 +104,14 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     mode: 'plan', openingPreview: { type: 'door', pointer: [0.48, 0.65] },
     openingPreviewPixels: { minPixels: 150, minInsideWallPixels: 8, minChannelDelta: 4 },
     theme: 'dark', viewport: { width: 1180, height: 900 }, ...page },
+  { id: 'opening-placement-passage-thick-wall-dark', fixture: 'visual', space: 'golden-geometry',
+    mode: 'plan', openingPreview: { type: 'passage', pointer: [0.48, 0.65] },
+    openingPreviewPixels: { minPixels: 150, minInsideWallPixels: 8, minChannelDelta: 4 },
+    theme: 'dark', viewport: { width: 1180, height: 900 }, ...page },
+  { id: 'opening-placement-passage-thick-wall-light', fixture: 'visual', space: 'golden-geometry',
+    mode: 'plan', openingPreview: { type: 'passage', pointer: [0.48, 0.65] },
+    openingPreviewPixels: { minPixels: 150, minInsideWallPixels: 8, minChannelDelta: 4 },
+    theme: 'light', viewport: { width: 1180, height: 900 }, ...page },
   { id: 'geometry-devices-editor-dark', fixture: 'visual', space: 'golden-geometry', mode: 'devices',
     theme: 'dark', viewport: { width: 1180, height: 900 }, ...page },
   { id: 'geometry-decor-editor-dark', fixture: 'visual', space: 'golden-geometry', mode: 'decor',

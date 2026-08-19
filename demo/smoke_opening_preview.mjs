@@ -91,14 +91,104 @@ const res = await page.evaluate(async () => {
   card._cursorPt = wallMid;
   await settle();
   const passagePreview = root().querySelector('.opening-preview[data-kind="passage"]');
-  out.passagePreviewHasNoSymbol = !!passagePreview
-    && passagePreview.querySelectorAll('.op-leaf,.op-arc,.op-glass,line').length === 0;
+  const passageCandidate = card._resolveOpeningPlacement(wallMid);
+  const passageCut = passagePreview?.querySelector('.passage-preview-cut');
+  const passageBoundaries = [...(passagePreview?.querySelectorAll('.passage-preview-boundary') || [])];
+  const passageHalfLength = (passageCandidate?.renderedLength || 0) / 2;
+  const passageHalfDepth = passageCandidate?.target?.physicalHalfWidth || 0;
+  const passageBoundaryHalf = passageHalfDepth + card._gridPitch * 0.18;
+  const near = (value, expected) => Math.abs(Number.parseFloat(value) - expected) < 1e-6;
+  out.passagePreviewGeometry = !!passagePreview && !!passageCandidate && !!passageCut
+    && passageBoundaries.length === 2
+    && near(passageCut.getAttribute('x'), -passageHalfLength)
+    && near(passageCut.getAttribute('y'), -passageHalfDepth)
+    && near(passageCut.getAttribute('width'), passageCandidate.renderedLength)
+    && near(passageCut.getAttribute('height'), passageHalfDepth * 2)
+    && passageBoundaries.every((boundary, index) => {
+      const x = index === 0 ? -passageHalfLength : passageHalfLength;
+      return near(boundary.getAttribute('x1'), x) && near(boundary.getAttribute('x2'), x)
+        && near(boundary.getAttribute('y1'), -passageBoundaryHalf)
+        && near(boundary.getAttribute('y2'), passageBoundaryHalf);
+    });
+  const wallFill = root().querySelector('.wallbody-fill');
+  const passageDot = root().querySelector('.opening-preview-dot');
+  const passagePreviewStyle = passagePreview ? getComputedStyle(passagePreview) : null;
+  const passageCutStyle = passageCut ? getComputedStyle(passageCut) : null;
+  const wallFillStyle = wallFill ? getComputedStyle(wallFill) : null;
+  const passageDotStyle = passageDot ? getComputedStyle(passageDot) : null;
+  const inheritedWallFill = passageCutStyle?.getPropertyValue('--wall-fill').trim() || '';
+  out._passagePreviewThemeDiagnostics = {
+    opacity: passagePreviewStyle?.opacity,
+    fillOpacity: passageCutStyle?.fillOpacity,
+    cutFill: passageCutStyle?.fill,
+    wallFill: wallFillStyle?.fill,
+    inheritedWallFill,
+    configuredWallFill: card._fillColors.wall_fill.c,
+    boundaryStrokes: passageBoundaries.map((boundary) => getComputedStyle(boundary).stroke),
+    dotFill: passageDotStyle?.fill,
+  };
+  out.passagePreviewTheme = !!passagePreview && !!passageCut
+    && Math.abs(Number.parseFloat(passagePreviewStyle.opacity) - 1) < 0.001
+    && Math.abs(Number.parseFloat(passageCutStyle.fillOpacity) - 0.35) < 0.001
+    && inheritedWallFill.toLowerCase() === card._fillColors.wall_fill.c.toLowerCase()
+    && passageCutStyle.fill !== 'none'
+    && passageBoundaries.every((boundary) => getComputedStyle(boundary).stroke
+      === passageDotStyle.fill);
+  out.passagePreviewInert = passagePreview?.getAttribute('aria-hidden') === 'true'
+    && passagePreview?.getAttribute('pointer-events') === 'none'
+    && passageCut?.getAttribute('pointer-events') === 'none'
+    && passageBoundaries.every((boundary) => boundary.getAttribute('pointer-events') === 'none');
+  out.passagePreviewKeepsRulers = root().querySelectorAll('.measurelabel.opshoulder').length === 2
+    && !!root().querySelector('.opcentertick');
+  out.passagePreviewHasNoCommittedSymbolParts = !!passagePreview
+    && passagePreview.querySelectorAll('.op-leaf,.op-arc,.op-glass').length === 0;
+  out.otherPreviewHasNoPassageGeometry = windowPreview
+    ?.querySelectorAll('.passage-preview-cut,.passage-preview-boundary').length === 0;
+  out.typeChoicesDoNotMutateGeometry = card._cfgEpoch === epochBeforeMenu
+    && JSON.stringify(card._curSpaceCfg.openings || []) === geometryBeforeMenu;
+
+  // Passage click and save use the same candidate, but the committed opening
+  // keeps only the canonical masonry cut and never the transient overlay.
+  const passageWallMid = [
+    (poly[2][0] + poly[3][0]) / 2,
+    (poly[2][1] + poly[3][1]) / 2,
+  ];
+  card._cursorPt = passageWallMid;
+  await settle();
+  const passageSaveCandidate = card._resolveOpeningPlacement(passageWallMid);
+  const passageIdsBeforeSave = new Set((card._curSpaceCfg.openings || []).map((item) => item.id));
+  card._openingClick(passageWallMid);
+  await settle();
+  out.passageDialogMatchesPreview = !!passageSaveCandidate && card._openingDialog?.type === 'passage'
+    && near(card._openingDialog.x, passageSaveCandidate.x)
+    && near(card._openingDialog.y, passageSaveCandidate.y)
+    && near(card._openingDialog.angle, passageSaveCandidate.angle)
+    && card._openingDialog.lengthCm === passageSaveCandidate.lengthCm
+    && !root().querySelector('.opening-preview');
+  card._saveOpening();
+  await settle();
+  const savedPassage = (card._curSpaceCfg.openings || [])
+    .find((item) => !passageIdsBeforeSave.has(item.id));
+  const committedPassage = savedPassage
+    ? root().querySelector(`.opening[data-id="${savedPassage.id}"]`)
+    : null;
+  out.passageSaveMatchesCandidate = !!savedPassage && !!passageSaveCandidate
+    && savedPassage.type === 'passage'
+    && near(savedPassage.x * 1000, passageSaveCandidate.x)
+    && near(savedPassage.y * card._spaceH, passageSaveCandidate.y)
+    && near(savedPassage.angle, passageSaveCandidate.angle)
+    && near(savedPassage.length * 1000, passageSaveCandidate.renderedLength);
+  out.committedPassageHasNoPreviewSymbol = !!committedPassage
+    && committedPassage.querySelectorAll(
+      '.passage-preview-cut,.passage-preview-boundary,.op-leaf,.op-arc,.op-glass',
+    ).length === 0;
   await choose('gate');
   card._cursorPt = wallMid;
   await settle();
   const gatePreview = root().querySelector('.opening-preview[data-kind="gate"]');
   out.gatePreviewGeometry = gatePreview?.querySelectorAll('.op-leaf').length === 2
-    && gatePreview?.querySelectorAll('.op-arc').length === 0;
+    && gatePreview?.querySelectorAll('.op-arc').length === 0
+    && gatePreview?.querySelectorAll('.passage-preview-cut,.passage-preview-boundary').length === 0;
   await choose('door');
   const axisCandidate = card._resolveOpeningPlacement(wallMid);
   const target = axisCandidate?.target;
@@ -122,8 +212,6 @@ const res = await page.evaluate(async () => {
   out.previewAriaHidden = preview?.getAttribute('aria-hidden') === 'true';
   out.previewHasNoPersistentIdentity = !preview?.hasAttribute('data-id')
     && !preview?.hasAttribute('data-hp');
-  out.typeChoicesDoNotMutateGeometry = card._cfgEpoch === epochBeforeMenu
-    && JSON.stringify(card._curSpaceCfg.openings || []) === geometryBeforeMenu;
   const wallBody = root().querySelector('.wallbody');
   out.previewPaintedAfterWall = !wallBody || (!!preview
     && !!(wallBody.compareDocumentPosition(preview) & Node.DOCUMENT_POSITION_FOLLOWING));
@@ -239,5 +327,8 @@ const res = await page.evaluate(async () => {
   return out;
 });
 
+if (!res.passagePreviewTheme)
+  console.error('passagePreviewTheme diagnostics:', res._passagePreviewThemeDiagnostics);
+delete res._passagePreviewThemeDiagnostics;
 checkAll(res);
 await finish(browser, res);
