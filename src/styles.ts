@@ -2498,10 +2498,14 @@ export const cardStyles = css`
       height: var(--puck-size);
       border-radius: 50%;
       transform: translate(-50%, -50%);
-      background: var(--hp-bg);
-      border: 1px solid var(--hp-line);
-      box-shadow: var(--shadow-1);
-      color: var(--hp-txt);
+      --vac-core-bg: light-dark(#fff, #252525);
+      --vac-core-fg: light-dark(#252525, #fff);
+      background: var(--vac-core-bg);
+      border: 1px solid #BCBCBC;
+      box-shadow:
+        0 1px 2px rgb(37 40 45 / 12%),
+        0 4px 8px -1.07px rgb(37 40 45 / 18%);
+      color: var(--vac-core-fg);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -2512,11 +2516,13 @@ export const cardStyles = css`
       transition: left 1.2s linear, top 1.2s linear;
       animation: vacpulse 2.2s ease-out infinite;
     }
+    .vacpuck.theme-light { --vac-core-bg: #fff; --vac-core-fg: #252525; }
+    .vacpuck.theme-dark { --vac-core-bg: #252525; --vac-core-fg: #fff; }
     .vacpuck.jump { transition: none; }
     .vacpuck.stale { opacity: 0.45; animation: none; }
     .vacpuck ha-icon {
       --mdc-icon-size: calc(var(--puck-size) * 0.68);
-      color: var(--hp-txt);
+      color: var(--vac-core-fg);
       /* same centering recipe as .dev ha-icon: without flex + line-height 0
          the glyph sits on its text baseline and appears to float around the
          circle (owner report 2026-07-31) */

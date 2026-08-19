@@ -37,7 +37,7 @@ const out = await page.evaluate(async () => {
   };
   const YELLOW = probe('var(--hp-on)');
   const ORANGE = probe('var(--hp-open)');
-  const NEUTRAL = probe('var(--hp-bg)');
+  const NEUTRAL = probe('light-dark(#fff, #252525)');
   o.tokensDiffer = new Set([YELLOW, ORANGE, NEUTRAL]).size === 3;
 
   // =======================================================================
@@ -197,7 +197,7 @@ const out = await page.evaluate(async () => {
     const el = d && elOf(d);
     o[tag + 'MarkerFound'] = !!el;
     if (!el) return;
-    const bg = getComputedStyle(el).backgroundColor;
+    const bg = getComputedStyle(el.querySelector('.device-core')).backgroundColor;
     o[tag + 'PlateNeutral'] = bg === NEUTRAL;
     o[tag + 'NotYellow'] = bg !== YELLOW;
     o[tag + 'NotOrange'] = bg !== ORANGE;
@@ -212,7 +212,9 @@ const out = await page.evaluate(async () => {
 
   // …and at rest (closed) they are plain, with no ring
   await push('closed');
-  const closedBg = (ref) => getComputedStyle(elOf(dev(ref))).backgroundColor;
+  const closedBg = (ref) => getComputedStyle(
+    elOf(dev(ref)).querySelector('.device-core'),
+  ).backgroundColor;
   o.litLampClosedNeutral = closedBg('d_mixed') === NEUTRAL;
   o.controlledClosedNeutral = closedBg('d_ctrl') === NEUTRAL;
   o.litLampClosedNoRing = !elOf(dev('d_mixed')).classList.contains('activity-transition');

@@ -248,11 +248,11 @@ Object.assign(out, await page.evaluate(async () => {
 const farIcon = await page.evaluate(async () => {
   const c = window.__card;
   const sr = c.shadowRoot || c.renderRoot;
-  // the badge is --dev-size PLUS a 1px border on each side, and the border
-  // is not part of the scaled geometry (same correction as smoke_icon_scale)
+  // Measure the package core: shell stroke/shadow are decoration, while the
+  // saved icon geometry must still scale with the plan.
   const size = () => {
-    const el = sr.querySelector('.devlayer .dev');
-    return Math.round((el.getBoundingClientRect().width - 2) * 100) / 100;
+    const el = sr.querySelector('.devlayer .dev .device-core');
+    return Math.round(el.getBoundingClientRect().width * 100) / 100;
   };
   const o = {};
   c._resetZoom(); await c.updateComplete;

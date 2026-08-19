@@ -8,6 +8,7 @@
   in one shell and are no longer ellipsized; marker LQI uses red at 0–40,
   amber at 41–179 and green at 180+. Activity motion follows the new package
   timings and colors, while saved custom pulse settings remain authoritative.
+  The live vacuum puck uses the same theme-aware core, stroke and shadow.
   Interactive markers also have a 44×44 px target and reuse their existing
   click/confirmation path from Enter or Space
   ([#179](https://github.com/Matysh/houseplan-card/issues/179)).

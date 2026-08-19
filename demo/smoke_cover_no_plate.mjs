@@ -7,9 +7,10 @@
 // --hp-open #ff9f43, not just a border), and the travelling states carried it
 // underneath the breathing ring. Now a cover returns no plate class at all:
 //
-//   closed / open / ajar   -> neutral plate, the ICON tells the state
+//   closed / open / ajar   -> neutral core, the ICON tells the state
 //   opening / closing      -> neutral plate + activity-transition when the
 //                             marker opts into «Icon + activity»
+//   unknown / unavailable  -> package unavailable core, without a morph
 //
 // The frame itself is NOT gone: door/window binary sensors and locks still
 // wear it, and a valve keeps it too (nothing morphs its icon). Those are
@@ -33,7 +34,8 @@ const out = await page.evaluate(async () => {
   };
   const YELLOW = probe('var(--hp-on)');     // «включено»
   const ORANGE = probe('var(--hp-open)');   // «открыто» frame
-  const NEUTRAL = probe('var(--hp-bg)');    // the plain badge
+  const NEUTRAL = probe('light-dark(#fff, #252525)'); // package theme fallback
+  const AMBER = probe('#F0A00C');            // package working/unlocked core
   o.tokensDiffer = new Set([YELLOW, ORANGE, NEUTRAL]).size === 3;
   o.yellowIsTheYellow = YELLOW === 'rgb(255, 212, 92)';
   o.orangeIsTheOpenFrame = ORANGE === 'rgb(255, 159, 67)';
@@ -71,7 +73,7 @@ const out = await page.evaluate(async () => {
 
   const devEl = () => sr().querySelector('.devlayer .dev');
   const cls = () => [...(devEl()?.classList || [])];
-  const plate = () => getComputedStyle(devEl()).backgroundColor;
+  const plate = () => getComputedStyle(devEl()?.querySelector('.device-core')).backgroundColor;
   const icon = () => devEl()?.querySelector('ha-icon')?.getAttribute('icon') || '';
   o.onlyTheCoverOnThePlan = sr().querySelectorAll('.devlayer .dev').length === 1;
 
@@ -105,7 +107,7 @@ const out = await page.evaluate(async () => {
   o.openingRingIsTheBreathingOne = (() => {
     const ring = devEl()?.querySelector('.device-pulse.continuous.transition i:first-child');
     const cs = ring ? getComputedStyle(ring) : null;
-    return !!cs && cs.animationName === 'hp-pulse-continuous' && cs.animationDuration === '2.4s';
+    return !!cs && cs.animationName === 'hp-pulse-continuous' && cs.animationDuration === '3.6s';
   })();
 
   await setCover('closing', { device_class: 'curtain' });
@@ -134,9 +136,12 @@ const out = await page.evaluate(async () => {
   // one the name rule «ворота|garage|gate» hands out, and it morphs too
   o.gateAutoIcon = c._devices.find((x) => x.bindingRef === 'd_gate')?.icon === 'mdi:garage-variant';
   o.morphNoClass = await morph('', 'mdi:garage-variant', 'mdi:garage-open-variant');
-  // …and an unreadable state morphs nothing, plate still neutral
+  // …and an unreadable state morphs nothing and uses the package unavailable core.
   await setCover('unknown', { device_class: 'curtain' });
-  plateIsNeutral('unknown');
+  o.unknownPlateUnavailable = plate() === probe('#B5BAC1');
+  o.unknownNotYellow = plate() !== YELLOW;
+  o.unknownNotOrange = plate() !== ORANGE;
+  o.unknownNoPlateClass = !cls().includes('on') && !cls().includes('open');
   o.unknownNoMorph = icon() === 'mdi:garage-variant';
   o.unknownNoRing = !cls().includes('activity-transition');
 
@@ -164,17 +169,21 @@ const out = await page.evaluate(async () => {
   const winEl = elOf(dev('d_window'));
   o.lockMarkerFound = !!lockEl;
   o.windowMarkerFound = !!winEl;
-  o.unlockedLockKeepsTheFrame = !!lockEl && lockEl.classList.contains('open')
-    && getComputedStyle(lockEl).backgroundColor === ORANGE;
+  o.unlockedLockKeepsTheFrame = !!lockEl && lockEl.classList.contains('lock-unlocked')
+    && getComputedStyle(lockEl.querySelector('.device-core')).backgroundColor === AMBER;
   o.openWindowKeepsTheFrame = !!winEl && winEl.classList.contains('open')
-    && getComputedStyle(winEl).backgroundColor === ORANGE;
+    && getComputedStyle(winEl.querySelector('.device-core')).backgroundColor === ORANGE;
   // …and a locked lock is neutral again, so the frame still MEANS something
   c.hass = { ...c.hass, states: { ...c.hass.states,
     'lock.front_door': { entity_id: 'lock.front_door', state: 'locked', attributes: { friendly_name: 'Front door' } } } };
   c.requestUpdate();
   await c.updateComplete;
   await new Promise((r) => setTimeout(r, 300));
-  o.lockedLockIsNeutral = getComputedStyle(elOf(dev('d_lock'))).backgroundColor === NEUTRAL;
+  const lockedEl = elOf(dev('d_lock'));
+  const lockedCore = lockedEl?.querySelector('.device-core');
+  o.lockedLockIsNeutral = !!lockedEl?.classList.contains('lock-locked')
+    && getComputedStyle(lockedCore).backgroundColor === NEUTRAL
+    && getComputedStyle(lockedCore).color === 'rgb(0, 0, 0)';
 
   // a VALVE keeps the frame too: nothing morphs its icon, so the frame is the
   // only thing it has to say «открыт» with (deliberately left alone)

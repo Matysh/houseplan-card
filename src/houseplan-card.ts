@@ -16721,7 +16721,7 @@ class HouseplanCard extends LitElement {
       const icon = d.marker?.icon || d.icon || 'mdi:robot-vacuum';
       pucks.push(html`<div
         data-mid="${d.id}"
-        class="vacpuck ${rt?.jump || jumpAll ? 'jump' : ''} ${stale ? 'stale' : ''}"
+        class="vacpuck ${deviceThemeClass(this._renderPlanHass)} ${rt?.jump || jumpAll ? 'jump' : ''} ${stale ? 'stale' : ''}"
         style="left:${left}%;top:${top}%"
         title=${d.name}
         @click=${(e: Event) => { e.stopPropagation(); const ve = this._vacEntity(d); if (ve) this._openMoreInfo(ve); }}>

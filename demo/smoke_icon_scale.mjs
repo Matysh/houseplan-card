@@ -57,10 +57,10 @@ const out2 = await page.evaluate(async () => {
     await new Promise((r) => setTimeout(r, 80));
   };
   const fs = (el) => parseFloat(getComputedStyle(el).fontSize);
-  // базовый --icon-size в px: ширина немасштабированного бейджа минус рамка 1px×2
+  // Базовый --icon-size в px — фактический package core без shell stroke.
   const plain = [...sr().querySelectorAll('.dev')].find(
     (e) => !e.classList.contains('ghost') && !e.classList.contains('valonly') && !(e.getAttribute('style') || '').includes('--dev-scale'));
-  const iconPx = plain.getBoundingClientRect().width - 2;
+  const iconPx = plain.querySelector('.device-core').getBoundingClientRect().width;
 
   // --- бейдж значения (valonly) ---
   await setMarker({ display: 'value', size: 1 });
@@ -72,19 +72,19 @@ const out2 = await page.evaluate(async () => {
   const v2 = devEl().getBoundingClientRect();
   const vf2 = fs(devEl().querySelector('.valtext'));
   o.valFontScales = vf2 / vf1 > 1.8 && vf2 / vf1 < 2.2;
-  o.valPlateScales = (v2.height - 2) / (v1.height - 2) > 1.8 && (v2.height - 2) / (v1.height - 2) < 2.2
+  o.valPlateScales = v2.height / v1.height > 1.8 && v2.height / v1.height < 2.2
     && v2.width / v1.width > 1.6 && v2.width / v1.width < 2.4;
 
   // --- temp-плашка (.tval) рядом со значком ---
   await setMarker({ size: 1 });
   const t1 = devEl().querySelector('.value-badge').getBoundingClientRect();
   const tf1 = fs(devEl().querySelector('.value-badge'));
-  // дефолт: line-height 0.68 * icon-size + рамка 1px×2
-  o.tvalDefaultKept = Math.abs(t1.height - (iconPx * 0.68 + 2)) < 1;
+  // Package Double section height is 0.7875 of the icon core.
+  o.tvalDefaultKept = Math.abs(t1.height - iconPx * 0.7875) < 1;
   await setMarker({ size: 2 });
   const t2 = devEl().querySelector('.value-badge').getBoundingClientRect();
   const tf2 = fs(devEl().querySelector('.value-badge'));
-  o.tvalScales = (t2.height - 2) / (t1.height - 2) > 1.8 && (t2.height - 2) / (t1.height - 2) < 2.2
+  o.tvalScales = t2.height / t1.height > 1.8 && t2.height / t1.height < 2.2
     && tf2 / tf1 > 1.8 && tf2 / tf1 < 2.2;
 
   c._serverCfg.markers = c._serverCfg.markers.filter((m) => m.id !== 'd_temp');

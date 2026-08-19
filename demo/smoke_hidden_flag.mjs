@@ -44,8 +44,9 @@ Object.assign(out, await page.evaluate(async () => {
   o.ghostHasNoState = !!g && !g.classList.contains('on') && !g.classList.contains('open')
     && !g.classList.contains('unavail') && !g.classList.contains('alarm');
   // и он синий, а не тёмный — отличим от недоступного устройства
-  o.ghostIsBlue = !!g && getComputedStyle(g).borderStyle.includes('dashed')
-    && getComputedStyle(g).borderColor !== 'rgb(255, 255, 255)';
+  const ghostShell = g?.querySelector('.device-shell');
+  o.ghostIsBlue = !!ghostShell && getComputedStyle(ghostShell).borderStyle.includes('dashed')
+    && getComputedStyle(ghostShell).borderColor !== 'rgb(255, 255, 255)';
   // тумблер локальный: конфиг не трогается
   o.toggleIsLocal = c._serverCfg.settings.show_all === undefined;
 

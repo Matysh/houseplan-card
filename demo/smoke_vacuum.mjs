@@ -39,11 +39,13 @@ const out = await page.evaluate(async () => {
   // owner 2026-07-31: the base badge, but round and 20% smaller — same plate
   // vs a NEUTRAL badge: the robot's own base is yellow while cleaning
   const devEl = sr().querySelector('.dev:not(.on)');
-  const pcs = getComputedStyle(puck), dcs = getComputedStyle(devEl);
-  o.puckPlateMatchesDev = pcs.backgroundColor === dcs.backgroundColor
-    && pcs.borderTopColor === dcs.borderTopColor;
+  const devCore = devEl.querySelector('.device-core');
+  const devShell = devEl.querySelector('.device-shell');
+  const pcs = getComputedStyle(puck);
+  o.puckPlateMatchesDev = pcs.backgroundColor === getComputedStyle(devCore).backgroundColor
+    && pcs.borderTopColor === getComputedStyle(devShell).borderTopColor;
   o.puck80pct = Math.abs(puck.getBoundingClientRect().width
-    - devEl.getBoundingClientRect().width * 0.8) < 2;
+    - devCore.getBoundingClientRect().width * 0.8) < 2;
   o.noWedge = !sr().querySelector('.vacwedge'); // owner 2026-07-31: no heading arrow
   // the glyph is DEAD centre (owner report: it floated on the text baseline)
   const pr = puck.getBoundingClientRect();

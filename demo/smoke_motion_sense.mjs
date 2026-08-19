@@ -118,7 +118,7 @@ const res = await page.evaluate(async () => {
   const holdRing = holdEl?.querySelector('.device-pulse.continuous.presence i:first-child');
   const hAfter = holdRing ? getComputedStyle(holdRing) : null;
   out.holdAnimated = !!hAfter && hAfter.animationName === 'hp-pulse-continuous';
-  out.holdAnimationCalm = !!hAfter && hAfter.animationDuration === '2.4s';
+  out.holdAnimationCalm = !!hAfter && hAfter.animationDuration === '3.6s';
   out.holdBgNeutral = !!holdEl && !!neutral
     && getComputedStyle(holdEl).backgroundColor === getComputedStyle(neutral).backgroundColor;
   out.holdNoFlashClass = !!holdEl && !holdEl.classList.contains('activity-event');
