@@ -236,6 +236,9 @@ export class HpColorOpacity extends LitElement {
       --hp-picker-hue-track: linear-gradient(to right,
         #f00 0%, #ff0 16.667%, #0f0 33.333%, #0ff 50%,
         #00f 66.667%, #f0f 83.333%, #f00 100%);
+      --hp-picker-hue-thumb-shadow:
+        0 0 0 2px var(--card-background-color, #202126),
+        0 0 0 3px var(--primary-text-color, #fff);
     }
     .hue-range::-webkit-slider-runnable-track {
       height: 10px;
@@ -256,6 +259,14 @@ export class HpColorOpacity extends LitElement {
       border: 0;
       border-radius: 999px;
       background: transparent;
+    }
+    .hue-range::-webkit-slider-thumb {
+      border-radius: 50%;
+      box-shadow: var(--hp-picker-hue-thumb-shadow);
+    }
+    .hue-range::-moz-range-thumb {
+      border-radius: 50%;
+      box-shadow: var(--hp-picker-hue-thumb-shadow);
     }
     input[type='text'],
     input[type='number'] {
@@ -307,6 +318,12 @@ export class HpColorOpacity extends LitElement {
       .hue-range::-moz-range-track {
         border-color: ButtonText;
         background: Canvas;
+      }
+      .hue-range::-webkit-slider-thumb {
+        box-shadow: none;
+      }
+      .hue-range::-moz-range-thumb {
+        box-shadow: none;
       }
     }
   `;

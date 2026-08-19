@@ -86,9 +86,10 @@
       and native/fallback floating surfaces remain mutually exclusive with help
       [auto: `smoke_help_affordance.mjs`].
 - [ ] The Hue range keeps `0…359`, step 1 and its existing input events while its
-      WebKit/Blink and Gecko tracks expose the same cyclic spectrum; forced-colors
-      falls back to a system track [unit: `color-picker.test.mjs`, auto:
-      `smoke_color_picker.mjs`].
+      WebKit/Blink and Gecko tracks expose the same cyclic spectrum. A dual
+      theme-aware ring keeps the native thumb distinct from every hue, while
+      forced-colors falls back to system track/thumb rendering [unit:
+      `color-picker.test.mjs`, auto: `smoke_color_picker.mjs`].
 - [ ] The dark mobile and light desktop open-picker goldens are reviewed from the
       complete Linux artifact before a beta; baseline acceptance is not part of
       the implementation loop [golden: `decor-color-popover-mobile-ru`,

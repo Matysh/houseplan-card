@@ -53,6 +53,9 @@ const result = await page.evaluate(async () => {
     && hue.min === '0' && hue.max === '359' && hue.step === '1'
     && hueStyle.getPropertyValue('--hp-picker-hue-track').includes('linear-gradient')
     && hue.getBoundingClientRect().height >= 40;
+  const thumbShadow = hueStyle.getPropertyValue('--hp-picker-hue-thumb-shadow');
+  out.hueThumbContrastContract = thumbShadow.includes('0 0 0 2px')
+    && thumbShadow.includes('0 0 0 3px');
   ranges()[1].value = '100';
   ranges()[1].dispatchEvent(new Event('input', { bubbles: true, composed: true }));
   ranges()[2].value = '100';

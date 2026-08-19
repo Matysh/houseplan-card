@@ -180,8 +180,9 @@ the tray scrolls horizontally instead of shrinking the plan.
 Where an editor offers a color sample, one click opens the House Plan color
 picker. Hue, saturation, brightness, an exact HEX value and opacity (when the
 setting supports it) are available together; there is no second browser color
-dialog. The Hue track shows the full colour spectrum at a glance. Changes remain
-a draft until the owning properties dialog is saved.
+dialog. The Hue track shows the full colour spectrum at a glance, with a
+contrasting ring keeping its slider visible. Changes remain a draft until the
+owning properties dialog is saved.
 
 <!-- docs-section: input -->
 

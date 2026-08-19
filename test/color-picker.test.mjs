@@ -58,6 +58,9 @@ test('the hue range exposes one cyclic spectrum without restyling other ranges',
   assert.match(component, /\.hue-range::\-webkit-slider-runnable-track\s*\{[\s\S]*?height:\s*10px;[\s\S]*?background:\s*var\(--hp-picker-hue-track\);/);
   assert.match(component, /\.hue-range::\-moz-range-track\s*\{[\s\S]*?height:\s*10px;[\s\S]*?background:\s*var\(--hp-picker-hue-track\);/);
   assert.match(component, /\.hue-range::\-moz-range-progress\s*\{[\s\S]*?background:\s*transparent;/);
+  assert.match(component, /\.hue-range::\-webkit-slider-thumb\s*\{[\s\S]*?border-radius:\s*50%;[\s\S]*?box-shadow:\s*var\(--hp-picker-hue-thumb-shadow\);/);
+  assert.match(component, /\.hue-range::\-moz-range-thumb\s*\{[\s\S]*?border-radius:\s*50%;[\s\S]*?box-shadow:\s*var\(--hp-picker-hue-thumb-shadow\);/);
+  assert.match(spectrum, /--hp-picker-hue-thumb-shadow:[\s\S]*?card-background-color[\s\S]*?primary-text-color/);
   assert.match(component, /@media \(forced-colors:\s*active\)[\s\S]*?background:\s*Canvas;/);
   assert.match(component, /class="hue-range" type="range" min="0" max="359" step="1"/);
   const commonRange = component.match(/input\[type='range'\]\s*\{[\s\S]*?\n\s*\}/)?.[0] || '';
