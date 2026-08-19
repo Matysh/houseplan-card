@@ -10,7 +10,14 @@ Issue: [#186](https://github.com/Matysh/houseplan-card/issues/186)
 в независимой стене. Редактор оставляет у каждого торца стены физически
 правдоподобный участок, поэтому проём не может закончиться вровень с торцом.
 
-## 2. До / после
+## 2. Проблема
+
+Редактор и backend считают валидным проём, край которого совпадает с торцом
+независимой стены. У такой geometry нет физического остатка стены под откос,
+хотя контракт #132 требует jamb safety margin; frontend и backend одинаково
+пропускают это нарушение.
+
+### До / после
 
 **До:** frontend считает валидным любой проём, целиком находящийся между
 математическими endpoints host. Backend повторяет эту границу с одним лишь
@@ -32,6 +39,9 @@ floating-point epsilon. Край проёма можно сохранить пр
    silent clamp и write-on-read запрещены.
 5. Новая граница обязательна при создании, перемещении самого проёма, изменении
    его длины и перепривязке. Отказ имеет локализованное объяснение.
+6. Полный backup/restore всегда сохраняет legacy near-end проёмы: поверх
+   текущего плана, на пустой и на другой инсталляции. Full import проверяет
+   структурное попадание внутрь host, но не применяет новый jamb margin.
 
 ## 4. Техническая база и единицы
 
@@ -64,8 +74,9 @@ normalized units та же формула имеет вид
 - изменение длины в opening dialog и explicit rebind;
 - frontend commit validation и отдельная причина `does-not-fit-jamb` либо
   эквивалентный typed result;
-- backend semantic delta validation для config/set и optimize, а также строгая
-  проверка импортируемого полного документа;
+- backend semantic delta validation для config/set и optimize;
+- совместимый full import/restore без нового jamb margin, в том числе без
+  trusted previous на пустой или другой инсталляции;
 - совместимое чтение и рендер уже сохранённых нарушающих записей;
 - RU/EN сообщение, unit/backend/browser coverage и документация.
 
@@ -160,8 +171,15 @@ semantic delta comparison. Новый jamb contract реализуется в se
 - существующий downgrade guard удаления `host` сохраняется;
 - overlap rule не меняется.
 
-Полный import/restore без trusted previous рассматривает все hosted openings как
-новые и проверяет strict. Отказ возвращает стабильный public code
+Полный import/restore всегда использует compatibility-границу: structural
+validation по-прежнему требует, чтобы opening целиком находился внутри host,
+но jamb margin не применяется ни поверх текущего плана, ни без trusted previous
+на пустой или другой инсталляции. Поэтому неизменённый legacy backup остаётся
+восстановимым. Осознанная цена решения владельца: вручную изменённый полный
+backup тоже может содержать near-end geometry, которую обычный UI создать уже
+не позволит; следующий direct geometry edit потребует исправления.
+
+Для strict config/set/optimize отказ возвращает стабильный public code
 `invalid_partition_opening_jamb_margin` (или расширенный typed reason того же
 уровня), включая `space`, `opening` и требуемый margin в diagnostic message.
 Backend ничего не нормализует и не переписывает.
@@ -175,6 +193,7 @@ Backend ничего не нормализует и не переписывае�
 | Drag к endpoint | opening останавливается на точной допустимой границе |
 | Увеличение длины в dialog нарушает margin | banner + локализованный отказ, config не меняется |
 | Legacy near-end opening без geometry edit | видим, интерактивен и losslessly сохраняется |
+| Full restore с legacy near-end opening | импортируется без jamb-проверки, в том числе на пустой/другой инсталляции |
 | Legacy opening получил direct move/length/rebind | новая geometry обязана соответствовать margin |
 | Два соседних opening касаются, но не пересекаются | допустимо по прежнему overlap contract |
 | Missing partition | прежний orphan/fail-dark contract #132 |
@@ -224,11 +243,13 @@ smoke placement и drag у обоих endpoints.
 
 Сохранённый near-end opening остаётся видимым и рабочим во всех прежних
 consumers, не получает silent clamp и проходит backend round-trip при
-постороннем edit или rigid host translation. Direct geometry edit и full import
-того же нарушения отклоняются.
+постороннем edit или rigid host translation. Direct geometry edit того же
+нарушения отклоняется, а полный backup/restore сохраняет запись без
+jamb-проверки поверх текущего плана и без trusted previous.
 
-**Доказательство:** frontend render/cut regression unit + backend delta/import
-tests с previous и без него.
+**Доказательство:** frontend render/cut regression unit + backend delta tests
+для ordinary write и full-import compatibility tests поверх текущего, пустого
+и другого config.
 
 ### AC5 — overlap и остальные host не меняются
 
@@ -242,9 +263,11 @@ semantics #132 не меняются.
 
 `config/set` и optimize применяют один semantic validator. Новый/изменённый
 invalid record возвращает стабильный jamb error code, а structural schema не
-ломает совместимый unchanged round-trip.
+ломает совместимый unchanged round-trip. Full import остаётся на zero-margin
+structural boundary и не вызывает этот jamb validator.
 
-**Доказательство:** backend validator tests и websocket tests обоих write paths.
+**Доказательство:** backend validator tests и websocket tests обоих strict
+write paths плюс full-import compatibility regression.
 
 ## 12. План проверок
 
@@ -272,6 +295,7 @@ performance остаются pre-beta gate по release runbook.
 | Default strict скрывает старые openings | явные compat/read и strict/write call sites |
 | Frontend/backend расходятся в масштабе | shared named formula и boundary matrix |
 | Structural schema блокирует round-trip раньше delta validator | zero-margin schema + semantic comparison с previous |
+| Full restore ошибочно становится strict | отдельный compat import path и tests с/без текущего config |
 | Негеометрическое редактирование требует миграции | сравнивать только relative geometry contract |
 | Rigid translation ошибочно считается resize | сравнивать span, `cm`, host identity/t, а не absolute endpoints |
 | Room-wall placement получает новый отступ | margin только при `partitionHost` |
