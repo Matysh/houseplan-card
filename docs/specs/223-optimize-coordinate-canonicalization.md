@@ -106,8 +106,8 @@ Preview остаётся существующим диалогом. В стро�
 отдельный показатель, а существующий счётчик `canonicalized` получает
 однозначное название по своей единице измерения:
 
-- RU: «нормализовано пространств: {c}; устранён шум координат: {p}»;
-- EN: «spaces normalized: {c}; noisy coordinate values removed: {p}».
+- RU: «обновлено пространств: {c}; устранён шум координат: {p}»;
+- EN: «spaces updated: {c}; noisy coordinate values removed: {p}».
 
 `c` по-прежнему означает число пространств, где переписано представление
 `open_spans`/`open_to`/`walls`; `p` означает число отдельных coordinate values
@@ -147,7 +147,7 @@ entries и файлы сохраняются. Входные `config` и `layout
 | AC3 | Воспроизводимый fixture из шести комнат после Optimize имеет точно совпадающие общие вершины, `changed: true`, `moved: 0`, `coordsCanonicalized > 0`; union/downstream geometry успешно строится. | `plan-optimizer` regression unit на fixture из #223/#218. |
 | AC4 | Счётчик считает отдельные компоненты только при разнице `<= EPS`, не дублирует заметно перемещённые элементы и не увеличивает `maxShift*`. Принятая партиция и `wall_column` учитываются; у партиции с `hostedFit = false` вычисленный, но не записанный snap не учитывается и noisy endpoints сохраняются. | Units для room poly, rect/decor/layout, применённой и отклонённой partition, wall column и off-grid negative case. |
 | AC5 | Второй запуск над candidate возвращает `changed: false`, `coordsCanonicalized: 0` и побитово/глубоко тот же JSON. | Idempotence unit. |
-| AC6 | RU/EN preview разными терминами показывает «нормализованные пространства» (`canonicalized`) и «устранённый шум координат» (`coordsCanonicalized`); случай `moved=0` не превращается в «нет изменений»; итоговый toast учитывает очищенные координаты. | i18n/UI unit + targeted production-bundle browser smoke. |
+| AC6 | RU/EN preview разными терминами показывает «обновлённые пространства» (`canonicalized`) и «устранённый шум координат» (`coordsCanonicalized`); случай `moved=0` не превращается в «нет изменений»; итоговый toast учитывает очищенные координаты. | i18n/UI unit + targeted production-bundle browser smoke. |
 | AC7 | Preview не мутирует входы; Cancel ничего не пишет; Apply сохраняет exact candidate; Undo восстанавливает исходные noisy-координаты и неизвестные поля. | Optimizer immutability unit + targeted browser/backend smoke. |
 | AC8 | Обычные read/render/Save без явного Optimize не переписывают persisted config; устойчивость #218 остаётся зелёной. | Existing regression suite + focused negative unit. |
 | AC9 | Документация описывает явную exact-канонизацию и значение нового счётчика; три bundle-копии синхронны. | Docs check, bundle parity check. |
@@ -183,7 +183,7 @@ tracked increment. Чистая ветка зелёная, мутант обяз
 | Риск | Мера |
 |---|---|
 | Счётчик вводит пользователя в заблуждение как число объектов | Точное название «координат» и семантика отдельных компонент в §6. |
-| Два разных счётчика выглядят одной категорией канонизации | «Нормализовано пространств» и «устранён шум координат» явно называют разные единицы и действия. |
+| Два разных счётчика выглядят одной категорией канонизации | Нейтральное «обновлено пространств» и точное «устранён шум координат» явно называют разные единицы и действия; занятый термин нормализованных координат не используется для `c`. |
 | Отклонённый snap партиции попадает в отчёт | Вклад подтверждается только после фактической записи; отдельный `hostedFit=false` unit. |
 | Near-node rewrite ошибочно считается физическим сдвигом | Раздельные counters; `moved` и `maxShift*` не растут при `<= EPS`. |
 | Идемпотентность нарушается из-за недвоичного шага сетки | Результат определяется тем же выражением узла; exact second-run unit для всех call sites. |
