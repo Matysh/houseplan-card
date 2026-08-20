@@ -37,6 +37,7 @@ from custom_components.houseplan.const import (
     MAX_IMPORT_PREVIEWS_TOTAL,
     PLAN_MODEL_VERSION,
     FILES_DIR, PLANS_DIR,
+    CONTENT_URL, FILES_URL, PLANS_URL,
 )
 from custom_components.houseplan.store import (
     async_save_layout_state,
@@ -85,6 +86,133 @@ def _document(tmp_path: Path, kind: str = "full") -> dict:
         config_root=tmp_path,
     )
     return document
+
+
+# --- issue #225: an attachment url carries a cache-buster ---------------------
+#
+# Legacy references look like "/houseplan_files/files/m1/doc.pdf?v=1783170649".
+# The resolver used to compare the raw tail with its sanitized form, so the
+# query made the name differ from itself: the reference read as internal (by
+# prefix) yet non-canonical (by name), and _content_state refused the whole
+# document. Every backup holding one attachment was impossible to import back.
+
+
+@pytest.mark.parametrize("url, expected_tail", [
+    (f"{FILES_URL}/m1/doc.pdf?v=1783170649", ("m1", "doc.pdf")),
+    (f"{CONTENT_URL}/files/m1/doc.pdf?v=1783170649", ("m1", "doc.pdf")),
+    (f"{FILES_URL}/m1/doc.pdf#page=2", ("m1", "doc.pdf")),
+    (f"{FILES_URL}/m1/doc.pdf?v=1#page=2", ("m1", "doc.pdf")),
+    (f"{FILES_URL}/m1/doc.pdf", ("m1", "doc.pdf")),
+])
+def test_issue_225_attachment_url_resolves_regardless_of_query(
+    tmp_path: Path, url: str, expected_tail: tuple[str, str],
+) -> None:
+    """AC1: query and fragment address the transfer, never the file."""
+    resolved = import_export_api._internal_path(tmp_path, url)
+    assert resolved is not None, url
+    kind, path = resolved
+    assert kind == "attachment"
+    assert path == tmp_path / FILES_DIR / expected_tail[0] / expected_tail[1]
+
+
+@pytest.mark.parametrize("url", [
+    f"{PLANS_URL}/f1.svg?v=1",
+    f"{CONTENT_URL}/plans/_/f1.svg?v=1#page=2",
+    f"{PLANS_URL}/f1.svg",
+])
+def test_issue_225_plan_url_resolves_regardless_of_query(tmp_path: Path, url: str) -> None:
+    """AC1: the plan branch of the same resolver behaves identically."""
+    resolved = import_export_api._internal_path(tmp_path, url)
+    assert resolved == ("plan", tmp_path / PLANS_DIR / "f1.svg")
+
+
+@pytest.mark.parametrize("url", [
+    f"{FILES_URL}/../../secret.pdf?v=1",
+    f"{FILES_URL}/m1/../../secret.pdf",
+    f"{CONTENT_URL}/plans/_/../x.svg?v=1",
+    f"{PLANS_URL}/../x.svg",
+])
+def test_issue_225_traversal_stays_closed_with_a_query(tmp_path: Path, url: str) -> None:
+    """AC4: dropping the query must not widen what a path segment may be."""
+    assert import_export_api._internal_path(tmp_path, url) is None
+
+
+@pytest.mark.parametrize("url", [
+    f"{FILES_URL}/m1/doc.pdf?x=/../../etc",
+    f"{FILES_URL}/m1/doc.pdf#/../..",
+])
+def test_issue_225_hostile_looking_query_does_not_reject_a_valid_path(
+    tmp_path: Path, url: str,
+) -> None:
+    """AC4a: the guard is the path split, not string filtering.
+
+    A query may contain anything at all — slashes and dot-dots included — and
+    still address the very same file. Rejecting on the sight of ".." would fail
+    a legitimate reference while adding no protection: the path segments are
+    what the resolver validates.
+    """
+    assert import_export_api._internal_path(tmp_path, url) == (
+        "attachment", tmp_path / FILES_DIR / "m1" / "doc.pdf",
+    )
+
+
+def test_issue_225_external_url_is_still_external(tmp_path: Path) -> None:
+    """AC5: nothing outside the internal namespaces became internal."""
+    assert import_export_api._internal_path(
+        tmp_path, "https://example.invalid/floor.svg?v=1",
+    ) is None
+    assert import_export_api._looks_internal("https://example.invalid/floor.svg?v=1") is False
+
+
+@pytest.mark.parametrize("same_source, expected_state, expected_confirmation", [
+    (True, "available", False),
+    (False, "detach_required", True),
+])
+def test_issue_225_content_state_accepts_a_cache_busted_attachment(
+    tmp_path: Path, same_source: bool, expected_state: str, expected_confirmation: bool,
+) -> None:
+    """AC2: both branches of the ownership question, neither an outright refusal."""
+    url = f"{FILES_URL}/lamp/manual.pdf?v=1783170649"
+    attachment = tmp_path / FILES_DIR / "lamp" / "manual.pdf"
+    attachment.parent.mkdir(parents=True, exist_ok=True)
+    attachment.write_bytes(b"%PDF-1.4\n")
+    config = _config()
+    config["markers"][0]["pdfs"] = [{"name": "Manual", "url": url}]
+    runtime = SimpleNamespace(instance_id="instance-a")
+    document, _ = create_export(
+        runtime, {"config": config}, {"layout": {}}, kind="full", space_id=None,
+        card_version="1.61.0", config_root=tmp_path,
+    )
+    rows, confirmation = import_export_api._content_state(document, same_source, tmp_path)
+    assert [row["state"] for row in rows] == [expected_state]
+    assert confirmation is expected_confirmation
+    assert rows[0]["url"] == url, "the stored reference is preserved, cache-buster included"
+
+
+def test_issue_225_backup_with_an_attachment_survives_a_full_round_trip(
+    tmp_path: Path,
+) -> None:
+    """AC3: export then import the same document back, no manual edits."""
+    url = f"{FILES_URL}/lamp/manual.pdf?v=1783170649"
+    attachment = tmp_path / FILES_DIR / "lamp" / "manual.pdf"
+    attachment.parent.mkdir(parents=True, exist_ok=True)
+    attachment.write_bytes(b"%PDF-1.4\n")
+    config = _config()
+    config["markers"][0]["pdfs"] = [{"name": "Manual", "url": url}]
+    runtime = SimpleNamespace(instance_id="instance-a")
+    document, _ = create_export(
+        runtime, {"config": config}, {"layout": {}}, kind="full", space_id=None,
+        card_version="1.61.0", config_root=tmp_path,
+    )
+    response = create_preview(
+        SimpleNamespace(instance_id="instance-a", import_previews={}),
+        json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
+        current_config_data={"config": _config(), "rev": 1},
+        current_layout_data={"layout": {}, "rev": 1}, config_root=tmp_path,
+    )
+    content = response["preview"]["content"]
+    assert [row["state"] for row in content] == ["available"]
+    assert response["preview"]["confirmation_required"] is False
 
 
 def test_background_defaults_and_store_migration_preserve_legacy_view() -> None:

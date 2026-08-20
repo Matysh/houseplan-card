@@ -7,6 +7,11 @@
   contains only the remaining active visible entities and disappears when
   none remain; two explicitly placed entity/device markers still coexist
   ([#226](https://github.com/Matysh/houseplan-card/issues/226)).
+- Fixed a backup with PDF attachments refusing to import back with "The backup
+  contains invalid or inconsistent content references". Attachment links that
+  carry a cache-buster (`…/files/marker/doc.pdf?v=1783170649`) are now resolved
+  by their path, as a URL rather than as a string
+  ([#225](https://github.com/Matysh/houseplan-card/issues/225)).
 
 ## v1.66.0 — 2026-08-20
 
