@@ -187,7 +187,7 @@ export class HpDialog extends LitElement {
       cursor: pointer;
     }
 
-    .close:hover,
+    :host([data-pointer-hover]) .close:hover,
     .close:focus-visible {
       background: rgb(127 127 127 / 0.16);
     }

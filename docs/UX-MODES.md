@@ -71,6 +71,14 @@ the only way to operate a lock from the card; plan-icon taps never toggle locks)
 room-card link icon → HA area (room taps do nothing since v1.40.1), room hover
 highlight, hover tooltips (name, clean-floor area, temperature, signal).
 
+Room, device, opening and shared-control hover is a mouse-only transient layer:
+the card enables it per instance after real mouse input on fine/hover hardware,
+clears it on touch/pen and on mode, space or lifecycle boundaries, and restores
+it when a real mouse is used again. Keyboard focus, selection and semantic
+device state do not depend on that gate. A device action that actually dispatches
+briefly scales its painted shell to 95% and back over 200 ms; informational,
+editor and no-op paths do not imitate a successful action.
+
 Removed from this mode (they move, not die):
 - icon dragging ("drag anywhere", v1.9 — consciously reversed),
 - room-label dragging,

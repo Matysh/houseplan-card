@@ -96,7 +96,7 @@ export class HpColorOpacity extends LitElement {
         linear-gradient(45deg, #b8b8b8 25%, #eee 25%) 5px 5px / 10px 10px;
       cursor: pointer;
     }
-    .trigger:hover {
+    :host([data-pointer-hover]) .trigger:hover {
       border-color: var(--primary-color, #03a9f4);
     }
     .trigger[aria-expanded='true'] {

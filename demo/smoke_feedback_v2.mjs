@@ -38,12 +38,26 @@ const res = await page.evaluate(async () => {
     const metaSz = parseFloat(getComputedStyle(lbl.querySelector('.rlmetrics')).fontSize);
     out.metricsRatio = Math.round((metaSz / nameSz) * 100) / 100;
   } else out.metricsRatio = 'no-metrics';
-  // 4) касание помечает сессию как тач и гасит тултип
+  // 4) modality lives on this card: touch clears transient hover, a synthetic
+  // compatibility mouse cannot restore it, and a real mouse can.
   c._tip = { x: 1, y: 1, title: 't', meta: 'm' };
+  c._hoverRoom = { space: c._space, room: c._curSpaceCfg.rooms[0] };
   c._notePointer(new PointerEvent('pointerdown', { pointerType: 'touch' }));
-  out.touchClearsTip = c._tip === null;
-  c._showTip(new MouseEvent('mousemove', { clientX: 5, clientY: 5 }), 'x', 'y');
-  out.noTipAfterTouch = !c._tip;
+  out.touchClearsTransientHover = c._tip === null && c._hoverRoom === null
+    && !c.hasAttribute('data-pointer-hover');
+  const compatibilityMouse = new PointerEvent('pointermove', {
+    pointerType: 'mouse', clientX: 5, clientY: 5,
+  });
+  Object.defineProperty(compatibilityMouse, 'sourceCapabilities', {
+    value: { firesTouchEvents: true },
+  });
+  c._showTip(compatibilityMouse, 'compatibility', 'ignored');
+  out.compatibilityMouseIgnored = !c._tip && !c.hasAttribute('data-pointer-hover');
+  c._showTip(new PointerEvent('pointermove', {
+    pointerType: 'mouse', clientX: 7, clientY: 7,
+  }), 'real mouse', 'restored');
+  out.realMouseRestoresHover = c._tip?.title === 'real mouse'
+    && c.hasAttribute('data-pointer-hover');
   return out;
 });
 check('metricsRatio 0.75', res.metricsRatio, 0.75);

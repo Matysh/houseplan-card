@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Device markers are now 10% more compact without moving their saved centres or
+  shrinking the 44×44 px interaction floor, and wide Text markers keep uniform
+  capsule insets. A real toggle/run dispatch gives a smooth 5% press response
+  for 200 ms (with a reduced-motion alternative). Touch and pen no longer leave
+  room, marker or shared-control hover stuck; a real mouse restores hover on
+  hybrid hardware without reloading ([#212](https://github.com/Matysh/houseplan-card/issues/212)).
+
 ## v1.65.0-beta.7 — 2026-08-20
 
 - A card instance can now be pinned to one space with `floor`: use a stable

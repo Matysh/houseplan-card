@@ -354,7 +354,7 @@ class HpDevicePreview extends LitElement {
       }
       .previewfit { position: absolute; left: 50%; top: 50%; transform-origin: center; }
       .previewstage .dev { left: 0; top: 0; cursor: default; }
-      .previewstage .dev:hover { z-index: 2; }
+      :host([data-pointer-hover]) .previewstage .dev:hover { z-index: 2; }
       .previewfacts { min-width: 0; display: grid; align-content: start; gap: 8px; }
       .previewfacts > div { display: grid; grid-template-columns: minmax(115px, 0.8fr) minmax(0, 1.3fr); gap: 8px; }
       .previewfacts span { color: var(--secondary-text-color, #9aa0aa); }

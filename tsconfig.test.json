@@ -21,7 +21,7 @@
     "src/types.ts",
     "src/space-geometry.ts",
     "src/signing.ts", "src/initial-load.ts", "src/space-model-selection.ts", "src/space-dialog.ts",
-    "src/visual-continuity.ts", "src/mode-transition.ts",
+    "src/visual-continuity.ts", "src/mode-transition.ts", "src/pointer-modality.ts",
     "src/render-device-snapshot.ts",
     "src/command-stack.ts",
     "src/align-grid.ts",

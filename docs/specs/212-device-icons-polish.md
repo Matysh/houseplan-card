@@ -547,3 +547,6 @@ radius, feedback и hover path. Данных, backend migration и rollback stor
    `cubic-bezier(.22,.61,.36,1)`; exact easing не является config surface.
 7. Reduced-motion accent использует существующий theme/focus token и один
    painted-frame owner, не новую пользовательскую строку.
+8. Формулировка #22 `plan-wide setting` означает одну общую политику feedback
+   для всех actionable markers плана, а не новую пользовательскую настройку
+   либо per-marker override.

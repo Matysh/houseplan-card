@@ -190,6 +190,10 @@ const result = await page.evaluate(async ({ beforeUnavailable, afterUnavailable,
   const presence = node('d_motion');
   const unavailable = node('d_kettle');
   const text = node('d_tv');
+  const textCoreRect = rect(text?.querySelector('.device-core'));
+  const textCoreRadius = parseFloat(
+    getComputedStyle(text?.querySelector('.device-core')).borderTopLeftRadius,
+  );
   const double = node('d_temp');
   const doubleShellRect = rect(double?.querySelector('.device-shell'));
   const doubleCoreRect = rect(double?.querySelector('.device-core'));
@@ -299,12 +303,51 @@ const result = await page.evaluate(async ({ beforeUnavailable, afterUnavailable,
   const focusCoreDecoration = getComputedStyle(text.querySelector('.device-core')).boxShadow;
   text.blur();
 
+  const originalCallService = c.hass.callService;
+  let actionDispatches = 0;
+  c.hass.callService = async () => { actionDispatches++; };
+  light.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
+  await Promise.resolve();
+  const pressAnimation = lightShell.getAnimations().find((animation) =>
+    animation.effect?.getTiming().duration === 200);
+  const pressFrames = pressAnimation?.effect?.getKeyframes?.() || [];
+  const acceptedActionFeedback = actionDispatches === 1
+    && pressAnimation?.effect?.getTiming().duration === 200
+    && pressFrames.some((frame) => frame.scale === '0.95');
+  await new Promise((resolve) => setTimeout(resolve, 240));
+  const feedbackLifecycleBounded = !lightShell.getAnimations().some((animation) =>
+    animation.effect?.getTiming().duration === 200);
+  c._reducedMotion = true;
+  light.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
+  await Promise.resolve();
+  const reducedAnimation = lightShell.getAnimations().find((animation) =>
+    animation.effect?.getTiming().duration === 200);
+  const reducedFrames = reducedAnimation?.effect?.getKeyframes?.() || [];
+  const reducedMotionUsesNoScale = !!reducedAnimation
+    && reducedFrames.every((frame) => frame.scale == null)
+    && reducedFrames.some((frame) => frame.outlineWidth === '2px');
+  c._cancelDevicePressFeedback();
+  c._reducedMotion = false;
+  const enterAction = new KeyboardEvent('keydown', {
+    key: 'Enter', bubbles: true, composed: true, cancelable: true,
+  });
+  light.dispatchEvent(enterAction);
+  await Promise.resolve();
+  const keyboardAnimation = lightShell.getAnimations().find((animation) =>
+    animation.effect?.getTiming().duration === 200);
+  const keyboardActionFeedback = enterAction.defaultPrevented && actionDispatches === 3
+    && keyboardAnimation?.effect?.getKeyframes?.().some((frame) => frame.scale === '0.95');
+  c._cancelDevicePressFeedback();
+  c.hass.callService = originalCallService;
+
   let moreInfo = 0;
   c._openMoreInfo = () => { moreInfo++; };
   const enter = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
   unavailable.dispatchEvent(enter);
   const space = new KeyboardEvent('keydown', { key: ' ', bubbles: true, cancelable: true });
   unavailable.dispatchEvent(space);
+  const informationalActionHasNoFeedback = unavailable.querySelector('.device-shell')
+    .getAnimations().every((animation) => animation.effect?.getTiming().duration !== 200);
 
   const aria = unavailable.getAttribute('aria-label') || '';
   const viewKeyboard = unavailable.getAttribute('role') === 'button'
@@ -350,7 +393,7 @@ const result = await page.evaluate(async ({ beforeUnavailable, afterUnavailable,
       .every((state) => state.core.startsWith('rgb')
         && state.glyph.startsWith('rgb') && state.shell.startsWith('rgb'))),
     geometryMatchesAt32_56_96: sizeMatrix.every((sample) =>
-      Math.abs(sample.core - sample.requested) <= 0.5
+      Math.abs(sample.core - sample.requested * 0.9) <= 0.5
       && Math.abs(sample.shell / sample.core - 1.26875) < 0.03
       && sample.coreRadius === '50%'
       && Math.abs(sample.valueHeight / sample.core - 0.7875) < 0.015
@@ -364,7 +407,7 @@ const result = await page.evaluate(async ({ beforeUnavailable, afterUnavailable,
         && stateMatrix[theme][state].glyph === reference[theme][state].glyph
         && stateMatrix[theme][state].shell === reference[theme][state].shell
         && Math.abs(stateMatrix[theme][state].shellWidth
-          - Math.max(1, reference[theme][state].shellWidth * 56)) <= 0.5)),
+          - Math.max(1, Math.floor(reference[theme][state].shellWidth * 56 * 0.9))) <= 0.5)),
     referenceHoverMatches: lightHover.core === reference.light.hover.core
       && lightHover.glyph === reference.light.hover.glyph
       && lightHover.shell === reference.light.default.shell
@@ -379,6 +422,8 @@ const result = await page.evaluate(async ({ beforeUnavailable, afterUnavailable,
     sharedShellGeometry: !!shellRect && !!coreRect
       && Math.abs(shellRect.width / coreRect.width - 1.26875) < 0.03,
     iconCoreIsCircle: !!coreRect && radiusIsHalf(coreRadiusText, coreRect),
+    textCoreIsStadium: !!textCoreRect && textCoreRect.width > textCoreRect.height
+      && Math.abs(textCoreRadius - textCoreRect.height / 2) <= 0.5,
     valueBadgeIsPill: !!doubleValueRect
       && Math.abs(valueRadius - doubleValueRect.height / 2) <= 0.5,
     packageShadowColor: getComputedStyle(lightShell).boxShadow.includes('37, 40, 45'),
@@ -396,6 +441,11 @@ const result = await page.evaluate(async ({ beforeUnavailable, afterUnavailable,
       && selectedCoreDecoration.includes('240, 160, 12'),
     focusDecoratesCoreNotShell: focusVisibleMatched && focusShell === defaultShell
       && focusCoreDecoration.includes('12, 130, 240'),
+    acceptedActionFeedback,
+    feedbackLifecycleBounded,
+    reducedMotionUsesNoScale,
+    keyboardActionFeedback,
+    informationalActionHasNoFeedback,
     lightThemeCoreIsWhite: lightThemeCore === 'rgb(255, 255, 255)',
     darkThemeCoreIs252525: darkThemeClassProjected && darkThemeCore === 'rgb(37, 37, 37)',
     darkLockUsesWhiteGlyphAndDarkShell: darkLockGlyph === 'rgb(255, 255, 255)'

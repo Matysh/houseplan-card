@@ -35,6 +35,7 @@ import {
 import {
   bgModeOf, resolveDayCycle, dayCycleFingerprint, type DayCycleState,
 } from './sun';
+import { PointerModalityController } from './pointer-modality';
 import './space-editor';
 
 const fireEvent = (node: EventTarget, type: string, detail?: unknown) => {
@@ -101,6 +102,7 @@ class HouseplanSpaceCard extends LitElement {
   private _capturedSnapshotVirtual = '';
   private _activityRuntime = new Map<string, FiniteActivityRuntime>();
   private _reducedMotion = false;
+  private readonly _pointerModality = new PointerModalityController(this);
   private _motionMedia?: MediaQueryList;
   private _onMotionChange = (event: MediaQueryListEvent): void => {
     this._reducedMotion = event.matches;
@@ -187,7 +189,10 @@ class HouseplanSpaceCard extends LitElement {
   private _pageVisibility = (signal: PageVisibilitySignal): void => {
     this._continuity.visibility(signal);
     this._dayCycleVisibility(signal);
-    if (signal.kind === 'hidden') return;
+    if (signal.kind === 'hidden') {
+      this._pointerModality.suspend();
+      return;
+    }
     if (!signal.long) {
       const now = Date.now();
       let expired = false;
@@ -274,6 +279,7 @@ class HouseplanSpaceCard extends LitElement {
       this._continuityPaintToken = -1;
     }
     super.connectedCallback();
+    this._pointerModality.connect(this.ownerDocument.defaultView);
     this._motionMedia = window.matchMedia?.('(prefers-reduced-motion: reduce)');
     this._reducedMotion = !!this._motionMedia?.matches;
     this._motionMedia?.addEventListener?.('change', this._onMotionChange);
@@ -290,6 +296,7 @@ class HouseplanSpaceCard extends LitElement {
   }
 
   public disconnectedCallback(): void {
+    this._pointerModality.disconnect();
     this._continuityUnsub?.();
     this._continuityUnsub = undefined;
     this._motionMedia?.removeEventListener?.('change', this._onMotionChange);
@@ -806,7 +813,10 @@ class HouseplanSpaceCard extends LitElement {
         data-continuity-token=${this._continuity.token}
         data-frame-fingerprint=${this._continuity.frameFingerprint || nothing}
         data-device-snapshot-sequence=${deviceSnapshot?.sourceSequence ?? nothing}
-        data-recovery-reason=${recoveryReason || nothing}>
+        data-recovery-reason=${recoveryReason || nothing}
+        @pointerover=${(event: PointerEvent) => this._pointerModality.note(event)}
+        @pointerdown=${(event: PointerEvent) => this._pointerModality.note(event)}
+        @pointermove=${(event: PointerEvent) => this._pointerModality.note(event)}>
         ${title ? html`<div class="hp-static-title">${title}</div>` : nothing}
         <div class="hp-static-body">
           ${stage}
@@ -900,7 +910,7 @@ class HouseplanSpaceCard extends LitElement {
         font-weight: 600;
         cursor: pointer;
       }
-      .hp-static-btn:hover {
+      :host([data-pointer-hover]) .hp-static-btn:hover {
         filter: brightness(1.08);
       }
       .hp-static-error {

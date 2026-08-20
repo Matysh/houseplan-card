@@ -18,6 +18,7 @@ export class HpHelp extends LitElement {
   static properties = {
     text: { type: String },
     ariaLabel: { type: String, attribute: 'aria-label' },
+    pointerHover: { type: Boolean, attribute: 'data-pointer-hover', reflect: true },
     _open: { state: true },
     _forceFallback: { state: true },
   };
@@ -57,7 +58,7 @@ export class HpHelp extends LitElement {
       fill: currentColor;
     }
 
-    .trigger:hover,
+    :host([data-pointer-hover]) .trigger:hover,
     .trigger:focus-visible,
     .trigger[aria-expanded='true'] {
       color: var(--primary-text-color, #fff);
@@ -150,12 +151,14 @@ export class HpHelp extends LitElement {
 
   text = '';
   ariaLabel = '';
+  pointerHover = false;
 
   private _open = false;
   private _openTimer = 0;
   private _closeTimer = 0;
   private _positionRaf = 0;
   private _forceFallback = false;
+  private _hoverOwned = false;
   private _overlayDispose: (() => void) | null = null;
   private _scrollDialog: HpDialog | null = null;
   private readonly _descriptionId = `hp-help-description-${++helpSequence}`;
@@ -181,6 +184,12 @@ export class HpHelp extends LitElement {
   }
 
   protected updated(changed: PropertyValues): void {
+    if (changed.has('pointerHover') && !this.pointerHover) {
+      const win = this._window();
+      if (this._openTimer) win?.clearTimeout(this._openTimer);
+      this._openTimer = 0;
+      if (this._hoverOwned) this._closeHelp(false, 'outside');
+    }
     if (!this._hasContent() && this._open) {
       this._closeHelp();
       return;
@@ -217,12 +226,13 @@ export class HpHelp extends LitElement {
 
   private _scheduleOpen(): void {
     const win = this._window();
-    if (!win || this._open || this._openTimer) return;
+    if (!this.pointerHover || !win || this._open || this._openTimer) return;
     if (this._closeTimer) win.clearTimeout(this._closeTimer);
     this._closeTimer = 0;
     this._openTimer = win.setTimeout(() => {
       this._openTimer = 0;
       if (!this.isConnected) return;
+      this._hoverOwned = true;
       void this._openHelp();
     }, 300);
   }
@@ -242,7 +252,7 @@ export class HpHelp extends LitElement {
   }
 
   private _triggerPointerEnter(event: PointerEvent): void {
-    if (event.pointerType === 'mouse') this._scheduleOpen();
+    if (this.pointerHover && event.pointerType === 'mouse') this._scheduleOpen();
   }
 
   private _triggerPointerLeave(event: PointerEvent): void {
@@ -262,7 +272,10 @@ export class HpHelp extends LitElement {
   private _triggerFocus(): void {
     queueMicrotask(() => {
       const trigger = this.renderRoot.querySelector<HTMLButtonElement>('.trigger');
-      if (trigger?.matches(':focus-visible')) void this._openHelp();
+      if (trigger?.matches(':focus-visible')) {
+        this._hoverOwned = false;
+        void this._openHelp();
+      }
     });
   }
 
@@ -272,7 +285,10 @@ export class HpHelp extends LitElement {
 
   private _triggerClick(): void {
     if (this._open) this._closeHelp();
-    else void this._openHelp();
+    else {
+      this._hoverOwned = false;
+      void this._openHelp();
+    }
   }
 
   private _outsidePointerDown = (event: PointerEvent): void => {
@@ -381,6 +397,7 @@ export class HpHelp extends LitElement {
       }
     }
     this._open = false;
+    this._hoverOwned = false;
     this._unsubscribeOpenListeners();
     this._floating.destroy();
     if (refocus) {

@@ -572,6 +572,54 @@ export const MUTANTS = [
       replace: '    if (d.primary) this._openMoreInfo(d.primary);',
     }],
   },
+  {
+    id: 'device-visual-factor-removed',
+    guard: 'node --test --test-name-pattern="issue 212 applies one visual" '
+      + 'test/device-marker-polish-contract.test.mjs',
+    because: 'the owner-requested 10% correction must stay in the shared marker geometry '
+      + 'without changing stored icon_size or the interaction target',
+    patches: [{
+      file: 'src/styles.ts',
+      find: '      --device-visual-factor: 0.9;',
+      replace: '      --device-visual-factor: 1;',
+    }],
+  },
+  {
+    id: 'device-text-capsule-radius-restored',
+    guard: 'node --test --test-name-pattern="issue 212 Text value" '
+      + 'test/device-marker-polish-contract.test.mjs',
+    because: 'a wide Text core must keep a radius based on its height instead of reverting '
+      + 'to the elliptical 50% rule',
+    patches: [{
+      file: 'src/styles.ts',
+      find: '      border-radius: calc(var(--dev-size, var(--icon-size, 2.5cqw)) / 2);',
+      replace: '      border-radius: 50%;',
+    }],
+  },
+  {
+    id: 'device-press-duration-drifted',
+    guard: 'node --test --test-name-pattern="issue 212 feedback" '
+      + 'test/device-marker-polish-contract.test.mjs',
+    because: 'accepted device actions must retain the owner-specified bounded 200 ms feedback '
+      + 'instead of silently drifting with unrelated animation timings',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '      duration: 200,',
+      replace: '      duration: 350,',
+    }],
+  },
+  {
+    id: 'device-touch-hover-gate-removed',
+    guard: 'node --test --test-name-pattern="issue 212 removes the global touch latch" '
+      + 'test/device-marker-polish-contract.test.mjs',
+    because: 'touch must not leave a browser-matched device hover painted after the JS tooltip '
+      + 'has already been cleared',
+    patches: [{
+      file: 'src/styles.ts',
+      find: '    :host([data-pointer-hover]) .dev:not(.unavail):hover {',
+      replace: '    .dev:not(.unavail):hover {',
+    }],
+  },
 ];
 
 // --- механика ---------------------------------------------------------------

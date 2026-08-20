@@ -47,6 +47,14 @@ const res = await page.evaluate(async () => {
     return help?.shadowRoot?.querySelector('.tooltip')
       || root().querySelector('hp-dialog')?.shadowRoot?.querySelector('[data-hp-overlay="help"]')?.shadowRoot?.querySelector('.tooltip');
   };
+  const enterWithRealMouse = (target) => {
+    target?.dispatchEvent(new PointerEvent('pointerover', {
+      pointerType: 'mouse', bubbles: true, composed: true,
+    }));
+    target?.dispatchEvent(new PointerEvent('pointerenter', {
+      pointerType: 'mouse', bubbles: false, composed: true,
+    }));
+  };
 
   // Empty or incomplete content must not leave a dead focus target behind.
   const incompleteHelp = document.createElement('hp-help');
@@ -103,7 +111,7 @@ const res = await page.evaluate(async () => {
     && !roleButton.hasAttribute('aria-describedby');
 
   const beforeHoverGeometry = scrollGeometry();
-  roleButton?.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse', bubbles: true, composed: true }));
+  enterWithRealMouse(roleButton);
   await wait(330);
   out.mouseHover = roleButton?.getAttribute('aria-expanded') === 'true'
     && roleButton.getAttribute('aria-describedby') === roleDescription?.id
@@ -118,7 +126,7 @@ const res = await page.evaluate(async () => {
   // away from the form control the user was editing.
   const nameInput = root().querySelector('hp-dialog .namein');
   nameInput?.focus();
-  roleButton?.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse', bubbles: true, composed: true }));
+  enterWithRealMouse(roleButton);
   await wait(330);
   nameInput?.dispatchEvent(new KeyboardEvent('keydown', {
     key: 'Escape', bubbles: true, composed: true, cancelable: true,

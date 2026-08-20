@@ -192,6 +192,7 @@ import {
   visualFrameFingerprint,
   type PageVisibilitySignal,
 } from './visual-continuity';
+import { PointerModalityController } from './pointer-modality';
 import {
   entityVisualSample, entityVisualSamplesForDevice,
   type DeviceActivity, type DeviceVisualState, type EntityVisualSample,
@@ -729,6 +730,12 @@ class HouseplanCard extends LitElement {
   /** Room whose physical perimeter is highlighted in View. The explicit
    *  overlay is needed because thick wall bodies paint above room shapes. */
   private _hoverRoom: { space: string; room: RoomCfg } | null = null;
+  private readonly _pointerModality = new PointerModalityController(
+    this,
+    () => this._syncPointerHoverTargets(),
+  );
+  private _pointerHoverObserver?: MutationObserver;
+  private _devicePressAnimations = new Map<string, Animation>();
   private _selId: string | null = null;
   private _toast = '';
   private _toastTimer?: number;
@@ -860,6 +867,7 @@ class HouseplanCard extends LitElement {
   private _motionMedia?: MediaQueryList;
   private _onMotionChange = (event: MediaQueryListEvent): void => {
     this._reducedMotion = event.matches;
+    this._cancelDevicePressFeedback();
     // A preference change to reduced motion is authoritative immediately: do
     // not leave a 220 ms camera/chrome tween running until its old deadline.
     if (event.matches && this._modeTransitionPreparing) {
@@ -1181,6 +1189,10 @@ class HouseplanCard extends LitElement {
 
   private _commitSpace(id: string, authority = false): boolean {
     if (!this._canCommitSpace(id, authority)) return false;
+    if (id !== this._space) {
+      this._clearTransientHover(true);
+      this._cancelDevicePressFeedback();
+    }
     this._space = id;
     return true;
   }
@@ -1755,6 +1767,8 @@ class HouseplanCard extends LitElement {
     this._continuity.visibility(signal);
     this._dayCycleVisibility(signal);
     if (signal.kind === 'hidden') {
+      this._clearTransientHover(true);
+      this._cancelDevicePressFeedback();
       if (this._modeTransitionPreparing) {
         // There is no measured controller endpoint to commit yet. Keep the
         // already queued measurement but force its synchronous atomic path;
@@ -1994,6 +2008,16 @@ class HouseplanCard extends LitElement {
     this._continuityUnsub?.();
     this._continuityUnsub = subscribePageVisibility(this.ownerDocument, this._pageVisibility);
     super.connectedCallback();
+    this._pointerModality.connect(this.ownerDocument.defaultView);
+    const PointerHoverObserver = this.ownerDocument.defaultView?.MutationObserver;
+    if (PointerHoverObserver) {
+      this._pointerHoverObserver = new PointerHoverObserver((records) => {
+        for (const record of records) {
+          for (const node of record.addedNodes) this._syncPointerHoverSubtree(node);
+        }
+      });
+      this._pointerHoverObserver.observe(this.renderRoot, { childList: true, subtree: true });
+    }
     this._motionMedia = window.matchMedia?.('(prefers-reduced-motion: reduce)');
     this._reducedMotion = !!this._motionMedia?.matches;
     this._motionMedia?.addEventListener?.('change', this._onMotionChange);
@@ -2164,6 +2188,11 @@ class HouseplanCard extends LitElement {
     this._touchContacts.clear();
     this._touchSequenceMultitouch = false;
     this._touchClickBlockUntil = 0;
+    this._clearTransientHover(true);
+    this._cancelDevicePressFeedback();
+    this._pointerHoverObserver?.disconnect();
+    this._pointerHoverObserver = undefined;
+    this._pointerModality.disconnect();
     this._editorSecondary.reset();
     // R1: the rAF is the only normal owner that clears this flag. Reset only
     // after the disconnect snapshot (which must still skip unstable geometry),
@@ -3388,6 +3417,7 @@ class HouseplanCard extends LitElement {
   }
 
   protected updated(): void {
+    this._pruneDevicePressFeedback();
     this._syncDayCycleClock();
     this._warmSnapshot(); // DEV-B703-03: the memo follows what is on screen
     this._dtMeasure();    // the selected label's frame follows the glyphs
@@ -4639,6 +4669,7 @@ class HouseplanCard extends LitElement {
         const operation = toggleOperation(intent);
         if (!operation) return;
         if (operation.kind === 'virtual-light') {
+          this._startDevicePressFeedback(actionDevice.id);
           this.hass.callWS({
             type: 'houseplan/virtual_light/toggle',
             marker_id: operation.markerId,
@@ -4655,6 +4686,7 @@ class HouseplanCard extends LitElement {
           return;
         }
         const { command } = operation;
+        this._startDevicePressFeedback(actionDevice.id);
         this.hass.callService(command.domain, command.service, command.data)
           .catch((e: any) => this._showToast(this._t('toast.error', { err: this._errText(e) })));
       };
@@ -4704,6 +4736,7 @@ class HouseplanCard extends LitElement {
       const name = st.attributes?.friendly_name || target;
       guarded(this._t('confirm.tap_run', { name }), () => {
         if (!this._deviceBindingActive(actionDevice) || !this._planEntityAvailable(target)) return;
+        this._startDevicePressFeedback(actionDevice.id);
         this.hass
           .callService(svc.domain, svc.service, { entity_id: target })
           .then(() => {
@@ -4729,6 +4762,65 @@ class HouseplanCard extends LitElement {
     if (this._mode !== 'view' && this._mode !== 'devices') return;
     ev.preventDefault();
     this._clickDevice(ev, d);
+  }
+
+  /** One retargetable visual acknowledgement owned by actual action dispatch. */
+  private _startDevicePressFeedback(markerId: string): void {
+    const marker = [...this.renderRoot.querySelectorAll<HTMLElement>('.dev[data-id]')]
+      .find((candidate) => candidate.dataset.id === markerId);
+    const body = marker?.querySelector<HTMLElement>('.device-shell');
+    if (!body || typeof body.animate !== 'function') return;
+    const paintedScale = Number.parseFloat(
+      this.ownerDocument.defaultView?.getComputedStyle(body).scale || '',
+    );
+    const restartScale = Number.isFinite(paintedScale)
+      ? Math.max(0.95, Math.min(1, paintedScale))
+      : 1;
+    this._devicePressAnimations.get(markerId)?.cancel();
+    const frames: Keyframe[] = this._reducedMotion
+      ? [
+          { outlineColor: 'transparent', outlineStyle: 'solid', outlineWidth: '0px' },
+          {
+            outlineColor: 'var(--hp-accent, #3ea6ff)', outlineStyle: 'solid',
+            outlineWidth: '2px', outlineOffset: '2px', offset: 0.5,
+          },
+          { outlineColor: 'transparent', outlineStyle: 'solid', outlineWidth: '0px' },
+        ]
+      : [
+          { scale: String(restartScale) },
+          { scale: '0.95', offset: 0.5 },
+          { scale: '1' },
+        ];
+    const animation = body.animate(frames, {
+      duration: 200,
+      easing: 'cubic-bezier(.22,.61,.36,1)',
+    });
+    this._devicePressAnimations.set(markerId, animation);
+    const clear = (): void => {
+      if (this._devicePressAnimations.get(markerId) === animation) {
+        this._devicePressAnimations.delete(markerId);
+      }
+    };
+    animation.addEventListener('finish', clear, { once: true });
+    animation.addEventListener('cancel', clear, { once: true });
+  }
+
+  private _cancelDevicePressFeedback(): void {
+    for (const animation of this._devicePressAnimations.values()) animation.cancel();
+    this._devicePressAnimations.clear();
+  }
+
+  private _pruneDevicePressFeedback(): void {
+    if (!this._devicePressAnimations.size) return;
+    const visible = new Set(
+      [...this.renderRoot.querySelectorAll<HTMLElement>('.dev[data-id]')]
+        .map((marker) => marker.dataset.id || ''),
+    );
+    for (const [markerId, animation] of this._devicePressAnimations) {
+      if (visible.has(markerId)) continue;
+      animation.cancel();
+      this._devicePressAnimations.delete(markerId);
+    }
   }
 
   /** Translate a key in the card's current language. */
@@ -5753,31 +5845,45 @@ class HouseplanCard extends LitElement {
     }, 3500);
   }
 
-  /**
-   * Touch-first surface: no hover tooltips.
-   *
-   * The media query alone was not enough (field report, 2026-07-27: tooltips
-   * still stuck on a OnePlus). Some devices/skins report `hover: hover`, and a
-   * stylus or a paired mouse flips it too. So this also latches on the FIRST
-   * touch pointer event and never unlatches for that session — a device that
-   * has been touched once is a touch device.
-   */
-  private static _touchSeen = false;
-  private static readonly _noHoverMq =
-    typeof window !== 'undefined' &&
-    typeof window.matchMedia === 'function' &&
-    window.matchMedia('(hover: none)').matches;
-
-  private get _noHover(): boolean {
-    return HouseplanCard._noHoverMq || HouseplanCard._touchSeen;
+  /** Publish the instance-local input authority to nested shared controls. */
+  private _syncPointerHoverTargets(): void {
+    const enabled = this._pointerModality.hoverEnabled;
+    for (const target of this.renderRoot.querySelectorAll<HTMLElement>(
+      'hp-dialog, hp-help, hp-color-opacity',
+    )) {
+      target.toggleAttribute('data-pointer-hover', enabled);
+    }
   }
 
-  /** Any touch anywhere marks the session as touch-first and kills open tips. */
+  private _syncPointerHoverSubtree(node: Node): void {
+    if (node.nodeType !== Node.ELEMENT_NODE) return;
+    const element = node as HTMLElement;
+    const enabled = this._pointerModality.hoverEnabled;
+    if (element.matches('hp-dialog, hp-help, hp-color-opacity')) {
+      element.toggleAttribute('data-pointer-hover', enabled);
+    }
+    for (const target of element.querySelectorAll<HTMLElement>(
+      'hp-dialog, hp-help, hp-color-opacity',
+    )) {
+      target.toggleAttribute('data-pointer-hover', enabled);
+    }
+  }
+
+  /** Remove visual state that can only be owned by a live mouse hover. */
+  private _clearTransientHover(suspend = false): void {
+    if (suspend) this._pointerModality.suspend();
+    if (this._tip) this._tip = null;
+    if (this._hoverRoom) this._hoverRoom = null;
+  }
+
+  /** The latest real pointer event, not a page-global first-touch latch, owns hover. */
   private _notePointer(ev: PointerEvent): void {
     this._boundaryPointerType = ev.pointerType || 'mouse';
-    if (ev.pointerType === 'touch' || ev.pointerType === 'pen') {
-      HouseplanCard._touchSeen = true;
-      if (this._tip) this._tip = null;
+    const previous = this._pointerModality.modality;
+    const modality = this._pointerModality.note(ev);
+    if ((modality === 'touch' || modality === 'pen')
+        && (previous !== modality || !!this._tip || !!this._hoverRoom)) {
+      this._clearTransientHover();
     }
   }
 
@@ -5800,8 +5906,8 @@ class HouseplanCard extends LitElement {
       return;
     }
     const pointer = ev as PointerEvent;
-    if (pointer.pointerType !== 'touch') return;
     this._notePointer(pointer);
+    if (pointer.pointerType !== 'touch') return;
     if (ev.type === 'pointerdown') {
       this._touchContacts.set(pointer.pointerId, {
         x: pointer.clientX,
@@ -5809,6 +5915,7 @@ class HouseplanCard extends LitElement {
         inStage: !!(pointer.target as Element | null)?.closest?.('.stage'),
       });
       if (this._touchContacts.size >= 2) {
+        this._clearTransientHover();
         this._touchSequenceMultitouch = true;
         this._touchClickBlockUntil = Number.POSITIVE_INFINITY;
         clearTimeout(this._holdTimer);
@@ -5855,7 +5962,9 @@ class HouseplanCard extends LitElement {
       }
       return;
     }
-    if (ev.type !== 'pointerup' && ev.type !== 'pointercancel') return;
+    if (ev.type !== 'pointerup' && ev.type !== 'pointercancel'
+        && ev.type !== 'lostpointercapture') return;
+    this._clearTransientHover();
     this._touchContacts.delete(pointer.pointerId);
     if (this._touchSequenceMultitouch) {
       this._touchClickBlockUntil = Date.now() + 500;
@@ -5875,14 +5984,15 @@ class HouseplanCard extends LitElement {
   }
 
   private _showTip(
-    ev: MouseEvent,
+    ev: PointerEvent,
     title: string,
     meta: string,
     lqi?: number | null,
     temp?: number | null,
     hum?: number | null,
   ): void {
-    if (this._noHover) return;
+    this._notePointer(ev);
+    if (!this._pointerModality.hoverEnabled) return;
     if (this._drag) return;
     this._tip = { x: ev.clientX, y: ev.clientY, title, meta, lqi, temp, hum };
   }
@@ -6058,6 +6168,8 @@ class HouseplanCard extends LitElement {
     }
     if (this._wallFaceBatch) this._roomDialogCancel();
     if (this._mode === 'plan' && this._tool === 'draw' && !this._finishWallChain()) return;
+    this._clearTransientHover(true);
+    this._cancelDevicePressFeedback();
     const previousMode = this._mode;
     const previousProjection = this._effectiveProjection();
     const capturedVisual = this._currentModeVisual(previousMode);
@@ -15585,10 +15697,12 @@ class HouseplanCard extends LitElement {
         data-ha-registry-access=${diagnostics.registry.access}
         data-ha-disabled-bindings=${diagnostics.bindings.ha_disabled}
         data-ha-unverified-bindings=${diagnostics.bindings.unverified}
+        @pointerover=${(event: PointerEvent) => this._notePointer(event)}
         @pointerdown=${this._touchGestureGuard}
         @pointermove=${this._touchGestureGuard}
         @pointerup=${this._touchGestureGuard}
         @pointercancel=${this._touchGestureGuard}
+        @lostpointercapture=${this._touchGestureGuard}
         @click=${this._touchGestureGuard}>
         <div class="hdr ${this._kiosk ? 'kioskhide' : ''}">
         <div class="head">
@@ -15789,7 +15903,7 @@ class HouseplanCard extends LitElement {
                 style = st.join(';');
               }
               let areaText: string | null | undefined;
-              const tip = (e: MouseEvent) => {
+              const tip = (e: PointerEvent) => {
                 if (this._mode !== 'view') return;
                 if (areaText === undefined) areaText = this._roomArea(r);
                 this._showTip(
@@ -15834,34 +15948,59 @@ class HouseplanCard extends LitElement {
                 ? svg`<path class="${cls}" style="${style}" fill-rule="evenodd"
                     data-hp="room" data-id=${hpId} data-area=${hpArea}
                     d="${[obstaclePath, ...holes.map(pathD)].join(' ')}"
-                    @mouseenter=${() => (this._hoverRoom = { space: space.id, room: r })}
-                    @mousemove=${tip}
-                    @mouseleave=${() => { this._tip = null; this._hoverRoom = null; }}></path>`
+                    @pointerenter=${(event: PointerEvent) => {
+                      this._notePointer(event);
+                      if (this._pointerModality.hoverEnabled) {
+                        this._hoverRoom = { space: space.id, room: r };
+                      }
+                    }}
+                    @pointermove=${tip}
+                    @pointerleave=${() => this._clearTransientHover()}></path>`
                 : holes.length && fillPoly
                 ? svg`<path class="${cls}" style="${style}" fill-rule="evenodd"
                     data-hp="room" data-id=${hpId} data-area=${hpArea}
                     d="${[fillPoly, ...holes].map(pathD).join(' ')}"
-                    @mouseenter=${() => (this._hoverRoom = { space: space.id, room: r })}
-                    @mousemove=${tip}
-                    @mouseleave=${() => { this._tip = null; this._hoverRoom = null; }}></path>`
+                    @pointerenter=${(event: PointerEvent) => {
+                      this._notePointer(event);
+                      if (this._pointerModality.hoverEnabled) {
+                        this._hoverRoom = { space: space.id, room: r };
+                      }
+                    }}
+                    @pointermove=${tip}
+                    @pointerleave=${() => this._clearTransientHover()}></path>`
                  : fillPoly && fillPoly !== myPoly
                  ? svg`<polygon class="${cls}" style="${style}" points="${fillPoly.map((p) => p.join(',')).join(' ')}"
                      data-hp="room" data-id=${hpId} data-area=${hpArea}
-                    @mouseenter=${() => (this._hoverRoom = { space: space.id, room: r })}
-                    @mousemove=${tip}
-                    @mouseleave=${() => { this._tip = null; this._hoverRoom = null; }}></polygon>`
+                    @pointerenter=${(event: PointerEvent) => {
+                      this._notePointer(event);
+                      if (this._pointerModality.hoverEnabled) {
+                        this._hoverRoom = { space: space.id, room: r };
+                      }
+                    }}
+                    @pointermove=${tip}
+                    @pointerleave=${() => this._clearTransientHover()}></polygon>`
                  : r.poly
                  ? svg`<polygon class="${cls}" style="${style}" points="${r.poly.map((p) => p.join(',')).join(' ')}"
                      data-hp="room" data-id=${hpId} data-area=${hpArea}
-                    @mouseenter=${() => (this._hoverRoom = { space: space.id, room: r })}
-                    @mousemove=${tip}
-                    @mouseleave=${() => { this._tip = null; this._hoverRoom = null; }}></polygon>`
+                    @pointerenter=${(event: PointerEvent) => {
+                      this._notePointer(event);
+                      if (this._pointerModality.hoverEnabled) {
+                        this._hoverRoom = { space: space.id, room: r };
+                      }
+                    }}
+                    @pointermove=${tip}
+                    @pointerleave=${() => this._clearTransientHover()}></polygon>`
                  : svg`<rect class="${cls}" style="${style}"
                      data-hp="room" data-id=${hpId} data-area=${hpArea}
                      x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" rx="${Math.min(r.w!, r.h!) * 0.03}"
-                    @mouseenter=${() => (this._hoverRoom = { space: space.id, room: r })}
-                    @mousemove=${tip}
-                    @mouseleave=${() => { this._tip = null; this._hoverRoom = null; }}></rect>`;
+                    @pointerenter=${(event: PointerEvent) => {
+                      this._notePointer(event);
+                      if (this._pointerModality.hoverEnabled) {
+                        this._hoverRoom = { space: space.id, room: r };
+                      }
+                    }}
+                    @pointermove=${tip}
+                    @pointerleave=${() => this._clearTransientHover()}></rect>`;
               const trimmed = edgeCuts.length && myPoly
                 ? outlineWithout(myPoly, edgeCuts, this._gridPitch * 0.02)
                 : null;
@@ -16911,11 +17050,14 @@ class HouseplanCard extends LitElement {
       @click=${(e: MouseEvent) => this._clickDevice(e, d)}
       @keydown=${(e: KeyboardEvent) => this._keyDevice(e, d)}
       @contextmenu=${(e: MouseEvent) => this._ctxDevice(e, d)}
-      @mousemove=${(e: MouseEvent) =>
+      @pointerover=${(e: PointerEvent) =>
         this._showTip(e, d.name, presentation.haDisabled ? ghostLabel : metrics)}
-      @mouseleave=${() => (this._tip = null)}
+      @pointerleave=${() => this._clearTransientHover()}
       @pointerdown=${(e: PointerEvent) => this._pointerDown(e, d)}
-      @pointermove=${(e: PointerEvent) => this._pointerMove(e, d)}
+      @pointermove=${(e: PointerEvent) => {
+        this._pointerMove(e, d);
+        this._showTip(e, d.name, presentation.haDisabled ? ghostLabel : metrics);
+      }}
       @pointerup=${(e: PointerEvent) => this._pointerUp(e, d)}
       @pointercancel=${(e: PointerEvent) => this._pointerUp(e, d)}
     >

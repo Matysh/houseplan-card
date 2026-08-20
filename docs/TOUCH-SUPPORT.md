@@ -40,6 +40,17 @@ On phones, tablets, wall panels and HA Companion apps, the ordinary View must:
 A touch-only failure in View is a product defect, not an accepted limitation of
 the editor policy.
 
+## Pointer modality and hover ownership
+
+Hover is instance-local and follows the latest real pointer input. It is
+enabled only after a mouse event when the browser also reports fine,
+hover-capable hardware. Touch and pen input immediately clear transient room
+and device hover, including tooltips; browser-generated compatibility mouse
+events must not restore it. A later real mouse move on a hybrid device restores
+desktop hover without a reload. Space/mode changes, page hiding and remounts
+also discard transient hover. Keyboard focus and explicit click/tap surfaces
+remain independent of this visual hover gate.
+
 ## What “best-effort editors” means
 
 On a coarse-pointer or no-hover device, an editor operation may:

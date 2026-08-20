@@ -10,6 +10,7 @@ export const cardStyles = css`
       --hp-accent: var(--primary-color, #3ea6ff);
       --hp-on: #ffd45c;
       --hp-open: #ff9f43;
+      --device-visual-factor: 0.9;
       /* design tokens (UI chrome only). The icon/plan scale math stays on
          --icon-size/--dev-size cqw units and never uses these. */
       /* spacing scale, fact-based; stray 3/5/7/9/13/14px values are unified
@@ -126,7 +127,7 @@ export const cardStyles = css`
       transition: 0.15s;
       font-family: inherit;
     }
-    .tab:hover {
+    :host([data-pointer-hover]) .tab:hover {
       color: var(--hp-txt);
     }
     .tab.active {
@@ -157,7 +158,7 @@ export const cardStyles = css`
     .btn ha-icon {
       --mdc-icon-size: 17px;
     }
-    .btn:hover {
+    :host([data-pointer-hover]) .btn:hover {
       border-color: var(--hp-accent);
     }
     .btn.on {
@@ -639,7 +640,7 @@ export const cardStyles = css`
       stroke: transparent;
       stroke-width: 2;
     }
-    .stage.mode-view .room.overlay:not(.styled):hover {
+    :host([data-pointer-hover]) .stage.mode-view .room.overlay:not(.styled):hover {
       stroke: var(--hp-accent);
       stroke-opacity: 1;
     }
@@ -648,7 +649,7 @@ export const cardStyles = css`
       stroke: #4b8c5a;
       stroke-width: 2;
     }
-    .stage.mode-view .room.yard:not(.styled):hover {
+    :host([data-pointer-hover]) .stage.mode-view .room.yard:not(.styled):hover {
       stroke: var(--hp-accent);
       stroke-opacity: 1;
     }
@@ -696,7 +697,7 @@ export const cardStyles = css`
     /* The explicit late room-hover layer owns the wash and halo. Keeping CSS
        filters off room paths prevents Chromium from recompositing the sibling
        screen-blended Glow layer for one bright frame on every hover. */
-    .stage.mode-view .room.styled:hover {
+    :host([data-pointer-hover]) .stage.mode-view .room.styled:hover {
       stroke: var(--hp-accent);
       stroke-opacity: 1;
     }
@@ -717,7 +718,7 @@ export const cardStyles = css`
       transition: opacity 0.15s;
       pointer-events: none;
     }
-    .stage.markup g.opening:hover .op-outline {
+    :host([data-pointer-hover]) .stage.markup g.opening:hover .op-outline {
       opacity: 0.9;
     }
     /* openings are pure status graphics outside Plan mode: no cursor, no hover,
@@ -958,7 +959,7 @@ export const cardStyles = css`
       z-index: 2;
     }
     .rlgearbtn { transition: opacity 0.15s, filter 0.15s; }
-    .rlgearbtn:hover { opacity: 1; filter: brightness(1.18); }
+    :host([data-pointer-hover]) .rlgearbtn:hover { opacity: 1; filter: brightness(1.18); }
     .rlgearbtn ha-icon { --mdc-icon-size: calc(var(--gear-h) * 0.55); display: inline-flex; }
     .rlgear {
       --mdc-icon-size: 0.9em;
@@ -968,7 +969,7 @@ export const cardStyles = css`
       cursor: pointer;
       pointer-events: auto;
     }
-    .rlgear:hover { opacity: 1; }
+    :host([data-pointer-hover]) .rlgear:hover { opacity: 1; }
     .rlgo {
       --mdc-icon-size: 0.85em;
       display: inline-flex;
@@ -978,7 +979,7 @@ export const cardStyles = css`
       pointer-events: auto;
       cursor: pointer;
     }
-    .stage.mode-view .rlgo:hover { opacity: 1; }
+    :host([data-pointer-hover]) .stage.mode-view .rlgo:hover { opacity: 1; }
     .roomlabel .rlmetrics {
       position: absolute; /* below the name, outside the centring math */
       top: calc(100% + 0.15em);
@@ -1049,7 +1050,9 @@ export const cardStyles = css`
       border: 0; background: transparent; color: var(--hp-txt);
       padding: var(--sp-3) var(--sp-4); border-radius: var(--rad-s); cursor: pointer; font-family: inherit; font-size: var(--fs-m);
     }
-    .ctrlopt:hover { background: var(--secondary-background-color, rgba(128,128,128,0.15)); }
+    :host([data-pointer-hover]) .ctrlopt:hover {
+      background: var(--secondary-background-color, rgba(128,128,128,0.15));
+    }
     .ctrlopt .sub { color: var(--hp-muted); font-size: var(--fs-s); margin-left: auto; }
     .ctrlopt ha-icon { --mdc-icon-size: 16px; }
     .ctrlstates { display: flex; flex-direction: column; gap: var(--sp-2); }
@@ -1099,7 +1102,7 @@ export const cardStyles = css`
     .rlhandle.br { right: -6px; bottom: -6px; cursor: nwse-resize; }
     .rlhandle.tr { right: -6px; top: -6px; cursor: nesw-resize; }
     .rlhandle.bl { left: -6px; bottom: -6px; cursor: nesw-resize; }
-    .stage.markup .roomlabel:hover .rlhandle { display: block; }
+    :host([data-pointer-hover]) .stage.markup .roomlabel:hover .rlhandle { display: block; }
     .stage.markup .roomlabel { pointer-events: auto; }
     .roomlabel:active { cursor: grabbing; }
     .measurelayer {
@@ -1269,7 +1272,10 @@ export const cardStyles = css`
       vector-effect: non-scaling-stroke;
       pointer-events: none;
     }
-    .bdframe .bdhandle:hover + .bdknob { fill: #fff; stroke: var(--hp-accent); }
+    :host([data-pointer-hover]) .bdframe .bdhandle:hover + .bdknob {
+      fill: #fff;
+      stroke: var(--hp-accent);
+    }
     .bdframe .bd-nwse { cursor: nwse-resize; }
     .bdframe .bd-nesw { cursor: nesw-resize; }
     /* the picture itself is the drag target for a move (grab, then grabbing) */
@@ -1316,7 +1322,10 @@ export const cardStyles = css`
       vector-effect: non-scaling-stroke;
       pointer-events: none;
     }
-    .dtframe .dthandle:hover + .dtknob { fill: #fff; stroke: var(--hp-accent); }
+    :host([data-pointer-hover]) .dtframe .dthandle:hover + .dtknob {
+      fill: #fff;
+      stroke: var(--hp-accent);
+    }
     .dtframe .dt-nwse { cursor: nwse-resize; }
     .dtframe .dt-nesw { cursor: nesw-resize; }
     .dtframe .dtrot { cursor: grab; }
@@ -1637,7 +1646,7 @@ export const cardStyles = css`
       cursor: pointer;
       border-radius: var(--rad-s);
     }
-    .modetab .closex:hover { opacity: 1; }
+    :host([data-pointer-hover]) .modetab .closex:hover { opacity: 1; }
     .editbar .barclose {
       box-sizing: border-box;
       width: 40px;
@@ -1813,6 +1822,7 @@ export const cardStyles = css`
       width: max-content;
       min-width: var(--dev-size, var(--icon-size, 2.5cqw));
       padding-inline: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.16);
+      border-radius: calc(var(--dev-size, var(--icon-size, 2.5cqw)) / 2);
     }
     .dev .valtext {
       overflow: visible;
@@ -1872,7 +1882,9 @@ export const cardStyles = css`
     .dev {
       position: absolute;
       /* per-device multiplier on top of the card-wide icon size */
-      --dev-size: calc(var(--icon-size, 2.5cqw) * var(--dev-scale, 1));
+      --dev-size: calc(
+        var(--icon-size, 2.5cqw) * var(--dev-scale, 1) * var(--device-visual-factor, 0.9)
+      );
       /* 101.5/80 is the package shell/core ratio, including its stroke. */
       --device-shell-size: calc(var(--dev-size) * 1.26875);
       --device-shell-stroke-ratio: 0.01875;
@@ -2072,14 +2084,14 @@ export const cardStyles = css`
     }
     /* Interaction wins ordinary state colours. Alarm keeps priority through
        the more-specific rule below. Unavailable has no visual hover. */
-    .dev:not(.unavail):hover {
+    :host([data-pointer-hover]) .dev:not(.unavail):hover {
       --device-face-bg: #0C82F0;
       --device-face-fg: light-dark(#fff, #252525);
       --device-shell-stroke: var(--device-shell-base-stroke);
     }
-    .dev.theme-light:not(.unavail):hover { --device-face-fg: #fff; }
-    .dev.theme-dark:not(.unavail):hover { --device-face-fg: #252525; }
-    .dev:hover,
+    :host([data-pointer-hover]) .dev.theme-light:not(.unavail):hover { --device-face-fg: #fff; }
+    :host([data-pointer-hover]) .dev.theme-dark:not(.unavail):hover { --device-face-fg: #252525; }
+    :host([data-pointer-hover]) .dev:hover,
     .dev:focus-visible { z-index: 5; }
     .dev.unavail {
       opacity: 0.35;
@@ -2220,7 +2232,7 @@ export const cardStyles = css`
     }
     /* Alert stays above focus, selection, hover and ordinary semantic paint. */
     .dev.alarm,
-    .dev.alarm:hover,
+    :host([data-pointer-hover]) .dev.alarm:hover,
     .dev.alarm:focus-visible {
       --device-face-bg: #F0410C;
       --device-face-fg: light-dark(#fff, #252525);
@@ -2304,7 +2316,7 @@ export const cardStyles = css`
       margin-left: var(--sp-3);
       opacity: 0.4;
     }
-    .tab:hover .tabedit {
+    :host([data-pointer-hover]) .tab:hover .tabedit {
       opacity: 0.9;
     }
     .tab.tabadd {
@@ -2553,7 +2565,9 @@ export const cardStyles = css`
       position: absolute;
       /* the base badge, but round and 20% smaller — the owner's wording:
          «иконка похожа на иконку базы, только круглая и чуть меньше» */
-      --puck-size: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.8);
+      --puck-size: calc(
+        var(--icon-size, 2.5cqw) * var(--device-visual-factor, 0.9) * 0.8
+      );
       width: var(--puck-size);
       height: var(--puck-size);
       border-radius: 50%;
@@ -2702,7 +2716,7 @@ export const cardStyles = css`
     }
     .rszhalo { stroke: var(--hp-bg); stroke-width: 6; }
     .rszink { stroke: var(--hp-accent); stroke-width: 2; }
-    .rszhandle:hover + .rszicon .rszink { stroke-width: 3; }
+    :host([data-pointer-hover]) .rszhandle:hover + .rszicon .rszink { stroke-width: 3; }
     /* corner (scale-frame) handles: hit circle invisible, .rszknob is the bead */
     .rszcorner {
       fill: transparent;
@@ -2716,7 +2730,7 @@ export const cardStyles = css`
       vector-effect: non-scaling-stroke;
       pointer-events: none;
     }
-    .rszcorner:hover + .rszknob { fill: var(--hp-accent); }
+    :host([data-pointer-hover]) .rszcorner:hover + .rszknob { fill: var(--hp-accent); }
     .rszcorner:active { cursor: nwse-resize; }
     .rszframe {
       fill: none;
@@ -2793,7 +2807,7 @@ export const cardStyles = css`
       text-align: center;
       cursor: pointer;
     }
-    .furnitem:hover { background: rgba(127, 127, 127, 0.18); }
+    :host([data-pointer-hover]) .furnitem:hover { background: rgba(127, 127, 127, 0.18); }
     .furnitem.on {
       border-color: var(--hp-accent);
       background: rgba(38, 166, 154, 0.18);
@@ -2874,7 +2888,7 @@ export const cardStyles = css`
       border-radius: var(--rad-s);
       font-size: var(--fs-m);
     }
-    .cand:hover {
+    :host([data-pointer-hover]) .cand:hover {
       background: rgba(127, 127, 127, 0.15);
     }
     .cand.sel {
@@ -2922,7 +2936,7 @@ export const cardStyles = css`
       cursor: pointer;
       color: var(--hp-muted);
     }
-    .pdftag .x:hover {
+    :host([data-pointer-hover]) .pdftag .x:hover {
       color: #ff7a5c;
     }
     .entlist {
@@ -3059,8 +3073,8 @@ export const cardStyles = css`
       color: var(--hp-muted);
       cursor: pointer;
     }
-    .rrow .ract:hover { color: var(--hp-txt); }
-    .rrow .ract.del:hover { color: #ff7a5c; }
+    :host([data-pointer-hover]) .rrow .ract:hover { color: var(--hp-txt); }
+    :host([data-pointer-hover]) .rrow .ract.del:hover { color: #ff7a5c; }
 
     .gsrow .gsl {
       min-width: 150px;
@@ -3144,7 +3158,7 @@ export const cardStyles = css`
       font-size: var(--fs-m);
       padding: var(--sp-1) 0;
     }
-    .aboutlink:hover { text-decoration: underline; }
+    :host([data-pointer-hover]) .aboutlink:hover { text-decoration: underline; }
     .aboutlink ha-icon { --mdc-icon-size: 18px; line-height: 1; }
     hp-dialog .body {
       padding: var(--sp-5) var(--sp-6);
@@ -3419,7 +3433,7 @@ export const cardStyles = css`
       --mdc-icon-size: 16px;
       color: var(--hp-muted);
     }
-    .menu .it:hover {
+    :host([data-pointer-hover]) .menu .it:hover {
       background: rgba(127, 127, 127, 0.15);
     }
     .menu .it.all {

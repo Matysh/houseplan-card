@@ -61,6 +61,26 @@
       sizes 32/56/96 and colored backgrounds. Full smoke/golden/performance
       remains a Linux release gate.
 
+## Device marker polish and pointer modality (#212)
+
+- [ ] Shared icon geometry applies one 0.9 visual factor after card/per-marker
+      sizing, keeps the saved centre and 44×44 hit floor unchanged, and gives
+      wide Text cores a radius equal to half their height
+      [unit: `device-marker-polish-contract.test.mjs`; auto:
+      `smoke_device_icon_design.mjs`].
+- [ ] Only a genuinely dispatched toggle/run action produces one
+      `1 → .95 → 1` feedback cycle lasting 200 ms. Info, editor, confirmation
+      before acceptance, unavailable/secure/no-target and cancelled gestures do
+      not; reduced motion has no scale tween
+      [auto: `smoke_device_icon_design.mjs`].
+- [ ] Pointer authority is isolated per card. Touch/pen and compatibility mouse
+      input clear JS/CSS hover, while a later real mouse restores it only on
+      fine/hover hardware; mode/space/visibility/disconnect cleanup remains
+      bounded [unit: `pointer-modality.test.mjs`; auto: `smoke_feedback_v2.mjs`].
+- [ ] Pre-beta visual review covers Light/Dark desktop and touch matrices for
+      ordinary, Text, Double, unavailable and vacuum markers; full golden and
+      performance gates remain release work.
+
 ## Empty-space lifecycle (#113)
 
 - [ ] Active selection keeps active-or-first compatibility, while an empty
@@ -384,9 +404,10 @@ missing destructive confirmation or an editor exception that breaks View.
       Room settings [auto: smoke_feedback_v2]
 - [ ] Metrics readability (v1.43.3): the metrics line is 0.75 of the room name
       (was 0.62 — unreadable on tablets); per-room sliders still apply on top [auto: smoke_feedback_v2]
-- [ ] Touch tooltips, take two (v1.43.3): a hover tooltip never appears after
-      ANY touch/pen pointer event, even if the browser claims `hover: hover`
-      (stylus, paired mouse, vendor skins) [auto: smoke_feedback_v2]
+- [ ] Touch tooltips: touch/pen immediately clears hover even if the browser
+      claims hover support; compatibility mouse is ignored, while a later real
+      paired-mouse event restores desktop hover without reload
+      [auto: smoke_feedback_v2]
 
 - [ ] Light-source flag (v1.44.0, user feedback): a smart SWITCH driving dumb
       fixtures creates a Glow pool only once "This device is a
