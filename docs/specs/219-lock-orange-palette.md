@@ -69,8 +69,11 @@ semantic-подложкой. Активное устройство рисует 
 - одинаковая проекция на интерактивном плане, в Device preview и static space
   card через существующие shared DOM/CSS;
 - contract/unit tests и существующая light/dark device state-table golden;
-- оба changelog, `docs/TESTING.md`, при необходимости канонический документ
-  device icon states, generated bundles и screenshot fingerprint.
+- оба changelog и `docs/TESTING.md`;
+- обязательное обновление `docs/USER-GUIDE.ru.md`: раздел «Замок» и строки
+  таблицы постоянных статусов, где сейчас зафиксированы заменяемые black/amber
+  Lock/Unlock и orange unlocked/open примеры;
+- generated bundles и screenshot fingerprint.
 
 ## 7. Не входит в задачу
 
@@ -141,7 +144,8 @@ ResolvedDevicePresentation classes / opening lock state
 - `test/device-marker-polish-contract.test.mjs` — точные semantic contracts;
 - `demo/golden/matrix.mjs` и `test/golden-matrix.test.mjs` — orange `open` рядом
   с `on`, обе темы, lock red/green states;
-- `docs/TESTING.md`, оба changelog и при необходимости device-icon docs;
+- `docs/TESTING.md`, `docs/USER-GUIDE.ru.md` (раздел «Замок» и таблица
+  постоянных статусов), оба changelog;
 - три generated bundle после `npm run build`.
 
 `src/device-presentation.ts`, `src/device-face.ts` и `src/houseplan-card.ts` не
@@ -197,9 +201,10 @@ Performance budget и размер hit-area должны остаться без
 6. **AC6 — невидимые контракты.** Нет изменений config/backend/i18n/a11y text,
    DOM geometry, touch и performance path. **Доказательство:** diff review,
    typecheck, полный unit и build.
-7. **AC7 — release artifacts.** Оба changelog и `docs/TESTING.md` описывают новую
-   палитру; `dist`, demo и integration bundle идентичны; screenshot manifest
-   актуален. **Доказательство:** diff, hash comparison, `check-docs`.
+7. **AC7 — release artifacts.** Оба changelog, `docs/TESTING.md` и заменяемые
+   black/amber строки в `docs/USER-GUIDE.ru.md` описывают новую палитру; `dist`,
+   demo и integration bundle идентичны; screenshot manifest актуален.
+   **Доказательство:** diff, hash comparison, `check-docs`.
 
 ## 15. Проверки реализации и ревью
 
@@ -227,8 +232,9 @@ Golden baseline не принимается автором реализации.
 - `docs/CHANGELOG.md`;
 - `docs/CHANGELOG.ru.md`;
 - `docs/TESTING.md`;
-- актуализация канонической таблицы device states, если она дублирует старую
-  black/amber lock-палитру;
+- обязательная актуализация `docs/USER-GUIDE.ru.md`: описание «Замок» и строки
+  таблицы «Жёлтая подложка»/«Чёрный значок замка», которые сейчас прямо
+  фиксируют заменяемую black/amber lock-палитру;
 - light/dark state-table golden artifact для review;
 - `docs/images/screenshots.json` после штатного capture, если source fingerprint
   изменился; PNG коммитятся только при реальной проверенной дельте;
@@ -251,4 +257,3 @@ fixture/test metadata и generated bundles. Данные пользовател�
 4. «Все иконки на оранжевой подложке» относится к device core. Оранжевые линии
    проёмов, selection ring и activity ripple не являются подложкой glyph.
 5. Дополнительных предупреждений, настроек и текстов не требуется.
-
