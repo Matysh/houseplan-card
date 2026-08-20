@@ -37,6 +37,11 @@ const res = await page.evaluate(async () => {
   await c.updateComplete;
   const preview = sr().querySelector('hp-device-preview');
   await preview?.updateComplete;
+  preview?.dispatchEvent(new PointerEvent('pointerover', {
+    pointerType: 'mouse', bubbles: true, composed: true,
+  }));
+  const previewHoverGatePropagates = c.hasAttribute('data-pointer-hover')
+    && preview?.hasAttribute('data-pointer-hover');
   const previewFace = face(preview?.renderRoot?.querySelector('.dev'));
   const providerShown = /demo/i.test(preview?.renderRoot?.querySelector('.previewfacts')?.textContent || '');
 
@@ -168,6 +173,7 @@ const res = await page.evaluate(async () => {
 
   return {
     allFacesPresent: !!planFace && !!previewFace && !!staticFace,
+    previewHoverGatePropagates,
     planPreviewEqual: JSON.stringify(planFace) === JSON.stringify(previewFace),
     planStaticEqual: JSON.stringify(planFace) === JSON.stringify(staticFace),
     providerShown,

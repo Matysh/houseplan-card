@@ -45,15 +45,15 @@ const res = await page.evaluate(async () => {
   const lbl = [...sr().querySelectorAll('.roomlabel')].find((l) => l.textContent.includes(model.name));
   out.cardShowsSource = lbl ? lbl.textContent.includes('30.2°') : false;
   const modelIndex = c._spaceModel().rooms.findIndex((r) => r.id === editedId);
-  [...sr().querySelectorAll('.room')][modelIndex].dispatchEvent(new MouseEvent('mousemove', {
-    bubbles: true, composed: true, clientX: 200, clientY: 200,
+  [...sr().querySelectorAll('.room')][modelIndex].dispatchEvent(new PointerEvent('pointermove', {
+    pointerType: 'mouse', bubbles: true, composed: true, clientX: 200, clientY: 200,
   }));
   await c.updateComplete;
   out.tooltipShowsHumiditySource = c._tip?.hum === 47
     && (sr().querySelector('.tip')?.textContent || '').includes(`${c._t('tip.hum_avg')} 47%`);
   model.settings = { ...model.settings, hum_source: 'entity:sensor.missing_room_hum' };
-  [...sr().querySelectorAll('.room')][modelIndex].dispatchEvent(new MouseEvent('mousemove', {
-    bubbles: true, composed: true, clientX: 210, clientY: 210,
+  [...sr().querySelectorAll('.room')][modelIndex].dispatchEvent(new PointerEvent('pointermove', {
+    pointerType: 'mouse', bubbles: true, composed: true, clientX: 210, clientY: 210,
   }));
   await c.updateComplete;
   out.invalidHumiditySourceIsOmitted = c._tip?.hum == null

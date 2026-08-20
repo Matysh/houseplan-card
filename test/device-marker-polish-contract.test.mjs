@@ -41,8 +41,20 @@ test('issue 212 removes the global touch latch and gates every shared hover sele
   assert.doesNotMatch(card, /private static _touchSeen/);
   assert.match(card, /PointerModalityController/);
   assert.match(card, /_clearTransientHover/);
+  assert.match(
+    card,
+    /POINTER_HOVER_TARGET_SELECTOR\s*=\s*'[^']*hp-device-preview[^']*'/,
+    'device preview must receive the card-owned pointer hover gate',
+  );
 
-  for (const name of ['styles.ts', 'hp-dialog.ts', 'hp-help.ts', 'hp-color-opacity.ts', 'space-card.ts']) {
+  for (const name of [
+    'styles.ts',
+    'hp-dialog.ts',
+    'hp-help.ts',
+    'hp-color-opacity.ts',
+    'hp-device-preview.ts',
+    'space-card.ts',
+  ]) {
     const text = source(name);
     const selectors = [...text.matchAll(/(^|\})([^{}]+)\{/gm)].map((match) => match[2]);
     const naked = selectors.flatMap((selector) => selector.split(','))

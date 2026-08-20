@@ -239,7 +239,7 @@ const res = await page.evaluate(async () => {
   const poolBeforeHover = sr().querySelector('.glow-pool');
   const gradientBeforeHover = sr().querySelector('radialGradient[id^="hp-glow-"]');
   const roomEl = sr().querySelector('.room');
-  roomEl?.dispatchEvent(new MouseEvent('mouseenter'));
+  roomEl?.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }));
   await c.updateComplete;
   const hoverFill = sr().querySelector('.room-hover-fill');
   const hoverFillLayer = sr().querySelector('.room-hover-fill-layer');
@@ -263,7 +263,7 @@ const res = await page.evaluate(async () => {
     // late outline must follow it; absence is not a layer-order failure.
     && (!wallLayer
       || !!(wallLayer.compareDocumentPosition(hoverOutlineLayer) & Node.DOCUMENT_POSITION_FOLLOWING));
-  roomEl?.dispatchEvent(new MouseEvent('mouseleave'));
+  roomEl?.dispatchEvent(new PointerEvent('pointerleave', { pointerType: 'mouse' }));
   await c.updateComplete;
   return out;
 });

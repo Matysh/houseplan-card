@@ -41,7 +41,9 @@ const res = await page.evaluate(async () => {
   // тултип комнаты: площадь и агрегаты температуры/влажности в стабильном порядке
   const rooms = [...sr().querySelectorAll('.room')];
   const room = rooms[0];
-  room.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, composed: true, clientX: 200, clientY: 200 }));
+  room.dispatchEvent(new PointerEvent('pointermove', {
+    pointerType: 'mouse', bubbles: true, composed: true, clientX: 200, clientY: 200,
+  }));
   await c.updateComplete;
   out.tipTemp = c._tip?.temp;
   out.tipHum = c._tip?.hum;
@@ -60,26 +62,37 @@ const res = await page.evaluate(async () => {
   out.tipHasAreaLine = (sr().querySelector('.tip')?.textContent || '').includes(expectedArea);
 
   // Комната без источника влажности не получает пустую строку.
-  rooms[1].dispatchEvent(new MouseEvent('mousemove', { bubbles: true, composed: true, clientX: 210, clientY: 210 }));
+  rooms[1].dispatchEvent(new PointerEvent('pointermove', {
+    pointerType: 'mouse', bubbles: true, composed: true, clientX: 210, clientY: 210,
+  }));
   await c.updateComplete;
   out.noHumidityOmitted = c._tip?.hum == null
     && !(sr().querySelector('.tip')?.textContent || '').includes('средняя влажность');
 
   // Общий device tooltip остаётся без room humidity.
-  sr().querySelector('.dev').dispatchEvent(new MouseEvent('mousemove', {
-    bubbles: true, composed: true, clientX: 220, clientY: 220,
+  sr().querySelector('.dev').dispatchEvent(new PointerEvent('pointermove', {
+    pointerType: 'mouse', bubbles: true, composed: true, clientX: 220, clientY: 220,
   }));
   await c.updateComplete;
   out.deviceTooltipHasNoHumidity = c._tip?.hum == null
     && !(sr().querySelector('.tip')?.textContent || '').includes('средняя влажность');
 
-  // После первого touch/pen hover-подсказки по-прежнему не создаются.
-  c.constructor._touchSeen = true;
+  // Touch/pen input never creates hover-only tooltips.
+  room.dispatchEvent(new PointerEvent('pointerdown', {
+    pointerType: 'touch', pointerId: 91, bubbles: true, composed: true,
+    clientX: 230, clientY: 230,
+  }));
   c._tip = null;
-  room.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, composed: true, clientX: 230, clientY: 230 }));
+  room.dispatchEvent(new PointerEvent('pointermove', {
+    pointerType: 'touch', pointerId: 91, bubbles: true, composed: true,
+    clientX: 230, clientY: 230,
+  }));
   await c.updateComplete;
   out.noHoverSuppressesTooltip = c._tip === null;
-  c.constructor._touchSeen = false;
+  room.dispatchEvent(new PointerEvent('pointerup', {
+    pointerType: 'touch', pointerId: 91, bubbles: true, composed: true,
+    clientX: 230, clientY: 230,
+  }));
   // диалог: радио заливки, компактные поля, ширина
   c._openSpaceDialog('edit', 'f1'); await c.updateComplete;
   out.fillRadios = sr().querySelectorAll('input[name="fillmode"]').length;

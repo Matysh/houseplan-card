@@ -484,6 +484,7 @@ const LS_ZOOM = 'houseplan_card_zoom_v1';
 const LS_NAV = 'houseplan_card_nav_v1'; // last space only; editor sessions never survive page navigation
 const LS_KIOSK = 'houseplan_card_kiosk_v1'; // per-SCREEN size multipliers (each wall tablet differs)
 const LS_VIEW = 'houseplan_card_view_v1'; // presentation preference per space, Labs-only
+const POINTER_HOVER_TARGET_SELECTOR = 'hp-dialog, hp-help, hp-color-opacity, hp-device-preview';
 const NORM_W = 1000; // side of the render space — the canvas is square (v1.48.0)
 /** Short semantic-event / direct-terminal-transition window. Event uses
     three sequential 1.1 s waves; motion cool-down itself never animates. */
@@ -5849,7 +5850,7 @@ class HouseplanCard extends LitElement {
   private _syncPointerHoverTargets(): void {
     const enabled = this._pointerModality.hoverEnabled;
     for (const target of this.renderRoot.querySelectorAll<HTMLElement>(
-      'hp-dialog, hp-help, hp-color-opacity',
+      POINTER_HOVER_TARGET_SELECTOR,
     )) {
       target.toggleAttribute('data-pointer-hover', enabled);
     }
@@ -5859,11 +5860,11 @@ class HouseplanCard extends LitElement {
     if (node.nodeType !== Node.ELEMENT_NODE) return;
     const element = node as HTMLElement;
     const enabled = this._pointerModality.hoverEnabled;
-    if (element.matches('hp-dialog, hp-help, hp-color-opacity')) {
+    if (element.matches(POINTER_HOVER_TARGET_SELECTOR)) {
       element.toggleAttribute('data-pointer-hover', enabled);
     }
     for (const target of element.querySelectorAll<HTMLElement>(
-      'hp-dialog, hp-help, hp-color-opacity',
+      POINTER_HOVER_TARGET_SELECTOR,
     )) {
       target.toggleAttribute('data-pointer-hover', enabled);
     }
