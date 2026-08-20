@@ -154,6 +154,8 @@ for (const theme of ['Light', 'Dark']) {
     const row = rows[0];
     matrix.push({ theme, row, size, runtime: await runtimePng(theme, row, size) });
   }
+  const textRow = rows.find((row) => row.label === 'Text');
+  matrix.push({ theme, row: textRow, size: 96, runtime: await runtimePng(theme, textRow, 96) });
 }
 
 const escapeHtml = (value) => String(value)
@@ -177,7 +179,7 @@ const html = `<!doctype html>
   .preview img{display:block;margin:auto;max-width:300px;max-height:180px}.runtime img{image-rendering:auto}
 </style></head><body>
 <h1>House Plan device icons: package 1.1.1 vs runtime</h1>
-<p>Issue #211. Reference SVG is loaded directly from the designer package; Runtime is a fresh browser capture. Default also covers 32/56/96 px. Dark Unlock is evaluated using the owner's amber override from #179.</p>
+<p>Issues #211/#217. Reference SVG is loaded directly from the designer package; Runtime is a fresh browser capture. Default covers 32/56/96 px and Text has an additional large 96 px row so its outer stadium curvature is reviewable. Dark Unlock is evaluated using the owner's amber override from #179.</p>
 <table><thead><tr><th>Theme</th><th>State/layout</th><th>Core</th><th>Reference SVG</th><th>Runtime</th></tr></thead>
 <tbody>${body}</tbody></table></body></html>`;
 const htmlPath = resolve(artifactDir, 'device-icons-reference-runtime.html');

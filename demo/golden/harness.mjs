@@ -188,6 +188,7 @@ export function prepareGoldenFixture(scenario) {
   }
   if (scenario.fillMode || scenario.bgMode || typeof scenario.glowEnabled === 'boolean'
       || typeof scenario.sunRays === 'boolean' || typeof scenario.showBorders === 'boolean'
+      || typeof scenario.showNames === 'boolean'
       || typeof scenario.northDeg === 'number') {
     const space = requireSpace();
     space.settings = {
@@ -197,6 +198,7 @@ export function prepareGoldenFixture(scenario) {
       ...(typeof scenario.glowEnabled === 'boolean' ? { glow_enabled: scenario.glowEnabled } : {}),
       ...(typeof scenario.sunRays === 'boolean' ? { sun_rays: scenario.sunRays } : {}),
       ...(typeof scenario.showBorders === 'boolean' ? { show_borders: scenario.showBorders } : {}),
+      ...(typeof scenario.showNames === 'boolean' ? { show_names: scenario.showNames } : {}),
       ...(typeof scenario.northDeg === 'number' ? { north_deg: scenario.northDeg } : {}),
       ...(scenario.customFill ? { custom_fill: scenario.customFill } : {}),
     };
@@ -771,6 +773,12 @@ export async function prepareGoldenScenario(page, scenario) {
         }
         marker.classList.add(...classes);
       }
+    }
+    if (scenario.deviceOnly) {
+      const markers = [...card.renderRoot.querySelectorAll('[data-hp="device"]')];
+      const selected = markers.find((marker) => marker.dataset.id === scenario.deviceOnly);
+      if (!selected) throw new Error(`golden isolated device missing: ${scenario.deviceOnly}`);
+      for (const marker of markers) marker.style.visibility = marker === selected ? 'visible' : 'hidden';
     }
     if (scenario.focusDevice) {
       const marker = card.renderRoot.querySelector(

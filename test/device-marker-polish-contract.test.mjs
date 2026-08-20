@@ -47,6 +47,22 @@ test('issue 212 Text value uses a stadium radius based on height', () => {
   assert.doesNotMatch(rule, /border-radius:\s*50%/);
 });
 
+test('issue 217 keeps the Text shell stadium while icon-only stays circular', () => {
+  const styles = source('styles.ts');
+  const frame = styles.match(/\.device-shell-frame\s*\{([\s\S]*?)\}/)?.[1] || '';
+  const circle = styles.match(
+    /\.device-shell:not\(\.with-values\):not\(\.text-shell\) \.device-shell-frame\s*\{([\s\S]*?)\}/,
+  )?.[1] || '';
+
+  assert.match(frame, /border-radius:\s*9999px/);
+  assert.match(circle, /border-radius:\s*50%/);
+  assert.doesNotMatch(
+    styles,
+    /\.device-shell:not\(\.with-values\) \.device-shell-frame\s*\{[\s\S]*?border-radius:\s*50%/,
+    'the circular override must not capture a wide Text shell',
+  );
+});
+
 test('issue 212 feedback is owned by actual dispatch and lasts 200 ms', () => {
   const card = source('houseplan-card.ts');
   assert.match(card, /private _startDevicePressFeedback\(/);

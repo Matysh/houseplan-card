@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Fixed Text device markers whose outer outline became an ellipse instead of
+  matching the capsule-shaped value core and designer reference
+  ([#217](https://github.com/Matysh/houseplan-card/issues/217)).
+
 ## v1.65.0-beta.9 — 2026-08-20
 
 - Device marker cores now stay concentric with their outer shell at fractional

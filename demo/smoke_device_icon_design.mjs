@@ -259,10 +259,18 @@ const result = await page.evaluate(async ({ beforeUnavailable, afterUnavailable,
     probe.remove();
     return { value, actual: getComputedStyle(label).color, expected };
   }).filter(Boolean);
-  const textCoreRect = rect(text?.querySelector('.device-core'));
+  const textFrame = text?.querySelector('.device-shell-frame');
+  const textCore = text?.querySelector('.device-core');
+  const textFrameRect = rect(textFrame);
+  const textCoreRect = rect(textCore);
+  const textFrameRadius = getComputedStyle(textFrame).borderTopLeftRadius;
   const textCoreRadius = parseFloat(
-    getComputedStyle(text?.querySelector('.device-core')).borderTopLeftRadius,
+    getComputedStyle(textCore).borderTopLeftRadius,
   );
+  const originalTextFrameInlineRadius = textFrame.style.borderRadius;
+  textFrame.style.borderRadius = '50%';
+  const mutantTextFrameRadius = getComputedStyle(textFrame).borderTopLeftRadius;
+  textFrame.style.borderRadius = originalTextFrameInlineRadius;
   const double = node('d_temp');
   const doubleShellRect = rect(double?.querySelector('.device-shell-frame'));
   const doubleCoreRect = rect(double?.querySelector('.device-core'));
@@ -323,6 +331,7 @@ const result = await page.evaluate(async ({ beforeUnavailable, afterUnavailable,
 
   const originalLightStyle = light.getAttribute('style') || '';
   const originalDoubleStyle = double.getAttribute('style') || '';
+  const originalTextStyle = text.getAttribute('style') || '';
   const sizeMatrix = [
     { configured: 32, effective: 28.8 },
     { configured: 56, effective: 50.4 },
@@ -353,6 +362,27 @@ const result = await page.evaluate(async ({ beforeUnavailable, afterUnavailable,
   });
   light.setAttribute('style', originalLightStyle);
   double.setAttribute('style', originalDoubleStyle);
+
+  const textShellSizeMatrix = [24, 32, 56, 96, 112].map((effective) => {
+    text.style.setProperty('--device-base-size', `${effective}px`);
+    text.style.setProperty('--dev-scale', '1');
+    const frameRect = rect(textFrame);
+    const coreRect = rect(textCore);
+    const frameStyle = getComputedStyle(textFrame);
+    const coreStyle = getComputedStyle(textCore);
+    return {
+      effective,
+      frameWidth: frameRect?.width || 0,
+      frameHeight: frameRect?.height || 0,
+      coreWidth: coreRect?.width || 0,
+      coreHeight: coreRect?.height || 0,
+      frameRadius: frameStyle.borderTopLeftRadius,
+      coreRadius: parseFloat(coreStyle.borderTopLeftRadius),
+      horizontalInset: frameRect && coreRect ? (frameRect.width - coreRect.width) / 2 : 0,
+      verticalInset: frameRect && coreRect ? (frameRect.height - coreRect.height) / 2 : 0,
+    };
+  });
+  text.setAttribute('style', originalTextStyle);
 
   light.classList.remove('theme-dark');
   light.classList.add('theme-light');
@@ -461,6 +491,9 @@ const result = await page.evaluate(async ({ beforeUnavailable, afterUnavailable,
       focusCoreDecoration,
       stateMatrix,
       sizeMatrix,
+      textShellSizeMatrix,
+      textFrameRadius,
+      mutantTextFrameRadius,
       reference,
       lightHover,
       ordinaryHover,
@@ -501,10 +534,26 @@ const result = await page.evaluate(async ({ beforeUnavailable, afterUnavailable,
     sharedShellGeometry: !!shellRect && !!coreRect
       && Math.abs(shellRect.width / coreRect.width - 1.26875) < 0.03,
     iconCoreIsCircle: !!coreRect && radiusIsHalf(coreRadiusText, coreRect),
+    iconShellIsCircle: !!shellRect && Math.abs(shellRect.width - shellRect.height) <= 0.5
+      && activeShellStyle.borderTopLeftRadius === '50%',
     textCoreIsStadium: !!textCoreRect && textCoreRect.width > textCoreRect.height
       && Math.abs(textCoreRadius - textCoreRect.height / 2) <= 0.5,
+    textShellIsStadiumAtRepresentativeSizes: !!textFrameRect
+      && textFrameRect.width > textFrameRect.height
+      && textFrameRadius === '9999px'
+      && textShellSizeMatrix.every((sample) => sample.frameWidth > sample.frameHeight
+        && sample.coreWidth > sample.coreHeight
+        && sample.frameRadius === '9999px'
+        && Number.parseFloat(sample.frameRadius) >= sample.frameHeight / 2
+        && Math.abs(sample.coreRadius - sample.coreHeight / 2) <= 0.5
+        && Math.abs(sample.horizontalInset - sample.verticalInset) <= 0.5),
+    textShellMutationGuardRejects50Percent: textFrameRadius === '9999px'
+      && mutantTextFrameRadius === '50%',
     valueBadgeIsPill: !!doubleValueRect
       && Math.abs(valueRadius - doubleValueRect.height / 2) <= 0.5,
+    doubleShellKeepsCapsule: !!doubleShellRect
+      && doubleShellRect.width > doubleShellRect.height
+      && getComputedStyle(double.querySelector('.device-shell-frame')).borderTopLeftRadius === '9999px',
     packageShadowColor: getComputedStyle(lightFrame).boxShadow.includes('37, 40, 45'),
     noBackdropBlur: getComputedStyle(lightFrame).backdropFilter === 'none',
     activeUsesPackageAmber: getComputedStyle(lightCore).backgroundColor === 'rgb(240, 160, 12)'

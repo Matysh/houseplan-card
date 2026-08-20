@@ -234,7 +234,7 @@ test('sun-ray golden requires browser-painted light from a state-only sun entity
   assert.ok(scenario);
   const fixture = prepareGoldenFixture(scenario);
   const space = fixture.config.spaces.find((item) => item.id === scenario.space);
-  assert.equal(GOLDEN_MATRIX_VERSION, 32);
+  assert.equal(GOLDEN_MATRIX_VERSION, 33);
   assert.equal(space.settings.sun_rays, true);
   assert.equal(scenario.northDeg, 90,
     'the sign-sensitive golden must keep a non-zero north direction');
@@ -332,6 +332,27 @@ test('device icon state-table goldens cover both themes and design facets', () =
     assert.equal(
       fixture.config.markers.find((marker) => marker.id === 'golden-right-temperature').display,
       'static_icon',
+    );
+  }
+});
+
+test('Text shell regression goldens isolate a large long value in both themes', () => {
+  const scenarios = GOLDEN_SCENARIOS.filter((item) => item.id.startsWith('device-text-shell-long-'));
+  assert.deepEqual(new Set(scenarios.map((scenario) => scenario.theme)), new Set(['light', 'dark']));
+  for (const scenario of scenarios) {
+    assert.equal(scenario.deviceOnly, 'golden-left-linkquality');
+    const fixture = prepareGoldenFixture(scenario);
+    const marker = fixture.config.markers.find((item) => item.id === 'golden-left-linkquality');
+    assert.equal(marker.display, 'value');
+    assert.equal(marker.size, 3);
+    assert.equal(
+      fixture.config.spaces.find((item) => item.id === scenario.space).settings.show_names,
+      false,
+    );
+    assert.equal(fixture.states['sensor.golden_left_linkquality'].state, '498');
+    assert.equal(
+      fixture.states['sensor.golden_left_linkquality'].attributes.unit_of_measurement,
+      'ppm',
     );
   }
 });

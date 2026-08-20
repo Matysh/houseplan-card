@@ -2058,7 +2058,7 @@ export const cardStyles = css`
       left: 0;
       top: 0;
     }
-    .device-shell:not(.with-values) .device-shell-frame {
+    .device-shell:not(.with-values):not(.text-shell) .device-shell-frame {
       border-radius: 50%;
     }
     .device-shell.with-values.pos-right {

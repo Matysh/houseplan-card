@@ -391,6 +391,18 @@ owner's amber Dark Unlock override are recorded in that directory's README.
       continuous `lqiColor()` across former 40/41 and 179/180 boundaries; bands
       remain semantic metadata only.
 
+## Text marker shell shape (#217)
+
+- [ ] `node demo/smoke_device_icon_design.mjs` checks the external Text frame,
+      not only its core: a long value keeps a saturating capsule radius at
+      24/32/56/96/112 px, while Icon-only remains circular and Double remains a
+      capsule. The runtime mutation to `border-radius: 50%` must be rejected.
+- [ ] `device-text-shell-long-light` and `device-text-shell-long-dark` isolate a
+      large `498 ppm` Text marker. Golden review must visibly confirm straight
+      upper/lower middle sections rather than an ellipse.
+- [ ] `node demo/capture_device_icon_reference.mjs` includes an additional
+      96 px Text row beside the normative Light/Dark `Text Default.svg`.
+
 ## Touch support and release gates
 
 The product contract is defined in `docs/TOUCH-SUPPORT.md`:

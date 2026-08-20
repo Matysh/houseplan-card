@@ -1,7 +1,7 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 32;
+export const GOLDEN_MATRIX_VERSION = 33;
 
 const stage = { capture: 'stage', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0005 } };
 const page = { capture: 'page', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0008 } };
@@ -246,6 +246,24 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     focusDevice: 'golden-climate',
     hoverDevice: 'golden-presence',
     hideHoverTooltip: true,
+    theme, viewport: { width: 1000, height: 900 }, ...stage,
+  })),
+  ...['light', 'dark'].map((theme) => ({
+    id: `device-text-shell-long-${theme}`, fixture: 'visual', space: 'golden-lighting', mode: 'view',
+    glowEnabled: false, sunRays: false, showNames: false,
+    markerOverrides: [{
+      id: 'golden-left-linkquality', binding: 'device:golden-left-linkquality',
+      display: 'value', size: 3,
+    }],
+    stateOverrides: {
+      'sensor.golden_left_linkquality': {
+        state: '498', attributes: { unit_of_measurement: 'ppm' },
+      },
+    },
+    layoutOverrides: {
+      'golden-left-linkquality': { s: 'golden-lighting', x: 0.50, y: 0.50 },
+    },
+    deviceOnly: 'golden-left-linkquality',
     theme, viewport: { width: 1000, height: 900 }, ...stage,
   })),
   { id: 'lighting-sun-window-state-only-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',
