@@ -164,6 +164,26 @@ def test_issue_225_external_url_is_still_external(tmp_path: Path) -> None:
     assert import_export_api._looks_internal("https://example.invalid/floor.svg?v=1") is False
 
 
+@pytest.mark.parametrize("url", [
+    f"https://evil.example{FILES_URL}/m1/doc.pdf",
+    f"https://evil.example{CONTENT_URL}/files/m1/doc.pdf?v=1",
+    f"//evil.example{FILES_URL}/m1/doc.pdf",
+    f"https://evil.example{PLANS_URL}/f1.svg",
+])
+def test_issue_225_absolute_url_never_resolves_onto_a_local_file(
+    tmp_path: Path, url: str,
+) -> None:
+    """AC5: only a same-document reference may be resolved by its path.
+
+    A scheme or an authority means the path belongs to another host. Taking it
+    would let a crafted document describe an outside link as a local file —
+    the same inconsistency the resolver is meant to prevent, mirrored
+    (review CODE-REVIEW-225-r1, M1).
+    """
+    assert import_export_api._internal_path(tmp_path, url) is None
+    assert import_export_api._looks_internal(url) is False
+
+
 @pytest.mark.parametrize("same_source, expected_state, expected_confirmation", [
     (True, "available", False),
     (False, "detach_required", True),

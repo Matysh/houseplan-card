@@ -703,6 +703,47 @@ export const MUTANTS = [
       replace: '    .dev:not(.unavail):hover {',
     }],
   },
+  {
+    id: 'internal-path-ignores-query',
+    guard: 'node scripts/backend-test-guard.mjs issue_225',
+    because: 'разбор url строкой вместо urlsplit возвращает баг #225: кэш-бастер '
+      + '?v=… делает имя файла не равным самому себе, ссылка читается как '
+      + 'внутренняя-но-неканоническая, и бэкап с вложением снова не импортируется',
+    patches: [{
+      file: 'custom_components/houseplan/import_export.py',
+      find: '    parsed = urlsplit(url)\n    if parsed.scheme or parsed.netloc:\n        return None\n    url = parsed.path',
+      replace: '    url = url.split("?", 1)[0]',
+    }],
+  },
+  {
+    id: 'internal-path-trusts-foreign-host',
+    guard: 'node scripts/backend-test-guard.mjs issue_225',
+    because: 'доверие к path при наличии scheme/netloc позволяет '
+      + '"https://evil.example/houseplan_files/files/m1/doc.pdf" разрешиться в локальный '
+      + 'файл, хотя _looks_internal считает такую ссылку внешней (ревью r1, M1)',
+    patches: [{
+      file: 'custom_components/houseplan/import_export.py',
+      find: '    if parsed.scheme or parsed.netloc:\n        return None',
+      replace: '    if False:\n        return None',
+    }],
+  },
+  {
+    id: 'internal-path-allows-traversal',
+    guard: 'node scripts/backend-test-guard.mjs issue_225',
+    because: 'структурные проверки пути — единственное, что режет traversal после '
+      + 'отделения query; снимать их нельзя. Мутант снимает обе сразу: по одной '
+      + 'защита эшелонирована (sanitize-сравнение ловит "..") и мутант был бы '
+      + 'эквивалентным — выяснено прогоном при реализации',
+    patches: [{
+      file: 'custom_components/houseplan/import_export.py',
+      find: '        if not raw_name or "/" in raw_name:\n            return None',
+      replace: '        raw_name = raw_name.split("/")[-1]\n        if not raw_name:\n            return None',
+    }, {
+      file: 'custom_components/houseplan/import_export.py',
+      find: '            tail = url[len(prefix):].split("/")\n            if len(tail) != 2:\n                return None',
+      replace: '            tail = url[len(prefix):].split("/")[-2:]',
+    }],
+  },
 ];
 
 // --- механика ---------------------------------------------------------------

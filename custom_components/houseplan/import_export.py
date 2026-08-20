@@ -357,7 +357,16 @@ def _internal_path(root: Path, url: str) -> tuple[str, Path] | None:
     # every backup holding one refused to import (issue #225). Path segments
     # keep doing the guarding: dropping the query cannot widen what a segment
     # is allowed to be.
-    url = urlsplit(url).path
+    #
+    # Only a same-document reference may be trusted this way: with a scheme or
+    # an authority the path belongs to another host, and taking it would let
+    # "https://evil.example/houseplan_files/files/m1/doc.pdf" resolve onto a
+    # local file (review CODE-REVIEW-225-r1, M1). Such a url stays external,
+    # which is also what _looks_internal says about it.
+    parsed = urlsplit(url)
+    if parsed.scheme or parsed.netloc:
+        return None
+    url = parsed.path
     content_plan = CONTENT_URL + "/plans/_/"
     if url.startswith(content_plan) or url.startswith(PLANS_URL + "/"):
         prefix = content_plan if url.startswith(content_plan) else PLANS_URL + "/"
