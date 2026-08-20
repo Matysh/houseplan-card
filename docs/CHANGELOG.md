@@ -12,6 +12,25 @@
   LQI colours again move continuously from red to green
   ([#213](https://github.com/Matysh/houseplan-card/issues/213)).
 
+## v1.65.0 — 2026-08-20
+
+- Plan editing now uses one continuous Walls workflow, supports open passages
+  and Home Assistant-aware openings in independent walls, and preserves exact
+  wall thickness, snap gaps, junctions and room geometry through preview,
+  optimization, import and rendering.
+- Device placement and control are more predictable: exact toggle entities,
+  registry-less opening bindings, linked virtual lights, room assignments
+  without HA Areas and explicit appliance run states all follow the same live
+  Home Assistant sources.
+- Spaces can be exported as plan-only templates or pinned to one configured
+  floor. New-space defaults, room labels, humidity tooltips and robot trails
+  now stay consistent across the supported views and editing flows.
+- Device markers use the new light/dark design system across plan, kiosk,
+  editor preview and static cards, including complete interaction capsules,
+  touch-safe hover handling, activity and availability states, opening locks
+  and a continuous LQI colour scale.
+- Small fixes and improvements.
+
 ## v1.65.0-beta.8 — 2026-08-20
 
 - Device markers are now 10% more compact without moving their saved centres or
