@@ -296,7 +296,7 @@ export function checkReviewDocLimit(files) {
 
 // Правило №1 говорит о продуктовом коде и инструментах, а не о документации.
 // Поэтому статус issue спрашивается только у коммитов класса A/B. Иначе краснел
-// бы каждый документ ревью: он ложится в ветку задачи, пока issue в S4-spec-review или
+// бы каждый документ ревью: он ложится в ветку, пока issue в S4-spec-review или
 // S7-code-review, и рабочего статуса у задачи в этот момент нет.
 export function commitsUnderRuleOne(commits) {
   return commits.filter(
