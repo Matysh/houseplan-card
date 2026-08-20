@@ -593,7 +593,7 @@ export const MUTANTS = [
   {
     id: 'device-marker-lqi-low-boundary-shifted',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
-      + '&& node --test --test-name-pattern="marker LQI is categorical" '
+      + '&& node --test --test-name-pattern="marker LQI keeps semantic bands" '
       + 'test/device-presentation.test.mjs',
     because: 'marker LQI must keep the owner-approved inclusive <=40 red boundary without '
       + 'changing the separate room-fill gradient',
