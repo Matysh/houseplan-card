@@ -14288,7 +14288,7 @@ class HouseplanCard extends LitElement {
       this._showToast(this._t('gs.align_done', {
         n: String(d.report.moved),
         m: String(d.report.migrated + d.report.canonicalized
-          + d.report.wallsMerged + d.report.spansMerged),
+          + d.report.coordsCanonicalized + d.report.wallsMerged + d.report.spansMerged),
       }));
     } catch (e: any) {
       if (this._alignDialog) this._alignDialog = { ...this._alignDialog, busy: false };
@@ -15291,7 +15291,8 @@ class HouseplanCard extends LitElement {
                 : nothing}
               <p class="alignmsg">${this._t('gs.optimize_changes', {
                 m: String(r.migrated), c: String(r.canonicalized),
-                w: String(r.wallsMerged), s: String(r.spansMerged),
+                p: String(r.coordsCanonicalized), w: String(r.wallsMerged),
+                s: String(r.spansMerged),
               })}</p>
               ${r.glowSpacesMigrated || r.glowRoomsMigrated
                 ? html`<p class="alignmsg">${this._t('gs.optimize_glow_migration', {

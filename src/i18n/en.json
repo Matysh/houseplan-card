@@ -782,7 +782,7 @@
   "gs.align_where": "The largest shift is in “{s}”.",
   "gs.align_turned": "Openings whose angle is corrected: {n}.",
   "gs.align_removed_drafts": "Invalid outlines collapsed by the grid and removed: {n}.",
-  "gs.optimize_changes": "Model migrations: {m}; plans canonicalized: {c}; merged real-wall fragments: {w}; virtual fragments: {s}.",
+  "gs.optimize_changes": "Model migrations: {m}; spaces updated: {c}; noisy coordinate values removed: {p}; merged real-wall fragments: {w}; virtual fragments: {s}.",
   "gs.optimize_glow_migration": "Legacy Glow: {spaces} spaces → no data fill + independent Glow; {rooms} rooms → inherited data fill + independent Glow.",
   "gs.align_warn": "Elements deliberately placed between grid nodes will move. One undo is available after the operation, only until the next plan edit.",
   "gs.align_run": "Optimize",

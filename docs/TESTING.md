@@ -2042,6 +2042,16 @@ require hands on real hardware — they remain for the human pass.
       snap to nodes in ONE write, openings stay on their walls, and pressing the
       button a second time reports nothing to do. Cancel does nothing at all
       [auto: smoke_grid_snap + unit test/align-grid.test.mjs]
+- [ ] **Optimize removes stored ULP coordinate noise (#223)**: a six-room
+      fixture whose shared grid vertices differ by `5.5e-17` offers Apply with
+      `moved: 0` and a positive cleaned-coordinate count. Preview distinguishes
+      updated spaces from removed coordinate noise; Cancel writes nothing;
+      Apply stores exact grid nodes in one transaction; the next run is a no-op
+      and server Undo restores the original noisy bits. A rejected hosted
+      partition contributes nothing to the counter
+      [unit: align-grid + plan-optimizer + i18n; auto:
+      smoke_optimize_coordinate_canonicalization; mutation:
+      `snapn-returns-input-near-node`].
 - [ ] Optimizer migration safety: legacy decor width/text size is clamped to
       the backend schema, `fill: true` receives explicit fill style, invalid
       legacy `plan_scale` is preserved for repair, an already canonical plan is
