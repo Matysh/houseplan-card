@@ -242,6 +242,7 @@ export const GOLDEN_SCENARIOS = Object.freeze([
       'golden-light-three': ['lock-unlocked'],
       'golden-presence': ['virtual'],
       'golden-climate': ['alarm', 'sel'],
+      'golden-right-linkquality': ['open'],
     },
     focusDevice: 'golden-climate',
     hoverDevice: 'golden-presence',

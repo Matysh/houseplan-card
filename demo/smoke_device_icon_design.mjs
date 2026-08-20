@@ -55,13 +55,20 @@ const reference = {
     alert: svgState('Dark', 'Alert Value.svg'),
   },
 };
-// Owner decision in #179 overrides the stale green Dark/Unlock asset.
-reference.dark.unlock = {
-  ...reference.dark.unlock,
-  core: reference.light.unlock.core,
-  glyph: reference.dark.active.glyph,
-  shell: reference.light.unlock.shell,
-};
+// Owner decision in #219 supersedes the package paint while retaining its
+// geometry: a closed lock is green, an open lock is red, and the glyph follows
+// the same Light/Dark foreground as every other coloured core.
+for (const theme of ['light', 'dark']) {
+  const glyph = theme === 'light' ? browserColor('#FFFFFF') : browserColor('#252525');
+  reference[theme].lock = {
+    ...reference[theme].lock,
+    core: browserColor('#66D17A'), glyph, shell: browserColor('#66D17A'),
+  };
+  reference[theme].unlock = {
+    ...reference[theme].unlock,
+    core: browserColor('#F0410C'), glyph, shell: browserColor('#F0410C'),
+  };
+}
 
 const { page, browser } = await launch(
   { width: 1120, height: 900 }, 1, [], { colorScheme: 'dark' },
@@ -320,6 +327,7 @@ const result = await page.evaluate(async ({ beforeUnavailable, afterUnavailable,
   const stateMatrix = Object.fromEntries(['light', 'dark'].map((theme) => [theme, {
     default: sampleState(theme),
     active: sampleState(theme, ['on']),
+    open: sampleState(theme, ['open']),
     lock: sampleState(theme, ['lock-locked']),
     unlock: sampleState(theme, ['lock-unlocked']),
     alert: sampleState(theme, ['alarm']),
@@ -328,6 +336,22 @@ const result = await page.evaluate(async ({ beforeUnavailable, afterUnavailable,
   }]));
   lockNode.className = originalLockClasses;
   lockNode.setAttribute('style', originalLockStyle);
+
+  const openingProbe = document.createElement('div');
+  openingProbe.innerHTML = '<span class="oplock-shell"><span class="oplock-core">'
+    + '<ha-icon icon="mdi:lock"></ha-icon></span></span>';
+  sr().append(openingProbe);
+  const sampleOpeningLock = (theme, state) => {
+    openingProbe.className = `oplock theme-${theme} ${state}`;
+    const core = getComputedStyle(openingProbe.querySelector('.oplock-core'));
+    const shell = getComputedStyle(openingProbe.querySelector('.oplock-shell'));
+    return { core: core.backgroundColor, glyph: core.color, shell: shell.borderColor };
+  };
+  const openingLockMatrix = Object.fromEntries(['light', 'dark'].map((theme) => [theme, {
+    lock: sampleOpeningLock(theme, 'locked'),
+    unlock: sampleOpeningLock(theme, 'unlocked'),
+  }]));
+  openingProbe.remove();
 
   const originalLightStyle = light.getAttribute('style') || '';
   const originalDoubleStyle = double.getAttribute('style') || '';
@@ -490,6 +514,7 @@ const result = await page.evaluate(async ({ beforeUnavailable, afterUnavailable,
       defaultShell,
       focusCoreDecoration,
       stateMatrix,
+      openingLockMatrix,
       sizeMatrix,
       textShellSizeMatrix,
       textFrameRadius,
@@ -520,6 +545,15 @@ const result = await page.evaluate(async ({ beforeUnavailable, afterUnavailable,
         && stateMatrix[theme][state].shell === reference[theme][state].shell
         && Math.abs(stateMatrix[theme][state].shellWidth
           - Math.max(1, Math.floor(reference[theme][state].shellWidth * 50.4))) <= 0.5)),
+    openingLockPaletteMatches: ['light', 'dark'].every((theme) =>
+      ['lock', 'unlock'].every((state) =>
+        openingLockMatrix[theme][state].core === reference[theme][state].core
+        && openingLockMatrix[theme][state].glyph === reference[theme][state].glyph
+        && openingLockMatrix[theme][state].shell === reference[theme][state].shell)),
+    orangeGlyphsFollowTheme: stateMatrix.light.active.glyph === 'rgb(255, 255, 255)'
+      && stateMatrix.light.open.glyph === 'rgb(255, 255, 255)'
+      && stateMatrix.dark.active.glyph === 'rgb(37, 37, 37)'
+      && stateMatrix.dark.open.glyph === 'rgb(37, 37, 37)',
     referenceHoverMatches: lightHover.core === reference.light.hover.core
       && lightHover.glyph === reference.light.hover.glyph
       && lightHover.shell === reference.light.default.shell
@@ -575,9 +609,11 @@ const result = await page.evaluate(async ({ beforeUnavailable, afterUnavailable,
     keyboardActionFeedback,
     informationalActionHasNoFeedback,
     lightThemeCoreIsWhite: lightThemeCore === 'rgb(255, 255, 255)',
-    darkThemeCoreIs252525: darkThemeClassProjected && darkThemeCore === 'rgb(37, 37, 37)',
-    darkLockUsesWhiteGlyphAndDarkShell: darkLockGlyph === 'rgb(255, 255, 255)'
-      && darkLockShell === 'rgb(37, 37, 37)',
+    darkThemeCoreIs252525: darkThemeClassProjected
+      && stateMatrix.dark.default.core === 'rgb(37, 37, 37)',
+    darkLockUsesGreenCoreAndDarkGlyph: darkThemeCore === 'rgb(102, 209, 122)'
+      && darkLockGlyph === 'rgb(37, 37, 37)'
+      && darkLockShell === 'rgb(102, 209, 122)',
     hitAreaAtLeast44: parseFloat(pseudo.width) >= 44 && parseFloat(pseudo.height) >= 44,
     presenceContinuousGreen: presence?.querySelector('.device-pulse.continuous.reason-presence')
       && getComputedStyle(presence.querySelector('.device-pulse i')).borderColor === 'rgb(29, 194, 29)'

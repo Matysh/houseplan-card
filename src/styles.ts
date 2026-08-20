@@ -831,23 +831,19 @@ export const cardStyles = css`
       line-height: 0;
     }
     .oplock.locked {
-      --oplock-core-bg: light-dark(#000, #252525);
-      --oplock-core-fg: #fff;
-      --oplock-shell-stroke: light-dark(#000, #252525);
+      --oplock-core-bg: #66D17A;
+      --oplock-core-fg: light-dark(#fff, #252525);
+      --oplock-shell-stroke: #66D17A;
     }
-    .oplock.theme-light.locked {
-      --oplock-core-bg: #000;
-      --oplock-shell-stroke: #000;
-    }
+    .oplock.theme-light.locked { --oplock-core-fg: #fff; }
     .oplock.theme-dark.locked {
-      --oplock-core-bg: #252525;
-      --oplock-shell-stroke: #252525;
+      --oplock-core-fg: #252525;
       --oplock-stroke-ratio: .025;
     }
     .oplock.unlocked {
-      --oplock-core-bg: #F0A00C;
+      --oplock-core-bg: #F0410C;
       --oplock-core-fg: light-dark(#fff, #252525);
-      --oplock-shell-stroke: #F0A00C;
+      --oplock-shell-stroke: #F0410C;
     }
     .oplock.theme-light.unlocked { --oplock-core-fg: #fff; }
     .oplock.theme-dark.unlocked {
@@ -2142,26 +2138,24 @@ export const cardStyles = css`
     }
     .dev.open {
       --device-face-bg: var(--hp-open);
-      --device-face-fg: #4a2800;
+      --device-face-fg: light-dark(#fff, #252525);
     }
+    .dev.theme-light.open { --device-face-fg: #fff; }
+    .dev.theme-dark.open { --device-face-fg: #252525; }
     .dev.lock-locked {
-      --device-face-bg: light-dark(#000, #252525);
-      --device-face-fg: #fff;
-      --device-shell-stroke: light-dark(#000, #252525);
+      --device-face-bg: #66D17A;
+      --device-face-fg: light-dark(#fff, #252525);
+      --device-shell-stroke: #66D17A;
     }
-    .dev.theme-light.lock-locked {
-      --device-face-bg: #000;
-      --device-shell-stroke: #000;
-    }
+    .dev.theme-light.lock-locked { --device-face-fg: #fff; }
     .dev.theme-dark.lock-locked {
-      --device-face-bg: #252525;
-      --device-shell-stroke: #252525;
+      --device-face-fg: #252525;
       --device-shell-stroke-ratio: .025;
     }
     .dev.lock-unlocked {
-      --device-face-bg: #F0A00C;
+      --device-face-bg: #F0410C;
       --device-face-fg: light-dark(#fff, #252525);
-      --device-shell-stroke: #F0A00C;
+      --device-shell-stroke: #F0410C;
     }
     .dev.theme-light.lock-unlocked { --device-face-fg: #fff; }
     .dev.theme-dark.lock-unlocked {

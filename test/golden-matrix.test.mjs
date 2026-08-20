@@ -321,6 +321,7 @@ test('device icon state-table goldens cover both themes and design facets', () =
     assert.deepEqual(scenario.deviceClassOverrides['golden-presence'], ['virtual']);
     assert.deepEqual(scenario.deviceClassOverrides['golden-light-two'], ['lock-locked']);
     assert.deepEqual(scenario.deviceClassOverrides['golden-light-three'], ['lock-unlocked']);
+    assert.deepEqual(scenario.deviceClassOverrides['golden-right-linkquality'], ['open']);
     const fixture = prepareGoldenFixture(scenario);
     assert.equal(fixture.states['light.golden_light_one'].attributes.lqi, 40);
     assert.equal(fixture.states['light.golden_light_two'].attributes.lqi, 41);

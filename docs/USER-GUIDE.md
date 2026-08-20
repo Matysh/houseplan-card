@@ -310,8 +310,8 @@ near-end openings remain visible and are not moved until their geometry is
 edited.
 
 An opening may bind a contact; doors and gates may also bind a lock. View paints
-the moving leaf and state. A lock badge uses the package's black/dark locked
-state and amber unlocked state. A plan tap never toggles a lock. The opening
+the moving leaf and state. A lock badge is green when locked and red when
+unlocked. A plan tap never toggles a lock. The opening
 card provides a labelled
 lock/unlock control, with confirmation before unlocking.
 
@@ -408,8 +408,9 @@ stable core, icon or value, and optional activity pulse. Visual priority is
 | State | Meaning | Examples |
 |---|---|---|
 | Red alarm | Critical condition, even with live states disabled | Smoke, gas, CO, leak, tamper/problem/safety, triggered alarm |
-| Yellow | Device is doing its main job or a lock is unlocked | Light/switch/fan on, active climate, vacuum cleaning, known appliance work, unlocked lock |
-| Black lock glyph | Lock is secured | Locked lock |
+| Yellow | Device is doing its main job | Light/switch/fan on, active climate, vacuum cleaning, known appliance work |
+| Red lock | Lock is unsecured | Unlocked/open lock |
+| Green lock | Lock is secured | Locked lock |
 | Orange | Physically open | Door/window contact, opening valve |
 | Faded | Data unavailable | All relevant entities unknown, unavailable or absent |
 | Neutral | No alarm, work or open condition | Off, closed, idle, standby, docked |

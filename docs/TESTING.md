@@ -361,7 +361,8 @@ public binding-status hook.
 The independent reference subset under
 `demo/srv/reference/device-icons/` comes directly from designer package 1.1.1;
 it is not generated from production CSS. The package archive hash and the
-owner's amber Dark Unlock override are recorded in that directory's README.
+owner's #219 red/green Lock/Unlock paint override are recorded in that
+directory's README.
 
 - [ ] `node demo/smoke_device_icon_design.mjs` reads the SVG colors and stroke
       widths, then compares them with fresh computed styles. It also measures
@@ -402,6 +403,20 @@ owner's amber Dark Unlock override are recorded in that directory's README.
       upper/lower middle sections rather than an ellipse.
 - [ ] `node demo/capture_device_icon_reference.mjs` includes an additional
       96 px Text row beside the normative Light/Dark `Text Default.svg`.
+
+## Device lock and orange foreground palette (#219)
+
+- [ ] Closed/`locked` is green `#66D17A`; open/`unlocked` is red `#F0410C`.
+      The same core/stroke palette is used by ordinary lock markers and compact
+      door/gate lock badges; glyph shape remains closed/open/question.
+- [ ] Every device glyph on an orange core (`on`/working and physical `open`)
+      is white in Light and `#252525` in Dark. `device-icon-state-table-light`
+      and `device-icon-state-table-dark` show `on` and `open` together, plus
+      both lock states [unit: device-marker-polish-contract; auto:
+      smoke_device_icon_design; golden: device-icon-state-table-*].
+- [ ] Alarm, hover, focus, selected, unavailable, virtual, press feedback,
+      pulse, hit-area and lock actions retain their existing priority and
+      behaviour [unit: device presentation/polish/pointer; visual source review].
 
 ## Touch support and release gates
 
@@ -667,10 +682,11 @@ separately promised workflows:
 - [ ] Drag anywhere (no edit mode), snaps to grid, persists after reload, per space
 - [ ] ↺ reset restores auto layout after confirm
 - [ ] Temperature badge on thermometers; LQI value under zigbee icons with red→green color
-- [ ] Unified live states (dev, owner 2026-08-05): actual work is yellow;
-      open door/window, unlocked lock and open valve are orange; covers stay
-      neutral and morph their icon; unavailable is faded. The plate and the
-      activity effect come from the same semantic resolver
+- [ ] Unified live states (dev, owner 2026-08-05; lock palette #219): actual
+      work is yellow; open door/window and open valve are orange; unlocked lock
+      is red and locked lock is green; covers stay neutral and morph their icon;
+      unavailable is faded. The plate and the activity effect come from the same
+      semantic resolver
 - [ ] State icons (v1.26.0): auto icons morph with state — door/window/garage open↔closed,
       lock locked↔unlocked, bulb on; custom icons and unavailable states never morph [manual]
 - [ ] display "Value instead of an icon": the marker shows the measurement (°/%/unit)
@@ -764,10 +780,10 @@ separately promised workflows:
       auto-icon family (mdi:roller-shade, mdi:garage-variant), a hand-picked
       icon morphs only inside the pair it was picked from, and an
       unknown/unavailable state morphs nothing. NOT touched: an open door /
-      window binary sensor, an unlocked lock and an open valve still wear the
-      orange «открыто» frame (a valve has no icon pair, so the frame is all it
-      has) [auto: smoke_cover_no_plate + unit stateIcon «every class, both
-      ways»]
+      window binary sensor and an open valve still wear the orange «открыто»
+      frame (a valve has no icon pair, so the frame is all it has); lock keeps
+      its separate red-unlocked/green-locked palette [auto:
+      smoke_cover_no_plate + unit stateIcon «every class, both ways»]
 - [ ] Cover target and indication parity: on a device where a hidden functional
       `cover.*` competes with an auxiliary option switch, the shared resolver
       selects the cover, calls only it and supplies the same entity to icon
@@ -1608,8 +1624,9 @@ require hands on real hardware — they remain for the human pass.
       resolved media entities fade only when none is available and powered
 - [ ] Controls aggregate their targets: any working target drives both the
       yellow plate and the running effect
-- [ ] Open contact/unlocked lock/open valve are orange; an open cover stays
-      neutral because its icon morph carries that state
+- [ ] Open contact/open valve are orange; unlocked lock is red and locked lock
+      is green; an open cover stays neutral because its icon morph carries that
+      state
 - [ ] Unavailable suppresses ordinary activity. Alarm outranks all dynamic
       presentation, including when ordinary live states are off; `static_icon`
       deliberately hides alarm paint without suppressing service-call errors
@@ -1633,8 +1650,9 @@ require hands on real hardware — they remain for the human pass.
 - [ ] Bind a contact sensor: open → leaf swings and the arc draws on in the accent colour;
       closed → leaf lies along the wall, arc hidden; invert flips this
 - [ ] Sensor unavailable → the opening freezes at its static default (door open / window closed)
-- [ ] A door with a lock shows the package padlock badge: black/dark locked,
-      amber unlocked and neutral unknown in both themes
+- [ ] A door with a lock shows the compact padlock badge: green locked, red
+      unlocked and neutral unknown; coloured glyphs are white in Light and
+      `#252525` in Dark
 - [ ] A gate defaults to 300 cm, has two equal leaves, no swing arc and opens
       10° outwards; contact, inversion, lock, drag and resize anchoring match a door
 - [ ] Clicking an opening (or the padlock) in view mode opens the info card with both states;

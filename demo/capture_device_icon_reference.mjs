@@ -10,7 +10,14 @@ mkdirSync(artifactDir, { recursive: true });
 
 const referenceAsset = (theme, file, coreSize) => {
   let source = readFileSync(resolve('demo/srv/reference/device-icons', theme, file), 'utf8');
-  if (theme === 'Dark' && file === 'Unlock.svg') source = source.replaceAll('#1DC21D', '#F0A00C');
+  if (file === 'Lock.svg') {
+    const old = theme === 'Dark' ? '#252525' : 'black';
+    source = source.replaceAll(old, '#66D17A');
+    if (theme === 'Dark') source = source.replaceAll('fill="white"', 'fill="#252525"');
+  }
+  if (file === 'Unlock.svg') {
+    source = source.replaceAll(theme === 'Dark' ? '#1DC21D' : '#F0A00C', '#F0410C');
+  }
   const nativeWidth = Number(source.match(/<svg[^>]*width="([\d.]+)"/)?.[1] || 127);
   return {
     url: `data:image/svg+xml;base64,${Buffer.from(source).toString('base64')}`,

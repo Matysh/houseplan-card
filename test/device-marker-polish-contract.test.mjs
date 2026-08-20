@@ -34,10 +34,43 @@ test('issue 213 projects opening locks through the compact package layers', () =
   assert.match(styles, /--oplock-size:\s*calc\(var\(--icon-size,\s*2\.5cqw\)\s*\*\s*0\.62\)/);
   assert.match(styles, /--oplock-core-size:\s*calc\(var\(--oplock-size\)\s*\/\s*1\.26875\)/);
   assert.match(styles, /\.oplock ha-icon\s*\{[\s\S]*--mdc-icon-size:[^;]*\*\s*0\.55/);
-  assert.match(styles, /\.oplock\.unlocked\s*\{[\s\S]*--oplock-core-bg:\s*#F0A00C/);
-  assert.doesNotMatch(styles, /\.oplock\.locked\s*\{[^}]*#66d17a/i);
   assert.match(card, /class="oplock \$\{deviceThemeClass\(this\._renderPlanHass\)\}/);
   assert.match(card, /class="oplock-shell"[\s\S]*class="oplock-core"/);
+});
+
+test('issue 219 gives locks red-open green-closed and themes every colored glyph', () => {
+  const styles = source('styles.ts');
+  const card = source('houseplan-card.ts');
+  for (const [selector, background] of [
+    ['oplock\\.locked', '#66D17A'],
+    ['oplock\\.unlocked', '#F0410C'],
+    ['dev\\.lock-locked', '#66D17A'],
+    ['dev\\.lock-unlocked', '#F0410C'],
+  ]) {
+    const block = styles.match(new RegExp(`\\.${selector}\\s*\\{([\\s\\S]*?)\\}`))?.[1] || '';
+    assert.match(block, new RegExp(`(?:core|face)-bg:\\s*${background}`));
+    assert.match(block, new RegExp(`shell-stroke:\\s*${background}`));
+    assert.match(block, /(?:core|face)-fg:\s*light-dark\(#fff, #252525\)/);
+  }
+
+  const open = styles.match(/\.dev\.open\s*\{([\s\S]*?)\}/)?.[1] || '';
+  assert.match(open, /--device-face-bg:\s*var\(--hp-open\)/);
+  assert.match(open, /--device-face-fg:\s*light-dark\(#fff, #252525\)/);
+  assert.doesNotMatch(open, /#4a2800/i);
+
+  for (const state of ['on', 'open', 'lock-locked', 'lock-unlocked']) {
+    assert.match(styles, new RegExp(`\\.dev\\.theme-light\\.${state.replace('-', '\\-')}[^}]*#fff`));
+    assert.match(styles, new RegExp(`\\.dev\\.theme-dark\\.${state.replace('-', '\\-')}[\\s\\S]*?--device-face-fg:\\s*#252525`));
+  }
+  for (const state of ['locked', 'unlocked']) {
+    assert.match(styles, new RegExp(`\\.oplock\\.theme-light\\.${state}[^}]*#fff`));
+    assert.match(styles, new RegExp(`\\.oplock\\.theme-dark\\.${state}[\\s\\S]*?--oplock-core-fg:\\s*#252525`));
+  }
+
+  assert.match(card, /locked \? 'mdi:lock' : known \? 'mdi:lock-open-variant'/);
+  for (const name of ['houseplan-card.ts', 'hp-device-preview.ts', 'space-card.ts']) {
+    assert.match(source(name), /cardStyles/, `${name} must keep the shared state palette`);
+  }
 });
 
 test('issue 212 Text value uses a stadium radius based on height', () => {

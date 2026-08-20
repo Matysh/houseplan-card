@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Door and gate locks now use green for locked and red for unlocked on both
+  compact opening badges and ordinary device markers. Every glyph on an orange
+  device core is now white in the light theme and dark in the dark theme
+  ([#219](https://github.com/Matysh/houseplan-card/issues/219)).
 - Fixed Glow disappearing from an entire space when harmless floating-point
   tails or one malformed room outline upset floor clipping. Boolean inputs are
   now stabilised at render time, and a residual failure is isolated to the
