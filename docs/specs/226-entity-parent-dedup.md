@@ -50,7 +50,11 @@ marker и вычитается из автоматического состав�
 3. **Hidden sibling не удерживает остаток.** Сущность с HA `hidden_by` (в
    нормализованном frontend registry — `reg.hidden`) не считается основанием
    для остаточного auto-marker. При этом явно сохранённый `entity:X` разрешён и
-   отображается по действующим правилам даже при `hidden_by`.
+   отображается по действующим правилам даже при `hidden_by`. Следствие принято
+   осознанно: если пользователь вынес видимую вспомогательную entity, а у
+   родителя остался только HA-hidden функциональный sibling, auto-marker
+   родителя исчезает. Чтобы сохранить полное устройство рядом с отдельной
+   entity, пользователь явно размещает `device:D` — тогда действует решение 4.
 4. **Явная конфигурация сильнее автоматической.** Сохранённый `device:D` не
    удаляет явно сохранённые entity-markers того же устройства. В этом случае
    состав `device:D` остаётся полным, как сейчас.
@@ -155,7 +159,11 @@ contract test, доказывающий идентичную семантику.
 видимым служебным `switch.*` auto/device-marker сохраняет cover-first
 functional state/icon/toggle из #94. Только **остаточный auto-marker**, возникший
 после явного entity-marker, применяет правило «hidden siblings не удерживают
-остаток».
+остаток». Поэтому при явном marker на видимый `switch.reverse_direction` и
+единственном остатке в виде hidden `cover.curtain` автоматическая штора
+исчезает; это ожидаемое следствие Q2, а не обход cover-first. Явно сохранённый
+`device:D` по-прежнему показывает полную штору и может сосуществовать с этим
+entity-marker.
 
 ## 9. Lifecycle и совместимость
 
@@ -227,7 +235,11 @@ i18n-ключи, backend и отдельная mobile-компоновка не 
 12. Seeder не создаёт parent stub при пустом остатке и остаётся идемпотентным.
 13. Registry refresh, добавляющий/удаляющий sibling или меняющий hidden status,
     перестраивает один остаточный marker без config write.
-14. Switch as X browser fixture: отдельная лампа и остаток (если он есть)
+14. Граница #94: размещён видимый `entity:switch.reverse_direction`, а
+    единственный sibling `cover.curtain` имеет HA-hidden status → остаётся
+    только entity-marker, auto-marker шторы отсутствует; добавление явного
+    `device:D` возвращает полную cover-first штору рядом с entity-marker.
+15. Switch as X browser fixture: отдельная лампа и остаток (если он есть)
     дают ожидаемое число DOM markers; click entity-marker вызывает точную
     entity action, а light/Glow считают `X` один раз.
 
@@ -243,7 +255,8 @@ i18n-ключи, backend и отдельная mobile-компоновка не 
    `device:D + entity:X` сосуществуют. **Доказательство:** unit cases 4/6.
 4. **AC4 — hidden-контракты.** Marker hidden, HA hidden и HA disabled следуют
    решениям §§3, 7 и 8; штора #94 не регрессирует. **Доказательство:** unit cases
-   5/7/8/9.
+   5/7/8/9/14, включая явную проверку hidden-only остатка и восстановления
+   полного cover-first marker через сохранённый `device:D`.
 5. **AC5 — standalone и групповые bindings.** Entity без parent и light group
    не меняют поведение. **Доказательство:** unit cases 10/11 и существующие
    device/group tests.
@@ -252,7 +265,7 @@ i18n-ключи, backend и отдельная mobile-компоновка не 
    unit case 12 и mutation guard seeder predicate.
 7. **AC7 — все renderers и действия.** Full View, kiosk/touch, Device preview и
    static card получают одну проекцию; Switch as X рисуется и действует без
-   двойного light/Glow contribution. **Доказательство:** browser smoke case 14,
+   двойного light/Glow contribution. **Доказательство:** browser smoke case 15,
    shared projection unit и code review.
 8. **AC8 — динамический registry.** Изменение sibling/hidden metadata
    пересчитывает остаток без записи конфига и без исключения/ошибки.
