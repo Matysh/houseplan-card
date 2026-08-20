@@ -82,6 +82,14 @@ emit Glow again ([#92](https://github.com/Matysh/houseplan-card/issues/92)).
 3. **Intersect with the floor** (`intersectionPaths`): light lands on rooms, not
    on the space around the house.
 
+Room and fan coordinates cross the polygon-boolean boundary through a
+`1e-6` render-unit numeric grid. This removes sub-pixel arithmetic tails
+without rewriting saved plan geometry. If the combined floor still cannot be
+processed, clipping retries room by room: a failed room stays dark, every
+healthy room keeps its visible light, and the card emits one redacted warning
+per space-geometry revision and room. Returning the un-clipped visibility fan
+is never a fallback ([#218](https://github.com/Matysh/houseplan-card/issues/218)).
+
 The result is ONE `clipPath` for ONE `<circle>` filled with the source's radial
 gradient. A shadow is simply floor that is not in that region.
 

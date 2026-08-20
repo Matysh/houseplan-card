@@ -1352,6 +1352,8 @@ class HouseplanCard extends LitElement {
     floor: number[][]; geom: any; path: string; area: number;
   }>();
   private _glowClipCache = new Map<string, GlowClipGeometry | null>();
+  /** Redacted, bounded dedupe for numerical floor fallbacks (#218). */
+  private _glowGeometryWarnings = new Set<string>();
   private _lightBarrierCache: {
     key: string;
     value: {
@@ -14863,6 +14865,23 @@ class HouseplanCard extends LitElement {
     }
   }
 
+  private _warnGlowGeometryFallback(
+    spaceId: string, fingerprint: string, roomId: string, phase: string,
+  ): void {
+    // One diagnostic per geometry revision and room, even if that room happens
+    // to fail in more than one boolean phase while the card is re-rendering.
+    const key = `${spaceId}|${fingerprint}|${roomId}`;
+    if (this._glowGeometryWarnings.has(key)) return;
+    if (this._glowGeometryWarnings.size >= 128) {
+      const oldest = this._glowGeometryWarnings.values().next().value;
+      if (oldest) this._glowGeometryWarnings.delete(oldest);
+    }
+    this._glowGeometryWarnings.add(key);
+    console.warn(
+      `HOUSEPLAN GLOW GEOMETRY FALLBACK: #218, space ${spaceId}, room ${roomId}, phase ${phase}`,
+    );
+  }
+
   /**
    * Everything in a space that stops light, and the floor light may land on.
    *
@@ -15098,7 +15117,16 @@ class HouseplanCard extends LitElement {
         // reason a column does.
         const seen = visibilityPolygon([pos.x, pos.y], R, occluders, GLOW_ARC_STEPS);
         geometry = {
-          lit: seen.length >= 3 ? intersectionPaths([seen], floor) : [],
+          lit: seen.length >= 3
+            ? intersectionPaths([seen], floor, {
+                onBoundsFailure: ({ boundIndex, phase }) => {
+                  const room = polys[boundIndex]?.r;
+                  this._warnGlowGeometryFallback(
+                    space.id, fingerprint, room?.id || `#${boundIndex}`, phase,
+                  );
+                },
+              })
+            : [],
         };
         lruWrite(this._glowClipCache, clipKey, geometry, 256);
       }

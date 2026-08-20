@@ -1156,6 +1156,18 @@ separately promised workflows:
       [auto: smoke_glow, smoke_openwall;
       unit: light-visibility, golden-matrix;
       golden: lighting-opaque-glow-two-doorways-dark]
+- [ ] Glow floor resilience (#218): a six-room floor containing the captured
+      one-ULP shared-coordinate tails still produces a complete Glow clip and
+      preserves every Glow-base room without mutating stored outlines. If one
+      room is deterministically malformed, healthy rooms remain lit, the bad
+      room is skipped, overlapping healthy rooms are geometrically united, and
+      an all-invalid floor remains dark rather than exposing the raw visibility
+      fan. Repeated renders emit exactly one warning for the affected
+      space/revision/room; it contains no coordinates, room names, entity IDs or
+      exception text [unit: physical-geometry, golden-matrix; auto:
+      `node demo/smoke_glow_geometry_resilience.mjs`; mutation:
+      union-quantization-removed, union-failure-kills-space,
+      union-failure-silent, glow-fail-dark-weakened].
 - [ ] Per-source glow radius (v1.36.2): the device dialog has a "Glow radius"
       field (HA units; empty = general-settings default shown as placeholder);
       an override changes that source's visibility-clipped pool only [auto: smoke_glow]

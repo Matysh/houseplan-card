@@ -11,6 +11,9 @@ import type {
 
 export const COLUMN_MIN_CM = 1;
 export const COLUMN_MAX_CM = 150;
+/** Boolean operations work far below visible/physical plan precision, but raw
+ * double tails from split/merge/resize must describe the same shared vertex. */
+export const BOOLEAN_COORD_QUANTUM = 1e-6;
 
 export function clampColumnCm(cm: number): number {
   if (!Number.isFinite(cm)) return COLUMN_MIN_CM;
@@ -29,6 +32,39 @@ const closedRing = (poly: number[][]): number[][][] => {
       || ring[0][1] !== ring[ring.length - 1][1])) ring.push([...ring[0]]);
   return [ring];
 };
+
+const samePoint = (a: number[], b: number[]): boolean =>
+  a[0] === b[0] && a[1] === b[1];
+
+/**
+ * Copy one open outline into the numeric domain used by polyclip.
+ *
+ * Saved geometry stays untouched. Normalising only at the boolean boundary
+ * collapses arithmetic tails without turning the drawing grid into a storage
+ * migration or changing what a later editor save writes.
+ */
+export function normalizeBooleanBody(
+  body: number[][], quantum = BOOLEAN_COORD_QUANTUM,
+): number[][] | null {
+  const step = Number.isFinite(quantum) && quantum > 0
+    ? quantum
+    : BOOLEAN_COORD_QUANTUM;
+  const stable: number[][] = [];
+  for (const raw of body || []) {
+    if (!Array.isArray(raw) || raw.length < 2) return null;
+    const x = Number(raw[0]), y = Number(raw[1]);
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+    const qx = Math.round(x / step) * step;
+    const qy = Math.round(y / step) * step;
+    if (!Number.isFinite(qx) || !Number.isFinite(qy)) return null;
+    const point = [Object.is(qx, -0) ? 0 : qx, Object.is(qy, -0) ? 0 : qy];
+    if (!stable.length || !samePoint(stable[stable.length - 1], point)) stable.push(point);
+  }
+  if (stable.length > 1 && samePoint(stable[0], stable[stable.length - 1])) stable.pop();
+  if (stable.length < 3) return null;
+  if (new Set(stable.map((point) => `${point[0]},${point[1]}`)).size < 3) return null;
+  return polygonArea(stable) > step * step ? stable : null;
+}
 
 export function polyclipPathD(geom: any): string {
   const out: string[] = [];
@@ -223,7 +259,10 @@ export function physicalBodySet(
 
 export function unionBodies(bodies: number[][][]): any | null {
   try {
-    const polygons = bodies.filter((body) => body.length >= 3).map((body) => closedRing(body));
+    const polygons = bodies
+      .map((body) => normalizeBooleanBody(body))
+      .filter((body): body is number[][] => !!body)
+      .map((body) => closedRing(body));
     return polygons.length ? union(polygons[0] as any, ...polygons.slice(1) as any[]) : null;
   } catch {
     return null;
@@ -257,21 +296,70 @@ export function geometryPolygonPaths(geom: any): string[] {
   return out;
 }
 
-/** `polygons` clipped to `bounds`, as disjoint paths. Empty when they miss. */
-export function intersectionPaths(polygons: number[][][], bounds: number[][][]): string[] {
-  const base = unionBodies(polygons.filter((poly) => poly.length >= 3));
-  const limit = unionBodies(bounds.filter((poly) => poly.length >= 3));
-  if (!base) return [];
-  if (!limit) return [];
-  try {
-    return geometryPolygonPaths(intersection(base, limit));
-  } catch {
-    // The un-clipped visibility fan may cover the backdrop and the area
-    // outside the house. A boolean failure must therefore fail dark: returning
-    // `base` here turns a numerical polyclip exception into a light leak and
-    // then persists it in the per-source clip cache.
-    return [];
+export interface IntersectionBoundsFailure {
+  boundIndex: number;
+  phase: 'bound-union' | 'bound-intersection' | 'result-union';
+}
+
+export interface IntersectionPathsOptions {
+  onBoundsFailure?: (failure: IntersectionBoundsFailure) => void;
+}
+
+/** A failed all-floor operation degrades one room at a time, never to a raw fan. */
+function intersectionPathsByBound(
+  base: any, bounds: number[][][], options: IntersectionPathsOptions,
+): string[] {
+  let combined: any = null;
+  for (let i = 0; i < bounds.length; i++) {
+    const limit = unionBodies([bounds[i]]);
+    if (!limit) {
+      options.onBoundsFailure?.({ boundIndex: i, phase: 'bound-union' });
+      continue;
+    }
+    let clipped: any;
+    try {
+      clipped = intersection(base, limit);
+    } catch {
+      options.onBoundsFailure?.({ boundIndex: i, phase: 'bound-intersection' });
+      continue;
+    }
+    if (!clipped?.length || geometryArea(clipped) <= BOOLEAN_COORD_QUANTUM ** 2) continue;
+    if (!combined) {
+      combined = clipped;
+      continue;
+    }
+    try {
+      // Keep the normal merged-floor semantics for overlapping legacy rooms.
+      // Concatenating overlapping fragments into one evenodd path would punch
+      // a transparent hole through their overlap.
+      combined = union(combined, clipped);
+    } catch {
+      options.onBoundsFailure?.({ boundIndex: i, phase: 'result-union' });
+    }
   }
+  return combined ? geometryPolygonPaths(combined) : [];
+}
+
+/** `polygons` clipped to `bounds`, as disjoint paths. Empty when they miss. */
+export function intersectionPaths(
+  polygons: number[][][], bounds: number[][][], options: IntersectionPathsOptions = {},
+): string[] {
+  const base = unionBodies(polygons.filter((poly) => poly.length >= 3));
+  // Do not let unionBodies' generic "skip an unusable member" behaviour hide
+  // a broken room. A rejected ring must enter the room-local fallback so the
+  // healthy rooms remain visible and the caller can identify the failed one.
+  const hasRejectedBound = bounds.some((bound) => !normalizeBooleanBody(bound));
+  const limit = hasRejectedBound ? null : unionBodies(bounds);
+  if (!base) return [];
+  if (limit) {
+    try {
+      return geometryPolygonPaths(intersection(base, limit));
+    } catch {
+      // Continue with the same floor one room at a time. The un-clipped fan may
+      // cover the backdrop, so returning `base` is never a legal fallback.
+    }
+  }
+  return intersectionPathsByBound(base, bounds, options);
 }
 
 export function physicalBodiesPath(bodies: number[][][]): string {

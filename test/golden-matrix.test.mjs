@@ -429,7 +429,10 @@ test('a light source paints exactly one region: the floor it can see', () => {
   const source = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
   // One region per source, and it is the visibility polygon clipped to floor.
   assert.match(source, /visibilityPolygon\(\[pos\.x, pos\.y\], R, occluders/);
-  assert.match(source, /lit: seen\.length >= 3 \? intersectionPaths\(\[seen\], floor\) : \[\]/);
+  assert.match(source,
+    /lit: seen\.length >= 3\s*\? intersectionPaths\(\[seen\], floor, \{/);
+  assert.match(source, /onBoundsFailure: \(\{ boundIndex, phase \}\) =>/,
+    'room-local boolean failures must be observable without restoring an unclipped fan');
   assert.match(source, /<circle class="glow-pool"/);
   // No second layer of LIGHT may come back: a spill path or a shadow mask of
   // its own is how the rendered result and the computed geometry got to

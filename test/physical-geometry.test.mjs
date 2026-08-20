@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  canonicalColumnAngle, columnBody, floorMinusBodies, geometryArea,
+  BOOLEAN_COORD_QUANTUM, canonicalColumnAngle, columnBody, floorMinusBodies, geometryArea,
   directionalOccluders, intersectionPaths, partitionBody, pointInPhysicalBody,
   physicalBodyParts, physicalBodySet, pointInOpaquePlanBody, pointInPhysicalGeometry,
-  sameColumnPlacement,
+  normalizeBooleanBody, sameColumnPlacement, unionBodies,
 } from '../test-build/physical-geometry.js';
 import {
   polygonSegments, splitAtIntersections, visibilityPolygon,
@@ -12,6 +12,20 @@ import {
 
 const closeTo = (got, want, tol = 1e-6) =>
   assert.ok(Math.abs(got - want) <= tol, `expected ${want}, got ${got}`);
+
+// Privacy-minimised topology from the six-room #218 failure. The two relevant
+// stored double tails are preserved; names, ids, entities and unrelated plan
+// geometry are deliberately absent.
+const noisySixRoomFloor = [
+  [[0.46666666666666673, 0.7083333333333334], [0.6125, 0.9],
+    [0.4666666666666667, 1], [0.46666666666666673, 0.9]],
+  [[0.1625, 0.3], [0.3458333333333333, 0],
+    [0.46666666666666673, 1], [0.3458333333333333, 1]],
+  [[0.7, 0], [0.8, 0], [0.8, 0.7083333333333334], [0.7, 0.7083333333333334]],
+  [[0.7, 0.7083333333333335], [0.8, 0.7083333333333335], [0.8, 1], [0.7, 1]],
+  [[0.85, 0], [0.9, 0], [0.9, 0.4], [0.85, 0.4]],
+  [[0.85, 0.5], [0.9, 0.5], [0.9, 1], [0.85, 1]],
+];
 
 test('partition body keeps the centreline and requested physical width', () => {
   const body = partitionBody([0, 0], [1, 0], 10, 5, 0.25);
@@ -109,6 +123,81 @@ test('physical bodies are removed from clean floor area', () => {
   const floor = [[0, 0], [2, 0], [2, 2], [0, 2]];
   const obstacle = [[0.5, 0.5], [1.5, 0.5], [1.5, 1.5], [0.5, 1.5]];
   closeTo(geometryArea(floorMinusBodies(floor, [obstacle])), 3);
+});
+
+test('boolean input normalization collapses ULP tails without mutating saved outlines', () => {
+  const body = [
+    [-0, 0],
+    [0.46666666666666673, 0],
+    [0.4666666666666667, 0],
+    [0.4666666666666667, 1],
+    [0, 1],
+    [-0, 0],
+  ];
+  const before = structuredClone(body);
+  const stable = normalizeBooleanBody(body);
+  assert.deepEqual(body, before, 'the persisted/input outline stays byte-for-byte untouched');
+  assert.deepEqual(stable, [[0, 0], [0.466667, 0], [0.466667, 1], [0, 1]]);
+  assert.equal(Object.is(stable[0][0], -0), false, 'negative zero is canonicalised');
+  assert.equal(BOOLEAN_COORD_QUANTUM, 1e-6);
+  assert.equal(normalizeBooleanBody([[0, 0], [1e-12, 0], [0, 1e-12]]), null,
+    'a ring collapsed by the boolean quantum never reaches polyclip');
+});
+
+test('six-room ULP topology keeps a complete visible floor and is permutation-stable', () => {
+  const before = structuredClone(noisySixRoomFloor);
+  const fan = [[-0.1, -0.1], [1.1, -0.1], [1.1, 1.1], [-0.1, 1.1]];
+  const failures = [];
+  const paths = intersectionPaths([fan], noisySixRoomFloor, {
+    onBoundsFailure: (failure) => failures.push(failure),
+  });
+  assert.ok(paths.length > 0, 'the real ULP topology produces a non-empty Glow clip');
+  assert.deepEqual(failures, [], 'normal arithmetic noise is repaired before fallback');
+  assert.deepEqual(noisySixRoomFloor, before, 'render-time stabilisation never rewrites room data');
+
+  const direct = unionBodies(noisySixRoomFloor);
+  const reversed = unionBodies([...noisySixRoomFloor].reverse());
+  assert.ok(direct && reversed);
+  closeTo(geometryArea(direct), geometryArea(reversed), BOOLEAN_COORD_QUANTUM ** 2);
+  closeTo(geometryArea(direct), 0.31835083680549986, 1e-9);
+});
+
+test('one malformed room is diagnosed and cannot erase healthy lit floor', () => {
+  const fan = [[-1, -1], [6, -1], [6, 3], [-1, 3]];
+  const healthy = [[3, 0], [5, 0], [5, 2], [3, 2]];
+  // Deterministic polyclip failure: individually invalid rather than merely a
+  // bow-tie, which polyclip legally resolves into two triangles.
+  const malformed = [[2, 1], [0, 0], [2, 2], [1, 0], [0, 2], [2, 0]];
+  const failures = [];
+  const paths = intersectionPaths([fan], [healthy, malformed], {
+    onBoundsFailure: (failure) => failures.push(failure),
+  });
+  assert.deepEqual(paths, ['M 3 0 L 5 0 L 5 2 L 3 2 Z']);
+  assert.deepEqual(failures, [{ boundIndex: 1, phase: 'bound-union' }]);
+  assert.deepEqual(intersectionPaths([fan], [malformed]), [],
+    'when every room fails there is no raw-fan light leak');
+
+  const collapsed = [[0, 0], [1e-12, 0], [0, 1e-12]];
+  const collapsedFailures = [];
+  assert.deepEqual(intersectionPaths([fan], [healthy, collapsed], {
+    onBoundsFailure: (failure) => collapsedFailures.push(failure),
+  }), ['M 3 0 L 5 0 L 5 2 L 3 2 Z']);
+  assert.deepEqual(collapsedFailures, [{ boundIndex: 1, phase: 'bound-union' }],
+    'a ring rejected during normalisation is observable through the same fallback');
+});
+
+test('fallback unions overlapping healthy rooms instead of making an evenodd hole', () => {
+  const fan = [[-1, -1], [16, -1], [16, 3], [-1, 3]];
+  const malformed = [[12, 1], [10, 0], [12, 2], [11, 0], [10, 2], [12, 0]];
+  const left = [[0, 0], [3, 0], [3, 2], [0, 2]];
+  const right = [[2, 0], [5, 0], [5, 2], [2, 2]];
+  const failures = [];
+  const paths = intersectionPaths([fan], [malformed, left, right], {
+    onBoundsFailure: (failure) => failures.push(failure),
+  });
+  assert.equal(paths.length, 1, 'overlap is geometrically united, not concatenated as evenodd');
+  assert.match(paths[0], /M 0 0 L 5 0 L 5 2 L 0 2 Z/);
+  assert.deepEqual(failures, [{ boundIndex: 0, phase: 'bound-union' }]);
 });
 
 test('intersection failure is fail-dark and never returns the unclipped fan', () => {

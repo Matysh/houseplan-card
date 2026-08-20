@@ -41,6 +41,59 @@ import { fileURLToPath } from 'node:url';
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 export const MUTANTS = [
   {
+    id: 'union-quantization-removed',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="boolean input normalization|six-room ULP" '
+      + 'test/physical-geometry.test.mjs',
+    because: 'ordinary split/merge double tails must collapse at the shared boolean boundary '
+      + 'instead of making one room erase every Glow clip in its space',
+    patches: [{
+      file: 'src/physical-geometry.ts',
+      find: '    const qx = Math.round(x / step) * step;\n'
+        + '    const qy = Math.round(y / step) * step;',
+      replace: '    const qx = x;\n    const qy = y;',
+    }],
+  },
+  {
+    id: 'union-failure-kills-space',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="malformed room|fallback unions overlapping" '
+      + 'test/physical-geometry.test.mjs',
+    because: 'one room rejected by polyclip must be skipped locally while every healthy floor '
+      + 'fragment remains clipped and visible rather than failing the whole space dark',
+    patches: [{
+      file: 'src/physical-geometry.ts',
+      find: '  return intersectionPathsByBound(base, bounds, options);',
+      replace: '  return [];',
+    }],
+  },
+  {
+    id: 'union-failure-silent',
+    guard: 'node demo/smoke_glow_geometry_resilience.mjs',
+    because: 'a residual per-room geometry fallback must leave one redacted, deduplicated '
+      + 'space/room diagnostic instead of silently looking like a broken Glow setting',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '    console.warn(\n'
+        + '      `HOUSEPLAN GLOW GEOMETRY FALLBACK: #218, space ${spaceId}, room ${roomId}, phase ${phase}`,\n'
+        + '    );',
+      replace: '    if (false) console.warn(\n'
+        + '      `HOUSEPLAN GLOW GEOMETRY FALLBACK: #218, space ${spaceId}, room ${roomId}, phase ${phase}`,\n'
+        + '    );',
+    }],
+  },
+  {
+    id: 'glow-fail-dark-weakened',
+    guard: 'node demo/smoke_glow_fail_dark.mjs',
+    because: 'resilient floor clipping must not revive a source embedded in opaque masonry; '
+      + 'the existing source guard remains a release-blocking fail-dark boundary',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '      if (pointInOpaquePlanBody(sourcePoint, masonryGeometry, opaqueBodies)) {',
+      replace: '      if (false && pointInOpaquePlanBody(sourcePoint, masonryGeometry, opaqueBodies)) {',
+    }],
+  },
+  {
     id: 'optimizer-micro-interval-cleanup-disabled',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="isolated thickness micro-interval" '

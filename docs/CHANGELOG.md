@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Fixed Glow disappearing from an entire space when harmless floating-point
+  tails or one malformed room outline upset floor clipping. Boolean inputs are
+  now stabilised at render time, and a residual failure is isolated to the
+  affected room without allowing light outside valid floors
+  ([#218](https://github.com/Matysh/houseplan-card/issues/218)).
 - Fixed Text device markers whose outer outline became an ellipse instead of
   matching the capsule-shaped value core and designer reference
   ([#217](https://github.com/Matysh/houseplan-card/issues/217)).
