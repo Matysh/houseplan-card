@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.65.0-beta.8 — 2026-08-20
+
 - Device markers are now 10% more compact without moving their saved centres or
   shrinking the 44×44 px interaction floor, and wide Text markers keep uniform
   capsule insets. A real toggle/run dispatch gives a smooth 5% press response

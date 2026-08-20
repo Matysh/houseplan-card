@@ -1,16 +1,14 @@
-<!-- release: v1.65.0-beta.7 -->
+<!-- release: v1.65.0-beta.8 -->
 
 ## Основное
 
-- Маркеры устройств теперь точно повторяют пропорции исходного дизайн-пакета: круглое ядро, компактные MDI-глифы, value-pill, обводка и тени во всех светлых и тёмных состояниях.
-- Отдельный экземпляр карточки теперь можно навсегда закрепить за одним пространством по ID или YAML-индексу, независимо от общей навигации других карточек.
+- Маркеры устройств стали на 10% компактнее при прежних центрах и области нажатия; команды получили короткий отклик нажатием, а touch/pen больше не оставляют hover «прилипшим».
 - Мелкие исправления и улучшения.
 
 ## Highlights
 
-- Device markers now match the source design package proportions exactly: circular cores, compact MDI glyphs, value pills, strokes and shadows across every light and dark state.
-- A card instance can now stay permanently pinned to one space by ID or YAML index, independently of navigation in other cards.
+- Device markers are now 10% more compact without moving their centres or shrinking hit targets; actions have brief press feedback, and touch/pen no longer leave hover stuck.
 - Small fixes and improvements.
 
-[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.65.0-beta.7/docs/CHANGELOG.ru.md)
-· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.65.0-beta.7/docs/CHANGELOG.md)
+[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.65.0-beta.8/docs/CHANGELOG.ru.md)
+· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.65.0-beta.8/docs/CHANGELOG.md)
