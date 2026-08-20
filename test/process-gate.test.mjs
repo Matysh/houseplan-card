@@ -345,7 +345,7 @@ test('the CLI exits 0 on a clean range and 1 on a broken one', (t) => {
   }
   const dir = mkdtempSync(join(tmpdir(), 'hp-gate-'));
   // fileURLToPath, а не URL.pathname: на Windows pathname даёт «/C:/…», и
-  // spawnSync прочитал бы его как «C:\\C:\\…» (#133). Linux CI это не ловил —
+  // spawnSync прочитал бы его как «C:\C:\…» (#133). Linux CI это не ловил —
   // оба варианта там совпадают.
   const gate = fileURLToPath(new URL('../scripts/process-gate.mjs', import.meta.url));
   const git = (...args) => {
