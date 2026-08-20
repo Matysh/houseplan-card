@@ -419,6 +419,10 @@ nodes. New editor operations cannot create more. General settings contain
 a **Plan maintenance** group whose action previews and then repairs old
 data through all current passes: model upgrades, mandatory grid
 alignment, exact open-span canonicalisation and wall-interval compaction.
+Unlike live snapping, the explicit maintenance pass also replaces a stored
+coordinate which is only one or several ULPs away from its node with the exact
+computed node. That has no visible displacement but removes topology noise at
+its persisted source.
 
 Why an action rather than a silent migration:
 
@@ -468,7 +472,7 @@ idempotence case in `test/plan-optimizer.test.mjs`:
 * a stray opening with no wall within 6 steps is left exactly where it
   is rather than teleported;
 * **idempotent**: a second run reports `moved: 0`, `changed: false`, and
-  returns objects deep-equal to the first run's;
+  `coordsCanonicalized: 0`, and returns objects deep-equal to the first run's;
 * the report is an **upper bound**, not a sample (AUD-158B1-01).
 
 ### The report is a promise
@@ -491,6 +495,12 @@ The confirmation is the decision gate in front of a geometry rewrite, so
 * the dialog rounds the last tenth **up** and, on a multi-space plan,
   says which space the maximum is in; openings corrected in angle alone
   are counted on a line of their own.
+
+`coordsCanonicalized` counts individual near-node coordinate values actually
+written to the candidate. It excludes ordinary shifts above `EPS`, rejected
+partition snaps and wall/open-span maintenance. Those values do not increase
+`moved` or `maxShift*`; the dialog instead labels them as removed coordinate
+noise and keeps the existing updated-space counter separate.
 
 One undo is available until the next config or layout edit. It restores
 the stored snapshot; re-running optimization itself is never treated as

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- “Optimize plans” now removes microscopic floating-point noise from stored
+  grid coordinates even when nothing visibly moves. Its preview separately
+  reports updated spaces and cleaned coordinate values, and a second run is an
+  exact no-op ([#223](https://github.com/Matysh/houseplan-card/issues/223)).
 - Placing an individual Home Assistant entity no longer leaves a duplicate
   automatic marker of its complete parent device. The automatic marker now
   contains only the remaining active visible entities and disappears when

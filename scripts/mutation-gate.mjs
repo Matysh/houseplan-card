@@ -41,6 +41,20 @@ import { fileURLToPath } from 'node:url';
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 export const MUTANTS = [
   {
+    id: 'snapn-returns-input-near-node',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="snapN returns the exact nearest node" '
+      + 'test/align-grid.test.mjs',
+    because: 'explicit Optimize must replace a stored ULP tail with the exact nearest grid node '
+      + 'instead of preserving the noisy input merely because its displacement is visually tiny',
+    patches: [{
+      file: 'src/align-grid.ts',
+      find: '  return Math.round(v / GRID_STEP_N) * GRID_STEP_N;',
+      replace: '  const s = Math.round(v / GRID_STEP_N) * GRID_STEP_N;\n'
+        + '  return Math.abs(s - v) <= EPS ? v : s;',
+    }],
+  },
+  {
     id: 'union-quantization-removed',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="boolean input normalization|six-room ULP" '

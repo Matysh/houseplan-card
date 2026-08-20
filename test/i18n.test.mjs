@@ -27,6 +27,19 @@ test('i18n: placeholders match between languages', () => {
   }
 });
 
+test('Optimize distinguishes updated spaces from cleaned coordinate noise', () => {
+  assert.equal(
+    en['gs.optimize_changes'],
+    'Model migrations: {m}; spaces updated: {c}; noisy coordinate values removed: {p}; merged real-wall fragments: {w}; virtual fragments: {s}.',
+  );
+  assert.equal(
+    ru['gs.optimize_changes'],
+    'Миграций модели: {m}; обновлено пространств: {c}; устранён шум координат: {p}; объединено отрезков реальных стен: {w}; виртуальных: {s}.',
+  );
+  assert.match(cardSource, /p: String\(r\.coordsCanonicalized\)/);
+  assert.match(cardSource, /d\.report\.coordsCanonicalized \+ d\.report\.wallsMerged/);
+});
+
 test('i18n: every literal help call has body and full aria keys in both languages', () => {
   const allCalls = cardSource.match(/this\._help\(/g) || [];
   const helpKeys = [...cardSource.matchAll(/this\._help\('([^']+\.help)'\)/g)].map((match) => match[1]);

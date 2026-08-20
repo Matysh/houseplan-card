@@ -65,18 +65,17 @@ const WALL_TOL = GRID_STEP_N * 6;
 /** What one cell is worth when a space does not say — the card's own default. */
 const DEFAULT_CELL_CM = 5;
 
-/** Round a NORMALISED coordinate to the nearest grid node, idempotently.
- *  A value already on a node is returned UNCHANGED (bit for bit), so a second
- *  run of the alignment writes nothing at all. */
+/** Round a NORMALISED coordinate to the exact nearest grid node. */
 export function snapN(v: number): number {
   if (!Number.isFinite(v)) return v;
-  const s = Math.round(v / GRID_STEP_N) * GRID_STEP_N;
-  return Math.abs(s - v) <= EPS ? v : s;
+  return Math.round(v / GRID_STEP_N) * GRID_STEP_N;
 }
 
 export interface AlignReport {
   /** Elements whose coordinates the run would change. */
   moved: number;
+  /** Near-node coordinate components rewritten without a visible displacement. */
+  coordsCanonicalized: number;
   /** Elements examined (rooms, decor shapes, openings, markers, labels). */
   total: number;
   /** Largest displacement in NORMALISED units (1 = the plan's width). */
@@ -151,7 +150,20 @@ export function alignAllToGrid(
   const spaces = JSON.parse(JSON.stringify(spacesIn || []));
   const layout: Record<string, any> = JSON.parse(JSON.stringify(layoutIn || {}));
   let moved = 0, total = 0, maxShift = 0, maxShiftCm = 0, maxSpace = '', rotated = 0;
+  let coordsCanonicalized = 0;
   let removedDrafts = 0;
+
+  /** Count only a near-node value which was actually written to the candidate. */
+  const noteCanonicalCoordinate = (before: number, after: number): void => {
+    if (Number.isFinite(before) && Number.isFinite(after)
+      && before !== after && Math.abs(after - before) <= EPS) {
+      coordsCanonicalized++;
+    }
+  };
+  const noteCanonicalPoint = (before: number[], after: number[]): void => {
+    noteCanonicalCoordinate(before[0], after[0]);
+    noteCanonicalCoordinate(before[1], after[1]);
+  };
 
   // a marker or a room label names its space; the scale of THAT space is the
   // one its centimetres are in
@@ -186,6 +198,7 @@ export function alignAllToGrid(
         r.poly = r.poly.map((p: number[]) => {
           const q = [snapN(p[0]), snapN(p[1])];
           d = Math.max(d, dist(p[0], p[1], q[0], q[1]));
+          noteCanonicalPoint(p, q);
           return q;
         });
       } else if (r.x != null && r.y != null) {
@@ -198,6 +211,10 @@ export function alignAllToGrid(
         const nw = Math.max(GRID_STEP_N, x2 - nx), nh = Math.max(GRID_STEP_N, y2 - ny);
         d = boxShift(x0, y0, w0, h0, nx, ny, nw, nh);
         r.x = nx; r.y = ny; r.w = nw; r.h = nh;
+        noteCanonicalCoordinate(x0, nx);
+        noteCanonicalCoordinate(y0, ny);
+        noteCanonicalCoordinate(x0 + w0, nx + nw);
+        noteCanonicalCoordinate(y0 + h0, ny + nh);
       }
       note(d, cell, sid);
     }
@@ -206,17 +223,22 @@ export function alignAllToGrid(
     for (const draft of sp.room_drafts || []) {
       total++;
       let d = 0;
-      const snapped = (draft.points || []).map((p: number[]) => {
+      const sourcePoints: number[][] = draft.points || [];
+      const snapped = sourcePoints.map((p: number[]) => {
         const q = [snapN(p[0]), snapN(p[1])];
         d = Math.max(d, dist(p[0], p[1], q[0], q[1]));
         return q;
       });
       const points: number[][] = snapped.length ? [snapped[0]] : [];
+      const written: Array<[number[], number[]]> = snapped.length
+        ? [[sourcePoints[0], snapped[0]]]
+        : [];
       const segments: any[] = [];
       for (let i = 0; i + 1 < snapped.length; i++) {
         const next = snapped[i + 1], last = points[points.length - 1];
         if (last && dist(last[0], last[1], next[0], next[1]) <= EPS) continue;
         points.push(next);
+        written.push([sourcePoints[i + 1], next]);
         segments.push({
           ...(draft.segments?.[i] || {}),
           cm: Number(draft.segments?.[i]?.cm) || 15,
@@ -224,6 +246,9 @@ export function alignAllToGrid(
       }
       draft.points = points;
       draft.segments = segments;
+      if (points.length >= 2) {
+        for (const [before, after] of written) noteCanonicalPoint(before, after);
+      }
       note(d, cell, sid);
     }
     if (Array.isArray(sp.room_drafts)) {
@@ -236,10 +261,11 @@ export function alignAllToGrid(
     // ---- independent partitions and columns --------------------------
     for (const p of sp.partitions || []) {
       total++;
-      const a = [snapN(p.a[0]), snapN(p.a[1])];
-      const b = [snapN(p.b[0]), snapN(p.b[1])];
-      let d = Math.max(dist(p.a[0], p.a[1], a[0], a[1]),
-        dist(p.b[0], p.b[1], b[0], b[1]));
+      const beforeA = [p.a[0], p.a[1]], beforeB = [p.b[0], p.b[1]];
+      const a = [snapN(beforeA[0]), snapN(beforeA[1])];
+      const b = [snapN(beforeB[0]), snapN(beforeB[1])];
+      let d = Math.max(dist(beforeA[0], beforeA[1], a[0], a[1]),
+        dist(beforeB[0], beforeB[1], b[0], b[1]));
       const snappedLength = dist(a[0], a[1], b[0], b[1]);
       const hostedFit = (sp.openings || [])
         .filter((opening: any) => opening.host?.kind === 'partition'
@@ -253,15 +279,20 @@ export function alignAllToGrid(
             && along - length / 2 >= -EPS
             && along + length / 2 <= snappedLength + EPS;
         });
-      if (snappedLength > EPS && hostedFit) { p.a = a; p.b = b; }
-      else d = 0;
+      if (snappedLength > EPS && hostedFit) {
+        p.a = a; p.b = b;
+        noteCanonicalPoint(beforeA, a);
+        noteCanonicalPoint(beforeB, b);
+      } else d = 0;
       note(d, cell, sid);
     }
     for (const c of sp.wall_columns || []) {
       total++;
-      const center = [snapN(c.center[0]), snapN(c.center[1])];
-      const d = dist(c.center[0], c.center[1], center[0], center[1]);
+      const before = [c.center[0], c.center[1]];
+      const center = [snapN(before[0]), snapN(before[1])];
+      const d = dist(before[0], before[1], center[0], center[1]);
       c.center = center;
+      noteCanonicalPoint(before, center);
       note(d, cell, sid);
     }
 
@@ -270,20 +301,30 @@ export function alignAllToGrid(
       total++;
       let d = 0;
       if (sh.kind === 'line') {
-        const a = [snapN(sh.x1), snapN(sh.y1)], b = [snapN(sh.x2), snapN(sh.y2)];
-        d = Math.max(dist(sh.x1, sh.y1, a[0], a[1]), dist(sh.x2, sh.y2, b[0], b[1]));
+        const beforeA = [sh.x1, sh.y1], beforeB = [sh.x2, sh.y2];
+        const a = [snapN(beforeA[0]), snapN(beforeA[1])];
+        const b = [snapN(beforeB[0]), snapN(beforeB[1])];
+        d = Math.max(dist(beforeA[0], beforeA[1], a[0], a[1]),
+          dist(beforeB[0], beforeB[1], b[0], b[1]));
         sh.x1 = a[0]; sh.y1 = a[1]; sh.x2 = b[0]; sh.y2 = b[1];
+        noteCanonicalPoint(beforeA, a);
+        noteCanonicalPoint(beforeB, b);
       } else {
-        const nx = snapN(sh.x), ny = snapN(sh.y);
+        const x0 = sh.x, y0 = sh.y, w0 = sh.w, h0 = sh.h;
+        const nx = snapN(x0), ny = snapN(y0);
         if (sh.w != null && sh.h != null) {
-          const x2 = snapN(sh.x + sh.w), y2 = snapN(sh.y + sh.h);
+          const x2 = snapN(x0 + w0), y2 = snapN(y0 + h0);
           const nw = Math.max(GRID_STEP_N, x2 - nx), nh = Math.max(GRID_STEP_N, y2 - ny);
-          d = boxShift(sh.x, sh.y, sh.w, sh.h, nx, ny, nw, nh);
+          d = boxShift(x0, y0, w0, h0, nx, ny, nw, nh);
           sh.w = nw; sh.h = nh;
+          noteCanonicalCoordinate(x0 + w0, nx + nw);
+          noteCanonicalCoordinate(y0 + h0, ny + nh);
         } else {
-          d = dist(sh.x, sh.y, nx, ny);
+          d = dist(x0, y0, nx, ny);
         }
         sh.x = nx; sh.y = ny;
+        noteCanonicalCoordinate(x0, nx);
+        noteCanonicalCoordinate(y0, ny);
       }
       note(d, cell, sid);
     }
@@ -340,6 +381,8 @@ export function alignAllToGrid(
     const nx = snapN(p.x), ny = snapN(p.y);
     const d = dist(p.x, p.y, nx, ny);
     layout[k] = { ...p, x: nx, y: ny };
+    noteCanonicalCoordinate(p.x, nx);
+    noteCanonicalCoordinate(p.y, ny);
     // an entry whose space is gone still moves, and the promise must not
     // shrink because of it: the largest scale on the plan is the safe one
     const sid = typeof p.s === 'string' ? p.s : '';
@@ -348,7 +391,10 @@ export function alignAllToGrid(
 
   return {
     spaces, layout,
-    report: { moved, total, maxShift, maxShiftCm, maxSpace, rotated, removedDrafts },
-    changed: moved > 0,
+    report: {
+      moved, coordsCanonicalized, total, maxShift, maxShiftCm, maxSpace,
+      rotated, removedDrafts,
+    },
+    changed: moved > 0 || coordsCanonicalized > 0,
   };
 }

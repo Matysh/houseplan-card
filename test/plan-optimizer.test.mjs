@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {
   collapseIsolatedWallThicknessIslands, optimizePlans, PLAN_MODEL_VERSION,
 } from '../test-build/plan-optimizer.js';
+import { unionBodies } from '../test-build/physical-geometry.js';
 import { GRID_PITCH, GRID_STEP_N as S, NORM_W } from '../test-build/space-geometry.js';
 import { wallKey } from '../test-build/wall-thickness.js';
 
@@ -16,6 +17,20 @@ const room = (id, x0, x1, openTo) => ({
 });
 
 const exactWall = (a, b, cm) => ({ key: wallKey(a, b, S), a, b, cm });
+
+// Privacy-minimised six-room topology from #218/#223. The relevant stored ULP
+// tails stay literal so this fixture proves that Optimize repairs the source,
+// not merely that render-time boolean normalisation remains resilient.
+const noisySixRoomFloor = [
+  [[0.46666666666666673, 0.7083333333333334], [0.6125, 0.9],
+    [0.4666666666666667, 1], [0.46666666666666673, 0.9]],
+  [[0.1625, 0.3], [0.3458333333333333, 0],
+    [0.46666666666666673, 1], [0.3458333333333333, 1]],
+  [[0.7, 0], [0.8, 0], [0.8, 0.7083333333333334], [0.7, 0.7083333333333334]],
+  [[0.7, 0.7083333333333335], [0.8, 0.7083333333333335], [0.8, 1], [0.7, 1]],
+  [[0.85, 0], [0.9, 0], [0.9, 0.4], [0.85, 0.4]],
+  [[0.85, 0.5], [0.9, 0.5], [0.9, 1], [0.85, 1]],
+];
 
 const microIntervalFixture = (length = S / 3, middleCm = 15, rightCm = 22) => {
   const x0 = 0.2, split = 0.5, x1 = 0.8, y = 0.2;
@@ -55,6 +70,41 @@ test('Optimize collapses one isolated thickness micro-interval and is idempotent
   assert.equal(second.report.canonicalized, 0);
   assert.equal(second.report.wallsMerged, 0);
   assert.deepEqual(second.config, first.config);
+});
+
+test('Optimize canonicalizes the six-room ULP source without claiming a visible move', () => {
+  const config = {
+    model_version: PLAN_MODEL_VERSION,
+    spaces: [{
+      id: 'noisy', title: 'Noisy', view_box: [0, 0, 1, 1], cell_cm: 5,
+      rooms: noisySixRoomFloor.map((poly, index) => ({ id: `room-${index}`, poly })),
+    }],
+    markers: [], settings: {}, future: { kept: true },
+  };
+  const before = structuredClone(config);
+  const first = optimizePlans(config, {});
+
+  assert.deepEqual(config, before, 'preview never mutates the noisy source');
+  assert.equal(first.changed, true);
+  assert.equal(first.report.moved, 0);
+  assert.equal(first.report.maxShift, 0);
+  assert.equal(first.report.maxShiftCm, 0);
+  assert.ok(first.report.coordsCanonicalized > 0);
+  assert.deepEqual(first.config.future, { kept: true });
+  for (const item of first.config.spaces[0].rooms) {
+    for (const [x, y] of item.poly) {
+      assert.equal(x, Math.round(x / S) * S);
+      assert.equal(y, Math.round(y / S) * S);
+    }
+  }
+  assert.ok(unionBodies(first.config.spaces[0].rooms.map((item) => item.poly)),
+    'downstream boolean geometry accepts the exact candidate');
+
+  const second = optimizePlans(first.config, first.layout);
+  assert.equal(second.changed, false);
+  assert.equal(second.report.coordsCanonicalized, 0);
+  assert.deepEqual(second.config, first.config);
+  assert.deepEqual(second.layout, first.layout);
 });
 
 test('micro-interval cleanup has a strict half-step boundary at both coordinate scales', () => {

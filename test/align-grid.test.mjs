@@ -38,12 +38,59 @@ const detunedLayout = () => ({
   junk: { s: 'f1' },                                    // no coordinates: skipped
 });
 
-test('snapN is idempotent and leaves a node bit-identical', () => {
+test('snapN returns the exact nearest node and is idempotent', () => {
   const node = 12 / GRID_N;
-  assert.equal(snapN(node), node);            // untouched, not "re-rounded"
+  assert.equal(snapN(node), node);
+  const canonical = 112 * S;
+  const noisy = 0.46666666666666673;
+  assert.notEqual(noisy, canonical);
+  assert.equal(snapN(noisy), canonical, 'a one-ULP tail must not survive Optimize');
   const off = node + S / 3;
   assert.ok(Math.abs(snapN(off) - node) < 1e-12);
   assert.equal(snapN(snapN(off)), snapN(off));
+});
+
+test('near-node report counts only coordinate values actually written to the candidate', () => {
+  const canonical = 112 * S;
+  const noisy = 0.46666666666666673;
+  const spaces = [{
+    id: 'f1', rooms: [
+      { id: 'poly', poly: [[noisy, 0.2], [0.6, 0.2], [0.6, 0.4], [0.2, 0.4]] },
+      { id: 'rect', x: 0, y: 0.5, w: noisy, h: 0.2 },
+    ],
+    partitions: [
+      { id: 'accepted', a: [noisy, 0.2], b: [0.6, 0.2], cm: 15 },
+      { id: 'rejected', a: [noisy, 0.4], b: [0.6, 0.4], cm: 15 },
+    ],
+    openings: [{
+      id: 'outside-host', type: 'door', x: 0.5, y: 0.4, angle: 0, length: 0.05,
+      host: { kind: 'partition', id: 'rejected', t: 2 },
+    }],
+    wall_columns: [{ id: 'column', shape: 'circle', center: [noisy, 0.5], cm: 20 }],
+    decor: [
+      { id: 'line', kind: 'line', x1: noisy, y1: 0.7, x2: 0.6, y2: 0.7 },
+      { id: 'box', kind: 'rect', x: 0, y: 0.8, w: noisy, h: 0.1 },
+      { id: 'text', kind: 'text', x: noisy, y: 0.9, text: 'x' },
+    ],
+  }];
+  const result = alignAllToGrid(spaces, { marker: { s: 'f1', x: noisy, y: 0.5 } });
+
+  assert.equal(result.report.moved, 0, 'ULP cleanup is not a visible move');
+  assert.equal(result.report.maxShift, 0);
+  assert.equal(result.report.maxShiftCm, 0);
+  assert.equal(result.report.coordsCanonicalized, 8);
+  assert.equal(result.changed, true);
+  assert.equal(result.spaces[0].partitions[0].a[0], canonical);
+  assert.equal(result.spaces[0].partitions[1].a[0], noisy,
+    'hostedFit=false keeps the rejected endpoints and must not count them');
+  assert.equal(result.spaces[0].wall_columns[0].center[0], canonical);
+  assert.equal(result.layout.marker.x, canonical);
+});
+
+test('ordinary off-grid movement is not duplicated in the near-node counter', () => {
+  const result = alignAllToGrid([], { marker: { x: 0.2 + S / 3, y: 0.2 } });
+  assert.equal(result.report.moved, 1);
+  assert.equal(result.report.coordsCanonicalized, 0);
 });
 
 test('alignAllToGrid puts every grid-bound element on a node', () => {
@@ -111,6 +158,7 @@ test('idempotent: a second run moves nothing and changes nothing', () => {
   const first = alignAllToGrid(detuned().spaces, detunedLayout());
   const second = alignAllToGrid(first.spaces, first.layout);
   assert.equal(second.report.moved, 0);
+  assert.equal(second.report.coordsCanonicalized, 0);
   assert.equal(second.changed, false);
   assert.deepEqual(second.spaces, first.spaces);
   assert.deepEqual(second.layout, first.layout);
@@ -122,6 +170,7 @@ test('an already-aligned plan reports nothing to do', () => {
   };
   const r = alignAllToGrid(clean.spaces, { d1: { s: 'f1', x: 0.25, y: 0.5 } });
   assert.equal(r.report.moved, 0);
+  assert.equal(r.report.coordsCanonicalized, 0);
   assert.equal(r.changed, false);
   assert.ok(r.report.total >= 2); // it still LOOKED at everything
 });
