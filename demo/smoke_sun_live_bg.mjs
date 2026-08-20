@@ -76,7 +76,7 @@ const res = await page.evaluate(async () => {
   document.dispatchEvent(new Event('visibilitychange'));
   await c.updateComplete;
   out.visibleRestartsClock = c._dayCycleTimer !== 0;
-  out.visibilityKeepsHover = c._hoverRoom?.room === room;
+  out.visibilityClearsHover = c._hoverRoom === null;
   if (ownVisibilityState) Object.defineProperty(document, 'visibilityState', ownVisibilityState);
   else delete document.visibilityState;
 
