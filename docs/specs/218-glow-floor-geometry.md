@@ -219,11 +219,30 @@ saved room coordinates (immutable)
 - warning redacted согласно §9;
 - fail-dark security boundary не ослабляется.
 
-## 15. Acceptance criteria
+## 15. Риски
 
-1. **AC1 — ULP union.** Два прямоугольника с общей гранью, отличающейся на один
-   ULP, после `unionBodies()` дают валидную объединённую геометрию.
-   **Доказательство:** unit, красный при mutant без normalization.
+| Риск | Последствие | Снижение риска и доказательство |
+|---|---|---|
+| Квантование находится в общем `unionBodies()`, а не только в Glow | Невидимый ранее сдвиг кладки, clean floor или `physicalBodiesPath` у соседнего потребителя | Quantum остаётся на много порядков меньше физической и экранной точности; unit покрывает площадь, вершины и input immutability, а существующие wall/floor/physical-geometry tests и golden обязаны остаться зелёными |
+| Legacy-план содержит реально перекрывающиеся комнаты | На fallback покомнатные fragments могут дать иное evenodd-покрытие, чем общий merged path | Fast path с общим union сохраняется; fallback не склеивает перекрывающиеся fragments в один evenodd path без нормализации покрытия; отдельная overlap-fixture сравнивает площадь/coverage с общим union |
+| Наблюдение `0 из 6` для Glow-base имеет другую причину | Основной баг будет исправлен, но вторичное наблюдение останется без объяснения | Targeted smoke фиксирует результат; при иной причине в implementation evidence прямо записывается отрицательный результат и создаётся отдельный issue только после подтверждения пользовательской проблемы |
+| Полный mutation gate слишком дорог для одного review-цикла | Реализация задержится либо мутанты будут заявлены без доказательства | Перед S7 обязательны `--check` и целевые мутанты #218; полный реестр остаётся предрелизным гейтом по PROCESS |
+| Повторный render одной битой комнаты заспамит консоль или раздует dedupe-set | Диагностика сама станет performance/memory-регрессией | Warning дедуплицируется по ограниченному space/fingerprint/room lifecycle, повторный render проверяется console-capture тестом, размер структуры проверяется source review |
+| Слишком широкий fallback случайно вернёт raw visibility fan | Свет протечёт за пределы дома или через кладку | Empty floor, source-in-masonry, outside-floor и total-failure tests остаются строгими fail-dark; existing `smoke_glow_fail_dark` не изменяется ради прохождения задачи |
+
+Откат §19 безопасен для данных и является последней мерой, если соседний
+boolean-потребитель меняет видимую геометрию либо performance выходит за
+действующий Glow budget.
+
+## 16. Acceptance criteria
+
+1. **AC1 — ULP normalization.** Два прямоугольника с общей гранью,
+   отличающейся на один ULP, после `unionBodies()` дают одно тело, а
+   normalization-specific assertion подтверждает канонические координаты без
+   мутации входа. Простая пара является проверкой контракта normalization, но
+   не обязана падать на старом polyclip сама по себе.
+   **Доказательство:** unit; assertion координат красный при mutant без
+   normalization.
 2. **AC2 — реальная regression fixture.** Анонимизированная шестикомнатная
    fixture с точными проблемными парами координат даёт непустой `lit` и
    непустой DOM clipPath включённого источника. **Доказательство:** unit +
@@ -255,9 +274,9 @@ saved room coordinates (immutable)
     generated bundles и screenshot/golden fingerprints актуальны.
     **Доказательство:** docs check, build parity и review diff.
 
-## 16. План автотестов
+## 17. План автотестов
 
-### 16.1. Цикл реализации
+### 17.1. Цикл реализации
 
 ```bash
 npm run typecheck
@@ -274,7 +293,7 @@ Unit matrix:
 - input immutability, repeatability, reversed/permuted bodies;
 - structured callback и diagnostic dedupe.
 
-### 16.2. Targeted smoke перед S7
+### 17.2. Targeted smoke перед S7
 
 ```bash
 node demo/smoke_glow.mjs
@@ -285,7 +304,7 @@ node demo/smoke_glow_fail_dark.mjs
 Добавляется отдельный узкий smoke либо детерминированное расширение
 `smoke_glow` для ULP-fixture, DOM clipPath, Glow-base и console warning.
 
-### 16.3. Mutation gate
+### 17.3. Mutation gate
 
 | id | Мутация | Обязанный guard |
 |---|---|---|
@@ -297,7 +316,7 @@ node demo/smoke_glow_fail_dark.mjs
 Перед S7 выполняются `node scripts/mutation-gate.mjs --check` и целевые мутанты,
 если их runtime укладывается в локальный review gate.
 
-### 16.4. Golden и предрелиз
+### 17.4. Golden и предрелиз
 
 Golden verify выполняется на существующих Glow-сценах: валидные планы не должны
 получить видимый raster diff. Если для #218 добавляется новый visual scenario,
@@ -305,7 +324,7 @@ Golden verify выполняется на существующих Glow-сцен
 полному Linux CI artifact перед бетой. Полный smoke/golden/performance —
 предрелизный гейт по PROCESS, не цикл реализации.
 
-## 17. Release-артефакты
+## 18. Release-артефакты
 
 В user-visible implementation commit обязательны:
 
@@ -318,13 +337,13 @@ Golden verify выполняется на существующих Glow-сцен
 
 User Guide не меняется: настройки и пользовательский сценарий остаются прежними.
 
-## 18. Откат
+## 19. Откат
 
 Откат выполняется одним user-visible implementation commit вместе с tests,
 bundles и changelog. Persisted rollback/migration не нужен. При откате вернётся
 старый полный fail-dark, но сохранённые планы останутся совместимыми.
 
-## 19. Принятые предположения
+## 20. Принятые предположения
 
 Можно свободно изменить на ревью ТЗ без вопроса владельцу:
 
@@ -335,3 +354,6 @@ bundles и changelog. Persisted rollback/migration не нужен. При от�
 4. приватный реальный экспорт не коммитится — только минимальная геометрия с
    сохранёнными проблемными double-значениями;
 5. наблюдение Glow-base считается частью #218 только при той же корневой причине.
+6. простая пара прямоугольников с 1 ULP на текущем polyclip уже объединяется;
+   поэтому красный до исправления regression gate строится на конфликтующей
+   многокомнатной топологии, а простая пара проверяет сам normalization contract.
