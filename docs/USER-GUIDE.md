@@ -235,6 +235,23 @@ The plan image keeps its proportions initially. Background can later move,
 scale or rotate it. Detaching a plan never deletes its server file; deletion
 requires an explicit user action.
 
+### Tab order
+
+Space tabs follow the order in which the spaces were created, and that order can
+be changed: in any editor mode, grab a tab with the mouse and drag it to a new
+position. The new order is saved immediately and applies everywhere — the tabs,
+the kiosk swipe between floors and the carousel arrows.
+
+Dragging works **with a mouse and in the editors only**. In ordinary View and on
+touch screens a tab still does one thing: it switches the space. There it is the
+primary way to navigate, and a gesture must not compete with a plain tap. Order
+is changed on a computer, like the rest of the plan work.
+
+If a card anywhere pins its floor **by number** (`floor: 0`), remember that the
+number means a position: after a reorder such a card shows a different floor.
+The card warns about this once. Pin the floor by space id instead of a number to
+avoid it entirely.
+
 ### Display settings
 
 A space can show/hide room borders, names, LQI, Background and openings. It can

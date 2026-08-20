@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Space tabs can be reordered: grab a tab with the mouse in any editor mode and
+  drop it where it belongs. The order is saved, and swipe and carousel
+  navigation follow it. Markers stay exactly where they were
+  ([#220](https://github.com/Matysh/houseplan-card/issues/220)).
+
 - “Optimize plans” now removes microscopic floating-point noise from stored
   grid coordinates even when nothing visibly moves. Its preview separately
   reports updated spaces and cleaned coordinate values, and a second run is an

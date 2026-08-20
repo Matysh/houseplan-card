@@ -718,6 +718,50 @@ export const MUTANTS = [
     }],
   },
   {
+    id: 'tab-reorder-not-persisted',
+    guard: 'node demo/smoke_space_tab_reorder.mjs',
+    because: 'перестановка вкладок, оставшаяся только в памяти, выглядит рабочей ровно до '
+      + 'перезагрузки страницы — смок обязан требовать запись на сервер',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '    cfg.spaces = applySpaceOrder(cfg.spaces || [], order);\n    this._saveConfig();',
+      replace: '    cfg.spaces = applySpaceOrder(cfg.spaces || [], order);',
+    }],
+  },
+  {
+    id: 'reorder-skips-materialization',
+    guard: 'node demo/smoke_space_tab_reorder.mjs',
+    because: 'без материализации привязки маркер без space и area уезжает вслед за порядком: '
+      + 'его пространство решает firstSpaceId, а тот после перестановки другой (#220 §8.3)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '      const byId = new Map(pinned.map((entry) => [entry.id, entry.space]));',
+      replace: '      const byId = new Map();',
+    }],
+  },
+  {
+    id: 'tab-reorder-eats-click',
+    guard: 'node --test --test-name-pattern="issue 220" test/space-order.test.mjs',
+    because: 'нулевой порог превращает обычный клик по вкладке в перетаскивание, и '
+      + 'переключение пространств — основное действие панели — перестаёт работать',
+    patches: [{
+      file: 'src/space-order.ts',
+      find: 'export const TAB_DRAG_THRESHOLD_PX = 4;',
+      replace: 'export const TAB_DRAG_THRESHOLD_PX = 0;',
+    }],
+  },
+  {
+    id: 'tab-reorder-ignores-pointer-type',
+    guard: 'node --test --test-name-pattern="issue 220" test/space-order.test.mjs',
+    because: 'на тач-устройстве вкладки — это навигация View, где тап обязан оставаться тапом; '
+      + 'решение владельца «Touch editor: not exposed» держится именно этой проверкой',
+    patches: [{
+      file: 'src/space-order.ts',
+      find: "  if (ctx.pointerType !== 'mouse') return false;",
+      replace: '  if (false) return false;',
+    }],
+  },
+  {
     id: 'internal-path-ignores-query',
     guard: 'node scripts/backend-test-guard.mjs issue_225',
     because: 'разбор url строкой вместо urlsplit возвращает баг #225: кэш-бастер '
