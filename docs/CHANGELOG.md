@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.66.0-beta.1 — 2026-08-20
+
 - Door and gate locks now use green for locked and red for unlocked on both
   compact opening badges and ordinary device markers. Every glyph on an orange
   device core is now white in the light theme and dark in the dark theme
