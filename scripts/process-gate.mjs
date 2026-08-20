@@ -254,7 +254,22 @@ export function checkSpecs(commits, specFiles, labelsOf = null) {
   return out;
 }
 
-// 7. документов ревью на issue не больше четырёх (§4, лимит циклов)
+// 7. документов ревью на issue не больше шести.
+//
+// Порог НЕ равен лимиту циклов (§4), и это не небрежность. Документ нумеруется
+// по ЗАХОДУ ревью, а бюджет §4 тратят только вердикты с блокирующими находками
+// (#227): зелёное ревью, слияние которого не удалось, требует повторного захода
+// после ребейза — это другой код (§2.10) — но цикла не образует. Значит заходов
+// законно бывает больше, чем циклов, и порог, равный лимиту, превращал бы
+// разрешённый ребейз в отказ гейта. Ровно этот класс противоречия — правило
+// против собственной проверки — и разбирался в #227.
+//
+// Шесть = четыре цикла плюс два ребейза. Не бесконечность: пятнадцать
+// документов на одном issue означают, что что-то пошло не так, и это стоит
+// увидеть.
+export const REVIEW_DOC_LIMIT = 6;
+
+
 export function checkReviewDocLimit(files) {
   if (!files.length) {
     return [{ level: 'warn', rule: 7, sha: '-', msg: 'документов ревью не найдено — проверка 7 пропущена' }];
@@ -269,10 +284,10 @@ export function checkReviewDocLimit(files) {
   }
   const out = [];
   for (const [nn, rounds] of byIssue) {
-    if (Math.max(...rounds) > 4 || rounds.length > 4) {
+    if (Math.max(...rounds) > REVIEW_DOC_LIMIT || rounds.length > REVIEW_DOC_LIMIT) {
       out.push({
         level: 'fail', rule: 7, sha: '-',
-        msg: `issue #${nn}: документов ревью ${rounds.length}, максимум r${Math.max(...rounds)} — лимит 4 цикла исчерпан`,
+        msg: `issue #${nn}: документов ревью ${rounds.length}, максимум r${Math.max(...rounds)} — больше ${REVIEW_DOC_LIMIT} заходов на один issue`,
       });
     }
   }
@@ -281,7 +296,7 @@ export function checkReviewDocLimit(files) {
 
 // Правило №1 говорит о продуктовом коде и инструментах, а не о документации.
 // Поэтому статус issue спрашивается только у коммитов класса A/B. Иначе краснел
-// бы каждый документ ревью: он ложится в ветку, пока issue в S4-spec-review или
+// бы каждый документ ревью: он ложится в ветку задачи, пока issue в S4-spec-review или
 // S7-code-review, и рабочего статуса у задачи в этот момент нет.
 export function commitsUnderRuleOne(commits) {
   return commits.filter(
