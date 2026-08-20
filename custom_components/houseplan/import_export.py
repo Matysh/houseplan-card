@@ -17,6 +17,7 @@ import unicodedata
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Callable
+from urllib.parse import urlsplit
 
 import voluptuous as vol
 
@@ -348,6 +349,24 @@ def placement_manifest(config: dict[str, Any], layout: dict[str, Any]) -> list[d
 
 
 def _internal_path(root: Path, url: str) -> tuple[str, Path] | None:
+    # A url is parsed as a url, not as a string: everything after "?" or "#"
+    # addresses the transfer, never the file. Legacy attachments carry a
+    # cache-buster (".../files/m1/doc.pdf?v=1783170649"), and while the string
+    # form fed "doc.pdf?v=1783170649" to sanitize_filename the name never
+    # matched itself — the reference read as internal-but-non-canonical and
+    # every backup holding one refused to import (issue #225). Path segments
+    # keep doing the guarding: dropping the query cannot widen what a segment
+    # is allowed to be.
+    #
+    # Only a same-document reference may be trusted this way: with a scheme or
+    # an authority the path belongs to another host, and taking it would let
+    # "https://evil.example/houseplan_files/files/m1/doc.pdf" resolve onto a
+    # local file (review CODE-REVIEW-225-r1, M1). Such a url stays external,
+    # which is also what _looks_internal says about it.
+    parsed = urlsplit(url)
+    if parsed.scheme or parsed.netloc:
+        return None
+    url = parsed.path
     content_plan = CONTENT_URL + "/plans/_/"
     if url.startswith(content_plan) or url.startswith(PLANS_URL + "/"):
         prefix = content_plan if url.startswith(content_plan) else PLANS_URL + "/"
