@@ -1,4 +1,4 @@
-<!-- release: v1.66.0-beta.1 -->
+<!-- release: v1.66.0 -->
 
 ## Основное
 
@@ -14,5 +14,5 @@
 - Locked states are now green and unlocked states red; glyphs on orange cores follow the light and dark themes consistently.
 - Small fixes and improvements.
 
-[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.66.0-beta.1/docs/CHANGELOG.ru.md)
-· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.66.0-beta.1/docs/CHANGELOG.md)
+[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.66.0/docs/CHANGELOG.ru.md)
+· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.66.0/docs/CHANGELOG.md)

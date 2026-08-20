@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+## v1.66.0 — 2026-08-20
+
+- Text device markers once again use a capsule-shaped outer outline instead of
+  an ellipse.
+- Glow no longer disappears from an entire space because of floating-point
+  noise or one malformed room outline.
+- Door and gate locks use green for locked and red for unlocked, while glyphs
+  on orange device cores follow the light and dark themes consistently.
+- Small fixes and improvements.
+
 ## v1.66.0-beta.1 — 2026-08-20
 
 - Door and gate locks now use green for locked and red for unlocked on both
