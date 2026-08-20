@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.65.0-beta.9 — 2026-08-20
+
 - Device marker cores now stay concentric with their outer shell at fractional
   sizes and common DPRs. Their current footprint is preserved without a late
   `0.9` visual factor, while the MDI glyph is 10% larger. A value capsule owns
