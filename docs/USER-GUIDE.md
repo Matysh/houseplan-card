@@ -310,8 +310,9 @@ near-end openings remain visible and are not moved until their geometry is
 edited.
 
 An opening may bind a contact; doors and gates may also bind a lock. View paints
-the moving leaf and state. A lock badge is green when locked and orange when
-unlocked. A plan tap never toggles a lock. The opening card provides a labelled
+the moving leaf and state. A lock badge uses the package's black/dark locked
+state and amber unlocked state. A plan tap never toggles a lock. The opening
+card provides a labelled
 lock/unlock control, with confirmation before unlocking.
 
 Openings may slide along joined wall corners. A double click in Plan opens
@@ -435,14 +436,17 @@ state; and always-static icon. A separate value badge can show an entity state,
 useful attribute, average LQI or linked light state on any side of the marker.
 Text and adjacent values are sections of the same shell. They shrink to a
 readable floor and then expand the shell; they are never ellipsized.
+The complete visible value capsule is one hover and action target: clicking or
+tapping its value section runs exactly the same configured action and safety
+checks as the icon core.
 
 Virtual devices use the ordinary neutral/hover background with a dashed outer
 circle. An HA-less virtual device does not invent unavailable or activity;
 a linked virtual light may still follow its real controller. Unavailable keeps the ordinary
 presentation with the standard icon opacity reduction, no visual hover and no
 motion; its existing click/tap still opens information or settings. Marker LQI
-is red at 0–40, amber at 41–179 and green at 180+, without changing the room
-fill gradient.
+uses the same continuous red-to-green scale as before the package update; the
+room fill gradient and the displayed number are unchanged.
 
 Interactive View/kiosk and Device-editor markers have at least a 44×44 CSS px
 target. Enter and Space reuse the exact current click and confirmation path;

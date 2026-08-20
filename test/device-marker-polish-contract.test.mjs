@@ -4,18 +4,40 @@ import { readFileSync } from 'node:fs';
 
 const source = (name) => readFileSync(new URL(`../src/${name}`, import.meta.url), 'utf8');
 
-test('issue 212 applies one visual 0.9 factor without shrinking the hit target', () => {
+test('issue 213 resolves the effective base before the face without a late visual factor', () => {
   const styles = source('styles.ts');
-  assert.match(styles, /--device-visual-factor:\s*0\.9\s*;/);
+  assert.doesNotMatch(styles, /--device-visual-factor/);
   assert.match(
     styles,
-    /--dev-size:\s*calc\([^;]*var\(--device-visual-factor,\s*0\.9\)[^;]*\);/,
+    /--dev-size:\s*calc\(\s*var\(--device-base-size,\s*2\.25cqw\)\s*\*\s*var\(--dev-scale,\s*1\)\s*\)/,
   );
   assert.match(styles, /width:\s*max\(44px,\s*var\(--device-shell-size\)\)/);
   assert.match(
     styles,
-    /--puck-size:\s*calc\([^;]*var\(--device-visual-factor,\s*0\.9\)[^;]*\);/,
+    /--puck-size:\s*calc\(\s*var\(--device-base-size,\s*2\.25cqw\)\s*\*\s*0\.8\s*\)/,
   );
+  assert.match(styles, /--mdc-icon-size:\s*calc\([^;]*var\(--dev-size[^;]*\*\s*0\.55\)/);
+});
+
+test('issue 213 gives the visual shell a shared-centre frame that owns capsule input', () => {
+  const styles = source('styles.ts');
+  const face = source('device-face.ts');
+  assert.match(face, /class="device-shell-frame"/);
+  assert.match(styles, /\.device-shell-frame\s*\{[\s\S]*inset:\s*calc\(var\(--device-shell-inset\)\s*\/\s*-1\)/);
+  assert.match(styles, /\.device-shell-frame\s*\{[\s\S]*pointer-events:\s*auto/);
+  assert.match(styles, /\.device-shell\s*\{[\s\S]*padding:\s*0/);
+});
+
+test('issue 213 projects opening locks through the compact package layers', () => {
+  const styles = source('styles.ts');
+  const card = source('houseplan-card.ts');
+  assert.match(styles, /--oplock-size:\s*calc\(var\(--icon-size,\s*2\.5cqw\)\s*\*\s*0\.62\)/);
+  assert.match(styles, /--oplock-core-size:\s*calc\(var\(--oplock-size\)\s*\/\s*1\.26875\)/);
+  assert.match(styles, /\.oplock ha-icon\s*\{[\s\S]*--mdc-icon-size:[^;]*\*\s*0\.55/);
+  assert.match(styles, /\.oplock\.unlocked\s*\{[\s\S]*--oplock-core-bg:\s*#F0A00C/);
+  assert.doesNotMatch(styles, /\.oplock\.locked\s*\{[^}]*#66d17a/i);
+  assert.match(card, /class="oplock \$\{deviceThemeClass\(this\._renderPlanHass\)\}/);
+  assert.match(card, /class="oplock-shell"[\s\S]*class="oplock-core"/);
 });
 
 test('issue 212 Text value uses a stadium radius based on height', () => {

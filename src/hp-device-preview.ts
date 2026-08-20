@@ -351,6 +351,7 @@ class HpDevicePreview extends LitElement {
         pointer-events: none;
         container-type: inline-size;
         --icon-size: 54px;
+        --device-base-size: 48.6px;
       }
       .previewfit { position: absolute; left: 50%; top: 50%; transform-origin: center; }
       .previewstage .dev { left: 0; top: 0; cursor: default; }

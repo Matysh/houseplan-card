@@ -574,14 +574,14 @@ export const MUTANTS = [
   },
   {
     id: 'device-visual-factor-removed',
-    guard: 'node --test --test-name-pattern="issue 212 applies one visual" '
+    guard: 'node --test --test-name-pattern="issue 213 resolves the effective base" '
       + 'test/device-marker-polish-contract.test.mjs',
-    because: 'the owner-requested 10% correction must stay in the shared marker geometry '
-      + 'without changing stored icon_size or the interaction target',
+    because: 'the current effective size must be resolved once at the surface boundary; '
+      + 'restoring a late face-level 0.9 factor would shrink every marker a second time',
     patches: [{
       file: 'src/styles.ts',
-      find: '      --device-visual-factor: 0.9;',
-      replace: '      --device-visual-factor: 1;',
+      find: '      --dev-size: calc(var(--device-base-size, 2.25cqw) * var(--dev-scale, 1));',
+      replace: '      --dev-size: calc(var(--device-base-size, 2.25cqw) * var(--dev-scale, 1) * 0.9);',
     }],
   },
   {

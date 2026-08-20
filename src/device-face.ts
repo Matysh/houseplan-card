@@ -114,6 +114,7 @@ export function renderDeviceFace(
       ? html`<span class="habadge" title=${options.disabledTitle || ''} aria-hidden="true"><ha-icon icon="mdi:power-plug-off-outline"></ha-icon></span>`
       : nothing}
     <span class=${shellClasses} aria-hidden="true">
+      <span class="device-shell-frame"></span>
       <span class="device-core">
         ${presentation.valueText != null
           ? html`<span class="valtext" title=${presentation.valueFullText || presentation.valueText}

@@ -51,13 +51,14 @@ const options = {
   showSignal: true,
 };
 
-test('marker LQI is categorical without changing the room-fill gradient', () => {
+test('marker LQI keeps semantic bands while its colour uses the continuous gradient', () => {
   assert.deepEqual([0, 40, 41, 179, 180].map(markerLqiBand), [
     'low', 'low', 'mid', 'mid', 'high',
   ]);
-  assert.deepEqual([40, 41, 179, 180].map(markerLqiColor), [
-    '#F0410C', '#F0A00C', '#F0A00C', '#1DC21D',
-  ]);
+  for (const lqi of [0, 40, 41, 110, 179, 180, 255]) {
+    assert.equal(markerLqiColor(lqi), lqiColor(lqi));
+  }
+  assert.notEqual(markerLqiColor(41), markerLqiColor(42));
   assert.equal(lqiColor(110), 'hsl(60, 85%, 55%)');
 });
 

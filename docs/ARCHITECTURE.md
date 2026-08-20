@@ -220,8 +220,11 @@ mutable and warning-deduplicated.
 
 ## Sizes
 
-`icon_size` in the config = **% of the visible plan area width** (default 2.5). Implementation:
-`.stage { container-type: inline-size }` + sizes in `cqw`. Legacy px values (>8) are ignored.
+`icon_size` in the config = **% of the visible plan area width** (default 2.5).
+The surface boundary resolves this legacy public unit to the current effective
+device base (`2.25` for the default) before the shared face sees it; the face
+does not apply a late visual factor. Implementation: `.stage {
+container-type: inline-size }` + sizes in `cqw`. Legacy px values (>8) are ignored.
 
 ## Sticky header
 
@@ -238,8 +241,11 @@ projection (sources, value, icon, classes, metrics and explanation),
 `src/device-face.ts` renders one package-derived shell/core DOM on the full plan,
 device preview and static space card. The saved coordinate remains the icon-core
 centre; Text is shell-centred, while a Double shell extends around the anchored
-core. The 101.5/80 shell/core ratio, Light/Dark context, full-text fitting and
-44×44 interactive hit area are renderer facts rather than surface-specific DOM.
+core. The 101.5/80 shell/core ratio, shared shell/core centre, Light/Dark
+context, full-text fitting and 44×44 core-centred interaction floor are
+renderer facts rather than surface-specific DOM. A positioned shell frame owns
+the complete visible capsule hit area; its event bubbles to the marker's one
+action path.
 `badge` shows the icon/morph and semantic core; `icon_ripple` additionally shows three finite
 event waves or one continuous wave for presence, mechanical transition and actual work;
 `value` replaces the icon
@@ -256,9 +262,9 @@ suppresses legacy output. Bottom badges stack above system LQI, and a derived
 LQI badge de-duplicates that system row. `hp-device-preview` fits and centres
 the complete face bounding box rather than allowing satellites to clip.
 `normalizeDeviceDisplay()` is the mandatory compatibility gate for every consumer and maps
-legacy `ripple` to `icon_ripple`. `markerLqiBand()` / `markerLqiColor()` are
-deliberately marker-only (`<=40` red, `41…179` amber, `>=180` green); room fill
-keeps the continuous `logic.ts::lqiColor()` gradient. The marker dialog builds
+legacy `ripple` to `icon_ripple`. `markerLqiBand()` remains marker-only semantic
+metadata for accessibility, while `markerLqiColor()` delegates to the shared
+continuous `logic.ts::lqiColor()` red-to-green scale. The marker dialog builds
 its unsaved draft through `buildDevices`,
 then `hp-device-preview` shows the actual projection, integration provenance from
 registry/config-entry metadata and isolated short/continuous activity demonstrations.
@@ -548,8 +554,9 @@ are two casement leaves. A gate has the same data/light/contact/lock semantics a
 uses two half-width leaves opening only 10° toward the exterior face and no large swing arc.
 Its default width in the editor is 300 cm. `openingAmount` (pure) maps the contact state to
 0..1: no sensor → door/gate drawn open / window closed (static-plan convention);
-`unavailable`/`unknown` freeze that default. The lock renders as an HTML padlock badge
-(`.oplock`) in the device layer; a lock is
+`unavailable`/`unknown` freeze that default. The lock renders as a compact
+package-derived shell/core HTML padlock badge (`.oplock`) in the device layer,
+with theme-aware locked/unlocked/unknown states; a lock is
 **never** toggled from the plan (`resolveToggleIntent` returns a secure no-op). View-mode UX: hover outline,
 drag along walls (continuous re-snap, saved on release), click → status card (250 ms timer),
 double click → properties dialog. In markup mode the "Opening" tool handles clicks instead.

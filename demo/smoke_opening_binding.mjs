@@ -43,6 +43,33 @@ const out = await page.evaluate(async () => {
   const contactValues = c._contactCandidates().map((item) => item.value);
   const lockValues = c._lockCandidates().map((item) => item.value);
   const openings = c._openingsR;
+  const lockBadge = sr().querySelector('.oplock');
+  const originalLockClass = lockBadge?.className || '';
+  const lockVisual = (theme, state) => {
+    lockBadge.className = `oplock theme-${theme} ${state}`;
+    const shell = lockBadge.querySelector('.oplock-shell');
+    const core = lockBadge.querySelector('.oplock-core');
+    const icon = lockBadge.querySelector('ha-icon');
+    const shellStyle = getComputedStyle(shell);
+    const coreStyle = getComputedStyle(core);
+    const shellRect = shell.getBoundingClientRect();
+    const coreRect = core.getBoundingClientRect();
+    const iconRect = icon.getBoundingClientRect();
+    return {
+      shell: shellStyle.borderColor,
+      core: coreStyle.backgroundColor,
+      glyph: coreStyle.color,
+      shellCoreRatio: shellRect.width / coreRect.width,
+      glyphCoreRatio: iconRect.width / coreRect.width,
+      footprint: shellRect.width,
+    };
+  };
+  const lockVisualMatrix = Object.fromEntries(['light', 'dark'].map((theme) => [theme, {
+    locked: lockVisual(theme, 'locked'),
+    unlocked: lockVisual(theme, 'unlocked'),
+    unknown: lockVisual(theme, 'unknown'),
+  }]));
+  if (lockBadge) lockBadge.className = originalLockClass;
   const result = {
     entityTombstoneCandidate: contactValues.includes('binary_sensor.window'),
     deviceTombstoneCandidate: lockValues.includes('lock.front_door'),
@@ -55,6 +82,27 @@ const out = await page.evaluate(async () => {
     sharedContactDrivesBoth: openings.length === 2
       && openings.every((opening) => c._openingAmt(opening) === 1),
     sharedLockRendersTwice: sr().querySelectorAll('.oplock').length === 2,
+    openingLockUsesPackageGeometryAndStates:
+      Object.values(lockVisualMatrix).every((theme) => Object.values(theme).every((state) =>
+        Math.abs(state.shellCoreRatio - 1.26875) < 0.03
+        && Math.abs(state.glyphCoreRatio - 0.55) < 0.03
+        && state.footprint > 0))
+      && lockVisualMatrix.light.locked.core === 'rgb(0, 0, 0)'
+      && lockVisualMatrix.light.locked.shell === 'rgb(0, 0, 0)'
+      && lockVisualMatrix.light.locked.glyph === 'rgb(255, 255, 255)'
+      && lockVisualMatrix.dark.locked.core === 'rgb(37, 37, 37)'
+      && lockVisualMatrix.dark.locked.shell === 'rgb(37, 37, 37)'
+      && lockVisualMatrix.dark.locked.glyph === 'rgb(255, 255, 255)'
+      && lockVisualMatrix.light.unlocked.core === 'rgb(240, 160, 12)'
+      && lockVisualMatrix.light.unlocked.shell === 'rgb(240, 160, 12)'
+      && lockVisualMatrix.light.unlocked.glyph === 'rgb(255, 255, 255)'
+      && lockVisualMatrix.dark.unlocked.core === 'rgb(240, 160, 12)'
+      && lockVisualMatrix.dark.unlocked.shell === 'rgb(240, 160, 12)'
+      && lockVisualMatrix.dark.unlocked.glyph === 'rgb(37, 37, 37)'
+      && lockVisualMatrix.light.unknown.core === 'rgb(255, 255, 255)'
+      && lockVisualMatrix.light.unknown.shell === 'rgb(188, 188, 188)'
+      && lockVisualMatrix.dark.unknown.core === 'rgb(37, 37, 37)'
+      && lockVisualMatrix.dark.unknown.shell === 'rgba(37, 37, 37, 0.75)',
     deletionKeepsOpeningFields: JSON.stringify(openingRefs()) === refsBefore,
   };
 

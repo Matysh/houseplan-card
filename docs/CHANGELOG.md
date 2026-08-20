@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Device marker cores now stay concentric with their outer shell at fractional
+  sizes and common DPRs. Their current footprint is preserved without a late
+  `0.9` visual factor, while the MDI glyph is 10% larger. A value capsule owns
+  hover and the configured action across its complete visible area; opening
+  lock badges follow the compact light/dark Lock/Unlock artwork; and marker
+  LQI colours again move continuously from red to green
+  ([#213](https://github.com/Matysh/houseplan-card/issues/213)).
+
 ## v1.65.0-beta.8 — 2026-08-20
 
 - Device markers are now 10% more compact without moving their saved centres or

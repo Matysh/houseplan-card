@@ -38,6 +38,7 @@ import {
 } from './device-presentation';
 import { presentationSnapshotKey } from './render-device-snapshot';
 import { deviceFaceStyle, deviceThemeClass, renderDeviceFace } from './device-face';
+import { effectiveDeviceBaseSize } from './device-marker-geometry';
 import { valueBadgeTitle } from './device-value-badge';
 import { contentFingerprint } from './visual-continuity';
 import type { VirtualLightSnapshot } from './virtual-light-state';
@@ -174,6 +175,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   const colors = fillColorsOf(o.cfg.settings);
   const cfgSize = o.iconSize ?? 2.5;
   const iconPct = cfgSize > 8 ? 2.5 : cfgSize;
+  const deviceBasePct = effectiveDeviceBaseSize(iconPct);
 
   const planHass = o.registry ? activeRegistryHass(o.hass, o.registry) : o.hass;
   const registryHass = o.registry ? fullRegistryHass(o.hass, o.registry) : o.hass;
@@ -545,10 +547,10 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
       ${''/* docs/CANVAS.md §6: the same expression as the full card. The
              static card has no zoom, but its frame is the CONTENT now, so a
              bare `iconPct` would make markers shrink relative to the plan the
-             tighter the frame got. `iconCqw` keeps the marker's footprint at
-             iconPct% of the plan's base unit, which is what it was when the
-             frame was the stored view_box. */}
-      <div class="devlayer" style="--icon-size:${iconCqw(iconPct, space, vb[2]).toFixed(3)}cqw">${markers}${labels}</div>
+             tighter the frame got. `iconCqw` keeps the resolved device base
+             proportional to the plan's base unit, as it was when the frame
+             was the stored view_box. */}
+      <div class="devlayer" style="--icon-size:${iconCqw(iconPct, space, vb[2]).toFixed(3)}cqw;--device-base-size:${iconCqw(deviceBasePct, space, vb[2]).toFixed(3)}cqw">${markers}${labels}</div>
     </div>
   `;
 }

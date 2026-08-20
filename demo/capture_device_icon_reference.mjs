@@ -87,10 +87,10 @@ async function runtimePng(theme, row, size) {
       'sel', 'lock-locked', 'lock-unlocked',
     ]);
     node.classList.add(`theme-${themeName}`, ...classes);
-    node.style.setProperty('--icon-size', `${px}px`);
+    node.style.setProperty('--device-base-size', `${px}px`);
     node.style.setProperty('--dev-scale', '1');
     node.querySelector('.device-core')?.style.setProperty('transition', 'none');
-    node.querySelector('.device-shell')?.style.setProperty('transition', 'none');
+    node.querySelector('.device-shell-frame')?.style.setProperty('transition', 'none');
     if (clearValues) node.querySelectorAll('.value-badge').forEach((value) => value.remove());
     node.blur();
   }, {
@@ -113,7 +113,7 @@ async function runtimePng(theme, row, size) {
     node.querySelector('.lqi')?.style.setProperty('display', 'none');
   });
   const clip = await page.$eval(selector(row.id), (node) => {
-    const shell = node.querySelector('.device-shell').getBoundingClientRect();
+    const shell = node.querySelector('.device-shell-frame').getBoundingClientRect();
     const pad = 22;
     return {
       x: Math.max(0, shell.left - pad),

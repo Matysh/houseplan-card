@@ -40,12 +40,17 @@ const out = await page.evaluate(async () => {
   // vs a NEUTRAL badge: the robot's own base is yellow while cleaning
   const devEl = sr().querySelector('.dev:not(.on)');
   const devCore = devEl.querySelector('.device-core');
-  const devShell = devEl.querySelector('.device-shell');
+  const devShell = devEl.querySelector('.device-shell-frame');
   const pcs = getComputedStyle(puck);
   o.puckPlateMatchesDev = pcs.backgroundColor === getComputedStyle(devCore).backgroundColor
     && pcs.borderTopColor === getComputedStyle(devShell).borderTopColor;
-  o.puck80pct = Math.abs(puck.getBoundingClientRect().width
-    - devCore.getBoundingClientRect().width * 0.8) < 2;
+  const originalScale = devEl.style.getPropertyValue('--dev-scale');
+  devEl.style.setProperty('--dev-scale', '1');
+  const puckWidth = parseFloat(getComputedStyle(puck).width);
+  const deviceCoreWidth = devCore.getBoundingClientRect().width;
+  if (originalScale) devEl.style.setProperty('--dev-scale', originalScale);
+  else devEl.style.removeProperty('--dev-scale');
+  o.puck80pct = Math.abs(puckWidth - deviceCoreWidth * 0.8) < 0.5;
   o.noWedge = !sr().querySelector('.vacwedge'); // owner 2026-07-31: no heading arrow
   // the glyph is DEAD centre (owner report: it floated on the text baseline)
   const pr = puck.getBoundingClientRect();

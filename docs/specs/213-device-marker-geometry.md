@@ -26,7 +26,7 @@
 капсулы не включает hover. После изменения все концентрические слои остаются
 визуально по центру, фактический размер маркера не меняется, глиф становится на
 10% крупнее, LQI снова использует плавную шкалу, дверной замок соответствует
-#179, а вся капсула является mouse-hover областью.
+#179, а вся капсула является общей областью hover и действия.
 
 ## 3. Проблема и подтверждённые причины
 
@@ -83,7 +83,7 @@ No-Blur fallback; owner override Dark Unlock остаётся amber.
 3. Увеличить базовый MDI viewport на 10% без отдельного glyph multiplier.
 4. Перевести opening Lock/Unlock на принятую визуальную систему #179 без
    изменения security/action contract.
-5. Сделать всю видимую value/legacy capsule mouse-hover областью.
+5. Сделать всю видимую value/legacy capsule общей областью hover и действия.
 6. Вернуть marker LQI прежнюю плавную цветовую шкалу, меняя только цвет.
 
 ## 6. Scope
@@ -112,7 +112,6 @@ No-Blur fallback; owner override Dark Unlock остаётся amber.
   значения LQI;
 - изменение low/mid/high категорий в aria-label/data attributes;
 - изменение непрерывной комнатной LQI-заливки;
-- расширение либо сокращение click/tap/action области value capsule;
 - новый hover на touch/pen, sticky hover или новая touch-editor parity;
 - изменение lock service calls, подтверждения Unlock либо secure invariant;
 - backdrop-filter на marker/opening lock;
@@ -192,8 +191,12 @@ layout без per-size special cases. Запрещены hardcoded `translateX/Y
 
 - DOM-centres core и его shell-end отличаются не более чем на один browser
   layout quantum;
-- alpha/color-weighted painted centroids расходятся менее чем на 0.5 физического
-  пикселя по каждой оси;
+- на изолированных solid diagnostic слоях alpha/color-weighted centroid
+  расходится не более чем на половину CSS-пикселя плюс один anti-alias quantum
+  (`DPR / 2 + 0.1` физического пикселя), а центр дискретного painted support —
+  не более чем на один физический raster pixel; это откалиброванные пределы
+  смены чётности диаметров, а не допуск устойчивого смещения на один
+  CSS-пиксель;
 - противоположные видимые inset не дают устойчивой однопиксельной ступени;
 - проверка умеет покраснеть на v1.65.0-beta.8 либо на документированном mutant,
   восстанавливающем прежний layout.
@@ -229,7 +232,7 @@ Unknown/unavailable сохраняет нейтральный `lock-question` с
 маркеров устройств не получают нового lock action. Скрытый/disabled/missing
 exact opening reference ведёт себя по прежним #117 правилам.
 
-## 11. Hover всей внешней capsule
+## 11. Hover и действие всей внешней capsule
 
 Для `.device-shell.with-values` видимая border-box capsule целиком является
 mouse-hover областью, включая:
@@ -241,15 +244,17 @@ mouse-hover областью, включая:
 - все четыре направления right/bottom/left/top.
 
 Над любой точкой capsule активируются те же visual hover, z-index и tooltip,
-что над core. Hover остаётся instance-local и разрешён только canonical
+что над core. Click/tap, long press и действие marker также работают по всей
+видимой capsule, включая value/legacy sections и промежутки; используется тот
+же action, confirmation и security contract, что у core. Hover остаётся
+instance-local и разрешён только canonical
 `data-pointer-hover` после настоящей fine mouse. Touch/pen и compatibility mouse
 не включают и не оставляют hover; unavailable по-прежнему не получает visual
 hover.
 
-Расширение касается hover/tooltip. Click/tap/action hit contract и 44×44 core
-target не расширяются скрыто на value sections. Реализация обязана отделить
-hover ownership от action ownership, если browser bubbling иначе превратил бы
-всю capsule в новую click target.
+Минимальный core-centred target 44×44 сохраняется, но больше не является
+единственной action-областью для вытянутого marker. Keyboard path остаётся на
+самом marker и выполняет то же действие независимо от наличия sections.
 
 Preview воспроизводит визуальный hover при переданном mouse gate, но остаётся
 неинтерактивным. Static plan marker остаётся read-only; его footer button не
@@ -322,7 +327,10 @@ opening exact lock state
 
 real mouse modality
   → full capsule hover owner
-  → visual hover + tooltip; action owner remains unchanged
+  → visual hover + tooltip
+
+full capsule pointer target
+  → existing marker action / confirmation / long press
 ```
 
 Ожидаемые зоны изменений:
@@ -388,9 +396,10 @@ real mouse modality
    capsule включает один mouse visual hover/z-index/tooltip; unavailable,
    touch/pen и compatibility mouse не включают его. **Доказательство:** real
    PointerEvent desktop/hybrid browser smoke + computed styles.
-8. **AC8 — action boundary.** Value/legacy section не становится новым click/
-   tap action target; core/44×44 action semantics, confirmation и gesture safety
-   прежние. **Доказательство:** pointer target/action-count smoke.
+8. **AC8 — action всей capsule.** Click/tap по value/legacy section и
+   промежутку выполняет то же marker action, что core; confirmation, secure
+   invariant и gesture safety сохраняются. Core-centred target остаётся не
+   меньше 44×44. **Доказательство:** four-side pointer target/action-count smoke.
 9. **AC9 — continuous marker LQI.** Marker color совпадает с `lqiColor()` на
    representative и boundary-adjacent values; 40/41 и 179/180 не используют
    дискретные palette jumps. **Доказательство:** pure boundary/dense-range tests
@@ -476,7 +485,7 @@ Linux CI artifact. Перед beta выполняются full smoke, golden и 
 | Pixel тест окажется привязан к платформе | DOM invariant + alpha centroid; golden canon только Linux |
 | Больший glyph клиппится у сложного MDI path | representative custom/state-swapped matrix на min size |
 | Opening lock станет слишком крупным | сохраняется текущий compact footprint, меняются внутренние ratios |
-| Hover capsule расширит click target | разные hover/action owners и action-count smoke |
+| Capsule даст двойной action через bubbling | единый handler на marker и action-count smoke |
 | Continuous marker LQI затронет room fill | reuse `lqiColor`, отдельный marker projection и room regression |
 | Refactor добавит layout/compositor cost | CSS-only geometry, no observers/blur, pre-beta performance |
 
@@ -511,7 +520,7 @@ beta; stable — только после promotion rule.
 2. Перенести current effective sizes на единую base-resolution boundary и
    удалить late factor из face/puck.
 3. Перестроить concentric shell/core tracks и увеличить direct glyph base.
-4. Подключить full-capsule hover с отдельным action owner.
+4. Подключить full-capsule hover и существующий marker action к единому target.
 5. Вернуть continuous marker LQI color при неизменном band/a11y.
 6. Перевести opening lock на #179 tokens/geometry, сохранив compact footprint и
    security path.
@@ -528,15 +537,18 @@ beta; stable — только после promotion rule.
    его внутренние proportions/tokens, а не новый абсолютный размер.
 2. Unknown opening lock использует package shell/default theme и текущий
    `lock-question`, потому что архив не содержит отдельного Unknown asset.
-3. Запрос владельца расширяет именно hover/tooltip value capsule; click/tap
-   target остаётся прежним, так как отдельного решения расширить действие нет.
+3. По уточнению владельца во время реализации вся видимая capsule является и
+   hover-, и action-target; отдельного hover-only слоя нет.
 4. Low/mid/high band остаётся только semantic/a11y facet; цвет независимо
    разрешается общей continuous `lqiColor()`.
 5. Base compatibility может нормализоваться один раз на границе surface size,
    но внутри `.dev`, puck и face запрещён любой поздний 0.9-equivalent factor.
-6. Pixel-centroid smoke использует controlled solid background и color/alpha
-   segmentation; точные thresholds калибруются failing-before-fix/mutant и не
-   становятся browser-vendor whitelist.
+6. Pixel-centroid smoke использует controlled solid background, изолированные
+   solid shell/core слои и color/alpha segmentation. Совместный тонкий annulus
+   не используется для centroid: вычитание большой core-площади усиливает
+   обычный edge-AA. Предел weighted-centroid `DPR / 2 + 0.1` и предел painted
+   support в один физический raster pixel получены на матрице DPR и дополняются
+   нулевым DOM-center delta и mutant на 1 CSS px; это не browser whitelist.
 7. Общий concentric layout предпочтительнее размера, округлённого через CSS
    `round()`: последний зависит от поддержки WebView и не решает shared-center
    invariant сам по себе.

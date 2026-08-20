@@ -214,6 +214,7 @@ import {
   type RenderDeviceSnapshot,
 } from './render-device-snapshot';
 import { deviceFaceStyle, deviceThemeClass, renderDeviceFace } from './device-face';
+import { effectiveDeviceBaseSize } from './device-marker-geometry';
 import {
   ModeTransitionController, viewportFromViewBox,
   type HouseplanMode, type ModeTransitionState, type ModeVisualState, type ModeViewBox,
@@ -15662,6 +15663,7 @@ class HouseplanCard extends LitElement {
     const showLqi = disp.showLqi ?? this._config.show_signal ?? true;
     const cfgSize = this._config.icon_size ?? 2.5;
     const iconPct = cfgSize > 8 ? 2.5 : cfgSize;
+    const deviceBasePct = effectiveDeviceBaseSize(iconPct);
     const view = this._viewOr(this._baseVb());
     const floorView = this._floorView(view);
     // Background around the plan (view/kiosk; editors keep their own canvas).
@@ -16077,9 +16079,10 @@ class HouseplanCard extends LitElement {
                  ordinary plan (pixel-identical) but grows with a plan drawn
                  past the old square, where a fixed 1000 would have shrunk
                  every marker to a dot. Same expression as the static
-                 space-card, so the two renderers agree. The per-device
-                 multiplier and the kiosk scales still feed --dev-size. */}
-          <div class="devlayer" style="--icon-size:${iconCqw(iconPct, space, view.w, this._kiosk ? this._kioskScale.icon : 1).toFixed(3)}cqw;--rl-icon-size:${iconCqw(iconPct, space, this._roomLabelReferenceViewWidth(view), this._kiosk ? this._kioskScale.icon : 1).toFixed(3)}cqw;--rl-font:${this._kiosk ? this._kioskScale.font : 1}">
+                 space-card, so the two renderers agree. The compatibility
+                 base is resolved before `iconCqw`; only the per-device and
+                 kiosk multipliers still feed --dev-size. */}
+          <div class="devlayer" style="--icon-size:${iconCqw(iconPct, space, view.w, this._kiosk ? this._kioskScale.icon : 1).toFixed(3)}cqw;--device-base-size:${iconCqw(deviceBasePct, space, view.w, this._kiosk ? this._kioskScale.icon : 1).toFixed(3)}cqw;--rl-icon-size:${iconCqw(iconPct, space, this._roomLabelReferenceViewWidth(view), this._kiosk ? this._kioskScale.icon : 1).toFixed(3)}cqw;--rl-font:${this._kiosk ? this._kioskScale.font : 1}">
             ${devs.map((d) => this._renderDevice(d, view, showLqi))}
             ${this._renderVacuums(devs, view)}
             ${this._renderVacFit(view)}
@@ -17811,10 +17814,14 @@ class HouseplanCard extends LitElement {
       const point = this._scenePoint([px, py]);
       const left = ((point[0] - view.x) / view.w) * 100;
       const top = ((point[1] - view.y) / view.h) * 100;
-      return html`<div class="oplock ${locked ? 'locked' : known ? 'unlocked' : 'unknown'}"
+      return html`<div class="oplock ${deviceThemeClass(this._renderPlanHass)} ${locked ? 'locked' : known ? 'unlocked' : 'unknown'}"
         style="left:${left}%;top:${top}%"
         @click=${(e: MouseEvent) => { e.stopPropagation(); if (this._mode === 'view') this._openingInfo = o; }}>
-        <ha-icon icon="${locked ? 'mdi:lock' : known ? 'mdi:lock-open-variant' : 'mdi:lock-question'}"></ha-icon>
+        <span class="oplock-shell" aria-hidden="true">
+          <span class="oplock-core">
+            <ha-icon icon="${locked ? 'mdi:lock' : known ? 'mdi:lock-open-variant' : 'mdi:lock-question'}"></ha-icon>
+          </span>
+        </span>
       </div>`;
     })}`;
   }

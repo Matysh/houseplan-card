@@ -375,6 +375,22 @@ owner's amber Dark Unlock override are recorded in that directory's README.
       covered by `smoke_device_preview_parity`, `smoke_static_icon` and
       `smoke_disabled_device` after a fresh production build.
 
+## Device marker geometry and input polish (#213)
+
+- [ ] `node demo/smoke_device_icon_pixel_alignment.mjs` covers core bases
+      24…112 CSS px in quarter-pixel steps at DPR 1/1.25/1.5/2. DOM centres,
+      isolated painted centroids/support and a deliberate 1 CSS px mutant must
+      distinguish browser raster parity from a persistent offset.
+- [ ] `node demo/smoke_device_icon_design.mjs` keeps the effective 32/56/96
+      geometry, uses the direct 0.55 MDI/core ratio and proves hover plus the
+      configured action from the far value-capsule end at right/bottom/left/top.
+- [ ] Opening binding/registry-less/lock-action smokes preserve the secure
+      no-toggle-on-plan invariant while checking compact Light/Dark
+      locked/unlocked/unknown shell/core presentation.
+- [ ] Unit presentation coverage compares marker LQI colour with the shared
+      continuous `lqiColor()` across former 40/41 and 179/180 boundaries; bands
+      remain semantic metadata only.
+
 ## Touch support and release gates
 
 The product contract is defined in `docs/TOUCH-SUPPORT.md`:
@@ -1593,7 +1609,8 @@ require hands on real hardware — they remain for the human pass.
 - [ ] Bind a contact sensor: open → leaf swings and the arc draws on in the accent colour;
       closed → leaf lies along the wall, arc hidden; invert flips this
 - [ ] Sensor unavailable → the opening freezes at its static default (door open / window closed)
-- [ ] A door with a lock shows the padlock badge: green locked / orange unlocked / grey unknown
+- [ ] A door with a lock shows the package padlock badge: black/dark locked,
+      amber unlocked and neutral unknown in both themes
 - [ ] A gate defaults to 300 cm, has two equal leaves, no swing arc and opens
       10° outwards; contact, inversion, lock, drag and resize anchoring match a door
 - [ ] Clicking an opening (or the padlock) in view mode opens the info card with both states;

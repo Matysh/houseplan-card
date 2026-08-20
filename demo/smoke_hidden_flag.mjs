@@ -44,7 +44,7 @@ Object.assign(out, await page.evaluate(async () => {
   o.ghostHasNoState = !!g && !g.classList.contains('on') && !g.classList.contains('open')
     && !g.classList.contains('unavail') && !g.classList.contains('alarm');
   // и он синий, а не тёмный — отличим от недоступного устройства
-  const ghostShell = g?.querySelector('.device-shell');
+  const ghostShell = g?.querySelector('.device-shell-frame');
   o.ghostIsBlue = !!ghostShell && getComputedStyle(ghostShell).borderStyle.includes('dashed')
     && getComputedStyle(ghostShell).borderColor !== 'rgb(255, 255, 255)';
   // тумблер локальный: конфиг не трогается

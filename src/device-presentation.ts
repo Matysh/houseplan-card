@@ -16,7 +16,7 @@ import {
   type DeviceActivity, type DeviceVisualState, type EntityVisualSample,
 } from './device-visual';
 import {
-  hassValue, lightColorOf, normalizeDeviceDisplay, stateIcon, valueWithUnit,
+  hassValue, lightColorOf, lqiColor, normalizeDeviceDisplay, stateIcon, valueWithUnit,
   type DeviceDisplayMode,
 } from './logic';
 import { resolveToggleIntent, toggleCoverEntity } from './device-toggle';
@@ -49,10 +49,9 @@ export function markerLqiBand(lqi: number): DeviceLqiBand {
   return 'high';
 }
 
-/** Marker numbers are categorical. Room fill deliberately keeps logic.ts's gradient. */
+/** Colour is continuous; the separate band remains semantic/a11y metadata. */
 export function markerLqiColor(lqi: number): string {
-  const band = markerLqiBand(lqi);
-  return band === 'low' ? '#F0410C' : band === 'mid' ? '#F0A00C' : '#1DC21D';
+  return lqiColor(lqi);
 }
 
 export function deviceA11yState(presentation: Pick<

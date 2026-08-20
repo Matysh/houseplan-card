@@ -81,6 +81,7 @@ await page.evaluate(async () => {
     ['d_tv', marker('d_tv', { display: 'value' })],
     ['d_temp', marker('d_temp', {
       display: 'badge',
+      tap_action: 'more-info',
       value_badge: {
         enabled: true,
         source: { kind: 'entity_state', entity_id: 'sensor.living_temp' },
@@ -138,7 +139,7 @@ await page.waitForTimeout(220);
 const selector = (id) => `.dev[data-id="${id}"]`;
 const beforeUnavailable = await page.$eval(selector('d_kettle'), (node) => ({
   core: getComputedStyle(node.querySelector('.device-core')).backgroundColor,
-  shell: getComputedStyle(node.querySelector('.device-shell')).borderColor,
+  shell: getComputedStyle(node.querySelector('.device-shell-frame')).borderColor,
   opacity: getComputedStyle(node).opacity,
 }));
 await page.hover(selector('d_kettle'));
@@ -148,7 +149,7 @@ await page.hover(selector('d_kettle'));
 await page.waitForTimeout(220);
 const afterUnavailable = await page.$eval(selector('d_kettle'), (node) => ({
   core: getComputedStyle(node.querySelector('.device-core')).backgroundColor,
-  shell: getComputedStyle(node.querySelector('.device-shell')).borderColor,
+  shell: getComputedStyle(node.querySelector('.device-shell-frame')).borderColor,
   opacity: getComputedStyle(node).opacity,
 }));
 
@@ -157,19 +158,73 @@ await page.waitForTimeout(220);
 const ordinaryHover = await page.$eval(selector('d_tv'), (node) => ({
   core: getComputedStyle(node.querySelector('.device-core')).backgroundColor,
   glyph: getComputedStyle(node.querySelector('.device-core')).color,
-  shell: getComputedStyle(node.querySelector('.device-shell')).borderColor,
+  shell: getComputedStyle(node.querySelector('.device-shell-frame')).borderColor,
 }));
 await page.$eval(selector('d_tv'), (node) => {
   node.querySelector('.device-core').style.transition = 'none';
-  node.querySelector('.device-shell').style.transition = 'none';
+  node.querySelector('.device-shell-frame').style.transition = 'none';
   node.classList.remove('theme-dark');
   node.classList.add('theme-light');
 });
 const lightHover = await page.$eval(selector('d_tv'), (node) => ({
   core: getComputedStyle(node.querySelector('.device-core')).backgroundColor,
   glyph: getComputedStyle(node.querySelector('.device-core')).color,
-  shell: getComputedStyle(node.querySelector('.device-shell')).borderColor,
+  shell: getComputedStyle(node.querySelector('.device-shell-frame')).borderColor,
 }));
+await page.evaluate(() => {
+  const c = window.__card;
+  window.__capsuleActionCount = 0;
+  window.__capsuleOriginalMoreInfo = c._openMoreInfo;
+  c._openMoreInfo = () => { window.__capsuleActionCount++; };
+});
+const capsulePositions = [];
+for (const [index, position] of ['right', 'bottom', 'left', 'top'].entries()) {
+  await page.mouse.move(1, 1);
+  await page.$eval(selector('d_temp'), (node, nextPosition) => {
+    const shell = node.querySelector('.device-shell');
+    const badge = node.querySelector('.value-badge');
+    for (const name of ['right', 'bottom', 'left', 'top']) {
+      shell.classList.remove(`pos-${name}`);
+      badge.classList.remove(`pos-${name}`);
+    }
+    shell.classList.add(`pos-${nextPosition}`);
+    badge.classList.add(`pos-${nextPosition}`);
+  }, position);
+  const valuePoint = await page.$eval(selector('d_temp'), (node, nextPosition) => {
+    const value = node.querySelector('.value-badge').getBoundingClientRect();
+    const center = { x: value.left + value.width / 2, y: value.top + value.height / 2 };
+    if (nextPosition === 'right') center.x = value.right - 1;
+    if (nextPosition === 'left') center.x = value.left + 1;
+    if (nextPosition === 'bottom') center.y = value.bottom - 1;
+    if (nextPosition === 'top') center.y = value.top + 1;
+    return center;
+  }, position);
+  await page.mouse.move(valuePoint.x, valuePoint.y);
+  await page.waitForTimeout(220);
+  const hover = await page.$eval(selector('d_temp'), (node, point) => {
+    return {
+      core: getComputedStyle(node.querySelector('.device-core')).backgroundColor,
+      hovered: node.matches(':hover'),
+      target: node.getRootNode().elementFromPoint(point.x, point.y)?.className || '',
+    };
+  }, valuePoint);
+  await page.mouse.click(valuePoint.x, valuePoint.y);
+  const actionCount = await page.evaluate(() => window.__capsuleActionCount);
+  capsulePositions.push({ position, hover, actionAccepted: actionCount === index + 1 });
+}
+const capsuleCorePoint = await page.$eval(selector('d_temp'), (node) => {
+  const core = node.querySelector('.device-core').getBoundingClientRect();
+  return { x: core.left + core.width / 2, y: core.top + core.height / 2 };
+});
+await page.mouse.click(capsuleCorePoint.x, capsuleCorePoint.y);
+const capsuleActions = await page.evaluate(() => {
+  const c = window.__card;
+  const count = window.__capsuleActionCount;
+  c._openMoreInfo = window.__capsuleOriginalMoreInfo;
+  delete window.__capsuleOriginalMoreInfo;
+  delete window.__capsuleActionCount;
+  return count;
+});
 await page.$eval(selector('d_tv'), (node) => {
   node.classList.remove('theme-light');
   node.classList.add('theme-dark');
@@ -177,34 +232,48 @@ await page.$eval(selector('d_tv'), (node) => {
 await page.mouse.move(1, 1);
 await page.waitForTimeout(220);
 
-const result = await page.evaluate(async ({ beforeUnavailable, afterUnavailable, ordinaryHover, lightHover, reference }) => {
+const result = await page.evaluate(async ({ beforeUnavailable, afterUnavailable, ordinaryHover, lightHover, capsulePositions, capsuleActions, reference }) => {
   const c = window.__card;
   const sr = () => c.shadowRoot || c.renderRoot;
   const node = (id) => sr().querySelector(`.dev[data-id="${id}"]`);
   const rect = (element) => element?.getBoundingClientRect();
   const light = node('d_light1');
   const lightShell = light?.querySelector('.device-shell');
+  const lightFrame = light?.querySelector('.device-shell-frame');
   const lightCore = light?.querySelector('.device-core');
-  const shellRect = rect(lightShell);
+  const shellRect = rect(lightFrame);
   const coreRect = rect(lightCore);
   const presence = node('d_motion');
   const unavailable = node('d_kettle');
   const text = node('d_tv');
+  const lqiSamples = ['d_temp', 'd_motion', 'd_window', 'd_lamp'].map((id) => {
+    const marker = node(id);
+    const label = marker?.querySelector('.lqi');
+    const value = Number(label?.textContent?.trim());
+    if (!label || !Number.isFinite(value)) return null;
+    const hue = Math.max(0, Math.min(120, Math.round(((value - 40) / 140) * 120)));
+    const probe = document.createElement('span');
+    probe.style.color = `hsl(${hue}, 85%, 55%)`;
+    sr().append(probe);
+    const expected = getComputedStyle(probe).color;
+    probe.remove();
+    return { value, actual: getComputedStyle(label).color, expected };
+  }).filter(Boolean);
   const textCoreRect = rect(text?.querySelector('.device-core'));
   const textCoreRadius = parseFloat(
     getComputedStyle(text?.querySelector('.device-core')).borderTopLeftRadius,
   );
   const double = node('d_temp');
-  const doubleShellRect = rect(double?.querySelector('.device-shell'));
+  const doubleShellRect = rect(double?.querySelector('.device-shell-frame'));
   const doubleCoreRect = rect(double?.querySelector('.device-core'));
   const doubleValueRect = rect(double?.querySelector('.value-badge'));
   const pseudo = getComputedStyle(light, '::before');
   lightCore.style.transition = 'none';
-  lightShell.style.transition = 'none';
+  lightFrame.style.transition = 'none';
   text.querySelector('.device-core').style.transition = 'none';
-  text.querySelector('.device-shell').style.transition = 'none';
+  text.querySelector('.device-shell-frame').style.transition = 'none';
   const coreStyle = getComputedStyle(lightCore);
-  const activeShellStyle = getComputedStyle(lightShell);
+  const activeShellStyle = getComputedStyle(lightFrame);
   const valueRadius = parseFloat(getComputedStyle(double?.querySelector('.value-badge')).borderTopLeftRadius);
   const coreRadiusText = coreStyle.borderTopLeftRadius;
   const radiusIsHalf = (value, rectangle) => value.endsWith('%')
@@ -213,14 +282,14 @@ const result = await page.evaluate(async ({ beforeUnavailable, afterUnavailable,
 
   const lockNode = node('d_lock');
   lockNode.querySelector('.device-core').style.transition = 'none';
-  lockNode.querySelector('.device-shell').style.transition = 'none';
+  lockNode.querySelector('.device-shell-frame').style.transition = 'none';
   const darkThemeClassProjected = lockNode.classList.contains('theme-dark');
   const darkThemeCore = getComputedStyle(lockNode.querySelector('.device-core')).backgroundColor;
   const darkLockGlyph = getComputedStyle(lockNode.querySelector('.device-core')).color;
-  const darkLockShell = getComputedStyle(lockNode.querySelector('.device-shell')).borderColor;
+  const darkLockShell = getComputedStyle(lockNode.querySelector('.device-shell-frame')).borderColor;
   const originalLockClasses = lockNode.className;
   const originalLockStyle = lockNode.getAttribute('style') || '';
-  lockNode.style.setProperty('--icon-size', '56px');
+  lockNode.style.setProperty('--device-base-size', '50.4px');
   lockNode.style.setProperty('--dev-scale', '1');
   const stateClasses = [
     'theme-light', 'theme-dark', 'on', 'open', 'alarm', 'unavail', 'virtual',
@@ -230,7 +299,7 @@ const result = await page.evaluate(async ({ beforeUnavailable, afterUnavailable,
     lockNode.classList.remove(...stateClasses);
     lockNode.classList.add(`theme-${theme}`, ...classes);
     const core = getComputedStyle(lockNode.querySelector('.device-core'));
-    const shell = getComputedStyle(lockNode.querySelector('.device-shell'));
+    const shell = getComputedStyle(lockNode.querySelector('.device-shell-frame'));
     return {
       core: core.backgroundColor,
       glyph: core.color,
@@ -254,19 +323,24 @@ const result = await page.evaluate(async ({ beforeUnavailable, afterUnavailable,
 
   const originalLightStyle = light.getAttribute('style') || '';
   const originalDoubleStyle = double.getAttribute('style') || '';
-  const sizeMatrix = [32, 56, 96].map((size) => {
-    light.style.setProperty('--icon-size', `${size}px`);
+  const sizeMatrix = [
+    { configured: 32, effective: 28.8 },
+    { configured: 56, effective: 50.4 },
+    { configured: 96, effective: 86.4 },
+  ].map(({ configured, effective }) => {
+    light.style.setProperty('--device-base-size', `${effective}px`);
     light.style.setProperty('--dev-scale', '1');
-    double.style.setProperty('--icon-size', `${size}px`);
+    double.style.setProperty('--device-base-size', `${effective}px`);
     double.style.setProperty('--dev-scale', '1');
     const sizedCore = rect(light.querySelector('.device-core'));
-    const sizedShell = rect(light.querySelector('.device-shell'));
+    const sizedShell = rect(light.querySelector('.device-shell-frame'));
     const sizedIcon = rect(light.querySelector('ha-icon'));
     const sizedValue = rect(double.querySelector('.value-badge'));
     const iconSvg = light.querySelector('ha-icon')?.shadowRoot?.querySelector('svg');
     const pathBox = iconSvg?.querySelector('path')?.getBBox();
     return {
-      requested: size,
+      configured,
+      effective,
       core: sizedCore?.width || 0,
       shell: sizedShell?.width || 0,
       coreRadius: getComputedStyle(light.querySelector('.device-core')).borderTopLeftRadius,
@@ -283,23 +357,23 @@ const result = await page.evaluate(async ({ beforeUnavailable, afterUnavailable,
   light.classList.remove('theme-dark');
   light.classList.add('theme-light');
   const lightActiveGlyph = getComputedStyle(lightCore).color;
-  const lightActiveShell = getComputedStyle(lightShell).borderColor;
+  const lightActiveShell = getComputedStyle(lightFrame).borderColor;
   light.classList.remove('theme-light');
   light.classList.add('theme-dark');
 
-  const defaultShell = getComputedStyle(text.querySelector('.device-shell')).borderColor;
+  const defaultShell = getComputedStyle(text.querySelector('.device-shell-frame')).borderColor;
   text.classList.remove('theme-dark');
   text.classList.add('theme-light');
   const lightThemeCore = getComputedStyle(text.querySelector('.device-core')).backgroundColor;
   text.classList.remove('theme-light');
   text.classList.add('theme-dark');
   text.classList.add('sel');
-  const selectedShell = getComputedStyle(text.querySelector('.device-shell')).borderColor;
+  const selectedShell = getComputedStyle(text.querySelector('.device-shell-frame')).borderColor;
   const selectedCoreDecoration = getComputedStyle(text.querySelector('.device-core')).boxShadow;
   text.classList.remove('sel');
-  text.focus();
+  text.focus({ focusVisible: true });
   const focusVisibleMatched = text.matches(':focus-visible');
-  const focusShell = getComputedStyle(text.querySelector('.device-shell')).borderColor;
+  const focusShell = getComputedStyle(text.querySelector('.device-shell-frame')).borderColor;
   const focusCoreDecoration = getComputedStyle(text.querySelector('.device-core')).boxShadow;
   text.blur();
 
@@ -378,6 +452,8 @@ const result = await page.evaluate(async ({ beforeUnavailable, afterUnavailable,
       valueRadius,
       lightActiveGlyph,
       lightActiveShell,
+      lightClasses: light.className,
+      lightShellVariable: getComputedStyle(light).getPropertyValue('--device-shell-stroke'),
       lightThemeCore,
       focusVisibleMatched,
       focusShell,
@@ -388,26 +464,29 @@ const result = await page.evaluate(async ({ beforeUnavailable, afterUnavailable,
       reference,
       lightHover,
       ordinaryHover,
+      capsulePositions,
+      capsuleActions,
+      lqiSamples,
     },
     referenceAssetsLoaded: Object.values(reference).every((theme) => Object.values(theme)
       .every((state) => state.core.startsWith('rgb')
         && state.glyph.startsWith('rgb') && state.shell.startsWith('rgb'))),
     geometryMatchesAt32_56_96: sizeMatrix.every((sample) =>
-      Math.abs(sample.core - sample.requested * 0.9) <= 0.5
+      Math.abs(sample.core - sample.effective) <= 0.5
       && Math.abs(sample.shell / sample.core - 1.26875) < 0.03
       && sample.coreRadius === '50%'
       && Math.abs(sample.valueHeight / sample.core - 0.7875) < 0.015
       && Math.abs(sample.valueRadius - sample.valueHeight / 2) <= 0.5
-      && Math.abs(sample.iconViewport / sample.core - 0.5) < 0.01
-      && Math.abs(sample.paintedWidth / sample.core - 0.416667) < 0.015
-      && Math.abs(sample.paintedHeight / sample.core - 0.416667) < 0.015),
+      && Math.abs(sample.iconViewport / sample.core - 0.55) < 0.01
+      && Math.abs(sample.paintedWidth / sample.core - 0.458333) < 0.015
+      && Math.abs(sample.paintedHeight / sample.core - 0.458333) < 0.015),
     referenceStateMatrixMatches: ['light', 'dark'].every((theme) =>
       ['default', 'active', 'lock', 'unlock', 'alert'].every((state) =>
         stateMatrix[theme][state].core === reference[theme][state].core
         && stateMatrix[theme][state].glyph === reference[theme][state].glyph
         && stateMatrix[theme][state].shell === reference[theme][state].shell
         && Math.abs(stateMatrix[theme][state].shellWidth
-          - Math.max(1, Math.floor(reference[theme][state].shellWidth * 56 * 0.9))) <= 0.5)),
+          - Math.max(1, Math.floor(reference[theme][state].shellWidth * 50.4))) <= 0.5)),
     referenceHoverMatches: lightHover.core === reference.light.hover.core
       && lightHover.glyph === reference.light.hover.glyph
       && lightHover.shell === reference.light.default.shell
@@ -426,8 +505,8 @@ const result = await page.evaluate(async ({ beforeUnavailable, afterUnavailable,
       && Math.abs(textCoreRadius - textCoreRect.height / 2) <= 0.5,
     valueBadgeIsPill: !!doubleValueRect
       && Math.abs(valueRadius - doubleValueRect.height / 2) <= 0.5,
-    packageShadowColor: getComputedStyle(lightShell).boxShadow.includes('37, 40, 45'),
-    noBackdropBlur: getComputedStyle(lightShell).backdropFilter === 'none',
+    packageShadowColor: getComputedStyle(lightFrame).boxShadow.includes('37, 40, 45'),
+    noBackdropBlur: getComputedStyle(lightFrame).backdropFilter === 'none',
     activeUsesPackageAmber: getComputedStyle(lightCore).backgroundColor === 'rgb(240, 160, 12)'
       && activeShellStyle.borderColor === 'rgb(240, 160, 12)'
       && getComputedStyle(lightCore).color === 'rgb(37, 37, 37)',
@@ -459,8 +538,18 @@ const result = await page.evaluate(async ({ beforeUnavailable, afterUnavailable,
     lqiBandsProjected: node('d_temp')?.getAttribute('data-lqi-band') === 'low'
       && node('d_window')?.getAttribute('data-lqi-band') === 'mid'
       && node('d_lamp')?.getAttribute('data-lqi-band') === 'high',
+    lqiUsesContinuousComputedColor: lqiSamples.length >= 3
+      && lqiSamples.every((sample) => sample.actual === sample.expected)
+      && lqiSamples.some((sample) => sample.value > 41 && sample.value < 179
+        && sample.actual !== 'rgb(240, 160, 12)'),
     unavailableHasNoHoverOrMotion: JSON.stringify(beforeUnavailable) === JSON.stringify(afterUnavailable)
       && beforeUnavailable.opacity === '0.35' && !unavailable.querySelector('.device-pulse'),
+    valueCapsuleOwnsHoverAndActionAtEveryPosition: capsulePositions.length === 4
+      && capsulePositions.every(({ hover, actionAccepted }) => hover.hovered
+        && hover.core === 'rgb(12, 130, 240)'
+        && String(hover.target).includes('device-shell-frame')
+        && actionAccepted)
+      && capsuleActions === 5,
     unavailableAriaIsReadable: /unavailable/i.test(aria) && /LQI|signal/i.test(aria),
     textIsComplete: text?.querySelector('.valtext')?.textContent
       === 'A very long localized device value without clipping'
@@ -474,7 +563,7 @@ const result = await page.evaluate(async ({ beforeUnavailable, afterUnavailable,
     editorKeyboardOpensSettings,
     planNotInTabOrder,
   };
-}, { beforeUnavailable, afterUnavailable, ordinaryHover, lightHover, reference });
+}, { beforeUnavailable, afterUnavailable, ordinaryHover, lightHover, capsulePositions, capsuleActions, reference });
 
 const { __debug, ...out } = result;
 if (Object.values(out).some((value) => value !== true)) {

@@ -165,11 +165,13 @@ const res = await page.evaluate(async () => {
   const staticNode = card.renderRoot.querySelector('.dev[data-id="d_light1"]');
   const staticFace = face(staticNode);
   const staticBadgeFace = face(card.renderRoot.querySelector('.dev[data-id="d_temp"]'));
-  const visualFactorParity = [
+  const resolvedBaseContract = [
     sr().querySelector('.dev[data-id="d_light1"]'),
     persistedPreview?.renderRoot?.querySelector('.dev'),
     staticNode,
-  ].every((node) => getComputedStyle(node).getPropertyValue('--device-visual-factor').trim() === '0.9');
+  ].every((node) => node
+    && getComputedStyle(node).getPropertyValue('--device-visual-factor').trim() === ''
+    && parseFloat(getComputedStyle(node).getPropertyValue('--device-base-size')) > 0);
 
   return {
     allFacesPresent: !!planFace && !!previewFace && !!staticFace,
@@ -186,7 +188,7 @@ const res = await page.evaluate(async () => {
     badgeBounds,
     valueBadgePlanPreviewParity: JSON.stringify(planBadgeFace) === JSON.stringify(persistedPreviewFace),
     valueBadgePlanStaticParity: JSON.stringify(planBadgeFace) === JSON.stringify(staticBadgeFace),
-    visualFactorParity,
+    resolvedBaseContract,
     bottomBadgeLqiStacked,
     staticBindingHook: staticNode?.getAttribute('data-binding-status') === 'active',
   };

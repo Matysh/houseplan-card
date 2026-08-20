@@ -102,6 +102,7 @@ test('Text and Double use one shared shell and deterministic full-text fitting',
     : Array.isArray(value) ? value.map(flatten).join('') : String(value ?? '');
   const markup = flatten(root);
   assert.match(markup, /device-shell/);
+  assert.match(markup, /device-shell-frame/);
   assert.match(markup, /device-core/);
   assert.match(markup, /device-sections/);
   assert.match(markup, /band-/);

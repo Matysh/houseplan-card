@@ -10,7 +10,6 @@ export const cardStyles = css`
       --hp-accent: var(--primary-color, #3ea6ff);
       --hp-on: #ffd45c;
       --hp-open: #ff9f43;
-      --device-visual-factor: 0.9;
       /* design tokens (UI chrome only). The icon/plan scale math stays on
          --icon-size/--dev-size cqw units and never uses these. */
       /* spacing scale, fact-based; stray 3/5/7/9/13/14px values are unified
@@ -762,31 +761,100 @@ export const cardStyles = css`
       cursor: default;
     }
     .oplock {
+      --oplock-size: calc(var(--icon-size, 2.5cqw) * 0.62);
+      --oplock-core-size: calc(var(--oplock-size) / 1.26875);
+      --oplock-stroke-ratio: 0.01875;
+      --oplock-stroke-width: max(1px, calc(var(--oplock-core-size) * var(--oplock-stroke-ratio)));
+      --oplock-core-bg: light-dark(#fff, #252525);
+      --oplock-core-fg: light-dark(#252525, #fff);
+      --oplock-shell-stroke: light-dark(#BCBCBC, rgb(37 37 37 / 75%));
+      --oplock-shell-shadow:
+        0 calc(var(--oplock-core-size) * .025) calc(var(--oplock-core-size) * .05) rgb(37 40 45 / 12%),
+        0 calc(var(--oplock-core-size) * .1) calc(var(--oplock-core-size) * .175)
+          calc(var(--oplock-core-size) * -.025) rgb(37 40 45 / 18%);
+      --oplock-core-shadow: 0 0 0 0 transparent;
       pointer-events: none; /* inert while editing; clickable in View (rule below) */
       position: absolute;
       transform: translate(-50%, -50%);
-      width: calc(var(--icon-size, 2.5cqw) * 0.62);
-      height: calc(var(--icon-size, 2.5cqw) * 0.62);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--hp-bg);
-      border: 1px solid var(--hp-line);
+      width: var(--oplock-size);
+      height: var(--oplock-size);
+      display: grid;
+      place-items: center;
+      border: 0;
+      background: transparent;
       z-index: 1;
+    }
+    .oplock.theme-light {
+      --oplock-core-bg: #fff;
+      --oplock-core-fg: #252525;
+      --oplock-shell-stroke: #BCBCBC;
+    }
+    .oplock.theme-dark {
+      --oplock-core-bg: #252525;
+      --oplock-core-fg: #fff;
+      --oplock-shell-stroke: rgb(37 37 37 / 75%);
+      --oplock-core-shadow:
+        inset 0 calc(var(--oplock-core-size) * .0125)
+          calc(var(--oplock-core-size) * .0125) rgb(255 255 255 / 70%);
     }
     .stage.mode-view .oplock {
       pointer-events: auto;
       cursor: pointer;
     }
+    .oplock-shell {
+      box-sizing: border-box;
+      width: 100%;
+      height: 100%;
+      border: var(--oplock-stroke-width) solid var(--oplock-shell-stroke);
+      border-radius: 50%;
+      background: transparent;
+      box-shadow: var(--oplock-shell-shadow);
+      display: grid;
+      place-items: center;
+      pointer-events: none;
+      backdrop-filter: none;
+    }
+    .oplock-core {
+      width: var(--oplock-core-size);
+      height: var(--oplock-core-size);
+      border-radius: 50%;
+      background: var(--oplock-core-bg);
+      color: var(--oplock-core-fg);
+      box-shadow: var(--oplock-core-shadow);
+      display: grid;
+      place-items: center;
+      pointer-events: none;
+    }
     .oplock ha-icon {
-      --mdc-icon-size: calc(var(--icon-size, 2.5cqw) * 0.4);
+      --mdc-icon-size: calc(var(--oplock-core-size) * 0.55);
       display: flex;
       line-height: 0;
     }
-    .oplock.locked { color: #66d17a; border-color: #66d17a; }
-    .oplock.unlocked { color: var(--hp-open); border-color: var(--hp-open); }
-    .oplock.unknown { color: var(--hp-muted); }
+    .oplock.locked {
+      --oplock-core-bg: light-dark(#000, #252525);
+      --oplock-core-fg: #fff;
+      --oplock-shell-stroke: light-dark(#000, #252525);
+    }
+    .oplock.theme-light.locked {
+      --oplock-core-bg: #000;
+      --oplock-shell-stroke: #000;
+    }
+    .oplock.theme-dark.locked {
+      --oplock-core-bg: #252525;
+      --oplock-shell-stroke: #252525;
+      --oplock-stroke-ratio: .025;
+    }
+    .oplock.unlocked {
+      --oplock-core-bg: #F0A00C;
+      --oplock-core-fg: light-dark(#fff, #252525);
+      --oplock-shell-stroke: #F0A00C;
+    }
+    .oplock.theme-light.unlocked { --oplock-core-fg: #fff; }
+    .oplock.theme-dark.unlocked {
+      --oplock-core-fg: #252525;
+      --oplock-stroke-ratio: .025;
+    }
+    .oplock.unknown { --oplock-core-fg: var(--hp-muted); }
     .btn.lockact {
       width: 100%;
       justify-content: center;
@@ -1881,15 +1949,14 @@ export const cardStyles = css`
     }
     .dev {
       position: absolute;
-      /* per-device multiplier on top of the card-wide icon size */
-      --dev-size: calc(
-        var(--icon-size, 2.5cqw) * var(--dev-scale, 1) * var(--device-visual-factor, 0.9)
-      );
+      /* The surface resolves compatibility icon_size units once. The shared
+         face receives an effective base and only applies the per-device size. */
+      --dev-size: calc(var(--device-base-size, 2.25cqw) * var(--dev-scale, 1));
       /* 101.5/80 is the package shell/core ratio, including its stroke. */
       --device-shell-size: calc(var(--dev-size) * 1.26875);
+      --device-shell-inset: calc(var(--dev-size) * 0.134375);
       --device-shell-stroke-ratio: 0.01875;
       --device-shell-border-width: max(1px, calc(var(--dev-size) * var(--device-shell-stroke-ratio)));
-      --device-shell-pad: max(0px, calc(var(--dev-size) * 0.134375 - var(--device-shell-border-width)));
       --device-core-bg: var(--card-background-color, #fff);
       --device-core-fg: var(--primary-text-color, #252525);
       --device-core-bg: light-dark(#fff, #252525);
@@ -1953,6 +2020,7 @@ export const cardStyles = css`
       transform: translate(-50%, -50%);
       border-radius: 50%;
       pointer-events: auto;
+      z-index: 3;
     }
     .device-shell {
       position: absolute;
@@ -1960,43 +2028,59 @@ export const cardStyles = css`
       display: flex;
       align-items: center;
       gap: calc(var(--dev-size) * 0.1);
-      padding: var(--device-shell-pad);
-      min-width: var(--device-shell-size);
-      min-height: var(--device-shell-size);
+      padding: 0;
+      min-width: var(--dev-size);
+      min-height: var(--dev-size);
+      border: 0;
+      background: transparent;
+      box-shadow: none;
+      transition: opacity .2s;
+      pointer-events: none;
+    }
+    .device-shell-frame {
+      position: absolute;
+      z-index: 0;
+      box-sizing: border-box;
+      inset: calc(var(--device-shell-inset) / -1);
       border: var(--device-shell-border-width) solid var(--device-shell-stroke);
-      border-radius: calc(var(--device-shell-size) / 2);
+      /* A saturating radius is resolved from the final border box. Using a
+         second fractional length here lets border-box and radius quantise on
+         different sides of a device pixel at some zoom/DPR combinations. */
+      border-radius: 9999px;
       background: transparent;
       box-shadow: var(--device-shell-shadow);
       transition: border-color .15s, box-shadow .15s, opacity .2s;
-      pointer-events: none;
+      pointer-events: auto;
       /* Normative production fallback: never add a per-marker backdrop blur. */
       backdrop-filter: none;
     }
     .device-shell:not(.with-values) {
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
+      left: 0;
+      top: 0;
+    }
+    .device-shell:not(.with-values) .device-shell-frame {
+      border-radius: 50%;
     }
     .device-shell.with-values.pos-right {
-      left: calc(50% - var(--device-shell-size) / 2);
+      left: 0;
       top: 50%;
       transform: translateY(-50%);
     }
     .device-shell.with-values.pos-left {
-      right: calc(50% - var(--device-shell-size) / 2);
+      right: 0;
       top: 50%;
       transform: translateY(-50%);
       flex-direction: row-reverse;
     }
     .device-shell.with-values.pos-bottom {
       left: 50%;
-      top: calc(50% - var(--device-shell-size) / 2);
+      top: 0;
       transform: translateX(-50%);
       flex-direction: column;
     }
     .device-shell.with-values.pos-top {
       left: 50%;
-      bottom: calc(50% - var(--device-shell-size) / 2);
+      bottom: 0;
       transform: translateX(-50%);
       flex-direction: column-reverse;
     }
@@ -2018,6 +2102,7 @@ export const cardStyles = css`
         0 0 0 var(--device-ring-width) var(--device-ring-color);
       line-height: 0;
       transition: background .15s, color .15s, box-shadow .15s, opacity .2s;
+      pointer-events: none;
     }
     .device-sections {
       display: flex;
@@ -2026,6 +2111,7 @@ export const cardStyles = css`
       justify-content: center;
       gap: calc(var(--dev-size) * .08);
       min-width: 0;
+      pointer-events: none;
     }
     .device-shell.pos-top .device-sections,
     .device-shell.pos-bottom .device-sections {
@@ -2036,7 +2122,7 @@ export const cardStyles = css`
          scale the GLYPH with its badge. Pinned to the base size, "make this
          icon bigger" grew an empty box around a default-size glyph (user
          report via the owner, 2026-07-29). */
-      --mdc-icon-size: calc(var(--dev-size, var(--icon-size, 2.5cqw)) * 0.5);
+      --mdc-icon-size: calc(var(--dev-size, var(--device-base-size, 2.25cqw)) * 0.55);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -2150,7 +2236,7 @@ export const cardStyles = css`
     .drawwall.invalid .rangehint { color: var(--error-color, #db4437); opacity: 1; }
     .stage.markup.tool-partition,
     .stage.markup.tool-column { cursor: crosshair; }
-    .dev.virtual .device-shell {
+    .dev.virtual .device-shell-frame {
       border-style: dashed;
     }
     /* "hide from plan" flag, shown only in the device editor with the
@@ -2162,7 +2248,7 @@ export const cardStyles = css`
       opacity: 0.6;
       color: var(--hp-accent);
     }
-    .dev.ghost .device-shell {
+    .dev.ghost .device-shell-frame {
       border-style: dashed;
       border-color: var(--hp-accent);
       box-shadow: none;
@@ -2178,7 +2264,7 @@ export const cardStyles = css`
       opacity: 0.62;
       color: var(--secondary-text-color, #9aa0aa);
     }
-    .dev.ghost.ha-disabled .device-shell {
+    .dev.ghost.ha-disabled .device-shell-frame {
       border-color: var(--secondary-text-color, #9aa0aa);
     }
     .dev.ghost.ha-disabled .device-core {
@@ -2565,9 +2651,7 @@ export const cardStyles = css`
       position: absolute;
       /* the base badge, but round and 20% smaller — the owner's wording:
          «иконка похожа на иконку базы, только круглая и чуть меньше» */
-      --puck-size: calc(
-        var(--icon-size, 2.5cqw) * var(--device-visual-factor, 0.9) * 0.8
-      );
+      --puck-size: calc(var(--device-base-size, 2.25cqw) * 0.8);
       width: var(--puck-size);
       height: var(--puck-size);
       border-radius: 50%;
