@@ -13,6 +13,7 @@ import {
   checkBranchRule,
   checkIssueStatuses,
   checkReviewDocLimit,
+  REVIEW_DOC_LIMIT,
   checkSpecs,
   clampIssueBranchRange,
   classify,
@@ -152,14 +153,34 @@ test('a class A commit without a spec warns offline and fails with labels', () =
   assert.equal(checkSpecs([c], [], () => null)[0].level, 'warn');
 });
 
-test('more than four review documents on one issue exhausts the cycle limit', () => {
+test('a rebase re-run may exceed the cycle limit in documents (#227)', () => {
+  // Документ нумеруется по заходу, бюджет §4 — по блокирующим вердиктам.
+  // Зелёное ревью с неудавшимся слиянием требует ещё одного захода после
+  // ребейза, цикла при этом не образуя: порог документов обязан быть выше
+  // лимита циклов, иначе гейт отказывает за то, что конвейер сам предписал.
+  assert.equal(REVIEW_DOC_LIMIT, 6);
+  const docs = (n) => Array.from({ length: n }, (_, i) => `CODE-REVIEW-225-r${i + 1}.md`);
+  assert.deepEqual(rules(checkReviewDocLimit(docs(5))), []);
+  assert.deepEqual(rules(checkReviewDocLimit(docs(6))), []);
+  assert.deepEqual(rules(checkReviewDocLimit(docs(7))), [7]);
+  // Дырка в нумерации тоже ловится: r7 в одиночку — это седьмой заход.
+  assert.deepEqual(rules(checkReviewDocLimit(['CODE-REVIEW-225-r7.md'])), [7]);
+});
+
+test('the review document count is per issue and per stage', () => {
+  // Считать надо по issue: документы разных задач не складываются, иначе
+  // репозиторий с историей ревью упирался бы в порог сам по себе.
   assert.deepEqual(rules(checkReviewDocLimit([
     'CODE-REVIEW-104-r1.md', 'CODE-REVIEW-104-r2.md',
   ])), []);
-  assert.deepEqual(rules(checkReviewDocLimit([
-    'CODE-REVIEW-104-r1.md', 'CODE-REVIEW-104-r2.md',
-    'CODE-REVIEW-104-r3.md', 'CODE-REVIEW-104-r4.md', 'CODE-REVIEW-104-r5.md',
-  ])), [7]);
+  const manyIssues = Array.from({ length: 12 }, (_, i) => `CODE-REVIEW-${100 + i}-r1.md`);
+  assert.deepEqual(rules(checkReviewDocLimit(manyIssues)), []);
+  // А внутри одного issue порог действует.
+  assert.deepEqual(rules(checkReviewDocLimit(
+    Array.from({ length: 7 }, (_, i) => `CODE-REVIEW-104-r${i + 1}.md`),
+  )), [7]);
+  // Файл без номера захода проверку не роняет и не ломает разбор.
+  assert.deepEqual(rules(checkReviewDocLimit(['CODE-REVIEW-issue-068-2026-08-12.md'])), []);
 });
 
 test('only class A/B commits are held to the issue status', () => {
@@ -324,7 +345,7 @@ test('the CLI exits 0 on a clean range and 1 on a broken one', (t) => {
   }
   const dir = mkdtempSync(join(tmpdir(), 'hp-gate-'));
   // fileURLToPath, а не URL.pathname: на Windows pathname даёт «/C:/…», и
-  // spawnSync прочитал бы его как «C:\C:\…» (#133). Linux CI это не ловил —
+  // spawnSync прочитал бы его как «C:\\C:\\…» (#133). Linux CI это не ловил —
   // оба варианта там совпадают.
   const gate = fileURLToPath(new URL('../scripts/process-gate.mjs', import.meta.url));
   const git = (...args) => {
