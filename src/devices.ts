@@ -58,6 +58,53 @@ function allEntitiesByDevice(hass: any): Record<string, string[]> {
   return map;
 }
 
+interface EntityMarkerOwnership {
+  byDevice: ReadonlyMap<string, ReadonlySet<string>>;
+}
+
+/**
+ * Live entity markers own their exact entity inside an auto-discovered parent.
+ * Tombstones deliberately do not: removing a standalone binding must return
+ * that entity to the still-live HA device (docs/FILTERING.md).
+ */
+function entityMarkerOwnership(markers: readonly Marker[], fullHass: any): EntityMarkerOwnership {
+  const mutableByDevice = new Map<string, Set<string>>();
+  for (const marker of markers) {
+    if (marker?.removed === true) continue;
+    const binding = marker?.binding || '';
+    if (!binding.startsWith('entity:')) continue;
+    const entityId = binding.slice('entity:'.length);
+    if (!entityId) continue;
+    const deviceId = fullHass?.entities?.[entityId]?.device_id;
+    if (!deviceId) continue;
+    const owned = mutableByDevice.get(deviceId) || new Set<string>();
+    owned.add(entityId);
+    mutableByDevice.set(deviceId, owned);
+  }
+  return { byDevice: mutableByDevice };
+}
+
+/**
+ * An untouched automatic device keeps its complete functional resolver,
+ * including integration-hidden cover entities (#94). Once one of its entities
+ * is placed explicitly, the residual auto marker contains only active,
+ * HA-visible, unclaimed siblings.
+ */
+function residualAutoDeviceEntities(
+  hass: any,
+  deviceId: string,
+  entityIds: readonly string[],
+  ownership: EntityMarkerOwnership,
+): { partial: boolean; entityIds: string[] } {
+  const owned = ownership.byDevice.get(deviceId);
+  if (!owned?.size) return { partial: false, entityIds: [...entityIds] };
+  return {
+    partial: true,
+    entityIds: entityIds.filter((entityId) =>
+      !owned.has(entityId) && !hass?.entities?.[entityId]?.hidden),
+  };
+}
+
 export function domainOfDevice(hass: any, dev: any, entIds: string[]): string {
   if (dev.identifiers?.[0]?.[0]) return dev.identifiers[0][0];
   for (const eid of entIds) {
@@ -957,6 +1004,7 @@ export function seedHiddenBindings(ctx: Omit<BuildCtx, 'showAll' | 'loc'>): stri
   const baseHass = ctx.hass;
   const registry = ctx.registry || haRegistrySnapshot(baseHass);
   const h = activeRegistryHass(baseHass, registry);
+  const fullHass = fullRegistryHass(baseHass, registry);
   const { areaToSpace, markers, settings, excluded, iconRules } = ctx;
   const groupLights = settings.group_lights !== false;
   const removed = removedPlanBindings(markers);
@@ -964,6 +1012,7 @@ export function seedHiddenBindings(ctx: Omit<BuildCtx, 'showAll' | 'loc'>): stri
     .filter((g) => !isRemovedPlanEntity(h, g.eid, removed));
   const groupedAreas = new Set(groups.map((g) => g.area));
   const entsBy = entitiesByDevice(h);
+  const ownership = entityMarkerOwnership(markers, fullHass);
   const marked = new Set(markers.map((m) => m.binding));
   const out: string[] = [];
   for (const dev of Object.values<any>(h.devices)) {
@@ -974,7 +1023,9 @@ export function seedHiddenBindings(ctx: Omit<BuildCtx, 'showAll' | 'loc'>): stri
     if (resolveHaBindingStatus(baseHass, 'device:' + dev.id, registry).kind !== 'active') continue;
     // An entity tombstone suppresses that standalone binding, not the same
     // entity as data belonging to a still-live parent device.
-    const entIds = entsBy[dev.id] || [];
+    const residual = residualAutoDeviceEntities(h, dev.id, entsBy[dev.id] || [], ownership);
+    if (residual.partial && !residual.entityIds.length) continue;
+    const entIds = residual.entityIds;
     const dom = domainOfDevice(h, dev, entIds);
     let nonPhysical =
       excluded.has(dom)
@@ -1027,6 +1078,7 @@ export function buildDevices(ctx: BuildCtx): DevItem[] {
   const groupedAreas = new Set(groups.map((g) => g.area));
   const entsBy = entitiesByDevice(h);
   const allEntsBy = allEntitiesByDevice(fullHass);
+  const ownership = entityMarkerOwnership(markers, fullHass);
   const claimed = new Set<string>();
   for (const m of markers) {
     const [kind, ref] = m.binding.split(':');
@@ -1046,7 +1098,12 @@ export function buildDevices(ctx: BuildCtx): DevItem[] {
     if (bindingStatus.kind !== 'active') continue;
     const marker = markerFor('device', dev.id);
     if (marker && marker.hidden && !settings.filter_seeded) continue; // legacy: dropped entirely
-    const entIds = entsBy[dev.id] || [];
+    const residual = residualAutoDeviceEntities(h, dev.id, entsBy[dev.id] || [], ownership);
+    if (residual.partial && !residual.entityIds.length) continue;
+    const entIds = residual.entityIds;
+    const itemBindingStatus = residual.partial
+      ? { kind: 'active' as const, enabledEntityIds: entIds, allEntityIds: entIds }
+      : bindingStatus;
     const dom = domainOfDevice(h, dev, entIds);
     // LEGACY runtime filter: only while the config is not yet materialised
     // (docs/FILTERING.md). A seeded config hides by explicit marker flags.
@@ -1074,8 +1131,8 @@ export function buildDevices(ctx: BuildCtx): DevItem[] {
       space: areaToSpace[area],
       icon,
       entities: entIds,
-      allEntities: bindingStatus.allEntityIds,
-      bindingStatus,
+      allEntities: itemBindingStatus.allEntityIds,
+      bindingStatus: itemBindingStatus,
       bindingKind: 'device',
       bindingRef: dev.id,
       pdfs: [],

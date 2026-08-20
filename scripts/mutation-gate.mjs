@@ -419,6 +419,36 @@ export const MUTANTS = [
     }],
   },
   {
+    id: 'entity-marker-kept-in-parent-device',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="entity marker owns its entity|partial auto parent" '
+      + 'test/devices.test.mjs',
+    because: 'an explicitly placed entity must be removed from the residual automatic parent '
+      + 'so state, action and light projection cannot render the same HA channel twice',
+    patches: [{
+      file: 'src/devices.ts',
+      find: '      !owned.has(entityId) && !hass?.entities?.[entityId]?.hidden),',
+      replace: '      !hass?.entities?.[entityId]?.hidden),',
+    }],
+  },
+  {
+    id: 'entity-marker-parent-seeded',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="seedHiddenBindings: entity ownership" '
+      + 'test/devices.test.mjs',
+    because: 'the first-run seeder must share residual ownership with buildDevices or it can '
+      + 'materialise the removed automatic duplicate as a permanent hidden device marker',
+    patches: [{
+      file: 'src/devices.ts',
+      find: '  const entsBy = entitiesByDevice(h);\n'
+        + '  const ownership = entityMarkerOwnership(markers, fullHass);\n'
+        + '  const marked = new Set(markers.map((m) => m.binding));',
+      replace: '  const entsBy = entitiesByDevice(h);\n'
+        + '  const ownership = entityMarkerOwnership([], fullHass);\n'
+        + '  const marked = new Set(markers.map((m) => m.binding));',
+    }],
+  },
+  {
     id: 'manual-room-device-area-fallback',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="manual room without area.*device" test/devices.test.mjs',

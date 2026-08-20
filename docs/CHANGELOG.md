@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Placing an individual Home Assistant entity no longer leaves a duplicate
+  automatic marker of its complete parent device. The automatic marker now
+  contains only the remaining active visible entities and disappears when
+  none remain; two explicitly placed entity/device markers still coexist
+  ([#226](https://github.com/Matysh/houseplan-card/issues/226)).
+
 ## v1.66.0 — 2026-08-20
 
 - Text device markers once again use a capsule-shaped outer outline instead of

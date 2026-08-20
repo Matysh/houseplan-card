@@ -26,6 +26,12 @@ as the SEEDER of initial hidden flags.
   automatic discovery cannot immediately recreate the deleted device. The
   same binding remains available in Add; saving it again replaces the
   tombstone and starts with a fresh position.
+- A live `entity:X` marker owns X inside its automatic parent `device:D`. A
+  residual auto-device contains only active, HA-visible siblings not owned by
+  other entity markers and disappears when that set is empty. A user-hidden
+  live marker still owns X; an entity tombstone does not. An explicit
+  `device:D` remains complete and may intentionally coexist with explicit
+  entity markers.
 - No marker — never evaluated by the seeder yet, or a plain physical device.
 - `bindingStatus: ha_disabled` is runtime-only. It is derived from Home
   Assistant's device/entity registries and is never written into a marker or
@@ -50,6 +56,10 @@ are never revisited. It fires on:
 2. an area newly bound to the plan;
 3. a new device appearing in a bound area — non-physical ones are hidden
    silently (no red dot); physical ones keep the red-dot flow.
+
+Entity-marker ownership uses the same residual projection here as in the
+renderer. The seeder never turns an automatic parent with an empty or
+HA-hidden-only residual into a persistent hidden `device:D` stub.
 
 Until a config is seeded (`filter_seeded` absent), `buildDevices` applies the
 LEGACY runtime filter, so a read-only client on an old config sees exactly
