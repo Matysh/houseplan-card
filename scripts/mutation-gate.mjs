@@ -740,6 +740,29 @@ export const MUTANTS = [
     }],
   },
   {
+    id: 'materialization-touches-bound-markers',
+    guard: 'node --test --test-name-pattern="issue 220" test/space-order.test.mjs',
+    because: 'материализация обязана трогать только маркеры, чьё пространство решает порядок; '
+      + 'запись space маркеру, закреплённому HA-областью, кладёт в конфиг поле, которое '
+      + 'сдвинет его в старое первое пространство в день смены области (ревью r1, H1)',
+    patches: [{
+      file: 'src/space-order.ts',
+      find: '    if (area && areaToSpace[area]) continue;',
+      replace: '    if (false) continue;',
+    }],
+  },
+  {
+    id: 'tab-drag-survives-release-outside',
+    guard: 'node demo/smoke_space_tab_reorder.mjs',
+    because: 'мышь, отпущенная мимо панели, обязана завершить жест: иначе перетаскивание '
+      + 'зависает с moved:true и съедает следующий клик по вкладке (ревью r1, M1)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: "    window.addEventListener('pointerup', this._tabDragRelease);",
+      replace: '    void 0;',
+    }],
+  },
+  {
     id: 'tab-reorder-eats-click',
     guard: 'node --test --test-name-pattern="issue 220" test/space-order.test.mjs',
     because: 'нулевой порог превращает обычный клик по вкладке в перетаскивание, и '

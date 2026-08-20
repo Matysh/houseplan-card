@@ -73,6 +73,25 @@ test('issue 220 only order-dependent markers are pinned, and to where they are n
   ]);
 });
 
+test('issue 220 a marker anchored by its HA area is left alone (review r1 H1)', () => {
+  // The ordinary marker: it binds an HA device and stores neither area nor
+  // space, because resolveExplicitMarkerPlacement reads the area from the
+  // registry. Such a marker never depended on the order, so writing it a space
+  // would plant a field that moves it the day its HA area changes.
+  const markers = [{ id: 'ha-device' }];
+  const areaOf = (id) => (id === 'ha-device' ? 'kitchen' : '');
+  assert.deepEqual(markersNeedingPlacement(markers, { kitchen: 'f1' }, 'f1', areaOf), []);
+  // …while a registry area that names no space leaves the marker order-bound.
+  assert.deepEqual(markersNeedingPlacement(markers, { hall: 'f1' }, 'f1', areaOf), [
+    { id: 'ha-device', space: 'f1' },
+  ]);
+  // The marker's own area still wins over the registry, as in devices.ts.
+  assert.deepEqual(
+    markersNeedingPlacement([{ id: 'ha-device', area: 'hall' }], { hall: 'f2' }, 'f1', areaOf),
+    [],
+  );
+});
+
 test('issue 220 pinning writes the space the marker has before the reorder', () => {
   // The fallback is the FIRST space of the current order. If the write used
   // the order after the move, the marker would follow the reorder — the very

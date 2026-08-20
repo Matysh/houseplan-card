@@ -92,16 +92,27 @@ export interface PlacementMarker {
  * Markers whose space is decided by the "first space" fallback, and where that
  * fallback currently lands.
  *
- * Such a marker has neither an explicit `space` nor an `area` that names a
+ * Such a marker has neither an explicit `space` nor an area that names a
  * space. Today it renders in whichever space happens to sit first; after a
  * reorder that would be a different one — the marker would move on its own,
  * which is the one thing a reorder may never do. Writing the answer it has
  * right now makes the placement explicit and independent of order for good.
+ *
+ * **The area is not only the marker's own field.** `resolveExplicitMarkerPlacement`
+ * (`devices.ts`) reads `marker.area || <area of the HA device or entity>`, so a
+ * marker that simply binds an existing HA device — the ordinary case, saved
+ * without `area` or `space` — is anchored by the registry and never depended on
+ * the order at all. Judging by `marker.area` alone would classify it as
+ * order-dependent and write it a `space` it never asked for: a field that is
+ * dormant today and moves the marker the day its HA area changes. Hence
+ * `effectiveArea`, which answers with the area actually in force (review
+ * CODE-REVIEW-220-r1, H1).
  */
 export function markersNeedingPlacement(
   markers: readonly PlacementMarker[],
   areaToSpace: Readonly<Record<string, string>>,
   firstSpaceId: string,
+  effectiveArea: (markerId: string) => string = () => '',
 ): { id: string; space: string }[] {
   if (!firstSpaceId) return [];
   const out: { id: string; space: string }[] = [];
@@ -111,7 +122,8 @@ export function markersNeedingPlacement(
     if (!id) continue;
     const explicit = typeof marker.space === 'string' ? marker.space : '';
     if (explicit) continue;
-    const area = typeof marker.area === 'string' ? marker.area : '';
+    const own = typeof marker.area === 'string' ? marker.area : '';
+    const area = own || effectiveArea(id) || '';
     if (area && areaToSpace[area]) continue;
     out.push({ id, space: firstSpaceId });
   }

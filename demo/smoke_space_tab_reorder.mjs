@@ -35,7 +35,7 @@ const res = await page.evaluate(async () => {
     const a = from.getBoundingClientRect();
     const b = to.getBoundingClientRect();
     const event = (type, x, y, target) => target.dispatchEvent(new PointerEvent(type, {
-      pointerId: 7, pointerType: 'mouse', clientX: x, clientY: y, bubbles: true,
+      pointerId: 7, pointerType: 'mouse', clientX: x, clientY: y, bubbles: true, composed: true,
     }));
     event('pointerdown', a.x + a.width / 2, a.y + a.height / 2, from);
     // one intermediate move on the source keeps the gesture honest: the drag
@@ -109,7 +109,7 @@ const res = await page.evaluate(async () => {
   const tab = tabs().find((t) => t.dataset.id === other);
   const rect = tab.getBoundingClientRect();
   const at = (type) => tab.dispatchEvent(new PointerEvent(type, {
-    pointerId: 8, pointerType: 'mouse',
+    pointerId: 8, pointerType: 'mouse', composed: true,
     clientX: rect.x + rect.width / 2, clientY: rect.y + rect.height / 2, bubbles: true,
   }));
   at('pointerdown'); at('pointermove'); at('pointerup');
@@ -126,7 +126,7 @@ const res = await page.evaluate(async () => {
   const ra = src.getBoundingClientRect();
   const rb = dst.getBoundingClientRect();
   const touch = (type, x, y, target) => target.dispatchEvent(new PointerEvent(type, {
-    pointerId: 9, pointerType: 'touch', clientX: x, clientY: y, bubbles: true,
+    pointerId: 9, pointerType: 'touch', clientX: x, clientY: y, bubbles: true, composed: true,
   }));
   touch('pointerdown', ra.x + ra.width / 2, ra.y + ra.height / 2, src);
   touch('pointermove', rb.x + rb.width / 2, rb.y + rb.height / 2, dst);
@@ -141,6 +141,44 @@ const res = await page.evaluate(async () => {
   const viewOrder = ids();
   await drag(viewOrder[viewOrder.length - 1], viewOrder[0]);
   out.viewDidNotReorder = JSON.stringify(ids()) === JSON.stringify(viewOrder);
+
+  // --- review r1 M1: the mouse is released away from the panel ---------------
+  //
+  // A horizontal drag that ends a few pixels below the tabs is ordinary hand
+  // imprecision. Without pointer capture no tab ever sees the release, the
+  // gesture stays stuck with moved:true, and the next click is swallowed by
+  // _tabClick — the panel simply stops switching spaces.
+  c._mode = 'plan';
+  c.requestUpdate();
+  await settle();
+  const strayTabs = tabs();
+  const strayFrom = strayTabs[strayTabs.length - 1];
+  const strayRect = strayFrom.getBoundingClientRect();
+  const stray = (type, x, y) => strayFrom.dispatchEvent(new PointerEvent(type, {
+    pointerId: 11, pointerType: 'mouse', clientX: x, clientY: y, bubbles: true, composed: true,
+  }));
+  stray('pointerdown', strayRect.x + strayRect.width / 2, strayRect.y + strayRect.height / 2);
+  stray('pointermove', strayRect.x + strayRect.width / 2 + 40, strayRect.y + strayRect.height / 2);
+  // released far below the panel, where no tab lives
+  // released on the stage, not on a tab: without pointer capture no tab
+  // handler ever runs and the gesture stays stuck
+  (sr().querySelector('.stage') || document.body).dispatchEvent(new PointerEvent('pointerup', {
+    pointerId: 11, pointerType: 'mouse', composed: true,
+    clientX: strayRect.x + 400, clientY: strayRect.y + 400, bubbles: true,
+  }));
+  await settle();
+  out.strayReleaseEndedTheDrag = c._tabDrag === null;
+  const strayTarget = ids().find((id) => id !== c._space);
+  const strayNext = tabs().find((tab) => tab.dataset.id === strayTarget);
+  strayNext.dispatchEvent(new PointerEvent('pointerdown', {
+    pointerId: 12, pointerType: 'mouse', bubbles: true, composed: true,
+  }));
+  strayNext.dispatchEvent(new PointerEvent('pointerup', {
+    pointerId: 12, pointerType: 'mouse', bubbles: true, composed: true,
+  }));
+  strayNext.click();
+  await settle();
+  out.panelStillSwitchesAfterStrayRelease = c._space === strayTarget;
 
   c._writeConfig = realWrite;
   return out;

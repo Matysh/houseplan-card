@@ -1268,6 +1268,20 @@ class HouseplanCard extends LitElement {
       spaceCount: this._model.length,
       fixedFloor: this._hasFixedFloor,
     })) return;
+    // A mouse released past the edge of the panel fires neither pointerup nor
+    // pointercancel on any tab, and the gesture would stay stuck mid-drag —
+    // taking the next click with it, since _tabClick swallows clicks that
+    // follow a drag (review CODE-REVIEW-220-r1, M1).
+    //
+    // Capture is the usual answer and this file uses it everywhere, but it is
+    // not a guarantee: the browser grants it only for a live pointer, so a
+    // gesture that starts any other way keeps no capture at all. The window
+    // listener below is what actually closes the gesture; capture merely keeps
+    // the moves flowing to the tab while the button is held.
+    capturePointer(event);
+    this._tabDragRelease = (release: PointerEvent) => this._tabPointerUp(release);
+    window.addEventListener('pointerup', this._tabDragRelease);
+    window.addEventListener('pointercancel', this._tabDragRelease);
     this._tabDrag = {
       id, pointerId: event.pointerId, x: event.clientX, y: event.clientY,
       moved: false, overId: id,
@@ -1287,9 +1301,19 @@ class HouseplanCard extends LitElement {
 
   private _tabPointerUp(event: PointerEvent): void {
     const drag = this._tabDrag;
-    this._tabDrag = null;
-    if (!drag || drag.pointerId !== event.pointerId || !drag.moved) return;
+    if (drag && drag.pointerId !== event.pointerId) return;
+    this._endTabDrag();
+    if (!drag || !drag.moved) return;
     this._commitTabOrder(drag.id, drag.overId);
+  }
+
+  /** Drop the gesture and its window listeners, wherever the release happened. */
+  private _endTabDrag(): void {
+    this._tabDrag = null;
+    if (!this._tabDragRelease) return;
+    window.removeEventListener('pointerup', this._tabDragRelease);
+    window.removeEventListener('pointercancel', this._tabDragRelease);
+    this._tabDragRelease = null;
   }
 
   /** A click that followed a real drag must not also switch the space. */
@@ -1313,12 +1337,19 @@ class HouseplanCard extends LitElement {
     const ids = this._model.map((space) => space.id);
     const order = reorderSpaceIds(ids, movedId, targetId);
     if (order === ids) return;
+    // The area in force, not merely the one stored on the marker: a marker that
+    // binds an HA device inherits its area from the registry, and such a marker
+    // never depended on the order (review CODE-REVIEW-220-r1, H1).
+    const areaById = new Map(
+      this._devices.map((device) => [String(device.id), String(device.area || '')]),
+    );
     const pinned = markersNeedingPlacement(
       cfg.markers || [],
       Object.fromEntries(
         Object.entries(this._areaToSpace).map(([area, value]) => [area, value.space]),
       ),
       ids[0] || '',
+      (markerId) => areaById.get(markerId) || '',
     );
     if (pinned.length) {
       const byId = new Map(pinned.map((entry) => [entry.id, entry.space]));
@@ -1929,6 +1960,9 @@ class HouseplanCard extends LitElement {
   private _tabDrag: {
     id: string; pointerId: number; x: number; y: number; moved: boolean; overId: string;
   } | null = null;
+
+  /** Window-level release handler while a tab is held; see _tabPointerDown. */
+  private _tabDragRelease: ((event: PointerEvent) => void) | null = null;
 
   /** The positional-`floor` warning is worth saying once, not on every drop. */
   private _tabOrderWarned = false;
@@ -15860,7 +15894,7 @@ class HouseplanCard extends LitElement {
                 @pointerdown=${(e: PointerEvent) => this._tabPointerDown(e, s.id)}
                 @pointermove=${(e: PointerEvent) => this._tabPointerMove(e, s.id)}
                 @pointerup=${(e: PointerEvent) => this._tabPointerUp(e)}
-                @pointercancel=${() => { this._tabDrag = null; }}
+                @pointercancel=${() => this._endTabDrag()}
                 @click=${() => this._tabClick(s.id)}
               >
                 ${s.title}${this._norm && this._canEdit
