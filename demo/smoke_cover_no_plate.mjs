@@ -35,7 +35,8 @@ const out = await page.evaluate(async () => {
   const YELLOW = probe('var(--hp-on)');     // «включено»
   const ORANGE = probe('var(--hp-open)');   // «открыто» frame
   const NEUTRAL = probe('light-dark(#fff, #252525)'); // package theme fallback
-  const AMBER = probe('#F0A00C');            // package working/unlocked core
+  const UNLOCKED_RED = probe('#F0410C');      // owner palette #219
+  const LOCKED_GREEN = probe('#66D17A');      // owner palette #219
   o.tokensDiffer = new Set([YELLOW, ORANGE, NEUTRAL]).size === 3;
   o.yellowIsTheYellow = YELLOW === 'rgb(255, 212, 92)';
   o.orangeIsTheOpenFrame = ORANGE === 'rgb(255, 159, 67)';
@@ -170,10 +171,10 @@ const out = await page.evaluate(async () => {
   o.lockMarkerFound = !!lockEl;
   o.windowMarkerFound = !!winEl;
   o.unlockedLockKeepsTheFrame = !!lockEl && lockEl.classList.contains('lock-unlocked')
-    && getComputedStyle(lockEl.querySelector('.device-core')).backgroundColor === AMBER;
+    && getComputedStyle(lockEl.querySelector('.device-core')).backgroundColor === UNLOCKED_RED;
   o.openWindowKeepsTheFrame = !!winEl && winEl.classList.contains('open')
     && getComputedStyle(winEl.querySelector('.device-core')).backgroundColor === ORANGE;
-  // …and a locked lock keeps the distinct package face: dark core + white glyph.
+  // …and a locked lock keeps the #219 green face with a theme-aware glyph.
   c.hass = { ...c.hass, states: { ...c.hass.states,
     'lock.front_door': { entity_id: 'lock.front_door', state: 'locked', attributes: { friendly_name: 'Front door' } } } };
   c.requestUpdate();
@@ -181,12 +182,12 @@ const out = await page.evaluate(async () => {
   await new Promise((r) => setTimeout(r, 300));
   const lockedEl = elOf(dev('d_lock'));
   const lockedCore = lockedEl?.querySelector('.device-core');
-  const lockedFace = lockedEl?.classList.contains('theme-dark')
+  const lockedGlyph = lockedEl?.classList.contains('theme-dark')
     ? 'rgb(37, 37, 37)'
-    : 'rgb(0, 0, 0)';
+    : 'rgb(255, 255, 255)';
   o.lockedLockKeepsPackageFace = !!lockedEl?.classList.contains('lock-locked')
-    && getComputedStyle(lockedCore).backgroundColor === lockedFace
-    && getComputedStyle(lockedCore).color === 'rgb(255, 255, 255)';
+    && getComputedStyle(lockedCore).backgroundColor === LOCKED_GREEN
+    && getComputedStyle(lockedCore).color === lockedGlyph;
 
   // a VALVE keeps the frame too: nothing morphs its icon, so the frame is the
   // only thing it has to say «открыт» with (deliberately left alone)
