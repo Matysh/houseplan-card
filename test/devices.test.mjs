@@ -119,6 +119,223 @@ test('buildDevices: claimed device is replaced by its marker (metadata applied)'
   assert.equal(it.bindingKind, 'device');
 });
 
+test('buildDevices: entity marker owns its entity and removes an empty auto parent', () => {
+  const h = mkHass({
+    devices: { combo: dev('combo', 'Combo sensor', 'Sensor', 'living') },
+    entities: {
+      'sensor.combo_temp': {
+        entity_id: 'sensor.combo_temp', device_id: 'combo', platform: 'demo',
+      },
+    },
+    states: {
+      'sensor.combo_temp': {
+        state: '22', attributes: { device_class: 'temperature', friendly_name: 'Combo temperature' },
+      },
+    },
+  });
+  const result = buildDevices(baseCtx(h, {
+    markers: [{ id: 'temp-marker', binding: 'entity:sensor.combo_temp' }],
+  }));
+  assert.deepEqual(result.map((item) => item.id), ['temp-marker']);
+  assert.equal(result[0].bindingKind, 'entity');
+});
+
+test('buildDevices: partial auto parent contains only visible unclaimed siblings', () => {
+  const h = mkHass({
+    devices: { combo: dev('combo', 'Combo relay', 'Relay', 'living') },
+    entities: {
+      'light.combo_main': { entity_id: 'light.combo_main', device_id: 'combo', platform: 'demo' },
+      'switch.combo_aux': { entity_id: 'switch.combo_aux', device_id: 'combo', platform: 'demo' },
+    },
+    states: {
+      'light.combo_main': { state: 'on', attributes: { friendly_name: 'Main light' } },
+      'switch.combo_aux': { state: 'off', attributes: { friendly_name: 'Aux relay' } },
+    },
+  });
+  const result = buildDevices(baseCtx(h, {
+    settings: { group_lights: false },
+    markers: [{ id: 'main-marker', binding: 'entity:light.combo_main' }],
+  }));
+  const exact = result.find((item) => item.id === 'main-marker');
+  const parent = result.find((item) => item.id === 'combo');
+  assert.ok(exact);
+  assert.ok(parent);
+  assert.deepEqual(parent.entities, ['switch.combo_aux']);
+  assert.deepEqual(parent.allEntities, ['switch.combo_aux']);
+  assert.deepEqual(parent.bindingStatus, {
+    kind: 'active', enabledEntityIds: ['switch.combo_aux'], allEntityIds: ['switch.combo_aux'],
+  });
+  assert.equal(parent.primary, 'switch.combo_aux');
+  assert.deepEqual(
+    resolvedLightSources(h, result).map((source) => source.eid).sort(),
+    ['light.combo_main'],
+    'the claimed light contributes once and never leaks through the parent',
+  );
+});
+
+test('buildDevices: several entity markers split one device without an auto duplicate', () => {
+  const h = mkHass({
+    devices: { climate_box: dev('climate_box', 'Climate box', 'Sensor', 'living') },
+    entities: {
+      'sensor.box_temp': { entity_id: 'sensor.box_temp', device_id: 'climate_box', platform: 'demo' },
+      'sensor.box_hum': { entity_id: 'sensor.box_hum', device_id: 'climate_box', platform: 'demo' },
+    },
+    states: {
+      'sensor.box_temp': { state: '21', attributes: { device_class: 'temperature' } },
+      'sensor.box_hum': { state: '50', attributes: { device_class: 'humidity' } },
+    },
+  });
+  const result = buildDevices(baseCtx(h, { markers: [
+    { id: 'temp', binding: 'entity:sensor.box_temp' },
+    { id: 'hum', binding: 'entity:sensor.box_hum' },
+  ] }));
+  assert.deepEqual(result.map((item) => item.id), ['temp', 'hum']);
+  assert.ok(!result.some((item) => item.bindingRef === 'climate_box'));
+});
+
+test('buildDevices: explicit device and child entity markers coexist intentionally', () => {
+  const h = mkHass({
+    devices: { combo: dev('combo', 'Combo relay', 'Relay', 'living') },
+    entities: {
+      'switch.combo': { entity_id: 'switch.combo', device_id: 'combo', platform: 'demo' },
+      'sensor.combo_power': { entity_id: 'sensor.combo_power', device_id: 'combo', platform: 'demo' },
+    },
+    states: {
+      'switch.combo': { state: 'on', attributes: {} },
+      'sensor.combo_power': { state: '20', attributes: { device_class: 'power' } },
+    },
+  });
+  const result = buildDevices(baseCtx(h, { markers: [
+    { id: 'device-marker', binding: 'device:combo' },
+    { id: 'power-marker', binding: 'entity:sensor.combo_power' },
+  ] }));
+  const explicitDevice = result.find((item) => item.id === 'device-marker');
+  const exact = result.find((item) => item.id === 'power-marker');
+  assert.equal(result.length, 2);
+  assert.ok(explicitDevice && exact);
+  assert.deepEqual(explicitDevice.entities.sort(), ['sensor.combo_power', 'switch.combo']);
+  assert.deepEqual(explicitDevice.allEntities.sort(), ['sensor.combo_power', 'switch.combo']);
+});
+
+test('buildDevices: hidden entity marker still owns its entity inside the parent', () => {
+  const h = mkHass({
+    devices: { combo: dev('combo', 'Combo relay', 'Relay', 'living') },
+    entities: {
+      'switch.combo': { entity_id: 'switch.combo', device_id: 'combo', platform: 'demo' },
+    },
+    states: { 'switch.combo': { state: 'on', attributes: {} } },
+  });
+  const result = buildDevices(baseCtx(h, {
+    settings: { filter_seeded: true },
+    markers: [{ id: 'hidden-switch', binding: 'entity:switch.combo', hidden: true }],
+  }));
+  assert.equal(result.length, 1);
+  assert.equal(result[0].id, 'hidden-switch');
+  assert.equal(result[0].hidden, true);
+  assert.ok(!result.some((item) => item.id === 'combo'));
+});
+
+test('buildDevices: hidden-only curtain residual disappears but explicit device stays cover-first', () => {
+  const h = mkHass({
+    devices: { curtain: dev('curtain', 'Living curtain', 'Roller shade E1', 'living') },
+    entities: {
+      'cover.curtain': {
+        entity_id: 'cover.curtain', device_id: 'curtain', platform: 'demo', hidden: true,
+      },
+      'switch.curtain_reverse_direction': {
+        entity_id: 'switch.curtain_reverse_direction', device_id: 'curtain', platform: 'demo',
+      },
+    },
+    states: {
+      'cover.curtain': { state: 'opening', attributes: { device_class: 'curtain' } },
+      'switch.curtain_reverse_direction': { state: 'off', attributes: {} },
+    },
+  });
+
+  const untouched = buildDevices(baseCtx(h));
+  assert.equal(untouched.length, 1);
+  assert.equal(untouched[0].primary, 'cover.curtain', 'untouched #94 resolver remains cover-first');
+
+  const marker = { id: 'reverse', binding: 'entity:switch.curtain_reverse_direction' };
+  const split = buildDevices(baseCtx(h, { markers: [marker] }));
+  assert.deepEqual(split.map((item) => item.id), ['reverse']);
+
+  const explicit = buildDevices(baseCtx(h, { markers: [
+    marker, { id: 'curtain-device', binding: 'device:curtain' },
+  ] }));
+  assert.equal(explicit.length, 2);
+  assert.equal(explicit.find((item) => item.id === 'curtain-device').primary, 'cover.curtain');
+});
+
+test('buildDevices: disabled entity marker owns its known parent relation', () => {
+  const devices = { combo: dev('combo', 'Combo relay', 'Relay', 'living') };
+  const entities = {
+    'switch.combo_disabled': {
+      entity_id: 'switch.combo_disabled', device_id: 'combo', platform: 'demo', disabled_by: 'user',
+    },
+    'switch.combo_live': {
+      entity_id: 'switch.combo_live', device_id: 'combo', platform: 'demo', disabled_by: null,
+    },
+  };
+  const h = mkHass({
+    devices,
+    entities,
+    states: {
+      'switch.combo_disabled': { state: 'on', attributes: {} },
+      'switch.combo_live': { state: 'off', attributes: {} },
+    },
+  });
+  const registry = {
+    revision: 1, authoritative: true, access: 'full', devices, entities, lastSuccess: 1,
+  };
+  const result = buildDevices(baseCtx(h, {
+    registry,
+    settings: { filter_seeded: true },
+    markers: [{ id: 'disabled-marker', binding: 'entity:switch.combo_disabled' }],
+  }));
+  const parent = result.find((item) => item.id === 'combo');
+  const ghost = result.find((item) => item.id === 'disabled-marker');
+  assert.deepEqual(parent.entities, ['switch.combo_live']);
+  assert.deepEqual(parent.allEntities, ['switch.combo_live']);
+  assert.equal(ghost.bindingStatus.kind, 'ha_disabled');
+  assert.equal(ghost.hidden, true);
+});
+
+test('buildDevices: registry hidden sibling changes rebuild the residual without config writes', () => {
+  const devices = { combo: dev('combo', 'Combo relay', 'Relay', 'living') };
+  const visibleEntities = {
+    'switch.combo_claimed': {
+      entity_id: 'switch.combo_claimed', device_id: 'combo', platform: 'demo', disabled_by: null,
+    },
+    'switch.combo_sibling': {
+      entity_id: 'switch.combo_sibling', device_id: 'combo', platform: 'demo', disabled_by: null,
+    },
+  };
+  const h = mkHass({
+    devices,
+    entities: visibleEntities,
+    states: {
+      'switch.combo_claimed': { state: 'on', attributes: {} },
+      'switch.combo_sibling': { state: 'off', attributes: {} },
+    },
+  });
+  const marker = { id: 'claimed', binding: 'entity:switch.combo_claimed' };
+  const snapshot = (revision, hidden) => ({
+    revision, authoritative: true, access: 'full', devices,
+    entities: {
+      ...visibleEntities,
+      'switch.combo_sibling': { ...visibleEntities['switch.combo_sibling'], hidden },
+    },
+    lastSuccess: revision,
+  });
+  const hidden = buildDevices(baseCtx(h, { registry: snapshot(1, true), markers: [marker] }));
+  const visible = buildDevices(baseCtx(h, { registry: snapshot(2, false), markers: [marker] }));
+  assert.deepEqual(hidden.map((item) => item.id), ['claimed']);
+  assert.deepEqual(visible.map((item) => item.id), ['combo', 'claimed']);
+  assert.deepEqual(visible.find((item) => item.id === 'combo').entities, ['switch.combo_sibling']);
+  assert.deepEqual(marker, { id: 'claimed', binding: 'entity:switch.combo_claimed' });
+});
+
 test('buildDevices: manual room without area overrides registry area for device binding', () => {
   const h = mkHass({ devices: { washer: dev('washer', 'Washer', 'WM-1', 'living') } });
   const [item] = buildDevices(baseCtx(h, {
@@ -1570,6 +1787,59 @@ test('seedHiddenBindings: non-physical devices in bound areas, unmarked only', (
     { id: 'z', binding: 'device:scn', removed: true },
   ] };
   assert.deepEqual(seedHiddenBindings(marked), [], 'marked and deleted devices are never revisited');
+});
+
+test('seedHiddenBindings: entity ownership uses the same visible residual as buildDevices', () => {
+  const devices = { bridge: dev('bridge', 'Z2M Bridge', 'Bridge', 'living') };
+  const states = {
+    'sensor.bridge_claimed': { state: 'ok', attributes: {} },
+    'sensor.bridge_sibling': { state: 'ok', attributes: {} },
+  };
+  const makeCtx = (entities, markers) => ({
+    hass: mkHass({ devices, entities, states }),
+    areaToSpace: { living: 'f1' }, markers, settings: {},
+    excluded: new Set(['hacs']), firstSpaceId: 'f1',
+  });
+  const claimed = {
+    entity_id: 'sensor.bridge_claimed', device_id: 'bridge', platform: 'demo',
+  };
+  const marker = { id: 'claimed', binding: 'entity:sensor.bridge_claimed' };
+
+  assert.deepEqual(
+    seedHiddenBindings(makeCtx({ 'sensor.bridge_claimed': claimed }, [marker])),
+    [],
+    'an empty residual must not become a hidden parent stub',
+  );
+
+  const visibleSibling = {
+    entity_id: 'sensor.bridge_sibling', device_id: 'bridge', platform: 'demo',
+  };
+  assert.deepEqual(
+    seedHiddenBindings(makeCtx({
+      'sensor.bridge_claimed': claimed,
+      'sensor.bridge_sibling': visibleSibling,
+    }, [marker])),
+    ['device:bridge'],
+    'a visible unclaimed sibling keeps one residual parent',
+  );
+
+  assert.deepEqual(
+    seedHiddenBindings(makeCtx({
+      'sensor.bridge_claimed': claimed,
+      'sensor.bridge_sibling': { ...visibleSibling, hidden: true },
+    }, [marker])),
+    [],
+    'a hidden-only sibling does not keep the residual parent',
+  );
+
+  assert.deepEqual(
+    seedHiddenBindings(makeCtx(
+      { 'sensor.bridge_claimed': claimed },
+      [{ ...marker, removed: true, hidden: true }],
+    )),
+    ['device:bridge'],
+    'an entity tombstone does not own the entity inside its live parent',
+  );
 });
 
 test('seeded config: hidden is a flag, not an absence', () => {

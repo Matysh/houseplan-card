@@ -676,6 +676,23 @@ separately promised workflows:
 ## Devices on the plan ★
 
 - [ ] Auto devices appear only in rooms bound to their area [manual]
+- [ ] **Entity/parent ownership (#226):** placing `entity:X` removes X from its
+      automatic parent. A visible unclaimed sibling keeps one residual parent;
+      an empty or HA-hidden-only residual removes it. State, primary/action,
+      `allEntities`, light/Glow and LQI cannot see X twice
+      [auto: unit `devices.test.mjs`; browser `smoke_entity_parent_dedup.mjs`].
+- [ ] Two explicit markers `entity:X` + `device:D` coexist and the device stays
+      complete. A user-hidden live entity marker still owns X, while an entity
+      tombstone returns X to the parent; disabled entity ownership follows the
+      known full-registry relation [auto: unit `devices.test.mjs`].
+- [ ] The #94 curtain boundary is deliberate: untouched hidden `cover.*` stays
+      cover-first, but after placing the only visible auxiliary switch the
+      hidden-only automatic remainder disappears. An explicit `device:D`
+      restores the complete curtain beside that entity marker
+      [auto: unit `devices.test.mjs`].
+- [ ] Renderer and seeder cannot drift back to exact-binding-only ownership
+      [mutation: `entity-marker-kept-in-parent-device`,
+      `entity-marker-parent-seeded`].
 - [ ] Filtering hides bridges/groups/scenes/excluded integrations; 👁 "show all" reveals [manual]
 - [ ] Duplicate "name|area" numbered ("Lamp", "Lamp 2") [manual]
 - [ ] Light groups fold their single lamps; `group_lights=false` unfolds [manual]

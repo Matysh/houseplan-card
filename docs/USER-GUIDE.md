@@ -338,6 +338,16 @@ Newly discovered devices get a red dot until first opened in Device.
 
 The same binding cannot be used by two markers.
 
+When an exact HA entity belongs to a device, placing that entity gives its
+channel to the entity marker. The automatic parent marker, if needed, contains
+only the remaining active, HA-visible and unplaced entities; it disappears
+when that residual is empty. HA-hidden siblings alone do not keep an automatic
+parent on the plan. To show both the exact entity and the complete device,
+place `entity:X` and `device:D` explicitly — two explicit markers are treated
+as an intentional configuration. Deleting an entity marker returns the entity
+to automatic parent discovery; its binding tombstone does not remove registry
+data from the live HA device.
+
 ### Device editor
 
 - drag a marker to save its server-side position;
