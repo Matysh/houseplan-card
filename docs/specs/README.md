@@ -58,6 +58,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#211](https://github.com/Matysh/houseplan-card/issues/211) Визуальное соответствие маркеров дизайн-пакету #179 | [211-device-icons-visual-parity.md](211-device-icons-visual-parity.md) |
 | [#217](https://github.com/Matysh/houseplan-card/issues/217) Внешняя рамка Text-маркера должна быть капсулой | [217-text-shell-outline.md](217-text-shell-outline.md) |
 | [#218](https://github.com/Matysh/houseplan-card/issues/218) Floating-point шум комнаты не гасит Glow пространства | [218-glow-floor-geometry.md](218-glow-floor-geometry.md) |
+| [#219](https://github.com/Matysh/houseplan-card/issues/219) Единая палитра замков и glyph на оранжевых подложках | [219-lock-orange-palette.md](219-lock-orange-palette.md) |
 | [#205](https://github.com/Matysh/houseplan-card/issues/205) Продолжение следа после короткой остановки пылесоса | [205-vacuum-trail-resume-grace.md](205-vacuum-trail-resume-grace.md) |
 
 ## P2
