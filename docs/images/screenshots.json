@@ -1,7 +1,7 @@
 {
   "version": 1,
   "fixture": "synthetic-only",
-  "sourceFingerprint": "264380083a9a18bfc2305a6577368068d6839fabe82fe1a1f440a62867b4e589",
+  "sourceFingerprint": "d163d1ae7af291ebbcfe69419b5cf0bdcd20d1930ba79c72651b8c682451b7d2",
   "captureScriptSha256": "34f2219790d46efd8250e7a1bd829cb8fc0b0547e1260635fefa52407551b41b",
   "command": "npm run build && node demo/docs/capture.mjs",
   "scenarios": {
@@ -13,8 +13,8 @@
       },
       "theme": "dark",
       "language": "en",
-      "sourceSha256": "264380083a9a18bfc2305a6577368068d6839fabe82fe1a1f440a62867b4e589",
-      "imageSha256": "2885f96e348b15ab7c696e56e99bddcd9bb2ee94218a883e5a2155f45f5042aa"
+      "sourceSha256": "d163d1ae7af291ebbcfe69419b5cf0bdcd20d1930ba79c72651b8c682451b7d2",
+      "imageSha256": "d7ce576f5a70b1977277e15985bb409f40f205f6016eeebc62f76a4394effdb4"
     },
     "view-touch": {
       "file": "02-view-touch.png",
@@ -24,8 +24,8 @@
       },
       "theme": "dark",
       "language": "en",
-      "sourceSha256": "264380083a9a18bfc2305a6577368068d6839fabe82fe1a1f440a62867b4e589",
-      "imageSha256": "f62d8af3617c00a5e99511bd765980d2e27badf25047a1be34046b64195abe6c"
+      "sourceSha256": "d163d1ae7af291ebbcfe69419b5cf0bdcd20d1930ba79c72651b8c682451b7d2",
+      "imageSha256": "62c13b7f9dc6c0576735a727a1988bc35b9b28fc2a9d34e9a746a4dc3e01b28a"
     },
     "space-create": {
       "file": "03-space-create.png",
@@ -35,8 +35,8 @@
       },
       "theme": "dark",
       "language": "en",
-      "sourceSha256": "264380083a9a18bfc2305a6577368068d6839fabe82fe1a1f440a62867b4e589",
-      "imageSha256": "c53db2e5c642a5549c13f3c93a5b359fed69bdb2621bf71a243a877ffcb95e6b"
+      "sourceSha256": "d163d1ae7af291ebbcfe69419b5cf0bdcd20d1930ba79c72651b8c682451b7d2",
+      "imageSha256": "a73bb2301677752c7980712af554d40f3fd6077944249677245c8135d325b1b9"
     },
     "room-contour-close": {
       "file": "04-room-contour-close.png",
@@ -46,8 +46,8 @@
       },
       "theme": "dark",
       "language": "en",
-      "sourceSha256": "264380083a9a18bfc2305a6577368068d6839fabe82fe1a1f440a62867b4e589",
-      "imageSha256": "2f13ea645af306eee9cc7c52699c928377b72f412b08c1a3db6beb848ace1b51"
+      "sourceSha256": "d163d1ae7af291ebbcfe69419b5cf0bdcd20d1930ba79c72651b8c682451b7d2",
+      "imageSha256": "8f234c7750809cbc75b3ce364dc2d3b55eebacd4b2b5e42b223d6e2cee9bb4ac"
     },
     "plan-context-tray": {
       "file": "05-plan-context-tray.png",
@@ -57,8 +57,8 @@
       },
       "theme": "dark",
       "language": "en",
-      "sourceSha256": "264380083a9a18bfc2305a6577368068d6839fabe82fe1a1f440a62867b4e589",
-      "imageSha256": "a6c526fede11bc3503fd2384bd4a3f6afa008f481c5c47578f06cae6c81c6f9b"
+      "sourceSha256": "d163d1ae7af291ebbcfe69419b5cf0bdcd20d1930ba79c72651b8c682451b7d2",
+      "imageSha256": "3eee486fe5cc226e8b3c19c4035ebb279087432a69959d24b7edabc59d848582"
     },
     "device-editor": {
       "file": "06-device-editor.png",
@@ -68,8 +68,8 @@
       },
       "theme": "dark",
       "language": "en",
-      "sourceSha256": "264380083a9a18bfc2305a6577368068d6839fabe82fe1a1f440a62867b4e589",
-      "imageSha256": "9585b59add4d35b5a6f028ce5b720ef1b77a3f8b19436d192cd1a0e6fc637264"
+      "sourceSha256": "d163d1ae7af291ebbcfe69419b5cf0bdcd20d1930ba79c72651b8c682451b7d2",
+      "imageSha256": "a6360309a9a6125bdc2dfd411463d281af2f21a09b07e58eae1fc23d7371b8e5"
     },
     "device-display-preview": {
       "file": "06-device-display-preview.png",
@@ -79,8 +79,8 @@
       },
       "theme": "dark",
       "language": "en",
-      "sourceSha256": "264380083a9a18bfc2305a6577368068d6839fabe82fe1a1f440a62867b4e589",
-      "imageSha256": "cfc317da4628d079a116ff71311fbf06b1eb3b181928a5ea7ba888ab936a5e8b"
+      "sourceSha256": "d163d1ae7af291ebbcfe69419b5cf0bdcd20d1930ba79c72651b8c682451b7d2",
+      "imageSha256": "4476e223863379ef9dfd0a1c89fb4c169a1249268e733ac11e5a2eec8d90f8f5"
     },
     "background-editor": {
       "file": "07-background-editor.png",
@@ -90,8 +90,8 @@
       },
       "theme": "dark",
       "language": "en",
-      "sourceSha256": "264380083a9a18bfc2305a6577368068d6839fabe82fe1a1f440a62867b4e589",
-      "imageSha256": "d7cfe70551d9260169df8efd832e32ed7df99c7f60b55d1fd4a8322bd4c47175"
+      "sourceSha256": "d163d1ae7af291ebbcfe69419b5cf0bdcd20d1930ba79c72651b8c682451b7d2",
+      "imageSha256": "a83926911c2d6d468c81dfdf74be7e00cbbca9a02afade6e6b5644bdf4f46852"
     },
     "room-card": {
       "file": "08-room-card.png",
@@ -101,8 +101,8 @@
       },
       "theme": "dark",
       "language": "en",
-      "sourceSha256": "264380083a9a18bfc2305a6577368068d6839fabe82fe1a1f440a62867b4e589",
-      "imageSha256": "029a3e69ec647a8a370d99e6bb7f9225833c526739076022f6b52ba54bff30ea"
+      "sourceSha256": "d163d1ae7af291ebbcfe69419b5cf0bdcd20d1930ba79c72651b8c682451b7d2",
+      "imageSha256": "48a5685039a5e0de2a28190d857b193c86e2e63606e3c7a8c40fc9d2b190da4e"
     },
     "device-info": {
       "file": "09-device-info.png",
@@ -112,8 +112,8 @@
       },
       "theme": "dark",
       "language": "en",
-      "sourceSha256": "264380083a9a18bfc2305a6577368068d6839fabe82fe1a1f440a62867b4e589",
-      "imageSha256": "a06cbf83f09e2f67b3566d7c0b10e973db060c3d20786f26f74ada6a21937c3e"
+      "sourceSha256": "d163d1ae7af291ebbcfe69419b5cf0bdcd20d1930ba79c72651b8c682451b7d2",
+      "imageSha256": "307b2ba224cd0b55c2e2936767a16cdda7af3ddffd292705f20c5a300e56c648"
     }
   }
 }
