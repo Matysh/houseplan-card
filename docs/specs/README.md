@@ -115,6 +115,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#201](https://github.com/Matysh/houseplan-card/issues/201) Наследование толщины для атомарного участка стены | [201-atomic-thickness-lookup.md](201-atomic-thickness-lookup.md) |
 | [#203](https://github.com/Matysh/houseplan-card/issues/203) Выключение названий скрывает все подписи комнат | [203-hide-room-names.md](203-hide-room-names.md) |
 | [#186](https://github.com/Matysh/houseplan-card/issues/186) Безопасный остаток стены у торцов партиционного проёма | [186-partition-opening-jamb-margin.md](186-partition-opening-jamb-margin.md) |
+| [#234](https://github.com/Matysh/houseplan-card/issues/234) Толщина отрезка цепочки не расходится между превью и записью | [234-chain-segment-thickness.md](234-chain-segment-thickness.md) |
 
 ## P3
 
