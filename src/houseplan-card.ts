@@ -265,7 +265,7 @@ import {
   applySpaceOrder, canStartTabDrag, markersNeedingPlacement, passedDragThreshold,
   reorderSpaceIds,
 } from './space-order';
-import { applyOpeningMoves, mergeCollinearPartitions } from './wall-merge';
+import { applyOpeningMoves, mergeCollinearPartitions, spaceMergeGeometry } from './wall-merge';
 
 const CARD_VERSION = '1.66.0';
 const DISPLAY_LABEL_KEYS: Record<DeviceDisplayMode, I18nKey> = {
@@ -6548,26 +6548,10 @@ class HouseplanCard extends LitElement {
   private _mergeSpacePartitions(sp: any, seedIds?: string[]): number {
     const partitions = (sp?.partitions || []) as PartitionCfg[];
     if (partitions.length < 2) return 0;
-    const rooms = (sp.rooms || []) as any[];
     const result = mergeCollinearPartitions(partitions, {
       pitch: GRID_STEP_N,
       seedIds,
-      geometry: {
-        // Same coordinates as the partitions — `roomPoly` returns the raw
-        // config polygon (review CODE-REVIEW-229-r1, High-1).
-        roomPolygons: rooms
-          .map((room) => roomPoly(room))
-          .filter((poly): poly is number[][] => !!poly),
-        columns: sp.wall_columns || [],
-        // The chain being finished is still persisted as a draft at this
-        // point, and its own ends must not pass for someone else's junction —
-        // the same exclusion plan-snap-overlay makes (review r1, High-2).
-        draftEnds: (sp.room_drafts || []).flatMap((draft: any) => {
-          if (draft?.id && draft.id === this._activeDraftId) return [];
-          const points = draft?.points || [];
-          return points.length ? [points[0], points[points.length - 1]] : [];
-        }),
-      },
+      geometry: spaceMergeGeometry(sp, { excludeDraftId: this._activeDraftId }),
     });
     if (!result.merged) return 0;
     sp.partitions = result.partitions;

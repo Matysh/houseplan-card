@@ -4,6 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   applyOpeningMoves, EPS_JOIN, mergeCollinearPartitions, junctionAt, remapHostT,
+  spaceMergeGeometry,
 } from '../test-build/wall-merge.js';
 
 const PITCH = 10;                       // one grid pitch in test coordinates
@@ -209,4 +210,53 @@ test('issue 229 openings hosted elsewhere are left alone', () => {
   });
   assert.equal(moved, 0);
   assert.equal(JSON.stringify(openings), before);
+});
+
+test('issue 229 space geometry keeps rooms in the coordinates partitions use', () => {
+  // Both callers used to build this themselves and both rescaled the polygon,
+  // so a junction on a room side was never found (CODE-REVIEW-229-r1 High-1,
+  // r2 Medium-1). One function now, checked in the units both paths share.
+  const space = {
+    rooms: [
+      { id: 'r1', poly: [[0.1, 0.1], [0.5, 0.1], [0.5, 0.5], [0.1, 0.5]] },
+      { id: 'r2', x: 0.6, y: 0.1, w: 0.2, h: 0.2 },
+      { id: 'broken' },
+    ],
+    wall_columns: [{ id: 'c1', center: [0.7, 0.7] }],
+  };
+  const geometry = spaceMergeGeometry(space);
+  assert.deepEqual(geometry.roomPolygons[0], [[0.1, 0.1], [0.5, 0.1], [0.5, 0.5], [0.1, 0.5]]);
+  assert.deepEqual(geometry.roomPolygons[1][0], [0.6, 0.1], 'x/y/w/h rooms come through too');
+  assert.equal(geometry.roomPolygons.length, 2, 'a room without geometry is skipped');
+  assert.deepEqual(geometry.columns, space.wall_columns);
+});
+
+test('issue 229 the chain being finished is not its own junction', () => {
+  const space = {
+    rooms: [],
+    room_drafts: [
+      { id: 'active', points: [[0.1, 0.1], [0.3, 0.1]] },
+      { id: 'other', points: [[0.6, 0.6], [0.8, 0.6]] },
+    ],
+  };
+  assert.deepEqual(
+    spaceMergeGeometry(space).draftEnds,
+    [[0.1, 0.1], [0.3, 0.1], [0.6, 0.6], [0.8, 0.6]],
+    'without an active chain every draft anchors a node',
+  );
+  assert.deepEqual(
+    spaceMergeGeometry(space, { excludeDraftId: 'active' }).draftEnds,
+    [[0.6, 0.6], [0.8, 0.6]],
+    'the chain about to disappear does not hold a node',
+  );
+});
+
+test('issue 229 a junction on a room side survives, through the shared geometry', () => {
+  const partitions = [seg('p1', 100, 500, 300, 500), seg('p2', 300, 500, 500, 500)];
+  const space = { rooms: [{ id: 'r1', x: 100, y: 100, w: 400, h: 400 }] };
+  const result = mergeCollinearPartitions(partitions, {
+    pitch: PITCH, geometry: spaceMergeGeometry(space),
+  });
+  assert.equal(result.merged, 0, 'the middle of the room side holds the node');
+  assert.equal(result.partitions.length, 2);
 });

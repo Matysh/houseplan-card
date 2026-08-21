@@ -16,6 +16,7 @@
 
 import type { OpeningCfg, PartitionCfg, WallColumnCfg } from './types';
 import { materializePartitionOpening, resolvePartitionOpeningCompat } from './partition-openings';
+import { roomPoly } from './logic';
 
 /** Collinearity, as a fraction of one grid pitch (spec §8.3). */
 export const EPS_ANGLE = 0.02;
@@ -259,4 +260,36 @@ export function applyOpeningMoves(
     );
   }
   return moved;
+}
+
+/**
+ * The junction geometry of one space, in the coordinates the partitions use.
+ *
+ * Both callers — the live editor and “Optimize plans” — need exactly the same
+ * three things, and when each built them for itself the identical mistake was
+ * made twice: room polygons were scaled a second time and no room junction was
+ * ever found (review CODE-REVIEW-229-r1/r2). One function, one set of
+ * coordinates, one place to get it wrong.
+ *
+ * `excludeDraftId` is the chain being finished right now: it is already
+ * persisted in `room_drafts`, and its own ends are not a foreign junction —
+ * the same exclusion `plan-snap-overlay` makes.
+ */
+export function spaceMergeGeometry(
+  space: any, options?: { excludeDraftId?: string | null },
+): MergeGeometry {
+  const exclude = options?.excludeDraftId || null;
+  return {
+    // `roomPoly` hands back the raw config polygon: rooms are stored in the
+    // same normalised coordinates as partitions, so nothing is rescaled here.
+    roomPolygons: (space?.rooms || [])
+      .map((room: any) => roomPoly(room))
+      .filter((poly: number[][] | null): poly is number[][] => !!poly),
+    columns: space?.wall_columns || [],
+    draftEnds: (space?.room_drafts || []).flatMap((draft: any) => {
+      if (exclude && draft?.id === exclude) return [];
+      const points = draft?.points || [];
+      return points.length ? [points[0], points[points.length - 1]] : [];
+    }),
+  };
 }

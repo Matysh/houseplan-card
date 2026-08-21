@@ -24,7 +24,7 @@ import {
   degradeWalls, normalizeWallIntervals, rekeyWallsAfterMove, roomWallProfile,
   setWallThickness, type WallEntry,
 } from './wall-thickness';
-import { applyOpeningMoves, mergeCollinearPartitions } from './wall-merge';
+import { applyOpeningMoves, mergeCollinearPartitions, spaceMergeGeometry } from './wall-merge';
 
 /** Bump when a new lossless maintenance pass is added. */
 export const PLAN_MODEL_VERSION = 6;
@@ -502,20 +502,7 @@ export function optimizePlans(configIn: any, layoutIn: Record<string, any>): Opt
     // plan finally loses them — explicitly, with a report and an undo (#229).
     const partitionMerge = mergeCollinearPartitions(space.partitions || [], {
       pitch: GRID_STEP_N,
-      geometry: {
-        // Rooms are stored in the same coordinates as partitions: `roomPoly`
-        // hands back the raw config polygon, so scaling it here would push
-        // every room into a corner and no junction would ever be found
-        // (review CODE-REVIEW-229-r1, High-1).
-        roomPolygons: (space.rooms || [])
-          .map((room: any) => roomPoly(room))
-          .filter((poly: number[][] | null): poly is number[][] => !!poly),
-        columns: space.wall_columns || [],
-        draftEnds: (space.room_drafts || []).flatMap((draft: any) => {
-          const points = draft?.points || [];
-          return points.length ? [points[0], points[points.length - 1]] : [];
-        }),
-      },
+      geometry: spaceMergeGeometry(space),
     });
     if (partitionMerge.merged) {
       partitionsMerged += partitionMerge.merged;

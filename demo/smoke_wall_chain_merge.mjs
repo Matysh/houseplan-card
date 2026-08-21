@@ -73,6 +73,7 @@ const res = await page.evaluate(async () => {
   out.touchedWallGrew = !!extended && Math.abs(extended.b[0] * 1000 - 700) < 0.01;
   out.draftIsGone = !(space().room_drafts || []).length;
 
+
   return out;
 });
 checkAll(res);

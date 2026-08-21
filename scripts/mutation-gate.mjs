@@ -719,27 +719,27 @@ export const MUTANTS = [
   },
   {
     id: 'partition-merge-rescales-rooms',
-    guard: 'node --test --test-name-pattern="issue 229" test/plan-optimizer.test.mjs',
+    guard: 'node --test --test-name-pattern="issue 229" test/wall-merge.test.mjs',
     because: 'комнаты хранятся в тех же координатах, что перегородки: лишнее деление '
       + 'уносит их в угол и примыкание к стене комнаты перестаёт находиться '
       + '(CODE-REVIEW-229-r1, High-1)',
     patches: [{
-      file: 'src/plan-optimizer.ts',
-      find: `          .filter((poly: number[][] | null): poly is number[][] => !!poly),`,
-      replace: `          .filter((poly: number[][] | null): poly is number[][] => !!poly)
-          .map((poly: number[][]) => poly.map((p) => [p[0] / NORM_W, p[1] / NORM_W])),`,
+      file: 'src/wall-merge.ts',
+      find: `      .filter((poly: number[][] | null): poly is number[][] => !!poly),`,
+      replace: `      .filter((poly: number[][] | null): poly is number[][] => !!poly)
+      .map((poly: number[][]) => poly.map((p) => [p[0] / 1000, p[1] / 1000])),`,
     }],
   },
   {
     id: 'chain-merge-sees-own-draft',
-    guard: 'node demo/smoke_wall_chain_merge.mjs',
+    guard: 'node --test --test-name-pattern="issue 229" test/wall-merge.test.mjs',
     because: 'завершаемая цепочка ещё лежит в room_drafts, и её собственные концы '
       + 'нельзя принимать за чужое примыкание — иначе стык с существующей стеной '
       + 'никогда не срастается (CODE-REVIEW-229-r1, High-2)',
     patches: [{
-      file: 'src/houseplan-card.ts',
-      find: '          if (draft?.id && draft.id === this._activeDraftId) return [];',
-      replace: '          void 0;',
+      file: 'src/wall-merge.ts',
+      find: '      if (exclude && draft?.id === exclude) return [];',
+      replace: '      void exclude;',
     }],
   },
   {
