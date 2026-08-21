@@ -60,6 +60,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#218](https://github.com/Matysh/houseplan-card/issues/218) Floating-point шум комнаты не гасит Glow пространства | [218-glow-floor-geometry.md](218-glow-floor-geometry.md) |
 | [#219](https://github.com/Matysh/houseplan-card/issues/219) Единая палитра замков и glyph на оранжевых подложках | [219-lock-orange-palette.md](219-lock-orange-palette.md) |
 | [#205](https://github.com/Matysh/houseplan-card/issues/205) Продолжение следа после короткой остановки пылесоса | [205-vacuum-trail-resume-grace.md](205-vacuum-trail-resume-grace.md) |
+| [#220](https://github.com/Matysh/houseplan-card/issues/220) Порядок пространств перетаскиванием вкладок | [220-space-tab-reorder.md](220-space-tab-reorder.md) |
 | [#226](https://github.com/Matysh/houseplan-card/issues/226) Entity-marker не дублируется родительским HA-устройством | [226-entity-parent-dedup.md](226-entity-parent-dedup.md) |
 | [#223](https://github.com/Matysh/houseplan-card/issues/223) Optimize канонизирует координаты без floating-point шума | [223-optimize-coordinate-canonicalization.md](223-optimize-coordinate-canonicalization.md) |
 

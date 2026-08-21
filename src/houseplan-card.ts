@@ -261,6 +261,10 @@ import {
   type OpeningPlacementCore, type OpeningPlacementPreset, type OpeningPlacementType,
 } from './opening-placement';
 import { safeStoredColor } from './color';
+import {
+  applySpaceOrder, canStartTabDrag, markersNeedingPlacement, passedDragThreshold,
+  reorderSpaceIds,
+} from './space-order';
 
 const CARD_VERSION = '1.66.0';
 const DISPLAY_LABEL_KEYS: Record<DeviceDisplayMode, I18nKey> = {
@@ -1238,6 +1242,130 @@ class HouseplanCard extends LitElement {
   }
 
   /** Direct space tabs use the same motion as swipe/carousel navigation. */
+  // ---- reordering the space tabs (issue #220) ------------------------------
+  //
+  // Mouse only, editors only: the same tabs switch spaces in View, where touch
+  // is a first-class citizen, so a gesture here would compete with that tap.
+  // docs/specs/220-space-tab-reorder.md §4.1, "Touch editor: not exposed".
+
+  private get _canReorderTabs(): boolean {
+    return canStartTabDrag({
+      canEdit: this._canEdit,
+      kiosk: this._kiosk,
+      mode: this._mode,
+      pointerType: 'mouse',
+      spaceCount: this._model.length,
+      fixedFloor: this._hasFixedFloor,
+    });
+  }
+
+  private _tabPointerDown(event: PointerEvent, id: string): void {
+    if (!canStartTabDrag({
+      canEdit: this._canEdit,
+      kiosk: this._kiosk,
+      mode: this._mode,
+      pointerType: event.pointerType,
+      spaceCount: this._model.length,
+      fixedFloor: this._hasFixedFloor,
+    })) return;
+    // A mouse released past the edge of the panel fires neither pointerup nor
+    // pointercancel on any tab, and the gesture would stay stuck mid-drag —
+    // taking the next click with it, since _tabClick swallows clicks that
+    // follow a drag (review CODE-REVIEW-220-r1, M1).
+    //
+    // Capture is the usual answer and this file uses it everywhere, but it is
+    // not a guarantee: the browser grants it only for a live pointer, so a
+    // gesture that starts any other way keeps no capture at all. The window
+    // listener below is what actually closes the gesture; capture merely keeps
+    // the moves flowing to the tab while the button is held.
+    capturePointer(event);
+    this._tabDragRelease = (release: PointerEvent) => this._tabPointerUp(release);
+    window.addEventListener('pointerup', this._tabDragRelease);
+    window.addEventListener('pointercancel', this._tabDragRelease);
+    this._tabDrag = {
+      id, pointerId: event.pointerId, x: event.clientX, y: event.clientY,
+      moved: false, overId: id,
+    };
+  }
+
+  private _tabPointerMove(event: PointerEvent, overId: string): void {
+    const drag = this._tabDrag;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    if (!drag.moved
+        && !passedDragThreshold(event.clientX - drag.x, event.clientY - drag.y)) return;
+    // Past the threshold the gesture is a drag: the click that would otherwise
+    // follow is suppressed in _tabClick, and the panel shows where it lands.
+    if (drag.moved && drag.overId === overId) return;
+    this._tabDrag = { ...drag, moved: true, overId };
+  }
+
+  private _tabPointerUp(event: PointerEvent): void {
+    const drag = this._tabDrag;
+    if (drag && drag.pointerId !== event.pointerId) return;
+    this._endTabDrag();
+    if (!drag || !drag.moved) return;
+    this._commitTabOrder(drag.id, drag.overId);
+  }
+
+  /** Drop the gesture and its window listeners, wherever the release happened. */
+  private _endTabDrag(): void {
+    this._tabDrag = null;
+    if (!this._tabDragRelease) return;
+    window.removeEventListener('pointerup', this._tabDragRelease);
+    window.removeEventListener('pointercancel', this._tabDragRelease);
+    this._tabDragRelease = null;
+  }
+
+  /** A click that followed a real drag must not also switch the space. */
+  private _tabClick(id: string): void {
+    if (this._tabDrag?.moved) return;
+    this._pickSpace(id);
+  }
+
+  /**
+   * Write the new order — and, in the same write, the placement that used to
+   * depend on it.
+   *
+   * A marker with neither an explicit space nor an area that names one renders
+   * in whatever space sits first. Reordering would silently hand it to another
+   * space, so the answer it has right now is written down first. This is the
+   * whole reason the two changes may not be split into two saves.
+   */
+  private _commitTabOrder(movedId: string, targetId: string): void {
+    const cfg = this._serverCfg;
+    if (!cfg || !this._canReorderTabs) return;
+    const ids = this._model.map((space) => space.id);
+    const order = reorderSpaceIds(ids, movedId, targetId);
+    if (order === ids) return;
+    // The area in force, not merely the one stored on the marker: a marker that
+    // binds an HA device inherits its area from the registry, and such a marker
+    // never depended on the order (review CODE-REVIEW-220-r1, H1).
+    const areaById = new Map(
+      this._devices.map((device) => [String(device.id), String(device.area || '')]),
+    );
+    const pinned = markersNeedingPlacement(
+      cfg.markers || [],
+      Object.fromEntries(
+        Object.entries(this._areaToSpace).map(([area, value]) => [area, value.space]),
+      ),
+      ids[0] || '',
+      (markerId) => areaById.get(markerId) || '',
+    );
+    if (pinned.length) {
+      const byId = new Map(pinned.map((entry) => [entry.id, entry.space]));
+      for (const marker of cfg.markers || []) {
+        const space = byId.get(String((marker as any).id));
+        if (space) (marker as any).space = space;
+      }
+    }
+    cfg.spaces = applySpaceOrder(cfg.spaces || [], order);
+    this._saveConfig();
+    if (!this._tabOrderWarned) {
+      this._tabOrderWarned = true;
+      this._showToast(this._t('toast.space_order_changed'));
+    }
+  }
+
   private _pickSpace(id: string): void {
     if (id === this._space) return;
     const ids = this._model.map((sp) => sp.id);
@@ -1827,6 +1955,17 @@ class HouseplanCard extends LitElement {
   private _cycleTimer?: number;
   private _cyclePausedUntil = 0;
   private _swipeStart: { x: number; y: number; id: number } | null = null;
+
+  /** Live tab reorder: which tab is held, where it started, where it would land. */
+  private _tabDrag: {
+    id: string; pointerId: number; x: number; y: number; moved: boolean; overId: string;
+  } | null = null;
+
+  /** Window-level release handler while a tab is held; see _tabPointerDown. */
+  private _tabDragRelease: ((event: PointerEvent) => void) | null = null;
+
+  /** The positional-`floor` warning is worth saying once, not on every drop. */
+  private _tabOrderWarned = false;
   private _lastTap = 0;
   private get _labsIso(): boolean {
     return this._labs.active.includes('iso');
@@ -1916,6 +2055,7 @@ class HouseplanCard extends LitElement {
   private _holdFired = false;
 
   static properties = {
+    _tabDrag: { state: true },
     _hdrH: { state: true },
     _booting: { state: true },
     _bootFading: { state: true },
@@ -2096,6 +2236,13 @@ class HouseplanCard extends LitElement {
     this._bootSettling = false;
     for (const rt of this._activityRt.values()) clearTimeout(rt.timer); // pending activity-window repaints
     window.removeEventListener('keydown', this._keyHandler);
+    // A tab drag holds window listeners for the length of the gesture. Losing
+    // the card mid-drag — Lovelace rebuilding its tree, the user leaving the
+    // view with the button still down — would leave them alive: the closure
+    // keeps this instance (and its config) from being collected, and the next
+    // pointerup anywhere on the page would make an invisible card write its
+    // order (review CODE-REVIEW-220-r2/r3, F1).
+    this._endTabDrag();
     clearInterval(this._cycleTimer);
     clearTimeout(this._kioskDotsTimer);
     clearTimeout(this._kioskHoldTimer);
@@ -15746,8 +15893,16 @@ class HouseplanCard extends LitElement {
             ${navigationSpaces.map(
               (s) => html`<button
                 data-hp="space-tab" data-id="${s.id}"
-                class="tab ${this._space === s.id ? 'active' : ''}"
-                @click=${() => this._pickSpace(s.id)}
+                class="tab ${this._space === s.id ? 'active' : ''}${
+                  this._tabDrag?.moved && this._tabDrag.id === s.id ? ' dragging' : ''}${
+                  this._tabDrag?.moved && this._tabDrag.overId === s.id
+                    && this._tabDrag.id !== s.id ? ' droptarget' : ''}"
+                ?data-reorderable=${this._canReorderTabs}
+                @pointerdown=${(e: PointerEvent) => this._tabPointerDown(e, s.id)}
+                @pointermove=${(e: PointerEvent) => this._tabPointerMove(e, s.id)}
+                @pointerup=${(e: PointerEvent) => this._tabPointerUp(e)}
+                @pointercancel=${() => this._endTabDrag()}
+                @click=${() => this._tabClick(s.id)}
               >
                 ${s.title}${this._norm && this._canEdit
                   ? html`<ha-icon class="tabedit" icon="mdi:cog-outline"
