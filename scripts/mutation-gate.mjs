@@ -82,6 +82,19 @@ export const MUTANTS = [
     }],
   },
   {
+    id: 'smoke-launcher-skips-freshness',
+    guard: 'node --test --test-name-pattern="launcher enforces the gate" '
+      + 'test/bundle-freshness.test.mjs',
+    because: 'a smoke run against a stale demo bundle does not fail cleanly — on #234 three '
+      + 'assertions went red while a fourth went green, because the old code was wrong in two '
+      + 'places that agreed with each other, and the mixed result reads as a logic defect (#236)',
+    patches: [{
+      file: 'demo/serve.mjs',
+      find: '  await assertFreshDemoBundleUnlessAllowed(page, REPO_ROOT);',
+      replace: '  // freshness intentionally skipped by the mutant',
+    }],
+  },
+  {
     id: 'snapn-returns-input-near-node',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="snapN returns the exact nearest node" '
@@ -684,8 +697,8 @@ export const MUTANTS = [
       + 'changing the separate room-fill gradient',
     patches: [{
       file: 'src/device-presentation.ts',
-      find: '  if (lqi <= 40) return \'low\';',
-      replace: '  if (lqi < 40) return \'low\';',
+      find: '  if (lqi <= 40) return \\'low\\';',
+      replace: '  if (lqi < 40) return \\'low\\';',
     }],
   },
   {
