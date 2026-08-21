@@ -358,9 +358,13 @@ complete Linux CI artifact; never accept a partial scenario or images merely to 
 CI green. See `demo/golden/README.md`.
 
 **Freshness contract**: the embedded fingerprint covers `src/` plus Rollup,
-TypeScript and package-lock build inputs. Benchmark and golden tooling must call
-`assertFreshDemoBundle` before recording any result; a missing or mismatched
-fingerprint is a hard failure, not a warning.
+TypeScript and package-lock build inputs. Every browser check must verify it
+before trusting a result — benchmarks, golden runs and documentation captures
+call `assertFreshDemoBundle` themselves, and smokes get it from `launch()` in
+`demo/serve.mjs` (#236). A missing or mismatched fingerprint is a hard failure,
+not a warning; `HP_ALLOW_STALE_BUNDLE=1` skips the check for debugging and says
+so out loud. A smoke against a stale bundle does not fail cleanly: part of its
+assertions go red and part stay green, which reads as a logic defect.
 
 **CI is pinned to an exact SHA.** The release gate accepts only a `completed
 success` run for the candidate's SHA, not "the last green one"; a new push cancels
