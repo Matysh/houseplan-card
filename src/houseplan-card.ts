@@ -2236,6 +2236,13 @@ class HouseplanCard extends LitElement {
     this._bootSettling = false;
     for (const rt of this._activityRt.values()) clearTimeout(rt.timer); // pending activity-window repaints
     window.removeEventListener('keydown', this._keyHandler);
+    // A tab drag holds window listeners for the length of the gesture. Losing
+    // the card mid-drag — Lovelace rebuilding its tree, the user leaving the
+    // view with the button still down — would leave them alive: the closure
+    // keeps this instance (and its config) from being collected, and the next
+    // pointerup anywhere on the page would make an invisible card write its
+    // order (review CODE-REVIEW-220-r2/r3, F1).
+    this._endTabDrag();
     clearInterval(this._cycleTimer);
     clearTimeout(this._kioskDotsTimer);
     clearTimeout(this._kioskHoldTimer);

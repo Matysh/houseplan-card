@@ -180,6 +180,43 @@ const res = await page.evaluate(async () => {
   await settle();
   out.panelStillSwitchesAfterStrayRelease = c._space === strayTarget;
 
+  // --- review r2/r3 F1: the card is destroyed mid-drag -----------------------
+  //
+  // Lovelace rebuilds its tree, or the user leaves the view with the button
+  // still down. The window listeners the gesture installed must not outlive
+  // the card: they hold the instance alive and would let an invisible card
+  // write its order on the next pointerup anywhere on the page.
+  c._mode = 'plan';
+  c.requestUpdate();
+  await settle();
+  const orderBeforeDetach = ids();
+  const detachTabs = tabs();
+  const held = detachTabs[detachTabs.length - 1];
+  const heldRect = held.getBoundingClientRect();
+  const heldEvent = (type, x, y) => held.dispatchEvent(new PointerEvent(type, {
+    pointerId: 13, pointerType: 'mouse', clientX: x, clientY: y,
+    bubbles: true, composed: true,
+  }));
+  heldEvent('pointerdown', heldRect.x + heldRect.width / 2, heldRect.y + heldRect.height / 2);
+  heldEvent('pointermove', heldRect.x + heldRect.width / 2 + 40, heldRect.y + heldRect.height / 2);
+  out.dragWasActiveBeforeDetach = c._tabDrag !== null && c._tabDrag.moved === true;
+
+  const parent = c.parentNode;
+  const next = c.nextSibling;
+  const writesBeforeDetach = writes.length;
+  c.remove();
+  await new Promise((r) => setTimeout(r, 50));
+  out.detachEndedTheDrag = c._tabDrag === null;
+  // the release the detached card must no longer hear
+  window.dispatchEvent(new PointerEvent('pointerup', {
+    pointerId: 13, pointerType: 'mouse', bubbles: true, composed: true,
+  }));
+  await new Promise((r) => setTimeout(r, 700));
+  out.detachedCardDidNotWrite = writes.length === writesBeforeDetach;
+  parent.insertBefore(c, next);
+  await settle();
+  out.orderSurvivedDetach = JSON.stringify(ids()) === JSON.stringify(orderBeforeDetach);
+
   c._writeConfig = realWrite;
   return out;
 });

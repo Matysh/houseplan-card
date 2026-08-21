@@ -763,6 +763,18 @@ export const MUTANTS = [
     }],
   },
   {
+    id: 'tab-drag-outlives-the-card',
+    guard: 'node demo/smoke_space_tab_reorder.mjs',
+    because: 'слушатели жеста, пережившие disconnectedCallback, держат инстанс карточки '
+      + 'и дают невидимой карточке записать порядок по следующему pointerup на странице '
+      + '(ревью r2/r3, F1)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '    this._endTabDrag();\n    clearInterval(this._cycleTimer);',
+      replace: '    clearInterval(this._cycleTimer);',
+    }],
+  },
+  {
     id: 'tab-reorder-eats-click',
     guard: 'node --test --test-name-pattern="issue 220" test/space-order.test.mjs',
     because: 'нулевой порог превращает обычный клик по вкладке в перетаскивание, и '
