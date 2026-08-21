@@ -158,7 +158,7 @@ import {
 } from './plan-snap-overlay';
 import {
   atomizeWallSegments, buildWallFaceGraph, findNewWallFacesInGraphs,
-  normalizeUnifiedWallTool, wallChainSegments,
+  normalizeUnifiedWallTool, wallChainSegments, chainSegmentCms,
   type WallFaceGraph, type WallGraphFace, type WallGraphSourceSegment,
 } from './wall-face-graph';
 import {
@@ -2617,7 +2617,9 @@ class HouseplanCard extends LitElement {
     if (draft) {
       this._activeDraftId = draft.id;
       this._path = draft.points.map((point) => [...point]);
-      this._draftSegmentCms = draft.segments.map((segment) => segment.cm);
+      this._draftSegmentCms = this._adoptDraftCms(
+        this._path, draft.segments.map((segment: any) => segment.cm), draft.id,
+      );
       this._resumeDraftBySpace[this._space] = draft.id;
     } else {
       this._activeDraftId = null;
@@ -6574,7 +6576,11 @@ class HouseplanCard extends LitElement {
       return true;
     }
     const segments = wallChainSegments(
-      this._path, this._draftSegmentCms, DRAW_WALL_DEFAULT_CM,
+      this._path,
+      chainSegmentCms(
+        this._path.length - 1, this._draftSegmentCms,
+        this._drawWallCm, DRAW_WALL_DEFAULT_CM,
+      ),
     );
     const segmentCount = segments.length;
     if ((sp.partitions || []).length + segmentCount > MAX_PARTITIONS) {
@@ -7268,9 +7274,13 @@ class HouseplanCard extends LitElement {
         this._path = endHit.reverse
           ? [...endHit.draft.points].reverse().map((p) => [...p])
           : endHit.draft.points.map((p) => [...p]);
-        this._draftSegmentCms = endHit.reverse
-          ? [...endHit.draft.segments].reverse().map((s) => s.cm)
-          : endHit.draft.segments.map((s) => s.cm);
+        this._draftSegmentCms = this._adoptDraftCms(
+          this._path,
+          endHit.reverse
+            ? [...endHit.draft.segments].reverse().map((s) => s.cm)
+            : endHit.draft.segments.map((s) => s.cm),
+          endHit.draft.id,
+        );
         return;
       }
       this._activeDraftId = null;
@@ -7289,8 +7299,16 @@ class HouseplanCard extends LitElement {
       return;
     }
     if (!this._canAppendRoomDraftPoint()) return;
+    // Точка и толщина её отрезка пишутся вместе (#234). Раньше запись жила в
+    // отдельном методе, который молча выходил при невалидном поле толщины, и
+    // тогда `_draftSegmentCms` становился короче числа отрезков: превью
+    // показывало текущее поле, а запись — 15 см. Инвариант читается прямо
+    // здесь, а не выводится из двух проверок в разных местах.
+    const cm = this._drawWallCm;
+    if (cm == null) { this._showPhysicalRange(100); return; }
     const beforePath = this._path.map((point) => [...point]);
     this._path = [...this._path, pt];
+    this._draftSegmentCms = [...this._draftSegmentCms, cm];
     this._persistActiveDraftSegment();
     this._offerWallFaces(beforePath);
   }
@@ -7395,8 +7413,10 @@ class HouseplanCard extends LitElement {
     sp.room_drafts.push(saved);
     this._activeDraftId = id;
     this._resumeDraftBySpace[this._space] = id;
-    this._draftSegmentCms = persistedSegments.map((s: any) => Number(s.cm));
     this._path = persistedPoints;
+    this._draftSegmentCms = this._adoptDraftCms(
+      persistedPoints, persistedSegments.map((s: any) => Number(s.cm)), id,
+    );
     this._physicalSel = null;
     this._recordGeometry(this._t('history.draft_merge'), before);
     this._saveConfig();
@@ -7406,12 +7426,35 @@ class HouseplanCard extends LitElement {
     }
   }
 
-  /** Persist every completed draft segment immediately. */
+  /**
+   * Thickness array adopted from storage, brought to the length of the path.
+   *
+   * A record written before #234 may be shorter than the path: the resolver
+   * fills the gaps by the same rule the preview and the writers use, so a
+   * resumed draft cannot carry a hidden 15 cm into the next save. Reported to
+   * the console rather than to the user: the person did not cause it and cannot
+   * fix it.
+   */
+  private _adoptDraftCms(path: readonly (readonly number[])[], recorded: readonly (number | null | undefined)[], id?: string): number[] {
+    const count = Math.max(0, path.length - 1);
+    const resolved = chainSegmentCms(count, recorded, this._drawWallCm, DRAW_WALL_DEFAULT_CM);
+    if (recorded.length !== count) {
+      console.debug(
+        `[houseplan] draft ${id ?? '?'}: восстановлено толщин ${count - recorded.length} (#234)`,
+      );
+    }
+    return resolved;
+  }
+
+  /**
+   * Persist every completed draft segment immediately.
+   *
+   * The thickness of the new segment is already recorded by the caller (#234):
+   * this method must not decide whether to record it, or the array and the path
+   * drift apart the moment the toolbar field is mid-edit.
+   */
   private _persistActiveDraftSegment(): void {
     if (this._path.length < 2 || !this._curSpaceCfg) return;
-    const cm = this._drawWallCm;
-    if (cm == null) return;
-    this._draftSegmentCms = [...this._draftSegmentCms, cm];
     const before = this._geometrySnapshot();
     const sp = this._curSpaceCfg as any;
     sp.room_drafts ||= [];
@@ -12383,10 +12426,17 @@ class HouseplanCard extends LitElement {
       return validCm(model.room_drafts.find((item) => item.id === draftId)?.segments[index]?.cm)
         ?? DRAW_WALL_DEFAULT_CM;
     }
+    // Толщина отрезка активной цепочки решается тем же резолвером (#234):
+    // именно это значение подсвечивает инструмент «Толщина», и расхождение с
+    // записью здесь было тем способом, которым дефект и обнаружился.
+    const resolved = chainSegmentCms(
+      Math.max(0, activePath.length - 1), activeCms,
+      this._drawWallCm, DRAW_WALL_DEFAULT_CM,
+    );
     for (let i = 0; i + 1 < activePath.length; i++) {
       const a = activePath[i], b = activePath[i + 1];
       if (distToSegment(point, [a[0], a[1], b[0], b[1]]) <= epsilon) {
-        return validCm(activeCms[i]) ?? DRAW_WALL_DEFAULT_CM;
+        return resolved[i] ?? DRAW_WALL_DEFAULT_CM;
       }
     }
     return DRAW_WALL_DEFAULT_CM;
@@ -12441,7 +12491,11 @@ class HouseplanCard extends LitElement {
     const partitions: Array<{ a: number[]; b: number[]; cm: number }> = [];
     if (!accepted.length) {
       partitions.push(...wallChainSegments(
-        batch.activePath, batch.activeCms, DRAW_WALL_DEFAULT_CM,
+        batch.activePath,
+        chainSegmentCms(
+          batch.activePath.length - 1, batch.activeCms,
+          this._drawWallCm, DRAW_WALL_DEFAULT_CM,
+        ),
       ));
     } else {
       const consumed = new Set(accepted.flatMap((decision) => decision.candidate.atomKeys));
@@ -12656,8 +12710,12 @@ class HouseplanCard extends LitElement {
     // Draw-session wall thickness: apply to new edges only; keep neighbour cm
     // on shared stretches. Split naming does not use the Draw field.
     if (!wasSplit) {
-      const edgeCms = [...this._draftSegmentCms, this._closingWallCm || this._drawWallCm || DRAW_WALL_DEFAULT_CM];
-      const cm = edgeCms[0] || this._drawWallCm;
+      const edgeCms = chainSegmentCms(
+        verts.length,
+        [...this._draftSegmentCms, this._closingWallCm ?? undefined],
+        this._drawWallCm, DRAW_WALL_DEFAULT_CM,
+      );
+      const cm = edgeCms[0];
       if (cm != null) {
         this._cfgEpoch++; // the new room must be in the model before keying
         const openCuts = this._openCuts();
@@ -12681,7 +12739,7 @@ class HouseplanCard extends LitElement {
             return distToSegment(mid, [a[0], a[1], b[0], b[1]]) <= this._gridPitch * 0.02;
           });
           if (source >= 0) next = setWallThickness(
-            next, iv.a, iv.b, edgeCms[source] || cm,
+            next, iv.a, iv.b, edgeCms[source],
             this._wallKeyPitch, NORM_W,
           );
         }
@@ -12759,7 +12817,9 @@ class HouseplanCard extends LitElement {
     if (!draft) { delete this._resumeDraftBySpace[this._space]; return; }
     this._activeDraftId = id;
     this._path = draft.points.map((p) => [...p]);
-    this._draftSegmentCms = draft.segments.map((s) => s.cm);
+    this._draftSegmentCms = this._adoptDraftCms(
+      this._path, draft.segments.map((s: any) => s.cm), draft.id,
+    );
     this._clearPlanSnapHover();
   }
 
@@ -13029,8 +13089,14 @@ class HouseplanCard extends LitElement {
       return;
     }
     const before = this._geometrySnapshot();
-    const cms = [...this._draftSegmentCms,
-      this._closingWallCm || this._drawWallCm || DRAW_WALL_DEFAULT_CM];
+    // Замкнутый контур: отрезков столько же, сколько вершин, и последний —
+    // закрывающий. Его известное значение подаётся резолверу как запись, всё
+    // остальное решает единое правило (#234).
+    const cms = chainSegmentCms(
+      verts.length,
+      [...this._draftSegmentCms, this._closingWallCm ?? undefined],
+      this._drawWallCm, DRAW_WALL_DEFAULT_CM,
+    );
     sp.partitions ||= [];
     const seed = Date.now().toString(36);
     for (let i = 0; i < verts.length; i++) {
@@ -13039,7 +13105,7 @@ class HouseplanCard extends LitElement {
         id: `partition-${seed}-${i}`,
         a: [a[0] / NORM_W, a[1] / NORM_W],
         b: [b[0] / NORM_W, b[1] / NORM_W],
-        cm: cms[i] || DRAW_WALL_DEFAULT_CM,
+        cm: cms[i],
       });
     }
     if (this._activeDraftId && Array.isArray(sp.room_drafts)) {
@@ -18544,15 +18610,17 @@ class HouseplanCard extends LitElement {
       if (this._cursorPt) return [...path, this._cursorPt];
       return path.length >= 2 ? path : null;
     })();
+    // Превью берёт толщины из того же резолвера, что и запись (#234). Раньше
+    // здесь была вторая формула, и расходились они ровно на пропуске: на экране
+    // текущее поле, в конфиге — 15 см.
     const previewHalfDepths = previewPts
-      ? previewPts.slice(0, -1).map((_, i) => {
-          const cm = Number(this._draftSegmentCms[i]) > 0
-            ? Number(this._draftSegmentCms[i])
-            : this._contourClosed && i === previewPts.length - 2
-              ? (this._closingWallCm || drawCm || DRAW_WALL_DEFAULT_CM)
-              : (drawCm || DRAW_WALL_DEFAULT_CM);
-          return wallCmToUnits(cm, this._cellCm, this._gridPitch) / 2;
-        })
+      ? chainSegmentCms(
+          previewPts.length - 1,
+          this._contourClosed
+            ? [...this._draftSegmentCms, this._closingWallCm ?? undefined]
+            : this._draftSegmentCms,
+          drawCm, DRAW_WALL_DEFAULT_CM,
+        ).map((cm) => wallCmToUnits(cm, this._cellCm, this._gridPitch) / 2)
       : [];
     const previewD = previewPts
       ? drawWallPreviewD(

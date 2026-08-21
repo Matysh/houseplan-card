@@ -41,6 +41,47 @@ import { fileURLToPath } from 'node:url';
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 export const MUTANTS = [
   {
+    id: 'chain-thickness-falls-back-to-default',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="chainSegmentCms fills a gap" '
+      + 'test/wall-face-graph.test.mjs',
+    because: 'a segment whose thickness was not recorded must inherit the previous segment of '
+      + 'its own chain — the value the person watched on screen — instead of the global default '
+      + 'that silently replaced 30 cm with 15 cm in the stored plan (#234)',
+    patches: [{
+      file: 'src/wall-face-graph.ts',
+      find: '    const cm = own ?? previous ?? fallbackTail;',
+      replace: '    const cm = own ?? fallbackTail;',
+    }],
+  },
+  {
+    id: 'chain-thickness-preview-diverges',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="owns no fallback of its own" '
+      + 'test/wall-face-graph.test.mjs',
+    because: 'the preview and every writer must read one resolver; two formulas for one meaning '
+      + 'is what let the editor show 30 cm while the config kept 15 (#234)',
+    patches: [{
+      file: 'src/wall-face-graph.ts',
+      find: '    result.push({ a: [a[0], a[1]], b: [b[0], b[1]], cm: cms[i] });',
+      replace: '    result.push({ a: [a[0], a[1]], b: [b[0], b[1]], '
+        + 'cm: Number.isFinite(cms[i]) && cms[i] >= 0 ? cms[i] : 15 });',
+    }],
+  },
+  {
+    id: 'chain-thickness-length-invariant-dropped',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="always returns exactly segmentCount" '
+      + 'test/wall-face-graph.test.mjs',
+    because: 'the resolver must return one thickness per segment for any input: the array drifting '
+      + 'shorter than the path is the mechanism that produced the whole defect (#234)',
+    patches: [{
+      file: 'src/wall-face-graph.ts',
+      find: '  for (let i = 0; i < count; i++) {',
+      replace: '  for (let i = 0; i < Math.min(count, (recorded?.length ?? 0)); i++) {',
+    }],
+  },
+  {
     id: 'snapn-returns-input-near-node',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="snapN returns the exact nearest node" '

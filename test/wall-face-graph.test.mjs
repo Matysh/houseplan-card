@@ -7,6 +7,7 @@ import {
   findNewWallFacesInGraphs,
   normalizeUnifiedWallTool,
   wallChainSegments,
+  chainSegmentCms,
 } from '../test-build/wall-face-graph.js';
 
 const edge = (key, a, b) => ({ key, a, b });
@@ -24,14 +25,76 @@ test('legacy Partition token becomes Walls without mutating other tools', () => 
 });
 
 test('open chain converts endpoints and per-segment thickness without mutation', () => {
+  // Толщины приходят уже разрешёнными (#234): своего fallback у функции нет.
   const path = [[0, 0], [100, 0], [100, 50]];
   const before = JSON.stringify(path);
-  assert.deepEqual(wallChainSegments(path, [0, 25], 15), [
-    { a: [0, 0], b: [100, 0], cm: 0 },
+  assert.deepEqual(wallChainSegments(path, [30, 25]), [
+    { a: [0, 0], b: [100, 0], cm: 30 },
     { a: [100, 0], b: [100, 50], cm: 25 },
   ]);
   assert.equal(JSON.stringify(path), before);
-  assert.deepEqual(wallChainSegments([[0, 0]], [], 15), []);
+  assert.deepEqual(wallChainSegments([[0, 0]], []), []);
+});
+
+test('chainSegmentCms fills a gap from the previous segment, then the field (#234)', () => {
+  // Симптом задачи: цепочка нарисована 30 см, запись последнего отрезка
+  // потеряна. Раньше запись давала 15, превью — 30; теперь ответ один.
+  assert.deepEqual(chainSegmentCms(3, [30, 30], 30, 15), [30, 30, 30]);
+  // Дырка в середине наследует предыдущий, а не следующий и не дефолт.
+  assert.deepEqual(chainSegmentCms(4, [30, undefined, 20], 12, 15), [30, 30, 20, 20]);
+  // Нет ни одной записи — текущее поле.
+  assert.deepEqual(chainSegmentCms(2, [], 22, 15), [22, 22]);
+  // Нет и поля — дефолт вызывающего.
+  assert.deepEqual(chainSegmentCms(2, [], null, 15), [15, 15]);
+});
+
+test('chainSegmentCms treats only strictly positive records as valid (#234)', () => {
+  // Прежняя wallChainSegments считала записанный 0 валидным; через UI ноль
+  // недостижим (1..100 см), но в старом черновике лежать может.
+  assert.deepEqual(chainSegmentCms(3, [0, 30, 0], 25, 15), [25, 30, 30]);
+  assert.deepEqual(chainSegmentCms(4, [NaN, -5, null, 'x'], 18, 15), [18, 18, 18, 18]);
+  assert.deepEqual(chainSegmentCms(2, [Infinity, 40], 18, 15), [18, 40]);
+});
+
+test('chainSegmentCms always returns exactly segmentCount positive numbers (#234)', () => {
+  // Инвариант: длина результата равна числу отрезков при любом входе — именно
+  // его отсутствие и позволяло массиву разъехаться с путём.
+  for (const count of [0, 1, 5]) {
+    for (const recorded of [[], [30], [30, 30, 30, 30, 30, 30, 30], [null, 0, NaN]]) {
+      const out = chainSegmentCms(count, recorded, 20, 15);
+      assert.equal(out.length, count);
+      assert.ok(out.every((cm) => typeof cm === 'number' && cm > 0), JSON.stringify(out));
+    }
+  }
+  // Мусор в самих аргументах длины и дефолта не роняет резолвер.
+  assert.deepEqual(chainSegmentCms(-1, [30], 20, 15), []);
+  assert.deepEqual(chainSegmentCms(2, [30], null, NaN), [30, 30]);
+  assert.deepEqual(chainSegmentCms(2, null, null, null), [1, 1]);
+});
+
+test('wallChainSegments owns no fallback of its own (#234)', () => {
+  // Свойство, а не курьёз: единственный источник значения — резолвер. Если у
+  // этой функции появится собственный дефолт, вернётся ровно та ситуация, из
+  // которой выросла задача — две формулы для одного смысла. Поэтому пропуск
+  // здесь обязан остаться пропуском, а не превратиться в 15 см.
+  const path = [[0, 0], [100, 0], [100, 50]];
+  const out = wallChainSegments(path, [30]);
+  assert.equal(out.length, 2);
+  assert.equal(out[0].cm, 30);
+  assert.equal(out[1].cm, undefined);
+});
+
+test('the preview and the writers cannot disagree, because the source is one (#234)', () => {
+  // Это ядро задачи, поэтому проверяется как свойство, а не как пример:
+  // вектор для превью и вектор для записи строятся одним вызовом.
+  const path = [[0, 0], [100, 0], [100, 60], [0, 60]];
+  const recorded = [30, 30];
+  const field = 30;
+  const resolved = chainSegmentCms(path.length - 1, recorded, field, 15);
+  const written = wallChainSegments(path, resolved).map((segment) => segment.cm);
+  assert.deepEqual(written, resolved);
+  // И то, что раньше расходилось: последний отрезок больше не 15.
+  assert.equal(written[written.length - 1], 30);
 });
 
 test('atomizes endpoint, T, proper X and collinear overlap with provenance', () => {

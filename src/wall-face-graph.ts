@@ -55,10 +55,60 @@ export function normalizeUnifiedWallTool(value: unknown): unknown {
 }
 
 /** Immutable open-chain projection used by explicit finish and full rejection. */
+/**
+ * Thickness of every segment in a chain — the single answer to that question.
+ *
+ * Issue #234: five call sites decided it independently and disagreed in three
+ * different ways. The preview filled a gap with the toolbar field, the two
+ * partition writers with a hard-coded 15 cm, the room writer with the first
+ * edge's value. So a chain drawn at 30 cm was shown at 30 and stored at 15, and
+ * the owner discovered it much later by hovering a wall. Two formulas for one
+ * meaning always drift; there is exactly one here now.
+ *
+ * A missing record inherits the previous segment of the same chain, then the
+ * toolbar field, then the default (owner's decision 2026-08-21): that is what
+ * the person saw on screen while drawing, and a global default is not.
+ *
+ * Strictly positive is the validity boundary. The previous `wallChainSegments`
+ * accepted a recorded zero, which cannot be drawn through the UI (1..100 cm,
+ * `docs/WALL-THICKNESS.md`) but can sit in an old draft.
+ */
+export function chainSegmentCms(
+  segmentCount: number,
+  recorded: readonly (number | null | undefined)[] | null | undefined,
+  activeCm: number | null | undefined,
+  defaultCm: number,
+): number[] {
+  const count = Number.isFinite(segmentCount) && segmentCount > 0
+    ? Math.floor(segmentCount) : 0;
+  const valid = (value: unknown): number | null =>
+    typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : null;
+  // `defaultCm` — ответственность вызывающего: он передаёт
+  // DRAW_WALL_DEFAULT_CM. Константа сюда не импортируется намеренно — этот
+  // модуль не зависит ни от чего, и второе место, где живёт число 15, было бы
+  // ровно тем дублированием, которое задача и убирает. Невалидный default —
+  // дефект вызывающего, поэтому он приводится к минимальной допустимой
+  // толщине (1 см, docs/WALL-THICKNESS.md), а не к выдуманному значению.
+  const fallbackTail = valid(activeCm) ?? valid(defaultCm) ?? 1;
+  const out: number[] = [];
+  let previous: number | null = null;
+  for (let i = 0; i < count; i++) {
+    const own = valid(recorded?.[i]);
+    const cm = own ?? previous ?? fallbackTail;
+    out.push(cm);
+    previous = cm;
+  }
+  return out;
+}
+
+/**
+ * Drawable segments of a chain. Thickness arrives already resolved (#234): this
+ * function no longer owns a fallback of its own, because owning one is how the
+ * disagreement started.
+ */
 export function wallChainSegments(
   path: readonly (readonly number[])[],
   cms: readonly number[],
-  defaultCm: number,
 ): WallChainSegment[] {
   const result: WallChainSegment[] = [];
   for (let i = 0; i + 1 < path.length; i++) {
@@ -66,8 +116,9 @@ export function wallChainSegments(
     const b = path[i + 1];
     if (!finitePoint(a) || !finitePoint(b)
         || Math.hypot(b[0] - a[0], b[1] - a[1]) <= Number.EPSILON) continue;
-    const cm = Number.isFinite(cms[i]) && cms[i] >= 0 ? cms[i] : defaultCm;
-    result.push({ a: [a[0], a[1]], b: [b[0], b[1]], cm });
+    // The resolver guarantees a positive number per index; a caller that skips
+    // it is a defect, so the value is used as given rather than re-defaulted.
+    result.push({ a: [a[0], a[1]], b: [b[0], b[1]], cm: cms[i] });
   }
   return result;
 }
