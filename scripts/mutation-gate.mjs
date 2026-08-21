@@ -697,8 +697,8 @@ export const MUTANTS = [
       + 'changing the separate room-fill gradient',
     patches: [{
       file: 'src/device-presentation.ts',
-      find: '  if (lqi <= 40) return \\'low\\';',
-      replace: '  if (lqi < 40) return \\'low\\';',
+      find: '  if (lqi <= 40) return \'low\';',
+      replace: '  if (lqi < 40) return \'low\';',
     }],
   },
   {
