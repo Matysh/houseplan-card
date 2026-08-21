@@ -68,7 +68,8 @@ import {
   drawWallPreviewD, linearWallJoinPatches, DRAW_WALL_DEFAULT_CM,
   wallIntervals, materializeWallIntervals,
   normalizeWallIntervals,
-  intervalCmAt, wallBodyNeedsSolid, type OpeningTunnelGeometry, type OpeningWallIndex,
+  intervalCmAt, wallBodyNeedsSolid, wallHatchNeedsSolid, wallHatchStepUnits,
+  HATCH_BASE_STEP_UNITS, type OpeningTunnelGeometry, type OpeningWallIndex,
   type LinearWallSegment, type WallEntry, type WallInterval,
 } from './wall-thickness';
 import {
@@ -11079,15 +11080,19 @@ class HouseplanCard extends LitElement {
   private _wallHatchDefs(color: string): TemplateResult {
     if (!this._spaceWalls.length && !this._physicalBodiesR().length && !this._markup)
       return svg`` as unknown as TemplateResult;
-    const inv = Math.max(0.4, 1 / Math.max(this._zoom, 0.4));
+    // The step is a physical distance now — 9.6 cm of plan, whatever the grid
+    // scale — so it must NOT be compensated for zoom: a wall that changes its
+    // hatching as you zoom is exactly what #230 is about (spec §4.2).
+    const step = wallHatchStepUnits(this._cellCm);
+    const stripe = 2 * (step / HATCH_BASE_STEP_UNITS);
     // Bake the wall colour into the pattern — CSS vars on <pattern> content
     // do not inherit from the filled path, so var(--room-stroke) fell back
     // to grey while the wall outline used the real border colour.
     const stroke = color || '#607d8b';
     return svg`<defs>
-      <pattern id="hp-wall-hatch" patternUnits="userSpaceOnUse" width="8" height="8"
-        patternTransform="rotate(45) scale(${inv.toFixed(3)})">
-        <path d="M0 0 L0 8" stroke="${stroke}" stroke-width="2"></path>
+      <pattern id="hp-wall-hatch" patternUnits="userSpaceOnUse"
+        width="${step}" height="${step}" patternTransform="rotate(45)">
+        <path d="M0 0 L0 ${step}" stroke="${stroke}" stroke-width="${stripe}"></path>
       </pattern>
     </defs>` as unknown as TemplateResult;
   }
@@ -11309,7 +11314,10 @@ class HouseplanCard extends LitElement {
     const v = this._viewOr(this._baseVb());
     const px = stage && stage.clientWidth && v.w ? stage.clientWidth / v.w : 1;
     const stroke = disp?.color || '#607d8b';
-    const solid = wallBodyNeedsSolid(united.depthUnits, px);
+    // Two independent ways for hatching to become noise: a body too thin to
+    // hold stripes, and stripes too close to tell apart (#230 §8.4).
+    const solid = wallBodyNeedsSolid(united.depthUnits, px)
+      || wallHatchNeedsSolid(wallHatchStepUnits(this._cellCm), px);
     const wf = this._fillColors.wall_fill;
     // Fill colour UNDER the hatch (owner 2026-08-05): both, never one instead
     // of the other. When the body is thinner than ~3px on screen the hatch

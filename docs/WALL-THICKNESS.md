@@ -74,6 +74,19 @@ thinner than 3 CSS px on screen, the shared full/static render policy suppresses
 only the hatch so it does not collapse into noise; the solid fill remains. Mitre
 joins; bevel when the mitre spike exceeds `MITRE_LIMIT × thickness`.
 
+**Hatch density is physical (#230).** The pattern step is a distance on the
+plan, not a count of coordinate units: `wallHatchStepUnits(cellCm)` returns
+`8 × (5 / cell_cm)`, which is 9.6 cm at every grid scale and exactly the
+historical 8 units at the reference `cell_cm: 5`. The stroke width follows the
+same factor, so the stripe-to-gap ratio is scale-invariant too. The step is
+NOT compensated for zoom — a wall that re-hatches itself as you zoom is the
+defect this rule replaced — and both renderers, interactive and static, read it
+from the same function. Two independent guards fall back to the solid fill: the
+body thinner than `WALL_HATCH_MIN_PX = 3` on screen, and the step itself
+thinner than `HATCH_MIN_STEP_PX = 2` (`wallHatchNeedsSolid`). The step is
+clamped to `[0.5, 80]` units so a pathological `cell_cm` cannot degenerate the
+pattern.
+
 A variable-offset join where exactly one adjacent edge has zero depth is a
 local flat cap, not a mitre. Both `inset` and `outset` retain the physical
 edge's offset point followed by the untouched zero-edge vertex (or the reverse

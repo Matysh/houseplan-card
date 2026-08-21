@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Wall hatching no longer changes density with the space's grid scale. The same
+  15 cm wall used to look different on plans with different `cell_cm` — from a
+  dense set of stripes to almost none, a 25× spread. The step is now a distance
+  on the plan (9.6 cm at any grid scale), which is exactly today's look at
+  `cell_cm: 5`, and a wall twice as thick gets twice the stripes, like on a
+  construction drawing. Hatching also stopped shifting as you zoom
+  ([#230](https://github.com/Matysh/houseplan-card/issues/230)).
+
 - A straight wall drawn in several clicks is now stored as one partition:
   seams between segments of the same thickness and direction are merged as soon
   as the chain is finished. A node stays only where something holds it — a third

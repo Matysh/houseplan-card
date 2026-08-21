@@ -17,6 +17,8 @@ import {
   intervalCmAt, wallBodyNeedsSolid, openingInnerFaceOffset, openingTunnelGeometry,
   openingTunnelGeometries, tunnelFacePath,
   WALL_HATCH_MIN_PX,
+  wallHatchStepUnits, wallHatchNeedsSolid,
+  HATCH_BASE_STEP_UNITS, HATCH_MIN_STEP_UNITS, HATCH_MAX_STEP_UNITS,
 } from '../test-build/wall-thickness.js';
 import { polygonArea, paperRoomShapes, splitRoomPath, sharedBoundary } from '../test-build/logic.js';
 import { resolveOpenCuts } from '../test-build/open-spans.js';
@@ -1420,4 +1422,67 @@ test('linear wall joins bevel an excessive mitre and ignore malformed or near-mi
     { a: [0, 0], b: [0, 0], halfDepth: 1 },
     { a: [0, 0], b: [Infinity, 1], halfDepth: 1 },
   ]), [], 'invalid neighbours do not alter a valid flat-capped segment');
+});
+
+// --- issue #230: hatch density follows the plan's centimetres -----------------
+
+test('issue 230 the reference scale is untouched', () => {
+  assert.equal(wallHatchStepUnits(5), 8, 'exactly, not approximately');
+  assert.equal(wallHatchStepUnits(5), HATCH_BASE_STEP_UNITS);
+});
+
+test('issue 230 one wall carries the same stripes at every grid scale', () => {
+  const stripes = (cell) => wallCmToUnits(15, cell, GRID_PITCH) / wallHatchStepUnits(cell);
+  const reference = stripes(5);
+  for (const cell of [1, 2, 5, 10, 25, 50]) {
+    assert.ok(
+      Math.abs(stripes(cell) - reference) < 1e-9,
+      `cell_cm ${cell}: ${stripes(cell)} stripes vs ${reference}`,
+    );
+  }
+});
+
+test('issue 230 density is physical, so a thicker wall gets more stripes', () => {
+  const stripes = (cm, cell) => wallCmToUnits(cm, cell, GRID_PITCH) / wallHatchStepUnits(cell);
+  for (const cell of [1, 5, 25]) {
+    assert.ok(
+      Math.abs(stripes(30, cell) / stripes(15, cell) - 2) < 1e-9,
+      `cell_cm ${cell}: ratio ${stripes(30, cell) / stripes(15, cell)}`,
+    );
+  }
+});
+
+test('issue 230 a missing or broken cell_cm falls back to the reference', () => {
+  for (const bad of [0, -5, NaN, undefined, null, 'wide', {}]) {
+    assert.equal(wallHatchStepUnits(bad), 8, `input ${String(bad)}`);
+  }
+});
+
+test('issue 230 the step stays inside its limits', () => {
+  assert.ok(wallHatchStepUnits(0.1) <= HATCH_MAX_STEP_UNITS, 'a hair-fine grid');
+  assert.ok(wallHatchStepUnits(1000) >= HATCH_MIN_STEP_UNITS, 'a hectare-wide grid');
+  assert.equal(wallHatchStepUnits(0.5), HATCH_MAX_STEP_UNITS, 'the upper limit is reachable');
+  assert.equal(wallHatchStepUnits(80), HATCH_MIN_STEP_UNITS, 'the lower limit is reachable');
+});
+
+test('issue 230 stripes too close on screen ask for a solid body', () => {
+  assert.equal(wallHatchNeedsSolid(1, 1), true, '1 px step is noise');
+  assert.equal(wallHatchNeedsSolid(1, 2), false, 'exactly the threshold is fine');
+  assert.equal(wallHatchNeedsSolid(8, 10), false, 'a comfortable step');
+  for (const [step, px] of [[0, 5], [-1, 5], [8, 0], [8, -1], [NaN, 5], [8, NaN]]) {
+    assert.equal(wallHatchNeedsSolid(step, px), false, `garbage in: ${step}, ${px}`);
+  }
+});
+
+test('issue 230 a thin wall is not turned into a blot by the new rule', () => {
+  // 3 cm on the reference grid is 2.5 units: fewer stripes than one. Whether it
+  // is filled or hatched stays the business of the thin-BODY guard, exactly as
+  // before — the new step guard must have no opinion about it.
+  const thin = wallCmToUnits(3, 5, GRID_PITCH);
+  const step = wallHatchStepUnits(5);
+  for (const px of [1, 1.2, 2, 5]) {
+    assert.equal(wallHatchNeedsSolid(step, px), false, `step guard fired at px=${px}`);
+  }
+  assert.equal(wallBodyNeedsSolid(thin, 1), true, 'body guard still owns the thin case');
+  assert.equal(wallBodyNeedsSolid(thin, 1.2), false, 'and lets it hatch once it is wide enough');
 });

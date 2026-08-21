@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "matrixVersion": 33,
-  "acceptedAt": "2026-08-20T12:25:00.582Z",
-  "sourceFingerprint": "38466828a3a7330ef1b18d79f0bc1a96f236046a1f8107c3dc6b59b77d170700",
+  "acceptedAt": "2026-08-21T12:03:00.868Z",
+  "sourceFingerprint": "73154ad392659d101a708f2bce5f02f2851e810a615bda97d19172cdb576c6bd",
   "chromium": "151.0.7922.34",
   "scenarios": {
     "split-corner-wall-before-dark": "3176dc67f54d5309f87c94e1077b4f69eb1db9f660469fbf97953038323430f3",
@@ -71,8 +71,8 @@
     "lighting-manual-auto-spill-overlap-dark": "9bb31a72bfa073eae4630ea5edf01b5a7dbb1885eb25153c4bf3b2574fc6e5c5",
     "hover-over-glow-dark": "d505d1514e492dd3f5e299ebace0392e14734f21626310a8efdc0d148a00ddf0",
     "hover-nested-room-dark": "2db78e53a76fa9b7cdc4597f23fc2c8ae439e5a56d82895109ca968d73075640",
-    "large-house-zoom-040-dark": "0e36d124049b1a1513050bd3b1c24a3ae0bc60105de986d3238c2752ec9aeddb",
-    "large-house-zoom-250-dark": "4f0f4151ae4a2c68929baf70d2da411e8c10c51e94c54ce7ca7af5f197aaa3f6",
+    "large-house-zoom-040-dark": "a21faa9eafea706cf8d6366e93f526a8f83798b6b6cf058ee43010607182677d",
+    "large-house-zoom-250-dark": "48b13045d83ac83bc35aba7182057ec56023ac448ad57f6b7dc9981349cea563",
     "large-house-warm-remount-dark": "99ef82407bd148cef968e99a593f25da06da2df7363af842f617113349c7ee85",
     "device-dialog-desktop-en": "ea341f6ea9db5f61bbcb6fd7ca5078fd2f347023de4279cb70bf190c1379c364",
     "device-dialog-mobile-ru": "c90be98e65c37963fd4443e413848ca68a412c9ee568d648aba76bf9232ee59d",

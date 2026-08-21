@@ -15,7 +15,8 @@ import {
   type ResolvedRoomFill,
 } from './logic';
 import {
-  openingTunnelGeometries, wallBodiesUnionPath, wallBodyNeedsSolid, wallIntervals,
+  openingTunnelGeometries, wallBodiesUnionPath, wallBodyNeedsSolid, wallHatchNeedsSolid,
+  wallHatchStepUnits, wallIntervals, HATCH_BASE_STEP_UNITS,
   type WallEntry,
 } from './wall-thickness';
 import { DEFAULT_ICON_RULES, compileIconRules, EXCLUDED_DOMAINS } from './rules';
@@ -470,7 +471,11 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
     : paperRoomShapes(space.rooms);
   const wallUnion = disp.showBorders ? canonicalWallGeometry : null;
   const pxPerUnit = o.stageWidth && vb[2] ? o.stageWidth / vb[2] : 1;
-  const solidWall = !!wallUnion && wallBodyNeedsSolid(wallUnion.depthUnits, pxPerUnit);
+  // Same rule as the interactive card, from the same function: the two used to
+  // drift apart at any zoom other than 1 (#230 §3).
+  const hatchStep = wallHatchStepUnits(cellCm);
+  const solidWall = !!wallUnion && (wallBodyNeedsSolid(wallUnion.depthUnits, pxPerUnit)
+    || wallHatchNeedsSolid(hatchStep, pxPerUnit));
   const wallStroke = disp.color || '#607d8b';
   const hostedOpeningSymbols = disp.hideOpenings ? [] : resolvedHosted.map((resolved) => {
     const opening = resolved.opening;
@@ -506,9 +511,10 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
       ${renderDayCycleEnvironment(dayCycle)}
       <svg viewBox="${vb[0]} ${vb[1]} ${vb[2]} ${vb[3]}" preserveAspectRatio="xMidYMid meet">
         ${wallUnion ? svg`<defs>
-          <pattern id="hp-wall-hatch" patternUnits="userSpaceOnUse" width="8" height="8"
-            patternTransform="rotate(45)">
-            <path d="M0 0 L0 8" stroke="${wallStroke}" stroke-width="2"></path>
+          <pattern id="hp-wall-hatch" patternUnits="userSpaceOnUse"
+            width="${hatchStep}" height="${hatchStep}" patternTransform="rotate(45)">
+            <path d="M0 0 L0 ${hatchStep}" stroke="${wallStroke}"
+              stroke-width="${2 * (hatchStep / HATCH_BASE_STEP_UNITS)}"></path>
           </pattern>
         </defs>` : nothing}
         <g class="hp-paperg">${paperShapes.map((sh) =>

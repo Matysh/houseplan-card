@@ -24,6 +24,24 @@ export const DRAW_WALL_DEFAULT_CM = 15;
 /** Below this screen depth the diagonal hatch becomes visual noise. */
 export const WALL_HATCH_MIN_PX = 3;
 
+/**
+ * Hatch density is a physical quantity, not a coordinate one (#230).
+ *
+ * The pattern step used to be a constant 8 units while wall thickness converts
+ * through `cell_cm`, so the same 15 cm wall carried 7.8 stripes on a 1 cm grid
+ * and 0.3 on a 25 cm one — a 25× spread for identical data. The step now
+ * follows the plan's centimetres: 8 units at the reference `cell_cm: 5`, which
+ * is 9.6 cm, and that distance holds at every grid scale.
+ */
+export const HATCH_REFERENCE_CELL_CM = 5;
+export const HATCH_BASE_STEP_UNITS = 8;
+/** Below this the stripes fuse into a fill even at maximum zoom (cell ≈ 80). */
+export const HATCH_MIN_STEP_UNITS = 0.5;
+/** Above this further thickening no longer reads (cell ≈ 0.5). */
+export const HATCH_MAX_STEP_UNITS = 80;
+/** A step thinner than this on screen is noise, not hatching. */
+export const HATCH_MIN_STEP_PX = 2;
+
 /** Mitre spikes longer than this × thickness fall back to a bevel. */
 export const MITRE_LIMIT = 4;
 
@@ -41,6 +59,33 @@ export function wallBodyNeedsSolid(depthUnits: number, pxPerUnit: number): boole
   return Number.isFinite(depthUnits) && depthUnits > 0
     && Number.isFinite(pxPerUnit) && pxPerUnit > 0
     && depthUnits * pxPerUnit < WALL_HATCH_MIN_PX;
+}
+
+/**
+ * Pattern step in plan units for a given grid scale (#230, spec §8.1).
+ *
+ * At the reference scale this returns exactly the historical 8, so plans on
+ * `cell_cm: 5` — every golden fixture among them — render byte for byte as
+ * before.
+ */
+export function wallHatchStepUnits(cellCm: number): number {
+  const c = Number(cellCm) > 0 ? Number(cellCm) : HATCH_REFERENCE_CELL_CM;
+  if (c === HATCH_REFERENCE_CELL_CM) return HATCH_BASE_STEP_UNITS;
+  const step = HATCH_BASE_STEP_UNITS * (HATCH_REFERENCE_CELL_CM / c);
+  return Math.min(HATCH_MAX_STEP_UNITS, Math.max(HATCH_MIN_STEP_UNITS, step));
+}
+
+/**
+ * Stripes too close together on screen: fill the body instead (#230, §8.4).
+ *
+ * Companion to `wallBodyNeedsSolid`, which watches the body's depth. Now that
+ * the step is physical it no longer shrinks with zoom, so the far end of the
+ * zoom range needs its own guard.
+ */
+export function wallHatchNeedsSolid(stepUnits: number, pxPerUnit: number): boolean {
+  return Number.isFinite(stepUnits) && stepUnits > 0
+    && Number.isFinite(pxPerUnit) && pxPerUnit > 0
+    && stepUnits * pxPerUnit < HATCH_MIN_STEP_PX;
 }
 
 export function clampWallCm(cm: number): number {

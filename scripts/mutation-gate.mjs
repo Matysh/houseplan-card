@@ -718,6 +718,84 @@ export const MUTANTS = [
     }],
   },
   {
+    id: 'hatch-step-ignores-cell-cm',
+    guard: 'node --test --test-name-pattern="issue 230" test/wall-thickness.test.mjs',
+    because: 'шаг-константа — это и есть баг #230: одна и та же стена 15 см '
+      + 'получала от 0.3 до 7.8 полос в зависимости от масштаба сетки',
+    patches: [{
+      file: 'src/wall-thickness.ts',
+      find: '  const step = HATCH_BASE_STEP_UNITS * (HATCH_REFERENCE_CELL_CM / c);',
+      replace: '  const step = HATCH_BASE_STEP_UNITS;',
+    }],
+  },
+  {
+    id: 'hatch-step-inverted',
+    guard: 'node --test --test-name-pattern="issue 230" test/wall-thickness.test.mjs',
+    because: 'множитель cell/5 вместо 5/cell — ошибка из описания issue; она не '
+      + 'убирает разброс, а увеличивает его',
+    patches: [{
+      file: 'src/wall-thickness.ts',
+      find: '  const step = HATCH_BASE_STEP_UNITS * (HATCH_REFERENCE_CELL_CM / c);',
+      replace: '  const step = HATCH_BASE_STEP_UNITS * (c / HATCH_REFERENCE_CELL_CM);',
+    }],
+  },
+  {
+    id: 'hatch-step-unclamped',
+    guard: 'node --test --test-name-pattern="issue 230" test/wall-thickness.test.mjs',
+    because: 'без клампа патологический cell_cm рождает паттерн, который либо '
+      + 'сливается в заливку, либо не попадает в стену ни одной полосой',
+    patches: [{
+      file: 'src/wall-thickness.ts',
+      find: '  return Math.min(HATCH_MAX_STEP_UNITS, Math.max(HATCH_MIN_STEP_UNITS, step));',
+      replace: '  return step;',
+    }],
+  },
+  {
+    id: 'hatch-density-solid-threshold-off',
+    guard: 'node --test --test-name-pattern="issue 230" test/wall-thickness.test.mjs',
+    because: 'порог по шагу на экране — единственная защита от каши на дальнем '
+      + 'конце зума после того, как компенсация 1/zoom убрана',
+    patches: [{
+      file: 'src/wall-thickness.ts',
+      find: '    && stepUnits * pxPerUnit < HATCH_MIN_STEP_PX;',
+      replace: '    && false;',
+    }],
+  },
+  {
+    id: 'hatch-stroke-not-scaled',
+    guard: 'node demo/smoke_wall_hatch_density.mjs',
+    because: 'штрих обязан следовать за шагом: иначе на мелкой клетке полосы '
+      + 'слипаются в сплошное пятно, а на крупной становятся волосяными',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '    const stripe = 2 * (step / HATCH_BASE_STEP_UNITS);',
+      replace: '    const stripe = 2;',
+    }],
+  },
+  {
+    id: 'hatch-zoom-compensation-back',
+    guard: 'node demo/smoke_wall_hatch_density.mjs',
+    because: 'компенсация 1/zoom возвращает ровно то, ради устранения чего '
+      + 'задача и делалась: стена меняет вид при зуме (решение владельца §4.2)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '        width="${step}" height="${step}" patternTransform="rotate(45)">',
+      replace: '        width="${step}" height="${step}"\n'
+        + '        patternTransform="rotate(45) scale(${Math.max(0.4, 1 / Math.max(this._zoom, 0.4)).toFixed(3)})">',
+    }],
+  },
+  {
+    id: 'hatch-static-renderer-untouched',
+    guard: 'node demo/smoke_wall_hatch_density.mjs',
+    because: 'статический рендерер — второй путь, рисующий тело стены; все '
+      + 'golden-сцены снимаются при cell_cm 5, где его константа неотличима',
+    patches: [{
+      file: 'src/space-render.ts',
+      find: '  const hatchStep = wallHatchStepUnits(cellCm);',
+      replace: '  const hatchStep = 8;',
+    }],
+  },
+  {
     id: 'partition-merge-rescales-rooms',
     guard: 'node --test --test-name-pattern="issue 229" test/wall-merge.test.mjs',
     because: 'комнаты хранятся в тех же координатах, что перегородки: лишнее деление '
