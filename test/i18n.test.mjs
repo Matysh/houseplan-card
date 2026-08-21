@@ -30,13 +30,15 @@ test('i18n: placeholders match between languages', () => {
 test('Optimize distinguishes updated spaces from cleaned coordinate noise', () => {
   assert.equal(
     en['gs.optimize_changes'],
-    'Model migrations: {m}; spaces updated: {c}; noisy coordinate values removed: {p}; merged real-wall fragments: {w}; virtual fragments: {s}.',
+    'Model migrations: {m}; spaces updated: {c}; noisy coordinate values removed: {p}; merged real-wall fragments: {w}; virtual fragments: {s}; independent walls: {i}.',
   );
   assert.equal(
     ru['gs.optimize_changes'],
-    'Миграций модели: {m}; обновлено пространств: {c}; устранён шум координат: {p}; объединено отрезков реальных стен: {w}; виртуальных: {s}.',
+    'Миграций модели: {m}; обновлено пространств: {c}; устранён шум координат: {p}; объединено отрезков реальных стен: {w}; виртуальных: {s}; независимых: {i}.',
   );
   assert.match(cardSource, /p: String\(r\.coordsCanonicalized\)/);
+  // #229: the independent-wall counter is reported, not silently accumulated
+  assert.match(cardSource, /i: String\(r\.partitionsMerged\)/);
   assert.match(cardSource, /d\.report\.coordsCanonicalized \+ d\.report\.wallsMerged/);
 });
 

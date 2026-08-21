@@ -405,3 +405,92 @@ test('optimizer canonicalises only an explicitly stored square-column angle', ()
   assert.equal('angle' in implicit, false);
   assert.equal(explicit.angle, 5);
 });
+
+// --- issue #229: сращивание независимых стен в «Оптимизировать планы» --------
+
+const partition = (id, ax, ay, bx, by, cm = 15) => ({ id, a: [ax, ay], b: [bx, by], cm });
+
+test('issue 229 Optimize collapses the seams an older plan has piled up', () => {
+  const config = {
+    spaces: [{
+      id: 'f1', title: 'Floor', cell_cm: 5, view_box: [0, 0, 1, 1], rooms: [],
+      partitions: [
+        partition('p1', 0.1, 0.1, 0.3, 0.1),
+        partition('p2', 0.3, 0.1, 0.5, 0.1),
+        partition('p3', 0.5, 0.1, 0.7, 0.1),
+        // a lone wall elsewhere: nothing to merge with, must survive untouched
+        partition('lonely', 0.1, 0.6, 0.4, 0.6),
+      ],
+    }],
+    markers: [], settings: {},
+  };
+  const result = optimizePlans(config, {});
+  const space = result.config.spaces[0];
+  assert.equal(result.report.partitionsMerged, 2, 'three collinear pieces are one wall');
+  assert.equal(space.partitions.length, 2);
+  const merged = space.partitions.find((p) => p.id !== 'lonely');
+  assert.deepEqual([merged.a, merged.b], [[0.1, 0.1], [0.7, 0.1]]);
+  assert.ok(space.partitions.some((p) => p.id === 'lonely'), 'an unrelated wall is left alone');
+
+  // Idempotent: the sweep has nothing left to do on its own output.
+  const again = optimizePlans(result.config, result.layout);
+  assert.equal(again.report.partitionsMerged, 0);
+  assert.equal(again.config.spaces[0].partitions.length, 2);
+});
+
+test('issue 229 Optimize keeps a door where it was when its host is merged', () => {
+  const config = {
+    spaces: [{
+      id: 'f1', title: 'Floor', cell_cm: 5, view_box: [0, 0, 1, 1], rooms: [],
+      partitions: [
+        partition('p1', 0.1, 0.1, 0.3, 0.1),
+        partition('p2', 0.3, 0.1, 0.5, 0.1),
+      ],
+      // door in the middle of p2 → absolute x = 0.4
+      openings: [{
+        id: 'door', type: 'door', x: 0.4, y: 0.1, angle: 0, length: 0.05,
+        host: { kind: 'partition', id: 'p2', t: 0.5 },
+      }],
+    }],
+    markers: [], settings: {},
+  };
+  const result = optimizePlans(config, {});
+  const space = result.config.spaces[0];
+  assert.equal(result.report.partitionsMerged, 1);
+  const [wall] = space.partitions;
+  const [door] = space.openings;
+  assert.equal(door.host.id, wall.id, 'the host that vanished is not referenced any more');
+  const x = wall.a[0] + (wall.b[0] - wall.a[0]) * door.host.t;
+  assert.ok(Math.abs(x - 0.4) < 1e-9, `door moved to ${x}`);
+  // …and the legacy projection follows, because that is all an older reader sees
+  assert.ok(Math.abs(door.x - 0.4) < 1e-9, `stale projection: ${door.x}`);
+});
+
+test('issue 229 Optimize rewrites the legacy projection when the merged wall turns around', () => {
+  // Both pieces are stored right-to-left; the survivor is canonicalised
+  // left-to-right, so the angle an older reader draws from must be rewritten.
+  const config = {
+    spaces: [{
+      id: 'f1', title: 'Floor', cell_cm: 5, view_box: [0, 0, 1, 1], rooms: [],
+      partitions: [
+        partition('p1', 0.5, 0.1, 0.3, 0.1),
+        partition('p2', 0.3, 0.1, 0.1, 0.1),
+      ],
+      openings: [{
+        id: 'door', type: 'door', x: 0.4, y: 0.1, angle: 180, length: 0.05,
+        host: { kind: 'partition', id: 'p1', t: 0.5 },
+      }],
+    }],
+    markers: [], settings: {},
+  };
+  const result = optimizePlans(config, {});
+  const space = result.config.spaces[0];
+  const [wall] = space.partitions;
+  const [door] = space.openings;
+  assert.equal(result.report.partitionsMerged, 1);
+  assert.deepEqual([wall.a, wall.b], [[0.1, 0.1], [0.5, 0.1]], 'survivor points one way');
+  const x = wall.a[0] + (wall.b[0] - wall.a[0]) * door.host.t;
+  assert.ok(Math.abs(x - 0.4) < 1e-9, `door moved to ${x}`);
+  assert.ok(Math.abs(door.x - 0.4) < 1e-9, `stale projection x: ${door.x}`);
+  assert.equal(door.angle, 0, 'stale projection angle');
+});

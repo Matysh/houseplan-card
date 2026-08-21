@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- A straight wall drawn in several clicks is now stored as one partition:
+  seams between segments of the same thickness and direction are merged as soon
+  as the chain is finished. A node stays only where something holds it — a third
+  wall, a room wall, a column or the end of a saved draft. Older plans lose
+  their seams through “Optimize plans”, reported on its own preview line; doors
+  and windows keep their place
+  ([#229](https://github.com/Matysh/houseplan-card/issues/229)).
+
 - Space tabs can be reordered: grab a tab with the mouse in any editor mode and
   drop it where it belongs. The order is saved, and swipe and carousel
   navigation follow it. Markers stay exactly where they were

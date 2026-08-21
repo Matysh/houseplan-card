@@ -265,6 +265,7 @@ import {
   applySpaceOrder, canStartTabDrag, markersNeedingPlacement, passedDragThreshold,
   reorderSpaceIds,
 } from './space-order';
+import { applyOpeningMoves, mergeCollinearPartitions } from './wall-merge';
 
 const CARD_VERSION = '1.66.0';
 const DISPLAY_LABEL_KEYS: Record<DeviceDisplayMode, I18nKey> = {
@@ -6535,6 +6536,42 @@ class HouseplanCard extends LitElement {
    * A saved draft is crash safety only; once explicitly finished, its segments
    * become ordinary selectable partitions and can never auto-resume.
    */
+  /**
+   * Collapse collinear partitions of one thickness (issue #229).
+   *
+   * `seedIds` confines the sweep to the connected component containing the
+   * freshly drawn chain; the optimiser calls the pure module without seeds.
+   * Openings ride along: their position is stored as a fraction of the host's
+   * length, so every merge has to rewrite both the fraction and the legacy
+   * `x/y/angle` projection that older readers still consume (#132).
+   */
+  private _mergeSpacePartitions(sp: any, seedIds?: string[]): number {
+    const partitions = (sp?.partitions || []) as PartitionCfg[];
+    if (partitions.length < 2) return 0;
+    const rooms = (sp.rooms || []) as any[];
+    const result = mergeCollinearPartitions(partitions, {
+      pitch: GRID_STEP_N,
+      seedIds,
+      geometry: {
+        roomPolygons: rooms
+          .map((room) => roomPoly(room))
+          .filter((poly): poly is number[][] => !!poly)
+          .map((poly) => poly.map((point) => [point[0] / NORM_W, point[1] / NORM_W])),
+        columns: sp.wall_columns || [],
+        draftEnds: (sp.room_drafts || []).flatMap((draft: any) => {
+          const points = draft?.points || [];
+          return points.length ? [points[0], points[points.length - 1]] : [];
+        }),
+      },
+    });
+    if (!result.merged) return 0;
+    sp.partitions = result.partitions;
+    applyOpeningMoves(sp.openings, sp.partitions, result.openingMoves, {
+      coordScale: NORM_W, cellCm: this._cellCm, gridPitch: this._gridPitch,
+    });
+    return result.merged;
+  }
+
   private _finishWallChain(): boolean {
     if (this._tool !== 'draw' || this._wallFaceBatch || this._roomDialog) return true;
     const sp = this._curSpaceCfg as any;
@@ -6557,15 +6594,22 @@ class HouseplanCard extends LitElement {
     const before = this._geometrySnapshot();
     sp.partitions ||= [];
     const seed = Date.now().toString(36);
+    const drawnIds: string[] = [];
     for (let i = 0; i < segmentCount; i++) {
       const segment = segments[i];
+      const id = `partition-${seed}-${i}`;
+      drawnIds.push(id);
       sp.partitions.push({
-        id: `partition-${seed}-${i}`,
+        id,
         a: [segment.a[0] / NORM_W, segment.a[1] / NORM_W],
         b: [segment.b[0] / NORM_W, segment.b[1] / NORM_W],
         cm: segment.cm,
       });
     }
+    // A straight run drawn in several clicks is one wall, not five (#229).
+    // Only what this chain touches is merged: what has piled up earlier waits
+    // for «Optimise plans», where the sweep is explicit and undoable.
+    this._mergeSpacePartitions(sp, drawnIds);
     if (this._activeDraftId && Array.isArray(sp.room_drafts)) {
       sp.room_drafts = sp.room_drafts.filter((draft: any) => draft.id !== this._activeDraftId);
       if (!sp.room_drafts.length) delete sp.room_drafts;
@@ -14435,7 +14479,8 @@ class HouseplanCard extends LitElement {
       this._showToast(this._t('gs.align_done', {
         n: String(d.report.moved),
         m: String(d.report.migrated + d.report.canonicalized
-          + d.report.coordsCanonicalized + d.report.wallsMerged + d.report.spansMerged),
+          + d.report.coordsCanonicalized + d.report.wallsMerged + d.report.spansMerged
+          + d.report.partitionsMerged),
       }));
     } catch (e: any) {
       if (this._alignDialog) this._alignDialog = { ...this._alignDialog, busy: false };
@@ -15439,7 +15484,7 @@ class HouseplanCard extends LitElement {
               <p class="alignmsg">${this._t('gs.optimize_changes', {
                 m: String(r.migrated), c: String(r.canonicalized),
                 p: String(r.coordsCanonicalized), w: String(r.wallsMerged),
-                s: String(r.spansMerged),
+                s: String(r.spansMerged), i: String(r.partitionsMerged),
               })}</p>
               ${r.glowSpacesMigrated || r.glowRoomsMigrated
                 ? html`<p class="alignmsg">${this._t('gs.optimize_glow_migration', {

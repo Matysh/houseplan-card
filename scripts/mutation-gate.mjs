@@ -718,6 +718,85 @@ export const MUTANTS = [
     }],
   },
   {
+    id: 'partition-merge-disabled',
+    guard: 'node demo/smoke_wall_chain_merge.mjs',
+    because: 'без вызова слияния прямая, нарисованная в несколько кликов, снова хранится '
+      + 'набором отрезков со швами на каждом стыке (#229)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '    this._mergeSpacePartitions(sp, drawnIds);',
+      replace: '    void drawnIds;',
+    }],
+  },
+  {
+    id: 'partition-merge-ignores-thickness',
+    guard: 'node --test --test-name-pattern="issue 229" test/wall-merge.test.mjs',
+    because: 'сращивание отрезков разной толщины стирает намеренный переход толщины стены',
+    patches: [{
+      file: 'src/wall-merge.ts',
+      find: '  if (p.cm !== q.cm) return null;',
+      replace: '  if (false) return null;',
+    }],
+  },
+  {
+    id: 'partition-merge-ignores-junction',
+    guard: 'node --test --test-name-pattern="issue 229" test/wall-merge.test.mjs',
+    because: 'слияние сквозь примыкание убирает узел, который держит третья стена, '
+      + 'комната, колонна или черновик — §8.2 ТЗ',
+    patches: [{
+      file: 'src/wall-merge.ts',
+      find: '        if (junctionAt(at, list, new Set([list[i].id, list[j].id]), options.geometry, join)) continue;',
+      replace: '        if (false) continue;',
+    }],
+  },
+  {
+    id: 'junction-checks-room-vertices-only',
+    guard: 'node --test --test-name-pattern="issue 229" test/wall-merge.test.mjs',
+    because: 'поиск примыкания комнаты только по вершинам пропускает T-стык к середине '
+      + 'комнатной стены — штатный случай продукта (docs/specs/141-wall-junctions.md)',
+    patches: [{
+      file: 'src/wall-merge.ts',
+      find: '      if (finite(a) && finite(b) && distToSegment(point, a, b) <= join) return true;',
+      replace: '      if (finite(a) && dist(point, a) <= join) return true; void b;',
+    }],
+  },
+  {
+    id: 'partition-merge-keeps-relative-t',
+    guard: 'node --test --test-name-pattern="issue 229" test/wall-merge.test.mjs',
+    because: 'сохранение прежней доли вместо пересчёта двигает дверь вдоль стены: '
+      + 'позиция проёма относительна длине хозяина, а она при слиянии меняется',
+    patches: [{
+      file: 'src/wall-merge.ts',
+      find: '  const mapped = move.base + t * move.span;',
+      replace: '  const mapped = t;',
+    }],
+  },
+  {
+    id: 'partition-merge-skips-materialization',
+    guard: 'node --test --test-name-pattern="issue 229" test/wall-merge.test.mjs',
+    because: 'устаревшие x/y/angle — это то, что рисует старый читатель конфига; '
+      + 'слияние канонизирует направление стены, поэтому проекция обязана '
+      + 'переписаться (docs/CONFIG-COMPATIBILITY.md, #132)',
+    patches: [{
+      file: 'src/wall-merge.ts',
+      find: `    if (resolved) Object.assign(
+      opening, materializePartitionOpening(opening, resolved, ctx.coordScale),
+    );`,
+      replace: '    void resolved;',
+    }],
+  },
+  {
+    id: 'chain-merge-sweeps-whole-space',
+    guard: 'node --test --test-name-pattern="issue 229" test/wall-merge.test.mjs',
+    because: 'слияние всего пространства при рисовании молча правит старые швы в стороне, '
+      + 'минуя отчёт и отмену, которые обещаны им в «Оптимизировать планы» (§8.6 ТЗ)',
+    patches: [{
+      file: 'src/wall-merge.ts',
+      find: '        if (seeds && !seeds.has(list[i].id) && !seeds.has(list[j].id)) continue;',
+      replace: '        if (false) continue;',
+    }],
+  },
+  {
     id: 'tab-reorder-not-persisted',
     guard: 'node demo/smoke_space_tab_reorder.mjs',
     because: 'перестановка вкладок, оставшаяся только в памяти, выглядит рабочей ровно до '
