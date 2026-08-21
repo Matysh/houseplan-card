@@ -29,3 +29,32 @@ export async function assertFreshDemoBundle(page, root = process.cwd()) {
   }
   return expected;
 }
+
+/** Env switch that lets a debugging session run against a stale bundle. */
+export const ALLOW_STALE_BUNDLE = 'HP_ALLOW_STALE_BUNDLE';
+
+/**
+ * The freshness gate for every browser check, escape hatch included (#236).
+ *
+ * The smoke launcher had no freshness check at all, while golden runs and
+ * benchmarks did. A smoke against a stale `demo/srv/assets/houseplan-card.js`
+ * does not fail cleanly: on #234 three assertions went red and a fourth went
+ * GREEN, because the old code was wrong in two places that agreed with each
+ * other. A partly-red partly-green result looks like a logic defect and sends
+ * the reader hunting in the wrong file.
+ *
+ * Skipping is allowed for debugging, but never silently: a skipped guard that
+ * says nothing is the same silent success this project keeps digging out.
+ */
+export async function assertFreshDemoBundleUnlessAllowed(
+  page, root = process.cwd(), env = process.env,
+) {
+  if (env[ALLOW_STALE_BUNDLE]) {
+    console.warn(
+      `[houseplan] ${ALLOW_STALE_BUNDLE} is set — bundle freshness NOT verified. `
+      + 'A red result may mean a stale bundle rather than a defect (#236).',
+    );
+    return null;
+  }
+  return assertFreshDemoBundle(page, root);
+}
