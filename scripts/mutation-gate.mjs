@@ -719,7 +719,8 @@ export const MUTANTS = [
   },
   {
     id: 'hatch-step-ignores-cell-cm',
-    guard: 'node --test --test-name-pattern="issue 230" test/wall-thickness.test.mjs',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="issue 230" test/wall-thickness.test.mjs',
     because: 'шаг-константа — это и есть баг #230: одна и та же стена 15 см '
       + 'получала от 0.3 до 7.8 полос в зависимости от масштаба сетки',
     patches: [{
@@ -730,7 +731,8 @@ export const MUTANTS = [
   },
   {
     id: 'hatch-step-inverted',
-    guard: 'node --test --test-name-pattern="issue 230" test/wall-thickness.test.mjs',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="issue 230" test/wall-thickness.test.mjs',
     because: 'множитель cell/5 вместо 5/cell — ошибка из описания issue; она не '
       + 'убирает разброс, а увеличивает его',
     patches: [{
@@ -741,7 +743,8 @@ export const MUTANTS = [
   },
   {
     id: 'hatch-step-unclamped',
-    guard: 'node --test --test-name-pattern="issue 230" test/wall-thickness.test.mjs',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="issue 230" test/wall-thickness.test.mjs',
     because: 'без клампа патологический cell_cm рождает паттерн, который либо '
       + 'сливается в заливку, либо не попадает в стену ни одной полосой',
     patches: [{
@@ -752,7 +755,8 @@ export const MUTANTS = [
   },
   {
     id: 'hatch-density-solid-threshold-off',
-    guard: 'node --test --test-name-pattern="issue 230" test/wall-thickness.test.mjs',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="issue 230" test/wall-thickness.test.mjs',
     because: 'порог по шагу на экране — единственная защита от каши на дальнем '
       + 'конце зума после того, как компенсация 1/zoom убрана',
     patches: [{
