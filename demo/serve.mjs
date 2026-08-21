@@ -1,10 +1,14 @@
 // Shared launcher for demo captures: starts headless Chromium serving demo/srv/
 // via request interception (no HTTP server needed). Usage: const {page,browser}=await launch();
 import { chromium } from 'playwright';
+import { assertFreshDemoBundleUnlessAllowed } from './bundle-freshness.mjs';
 import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname } from 'node:path';
 const ROOT = dirname(fileURLToPath(import.meta.url)) + '/srv';
+// Корень репозитория, а не каталог раздачи: фингерпринт считается по
+// src/** и demo/fixtures, которых внутри demo/srv нет (#236).
+const REPO_ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const CT = { '.html': 'text/html', '.js': 'text/javascript', '.svg': 'image/svg+xml' };
 // ---- assertion harness (audit T1) --------------------------------------
 // Until 2026-07-27 the smokes printed booleans and always exited 0: a broken
@@ -64,6 +68,14 @@ export async function launch(
   });
   await page.goto('http://demo.local/demo.html', { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.__card?._model?.length > 0, { timeout: 9000 });
+  // Свежесть бандла проверяется здесь, а не в каждом смоке (#236). Смок читает
+  // demo/srv/assets/houseplan-card.js; если туда не скопирован свежий dist,
+  // проверяется прежняя версия карточки — и результат выглядит осмысленным,
+  // потому что часть проверок краснеет, а часть зеленеет. На #234 это стоило
+  // круга разбора: три проверки упали, четвёртая ложно прошла, поскольку старый
+  // код одинаково врал в двух местах, которые сверялись друг с другом.
+  // golden и бенчмарки эту защиту имели с самого начала, смоки — нет.
+  await assertFreshDemoBundleUnlessAllowed(page, REPO_ROOT);
   // HP-1552: the first-open boot veil hides the plan (visibility:hidden) until
   // the stage height settles — real pointer interaction cannot hit a hidden
   // plan, so every smoke starts where the user does: with the plan revealed.
