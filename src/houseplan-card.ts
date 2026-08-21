@@ -6553,12 +6553,17 @@ class HouseplanCard extends LitElement {
       pitch: GRID_STEP_N,
       seedIds,
       geometry: {
+        // Same coordinates as the partitions — `roomPoly` returns the raw
+        // config polygon (review CODE-REVIEW-229-r1, High-1).
         roomPolygons: rooms
           .map((room) => roomPoly(room))
-          .filter((poly): poly is number[][] => !!poly)
-          .map((poly) => poly.map((point) => [point[0] / NORM_W, point[1] / NORM_W])),
+          .filter((poly): poly is number[][] => !!poly),
         columns: sp.wall_columns || [],
+        // The chain being finished is still persisted as a draft at this
+        // point, and its own ends must not pass for someone else's junction —
+        // the same exclusion plan-snap-overlay makes (review r1, High-2).
         draftEnds: (sp.room_drafts || []).flatMap((draft: any) => {
+          if (draft?.id && draft.id === this._activeDraftId) return [];
           const points = draft?.points || [];
           return points.length ? [points[0], points[points.length - 1]] : [];
         }),

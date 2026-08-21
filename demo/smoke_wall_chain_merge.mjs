@@ -44,9 +44,26 @@ const res = await page.evaluate(async () => {
   out.cornerKeepsBothRecords = partitionCount() - beforeCorner === 2;
 
   // Drawing onto an existing wall merges with it — the seam belongs to the chain.
+  // Real clicks, not an assigned `_path`: each click persists the chain into
+  // `room_drafts`, and the merge used to mistake the chain's own ends for a
+  // foreign junction (review CODE-REVIEW-229-r1, High-2).
+  const stage = c.shadowRoot.querySelector('svg');
+  // Clicks are given in plan coordinates and converted through the live view
+  // box, so the smoke aims at the wall it just drew and not at a screen guess.
+  const click = async (px, py) => {
+    const rect = stage.getBoundingClientRect();
+    const view = c._viewOr(c._baseVb());
+    stage.dispatchEvent(new MouseEvent('click', {
+      clientX: rect.left + ((px - view.x) / view.w) * rect.width,
+      clientY: rect.top + ((py - view.y) / view.h) * rect.height,
+      bubbles: true, composed: true,
+    }));
+    await settle();
+  };
   const beforeTouch = partitionCount();
-  c._path = [[560, 500], [700, 500]];
-  c._draftSegmentCms = [];
+  await click(560, 500);
+  await click(700, 500);
+  out.clicksPersistTheDraft = ((space().room_drafts || []).length) === 1;
   c._finishWallChain();
   await settle();
   out.chainMergesIntoTheWallItTouches = partitionCount() === beforeTouch;
@@ -54,6 +71,7 @@ const res = await page.evaluate(async () => {
     (p) => Math.abs(p.a[1] * 1000 - 500) < 0.01 && Math.abs(p.b[1] * 1000 - 500) < 0.01,
   );
   out.touchedWallGrew = !!extended && Math.abs(extended.b[0] * 1000 - 700) < 0.01;
+  out.draftIsGone = !(space().room_drafts || []).length;
 
   return out;
 });

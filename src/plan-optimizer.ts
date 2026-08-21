@@ -503,10 +503,13 @@ export function optimizePlans(configIn: any, layoutIn: Record<string, any>): Opt
     const partitionMerge = mergeCollinearPartitions(space.partitions || [], {
       pitch: GRID_STEP_N,
       geometry: {
+        // Rooms are stored in the same coordinates as partitions: `roomPoly`
+        // hands back the raw config polygon, so scaling it here would push
+        // every room into a corner and no junction would ever be found
+        // (review CODE-REVIEW-229-r1, High-1).
         roomPolygons: (space.rooms || [])
           .map((room: any) => roomPoly(room))
-          .filter((poly: number[][] | null): poly is number[][] => !!poly)
-          .map((poly: number[][]) => poly.map((p) => [p[0] / NORM_W, p[1] / NORM_W])),
+          .filter((poly: number[][] | null): poly is number[][] => !!poly),
         columns: space.wall_columns || [],
         draftEnds: (space.room_drafts || []).flatMap((draft: any) => {
           const points = draft?.points || [];

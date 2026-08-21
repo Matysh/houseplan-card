@@ -494,3 +494,23 @@ test('issue 229 Optimize rewrites the legacy projection when the merged wall tur
   assert.ok(Math.abs(door.x - 0.4) < 1e-9, `stale projection x: ${door.x}`);
   assert.equal(door.angle, 0, 'stale projection angle');
 });
+
+test('issue 229 a node on the side of a room survives the sweep', () => {
+  // The junction sits in the middle of the room's bottom side, not on a
+  // corner — an ordinary T-junction, and the reason the node exists.
+  // Regression for the rescaled room polygons of CODE-REVIEW-229-r1 High-1.
+  const config = {
+    spaces: [{
+      id: 'f1', title: 'Floor', cell_cm: 5, view_box: [0, 0, 1, 1],
+      rooms: [{ id: 'r1', x: 0.1, y: 0.1, w: 0.4, h: 0.4 }],
+      partitions: [
+        partition('p1', 0.1, 0.5, 0.3, 0.5),
+        partition('p2', 0.3, 0.5, 0.5, 0.5),
+      ],
+    }],
+    markers: [], settings: {},
+  };
+  const result = optimizePlans(config, {});
+  assert.equal(result.report.partitionsMerged, 0, 'the room side holds the node');
+  assert.equal(result.config.spaces[0].partitions.length, 2);
+});
