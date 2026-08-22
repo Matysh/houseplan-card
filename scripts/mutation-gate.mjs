@@ -441,6 +441,30 @@ export const MUTANTS = [
     }],
   },
   {
+    id: 'decor-restored-below-room-fills',
+    guard: 'node demo/smoke_decor_layer_order.mjs',
+    because: 'moving decor back before room fills reproduces #231: opaque custom floors, room '
+      + 'hover and Glow base erase stored decor even though the decor group still exists in the DOM; '
+      + 'the raster probes must catch the visual regression, including the filled opening tunnel',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: "            ${''/* Decor is one composition layer above every floor treatment\n"
+        + '                   (room fill/hover, opening tunnels and Glow base) and below\n'
+        + '                   live lighting, physical plan geometry and devices. Keep\n'
+        + '                   hide_decor visual-only: the decor editor must always paint\n'
+        + '                   stored shapes so they remain editable. */}\n'
+        + "            ${disp.hideDecor && this._mode !== 'decor' ? nothing : this._renderDecorLayer()}\n",
+      replace: '',
+    }, {
+      file: 'src/houseplan-card.ts',
+      find: '            ${(() => {\n'
+        + '              // audit L1: hoisted out of the per-room map — these depend on the',
+      replace: "            ${disp.hideDecor && this._mode !== 'decor' ? nothing : this._renderDecorLayer()}\n"
+        + '            ${(() => {\n'
+        + '              // audit L1: hoisted out of the per-room map — these depend on the',
+    }],
+  },
+  {
     id: 'feather-20px',
     guard: 'node demo/smoke_glow.mjs',
     because: 'растушёвка 20 px вместо 2 размывает границу света на полкомнаты; '
@@ -758,10 +782,8 @@ export const MUTANTS = [
       + 'the smoke must reject the legacy centred SVG substitute independently of compact and iso',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: "            ${this._renderOpeningTunnelFills(space, glowBase, 'glow-base')}\n"
-        + '            ${glowLayerVisible ? this._renderGlowLayer(space, disp) : nothing}',
-      replace: "            ${this._renderOpeningTunnelFills(space, glowBase, 'glow-base')}\n"
-        + '            ${!space.bg && !disp.showNames && !this._markup ? svg`<g class="room-svg-labels" pointer-events="none">${space.rooms.map((room) => {\n'
+      find: '            ${glowLayerVisible ? this._renderGlowLayer(space, disp) : nothing}',
+      replace: '            ${!space.bg && !disp.showNames && !this._markup ? svg`<g class="room-svg-labels" pointer-events="none">${space.rooms.map((room) => {\n'
         + '              const center = this._roomCenter(room);\n'
         + '              return svg`<text class="rlabel" data-hp="room-label" data-id=${room.id || nothing}\n'
         + '                data-area=${room.area || nothing} x=${center[0]} y=${center[1]}>${room.name}</text>`;\n'

@@ -302,6 +302,61 @@ async function countWarmPixels(page, png, region) {
   }, { png64: png.toString('base64'), region });
 }
 
+/** Semantic guard for #231. Sample named plan points from the actual browser
+ * capture; the decor node merely existing in DOM is insufficient when an
+ * opaque floor layer is painted after it. */
+async function inspectDecorPixels(page, png, clip, spec) {
+  return page.evaluate(async ({ png64, clip, spec }) => {
+    const card = window.__goldenCard;
+    const svg = card?.renderRoot?.querySelector('.stage .zoomwrap > svg');
+    const decor = card?.renderRoot?.querySelector('.decorlayer');
+    const matrix = svg?.getScreenCTM?.();
+    if (!svg || !decor || !matrix) throw new Error('semantic golden decor layer is missing');
+    const bytes = Uint8Array.from(atob(png64), (char) => char.charCodeAt(0));
+    const image = await createImageBitmap(new Blob([bytes], { type: 'image/png' }));
+    const canvas = document.createElement('canvas');
+    canvas.width = image.width; canvas.height = image.height;
+    const context = canvas.getContext('2d', { willReadFrequently: true });
+    context.drawImage(image, 0, 0);
+    const pixels = context.getImageData(0, 0, image.width, image.height).data;
+    const cssWidth = clip?.width || document.documentElement.clientWidth;
+    const cssHeight = clip?.height || document.documentElement.clientHeight;
+    const scaleX = image.width / Math.max(1, cssWidth);
+    const scaleY = image.height / Math.max(1, cssHeight);
+    const originX = clip?.x || 0, originY = clip?.y || 0;
+    const expected = String(spec.color || '').match(/^#([0-9a-f]{6})$/i)?.[1];
+    if (!expected) throw new Error(`semantic golden decor color is invalid: ${spec.color}`);
+    const rgb = [0, 2, 4].map((offset) => parseInt(expected.slice(offset, offset + 2), 16));
+    const radius = Math.max(0, Math.round(spec.radius || 0));
+    return spec.points.map((probe) => {
+      const point = svg.createSVGPoint();
+      point.x = Number(probe.x) * 1000; point.y = Number(probe.y) * 1000;
+      const screen = point.matrixTransform(matrix);
+      const cx = Math.round((screen.x - originX) * scaleX);
+      const cy = Math.round((screen.y - originY) * scaleY);
+      let matching = 0, sampled = 0;
+      for (let y = cy - radius; y <= cy + radius; y++) {
+        for (let x = cx - radius; x <= cx + radius; x++) {
+          if (x < 0 || y < 0 || x >= image.width || y >= image.height) continue;
+          const offset = (y * image.width + x) * 4;
+          const distance = Math.max(
+            Math.abs(pixels[offset] - rgb[0]),
+            Math.abs(pixels[offset + 1] - rgb[1]),
+            Math.abs(pixels[offset + 2] - rgb[2]),
+          );
+          if (pixels[offset + 3] > 240 && distance <= 48) matching++;
+          sampled++;
+        }
+      }
+      return {
+        id: probe.id, matching, sampled,
+        fraction: sampled ? matching / sampled : 0,
+        pixel: [cx, cy],
+      };
+    });
+  }, { png64: png.toString('base64'), clip, spec });
+}
+
 /** Semantic guard for issue #68: the reviewed bubble must contain rendered
  * glyph pixels, not just an empty surface or a stale open-state flag. */
 async function countHelpTextPixels(page, png, clip, spec) {
@@ -562,6 +617,18 @@ try {
           throw new Error(
             `semantic golden assertion failed: ${sample.warm} warm pixels, expected at least `
             + `${scenario.warmPixelRegion.minPixels}`,
+          );
+        }
+      }
+      if (scenario.decorPixelProbes) {
+        const samples = await inspectDecorPixels(page, actual, clip, scenario.decorPixelProbes);
+        result.decorPixelProbes = samples;
+        const failed = samples.filter((sample) =>
+          sample.fraction < scenario.decorPixelProbes.minMatchingFraction);
+        if (failed.length) {
+          throw new Error(
+            `semantic golden assertion failed: decor is hidden/tinted at `
+            + failed.map((sample) => `${sample.id} (${sample.matching}/${sample.sampled})`).join(', '),
           );
         }
       }

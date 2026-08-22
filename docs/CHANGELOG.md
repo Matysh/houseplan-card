@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Decorative lines, shapes, text and furniture are now drawn above opaque room
+  fills, room hover, doorway fill and the dark Glow base, so the floor no
+  longer hides them. Live light and sun, walls, opening symbols, devices and
+  room labels keep their existing position above decor
+  ([#231](https://github.com/Matysh/houseplan-card/issues/231)).
+
 ## v1.67.0-beta.1 — 2026-08-22
 
 - “Optimize plans” now verifies the exact preview candidate with the same wall,

@@ -51,7 +51,11 @@ Layer order, top to bottom:
 
 ```text
 devices and room labels
-sun / walls / openings / rooms / decor
+opening symbols / physical and virtual walls / late room-hover outline
+sun rays
+live Glow pools
+decor
+room hover fill / Glow-base rooms and tunnels / data room fills and tunnels
 plan image
 room-shaped paper
 scene background
