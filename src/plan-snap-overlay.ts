@@ -58,9 +58,20 @@ export interface BuildPlanSnapGeometryOptions {
 export interface ResolvePlanSnapOptions {
   tolerance: number;
   gridStep: number;
+  /** Screen-space ambiguity threshold already converted to plan units. */
+  distinguishTolerance?: number;
   excludePoints?: readonly (readonly number[])[];
   extraEndpoints?: readonly PlanSnapExtraEndpoint[];
   epsilon?: number;
+}
+
+export type PlanSnapResolution =
+  | { kind: 'none'; candidate: null; conflicts: [] }
+  | { kind: 'resolved'; candidate: PlanSnapCandidate; conflicts: [] }
+  | { kind: 'ambiguous'; candidate: null; conflicts: PlanSnapEndpoint[] };
+
+export interface ResolveStrictPlanSnapOptions extends ResolvePlanSnapOptions {
+  anchor: readonly number[];
 }
 
 interface SourceSegment {
@@ -261,6 +272,61 @@ function better(distance: number, key: string, current: PlanSnapCandidate | null
   return delta < -1e-9 || (Math.abs(delta) <= 1e-9 && key.localeCompare(current.key) < 0);
 }
 
+function endpointCandidates(
+  geometry: PlanSnapGeometry,
+  pointer: readonly number[],
+  options: ResolvePlanSnapOptions,
+): PlanSnapCandidate[] {
+  const epsilon = options.epsilon ?? DEFAULT_EPSILON;
+  const excluded = options.excludePoints || [];
+  const endpoints: PlanSnapEndpoint[] = [
+    ...geometry.endpoints,
+    ...(options.extraEndpoints || [])
+      .filter((entry) => finitePoint(entry.point))
+      .map((entry): PlanSnapEndpoint => ({
+        point: [entry.point[0], entry.point[1]], key: entry.key,
+      })),
+  ];
+  const deduped = new Map<string, PlanSnapEndpoint>();
+  for (const endpoint of endpoints) {
+    if (isExcluded(endpoint.point, excluded, epsilon)) continue;
+    const identity = pointKey(endpoint.point);
+    const previous = deduped.get(identity);
+    if (!previous || endpoint.key.localeCompare(previous.key) < 0) deduped.set(identity, endpoint);
+  }
+  return [...deduped.values()].map((endpoint): PlanSnapCandidate => ({
+    kind: 'endpoint', point: [...endpoint.point], key: endpoint.key,
+    distance: Math.hypot(pointer[0] - endpoint.point[0], pointer[1] - endpoint.point[1]),
+  })).filter((candidate) => candidate.distance <= options.tolerance)
+    .sort((left, right) => left.distance - right.distance || left.key.localeCompare(right.key));
+}
+
+function endpointResolution(
+  candidates: readonly PlanSnapCandidate[], distinguishTolerance: number,
+): PlanSnapResolution | null {
+  if (!candidates.length) return null;
+  if (distinguishTolerance > 0) {
+    const conflictKeys = new Set<string>();
+    for (let i = 0; i < candidates.length; i++) {
+      for (let j = i + 1; j < candidates.length; j++) {
+        if (Math.hypot(
+          candidates[i].point[0] - candidates[j].point[0],
+          candidates[i].point[1] - candidates[j].point[1],
+        ) < distinguishTolerance) {
+          conflictKeys.add(candidates[i].key);
+          conflictKeys.add(candidates[j].key);
+        }
+      }
+    }
+    if (conflictKeys.size > 1) return {
+      kind: 'ambiguous', candidate: null,
+      conflicts: candidates.filter((candidate) => conflictKeys.has(candidate.key))
+        .map((candidate) => ({ point: [...candidate.point], key: candidate.key })),
+    };
+  }
+  return { kind: 'resolved', candidate: candidates[0], conflicts: [] };
+}
+
 function quantizedPoint(segment: PlanSnapSegment, pointer: readonly number[], step: number): [number, number] {
   const dx = segment.b[0] - segment.a[0];
   const dy = segment.b[1] - segment.a[1];
@@ -284,28 +350,25 @@ export function resolvePlanSnap(
   pointer: readonly number[],
   options: ResolvePlanSnapOptions,
 ): PlanSnapCandidate | null {
-  if (!finitePoint(pointer) || !(options.tolerance >= 0)) return null;
+  const resolution = resolvePlanSnapResult(geometry, pointer, options);
+  return resolution.kind === 'resolved' ? resolution.candidate : null;
+}
+
+/** Resolve endpoint-first snap while making visually inseparable endpoints explicit. */
+export function resolvePlanSnapResult(
+  geometry: PlanSnapGeometry,
+  pointer: readonly number[],
+  options: ResolvePlanSnapOptions,
+): PlanSnapResolution {
+  if (!finitePoint(pointer) || !(options.tolerance >= 0)) {
+    return { kind: 'none', candidate: null, conflicts: [] };
+  }
   const epsilon = options.epsilon ?? DEFAULT_EPSILON;
   const excluded = options.excludePoints || [];
-  let bestEndpoint: PlanSnapCandidate | null = null;
-  const endpoints: PlanSnapEndpoint[] = [
-    ...geometry.endpoints,
-    ...(options.extraEndpoints || [])
-      .filter((entry) => finitePoint(entry.point))
-      .map((entry): PlanSnapEndpoint => ({
-        point: [entry.point[0], entry.point[1]], key: entry.key,
-      })),
-  ];
-
-  for (const endpoint of endpoints) {
-    if (isExcluded(endpoint.point, excluded, epsilon)) continue;
-    const distance = Math.hypot(pointer[0] - endpoint.point[0], pointer[1] - endpoint.point[1]);
-    if (distance > options.tolerance || !better(distance, endpoint.key, bestEndpoint)) continue;
-    bestEndpoint = {
-      kind: 'endpoint', point: [...endpoint.point], key: endpoint.key, distance,
-    };
-  }
-  if (bestEndpoint) return bestEndpoint;
+  const endpoint = endpointResolution(
+    endpointCandidates(geometry, pointer, options), options.distinguishTolerance || 0,
+  );
+  if (endpoint) return endpoint;
 
   let bestLine: PlanSnapCandidate | null = null;
   for (const segment of geometry.segments) {
@@ -316,5 +379,78 @@ export function resolvePlanSnap(
     if (isExcluded(point, excluded, epsilon) || !better(distance, segment.key, bestLine)) continue;
     bestLine = { kind: 'line', point, key: segment.key, distance, segment };
   }
-  return bestLine;
+  return bestLine
+    ? { kind: 'resolved', candidate: bestLine, conflicts: [] }
+    : { kind: 'none', candidate: null, conflicts: [] };
+}
+
+function selectedRay(anchor: readonly number[], pointer: readonly number[]): [number, number] | null {
+  const dx = pointer[0] - anchor[0];
+  const dy = pointer[1] - anchor[1];
+  if (!(Math.hypot(dx, dy) > Number.EPSILON)) return null;
+  const angle = Math.round(Math.atan2(dy, dx) / (Math.PI / 4)) * (Math.PI / 4);
+  return [Math.cos(angle), Math.sin(angle)];
+}
+
+function pointOnForwardRay(
+  point: readonly number[], anchor: readonly number[], ray: readonly number[], epsilon: number,
+): boolean {
+  const dx = point[0] - anchor[0];
+  const dy = point[1] - anchor[1];
+  return dx * ray[0] + dy * ray[1] > epsilon
+    && Math.abs(dx * ray[1] - dy * ray[0]) <= epsilon * Math.max(Math.hypot(dx, dy), 1);
+}
+
+/** Exact endpoint/segment snap constrained to the Shift-selected 45 degree ray. */
+export function resolveStrictPlanSnap(
+  geometry: PlanSnapGeometry,
+  pointer: readonly number[],
+  options: ResolveStrictPlanSnapOptions,
+): PlanSnapResolution {
+  if (!finitePoint(pointer) || !finitePoint(options.anchor) || !(options.tolerance >= 0)) {
+    return { kind: 'none', candidate: null, conflicts: [] };
+  }
+  const epsilon = options.epsilon ?? DEFAULT_EPSILON;
+  const ray = selectedRay(options.anchor, pointer);
+  if (!ray) return { kind: 'none', candidate: null, conflicts: [] };
+  const endpoints = endpointCandidates(geometry, pointer, options)
+    .filter((candidate) => pointOnForwardRay(candidate.point, options.anchor, ray, epsilon));
+  const endpoint = endpointResolution(endpoints, options.distinguishTolerance || 0);
+  if (endpoint) return endpoint;
+
+  let best: PlanSnapCandidate | null = null;
+  for (const segment of geometry.segments) {
+    const sx = segment.b[0] - segment.a[0];
+    const sy = segment.b[1] - segment.a[1];
+    const qx = segment.a[0] - options.anchor[0];
+    const qy = segment.a[1] - options.anchor[1];
+    const denominator = ray[0] * sy - ray[1] * sx;
+    let point: [number, number] | null = null;
+    if (Math.abs(denominator) <= epsilon * Math.max(Math.hypot(sx, sy), 1)) {
+      if (Math.abs(qx * ray[1] - qy * ray[0]) > epsilon * Math.max(Math.hypot(qx, qy), 1)) continue;
+      const candidates = [segment.a, segment.b]
+        .map((candidate) => ({
+          point: candidate,
+          along: (candidate[0] - options.anchor[0]) * ray[0]
+            + (candidate[1] - options.anchor[1]) * ray[1],
+        }))
+        .filter((candidate) => candidate.along > epsilon)
+        .sort((left, right) => left.along - right.along);
+      if (candidates.length) point = [...candidates[0].point];
+    } else {
+      const t = (qx * sy - qy * sx) / denominator;
+      const u = (qx * ray[1] - qy * ray[0]) / denominator;
+      if (t > epsilon && u >= -epsilon && u <= 1 + epsilon) {
+        point = [options.anchor[0] + ray[0] * t, options.anchor[1] + ray[1] * t];
+      }
+    }
+    if (!point) continue;
+    const distance = Math.hypot(pointer[0] - point[0], pointer[1] - point[1]);
+    if (distance > options.tolerance || isExcluded(point, options.excludePoints || [], epsilon)
+        || !better(distance, segment.key, best)) continue;
+    best = { kind: 'line', point, key: segment.key, distance, segment };
+  }
+  return best
+    ? { kind: 'resolved', candidate: best, conflicts: [] }
+    : { kind: 'none', candidate: null, conflicts: [] };
 }

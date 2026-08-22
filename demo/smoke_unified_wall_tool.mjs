@@ -34,6 +34,7 @@ const result = await page.evaluate(async () => {
     for (let i = 1; i < points.length; i++) {
       const before = card._path.map((point) => [...point]);
       card._path = [...card._path, [...points[i]]];
+      card._draftSegmentCms = [...card._draftSegmentCms, card._drawWallCm];
       card._persistActiveDraftSegment();
       card._offerWallFaces(before);
       await update();

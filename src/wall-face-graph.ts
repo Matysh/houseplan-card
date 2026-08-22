@@ -559,3 +559,39 @@ export function findNewWallFacesInGraphs(
   return after.faces.filter((face) =>
     !beforeKeys.has(face.key) && face.sourceKeys.includes(addedSourceKey));
 }
+
+function pointOnFaceEdge(
+  point: readonly number[], a: readonly number[], b: readonly number[], epsilon: number,
+): boolean {
+  const dx = b[0] - a[0];
+  const dy = b[1] - a[1];
+  const length2 = dx * dx + dy * dy;
+  if (!(length2 > 0)) return Math.hypot(point[0] - a[0], point[1] - a[1]) <= epsilon;
+  const t = ((point[0] - a[0]) * dx + (point[1] - a[1]) * dy) / length2;
+  if (t < 0 || t > 1) return false;
+  return Math.hypot(a[0] + dx * t - point[0], a[1] + dy * t - point[1]) <= epsilon;
+}
+
+/** Smallest exact bounded face containing a click; boundary hits belong to drawing. */
+export function findWallFaceAtPoint(
+  graph: WallFaceGraph, point: readonly number[], epsilon = DEFAULT_EPSILON,
+): WallGraphFace | null {
+  if (!finitePoint(point)) return null;
+  const eligible = graph.faces.filter((face) => {
+    if (face.ring.some((a, index) => pointOnFaceEdge(
+      point, a, face.ring[(index + 1) % face.ring.length], epsilon,
+    ))) return false;
+    let inside = false;
+    for (let i = 0, j = face.ring.length - 1; i < face.ring.length; j = i++) {
+      const a = face.ring[i];
+      const b = face.ring[j];
+      if ((a[1] > point[1]) !== (b[1] > point[1])
+          && point[0] < ((b[0] - a[0]) * (point[1] - a[1])) / (b[1] - a[1]) + a[0]) {
+        inside = !inside;
+      }
+    }
+    return inside;
+  });
+  return [...eligible].sort((left, right) =>
+    left.area - right.area || left.key.localeCompare(right.key))[0] || null;
+}

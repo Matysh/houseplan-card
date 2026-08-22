@@ -1782,6 +1782,28 @@ export const cardStyles = css`
       stroke-dasharray: 6 5;
       opacity: 0.7;
     }
+    .active-axis {
+      stroke: #ffc14d;
+      stroke-width: 2;
+      stroke-linecap: round;
+      vector-effect: non-scaling-stroke;
+      pointer-events: none;
+    }
+    .active-vertex {
+      fill: #ffc14d;
+      stroke: #171006;
+      stroke-width: 2;
+      vector-effect: non-scaling-stroke;
+      pointer-events: none;
+    }
+    .wall-repair-preview {
+      stroke: #d93025;
+      stroke-width: 4;
+      stroke-linecap: round;
+      stroke-dasharray: 5 4;
+      vector-effect: non-scaling-stroke;
+      pointer-events: none;
+    }
     .drawwall-preview-fill {
       fill: var(--wall-fill, #ffffff);
       fill-opacity: calc(var(--wall-fill-op, 1) * 0.55);
@@ -1832,6 +1854,11 @@ export const cardStyles = css`
     .plan-snap-node.active.dynamic {
       fill: #4bd28f;
       stroke: #04121f;
+    }
+    .plan-snap-node.conflict {
+      fill: #fff;
+      stroke: #d93025;
+      stroke-width: 3;
     }
     @media (prefers-color-scheme: dark) {
       .plan-snap-line {

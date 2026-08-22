@@ -30,7 +30,7 @@
     "src/furniture.ts",
     "src/floating-surface.ts", "src/floating-surface-controller.ts", "src/help-behavior.ts",
     "src/hp-help.ts", "src/hp-dialog.ts", "src/hp-color-opacity.ts",
-    "src/opening-placement.ts", "src/partition-openings.ts", "src/plan-snap-overlay.ts", "src/wall-face-graph.ts", "src/render/opening-symbol.ts",
+    "src/opening-placement.ts", "src/partition-openings.ts", "src/plan-snap-overlay.ts", "src/wall-face-graph.ts", "src/wall-face-repair.ts", "src/room-deletion.ts", "src/render/opening-symbol.ts",
     "src/wall-thickness.ts",
     "src/wall-merge.ts",
     "src/physical-geometry.ts",

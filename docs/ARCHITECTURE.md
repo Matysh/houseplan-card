@@ -493,6 +493,15 @@ or partial overlap with a room is rejected while legal nesting is preserved.
 A clean single-room divider reuses `splitRoomPath`, offering only the smaller
 child while the larger child retains the original room identity and metadata.
 
+An idle Walls click also queries the smallest exact unoccupied bounded face at
+the raw point; boundary/snap hits and desktop `Shift+click` remain drawing
+gestures. If no exact face exists, `src/wall-face-repair.ts` may plan one
+endpoint→endpoint or endpoint→solid-line move no longer than 2 physical cm.
+Room vertices are never movers, multiple valid repairs fail closed, and the
+immutable proposal is revalidated against current source/target geometry before
+it is applied. The move and room are one history/config transaction; rejecting
+or cancelling the room never applies the proposal.
+
 Room answers are buffered in `_wallFaceBatch`. Create/Keep-as-walls advance the
 queue without mutating geometry; Cancel/Esc restores the terminal draft. The
 last answer revalidates every face and capacity limit, then commits all accepted
@@ -501,6 +510,15 @@ config transaction. Existing saved source geometry is never atomized or
 rewritten merely because it participated in a face. `column` still creates a
 physical object whose size comes from the current Thickness field. The legacy
 root `space.segments` array is stripped on every save.
+
+Room deletion is likewise planned before mutation. `src/room-deletion.ts`
+classifies the selected room's atomic outer/shared/open intervals and its
+unhosted openings. Keep-walls materializes only exclusive positive solid
+intervals as partitions (reusing exact compatible masonry) and rehosts their
+openings. Delete-walls cascades only those exclusive openings. Shared walls,
+explicit partitions and partition-hosted openings survive. The selected room,
+wall profile/open spans, partitions and openings commit in one named geometry
+transaction through an accessible `hp-dialog`, never native `confirm()`.
 
 While drawing, the length of the current segment follows the cursor (`_fmtLen` → `segmentCm`/
 `formatLength`): metres, or feet+inches when `hass.config.unit_system` is imperial. The scale is

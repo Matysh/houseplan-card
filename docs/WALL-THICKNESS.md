@@ -192,6 +192,16 @@ value; existing shared masonry remains authoritative. Empty / 0 leaves the new
 wall thin. Live thick preview follows the rubber-band while drawing. Split does
 not use this field. The Thickness tool remains for later edits.
 
+**Deleting a room.** The accessible confirmation offers two explicit physical
+consequences. **Keep walls** converts only that room's exclusive positive solid
+wall intervals into exact independent partitions, preserving their centimetre
+thickness and rehosting openings to those partitions. Shared intervals, virtual
+gaps and zero-thickness edges are not materialised. **Delete walls** removes the
+room without that conversion and cascades only openings owned by its exclusive
+walls. Shared masonry, existing partitions, partition-hosted openings and their
+physical thickness remain intact in both cases. The room, wall profile,
+partitions and openings are one Undo/Redo and persistence transaction.
+
 ## 7. Out of scope
 
 Decor-line thickness, per-side finish, auto-from-backdrop, plan-wide default.

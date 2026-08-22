@@ -22,7 +22,7 @@ import {
 import {
   lqiColor, snapToGrid, snapSegment45, samePoint, pointInPolygon, markerIdForBinding,
   segmentCm, formatLength, roomEdges, roomPoly, paperRoomShapes, pointStrictlyInside, roomsOverlap,
-  pointOnBoundary, mergeRooms, splitRoomPath, polygonArea, closestPointOnBoundary, pointStrictlyInside as ptInside, islandsOf, sharedBoundary, distToSegment, outlineWithout, cutSegments, alignGuides, segmentAngle, is45, type AlignGuide, swipeTarget, clampScale, migratePdfUrls, roomFillModeOf, roomGlowOf, contentUrl,
+  pointOnBoundary, mergeRooms, splitRoomPath, polygonArea, closestPointOnBoundary, pointStrictlyInside as ptInside, islandsOf, sharedBoundary, distToSegment, outlineWithout, cutSegments, alignGuides, segmentAngle, is45, isExact45Vector, type AlignGuide, swipeTarget, clampScale, migratePdfUrls, roomFillModeOf, roomGlowOf, contentUrl,
   snapToWall, snapPointAlongPoly, openingAmount, openingShoulders, interiorPoint,
   isInteriorLightOpeningType, openingEntityReferences,
   poleOfInaccessibility, subst,
@@ -154,14 +154,16 @@ import {
   type PartitionOpeningOrphanReason, type ResolvedPartitionOpening,
 } from './partition-openings';
 import {
-  buildPlanSnapGeometry, resolvePlanSnap,
-  type PlanSnapCandidate, type PlanSnapGeometry, type PlanSnapSegment,
+  buildPlanSnapGeometry, resolvePlanSnapResult, resolveStrictPlanSnap,
+  type PlanSnapCandidate, type PlanSnapEndpoint, type PlanSnapGeometry, type PlanSnapSegment,
 } from './plan-snap-overlay';
 import {
-  atomizeWallSegments, buildWallFaceGraph, findNewWallFacesInGraphs,
+  atomizeWallSegments, buildWallFaceGraph, findNewWallFacesInGraphs, findWallFaceAtPoint,
   normalizeUnifiedWallTool, wallChainSegments, chainSegmentCms,
   type WallFaceGraph, type WallGraphFace, type WallGraphSourceSegment,
 } from './wall-face-graph';
+import { parameterOnPartition, planRoomDeletion } from './room-deletion';
+import { planWallFaceRepair, type WallFaceRepairProposal } from './wall-face-repair';
 import {
   LightSegment, polygonSegments, splitAtIntersections, visibilityPolygon,
 } from './light-visibility';
@@ -535,6 +537,9 @@ type RoomFillFrame = {
 type WallFaceCandidate = WallGraphFace & {
   split?: { roomId: string; mainPoly: number[][]; newPoly: number[][] };
   consumeAllActive?: boolean;
+  /** Face existed before this click; rejecting it must be a true no-op. */
+  existing?: boolean;
+  repair?: WallFaceRepairProposal;
 };
 type WallFaceDecision = {
   candidate: WallFaceCandidate;
@@ -1434,6 +1439,7 @@ class HouseplanCard extends LitElement {
     segment?: number; shape?: 'square' | 'circle'; angle?: string; length?: string;
   } | null = null;
   private _partitionDeleteDialog: { id: string; openings: OpeningCfg[] } | null = null;
+  private _roomDeleteDialog: { roomId: string; name: string } | null = null;
   /** Drag preview is render-only; config is committed once on pointerup. */
   private _physicalDrag: {
     pid: number; kind: 'partition' | 'column'; id: string;
@@ -1530,7 +1536,9 @@ class HouseplanCard extends LitElement {
   private _rszLive: { x: number; y: number; text: string; area?: boolean }[] | null = null;
   private _path: number[][] = []; // current outline (render units, vertices snapped to the grid)
   private _cursorPt: number[] | null = null;
-  private _planSnapHover: { contextKey: string; candidate: PlanSnapCandidate | null } | null = null;
+  private _planSnapHover: {
+    contextKey: string; candidate: PlanSnapCandidate | null; conflicts: PlanSnapEndpoint[];
+  } | null = null;
   private _mergeSel: string | null = null;
   /** Session-only explicit type/width chosen in the Opening sub-panel. */
   private _openingPreset: OpeningPlacementPreset | null = null;
@@ -1575,6 +1583,7 @@ class HouseplanCard extends LitElement {
   private _pendingSplit: { roomId: string; mainPoly: number[][]; newPoly: number[][] } | null = null;
   /** Pending #173 face decisions. Config remains untouched until the last one. */
   private _wallFaceBatch: WallFaceBatch | null = null;
+  private _wallRepairDiagnostic: WallFaceRepairProposal | null = null;
   /** Four exact structural entries; never keyed by HA state, hover or theme. */
   private _wallFaceGraphCache: Array<{ key: string; value: WallFaceGraph }> = [];
   private _areaSel = '';
@@ -2083,6 +2092,7 @@ class HouseplanCard extends LitElement {
     _physicalSel: { state: true },
     _physicalDialog: { state: true },
     _partitionDeleteDialog: { state: true },
+    _roomDeleteDialog: { state: true },
     _physicalDrag: { state: true },
     _physicalRotate: { state: true },
     _duplicateColumnId: { state: true },
@@ -6752,22 +6762,32 @@ class HouseplanCard extends LitElement {
 
   private _resolvePlanDrawPoint(
     raw: number[], lock45: boolean,
-  ): { point: number[]; candidate: PlanSnapCandidate | null; contextKey: string } {
+  ): {
+    point: number[]; candidate: PlanSnapCandidate | null;
+    conflicts: PlanSnapEndpoint[]; ambiguous: boolean; contextKey: string;
+  } {
     const snapshot = this._planSnapGeometrySnapshot();
     const anchor = this._path[this._path.length - 1];
     const closure = this._tool === 'draw' && this._path.length >= 3
       ? [{ point: this._path[0], key: 'closure:first-point' }]
       : [];
-    const candidate = resolvePlanSnap(snapshot.value, raw, {
+    const options = {
       tolerance: this._cssPxToRender(12),
+      distinguishTolerance: this._cssPxToRender(8),
       gridStep: this._gridPitch,
       excludePoints: anchor ? [anchor] : [],
       extraEndpoints: closure,
       epsilon: this._gridPitch * 0.0002,
-    });
+    };
+    const resolution = lock45 && anchor
+      ? resolveStrictPlanSnap(snapshot.value, raw, { ...options, anchor })
+      : resolvePlanSnapResult(snapshot.value, raw, options);
+    const candidate = resolution.kind === 'resolved' ? resolution.candidate : null;
     return {
       point: candidate ? [...candidate.point] : this._snapDrawPoint(raw, lock45),
       candidate,
+      conflicts: resolution.kind === 'ambiguous' ? resolution.conflicts : [],
+      ambiguous: resolution.kind === 'ambiguous',
       contextKey: this._planSnapContextKey(snapshot.key),
     };
   }
@@ -6780,9 +6800,18 @@ class HouseplanCard extends LitElement {
     return hover.contextKey === this._planSnapContextKey(snapshot.key) ? hover.candidate : null;
   }
 
+  private get _activePlanSnapConflicts(): PlanSnapEndpoint[] {
+    if (!this._markup || this._tool !== 'draw') return [];
+    const hover = this._planSnapHover;
+    if (!hover) return [];
+    const snapshot = this._planSnapGeometrySnapshot();
+    return hover.contextKey === this._planSnapContextKey(snapshot.key) ? hover.conflicts : [];
+  }
+
   private _clearPlanSnapHover(clearCursor = true): void {
     this._planSnapHover = null;
     this._syncPlanSnapActiveMarker(null);
+    this._syncPlanSnapConflictMarkers([]);
     if (clearCursor) this._cursorPt = null;
   }
 
@@ -6957,6 +6986,8 @@ class HouseplanCard extends LitElement {
     this._splitSel = null;
     this._pendingSplit = null;
     this._wallFaceBatch = null;
+    this._wallRepairDiagnostic = null;
+    this._roomDeleteDialog = null;
     this._openWallAnchor = null;
     this._boundaryRestoreGuard = null;
     this._wallDialog = null;
@@ -7250,7 +7281,18 @@ class HouseplanCard extends LitElement {
     }
     // Walls: every completed segment is crash-safe in room_drafts until an
     // explicit finish converts the chain or a confirmed face batch consumes it.
-    let pt = this._resolvePlanDrawPoint(raw, ev.shiftKey).point;
+    this._wallRepairDiagnostic = null;
+    const resolved = this._resolvePlanDrawPoint(raw, ev.shiftKey);
+    if (resolved.ambiguous) {
+      this._planSnapHover = {
+        contextKey: resolved.contextKey, candidate: null, conflicts: resolved.conflicts,
+      };
+      this._syncPlanSnapActiveMarker(null);
+      this._syncPlanSnapConflictMarkers(resolved.conflicts);
+      this._showToast(this._t('toast.plan_snap_ambiguous'));
+      return;
+    }
+    let pt = resolved.point;
     if (ev.ctrlKey || ev.metaKey) {
       // The closure shortcut owns the gesture even before the chain has the
       // two existing edges required to form a room. Falling through here
@@ -7266,6 +7308,10 @@ class HouseplanCard extends LitElement {
     // overlaps are still rejected, but only at closing time, when the whole
     // outline is known (roomsOverlap treats full nesting as legal).
     if (!this._path.length) {
+      // A free idle click can name a room inside masonry that was completed in
+      // an earlier session. Shift and architectural snap hits retain the Walls
+      // gesture, so this offer never steals an intentional new chain.
+      if (!ev.shiftKey && !resolved.candidate && this._offerExistingWallFace(raw)) return;
       // After reload a saved open contour is resumed explicitly by clicking
       // either free end. Mid-segment branching is deliberately unsupported.
       const endHit = this._draftEndAt(pt);
@@ -7523,9 +7569,10 @@ class HouseplanCard extends LitElement {
     const addedSourceKey = this._activeWallSourceKey(addedSegmentIndex);
     const epsilon = this._gridPitch * 0.0002;
     let faces: WallGraphFace[];
+    let after: WallGraphSourceSegment[];
     try {
       const before = beforeGraphSources || this._wallGraphSources(beforePath);
-      const after = this._wallGraphSources(this._path);
+      after = this._wallGraphSources(this._path);
       faces = findNewWallFacesInGraphs(
         this._wallFaceGraph(before, epsilon), this._wallFaceGraph(after, epsilon),
         addedSourceKey,
@@ -7535,7 +7582,23 @@ class HouseplanCard extends LitElement {
       // truth and drawing can continue when malformed legacy geometry exists.
       return;
     }
-    if (!faces.length) return;
+    if (!faces.length) {
+      const repair = planWallFaceRepair(after, {
+        requiredSourceKey: addedSourceKey,
+        maxDistance: wallCmToUnits(2, this._cellCm, this._gridPitch),
+        gridStep: this._gridPitch,
+        epsilon,
+      });
+      if (repair.kind === 'ambiguous') {
+        this._wallRepairDiagnostic = repair.proposals[0] || null;
+        this._showToast(this._t('toast.wall_repair_ambiguous'));
+        return;
+      }
+      if (repair.kind === 'repair' && !this._overlapRoom(repair.face.ring)) {
+        this._beginWallFaceBatch([{ ...repair.face, repair: repair.proposal }]);
+      }
+      return;
+    }
 
     // A clean wall-to-wall cut is one product decision about the smaller part,
     // even though the planar delta contains both resulting faces.
@@ -7570,6 +7633,7 @@ class HouseplanCard extends LitElement {
   }
 
   private _beginWallFaceBatch(candidates: WallFaceCandidate[]): void {
+    this._wallRepairDiagnostic = null;
     this._wallFaceBatch = {
       candidates: [...candidates].sort((left, right) =>
         left.area - right.area || left.key.localeCompare(right.key)),
@@ -7584,6 +7648,53 @@ class HouseplanCard extends LitElement {
     this._areaSel = '';
     this._resetRoomDialogFields();
     this._roomDialog = true;
+  }
+
+  /** Offer the smallest unoccupied exact face under an idle Walls click. */
+  private _offerExistingWallFace(raw: number[]): boolean {
+    if (this._path.length || this._wallFaceBatch || this._roomDialog) return false;
+    const epsilon = this._gridPitch * 0.0002;
+    try {
+      const graph = this._wallFaceGraph(this._wallGraphSources([]), epsilon);
+      let face = findWallFaceAtPoint(graph, raw, epsilon);
+      let repair: WallFaceRepairProposal | undefined;
+      if (!face) {
+        const result = planWallFaceRepair(this._wallGraphSources([]), {
+          point: raw,
+          maxDistance: wallCmToUnits(2, this._cellCm, this._gridPitch),
+          gridStep: this._gridPitch,
+          epsilon,
+        });
+        if (result.kind === 'ambiguous') {
+          this._wallRepairDiagnostic = result.proposals[0] || null;
+          this._showToast(this._t('toast.wall_repair_ambiguous'));
+          return true;
+        }
+        if (result.kind === 'repair') {
+          face = result.face;
+          repair = result.proposal;
+        } else if (result.kind === 'none') {
+          const diagnostic = planWallFaceRepair(this._wallGraphSources([]), {
+            point: raw,
+            maxDistance: this._cssPxToRender(12),
+            gridStep: this._gridPitch,
+            epsilon,
+          });
+          if (diagnostic.kind !== 'none') {
+            this._wallRepairDiagnostic = diagnostic.kind === 'repair'
+              ? diagnostic.proposal : diagnostic.proposals[0] || null;
+            this._showToast(this._t('toast.wall_repair_too_large'));
+            return true;
+          }
+        }
+      }
+      if (!face || face.ring.length < 3 || this._contourSelfIntersects(face.ring)
+          || this._overlapRoom(face.ring)) return false;
+      this._beginWallFaceBatch([{ ...face, existing: !repair, repair }]);
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   private _columnClick(raw: number[]): void {
@@ -10937,7 +11048,7 @@ class HouseplanCard extends LitElement {
     this.requestUpdate();
   }
 
-  /** Delete tool: only the explicitly clicked room, never wall semantics. */
+  /** Delete tool: defer all wall consequences to one explicit accessible choice. */
   private _deleteRoomClick(raw: number[]): void {
     const space = this._spaceModel();
     if (!space) return;
@@ -10946,18 +11057,98 @@ class HouseplanCard extends LitElement {
       this._showToast(this._t('toast.delete_room_pick'));
       return;
     }
-    if (!confirm(this._t('confirm.delete_room', { name: room.name }))) return;
+    if (!room.id) return;
+    this._roomDeleteDialog = { roomId: room.id, name: room.name };
+  }
+
+  private _confirmRoomDelete = (keepWalls: boolean): void => {
+    const dialog = this._roomDeleteDialog;
     const sp = this._curSpaceCfg;
-    if (!sp) return;
+    const space = this._spaceModel();
+    if (!dialog || !sp || !space) return;
+    const room = space.rooms.find((candidate) => candidate.id === dialog.roomId);
+    if (!room) { this._roomDeleteDialog = null; return; }
+    const openCuts = this._openCuts();
+    const allIntervals = wallIntervals(
+      space.rooms, this._spaceWalls, openCuts,
+      this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
+    );
+    const roomIntervals = allIntervals.filter((interval) => interval.roomId === room.id);
+    const plan = planRoomDeletion(
+      roomIntervals,
+      space.partitions,
+      this._openingsR.map((opening) => ({
+        ...opening, x: opening.rx, y: opening.ry,
+      })),
+      this._gridPitch * 0.02,
+    );
+    const newCount = new Set(plan.materialize
+      .filter((item) => !item.reusePartitionId)
+      .map((item) => item.interval.key)).size;
+    if (keepWalls && (sp.partitions || []).length + newCount > MAX_PARTITIONS) {
+      this._showToast(this._t('toast.physical_limit'));
+      return;
+    }
     const before = this._geometrySnapshot();
+    const materializedWalls = materializeWallIntervals(
+      space.rooms, this._spaceWalls, openCuts,
+      this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
+    );
+    if (keepWalls) {
+      sp.partitions ||= [];
+      const targetByInterval = new Map<string, PartitionCfg>();
+      const createdByKey = new Map<string, PartitionCfg>();
+      const seed = Date.now().toString(36);
+      for (const item of plan.materialize) {
+        let target = item.reusePartitionId
+          ? sp.partitions.find((partition: PartitionCfg) => partition.id === item.reusePartitionId)
+          : createdByKey.get(item.interval.key);
+        if (!target) {
+          target = {
+            id: `partition-room-${seed}-${createdByKey.size}`,
+            a: [item.interval.a[0] / NORM_W, item.interval.a[1] / NORM_W],
+            b: [item.interval.b[0] / NORM_W, item.interval.b[1] / NORM_W],
+            cm: item.interval.cm,
+          };
+          sp.partitions.push(target);
+          createdByKey.set(item.interval.key, target);
+        }
+        targetByInterval.set(item.interval.key, target);
+      }
+      for (const opening of sp.openings || []) {
+        const intervalKey = plan.openingIntervals.get(opening.id);
+        const target = intervalKey ? targetByInterval.get(intervalKey) : null;
+        const rendered = this._openingsR.find((candidate) => candidate.id === opening.id);
+        if (!target || !rendered) continue;
+        const renderTarget = {
+          a: [target.a[0] * NORM_W, target.a[1] * NORM_W],
+          b: [target.b[0] * NORM_W, target.b[1] * NORM_W],
+        };
+        opening.host = {
+          kind: 'partition', id: target.id,
+          t: parameterOnPartition([rendered.rx, rendered.ry], renderTarget),
+        };
+      }
+    } else if (plan.removeOpeningIds.length) {
+      const remove = new Set(plan.removeOpeningIds);
+      sp.openings = (sp.openings || []).filter((opening: OpeningCfg) => !remove.has(opening.id));
+      if (!sp.openings.length) delete sp.openings;
+    }
     sp.rooms = sp.rooms.filter((r: any) => r.id !== room.id);
+    this._cfgEpoch++;
     this._commitOpenSpans();
-    this._recordGeometry(this._t('history.delete_room'), before);
+    const normalized = this._normalizeWalls(materializedWalls, this._openCuts());
+    if (normalized.length) sp.walls = normalized;
+    else delete sp.walls;
+    this._roomDeleteDialog = null;
+    this._recordGeometry(this._t(
+      keepWalls ? 'history.delete_room_keep_walls' : 'history.delete_room_with_walls',
+    ), before);
     this._saveConfig();
     this._regSignature = '';
     this._maybeRebuildDevices();
     this.requestUpdate();
-  }
+  };
 
 
   // ================= WALL THICKNESS (docs/WALL-THICKNESS.md) =================
@@ -12369,7 +12560,12 @@ class HouseplanCard extends LitElement {
     const raw = this._svgPoint(ev);
     if (architectural) {
       const resolved = this._resolvePlanDrawPoint(raw, ev.shiftKey);
-      this._planSnapHover = { contextKey: resolved.contextKey, candidate: resolved.candidate };
+      this._planSnapHover = {
+        contextKey: resolved.contextKey,
+        candidate: resolved.candidate,
+        conflicts: resolved.conflicts,
+      };
+      this._syncPlanSnapConflictMarkers(resolved.conflicts);
       // Before the first click there is no rubber-band to repaint. Updating the
       // dedicated marker avoids walking the complete large-house Lit tree for
       // every mouse move while click still resolves from the event coordinate.
@@ -12424,6 +12620,14 @@ class HouseplanCard extends LitElement {
     if (!batch) return;
     const candidate = batch.candidates[batch.index];
     if (!candidate) return;
+    if (!create && (candidate.existing || candidate.repair) && batch.candidates.length === 1) {
+      this._wallFaceBatch = null;
+      this._roomDialog = false;
+      this._nameSel = '';
+      this._areaSel = '';
+      this.requestUpdate();
+      return;
+    }
     const decision: WallFaceDecision = create ? {
       candidate,
       create: true,
@@ -12485,6 +12689,90 @@ class HouseplanCard extends LitElement {
     return DRAW_WALL_DEFAULT_CM;
   }
 
+  private _activePathWithRepair(
+    path: number[][], proposal: WallFaceRepairProposal | undefined,
+  ): number[][] {
+    const result = path.map((point) => [...point]);
+    if (!proposal?.sourceKey.startsWith('active:')) return result;
+    const match = /:(\d+)$/.exec(proposal.sourceKey);
+    const index = match ? Number(match[1]) + (proposal.endpoint === 'b' ? 1 : 0) : -1;
+    if (index >= 0 && index < result.length) result[index] = [...proposal.to];
+    return result;
+  }
+
+  private _validateWallRepair(
+    proposal: WallFaceRepairProposal, activePath: number[][],
+  ): boolean {
+    const epsilon = this._gridPitch * 0.0002;
+    const sources = this._wallGraphSources(activePath);
+    const source = sources.find((item) => item.key === proposal.sourceKey);
+    const target = sources.find((item) => item.key === proposal.targetSourceKey);
+    if (!source || !target) return false;
+    const current = proposal.endpoint === 'a' ? source.a : source.b;
+    if (Math.hypot(current[0] - proposal.from[0], current[1] - proposal.from[1]) > epsilon) return false;
+    if (distToSegment(proposal.to, [target.a[0], target.a[1], target.b[0], target.b[1]]) > epsilon) {
+      return false;
+    }
+    if (proposal.sourceKey.startsWith('static:partition|')) {
+      const id = proposal.sourceKey.slice('static:partition|'.length).split('|')[0];
+      if ((this._curSpaceCfg as any)?.openings?.some((opening: OpeningCfg) =>
+        opening.host?.kind === 'partition' && opening.host.id === id)) return false;
+    }
+    return true;
+  }
+
+  /** Apply one revalidated endpoint move inside the surrounding room transaction. */
+  private _applyWallRepair(
+    proposal: WallFaceRepairProposal, batch: WallFaceBatch,
+  ): boolean {
+    const sp = this._curSpaceCfg as any;
+    if (!sp || !this._validateWallRepair(proposal, batch.activePath)) return false;
+    const write = (point: number[]): void => {
+      point[0] = proposal.to[0] / NORM_W;
+      point[1] = proposal.to[1] / NORM_W;
+    };
+    if (proposal.sourceKey.startsWith('active:')) {
+      const match = /:(\d+)$/.exec(proposal.sourceKey);
+      const index = match ? Number(match[1]) + (proposal.endpoint === 'b' ? 1 : 0) : -1;
+      if (index < 0 || index >= batch.activePath.length) return false;
+      batch.activePath[index] = [...proposal.to];
+      const draft = (sp.room_drafts || []).find((item: any) => item.id === batch.activeDraftId);
+      if (draft?.points?.[index]) write(draft.points[index]);
+      return true;
+    }
+    if (!proposal.sourceKey.startsWith('static:')) return false;
+    const [kind, sourceId] = proposal.sourceKey.slice('static:'.length).split('|');
+    if (kind === 'partition') {
+      const partition = (sp.partitions || []).find((item: PartitionCfg) => item.id === sourceId);
+      if (!partition) return false;
+      const renderA = [partition.a[0] * NORM_W, partition.a[1] * NORM_W];
+      const renderB = [partition.b[0] * NORM_W, partition.b[1] * NORM_W];
+      const point = Math.hypot(renderA[0] - proposal.from[0], renderA[1] - proposal.from[1])
+          <= this._gridPitch * 0.0002 ? partition.a
+        : Math.hypot(renderB[0] - proposal.from[0], renderB[1] - proposal.from[1])
+          <= this._gridPitch * 0.0002 ? partition.b : null;
+      if (!point) return false;
+      write(point);
+      return true;
+    }
+    if (kind === 'draft') {
+      const separator = sourceId.lastIndexOf(':');
+      const draftId = separator >= 0 ? sourceId.slice(0, separator) : '';
+      const segment = separator >= 0 ? Number(sourceId.slice(separator + 1)) : -1;
+      const draft = (sp.room_drafts || []).find((item: any) => item.id === draftId);
+      if (!draft?.points?.[segment] || !draft?.points?.[segment + 1]) return false;
+      const candidates = [segment, segment + 1];
+      const index = candidates.find((candidate) => Math.hypot(
+        draft.points[candidate][0] * NORM_W - proposal.from[0],
+        draft.points[candidate][1] * NORM_W - proposal.from[1],
+      ) <= this._gridPitch * 0.0002);
+      if (index == null) return false;
+      write(draft.points[index]);
+      return true;
+    }
+    return false;
+  }
+
   /** Revalidate and apply every queued answer as one geometry transaction. */
   private _applyWallFaceBatch(): void {
     const batch = this._wallFaceBatch;
@@ -12527,6 +12815,15 @@ class HouseplanCard extends LitElement {
       return;
     }
 
+    const repairs = accepted
+      .map((decision) => decision.candidate.repair)
+      .filter((repair): repair is WallFaceRepairProposal => !!repair);
+    if (repairs.length > 1 || (repairs[0] && !this._validateWallRepair(repairs[0], batch.activePath))) {
+      abort('toast.wall_repair_changed');
+      return;
+    }
+    const effectiveActivePath = this._activePathWithRepair(batch.activePath, repairs[0]);
+
     const epsilon = this._gridPitch * 0.0002;
     const activeSourceCms = new Map<string, number>();
     for (let i = 0; i < batch.activeCms.length; i++)
@@ -12534,16 +12831,16 @@ class HouseplanCard extends LitElement {
     const partitions: Array<{ a: number[]; b: number[]; cm: number }> = [];
     if (!accepted.length) {
       partitions.push(...wallChainSegments(
-        batch.activePath,
+        effectiveActivePath,
         chainSegmentCms(
-          batch.activePath.length - 1, batch.activeCms,
+          effectiveActivePath.length - 1, batch.activeCms,
           this._drawWallCm, DRAW_WALL_DEFAULT_CM,
         ),
       ));
     } else {
       const consumed = new Set(accepted.flatMap((decision) => decision.candidate.atomKeys));
       const consumeAll = accepted.some((decision) => decision.candidate.consumeAllActive);
-      for (const atom of atomizeWallSegments(this._wallGraphSources(batch.activePath), epsilon)) {
+      for (const atom of atomizeWallSegments(this._wallGraphSources(effectiveActivePath), epsilon)) {
         const activeKey = atom.sourceKeys.find((key) => activeSourceCms.has(key));
         if (!activeKey || consumeAll || consumed.has(atom.key)) continue;
         partitions.push({ a: atom.a, b: atom.b, cm: activeSourceCms.get(activeKey)! });
@@ -12555,6 +12852,10 @@ class HouseplanCard extends LitElement {
     }
 
     const before = this._geometrySnapshot();
+    if (repairs[0] && !this._applyWallRepair(repairs[0], batch)) {
+      abort('toast.wall_repair_changed');
+      return;
+    }
     const hasSplit = accepted.some((decision) => !!decision.candidate.split);
     const splitWalls = hasSplit
       ? materializeWallIntervals(
@@ -12833,6 +13134,7 @@ class HouseplanCard extends LitElement {
   }
 
   private _cancelPath(): void {
+    this._wallRepairDiagnostic = null;
     if (this._activeDraftId) this._resumeDraftBySpace[this._space] = this._activeDraftId;
     this._path = [];
     this._activeDraftId = null;
@@ -16477,6 +16779,7 @@ class HouseplanCard extends LitElement {
         ${this._openingDialog ? this._renderOpeningDialog() : nothing}
         ${this._physicalDialog ? this._renderPhysicalDialog() : nothing}
         ${this._partitionDeleteDialog ? this._renderPartitionDeleteDialog() : nothing}
+        ${this._roomDeleteDialog ? this._renderRoomDeleteDialog() : nothing}
         ${this._openingInfo ? this._renderOpeningInfoCard() : nothing}
         ${this._decorTextDialog ? this._renderDecorTextDialog() : nothing}
         ${this._decorShapeDialog ? this._renderDecorShapeDialog() : nothing}
@@ -17822,7 +18125,7 @@ class HouseplanCard extends LitElement {
     // angle badge: length · angle, both green when the angle is a 45° multiple
     const deg = segmentAngle(a, b);
     const shown = Math.round(deg * 10) / 10;
-    const on45 = is45(deg);
+    const on45 = isExact45Vector(a, b, this._gridPitch * 0.0002);
     return html`<div class="measurelabel ${on45 ? 'on45' : ''}" style="left:${left}%;top:${top}%">
       ${this._fmtLen(a, b)} · ${shown}°</div>`;
   }
@@ -18535,18 +18838,19 @@ class HouseplanCard extends LitElement {
     }
     const geometry = this._planSnapGeometrySnapshot().value;
     const active = this._activePlanSnapCandidate;
+    const conflictKeys = new Set(this._activePlanSnapConflicts.map((item) => item.key));
     const staticRadius = wallCmToUnits(5, this._cellCm, this._gridPitch);
     const activeRadius = wallCmToUnits(10, this._cellCm, this._gridPitch);
     return svg`<g class="plan-snap-overlay" data-hp="plan-snap-overlay"
       data-segment-count=${geometry.segments.length}
       data-endpoint-count=${geometry.endpoints.length}
       aria-hidden="true" pointer-events="none">
-      ${guard([geometry, staticRadius], () => svg`
+      ${guard([geometry, staticRadius, [...conflictKeys].sort().join('|')], () => svg`
         ${geometry.segments.map((segment) => svg`<line class="plan-snap-line"
           data-key=${segment.key} data-source-kind=${segment.sourceKind}
           x1=${segment.a[0]} y1=${segment.a[1]} x2=${segment.b[0]} y2=${segment.b[1]}
           vector-effect="non-scaling-stroke" pointer-events="none"></line>`)}
-        ${geometry.endpoints.map((endpoint) => svg`<circle class="plan-snap-node"
+        ${geometry.endpoints.map((endpoint) => svg`<circle class="plan-snap-node ${conflictKeys.has(endpoint.key) ? 'conflict' : ''}"
           data-kind="endpoint" data-key=${endpoint.key} data-active="false"
           cx=${endpoint.point[0]} cy=${endpoint.point[1]} r=${staticRadius}
           pointer-events="none"></circle>`)}
@@ -18581,6 +18885,16 @@ class HouseplanCard extends LitElement {
     marker.setAttribute('cx', String(candidate.point[0]));
     marker.setAttribute('cy', String(candidate.point[1]));
     marker.setAttribute('r', String(wallCmToUnits(10, this._cellCm, this._gridPitch)));
+  }
+
+  /** Pointer-only ambiguity styling without a full Lit render on large plans. */
+  private _syncPlanSnapConflictMarkers(conflicts: readonly PlanSnapEndpoint[]): void {
+    const keys = new Set(conflicts.map((item) => item.key));
+    for (const marker of this.renderRoot?.querySelectorAll<SVGCircleElement>(
+      '.plan-snap-node[data-kind="endpoint"]',
+    ) || []) {
+      marker.setAttribute('class', `plan-snap-node${keys.has(marker.dataset.key || '') ? ' conflict' : ''}`);
+    }
   }
 
   /** Physical depth for one immutable architectural snap segment. */
@@ -18676,6 +18990,8 @@ class HouseplanCard extends LitElement {
     const previewJoinPatchD = previewPts
       ? this._drawPreviewJoinPatchD(previewPts, previewHalfDepths)
       : '';
+    const repairPreview = this._wallFaceBatch?.candidates[this._wallFaceBatch.index]?.repair
+      || this._wallRepairDiagnostic;
     return svg`
       ${this._gridLevels()
         ? svg`<rect x="${view.x}" y="${view.y}" width="${view.w}" height="${view.h}" fill="url(#hp-grid-major)" pointer-events="none"></rect>`
@@ -18697,12 +19013,19 @@ class HouseplanCard extends LitElement {
         ? svg`<path class="drawwall-preview-fill" d="${previewJoinPatchD}"></path>
              <path class="drawwall-preview" style="stroke:none" d="${previewJoinPatchD}"></path>`
         : nothing}
+      ${repairPreview ? svg`<line class="wall-repair-preview"
+        x1=${repairPreview.from[0]} y1=${repairPreview.from[1]}
+        x2=${repairPreview.to[0]} y2=${repairPreview.to[1]}
+        aria-hidden="true" pointer-events="none"></line>` : nothing}
       ${path.length > 1
         ? svg`<polyline class="pathline" points="${path.map((p) => p.join(',')).join(' ')}"></polyline>`
         : nothing}
       ${path.length && this._cursorPt && this._tool === 'draw' && !this._contourClosed
-        ? svg`<line class="preview" x1="${path[path.length - 1][0]}" y1="${path[path.length - 1][1]}"
-            x2="${this._cursorPt[0]}" y2="${this._cursorPt[1]}"></line>`
+        ? svg`<line class="active-axis" x1="${path[path.length - 1][0]}" y1="${path[path.length - 1][1]}"
+            x2="${this._cursorPt[0]}" y2="${this._cursorPt[1]}" aria-hidden="true"></line>
+            ${!this._activePlanSnapCandidate && !this._activePlanSnapConflicts.length
+              ? svg`<circle class="active-vertex" cx="${this._cursorPt[0]}" cy="${this._cursorPt[1]}"
+                  r="${g * 0.22}" aria-hidden="true"></circle>` : nothing}`
         : nothing}
       ${path.map((p, i) => svg`<circle class="vertex ${i === 0 ? 'first' : ''}" cx="${p[0]}" cy="${p[1]}" r="${g * 0.22}"></circle>`)}
       ${this._tool === 'split' && this._splitSel?.pts?.length
@@ -18748,6 +19071,30 @@ class HouseplanCard extends LitElement {
         <span class="spacer"></span>
         <button class="btn danger" @click=${this._confirmPartitionDelete}>
           <ha-icon icon="mdi:delete-outline"></ha-icon>${this._t('btn.delete')}
+        </button>
+      </div>
+    </hp-dialog>`;
+  }
+
+  private _renderRoomDeleteDialog(): TemplateResult {
+    const dialog = this._roomDeleteDialog!;
+    return html`<hp-dialog .hass=${this.hass}
+      .title=${this._t('confirm.delete_room_title', { name: dialog.name })}
+      icon="mdi:floor-plan" dismiss-on-scrim
+      @hp-close=${() => (this._roomDeleteDialog = null)}>
+      <div class="body">
+        <p>${this._t('confirm.delete_room_body')}</p>
+      </div>
+      <div class="row" slot="footer">
+        <button class="btn ghost" @click=${() => (this._roomDeleteDialog = null)}>
+          ${this._t('btn.cancel')}
+        </button>
+        <span class="spacer"></span>
+        <button class="btn" @click=${() => this._confirmRoomDelete(true)}>
+          <ha-icon icon="mdi:wall"></ha-icon>${this._t('btn.delete_room_keep_walls')}
+        </button>
+        <button class="btn danger" @click=${() => this._confirmRoomDelete(false)}>
+          <ha-icon icon="mdi:delete-outline"></ha-icon>${this._t('btn.delete_room_with_walls')}
         </button>
       </div>
     </hp-dialog>`;

@@ -383,6 +383,14 @@ quantised to the same step, measured from the wall's first corner:**
 | openings, placed and dragged | `snapToWall(..., { step, length })` |
 | split tool's points ON a wall | `snapPointAlongPoly` |
 
+The Walls tool adds one architectural resolver before the free grid fallback.
+Within a 12 CSS-pixel hit zone, exact endpoints win over wall axes. Two distinct
+endpoints that are less than the live 8 CSS-pixel distinguishability threshold
+apart produce an explicit ambiguous result: the segment is not committed and
+the user is asked to zoom. Exact coincident endpoints are still one node. The
+active thick rubber-band always paints its centreline and final node above the
+body; an active snap marker replaces, rather than duplicates, that final node.
+
 On an axis-aligned wall whose corners are on the grid — every wall the
 editor itself draws — the two rules give the same point. An opening is
 also kept inside its wall by half its own length.
@@ -404,10 +412,13 @@ Three things were fixed here besides the new coverage:
 ### 9.4 Shift
 
 There is no free-position mode. `Shift` never suspends coordinate
-snapping: free anchors always land on grid nodes, and wall-bound objects
-always remain projected and quantised along their wall. It modifies only
-the current gesture: a room-outline segment is constrained to the nearest
-45° direction and the nearest grid node on that ray; square/circle creation,
+snapping. For a Walls segment with an anchor it selects the nearest 45° ray:
+an endpoint is accepted only when it lies on that ray, and a wall-axis hit is
+the exact forward ray/solid-segment intersection inside the pointer hit zone.
+An incompatible ordinary snap is ignored; only then does the nearest grid node
+on the ray become the fallback. The green angle badge uses the actual vector
+(horizontal, vertical or `|dx| = |dy|`), so 89.9°/90.1° are not advertised as
+exact. For other tools Shift modifies only the current gesture: square/circle creation,
 independent resize axes, free decor/backdrop rotation, the compass step, or
 bypassing the furniture wall magnet while the ordinary decor/room/grid magnet
 remains active. It cannot create an off-grid object.

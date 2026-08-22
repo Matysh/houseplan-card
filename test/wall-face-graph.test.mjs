@@ -5,6 +5,7 @@ import {
   buildWallFaceGraph,
   findNewWallFaces,
   findNewWallFacesInGraphs,
+  findWallFaceAtPoint,
   normalizeUnifiedWallTool,
   wallChainSegments,
   chainSegmentCms,
@@ -22,6 +23,19 @@ test('legacy Partition token becomes Walls without mutating other tools', () => 
   assert.equal(normalizeUnifiedWallTool('partition'), 'draw');
   assert.equal(normalizeUnifiedWallTool('split'), 'split');
   assert.equal(normalizeUnifiedWallTool(null), null);
+});
+
+test('face hit chooses the smallest containing face and excludes its boundary', () => {
+  const graph = buildWallFaceGraph([
+    { a: [0, 0], b: [100, 0], key: 'top' },
+    { a: [100, 0], b: [100, 100], key: 'right' },
+    { a: [100, 100], b: [0, 100], key: 'bottom' },
+    { a: [0, 100], b: [0, 0], key: 'left' },
+    { a: [50, 0], b: [50, 100], key: 'divider' },
+  ]);
+  assert.equal(findWallFaceAtPoint(graph, [25, 50])?.area, 5000);
+  assert.equal(findWallFaceAtPoint(graph, [50, 50]), null);
+  assert.equal(findWallFaceAtPoint(graph, [120, 50]), null);
 });
 
 test('open chain converts endpoints and per-segment thickness without mutation', () => {

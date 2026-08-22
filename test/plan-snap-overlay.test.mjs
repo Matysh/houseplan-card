@@ -4,6 +4,8 @@ import {
   buildPlanSnapGeometry,
   findSharedRoomSnapSegment,
   resolvePlanSnap,
+  resolvePlanSnapResult,
+  resolveStrictPlanSnap,
 } from '../test-build/plan-snap-overlay.js';
 
 const space = (patch = {}) => ({ rooms: [], room_drafts: [], partitions: [], ...patch });
@@ -208,4 +210,45 @@ test('current anchor is excluded while an explicit closure endpoint remains avai
   });
   assert.equal(closure?.kind, 'endpoint');
   closePoint(closure.point, [0, 100]);
+});
+
+test('visually inseparable distinct endpoints fail closed until zoom separates them', () => {
+  const geometry = buildPlanSnapGeometry({
+    space: space({ partitions: [
+      { id: 'a', a: [0, 0], b: [100, 0], cm: 10 },
+      { id: 'b', a: [6, 0], b: [6, 100], cm: 10 },
+    ] }),
+  });
+  const ambiguous = resolvePlanSnapResult(geometry, [3, 2], {
+    tolerance: 12, distinguishTolerance: 8, gridStep: 10,
+  });
+  assert.equal(ambiguous.kind, 'ambiguous');
+  assert.equal(ambiguous.conflicts.length, 2);
+  const zoomed = resolvePlanSnapResult(geometry, [1, 1], {
+    tolerance: 3, distinguishTolerance: 2, gridStep: 10,
+  });
+  assert.equal(zoomed.kind, 'resolved');
+  closePoint(zoomed.candidate.point, [0, 0]);
+});
+
+test('strict Shift accepts only points and intersections on the selected octant ray', () => {
+  const geometry = buildPlanSnapGeometry({
+    space: space({ partitions: [
+      { id: 'off-ray', a: [100, 5], b: [100, 80], cm: 10 },
+      { id: 'cross', a: [95, -50], b: [95, 50], cm: 10 },
+      { id: 'diagonal', a: [200, 200], b: [300, 300], cm: 10 },
+    ] }),
+  });
+  const horizontal = resolveStrictPlanSnap(geometry, [97, 3], {
+    anchor: [0, 0], tolerance: 12, distinguishTolerance: 8, gridStep: 10, epsilon: 0.001,
+  });
+  assert.equal(horizontal.kind, 'resolved');
+  assert.equal(horizontal.candidate.kind, 'line');
+  closePoint(horizontal.candidate.point, [95, 0]);
+
+  const diagonal = resolveStrictPlanSnap(geometry, [205, 201], {
+    anchor: [100, 100], tolerance: 12, distinguishTolerance: 8, gridStep: 10, epsilon: 0.001,
+  });
+  assert.equal(diagonal.kind, 'resolved');
+  closePoint(diagonal.candidate.point, [200, 200]);
 });

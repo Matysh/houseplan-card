@@ -1933,6 +1933,18 @@ export function is45(deg: number, tol = 0.5): boolean {
   return m <= tol || 45 - m <= tol;
 }
 
+/** True only when the actual segment vector is an exact octant direction. */
+export function isExact45Vector(
+  a: readonly number[], b: readonly number[], epsilon = 0.001,
+): boolean {
+  if (a.length < 2 || b.length < 2) return false;
+  const dx = Math.abs(b[0] - a[0]);
+  const dy = Math.abs(b[1] - a[1]);
+  if (!Number.isFinite(dx) || !Number.isFinite(dy) || Math.hypot(dx, dy) <= epsilon) return false;
+  const scale = Math.max(dx, dy, 1);
+  return dx <= epsilon * scale || dy <= epsilon * scale || Math.abs(dx - dy) <= epsilon * scale;
+}
+
 /** Distance from a point to a segment [x1,y1,x2,y2]. */
 export function distToSegment(p: number[], s: number[]): number {
   const dx = s[2] - s[0], dy = s[3] - s[1];

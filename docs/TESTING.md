@@ -635,8 +635,27 @@ separately promised workflows:
 - [ ] Re-selecting Walls, Reset, pan, pinch, a second pointer, `pointercancel`
       and a suppressed synthetic click never finish a chain or save an extra
       segment [auto: smoke_unified_wall_tool]
-- [ ] Deleting a room removes its walls, EXCEPT those shared with a neighbouring room
-      (the neighbour still yields them); deleting the neighbour too removes them as well
+- [ ] The active segment keeps a visible thin axis and endpoint above a thick
+      preview. Distinct nodes inside the ambiguity radius fail closed with a
+      zoom prompt. Shift constrains the actual endpoint to the nearest exact
+      45° ray, including exact ray/wall intersections; the angle colour follows
+      the stored vector, not pointer intent [unit: plan-snap-overlay.test.mjs;
+      auto: smoke_plan_snap_overlay + smoke_plan_drawing_repairs].
+- [ ] With no active chain, a click strictly inside the smallest unoccupied
+      exact wall face offers a room; boundary/snap hits and Shift bypass it.
+      Keep/Cancel is a true no-op. If one endpoint→endpoint or
+      endpoint→solid-line repair closes the face within 2 physical cm, the red
+      diagnostic is offered and moves geometry only together with Create.
+      A larger gap, hosted-opening mover or multiple possible repairs fails
+      closed [unit: wall-face-graph.test.mjs + wall-face-repair.test.mjs; auto:
+      smoke_plan_drawing_repairs].
+- [ ] Deleting a room uses an accessible Keep walls / Delete walls / Cancel
+      dialog. Keep materialises only exclusive positive solid intervals as
+      partitions and rehosts their openings; Delete cascades only openings on
+      those exclusive walls. Shared walls/openings, explicit partitions and
+      partition-hosted openings survive. Either accepted choice is one
+      Undo/Redo/save transaction [unit: room-deletion.test.mjs; auto:
+      smoke_plan_drawing_repairs].
 - [ ] There is no "Erase" tool in the markup toolbar (removed in v1.19.0)
 - [ ] Rooms never overlap (v1.20.0): a click strictly inside an existing room is refused with a
       toast; a click ON a shared wall (including mid-span of a longer neighbour wall) still works
@@ -670,7 +689,8 @@ separately promised workflows:
 - [ ] "No area" room (decorative) requires a name; saves with `area: null`
 - [ ] Cancel in a Walls face queue restores the persisted terminal draft
 - [ ] Saving a room with an area: area devices appear with icons; positions are fixed into the layout [manual]
-- [ ] Delete-room removes the polygon after confirm; there is no Erase tool
+- [ ] Delete-room consequences are chosen explicitly as described above; there
+      is no Erase tool
 - [ ] Device icons hidden during markup; visible again on exit
 
 ## Devices on the plan ★
