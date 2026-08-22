@@ -861,6 +861,74 @@ export async function prepareGoldenScenario(page, scenario) {
       } } : {}),
     };
   }, { fixture, scenario });
+  if (scenario.tabDrag) {
+    const drag = await page.evaluate((placement) => {
+      const card = window.__goldenCard;
+      const tabs = [...card.renderRoot.querySelectorAll('[data-hp="space-tab"]')];
+      if (tabs.length < 3) throw new Error('golden tab drag requires at least three spaces');
+      const source = placement === 'before' ? tabs.at(-1) : tabs[0];
+      const target = placement === 'before' ? tabs[0] : tabs.at(-1);
+      const point = (element) => {
+        const rect = element.getBoundingClientRect();
+        return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+      };
+      window.__goldenTabTrustedMove = false;
+      window.__goldenTabCapturedTargetId = null;
+      card.renderRoot.querySelector('.tabs').addEventListener('pointermove', (event) => {
+        if (!event.buttons || !event.isTrusted) return;
+        window.__goldenTabTrustedMove = true;
+        window.__goldenTabCapturedTargetId = event.target
+          ?.closest?.('[data-hp="space-tab"]')?.dataset?.id || null;
+      }, { capture: true });
+      return {
+        sourceId: source.dataset.id,
+        targetId: target.dataset.id,
+        source: point(source),
+        target: point(target),
+      };
+    }, scenario.tabDrag);
+    await page.mouse.move(drag.source.x, drag.source.y);
+    await page.mouse.down();
+    await page.mouse.move(drag.target.x, drag.target.y, { steps: 5 });
+    const state = await page.evaluate(async ({ expected, sourceId, targetId }) => {
+      const card = window.__goldenCard;
+      await card.updateComplete;
+      await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
+      const source = [...card.renderRoot.querySelectorAll('[data-hp="space-tab"]')]
+        .find((tab) => tab.dataset.id === sourceId);
+      const target = [...card.renderRoot.querySelectorAll('[data-hp="space-tab"]')]
+        .find((tab) => tab.dataset.id === targetId);
+      const targetRect = target?.getBoundingClientRect();
+      const shadow = getComputedStyle(target).boxShadow;
+      const insetX = Number(shadow.match(
+        /([+-]?\d+(?:\.\d+)?)px\s+0px\s+0px\s+0px\s+inset/,
+      )?.[1] || 0);
+      const ok = window.__goldenTabTrustedMove
+        && window.__goldenTabCapturedTargetId === sourceId
+        && card._tabDrag?.id === sourceId
+        && card._tabDrag?.targetId === targetId
+        && card._tabDrag?.placement === expected
+        && source?.classList.contains('dragging')
+        && target?.classList.contains(`drop-${expected}`)
+        && !target?.classList.contains(`drop-${expected === 'before' ? 'after' : 'before'}`)
+        && targetRect?.width > 0 && targetRect?.height > 0
+        && (expected === 'before' ? insetX > 0 : insetX < 0);
+      return {
+        ok,
+        trusted: window.__goldenTabTrustedMove,
+        capturedTargetId: window.__goldenTabCapturedTargetId,
+        sourceId,
+        targetId,
+        placement: card._tabDrag?.placement || null,
+        targetSize: targetRect ? [targetRect.width, targetRect.height] : null,
+        insetX,
+      };
+    }, { expected: scenario.tabDrag, sourceId: drag.sourceId, targetId: drag.targetId });
+    if (!state.ok) {
+      throw new Error(`semantic golden tab drag failed: ${JSON.stringify(state)}`);
+    }
+    result.tabDrag = state;
+  }
   if (scenario.hoverDevice) {
     const point = await page.evaluate((id) => {
       const marker = window.__goldenCard?.renderRoot?.querySelector(

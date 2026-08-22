@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Space tabs can once again be reordered with a real mouse drag in an editor.
+  Browser pointer capture no longer traps the drop target on the held tab; a
+  divider now marks the exact side where the space will be inserted, and
+  releasing outside the tab strip leaves the saved order unchanged
+  ([#243](https://github.com/Matysh/houseplan-card/issues/243)).
+
 - Decorative lines, shapes, text and furniture are now drawn above opaque room
   fills, room hover, doorway fill and the dark Glow base, so the floor no
   longer hides them. Live light and sun, walls, opening symbols, devices and

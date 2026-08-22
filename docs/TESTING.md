@@ -556,6 +556,19 @@ separately promised workflows:
 - [ ] View header: space tabs + count + zoom + editor tabs, the general-settings
       cog and the per-space gears (visible in EVERY mode since v1.30.1/v1.30.3
       for users who may edit); no editor toolbars [auto: smoke_modes]
+- [ ] Space-tab reorder (#243): in an editor with at least three spaces, use a
+      real mouse drag while browser pointer capture remains on the held tab;
+      moving left resolves the tab under the cursor and paints its left divider,
+      moving right paints the right divider, and each valid drop saves exactly
+      once [auto: smoke_space_tab_reorder; golden: space-tab-drop-before-light,
+      space-tab-drop-after-dark]
+- [ ] Move a held space from a valid target out over the plan: the divider
+      clears immediately and release does not save. `pointercancel` and removing
+      the card mid-drag also end the gesture without changing order
+      [auto: smoke_space_tab_reorder]
+- [ ] A sub-threshold mouse gesture remains a tab click; the next click after an
+      outside release still works. Touch, View and a card fixed to one `floor`
+      never expose reordering [auto: smoke_space_tab_reorder]
 - [ ] Plan: markup toolbar, space gears, +space, ⚙ palette; device icons hidden,
       labels/openings draggable; orange stage frame [manual]
 - [ ] Devices: icon drag works, click opens the marker editor directly; +/👁/↺/⬡

@@ -1212,6 +1212,49 @@ export const MUTANTS = [
     }],
   },
   {
+    id: 'tab-drag-target-follows-captured-source',
+    guard: 'node demo/smoke_space_tab_reorder.mjs',
+    because: 'pointer capture keeps pointermove targeted at the held tab; resolving the drop '
+      + 'from that event target reproduces #243, where a real mouse can never reach another tab',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '    const target = this._tabDropTargetAt(event.clientX, event.clientY, drag.id);',
+      replace: '    const target = this._tabDropTargetAt(drag.x, drag.y, drag.id);',
+    }],
+  },
+  {
+    id: 'tab-drop-indicator-always-before',
+    guard: 'node demo/smoke_space_tab_reorder.mjs',
+    because: 'a single undirected marker cannot tell whether the held space will land before '
+      + 'or after the target; #243 requires the divider on the actual insertion side',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: "      return { targetId, placement: targetIndex < sourceIndex ? 'before' : 'after' };",
+      replace: "      return { targetId, placement: 'before' };",
+    }],
+  },
+  {
+    id: 'tab-drop-outside-commits-last-target',
+    guard: 'node demo/smoke_space_tab_reorder.mjs',
+    because: 'leaving the tab strip must clear the preview and make release a no-op; retaining '
+      + 'the last target makes an outside drop reorder spaces unexpectedly',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: `      targetId: target?.targetId || null,
+      placement: target?.placement || null,`,
+      replace: `      targetId: target?.targetId || drag.targetId,
+      placement: target?.placement || drag.placement,`,
+    }, {
+      file: 'src/houseplan-card.ts',
+      find: `    const target = event.type === 'pointerup' && drag?.moved
+      ? this._tabDropTargetAt(event.clientX, event.clientY, drag.id)
+      : null;`,
+      replace: `    const target = event.type === 'pointerup' && drag?.moved
+      ? drag.targetId ? { targetId: drag.targetId } : null
+      : null;`,
+    }],
+  },
+  {
     id: 'reorder-skips-materialization',
     guard: 'node demo/smoke_space_tab_reorder.mjs',
     because: 'без материализации привязки маркер без space и area уезжает вслед за порядком: '
@@ -1253,8 +1296,9 @@ export const MUTANTS = [
       + '(ревью r2/r3, F1)',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: '    this._endTabDrag();\n    clearInterval(this._cycleTimer);',
-      replace: '    clearInterval(this._cycleTimer);',
+      find: `    this._endTabDrag();
+    clearTimeout(this._tabSuppressClickTimer);`,
+      replace: '    clearTimeout(this._tabSuppressClickTimer);',
     }],
   },
   {

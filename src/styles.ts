@@ -1725,7 +1725,8 @@ export const cardStyles = css`
     /* issue #220: a tab can be dragged to a new position in the editors */
     .tab[data-reorderable] { cursor: grab; }
     .tab.dragging { cursor: grabbing; opacity: 0.55; }
-    .tab.droptarget { box-shadow: inset 2px 0 0 0 var(--primary-color, #03a9f4); }
+    .tab.drop-before { box-shadow: inset 2px 0 0 0 var(--primary-color, #03a9f4); }
+    .tab.drop-after { box-shadow: inset -2px 0 0 0 var(--primary-color, #03a9f4); }
     .modetab .closex {
       --mdc-icon-size: 13px;
       box-sizing: border-box;

@@ -253,7 +253,9 @@ uses the 5 cm compatibility fallback and is not silently migrated.
 Space tabs follow the order in which the spaces were created, and that order can
 be changed: in any editor mode, grab a tab with the mouse and drag it to a new
 position. The new order is saved immediately and applies everywhere — the tabs,
-the kiosk swipe between floors and the carousel arrows.
+the kiosk swipe between floors and the carousel arrows. While dragging, a thin
+divider shows the exact insertion side; release outside the tab strip to keep
+the existing order.
 
 Dragging works **with a mouse and in the editors only**. In ordinary View and on
 touch screens a tab still does one thing: it switches the space. There it is the

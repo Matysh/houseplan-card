@@ -104,6 +104,12 @@ test('golden matrix has stable unique ids and bounded comparison thresholds', ()
       assert.equal(scenario.capture, 'page', scenario.id);
       assert.ok(scenario.wallJunctionPreview.path.length >= 1, scenario.id);
     }
+    if (scenario.tabDrag) {
+      assert.equal(['before', 'after'].includes(scenario.tabDrag), true, scenario.id);
+      assert.equal(scenario.applianceLifecycle, true, scenario.id);
+      assert.equal(scenario.mode, 'plan', scenario.id);
+      assert.equal(scenario.capture, 'page', scenario.id);
+    }
   }
 });
 
@@ -117,7 +123,8 @@ test('golden matrix covers required geometry, rendering and adaptive surfaces', 
     'isometric-live-layers', 'isometric-no-borders', 'isometric-touch-kiosk',
     'isometric-large-warm-remount', 'split-corner-wall', 'plan-snap-endpoint',
     'plan-snap-line-gaps', 'wall-junctions', 'isometric-wall-junctions',
-    'washer-active-cycle', 'washer-idle-cycle', 'decor-over-opaque-hover',
+    'washer-active-cycle', 'washer-idle-cycle', 'space-tab-drop-before',
+    'space-tab-drop-after', 'decor-over-opaque-hover',
     'decor-over-glow-base'])
     assert.equal(ids.includes(token), true, token);
   assert.equal(new Set(GOLDEN_SCENARIOS.map((scenario) => scenario.mode)).has('plan'), true);
@@ -142,6 +149,18 @@ test('room-label parity goldens pair View and Plan in light and dark themes', ()
     assert.deepEqual(Object.keys(fixture.layout).filter((id) => id.startsWith('rl_')).sort(), [
       'rl_light-left', 'rl_light-right',
     ]);
+  }
+});
+
+test('space-tab drop goldens hold both insertion sides in light and dark', () => {
+  const scenarios = GOLDEN_SCENARIOS.filter((scenario) => scenario.tabDrag);
+  assert.equal(scenarios.length, 2);
+  assert.deepEqual(new Set(scenarios.map((scenario) => scenario.tabDrag)),
+    new Set(['before', 'after']));
+  assert.deepEqual(new Set(scenarios.map((scenario) => scenario.theme)),
+    new Set(['light', 'dark']));
+  for (const scenario of scenarios) {
+    assert.equal(prepareGoldenFixture(scenario).config.spaces.length >= 3, true, scenario.id);
   }
 });
 
@@ -282,7 +301,7 @@ test('sun-ray golden requires browser-painted light from a state-only sun entity
   assert.ok(scenario);
   const fixture = prepareGoldenFixture(scenario);
   const space = fixture.config.spaces.find((item) => item.id === scenario.space);
-  assert.equal(GOLDEN_MATRIX_VERSION, 35);
+  assert.equal(GOLDEN_MATRIX_VERSION, 36);
   assert.equal(space.settings.sun_rays, true);
   assert.equal(scenario.northDeg, 90,
     'the sign-sensitive golden must keep a non-zero north direction');

@@ -1,7 +1,7 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 35;
+export const GOLDEN_MATRIX_VERSION = 36;
 
 const stage = { capture: 'stage', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0005 } };
 const page = { capture: 'page', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0008 } };
@@ -100,6 +100,12 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     stateOverrides: { 'sun.sun': { attributes: { azimuth: 0, elevation: -12, rising: false } } },
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'geometry-plan-editor-dark', fixture: 'visual', space: 'golden-geometry', mode: 'plan',
+    theme: 'dark', viewport: { width: 1180, height: 900 }, ...page },
+  { id: 'space-tab-drop-before-light', fixture: 'visual', applianceLifecycle: true,
+    space: 'golden-geometry', mode: 'plan', tabDrag: 'before',
+    theme: 'light', viewport: { width: 1180, height: 900 }, ...page },
+  { id: 'space-tab-drop-after-dark', fixture: 'visual', applianceLifecycle: true,
+    space: 'golden-geometry', mode: 'plan', tabDrag: 'after',
     theme: 'dark', viewport: { width: 1180, height: 900 }, ...page },
   { id: 'plan-snap-endpoint-light', fixture: 'visual', space: 'golden-geometry', mode: 'plan',
     planSnap: { tool: 'draw', pointer: [0.48, 0.48], expectedKind: 'endpoint' },

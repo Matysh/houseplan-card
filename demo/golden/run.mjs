@@ -721,6 +721,13 @@ try {
       }
     } catch (error) {
       result.error = error instanceof Error ? error.message : String(error);
+    } finally {
+      // Tab-divider goldens deliberately hold the real pointer through the
+      // screenshot. Always release it before the shared page is reused, even
+      // when semantic validation or capture failed.
+      if (scenario.tabDrag) {
+        try { await page.mouse.up(); } catch { /* the browser may already be closing */ }
+      }
     }
     results.push(result);
     console.log(`${result.status.padEnd(17)} ${scenario.id}`);

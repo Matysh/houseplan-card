@@ -1324,27 +1324,59 @@ class HouseplanCard extends LitElement {
     window.addEventListener('pointercancel', this._tabDragRelease);
     this._tabDrag = {
       id, pointerId: event.pointerId, x: event.clientX, y: event.clientY,
-      moved: false, overId: id,
+      moved: false, targetId: null, placement: null,
     };
   }
 
-  private _tabPointerMove(event: PointerEvent, overId: string): void {
+  /** Resolve a drop from screen coordinates, independent of captured event.target. */
+  private _tabDropTargetAt(clientX: number, clientY: number, sourceId: string): {
+    targetId: string; placement: 'before' | 'after';
+  } | null {
+    const ids = this._model.map((space) => space.id);
+    const sourceIndex = ids.indexOf(sourceId);
+    if (sourceIndex < 0) return null;
+    const tabs = this.renderRoot.querySelectorAll<HTMLElement>('[data-hp="space-tab"]');
+    for (const tab of tabs) {
+      const targetId = tab.dataset.id || '';
+      if (!targetId || targetId === sourceId) continue;
+      const rect = tab.getBoundingClientRect();
+      if (clientX < rect.left || clientX > rect.right
+          || clientY < rect.top || clientY > rect.bottom) continue;
+      const targetIndex = ids.indexOf(targetId);
+      if (targetIndex < 0) return null;
+      return { targetId, placement: targetIndex < sourceIndex ? 'before' : 'after' };
+    }
+    return null;
+  }
+
+  private _tabPointerMove(event: PointerEvent): void {
     const drag = this._tabDrag;
     if (!drag || drag.pointerId !== event.pointerId) return;
     if (!drag.moved
         && !passedDragThreshold(event.clientX - drag.x, event.clientY - drag.y)) return;
     // Past the threshold the gesture is a drag: the click that would otherwise
     // follow is suppressed in _tabClick, and the panel shows where it lands.
-    if (drag.moved && drag.overId === overId) return;
-    this._tabDrag = { ...drag, moved: true, overId };
+    const target = this._tabDropTargetAt(event.clientX, event.clientY, drag.id);
+    if (drag.moved && drag.targetId === target?.targetId
+        && drag.placement === target?.placement) return;
+    this._tabDrag = {
+      ...drag,
+      moved: true,
+      targetId: target?.targetId || null,
+      placement: target?.placement || null,
+    };
   }
 
   private _tabPointerUp(event: PointerEvent): void {
     const drag = this._tabDrag;
     if (drag && drag.pointerId !== event.pointerId) return;
+    const target = event.type === 'pointerup' && drag?.moved
+      ? this._tabDropTargetAt(event.clientX, event.clientY, drag.id)
+      : null;
+    if (event.type === 'pointerup' && drag?.moved) this._suppressNextTabClick();
     this._endTabDrag();
-    if (!drag || !drag.moved) return;
-    this._commitTabOrder(drag.id, drag.overId);
+    if (!drag?.moved || !target) return;
+    this._commitTabOrder(drag.id, target.targetId);
   }
 
   /** Drop the gesture and its window listeners, wherever the release happened. */
@@ -1358,8 +1390,23 @@ class HouseplanCard extends LitElement {
 
   /** A click that followed a real drag must not also switch the space. */
   private _tabClick(id: string): void {
-    if (this._tabDrag?.moved) return;
+    if (this._tabSuppressClick) {
+      this._tabSuppressClick = false;
+      clearTimeout(this._tabSuppressClickTimer);
+      this._tabSuppressClickTimer = undefined;
+      return;
+    }
     this._pickSpace(id);
+  }
+
+  /** Browser click follows pointerup in the same task; clear if none arrived. */
+  private _suppressNextTabClick(): void {
+    this._tabSuppressClick = true;
+    clearTimeout(this._tabSuppressClickTimer);
+    this._tabSuppressClickTimer = window.setTimeout(() => {
+      this._tabSuppressClick = false;
+      this._tabSuppressClickTimer = undefined;
+    }, 0);
   }
 
   /**
@@ -1407,6 +1454,7 @@ class HouseplanCard extends LitElement {
   }
 
   private _pickSpace(id: string): void {
+    this._endTabDrag();
     if (id === this._space) return;
     const ids = this._model.map((sp) => sp.id);
     const from = ids.indexOf(this._space);
@@ -2010,11 +2058,14 @@ class HouseplanCard extends LitElement {
 
   /** Live tab reorder: which tab is held, where it started, where it would land. */
   private _tabDrag: {
-    id: string; pointerId: number; x: number; y: number; moved: boolean; overId: string;
+    id: string; pointerId: number; x: number; y: number; moved: boolean;
+    targetId: string | null; placement: 'before' | 'after' | null;
   } | null = null;
 
   /** Window-level release handler while a tab is held; see _tabPointerDown. */
   private _tabDragRelease: ((event: PointerEvent) => void) | null = null;
+  private _tabSuppressClick = false;
+  private _tabSuppressClickTimer?: number;
 
   /** The positional-`floor` warning is worth saying once, not on every drop. */
   private _tabOrderWarned = false;
@@ -2296,6 +2347,9 @@ class HouseplanCard extends LitElement {
     // pointerup anywhere on the page would make an invisible card write its
     // order (review CODE-REVIEW-220-r2/r3, F1).
     this._endTabDrag();
+    clearTimeout(this._tabSuppressClickTimer);
+    this._tabSuppressClickTimer = undefined;
+    this._tabSuppressClick = false;
     clearInterval(this._cycleTimer);
     clearTimeout(this._kioskDotsTimer);
     clearTimeout(this._kioskHoldTimer);
@@ -6351,6 +6405,7 @@ class HouseplanCard extends LitElement {
   }
 
   private _setMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate = true): void {
+    this._endTabDrag();
     // A mode command is newer than the editor remembered by a same-route warm
     // remount. Clear it before the same-mode early return: while can_write is
     // pending, Lit may still be presenting the previous editor DOM even though
@@ -16413,17 +16468,16 @@ class HouseplanCard extends LitElement {
             <ha-icon icon="mdi:home-city"></ha-icon>
             ${this._config.title || this._t('card.title')}
           </div>
-          <div class="tabs">
+          <div class="tabs" @pointermove=${(e: PointerEvent) => this._tabPointerMove(e)}>
             ${navigationSpaces.map(
               (s) => html`<button
                 data-hp="space-tab" data-id="${s.id}"
                 class="tab ${this._space === s.id ? 'active' : ''}${
                   this._tabDrag?.moved && this._tabDrag.id === s.id ? ' dragging' : ''}${
-                  this._tabDrag?.moved && this._tabDrag.overId === s.id
-                    && this._tabDrag.id !== s.id ? ' droptarget' : ''}"
+                  this._tabDrag?.moved && this._tabDrag.targetId === s.id
+                    ? ` drop-${this._tabDrag.placement}` : ''}"
                 ?data-reorderable=${this._canReorderTabs}
                 @pointerdown=${(e: PointerEvent) => this._tabPointerDown(e, s.id)}
-                @pointermove=${(e: PointerEvent) => this._tabPointerMove(e, s.id)}
                 @pointerup=${(e: PointerEvent) => this._tabPointerUp(e)}
                 @pointercancel=${() => this._endTabDrag()}
                 @click=${() => this._tabClick(s.id)}
