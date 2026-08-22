@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.67.0-beta.1 — 2026-08-22
+
 - “Optimize plans” now verifies the exact preview candidate with the same wall,
   opening, partition, column and floor geometry builders used by the card. If
   any space cannot be built safely, the preview names up to three affected
