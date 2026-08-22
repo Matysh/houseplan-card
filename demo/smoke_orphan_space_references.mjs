@@ -13,10 +13,17 @@ const out = await page.evaluate(async () => {
       id: 'home', title: 'Home', view_box: [0, 0, 1, 1], cell_cm: 5,
       rooms: [{ id: 'living', name: 'Living', area: null, poly: [[0, 0], [1, 0], [1, 1], [0, 1]] }],
     }],
-    markers: [{
-      id: 'orphan', binding: 'virtual', space: 'gone', name: 'Kept marker',
-      icon: 'mdi:washing-machine', description: 'must survive',
-    }],
+    markers: [
+      {
+        id: 'orphan', binding: 'virtual', space: 'gone', name: 'Kept marker',
+        icon: 'mdi:washing-machine', description: 'must survive',
+      },
+      {
+        // Independent from the Optimize→Undo cycle: this is the actual
+        // dependency of the later attempt to delete `home`.
+        id: 'home-blocker', binding: 'virtual', space: 'home', name: 'Home blocker',
+      },
+    ],
     settings: {},
   };
   const originalLayout = {
