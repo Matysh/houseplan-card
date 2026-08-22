@@ -372,6 +372,7 @@
   "btn.skip": "Skip",
   "space.scale_label": "Scale (grid cell size)",
   "space.scale_unit": "cm per cell",
+  "space.scale_unit_imperial": "in per cell",
   "space.display_section": "Display",
   "space.show_borders": "Always show room borders",
   "space.show_names": "Show room names (drag to move)",

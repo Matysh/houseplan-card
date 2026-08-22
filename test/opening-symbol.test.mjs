@@ -25,11 +25,23 @@ const templateText = (value) => {
 
 test('opening metrics expand hit and outline zones with a thick wall face', () => {
   assert.deepEqual(openingVisibleMetrics(spec()), {
-    half: 50, jambHalf: 4, gateDepth: 0, outlineHalf: 16, hitHalf: 20,
+    half: 50, jambHalf: 2, gateDepth: 0, outlineHalf: 8, hitHalf: 10,
   });
   assert.deepEqual(openingVisibleMetrics(spec({ face: { ox: 0, oy: 20, cm: 20, side: 1 } })), {
-    half: 50, jambHalf: 20, gateDepth: 0, outlineHalf: 28, hitHalf: 30,
+    half: 50, jambHalf: 20, gateDepth: 0, outlineHalf: 24, hitHalf: 25,
   });
+});
+
+test('equivalent grid scales preserve visual padding without double-scaling physical jambs', () => {
+  const reference = openingVisibleMetrics(spec({
+    length: 100, cellCm: 5, face: { ox: 0, oy: 0, cm: 20, side: 1 },
+  }));
+  const detailed = openingVisibleMetrics(spec({
+    length: 500, cellCm: 1, face: { ox: 0, oy: 0, cm: 20, side: 1 },
+  }));
+  assert.equal(detailed.jambHalf, reference.jambHalf * 5);
+  assert.equal(detailed.outlineHalf, reference.outlineHalf * 5);
+  assert.equal(detailed.hitHalf, reference.hitHalf * 5);
 });
 
 test('shared renderer emits the expected visible symbol for every opening type', () => {

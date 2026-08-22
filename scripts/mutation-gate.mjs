@@ -1183,6 +1183,154 @@ export const MUTANTS = [
       replace: '            ${nothing}',
     }],
   },
+  {
+    id: 'grid-scale-visual-factor-constant',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="visual scale preserves" test/grid-scale.test.mjs',
+    because: 'the visual baseline is 5 cm per cell, so a finer coordinate grid must enlarge '
+      + 'legacy SVG visual constants by the reciprocal factor (#239)',
+    patches: [{
+      file: 'src/grid-scale.ts',
+      find: '  return GRID_VISUAL_REFERENCE_CELL_CM / value;',
+      replace: '  return 1;',
+    }],
+  },
+  {
+    id: 'grid-scale-visual-factor-inverted',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="visual scale preserves" test/grid-scale.test.mjs',
+    because: 'cell/5 shrinks visual constants on a finer grid, exactly reversing the physical '
+      + 'equivalence contract (#239)',
+    patches: [{
+      file: 'src/grid-scale.ts',
+      find: '  return GRID_VISUAL_REFERENCE_CELL_CM / value;',
+      replace: '  return value / GRID_VISUAL_REFERENCE_CELL_CM;',
+    }],
+  },
+  {
+    id: 'grid-scale-opening-symbol-unscaled',
+    guard: 'node demo/smoke_grid_scale_invariance.mjs',
+    because: 'door leaves, window bars and gate panels are visual geometry and must keep the '
+      + 'same screen footprint on physically equivalent grids (#239)',
+    patches: [{
+      file: 'src/render/opening-symbol.ts',
+      find: '  const visualScale = gridVisualScale(spec.cellCm);',
+      replace: '  const visualScale = 1;',
+    }],
+  },
+  {
+    id: 'grid-scale-opening-hit-unscaled',
+    guard: 'node demo/smoke_grid_scale_invariance.mjs',
+    because: 'the opening hover outline and action hitbox must not shrink when cell_cm becomes '
+      + 'more precise; the smoke also clicks the real outer edge (#239)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '      const outlinePad = gridVisualUnits(10, this._cellCm);\n'
+        + '      const hitPad = gridVisualUnits(12, this._cellCm);',
+      replace: '      const outlinePad = 10;\n      const hitPad = 12;',
+    }],
+  },
+  {
+    id: 'grid-scale-plan-chrome-unscaled',
+    guard: 'node demo/smoke_grid_scale_invariance.mjs',
+    because: 'Plan architecture ink is visual chrome; leaving the wall outline at raw SVG units '
+      + 'makes it five times thinner on a 1 cm grid (#239)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '        stroke="${stroke}" stroke-width="${gridVisualUnits(0.6, this._cellCm)}"',
+      replace: '        stroke="${stroke}" stroke-width="0.6"',
+    }],
+  },
+  {
+    id: 'grid-scale-static-factor-missing',
+    guard: 'node demo/smoke_grid_scale_invariance.mjs',
+    because: 'the secondary space card shares visual CSS with the full card and must receive '
+      + 'the same per-space factor instead of silently drifting (#239)',
+    patches: [{
+      file: 'src/space-render.ts',
+      find: ';--hp-cell-visual-scale:${gridVisualScale(cellCm)}',
+      replace: '',
+    }],
+  },
+  {
+    id: 'grid-scale-iso-height-unscaled',
+    guard: 'node demo/smoke_grid_scale_invariance.mjs',
+    because: 'hidden isometric wall and floor heights are visual geometry and must project to '
+      + 'the same raster at 1 and 5 cm per cell (#239)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '    const structural = source.build();\n'
+        + '    const wallHeight = gridVisualUnits(ISO_WALL_HEIGHT, this._cellCm);\n'
+        + '    const floorEdgeHeight = gridVisualUnits(ISO_FLOOR_EDGE_HEIGHT, this._cellCm);',
+      replace: '    const structural = source.build();\n'
+        + '    const wallHeight = ISO_WALL_HEIGHT;\n'
+        + '    const floorEdgeHeight = ISO_FLOOR_EDGE_HEIGHT;',
+    }],
+  },
+  {
+    id: 'grid-scale-metric-default-five',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="new-space defaults" test/grid-scale.test.mjs',
+    because: 'new metric spaces must start at 1 cm per cell; restoring the old 5 cm default '
+      + 'would preserve the defect for every new plan (#239)',
+    patches: [{
+      file: 'src/grid-scale.ts',
+      find: '  return imperial ? GRID_IMPERIAL_CELL_CM : 1;',
+      replace: '  return imperial ? GRID_IMPERIAL_CELL_CM : 5;',
+    }],
+  },
+  {
+    id: 'grid-scale-imperial-default-wrong',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="new-space defaults" test/grid-scale.test.mjs',
+    because: 'one imperial grid point means exactly one inch (2.54 canonical centimetres), '
+      + 'not one centimetre (#239)',
+    patches: [{
+      file: 'src/grid-scale.ts',
+      find: '  return imperial ? GRID_IMPERIAL_CELL_CM : 1;',
+      replace: '  return imperial ? 1 : 1;',
+    }],
+  },
+  {
+    id: 'grid-scale-legacy-fallback-one',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="legacy space without cell_cm" test/canvas.test.mjs',
+    because: 'missing cell_cm is stored-data compatibility and stays at the historical 5 cm; '
+      + 'the new 1 cm value applies only at creation (#239)',
+    patches: [{
+      file: 'src/space-geometry.ts',
+      find: '      cellCm: Number.isFinite(Number(s.cell_cm)) && Number(s.cell_cm) > 0\n'
+        + '        ? Number(s.cell_cm) : 5,',
+      replace: '      cellCm: Number.isFinite(Number(s.cell_cm)) && Number(s.cell_cm) > 0\n'
+        + '        ? Number(s.cell_cm) : 1,',
+    }],
+  },
+  {
+    id: 'grid-scale-imperial-roundtrip-drift',
+    guard: 'node demo/smoke_space_scale_defaults.mjs',
+    because: 'the rounded imperial field is presentation only; saving it without an edit must '
+      + 'not replace the exact canonical centimetre value (#239)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '      sp.cell_cm = Number.isFinite(d.cellCm) && d.cellCm > 0\n'
+        + '        ? Math.max(CELL_CM_MIN, Math.min(CELL_CM_MAX, d.cellCm)) : 5;',
+      replace: '      sp.cell_cm = gridCellFieldToCm(Number(d.cellCmInput), this._imperial);',
+    }],
+  },
+  {
+    id: 'grid-scale-physical-double-scaled',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="without double-scaling physical jambs" '
+      + 'test/opening-symbol.test.mjs',
+    because: 'wall-face depth is already converted from centimetres to render units; applying '
+      + 'the visual factor again makes physical geometry five times too large (#239)',
+    patches: [{
+      file: 'src/render/opening-symbol.ts',
+      find: '    ? ((spec.face.cm / spec.cellCm) * spec.gridPitch) / 2',
+      replace: '    ? (((spec.face.cm / spec.cellCm) * spec.gridPitch) / 2) '
+        + '* gridVisualScale(spec.cellCm)',
+    }],
+  },
 ];
 
 // --- механика ---------------------------------------------------------------

@@ -272,6 +272,9 @@ import {
 } from './opening-dimensions';
 import { safeStoredColor } from './color';
 import {
+  gridCellFieldToCm, gridCellFieldValue, gridVisualScale, gridVisualUnits, newSpaceCellCm,
+} from './grid-scale';
+import {
   applySpaceOrder, canStartTabDrag, markersNeedingPlacement, passedDragThreshold,
   reorderSpaceIds,
 } from './space-order';
@@ -1849,6 +1852,9 @@ class HouseplanCard extends LitElement {
     labelLqi: boolean;
     labelLight: boolean;
     cellCm: number;                // real-world cm represented by one grid cell
+    /** Projected text is separate so an untouched imperial edit stays lossless. */
+    cellCmInput?: string;
+    cellCmTouched?: boolean;
     busy: boolean;
   } | null = null;
   private _keyHandler = (e: KeyboardEvent) => this._onKey(e);
@@ -5171,12 +5177,14 @@ class HouseplanCard extends LitElement {
       flipH: !!opening.flip_h,
       flipV: !!opening.flip_v,
     }));
+    const wallHeight = gridVisualUnits(ISO_WALL_HEIGHT, this._cellCm);
+    const floorEdgeHeight = gridVisualUnits(ISO_FLOOR_EDGE_HEIGHT, this._cellCm);
     const key = `${space.id}|${isoGeometryFingerprint({
       rooms: space.rooms, walls, openCuts, openings,
       partitions: space.partitions, roomDrafts: space.room_drafts, columns: space.wall_columns,
       cellCm: this._cellCm, gridPitch: this._gridPitch, wallKeyPitch: this._wallKeyPitch,
-      camera: ISO_CAMERA, wallHeight: ISO_WALL_HEIGHT,
-      floorEdgeHeight: ISO_FLOOR_EDGE_HEIGHT, algorithm: 3,
+      camera: ISO_CAMERA, wallHeight,
+      floorEdgeHeight, algorithm: 3,
     })}`;
     return {
       key,
@@ -5217,7 +5225,7 @@ class HouseplanCard extends LitElement {
                   flip_v: faceFlipV,
                 })
             : { ox: 0, oy: 0, cm: 0, side: -1 as -1 | 1 };
-          return buildIsoOpeningBasis({ ...opening, face });
+          return buildIsoOpeningBasis({ ...opening, face }, wallHeight);
         });
         return { walls: united?.geom || [], floor, openings: Object.freeze(openingBases) };
       },
@@ -5242,16 +5250,18 @@ class HouseplanCard extends LitElement {
     if (cached) return { key: source.key, ...cached };
     const flat = this._frameOf().rect;
     const structural = source.build();
+    const wallHeight = gridVisualUnits(ISO_WALL_HEIGHT, this._cellCm);
+    const floorEdgeHeight = gridVisualUnits(ISO_FLOOR_EDGE_HEIGHT, this._cellCm);
     const openingFrame = isoOpeningBounds(structural.openings);
     const structuralFrame = openingFrame ? unionRect(flat, openingFrame) : flat;
     const frame = projectedFrame({
       rect: structuralFrame,
-      wallHeight: ISO_WALL_HEIGHT,
-      openingHeight: ISO_WALL_HEIGHT,
-      floorDepth: ISO_FLOOR_EDGE_HEIGHT,
+      wallHeight,
+      openingHeight: wallHeight,
+      floorDepth: floorEdgeHeight,
     });
-    const geometry = buildIsoWallGeometry(structural.walls);
-    const floor = buildIsoFloorGeometry(structural.floor, ISO_FLOOR_EDGE_HEIGHT);
+    const geometry = buildIsoWallGeometry(structural.walls, ISO_CAMERA, wallHeight);
+    const floor = buildIsoFloorGeometry(structural.floor, floorEdgeHeight);
     const value = { geometry, floor, openings: structural.openings, frame };
     lruWrite(this._isoGeometryCache, source.key, value, 8);
     return { key: source.key, ...value };
@@ -5293,7 +5303,10 @@ class HouseplanCard extends LitElement {
       // otherwise merely hiding volume reframes every live floor pixel.
       if (!this._spaceDisplayForRender().showBorders) {
         const flat = this._frameOf().rect;
-        const frame = projectedFrame({ rect: flat, wallHeight: ISO_WALL_HEIGHT });
+        const frame = projectedFrame({
+          rect: flat,
+          wallHeight: gridVisualUnits(ISO_WALL_HEIGHT, this._cellCm),
+        });
         return [frame.x, frame.y, frame.w, frame.h];
       }
       const frame = this._isoScene()?.frame ?? this._frameOf().rect;
@@ -11622,7 +11635,8 @@ class HouseplanCard extends LitElement {
       <path class="wallbody ${solid ? 'solid' : ''}"
         data-hp="wall" data-id="union" data-kind="union"
         d="${united.d}" fill="${solid ? 'none' : 'url(#hp-wall-hatch)'}" fill-rule=${united.fillRule}
-        stroke="${stroke}" stroke-width="0.6" pointer-events="none"></path>
+        stroke="${stroke}" stroke-width="${gridVisualUnits(0.6, this._cellCm)}"
+        pointer-events="none"></path>
     </g>` as unknown as TemplateResult;
   }
 
@@ -11656,6 +11670,7 @@ class HouseplanCard extends LitElement {
     layers: IsoDecorationLayers,
     root: 'underlay' | 'shadows' | 'walls',
   ): TemplateResult {
+    const visualScale = gridVisualScale(this._cellCm);
     return svg`<defs>
       ${root === 'walls' && layers.materialNuance ? svg`
         <linearGradient id="hp-iso-wall-side" x1="0" y1="0" x2="0" y2="1">
@@ -11666,14 +11681,14 @@ class HouseplanCard extends LitElement {
         </linearGradient>` : nothing}
       ${root === 'underlay' && layers.shadows ? svg`
         <filter id="hp-iso-ambient-shadow" x="-12%" y="-12%" width="124%" height="130%">
-          <feGaussianBlur stdDeviation="7"></feGaussianBlur>
+          <feGaussianBlur stdDeviation="${7 * visualScale}"></feGaussianBlur>
         </filter>` : nothing}
       ${root === 'shadows' && layers.shadows ? svg`
         <filter id="hp-iso-contact-shadow" x="-8%" y="-20%" width="116%" height="140%">
-          <feGaussianBlur stdDeviation="2.5"></feGaussianBlur>
+          <feGaussianBlur stdDeviation="${2.5 * visualScale}"></feGaussianBlur>
         </filter>
         <filter id="hp-iso-leaf-shadow" x="-12%" y="-30%" width="124%" height="160%">
-          <feGaussianBlur stdDeviation="2"></feGaussianBlur>
+          <feGaussianBlur stdDeviation="${2 * visualScale}"></feGaussianBlur>
         </filter>` : nothing}
     </defs>` as unknown as TemplateResult;
   }
@@ -11685,7 +11700,8 @@ class HouseplanCard extends LitElement {
     return svg`<g class="iso-underlay" data-hp="iso-underlay" aria-hidden="true" pointer-events="none">
       ${this._renderIsoDefs(layers, 'underlay')}
       ${layers.shadows && floor.footprintPath
-        ? svg`<path class="iso-ambient-shadow" d=${floor.footprintPath} transform="translate(0 8)"></path>`
+        ? svg`<path class="iso-ambient-shadow" d=${floor.footprintPath}
+            transform="translate(0 ${gridVisualUnits(8, this._cellCm)})"></path>`
         : nothing}
       <g class="iso-floor-edge">${floor.sides.map((face) =>
         svg`<path class="iso-floor-side" d=${face.d} data-component=${face.component}
@@ -11915,7 +11931,7 @@ class HouseplanCard extends LitElement {
       const rad = o.angle * Math.PI / 180;
       const dx = raw[0] - o.rx, dy = raw[1] - o.ry;
       const localX = dx * Math.cos(rad) + dy * Math.sin(rad);
-      if (Math.abs(localX) > o.rlen / 2 + 12) return [];
+      if (Math.abs(localX) > o.rlen / 2 + gridVisualUnits(12, this._cellCm)) return [];
       return [{ o, localY: -dx * Math.sin(rad) + dy * Math.cos(rad) }];
     });
     if (!roughHits.length) return null;
@@ -14066,6 +14082,10 @@ class HouseplanCard extends LitElement {
         labelTemp: disp.labelTemp, labelHum: disp.labelHum,
         labelLqi: disp.labelLqi, labelLight: disp.labelLight,
         cellCm: Number(sp.cell_cm) > 0 ? Number(sp.cell_cm) : 5,
+        cellCmInput: gridCellFieldValue(
+          Number(sp.cell_cm) > 0 ? Number(sp.cell_cm) : 5, this._imperial,
+        ),
+        cellCmTouched: false,
         busy: false,
       };
     } else {
@@ -14085,7 +14105,9 @@ class HouseplanCard extends LitElement {
         showLqi: this._config?.show_signal ?? true,
         cardFontScale: 1,
         labelTemp: false, labelHum: false, labelLqi: false, labelLight: false,
-        cellCm: 5,
+        cellCm: newSpaceCellCm(this._imperial),
+        cellCmInput: gridCellFieldValue(newSpaceCellCm(this._imperial), this._imperial),
+        cellCmTouched: false,
         busy: false,
       };
     }
@@ -14456,7 +14478,9 @@ class HouseplanCard extends LitElement {
       showLqi: this._config?.show_signal ?? true,
       cardFontScale: 1,
       labelTemp: false, labelHum: false, labelLqi: false, labelLight: false,
-      cellCm: 5,
+      cellCm: newSpaceCellCm(this._imperial),
+      cellCmInput: gridCellFieldValue(newSpaceCellCm(this._imperial), this._imperial),
+      cellCmTouched: false,
       busy: false,
     };
   }
@@ -16468,7 +16492,7 @@ class HouseplanCard extends LitElement {
 
         <div class="stage ${this._markup ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + (this._tool === 'boundary' ? this._boundaryStageClass : '') + (this._tool === 'wallthick' && this._wallThickHover ? ' wallhot' : '') : ''} ${this._mode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}${this._bdMovable ? ' bdgrab' : ''}${this._bdDrag ? ' bdgrabbing' : ''}${dayCycle ? ` daycycle phase-${dayCycle.phase}` : ''}${this._booting ? ' hpboot' : ''}${this._bootSoft ? ' hpsettle' : ''}${this._modeTransitionBusy ? ' mode-transition' : ''}"
           ?inert=${this._modeTransitionBusy}
-          style="height:${modeVisual ? `${modeVisual.stageHeight}px` : this._kiosk ? '100dvh' : `calc(100dvh - ${this._hdrH}px)`}${transitionStageBg ? `;background:${transitionStageBg}` : ''};--wall-fill:${this._fillColors.wall_fill.c};--wall-fill-op:${this._fillColors.wall_fill.a};--hp-mode-architecture-opacity:${modeVisual ? modeVisual.architectureOpacity : this._mode === 'decor' ? 0.35 : 1};--hp-mode-view-weight:${modeVisual?.viewWeight ?? (this._mode === 'view' ? 1 : 0)};--hp-mode-editor-weight:${modeVisual?.editorWeight ?? (this._mode === 'view' ? 0 : 1)}${modeVisual ? `;--hp-mode-paper:${modeVisual.paperColor}` : ''}${dayCycle ? `;${dayCycleStageVars(dayCycle)}` : ''}"
+          style="height:${modeVisual ? `${modeVisual.stageHeight}px` : this._kiosk ? '100dvh' : `calc(100dvh - ${this._hdrH}px)`}${transitionStageBg ? `;background:${transitionStageBg}` : ''};--hp-cell-visual-scale:${gridVisualScale(this._cellCm)};--wall-fill:${this._fillColors.wall_fill.c};--wall-fill-op:${this._fillColors.wall_fill.a};--hp-mode-architecture-opacity:${modeVisual ? modeVisual.architectureOpacity : this._mode === 'decor' ? 0.35 : 1};--hp-mode-view-weight:${modeVisual?.viewWeight ?? (this._mode === 'view' ? 1 : 0)};--hp-mode-editor-weight:${modeVisual?.editorWeight ?? (this._mode === 'view' ? 0 : 1)}${modeVisual ? `;--hp-mode-paper:${modeVisual.paperColor}` : ''}${dayCycle ? `;${dayCycleStageVars(dayCycle)}` : ''}"
           @click=${(e: MouseEvent) => this._markupClick(e)}
           @wheel=${(e: WheelEvent) => this._onWheel(e)}
           @pointerdown=${(e: PointerEvent) => { this._notePointer(e); this._stagePointerDown(e); }}
@@ -18300,7 +18324,8 @@ class HouseplanCard extends LitElement {
           ? [gd.at, gd.from[1], gd.at, pt[1] + Math.sign(pt[1] - gd.from[1]) * over]
           : [gd.from[0], gd.at, pt[0] + Math.sign(pt[0] - gd.from[0]) * over, gd.at];
         return svg`<line class="alignline" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"></line>
-          <circle class="aligndot" cx="${gd.from[0]}" cy="${gd.from[1]}" r="${g * 0.18}"></circle>`;
+          <circle class="aligndot" cx="${gd.from[0]}" cy="${gd.from[1]}"
+            r="${gridVisualUnits(g * 0.18, this._cellCm)}"></circle>`;
       })}
     </g>` as unknown as TemplateResult;
   }
@@ -18310,7 +18335,7 @@ class HouseplanCard extends LitElement {
    * about the wall stroke (2.5) × 6 to each side. */
   private _renderOpeningCenterTick(gd: { x: number; y: number; angle: number }): TemplateResult {
     const rad = ((gd.angle + 90) * Math.PI) / 180;
-    const half = 2.5 * 6;
+    const half = gridVisualUnits(2.5 * 6, this._cellCm);
     return svg`<line class="alignline opcentertick"
       x1="${gd.x - Math.cos(rad) * half}" y1="${gd.y - Math.sin(rad) * half}"
       x2="${gd.x + Math.cos(rad) * half}" y2="${gd.y + Math.sin(rad) * half}"></line>` as unknown as TemplateResult;
@@ -18402,7 +18427,9 @@ class HouseplanCard extends LitElement {
       face: candidate.face,
     };
     const passageGeometry = candidate.type === 'passage'
-      ? passagePlacementPreviewGeometry(candidate, this._gridPitch)
+      ? passagePlacementPreviewGeometry(
+          candidate, gridVisualUnits(this._gridPitch, this._cellCm),
+        )
       : null;
     return svg`<g class="opening-preview" data-kind=${candidate.type}
       aria-hidden="true" pointer-events="none"
@@ -18418,7 +18445,8 @@ class HouseplanCard extends LitElement {
       ` : renderOpeningVisibleGeometry(visibleSpec)}
     </g>
     <circle class="opening-preview-dot opghost-dot" aria-hidden="true" pointer-events="none"
-      cx=${candidate.x} cy=${candidate.y} r=${this._gridPitch * 0.18}></circle>` as unknown as TemplateResult;
+      cx=${candidate.x} cy=${candidate.y}
+      r=${gridVisualUnits(this._gridPitch * 0.18, this._cellCm)}></circle>` as unknown as TemplateResult;
   }
 
   private _renderOpenings(disp: SpaceDisplay): TemplateResult {
@@ -18436,7 +18464,7 @@ class HouseplanCard extends LitElement {
         aria-label=${this._t('opening.partition_orphan')}
         transform="translate(${o.rx} ${o.ry})"
         @click=${(event: MouseEvent) => { event.stopPropagation(); this._editOpening(o); }}>
-        <circle r=${this._gridPitch * 0.55}></circle>
+        <circle r=${gridVisualUnits(this._gridPitch * 0.55, this._cellCm)}></circle>
         <text text-anchor="middle" dominant-baseline="central">!</text>
       </g>`;
       const amt = this._openingAmt(o);
@@ -18466,11 +18494,16 @@ class HouseplanCard extends LitElement {
         face,
       };
       const { half, outlineHalf, hitHalf } = openingVisibleMetrics(visibleSpec);
+      const outlinePad = gridVisualUnits(10, this._cellCm);
+      const hitPad = gridVisualUnits(12, this._cellCm);
       return svg`<g class="opening" data-hp="opening" data-id="${o.id}" data-kind="${o.type}"
         transform="translate(${o.rx} ${o.ry}) rotate(${o.angle})">
         ${renderOpeningVisibleGeometry(visibleSpec)}
-        <rect class="op-outline" x="${-half - 10}" y="${-outlineHalf}" width="${o.rlen + 20}" height="${outlineHalf * 2}" rx="6"></rect>
-        <rect class="op-hit" x="${-half - 12}" y="${-hitHalf}" width="${o.rlen + 24}" height="${hitHalf * 2}"
+        <rect class="op-outline" x="${-half - outlinePad}" y="${-outlineHalf}"
+          width="${o.rlen + outlinePad * 2}" height="${outlineHalf * 2}"
+          rx="${gridVisualUnits(6, this._cellCm)}"></rect>
+        <rect class="op-hit" x="${-half - hitPad}" y="${-hitHalf}"
+          width="${o.rlen + hitPad * 2}" height="${hitHalf * 2}"
           @click=${(e: MouseEvent) => this._opClick(e, o)}
           @pointerdown=${(e: PointerEvent) => this._opPointerDown(e, o)}
           @pointermove=${(e: PointerEvent) => this._opPointerMove(e, o)}
@@ -18502,7 +18535,8 @@ class HouseplanCard extends LitElement {
       const gateFace = o.type === 'gate'
         ? this._openingFace(o, openingWallIndex, !o.flip_v)
         : null;
-      const off = gateFace ? -16 * gateFace.side : 16 * (o.flip_v ? -1 : 1);
+      const lockOffset = gridVisualUnits(16, this._cellCm);
+      const off = gateFace ? -lockOffset * gateFace.side : lockOffset * (o.flip_v ? -1 : 1);
       const px = o.rx + Math.cos(rad) * off;
       const py = o.ry + Math.sin(rad) * off;
       const point = this._scenePoint([px, py]);
@@ -19081,14 +19115,16 @@ class HouseplanCard extends LitElement {
             x2="${this._cursorPt[0]}" y2="${this._cursorPt[1]}" aria-hidden="true"></line>
             ${!this._activePlanSnapCandidate && !this._activePlanSnapConflicts.length
               ? svg`<circle class="active-vertex" cx="${this._cursorPt[0]}" cy="${this._cursorPt[1]}"
-                  r="${g * 0.22}" aria-hidden="true"></circle>` : nothing}`
+                  r="${gridVisualUnits(g * 0.22, this._cellCm)}" aria-hidden="true"></circle>` : nothing}`
         : nothing}
-      ${path.map((p, i) => svg`<circle class="vertex ${i === 0 ? 'first' : ''}" cx="${p[0]}" cy="${p[1]}" r="${g * 0.22}"></circle>`)}
+      ${path.map((p, i) => svg`<circle class="vertex ${i === 0 ? 'first' : ''}"
+        cx="${p[0]}" cy="${p[1]}" r="${gridVisualUnits(g * 0.22, this._cellCm)}"></circle>`)}
       ${this._tool === 'split' && this._splitSel?.pts?.length
         ? svg`${this._splitSel.pts.length > 1
               ? svg`<polyline class="pathline" points="${this._splitSel.pts.map((p) => p.join(',')).join(' ')}"></polyline>`
               : nothing}
-            ${this._splitSel.pts.map((p, i) => svg`<circle class="vertex ${i === 0 ? 'first' : ''}" cx="${p[0]}" cy="${p[1]}" r="${g * 0.22}"></circle>`)}
+            ${this._splitSel.pts.map((p, i) => svg`<circle class="vertex ${i === 0 ? 'first' : ''}"
+              cx="${p[0]}" cy="${p[1]}" r="${gridVisualUnits(g * 0.22, this._cellCm)}"></circle>`)}
             ${this._cursorPt
               ? svg`<line class="preview" x1="${this._splitSel.pts[this._splitSel.pts.length - 1][0]}" y1="${this._splitSel.pts[this._splitSel.pts.length - 1][1]}"
                   x2="${this._cursorPt[0]}" y2="${this._cursorPt[1]}"></line>`
@@ -20589,16 +20625,25 @@ class HouseplanCard extends LitElement {
 
           <label>${this._t('space.scale_label')}</label>
           <div class="colorrow">
-            <input class="namein tempin" type="number" min=${CELL_CM_MIN} max=${CELL_CM_MAX}
-              step="0.1" .value=${String(d.cellCm)}
+            <input class="namein tempin" type="number"
+              min=${gridCellFieldValue(CELL_CM_MIN, this._imperial)}
+              max=${gridCellFieldValue(CELL_CM_MAX, this._imperial)}
+              step="0.1" .value=${d.cellCmInput ?? gridCellFieldValue(d.cellCm, this._imperial)}
               @input=${(e: Event) => {
-                const n = strictNumber((e.target as HTMLInputElement).value);
+                const raw = (e.target as HTMLInputElement).value;
+                const n = strictNumber(raw);
+                const canonical = n == null ? null : gridCellFieldToCm(n, this._imperial);
                 this._spaceDialog = {
-                  ...d, cellCm: n != null && n > 0
-                    ? Math.max(CELL_CM_MIN, Math.min(CELL_CM_MAX, n)) : d.cellCm,
+                  ...d,
+                  cellCmInput: raw,
+                  cellCmTouched: true,
+                  cellCm: canonical != null && canonical > 0
+                    ? Math.max(CELL_CM_MIN, Math.min(CELL_CM_MAX, canonical)) : d.cellCm,
                 };
               }} />
-            <span class="opl">${this._t('space.scale_unit')}</span>
+            <span class="opl">${this._t(
+              this._imperial ? 'space.scale_unit_imperial' : 'space.scale_unit',
+            )}</span>
           </div>
 
           <label class="dispsection">${this._t('space.display_section')}</label>

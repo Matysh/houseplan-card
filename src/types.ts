@@ -65,6 +65,8 @@ export type WallColumnCfg =
 export interface SpaceModel {
   id: string;
   title: string;
+  /** Canonical centimetres represented by one stored grid cell. */
+  cellCm?: number;
   vb: number[]; // render units
   bg: { href: string; x: number; y: number; w: number; h: number; angle?: number } | null;
   rooms: RoomCfg[]; // render units

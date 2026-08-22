@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- Grid precision no longer changes the appearance of the same physical plan.
+  Room and wall outlines, openings and their hit areas, Plan hints, the static
+  card and hidden isometric geometry now retain the `cell_cm: 5` visual size at
+  every supported cell size, while physical objects and screen-fixed controls
+  are not scaled twice. New metric spaces start at 1 cm per cell; imperial HA
+  starts at 1 inch per cell and shows inches in the field. Existing values are
+  neither migrated nor rounded when settings are opened and saved
+  ([#239](https://github.com/Matysh/houseplan-card/issues/239)).
+
 - While placing a door, window, gate or open passage, Plan now shows the usable
   distances from both jambs to the physical inner ends of the wall, with thin
   dimension lines and endpoint ticks. A shared wall shows four measurements —

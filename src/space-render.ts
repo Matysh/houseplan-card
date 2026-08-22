@@ -44,6 +44,7 @@ import { valueBadgeTitle } from './device-value-badge';
 import { contentFingerprint } from './visual-continuity';
 import type { VirtualLightSnapshot } from './virtual-light-state';
 import { renderOpeningTunnelFills } from './render/opening-tunnels';
+import { gridVisualScale, gridVisualUnits } from './grid-scale';
 import {
   spaceModels, defaultPositions, markerPos, labelPos, spaceFrame, iconCqw, NORM_W,
   GRID_STEP_N, GRID_PITCH, staticPassageOpenings,
@@ -507,7 +508,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   return html`
     <div class="hp-static-stage${dayCycle ? ` daycycle phase-${dayCycle.phase}` : ''}"
       ?inert=${!!o.inert}
-      style="aspect-ratio:${vb[2]}/${vb[3]}${stageBg ? ';background:' + stageBg : ''};--wall-fill:${colors.wall_fill.c};--wall-fill-op:${colors.wall_fill.a}${dayCycle ? `;${dayCycleStageVars(dayCycle)}` : ''}">
+      style="aspect-ratio:${vb[2]}/${vb[3]}${stageBg ? ';background:' + stageBg : ''};--hp-cell-visual-scale:${gridVisualScale(cellCm)};--wall-fill:${colors.wall_fill.c};--wall-fill-op:${colors.wall_fill.a}${dayCycle ? `;${dayCycleStageVars(dayCycle)}` : ''}">
       ${renderDayCycleEnvironment(dayCycle)}
       <svg viewBox="${vb[0]} ${vb[1]} ${vb[2]} ${vb[3]}" preserveAspectRatio="xMidYMid meet">
         ${wallUnion ? svg`<defs>
@@ -545,7 +546,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
                 stroke="none" pointer-events="none"></path>
               <path class="wallbody ${solidWall ? 'solid' : ''}" data-hp="wall" data-id="union" data-kind="union"
                 d="${wallUnion.d}" fill="${solidWall ? 'none' : 'url(#hp-wall-hatch)'}" fill-rule=${wallUnion.fillRule}
-                stroke="${wallStroke}" stroke-width="0.6" pointer-events="none"></path>
+                stroke="${wallStroke}" stroke-width="${gridVisualUnits(0.6, cellCm)}" pointer-events="none"></path>
             </g>`
           : nothing}
         ${hostedOpeningSymbols}

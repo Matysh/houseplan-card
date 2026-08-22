@@ -280,8 +280,17 @@ so secure confirmation and Device-editor routing cannot drift.
 `size` (icon multiplier via the
 `--dev-size` CSS var — value badges scale along) and `angle` rotate/scale a single icon.
 Room drawing shows a live **ruler** (`segmentCm` +
-`formatLength`, metres or feet+inches by `hass.config.unit_system`); the scale is per-space
-`cell_cm` (default 5 cm per grid cell).
+`formatLength`, metres or feet+inches by `hass.config.unit_system`); the scale is
+per-space canonical `cell_cm`. New spaces default to 1 cm in metric HA or
+2.54 cm (shown as 1 inch) in imperial HA. Missing legacy data still reads as
+5 cm and is not migrated.
+
+Legacy raw SVG constants are classified as visual units relative to the old
+5 cm renderer and pass through `gridVisualScale()` / `gridVisualUnits()`.
+Physical cm paths, screen-fixed chrome, plan-relative marker/label sizes and
+grid geometry are deliberately excluded from that factor. Full/static roots
+expose the same `--hp-cell-visual-scale`; hidden isometric heights and
+user-space shadows include the factor in their structural cache inputs.
 
 
 `config.markers[]`: `{id, binding:'device:<id>'|'entity:<eid>'|'virtual', space?, area?, hidden?, removed?,
@@ -522,7 +531,8 @@ transaction through an accessible `hp-dialog`, never native `confirm()`.
 
 While drawing, the length of the current segment follows the cursor (`_fmtLen` → `segmentCm`/
 `formatLength`): metres, or feet+inches when `hass.config.unit_system` is imperial. The scale is
-per-space `cell_cm` — cm represented by one grid cell (default 5, so 240 cells ≈ 12 m).
+per-space `cell_cm` — canonical centimetres represented by one grid cell; new
+spaces use 1 cm or 2.54 cm/1 inch, while missing legacy values fall back to 5 cm.
 
 ## Editor chrome and contextual controls
 

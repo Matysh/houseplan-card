@@ -30,6 +30,21 @@ coordinate system.
 4. **What is stored is only where something is drawn.** There is no
    stored extent to keep in sync.
 
+### Grid precision and visual units
+
+`cell_cm` is canonical centimetres per grid cell. New metric spaces use 1 cm;
+new imperial spaces store 2.54 cm and present it as 1 inch. The historical
+5 cm value remains the read fallback for missing or invalid legacy data, not a
+creation default, and existing spaces are never migrated merely by opening
+settings.
+
+A finer grid changes precision only. Raw SVG constants inherited from the
+historical 5 cm renderer are **visual units** and use
+`gridVisualScale(cell_cm) = 5 / cell_cm`. Physical sizes already converted from
+centimetres, screen-fixed strokes/handles, plan-relative icon sizes and the
+grid pitch must not receive that factor again. Full, static and hidden
+isometric renderers share this classification.
+
 ## Model
 
 | Concept | Before | Now |
@@ -75,8 +90,8 @@ the exact target atomically without exposing a default-fit frame.
 | `_NORM` (decor x/y/w/h) | `-1 .. 2` | `-5000 .. 5000` | coordinate |
 | opening `length` | `0.001 .. 1` | `0.001 .. 5000` | size — strictly positive |
 
-`+/-5000` is **garbage insurance, not a frame**. At the product's own
-scale (`cell_cm` = 5 by default, 240 grid cells across the unit width)
+`+/-5000` is **garbage insurance, not a frame**. At the historical compatibility
+scale (`cell_cm` = 5, 240 grid cells across the unit width)
 one canvas width is ~12 m, so `5000` is ~60 km of plan — unreachable
 in a home, while still stopping a stored `1e100` from making the plan
 invisible for every client (the failure HP-1500-03 / HP-1501-01

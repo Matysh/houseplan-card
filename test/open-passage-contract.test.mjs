@@ -56,7 +56,7 @@ test('placement preview adds passage-only cut geometry without changing saved sy
   const start = card.indexOf('private _renderOpeningPlacementPreview()');
   const preview = card.slice(start, card.indexOf('private _renderOpenings(', start));
   assert.match(preview, /candidate\.type === 'passage'/);
-  assert.match(preview, /passagePlacementPreviewGeometry\(candidate, this\._gridPitch\)/);
+  assert.match(preview, /passagePlacementPreviewGeometry\([\s\S]*gridVisualUnits\(this\._gridPitch, this\._cellCm\)/);
   assert.equal((preview.match(/class="passage-preview-cut"/g) || []).length, 1);
   assert.equal((preview.match(/class="passage-preview-boundary"/g) || []).length, 1,
     'one mapped template emits exactly two resolved boundary records');

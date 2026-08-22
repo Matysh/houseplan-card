@@ -637,7 +637,7 @@ export const cardStyles = css`
     .room.overlay {
       fill: transparent;
       stroke: transparent;
-      stroke-width: 2;
+      stroke-width: calc(2px * var(--hp-cell-visual-scale, 1));
     }
     :host([data-pointer-hover]) .stage.mode-view .room.overlay:not(.styled):hover {
       stroke: var(--hp-accent);
@@ -646,7 +646,7 @@ export const cardStyles = css`
     .room.yard {
       fill: rgba(75, 140, 90, 0.14);
       stroke: #4b8c5a;
-      stroke-width: 2;
+      stroke-width: calc(2px * var(--hp-cell-visual-scale, 1));
     }
     :host([data-pointer-hover]) .stage.mode-view .room.yard:not(.styled):hover {
       stroke: var(--hp-accent);
@@ -655,7 +655,7 @@ export const cardStyles = css`
     .room.styled {
       stroke: var(--room-stroke, transparent);
       stroke-opacity: var(--room-stroke-op, 0);
-      stroke-width: 2.5;
+      stroke-width: calc(2.5px * var(--hp-cell-visual-scale, 1));
       fill: var(--room-fill, transparent);
       fill-opacity: var(--room-fill-op, 0);
     }
@@ -705,14 +705,14 @@ export const cardStyles = css`
       transition: transform 0.6s ease;
     }
     .op-arc {
-      stroke-width: 1.5;
+      stroke-width: calc(1.5px * var(--hp-cell-visual-scale, 1));
       transition: stroke-dashoffset 0.6s ease;
     }
     /* hover affordance: a rounded outline hugging the wall strip + a grab cursor */
     .op-outline {
       fill: none;
       stroke: var(--hp-accent);
-      stroke-width: 1.5;
+      stroke-width: calc(1.5px * var(--hp-cell-visual-scale, 1));
       opacity: 0;
       transition: opacity 0.15s;
       pointer-events: none;
@@ -743,12 +743,12 @@ export const cardStyles = css`
     .stage.markup .opening.orphan circle {
       fill: var(--hp-bg);
       stroke: currentColor;
-      stroke-width: 2;
+      stroke-width: calc(2px * var(--hp-cell-visual-scale, 1));
     }
     .stage.markup .opening.orphan text {
       fill: currentColor;
       font-weight: 800;
-      font-size: 12px;
+      font-size: calc(12px * var(--hp-cell-visual-scale, 1));
       pointer-events: none;
     }
     /* HP-1550-04: in the resize tool the wall handles own the hit test — the
@@ -1176,8 +1176,10 @@ export const cardStyles = css`
     }
     .alignline {
       stroke: var(--hp-accent);
-      stroke-width: 1.2;
-      stroke-dasharray: 4 4;
+      stroke-width: calc(1.2px * var(--hp-cell-visual-scale, 1));
+      stroke-dasharray:
+        calc(4px * var(--hp-cell-visual-scale, 1))
+        calc(4px * var(--hp-cell-visual-scale, 1));
       pointer-events: none;
       opacity: 0.9;
     }
@@ -1301,7 +1303,9 @@ export const cardStyles = css`
       filter: drop-shadow(0 0 3px var(--hp-accent));
     }
     .decorlayer .ddraft {
-      stroke-dasharray: 6 5;
+      stroke-dasharray:
+        calc(6px * var(--hp-cell-visual-scale, 1))
+        calc(5px * var(--hp-cell-visual-scale, 1));
       pointer-events: none;
     }
     .decorlayer text {
@@ -1479,7 +1483,7 @@ export const cardStyles = css`
     }
     .passage-preview-boundary {
       stroke: var(--hp-open, #ff9800);
-      stroke-width: 2.5;
+      stroke-width: calc(2.5px * var(--hp-cell-visual-scale, 1));
       pointer-events: none;
     }
     .opening-preview .op-leaf,
@@ -1531,7 +1535,7 @@ export const cardStyles = css`
       fill: url(#hp-wall-hatch);
       fill-rule: evenodd;
       stroke: var(--room-stroke, var(--hp-muted));
-      stroke-width: 0.6;
+      stroke-width: calc(0.6px * var(--hp-cell-visual-scale, 1));
       pointer-events: none;
     }
     /* Thin-on-screen: hatch collapses into noise — fill alone, stroke from fill path's sibling. */
@@ -1542,7 +1546,7 @@ export const cardStyles = css`
       fill: var(--accent-color, #03a9f4);
       fill-opacity: 0.38;
       stroke: var(--accent-color, #03a9f4);
-      stroke-width: 2.5;
+      stroke-width: calc(2.5px * var(--hp-cell-visual-scale, 1));
       stroke-linejoin: round;
       stroke-linecap: round;
       pointer-events: none;
@@ -1585,8 +1589,10 @@ export const cardStyles = css`
     .stage.markup.tool-boundary.boundary-invalid { cursor: not-allowed; }
     .openwall {
       stroke: var(--ow-stroke, var(--hp-muted));
-      stroke-width: 2.5;
-      stroke-dasharray: 7 7;
+      stroke-width: calc(2.5px * var(--hp-cell-visual-scale, 1));
+      stroke-dasharray:
+        calc(7px * var(--hp-cell-visual-scale, 1))
+        calc(7px * var(--hp-cell-visual-scale, 1));
       stroke-linecap: butt;
       pointer-events: none;
       opacity: 0.9;
@@ -1603,7 +1609,7 @@ export const cardStyles = css`
        (owner 2026-08-04 — no teeth anywhere on a room border). */
     .room-outline {
       fill: none;
-      stroke-width: 2.5;
+      stroke-width: calc(2.5px * var(--hp-cell-visual-scale, 1));
       stroke-linejoin: round;
       stroke-linecap: round;
       pointer-events: none;
@@ -1627,7 +1633,7 @@ export const cardStyles = css`
       fill: none;
       stroke: var(--hp-accent);
       stroke-opacity: 0.28;
-      stroke-width: 8;
+      stroke-width: calc(8px * var(--hp-cell-visual-scale, 1));
       stroke-linejoin: round;
       stroke-linecap: round;
       pointer-events: none;
@@ -1635,15 +1641,17 @@ export const cardStyles = css`
     .room-hover-outline {
       fill: none;
       stroke: var(--hp-accent);
-      stroke-width: 3;
+      stroke-width: calc(3px * var(--hp-cell-visual-scale, 1));
       stroke-linejoin: round;
       stroke-linecap: round;
       pointer-events: none;
     }
     .openwall-preview {
       stroke: #ffc14d;
-      stroke-width: 5;
-      stroke-dasharray: 7 7;
+      stroke-width: calc(5px * var(--hp-cell-visual-scale, 1));
+      stroke-dasharray:
+        calc(7px * var(--hp-cell-visual-scale, 1))
+        calc(7px * var(--hp-cell-visual-scale, 1));
       stroke-linecap: round;
       pointer-events: none;
       opacity: 0.95;
@@ -1655,7 +1663,7 @@ export const cardStyles = css`
       fill: rgba(255, 193, 77, 0.28);
       fill-rule: evenodd;
       stroke: #ffc14d;
-      stroke-width: 2.5;
+      stroke-width: calc(2.5px * var(--hp-cell-visual-scale, 1));
       stroke-dasharray: none;
       stroke-linejoin: round;
     }
@@ -1764,7 +1772,7 @@ export const cardStyles = css`
     /* AFTER .outlined: same specificity — source order decides (gotcha x4) */
     .room.picked {
       stroke: #ffc14d;
-      stroke-width: 3;
+      stroke-width: calc(3px * var(--hp-cell-visual-scale, 1));
       fill: rgba(255, 193, 77, 0.25);
     }
     /* Owner 2026-08-04: the grid is a HINT, not content — at full strength the
@@ -1787,21 +1795,23 @@ export const cardStyles = css`
        so the round cap IS the corner (matches the finished .room border) */
     .seg {
       stroke: var(--hp-accent);
-      stroke-width: 2.5;
+      stroke-width: calc(2.5px * var(--hp-cell-visual-scale, 1));
       stroke-linecap: round;
       stroke-linejoin: round;
     }
     .pathline {
       stroke: #ffc14d;
-      stroke-width: 3;
+      stroke-width: calc(3px * var(--hp-cell-visual-scale, 1));
       fill: none;
       stroke-linecap: round;
       stroke-linejoin: round;
     }
     .preview {
       stroke: #ffc14d;
-      stroke-width: 2;
-      stroke-dasharray: 6 5;
+      stroke-width: calc(2px * var(--hp-cell-visual-scale, 1));
+      stroke-dasharray:
+        calc(6px * var(--hp-cell-visual-scale, 1))
+        calc(5px * var(--hp-cell-visual-scale, 1));
       opacity: 0.7;
     }
     .active-axis {
@@ -1838,14 +1848,14 @@ export const cardStyles = css`
       fill-opacity: 0.55;
       fill-rule: evenodd;
       stroke: var(--accent-color, #03a9f4);
-      stroke-width: 0.5;
+      stroke-width: calc(0.5px * var(--hp-cell-visual-scale, 1));
       stroke-opacity: 0.7;
       pointer-events: none;
     }
     .vertex {
       fill: #ffc14d;
       stroke: #4a2800;
-      stroke-width: 1;
+      stroke-width: calc(1px * var(--hp-cell-visual-scale, 1));
     }
     .vertex.first {
       fill: #4bd28f;
@@ -1858,6 +1868,7 @@ export const cardStyles = css`
     .plan-snap-line {
       fill: none;
       stroke: color-mix(in srgb, var(--hp-accent) 82%, white 18%);
+      /* Explicit non-scaling-stroke in the SVG keeps this one screen pixel. */
       stroke-width: 1;
       stroke-linecap: round;
       opacity: 0.92;

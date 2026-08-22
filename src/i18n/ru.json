@@ -372,6 +372,7 @@
   "btn.skip": "Пропустить",
   "space.scale_label": "Масштаб (размер клетки сетки)",
   "space.scale_unit": "см на клетку",
+  "space.scale_unit_imperial": "дюйм на клетку",
   "space.display_section": "Отображение",
   "space.show_borders": "Всегда отображать границы комнат",
   "space.show_names": "Отображать названия комнат (перетаскиваются)",

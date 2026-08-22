@@ -1,5 +1,6 @@
 import { svg, type TemplateResult } from 'lit';
 import type { OpeningCfg } from '../types';
+import { gridVisualScale, gridVisualUnits } from '../grid-scale';
 
 export interface OpeningFaceOffset {
   ox: number;
@@ -34,14 +35,22 @@ export function openingVisibleMetrics(spec: OpeningVisibleSpec): OpeningVisibleM
   const half = spec.length / 2;
   const jambHalf = spec.face.cm > 0
     ? ((spec.face.cm / spec.cellCm) * spec.gridPitch) / 2
-    : 4;
+    : gridVisualUnits(4, spec.cellCm);
   const gateDepth = spec.type === 'gate' ? Math.sin((10 * Math.PI) / 180) * half : 0;
   return {
     half,
     jambHalf,
     gateDepth,
-    outlineHalf: Math.max(16, jambHalf + 8, gateDepth + 8),
-    hitHalf: Math.max(20, jambHalf + 10, gateDepth + 12),
+    outlineHalf: Math.max(
+      gridVisualUnits(16, spec.cellCm),
+      jambHalf + gridVisualUnits(8, spec.cellCm),
+      gateDepth + gridVisualUnits(8, spec.cellCm),
+    ),
+    hitHalf: Math.max(
+      gridVisualUnits(20, spec.cellCm),
+      jambHalf + gridVisualUnits(10, spec.cellCm),
+      gateDepth + gridVisualUnits(12, spec.cellCm),
+    ),
   };
 }
 
@@ -55,6 +64,8 @@ export function renderOpeningVisibleGeometry(spec: OpeningVisibleSpec): Template
   if (spec.type === 'passage') return svg``;
   const amount = Math.max(0, Math.min(1, spec.amount));
   const { half, jambHalf } = openingVisibleMetrics(spec);
+  const visualScale = gridVisualScale(spec.cellCm);
+  const leafHalf = 1.75 * visualScale;
   const sx = spec.flipH ? -1 : 1;
   const sy = spec.flipV ? -1 : 1;
 
@@ -75,7 +86,7 @@ export function renderOpeningVisibleGeometry(spec: OpeningVisibleSpec): Template
     const arcLen = (Math.PI / 2) * half;
     const glass = spec.face.cm > 0
       ? svg`<line class="op-glass" x1="0" y1="${-jambHalf}" x2="0" y2="${jambHalf}"
-          stroke="${spec.tone}" stroke-width="1.5"></line>`
+          stroke="${spec.tone}" stroke-width="${1.5 * visualScale}"></line>`
       : svg``;
     body = svg`
       <g transform="translate(${swingTx} ${swingTy})">
@@ -85,12 +96,12 @@ export function renderOpeningVisibleGeometry(spec: OpeningVisibleSpec): Template
         stroke="${spec.tone}" stroke-dasharray="${arcLen}" stroke-dashoffset="${arcLen * (1 - amount)}"></path>
       <g transform="translate(${-half} 0)">
         <g class="op-leaf" style="transform:rotate(${-90 * amount}deg)">
-          <rect x="0" y="-1.5" width="${half}" height="3" fill="${spec.tone}"></rect>
+          <rect x="0" y="${-1.5 * visualScale}" width="${half}" height="${3 * visualScale}" fill="${spec.tone}"></rect>
         </g>
       </g>
       <g transform="translate(${half} 0)">
         <g class="op-leaf" style="transform:rotate(${90 * amount}deg)">
-          <rect x="${-half}" y="-1.5" width="${half}" height="3" fill="${spec.tone}"></rect>
+          <rect x="${-half}" y="${-1.5 * visualScale}" width="${half}" height="${3 * visualScale}" fill="${spec.tone}"></rect>
         </g>
       </g>
       ${glass}
@@ -103,12 +114,12 @@ export function renderOpeningVisibleGeometry(spec: OpeningVisibleSpec): Template
       <g transform="translate(${swingTx} ${swingTy})">
       <g transform="translate(${-half} 0)">
         <g class="op-leaf" style="transform:rotate(${gateAngle}deg)">
-          <rect x="0" y="-1.75" width="${half}" height="3.5" fill="${spec.tone}"></rect>
+          <rect x="0" y="${-leafHalf}" width="${half}" height="${leafHalf * 2}" fill="${spec.tone}"></rect>
         </g>
       </g>
       <g transform="translate(${half} 0)">
         <g class="op-leaf" style="transform:rotate(${-gateAngle}deg)">
-          <rect x="${-half}" y="-1.75" width="${half}" height="3.5" fill="${spec.tone}"></rect>
+          <rect x="${-half}" y="${-leafHalf}" width="${half}" height="${leafHalf * 2}" fill="${spec.tone}"></rect>
         </g>
       </g>
       </g>`;
@@ -120,7 +131,7 @@ export function renderOpeningVisibleGeometry(spec: OpeningVisibleSpec): Template
         stroke="${spec.tone}" stroke-dasharray="${arcLen}" stroke-dashoffset="${arcLen * (1 - amount)}"></path>
       <g transform="translate(${-half} 0)">
         <g class="op-leaf" style="transform:rotate(${-90 * amount}deg)">
-          <rect x="0" y="-1.75" width="${spec.length}" height="3.5" fill="${spec.tone}"></rect>
+          <rect x="0" y="${-leafHalf}" width="${spec.length}" height="${leafHalf * 2}" fill="${spec.tone}"></rect>
         </g>
       </g>
       </g>`;
@@ -128,9 +139,9 @@ export function renderOpeningVisibleGeometry(spec: OpeningVisibleSpec): Template
 
   return svg`<g transform="scale(${sx} ${sy})">
     <line x1="${-half}" y1="${-jambHalf}" x2="${-half}" y2="${jambHalf}"
-      stroke="${spec.base}" stroke-width="2.5"></line>
+      stroke="${spec.base}" stroke-width="${2.5 * visualScale}"></line>
     <line x1="${half}" y1="${-jambHalf}" x2="${half}" y2="${jambHalf}"
-      stroke="${spec.base}" stroke-width="2.5"></line>
+      stroke="${spec.base}" stroke-width="${2.5 * visualScale}"></line>
     ${body}
   </g>`;
 }

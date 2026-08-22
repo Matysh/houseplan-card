@@ -235,6 +235,19 @@ The plan image keeps its proportions initially. Background can later move,
 scale or rotate it. Detaching a plan never deletes its server file; deletion
 requires an explicit user action.
 
+### Grid scale
+
+The scale field is the real size of one grid cell. A new metric space starts at
+**1 cm per cell**; with an imperial Home Assistant unit system it starts at
+**1 in per cell** and the field is shown in inches. Floor import uses the same
+default for every new space.
+
+Choose a finer cell when you need more precise snap points. It changes only the
+number of grid points per metre, not how the finished plan looks: physically
+equal rooms, walls, openings, labels and markers retain the same appearance.
+Existing spaces keep their stored scale. A legacy space without a scale still
+uses the 5 cm compatibility fallback and is not silently migrated.
+
 ### Tab order
 
 Space tabs follow the order in which the spaces were created, and that order can

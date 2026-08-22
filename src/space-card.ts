@@ -884,7 +884,7 @@ class HouseplanSpaceCard extends LitElement {
         fill: url(#hp-wall-hatch);
         fill-rule: evenodd;
         stroke: var(--room-stroke, var(--hp-muted, #607d8b));
-        stroke-width: 0.6;
+        stroke-width: calc(0.6px * var(--hp-cell-visual-scale, 1));
         pointer-events: none;
       }
       .wallbody.solid {

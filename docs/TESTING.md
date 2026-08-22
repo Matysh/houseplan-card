@@ -612,7 +612,19 @@ separately promised workflows:
 - [ ] Average room temperature counts ONLY thermometer/air-monitor devices — fridges, TRV heads,
       smart-plug chip temperatures (`*_device_temperature`) and diagnostic-category temps are excluded [manual]
 - [ ] Space dialog is 500 px wide; the comfort-bounds inputs are compact (56 px)
-- [ ] The scale (cm per cell) input is compact (72 px), not full-width [manual]
+- [ ] The scale input is compact (72 px), not full-width; it shows cm in metric
+      HA and inches in imperial HA [manual; auto: smoke_space_scale_defaults]
+- [ ] A new manual space and every floor-import draft start at 1 cm in metric HA
+      or exactly 1 inch/2.54 canonical cm in imperial HA. Opening and saving an
+      existing 5 cm, fractional or missing legacy value without editing the
+      field is lossless; changing language does not rewrite the canonical draft
+      [auto: smoke_space_scale_defaults]
+- [ ] Physically equivalent rich fixtures at 1 cm and 5 cm have equal View,
+      Plan-with-grid-masked and static-card pixels/critical bounds. The grid has
+      five times the intervals only; openings retain their edge hit target, and
+      physical/screen-fixed layers are not double-scaled
+      [auto: smoke_grid_scale_invariance; unit: grid-scale.test.mjs,
+      opening-symbol.test.mjs, canvas.test.mjs]
 - [ ] General settings (⚙ in the header): fill colors grouped by mode (lights on/off/none,
       temp cold/comfy/hot, LQI weak/strong), each with its own opacity slider [manual];
       Reset restores defaults; saving defaults stores nothing [manual]
@@ -632,7 +644,8 @@ separately promised workflows:
       smoke_unified_wall_tool + unified-wall-tool-source.test]
 - [ ] Grid appears; dots snap; the wall chain draws pair-by-pair; shared walls reused
 - [ ] Ruler: while drawing, the length of the current segment follows the cursor
-      (metres, or feet+inches on an imperial HA); scale = space "cm per cell" (default 5)
+      (metres, or feet+inches on an imperial HA); scale = canonical per-space
+      `cell_cm` (new-space default 1 cm or 1 inch; missing legacy fallback 5 cm)
 - [ ] Every completed segment is crash-safe in `room_drafts`. Changing tool,
       editor or floor finishes an open chain as ordinary partitions in one
       history/config transaction; the finished chain is not resumed as a draft

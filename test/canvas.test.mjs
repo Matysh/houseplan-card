@@ -79,6 +79,24 @@ test('icon size: a percentage of the PLAN, exactly as before the canvas', () => 
   assert.equal(iconCqw(2.5, small, 1000, 2), 2 * iconCqw(2.5, small, 1000));
 });
 
+test('icon size is invariant for physically equivalent plans at different grid scales', () => {
+  const coarse = model({
+    id: 'coarse', cell_cm: 5,
+    rooms: [{ id: 'r', poly: [[0.1, 0.1], [0.9, 0.1], [0.9, 0.88], [0.1, 0.88]] }],
+  });
+  const fine = model({
+    id: 'fine', cell_cm: 1, view_box: [0, 0, 5, 5],
+    rooms: [{ id: 'r', poly: [[0.5, 0.5], [4.5, 0.5], [4.5, 4.4], [0.5, 4.4]] }],
+  });
+  assert.equal(iconUnit(coarse), NORM_W);
+  assert.equal(iconUnit(fine), 5 * NORM_W);
+  assert.equal(iconCqw(2.5, coarse, spaceFrame(coarse).w), iconCqw(2.5, fine, spaceFrame(fine).w));
+});
+
+test('a legacy space without cell_cm keeps the historical five-centimetre read fallback', () => {
+  assert.equal(model({ id: 'legacy' }).cellCm, 5);
+});
+
 test('icon size: a plan drawn past the old square keeps its markers', () => {
   // rooms at 1.0..3.0 — 2 canvases wide, framed by ~2.2 canvases once the
   // frame is the content. With the old fixed NORM_W numerator the marker

@@ -7,6 +7,7 @@ import { declump, contentUrl } from './logic';
 import type { ServerConfig, SpaceModel, RoomCfg, DevItem, OpeningCfg } from './types';
 import { boxCorners, normalizeAngle } from './editors/decor/geometry';
 import { canonicalColumnAngle } from './physical-geometry';
+import { gridVisualScale } from './grid-scale';
 
 export const NORM_W = 1000; // side of the render space — the canvas is square
 
@@ -154,6 +155,9 @@ export function spaceModels(cfg: ServerConfig | null): SpaceModel[] {
     return {
       id: s.id,
       title: s.title,
+      // Missing remains the historical 5 cm for stored-config compatibility.
+      cellCm: Number.isFinite(Number(s.cell_cm)) && Number(s.cell_cm) > 0
+        ? Number(s.cell_cm) : 5,
       vb: [vb[0] * NORM_W, vb[1] * H, vb[2] * NORM_W, vb[3] * H],
       // the image's own placement — the centred default plus whatever the
       // backdrop frame has stored (plan_x/y, per-axis scale and angle)
@@ -446,8 +450,14 @@ export function iconUnit(space: SpaceModel): number {
   // no business inflating the icons. Degenerate axes are still lifted off zero,
   // which cannot matter here (FLOOR < NORM_W).
   const b = contentFrame(items, { pad: 0 }).core;
-  if (!b) return NORM_W;
-  return Math.max(NORM_W, Math.min(SANE_LIMIT, Math.max(b.w, b.h)));
+  // The historical NORM_W floor is a VISUAL size, not a physical distance.
+  // A physically equivalent plan at a finer cell size stores proportionally
+  // larger coordinates, so its floor must grow by the same factor. Without
+  // this, icons and room labels shrink whenever one side of the plan is below
+  // the old 1000-unit threshold (issue #239).
+  const visualFloor = NORM_W * gridVisualScale(space.cellCm ?? 5);
+  if (!b) return visualFloor;
+  return Math.max(visualFloor, Math.min(SANE_LIMIT, Math.max(b.w, b.h)));
 }
 
 /**
