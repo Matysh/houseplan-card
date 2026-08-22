@@ -69,6 +69,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#228](https://github.com/Matysh/houseplan-card/issues/228) Надёжное рисование стен и операции с готовым контуром | [228-plan-drawing-problems.md](228-plan-drawing-problems.md) |
 | [#239](https://github.com/Matysh/houseplan-card/issues/239) Масштаб сетки не меняет внешний вид плана; default 1 см/1 дюйм | [239-grid-scale-invariance.md](239-grid-scale-invariance.md) |
 | [#231](https://github.com/Matysh/houseplan-card/issues/231) Декоративный слой виден поверх заливок комнат | [231-decor-layer-order.md](231-decor-layer-order.md) |
+| [#243](https://github.com/Matysh/houseplan-card/issues/243) Рабочее перетаскивание вкладок и точный указатель вставки | [243-space-tab-drop-target.md](243-space-tab-drop-target.md) |
 
 ## P2
 
