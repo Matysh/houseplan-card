@@ -123,6 +123,19 @@ export const MUTANTS = [
     }],
   },
   {
+    id: 'docs-fixture-splits-posix-only',
+    guard: 'node --test --test-name-pattern="не зависит от разделителя платформы" '
+      + 'test/docs-accept.test.mjs',
+    because: 'фикстура приёмки разбирала путь только по «/» и на Windows отдавала весь путь '
+      + 'вместо имени файла: три проверки краснели на верной реализации, а Linux этого не '
+      + 'видел вовсе — регресс обязан краснеть на любой платформе (#247)',
+    patches: [{
+      file: 'test/docs-accept.test.mjs',
+      find: "export const basename = (path) => String(path).split(/[\\\\/]/).filter(Boolean).pop() ?? '';",
+      replace: "export const basename = (path) => String(path).split('/').pop() ?? '';",
+    }],
+  },
+  {
     id: 'docs-accept-takes-any-chromium',
     guard: 'node --test --test-name-pattern="без названного Chromium" test/docs-accept.test.mjs',
     because: 'набор, снятый другим браузером, переписывает все десять картинок без единого '

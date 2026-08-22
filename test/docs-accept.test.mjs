@@ -39,8 +39,15 @@ const candidate = (overrides = {}) => {
   };
 };
 
+// Разделитель зависит от платформы, а фикстура — нет (#247). `resolve()` на
+// Windows отдаёт `C:\\artifact\\01-view-desktop.png`, и разбор только по «/»
+// возвращал весь путь целиком: `idOf` давал undefined, синтетический хэш не
+// сходился, и три проверки краснели на верной реализации. Linux этого не ловил
+// вовсе — поэтому ниже отдельный тест на сам разбор.
+export const basename = (path) => String(path).split(/[\\/]/).filter(Boolean).pop() ?? '';
+
 const idOf = (path) => {
-  const file = String(path).split('/').pop();
+  const file = basename(path);
   return DOC_SCREENSHOTS.find((scenario) => scenario.file === file)?.id;
 };
 
@@ -111,4 +118,13 @@ test('кандидат не на синтетической фикстуре н�
 test('кандидат чужой версии манифеста не принимается (#246)', () => {
   assert.throws(() => verify(candidate({ version: DOC_SCREENSHOT_VERSION + 1 })),
     /версии/);
+});
+
+test('разбор пути фикстуры не зависит от разделителя платформы (#247)', () => {
+  // Тест существует, чтобы регресс к `split('/')` краснел и на Linux: сам по
+  // себе набор проверок выше на POSIX-путях проходит при любом разборе.
+  assert.equal(basename('C:\\artifact\\01-view-desktop.png'), '01-view-desktop.png');
+  assert.equal(basename('/artifact/01-view-desktop.png'), '01-view-desktop.png');
+  assert.equal(basename('C:/artifact/sub\\02-view-touch.png'), '02-view-touch.png');
+  assert.equal(basename('01-view-desktop.png'), '01-view-desktop.png');
 });
