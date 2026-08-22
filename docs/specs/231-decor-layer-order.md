@@ -222,10 +222,11 @@ CSS `z-index`, который не определяет paint order внутри
    границу комнаты, остаются видимы и сохраняют заданные style values внутри и
    снаружи комнаты. **Доказательство:** browser smoke + reviewed golden с
    semantic pixel assertions; тест красный на коде до #231.
-2. **AC2 — decor поверх пола проёма.** Decor следует в DOM и визуально лежит
-   после обычного тоннеля, Glow-base комнаты и Glow-base тоннеля; линия через
-   порог не разрывается. **Доказательство:** browser DOM-order + pixel smoke на
-   data-fill и no-fill/Glow fixtures.
+2. **AC2 — decor поверх hover и пола проёма.** Decor следует в DOM и визуально
+   лежит после room hover fill, обычного тоннеля, Glow-base комнаты и Glow-base
+   тоннеля; hover-подсветка не тонирует decor, а линия через порог не
+   разрывается. **Доказательство:** browser DOM-order + pixel smoke на active
+   room-hover, data-fill и no-fill/Glow fixtures.
 3. **AC3 — верхние слои сохранены.** Live Glow и солнце следуют после decor;
    wall bodies и door/window/gate/passage symbols перекрывают decor в точках
    пересечения; устройства и room labels остаются выше. **Доказательство:**
@@ -262,6 +263,7 @@ npm run build
 node scripts/check-docs.mjs --external
 node scripts/mutation-gate.mjs --check
 node demo/smoke_decor_layer_order.mjs
+node demo/smoke_glow.mjs
 ```
 
 Сверяются три копии bundle. Ревьюер дополнительно выбирает затронутые существующие
@@ -279,6 +281,9 @@ Fixture содержит не декларации, а реальные пере
 - включённый источник live Glow;
 - окно с видимым солнечным лучом;
 - physical wall, opening symbol, device и room label над decor;
+- активный room hover с существующей `.room-hover-fill-layer`; целевой assert
+  проверяет `compareDocumentPosition` от неё к `.decorlayer` и raster sample на
+  decor внутри подсвеченной комнаты;
 - режимы `hide_decor` и Background editor.
 
 Для контрольных координат браузер считывает raster pixels либо эквивалентный
