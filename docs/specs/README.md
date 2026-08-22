@@ -64,6 +64,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#229](https://github.com/Matysh/houseplan-card/issues/229) Сращивание коллинеарных отрезков стен | [229-merge-collinear-partitions.md](229-merge-collinear-partitions.md) |
 | [#226](https://github.com/Matysh/houseplan-card/issues/226) Entity-marker не дублируется родительским HA-устройством | [226-entity-parent-dedup.md](226-entity-parent-dedup.md) |
 | [#223](https://github.com/Matysh/houseplan-card/issues/223) Optimize канонизирует координаты без floating-point шума | [223-optimize-coordinate-canonicalization.md](223-optimize-coordinate-canonicalization.md) |
+| [#224](https://github.com/Matysh/houseplan-card/issues/224) Канонические координаты на каждой записи | [224-config-coordinate-canonicalization.md](224-config-coordinate-canonicalization.md) |
 | [#228](https://github.com/Matysh/houseplan-card/issues/228) Надёжное рисование стен и операции с готовым контуром | [228-plan-drawing-problems.md](228-plan-drawing-problems.md) |
 | [#239](https://github.com/Matysh/houseplan-card/issues/239) Масштаб сетки не меняет внешний вид плана; default 1 см/1 дюйм | [239-grid-scale-invariance.md](239-grid-scale-invariance.md) |
 
