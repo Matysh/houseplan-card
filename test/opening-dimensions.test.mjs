@@ -98,6 +98,18 @@ test('shared wall keeps two independently resolved room sides (#238 AC3)', () =>
   assert.equal(new Set(dimensions.map((item) => item.source)).size, 1);
 });
 
+test('shared wall dimension order is independent of room config order (#238 AC3)', () => {
+  const a = { id: 'a', poly: [[0, 0], [200, 0], [200, 300], [0, 300]] };
+  const b = { id: 'b', poly: [[200, 0], [400, 0], [400, 300], [200, 300]] };
+  const rooms = [b, a];
+  const dimensions = resolveOpeningDimensions(candidate({
+    x: 200, y: 150, angle: -90, length: 80, a: [200, 0], b: [200, 300],
+  }), context({ rooms, walls: wallsFor(rooms) }));
+
+  assert.deepEqual(dimensions.map((item) => item.roomId), ['a', 'b', 'a', 'b']);
+  assert.deepEqual(distances(dimensions), [100, 100, 100, 100]);
+});
+
 test('a concave room uses only the connected inner-face run (#238 AC4)', () => {
   const rooms = [{
     id: 'concave',
