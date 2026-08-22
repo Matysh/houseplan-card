@@ -69,6 +69,12 @@ unknown fields in canonical representation, not the invisible noisy IEEE-754
 tail. A repeated canonical Save with the current revision is a no-op and does
 not invalidate the one-deep maintenance backup.
 
+Optimize itself returns and compares that storage-canonical config/layout pair,
+not the higher-precision intermediate produced by the `1 / 240` grid formula.
+Consequently the normal commit, durable pending recovery, update-event reload
+and a cold read all converge on one JSON value set; feeding any of them back to
+Optimize is a no-op (#248).
+
 ## Open-passage opening type (#157)
 
 `space.openings[].type` additionally accepts the literal `passage`. Its

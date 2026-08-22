@@ -507,6 +507,16 @@ either store changes, commits both revisions, and retains one snapshot.
 has changed since the optimization. A crash between store writes is
 completed from the intent on the next integration setup.
 
+The pair returned by `optimizePlans` is canonicalized through the same
+nine-decimal allowlist as the storage writers **before** `changed` is computed.
+This boundary is required because the normalized grid step `1 / 240` has no
+finite decimal representation: a raw binary grid node and its persisted JSON
+number are semantically identical but not `===`. Update-event reload and a cold
+read therefore receive exactly the pair the preview already retained, and a
+second run cannot manufacture fresh coordinate noise (#248). Counters describe
+only the final persisted delta; an intermediate double which canonicalizes
+back to the input is not reported as work.
+
 Guarantees are covered by `test/align-grid.test.mjs` and the orchestration/
 idempotence case in `test/plan-optimizer.test.mjs`:
 
@@ -520,8 +530,10 @@ idempotence case in `test/plan-optimizer.test.mjs`:
   it unfixable);
 * a stray opening with no wall within 6 steps is left exactly where it
   is rather than teleported;
-* **idempotent**: a second run reports `moved: 0`, `changed: false`, and
-  `coordsCanonicalized: 0`, and returns objects deep-equal to the first run's;
+* **idempotent across storage**: a second run in memory, after the nine-decimal
+  writer round-trip, after update-event reload or after a cold read reports
+  `moved: 0`, `changed: false`, and `coordsCanonicalized: 0`, and returns
+  objects deep-equal to the first persisted result;
 * the report is an **upper bound**, not a sample (AUD-158B1-01).
 
 Before a changed preview can expose Apply, `checkOptimizeGeometry(config)`

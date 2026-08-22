@@ -287,6 +287,45 @@ export const MUTANTS = [
     }],
   },
   {
+    id: 'optimize-storage-boundary-removed',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="issue 248 Optimize stays" '
+      + 'test/plan-optimizer.test.mjs',
+    because: 'the pure Optimize candidate must already equal the nine-decimal pair that the '
+      + 'backend writes, or a server-event reload turns 1/240 into fresh coordinate noise (#248)',
+    patches: [{
+      file: 'src/plan-optimizer.ts',
+      find: '  const persistedConfig = canonicalizeConfigGeometry(config);\n'
+        + '  const persistedLayout = canonicalizeLayoutGeometry(aligned.layout);',
+      replace: '  const persistedConfig = config;\n'
+        + '  const persistedLayout = aligned.layout;',
+    }],
+  },
+  {
+    id: 'optimize-config-storage-half-raw',
+    guard: 'node scripts/backend-test-guard.mjs storage_helpers_are_the_final_canonical_barrier '
+      + 'tests_backend/test_coordinate_canonicalization.py',
+    because: 'the durable config half must remain the exact canonical target recorded by '
+      + 'Optimize intent even for internal writers which bypass WebSocket schema (#248)',
+    patches: [{
+      file: 'custom_components/houseplan/store.py',
+      find: '    canonical_config = canonicalize_config_geometry(config)',
+      replace: '    canonical_config = config',
+    }],
+  },
+  {
+    id: 'optimize-layout-storage-half-raw',
+    guard: 'node scripts/backend-test-guard.mjs storage_helpers_are_the_final_canonical_barrier '
+      + 'tests_backend/test_coordinate_canonicalization.py',
+    because: 'the durable layout half must remain the exact canonical target recorded by '
+      + 'Optimize intent even for internal writers which bypass WebSocket schema (#248)',
+    patches: [{
+      file: 'custom_components/houseplan/store.py',
+      find: '    out["layout"] = canonicalize_layout_geometry(layout)',
+      replace: '    out["layout"] = layout',
+    }],
+  },
+  {
     id: 'union-quantization-removed',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="boolean input normalization|six-room ULP" '

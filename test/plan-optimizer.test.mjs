@@ -1,9 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 
 import {
   collapseIsolatedWallThicknessIslands, optimizePlans, PLAN_MODEL_VERSION,
 } from '../test-build/plan-optimizer.js';
+import {
+  canonicalizeConfigGeometry, canonicalizeLayoutGeometry, canonicalizeNumber,
+} from '../test-build/coordinate-canonicalization.js';
 import { unionBodies } from '../test-build/physical-geometry.js';
 import { GRID_PITCH, GRID_STEP_N as S, NORM_W } from '../test-build/space-geometry.js';
 import { wallKey } from '../test-build/wall-thickness.js';
@@ -17,6 +21,28 @@ const room = (id, x0, x1, openTo) => ({
 });
 
 const exactWall = (a, b, cm) => ({ key: wallKey(a, b, S), a, b, cm });
+
+const coordinateFixture = JSON.parse(readFileSync(
+  new URL('./fixtures/coordinate-canonicalization.json', import.meta.url),
+  'utf8',
+));
+const storageRoundtripFixture = JSON.parse(readFileSync(
+  new URL('./fixtures/optimize-storage-roundtrip.json', import.meta.url),
+  'utf8',
+));
+
+const assertNoPersistedChanges = (result) => {
+  assert.equal(result.changed, false);
+  for (const field of [
+    'moved', 'coordsCanonicalized', 'rotated', 'removedDrafts', 'migrated',
+    'glowSpacesMigrated', 'glowRoomsMigrated', 'canonicalized', 'wallsMerged',
+    'spansMerged', 'partitionsMerged', 'spaceRefsRemapped', 'roomRefsRemapped',
+    'positionsRemapped', 'markersDetached',
+  ]) assert.equal(result.report[field], 0, `${field} must describe the persisted delta`);
+  assert.equal(result.report.maxShift, 0);
+  assert.equal(result.report.maxShiftCm, 0);
+  assert.equal(result.report.maxSpace, '');
+};
 
 // Privacy-minimised six-room topology from #218/#223. The relevant stored ULP
 // tails stay literal so this fixture proves that Optimize repairs the source,
@@ -93,8 +119,8 @@ test('Optimize canonicalizes the six-room ULP source without claiming a visible 
   assert.deepEqual(first.config.future, { kept: true });
   for (const item of first.config.spaces[0].rooms) {
     for (const [x, y] of item.poly) {
-      assert.equal(x, Math.round(x / S) * S);
-      assert.equal(y, Math.round(y / S) * S);
+      assert.equal(x, canonicalizeNumber(Math.round(x / S) * S));
+      assert.equal(y, canonicalizeNumber(Math.round(y / S) * S));
     }
   }
   assert.ok(unionBodies(first.config.spaces[0].rooms.map((item) => item.poly)),
@@ -105,6 +131,50 @@ test('Optimize canonicalizes the six-room ULP source without claiming a visible 
   assert.equal(second.report.coordsCanonicalized, 0);
   assert.deepEqual(second.config, first.config);
   assert.deepEqual(second.layout, first.layout);
+});
+
+test('issue 248 Optimize stays a no-op across the nine-decimal storage round-trip', () => {
+  const inputBefore = structuredClone(storageRoundtripFixture.input);
+  const first = optimizePlans(
+    storageRoundtripFixture.input.config,
+    storageRoundtripFixture.input.layout,
+  );
+
+  assert.deepEqual(storageRoundtripFixture.input, inputBefore, 'preview must keep fixture input');
+  assert.equal(first.changed, true);
+  assert.ok(first.report.coordsCanonicalized > 0);
+  assert.deepEqual(first.config, storageRoundtripFixture.expected.config);
+  assert.deepEqual(first.layout, storageRoundtripFixture.expected.layout);
+  assert.deepEqual(canonicalizeConfigGeometry(first.config), first.config);
+  assert.deepEqual(canonicalizeLayoutGeometry(first.layout), first.layout);
+
+  const inMemorySecond = optimizePlans(first.config, first.layout);
+  assertNoPersistedChanges(inMemorySecond);
+  assert.deepEqual(inMemorySecond.config, first.config);
+  assert.deepEqual(inMemorySecond.layout, first.layout);
+
+  const backendEcho = optimizePlans(
+    canonicalizeConfigGeometry(first.config),
+    canonicalizeLayoutGeometry(first.layout),
+  );
+  assertNoPersistedChanges(backendEcho);
+  assert.deepEqual(backendEcho.config, first.config);
+  assert.deepEqual(backendEcho.layout, first.layout);
+});
+
+test('issue 248 every persisted geometry surface converges at every supported scale', () => {
+  for (const cellCm of [1, 3, 5, 1000]) {
+    const config = structuredClone(coordinateFixture.configInput);
+    config.spaces[0].cell_cm = cellCm;
+    const first = optimizePlans(config, coordinateFixture.layoutInput);
+    assert.deepEqual(canonicalizeConfigGeometry(first.config), first.config, `config ${cellCm}`);
+    assert.deepEqual(canonicalizeLayoutGeometry(first.layout), first.layout, `layout ${cellCm}`);
+
+    const second = optimizePlans(first.config, first.layout);
+    assertNoPersistedChanges(second);
+    assert.deepEqual(second.config, first.config, `config round-trip ${cellCm}`);
+    assert.deepEqual(second.layout, first.layout, `layout round-trip ${cellCm}`);
+  }
 });
 
 test('micro-interval cleanup has a strict half-step boundary at both coordinate scales', () => {

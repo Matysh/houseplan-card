@@ -1,5 +1,5 @@
-// #223: explicit Optimize removes stored ULP noise without claiming a visible
-// move. Exercise the production bundle's Preview → Cancel → Apply → Undo flow.
+// #223/#248: explicit Optimize removes stored ULP noise once and stays a no-op
+// after the backend's nine-decimal write, event reload and cold reload.
 import { launch, checkAll, finish } from './serve.mjs';
 
 const { page, browser } = await launch({ width: 920, height: 840 });
@@ -27,8 +27,25 @@ const out = await page.evaluate(async () => {
     markers: [], settings: {},
   };
   const clone = (value) => JSON.parse(JSON.stringify(value));
-  const isCanonical = (value) => value === Math.round(value / S) * S;
+  const canonicalNumber = (value) => {
+    const sign = value < 0 || Object.is(value, -0) ? -1 : 1;
+    const result = sign * (Math.floor(Math.abs(value) * 1e9 + 0.5) / 1e9);
+    return result === 0 ? 0 : result;
+  };
+  const canonicalConfig = (source) => {
+    const value = clone(source);
+    for (const space of value.spaces || []) {
+      for (const room of space.rooms || []) {
+        if (room.poly) room.poly = room.poly.map(([x, y]) => [canonicalNumber(x), canonicalNumber(y)]);
+      }
+    }
+    return value;
+  };
+  const canonicalLayout = (source) => Object.fromEntries(Object.entries(clone(source))
+    .map(([id, pos]) => [id, { ...pos, x: canonicalNumber(pos.x), y: canonicalNumber(pos.y) }]));
+  const isCanonical = (value) => value === canonicalNumber(value);
   let serverConfig = clone(original), serverLayout = {}, backup = null;
+  let configRev = 1, layoutRev = 1;
   let lastToast = '';
   const sent = [];
   const baseCall = card.hass.callWS.bind(card.hass);
@@ -37,19 +54,27 @@ const out = await page.evaluate(async () => {
     callWS: async (message) => {
       if (message.type === 'houseplan/plan/optimize') {
         sent.push(message.type);
-        backup = { config: clone(serverConfig), layout: clone(serverLayout) };
-        serverConfig = clone(message.config); serverLayout = clone(message.layout);
-        return { ok: true, config_rev: 2, layout_rev: 2, can_undo: true };
+        backup = {
+          config: canonicalConfig(serverConfig), layout: canonicalLayout(serverLayout),
+        };
+        serverConfig = canonicalConfig(message.config);
+        serverLayout = canonicalLayout(message.layout);
+        configRev++; layoutRev++;
+        return { ok: true, config_rev: configRev, layout_rev: layoutRev, can_undo: true };
       }
       if (message.type === 'houseplan/plan/optimize_undo') {
         sent.push(message.type);
         serverConfig = clone(backup.config); serverLayout = clone(backup.layout);
-        return { ok: true, config_rev: 3, layout_rev: 3, can_undo: false };
+        configRev++; layoutRev++;
+        return { ok: true, config_rev: configRev, layout_rev: layoutRev, can_undo: false };
       }
       if (message.type === 'houseplan/config/get')
-        return { config: clone(serverConfig), rev: 3, can_write: true };
+        return {
+          config: clone(serverConfig), rev: configRev, can_write: true,
+          can_optimize_undo: !!backup, undo_kind: backup ? 'optimize' : null,
+        };
       if (message.type === 'houseplan/layout/get')
-        return { layout: clone(serverLayout), rev: 3 };
+        return { layout: clone(serverLayout), rev: layoutRev };
       return baseCall(message);
     },
   };
@@ -83,19 +108,36 @@ const out = await page.evaluate(async () => {
   result.applyUsesOneAtomicWrite = sent.filter((type) => type === 'houseplan/plan/optimize').length === 1;
   result.applyStoresOnlyCanonicalRoomCoordinates = card._serverCfg.spaces[0].rooms
     .every((room) => room.poly.every(([x, y]) => isCanonical(x) && isCanonical(y)));
+  result.applyGeometryEqualsBackendTarget = card._serverCfg.model_version === serverConfig.model_version
+    && JSON.stringify(card._serverCfg.spaces) === JSON.stringify(serverConfig.spaces);
+  result.applyLayoutEqualsBackendTarget = JSON.stringify(card._layout)
+    === JSON.stringify(serverLayout);
   result.applyPreservesUnknownFields = card._serverCfg.spaces[0].future?.kept === true;
   result.toastExplainsZeroMoveCleanup = lastToast.includes('0 elements moved')
     && !lastToast.includes('0 records maintained');
 
+  await Promise.all([card._reloadConfigOnly(true), card._reloadLayoutOnly()]);
   card._openAlignDialog(); await card.updateComplete;
-  result.secondRunIsExactNoOp = card._alignDialog?.changed === false
+  result.serverEventReloadIsExactNoOp = card._alignDialog?.changed === false
+    && card._alignDialog.report.coordsCanonicalized === 0
+    && !card.renderRoot.querySelector('hp-dialog .btn.on');
+  card._alignDialog = null; await card.updateComplete;
+
+  card._serverCfg = null; card._layout = {};
+  card._cfgContentFingerprint = ''; card._layoutContentFingerprint = '';
+  card._loadOk = false;
+  await card._loadFromServer();
+  card._openAlignDialog(); await card.updateComplete;
+  result.coldReloadIsExactNoOp = card._alignDialog?.changed === false
     && card._alignDialog.report.coordsCanonicalized === 0
     && !card.renderRoot.querySelector('hp-dialog .btn.on');
   card._alignDialog = null; await card.updateComplete;
 
   await card._undoPlanOptimization(); await card.updateComplete;
   result.undoUsesServerSnapshot = sent.filter((type) => type === 'houseplan/plan/optimize_undo').length === 1;
-  result.undoRestoresExactNoisyValues = JSON.stringify(card._serverCfg) === JSON.stringify(original);
+  const canonicalOriginal = canonicalConfig(original);
+  result.undoRestoresCanonicalSnapshot = card._serverCfg.model_version === canonicalOriginal.model_version
+    && JSON.stringify(card._serverCfg.spaces) === JSON.stringify(canonicalOriginal.spaces);
   result.undoIsOneDeep = card._canOptimizeUndo === false;
   return result;
 });

@@ -10,6 +10,9 @@
 
 import { alignAllToGrid, type AlignReport } from './align-grid';
 import {
+  canonicalizeConfigGeometry, canonicalizeLayoutGeometry,
+} from './coordinate-canonicalization';
+import {
   DECOR_TEXT_BASE, decorTextScale, liveTextReference, liveTextToken, roomPoly,
 } from './logic';
 import {
@@ -529,36 +532,65 @@ export function optimizePlans(
     if (canonicalAfter !== canonicalBefore) canonicalized++;
   }
 
+  // The storage barrier (#224) is part of Optimize's idempotence contract.
+  // A 1/240 grid node has no finite decimal representation: comparing or
+  // returning the raw binary result would let the backend's nine-decimal
+  // canonical form look dirty again after the update event reloads it (#248).
+  // Canonicalise the complete pair before both the diff and the return so the
+  // preview, durable intent, live stores and next preview all see one target.
+  const persistedConfig = canonicalizeConfigGeometry(config);
+  const persistedLayout = canonicalizeLayoutGeometry(aligned.layout);
+
   // A version marker is bookkeeping, not maintenance by itself. Persist it
   // only alongside a real config/layout transformation; otherwise an already
   // canonical plan would forever offer an Optimize action that changes no
   // user data. Never downgrade a model written by a newer client.
-  const meaningfulChanged = JSON.stringify(config) !== original
-    || JSON.stringify(aligned.layout) !== originalLayout;
+  const meaningfulChanged = JSON.stringify(persistedConfig) !== original
+    || JSON.stringify(persistedLayout) !== originalLayout;
   if (modelFrom < PLAN_MODEL_VERSION && meaningfulChanged) {
-    config.model_version = PLAN_MODEL_VERSION;
+    persistedConfig.model_version = PLAN_MODEL_VERSION;
   }
 
-  const changed = JSON.stringify(config) !== original
-    || JSON.stringify(aligned.layout) !== originalLayout;
-  const modelTo = Number.isInteger(Number(config.model_version))
-    ? Number(config.model_version)
+  const changed = JSON.stringify(persistedConfig) !== original
+    || JSON.stringify(persistedLayout) !== originalLayout;
+  const modelTo = Number.isInteger(Number(persistedConfig.model_version))
+    ? Number(persistedConfig.model_version)
     : modelFrom;
+  // Passes may briefly produce a more precise double which the shared storage
+  // boundary maps straight back to the input. Such internal work is not a
+  // persisted change and must not leak into the user-visible report.
+  const persistedAlignReport: AlignReport = changed ? alignReport : {
+    ...alignReport,
+    moved: 0,
+    coordsCanonicalized: 0,
+    maxShift: 0,
+    maxShiftCm: 0,
+    maxSpace: '',
+    rotated: 0,
+    removedDrafts: 0,
+  };
+  const persistedReferences: SpaceReferenceReport = changed ? references.report : {
+    ...references.report,
+    spaceRefsRemapped: 0,
+    roomRefsRemapped: 0,
+    positionsRemapped: 0,
+    markersDetached: 0,
+  };
   return {
-    config,
-    layout: aligned.layout,
+    config: persistedConfig,
+    layout: persistedLayout,
     report: {
-      ...alignReport,
+      ...persistedAlignReport,
       modelFrom,
       modelTo,
-      migrated,
-      glowSpacesMigrated: migration.glowSpaces,
-      glowRoomsMigrated: migration.glowRooms,
-      canonicalized,
-      wallsMerged,
-      spansMerged,
-      partitionsMerged,
-      ...references.report,
+      migrated: changed ? migrated : 0,
+      glowSpacesMigrated: changed ? migration.glowSpaces : 0,
+      glowRoomsMigrated: changed ? migration.glowRooms : 0,
+      canonicalized: changed ? canonicalized : 0,
+      wallsMerged: changed ? wallsMerged : 0,
+      spansMerged: changed ? spansMerged : 0,
+      partitionsMerged: changed ? partitionsMerged : 0,
+      ...persistedReferences,
     },
     changed,
   };

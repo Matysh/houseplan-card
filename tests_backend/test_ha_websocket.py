@@ -1,4 +1,8 @@
 """WebSocket API tests (CI): layout ops, config rev conflict, not_ready gate."""
+import copy
+import json
+from pathlib import Path
+
 import pytest
 
 
@@ -528,6 +532,64 @@ async def test_optimize_undo_restores_geometry_but_not_legacy_noisy_bits(
     restored_layout = (await runtime.store.async_load())["layout"]
     assert restored_config["spaces"][0]["rooms"][0]["poly"][0][0] == 0.12345679
     assert restored_layout["lamp"]["x"] == -0.12345679
+
+
+async def test_plan_optimize_persists_exact_storage_roundtrip_target(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator, monkeypatch
+) -> None:
+    """#248: intent, normal commit and reads expose one canonical pair."""
+    from custom_components.houseplan.store import get_data
+
+    fixture = json.loads((
+        Path(__file__).parents[1]
+        / "test"
+        / "fixtures"
+        / "optimize-storage-roundtrip.json"
+    ).read_text(encoding="utf-8"))
+    source = fixture["input"]
+    expected = fixture["expected"]
+
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    runtime = get_data(hass)
+    assert runtime is not None
+
+    layout_writes = []
+    real_layout_save = runtime.store.async_save
+
+    async def capture_layout_write(value: dict) -> None:
+        layout_writes.append(copy.deepcopy(value))
+        await real_layout_save(value)
+
+    monkeypatch.setattr(runtime.store, "async_save", capture_layout_write)
+    await client.send_json_auto_id({
+        "type": "houseplan/plan/optimize",
+        "config": source["config"],
+        "layout": source["layout"],
+        "expected_config_rev": 0,
+        "expected_layout_rev": 0,
+    })
+    response = await client.receive_json()
+    assert response["success"]
+    assert response["result"]["config_rev"] == 1
+    assert response["result"]["layout_rev"] == 1
+
+    intent_write = next(
+        item for item in layout_writes if "optimize_pending" in item
+    )
+    pending = intent_write["optimize_pending"]
+    final_config = await runtime.config_store.async_load()
+    final_layout = await runtime.store.async_load()
+
+    assert pending["config"] == expected["config"]
+    assert pending["layout"] == expected["layout"]
+    assert final_config["config"] == expected["config"]
+    assert final_layout["layout"] == expected["layout"]
+    assert "optimize_pending" not in final_layout
+    assert json.dumps(pending["config"], sort_keys=True, separators=(",", ":")) == \
+        json.dumps(final_config["config"], sort_keys=True, separators=(",", ":"))
+    assert json.dumps(pending["layout"], sort_keys=True, separators=(",", ":")) == \
+        json.dumps(final_layout["layout"], sort_keys=True, separators=(",", ":"))
 
 
 async def test_config_set_validates_new_marker_light_links(

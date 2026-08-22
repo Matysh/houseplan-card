@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Repeating “Optimize plans” immediately after a successful run now correctly
+  reports that there is nothing to fix, including after the backend update
+  event or a page reload. Optimize compares and retains the same nine-decimal
+  geometry representation that the integration persists, so the binary
+  `1/240` grid step no longer returns as freshly removed coordinate noise
+  ([#248](https://github.com/Matysh/houseplan-card/issues/248)).
+
 - “Optimize plans” now restores device references left behind by deleted or
   independently imported spaces. Exact import copies keep their positions;
   other active devices safely lose only the missing placement and return via

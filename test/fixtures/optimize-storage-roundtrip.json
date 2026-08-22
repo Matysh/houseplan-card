@@ -1,0 +1,112 @@
+{
+  "input": {
+    "config": {
+      "model_version": 7,
+      "spaces": [
+        {
+          "id": "fine",
+          "title": "Fine grid",
+          "cell_cm": 3,
+          "rooms": [
+            {
+              "id": "fine-room",
+              "name": "Fine room",
+              "poly": [
+                [0.004166666766666667, 0],
+                [0.008333333233333333, 0],
+                [0.008333333233333333, 0.008333333433333333],
+                [0.004166666766666667, 0.008333333433333333]
+              ]
+            }
+          ]
+        },
+        {
+          "id": "regular",
+          "title": "Regular grid",
+          "cell_cm": 5,
+          "rooms": [
+            {
+              "id": "regular-room",
+              "name": "Regular room",
+              "poly": [
+                [0.1000000001, 0.1],
+                [0.1999999999, 0.1],
+                [0.1999999999, 0.2000000001],
+                [0.1000000001, 0.2000000001]
+              ]
+            }
+          ]
+        }
+      ],
+      "markers": [],
+      "settings": {}
+    },
+    "layout": {
+      "sensor.fine": {
+        "s": "fine",
+        "x": 0.004166666766666667,
+        "y": 0.008333333433333333
+      },
+      "sensor.regular": {
+        "s": "regular",
+        "x": 0.1000000001,
+        "y": 0.1999999999
+      }
+    }
+  },
+  "expected": {
+    "config": {
+      "model_version": 7,
+      "spaces": [
+        {
+          "id": "fine",
+          "title": "Fine grid",
+          "cell_cm": 3,
+          "rooms": [
+            {
+              "id": "fine-room",
+              "name": "Fine room",
+              "poly": [
+                [0.004166667, 0],
+                [0.008333333, 0],
+                [0.008333333, 0.008333333],
+                [0.004166667, 0.008333333]
+              ]
+            }
+          ]
+        },
+        {
+          "id": "regular",
+          "title": "Regular grid",
+          "cell_cm": 5,
+          "rooms": [
+            {
+              "id": "regular-room",
+              "name": "Regular room",
+              "poly": [
+                [0.1, 0.1],
+                [0.2, 0.1],
+                [0.2, 0.2],
+                [0.1, 0.2]
+              ]
+            }
+          ]
+        }
+      ],
+      "markers": [],
+      "settings": {}
+    },
+    "layout": {
+      "sensor.fine": {
+        "s": "fine",
+        "x": 0.004166667,
+        "y": 0.008333333
+      },
+      "sensor.regular": {
+        "s": "regular",
+        "x": 0.1,
+        "y": 0.2
+      }
+    }
+  }
+}

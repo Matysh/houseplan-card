@@ -33,6 +33,12 @@ FIXTURE = (
     / "fixtures"
     / "coordinate-canonicalization.json"
 )
+OPTIMIZE_ROUNDTRIP_FIXTURE = (
+    Path(__file__).parents[1]
+    / "test"
+    / "fixtures"
+    / "optimize-storage-roundtrip.json"
+)
 
 
 def _fixture() -> dict:
@@ -74,6 +80,17 @@ def test_backend_schemas_apply_the_same_allowlist() -> None:
     assert CONFIG_SCHEMA(fixture["configInput"]) == fixture["configExpected"]
     assert LAYOUT_SCHEMA(fixture["layoutInput"]) == fixture["layoutExpected"]
     assert POS_SCHEMA(fixture["layoutInput"]["virtual"]) == fixture["layoutExpected"]["virtual"]
+
+
+def test_optimize_roundtrip_fixture_has_one_backend_canonical_target() -> None:
+    """#248: Python consumes the same cross-runtime target as the Node test."""
+    fixture = json.loads(OPTIMIZE_ROUNDTRIP_FIXTURE.read_text(encoding="utf-8"))
+    source = fixture["input"]
+    expected = fixture["expected"]
+    assert canonicalize_config_geometry(source["config"]) == expected["config"]
+    assert canonicalize_layout_geometry(source["layout"]) == expected["layout"]
+    assert CONFIG_SCHEMA(source["config"]) == expected["config"]
+    assert LAYOUT_SCHEMA(source["layout"]) == expected["layout"]
 
 
 @pytest.mark.asyncio

@@ -2246,6 +2246,18 @@ require hands on real hardware — they remain for the human pass.
       test_ha_import_export; mutations: `schema-quantization-removed`,
       `frontend-writes-raw-coords`, `quantization-hits-allowlist`,
       `import-path-bypasses-schema`; pre-release: golden verify].
+- [ ] **Optimize remains idempotent across storage and reload (#248)**: its
+      final config/layout pair equals the shared nine-decimal writer target;
+      a second run in memory, after schema/storage round-trip, after update
+      events and after a cold reload returns `changed:false`, zero change
+      counters and a deep-equal pair. The shared two-scale fixture is consumed
+      independently by Node and Python; the Optimize handler records the exact
+      pair in pending and both final stores, and startup recovery converges on
+      it [unit: plan-optimizer + coordinate-canonicalization; backend:
+      test_coordinate_canonicalization + test_ha_websocket +
+      test_ha_import_export; auto: smoke_optimize_coordinate_canonicalization;
+      mutations: `optimize-storage-boundary-removed`,
+      `optimize-config-storage-half-raw`, `optimize-layout-storage-half-raw`].
 - [ ] Optimizer migration safety: legacy decor width/text size is clamped to
       the backend schema, `fill: true` receives explicit fill style, invalid
       legacy `plan_scale` is preserved for repair, an already canonical plan is

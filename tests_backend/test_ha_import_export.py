@@ -1627,6 +1627,49 @@ async def test_setup_recovers_durable_import_pair(
     assert "optimize_pending" not in layout_data
 
 
+async def test_setup_recovers_exact_optimize_storage_roundtrip_pair(
+    hass: HomeAssistant,
+) -> None:
+    """#248: startup recovery converges on the same shared canonical target."""
+    fixture = json.loads((
+        Path(__file__).parents[1]
+        / "test"
+        / "fixtures"
+        / "optimize-storage-roundtrip.json"
+    ).read_text(encoding="utf-8"))
+    expected = fixture["expected"]
+
+    entry = await _setup(hass)
+    rt = get_data(hass)
+    assert rt is not None
+    await rt.config_store.async_save({"config": DEFAULT_CONFIG, "rev": 1})
+    await rt.store.async_save({
+        "layout": {},
+        "rev": 1,
+        "optimize_backup": {"sentinel": True},
+        "optimize_pending": {
+            "kind": "optimize",
+            "config": expected["config"],
+            "layout": expected["layout"],
+            "config_rev": 2,
+            "layout_rev": 2,
+            "clear_backup": False,
+        },
+    })
+
+    assert await hass.config_entries.async_reload(entry.entry_id)
+    await hass.async_block_till_done()
+    recovered = get_data(hass)
+    assert recovered is not None
+    config_data = await recovered.config_store.async_load()
+    layout_data = await recovered.store.async_load()
+    assert config_data == {"config": expected["config"], "rev": 2}
+    assert layout_data["layout"] == expected["layout"]
+    assert layout_data["rev"] == 2
+    assert layout_data["optimize_backup"] == {"sentinel": True}
+    assert "optimize_pending" not in layout_data
+
+
 async def test_apply_rechecks_plan_file_under_the_write_lock(
     hass: HomeAssistant, tmp_path: Path,
 ) -> None:

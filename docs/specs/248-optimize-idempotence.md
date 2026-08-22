@@ -5,7 +5,7 @@
 - Оценка: пользовательская ценность 6/10 · ценность для разработки 8/10 · сложность 4/10 · риск 4/10
 - Issue: [#248](https://github.com/Matysh/houseplan-card/issues/248)
 - Ветка: `issue/248-optimize-idempotence`
-- Статус ТЗ: первая редакция, на ревью
+- Статус ТЗ: утверждено (SPEC-REVIEW-248-r1 green), реализовано в ветке задачи
 
 Канонические документы: `docs/SCOPE.md`, `docs/CANVAS.md`,
 `docs/CONFIG-COMPATIBILITY.md`, `docs/TOUCH-SUPPORT.md`,
@@ -250,8 +250,8 @@ Implementation-коммит получает `User-Visible: yes` и включа
 - `docs/CHANGELOG.md` и `docs/CHANGELOG.ru.md` со ссылкой на #248;
 - `docs/CANVAS.md` — идемпотентность через storage/reload boundary;
 - `docs/CONFIG-COMPATIBILITY.md` — композиция Optimize с девятизнаковым writer;
-- `docs/USER-GUIDE.ru.md` — второй запуск после reload сообщает, что чинить
-  нечего;
+- `docs/USER-GUIDE.ru.md` — существующая фраза об идемпотентности точечно
+  уточнена границей reload (Low из SPEC-REVIEW-248-r1);
 - `docs/TESTING.md` — shared fixture, backend pair/recovery и mutation coverage;
 - `docs/STATUS.md` — только если текущая unreleased-сводка перечисляет
   исправления этого уровня;
