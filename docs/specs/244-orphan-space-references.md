@@ -6,8 +6,8 @@
 - Ветка: `issue/244-orphan-space-references`
 - Статус ТЗ: на ревью
 
-Канонические документы: `docs/SCOPE.md`, `docs/USER-GUIDE.md`,
-`docs/USER-GUIDE.ru.md`, `docs/CONFIG-COMPATIBILITY.md`,
+Канонические документы: `docs/SCOPE.md`, `docs/TOUCH-SUPPORT.md`,
+`docs/USER-GUIDE.md`, `docs/USER-GUIDE.ru.md`, `docs/CONFIG-COMPATIBILITY.md`,
 `docs/TESTING.md`, `docs/specs/050-config-export-import.md`,
 `docs/specs/199-optimize-geometry-preflight.md`.
 
@@ -326,11 +326,18 @@ Delete blocker и editor warning доступны текстом и `role=alert`
 binding Lit и не интерпретируются как HTML. UI ограничивает summary первыми
 десятью id и сообщает остаток, поэтому forged legacy data не раздувает диалог.
 
+Touch/kiosk наследуют действующий контракт `docs/TOUCH-SUPPORT.md` без нового
+жеста или интерактивного пути. Восстановленный маркер использует тот же
+поддерживаемый View/Static render и тот же tap-контракт на desktop, телефоне и
+планшете-киоске; его доступность не зависит от возможности открыть редактор.
+Optimize, редактор пространства и редактор карточки остаются desktop-first
+best effort на touch, поэтому новые editor controls не расширяют touch-гарантию.
+
 ## 14. Acceptance criteria
 
 | AC | Критерий | Доказательство |
 |---|---|---|
-| AC1 | Fixture с активным marker `space=f1`, без рабочей Area и без пространства `f1` не рисуется на исходном `dev`; после Optimize маркер сохраняет binding/settings, теряет только dead placement, появляется в первом пространстве и доступен редактору. | `buildDevices` + `plan-optimizer` regression unit и production-bundle smoke. |
+| AC1 | Fixture с активным marker `space=f1`, без рабочей Area и без пространства `f1` не рисуется на исходном `dev`; после Optimize маркер сохраняет binding/settings, теряет только dead placement и появляется в первом пространстве одинаково в desktop View, touch/kiosk View и Static. | `buildDevices` + `plan-optimizer` regression unit и production-bundle smoke с desktop/touch/static viewport. |
 | AC2 | При единственном `space_f1_<8hex>` marker, его matching layout, room id, room label и vacuum segment map переводятся по exact signature без изменения координат; второй прогон `changed=false` и все reference counters равны нулю. | Table-driven optimizer unit + idempotence unit. |
 | AC3 | Существующий `f1`, два signature-кандидата, id длиннее 35 и неверный suffix не запускают signature-remap. Активный marker проходит Area либо detach, removed tombstone не переносится по догадке. | Negative/boundary unit + signature mutation. |
 | AC4 | Device/entity с effective registry Area записывает существующее пространство/комнату; manual-room-without-Area не возвращается в registry Area. Virtual marker проходит signature либо detach. | Production placement resolver unit matrix. |
@@ -443,4 +450,3 @@ backend delete-защиты не должен восстанавливать у�
    modal не добавляется.
 6. UI показывает первые десять dead id, report хранит полный отсортированный
    массив.
-
