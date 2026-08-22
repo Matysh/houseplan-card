@@ -30,10 +30,34 @@ const out = await page.evaluate(async () => {
   configSpace.partitions = [{
     id: 'iso-smoke-wall', a: [0.15, 0.12], b: [0.85, 0.12], cm: 15,
   }];
+  configSpace.openings = [
+    { id: 'iso-centred-door', type: 'door', x: 0.325, y: 0.12, angle: 0, length: 0.08,
+      host: { kind: 'partition', id: 'iso-smoke-wall', t: 0.25 } },
+    { id: 'iso-flipped-window', type: 'window', x: 0.5, y: 0.12, angle: 0, length: 0.08,
+      flip_v: true, host: { kind: 'partition', id: 'iso-smoke-wall', t: 0.5 } },
+    { id: 'iso-centred-gate', type: 'gate', x: 0.675, y: 0.12, angle: 0, length: 0.08,
+      flip_v: true, host: { kind: 'partition', id: 'iso-smoke-wall', t: 0.75 } },
+  ];
   card._cfgEpoch++;
   card.requestUpdate();
   await card.updateComplete;
   await enable();
+  const openingBases = card._isoSource()?.build().openings || [];
+  const basis = (id) => openingBases.find((opening) => opening.id === id);
+  const centredDoor = basis('iso-centred-door');
+  const flippedWindow = basis('iso-flipped-window');
+  const centredGate = basis('iso-centred-gate');
+  const wallAxisY = 0.12 * 1000;
+  const halfDepth = (15 / card._cellCm) * card._gridPitch / 2;
+  result.isoOpeningDefaultCentred = centredDoor?.leaves.length === 1
+    && centredDoor.leaves.every((leaf) => Math.abs(leaf.hinge[1] - wallAxisY) < 1e-6);
+  result.isoWindowFlipUsesCanonicalEdge = flippedWindow?.leaves.length === 2
+    && flippedWindow.leaves.every(
+      (leaf) => Math.abs(leaf.hinge[1] - wallAxisY - halfDepth) < 1e-6,
+    );
+  result.isoGateFlipKeepsCentredOrigin = centredGate?.leaves.length === 2
+    && centredGate.leaves.every((leaf) => Math.abs(leaf.hinge[1] - wallAxisY) < 1e-6)
+    && centredGate.leaves.every((leaf) => Math.abs(leaf.turnDeg) === 10);
   const toggle = root().querySelector('[data-hp="projection-toggle"]');
   result.labsSnapshotFrozen = Object.isFrozen(window.__hpLabs)
     && JSON.stringify(window.__hpLabs) === '["iso"]';

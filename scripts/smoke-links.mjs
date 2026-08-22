@@ -28,6 +28,15 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    // #242: pure placement is called inside shared SVG/Iso renderers, while
+    // browser smokes can only inspect the resulting transforms and bases.
+    symbols: ['openingSymbolOffset'],
+    smokes: ['smoke_isometric_contract.mjs', 'smoke_wall_thickness.mjs'],
+    because: 'wall-thickness smoke proves the default and saved-flip SVG translations; '
+      + 'isometric smoke inspects door/window/gate bases from the same helper, but neither '
+      + 'browser bundle exposes the helper name in its test steps',
+  },
+  {
     // #234: единый резолвер толщины отрезка цепочки. Смок перехода между
     // толщинами не называет ни `chainSegmentCms`, ни `_draftSegmentCms` — он
     // рисует стены инструментом и проверяет, что кладка на стыке толщин
