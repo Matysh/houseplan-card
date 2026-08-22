@@ -1,0 +1,42 @@
+commit abfaae3e38b86769c39692d62dd146424ad0255c
+Author: Matysh <s.matyunin@justbusiness.site>
+Date:   Sat Aug 22 09:45:15 2026 +0300
+
+    feat: measure resize labels between wall faces
+    
+    Issue: #233
+    User-Visible: yes
+
+diff --git a/docs/CHANGELOG.md b/docs/CHANGELOG.md
+index a9ae244..be221a9 100644
+--- a/docs/CHANGELOG.md
++++ b/docs/CHANGELOG.md
+@@ -2,6 +2,15 @@
+ 
+ ## Unreleased
+ 
++- Resizing a room now reports the distance between wall faces, the number a tape
++  measure gives: a 300 cm span between 15 cm walls reads 285 cm. The area label
++  was already computed from the floor, so one bubble used to carry two
++  conventions and neither number could be checked against anything. A passage or
++  a side open to the next room keeps its full length, because there is no face to
++  measure from. Area still subtracts columns and partitions, so length times
++  length may differ from it — that gap is furniture in the room, not a change of
++  ruler ([#233](https://github.com/Matysh/houseplan-card/issues/233)).
++
+ - A chain of walls now stores the thickness it was drawn with. A segment whose
+   thickness was not recorded — which happened while the toolbar field was being
+   edited between segments — used to be previewed at the drawn value and saved at
+diff --git a/docs/USER-GUIDE.md b/docs/USER-GUIDE.md
+index 3adaa08..c4d57ef 100644
+--- a/docs/USER-GUIDE.md
++++ b/docs/USER-GUIDE.md
+@@ -295,7 +295,7 @@ Other operations edit existing geometry:
+ |---|---|
+ | Merge | Joins adjacent rooms; a dialog chooses the surviving identity, name and area |
+ | Split | Cuts a room from one wall to another; the larger part keeps the original room |
+-| Resize | Moves a wall with shared geometry or scales a room by corner handles |
++| Resize | Moves a wall with shared geometry or scales a room by corner handles. Live labels report **inner** dimensions — the clear distance between wall faces, the number a tape measure gives — and the room area |
+ | Thickness | Changes one physical span or every wall of a room |
+ | Delete room | Deletes only the selected room after confirmation |
+ 

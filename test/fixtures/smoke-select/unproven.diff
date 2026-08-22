@@ -1,0 +1,10 @@
+diff --git a/src/wall-thickness.ts b/src/wall-thickness.ts
+index 1111111..2222222 100644
+--- a/src/wall-thickness.ts
++++ b/src/wall-thickness.ts
+@@ -2508,7 +2508,7 @@
+-export function openingInnerFaceOffsetFromIndex(
++export function openingInnerFaceOffsetFromIndex(
+   index: OpeningWallIndex,
+-  const piece = centrePiece(selected);
++  const piece = tunnelFacePath(selected);

@@ -123,6 +123,20 @@ export const MUTANTS = [
     }],
   },
   {
+    id: 'smoke-select-drops-registered-link',
+    guard: 'node --test --test-name-pattern="держится на зарегистрированной связи" '
+      + 'test/smoke-select.test.mjs',
+    because: 'связь «изменённый контракт → смок, который его не называет» доказать поиском '
+      + 'нельзя, и держится она только на реестре: без записи выборка по диффу #234 снова '
+      + 'промолчит о smoke_wall_thickness_transition — том самом классе смоков, на котором '
+      + '#234 потерял регресс (#241)',
+    patches: [{
+      file: 'scripts/smoke-links.mjs',
+      find: "    symbols: ['chainSegmentCms', 'wallChainSegments', '_draftSegmentCms', '_closingWallCm'],",
+      replace: '    symbols: [],',
+    }],
+  },
+  {
     id: 'inner-span-ignores-neighbour-thickness',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="innerEdgeSpan measures between wall faces" '
