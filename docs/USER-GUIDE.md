@@ -276,6 +276,11 @@ scale and which room metrics are visible.
 Room cards are positioned and scaled on the plan. View renders only the metrics
 enabled for that space.
 
+Deleting a space is blocked while any active device still points to the space,
+one of its rooms or a saved position on it. Move or delete those devices first;
+then the confirmed delete removes the space-owned layout. Plan images and
+attachments are not deleted automatically.
+
 ![Room card with temperature, LQI and light state](images/08-room-card.png)
 
 <!-- docs-section: plan-tools -->
@@ -597,9 +602,15 @@ space: ground
 
 ## 19. Plan maintenance
 
-Optimization compacts old off-grid geometry and unused layout records while
-preserving rooms, bindings and supported settings. It does not delete plan
-images or attachments merely because nothing currently references them.
+Optimization compacts old off-grid geometry and repairs the plan's reference
+graph while preserving rooms, bindings and supported settings. An exact
+independent-import signature restores the copied space, room and positions. If
+there is no exact copy, an active real device follows its unambiguous HA Area;
+otherwise only its missing placement and stale coordinates are detached, so
+the marker becomes available on a valid plan without losing its settings.
+Unknown layout and vacuum mappings are preserved and reported for manual
+attention. It does not delete plan images or attachments merely because
+nothing currently references them.
 
 Optimization creates one server-side undo point. Any later edit makes that undo
 stale, so create a Home Assistant backup before a large maintenance operation.
@@ -617,6 +628,9 @@ until confirmation.
 
 A full import replaces the model and creates one undo point. A space import
 assigns new internal IDs and adds the copy without replacing global settings.
+When that exact import map matches orphan references already present in the
+target, the preview reports them and Apply restores them together with the
+space.
 Internal uploaded files are not embedded in JSON; an import to another HA
 instance must explicitly detach those links.
 
@@ -670,6 +684,9 @@ another space. Remove `floor` to restore normal navigation.
 Unpinned `custom:houseplan-card` instances may still use different
 `default_floor` values. That option is only the initial/fallback choice; the
 last selected space, a valid `#space=` link or normal navigation may replace it.
+If the saved id no longer exists, runtime still opens the first valid space and
+the visual card editor shows the raw missing id with an inline warning until a
+valid choice is made.
 
 - configuration, rooms, Background and device layout are shared server data;
 - `floor` is a permanent per-card navigation authority, while `default_floor`

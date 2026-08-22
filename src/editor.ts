@@ -1,12 +1,14 @@
 /** Card configuration editor (Lovelace GUI). */
 import { LitElement, html, nothing } from 'lit';
 import { langOf, t, type Lang } from './i18n';
+import { invalidDefaultFloor } from './card-editor-validation';
 
 class HouseplanCardEditor extends LitElement {
   public hass?: any;
   private _config?: any;
   private _spaces: { value: string; label: string }[] | null = null;
   private _spacesLoading = false;
+  private _spacesAuthoritative = false;
 
   static properties = {
     hass: { attribute: false },
@@ -28,8 +30,10 @@ class HouseplanCardEditor extends LitElement {
         value: s.id,
         label: s.title || s.id,
       }));
+      this._spacesAuthoritative = true;
     } catch {
       this._spaces = [];
+      this._spacesAuthoritative = false;
     } finally {
       this._spacesLoading = false;
     }
@@ -70,6 +74,12 @@ class HouseplanCardEditor extends LitElement {
       floorOptions.push({ value: currentFloor, label: currentFloor });
     }
     floorOptions.push(...spaces);
+    const currentDefault = typeof this._config?.default_floor === 'string'
+      ? this._config.default_floor : '';
+    const defaultFloorOptions = [...spaces];
+    if (currentDefault && !spaces.some((space) => space.value === currentDefault)) {
+      defaultFloorOptions.unshift({ value: currentDefault, label: currentDefault });
+    }
     return [
       { name: 'title', selector: { text: {} } },
       {
@@ -79,7 +89,7 @@ class HouseplanCardEditor extends LitElement {
       spaces.length
         ? {
             name: 'default_floor',
-            selector: { select: { mode: 'dropdown', options: spaces } },
+            selector: { select: { mode: 'dropdown', options: defaultFloorOptions } },
           }
         : { name: 'default_floor', selector: { text: {} } },
       {
@@ -120,13 +130,25 @@ class HouseplanCardEditor extends LitElement {
       kiosk: t(L, 'editor.kiosk'),
       cycle: t(L, 'editor.cycle'),
     };
-    return html`<ha-form
-      .hass=${this.hass}
-      .data=${this._formData}
-      .schema=${this._schema}
-      .computeLabel=${(s: any) => labels[s.name] || s.name}
-      @value-changed=${this._valueChanged}
-    ></ha-form>`;
+    const schema = this._schema;
+    const missingDefault = invalidDefaultFloor(
+      this._config, this._spaces, this._spacesAuthoritative,
+    );
+    const form = (part: any[]) => html`<ha-form
+        .hass=${this.hass}
+        .data=${this._formData}
+        .schema=${part}
+        .computeLabel=${(s: any) => labels[s.name] || s.name}
+        @value-changed=${this._valueChanged}
+      ></ha-form>`;
+    return html`
+      ${form(schema.slice(0, 3))}
+      ${missingDefault ? html`<div class="default-floor-error" role="alert"
+        style="color:var(--error-color,#db4437);margin:-4px 0 12px;overflow-wrap:anywhere">
+        ${t(L, 'editor.default_floor_missing', { id: missingDefault })}
+      </div>` : nothing}
+      ${form(schema.slice(3))}
+    `;
   }
 
   private _valueChanged(ev: CustomEvent): void {

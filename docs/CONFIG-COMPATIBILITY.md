@@ -178,8 +178,27 @@ The historical space and room token `fill_mode: glow` remains accepted on read
 indefinitely. Runtime projects it into an ordinary inherited data fill plus an
 enabled Glow overlay; explicit `glow_enabled` / room `glow` booleans always win.
 A normal edit that replaces the legacy token writes the resolved boolean in the
-same operation. Optimize Plans applies the same lossless, idempotent model-v6
+same operation. Optimize Plans applies the same lossless, idempotent model-v7
 migration while preserving unknown sibling settings.
+
+## Space reference repair (model v7)
+
+Missing `marker.space`, `marker.room_id`, `vacuum.segment_map` and layout
+ownership remain readable by the permissive persisted schemas. They are never
+rewritten during load or an unrelated Save. Explicit Optimize may map an
+untruncated exact `space_<old>_<8 hex>` / `room_<old>_<8 hex>` import signature,
+or use the production HA Area placement for an active real marker. Without
+proof it removes only the active marker's missing placement and stale position;
+unknown layout and nested vacuum mappings remain stored and reported. The pass
+is data-driven, idempotent and runs even when `model_version` is already 7.
+
+A one-space import uses its known id map (not a heuristic) to repair matching
+orphan target references when the original space id is absent. Full restore is
+unchanged. Space deletion now uses a revision-guarded config/layout transaction
+and refuses active marker dependencies; removed tombstones keep their metadata
+and lose only placement fields owned by the deleted space. Older clients can
+read every repaired candidate because the schemas and field shapes did not
+change.
 
 Current `fill_mode` additionally accepts `custom`. Its optional color is stored
 as `{c:'#RRGGBB',a:0..1}` in `space.settings.custom_fill` and, for an explicit

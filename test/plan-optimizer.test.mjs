@@ -304,6 +304,23 @@ test('model version bookkeeping does not claim a data migration', () => {
   assert.equal(result.report.migrated, 0);
 });
 
+test('issue 244 reference repair is part of exact Optimize candidate and bumps model version', () => {
+  const input = {
+    model_version: PLAN_MODEL_VERSION - 1,
+    spaces: [{ id: 'home', title: 'Home', view_box: [0, 0, 1, 1], rooms: [] }],
+    markers: [{ id: 'm', binding: 'virtual', space: 'gone', icon: 'mdi:sofa' }],
+    settings: {},
+  };
+  const result = optimizePlans(input, { m: { s: 'gone', x: 0.25, y: 0.5 } });
+  assert.equal(result.changed, true);
+  assert.equal(result.config.model_version, PLAN_MODEL_VERSION);
+  assert.equal(result.config.markers[0].space, undefined);
+  assert.equal(result.config.markers[0].icon, 'mdi:sofa');
+  assert.equal(result.layout.m, undefined);
+  assert.equal(result.report.markersDetached, 1);
+  assert.equal(result.report.migrated, 0, 'reference counters stay separate from migration');
+});
+
 test('optimizer never downgrades a model from a newer client', () => {
   const future = PLAN_MODEL_VERSION + 1;
   const result = optimizePlans({

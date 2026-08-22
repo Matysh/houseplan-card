@@ -28,6 +28,18 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    // #244: pure repair/validation helpers are bundled behind editor actions;
+    // the smoke observes their persisted candidate and rendered explanations.
+    symbols: [
+      'repairSpaceReferences', 'collectSpaceMarkerDependencies',
+      'createSpaceDeletionCandidate', 'invalidDefaultFloor',
+    ],
+    smokes: ['smoke_orphan_space_references.mjs'],
+    because: 'the production-bundle smoke proves the Optimize candidate, live marker rebuild, '
+      + 'delete blocker and card-editor warning, while those UI surfaces do not expose the '
+      + 'pure helper names at runtime',
+  },
+  {
     // #242: pure placement is called inside shared SVG/Iso renderers, while
     // browser smokes can only inspect the resulting transforms and bases.
     symbols: ['openingSymbolOffset'],

@@ -4,7 +4,7 @@
 - Тип: bug · приоритет P2 · ценность 8/10 · сложность/риск 5/10 и 5/10
 - Issue: [#244](https://github.com/Matysh/houseplan-card/issues/244)
 - Ветка: `issue/244-orphan-space-references`
-- Статус ТЗ: на ревью
+- Статус ТЗ: утверждено (SPEC-REVIEW-244-r2 green)
 
 Канонические документы: `docs/SCOPE.md`, `docs/TOUCH-SUPPORT.md`,
 `docs/USER-GUIDE.md`, `docs/USER-GUIDE.ru.md`, `docs/CONFIG-COMPATIBILITY.md`,

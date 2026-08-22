@@ -1,7 +1,7 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 37;
+export const GOLDEN_MATRIX_VERSION = 38;
 
 const stage = { capture: 'stage', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0005 } };
 const page = { capture: 'page', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0008 } };
@@ -570,5 +570,22 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     viewport: { width: 900, height: 760 }, ...page },
   { id: 'optimize-preflight-dialog-light-ru', fixture: 'visual', space: 'golden-geometry',
     dialog: 'optimize-preflight', language: 'ru', theme: 'light',
+    viewport: { width: 900, height: 760 }, ...page },
+  { id: 'optimize-orphan-references-dark-en', fixture: 'visual', space: 'golden-geometry',
+    dialog: 'optimize-orphan-references', language: 'en', theme: 'dark',
+    markerOverrides: [{
+      id: 'golden-light-two', binding: 'virtual', space: 'removed-floor',
+      room_id: 'removed-room', icon: 'mdi:lightbulb',
+    }],
+    layoutOverrides: {
+      'golden-light-two': { s: 'removed-floor', x: 0.35, y: 0.72 },
+      'golden-light-one': { s: 'unresolved-floor', x: 0.20, y: 0.34 },
+    },
+    viewport: { width: 900, height: 760 }, ...page },
+  { id: 'card-editor-invalid-default-floor-light-en', fixture: 'visual',
+    cardEditorInvalidDefaultFloor: 'removed-floor', language: 'en', theme: 'light',
+    viewport: { width: 900, height: 760 }, ...page },
+  { id: 'card-editor-invalid-default-floor-dark-ru', fixture: 'visual',
+    cardEditorInvalidDefaultFloor: 'removed-floor', language: 'ru', theme: 'dark',
     viewport: { width: 900, height: 760 }, ...page },
 ]);

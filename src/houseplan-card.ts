@@ -187,6 +187,7 @@ import {
   clampCanvasR, clampCanvasN, type ContentItem, type Rect,
 } from './space-geometry';
 import { optimizePlans, type OptimizeReport } from './plan-optimizer';
+import { collectSpaceMarkerDependencies } from './space-deletion';
 import {
   checkOptimizeGeometry,
   geometryOpenCuts,
@@ -1920,6 +1921,8 @@ class HouseplanCard extends LitElement {
     /** Projected text is separate so an untouched imperial edit stays lossless. */
     cellCmInput?: string;
     cellCmTouched?: boolean;
+    /** Set only after Delete is activated with dependent active markers. */
+    deleteBlockers?: number;
     busy: boolean;
   } | null = null;
   private _keyHandler = (e: KeyboardEvent) => this._onKey(e);
@@ -14458,16 +14461,47 @@ class HouseplanCard extends LitElement {
     const d = this._spaceDialog;
     if (!d || d.mode !== 'edit') return;
     const sp = this._serverCfg!.spaces.find((x: any) => x.id === d.spaceId);
+    const dependencies = collectSpaceMarkerDependencies(
+      this._serverCfg, this._layout || {}, d.spaceId || '',
+    );
+    if (dependencies.count) {
+      this._spaceDialog = { ...d, deleteBlockers: dependencies.count };
+      return;
+    }
     if (!confirm(this._t('confirm.delete_space', { title: sp.title }))) return;
-    this._serverCfg!.spaces = this._serverCfg!.spaces.filter((x: any) => x.id !== d.spaceId);
+    this._spaceDialog = { ...d, deleteBlockers: 0, busy: true };
     try {
-      await this._saveConfigNow();
+      if (this._saveConfigDebounced.pending()) this._saveConfigDebounced.flush();
+      if (this._persistLayout.pending()) this._persistLayout.flush();
+      await this._writeChain;
+      const response: any = await this.hass.callWS({
+        type: 'houseplan/space/delete',
+        space_id: d.spaceId,
+        expected_config_rev: this._cfgRev,
+        expected_layout_rev: this._layoutRev,
+      });
+      const [configResponse, layoutResponse] = await Promise.all([
+        this.hass.callWS({ type: 'houseplan/config/get' }),
+        this.hass.callWS({ type: 'houseplan/layout/get' }),
+      ]);
+      this._adoptStructuralResponses(configResponse, layoutResponse);
+      this._cfgRev = response?.config_rev ?? this._cfgRev;
+      this._layoutRev = response?.layout_rev ?? this._layoutRev;
       this._spaceDialog = null;
       if (this._space === d.spaceId) this._commitSpace(this._serverCfg!.spaces[0]?.id || '');
       this._regSignature = '';
       this._maybeRebuildDevices();
       this._showToast(this._t('toast.space_deleted'));
     } catch (e: any) {
+      if (e?.code === 'conflict' || e?.code === 'space_in_use') {
+        await Promise.all([this._reloadConfigOnly(true), this._reloadLayoutOnly()]);
+      }
+      if (this._spaceDialog) {
+        const refreshed = collectSpaceMarkerDependencies(
+          this._serverCfg, this._layout || {}, d.spaceId || '',
+        );
+        this._spaceDialog = { ...this._spaceDialog, busy: false, deleteBlockers: refreshed.count };
+      }
       this._showToast(this._t('toast.delete_failed', { err: this._errText(e) }));
     }
   }
@@ -14939,7 +14973,12 @@ class HouseplanCard extends LitElement {
   private _openAlignDialog = (): void => {
     if (!this._norm || !this._serverCfg) return;
     const spaces = this._serverCfg.spaces || [];
-    const r = optimizePlans(this._serverCfg, this._layout || {});
+    const effectiveAreaByMarker = Object.fromEntries(
+      this._devices
+        .filter((device) => !device.virtual && !!device.area)
+        .map((device) => [device.id, device.area]),
+    );
+    const r = optimizePlans(this._serverCfg, this._layout || {}, { effectiveAreaByMarker });
     const preflight = r.changed ? this._checkOptimizeGeometry(r.config) : null;
     // The maximum geometry shift is an UPPER BOUND, not a sample. The run
     // measured every element in the centimetres of ITS OWN space — converting
@@ -14993,6 +15032,8 @@ class HouseplanCard extends LitElement {
       this._cfgEpoch++;
       this._modelCache = null;
       this._frame = null;
+      this._regSignature = '';
+      this._maybeRebuildDevices();
       this._cacheSnapshot();
       this._alignDialog = null;
       this.requestUpdate();
@@ -15001,6 +15042,8 @@ class HouseplanCard extends LitElement {
         m: String(d.report.migrated + d.report.canonicalized
           + d.report.coordsCanonicalized + d.report.wallsMerged + d.report.spansMerged
           + d.report.partitionsMerged),
+        r: String(d.report.spaceRefsRemapped + d.report.roomRefsRemapped
+          + d.report.positionsRemapped + d.report.markersDetached),
       }));
     } catch (e: any) {
       if (this._alignDialog) this._alignDialog = { ...this._alignDialog, busy: false };
@@ -15041,6 +15084,8 @@ class HouseplanCard extends LitElement {
       this._cfgEpoch++;
       this._modelCache = null;
       this._frame = null;
+      this._regSignature = '';
+      this._maybeRebuildDevices();
       this._cacheSnapshot();
       this.requestUpdate();
       this._showToast(this._t(undoKind === 'import' ? 'backup.import_undone' : 'gs.optimize_undone'));
@@ -15219,6 +15264,7 @@ class HouseplanCard extends LitElement {
       this._showToast(this._t(result.kind === 'space' ? 'backup.space_done' : 'backup.full_done', {
         spaces: String(outcomeCounts?.spaces || 0), rooms: String(outcomeCounts?.rooms || 0),
         markers: String(outcomeCounts?.markers || 0),
+        refs: String(result.repaired_target_refs || 0),
       }));
     } catch (error: any) {
       if (error?.code === 'conflict' && this._backupImportDialog?.token) {
@@ -15335,6 +15381,9 @@ class HouseplanCard extends LitElement {
           })}</div>` : nothing}
           ${p.dropped_marker_links ? html`<div class="backupwarn">${this._t('backup.dropped_marker_links', {
             n: String(p.dropped_marker_links),
+          })}</div>` : nothing}
+          ${p.repaired_target_refs ? html`<div class="rhint">${this._t('backup.repaired_target_refs', {
+            n: String(p.repaired_target_refs),
           })}</div>` : nothing}
           ${p.kind === 'full' ? html`
             <div class="backupwarn">${this._t('backup.replace_warning')}</div>
@@ -15991,6 +16040,11 @@ class HouseplanCard extends LitElement {
     const more = remaining
       ? this._t('gs.align_preflight_more', { n: String(remaining) })
       : '';
+    const repaired = r.spaceRefsRemapped + r.roomRefsRemapped
+      + r.positionsRemapped + r.markersDetached;
+    const referenceWarnings = r.positionsUnresolved + r.nestedRefsUnresolved;
+    const visibleDeadIds = r.deadSpaceIds.slice(0, 10).join(', ');
+    const remainingDeadIds = Math.max(0, r.deadSpaceIds.length - 10);
     return html`<hp-dialog .hass=${this.hass} .title=${this._t('gs.align_title')} icon="mdi:broom"
       dismiss-on-scrim @hp-close=${() => (this._alignDialog = null)}>
         <div class="body">
@@ -16027,6 +16081,20 @@ class HouseplanCard extends LitElement {
                   })}</p>`
                 : nothing}
               <div class="rhint">${this._t('gs.align_warn')}</div>`}
+          ${repaired
+            ? html`<p class="alignmsg">${this._t('gs.optimize_references', {
+                spaces: String(r.spaceRefsRemapped), rooms: String(r.roomRefsRemapped),
+                positions: String(r.positionsRemapped), detached: String(r.markersDetached),
+              })}</p>`
+            : nothing}
+          ${referenceWarnings || r.deadSpaceIds.length
+            ? html`<div class="rhint" role="alert">${this._t('gs.optimize_reference_warning', {
+                positions: String(r.positionsUnresolved), nested: String(r.nestedRefsUnresolved),
+                ids: visibleDeadIds || '—',
+                more: remainingDeadIds
+                  ? this._t('gs.optimize_reference_more', { n: String(remainingDeadIds) }) : '',
+              })}</div>`
+            : nothing}
         </div>
         <div class="row" slot="footer">
           <span class="spacer"></span>
@@ -20872,11 +20940,16 @@ class HouseplanCard extends LitElement {
             })}
             <span>${this._t('space.glow_enabled')}</span>
           </label>
+          ${d.deleteBlockers
+            ? html`<div class="backuperror" role="alert">${this._t('space.delete_blocked', {
+                n: String(d.deleteBlockers),
+              })}</div>`
+            : nothing}
         </div>
         <div class="row dialog-action-footer" slot="footer">
           ${d.mode === 'edit'
             ? html`<div class="dialog-action-group dialog-action-danger">
-                <button class="btn danger" @click=${this._deleteSpace}>
+                <button class="btn danger" @click=${this._deleteSpace} ?disabled=${d.busy}>
                   <ha-icon icon="mdi:delete-outline"></ha-icon>${this._t('btn.delete')}
                 </button>
               </div>`

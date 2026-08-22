@@ -12,6 +12,9 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 from pytest_homeassistant_custom_component.typing import WebSocketGenerator
 
 from custom_components.houseplan.const import CONF_ADMIN_ONLY, DOMAIN
+from custom_components.houseplan.websocket_api import (
+    _space_delete_candidate, _space_marker_dependencies,
+)
 
 
 async def _setup(hass: HomeAssistant) -> MockConfigEntry:
@@ -20,6 +23,117 @@ async def _setup(hass: HomeAssistant) -> MockConfigEntry:
     assert await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
     return entry
+
+
+def _space(space_id: str, room_id: str) -> dict:
+    return {
+        "id": space_id, "title": space_id, "view_box": [0, 0, 1, 1],
+        "rooms": [{
+            "id": room_id, "name": room_id,
+            "poly": [[0, 0], [1, 0], [1, 1], [0, 1]],
+        }],
+        "plan_url": None,
+    }
+
+
+def test_issue_244_space_delete_dependency_and_tombstone_candidate() -> None:
+    config = {
+        "spaces": [_space("f1", "r1"), _space("f2", "r2")],
+        "markers": [
+            {"id": "all", "binding": "virtual", "space": "f1", "room_id": "r1"},
+            {"id": "position", "binding": "virtual", "space": "f2"},
+            {
+                "id": "removed", "binding": "entity:light.old", "removed": True,
+                "space": "f1", "room_id": "r1", "name": "Kept",
+            },
+        ],
+        "settings": {},
+    }
+    layout = {"all": {"s": "f1"}, "position": {"s": "f1"}, "removed": {"s": "f1"}}
+    assert _space_marker_dependencies(config, layout, "f1") == ["all", "position"]
+
+    config["markers"] = [config["markers"][2]]
+    candidate, candidate_layout, dependencies, removed_layout = _space_delete_candidate(
+        config, layout, "f1",
+    )
+    assert dependencies == []
+    assert [item["id"] for item in candidate["spaces"]] == ["f2"]
+    assert candidate["markers"][0] == {
+        "id": "removed", "binding": "entity:light.old", "removed": True, "name": "Kept",
+    }
+    assert candidate_layout == {}
+    assert removed_layout == 3
+    assert config["markers"][0]["space"] == "f1"
+
+
+async def test_issue_244_space_delete_is_authoritative_and_revision_guarded(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator,
+) -> None:
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    config = {
+        "spaces": [_space("f1", "r1"), _space("f2", "r2")],
+        "markers": [{"id": "device", "binding": "virtual", "space": "f1"}],
+        "settings": {},
+    }
+    await client.send_json_auto_id({
+        "type": "houseplan/config/set", "config": config, "expected_rev": 0,
+    })
+    config_set = await client.receive_json()
+    assert config_set["success"]
+    await client.send_json_auto_id({
+        "type": "houseplan/layout/set", "layout": {
+            "device": {"s": "f1", "x": 0.2, "y": 0.3},
+            "rl_r1": {"s": "f1", "x": 0.5, "y": 0.5},
+        },
+    })
+    layout_set = await client.receive_json()
+    assert layout_set["success"]
+
+    await client.send_json_auto_id({
+        "type": "houseplan/space/delete", "space_id": "f1",
+        "expected_config_rev": config_set["result"]["rev"],
+        "expected_layout_rev": layout_set["result"]["rev"],
+    })
+    blocked = await client.receive_json()
+    assert not blocked["success"] and blocked["error"]["code"] == "space_in_use"
+
+    await client.send_json_auto_id({"type": "houseplan/config/get"})
+    unchanged_config = await client.receive_json()
+    await client.send_json_auto_id({"type": "houseplan/layout/get"})
+    unchanged_layout = await client.receive_json()
+    assert unchanged_config["result"]["rev"] == config_set["result"]["rev"]
+    assert unchanged_layout["result"]["rev"] == layout_set["result"]["rev"]
+
+    config["markers"] = [{
+        "id": "device", "binding": "virtual", "space": "f1", "removed": True,
+        "name": "Kept tombstone",
+    }]
+    await client.send_json_auto_id({
+        "type": "houseplan/config/set", "config": config,
+        "expected_rev": unchanged_config["result"]["rev"],
+    })
+    config_set = await client.receive_json()
+    assert config_set["success"]
+    await client.send_json_auto_id({
+        "type": "houseplan/space/delete", "space_id": "f1",
+        "expected_config_rev": config_set["result"]["rev"],
+        "expected_layout_rev": unchanged_layout["result"]["rev"],
+    })
+    deleted = await client.receive_json()
+    assert deleted["success"]
+    assert deleted["result"]["removed_layout"] == 2
+
+    await client.send_json_auto_id({"type": "houseplan/config/get"})
+    final_config = (await client.receive_json())["result"]
+    await client.send_json_auto_id({"type": "houseplan/layout/get"})
+    final_layout = (await client.receive_json())["result"]
+    assert [item["id"] for item in final_config["config"]["spaces"]] == ["f2"]
+    assert final_config["config"]["markers"][0] == {
+        "id": "device", "binding": "virtual", "removed": True,
+        "name": "Kept tombstone",
+    }
+    assert final_layout["layout"] == {}
 
 
 async def test_layout_roundtrip(hass: HomeAssistant, hass_ws_client: WebSocketGenerator) -> None:

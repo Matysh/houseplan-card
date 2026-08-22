@@ -25,9 +25,12 @@ import {
   setWallThickness, type WallEntry,
 } from './wall-thickness';
 import { applyOpeningMoves, mergeCollinearPartitions, spaceMergeGeometry } from './wall-merge';
+import {
+  repairSpaceReferences, type SpaceReferenceRepairContext, type SpaceReferenceReport,
+} from './space-reference-repair';
 
 /** Bump when a new lossless maintenance pass is added. */
-export const PLAN_MODEL_VERSION = 6;
+export const PLAN_MODEL_VERSION = 7;
 const DEFAULT_CELL_CM = 5;
 const CELL_CM_MIN = 0.1;
 const CELL_CM_MAX = 1000;
@@ -36,7 +39,7 @@ const DECOR_WIDTH_CM_MAX = 100;
 const DECOR_TEXT_CM_MIN = 0.1;
 const DECOR_TEXT_CM_MAX = 2000;
 
-export interface OptimizeReport extends AlignReport {
+export interface OptimizeReport extends AlignReport, SpaceReferenceReport {
   modelFrom: number;
   modelTo: number;
   /** Legacy fields converted or removed. */
@@ -370,8 +373,13 @@ const migrateLosslessly = (config: any): {
  * Produce the exact config/layout pair that the confirmation dialog previews.
  * Calling it again on its own output is a no-op.
  */
-export function optimizePlans(configIn: any, layoutIn: Record<string, any>): OptimizeResult {
-  const config = clone(configIn || { spaces: [], markers: [], settings: {} });
+export function optimizePlans(
+  configIn: any,
+  layoutIn: Record<string, any>,
+  context: SpaceReferenceRepairContext = {},
+): OptimizeResult {
+  const references = repairSpaceReferences(configIn, layoutIn, context);
+  const config = references.config;
   const original = JSON.stringify(configIn || {});
   const originalLayout = JSON.stringify(layoutIn || {});
   const modelFrom = Number.isInteger(Number(config.model_version))
@@ -398,7 +406,7 @@ export function optimizePlans(configIn: any, layoutIn: Record<string, any>): Opt
   }
 
   const beforeSpaces = clone(config.spaces || []);
-  const aligned = alignAllToGrid(config.spaces || [], layoutIn || {});
+  const aligned = alignAllToGrid(config.spaces || [], references.layout);
   config.spaces = aligned.spaces;
   const alignReport: AlignReport = { ...aligned.report };
 
@@ -550,6 +558,7 @@ export function optimizePlans(configIn: any, layoutIn: Record<string, any>): Opt
       wallsMerged,
       spansMerged,
       partitionsMerged,
+      ...references.report,
     },
     changed,
   };

@@ -961,7 +961,7 @@ its configured space.
   foundation for #36. Legacy `fill_mode: 'glow'` remains a permanent read
   token and projects to data fill `none` plus Glow `true` unless an explicit
   boolean wins. Normal settings/room saves materialise that projection in the
-  same write; Optimize Plans performs the equivalent idempotent model-v6
+  same write; Optimize Plans performs the equivalent idempotent model-v7
   migration. Render order is paper → resolved data room/tunnel fill → conditional
   pointer-free Glow base for rooms whose resolver result is absent or fully
   transparent → radial

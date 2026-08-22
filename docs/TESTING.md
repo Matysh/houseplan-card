@@ -1392,7 +1392,7 @@ separately promised workflows:
       `fill_mode: glow` has identical effective state; legacy space `none`
       remains losslessly readable and projects to Custom when edited; explicit booleans win,
       normal Save materialises both fields atomically and Optimize Plans makes
-      the same idempotent model-v6 migration without deleting unknown settings.
+      the same idempotent model-v7 migration without deleting unknown settings.
       Glow-off everywhere creates no base/tunnel/pool SVG layer; a dynamic mode
       without usable HA data falls back to base darkness instead of bright
       paper; static room cards show the same data/base projection but no live pools
@@ -2216,6 +2216,20 @@ require hands on real hardware — they remain for the human pass.
       `optimize-preflight-active-space-only`,
       `optimize-preflight-accepts-null`,
       `optimize-preflight-renders-apply-on-failure`].
+- [ ] **Missing space references recover without losing a marker (#244)**:
+      exact import signatures remap space, room, marker/room-label positions
+      and vacuum segments; Area remap and detach delete stale coordinates but
+      preserve the marker record; ambiguous/truncated signatures and opaque
+      layout are never guessed. Preview/Apply/Undo use one exact candidate and
+      show remaining debt even for a no-op. Space import repairs target refs by
+      its known map. Space delete deduplicates active marker blockers, rechecks
+      both revisions under the backend lock and removes owned layout without
+      deleting tombstone metadata. A missing `default_floor` remains raw and
+      gains a RU/EN inline warning after spaces load
+      [unit: space-reference-repair, plan-optimizer, space-deletion,
+      card-editor-validation; backend: test_ha_import_export,
+      test_ha_websocket; pre-release: targeted browser smoke and light/dark
+      golden].
 - [ ] **Every write prevents new ULP coordinate noise (#224)**: config/layout
       schema, import, direct storage writers, startup recovery and maintenance
       Undo produce the same nine-decimal allow-listed geometry as the frontend.

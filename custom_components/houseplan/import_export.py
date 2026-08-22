@@ -822,6 +822,56 @@ def _orphan_marker(key: str, manifest: dict[str, Any] | None, space_id: str, use
     }
 
 
+def _repair_target_space_refs(
+    current_config: dict[str, Any],
+    current_layout: dict[str, Any],
+    old_space_id: str,
+    new_space_id: str,
+    old_room_ids: dict[str, str],
+) -> tuple[dict[str, Any], dict[str, Any], int]:
+    """Apply the exact map of this import to pre-existing orphan target refs."""
+    config = _json_copy(current_config)
+    layout = _json_copy(current_layout)
+    if any(str(space.get("id")) == old_space_id for space in config.get("spaces") or []):
+        return config, layout, 0
+
+    repaired = 0
+    for marker in config.get("markers") or []:
+        if marker.get("space") == old_space_id:
+            marker["space"] = new_space_id
+            repaired += 1
+        room_id = marker.get("room_id")
+        if room_id is not None and str(room_id) in old_room_ids:
+            marker["room_id"] = old_room_ids[str(room_id)]
+            repaired += 1
+        vacuum = marker.get("vacuum")
+        segment_map = vacuum.get("segment_map") if isinstance(vacuum, dict) else None
+        if isinstance(segment_map, dict):
+            for key, room_id in list(segment_map.items()):
+                mapped = old_room_ids.get(str(room_id))
+                if mapped is not None:
+                    segment_map[key] = mapped
+                    repaired += 1
+
+    # Rewrite ownership before rekeying labels. A valid destination wins a
+    # collision inside the target; the imported document itself is overlaid
+    # later and has final priority for its own label position.
+    for position in layout.values():
+        if isinstance(position, dict) and position.get("s") == old_space_id:
+            position["s"] = new_space_id
+            repaired += 1
+    for old_room_id, new_room_id in old_room_ids.items():
+        old_key = "rl_" + old_room_id
+        if old_key not in layout:
+            continue
+        new_key = "rl_" + new_room_id
+        if new_key not in layout:
+            layout[new_key] = layout[old_key]
+        del layout[old_key]
+        repaired += 1
+    return config, layout, repaired
+
+
 def build_space_merge(
     document: dict[str, Any],
     current_config: dict[str, Any],
@@ -859,6 +909,9 @@ def build_space_merge(
     old_room_ids = {
         old: new for old, new in id_map.items() if old != old_space_id and new.startswith("room_")
     }
+    target_config, target_layout, repaired_target_refs = _repair_target_space_refs(
+        current_config, current_layout, old_space_id, new_space_id, old_room_ids,
+    )
     for room in space.get("rooms") or []:
         if room.get("open_to"):
             room["open_to"] = [old_room_ids.get(str(value), str(value)) for value in room["open_to"]]
@@ -884,7 +937,7 @@ def build_space_merge(
         if isinstance(item, dict)
     }
     incoming_bindings = _binding_inventory(incoming, incoming_layout, manifest)
-    current_bindings = _binding_inventory(current_config, current_layout)
+    current_bindings = _binding_inventory(target_config, target_layout)
     duplicate = incoming_bindings & current_bindings
     marker_map: dict[str, str] = {}
     output_markers: list[dict[str, Any]] = []
@@ -991,14 +1044,14 @@ def build_space_merge(
                 virtualized += 1
         output_layout[new_key] = {**pos, "s": new_space_id}
 
-    merged_config = _json_copy(current_config)
+    merged_config = target_config
     merged_config.setdefault("spaces", []).append(space)
     merged_config.setdefault("markers", []).extend(output_markers)
     dropped_marker_links += _drop_invalid_import_marker_links(
         merged_config,
         clean_ids={str(marker.get("id")) for marker in output_markers},
     )
-    merged_layout = {**_json_copy(current_layout), **output_layout}
+    merged_layout = {**target_layout, **output_layout}
     if len(merged_config.get("spaces") or []) > MAX_SPACES \
             or len(merged_config.get("markers") or []) > MAX_MARKERS \
             or len(merged_layout) > MAX_LAYOUT:
@@ -1034,6 +1087,7 @@ def build_space_merge(
         "virtualized": virtualized,
         "orphan_markers": len(output_markers) - len(marker_map),
         "dropped_marker_links": dropped_marker_links,
+        "repaired_target_refs": repaired_target_refs,
     }
 
 

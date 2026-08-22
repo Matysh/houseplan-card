@@ -41,6 +41,49 @@ import { fileURLToPath } from 'node:url';
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 export const MUTANTS = [
   {
+    id: 'orphan-space-detach-disabled',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="detaches only dead active placement" '
+      + 'test/space-reference-repair.test.mjs',
+    because: 'an active marker with no exact copy or usable Area must lose only its dead space '
+      + 'field; retaining that one field is the original invisibility bug and must be caught '
+      + 'without relying on rendering (#244)',
+    patches: [{
+      file: 'src/space-reference-repair.ts',
+      find: '        } else {\n          delete marker.space;\n          targetSpace = null;\n'
+        + '          report.markersDetached++;\n        }',
+      replace: '        } else {\n          targetSpace = null;\n'
+        + '          report.markersDetached++;\n        }',
+    }],
+  },
+  {
+    id: 'orphan-space-ambiguous-signature-guessed',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="ambiguous, truncated and malformed" '
+      + 'test/space-reference-repair.test.mjs',
+    because: 'choosing the first of two independent import copies moves a device between plans '
+      + 'by array order; exact signature repair is safe only when the candidate is unique (#244)',
+    patches: [{
+      file: 'src/space-reference-repair.ts',
+      find: ': (spaceSignatures.get(oldId)?.length === 1 ? spaceSignatures.get(oldId)![0] : null)',
+      replace: ': (spaceSignatures.get(oldId)?.[0] || null)',
+    }],
+  },
+  {
+    id: 'orphan-space-area-keeps-stale-position',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="Area remap uses a unique production Area" '
+      + 'test/space-reference-repair.test.mjs',
+    because: 'an Area proves the destination room but not a coordinate transform between plans; '
+      + 'keeping the deleted-plan x/y silently teleports the restored device (#244)',
+    patches: [{
+      file: 'src/space-reference-repair.ts',
+      find: '        delete layout[markerId];\n        handledLayout.add(markerId);',
+      replace: '        layout[markerId] = { ...position, s: targetSpace || positionSpace };\n'
+        + '        handledLayout.add(markerId);',
+    }],
+  },
+  {
     id: 'chain-thickness-falls-back-to-default',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="chainSegmentCms fills a gap" '

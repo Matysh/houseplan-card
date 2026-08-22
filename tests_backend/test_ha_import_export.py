@@ -56,7 +56,7 @@ def _enable_custom_integrations(enable_custom_integrations):
 
 def _config() -> dict:
     return {
-        "model_version": 6,
+        "model_version": PLAN_MODEL_VERSION,
         "spaces": [{
             "id": "ground", "title": "Ground", "view_box": [0, 0, 1, 1],
             "rooms": [{"id": "living", "name": "Living", "poly": [[0, 0], [1, 0], [1, 1]]}],
@@ -510,7 +510,7 @@ def test_full_export_has_versioned_envelope_and_live_layout(tmp_path: Path) -> N
     )
     assert document["format"] == "houseplan-export"
     assert document["export_version"] == 1
-    assert document["model_version"] == 6
+    assert document["model_version"] == PLAN_MODEL_VERSION
     assert "model_version" not in document["payload"]["config"]
     assert document["source_fingerprint"].startswith("sha256:")
     assert set(document["payload"]["layout"]) == {"lamp"}
@@ -1060,6 +1060,55 @@ def test_space_remap_covers_marker_id_layout_and_vacuum_segment_map(tmp_path: Pa
     assert marker["id"] != "lamp"
     assert marker["vacuum"]["segment_map"] == {"12": imported_room}
     assert marker["id"] in layout and "lamp" not in layout
+
+
+def test_issue_244_space_import_repairs_existing_target_refs_with_exact_map(tmp_path: Path) -> None:
+    document = _document(tmp_path, "space")
+    current = {
+        "spaces": [],
+        "markers": [{
+            "id": "target-vac", "binding": "virtual", "space": "ground",
+            "room_id": "living", "vacuum": {"segment_map": {"12": "living"}},
+        }],
+        "settings": {},
+    }
+    current_layout = {
+        "target-vac": {"s": "ground", "x": 0.2, "y": 0.3},
+        "rl_living": {"s": "ground", "x": 0.6, "y": 0.7},
+    }
+
+    merged, layout, details = build_space_merge(
+        document, current, current_layout, "skip",
+    )
+    imported = next(space for space in merged["spaces"] if space["id"] == details["space_id"])
+    imported_room = imported["rooms"][0]["id"]
+    marker = next(marker for marker in merged["markers"] if marker["id"] == "target-vac")
+
+    assert marker["space"] == details["space_id"]
+    assert marker["room_id"] == imported_room
+    assert marker["vacuum"]["segment_map"] == {"12": imported_room}
+    assert layout["target-vac"] == {
+        "s": details["space_id"], "x": 0.2, "y": 0.3,
+    }
+    assert "rl_living" not in layout
+    assert layout["rl_" + imported_room]["s"] == details["space_id"]
+    assert details["repaired_target_refs"] == 6
+
+
+def test_issue_244_space_import_does_not_repair_target_while_source_exists(tmp_path: Path) -> None:
+    document = _document(tmp_path, "space")
+    current = _config()
+    current_layout = {"lamp": {"s": "ground", "x": 0.2, "y": 0.3}}
+
+    merged, layout, details = build_space_merge(
+        document, current, current_layout, "skip",
+    )
+
+    marker = next(marker for marker in merged["markers"] if marker["id"] == "lamp")
+    assert marker["space"] == "ground"
+    assert marker["room_id"] == "living"
+    assert layout["lamp"]["s"] == "ground"
+    assert details["repaired_target_refs"] == 0
 
 
 def test_space_merge_remaps_every_space_owned_id_and_room_link(tmp_path: Path) -> None:

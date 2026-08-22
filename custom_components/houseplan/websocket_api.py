@@ -142,6 +142,7 @@ def async_register(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, ws_config_set)
     websocket_api.async_register_command(hass, ws_plan_optimize)
     websocket_api.async_register_command(hass, ws_plan_optimize_undo)
+    websocket_api.async_register_command(hass, ws_space_delete)
     websocket_api.async_register_command(hass, ws_plan_set)
     websocket_api.async_register_command(hass, ws_plans_list)
     websocket_api.async_register_command(hass, ws_plans_delete)
@@ -508,6 +509,7 @@ async def ws_import_apply(hass: HomeAssistant, connection, msg: dict[str, Any]) 
         "layout_rev": new_layout_rev,
         "counts": details.get("counts", {}),
         "space_id": details.get("space_id"),
+        "repaired_target_refs": details.get("repaired_target_refs", 0),
         "can_undo": kind == "full",
     })
 
@@ -1350,6 +1352,170 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
 
 
 # ---------------- whole-plan maintenance ----------------
+
+
+def _space_marker_dependencies(
+    config: dict[str, Any], layout: dict[str, Any], space_id: str,
+) -> list[str]:
+    """Active marker ids that make deleting a space unsafe (deduplicated)."""
+    space = next(
+        (item for item in config.get("spaces") or [] if item.get("id") == space_id),
+        None,
+    )
+    room_ids = {
+        str(room.get("id")) for room in (space or {}).get("rooms") or []
+        if room.get("id") is not None
+    }
+    dependencies = {
+        str(marker.get("id"))
+        for marker in config.get("markers") or []
+        if marker.get("removed") is not True
+        and marker.get("id") is not None
+        and (
+            marker.get("space") == space_id
+            or (
+                marker.get("room_id") is not None
+                and str(marker.get("room_id")) in room_ids
+            )
+            or (layout.get(str(marker.get("id"))) or {}).get("s") == space_id
+        )
+    }
+    return sorted(dependencies)
+
+
+def _space_delete_candidate(
+    config: dict[str, Any], layout: dict[str, Any], space_id: str,
+) -> tuple[dict[str, Any], dict[str, Any], list[str], int]:
+    """Return a pure exact pair; blockers leave both inputs unchanged."""
+    candidate_config = json.loads(json.dumps(config))
+    candidate_layout = json.loads(json.dumps(layout))
+    dependencies = _space_marker_dependencies(candidate_config, candidate_layout, space_id)
+    if dependencies:
+        return candidate_config, candidate_layout, dependencies, 0
+    space = next(
+        (item for item in candidate_config.get("spaces") or []
+         if item.get("id") == space_id),
+        None,
+    )
+    room_ids = {
+        str(room.get("id")) for room in (space or {}).get("rooms") or []
+        if room.get("id") is not None
+    }
+    candidate_config["spaces"] = [
+        item for item in candidate_config.get("spaces") or []
+        if item.get("id") != space_id
+    ]
+    for marker in candidate_config.get("markers") or []:
+        if marker.get("removed") is not True:
+            continue
+        if marker.get("space") == space_id:
+            marker.pop("space", None)
+        if (marker.get("room_id") is not None
+                and str(marker.get("room_id")) in room_ids):
+            marker.pop("room_id", None)
+    removed_layout = 0
+    for key in list(candidate_layout):
+        position = candidate_layout.get(key)
+        if isinstance(position, dict) and position.get("s") == space_id:
+            del candidate_layout[key]
+            removed_layout += 1
+    return candidate_config, candidate_layout, dependencies, removed_layout
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): "houseplan/space/delete",
+        vol.Required("space_id"): str,
+        vol.Required("expected_config_rev"): int,
+        vol.Required("expected_layout_rev"): int,
+    }
+)
+@websocket_api.async_response
+async def ws_space_delete(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
+    """Delete one unoccupied space as a crash-recoverable config/layout pair."""
+    if not _check_write(hass, connection):
+        connection.send_error(msg["id"], "unauthorized", "Only editors may delete spaces")
+        return
+    rt = _runtime(hass, connection, msg["id"])
+    if rt is None:
+        return
+    space_id = msg["space_id"]
+    if not valid_space_id(space_id):
+        connection.send_error(msg["id"], "invalid_space_id", "Invalid space id")
+        return
+
+    try:
+        async with rt.write_lock:
+            config_data = await rt.config_store.async_load() or {}
+            layout_data = await rt.store.async_load() or {}
+            config_rev = int(config_data.get("rev", 0))
+            layout_rev = int(layout_data.get("rev", 0))
+            if (msg["expected_config_rev"] != config_rev
+                    or msg["expected_layout_rev"] != layout_rev):
+                connection.send_error(msg["id"], "conflict", "Plan changed elsewhere")
+                return
+            current_config = config_data.get("config") or DEFAULT_CONFIG
+            current_layout = layout_data.get("layout") or {}
+            if not any(
+                item.get("id") == space_id for item in current_config.get("spaces") or []
+            ):
+                connection.send_error(msg["id"], "space_not_found", "Space no longer exists")
+                return
+            target_config, target_layout, dependencies, removed_layout = (
+                _space_delete_candidate(current_config, current_layout, space_id)
+            )
+            if dependencies:
+                connection.send_error(
+                    msg["id"], "space_in_use",
+                    f"Space is still used by {len(dependencies)} active marker(s)",
+                )
+                return
+            target_config = CONFIG_SCHEMA(target_config)
+            target_layout = LAYOUT_SCHEMA(target_layout)
+            new_config_rev = config_rev + 1
+            new_layout_rev = layout_rev + 1
+            original_metadata = _layout_metadata(layout_data)
+            final_metadata = {
+                key: value for key, value in original_metadata.items()
+                if key not in {_OPTIMIZE_BACKUP, _OPTIMIZE_PENDING, "repair_backup", "geom_pending"}
+            }
+            pending = {
+                "kind": "space_delete",
+                "config": canonicalize_config_geometry(target_config),
+                "layout": canonicalize_layout_geometry(target_layout),
+                "config_rev": new_config_rev,
+                "layout_rev": new_layout_rev,
+                "final_metadata": final_metadata,
+            }
+            rollback = {
+                "kind": "space_delete_rollback",
+                "config": canonicalize_config_geometry(current_config),
+                "layout": canonicalize_layout_geometry(current_layout),
+                "config_rev": config_rev,
+                "layout_rev": layout_rev,
+                "final_metadata": original_metadata,
+            }
+            await _commit_import_pair(rt, pending, rollback)
+    except ImportFailure as err:
+        _send_import_error(connection, msg["id"], err)
+        return
+    except vol.Invalid as err:
+        connection.send_error(msg["id"], "invalid_config", str(err))
+        return
+    except Exception:  # noqa: BLE001
+        _LOGGER.exception("House Plan space delete failed")
+        connection.send_error(msg["id"], "commit_failed", "Space delete failed")
+        return
+
+    hass.bus.async_fire("houseplan_config_updated", {"rev": new_config_rev})
+    hass.bus.async_fire("houseplan_layout_updated", {"rev": new_layout_rev})
+    _refresh_trail_recorder(hass)
+    connection.send_result(msg["id"], {
+        "ok": True,
+        "config_rev": new_config_rev,
+        "layout_rev": new_layout_rev,
+        "removed_layout": removed_layout,
+    })
 
 
 @websocket_api.websocket_command(

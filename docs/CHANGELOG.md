@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- “Optimize plans” now restores device references left behind by deleted or
+  independently imported spaces. Exact import copies keep their positions;
+  other active devices safely lose only the missing placement and return via
+  their HA Area or the first space. The preview reports repaired and unresolved
+  references. Spaces that still contain active devices cannot be deleted, a
+  space import repairs matching target references, and the card editor warns
+  when `default_floor` names a missing space
+  ([#244](https://github.com/Matysh/houseplan-card/issues/244)).
+
 ## v1.67.0-beta.2 — 2026-08-22
 
 - Door, window and gate symbols now sit on the centreline of thick room and

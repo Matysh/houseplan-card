@@ -429,6 +429,7 @@ export async function prepareGoldenScenario(page, scenario) {
       await frame();
     };
     window.__goldenCard?.remove?.();
+    window.__goldenEditor?.remove?.();
     window.__card?.remove?.();
     localStorage.clear();
     history.replaceState(null, '', scenario.labs?.length
@@ -691,7 +692,20 @@ export async function prepareGoldenScenario(page, scenario) {
       card.requestUpdate();
       await card.updateComplete;
     }
-    if (scenario.dialog === 'optimize-preflight') {
+    if (scenario.dialog === 'optimize-orphan-references') {
+      card._openAlignDialog();
+      await card.updateComplete;
+      const dialog = card.renderRoot.querySelector('hp-dialog');
+      const report = card._alignDialog?.report;
+      const body = dialog?.querySelector('.body');
+      if (!body || report?.markersDetached !== 1 || report?.positionsUnresolved !== 1
+          || !body.textContent.includes(card._t('gs.optimize_references', {
+            spaces: '0', rooms: '0', positions: '0', detached: '1',
+          }))
+          || !body.textContent.includes('unresolved-floor')) {
+        throw new Error('golden orphan-reference Optimize dialog is incomplete');
+      }
+    } else if (scenario.dialog === 'optimize-preflight') {
       const names = [
         'Ground floor', 'Garage', card._t('gs.align_preflight_space', { n: '3' }), 'Attic',
       ];
@@ -886,6 +900,51 @@ export async function prepareGoldenScenario(page, scenario) {
       trigger.click();
       await picker.updateComplete;
     }
+    if (scenario.cardEditorInvalidDefaultFloor) {
+      if (!customElements.get('ha-form')) {
+        customElements.define('ha-form', class GoldenHaForm extends HTMLElement {
+          set data(value) { this._data = value; this._render(); }
+          set schema(value) { this._schema = value; this._render(); }
+          set computeLabel(value) { this._computeLabel = value; this._render(); }
+          connectedCallback() { this._render(); }
+          _render() {
+            if (!this.isConnected || !this._schema || !this._data) return;
+            this.replaceChildren(...this._schema.map((field) => {
+              const row = document.createElement('label');
+              row.style.cssText = 'display:grid;gap:6px;margin:0 0 14px;color:var(--primary-text-color);font-size:14px';
+              const title = document.createElement('span');
+              title.textContent = this._computeLabel?.(field) || field.name;
+              const input = document.createElement('div');
+              input.dataset.field = field.name;
+              input.textContent = String(this._data[field.name] ?? '');
+              input.style.cssText = 'min-height:22px;padding:10px 12px;border:1px solid var(--divider-color);border-radius:4px;background:var(--card-background-color);font-size:16px';
+              row.append(title, input);
+              return row;
+            }));
+          }
+        });
+      }
+      const raw = scenario.cardEditorInvalidDefaultFloor;
+      const editor = document.createElement('houseplan-card-editor');
+      editor.setConfig({
+        type: 'custom:houseplan-card', title: 'Golden invalid floor',
+        language: scenario.language || 'en', default_floor: raw,
+      });
+      editor.hass = hassFor();
+      editor.style.cssText = 'display:block;box-sizing:border-box;width:720px;margin:24px auto;padding:24px;background:var(--ha-card-background);border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.35)';
+      host.replaceChildren(editor);
+      window.__goldenEditor = editor;
+      await until(() => editor._spacesAuthoritative === true);
+      await editor.updateComplete;
+      await frame();
+      const alert = editor.renderRoot.querySelector('[role="alert"]');
+      const field = [...editor.renderRoot.querySelectorAll('ha-form')]
+        .map((form) => form.querySelector('[data-field="default_floor"]'))
+        .find(Boolean);
+      if (!alert?.textContent?.includes(raw) || field?.textContent !== raw) {
+        throw new Error('golden invalid default_floor editor warning is incomplete');
+      }
+    }
     if (scenario.deviceClassOverrides) {
       for (const [id, classes] of Object.entries(scenario.deviceClassOverrides)) {
         const marker = card.renderRoot.querySelector(`[data-hp="device"][data-id="${CSS.escape(id)}"]`);
@@ -930,6 +989,8 @@ export async function prepareGoldenScenario(page, scenario) {
         .some((help) => help.renderRoot?.querySelector('.trigger')?.getAttribute('aria-expanded') === 'true'),
       editorTray: card.renderRoot.querySelector('.editor-secondary-host.open .editor-secondary')
         ?.className || '',
+      defaultFloorWarning: window.__goldenEditor?.renderRoot
+        ?.querySelector('[role="alert"]')?.textContent?.trim() || '',
       ...(scenario.sunRayPixels ? { sun: {
         raw: card.hass?.states?.['sun.sun']?.attributes || null,
         plan: card._planHass?.states?.['sun.sun']?.attributes || null,
