@@ -43,11 +43,15 @@
       decor colour before/after hover and over Glow base. Restoring the old DOM
       order makes those probes red [auto: `smoke_decor_layer_order.mjs`;
       mutation: `decor-restored-below-room-fills`].
-- [ ] Light/opaque-hover and Dark/Glow-base golden scenes contain the five
-      supported decor types and semantic probes in both rooms and the shared
-      doorway. Reviewed baselines are accepted only from the Linux release
-      artifact [golden: `decor-over-opaque-hover-light`,
-      `decor-over-glow-base-dark`].
+- [ ] The complete #231 golden impact set is reviewed before baseline
+      acceptance. The two dedicated Light/opaque-hover and Dark/Glow-base
+      scenes contain all five decor types and semantic probes in both rooms and
+      the shared doorway. The three existing large-house scenes also change
+      because their dense decor grid now renders above Glow-base room fills.
+      Reviewed baselines are accepted only from the Linux release artifact
+      [golden: `decor-over-opaque-hover-light`,
+      `decor-over-glow-base-dark`, `isometric-large-warm-remount-dark`,
+      `large-house-zoom-250-dark`, `large-house-warm-remount-dark`].
 - [ ] `hide_decor`, the Background editor override and stored config remain
       unchanged; no per-object under-plan compatibility flag is introduced.
 
