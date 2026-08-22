@@ -49,14 +49,31 @@ jobs:
         run: npm run build
       - name: Capture
         run: node demo/docs/capture.mjs
-      # Что именно изменилось — видно в логе прогона, до всякой приёмки: если
-      # изменились все девять файлов, значит съёмка велась не тем браузером, и
-      # принимать такой набор не надо.
-      - name: Что изменилось
+      # Вердикт до всякой приёмки. Само число изменившихся файлов ничего не
+      # говорит: набор, снятый другим браузером, меняет их все, и это нормально
+      # ровно один раз — при переходе на канонический прогон. Сравнивать надо
+      # браузер: тот же Chromium и десять изменившихся картинок означают, что
+      # изменился продукт (или что-то не так), другой Chromium — ожидаемую
+      # разницу рендеринга.
+      - name: Вердикт
         run: |
           git status --porcelain docs/images
-          echo "--- изменившихся PNG: $(git diff --name-only docs/images | grep -c png || true)"
-          node -e "const m=require('./docs/images/screenshots.json');console.log('Chromium:',m.chromium)"
+          changed=$(git diff --name-only docs/images | grep -c png || true)
+          before=$(git show HEAD:docs/images/screenshots.json | node -e \
+            "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{console.log(JSON.parse(s).chromium||'')}catch{console.log('')}})")
+          after=$(node -e "console.log(require('./docs/images/screenshots.json').chromium)")
+          echo "--- изменившихся PNG: $changed"
+          echo "--- Chromium: было «${before:-не записан}», стало «$after»"
+          if [ "$before" = "$after" ] && [ "$changed" -gt 0 ]; then
+            echo "ВЕРДИКТ: тот же браузер, а картинки изменились — изменился продукт."
+            echo "Смотрите на кадры: если изменение ожидаемое, принимайте."
+          elif [ "$before" != "$after" ]; then
+            echo "ВЕРДИКТ: браузер другой, поэтому переписаны все кадры сразу."
+            echo "Это ожидаемо один раз — при переходе на канонический прогон."
+            echo "Если Chromium сменился неожиданно, сверьте закреплённую версию в package-lock."
+          else
+            echo "ВЕРДИКТ: ничего не изменилось, принимать нечего."
+          fi
       - name: Upload candidate
         uses: actions/upload-artifact@v7
         with:
