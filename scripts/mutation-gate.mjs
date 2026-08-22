@@ -201,8 +201,8 @@ export const MUTANTS = [
       + 'reload, so the current session can still reproduce the geometry failure after Save',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: '        const candidate = canonicalizeConfigGeometry(this._serverCfg);',
-      replace: '        const candidate = this._serverCfg;',
+      find: '      const candidate = canonicalizeConfigGeometry(this._serverCfg);',
+      replace: '      const candidate = this._serverCfg;',
     }],
   },
   {

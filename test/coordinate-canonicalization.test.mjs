@@ -54,9 +54,14 @@ test('one position changes only x/y and preserves future metadata (#224)', () =>
 
 test('frontend write paths adopt canonical candidates before persistence (#224)', () => {
   const source = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
+  assert.match(source, /enqueueSerializedWrite\(this\._writeChain, async \(\) =>/);
   assert.match(
     source,
     /const candidate = canonicalizeConfigGeometry\(this\._serverCfg\);[\s\S]*config: candidate/,
+  );
+  assert.match(
+    source,
+    /if \(candidateFingerprint !== contentFingerprint\(this\._serverCfg\)\) \{\s*this\._serverCfg = candidate;/,
   );
   assert.match(
     source,

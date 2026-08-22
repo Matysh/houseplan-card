@@ -26,6 +26,7 @@
     "src/render-device-snapshot.ts",
     "src/command-stack.ts",
     "src/coordinate-canonicalization.ts",
+    "src/serialized-write-queue.ts",
     "src/align-grid.ts",
     "src/plan-optimizer.ts",
     "src/furniture.ts",

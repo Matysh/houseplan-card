@@ -192,6 +192,7 @@ import {
   canonicalizeLayoutGeometry,
   canonicalizePosition,
 } from './coordinate-canonicalization';
+import { enqueueSerializedWrite } from './serialized-write-queue';
 import { hasTranslation, langOf, t, type I18nKey } from './i18n';
 import { CommandStack } from './command-stack';
 import { resolvedSvgScreenBlend, svgScreenBlendSupported } from './glow-blend';
@@ -6947,21 +6948,25 @@ class HouseplanCard extends LitElement {
 
   private _writeConfig(): Promise<void> {
     this._writesPending++;
-    this._writeChain = this._writeChain
-      .catch(() => undefined) // a failed write must not poison the queue
-      .then(async () => {
-        if (!this._serverCfg) return;
-        this._dropLegacySegments();
-        const candidate = canonicalizeConfigGeometry(this._serverCfg);
-        const candidateFingerprint = contentFingerprint(candidate);
-        if (candidateFingerprint !== contentFingerprint(this._serverCfg)) this._cfgEpoch++;
+    this._writeChain = enqueueSerializedWrite(this._writeChain, async () => {
+      if (!this._serverCfg) return;
+      this._dropLegacySegments();
+      const candidate = canonicalizeConfigGeometry(this._serverCfg);
+      const candidateFingerprint = contentFingerprint(candidate);
+      // Do not replace the reactive root merely because the pure helper
+      // returned a clone. Besides an unnecessary render, that used to expose
+      // unrelated write-time cleanup as a visual change (#224 review H1).
+      // A real coordinate change still adopts the exact object sent below;
+      // willUpdate owns the corresponding geometry-epoch bump.
+      if (candidateFingerprint !== contentFingerprint(this._serverCfg)) {
         this._serverCfg = candidate;
-        this._cfgContentFingerprint = candidateFingerprint;
-        const r = await this.hass.callWS({
-          type: 'houseplan/config/set', config: candidate, expected_rev: this._cfgRev,
-        });
-        this._cfgRev = r?.rev ?? this._cfgRev + 1;
+      }
+      this._cfgContentFingerprint = candidateFingerprint;
+      const r = await this.hass.callWS({
+        type: 'houseplan/config/set', config: candidate, expected_rev: this._cfgRev,
       });
+      this._cfgRev = r?.rev ?? this._cfgRev + 1;
+    });
     const mine = this._writeChain.finally(() => { this._writesPending--; });
     // keep the chain itself unadorned so the next link waits for the write only
     return mine;
