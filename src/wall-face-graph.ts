@@ -65,9 +65,11 @@ export function normalizeUnifiedWallTool(value: unknown): unknown {
  * the owner discovered it much later by hovering a wall. Two formulas for one
  * meaning always drift; there is exactly one here now.
  *
- * A missing record inherits the previous segment of the same chain, then the
- * toolbar field, then the default (owner's decision 2026-08-21): that is what
- * the person saw on screen while drawing, and a global default is not.
+ * A missing record inside a committed chain inherits the previous segment,
+ * then the toolbar field, then the default (owner's decision 2026-08-21).
+ * The final missing record is different: it is the live rubber-band, so the
+ * toolbar field must win before the previous segment. Otherwise changing the
+ * field between clicks previews the old thickness and commits the new one.
  *
  * Strictly positive is the validity boundary. The previous `wallChainSegments`
  * accepted a recorded zero, which cannot be drawn through the UI (1..100 cm,
@@ -89,12 +91,15 @@ export function chainSegmentCms(
   // ровно тем дублированием, которое задача и убирает. Невалидный default —
   // дефект вызывающего, поэтому он приводится к минимальной допустимой
   // толщине (1 см, docs/WALL-THICKNESS.md), а не к выдуманному значению.
-  const fallbackTail = valid(activeCm) ?? valid(defaultCm) ?? 1;
+  const active = valid(activeCm);
+  const fallback = valid(defaultCm) ?? 1;
   const out: number[] = [];
   let previous: number | null = null;
   for (let i = 0; i < count; i++) {
     const own = valid(recorded?.[i]);
-    const cm = own ?? previous ?? fallbackTail;
+    const inherited = previous ?? active ?? fallback;
+    const liveTail = active ?? previous ?? fallback;
+    const cm = own ?? (i === count - 1 ? liveTail : inherited);
     out.push(cm);
     previous = cm;
   }

@@ -59,8 +59,10 @@
   edited between segments — used to be previewed at the drawn value and saved at
   15 cm, and the plan only revealed it later when the Thickness tool reported a
   number nobody had chosen. Preview, both writers and the Thickness highlight now
-  read one resolver, and a missing record inherits the previous segment of the
-  same chain ([#234](https://github.com/Matysh/houseplan-card/issues/234)).
+  read one resolver: a historical missing record inherits the previous segment,
+  while the live rubber-band uses the current field value and therefore no longer
+  changes thickness on click
+  ([#234](https://github.com/Matysh/houseplan-card/issues/234)).
 
 - Wall hatching no longer changes density with the space's grid scale. The same
   15 cm wall used to look different on plans with different `cell_cm` — from a

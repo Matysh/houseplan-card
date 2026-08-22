@@ -50,8 +50,22 @@ export const MUTANTS = [
       + 'that silently replaced 30 cm with 15 cm in the stored plan (#234)',
     patches: [{
       file: 'src/wall-face-graph.ts',
-      find: '    const cm = own ?? previous ?? fallbackTail;',
-      replace: '    const cm = own ?? fallbackTail;',
+      find: '    const inherited = previous ?? active ?? fallback;',
+      replace: '    const inherited = active ?? fallback;',
+    }],
+  },
+  {
+    id: 'chain-thickness-live-tail-inherits-previous',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="live rubber-band" '
+      + 'test/wall-face-graph.test.mjs',
+    because: 'the last missing thickness belongs to the live rubber-band, so a field change '
+      + 'between clicks must preview the value that the click will commit instead of inheriting '
+      + 'the preceding segment (#234)',
+    patches: [{
+      file: 'src/wall-face-graph.ts',
+      find: '    const liveTail = active ?? previous ?? fallback;',
+      replace: '    const liveTail = previous ?? active ?? fallback;',
     }],
   },
   {

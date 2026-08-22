@@ -55,17 +55,25 @@ test('chainSegmentCms fills a gap from the previous segment, then the field (#23
   // потеряна. Раньше запись давала 15, превью — 30; теперь ответ один.
   assert.deepEqual(chainSegmentCms(3, [30, 30], 30, 15), [30, 30, 30]);
   // Дырка в середине наследует предыдущий, а не следующий и не дефолт.
-  assert.deepEqual(chainSegmentCms(4, [30, undefined, 20], 12, 15), [30, 30, 20, 20]);
+  assert.deepEqual(chainSegmentCms(3, [30, undefined, 20], 12, 15), [30, 30, 20]);
   // Нет ни одной записи — текущее поле.
   assert.deepEqual(chainSegmentCms(2, [], 22, 15), [22, 22]);
   // Нет и поля — дефолт вызывающего.
   assert.deepEqual(chainSegmentCms(2, [], null, 15), [15, 15]);
 });
 
+test('chainSegmentCms gives the live rubber-band the current field value (#234)', () => {
+  // The last missing record is not historical damage: it is the segment under
+  // the cursor. A field change between clicks must be visible before commit.
+  assert.deepEqual(chainSegmentCms(2, [12], 24, 15), [12, 24]);
+  // With no active field, a missing tail remains a historical gap and inherits.
+  assert.deepEqual(chainSegmentCms(3, [30, undefined], null, 15), [30, 30, 30]);
+});
+
 test('chainSegmentCms treats only strictly positive records as valid (#234)', () => {
   // Прежняя wallChainSegments считала записанный 0 валидным; через UI ноль
   // недостижим (1..100 см), но в старом черновике лежать может.
-  assert.deepEqual(chainSegmentCms(3, [0, 30, 0], 25, 15), [25, 30, 30]);
+  assert.deepEqual(chainSegmentCms(3, [0, 30, 0], 25, 15), [25, 30, 25]);
   assert.deepEqual(chainSegmentCms(4, [NaN, -5, null, 'x'], 18, 15), [18, 18, 18, 18]);
   assert.deepEqual(chainSegmentCms(2, [Infinity, 40], 18, 15), [18, 40]);
 });

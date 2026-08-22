@@ -7,7 +7,8 @@
  * no recorded thickness — the shape a mid-edit toolbar field used to produce —
  * and then reads three things that used to disagree: the committed partitions,
  * what the Thickness tool reports for the same stretch, and what a resumed
- * legacy draft carries.
+ * legacy draft carries. A missing live tail uses the current field; only an
+ * internal historical gap inherits the preceding segment.
  */
 import { launch, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch();
@@ -39,8 +40,8 @@ const res = await page.evaluate(async () => {
     [100 + 12 * g, 100 + 6 * g],
   ];
 
-  // Two recorded segments at 30 and 25 cm, then a third point whose thickness
-  // is missing: exactly what a field left mid-edit produced before #234.
+  // Two recorded segments at 30 and 25 cm, then a live third segment whose
+  // record does not exist yet. The current field is 30 cm.
   c._drawWallField = '30';
   await upd();
   out.fieldAcceptedThirty = c._drawWallCm === 30;
@@ -61,8 +62,8 @@ const res = await page.evaluate(async () => {
   out.storedThreeSegments = stored.length === 3;
   out.storedFirstThirty = stored[0] === 30;
   out.storedSecondTwentyFive = stored[1] === 25;
-  // The gap inherits the previous segment, never the global default.
-  out.gapInheritedPrevious = stored[2] === 25;
+  // A live missing tail uses the current field, not the previous segment.
+  out.liveTailUsesCurrentField = stored[2] === 30;
   out.nothingFellBackToFifteen = !stored.includes(15);
 
   // The Thickness tool reads the same value it stored: the mismatch between
