@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { MUTANTS, applyPatches } from '../scripts/mutation-gate.mjs';
+import { MUTANTS, applyPatches, guardNeedsTestBuild } from '../scripts/mutation-gate.mjs';
 
 const repoRoot = fileURLToPath(new URL('..', import.meta.url));
 
@@ -73,5 +73,36 @@ test('applyPatches rewrites the anchor and refuses a stale one', () => {
     );
   } finally {
     rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+// #235: в свежем worktree мутанта каталога test-build/ нет. Короткий гвард
+// (сразу `node --test`) падал там с ERR_MODULE_NOT_FOUND, а гейт читал это как
+// «мутант пойман» — тихий отказ, который девять мутантов держал мёртвыми, не
+// краснея. Теперь компиляцию делает харнесс, и здесь проверяется, что он
+// узнаёт нужный ему гвард.
+
+test('the harness compiles test-build for exactly the guards that need it (#235)', () => {
+  assert.equal(guardNeedsTestBuild('node --test --test-name-pattern="x" test/a.test.mjs'), true);
+  assert.equal(guardNeedsTestBuild(
+    'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/a.test.mjs',
+  ), false, 'длинный гвард компилирует сам — второй раз не надо');
+  assert.equal(guardNeedsTestBuild('node demo/smoke_x.mjs'), false, 'смоку хватает бандла');
+  assert.equal(guardNeedsTestBuild('node scripts/backend-test-guard.mjs x'), false);
+});
+
+test('no mutant guard is left unable to resolve test-build (#235)', () => {
+  for (const mutant of MUTANTS) {
+    const file = mutant.guard.split(/\s+/).find((part) => part.endsWith('.test.mjs'));
+    if (!file) continue;
+    const source = readFileSync(join(repoRoot, file), 'utf8');
+    if (!source.includes('test-build/')) continue;
+    // Либо гвард компилирует сам, либо это делает харнесс — третьего исхода
+    // (падение на резолве модуля) быть не должно.
+    assert.ok(
+      mutant.guard.includes('tsconfig.test.json') || guardNeedsTestBuild(mutant.guard),
+      `${mutant.id}: гвард читает ${file}, который импортирует test-build/, `
+      + 'и никто этот каталог в мутанте не соберёт',
+    );
   }
 });

@@ -1173,6 +1173,36 @@ function dropWorktree(dir) {
   rmSync(dir, { recursive: true, force: true });
 }
 
+/**
+ * Нужен ли гварду скомпилированный `test-build/` (#235).
+ *
+ * Гварды в реестре двух видов: длинные сами начинаются с
+ * `npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs`, короткие —
+ * сразу с `node --test`. В свежем worktree каталога `test-build/` нет вообще,
+ * поэтому короткий гвард падал с `ERR_MODULE_NOT_FOUND` — и это читалось как
+ * «мутант поймал поломку», хотя означало «гвард не смог исполниться». Компиляция
+ * стоит секунд, поэтому шаг ставится только там, где гвард не делает его сам.
+ */
+export function guardNeedsTestBuild(guard) {
+  return /(^|[\s&|;])node --test\b/.test(guard) && !guard.includes('tsconfig.test.json');
+}
+
+/**
+ * Собрать `test-build/` из мутированного src в каталоге мутанта.
+ *
+ * Код выхода `tsc` игнорируется сознательно, по той же причине, что и в
+ * `buildBundle`: мутант воспроизводит поломку, а не образцовый код, и имеет
+ * право быть нестрогим по типам. Доказательством служит появление каталога —
+ * если его нет, падаем громко, а не отдаём тесту пустоту.
+ */
+function buildTestBuild(dir) {
+  sh('npx tsc -p tsconfig.test.json', dir);
+  const fixed = sh('node scripts/fix-test-build.mjs', dir);
+  if (!existsSync(join(dir, 'test-build'))) {
+    throw new Error(`test-build не собрался в мутанте:\n${(fixed.stderr || fixed.stdout).slice(-2000)}`);
+  }
+}
+
 function buildBundle(dir) {
   // Только rollup, без tsc --noEmit: мутант имеет право быть нестрогим по
   // типам — он воспроизводит поломку, а не образцовый код.
@@ -1188,6 +1218,7 @@ function runMutant(mutant) {
   try {
     applyPatches(dir, mutant.patches);
     buildBundle(dir);
+    if (guardNeedsTestBuild(mutant.guard)) buildTestBuild(dir);
     const guard = sh(mutant.guard, dir);
     if (guard.status === 0) {
       console.log(`FAIL ${mutant.id}: тест остался зелёным на сломанном коде`);
@@ -1209,6 +1240,8 @@ function runCleanGuards(mutants) {
   const dir = makeWorktree();
   try {
     buildBundle(dir);
+    // Один worktree на все чистые гварды — значит и компиляция одна.
+    if (guards.some(guardNeedsTestBuild)) buildTestBuild(dir);
     for (const guard of guards) {
       const result = sh(guard, dir);
       if (result.status !== 0) {
