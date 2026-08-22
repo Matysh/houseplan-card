@@ -163,7 +163,9 @@ import {
   type WallFaceGraph, type WallGraphFace, type WallGraphSourceSegment,
 } from './wall-face-graph';
 import { parameterOnPartition, planRoomDeletion } from './room-deletion';
-import { planWallFaceRepair, type WallFaceRepairProposal } from './wall-face-repair';
+import {
+  planWallFaceRepair, repairMovesHostedPartition, type WallFaceRepairProposal,
+} from './wall-face-repair';
 import {
   LightSegment, polygonSegments, splitAtIntersections, visibilityPolygon,
 } from './light-visibility';
@@ -7680,9 +7682,8 @@ class HouseplanCard extends LitElement {
             gridStep: this._gridPitch,
             epsilon,
           });
-          if (diagnostic.kind !== 'none') {
-            this._wallRepairDiagnostic = diagnostic.kind === 'repair'
-              ? diagnostic.proposal : diagnostic.proposals[0] || null;
+          if (diagnostic.kind === 'repair') {
+            this._wallRepairDiagnostic = diagnostic.proposal;
             this._showToast(this._t('toast.wall_repair_too_large'));
             return true;
           }
@@ -12713,11 +12714,9 @@ class HouseplanCard extends LitElement {
     if (distToSegment(proposal.to, [target.a[0], target.a[1], target.b[0], target.b[1]]) > epsilon) {
       return false;
     }
-    if (proposal.sourceKey.startsWith('static:partition|')) {
-      const id = proposal.sourceKey.slice('static:partition|'.length).split('|')[0];
-      if ((this._curSpaceCfg as any)?.openings?.some((opening: OpeningCfg) =>
-        opening.host?.kind === 'partition' && opening.host.id === id)) return false;
-    }
+    if (repairMovesHostedPartition(
+      proposal, (this._curSpaceCfg as any)?.openings || [],
+    )) return false;
     return true;
   }
 

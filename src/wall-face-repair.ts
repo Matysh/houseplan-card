@@ -26,6 +26,21 @@ export interface WallFaceRepairOptions {
   requiredSourceKey?: string;
 }
 
+export interface WallRepairHostedOpening {
+  host?: { kind?: string; id?: string };
+}
+
+/** A hosted opening makes its persisted partition endpoint immovable. */
+export function repairMovesHostedPartition(
+  proposal: Pick<WallFaceRepairProposal, 'sourceKey'>,
+  openings: readonly WallRepairHostedOpening[],
+): boolean {
+  if (!proposal.sourceKey.startsWith('static:partition|')) return false;
+  const id = proposal.sourceKey.slice('static:partition|'.length).split('|')[0];
+  return !!id && openings.some((opening) =>
+    opening.host?.kind === 'partition' && opening.host.id === id);
+}
+
 const movable = (source: WallGraphSourceSegment): boolean => !source.key.startsWith('static:room|');
 
 function projection(

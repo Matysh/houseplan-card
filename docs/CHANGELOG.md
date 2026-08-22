@@ -7,8 +7,10 @@
   and Shift accepts only an exact 45° ray endpoint or wall intersection. A
   click inside an already closed empty wall contour can create its room; one
   unambiguous gap up to 2 cm is repaired only together with that confirmed
-  room. Deleting a room now explicitly offers to keep its exclusive physical
-  walls or delete them, while shared walls and their openings survive
+  room; ambiguous wider gaps remain ordinary drawing, and a wall carrying a
+  hosted opening is never moved by repair. Deleting a room now explicitly
+  offers to keep its exclusive physical walls or delete them, while shared
+  walls and their openings survive
   ([#228](https://github.com/Matysh/houseplan-card/issues/228)).
 
 - Resizing a room now reports the distance between wall faces, the number a tape

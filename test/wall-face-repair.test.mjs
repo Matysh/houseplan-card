@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { planWallFaceRepair } from '../test-build/wall-face-repair.js';
+import {
+  planWallFaceRepair, repairMovesHostedPartition,
+} from '../test-build/wall-face-repair.js';
 
 const ringWithGap = (gap) => [
   { a: [0, 0], b: [100, 0], key: 'static:partition|top|0' },
@@ -47,4 +49,22 @@ test('multiple valid closures fail closed instead of choosing record order', () 
     point: [50, 50], maxDistance: 2, gridStep: 10, epsilon: 0.001,
   });
   assert.notEqual(result.kind, 'repair');
+});
+
+test('a hosted opening makes its partition an invalid repair mover', () => {
+  const proposal = {
+    sourceKey: 'static:partition|left|0', endpoint: 'b',
+    from: [0, 1.2], to: [0, 0], targetSourceKey: 'static:partition|top|0',
+    targetKind: 'endpoint', distance: 1.2,
+  };
+  assert.equal(repairMovesHostedPartition(proposal, [
+    { host: { kind: 'partition', id: 'left' } },
+  ]), true);
+  assert.equal(repairMovesHostedPartition(proposal, [
+    { host: { kind: 'partition', id: 'right' } },
+    { host: { kind: 'room', id: 'left' } },
+  ]), false);
+  assert.equal(repairMovesHostedPartition({ ...proposal, sourceKey: 'active:session:0' }, [
+    { host: { kind: 'partition', id: 'left' } },
+  ]), false);
 });

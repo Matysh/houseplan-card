@@ -87,6 +87,35 @@ const out = await page.evaluate(async () => {
   card._markupClick(clickAt(300, 300, true));
   result.shiftBypassesExistingFaceOffer = card._path.length === 1 && !card._roomDialog;
   card._cancelPath();
+
+  const largeGap = card._cmToUnits(3) / 1000;
+  const alternativeX = 0.1 + card._cmToUnits(1) / 1000;
+  await reset({ partitions: [
+    ...ring(largeGap),
+    { id: 'alternative', a: [alternativeX, 0.1], b: [alternativeX, 0.08], cm: 20 },
+  ] });
+  card._markupClick(clickAt(300, 300));
+  result.ambiguousLargeGapUsesWallsFlow = card._path.length === 1
+    && !card._roomDialog && !card._wallRepairDiagnostic && !card._toast;
+
+  await reset({
+    partitions: ring(card._cmToUnits(1.2) / 1000),
+    openings: [{
+      id: 'hosted-gap', type: 'door', x: 0.1, y: 0.3, angle: 90, length: 0.08,
+      host: { kind: 'partition', id: 'left', t: 0.5 },
+    }],
+  });
+  const hostedBefore = JSON.stringify(card._curSpaceCfg);
+  const hostedOffered = card._offerExistingWallFace([300, 300]);
+  card._nameSel = 'Must not repair';
+  card._saveRoom();
+  await update();
+  result.hostedOpeningBlocksRepair = hostedOffered
+    && JSON.stringify(card._curSpaceCfg) === hostedBefore
+    && !card._roomDialog && !card._wallFaceBatch
+    && card._toast === card._t('toast.wall_repair_changed');
+
+  await reset({ partitions: ring() });
   card._offerExistingWallFace([300, 300]);
   card._nameSel = 'Existing face';
   card._saveRoom();
