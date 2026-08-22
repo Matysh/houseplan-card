@@ -1675,7 +1675,7 @@ export const MUTANTS = [
   {
     id: 'opening-gate-flip-cancels-turn',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
-      + '&& node --test --test-name-pattern="shared renderer centres defaults" '
+      + '&& node --test --test-name-pattern="shared renderer centres every flip" '
       + 'test/opening-symbol.test.mjs',
     because: 'restoring the second flip_v inversion makes shared and partition gates emit '
       + 'the same first-leaf turn sign for both saved values even though their origin stays centred',
