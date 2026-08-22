@@ -1,7 +1,7 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 34;
+export const GOLDEN_MATRIX_VERSION = 35;
 
 const stage = { capture: 'stage', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0005 } };
 const page = { capture: 'page', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0008 } };
@@ -10,6 +10,29 @@ const sunWindow = { capture: 'sun-window', threshold: { maxChannelDelta: 10, max
 // renderer covered through an explicit card-only snapshot; this never changes
 // URL/storage/registry behaviour and must fail if the rendered view stays flat.
 const expiredIsoFixture = { testOnlyLabsSnapshot: true };
+
+const decorLayerFixture = [
+  { id: 'golden-decor-axis', kind: 'line', x1: 0.10, y1: 0.54, x2: 0.90, y2: 0.54,
+    color: '#ff0033', opacity: 1, width_cm: 8 },
+  { id: 'golden-decor-rect', kind: 'rect', x: 0.15, y: 0.28, w: 0.16, h: 0.12,
+    color: '#ff0033', opacity: 1, width_cm: 2, fill: true,
+    fill_color: '#ff6680', fill_opacity: 1 },
+  { id: 'golden-decor-ellipse', kind: 'ellipse', x: 0.69, y: 0.28, w: 0.16, h: 0.12,
+    color: '#ff0033', opacity: 1, width_cm: 2, fill: true,
+    fill_color: '#ff6680', fill_opacity: 1 },
+  { id: 'golden-decor-text', kind: 'text', x: 0.24, y: 0.72, text: 'DECOR',
+    color: '#ff0033', opacity: 1, size_cm: 14 },
+  { id: 'golden-decor-sofa', kind: 'furniture', symbol: 'sofa',
+    x: 0.68, y: 0.66, w: 0.18, h: 0.13, color: '#ff0033', opacity: 1, width_cm: 2 },
+];
+const decorLayerProbes = {
+  color: '#ff0033', radius: 2, minMatchingFraction: 0.6,
+  points: [
+    { id: 'left-room', x: 0.25, y: 0.54 },
+    { id: 'opening-tunnel', x: 0.50, y: 0.54 },
+    { id: 'right-room', x: 0.75, y: 0.54 },
+  ],
+};
 
 export const GOLDEN_SCENARIOS = Object.freeze([
   { id: 'split-corner-wall-before-dark', fixture: 'visual', space: 'golden-corner-split',
@@ -166,6 +189,17 @@ export const GOLDEN_SCENARIOS = Object.freeze([
       ],
     }],
     tunnelContinuity: { openingId: 'light-door', insetPx: 2, maxChannelJump: 3, dpr2: true },
+    theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
+  { id: 'decor-over-opaque-hover-light', fixture: 'visual', space: 'golden-lighting', mode: 'view',
+    fillMode: 'custom', customFill: { c: '#2255cc', a: 1 }, glowEnabled: false,
+    sunRays: false, showBorders: false, showNames: false, hideOpenings: true,
+    hoverRoom: 'light-left', decorOverride: decorLayerFixture,
+    decorPixelProbes: decorLayerProbes,
+    theme: 'light', viewport: { width: 1000, height: 900 }, ...stage },
+  { id: 'decor-over-glow-base-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',
+    fillMode: 'glow', glowEnabled: true, allLightsOff: true,
+    sunRays: false, showBorders: false, showNames: false, hideOpenings: true,
+    decorOverride: decorLayerFixture, decorPixelProbes: decorLayerProbes,
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'openings-hidden-view-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',
     fillMode: 'none', glowEnabled: false, hideOpenings: true, theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },

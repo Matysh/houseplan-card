@@ -246,6 +246,7 @@ const res = await page.evaluate(async () => {
   const hoverHalo = sr().querySelector('.room-hover-halo');
   const hoverOutline = sr().querySelector('.room-hover-outline');
   const hoverOutlineLayer = sr().querySelector('.room-hover-outline-layer');
+  const decorLayer = sr().querySelector('.decorlayer');
   const glowLayer = sr().querySelector('.glow-pools-frame');
   const wallLayer = sr().querySelector('.wallbodies');
   out.hoverKeepsGlowDom = poolBeforeHover === sr().querySelector('.glow-pool')
@@ -257,8 +258,9 @@ const res = await page.evaluate(async () => {
   const fillStyle = hoverFill ? getComputedStyle(hoverFill) : null;
   out.hoverUsesNeutralDarkening = fillStyle?.fill === 'rgb(0, 0, 0)'
     && Math.abs(Number(fillStyle.fillOpacity) - 0.22) < 0.001;
-  out.hoverLayerOrder = !!hoverFillLayer && !!glowLayer && !!hoverOutlineLayer
-    && !!(hoverFillLayer.compareDocumentPosition(glowLayer) & Node.DOCUMENT_POSITION_FOLLOWING)
+  out.hoverLayerOrder = !!hoverFillLayer && !!decorLayer && !!glowLayer && !!hoverOutlineLayer
+    && !!(hoverFillLayer.compareDocumentPosition(decorLayer) & Node.DOCUMENT_POSITION_FOLLOWING)
+    && !!(decorLayer.compareDocumentPosition(glowLayer) & Node.DOCUMENT_POSITION_FOLLOWING)
     // The default smoke fixture has no thick wall body. When one exists, the
     // late outline must follow it; absence is not a layer-order failure.
     && (!wallLayer

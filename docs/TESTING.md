@@ -32,6 +32,25 @@
 полный прогон — workflow `mutation-gate.yml`, перед стабильным релизом и по
 понедельникам. Дешёвая половина идёт с юнитами: `test/mutation-gate.test.mjs`.
 
+## Decor composition order (#231)
+
+- [ ] All five decor kinds render in one `.decorlayer` after opaque room/data
+      fill, active room-hover fill, opening tunnels and Glow-base rooms/tunnels,
+      but before live Glow, sun, physical walls, opening symbols and the HTML
+      device/room-label layer [auto: `smoke_decor_layer_order.mjs`,
+      `smoke_glow.mjs`].
+- [ ] Pixel probes through an opaque room and a filled opening tunnel stay the
+      decor colour before/after hover and over Glow base. Restoring the old DOM
+      order makes those probes red [auto: `smoke_decor_layer_order.mjs`;
+      mutation: `decor-restored-below-room-fills`].
+- [ ] Light/opaque-hover and Dark/Glow-base golden scenes contain the five
+      supported decor types and semantic probes in both rooms and the shared
+      doorway. Reviewed baselines are accepted only from the Linux release
+      artifact [golden: `decor-over-opaque-hover-light`,
+      `decor-over-glow-base-dark`].
+- [ ] `hide_decor`, the Background editor override and stored config remain
+      unchanged; no per-object under-plan compatibility flag is introduced.
+
 ## Device icon design package (#179)
 
 - [ ] Pure presentation tests cover lock/unlock, exact marker-only LQI bands

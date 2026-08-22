@@ -62,6 +62,25 @@ test('golden matrix has stable unique ids and bounded comparison thresholds', ()
         && scenario.tunnelContinuity.maxChannelJump <= 32, true, scenario.id);
       assert.equal(typeof scenario.tunnelContinuity.dpr2, 'boolean', scenario.id);
     }
+    if (scenario.decorPixelProbes) {
+      assert.match(scenario.decorPixelProbes.color, /^#[0-9a-f]{6}$/i, scenario.id);
+      assert.equal(Number.isInteger(scenario.decorPixelProbes.radius)
+        && scenario.decorPixelProbes.radius >= 0, true, scenario.id);
+      assert.equal(scenario.decorPixelProbes.minMatchingFraction > 0
+        && scenario.decorPixelProbes.minMatchingFraction <= 1, true, scenario.id);
+      assert.equal(scenario.decorPixelProbes.points.length >= 1, true, scenario.id);
+      for (const point of scenario.decorPixelProbes.points) {
+        assert.match(point.id, /^[a-z0-9-]+$/, scenario.id);
+        assert.equal(point.x >= 0 && point.x <= 1 && point.y >= 0 && point.y <= 1,
+          true, scenario.id);
+      }
+    }
+    if (scenario.decorOverride) {
+      assert.equal(new Set(scenario.decorOverride.map((shape) => shape.id)).size,
+        scenario.decorOverride.length, scenario.id);
+      assert.deepEqual(new Set(scenario.decorOverride.map((shape) => shape.kind)),
+        new Set(['line', 'rect', 'ellipse', 'text', 'furniture']), scenario.id);
+    }
     if (scenario.helpTextRegion) {
       assert.match(scenario.helpTextRegion.key, /^[a-z0-9_.-]+\.help$/, scenario.id);
       assert.equal(Number.isInteger(scenario.helpTextRegion.minPixels)
@@ -98,7 +117,8 @@ test('golden matrix covers required geometry, rendering and adaptive surfaces', 
     'isometric-live-layers', 'isometric-no-borders', 'isometric-touch-kiosk',
     'isometric-large-warm-remount', 'split-corner-wall', 'plan-snap-endpoint',
     'plan-snap-line-gaps', 'wall-junctions', 'isometric-wall-junctions',
-    'washer-active-cycle', 'washer-idle-cycle'])
+    'washer-active-cycle', 'washer-idle-cycle', 'decor-over-opaque-hover',
+    'decor-over-glow-base'])
     assert.equal(ids.includes(token), true, token);
   assert.equal(new Set(GOLDEN_SCENARIOS.map((scenario) => scenario.mode)).has('plan'), true);
   assert.equal(new Set(GOLDEN_SCENARIOS.map((scenario) => scenario.mode)).has('devices'), true);
@@ -212,6 +232,34 @@ test('filled opening golden has a pixel-level seam detector', () => {
   );
 });
 
+test('decor layer goldens pair opaque hover and Glow base with semantic pixels', () => {
+  const scenarios = GOLDEN_SCENARIOS.filter((item) => item.decorPixelProbes);
+  assert.deepEqual(scenarios.map((item) => item.id), [
+    'decor-over-opaque-hover-light',
+    'decor-over-glow-base-dark',
+  ]);
+  assert.deepEqual(scenarios.map((item) => item.theme), ['light', 'dark']);
+  for (const scenario of scenarios) {
+    assert.equal(scenario.showBorders, false);
+    assert.equal(scenario.showNames, false);
+    assert.equal(scenario.hideOpenings, true);
+    assert.equal(scenario.sunRays, false);
+    assert.equal(scenario.decorPixelProbes.points.some((point) => point.id === 'opening-tunnel'), true);
+    const fixture = prepareGoldenFixture(scenario);
+    const space = fixture.config.spaces.find((item) => item.id === scenario.space);
+    assert.deepEqual(new Set(space.decor.map((shape) => shape.kind)),
+      new Set(['line', 'rect', 'ellipse', 'text', 'furniture']));
+    assert.equal(space.settings.show_borders, false);
+    assert.equal(space.settings.hide_openings, true);
+  }
+  assert.equal(scenarios[0].fillMode, 'custom');
+  assert.equal(scenarios[0].customFill.a, 1);
+  assert.equal(scenarios[0].hoverRoom, 'light-left');
+  assert.equal(scenarios[1].fillMode, 'glow');
+  assert.equal(scenarios[1].glowEnabled, true);
+  assert.equal(scenarios[1].allLightsOff, true);
+});
+
 test('doorway spill golden exposes the opaque-fill failure mode from issue 71', () => {
   const scenario = GOLDEN_SCENARIOS.find((item) => item.id === 'lighting-opaque-glow-two-doorways-dark');
   assert.ok(scenario);
@@ -234,7 +282,7 @@ test('sun-ray golden requires browser-painted light from a state-only sun entity
   assert.ok(scenario);
   const fixture = prepareGoldenFixture(scenario);
   const space = fixture.config.spaces.find((item) => item.id === scenario.space);
-  assert.equal(GOLDEN_MATRIX_VERSION, 34);
+  assert.equal(GOLDEN_MATRIX_VERSION, 35);
   assert.equal(space.settings.sun_rays, true);
   assert.equal(scenario.northDeg, 90,
     'the sign-sensitive golden must keep a non-zero north direction');
@@ -424,6 +472,9 @@ test('golden overrides fail closed on misspelled fixture references', () => {
   assert.throws(() => prepareGoldenFixture({
     ...base, roomGlow: { 'light-rightt': true },
   }), /missing room/);
+  assert.throws(() => prepareGoldenFixture({
+    ...base, decorOverride: [{ id: 'bad', kind: 'triangle' }],
+  }), /unknown kind/);
 });
 
 test('a light source paints exactly one region: the floor it can see', () => {

@@ -16576,12 +16576,6 @@ class HouseplanCard extends LitElement {
                   @dblclick=${(e: Event) => this._openBackdropDialog(e)}
                   preserveAspectRatio="none" />`
               : nothing}
-            ${''/* «Скрыть декоративный слой» (space.hide_decor). The layer is
-                   still THERE — the shapes are in the config and the decor
-                   editor draws them as always, because a layer you cannot see
-                   is a layer you cannot edit. Every other mode simply stops
-                   painting it. */}
-            ${disp.hideDecor && this._mode !== 'decor' ? nothing : this._renderDecorLayer()}
             ${(() => {
               // audit L1: hoisted out of the per-room map — these depend on the
               // config, not on entity state, and were recomputed per room.
@@ -16727,6 +16721,12 @@ class HouseplanCard extends LitElement {
             ${this._renderOpeningTunnelFills(space, roomFills)}
             ${this._renderGlowBaseRooms(space, glowBase)}
             ${this._renderOpeningTunnelFills(space, glowBase, 'glow-base')}
+            ${''/* Decor is one composition layer above every floor treatment
+                   (room fill/hover, opening tunnels and Glow base) and below
+                   live lighting, physical plan geometry and devices. Keep
+                   hide_decor visual-only: the decor editor must always paint
+                   stored shapes so they remain editable. */}
+            ${disp.hideDecor && this._mode !== 'decor' ? nothing : this._renderDecorLayer()}
             ${glowLayerVisible ? this._renderGlowLayer(space, disp) : nothing}
             ${this._renderSunRays(space)}
             ${this._editing ? svg`<g class="hp-editor-only-layer"

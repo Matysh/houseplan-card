@@ -215,6 +215,18 @@ export function prepareGoldenFixture(scenario) {
     }
     space.openings = [...(space.openings || []), ...structuredClone(scenario.extraOpenings)];
   }
+  if (scenario.decorOverride) {
+    const space = requireSpace();
+    const known = new Set();
+    for (const shape of scenario.decorOverride) {
+      if (!shape?.id || known.has(shape.id))
+        throw new Error(`golden decorOverride has missing/duplicate id: ${shape?.id || '<empty>'}`);
+      if (!['line', 'rect', 'ellipse', 'text', 'furniture'].includes(shape.kind))
+        throw new Error(`golden decorOverride has unknown kind: ${shape.kind}`);
+      known.add(shape.id);
+    }
+    space.decor = structuredClone(scenario.decorOverride);
+  }
   if (scenario.openingGeometry) {
     const space = requireSpace();
     const opening = (space.openings || []).find(
