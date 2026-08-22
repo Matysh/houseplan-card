@@ -7,6 +7,7 @@
           "id": "fine",
           "title": "Fine grid",
           "cell_cm": 3,
+          "view_box": [0, 0, 1, 1],
           "rooms": [
             {
               "id": "fine-room",
@@ -24,6 +25,7 @@
           "id": "regular",
           "title": "Regular grid",
           "cell_cm": 5,
+          "view_box": [0, 0, 1, 1],
           "rooms": [
             {
               "id": "regular-room",
@@ -62,6 +64,7 @@
           "id": "fine",
           "title": "Fine grid",
           "cell_cm": 3,
+          "view_box": [0, 0, 1, 1],
           "rooms": [
             {
               "id": "fine-room",
@@ -79,6 +82,7 @@
           "id": "regular",
           "title": "Regular grid",
           "cell_cm": 5,
+          "view_box": [0, 0, 1, 1],
           "rooms": [
             {
               "id": "regular-room",
