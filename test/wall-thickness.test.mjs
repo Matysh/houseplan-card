@@ -1531,22 +1531,40 @@ test('innerEdgeSpan handles a diagonal edge and degenerate input (#233)', () => 
 });
 
 test('ownEdgeOffsets reads the atomic profile, not a whole-edge lookup (#233)', () => {
-  // AC6b: половина ребра задана толщиной, половина нет. thicknessCmAt по целому
-  // ребру вернул бы 0 (test выше «exact-parent fallback does not leak»), а
-  // атомарный профиль отдаёт толщину участка под серединой ребра.
+  // AC6b, находка H2: толщина записана только на ЧАСТЬ ребра. Именно на таком
+  // ребре `thicknessCmAt` по целому ребру возвращает 0 — наивный источник
+  // толщин молча перестал бы сокращать подпись, и тест обязан это различать
+  // (M1 код-ревью r1: прежняя редакция задавала толщину на всё ребро, где оба
+  // источника отвечают одинаково, и наивную реализацию пропускала).
   const rooms = [{ id: 'r', poly: [[0, 0], [1, 0], [1, 1], [0, 1]] }];
-  const walls = setWallThickness([], [0, 0], [1, 0], 20, pitch);
-  assert.equal(thicknessCmAt(walls, [0, 0], [1, 0], pitch), 20);
+  const split = setWallThickness([], [0, 0], [0.6, 0], 20, pitch);
+  assert.equal(thicknessCmAt(split, [0, 0], [1, 0], pitch), 0,
+    'запрос по целому ребру против частичной толщины даёт 0 — это и есть H2');
+  assert.equal(thicknessCmAt(split, [0, 0], [0.6, 0], pitch), 20,
+    'а по самому участку толщина находится');
   // Полигон здесь в нормализованных координатах, поэтому coordScale = 1:
   // с NORM_W допуск поиска ключа стал бы больше самой комнаты и толщина
   // «протекла» бы на противоположное ребро — проверено прогоном.
-  const offsets = ownEdgeOffsets(rooms, 'r', walls, [], pitch, 5, GRID_PITCH, 1);
-  assert.equal(offsets.length, 4);
-  assert.ok(offsets[0] > 0, 'ребро со стеной получает половинную глубину');
-  assert.deepEqual(offsets.slice(1), [0, 0, 0], 'рёбра без записи остаются нулевыми');
-  // Тот же ответ, что у канонического источника профиля.
-  assert.deepEqual(offsets, insetOffsetsForRoom(rooms, 'r', walls, [], pitch, 5, GRID_PITCH, 1));
+  const halfDepth = wallCmToUnits(20, 5, GRID_PITCH) / 2;
+  const viaProfile = ownEdgeOffsets(rooms, 'r', split, [], pitch, 5, GRID_PITCH, 1);
+  assert.equal(viaProfile.length, 4, 'по одному числу на ребро своего полигона');
+  assert.equal(viaProfile[0], halfDepth,
+    'участок под серединой ребра отдаёт половинную глубину, а не 0');
+  assert.deepEqual(viaProfile.slice(1), [0, 0, 0], 'рёбра без записи остаются нулевыми');
+  // Разница с наивным источником именно здесь: 0 против половинной глубины.
+  // Дальше эту разницу видит `innerEdgeSpan` — с нулём сокращения не будет
+  // вовсе (AC3), с профилем соседнее ребро сократится (AC1, отдельные тесты
+  // выше; смешивать здесь нельзя — полигон нормализован, а профиль в единицах
+  // рендера).
+  assert.notEqual(viaProfile[0], thicknessCmAt(split, [0, 0], [1, 0], pitch));
+
+  // Неразрезанное ребро: тот же ответ, что у канонического источника профиля.
+  const whole = setWallThickness([], [0, 0], [1, 0], 20, pitch);
+  assert.deepEqual(
+    ownEdgeOffsets(rooms, 'r', whole, [], pitch, 5, GRID_PITCH, 1),
+    insetOffsetsForRoom(rooms, 'r', whole, [], pitch, 5, GRID_PITCH, 1),
+  );
   // Комната без стен: все нули — вызывающий покажет осевую длину.
   assert.deepEqual(ownEdgeOffsets(rooms, 'r', [], [], pitch, 5, GRID_PITCH, 1), [0, 0, 0, 0]);
-  assert.equal(ownEdgeOffsets(rooms, 'missing', walls, [], pitch, 5, GRID_PITCH, 1), null);
+  assert.equal(ownEdgeOffsets(rooms, 'missing', whole, [], pitch, 5, GRID_PITCH, 1), null);
 });

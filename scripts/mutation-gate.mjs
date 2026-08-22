@@ -109,6 +109,20 @@ export const MUTANTS = [
     }],
   },
   {
+    id: 'inner-span-ignores-neighbour-thickness',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="innerEdgeSpan measures between wall faces" '
+      + 'test/wall-thickness.test.mjs',
+    because: 'an edge is cut by the inner faces of its NEIGHBOURS, not by its own thickness: a '
+      + 'thin side between two thick walls loses 2x15, not 2x7.5, and reading own thickness at '
+      + 'both ends gives a number no tape measure confirms (#233 AC2)',
+    patches: [{
+      file: 'src/wall-thickness.ts',
+      find: '    const o = Math.max(0, Number(offsets[edge]) || 0);',
+      replace: '    const o = own;',
+    }],
+  },
+  {
     id: 'inner-span-shortens-a-passage',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="keeps the centreline where there is no wall" '
