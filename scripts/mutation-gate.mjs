@@ -95,6 +95,48 @@ export const MUTANTS = [
     }],
   },
   {
+    id: 'resize-labels-show-centreline',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="innerEdgeSpan measures between wall faces" '
+      + 'test/wall-thickness.test.mjs',
+    because: 'resize labels must report the distance a person measures with a tape between wall '
+      + 'faces; centreline numbers cannot be checked against anything and sat next to an area '
+      + 'that was already computed from the floor (#233)',
+    patches: [{
+      file: 'src/wall-thickness.ts',
+      find: '  const span = end - start;',
+      replace: '  const span = centre;',
+    }],
+  },
+  {
+    id: 'inner-span-shortens-a-passage',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="keeps the centreline where there is no wall" '
+      + 'test/wall-thickness.test.mjs',
+    because: 'a passage has no face to measure from, and insetContour leaves that joint as a flat '
+      + 'cap, so shortening an open side would split length from area again at a new boundary '
+      + '(#233, spec review r1/H1)',
+    patches: [{
+      file: 'src/wall-thickness.ts',
+      find: '  if (!(own > 0)) return centre;',
+      replace: '  if (false) return centre;',
+    }],
+  },
+  {
+    id: 'inner-span-reads-whole-edge-thickness',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="ownEdgeOffsets reads the atomic profile" '
+      + 'test/wall-thickness.test.mjs',
+    because: 'thicknessCmAt returns 0 for a whole-edge query against a partially set thickness, so '
+      + 'reading it instead of the atomic profile would silently stop shortening split-thickness '
+      + 'edges (#233, spec review r1/H2)',
+    patches: [{
+      file: 'src/wall-thickness.ts',
+      find: '      if (distToSeg(mid[0], mid[1], p0[0], p0[1], p1[0], p1[1]) <= eps) {',
+      replace: '      if (false) {',
+    }],
+  },
+  {
     id: 'snapn-returns-input-near-node',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="snapN returns the exact nearest node" '

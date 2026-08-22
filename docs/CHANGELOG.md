@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- Resizing a room now reports the distance between wall faces, the number a tape
+  measure gives: a 300 cm span between 15 cm walls reads 285 cm. The area label
+  was already computed from the floor, so one bubble used to carry two
+  conventions and neither number could be checked against anything. A passage or
+  a side open to the next room keeps its full length, because there is no face to
+  measure from. Area still subtracts columns and partitions, so length times
+  length may differ from it — that gap is furniture in the room, not a change of
+  ruler ([#233](https://github.com/Matysh/houseplan-card/issues/233)).
+
 - A chain of walls now stores the thickness it was drawn with. A segment whose
   thickness was not recorded — which happened while the toolbar field was being
   edited between segments — used to be previewed at the drawn value and saved at

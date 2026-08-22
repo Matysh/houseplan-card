@@ -71,6 +71,7 @@ import {
   intervalCmAt, wallBodyNeedsSolid, wallHatchNeedsSolid, wallHatchStepUnits,
   HATCH_BASE_STEP_UNITS, type OpeningTunnelGeometry, type OpeningWallIndex,
   type LinearWallSegment, type WallEntry, type WallInterval,
+  innerEdgeSpan, ownEdgeOffsets,
 } from './wall-thickness';
 import {
   resolveOpenCuts, resolveBoundaryTarget, snapOpenPoint,
@@ -8248,9 +8249,20 @@ class HouseplanCard extends LitElement {
     const own = res.polys[plan.roomId] || g.rooms.find((r) => r.id === plan.roomId)!.poly;
     const n = own.length;
     const i = plan.edge, j = (i + 1) % n;
+    // Длины — между внутренними гранями, как и площадь ниже (#233). Раньше
+    // здесь считалась осевая длина, и одно облачко подписей несло две разные
+    // конвенции: «3.00 × 4.00» по центрам стен рядом с площадью по полу.
+    const spanCms = this._rszInnerSpanCms(plan.roomId, own, res.polys);
     // the dragged wall and its two adjacent walls
-    for (const [a, b] of [[own[(i - 1 + n) % n], own[i]], [own[i], own[j]], [own[j], own[(j + 1) % n]]]) {
-      labels.push({ x: (a[0] + b[0]) / 2, y: (a[1] + b[1]) / 2, text: this._fmtLen(a, b) });
+    for (const edge of [(i - 1 + n) % n, i, j]) {
+      const a = own[edge], b = own[(edge + 1) % n];
+      const cm = spanCms?.[edge];
+      labels.push({
+        x: (a[0] + b[0]) / 2,
+        y: (a[1] + b[1]) / 2,
+        text: cm == null ? this._fmtLen(a, b)
+          : formatLength(cm, this.hass?.config?.unit_system?.length === 'mi'),
+      });
     }
     // live areas of EVERY room the drag reshapes (both sides of a shared wall)
     const imperial = this.hass?.config?.unit_system?.length === 'mi';
@@ -8276,10 +8288,36 @@ class HouseplanCard extends LitElement {
     return labels;
   }
 
+  /**
+   * Внутренние длины рёбер комнаты в сантиметрах, по одному числу на ребро.
+   *
+   * Толщины берутся из атомарного профиля (#233): `thicknessCmAt` по целому
+   * ребру возвращает 0 на ребре со сплит-толщиной, и подписи молча перестали бы
+   * сокращаться. `null` означает «профиля нет» — тогда вызывающий показывает
+   * осевую длину, как до правки.
+   */
+  private _rszInnerSpanCms(
+    roomId: string, own: number[][], polys: Record<string, number[][]>,
+  ): number[] | null {
+    const rooms = Object.keys(polys).length
+      ? Object.entries(polys).map(([id, poly]) => ({ id, poly }))
+      : this._spaceModel()?.rooms;
+    if (!rooms?.length) return null;
+    const walls = this._spaceWalls;
+    if (!walls.length) return null;
+    const openCuts = this._openPairs().flatMap((pair) => pair.segs);
+    const offsets = ownEdgeOffsets(
+      rooms, roomId, walls, openCuts,
+      this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
+    );
+    if (!offsets || offsets.length !== own.length) return null;
+    const perUnitCm = this._cellCm / this._gridPitch;
+    return own.map((_, edge) => innerEdgeSpan(own, edge, offsets) * perUnitCm);
+  }
+
   private _rszScaleLabels(poly: number[][]): { x: number; y: number; text: string; area?: boolean }[] {
     const imperial = this.hass?.config?.unit_system?.length === 'mi';
     const xs = poly.map((p) => p[0]), ys = poly.map((p) => p[1]);
-    const w = Math.max(...xs) - Math.min(...xs), h = Math.max(...ys) - Math.min(...ys);
     const walls = this._spaceWalls;
     const floor = walls.length && this._rszSel
       ? (innerContourForRoom(
@@ -8293,6 +8331,11 @@ class HouseplanCard extends LitElement {
       ? geometryArea(floorMinusBodies(floor, physical))
           * Math.pow(this._cellCm / this._gridPitch, 2) / 1e4
       : areaM2(floor, this._gridPitch, this._cellCm);
+    // Габарит — по внутреннему контуру, который уже посчитан выше для площади
+    // (#233): та же конвенция, что у площади, и никакой отдельной математики.
+    const fxs = floor.map((p) => p[0]), fys = floor.map((p) => p[1]);
+    const w = Math.max(...fxs) - Math.min(...fxs);
+    const h = Math.max(...fys) - Math.min(...fys);
     return [
       { x: Math.min(...xs), y: Math.min(...ys), text: `${this._fmtLen([0, 0], [w, 0])} × ${this._fmtLen([0, 0], [h, 0])}` },
       { x: c[0], y: c[1], text: formatArea(area, imperial), area: true },

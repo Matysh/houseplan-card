@@ -295,7 +295,7 @@ Other operations edit existing geometry:
 |---|---|
 | Merge | Joins adjacent rooms; a dialog chooses the surviving identity, name and area |
 | Split | Cuts a room from one wall to another; the larger part keeps the original room |
-| Resize | Moves a wall with shared geometry or scales a room by corner handles |
+| Resize | Moves a wall with shared geometry or scales a room by corner handles. Live labels report **inner** dimensions — the clear distance between wall faces, the number a tape measure gives — and the room area |
 | Thickness | Changes one physical span or every wall of a room |
 | Delete room | Deletes only the selected room after confirmation |
 

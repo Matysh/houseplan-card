@@ -856,6 +856,110 @@ function lineIntersect(
 }
 
 /**
+ * Clear distance between the wall faces along edge `index` (#233).
+ *
+ * The resize labels used to measure centrelines while the area label already
+ * measured the floor, so one bubble carried two conventions: "3.00 x 4.00" from
+ * wall centres next to an area from inner faces, and neither number could be
+ * checked with a tape measure.
+ *
+ * Indices of `insetContour` are deliberately NOT used: that function emits one
+ * point per corner (mitre), two (bevel, collinear joint, zero-thickness joint)
+ * or the original vertex, so inner and centre polygons do not share an index
+ * space. The span is obtained by intersecting the inner offset LINES instead,
+ * which is exact for any angle, diagonals included.
+ *
+ * `poly` is the room's own polygon and `offsets` carries one half-depth per its
+ * edge — resolved from the atomic profile by the caller, because a whole-edge
+ * `thicknessCmAt` lookup returns 0 on a split-thickness edge.
+ */
+export function innerEdgeSpan(poly: number[][], index: number, offsets: number[]): number {
+  const n = poly?.length || 0;
+  if (n < 3 || !Array.isArray(offsets) || offsets.length !== n) return 0;
+  const i = ((Math.trunc(index) % n) + n) % n;
+  const a = poly[i], b = poly[(i + 1) % n];
+  const dx = b[0] - a[0], dy = b[1] - a[1];
+  const centre = Math.hypot(dx, dy);
+  if (!(centre > 0)) return 0;
+  const own = Math.max(0, Number(offsets[i]) || 0);
+  // The zero rule comes first (#233, spec review r1/H1): a passage or a side
+  // open to the neighbouring room has no face to measure from, so its label is
+  // the full centreline. `insetContour` treats the same joint as a flat cap
+  // (#172) and shortens nothing either — otherwise length and area would
+  // diverge again, merely at a different boundary.
+  if (!(own > 0)) return centre;
+
+  const u: [number, number] = [dx / centre, dy / centre];
+  const selfNormal = inwardNormal(poly, i);
+  const selfPoint = [a[0] + selfNormal[0] * own, a[1] + selfNormal[1] * own];
+  // Distance from `a` measured along the edge; the inner line of a neighbour
+  // that has no thickness does not cut this edge at all.
+  const cutAt = (edge: number): number | null => {
+    const o = Math.max(0, Number(offsets[edge]) || 0);
+    if (!(o > 0)) return null;
+    const p0 = poly[edge], p1 = poly[(edge + 1) % n];
+    const ex = p1[0] - p0[0], ey = p1[1] - p0[1];
+    const len = Math.hypot(ex, ey);
+    if (!(len > 0)) return null;
+    const nrm = inwardNormal(poly, edge);
+    const hit = lineIntersect(
+      selfPoint, u, [p0[0] + nrm[0] * o, p0[1] + nrm[1] * o], [ex / len, ey / len],
+    );
+    if (!hit) return null;
+    return (hit[0] - a[0]) * u[0] + (hit[1] - a[1]) * u[1];
+  };
+
+  const start = cutAt((i - 1 + n) % n) ?? 0;
+  const end = cutAt((i + 1) % n) ?? centre;
+  const span = end - start;
+  // Walls thicker than the room they enclose: report nothing left, never a
+  // negative length.
+  return span > 0 ? span : 0;
+}
+
+/**
+ * One half-depth per edge of the room's OWN polygon (#233).
+ *
+ * The profile is atomic — its polygon is cut at shared boundaries — so an own
+ * edge may cover several stretches. The stretch holding the edge midpoint is
+ * the representative: the clear distance between the walls at the two ENDS of
+ * the edge is what the label reports, and a differently thick stretch in the
+ * middle does not change that distance.
+ */
+export function ownEdgeOffsets(
+  rooms: any[],
+  roomId: string,
+  walls: WallEntry[] | null | undefined,
+  openCuts: number[][],
+  pitch: number,
+  cellCm: number,
+  gridPitch: number,
+  coordScale = 1,
+): number[] | null {
+  const room = (rooms || []).find((r) => r?.id === roomId);
+  const own = roomPoly(room);
+  if (!own || own.length < 3) return null;
+  const profile = roomWallProfile(
+    rooms, roomId, walls, openCuts, pitch, cellCm, gridPitch, coordScale,
+  );
+  if (!profile) return own.map(() => 0);
+  const eps = openEps(pitch, coordScale) * 4;
+  return own.map((a, i) => {
+    const b = own[(i + 1) % own.length];
+    const mid = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+    for (let k = 0; k < profile.poly.length; k++) {
+      const p0 = profile.poly[k], p1 = profile.poly[(k + 1) % profile.poly.length];
+      // Уже существующая distToSeg принимает координаты, а не точки.
+      if (distToSeg(mid[0], mid[1], p0[0], p0[1], p1[0], p1[1]) <= eps) {
+        return Math.max(0, profile.offsets[k] || 0);
+      }
+    }
+    return 0;
+  });
+}
+
+
+/**
  * Inset a polygon by a per-edge inward distance (same units as poly).
  * Zero-offset edges stay on the original. Mitre joins; bevel when the mitre
  * would spike longer than MITRE_LIMIT × max(adjacent offsets).

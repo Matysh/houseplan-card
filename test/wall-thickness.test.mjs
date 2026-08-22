@@ -10,7 +10,7 @@ import {
   wallCmToUnits, insetContour, outsetContour, inwardNormal, edgeKinds, wallEdgeBodies,
   wallBodyRings, wallBodiesGeometry, wallBodiesUnionPath, floorFootprintGeometry,
   virtualJunctionPatches, stableJunctionPatch, unionJunctionPatches,
-  innerContourForRoom,
+  innerContourForRoom, innerEdgeSpan, ownEdgeOffsets,
   paperRoomShapesWithWalls, WALL_MIN_CM, WALL_MAX_CM, MITRE_LIMIT,
   atomicPolyForRoom, insetOffsetsForRoom, wallIntervals, materializeWallIntervals,
   normalizeWallIntervals,
@@ -1485,4 +1485,68 @@ test('issue 230 a thin wall is not turned into a blot by the new rule', () => {
   }
   assert.equal(wallBodyNeedsSolid(thin, 1), true, 'body guard still owns the thin case');
   assert.equal(wallBodyNeedsSolid(thin, 1.2), false, 'and lets it hatch once it is wide enough');
+});
+
+
+// --------------------- #233: внутренние размеры при ресайзе -----------------
+
+const rect = (w, h) => [[0, 0], [w, 0], [w, h], [0, h]];
+
+test('innerEdgeSpan measures between wall faces, not centrelines (#233)', () => {
+  // AC1: осевой пролёт 300 и стены 15 см дают 285 — то, что человек измерит
+  // рулеткой. В единицах: половинная глубина 7.5 при пролёте 300.
+  const poly = rect(300, 400);
+  const o = poly.map(() => 7.5);
+  assert.equal(innerEdgeSpan(poly, 0, o), 285);
+  assert.equal(innerEdgeSpan(poly, 1, o), 385);
+  // AC2: разные толщины на концах сокращают по-своему.
+  const mixed = [7.5, 15, 7.5, 15];
+  assert.equal(innerEdgeSpan(poly, 0, mixed), 300 - 15 - 15);
+  assert.equal(innerEdgeSpan(poly, 2, mixed), 300 - 15 - 15);
+});
+
+test('innerEdgeSpan keeps the centreline where there is no wall (#233)', () => {
+  const poly = rect(300, 400);
+  // AC3: нулевые толщины — внутренний размер равен осевому.
+  assert.equal(innerEdgeSpan(poly, 0, poly.map(() => 0)), 300);
+  // AC4: сосед без толщины не сокращает конец.
+  assert.equal(innerEdgeSpan(poly, 0, [7.5, 0, 7.5, 7.5]), 300 - 7.5);
+  // AC6a: сама сторона — проём, соседи-стены: полная осевая длина.
+  assert.equal(innerEdgeSpan(poly, 0, [0, 7.5, 7.5, 7.5]), 300);
+});
+
+test('innerEdgeSpan handles a diagonal edge and degenerate input (#233)', () => {
+  // AC5: на диагонали сокращение не равно простому o + o.
+  const tri = [[0, 0], [100, 0], [0, 100]];
+  const o = [5, 5, 5];
+  const diagonal = innerEdgeSpan(tri, 1, o);
+  const naive = Math.hypot(100, 100) - 10;
+  assert.ok(diagonal > 0 && Math.abs(diagonal - naive) > 1,
+    `диагональ ${diagonal} не должна совпадать с наивным ${naive}`);
+  // AC6: стены толще комнаты — ноль, а не отрицательное число.
+  assert.equal(innerEdgeSpan(rect(20, 20), 0, [30, 30, 30, 30]), 0);
+  // Мусор на входе не роняет функцию.
+  assert.equal(innerEdgeSpan([[0, 0], [1, 0]], 0, [1, 1]), 0);
+  assert.equal(innerEdgeSpan(rect(10, 10), 0, [1, 1, 1]), 0);
+});
+
+test('ownEdgeOffsets reads the atomic profile, not a whole-edge lookup (#233)', () => {
+  // AC6b: половина ребра задана толщиной, половина нет. thicknessCmAt по целому
+  // ребру вернул бы 0 (test выше «exact-parent fallback does not leak»), а
+  // атомарный профиль отдаёт толщину участка под серединой ребра.
+  const rooms = [{ id: 'r', poly: [[0, 0], [1, 0], [1, 1], [0, 1]] }];
+  const walls = setWallThickness([], [0, 0], [1, 0], 20, pitch);
+  assert.equal(thicknessCmAt(walls, [0, 0], [1, 0], pitch), 20);
+  // Полигон здесь в нормализованных координатах, поэтому coordScale = 1:
+  // с NORM_W допуск поиска ключа стал бы больше самой комнаты и толщина
+  // «протекла» бы на противоположное ребро — проверено прогоном.
+  const offsets = ownEdgeOffsets(rooms, 'r', walls, [], pitch, 5, GRID_PITCH, 1);
+  assert.equal(offsets.length, 4);
+  assert.ok(offsets[0] > 0, 'ребро со стеной получает половинную глубину');
+  assert.deepEqual(offsets.slice(1), [0, 0, 0], 'рёбра без записи остаются нулевыми');
+  // Тот же ответ, что у канонического источника профиля.
+  assert.deepEqual(offsets, insetOffsetsForRoom(rooms, 'r', walls, [], pitch, 5, GRID_PITCH, 1));
+  // Комната без стен: все нули — вызывающий покажет осевую длину.
+  assert.deepEqual(ownEdgeOffsets(rooms, 'r', [], [], pitch, 5, GRID_PITCH, 1), [0, 0, 0, 0]);
+  assert.equal(ownEdgeOffsets(rooms, 'missing', walls, [], pitch, 5, GRID_PITCH, 1), null);
 });
