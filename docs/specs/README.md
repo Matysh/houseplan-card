@@ -68,6 +68,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#224](https://github.com/Matysh/houseplan-card/issues/224) Канонические координаты на каждой записи | [224-config-coordinate-canonicalization.md](224-config-coordinate-canonicalization.md) |
 | [#228](https://github.com/Matysh/houseplan-card/issues/228) Надёжное рисование стен и операции с готовым контуром | [228-plan-drawing-problems.md](228-plan-drawing-problems.md) |
 | [#239](https://github.com/Matysh/houseplan-card/issues/239) Масштаб сетки не меняет внешний вид плана; default 1 см/1 дюйм | [239-grid-scale-invariance.md](239-grid-scale-invariance.md) |
+| [#231](https://github.com/Matysh/houseplan-card/issues/231) Декоративный слой виден поверх заливок комнат | [231-decor-layer-order.md](231-decor-layer-order.md) |
 
 ## P2
 
