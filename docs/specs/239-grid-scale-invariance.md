@@ -279,8 +279,9 @@ lossless механизм.
 ## 10. Данные, migration, i18n, a11y, privacy и security
 
 - Schema и формат данных не меняются; миграции нет.
-- Новые EN/RU строки нужны для imperial unit label; существующий metric текст
-  сохраняется.
+- Существующий `space.scale_unit` остаётся metric-текстом: RU «см на клетку»,
+  EN `cm per cell`. Новый `space.scale_unit_imperial`: RU «дюйм на клетку»,
+  EN `in per cell`. Label поля остаётся существующим `space.scale_label`.
 - Поле остаётся обычным label+number input; доступное имя и порядок фокуса не
   меняются.
 - Никаких новых данных HA, service calls, URL или файловых операций.
@@ -372,6 +373,27 @@ styles совпадают с pre-#239 contract; current golden не требуе
 **AC16.** EN/RU user guide и оба changelog объясняют: внешний вид не зависит от
 шага сетки, default новых пространств 1 см/1 дюйм, существующие значения не
 мигрируют.
+
+### 13.1 Матрица доказательств
+
+| AC | Обязательное доказательство |
+|---|---|
+| AC1 | `test/grid-scale.test.mjs`: точные значения helper и invalid fallback |
+| AC2 | `demo/smoke_grid_scale_invariance.mjs`: pair pixel comparison flat View light/dark |
+| AC3 | opening unit tests + тот же smoke: DOM metrics и реальные pointer-точки на внешней границе hitbox |
+| AC4 | тот же smoke: Plan pair pixels с замаскированным grid; отдельный DOM count/spacing grid intervals |
+| AC5 | unit negative controls для physical helpers + pair smoke для hatch/Glow/decor/device/snap nodes; mutation `grid-scale-physical-double-scaled` обязан покраснеть |
+| AC6 | pair smoke в Devices/Background: `getBoundingClientRect()` frame/knob/hit handles и mutation-free pointer sequence |
+| AC7 | pair pixel/DOM comparison двух `houseplan-space-card` в `demo/smoke_grid_scale_invariance.mjs` |
+| AC8 | iso unit tests для height/depth/fingerprint + pair pixel/DOM comparison hidden iso light/dark и отсутствие публичного toggle без Labs |
+| AC9 | `test/grid-scale.test.mjs` для pure default + `demo/smoke_space_scale_defaults.mjs` для dialog/save metric и imperial |
+| AC10 | `demo/smoke_space_scale_defaults.mjs`: два floors-import drafts и сохранённые canonical значения в обеих unit systems |
+| AC11 | unit compatibility cases + smoke open→save без input event для 5, дробного и missing `cell_cm` в imperial |
+| AC12 | default smoke: input value/min/max/unit text для EN/RU metric/imperial и неизменный canonical draft при language rerender |
+| AC13 | code review сверяет exact scale-1 attributes/computed styles; текущий `golden:verify` выполняется перед бетой и не принимается разработчиком; public docs provenance показывает единственный ожидаемый create-default diff |
+| AC14 | targeted opening/touch browser smoke: tap остаётся действием, pan/pinch/second-pointer/`pointercancel`/suppressed click не выполняют action и не мутируют config; edge hit-points из AC3 подтверждают неуменьшение области |
+| AC15 | code review по diff: factor O(1), без новых geometry traversal/state reads; performance benchmarks — предрелизный gate |
+| AC16 | `node scripts/check-docs.mjs` + code review полного diff обоих changelog и обоих user guide; public screenshot provenance проверяет create-dialog |
 
 ## 14. План автотестов
 
