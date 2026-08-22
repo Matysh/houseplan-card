@@ -538,6 +538,7 @@ npx tsc --noEmit
 npm test
 npm run build && cmp dist/houseplan-card.js custom_components/houseplan/frontend/houseplan-card.js \
               && cmp dist/houseplan-card.js demo/srv/assets/houseplan-card.js
+node scripts/smoke-select.mjs --base origin/dev --head HEAD   # какие смоки относятся к диффу
 node demo/smoke_<целевые>.mjs
 npm run golden:verify                 # если менялся визуал
 node scripts/check-docs.mjs           # если менялся src/**
@@ -547,8 +548,10 @@ python -m pytest tests_backend -q     # py3.13, если менялся бэке
 **Объём гейтов на код-ревью соразмерен задаче** (issue #127). Всегда:
 `typecheck`, `npm test`, `npm run build` со сверкой трёх копий бандла, а при
 любом diff'е по `src/**` — ещё и `node scripts/check-docs.mjs`. По
-необходимости, определяемой diff'ом и AC: браузерные смоки (их 163 — прогон всех
-уместен только когда задача задевает всё), `golden:verify` при изменении видимого
+необходимости, определяемой diff'ом и AC: браузерные смоки (их 167 — прогон всех
+уместен только когда задача задевает всё; какие относятся к диффу, печатает
+`node scripts/smoke-select.mjs --base origin/dev --head HEAD`, и его вывод
+прикладывается к ревью вместе с решением по каждой строке), `golden:verify` при изменении видимого
 результата, `pytest tests_backend` при правках в Python, performance-профили при
 названном в AC влиянии. **Полные наборы — предрелизный гейт, а не гейт ревью.**
 

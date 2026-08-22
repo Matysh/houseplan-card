@@ -9,6 +9,7 @@
     "watch": "rollup -c --watch",
     "typecheck": "tsc --noEmit",
     "test": "tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/*.test.mjs",
+    "smokes:select": "node scripts/smoke-select.mjs",
     "inventory": "node scripts/inventory.mjs",
     "audit:config": "node scripts/config-audit.mjs",
     "benchmark:large-house": "node demo/benchmark_large_house.mjs",
