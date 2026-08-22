@@ -84,11 +84,17 @@ const out = await page.evaluate(async () => {
   o.columnCreatedSquare = sp.wall_columns?.length === 1
     && sp.wall_columns[0].shape === 'square' && sp.wall_columns[0].cm === 30;
 
-  c._tool = 'draw';
+  // Незавершённая цепочка сохраняется сразу, вместе с толщиной отрезка.
+  // Путь набирается кликами, а не присваиванием `_path`: с #234 толщина
+  // пишется в тот же момент, что и точка, и подстановка пути в обход клика
+  // опирается на снятый там fallback — тест проверял бы поведение, которого
+  // в продукте больше нет.
+  c._activateMarkupTool('draw');
   c._drawWallField = '12';
-  c._path = [[100, 300], [200, 300]];
   c._activeDraftId = null;
-  c._draftSegmentCms = [];
+  c._markupClick(clickAt(100, 300));
+  c._markupClick(clickAt(200, 300));
+  o.draftChainRecordedThickness = c._draftSegmentCms.length === c._path.length - 1;
   c._persistActiveDraftSegment();
   sp = c._serverCfg.spaces[0];
   o.draftPersistedImmediately = sp.room_drafts?.length === 1
