@@ -34,7 +34,9 @@ export function createSpaceDeletionCandidate(
   const dependencies = collectSpaceMarkerDependencies(configIn, layoutIn, spaceId);
   const config = clone(configIn);
   const layout = clone(layoutIn || {});
-  if (dependencies.count) return { config, layout, dependencies };
+  const spaces = config.spaces || [];
+  const deletingLastSpace = spaces.length === 1 && spaces[0]?.id === spaceId;
+  if (dependencies.count && !deletingLastSpace) return { config, layout, dependencies };
 
   const space = (config.spaces || []).find((item: any) => item?.id === spaceId);
   const roomIds = new Set(
@@ -42,6 +44,16 @@ export function createSpaceDeletionCandidate(
   );
   config.spaces = (config.spaces || []).filter((item: any) => item?.id !== spaceId);
   for (const marker of config.markers || []) {
+    const markerOwnsPosition = typeof marker?.id === 'string'
+      && layout?.[marker.id]?.s === spaceId;
+    const referencesDeletedSpace = marker?.space === spaceId
+      || (typeof marker?.room_id === 'string' && roomIds.has(marker.room_id))
+      || markerOwnsPosition;
+    if (deletingLastSpace && referencesDeletedSpace) {
+      delete marker.space;
+      delete marker.room_id;
+      continue;
+    }
     if (marker?.removed !== true) continue;
     if (marker.space === spaceId) delete marker.space;
     if (typeof marker.room_id === 'string' && roomIds.has(marker.room_id)) delete marker.room_id;

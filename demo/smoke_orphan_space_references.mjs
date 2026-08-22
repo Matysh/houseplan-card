@@ -12,6 +12,10 @@ const out = await page.evaluate(async () => {
     spaces: [{
       id: 'home', title: 'Home', view_box: [0, 0, 1, 1], cell_cm: 5,
       rooms: [{ id: 'living', name: 'Living', area: null, poly: [[0, 0], [1, 0], [1, 1], [0, 1]] }],
+    }, {
+      // Keep `home` non-final so this fixture proves the normal blocker; the
+      // final-space safe-detach exception is covered by #113's lifecycle smoke.
+      id: 'other', title: 'Other', view_box: [0, 0, 1, 1], cell_cm: 5, rooms: [],
     }],
     markers: [
       {

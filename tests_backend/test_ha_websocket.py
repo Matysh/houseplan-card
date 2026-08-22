@@ -66,6 +66,52 @@ def test_issue_244_space_delete_dependency_and_tombstone_candidate() -> None:
     assert config["markers"][0]["space"] == "f1"
 
 
+def test_issue_244_last_occupied_space_candidate_detaches_all_affected_markers() -> None:
+    config = {
+        "spaces": [_space("only", "room-only")],
+        "markers": [
+            {
+                "id": "direct", "binding": "virtual", "space": "only",
+                "room_id": "room-only", "name": "Kept", "icon": "mdi:lightbulb",
+            },
+            {
+                "id": "position", "binding": "virtual", "name": "Position",
+            },
+            {
+                "id": "removed", "binding": "entity:light.old", "removed": True,
+                "space": "only", "room_id": "room-only", "name": "Tombstone",
+            },
+            {
+                "id": "unrelated", "binding": "virtual", "space": "legacy",
+                "name": "Unrelated",
+            },
+        ],
+        "settings": {},
+    }
+    layout = {
+        "direct": {"s": "only", "x": 0.1, "y": 0.2},
+        "position": {"s": "only", "x": 0.3, "y": 0.4},
+        "rl_room-only": {"s": "only", "x": 0.5, "y": 0.6},
+    }
+
+    candidate, candidate_layout, dependencies, removed_layout = _space_delete_candidate(
+        config, layout, "only",
+    )
+
+    assert dependencies == ["direct", "position"]
+    assert candidate["spaces"] == []
+    assert candidate_layout == {}
+    assert removed_layout == 3
+    by_id = {marker["id"]: marker for marker in candidate["markers"]}
+    for marker_id in ("direct", "position", "removed"):
+        assert "space" not in by_id[marker_id]
+        assert "room_id" not in by_id[marker_id]
+    assert by_id["direct"]["icon"] == "mdi:lightbulb"
+    assert by_id["unrelated"]["space"] == "legacy"
+    assert config["markers"][0]["space"] == "only"
+    assert layout["direct"]["s"] == "only"
+
+
 async def test_issue_244_space_delete_is_authoritative_and_revision_guarded(
     hass: HomeAssistant, hass_ws_client: WebSocketGenerator,
 ) -> None:
@@ -134,6 +180,51 @@ async def test_issue_244_space_delete_is_authoritative_and_revision_guarded(
         "name": "Kept tombstone",
     }
     assert final_layout["layout"] == {}
+
+
+async def test_issue_244_last_occupied_space_delete_preserves_marker_records(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator,
+) -> None:
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    config = {
+        "spaces": [_space("only", "room-only")],
+        "markers": [{
+            "id": "device", "binding": "virtual", "space": "only",
+            "room_id": "room-only", "name": "Kept", "icon": "mdi:lightbulb",
+        }],
+        "settings": {},
+    }
+    await client.send_json_auto_id({
+        "type": "houseplan/config/set", "config": config, "expected_rev": 0,
+    })
+    config_set = await client.receive_json()
+    assert config_set["success"]
+    await client.send_json_auto_id({
+        "type": "houseplan/layout/set",
+        "layout": {"device": {"s": "only", "x": 0.2, "y": 0.3}},
+    })
+    layout_set = await client.receive_json()
+    assert layout_set["success"]
+
+    await client.send_json_auto_id({
+        "type": "houseplan/space/delete", "space_id": "only",
+        "expected_config_rev": config_set["result"]["rev"],
+        "expected_layout_rev": layout_set["result"]["rev"],
+    })
+    deleted = await client.receive_json()
+    assert deleted["success"]
+
+    await client.send_json_auto_id({"type": "houseplan/config/get"})
+    final_config = (await client.receive_json())["result"]["config"]
+    await client.send_json_auto_id({"type": "houseplan/layout/get"})
+    final_layout = (await client.receive_json())["result"]["layout"]
+    assert final_config["spaces"] == []
+    assert final_config["markers"] == [{
+        "id": "device", "binding": "virtual", "name": "Kept",
+        "icon": "mdi:lightbulb",
+    }]
+    assert final_layout == {}
 
 
 async def test_layout_roundtrip(hass: HomeAssistant, hass_ws_client: WebSocketGenerator) -> None:

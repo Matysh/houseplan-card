@@ -16,9 +16,66 @@ const result = await page.evaluate(async () => {
   };
   const original = structuredClone(card._serverCfg);
   const first = structuredClone(original.spaces[0]);
+  const retainedMarker = {
+    id: '__issue244_retained', binding: 'virtual', space: first.id,
+    name: 'Retained marker', icon: 'mdi:lightbulb',
+    actions: [{ tap: 'more-info' }], description: 'must survive final space delete',
+  };
+  let serverConfig = {
+    ...structuredClone(original),
+    spaces: [first],
+    markers: [...(structuredClone(original.markers) || []), retainedMarker],
+  };
+  let serverLayout = {
+    ...structuredClone(card._layout || {}),
+    [retainedMarker.id]: { s: first.id, x: 0.4, y: 0.6 },
+  };
+  const markersBeforeDelete = structuredClone(serverConfig.markers);
+  const firstRoomIds = new Set((first.rooms || []).map((room) => room.id));
+  const affectedMarkerIds = new Set((serverConfig.markers || [])
+    .filter((marker) => marker.space === first.id || firstRoomIds.has(marker.room_id)
+      || serverLayout[marker.id]?.s === first.id)
+    .map((marker) => marker.id));
+  const baseCall = card.hass.callWS.bind(card.hass);
+  let deleteCalls = 0;
+  card.hass = {
+    ...card.hass,
+    callWS: async (message) => {
+      if (message.type === 'houseplan/space/delete') {
+        deleteCalls++;
+        const target = message.space_id;
+        const space = serverConfig.spaces.find((item) => item.id === target);
+        const roomIds = new Set((space?.rooms || []).map((room) => room.id));
+        serverConfig = {
+          ...serverConfig,
+          spaces: serverConfig.spaces.filter((item) => item.id !== target),
+          markers: (serverConfig.markers || []).map((marker) => {
+            const affected = marker.space === target || roomIds.has(marker.room_id)
+              || serverLayout[marker.id]?.s === target;
+            if (!affected) return marker;
+            const detached = { ...marker };
+            delete detached.space;
+            delete detached.room_id;
+            return detached;
+          }),
+        };
+        serverLayout = Object.fromEntries(
+          Object.entries(serverLayout).filter(([, position]) => position?.s !== target),
+        );
+        return { ok: true, config_rev: 2, layout_rev: 2 };
+      }
+      if (message.type === 'houseplan/config/get') {
+        return { config: structuredClone(serverConfig), rev: 2, can_write: true };
+      }
+      if (message.type === 'houseplan/layout/get') {
+        return { layout: structuredClone(serverLayout), rev: 2 };
+      }
+      return baseCall(message);
+    },
+  };
 
   // Exercise the real delete command with exactly one remaining space.
-  card._serverCfg = { ...structuredClone(original), spaces: [first] };
+  card._serverCfg = structuredClone(serverConfig);
   card._space = first.id;
   card._cfgEpoch++;
   card.requestUpdate();
@@ -46,6 +103,17 @@ const result = await page.evaluate(async () => {
     && Object.keys(card._resumeDraftBySpace).length === 0;
   out.deleteLastClosesEditDialog = card._spaceDialog === null;
   out.deleteLastCancelsPendingWrite = card._saveConfigDebounced.pending() === false;
+  out.deleteLastUsesAuthoritativeEndpoint = deleteCalls === 1;
+  const retainedAfterDelete = serverConfig.markers.find((marker) => marker.id === retainedMarker.id);
+  out.deleteLastPreservesMarkersWithoutPlacement = serverConfig.markers.length === markersBeforeDelete.length
+    && affectedMarkerIds.size > 0
+    && serverConfig.markers.filter((marker) => affectedMarkerIds.has(marker.id))
+      .every((marker) => marker.space === undefined && marker.room_id === undefined)
+    && Object.values(serverLayout).every((position) => position?.s !== first.id)
+    && retainedAfterDelete?.binding === retainedMarker.binding
+    && retainedAfterDelete?.icon === retainedMarker.icon
+    && retainedAfterDelete?.description === retainedMarker.description
+    && JSON.stringify(retainedAfterDelete?.actions) === JSON.stringify(retainedMarker.actions);
 
   // The empty state still owns global recovery flows.
   const add = root().querySelector('.empty button.btn.on');

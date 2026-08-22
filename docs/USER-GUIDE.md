@@ -277,9 +277,11 @@ Room cards are positioned and scaled on the plan. View renders only the metrics
 enabled for that space.
 
 Deleting a space is blocked while any active device still points to the space,
-one of its rooms or a saved position on it. Move or delete those devices first;
-then the confirmed delete removes the space-owned layout. Plan images and
-attachments are not deleted automatically.
+one of its rooms or a saved position on it, provided another space remains.
+Move or delete those devices first; then the confirmed delete removes the
+space-owned layout. The sole remaining space can still be deleted after
+confirmation: affected devices keep their bindings, icons, actions and settings
+but become unplaced. Plan images and attachments are not deleted automatically.
 
 ![Room card with temperature, LQI and light state](images/08-room-card.png)
 

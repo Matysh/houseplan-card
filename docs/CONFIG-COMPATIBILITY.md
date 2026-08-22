@@ -195,10 +195,12 @@ is data-driven, idempotent and runs even when `model_version` is already 7.
 A one-space import uses its known id map (not a heuristic) to repair matching
 orphan target references when the original space id is absent. Full restore is
 unchanged. Space deletion now uses a revision-guarded config/layout transaction
-and refuses active marker dependencies; removed tombstones keep their metadata
-and lose only placement fields owned by the deleted space. Older clients can
-read every repaired candidate because the schemas and field shapes did not
-change.
+and refuses active marker dependencies while another space remains; removed
+tombstones keep their metadata and lose only placement fields owned by the
+deleted space. Deleting the sole remaining space is the intentional exception:
+all affected active and removed marker records survive with only `space` and
+`room_id` cleared, preserving the empty-state contract. Older clients can read
+every repaired candidate because the schemas and field shapes did not change.
 
 Current `fill_mode` additionally accepts `custom`. Its optional color is stored
 as `{c:'#RRGGBB',a:0..1}` in `space.settings.custom_fill` and, for an explicit

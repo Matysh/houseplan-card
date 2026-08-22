@@ -68,3 +68,44 @@ test('issue 244 deleting the last unoccupied space produces an explicit empty mo
   assert.deepEqual(result.config.settings, { keep: true });
   assert.deepEqual(result.layout, {});
 });
+
+test('issue 244 deleting the last occupied space detaches placement but preserves markers', () => {
+  const config = {
+    spaces: [{ id: 'only', rooms: [{ id: 'room-only' }] }],
+    markers: [
+      {
+        id: 'direct', binding: 'virtual', space: 'only', room_id: 'room-only',
+        name: 'Direct', icon: 'mdi:lightbulb', actions: [{ tap: 'more-info' }],
+      },
+      {
+        id: 'room', binding: 'entity:sensor.room', space: 'legacy', room_id: 'room-only',
+        name: 'Room', removed: true,
+      },
+      { id: 'position', binding: 'entity:sensor.position', name: 'Position' },
+      { id: 'unrelated', binding: 'virtual', space: 'legacy', name: 'Unrelated' },
+    ],
+    settings: { keep: true },
+  };
+  const layout = {
+    direct: { s: 'only', x: 0.1, y: 0.2 },
+    position: { s: 'only', x: 0.3, y: 0.4 },
+    rl_room_only: { s: 'only', x: 0.5, y: 0.6 },
+  };
+  const result = createSpaceDeletionCandidate(config, layout, 'only');
+
+  assert.equal(result.dependencies.count, 2);
+  assert.deepEqual(result.config.spaces, []);
+  assert.deepEqual(result.layout, {});
+  assert.deepEqual(result.config.markers.map((marker) => ({
+    id: marker.id, space: marker.space, room: marker.room_id, name: marker.name,
+  })), [
+    { id: 'direct', space: undefined, room: undefined, name: 'Direct' },
+    { id: 'room', space: undefined, room: undefined, name: 'Room' },
+    { id: 'position', space: undefined, room: undefined, name: 'Position' },
+    { id: 'unrelated', space: 'legacy', room: undefined, name: 'Unrelated' },
+  ]);
+  assert.equal(result.config.markers[0].icon, 'mdi:lightbulb');
+  assert.deepEqual(result.config.markers[0].actions, [{ tap: 'more-info' }]);
+  assert.equal(config.markers[0].space, 'only', 'input config is immutable');
+  assert.equal(layout.direct.s, 'only', 'input layout is immutable');
+});

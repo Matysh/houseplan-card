@@ -2222,14 +2222,18 @@ require hands on real hardware — they remain for the human pass.
       preserve the marker record; ambiguous/truncated signatures and opaque
       layout are never guessed. Preview/Apply/Undo use one exact candidate and
       show remaining debt even for a no-op. Space import repairs target refs by
-      its known map. Space delete deduplicates active marker blockers, rechecks
-      both revisions under the backend lock and removes owned layout without
-      deleting tombstone metadata. A missing `default_floor` remains raw and
+      its known map. With another space present, space delete deduplicates active
+      marker blockers; deleting the sole remaining space instead preserves every
+      affected active/removed marker record while clearing only `space` and
+      `room_id`. Both paths recheck both revisions under the backend lock and
+      remove owned layout without deleting marker metadata. The sole-space path
+      also keeps the #113 empty-state smoke green. A missing `default_floor`
+      remains raw and
       gains a RU/EN inline warning after spaces load
       [unit: space-reference-repair, plan-optimizer, space-deletion,
       card-editor-validation; backend: test_ha_import_export,
-      test_ha_websocket; pre-release: targeted browser smoke and light/dark
-      golden].
+      test_ha_websocket; smoke: orphan-space-references + optional-space-model;
+      pre-release: targeted browser smoke and light/dark golden].
 - [ ] **Every write prevents new ULP coordinate noise (#224)**: config/layout
       schema, import, direct storage writers, startup recovery and maintenance
       Undo produce the same nine-decimal allow-listed geometry as the frontend.

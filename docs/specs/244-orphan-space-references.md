@@ -35,7 +35,9 @@ Optimize сообщает только о геометрии. Удаление �
 пространство, а без надёжного назначения снимает только мёртвую привязку и
 возвращает сам маркер в доступный план. Preview сообщает, сколько устройств
 восстановлено и какие ссылки требуют внимания. Удалить занятое пространство
-нельзя до переноса его маркеров. Редактор карточки постоянно показывает, какой
+нельзя до переноса его маркеров, пока существует другое пространство. Последнее
+пространство можно удалить после подтверждения: маркеры сохраняют настройки и
+теряют только размещение. Редактор карточки постоянно показывает, какой
 `default_floor` отсутствует.
 
 ## 3. Подтверждённый диагноз
@@ -71,8 +73,12 @@ Optimize сообщает только о геометрии. Удаление �
 3. Весь marker record не удаляется: это потеряло бы пользовательские настройки,
    уничтожило virtual-маркер и не гарантировало бы автопоявление реального
    устройства без HA Area.
-4. Удаление пространства блокируется, пока на нём остаются активные маркеры;
-   UI называет количество и просит сначала перенести или удалить их.
+4. Если пространств два или больше, удаление пространства блокируется, пока на
+   нём остаются активные маркеры; UI называет количество и просит сначала
+   перенести или удалить их. Исключение: последнее пространство можно удалить
+   после подтверждения. У всех затронутых активных и removed marker records
+   снимаются только `space` и `room_id`; binding, иконка, действия и остальные
+   настройки сохраняются. Это сохраняет empty-state контракт #113.
 5. Невалидный `default_floor` получает постоянную inline-ошибку в редакторе
    карточки. Дополнительный toast не показывается; безопасный fallback на первое
    пространство сохраняется.
@@ -255,8 +261,8 @@ room-label position имеет приоритет над stale target label пр
 
 ## 10. Безопасное удаление пространства
 
-Перед delete frontend считает активные marker dependencies. Маркер блокирует
-удаление, если выполняется хотя бы одно:
+Перед delete frontend считает активные marker dependencies. Если пространств
+два или больше, маркер блокирует удаление, если выполняется хотя бы одно:
 
 - `marker.space` равен удаляемому id;
 - его `room_id` принадлежит комнате удаляемого пространства;
@@ -267,7 +273,8 @@ room-label position имеет приоритет над stale target label пр
 пользовательскими устройствами: после снятия marker blockers они удаляются
 вместе с пространством.
 
-При blockers редактор пространства сохраняет диалог открытым, показывает
+При blockers и наличии другого пространства редактор пространства сохраняет
+диалог открытым, показывает
 inline `role=alert` с количеством и инструкцией перенести/удалить устройства,
 не показывает native confirm и не пишет config/layout/revisions. Delete control
 остаётся доступным для активации, чтобы причина была объяснена, а не выглядит
@@ -278,11 +285,20 @@ entries с `s == spaceId`; у removed tombstones снимаются только
 которые ссылались на удалённое пространство. Marker metadata и файлы не
 удаляются по inference.
 
+Если удаляется единственное оставшееся пространство, dependencies не
+блокируют подтверждение. Та же авторитетная транзакция удаляет space и весь его
+layout, а у каждого затронутого активного или removed marker record снимает
+ровно `space` и `room_id`. Затронутым считается маркер, чьё прямое `space`,
+комната либо marker-layout position принадлежит удаляемому пространству.
+Binding, иконка, действия и любые остальные настройки сохраняются; незатронутые
+legacy-ссылки не переписываются.
+
 Авторитетная backend-операция повторно проверяет dependencies под write lock,
 сверяет обе expected revisions и сохраняет config/layout без наблюдаемого
 полусостояния. Гонка возвращает стабильный `conflict` либо `space_in_use` с
 counts; frontend обновляет данные и показывает локализованную причину. Удаление
-последнего пустого пространства сохраняет действующий контракт #111.
+последнего пустого или занятого пространства сохраняет действующий empty-state
+контракт #113.
 
 ## 11. `default_floor` в редакторе карточки
 
@@ -345,8 +361,8 @@ best effort на touch, поэтому новые editor controls не расш�
 | AC6 | Нерешённый `vacuum.segment_map` не удаляется, но считается в `nestedRefsUnresolved`; exact room map переписывает его полностью. | Vacuum reference unit. |
 | AC7 | Optimize preview и toast отдельно показывают remapped/detached counters; warning виден и при `changed=false`, Apply тогда отсутствует; Cancel не пишет, Apply сохраняет exact candidate, Undo возвращает исходные ссылки. | UI unit + targeted browser/backend smoke. |
 | AC8 | Space import при отсутствующем source id переписывает target marker/layout/room/vacuum refs известным `id_map`, отражает count в preview и apply; при существующем source id target не меняется. Full restore остаётся прежним. | Backend import/export tests preview/revalidate/apply. |
-| AC9 | Удаление пространства с N зависимыми активными markers показывает inline blocker с N, не вызывает confirm/backend write и не меняет revisions. Один marker по трём ссылкам считается один раз. | Pure dependency unit + browser smoke. |
-| AC10 | После переноса/удаления blockers delete под revision guard удаляет space и весь принадлежащий ему layout без полусостояния; concurrent change даёт `conflict`/`space_in_use`; marker metadata/files не удаляются. | Backend transaction tests + frontend smoke. |
+| AC9 | При двух или более пространствах удаление пространства с N зависимыми активными markers показывает inline blocker с N, не вызывает confirm/backend write и не меняет revisions. Один marker по трём ссылкам считается один раз. | Pure dependency unit + browser smoke. |
+| AC10 | После переноса/удаления blockers delete под revision guard удаляет space и весь принадлежащий ему layout без полусостояния; concurrent change даёт `conflict`/`space_in_use`; marker metadata/files не удаляются. Единственное оставшееся пространство удаляется и при dependencies: у всех затронутых active/removed markers снимаются только `space`/`room_id`, остальные настройки сохраняются, после чего действует empty-state #113. | Backend transaction tests + `smoke_orphan_space_references` + `smoke_optional_space_model`. |
 | AC11 | Редактор с отсутствующим `default_floor=f1` после загрузки показывает raw id и RU/EN inline error; выбор валидного id убирает её. Runtime открывает первое пространство, toast отсутствует, несвязанное поле не стирает raw value. | Editor unit + light/dark golden/browser smoke. |
 | AC12 | Уже валидные marker/layout/room refs не меняются; входы не мутируются; model version не создаёт запись сам по себе; старый schema fixture читается. | Immutability/compatibility/idempotence units. |
 | AC13 | Проход линейный по spaces + rooms + markers + layout и не входит в render/state tick; permission и optimistic-lock guards не ослаблены. | Code inspection + large synthetic unit/backend test. |

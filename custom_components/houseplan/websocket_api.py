@@ -1390,7 +1390,9 @@ def _space_delete_candidate(
     candidate_config = json.loads(json.dumps(config))
     candidate_layout = json.loads(json.dumps(layout))
     dependencies = _space_marker_dependencies(candidate_config, candidate_layout, space_id)
-    if dependencies:
+    spaces = candidate_config.get("spaces") or []
+    deleting_last_space = len(spaces) == 1 and spaces[0].get("id") == space_id
+    if dependencies and not deleting_last_space:
         return candidate_config, candidate_layout, dependencies, 0
     space = next(
         (item for item in candidate_config.get("spaces") or []
@@ -1406,6 +1408,23 @@ def _space_delete_candidate(
         if item.get("id") != space_id
     ]
     for marker in candidate_config.get("markers") or []:
+        marker_id = str(marker.get("id")) if marker.get("id") is not None else None
+        marker_position = candidate_layout.get(marker_id) if marker_id is not None else None
+        references_deleted_space = (
+            marker.get("space") == space_id
+            or (
+                marker.get("room_id") is not None
+                and str(marker.get("room_id")) in room_ids
+            )
+            or (
+                isinstance(marker_position, dict)
+                and marker_position.get("s") == space_id
+            )
+        )
+        if deleting_last_space and references_deleted_space:
+            marker.pop("space", None)
+            marker.pop("room_id", None)
+            continue
         if marker.get("removed") is not True:
             continue
         if marker.get("space") == space_id:
@@ -1432,7 +1451,7 @@ def _space_delete_candidate(
 )
 @websocket_api.async_response
 async def ws_space_delete(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
-    """Delete one unoccupied space as a crash-recoverable config/layout pair."""
+    """Delete one space as a crash-recoverable config/layout pair."""
     if not _check_write(hass, connection):
         connection.send_error(msg["id"], "unauthorized", "Only editors may delete spaces")
         return
@@ -1464,7 +1483,11 @@ async def ws_space_delete(hass: HomeAssistant, connection, msg: dict[str, Any]) 
             target_config, target_layout, dependencies, removed_layout = (
                 _space_delete_candidate(current_config, current_layout, space_id)
             )
-            if dependencies:
+            spaces = current_config.get("spaces") or []
+            deleting_last_space = (
+                len(spaces) == 1 and spaces[0].get("id") == space_id
+            )
+            if dependencies and not deleting_last_space:
                 connection.send_error(
                     msg["id"], "space_in_use",
                     f"Space is still used by {len(dependencies)} active marker(s)",

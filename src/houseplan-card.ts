@@ -14460,11 +14460,15 @@ class HouseplanCard extends LitElement {
   private async _deleteSpace(): Promise<void> {
     const d = this._spaceDialog;
     if (!d || d.mode !== 'edit') return;
-    const sp = this._serverCfg!.spaces.find((x: any) => x.id === d.spaceId);
+    const serverCfg = this._serverCfg;
+    if (!serverCfg) return;
+    const sp = serverCfg.spaces.find((x: any) => x.id === d.spaceId);
     const dependencies = collectSpaceMarkerDependencies(
-      this._serverCfg, this._layout || {}, d.spaceId || '',
+      serverCfg, this._layout || {}, d.spaceId || '',
     );
-    if (dependencies.count) {
+    const deletingLastSpace = serverCfg.spaces.length === 1
+      && serverCfg.spaces[0]?.id === d.spaceId;
+    if (dependencies.count && !deletingLastSpace) {
       this._spaceDialog = { ...d, deleteBlockers: dependencies.count };
       return;
     }
@@ -14496,11 +14500,18 @@ class HouseplanCard extends LitElement {
       if (e?.code === 'conflict' || e?.code === 'space_in_use') {
         await Promise.all([this._reloadConfigOnly(true), this._reloadLayoutOnly()]);
       }
-      if (this._spaceDialog) {
+      const refreshedConfig = this._serverCfg;
+      if (this._spaceDialog && refreshedConfig) {
         const refreshed = collectSpaceMarkerDependencies(
-          this._serverCfg, this._layout || {}, d.spaceId || '',
+          refreshedConfig, this._layout || {}, d.spaceId || '',
         );
-        this._spaceDialog = { ...this._spaceDialog, busy: false, deleteBlockers: refreshed.count };
+        const stillLastSpace = refreshedConfig.spaces.length === 1
+          && refreshedConfig.spaces[0]?.id === d.spaceId;
+        this._spaceDialog = {
+          ...this._spaceDialog,
+          busy: false,
+          deleteBlockers: stillLastSpace ? 0 : refreshed.count,
+        };
       }
       this._showToast(this._t('toast.delete_failed', { err: this._errText(e) }));
     }
