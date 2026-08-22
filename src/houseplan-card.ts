@@ -187,6 +187,11 @@ import {
   clampCanvasR, clampCanvasN, type ContentItem, type Rect,
 } from './space-geometry';
 import { optimizePlans, type OptimizeReport } from './plan-optimizer';
+import {
+  canonicalizeConfigGeometry,
+  canonicalizeLayoutGeometry,
+  canonicalizePosition,
+} from './coordinate-canonicalization';
 import { hasTranslation, langOf, t, type I18nKey } from './i18n';
 import { CommandStack } from './command-stack';
 import { resolvedSvgScreenBlend, svgScreenBlendSupported } from './glow-blend';
@@ -4416,8 +4421,9 @@ class HouseplanCard extends LitElement {
       const ids = [...this._dirtyPos];
       this._dirtyPos.clear();
       for (const id of ids) {
-        const pos = this._layout[id];
+        const pos = canonicalizePosition(this._layout[id]);
         if (!pos) continue;
+        this._layout = { ...this._layout, [id]: pos };
         // in flight until the server answers: a layout reload triggered in the
         // meantime must keep this position, not the one the server still has
         this._sentPos.set(id, pos);
@@ -4429,6 +4435,7 @@ class HouseplanCard extends LitElement {
       }
       this._cacheSnapshot();
     } else {
+      this._layout = canonicalizeLayoutGeometry(this._layout);
       localStorage.setItem(LS_KEY, JSON.stringify(this._layout));
     }
   }, 600);
@@ -6945,8 +6952,13 @@ class HouseplanCard extends LitElement {
       .then(async () => {
         if (!this._serverCfg) return;
         this._dropLegacySegments();
+        const candidate = canonicalizeConfigGeometry(this._serverCfg);
+        const candidateFingerprint = contentFingerprint(candidate);
+        if (candidateFingerprint !== contentFingerprint(this._serverCfg)) this._cfgEpoch++;
+        this._serverCfg = candidate;
+        this._cfgContentFingerprint = candidateFingerprint;
         const r = await this.hass.callWS({
-          type: 'houseplan/config/set', config: this._serverCfg, expected_rev: this._cfgRev,
+          type: 'houseplan/config/set', config: candidate, expected_rev: this._cfgRev,
         });
         this._cfgRev = r?.rev ?? this._cfgRev + 1;
       });

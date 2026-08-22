@@ -25,6 +25,7 @@
     "src/visual-continuity.ts", "src/mode-transition.ts", "src/pointer-modality.ts",
     "src/render-device-snapshot.ts",
     "src/command-stack.ts",
+    "src/coordinate-canonicalization.ts",
     "src/align-grid.ts",
     "src/plan-optimizer.ts",
     "src/furniture.ts",

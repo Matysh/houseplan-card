@@ -9,6 +9,7 @@ import {
 import {
   polygonSegments, splitAtIntersections, visibilityPolygon,
 } from '../test-build/light-visibility.js';
+import { canonicalizeConfigGeometry } from '../test-build/coordinate-canonicalization.js';
 
 const closeTo = (got, want, tol = 1e-6) =>
   assert.ok(Math.abs(got - want) <= tol, `expected ${want}, got ${got}`);
@@ -160,6 +161,28 @@ test('six-room ULP topology keeps a complete visible floor and is permutation-st
   assert.ok(direct && reversed);
   closeTo(geometryArea(direct), geometryArea(reversed), BOOLEAN_COORD_QUANTUM ** 2);
   closeTo(geometryArea(direct), 0.31835083680549986, 1e-9);
+});
+
+test('write canonicalization cleans the six-room #218 topology before union', () => {
+  const config = {
+    spaces: [{
+      rooms: noisySixRoomFloor.map((poly, index) => ({
+        id: `r${index}`, name: `Room ${index}`, area: null, poly,
+      })),
+    }],
+    markers: [],
+    settings: {},
+  };
+  const clean = canonicalizeConfigGeometry(config);
+  const outlines = clean.spaces[0].rooms.map((room) => room.poly);
+
+  assert.equal(outlines[0][0][0], outlines[0][2][0]);
+  assert.equal(outlines[2][2][1], outlines[3][0][1]);
+  assert.ok(unionBodies(outlines), 'canonical persisted rooms have a valid union');
+  const fan = [[-0.1, -0.1], [1.1, -0.1], [1.1, 1.1], [-0.1, 1.1]];
+  assert.ok(intersectionPaths([fan], outlines).length > 0, 'Glow clip remains non-empty');
+  assert.deepEqual(config.spaces[0].rooms.map((room) => room.poly), noisySixRoomFloor,
+    'write canonicalization never mutates the editor candidate');
 });
 
 test('one malformed room is diagnosed and cannot erase healthy lit floor', () => {

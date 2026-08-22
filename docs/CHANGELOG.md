@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- Every config and device-layout write now canonicalizes persisted geometry to
+  nine decimal places without snapping it to the grid. This removes invisible
+  floating-point tails before they can break shared walls, room unions or Glow;
+  import, maintenance recovery and server Undo use the same invariant. Repeating
+  an unchanged canonical Save no longer creates a revision or consumes the
+  one-deep Undo snapshot. Existing noisy plans are cleaned on their next write,
+  or immediately through Optimize Plans
+  ([#224](https://github.com/Matysh/houseplan-card/issues/224)).
+
 - Grid precision no longer changes the appearance of the same physical plan.
   Room and wall outlines, openings and their hit areas, Plan hints, the static
   card and hidden isometric geometry now retain the `cell_cm: 5` visual size at

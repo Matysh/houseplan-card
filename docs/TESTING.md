@@ -2090,11 +2090,24 @@ require hands on real hardware — they remain for the human pass.
       `moved: 0` and a positive cleaned-coordinate count. Preview distinguishes
       updated spaces from removed coordinate noise; Cancel writes nothing;
       Apply stores exact grid nodes in one transaction; the next run is a no-op
-      and server Undo restores the original noisy bits. A rejected hosted
+      and server Undo restores the original geometry in canonical
+      representation. A rejected hosted
       partition contributes nothing to the counter
       [unit: align-grid + plan-optimizer + i18n; auto:
       smoke_optimize_coordinate_canonicalization; mutation:
       `snapn-returns-input-near-node`].
+- [ ] **Every write prevents new ULP coordinate noise (#224)**: config/layout
+      schema, import, direct storage writers, startup recovery and maintenance
+      Undo produce the same nine-decimal allow-listed geometry as the frontend.
+      A first noisy write creates one canonical revision; a repeated canonical
+      write creates no store write/event/revision and preserves the maintenance
+      backup. `view_box`, physical/presentation values, colours and vacuum
+      calibration remain exact; the six-room #218 union and Glow clip stay
+      non-empty [unit: coordinate-canonicalization + physical-geometry;
+      backend: test_coordinate_canonicalization + test_ha_websocket +
+      test_ha_import_export; mutations: `schema-quantization-removed`,
+      `frontend-writes-raw-coords`, `quantization-hits-allowlist`,
+      `import-path-bypasses-schema`; pre-release: golden verify].
 - [ ] Optimizer migration safety: legacy decor width/text size is clamped to
       the backend schema, `fill: true` receives explicit fill style, invalid
       legacy `plan_scale` is preserved for repair, an already canonical plan is

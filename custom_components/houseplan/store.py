@@ -20,6 +20,10 @@ from .const import (
     STORAGE_VERSION,
     STORAGE_VIRTUAL_LIGHTS_KEY,
 )
+from .coordinate_canonicalization import (
+    canonicalize_config_geometry,
+    canonicalize_layout_geometry,
+)
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -157,7 +161,7 @@ def layout_store_payload(
     }
     if metadata:
         out.update(metadata)
-    out["layout"] = layout
+    out["layout"] = canonicalize_layout_geometry(layout)
     out["rev"] = rev
     return out
 
@@ -205,7 +209,8 @@ async def async_save_config_state(
         except (TypeError, ValueError):
             previous_rev = 0
 
-    payload = {"config": config, "rev": rev}
+    canonical_config = canonicalize_config_geometry(config)
+    payload = {"config": canonical_config, "rev": rev}
     await runtime.config_store.async_save(payload)
 
     # The config is already durable at this point.  Reconciliation remains a
@@ -216,7 +221,7 @@ async def async_save_config_state(
     try:
         await async_reconcile_virtual_lights(
             runtime.virtual_light_store,
-            config,
+            canonical_config,
             rev,
             previous_config_rev=previous_rev,
         )

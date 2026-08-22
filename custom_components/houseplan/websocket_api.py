@@ -25,6 +25,10 @@ from .const import (
     MAX_SIGN_PATHS,
     PLANS_DIR, PLANS_URL,
 )
+from .coordinate_canonicalization import (
+    canonicalize_config_geometry,
+    canonicalize_layout_geometry,
+)
 from .auth import may_write
 from .import_export import (
     ImportFailure,
@@ -426,8 +430,12 @@ async def ws_import_apply(hass: HomeAssistant, connection, msg: dict[str, Any]) 
             if kind == "full":
                 backup = {
                     "kind": "import",
-                    "config": config_data.get("config") or DEFAULT_CONFIG,
-                    "layout": layout_data.get("layout") or {},
+                    "config": canonicalize_config_geometry(
+                        config_data.get("config") or DEFAULT_CONFIG
+                    ),
+                    "layout": canonicalize_layout_geometry(
+                        layout_data.get("layout") or {}
+                    ),
                     "created": int(time.time()),
                     "after_config_rev": new_config_rev,
                     "after_layout_rev": new_layout_rev,
@@ -444,16 +452,20 @@ async def ws_import_apply(hass: HomeAssistant, connection, msg: dict[str, Any]) 
                 final_metadata[_OPTIMIZE_BACKUP] = backup
             pending = {
                 "kind": "import",
-                "config": target_config,
-                "layout": target_layout,
+                "config": canonicalize_config_geometry(target_config),
+                "layout": canonicalize_layout_geometry(target_layout),
                 "config_rev": new_config_rev,
                 "layout_rev": new_layout_rev,
                 "final_metadata": final_metadata,
             }
             rollback = {
                 "kind": "import_rollback",
-                "config": config_data.get("config") or DEFAULT_CONFIG,
-                "layout": layout_data.get("layout") or {},
+                "config": canonicalize_config_geometry(
+                    config_data.get("config") or DEFAULT_CONFIG
+                ),
+                "layout": canonicalize_layout_geometry(
+                    layout_data.get("layout") or {}
+                ),
                 "config_rev": config_rev,
                 "layout_rev": layout_rev,
                 "final_metadata": original_metadata,
@@ -566,6 +578,9 @@ async def ws_layout_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             )
             return
         layout = _live_layout(config_data.get("config") or {}, msg["layout"])
+        if layout == data.get("layout", {}):
+            connection.send_result(msg["id"], {"ok": True, "rev": current_rev})
+            return
         new_rev = current_rev + 1
         await async_save_layout_state(
             rt, data, layout, new_rev,
@@ -627,7 +642,10 @@ async def ws_layout_update(hass: HomeAssistant, connection, msg: dict[str, Any])
             return
         data = await rt.store.async_load() or {}
         layout = data.get("layout", {})
-        layout[msg["device_id"]] = msg["pos"]
+        if layout.get(msg["device_id"]) == msg["pos"]:
+            connection.send_result(msg["id"], {"ok": True, "rev": int(data.get("rev", 0))})
+            return
+        layout = {**layout, msg["device_id"]: msg["pos"]}
         # keep the revision: a point-wise write used to drop it, which made the
         # optimistic locking on layout/set meaningless — every drag reset the
         # counter to 0 (HP-1454-08)
@@ -735,7 +753,10 @@ async def ws_geometry_repair(hass: HomeAssistant, connection, msg: dict[str, Any
             rt, data, new_layout, new_rev,
             metadata={
                 **_optimizer_backup_after_layout_maintenance(data, new_rev),
-                "repair_backup": {"space": space_id, "positions": touched},
+                "repair_backup": {
+                    "space": space_id,
+                    "positions": canonicalize_layout_geometry(touched),
+                },
             },
             remove=("repair_backup",),
         )
@@ -1281,6 +1302,17 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
                 "Plan file no longer exists: " + ", ".join(sorted(missing)),
             )
             return
+        if msg["config"] == data.get("config"):
+            # A semantic no-op still has to reconcile Repairs with external
+            # file-system changes. It must not create a revision, event, or
+            # discard the optimizer snapshot merely to refresh diagnostics.
+            entry = get_entry(hass)
+            if entry is not None:
+                from .repairs import async_check_plan_files
+
+                hass.async_create_task(async_check_plan_files(hass, entry))
+            connection.send_result(msg["id"], {"ok": True, "rev": int(current_rev)})
+            return
         new_rev = current_rev + 1
         await async_save_config_state(
             rt,
@@ -1397,15 +1429,19 @@ async def ws_plan_optimize(hass: HomeAssistant, connection, msg: dict[str, Any])
         new_layout_rev = layout_rev + 1
         backup = {
             "kind": "optimize",
-            "config": config_data.get("config") or DEFAULT_CONFIG,
-            "layout": layout_data.get("layout", {}),
+            "config": canonicalize_config_geometry(
+                config_data.get("config") or DEFAULT_CONFIG
+            ),
+            "layout": canonicalize_layout_geometry(
+                layout_data.get("layout", {})
+            ),
             "created": int(time.time()),
             "after_config_rev": new_config_rev,
             "after_layout_rev": new_layout_rev,
         }
         pending = {
-            "config": msg["config"],
-            "layout": msg["layout"],
+            "config": canonicalize_config_geometry(msg["config"]),
+            "layout": canonicalize_layout_geometry(msg["layout"]),
             "config_rev": new_config_rev,
             "layout_rev": new_layout_rev,
             "clear_backup": False,
@@ -1475,8 +1511,12 @@ async def ws_plan_optimize_undo(hass: HomeAssistant, connection, msg: dict[str, 
 
         backup = layout_data[_OPTIMIZE_BACKUP]
         restored_kind = str(backup.get("kind") or "optimize")
-        restored_config = backup.get("config") or DEFAULT_CONFIG
-        restored_layout = backup.get("layout") or {}
+        restored_config = canonicalize_config_geometry(
+            backup.get("config") or DEFAULT_CONFIG
+        )
+        restored_layout = canonicalize_layout_geometry(
+            backup.get("layout") or {}
+        )
         new_config_rev = config_rev + 1
         new_layout_rev = layout_rev + 1
         pending = {

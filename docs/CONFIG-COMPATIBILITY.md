@@ -48,6 +48,27 @@ Unknown future fields remain outside this report and continue to follow the
 backend's forward-compatibility policy. Absence from the report is therefore
 not permission to delete a field.
 
+## Canonical geometry on write (#224)
+
+Config and layout schemas canonicalize only named geometry numbers to nine
+decimal places. The common storage helpers repeat the same idempotent contract
+for internal writers, while the frontend adopts the exact candidate it sends.
+This prevents ULP noise without changing the schema, JSON number type,
+model/store version or any user-visible placement.
+
+The operation is lossless at the product scale and intentionally narrow.
+`view_box`, `cell_cm`, `plan_aspect`, physical centimetre values,
+presentation settings, colours, opacity/brightness/temperature, vacuum
+calibration and unknown/future numeric fields retain their exact input values.
+No recursive “round every number” migration is allowed.
+
+Existing stores remain byte-for-byte untouched on read. Their geometry becomes
+canonical on the next config/layout write; Optimize Plans is the immediate bulk
+path. Optimize/Import/repair Undo restores the previous semantic geometry and
+unknown fields in canonical representation, not the invisible noisy IEEE-754
+tail. A repeated canonical Save with the current revision is a no-op and does
+not invalidate the one-deep maintenance backup.
+
 ## Open-passage opening type (#157)
 
 `space.openings[].type` additionally accepts the literal `passage`. Its

@@ -45,6 +45,29 @@ centimetres, screen-fixed strokes/handles, plan-relative icon sizes and the
 grid pitch must not receive that factor again. Full, static and hidden
 isometric renderers share this classification.
 
+### Persisted coordinate canonicalisation
+
+Every current config/layout write removes IEEE-754 representation tails from
+persisted geometry by rounding an explicit allow-list to nine decimal places.
+This is not grid snapping: an off-grid or diagonal coordinate stays where the
+editor put it, with a maximum normalized change of `5e-10`. The contract is
+mirrored in Python and TypeScript and normalizes negative zero.
+
+The allow-list covers room outlines/extents, exact wall endpoints, openings
+(including angle, length and hosted `t`), decor transforms, drafts,
+partitions, columns, open spans, backdrop transforms, marker angle and layout
+`x/y`. It deliberately excludes `cell_cm`, `plan_aspect`, `view_box`,
+physical centimetre fields, colours/opacities/live values, presentation scales
+and vacuum affine calibration. Unknown/future numeric fields round-trip
+unchanged.
+
+Schema validation is the public door; the common config/layout storage helpers
+repeat the same idempotent operation for internal import, maintenance and
+startup-recovery writers. A canonical read/write echo is a no-op: optimistic
+locking is still checked, but the revision, update event and maintenance Undo
+snapshot do not move. Existing stores are not rewritten on read; Optimize Plans
+remains the explicit bulk-cleanup path.
+
 ## Model
 
 | Concept | Before | Now |

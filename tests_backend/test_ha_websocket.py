@@ -172,6 +172,159 @@ async def test_config_rev_conflict(hass: HomeAssistant, hass_ws_client: WebSocke
     assert resp["result"]["rev"] == 1
 
 
+async def test_canonical_rewrites_are_noops_without_events_or_undo_loss(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+) -> None:
+    """#224: a read/write echo must not manufacture another edit."""
+    from custom_components.houseplan.store import get_data
+
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    config_events = []
+    layout_events = []
+    hass.bus.async_listen(
+        "houseplan_config_updated", lambda event: config_events.append(event.data)
+    )
+    hass.bus.async_listen(
+        "houseplan_layout_updated", lambda event: layout_events.append(event.data)
+    )
+
+    noisy_config = {
+        "spaces": [{
+            "id": "floor",
+            "title": "Floor",
+            "view_box": [0, 0, 1, 1],
+            "rooms": [{
+                "id": "room",
+                "name": "Room",
+                "poly": [[0.1234567896, 0], [0.5, 0], [0.5, 0.5]],
+            }],
+        }],
+        "markers": [],
+        "settings": {},
+    }
+    await client.send_json_auto_id({
+        "type": "houseplan/config/set", "config": noisy_config, "expected_rev": 0,
+    })
+    first = await client.receive_json()
+    assert first["success"] and first["result"]["rev"] == 1
+    await client.send_json_auto_id({"type": "houseplan/config/get"})
+    canonical_config = (await client.receive_json())["result"]["config"]
+    assert canonical_config["spaces"][0]["rooms"][0]["poly"][0][0] == 0.12345679
+
+    runtime = get_data(hass)
+    assert runtime is not None
+    layout_data = await runtime.store.async_load() or {}
+    layout_data["optimize_backup"] = {"sentinel": True}
+    await runtime.store.async_save(layout_data)
+
+    await client.send_json_auto_id({
+        "type": "houseplan/config/set", "config": canonical_config, "expected_rev": 1,
+    })
+    noop = await client.receive_json()
+    assert noop["success"] and noop["result"]["rev"] == 1
+    assert len(config_events) == 1
+    assert "optimize_backup" in (await runtime.store.async_load())
+
+    # CAS remains authoritative even when the body is otherwise identical.
+    await client.send_json_auto_id({
+        "type": "houseplan/config/set", "config": canonical_config, "expected_rev": 0,
+    })
+    stale = await client.receive_json()
+    assert not stale["success"] and stale["error"]["code"] == "conflict"
+
+    noisy_layout = {
+        "lamp": {"s": "floor", "x": 0.1234567896, "y": -0.1234567896}
+    }
+    await client.send_json_auto_id({
+        "type": "houseplan/layout/set", "layout": noisy_layout, "expected_rev": 0,
+    })
+    first_layout = await client.receive_json()
+    assert first_layout["success"] and first_layout["result"]["rev"] == 1
+    await client.send_json_auto_id({"type": "houseplan/layout/get"})
+    canonical_layout = (await client.receive_json())["result"]["layout"]
+    assert canonical_layout["lamp"]["x"] == 0.12345679
+
+    layout_data = await runtime.store.async_load() or {}
+    layout_data["optimize_backup"] = {"sentinel": True}
+    await runtime.store.async_save(layout_data)
+    await client.send_json_auto_id({
+        "type": "houseplan/layout/set",
+        "layout": canonical_layout,
+        "expected_rev": 1,
+    })
+    layout_noop = await client.receive_json()
+    assert layout_noop["success"] and layout_noop["result"]["rev"] == 1
+
+    await client.send_json_auto_id({
+        "type": "houseplan/layout/update",
+        "device_id": "lamp",
+        "pos": canonical_layout["lamp"],
+    })
+    point_noop = await client.receive_json()
+    assert point_noop["success"] and point_noop["result"]["rev"] == 1
+    assert len(layout_events) == 1
+    assert "optimize_backup" in (await runtime.store.async_load())
+
+
+async def test_optimize_undo_restores_geometry_but_not_legacy_noisy_bits(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+) -> None:
+    """#224 supersedes #223's invisible exact-bit Undo promise."""
+    from custom_components.houseplan.store import get_data
+
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    runtime = get_data(hass)
+    assert runtime is not None
+    noisy_config = {
+        "spaces": [{
+            "id": "floor",
+            "title": "Floor",
+            "view_box": [0, 0, 1, 1],
+            "rooms": [{
+                "id": "room",
+                "name": "Room",
+                "poly": [[0.1234567896, 0], [0.5, 0], [0.5, 0.5]],
+            }],
+        }],
+        "markers": [],
+        "settings": {},
+    }
+    noisy_layout = {
+        "lamp": {"s": "floor", "x": -0.1234567896, "y": 0.5}
+    }
+    # Seed the pre-#224 store directly: public writers can no longer create it.
+    await runtime.config_store.async_save({"config": noisy_config, "rev": 1})
+    await runtime.store.async_save({"layout": noisy_layout, "rev": 1})
+
+    await client.send_json_auto_id({
+        "type": "houseplan/plan/optimize",
+        "config": noisy_config,
+        "layout": noisy_layout,
+        "expected_config_rev": 1,
+        "expected_layout_rev": 1,
+    })
+    optimized = await client.receive_json()
+    assert optimized["success"]
+    stored_layout = await runtime.store.async_load()
+    backup = stored_layout["optimize_backup"]
+    assert backup["config"]["spaces"][0]["rooms"][0]["poly"][0][0] == 0.12345679
+    assert backup["layout"]["lamp"]["x"] == -0.12345679
+
+    await client.send_json_auto_id({
+        "type": "houseplan/plan/optimize_undo",
+        "expected_config_rev": 2,
+        "expected_layout_rev": 2,
+    })
+    undone = await client.receive_json()
+    assert undone["success"] and undone["result"]["can_undo"] is False
+    restored_config = (await runtime.config_store.async_load())["config"]
+    restored_layout = (await runtime.store.async_load())["layout"]
+    assert restored_config["spaces"][0]["rooms"][0]["poly"][0][0] == 0.12345679
+    assert restored_layout["lamp"]["x"] == -0.12345679
+
+
 async def test_config_set_validates_new_marker_light_links(
     hass: HomeAssistant, hass_ws_client: WebSocketGenerator,
 ) -> None:

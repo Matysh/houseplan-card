@@ -9,6 +9,12 @@ import re
 
 import voluptuous as vol
 
+from custom_components.houseplan.coordinate_canonicalization import (
+    canonicalize_config_geometry,
+    canonicalize_layout_geometry,
+    canonicalize_position,
+)
+
 # ---------- limits and extension sets ----------
 PLAN_EXTENSIONS = {"svg": "image/svg+xml", "png": "image/png", "jpg": "image/jpeg", "webp": "image/webp"}
 MAX_PLAN_BYTES = 8 * 1024 * 1024
@@ -522,11 +528,18 @@ _URL = vol.All(str, vol.Length(max=MAX_URL))
 CANVAS_LIMIT = 5000.0
 _COORD = vol.All(_finite, vol.Range(min=-CANVAS_LIMIT, max=CANVAS_LIMIT))
 
-POS_SCHEMA = vol.Schema(
-    {vol.Required("x"): _COORD, vol.Required("y"): _COORD},
-    extra=vol.ALLOW_EXTRA,  # v2 records carry the "s" key (space id)
+POS_SCHEMA = vol.All(
+    vol.Schema(
+        {vol.Required("x"): _COORD, vol.Required("y"): _COORD},
+        extra=vol.ALLOW_EXTRA,  # v2 records carry the "s" key (space id)
+    ),
+    canonicalize_position,
 )
-LAYOUT_SCHEMA = vol.All(vol.Schema({str: POS_SCHEMA}), vol.Length(max=MAX_LAYOUT))
+LAYOUT_SCHEMA = vol.All(
+    vol.Schema({str: POS_SCHEMA}),
+    vol.Length(max=MAX_LAYOUT),
+    canonicalize_layout_geometry,
+)
 
 # Room/opening geometry: same story, same range (docs/CANVAS.md). A vertex at
 # 2.5 is a plan that grew past the old square, not corruption; 1e100 is
@@ -1124,38 +1137,41 @@ MARKER_SCHEMA = vol.Schema(
     },
     extra=vol.ALLOW_EXTRA,
 )
-CONFIG_SCHEMA = vol.Schema(
-    {
-        vol.Required("spaces"): vol.All([SPACE_SCHEMA], vol.Length(max=MAX_SPACES)),
-        vol.Optional("markers", default=list): vol.All([MARKER_SCHEMA], vol.Length(max=MAX_MARKERS)),
-        vol.Optional("settings", default=dict): vol.Schema(
-            {
-                vol.Optional("glow_radius_cm"): vol.All(vol.Coerce(float), vol.Range(min=10, max=10000)),
-                # background around the plan, all spaces (a space may override)
-                vol.Optional("bg_color"): _COLOR,
-                # sun on the plan (docs/SUN.md): global defaults
-                vol.Optional("north_deg"): _north_deg,
-                vol.Optional("bg_mode"): _BG_MODE,
-                vol.Optional("sun_rays"): bool,
-                # Removed from the UI/runtime in 2026-08-08. Keep accepting the
-                # legacy field so an existing stored config can still load; the
-                # frontend ignores it and removes it on the next settings save.
-                vol.Optional("weather_entity"): vol.Any(None, _TEXT),
-                vol.Optional("known_devices"): vol.All([_TEXT], vol.Length(max=MAX_KNOWN_DEVICES)),
-                vol.Optional("new_device_ids"): vol.All([_TEXT], vol.Length(max=MAX_KNOWN_DEVICES)),
-                vol.Optional("fill_colors"): vol.Schema(
-                    {
-                        str: vol.Schema(
-                            {
-                                vol.Required("c"): _COLOR,
-                                vol.Required("a"): vol.All(vol.Coerce(float), vol.Range(min=0, max=1)),
-                            }
-                        )
-                    }
-                ),
-            },
-            extra=vol.ALLOW_EXTRA,
-        ),
-    },
-    extra=vol.ALLOW_EXTRA,  # unknown (legacy) keys do not break loading
+CONFIG_SCHEMA = vol.All(
+    vol.Schema(
+        {
+            vol.Required("spaces"): vol.All([SPACE_SCHEMA], vol.Length(max=MAX_SPACES)),
+            vol.Optional("markers", default=list): vol.All([MARKER_SCHEMA], vol.Length(max=MAX_MARKERS)),
+            vol.Optional("settings", default=dict): vol.Schema(
+                {
+                    vol.Optional("glow_radius_cm"): vol.All(vol.Coerce(float), vol.Range(min=10, max=10000)),
+                    # background around the plan, all spaces (a space may override)
+                    vol.Optional("bg_color"): _COLOR,
+                    # sun on the plan (docs/SUN.md): global defaults
+                    vol.Optional("north_deg"): _north_deg,
+                    vol.Optional("bg_mode"): _BG_MODE,
+                    vol.Optional("sun_rays"): bool,
+                    # Removed from the UI/runtime in 2026-08-08. Keep accepting the
+                    # legacy field so an existing stored config can still load; the
+                    # frontend ignores it and removes it on the next settings save.
+                    vol.Optional("weather_entity"): vol.Any(None, _TEXT),
+                    vol.Optional("known_devices"): vol.All([_TEXT], vol.Length(max=MAX_KNOWN_DEVICES)),
+                    vol.Optional("new_device_ids"): vol.All([_TEXT], vol.Length(max=MAX_KNOWN_DEVICES)),
+                    vol.Optional("fill_colors"): vol.Schema(
+                        {
+                            str: vol.Schema(
+                                {
+                                    vol.Required("c"): _COLOR,
+                                    vol.Required("a"): vol.All(vol.Coerce(float), vol.Range(min=0, max=1)),
+                                }
+                            )
+                        }
+                    ),
+                },
+                extra=vol.ALLOW_EXTRA,
+            ),
+        },
+        extra=vol.ALLOW_EXTRA,  # unknown (legacy) keys do not break loading
+    ),
+    canonicalize_config_geometry,
 )

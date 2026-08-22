@@ -88,6 +88,18 @@ def _document(tmp_path: Path, kind: str = "full") -> dict:
     return document
 
 
+def test_import_document_canonicalizes_external_coordinates(tmp_path: Path) -> None:
+    document = _document(tmp_path)
+    room = document["payload"]["config"]["spaces"][0]["rooms"][0]
+    room["poly"][0][0] = 0.1234567896
+    document["payload"]["layout"]["lamp"]["x"] = -0.1234567896
+
+    parsed = parse_document(json.dumps(document).encode("utf-8"))
+
+    assert parsed["payload"]["config"]["spaces"][0]["rooms"][0]["poly"][0][0] == 0.12345679
+    assert parsed["payload"]["layout"]["lamp"]["x"] == -0.12345679
+
+
 # --- issue #225: an attachment url carries a cache-buster ---------------------
 #
 # Legacy references look like "/houseplan_files/files/m1/doc.pdf?v=1783170649".

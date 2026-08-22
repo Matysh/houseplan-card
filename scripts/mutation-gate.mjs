@@ -179,6 +179,57 @@ export const MUTANTS = [
     }],
   },
   {
+    id: 'schema-quantization-removed',
+    guard: 'node scripts/backend-test-guard.mjs backend_schemas_apply '
+      + 'tests_backend/test_coordinate_canonicalization.py',
+    because: 'backend schemas are the public write door for cards, imports and manual clients; '
+      + 'removing their canonicalisation would let the same ULP noise enter every future writer',
+    patches: [{
+      file: 'custom_components/houseplan/validation.py',
+      find: '        extra=vol.ALLOW_EXTRA,  # unknown (legacy) keys do not break loading\n'
+        + '    ),\n    canonicalize_config_geometry,\n)',
+      replace: '        extra=vol.ALLOW_EXTRA,  # unknown (legacy) keys do not break loading\n'
+        + '    ),\n    lambda value: value,\n)',
+    }],
+  },
+  {
+    id: 'frontend-writes-raw-coords',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="frontend write paths" '
+      + 'test/coordinate-canonicalization.test.mjs',
+    because: 'a server-only fix leaves the open card rendering its noisy mutable config until '
+      + 'reload, so the current session can still reproduce the geometry failure after Save',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '        const candidate = canonicalizeConfigGeometry(this._serverCfg);',
+      replace: '        const candidate = this._serverCfg;',
+    }],
+  },
+  {
+    id: 'quantization-hits-allowlist',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="nine-decimal fixture contract" '
+      + 'test/coordinate-canonicalization.test.mjs',
+    because: 'presentation and calibration values are deliberately outside geometry; widening '
+      + 'the allow-list silently changes user data that has no ULP topology problem',
+    patches: [{
+      file: 'src/coordinate-canonicalization.ts',
+      find: "  for (const marker of records(root.markers)) fields(marker, ['angle']);",
+      replace: "  for (const marker of records(root.markers)) fields(marker, ['angle', 'size']);",
+    }],
+  },
+  {
+    id: 'import-path-bypasses-schema',
+    guard: 'node scripts/backend-test-guard.mjs import_document_canonicalizes_external_coordinates',
+    because: 'an externally assembled backup is an independent source of noisy geometry and '
+      + 'must enter preview and storage through the same canonical schema as the live card',
+    patches: [{
+      file: 'custom_components/houseplan/import_export.py',
+      find: '        config = CONFIG_SCHEMA(_json_copy(payload.get("config")))',
+      replace: '        config = _json_copy(payload.get("config"))',
+    }],
+  },
+  {
     id: 'union-failure-kills-space',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="malformed room|fallback unions overlapping" '
