@@ -321,7 +321,7 @@ test('sun-ray golden requires browser-painted light from a state-only sun entity
   assert.ok(scenario);
   const fixture = prepareGoldenFixture(scenario);
   const space = fixture.config.spaces.find((item) => item.id === scenario.space);
-  assert.equal(GOLDEN_MATRIX_VERSION, 37);
+  assert.equal(GOLDEN_MATRIX_VERSION, 38);
   assert.equal(space.settings.sun_rays, true);
   assert.equal(scenario.northDeg, 90,
     'the sign-sensitive golden must keep a non-zero north direction');
@@ -337,6 +337,22 @@ test('sun-ray golden requires browser-painted light from a state-only sun entity
   assert.equal(scenario.allLightsOff, true);
   assert.equal(scenario.sunRayPixels.minPixels >= 500, true);
   assert.equal(scenario.sunRayPixels.minChannelDelta >= 4, true);
+});
+
+test('issue 244 golden matrix covers orphan repair and invalid default_floor themes', () => {
+  const optimize = GOLDEN_SCENARIOS.find(
+    (item) => item.id === 'optimize-orphan-references-dark-en',
+  );
+  assert.ok(optimize);
+  assert.equal(optimize.dialog, 'optimize-orphan-references');
+  assert.equal(optimize.markerOverrides[0].space, 'removed-floor');
+  assert.equal(optimize.layoutOverrides['golden-light-one'].s, 'unresolved-floor');
+
+  const editors = GOLDEN_SCENARIOS.filter(
+    (item) => item.cardEditorInvalidDefaultFloor === 'removed-floor',
+  );
+  assert.deepEqual(editors.map((item) => item.theme).sort(), ['dark', 'light']);
+  assert.deepEqual(editors.map((item) => item.language).sort(), ['en', 'ru']);
 });
 
 test('issue #197 golden keeps the complete junction fixture in Plan and View', () => {
