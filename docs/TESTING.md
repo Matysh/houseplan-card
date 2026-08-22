@@ -55,6 +55,73 @@
 - [ ] `hide_decor`, the Background editor override and stored config remain
       unchanged; no per-object under-plan compatibility flag is introduced.
 
+## Opening symbol centreline (#242)
+
+- [ ] Unit and browser checks prove that door/window/gate defaults stay on the
+      wall centreline, saved door/window `flip_v` uses the canonical edge, and
+      gate `flip_v` reverses the first-leaf 10° turn on shared room walls,
+      independent partitions and hidden Iso without translating the gate
+      [unit: `opening-symbol.test.mjs`, `iso-openings.test.mjs`; auto:
+      `smoke_wall_thickness.mjs`, `smoke_isometric_contract.mjs`; mutation:
+      `opening-gate-flip-cancels-turn`].
+- [ ] Matrix v37 adds four dedicated semantic scenes. Before PNG comparison
+      they assert the saved flip value, wall centreline, visible-group offset,
+      full jamb depth, window glass membership and opposite gate turn signs:
+      `opening-symbol-room-wall-light`,
+      `opening-symbol-diagonal-partition-dark`,
+      `opening-symbol-flip-pairs-light`,
+      `isometric-opening-symbol-parity-dark`.
+- [ ] The exact existing golden impact set below contains **67** scenes. It was
+      measured by comparing `actualSha256` for HEAD and `origin/dev` under the
+      same Chromium build; baseline status alone is not used because `dev`
+      already has unrelated pending pre-release candidates. Every listed frame
+      uses a shared fixture containing an affected opening or retains that plan
+      behind an editor/dialog. No other existing frame changed:
+
+      `isometric-geometry-view-dark`, `isometric-geometry-view-light`,
+      `isometric-live-layers-dark`, `isometric-no-borders-dark`,
+      `isometric-touch-kiosk-dark`, `isometric-large-warm-remount-dark`,
+      `geometry-view-dark-fit`, `geometry-view-light-fit`,
+      `room-label-parity-view-dark`, `room-label-parity-plan-dark`,
+      `room-label-parity-view-light`, `room-label-parity-plan-light`,
+      `day-cycle-dawn-dark`, `day-cycle-day-dark`, `day-cycle-dusk-dark`,
+      `day-cycle-night-dark`, `geometry-plan-editor-dark`,
+      `space-tab-drop-before-light`, `space-tab-drop-after-dark`,
+      `plan-snap-endpoint-light`, `plan-snap-line-gaps-dark`,
+      `junction-patch-resilience-plan-dark`,
+      `opening-placement-door-thick-wall-dark`,
+      `opening-placement-passage-thick-wall-dark`,
+      `opening-placement-passage-thick-wall-light`,
+      `geometry-devices-editor-dark`, `geometry-decor-editor-dark`,
+      `tray-wide-selection-en`, `tray-wide-tool-ru`,
+      `tray-medium-group-en`, `tray-medium-selection-ru`,
+      `tray-narrow-palette-en`, `tray-narrow-tool-ru`,
+      `geometry-diagonal-45-opening-dark`, `openings-thick-wall-dark`,
+      `lighting-glow-sun-dark`, `device-value-badge-positions-dark`,
+      `device-icon-state-table-light`, `device-icon-state-table-dark`,
+      `device-text-shell-long-light`, `device-text-shell-long-dark`,
+      `lighting-sun-window-state-only-dark`,
+      `lighting-fill-light-axis-split-dark`,
+      `lighting-fill-temp-axis-split-dark`,
+      `lighting-fill-lqi-axis-split-dark`, `lighting-temp-glow-dark`,
+      `lighting-temp-glow-light`, `lighting-custom-glow-dark`,
+      `lighting-opaque-glow-two-doorways-dark`,
+      `lighting-custom-glow-light`, `lighting-temp-glow-no-sources-dark`,
+      `lighting-temp-glow-room-override-dark`,
+      `lighting-manual-auto-spill-overlap-dark`, `hover-over-glow-dark`,
+      `hover-nested-room-dark`, `large-house-zoom-040-dark`,
+      `large-house-zoom-250-dark`, `large-house-warm-remount-dark`,
+      `device-dialog-desktop-en`, `device-help-popover-light-ru`,
+      `decor-color-popover-desktop-en`, `general-color-popover-desktop-en`,
+      `space-room-color-popover-desktop-ru`,
+      `backup-full-preview-desktop-en`,
+      `backup-plan-only-export-desktop-en`,
+      `optimize-preflight-dialog-dark-en`,
+      `optimize-preflight-dialog-light-ru`.
+- [ ] Baselines for the 67 existing and four dedicated scenes are accepted
+      only from the reviewed full Linux pre-beta artifact. Local
+      `golden:accept` remains forbidden.
+
 ## Device icon design package (#179)
 
 - [ ] Pure presentation tests cover lock/unlock, exact marker-only LQI bands

@@ -64,6 +64,11 @@ export function renderOpeningVisibleGeometry(spec: OpeningVisibleSpec): Template
   const leafHalf = 1.75 * visualScale;
   const sx = spec.flipH ? -1 : 1;
   const sy = spec.flipV ? -1 : 1;
+  // A gate is already symmetric around the wall axis. Its vertical flip is a
+  // direction command, not a mirror transform: face.side carries the resolved
+  // turn side and must remain observable instead of being cancelled by a
+  // second scaleY(-1).
+  const renderSy = spec.type === 'gate' ? 1 : sy;
 
   // Default symbols sit on the wall centreline. A saved door/window flip keeps
   // the explicit edge-aligned compatibility mode, but gate leaves always stay
@@ -107,9 +112,10 @@ export function renderOpeningVisibleGeometry(spec: OpeningVisibleSpec): Template
       ${glass}
       </g>`;
   } else if (spec.type === 'gate') {
-    // Gate leaves open only 10° towards the resolved exterior face. Conjugating
-    // their rotation through scaleY(-1) reverses the sign.
-    const gateAngle = spec.face.side * sy * 10 * amount;
+    // Gate leaves open only 10° towards the resolved face. Gate flip_v changes
+    // face.side at the resolver; there is deliberately no second inversion
+    // here, so shared and partition hosts expose opposite turn signs too.
+    const gateAngle = spec.face.side * 10 * amount;
     body = svg`
       <g transform="translate(${swingTx} ${swingTy})">
       <g transform="translate(${-half} 0)">
@@ -137,7 +143,7 @@ export function renderOpeningVisibleGeometry(spec: OpeningVisibleSpec): Template
       </g>`;
   }
 
-  return svg`<g transform="scale(${sx} ${sy})">
+  return svg`<g transform="scale(${sx} ${renderSy})">
     <line x1="${-half}" y1="${-jambHalf}" x2="${-half}" y2="${jambHalf}"
       stroke="${spec.base}" stroke-width="${2.5 * visualScale}"></line>
     <line x1="${half}" y1="${-jambHalf}" x2="${half}" y2="${jambHalf}"

@@ -35,8 +35,10 @@ const out = await page.evaluate(async () => {
       host: { kind: 'partition', id: 'iso-smoke-wall', t: 0.25 } },
     { id: 'iso-flipped-window', type: 'window', x: 0.5, y: 0.12, angle: 0, length: 0.08,
       flip_v: true, host: { kind: 'partition', id: 'iso-smoke-wall', t: 0.5 } },
-    { id: 'iso-centred-gate', type: 'gate', x: 0.675, y: 0.12, angle: 0, length: 0.08,
-      flip_v: true, host: { kind: 'partition', id: 'iso-smoke-wall', t: 0.75 } },
+    { id: 'iso-centred-gate', type: 'gate', x: 0.605, y: 0.12, angle: 0, length: 0.08,
+      flip_v: false, host: { kind: 'partition', id: 'iso-smoke-wall', t: 0.65 } },
+    { id: 'iso-flipped-gate', type: 'gate', x: 0.745, y: 0.12, angle: 0, length: 0.08,
+      flip_v: true, host: { kind: 'partition', id: 'iso-smoke-wall', t: 0.85 } },
   ];
   card._cfgEpoch++;
   card.requestUpdate();
@@ -47,6 +49,7 @@ const out = await page.evaluate(async () => {
   const centredDoor = basis('iso-centred-door');
   const flippedWindow = basis('iso-flipped-window');
   const centredGate = basis('iso-centred-gate');
+  const flippedGate = basis('iso-flipped-gate');
   const wallAxisY = 0.12 * 1000;
   const halfDepth = (15 / card._cellCm) * card._gridPitch / 2;
   result.isoOpeningDefaultCentred = centredDoor?.leaves.length === 1
@@ -57,7 +60,12 @@ const out = await page.evaluate(async () => {
     );
   result.isoGateFlipKeepsCentredOrigin = centredGate?.leaves.length === 2
     && centredGate.leaves.every((leaf) => Math.abs(leaf.hinge[1] - wallAxisY) < 1e-6)
-    && centredGate.leaves.every((leaf) => Math.abs(leaf.turnDeg) === 10);
+    && flippedGate?.leaves.length === 2
+    && flippedGate.leaves.every((leaf) => Math.abs(leaf.hinge[1] - wallAxisY) < 1e-6)
+    && centredGate.leaves.every((leaf) => Math.abs(leaf.turnDeg) === 10)
+    && flippedGate.leaves.every((leaf) => Math.abs(leaf.turnDeg) === 10);
+  result.isoGateFlipReversesTurn = centredGate?.leaves[0]?.turnDeg
+    === -flippedGate?.leaves[0]?.turnDeg;
   const toggle = root().querySelector('[data-hp="projection-toggle"]');
   result.labsSnapshotFrozen = Object.isFrozen(window.__hpLabs)
     && JSON.stringify(window.__hpLabs) === '["iso"]';

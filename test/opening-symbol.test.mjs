@@ -98,6 +98,18 @@ test('shared renderer centres defaults and preserves explicit door/window edge a
   })));
   assert.match(gate, /translate\(0 0\)/);
   assert.match(flippedGate, /translate\(0 0\)/);
+  assert.match(gate, /scale\(1 1\)/);
+  assert.match(flippedGate, /scale\(1 1\)/);
   assert.match(gate, /rotate\(10deg\)/);
   assert.match(gate, /rotate\(-10deg\)/);
+  assert.match(flippedGate, /rotate\(-10deg\)/);
+  assert.match(flippedGate, /rotate\(10deg\)/);
+  assert.equal(
+    gate.indexOf('rotate(10deg)') < gate.indexOf('rotate(-10deg)'), true,
+    'default gate turns its first leaf towards the resolved face',
+  );
+  assert.equal(
+    flippedGate.indexOf('rotate(-10deg)') < flippedGate.indexOf('rotate(10deg)'), true,
+    'flip_v reverses the first-leaf turn instead of cancelling in scaleY',
+  );
 });

@@ -1598,6 +1598,19 @@ export const MUTANTS = [
       replace: "  if (!flipV || type === 'passage') return { ox: 0, oy: 0 };",
     }],
   },
+  {
+    id: 'opening-gate-flip-cancels-turn',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="shared renderer centres defaults" '
+      + 'test/opening-symbol.test.mjs',
+    because: 'restoring the second flip_v inversion makes shared and partition gates emit '
+      + 'the same first-leaf turn sign for both saved values even though their origin stays centred',
+    patches: [{
+      file: 'src/render/opening-symbol.ts',
+      find: '    const gateAngle = spec.face.side * 10 * amount;',
+      replace: '    const gateAngle = spec.face.side * sy * 10 * amount;',
+    }],
+  },
 ];
 
 // --- механика ---------------------------------------------------------------

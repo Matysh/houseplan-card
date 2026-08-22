@@ -2,7 +2,9 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { prepareGoldenFixture } from '../demo/golden/harness.mjs';
-import { GOLDEN_MATRIX_VERSION, GOLDEN_SCENARIOS } from '../demo/golden/matrix.mjs';
+import {
+  GOLDEN_MATRIX_VERSION, GOLDEN_SCENARIOS, OPENING_SYMBOL_EXISTING_GOLDEN_IMPACT,
+} from '../demo/golden/matrix.mjs';
 import { fixtureWallKey } from '../demo/fixtures/visual-matrix.mjs';
 
 test('golden matrix has stable unique ids and bounded comparison thresholds', () => {
@@ -53,6 +55,24 @@ test('golden matrix has stable unique ids and bounded comparison thresholds', ()
       assert.match(scenario.openingGeometry.id, /^[a-z0-9-]+$/, scenario.id);
       assert.equal(['door', 'window', 'gate'].includes(scenario.openingGeometry.type), true, scenario.id);
       assert.equal(Number.isFinite(scenario.openingGeometry.angle), true, scenario.id);
+    }
+    if (scenario.openingSymbolContract) {
+      const contract = scenario.openingSymbolContract;
+      assert.equal(['room', 'partition'].includes(contract.kind), true, scenario.id);
+      assert.equal(['flat', 'iso'].includes(contract.surface), true, scenario.id);
+      assert.equal(contract.wallCm > 0, true, scenario.id);
+      assert.equal(contract.openings.length >= 3, true, scenario.id);
+      assert.equal(new Set(contract.openings.map((opening) => opening.id)).size,
+        contract.openings.length, scenario.id);
+      for (const opening of contract.openings) {
+        assert.match(opening.id, /^[a-z0-9-]+$/, scenario.id);
+        assert.equal(['door', 'window', 'gate'].includes(opening.type), true, scenario.id);
+        assert.equal(['center', 'edge'].includes(opening.offset), true, scenario.id);
+        assert.equal(typeof opening.flipV, 'boolean', scenario.id);
+        assert.equal(Number.isFinite(opening.at) && opening.length > 0, true, scenario.id);
+        if (opening.type === 'gate') assert.equal(opening.offset, 'center', scenario.id);
+      }
+      assert.equal(contract.surface === 'iso', scenario.projection === 'iso', scenario.id);
     }
     if (scenario.tunnelContinuity) {
       assert.match(scenario.tunnelContinuity.openingId, /^[a-z0-9-]+$/, scenario.id);
@@ -301,7 +321,7 @@ test('sun-ray golden requires browser-painted light from a state-only sun entity
   assert.ok(scenario);
   const fixture = prepareGoldenFixture(scenario);
   const space = fixture.config.spaces.find((item) => item.id === scenario.space);
-  assert.equal(GOLDEN_MATRIX_VERSION, 36);
+  assert.equal(GOLDEN_MATRIX_VERSION, 37);
   assert.equal(space.settings.sun_rays, true);
   assert.equal(scenario.northDeg, 90,
     'the sign-sensitive golden must keep a non-zero north direction');
@@ -461,6 +481,50 @@ test('diagonal opening golden asserts a real painted 45 degree symbol', () => {
   const fixture = prepareGoldenFixture(scenario);
   const space = fixture.config.spaces.find((item) => item.id === scenario.space);
   assert.deepEqual(space.openings.map((opening) => opening.id), ['geo-diagonal-window']);
+});
+
+test('opening symbol goldens lock room, diagonal, flip-pair and hidden Iso contracts', () => {
+  const scenarios = GOLDEN_SCENARIOS.filter((item) => item.openingSymbolContract);
+  assert.deepEqual(scenarios.map((item) => item.id), [
+    'opening-symbol-room-wall-light',
+    'opening-symbol-diagonal-partition-dark',
+    'opening-symbol-flip-pairs-light',
+    'isometric-opening-symbol-parity-dark',
+  ]);
+  for (const scenario of scenarios) {
+    const fixture = prepareGoldenFixture(scenario);
+    const space = fixture.config.spaces.find((item) => item.id === scenario.space);
+    assert.ok(space, scenario.id);
+    assert.equal(space.openings.length, scenario.openingSymbolContract.openings.length, scenario.id);
+    assert.equal(space.settings.show_borders, true, scenario.id);
+    assert.equal(space.openings.every((opening) => Number.isFinite(opening.x)
+      && Number.isFinite(opening.y) && Number.isFinite(opening.angle)), true, scenario.id);
+    if (scenario.openingSymbolContract.kind === 'partition') {
+      assert.equal(space.partitions.length, 1, scenario.id);
+      assert.equal(space.openings.every((opening) => opening.host?.id === space.partitions[0].id),
+        true, scenario.id);
+    } else {
+      assert.equal(space.rooms.length, 2, scenario.id);
+      assert.equal(space.walls.some((wall) => wall.cm === scenario.openingSymbolContract.wallCm),
+        true, scenario.id);
+    }
+  }
+  const flipPair = scenarios.find((item) => item.id === 'opening-symbol-flip-pairs-light');
+  assert.deepEqual(flipPair.openingSymbolContract.openings.map((opening) => [
+    opening.type, opening.flipV, opening.offset,
+  ]), [
+    ['door', false, 'center'], ['door', true, 'edge'],
+    ['window', false, 'center'], ['window', true, 'edge'],
+    ['gate', false, 'center'], ['gate', true, 'center'],
+  ]);
+  assert.equal(OPENING_SYMBOL_EXISTING_GOLDEN_IMPACT.length, 67);
+  assert.equal(new Set(OPENING_SYMBOL_EXISTING_GOLDEN_IMPACT).size, 67);
+  const scenarioIds = new Set(GOLDEN_SCENARIOS.map((scenario) => scenario.id));
+  const testingDoc = readFileSync(new URL('../docs/TESTING.md', import.meta.url), 'utf8');
+  for (const id of OPENING_SYMBOL_EXISTING_GOLDEN_IMPACT) {
+    assert.equal(scenarioIds.has(id), true, id);
+    assert.match(testingDoc, new RegExp(`\\b${id}\\b`), id);
+  }
 });
 
 test('golden harness applies doorway, state and layout overrides to a cloned fixture', () => {

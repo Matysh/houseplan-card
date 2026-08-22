@@ -1,7 +1,7 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 36;
+export const GOLDEN_MATRIX_VERSION = 37;
 
 const stage = { capture: 'stage', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0005 } };
 const page = { capture: 'page', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0008 } };
@@ -10,6 +10,136 @@ const sunWindow = { capture: 'sun-window', threshold: { maxChannelDelta: 10, max
 // renderer covered through an explicit card-only snapshot; this never changes
 // URL/storage/registry behaviour and must fail if the rendered view stays flat.
 const expiredIsoFixture = { testOnlyLabsSnapshot: true };
+
+const openingRoomContract = {
+  kind: 'room', wallCm: 30, surface: 'flat',
+  openings: [
+    { id: 'golden-centred-door', type: 'door', at: 0.25, length: 0.10,
+      flipV: false, offset: 'center' },
+    { id: 'golden-centred-window', type: 'window', at: 0.50, length: 0.10,
+      flipV: false, offset: 'center' },
+    { id: 'golden-centred-gate', type: 'gate', at: 0.75, length: 0.10,
+      flipV: false, offset: 'center' },
+  ],
+};
+
+const openingPartitionContract = {
+  kind: 'partition', wallCm: 30, surface: 'flat',
+  a: [0.14, 0.22], b: [0.86, 0.78],
+  openings: [
+    { id: 'golden-diagonal-door', type: 'door', at: 0.22, length: 0.09,
+      flipV: false, offset: 'center' },
+    { id: 'golden-diagonal-window', type: 'window', at: 0.50, length: 0.09,
+      flipV: false, offset: 'center' },
+    { id: 'golden-diagonal-gate', type: 'gate', at: 0.78, length: 0.09,
+      flipV: false, offset: 'center' },
+  ],
+};
+
+const openingFlipContract = {
+  kind: 'room', wallCm: 30, surface: 'flat',
+  openings: [
+    { id: 'golden-door-default', type: 'door', at: 0.16, length: 0.08,
+      flipV: false, offset: 'center' },
+    { id: 'golden-door-flipped', type: 'door', at: 0.30, length: 0.08,
+      flipV: true, offset: 'edge' },
+    { id: 'golden-window-default', type: 'window', at: 0.44, length: 0.08,
+      flipV: false, offset: 'center' },
+    { id: 'golden-window-flipped', type: 'window', at: 0.58, length: 0.08,
+      flipV: true, offset: 'edge' },
+    { id: 'golden-gate-default', type: 'gate', at: 0.72, length: 0.08,
+      flipV: false, offset: 'center', turnPair: 'golden-gate-turn' },
+    { id: 'golden-gate-flipped', type: 'gate', at: 0.86, length: 0.08,
+      flipV: true, offset: 'center', turnPair: 'golden-gate-turn' },
+  ],
+};
+
+const openingIsoContract = {
+  kind: 'room', wallCm: 30, surface: 'iso',
+  openings: [
+    { id: 'golden-iso-door', type: 'door', at: 0.20, length: 0.09,
+      flipV: false, offset: 'center' },
+    { id: 'golden-iso-window', type: 'window', at: 0.40, length: 0.09,
+      flipV: false, offset: 'center' },
+    { id: 'golden-iso-gate-default', type: 'gate', at: 0.62, length: 0.09,
+      flipV: false, offset: 'center', turnPair: 'golden-iso-gate-turn' },
+    { id: 'golden-iso-gate-flipped', type: 'gate', at: 0.82, length: 0.09,
+      flipV: true, offset: 'center', turnPair: 'golden-iso-gate-turn' },
+  ],
+};
+
+/** Exact existing baseline impact measured against origin/dev with the same
+ * Chromium build. Keep this list reviewable: shared visual fixtures make an
+ * opening-only change visible in editor/dialog captures too. */
+export const OPENING_SYMBOL_EXISTING_GOLDEN_IMPACT = Object.freeze([
+  'isometric-geometry-view-dark',
+  'isometric-geometry-view-light',
+  'isometric-live-layers-dark',
+  'isometric-no-borders-dark',
+  'isometric-touch-kiosk-dark',
+  'isometric-large-warm-remount-dark',
+  'geometry-view-dark-fit',
+  'geometry-view-light-fit',
+  'room-label-parity-view-dark',
+  'room-label-parity-plan-dark',
+  'room-label-parity-view-light',
+  'room-label-parity-plan-light',
+  'day-cycle-dawn-dark',
+  'day-cycle-day-dark',
+  'day-cycle-dusk-dark',
+  'day-cycle-night-dark',
+  'geometry-plan-editor-dark',
+  'space-tab-drop-before-light',
+  'space-tab-drop-after-dark',
+  'plan-snap-endpoint-light',
+  'plan-snap-line-gaps-dark',
+  'junction-patch-resilience-plan-dark',
+  'opening-placement-door-thick-wall-dark',
+  'opening-placement-passage-thick-wall-dark',
+  'opening-placement-passage-thick-wall-light',
+  'geometry-devices-editor-dark',
+  'geometry-decor-editor-dark',
+  'tray-wide-selection-en',
+  'tray-wide-tool-ru',
+  'tray-medium-group-en',
+  'tray-medium-selection-ru',
+  'tray-narrow-palette-en',
+  'tray-narrow-tool-ru',
+  'geometry-diagonal-45-opening-dark',
+  'openings-thick-wall-dark',
+  'lighting-glow-sun-dark',
+  'device-value-badge-positions-dark',
+  'device-icon-state-table-light',
+  'device-icon-state-table-dark',
+  'device-text-shell-long-light',
+  'device-text-shell-long-dark',
+  'lighting-sun-window-state-only-dark',
+  'lighting-fill-light-axis-split-dark',
+  'lighting-fill-temp-axis-split-dark',
+  'lighting-fill-lqi-axis-split-dark',
+  'lighting-temp-glow-dark',
+  'lighting-temp-glow-light',
+  'lighting-custom-glow-dark',
+  'lighting-opaque-glow-two-doorways-dark',
+  'lighting-custom-glow-light',
+  'lighting-temp-glow-no-sources-dark',
+  'lighting-temp-glow-room-override-dark',
+  'lighting-manual-auto-spill-overlap-dark',
+  'hover-over-glow-dark',
+  'hover-nested-room-dark',
+  'large-house-zoom-040-dark',
+  'large-house-zoom-250-dark',
+  'large-house-warm-remount-dark',
+  'device-dialog-desktop-en',
+  'device-help-popover-light-ru',
+  'decor-color-popover-desktop-en',
+  'general-color-popover-desktop-en',
+  'space-room-color-popover-desktop-ru',
+  'backup-full-preview-desktop-en',
+  'backup-plan-only-export-desktop-en',
+  'optimize-preflight-dialog-dark-en',
+  'optimize-preflight-dialog-light-ru',
+]);
 
 const decorLayerFixture = [
   { id: 'golden-decor-axis', kind: 'line', x1: 0.10, y1: 0.54, x2: 0.90, y2: 0.54,
@@ -155,6 +285,19 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     mode: 'plan', openingPreview: { type: 'passage', pointer: [0.48, 0.65] },
     openingPreviewPixels: { minPixels: 150, minInsideWallPixels: 8, minChannelDelta: 4 },
     theme: 'light', viewport: { width: 1180, height: 900 }, ...page },
+  { id: 'opening-symbol-room-wall-light', fixture: 'visual', space: 'golden-opening-symbols',
+    mode: 'view', openingSymbolContract: openingRoomContract,
+    theme: 'light', viewport: { width: 1000, height: 900 }, ...stage },
+  { id: 'opening-symbol-diagonal-partition-dark', fixture: 'visual', space: 'golden-opening-symbols',
+    mode: 'view', openingSymbolContract: openingPartitionContract,
+    theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
+  { id: 'opening-symbol-flip-pairs-light', fixture: 'visual', space: 'golden-opening-symbols',
+    mode: 'view', openingSymbolContract: openingFlipContract,
+    theme: 'light', viewport: { width: 1000, height: 900 }, ...stage },
+  { id: 'isometric-opening-symbol-parity-dark', fixture: 'visual', space: 'golden-opening-symbols',
+    mode: 'view', labs: ['iso'], projection: 'iso', ...expiredIsoFixture,
+    openingSymbolContract: openingIsoContract,
+    theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'geometry-devices-editor-dark', fixture: 'visual', space: 'golden-geometry', mode: 'devices',
     theme: 'dark', viewport: { width: 1180, height: 900 }, ...page },
   { id: 'geometry-decor-editor-dark', fixture: 'visual', space: 'golden-geometry', mode: 'decor',

@@ -122,6 +122,45 @@ const res = await page.evaluate(async () => {
   out.doorSavedFlipUsesEdge = /^translate\([^)]*\)$/.test(doorBodyTransform())
     && !/^translate\(\s*0\s+0\s*\)$/.test(doorBodyTransform());
 
+  const firstGateTurn = (id) => {
+    const transform = sr().querySelector(
+      `[data-hp="opening"][data-id="${id}"] .op-leaf`,
+    )?.style?.transform || '';
+    return Number(transform.match(/rotate\(([-+0-9.eE]+)deg\)/)?.[1]);
+  };
+  sp().openings = [
+    { id: 'wtGateDefault', type: 'gate', x: 0.55, y: 0.20, angle: 90, length: 0.08,
+      flip_v: false },
+    { id: 'wtGateFlipped', type: 'gate', x: 0.55, y: 0.30, angle: 90, length: 0.08,
+      flip_v: true },
+  ];
+  await upd();
+  const sharedGateDefault = firstGateTurn('wtGateDefault');
+  const sharedGateFlipped = firstGateTurn('wtGateFlipped');
+  out.sharedGateFlipReversesTurn = Math.abs(sharedGateDefault) === 10
+    && sharedGateFlipped === -sharedGateDefault;
+
+  const partitionsBefore = structuredClone(sp().partitions || []);
+  sp().partitions = [...partitionsBefore, {
+    id: 'wt-gate-partition', a: [0.15, 0.75], b: [0.45, 0.75], cm: 25,
+  }];
+  sp().openings = [
+    { id: 'wtPartGateDefault', type: 'gate', x: 0.25, y: 0.75, angle: 0, length: 0.08,
+      flip_v: false, host: { kind: 'partition', id: 'wt-gate-partition', t: 1 / 3 } },
+    { id: 'wtPartGateFlipped', type: 'gate', x: 0.35, y: 0.75, angle: 0, length: 0.08,
+      flip_v: true, host: { kind: 'partition', id: 'wt-gate-partition', t: 2 / 3 } },
+  ];
+  await upd();
+  const partitionGateDefault = firstGateTurn('wtPartGateDefault');
+  const partitionGateFlipped = firstGateTurn('wtPartGateFlipped');
+  out.partitionGateFlipReversesTurn = Math.abs(partitionGateDefault) === 10
+    && partitionGateFlipped === -partitionGateDefault;
+  sp().partitions = partitionsBefore;
+  sp().openings = [{
+    id: 'wt1', type: 'door', x: 0.55, y: 0.25, angle: 90, length: 0.09, flip_v: true,
+  }];
+  await upd();
+
   sp().settings = { ...(sp().settings || {}), hide_openings: true, show_borders: true };
   c._setMode('view');
   await upd();

@@ -80,7 +80,10 @@ function leafBasis(
   top: number,
 ): IsoOpeningLeafBasis {
   const sx = input.flipH ? -1 : 1;
-  const sy = input.flipV ? -1 : 1;
+  // Gate flip_v is represented by its resolved face.side/turnDeg. Mirroring
+  // the structural basis as well would cancel that direction on shared and
+  // partition hosts, just like a nested scaleY in the flat renderer.
+  const sy = input.type === 'gate' ? 1 : input.flipV ? -1 : 1;
   const offset = openingSymbolOffset(input.type, input.flipV, input.angle, input.face);
   const origin: PlanPoint = [input.x + offset.ox, input.y + offset.oy];
   const hinge = add(origin, transformVector(localHinge, input.angle, sx, sy));
@@ -111,8 +114,7 @@ export function buildIsoOpeningBasis(
   if (input.type === 'passage') {
     leaves = [];
   } else if (input.type === 'gate') {
-    const sy = input.flipV ? -1 : 1;
-    const turn = input.face.side * sy * 10;
+    const turn = input.face.side * 10;
     leaves = [
       leafBasis(input, 0, [-half, 0], [half, 0], turn, 0, wallHeight * 0.88),
       leafBasis(input, 1, [half, 0], [-half, 0], -turn, 0, wallHeight * 0.88),

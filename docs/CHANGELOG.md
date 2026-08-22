@@ -5,8 +5,9 @@
 - Door, window and gate symbols now sit on the centreline of thick room and
   independent walls by default, consistently in placement preview, Flat,
   Static and hidden Iso. Existing flipped doors/windows keep their explicit
-  edge alignment; gates remain centred while the flip changes only their 10°
-  opening direction, and jambs still span the full wall depth
+  edge alignment; gates remain centred while the flip reverses their 10°
+  opening direction on shared room and independent walls without a second
+  mirror inversion, and jambs still span the full wall depth
   ([#242](https://github.com/Matysh/houseplan-card/issues/242)).
 
 - Space tabs can once again be reordered with a real mouse drag in an editor.

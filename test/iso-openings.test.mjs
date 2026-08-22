@@ -58,6 +58,8 @@ test('isometric symbols share centred defaults and explicit edge alignment', () 
   }));
   assert.equal(gate.leaves[0].hinge[1], 80);
   assert.equal(gateFlipped.leaves[0].hinge[1], 80);
+  assert.deepEqual(gate.leaves.map((leaf) => leaf.turnDeg), [10, -10]);
+  assert.deepEqual(gateFlipped.leaves.map((leaf) => leaf.turnDeg), [-10, 10]);
   assert.notDeepEqual(
     projectIsoOpening(gate, 1).map((panel) => panel.d),
     projectIsoOpening(gateFlipped, 1).map((panel) => panel.d),

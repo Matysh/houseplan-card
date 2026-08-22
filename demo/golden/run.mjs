@@ -483,6 +483,119 @@ async function inspectTunnelContinuity(page, png, clip, spec) {
   }, { png64: png.toString('base64'), clip, spec });
 }
 
+/** Prove the opening-centre contract from rendered geometry before a PNG is
+ * compared. The screenshot remains useful for human review, but a shifted
+ * symbol, shallow jamb or cancelled gate turn must fail semantically even
+ * when no reviewed baseline exists yet. */
+async function assertOpeningSymbolContract(page, contract) {
+  return page.evaluate((expected) => {
+    const card = window.__goldenCard;
+    const root = card?.renderRoot;
+    const space = card?._serverCfg?.spaces?.find((item) => item.id === card._space);
+    if (!card || !root || !space) throw new Error('semantic golden opening card is missing');
+    const epsilon = 1e-5;
+    const parsePair = (value, name) => {
+      const match = String(value || '').match(new RegExp(`${name}\\(([-+0-9.eE]+)[ ,]+([-+0-9.eE]+)\\)`));
+      if (!match) throw new Error(`semantic golden cannot parse ${name}: ${value}`);
+      return [Number(match[1]), Number(match[2])];
+    };
+    const parseTurn = (leaf) => {
+      const value = leaf?.style?.transform || leaf?.getAttribute?.('style') || '';
+      const match = String(value).match(/rotate\(([-+0-9.eE]+)deg\)/);
+      if (!match) throw new Error(`semantic golden cannot parse gate turn: ${value}`);
+      return Number(match[1]);
+    };
+    const openingCfg = new Map((space.openings || []).map((opening) => [opening.id, opening]));
+    const turns = new Map();
+    const rows = [];
+
+    if (expected.surface === 'flat') {
+      const renderedById = new Map((card._openingsR || []).map((opening) => [opening.id, opening]));
+      const fullDepth = (expected.wallCm / card._cellCm) * card._gridPitch;
+      for (const item of expected.openings) {
+        const cfg = openingCfg.get(item.id);
+        const rendered = renderedById.get(item.id);
+        const group = root.querySelector(`.opening[data-id="${CSS.escape(item.id)}"]`);
+        if (!cfg || !rendered || !group || cfg.type !== item.type
+            || !!cfg.flip_v !== item.flipV) {
+          throw new Error(`semantic golden opening config/render mismatch: ${item.id}`);
+        }
+        if (Math.hypot(rendered.rx - cfg.x * 1000, rendered.ry - cfg.y * 1000) > epsilon)
+          throw new Error(`semantic golden opening left its wall centerline: ${item.id}`);
+        const scale = group.querySelector(':scope > g[transform^="scale("]');
+        const body = scale?.querySelector(':scope > g[transform^="translate("]');
+        if (!scale || !body) throw new Error(`semantic golden visible group is missing: ${item.id}`);
+        const translation = parsePair(body.getAttribute('transform'), 'translate');
+        const offset = Math.hypot(...translation);
+        const expectedOffset = item.offset === 'center' ? 0 : fullDepth / 2;
+        if (Math.abs(offset - expectedOffset) > epsilon) {
+          throw new Error(`semantic golden visible-group offset failed for ${item.id}: `
+            + `${offset} != ${expectedOffset}`);
+        }
+        const jambs = [...scale.querySelectorAll(':scope > line')];
+        if (jambs.length !== 2 || jambs.some((line) => {
+          const depth = Math.abs(Number(line.getAttribute('y2')) - Number(line.getAttribute('y1')));
+          return Math.abs(depth - fullDepth) > epsilon;
+        })) {
+          throw new Error(`semantic golden full-depth jamb failed: ${item.id}`);
+        }
+        if (item.type === 'window' && !body.querySelector('.op-glass'))
+          throw new Error(`semantic golden window group lost its glass: ${item.id}`);
+        let turn = null;
+        if (item.type === 'gate') {
+          const scalePair = parsePair(scale.getAttribute('transform'), 'scale');
+          if (Math.abs(scalePair[1] - 1) > epsilon)
+            throw new Error(`semantic golden gate regained scaleY flip: ${item.id}`);
+          turn = parseTurn(group.querySelector('.op-leaf'));
+          if (Math.abs(Math.abs(turn) - 10) > epsilon)
+            throw new Error(`semantic golden gate turn is not 10 degrees: ${item.id}`);
+          if (item.turnPair) turns.set(item.id, { pair: item.turnPair, flipV: item.flipV, turn });
+        }
+        rows.push({ id: item.id, offset, jambDepth: fullDepth, turn });
+      }
+    } else {
+      const bases = card._isoSource?.()?.build?.().openings || [];
+      for (const item of expected.openings) {
+        const cfg = openingCfg.get(item.id);
+        const basis = bases.find((opening) => opening.id === item.id);
+        if (!cfg || !basis || cfg.type !== item.type || !!cfg.flip_v !== item.flipV
+            || !basis.leaves.length) {
+          throw new Error(`semantic golden Iso opening mismatch: ${item.id}`);
+        }
+        const centre = basis.leaves.length === 1
+          ? [
+              basis.leaves[0].hinge[0] + basis.leaves[0].closedVector[0] / 2,
+              basis.leaves[0].hinge[1] + basis.leaves[0].closedVector[1] / 2,
+            ]
+          : [
+              basis.leaves.reduce((sum, leaf) => sum + leaf.hinge[0], 0) / basis.leaves.length,
+              basis.leaves.reduce((sum, leaf) => sum + leaf.hinge[1], 0) / basis.leaves.length,
+            ];
+        const offset = Math.hypot(centre[0] - cfg.x * 1000, centre[1] - cfg.y * 1000);
+        if (item.offset !== 'center' || offset > epsilon)
+          throw new Error(`semantic golden Iso centre failed for ${item.id}: ${offset}`);
+        const turn = item.type === 'gate' ? basis.leaves[0].turnDeg : null;
+        if (turn != null && Math.abs(Math.abs(turn) - 10) > epsilon)
+          throw new Error(`semantic golden Iso gate turn failed: ${item.id}`);
+        if (item.turnPair) turns.set(item.id, { pair: item.turnPair, flipV: item.flipV, turn });
+        rows.push({ id: item.id, offset, turn });
+      }
+      if (root.querySelectorAll('.iso-opening-panel').length < expected.openings.length)
+        throw new Error('semantic golden Iso opening panels are missing');
+    }
+
+    for (const pairName of new Set([...turns.values()].map((item) => item.pair))) {
+      const pair = [...turns.values()].filter((item) => item.pair === pairName)
+        .sort((a, b) => Number(a.flipV) - Number(b.flipV));
+      if (pair.length !== 2 || pair[0].flipV || !pair[1].flipV
+          || Math.abs(pair[0].turn + pair[1].turn) > epsilon) {
+        throw new Error(`semantic golden gate flip does not reverse turn: ${pairName}`);
+      }
+    }
+    return { surface: expected.surface, rows };
+  }, contract);
+}
+
 let baselineManifest = null;
 const baselineManifestPath = resolve(baselineRoot, GOLDEN_BASELINE_MANIFEST);
 if (existsSync(baselineManifestPath)) {
@@ -516,6 +629,11 @@ try {
       pageErrors.length = 0;
       result.runtime = await prepareGoldenScenario(page, scenario);
       if (pageErrors.length) throw new Error(`browser exception: ${pageErrors.join(' | ')}`);
+      if (scenario.openingSymbolContract) {
+        result.openingSymbolContract = await assertOpeningSymbolContract(
+          page, scenario.openingSymbolContract,
+        );
+      }
       if (scenario.openingGeometry) {
         result.openingGeometry = await page.evaluate((expected) => {
           const card = window.__goldenCard;

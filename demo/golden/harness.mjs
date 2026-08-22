@@ -158,6 +158,86 @@ export function prepareGoldenFixture(scenario) {
       },
     });
   }
+  if (scenario.openingSymbolContract) {
+    const contract = scenario.openingSymbolContract;
+    if (!['room', 'partition'].includes(contract.kind)
+        || !['flat', 'iso'].includes(contract.surface)
+        || !(contract.wallCm > 0)
+        || !Array.isArray(contract.openings) || !contract.openings.length) {
+      throw new Error(`invalid golden openingSymbolContract: ${scenario.id}`);
+    }
+    const seen = new Set();
+    for (const opening of contract.openings) {
+      if (!opening?.id || seen.has(opening.id)
+          || !['door', 'window', 'gate'].includes(opening.type)
+          || !Number.isFinite(opening.at) || !Number.isFinite(opening.length)
+          || !(opening.length > 0) || !['center', 'edge'].includes(opening.offset)
+          || typeof opening.flipV !== 'boolean') {
+        throw new Error(`invalid golden opening symbol entry: ${opening?.id || '<empty>'}`);
+      }
+      if (opening.type === 'gate' && opening.offset !== 'center')
+        throw new Error(`golden gate must remain centred: ${opening.id}`);
+      seen.add(opening.id);
+    }
+    const tl = [0.08, 0.08], tr = [0.92, 0.08];
+    const mr = [0.92, 0.50], br = [0.92, 0.92];
+    const bl = [0.08, 0.92], ml = [0.08, 0.50];
+    const wall = (a, b, cm = 15) => ({
+      key: fixtureWallKey(a, b), a: [...a], b: [...b], cm,
+    });
+    let rooms;
+    let walls;
+    let partitions;
+    let openings;
+    if (contract.kind === 'room') {
+      rooms = [
+        { id: 'golden-opening-upper', name: 'Upper', area: null,
+          poly: [tl, tr, mr, ml].map((point) => [...point]) },
+        { id: 'golden-opening-lower', name: 'Lower', area: null,
+          poly: [ml, mr, br, bl].map((point) => [...point]) },
+      ];
+      walls = [
+        wall(tl, tr), wall(tr, mr), wall(mr, ml, contract.wallCm), wall(ml, tl),
+        wall(mr, br), wall(br, bl), wall(bl, ml),
+      ];
+      partitions = [];
+      openings = contract.openings.map((opening) => ({
+        id: opening.id, type: opening.type,
+        x: opening.at, y: 0.50, angle: 0, length: opening.length,
+        flip_v: opening.flipV,
+      }));
+    } else {
+      if (!Array.isArray(contract.a) || !Array.isArray(contract.b)
+          || contract.a.length !== 2 || contract.b.length !== 2
+          || ![...contract.a, ...contract.b].every(Number.isFinite)) {
+        throw new Error(`invalid golden diagonal partition: ${scenario.id}`);
+      }
+      rooms = [{ id: 'golden-opening-room', name: 'Opening symbols', area: null,
+        poly: [tl, tr, br, bl].map((point) => [...point]) }];
+      walls = [wall(tl, tr), wall(tr, br), wall(br, bl), wall(bl, tl)];
+      const a = contract.a, b = contract.b;
+      partitions = [{
+        id: 'golden-opening-partition', a: [...a], b: [...b], cm: contract.wallCm,
+      }];
+      const angle = Math.atan2(b[1] - a[1], b[0] - a[0]) * 180 / Math.PI;
+      openings = contract.openings.map((opening) => ({
+        id: opening.id, type: opening.type,
+        x: a[0] + (b[0] - a[0]) * opening.at,
+        y: a[1] + (b[1] - a[1]) * opening.at,
+        angle, length: opening.length, flip_v: opening.flipV,
+        host: { kind: 'partition', id: 'golden-opening-partition', t: opening.at },
+      }));
+    }
+    fixture.config.spaces.push({
+      id: scenario.space,
+      title: 'Opening symbol contract',
+      plan_url: null,
+      view_box: [0, 0, 1, 1],
+      cell_cm: 5,
+      settings: { fill_mode: 'none', show_borders: true, show_names: false },
+      rooms, walls, partitions, openings, wall_columns: [], decor: [],
+    });
+  }
   const requireSpace = () => {
     const space = fixture.config.spaces.find((item) => item.id === scenario.space);
     if (!space) throw new Error(`golden override references missing space: ${scenario.space}`);
