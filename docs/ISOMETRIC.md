@@ -158,9 +158,9 @@ door has one jamb-hinged leaf, gate has two leaves with the established
 therefore no panel or leaf shadow. Heights are fixed presentation ratios of
 `ISO_WALL_HEIGHT`; there is no schema field.
 The panel basis consumes the same pure visible-offset contract as Flat: default
-door/window/gate panels are centred across wall depth, `flip_v: true` keeps the
-door/window compatibility edge alignment, and a gate flip changes only turn
-direction. Jamb/cut depth remains physical and independent of that translation.
+door/window/gate panels are always centred across wall depth. `flip_v` changes
+only door/window direction or the gate turn and never translates the structural
+origin. Jamb/cut depth remains physical and independent of symbol placement.
 Panels/shadows are pointer- and ARIA-inert. Existing lock badges/cards and HA
 actions remain the only interactive opening surface.
 

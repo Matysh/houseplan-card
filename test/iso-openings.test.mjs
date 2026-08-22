@@ -36,7 +36,7 @@ test('window and gate retain two leaves, fixed height bounds and gate 10 degree 
   assert.equal(projectIsoOpening(gateBasis, 1).length, 2);
 });
 
-test('isometric symbols share centred defaults and explicit edge alignment', () => {
+test('isometric symbols keep one centre while flips change only direction', () => {
   const centred = buildIsoOpeningBasis(opening());
   const oppositeResolvedFace = buildIsoOpeningBasis(opening({
     face: { ox: 0, oy: -5, side: -1 },
@@ -49,8 +49,15 @@ test('isometric symbols share centred defaults and explicit edge alignment', () 
     flipV: true, face: { ox: 0, oy: -5, side: -1 },
   }));
   assert.deepEqual(flippedNegative.leaves, flippedPositive.leaves,
-    'saved flip uses the same opening-local edge for either room order');
-  assert.equal(flippedPositive.leaves[0].hinge[1], centred.leaves[0].hinge[1] + 5);
+    'resolved room face cannot translate or redirect the saved flip');
+  assert.deepEqual(flippedPositive.leaves[0].hinge, centred.leaves[0].hinge,
+    'flip keeps the exact centreline hinge');
+  assert.deepEqual(flippedPositive.leaves[0].closedVector, centred.leaves[0].closedVector);
+  assert.equal(
+    flippedPositive.leaves[0].quarterVector[1],
+    -centred.leaves[0].quarterVector[1],
+    'flip mirrors the opening direction without moving its origin',
+  );
 
   const gate = buildIsoOpeningBasis(opening({ type: 'gate' }));
   const gateFlipped = buildIsoOpeningBasis(opening({

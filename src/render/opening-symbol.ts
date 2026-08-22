@@ -70,9 +70,8 @@ export function renderOpeningVisibleGeometry(spec: OpeningVisibleSpec): Template
   // second scaleY(-1).
   const renderSy = spec.type === 'gate' ? 1 : sy;
 
-  // Default symbols sit on the wall centreline. A saved door/window flip keeps
-  // the explicit edge-aligned compatibility mode, but gate leaves always stay
-  // centred and use face.side only for their 10 degree turn.
+  // Every symbol sits on the wall centreline. flip_v changes only leaf/swing
+  // direction; gates use face.side for their 10 degree turn (#250).
   const visualOffset = openingSymbolOffset(
     spec.type, spec.flipV, spec.angle, spec.face,
   );

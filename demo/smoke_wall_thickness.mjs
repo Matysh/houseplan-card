@@ -119,8 +119,7 @@ const res = await page.evaluate(async () => {
   out.doorDefaultCentered = /^translate\(0 0\)$/.test(doorBodyTransform());
   sp().openings[0].flip_v = true;
   await upd();
-  out.doorSavedFlipUsesEdge = /^translate\([^)]*\)$/.test(doorBodyTransform())
-    && !/^translate\(\s*0\s+0\s*\)$/.test(doorBodyTransform());
+  out.doorSavedFlipStaysCentered = /^translate\(\s*0\s+0\s*\)$/.test(doorBodyTransform());
 
   const firstGateTurn = (id) => {
     const transform = sr().querySelector(

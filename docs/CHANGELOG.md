@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Door, window and gate symbols now remain exactly on the wall centreline for
+  both opening directions. “Opens to the other side” only mirrors the door or
+  window geometry, or reverses a gate's 10° turn; it no longer shifts an
+  existing flipped door/window to the wall face. Jambs and wall cuts still span
+  the full physical depth in Flat, Static and hidden Iso
+  ([#250](https://github.com/Matysh/houseplan-card/issues/250)).
+
 - Repeating “Optimize plans” immediately after a successful run now correctly
   reports that there is nothing to fix, including after the backend update
   event or a page reload. Optimize compares and retains the same nine-decimal

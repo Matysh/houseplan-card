@@ -527,7 +527,7 @@ async function assertOpeningSymbolContract(page, contract) {
         if (!scale || !body) throw new Error(`semantic golden visible group is missing: ${item.id}`);
         const translation = parsePair(body.getAttribute('transform'), 'translate');
         const offset = Math.hypot(...translation);
-        const expectedOffset = item.offset === 'center' ? 0 : fullDepth / 2;
+        const expectedOffset = 0;
         if (Math.abs(offset - expectedOffset) > epsilon) {
           throw new Error(`semantic golden visible-group offset failed for ${item.id}: `
             + `${offset} != ${expectedOffset}`);

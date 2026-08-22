@@ -171,12 +171,10 @@ export function prepareGoldenFixture(scenario) {
       if (!opening?.id || seen.has(opening.id)
           || !['door', 'window', 'gate'].includes(opening.type)
           || !Number.isFinite(opening.at) || !Number.isFinite(opening.length)
-          || !(opening.length > 0) || !['center', 'edge'].includes(opening.offset)
+          || !(opening.length > 0) || opening.offset !== 'center'
           || typeof opening.flipV !== 'boolean') {
         throw new Error(`invalid golden opening symbol entry: ${opening?.id || '<empty>'}`);
       }
-      if (opening.type === 'gate' && opening.offset !== 'center')
-        throw new Error(`golden gate must remain centred: ${opening.id}`);
       seen.add(opening.id);
     }
     const tl = [0.08, 0.08], tr = [0.92, 0.08];

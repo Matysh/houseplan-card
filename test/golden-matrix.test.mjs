@@ -529,8 +529,8 @@ test('opening symbol goldens lock room, diagonal, flip-pair and hidden Iso contr
   assert.deepEqual(flipPair.openingSymbolContract.openings.map((opening) => [
     opening.type, opening.flipV, opening.offset,
   ]), [
-    ['door', false, 'center'], ['door', true, 'edge'],
-    ['window', false, 'center'], ['window', true, 'edge'],
+    ['door', false, 'center'], ['door', true, 'center'],
+    ['window', false, 'center'], ['window', true, 'center'],
     ['gate', false, 'center'], ['gate', true, 'center'],
   ]);
   assert.equal(OPENING_SYMBOL_EXISTING_GOLDEN_IMPACT.length, 67);

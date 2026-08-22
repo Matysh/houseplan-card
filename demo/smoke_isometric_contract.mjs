@@ -51,12 +51,11 @@ const out = await page.evaluate(async () => {
   const centredGate = basis('iso-centred-gate');
   const flippedGate = basis('iso-flipped-gate');
   const wallAxisY = 0.12 * 1000;
-  const halfDepth = (15 / card._cellCm) * card._gridPitch / 2;
   result.isoOpeningDefaultCentred = centredDoor?.leaves.length === 1
     && centredDoor.leaves.every((leaf) => Math.abs(leaf.hinge[1] - wallAxisY) < 1e-6);
-  result.isoWindowFlipUsesCanonicalEdge = flippedWindow?.leaves.length === 2
+  result.isoWindowFlipStaysCentred = flippedWindow?.leaves.length === 2
     && flippedWindow.leaves.every(
-      (leaf) => Math.abs(leaf.hinge[1] - wallAxisY - halfDepth) < 1e-6,
+      (leaf) => Math.abs(leaf.hinge[1] - wallAxisY) < 1e-6,
     );
   result.isoGateFlipKeepsCentredOrigin = centredGate?.leaves.length === 2
     && centredGate.leaves.every((leaf) => Math.abs(leaf.hinge[1] - wallAxisY) < 1e-6)

@@ -2486,8 +2486,8 @@ function centrePiece(side: OpeningWallSide): OpeningWallPiece {
 
 /**
  * Physical half-depth and direction for an opening. Visible symbol placement
- * is resolved separately: default symbols are centred and only an explicit
- * door/window flip uses an edge offset.
+ * is resolved separately and is always centred; flip_v changes only the
+ * opening direction (#250).
  */
 export function openingInnerFaceOffset(
   rooms: any[],

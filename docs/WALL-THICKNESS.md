@@ -105,9 +105,10 @@ the saved target segment. The live open-outline/rubber-band preview calls the
 same primitive with saved per-segment thicknesses plus the current field value.
 
 Openings cut the body full-depth and jambs cap the whole cut. By default the
-complete visible door/window/gate group is centred on the wall axis, including
-window glass. A saved `flip_v: true` keeps edge alignment only for doors and
-windows; gates stay centred and use the resolved side only for their 10° turn.
+complete visible door/window/gate group is always centred on the wall axis,
+including window glass. `flip_v` changes only the direction of door/window
+geometry or the gate's 10° turn; it never translates the symbol toward a wall
+face.
 Association uses wall direction ≈ opening angle (mod 180°), then nearest span —
 never a perpendicular neighbour at a T. One atomic `OpeningWallIndex` is
 authoritative for physical depth/direction, wall cut and coloured tunnel, while

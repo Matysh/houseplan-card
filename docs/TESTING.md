@@ -55,14 +55,15 @@
 - [ ] `hide_decor`, the Background editor override and stored config remain
       unchanged; no per-object under-plan compatibility flag is introduced.
 
-## Opening symbol centreline (#242)
+## Opening symbol centreline (#242, #250)
 
-- [ ] Unit and browser checks prove that door/window/gate defaults stay on the
-      wall centreline, saved door/window `flip_v` uses the canonical edge, and
-      gate `flip_v` reverses the first-leaf 10° turn on shared room walls,
+- [ ] Unit and browser checks prove that door/window/gate stay on the wall
+      centreline for both `flip_v` values, door/window flips change only their
+      direction, and gate `flip_v` reverses the first-leaf 10° turn on shared room walls,
       independent partitions and hidden Iso without translating the gate
       [unit: `opening-symbol.test.mjs`, `iso-openings.test.mjs`; auto:
-      `smoke_wall_thickness.mjs`, `smoke_isometric_contract.mjs`; mutation:
+      `smoke_wall_thickness.mjs`, `smoke_isometric_contract.mjs`; mutations:
+      `opening-symbol-flip-restores-edge-offset`,
       `opening-gate-flip-cancels-turn`].
 - [ ] Matrix v37 adds four dedicated semantic scenes. Before PNG comparison
       they assert the saved flip value, wall centreline, visible-group offset,
@@ -71,6 +72,9 @@
       `opening-symbol-diagonal-partition-dark`,
       `opening-symbol-flip-pairs-light`,
       `isometric-opening-symbol-parity-dark`.
+- [ ] #250 reuses those four scenes and requires `offset: center` for every
+      door/window/gate entry, including flipped pairs. The semantic guard must
+      fail before PNG comparison if any saved flip restores a wall-face offset.
 - [ ] The exact existing golden impact set below contains **67** scenes. It was
       measured by comparing `actualSha256` for HEAD and `origin/dev` under the
       same Chromium build; baseline status alone is not used because `dev`
