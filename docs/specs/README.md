@@ -54,6 +54,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#167](https://github.com/Matysh/houseplan-card/issues/167) Экспорт «только планировка» | [167-plan-only-export.md](167-plan-only-export.md) |
 | [#170](https://github.com/Matysh/houseplan-card/issues/170) HA-устройство не привязывается к комнате без HA-зоны | [170-room-without-area.md](170-room-without-area.md) |
 | [#179](https://github.com/Matysh/houseplan-card/issues/179) Новый визуальный язык маркеров устройств | [179-device-icons-redesign.md](179-device-icons-redesign.md) |
+| [#199](https://github.com/Matysh/houseplan-card/issues/199) Geometry preflight перед записью Optimize | [199-optimize-geometry-preflight.md](199-optimize-geometry-preflight.md) |
 | [#210](https://github.com/Matysh/houseplan-card/issues/210) Фиксированное пространство экземпляра карточки | [210-fixed-floor-card.md](210-fixed-floor-card.md) |
 | [#211](https://github.com/Matysh/houseplan-card/issues/211) Визуальное соответствие маркеров дизайн-пакету #179 | [211-device-icons-visual-parity.md](211-device-icons-visual-parity.md) |
 | [#217](https://github.com/Matysh/houseplan-card/issues/217) Внешняя рамка Text-маркера должна быть капсулой | [217-text-shell-outline.md](217-text-shell-outline.md) |
