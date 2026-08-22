@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import test from 'node:test';
-import { sourceFingerprint } from '../scripts/source-fingerprint.mjs';
+import { sourceFingerprint, visualFingerprint } from '../scripts/source-fingerprint.mjs';
 
 test('source fingerprint is stable across LF and CRLF checkouts', () => {
   const directory = mkdtempSync(resolve(tmpdir(), 'houseplan-fingerprint-'));
@@ -52,6 +52,63 @@ test('source fingerprint includes deterministic visual fixtures and golden code'
     assert.notEqual(fixtureChanged, initial);
     writeFileSync(resolve(directory, 'demo/golden/matrix.mjs'), 'export const matrix = 2;\n', 'utf8');
     assert.notEqual(sourceFingerprint(directory), fixtureChanged);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+// #245: два отпечатка отвечают на два разных вопроса. «Тот же ли это бандл» —
+// версия входит, потому что бандл действительно другой. «Те же ли это
+// скриншоты» — версия не входит, потому что на картинках её нет. Раньше вопрос
+// был один, и каждый релизный коммит оставлял job docs красным.
+
+const releaseFixture = () => {
+  const directory = mkdtempSync(resolve(tmpdir(), 'houseplan-fingerprint-release-'));
+  mkdirSync(resolve(directory, 'src'), { recursive: true });
+  writeFileSync(resolve(directory, 'src/houseplan-card.ts'),
+    "const CARD_VERSION = '1.66.0';\nexport const paint = () => 1;\n", 'utf8');
+  writeFileSync(resolve(directory, 'package.json'),
+    '{"name":"fixture","version":"1.66.0","dependencies":{"lit":"3.1.0"}}\n', 'utf8');
+  writeFileSync(resolve(directory, 'package-lock.json'),
+    '{"name":"fixture","version":"1.66.0","packages":{"":{"version":"1.66.0"},'
+    + '"node_modules/lit":{"version":"3.1.0"}}}\n', 'utf8');
+  return directory;
+};
+
+const bumpVersion = (directory, from, to) => {
+  for (const file of ['src/houseplan-card.ts', 'package.json', 'package-lock.json']) {
+    const path = resolve(directory, file);
+    writeFileSync(path, readFileSync(path, 'utf8').split(from).join(to), 'utf8');
+  }
+};
+
+test('бамп версии продукта не трогает отпечаток скриншотов, но трогает отпечаток бандла (#245)', () => {
+  const directory = releaseFixture();
+  try {
+    const before = { bundle: sourceFingerprint(directory), visual: visualFingerprint(directory) };
+    bumpVersion(directory, '1.66.0', '1.67.0-beta.1');
+    assert.notEqual(sourceFingerprint(directory), before.bundle,
+      'бандл после бампа другой — отпечаток обязан измениться, иначе несвежий бандл сойдёт за свежий');
+    assert.equal(visualFingerprint(directory), before.visual,
+      'номер версии на скриншотах не нарисован: требовать пересъёмки из-за него нечестно');
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test('отпечаток скриншотов не слепнет к правкам src и версиям зависимостей (#245)', () => {
+  const directory = releaseFixture();
+  try {
+    const initial = visualFingerprint(directory);
+    const cardPath = resolve(directory, 'src/houseplan-card.ts');
+    writeFileSync(cardPath, readFileSync(cardPath, 'utf8').replace('paint = () => 1', 'paint = () => 2'), 'utf8');
+    const afterSource = visualFingerprint(directory);
+    assert.notEqual(afterSource, initial, 'правка src обязана требовать пересъёмки');
+
+    const lockPath = resolve(directory, 'package-lock.json');
+    writeFileSync(lockPath, readFileSync(lockPath, 'utf8').replace('"3.1.0"', '"3.2.0"'), 'utf8');
+    assert.notEqual(visualFingerprint(directory), afterSource,
+      'версия зависимости меняет рендер и обязана менять отпечаток — нормализуется только версия продукта');
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }

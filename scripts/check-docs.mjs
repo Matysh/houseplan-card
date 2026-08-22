@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, statSync } from 'node:fs';
 import { dirname, extname, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { sourceFingerprint } from './source-fingerprint.mjs';
+import { visualFingerprint } from './source-fingerprint.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const EXTERNAL = process.argv.includes('--external');
@@ -129,7 +129,10 @@ if (!existsSync(manifestPath)) {
 } else {
   const manifest = JSON.parse(canonicalText(manifestPath));
   if (manifest.fixture !== 'synthetic-only') errors.push('screenshot manifest must declare synthetic-only fixture');
-  if (manifest.sourceFingerprint !== sourceFingerprint(ROOT))
+  // Версионно-нечувствительный отпечаток (#245): бамп версии не меняет ни одного
+  // пикселя, поэтому не обязан требовать пересъёмки — иначе каждый релизный
+  // коммит оставляет этот гейт красным.
+  if (manifest.sourceFingerprint !== visualFingerprint(ROOT))
     errors.push('screenshot source fingerprint is stale; run npm run build && node demo/docs/capture.mjs');
   const scriptPath = resolve(ROOT, 'demo/docs/capture.mjs');
   if (manifest.captureScriptSha256 !== sha256(readFileSync(scriptPath)))

@@ -123,6 +123,19 @@ export const MUTANTS = [
     }],
   },
   {
+    id: 'docs-fingerprint-sees-product-version',
+    guard: 'node --test --test-name-pattern="не трогает отпечаток скриншотов" '
+      + 'test/source-fingerprint.test.mjs',
+    because: 'номер версии продукта на скриншотах не нарисован, и если отпечаток документации '
+      + 'снова начнёт его видеть, каждый релизный коммит будет оставлять job docs красным — '
+      + 'красный гейт, который «всегда такой», перестают читать (#245)',
+    patches: [{
+      file: 'scripts/source-fingerprint.mjs',
+      find: '    ? (text) => text.split(version).join(\'0.0.0-product-version\')',
+      replace: '    ? (text) => text',
+    }],
+  },
+  {
     id: 'smoke-select-drops-registered-link',
     guard: 'node --test --test-name-pattern="держится на зарегистрированной связи" '
       + 'test/smoke-select.test.mjs',

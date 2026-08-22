@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { sourceFingerprint } from '../../scripts/source-fingerprint.mjs';
+import { visualFingerprint } from '../../scripts/source-fingerprint.mjs';
 import { assertFreshDemoBundle } from '../bundle-freshness.mjs';
 import { goldenClip, prepareGoldenScenario } from '../golden/harness.mjs';
 import { launch } from '../serve.mjs';
@@ -179,7 +179,12 @@ const browserErrors = [];
 page.on('pageerror', (error) => browserErrors.push(error.message));
 
 try {
-  const fingerprint = await assertFreshDemoBundle(page, ROOT);
+  // Свежесть бандла проверяется строго, вместе с версией: картинки обязаны
+  // приехать из бандла, собранного из ЭТОГО дерева. А в манифест пишется
+  // версионно-нечувствительный отпечаток (#245) — номер версии на скриншотах
+  // не виден, и требовать из-за него пересъёмки нечестно.
+  await assertFreshDemoBundle(page, ROOT);
+  const fingerprint = visualFingerprint(ROOT);
   const scenarios = {};
   for (const scenario of DOC_SCREENSHOTS) {
     await prepareGoldenScenario(page, scenario);
