@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- While placing a door, window, gate or open passage, Plan now shows the usable
+  distances from both jambs to the physical inner ends of the wall, with thin
+  dimension lines and endpoint ticks. A shared wall shows four measurements —
+  two for each room — and an independent wall measures to the nearest face of a
+  connected wall or falls back to its own endpoint
+  ([#238](https://github.com/Matysh/houseplan-card/issues/238)).
+
 - Plan drawing is now fail-closed where precision matters: the active wall
   shows its centreline and endpoint, visually inseparable nodes ask for zoom,
   and Shift accepts only an exact 45° ray endpoint or wall intersection. A

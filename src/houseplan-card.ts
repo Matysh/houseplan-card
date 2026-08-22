@@ -266,6 +266,10 @@ import {
   resolveOpeningPlacementResult, sameOpeningPlacementInput,
   type OpeningPlacementCore, type OpeningPlacementPreset, type OpeningPlacementType,
 } from './opening-placement';
+import {
+  buildOpeningDimensionContext, resolveOpeningDimensions,
+  type OpeningDimension, type OpeningDimensionContext,
+} from './opening-dimensions';
 import { safeStoredColor } from './color';
 import {
   applySpaceOrder, canStartTabDrag, markersNeedingPlacement, passedDragThreshold,
@@ -682,11 +686,18 @@ const capturePointer = (ev: PointerEvent): void => {
   }
 };
 
-/** Ruler badges on both shoulders of an opening + the centre-magnet tick.
- *  The same shape serves the DRAG of an existing opening and the PLACEMENT
- *  preview of a new one (owner 2026-08-03). */
+/** Ruler labels + the centre-magnet tick. Existing-opening DRAG carries its
+ *  legacy two labels; a new-opening PLACEMENT may additionally carry physical
+ *  line/tick geometry (#238). */
+interface OpMeasureLabel {
+  x: number;
+  y: number;
+  text: string;
+  dimension?: OpeningDimension;
+}
+
 interface OpMeasure {
-  labels: { x: number; y: number; text: string }[];
+  labels: OpMeasureLabel[];
   guide: { x: number; y: number; angle: number } | null;
 }
 
@@ -1478,6 +1489,10 @@ class HouseplanCard extends LitElement {
    * (and vice versa) on every pointer move. */
   private _openingWallIndexCache = new Map<string, OpeningWallIndex>();
   private _openingPlacementIntervalsCache: { key: string; value: WallInterval[] } | null = null;
+  private _openingDimensionContextCache: {
+    key: string;
+    value: OpeningDimensionContext;
+  } | null = null;
   private _planSnapGeometryCache: { key: string; value: PlanSnapGeometry } | null = null;
   private _planStructuralGeometryCache: { key: string; value: PlanSnapGeometry } | null = null;
   private _physicalBodiesCache: {
@@ -11953,6 +11968,25 @@ class HouseplanCard extends LitElement {
         ],
       };
     }
+    if (!this._openingDimensionContextCache
+        || this._openingDimensionContextCache.key !== placementKey) {
+      this._openingDimensionContextCache = {
+        key: placementKey,
+        value: buildOpeningDimensionContext({
+          rooms: space.rooms,
+          walls: this._spaceWalls,
+          openCuts,
+          partitions: space.partitions,
+          roomOpenings: this._roomWallOpeningInputs(),
+          partitionCuts: this._partitionOpeningCuts(space),
+          pitch: this._wallKeyPitch,
+          cellCm: this._cellCm,
+          gridPitch: this._gridPitch,
+          coordScale: NORM_W,
+          epsilon: this._gridPitch * 0.0002,
+        }),
+      };
+    }
     const resolution = resolveOpeningPlacementResult({
       pointer: [raw[0], raw[1]],
       preset,
@@ -11987,23 +12021,17 @@ class HouseplanCard extends LitElement {
       );
     }
     const imperial = this.hass?.config?.unit_system?.length === 'mi';
-    // Placement validity and magnetism belong to the selected atomic physical
-    // interval. Ruler copy keeps the established UX contract, however: it
-    // measures to the ends of the owning room edge rather than to an atomic
-    // breakpoint introduced solely by a neighbour or virtual span.
-    const shoulders = openingShoulders(
-      [core.x, core.y], core.angle, core.renderedLength, space.rooms, this._gridPitch / 2,
+    // #238: placement labels are physical dimensions. They consume the ONE
+    // resolved candidate above and never re-run pointer snap; existing-opening
+    // drag deliberately keeps `_opRuler`/`openingShoulders` below.
+    const dimensions = resolveOpeningDimensions(
+      core, this._openingDimensionContextCache.value,
     );
-    const measureLabels = shoulders
-      ? [
-          { distance: shoulders.sideA, midpoint: shoulders.midA as [number, number] },
-          { distance: shoulders.sideB, midpoint: shoulders.midB as [number, number] },
-        ]
-      : core.measure.labels;
-    const labels = measureLabels.map((label) => ({
-      x: label.midpoint[0],
-      y: label.midpoint[1],
-      text: formatLength((label.distance / this._gridPitch) * this._cellCm, imperial),
+    const labels = dimensions.map((dimension) => ({
+      x: dimension.label[0],
+      y: dimension.label[1],
+      text: formatLength((dimension.distance / this._gridPitch) * this._cellCm, imperial),
+      dimension,
     }));
     return { ...core, face, measure: { labels, guide: core.measure.guide } };
   }
@@ -16677,6 +16705,7 @@ class HouseplanCard extends LitElement {
               opacity="${modeVisual?.editorWeight ?? 1}">${this._renderPlanSnapOverlay()}</g>` : nothing}
             ${this._markup ? svg`<g class="hp-editor-only-layer"
               opacity="${modeVisual?.editorWeight ?? 1}">${this._renderOpeningPlacementPreview()}</g>` : nothing}
+            ${opMeasure ? this._renderOpeningDimensionGuides(opMeasure) : nothing}
             ${opMeasure?.guide ? this._renderOpeningCenterTick(opMeasure.guide) : nothing}
             ${this._renderRoomHoverOutline(roomHover)}
             ${''/* Editors: saved virtual boundaries and the live two-click
@@ -16738,8 +16767,12 @@ class HouseplanCard extends LitElement {
             : nothing}
           ${opMeasure
             ? html`<div class="measurelayer">${opMeasure.labels.map((l) => html`<div
-                class="measurelabel opshoulder"
-                style="left:${(((l.x - view.x) / view.w) * 100).toFixed(2)}%;top:${(((l.y - view.y) / view.h) * 100).toFixed(2)}%">${l.text}</div>`)}</div>`
+                class="measurelabel opshoulder ${l.dimension ? 'opdimension' : ''}"
+                data-dimension-source=${l.dimension?.source || nothing}
+                data-dimension-room=${l.dimension?.roomId || nothing}
+                style="left:${(((l.x - view.x) / view.w) * 100).toFixed(2)}%;top:${(((l.y - view.y) / view.h) * 100).toFixed(2)}%;${l.dimension
+                  ? `--op-label-shift-x:${(l.dimension.labelNormal[0] * 12).toFixed(2)}px;--op-label-shift-y:${(l.dimension.labelNormal[1] * 12).toFixed(2)}px`
+                  : ''}">${l.text}</div>`)}</div>`
             : nothing}
           ${this._wallDialog
             ? html`<div class="measurelayer">${this._renderWallThickDialog()}</div>`
@@ -18281,6 +18314,30 @@ class HouseplanCard extends LitElement {
     return svg`<line class="alignline opcentertick"
       x1="${gd.x - Math.cos(rad) * half}" y1="${gd.y - Math.sin(rad) * half}"
       x2="${gd.x + Math.cos(rad) * half}" y2="${gd.y + Math.sin(rad) * half}"></line>` as unknown as TemplateResult;
+  }
+
+  /** Physical dimension segments for a NEW-opening placement preview (#238).
+   * Existing-opening drag labels carry no `dimension` and render nothing here. */
+  private _renderOpeningDimensionGuides(measure: OpMeasure): TemplateResult {
+    const dimensions = measure.labels.flatMap((label) => label.dimension ? [label.dimension] : []);
+    if (!dimensions.length) return svg`` as unknown as TemplateResult;
+    const tickHalf = this._cssPxToRender(4);
+    return svg`<g class="opening-dimensions" aria-hidden="true" pointer-events="none">
+      ${dimensions.map((dimension) => {
+        const nx = -dimension.axis[1], ny = dimension.axis[0];
+        const tick = (point: [number, number], end: string) => svg`<line
+          class="opening-dimension-tick" data-end=${end}
+          x1=${point[0] - nx * tickHalf} y1=${point[1] - ny * tickHalf}
+          x2=${point[0] + nx * tickHalf} y2=${point[1] + ny * tickHalf}></line>`;
+        return svg`<g class="opening-dimension" data-source=${dimension.source}
+          data-room=${dimension.roomId || nothing}>
+          <line class="opening-dimension-line"
+            x1=${dimension.from[0]} y1=${dimension.from[1]}
+            x2=${dimension.to[0]} y2=${dimension.to[1]}></line>
+          ${tick(dimension.from, 'from')}${tick(dimension.to, 'to')}
+        </g>`;
+      })}
+    </g>` as unknown as TemplateResult;
   }
 
   private _roomCenter(r: RoomCfg): number[] {

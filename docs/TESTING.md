@@ -557,11 +557,21 @@ separately promised workflows:
       perpendicular dashed tick appears and the center magnet-snaps; there is
       no modifier that disables the magnet; badges and tick vanish on release
       [auto: smoke_opening_measure + unit openingShoulders]
-- [ ] The SAME rulers while PLACING a new opening: pressing **Opening** only
+- [ ] Physical rulers while PLACING a new opening (#238): one room shows two
+      lines/four endpoint ticks from the preview jambs to the physical inner
+      face endpoints. A shared wall shows four independently resolved lines/
+      eight ticks, two on each room face. A finished independent wall stops per
+      direction at the nearest physical face of a connected wall/partition and
+      falls back to its own endpoint where none exists. Lines, ticks and labels
+      update in the same frame as the preview and are pointer/ARIA inert; saved
+      opening drag retains the legacy two badges and no new lines
+      [unit: opening-dimensions; auto: smoke_opening_inner_distances +
+      smoke_opening_measure]
+- [ ] While PLACING a new opening: pressing **Opening** only
       opens the shared secondary tray; choosing Window / Door / Gate arms the
       120 / 90 / 300 cm session preset. Moving over a physical wall shows the
       complete architectural symbol at 50% opacity, above the masonry, together
-      with one badge on each shoulder and the existing centre tick/magnet. The
+      with the physical dimension badges and the existing centre tick/magnet. The
       preview accepts pointer hits anywhere inside a thick wall body, is absent
       on virtual spans and existing openings, and never carries an interactive
       or persistent identity. A direct click without prior hover resolves the

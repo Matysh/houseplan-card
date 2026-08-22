@@ -56,6 +56,8 @@ await settle();
   check('badges_sum_to_wall', near(a + b, 6.12 - 0.96, 0.021));
 }
 check('no_tick_off_center', await tick(), 0);
+check('existing_drag_has_no_new_dimension_lines', await page.evaluate(() =>
+  window.__card.renderRoot.querySelectorAll('.opening-dimension').length), 0);
 
 // ---------- live update on the way ----------
 const [t2x] = await screenPt(360, 140);

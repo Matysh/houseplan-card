@@ -320,6 +320,15 @@ symbol. An open passage instead shows the exact future wall cut as a translucent
 wall-coloured segment with an orange boundary mark at each end. Its depth follows
 the real wall thickness; after saving it has no standalone symbol.
 
+The placement preview also draws a thin dimension line from each jamb to the
+physical inner end of the wall. On a wall shared by two rooms, four values are
+shown — two along each room's inner face — because their usable boundaries can
+differ. On a finished independent wall, each value stops at the nearest
+physical face of a connected wall; where no such face exists, it keeps the
+distance to the independent wall's own endpoint. These richer dimensions apply
+only before a new opening is placed; dragging an existing opening retains its
+two established end-distance badges.
+
 On a finished independent wall, a new or directly edited opening must leave a
 jamb at each endpoint equal to at least half that wall's real thickness. The
 same limit applies to placement, drag, rebind and length edits. Existing

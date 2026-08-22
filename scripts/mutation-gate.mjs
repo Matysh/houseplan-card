@@ -1133,6 +1133,56 @@ export const MUTANTS = [
       replace: '            tail = url[len(prefix):].split("/")[-2:]',
     }],
   },
+  {
+    id: 'opening-dimensions-use-axis-ends',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="room dimensions stop at inner faces" '
+      + 'test/opening-dimensions.test.mjs',
+    because: 'a placement ruler must stop at the physical inner face endpoints, not silently '
+      + 'return to the room-axis endpoints that #238 replaces',
+    patches: [{
+      file: 'src/opening-dimensions.ts',
+      find: '  const [lo, hi] = run;',
+      replace: '  const [lo, hi] = [basis.targetLo, basis.targetHi];',
+    }],
+  },
+  {
+    id: 'opening-dimensions-collapse-shared-side',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="shared wall keeps two independently resolved room sides" '
+      + 'test/opening-dimensions.test.mjs',
+    because: 'a shared wall has two independently inset room faces and must render four '
+      + 'measurements; collapsing two owners back to one pair loses real geometry',
+    patches: [{
+      file: 'src/opening-dimensions.ts',
+      find: '  if (owners.length > 2) return fallbackDimensions(basis);',
+      replace: '  if (owners.length > 1) return fallbackDimensions(basis);',
+    }],
+  },
+  {
+    id: 'opening-dimensions-use-crossing-axis',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="independent T junction measures to the near masonry face" '
+      + 'test/opening-dimensions.test.mjs',
+    because: 'an independent partition ruler must meet the near physical face of a crossing '
+      + 'wall; shrinking the boundary body to its axis recreates the incorrect distance',
+    patches: [{
+      file: 'src/opening-dimensions.ts',
+      find: '      halfDepth,\n    });',
+      replace: '      halfDepth: epsilon,\n    });',
+    }],
+  },
+  {
+    id: 'opening-dimension-overlay-hidden',
+    guard: 'node demo/smoke_opening_inner_distances.mjs',
+    because: 'correct numbers alone do not identify which physical span they describe; the '
+      + 'placement preview must keep its dimension lines and endpoint ticks visible',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '            ${opMeasure ? this._renderOpeningDimensionGuides(opMeasure) : nothing}',
+      replace: '            ${nothing}',
+    }],
+  },
 ];
 
 // --- механика ---------------------------------------------------------------
