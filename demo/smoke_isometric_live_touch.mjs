@@ -134,9 +134,9 @@ const out = await page.evaluate(async () => {
   const ordered = [
     root(original).querySelector('.iso-underlay-svg'),
     root(original).querySelector('.hp-backdrop'),
-    root(original).querySelector('.decorlayer'),
     root(original).querySelector('[data-hp="room"]'),
     root(original).querySelector('.glow-base-layer'),
+    root(original).querySelector('.decorlayer'),
     root(original).querySelector('.glowlayer'),
     root(original).querySelector('.sunlayer'),
     root(original).querySelector('.iso-shadows-svg'),

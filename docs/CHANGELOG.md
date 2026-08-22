@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.67.0-beta.2 — 2026-08-22
+
 - Door, window and gate symbols now sit on the centreline of thick room and
   independent walls by default, consistently in placement preview, Flat,
   Static and hidden Iso. Existing flipped doors/windows keep their explicit
