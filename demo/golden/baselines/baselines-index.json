@@ -1,8 +1,8 @@
 {
   "schema": 1,
-  "matrixVersion": 33,
-  "acceptedAt": "2026-08-21T12:03:00.868Z",
-  "sourceFingerprint": "73154ad392659d101a708f2bce5f02f2851e810a615bda97d19172cdb576c6bd",
+  "matrixVersion": 34,
+  "acceptedAt": "2026-08-22T14:09:45.021Z",
+  "sourceFingerprint": "2d8295e95a0721f11075dd0388ab4960c79b480ae199a381d3bbd1086e5e5b34",
   "chromium": "151.0.7922.34",
   "scenarios": {
     "split-corner-wall-before-dark": "3176dc67f54d5309f87c94e1077b4f69eb1db9f660469fbf97953038323430f3",
@@ -29,16 +29,16 @@
     "day-cycle-night-dark": "1abf9528ac05dc3a963eb19a8b3ed4b7bb9ce647f7b83dab4fd2e736756cd770",
     "geometry-plan-editor-dark": "a3828bdd877c23d283dcd30dc88287c2104c8d39e849aa826a76190d7daa30ae",
     "plan-snap-endpoint-light": "2df0bd2abcb615d6bd1a4422b29747f95a1edd7b02d4ae3a6b333e24b27e9f78",
-    "plan-snap-line-gaps-dark": "a29d42ae49a0a513dc36e933bdd2b5f3cb97aa40b0e7ec897c602fe65a5a5fe8",
-    "wall-junctions-plan-preview-light": "cdb96edabd5b04a47e5026eed4255e06b802bd8ba7f0c7ba2cab66c4ae2f371a",
+    "plan-snap-line-gaps-dark": "a84364cf6bbb7b23fa9ec28ba8edbb03db7a4e401944b4a8e2c4a42871533bc3",
+    "wall-junctions-plan-preview-light": "f50afa3358d34552ef92947ec07403e3ae507b12881f688742f630e8e54ffe43",
     "wall-junctions-plan-t-dark": "ec2b29ca87bba9b41e4c22ce94d2c4fe06c6d9c0833152d3a6224371763ae6bc",
     "wall-junctions-view-dark": "7b859c4f25f8a5dd4fca64d5b2f7aa64b65845fabbe83bc2388c2f99d29f71b1",
     "junction-patch-resilience-plan-dark": "c42203eea92d2bc972eed829aa726ad51f36fc76d0ae049730d0f4155ef8efbf",
     "junction-patch-resilience-view-dark": "d531f2a01def73fb074e55543c8543112af158df65f24dc549e0da5a23f1af40",
     "isometric-wall-junctions-dark": "d1956cbbde9a6a02953ce80eb8a0f74ca06ea268a4c60bb09b5b3981c26d9731",
-    "opening-placement-door-thick-wall-dark": "c398f53391bc697e859ba389bac0ce586526d6f14c85f32d9a4b314bebe902ab",
-    "opening-placement-passage-thick-wall-dark": "98bb63f72886986d71d598fffcaa4fb8e7dce3e7f3a27b5afb6012f9eac4537c",
-    "opening-placement-passage-thick-wall-light": "2f19063a0e792c7bec92f3e4069739954dcdd79eb4933355a575aec5463b9ade",
+    "opening-placement-door-thick-wall-dark": "2bd1a6e3f7b676fa4820f67a9ed0f9f87c452c318711523cb22cab8750b6e7ba",
+    "opening-placement-passage-thick-wall-dark": "8b1955eaa2dd12f492d614d7642a71646d879810e52bd434adb5cfc5d1a36f18",
+    "opening-placement-passage-thick-wall-light": "96cc1d50db1e86d71ddfc55b89640b28d65c7315936f3af9e38b75c881dae7ef",
     "geometry-devices-editor-dark": "2ec2647797c71f6c6406f6e33fcbf70d5cb6d36a01a65c70ecabc7ad11e86183",
     "geometry-decor-editor-dark": "46798a59d99982c4e73596861e20b6e466f6e7aa1d70a26bf917e1bd3bf73cb1",
     "tray-wide-selection-en": "457b53c4e5ae5f691457f98f3c2fd255e5b7ed1c599af92c303c93c11f87b7d4",
@@ -86,6 +86,8 @@
     "space-room-color-popover-desktop-ru": "a5d62d68097af1ff5d2556be0c889efc25768ffc61af5d302f0b5775e082f296",
     "backup-full-preview-desktop-en": "6f0cfecf587b73f38088d414f489b67cc68ed71c37c96d4e307e66f6d97bda9f",
     "backup-plan-only-export-desktop-en": "1e1c8a9cc5383394b91e24af8342d92103a5e85b3e5c9b53c45ab0e9b0d57da4",
-    "backup-space-preview-mobile-ru": "a4719cbe29b378ef7baa63bb7ff23e201b2943025008d939f2c08cee63bb9038"
+    "backup-space-preview-mobile-ru": "a4719cbe29b378ef7baa63bb7ff23e201b2943025008d939f2c08cee63bb9038",
+    "optimize-preflight-dialog-dark-en": "9f6e35897adba06648d448e53755410cc831311038300affae396a396388b3d1",
+    "optimize-preflight-dialog-light-ru": "cbfca454d9eab95aaab1b12330b3833c3eae21eac735eb2c09529082c5211abe"
   }
 }
