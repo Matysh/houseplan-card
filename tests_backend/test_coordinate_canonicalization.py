@@ -87,6 +87,8 @@ def test_optimize_roundtrip_fixture_has_one_backend_canonical_target() -> None:
     fixture = json.loads(OPTIMIZE_ROUNDTRIP_FIXTURE.read_text(encoding="utf-8"))
     source = fixture["input"]
     expected = fixture["expected"]
+    assert all(space["view_box"] == [0, 0, 1, 1]
+               for space in source["config"]["spaces"])
     assert canonicalize_config_geometry(source["config"]) == expected["config"]
     assert canonicalize_layout_geometry(source["layout"]) == expected["layout"]
     assert CONFIG_SCHEMA(source["config"]) == expected["config"]
