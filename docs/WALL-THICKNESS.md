@@ -104,11 +104,15 @@ keeps its flat cap. This topology is render-only: a T does not split or rewrite
 the saved target segment. The live open-outline/rubber-band preview calls the
 same primitive with saved per-segment thicknesses plus the current field value.
 
-Openings cut the body full-depth; jambs cap the cut; window glass mid-tunnel;
-door swing from the **inner face**. Association uses wall direction ≈ opening
-angle (mod 180°), then nearest span — never a perpendicular neighbour at a T.
-One atomic `OpeningWallIndex` is authoritative for the symbol offset, physical
-wall cut and coloured tunnel. Candidates must be effectively collinear with
+Openings cut the body full-depth and jambs cap the whole cut. By default the
+complete visible door/window/gate group is centred on the wall axis, including
+window glass. A saved `flip_v: true` keeps edge alignment only for doors and
+windows; gates stay centred and use the resolved side only for their 10° turn.
+Association uses wall direction ≈ opening angle (mod 180°), then nearest span —
+never a perpendicular neighbour at a T. One atomic `OpeningWallIndex` is
+authoritative for physical depth/direction, wall cut and coloured tunnel, while
+the shared symbol-placement helper turns that result into the user-visible
+translation. Candidates must be effectively collinear with
 the opening axis (not merely parallel within one grid cell); ties use complete
 opening coverage, signed distance to the inner face, smaller room area and
 stable room id. The index and batch tunnel geometry are cached by space,

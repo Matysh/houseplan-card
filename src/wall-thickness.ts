@@ -2485,10 +2485,9 @@ function centrePiece(side: OpeningWallSide): OpeningWallPiece {
 }
 
 /**
- * Half-depth from the centreline toward the selected face of an opening.
- * The exact same association resolver is used by wall cuts and tunnel fills;
- * invalid angle/distance fallbacks can no longer move a symbol into a slot
- * which the other renderers do not recognise.
+ * Physical half-depth and direction for an opening. Visible symbol placement
+ * is resolved separately: default symbols are centred and only an explicit
+ * door/window flip uses an edge offset.
  */
 export function openingInnerFaceOffset(
   rooms: any[],
@@ -2511,15 +2510,17 @@ export function openingInnerFaceOffsetFromIndex(
 ): { ox: number; oy: number; cm: number; side: -1 | 1 } {
   const association = resolveOpeningWallAssociation(index, opening);
   const available = [association.negative, association.positive]
-    .filter((side): side is OpeningWallSide => !!side)
-    // Preserve the pre-index symbol behaviour: on a shared wall the first room
-    // in model order owns the unflipped face. This is separate from tunnel
-    // ownership, whose geometric tie-breaks must remain order-independent.
-    .sort((a, b) => a.order - b.order);
+    .filter((side): side is OpeningWallSide => !!side);
   if (!available.length) return { ox: 0, oy: 0, cm: 0, side: -1 };
-  const natural = available[0];
-  const selectedSide = (opening.flip_v ? -natural.side : natural.side) as -1 | 1;
-  const selected = (selectedSide === -1 ? association.negative : association.positive) || natural;
+  // An exterior wall keeps its real room-side direction so gates still open
+  // outward. A shared wall has no exterior, so use the opening-local negative
+  // side instead of the first room in model order.
+  const naturalSide = association.negative && association.positive
+    ? -1
+    : available[0].side;
+  const selectedSide = (opening.flip_v ? -naturalSide : naturalSide) as -1 | 1;
+  const selected = (selectedSide === -1 ? association.negative : association.positive)
+    || available[0];
   const piece = centrePiece(selected);
   if (!(piece.half > 0) || !(piece.cm > 0)) return { ox: 0, oy: 0, cm: 0, side: selectedSide };
   const rad = opening.angle * Math.PI / 180;

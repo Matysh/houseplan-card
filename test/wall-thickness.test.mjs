@@ -532,7 +532,7 @@ test('opening face side is known without wall thickness and can be inverted for 
   assert.equal(bottomInner.side, -1, 'the bottom wall room side is -Y');
 });
 
-test('opening face keeps the first room side on an ambiguous shared wall', () => {
+test('opening face is independent of room order on an ambiguous shared wall', () => {
   const rooms = [
     { id: 'large-first', poly: [[0, 0], [10, 0], [10, 8], [0, 8]] },
     { id: 'small-second', poly: [[3, 8], [7, 8], [7, 11], [3, 11]] },
@@ -540,8 +540,14 @@ test('opening face keeps the first room side on an ambiguous shared wall', () =>
   const opening = { x: 5, y: 8, angle: 0, length: 2 };
   const natural = openingInnerFaceOffset(rooms, opening, [], pitch, cellCm, pitch);
   const flipped = openingInnerFaceOffset(rooms, { ...opening, flip_v: true }, [], pitch, cellCm, pitch);
-  assert.equal(natural.side, -1, 'the first room is above the wall, so its inner face is -Y');
-  assert.equal(flipped.side, 1, 'flip_v selects the opposite face without an area-based side swap');
+  const reversed = openingInnerFaceOffset([...rooms].reverse(), opening, [], pitch, cellCm, pitch);
+  const reversedFlip = openingInnerFaceOffset(
+    [...rooms].reverse(), { ...opening, flip_v: true }, [], pitch, cellCm, pitch,
+  );
+  assert.equal(natural.side, -1, 'shared walls use the canonical local negative side');
+  assert.equal(flipped.side, 1, 'flip_v selects the opposite canonical side');
+  assert.deepEqual(reversed, natural);
+  assert.deepEqual(reversedFlip, flipped);
 });
 
 test('openingTunnelGeometry: an outer thick wall gives the one room both tunnel halves', () => {

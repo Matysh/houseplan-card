@@ -36,6 +36,35 @@ test('window and gate retain two leaves, fixed height bounds and gate 10 degree 
   assert.equal(projectIsoOpening(gateBasis, 1).length, 2);
 });
 
+test('isometric symbols share centred defaults and explicit edge alignment', () => {
+  const centred = buildIsoOpeningBasis(opening());
+  const oppositeResolvedFace = buildIsoOpeningBasis(opening({
+    face: { ox: 0, oy: -5, side: -1 },
+  }));
+  assert.deepEqual(oppositeResolvedFace.leaves, centred.leaves,
+    'default door ignores which physical room face was resolved');
+
+  const flippedPositive = buildIsoOpeningBasis(opening({ flipV: true }));
+  const flippedNegative = buildIsoOpeningBasis(opening({
+    flipV: true, face: { ox: 0, oy: -5, side: -1 },
+  }));
+  assert.deepEqual(flippedNegative.leaves, flippedPositive.leaves,
+    'saved flip uses the same opening-local edge for either room order');
+  assert.equal(flippedPositive.leaves[0].hinge[1], centred.leaves[0].hinge[1] + 5);
+
+  const gate = buildIsoOpeningBasis(opening({ type: 'gate' }));
+  const gateFlipped = buildIsoOpeningBasis(opening({
+    type: 'gate', flipV: true, face: { ox: 0, oy: -5, side: -1 },
+  }));
+  assert.equal(gate.leaves[0].hinge[1], 80);
+  assert.equal(gateFlipped.leaves[0].hinge[1], 80);
+  assert.notDeepEqual(
+    projectIsoOpening(gate, 1).map((panel) => panel.d),
+    projectIsoOpening(gateFlipped, 1).map((panel) => panel.d),
+    'flip changes the gate turn without translating its centred origin',
+  );
+});
+
 test('passage keeps the wall cut but never creates an isometric panel', () => {
   const passageBasis = buildIsoOpeningBasis(opening({ type: 'passage' }));
   assert.deepEqual(passageBasis.leaves, []);

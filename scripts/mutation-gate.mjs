@@ -1562,6 +1562,42 @@ export const MUTANTS = [
         + '* gridVisualScale(spec.cellCm)',
     }],
   },
+  {
+    id: 'opening-symbol-default-uses-room-face',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/opening-symbol-placement.test.mjs',
+    because: 'dropping the explicit default-centre guard makes every ordinary door/window '
+      + 'follow the resolved physical face again, restoring issue #242',
+    patches: [{
+      file: 'src/opening-symbol-placement.ts',
+      find: "  if (!flipV || type === 'gate' || type === 'passage') return { ox: 0, oy: 0 };",
+      replace: "  if (type === 'gate' || type === 'passage') return { ox: 0, oy: 0 };",
+    }],
+  },
+  {
+    id: 'opening-symbol-partition-follows-endpoints',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/opening-symbol-placement.test.mjs',
+    because: 'using the signed resolver offset instead of its depth makes the chosen edge '
+      + 'depend on room ownership or reversed host direction instead of the local opening axis',
+    patches: [{
+      file: 'src/opening-symbol-placement.ts',
+      find: '  const half = Math.hypot(face.ox, face.oy);',
+      replace: '  const half = face.oy || face.ox;',
+    }],
+  },
+  {
+    id: 'opening-gate-flip-translates-leaves',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/opening-symbol-placement.test.mjs',
+    because: 'removing the gate exemption turns flip_v back into a wall-face translation; '
+      + 'the leaves must stay centred while only their ten-degree turn changes direction',
+    patches: [{
+      file: 'src/opening-symbol-placement.ts',
+      find: "  if (!flipV || type === 'gate' || type === 'passage') return { ox: 0, oy: 0 };",
+      replace: "  if (!flipV || type === 'passage') return { ox: 0, oy: 0 };",
+    }],
+  },
 ];
 
 // --- механика ---------------------------------------------------------------

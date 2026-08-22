@@ -1,13 +1,9 @@
 import { svg, type TemplateResult } from 'lit';
 import type { OpeningCfg } from '../types';
 import { gridVisualScale, gridVisualUnits } from '../grid-scale';
+import { openingSymbolOffset, type OpeningFaceOffset } from '../opening-symbol-placement';
 
-export interface OpeningFaceOffset {
-  ox: number;
-  oy: number;
-  cm: number;
-  side: -1 | 1;
-}
+export type { OpeningFaceOffset } from '../opening-symbol-placement';
 
 export interface OpeningVisibleSpec {
   type: OpeningCfg['type'];
@@ -69,14 +65,18 @@ export function renderOpeningVisibleGeometry(spec: OpeningVisibleSpec): Template
   const sx = spec.flipH ? -1 : 1;
   const sy = spec.flipV ? -1 : 1;
 
-  // Shift swing geometry to its selected wall face. The outer scale applies
-  // the user flips, so undo those signs here and let SVG re-apply them once.
+  // Default symbols sit on the wall centreline. A saved door/window flip keeps
+  // the explicit edge-aligned compatibility mode, but gate leaves always stay
+  // centred and use face.side only for their 10 degree turn.
+  const visualOffset = openingSymbolOffset(
+    spec.type, spec.flipV, spec.angle, spec.face,
+  );
   let swingTx = 0, swingTy = 0;
-  if (spec.face.cm > 0 && (spec.face.ox || spec.face.oy)) {
+  if (visualOffset.ox || visualOffset.oy) {
     const rad = (-spec.angle * Math.PI) / 180;
     const c = Math.cos(rad), s = Math.sin(rad);
-    swingTx = spec.face.ox * c - spec.face.oy * s;
-    swingTy = spec.face.ox * s + spec.face.oy * c;
+    swingTx = visualOffset.ox * c - visualOffset.oy * s;
+    swingTy = visualOffset.ox * s + visualOffset.oy * c;
     swingTx *= sx;
     swingTy *= sy;
   }

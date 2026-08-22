@@ -1,6 +1,7 @@
 /**
  * Wall thickness (docs/WALL-THICKNESS.md): tool, hatch body, floor area drops
- * with thickness, opening cuts, door inner-face offset, shared once, clear→line,
+ * with thickness, opening cuts, centred/default and flipped door symbols,
+ * shared once, clear→line,
  * degrade/rekey, real resize+undo keeps walls.
  */
 import { launch, checkAll, finish } from './serve.mjs';
@@ -111,12 +112,15 @@ const res = await page.evaluate(async () => {
   const bodyD = shared[0]?.getAttribute('d') || sr().querySelector('[data-hp="wall"]')?.getAttribute('d') || '';
   out.openingCutsSlab = (bodyD.match(/\bM\b/g) || []).length >= 2;
 
-  const g = sr().querySelector('[data-hp="opening"][data-kind="door"] g g');
-  const inner = [...(g?.querySelectorAll('g') || [])].find((n) => {
-    const t = n.getAttribute('transform') || '';
-    return /translate\(([^)]+)\)/.test(t) && !/translate\(\s*0\s+0\s*\)/.test(t);
-  });
-  out.doorInnerFace = !!inner || (sp().walls || []).some((w) => w.cm === 25);
+  const doorBodyTransform = () => sr()
+    .querySelector('[data-hp="opening"][data-kind="door"] > g[transform^="scale("]'
+      + ' > g[transform^="translate("]')
+    ?.getAttribute('transform') || '';
+  out.doorDefaultCentered = /^translate\(0 0\)$/.test(doorBodyTransform());
+  sp().openings[0].flip_v = true;
+  await upd();
+  out.doorSavedFlipUsesEdge = /^translate\([^)]*\)$/.test(doorBodyTransform())
+    && !/^translate\(\s*0\s+0\s*\)$/.test(doorBodyTransform());
 
   sp().settings = { ...(sp().settings || {}), hide_openings: true, show_borders: true };
   c._setMode('view');

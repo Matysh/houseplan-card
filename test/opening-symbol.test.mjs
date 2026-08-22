@@ -67,19 +67,37 @@ test('an open passage emits no visible symbol at all', () => {
   assert.equal(passageText, '');
 });
 
-test('shared renderer preserves flips, wall-face offset and animated geometry', () => {
-  const text = templateText(renderOpeningVisibleGeometry(spec({
+test('shared renderer centres defaults and preserves explicit door/window edge alignment', () => {
+  const centred = templateText(renderOpeningVisibleGeometry(spec({
+    type: 'window', amount: 0.5,
+    face: { ox: 0, oy: -20, cm: 20, side: -1 },
+  })));
+  assert.match(centred, /translate\(0 0\)/);
+
+  const flippedPositive = templateText(renderOpeningVisibleGeometry(spec({
     type: 'window', amount: 0.5, flipH: true, flipV: true,
     face: { ox: 0, oy: 20, cm: 20, side: 1 },
   })));
-  assert.match(text, /scale\(-1 -1\)/);
-  assert.match(text, /translate\(0 -20\)/);
-  assert.match(text, /rotate\(45deg\)/);
-  assert.match(text, /stroke-dashoffset="39\.269/);
+  const flippedNegative = templateText(renderOpeningVisibleGeometry(spec({
+    type: 'window', amount: 0.5, flipH: true, flipV: true,
+    face: { ox: 0, oy: -20, cm: 20, side: -1 },
+  })));
+  for (const text of [flippedPositive, flippedNegative]) {
+    assert.match(text, /scale\(-1 -1\)/);
+    assert.match(text, /translate\(0 -20\)/);
+    assert.match(text, /rotate\(45deg\)/);
+    assert.match(text, /stroke-dashoffset="39\.269/);
+  }
 
   const gate = templateText(renderOpeningVisibleGeometry(spec({
     type: 'gate', amount: 1, face: { ox: 0, oy: 20, cm: 20, side: 1 },
   })));
+  const flippedGate = templateText(renderOpeningVisibleGeometry(spec({
+    type: 'gate', amount: 1, flipV: true,
+    face: { ox: 0, oy: -20, cm: 20, side: -1 },
+  })));
+  assert.match(gate, /translate\(0 0\)/);
+  assert.match(flippedGate, /translate\(0 0\)/);
   assert.match(gate, /rotate\(10deg\)/);
   assert.match(gate, /rotate\(-10deg\)/);
 });

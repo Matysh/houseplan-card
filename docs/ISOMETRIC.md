@@ -157,6 +157,10 @@ door has one jamb-hinged leaf, gate has two leaves with the established
 `passage` keeps the same full-height masonry cut but has zero leaves/panels and
 therefore no panel or leaf shadow. Heights are fixed presentation ratios of
 `ISO_WALL_HEIGHT`; there is no schema field.
+The panel basis consumes the same pure visible-offset contract as Flat: default
+door/window/gate panels are centred across wall depth, `flip_v: true` keeps the
+door/window compatibility edge alignment, and a gate flip changes only turn
+direction. Jamb/cut depth remains physical and independent of that translation.
 Panels/shadows are pointer- and ARIA-inert. Existing lock badges/cards and HA
 actions remain the only interactive opening surface.
 

@@ -2,6 +2,7 @@ import {
   ISO_CAMERA, ISO_WALL_HEIGHT, projectPlanPoint,
   type IsoCamera, type PlanPoint, type ScenePoint,
 } from './iso-projection';
+import { openingSymbolOffset } from './opening-symbol-placement';
 
 export type IsoOpeningType = 'door' | 'window' | 'gate' | 'passage';
 
@@ -80,7 +81,8 @@ function leafBasis(
 ): IsoOpeningLeafBasis {
   const sx = input.flipH ? -1 : 1;
   const sy = input.flipV ? -1 : 1;
-  const origin: PlanPoint = [input.x + input.face.ox, input.y + input.face.oy];
+  const offset = openingSymbolOffset(input.type, input.flipV, input.angle, input.face);
+  const origin: PlanPoint = [input.x + offset.ox, input.y + offset.oy];
   const hinge = add(origin, transformVector(localHinge, input.angle, sx, sy));
   const closedVector = transformVector(localVector, input.angle, sx, sy);
   const quarterVector = transformVector(

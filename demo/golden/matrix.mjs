@@ -142,8 +142,8 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'opening-placement-door-thick-wall-dark', fixture: 'visual', space: 'golden-geometry',
     // The shared centre edge is a long 25 cm physical wall. It can contain the
-    // complete 90 cm door preset while still proving rotation, inner-face
-    // offset and ruler placement on a thick wall.
+    // complete 90 cm door preset while still proving rotation, centreline
+    // placement and ruler geometry on a thick wall.
     mode: 'plan', openingPreview: { type: 'door', pointer: [0.48, 0.65] },
     openingPreviewPixels: { minPixels: 150, minInsideWallPixels: 8, minChannelDelta: 4 },
     theme: 'dark', viewport: { width: 1180, height: 900 }, ...page },

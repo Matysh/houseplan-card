@@ -577,9 +577,11 @@ authoritative, while `x/y/angle` are an atomically refreshed compatibility
 projection. No explicit host ever falls back to a nearest wall.
 
 Rendering (after easy-floorplan, MIT): SVG symbol at the origin (jambs + hinged leaf + a
-quarter-circle arc revealed via `stroke-dashoffset`), translated/rotated onto the wall; windows
+quarter-circle arc revealed via `stroke-dashoffset`), translated/rotated onto the wall. The
+default visible group is centred across wall depth on Flat, preview, Static and Iso; a saved
+`flip_v: true` edge-aligns only door/window through the shared pure placement helper. Windows
 are two casement leaves. A gate has the same data/light/contact/lock semantics as a door, but
-uses two half-width leaves opening only 10° toward the exterior face and no large swing arc.
+uses two centred half-width leaves opening only 10° toward the selected face and no large swing arc.
 Its default width in the editor is 300 cm. `openingAmount` (pure) maps the contact state to
 0..1: no sensor → door/gate drawn open / window closed (static-plan convention);
 `unavailable`/`unknown` freeze that default. The lock renders as a compact
