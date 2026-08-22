@@ -186,14 +186,31 @@ const themeVars = {
 };
 const setTheme = async (theme) => {
   await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: theme });
-  await page.evaluate(({ variables, dark }) => {
+  await page.evaluate(async ({ variables, dark }) => {
     for (const [name, value] of Object.entries(variables)) {
       document.documentElement.style.setProperty(name, value);
     }
     document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
     const card = window.__card;
     card.hass = { ...card.hass, themes: { ...(card.hass.themes || {}), darkMode: dark } };
+    await card.updateComplete;
+    await document.fonts.ready;
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
   }, { variables: themeVars[theme], dark: theme === 'dark' });
+};
+const stableScreenshot = async (locator) => {
+  let previous = null;
+  for (let attempt = 0; attempt < 6; attempt++) {
+    await page.evaluate(async () => {
+      await window.__card.updateComplete;
+      await document.fonts.ready;
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    });
+    const current = await locator.screenshot({ animations: 'disabled' });
+    if (previous?.equals(current)) return current;
+    previous = current;
+  }
+  throw new Error('grid scale fixture did not reach two identical consecutive paints');
 };
 const capture = async (cellCm, mode, {
   theme = 'light', projection = 'flat', staticCard = false, hide = [],
@@ -217,11 +234,11 @@ const capture = async (cellCm, mode, {
     }
   }, hide);
   await page.evaluate(() => window.scrollTo(0, 0));
-  const pixels = await stage.screenshot({ animations: 'disabled' });
+  const pixels = await stableScreenshot(stage);
   let staticPixels = null;
   if (staticCard) {
     await page.evaluate(() => window.__makeStaticGridCard());
-    staticPixels = await staticStage().screenshot({ animations: 'disabled' });
+    staticPixels = await stableScreenshot(staticStage());
   }
   return { metrics, pixels, staticPixels };
 };
