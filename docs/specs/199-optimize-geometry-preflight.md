@@ -210,7 +210,10 @@ Preflight result хранит `contentFingerprint(candidate.config)`. Dialog х�
   {spaces}{more}.»
 - RU hint: «Планы не изменены. Обновите House Plan и повторите. Если ошибка
   останется, приложите экспорт пространства к отчёту об ошибке.»
-- EN: equivalent plain-language text without implementation terms.
+- EN: `Could not safely verify the geometry of the following spaces:
+  {spaces}{more}.`
+- EN hint: `Plans were not changed. Update House Plan and try again. If the
+  error persists, attach a space export to the bug report.`
 
 Display name: непустой `space.title`, иначе `space.id`, иначе локализованное
 «Пространство N» / `Space N`. Первые три имени перечисляются в config order;
