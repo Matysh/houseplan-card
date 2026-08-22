@@ -123,6 +123,31 @@ export const MUTANTS = [
     }],
   },
   {
+    id: 'docs-accept-takes-any-chromium',
+    guard: 'node --test --test-name-pattern="без названного Chromium" test/docs-accept.test.mjs',
+    because: 'набор, снятый другим браузером, переписывает все десять картинок без единого '
+      + 'содержательного изменения, поэтому окружение съёмки — часть доказательства, а не '
+      + 'украшение манифеста (#246)',
+    patches: [{
+      file: 'scripts/docs-accept.mjs',
+      find: "  if (typeof manifest.chromium !== 'string' || !manifest.chromium.trim())",
+      replace: '  if (false)',
+    }],
+  },
+  {
+    id: 'docs-accept-copies-before-checking',
+    guard: 'node --test --test-name-pattern="отсутствующий в артефакте файл" '
+      + 'test/docs-accept.test.mjs',
+    because: 'половина принятого набора хуже непринятого: на плане окажется картинка от одного '
+      + 'дерева рядом с манифестом от другого, и check-docs покажет одну ошибку вместо десяти '
+      + '(#246)',
+    patches: [{
+      file: 'scripts/docs-accept.mjs',
+      find: "      throw new Error(`${scenario.id}: в артефакте нет файла ${entry.file || '(без имени)'}`);",
+      replace: '      continue;',
+    }],
+  },
+  {
     id: 'docs-fingerprint-sees-product-version',
     guard: 'node --test --test-name-pattern="не трогает отпечаток скриншотов" '
       + 'test/source-fingerprint.test.mjs',

@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, statSync } from 'node:fs';
 import { dirname, extname, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { DOC_SCREENSHOTS } from '../demo/docs/screenshots.mjs';
 import { visualFingerprint } from './source-fingerprint.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -11,11 +12,9 @@ const PUBLIC_DOCS = [
   'README.md', 'README.ru.md', 'docs/USER-GUIDE.md', 'docs/USER-GUIDE.ru.md',
   'docs/TOUCH-SUPPORT.md', 'docs/DECOR-EDITOR.md', 'docs/VACUUM.md',
 ];
-const EXPECTED_SCREENSHOTS = [
-  'view-desktop', 'view-touch', 'space-create', 'room-contour-close',
-  'plan-context-tray', 'device-editor', 'device-display-preview', 'background-editor',
-  'room-card', 'device-info',
-];
+// Каталог один и живёт рядом с капчуром (#246): третья копия списка сценариев
+// расходилась бы с ним молча.
+const EXPECTED_SCREENSHOTS = DOC_SCREENSHOTS.map((scenario) => scenario.id);
 const errors = [];
 const warnings = [];
 const externalUrls = new Set();

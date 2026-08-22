@@ -251,7 +251,7 @@ metadata). Only an explicit owner-approved emergency hotfix may skip this gate.
    expired and is gone.
 3. Privacy: legacy real-house plan sources (`assets/`) and screenshots were
 removed from the current tree. Public documentation images are generated
-   from synthetic fixtures by `npm run build && node demo/docs/capture.mjs` and indexed in
+   from synthetic fixtures by the `Docs screenshots` workflow, accepted with `npm run docs:accept -- --reviewed`, and indexed in
    `docs/images/screenshots.json`. Old images persist in git history and release
    archives; history rewrite is deliberately not done because it would break
    release tags and HACS installs.

@@ -1,0 +1,67 @@
+# Скриншоты документации снимаются здесь и только здесь (#246).
+#
+# Съёмка на машине исполнителя даёт байтово разный PNG при одинаковом кадре:
+# сглаживание и хинтинг зависят от окружения. Измерено на истории — пересъёмка
+# в #231 изменила два файла из девяти на 7–8 байт, набор с беты все девять
+# целиком. Одно окружение убирает этот шум насовсем.
+#
+# Джоба ничего не коммитит: она публикует артефакт, который человек принимает
+# локально через `npm run docs:accept -- --reviewed --from=<распакованный>`.
+# Та же конструкция, что у golden-эталонов, и по той же причине: картинки
+# попадают в репозиторий через явное решение, а не через бота.
+name: Docs screenshots
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Ветка или SHA, с которого снимать
+        required: false
+        default: dev
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref }}
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # Тот же кэш и тот же отказ от --with-deps, что в smoke/golden (#175, #206):
+      # системные библиотеки Chromium уже в образе раннера.
+      - name: Кэш браузеров Playwright
+        id: pw
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+      - name: Install pinned Chromium
+        if: steps.pw.outputs.cache-hit != 'true'
+        run: npx playwright install chromium
+      - name: Build the bundle the screenshots must come from
+        run: npm run build
+      - name: Capture
+        run: node demo/docs/capture.mjs
+      # Что именно изменилось — видно в логе прогона, до всякой приёмки: если
+      # изменились все девять файлов, значит съёмка велась не тем браузером, и
+      # принимать такой набор не надо.
+      - name: Что изменилось
+        run: |
+          git status --porcelain docs/images
+          echo "--- изменившихся PNG: $(git diff --name-only docs/images | grep -c png || true)"
+          node -e "const m=require('./docs/images/screenshots.json');console.log('Chromium:',m.chromium)"
+      - name: Upload candidate
+        uses: actions/upload-artifact@v7
+        with:
+          name: docs-screenshots
+          path: |
+            docs/images/*.png
+            docs/images/screenshots.json
+          if-no-files-found: error

@@ -113,3 +113,25 @@ test('отпечаток скриншотов не слепнет к правк�
     rmSync(directory, { recursive: true, force: true });
   }
 });
+
+test('npm-скрипт не требует пересъёмки, а версия зависимости требует (#246)', () => {
+  const directory = releaseFixture();
+  try {
+    const before = { bundle: sourceFingerprint(directory), visual: visualFingerprint(directory) };
+    const packagePath = resolve(directory, 'package.json');
+    const parsed = JSON.parse(readFileSync(packagePath, 'utf8'));
+    parsed.scripts = { 'docs:accept': 'node scripts/docs-accept.mjs' };
+    writeFileSync(packagePath, `${JSON.stringify(parsed)}\n`, 'utf8');
+    assert.notEqual(sourceFingerprint(directory), before.bundle,
+      'сборка читает package.json целиком — её отпечаток обязан ехать');
+    assert.equal(visualFingerprint(directory), before.visual,
+      'добавление npm-скрипта не меняет ни одного пикселя');
+
+    parsed.dependencies.lit = '3.2.0';
+    writeFileSync(packagePath, `${JSON.stringify(parsed)}\n`, 'utf8');
+    assert.notEqual(visualFingerprint(directory), before.visual,
+      'версия зависимости рендер меняет и пересъёмку требует');
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});

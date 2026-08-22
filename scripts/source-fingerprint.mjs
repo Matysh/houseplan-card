@@ -36,11 +36,12 @@ const fingerprintFiles = (root) => {
 const digest = (root, files, normalize) => {
   const hash = createHash('sha256');
   for (const file of files) {
-    hash.update(relative(root, file).replaceAll('\\', '/'));
+    const name = relative(root, file).replaceAll('\\', '/');
+    hash.update(name);
     hash.update('\0');
     // Git-canonical text, independent of core.autocrlf. Otherwise the injected
     // hash would make an otherwise identical Windows/Linux bundle differ.
-    hash.update(normalize(readFileSync(file, 'utf8').replace(/\r\n?/g, '\n')));
+    hash.update(normalize(readFileSync(file, 'utf8').replace(/\r\n?/g, '\n'), name));
     hash.update('\0');
   }
   return hash.digest('hex');
@@ -49,6 +50,29 @@ const digest = (root, files, normalize) => {
 /** Stable digest of frontend sources plus the files that control their build. */
 export const sourceFingerprint = (root = process.cwd()) =>
   digest(root, fingerprintFiles(root), (text) => text);
+
+/**
+ * Поля `package.json`, способные изменить картинку. Всё остальное в этом файле —
+ * имя, версия, описание, npm-скрипты — на рендер не влияет ни при каких
+ * обстоятельствах, а требовать из-за них пересъёмки десяти PNG по 300 КБ
+ * нечестно ровно так же, как из-за номера версии (#245, #246).
+ */
+const VISUAL_PACKAGE_FIELDS = ['dependencies', 'devDependencies', 'overrides', 'browserslist'];
+
+const visualPackageProjection = (text) => {
+  try {
+    const parsed = JSON.parse(text);
+    const projection = {};
+    for (const field of VISUAL_PACKAGE_FIELDS) {
+      if (parsed[field] !== undefined) projection[field] = parsed[field];
+    }
+    return JSON.stringify(projection);
+  } catch {
+    // Сломанный package.json — не повод молча считать отпечаток по проекции:
+    // пусть он поедет, и пересъёмка потребуется.
+    return text;
+  }
+};
 
 /** Номер версии продукта, как его знает package.json. */
 const productVersion = (root) => {
@@ -81,8 +105,12 @@ const productVersion = (root) => {
  */
 export const visualFingerprint = (root = process.cwd()) => {
   const version = productVersion(root);
-  const normalize = version
+  const withoutVersion = version
     ? (text) => text.split(version).join('0.0.0-product-version')
     : (text) => text;
-  return digest(root, fingerprintFiles(root), normalize);
+  return digest(root, fingerprintFiles(root), (text, name) => (
+    name === 'package.json'
+      ? visualPackageProjection(withoutVersion(text))
+      : withoutVersion(text)
+  ));
 };
