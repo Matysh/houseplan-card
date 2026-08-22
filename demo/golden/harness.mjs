@@ -713,8 +713,9 @@ export async function prepareGoldenScenario(page, scenario) {
         status: 'failed',
         reason: 'wall-null',
       }));
+      card._openAlignDialog();
       card._alignDialog = {
-        report: {}, config: card._serverCfg, layout: card._layout,
+        ...card._alignDialog,
         preflight: {
           fingerprint: 'golden-optimize-preflight',
           spaces: failures,

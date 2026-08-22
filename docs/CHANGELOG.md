@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.67.0-beta.3 — 2026-08-23
+
 - Door, window and gate symbols now remain exactly on the wall centreline for
   both opening directions. “Opens to the other side” only mirrors the door or
   window geometry, or reverses a gate's 10° turn; it no longer shifts an
