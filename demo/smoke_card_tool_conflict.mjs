@@ -38,22 +38,27 @@ const res = await page.evaluate(async () => {
     clientX: r.left + r.width * fx, clientY: r.top + r.height * fy }));
   await c.updateComplete;
   out.normalClickWorks = c._path.length === 1;
-  // 5) delroom: клик по карточке не зовёт confirm (переопределим)
-  let confirmCalled = false;
-  window.confirm = () => { confirmCalled = true; return false; };
-  c._tool = 'delroom'; c._path = []; await c.updateComplete;
+  // 5) delroom: клик по карточке устройства не заводит удаление комнаты.
+  // Раньше здесь подменялся window.confirm; #228 заменил его собственным
+  // диалогом карточки, и проверка стала невыполнимой в обе стороны — confirm
+  // теперь не звонит никто. Признак — открытый диалог.
+  c._tool = 'delroom'; c._path = []; c._roomDeleteDialog = null; await c.updateComplete;
   label.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true, clientX: 10, clientY: 10 }));
   await c.updateComplete;
-  out.delroomIgnored = !confirmCalled;
+  out.delroomIgnored = c._roomDeleteDialog === null;
   // 6) Delete has exactly one semantic result: the clicked room disappears;
   // it never closes a virtual boundary or merges a neighbour into it.
   const roomCount = c._curSpaceCfg.rooms.length;
   const deleteId = room.id;
-  window.confirm = () => true;
   c._deleteRoomClick(c._roomCenter(room));
+  await c.updateComplete;
+  // Клик по комнате только спрашивает; удаляет ответ на вопрос (#228).
+  out.deleteAsksFirst = c._roomDeleteDialog?.roomId === deleteId;
+  c._confirmRoomDelete(false);
   await c.updateComplete;
   out.deleteOnlyClickedRoom = c._curSpaceCfg.rooms.length === roomCount - 1
     && !c._curSpaceCfg.rooms.some((x) => x.id === deleteId);
+  out.deleteClosesDialog = c._roomDeleteDialog === null;
   c._undoGeometry();
   await c.updateComplete;
   out.deleteUndoRestoresRoom = c._curSpaceCfg.rooms.length === roomCount
