@@ -230,6 +230,54 @@ export const MUTANTS = [
     }],
   },
   {
+    id: 'optimize-preflight-bypassed',
+    guard: 'node demo/smoke_optimize_geometry_preflight.mjs',
+    because: 'a red preview must remain a hard write barrier even if a caller invokes the '
+      + 'private Apply method directly instead of clicking the deliberately absent button (#199)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '    if (!d || d.busy || !this._serverCfg || !d.changed || !d.preflight?.ok) return;',
+      replace: '    if (!d || d.busy || !this._serverCfg || !d.changed) return;',
+    }],
+  },
+  {
+    id: 'optimize-preflight-active-space-only',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="one failed space blocks" '
+      + 'test/plan-geometry-preflight.test.mjs',
+    because: 'Optimize is one whole-plan transaction, so a broken non-active floor must block '
+      + 'the operation just as decisively as the first floor in config order (#199)',
+    patches: [{
+      file: 'src/plan-geometry-preflight.ts',
+      find: '  const rawSpaces = Array.isArray(config?.spaces) ? config.spaces : [];',
+      replace: '  const rawSpaces = Array.isArray(config?.spaces) ? config.spaces.slice(0, 1) : [];',
+    }],
+  },
+  {
+    id: 'optimize-preflight-accepts-null',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="null, exceptions and floor failure" '
+      + 'test/plan-geometry-preflight.test.mjs',
+    because: 'wallBodiesGeometry null is a structural boolean failure, not an empty successful '
+      + 'wall set that may be hidden behind a later floor fallback (#199)',
+    patches: [{
+      file: 'src/plan-geometry-preflight.ts',
+      find: '      if (united == null) {',
+      replace: '      if (false && united == null) {',
+    }],
+  },
+  {
+    id: 'optimize-preflight-renders-apply-on-failure',
+    guard: 'node demo/smoke_optimize_geometry_preflight.mjs',
+    because: 'the failure state is not a dismissible warning: rendering Apply invites a person '
+      + 'to treat an unsafe whole-plan candidate as an accepted risk (#199)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '          ${!d.changed || !d.preflight?.ok ? nothing : html`',
+      replace: '          ${!d.changed ? nothing : html`',
+    }],
+  },
+  {
     id: 'union-failure-kills-space',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="malformed room|fallback unions overlapping" '

@@ -524,6 +524,18 @@ idempotence case in `test/plan-optimizer.test.mjs`:
   `coordsCanonicalized: 0`, and returns objects deep-equal to the first run's;
 * the report is an **upper bound**, not a sample (AUD-158B1-01).
 
+Before a changed preview can expose Apply, `checkOptimizeGeometry(config)`
+(`src/plan-geometry-preflight.ts`) runs the exact candidate through the shared
+production input projection and canonical wall/floor boolean builders for every
+space. `null` or an exception is a structural failure; an empty successful
+geometry and an empty/image-only space are not. One failure blocks the whole
+operation and the endpoint is not called. The dialog retains only bounded
+statuses plus `contentFingerprint(candidate.config)`: unchanged Apply reuses
+that result, while a changed fingerprint is checked again and fails closed.
+This frontend barrier does not replace backend permission, schema, revision or
+crash-recovery checks and is not a security attestation from an untrusted
+client.
+
 ### The report is a promise
 
 The confirmation is the decision gate in front of a geometry rewrite, so

@@ -16,6 +16,7 @@
     "benchmark:large-house-plan-snap": "node demo/benchmark_large_house.mjs --profile=large-house-plan-snap-v1",
     "benchmark:glow": "node demo/benchmark_glow.mjs",
     "benchmark:compare": "node demo/performance/compare.mjs",
+    "benchmark:optimize-geometry-preflight": "node demo/benchmark_optimize_geometry_preflight.mjs",
     "golden:capture": "node demo/golden/run.mjs --mode=capture",
     "golden:verify": "node demo/golden/run.mjs --mode=verify",
     "continuity:screencast": "node demo/screencast_visual_continuity.mjs",

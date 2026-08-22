@@ -234,7 +234,7 @@ test('sun-ray golden requires browser-painted light from a state-only sun entity
   assert.ok(scenario);
   const fixture = prepareGoldenFixture(scenario);
   const space = fixture.config.spaces.find((item) => item.id === scenario.space);
-  assert.equal(GOLDEN_MATRIX_VERSION, 33);
+  assert.equal(GOLDEN_MATRIX_VERSION, 34);
   assert.equal(space.settings.sun_rays, true);
   assert.equal(scenario.northDeg, 90,
     'the sign-sensitive golden must keep a non-zero north direction');
@@ -505,6 +505,18 @@ test('device dialog goldens expose the complete light-source controls at desktop
   const harness = readFileSync(new URL('../demo/golden/harness.mjs', import.meta.url), 'utf8');
   assert.match(harness, /if \(scenario\.deviceLightControls\)/,
     'the harness must activate the declared light-controls scenario flag');
+});
+
+test('issue #199 golden candidates cover the blocked Optimize dialog in both themes', () => {
+  const scenarios = GOLDEN_SCENARIOS.filter((scenario) =>
+    scenario.id.startsWith('optimize-preflight-dialog-'));
+  assert.equal(scenarios.length, 2);
+  assert.deepEqual(new Set(scenarios.map((scenario) => scenario.theme)), new Set(['dark', 'light']));
+  assert.deepEqual(new Set(scenarios.map((scenario) => scenario.language)), new Set(['en', 'ru']));
+  for (const scenario of scenarios) {
+    assert.equal(scenario.dialog, 'optimize-preflight');
+    assert.equal(scenario.capture, 'page');
+  }
 });
 
 test('golden harness neutralizes the shared pointer before every scenario', () => {

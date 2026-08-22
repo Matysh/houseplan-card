@@ -149,7 +149,7 @@ import {
 import {
   hostedOpeningIntervalsOverlap, materializePartitionOpening,
   partitionOpeningJambMargin, partitionOpeningNeedsStrictValidation,
-  partitionOpeningCut, partitionOpeningFace, partitionOpeningHasCompositeRoomWall,
+  partitionOpeningFace,
   partitionPlacementIntervals, resolvePartitionOpeningCompat, resolvePartitionOpeningStrict,
   type PartitionOpeningOrphanReason, type ResolvedPartitionOpening,
 } from './partition-openings';
@@ -187,6 +187,16 @@ import {
   clampCanvasR, clampCanvasN, type ContentItem, type Rect,
 } from './space-geometry';
 import { optimizePlans, type OptimizeReport } from './plan-optimizer';
+import {
+  checkOptimizeGeometry,
+  geometryOpenCuts,
+  geometryOpenings,
+  geometryOpenPairs,
+  geometryPartitionOpeningCuts,
+  geometryRoomOpeningInputs,
+  type GeometryOpeningProjection,
+  type OptimizeGeometryPreflightResult,
+} from './plan-geometry-preflight';
 import {
   canonicalizeConfigGeometry,
   canonicalizeLayoutGeometry,
@@ -1707,6 +1717,7 @@ class HouseplanCard extends LitElement {
   /** Optimization preview plus the exact pair, so commit cannot differ from it. */
   private _alignDialog: {
     report: OptimizeReport; config: any; layout: Record<string, any>;
+    preflight: OptimizeGeometryPreflightResult | null;
     /** the promised maximum, in centimetres, ALREADY rounded up (AUD-158B1-01) */
     cm: number;
     /** the space that maximum belongs to, named only when there are several */
@@ -8588,16 +8599,11 @@ class HouseplanCard extends LitElement {
     accept: (opening: OpeningCfg) => boolean = () => true,
   ): PartitionOpeningCut[] {
     if (!space) return [];
-    const raw = this._curSpaceCfg?.id === space.id ? this._curSpaceCfg?.openings || [] : [];
-    const cuts: PartitionOpeningCut[] = [];
-    for (const opening of raw) {
-      if (!opening.host || !accept(opening)) continue;
-      const resolution = resolvePartitionOpeningCompat(
-        opening, space.partitions, NORM_W, this._cellCm, this._gridPitch,
-      );
-      if (resolution.resolved) cuts.push(partitionOpeningCut(resolution.resolved));
-    }
-    return cuts;
+    const config = this._curSpaceCfg?.id === space.id ? this._curSpaceCfg : null;
+    const openings = geometryOpenings(
+      config, space, this._cellCm, this._gridPitch, NORM_W,
+    );
+    return geometryPartitionOpeningCuts(openings, accept);
   }
 
   /**
@@ -8610,22 +8616,11 @@ class HouseplanCard extends LitElement {
   ): Array<{ x: number; y: number; angle: number; length: number }> {
     if (!space) return [];
     const openCuts = this._openPairs().flatMap((pair) => pair.segs);
-    const intervals = wallIntervals(
-      space.rooms, this._spaceWalls, openCuts,
+    return geometryRoomOpeningInputs(
+      openings as readonly GeometryOpeningProjection[],
+      space, this._spaceWalls, openCuts,
       this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
     );
-    return openings.flatMap((opening) => {
-      const input = {
-        x: opening.rx, y: opening.ry,
-        angle: Number(opening.angle) || 0,
-        length: opening.rlen,
-      };
-      if (!opening.host) return [input];
-      if (!opening.partitionHost) return [];
-      return partitionOpeningHasCompositeRoomWall(
-        opening.partitionHost, intervals, this._gridPitch * 0.0002,
-      ) ? [input] : [];
-    });
   }
 
   private _openingFace(
@@ -10861,35 +10856,13 @@ class HouseplanCard extends LitElement {
     const sp = this._curSpaceCfg;
     const space = this._spaceModel();
     if (!space) return [];
-    return resolveOpenCuts(
-      space.rooms,
-      (sp as any)?.open_spans as OpenSpanEntry[] | undefined,
-      NORM_W,
-      this._gridPitch * 0.02,
-    );
+    return geometryOpenCuts(sp, space, this._gridPitch, NORM_W);
   }
 
   /** Open cuts grouped by room pair (for per-room outline trimming). */
   private _openPairs(): { a: RoomCfg; b: RoomCfg; segs: number[][] }[] {
     const cuts = this._openCuts();
-    if (!cuts.length) return [];
-    const rooms = (this._spaceModel()?.rooms || []).filter((r) => r.id);
-    const eps = this._gridPitch * 0.02;
-    const res: { a: RoomCfg; b: RoomCfg; segs: number[][] }[] = [];
-    for (let i = 0; i < rooms.length; i++) {
-      for (let j = i + 1; j < rooms.length; j++) {
-        const pa = roomPoly(rooms[i]), pb = roomPoly(rooms[j]);
-        if (!pa || !pb) continue;
-        const shared = sharedBoundary(pa, pb, eps);
-        if (!shared.length) continue;
-        const segs = cuts.filter((cut) => {
-          const mid = [(cut[0] + cut[2]) / 2, (cut[1] + cut[3]) / 2];
-          return shared.some((sg) => distToSegment(mid, sg) < eps * 4);
-        });
-        if (segs.length) res.push({ a: rooms[i], b: rooms[j], segs });
-      }
-    }
-    return res;
+    return geometryOpenPairs(this._spaceModel()?.rooms || [], cuts, this._gridPitch);
   }
 
   /**
@@ -14900,10 +14873,19 @@ class HouseplanCard extends LitElement {
    * Preview whole-plan maintenance. Nothing is written here: the pure run
    * produces both the report and the exact config/layout pair to commit.
    */
+  private _checkOptimizeGeometry(config: ServerConfig): OptimizeGeometryPreflightResult {
+    return checkOptimizeGeometry(config, {
+      fallbackSpaceName: (index) => this._t('gs.align_preflight_space', {
+        n: String(index),
+      }),
+    });
+  }
+
   private _openAlignDialog = (): void => {
     if (!this._norm || !this._serverCfg) return;
     const spaces = this._serverCfg.spaces || [];
     const r = optimizePlans(this._serverCfg, this._layout || {});
+    const preflight = r.changed ? this._checkOptimizeGeometry(r.config) : null;
     // The maximum geometry shift is an UPPER BOUND, not a sample. The run
     // measured every element in the centimetres of ITS OWN space — converting
     // one normalised maximum through the first space's `cell_cm` understated
@@ -14914,7 +14896,7 @@ class HouseplanCard extends LitElement {
     const where = spaces.length > 1 && sp ? String(sp.title || sp.id) : '';
     this._alignDialog = {
       report: r.report, config: r.config, layout: r.layout, cm, where,
-      changed: r.changed, busy: false,
+      preflight, changed: r.changed, busy: false,
     };
   };
 
@@ -14923,8 +14905,15 @@ class HouseplanCard extends LitElement {
    * one-deep snapshot that remains undoable until the next plan edit.
    */
   private async _runAlignToGrid(): Promise<void> {
-    const d = this._alignDialog;
-    if (!d || d.busy || !this._serverCfg) return;
+    let d = this._alignDialog;
+    if (!d || d.busy || !this._serverCfg || !d.changed || !d.preflight?.ok) return;
+    const fingerprint = contentFingerprint(d.config);
+    if (d.preflight.fingerprint !== fingerprint) {
+      const preflight = this._checkOptimizeGeometry(d.config);
+      d = { ...d, preflight };
+      this._alignDialog = d;
+      if (!preflight.ok) return;
+    }
     this._clearGeometryGesture();
     this._alignDialog = { ...d, busy: true };
     try {
@@ -15937,10 +15926,24 @@ class HouseplanCard extends LitElement {
   private _renderAlignDialog(): TemplateResult {
     const d = this._alignDialog!;
     const r = d.report;
+    const failed = d.changed && !d.preflight?.ok;
+    const failures = d.preflight?.failures || [];
+    const visibleNames = failures.slice(0, 3).map((failure) => failure.displayName);
+    const spaces = visibleNames.length
+      ? visibleNames.join(', ')
+      : this._t('gs.align_preflight_space', { n: '1' });
+    const remaining = Math.max(0, failures.length - visibleNames.length);
+    const more = remaining
+      ? this._t('gs.align_preflight_more', { n: String(remaining) })
+      : '';
     return html`<hp-dialog .hass=${this.hass} .title=${this._t('gs.align_title')} icon="mdi:broom"
       dismiss-on-scrim @hp-close=${() => (this._alignDialog = null)}>
         <div class="body">
-          ${!d.changed
+          ${failed
+            ? html`
+              <p class="alignmsg">${this._t('gs.align_preflight_failed', { spaces, more })}</p>
+              <div class="rhint">${this._t('gs.align_preflight_hint')}</div>`
+            : !d.changed
             ? html`<p class="alignmsg">${this._t('gs.align_none')}</p>`
             : html`
               ${r.moved ? html`<p class="alignmsg">${this._t('gs.align_count', {
@@ -15973,7 +15976,7 @@ class HouseplanCard extends LitElement {
         <div class="row" slot="footer">
           <span class="spacer"></span>
           <button class="btn ghost" @click=${() => (this._alignDialog = null)}>${this._t('btn.cancel')}</button>
-          ${!d.changed ? nothing : html`
+          ${!d.changed || !d.preflight?.ok ? nothing : html`
             <button class="btn on" @click=${this._runAlignToGrid} ?disabled=${d.busy}>
               <ha-icon icon="mdi:check"></ha-icon>${d.busy ? '…' : this._t('gs.align_run')}
             </button>`}

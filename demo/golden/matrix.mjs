@@ -1,7 +1,7 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 33;
+export const GOLDEN_MATRIX_VERSION = 34;
 
 const stage = { capture: 'stage', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0005 } };
 const page = { capture: 'page', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0008 } };
@@ -382,4 +382,10 @@ export const GOLDEN_SCENARIOS = Object.freeze([
   { id: 'backup-space-preview-mobile-ru', fixture: 'visual', space: 'golden-geometry',
     dialog: 'backup-space', language: 'ru', theme: 'light',
     viewport: { width: 390, height: 820 }, ...page },
+  { id: 'optimize-preflight-dialog-dark-en', fixture: 'visual', space: 'golden-geometry',
+    dialog: 'optimize-preflight', language: 'en', theme: 'dark',
+    viewport: { width: 900, height: 760 }, ...page },
+  { id: 'optimize-preflight-dialog-light-ru', fixture: 'visual', space: 'golden-geometry',
+    dialog: 'optimize-preflight', language: 'ru', theme: 'light',
+    viewport: { width: 900, height: 760 }, ...page },
 ]);

@@ -2096,6 +2096,23 @@ require hands on real hardware — they remain for the human pass.
       [unit: align-grid + plan-optimizer + i18n; auto:
       smoke_optimize_coordinate_canonicalization; mutation:
       `snapn-returns-input-near-node`].
+- [ ] **Optimize rejects an unrenderable candidate before writing (#199)**:
+      all spaces pass the shared production wall/opening/physical/floor input
+      projection. A forced wall/floor `null` or exception produces only a
+      bounded failure code; valid empty/image-only spaces remain allowed. One
+      failing floor removes Apply and makes zero Optimize WS calls without
+      changing config, layout, revisions or Undo. The first three safe names,
+      the remaining count and recovery hint are exact in RU/EN; unchanged Apply
+      reuses its fingerprint result, while a changed candidate is checked again.
+      The 3-floor/60-room/100-opening/60-partition/40-column fixture must stay
+      under 250 ms p95 and within direct-builder p95 × 1.2 + 15 ms
+      [unit: test/plan-geometry-preflight.test.mjs; auto:
+      smoke_optimize_geometry_preflight; benchmark:
+      benchmark_optimize_geometry_preflight; golden: dark/light failure dialog;
+      mutations: `optimize-preflight-bypassed`,
+      `optimize-preflight-active-space-only`,
+      `optimize-preflight-accepts-null`,
+      `optimize-preflight-renders-apply-on-failure`].
 - [ ] **Every write prevents new ULP coordinate noise (#224)**: config/layout
       schema, import, direct storage writers, startup recovery and maintenance
       Undo produce the same nine-decimal allow-listed geometry as the frontend.

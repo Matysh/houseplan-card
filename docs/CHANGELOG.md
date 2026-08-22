@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- “Optimize plans” now verifies the exact preview candidate with the same wall,
+  opening, partition, column and floor geometry builders used by the card. If
+  any space cannot be built safely, the preview names up to three affected
+  spaces, explains how to report the problem and offers only Cancel: config,
+  layout, revisions and the one-deep Undo snapshot remain untouched
+  ([#199](https://github.com/Matysh/houseplan-card/issues/199)).
+
 - Every config and device-layout write now canonicalizes persisted geometry to
   nine decimal places without snapping it to the grid. This removes invisible
   floating-point tails before they can break shared walls, room unions or Glow;

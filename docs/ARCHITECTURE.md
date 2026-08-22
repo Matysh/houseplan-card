@@ -658,6 +658,17 @@ gaps.
 | `houseplan/import/revalidate` | preview `token`, `duplicate_policy?` | refreshed bounded preview and current expected revisions |
 | `houseplan/import/apply` | token, both expected revisions, content confirmation | crash-resumable paired config/layout commit; full import gets one-deep undo |
 
+The normal frontend reaches `houseplan/plan/optimize` only after the exact
+preview candidate passes `src/plan-geometry-preflight.ts`. That pure barrier
+uses the same room/open-span/ordinary+hosted-opening projection,
+`physicalBodyParts`, `wallBodiesGeometry` and `floorFootprintGeometry` as the
+renderer for every space. The dialog retains statuses and a config fingerprint,
+not polygon output or exception text; a mismatch before Apply triggers a fresh
+check. A red result means zero WS calls. Python deliberately does not duplicate
+`polyclip-ts`: the endpoint remains the independent permission/schema/revision
+and crash-resumable atomicity boundary, not a consumer-supplied preflight
+attestation.
+
 Manual attachments upload over HTTP (streaming, transactional staging), not WS —
 the old `houseplan/file/set` was removed in v1.10.0.
 

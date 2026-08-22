@@ -29,6 +29,7 @@
     "src/serialized-write-queue.ts",
     "src/align-grid.ts",
     "src/plan-optimizer.ts",
+    "src/plan-geometry-preflight.ts",
     "src/furniture.ts",
     "src/floating-surface.ts", "src/floating-surface-controller.ts", "src/help-behavior.ts",
     "src/hp-help.ts", "src/hp-dialog.ts", "src/hp-color-opacity.ts",

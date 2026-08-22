@@ -599,7 +599,36 @@ export async function prepareGoldenScenario(page, scenario) {
       card.requestUpdate();
       await card.updateComplete;
     }
-    if (scenario.dialog === 'device') {
+    if (scenario.dialog === 'optimize-preflight') {
+      const names = [
+        'Ground floor', 'Garage', card._t('gs.align_preflight_space', { n: '3' }), 'Attic',
+      ];
+      const failures = names.map((displayName, index) => ({
+        spaceId: `golden-failure-${index + 1}`,
+        displayName,
+        status: 'failed',
+        reason: 'wall-null',
+      }));
+      card._alignDialog = {
+        report: {}, config: card._serverCfg, layout: card._layout,
+        preflight: {
+          fingerprint: 'golden-optimize-preflight',
+          spaces: failures,
+          failures,
+          ok: false,
+        },
+        cm: 0, where: '', changed: true, busy: false,
+      };
+      card.requestUpdate();
+      await card.updateComplete;
+      const dialog = card.renderRoot.querySelector('hp-dialog');
+      const body = dialog?.querySelector('.body');
+      if (!body?.textContent?.includes(names[0])
+          || !body.textContent.includes(card._t('gs.align_preflight_hint'))
+          || dialog.querySelector('.btn.on')) {
+        throw new Error('golden Optimize preflight failure dialog is incomplete');
+      }
+    } else if (scenario.dialog === 'device') {
       card._setMode('devices');
       await card.updateComplete;
       await settleMode(card);
