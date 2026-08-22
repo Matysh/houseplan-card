@@ -60,6 +60,20 @@ test('bundle freshness uses the target tree fingerprint contract', async () => {
   }
 });
 
+test('bundle freshness includes deterministic golden harness inputs (#244)', () => {
+  const root = fixtureRoot();
+  try {
+    const golden = resolve(root, 'demo/golden');
+    mkdirSync(golden, { recursive: true });
+    writeFileSync(resolve(golden, 'matrix.mjs'), 'export const version = 1;\n', 'utf8');
+    const before = sourceFingerprint(root);
+    writeFileSync(resolve(golden, 'matrix.mjs'), 'export const version = 2;\n', 'utf8');
+    assert.notEqual(sourceFingerprint(root), before);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test('the launcher gate refuses a stale bundle by default (#236)', async () => {
   // Смок против несвежего бандла не падает честно: на #234 три проверки
   // покраснели, а четвёртая ПРОШЛА, потому что старый код одинаково врал в двух
