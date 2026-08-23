@@ -229,22 +229,110 @@ jobs:
             echo "МАТЕРИАЛ НЕ ЗАПУШЕН" >> "$GITHUB_STEP_SUMMARY"
           fi
 
+      # Ревьюер обязан смотреть тот же код, который уедет в dev (#257). Раньше
+      # ревью шло по ветке как есть, а слияние делало ребейз — проверенный SHA и
+      # слитый SHA были разными коммитами. Пока расхождение с dev текстовое,
+      # ребейз упирается в конфликт и это видно; смысловое расхождение git
+      # склеивает молча, и в dev уезжает комбинация, которую никто не читал.
+      # Именно так пришёл регресс #234.
+      #
+      # Заодно снимается плата за конфликт: он обнаруживался ПОСЛЕ сорока минут
+      # ревью и потраченных лимитов подписки, хотя виден за пять секунд до них.
+      #
+      # Этап spec не затрагивается: ветку ТЗ в dev никто не сливает, и трогать
+      # чужую ветку без нужды — лишний риск.
+      - name: Привести ветку к dev
+        id: rebase
+        if: needs.guard.outputs.stage == 'code' && steps.branch.outputs.name != ''
+        env:
+          TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
+          BRANCH: ${{ steps.branch.outputs.name }}
+          # rebase, в отличие от commit, не принимает -c user.*: он запускает
+          # свои процессы и требует личность в окружении, иначе падает с
+          # «unable to auto-detect email address».
+          GIT_AUTHOR_NAME: claude[bot]
+          GIT_AUTHOR_EMAIL: 209825114+claude[bot]@users.noreply.github.com
+          GIT_COMMITTER_NAME: claude[bot]
+          GIT_COMMITTER_EMAIL: 209825114+claude[bot]@users.noreply.github.com
+        run: |
+          git fetch -q origin dev
+          if git merge-base --is-ancestor origin/dev HEAD; then
+            echo "ветка содержит весь dev — ребейз не нужен"
+            exit 0
+          fi
+          behind=$(git rev-list --count "HEAD..origin/dev")
+          before=$(git rev-parse "origin/$BRANCH")
+          echo "dev впереди на $behind коммит(ов) — привожу ветку"
+          if ! git rebase origin/dev; then
+            git rebase --abort || true
+            echo "conflict=true" >> "$GITHUB_OUTPUT"
+            echo "::warning::ветка $BRANCH не ребейзится на dev без конфликта — ревью не запускается"
+            exit 0
+          fi
+          # --force-with-lease с явным ожидаемым значением обязателен: между
+          # fetch и push автор мог запушить коммит, и слепой --force потерял бы
+          # его молча. Расхождение lease — падение прогона, а не предупреждение:
+          # ревью пошло бы по коду, которого на ветке уже нет.
+          if ! git push -q --force-with-lease="refs/heads/$BRANCH:$before" \
+               "https://x-access-token:$TOKEN@github.com/${{ github.repository }}" \
+               "HEAD:refs/heads/$BRANCH"; then
+            echo "::error::ветка $BRANCH изменилась во время ребейза — прогон прерван, чтобы не потерять коммит автора"
+            exit 1
+          fi
+          # Локальная ссылка обновляется тоже: шаг слияния берёт origin/$BRANCH,
+          # и без этого он ребейзил бы заново уже приведённое.
+          git fetch -q origin "+refs/heads/$BRANCH:refs/remotes/origin/$BRANCH"
+          short_before=$(git rev-parse --short "$before")
+          short_after=$(git rev-parse --short HEAD)
+          echo "note=Ветка приведена к dev конвейером до ревью: поверх легло $behind коммит(ов) dev, $short_before -> $short_after. После ребейза это другой код (§7.2) — разбор полный, а не по дельте." >> "$GITHUB_OUTPUT"
+          echo "ветка $BRANCH приведена к dev: $short_before -> $short_after"
+
+      # Конфликт возвращает задачу автору ДО ревью. Инвариант «после прогона
+      # метка меняется всегда» при этом держится: возврат в S6-in-progress —
+      # тоже смена метки, и автор не ждёт впустую.
+      - name: Конфликт с dev — вернуть автору без ревью
+        if: steps.rebase.outputs.conflict == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
+          NUM: ${{ github.event.issue.number }}
+          BRANCH: ${{ steps.branch.outputs.name }}
+        run: |
+          cat > /tmp/stale.md <<EOF
+          **Ревью не запускалось:** ветка \`$BRANCH\` не ребейзится на \`dev\` без конфликта. Код никто не читал, вердикта нет, цикл ревью не израсходован.
+
+          Проверка стоит до ревью намеренно: конфликт всё равно вернул бы задачу, но уже после сорока минут работы ревьюера и потраченных лимитов.
+
+          Задача переведена в \`S6-in-progress\`. Осталось:
+
+          1. \`git fetch origin\`, затем \`git rebase origin/dev\` в ветке задачи, разрешить конфликт;
+          2. запушить ветку;
+          3. вернуть метку \`S7-code-review\`.
+
+          [Прогон](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}).
+          EOF
+          gh issue comment "$NUM" --repo "${{ github.repository }}" --body-file /tmp/stale.md
+          gh issue edit "$NUM" --repo "${{ github.repository }}" \
+            --add-label S6-in-progress --remove-label S7-code-review
+          echo "S7-code-review -> S6-in-progress (ревью не запускалось)"
+
       # Зависимости ставятся ПОСЛЕ переключения на ветку задачи: lockfile мог
       # измениться именно в ней, и установка по копии из dev дала бы не то дерево.
       - name: Установить зависимости
+        if: steps.rebase.outputs.conflict != 'true'
         run: npm ci
 
       # Браузер нужен не всякому ревью (см. правило выбора гейтов в промпте),
       # но когда нужен — качать его заново дороже, чем держать в кэше.
       - name: Кэш браузеров Playwright
         id: pw
+        if: steps.rebase.outputs.conflict != 'true'
         uses: actions/cache@v6
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
 
       - name: Установить Chromium
-        if: steps.pw.outputs.cache-hit != 'true'
+        if: steps.rebase.outputs.conflict != 'true' && steps.pw.outputs.cache-hit != 'true'
         # Без --with-deps: системные библиотеки Chromium предустановлены в
         # образе ubuntu-latest, а apt при промахе кэша съедал минуты из бюджета
         # ревью и подолгу перебирал недоступное azure-зеркало (#175). Если
@@ -254,6 +342,7 @@ jobs:
 
       - name: Review
         id: review
+        if: steps.rebase.outputs.conflict != 'true'
         uses: anthropics/claude-code-action@v1
         env:
           # Вне рабочей копии: восстановление дерева ревьюером не должно
@@ -276,6 +365,8 @@ jobs:
               ничего не вернул на правки и цикла не образует (#227).
               Номер захода нужен для имени документа — два документа с
               одинаковым номером затёрли бы друг друга.
+
+            ${{ steps.rebase.outputs.note }}
 
             **Если цикл не первый — объём разбора по дельте, а не заново**
             (PROCESS.md §2.9, issue #214). Раньше промпт был одинаковым для
@@ -462,6 +553,7 @@ jobs:
       # Ревьюер пишет только в docs/reviews/. Что именно попадёт в коммит,
       # решает этот шаг, а не модель: всё остальное откатывается.
       - name: Опубликовать документ ревью
+        if: steps.rebase.outputs.conflict != 'true'
         env:
           TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
           BRANCH: ${{ steps.branch.outputs.name }}
@@ -560,6 +652,7 @@ jobs:
 
       - name: Решение по вердикту
         id: decide
+        if: steps.rebase.outputs.conflict != 'true'
         env:
           OUT: ${{ steps.review.outputs.structured_output }}
           STAGE: ${{ needs.guard.outputs.stage }}
@@ -638,6 +731,7 @@ jobs:
           echo "слито в dev: $(git rev-parse --short HEAD)"
 
       - name: Переставить метку
+        if: steps.rebase.outputs.conflict != 'true'
         env:
           # Именно PAT: с GITHUB_TOKEN следующий шаг конвейера не запустится.
           GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
