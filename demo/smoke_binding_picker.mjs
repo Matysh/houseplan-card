@@ -35,15 +35,18 @@ Object.assign(out, await page.evaluate(async () => {
     await c.updateComplete;
     window.confirm = nativeConfirm;
   };
-  const tombstones = () => (c._serverCfg.markers || []).filter((m) => m.removed === true);
+  const markers = () => c._serverCfg.markers || [];
+  const tombstones = () => markers().filter((m) => m.removed === true);
+  const liveMarkers = (binding) => markers().filter((m) => m.removed !== true && m.binding === binding);
 
   // --- 1. удалили устройство — оно снова предлагается ----------------------
   const device = c._devices.find((d) => d.bindingKind === 'device' && d.bindingRef && !d.hidden);
   o.standHasDeviceMarker = !!device;
   const deviceBinding = `device:${device.bindingRef}`;
   const childEntity = Object.entries(c._planHass.entities)
-    .find(([, reg]) => reg.device_id === device.bindingRef)?.[0];
+    .find(([, reg]) => reg.device_id === device.bindingRef && !reg.hidden)?.[0];
   o.standHasChildEntity = !!childEntity;
+  const childBinding = `entity:${childEntity}`;
 
   o.placedDeviceNotOffered = !(await offered(false)).includes(deviceBinding);
   await remove(device);
@@ -67,16 +70,62 @@ Object.assign(out, await page.evaluate(async () => {
     return c._markerDialog.showEntities;
   })()) === false;
 
-  // --- 3. известный дефект #262 -------------------------------------------
-  // Надгробие ключуется по точной строке привязки, поэтому `device:<id>`
-  // разблокирует только само устройство: `isRemovedPlanEntity` продолжает
-  // выкидывать из списка все его дочерние сущности. Здесь закреплено ТЕКУЩЕЕ
-  // поведение — починят #262, и смок покраснеет, потребовав перевернуть
-  // проверку. Молча пройти фикс мимо покрытия не сможет.
-  o.knownDefect262ChildEntityBlocked =
-    !(await offered(true)).includes(`entity:${childEntity}`);
+  // --- 3. #262: из удалённого parent возвращается одна exact entity --------
+  // Parent tombstone открывает переход в picker, но сохраняется после Save:
+  // выбранная X оживает, siblings и автоматический device:D — нет.
+  o.deletedDeviceChildHiddenWithoutCheckbox =
+    !(await offered(false)).includes(childBinding);
+  o.deletedDeviceChildOfferedWithCheckbox =
+    (await offered(true)).includes(childBinding);
+
+  const saveChild = async () => {
+    await openAdd(true);
+    const reg = c._planHass.entities[childEntity];
+    const state = c._planHass.states[childEntity];
+    c._markerDialog = {
+      ...c._markerDialog,
+      bindingMode: 'ha',
+      binding: childBinding,
+      name: reg?.name || state?.attributes?.friendly_name || childEntity,
+    };
+    await c._saveMarker();
+    await c.updateComplete;
+    return liveMarkers(childBinding)[0];
+  };
+
+  const childMarker = await saveChild();
+  o.childSaveCreatesOneLiveMarker = liveMarkers(childBinding).length === 1
+    && !tombstones().some((m) => m.binding === childBinding);
+  o.childSaveKeepsParentTombstone = tombstones().some((m) => m.binding === deviceBinding);
+  const childDevice = () => c._devices.find((d) =>
+    d.bindingKind === 'entity' && d.bindingRef === childEntity);
+  o.childBuiltWithoutAutoParent = !!childDevice()
+    && !c._devices.some((d) => d.bindingKind === 'device' && d.bindingRef === device.bindingRef);
+  const childPos = childMarker && c._layout[childMarker.id];
+  o.childGetsFreshLayoutPosition = !!childPos
+    && Number.isFinite(childPos.x) && Number.isFinite(childPos.y) && !!childPos.s;
+  c._setMode('view');
+  await c.updateComplete;
+  o.childDrawnInView = !!c.renderRoot.querySelector(
+    `.dev[data-id="${CSS.escape(childMarker.id)}"]`,
+  );
+
+  o.parentStillOfferedAfterChildSave = (await offered(false)).includes(deviceBinding);
+  o.liveChildRemovedFromPicker = !(await offered(true)).includes(childBinding);
+
+  // Повторный Delete → Add той же X обязан быть идемпотентным и не затрагивать
+  // соседний parent tombstone.
+  await remove(childDevice());
+  o.childDeleteLeavesBothTombstones = tombstones().some((m) => m.binding === deviceBinding)
+    && tombstones().some((m) => m.binding === childBinding);
+  o.deletedChildOfferedAgain = (await offered(true)).includes(childBinding);
+  await saveChild();
+  o.secondChildSaveIsIdempotent = liveMarkers(childBinding).length === 1
+    && !tombstones().some((m) => m.binding === childBinding)
+    && tombstones().some((m) => m.binding === deviceBinding);
 
   // --- 4. повторное добавление возвращает устройство в список размещённых --
+  // Явные device:D + entity:X сосуществуют по принятому контракту #226.
   await openAdd(false);
   c._markerDialog = { ...c._markerDialog, bindingMode: 'ha', binding: deviceBinding,
     name: device.name };
@@ -85,6 +134,9 @@ Object.assign(out, await page.evaluate(async () => {
   o.readdReplacesTombstone = !tombstones().some((m) => m.binding === deviceBinding)
     && (c._serverCfg.markers || []).some((m) => m.binding === deviceBinding);
   o.readdRemovesFromPicker = !(await offered(false)).includes(deviceBinding);
+  o.explicitParentAndChildCoexist = c._devices.some((d) =>
+    d.bindingKind === 'device' && d.bindingRef === device.bindingRef)
+    && !!childDevice();
 
   c._markerDialog = null;
   c._setMode('view');

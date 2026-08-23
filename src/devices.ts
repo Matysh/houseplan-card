@@ -840,6 +840,9 @@ export function resolveIcon(hass: any, name: string, model: string | undefined, 
 export interface RemovedPlanBindings {
   devices: Set<string>;
   entities: Set<string>;
+  /** Exact live entity markers that intentionally override an entity or
+   *  parent-device tombstone without restoring the rest of that device. */
+  liveEntities: Set<string>;
 }
 
 export interface DeletePlanMarkerResult {
@@ -934,23 +937,31 @@ export function deletePlanMarkerRecords(
 export function removedPlanBindings(markers?: readonly Marker[] | null): RemovedPlanBindings {
   const devices = new Set<string>();
   const entities = new Set<string>();
+  const liveEntities = new Set<string>();
   for (const m of markers || []) {
-    if (m?.removed !== true) continue;
     const i = String(m.binding || '').indexOf(':');
     if (i < 1) continue;
     const kind = m.binding.slice(0, i);
     const ref = m.binding.slice(i + 1);
     if (!ref) continue;
+    if (m?.removed !== true) {
+      if (kind === 'entity') liveEntities.add(ref);
+      continue;
+    }
     if (kind === 'device') devices.add(ref);
     else if (kind === 'entity') entities.add(ref);
   }
-  return { devices, entities };
+  return { devices, entities, liveEntities };
 }
 
 /** Whether an HA entity is suppressed by an entity or whole-device tombstone. */
 export function isRemovedPlanEntity(
   hass: any, eid: string, removed: RemovedPlanBindings,
 ): boolean {
+  // A person may restore one exact child without restoring its deleted parent.
+  // This exception must stay binding-scoped: siblings remain suppressed by the
+  // device tombstone until they receive their own live markers (#262).
+  if (removed.liveEntities.has(eid)) return false;
   if (removed.entities.has(eid)) return true;
   const deviceId = hass?.entities?.[eid]?.device_id;
   return !!deviceId && removed.devices.has(deviceId);
@@ -1393,8 +1404,8 @@ export function areaClimateMap(
     // A device tombstone suppresses all of its data. An entity tombstone only
     // suppresses a standalone entity; inside its live parent device it remains
     // available to device state, cards and room aggregates.
-    if ((reg.device_id && removed.devices.has(reg.device_id))
-        || (!reg.device_id && removed.entities.has(eid))) continue;
+    if ((reg.device_id && removed.devices.has(reg.device_id) && !removed.liveEntities.has(eid))
+        || (!reg.device_id && removed.entities.has(eid) && !removed.liveEntities.has(eid))) continue;
     const dev = reg.device_id ? hass.devices?.[reg.device_id] : null;
     const area = reg.area_id || dev?.area_id || null;
     if (!area) continue;

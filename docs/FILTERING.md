@@ -26,6 +26,12 @@ as the SEEDER of initial hidden flags.
   automatic discovery cannot immediately recreate the deleted device. The
   same binding remains available in Add; saving it again replaces the
   tombstone and starts with a fresh position.
+- A `device:D` tombstone also exposes D's active child entities in Add when
+  **Show entities** is enabled. Saving one `entity:X` keeps the parent
+  tombstone and restores only X: the live exact entity binding overrides the
+  tombstone for X, while D and every sibling without its own live marker stay
+  deleted. Adding D later is still an explicit exact re-add and may coexist
+  with X under the rule below.
 - A live `entity:X` marker owns X inside its automatic parent `device:D`. A
   residual auto-device contains only active, HA-visible siblings not owned by
   other entity markers and disappears when that set is empty. A user-hidden
@@ -110,10 +116,12 @@ the old behaviour until an editing client materialises it.
   server while the tombstone exists.
 - A deleted **device binding** is excluded from room LQI, light-source
   resolution, room light statistics/fill/Glow, registry-wide climate averages
-  and explicit room sources. An **entity binding** tombstone suppresses that
-  standalone plan object; it does not remove the same entity from the data of
-  a still-live parent HA device. Tombstones are binding-scoped, not mutations
-  of the HA registry.
+  and explicit room sources, except for an exact child entity restored as a
+  live marker as described above. That exception is exact: it restores X's
+  normal marker-level state and aggregates, never the parent or its siblings.
+  An **entity binding** tombstone suppresses that standalone plan object; it
+  does not remove the same entity from the data of a still-live parent HA
+  device. Tombstones are binding-scoped, not mutations of the HA registry.
 - Exact `opening.contact` and `opening.lock` references are independent of a
   standalone plan marker: deleting that marker does not remove the entity from
   the opening picker and does not stop the saved opening from following its HA

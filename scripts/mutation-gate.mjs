@@ -41,6 +41,61 @@ import { fileURLToPath } from 'node:url';
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 export const MUTANTS = [
   {
+    id: 'device-tombstone-blocks-child-picker',
+    guard: 'node demo/smoke_binding_picker.mjs',
+    because: 'a device tombstone must expose an active child in Add when Show entities is on; '
+      + 'restoring only the exact device reproduces the user-visible dead end from #262',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '        if (isRemovedPlanEntity(h, eid, removed)\n'
+        + '            && !removedBindings.has(v) && !childOfRemovedDevice) continue;',
+      replace: '        if (isRemovedPlanEntity(h, eid, removed)\n'
+        + '            && !removedBindings.has(v)) continue;',
+    }],
+  },
+  {
+    id: 'live-child-still-suppressed-by-parent-tombstone',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="issue 262" test/devices.test.mjs',
+    because: 'fixing only the picker lets the person select X but buildDevices and every '
+      + 'availability consumer still discard it after Save; a live exact child must win (#262)',
+    patches: [{
+      file: 'src/devices.ts',
+      find: '  if (removed.liveEntities.has(eid)) return false;\n',
+      replace: '',
+    }],
+  },
+  {
+    id: 'parent-tombstone-restores-all-siblings',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="issue 262" test/devices.test.mjs',
+    because: 'one restored child is an exact override, not permission for every sibling and '
+      + 'room aggregate of the deleted parent device to return (#262)',
+    patches: [{
+      file: 'src/devices.ts',
+      find: '  if (removed.liveEntities.has(eid)) return false;\n',
+      replace: '  if (removed.liveEntities.size) return false;\n',
+    }],
+  },
+  {
+    id: 'child-readd-clears-parent-tombstone',
+    guard: 'node demo/smoke_binding_picker.mjs',
+    because: 'saving one child must preserve the device tombstone; dropping all tombstones '
+      + 'resurrects the automatic parent and the siblings the person deliberately removed (#262)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: `      cfg.markers = cfg.markers.filter(
+        (m) => m.id !== id && m.id !== oldId
+          && (marker.binding === 'virtual' || m.binding !== marker.binding),
+      );`,
+      replace: `      cfg.markers = cfg.markers.filter(
+        (m) => m.id !== id && m.id !== oldId
+          && (marker.binding === 'virtual' || m.binding !== marker.binding)
+          && (!marker.binding.startsWith('entity:') || m.removed !== true),
+      );`,
+    }],
+  },
+  {
     id: 'orphan-space-detach-disabled',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="detaches a live marker" '

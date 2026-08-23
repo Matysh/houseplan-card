@@ -2,7 +2,9 @@
 
 - Issue: [#262](https://github.com/Matysh/houseplan-card/issues/262)
 - Ветка: `issue/262-readd-child-entity`
-- Статус: `S3-spec`
+- Статус: `S6-in-progress`, ТЗ одобрено
+- Ревью ТЗ: [`docs/reviews/SPEC-REVIEW-262-r1.md`](../reviews/SPEC-REVIEW-262-r1.md),
+  зелёный вердикт
 - Приоритет: `P2`
 - Тип: `bug`
 - Трек: обычный
@@ -439,4 +441,3 @@ records schema-valid и не удаляются старой версией, э�
    координат D → X нет.
 5. Полноценное добавление D после X оставляет оба explicit marker по уже
    утверждённому #226; скрытое автоматическое объединение было бы новым UX.
-

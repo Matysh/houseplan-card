@@ -10,6 +10,7 @@ import {
   removeMarkerControlReferences,
   rewriteMarkerControlReferences, markerControlWouldCycle, resolveDeviceLightSettings,
   incomingLightControls,
+  removedPlanBindings, isRemovedPlanEntity, isRemovedPlanSource,
 } from '../test-build/devices.js';
 import { compileIconRules, iconFor } from '../test-build/rules.js';
 
@@ -49,6 +50,36 @@ test('deletePlanMarkerRecords deduplicates HA binding and leaves old-card-safe t
     { id: 'new', binding: 'entity:sensor.x', removed: true, hidden: true },
   ]);
   assert.deepEqual(new Set(result.cleanupIds), new Set(['old', 'new']));
+});
+
+test('issue 262 live child overrides a parent tombstone without restoring siblings', () => {
+  const h = mkHass({
+    devices: { hub: dev('hub', 'Voice satellite', 'Satellite', 'living') },
+    entities: {
+      'sensor.voice_level': { entity_id: 'sensor.voice_level', device_id: 'hub' },
+      'switch.mic_mute': { entity_id: 'switch.mic_mute', device_id: 'hub' },
+    },
+  });
+  const removed = removedPlanBindings([
+    { id: 'hub', binding: 'device:hub', removed: true },
+    { id: 'stale-x', binding: 'entity:sensor.voice_level', removed: true },
+    { id: 'live-x', binding: 'entity:sensor.voice_level' },
+  ]);
+
+  assert.equal(isRemovedPlanEntity(h, 'sensor.voice_level', removed), false);
+  assert.equal(isRemovedPlanEntity(h, 'switch.mic_mute', removed), true);
+  assert.equal(isRemovedPlanSource(h, 'entity:sensor.voice_level', [
+    { id: 'hub', binding: 'device:hub', removed: true },
+    { id: 'live-x', binding: 'entity:sensor.voice_level' },
+  ]), false);
+  assert.equal(isRemovedPlanSource(h, 'entity:switch.mic_mute', [
+    { id: 'hub', binding: 'device:hub', removed: true },
+    { id: 'live-x', binding: 'entity:sensor.voice_level' },
+  ]), true);
+  assert.equal(isRemovedPlanSource(h, 'device:hub', [
+    { id: 'hub', binding: 'device:hub', removed: true },
+    { id: 'live-x', binding: 'entity:sensor.voice_level' },
+  ]), true);
 });
 
 test('buildDevices: devices outside bound areas are dropped', () => {
@@ -466,6 +497,36 @@ test('entity tombstone does not strip that entity from a live parent device', ()
   assert.ok(parent);
   assert.deepEqual(parent.entities, ['sensor.box_temp']);
   assert.equal(parent.primary, 'sensor.box_temp');
+});
+
+test('issue 262 parent tombstone builds only the explicitly restored child entity', () => {
+  const h = mkHass({
+    devices: { hub: dev('hub', 'Voice satellite', 'Satellite', 'living') },
+    entities: {
+      'sensor.voice_level': { entity_id: 'sensor.voice_level', device_id: 'hub', platform: 'demo' },
+      'switch.mic_mute': { entity_id: 'switch.mic_mute', device_id: 'hub', platform: 'demo' },
+    },
+    states: {
+      'sensor.voice_level': { state: '42', attributes: { friendly_name: 'Voice level' } },
+      'switch.mic_mute': { state: 'off', attributes: { friendly_name: 'Mic mute' } },
+    },
+  });
+  const child = { id: 'lg_sensor.voice_level', binding: 'entity:sensor.voice_level', hidden: false };
+  const withParentTombstone = buildDevices(baseCtx(h, { markers: [
+    { id: 'hub', binding: 'device:hub', removed: true, hidden: true },
+    child,
+  ], settings: { filter_seeded: true } }));
+  assert.deepEqual(withParentTombstone.map((item) => item.bindingKind + ':' + item.bindingRef), [
+    'entity:sensor.voice_level',
+  ]);
+
+  const bothExplicit = buildDevices(baseCtx(h, { markers: [
+    { id: 'hub', binding: 'device:hub', hidden: false },
+    child,
+  ], settings: { filter_seeded: true } }));
+  assert.deepEqual(new Set(bothExplicit.map((item) => item.bindingKind + ':' + item.bindingRef)), new Set([
+    'device:hub', 'entity:sensor.voice_level',
+  ]));
 });
 
 test('buildDevices: virtual marker lands in its room; entity marker resolves name from state', () => {
@@ -1300,6 +1361,25 @@ test('areaClimateMap: whole device tombstone wins; entity tombstone stays bindin
     { id: 'b-temp', binding: 'entity:sensor.b_temperature', removed: true },
   ];
   assert.deepEqual(areaClimateMap(hass, undefined, markers).get('living'), { temp: 30, hum: null });
+});
+
+test('issue 262 room climate restores only the exact live child of a tombstoned device', () => {
+  const hass = {
+    devices: { hub: { id: 'hub', name: 'Climate hub', area_id: 'living' } },
+    entities: {
+      'sensor.room_temperature': { device_id: 'hub', platform: 'demo' },
+      'sensor.sibling_temperature': { device_id: 'hub', platform: 'demo' },
+    },
+    states: {
+      'sensor.room_temperature': { state: '20', attributes: { device_class: 'temperature' } },
+      'sensor.sibling_temperature': { state: '40', attributes: { device_class: 'temperature' } },
+    },
+  };
+  const markers = [
+    { id: 'hub', binding: 'device:hub', removed: true },
+    { id: 'room-temp', binding: 'entity:sensor.room_temperature' },
+  ];
+  assert.deepEqual(areaClimateMap(hass, undefined, markers).get('living'), { temp: 20, hum: null });
 });
 
 test('resolvedLightSources: one source set feeds room fill, card, glow and controls', () => {

@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- After deleting a complete HA device from the plan, any one of its active
+  entities can now be added back separately through **Add → Show entities**.
+  The selected entity returns as a normal live marker with a fresh position,
+  while the parent device and unselected siblings stay deleted; the complete
+  device remains available for an intentional later re-add
+  ([#262](https://github.com/Matysh/houseplan-card/issues/262)).
 - Thick T-junctions no longer show white triangular gaps on the exterior side
   when three or more walls of different thickness meet. The bounded bevel now
   preserves valid masonry and paper up to the same limit on both sides of the

@@ -13518,7 +13518,13 @@ class HouseplanCard extends LitElement {
       for (const [eid, reg] of Object.entries<any>(h.entities)) {
         const v = 'entity:' + eid;
         if (taken.has(v) || seen.has(v) || (reg.hidden && !removedBindings.has(v))) continue;
-        if (isRemovedPlanEntity(h, eid, removed) && !removedBindings.has(v)) continue;
+        // A deleted device remains offered as a whole, but the person may also
+        // restore just one of its children. The runtime override begins only
+        // after that exact entity marker is saved; this picker-only exception
+        // is what makes the intentional transition possible (#262).
+        const childOfRemovedDevice = !!reg.device_id && removed.devices.has(reg.device_id);
+        if (isRemovedPlanEntity(h, eid, removed)
+            && !removedBindings.has(v) && !childOfRemovedDevice) continue;
         const stt = h.states[eid];
         const label = reg.name || stt?.attributes?.friendly_name || eid;
         const dev = reg.device_id ? h.devices[reg.device_id] : null;

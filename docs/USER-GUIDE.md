@@ -401,6 +401,12 @@ as an intentional configuration. Deleting an entity marker returns the entity
 to automatic parent discovery; its binding tombstone does not remove registry
 data from the live HA device.
 
+After deleting a complete HA device, you can restore only one of its entities:
+open **Add**, enable **Show entities**, and select that entity. House Plan
+returns the selected marker with a fresh position while the complete device
+and its other entities remain deleted. The complete device stays available in
+Add if you later decide to restore it explicitly as well.
+
 ### Device editor
 
 - drag a marker to save its server-side position;

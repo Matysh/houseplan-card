@@ -306,16 +306,22 @@ references and duplicates by name|area. Manual files: transactional HTTP upload 
 HA binding against automatic discovery while intentionally exposing that same
 binding to the Add picker. A device tombstone excludes all data of that device;
 an entity tombstone excludes the standalone entity binding but does not mutate
-the same entity out of a still-live parent device. Runtime-filtered references
-such as `controls` and live text remain persisted and become active again after
-re-add. Exact `opening.contact` / `opening.lock` fields are a separate
+the same entity out of a still-live parent device. A live exact `entity:X`
+marker is the one narrow override: it may coexist with a `device:D` tombstone,
+restoring X while the parent claim continues to suppress D and every sibling
+without its own live exact marker. The Add picker exposes active children of a
+device tombstone only behind **Show entities**, so that combination is reachable
+without weakening ordinary runtime deletion. Runtime-filtered references such
+as `controls` and live text remain persisted and become active again after
+exact re-add. Exact `opening.contact` / `opening.lock` fields are a separate
 architectural-object role: their HA availability ignores marker tombstones but
 still uses `resolveHaBindingStatus()` to reject disabled, orphaned or unverified
 entities. Their painted state comes from the immutable active-registry frame,
 not directly from live `hass`. Re-adding a marker therefore cannot duplicate or
 rewrite an opening reference.
-Re-adding replaces the tombstone; virtual markers need no tombstone because
-they have no discovery source.
+Re-adding the same binding replaces its tombstone. Re-adding a child entity of
+a tombstoned device preserves the parent tombstone instead; virtual markers
+need no tombstone because they have no discovery source.
 
 ## Server-side configuration (current shape, v1.51+)
 

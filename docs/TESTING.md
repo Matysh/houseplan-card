@@ -1573,6 +1573,12 @@ separately promised workflows:
       return on rebuild/reload, but its binding is offered by Add. Re-add it:
       one marker only, fresh centred/grid position, no tombstone
       [auto: smoke_hidden_flag; unit + manual]
+- [ ] Delete `device:D`, enable Show entities in Add and restore only child
+      `entity:X`: X receives one live marker and a fresh position; the parent
+      tombstone remains, so D and sibling Y do not return or contribute to
+      aggregates. Delete/re-add X is idempotent; explicitly re-adding D later
+      leaves the intentional D + X pair from #226
+      [auto: smoke_binding_picker; unit: devices.test.mjs; mutation x4]
 - [ ] Delete an entity marker and a virtual marker: the entity is offered by
       Add (with Show entities when applicable); the virtual marker is gone and
       can be recreated manually. The exact deleted entity remains offered even
