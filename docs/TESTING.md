@@ -1685,9 +1685,13 @@ that it automatically runs blocking verification. Review and accept the
 canonical set. See `demo/golden/README.md`.
 
 For #249, `test/wall-thickness.test.mjs` additionally covers equal and unequal
-three-/four-ray nodes, reversed input, winding/order changes, production
-`coordScale = 1000`, unchanged two-ray joins and the anonymised regression
-fixture in `test/fixtures/249-multiwall-junction.json`.
+three-/four-ray nodes (including literal 15/50/70 cm arms), reversed input,
+winding/order changes, production `coordScale = 1000`, unchanged two-ray joins
+and the anonymised regression fixture in
+`test/fixtures/249-multiwall-junction.json`. The asymmetric corner-Split case
+also proves that the union of clean-room floors equals the original room union
+minus canonical bounded masonry and that every floor vertex remains inside the
+source building.
 `demo/smoke_multiwall_junction.mjs` checks Plan/View/kiosk/Static/hidden-Iso
 parity, paper and clean-floor presence, shared Glow/sun masonry, cache reuse on
 HA/theme ticks, no saved-config mutation, a filled node and the removed old

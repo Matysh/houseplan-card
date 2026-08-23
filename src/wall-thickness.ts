@@ -1753,6 +1753,44 @@ export function insetOffsetsForRoom(
 export const halfOffsetsForRoom = insetOffsetsForRoom;
 
 /**
+ * A bounded inward bevel may cross a neighbouring source edge when incident
+ * wall depths differ sharply. Keep only the part that is physically inside
+ * the room and return its largest outer ring; room consumers accept one simple
+ * contour and handle nested-room holes separately.
+ */
+function clipInnerContourToRoom(
+  contour: number[][],
+  room: number[][],
+): number[][] | null {
+  try {
+    const clipped = intersection(
+      closedRing(contour) as any,
+      closedRing(room) as any,
+    );
+    return largestOuterContour(clipped);
+  } catch {
+    return null;
+  }
+}
+
+/** Largest simple outer ring from polygon-clipping geometry. */
+function largestOuterContour(geometry: any): number[][] | null {
+  let best: number[][] | null = null;
+  let bestArea = 0;
+  for (const polygon of geometry || []) {
+    const raw = polygon?.[0];
+    if (!Array.isArray(raw) || raw.length < 4) continue;
+    const ring = raw.slice(0, -1).map((point: number[]) => [point[0], point[1]]);
+    const area = Math.abs(signedArea(ring));
+    if (ring.length >= 3 && area > bestArea) {
+      best = ring;
+      bestArea = area;
+    }
+  }
+  return best;
+}
+
+/**
  * Inner (clean-floor) contour of a room: inset by half wall thickness.
  * Returns the original poly when there is no thickness.
  */
@@ -1765,6 +1803,8 @@ export function innerContourForRoom(
   cellCm: number,
   gridPitch: number,
   coordScale = 1,
+  /** Canonical room-wall masonry before opening cuts; pass the render cache. */
+  sharedRoomWallGeometry?: any,
 ): number[][] | null {
   const room = (rooms || []).find((r) => r?.id === roomId);
   const poly = roomPoly(room);
@@ -1775,7 +1815,22 @@ export function innerContourForRoom(
   const multiWallNodes = multiWallNodesForGeometry(
     rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale,
   );
-  return insetContour(pr.poly, pr.offsets, multiWallNodes)
+  const inset = insetContour(pr.poly, pr.offsets, multiWallNodes);
+  if (!inset) return poly.map((p) => [p[0], p[1]]);
+  if (!multiWallNodes.nodes.length) return inset;
+  const roomWallGeometry = sharedRoomWallGeometry ?? wallBodiesGeometry(
+    rooms, walls, openCuts, [], pitch, cellCm, gridPitch, coordScale,
+  )?.roomGeom;
+  if (roomWallGeometry) {
+    try {
+      const floor = difference(closedRing(pr.poly) as any, roomWallGeometry);
+      const contour = largestOuterContour(floor);
+      if (contour) return contour;
+    } catch {
+      // Fall through to the bounded contour clip; never return an outside tip.
+    }
+  }
+  return clipInnerContourToRoom(inset, pr.poly)
     || poly.map((p) => [p[0], p[1]]);
 }
 
@@ -1791,8 +1846,9 @@ interface MultiWallRoomRing {
 }
 
 /** Excess pairwise overlap triangles removed to expose the straight bevel. */
-export function multiWallBevelTriangles(
+function multiWallBevelTrianglesAt(
   map: MultiWallNodeMap | null | undefined,
+  retainToLimit: boolean,
 ): number[][][] {
   if (!map) return [];
   const triangles: number[][][] = [];
@@ -1820,41 +1876,113 @@ export function multiWallBevelTriangles(
         hit[0] - node.point[0], hit[1] - node.point[1],
       );
       if (!Number.isFinite(distance) || distance <= node.limit) continue;
-      const triangle = stableJunctionPatch([pA, pB, hit], map.coordinateScale);
+      // Canonical masonry retains pairwise overlap up to R so ordinary
+      // right-angle arms stay area-connected. The exterior paper uses the
+      // offset origins instead: its job is to remove the complete facade
+      // tooth, and the room centre is unioned back immediately afterwards.
+      const advanceA = retainToLimit ? Math.sqrt(Math.max(
+        0, node.limit * node.limit - a.halfDepth * a.halfDepth,
+      )) : 0;
+      const advanceB = retainToLimit ? Math.sqrt(Math.max(
+        0, node.limit * node.limit - b.halfDepth * b.halfDepth,
+      )) : 0;
+      const qA = [pA[0] + a.u[0] * advanceA, pA[1] + a.u[1] * advanceA];
+      const qB = [pB[0] + b.u[0] * advanceB, pB[1] + b.u[1] * advanceB];
+      const triangle = stableJunctionPatch([qA, qB, hit], map.coordinateScale);
       if (triangle) triangles.push(triangle);
     }
   }
   return triangles;
 }
 
-function bevelMultiWallBody(body: any, map: MultiWallNodeMap): any {
+export function multiWallBevelTriangles(
+  map: MultiWallNodeMap | null | undefined,
+): number[][][] {
+  return multiWallBevelTrianglesAt(map, true);
+}
+
+function bevelMultiWallBody(
+  body: any,
+  map: MultiWallNodeMap,
+  centre?: any,
+  envelope?: any,
+): any {
   if (!body || !map.nodes.length) return body;
-  let cuts: any = null;
-  for (const triangle of multiWallBevelTriangles(map)) {
+  let current = body;
+  for (const node of map.nodes) {
+    const radius = MITRE_LIMIT * node.halfDepth + map.epsilon * 2;
+    const extent = radius * 2;
+    const mask = [
+      [node.point[0] - radius, node.point[1] - radius],
+      [node.point[0] + radius, node.point[1] - radius],
+      [node.point[0] + radius, node.point[1] + radius],
+      [node.point[0] - radius, node.point[1] + radius],
+    ];
     try {
-      const piece = closedRing(triangle) as any;
-      cuts = cuts ? union(cuts, piece) : piece;
-    } catch {
-      // Keep other valid local cuts; one bad candidate cannot erase the pass.
-    }
-  }
-  if (!cuts) return body;
-  try {
-    return difference(body, cuts);
-  } catch {
-    // Polyclip can reject a valid aggregate even when each local candidate is
-    // usable. Retry one-by-one so one unstable corner cannot suppress the
-    // bevels at every other independent node.
-    let recovered = body;
-    for (const triangle of multiWallBevelTriangles(map)) {
-      try {
-        recovered = difference(recovered, closedRing(triangle) as any);
-      } catch {
-        // Keep the last valid body and isolate this candidate only.
+      let boundedCurrent = current;
+      for (const triangle of multiWallBevelTrianglesAt({
+        ...map,
+        nodes: [node],
+      }, false)) {
+        boundedCurrent = difference(boundedCurrent, closedRing(triangle) as any);
       }
+      let local: any = null;
+      for (const ray of node.rays) {
+        const n = [-ray.u[1], ray.u[0]];
+        const rectangle = stableJunctionPatch([
+          [node.point[0] + n[0] * ray.halfDepth,
+            node.point[1] + n[1] * ray.halfDepth],
+          [node.point[0] + ray.u[0] * extent + n[0] * ray.halfDepth,
+            node.point[1] + ray.u[1] * extent + n[1] * ray.halfDepth],
+          [node.point[0] + ray.u[0] * extent - n[0] * ray.halfDepth,
+            node.point[1] + ray.u[1] * extent - n[1] * ray.halfDepth],
+          [node.point[0] - n[0] * ray.halfDepth,
+            node.point[1] - n[1] * ray.halfDepth],
+        ], map.coordinateScale);
+        if (!rectangle) continue;
+        const piece: any = closedRing(rectangle) as any;
+        local = local ? union(local, piece) : piece;
+      }
+      for (const triangle of multiWallBevelTriangles({
+        ...map,
+        nodes: [node],
+      })) {
+        // Rebuild the physical half-strips first, then remove only their
+        // excessive pairwise overlap. Applying this cut to the legacy room
+        // ring itself can delete an incident half-strip and strand floor.
+        local = difference(local, closedRing(triangle) as any);
+      }
+      // Rays share a mathematical endpoint. A tiny physical core turns that
+      // point contact into a stable polygon contact for boolean/render paths.
+      const coreRadius = Math.min(
+        ...node.rays.map((ray) => ray.halfDepth),
+      ) * 0.02;
+      local = union(local, closedRing([
+        [node.point[0] - coreRadius, node.point[1] - coreRadius],
+        [node.point[0] + coreRadius, node.point[1] - coreRadius],
+        [node.point[0] + coreRadius, node.point[1] + coreRadius],
+        [node.point[0] - coreRadius, node.point[1] + coreRadius],
+      ]) as any);
+      if (!local) continue;
+      let localInside = intersection(local, closedRing(mask) as any);
+      if (centre) localInside = intersection(localInside, centre);
+      else if (envelope) localInside = intersection(localInside, envelope);
+      const outside = difference(boundedCurrent, closedRing(mask) as any);
+      const preservedExterior = centre
+        ? difference(
+            intersection(boundedCurrent, closedRing(mask) as any),
+            centre,
+          )
+        : null;
+      current = preservedExterior
+        ? union(outside, preservedExterior, localInside)
+        : union(outside, localInside);
+    } catch {
+      // Isolate the failed node. Other valid nodes still receive their repair;
+      // mandatory surrounding structural failures remain fail-dark upstream.
     }
-    return recovered;
   }
+  return current;
 }
 
 function bevelMultiWallPaper(
@@ -1862,7 +1990,14 @@ function bevelMultiWallPaper(
   centre: any,
   map: MultiWallNodeMap,
 ): any {
-  const beveled = bevelMultiWallBody(paper, map);
+  let beveled = paper;
+  for (const triangle of multiWallBevelTrianglesAt(map, false)) {
+    try {
+      beveled = difference(beveled, closedRing(triangle) as any);
+    } catch {
+      // Isolate the failed local cut and retain the rest of the paper.
+    }
+  }
   try {
     // Paper is the complete room footprint. Interior bevel cuts expose floor,
     // not the scene background, so the centre union must always remain solid.
@@ -2275,7 +2410,14 @@ export function wallBodiesGeometry(
   gridPitch: number,
   coordScale = 1,
   extraBodies: number[][][] = [],
-): { geom: any; paperGeom: any; depthUnits: number; openingIndex: OpeningWallIndex | null } | null {
+): {
+  geom: any;
+  /** Canonical room masonry before opening cuts and independent bodies. */
+  roomGeom: any;
+  paperGeom: any;
+  depthUnits: number;
+  openingIndex: OpeningWallIndex | null;
+} | null {
   if (!walls?.length && !extraBodies.length) return null;
   const roomRings: MultiWallRoomRing[] = [];
   const multiWallNodes = multiWallNodesForGeometry(
@@ -2365,7 +2507,8 @@ export function wallBodiesGeometry(
     if (exterior?.shell?.length)
       body = body ? union(body, exterior.shell) : exterior.shell;
     if (body && multiWallNodes.nodes.length)
-      body = bevelMultiWallBody(body, multiWallNodes);
+      body = bevelMultiWallBody(body, multiWallNodes, exterior?.centre, paperGeom);
+    const roomGeom = body || [];
     // cut opening tunnels (axis-aligned to opening angle)
     for (const o of openings) {
       if (!(o.length > 0)) continue;
@@ -2390,7 +2533,7 @@ export function wallBodiesGeometry(
       if (extra.length < 3) continue;
       body = body ? union(body, closedRing(extra) as any) : [closedRing(extra)];
     }
-    return { geom: body || [], paperGeom, depthUnits: maxDepth, openingIndex };
+    return { geom: body || [], roomGeom, paperGeom, depthUnits: maxDepth, openingIndex };
   } catch {
     return null;
   }
@@ -2408,14 +2551,23 @@ export function wallBodiesUnionPath(
   /** Independent physical bodies are unioned only after room openings are cut,
    * so a door/window/gate can never punch a coincident partition or column. */
   extraBodies: number[][][] = [],
-): { d: string; paperD: string; depthUnits: number; fillRule: 'evenodd' | 'nonzero' } | null {
+): {
+  d: string;
+  roomGeom: any;
+  paperD: string;
+  depthUnits: number;
+  fillRule: 'evenodd' | 'nonzero';
+} | null {
   if (!walls?.length && !extraBodies.length) return null;
   const united = wallBodiesGeometry(
     rooms, walls, openCuts, openings, pitch, cellCm, gridPitch, coordScale, extraBodies,
   );
   const d = united ? polyclipToPathD(united.geom) : '';
   const paperD = united ? polyclipToPathD(united.paperGeom) : '';
-  if (united && d) return { d, paperD, depthUnits: united.depthUnits, fillRule: 'evenodd' };
+  if (united && d) return {
+    d, roomGeom: united.roomGeom, paperD,
+    depthUnits: united.depthUnits, fillRule: 'evenodd',
+  };
   if (united) return null; // successful empty result: do not resurrect raw rings
   // Fail closed. The old raw per-room-ring fallback is the exact algorithm
   // that creates an exterior tooth at a corner Split, so resurrecting it after
