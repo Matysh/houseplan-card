@@ -6,7 +6,7 @@
 - Сложность/риск: 5/10 и 6/10
 - Issue: [#249](https://github.com/Matysh/houseplan-card/issues/249)
 - Ветка: `issue/249-multiwall-junction-bevel`
-- Статус ТЗ: редакция r2 после SPEC-REVIEW-249-r1, ожидает повторное ревью
+- Статус ТЗ: редакция r2, повторное ревью зелёное
 
 Канонические документы: `docs/SCOPE.md`, `docs/WALL-THICKNESS.md`,
 `docs/ARCHITECTURE.md`, `docs/TOUCH-SUPPORT.md`, `docs/TESTING.md`.

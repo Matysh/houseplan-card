@@ -45,6 +45,31 @@ export const HATCH_MIN_STEP_PX = 2;
 /** Mitre spikes longer than this × thickness fall back to a bevel. */
 export const MITRE_LIMIT = 4;
 
+/** Multi-ray joins stay inside this × the largest incident half-depth (#249). */
+export const MULTI_WALL_JOIN_LIMIT = 1.25;
+
+export interface MultiWallNodeRay {
+  /** Unit direction from the canonical node toward the interval's other end. */
+  u: [number, number];
+  halfDepth: number;
+}
+
+export interface MultiWallNode {
+  point: [number, number];
+  rays: MultiWallNodeRay[];
+  halfDepth: number;
+  limit: number;
+}
+
+/** Scale-relative lookup shared by every contour producer in one structural pass. */
+export interface MultiWallNodeMap {
+  epsilon: number;
+  coordinateScale: number;
+  nodes: MultiWallNode[];
+  /** Spatial buckets keep vertex lookup linear instead of scanning all nodes. */
+  index: Map<string, MultiWallNode[]>;
+}
+
 /** One finite physical wall centreline with its already-converted half depth. */
 export interface LinearWallSegment {
   a: number[];
@@ -964,7 +989,11 @@ export function ownEdgeOffsets(
  * Zero-offset edges stay on the original. Mitre joins; bevel when the mitre
  * would spike longer than MITRE_LIMIT × max(adjacent offsets).
  */
-export function insetContour(poly: number[][], offsets: number[]): number[][] | null {
+export function insetContour(
+  poly: number[][],
+  offsets: number[],
+  multiWallNodes?: MultiWallNodeMap | null,
+): number[][] | null {
   const n = poly?.length || 0;
   if (n < 3 || offsets.length !== n) return null;
   if (offsets.every((o) => !(o > 0))) return poly.map((p) => [p[0], p[1]]);
@@ -1025,9 +1054,11 @@ export function insetContour(poly: number[][], offsets: number[]): number[][] | 
 
     const hit = lineIntersect(pA, uA, pB, uB);
     const maxO = Math.max(oA, oB, 1e-9);
+    const joinLimit = multiWallNodeAt(multiWallNodes, poly[i])?.limit
+      ?? MITRE_LIMIT * maxO;
     if (hit) {
       const dist = Math.hypot(hit[0] - poly[i][0], hit[1] - poly[i][1]);
-      if (dist <= MITRE_LIMIT * maxO) {
+      if (Number.isFinite(dist) && dist <= joinLimit) {
         out.push(hit);
         continue;
       }
@@ -1310,6 +1341,189 @@ export interface RoomWallProfile extends AtomicPoly {
   offsets: number[];
 }
 
+interface PendingMultiWallNode {
+  point: [number, number];
+  rays: Array<{ u: [number, number]; halfDepth: number; angle: number }>;
+}
+
+function spatialBucket(point: number[], epsilon: number): [number, number] {
+  return [Math.floor(point[0] / epsilon), Math.floor(point[1] / epsilon)];
+}
+
+function spatialBucketKey(x: number, y: number): string {
+  return `${x},${y}`;
+}
+
+function nearbyBuckets<T>(
+  index: Map<string, T[]>,
+  point: number[],
+  epsilon: number,
+): T[] {
+  const [bx, by] = spatialBucket(point, epsilon);
+  const out: T[] = [];
+  for (let dx = -1; dx <= 1; dx++) {
+    for (let dy = -1; dy <= 1; dy++) {
+      const values = index.get(spatialBucketKey(bx + dx, by + dy));
+      if (values) out.push(...values);
+    }
+  }
+  return out;
+}
+
+/**
+ * Canonical degree-3+ physical endpoint map (#249).
+ *
+ * Shared intervals may occur once per owning room. They collapse first by
+ * interval key and again by co-directional ray, while opposite directions
+ * remain distinct. Sorting makes the representative and ray order independent
+ * of room/wall input order and winding.
+ */
+export function buildMultiWallNodeMap(
+  input: WallInterval[],
+  epsilon = 1e-6,
+  coordinateScale = 1,
+): MultiWallNodeMap {
+  const eps = Math.max(Number.isFinite(epsilon) ? epsilon : 0, 1e-9);
+  const scale = Number.isFinite(coordinateScale) && coordinateScale > 0
+    ? coordinateScale : 1;
+  const valid = (input || [])
+    .filter((iv) => iv && !iv.open && iv.kind !== null && Number.isFinite(iv.half) && iv.half > 0
+      && Array.isArray(iv.a) && Array.isArray(iv.b)
+      && iv.a.length >= 2 && iv.b.length >= 2
+      && [iv.a[0], iv.a[1], iv.b[0], iv.b[1]].every(Number.isFinite)
+      && Math.hypot(iv.b[0] - iv.a[0], iv.b[1] - iv.a[1]) > eps)
+    .sort((a, b) => a.key.localeCompare(b.key)
+      || a.a[0] - b.a[0] || a.a[1] - b.a[1]
+      || a.b[0] - b.b[0] || a.b[1] - b.b[1]
+      || a.half - b.half);
+  const byPhysicalKey = new Map<string, WallInterval>();
+  for (const interval of valid) {
+    const previous = byPhysicalKey.get(interval.key);
+    if (!previous) {
+      byPhysicalKey.set(interval.key, interval);
+    } else if (interval.half > previous.half) {
+      // A shared physical interval may be emitted by both room owners. Keep
+      // one deterministic axis and the largest effective physical half-depth.
+      byPhysicalKey.set(interval.key, { ...previous, half: interval.half });
+    }
+  }
+  const intervals = [...byPhysicalKey.values()];
+
+  const endpoints = intervals.flatMap((iv) => [
+    { point: [iv.a[0], iv.a[1]] as [number, number], other: iv.b, halfDepth: iv.half },
+    { point: [iv.b[0], iv.b[1]] as [number, number], other: iv.a, halfDepth: iv.half },
+  ]).sort((a, b) => a.point[0] - b.point[0] || a.point[1] - b.point[1]
+    || a.other[0] - b.other[0] || a.other[1] - b.other[1]
+    || a.halfDepth - b.halfDepth);
+
+  const pending: PendingMultiWallNode[] = [];
+  const pendingIndex = new Map<string, PendingMultiWallNode[]>();
+  for (const endpoint of endpoints) {
+    const candidates = nearbyBuckets(pendingIndex, endpoint.point, eps)
+      .filter((node) => Math.hypot(
+        node.point[0] - endpoint.point[0], node.point[1] - endpoint.point[1],
+      ) <= eps)
+      .sort((a, b) => Math.hypot(
+        a.point[0] - endpoint.point[0], a.point[1] - endpoint.point[1],
+      ) - Math.hypot(
+        b.point[0] - endpoint.point[0], b.point[1] - endpoint.point[1],
+      ) || a.point[0] - b.point[0] || a.point[1] - b.point[1]);
+    let node = candidates[0];
+    if (!node) {
+      node = { point: [...endpoint.point], rays: [] };
+      pending.push(node);
+      const [bx, by] = spatialBucket(node.point, eps);
+      const key = spatialBucketKey(bx, by);
+      const bucket = pendingIndex.get(key) || [];
+      bucket.push(node);
+      pendingIndex.set(key, bucket);
+    }
+    const dx = endpoint.other[0] - endpoint.point[0];
+    const dy = endpoint.other[1] - endpoint.point[1];
+    const length = Math.hypot(dx, dy);
+    if (!(length > eps)) continue;
+    const u: [number, number] = [dx / length, dy / length];
+    let angle = Math.atan2(u[1], u[0]);
+    if (angle < 0) angle += Math.PI * 2;
+    node.rays.push({ u, halfDepth: endpoint.halfDepth, angle });
+  }
+
+  const nodes: MultiWallNode[] = [];
+  const angleEps = 1e-9;
+  for (const node of pending) {
+    const sorted = node.rays.sort((a, b) => a.angle - b.angle || a.halfDepth - b.halfDepth);
+    const rays: Array<{ u: [number, number]; halfDepth: number; angle: number }> = [];
+    for (const ray of sorted) {
+      const previous = rays[rays.length - 1];
+      if (previous && Math.abs(ray.angle - previous.angle) <= angleEps) {
+        if (ray.halfDepth > previous.halfDepth) {
+          previous.halfDepth = ray.halfDepth;
+          previous.u = ray.u;
+        }
+      } else {
+        rays.push({ ...ray, u: [...ray.u] });
+      }
+    }
+    if (rays.length > 1
+        && Math.PI * 2 - rays[rays.length - 1].angle + rays[0].angle <= angleEps) {
+      const last = rays.pop()!;
+      if (last.halfDepth > rays[0].halfDepth) {
+        rays[0].halfDepth = last.halfDepth;
+        rays[0].u = last.u;
+      }
+    }
+    if (rays.length < 3) continue;
+    const halfDepth = Math.max(...rays.map((ray) => ray.halfDepth));
+    if (!(halfDepth > 0) || !Number.isFinite(halfDepth)) continue;
+    nodes.push({
+      point: [...node.point],
+      rays: rays.map(({ u, halfDepth: half }) => ({ u: [...u], halfDepth: half })),
+      halfDepth,
+      limit: MULTI_WALL_JOIN_LIMIT * halfDepth,
+    });
+  }
+  nodes.sort((a, b) => a.point[0] - b.point[0] || a.point[1] - b.point[1]);
+  const index = new Map<string, MultiWallNode[]>();
+  for (const node of nodes) {
+    const [bx, by] = spatialBucket(node.point, eps);
+    const key = spatialBucketKey(bx, by);
+    const bucket = index.get(key) || [];
+    bucket.push(node);
+    index.set(key, bucket);
+  }
+  return { epsilon: eps, coordinateScale: scale, nodes, index };
+}
+
+/** Find the canonical degree-3+ node matching a contour vertex. */
+export function multiWallNodeAt(
+  map: MultiWallNodeMap | null | undefined,
+  point: number[],
+): MultiWallNode | null {
+  if (!map || !Array.isArray(point) || point.length < 2
+      || !point.slice(0, 2).every(Number.isFinite)) return null;
+  return nearbyBuckets(map.index, point, map.epsilon)
+    .filter((node) => Math.hypot(node.point[0] - point[0], node.point[1] - point[1]) <= map.epsilon)
+    .sort((a, b) => Math.hypot(a.point[0] - point[0], a.point[1] - point[1])
+      - Math.hypot(b.point[0] - point[0], b.point[1] - point[1])
+      || a.point[0] - b.point[0] || a.point[1] - b.point[1])[0] || null;
+}
+
+function multiWallNodesForGeometry(
+  rooms: any[],
+  walls: WallEntry[] | null | undefined,
+  openCuts: number[][],
+  pitch: number,
+  cellCm: number,
+  gridPitch: number,
+  coordScale: number,
+): MultiWallNodeMap {
+  return buildMultiWallNodeMap(
+    wallIntervals(rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale),
+    openEps(pitch, coordScale) * 4,
+    coordScale,
+  );
+}
+
 export function roomWallProfile(
   rooms: any[],
   roomId: string,
@@ -1558,13 +1772,104 @@ export function innerContourForRoom(
   if (!walls?.length) return poly.map((p) => [p[0], p[1]]);
   const pr = roomWallProfile(rooms, roomId, walls, openCuts, pitch, cellCm, gridPitch, coordScale);
   if (!pr || !pr.offsets.some((o) => o > 0)) return poly.map((p) => [p[0], p[1]]);
-  return insetContour(pr.poly, pr.offsets) || poly.map((p) => [p[0], p[1]]);
+  const multiWallNodes = multiWallNodesForGeometry(
+    rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale,
+  );
+  return insetContour(pr.poly, pr.offsets, multiWallNodes)
+    || poly.map((p) => [p[0], p[1]]);
 }
 
 function closedRing(poly: number[][]): number[][][] {
   const ring = poly.map((p) => [p[0], p[1]]);
   ring.push([poly[0][0], poly[0][1]]);
   return [ring];
+}
+
+interface MultiWallRoomRing {
+  outset: number[][];
+  inset: number[][] | null;
+}
+
+/** Excess pairwise overlap triangles removed to expose the straight bevel. */
+export function multiWallBevelTriangles(
+  map: MultiWallNodeMap | null | undefined,
+): number[][][] {
+  if (!map) return [];
+  const triangles: number[][][] = [];
+  for (const node of map.nodes) {
+    for (let i = 0; i < node.rays.length; i++) {
+      const a = node.rays[i], b = node.rays[(i + 1) % node.rays.length];
+      const angleA = Math.atan2(a.u[1], a.u[0]);
+      let angleB = Math.atan2(b.u[1], b.u[0]);
+      while (angleB <= angleA) angleB += Math.PI * 2;
+      const gap = angleB - angleA;
+      if (!(gap > 1e-9) || gap >= Math.PI - 1e-9) continue;
+      const nA = [-a.u[1], a.u[0]];
+      const nB = [-b.u[1], b.u[0]];
+      const pA = [
+        node.point[0] + nA[0] * a.halfDepth,
+        node.point[1] + nA[1] * a.halfDepth,
+      ];
+      const pB = [
+        node.point[0] - nB[0] * b.halfDepth,
+        node.point[1] - nB[1] * b.halfDepth,
+      ];
+      const hit = lineIntersect(pA, a.u, pB, b.u);
+      if (!hit) continue;
+      const distance = Math.hypot(
+        hit[0] - node.point[0], hit[1] - node.point[1],
+      );
+      if (!Number.isFinite(distance) || distance <= node.limit) continue;
+      const triangle = stableJunctionPatch([pA, pB, hit], map.coordinateScale);
+      if (triangle) triangles.push(triangle);
+    }
+  }
+  return triangles;
+}
+
+function bevelMultiWallBody(body: any, map: MultiWallNodeMap): any {
+  if (!body || !map.nodes.length) return body;
+  let cuts: any = null;
+  for (const triangle of multiWallBevelTriangles(map)) {
+    try {
+      const piece = closedRing(triangle) as any;
+      cuts = cuts ? union(cuts, piece) : piece;
+    } catch {
+      // Keep other valid local cuts; one bad candidate cannot erase the pass.
+    }
+  }
+  if (!cuts) return body;
+  try {
+    return difference(body, cuts);
+  } catch {
+    // Polyclip can reject a valid aggregate even when each local candidate is
+    // usable. Retry one-by-one so one unstable corner cannot suppress the
+    // bevels at every other independent node.
+    let recovered = body;
+    for (const triangle of multiWallBevelTriangles(map)) {
+      try {
+        recovered = difference(recovered, closedRing(triangle) as any);
+      } catch {
+        // Keep the last valid body and isolate this candidate only.
+      }
+    }
+    return recovered;
+  }
+}
+
+function bevelMultiWallPaper(
+  paper: any,
+  centre: any,
+  map: MultiWallNodeMap,
+): any {
+  const beveled = bevelMultiWallBody(paper, map);
+  try {
+    // Paper is the complete room footprint. Interior bevel cuts expose floor,
+    // not the scene background, so the centre union must always remain solid.
+    return union(centre, beveled);
+  } catch {
+    return paper;
+  }
 }
 
 /**
@@ -1714,27 +2019,35 @@ function exteriorEnvelopeGeometry(
   cellCm: number,
   gridPitch: number,
   coordScale: number,
+  sharedMultiWallNodes?: MultiWallNodeMap | null,
 ): ExteriorEnvelopeGeometry | null {
-  const polys = (rooms || []).map(roomPoly).filter((p): p is number[][] => !!p && p.length >= 3);
+  const polys = (rooms || []).map(roomPoly)
+    .filter((p): p is number[][] => !!p && p.length >= 3);
   if (!polys.length) return null;
   let centre: any = union(closedRing(polys[0]) as any);
   for (let i = 1; i < polys.length; i++) centre = union(centre, closedRing(polys[i]) as any);
 
-  const outer = wallIntervals(
+  const intervals = wallIntervals(
     rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale,
-  ).filter((iv) => iv.kind === 'outer' && iv.half > 0);
+  );
+  const outer = intervals.filter((iv) => iv.kind === 'outer' && iv.half > 0);
   const eps = openEps(pitch, coordScale) * 4;
+  const multiWallNodes = sharedMultiWallNodes
+    || buildMultiWallNodeMap(intervals, eps, coordScale);
   let shell: any = null;
   for (const ring of geometryRings(centre)) {
     const profile = exteriorBoundaryProfile(ring, outer, eps);
     if (!profile || !profile.offsets.some((o) => o > 0)) continue;
-    const outset = outsetContour(profile.poly, profile.offsets);
-    const inset = insetContour(profile.poly, profile.offsets);
+    const outset = outsetContour(profile.poly, profile.offsets, multiWallNodes);
+    const inset = insetContour(profile.poly, profile.offsets, multiWallNodes);
     if (!outset || !inset) continue;
     const piece = difference(closedRing(outset) as any, closedRing(inset) as any);
     shell = shell ? union(shell, piece) : piece;
   }
-  return { centre, shell: shell || [] };
+  return {
+    centre,
+    shell: shell || [],
+  };
 }
 
 /**
@@ -1753,13 +2066,19 @@ export function floorFootprintGeometry(
   coordScale = 1,
 ): any | null {
   try {
-    const exterior = exteriorEnvelopeGeometry(
+    const multiWallNodes = multiWallNodesForGeometry(
       rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale,
     );
+    const exterior = exteriorEnvelopeGeometry(
+      rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale, multiWallNodes,
+    );
     if (!exterior) return [];
-    return exterior.shell?.length
+    const paper = exterior.shell?.length
       ? union(exterior.centre, exterior.shell)
       : exterior.centre;
+    return multiWallNodes.nodes.length
+      ? bevelMultiWallPaper(paper, exterior.centre, multiWallNodes)
+      : paper;
   } catch {
     return null;
   }
@@ -1803,6 +2122,7 @@ export function virtualJunctionPatches(
   cellCm: number,
   gridPitch: number,
   coordScale: number,
+  sharedMultiWallNodes?: MultiWallNodeMap | null,
 ): number[][][] {
   if (!walls?.length || !openCuts?.length) return [];
   const eps = openEps(pitch, coordScale) * 4;
@@ -1813,6 +2133,8 @@ export function virtualJunctionPatches(
   }
   const intervals = [...unique.values()];
   if (intervals.length < 2) return [];
+  const multiWallNodes = sharedMultiWallNodes
+    || buildMultiWallNodeMap(intervals, eps);
 
   const nodes: number[][] = [];
   for (const cut of openCuts) {
@@ -1850,8 +2172,31 @@ export function virtualJunctionPatches(
         const pb = [v[0] - b.u[0] * db, v[1] - b.u[1] * db];
         const far = [pa[0] + pb[0] - v[0], pa[1] + pb[1] - v[1]];
         const maxHalf = Math.max(a.iv.half, b.iv.half, 1e-9);
-        if (Math.hypot(far[0] - v[0], far[1] - v[1]) > MITRE_LIMIT * maxHalf) continue;
-        out.push(cross > 0 ? [v.slice(), pa, far, pb] : [v.slice(), pb, far, pa]);
+        const multiNode = multiWallNodeAt(multiWallNodes, v);
+        const limit = multiNode?.limit ?? MITRE_LIMIT * maxHalf;
+        const farDistance = Math.hypot(far[0] - v[0], far[1] - v[1]);
+        let patch: number[][];
+        if (farDistance <= limit) {
+          patch = cross > 0 ? [v.slice(), pa, far, pb] : [v.slice(), pb, far, pa];
+        } else if (multiNode) {
+          const nA = [-a.u[1], a.u[0]];
+          const nB = [-b.u[1], b.u[0]];
+          const sign = cross < 0 ? 1 : -1;
+          const edgeA = [
+            v[0] + nA[0] * a.iv.half * sign,
+            v[1] + nA[1] * a.iv.half * sign,
+          ];
+          const edgeB = [
+            v[0] - nB[0] * b.iv.half * sign,
+            v[1] - nB[1] * b.iv.half * sign,
+          ];
+          patch = cross > 0 ? [v.slice(), edgeA, edgeB] : [v.slice(), edgeB, edgeA];
+        } else {
+          // Preserve the exact two-ray contract: an over-limit legacy mitre
+          // produces no virtual patch, just as before #249.
+          continue;
+        }
+        if (Math.abs(signedArea(patch)) > eps * eps) out.push(patch);
       }
     }
   }
@@ -1873,12 +2218,15 @@ export function wallBodyRings(
 ): WallBodyPath[] {
   if (!walls?.length) return [];
   const out: WallBodyPath[] = [];
+  const multiWallNodes = multiWallNodesForGeometry(
+    rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale,
+  );
   for (const room of rooms || []) {
     if (!room?.id) continue;
     const pr = roomWallProfile(rooms, room.id, walls, openCuts, pitch, cellCm, gridPitch, coordScale);
     if (!pr || pr.poly.length < 3 || !pr.offsets.some((o) => o > 0)) continue;
-    const outset = outsetContour(pr.poly, pr.offsets);
-    const inset = insetContour(pr.poly, pr.offsets);
+    const outset = outsetContour(pr.poly, pr.offsets, multiWallNodes);
+    const inset = insetContour(pr.poly, pr.offsets, multiWallNodes);
     if (!outset || !inset) continue;
     const d = `${polyToPath(outset)} ${polyToPath(reversePoly(inset))}`;
     let key = '';
@@ -1929,15 +2277,18 @@ export function wallBodiesGeometry(
   extraBodies: number[][][] = [],
 ): { geom: any; paperGeom: any; depthUnits: number; openingIndex: OpeningWallIndex | null } | null {
   if (!walls?.length && !extraBodies.length) return null;
-  const roomRings: { outset: number[][]; inset: number[][] | null }[] = [];
+  const roomRings: MultiWallRoomRing[] = [];
+  const multiWallNodes = multiWallNodesForGeometry(
+    rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale,
+  );
   let maxDepth = 0;
   for (const room of rooms || []) {
     if (!room?.id) continue;
     const pr = roomWallProfile(rooms, room.id, walls, openCuts, pitch, cellCm, gridPitch, coordScale);
     if (!pr || pr.poly.length < 3 || !pr.offsets.some((o) => o > 0)) continue;
     for (const o of pr.offsets) if (o > 0) maxDepth = Math.max(maxDepth, o * 2);
-    const outC = outsetContour(pr.poly, pr.offsets);
-    const inC = insetContour(pr.poly, pr.offsets);
+    const outC = outsetContour(pr.poly, pr.offsets, multiWallNodes);
+    const inC = insetContour(pr.poly, pr.offsets, multiWallNodes);
     if (!outC) continue;
     roomRings.push({ outset: outC, inset: inC });
   }
@@ -1957,20 +2308,23 @@ export function wallBodiesGeometry(
     }
   }
   const junctions = virtualJunctionPatches(
-    rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale,
+    rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale, multiWallNodes,
   );
   const openingIndex = openings.length
     ? openingWallIndex(rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale)
     : null;
   try {
     const exterior = exteriorEnvelopeGeometry(
-      rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale,
+      rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale, multiWallNodes,
     );
     // Paper and masonry share this one structural pass. Renderers cache the
     // returned pair, so a live HA state update never repeats exterior topology.
-    const paperGeom = exterior
+    const rawPaperGeom = exterior
       ? (exterior.shell?.length ? union(exterior.centre, exterior.shell) : exterior.centre)
       : [];
+    const paperGeom = multiWallNodes.nodes.length && exterior
+      ? bevelMultiWallPaper(rawPaperGeom, exterior.centre, multiWallNodes)
+      : rawPaperGeom;
     const bodyOf = (ring: typeof roomRings[number]): any => {
       const outset: any = closedRing(ring.outset);
       return ring.inset ? difference(outset, closedRing(ring.inset) as any) : outset;
@@ -2010,6 +2364,8 @@ export function wallBodiesGeometry(
     if (body && exterior) body = intersection(body, exterior.centre);
     if (exterior?.shell?.length)
       body = body ? union(body, exterior.shell) : exterior.shell;
+    if (body && multiWallNodes.nodes.length)
+      body = bevelMultiWallBody(body, multiWallNodes);
     // cut opening tunnels (axis-aligned to opening angle)
     for (const o of openings) {
       if (!(o.length > 0)) continue;
@@ -2180,7 +2536,11 @@ export function paperOutwardOffsets(
  * Expand a polygon outward by per-edge offsets (mirror of inset with flipped
  * normals). Used for paper under shared thick walls.
  */
-export function outsetContour(poly: number[][], offsets: number[]): number[][] | null {
+export function outsetContour(
+  poly: number[][],
+  offsets: number[],
+  multiWallNodes?: MultiWallNodeMap | null,
+): number[][] | null {
   const n = poly?.length || 0;
   if (n < 3 || offsets.length !== n) return null;
   if (offsets.every((o) => !(o > 0))) return poly.map((p) => [p[0], p[1]]);
@@ -2233,9 +2593,11 @@ export function outsetContour(poly: number[][], offsets: number[]): number[][] |
     }
     const hit = lineIntersect(pA, uA, pB, uB);
     const maxO = Math.max(oA, oB, 1e-9);
+    const joinLimit = multiWallNodeAt(multiWallNodes, poly[i])?.limit
+      ?? MITRE_LIMIT * maxO;
     if (hit) {
       const dist = Math.hypot(hit[0] - poly[i][0], hit[1] - poly[i][1]);
-      if (dist <= MITRE_LIMIT * maxO) {
+      if (Number.isFinite(dist) && dist <= joinLimit) {
         out.push(hit);
         continue;
       }
@@ -2270,9 +2632,15 @@ export function paperRoomShapesWithWalls(
       rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale,
     );
     if (exterior) {
-      const paper = exterior.shell?.length
+      const rawPaper = exterior.shell?.length
         ? union(exterior.centre, exterior.shell)
         : exterior.centre;
+      const multiWallNodes = multiWallNodesForGeometry(
+        rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale,
+      );
+      const paper = multiWallNodes.nodes.length
+        ? bevelMultiWallPaper(rawPaper, exterior.centre, multiWallNodes)
+        : rawPaper;
       const path = polyclipToPathD(paper);
       if (path) return [{ path }];
     }
