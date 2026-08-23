@@ -150,10 +150,17 @@ Paper покрывает canonical masonry и room centre, но не маски�
 
 1. задаётся bounded local window, пересекающее все incident strips за join;
 2. классифицируются physical fill и пустота реальным geometry/SVG API;
-3. пустые samples, связанные с границей окна или с объявленным exterior
-   sector, считаются внешним фоном;
+3. пустые samples считаются внешним фоном только тогда, когда их компонент
+   связности достигает границы local window, не пересекая вычисленный union
+   конечных incident ray strips и node core;
 4. оставшиеся связные компоненты внутри required-solid envelope — holes;
 5. ожидаемое число holes для непрерывного T/X node равно нулю.
+
+Exterior здесь не назначается fixture-аннотацией. Он вычисляется из той же
+finite physical geometry и связности пустого пространства; поэтому тест не
+может «объявить» запертую полость допустимым сектором. Discarded wedge #249
+проходит классификацию только если у него действительно есть путь к границе
+окна, а не по заранее записанному исключению.
 
 Pure vector test дополнительно проверяет polygon rings/area, browser inventory
 проверяет фактический path после рендера. Raster pixel threshold не заменяет ни
@@ -205,11 +212,17 @@ Existing `discardedWedgeProbe` остаётся пустым; geometry не вы
 внутри стены. `MITRE_LIMIT`/`MULTI_WALL_JOIN_LIMIT` не меняются без отдельного
 решения.
 
+**Доказательство:** существующий #249 vector unit плюс новая проверка
+connected-component inventory в `test/wall-thickness.test.mjs`.
+
 ### AC3. #261 и #271 не регрессируют
 
 `retainedWedgeProbe` #261 заполнен в masonry/paper и не становится clean floor.
 Finite short ray не удлиняется ради закрытия hole. Zero-depth interval не
 материализуется. Existing #197 failure-isolation остаётся зелёным.
+
+**Доказательство:** существующие #197/#249/#261 и finite-ray #271 unit,
+mutation и targeted smoke probes.
 
 ### AC4. Browser surfaces показывают один непрерывный узел
 
@@ -217,6 +230,9 @@ Targeted production-bundle smoke проверяет hole inventory настоя�
 `isPointInFill()` для Plan/View/kiosk и Static. Hidden Iso source и light/sun
 barriers не имеют прохода/разрыва. Theme, hover и HA update не меняют
 structural fingerprint.
+
+**Доказательство:** targeted production-bundle multiwall/junction smoke с
+настоящим SVG `isPointInFill()` и geometry inventory для Iso/barriers.
 
 ### AC5. Golden больше не может принять белый клин
 
@@ -232,17 +248,26 @@ structural fingerprint.
 не сохраняется ради зелёного теста. Если не слита, реализация переносит её
 полезный inventory без дублирующих механизмов.
 
+**Доказательство:** `demo/golden/harness.mjs`, matrix scenarios и
+`test/golden-matrix.test.mjs`; targeted Linux semantic golden verify.
+
 ### AC6. Мутант воспроизводит слепой класс
 
 Mutation возвращает текущую pairwise реконструкцию/один из holes. AC1 или AC5
 обязаны падать. Отдельно доказывается, что single retained/discarded probes
 могут остаться зелёными, то есть новый inventory действительно сильнее.
 
+**Доказательство:** отдельная исполняемая запись `scripts/mutation-gate.mjs`,
+которая обязана покрасить AC1/AC5 при зелёных legacy single-point probes.
+
 ### AC7. Privacy и determinism
 
 Полные пользовательские экспорты и имена комнат не коммитятся. Permutations,
 reversed intervals, повторный расчёт и оба coordinate scales дают одинаковые
 semantic outcomes без мутации input.
+
+**Доказательство:** анонимные minimized table-driven units с deep-equal
+permutation/scale signatures и проверкой неизменности сериализованного input.
 
 ### AC8. Локальные гейты реализации
 
