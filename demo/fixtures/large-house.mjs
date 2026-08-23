@@ -3,6 +3,8 @@
  * visual-regression tooling. Nothing here depends on a real HA installation.
  */
 
+import { fixtureWallKey } from './wall-key.mjs';
+
 const FLOOR_COUNT = 3;
 const ROOMS_PER_FLOOR = 20;
 const DEVICE_COUNT = 200;
@@ -213,8 +215,14 @@ export const makeLargeHouseFixture = () => {
       cell_cm: 5,
       settings: { fill_mode: 'glow', show_borders: true, show_names: true },
       rooms,
-      walls: segments.map((wall, index) => ({
-        key: `perf-wall-${floor}-${index}`, cm: 15, a: wall.a, b: wall.b,
+      // The key must be the real one. A label like `perf-wall-0-3` does not
+      // parse as coordinates, so neither the exact match nor the tolerant
+      // fallback in lookupWall finds the record: every solid edge of this
+      // fixture resolved to zero thickness and the plan carried no wall bodies
+      // at all, while the same fixture backs four golden scenes and all six
+      // performance budgets (#260).
+      walls: segments.map((wall) => ({
+        key: fixtureWallKey(wall.a, wall.b), cm: 15, a: wall.a, b: wall.b,
       })),
       openings: makeOpenings(floor, segments, openingCount),
       partitions: makePartitions(floor, rooms, partitionCount),

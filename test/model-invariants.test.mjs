@@ -128,11 +128,16 @@ test('все модели, которые возит с собой проект,
     assert.deepEqual(found.map((v) => `${v.kind}:${v.owner} → ${v.reference}`), [],
       `${label}: модель, нарушающая инварианты, обесценивает и golden, и смоки на ней`);
 
-    // Compatibility-key debt remains visible as notes, while exact `a/b`
-    // proves every shipped record resolvable before midpoint parsing.
-    const notes = [];
-    const keys = checkWallKeys(fixture.config, { notes });
-    assert.deepEqual(keys, [], `${label}: exact wall entry declared unresolvable`);
+    // Долг совместимых ключей на dev виден наблюдениями, а нарушением считается
+    // только объявленная неразрешимой запись с точными концами. Для фикстур
+    // проекта требование строже: ни нарушений, ни наблюдений. Фикстура, чей
+    // ключ не равен ключу своего ребра, держится на запасе и на точных концах,
+    // то есть на удаче, — а на ней стоят golden-эталоны и перф-бюджеты (#260).
+    const keyNotes = [];
+    assert.deepEqual(checkWallKeys(fixture.config, { notes: keyNotes }), [],
+      `${label}: запись толщины объявлена неразрешимой (#258)`);
+    assert.deepEqual(keyNotes.map((n) => n.owner), [],
+      `${label}: ключ записи не равен ключу своего ребра (#260)`);
   }
 });
 

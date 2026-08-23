@@ -4,22 +4,13 @@ const round = (value) => Number(value.toFixed(6));
 
 // Golden fixtures must use the same persisted wall-key contract as real plan
 // data. Arbitrary labels make every configured wall look virtual to the
-// renderer, which lets a visually ineffective baseline pass unnoticed.
-const WALL_KEY_PITCH = 1 / 240;
-export const fixtureWallKey = (a, b) => {
-  const quantize = (value) => Math.round(value / WALL_KEY_PITCH) * WALL_KEY_PITCH;
-  const mx = quantize((a[0] + b[0]) / 2);
-  const my = quantize((a[1] + b[1]) / 2);
-  let dx = b[0] - a[0], dy = b[1] - a[1];
-  const length = Math.hypot(dx, dy);
-  if (length < 1e-12) { dx = 1; dy = 0; }
-  else { dx /= length; dy /= length; }
-  if (dx < -1e-12 || (Math.abs(dx) <= 1e-12 && dy < 0)) { dx = -dx; dy = -dy; }
-  let angle = Math.atan2(dy, dx);
-  if (angle < 0) angle += Math.PI;
-  const bucket = Math.round(angle * 1800) / 1800;
-  return `${mx.toFixed(4)},${my.toFixed(4)}@${bucket.toFixed(4)}`;
-};
+// renderer, which lets a visually ineffective baseline pass unnoticed — and a
+// key that merely differs in precision is found only through the tolerant
+// fallback in lookupWall, which is luck rather than contract (#260). The
+// formula lives in one place for every fixture and is pinned to the product one
+// by test/fixture-wall-key.test.mjs.
+export { fixtureWallKey } from './wall-key.mjs';
+import { fixtureWallKey } from './wall-key.mjs';
 
 const uniqueEdges = (rooms) => {
   const edges = new Map();
