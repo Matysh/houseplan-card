@@ -22,6 +22,10 @@ import { fileURLToPath } from 'node:url';
 /** Доля шага сетки, в пределах которой запись считается лежащей на ребре. */
 const EDGE_TOLERANCE = 0.004;
 
+/** Решётка редактора: та же, что `GRID_N` в `src/space-geometry.ts`. */
+const GRID_N = 240;
+const GRID_STEP_N = 1 / GRID_N;
+
 const isFiniteNumber = (value) => typeof value === 'number' && Number.isFinite(value);
 const point = (value) => (Array.isArray(value) && isFiniteNumber(value[0])
   && isFiniteNumber(value[1]) ? [value[0], value[1]] : null);
@@ -185,6 +189,95 @@ export function checkWallRecordsPreserved(before, after, { allowClear = false } 
   return violations;
 }
 
+/**
+ * Копия ключа отрезка из `src/wall-thickness.ts`.
+ *
+ * Дублировать формулу приходится: модуль сознательно читает сырой JSON без
+ * сборки, а `wallKey` живёт в TypeScript. Дубль величины, видимой в двух
+ * местах, — ровно тот дефект, который проект ловил трижды (#233, #234, #258),
+ * поэтому копия прикреплена тестом: `test/model-invariants.test.mjs` берёт
+ * настоящий `wallKey` из `test-build` и сверяет с этой копией на наборе
+ * отрезков, включая попадающие в ничью округления. Разойдутся — покраснеет.
+ */
+const quantise = (value, pitch) => (!(pitch > 0) || !Number.isFinite(value)
+  ? value : Math.round(value / pitch) * pitch);
+
+const segmentDirection = (a, b) => {
+  let dx = b[0] - a[0], dy = b[1] - a[1];
+  const length = Math.hypot(dx, dy);
+  if (length < 1e-12) return [1, 0];
+  dx /= length; dy /= length;
+  if (dx < -1e-12 || (Math.abs(dx) <= 1e-12 && dy < 0)) return [-dx, -dy];
+  return [dx, dy];
+};
+
+export function wallKey(a, b, pitch = GRID_STEP_N) {
+  const mx = quantise((a[0] + b[0]) / 2, pitch);
+  const my = quantise((a[1] + b[1]) / 2, pitch);
+  const [dx, dy] = segmentDirection(a, b);
+  let angle = Math.atan2(dy, dx);
+  if (angle < 0) angle += Math.PI;
+  const bucket = Math.round(angle * 1800) / 1800;
+  const precision = pitch > 0 && pitch < 0.01 ? 6 : pitch < 1 ? 4 : 2;
+  return `${mx.toFixed(precision)},${my.toFixed(precision)}@${bucket.toFixed(4)}`;
+}
+
+/**
+ * Вершина на ближайшем узле решётки.
+ *
+ * Через индекс узла, а не делением: `Math.round(v * 240) / 240` даёт точное
+ * `k/240`, тогда как умножение на шаг накапливает разницу в последних битах —
+ * а весь этот инвариант живёт именно там.
+ */
+export const latticePoint = (p) => [
+  Math.round(p[0] * GRID_N) / GRID_N,
+  Math.round(p[1] * GRID_N) / GRID_N,
+];
+
+/**
+ * Инвариант 3: ключ записи толщины — это ключ решёточного ребра (#258, #259).
+ *
+ * Сравниваются строки, без допусков: допуск здесь и был причиной промаха.
+ * `checkReferences` проверяет попадание середины на ребро с точностью 0.004,
+ * а сдвиг ключа на один шаг решётки равен 0.00417 — проверка стояла ровно на
+ * границе своего же допуска.
+ *
+ * Ключ считается от концов, ПРИВЕДЁННЫХ К УЗЛАМ, а не от сырых. Разница не
+ * косметическая, и первая формулировка в #258 была из-за неё неверной: до
+ * дефекта ключ `0.887500,0.200000@1.5706` не совпадал с ключом от сырых концов
+ * записи, и план при этом рисовался верно. Рендер ключует от узловой формы,
+ * поэтому сверять надо с ней; форма от сырых концов помечает исправное
+ * состояние и пропускает дефектное — проверено на паре экспортов «до/после».
+ *
+ * Причина, по которой одна вершина даёт два разных ключа: `wallKey` квантует
+ * середину через `Math.round`, а у стены нечётной длины в шагах середина
+ * попадает ровно на границу округления. `83/240` даёт 47.5 шага и бакет 48,
+ * записанное в конфиге `0.345833333` — 47.49999996 и бакет 47.
+ */
+export function checkWallKeys(config) {
+  const violations = [];
+  for (const space of Array.isArray(config?.spaces) ? config.spaces : []) {
+    const spaceId = String(space?.id ?? '?');
+    for (const wall of space?.walls || []) {
+      const a = point(wall?.a), b = point(wall?.b);
+      // Запись только с ключом — совместимость: проверять нечем, и это не повод
+      // объявлять её сломанной.
+      if (!a || !b) continue;
+      if (typeof wall?.key !== 'string' || !wall.key) continue;
+      const expected = wallKey(latticePoint(a), latticePoint(b));
+      if (wall.key !== expected) {
+        violations.push({
+          invariant: 'wall_keys', kind: 'wall_key', owner: `${spaceId}:${wall.key}`,
+          reference: expected,
+          detail: `ключ записи ${wall?.cm} см не равен ключу решёточного ребра —`
+            + ' запись не найдётся при отрисовке',
+        });
+      }
+    }
+  }
+  return violations;
+}
+
 /** Разобрать любой из трёх форматов, в которых приходит конфигурация. */
 export function readModel(text) {
   const parsed = JSON.parse(text);
@@ -198,7 +291,8 @@ function report(violations, notes = []) {
     const tail = notes.length
       ? `\nНаблюдений (не нарушения): ${notes.length} — позиции без записи маркера.`
       : '';
-    return 'Инварианты выполнены: неразрешимых ссылок не найдено.' + tail;
+    return 'Инварианты выполнены: ссылки разрешимы, ключи записей толщины на месте.'
+      + tail;
   }
   const lines = [`Нарушений: ${violations.length}.`, ''];
   const byKind = new Map();
@@ -214,6 +308,7 @@ function report(violations, notes = []) {
     wall_carrier: 'Записи толщины вне рёбер и перегородок',
     open_span_carrier: 'Виртуальные проёмы вне границ комнат',
     lost: 'Потерянные записи толщины',
+    wall_key: 'Ключи записей толщины не совпадают с ребром решётки',
   };
   for (const [kind, list] of byKind) {
     lines.push(`${titles[kind] || kind}: ${list.length}`);
@@ -239,7 +334,10 @@ function main(argv) {
   const model = readModel(readFileSync(configPath, 'utf8'));
   if (arg('--layout')) model.layout = readModel(readFileSync(arg('--layout'), 'utf8')).layout;
   const notes = [];
-  const violations = checkReferences(model, { notes });
+  const violations = [
+    ...checkReferences(model, { notes }),
+    ...checkWallKeys(model.config),
+  ];
   if (argv.includes('--json')) console.log(JSON.stringify({ violations, notes }, null, 2));
   else console.log(report(violations, notes));
   // Код возврата — не приговор конфигурации пользователя, а сигнал для CI.

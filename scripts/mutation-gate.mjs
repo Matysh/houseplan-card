@@ -231,6 +231,31 @@ export const MUTANTS = [
     }],
   },
   {
+    id: 'invariant-keys-from-raw-endpoints',
+    guard: 'node --test --test-name-pattern="ключ, пересчитанный от сырых концов" '
+      + 'test/model-invariants.test.mjs',
+    because: 'ключ считается от концов НА РЕШЁТКЕ, а не от сырых: от сырых проверка '
+      + 'помечает исправное состояние и пропускает дефектное — ровно этой ошибкой была '
+      + 'первая формулировка в #258',
+    patches: [{
+      file: 'scripts/model-invariants.mjs',
+      find: '      const expected = wallKey(latticePoint(a), latticePoint(b));',
+      replace: '      const expected = wallKey(a, b);',
+    }],
+  },
+  {
+    id: 'invariant-keys-tolerate-one-step',
+    guard: 'node --test --test-name-pattern="детектор ключей умеет падать" '
+      + 'test/model-invariants.test.mjs',
+    because: 'смысл проверки — сравнение строк без допусков: допуск здесь и был причиной '
+      + 'промаха, потому что сдвиг ключа на шаг решётки равен допуску checkReferences',
+    patches: [{
+      file: 'scripts/model-invariants.mjs',
+      find: '      if (wall.key !== expected) {',
+      replace: '      if (false) {',
+    }],
+  },
+  {
     id: 'invariant-accepts-dead-space-reference',
     guard: 'node --test --test-name-pattern="маркер на удалённое пространство" '
       + 'test/model-invariants.test.mjs',

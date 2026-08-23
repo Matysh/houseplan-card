@@ -21,7 +21,18 @@ carry exact endpoints `a` / `b` in normalised plan coordinates. Config always
 stores centimetres. Old `{key, cm}` data remains readable and is upgraded when
 the affected boundary is edited. Open boundaries refuse thickness. One physical
 stretch has one thickness (atomic collinear spans when neighbours overlap only
-partially). Exact endpoints make a thickness boundary independent of whichever
+partially). **The key is computed from endpoints snapped to the lattice**
+(`Math.round(v · 240) / 240`), never from the raw stored numbers: `wallKey`
+quantises the midpoint with `Math.round`, so a wall whose length is an odd
+number of grid steps has its midpoint exactly on a rounding tie, and the two
+representations of one vertex — the exact node `83/240` and a stored
+`0.345833333` — fall on opposite sides of it. That is how #258 lost two records
+whose keys had drifted by one step. The tolerant fallback in `lookupWall` does
+not rescue such a record: its tolerance is exactly half a pitch, which is
+exactly how far a one-step key error sits from the true midpoint, so the
+comparison lands on its own boundary. `scripts/model-invariants.mjs`
+(`checkWallKeys`, #259) compares the stored key against the lattice key as
+strings, without tolerance. Exact endpoints make a thickness boundary independent of whichever
 room topology later happens to split the same straight line. Normalisation
 merges consecutive solid pieces into each maximal run of equal thickness; a
 different thickness or a virtual gap remains a real break. Likewise,
