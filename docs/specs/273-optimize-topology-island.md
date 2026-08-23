@@ -135,7 +135,7 @@ Central effective interval может наследовать thickness сосе�
 совпадающий с room polygon vertex/derived T-node другого incident edge, если:
 
 - второй endpoint не является room vertex, endpoint opening/open span или
-  endpoint другого physical axis;
+  вторым room-topology endpoint;
 - прямой parent edge продолжается через T-node своим непосредственным
   одинаковым соседом;
 - target thickness одинакова по обе стороны central interval;
@@ -152,7 +152,6 @@ Candidate сохраняется, если:
 
 - оба central endpoints являются room/topology vertices;
 - любой endpoint является opening/open-span boundary;
-- второй endpoint совпадает с отдельной room/partition/draft axis boundary;
 - target thickness слева/справа различается;
 - один сосед отсутствует/zero/open/non-collinear;
 - central длина равна или больше половины шага;
@@ -207,11 +206,17 @@ effective profile и persisted walls не содержат `15 см`/`b`; ост
 `wallBodiesGeometry()` имеет одинаковые faces по обе стороны бывшего `b` и не
 создаёт локальную ступень. Это не golden-only доказательство.
 
+**Доказательство:** focused geometry unit в `test/wall-thickness.test.mjs` на
+effective profile до/после optimizer candidate.
+
 ### AC3. Два topology endpoints сохраняются
 
 Table-driven negative fixture, где micro interval соединяет два room/T nodes,
 остаётся byte-equivalent. То же для одного opening/open-span endpoint, даже
 если neighbors случайно равны.
+
+**Доказательство:** table-driven negative unit в
+`test/plan-optimizer.test.mjs` с deep-equal persisted walls.
 
 ### AC4. Остальная negative matrix #198 остаётся зелёной
 
@@ -220,14 +225,20 @@ Table-driven negative fixture, где micro interval соединяет два r
 - missing/zero/open neighbor;
 - chain/overlapping candidates;
 - conflicting exact owners;
-- offset/perpendicular/parallel coincidence;
+- offset/perpendicular/parallel coincidence с room profiles/open cuts;
 - настоящий intentional thickness change на topology boundary.
+
+**Доказательство:** расширенная existing #198 negative unit matrix в
+`test/plan-optimizer.test.mjs`.
 
 ### AC5. Детерминизм и immutability
 
 Reversed endpoints, wall/room permutations, normalized/render scales и
 повторный вызов дают один output; inputs deep-equal до/после. Candidates не
 каскадируют.
+
+**Доказательство:** permutation/scale table unit и serialized-input snapshot в
+`test/plan-optimizer.test.mjs`.
 
 ### AC6. Preview/Apply/Undo/idempotence
 
@@ -240,16 +251,23 @@ Production-bundle smoke доказывает:
 - Undo возвращает exact исходный micro profile;
 - следующий Optimize no-op.
 
+**Доказательство:** targeted production-bundle Optimize browser smoke.
+
 ### AC7. Runtime остаётся lossless
 
 Без `optimizePlans()` `wallIntervals()`, editor и renderer сохраняют исходный
 15-см interval. Новый predicate не вызывается из Save/render helpers.
+
+**Доказательство:** source-level contract unit и существующие lossless
+wall/editor regression tests.
 
 ### AC8. Мутант ловит слишком широкий guard
 
 Mutation возвращает прежнее условие `isTopologyNode(a) || isTopologyNode(b)`
 либо отключает разрешённый single-T branch. AC1 обязан падать. Negative AC3
 остаётся зелёным на чистом коде и доказывает, что фикс не равен удалению guard.
+
+**Доказательство:** отдельная исполняемая запись `scripts/mutation-gate.mjs`.
 
 ### AC9. Локальные гейты реализации
 
@@ -316,7 +334,13 @@ micro interval можно только существующим server Undo ил
    непосредственных parent-edge соседа имеют одну `cm`.
 3. Helper может классифицировать synthetic endpoint через profile provenance,
    а не отдельный глобальный registry; конкретная структура техническая.
-4. #271 нужна независимо: renderer не должен удлинять short ray даже до
+4. Совпадение synthetic endpoint с примыканием independent partition/draft не
+   классифицируется в #273: текущий helper получает только room profile и
+   `open_spans`, а не `space.partitions`/drafts. Такое совпадение не удаляет и
+   не перемещает independent axis и меняет только `cm` central room span на
+   уже доказанную двумя соседями толщину; отдельная identity-aware защита
+   потребует расширения optimizer input и не заявляется этой задачей.
+5. #271 нужна независимо: renderer не должен удлинять short ray даже до
    обслуживания данных. #273 отвечает только за обещание Optimize.
-5. Продуктовых вопросов нет: исправляется только доказанный равными соседями
+6. Продуктовых вопросов нет: исправляется только доказанный равными соседями
    artificial breakpoint, все неоднозначные случаи сохраняются.
