@@ -6,7 +6,7 @@
   сложность 5/10 · риск 6/10
 - Issue: [#273](https://github.com/Matysh/houseplan-card/issues/273)
 - Ветка: `issue/273-optimize-topology-island`
-- Статус ТЗ: готово к ревью
+- Статус ТЗ: реализовано, готово к code review
 
 Канонические документы: `docs/SCOPE.md`, `docs/WALL-THICKNESS.md`,
 `docs/USER-GUIDE.ru.md`, `docs/CONFIG-COMPATIBILITY.md` и `docs/TESTING.md`.
