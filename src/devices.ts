@@ -1284,9 +1284,19 @@ export function buildDevices(ctx: BuildCtx): DevItem[] {
  * projection over buildDevices prevents a second, subtly different preview
  * implementation from growing beside the runtime one.
  */
-export function deviceFromMarkerDraft(ctx: Omit<BuildCtx, 'markers'> & { marker: Marker }): DevItem | null {
-  const { marker, ...base } = ctx;
-  return buildDevices({ ...base, markers: [marker] })
+export function deviceFromMarkerDraft(
+  ctx: Omit<BuildCtx, 'markers'> & {
+    marker: Marker;
+    /** The persisted roster whose tombstones/ownership also constrain the plan. */
+    siblingMarkers?: readonly Marker[];
+  },
+): DevItem | null {
+  const { marker, siblingMarkers = [], ...base } = ctx;
+  const markers = [
+    ...siblingMarkers.filter((item) => item.id !== marker.id),
+    marker,
+  ];
+  return buildDevices({ ...base, markers })
     .find((device) => device.id === marker.id) || null;
 }
 

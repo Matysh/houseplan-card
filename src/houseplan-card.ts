@@ -19899,7 +19899,7 @@ class HouseplanCard extends LitElement {
   private _markerPreviewDevice(d: NonNullable<HouseplanCard['_markerDialog']>): DevItem | null {
     const marker = this._markerDraft(d);
     if (!marker) return null;
-    const key = `${this._haRegistry.revision}\n${JSON.stringify(marker)}`;
+    const key = `${this._haRegistry.revision}\n${contentFingerprint(this._markers)}\n${JSON.stringify(marker)}`;
     if (this._markerPreviewMemo?.key === key) return this._markerPreviewMemo.device;
     const device = deviceFromMarkerDraft({
       hass: this.hass,
@@ -19908,6 +19908,7 @@ class HouseplanCard extends LitElement {
         Object.entries(this._areaToSpace).map(([area, value]) => [area, value.space]),
       ),
       marker,
+      siblingMarkers: this._markers,
       settings: this._settings,
       excluded: this._excluded,
       showAll: this._showAll,

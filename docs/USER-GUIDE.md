@@ -500,6 +500,9 @@ but only the controller's own active entities decide whether it fades. A live
 battery, Zigbee LQI or update entity therefore keeps a wireless switch neutral
 and opaque when all of its lamps are unavailable. A controller with no live own
 entity fades even if a target is on; a virtual controller is always available.
+This remains true when the same target was separately removed from the plan:
+the removed marker is not restored, but it cannot make the controller look
+offline or make its editor preview disagree with the plan.
 
 For a composite appliance with a dedicated Power switch, Power=`on` alone
 remains neutral. If Home Assistant also exposes a strict lifecycle entity such

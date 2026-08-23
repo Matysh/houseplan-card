@@ -1369,15 +1369,22 @@ separately promised workflows:
       controller is encountered first. Controller availability is independent
       (#251): live battery/LQI/update keeps it neutral and opaque when every
       target is unavailable, all unavailable own entities fade it even if a
-      target is on, and a virtual controller remains available. A fully
+      target is on, and a virtual controller remains available. A separately
+      deleted target marker also cannot turn a live wireless controller into
+      `unavailable` or make dialog preview disagree with the saved plan (#274):
+      both projections consume the complete marker roster, preserve the live
+      LQI value and become yellow only after an active target returns. A fully
       unavailable configured group shows the named singular/plural local toast
       without service, confirmation or press feedback; partial groups still
       execute silently, and a target lost after confirmation uses the same
       unavailable toast [auto: smoke_controls; unit: devices.test.mjs,
       device-presentation.test.mjs, device-toggle.test.mjs; golden:
       device-icon-state-table light/dark; mutation: controller-availability-follows-target,
-      controller-diagnostics-do-not-prove-online, unavailable-toggle-stays-silent,
-      partial-group-shows-noop-toast]
+      controller-diagnostics-do-not-prove-online,
+      wireless-controller-loses-filtered-target-role,
+      wireless-controller-preview-drops-sibling-markers,
+      unavailable-toggle-stays-silent, partial-group-shows-noop-toast; #274:
+      smoke_wireless_controller_parity]
 - [ ] Linked manual virtual light (#174): an exact #107 virtual Always-light
       with an incoming controller follows the real HA driver despite a saved
       manual off-bit. Clicking either marker operates the real relay and one HA

@@ -16,7 +16,9 @@ import {
   resolveEntityProvider,
 } from '../test-build/integration-provider.js';
 import { valueBadgeTitle, valueBadgeWriteFields } from '../test-build/device-value-badge.js';
-import { resolvedLightSources } from '../test-build/devices.js';
+import {
+  buildDevices, deviceFromMarkerDraft, resolvedLightSources,
+} from '../test-build/devices.js';
 
 const state = (entity_id, value, attributes = {}) => ({ entity_id, state: value, attributes });
 const hass = (states, entities = {}) => ({
@@ -348,6 +350,96 @@ test('issue 251 separates controller availability from controlled target status'
   assert.equal(alarm.visual.status, 'alarm');
   assert.equal(alarm.visual.availability, 'available');
   assert.ok(alarm.classes.includes('alarm'));
+});
+
+test('issue 274 keeps a wireless controller available and gives its draft the full marker roster', () => {
+  const own = [
+    'event.wall_action', 'sensor.wall_battery', 'sensor.wall_linkquality', 'update.wall',
+  ];
+  const h = hass({
+    'event.wall_action': state('event.wall_action', 'unknown'),
+    'sensor.wall_battery': state('sensor.wall_battery', '100'),
+    'sensor.wall_linkquality': state('sensor.wall_linkquality', '164'),
+    'update.wall': state('update.wall', 'off'),
+    'light.wall_group': state('light.wall_group', 'off', { friendly_name: 'Wall lights' }),
+  }, {
+    'event.wall_action': {
+      entity_id: 'event.wall_action', device_id: 'wall', platform: 'mqtt',
+    },
+    'sensor.wall_battery': {
+      entity_id: 'sensor.wall_battery', device_id: 'wall', platform: 'mqtt',
+      entity_category: 'diagnostic',
+    },
+    'sensor.wall_linkquality': {
+      entity_id: 'sensor.wall_linkquality', device_id: 'wall', platform: 'mqtt',
+      entity_category: 'diagnostic',
+    },
+    'update.wall': {
+      entity_id: 'update.wall', device_id: 'wall', platform: 'mqtt',
+      entity_category: 'config',
+    },
+    'light.wall_group': {
+      entity_id: 'light.wall_group', platform: 'group', area_id: 'kitchen',
+    },
+  });
+  h.devices.wall = {
+    id: 'wall', name: 'Wall switch', model: 'Wireless switch', area_id: 'kitchen',
+    identifiers: [['mqtt', 'wall']], entry_type: null, via_device_id: null,
+  };
+  h.areas = { kitchen: { area_id: 'kitchen', name: 'Kitchen' } };
+  const marker = {
+    id: 'wall-marker', binding: 'device:wall', tap_action: 'toggle',
+    controls: ['light.wall_group'],
+  };
+  const markers = [
+    marker,
+    { id: 'removed-group', binding: 'entity:light.wall_group', removed: true, hidden: true },
+  ];
+  const context = {
+    hass: h,
+    areaToSpace: { kitchen: 'floor' },
+    settings: { filter_seeded: true },
+    excluded: new Set(),
+    showAll: false,
+    firstSpaceId: 'floor',
+    loc: (key) => key,
+  };
+  const saved = buildDevices({ ...context, markers })
+    .find((item) => item.id === marker.id);
+  const draft = deviceFromMarkerDraft({ ...context, marker, siblingMarkers: markers });
+  assert.ok(saved);
+  assert.ok(draft);
+  assert.deepEqual(saved.entities, own);
+  assert.deepEqual(draft.entities, own);
+  assert.deepEqual(draft.controls, saved.controls, 'draft honours the same tombstones as the plan');
+
+  const savedPresentation = resolveDevicePresentation(h, saved, {
+    ...options, lightDevices: [saved],
+  });
+  const draftPresentation = resolveDevicePresentation(h, draft, {
+    ...options, designPreview: true, lightDevices: [draft],
+  });
+  for (const result of [savedPresentation, draftPresentation]) {
+    assert.deepEqual(result.visual, {
+      availability: 'available', status: 'neutral', activity: 'none',
+    });
+    assert.ok(!result.classes.includes('unavail'));
+    assert.equal(result.lqiText, '164');
+  }
+  assert.deepEqual(
+    {
+      sourceKind: draftPresentation.sourceKind,
+      visual: draftPresentation.visual,
+      classes: draftPresentation.classes,
+      lqiText: draftPresentation.lqiText,
+    },
+    {
+      sourceKind: savedPresentation.sourceKind,
+      visual: savedPresentation.visual,
+      classes: savedPresentation.classes,
+      lqiText: savedPresentation.lqiText,
+    },
+  );
 });
 
 test('passive sensor source keeps its normal scalar value and never probes marker ids', () => {

@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Wireless controllers now keep the same available/working state on the plan
+  and in the device-dialog preview when a separately deleted target marker
+  filters the configured light from the runtime roster. Live controller
+  battery/LQI/update diagnostics continue to prove that the controller is
+  online, while only an active controlled target makes it yellow
+  ([#274](https://github.com/Matysh/houseplan-card/issues/274)).
 - “Optimize plans” now removes a microscopic wall-thickness step beside a
   T-junction when the short fragment is bounded by two equal-thickness pieces
   of the same straight wall. The T-node and its perpendicular wall stay in

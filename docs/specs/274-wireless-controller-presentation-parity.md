@@ -6,7 +6,7 @@
   сложность 5/10 · риск 5/10
 - Issue: [#274](https://github.com/Matysh/houseplan-card/issues/274)
 - Ветка: `issue/274-wireless-controller-parity`
-- Статус ТЗ: готово к ревью
+- Статус ТЗ: реализовано, готово к code review
 
 Канонические документы: `docs/SCOPE.md`, `docs/ARCHITECTURE.md`,
 `docs/USER-GUIDE.md`, `docs/USER-GUIDE.ru.md`, `docs/TESTING.md` и
@@ -314,4 +314,3 @@ provenance принимается только из полного Linux workflo
    draft после пользовательской правки вправе показывать будущий результат.
 4. Точная раскладка новых lifecycle tests техническая и может быть изменена
    ревьюером при сохранении AC2/AC4 и исполняемых мутантов.
-

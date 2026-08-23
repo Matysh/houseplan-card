@@ -624,7 +624,18 @@ export function resolveDevicePresentation(
   // A controller mirrors target work, not target connectivity. Its faded
   // state describes only the bound controller; Glow/fill/statistics continue
   // to consume the unchanged target graph.
-  let visual = sources.sourceKind === 'controls'
+  // A configured controller remains a controller when every saved target is
+  // currently filtered out by a plan tombstone. In that case the source graph
+  // is deliberately empty/device-led, but falling back to the event primary
+  // would undo #251 and can produce the impossible `unavail` + live LQI face.
+  // Manual/owned light and cover faces keep their dedicated availability.
+  const configuredController = !isManualVirtualLightMarker(d.marker)
+    && persistedExternalControls(
+      d.marker?.binding, d.marker?.controls ?? d.controls, d.entities,
+    ).length > 0;
+  const controllerFace = sources.sourceKind === 'controls'
+    || (configuredController && sources.sourceKind !== 'light' && sources.sourceKind !== 'cover');
+  let visual = controllerFace
     ? { ...combined, availability: controllerAvailability(hass, d) }
     : combined;
   if (effectiveHidden) visual = { availability: 'available', status: 'neutral', activity: 'none' };

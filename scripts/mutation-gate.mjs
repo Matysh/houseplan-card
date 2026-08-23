@@ -1306,8 +1306,9 @@ export const MUTANTS = [
       + 'the focused matrix keeps own availability and target working as separate facts (#251)',
     patches: [{
       file: 'src/device-presentation.ts',
-      find: "    ? { ...combined, availability: controllerAvailability(hass, d) }",
-      replace: '    ? combined',
+      find: "  let visual = controllerFace\n"
+        + "    ? { ...combined, availability: controllerAvailability(hass, d) }",
+      replace: "  let visual = controllerFace\n    ? combined",
     }],
   },
   {
@@ -1322,6 +1323,36 @@ export const MUTANTS = [
       find: '  const live = (d.entities || []).some((eid) => {',
       replace: "  const live = (d.entities || []).filter((eid) => !eid.startsWith('sensor.') "
         + "&& !eid.startsWith('update.')).some((eid) => {",
+    }],
+  },
+  {
+    id: 'wireless-controller-loses-filtered-target-role',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="issue 274 keeps a wireless controller" '
+      + 'test/device-presentation.test.mjs',
+    because: 'a saved target tombstone may empty the runtime light graph without turning the '
+      + 'physical controller into its event-only primary; live diagnostics still prove online (#274)',
+    patches: [{
+      file: 'src/device-presentation.ts',
+      find: "  const controllerFace = sources.sourceKind === 'controls'\n"
+        + "    || (configuredController && sources.sourceKind !== 'light' && sources.sourceKind !== 'cover');",
+      replace: "  const controllerFace = sources.sourceKind === 'controls';",
+    }],
+  },
+  {
+    id: 'wireless-controller-preview-drops-sibling-markers',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="issue 274 keeps a wireless controller" '
+      + 'test/device-presentation.test.mjs',
+    because: 'the draft must inherit the same tombstones and ownership roster as the saved plan; '
+      + 'isolating it restores the plan/preview contradiction (#274)',
+    patches: [{
+      file: 'src/devices.ts',
+      find: '  const markers = [\n'
+        + '    ...siblingMarkers.filter((item) => item.id !== marker.id),\n'
+        + '    marker,\n'
+        + '  ];',
+      replace: '  const markers = [marker];',
     }],
   },
   {

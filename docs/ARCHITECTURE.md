@@ -1132,6 +1132,13 @@ its configured space.
   group has no executable unavailable/missing/HA-disabled target produces the
   card's standard local explanatory toast and no service/press feedback;
   partial groups keep executing their available subset.
+  The persisted external-target list also keeps the physical-controller role
+  when every runtime target was filtered by another marker's deletion
+  tombstone: own live diagnostics still decide availability instead of an
+  event-primary fallback. Marker-dialog drafts are projected through
+  `buildDevices` with the complete persisted marker roster, replacing only the
+  edited marker. Consequently target ownership/tombstones and controller
+  presentation are identical on the committed plan and in preview.
 - **Universal device action** (#94): `src/device-toggle.ts` is the only authority
   for toggle origin, exact target, capability/security filtering, next effect
   and service command. The dialog hint, click path, confirmation re-resolution
