@@ -59,6 +59,7 @@ from .virtual_lights import (
     async_virtual_light_snapshot,
 )
 from .registry_snapshot import import_registry_snapshot
+from .projection import project_config, project_layout
 from .validation import (
     CONFIG_SCHEMA, LAYOUT_SCHEMA, MAX_CONFIG_BYTES, MAX_PLAN_BYTES,
     PLAN_EXTENSIONS, POS_SCHEMA, MarkerControlError, OpeningPassageError,
@@ -529,10 +530,15 @@ def _live_layout(config: dict[str, Any], layout: dict[str, Any]) -> dict[str, An
     return live_layout(config, layout)
 
 
-@websocket_api.websocket_command({vol.Required("type"): "houseplan/layout/get"})
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): "houseplan/layout/get",
+        vol.Optional("space_id"): vol.All(str, vol.Length(min=1, max=200)),
+    }
+)
 @websocket_api.async_response
 async def ws_layout_get(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
-    """Return the saved layout."""
+    """Return the saved layout, optionally narrowed to one space (#256)."""
     rt = _runtime(hass, connection, msg["id"])
     if rt is None:
         return
@@ -540,7 +546,9 @@ async def ws_layout_get(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
     config_data = await rt.config_store.async_load() or {}
     connection.send_result(
         msg["id"], {
-            "layout": data.get("layout", {}),
+            "layout": project_layout(
+                data.get("layout", {}), space_id=msg.get("space_id"),
+            ),
             "rev": int(data.get("rev", 0)),
             "can_optimize_undo": _optimizer_backup_is_current(config_data, data),
             "undo_kind": _undo_kind(config_data, data),
@@ -1081,7 +1089,20 @@ async def ws_layout_delete(hass: HomeAssistant, connection, msg: dict[str, Any])
 # ---------------- space configuration ----------------
 
 
-@websocket_api.websocket_command({vol.Required("type"): "houseplan/config/get"})
+_PROJECTION_FIELDS = vol.All([vol.All(str, vol.Length(min=1, max=100))], vol.Length(max=50))
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): "houseplan/config/get",
+        # Проекция ответа (#256). Все параметры необязательны, и без них ответ
+        # прежний — это главный инвариант: ни один существующий клиент не
+        # должен заметить появление этой возможности.
+        vol.Optional("space_id"): vol.All(str, vol.Length(min=1, max=200)),
+        vol.Optional("fields"): _PROJECTION_FIELDS,
+        vol.Optional("marker_fields"): _PROJECTION_FIELDS,
+    }
+)
 @websocket_api.async_response
 async def ws_config_get(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
     """Return the configuration, its revision, and whether this user may write.
@@ -1089,6 +1110,11 @@ async def ws_config_get(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
     `can_write` is the single source of truth for the card's editor chrome
     (audit P0-4): the UI must mirror `may_write`, not a hard-coded is_admin
     check that drifted from the integration option.
+
+    Optional `space_id`/`fields`/`marker_fields` narrow ONLY the returned
+    document (#256). Revisions and capability flags are computed from the whole
+    stored configuration: a caller that asked for one floor must not receive a
+    revision that describes only that floor.
     """
     rt = _runtime(hass, connection, msg["id"])
     if rt is None:
@@ -1112,7 +1138,12 @@ async def ws_config_get(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
     connection.send_result(
         msg["id"],
         {
-            "config": config,
+            "config": project_config(
+                config,
+                space_id=msg.get("space_id"),
+                fields=msg.get("fields"),
+                marker_fields=msg.get("marker_fields"),
+            ),
             "rev": config_rev,
             "virtual_lights": virtual_lights,
             "can_write": may_write(hass, getattr(connection, "user", None)),
