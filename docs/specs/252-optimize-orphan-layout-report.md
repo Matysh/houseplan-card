@@ -58,6 +58,16 @@ config-marker. `_devices` тоже не является доказательс�
 из render snapshot. Удаление допустимо только после классификации владельца по
 config и полному авторитетному HA registry/state snapshot.
 
+Это осознанно **заменяет**, а не дополняет, прежний абсолютный инвариант из
+`docs/CANVAS.md:494-497`, по которому Optimize вообще не удаляет unattached
+layout entries, поскольку устройство может быть временно недоступно. То же
+консервативное обещание было опубликовано в английском changelog для
+v1.59.0-rc.1. Новое правило не считает временную недоступность удалением:
+неавторитетный или неполный registry по-прежнему сохраняет запись, а очистка
+разрешена лишь при доказанном отсутствии владельца. При реализации старое
+предложение в `CANVAS.md` должно быть переписано новым доказательным контрактом,
+а не оставлено рядом с ним.
+
 ## 4. Цели
 
 1. Автоматически удалять позицию, чей владелец доказанно больше не существует.
@@ -329,10 +339,15 @@ Rollback — revert implementation-коммита. Persisted format не мен�
 Изменение пользовательски видимо. Implementation-коммит получает
 `User-Visible: yes` и в том же коммите включает:
 
-- `docs/CHANGELOG.md` и `docs/CHANGELOG.ru.md` со ссылкой на #252;
+- `docs/CHANGELOG.md` и `docs/CHANGELOG.ru.md` со ссылкой на #252 и явным
+  пояснением, что прежнее полное сохранение unattached layout entries из
+  v1.59.0-rc.1 сужено: временно недоступные/непроверенные владельцы по-прежнему
+  сохраняются, удаляются только доказанно отсутствующие;
 - `docs/USER-GUIDE.md` и `docs/USER-GUIDE.ru.md` — новый смысл отчёта,
   Details, secondary cleanup и Undo;
-- `docs/CANVAS.md` — owner classification и идемпотентность cleanup;
+- `docs/CANVAS.md` — **заменить**, не дополнить, старое предложение строк
+  494–497 «does not ... delete unattached layout entries» новым owner
+  classification/fail-closed контрактом и идемпотентностью cleanup;
 - `docs/CONFIG-COMPATIBILITY.md` — отсутствие миграции, fail-closed registry и
   сохранение unknown layout;
 - `docs/ARCHITECTURE.md` — runtime authority boundary, если добавляется новый
