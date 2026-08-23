@@ -13,6 +13,14 @@
   light barriers now stop at the real saved endpoint, including when a short
   thick arm shares its direction with a longer thin wall
   ([#271](https://github.com/Matysh/houseplan-card/issues/271)).
+- Multi-wall junctions no longer retain enclosed white triangular holes when
+  the legal bounded bevel reaches the exterior at only one mathematical point.
+  The bevel now has a finite local exit to the surrounding room/background,
+  while its `1.25 × H` limit, incident wall centrelines and the protection
+  against long mitre spikes remain unchanged. Semantic geometry, browser and
+  golden inventories now require zero enclosed holes across Plan, View, kiosk,
+  Static, hidden Iso and light/sun barriers
+  ([#272](https://github.com/Matysh/houseplan-card/issues/272)).
 
 ## v1.67.0-beta.5 — 2026-08-23
 

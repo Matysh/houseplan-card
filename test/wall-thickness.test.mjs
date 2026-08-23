@@ -78,6 +78,20 @@ const assertProbeInside = (geom, point, message) =>
 const assertProbeOutside = (geom, point, message) =>
   assert.ok(geometryProbeCoverage(geom, point) < 1e-7, message || `unexpected body at ${point}`);
 
+const enclosedLocalHoleRings = (geometry, node) => {
+  const radius = MITRE_LIMIT * node.halfDepth + 1e-6;
+  return (geometry || []).flatMap((polygon) => (polygon || []).slice(1)).filter((ring) =>
+    ring.length >= 4 && ring.every((point) => Math.hypot(
+      point[0] - node.point[0], point[1] - node.point[1],
+    ) <= radius));
+};
+
+const assertNoEnclosedLocalHoles = (geometry, node, consumer) => assert.equal(
+  enclosedLocalHoleRings(geometry, node).length,
+  0,
+  `${consumer} retained an enclosed background hole at ${node.point}`,
+);
+
 const assertBoundedMultiWallBevels = (
   rooms, walls, geometry, cell = cellCm, scale = 1,
 ) => {
@@ -811,6 +825,9 @@ test('issue #249 bounds the exported three-wall junction with straight bevels', 
   );
   assert.ok(geometry);
   assert.equal(geometry.geom.length, 1, 'the three wall arms became disconnected');
+  assertNoEnclosedLocalHoles(geometry.roomGeom, node, 'room masonry');
+  assertNoEnclosedLocalHoles(geometry.geom, node, 'final masonry');
+  assertNoEnclosedLocalHoles(geometry.paperGeom, node, 'exterior paper');
   assertProbeInside(geometry.geom, nodePoint, 'the bevel punched a hole at the node');
   for (const ray of node.rays) {
     assertProbeInside(geometry.geom, [
@@ -994,7 +1011,7 @@ test('issue #249 node classification is order, direction and scale independent',
       ]),
     ]),
   }));
-  const makeFanGeometry = (fixture, permuted = false) => {
+  const makeFanGeometry = (fixture, permuted = false, gridCellCm = cellCm) => {
     const scale = NORM_W;
     const node = [0.5 * scale, 0.5 * scale];
     const points = fixture.angles.map((degrees) => {
@@ -1011,7 +1028,7 @@ test('issue #249 node classification is order, direction and scale independent',
     let walls = [];
     for (let index = 0; index < points.length; index++) {
       walls = setWallThickness(
-        walls, node, points[index], fixture.halves[index] * 10, pitch, scale,
+        walls, node, points[index], fixture.halves[index] * 2 * gridCellCm, pitch, scale,
       );
     }
     if (permuted) {
@@ -1021,10 +1038,10 @@ test('issue #249 node classification is order, direction and scale independent',
       walls = walls.reverse();
     }
     const geometry = wallBodiesGeometry(
-      rooms, walls, [], [], pitch, cellCm, GRID_PITCH, scale,
+      rooms, walls, [], [], pitch, gridCellCm, GRID_PITCH, scale,
     );
     assert.ok(geometry, 'multi-wall fan geometry failed');
-    return { rooms, walls, geometry, node, scale };
+    return { rooms, walls, geometry, node, scale, gridCellCm };
   };
 
   for (const fixture of cases) {
@@ -1067,6 +1084,9 @@ test('issue #249 node classification is order, direction and scale independent',
       `fan ${fixture.angles.join('/')} halves ${fixture.halves.join('/')} wall arms are disconnected`,
     );
     assertProbeInside(fan.geometry.geom, fan.node, 'fan bevel punched a node hole');
+    assertNoEnclosedLocalHoles(fan.geometry.roomGeom, fanMap.nodes[0], 'fan room masonry');
+    assertNoEnclosedLocalHoles(fan.geometry.geom, fanMap.nodes[0], 'fan final masonry');
+    assertNoEnclosedLocalHoles(fan.geometry.paperGeom, fanMap.nodes[0], 'fan exterior paper');
     for (const [rayIndex, ray] of fanMap.nodes[0].rays.entries()) {
       const armPoint = [
         fan.node[0] + ray.u[0] * fanMap.nodes[0].halfDepth * 2,
@@ -1087,6 +1107,28 @@ test('issue #249 node classification is order, direction and scale independent',
     const permutedFan = makeFanGeometry(fixture, true);
     closeTo(geometryDifferenceArea(fan.geometry.geom, permutedFan.geometry.geom), 0, 1e-6);
     closeTo(geometryDifferenceArea(permutedFan.geometry.geom, fan.geometry.geom), 0, 1e-6);
+
+    const fineGridFan = makeFanGeometry(fixture, false, 1);
+    const fineGridMap = buildMultiWallNodeMap(
+      wallIntervals(
+        fineGridFan.rooms, fineGridFan.walls, [], pitch, 1, GRID_PITCH,
+        fineGridFan.scale,
+      ),
+      pitch * fineGridFan.scale * 0.04 * 4,
+      fineGridFan.scale,
+    );
+    assert.equal(fineGridMap.nodes.length, 1);
+    assertNoEnclosedLocalHoles(
+      fineGridFan.geometry.roomGeom, fineGridMap.nodes[0], 'cell_cm=1 room masonry',
+    );
+    assertNoEnclosedLocalHoles(
+      fineGridFan.geometry.geom, fineGridMap.nodes[0], 'cell_cm=1 final masonry',
+    );
+    assertNoEnclosedLocalHoles(
+      fineGridFan.geometry.paperGeom, fineGridMap.nodes[0], 'cell_cm=1 exterior paper',
+    );
+    closeTo(geometryDifferenceArea(fan.geometry.geom, fineGridFan.geometry.geom), 0, 1e-6);
+    closeTo(geometryDifferenceArea(fineGridFan.geometry.geom, fan.geometry.geom), 0, 1e-6);
   }
 
   const twoRay = make({ angles: [0, 55], halves: [5, 7] });
@@ -1540,7 +1582,8 @@ test('issue #197 keeps the full masonry when one virtual-junction patch has ULP 
   // right-angle arms to point contacts.
   // #271 removes only the area that the old node-wide 8H rectangles invented
   // after finite ray endpoints; all semantic #197/#249/#261 probes above stay.
-  closeTo(geometryArea(geometry.geom), 124244.26848307278, 1e-6);
+  // #272 additionally opens any point-contact bevel cut to the exterior.
+  closeTo(geometryArea(geometry.geom), 124242.78593276718, 1e-6);
   closeTo(geometryArea(geometry.paperGeom), 727303.8153386558, 1e-6);
   assert.equal(
     JSON.stringify({ rooms, walls, cuts, openings, extraBodies }), before,

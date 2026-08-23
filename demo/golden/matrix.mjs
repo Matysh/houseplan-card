@@ -275,6 +275,9 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     multiWallJunction: {
       node: [0.329166667, 0.141666667], rays: 3,
       discardedWedgeProbe: [0.3303808442725, 0.1488560107825],
+      // Product contract (#272): a bounded exterior bevel is allowed, but no
+      // empty component may remain trapped inside the continuous masonry.
+      enclosedHoles: 0,
     },
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'wall-key-roundtrip-view-dark', fixture: 'visual',

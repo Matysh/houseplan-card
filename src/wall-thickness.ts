@@ -2012,13 +2012,14 @@ interface MultiWallRoomRing {
   inset: number[][] | null;
 }
 
-/** Excess pairwise overlap triangles removed to expose the straight bevel. */
-function multiWallBevelTrianglesAt(
+/** Excess pairwise overlap cuts removed to expose the straight bevel. */
+function multiWallBevelCutsAt(
   map: MultiWallNodeMap | null | undefined,
   retainToLimit: boolean,
+  connectToExterior = false,
 ): number[][][] {
   if (!map) return [];
-  const triangles: number[][][] = [];
+  const cuts: number[][][] = [];
   for (const node of map.nodes) {
     for (let i = 0; i < node.rays.length; i++) {
       const a = node.rays[i], b = node.rays[(i + 1) % node.rays.length];
@@ -2054,17 +2055,51 @@ function multiWallBevelTrianglesAt(
       )) : 0;
       const qA = [pA[0] + a.u[0] * advanceA, pA[1] + a.u[1] * advanceA];
       const qB = [pB[0] + b.u[0] * advanceB, pB[1] + b.u[1] * advanceB];
-      const triangle = stableJunctionPatch([qA, qB, hit], map.coordinateScale);
-      if (triangle) triangles.push(triangle);
+      const cut = stableJunctionPatch([qA, qB, hit], map.coordinateScale);
+      if (cut) cuts.push(cut);
+      if (connectToExterior) {
+        // The two offset faces meet at `hit`, so a cut that ends exactly there
+        // only touches the exterior at one mathematical point. Polygon
+        // clipping and SVG then quite correctly retain it as an enclosed hole
+        // (the white junction triangles from #272). Add a small physical
+        // corridor across the tip into the already-empty angular sector so
+        // the cut has a finite-width exit without changing the approved R
+        // endpoints.
+        const dx = hit[0] - node.point[0], dy = hit[1] - node.point[1];
+        const length = Math.hypot(dx, dy);
+        const clearance = distance - node.limit;
+        if (length > map.epsilon && clearance > map.epsilon) {
+          const bridge = Math.min(
+            Math.max(map.epsilon * 8, node.halfDepth * 0.05),
+            clearance * 0.25,
+          );
+          const ux = dx / length, uy = dy / length;
+          const vx = -uy, vy = ux;
+          // A tiny local corridor overlaps the triangle just before `hit`
+          // and the exterior sector just after it. Keeping this as a second
+          // patch avoids rotating the long bevel edges across an acute arm.
+          const connector = stableJunctionPatch([
+            [hit[0] - ux * bridge + vx * bridge,
+              hit[1] - uy * bridge + vy * bridge],
+            [hit[0] - ux * bridge - vx * bridge,
+              hit[1] - uy * bridge - vy * bridge],
+            [hit[0] + ux * bridge - vx * bridge,
+              hit[1] + uy * bridge - vy * bridge],
+            [hit[0] + ux * bridge + vx * bridge,
+              hit[1] + uy * bridge + vy * bridge],
+          ], map.coordinateScale);
+          if (connector) cuts.push(connector);
+        }
+      }
     }
   }
-  return triangles;
+  return cuts;
 }
 
 export function multiWallBevelTriangles(
   map: MultiWallNodeMap | null | undefined,
 ): number[][][] {
-  return multiWallBevelTrianglesAt(map, true);
+  return multiWallBevelCutsAt(map, true);
 }
 
 function bevelMultiWallBody(
@@ -2086,10 +2121,10 @@ function bevelMultiWallBody(
     ];
     try {
       let boundedCurrent = current;
-      for (const triangle of multiWallBevelTrianglesAt({
+      for (const triangle of multiWallBevelCutsAt({
         ...map,
         nodes: [node],
-      }, false)) {
+      }, false, true)) {
         boundedCurrent = difference(boundedCurrent, closedRing(triangle) as any);
       }
       let local: any = null;
@@ -2116,10 +2151,10 @@ function bevelMultiWallBody(
           local = local ? union(local, piece) : piece;
         }
       }
-      for (const triangle of multiWallBevelTriangles({
+      for (const triangle of multiWallBevelCutsAt({
         ...map,
         nodes: [node],
-      })) {
+      }, true, true)) {
         // Rebuild the physical half-strips first, then remove only their
         // excessive pairwise overlap. Applying this cut to the legacy room
         // ring itself can delete an incident half-strip and strand floor.
@@ -2167,7 +2202,7 @@ function bevelMultiWallPaper(
   map: MultiWallNodeMap,
 ): any {
   let beveled = paper;
-  for (const triangle of multiWallBevelTriangles(map)) {
+  for (const triangle of multiWallBevelCutsAt(map, true, true)) {
     try {
       beveled = difference(beveled, closedRing(triangle) as any);
     } catch {

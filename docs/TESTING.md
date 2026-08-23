@@ -1715,6 +1715,18 @@ parity, paper and clean-floor presence, shared Glow/sun masonry, cache reuse on
 HA/theme ticks, no saved-config mutation, a filled node and the removed old
 spike. Full golden/smoke/performance remain pre-beta gates.
 
+For #272 the same fixture and table-driven equal/mixed T/X fans inventory every
+polygon hole fully enclosed in the local degree-3+ node window. The matrix runs
+at `cell_cm: 5` and `cell_cm: 1`, reversed/permuted input and production scale;
+`roomGeom`, final masonry and paper must all report zero local holes while the
+existing discarded-wedge probe remains empty. The browser smoke repeats a
+local flood-fill with real `SVGGeometryElement.isPointInFill()` in Plan, View,
+kiosk and Static, and inspects hidden-Iso and light/sun source rings. The golden
+scenario declares `enclosedHoles: 0`, so semantic failure happens before the
+whole-frame pixel threshold. Mutation `multi-wall-exterior-corridor-disabled`
+restores point-only contact and must be caught by the hole inventory even while
+the legacy single-point probes remain green.
+
 For #261, the anonymised #197 fixture also probes the real regression point
 `(895.5, 556)`: `roomGeom`, final masonry and paper must fill it, while every
 clean-floor contour must exclude it. The browser smoke repeats semantic point
@@ -2658,6 +2670,14 @@ require hands on real hardware — they remain for the human pass.
       junction-patch-resilience-plan-dark +
       junction-patch-resilience-view-dark; mutation:
       multi-wall-finite-ray-disabled].
+- [ ] **A degree-3+ junction has no enclosed white triangle (#272)**: every
+      excessive bevel sector remains empty but is connected to the exterior
+      through a finite-width local corridor. Equal/mixed T and X nodes at
+      `cell_cm: 1/5` have zero local holes in room/final masonry and paper;
+      Plan, View, kiosk, Static, hidden Iso and light/sun agree
+      [unit: test/wall-thickness.test.mjs; auto: smoke_multiwall_junction;
+      golden: multiwall-junction-bevel-view-dark; mutation:
+      multi-wall-exterior-corridor-disabled].
 - [ ] **Openings cut the slab**: a door/window/gate on a thick wall leaves a gap in
       the body; the door swing is offset toward the inner face and gate leaves
       toward the exterior face; with

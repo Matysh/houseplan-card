@@ -282,8 +282,8 @@ export const MUTANTS = [
       + 'offset origins recreates the measured white T-junction wedge from #261',
     patches: [{
       file: 'src/wall-thickness.ts',
-      find: '  for (const triangle of multiWallBevelTriangles(map)) {',
-      replace: '  for (const triangle of multiWallBevelTrianglesAt(map, false)) {',
+      find: '  for (const triangle of multiWallBevelCutsAt(map, true, true)) {',
+      replace: '  for (const triangle of multiWallBevelCutsAt(map, false, true)) {',
     }, {
       file: 'src/wall-thickness.ts',
       find: '      if (envelope) localInside = intersection(localInside, envelope);\n'
@@ -303,6 +303,25 @@ export const MUTANTS = [
       file: 'src/wall-thickness.ts',
       find: '          const supportExtent = Math.min(extent, support.length);',
       replace: '          const supportExtent = extent;',
+    }],
+  },
+  {
+    id: 'multi-wall-exterior-corridor-disabled',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="issue #249 bounds" '
+      + 'test/wall-thickness.test.mjs',
+    because: 'ending every excessive bevel cut at one mathematical point recreates the enclosed '
+      + 'white junction triangles from #272 while the old retained/discarded probes still pass',
+    patches: [{
+      file: 'src/wall-thickness.ts',
+      find: '      for (const triangle of multiWallBevelCutsAt({\n'
+        + '        ...map,\n'
+        + '        nodes: [node],\n'
+        + '      }, true, true)) {',
+      replace: '      for (const triangle of multiWallBevelCutsAt({\n'
+        + '        ...map,\n'
+        + '        nodes: [node],\n'
+        + '      }, true, false)) {',
     }],
   },
   {

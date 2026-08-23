@@ -396,6 +396,8 @@ test('issue #249 golden isolates a bounded physical three-ray bevel', () => {
   assert.equal(scenario.multiWallJunction.rays, 3);
   assert.equal(scenario.multiWallJunction.node.length, 2);
   assert.equal(scenario.multiWallJunction.discardedWedgeProbe.length, 2);
+  assert.equal(scenario.multiWallJunction.enclosedHoles, 0,
+    'the product contract must not preserve the temporary two-hole inventory');
   const fixture = prepareGoldenFixture(scenario);
   const space = fixture.config.spaces.find((item) => item.id === scenario.space);
   assert.ok(space);
@@ -405,6 +407,16 @@ test('issue #249 golden isolates a bounded physical three-ray bevel', () => {
   )));
   assert.equal(endpointRays.length >= scenario.multiWallJunction.rays, true);
   assert.equal(space.settings.show_borders, true);
+});
+
+test('every multi-wall golden scene declares its enclosed-hole inventory (#272)', () => {
+  const scenes = GOLDEN_SCENARIOS.filter((item) => item.multiWallJunction);
+  assert.ok(scenes.length >= 1, 'multi-wall semantic scenes disappeared');
+  for (const scene of scenes) {
+    assert.equal(Number.isInteger(scene.multiWallJunction.enclosedHoles), true,
+      `${scene.id}: enclosedHoles is missing`);
+    assert.ok(scene.multiWallJunction.enclosedHoles >= 0);
+  }
 });
 
 test('issue #258 golden renders the affected persisted key at its T-junction', () => {

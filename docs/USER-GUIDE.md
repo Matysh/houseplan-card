@@ -329,7 +329,9 @@ geometry remains joined without painted end caps. At a saved T-junction both
 physical half-walls stay solid: the bounded bevel removes only an excessive
 projecting corner and never leaves a white triangular gap. A short arm stops at
 its real endpoint; the join repair never draws a cap, shadow or light barrier
-where no wall was saved.
+where no wall was saved. At junctions of three or more walls the removed bevel
+remains connected to the surrounding room/background rather than becoming a
+small enclosed hole.
 If Resize moves only part of a longer thick wall, the moved part keeps its
 thickness and follows the room while the remaining continuation stays in
 place. Openings on the moved part follow it in the same Undo/Redo operation.

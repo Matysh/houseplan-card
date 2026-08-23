@@ -178,7 +178,8 @@ export function prepareGoldenFixture(scenario) {
     const validPoint = (point) => Array.isArray(point) && point.length === 2
       && point.every(Number.isFinite);
     if (!validPoint(contract.node) || !validPoint(contract.discardedWedgeProbe)
-        || !Number.isInteger(contract.rays) || contract.rays < 3) {
+        || !Number.isInteger(contract.rays) || contract.rays < 3
+        || !Number.isInteger(contract.enclosedHoles) || contract.enclosedHoles < 0) {
       throw new Error(`invalid golden multiWallJunction: ${scenario.id}`);
     }
     fixture.config.spaces.push({
@@ -563,12 +564,62 @@ export async function prepareGoldenScenario(page, scenario) {
       await settleMode(card);
     }
     if (scenario.multiWallJunction) {
-      const { node, discardedWedgeProbe } = scenario.multiWallJunction;
+      const { node, discardedWedgeProbe, enclosedHoles } = scenario.multiWallJunction;
       const wall = card.renderRoot.querySelector('[data-hp="wall"]');
       const at = (point) => new DOMPoint(point[0] * 1000, point[1] * card._spaceH);
       if (!wall?.isPointInFill?.(at(node))
           || wall.isPointInFill(at(discardedWedgeProbe))) {
         throw new Error(`golden multi-wall bevel contract failed: ${scenario.id}`);
+      }
+      // A pixel threshold missed the reported triangles because they occupy a
+      // tiny fraction of the whole screenshot. Inventory empty components in
+      // a local window instead: flood-fill from its edge marks real room/floor
+      // background, and every remaining component is an enclosed wall hole.
+      const SPAN = 0.02;
+      const STEP = 0.0002;
+      const side = Math.round((SPAN * 2) / STEP) + 1;
+      const empty = new Uint8Array(side * side);
+      for (let iy = 0; iy < side; iy++) {
+        for (let ix = 0; ix < side; ix++) {
+          const point = [node[0] - SPAN + ix * STEP, node[1] - SPAN + iy * STEP];
+          if (!wall.isPointInFill(at(point))) empty[iy * side + ix] = 1;
+        }
+      }
+      const seen = new Uint8Array(side * side);
+      const stack = [];
+      const push = (ix, iy) => {
+        if (ix < 0 || iy < 0 || ix >= side || iy >= side) return;
+        const index = iy * side + ix;
+        if (seen[index] || !empty[index]) return;
+        seen[index] = 1;
+        stack.push(index);
+      };
+      for (let index = 0; index < side; index++) {
+        push(index, 0); push(index, side - 1);
+        push(0, index); push(side - 1, index);
+      }
+      while (stack.length) {
+        const index = stack.pop();
+        const ix = index % side, iy = (index - ix) / side;
+        push(ix + 1, iy); push(ix - 1, iy); push(ix, iy + 1); push(ix, iy - 1);
+      }
+      let holes = 0;
+      for (let start = 0; start < empty.length; start++) {
+        if (!empty[start] || seen[start]) continue;
+        let size = 0;
+        seen[start] = 1;
+        stack.push(start);
+        while (stack.length) {
+          const index = stack.pop();
+          size++;
+          const ix = index % side, iy = (index - ix) / side;
+          push(ix + 1, iy); push(ix - 1, iy); push(ix, iy + 1); push(ix, iy - 1);
+        }
+        if (size >= 2) holes++;
+      }
+      if (holes !== enclosedHoles) {
+        throw new Error(`golden enclosed-hole inventory failed: ${scenario.id}`
+          + ` — expected ${enclosedHoles}, found ${holes}`);
       }
     }
     if (scenario.retainedWedgeProbe) {

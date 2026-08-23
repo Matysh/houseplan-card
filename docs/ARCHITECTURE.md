@@ -444,6 +444,11 @@ Only the excessive portion beyond `1.25 × H` is removed. This prevents the
 repair from deleting an exterior half-strip into a white T-junction wedge while
 still rejecting the old unbounded spike. Paper applies that same bounded cut
 before re-unioning the room centre footprint (#261).
+The cut's offset faces meet at one point, which is not topological connectivity
+for polygon holes. A scale-relative local corridor overlaps both sides of that
+tip and the exterior angular sector; it keeps the approved `1.25 × H` endpoints
+and acute wall centrelines intact while preventing an enclosed white component.
+Room masonry, final masonry and paper use the same connector (#272).
 `wallBodiesGeometry.roomGeom` caches this repaired room masonry before openings
 and independent bodies; clean-floor consumers subtract it from each source room
 and clip their fallback, so fill cannot escape the building or silently drop a

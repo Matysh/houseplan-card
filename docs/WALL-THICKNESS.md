@@ -122,6 +122,15 @@ interior child mitre to change a concave facade. Ordinary two-ray corners retain
 the exact historical `MITRE_LIMIT = 4` contract. This is computed geometry only:
 saved room outlines and wall entries are not rewritten (#261).
 
+Every excessive pairwise cut also has a finite-width corridor through its
+offset-line tip into the already empty angular sector (#272). Ending the cut at
+the exact intersection is not sufficient: it creates a polygon hole that SVG
+renders as an enclosed white triangle even though one mathematical point
+touches the exterior. The corridor is bounded by the excess beyond `R`, is
+scale-relative, and is applied to room masonry, final masonry and paper. It
+therefore opens the legal discarded bevel to the exterior without filling it,
+moving the `R` endpoints or shaving an incident wall centreline.
+
 Clean-floor consumers subtract the cached, repaired canonical room masonry from
 their source room and take its outer component. The result is clipped to the
 source room on fallback. Openings and independent partitions are deliberately
@@ -201,6 +210,9 @@ committed independently inside its bounded mask. A malformed local candidate
 therefore keeps that node's previous body without reverting successful repairs
 at unrelated nodes. The exterior paper uses the same `R`-bounded overlap as the
 masonry; it never restarts the cut at the offset origins (#261).
+Pairwise cuts cannot end in point contact: a small local connector crosses the
+offset-line tip so every removed bevel sector is exterior-connected and never
+an enclosed polygon hole (#272).
 
 Runtime normalisation remains lossless for every positive exact thickness
 interval, regardless of its length. The explicit **Optimize plans** maintenance
