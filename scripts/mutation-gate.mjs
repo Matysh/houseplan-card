@@ -231,27 +231,39 @@ export const MUTANTS = [
     }],
   },
   {
-    id: 'invariant-keys-from-raw-endpoints',
-    guard: 'node --test --test-name-pattern="ключ, пересчитанный от сырых концов" '
+    id: 'invariant-keys-cry-wolf',
+    guard: 'node --test --test-name-pattern="ушедший на шаг решётки" '
       + 'test/model-invariants.test.mjs',
-    because: 'ключ считается от концов НА РЕШЁТКЕ, а не от сырых: от сырых проверка '
-      + 'помечает исправное состояние и пропускает дефектное — ровно этой ошибкой была '
-      + 'первая формулировка в #258',
+    because: 'запись, ушедшую на полшага, продукт НАХОДИТ — измерено на двух конфигах '
+      + 'владельца с побайтово одинаковыми телами стен; объявить это нарушением значит '
+      + 'покрасить исправный план, а такую проверку отключают первой (#258)',
     patches: [{
       file: 'scripts/model-invariants.mjs',
-      find: '      const expected = wallKey(latticePoint(a), latticePoint(b));',
-      replace: '      const expected = wallKey(a, b);',
+      find: '      if (steps > 0.5 + 1e-3) {',
+      replace: '      if (steps > 0) {',
     }],
   },
   {
-    id: 'invariant-keys-tolerate-one-step',
-    guard: 'node --test --test-name-pattern="детектор ключей умеет падать" '
+    id: 'invariant-keys-tolerate-any-drift',
+    guard: 'node --test --test-name-pattern="дальше терпимого запаса" '
       + 'test/model-invariants.test.mjs',
-    because: 'смысл проверки — сравнение строк без допусков: допуск здесь и был причиной '
-      + 'промаха, потому что сдвиг ключа на шаг решётки равен допуску checkReferences',
+    because: 'ключ, ушедший дальше полшага, не находит ни точное совпадение, ни запас — '
+      + 'если проверка это пропустит, запись толщины молча перестанет существовать',
     patches: [{
       file: 'scripts/model-invariants.mjs',
-      find: '      if (wall.key !== expected) {',
+      find: '      if (steps > 0.5 + 1e-3) {',
+      replace: '      if (false) {',
+    }],
+  },
+  {
+    id: 'invariant-keys-accept-a-label',
+    guard: 'node --test --test-name-pattern="не разбирается как координаты" '
+      + 'test/model-invariants.test.mjs',
+    because: 'метка вместо ключа (perf-wall-0-3 в перф-фикстуре, #260) оставляет все 80 '
+      + 'сплошных рёбер без толщины: проверка обязана отличать её от сдвига на полшага',
+    patches: [{
+      file: 'scripts/model-invariants.mjs',
+      find: '      if (!stored) {',
       replace: '      if (false) {',
     }],
   },

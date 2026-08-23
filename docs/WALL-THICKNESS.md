@@ -21,18 +21,20 @@ carry exact endpoints `a` / `b` in normalised plan coordinates. Config always
 stores centimetres. Old `{key, cm}` data remains readable and is upgraded when
 the affected boundary is edited. Open boundaries refuse thickness. One physical
 stretch has one thickness (atomic collinear spans when neighbours overlap only
-partially). **The key is computed from endpoints snapped to the lattice**
-(`Math.round(v · 240) / 240`), never from the raw stored numbers: `wallKey`
-quantises the midpoint with `Math.round`, so a wall whose length is an odd
-number of grid steps has its midpoint exactly on a rounding tie, and the two
-representations of one vertex — the exact node `83/240` and a stored
-`0.345833333` — fall on opposite sides of it. That is how #258 lost two records
-whose keys had drifted by one step. The tolerant fallback in `lookupWall` does
-not rescue such a record: its tolerance is exactly half a pitch, which is
-exactly how far a one-step key error sits from the true midpoint, so the
-comparison lands on its own boundary. `scripts/model-invariants.mjs`
-(`checkWallKeys`, #259) compares the stored key against the lattice key as
-strings, without tolerance. Exact endpoints make a thickness boundary independent of whichever
+partially). The lookup key is computed from the
+edge coordinates **as stored in the configuration**, not from a lattice-snapped
+copy of them. That matters because `wallKey` quantises the midpoint with
+`Math.round`: a wall whose length is an odd number of grid steps has its
+midpoint exactly on a rounding tie, so the exact node `83/240` and a stored
+`0.345833333` land in different buckets and the same edge acquires two possible
+keys, one grid step apart. A record carrying the other one is still found — the
+tolerant fallback in `lookupWall` reaches half a pitch, which is exactly that
+distance — but only through the fallback, and the comparison sits on its own
+boundary. Measured on two real configurations differing in exactly this way:
+identical wall bodies, byte for byte (#258). `scripts/model-invariants.mjs`
+(`checkWallKeys`, #259) grades it accordingly — a drift within the fallback's
+reach is an observation, a key beyond it or one that does not parse as
+coordinates at all is a violation, because nothing will find that record. Exact endpoints make a thickness boundary independent of whichever
 room topology later happens to split the same straight line. Normalisation
 merges consecutive solid pieces into each maximal run of equal thickness; a
 different thickness or a virtual gap remains a real break. Likewise,
