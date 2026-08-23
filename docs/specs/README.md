@@ -127,6 +127,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#242](https://github.com/Matysh/houseplan-card/issues/242) Символ проёма по центру толщины стены | [242-opening-symbol-center.md](242-opening-symbol-center.md) |
 | [#244](https://github.com/Matysh/houseplan-card/issues/244) Восстановление маркеров с мёртвой ссылкой на пространство | [244-orphan-space-references.md](244-orphan-space-references.md) |
 | [#248](https://github.com/Matysh/houseplan-card/issues/248) Идемпотентный Optimize после записи и reload | [248-optimize-idempotence.md](248-optimize-idempotence.md) |
+| [#251](https://github.com/Matysh/houseplan-card/issues/251) Доступность контроллера не наследуется от управляемой цели | [251-controller-target-availability.md](251-controller-target-availability.md) |
 
 ## P3
 
