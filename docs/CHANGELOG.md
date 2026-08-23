@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.67.0-beta.4 — 2026-08-23
+
 - Resizing a room no longer turns a thick wall into a thin centreline when the
   moved room edge covers only part of a longer wall. The covered part now keeps
   its thickness and follows the room, the untouched continuation stays in
