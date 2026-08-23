@@ -1,7 +1,7 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 40;
+export const GOLDEN_MATRIX_VERSION = 41;
 
 const stage = { capture: 'stage', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0005 } };
 const page = { capture: 'page', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0008 } };
@@ -279,6 +279,14 @@ export const GOLDEN_SCENARIOS = Object.freeze([
       // empty component may remain trapped inside the continuous masonry.
       enclosedHoles: 0,
     },
+    theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
+  { id: 'orthogonal-strip-cell-5-view-dark', fixture: 'visual',
+    space: 'golden-orthogonal-strip-cell-5', mode: 'view',
+    orthogonalStripContainment: { caseId: 'cell-5-mixed-depth-t', minSamples: 300 },
+    theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
+  { id: 'orthogonal-strip-cell-1-view-dark', fixture: 'visual',
+    space: 'golden-orthogonal-strip-cell-1', mode: 'view',
+    orthogonalStripContainment: { caseId: 'cell-1-thick-crossbar-t', minSamples: 300 },
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'wall-key-roundtrip-view-dark', fixture: 'visual',
     space: 'golden-wall-key-roundtrip', mode: 'view',

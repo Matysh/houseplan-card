@@ -331,7 +331,10 @@ projecting corner and never leaves a white triangular gap. A short arm stops at
 its real endpoint; the join repair never draws a cap, shadow or light barrier
 where no wall was saved. At junctions of three or more walls the removed bevel
 remains connected to the surrounding room/background rather than becoming a
-small enclosed hole.
+small enclosed hole. At a perpendicular T/X junction, the complete physical
+width of every participating wall remains solid through the node, including
+closely spaced neighbouring junctions. This is a rendering correction: a valid
+plan may remain unchanged when **Optimize plans** is run.
 If Resize moves only part of a longer thick wall, the moved part keeps its
 thickness and follows the room while the remaining continuation stays in
 place. Openings on the moved part follow it in the same Undo/Redo operation.

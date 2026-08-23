@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Perpendicular T/X wall junctions now keep the complete finite width of every
+  participating wall, including neighbouring junctions whose repair windows
+  overlap. Exterior-connected white corner notches, apparent thickness loss
+  and the large mixed-depth wall void are removed consistently in Plan, View,
+  Static, hidden Iso, paper/floor and light barriers. Optimize may correctly
+  remain a no-op because valid saved axes and thicknesses are not rewritten
+  ([#275](https://github.com/Matysh/houseplan-card/issues/275)).
+
 ## v1.67.0-beta.6 — 2026-08-24
 
 - Wireless controllers now keep the same available/working state on the plan

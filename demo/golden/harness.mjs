@@ -8,6 +8,9 @@ const junctionPatchFixture = JSON.parse(readFileSync(
 const multiWallJunctionFixture = JSON.parse(readFileSync(
   new URL('../../test/fixtures/249-multiwall-junction.json', import.meta.url), 'utf8',
 ));
+const orthogonalStripFixture = JSON.parse(readFileSync(
+  new URL('../../test/fixtures/275-orthogonal-strip-containment.json', import.meta.url), 'utf8',
+));
 const wallKeyRoundtripFixture = JSON.parse(readFileSync(
   new URL('../../test/fixtures/258-wall-key-roundtrip.json', import.meta.url), 'utf8',
 ));
@@ -189,6 +192,32 @@ export function prepareGoldenFixture(scenario) {
       view_box: [0.27, 0.07, 0.20, 0.21],
       settings: {
         ...(multiWallJunctionFixture.settings || {}),
+        fill_mode: 'none', show_borders: true, show_names: false,
+      },
+    });
+  }
+  if (scenario.orthogonalStripContainment) {
+    const contract = scenario.orthogonalStripContainment;
+    const source = orthogonalStripFixture.cases.find((item) => item.id === contract.caseId);
+    if (!source || !Number.isInteger(contract.minSamples) || contract.minSamples < 1
+        || !Array.isArray(source.nodes) || !source.nodes.length) {
+      throw new Error(`invalid golden orthogonalStripContainment: ${scenario.id}`);
+    }
+    const xs = source.rooms.flatMap((room) => room.poly.map((point) => point[0]));
+    const ys = source.rooms.flatMap((room) => room.poly.map((point) => point[1]));
+    const pad = 0.08;
+    fixture.config.spaces.push({
+      ...structuredClone(source),
+      id: scenario.space,
+      title: 'Orthogonal strip containment',
+      view_box: [
+        Math.min(...xs) - pad,
+        Math.min(...ys) - pad,
+        Math.max(...xs) - Math.min(...xs) + pad * 2,
+        Math.max(...ys) - Math.min(...ys) + pad * 2,
+      ],
+      settings: {
+        ...(source.settings || {}),
         fill_mode: 'none', show_borders: true, show_names: false,
       },
     });
@@ -620,6 +649,64 @@ export async function prepareGoldenScenario(page, scenario) {
       if (holes !== enclosedHoles) {
         throw new Error(`golden enclosed-hole inventory failed: ${scenario.id}`
           + ` — expected ${enclosedHoles}, found ${holes}`);
+      }
+    }
+    if (scenario.orthogonalStripContainment) {
+      const { minSamples } = scenario.orthogonalStripContainment;
+      const space = card._renderCfg?.spaces?.find((item) => item.id === scenario.space);
+      const wall = card.renderRoot.querySelector('[data-hp="wall"]');
+      const papers = [...card.renderRoot.querySelectorAll('.hp-paper')];
+      const close = (a, b, epsilon = 1e-7) => Math.hypot(a[0] - b[0], a[1] - b[1]) <= epsilon;
+      const onSegment = (point, a, b) => {
+        const dx = b[0] - a[0], dy = b[1] - a[1];
+        const length2 = dx * dx + dy * dy;
+        if (!(length2 > 0)) return false;
+        const t = ((point[0] - a[0]) * dx + (point[1] - a[1]) * dy) / length2;
+        const projected = [a[0] + dx * t, a[1] + dy * t];
+        return t >= -1e-7 && t <= 1 + 1e-7 && close(point, projected, 1e-6);
+      };
+      const samples = [];
+      for (const node of space.nodes || []) {
+        const rays = [];
+        for (const stored of space.walls || []) {
+          if (!onSegment(node, stored.a, stored.b)) continue;
+          const half = ((stored.cm / space.cell_cm) * (1000 / 240)) / 2;
+          for (const endpoint of [stored.a, stored.b]) {
+            const dx = (endpoint[0] - node[0]) * 1000;
+            const dy = (endpoint[1] - node[1]) * 1000;
+            const length = Math.hypot(dx, dy);
+            if (length <= 1e-5) continue;
+            rays.push({ u: [dx / length, dy / length], length, half });
+          }
+        }
+        const protectedRays = rays.filter((ray, index) => rays.some((other, otherIndex) =>
+          index !== otherIndex
+          && Math.abs(ray.u[0] * other.u[0] + ray.u[1] * other.u[1]) <= 1e-9));
+        const maxHalf = Math.max(0, ...protectedRays.map((ray) => ray.half));
+        const radius = maxHalf * 4;
+        for (const ray of protectedRays) {
+          const n = [-ray.u[1], ray.u[0]];
+          const tLimit = Math.min(ray.length, radius);
+          const tStep = Math.max(ray.half / 5, 0.25);
+          const sStep = Math.max(ray.half / 5, 0.25);
+          for (let t = tStep / 2; t < tLimit - tStep / 4; t += tStep) {
+            for (let s = -ray.half + sStep / 2; s < ray.half - sStep / 4; s += sStep) {
+              samples.push([
+                node[0] * 1000 + ray.u[0] * t + n[0] * s,
+                node[1] * 1000 + ray.u[1] * t + n[1] * s,
+              ]);
+            }
+          }
+        }
+      }
+      const misses = samples.filter((point) => {
+        const probe = new DOMPoint(point[0], point[1]);
+        return !wall?.isPointInFill?.(probe)
+          || !papers.some((paper) => paper.isPointInFill?.(probe));
+      });
+      if (samples.length < minSamples || misses.length) {
+        throw new Error(`golden orthogonal-strip containment failed: ${scenario.id}`
+          + ` — ${misses.length}/${samples.length} protected samples missing`);
       }
     }
     if (scenario.retainedWedgeProbe) {

@@ -322,7 +322,7 @@ test('sun-ray golden requires browser-painted light from a state-only sun entity
   assert.ok(scenario);
   const fixture = prepareGoldenFixture(scenario);
   const space = fixture.config.spaces.find((item) => item.id === scenario.space);
-  assert.equal(GOLDEN_MATRIX_VERSION, 40);
+  assert.equal(GOLDEN_MATRIX_VERSION, 41);
   assert.equal(space.settings.sun_rays, true);
   assert.equal(scenario.northDeg, 90,
     'the sign-sensitive golden must keep a non-zero north direction');
@@ -416,6 +416,28 @@ test('every multi-wall golden scene declares its enclosed-hole inventory (#272)'
     assert.equal(Number.isInteger(scene.multiWallJunction.enclosedHoles), true,
       `${scene.id}: enclosedHoles is missing`);
     assert.ok(scene.multiWallJunction.enclosedHoles >= 0);
+  }
+});
+
+test('issue #275 golden preflight samples protected strips, not just enclosed holes', () => {
+  const scenarios = GOLDEN_SCENARIOS.filter((item) => item.orthogonalStripContainment);
+  assert.deepEqual(scenarios.map((item) => item.id), [
+    'orthogonal-strip-cell-5-view-dark',
+    'orthogonal-strip-cell-1-view-dark',
+  ]);
+  assert.deepEqual(
+    scenarios.map((item) => item.orthogonalStripContainment.caseId),
+    ['cell-5-mixed-depth-t', 'cell-1-thick-crossbar-t'],
+  );
+  for (const scenario of scenarios) {
+    assert.equal(scenario.mode, 'view');
+    assert.ok(scenario.orthogonalStripContainment.minSamples >= 300);
+    const fixture = prepareGoldenFixture(scenario);
+    const space = fixture.config.spaces.find((item) => item.id === scenario.space);
+    assert.ok(space);
+    assert.ok(space.nodes.length >= 1);
+    assert.ok(space.walls.length >= 3);
+    assert.equal(space.settings.show_borders, true);
   }
 });
 

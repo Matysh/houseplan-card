@@ -449,6 +449,15 @@ for polygon holes. A scale-relative local corridor overlaps both sides of that
 tip and the exterior angular sector; it keeps the approved `1.25 × H` endpoints
 and acute wall centrelines intact while preventing an enclosed white component.
 Room masonry, final masonry and paper use the same connector (#272).
+For #275, a pair-level perpendicular classifier marks only rays that have an
+orthogonal partner. Their finite physical strips are subtracted from every
+effective bevel cut and restored after local boolean work. The protected union
+is built once for the structural node map, rather than once per node, because
+adjacent repair masks may overlap and a later node pass must retain an earlier
+node's material. Non-orthogonal rays keep the bounded #249 cut. The shared
+result remains pre-opening geometry: explicit opening slots are subtracted
+afterward, and all SVG, paper, clean-floor, Iso and light consumers receive the
+same canonical topology.
 `wallBodiesGeometry.roomGeom` caches this repaired room masonry before openings
 and independent bodies; clean-floor consumers subtract it from each source room
 and clip their fallback, so fill cannot escape the building or silently drop a

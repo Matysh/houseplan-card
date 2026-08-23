@@ -282,14 +282,44 @@ export const MUTANTS = [
       + 'offset origins recreates the measured white T-junction wedge from #261',
     patches: [{
       file: 'src/wall-thickness.ts',
-      find: '  const cuts = multiWallCutGeometry(multiWallBevelCutsAt(map, true, true));',
-      replace: '  const cuts = multiWallCutGeometry(multiWallBevelCutsAt(map, false, true));',
+      find: '      const cuts = multiWallEffectiveCutGeometry(\n'
+        + '        node, map, true, true, protectedStrips,\n'
+        + '      );',
+      replace: '      const cuts = multiWallEffectiveCutGeometry(\n'
+        + '        node, map, false, true, protectedStrips,\n'
+        + '      );',
     }, {
       file: 'src/wall-thickness.ts',
       find: '      if (envelope) localInside = intersection(localInside, envelope);\n'
         + '      else if (centre) localInside = intersection(localInside, centre);',
       replace: '      if (centre) localInside = intersection(localInside, centre);\n'
         + '      else if (envelope) localInside = intersection(localInside, envelope);',
+    }],
+  },
+  {
+    id: 'multi-wall-orthogonal-strip-protection-disabled',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="issue #275 preserves" '
+      + 'test/wall-thickness.test.mjs',
+    because: 'pairwise bevel cuts must exclude every finite strip with an orthogonal partner, '
+      + 'and the post-cut reconstruction is the independent fail-safe; disabling both recreates '
+      + 'the white notches and large missing wall areas from the exact #275 fixtures',
+    patches: [{
+      file: 'src/wall-thickness.ts',
+      find: '  return cuts && protectedStrips ? difference(cuts, protectedStrips) : cuts;',
+      replace: '  return cuts;',
+    }, {
+      file: 'src/wall-thickness.ts',
+      find: '      if (protectedStrips) local = union(local, protectedStrips);',
+      replace: '      // protected-strip fail-safe intentionally disabled by the mutant',
+    }, {
+      file: 'src/wall-thickness.ts',
+      find: '  if (protectedStrips) {\n'
+        + '    try {\n'
+        + '      let protectedInside = protectedStrips;',
+      replace: '  if (protectedStrips && false) {\n'
+        + '    try {\n'
+        + '      let protectedInside = protectedStrips;',
     }],
   },
   {
@@ -301,8 +331,8 @@ export const MUTANTS = [
       + 'node-wide 8H rectangle recreates the phantom wall and light barrier from #271',
     patches: [{
       file: 'src/wall-thickness.ts',
-      find: '          const supportExtent = Math.min(extent, support.length);',
-      replace: '          const supportExtent = extent;',
+      find: '      const supportExtent = Math.min(extent, support.length);',
+      replace: '      const supportExtent = extent;',
     }],
   },
   {
@@ -314,8 +344,8 @@ export const MUTANTS = [
       + 'white junction triangles from #272 while the old retained/discarded probes still pass',
     patches: [{
       file: 'src/wall-thickness.ts',
-      find: '        multiWallBevelCutsAt(nodeMap, true, true),',
-      replace: '        multiWallBevelCutsAt(nodeMap, true, false),',
+      find: '    multiWallBevelCutsAt(nodeMap, retainToLimit, connectToExterior),',
+      replace: '    multiWallBevelCutsAt(nodeMap, retainToLimit, false),',
     }],
   },
   {

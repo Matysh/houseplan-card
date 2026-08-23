@@ -48,6 +48,9 @@ export const MITRE_LIMIT = 4;
 /** Multi-ray joins stay inside this × the largest incident half-depth (#249). */
 export const MULTI_WALL_JOIN_LIMIT = 1.25;
 
+/** Normalized dot-product tolerance for a physically orthogonal ray pair. */
+export const MULTI_WALL_ORTHOGONAL_DOT_EPSILON = 1e-9;
+
 export interface MultiWallNodeRaySupport {
   /** Physical half-depth owned by this finite co-directional interval. */
   halfDepth: number;
@@ -2122,6 +2125,100 @@ function multiWallCutGeometry(cuts: number[][][]): any {
   return geometry;
 }
 
+/** Rays whose finite strips must survive every bevel cut at this node (#275). */
+export function multiWallProtectedRayIndexes(
+  node: MultiWallNode,
+  dotEpsilon = MULTI_WALL_ORTHOGONAL_DOT_EPSILON,
+): number[] {
+  const protectedRays = new Set<number>();
+  const epsilon = Number.isFinite(dotEpsilon) && dotEpsilon >= 0
+    ? dotEpsilon
+    : MULTI_WALL_ORTHOGONAL_DOT_EPSILON;
+  for (let i = 0; i < node.rays.length; i++) {
+    for (let j = i + 1; j < node.rays.length; j++) {
+      const a = node.rays[i].u, b = node.rays[j].u;
+      const dot = Math.abs(a[0] * b[0] + a[1] * b[1]);
+      if (dot <= epsilon) {
+        protectedRays.add(i);
+        protectedRays.add(j);
+      }
+    }
+  }
+  return [...protectedRays].sort((a, b) => a - b);
+}
+
+function multiWallRayStripGeometry(
+  node: MultiWallNode,
+  map: MultiWallNodeMap,
+  extent: number,
+  rayIndexes?: readonly number[],
+): any {
+  const selected = rayIndexes ? new Set(rayIndexes) : null;
+  let geometry: any = null;
+  for (let rayIndex = 0; rayIndex < node.rays.length; rayIndex++) {
+    if (selected && !selected.has(rayIndex)) continue;
+    const ray = node.rays[rayIndex];
+    const n = [-ray.u[1], ray.u[0]];
+    // A canonical direction may be owned by overlapping room intervals with
+    // different depth/length pairs. Preserve their exact finite union.
+    for (const support of ray.supports) {
+      const supportExtent = Math.min(extent, support.length);
+      if (!(supportExtent > map.epsilon)) continue;
+      const rectangle = stableJunctionPatch([
+        [node.point[0] + n[0] * support.halfDepth,
+          node.point[1] + n[1] * support.halfDepth],
+        [node.point[0] + ray.u[0] * supportExtent + n[0] * support.halfDepth,
+          node.point[1] + ray.u[1] * supportExtent + n[1] * support.halfDepth],
+        [node.point[0] + ray.u[0] * supportExtent - n[0] * support.halfDepth,
+          node.point[1] + ray.u[1] * supportExtent - n[1] * support.halfDepth],
+        [node.point[0] - n[0] * support.halfDepth,
+          node.point[1] - n[1] * support.halfDepth],
+      ], map.coordinateScale);
+      if (!rectangle) continue;
+      const piece: any = closedRing(rectangle) as any;
+      geometry = geometry ? union(geometry, piece) : piece;
+    }
+  }
+  return geometry;
+}
+
+/** Finite local strips protected by at least one perpendicular partner. */
+export function multiWallProtectedStripGeometry(
+  node: MultiWallNode,
+  map: MultiWallNodeMap,
+  extent = (MITRE_LIMIT * node.halfDepth + map.epsilon * 2) * 2,
+): any {
+  const protectedRays = multiWallProtectedRayIndexes(node);
+  return protectedRays.length
+    ? multiWallRayStripGeometry(node, map, extent, protectedRays)
+    : null;
+}
+
+function multiWallProtectedMapGeometry(map: MultiWallNodeMap): any {
+  let geometry: any = null;
+  for (const node of map.nodes) {
+    const protectedStrips = multiWallProtectedStripGeometry(node, map);
+    if (protectedStrips) {
+      geometry = geometry ? union(geometry, protectedStrips) : protectedStrips;
+    }
+  }
+  return geometry;
+}
+
+function multiWallEffectiveCutGeometry(
+  node: MultiWallNode,
+  map: MultiWallNodeMap,
+  retainToLimit: boolean,
+  connectToExterior: boolean,
+  protectedStrips: any,
+): any {
+  const nodeMap = { ...map, nodes: [node] };
+  const cuts = multiWallCutGeometry(
+    multiWallBevelCutsAt(nodeMap, retainToLimit, connectToExterior),
+  );
+  return cuts && protectedStrips ? difference(cuts, protectedStrips) : cuts;
+}
+
 function bevelMultiWallBody(
   body: any,
   map: MultiWallNodeMap,
@@ -2129,6 +2226,17 @@ function bevelMultiWallBody(
   envelope?: any,
 ): any {
   if (!body || !map.nodes.length) return body;
+  let protectedStrips: any = null;
+  try {
+    // Node masks may overlap (a short wall can end inside both). Every local
+    // pass must therefore preserve the protected strips of neighbouring nodes,
+    // not only its own, or the later pass can erase the earlier repair.
+    protectedStrips = multiWallProtectedMapGeometry(map);
+  } catch {
+    // A bevel is optional. If its protection cannot be built, keep the complete
+    // pre-bevel body instead of risking another user-visible structural hole.
+    return body;
+  }
   let current = body;
   for (const node of map.nodes) {
     const radius = MITRE_LIMIT * node.halfDepth + map.epsilon * 2;
@@ -2141,40 +2249,13 @@ function bevelMultiWallBody(
     ];
     try {
       let boundedCurrent = current;
-      const nodeMap = {
-        ...map,
-        nodes: [node],
-      };
-      const outerCuts = multiWallCutGeometry(
-        multiWallBevelCutsAt(nodeMap, false, true),
+      const outerCuts = multiWallEffectiveCutGeometry(
+        node, map, false, true, protectedStrips,
       );
       if (outerCuts) boundedCurrent = difference(boundedCurrent, outerCuts);
-      let local: any = null;
-      for (const ray of node.rays) {
-        const n = [-ray.u[1], ray.u[0]];
-        // A canonical direction may be owned by overlapping room intervals
-        // with different depth/length pairs. Rebuild their finite union; using
-        // the node-wide 8H extent here invents a wall after a short endpoint.
-        for (const support of ray.supports) {
-          const supportExtent = Math.min(extent, support.length);
-          if (!(supportExtent > map.epsilon)) continue;
-          const rectangle = stableJunctionPatch([
-            [node.point[0] + n[0] * support.halfDepth,
-              node.point[1] + n[1] * support.halfDepth],
-            [node.point[0] + ray.u[0] * supportExtent + n[0] * support.halfDepth,
-              node.point[1] + ray.u[1] * supportExtent + n[1] * support.halfDepth],
-            [node.point[0] + ray.u[0] * supportExtent - n[0] * support.halfDepth,
-              node.point[1] + ray.u[1] * supportExtent - n[1] * support.halfDepth],
-            [node.point[0] - n[0] * support.halfDepth,
-              node.point[1] - n[1] * support.halfDepth],
-          ], map.coordinateScale);
-          if (!rectangle) continue;
-          const piece: any = closedRing(rectangle) as any;
-          local = local ? union(local, piece) : piece;
-        }
-      }
-      const retainedCuts = multiWallCutGeometry(
-        multiWallBevelCutsAt(nodeMap, true, true),
+      let local = multiWallRayStripGeometry(node, map, extent);
+      const retainedCuts = multiWallEffectiveCutGeometry(
+        node, map, true, true, protectedStrips,
       );
       if (retainedCuts) {
         // Rebuild the physical half-strips first, then remove only their
@@ -2182,6 +2263,9 @@ function bevelMultiWallBody(
         // ring itself can delete an incident half-strip and strand floor.
         local = difference(local, retainedCuts);
       }
+      // The same protected material is restored after subtraction so boolean
+      // ordering/rounding cannot turn a right-angle wall into an open notch.
+      if (protectedStrips) local = union(local, protectedStrips);
       // Rays share a mathematical endpoint. A tiny physical core turns that
       // point contact into a stable polygon contact for boolean/render paths.
       const coreRadius = Math.min(
@@ -2215,6 +2299,16 @@ function bevelMultiWallBody(
       // mandatory surrounding structural failures remain fail-dark upstream.
     }
   }
+  if (protectedStrips) {
+    try {
+      let protectedInside = protectedStrips;
+      if (envelope) protectedInside = intersection(protectedInside, envelope);
+      else if (centre) protectedInside = intersection(protectedInside, centre);
+      current = union(current, protectedInside);
+    } catch {
+      // Per-node reconstruction above already retained the same material.
+    }
+  }
   return current;
 }
 
@@ -2224,15 +2318,27 @@ function bevelMultiWallPaper(
   map: MultiWallNodeMap,
 ): any {
   let beveled = paper;
-  const cuts = multiWallCutGeometry(multiWallBevelCutsAt(map, true, true));
-  if (cuts) {
+  let protectedStrips: any = null;
+  try {
+    protectedStrips = multiWallProtectedMapGeometry(map);
+  } catch {
+    return paper;
+  }
+  for (const node of map.nodes) {
     try {
-      beveled = difference(beveled, cuts);
+      const cuts = multiWallEffectiveCutGeometry(
+        node, map, true, true, protectedStrips,
+      );
+      if (cuts) beveled = difference(beveled, cuts);
     } catch {
-      // Retain the uncut paper if the combined local subtraction fails.
+      // Isolate a failed optional node cut; retain the last valid paper.
     }
   }
   try {
+    if (protectedStrips) {
+      const protectedPaper = intersection(protectedStrips, paper);
+      beveled = union(beveled, protectedPaper);
+    }
     // Paper is the complete room footprint. Interior bevel cuts expose floor,
     // not the scene background, so the centre union must always remain solid.
     return union(centre, beveled);

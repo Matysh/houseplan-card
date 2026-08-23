@@ -46,12 +46,18 @@ export const SMOKE_LINKS = [
     symbols: [
       'multiWallBevelTriangles', 'multiWallBevelTrianglesAt',
       'buildMultiWallNodeMap', 'MultiWallNodeRay', 'MultiWallNodeRaySupport',
+      'multiWallProtectedRayIndexes', 'multiWallProtectedStripGeometry',
+      'multiWallProtectedMapGeometry', 'multiWallEffectiveCutGeometry',
     ],
-    smokes: ['smoke_junction_patch_resilience.mjs', 'smoke_multiwall_junction.mjs'],
+    smokes: [
+      'smoke_junction_patch_resilience.mjs', 'smoke_multiwall_junction.mjs',
+      'smoke_multiwall_strip_containment.mjs',
+    ],
     because: 'the #197 smoke probes the repaired exterior wedge across Plan, View, kiosk, '
       + 'Static, hidden Iso and light barriers, while the #249 smoke proves the old excessive '
-      + 'wedge stays empty, while #271 also proves finite ray endpoints across Plan, Static, '
-      + 'hidden Iso and light barriers; the browser scenarios call none of the pure helpers by name',
+      + 'wedge stays empty, #271 also proves finite ray endpoints, and #275 densely samples every '
+      + 'protected orthogonal strip across Plan, Static, hidden Iso and light barriers; the browser '
+      + 'scenarios call none of the pure helpers by name',
   },
   {
     // #258: the browser sees only the resulting path/caches; it cannot call

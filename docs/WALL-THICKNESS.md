@@ -131,6 +131,19 @@ scale-relative, and is applied to room masonry, final masonry and paper. It
 therefore opens the legal discarded bevel to the exterior without filling it,
 moving the `R` endpoints or shaving an incident wall centreline.
 
+Exterior connectivity alone is not sufficient (#275). At a degree-3+ node,
+every finite ray that has a perpendicular partner owns its complete physical
+strip through the local repair window. The effective bevel cut excludes the
+union of those protected strips, then the reconstruction unions them back as a
+boolean fail-safe. Rays are classified pair by pair: a diagonal ray in a mixed
+orthogonal/diagonal node remains subject to the bounded #249 bevel unless it
+has its own perpendicular partner. The non-orthogonal #249 fixture therefore
+keeps its approved empty wedge. Protected strips are unioned once for the
+complete node map, because neighbouring repair masks can overlap; a later node
+must not erase a strip restored by an earlier one. The result is still clipped
+to the canonical physical paper envelope and explicit opening slots are cut
+afterwards, so no wall is extended and no real doorway is filled.
+
 Clean-floor consumers subtract the cached, repaired canonical room masonry from
 their source room and take its outer component. The result is clipped to the
 source room on fallback. Openings and independent partitions are deliberately
@@ -212,7 +225,9 @@ at unrelated nodes. The exterior paper uses the same `R`-bounded overlap as the
 masonry; it never restarts the cut at the offset origins (#261).
 Pairwise cuts cannot end in point contact: a small local connector crosses the
 offset-line tip so every removed bevel sector is exterior-connected and never
-an enclosed polygon hole (#272).
+an enclosed polygon hole (#272). Orthogonal finite strips are additionally
+protected across the complete node map, so overlapping local masks cannot turn
+that exterior-connected sector into an open notch inside a real wall (#275).
 
 Runtime normalisation remains lossless for every positive exact thickness
 interval, regardless of its length. The explicit **Optimize plans** maintenance
@@ -300,7 +315,9 @@ invariance (#197); explicit Optimize-only collapse of a sub-half-step isolated
 thickness island with strict threshold and ambiguity guards (#198), including
 the proven `equal → micro → equal` case beside exactly one room T-node while
 opening endpoints and spans between two room topology nodes stay protected
-(#273);
+(#273); exact `cell_cm: 5` and `cell_cm: 1` orthogonal T fixtures derived from
+the two #275 owner backups, including overlapping neighbouring node masks,
+mixed depth and the unchanged non-orthogonal #249 wedge;
 exact parent-run thickness inherited by atomic children when
 closing a virtual neighbour, without partial-span leakage (#201).
 Browser: seamless frame; fill not in hatch; m² drops with thickness; a partial
@@ -322,7 +339,12 @@ static, hidden Iso, paper/clean-floor and light/sun consumers while theme and HA
 state ticks reuse the structural geometry
 (`demo/smoke_junction_patch_resilience.mjs`); Optimize Preview/Cancel/Apply/
 server Undo for guarded micro-interval cleanup
-(`demo/smoke_optimize_micro_interval.mjs`).
+(`demo/smoke_optimize_micro_interval.mjs`); dense protected-strip sampling
+through Plan, View, kiosk, Static, hidden Iso, paper/clean-floor and light
+consumers (`demo/smoke_multiwall_strip_containment.mjs`). The local
+`scripts/wall-strip-containment.mjs` gate accepts external backups without
+copying their contents into Git and checks raw, Optimize preview, applied
+canonical storage and reload states.
 
 ## 9. Independent partitions, drafts and columns
 

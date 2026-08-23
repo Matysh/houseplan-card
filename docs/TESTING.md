@@ -1693,6 +1693,8 @@ The matrix covers thick wall junctions, the full #197 multi-room
 virtual-junction resilience fixture in Plan and View (including the #261
 measured exterior-wedge fill probe), the #249 three-ray
 unequal-thickness fixture with a semantic filled-node/empty-old-wedge gate,
+the two #275 orthogonal-strip fixtures at `cell_cm: 5/1` with dense
+`isPointInFill()` containment before raster comparison,
 virtual/physical boundaries,
 partitions/columns, axis-aligned and 45° door/window/gate tunnels, hidden
 opening symbols, Glow and sun, live/manual Glow overlap and light through a doorway,
@@ -1733,6 +1735,22 @@ scenario declares `enclosedHoles: 0`, so semantic failure happens before the
 whole-frame pixel threshold. Mutation `multi-wall-exterior-corridor-disabled`
 restores point-only contact and must be caught by the hole inventory even while
 the legacy single-point probes remain green.
+
+For #275, `test/fixtures/275-orthogonal-strip-containment.json` contains only
+the minimized coordinates and wall depths needed from both owner backups. The
+unit oracle classifies perpendicular ray pairs independently, differences their
+finite strip union against `roomGeom`/paper, covers adjacent overlapping repair
+masks and keeps the non-orthogonal #249 discarded wedge empty. The production-
+bundle smoke densely samples the same strips through Plan, View, kiosk, Static,
+hidden Iso and light barriers. Golden scenes
+`orthogonal-strip-cell-5-view-dark` and
+`orthogonal-strip-cell-1-view-dark` repeat that semantic containment before
+pixel comparison; `enclosedHoles: 0` remains a separate #272 assertion and can
+no longer approve an exterior-connected notch. For private full-plan evidence,
+`scripts/wall-strip-containment.mjs <backup...>` checks raw, Optimize preview,
+applied canonical storage and JSON reload without printing or committing plan
+contents. Mutation `multi-wall-orthogonal-strip-protection-disabled` restores
+the release escape and must be killed by the containment tests.
 
 For #261, the anonymised #197 fixture also probes the real regression point
 `(895.5, 556)`: `roomGeom`, final masonry and paper must fill it, while every
@@ -2685,6 +2703,19 @@ require hands on real hardware — they remain for the human pass.
       [unit: test/wall-thickness.test.mjs; auto: smoke_multiwall_junction;
       golden: multiwall-junction-bevel-view-dark; mutation:
       multi-wall-exterior-corridor-disabled].
+- [ ] **A perpendicular T/X junction keeps every real wall strip (#275)**:
+      every finite ray with a perpendicular partner remains filled through its
+      node even when the removed sector is exterior-connected or neighbouring
+      node masks overlap. Mixed orthogonal/diagonal nodes protect only the
+      qualifying rays; the non-orthogonal #249 wedge stays empty. Raw,
+      Optimize preview, applied storage and reload agree at `cell_cm: 5/1`, as
+      do Plan, View, kiosk, Static, hidden Iso, paper, clean floor and light
+      [unit: test/wall-thickness.test.mjs; auto:
+      smoke_multiwall_strip_containment; golden:
+      orthogonal-strip-cell-5-view-dark +
+      orthogonal-strip-cell-1-view-dark; mutation:
+      multi-wall-orthogonal-strip-protection-disabled; exact local gate:
+      scripts/wall-strip-containment.mjs].
 - [ ] **Openings cut the slab**: a door/window/gate on a thick wall leaves a gap in
       the body; the door swing is offset toward the inner face and gate leaves
       toward the exterior face; with

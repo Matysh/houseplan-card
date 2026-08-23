@@ -13,6 +13,8 @@ import {
   innerContourForRoom, innerEdgeSpan, ownEdgeOffsets,
   paperRoomShapesWithWalls, WALL_MIN_CM, WALL_MAX_CM, MITRE_LIMIT,
   MULTI_WALL_JOIN_LIMIT, buildMultiWallNodeMap, multiWallBevelTriangles,
+  MULTI_WALL_ORTHOGONAL_DOT_EPSILON, multiWallProtectedRayIndexes,
+  multiWallProtectedStripGeometry,
   atomicPolyForRoom, insetOffsetsForRoom, wallIntervals, materializeWallIntervals,
   normalizeWallIntervals,
   intervalCmAt, wallBodyNeedsSolid, openingInnerFaceOffset, openingTunnelGeometry,
@@ -92,6 +94,42 @@ const assertNoEnclosedLocalHoles = (geometry, node, consumer) => assert.equal(
   `${consumer} retained an enclosed background hole at ${node.point}`,
 );
 
+const protectedOrthogonalStripGeometry = (node, map) => {
+  const protectedRays = new Set();
+  for (let i = 0; i < node.rays.length; i++) {
+    for (let j = i + 1; j < node.rays.length; j++) {
+      const a = node.rays[i].u, b = node.rays[j].u;
+      if (Math.abs(a[0] * b[0] + a[1] * b[1]) <= 1e-9) {
+        protectedRays.add(i);
+        protectedRays.add(j);
+      }
+    }
+  }
+  const radius = MITRE_LIMIT * node.halfDepth + map.epsilon * 2;
+  const extent = radius * 2;
+  let geometry = null;
+  for (const index of protectedRays) {
+    const ray = node.rays[index];
+    const n = [-ray.u[1], ray.u[0]];
+    for (const support of ray.supports) {
+      const length = Math.min(extent, support.length);
+      if (!(length > map.epsilon)) continue;
+      const rectangle = closedGeometry([
+        [node.point[0] + n[0] * support.halfDepth,
+          node.point[1] + n[1] * support.halfDepth],
+        [node.point[0] + ray.u[0] * length + n[0] * support.halfDepth,
+          node.point[1] + ray.u[1] * length + n[1] * support.halfDepth],
+        [node.point[0] + ray.u[0] * length - n[0] * support.halfDepth,
+          node.point[1] + ray.u[1] * length - n[1] * support.halfDepth],
+        [node.point[0] - n[0] * support.halfDepth,
+          node.point[1] - n[1] * support.halfDepth],
+      ]);
+      geometry = geometry ? union(geometry, rectangle) : rectangle;
+    }
+  }
+  return { geometry, protectedRays: [...protectedRays].sort((a, b) => a - b) };
+};
+
 const assertBoundedMultiWallBevels = (
   rooms, walls, geometry, cell = cellCm, scale = 1,
 ) => {
@@ -113,10 +151,26 @@ const assertBoundedMultiWallBevels = (
       (triangle[0][0] + triangle[1][0]) / 2,
       (triangle[0][1] + triangle[1][1]) / 2,
     ];
-    assertProbeOutside(geometry.geom, [
+    const probe = [
       (base[0] + triangle[2][0]) / 2,
       (base[1] + triangle[2][1]) / 2,
-    ], 'an excessive multi-wall wedge remains filled');
+    ];
+    const protectedStrips = multiWallProtectedStripGeometry(node, map);
+    const protectedCoverage = protectedStrips
+      ? geometryProbeCoverage(protectedStrips, probe)
+      : 0;
+    const actualCoverage = geometryProbeCoverage(geometry.geom, probe);
+    if (protectedCoverage > 1e-7) {
+      assert.ok(
+        actualCoverage + 1e-7 >= protectedCoverage,
+        `a bevel removed protected orthogonal material at ${probe}`,
+      );
+    } else {
+      assert.ok(
+        actualCoverage < 1e-7,
+        `an unprotected excessive multi-wall wedge remains filled at ${probe}`,
+      );
+    }
   }
   return map;
 };
@@ -794,6 +848,11 @@ test('issue #249 bounds the exported three-wall junction with straight bevels', 
     ) < 1e-6);
   assert.ok(node);
   assert.equal(node.rays.length, 3);
+  assert.deepEqual(
+    multiWallProtectedRayIndexes(node),
+    [],
+    'the approved non-orthogonal #249 join must not gain protected strips',
+  );
   closeTo(node.halfDepth, 4.861111111111112, 1e-9);
   closeTo(node.limit, MULTI_WALL_JOIN_LIMIT * node.halfDepth, 1e-9);
 
@@ -852,6 +911,119 @@ test('issue #249 bounds the exported three-wall junction with straight bevels', 
   closeTo(geometryDifferenceArea(geometry.geom, repeated.geom), 0, 1e-7);
   closeTo(geometryDifferenceArea(repeated.geom, geometry.geom), 0, 1e-7);
   assert.equal(JSON.stringify({ rooms, walls }), before, 'geometry mutated saved data');
+});
+
+test('issue #275 preserves every finite strip participating in an orthogonal T join', () => {
+  const fixture = JSON.parse(readFileSync(
+    new URL('./fixtures/275-orthogonal-strip-containment.json', import.meta.url), 'utf8',
+  ));
+  for (const item of fixture.cases) {
+    const rooms = item.rooms.map((room) => ({
+      ...room,
+      poly: room.poly.map(([x, y]) => [x * NORM_W, y * NORM_W]),
+    }));
+    let walls = [];
+    for (const wall of item.walls) {
+      walls = setWallThickness(
+        walls,
+        wall.a.map((value) => value * NORM_W),
+        wall.b.map((value) => value * NORM_W),
+        wall.cm,
+        pitch,
+        NORM_W,
+      );
+    }
+    const map = buildMultiWallNodeMap(
+      wallIntervals(rooms, walls, [], pitch, item.cell_cm, GRID_PITCH, NORM_W),
+      pitch * NORM_W * 0.04 * 4,
+      NORM_W,
+    );
+    const geometry = wallBodiesGeometry(
+      rooms, walls, [], [], pitch, item.cell_cm, GRID_PITCH, NORM_W,
+    );
+    assert.ok(geometry, `${item.id}: production geometry failed`);
+    for (const storedNode of item.nodes) {
+      const expectedNode = storedNode.map((value) => value * NORM_W);
+      const node = map.nodes.find((candidate) => Math.hypot(
+        candidate.point[0] - expectedNode[0],
+        candidate.point[1] - expectedNode[1],
+      ) <= map.epsilon);
+      assert.ok(node, `${item.id}: exact backup node ${storedNode} disappeared`);
+      const required = protectedOrthogonalStripGeometry(node, map);
+      assert.equal(required.protectedRays.length, node.rays.length,
+        `${item.id}: fixture no longer describes a pure orthogonal T join`);
+      assert.deepEqual(
+        multiWallProtectedRayIndexes(node),
+        required.protectedRays,
+        `${item.id}: product pair classification disagrees with the independent oracle`,
+      );
+      assert.ok(required.geometry, `${item.id}: no protected strip geometry`);
+      const productProtected = multiWallProtectedStripGeometry(node, map);
+      assert.ok(productProtected, `${item.id}: product protected geometry is empty`);
+      closeTo(geometryDifferenceArea(required.geometry, productProtected), 0, 1e-6);
+      closeTo(geometryDifferenceArea(productProtected, required.geometry), 0, 1e-6);
+      closeTo(
+        geometryDifferenceArea(required.geometry, geometry.roomGeom),
+        0,
+        1e-6,
+      );
+      closeTo(
+        geometryDifferenceArea(required.geometry, geometry.geom),
+        0,
+        1e-6,
+      );
+    }
+  }
+});
+
+test('issue #275 classifies orthogonal rays by pair, including mixed-node and epsilon bounds', () => {
+  const ray = (degrees) => {
+    const radians = degrees * Math.PI / 180;
+    return {
+      u: [Math.cos(radians), Math.sin(radians)],
+      halfDepth: 5,
+      length: 100,
+      supports: [{ halfDepth: 5, length: 100 }],
+    };
+  };
+  const node = (degrees) => ({
+    point: [0, 0],
+    rays: degrees.map(ray),
+    halfDepth: 5,
+    limit: 5 * MULTI_WALL_JOIN_LIMIT,
+  });
+
+  assert.deepEqual(multiWallProtectedRayIndexes(node([0, 90, 180])), [0, 1, 2]);
+  assert.deepEqual(
+    multiWallProtectedRayIndexes(node([0, 45, 90, 180])),
+    [0, 2, 3],
+    'the diagonal ray must not disable protection of the orthogonal rays',
+  );
+  assert.deepEqual(multiWallProtectedRayIndexes(node([0, 30, 200])), []);
+
+  const epsilonNode = (dot) => ({
+    point: [0, 0],
+    rays: [
+      { ...ray(0), u: [1, 0] },
+      { ...ray(90), u: [dot, Math.sqrt(1 - dot * dot)] },
+      ray(210),
+    ],
+    halfDepth: 5,
+    limit: 5 * MULTI_WALL_JOIN_LIMIT,
+  });
+  assert.deepEqual(
+    multiWallProtectedRayIndexes(
+      epsilonNode(MULTI_WALL_ORTHOGONAL_DOT_EPSILON * 0.5),
+    ),
+    [0, 1],
+  );
+  assert.deepEqual(
+    multiWallProtectedRayIndexes(
+      epsilonNode(MULTI_WALL_ORTHOGONAL_DOT_EPSILON * 2),
+    ),
+    [],
+    'a physically diagonal ray beyond normalization noise must stay unprotected',
+  );
 });
 
 test('issue #271 keeps finite co-directional ray supports and never rebuilds past an endpoint', () => {
@@ -1577,14 +1749,14 @@ test('issue #197 keeps the full masonry when one virtual-junction patch has ULP 
       `room ${room.id} clean floor leaked into the retained T-junction wedge`,
     );
   }
-  // #249 intentionally bevels degree-3+ nodes in this older fixture too.
-  // #249 retains the physical multi-wall overlap up to R instead of reducing
-  // right-angle arms to point contacts.
+  // #249 intentionally bevels unprotected degree-3+ sectors in this older
+  // fixture too. #275 additionally retains every finite strip that has an
+  // orthogonal partner instead of letting the same bevel create an open notch.
   // #271 removes only the area that the old node-wide 8H rectangles invented
   // after finite ray endpoints; all semantic #197/#249/#261 probes above stay.
   // #272 additionally opens any point-contact bevel cut to the exterior.
-  closeTo(geometryArea(geometry.geom), 124243.7732289006, 1e-6);
-  closeTo(geometryArea(geometry.paperGeom), 727303.8153386558, 1e-6);
+  closeTo(geometryArea(geometry.geom), 124534.6091222676, 1e-6);
+  closeTo(geometryArea(geometry.paperGeom), 727303.8194444444, 1e-6);
   assert.equal(
     JSON.stringify({ rooms, walls, cuts, openings, extraBodies }), before,
     'rendering mutated persisted input',
