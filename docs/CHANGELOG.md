@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.67.0-beta.7 — 2026-08-24
+
 - Perpendicular T/X wall junctions now keep the complete finite width of every
   participating wall, including neighbouring junctions whose repair windows
   overlap. Exterior-connected white corner notches, apparent thickness loss
