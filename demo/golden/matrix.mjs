@@ -270,7 +270,7 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     space: 'golden-multiwall-junction', mode: 'view',
     multiWallJunction: {
       node: [0.329166667, 0.141666667], rays: 3,
-      discardedWedgeProbe: [0.3300011713041353, 0.14699331561935776],
+      discardedWedgeProbe: [0.3303808442725, 0.1488560107825],
     },
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'isometric-wall-junctions-dark', fixture: 'visual',
