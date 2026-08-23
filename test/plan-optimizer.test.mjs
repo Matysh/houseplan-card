@@ -37,7 +37,9 @@ const assertNoPersistedChanges = (result) => {
     'moved', 'coordsCanonicalized', 'rotated', 'removedDrafts', 'migrated',
     'glowSpacesMigrated', 'glowRoomsMigrated', 'canonicalized', 'wallsMerged',
     'spansMerged', 'partitionsMerged', 'spaceRefsRemapped', 'roomRefsRemapped',
-    'positionsRemapped', 'markersDetached',
+    'positionsRemapped', 'markersDetached', 'orphanRoomLabelsRemoved',
+    'orphanDevicePositionsRemoved', 'orphanGroupPositionsRemoved',
+    'liveMissingPositionsRemoved',
   ]) assert.equal(result.report[field], 0, `${field} must describe the persisted delta`);
   assert.equal(result.report.maxShift, 0);
   assert.equal(result.report.maxShiftCm, 0);
@@ -374,7 +376,7 @@ test('model version bookkeeping does not claim a data migration', () => {
   assert.equal(result.report.migrated, 0);
 });
 
-test('issue 244 reference repair is part of exact Optimize candidate and bumps model version', () => {
+test('issue 252 Optimize detaches a live marker without silently deleting its old position', () => {
   const input = {
     model_version: PLAN_MODEL_VERSION - 1,
     spaces: [{ id: 'home', title: 'Home', view_box: [0, 0, 1, 1], rooms: [] }],
@@ -386,8 +388,10 @@ test('issue 244 reference repair is part of exact Optimize candidate and bumps m
   assert.equal(result.config.model_version, PLAN_MODEL_VERSION);
   assert.equal(result.config.markers[0].space, undefined);
   assert.equal(result.config.markers[0].icon, 'mdi:sofa');
-  assert.equal(result.layout.m, undefined);
+  assert.deepEqual(result.layout.m, { s: 'gone', x: 0.25, y: 0.5 });
   assert.equal(result.report.markersDetached, 1);
+  assert.equal(result.report.positionsUnresolved, 1);
+  assert.equal(result.report.liveMissingPositions.length, 1);
   assert.equal(result.report.migrated, 0, 'reference counters stay separate from migration');
 });
 

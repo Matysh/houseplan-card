@@ -491,10 +491,15 @@ touching virtual spans per room pair, compacts consecutive real-wall
 intervals of equal thickness and stamps `model_version`. Unknown fields
 are preserved and every pass is idempotent.
 
-The optimizer deliberately does **not** alter backdrop calibration or
-saved view boxes, delete unattached layout entries (a device may only be
-temporarily unavailable), deduplicate markers, or delete files. File
-collection remains the backend's reference-aware scheduled job.
+The optimizer deliberately does **not** alter backdrop calibration or saved
+view boxes, deduplicate markers, or delete files. It may delete an unattached
+layout entry only after classifying its owner against current rooms, marker
+tombstones and an authoritative HA device/entity roster. Proven-absent room
+labels, devices and group markers are cleaned; live owners are preserved unless
+the administrator explicitly opts into removing their old positions, and an
+incomplete registry or unknown namespace always fails closed. The cleanup is
+part of the pure candidate, Undo and idempotence contract. File collection
+remains the backend's reference-aware scheduled job.
 
 `alignAllToGrid(spaces, layout)` (`src/align-grid.ts`) is pure: it
 copies its input, never mutates it, and returns the new spaces, the new

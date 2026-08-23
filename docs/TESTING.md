@@ -2248,9 +2248,10 @@ require hands on real hardware — they remain for the human pass.
       `optimize-preflight-renders-apply-on-failure`].
 - [ ] **Missing space references recover without losing a marker (#244)**:
       exact import signatures remap space, room, marker/room-label positions
-      and vacuum segments; Area remap and detach delete stale coordinates but
-      preserve the marker record; ambiguous/truncated signatures and opaque
-      layout are never guessed. Preview/Apply/Undo use one exact candidate and
+      and vacuum segments; Area remap and detach preserve the marker record and
+      leave an old position for the owner-aware #252 decision rather than
+      guessing. Ambiguous/truncated signatures and opaque layout are never
+      guessed. Preview/Apply/Undo use one exact candidate and
       show remaining debt even for a no-op. Space import repairs target refs by
       its known map. With another space present, space delete deduplicates active
       marker blockers; deleting the sole remaining space instead preserves every
@@ -2264,6 +2265,20 @@ require hands on real hardware — they remain for the human pass.
       card-editor-validation; backend: test_ha_import_export,
       test_ha_websocket; smoke: orphan-space-references + optional-space-model;
       pre-release: targeted browser smoke and light/dark golden].
+- [ ] **Optimize explains and safely cleans forgotten positions (#252)**:
+      the owner matrix covers room labels, marker tombstones, known HA devices,
+      `lg_` entities and unknown namespaces across authoritative and limited
+      registries. Only proven-absent owners enter the default candidate; live
+      owners are named and preserved until the secondary opt-in, and unverified
+      owners never receive a destructive action. The main RU/EN report contains
+      bounded human categories rather than IDs; closed Details contains at most
+      ten technical entries plus the remainder, and vacuum mappings remain a
+      separate warning. Cancel and the secondary toggle write nothing; Apply
+      writes the exact preview once, reload is a no-op, and Undo restores all
+      removed positions [unit: space-reference-repair + plan-optimizer + i18n;
+      auto: smoke_orphan_space_references; golden: dark EN + light RU;
+      mutations: `orphan-cleanup-proven-owners-kept`,
+      `orphan-cleanup-partial-registry-deletes`].
 - [ ] **Every write prevents new ULP coordinate noise (#224)**: config/layout
       schema, import, direct storage writers, startup recovery and maintenance
       Undo produce the same nine-decimal allow-listed geometry as the frontend.

@@ -3225,6 +3225,34 @@ export const cardStyles = css`
       color: var(--hp-muted);
     }
     .alignmsg { margin: 0 0 8px; font-size: 13px; line-height: 1.45; }
+    .optimize-live {
+      display: grid;
+      justify-items: start;
+      gap: var(--sp-2);
+      margin-bottom: var(--sp-3);
+    }
+    .optimize-live .alignmsg, .optimize-live .rhint { margin-bottom: 0; }
+    .optimize-cleanup { min-height: 44px; }
+    .optimize-selected { color: var(--hp-txt); }
+    .optimize-details {
+      margin-top: var(--sp-3);
+      color: var(--hp-muted);
+      font-size: var(--fs-s);
+      overflow-wrap: anywhere;
+    }
+    .optimize-details > summary {
+      width: fit-content;
+      color: var(--hp-txt);
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .optimize-details > summary:focus-visible {
+      outline: 2px solid var(--hp-accent);
+      outline-offset: 3px;
+      border-radius: var(--rad-s);
+    }
+    .optimize-details ul { margin: var(--sp-3) 0; padding-inline-start: 22px; }
+    .optimize-details li + li { margin-top: var(--sp-1); }
     .btn.alignall { width: 100%; justify-content: center; }
     .backupactions {
       display: grid;

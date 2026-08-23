@@ -43,7 +43,7 @@ export const MUTANTS = [
   {
     id: 'orphan-space-detach-disabled',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
-      + '&& node --test --test-name-pattern="detaches only dead active placement" '
+      + '&& node --test --test-name-pattern="detaches a live marker" '
       + 'test/space-reference-repair.test.mjs',
     because: 'an active marker with no exact copy or usable Area must lose only its dead space '
       + 'field; retaining that one field is the original invisibility bug and must be caught '
@@ -70,17 +70,29 @@ export const MUTANTS = [
     }],
   },
   {
-    id: 'orphan-space-area-keeps-stale-position',
+    id: 'orphan-cleanup-partial-registry-deletes',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
-      + '&& node --test --test-name-pattern="Area remap uses a unique production Area" '
+      + '&& node --test --test-name-pattern="fails closed for limited registry" '
       + 'test/space-reference-repair.test.mjs',
-    because: 'an Area proves the destination room but not a coordinate transform between plans; '
-      + 'keeping the deleted-plan x/y silently teleports the restored device (#244)',
+    because: 'limited registry access is not proof that an HA device or group was deleted; '
+      + 'treating it as authoritative destroys positions on permission/network failures (#252)',
     patches: [{
       file: 'src/space-reference-repair.ts',
-      find: '        delete layout[markerId];\n        handledLayout.add(markerId);',
-      replace: '        layout[markerId] = { ...position, s: targetSpace || positionSpace };\n'
-        + '        handledLayout.add(markerId);',
+      find: '  const rosterAuthoritative = roster?.authoritative === true;',
+      replace: '  const rosterAuthoritative = true;',
+    }],
+  },
+  {
+    id: 'orphan-cleanup-proven-owners-kept',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="removes only proven room, device and group" '
+      + 'test/space-reference-repair.test.mjs',
+    because: 'proof without deletion leaves the exact maintenance debt #252 exists to remove; '
+      + 'all three supported owner categories must change the candidate once and only once',
+    patches: [{
+      file: 'src/space-reference-repair.ts',
+      find: "    if (status === 'absent') {\n      delete layout[key];\n      countRemoval(owner.kind);",
+      replace: "    if (status === 'absent') {\n      countRemoval(owner.kind);",
     }],
   },
   {

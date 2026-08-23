@@ -10,6 +10,27 @@
 export interface SpaceReferenceRepairContext {
   /** Effective Area from the same buildDevices snapshot used by View. */
   effectiveAreaByMarker?: Readonly<Record<string, string>>;
+  /** Full HA owner evidence. Absence is meaningful only when authoritative. */
+  ownerRoster?: {
+    authoritative: boolean;
+    deviceIds?: readonly string[];
+    entityIds?: readonly string[];
+    /** User-facing names keyed by the persisted layout owner id. */
+    names?: Readonly<Record<string, string>>;
+  };
+  /** Explicit preview opt-in; the default candidate preserves live owners. */
+  removeLiveMissingPositions?: boolean;
+}
+
+export type SpaceReferenceOwnerKind = 'room_label' | 'device' | 'group' | 'unknown';
+
+export interface SpaceReferencePositionDetail {
+  id: string;
+  spaceId: string;
+  kind: SpaceReferenceOwnerKind;
+  /** Empty when no safe human-readable name exists. */
+  name: string;
+  reason?: 'registry_unavailable' | 'unknown_owner';
 }
 
 export interface SpaceReferenceReport {
@@ -20,6 +41,13 @@ export interface SpaceReferenceReport {
   positionsUnresolved: number;
   nestedRefsUnresolved: number;
   deadSpaceIds: string[];
+  orphanRoomLabelsRemoved: number;
+  orphanDevicePositionsRemoved: number;
+  orphanGroupPositionsRemoved: number;
+  liveMissingPositionsRemoved: number;
+  removedPositions: SpaceReferencePositionDetail[];
+  liveMissingPositions: SpaceReferencePositionDetail[];
+  unverifiedPositions: SpaceReferencePositionDetail[];
 }
 
 export interface SpaceReferenceRepairResult {
@@ -71,6 +99,7 @@ export function repairSpaceReferences(
   }
   const roomSignaturesBySpace = new Map<string, Map<string, string[]>>();
   const roomOwner = new Map<string, string>();
+  const roomNames = new Map<string, string>();
   const roomsByArea = new Map<string, { spaceId: string; roomId: string }[]>();
   for (const space of spaces) {
     const spaceId = typeof space?.id === 'string' ? space.id : '';
@@ -82,6 +111,7 @@ export function repairSpaceReferences(
       const signature = /^room_(.+)_([0-9a-f]{8})$/.exec(roomId);
       if (signature) addCandidate(roomSignatures, signature[1], roomId);
       if (!roomOwner.has(roomId)) roomOwner.set(roomId, spaceId);
+      if (!roomNames.has(roomId)) roomNames.set(roomId, String(room.name || ''));
       const area = typeof room.area === 'string' ? room.area : '';
       if (area) {
         const values = roomsByArea.get(area) || [];
@@ -92,11 +122,15 @@ export function repairSpaceReferences(
     roomSignaturesBySpace.set(spaceId, roomSignatures);
   }
   const existingRoomIds = new Set(roomOwner.keys());
-  const activeMarkerIds = new Set<string>();
-  const removedMarkerIds = new Set<string>();
+  const activeMarkers = new Map<string, any>();
+  const removedMarkers = new Map<string, any>();
   for (const marker of markers) {
     if (typeof marker?.id !== 'string' || !marker.id) continue;
-    (marker.removed === true ? removedMarkerIds : activeMarkerIds).add(marker.id);
+    if (marker.removed === true) {
+      removedMarkers.set(marker.id, marker);
+    } else {
+      activeMarkers.set(marker.id, marker);
+    }
   }
 
   const report: SpaceReferenceReport = {
@@ -107,6 +141,13 @@ export function repairSpaceReferences(
     positionsUnresolved: 0,
     nestedRefsUnresolved: 0,
     deadSpaceIds: [],
+    orphanRoomLabelsRemoved: 0,
+    orphanDevicePositionsRemoved: 0,
+    orphanGroupPositionsRemoved: 0,
+    liveMissingPositionsRemoved: 0,
+    removedPositions: [],
+    liveMissingPositions: [],
+    unverifiedPositions: [],
   };
   const handledLayout = new Set<string>();
 
@@ -204,10 +245,6 @@ export function repairSpaceReferences(
         layout[markerId] = { ...position, s: targetSpace };
         report.positionsRemapped++;
         handledLayout.add(markerId);
-      } else if (!isRemoved) {
-        // Coordinates from an unrelated/deleted plan must not be transplanted.
-        delete layout[markerId];
-        handledLayout.add(markerId);
       }
     }
   }
@@ -238,18 +275,88 @@ export function repairSpaceReferences(
     report.positionsRemapped++;
   }
 
+  const roster = context.ownerRoster;
+  const rosterAuthoritative = roster?.authoritative === true;
+  const liveDeviceIds = new Set(roster?.deviceIds || []);
+  const liveEntityIds = new Set(roster?.entityIds || []);
+  const knownDeviceIds = new Set(
+    Array.isArray(config.settings?.known_devices)
+      ? config.settings.known_devices.filter((value: unknown) => typeof value === 'string')
+      : [],
+  );
+  const ownerName = (id: string, fallback = ''): string => {
+    const value = String(roster?.names?.[id] || fallback || '').trim();
+    return value && value !== id ? value : '';
+  };
+  const detail = (
+    id: string, spaceId: string, kind: SpaceReferenceOwnerKind, fallback = '',
+    reason?: SpaceReferencePositionDetail['reason'],
+  ): SpaceReferencePositionDetail => ({
+    id, spaceId, kind, name: ownerName(id, fallback), ...(reason ? { reason } : {}),
+  });
+  const countRemoval = (kind: SpaceReferenceOwnerKind): void => {
+    if (kind === 'room_label') report.orphanRoomLabelsRemoved++;
+    else if (kind === 'group') report.orphanGroupPositionsRemoved++;
+    else report.orphanDevicePositionsRemoved++;
+  };
   const remainingDead = new Set<string>();
-  for (const marker of markers) {
-    const value = typeof marker?.space === 'string' ? marker.space : '';
-    if (value && !existingSpaceIds.has(value)) remainingDead.add(value);
-  }
   for (const [key, position] of Object.entries(layout)) {
     const value = typeof (position as any)?.s === 'string' ? (position as any).s : '';
     if (!value || existingSpaceIds.has(value)) continue;
+
+    let owner: SpaceReferencePositionDetail;
+    let status: 'absent' | 'live' | 'unverified';
+    const activeMarker = activeMarkers.get(key);
+    const removedMarker = removedMarkers.get(key);
+    if (activeMarker) {
+      owner = detail(key, value, 'device', String(activeMarker.name || ''));
+      status = 'live';
+    } else if (removedMarker) {
+      owner = detail(key, value, 'device', String(removedMarker.name || ''));
+      status = 'absent';
+    } else if (key.startsWith('rl_')) {
+      const roomId = key.slice(3);
+      owner = detail(key, value, 'room_label', roomNames.get(roomId) || '');
+      status = existingRoomIds.has(roomId) ? 'live' : 'absent';
+    } else if (key.startsWith('lg_')) {
+      const entityId = key.slice(3);
+      owner = detail(key, value, 'group');
+      status = liveEntityIds.has(entityId)
+        ? 'live'
+        : rosterAuthoritative ? 'absent' : 'unverified';
+      if (status === 'unverified') owner.reason = 'registry_unavailable';
+    } else if (liveDeviceIds.has(key)) {
+      owner = detail(key, value, 'device');
+      status = 'live';
+    } else if (knownDeviceIds.has(key)) {
+      owner = detail(key, value, 'device');
+      status = rosterAuthoritative ? 'absent' : 'unverified';
+      if (status === 'unverified') owner.reason = 'registry_unavailable';
+    } else {
+      owner = detail(key, value, 'unknown', '', 'unknown_owner');
+      status = 'unverified';
+    }
+
+    if (status === 'absent') {
+      delete layout[key];
+      countRemoval(owner.kind);
+      report.removedPositions.push(owner);
+      continue;
+    }
+    if (status === 'live') {
+      report.liveMissingPositions.push(owner);
+      if (context.removeLiveMissingPositions === true) {
+        delete layout[key];
+        report.liveMissingPositionsRemoved++;
+        countRemoval(owner.kind);
+        report.removedPositions.push(owner);
+        continue;
+      }
+    } else {
+      report.unverifiedPositions.push(owner);
+    }
+    report.positionsUnresolved++;
     remainingDead.add(value);
-    // Active marker positions should have been deleted above. Count every
-    // preserved opaque/removed owner once in the remaining warning.
-    if (!activeMarkerIds.has(key) || removedMarkerIds.has(key)) report.positionsUnresolved++;
   }
   report.deadSpaceIds = [...remainingDead].sort((a, b) => a.localeCompare(b));
 

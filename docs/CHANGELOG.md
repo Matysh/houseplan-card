@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- “Optimize plans” now removes layout positions only when their room label,
+  device or light-group owner is proven to no longer exist. The preview reports
+  those cleanups in plain-language categories, keeps technical IDs inside
+  collapsed Details, and preserves live or unverifiable owners. A separate
+  opt-in can remove old positions of live objects before the main Apply; Cancel
+  writes nothing and maintenance Undo restores the complete previous layout.
+  This narrows the v1.59 promise to preserve every unattached entry: temporarily
+  unavailable and unverified objects remain protected, while proven orphans no
+  longer accumulate indefinitely
+  ([#252](https://github.com/Matysh/houseplan-card/issues/252)).
 - Wall junctions where three or more physical walls meet now use a bounded
   straight bevel instead of producing long hatched spikes, including mixed wall
   thicknesses. The node stays filled and matches across Plan, View, kiosk,
