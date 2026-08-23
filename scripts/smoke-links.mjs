@@ -43,11 +43,15 @@ export const SMOKE_LINKS = [
   {
     // #261: the browser observes the canonical wall/paper paths and downstream
     // geometries, while the pure bevel helpers remain internal to the bundle.
-    symbols: ['multiWallBevelTriangles', 'multiWallBevelTrianglesAt'],
+    symbols: [
+      'multiWallBevelTriangles', 'multiWallBevelTrianglesAt',
+      'buildMultiWallNodeMap', 'MultiWallNodeRay', 'MultiWallNodeRaySupport',
+    ],
     smokes: ['smoke_junction_patch_resilience.mjs', 'smoke_multiwall_junction.mjs'],
     because: 'the #197 smoke probes the repaired exterior wedge across Plan, View, kiosk, '
       + 'Static, hidden Iso and light barriers, while the #249 smoke proves the old excessive '
-      + 'wedge stays empty; neither browser scenario calls the pure bevel helpers by name',
+      + 'wedge stays empty, while #271 also proves finite ray endpoints across Plan, Static, '
+      + 'hidden Iso and light barriers; the browser scenarios call none of the pure helpers by name',
   },
   {
     // #258: the browser sees only the resulting path/caches; it cannot call

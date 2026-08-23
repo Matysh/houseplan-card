@@ -2648,6 +2648,16 @@ require hands on real hardware — they remain for the human pass.
       junction-patch-resilience-plan-dark +
       junction-patch-resilience-view-dark; mutation:
       multi-wall-paper-full-origin-cut].
+- [ ] **Degree-3 repair stops at every finite ray endpoint (#271)**: canonical
+      co-directional rays retain separate short-thick and long-thin supports;
+      the rebuilt masonry, paper and light barrier contain the real short arm
+      but no area after its endpoint. Plan, View, kiosk, Static, hidden Iso and
+      clean floor agree, independent of owner order, winding and scale
+      [unit: test/wall-thickness.test.mjs; auto:
+      smoke_junction_patch_resilience; golden:
+      junction-patch-resilience-plan-dark +
+      junction-patch-resilience-view-dark; mutation:
+      multi-wall-finite-ray-disabled].
 - [ ] **Openings cut the slab**: a door/window/gate on a thick wall leaves a gap in
       the body; the door swing is offset toward the inner face and gate leaves
       toward the exterior face; with

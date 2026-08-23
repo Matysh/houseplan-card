@@ -48,10 +48,22 @@ export const MITRE_LIMIT = 4;
 /** Multi-ray joins stay inside this × the largest incident half-depth (#249). */
 export const MULTI_WALL_JOIN_LIMIT = 1.25;
 
+export interface MultiWallNodeRaySupport {
+  /** Physical half-depth owned by this finite co-directional interval. */
+  halfDepth: number;
+  /** Distance from the canonical node to the interval's real endpoint. */
+  length: number;
+}
+
 export interface MultiWallNodeRay {
   /** Unit direction from the canonical node toward the interval's other end. */
   u: [number, number];
+  /** Largest incident half-depth at the node; used by the join formula. */
   halfDepth: number;
+  /** Furthest real endpoint in this direction. */
+  length: number;
+  /** Non-dominated finite strips whose union is the physical ray support. */
+  supports: MultiWallNodeRaySupport[];
 }
 
 export interface MultiWallNode {
@@ -1463,7 +1475,9 @@ export interface RoomWallProfile extends AtomicPoly {
 
 interface PendingMultiWallNode {
   point: [number, number];
-  rays: Array<{ u: [number, number]; halfDepth: number; angle: number }>;
+  rays: Array<{
+    u: [number, number]; halfDepth: number; length: number; angle: number;
+  }>;
 }
 
 function spatialBucket(point: number[], epsilon: number): [number, number] {
@@ -1565,39 +1579,72 @@ export function buildMultiWallNodeMap(
     const u: [number, number] = [dx / length, dy / length];
     let angle = Math.atan2(u[1], u[0]);
     if (angle < 0) angle += Math.PI * 2;
-    node.rays.push({ u, halfDepth: endpoint.halfDepth, angle });
+    node.rays.push({ u, halfDepth: endpoint.halfDepth, length, angle });
   }
 
   const nodes: MultiWallNode[] = [];
   const angleEps = 1e-9;
+  const canonicalSupports = (
+    input: MultiWallNodeRaySupport[],
+  ): MultiWallNodeRaySupport[] => {
+    // Endpoint clustering uses a deliberately visible plan-space tolerance;
+    // dominance between already matched physical strips must not. Otherwise a
+    // long thin strip can erase a shorter thick strip merely because their
+    // half-depth difference is below the node lookup epsilon.
+    const supportEps = 1e-9 * Math.max(1, scale);
+    const validSupports = input.filter((support) => Number.isFinite(support.halfDepth)
+      && support.halfDepth > 0 && Number.isFinite(support.length) && support.length > eps);
+    return validSupports
+      .filter((support, index) => !validSupports.some((other, otherIndex) => (
+        otherIndex !== index
+        && other.halfDepth >= support.halfDepth - supportEps
+        && other.length >= support.length - supportEps
+        && (other.halfDepth > support.halfDepth + supportEps
+          || other.length > support.length + supportEps
+          || otherIndex < index)
+      )))
+      .sort((a, b) => a.length - b.length || a.halfDepth - b.halfDepth)
+      .map((support) => ({ ...support }));
+  };
   for (const node of pending) {
-    const sorted = node.rays.sort((a, b) => a.angle - b.angle || a.halfDepth - b.halfDepth);
-    const rays: Array<{ u: [number, number]; halfDepth: number; angle: number }> = [];
+    const sorted = node.rays.sort((a, b) => a.angle - b.angle
+      || a.length - b.length || a.halfDepth - b.halfDepth);
+    const rays: Array<{
+      u: [number, number]; angle: number; supports: MultiWallNodeRaySupport[];
+    }> = [];
     for (const ray of sorted) {
       const previous = rays[rays.length - 1];
       if (previous && Math.abs(ray.angle - previous.angle) <= angleEps) {
-        if (ray.halfDepth > previous.halfDepth) {
-          previous.halfDepth = ray.halfDepth;
-          previous.u = ray.u;
-        }
+        previous.supports.push({ halfDepth: ray.halfDepth, length: ray.length });
       } else {
-        rays.push({ ...ray, u: [...ray.u] });
+        rays.push({
+          u: [...ray.u], angle: ray.angle,
+          supports: [{ halfDepth: ray.halfDepth, length: ray.length }],
+        });
       }
     }
     if (rays.length > 1
         && Math.PI * 2 - rays[rays.length - 1].angle + rays[0].angle <= angleEps) {
       const last = rays.pop()!;
-      if (last.halfDepth > rays[0].halfDepth) {
-        rays[0].halfDepth = last.halfDepth;
-        rays[0].u = last.u;
-      }
+      rays[0].supports.push(...last.supports);
     }
     if (rays.length < 3) continue;
-    const halfDepth = Math.max(...rays.map((ray) => ray.halfDepth));
+    const canonicalRays = rays.map((ray) => {
+      const supports = canonicalSupports(ray.supports);
+      return {
+        u: [...ray.u] as [number, number],
+        halfDepth: Math.max(...supports.map((support) => support.halfDepth)),
+        length: Math.max(...supports.map((support) => support.length)),
+        supports,
+      };
+    }).filter((ray) => Number.isFinite(ray.halfDepth) && ray.halfDepth > 0
+      && Number.isFinite(ray.length) && ray.length > eps);
+    if (canonicalRays.length < 3) continue;
+    const halfDepth = Math.max(...canonicalRays.map((ray) => ray.halfDepth));
     if (!(halfDepth > 0) || !Number.isFinite(halfDepth)) continue;
     nodes.push({
       point: [...node.point],
-      rays: rays.map(({ u, halfDepth: half }) => ({ u: [...u], halfDepth: half })),
+      rays: canonicalRays,
       halfDepth,
       limit: MULTI_WALL_JOIN_LIMIT * halfDepth,
     });
@@ -2048,19 +2095,26 @@ function bevelMultiWallBody(
       let local: any = null;
       for (const ray of node.rays) {
         const n = [-ray.u[1], ray.u[0]];
-        const rectangle = stableJunctionPatch([
-          [node.point[0] + n[0] * ray.halfDepth,
-            node.point[1] + n[1] * ray.halfDepth],
-          [node.point[0] + ray.u[0] * extent + n[0] * ray.halfDepth,
-            node.point[1] + ray.u[1] * extent + n[1] * ray.halfDepth],
-          [node.point[0] + ray.u[0] * extent - n[0] * ray.halfDepth,
-            node.point[1] + ray.u[1] * extent - n[1] * ray.halfDepth],
-          [node.point[0] - n[0] * ray.halfDepth,
-            node.point[1] - n[1] * ray.halfDepth],
-        ], map.coordinateScale);
-        if (!rectangle) continue;
-        const piece: any = closedRing(rectangle) as any;
-        local = local ? union(local, piece) : piece;
+        // A canonical direction may be owned by overlapping room intervals
+        // with different depth/length pairs. Rebuild their finite union; using
+        // the node-wide 8H extent here invents a wall after a short endpoint.
+        for (const support of ray.supports) {
+          const supportExtent = Math.min(extent, support.length);
+          if (!(supportExtent > map.epsilon)) continue;
+          const rectangle = stableJunctionPatch([
+            [node.point[0] + n[0] * support.halfDepth,
+              node.point[1] + n[1] * support.halfDepth],
+            [node.point[0] + ray.u[0] * supportExtent + n[0] * support.halfDepth,
+              node.point[1] + ray.u[1] * supportExtent + n[1] * support.halfDepth],
+            [node.point[0] + ray.u[0] * supportExtent - n[0] * support.halfDepth,
+              node.point[1] + ray.u[1] * supportExtent - n[1] * support.halfDepth],
+            [node.point[0] - n[0] * support.halfDepth,
+              node.point[1] - n[1] * support.halfDepth],
+          ], map.coordinateScale);
+          if (!rectangle) continue;
+          const piece: any = closedRing(rectangle) as any;
+          local = local ? union(local, piece) : piece;
+        }
       }
       for (const triangle of multiWallBevelTriangles({
         ...map,

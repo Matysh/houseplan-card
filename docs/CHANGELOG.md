@@ -8,6 +8,11 @@
   place; fragments between two topology nodes or touching an opening boundary
   remain protected. Preview, Apply, reload and maintenance Undo use the same
   canonical result ([#273](https://github.com/Matysh/houseplan-card/issues/273)).
+- Degree-3+ wall junctions no longer extend a short wall arm up to `8×` the
+  largest half-thickness. Plan, View, Static, hidden Iso, floor, shadows and
+  light barriers now stop at the real saved endpoint, including when a short
+  thick arm shares its direction with a longer thin wall
+  ([#271](https://github.com/Matysh/houseplan-card/issues/271)).
 
 ## v1.67.0-beta.5 — 2026-08-23
 

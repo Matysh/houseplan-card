@@ -429,9 +429,12 @@ prevents one cosmetic junction repair from blanking a whole plan without
 masking a real structural failure (#197).
 The same structural pass builds one scale-relative physical endpoint map for
 room profiles, exterior intervals and junction patches (#249). Co-directional
-duplicates collapse while opposite rays remain distinct. At degree 3+ nodes it
-uses `H = max(incident half-depth)` and clips excessive overlap to a straight
-bevel bounded by `1.25 × H`; degree-2 joins keep the legacy `MITRE_LIMIT = 4`.
+duplicates collapse while opposite rays remain distinct. Each canonical
+direction retains the non-dominated finite `(half-depth, length)` supports of
+its source intervals, so local reconstruction cannot invent masonry, paper or
+an occluder after a real endpoint (#271). At degree 3+ nodes it uses
+`H = max(incident half-depth)` and clips excessive overlap to a straight bevel
+bounded by `1.25 × H`; degree-2 joins keep the legacy `MITRE_LIMIT = 4`.
 The final bevel is applied to canonical masonry after its room/atomic/exterior
 union, preventing later boolean inputs from recreating the discarded spike.
 Canonical masonry replaces each affected local mask with complete physical ray

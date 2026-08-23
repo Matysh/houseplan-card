@@ -107,10 +107,13 @@ joins; bevel when the mitre spike exceeds `MITRE_LIMIT × thickness`.
 At a physical node with **three or more distinct incident rays**, the stricter
 multi-wall rule applies (#249). Shared room ownership and reversed interval
 direction do not create extra rays. One structural node map records the largest
-incident half-depth `H`; every excessive join is cut back with a straight local
-bevel and may not extend beyond `R = 1.25 × H`. Inside the room union, a bounded
-mask replaces the legacy ring with the complete finite ray strips, retains their
-overlap through `R`, and removes only the remaining excessive pairwise wedge.
+incident half-depth `H` and the finite `(half-depth, endpoint distance)` supports
+of every co-directional ray. A longer thin support never extends a shorter thick
+support, and no repair may continue either one beyond its saved endpoint (#271).
+Every excessive join is cut back with a straight local bevel and may not extend
+beyond `R = 1.25 × H`. Inside the room union, a bounded mask replaces the legacy
+ring with the complete finite ray strips, retains their overlap through `R`, and
+removes only the remaining excessive pairwise wedge.
 The same bounded rule applies to the exterior half-wall and paper envelope:
 local ray strips are clipped to that physical envelope rather than the room
 centre, so a valid T-junction cannot become a white wedge. This keeps the node

@@ -153,7 +153,11 @@ export function prepareGoldenFixture(scenario) {
   if (scenario.junctionPatchResilience) {
     if (!Array.isArray(scenario.retainedWedgeProbe)
         || scenario.retainedWedgeProbe.length !== 2
-        || !scenario.retainedWedgeProbe.every(Number.isFinite)) {
+        || !scenario.retainedWedgeProbe.every(Number.isFinite)
+        || !Array.isArray(scenario.absentWallProbes)
+        || scenario.absentWallProbes.length < 1
+        || scenario.absentWallProbes.some((point) => !Array.isArray(point)
+          || point.length !== 2 || !point.every(Number.isFinite))) {
       throw new Error(`invalid golden retainedWedgeProbe: ${scenario.id}`);
     }
     fixture.config.spaces.push({
@@ -577,6 +581,12 @@ export async function prepareGoldenScenario(page, scenario) {
       if (!wall?.isPointInFill?.(point)
           || !papers.some((paper) => paper.isPointInFill?.(point))) {
         throw new Error(`golden retained T-junction wedge contract failed: ${scenario.id}`);
+      }
+      for (const absent of scenario.absentWallProbes || []) {
+        const absentPoint = new DOMPoint(absent[0] * 1000, absent[1] * card._spaceH);
+        if (wall?.isPointInFill?.(absentPoint)) {
+          throw new Error(`golden finite multi-wall ray contract failed: ${scenario.id}`);
+        }
       }
     }
     if (scenario.wallKeyRoundtrip) {

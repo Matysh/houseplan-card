@@ -12,8 +12,21 @@ const result = await page.evaluate(async (spaceFixture) => {
   const card = window.__card;
   const root = () => card.shadowRoot || card.renderRoot;
   const retainedWedgeProbe = [895.5, 556];
+  const finiteRayOutsideProbe = [0.420833333 * 1000, 0.37625 * card._spaceH];
   const svgContains = (element, point = retainedWedgeProbe) =>
     !!element?.isPointInFill?.(new DOMPoint(point[0], point[1]));
+  const pathDataContains = (d, point) => {
+    const svgRoot = root().querySelector('svg');
+    if (!svgRoot || !d) return false;
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', d);
+    path.setAttribute('fill-rule', 'evenodd');
+    path.setAttribute('visibility', 'hidden');
+    svgRoot.append(path);
+    const contains = svgContains(path, point);
+    path.remove();
+    return contains;
+  };
   const ringContains = (ring, point) => {
     let inside = false;
     for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
@@ -79,6 +92,7 @@ const result = await page.evaluate(async (spaceFixture) => {
   out.planKeepsMasonry = !!planD && !!planPath && canonical?.d === planD;
   out.paperKeepsFootprint = !!canonical?.paperD && !!root().querySelector('.hp-paper');
   out.planRetainsMeasuredWedge = svgContains(planPath);
+  out.planStopsAtFiniteRayEndpoint = !svgContains(planPath, finiteRayOutsideProbe);
   out.paperRetainsMeasuredWedge = [...root().querySelectorAll('.hp-paper')]
     .some((paper) => svgContains(paper));
 
@@ -89,6 +103,9 @@ const result = await page.evaluate(async (spaceFixture) => {
     && barriers.occluders.length > 0
     && !!barriers.fingerprint;
   out.lightAndSunRetainMeasuredWedge = geometryContains(barriers.masonryGeometry);
+  out.lightAndSunStopAtFiniteRayEndpoint = !geometryContains(
+    barriers.masonryGeometry, finiteRayOutsideProbe,
+  );
   const barrierFingerprint = barriers.fingerprint;
   const cacheBeforeState = card._wallUnionCache;
 
@@ -113,6 +130,9 @@ const result = await page.evaluate(async (spaceFixture) => {
   await update(false);
   out.viewMatchesPlan = root().querySelector('[data-hp="wall"]')?.getAttribute('d') === planD;
   out.viewRetainsMeasuredWedge = svgContains(root().querySelector('[data-hp="wall"]'));
+  out.viewStopsAtFiniteRayEndpoint = !svgContains(
+    root().querySelector('[data-hp="wall"]'), finiteRayOutsideProbe,
+  );
   card._hoverRoom = { space: spaceFixture.id, room: model.rooms[0] };
   const hoverFloor = card._roomHoverPaths(model);
   out.cleanFloorConsumerStaysNonEmpty = !!hoverFloor?.fillD && !!hoverFloor.outlineD;
@@ -120,10 +140,13 @@ const result = await page.evaluate(async (spaceFixture) => {
     card._hoverRoom = { space: spaceFixture.id, room };
     const floor = card._roomHoverPaths(model);
     if (!floor?.fillD) return true;
-    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    path.setAttribute('d', floor.fillD);
-    path.setAttribute('fill-rule', 'evenodd');
-    return !svgContains(path);
+    return !pathDataContains(floor.fillD, retainedWedgeProbe);
+  });
+  out.cleanFloorOwnsAreaAfterFiniteEndpoint = model.rooms.some((room) => {
+    card._hoverRoom = { space: spaceFixture.id, room };
+    const floor = card._roomHoverPaths(model);
+    if (!floor?.fillD) return false;
+    return pathDataContains(floor.fillD, finiteRayOutsideProbe);
   });
   card._hoverRoom = null;
 
@@ -132,6 +155,9 @@ const result = await page.evaluate(async (spaceFixture) => {
   await update(false);
   out.kioskMatchesPlan = root().querySelector('[data-hp="wall"]')?.getAttribute('d') === planD;
   out.kioskRetainsMeasuredWedge = svgContains(root().querySelector('[data-hp="wall"]'));
+  out.kioskStopsAtFiniteRayEndpoint = !svgContains(
+    root().querySelector('[data-hp="wall"]'), finiteRayOutsideProbe,
+  );
   card._config.kiosk = kioskBefore;
   await update(false);
 
@@ -158,6 +184,9 @@ const result = await page.evaluate(async (spaceFixture) => {
   out.staticRetainsMeasuredWedge = svgContains(
     staticCard.renderRoot?.querySelector('[data-hp="wall"]'),
   );
+  out.staticStopsAtFiniteRayEndpoint = !svgContains(
+    staticCard.renderRoot?.querySelector('[data-hp="wall"]'), finiteRayOutsideProbe,
+  );
   staticCard.remove();
 
   const labs = Object.freeze(['iso']);
@@ -169,6 +198,9 @@ const result = await page.evaluate(async (spaceFixture) => {
   out.hiddenIsoKeepsMasonry = !!root().querySelector('[data-hp="iso-walls"]')
     && isoWalls.flat(2).length > 0;
   out.hiddenIsoRetainsMeasuredWedge = geometryContains(isoWalls);
+  out.hiddenIsoStopsAtFiniteRayEndpoint = !geometryContains(
+    isoWalls, finiteRayOutsideProbe,
+  );
 
   out.renderNeverWritesConfig = JSON.stringify(card._serverCfg.spaces[0]) === sourceBefore;
   return out;

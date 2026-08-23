@@ -837,6 +837,83 @@ test('issue #249 bounds the exported three-wall junction with straight bevels', 
   assert.equal(JSON.stringify({ rooms, walls }), before, 'geometry mutated saved data');
 });
 
+test('issue #271 keeps finite co-directional ray supports and never rebuilds past an endpoint', () => {
+  const interval = (key, b, half) => ({
+    roomId: key, a: [0, 0], b, key, kind: 'outer', cm: half * 2,
+    open: false, half,
+  });
+  const source = [
+    interval('east-thick-short', [10, 0], 8),
+    interval('east-thin-long', [100, 0], 4),
+    interval('east-owner-duplicate', [100, 0], 4),
+    interval('north', [0, -100], 5),
+    interval('west', [-100, 0], 5),
+  ];
+  const map = buildMultiWallNodeMap(source, 5);
+  assert.equal(map.nodes.length, 1);
+  const east = map.nodes[0].rays.find((ray) => ray.u[0] > 0.99);
+  assert.ok(east);
+  assert.equal(east.halfDepth, 8);
+  assert.equal(east.length, 100);
+  assert.deepEqual(east.supports, [
+    { halfDepth: 8, length: 10 },
+    { halfDepth: 4, length: 100 },
+  ], 'the shorter thick strip and longer thin strip need separate finite support');
+  const permuted = buildMultiWallNodeMap(
+    [...source].reverse().map((item) => ({ ...item, a: item.b, b: item.a })),
+    5,
+  );
+  const raySignature = (nodeMap) => nodeMap.nodes[0].rays.map((ray) => ({
+    u: ray.u.map((value) => Math.round(value * 1e9) / 1e9),
+    halfDepth: ray.halfDepth,
+    length: ray.length,
+    supports: ray.supports,
+  }));
+  assert.deepEqual(raySignature(permuted), raySignature(map));
+
+  const rooms = [
+    { id: 'lower', poly: [[-1000, 0], [0, 0], [0, 20], [500, 20], [500, 1000], [-1000, 1000]] },
+    { id: 'upper', poly: [[-1000, -1000], [0, -1000], [0, 0], [-1000, 0]] },
+  ];
+  let walls = [];
+  for (const [a, b] of [
+    [[-1000, 0], [0, 0]],
+    [[0, -1000], [0, 0]],
+    [[0, 0], [0, 20]],
+  ]) walls = setWallThickness(walls, a, b, 15, pitch, 1);
+  const nodeMap = buildMultiWallNodeMap(
+    wallIntervals(rooms, walls, [], pitch, 1, GRID_PITCH, 1),
+    pitch * 0.04 * 4,
+  );
+  const node = nodeMap.nodes.find((candidate) =>
+    Math.hypot(candidate.point[0], candidate.point[1]) < 1e-7);
+  assert.ok(node);
+  const short = node.rays.find((ray) => ray.u[1] > 0.99);
+  assert.ok(short);
+  closeTo(short.length, 20, 1e-7);
+  assert.ok(8 * node.halfDepth > short.length * 5,
+    'fixture no longer distinguishes the old 8H rebuild from the finite interval');
+
+  const geometry = wallBodiesGeometry(
+    rooms, walls, [], [], pitch, 1, GRID_PITCH, 1,
+  );
+  assert.ok(geometry);
+  assertProbeInside(geometry.geom, [0, 10], 'the finite short arm disappeared');
+  assertProbeOutside(
+    geometry.geom, [0, 100],
+    'the degree-3 repair rebuilt masonry after the short ray endpoint',
+  );
+  assertProbeOutside(
+    geometry.roomGeom, [0, 100],
+    'the pre-opening canonical masonry still contains the phantom ray',
+  );
+  const cleanFloor = difference(closedGeometry(rooms[0].poly), geometry.roomGeom);
+  assertProbeInside(
+    cleanFloor, [1, 100],
+    'the phantom ray still removes usable clean-floor area after its endpoint',
+  );
+});
+
 test('issue #249 node classification is order, direction and scale independent', () => {
   const cases = [
     { angles: [0, 30, 200], halves: [5, 5, 5], bevel: true },
@@ -866,6 +943,11 @@ test('issue #249 node classification is order, direction and scale independent',
       Math.round(ray.u[0] * 1e9) / 1e9,
       Math.round(ray.u[1] * 1e9) / 1e9,
       ray.halfDepth / scale,
+      Math.round((ray.length / scale) * 1e9) / 1e9,
+      ray.supports.map((support) => [
+        support.halfDepth / scale,
+        Math.round((support.length / scale) * 1e9) / 1e9,
+      ]),
     ]),
   }));
   const makeFanGeometry = (fixture, permuted = false) => {
@@ -1412,7 +1494,9 @@ test('issue #197 keeps the full masonry when one virtual-junction patch has ULP 
   // #249 intentionally bevels degree-3+ nodes in this older fixture too.
   // #249 retains the physical multi-wall overlap up to R instead of reducing
   // right-angle arms to point contacts.
-  closeTo(geometryArea(geometry.geom), 124568.27047237023, 1e-6);
+  // #271 removes only the area that the old node-wide 8H rectangles invented
+  // after finite ray endpoints; all semantic #197/#249/#261 probes above stay.
+  closeTo(geometryArea(geometry.geom), 124244.26848307278, 1e-6);
   closeTo(geometryArea(geometry.paperGeom), 727303.8153386558, 1e-6);
   assert.equal(
     JSON.stringify({ rooms, walls, cuts, openings, extraBodies }), before,

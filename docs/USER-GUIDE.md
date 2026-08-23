@@ -327,7 +327,9 @@ Wall thickness is stored in real units. A room may have different thicknesses
 on different spans. Open wall branches and T-junctions are allowed; shared
 geometry remains joined without painted end caps. At a saved T-junction both
 physical half-walls stay solid: the bounded bevel removes only an excessive
-projecting corner and never leaves a white triangular gap.
+projecting corner and never leaves a white triangular gap. A short arm stops at
+its real endpoint; the join repair never draws a cap, shadow or light barrier
+where no wall was saved.
 If Resize moves only part of a longer thick wall, the moved part keeps its
 thickness and follows the room while the remaining continuation stays in
 place. Openings on the moved part follow it in the same Undo/Redo operation.

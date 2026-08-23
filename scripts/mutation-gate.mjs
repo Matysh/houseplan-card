@@ -293,6 +293,19 @@ export const MUTANTS = [
     }],
   },
   {
+    id: 'multi-wall-finite-ray-disabled',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="issue #271 keeps finite" '
+      + 'test/wall-thickness.test.mjs',
+    because: 'a degree-3 repair must stop at every real interval endpoint; restoring the '
+      + 'node-wide 8H rectangle recreates the phantom wall and light barrier from #271',
+    patches: [{
+      file: 'src/wall-thickness.ts',
+      find: '          const supportExtent = Math.min(extent, support.length);',
+      replace: '          const supportExtent = extent;',
+    }],
+  },
+  {
     id: 'wall-exact-span-fallback-disabled',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="issue 258 exact-span" '
