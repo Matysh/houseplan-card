@@ -166,6 +166,18 @@ export const MUTANTS = [
     }],
   },
   {
+    id: 'wall-face-apply-skips-overlap-guard',
+    guard: 'node demo/smoke_wall_face_overlap.mjs',
+    because: 'вторая проверка при создании — не дубль первой, а defense-in-depth из #173 §10.3: '
+      + 'решение принимается в диалоге, а геометрия к моменту применения может стать другой '
+      + '(#177)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '      const clash = existingRooms.find((room) => room.id !== ownSplit',
+      replace: '      const clash = [].find((room) => room.id !== ownSplit',
+    }],
+  },
+  {
     id: 'docs-fixture-splits-posix-only',
     guard: 'node --test --test-name-pattern="не зависит от разделителя платформы" '
       + 'test/docs-accept.test.mjs',
