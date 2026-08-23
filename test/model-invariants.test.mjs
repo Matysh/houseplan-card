@@ -1,9 +1,14 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { readdirSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import {
   checkReferences, checkWallRecordsPreserved, readModel,
 } from '../scripts/model-invariants.mjs';
+
+const repoRoot = fileURLToPath(new URL('..', import.meta.url));
 
 // #254. Инварианты нужны не сами по себе, а чтобы ловить уже случившиеся
 // дефекты: #253 (запись толщины исчезла при ресайзе), #244 (маркеры на
@@ -75,14 +80,50 @@ test('позиция устройства без записи маркера —
   assert.equal(notes[0].kind, 'unknown_owner');
 });
 
-test('фикстуры проекта сами инварианты не нарушают (#254)', async () => {
-  const { makeVisualMatrixFixture } = await import('../demo/fixtures/visual-matrix.mjs');
-  const { makeLargeHouseFixture } = await import('../demo/fixtures/large-house.mjs');
-  for (const make of [makeVisualMatrixFixture, makeLargeHouseFixture]) {
-    const fixture = make();
+// Все модели, которые проект возит с собой, обязаны быть согласованы. Список
+// не хардкодится: фикстуры перечисляются чтением каталога, поэтому новая
+// фикстура попадает под проверку сама, без правки этого теста.
+const fixtureModules = () => readdirSync(resolve(repoRoot, 'demo/fixtures'))
+  .filter((name) => name.endsWith('.mjs')).sort();
+
+const demoStandModel = () => {
+  // Конфигурация стенда живёт внутри demo.html — на ней стоят все 170 смоков.
+  // Если разбор перестанет находить блоки, это само по себе сигнал: стенд
+  // сменил форму, и проверять его надо заново.
+  const html = readFileSync(resolve(repoRoot, 'demo/srv/demo.html'), 'utf8');
+  const block = (name) => {
+    const declaration = html.indexOf(`const ${name} = `);
+    assert.ok(declaration >= 0, `в demo.html не найден блок ${name}`);
+    const from = html.indexOf('{', declaration);
+    let depth = 0, index = from;
+    for (; index < html.length; index++) {
+      const char = html[index];
+      if (char === '{') depth++;
+      else if (char === '}' && --depth === 0) { index++; break; }
+    }
+    // eslint-disable-next-line no-new-func
+    return new Function(`return ${html.slice(from, index)}`)();
+  };
+  return { config: block('CFG'), layout: block('LAYOUT') };
+};
+
+test('все модели, которые возит с собой проект, инварианты не нарушают (#254)', async () => {
+  const models = [];
+  for (const file of fixtureModules()) {
+    const loaded = await import(`../demo/fixtures/${file}`);
+    for (const [name, value] of Object.entries(loaded)) {
+      if (typeof value !== 'function' || !/^make.*Fixture$/.test(name)) continue;
+      const fixture = value();
+      if (fixture?.config) models.push([`${file}:${name}`, fixture]);
+    }
+  }
+  models.push(['demo/srv/demo.html', demoStandModel()]);
+  assert.ok(models.length >= 3, `моделей найдено ${models.length}: список подозрительно короток`);
+
+  for (const [label, fixture] of models) {
     const found = checkReferences({ config: fixture.config, layout: fixture.layout || {} });
-    assert.deepEqual(found.map((v) => `${v.kind}:${v.owner}`), [],
-      'фикстура, нарушающая инварианты, обесценивает и golden, и смоки на ней');
+    assert.deepEqual(found.map((v) => `${v.kind}:${v.owner} → ${v.reference}`), [],
+      `${label}: модель, нарушающая инварианты, обесценивает и golden, и смоки на ней`);
   }
 });
 
