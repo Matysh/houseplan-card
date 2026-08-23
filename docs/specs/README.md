@@ -129,6 +129,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#248](https://github.com/Matysh/houseplan-card/issues/248) Идемпотентный Optimize после записи и reload | [248-optimize-idempotence.md](248-optimize-idempotence.md) |
 | [#251](https://github.com/Matysh/houseplan-card/issues/251) Доступность контроллера не наследуется от управляемой цели | [251-controller-target-availability.md](251-controller-target-availability.md) |
 | [#252](https://github.com/Matysh/houseplan-card/issues/252) Понятная и безопасная очистка забытых позиций в Optimize | [252-optimize-orphan-layout-report.md](252-optimize-orphan-layout-report.md) |
+| [#253](https://github.com/Matysh/houseplan-card/issues/253) Resize не теряет интервалы толщины стен | [253-resize-wall-thickness.md](253-resize-wall-thickness.md) |
 
 ## P3
 
