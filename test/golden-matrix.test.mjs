@@ -374,7 +374,7 @@ test('issue #197 golden keeps the complete junction fixture in Plan and View', (
     assert.deepEqual(scenario.retainedWedgeProbe, [0.8955, 0.556]);
     assert.deepEqual(
       scenario.absentWallProbes,
-      [[0.420833333, 0.37625], [0.936524285, 0.345833333]],
+      [[0.420833333, 0.37625], [0.92, 0.348]],
     );
     const fixture = prepareGoldenFixture(scenario);
     const space = fixture.config.spaces.find((item) => item.id === scenario.space);

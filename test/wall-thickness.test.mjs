@@ -914,6 +914,50 @@ test('issue #271 keeps finite co-directional ray supports and never rebuilds pas
   );
 });
 
+test('issue #271 keeps a nearby door slot and its light-side approach free of a phantom ray', () => {
+  const fixture = JSON.parse(readFileSync(
+    new URL('./fixtures/197-junction-patch.json', import.meta.url), 'utf8',
+  ));
+  const rooms = fixture.rooms.map((room) => ({
+    ...room,
+    poly: room.poly.map(([x, y]) => [x * NORM_W, y * NORM_W]),
+  }));
+  const cuts = resolveOpenCuts(
+    rooms, fixture.open_spans, NORM_W, GRID_PITCH * 0.02,
+  );
+  const opening = {
+    x: 950, y: 345.8333333333333, angle: 0, length: 25,
+  };
+  const geometry = wallBodiesGeometry(
+    rooms, fixture.walls, cuts, [opening], pitch,
+    fixture.cell_cm, GRID_PITCH, NORM_W,
+  );
+  assert.ok(geometry);
+  assertProbeInside(
+    geometry.roomGeom, [950, 345.8333333333333],
+    'fixture no longer puts the door on physical masonry before the cut',
+  );
+  assertProbeOutside(
+    geometry.geom, [950, 345.8333333333333],
+    'the final door slot is not empty through the complete masonry',
+  );
+  assertProbeOutside(
+    geometry.roomGeom, [920, 348],
+    'the short 15 cm ray still paints a lateral phantom before the nearby door',
+  );
+  assertProbeOutside(
+    geometry.geom, [920, 348],
+    'opening subtraction or final union revived the lateral phantom',
+  );
+  assert.ok(
+    openingTunnelGeometry(
+      rooms, opening, fixture.walls, cuts, pitch,
+      fixture.cell_cm, GRID_PITCH, NORM_W,
+    ),
+    'the associated opening tunnel contract disappeared',
+  );
+});
+
 test('issue #249 node classification is order, direction and scale independent', () => {
   const cases = [
     { angles: [0, 30, 200], halves: [5, 5, 5], bevel: true },

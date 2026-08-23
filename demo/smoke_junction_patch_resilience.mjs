@@ -13,6 +13,8 @@ const result = await page.evaluate(async (spaceFixture) => {
   const root = () => card.shadowRoot || card.renderRoot;
   const retainedWedgeProbe = [895.5, 556];
   const finiteRayOutsideProbe = [0.420833333 * 1000, 0.37625 * card._spaceH];
+  const finiteRayDoorApproachProbe = [0.92 * 1000, 0.348 * card._spaceH];
+  const finiteDoorSlotProbe = [0.95 * 1000, 0.345833333 * card._spaceH];
   const svgContains = (element, point = retainedWedgeProbe) =>
     !!element?.isPointInFill?.(new DOMPoint(point[0], point[1]));
   const pathDataContains = (d, point) => {
@@ -93,6 +95,7 @@ const result = await page.evaluate(async (spaceFixture) => {
   out.paperKeepsFootprint = !!canonical?.paperD && !!root().querySelector('.hp-paper');
   out.planRetainsMeasuredWedge = svgContains(planPath);
   out.planStopsAtFiniteRayEndpoint = !svgContains(planPath, finiteRayOutsideProbe);
+  out.planStopsAtLateralFiniteRayProbe = !svgContains(planPath, finiteRayDoorApproachProbe);
   out.paperRetainsMeasuredWedge = [...root().querySelectorAll('.hp-paper')]
     .some((paper) => svgContains(paper));
 
@@ -105,6 +108,9 @@ const result = await page.evaluate(async (spaceFixture) => {
   out.lightAndSunRetainMeasuredWedge = geometryContains(barriers.masonryGeometry);
   out.lightAndSunStopAtFiniteRayEndpoint = !geometryContains(
     barriers.masonryGeometry, finiteRayOutsideProbe,
+  );
+  out.lightAndSunStopAtLateralFiniteRayProbe = !geometryContains(
+    barriers.masonryGeometry, finiteRayDoorApproachProbe,
   );
   const barrierFingerprint = barriers.fingerprint;
   const cacheBeforeState = card._wallUnionCache;
@@ -133,6 +139,9 @@ const result = await page.evaluate(async (spaceFixture) => {
   out.viewStopsAtFiniteRayEndpoint = !svgContains(
     root().querySelector('[data-hp="wall"]'), finiteRayOutsideProbe,
   );
+  out.viewStopsAtLateralFiniteRayProbe = !svgContains(
+    root().querySelector('[data-hp="wall"]'), finiteRayDoorApproachProbe,
+  );
   card._hoverRoom = { space: spaceFixture.id, room: model.rooms[0] };
   const hoverFloor = card._roomHoverPaths(model);
   out.cleanFloorConsumerStaysNonEmpty = !!hoverFloor?.fillD && !!hoverFloor.outlineD;
@@ -148,6 +157,11 @@ const result = await page.evaluate(async (spaceFixture) => {
     if (!floor?.fillD) return false;
     return pathDataContains(floor.fillD, finiteRayOutsideProbe);
   });
+  out.cleanFloorOwnsFiniteDoorApproach = model.rooms.some((room) => {
+    card._hoverRoom = { space: spaceFixture.id, room };
+    const floor = card._roomHoverPaths(model);
+    return !!floor?.fillD && pathDataContains(floor.fillD, finiteRayDoorApproachProbe);
+  });
   card._hoverRoom = null;
 
   const kioskBefore = card._config.kiosk;
@@ -157,6 +171,9 @@ const result = await page.evaluate(async (spaceFixture) => {
   out.kioskRetainsMeasuredWedge = svgContains(root().querySelector('[data-hp="wall"]'));
   out.kioskStopsAtFiniteRayEndpoint = !svgContains(
     root().querySelector('[data-hp="wall"]'), finiteRayOutsideProbe,
+  );
+  out.kioskStopsAtLateralFiniteRayProbe = !svgContains(
+    root().querySelector('[data-hp="wall"]'), finiteRayDoorApproachProbe,
   );
   card._config.kiosk = kioskBefore;
   await update(false);
@@ -187,6 +204,9 @@ const result = await page.evaluate(async (spaceFixture) => {
   out.staticStopsAtFiniteRayEndpoint = !svgContains(
     staticCard.renderRoot?.querySelector('[data-hp="wall"]'), finiteRayOutsideProbe,
   );
+  out.staticStopsAtLateralFiniteRayProbe = !svgContains(
+    staticCard.renderRoot?.querySelector('[data-hp="wall"]'), finiteRayDoorApproachProbe,
+  );
   staticCard.remove();
 
   const labs = Object.freeze(['iso']);
@@ -201,8 +221,44 @@ const result = await page.evaluate(async (spaceFixture) => {
   out.hiddenIsoStopsAtFiniteRayEndpoint = !geometryContains(
     isoWalls, finiteRayOutsideProbe,
   );
-
+  out.hiddenIsoStopsAtLateralFiniteRayProbe = !geometryContains(
+    isoWalls, finiteRayDoorApproachProbe,
+  );
   out.renderNeverWritesConfig = JSON.stringify(card._serverCfg.spaces[0]) === sourceBefore;
+
+  // AC4: add an actual door only after the all-surface structural parity pass,
+  // so the static-card comparison above remains about one identical model.
+  // The door begins after the lateral phantom probe: final masonry must cut
+  // its slot, while the light barrier must still be empty before that slot.
+  const openingCfg = structuredClone(cfg);
+  openingCfg.spaces[0].openings = [{
+    id: 'finite-door', type: 'door', x: 0.95, y: 0.345833333,
+    angle: 0, length: 0.025,
+  }];
+  card._serverCfg = openingCfg;
+  card._setProjection('flat');
+  card._setMode('plan');
+  await update(true);
+  const openingSource = JSON.stringify(card._serverCfg.spaces[0]);
+  const openingPlanPath = root().querySelector('[data-hp="wall"]');
+  out.nearDoorPlanStopsAtFiniteRay = !svgContains(
+    openingPlanPath, finiteRayDoorApproachProbe,
+  );
+  out.nearDoorPlanKeepsSlotEmpty = !svgContains(openingPlanPath, finiteDoorSlotProbe);
+  out.nearDoorPlanKeepsSymbol = !!root().querySelector('.opening[data-id="finite-door"]');
+  const openingModel = card._spaceModel();
+  const openingPolys = openingModel.rooms.map((room) => ({ r: room, poly: room.poly }));
+  const openingBarriers = card._lightBarriers(openingModel, openingPolys);
+  out.nearDoorLightStopsAtFiniteRay = !geometryContains(
+    openingBarriers.masonryGeometry, finiteRayDoorApproachProbe,
+  );
+  card._setMode('view');
+  await update(false);
+  out.nearDoorViewKeepsSlotEmpty = !svgContains(
+    root().querySelector('[data-hp="wall"]'), finiteDoorSlotProbe,
+  );
+  out.nearDoorViewKeepsSymbol = !!root().querySelector('.opening[data-id="finite-door"]');
+  out.nearDoorRenderNeverWritesConfig = JSON.stringify(card._serverCfg.spaces[0]) === openingSource;
   return out;
 }, fixture);
 
