@@ -11,6 +11,22 @@ const result = await page.evaluate(async (spaceFixture) => {
   const out = {};
   const card = window.__card;
   const root = () => card.shadowRoot || card.renderRoot;
+  const retainedWedgeProbe = [895.5, 556];
+  const svgContains = (element, point = retainedWedgeProbe) =>
+    !!element?.isPointInFill?.(new DOMPoint(point[0], point[1]));
+  const ringContains = (ring, point) => {
+    let inside = false;
+    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+      const a = ring[i], b = ring[j];
+      if (((a[1] > point[1]) !== (b[1] > point[1]))
+          && point[0] < ((b[0] - a[0]) * (point[1] - a[1]))
+            / (b[1] - a[1]) + a[0]) inside = !inside;
+    }
+    return inside;
+  };
+  const geometryContains = (geometry, point = retainedWedgeProbe) =>
+    (geometry || []).some((polygon) => ringContains(polygon[0] || [], point)
+      && !(polygon.slice(1) || []).some((hole) => ringContains(hole, point)));
   const frame = () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
   const settle = async () => {
     await card.updateComplete;
@@ -62,6 +78,9 @@ const result = await page.evaluate(async (spaceFixture) => {
   const canonical = card._wallUnionGeometry();
   out.planKeepsMasonry = !!planD && !!planPath && canonical?.d === planD;
   out.paperKeepsFootprint = !!canonical?.paperD && !!root().querySelector('.hp-paper');
+  out.planRetainsMeasuredWedge = svgContains(planPath);
+  out.paperRetainsMeasuredWedge = [...root().querySelectorAll('.hp-paper')]
+    .some((paper) => svgContains(paper));
 
   const model = card._spaceModel();
   const polys = model.rooms.map((room) => ({ r: room, poly: room.poly }));
@@ -69,6 +88,7 @@ const result = await page.evaluate(async (spaceFixture) => {
   out.lightAndSunKeepCanonicalMasonry = barriers.masonryGeometry.flat(2).length > 0
     && barriers.occluders.length > 0
     && !!barriers.fingerprint;
+  out.lightAndSunRetainMeasuredWedge = geometryContains(barriers.masonryGeometry);
   const barrierFingerprint = barriers.fingerprint;
   const cacheBeforeState = card._wallUnionCache;
 
@@ -92,15 +112,26 @@ const result = await page.evaluate(async (spaceFixture) => {
   card._setMode('view');
   await update(false);
   out.viewMatchesPlan = root().querySelector('[data-hp="wall"]')?.getAttribute('d') === planD;
+  out.viewRetainsMeasuredWedge = svgContains(root().querySelector('[data-hp="wall"]'));
   card._hoverRoom = { space: spaceFixture.id, room: model.rooms[0] };
   const hoverFloor = card._roomHoverPaths(model);
   out.cleanFloorConsumerStaysNonEmpty = !!hoverFloor?.fillD && !!hoverFloor.outlineD;
+  out.cleanFloorExcludesMeasuredWedge = model.rooms.every((room) => {
+    card._hoverRoom = { space: spaceFixture.id, room };
+    const floor = card._roomHoverPaths(model);
+    if (!floor?.fillD) return true;
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', floor.fillD);
+    path.setAttribute('fill-rule', 'evenodd');
+    return !svgContains(path);
+  });
   card._hoverRoom = null;
 
   const kioskBefore = card._config.kiosk;
   card._config.kiosk = true;
   await update(false);
   out.kioskMatchesPlan = root().querySelector('[data-hp="wall"]')?.getAttribute('d') === planD;
+  out.kioskRetainsMeasuredWedge = svgContains(root().querySelector('[data-hp="wall"]'));
   card._config.kiosk = kioskBefore;
   await update(false);
 
@@ -124,6 +155,9 @@ const result = await page.evaluate(async (spaceFixture) => {
   await staticCard.updateComplete;
   out.staticMatchesPlan = staticCard.renderRoot
     ?.querySelector('[data-hp="wall"]')?.getAttribute('d') === planD;
+  out.staticRetainsMeasuredWedge = svgContains(
+    staticCard.renderRoot?.querySelector('[data-hp="wall"]'),
+  );
   staticCard.remove();
 
   const labs = Object.freeze(['iso']);
@@ -131,8 +165,10 @@ const result = await page.evaluate(async (spaceFixture) => {
   window.__hpLabs = labs;
   card._setProjection('iso');
   await update(false);
+  const isoWalls = card._isoSource().build().walls;
   out.hiddenIsoKeepsMasonry = !!root().querySelector('[data-hp="iso-walls"]')
-    && card._isoSource().build().walls.flat(2).length > 0;
+    && isoWalls.flat(2).length > 0;
+  out.hiddenIsoRetainsMeasuredWedge = geometryContains(isoWalls);
 
   out.renderNeverWritesConfig = JSON.stringify(card._serverCfg.spaces[0]) === sourceBefore;
   return out;

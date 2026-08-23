@@ -151,6 +151,11 @@ export function prepareGoldenFixture(scenario) {
     });
   }
   if (scenario.junctionPatchResilience) {
+    if (!Array.isArray(scenario.retainedWedgeProbe)
+        || scenario.retainedWedgeProbe.length !== 2
+        || !scenario.retainedWedgeProbe.every(Number.isFinite)) {
+      throw new Error(`invalid golden retainedWedgeProbe: ${scenario.id}`);
+    }
     fixture.config.spaces.push({
       ...structuredClone(junctionPatchFixture),
       id: scenario.space,
@@ -560,6 +565,18 @@ export async function prepareGoldenScenario(page, scenario) {
       if (!wall?.isPointInFill?.(at(node))
           || wall.isPointInFill(at(discardedWedgeProbe))) {
         throw new Error(`golden multi-wall bevel contract failed: ${scenario.id}`);
+      }
+    }
+    if (scenario.retainedWedgeProbe) {
+      const point = new DOMPoint(
+        scenario.retainedWedgeProbe[0] * 1000,
+        scenario.retainedWedgeProbe[1] * card._spaceH,
+      );
+      const wall = card.renderRoot.querySelector('[data-hp="wall"]');
+      const papers = [...card.renderRoot.querySelectorAll('.hp-paper')];
+      if (!wall?.isPointInFill?.(point)
+          || !papers.some((paper) => paper.isPointInFill?.(point))) {
+        throw new Error(`golden retained T-junction wedge contract failed: ${scenario.id}`);
       }
     }
     if (scenario.wallKeyRoundtrip) {

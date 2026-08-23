@@ -1330,6 +1330,15 @@ test('issue #197 keeps the full masonry when one virtual-junction patch has ULP 
   const intervals = wallIntervals(
     rooms, walls, cuts, pitch, fixture.cell_cm, GRID_PITCH, NORM_W,
   );
+  const multiWallMap = buildMultiWallNodeMap(
+    intervals, pitch * NORM_W * 0.04 * 4, NORM_W,
+  );
+  const affectedNode = multiWallMap.nodes.find((node) =>
+    Math.hypot(node.point[0] - 887.5, node.point[1] - 550) < 1e-6);
+  assert.equal(affectedNode?.rays.length, 3, 'the affected T-junction lost an incident ray');
+  assert.equal(multiWallMap.nodes.some((node) =>
+    Math.hypot(node.point[0] - 620.8333333333334, node.point[1] - 550) < 1e-6), false,
+  'the zero-depth shared edge became a physical multi-wall node');
   const nodeCms = intervals
     .filter((iv) => Math.abs(iv.a[1] - 550) < 1e-6
       && Math.abs(iv.b[1] - 550) < 1e-6)
@@ -1369,11 +1378,42 @@ test('issue #197 keeps the full masonry when one virtual-junction patch has ULP 
   assert.ok(geometry, 'one rejected junction patch must not erase the whole plan');
   assert.ok(geometry.geom.length > 0);
   assert.ok(geometry.paperGeom.length > 0);
+  const retainedWedgeProbe = [895.5, 556];
+  assertProbeInside(
+    geometry.roomGeom, retainedWedgeProbe,
+    'the room masonry lost the bounded exterior half-wall at the T-junction',
+  );
+  assertProbeInside(
+    geometry.geom, retainedWedgeProbe,
+    'the canonical masonry lost the bounded exterior half-wall at the T-junction',
+  );
+  assertProbeInside(
+    geometry.paperGeom, retainedWedgeProbe,
+    'the paper exposed the scene background through the bounded T-junction',
+  );
+  for (const ray of affectedNode.rays) assertProbeInside(
+    geometry.roomGeom,
+    [
+      affectedNode.point[0] + ray.u[0] * affectedNode.limit * 0.5,
+      affectedNode.point[1] + ray.u[1] * affectedNode.limit * 0.5,
+    ],
+    'the repaired T-junction disconnected an incident physical ray',
+  );
+  for (const room of rooms) {
+    const cleanFloor = innerContourForRoom(
+      rooms, room.id, walls, cuts, pitch, fixture.cell_cm, GRID_PITCH, NORM_W,
+      geometry.roomGeom,
+    );
+    if (cleanFloor) assertProbeOutside(
+      closedGeometry(cleanFloor), retainedWedgeProbe,
+      `room ${room.id} clean floor leaked into the retained T-junction wedge`,
+    );
+  }
   // #249 intentionally bevels degree-3+ nodes in this older fixture too.
   // #249 retains the physical multi-wall overlap up to R instead of reducing
   // right-angle arms to point contacts.
-  closeTo(geometryArea(geometry.geom), 124512.89263371378, 1e-6);
-  closeTo(geometryArea(geometry.paperGeom), 727248.4374999999, 1e-6);
+  closeTo(geometryArea(geometry.geom), 124568.27047237023, 1e-6);
+  closeTo(geometryArea(geometry.paperGeom), 727303.8153386558, 1e-6);
   assert.equal(
     JSON.stringify({ rooms, walls, cuts, openings, extraBodies }), before,
     'rendering mutated persisted input',

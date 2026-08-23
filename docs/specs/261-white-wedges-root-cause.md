@@ -6,7 +6,7 @@
   сложность/риск 7/10
 - Issue: [#261](https://github.com/Matysh/houseplan-card/issues/261)
 - Ветка: `issue/261-white-wedges-root-cause`
-- Статус ТЗ: первая редакция, ожидает ревью
+- Статус ТЗ: реализовано, ожидает код-ревью
 
 Канонические документы: `docs/SCOPE.md`, `docs/USER-GUIDE.ru.md`,
 `docs/ARCHITECTURE.md`, `docs/WALL-THICKNESS.md`,

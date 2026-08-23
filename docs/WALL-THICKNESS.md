@@ -111,11 +111,13 @@ incident half-depth `H`; every excessive join is cut back with a straight local
 bevel and may not extend beyond `R = 1.25 × H`. Inside the room union, a bounded
 mask replaces the legacy ring with the complete finite ray strips, retains their
 overlap through `R`, and removes only the remaining excessive pairwise wedge.
-Outside the room union, the established full facade cut is preserved. This keeps
-the node centre and every arm area-connected without allowing an interior child
-mitre to change a concave facade. Ordinary two-ray corners retain the exact
-historical `MITRE_LIMIT = 4` contract. This is computed geometry only: saved room
-outlines and wall entries are not rewritten.
+The same bounded rule applies to the exterior half-wall and paper envelope:
+local ray strips are clipped to that physical envelope rather than the room
+centre, so a valid T-junction cannot become a white wedge. This keeps the node
+centre and every arm area-connected without allowing overlap beyond `R` or an
+interior child mitre to change a concave facade. Ordinary two-ray corners retain
+the exact historical `MITRE_LIMIT = 4` contract. This is computed geometry only:
+saved room outlines and wall entries are not rewritten (#261).
 
 Clean-floor consumers subtract the cached, repaired canonical room masonry from
 their source room and take its outer component. The result is clipped to the
@@ -194,7 +196,8 @@ valid masonry, paper, floor faces or light barriers for the whole space (#197).
 The same failure isolation covers degree-3+ repair: every node is rebuilt and
 committed independently inside its bounded mask. A malformed local candidate
 therefore keeps that node's previous body without reverting successful repairs
-at unrelated nodes.
+at unrelated nodes. The exterior paper uses the same `R`-bounded overlap as the
+masonry; it never restarts the cut at the offset origins (#261).
 
 Runtime normalisation remains lossless for every positive exact thickness
 interval, regardless of its length. The explicit **Optimize plans** maintenance

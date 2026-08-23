@@ -429,10 +429,12 @@ bevel bounded by `1.25 × H`; degree-2 joins keep the legacy `MITRE_LIMIT = 4`.
 The final bevel is applied to canonical masonry after its room/atomic/exterior
 union, preventing later boolean inputs from recreating the discarded spike.
 Canonical masonry replaces each affected local mask with complete physical ray
-strips clipped to the room union, retains overlap through the approved radius,
-and preserves the established full exterior cut outside the room union. This
-prevents the repair from deleting half an incident strip or changing a concave
-facade. Paper re-unions the room centre footprint after its facade cut.
+strips clipped to the bounded physical paper envelope, not just the room union,
+and retains overlap through the approved radius on both sides of the facade.
+Only the excessive portion beyond `1.25 × H` is removed. This prevents the
+repair from deleting an exterior half-strip into a white T-junction wedge while
+still rejecting the old unbounded spike. Paper applies that same bounded cut
+before re-unioning the room centre footprint (#261).
 `wallBodiesGeometry.roomGeom` caches this repaired room masonry before openings
 and independent bodies; clean-floor consumers subtract it from each source room
 and clip their fallback, so fill cannot escape the building or silently drop a

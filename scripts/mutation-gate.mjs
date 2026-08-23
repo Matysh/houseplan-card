@@ -219,6 +219,25 @@ export const MUTANTS = [
     }],
   },
   {
+    id: 'multi-wall-paper-full-origin-cut',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="issue #197 keeps" '
+      + 'test/wall-thickness.test.mjs',
+    because: 'the exterior paper must retain valid multi-wall overlap up to R; cutting from the '
+      + 'offset origins recreates the measured white T-junction wedge from #261',
+    patches: [{
+      file: 'src/wall-thickness.ts',
+      find: '  for (const triangle of multiWallBevelTriangles(map)) {',
+      replace: '  for (const triangle of multiWallBevelTrianglesAt(map, false)) {',
+    }, {
+      file: 'src/wall-thickness.ts',
+      find: '      if (envelope) localInside = intersection(localInside, envelope);\n'
+        + '      else if (centre) localInside = intersection(localInside, centre);',
+      replace: '      if (centre) localInside = intersection(localInside, centre);\n'
+        + '      else if (envelope) localInside = intersection(localInside, envelope);',
+    }],
+  },
+  {
     id: 'wall-exact-span-fallback-disabled',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="issue 258 exact-span" '

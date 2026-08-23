@@ -1677,7 +1677,8 @@ error-free report captured from the current source fingerprint; the entire set
 is validated before any reference is copied.
 
 The matrix covers thick wall junctions, the full #197 multi-room
-virtual-junction resilience fixture in Plan and View, the #249 three-ray
+virtual-junction resilience fixture in Plan and View (including the #261
+measured exterior-wedge fill probe), the #249 three-ray
 unequal-thickness fixture with a semantic filled-node/empty-old-wedge gate,
 virtual/physical boundaries,
 partitions/columns, axis-aligned and 45° door/window/gate tunnels, hidden
@@ -1707,6 +1708,14 @@ source building.
 parity, paper and clean-floor presence, shared Glow/sun masonry, cache reuse on
 HA/theme ticks, no saved-config mutation, a filled node and the removed old
 spike. Full golden/smoke/performance remain pre-beta gates.
+
+For #261, the anonymised #197 fixture also probes the real regression point
+`(895.5, 556)`: `roomGeom`, final masonry and paper must fill it, while every
+clean-floor contour must exclude it. The browser smoke repeats semantic point
+coverage in Plan, View, kiosk, Static, hidden Iso and light/sun masonry; the two
+existing #197 goldens require `SVGGeometryElement.isPointInFill()` at the same
+point. Mutation `multi-wall-paper-full-origin-cut` restores the faulty
+offset-origin cut and must make that regression test fail.
 
 ### Issue #73 baseline and implementation (2026-08-11)
 
@@ -2623,6 +2632,16 @@ require hands on real hardware — they remain for the human pass.
       [auto: test/wall-thickness.test.mjs +
       smoke_junction_patch_resilience + junction-patch-resilience golden
       scenarios].
+- [ ] **A bounded T-junction keeps its exterior half-wall (#261)**: in the
+      anonymised #197 fixture the measured point `(895.5, 556)` is filled by
+      room masonry, final masonry and paper, and excluded from clean floor.
+      Plan, View, kiosk, Static, hidden Iso and light/sun barriers agree at that
+      point, while the old excessive #249 spike remains absent
+      [unit: test/wall-thickness.test.mjs; auto:
+      smoke_junction_patch_resilience; golden:
+      junction-patch-resilience-plan-dark +
+      junction-patch-resilience-view-dark; mutation:
+      multi-wall-paper-full-origin-cut].
 - [ ] **Openings cut the slab**: a door/window/gate on a thick wall leaves a gap in
       the body; the door swing is offset toward the inner face and gate leaves
       toward the exterior face; with

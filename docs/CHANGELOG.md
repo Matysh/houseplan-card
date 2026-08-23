@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Thick T-junctions no longer show white triangular gaps on the exterior side
+  when three or more walls of different thickness meet. The bounded bevel now
+  preserves valid masonry and paper up to the same limit on both sides of the
+  room outline, consistently in Plan, View, kiosk, Static, hidden Iso and
+  light/sun barriers, without restoring the former long mitre spike
+  ([#261](https://github.com/Matysh/houseplan-card/issues/261)).
 - Wall thickness now stays consistent across structural consumers when
   “Optimize plans” rewrites a compatibility key. Wall identity remains stable
   when an exact `1/240` grid endpoint is persisted with nine decimal places,

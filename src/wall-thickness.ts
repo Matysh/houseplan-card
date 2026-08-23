@@ -1996,10 +1996,9 @@ function multiWallBevelTrianglesAt(
         hit[0] - node.point[0], hit[1] - node.point[1],
       );
       if (!Number.isFinite(distance) || distance <= node.limit) continue;
-      // Canonical masonry retains pairwise overlap up to R so ordinary
-      // right-angle arms stay area-connected. The exterior paper uses the
-      // offset origins instead: its job is to remove the complete facade
-      // tooth, and the room centre is unioned back immediately afterwards.
+      // Canonical masonry and its exterior paper retain pairwise overlap up
+      // to R so ordinary right-angle arms stay area-connected. Starting the
+      // cut at the offset origins removes valid exterior half-wall material.
       const advanceA = retainToLimit ? Math.sqrt(Math.max(
         0, node.limit * node.limit - a.halfDepth * a.halfDepth,
       )) : 0;
@@ -2085,8 +2084,11 @@ function bevelMultiWallBody(
       ]) as any);
       if (!local) continue;
       let localInside = intersection(local, closedRing(mask) as any);
-      if (centre) localInside = intersection(localInside, centre);
-      else if (envelope) localInside = intersection(localInside, envelope);
+      // `envelope` is the bounded physical paper, including the exterior
+      // half-walls. Clipping the repair to the room-centre union first drops
+      // exactly the valid T-junction wedge this reconstruction must retain.
+      if (envelope) localInside = intersection(localInside, envelope);
+      else if (centre) localInside = intersection(localInside, centre);
       const outside = difference(boundedCurrent, closedRing(mask) as any);
       const preservedExterior = centre
         ? difference(
@@ -2111,7 +2113,7 @@ function bevelMultiWallPaper(
   map: MultiWallNodeMap,
 ): any {
   let beveled = paper;
-  for (const triangle of multiWallBevelTrianglesAt(map, false)) {
+  for (const triangle of multiWallBevelTriangles(map)) {
     try {
       beveled = difference(beveled, closedRing(triangle) as any);
     } catch {
