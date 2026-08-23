@@ -112,9 +112,13 @@ const out = await page.evaluate(async () => {
     id: 'p_remote', primary: 'sensor.remote', entities: ['sensor.remote'], tapAction: null,
     marker: { id: 'p_remote', binding: 'device:y', controls: ['light.hall'] },
   };
-  o.remoteMirrorsItsControls = withStates({ 'light.hall': st('on', {}) },
+  o.remoteMirrorsItsControls = withStates({
+    'sensor.remote': st('online', {}), 'light.hall': st('on', {}),
+  },
     () => c._stateClass(remote)) === 'on';
-  o.remoteOffIsNeutral = withStates({ 'light.hall': st('off', {}) },
+  o.remoteOffIsNeutral = withStates({
+    'sensor.remote': st('online', {}), 'light.hall': st('off', {}),
+  },
     () => c._stateClass(remote)) === '';
   // a curtain marker with controls that are OFF is still just a curtain
   o.controlledOffStillRings = withStates({
