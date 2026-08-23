@@ -2,7 +2,7 @@
 
 - Issue: [#262](https://github.com/Matysh/houseplan-card/issues/262)
 - Ветка: `issue/262-readd-child-entity`
-- Статус: `S6-in-progress`, ТЗ одобрено
+- Статус: реализовано, ожидает код-ревью
 - Ревью ТЗ: [`docs/reviews/SPEC-REVIEW-262-r1.md`](../reviews/SPEC-REVIEW-262-r1.md),
   зелёный вердикт
 - Приоритет: `P2`
