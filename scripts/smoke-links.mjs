@@ -28,6 +28,19 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    // #263: пикер называет себя (`_bindingCandidates`) и потому находится
+    // прямым совпадением. Регистрируются только чистые помощники надгробий:
+    // смок не произносит ни одного их имени — он видит лишь список, который
+    // они отфильтровали. Проверено зондом: правка одного `src/devices.ts` без
+    // этой записи не выбирает ни одного смока.
+    symbols: ['removedPlanBindings', 'isRemovedPlanEntity', 'deletePlanMarkerRecords'],
+    smokes: ['smoke_binding_picker.mjs'],
+    because: 'смок проверяет, что удалённая привязка снова предлагается в списке «Добавить», '
+      + 'что отдельные сущности устройств живут за галкой и что надгробие устройства '
+      + 'по-прежнему прячет его дочерние сущности (#262) — всё это следствия фильтров '
+      + 'надгробий, чьи имена в браузерный сценарий не попадают',
+  },
+  {
     // #258: the browser sees only the resulting path/caches; it cannot call
     // the pure identity helpers by name through the production bundle.
     symbols: ['wallKey', 'lookupWall', 'canonicalKeyCoordinate', 'keyEpsilon'],
