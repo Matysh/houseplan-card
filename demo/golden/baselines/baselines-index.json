@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "matrixVersion": 39,
-  "acceptedAt": "2026-08-23T05:36:23.917Z",
-  "sourceFingerprint": "9f02bbdd4af8b4bb62b64b6c02b34185edd3d5072031d8adb6d54393ec7b7c54",
+  "acceptedAt": "2026-08-23T06:49:21.230Z",
+  "sourceFingerprint": "f3ed53aabec5afb371295d3a681d1cfc11ff6c704cffd8325874c337983b8572",
   "chromium": "151.0.7922.34",
   "scenarios": {
     "split-corner-wall-before-dark": "3176dc67f54d5309f87c94e1077b4f69eb1db9f660469fbf97953038323430f3",
@@ -98,7 +98,8 @@
     "backup-space-preview-mobile-ru": "698e81b952a26e50b60d2ec85321c43035ff4376a5a348eeed39726804cead78",
     "optimize-preflight-dialog-dark-en": "d42cab423d2838b7592b661548f7d524d6403db5258419e635733af9ffdda685",
     "optimize-preflight-dialog-light-ru": "d8262ed5bf93347c4727365aab71897dcb2f24f0c8196e4fcdcbf43b07919b5a",
-    "optimize-orphan-references-dark-en": "6071c61b90243fc10ff178a4ba8bb965515b3c955a184d1039ba257158d90625",
+    "optimize-orphan-references-dark-en": "a39b2946ea69939941b9f22784111707513d4a4a951df77ed6e8893539ab69eb",
+    "optimize-orphan-references-light-ru": "cb21ccfa4426e5ff92a547ef4f0f4592affbda7f235f419dc84640ef40501892",
     "card-editor-invalid-default-floor-light-en": "dbf251ece014cfee252e0dcb2d7c00eda66aa4b5bd125e4c83e248d4319d24b3",
     "card-editor-invalid-default-floor-dark-ru": "422b74bb391b87e383350247ef1bc1f10ca48c8f6fe418f75bde94e62e3b8bc0"
   }
