@@ -6,6 +6,12 @@ on:
     # to the same SHA and must not duplicate the browser validation jobs.
     branches:
       - '**'
+    # Документы ревью конвейер пишет пачками — 340 коммитов за месяц, и каждый
+    # гонял лёгкую половину Validate впустую (≈15 часов раннера в месяц).
+    # Релизного кандидата это не затрагивает: тег всегда стоит на коммите,
+    # который меняет версию и бандл, а не только `docs/reviews/**`.
+    paths-ignore:
+      - 'docs/reviews/**'
   pull_request:
 
 # A new push supersedes an unfinished validation for the same branch or PR.
@@ -23,6 +29,28 @@ jobs:
         with: { node-version: 22 }
       - name: Validate public documentation
         run: node scripts/check-docs.mjs --external
+
+  # Конвейер читает `process.yml` из ветки по умолчанию, поэтому файл обязан
+  # совпадать в `main` и `dev`. До этой проверки совпадение держалось на
+  # дисциплине: каждая правка требовала двух пушей и ручной сверки.
+  process-workflow-sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: process.yml идентичен в main и dev
+        run: |
+          git fetch --quiet origin main dev
+          if diff <(git show origin/main:.github/workflows/process.yml) \
+                  <(git show origin/dev:.github/workflows/process.yml); then
+            echo "main и dev идентичны"
+          else
+            echo "РАСХОЖДЕНИЕ: process.yml в main и dev различаются."
+            echo "Конвейер исполняет версию из ветки по умолчанию, поэтому"
+            echo "правку нужно отправить в обе ветки."
+            exit 1
+          fi
 
   provenance:
     runs-on: ubuntu-latest
@@ -255,6 +283,13 @@ jobs:
     needs: [frontend, reuse]
     if: needs.reuse.outputs.smoke != 'true'
     runs-on: ubuntu-latest
+    # Смоки шардируются: последовательный прогон занимал ~7.5 минут и был
+    # критическим путём всего Validate. Три шарда режут его примерно вдвое;
+    # цена — трижды `npm ci` и сборка, около двух оплаченных минут раннера.
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -278,11 +313,21 @@ jobs:
         run: npx playwright install chromium
       - name: Build a fresh bundle for the smokes
         run: npm run build && cp dist/houseplan-card.js demo/srv/assets/houseplan-card.js
-      - name: Smoke suite
+      - name: Smoke suite (шард ${{ matrix.shard }} из 3)
+        env:
+          SHARD: ${{ matrix.shard }}
+          SHARDS: '3'
         run: |
           fail=0
+          index=0
+          ran=0
           mkdir -p /tmp/smoke-logs
+          # Деление по порядковому номеру файла: список отсортирован, поэтому
+          # разбиение детерминировано и не зависит от времени прогона.
           for f in demo/smoke_*.mjs; do
+            index=$((index + 1))
+            if [ $(( (index - 1) % SHARDS + 1 )) -ne "$SHARD" ]; then continue; fi
+            ran=$((ran + 1))
             name=$(basename "$f" .mjs)
             if node "$f" > "/tmp/smoke-logs/$name.log" 2>&1; then
               echo "ok   $name"
@@ -292,18 +337,27 @@ jobs:
               fail=1
             fi
           done
+          echo "--- шард ${SHARD}/${SHARDS}: прогнано ${ran} из ${index}"
+          # Пустой шард — признак, что деление сломалось, а не что работы нет.
+          if [ "$ran" -eq 0 ]; then echo "шард пуст: проверьте деление"; exit 1; fi
           exit $fail
       - name: Upload smoke logs
         if: failure()
         uses: actions/upload-artifact@v7
         with:
-          name: smoke-logs
+          name: smoke-logs-${{ matrix.shard }}
           path: /tmp/smoke-logs
-      # Маркер пишется последним шагом: он существует только если всё выше
-      # прошло. Кэш сохраняется post-шагом, то есть тоже лишь при успехе job.
+
+  # Маркер переиспользования пишется ОДИН раз и только когда прошли все шарды:
+  # частично прогнанная матрица не имеет права выглядеть как выполненная работа.
+  smoke_done:
+    needs: [smoke, reuse]
+    if: needs.reuse.outputs.smoke != 'true'
+    runs-on: ubuntu-latest
+    steps:
       - name: Записать маркер успеха
         run: |
-          printf '%s\n' "smoke прогнана успешно" \
+          printf '%s\n' "smoke прогнана успешно (3 шарда)" \
             "SHA: ${{ github.sha }}" \
             "прогон: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
             > .reuse-marker
