@@ -25,6 +25,7 @@ import { polygonArea, paperRoomShapes, splitRoomPath, sharedBoundary } from '../
 import { resolveOpenCuts } from '../test-build/open-spans.js';
 import { GRID_PITCH, NORM_W } from '../test-build/space-geometry.js';
 import { geometryArea } from '../test-build/physical-geometry.js';
+import { checkWallRecordsPreserved } from '../scripts/model-invariants.mjs';
 import { difference, intersection, union } from 'polyclip-ts';
 
 const closeTo = (got, want, tol = 1e-6) =>
@@ -289,6 +290,125 @@ test('rekeyWallsAfterMove carries exact interval endpoints with the wall', () =>
   assert.equal(next[0].key, wallKey(newA, newB, pitch));
   assert.deepEqual(next[0].a, newA);
   assert.deepEqual(next[0].b, newB);
+});
+
+const issue253SpanSet = (spans) => spans
+  .map(([a, b]) => [a, b].map((point) => point.map((value) => Number(value.toFixed(9)))))
+  .sort((left, right) => JSON.stringify(left).localeCompare(JSON.stringify(right)));
+
+test('issue 253 splits a longer exact wall and moves only the covered interval', () => {
+  const wallA = [0.070833333, 0.4375], wallB = [0.420833333, 0.4375];
+  const oldA = [0.070833333, 0.4375], oldB = [0.204166667, 0.4375];
+  const newA = [0.070833333, 0.4625], newB = [0.204166667, 0.4625];
+  const walls = setWallThickness([], wallA, wallB, 33, pitch);
+  const next = rekeyWallsAfterMove(walls, [[oldA, oldB]], [[newA, newB]], pitch);
+  assert.deepEqual(next.map((wall) => wall.cm), [33, 33]);
+  assert.deepEqual(issue253SpanSet(next.map((wall) => [wall.a, wall.b])), issue253SpanSet([
+    [newA, newB],
+    [[0.204166667, 0.4375], wallB],
+  ]));
+  assert.deepEqual(checkWallRecordsPreserved(walls, next), []);
+});
+
+test('issue 253 interval partition is orientation and axis independent', () => {
+  const cases = [
+    {
+      wall: [[1, 0], [0, 0]], old: [[0.2, 0], [0.6, 0]], next: [[0.2, 1], [0.6, 1]],
+      want: [[[0, 0], [0.2, 0]], [[0.2, 1], [0.6, 1]], [[0.6, 0], [1, 0]]],
+    },
+    {
+      wall: [[0, 0], [0, 1]], old: [[0, 0.25], [0, 0.75]], next: [[1, 0.25], [1, 0.75]],
+      want: [[[0, 0], [0, 0.25]], [[1, 0.25], [1, 0.75]], [[0, 0.75], [0, 1]]],
+    },
+    {
+      wall: [[0, 0], [1, 1]], old: [[0.25, 0.25], [0.75, 0.75]],
+      next: [[0.25, 0.5], [0.75, 1]],
+      want: [[[0, 0], [0.25, 0.25]], [[0.25, 0.5], [0.75, 1]], [[0.75, 0.75], [1, 1]]],
+    },
+  ];
+  for (const entry of cases) {
+    const walls = setWallThickness([], entry.wall[0], entry.wall[1], 18, pitch);
+    const next = rekeyWallsAfterMove(walls, [entry.old], [entry.next], pitch);
+    assert.deepEqual(issue253SpanSet(next.map((wall) => [wall.a, wall.b])), issue253SpanSet(entry.want));
+  }
+});
+
+test('issue 253 maps a covered interval through scale and rotation', () => {
+  const walls = setWallThickness([], [0.25, 0], [0.75, 0], 24, pitch);
+  const next = rekeyWallsAfterMove(
+    walls,
+    [[[0, 0], [1, 0]]],
+    [[[0, 0], [2, 1]]],
+    pitch,
+  );
+  assert.deepEqual(issue253SpanSet(next.map((wall) => [wall.a, wall.b])), issue253SpanSet([
+    [[0.5, 0.25], [1.5, 0.75]],
+  ]));
+  assert.equal(next[0].cm, 24);
+});
+
+test('issue 253 unchanged context edges preserve the wall array semantically', () => {
+  const walls = [{ key: 'legacy', cm: 19 }, ...setWallThickness([], [1, 0], [0, 0], 21, pitch)];
+  const next = rekeyWallsAfterMove(walls, [[[0, 0], [1, 0]]], [[[0, 0], [1, 0]]], pitch);
+  assert.deepEqual(next, walls);
+  assert.notEqual(next, walls);
+});
+
+test('issue 253 equivalent shared-room transforms apply once and conflicts fail closed', () => {
+  const wall = setWallThickness([], [0, 0], [1, 0], 20, pitch);
+  const old = [[0, 0], [1, 0]];
+  const moved = [[0, 1], [1, 1]];
+  const equivalent = rekeyWallsAfterMove(wall, [old, old], [moved, moved], pitch);
+  assert.equal(equivalent.length, 1);
+  assert.deepEqual([equivalent[0].a, equivalent[0].b], moved);
+
+  const conflictA = rekeyWallsAfterMove(wall, [old, old], [moved, [[0, 2], [1, 2]]], pitch);
+  const conflictB = rekeyWallsAfterMove(wall, [old, old], [[[0, 2], [1, 2]], moved], pitch);
+  assert.deepEqual(conflictA, conflictB, 'array order cannot choose a room transform');
+  assert.deepEqual([conflictA[0].a, conflictA[0].b], old);
+});
+
+test('issue 253 key collisions never erase different exact or legacy records', () => {
+  const exact = [
+    { key: wallKey([-1, 0], [1, 0], pitch), cm: 20, a: [-1, 0], b: [1, 0] },
+    { key: wallKey([-0.5, 0], [0.5, 0], pitch), cm: 30, a: [-0.5, 0], b: [0.5, 0] },
+  ];
+  assert.equal(exact[0].key, exact[1].key, 'fixture must exercise one compatibility key');
+  const exactNext = rekeyWallsAfterMove(exact, [[[2, 0], [3, 0]]], [[[2, 1], [3, 1]]], pitch);
+  assert.equal(exactNext.length, 2);
+  assert.deepEqual(exactNext.map((wall) => wall.cm), [20, 30]);
+
+  const legacy = exact.map(({ key, cm }) => ({ key, cm }));
+  const legacyNext = rekeyWallsAfterMove(legacy, [[[2, 0], [3, 0]]], [[[2, 1], [3, 1]]], pitch);
+  assert.equal(legacyNext.length, 2);
+  assert.deepEqual(legacyNext.map((wall) => wall.cm), [20, 30]);
+});
+
+test('issue 253 deduplicates only identical exact geometry with identical thickness', () => {
+  const a = [0, 0], b = [1, 0];
+  const same = [
+    { key: wallKey(a, b, pitch), cm: 20, a, b },
+    { key: wallKey(b, a, pitch), cm: 20, a: b, b: a },
+    { key: wallKey(a, b, pitch), cm: 30, a, b },
+  ];
+  const next = rekeyWallsAfterMove(same, [[[2, 0], [3, 0]]], [[[2, 1], [3, 1]]], pitch);
+  assert.equal(next.length, 2);
+  assert.deepEqual(next.map((wall) => wall.cm), [20, 30]);
+});
+
+test('issue 253 does not truncate a lossless split at the backend 500-record boundary', () => {
+  const walls = Array.from({ length: 500 }, (_, index) => {
+    const y = index * 2;
+    return { key: wallKey([0, y], [1, y], pitch), cm: 20, a: [0, y], b: [1, y] };
+  });
+  const next = rekeyWallsAfterMove(
+    walls,
+    [[[0.25, 0], [0.75, 0]]],
+    [[[0.25, 1], [0.75, 1]]],
+    pitch,
+  );
+  assert.equal(next.length, 502, 'frontend must preserve every atom; backend may reject atomically');
+  assert.equal(next.filter((wall) => wall.cm === 20).length, 502);
 });
 
 test('setWallThickness upserts and removes', () => {

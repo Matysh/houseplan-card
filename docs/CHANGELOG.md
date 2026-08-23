@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Resizing a room no longer turns a thick wall into a thin centreline when the
+  moved room edge covers only part of a longer wall. The covered part now keeps
+  its thickness and follows the room, the untouched continuation stays in
+  place, and an opening on the moved part follows it in the same Undo/Redo
+  operation ([#253](https://github.com/Matysh/houseplan-card/issues/253)).
 - “Optimize plans” now removes layout positions only when their room label,
   device or light-group owner is proven to no longer exist. The preview reports
   those cleanups in plain-language categories, keeps technical IDs inside

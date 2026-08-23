@@ -32,9 +32,19 @@ its exact endpoints cover that room's shorter child side too; lookup does not
 depend on the compacted run's midpoint remaining inside every room.
 
 Degrade unmatched keys silently on write. Resize / undo / scale transform exact
-endpoints and re-key all touched spans in the same transaction; legacy entries
-without endpoints keep the midpoint fallback. `walls` stays in the resize
-snapshot.
+endpoints and re-key all touched spans in the same transaction. A moved room
+edge may cover only part of a longer exact wall entry: Resize partitions that
+entry at every collinear overlap boundary, transforms only the covered atoms
+from the immutable pre-drag snapshot and leaves every uncovered remainder on
+its old carrier. Equivalent transforms from two owners collapse to one; a
+conflicting pair fails closed by retaining the source atom. Results deduplicate
+only when canonical exact endpoints **and** centimetres match — the quantised
+compatibility key alone may never erase a record. Legacy entries without
+endpoints keep the unambiguous whole-key/midpoint fallback and are never split
+by inventing a length. `walls` stays in the resize snapshot. If lossless
+partitioning takes a valid 500-record input above the backend limit, the
+frontend keeps every result so persistence rejects the transaction atomically;
+it does not truncate masonry to make the write fit.
 
 ## 2. Growth (centreline ±½)
 
@@ -242,7 +252,8 @@ virtual-T mitre; angle-aware opening; 45° wall; T-junction; detached parallel
 room; nested-room tie; partially out-of-span legacy opening; overlapping
 opening de-duplication; shared symbol/cut/tunnel rejection; thick-door tunnel
 clipping and room-side colour ownership; whole and
-atomic rekey after edge/scale; corner Split exterior equality across
+atomic rekey after edge/scale, including a long exact record only partly
+covered by the moved edge, key collisions and the 500-record boundary; corner Split exterior equality across
 0/1/15/100 cm, unequal arms, both windings and convex/concave endpoints;
 production-scale `0 ↔ 10`, `10 ↔ 20` and `1 ↔ 100` collinear transitions at
 their exact endpoint; full 8-room/25-wall/3-cut virtual-junction resilience,
@@ -253,6 +264,9 @@ exact parent-run thickness inherited by atomic children when
 closing a virtual neighbour, without partial-span leakage (#201).
 Browser: seamless frame; fill not in hatch; m² drops with thickness; a partial
 virtual stretch, its solid thick remainders and Undo move as one real resize;
+a shorter moved room edge splits a longer 33 cm record, moves only its covered
+part together with its opening, commits both pieces and restores the exact
+source with Undo (`demo/smoke_resize_wall_thickness.mjs`);
 the virtual rubber band paints above the real body; sun starts at the room-side
 opening corners; nav mode restores after `can_write`; a 1 cm body uses
 solid-only in both full and static cards while a 20 cm body keeps its hatch;

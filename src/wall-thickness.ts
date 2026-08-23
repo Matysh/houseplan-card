@@ -444,76 +444,164 @@ export function rekeyWallsAfterMove(
 ): WallEntry[] {
   if (!walls?.length) return [];
   if (oldSpans.length !== newSpans.length) return walls.slice();
-  const map = new Map<string, string>();
+  const scale = coordScale > 0 ? coordScale : 1;
+  const tol = Math.max(pitch * 0.5, 1e-9) * scale;
+  const exactEps = Math.max(pitch * scale * 1e-6, 1e-9);
+  type Move = {
+    oa: number[]; ob: number[]; na: number[]; nb: number[];
+    dx: number; dy: number; len2: number;
+  };
+  const moves: Move[] = [];
+  const keyMoves = new Map<string, Set<string>>();
   for (let i = 0; i < oldSpans.length; i++) {
     const [oa, ob] = oldSpans[i];
     const [na, nb] = newSpans[i];
+    if (![oa?.[0], oa?.[1], ob?.[0], ob?.[1], na?.[0], na?.[1], nb?.[0], nb?.[1]]
+      .every(Number.isFinite)) continue;
+    const dx = ob[0] - oa[0], dy = ob[1] - oa[1];
+    const len2 = dx * dx + dy * dy;
+    if (len2 < 1e-18) continue;
+    // Unchanged polygon edges are context, not split points.  Including them
+    // would atomise every long wall on every preview even when no part moved.
+    if (Math.max(Math.hypot(na[0] - oa[0], na[1] - oa[1]),
+      Math.hypot(nb[0] - ob[0], nb[1] - ob[1])) <= exactEps) continue;
+    moves.push({ oa, ob, na, nb, dx, dy, len2 });
     const ok = keyOf(oa, ob, pitch, coordScale);
     const nk = keyOf(na, nb, pitch, coordScale);
-    if (ok !== nk) map.set(ok, nk);
+    if (ok !== nk) {
+      const targets = keyMoves.get(ok) || new Set<string>();
+      targets.add(nk);
+      keyMoves.set(ok, targets);
+    }
   }
-  const scale = coordScale > 0 ? coordScale : 1;
-  const tol = Math.max(pitch * 0.5, 1e-9) * scale;
-  const used = new Set<string>();
+  if (!moves.length) return walls.slice();
+
+  const pointAt = (a: number[], b: number[], t: number): number[] => [
+    a[0] + (b[0] - a[0]) * t,
+    a[1] + (b[1] - a[1]) * t,
+  ];
+  const mapPoint = (p: number[], move: Move): number[] => {
+    const t = Math.max(0, Math.min(1,
+      ((p[0] - move.oa[0]) * move.dx + (p[1] - move.oa[1]) * move.dy) / move.len2));
+    return pointAt(move.na, move.nb, t);
+  };
+  const closePoint = (a: number[], b: number[]): boolean =>
+    Math.hypot(a[0] - b[0], a[1] - b[1]) <= exactEps;
+  const canonicalSpan = (a: number[], b: number[]): [number[], number[]] => {
+    const [ux, uy] = wallDir(a, b);
+    return (b[0] - a[0]) * ux + (b[1] - a[1]) * uy >= 0
+      ? [[...a], [...b]] : [[...b], [...a]];
+  };
+
   const out: WallEntry[] = [];
+  const exactOut: { entry: WallEntry; span: [number[], number[]] }[] = [];
+  const pushExact = (a: number[], b: number[], cm: number): void => {
+    if (Math.hypot(b[0] - a[0], b[1] - a[1]) <= exactEps) return;
+    const [ca, cb] = canonicalSpan(a, b);
+    const value = clampWallCm(cm);
+    const duplicate = exactOut.some((candidate) => candidate.entry.cm === value
+      && closePoint(candidate.span[0], ca) && closePoint(candidate.span[1], cb));
+    if (duplicate) return;
+    const entry = wallEntry(ca, cb, value, pitch, scale);
+    out.push(entry);
+    exactOut.push({ entry, span: [ca, cb] });
+  };
+
   for (const w of walls) {
     // Exact endpoints are authoritative for new entries. Never move only their
-    // compatibility key while leaving a/b behind on the old wall.
-    let nk = '';
-    let moved: [number[], number[]] | null = null;
+    // compatibility key while leaving a/b behind on the old wall.  A record
+    // may be longer than the moved room edge, so partition it at every overlap
+    // boundary and transform the covered atoms from this immutable source.
     const exact = entrySpan(w, scale);
     if (exact) {
-      for (let i = 0; i < oldSpans.length; i++) {
-        const [oa, ob] = oldSpans[i];
-        const [na, nb] = newSpans[i];
-        if (!angleClose(segAngle(exact[0], exact[1]), segAngle(oa, ob))) continue;
-        if (distToSeg(exact[0][0], exact[0][1], oa[0], oa[1], ob[0], ob[1]) > tol
-            || distToSeg(exact[1][0], exact[1][1], oa[0], oa[1], ob[0], ob[1]) > tol) continue;
-        const dx = ob[0] - oa[0], dy = ob[1] - oa[1];
-        const L2 = dx * dx + dy * dy;
-        if (L2 < 1e-18) continue;
-        const movePoint = (p: number[]): number[] => {
-          const t = Math.max(0, Math.min(1, ((p[0] - oa[0]) * dx + (p[1] - oa[1]) * dy) / L2));
-          return [na[0] + (nb[0] - na[0]) * t, na[1] + (nb[1] - na[1]) * t];
-        };
-        moved = [movePoint(exact[0]), movePoint(exact[1])];
-        nk = keyOf(moved[0], moved[1], pitch, scale);
-        break;
+      const [wa, wb] = canonicalSpan(exact[0], exact[1]);
+      const wx = wb[0] - wa[0], wy = wb[1] - wa[1];
+      const wallLen2 = wx * wx + wy * wy;
+      const wallLen = Math.sqrt(wallLen2);
+      if (wallLen <= exactEps) {
+        out.push({ ...w, cm: clampWallCm(w.cm) });
+        continue;
       }
+
+      type Overlap = { lo: number; hi: number; move: Move };
+      const overlaps: Overlap[] = [];
+      for (const move of moves) {
+        if (!angleClose(segAngle(wa, wb), segAngle(move.oa, move.ob))) continue;
+        const lineDistance = (p: number[]): number =>
+          Math.abs((p[0] - wa[0]) * wy - (p[1] - wa[1]) * wx) / wallLen;
+        if (lineDistance(move.oa) > tol || lineDistance(move.ob) > tol) continue;
+        const ta = ((move.oa[0] - wa[0]) * wx + (move.oa[1] - wa[1]) * wy) / wallLen2;
+        const tb = ((move.ob[0] - wa[0]) * wx + (move.ob[1] - wa[1]) * wy) / wallLen2;
+        const lo = Math.max(0, Math.min(ta, tb));
+        const hi = Math.min(1, Math.max(ta, tb));
+        if ((hi - lo) * wallLen > exactEps) overlaps.push({ lo, hi, move });
+      }
+
+      if (!overlaps.length) {
+        pushExact(wa, wb, w.cm);
+        continue;
+      }
+
+      const bounds = [0, 1, ...overlaps.flatMap(({ lo, hi }) => [lo, hi])]
+        .sort((a, b) => a - b)
+        .filter((value, index, list) => index === 0
+          || Math.abs(value - list[index - 1]) * wallLen > exactEps);
+      for (let i = 0; i + 1 < bounds.length; i++) {
+        const lo = bounds[i], hi = bounds[i + 1];
+        if ((hi - lo) * wallLen <= exactEps) continue;
+        const a = pointAt(wa, wb, lo), b = pointAt(wa, wb, hi);
+        const mid = (lo + hi) / 2;
+        const candidates = overlaps.filter((overlap) =>
+          mid >= overlap.lo - 1e-12 && mid <= overlap.hi + 1e-12);
+        if (!candidates.length) {
+          pushExact(a, b, w.cm);
+          continue;
+        }
+        const first: [number[], number[]] = [
+          mapPoint(a, candidates[0].move), mapPoint(b, candidates[0].move),
+        ];
+        const conflict = candidates.slice(1).some((candidate) => {
+          const ca = mapPoint(a, candidate.move), cb = mapPoint(b, candidate.move);
+          return !closePoint(first[0], ca) || !closePoint(first[1], cb);
+        });
+        // Conflicting room transforms are invalid planner input.  Preserve the
+        // source atom rather than selecting by array order or losing masonry.
+        if (conflict) pushExact(a, b, w.cm);
+        else pushExact(first[0], first[1], w.cm);
+      }
+      continue;
     }
-    if (!exact) nk = map.get(w.key) || '';
+
+    // Legacy entries carry only a midpoint/direction key, so they cannot be
+    // split without inventing a length.  Move an unambiguous whole-edge key or
+    // projected midpoint, and never deduplicate them merely by key.
+    let nk = '';
+    const direct = keyMoves.get(w.key);
+    if (direct?.size === 1) nk = [...direct][0];
     if (!nk) {
       const parsed = parseKeys([w], scale)[0];
       if (parsed) {
-        for (let i = 0; i < oldSpans.length; i++) {
-          const [oa, ob] = oldSpans[i];
-          const [na, nb] = newSpans[i];
-          if (!angleClose(parsed.ang, segAngle(oa, ob))) continue;
-          const dx = ob[0] - oa[0], dy = ob[1] - oa[1];
-          const L2 = dx * dx + dy * dy;
-          if (L2 < 1e-18) continue;
-          const t = ((parsed.x - oa[0]) * dx + (parsed.y - oa[1]) * dy) / L2;
+        const targets = new Set<string>();
+        for (const move of moves) {
+          if (!angleClose(parsed.ang, segAngle(move.oa, move.ob))) continue;
+          const t = ((parsed.x - move.oa[0]) * move.dx
+            + (parsed.y - move.oa[1]) * move.dy) / move.len2;
           if (t < -1e-6 || t > 1 + 1e-6) continue;
-          if (distToSeg(parsed.x, parsed.y, oa[0], oa[1], ob[0], ob[1]) > tol) continue;
-          const mx = na[0] + (nb[0] - na[0]) * Math.max(0, Math.min(1, t));
-          const my = na[1] + (nb[1] - na[1]) * Math.max(0, Math.min(1, t));
-          const [ux, uy] = wallDir(na, nb);
+          if (distToSeg(parsed.x, parsed.y,
+            move.oa[0], move.oa[1], move.ob[0], move.ob[1]) > tol) continue;
+          const at = mapPoint([parsed.x, parsed.y], move);
+          const [ux, uy] = wallDir(move.na, move.nb);
           const arm = Math.max(pitch * scale, 1e-6);
-          nk = keyOf(
-            [mx - ux * arm, my - uy * arm],
-            [mx + ux * arm, my + uy * arm],
+          targets.add(keyOf(
+            [at[0] - ux * arm, at[1] - uy * arm],
+            [at[0] + ux * arm, at[1] + uy * arm],
             pitch, scale,
-          );
-          break;
+          ));
         }
+        if (targets.size === 1) nk = [...targets][0];
       }
     }
-    if (!nk) nk = w.key;
-    if (used.has(nk)) continue;
-    used.add(nk);
-    out.push(moved
-      ? wallEntry(moved[0], moved[1], w.cm, pitch, scale)
-      : { ...w, key: nk, cm: clampWallCm(w.cm) });
+    out.push({ ...w, key: nk || w.key, cm: clampWallCm(w.cm) });
   }
   return out;
 }

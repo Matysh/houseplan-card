@@ -492,6 +492,16 @@ a newer external config revision is adopted. Positional placement is always quan
 grid. Shift may alter a gesture's geometry (square/circle creation, independent
 resize axes or free rotation), but it cannot create off-grid coordinates.
 
+Room Resize keeps its live geometry in an immutable-snapshot overlay. Modern
+wall-thickness entries use exact `a/b` endpoints as identity; their quantised
+midpoint/direction `key` is only a compatibility index. When a moved polygon
+edge overlaps only part of a longer entry, `rekeyWallsAfterMove()` partitions
+the source interval at all overlap endpoints, maps only covered atoms and
+retains the rest. Exact geometry plus `cm`, never key alone, defines a duplicate.
+Legacy key-only records follow an unambiguous whole-edge/midpoint move without
+inventing a splittable length. This same helper serves edge drag, corner scale
+and optimizer geometry, while commit/degrade remains the persistence boundary.
+
 `boundary` is one contextual UI tool over the existing `open_spans` model.
 Before the first click, independent physical bodies block the room boundary
 below them; otherwise a dashed span wins over a solid shared boundary, and an

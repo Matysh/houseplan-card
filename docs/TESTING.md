@@ -1941,6 +1941,10 @@ require hands on real hardware — they remain for the human pass.
       remainders keeps the dash and both thickness values during live drag and
       after release; Undo restores rooms, `open_spans` and `walls` together
       [auto: smoke_resize_virtual_thick]
+- [ ] A short room edge cut from a longer 33 cm wall entry moves only its
+      covered interval through the real pointer handlers. Live preview and
+      commit retain both exact pieces, the opening follows, and Undo restores
+      the source bytes [auto: smoke_resize_wall_thickness]
 - [ ] Device markers do not move; the room settings gear re-centres itself
 - [ ] Smoke: `node demo/smoke_room_resize.mjs`
 
@@ -2655,8 +2659,11 @@ require hands on real hardware — they remain for the human pass.
 - [ ] **Shared once / clear → line / resize re-keys**: one body for a shared
       wall; clearing thickness restores the centreline; resizing a thick wall
       keeps the thickness on the moved stretch, including both atomic solid
-      remainders around a partial virtual span
-      [auto: smoke_wall_thickness + smoke_resize_virtual_thick]
+      remainders around a partial virtual span. When the moved room edge covers
+      only part of a longer exact thickness entry, it splits losslessly and a
+      compatibility-key collision cannot erase either result
+      [auto: smoke_wall_thickness + smoke_resize_virtual_thick +
+      smoke_resize_wall_thickness + test/wall-thickness.test.mjs + mutation-gate]
 - [ ] **Virtual T-junction**: when two real thick arms from different room
       contours meet at an `open_span` endpoint, the outside corner is a clean
       mitre with no stair-step. In every editor the saved dash and the two-click

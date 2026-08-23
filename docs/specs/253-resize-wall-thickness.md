@@ -9,7 +9,7 @@
   [#233](https://github.com/Matysh/houseplan-card/issues/233),
   [#254](https://github.com/Matysh/houseplan-card/issues/254)
 - Ветка: `issue/253-resize-wall-thickness`
-- Статус ТЗ: на ревью
+- Статус ТЗ: одобрено (SPEC REVIEW r1, 2026-08-23)
 
 Канонические документы: `docs/SCOPE.md`, `docs/WALL-THICKNESS.md`,
 `docs/ARCHITECTURE.md`, `docs/CANVAS.md`, `docs/CONFIG-COMPATIBILITY.md`,

@@ -28,6 +28,18 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    // #253: the pure interval transformer is invoked inside the resize preview;
+    // the smoke can observe only the resulting wall records and rendered body.
+    symbols: [
+      'rekeyWallsAfterMove', 'WallEntry', 'angleClose', 'clampWallCm',
+      'closePoint', 'distToSeg', 'keyOf', 'pointAt', 'segAngle', 'wallDir', 'wallEntry',
+    ],
+    smokes: ['smoke_resize_wall_thickness.mjs'],
+    because: 'the real pointer-handler smoke proves that a partial overlap is split losslessly '
+      + 'through live preview, commit, opening movement and Undo, but the browser bundle does '
+      + 'not expose the pure transformer name to the scenario',
+  },
+  {
     // #244: pure repair/validation helpers are bundled behind editor actions;
     // the smoke observes their persisted candidate and rendered explanations.
     symbols: [

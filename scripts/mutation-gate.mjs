@@ -178,6 +178,34 @@ export const MUTANTS = [
     }],
   },
   {
+    id: 'resize-wall-partial-overlap-not-split',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="issue 253 splits a longer exact wall" '
+      + 'test/wall-thickness.test.mjs',
+    because: 'a room edge may cover only part of a longer thickness record; omitting the overlap '
+      + 'boundaries recreates #253 by leaving the entire record behind instead of moving one atom',
+    patches: [{
+      file: 'src/wall-thickness.ts',
+      find: '      const bounds = [0, 1, ...overlaps.flatMap(({ lo, hi }) => [lo, hi])]',
+      replace: '      const bounds = [0, 1]',
+    }],
+  },
+  {
+    id: 'resize-wall-key-collision-drops-record',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="key collisions never erase" '
+      + 'test/wall-thickness.test.mjs',
+    because: 'compatibility keys identify a quantised midpoint, not an exact interval; treating '
+      + 'them as unique silently deletes different thickness records, the second half of #253',
+    patches: [{
+      file: 'src/wall-thickness.ts',
+      find: '    const duplicate = exactOut.some((candidate) => candidate.entry.cm === value\n'
+        + '      && closePoint(candidate.span[0], ca) && closePoint(candidate.span[1], cb));',
+      replace: '    const duplicate = exactOut.some((candidate) =>\n'
+        + '      candidate.entry.key === keyOf(ca, cb, pitch, scale));',
+    }],
+  },
+  {
     id: 'unit-formatting-escapes-the-formatter',
     guard: 'node --test --test-name-pattern="детектор действительно ловит" '
       + 'test/single-source-numbers.test.mjs',

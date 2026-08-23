@@ -136,6 +136,15 @@ it carries only committed geometry. The overlay moves into the real
 config exactly once, on pointerup; a cancel (Esc, pointercancel) just
 drops the overlay, leaving nothing to restore and nothing to write.
 
+Wall thickness and virtual-boundary spans are derived on every preview from
+that same immutable snapshot. An exact thickness entry may extend beyond the
+room edge being moved. In that case it is partitioned at the overlap endpoints:
+only the covered part follows the wall, while the uncovered continuation stays
+on its original edge. Compatibility keys are rebuilt from exact endpoints and
+never used alone to discard another interval. A shared part encountered from
+both adjacent rooms is transformed once; inconsistent destinations fail closed
+and retain the source part.
+
 ## Undo
 
 One operation (handle release that changed something) = one undo step.

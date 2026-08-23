@@ -326,6 +326,9 @@ Other operations edit existing geometry:
 Wall thickness is stored in real units. A room may have different thicknesses
 on different spans. Open wall branches and T-junctions are allowed; shared
 geometry remains joined without painted end caps.
+If Resize moves only part of a longer thick wall, the moved part keeps its
+thickness and follows the room while the remaining continuation stays in
+place. Openings on the moved part follow it in the same Undo/Redo operation.
 
 ### HA area binding
 
