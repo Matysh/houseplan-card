@@ -583,13 +583,36 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     dialog: 'optimize-orphan-references', language: 'en', theme: 'dark',
     markerOverrides: [{
       id: 'golden-light-two', binding: 'virtual', space: 'removed-floor',
-      room_id: 'removed-room', icon: 'mdi:lightbulb',
+      room_id: 'removed-room', icon: 'mdi:lightbulb', name: 'Living-room lamp',
+    }, {
+      id: 'golden-light-one', binding: 'virtual', name: 'Hall lamp',
+    }, {
+      id: 'golden-presence', binding: 'virtual', removed: true,
+      space: 'removed-floor', name: 'Retired marker',
     }],
     layoutOverrides: {
       'golden-light-two': { s: 'removed-floor', x: 0.35, y: 0.72 },
       'golden-light-one': { s: 'unresolved-floor', x: 0.20, y: 0.34 },
+      'golden-presence': { s: 'removed-floor', x: 0.45, y: 0.64 },
     },
     viewport: { width: 900, height: 760 }, ...page },
+  { id: 'optimize-orphan-references-light-ru', fixture: 'visual', space: 'golden-geometry',
+    dialog: 'optimize-orphan-references', language: 'ru', theme: 'light',
+    markerOverrides: [{
+      id: 'golden-light-two', binding: 'virtual', space: 'removed-floor',
+      room_id: 'removed-room', icon: 'mdi:lightbulb', name: 'Лампа в гостиной',
+    }, {
+      id: 'golden-light-one', binding: 'virtual', name: 'Лампа в холле',
+    }, {
+      id: 'golden-presence', binding: 'virtual', removed: true,
+      space: 'removed-floor', name: 'Старый маркер',
+    }],
+    layoutOverrides: {
+      'golden-light-two': { s: 'removed-floor', x: 0.35, y: 0.72 },
+      'golden-light-one': { s: 'unresolved-floor', x: 0.20, y: 0.34 },
+      'golden-presence': { s: 'removed-floor', x: 0.45, y: 0.64 },
+    },
+    viewport: { width: 900, height: 880 }, ...page },
   { id: 'card-editor-invalid-default-floor-light-en', fixture: 'visual',
     cardEditorInvalidDefaultFloor: 'removed-floor', language: 'en', theme: 'light',
     viewport: { width: 900, height: 760 }, ...page },

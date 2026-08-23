@@ -187,6 +187,7 @@ import {
   clampCanvasR, clampCanvasN, type ContentItem, type Rect,
 } from './space-geometry';
 import { optimizePlans, type OptimizeReport } from './plan-optimizer';
+import type { SpaceReferenceRepairContext } from './space-reference-repair';
 import { collectSpaceMarkerDependencies } from './space-deletion';
 import {
   checkOptimizeGeometry,
@@ -1773,6 +1774,8 @@ class HouseplanCard extends LitElement {
     where: string;
     changed: boolean;
     busy: boolean;
+    /** False by default; true only after the secondary preview action. */
+    removeLiveMissingPositions: boolean;
   } | null = null;
 
   private _settingsDialog: {
@@ -15003,15 +15006,74 @@ class HouseplanCard extends LitElement {
     });
   }
 
-  private _openAlignDialog = (): void => {
+  private _optimizeReferenceContext(
+    removeLiveMissingPositions: boolean,
+  ): SpaceReferenceRepairContext {
+    const registry = this._haRegistry;
+    const full = this._fullRegistryHass;
+    const names: Record<string, string> = {};
+    const humanName = (...values: unknown[]): string => {
+      for (const value of values) {
+        const name = String(value || '').trim();
+        if (name) return name;
+      }
+      return '';
+    };
+    for (const [deviceId, device] of Object.entries<any>(registry.devices || {})) {
+      names[deviceId] = humanName(device?.name_by_user, device?.name, device?.model);
+    }
+    for (const [entityId, entity] of Object.entries<any>(registry.entities || {})) {
+      names[`lg_${entityId}`] = humanName(
+        this.hass?.states?.[entityId]?.attributes?.friendly_name,
+        entity?.name,
+        entity?.original_name,
+      );
+    }
+    for (const device of this._devices) names[device.id] = humanName(device.name, names[device.id]);
+    for (const marker of this._serverCfg?.markers || []) {
+      const separator = String(marker.binding || '').indexOf(':');
+      const kind = separator > 0 ? marker.binding.slice(0, separator) : '';
+      const ref = separator > 0 ? marker.binding.slice(separator + 1) : '';
+      const bound = kind === 'device'
+        ? full?.devices?.[ref]
+        : kind === 'entity' ? full?.entities?.[ref] : null;
+      names[marker.id] = humanName(
+        marker.name,
+        kind === 'device' ? bound?.name_by_user : null,
+        bound?.name,
+        kind === 'entity' ? this.hass?.states?.[ref]?.attributes?.friendly_name : null,
+        names[marker.id],
+      );
+    }
+    return {
+      effectiveAreaByMarker: Object.fromEntries(
+        this._devices
+          .filter((device) => !device.virtual && !!device.area)
+          .map((device) => [device.id, device.area]),
+      ),
+      ownerRoster: {
+        authoritative: registry.authoritative,
+        deviceIds: Object.keys(registry.devices || {}),
+        // State-only YAML entities are positive existence evidence even though
+        // an authoritative Entity Registry cannot list them.
+        entityIds: [...new Set([
+          ...Object.keys(registry.entities || {}),
+          ...Object.keys(this.hass?.states || {}),
+        ])],
+        names,
+      },
+      removeLiveMissingPositions,
+    };
+  }
+
+  private _previewAlignDialog(removeLiveMissingPositions: boolean): void {
     if (!this._norm || !this._serverCfg) return;
     const spaces = this._serverCfg.spaces || [];
-    const effectiveAreaByMarker = Object.fromEntries(
-      this._devices
-        .filter((device) => !device.virtual && !!device.area)
-        .map((device) => [device.id, device.area]),
+    const r = optimizePlans(
+      this._serverCfg,
+      this._layout || {},
+      this._optimizeReferenceContext(removeLiveMissingPositions),
     );
-    const r = optimizePlans(this._serverCfg, this._layout || {}, { effectiveAreaByMarker });
     const preflight = r.changed ? this._checkOptimizeGeometry(r.config) : null;
     // The maximum geometry shift is an UPPER BOUND, not a sample. The run
     // measured every element in the centimetres of ITS OWN space — converting
@@ -15023,8 +15085,16 @@ class HouseplanCard extends LitElement {
     const where = spaces.length > 1 && sp ? String(sp.title || sp.id) : '';
     this._alignDialog = {
       report: r.report, config: r.config, layout: r.layout, cm, where,
-      preflight, changed: r.changed, busy: false,
+      preflight, changed: r.changed, busy: false, removeLiveMissingPositions,
     };
+  }
+
+  private _openAlignDialog = (): void => this._previewAlignDialog(false);
+
+  private _toggleOptimizeLivePositions = (): void => {
+    const dialog = this._alignDialog;
+    if (!dialog || dialog.busy || !dialog.report.liveMissingPositions.length) return;
+    this._previewAlignDialog(!dialog.removeLiveMissingPositions);
   };
 
   /**
@@ -15076,7 +15146,9 @@ class HouseplanCard extends LitElement {
           + d.report.coordsCanonicalized + d.report.wallsMerged + d.report.spansMerged
           + d.report.partitionsMerged),
         r: String(d.report.spaceRefsRemapped + d.report.roomRefsRemapped
-          + d.report.positionsRemapped + d.report.markersDetached),
+          + d.report.positionsRemapped + d.report.markersDetached
+          + d.report.orphanRoomLabelsRemoved + d.report.orphanDevicePositionsRemoved
+          + d.report.orphanGroupPositionsRemoved),
       }));
     } catch (e: any) {
       if (this._alignDialog) this._alignDialog = { ...this._alignDialog, busy: false };
@@ -16077,9 +16149,48 @@ class HouseplanCard extends LitElement {
       : '';
     const repaired = r.spaceRefsRemapped + r.roomRefsRemapped
       + r.positionsRemapped + r.markersDetached;
-    const referenceWarnings = r.positionsUnresolved + r.nestedRefsUnresolved;
-    const visibleDeadIds = r.deadSpaceIds.slice(0, 10).join(', ');
-    const remainingDeadIds = Math.max(0, r.deadSpaceIds.length - 10);
+    const modelMaintenance = r.migrated + r.canonicalized + r.coordsCanonicalized
+      + r.wallsMerged + r.spansMerged + r.partitionsMerged;
+    const gridWarning = r.moved + r.rotated + r.removedDrafts + r.coordsCanonicalized;
+    const removed = r.orphanRoomLabelsRemoved + r.orphanDevicePositionsRemoved
+      + r.orphanGroupPositionsRemoved;
+    const liveNames = r.liveMissingPositions.map((item) => item.name).filter(Boolean);
+    const visibleLiveNames = liveNames.slice(0, 3).join(', ');
+    const remainingLiveNames = Math.max(0, liveNames.length - 3);
+    const liveNamesText = visibleLiveNames
+      ? this._t('gs.optimize_live_names', {
+          names: visibleLiveNames,
+          more: remainingLiveNames
+            ? this._t('gs.optimize_reference_more', { n: String(remainingLiveNames) }) : '',
+        })
+      : '';
+    const registryLimited = r.unverifiedPositions.some(
+      (item) => item.reason === 'registry_unavailable',
+    );
+    const detailStatus = (item: typeof r.removedPositions[number]): string => {
+      if (r.removedPositions.some((removedItem) => removedItem.id === item.id)) {
+        return this._t('gs.optimize_detail_removed');
+      }
+      if (r.liveMissingPositions.some((liveItem) => liveItem.id === item.id)) {
+        return this._t('gs.optimize_detail_live');
+      }
+      return this._t('gs.optimize_detail_unverified');
+    };
+    const detailKind = (kind: typeof r.removedPositions[number]['kind']): string => this._t(
+      kind === 'room_label' ? 'gs.optimize_detail_room_label'
+        : kind === 'group' ? 'gs.optimize_detail_group'
+        : kind === 'device' ? 'gs.optimize_detail_device'
+        : 'gs.optimize_detail_unknown',
+    );
+    const referenceDetails = [
+      ...r.removedPositions,
+      ...r.liveMissingPositions.filter((item) => (
+        !r.removedPositions.some((removedItem) => removedItem.id === item.id)
+      )),
+      ...r.unverifiedPositions,
+    ];
+    const visibleDetails = referenceDetails.slice(0, 10);
+    const remainingDetails = Math.max(0, referenceDetails.length - visibleDetails.length);
     return html`<hp-dialog .hass=${this.hass} .title=${this._t('gs.align_title')} icon="mdi:broom"
       dismiss-on-scrim @hp-close=${() => (this._alignDialog = null)}>
         <div class="body">
@@ -16088,7 +16199,11 @@ class HouseplanCard extends LitElement {
               <p class="alignmsg">${this._t('gs.align_preflight_failed', { spaces, more })}</p>
               <div class="rhint">${this._t('gs.align_preflight_hint')}</div>`
             : !d.changed
-            ? html`<p class="alignmsg">${this._t('gs.align_none')}</p>`
+            ? html`<p class="alignmsg">${this._t(
+                r.liveMissingPositions.length || r.unverifiedPositions.length
+                  || r.nestedRefsUnresolved
+                  ? 'gs.optimize_no_automatic_changes' : 'gs.align_none',
+              )}</p>`
             : html`
               ${r.moved ? html`<p class="alignmsg">${this._t('gs.align_count', {
                   n: String(r.moved), total: String(r.total), cm: String(d.cm),
@@ -16104,31 +16219,80 @@ class HouseplanCard extends LitElement {
                     n: String(r.removedDrafts),
                   })}</p>`
                 : nothing}
-              <p class="alignmsg">${this._t('gs.optimize_changes', {
-                m: String(r.migrated), c: String(r.canonicalized),
-                p: String(r.coordsCanonicalized), w: String(r.wallsMerged),
-                s: String(r.spansMerged), i: String(r.partitionsMerged),
-              })}</p>
+              ${modelMaintenance ? html`<p class="alignmsg">${this._t('gs.optimize_changes', {
+                  m: String(r.migrated), c: String(r.canonicalized),
+                  p: String(r.coordsCanonicalized), w: String(r.wallsMerged),
+                  s: String(r.spansMerged), i: String(r.partitionsMerged),
+                })}</p>` : nothing}
               ${r.glowSpacesMigrated || r.glowRoomsMigrated
                 ? html`<p class="alignmsg">${this._t('gs.optimize_glow_migration', {
                     spaces: String(r.glowSpacesMigrated),
                     rooms: String(r.glowRoomsMigrated),
                   })}</p>`
                 : nothing}
-              <div class="rhint">${this._t('gs.align_warn')}</div>`}
+              ${gridWarning ? html`<div class="rhint">${this._t('gs.align_warn')}</div>` : nothing}`}
           ${repaired
             ? html`<p class="alignmsg">${this._t('gs.optimize_references', {
                 spaces: String(r.spaceRefsRemapped), rooms: String(r.roomRefsRemapped),
                 positions: String(r.positionsRemapped), detached: String(r.markersDetached),
               })}</p>`
             : nothing}
-          ${referenceWarnings || r.deadSpaceIds.length
-            ? html`<div class="rhint" role="alert">${this._t('gs.optimize_reference_warning', {
-                positions: String(r.positionsUnresolved), nested: String(r.nestedRefsUnresolved),
-                ids: visibleDeadIds || '—',
-                more: remainingDeadIds
-                  ? this._t('gs.optimize_reference_more', { n: String(remainingDeadIds) }) : '',
+          ${removed
+            ? html`<p class="alignmsg">${this._t('gs.optimize_orphans_removed', {
+                total: String(removed),
+                rooms: String(r.orphanRoomLabelsRemoved),
+                devices: String(r.orphanDevicePositionsRemoved),
+                groups: String(r.orphanGroupPositionsRemoved),
+              })}</p>`
+            : nothing}
+          ${r.liveMissingPositions.length
+            ? html`<div class="optimize-live">
+                <p class="alignmsg">${this._t(d.removeLiveMissingPositions
+                  ? 'gs.optimize_live_positions_remove' : 'gs.optimize_live_positions', {
+                  n: String(r.liveMissingPositions.length), names: liveNamesText,
+                })}</p>
+                <button class="btn ghost optimize-cleanup" type="button"
+                  aria-pressed=${d.removeLiveMissingPositions ? 'true' : 'false'}
+                  @click=${this._toggleOptimizeLivePositions} ?disabled=${d.busy}>
+                  <ha-icon icon=${d.removeLiveMissingPositions ? 'mdi:undo' : 'mdi:map-marker-remove-outline'}></ha-icon>
+                  ${this._t(d.removeLiveMissingPositions
+                    ? 'gs.optimize_live_keep' : 'gs.optimize_live_remove')}
+                </button>
+                ${d.removeLiveMissingPositions
+                  ? html`<div class="rhint optimize-selected" role="status">
+                      ${this._t('gs.optimize_live_selected')}
+                    </div>`
+                  : nothing}
+              </div>`
+            : nothing}
+          ${r.unverifiedPositions.length
+            ? html`<div class="rhint" role="alert">
+                ${this._t('gs.optimize_unverified', {
+                  n: String(r.unverifiedPositions.length),
+                })}
+                ${registryLimited ? ` ${this._t('gs.optimize_registry_limited')}` : ''}
+              </div>`
+            : nothing}
+          ${r.nestedRefsUnresolved
+            ? html`<div class="rhint" role="alert">${this._t('gs.optimize_vacuum_warning', {
+                n: String(r.nestedRefsUnresolved),
               })}</div>`
+            : nothing}
+          ${referenceDetails.length
+            ? html`<details class="optimize-details">
+                <summary>${this._t('gs.optimize_details')}</summary>
+                <ul>
+                  ${visibleDetails.map((item) => html`<li>${this._t('gs.optimize_detail_item', {
+                    status: detailStatus(item), kind: detailKind(item.kind),
+                    id: item.id, space: item.spaceId,
+                  })}</li>`)}
+                </ul>
+                ${remainingDetails
+                  ? html`<div class="rhint">${this._t('gs.optimize_details_more', {
+                      n: String(remainingDetails),
+                    })}</div>`
+                  : nothing}
+              </details>`
             : nothing}
         </div>
         <div class="row" slot="footer">

@@ -193,10 +193,20 @@ Missing `marker.space`, `marker.room_id`, `vacuum.segment_map` and layout
 ownership remain readable by the permissive persisted schemas. They are never
 rewritten during load or an unrelated Save. Explicit Optimize may map an
 untruncated exact `space_<old>_<8 hex>` / `room_<old>_<8 hex>` import signature,
-or use the production HA Area placement for an active real marker. Without
-proof it removes only the active marker's missing placement and stale position;
-unknown layout and nested vacuum mappings remain stored and reported. The pass
-is data-driven, idempotent and runs even when `model_version` is already 7.
+or use the production HA Area placement for an active real marker. Without a
+valid target it removes the marker's missing placement but preserves its old
+position for the owner-aware cleanup decision.
+
+The same explicit Optimize candidate automatically removes layout entries only
+for owners proven absent: missing room labels, removed marker tombstones, and
+known devices or `lg_` entities absent from an authoritative HA registry/state
+roster. A live owner in a deleted space is preserved unless the administrator
+explicitly opts into removing its old position. A limited or unavailable
+registry and an unknown/future layout namespace always preserve the entry;
+nested vacuum mappings likewise remain stored and reported. This is a runtime
+read-model decision, not a persisted migration: schemas, store/model versions
+and the layout shape are unchanged. The pass is data-driven, undoable,
+idempotent and runs even when `model_version` is already 7.
 
 A one-space import uses its known id map (not a heuristic) to repair matching
 orphan target references when the original space id is absent. Full restore is

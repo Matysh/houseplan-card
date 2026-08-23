@@ -575,6 +575,10 @@ export function optimizePlans(
     roomRefsRemapped: 0,
     positionsRemapped: 0,
     markersDetached: 0,
+    orphanRoomLabelsRemoved: 0,
+    orphanDevicePositionsRemoved: 0,
+    orphanGroupPositionsRemoved: 0,
+    liveMissingPositionsRemoved: 0,
   };
   return {
     config: persistedConfig,

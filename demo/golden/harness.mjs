@@ -727,9 +727,15 @@ export async function prepareGoldenScenario(page, scenario) {
       const dialog = card.renderRoot.querySelector('hp-dialog');
       const report = card._alignDialog?.report;
       const body = dialog?.querySelector('.body');
-      if (!body || report?.markersDetached !== 1 || report?.positionsUnresolved !== 1
+      if (!body || report?.markersDetached !== 1
+          || report?.orphanRoomLabelsRemoved !== 0
+          || report?.orphanDevicePositionsRemoved !== 1
+          || report?.liveMissingPositions.length !== 2
           || !body.textContent.includes(card._t('gs.optimize_references', {
             spaces: '0', rooms: '0', positions: '0', detached: '1',
+          }))
+          || !body.textContent.includes(card._t('gs.optimize_orphans_removed', {
+            total: '1', rooms: '0', devices: '1', groups: '0',
           }))
           || !body.textContent.includes('unresolved-floor')) {
         throw new Error('golden orphan-reference Optimize dialog is incomplete');

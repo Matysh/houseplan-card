@@ -63,6 +63,27 @@ test('Optimize distinguishes updated spaces from cleaned coordinate noise', () =
   assert.match(cardSource, /d\.report\.coordsCanonicalized \+ d\.report\.wallsMerged/);
 });
 
+test('issue 252 Optimize keeps internal ids out of the main orphan report', () => {
+  assert.equal(
+    en['gs.optimize_orphans_removed'],
+    'Forgotten records removed: {total} — room labels: {rooms}; devices: {devices}; group markers: {groups}. They belonged to spaces deleted earlier.',
+  );
+  assert.equal(
+    ru['gs.optimize_orphans_removed'],
+    'Убрано забытых записей: {total} — подписи комнат: {rooms}; устройства: {devices}; групповые метки: {groups}. Все они принадлежали пространствам, удалённым ранее.',
+  );
+  assert.match(cardSource, /gs\.optimize_orphans_removed/);
+  assert.match(cardSource, /<details class="optimize-details">/);
+  assert.doesNotMatch(cardSource, /this\._t\('gs\.optimize_reference_warning'/);
+  for (const key of [
+    'gs.optimize_orphans_removed', 'gs.optimize_live_positions',
+    'gs.optimize_unverified', 'gs.optimize_vacuum_warning',
+  ]) {
+    assert.doesNotMatch(en[key], /\b(?:layout|owner|nested mapping|space id|marker id)\b/i);
+    assert.doesNotMatch(ru[key], /\b(?:layout|owner|id|вложенн)/i);
+  }
+});
+
 test('i18n: every literal help call has body and full aria keys in both languages', () => {
   const allCalls = cardSource.match(/this\._help\(/g) || [];
   const helpKeys = [...cardSource.matchAll(/this\._help\('([^']+\.help)'\)/g)].map((match) => match[1]);

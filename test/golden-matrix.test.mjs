@@ -339,15 +339,23 @@ test('sun-ray golden requires browser-painted light from a state-only sun entity
   assert.equal(scenario.sunRayPixels.minChannelDelta >= 4, true);
 });
 
-test('issue 244 golden matrix covers orphan repair and invalid default_floor themes', () => {
-  const optimize = GOLDEN_SCENARIOS.find(
-    (item) => item.id === 'optimize-orphan-references-dark-en',
+test('issue 252 golden matrix covers owner-aware cleanup in both themes and languages', () => {
+  const optimize = GOLDEN_SCENARIOS.filter(
+    (item) => item.dialog === 'optimize-orphan-references',
   );
-  assert.ok(optimize);
-  assert.equal(optimize.dialog, 'optimize-orphan-references');
-  assert.equal(optimize.markerOverrides[0].space, 'removed-floor');
-  assert.equal(optimize.layoutOverrides['golden-light-one'].s, 'unresolved-floor');
+  assert.deepEqual(optimize.map((item) => item.theme).sort(), ['dark', 'light']);
+  assert.deepEqual(optimize.map((item) => item.language).sort(), ['en', 'ru']);
+  for (const scenario of optimize) {
+    const live = scenario.markerOverrides.find((marker) => marker.id === 'golden-light-two');
+    const removed = scenario.markerOverrides.find((marker) => marker.id === 'golden-presence');
+    assert.equal(live.space, 'removed-floor');
+    assert.equal(!!live.name, true);
+    assert.equal(removed.removed, true);
+    assert.equal(scenario.layoutOverrides['golden-light-one'].s, 'unresolved-floor');
+    assert.equal(scenario.layoutOverrides['golden-presence'].s, 'removed-floor');
+  }
 
+  // The existing #244 default-floor warning remains paired light/dark as well.
   const editors = GOLDEN_SCENARIOS.filter(
     (item) => item.cardEditorInvalidDefaultFloor === 'removed-floor',
   );

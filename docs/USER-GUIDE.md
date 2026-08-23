@@ -621,14 +621,24 @@ Optimization compacts old off-grid geometry and repairs the plan's reference
 graph while preserving rooms, bindings and supported settings. An exact
 independent-import signature restores the copied space, room and positions. If
 there is no exact copy, an active real device follows its unambiguous HA Area;
-otherwise only its missing placement and stale coordinates are detached, so
-the marker becomes available on a valid plan without losing its settings.
-Unknown layout and vacuum mappings are preserved and reported for manual
-attention. It does not delete plan images or attachments merely because
-nothing currently references them.
+otherwise only its missing placement is detached, so the marker becomes
+available on a valid plan without losing its settings.
 
-Optimization creates one server-side undo point. Any later edit makes that undo
-stale, so create a Home Assistant backup before a large maintenance operation.
+Old positions are classified before Apply. A position whose room label, device
+or light-group owner is proven absent is removed automatically and counted by a
+plain-language category. A live owner in a deleted space is named and preserved
+by default; **Remove old positions** explicitly adds only those entries to the
+same Apply candidate. An owner that cannot be checked against a complete HA
+registry is preserved without a destructive action. Raw IDs appear only inside
+collapsed **Details**, and vacuum room mappings remain a separate warning for
+manual review. Preview, the secondary option and Cancel do not write anything.
+Plan images and attachments are never deleted merely because nothing currently
+references them.
+
+Optimization creates one server-side undo point which restores automatically
+and explicitly removed positions with the rest of the previous layout. Any
+later edit makes that undo stale, so create a Home Assistant backup before a
+large maintenance operation.
 
 <!-- docs-section: multiple-cards -->
 

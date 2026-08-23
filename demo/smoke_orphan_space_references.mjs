@@ -1,5 +1,5 @@
-// #244: production-bundle coverage for Optimize reference preview/apply/undo,
-// remaining-only warning, space-delete blocker and invalid default_floor UI.
+// #244/#252: production-bundle coverage for safe owner-aware Optimize
+// preview/opt-in/apply/undo, plus the existing space-delete/default-floor UI.
 import { launch, checkAll, finish } from './serve.mjs';
 
 const { page, browser } = await launch({ width: 920, height: 900 });
@@ -27,12 +27,17 @@ const out = await page.evaluate(async () => {
         // dependency of the later attempt to delete `home`.
         id: 'home-blocker', binding: 'virtual', space: 'home', name: 'Home blocker',
       },
+      { id: 'removed-marker', binding: 'virtual', removed: true, space: 'gone', name: 'Old marker' },
     ],
-    settings: {},
+    settings: { known_devices: ['removed-auto-device'] },
   };
   const originalLayout = {
     orphan: { s: 'gone', x: 0.25, y: 0.5, k: 1.1 },
     opaque_owner: { s: 'gone', x: 0.6, y: 0.7 },
+    rl_removed_room: { s: 'gone', x: 0.2, y: 0.3 },
+    'removed-marker': { s: 'gone', x: 0.3, y: 0.4 },
+    'removed-auto-device': { s: 'gone', x: 0.4, y: 0.5 },
+    'lg_light.removed_group': { s: 'gone', x: 0.5, y: 0.6 },
   };
   let serverConfig = clone(original);
   let serverLayout = clone(originalLayout);
@@ -84,16 +89,34 @@ const out = await page.evaluate(async () => {
   card._openAlignDialog();
   await card.updateComplete;
   const preview = card._alignDialog;
-  const previewText = card.renderRoot.querySelector('hp-dialog .body')?.textContent || '';
-  result.previewSeparatesRepairAndDebt = preview?.report.markersDetached === 1
-    && preview.report.positionsUnresolved === 1
-    && preview.report.deadSpaceIds.join(',') === 'gone'
-    && previewText.includes('devices detached from missing spaces — 1')
-    && previewText.includes('unresolved positions — 1');
+  const previewBody = card.renderRoot.querySelector('hp-dialog .body');
+  const previewMainText = [...(previewBody?.children || [])]
+    .filter((element) => element.tagName !== 'DETAILS')
+    .map((element) => element.textContent || '').join(' ');
+  result.previewSeparatesRepairCleanupAndDebt = preview?.report.markersDetached === 1
+    && preview.report.orphanRoomLabelsRemoved === 1
+    && preview.report.orphanDevicePositionsRemoved === 2
+    && preview.report.orphanGroupPositionsRemoved === 1
+    && preview.report.liveMissingPositions.length === 1
+    && preview.report.unverifiedPositions.length === 1
+    && preview.report.positionsUnresolved === 2
+    && previewMainText.includes('devices detached from missing spaces — 1')
+    && previewMainText.includes('Forgotten records removed: 4')
+    && previewMainText.includes('Kept marker')
+    && previewMainText.includes('Could not safely verify positions: 1')
+    && !previewMainText.includes('opaque_owner')
+    && !previewMainText.includes('gone');
   result.previewPreservesMarkerSettings = preview?.config.markers[0].description === 'must survive'
     && preview.config.markers[0].space === undefined
-    && preview.layout.orphan === undefined
-    && preview.layout.opaque_owner.s === 'gone';
+    && preview.layout.orphan.s === 'gone'
+    && preview.layout.opaque_owner.s === 'gone'
+    && preview.layout.rl_removed_room === undefined
+    && preview.layout['removed-marker'] === undefined
+    && preview.layout['removed-auto-device'] === undefined
+    && preview.layout['lg_light.removed_group'] === undefined;
+  const details = previewBody?.querySelector('details.optimize-details');
+  result.idsExistOnlyInClosedDetails = details && details.open === false
+    && details.textContent.includes('opaque_owner') && details.textContent.includes('gone');
   result.previewOffersOneApplyWithoutWriting = !!card.renderRoot.querySelector('hp-dialog .btn.on')
     && calls.length === 0;
 
@@ -103,6 +126,13 @@ const out = await page.evaluate(async () => {
 
   card._openAlignDialog();
   await card.updateComplete;
+  card._toggleOptimizeLivePositions();
+  await card.updateComplete;
+  result.explicitCleanupRebuildsPreviewWithoutWriting = calls.length === 0
+    && card._alignDialog?.removeLiveMissingPositions === true
+    && card._alignDialog.report.liveMissingPositionsRemoved === 1
+    && card._alignDialog.layout.orphan === undefined
+    && card.renderRoot.querySelector('.optimize-cleanup')?.getAttribute('aria-pressed') === 'true';
   await card._runAlignToGrid();
   await card.updateComplete;
   result.applyUsesExactAtomicEndpoint = calls.filter((type) => type === 'houseplan/plan/optimize').length === 1;
@@ -115,8 +145,8 @@ const out = await page.evaluate(async () => {
   await card.updateComplete;
   const noOpText = card.renderRoot.querySelector('hp-dialog .body')?.textContent || '';
   result.remainingOnlyWarningHasNoApply = card._alignDialog?.changed === false
-    && noOpText.includes('All plans already use the current optimized data model.')
-    && noOpText.includes('unresolved positions — 1')
+    && noOpText.includes('There are no automatic changes to apply.')
+    && noOpText.includes('Could not safely verify positions: 1')
     && !card.renderRoot.querySelector('hp-dialog .btn.on');
   card._alignDialog = null;
   await card.updateComplete;
@@ -125,6 +155,8 @@ const out = await page.evaluate(async () => {
   await card.updateComplete;
   result.undoRestoresDeadRefs = card._serverCfg.markers[0].space === 'gone'
     && card._layout.orphan.s === 'gone'
+    && card._layout.rl_removed_room.s === 'gone'
+    && card._layout['removed-marker'].s === 'gone'
     && !card.renderRoot.querySelector('.dev[data-id="orphan"]');
 
   let nativeConfirmCalls = 0;

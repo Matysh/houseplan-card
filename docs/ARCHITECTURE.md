@@ -690,6 +690,17 @@ check. A red result means zero WS calls. Python deliberately does not duplicate
 and crash-resumable atomicity boundary, not a consumer-supplied preflight
 attestation.
 
+`src/space-reference-repair.ts` keeps orphan-layout classification pure. The
+card builds a runtime-only owner roster from the complete HA device/entity
+registries, current states and config names, and marks absence authoritative
+only after the registry load succeeds. The repair pass may then distinguish a
+proven-absent room label/device/group position from a live owner in a deleted
+space and from an unverified future or registry-limited owner. The first enters
+the default candidate, the second only an explicit secondary opt-in, and the
+third never a destructive candidate. No registry data or classification status
+is persisted; Apply still sends only the exact ordinary config/layout pair that
+was previewed.
+
 Manual attachments upload over HTTP (streaming, transactional staging), not WS —
 the old `houseplan/file/set` was removed in v1.10.0.
 
