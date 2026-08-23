@@ -131,6 +131,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#252](https://github.com/Matysh/houseplan-card/issues/252) Понятная и безопасная очистка забытых позиций в Optimize | [252-optimize-orphan-layout-report.md](252-optimize-orphan-layout-report.md) |
 | [#253](https://github.com/Matysh/houseplan-card/issues/253) Resize не теряет интервалы толщины стен | [253-resize-wall-thickness.md](253-resize-wall-thickness.md) |
 | [#258](https://github.com/Matysh/houseplan-card/issues/258) Канонический wall key после Optimize и storage round-trip | [258-wall-key-storage-roundtrip.md](258-wall-key-storage-roundtrip.md) |
+| [#262](https://github.com/Matysh/houseplan-card/issues/262) Повторное добавление entity после удаления родительского устройства | [262-readd-child-entity-after-device-delete.md](262-readd-child-entity-after-device-delete.md) |
 
 ## P3
 
