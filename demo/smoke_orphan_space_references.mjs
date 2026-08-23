@@ -128,11 +128,14 @@ const out = await page.evaluate(async () => {
   await card.updateComplete;
   card._toggleOptimizeLivePositions();
   await card.updateComplete;
+  const selectedText = card.renderRoot.querySelector('hp-dialog .body')?.textContent || '';
   result.explicitCleanupRebuildsPreviewWithoutWriting = calls.length === 0
     && card._alignDialog?.removeLiveMissingPositions === true
     && card._alignDialog.report.liveMissingPositionsRemoved === 1
     && card._alignDialog.layout.orphan === undefined
-    && card.renderRoot.querySelector('.optimize-cleanup')?.getAttribute('aria-pressed') === 'true';
+    && card.renderRoot.querySelector('.optimize-cleanup')?.getAttribute('aria-pressed') === 'true'
+    && selectedText.includes('They are selected for removal.')
+    && !selectedText.includes('They will be kept.');
   await card._runAlignToGrid();
   await card.updateComplete;
   result.applyUsesExactAtomicEndpoint = calls.filter((type) => type === 'houseplan/plan/optimize').length === 1;
