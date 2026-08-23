@@ -806,7 +806,6 @@
   "gs.optimize_changes": "Model migrations: {m}; spaces updated: {c}; noisy coordinate values removed: {p}; merged real-wall fragments: {w}; virtual fragments: {s}; independent walls: {i}.",
   "gs.optimize_glow_migration": "Legacy Glow: {spaces} spaces → no data fill + independent Glow; {rooms} rooms → inherited data fill + independent Glow.",
   "gs.optimize_references": "References repaired: spaces — {spaces}; rooms — {rooms}; positions — {positions}; devices detached from missing spaces — {detached}.",
-  "gs.optimize_reference_warning": "Some references still need attention: unresolved positions — {positions}; nested mappings — {nested}. Missing space IDs: {ids}{more}.",
   "gs.optimize_reference_more": ", and {n} more",
   "gs.optimize_orphans_removed": "Forgotten records removed: {total} — room labels: {rooms}; devices: {devices}; group markers: {groups}. They belonged to spaces deleted earlier.",
   "gs.optimize_live_positions": "Old positions in deleted spaces belong to existing objects: {n}{names}. They will be kept.",
