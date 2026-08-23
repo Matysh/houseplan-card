@@ -166,6 +166,19 @@ export const MUTANTS = [
     }],
   },
   {
+    id: 'unit-formatting-escapes-the-formatter',
+    guard: 'node --test --test-name-pattern="детектор действительно ловит" '
+      + 'test/single-source-numbers.test.mjs',
+    because: 'одно число, видимое дважды, обязано иметь один источник: расхождение превью и '
+      + 'записи стоило продукту #234, а расхождение подписи и площади — #233. Детектор без '
+      + 'способности сработать — это разрешение собирать подписи где угодно',
+    patches: [{
+      file: 'test/single-source-numbers.test.mjs',
+      find: "  + '\\\\s*(m²|ft²|м²|m\\\\b|cm\\\\b|см(?![а-яё])|м(?![а-яё])|′|″)',",
+      replace: "  + '\\\\s*(ЗАГЛУШКА)',",
+    }],
+  },
+  {
     id: 'invariant-loses-wall-record',
     guard: 'node --test --test-name-pattern="исчезнувшая запись толщины" '
       + 'test/model-invariants.test.mjs',
