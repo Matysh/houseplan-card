@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.67.0-beta.6 — 2026-08-24
+
 - Wireless controllers now keep the same available/working state on the plan
   and in the device-dialog preview when a separately deleted target marker
   filters the configured light from the runtime roster. Live controller
