@@ -35,7 +35,7 @@ Build and copy the exact current source first:
 
 ```bash
 npm run build
-cp dist/houseplan-card.js demo/srv/assets/houseplan-card.js
+npm run bundle:sync
 npm run golden:capture
 ```
 

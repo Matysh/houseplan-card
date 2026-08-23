@@ -8,7 +8,7 @@ public materials.
   fake `hass` (registries, states, `callWS`, `callService`, floors).
 - `srv/assets/` — generated plan SVGs and `icons.js` (`node demo/gen_icons.mjs`,
   needs the repo's devDependencies). The card bundle is copied from `dist/`:
-  `cp dist/houseplan-card.js demo/srv/assets/`.
+  `npm run bundle:sync` (копия стенда не коммитится, #255).
 - `serve.mjs` — playwright launcher (route interception, no web server).
 - `smoke_*.mjs` — feature smoke tests; run with a Chromium installed via
   `PLAYWRIGHT_BROWSERS_PATH=<dir> npx playwright install chromium-headless-shell`.

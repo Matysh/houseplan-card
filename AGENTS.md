@@ -87,7 +87,7 @@ Start with the spec?" is the correct answer, not a smaller patch.
 | **A — product** | `src/**`, `custom_components/houseplan/**/*.py`, `manifest.json`, `hacs.json`, i18n, `custom_components/**/translations/**` | yes |
 | **B — gates and tooling** | `test/**`, `tests_backend/**`, `demo/**`, `scripts/**`, `.github/workflows/**`, `rollup.config.mjs`, `tsconfig*.json` | yes; may reuse the issue it covers |
 | **C — documentation** | `docs/**`, `README*`, `CHANGELOG*`, `AGENTS.md` | not if it is part of its issue's DoD |
-| **D — generated** | `dist/**`, `custom_components/houseplan/frontend/**`, `demo/srv/assets/houseplan-card.js`, `demo/golden/baselines/**` | never changes on its own |
+| **D — generated** | `dist/**`, `custom_components/houseplan/frontend/**`, `demo/golden/baselines/**` | never changes on its own. The stand copy `demo/srv/assets/houseplan-card.js` is no longer committed (#255): build it with `npm run bundle:sync` |
 
 The table above is a summary; `PROCESS.md` §1 is the authority and now covers the
 configuration files this one omits — `package.json`, `package-lock.json`,
@@ -322,7 +322,7 @@ byte-for-byte:
 
 ```
 cp dist/houseplan-card.js custom_components/houseplan/frontend/houseplan-card.js
-cp dist/houseplan-card.js demo/srv/assets/houseplan-card.js
+npm run bundle:sync   # dist → custom_components + demo/srv/assets (#255)
 ```
 
 During the implementation cycle the fast gates always run. Since 2026-08-14 the

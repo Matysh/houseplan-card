@@ -57,7 +57,7 @@ jobs:
         if: ${{ !github.event.release.prerelease }}
         run: |
           npx playwright install --with-deps chromium
-          cp dist/houseplan-card.js demo/srv/assets/houseplan-card.js
+          node scripts/bundle-sync.mjs
           npm run continuity:screencast
       - name: Upload failed continuity frames
         if: ${{ failure() && !github.event.release.prerelease }}

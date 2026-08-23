@@ -386,7 +386,7 @@ await finish(browser, out);
 `finish` prints the JSON dump (useful on failure), reports named mismatches and
 sets a non-zero exit code — including when the card threw during the run. The
 suite runs in CI (`smoke` job) against a freshly built bundle; never test the
-committed `demo/srv/assets/houseplan-card.js` snapshot.
+`demo/srv/assets/houseplan-card.js` copy, which `npm run bundle:sync` writes and which is not committed (#255).
 
 When adding a checklist line marked `[auto: ...]` in docs/TESTING.md, add the
 failing check in the same commit — that is what the marker now promises.

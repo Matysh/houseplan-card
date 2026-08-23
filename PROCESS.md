@@ -35,7 +35,7 @@
 | **A. Продукт** | `src/**`, `custom_components/houseplan/**/*.py`, `manifest.json`, `hacs.json`, `src/i18n/*.json`, `custom_components/**/translations/*` | **Да, обязательно.** Только из «Готово к разработке» или дальше |
 | **B. Гейты и инструменты** | `test/**`, `tests_backend/**`, `demo/**`, `scripts/**`, весь `.github/**`, `.githooks/**`, `rollup.config.mjs`, `tsconfig*.json`, `package.json`, `package-lock.json`, `pytest.ini`, `.gitignore`, `.gitattributes` | **Да.** Может использовать issue того изменения, которое покрывает; самостоятельная работа над гейтом получает свой issue (тип `tech-debt`) |
 | **C. Документация** | `docs/**`, `README*`, `CHANGELOG*`, `AGENTS.md`, `CONTRIBUTING.md`, `PROCESS*.md`, `LICENSE`, `(CODE\|SPEC)-REVIEW-*.md` | Документирование A/B в том же коммите — часть DoD своего issue. Самостоятельная работа над документацией — свой issue |
-| **D. Сгенерированное** | `dist/**`, `custom_components/houseplan/frontend/**`, `demo/srv/assets/houseplan-card.js`, `demo/golden/baselines/**` | Никогда не меняется само по себе. Коммит **только** класса D допустим лишь как релизный промоушен или как принятие эталонов с доказательством ревью |
+| **D. Сгенерированное** | `dist/**`, `custom_components/houseplan/frontend/**`, `demo/golden/baselines/**` (копия стенда `demo/srv/assets/houseplan-card.js` с #255 не коммитится вовсе) | Никогда не меняется само по себе. Коммит **только** класса D допустим лишь как релизный промоушен или как принятие эталонов с доказательством ревью |
 
 Практический смысл таблицы: «я только поправил тест» и «я только пересобрал
 бандл» перестают быть лазейками.
@@ -537,7 +537,7 @@ issue #NN
 npx tsc --noEmit
 npm test
 npm run build && cmp dist/houseplan-card.js custom_components/houseplan/frontend/houseplan-card.js \
-              && cmp dist/houseplan-card.js demo/srv/assets/houseplan-card.js
+              # копия стенда собирается `npm run bundle:sync`, в репозитории её нет (#255)
 node scripts/smoke-select.mjs --base origin/dev --head HEAD   # какие смоки относятся к диффу
 node demo/smoke_<целевые>.mjs
 npm run golden:verify                 # если менялся визуал

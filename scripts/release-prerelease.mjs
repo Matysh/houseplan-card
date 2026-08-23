@@ -249,10 +249,12 @@ if (invokedDirectly) {
   const sha256Path = (name) => sha256Bytes(readFileSync(name));
   const committedFile = (sha, name) => runBytes('git', ['show', `${sha}:${name}`]);
   const assertBundleSnapshots = (sha) => {
+    // Копия стенда (`demo/srv/assets`) больше не коммитится (#255): её собирает
+    // `npm run bundle:sync` перед браузерными прогонами. В релиз входят ровно
+    // две копии — артефакт сборки и та, что ставит HACS.
     const names = [
       'dist/houseplan-card.js',
       'custom_components/houseplan/frontend/houseplan-card.js',
-      'demo/srv/assets/houseplan-card.js',
     ];
     // Hash Git blobs, not checkout bytes. On Windows, Git can expose CRLF in
     // the worktree while the exact tagged blobs and Linux release checkout use

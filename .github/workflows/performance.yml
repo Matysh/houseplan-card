@@ -147,9 +147,9 @@ jobs:
       - name: Build both exact source trees
         run: |
           npm --prefix candidate run build
-          cp candidate/dist/houseplan-card.js candidate/demo/srv/assets/houseplan-card.js
+          (cd candidate && node scripts/bundle-sync.mjs)
           npm --prefix baseline run build
-          cp baseline/dist/houseplan-card.js baseline/demo/srv/assets/houseplan-card.js
+          (cd baseline && node scripts/bundle-sync.mjs)
 
       - name: Capture base and candidate profiles
         working-directory: candidate

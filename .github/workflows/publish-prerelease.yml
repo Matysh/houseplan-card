@@ -81,7 +81,6 @@ jobs:
           npm ci
           npm run build
           cmp dist/houseplan-card.js custom_components/houseplan/frontend/houseplan-card.js
-          cmp dist/houseplan-card.js demo/srv/assets/houseplan-card.js
           VERSION=${TAG#v}
           grep -Fq "$VERSION" dist/houseplan-card.js
           (cd custom_components/houseplan && zip -qr ../../houseplan.zip .)

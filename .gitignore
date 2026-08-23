@@ -7,3 +7,8 @@ __pycache__/
 .venv-backend/
 artifacts/
 .agents/
+
+# Копия бандла для стенда: её собирает `npm run bundle:sync`, а в репозитории
+# она только росла — 364 версии по 1.16 МБ за семь недель (#255). Обязательных
+# копий две: `dist/` (артефакт сборки) и `custom_components/` (её ставит HACS).
+demo/srv/assets/houseplan-card.js

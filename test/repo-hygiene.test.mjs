@@ -19,3 +19,19 @@ test('the tree carries exactly one *manifest.json: HACS rejects a repository wit
   const found = tracked.filter((path) => path.split('/').pop().endsWith('manifest.json'));
   assert.deepEqual(found, ['custom_components/houseplan/manifest.json']);
 });
+
+// #255. Копия бандла для стенда весит 1.16 МБ и переписывается почти каждым
+// продуктовым коммитом: 364 версии за семь недель — примерно четверть всего
+// репозитория. Она нужна только браузерным прогонам, которые собирают её сами
+// (`npm run bundle:sync`), поэтому в дереве её быть не должно. Проверка стоит
+// здесь, а не в глазах ревьюера: вернуть файл обратно проще всего случайно,
+// одним `git add -A` после локальной сборки.
+test('копия бандла для стенда не коммитится (#255)', () => {
+  const tracked = execFileSync('git', ['ls-files', '-z', 'demo/srv/assets'], { cwd: ROOT })
+    .toString('utf8').split('\0').filter(Boolean);
+  assert.ok(!tracked.includes('demo/srv/assets/houseplan-card.js'),
+    'demo/srv/assets/houseplan-card.js снова в индексе: соберите его `npm run bundle:sync`, '
+    + 'а из коммита уберите');
+  // Остальное содержимое стенда (иконки, страницы) коммитится и должно остаться.
+  assert.ok(tracked.length > 0, 'каталог стенда пуст: проверьте, что убрали только бандл');
+});

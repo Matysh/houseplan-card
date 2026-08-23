@@ -273,10 +273,9 @@ jobs:
         run: npm test
       - name: Build
         run: npm run build
+      # Копия стенда больше не коммитится (#255): сверяются две обязательные.
       - name: Card bundle snapshots in sync
-        run: |
-          cmp dist/houseplan-card.js custom_components/houseplan/frontend/houseplan-card.js
-          cmp dist/houseplan-card.js demo/srv/assets/houseplan-card.js
+        run: cmp dist/houseplan-card.js custom_components/houseplan/frontend/houseplan-card.js
 
   smoke:
     # Gated on `frontend` so a typecheck failure does not burn browser minutes.
@@ -312,7 +311,7 @@ jobs:
         if: steps.pw.outputs.cache-hit != 'true'
         run: npx playwright install chromium
       - name: Build a fresh bundle for the smokes
-        run: npm run build && cp dist/houseplan-card.js demo/srv/assets/houseplan-card.js
+        run: npm run bundle:sync
       - name: Smoke suite (шард ${{ matrix.shard }} из 3)
         env:
           SHARD: ${{ matrix.shard }}
@@ -398,7 +397,7 @@ jobs:
         if: steps.pw.outputs.cache-hit != 'true'
         run: npx playwright install chromium
       - name: Build the exact source under review
-        run: npm run build && cp dist/houseplan-card.js demo/srv/assets/houseplan-card.js
+        run: npm run bundle:sync
       - name: Capture or verify golden matrix
         id: golden
         run: |
@@ -464,7 +463,7 @@ jobs:
         if: steps.pw.outputs.cache-hit != 'true'
         run: npx playwright install chromium
       - name: Build the exact candidate source
-        run: npm run build && cp dist/houseplan-card.js demo/srv/assets/houseplan-card.js
+        run: npm run bundle:sync
       - name: Capture the heaviest Glow state
         run: |
           npm run benchmark:glow -- --profile=large-house-glow-overlay-v1 --variants=60 --samples=3 --warmups=1 --output=artifacts/performance-smoke/candidate.json
