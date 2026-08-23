@@ -6,7 +6,7 @@
   сложность 8/10 · риск 9/10
 - Issue: [#275](https://github.com/Matysh/houseplan-card/issues/275)
 - Ветка: `issue/275-multiwall-strip-containment`
-- Статус ТЗ: готово к ревью
+- Статус ТЗ: редакция r2 после авторского контрпримера к r1, готово к ревью
 
 Канонические документы: `docs/SCOPE.md`, `docs/ARCHITECTURE.md`,
 `docs/WALL-THICKNESS.md`, `docs/USER-GUIDE.ru.md` и `docs/TESTING.md`.
@@ -96,8 +96,20 @@ semantic inventory и golden стали зелёными, хотя пользо�
 Тесты #272 проверяли только связность пустоты, single retained/discarded probes
 и синтетические cases. Code review прямо не сверял cases с приватными
 экспортами и не делал ручной UI-check. Ни один gate не проверял отношение
-`incident strip union ⊆ canonical masonry`, поэтому релизный escape был
-возможен.
+сохранение прямоугольного T/X overlap, поэтому релизный escape был возможен.
+
+После зелёного spec review r1 автор исполнил буквальную формулу
+`incident strip union ⊆ canonical masonry` на неортогональном fixture #249.
+Она вернула в masonry уже запрещённый `discardedWedgeProbe`
+`(330.3808442725, 148.8560107825)`: точка лежит внутри двух raw incident
+rectangles, хотя утверждённая владельцем локальная фаска обязана оставить её
+пустой. Поэтому общий для всех multi-wall nodes strip-containment неверен.
+
+Новые backups показывают другой, более узкий класс: все 12 измеренных потерь
+лежат в **rectilinear** T/X nodes, где направления попарно параллельны либо
+перпендикулярны. У такого стыка raw rectangular overlaps и есть правильная
+кладка; pairwise bevel не решает spike, а создаёт выемку. Неортогональный узел
+#249 сохраняет прежний bounded-bevel contract.
 
 ## 4. Что человек увидит до и после
 
@@ -105,10 +117,10 @@ semantic inventory и golden стали зелёными, хотя пользо�
 толщина входящего отрезка визуально уменьшается, хотя editor overlay показывает
 полную ось.
 
-**После:** каждый конечный входящий отрезок сохраняет заданную полную толщину
-до node. Стык заполнен. Если room-ring действительно образовала внешний
-mitre-spike вне всех физических strips, он по-прежнему срезан прямой фаской
-#249 и не выходит за `R`.
+**После:** в прямоугольном T/X каждый конечный входящий отрезок сохраняет
+заданную полную толщину до node, а стык заполнен без pairwise cut. В
+неортогональном node прежняя прямая фаска #249 по-прежнему удаляет внешний
+mitre-spike и не выходит за `R`.
 
 Optimize валидного плана может остаться no-op. Raw, Preview, Apply, reload,
 Plan/View/Static/Iso и световая модель показывают одну форму.
@@ -117,10 +129,11 @@ Plan/View/Static/Iso и световая модель показывают од�
 
 ### Входит
 
-- канонический containment-инвариант для положительных finite incident strips;
-- ограничение bevel-cut только материалом, не принадлежащим ни одной incident
-  strip;
-- rectilinear T/X и неортогональный fixture #249, равные/смешанные толщины,
+- каноническая классификация rectilinear multi-wall nodes;
+- запрет pairwise bevel-cuts внутри rectilinear T/X и сохранение полного union
+  их положительных finite incident strips;
+- неизменность неортогонального bounded bevel #249;
+- rectilinear T/X и regression fixture #249, равные/смешанные толщины,
   короткие rays, `cell_cm: 1/5/30`;
 - `roomGeom`, final masonry, paper, clean floor/fill/hover, Plan/View/kiosk,
   Static, hidden Iso и light/sun barriers;
@@ -140,7 +153,24 @@ Plan/View/Static/Iso и световая модель показывают од�
 
 ## 6. Канонический геометрический контракт
 
-### 6.1 Incident strip
+### 6.1 Классификация rectilinear node
+
+Для canonical multi-wall node берутся направления его положительных finite
+rays после действующей дедупликации. Node является `rectilinear`, если для
+каждой пары направлений нормализованный модуль scalar product с единым
+angle-epsilon означает одно из двух:
+
+- направления параллельны/противоположны: `|dot| ≈ 1`;
+- направления перпендикулярны: `|dot| ≈ 0`.
+
+Иными словами, все rays принадлежат двум взаимно перпендикулярным
+неориентированным осям. T имеет три directed rays, X — четыре. Классификация не
+зависит от winding, reversed endpoints, room/wall order и `coordScale`.
+Произвольно близкий, но физически диагональный луч не округляется к 90°:
+epsilon компенсирует только storage/normalization noise и покрывается
+пограничными негативными тестами.
+
+### 6.2 Incident strip rectilinear node
 
 Для каждого canonical multi-wall node и каждого `ray.support` определяется
 конечная полоса:
@@ -152,9 +182,10 @@ Plan/View/Static/Iso и световая модель показывают од�
 - duplicate room owners схлопываются действующей детерминированной картой.
 
 `requiredStripUnion(node)` — boolean union этих полос в действующей node mask.
-Он является физическим минимумом masonry до применения явных opening cuts.
+Для rectilinear node он является физическим минимумом masonry до применения
+явных opening cuts.
 
-### 6.2 Containment
+### 6.3 Rectilinear containment
 
 До opening cuts должно выполняться:
 
@@ -167,43 +198,53 @@ requiredStripUnion(node) − roomGeom = ∅
 подтверждённому opening slot. Pairwise bevel, room-ring winding и paper repair
 не имеют права удалять остальную часть incident strip.
 
+`multiWallBevelCutsAt()` не создаёт cut ни для одной пары rectilinear node.
+Локальная реконструкция сохраняет union finite supports и node core. Это
+правило относится ко всему rectilinear node целиком: недостаточно пропустить
+только одну 90° пару и оставить соседний cut того же T/X.
+
 Containment проверяется площадью vector difference и устойчивыми interior
 samples. Одной точки node, числа polygon holes либо connected-component
 классификации пустоты недостаточно.
 
-### 6.3 Bounded exterior bevel
+### 6.4 Неортогональный bounded bevel
 
-Room contours могут содержать material за `R`, который не принадлежит ни одной
-incident strip. Только такой material разрешено удалить bevel-cut:
+Если node не прошёл rectilinear-классификацию, действующий контракт #249 не
+расширяется и не заменяется strip-containment:
 
-```text
-effectiveCut = pairwiseCut − requiredStripUnion(node)
-```
+- pairwise offset intersections за `R` по-прежнему дают прямую фаску;
+- `discardedWedgeProbe` остаётся пустым, даже если он попадает в overlap raw
+  endpoint rectangles;
+- retained wedge #261, node connectivity и finite support bounds #271
+  сохраняются;
+- исправление #275 не меняет форму, площадь либо path fixture #249 сверх
+  неизбежного floating-point normalization.
 
-Либо технически эквивалентной операцией, если доказаны те же множества.
-Existing excessive-wedge probe #249 остаётся пустым, каждая join-вершина
-остаётся в bound, но прямоугольные T/X не получают выемку в overlap strips.
+Так явно разрешается конфликт r1: полная поперечная strip у математического
+endpoint является обязательной только для rectilinear стыка. В
+неортогональном локальном join её угловая часть может принадлежать утверждённой
+фаске #249.
 
-### 6.4 Paper, floor и physics
+### 6.5 Paper, floor и physics
 
 Paper покрывает room centre и canonical masonry. Он не может ни скрывать
 отсутствующую masonry белой подложкой, ни повторно вырезать required strip.
 Clean floor не присваивает эту площадь комнате. Light/sun barriers, hidden Iso
 и SVG используют один corrected structural result, без surface-only patch.
 
-### 6.5 Openings и independent bodies
+### 6.6 Openings и independent bodies
 
-Room opening cuts выполняются после strip-safe node reconstruction по
+Room opening cuts выполняются после rectilinear-safe node reconstruction по
 существующей association. Independent partitions/drafts/columns объединяются
 в существующем порядке. Тест отличает разрешённый opening slot от bevel-loss
 и не объявляет любой белый sample допустимым только из-за близкого opening.
 
-### 6.6 Failure isolation и determinism
+### 6.7 Failure isolation и determinism
 
-Неуспешный optional local cut не гасит весь план и не обходит containment
-fallback. Rooms/walls order, reversed endpoints, winding, duplicate owner,
-raw/optimized/reloaded storage не меняют semantic result. Product render не
-мутирует config.
+Неуспешный optional local cut не гасит весь план. Rectilinear node не может
+молча вернуться к pairwise cuts как failure fallback. Rooms/walls order,
+reversed endpoints, winding, duplicate owner, raw/optimized/reloaded storage
+не меняют classification и semantic result. Product render не мутирует config.
 
 ## 7. Совместимость, UX, security и performance
 
@@ -211,17 +252,18 @@ raw/optimized/reloaded storage не меняют semantic result. Product render
 - Legacy/canonical keys используют resolved `WallInterval` как сейчас.
 - Новых controls, touch/keyboard/focus/ARIA и locale keys нет.
 - Новых HA calls, URL/HTML, permissions и security boundaries нет.
-- Required-strip geometry строится внутри cached structural node pass. Новый
+- Rectilinear classification и required-strip geometry строятся внутри cached
+  structural node pass. Новый
   глобальный `O(E²)` обход и пересчёт на HA/theme/hover tick запрещены.
 - Local masks и число rays одного node ограничивают boolean work; benchmark
   large-house не должен выйти за действующий prerelease budget.
 
 ## 8. Acceptance criteria и доказательства
 
-### AC1. Оба новых реальных класса дают нулевую потерю strips
+### AC1. Оба новых rectilinear класса дают нулевую потерю strips
 
 Минимизированные анонимные fixtures содержат точные координаты/толщины минимум
-узлов `(204.166667, 645.833333)` при `cell_cm: 5` и
+rectilinear-узлов `(204.166667, 645.833333)` при `cell_cm: 5` и
 `(-354.166667, 2087.5)` при `cell_cm: 1`, плюс по одному треугольному T из
 каждого backup. Для каждого:
 
@@ -234,12 +276,13 @@ raw/optimized/reloaded storage не меняют semantic result. Product render
 
 ### AC2. #249 остаётся ограниченным
 
-На fixture #249 old excessive-wedge area, не принадлежащая incident strips,
-остаётся пустой; join не выходит за `R + epsilon`. Retained wedge #261 заполнен,
+Fixture #249 классифицируется как non-rectilinear. Его existing
+`discardedWedgeProbe` остаётся пустым, join не выходит за `R + epsilon`, а
+normalized geometry area/path не меняются. Retained wedge #261 заполнен,
 finite endpoints #271 не удлиняются, zero/open ray не материализуется.
 
-**Доказательство:** существующие probes плюс vector difference между pairwise
-cut и required strips.
+**Доказательство:** существующие probes, classification unit и geometry
+difference до/после #275 для fixture #249.
 
 ### AC3. Exact-input lifecycle проходит на полных backups владельца
 
@@ -247,7 +290,8 @@ cut и required strips.
 проверяет четыре состояния: raw render, Optimize Preview, Apply + backend echo,
 reload + повторный render. Для обоих файлов:
 
-- нарушений strip containment — `0` во всех degree-3+ nodes;
+- нарушений strip containment — `0` во всех rectilinear degree-3+ nodes;
+- non-rectilinear nodes сохраняют утверждённые #249/#261 probes;
 - Optimize не мутирует preview input;
 - `2.json` вправе остаться `changed: false`, но render уже корректен;
 - targeted crops не содержат прежних белых треугольников/крупного провала.
@@ -266,7 +310,7 @@ structural cache и не меняют path/fingerprint.
 
 ### AC5. Visual gate видит именно выемку, а не только enclosed hole
 
-Golden/local crop semantic preflight проверяет required-strip containment до
+Golden/local crop semantic preflight проверяет rectilinear strip containment до
 pixel diff. Предрелизный baseline не может пройти, если пустота связана с
 внешним фоном, но лежит внутри incident strip. Hole inventory #272 остаётся
 дополнительной, а не достаточной проверкой.
@@ -275,8 +319,8 @@ pixel diff. Предрелизный baseline не может пройти, ес
 
 ### AC6. Мутант ловит release escape
 
-Исполняемый mutation возвращает безусловное вычитание полного pairwise cut из
-ray-strip union. AC1 либо AC5 краснеют, даже если legacy
+Исполняемый mutation отключает rectilinear guard и возвращает pairwise cuts в
+обычные T/X. AC1 либо AC5 краснеют, даже если legacy
 `enclosedHoles === 0`, retained probe и discarded probe остаются зелёными.
 
 **Доказательство:** отдельная запись `scripts/mutation-gate.mjs`, прогнанная в
@@ -286,8 +330,9 @@ ray-strip union. AC1 либо AC5 краснеют, даже если legacy
 
 В репозитории отсутствуют полные backups, layout и пользовательские названия.
 Permutation rooms/walls, reversed interval endpoints, повторный расчёт,
-canonical storage echo и оба grid scales дают одинаковый containment result и
-не мутируют input.
+canonical storage echo и оба grid scales дают одинаковую classification и
+containment result, не мутируя input. Негативная angle-boundary matrix не
+переклассифицирует диагональный fixture в rectilinear.
 
 **Доказательство:** table-driven units и проверка Git diff/fixture contents.
 
@@ -336,7 +381,7 @@ smoke, performance и exact-SHA Validate.
 
 | Риск | Мера |
 |---|---|
-| Возвратить spike, лишь перестав вычитать cuts | AC2 проверяет area вне strips и bound `R`. |
+| Возвратить spike глобальным отключением cuts | Rectilinear guard + AC2 сохраняют non-rectilinear geometry #249. |
 | Заполнить настоящий opening | AC1/AC3 различают pre-opening `roomGeom` и разрешённый slot. |
 | Починить только SVG | AC4 проверяет paper/floor/Iso/light из общего source. |
 | Снова принять похожую синтетику | AC1 требует точные minimized coordinates обоих backups, AC3 — полные файлы. |
@@ -354,8 +399,9 @@ baseline при старом безусловном cut либо вернуть 
 
 1. Продуктовый ответ однозначен из репорта владельца: сохранённая положительная
    полоса стены не может быть вырезана renderer-bevel.
-2. Различающая формула `effectiveCut = pairwiseCut − requiredStripUnion` задаёт
-   множество, а не обязательную реализацию; эквивалентный алгоритм допустим.
+2. Исправление классификационное, а не глобальное: rectilinear T/X не получает
+   pairwise cuts; non-rectilinear node сохраняет #249. Общий union strips для
+   всех nodes запрещён контрпримером r1.
 3. Optimize для валидной осевой модели не обязан менять данные ради renderer
    workaround.
 4. Белые треугольники, потеря толщины и крупная выемка имеют одну доказанную
