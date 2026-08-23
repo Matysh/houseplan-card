@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.67.0-beta.5 — 2026-08-23
+
 - After deleting a complete HA device from the plan, any one of its active
   entities can now be added back separately through **Add → Show entities**.
   The selected entity returns as a normal live marker with a fresh position,

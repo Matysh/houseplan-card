@@ -1,18 +1,18 @@
-<!-- release: v1.67.0-beta.4 -->
+<!-- release: v1.67.0-beta.5 -->
 
 ## Основное
 
-- Узлы из трёх и более стен больше не образуют длинные штрихованные шипы, а Resize сохраняет толщину перемещённой части стены и её продолжения.
-- Маркер выключателя больше не выглядит недоступным только из-за управляемой лампы; если цель недоступна, действие объясняет это отдельно.
-- «Оптимизировать планы» удаляет только доказанно осиротевшие позиции и сохраняет живые либо непроверенные объекты.
+- «Оптимизировать планы» сохраняет толщину стен после перезаписи compatibility-ключей и остаётся no-op после перезагрузки.
+- В толстых T-стыках больше не появляются белые треугольные щели с наружной стороны при сходе стен разной толщины.
+- После удаления целого HA-устройства любую его активную сущность можно отдельно вернуть через «Добавить → Показывать сущности».
 - Мелкие исправления и улучшения.
 
 ## Highlights
 
-- Junctions of three or more walls no longer grow long hatched spikes, while Resize preserves both the moved wall thickness and its continuation.
-- A switch marker no longer looks unavailable merely because its controlled lamp is offline; an unavailable target is explained separately.
-- Optimize Plans removes only positions proven to be orphaned and preserves live or unverifiable objects.
+- Optimize Plans preserves wall thickness after rewriting compatibility keys and remains a no-op after reload.
+- Thick T-junctions no longer show white triangular gaps on the exterior side where walls of different thickness meet.
+- After deleting a complete HA device, any active child entity can be added back separately through “Add → Show entities”.
 - Small fixes and improvements.
 
-[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.67.0-beta.4/docs/CHANGELOG.ru.md)
-· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.67.0-beta.4/docs/CHANGELOG.md)
+[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.67.0-beta.5/docs/CHANGELOG.ru.md)
+· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.67.0-beta.5/docs/CHANGELOG.md)
