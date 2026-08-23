@@ -720,6 +720,19 @@ export const MUTANTS = [
     }],
   },
   {
+    id: 'optimizer-single-topology-island-blocked',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="issue 273 Optimize" '
+      + 'test/plan-optimizer.test.mjs',
+    because: 'a proven 22→15→22 island beside exactly one room T-node must not survive '
+      + 'merely because the old #198 guard classified both endpoints identically',
+    patches: [{
+      file: 'src/plan-optimizer.ts',
+      find: '        if (isNode(a, roomNodes) && isNode(b, roomNodes)) continue;',
+      replace: '        if (isNode(a, roomNodes) || isNode(b, roomNodes)) continue;',
+    }],
+  },
+  {
     id: 'atomic-child-thickness-parent-fallback',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="exact parent|atomic solid children" '

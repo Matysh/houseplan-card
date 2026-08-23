@@ -2733,6 +2733,15 @@ require hands on real hardware — they remain for the human pass.
       [unit: test/plan-optimizer.test.mjs; auto:
       smoke_optimize_micro_interval; mutation:
       `optimizer-micro-interval-cleanup-disabled`].
+- [ ] **A single T-node does not preserve an artificial thickness island
+      (#273)**: the minimized beta.5 `22 → 15 → 22` profile has a 1.381904-unit
+      centre beside one perpendicular room edge. Preview/Apply store one 22 cm
+      run, the T coordinate and incident room stay unchanged, render probes
+      see one continuous outer face, reload is idempotent and server Undo
+      restores the exact entries. A second topology endpoint or any open-span
+      endpoint still blocks cleanup [unit: test/plan-optimizer.test.mjs; auto:
+      smoke_optimize_micro_interval; mutation:
+      `optimizer-single-topology-island-blocked`].
 - [ ] **Unit + backend**: inset/mitre/bevel, key from either end, degrade,
       rekey, cm↔inches; `walls` schema bounds
       [auto: test/wall-thickness.test.mjs + tests_backend/test_validation.py]

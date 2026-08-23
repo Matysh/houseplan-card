@@ -635,6 +635,14 @@ there is no exact copy, an active real device follows its unambiguous HA Area;
 otherwise only its missing placement is detached, so the marker becomes
 available on a valid plan without losing its settings.
 
+Equal neighbouring wall-thickness fragments are compacted. Optimize may also
+remove a different-thickness fragment shorter than half a grid step when equal
+pieces of the same straight wall prove the replacement. This includes a
+fragment touching exactly one room T-junction: the junction and perpendicular
+wall do not move. A fragment between two room vertices or touching an opening
+boundary is preserved. Ordinary opening, rendering, Save and editing never
+perform this cleanup without explicit Optimize confirmation.
+
 Old positions are classified before Apply. A position whose room label, device
 or light-group owner is proven absent is removed automatically and counted by a
 plain-language category. A live owner in a deleted space is named and preserved

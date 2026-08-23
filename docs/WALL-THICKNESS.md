@@ -282,7 +282,10 @@ production-scale `0 ↔ 10`, `10 ↔ 20` and `1 ↔ 100` collinear transitions a
 their exact endpoint; full 8-room/25-wall/3-cut virtual-junction resilience,
 ULP-equivalent patch vertices, per-patch failure isolation and record-order
 invariance (#197); explicit Optimize-only collapse of a sub-half-step isolated
-thickness island with strict threshold, topology and ambiguity guards (#198);
+thickness island with strict threshold and ambiguity guards (#198), including
+the proven `equal → micro → equal` case beside exactly one room T-node while
+opening endpoints and spans between two room topology nodes stay protected
+(#273);
 exact parent-run thickness inherited by atomic children when
 closing a virtual neighbour, without partial-span leakage (#201).
 Browser: seamless frame; fill not in hatch; m² drops with thickness; a partial

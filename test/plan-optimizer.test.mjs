@@ -8,9 +8,11 @@ import {
 import {
   canonicalizeConfigGeometry, canonicalizeLayoutGeometry, canonicalizeNumber,
 } from '../test-build/coordinate-canonicalization.js';
-import { unionBodies } from '../test-build/physical-geometry.js';
+import { pointInPhysicalGeometry, unionBodies } from '../test-build/physical-geometry.js';
 import { GRID_PITCH, GRID_STEP_N as S, NORM_W } from '../test-build/space-geometry.js';
-import { wallKey } from '../test-build/wall-thickness.js';
+import {
+  wallBodiesGeometry, wallIntervals, wallKey,
+} from '../test-build/wall-thickness.js';
 
 const room = (id, x0, x1, openTo) => ({
   id,
@@ -76,6 +78,29 @@ const microIntervalFixture = (length = S / 3, middleCm = 15, rightCm = 22) => {
   };
 };
 
+// Privacy-minimised beta.5 topology from #273. The main room keeps one
+// original straight parent edge. The upper room contributes only the
+// perpendicular incident edge at `split`, so it is a real T-node rather than
+// a collinear vertex inserted into the candidate's parent edge.
+const topologyMicroIntervalFixture = () => {
+  const x0 = 0.8, split = 0.8875, x1 = 0.95, y = 0.345833333;
+  const microEnd = split + 0.001381904;
+  return {
+    split,
+    microEnd,
+    rooms: [
+      { id: 'main', poly: [[x0, y], [x1, y], [x1, 0.5], [x0, 0.5]] },
+      { id: 'branch', poly: [[0.845833333, 0.245833333], [split, 0.245833333],
+        [split, y], [0.845833333, y]] },
+    ],
+    walls: [
+      exactWall([x0, y], [split, y], 22),
+      exactWall([split, y], [microEnd, y], 15),
+      exactWall([microEnd, y], [x1, y], 22),
+    ],
+  };
+};
+
 test('Optimize collapses one isolated thickness micro-interval and is idempotent', () => {
   const fixture = microIntervalFixture();
   const config = {
@@ -101,6 +126,53 @@ test('Optimize collapses one isolated thickness micro-interval and is idempotent
   assert.equal(second.changed, false);
   assert.equal(second.report.canonicalized, 0);
   assert.equal(second.report.wallsMerged, 0);
+  assert.deepEqual(second.config, first.config);
+});
+
+test('issue 273 Optimize collapses the beta.5 island beside one T-node', () => {
+  const fixture = topologyMicroIntervalFixture();
+  const config = {
+    model_version: PLAN_MODEL_VERSION,
+    spaces: [{
+      id: 'topology-micro', title: 'Topology micro', view_box: [0, 0, 1, 1], cell_cm: 5,
+      rooms: fixture.rooms, walls: fixture.walls,
+    }],
+    markers: [], settings: {},
+  };
+  const before = structuredClone(config);
+  const rawIntervals = wallIntervals(fixture.rooms, fixture.walls, [], S, 5, S);
+  assert.ok(rawIntervals.some((interval) => interval.cm === 15),
+    'runtime remains lossless before explicit Optimize');
+
+  const first = optimizePlans(config, {});
+  assert.deepEqual(config, before, 'preview must not mutate the T-node source');
+  assert.equal(first.changed, true);
+  assert.equal(first.report.canonicalized, 1);
+  assert.equal(first.report.wallsMerged, 2);
+  const canonicalBefore = canonicalizeConfigGeometry(before);
+  assert.deepEqual(first.config.spaces[0].rooms, canonicalBefore.spaces[0].rooms,
+    'T coordinate and perpendicular incident room stay byte-equivalent');
+  assert.equal(first.config.spaces[0].walls.length, 1);
+  assert.equal(first.config.spaces[0].walls[0].cm, 22);
+  assert.deepEqual(first.config.spaces[0].walls[0].a, [0.8, 0.345833333]);
+  assert.deepEqual(first.config.spaces[0].walls[0].b, [0.95, 0.345833333]);
+
+  const afterIntervals = wallIntervals(
+    first.config.spaces[0].rooms, first.config.spaces[0].walls, [], S, 5, S,
+  );
+  assert.equal(afterIntervals.some((interval) => interval.cm === 15), false);
+  const geometry = wallBodiesGeometry(
+    first.config.spaces[0].rooms, first.config.spaces[0].walls, [], [], S, 5, S,
+  );
+  assert.ok(geometry, 'optimized profile must render a masonry body');
+  for (const x of [fixture.split - S, (fixture.split + fixture.microEnd) / 2,
+    fixture.microEnd + S]) {
+    assert.equal(pointInPhysicalGeometry([x, 0.345833333 - 0.008], geometry.geom), true,
+      `22 cm outer face must stay continuous at x=${x}`);
+  }
+
+  const second = optimizePlans(first.config, first.layout);
+  assertNoPersistedChanges(second);
   assert.deepEqual(second.config, first.config);
 });
 
@@ -263,6 +335,24 @@ test('micro-interval cleanup preserves ambiguous and topological boundaries', ()
     collapseIsolatedWallThicknessIslands(atOpening.rooms, atOpening.walls, cut, S, 5, S),
     atOpening.walls,
     'an open-cut endpoint at the island boundary blocks cleanup',
+  );
+
+  const betweenTwoNodes = topologyMicroIntervalFixture();
+  betweenTwoNodes.rooms.push({
+    id: 'branch-2',
+    poly: [
+      [betweenTwoNodes.microEnd, 0.245833333],
+      [betweenTwoNodes.microEnd + 5 * S, 0.245833333],
+      [betweenTwoNodes.microEnd + 5 * S, 0.345833333],
+      [betweenTwoNodes.microEnd, 0.345833333],
+    ],
+  });
+  assert.deepEqual(
+    collapseIsolatedWallThicknessIslands(
+      betweenTwoNodes.rooms, betweenTwoNodes.walls, [], S, 5, S,
+    ),
+    betweenTwoNodes.walls,
+    'an interval between two room topology nodes remains intentional',
   );
 
   const chain = microIntervalFixture(S / 3, 15, 22);

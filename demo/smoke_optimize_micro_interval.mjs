@@ -19,16 +19,22 @@ const out = await page.evaluate(async () => {
     return `${q((a[0] + b[0]) / 2).toFixed(6)},${q((a[1] + b[1]) / 2).toFixed(6)}@${bucket.toFixed(4)}`;
   };
   const entry = (a, b, cm) => ({ key: wallKey(a, b), a, b, cm });
-  const y = 0.2, split = 0.5, microEnd = split + S / 3;
+  const y = 0.345833333, split = 0.8875, microEnd = split + 0.001381904;
   const original = {
-    model_version: 6,
+    model_version: 7,
     spaces: [{
       id: 'micro', title: 'Micro wall', view_box: [0, 0, 1, 1], cell_cm: 5,
-      rooms: [{ id: 'room', name: 'Room', poly: [[0.2, y], [0.8, y], [0.8, 0.8], [0.2, 0.8]] }],
+      rooms: [
+        { id: 'room', name: 'Room', poly: [[0.8, y], [0.95, y], [0.95, 0.5], [0.8, 0.5]] },
+        { id: 'branch', name: 'Branch', poly: [
+          [0.845833333, 0.245833333], [split, 0.245833333],
+          [split, y], [0.845833333, y],
+        ] },
+      ],
       walls: [
-        entry([0.2, y], [split, y], 22),
+        entry([0.8, y], [split, y], 22),
         entry([split, y], [microEnd, y], 15),
-        entry([microEnd, y], [0.8, y], 22),
+        entry([microEnd, y], [0.95, y], 22),
       ],
     }],
     markers: [], settings: {},
@@ -52,7 +58,7 @@ const out = await page.evaluate(async () => {
         return { ok: true, config_rev: 3, layout_rev: 3, can_undo: false };
       }
       if (message.type === 'houseplan/config/get')
-        return { config: clone(serverConfig), rev: 3, can_write: true };
+        return { config: clone(serverConfig), rev: 3, can_write: true, can_optimize_undo: !!backup };
       if (message.type === 'houseplan/layout/get')
         return { layout: clone(serverLayout), rev: 3 };
       return baseCall(message);
@@ -81,9 +87,15 @@ const out = await page.evaluate(async () => {
   const appliedWalls = card._serverCfg.spaces[0].walls;
   result.applyUsesOneAtomicWrite = sent.filter((type) => type === 'houseplan/plan/optimize').length === 1;
   result.applyStoresOneUniformRun = appliedWalls.length === 1 && appliedWalls[0].cm === 22
-    && JSON.stringify(appliedWalls[0].a) === JSON.stringify([0.2, 0.2])
-    && JSON.stringify(appliedWalls[0].b) === JSON.stringify([0.8, 0.2]);
+    && JSON.stringify(appliedWalls[0].a) === JSON.stringify([0.8, y])
+    && JSON.stringify(appliedWalls[0].b) === JSON.stringify([0.95, y]);
   result.applyEnablesUndo = card._canOptimizeUndo === true;
+
+  await card._loadFromServer(); await card.updateComplete;
+  const reloadedWalls = card._serverCfg.spaces[0].walls;
+  result.reloadKeepsCanonicalRun = reloadedWalls.length === 1 && reloadedWalls[0].cm === 22
+    && JSON.stringify(reloadedWalls[0].a) === JSON.stringify([0.8, y])
+    && JSON.stringify(reloadedWalls[0].b) === JSON.stringify([0.95, y]);
 
   await card._undoPlanOptimization(); await card.updateComplete;
   result.undoUsesServerSnapshot = sent.filter((type) => type === 'houseplan/plan/optimize_undo').length === 1;

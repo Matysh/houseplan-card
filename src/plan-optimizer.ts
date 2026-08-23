@@ -92,7 +92,9 @@ const optimizerSpanKey = (a: number[], b: number[], coordScale: number): string 
  *
  * A positive interval shorter than half a grid step may inherit its two equal
  * neighbours only when all three pieces belong to one original straight room
- * edge and neither endpoint is a room/opening topology node. Candidates are
+ * edge. Opening endpoints and spans between two room topology nodes stay
+ * protected; one room T-node plus one synthetic endpoint is safe because the
+ * node coordinate and its incident edges are not changed. Candidates are
  * collected from the untouched effective profile first, so replacements never
  * cascade and input order cannot change the result.
  */
@@ -108,16 +110,17 @@ export function collapseIsolatedWallThicknessIslands(
   if (!walls?.length) return [];
   const scale = coordScale > 0 ? coordScale : 1;
   const eps = Math.max(pitch * scale * 0.02, 1e-9);
-  const nodes: number[][] = [];
+  const roomNodes: number[][] = [];
   for (const room of rooms || []) {
-    for (const point of roomPoly(room) || []) nodes.push([point[0], point[1]]);
+    for (const point of roomPoly(room) || []) roomNodes.push([point[0], point[1]]);
   }
+  const openingNodes: number[][] = [];
   for (const cut of openCuts || []) {
     if (Array.isArray(cut) && cut.length >= 4 && cut.slice(0, 4).every(Number.isFinite)) {
-      nodes.push([cut[0], cut[1]], [cut[2], cut[3]]);
+      openingNodes.push([cut[0], cut[1]], [cut[2], cut[3]]);
     }
   }
-  const isTopologyNode = (point: number[]): boolean => nodes.some((node) => (
+  const isNode = (point: number[], nodes: number[][]): boolean => nodes.some((node) => (
     Math.hypot(point[0] - node[0], point[1] - node[1]) <= eps * 2
   ));
 
@@ -152,7 +155,12 @@ export function collapseIsolatedWallThicknessIslands(
         // scale-relative numeric guard instead of accidentally deleting it.
         const halfStep = gridPitch * 0.5;
         if (!(length > eps) || !(length < halfStep - gridPitch * 1e-9)) continue;
-        if (isTopologyNode(a) || isTopologyNode(b)) continue;
+        // An opening boundary is always semantic. Room vertices are different:
+        // a micro interval between two vertices is semantic, while exactly one
+        // vertex is the confirmed T-junction shape from #273. Replacing only
+        // the interval cm keeps that vertex and every incident edge intact.
+        if (isNode(a, openingNodes) || isNode(b, openingNodes)) continue;
+        if (isNode(a, roomNodes) && isNode(b, roomNodes)) continue;
         const key = optimizerSpanKey(a, b, scale);
         const found = candidates.get(key);
         if (found) found.targets.add(leftCm);

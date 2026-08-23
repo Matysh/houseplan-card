@@ -86,6 +86,17 @@ Explicit Optimize rewrites the compatibility key, retains `cm`, endpoints and
 unknown siblings, and its next in-memory or backend storage round-trip is a
 no-op. Legacy key-only records continue through the previous midpoint fallback.
 
+Explicit Optimize also has one deliberately lossy wall-thickness repair. A
+positive interval shorter than half a grid step may inherit its two equal
+positive neighbours only when all three belong to one original straight room
+edge and exact owners are unambiguous. One endpoint may be a room T-node: only
+the interval `cm` changes, so that node and its perpendicular incident geometry
+remain intact. An opening/open-span endpoint, two room topology endpoints,
+unequal neighbours, a half-step-or-longer interval or conflicting owners always
+block the repair. Normal read, render, Save and editor paths remain lossless;
+only confirmed Optimize applies it, with the ordinary preview and server Undo
+(#198, #273).
+
 ## Open-passage opening type (#157)
 
 `space.openings[].type` additionally accepts the literal `passage`. Its

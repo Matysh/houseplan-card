@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- “Optimize plans” now removes a microscopic wall-thickness step beside a
+  T-junction when the short fragment is bounded by two equal-thickness pieces
+  of the same straight wall. The T-node and its perpendicular wall stay in
+  place; fragments between two topology nodes or touching an opening boundary
+  remain protected. Preview, Apply, reload and maintenance Undo use the same
+  canonical result ([#273](https://github.com/Matysh/houseplan-card/issues/273)).
+
 ## v1.67.0-beta.5 — 2026-08-23
 
 - After deleting a complete HA device from the plan, any one of its active
