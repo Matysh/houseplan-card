@@ -444,6 +444,12 @@ A light defaults to Toggle; other devices default to the House Plan card. An
 unsupported Toggle remains a visible no-op and is never changed into another
 action behind the user's back.
 
+If every explicitly configured `controls` target is unavailable, missing or
+disabled in HA, a short tap sends no service call and the standard local House
+Plan message names the target and explains that no action was performed. A
+partially available group still operates only its available subset, so it does
+not show the misleading no-action message.
+
 When a device-bound marker has two or more own `light.*`/`switch.*` entities,
 **Entity to toggle** appears below Toggle. It selects the exact own channel and
 updates the target hint before Save. **Automatic** keeps the previous binding /
@@ -472,6 +478,13 @@ stable core, icon or value, and optional activity pulse. Visual priority is
 | Orange | Physically open | Door/window contact, opening valve |
 | Faded | Data unavailable | All relevant entities unknown, unavailable or absent |
 | Neutral | No alarm, work or open condition | Off, closed, idle, standby, docked |
+
+For a controller with `controls`, target work and controller availability are
+independent. The controlled lights still decide whether the marker is yellow,
+but only the controller's own active entities decide whether it fades. A live
+battery, Zigbee LQI or update entity therefore keeps a wireless switch neutral
+and opaque when all of its lamps are unavailable. A controller with no live own
+entity fades even if a target is on; a virtual controller is always available.
 
 For a composite appliance with a dedicated Power switch, Power=`on` alone
 remains neutral. If Home Assistant also exposes a strict lifecycle entity such

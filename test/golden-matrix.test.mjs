@@ -450,6 +450,12 @@ test('device icon state-table goldens cover both themes and design facets', () =
     assert.equal(fixture.states['light.golden_light_one'].attributes.lqi, 40);
     assert.equal(fixture.states['light.golden_light_two'].attributes.lqi, 41);
     assert.equal(fixture.states['light.golden_light_three'].attributes.lqi, 180);
+    assert.equal(fixture.states['light.golden_light_three'].state, 'unavailable');
+    const targetAvailabilityController = fixture.config.markers.find(
+      (marker) => marker.id === 'golden-left-linkquality',
+    );
+    assert.equal(targetAvailabilityController.tap_action, 'toggle');
+    assert.deepEqual(targetAvailabilityController.controls, ['light.golden_light_three']);
     assert.equal(
       fixture.config.markers.find((marker) => marker.id === 'golden-left-temperature').display,
       'value',

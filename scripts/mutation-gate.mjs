@@ -1039,6 +1039,58 @@ export const MUTANTS = [
     }],
   },
   {
+    id: 'controller-availability-follows-target',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="issue 251 separates controller availability" '
+      + 'test/device-presentation.test.mjs',
+    because: 'a live controller must not inherit unavailable from its controlled lamp; '
+      + 'the focused matrix keeps own availability and target working as separate facts (#251)',
+    patches: [{
+      file: 'src/device-presentation.ts',
+      find: "    ? { ...combined, availability: controllerAvailability(hass, d) }",
+      replace: '    ? combined',
+    }],
+  },
+  {
+    id: 'controller-diagnostics-do-not-prove-online',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="issue 251 separates controller availability" '
+      + 'test/device-presentation.test.mjs',
+    because: 'battery, LQI and update are the available evidence for event-only wireless '
+      + 'controllers; excluding those siblings restores the field defect (#251)',
+    patches: [{
+      file: 'src/device-presentation.ts',
+      find: '  const live = (d.entities || []).some((eid) => {',
+      replace: "  const live = (d.entities || []).filter((eid) => !eid.startsWith('sensor.') "
+        + "&& !eid.startsWith('update.')).some((eid) => {",
+    }],
+  },
+  {
+    id: 'unavailable-toggle-stays-silent',
+    guard: 'node demo/smoke_controls.mjs',
+    because: 'a configured group with no available target must explain the safe no-op instead '
+      + 'of returning silently before service, confirmation and press feedback (#251)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '        this._showUnavailableToggleTargets(initial);',
+      replace: '        // Mutant: restore the historical quiet no-op.',
+    }],
+  },
+  {
+    id: 'partial-group-shows-noop-toast',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="issue 251 classifies only unavailable" '
+      + 'test/device-toggle.test.mjs',
+    because: 'a partial group did execute its available subset and must never claim that no '
+      + 'action happened merely because another target was skipped (#251)',
+    patches: [{
+      file: 'src/device-toggle.ts',
+      find: "  if (!intent || intent.kind !== 'group' || toggleOperation(intent)\n"
+        + "      || intent.noneReason !== 'configured-targets-missing') return [];",
+      replace: "  if (!intent || intent.kind !== 'group') return [];",
+    }],
+  },
+  {
     id: 'device-marker-lqi-low-boundary-shifted',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="marker LQI keeps semantic bands" '

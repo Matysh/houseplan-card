@@ -27,6 +27,27 @@ test('i18n: placeholders match between languages', () => {
   }
 });
 
+test('issue 251 unavailable controls toast has exact singular and plural copy', () => {
+  assert.equal(
+    en['toast.toggle_target_unavailable'],
+    'Target “{name}” is unavailable — no action was performed',
+  );
+  assert.equal(
+    ru['toast.toggle_target_unavailable'],
+    'Цель «{name}» недоступна — действие не выполнено',
+  );
+  assert.equal(
+    en['toast.toggle_targets_unavailable'],
+    'Targets are unavailable: {names}. No action was performed',
+  );
+  assert.equal(
+    ru['toast.toggle_targets_unavailable'],
+    'Цели недоступны: {names}. Действие не выполнено',
+  );
+  assert.match(cardSource, /toast\.toggle_target_unavailable/);
+  assert.match(cardSource, /toast\.toggle_targets_unavailable/);
+});
+
 test('Optimize distinguishes updated spaces from cleaned coordinate noise', () => {
   assert.equal(
     en['gs.optimize_changes'],

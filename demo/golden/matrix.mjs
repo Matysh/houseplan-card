@@ -398,7 +398,8 @@ export const GOLDEN_SCENARIOS = Object.freeze([
       { id: 'golden-climate', binding: 'device:golden-climate' },
       { id: 'golden-left-temperature', binding: 'device:golden-left-temperature', display: 'value' },
       { id: 'golden-right-temperature', binding: 'device:golden-right-temperature', display: 'static_icon' },
-      { id: 'golden-left-linkquality', binding: 'device:golden-left-linkquality', value_badge: {
+      { id: 'golden-left-linkquality', binding: 'device:golden-left-linkquality',
+        tap_action: 'toggle', controls: ['light.golden_light_three'], value_badge: {
         enabled: true,
         source: { kind: 'entity_state', entity_id: 'sensor.golden_left_linkquality' },
         position: 'right',
@@ -412,7 +413,7 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     stateOverrides: {
       'light.golden_light_one': { attributes: { lqi: 40 } },
       'light.golden_light_two': { attributes: { lqi: 41 } },
-      'light.golden_light_three': { attributes: { lqi: 180 } },
+      'light.golden_light_three': { state: 'unavailable', attributes: { lqi: 180 } },
       'sensor.golden_left_temperature': { state: 'Complete long localized state' },
       'sensor.golden_right_temperature': { state: 'unavailable' },
     },

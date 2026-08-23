@@ -766,6 +766,38 @@ export function toggleOperation(intent: ResolvedToggleIntent | null): ToggleOper
   return intent.command ? { kind: 'ha-service', command: intent.command } : null;
 }
 
+const TARGET_UNAVAILABLE_NOTICE_REASONS = new Set<ToggleSkipReason>([
+  'missing', 'ha-disabled', 'unavailable',
+]);
+
+/**
+ * Names for the #251 explanatory no-op toast.
+ *
+ * Only configured control groups qualify. Unsupported targets keep their
+ * existing explained/quiet path; secure targets may coexist with unavailable
+ * ones but are never named or made actionable by this projection.
+ */
+export function unavailableToggleTargetNames(
+  intent: ResolvedToggleIntent | null,
+): string[] {
+  if (!intent || intent.kind !== 'group' || toggleOperation(intent)
+      || intent.noneReason !== 'configured-targets-missing') return [];
+  if (!intent.skippedTargets.length || intent.skippedTargets.some((target) =>
+    !TARGET_UNAVAILABLE_NOTICE_REASONS.has(target.reason) && target.reason !== 'secure'
+  )) return [];
+
+  const names: string[] = [];
+  const seen = new Set<string>();
+  for (const target of intent.skippedTargets) {
+    if (!TARGET_UNAVAILABLE_NOTICE_REASONS.has(target.reason)) continue;
+    const name = String(target.name || target.entityId || target.ref || '').trim();
+    if (!name || seen.has(name)) continue;
+    seen.add(name);
+    names.push(name);
+  }
+  return names;
+}
+
 export interface ToggleConfirmationFormatter {
   /** Localized/formatted current state for one executable target. */
   state: (target: ResolvedToggleTarget) => string;

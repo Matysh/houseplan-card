@@ -1366,7 +1366,18 @@ separately promised workflows:
       the click opens info as usual; the info card lists targets with states;
       locks/other domains are filtered out of controls. Glow is spatial: the
       controller casts no pool and the real lamp marker owns it even when the
-      controller is encountered first [auto: smoke_controls; unit: devices.test.mjs]
+      controller is encountered first. Controller availability is independent
+      (#251): live battery/LQI/update keeps it neutral and opaque when every
+      target is unavailable, all unavailable own entities fade it even if a
+      target is on, and a virtual controller remains available. A fully
+      unavailable configured group shows the named singular/plural local toast
+      without service, confirmation or press feedback; partial groups still
+      execute silently, and a target lost after confirmation uses the same
+      unavailable toast [auto: smoke_controls; unit: devices.test.mjs,
+      device-presentation.test.mjs, device-toggle.test.mjs; golden:
+      device-icon-state-table light/dark; mutation: controller-availability-follows-target,
+      controller-diagnostics-do-not-prove-online, unavailable-toggle-stays-silent,
+      partial-group-shows-noop-toast]
 - [ ] Linked manual virtual light (#174): an exact #107 virtual Always-light
       with an incoming controller follows the real HA driver despite a saved
       manual off-bit. Clicking either marker operates the real relay and one HA

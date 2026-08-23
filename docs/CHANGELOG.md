@@ -10,6 +10,13 @@
   strongly asymmetric junctions cannot push floor outside the building or
   leave a missing floor pocket
   ([#249](https://github.com/Matysh/houseplan-card/issues/249)).
+- A wireless switch or other controller no longer looks offline merely because
+  its configured lamp or light group is unavailable. Fading now reflects the
+  controller's own live entities (including battery and Zigbee LQI), while the
+  targets still determine the yellow working state. Tapping a controller when
+  none of its configured targets can be reached now names the unavailable
+  target and explains that no action was performed
+  ([#251](https://github.com/Matysh/houseplan-card/issues/251)).
 
 ## v1.67.0-beta.3 — 2026-08-23
 

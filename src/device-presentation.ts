@@ -13,7 +13,7 @@ import {
 import {
   combineVisualSamples, entityVisualSample, entityVisualSamplesForDevice,
   isApplianceLifecycleEntity, isDevicePowerSwitch,
-  type DeviceActivity, type DeviceVisualState, type EntityVisualSample,
+  type DeviceActivity, type DeviceAvailability, type DeviceVisualState, type EntityVisualSample,
 } from './device-visual';
 import {
   hassValue, lightColorOf, lqiColor, normalizeDeviceDisplay, stateIcon, valueWithUnit,
@@ -213,6 +213,25 @@ function sourceStateText(hass: any, eid: string): string {
     } catch { /* older/custom HA formatter: use raw state */ }
   }
   return String(st.state ?? '');
+}
+
+/**
+ * Availability of the physical controller itself (#251).
+ *
+ * HA exposes entity states rather than one device state. Controls are not
+ * controller evidence: a live battery/LQI/update sibling is, while an
+ * event-only `unknown` entity is not. A virtual controller has no physical HA
+ * binding which can go offline, so it is available by definition.
+ */
+export function controllerAvailability(hass: any, d: DevItem): DeviceAvailability {
+  if (d.virtual || d.bindingKind === 'virtual' || d.marker?.binding === 'virtual') {
+    return 'available';
+  }
+  const live = (d.entities || []).some((eid) => {
+    const state = String(hass?.states?.[eid]?.state ?? '').trim().toLowerCase();
+    return state !== '' && state !== 'unknown' && state !== 'unavailable';
+  });
+  return live ? 'available' : 'unavailable';
 }
 
 function sourceOf(
@@ -602,7 +621,12 @@ export function resolveDevicePresentation(
       ? 'unlocked'
       : lockSource.state.toLowerCase() === 'locked' ? 'locked' : null
     : null;
-  let visual = combined;
+  // A controller mirrors target work, not target connectivity. Its faded
+  // state describes only the bound controller; Glow/fill/statistics continue
+  // to consume the unchanged target graph.
+  let visual = sources.sourceKind === 'controls'
+    ? { ...combined, availability: controllerAvailability(hass, d) }
+    : combined;
   if (effectiveHidden) visual = { availability: 'available', status: 'neutral', activity: 'none' };
   else if (staticIcon) visual = { availability: 'available', status: 'neutral', activity: 'none' };
   else if (combined.status !== 'alarm' && !options.liveStates) {

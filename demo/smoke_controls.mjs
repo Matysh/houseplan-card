@@ -59,10 +59,56 @@ const res = await page.evaluate(async () => {
   out.aggregateActivityRuns = c._stateClass(dev2()).includes('activity-running');
   await setSt({ [lights[0]]: 'off' });
   out.stateOff = c._stateClass(dev2()) === '';
+
+  // #251: target connectivity never paints a virtual/healthy controller
+  // unavailable. A completely non-executable configured group explains the
+  // no-op through the standard local toast, without service or press feedback.
+  const targetLabel = (entityId) => c.hass.entities?.[entityId]?.name
+    || c.hass.entities?.[entityId]?.original_name
+    || c.hass.states?.[entityId]?.attributes?.friendly_name
+    || entityId;
+  await setSt({ [lights[0]]: 'unavailable', [lights[1]]: 'unavailable' });
+  c._cancelDevicePressFeedback();
+  const unavailableCalls = calls.length;
+  c._clickDevice(new MouseEvent('click'), dev2());
+  await c.updateComplete;
+  const pluralToast = `Targets are unavailable: ${lights.map(targetLabel).join(', ')}. No action was performed`;
+  out.unavailableTargetsStayNeutral = c._stateClass(dev2()) === '';
+  out.unavailableTargetsNoService = calls.length === unavailableCalls;
+  out.unavailableTargetsNoPress = c._devicePressAnimations.size === 0;
+  out.unavailableTargetsPluralToast = sr().querySelector('.toast')?.textContent?.trim() === pluralToast;
+
+  // One target uses the named singular copy. The same branch must win when
+  // the target disappears after a confirmation dialog was opened.
+  const cfg = c._serverCfg.markers.find((m) => m.name === 'Выключатель');
+  cfg.controls = [lights[0]];
+  c._regSignature = ''; c._maybeRebuildDevices(); await c.updateComplete;
+  c._clickDevice(new MouseEvent('click'), dev2());
+  await c.updateComplete;
+  const singularToast = `Target “${targetLabel(lights[0])}” is unavailable — no action was performed`;
+  out.unavailableTargetSingularToast = sr().querySelector('.toast')?.textContent?.trim() === singularToast;
+
+  await setSt({ [lights[0]]: 'off' });
+  cfg.tap_confirm = true;
+  c._regSignature = ''; c._maybeRebuildDevices(); await c.updateComplete;
+  c._clickDevice(new MouseEvent('click'), dev2());
+  const confirm = c._tapConfirm;
+  out.availableTargetOpensConfirm = confirm?.kind === 'toggle';
+  await setSt({ [lights[0]]: 'unavailable' });
+  const confirmCalls = calls.length;
+  confirm?.exec();
+  await c.updateComplete;
+  out.confirmRaceNoService = calls.length === confirmCalls;
+  out.confirmRaceUnavailableToast = sr().querySelector('.toast')?.textContent?.trim() === singularToast;
+  cfg.tap_confirm = false;
+  cfg.controls = [...lights];
+  c._tapConfirm = null;
+  c._regSignature = ''; c._maybeRebuildDevices(); await c.updateComplete;
+  await setSt({ [lights[0]]: 'off', [lights[1]]: 'off' });
+
   // #94/#73 boundary: a complete visual frame may temporarily retain the old
   // DevItem while live config has already changed. The click must resolve the
   // current marker by id and never call the controls captured by that frame.
-  const cfg = c._serverCfg.markers.find((m) => m.name === 'Выключатель');
   const staleSource = dev2();
   const visuallyStale = {
     ...staleSource,

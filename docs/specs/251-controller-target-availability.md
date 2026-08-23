@@ -168,6 +168,11 @@ Glow, room fill и statistics продолжают читать resolved light g
 4. показывает существующий локальный House Plan toast с `role="alert"` и
    `aria-live="assertive"`.
 
+Фразу владельца «стандартными средствами HA» здесь намеренно реализует
+существующий локальный toast карточки по образцу `toast.error`,
+`toast.tap_target_changed` и других системных объяснений House Plan. Новый
+нативный глобальный `hass-notification` не вводится.
+
 Точный текст:
 
 | Случай | RU | EN |
@@ -183,6 +188,11 @@ Glow, room fill и statistics продолжают читать resolved light g
 ложно более точной причины: для человека цель недоступна. Если no-op вызван
 `secure`, `unsupported`, отсутствием configured target или отсутствующим
 service capability, существующее поведение сохраняется.
+
+Для смешанного нулевого набора `secure` + unavailable/missing/HA-disabled toast
+показывается по именам только недоступных целей; secure-цели не называются и не
+становятся исполняемыми. Наличие `unsupported` среди пропусков сохраняет
+существующий no-op без этого toast.
 
 ### 7.2. Partial group и гонки
 

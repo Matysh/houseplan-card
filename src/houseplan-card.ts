@@ -117,7 +117,7 @@ import {
 import {
   formatToggleConfirmation, formatToggleIntent, projectedTapAction, resolveToggleIntent,
   sameToggleOperationTargets, toggleCoverEntity, toggleIntentName, toggleOperation,
-  toggleEntityCandidates,
+  toggleEntityCandidates, unavailableToggleTargetNames,
   type ResolvedToggleIntent, type ResolvedToggleTarget,
   type ToggleNextEffect, type ToggleNoneReason,
   type ToggleSkipReason,
@@ -4929,7 +4929,11 @@ class HouseplanCard extends LitElement {
     };
     if (action === 'toggle') {
       const initial = this._toggleIntent(actionDevice);
-      if (!initial || !toggleOperation(initial)) return; // configured no-target is an intentional, quiet no-op
+      if (!initial) return;
+      if (!toggleOperation(initial)) {
+        this._showUnavailableToggleTargets(initial);
+        return; // other configured no-target outcomes remain intentional quiet no-ops
+      }
       const execute = (intent: ResolvedToggleIntent): void => {
         const operation = toggleOperation(intent);
         if (!operation) return;
@@ -4968,6 +4972,8 @@ class HouseplanCard extends LitElement {
           exec: () => {
             const currentDevice = this._devices.find((item) => item.id === actionDevice.id);
             const current = currentDevice ? this._toggleIntent(currentDevice) : null;
+            if (current && !toggleOperation(current)
+                && this._showUnavailableToggleTargets(current)) return;
             if (!current || !sameToggleOperationTargets(initial, current)) {
               this._showToast(this._t('toast.tap_target_changed'));
               return;
@@ -5020,6 +5026,16 @@ class HouseplanCard extends LitElement {
       return;
     }
     this._infoCard = actionDevice;
+  }
+
+  /** Explain a safe controls no-op through the card's standard local toast. */
+  private _showUnavailableToggleTargets(intent: ResolvedToggleIntent): boolean {
+    const names = unavailableToggleTargetNames(intent);
+    if (!names.length) return false;
+    this._showToast(names.length === 1
+      ? this._t('toast.toggle_target_unavailable', { name: names[0] })
+      : this._t('toast.toggle_targets_unavailable', { names: names.join(', ') }));
+    return true;
   }
 
   private _keyDevice(ev: KeyboardEvent, d: DevItem): void {

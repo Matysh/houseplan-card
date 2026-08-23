@@ -10,6 +10,7 @@ import {
   toggleCommandEntityIds,
   toggleCoverEntity,
   toggleOriginOf,
+  unavailableToggleTargetNames,
 } from '../test-build/device-toggle.js';
 
 const confirmationFormatter = {
@@ -310,6 +311,62 @@ test('explicit controls execute only the available subset and report skipped tar
   assert.equal(intent.kind, 'group');
   assert.deepEqual(toggleCommandEntityIds(intent.command), ['light.a']);
   assert.deepEqual(intent.skippedTargets.map((item) => item.reason), ['unavailable', 'missing']);
+});
+
+test('issue 251 classifies only unavailable configured groups for the no-op toast', () => {
+  const h = hass({
+    'light.dead': state('light.dead', 'unavailable', { friendly_name: 'Dead lamp' }),
+    'light.live': state('light.live', 'off', { friendly_name: 'Live lamp' }),
+  }, {
+    'light.dead': { entity_id: 'light.dead', platform: 'demo', name: 'Dead lamp' },
+    'light.live': { entity_id: 'light.live', platform: 'demo', name: 'Live lamp' },
+    'light.missing': { entity_id: 'light.missing', platform: 'demo', name: 'Missing lamp' },
+  });
+  const controls = (refs) => device({
+    id: 'controller', name: 'Controller', controls: refs,
+    marker: {
+      id: 'controller', binding: 'virtual', tap_action: 'toggle', controls: refs,
+    },
+  });
+
+  const oneDevice = controls(['light.dead']);
+  const one = resolveToggleIntent({ hass: h, devices: [oneDevice], device: oneDevice });
+  assert.deepEqual(unavailableToggleTargetNames(one), ['Dead lamp']);
+
+  const groupDevice = controls(['light.missing', 'light.dead', 'light.dead']);
+  const group = resolveToggleIntent({ hass: h, devices: [groupDevice], device: groupDevice });
+  assert.deepEqual(unavailableToggleTargetNames(group), ['Missing lamp', 'Dead lamp']);
+
+  const partialDevice = controls(['light.dead', 'light.live']);
+  const partial = resolveToggleIntent({ hass: h, devices: [partialDevice], device: partialDevice });
+  assert.ok(toggleOperation(partial));
+  assert.deepEqual(unavailableToggleTargetNames(partial), []);
+
+  const exact = device({
+    bindingKind: 'entity', bindingRef: 'light.dead', primary: 'light.dead',
+    entities: ['light.dead'], marker: { id: 'exact', binding: 'entity:light.dead' },
+  });
+  assert.deepEqual(unavailableToggleTargetNames(resolveToggleIntent({
+    hass: h, devices: [exact], device: exact,
+  })), [], 'an unavailable own binding is not an unavailable controls group');
+
+  const mixedSecure = {
+    ...group,
+    skippedTargets: [
+      ...group.skippedTargets,
+      { ref: 'marker:secure', entityId: 'cover.gate', name: 'Gate', reason: 'secure' },
+    ],
+  };
+  assert.deepEqual(unavailableToggleTargetNames(mixedSecure), ['Missing lamp', 'Dead lamp']);
+
+  const mixedUnsupported = {
+    ...group,
+    skippedTargets: [
+      ...group.skippedTargets,
+      { ref: 'sensor.mode', entityId: 'sensor.mode', name: 'Mode', reason: 'unsupported' },
+    ],
+  };
+  assert.deepEqual(unavailableToggleTargetNames(mixedUnsupported), []);
 });
 
 test('a group turns everything off when any available target is on', () => {

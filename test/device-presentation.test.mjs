@@ -257,6 +257,99 @@ test('issue 174 linked manual source and controller presentation follow the real
   assert.equal(control.visual.status, 'neutral');
 });
 
+test('issue 251 separates controller availability from controlled target status', () => {
+  const own = [
+    'event.wall_action', 'sensor.wall_battery', 'sensor.wall_linkquality', 'update.wall',
+  ];
+  const h = hass({
+    'event.wall_action': state('event.wall_action', 'unknown'),
+    'sensor.wall_battery': state('sensor.wall_battery', '100'),
+    'sensor.wall_linkquality': state('sensor.wall_linkquality', '164'),
+    'update.wall': state('update.wall', 'off'),
+    'light.wall_group': state('light.wall_group', 'unavailable', { friendly_name: 'Wall lights' }),
+  }, Object.fromEntries([...own, 'light.wall_group'].map((entity_id) => [entity_id, {
+    entity_id,
+    device_id: own.includes(entity_id) ? 'wall' : 'lights',
+    platform: 'demo',
+  }])));
+  const controller = device({
+    id: 'wall', name: 'Wall switch', entities: own, primary: 'event.wall_action',
+    bindingRef: 'wall',
+    bindingStatus: { kind: 'active', enabledEntityIds: own, allEntityIds: own },
+    marker: {
+      id: 'wall', binding: 'device:wall', tap_action: 'toggle', controls: ['light.wall_group'],
+    },
+  });
+
+  let result = resolveDevicePresentation(h, controller, options);
+  assert.equal(result.sourceKind, 'controls');
+  assert.deepEqual(result.visual, {
+    availability: 'available', status: 'neutral', activity: 'none',
+  });
+  assert.ok(!result.classes.includes('unavail'));
+  assert.ok(!result.classes.includes('on'));
+
+  h.states['light.wall_group'].state = 'on';
+  result = resolveDevicePresentation(h, controller, options);
+  assert.equal(result.visual.availability, 'available');
+  assert.equal(result.visual.status, 'working');
+  assert.ok(result.classes.includes('on'));
+
+  for (const entityId of ['sensor.wall_battery', 'sensor.wall_linkquality', 'update.wall']) {
+    h.states[entityId].state = 'unavailable';
+  }
+  result = resolveDevicePresentation(h, controller, options);
+  assert.equal(result.visual.availability, 'unavailable');
+  assert.equal(result.visual.status, 'working', 'target work remains a separate fact');
+  assert.ok(result.classes.includes('unavail'));
+  assert.ok(!result.classes.includes('on'));
+  assert.equal(deviceA11yState(result), 'unavailable');
+  assert.equal(result.pulse.kind, 'none');
+
+  const staticLiveDisabled = resolveDevicePresentation(h, controller, {
+    ...options, liveStates: false,
+  });
+  assert.deepEqual(staticLiveDisabled.visual, {
+    availability: 'available', status: 'neutral', activity: 'none',
+  });
+
+  h.states['light.wall_group'].state = 'unavailable';
+  const eventOnly = resolveDevicePresentation(h, {
+    ...controller,
+    entities: ['event.wall_action'],
+    bindingStatus: {
+      kind: 'active', enabledEntityIds: ['event.wall_action'], allEntityIds: ['event.wall_action'],
+    },
+  }, options);
+  assert.equal(eventOnly.visual.availability, 'unavailable');
+  assert.equal(eventOnly.visual.status, 'neutral');
+
+  const virtual = resolveDevicePresentation(h, device({
+    id: 'virtual-control', name: 'Virtual control', virtual: true,
+    entities: [], primary: null, bindingKind: 'virtual', bindingRef: 'virtual-control',
+    marker: {
+      id: 'virtual-control', binding: 'virtual', tap_action: 'toggle',
+      controls: ['light.wall_group'],
+    },
+  }), options);
+  assert.equal(virtual.sourceKind, 'controls');
+  assert.equal(virtual.visual.availability, 'available');
+  assert.equal(virtual.visual.status, 'neutral');
+
+  h.states['binary_sensor.wall_smoke'] = state(
+    'binary_sensor.wall_smoke', 'on', { device_class: 'smoke' },
+  );
+  h.entities['binary_sensor.wall_smoke'] = {
+    entity_id: 'binary_sensor.wall_smoke', device_id: 'wall', platform: 'demo',
+  };
+  const alarm = resolveDevicePresentation(h, {
+    ...controller, entities: [...own, 'binary_sensor.wall_smoke'],
+  }, options);
+  assert.equal(alarm.visual.status, 'alarm');
+  assert.equal(alarm.visual.availability, 'available');
+  assert.ok(alarm.classes.includes('alarm'));
+});
+
 test('passive sensor source keeps its normal scalar value and never probes marker ids', () => {
   const hits = [];
   const h = hass(new Proxy({

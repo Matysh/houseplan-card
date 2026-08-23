@@ -1080,7 +1080,14 @@ its configured space.
   de-duplicates and filters to currently controllable lights/switches. For an
   explicit `tap_action=toggle`, `resolveToggleIntent` executes the available
   subset with HA-group semantics and reports missing/disabled/unsupported refs;
-  icon state/tint mirrors the effective light graph.
+  icon working state mirrors the effective light graph. Controller availability
+  is deliberately separate (#251): at least one live own active entity
+  (including battery/LQI/update diagnostics) keeps a physical controller
+  available, while an all-unavailable target graph is neutral. A virtual
+  controller is available by definition. An explicit Toggle whose configured
+  group has no executable unavailable/missing/HA-disabled target produces the
+  card's standard local explanatory toast and no service/press feedback;
+  partial groups keep executing their available subset.
 - **Universal device action** (#94): `src/device-toggle.ts` is the only authority
   for toggle origin, exact target, capability/security filtering, next effect
   and service command. The dialog hint, click path, confirmation re-resolution
