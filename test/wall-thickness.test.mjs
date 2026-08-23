@@ -1583,7 +1583,7 @@ test('issue #197 keeps the full masonry when one virtual-junction patch has ULP 
   // #271 removes only the area that the old node-wide 8H rectangles invented
   // after finite ray endpoints; all semantic #197/#249/#261 probes above stay.
   // #272 additionally opens any point-contact bevel cut to the exterior.
-  closeTo(geometryArea(geometry.geom), 124242.78593276718, 1e-6);
+  closeTo(geometryArea(geometry.geom), 124243.7732289006, 1e-6);
   closeTo(geometryArea(geometry.paperGeom), 727303.8153386558, 1e-6);
   assert.equal(
     JSON.stringify({ rooms, walls, cuts, openings, extraBodies }), before,

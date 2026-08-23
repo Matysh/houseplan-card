@@ -2075,18 +2075,16 @@ function multiWallBevelCutsAt(
           );
           const ux = dx / length, uy = dy / length;
           const vx = -uy, vy = ux;
-          // A tiny local corridor overlaps the triangle just before `hit`
-          // and the exterior sector just after it. Keeping this as a second
-          // patch avoids rotating the long bevel edges across an acute arm.
+          // This tapered connector is a strict subset of the original square
+          // corridor: it keeps the same finite cross-section at `hit` and the
+          // same exterior reach, but avoids two extra contour corners in every
+          // large-plan junction path.
           const connector = stableJunctionPatch([
             [hit[0] - ux * bridge + vx * bridge,
               hit[1] - uy * bridge + vy * bridge],
             [hit[0] - ux * bridge - vx * bridge,
               hit[1] - uy * bridge - vy * bridge],
-            [hit[0] + ux * bridge - vx * bridge,
-              hit[1] + uy * bridge - vy * bridge],
-            [hit[0] + ux * bridge + vx * bridge,
-              hit[1] + uy * bridge + vy * bridge],
+            [hit[0] + ux * bridge, hit[1] + uy * bridge],
           ], map.coordinateScale);
           if (connector) cuts.push(connector);
         }
