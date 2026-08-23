@@ -2102,6 +2102,28 @@ export function multiWallBevelTriangles(
   return multiWallBevelCutsAt(map, true);
 }
 
+/**
+ * Collapse local cut patches before subtracting them from a large wall body.
+ *
+ * `A − p1 − p2 ...` is geometrically identical to `A − union(p1, p2,
+ * ...)`, but the latter traverses the large subject only once. The exterior
+ * connectors from #272 made the former path repeat that expensive traversal
+ * for every bevel sector. Keep malformed patches isolated just like the old
+ * per-patch subtraction loop did.
+ */
+function multiWallCutGeometry(cuts: number[][][]): any {
+  let geometry: any = null;
+  for (const cut of cuts) {
+    const piece: any = closedRing(cut) as any;
+    try {
+      geometry = geometry ? union(geometry, piece) : piece;
+    } catch {
+      // One unusable local patch must not discard the remaining valid cuts.
+    }
+  }
+  return geometry;
+}
+
 function bevelMultiWallBody(
   body: any,
   map: MultiWallNodeMap,
@@ -2121,12 +2143,14 @@ function bevelMultiWallBody(
     ];
     try {
       let boundedCurrent = current;
-      for (const triangle of multiWallBevelCutsAt({
+      const nodeMap = {
         ...map,
         nodes: [node],
-      }, false, true)) {
-        boundedCurrent = difference(boundedCurrent, closedRing(triangle) as any);
-      }
+      };
+      const outerCuts = multiWallCutGeometry(
+        multiWallBevelCutsAt(nodeMap, false, true),
+      );
+      if (outerCuts) boundedCurrent = difference(boundedCurrent, outerCuts);
       let local: any = null;
       for (const ray of node.rays) {
         const n = [-ray.u[1], ray.u[0]];
@@ -2151,14 +2175,14 @@ function bevelMultiWallBody(
           local = local ? union(local, piece) : piece;
         }
       }
-      for (const triangle of multiWallBevelCutsAt({
-        ...map,
-        nodes: [node],
-      }, true, true)) {
+      const retainedCuts = multiWallCutGeometry(
+        multiWallBevelCutsAt(nodeMap, true, true),
+      );
+      if (retainedCuts) {
         // Rebuild the physical half-strips first, then remove only their
         // excessive pairwise overlap. Applying this cut to the legacy room
         // ring itself can delete an incident half-strip and strand floor.
-        local = difference(local, closedRing(triangle) as any);
+        local = difference(local, retainedCuts);
       }
       // Rays share a mathematical endpoint. A tiny physical core turns that
       // point contact into a stable polygon contact for boolean/render paths.
@@ -2202,11 +2226,12 @@ function bevelMultiWallPaper(
   map: MultiWallNodeMap,
 ): any {
   let beveled = paper;
-  for (const triangle of multiWallBevelCutsAt(map, true, true)) {
+  const cuts = multiWallCutGeometry(multiWallBevelCutsAt(map, true, true));
+  if (cuts) {
     try {
-      beveled = difference(beveled, closedRing(triangle) as any);
+      beveled = difference(beveled, cuts);
     } catch {
-      // Isolate the failed local cut and retain the rest of the paper.
+      // Retain the uncut paper if the combined local subtraction fails.
     }
   }
   try {

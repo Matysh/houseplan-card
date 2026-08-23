@@ -282,8 +282,8 @@ export const MUTANTS = [
       + 'offset origins recreates the measured white T-junction wedge from #261',
     patches: [{
       file: 'src/wall-thickness.ts',
-      find: '  for (const triangle of multiWallBevelCutsAt(map, true, true)) {',
-      replace: '  for (const triangle of multiWallBevelCutsAt(map, false, true)) {',
+      find: '  const cuts = multiWallCutGeometry(multiWallBevelCutsAt(map, true, true));',
+      replace: '  const cuts = multiWallCutGeometry(multiWallBevelCutsAt(map, false, true));',
     }, {
       file: 'src/wall-thickness.ts',
       find: '      if (envelope) localInside = intersection(localInside, envelope);\n'
@@ -314,14 +314,8 @@ export const MUTANTS = [
       + 'white junction triangles from #272 while the old retained/discarded probes still pass',
     patches: [{
       file: 'src/wall-thickness.ts',
-      find: '      for (const triangle of multiWallBevelCutsAt({\n'
-        + '        ...map,\n'
-        + '        nodes: [node],\n'
-        + '      }, true, true)) {',
-      replace: '      for (const triangle of multiWallBevelCutsAt({\n'
-        + '        ...map,\n'
-        + '        nodes: [node],\n'
-        + '      }, true, false)) {',
+      find: '        multiWallBevelCutsAt(nodeMap, true, true),',
+      replace: '        multiWallBevelCutsAt(nodeMap, true, false),',
     }],
   },
   {
