@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "matrixVersion": 38,
-  "acceptedAt": "2026-08-22T23:47:18.565Z",
-  "sourceFingerprint": "bbcf69875d25a1a6027c2ee32d4863dd63da90cf058cca41d1c29f05acdedd33",
+  "acceptedAt": "2026-08-23T04:38:25.149Z",
+  "sourceFingerprint": "b6743385962efdab9d296be7f0a6624c2d5cba83bf76b5c734e93b5ca25653c9",
   "chromium": "151.0.7922.34",
   "scenarios": {
     "split-corner-wall-before-dark": "3176dc67f54d5309f87c94e1077b4f69eb1db9f660469fbf97953038323430f3",
@@ -61,8 +61,8 @@
     "openings-hidden-view-dark": "19ab4fd2ffce0fea0fe609b007a3e60f7abd84b40935cbf3c5fa9dc1fda21046",
     "lighting-glow-sun-dark": "08e2964df6fd03abad4b9a81f1dbd0fe3812fb6b5f7908aeb027ad2953b2f88c",
     "device-value-badge-positions-dark": "75ab0210d697f952b8a8977649e84308de3ce3b59c84ec93071179a1d6cb015d",
-    "device-icon-state-table-light": "73a51bf46b42869d5c333bb42fa17d7a3570e2c95ebef9cb740f353703433b59",
-    "device-icon-state-table-dark": "7cc888cd2f8f3359cf86171dc7152cc94bea0126b82a4626af4d182c33ea37ce",
+    "device-icon-state-table-light": "85c785824ccafc2d5f50e834ad2d746319d64ecb292d1b9cf7fab8661d5d410d",
+    "device-icon-state-table-dark": "03a90523132c3dbe6c78d44d01fe89df93e2d0474f91ef84e7107e6e4bc7d337",
     "device-text-shell-long-light": "97a113b5164f373b4af2922c8e71bc1f063d8c2761b72c3182697fcb1aac3cab",
     "device-text-shell-long-dark": "c8fe32aced704c7e7562f0c8499183fad848a977063ab731401cc01e7f20ef38",
     "lighting-sun-window-state-only-dark": "4da798c4de6d1303d17be246e9a2e63b12da3f53a42136cf745d1a92ad5a4f21",
