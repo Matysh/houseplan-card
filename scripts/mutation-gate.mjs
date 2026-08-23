@@ -166,6 +166,30 @@ export const MUTANTS = [
     }],
   },
   {
+    id: 'invariant-loses-wall-record',
+    guard: 'node --test --test-name-pattern="исчезнувшая запись толщины" '
+      + 'test/model-invariants.test.mjs',
+    because: 'потеря записи толщины — это дефект #253, найденный человеком глазами; если '
+      + 'инвариант перестанет её замечать, класс вернётся в продукт незамеченным (#254)',
+    patches: [{
+      file: 'scripts/model-invariants.mjs',
+      find: '    if (now === 0) {',
+      replace: '    if (false) {',
+    }],
+  },
+  {
+    id: 'invariant-accepts-dead-space-reference',
+    guard: 'node --test --test-name-pattern="маркер на удалённое пространство" '
+      + 'test/model-invariants.test.mjs',
+    because: 'маркер, привязанный к удалённому пространству, исчезает с плана молча (#244): '
+      + 'проверка ссылок обязана считать это дефектом операции, а не особенностью данных (#254)',
+    patches: [{
+      file: 'scripts/model-invariants.mjs',
+      find: '    if (space && !spaceIds.has(space)) {\n      add(\'marker_space\'',
+      replace: '    if (false) {\n      add(\'marker_space\'',
+    }],
+  },
+  {
     id: 'wall-face-apply-skips-overlap-guard',
     guard: 'node demo/smoke_wall_face_overlap.mjs',
     because: 'вторая проверка при создании — не дубль первой, а defense-in-depth из #173 §10.3: '

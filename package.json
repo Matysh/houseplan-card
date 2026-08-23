@@ -9,6 +9,7 @@
     "watch": "rollup -c --watch",
     "typecheck": "tsc --noEmit",
     "test": "tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/*.test.mjs",
+    "invariants": "node scripts/model-invariants.mjs",
     "docs:accept": "node scripts/docs-accept.mjs",
     "smokes:select": "node scripts/smoke-select.mjs",
     "inventory": "node scripts/inventory.mjs",
