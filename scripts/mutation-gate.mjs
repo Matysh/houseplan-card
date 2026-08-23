@@ -294,6 +294,22 @@ export const MUTANTS = [
         + '      else if (centre) localInside = intersection(localInside, centre);',
       replace: '      if (centre) localInside = intersection(localInside, centre);\n'
         + '      else if (envelope) localInside = intersection(localInside, envelope);',
+    }, {
+      file: 'src/wall-thickness.ts',
+      find: '  return cuts && protectedStrips ? difference(cuts, protectedStrips) : cuts;',
+      replace: '  return cuts;',
+    }, {
+      file: 'src/wall-thickness.ts',
+      find: '      if (protectedStrips) local = union(local, protectedStrips);',
+      replace: '      // protected-strip fail-safe intentionally disabled by the mutant',
+    }, {
+      file: 'src/wall-thickness.ts',
+      find: '  if (protectedStrips) {\n'
+        + '    try {\n'
+        + '      let protectedInside = protectedStrips;',
+      replace: '  if (protectedStrips && false) {\n'
+        + '    try {\n'
+        + '      let protectedInside = protectedStrips;',
     }],
   },
   {
