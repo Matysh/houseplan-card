@@ -625,6 +625,7 @@ test('issue #249 node classification is order, direction and scale independent',
   const cases = [
     { angles: [0, 30, 200], halves: [5, 5, 5], bevel: true },
     { angles: [45, 102, 230], halves: [7, 5, 5], bevel: true },
+    { angles: [45, 102, 230], halves: [1.5, 5, 7], bevel: true },
     { angles: [0, 90, 180, 270], halves: [5, 5, 5, 5], bevel: true },
     { angles: [0, 90, 180, 270], halves: [2, 5, 3, 7], bevel: false },
   ];
@@ -718,7 +719,11 @@ test('issue #249 node classification is order, direction and scale independent',
     );
     assert.equal(fanMap.nodes.length, 1);
     assert.equal(fanMap.nodes[0].rays.length, fixture.angles.length);
-    assert.equal(fan.geometry.geom.length, 1, 'fan wall arms are disconnected');
+    assert.equal(
+      fan.geometry.geom.length,
+      1,
+      `fan ${fixture.angles.join('/')} halves ${fixture.halves.join('/')} wall arms are disconnected`,
+    );
     assertProbeInside(fan.geometry.geom, fan.node, 'fan bevel punched a node hole');
     for (const [rayIndex, ray] of fanMap.nodes[0].rays.entries()) {
       const armPoint = [
@@ -1149,7 +1154,9 @@ test('issue #197 keeps the full masonry when one virtual-junction patch has ULP 
   assert.ok(geometry.geom.length > 0);
   assert.ok(geometry.paperGeom.length > 0);
   // #249 intentionally bevels degree-3+ nodes in this older fixture too.
-  closeTo(geometryArea(geometry.geom), 124495.74029324856, 1e-6);
+  // #249 retains the physical multi-wall overlap up to R instead of reducing
+  // right-angle arms to point contacts.
+  closeTo(geometryArea(geometry.geom), 124512.89263371378, 1e-6);
   closeTo(geometryArea(geometry.paperGeom), 727248.4374999999, 1e-6);
   assert.equal(
     JSON.stringify({ rooms, walls, cuts, openings, extraBodies }), before,
@@ -1512,21 +1519,24 @@ test('Split with both endpoints at exterior vertices bevels both new 3-ray corne
   assert.equal(map.nodes.length, 2);
 });
 
-test('corner Split clean-floor contours use the same bounded bevel endpoints', () => {
+test('corner Split clean floors equal room union minus canonical bounded walls', () => {
   const fixture = cornerSplitFixture({ dividerCm: 100 });
   const floors = fixture.rooms.map((room) => innerContourForRoom(
     fixture.rooms, room.id, fixture.walls, [], pitch, cellCm, GRID_PITCH,
   ));
   assert.ok(floors.every(Boolean));
-  const map = assertBoundedMultiWallBevels(
-    fixture.rooms, fixture.walls, fixture.after,
-  );
-  const boundedEndpoints = multiWallBevelTriangles(map)
-    .flatMap((triangle) => triangle.slice(0, 2));
-  for (const endpoint of boundedEndpoints) {
-    assert.ok(floors.some((floor) => floor.some((point) =>
-      Math.hypot(point[0] - endpoint[0], point[1] - endpoint[1]) < 1e-7)),
-    `clean-floor contours lost bevel endpoint ${endpoint}`);
+  const actual = union(...floors.map((floor) => closedGeometry(floor)));
+  const expected = difference(closedGeometry(fixture.original.poly), fixture.after.geom);
+  const extra = geometryDifferenceArea(actual, expected);
+  const missing = geometryDifferenceArea(expected, actual);
+  assert.ok(extra <= 1e-7 && missing <= 1e-7,
+    `floor mismatch extra=${extra} missing=${missing} floors=${JSON.stringify(floors)}`);
+  for (const floor of floors) {
+    for (const point of floor) {
+      assert.ok(point[0] >= 100 - 1e-7 && point[0] <= 900 + 1e-7
+        && point[1] >= 100 - 1e-7 && point[1] <= 700 + 1e-7,
+      `clean floor escaped the source building: ${point}`);
+    }
   }
 });
 

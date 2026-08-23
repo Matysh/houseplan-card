@@ -78,10 +78,21 @@ At a physical node with **three or more distinct incident rays**, the stricter
 multi-wall rule applies (#249). Shared room ownership and reversed interval
 direction do not create extra rays. One structural node map records the largest
 incident half-depth `H`; every excessive join is cut back with a straight local
-bevel and may not extend beyond `R = 1.25 × H`. The node centre and each wall arm
-remain masonry, so the bevel cannot create a floor pinhole. Ordinary two-ray
-corners retain the exact historical `MITRE_LIMIT = 4` contract. This is computed
-geometry only: saved room outlines and wall entries are not rewritten.
+bevel and may not extend beyond `R = 1.25 × H`. Inside the room union, a bounded
+mask replaces the legacy ring with the complete finite ray strips, retains their
+overlap through `R`, and removes only the remaining excessive pairwise wedge.
+Outside the room union, the established full facade cut is preserved. This keeps
+the node centre and every arm area-connected without allowing an interior child
+mitre to change a concave facade. Ordinary two-ray corners retain the exact
+historical `MITRE_LIMIT = 4` contract. This is computed geometry only: saved room
+outlines and wall entries are not rewritten.
+
+Clean-floor consumers subtract the cached, repaired canonical room masonry from
+their source room and take its outer component. The result is clipped to the
+source room on fallback. Openings and independent partitions are deliberately
+excluded from this shared `roomGeom`, so a door does not change the room fill
+and a detached body cannot punch it. Full and Static render paths reuse the same
+structural cache instead of rebuilding wall booleans once per room.
 
 **Hatch density is physical (#230).** The pattern step is a distance on the
 plan, not a count of coordinate units: `wallHatchStepUnits(cellCm)` returns
@@ -150,9 +161,10 @@ patches. This fallback never rounds persisted rooms, walls or open spans to the
 grid and never turns a failure of the mandatory exterior/body/opening passes
 into a successful result. One noisy junction therefore cannot remove otherwise
 valid masonry, paper, floor faces or light barriers for the whole space (#197).
-The same failure isolation covers the degree-3+ bevel cuts: malformed candidates
-are skipped locally, and an aggregate boolean failure retries valid cuts one at
-a time instead of reverting every multi-wall node.
+The same failure isolation covers degree-3+ repair: every node is rebuilt and
+committed independently inside its bounded mask. A malformed local candidate
+therefore keeps that node's previous body without reverting successful repairs
+at unrelated nodes.
 
 Runtime normalisation remains lossless for every positive exact thickness
 interval, regardless of its length. The explicit **Optimize plans** maintenance

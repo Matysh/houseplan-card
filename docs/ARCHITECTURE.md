@@ -428,10 +428,17 @@ uses `H = max(incident half-depth)` and clips excessive overlap to a straight
 bevel bounded by `1.25 × H`; degree-2 joins keep the legacy `MITRE_LIMIT = 4`.
 The final bevel is applied to canonical masonry after its room/atomic/exterior
 union, preventing later boolean inputs from recreating the discarded spike.
-Paper re-unions the room centre footprint after the same cut so an interior
-bevel exposes clean floor rather than scene background. Full, Static, hidden
-Iso, room fills/hover, clean-floor calculations and light barriers therefore
-observe the same topology, and cached HA/theme ticks do not rebuild the map.
+Canonical masonry replaces each affected local mask with complete physical ray
+strips clipped to the room union, retains overlap through the approved radius,
+and preserves the established full exterior cut outside the room union. This
+prevents the repair from deleting half an incident strip or changing a concave
+facade. Paper re-unions the room centre footprint after its facade cut.
+`wallBodiesGeometry.roomGeom` caches this repaired room masonry before openings
+and independent bodies; clean-floor consumers subtract it from each source room
+and clip their fallback, so fill cannot escape the building or silently drop a
+floor pocket. Full, Static, hidden Iso, room fills/hover and light barriers
+therefore observe the same topology, and cached HA/theme ticks do not rebuild
+the map.
 Before the exterior offset is built, each saved atomic endpoint splits its
 containing collinear union edge. Offset changes are explicit butt steps at that
 endpoint, including nonzero-to-zero transitions. The topology tolerance starts

@@ -58,8 +58,8 @@ const result = await page.evaluate(async (source) => {
   const planD = path?.getAttribute('d') || '';
   const canonical = card._wallUnionGeometry();
   const node = new DOMPoint(source.node[0] * 1000, source.node[1] * 1000);
-  // Midpoint between the approved bevel and the old 1.80×H mitre.
-  const discardedWedge = new DOMPoint(330.0011713041353, 146.99331561935776);
+  // Midpoint between the R-bounded straight bevel and the old 1.80×H mitre.
+  const discardedWedge = new DOMPoint(330.3808442725, 148.8560107825);
   out.fixtureLoaded = card._spaceModel()?.rooms.length === 2
     && card._spaceWalls.length === 7;
   out.planUsesCanonicalPath = !!planD && canonical?.d === planD;

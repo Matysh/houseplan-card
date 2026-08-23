@@ -11621,6 +11621,7 @@ class HouseplanCard extends LitElement {
       space.rooms.map((room) => [room, roomPoly(room)]),
     );
     const openCuts = this._openPairs().flatMap((pair) => pair.segs);
+    const roomWalls = this._wallUnionGeometry()?.roomGeom;
     const pathD = (points: number[][]) =>
       'M ' + points.map((point) => point[0] + ' ' + point[1]).join(' L ') + ' Z';
     const shapes = space.rooms.map((room) => {
@@ -11631,6 +11632,7 @@ class HouseplanCard extends LitElement {
         ? (innerContourForRoom(
             space.rooms, room.id, this._spaceWalls, openCuts,
             this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
+            roomWalls,
           ) || ownPoly)
         : ownPoly;
       const otherPolys = space.rooms
@@ -11825,10 +11827,12 @@ class HouseplanCard extends LitElement {
       ? pairs.filter((p) => p.a.id === room.id || p.b.id === room.id).flatMap((p) => p.segs)
       : pairs.flatMap((p) => p.segs);
     const walls = this._spaceWalls;
+    const roomWalls = this._wallUnionGeometry()?.roomGeom;
     const floor = walls.length && room.id
       ? (innerContourForRoom(
           space.rooms, room.id, walls, allOpenCuts,
           this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
+          roomWalls,
         ) || poly)
       : poly;
     const contours: { axis: number[][]; face: number[][] }[] = [{ axis: poly, face: floor }];
@@ -14768,11 +14772,13 @@ class HouseplanCard extends LitElement {
       const openingWallIndex = this._openingWallIndexFor(space, openCuts).value;
       const innerByRoom: Record<string, number[][]> = {};
       const wallDepthByOpening: Record<string, number> = {};
+      const roomWalls = this._wallUnionGeometry()?.roomGeom;
       if (walls.length) {
         for (const r of rooms) {
           const inn = innerContourForRoom(
             space.rooms, r.id, walls, openCuts,
             this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
+            roomWalls,
           );
           if (inn) innerByRoom[r.id] = inn;
         }
@@ -15927,11 +15933,13 @@ class HouseplanCard extends LitElement {
     const openCuts = enabled.length === polys.length
       ? []
       : this._openPairs().flatMap((pair) => pair.segs);
+    const roomWalls = this._wallUnionGeometry()?.roomGeom;
     const enabledClip = enabled.length === polys.length ? null : enabled.map(({ r, poly }) => {
       const floorPoly = walls.length && r.id
         ? (innerContourForRoom(
             space.rooms, r.id, walls, openCuts,
             this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
+            roomWalls,
           ) || poly)
         : poly;
       const clean = this._cleanFloor(r, floorPoly, space).path;
@@ -16772,6 +16780,7 @@ class HouseplanCard extends LitElement {
                     space.rooms, r.id, walls,
                     this._openPairs().flatMap((p) => p.segs),
                     this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
+                    this._wallUnionGeometry()?.roomGeom,
                   ) || myPoly)
                 : myPoly;
               const holes = fillPoly ? islandsOf(fillPoly, otherPolys(r)) : [];
@@ -17933,6 +17942,7 @@ class HouseplanCard extends LitElement {
           space.rooms, r.id, walls,
           this._openPairs().flatMap((p) => p.segs),
           this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
+          this._wallUnionGeometry()?.roomGeom,
         ) || poly)
       : poly;
     const clean = this._cleanFloor(r, floor);
