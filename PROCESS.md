@@ -542,6 +542,7 @@ node scripts/smoke-select.mjs --base origin/dev --head HEAD   # какие см�
 node demo/smoke_<целевые>.mjs
 npm run golden:verify                 # если менялся визуал
 node scripts/check-docs.mjs           # если менялся src/**
+node scripts/model-invariants.mjs --config <экспорт>   # если правилась геометрия или ссылки
 python -m pytest tests_backend -q     # py3.13, если менялся бэкенд
 ```
 
