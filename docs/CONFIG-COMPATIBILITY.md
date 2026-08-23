@@ -75,6 +75,17 @@ Consequently the normal commit, durable pending recovery, update-event reload
 and a cold read all converge on one JSON value set; feeding any of them back to
 Optimize is a no-op (#248).
 
+Wall-thickness compatibility keys use the same boundary without depending on
+which side of it produced the key (#258). A `wallKey` endpoint already within
+`max(pitch · 10⁻⁶, 10⁻⁹)` of a grid node is treated as that exact node before
+midpoint quantisation, so `83/240` and persisted `0.345833333` identify one
+stretch. Existing entries whose old midpoint key landed one grid step away are
+read immediately by strict equality of their lossless `a/b` endpoint pair;
+read does not rewrite config and does not broaden parent/child matching.
+Explicit Optimize rewrites the compatibility key, retains `cm`, endpoints and
+unknown siblings, and its next in-memory or backend storage round-trip is a
+no-op. Legacy key-only records continue through the previous midpoint fallback.
+
 ## Open-passage opening type (#157)
 
 `space.openings[].type` additionally accepts the literal `passage`. Its

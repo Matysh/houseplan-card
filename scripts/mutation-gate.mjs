@@ -206,6 +206,45 @@ export const MUTANTS = [
     }],
   },
   {
+    id: 'wall-key-storage-normalization-disabled',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="issue 258 wallKey" '
+      + 'test/wall-thickness.test.mjs',
+    because: 'one grid endpoint has exact and nine-decimal storage forms; keying their midpoint '
+      + 'without first stabilising the endpoints recreates the one-grid-step key fork from #258',
+    patches: [{
+      file: 'src/wall-thickness.ts',
+      find: '  return Math.abs(snapped - v) <= keyEpsilon(pitch) ? snapped : v;',
+      replace: '  return v;',
+    }],
+  },
+  {
+    id: 'wall-exact-span-fallback-disabled',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="issue 258 exact-span" '
+      + 'test/wall-thickness.test.mjs',
+    because: 'already affected plans must resolve the same physical a/b span immediately even '
+      + 'when their persisted midpoint key is on the other side of the rounding tie (#258)',
+    patches: [{
+      file: 'src/wall-thickness.ts',
+      find: '  const exactEps = keyEpsilon(pitch) * scale;',
+      replace: '  const exactEps = -1;',
+    }],
+  },
+  {
+    id: 'invariant-wall-key-storage-normalization-disabled',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="копия wallKey" '
+      + 'test/model-invariants.test.mjs',
+    because: 'the raw-model invariant keeps a deliberate copy of production wallKey; if its '
+      + 'storage-noise normalisation drifts, the diagnostic and runtime disagree again (#258)',
+    patches: [{
+      file: 'scripts/model-invariants.mjs',
+      find: '  return Math.abs(snapped - value) <= keyEpsilon(pitch) ? snapped : value;',
+      replace: '  return value;',
+    }],
+  },
+  {
     id: 'unit-formatting-escapes-the-formatter',
     guard: 'node --test --test-name-pattern="детектор действительно ловит" '
       + 'test/single-source-numbers.test.mjs',
@@ -232,39 +271,26 @@ export const MUTANTS = [
   },
   {
     id: 'invariant-keys-cry-wolf',
-    guard: 'node --test --test-name-pattern="ушедший на шаг решётки" '
+    guard: 'node --test --test-name-pattern="старый и неразбираемый compatibility key" '
       + 'test/model-invariants.test.mjs',
-    because: 'запись, ушедшую на полшага, продукт НАХОДИТ — измерено на двух конфигах '
-      + 'владельца с побайтово одинаковыми телами стен; объявить это нарушением значит '
-      + 'покрасить исправный план, а такую проверку отключают первой (#258)',
+    because: 'valid exact endpoints prove the same physical span before every legacy key '
+      + 'fallback; calling a stale or unparsable index a violation would cry wolf (#258)',
     patches: [{
       file: 'scripts/model-invariants.mjs',
-      find: '      if (steps > 0.5 + 1e-3) {',
-      replace: '      if (steps > 0) {',
+      find: "      notes.push({ invariant: 'wall_keys', kind: 'stale_wall_key', owner,",
+      replace: "      violations.push({ invariant: 'wall_keys', kind: 'stale_wall_key', owner,",
     }],
   },
   {
-    id: 'invariant-keys-tolerate-any-drift',
-    guard: 'node --test --test-name-pattern="дальше терпимого запаса" '
+    id: 'invariant-keys-hide-stale-observation',
+    guard: 'node --test --test-name-pattern="старый и неразбираемый compatibility key" '
       + 'test/model-invariants.test.mjs',
-    because: 'ключ, ушедший дальше полшага, не находит ни точное совпадение, ни запас — '
-      + 'если проверка это пропустит, запись толщины молча перестанет существовать',
+    because: 'a mismatched compatibility key is repairable data debt; hiding the observation '
+      + 'would make Optimize repair invisible and let the two representations accumulate (#258)',
     patches: [{
       file: 'scripts/model-invariants.mjs',
-      find: '      if (steps > 0.5 + 1e-3) {',
-      replace: '      if (false) {',
-    }],
-  },
-  {
-    id: 'invariant-keys-accept-a-label',
-    guard: 'node --test --test-name-pattern="не разбирается как координаты" '
-      + 'test/model-invariants.test.mjs',
-    because: 'метка вместо ключа (perf-wall-0-3 в перф-фикстуре, #260) оставляет все 80 '
-      + 'сплошных рёбер без толщины: проверка обязана отличать её от сдвига на полшага',
-    patches: [{
-      file: 'scripts/model-invariants.mjs',
-      find: '      if (!stored) {',
-      replace: '      if (false) {',
+      find: '      if (wall.key === expected) continue;',
+      replace: '      continue;',
     }],
   },
   {

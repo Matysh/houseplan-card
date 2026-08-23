@@ -170,6 +170,102 @@ test('wallKey changes when the wall moves by one grid step', () => {
   assert.notEqual(wallKey(a, b, pitch), wallKey(a2, b2, pitch));
 });
 
+test('issue 258 wallKey survives the nine-decimal storage round-trip', () => {
+  const cases = [
+    [[0.8875, 0.05], [0.8875, 83 / 240], [0.8875, 0.05], [0.8875, 0.345833333]],
+    [[235 / 240, 83 / 240], [235 / 240, 0.55], [0.979166667, 0.345833333], [0.979166667, 0.55]],
+    [[-83 / 240, -12 / 240], [-83 / 240, -47 / 240], [-0.345833333, -0.05], [-0.345833333, -0.195833333]],
+    [[12 / 240, 7 / 240], [48 / 240, 7 / 240], [0.05, 0.029166667], [0.2, 0.029166667]],
+  ];
+  for (const [exactA, exactB, storedA, storedB] of cases) {
+    const exact = wallKey(exactA, exactB, pitch);
+    assert.equal(wallKey(storedA, storedB, pitch), exact);
+    assert.equal(wallKey(storedB, storedA, pitch), exact);
+  }
+  assert.notEqual(wallKey([0, 0], [pitch - pitch * 2e-6, 0], pitch),
+    wallKey([0, 0], [pitch, 0], pitch), 'coordinates beyond key epsilon are not snapped');
+});
+
+test('issue 258 exact-span lookup repairs either persisted key without leaking', () => {
+  const a = [0.8875, 0.05], b = [0.8875, 0.345833333];
+  const exactA = [213 / 240, 12 / 240], exactB = [213 / 240, 83 / 240];
+  const canonical = wallKey(exactA, exactB, pitch);
+  const affected = canonical.replace(',0.200000@', ',0.195833@');
+  for (const key of [canonical, affected]) {
+    const walls = [{ key, cm: 29, a, b }];
+    assert.equal(lookupWall(walls, exactA, exactB, pitch)?.cm, 29);
+    assert.equal(lookupWall(walls, exactB, exactA, pitch)?.cm, 29);
+    assert.equal(thicknessCmAt(walls, exactA, exactB, pitch), 29);
+  }
+
+  const unrelated = [
+    { key: 'broken-parent', cm: 31, a: [0.8875, 0], b: [0.8875, 0.4] },
+    { key: 'broken-child', cm: 32, a: [0.8875, 0.05], b: [0.8875, 0.2] },
+    { key: 'broken-neighbour', cm: 33, a: [0.8875 + pitch, 0.05], b: [0.8875 + pitch, 0.345833333] },
+    { key: 'broken-parallel', cm: 34, a: [0.05, 0.8875], b: [0.345833333, 0.8875] },
+  ];
+  assert.equal(lookupWall(unrelated, exactA, exactB, pitch), null);
+
+  const scale = 1000;
+  const renderA = exactA.map((v) => v * scale), renderB = exactB.map((v) => v * scale);
+  const renderWalls = [{ key: affected, cm: 29, a, b }];
+  assert.equal(lookupWall(renderWalls, renderA, renderB, pitch, scale)?.cm, 29);
+  assert.equal(thicknessCmAt(renderWalls, renderA, renderB, pitch, scale), 29);
+});
+
+test('issue 258 repaired span reaches intervals, junction nodes and masonry', () => {
+  const scale = NORM_W;
+  const node = [213 / 240 * scale, 83 / 240 * scale];
+  const rooms = [
+    { id: 'lower', poly: [
+      [0.75 * scale, 12 / 240 * scale],
+      [213 / 240 * scale, 12 / 240 * scale],
+      node,
+      [0.75 * scale, 83 / 240 * scale],
+    ] },
+    { id: 'upper', poly: [
+      [0.75 * scale, 83 / 240 * scale],
+      [0.95 * scale, 83 / 240 * scale],
+      [0.95 * scale, 0.5 * scale],
+      [0.75 * scale, 0.5 * scale],
+    ] },
+  ];
+  let walls = setWallThicknessForRoom([], rooms, 'lower', 20, pitch, [], scale);
+  walls = setWallThicknessForRoom(walls, rooms, 'upper', 20, pitch, [], scale);
+  const a = [0.8875, 0.05], b = [0.8875, 0.345833333];
+  const target = walls.findIndex((wall) => (
+    wall.a && wall.b
+    && Math.abs(wall.a[0] - a[0]) < 1e-9 && Math.abs(wall.b[0] - b[0]) < 1e-9
+  ));
+  assert.ok(target >= 0, 'fixture must contain the affected vertical wall');
+  walls[target] = { key: '0.887500,0.195833@1.5706', cm: 29, a, b };
+
+  const intervals = wallIntervals(rooms, walls, [], pitch, cellCm, GRID_PITCH, scale);
+  const affected = intervals.find((interval) => (
+    Math.abs(interval.a[0] - node[0]) < 1e-6
+    && Math.abs(interval.b[0] - node[0]) < 1e-6
+    && Math.min(interval.a[1], interval.b[1]) < node[1] - 1
+    && Math.max(interval.a[1], interval.b[1]) >= node[1] - 1e-6
+  ));
+  assert.equal(affected?.cm, 29);
+
+  const nodes = buildMultiWallNodeMap(intervals, pitch * scale * 0.04 * 4, scale);
+  const junction = nodes.nodes.find((candidate) => (
+    Math.hypot(candidate.point[0] - node[0], candidate.point[1] - node[1]) < 1e-6
+  ));
+  assert.ok(junction && junction.rays.length >= 3);
+  assert.ok(junction.rays.some((ray) => (
+    Math.abs(ray.halfDepth - wallCmToUnits(29, cellCm, GRID_PITCH) / 2) < 1e-9
+    && Math.abs(ray.u[0]) < 1e-9 && ray.u[1] < -0.999
+  )), `multi-wall node lost the affected incident wall: ${JSON.stringify(junction.rays)}`);
+
+  const geometry = wallBodiesGeometry(
+    rooms, walls, [], [], pitch, cellCm, GRID_PITCH, scale,
+  );
+  assert.ok(geometry);
+  assertProbeInside(geometry.geom, node, 'the affected T-node contains a white wedge');
+});
+
 test('lookupWall finds an entry and thicknessCmAt reads it', () => {
   const a = [0.1, 0.2], b = [0.4, 0.2];
   const walls = [{ key: wallKey(a, b, pitch), cm: 20 }];

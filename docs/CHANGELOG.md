@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Thick-wall T-junctions no longer develop white wedges after “Optimize
+  plans”. Wall identity now stays stable when an exact `1/240` grid endpoint is
+  persisted with nine decimal places, and already affected records are read by
+  their exact endpoint pair without broadening legacy midpoint matching.
+  Optimize canonically repairs the stored key and remains a no-op after reload
+  ([#258](https://github.com/Matysh/houseplan-card/issues/258)).
+
 ## v1.67.0-beta.4 — 2026-08-23
 
 - Resizing a room no longer turns a thick wall into a thin centreline when the

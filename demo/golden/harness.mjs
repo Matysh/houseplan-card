@@ -8,6 +8,9 @@ const junctionPatchFixture = JSON.parse(readFileSync(
 const multiWallJunctionFixture = JSON.parse(readFileSync(
   new URL('../../test/fixtures/249-multiwall-junction.json', import.meta.url), 'utf8',
 ));
+const wallKeyRoundtripFixture = JSON.parse(readFileSync(
+  new URL('../../test/fixtures/258-wall-key-roundtrip.json', import.meta.url), 'utf8',
+));
 
 const fixtureFor = (scenario) => scenario.fixture === 'large'
   ? makeLargeHouseFixture()
@@ -179,6 +182,20 @@ export function prepareGoldenFixture(scenario) {
         fill_mode: 'none', show_borders: true, show_names: false,
       },
     });
+  }
+  if (scenario.wallKeyRoundtrip) {
+    const contract = scenario.wallKeyRoundtrip;
+    const validPoint = (point) => Array.isArray(point) && point.length === 2
+      && point.every(Number.isFinite);
+    if (contract.variant !== 'affected' || !validPoint(contract.node)
+        || !validPoint(contract.incidentArm)) {
+      throw new Error(`invalid golden wallKeyRoundtrip: ${scenario.id}`);
+    }
+    const space = structuredClone(wallKeyRoundtripFixture.space);
+    space.id = scenario.space;
+    space.title = 'Wall key storage round-trip';
+    space.walls[0].key = wallKeyRoundtripFixture.affected_key;
+    fixture.config.spaces.push(space);
   }
   if (scenario.openingSymbolContract) {
     const contract = scenario.openingSymbolContract;
@@ -543,6 +560,14 @@ export async function prepareGoldenScenario(page, scenario) {
       if (!wall?.isPointInFill?.(at(node))
           || wall.isPointInFill(at(discardedWedgeProbe))) {
         throw new Error(`golden multi-wall bevel contract failed: ${scenario.id}`);
+      }
+    }
+    if (scenario.wallKeyRoundtrip) {
+      const { node, incidentArm } = scenario.wallKeyRoundtrip;
+      const wall = card.renderRoot.querySelector('[data-hp="wall"]');
+      const at = (point) => new DOMPoint(point[0] * 1000, point[1] * card._spaceH);
+      if (!wall?.isPointInFill?.(at(node)) || !wall.isPointInFill(at(incidentArm))) {
+        throw new Error(`golden wall-key round-trip contract failed: ${scenario.id}`);
       }
     }
     if (scenario.roomLabelParity) {

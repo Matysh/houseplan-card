@@ -494,7 +494,14 @@ resize axes or free rotation), but it cannot create off-grid coordinates.
 
 Room Resize keeps its live geometry in an immutable-snapshot overlay. Modern
 wall-thickness entries use exact `a/b` endpoints as identity; their quantised
-midpoint/direction `key` is only a compatibility index. When a moved polygon
+midpoint/direction `key` is only a compatibility index. `wallKey()` stabilises
+endpoint coordinates already within storage precision of a grid node before
+quantising the midpoint, so exact and nine-decimal forms of the same node have
+one index. Resolution prefers exact key, then strict endpoint-pair identity,
+then the legacy midpoint fallback; containment is intentionally excluded from
+the identity step and remains an explicit parent-run compatibility path. This
+lets every structural consumer repair an affected record on read without
+mutating config, while explicit Optimize rewrites the stable index. When a moved polygon
 edge overlaps only part of a longer entry, `rekeyWallsAfterMove()` partitions
 the source interval at all overlap endpoints, maps only covered atoms and
 retains the rest. Exact geometry plus `cm`, never key alone, defines a duplicate.

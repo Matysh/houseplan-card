@@ -2664,6 +2664,18 @@ require hands on real hardware — they remain for the human pass.
       compatibility-key collision cannot erase either result
       [auto: smoke_wall_thickness + smoke_resize_virtual_thick +
       smoke_resize_wall_thickness + test/wall-thickness.test.mjs + mutation-gate]
+- [ ] **Wall key survives storage round-trip (#258)**: exact grid endpoints and
+      their nine-decimal stored form produce one midpoint key, including odd
+      and even lengths, negative/reversed coordinates and render-space scale.
+      Both known persisted key variants resolve the same exact span immediately
+      without accepting a parent, child, neighbour or parallel wall. The
+      affected T-node stays filled in Plan, View, kiosk, Static and hidden Iso;
+      clean-floor and light barriers use the same masonry. Explicit Optimize
+      rewrites the stable key and the next in-memory/backend echo is a no-op
+      [unit: test/wall-thickness.test.mjs + test/plan-optimizer.test.mjs +
+      test/model-invariants.test.mjs; auto: smoke_wall_key_roundtrip; golden:
+      wall-key-roundtrip-view-dark; mutation: wall-key-storage-normalization-disabled +
+      wall-exact-span-fallback-disabled + invariant-wall-key-storage-normalization-disabled].
 - [ ] **Virtual T-junction**: when two real thick arms from different room
       contours meet at an `open_span` endpoint, the outside corner is a clean
       mitre with no stair-step. In every editor the saved dash and the two-click

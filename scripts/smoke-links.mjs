@@ -28,6 +28,14 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    // #258: the browser sees only the resulting path/caches; it cannot call
+    // the pure identity helpers by name through the production bundle.
+    symbols: ['wallKey', 'lookupWall', 'canonicalKeyCoordinate', 'keyEpsilon'],
+    smokes: ['smoke_wall_key_roundtrip.mjs'],
+    because: 'the affected and canonical midpoint keys must produce the same T-junction in '
+      + 'Plan, View, kiosk, Static, hidden Iso, clean-floor and light-barrier consumers',
+  },
+  {
     // #253: the pure interval transformer is invoked inside the resize preview;
     // the smoke can observe only the resulting wall records and rendered body.
     symbols: [

@@ -149,6 +149,22 @@ function q(v: number, pitch: number): number {
   return Math.round(v / pitch) * pitch;
 }
 
+/** Storage-noise tolerance used only to stabilise wall identity near a node. */
+function keyEpsilon(pitch: number): number {
+  return Math.max(Math.abs(pitch) * 1e-6, 1e-9);
+}
+
+/**
+ * Treat a coordinate already within storage precision of a grid node as that
+ * exact node. Arbitrary off-grid geometry remains off-grid: this is identity
+ * canonicalisation, not an implicit geometry snap.
+ */
+function canonicalKeyCoordinate(v: number, pitch: number): number {
+  if (!(pitch > 0) || !Number.isFinite(v)) return v;
+  const snapped = q(v, pitch);
+  return Math.abs(snapped - v) <= keyEpsilon(pitch) ? snapped : v;
+}
+
 /**
  * Direction of a wall, modulo 180° (a wall is the same from either end),
  * as a unit vector with a stable sign (prefer +x, then +y).
@@ -169,9 +185,11 @@ export function wallDir(a: number[], b: number[]): [number, number] {
  * survives whole-grid moves when re-keyed by the resize commit.
  */
 export function wallKey(a: number[], b: number[], pitch: number): string {
-  const mx = q((a[0] + b[0]) / 2, pitch);
-  const my = q((a[1] + b[1]) / 2, pitch);
-  const [dx, dy] = wallDir(a, b);
+  const ca = [canonicalKeyCoordinate(a[0], pitch), canonicalKeyCoordinate(a[1], pitch)];
+  const cb = [canonicalKeyCoordinate(b[0], pitch), canonicalKeyCoordinate(b[1], pitch)];
+  const mx = q((ca[0] + cb[0]) / 2, pitch);
+  const my = q((ca[1] + cb[1]) / 2, pitch);
+  const [dx, dy] = wallDir(ca, cb);
   // angle bucket: round to ~0.1° so float noise does not fork keys
   let ang = Math.atan2(dy, dx);
   if (ang < 0) ang += Math.PI;
@@ -266,8 +284,22 @@ export function lookupWall(
   const want = keyOf(a, b, pitch, coordScale);
   const hit = walls.find((w) => w.key === want);
   if (hit) return hit;
-  // tolerant fallback: same direction bucket, midpoint within half pitch (norm)
+  // A lossless entry can prove that it names this exact physical stretch even
+  // when an older midpoint key landed on the other side of a rounding tie.
+  // This is deliberately same-span only: parent containment remains the
+  // separate exactCoveringWall/cmsForPoly compatibility contract.
   const scale = coordScale > 0 ? coordScale : 1;
+  const exactEps = keyEpsilon(pitch) * scale;
+  const closePoint = (x: number[], y: number[]): boolean => (
+    Math.abs(x[0] - y[0]) <= exactEps && Math.abs(x[1] - y[1]) <= exactEps
+  );
+  for (const wall of walls) {
+    const span = entrySpan(wall, scale);
+    if (!span) continue;
+    if ((closePoint(span[0], a) && closePoint(span[1], b))
+        || (closePoint(span[0], b) && closePoint(span[1], a))) return wall;
+  }
+  // tolerant fallback: same direction bucket, midpoint within half pitch (norm)
   const mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
   const ang = segAngle(a, b);
   const tol = Math.max(pitch * 0.5, 1e-9) * scale;

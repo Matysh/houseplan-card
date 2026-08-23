@@ -143,6 +143,7 @@ test('golden matrix covers required geometry, rendering and adaptive surfaces', 
     'isometric-live-layers', 'isometric-no-borders', 'isometric-touch-kiosk',
     'isometric-large-warm-remount', 'split-corner-wall', 'plan-snap-endpoint',
     'plan-snap-line-gaps', 'wall-junctions', 'isometric-wall-junctions',
+    'wall-key-roundtrip',
     'washer-active-cycle', 'washer-idle-cycle', 'space-tab-drop-before',
     'space-tab-drop-after', 'decor-over-opaque-hover',
     'decor-over-glow-base'])
@@ -321,7 +322,7 @@ test('sun-ray golden requires browser-painted light from a state-only sun entity
   assert.ok(scenario);
   const fixture = prepareGoldenFixture(scenario);
   const space = fixture.config.spaces.find((item) => item.id === scenario.space);
-  assert.equal(GOLDEN_MATRIX_VERSION, 39);
+  assert.equal(GOLDEN_MATRIX_VERSION, 40);
   assert.equal(space.settings.sun_rays, true);
   assert.equal(scenario.northDeg, 90,
     'the sign-sensitive golden must keep a non-zero north direction');
@@ -398,6 +399,22 @@ test('issue #249 golden isolates a bounded physical three-ray bevel', () => {
     Math.hypot(point[0] - space.node[0], point[1] - space.node[1]) < 1e-8
   )));
   assert.equal(endpointRays.length >= scenario.multiWallJunction.rays, true);
+  assert.equal(space.settings.show_borders, true);
+});
+
+test('issue #258 golden renders the affected persisted key at its T-junction', () => {
+  const scenario = GOLDEN_SCENARIOS.find(
+    (item) => item.id === 'wall-key-roundtrip-view-dark',
+  );
+  assert.ok(scenario);
+  assert.equal(scenario.mode, 'view');
+  assert.equal(scenario.theme, 'dark');
+  assert.equal(scenario.wallKeyRoundtrip.variant, 'affected');
+  const fixture = prepareGoldenFixture(scenario);
+  const space = fixture.config.spaces.find((item) => item.id === scenario.space);
+  assert.ok(space);
+  assert.equal(space.walls[0].key, '0.887500,0.195833@1.5706');
+  assert.deepEqual(scenario.wallKeyRoundtrip.node, [0.8875, 0.345833333]);
   assert.equal(space.settings.show_borders, true);
 });
 

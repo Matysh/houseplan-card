@@ -202,6 +202,13 @@ export function checkWallRecordsPreserved(before, after, { allowClear = false } 
 const quantise = (value, pitch) => (!(pitch > 0) || !Number.isFinite(value)
   ? value : Math.round(value / pitch) * pitch);
 
+const keyEpsilon = (pitch) => Math.max(Math.abs(pitch) * 1e-6, 1e-9);
+const canonicalKeyCoordinate = (value, pitch) => {
+  if (!(pitch > 0) || !Number.isFinite(value)) return value;
+  const snapped = quantise(value, pitch);
+  return Math.abs(snapped - value) <= keyEpsilon(pitch) ? snapped : value;
+};
+
 const segmentDirection = (a, b) => {
   let dx = b[0] - a[0], dy = b[1] - a[1];
   const length = Math.hypot(dx, dy);
@@ -212,9 +219,11 @@ const segmentDirection = (a, b) => {
 };
 
 export function wallKey(a, b, pitch = GRID_STEP_N) {
-  const mx = quantise((a[0] + b[0]) / 2, pitch);
-  const my = quantise((a[1] + b[1]) / 2, pitch);
-  const [dx, dy] = segmentDirection(a, b);
+  const ca = [canonicalKeyCoordinate(a[0], pitch), canonicalKeyCoordinate(a[1], pitch)];
+  const cb = [canonicalKeyCoordinate(b[0], pitch), canonicalKeyCoordinate(b[1], pitch)];
+  const mx = quantise((ca[0] + cb[0]) / 2, pitch);
+  const my = quantise((ca[1] + cb[1]) / 2, pitch);
+  const [dx, dy] = segmentDirection(ca, cb);
   let angle = Math.atan2(dy, dx);
   if (angle < 0) angle += Math.PI;
   const bucket = Math.round(angle * 1800) / 1800;
@@ -231,34 +240,17 @@ export function keyMidpoint(key) {
 }
 
 /**
- * Инвариант 3: ключ записи толщины опознаёт своё же ребро (#258, #259).
+ * Диагностика совместимого ключа записи толщины (#258, #259).
  *
- * Что здесь измерено, а не предположено. Продукт ищет запись по ключу,
- * посчитанному от координат ребра **как они лежат в конфигурации** —
- * `keyOf(a, b, pitch, coordScale)` в `lookupWall`. Проверено исполнением на
- * экспортах владельца: `wallIntervals` даёт для спорного ребра ключ запроса
- * `0.887500,0.195833@1.5706`, то есть форму от сырых концов. Первая редакция
- * этой проверки сверяла с концами, приведёнными к узлам решётки, и была
- * неверна: на решёточную форму продукт не смотрит нигде.
- *
- * Отсюда две степени, а не одна. `lookupWall` после промаха по строке даёт
- * терпимый запас — полшага решётки по середине при совпадении направления:
- *
- *   - расхождение в пределах запаса — НАБЛЮДЕНИЕ. Запись находится, план
- *     рисуется верно. Проверено: два конфига владельца, различающиеся ровно
- *     такими ключами, дают побайтово одинаковые тела стен. Объявить это
- *     нарушением значит покрасить здоровый план — а проверка с ложными
- *     срабатываниями отключается первой;
- *   - расхождение больше запаса либо ключ, который вообще не разбирается как
- *     координаты, — НАРУШЕНИЕ. Такую запись не находит ни точное совпадение,
- *     ни запас. Ровно это происходит с `demo/fixtures/large-house.mjs` (#260):
- *     метки вида `perf-wall-0-3` не разбираются, и все 80 сплошных рёбер
- *     фикстуры остаются с нулевой толщиной — 0 тел стен на плане, который
- *     служит перф-бюджетом.
+ * После #258 точная пара `a/b` является строгой идентичностью того же span и
+ * разрешается до legacy midpoint fallback. Поэтому любой отличный или даже
+ * неразбираемый compatibility key у записи с валидными endpoints — наблюдение,
+ * а не нарушение: runtime найдёт запись по endpoints, а явный Optimize
+ * перепишет стабильный key. Legacy key-only запись проверить и исправить по
+ * догадке нельзя, поэтому она по-прежнему пропускается.
  */
 export function checkWallKeys(config, { notes = [] } = {}) {
   const violations = [];
-  const reach = GRID_STEP_N * 0.5;
   for (const space of Array.isArray(config?.spaces) ? config.spaces : []) {
     const spaceId = String(space?.id ?? '?');
     for (const wall of space?.walls || []) {
@@ -271,42 +263,16 @@ export function checkWallKeys(config, { notes = [] } = {}) {
       if (wall.key === expected) continue;
       const owner = `${spaceId}:${wall.key}`;
       const stored = keyMidpoint(wall.key);
-      if (!stored) {
-        violations.push({ invariant: 'wall_keys', kind: 'wall_key', owner,
-          reference: expected,
-          detail: `ключ записи ${wall?.cm} см не разбирается как координаты —`
-            + ' её не найдёт ни точное совпадение, ни терпимый запас' });
-        continue;
-      }
-      const drift = Math.hypot(stored[0] - (a[0] + b[0]) / 2, stored[1] - (a[1] + b[1]) / 2);
-      // Сравнение с запасом обязано иметь собственный допуск. Сдвиг ключа на
-      // один шаг решётки даёт середину ровно на полшага, то есть ровно на
-      // границе запаса — и исход у продукта решает шум в последних битах.
-      // Измерено: продукт такую запись НАХОДИТ (тела стен двух конфигов
-      // владельца, различающихся именно этим, побайтово одинаковы). Приговор,
-      // который решает шум, — не приговор.
-      // Допуск задан в шагах, а не в долях от `reach`: сдвиг на один шаг даёт
-      // ровно 0.5, и разные представления одной вершины (точный узел против
-      // девяти знаков в конфигурации) двигают эту величину на ~5e-5 шага. С
-      // относительным допуском 1e-6 четыре одинаковых записи одного плана
-      // делились на «нарушение» и «наблюдение» по последним битам — проверка
-      // повторяла ту самую болезнь, которую должна показывать. Ближайший
-      // настоящий класс — 1.5 шага, до него 200%, так что 1e-3 ничего не прячет.
-      const steps = drift / GRID_STEP_N;
-      if (steps > 0.5 + 1e-3) {
-        violations.push({ invariant: 'wall_keys', kind: 'wall_key', owner,
-          reference: expected,
-          detail: `середина ключа ушла на ${steps.toFixed(2)} шага —`
-            + ' дальше терпимого запаса в полшага, запись не найдётся' });
-        continue;
-      }
-      const edge = Math.abs(steps - 0.5) <= 1e-3
-        ? ' и ровно на его границе: у продукта исход решает шум в последних битах'
-        : '';
+      const drift = stored
+        ? Math.hypot(stored[0] - (a[0] + b[0]) / 2, stored[1] - (a[1] + b[1]) / 2)
+          / GRID_STEP_N
+        : null;
+      const driftText = drift === null ? 'ключ не разбирается как координаты'
+        : `середина отличается на ${drift.toFixed(2)} шага`;
       notes.push({ invariant: 'wall_keys', kind: 'stale_wall_key', owner,
         reference: expected,
-        detail: `ключ не равен ключу своего ребра, расхождение ${steps.toFixed(2)}`
-          + ` шага — запись находится только через терпимый запас${edge}` });
+        detail: `${driftText}; запись находится по точной паре endpoints,`
+          + ' явный Optimize перепишет совместимый ключ' });
     }
   }
   return violations;
@@ -326,7 +292,7 @@ function noteSummary(notes) {
   for (const note of notes) counts.set(note.kind, (counts.get(note.kind) || 0) + 1);
   const titles = {
     unknown_owner: 'позиции без записи маркера',
-    stale_wall_key: 'записей толщины находятся только через терпимый запас',
+    stale_wall_key: 'записей толщины используют exact endpoints вместо своего ключа',
   };
   return [...counts].map(([kind, n]) => `${n} — ${titles[kind] || kind}`).join('; ') + '.';
 }
@@ -336,7 +302,7 @@ function report(violations, notes = []) {
     const tail = notes.length
       ? `\nНаблюдений (не нарушения): ${notes.length}. ` + noteSummary(notes)
       : '';
-    return 'Инварианты выполнены: ссылки разрешимы, записи толщины находятся по ключу.'
+    return 'Инварианты выполнены: ссылки разрешимы, записи толщины находятся.'
       + tail;
   }
   const lines = [`Нарушений: ${violations.length}.`, ''];

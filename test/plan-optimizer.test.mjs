@@ -30,6 +30,10 @@ const storageRoundtripFixture = JSON.parse(readFileSync(
   new URL('./fixtures/optimize-storage-roundtrip.json', import.meta.url),
   'utf8',
 ));
+const wallKeyRoundtripFixture = JSON.parse(readFileSync(
+  new URL('./fixtures/258-wall-key-roundtrip.json', import.meta.url),
+  'utf8',
+));
 
 const assertNoPersistedChanges = (result) => {
   assert.equal(result.changed, false);
@@ -162,6 +166,36 @@ test('issue 248 Optimize stays a no-op across the nine-decimal storage round-tri
   assertNoPersistedChanges(backendEcho);
   assert.deepEqual(backendEcho.config, first.config);
   assert.deepEqual(backendEcho.layout, first.layout);
+});
+
+test('issue 258 Optimize canonicalizes an affected wall key across storage round-trip', () => {
+  const space = structuredClone(wallKeyRoundtripFixture.space);
+  space.walls[0].key = wallKeyRoundtripFixture.affected_key;
+  const config = {
+    model_version: PLAN_MODEL_VERSION,
+    spaces: [space],
+    markers: [], settings: {},
+  };
+  const before = structuredClone(config);
+  const first = optimizePlans(config, {});
+  assert.deepEqual(config, before, 'preview must not mutate the affected source');
+  assert.equal(first.changed, true);
+  assert.equal(first.report.canonicalized, 1);
+  const repaired = first.config.spaces[0].walls.find((wall) => wall.cm === 29);
+  assert.ok(repaired);
+  assert.equal(repaired.cm, 29);
+  assert.deepEqual(repaired.a, wallKeyRoundtripFixture.space.walls[0].a);
+  assert.deepEqual(repaired.b, wallKeyRoundtripFixture.space.walls[0].b);
+  assert.equal(repaired.key, wallKeyRoundtripFixture.canonical_key);
+  assert.equal(repaired.key, wallKey(repaired.a, repaired.b, S));
+  assert.deepEqual(canonicalizeConfigGeometry(first.config), first.config);
+
+  const inMemorySecond = optimizePlans(first.config, first.layout);
+  assertNoPersistedChanges(inMemorySecond);
+  assert.deepEqual(inMemorySecond.config, first.config);
+  const backendEcho = optimizePlans(canonicalizeConfigGeometry(first.config), first.layout);
+  assertNoPersistedChanges(backendEcho);
+  assert.deepEqual(backendEcho.config, first.config);
 });
 
 test('issue 248 every persisted geometry surface converges at every supported scale', () => {
