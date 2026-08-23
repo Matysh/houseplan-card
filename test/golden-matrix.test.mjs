@@ -321,7 +321,7 @@ test('sun-ray golden requires browser-painted light from a state-only sun entity
   assert.ok(scenario);
   const fixture = prepareGoldenFixture(scenario);
   const space = fixture.config.spaces.find((item) => item.id === scenario.space);
-  assert.equal(GOLDEN_MATRIX_VERSION, 38);
+  assert.equal(GOLDEN_MATRIX_VERSION, 39);
   assert.equal(space.settings.sun_rays, true);
   assert.equal(scenario.northDeg, 90,
     'the sign-sensitive golden must keep a non-zero north direction');
@@ -370,6 +370,27 @@ test('issue #197 golden keeps the complete junction fixture in Plan and View', (
       [8, 25, 3],
     );
   }
+});
+
+test('issue #249 golden isolates a bounded physical three-ray bevel', () => {
+  const scenario = GOLDEN_SCENARIOS.find(
+    (item) => item.id === 'multiwall-junction-bevel-view-dark',
+  );
+  assert.ok(scenario);
+  assert.equal(scenario.mode, 'view');
+  assert.equal(scenario.theme, 'dark');
+  assert.equal(scenario.multiWallJunction.rays, 3);
+  assert.equal(scenario.multiWallJunction.node.length, 2);
+  assert.equal(scenario.multiWallJunction.discardedWedgeProbe.length, 2);
+  const fixture = prepareGoldenFixture(scenario);
+  const space = fixture.config.spaces.find((item) => item.id === scenario.space);
+  assert.ok(space);
+  assert.deepEqual(space.node, scenario.multiWallJunction.node);
+  const endpointRays = space.walls.filter((wall) => [wall.a, wall.b].some((point) => (
+    Math.hypot(point[0] - space.node[0], point[1] - space.node[1]) < 1e-8
+  )));
+  assert.equal(endpointRays.length >= scenario.multiWallJunction.rays, true);
+  assert.equal(space.settings.show_borders, true);
 });
 
 test('the open color picker golden covers dark mobile and light desktop themes', () => {

@@ -421,6 +421,17 @@ exterior/body/opening/authoritative-extra passes still returns `null` and
 activates the established fail-dark consumer behaviour. This distinction
 prevents one cosmetic junction repair from blanking a whole plan without
 masking a real structural failure (#197).
+The same structural pass builds one scale-relative physical endpoint map for
+room profiles, exterior intervals and junction patches (#249). Co-directional
+duplicates collapse while opposite rays remain distinct. At degree 3+ nodes it
+uses `H = max(incident half-depth)` and clips excessive overlap to a straight
+bevel bounded by `1.25 × H`; degree-2 joins keep the legacy `MITRE_LIMIT = 4`.
+The final bevel is applied to canonical masonry after its room/atomic/exterior
+union, preventing later boolean inputs from recreating the discarded spike.
+Paper re-unions the room centre footprint after the same cut so an interior
+bevel exposes clean floor rather than scene background. Full, Static, hidden
+Iso, room fills/hover, clean-floor calculations and light barriers therefore
+observe the same topology, and cached HA/theme ticks do not rebuild the map.
 Before the exterior offset is built, each saved atomic endpoint splits its
 containing collinear union edge. Offset changes are explicit butt steps at that
 endpoint, including nonzero-to-zero transitions. The topology tolerance starts

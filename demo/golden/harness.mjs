@@ -5,6 +5,9 @@ import { readFileSync } from 'node:fs';
 const junctionPatchFixture = JSON.parse(readFileSync(
   new URL('../../test/fixtures/197-junction-patch.json', import.meta.url), 'utf8',
 ));
+const multiWallJunctionFixture = JSON.parse(readFileSync(
+  new URL('../../test/fixtures/249-multiwall-junction.json', import.meta.url), 'utf8',
+));
 
 const fixtureFor = (scenario) => scenario.fixture === 'large'
   ? makeLargeHouseFixture()
@@ -155,6 +158,25 @@ export function prepareGoldenFixture(scenario) {
         fill_mode: 'none',
         show_borders: true,
         show_names: false,
+      },
+    });
+  }
+  if (scenario.multiWallJunction) {
+    const contract = scenario.multiWallJunction;
+    const validPoint = (point) => Array.isArray(point) && point.length === 2
+      && point.every(Number.isFinite);
+    if (!validPoint(contract.node) || !validPoint(contract.discardedWedgeProbe)
+        || !Number.isInteger(contract.rays) || contract.rays < 3) {
+      throw new Error(`invalid golden multiWallJunction: ${scenario.id}`);
+    }
+    fixture.config.spaces.push({
+      ...structuredClone(multiWallJunctionFixture),
+      id: scenario.space,
+      title: 'Multi-wall bevel',
+      view_box: [0.27, 0.07, 0.20, 0.21],
+      settings: {
+        ...(multiWallJunctionFixture.settings || {}),
+        fill_mode: 'none', show_borders: true, show_names: false,
       },
     });
   }
@@ -513,6 +535,15 @@ export async function prepareGoldenScenario(page, scenario) {
       card._setMode(scenario.mode);
       await card.updateComplete;
       await settleMode(card);
+    }
+    if (scenario.multiWallJunction) {
+      const { node, discardedWedgeProbe } = scenario.multiWallJunction;
+      const wall = card.renderRoot.querySelector('[data-hp="wall"]');
+      const at = (point) => new DOMPoint(point[0] * 1000, point[1] * card._spaceH);
+      if (!wall?.isPointInFill?.(at(node))
+          || wall.isPointInFill(at(discardedWedgeProbe))) {
+        throw new Error(`golden multi-wall bevel contract failed: ${scenario.id}`);
+      }
     }
     if (scenario.roomLabelParity) {
       const labels = [...card.renderRoot.querySelectorAll('.roomlabel')];

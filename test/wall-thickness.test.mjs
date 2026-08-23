@@ -12,6 +12,7 @@ import {
   virtualJunctionPatches, stableJunctionPatch, unionJunctionPatches,
   innerContourForRoom, innerEdgeSpan, ownEdgeOffsets,
   paperRoomShapesWithWalls, WALL_MIN_CM, WALL_MAX_CM, MITRE_LIMIT,
+  MULTI_WALL_JOIN_LIMIT, buildMultiWallNodeMap, multiWallBevelTriangles,
   atomicPolyForRoom, insetOffsetsForRoom, wallIntervals, materializeWallIntervals,
   normalizeWallIntervals,
   intervalCmAt, wallBodyNeedsSolid, openingInnerFaceOffset, openingTunnelGeometry,
@@ -75,6 +76,35 @@ const assertProbeInside = (geom, point, message) =>
 
 const assertProbeOutside = (geom, point, message) =>
   assert.ok(geometryProbeCoverage(geom, point) < 1e-7, message || `unexpected body at ${point}`);
+
+const assertBoundedMultiWallBevels = (
+  rooms, walls, geometry, cell = cellCm, scale = 1,
+) => {
+  const map = buildMultiWallNodeMap(
+    wallIntervals(rooms, walls, [], pitch, cell, GRID_PITCH, scale),
+    pitch * scale * 0.04 * 4,
+    scale,
+  );
+  const triangles = multiWallBevelTriangles(map);
+  assert.ok(triangles.length > 0, 'fixture no longer exercises an oversized multi-wall join');
+  for (const triangle of triangles) {
+    const node = map.nodes.find((candidate) => triangle.slice(0, 2).every((point) =>
+      Math.hypot(
+        point[0] - candidate.point[0],
+        point[1] - candidate.point[1],
+      ) <= candidate.limit + 1e-7));
+    assert.ok(node, 'bevel endpoints escaped every multi-wall node limit');
+    const base = [
+      (triangle[0][0] + triangle[1][0]) / 2,
+      (triangle[0][1] + triangle[1][1]) / 2,
+    ];
+    assertProbeOutside(geometry.geom, [
+      (base[0] + triangle[2][0]) / 2,
+      (base[1] + triangle[2][1]) / 2,
+    ], 'an excessive multi-wall wedge remains filled');
+  }
+  return map;
+};
 
 function cornerSplitFixture({
   poly = [[100, 100], [900, 100], [900, 700], [100, 700]],
@@ -509,6 +539,218 @@ test('variable-offset contours keep a local cap at angled positive-to-zero joins
   }
 });
 
+test('issue #249 bounds the exported three-wall junction with straight bevels', () => {
+  const fixture = JSON.parse(readFileSync(
+    new URL('./fixtures/249-multiwall-junction.json', import.meta.url), 'utf8',
+  ));
+  const rooms = fixture.rooms.map((room) => ({
+    ...room,
+    poly: room.poly.map(([x, y]) => [x * NORM_W, y * NORM_W]),
+  }));
+  const walls = structuredClone(fixture.walls);
+  const nodePoint = fixture.node.map((value) => value * NORM_W);
+  const before = JSON.stringify({ rooms, walls });
+  const intervals = wallIntervals(
+    rooms, walls, [], pitch, fixture.cell_cm, GRID_PITCH, NORM_W,
+  );
+  const nodes = buildMultiWallNodeMap(
+    intervals, pitch * NORM_W * 0.04 * 4,
+    NORM_W,
+  );
+  const node = nodes.nodes.find((candidate) =>
+    Math.hypot(
+      candidate.point[0] - nodePoint[0],
+      candidate.point[1] - nodePoint[1],
+    ) < 1e-6);
+  assert.ok(node);
+  assert.equal(node.rays.length, 3);
+  closeTo(node.halfDepth, 4.861111111111112, 1e-9);
+  closeTo(node.limit, MULTI_WALL_JOIN_LIMIT * node.halfDepth, 1e-9);
+
+  const localTriangles = multiWallBevelTriangles(nodes).filter((triangle) =>
+    Math.hypot(
+      triangle[0][0] - nodePoint[0],
+      triangle[0][1] - nodePoint[1],
+    ) < node.limit + 1e-6);
+  assert.equal(localTriangles.length, 2, 'fixture must exercise both oversized wedges');
+  for (const triangle of localTriangles) {
+    for (const point of triangle.slice(0, 2)) {
+      assert.ok(
+        Math.hypot(point[0] - nodePoint[0], point[1] - nodePoint[1])
+          <= node.limit + 1e-7,
+        `bevel endpoint escaped the approved radius: ${point}`,
+      );
+    }
+    assert.ok(
+      Math.hypot(
+        triangle[2][0] - nodePoint[0],
+        triangle[2][1] - nodePoint[1],
+      ) > node.limit,
+      'fixture no longer contains the excessive mitre being removed',
+    );
+  }
+
+  const geometry = wallBodiesGeometry(
+    rooms, walls, [], [], pitch, fixture.cell_cm, GRID_PITCH, NORM_W,
+  );
+  assert.ok(geometry);
+  assert.equal(geometry.geom.length, 1, 'the three wall arms became disconnected');
+  assertProbeInside(geometry.geom, nodePoint, 'the bevel punched a hole at the node');
+  for (const ray of node.rays) {
+    assertProbeInside(geometry.geom, [
+      nodePoint[0] + ray.u[0] * node.halfDepth * 2,
+      nodePoint[1] + ray.u[1] * node.halfDepth * 2,
+    ], 'an incident wall arm no longer touches the junction');
+  }
+  for (const triangle of localTriangles) {
+    const base = [
+      (triangle[0][0] + triangle[1][0]) / 2,
+      (triangle[0][1] + triangle[1][1]) / 2,
+    ];
+    assertProbeOutside(geometry.geom, [
+      (base[0] + triangle[2][0]) / 2,
+      (base[1] + triangle[2][1]) / 2,
+    ], 'the discarded mitre wedge is still filled');
+  }
+  const repeated = wallBodiesGeometry(
+    rooms, walls, [], [], pitch, fixture.cell_cm, GRID_PITCH, NORM_W,
+  );
+  assert.ok(repeated);
+  closeTo(geometryDifferenceArea(geometry.geom, repeated.geom), 0, 1e-7);
+  closeTo(geometryDifferenceArea(repeated.geom, geometry.geom), 0, 1e-7);
+  assert.equal(JSON.stringify({ rooms, walls }), before, 'geometry mutated saved data');
+});
+
+test('issue #249 node classification is order, direction and scale independent', () => {
+  const cases = [
+    { angles: [0, 30, 200], halves: [5, 5, 5], bevel: true },
+    { angles: [45, 102, 230], halves: [7, 5, 5], bevel: true },
+    { angles: [0, 90, 180, 270], halves: [5, 5, 5, 5], bevel: true },
+    { angles: [0, 90, 180, 270], halves: [2, 5, 3, 7], bevel: false },
+  ];
+  const make = ({ angles, halves }, scale = 1) => angles.map((degrees, index) => {
+    const radians = degrees * Math.PI / 180;
+    return {
+      roomId: `r${index}`,
+      a: [0, 0],
+      b: [Math.cos(radians) * 100 * scale, Math.sin(radians) * 100 * scale],
+      key: `ray-${index}`,
+      kind: 'outer',
+      cm: halves[index] * 2,
+      open: false,
+      half: halves[index] * scale,
+    };
+  });
+  const signature = (map, scale) => map.nodes.map((node) => ({
+    point: node.point.map((value) => value / scale),
+    halfDepth: node.halfDepth / scale,
+    limit: node.limit / scale,
+    rays: node.rays.map((ray) => [
+      Math.round(ray.u[0] * 1e9) / 1e9,
+      Math.round(ray.u[1] * 1e9) / 1e9,
+      ray.halfDepth / scale,
+    ]),
+  }));
+  const makeFanGeometry = (fixture, permuted = false) => {
+    const scale = NORM_W;
+    const node = [0.5 * scale, 0.5 * scale];
+    const points = fixture.angles.map((degrees) => {
+      const radians = degrees * Math.PI / 180;
+      return [
+        node[0] + Math.cos(radians) * 0.3 * scale,
+        node[1] + Math.sin(radians) * 0.3 * scale,
+      ];
+    });
+    let rooms = points.map((point, index) => ({
+      id: `fan-${index}`,
+      poly: [node, point, points[(index + 1) % points.length]].map((p) => [...p]),
+    }));
+    let walls = [];
+    for (let index = 0; index < points.length; index++) {
+      walls = setWallThickness(
+        walls, node, points[index], fixture.halves[index] * 10, pitch, scale,
+      );
+    }
+    if (permuted) {
+      rooms = rooms.reverse().map((room) => ({
+        ...room, poly: [...room.poly].reverse(),
+      }));
+      walls = walls.reverse();
+    }
+    const geometry = wallBodiesGeometry(
+      rooms, walls, [], [], pitch, cellCm, GRID_PITCH, scale,
+    );
+    assert.ok(geometry, 'multi-wall fan geometry failed');
+    return { rooms, walls, geometry, node, scale };
+  };
+
+  for (const fixture of cases) {
+    const source = make(fixture);
+    const baseline = buildMultiWallNodeMap(source, 1e-6);
+    assert.equal(baseline.nodes.length, 1);
+    assert.equal(baseline.nodes[0].rays.length, fixture.angles.length);
+    closeTo(
+      baseline.nodes[0].limit,
+      MULTI_WALL_JOIN_LIMIT * Math.max(...fixture.halves),
+      1e-9,
+    );
+    const permuted = buildMultiWallNodeMap(
+      [...source].reverse().map((interval) => ({
+        ...interval,
+        a: [...interval.b],
+        b: [...interval.a],
+      })),
+      1e-6,
+    );
+    assert.deepEqual(signature(permuted, 1), signature(baseline, 1));
+
+    const production = buildMultiWallNodeMap(make(fixture, 1000), 1e-3, 1000);
+    assert.deepEqual(signature(production, 1000), signature(baseline, 1));
+    assert.equal(multiWallBevelTriangles(baseline).length > 0, fixture.bevel);
+
+    const fan = makeFanGeometry(fixture);
+    const fanMap = buildMultiWallNodeMap(
+      wallIntervals(
+        fan.rooms, fan.walls, [], pitch, cellCm, GRID_PITCH, fan.scale,
+      ),
+      pitch * fan.scale * 0.04 * 4,
+      fan.scale,
+    );
+    assert.equal(fanMap.nodes.length, 1);
+    assert.equal(fanMap.nodes[0].rays.length, fixture.angles.length);
+    assert.equal(fan.geometry.geom.length, 1, 'fan wall arms are disconnected');
+    assertProbeInside(fan.geometry.geom, fan.node, 'fan bevel punched a node hole');
+    for (const [rayIndex, ray] of fanMap.nodes[0].rays.entries()) {
+      const armPoint = [
+        fan.node[0] + ray.u[0] * fanMap.nodes[0].halfDepth * 2,
+        fan.node[1] + ray.u[1] * fanMap.nodes[0].halfDepth * 2,
+      ];
+      const coverage = geometryProbeCoverage(fan.geometry.geom, armPoint);
+      // A straight bevel may legitimately remove the sector-side half of an
+      // acute arm close to the node; positive masonry on the centreline plus
+      // the single-component assertion is the required connectivity contract.
+      assert.ok(coverage > 0.1,
+        `fan ${fixture.angles.join('/')} ray ${rayIndex} at ${armPoint} coverage=${coverage}`);
+    }
+    if (multiWallBevelTriangles(fanMap).length) {
+      assertBoundedMultiWallBevels(
+        fan.rooms, fan.walls, fan.geometry, cellCm, fan.scale,
+      );
+    }
+    const permutedFan = makeFanGeometry(fixture, true);
+    closeTo(geometryDifferenceArea(fan.geometry.geom, permutedFan.geometry.geom), 0, 1e-6);
+    closeTo(geometryDifferenceArea(permutedFan.geometry.geom, fan.geometry.geom), 0, 1e-6);
+  }
+
+  const twoRay = make({ angles: [0, 55], halves: [5, 7] });
+  const twoRayMap = buildMultiWallNodeMap(twoRay, 1e-6);
+  assert.equal(twoRayMap.nodes.length, 0);
+  const poly = [[0, 0], [10, 0], [8, 9], [0, 8]];
+  const offsets = [2, 2, 2, 2];
+  assert.deepEqual(insetContour(poly, offsets, twoRayMap), insetContour(poly, offsets));
+  assert.deepEqual(outsetContour(poly, offsets, twoRayMap), outsetContour(poly, offsets));
+});
+
 test('inwardNormal points into the rectangle', () => {
   const poly = [[0, 0], [10, 0], [10, 6], [0, 6]];
   const [nx, ny] = inwardNormal(poly, 0); // bottom edge → should point +y
@@ -906,8 +1148,9 @@ test('issue #197 keeps the full masonry when one virtual-junction patch has ULP 
   assert.ok(geometry, 'one rejected junction patch must not erase the whole plan');
   assert.ok(geometry.geom.length > 0);
   assert.ok(geometry.paperGeom.length > 0);
-  closeTo(geometryArea(geometry.geom), 124991.31944444453, 1e-6);
-  closeTo(geometryArea(geometry.paperGeom), 727303.8194444444, 1e-6);
+  // #249 intentionally bevels degree-3+ nodes in this older fixture too.
+  closeTo(geometryArea(geometry.geom), 124495.74029324856, 1e-6);
+  closeTo(geometryArea(geometry.paperGeom), 727248.4374999999, 1e-6);
   assert.equal(
     JSON.stringify({ rooms, walls, cuts, openings, extraBodies }), before,
     'rendering mutated persisted input',
@@ -1126,18 +1369,11 @@ test('production-scale 45° facade keeps an exact unequal-thickness breakpoint',
   }
 });
 
-test('corner Split keeps the original exterior wall body and paper', () => {
-  const { original, rooms, walls, before, after } = cornerSplitFixture();
+test('corner Split bounds the exterior join created by its third ray', () => {
+  const { rooms, walls, before, after } = cornerSplitFixture();
   assert.ok(before);
   assert.deepEqual(geometryBounds(after.geom), geometryBounds(before.geom));
-
-  const centre = closedGeometry(original.poly);
-  const beforeExterior = difference(before.geom, centre);
-  const afterExterior = difference(after.geom, centre);
-  closeTo(geometryDifferenceArea(beforeExterior, afterExterior), 0, 1e-7);
-  closeTo(geometryDifferenceArea(afterExterior, beforeExterior), 0, 1e-7);
-  closeTo(geometryDifferenceArea(before.paperGeom, after.paperGeom), 0, 1e-7);
-  closeTo(geometryDifferenceArea(after.paperGeom, before.paperGeom), 0, 1e-7);
+  assertBoundedMultiWallBevels(rooms, walls, after);
 
   const paper = paperRoomShapesWithWalls(
     rooms, walls, [], pitch, cellCm, GRID_PITCH,
@@ -1147,7 +1383,7 @@ test('corner Split keeps the original exterior wall body and paper', () => {
   const nums = paper[0].path.match(/-?\d+(?:\.\d+)?/g).map(Number);
   const paperPoints = [];
   for (let i = 0; i < nums.length; i += 2) paperPoints.push([nums[i], nums[i + 1]]);
-  assert.deepEqual(geometryBounds([[paperPoints]]), geometryBounds(before.geom));
+  assert.deepEqual(geometryBounds([[paperPoints]]), geometryBounds(after.paperGeom));
 
   const canonical = wallBodiesUnionPath(
     rooms, walls, [], [], pitch, cellCm, GRID_PITCH,
@@ -1163,16 +1399,22 @@ test('corner Split clips every divider thickness when exterior walls are absent'
   }
 });
 
-test('corner Split preserves the facade for thin and thick outer/divider matrices', () => {
+test('corner Split keeps facade bounds and bevels every positive-thickness 3-ray matrix', () => {
   for (const outerCm of [1, 15, 100]) {
     for (const dividerCm of [0, 1, 15, 100]) {
-      const { original, before, after } = cornerSplitFixture({ outerCm, dividerCm });
+      const { original, rooms, walls, before, after } = cornerSplitFixture({
+        outerCm, dividerCm,
+      });
       assert.ok(before);
-      const centre = closedGeometry(original.poly);
-      const beforeExterior = difference(before.geom, centre);
-      const afterExterior = difference(after.geom, centre);
-      closeTo(geometryDifferenceArea(beforeExterior, afterExterior), 0, 1e-7);
-      closeTo(geometryDifferenceArea(afterExterior, beforeExterior), 0, 1e-7);
+      assert.deepEqual(geometryBounds(after.paperGeom), geometryBounds(before.paperGeom));
+      if (dividerCm > 0) {
+        assertBoundedMultiWallBevels(rooms, walls, after);
+      } else {
+        const centre = closedGeometry(original.poly);
+        closeTo(geometryDifferenceArea(
+          difference(before.geom, centre), difference(after.geom, centre),
+        ), 0, 1e-7);
+      }
     }
   }
 });
@@ -1247,12 +1489,9 @@ test('corner Split keeps unequal exterior arms and is order/id/winding independe
   assert.ok(permuted);
   closeTo(geometryDifferenceArea(fixture.after.geom, permuted.geom), 0, 1e-7);
   closeTo(geometryDifferenceArea(permuted.geom, fixture.after.geom), 0, 1e-7);
-
-  const centre = closedGeometry(fixture.original.poly);
-  const beforeExterior = difference(fixture.before.geom, centre);
-  const afterExterior = difference(fixture.after.geom, centre);
-  closeTo(geometryDifferenceArea(beforeExterior, afterExterior), 0, 1e-7);
-  closeTo(geometryDifferenceArea(afterExterior, beforeExterior), 0, 1e-7);
+  assertBoundedMultiWallBevels(
+    fixture.rooms, fixture.walls, fixture.after,
+  );
 });
 
 test('Split from a concave vertex does not turn the child mitre into facade', () => {
@@ -1265,25 +1504,30 @@ test('Split from a concave vertex does not turn the child mitre into facade', ()
   closeTo(geometryDifferenceArea(afterExterior, beforeExterior), 0, 1e-7);
 });
 
-test('Split with both endpoints at exterior vertices preserves both corners', () => {
+test('Split with both endpoints at exterior vertices bevels both new 3-ray corners', () => {
   const fixture = cornerSplitFixture({ path: [[100, 100], [900, 700]], dividerCm: 100 });
-  const centre = closedGeometry(fixture.original.poly);
-  const beforeExterior = difference(fixture.before.geom, centre);
-  const afterExterior = difference(fixture.after.geom, centre);
-  closeTo(geometryDifferenceArea(beforeExterior, afterExterior), 0, 1e-7);
-  closeTo(geometryDifferenceArea(afterExterior, beforeExterior), 0, 1e-7);
+  const map = assertBoundedMultiWallBevels(
+    fixture.rooms, fixture.walls, fixture.after,
+  );
+  assert.equal(map.nodes.length, 2);
 });
 
-test('corner Split clean floors are exactly the room union minus canonical walls', () => {
+test('corner Split clean-floor contours use the same bounded bevel endpoints', () => {
   const fixture = cornerSplitFixture({ dividerCm: 100 });
   const floors = fixture.rooms.map((room) => innerContourForRoom(
     fixture.rooms, room.id, fixture.walls, [], pitch, cellCm, GRID_PITCH,
   ));
   assert.ok(floors.every(Boolean));
-  const actual = union(...floors.map((floor) => closedGeometry(floor)));
-  const expected = difference(closedGeometry(fixture.original.poly), fixture.after.geom);
-  closeTo(geometryDifferenceArea(actual, expected), 0, 1e-7);
-  closeTo(geometryDifferenceArea(expected, actual), 0, 1e-7);
+  const map = assertBoundedMultiWallBevels(
+    fixture.rooms, fixture.walls, fixture.after,
+  );
+  const boundedEndpoints = multiWallBevelTriangles(map)
+    .flatMap((triangle) => triangle.slice(0, 2));
+  for (const endpoint of boundedEndpoints) {
+    assert.ok(floors.some((floor) => floor.some((point) =>
+      Math.hypot(point[0] - endpoint[0], point[1] - endpoint[1]) < 1e-7)),
+    `clean-floor contours lost bevel endpoint ${endpoint}`);
+  }
 });
 
 test('corner Split rendering does not materialize or mutate saved geometry', () => {

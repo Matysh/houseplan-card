@@ -1666,7 +1666,9 @@ error-free report captured from the current source fingerprint; the entire set
 is validated before any reference is copied.
 
 The matrix covers thick wall junctions, the full #197 multi-room
-virtual-junction resilience fixture in Plan and View, virtual/physical boundaries,
+virtual-junction resilience fixture in Plan and View, the #249 three-ray
+unequal-thickness fixture with a semantic filled-node/empty-old-wedge gate,
+virtual/physical boundaries,
 partitions/columns, axis-aligned and 45° door/window/gate tunnels, hidden
 opening symbols, Glow and sun, live/manual Glow overlap and light through a doorway,
 light/temperature/LQI fill splits on a wall axis, hover over Glow and nested rooms, all three editors, dark/light themes,
@@ -1681,6 +1683,15 @@ CI job captures review candidates until the first baseline is accepted; after
 that it automatically runs blocking verification. Review and accept the
 `golden-images` CI artifact rather than treating a developer OS raster as the
 canonical set. See `demo/golden/README.md`.
+
+For #249, `test/wall-thickness.test.mjs` additionally covers equal and unequal
+three-/four-ray nodes, reversed input, winding/order changes, production
+`coordScale = 1000`, unchanged two-ray joins and the anonymised regression
+fixture in `test/fixtures/249-multiwall-junction.json`.
+`demo/smoke_multiwall_junction.mjs` checks Plan/View/kiosk/Static/hidden-Iso
+parity, paper and clean-floor presence, shared Glow/sun masonry, cache reuse on
+HA/theme ticks, no saved-config mutation, a filled node and the removed old
+spike. Full golden/smoke/performance remain pre-beta gates.
 
 ### Issue #73 baseline and implementation (2026-08-11)
 

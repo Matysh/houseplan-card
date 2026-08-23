@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Wall junctions where three or more physical walls meet now use a bounded
+  straight bevel instead of producing long hatched spikes, including mixed wall
+  thicknesses. The node stays filled and matches across Plan, View, kiosk,
+  Static, hidden Iso and light/shadow barriers; ordinary two-wall corners keep
+  their previous shape ([#249](https://github.com/Matysh/houseplan-card/issues/249)).
+
 ## v1.67.0-beta.3 — 2026-08-23
 
 - Door, window and gate symbols now remain exactly on the wall centreline for

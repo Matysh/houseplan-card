@@ -74,6 +74,15 @@ thinner than 3 CSS px on screen, the shared full/static render policy suppresses
 only the hatch so it does not collapse into noise; the solid fill remains. Mitre
 joins; bevel when the mitre spike exceeds `MITRE_LIMIT × thickness`.
 
+At a physical node with **three or more distinct incident rays**, the stricter
+multi-wall rule applies (#249). Shared room ownership and reversed interval
+direction do not create extra rays. One structural node map records the largest
+incident half-depth `H`; every excessive join is cut back with a straight local
+bevel and may not extend beyond `R = 1.25 × H`. The node centre and each wall arm
+remain masonry, so the bevel cannot create a floor pinhole. Ordinary two-ray
+corners retain the exact historical `MITRE_LIMIT = 4` contract. This is computed
+geometry only: saved room outlines and wall entries are not rewritten.
+
 **Hatch density is physical (#230).** The pattern step is a distance on the
 plan, not a count of coordinate units: `wallHatchStepUnits(cellCm)` returns
 `8 × (5 / cell_cm)`, which is 9.6 cm at every grid scale and exactly the
@@ -141,6 +150,9 @@ patches. This fallback never rounds persisted rooms, walls or open spans to the
 grid and never turns a failure of the mandatory exterior/body/opening passes
 into a successful result. One noisy junction therefore cannot remove otherwise
 valid masonry, paper, floor faces or light barriers for the whole space (#197).
+The same failure isolation covers the degree-3+ bevel cuts: malformed candidates
+are skipped locally, and an aggregate boolean failure retries valid cuts one at
+a time instead of reverting every multi-wall node.
 
 Runtime normalisation remains lossless for every positive exact thickness
 interval, regardless of its length. The explicit **Optimize plans** maintenance
