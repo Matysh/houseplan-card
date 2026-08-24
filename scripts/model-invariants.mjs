@@ -392,6 +392,93 @@ export function latticeProfile({ config, layout = {} } = {}) {
   };
 }
 
+/**
+ * Инвариант 4: запись толщины не описывает сразу общую и наружную стену (#287).
+ *
+ * Откуда это взялось. Владелец прислал пару экспортов до и после ресайза: одна
+ * комната из общей пары сдвинулась на 43 шага, вторая осталась. Нижние 43 шага
+ * стены перестали быть общими — стали наружными, — но продолжают нести 20 см
+ * бывшей общей границы, тогда как соседние наружные несут 30 см. Толщина
+ * сохранена ПО КЛЮЧУ, а не по роли ребра.
+ *
+ * Проверить это можно в одном состоянии, без пары «до и после»: признак —
+ * **одна запись толщины, чей пролёт частью общий, а частью наружный**. Такую
+ * запись пользователь не мог задать осознанно: он назначал толщину границе
+ * между двумя комнатами либо наружной стене, но не обоим сразу.
+ *
+ * Роль считается из полигонов и не требует ни сборки, ни продуктового кода:
+ * участок общий, если его накрывает ребро другой комнаты.
+ */
+const SHARE_TOLERANCE = 1e-6;
+
+const segmentsOfSpace = (space) => {
+  const out = [];
+  for (const room of space?.rooms || []) {
+    const poly = roomPolygon(room);
+    if (!poly) continue;
+    for (const [a, b] of edgesOf(poly)) out.push({ room: String(room?.id ?? '?'), a, b });
+  }
+  return out;
+};
+
+/** Доля пролёта записи, накрытая ребром ДРУГОЙ комнаты, по точкам выборки. */
+const roleProfile = (wall, segments, samples = 41) => {
+  const a = point(wall?.a), b = point(wall?.b);
+  if (!a || !b) return null;
+  const dx = b[0] - a[0], dy = b[1] - a[1];
+  const length = Math.hypot(dx, dy);
+  if (!(length > SHARE_TOLERANCE)) return null;
+  let shared = 0;
+  let outer = 0;
+  // Концы записи не выбираются: конец — это узел, а не участок. В узле стена
+  // законно касается рёбер двух комнат, и включение концов давало «95%
+  // наружного» на каждой наружной стене, упирающейся в общую.
+  for (let i = 1; i < samples; i++) {
+    const t = i / samples;
+    const p = [a[0] + dx * t, a[1] + dy * t];
+    // Считаются РАЗНЫЕ комнаты, а не рёбра: в углу одной комнаты точка лежит
+    // сразу на двух её рёбрах. Проверено мутантом: после исключения концов
+    // (ниже) подсчёт рёбер на реальных планах даёт тот же результат, то есть
+    // сам по себе этот выбор не несущий — он оставлен как смысловая страховка,
+    // а не как то, чем держится проверка. Мутанта на него не ставлю: он
+    // выживает, а выживающий мутант хуже отсутствующего.
+    const owners = new Set();
+    for (const segment of segments) {
+      if (distToSegment(p, segment.a, segment.b) <= SHARE_TOLERANCE) owners.add(segment.room);
+    }
+    if (owners.size >= 2) shared++;
+    else if (owners.size === 1) outer++;
+  }
+  return { shared, outer, samples: samples - 1 };
+};
+
+export function checkMixedRoleRecords(config) {
+  const violations = [];
+  for (const space of Array.isArray(config?.spaces) ? config.spaces : []) {
+    const spaceId = String(space?.id ?? '?');
+    const segments = segmentsOfSpace(space);
+    if (!segments.length) continue;
+    for (const wall of space?.walls || []) {
+      const profile = roleProfile(wall, segments);
+      if (!profile) continue;
+      // Оба вида в одной записи, и ни один не является краевым шумом выборки.
+      const edge = Math.max(2, Math.round(profile.samples * 0.05));
+      if (profile.shared >= edge && profile.outer >= edge) {
+        const outerShare = profile.outer / profile.samples;
+        violations.push({
+          invariant: 'wall_roles', kind: 'mixed_role_record',
+          owner: `${spaceId}:${wall?.key ?? '?'}`,
+          reference: `${wall?.cm} см`,
+          detail: `пролёт записи частью общий, частью наружный`
+            + ` (${(outerShare * 100).toFixed(0)}% наружного) — толщина сохранена`
+            + ' по ключу, а не по роли ребра',
+        });
+      }
+    }
+  }
+  return violations;
+}
+
 /** Разобрать любой из трёх форматов, в которых приходит конфигурация. */
 export function readModel(text) {
   const parsed = JSON.parse(text);
@@ -479,6 +566,7 @@ function report(violations, notes = []) {
     geometry_exception: 'Сбой проверки канонической геометрии стен',
     lost: 'Потерянные записи толщины',
     wall_key: 'Записи толщины, которые не найдутся по ключу',
+    mixed_role_record: 'Записи толщины, описывающие сразу общую и наружную стену',
   };
   for (const [kind, list] of byKind) {
     lines.push(`${titles[kind] || kind}: ${list.length}`);
@@ -514,6 +602,7 @@ function main(argv) {
   const violations = [
     ...checkReferences(model, { notes }),
     ...checkWallKeys(model.config, { notes }),
+    ...checkMixedRoleRecords(model.config),
     ...checkPhysicalGeometry(model.config),
   ];
   if (argv.includes('--json')) console.log(JSON.stringify({ violations, notes }, null, 2));

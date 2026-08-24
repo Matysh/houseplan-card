@@ -5,8 +5,8 @@ import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
-  checkReferences, checkWallKeys, checkWallRecordsPreserved, keyMidpoint,
-  latticeProfile, readModel, wallKey,
+  checkMixedRoleRecords, checkReferences, checkWallKeys, checkWallRecordsPreserved,
+  keyMidpoint, latticeProfile, readModel, wallKey,
 } from '../scripts/model-invariants.mjs';
 import { wallKey as productWallKey } from '../test-build/wall-thickness.js';
 import { GRID_STEP_N } from '../test-build/space-geometry.js';
@@ -416,5 +416,77 @@ test('реальные планы: сплошные рёбра без запис
     assert.equal(zero.length, plan.zeroThicknessSolidEdges,
       `${plan.file}: сплошных рёбер без толщины ${zero.length},`
       + ` ожидалось ${plan.zeroThicknessSolidEdges}`);
+  }
+});
+
+// ------- инвариант 4: запись толщины не смешивает общее и наружное (#287) ----
+// Воспроизведение дефекта владельца из `66.json`: ресайз сдвинул одну комнату
+// общей пары, вторая осталась, и нижняя часть стены перестала быть общей —
+// но продолжает нести толщину бывшей общей границы.
+
+const pair = (leftPoly, wall) => ({
+  spaces: [{
+    id: 'sp', cell_cm: 1,
+    rooms: [
+      { id: 'left', poly: leftPoly },
+      { id: 'right', poly: [[1, 0], [2, 0], [2, 1], [1, 1]] },
+    ],
+    walls: [wall],
+  }],
+});
+
+test('#287: до ресайза общая стена нарушением не считается', () => {
+  assert.deepEqual(checkMixedRoleRecords(pair(
+    [[0, 0], [1, 0], [1, 1], [0, 1]], { key: 'k', cm: 20, a: [1, 0], b: [1, 1] },
+  )), []);
+});
+
+test('#287: после частичного ресайза запись описывает и общее, и наружное', () => {
+  const found = checkMixedRoleRecords(pair(
+    [[0, 0], [1, 0], [1, 1.2], [0, 1.2]], { key: 'k2', cm: 20, a: [1, 0], b: [1, 1.2] },
+  ));
+  assert.equal(found.length, 1);
+  assert.equal(found[0].kind, 'mixed_role_record');
+  assert.match(found[0].detail, /частью общий, частью наружный/);
+  assert.match(found[0].detail, /наружного/);
+});
+
+test('#287: наружный угол одной комнаты — не общая граница', () => {
+  // Считать надо РАЗНЫЕ комнаты, а не рёбра: в углу точка лежит сразу на двух
+  // рёбрах одной комнаты. Подсчёт рёбер давал ложное срабатывание на каждой
+  // наружной стене.
+  assert.deepEqual(checkMixedRoleRecords({
+    spaces: [{
+      id: 'sp', cell_cm: 1,
+      rooms: [{ id: 'only', poly: [[0, 0], [1, 0], [1, 1], [0, 1]] }],
+      walls: [{ key: 'k', cm: 30, a: [0, 0], b: [1, 0] }],
+    }],
+  }), []);
+});
+
+test('#287: наружная стена, упирающаяся в общую, нарушением не считается', () => {
+  // Конец записи — это узел, а не участок: там стена законно касается рёбер
+  // двух комнат. Включение концов в выборку давало «95% наружного» на каждой
+  // такой стене, то есть ложное срабатывание на ровном месте.
+  const found = checkMixedRoleRecords({
+    spaces: [{
+      id: 'sp', cell_cm: 1,
+      rooms: [
+        { id: 'left', poly: [[0, 0], [1, 0], [1, 1], [0, 1]] },
+        { id: 'right', poly: [[1, 0], [2, 0], [2, 1], [1, 1]] },
+      ],
+      // наружная стена левой комнаты, оба конца упираются в общую границу x=1
+      walls: [{ key: 'outer', cm: 30, a: [0, 0], b: [1, 0] }],
+    }],
+  });
+  assert.deepEqual(found, []);
+});
+
+test('#287: реальные планы проекта эту проверку проходят', () => {
+  for (const file of ['real-plan-first-floor.json', 'real-plan-second-floor.json']) {
+    const { space } = JSON.parse(
+      readFileSync(resolve(repoRoot, 'test/fixtures', file), 'utf8'));
+    assert.deepEqual(checkMixedRoleRecords({ spaces: [space] }), [],
+      `${file}: ложное срабатывание на реальном плане`);
   }
 });

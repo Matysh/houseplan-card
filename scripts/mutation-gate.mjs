@@ -480,6 +480,19 @@ export const MUTANTS = [
     }],
   },
   {
+    id: 'invariant-roles-sample-endpoints',
+    guard: 'node --test --test-name-pattern="реальные планы проекта эту проверку" '
+      + 'test/model-invariants.test.mjs',
+    because: 'конец записи — узел, а не участок: там стена законно касается двух комнат, '
+      + 'и включение концов в выборку даёт ложное срабатывание на каждой наружной стене, '
+      + 'упирающейся в общую (#287)',
+    patches: [{
+      file: 'scripts/model-invariants.mjs',
+      find: '  for (let i = 1; i < samples; i++) {',
+      replace: '  for (let i = 0; i <= samples; i++) {',
+    }],
+  },
+  {
     id: 'invariant-keys-cry-wolf',
     guard: 'node --test --test-name-pattern="старый и неразбираемый compatibility key" '
       + 'test/model-invariants.test.mjs',
