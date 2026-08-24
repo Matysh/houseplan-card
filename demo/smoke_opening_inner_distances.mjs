@@ -10,10 +10,16 @@ const result = await page.evaluate(async () => {
   const card = window.__card;
   const root = () => card.renderRoot;
   const space = () => card._serverCfg.spaces.find((item) => item.id === 'f1');
+  const frame = () => new Promise((resolve) =>
+    requestAnimationFrame(() => requestAnimationFrame(resolve)));
   const settle = async () => {
     card.requestUpdate();
     await card.updateComplete;
-    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    const started = performance.now();
+    while (card._modeTransitionBusy && performance.now() - started < 1800) await frame();
+    card.requestUpdate();
+    await card.updateComplete;
+    await frame();
   };
   const fixtureWallKey = (a, b) => {
     const pitch = 1 / 240;
@@ -53,6 +59,11 @@ const result = await page.evaluate(async () => {
   });
   const activate = async (point) => {
     card._setMode('plan');
+    // Entering Plan owns an asynchronous editor-chrome transition which may
+    // clear transient hover state at completion. Arm the placement tool only
+    // after that transition settles so slower CI runners exercise the same
+    // state sequence as a user and as fast local runs.
+    await settle();
     card._activateOpeningPlacement('door');
     card._cursorPt = point;
     await settle();
