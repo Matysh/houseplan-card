@@ -1863,10 +1863,13 @@ export const cardStyles = css`
       stroke: #04121f;
     }
     .plan-snap-overlay,
-    .plan-snap-overlay * {
+    .plan-snap-overlay *,
+    .hidden-wall-diagnostic,
+    .hidden-wall-diagnostic * {
       pointer-events: none;
     }
-    .plan-snap-line {
+    .plan-snap-line,
+    .hidden-wall-line {
       fill: none;
       stroke: color-mix(in srgb, var(--hp-accent) 82%, white 18%);
       /* Explicit non-scaling-stroke in the SVG keeps this one screen pixel. */
@@ -1874,7 +1877,8 @@ export const cardStyles = css`
       stroke-linecap: round;
       opacity: 0.92;
     }
-    .plan-snap-node {
+    .plan-snap-node,
+    .hidden-wall-node {
       fill: var(--ha-card-background, var(--card-background-color, #fff));
       stroke: color-mix(in srgb, var(--hp-accent) 88%, #07131c 12%);
       stroke-width: 1;
@@ -1898,7 +1902,11 @@ export const cardStyles = css`
       .plan-snap-line {
         stroke: color-mix(in srgb, var(--hp-accent) 72%, white 28%);
       }
-      .plan-snap-node {
+      .hidden-wall-line {
+        stroke: color-mix(in srgb, var(--hp-accent) 72%, white 28%);
+      }
+      .plan-snap-node,
+      .hidden-wall-node {
         fill: #17242c;
         stroke: #9bdcf5;
       }
@@ -1912,12 +1920,14 @@ export const cardStyles = css`
       }
     }
     @media (forced-colors: active) {
-      .plan-snap-line {
+      .plan-snap-line,
+      .hidden-wall-line {
         stroke: CanvasText;
         opacity: 1;
         forced-color-adjust: auto;
       }
-      .plan-snap-node {
+      .plan-snap-node,
+      .hidden-wall-node {
         fill: Canvas;
         stroke: CanvasText;
         forced-color-adjust: auto;

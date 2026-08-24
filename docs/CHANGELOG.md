@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- Hidden independent wall sections and saved wall chains now keep their axes
+  and original endpoints visible above all masonry in every Plan tool. “Optimize
+  plans” can absorb every exactly covered section into one or more consecutive
+  room walls, retain any unproven residual and its openings, and remove a saved
+  chain only when all of it is redundant. This clears real invisible Resize
+  blockers without shrinking walls or deleting unfinished work. The server
+  independently proves the complete removed axis, including walls without
+  openings, and the Optimize report names redundant saved chains separately
+  ([#296](https://github.com/Matysh/houseplan-card/issues/296)).
 - While drawing Walls, `Esc` now finishes all accepted segments as independent
   walls and releases the last point without deleting geometry or leaving the
   tool. The next click starts a new chain; `Ctrl/Cmd+Z` remains the shortcut

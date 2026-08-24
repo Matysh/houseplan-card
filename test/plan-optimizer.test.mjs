@@ -43,6 +43,7 @@ const assertNoPersistedChanges = (result) => {
     'moved', 'coordsCanonicalized', 'rotated', 'removedDrafts', 'migrated',
     'glowSpacesMigrated', 'glowRoomsMigrated', 'canonicalized', 'wallsMerged',
     'spansMerged', 'partitionsMerged', 'partitionsReconciled', 'openingsRehosted',
+    'redundantDraftsRemoved',
     'wallsStraightened',
     'spaceRefsRemapped', 'roomRefsRemapped',
     'positionsRemapped', 'markersDetached', 'orphanRoomLabelsRemoved',
@@ -121,12 +122,12 @@ test('Optimize uses the exact max envelope for nested coincident thicknesses', (
   }
 });
 
-test('Optimize leaves partial and ambiguous coincident partitions untouched', () => {
+test('Optimize reconciles fully hidden subspans but leaves ambiguous partitions untouched', () => {
   const partial = coincidentPartitionConfig({ partial: true });
   const partialResult = optimizePlans(partial, {});
-  assert.equal(partialResult.report.partitionsReconciled, 0);
-  assert.equal(partialResult.config.spaces[0].partitions.length, 1);
-  assert.ok(partialResult.config.spaces[0].openings[0].host);
+  assert.equal(partialResult.report.partitionsReconciled, 1);
+  assert.equal(partialResult.config.spaces[0].partitions, undefined);
+  assert.equal(partialResult.config.spaces[0].openings[0].host, undefined);
 
   const ambiguous = coincidentPartitionConfig();
   ambiguous.spaces[0].partitions.push({
@@ -818,5 +819,7 @@ test('issue 229 a node on the side of a room survives the sweep', () => {
   };
   const result = optimizePlans(config, {});
   assert.equal(result.report.partitionsMerged, 0, 'the room side holds the node');
-  assert.equal(result.config.spaces[0].partitions.length, 2);
+  assert.equal(result.report.partitionsReconciled, 2,
+    'the two node-bounded records are then independently absorbed by #296');
+  assert.equal(result.config.spaces[0].partitions, undefined);
 });

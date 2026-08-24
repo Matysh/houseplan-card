@@ -694,14 +694,22 @@ change is canceled before Undo history or server storage is touched and the
 card reports that the wall geometry could not be built safely. Titles, colours,
 markers and other non-geometry settings remain editable.
 
-When an old plan contains an independent wall exactly on top of one complete
-solid boundary shared by two rooms, Optimize can replace the duplicate with
-the single room wall. Doors, windows and gates hosted by that independent wall
-stay in place and keep their contact/lock settings. The resulting thickness is
-the wider original thickness, so the visible masonry does not shrink during
-maintenance; use **Thickness** afterwards to choose a new value or **Boundary**
-to make the shared wall virtual. Partial, composite and ambiguous overlaps are
-left unchanged for manual correction.
+When an old plan contains an independent wall exactly on top of solid room
+masonry, Optimize can absorb each proven covered section even when consecutive
+room-wall intervals form the cover. Free or ambiguous residual sections remain
+independent walls with stable identities. Doors, windows and gates stay in
+place: each is reattached to the room wall or to the retained residual that
+still hosts it. The resulting thickness is the wider original thickness, so
+visible masonry does not shrink. A saved unfinished wall chain is removed only
+when every one of its segments is fully redundant; a free, partly covered or
+thicker chain remains byte-for-byte unchanged. The report counts absorbed
+independent-wall sections and removed whole chains, not source records.
+
+In the Plan editor, an independent wall or saved chain hidden under other wall
+bodies retains a thin centre axis and its original endpoint nodes above the
+masonry. These pointer-transparent diagnostics do not change snapping or
+selection and are absent from View. They disappear after Apply only when the
+corresponding independent geometry was safely absorbed or removed.
 
 Old positions are classified before Apply. A position whose room label, device
 or light-group owner is proven absent is removed automatically and counted by a

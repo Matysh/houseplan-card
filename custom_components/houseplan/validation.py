@@ -145,56 +145,263 @@ def _angle_delta_mod_180(first: float, second: float) -> float:
     return abs((first - second + 90.0) % 180.0 - 90.0)
 
 
+def _segments_cover_target(segments: list[tuple[list, list]], target_a: list, target_b: list) -> bool:
+    """Whether a collinear union covers one complete positive target span."""
+    dx, dy, length = _segment_metrics(target_a, target_b)
+    if length <= _OPTIMIZE_REHOST_EPSILON:
+        return False
+    ranges = []
+    for a, b in segments:
+        if (_line_distance(a, target_a, target_b) > _OPTIMIZE_REHOST_EPSILON
+                or _line_distance(b, target_a, target_b) > _OPTIMIZE_REHOST_EPSILON):
+            continue
+        lo, hi = sorted((_projection(a, target_a, target_b),
+                         _projection(b, target_a, target_b)))
+        lo, hi = max(0.0, lo), min(length, hi)
+        if hi - lo > _OPTIMIZE_REHOST_EPSILON:
+            ranges.append((lo, hi))
+    reached = 0.0
+    for lo, hi in sorted(ranges):
+        if lo > reached + _OPTIMIZE_REHOST_EPSILON:
+            return False
+        reached = max(reached, hi)
+        if reached >= length - _OPTIMIZE_REHOST_EPSILON:
+            return True
+    return False
+
+
+_OPTIMIZE_PARTITION_KEYS = {"id", "a", "b", "cm"}
+
+
+def _known_optimize_partition(partition: dict) -> bool:
+    return isinstance(partition, dict) and set(partition).issubset(_OPTIMIZE_PARTITION_KEYS)
+
+
+def _axis_range(a: list, b: list, axis_a: list, axis_b: list) -> tuple[float, float] | None:
+    """Project one positive collinear overlap onto ``axis_a -> axis_b``."""
+    if not (isinstance(a, list) and len(a) == 2
+            and isinstance(b, list) and len(b) == 2):
+        return None
+    if (_line_distance(a, axis_a, axis_b) > _OPTIMIZE_REHOST_EPSILON
+            or _line_distance(b, axis_a, axis_b) > _OPTIMIZE_REHOST_EPSILON):
+        return None
+    _, _, length = _segment_metrics(axis_a, axis_b)
+    lo, hi = sorted((_projection(a, axis_a, axis_b),
+                     _projection(b, axis_a, axis_b)))
+    lo, hi = max(0.0, lo), min(length, hi)
+    return (lo, hi) if hi - lo > _OPTIMIZE_REHOST_EPSILON else None
+
+
+def _axis_point(a: list, b: list, along: float) -> list[float]:
+    dx, dy, length = _segment_metrics(a, b)
+    return [float(a[0]) + dx / length * along,
+            float(a[1]) + dy / length * along]
+
+
+def _optimize_partition_needs_proof(old_partition: dict, space: dict) -> bool:
+    """Select #296 removal/splitting, not ordinary Optimize grid alignment."""
+    partition_id = str(old_partition.get("id", ""))
+    current = next((item for item in space.get("partitions") or []
+                    if str(item.get("id", "")) == partition_id), None)
+    if current == old_partition:
+        return False
+    if current is None:
+        return True
+    if not (_known_optimize_partition(old_partition)
+            and _known_optimize_partition(current)):
+        return False
+    try:
+        if float(current.get("cm")) != float(old_partition.get("cm")):
+            return False
+        old_a, old_b = old_partition["a"], old_partition["b"]
+        current_range = _axis_range(current["a"], current["b"], old_a, old_b)
+        _, _, old_length = _segment_metrics(old_a, old_b)
+    except (KeyError, TypeError, ValueError):
+        return False
+    return current_range is not None and (
+        current_range[0] > _OPTIMIZE_REHOST_EPSILON
+        or current_range[1] < old_length - _OPTIMIZE_REHOST_EPSILON
+    )
+
+
+def _safe_optimize_partition_delta(space: dict, old_partition: dict) -> bool:
+    """Independently prove every removed atom of one old partition axis."""
+    if not _known_optimize_partition(old_partition):
+        return False
+    try:
+        old_a, old_b = old_partition["a"], old_partition["b"]
+        old_cm = float(old_partition["cm"])
+        _, _, length = _segment_metrics(old_a, old_b)
+    except (KeyError, TypeError, ValueError):
+        return False
+    if length <= _OPTIMIZE_REHOST_EPSILON or old_cm <= 0:
+        return False
+
+    rooms: list[tuple[str, list[tuple[list, list]]]] = []
+    for room in space.get("rooms") or []:
+        poly = _room_polygon(room)
+        if len(poly) < 3:
+            return False
+        rooms.append((str(room.get("id", "")), [
+            (poly[index], poly[(index + 1) % len(poly)])
+            for index in range(len(poly))
+        ]))
+
+    candidate_partitions = space.get("partitions") or []
+    retained: list[tuple[float, float]] = []
+    breakpoints = [0.0, length]
+
+    def note_segment(a: list, b: list) -> tuple[float, float] | None:
+        projected = _axis_range(a, b, old_a, old_b)
+        if projected:
+            breakpoints.extend(projected)
+        return projected
+
+    for partition in candidate_partitions:
+        try:
+            projected = note_segment(partition["a"], partition["b"])
+            candidate_cm = float(partition["cm"])
+        except (KeyError, TypeError, ValueError):
+            return False
+        if projected and _known_optimize_partition(partition) and candidate_cm == old_cm:
+            retained.append(projected)
+    for _, edges in rooms:
+        for edge_a, edge_b in edges:
+            note_segment(edge_a, edge_b)
+    for collection in (space.get("walls") or [], space.get("open_spans") or []):
+        for segment in collection:
+            try:
+                note_segment(segment["a"], segment["b"])
+            except (KeyError, TypeError, ValueError):
+                return False
+
+    points = sorted(set(round(point, 12) for point in breakpoints
+                        if -_OPTIMIZE_REHOST_EPSILON <= point
+                        <= length + _OPTIMIZE_REHOST_EPSILON))
+    for lo, hi in zip(points, points[1:]):
+        if hi - lo <= _OPTIMIZE_REHOST_EPSILON:
+            continue
+        if any(start <= lo + _OPTIMIZE_REHOST_EPSILON
+               and end >= hi - _OPTIMIZE_REHOST_EPSILON
+               for start, end in retained):
+            continue
+        target_a, target_b = _axis_point(old_a, old_b, lo), _axis_point(old_a, old_b, hi)
+        owners = {room_id for room_id, edges in rooms
+                  if _segments_cover_target(edges, target_a, target_b)}
+        collinear = {room_id for room_id, edges in rooms
+                     if any(_segments_overlap_on_axis(
+                         target_a, target_b, edge_a, edge_b
+                     ) for edge_a, edge_b in edges)}
+        if len(owners) not in (1, 2) or collinear != owners:
+            return False
+        if any(_segments_overlap_on_axis(
+                target_a, target_b, span["a"], span["b"]
+        ) for span in space.get("open_spans") or []):
+            return False
+        if any(_segments_overlap_on_axis(
+                target_a, target_b, partition["a"], partition["b"]
+        ) for partition in candidate_partitions):
+            return False
+
+        covering_walls = []
+        for wall in space.get("walls") or []:
+            try:
+                wall_a, wall_b = wall["a"], wall["b"]
+                if _segment_covers(wall_a, wall_b, target_a, target_b):
+                    covering_walls.append((
+                        _segment_metrics(wall_a, wall_b)[2], float(wall["cm"]),
+                    ))
+            except (KeyError, TypeError, ValueError):
+                return False
+        effective_cm = (min(covering_walls, key=lambda item: item[0])[1]
+                        if covering_walls else _DEFAULT_ROOM_WALL_CM)
+        if effective_cm + _OPTIMIZE_REHOST_EPSILON < old_cm:
+            return False
+    return True
+
+
+def _hosted_opening_geometry(opening: dict, partition: dict) -> tuple[float, float, float, float] | None:
+    host = opening.get("host")
+    try:
+        if not isinstance(host, dict) or host.get("kind") != "partition":
+            return None
+        t = float(host["t"])
+        a, b = partition["a"], partition["b"]
+        dx, dy, length = _segment_metrics(a, b)
+        opening_length = float(opening["length"])
+    except (KeyError, TypeError, ValueError):
+        return None
+    if not 0 <= t <= 1 or length <= _OPTIMIZE_REHOST_EPSILON or opening_length <= 0:
+        return None
+    angle = math.degrees(math.atan2(dy, dx))
+    if angle >= 90:
+        angle -= 180
+    elif angle < -90:
+        angle += 180
+    return float(a[0]) + dx * t, float(a[1]) + dy * t, angle, opening_length
+
+
+def _safe_optimize_residual_rehost(
+    space: dict, old_space: dict, opening: dict, old_opening: dict,
+) -> bool:
+    """Prove a hosted opening rebound to a newly-created residual id."""
+    old_host, new_host = old_opening.get("host"), opening.get("host")
+    if not (isinstance(old_host, dict) and isinstance(new_host, dict)
+            and old_host.get("kind") == new_host.get("kind") == "partition"):
+        return False
+    old_partition = next((item for item in old_space.get("partitions") or []
+                          if str(item.get("id", "")) == str(old_host.get("id", ""))), None)
+    new_partition = next((item for item in space.get("partitions") or []
+                          if str(item.get("id", "")) == str(new_host.get("id", ""))), None)
+    if old_partition is None or new_partition is None:
+        return False
+    if not _safe_optimize_partition_delta(space, old_partition):
+        return False
+    ignored = {"host", "x", "y", "angle"}
+    if ({key: value for key, value in old_opening.items() if key not in ignored}
+            != {key: value for key, value in opening.items() if key not in ignored}):
+        return False
+    old_geometry = _hosted_opening_geometry(old_opening, old_partition)
+    new_geometry = _hosted_opening_geometry(opening, new_partition)
+    if old_geometry is None or new_geometry is None:
+        return False
+    old_x, old_y, old_angle, old_length = old_geometry
+    new_x, new_y, new_angle, new_length = new_geometry
+    try:
+        explicit_x, explicit_y = float(opening["x"]), float(opening["y"])
+        explicit_angle = float(opening["angle"])
+    except (KeyError, TypeError, ValueError):
+        return False
+    return (
+        abs(old_x - new_x) <= _OPTIMIZE_REHOST_EPSILON
+        and abs(old_y - new_y) <= _OPTIMIZE_REHOST_EPSILON
+        and abs(old_length - new_length) <= _OPTIMIZE_REHOST_EPSILON
+        and _angle_delta_mod_180(old_angle, new_angle) <= 1e-7
+        and abs(explicit_x - new_x) <= _OPTIMIZE_REHOST_EPSILON
+        and abs(explicit_y - new_y) <= _OPTIMIZE_REHOST_EPSILON
+        and _angle_delta_mod_180(explicit_angle, new_angle) <= 1e-7
+    )
+
+
 def _safe_optimize_partition_rehost(
     space: dict, old_space: dict, opening: dict, old_opening: dict,
 ) -> bool:
-    """Independently prove the exact #276 partition-to-room-wall transition."""
+    """Independently prove the #276/#296 partition-to-room-wall transition."""
     old_host = old_opening.get("host")
     if not isinstance(old_host, dict) or old_host.get("kind") != "partition":
         return False
     partition_id = str(old_host.get("id", ""))
     old_partition = next((item for item in old_space.get("partitions") or []
                           if str(item.get("id", "")) == partition_id), None)
-    if old_partition is None or any(
-        str(item.get("id", "")) == partition_id
-        for item in space.get("partitions") or []
-    ):
+    if old_partition is None:
+        return False
+    if not _safe_optimize_partition_delta(space, old_partition):
         return False
     a, b = old_partition.get("a"), old_partition.get("b")
     if not (isinstance(a, list) and len(a) == 2 and isinstance(b, list) and len(b) == 2):
         return False
     dx, dy, length = _segment_metrics(a, b)
     if length <= _OPTIMIZE_REHOST_EPSILON:
-        return False
-
-    owners: set[str] = set()
-    collinear_rooms: set[str] = set()
-    for room in space.get("rooms") or []:
-        poly = _room_polygon(room)
-        room_id = str(room.get("id", ""))
-        edges = [(poly[index], poly[(index + 1) % len(poly)])
-                 for index in range(len(poly))]
-        if any(_segment_covers(edge_a, edge_b, a, b) for edge_a, edge_b in edges):
-            owners.add(room_id)
-        if any(_segments_overlap_on_axis(a, b, edge_a, edge_b)
-               for edge_a, edge_b in edges):
-            collinear_rooms.add(room_id)
-    if len(owners) not in (1, 2) or collinear_rooms != owners:
-        return False
-    if any(_segments_overlap_on_axis(a, b, span["a"], span["b"])
-           for span in space.get("open_spans") or []):
-        return False
-
-    covering_walls = []
-    for wall in space.get("walls") or []:
-        wall_a, wall_b = wall.get("a"), wall.get("b")
-        if not (isinstance(wall_a, list) and isinstance(wall_b, list)):
-            continue
-        if _segment_covers(wall_a, wall_b, a, b):
-            covering_walls.append((_segment_metrics(wall_a, wall_b)[2], float(wall["cm"])))
-    effective_cm = min(covering_walls, key=lambda item: item[0])[1] \
-        if covering_walls else _DEFAULT_ROOM_WALL_CM
-    if effective_cm + _OPTIMIZE_REHOST_EPSILON < float(old_partition.get("cm", 0)):
         return False
 
     ignored = {"host", "x", "y", "angle"}
@@ -224,6 +431,42 @@ def _safe_optimize_partition_rehost(
     along = t * length
     if (along - opening_length / 2 < -_OPTIMIZE_REHOST_EPSILON
             or along + opening_length / 2 > length + _OPTIMIZE_REHOST_EPSILON):
+        return False
+
+    half_dx, half_dy = dx / length * opening_length / 2, dy / length * opening_length / 2
+    target_a = [expected_x - half_dx, expected_y - half_dy]
+    target_b = [expected_x + half_dx, expected_y + half_dy]
+    owners: set[str] = set()
+    collinear_rooms: set[str] = set()
+    for room in space.get("rooms") or []:
+        poly = _room_polygon(room)
+        room_id = str(room.get("id", ""))
+        edges = [(poly[index], poly[(index + 1) % len(poly)])
+                 for index in range(len(poly))]
+        if _segments_cover_target(edges, target_a, target_b):
+            owners.add(room_id)
+        if any(_segments_overlap_on_axis(target_a, target_b, edge_a, edge_b)
+               for edge_a, edge_b in edges):
+            collinear_rooms.add(room_id)
+    if len(owners) not in (1, 2) or collinear_rooms != owners:
+        return False
+    if any(_segments_overlap_on_axis(target_a, target_b, span["a"], span["b"])
+           for span in space.get("open_spans") or []):
+        return False
+    if any(_segments_overlap_on_axis(target_a, target_b, item["a"], item["b"])
+           for item in space.get("partitions") or []):
+        return False
+
+    covering_walls = []
+    for wall in space.get("walls") or []:
+        wall_a, wall_b = wall.get("a"), wall.get("b")
+        if not (isinstance(wall_a, list) and isinstance(wall_b, list)):
+            continue
+        if _segment_covers(wall_a, wall_b, target_a, target_b):
+            covering_walls.append((_segment_metrics(wall_a, wall_b)[2], float(wall["cm"])))
+    effective_cm = min(covering_walls, key=lambda item: item[0])[1] \
+        if covering_walls else _DEFAULT_ROOM_WALL_CM
+    if effective_cm + _OPTIMIZE_REHOST_EPSILON < float(old_partition.get("cm", 0)):
         return False
 
     for other in space.get("openings") or []:
@@ -294,6 +537,17 @@ def validate_partition_opening_hosts(
                 continue
             old_host = (old or {}).get("host")
             old_partition = old_partitions.get(str((old_host or {}).get("id", "")))
+            if (allow_optimize_rehost and old and old_space
+                    and isinstance(old_host, dict)
+                    and old_host.get("kind") == "partition"
+                    and isinstance(host, dict) and host.get("kind") == "partition"
+                    and old_host.get("id") != host.get("id")
+                    and not _safe_optimize_residual_rehost(
+                        space, old_space, opening, old
+                    )):
+                raise PartitionOpeningHostError(
+                    f"space={space_id}; opening={opening_id}; residual host changed"
+                )
             ax, ay = partition["a"]
             bx, by = partition["b"]
             span = ((bx - ax) ** 2 + (by - ay) ** 2) ** 0.5
@@ -324,6 +578,14 @@ def validate_partition_opening_hosts(
                 raise PartitionOpeningJambMarginError(
                     space_id, opening_id, margin, margin_cm
                 )
+        if allow_optimize_rehost and old_space:
+            for old_partition in old_space.get("partitions") or []:
+                if (_optimize_partition_needs_proof(old_partition, space)
+                        and not _safe_optimize_partition_delta(space, old_partition)):
+                    raise PartitionOpeningHostError(
+                        f"space={space_id}; partition={old_partition.get('id', '')}; "
+                        "optimize delta unproved"
+                    )
 
 
 PASSAGE_FORBIDDEN_FIELDS = {"contact", "lock", "invert", "flip_h", "flip_v"}

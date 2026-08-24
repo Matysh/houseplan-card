@@ -228,12 +228,38 @@ const out = await page.evaluate(async () => {
       partitions: card._curSpaceCfg.partitions,
     }) === gestureGeometry;
 
+  card._curSpaceCfg.partitions.push({
+    id: 'hidden-partition', a: [0.1, 0.1], b: [0.5, 0.1], cm: 15,
+  });
+  card._modelCache = null;
+  card._cfgEpoch++;
   card._activateMarkupTool('select');
   await update();
-  result.otherPlanToolsHaveNoOverlay = !overlay();
+  const diagnostic = root().querySelector('[data-hp="hidden-wall-diagnostic"]');
+  result.otherPlanToolsHaveHiddenDiagnostic = !overlay() && !!diagnostic
+    && diagnostic.querySelectorAll('.hidden-wall-line').length === 1
+    && diagnostic.querySelectorAll('.hidden-wall-node').length === 2;
+  const editorVirtualWalls = root().querySelector('.openwalls');
+  result.hiddenDiagnosticAboveAllWallBodies = !!diagnostic && !!wallBodies
+    && !!(wallBodies.compareDocumentPosition(diagnostic) & Node.DOCUMENT_POSITION_FOLLOWING)
+    && (!editorVirtualWalls
+      || !!(editorVirtualWalls.compareDocumentPosition(diagnostic) & Node.DOCUMENT_POSITION_FOLLOWING));
+  result.hiddenDiagnosticIsPointerTransparent = diagnostic?.getAttribute('pointer-events') === 'none'
+    && getComputedStyle(diagnostic).pointerEvents === 'none';
+  card._activateMarkupTool('draw');
+  await update();
+  const drawDiagnostic = root().querySelector('[data-hp="hidden-wall-diagnostic"]');
+  const drawSnap = overlay();
+  result.drawToolKeepsHiddenDiagnosticAndSnapOverlay = !!drawDiagnostic && !!drawSnap
+    && drawDiagnostic.querySelectorAll('.hidden-wall-line').length === 1
+    && drawDiagnostic.querySelectorAll('.hidden-wall-node').length === 2;
+  result.hiddenDiagnosticPaintsBeforeTransientSnap = !!(
+    drawDiagnostic.compareDocumentPosition(drawSnap) & Node.DOCUMENT_POSITION_FOLLOWING
+  );
   card._setMode('view');
   await update();
-  result.viewHasNoOverlay = !overlay();
+  result.viewHasNoOverlay = !overlay()
+    && !root().querySelector('[data-hp="hidden-wall-diagnostic"]');
 
   return result;
 });

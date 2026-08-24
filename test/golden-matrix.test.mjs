@@ -256,7 +256,9 @@ test('corner Split golden captures before, thin and thick facade states', () => 
 });
 
 test('issue 276 golden captures 5 cm offsets and hosted door before/after 10/30/virtual', () => {
-  const scenarios = GOLDEN_SCENARIOS.filter((scenario) => scenario.coincidentPartition);
+  const scenarios = GOLDEN_SCENARIOS.filter((scenario) => (
+    scenario.coincidentPartition && !scenario.hiddenWallDiagnostics
+  ));
   assert.deepEqual(
     scenarios.map((scenario) => scenario.coincidentPartition),
     ['before', 'thin', 'thick', 'virtual'],
@@ -282,6 +284,19 @@ test('issue 276 golden captures 5 cm offsets and hosted door before/after 10/30/
     } else {
       assert.equal(space.walls[0].cm, scenario.coincidentPartition === 'thin' ? 10 : 30);
     }
+  }
+});
+
+test('issue 296 golden shows hidden partition and saved-chain diagnostics in both themes', () => {
+  const scenarios = GOLDEN_SCENARIOS.filter((scenario) => scenario.hiddenWallDiagnostics);
+  assert.deepEqual(scenarios.map((scenario) => scenario.theme).sort(), ['dark', 'light']);
+  for (const scenario of scenarios) {
+    assert.equal(scenario.mode, 'plan');
+    const fixture = prepareGoldenFixture(scenario);
+    const space = fixture.config.spaces.find((item) => item.id === scenario.space);
+    assert.equal(space.partitions.length, 1);
+    assert.equal(space.room_drafts.length, 1);
+    assert.deepEqual(space.room_drafts[0].points, [[0, 0], [0, 1]]);
   }
 });
 

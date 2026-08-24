@@ -165,6 +165,14 @@ const decorLayerProbes = {
 };
 
 export const GOLDEN_SCENARIOS = Object.freeze([
+  { id: 'hidden-wall-diagnostics-plan-light', fixture: 'visual',
+    space: 'golden-coincident-partition', coincidentPartition: 'before',
+    hiddenWallDiagnostics: true, mode: 'plan', theme: 'light',
+    viewport: { width: 1000, height: 900 }, ...stage },
+  { id: 'hidden-wall-diagnostics-plan-dark', fixture: 'visual',
+    space: 'golden-coincident-partition', coincidentPartition: 'before',
+    hiddenWallDiagnostics: true, mode: 'plan', theme: 'dark',
+    viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'coincident-partition-before-dark', fixture: 'visual',
     space: 'golden-coincident-partition', coincidentPartition: 'before',
     mode: 'view', theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },

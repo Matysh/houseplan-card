@@ -165,7 +165,7 @@ test('issue 276 reconciliation is owned by explicit Optimize and called once per
     'render/pointer modules must not import or invoke the Optimize-only pass');
 });
 
-test('issue 276 fails closed for an orphan host, overlap, draft, column and unknown partition data', () => {
+test('issue 276 fails closed for an orphan host, overlap, column and unknown partition data', () => {
   const variants = [];
 
   const orphan = clone(fixture);
@@ -178,13 +178,6 @@ test('issue 276 fails closed for an orphan host, overlap, draft, column and unkn
     angle: 90, length: 0.2,
   });
   variants.push(['overlapping opening', overlap]);
-
-  const draft = clone(fixture);
-  draft.spaces[0].room_drafts = [{
-    id: 'draft', points: [[0.5041666666666667, 0.2], [0.5041666666666667, 0.8]],
-    segments: [{ cm: 15 }],
-  }];
-  variants.push(['overlapping draft', draft]);
 
   const column = clone(fixture);
   column.spaces[0].wall_columns = [{
@@ -202,4 +195,19 @@ test('issue 276 fails closed for an orphan host, overlap, draft, column and unkn
     assert.equal(result.config.spaces[0].partitions.length, 1, name);
     assert.ok(result.config.spaces[0].openings[0].host, name);
   }
+});
+
+test('issue 296 removes a fully hidden saved chain before reconciling its partition', () => {
+  const input = clone(fixture);
+  input.spaces[0].room_drafts = [{
+    id: 'hidden-draft',
+    points: [[0.5041666666666667, 0.2], [0.5041666666666667, 0.8]],
+    segments: [{ cm: 15 }],
+  }];
+  const result = optimize(input);
+  assert.equal(result.report.removedDrafts, 0);
+  assert.equal(result.report.redundantDraftsRemoved, 1);
+  assert.equal(result.report.partitionsReconciled, 1);
+  assert.equal(result.config.spaces[0].room_drafts, undefined);
+  assert.equal(result.config.spaces[0].partitions, undefined);
 });

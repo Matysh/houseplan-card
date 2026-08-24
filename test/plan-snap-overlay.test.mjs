@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  buildHiddenWallDiagnosticGeometry,
   buildPlanSnapGeometry,
   findSharedRoomSnapSegment,
   resolvePlanSnap,
@@ -152,6 +153,46 @@ test('a completed room remains the authority for a coincident deduplicated axis'
   });
   const shared = findSharedRoomSnapSegment(geometry, [0, 0], [100, 0]);
   assert.equal(shared?.sourceKind, 'room');
+});
+
+test('issue 296 diagnostic projection preserves hidden independent source identity', () => {
+  const input = space({
+    rooms: [{ id: 'room', x: 0, y: 0, w: 100, h: 100 }],
+    room_drafts: [{
+      id: 'draft', points: [[25, 0], [75, 0]], segments: [{ cm: 15 }],
+    }],
+    partitions: [
+      { id: 'hidden', a: [0, 0], b: [100, 0], cm: 15 },
+      { id: 'free', a: [0, 50], b: [100, 50], cm: 15 },
+    ],
+  });
+  const diagnostic = buildHiddenWallDiagnosticGeometry({ space: input });
+  assert.deepEqual(diagnostic.segments.map((segment) => segment.sourceId), [
+    'draft:0', 'hidden',
+  ]);
+  assert.equal(diagnostic.endpoints.length, 4,
+    'source endpoints must not be deduplicated into room authority');
+  assert.deepEqual(new Set(diagnostic.endpoints.map((endpoint) => endpoint.sourceId)),
+    new Set(['draft:0', 'hidden']));
+  assert.equal(diagnostic.segments.some((segment) => segment.sourceId === 'free'), false);
+
+  const snap = buildPlanSnapGeometry({ space: input });
+  assert.equal(findSharedRoomSnapSegment(snap, [0, 0], [100, 0])?.sourceKind, 'room',
+    'diagnostics must not change the established snap authority');
+});
+
+test('issue 296 active drafts and point-only contacts are not diagnostic walls', () => {
+  const diagnostic = buildHiddenWallDiagnosticGeometry({
+    space: space({
+      rooms: [{ id: 'room', x: 0, y: 0, w: 100, h: 100 }],
+      room_drafts: [{
+        id: 'active', points: [[0, 0], [100, 0]], segments: [{ cm: 15 }],
+      }],
+      partitions: [{ id: 'touch', a: [100, 0], b: [150, 0], cm: 15 }],
+    }),
+    activeDraftId: 'active',
+  });
+  assert.deepEqual(diagnostic, { segments: [], endpoints: [] });
 });
 
 test('endpoint wins over a closer line and tie resolution is stable', () => {

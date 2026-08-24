@@ -157,7 +157,9 @@ import {
   type PartitionOpeningOrphanReason, type ResolvedPartitionOpening,
 } from './partition-openings';
 import {
-  buildPlanSnapGeometry, resolvePlanSnapResult, resolveStrictPlanSnap,
+  buildHiddenWallDiagnosticGeometry, buildPlanSnapGeometry,
+  resolvePlanSnapResult, resolveStrictPlanSnap,
+  type HiddenWallDiagnosticGeometry,
   type PlanSnapCandidate, type PlanSnapEndpoint, type PlanSnapGeometry, type PlanSnapSegment,
 } from './plan-snap-overlay';
 import {
@@ -1571,6 +1573,9 @@ class HouseplanCard extends LitElement {
   } | null = null;
   private _planSnapGeometryCache: { key: string; value: PlanSnapGeometry } | null = null;
   private _planStructuralGeometryCache: { key: string; value: PlanSnapGeometry } | null = null;
+  private _hiddenWallDiagnosticCache: {
+    key: string; value: HiddenWallDiagnosticGeometry;
+  } | null = null;
   private _physicalBodiesCache: {
     key: string; drafts: number[][][]; partitions: number[][][];
     columns: number[][][]; patches: number[][][]; all: number[][][];
@@ -3562,6 +3567,7 @@ class HouseplanCard extends LitElement {
     this._saveConfigDebounced.cancel();
     this._frame = null;
     this._planSnapGeometryCache = null;
+    this._hiddenWallDiagnosticCache = null;
     this._decorSnapCache = null;
     this._commitSpace('', true);
   }
@@ -6861,6 +6867,30 @@ class HouseplanCard extends LitElement {
     });
     this._planSnapGeometryCache = { key, value };
     return this._planSnapGeometryCache;
+  }
+
+  /** Independent sources hidden under another wall, without snap deduplication. */
+  private _hiddenWallDiagnosticSnapshot(): {
+    key: string; value: HiddenWallDiagnosticGeometry;
+  } {
+    const space = this._spaceModel();
+    if (!space) {
+      return { key: `${this._space}|hidden-empty`, value: { segments: [], endpoints: [] } };
+    }
+    const key = [
+      'hidden', this._space, this._cfgEpoch, this._activeDraftId || '',
+      space.rooms.length, space.room_drafts.length, space.partitions.length,
+    ].join('|');
+    if (this._hiddenWallDiagnosticCache?.key === key) {
+      return this._hiddenWallDiagnosticCache;
+    }
+    const value = buildHiddenWallDiagnosticGeometry({
+      space,
+      activeDraftId: this._activeDraftId,
+      epsilon: this._gridPitch * 0.0002,
+    });
+    this._hiddenWallDiagnosticCache = { key, value };
+    return this._hiddenWallDiagnosticCache;
   }
 
   /**
@@ -16393,7 +16423,7 @@ class HouseplanCard extends LitElement {
       + r.positionsRemapped + r.markersDetached;
     const modelMaintenance = r.migrated + r.canonicalized + r.coordsCanonicalized
       + r.wallsMerged + r.spansMerged + r.partitionsMerged
-      + r.partitionsReconciled + r.openingsRehosted;
+      + r.partitionsReconciled + r.openingsRehosted + r.redundantDraftsRemoved;
     const gridWarning = r.moved + r.rotated + r.removedDrafts
       + r.coordsCanonicalized + r.wallsStraightened;
     const straightenCm = Math.ceil(r.maxStraightenShiftCm * 10) / 10;
@@ -16480,6 +16510,11 @@ class HouseplanCard extends LitElement {
               ${r.removedDrafts
                 ? html`<p class="alignmsg">${this._t('gs.align_removed_drafts', {
                     n: String(r.removedDrafts),
+                  })}</p>`
+                : nothing}
+              ${r.redundantDraftsRemoved
+                ? html`<p class="alignmsg">${this._t('gs.optimize_redundant_drafts', {
+                    n: String(r.redundantDraftsRemoved),
                   })}</p>`
                 : nothing}
               ${modelMaintenance ? html`<p class="alignmsg">${this._t('gs.optimize_changes', {
@@ -17349,17 +17384,19 @@ class HouseplanCard extends LitElement {
                    inside thick jambs without changing the stored span. */}
             ${!this._editing ? this._renderOpenWalls(disp) : nothing}
             ${this._renderWallBodies(disp)}
-            ${this._markup ? svg`<g class="hp-editor-only-layer"
-              opacity="${modeVisual?.editorWeight ?? 1}">${this._renderPlanSnapOverlay()}</g>` : nothing}
-            ${this._markup ? svg`<g class="hp-editor-only-layer"
-              opacity="${modeVisual?.editorWeight ?? 1}">${this._renderOpeningPlacementPreview()}</g>` : nothing}
-            ${opMeasure ? this._renderOpeningDimensionGuides(opMeasure) : nothing}
-            ${opMeasure?.guide ? this._renderOpeningCenterTick(opMeasure.guide) : nothing}
             ${this._renderRoomHoverOutline(roomHover)}
             ${''/* Editors: saved virtual boundaries and the live two-click
                    preview deliberately paint AFTER real wall bodies. Their
                    full centreline geometry remains visible for editing. */}
             ${this._editing ? this._renderOpenWalls(disp) : nothing}
+            ${this._markup ? svg`<g class="hp-editor-only-layer"
+              opacity="${modeVisual?.editorWeight ?? 1}">${this._renderHiddenWallDiagnosticOverlay()}</g>` : nothing}
+            ${this._markup ? svg`<g class="hp-editor-only-layer"
+              opacity="${modeVisual?.editorWeight ?? 1}">${this._renderOpeningPlacementPreview()}</g>` : nothing}
+            ${opMeasure ? this._renderOpeningDimensionGuides(opMeasure) : nothing}
+            ${opMeasure?.guide ? this._renderOpeningCenterTick(opMeasure.guide) : nothing}
+            ${this._markup && this._tool === 'draw' ? svg`<g class="hp-editor-only-layer"
+              opacity="${modeVisual?.editorWeight ?? 1}">${this._renderPlanSnapOverlay()}</g>` : nothing}
             ${disp.hideOpenings && !this._markup
               ? nothing
               : isoLayers && !isoLayers.floorSymbols
@@ -19545,6 +19582,28 @@ class HouseplanCard extends LitElement {
       </g>`;
     })();
     return svg`<g class="physical-editor">${draftSegs}${partitions}${columns}${ghost}${chrome}</g>`;
+  }
+
+  private _renderHiddenWallDiagnosticOverlay(): TemplateResult {
+    if (!this._markup) return svg`` as unknown as TemplateResult;
+    const geometry = this._hiddenWallDiagnosticSnapshot().value;
+    if (!geometry.segments.length) return svg`` as unknown as TemplateResult;
+    const radius = wallCmToUnits(5, this._cellCm, this._gridPitch);
+    return svg`<g class="hidden-wall-diagnostic" data-hp="hidden-wall-diagnostic"
+      data-segment-count=${geometry.segments.length}
+      data-endpoint-count=${geometry.endpoints.length}
+      aria-hidden="true" pointer-events="none">
+      ${geometry.segments.map((segment) => svg`<line class="hidden-wall-line"
+        data-key=${segment.key} data-source-kind=${segment.sourceKind}
+        data-source-id=${segment.sourceId}
+        x1=${segment.a[0]} y1=${segment.a[1]} x2=${segment.b[0]} y2=${segment.b[1]}
+        vector-effect="non-scaling-stroke" pointer-events="none"></line>`)}
+      ${geometry.endpoints.map((endpoint) => svg`<circle class="hidden-wall-node"
+        data-key=${endpoint.key} data-source-kind=${endpoint.sourceKind}
+        data-source-id=${endpoint.sourceId}
+        cx=${endpoint.point[0]} cy=${endpoint.point[1]} r=${radius}
+        pointer-events="none"></circle>`)}
+    </g>` as unknown as TemplateResult;
   }
 
   private _renderPlanSnapOverlay(): TemplateResult {

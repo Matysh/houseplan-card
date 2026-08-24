@@ -403,16 +403,20 @@ delete requires cascade confirmation, and malformed/orphan hosts remain opaque.
 Opening cuts change physical masonry, not the structural wall axes used for
 room-face detection (#185).
 
-Explicit Optimize has one stricter reconciliation pass (#276/#281). It may
-remove a partition only when its axis is endpoint-to-endpoint identical to one
-uniform, solid outer interval owned by one room or shared interval owned by
-exactly two rooms, and no draft, column, second partition or conflicting
-opening makes the result ambiguous. Hosted openings are materialised at the
-same centre/angle as ordinary room-wall openings. The canonical thickness is
-`max(roomCm, partitionCm)`, which is exactly the union envelope of the centred
-coincident bodies. The pass is immutable, idempotent and followed by the common
-whole-plan geometry preflight; rendering, Resize and ordinary Save never
-perform it implicitly.
+Explicit Optimize has one stricter reconciliation pass (#276/#281/#296). It
+atomizes an independent wall at consecutive solid room-wall and hosted-opening
+boundaries. Every positive section is proved independently: one outer owner or
+exactly two shared owners with one effective thickness, and no draft, column,
+second partition or conflicting opening. Proven sections are absorbed even
+when several consecutive room intervals cover the source; unproven sections
+are recombined into deterministic residual partitions. Hosted openings are
+materialised at the same centre/angle on a proven room wall or rebound to the
+single residual that contains them. The canonical thickness is
+`max(roomCm, partitionCm)`, exactly the union envelope of centred coincident
+bodies. A saved draft is removed only all-or-nothing when every segment has the
+same complete solid proof. The pass is immutable, idempotent and followed by
+the common whole-plan geometry preflight; rendering, Resize and ordinary Save
+never perform it implicitly.
 
 `physicalBodySet()` separates raw draft/partition/column bodies from computed
 junction patches and their joined geometry. Raw bodies remain authoritative for
