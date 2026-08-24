@@ -44,7 +44,7 @@
 2. не передаёт в render model идентичность измеряемого ребра, поэтому отдельной
    подсветки нет;
 3. ставит площадь каждой изменяемой комнаты в `poleOfInaccessibility(floor)` —
-   туда же, где в Plan editor находится `.roomgear`.
+   туда же, где в Plan editor находится `.rlgearbtn`.
 
 Числа уже корректны по #233: `_rszInnerSpanCms()` измеряет между внутренними
 гранями, а площадь считается по чистому полу через `innerContourForRoom()` и
@@ -67,10 +67,9 @@
    комнаты, ей разрешено выйти за границу комнаты; выносная линия продолжает
    однозначно связывать её с нужной стороной стены. Площади не перекрывают друг
    друга.
-6. Во время активного Resize кнопки настроек комнат временно скрыты. В этот
-   момент pointer захвачен жестом и кнопка всё равно не может быть полезным
-   действием; после завершения или отмены она возвращается без изменения
-   состояния.
+6. Кнопка настроек комнаты остаётся видимой. Если nominal area-плашка попадает
+   в её screen-fixed no-fly zone, плашка сдвигается вдоль перемещаемой стены до
+   первого свободного положения; leader сохраняет связь с исходным midpoint.
 
 Пункт 5 заменяет первоначальный AC6 в теле issue, где требовалось удерживать
 плашку внутри комнаты: владелец явно выбрал альтернативу в комментарии.
@@ -83,7 +82,7 @@
 - pointer-transparent SVG-подсветка поверх кладки;
 - размещение одной/двух площадей у перемещаемой стены;
 - короткие выносные линии для площадей;
-- временное скрытие room settings buttons на время активного жеста;
+- collision-free раскладка area-плашки относительно room settings button;
 - horizontal/vertical, outer/shared и оба направления drag;
 - unit, browser smoke, golden, mutation guards и RU/EN документация.
 
@@ -122,6 +121,7 @@ type ResizeMeasuredEdge = {
 type ResizeAreaLabel = {
   kind: 'area'; roomId: string; x: number; y: number; text: string;
   side: 'left' | 'right' | 'above' | 'below';
+  tangentOffsetPx: number;
   leader: { a: Pt; b: Pt };
 };
 ```
@@ -179,6 +179,17 @@ HTML-плашка якорится на midpoint moving edge. CSS-смещени
 не могут перекрыться независимо от длины локализованного текста. На наружной
 стене строится одна плашка на стороне комнаты.
 
+Для collision check используется консервативный screen-space footprint
+плашки, вычисленный из форматированного текста, font/padding tokens и
+screen-fixed footprint `.rlgearbtn`. Nominal position сначала проверяется
+против gear той же комнаты. При пересечении helper выбирает минимальный сдвиг
+по касательной к moving wall; при равных вариантах стабильный порядок — к
+меньшей screen-coordinate. Выход за room polygon разрешён решением владельца,
+поэтому такой сдвиг не скрывает число и не требует менять сторону стены.
+Production gesture path не вызывает `getBoundingClientRect()` и не читает
+layout; фактические DOM rectangles проверяются браузерным smoke как post-render
+доказательство консервативности footprint.
+
 Короткая выносная линия идёт от midpoint стены на 12 CSS px в сторону плашки.
 Перевод screen px в render units использует текущий viewBox/stage size; stroke
 остаётся screen-fixed. Линия присутствует у каждой area-плашки: в обычной
@@ -193,9 +204,10 @@ HTML-плашка якорится на midpoint moving edge. CSS-смещени
 object на том же accepted preview, поэтому линия, подсветка и число не могут
 относиться к разным candidate frames.
 
-Room settings buttons не рендерятся при `_rszDrag && _rszLive`; состояние и
-позиции комнатных карточек не меняются. Любой путь очистки `_rszLive` возвращает
-кнопки на следующем render.
+Room settings buttons продолжают рендериться и не получают нового состояния.
+Area projection использует тот же вычисленный visual centre, что
+`_renderRoomGear()`, поэтому collision avoidance не создаёт вторую модель
+позиции кнопки.
 
 Новые элементы pointer-inert и не меняют capture/hit priority. Существующие
 гарантии `docs/RESIZE.md` обязательны без изменений:
@@ -241,6 +253,8 @@ Open/Save ничего не материализует.
 - `test/resize-labels.test.mjs` — pure contract;
 - `test/resize-production-path.test.mjs` — production ownership/lifecycle;
 - `demo/smoke_resize_labels.mjs` — outer/shared/narrow/horizontal/vertical;
+- `demo/benchmark_safe_resize_render.mjs` — существующий real-render gate с
+  абсолютным `RENDER_P95_MS = 25`; исходник benchmark менять не требуется;
 - `demo/golden/harness.mjs`, при необходимости `demo/golden/matrix.mjs` —
   semantic checks active Resize scene;
 - `scripts/mutation-gate.mjs` — guards §12;
@@ -261,11 +275,11 @@ Open/Save ничего не материализует.
 | AC4 | Наружная горизонтальная и вертикальная стена показывают одну area-плашку со стороны комнаты и одну выносную линию | unit + smoke |
 | AC5 | Общая горизонтальная и вертикальная стена показывают две area-плашки с разными `roomId` по противоположным сторонам и две выносные линии | unit + smoke |
 | AC6 | В narrow-room fixture обе площади остаются в DOM, могут выйти за room polygon по решению владельца, но их фактические DOM rectangles не пересекаются; leader ownership остаётся однозначным | smoke |
-| AC7 | Во время жеста ни одна area-плашка не пересекает room settings button: buttons отсутствуют до завершения/отмены и возвращаются после обоих путей | smoke |
+| AC7 | При horizontal/vertical и обоих направлениях drag room settings button остаётся видимой, а её фактический DOM rectangle не пересекает area-плашку той же комнаты | unit + smoke |
 | AC8 | Pointerup очищает measurement overlay; Esc, pointercancel, lost capture и pinch также очищают его и создают 0 Undo/0 writes | smoke |
 | AC9 | Light/dark active-Resize golden показывает две подсвеченные стены, две площади shared wall и читаемые leaders; принятие baseline только из полного reviewed Linux CI artifact | golden review |
 | AC10 | User-visible docs и оба changelog обновлены в том же коммите; i18n/schema/backend отсутствуют в diff | code review |
-| AC11 | `benchmark_safe_resize_render` не регрессирует больше чем на 10% либо 1 ms p95 (берётся больший допуск); `_rszMove` не делает forced layout read | benchmark + code review |
+| AC11 | Existing `demo/benchmark_safe_resize_render.mjs` остаётся внутри реального абсолютного потолка `RENDER_P95_MS = 25`; `_rszMove` не делает forced layout read | benchmark + code review |
 
 ## 12. Mutation guards
 
@@ -275,7 +289,7 @@ Open/Save ничего не материализует.
 | `resize-labels-drops-measured-edge` | одна длина остаётся без соответствующей подсветки | AC3 |
 | `resize-labels-same-side-areas` | обе площади общей стены ставятся с одной стороны | AC5/AC6 |
 | `resize-labels-hide-narrow-area` | narrow fallback скрывает одну площадь вопреки решению владельца | AC6 |
-| `resize-labels-gear-during-drag` | room settings button остаётся поверх активной площади | AC7 |
+| `resize-labels-ignore-gear-collision` | nominal area-плашка не сдвигается от room settings button | AC7 |
 | `resize-labels-cancel-leak` | measurement overlay переживает abort | AC8 |
 
 ## 13. План автотестов
@@ -293,7 +307,8 @@ Open/Save ничего не материализует.
    - shared wall с двумя rooms;
    - positive/negative drag;
    - narrow room с фактической проверкой `getBoundingClientRect()` двух badges;
-   - gear lifecycle и все abort paths.
+   - фактическое отсутствие overlap с видимой room settings button и все abort
+     paths.
 3. `demo/smoke_resize_inner_dimensions.mjs` остаётся зелёным и доказывает, что
    числа #233 не изменены.
 4. Existing `safe-resize-handles-clamp-light/dark` golden используется как
@@ -302,7 +317,8 @@ Open/Save ничего не материализует.
 5. Перед `S7-code-review`: `npm run typecheck`, `npm test`, `npm run build`,
    `npm run bundle:sync`, `node scripts/check-docs.mjs`, вывод
    `node scripts/smoke-select.mjs --base origin/dev --head HEAD` и все выбранные
-   target smokes.
+   target smokes, включая `node demo/benchmark_safe_resize_render.mjs` как
+   доказательство абсолютного p95-бюджета 25 ms.
 
 ## 14. Производительность, security, touch
 
@@ -327,8 +343,9 @@ Touch — best effort, без изменения существующей под
    fixtures.
 3. **Highlight перехватит жест или перекроет проём.** Слой pointer-transparent и
    расположен ниже opening symbols/handles.
-4. **Room gear мигнёт после abort.** Gear видимость выводится из того же live
-   gesture state, а не хранится отдельно.
+4. **Консервативный footprint разойдётся с фактическим CSS.** Размеры выводятся
+   из общих tokens, а smoke сравнивает реальные `getBoundingClientRect()` в
+   horizontal/vertical и narrow fixtures.
 5. **Forced reflow на каждом pointermove.** Production placement не измеряет
    DOM; mutation/code review стережёт отсутствие `getBoundingClientRect()` в
    gesture path.
@@ -365,9 +382,14 @@ measured-edge/leader layers. Данных и миграции нет, backend о
 3. Leader рисуется всегда, а не только после определения выхода за polygon.
    Это избегает forced layout read и сохраняет стабильную ownership-связь без
    визуального переключения режима во время drag.
-4. Highlight использует два screen-fixed strokes (halo + accent); точные
+4. Collision helper использует консервативную расчётную ширину текста и
+   screen-fixed footprint room gear. Допустима другая pure screen-space
+   стратегия, если кнопка остаётся видимой, фактические rectangles не
+   пересекаются и pointermove не читает layout.
+5. Highlight использует два screen-fixed strokes (halo + accent); точные
    ширины являются темизацией, не продуктовым решением.
 
 Не являются предположениями: отсутствие moving-wall length, две подсвеченные
 соседние стены, area по обе стороны shared wall, всегда видимая narrow-room
-площадь с leader и временное отсутствие room gear — это acceptance contract.
+площадь с leader и отсутствие overlap с видимой room settings button — это
+acceptance contract.
