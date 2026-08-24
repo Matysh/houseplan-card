@@ -117,11 +117,17 @@ moving edge, чей сдвиг на 43 шага создал бы mixed-role int
 `{enabled:false, reason:'partial-shared'}`; pointer capture, preview, history и
 write не создаются.
 
+**Доказательство:** table-driven unit в `test/resize.test.mjs` плюс
+production-bundle pointer smoke на минимизированной fixture.
+
 ### AC2. Причина доступна человеку
 
 RU: «Нельзя сдвинуть только часть общей стены». EN передаёт тот же смысл.
 Disabled handle сохраняет hit area, `aria-disabled`, localized accessible name,
 tooltip на hover/focus и toast на click/tap. Он не запускает drag.
+
+**Доказательство:** production-path DOM/source test для i18n/ARIA и browser
+smoke для click, focus, tap и нулевой history/config write.
 
 ### AC3. Directed safe range не перепрыгивает смену роли
 
@@ -129,6 +135,9 @@ tooltip на hover/focus и toast на click/tap. Он не запускает d
 затем доходит до конца соседней комнаты, preview останавливается на последнем
 endpoint-to-endpoint node. Он не перескакивает через запрещённый node к более
 дальнему валидному polygon. Обратное безопасное направление остаётся рабочим.
+
+**Доказательство:** pure unit для последовательности grid candidates и browser
+smoke, сравнивающий фактическую preview/commit coordinate с первым unsafe node.
 
 ### AC4. Разрешённые сценарии #277 сохраняются
 
@@ -139,6 +148,9 @@ endpoint-to-endpoint node. Он не перескакивает через за�
 - zero-range handle #281 disabled по своей точной причине;
 - pinch, pointercancel и lostpointercapture дают ноль записей.
 
+**Доказательство:** table-driven positive unit matrix и существующие
+`smoke_room_resize` pointer scenarios без ослабления их exact assertions.
+
 ### AC5. Persisted model чиста
 
 После каждого разрешённого commit `checkMixedRoleRecords` возвращает ноль.
@@ -146,12 +158,18 @@ endpoint-to-endpoint node. Он не перескакивает через за�
 preflight также возвращают ноль нарушений. Exact forbidden repro оставляет
 JSON config/layout byte-equivalent.
 
+**Доказательство:** `scripts/model-invariants.mjs`/targeted invariant unit на
+before/after candidate и byte-for-byte assertion forbidden config/layout.
+
 ### AC6. Preview и commit используют один proof
 
 Ownership profile входит в immutable `SafeResizePlan`/его signature и
 проверяется `validateSafeResize()` перед pointerup. Если committed snapshot или
 owners изменились, весь жест отменяется с `resize.commit_failed`, без partial
 write. Commit принимает только exact preview.
+
+**Доказательство:** unit, подменяющий owner signature между preview/pointerup,
+и production smoke с нулём history/config writes после rejected commit.
 
 ### AC7. Production-bundle smoke
 
@@ -189,13 +207,29 @@ handle и cancellation не сохраняют геометрию.
 получает новый глобальный `O(R×E)` анализ: он проверяет подготовленный plan и
 contiguous deltas. Действующие p95 budgets из `docs/RESIZE.md` сохраняются.
 
-## 8. Ожидаемые файлы
+## 8. Риски и меры
+
+- Слишком строгий ownership profile может отключить безопасные outer/exact
+  shared стены. Мера: positive AC3/AC4 и exact reason matrix, запрещающая
+  blanket-disable.
+- Слишком мягкий профиль снова позволит одному thickness record описывать
+  shared и outer intervals. Мера: AC1/AC5, `checkMixedRoleRecords` и мутант AC8.
+- Preview и pointerup могут проверить разные owners после внешнего обновления.
+  Мера: immutable signature и atomic reject AC6.
+
+## 9. Откат
+
+Чистый revert implementation-коммита возвращает прежнюю eligibility; миграция
+и feature flag не требуются, потому что persisted geometry/schema не меняются.
+
+## 10. Ожидаемые файлы
 
 Product code:
 
 - `src/resize.ts`;
 - `src/houseplan-card.ts` только для передачи profile/UX, если требуется;
-- `src/i18n/en.json`, `src/i18n/ru.json`.
+- `src/i18n/en.json`, `src/i18n/ru.json`, включая
+  `resize.disabled.partial-shared`.
 
 Tests/evidence:
 
@@ -212,7 +246,7 @@ Tests/evidence:
   `docs/TESTING.md`;
 - `docs/CHANGELOG.md`, `docs/CHANGELOG.ru.md`.
 
-## 9. Release и порядок интеграции
+## 11. Release и порядок интеграции
 
 Implementation-коммит имеет `Issue: #289`, `User-Visible: yes` и оба
 changelog. Если меняется вид disabled handle, targeted golden/docs screenshots
@@ -221,7 +255,7 @@ changelog. Если меняется вид disabled handle, targeted golden/doc
 Инфраструктурная #260 должна попасть в `dev` до финальной пересъёмки, но не
 входит в product branch #289.
 
-## 10. Принятые технические предположения
+## 12. Принятые технические предположения
 
 1. Существующий reason key `partial-shared` переиспользуется, но его текст
    меняется на принятое владельцем объяснение.
