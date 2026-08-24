@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.67.0-beta.10 — 2026-08-24
+
 - Resize availability on real plans is now protected by an exact per-wall
   audit using the production safety resolver. Disabled handles explain the
   actual geometric restriction in clearer language; click, tap, Enter and

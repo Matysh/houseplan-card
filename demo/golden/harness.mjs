@@ -671,10 +671,16 @@ export async function prepareGoldenScenario(page, scenario) {
     if (scenario.wallUnionIsolation) {
       const result = card._wallUnionGeometry?.();
       const paths = [...card.renderRoot.querySelectorAll('[data-hp="wall"]')];
-      if (result?.status !== 'degraded-extra' || result.paths?.length !== 2
-          || paths.length !== 2
-          || new Set(paths.map((path) => path.dataset.component)).size !== 2) {
-        throw new Error(`golden wall-union isolation contract failed: ${scenario.id}`);
+      // The stored #278 fixture deliberately contains near-lattice noise so
+      // its unit test can exercise degraded-extra isolation. In the mounted
+      // product, #291's write barrier canonicalizes that noise before this
+      // integration frame: the same masonry must now unite normally.
+      if (result?.status !== 'ok' || result.paths?.length !== 1
+          || paths.length !== 1
+          || new Set(paths.map((path) => path.dataset.component)).size !== 1) {
+        throw new Error(`golden wall-union isolation contract failed: ${scenario.id}; `
+          + `status=${result?.status || 'missing'}; geometryPaths=${result?.paths?.length ?? 'missing'}; `
+          + `domPaths=${paths.length}; domComponents=${new Set(paths.map((path) => path.dataset.component)).size}`);
       }
     }
     if (scenario.multiWallJunction) {

@@ -305,7 +305,7 @@ import {
 } from './space-order';
 import { applyOpeningMoves, mergeCollinearPartitions, spaceMergeGeometry } from './wall-merge';
 
-const CARD_VERSION = '1.67.0-beta.9';
+const CARD_VERSION = '1.67.0-beta.10';
 const DISPLAY_LABEL_KEYS: Record<DeviceDisplayMode, I18nKey> = {
   badge: 'display.badge',
   icon_ripple: 'display.icon_ripple',

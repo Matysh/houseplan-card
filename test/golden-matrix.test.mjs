@@ -430,7 +430,7 @@ test('issue #197 golden keeps the complete junction fixture in Plan and View', (
   }
 });
 
-test('issue #278 golden keeps degraded wall components in both themes', () => {
+test('issues #278/#291 golden covers the stored wall-union fixture in both themes', () => {
   const scenarios = GOLDEN_SCENARIOS.filter((item) => item.wallUnionIsolation);
   assert.deepEqual(scenarios.map((item) => item.theme).sort(), ['dark', 'light']);
   for (const scenario of scenarios) {
