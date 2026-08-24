@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "matrixVersion": 44,
-  "acceptedAt": "2026-08-24T06:02:36.820Z",
-  "sourceFingerprint": "0d7a1509c45ee7e3545c86664c9e6a8ea5b635ee3a0f89138142ac3ad3005659",
+  "acceptedAt": "2026-08-24T12:13:09.090Z",
+  "sourceFingerprint": "3421993bc267f4708472dfdee1f48d6186a1144b6c02ab3be39c15f46af87333",
   "chromium": "151.0.7922.34",
   "scenarios": {
     "coincident-partition-before-dark": "c0e38cfff096725cf1eb5dc91e005b2af983172d04e6573075db635275cabca3",
@@ -13,8 +13,8 @@
     "split-corner-wall-thin-dark": "17e49394c300887bb5349bf477292571e96e209c9515db6853348883d95a1422",
     "split-corner-wall-thick-dark": "309b8fe8a206f4f3fc50f6a27fc762a933f245b778e7b1f9a6348b66f39b2c39",
     "split-zero-divider-taper-dark": "3de38befb41f15ef4047da1390e061b1b5756340142dd9204d011287ff39be5b",
-    "isometric-geometry-view-dark": "893dba2066a14c5c636b8ee08c03ba8229a2f53ae656756c68be3b3037dcdf0c",
-    "isometric-geometry-view-light": "70829538ba4cf62ba45f8bbefc5dce35b5e9afdea4675dd7857284c716385780",
+    "isometric-geometry-view-dark": "43ad006844a78b502b36aeeb82d82669532e06d2c798de928a5207acd24bd5f9",
+    "isometric-geometry-view-light": "0fcb10ffdc0baa9006d1c2f0406ebf19e71ba9feda180979a51b74166d7200d2",
     "isometric-live-layers-dark": "8aaa914fc45780f67dd5c008a106696d21235a9acee7402f9cc8ae51a26660f3",
     "isometric-no-borders-dark": "c105382d883bbdae8562b756ccbf47ac1fcf46675c6aa7654289856223a3ebf0",
     "isometric-touch-kiosk-dark": "be122ceec8114374ba384f51d5d9287e498a97354865c5a9f91d505ca18d8640",
