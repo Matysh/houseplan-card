@@ -1,7 +1,7 @@
 # Issue #294 — Esc завершает текущую цепочку стен без удаления геометрии
 
 - **Issue:** https://github.com/Matysh/houseplan-card/issues/294
-- **Статус:** первая редакция для внешнего ревью; канонический статус задаётся метками issue
+- **Статус:** редакция r2 после жёлтого ревью r1; канонический статус задаётся метками issue
 - **Тип / приоритет:** feature + polish / P2
 - **Область:** Plan editor, desktop keyboard, lifecycle активного wall draft,
   подсказки RU/EN, targeted browser regression
@@ -107,9 +107,24 @@ draft становится ordinary `partitions`, активный якорь о
 - EN различает “Esc — finish chain” и “Ctrl+Z — undo a point”.
 
 `docs/USER-GUIDE.md` и `docs/USER-GUIDE.ru.md` должны явно описать тот же
-контракт в разделах keyboard/cancel и Rooms/Walls. Формулировка «Esc/Ctrl+Z
-удаляет точку» удаляется. Поведение Escape у room dialog, resize и других
-операций остаётся описано отдельно и не обобщается на wall chain.
+контракт во всех местах, где сейчас обобщено старое поведение:
+
+- RU, таблица поверхностей ввода «Рисование и точный drag»: отделить finish
+  цепочки «Стены» от отмены текущего precise drag;
+- RU, таблица «Клавиши отмены»: разделить объединённый Draw/Split-контекст —
+  `Esc` завершает wall chain, а Split сохраняет свою действующую отмену;
+- RU, «Комнаты и стены»: заменить «Esc/Ctrl+Z удаляет последнюю точку» двумя
+  разными действиями;
+- EN, input-surface row “Draw or precise drag”: отделить Walls finish от
+  cancel текущего precise drag;
+- EN, “Cancel and undo”: исключить wall chain из обобщения “Esc cancels an
+  unfinished path” и явно назвать сохранение принятой цепочки;
+- EN, “Create a room”: добавить тот же явный паритет Esc/Ctrl+Z, который есть
+  в RU-разделе, а не оставлять новый контракт только в общей клавиатурной
+  памятке.
+
+Поведение Escape у room dialog, Resize, Split и других операций остаётся
+описано отдельно и не обобщается на wall chain.
 
 Изменение пользовательское: implementation-коммит обновляет оба changelog.
 
@@ -172,11 +187,25 @@ command или config write.
 state и не меняет geometry/history. После успешного finish повторный `Esc`
 ничего не добавляет, не удаляет и не возобновляет draft.
 
-### AC7. Тексты совпадают с поведением (`unit` + ревью кода)
+### AC7. Тексты совпадают с поведением во всех справочных местах (`unit` + ревью кода)
 
 RU/EN `markup.hint_points`, обе user guide и оба changelog различают finish по
-Esc и удаление точки по Ctrl/Cmd+Z. Старое утверждение `Esc/Ctrl+Z — убрать
-точку` отсутствует в затронутых Walls-разделах; i18n parity зелёный.
+Esc и удаление точки по Ctrl/Cmd+Z. Ревью кода обязано проверить все шесть
+конкретных поверхностей из §5:
+
+1. `docs/USER-GUIDE.ru.md`: строка «Рисование и точный drag» не называет Esc
+   общей отменой; она отдельно говорит про finish «Стен» и cancel drag;
+2. `docs/USER-GUIDE.ru.md`: объединённая строка «Незавершённый Draw/Split»
+   разделена, и у Walls больше нет текста «убирает последнюю точку» для Esc;
+3. `docs/USER-GUIDE.ru.md`: «Комнаты и стены» различает `Esc` и `Ctrl+Z`;
+4. `docs/USER-GUIDE.md`: строка “Draw or precise drag” не называет Esc общей
+   отменой, а различает Walls finish и cancel drag;
+5. `docs/USER-GUIDE.md`: “Cancel and undo” исключает wall chain из “cancels an
+   unfinished path” и не обещает удалить принятую геометрию;
+6. `docs/USER-GUIDE.md`: “Create a room” явно описывает Esc/Ctrl+Z с тем же
+   смыслом, что RU-раздел.
+
+Старые противоречащие формулировки отсутствуют, i18n parity зелёный.
 
 ### AC8. Регрессии и локальные гейты (`unit` + `build`)
 
