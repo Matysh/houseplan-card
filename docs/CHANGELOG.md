@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- While drawing Walls, `Esc` now finishes all accepted segments as independent
+  walls and releases the last point without deleting geometry or leaving the
+  tool. The next click starts a new chain; `Ctrl/Cmd+Z` remains the shortcut
+  that removes the last point and segment
+  ([#294](https://github.com/Matysh/houseplan-card/issues/294)).
+
 ## v1.67.0-rc.1 — 2026-08-24
 
 - Republished the reviewed beta.10 candidate under an RC identifier so HACS

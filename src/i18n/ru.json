@@ -158,7 +158,7 @@
   "confirm.delete_partition_openings_body": "В стене есть проёмы: {count}. Они будут удалены вместе со стеной.",
   "confirm.delete_partition_openings_item": "• {type}, {length}",
   "markup.delete": "Удалить",
-  "markup.hint_points": "точек: {n} · Shift — шаг 45° · Esc/Ctrl+Z — убрать точку · при замыкании будет предложена комната",
+  "markup.hint_points": "точек: {n} · Shift — шаг 45° · Esc — завершить цепочку · Ctrl+Z — убрать точку · при замыкании будет предложена комната",
   "markup.hint_start": "кликните точку сетки, чтобы начать цепочку стен",
   "tip.lqi": "средний сигнал zigbee:",
   "tip.area": "площадь: {value}",

@@ -204,7 +204,7 @@ objects; each space keeps its local View viewport.
 | Zoom and pan | Wheel; drag empty space; `−`/`+` | Pinch; drag; double-tap resets kiosk | Available but precision is not guaranteed | — |
 | Change space | Click a tab | Tap; kiosk swipe at 1:1 | Tap a tab | — |
 | Device | Click/double-click per mode | Tap; safe actions equal desktop | Drag/properties are best effort | `Esc` closes the top surface |
-| Draw or precise drag | Full contract | Not applicable | Best effort; use desktop for Resize and exact nodes | `Shift` changes magnet/angle; `Esc` cancels the operation |
+| Walls drawing or precise drag | Full contract | Not applicable | Best effort; use desktop for Resize and exact nodes | `Shift` changes magnet/angle; `Esc` finishes a Walls chain or cancels the current precise drag |
 | Editor history | Undo/Redo controls | Not applicable | Controls may work; no gesture guarantee | `Ctrl/Cmd+Z`, `Ctrl/Cmd+Shift+Z`, `Ctrl+Y` |
 | Kiosk sizing | — | Hold empty space for 3 seconds | — | — |
 
@@ -213,8 +213,10 @@ Any manual kiosk operation pauses auto-cycle for 60 seconds.
 
 ### Cancel and undo
 
-- `Esc` cancels an unfinished path, current drag/resize/rotation, or the top
-  dialog without undoing an already committed action.
+- `Esc` finishes an active Walls chain without deleting its accepted segments.
+  In Split and other tools it cancels the unfinished path, current
+  drag/resize/rotation, or the top dialog without undoing an already committed
+  action.
 - `Ctrl/Cmd+Z` undoes an editor command; redo is `Ctrl/Cmd+Shift+Z` or `Ctrl+Y`.
 - Undo/Redo stores up to 50 named commands for Plan and Background.
 
@@ -297,6 +299,11 @@ independent walls. When the latest segment creates bounded endpoint/T/X faces,
 House Plan offers them from smallest to largest. Save creates that room, Keep
 as walls rejects only that candidate, and Cancel restores the whole draft with
 no partial rooms.
+
+While drawing an open chain, `Esc` finishes all accepted segments as ordinary
+independent walls and keeps **Walls** selected; the next click starts a new
+chain. `Ctrl/Cmd+Z` instead removes the last accepted point and segment. Pan,
+pinch and `pointercancel` neither finish the chain nor add geometry.
 
 Existing segment endpoints and lines appear above walls while drawing. An
 endpoint grows when the next click will join it. A point on a line shows where

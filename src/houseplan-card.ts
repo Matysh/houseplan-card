@@ -2627,7 +2627,10 @@ class HouseplanCard extends LitElement {
     }
     if (this._tool === 'draw' && this._path.length) {
       e.preventDefault();
-      this._undoPoint();
+      // Escape releases the active wall chain without making it destructive:
+      // Ctrl/Cmd+Z remains the one-point undo path (#294).  Reuse the exact
+      // finish transaction used by a tool change, but keep `draw` selected.
+      this._finishWallChain();
       return;
     }
     if (this._physicalSel) {

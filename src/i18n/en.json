@@ -158,7 +158,7 @@
   "confirm.delete_partition_openings_body": "This wall contains {count} opening(s). They will be deleted together.",
   "confirm.delete_partition_openings_item": "• {type}, {length}",
   "markup.delete": "Delete",
-  "markup.hint_points": "points: {n} · Shift — 45° steps · Esc/Ctrl+Z — undo a dot · closing an area offers a room",
+  "markup.hint_points": "points: {n} · Shift — 45° steps · Esc — finish chain · Ctrl+Z — undo a point · closing an area offers a room",
   "markup.hint_start": "click a grid dot to start a wall chain",
   "tip.lqi": "average zigbee signal:",
   "tip.area": "area: {value}",

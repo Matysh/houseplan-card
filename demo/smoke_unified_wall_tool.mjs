@@ -9,6 +9,23 @@ const result = await page.evaluate(async () => {
   const root = () => card.shadowRoot || card.renderRoot;
   const update = async () => { card.requestUpdate(); await card.updateComplete; };
   const space = () => card._serverCfg.spaces[0];
+  const keyDown = async (key, init = {}) => {
+    window.dispatchEvent(new KeyboardEvent('keydown', {
+      key, bubbles: true, cancelable: true, ...init,
+    }));
+    await update();
+  };
+  const clickStage = async (x, y) => {
+    const stage = root().querySelector('.stage');
+    const rect = stage.getBoundingClientRect();
+    const view = card._viewOr(card._baseVb());
+    stage.dispatchEvent(new MouseEvent('click', {
+      clientX: rect.left + ((x - view.x) / view.w) * rect.width,
+      clientY: rect.top + ((y - view.y) / view.h) * rect.height,
+      bubbles: true, cancelable: true,
+    }));
+    await update();
+  };
   const resetGeometry = async (rooms = []) => {
     const current = space();
     current.rooms = JSON.parse(JSON.stringify(rooms));
@@ -24,9 +41,14 @@ const result = await page.evaluate(async () => {
     card._wallFaceBatch = null;
     card._roomDialog = false;
     card._tool = 'draw';
+    card._cursorPt = null;
+    card._suppressClick = false;
+    card._geometryHistory.clear();
+    delete card._resumeDraftBySpace[card._space];
+    card._clearPlanSnapHover();
     await update();
   };
-  const draw = async (points) => {
+  const draw = async (points, cms = []) => {
     card._tool = 'draw';
     card._path = [[...points[0]]];
     card._activeDraftId = null;
@@ -34,7 +56,7 @@ const result = await page.evaluate(async () => {
     for (let i = 1; i < points.length; i++) {
       const before = card._path.map((point) => [...point]);
       card._path = [...card._path, [...points[i]]];
-      card._draftSegmentCms = [...card._draftSegmentCms, card._drawWallCm];
+      card._draftSegmentCms = [...card._draftSegmentCms, cms[i - 1] ?? card._drawWallCm];
       card._persistActiveDraftSegment();
       card._offerWallFaces(before);
       await update();
@@ -74,6 +96,64 @@ const result = await page.evaluate(async () => {
     && space().partitions.every((partition, index) => partition.cm === cms[index]);
   out.finishedChainDoesNotResume = !card._activeDraftId && card._path.length === 0;
 
+  // #294: Escape owns the registered window keyboard path, finishes exactly
+  // like a tool change and leaves Walls armed for an independent next chain.
+  await resetGeometry();
+  await draw([[100, 100], [300, 100], [300, 250]], [12, 23]);
+  await keyDown('Escape');
+  const escapedPartitions = space().partitions || [];
+  out.escapeFinishesWithoutDeletingSegments = card._tool === 'draw'
+    && card._path.length === 0 && !card._activeDraftId && !space().room_drafts
+    && !card._resumeDraftBySpace[card._space]
+    && escapedPartitions.length === 2
+    && escapedPartitions.some((part) => part.cm === 12)
+    && escapedPartitions.some((part) => part.cm === 23)
+    && card._geometryHistory.undoName === card._t('history.wall_chain_finish')
+    && !root().querySelector('.active-axis') && !root().querySelector('.active-vertex');
+  const escapedGeometry = JSON.stringify(space());
+  const escapedHistory = card._geometryHistory.undoName;
+  await keyDown('Escape');
+  out.repeatedEscapeAfterFinishIsNoop = JSON.stringify(space()) === escapedGeometry
+    && card._geometryHistory.undoName === escapedHistory
+    && card._tool === 'draw' && card._path.length === 0;
+  await clickStage(500, 500);
+  out.nextClickStartsIndependentChain = card._path.length === 1
+    && card._path[0][0] === 500 && card._path[0][1] === 500
+    && !space().room_drafts && (space().partitions || []).length === 2;
+  await clickStage(700, 500);
+  const independentDraft = space().room_drafts?.[0];
+  out.secondClickCreatesOnlyIndependentSegment = card._path.length === 2
+    && independentDraft?.points?.length === 2
+    && independentDraft.points[0][0] === 0.5 && independentDraft.points[0][1] === 0.5
+    && independentDraft.points[1][0] === 0.7 && independentDraft.points[1][1] === 0.5
+    && (space().partitions || []).length === 2;
+
+  await resetGeometry();
+  const singlePointGeometry = JSON.stringify(space());
+  const singlePointHistory = card._geometryHistory.undoName;
+  await clickStage(200, 200);
+  const onePointWasArmed = card._path.length === 1 && !space().room_drafts;
+  await keyDown('Escape');
+  out.escapeClearsOnlyTransientFirstPoint = onePointWasArmed
+    && card._tool === 'draw' && card._path.length === 0 && !card._activeDraftId
+    && JSON.stringify(space()) === singlePointGeometry
+    && card._geometryHistory.undoName === singlePointHistory;
+
+  await resetGeometry();
+  await draw([[100, 100], [300, 100], [300, 250]], [12, 23]);
+  const rejectedPath = JSON.stringify(card._path);
+  const rejectedDraft = JSON.stringify(space().room_drafts);
+  const rejectedHistory = card._geometryHistory.undoName;
+  const finishWallChain = card._finishWallChain;
+  card._finishWallChain = () => false;
+  await keyDown('Escape');
+  card._finishWallChain = finishWallChain;
+  out.rejectedFinishKeepsActiveDraft = JSON.stringify(card._path) === rejectedPath
+    && JSON.stringify(space().room_drafts) === rejectedDraft
+    && card._geometryHistory.undoName === rejectedHistory
+    && card._activeDraftId === space().room_drafts?.[0]?.id
+    && !(space().partitions?.length);
+
   await resetGeometry();
   await draw([[100, 100], [300, 100], [300, 300], [100, 300], [100, 100]]);
   out.closedFaceOpensDialog = card._roomDialog && card._wallFaceBatch?.candidates.length === 1;
@@ -93,19 +173,25 @@ const result = await page.evaluate(async () => {
   out.cancelKeepsWholeTerminalDraft = !card._roomDialog && !card._wallFaceBatch
     && JSON.stringify(space().room_drafts) === draftBeforeCancel
     && card._path.length === 5;
-  card._onKey(new KeyboardEvent('keydown', {
-    key: 'z', code: 'KeyZ', ctrlKey: true, bubbles: true,
-  }));
-  await update();
-  out.escapeUndoContractStillRemovesLastSegment = space().room_drafts?.[0]?.segments.length === 3
+  await keyDown('z', { code: 'KeyZ', ctrlKey: true });
+  out.ctrlZContractStillRemovesLastSegment = space().room_drafts?.[0]?.segments.length === 3
     && card._path.length === 4;
 
   await resetGeometry();
+  await draw([[500, 100], [700, 100], [700, 300], [500, 300], [500, 100]]);
+  const dialogDraft = JSON.stringify(space().room_drafts);
+  await keyDown('Escape');
+  out.firstEscapeOnlyCancelsRoomDialog = !card._roomDialog && !card._wallFaceBatch
+    && JSON.stringify(space().room_drafts) === dialogDraft
+    && card._path.length === 5 && !(space().partitions?.length);
+  await keyDown('Escape');
+  out.secondEscapeFinishesRestoredDraft = !space().room_drafts
+    && card._path.length === 0 && !card._activeDraftId
+    && space().partitions?.length === 4 && card._tool === 'draw';
+
+  await resetGeometry();
   await draw([[100, 450], [300, 450], [300, 650], [100, 650], [100, 450]]);
-  card._onKey(new KeyboardEvent('keydown', {
-    key: 'z', code: 'KeyZ', ctrlKey: true, bubbles: true,
-  }));
-  await update();
+  await keyDown('z', { code: 'KeyZ', ctrlKey: true });
   out.ctrlZInQueueRemovesTerminalPoint = !card._roomDialog && !card._wallFaceBatch
     && card._path.length === 4 && space().room_drafts?.[0]?.segments.length === 3;
 
