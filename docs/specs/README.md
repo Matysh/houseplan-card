@@ -71,6 +71,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#231](https://github.com/Matysh/houseplan-card/issues/231) Декоративный слой виден поверх заливок комнат | [231-decor-layer-order.md](231-decor-layer-order.md) |
 | [#243](https://github.com/Matysh/houseplan-card/issues/243) Рабочее перетаскивание вкладок и точный указатель вставки | [243-space-tab-drop-target.md](243-space-tab-drop-target.md) |
 | [#276](https://github.com/Matysh/houseplan-card/issues/276) Совпадающая partition становится одной общей стеной | [276-coincident-partition-reconciliation.md](276-coincident-partition-reconciliation.md) |
+| [#277](https://github.com/Matysh/houseplan-card/issues/277) Безопасный Resize без изменения топологии | [277-safe-resize.md](277-safe-resize.md) |
 
 ## P2
 
