@@ -804,6 +804,8 @@
   "gs.align_preflight_space": "Space {n}",
   "gs.align_preflight_more": ", and {n} more",
   "gs.optimize_changes": "Model migrations: {m}; spaces updated: {c}; noisy coordinate values removed: {p}; merged real-wall fragments: {w}; virtual fragments: {s}; independent walls: {i}.",
+  "gs.optimize_coincident_partitions": "Coincident partitions converted to room walls: {n}.",
+  "gs.optimize_openings_rehosted": "Openings reattached to room walls: {n}.",
   "gs.optimize_glow_migration": "Legacy Glow: {spaces} spaces → no data fill + independent Glow; {rooms} rooms → inherited data fill + independent Glow.",
   "gs.optimize_references": "References repaired: spaces — {spaces}; rooms — {rooms}; positions — {positions}; devices detached from missing spaces — {detached}.",
   "gs.optimize_reference_more": ", and {n} more",

@@ -60,6 +60,8 @@ test('Optimize distinguishes updated spaces from cleaned coordinate noise', () =
   assert.match(cardSource, /p: String\(r\.coordsCanonicalized\)/);
   // #229: the independent-wall counter is reported, not silently accumulated
   assert.match(cardSource, /i: String\(r\.partitionsMerged\)/);
+  assert.match(cardSource, /gs\.optimize_coincident_partitions/);
+  assert.match(cardSource, /gs\.optimize_openings_rehosted/);
   assert.match(cardSource, /d\.report\.coordsCanonicalized \+ d\.report\.wallsMerged/);
 });
 

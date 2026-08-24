@@ -42,7 +42,8 @@ const assertNoPersistedChanges = (result) => {
   for (const field of [
     'moved', 'coordsCanonicalized', 'rotated', 'removedDrafts', 'migrated',
     'glowSpacesMigrated', 'glowRoomsMigrated', 'canonicalized', 'wallsMerged',
-    'spansMerged', 'partitionsMerged', 'spaceRefsRemapped', 'roomRefsRemapped',
+    'spansMerged', 'partitionsMerged', 'partitionsReconciled', 'openingsRehosted',
+    'spaceRefsRemapped', 'roomRefsRemapped',
     'positionsRemapped', 'markersDetached', 'orphanRoomLabelsRemoved',
     'orphanDevicePositionsRemoved', 'orphanGroupPositionsRemoved',
     'liveMissingPositionsRemoved',
@@ -51,6 +52,85 @@ const assertNoPersistedChanges = (result) => {
   assert.equal(result.report.maxShiftCm, 0);
   assert.equal(result.report.maxSpace, '');
 };
+
+const coincidentPartitionConfig = ({ roomCm = 20, partitionCm = 20, partial = false } = {}) => ({
+  model_version: PLAN_MODEL_VERSION,
+  spaces: [{
+    id: 'coincident', title: 'Coincident', view_box: [0, 0, 1, 1], cell_cm: 5,
+    rooms: [
+      { id: 'left', name: 'left', area: null,
+        poly: [[0, 0], [0.5, 0], [0.5, 1], [0, 1]] },
+      { id: 'right', name: 'right', area: null,
+        poly: [[0.5, 0], [1, 0], [1, 1], [0.5, 1]] },
+    ],
+    walls: [exactWall([0.5, 0], [0.5, 1], roomCm)],
+    partitions: [{
+      id: 'redundant',
+      a: [0.5, partial ? 0.1 : 0], b: [0.5, partial ? 0.9 : 1], cm: partitionCm,
+    }],
+    openings: [{
+      id: 'door', type: 'door', x: 0.5, y: 0.5, angle: -90, length: 0.2,
+      contact: 'binary_sensor.door', lock: 'lock.door', invert: true,
+      host: { kind: 'partition', id: 'redundant', t: 0.5 },
+    }],
+  }],
+  markers: [], settings: {},
+});
+
+test('Optimize reconciles an exact coincident partition and losslessly rehosts its opening', () => {
+  const input = coincidentPartitionConfig();
+  const before = JSON.parse(JSON.stringify(input));
+  const first = optimizePlans(input, {});
+  assert.deepEqual(input, before, 'preview is immutable');
+  assert.equal(first.changed, true);
+  assert.equal(first.report.partitionsReconciled, 1);
+  assert.equal(first.report.openingsRehosted, 1);
+  const space = first.config.spaces[0];
+  assert.equal(space.partitions, undefined);
+  assert.equal(space.openings.length, 1);
+  assert.equal(space.openings[0].host, undefined);
+  assert.deepEqual(space.openings[0], {
+    id: 'door', type: 'door', x: 0.5, y: 0.5, angle: -90, length: 0.2,
+    contact: 'binary_sensor.door', lock: 'lock.door', invert: true,
+  });
+
+  const second = optimizePlans(first.config, first.layout);
+  assert.equal(second.changed, false);
+  assert.equal(second.report.partitionsReconciled, 0);
+  assert.equal(second.report.openingsRehosted, 0);
+  assert.deepEqual(second.config, first.config);
+});
+
+test('Optimize uses the exact max envelope for nested coincident thicknesses', () => {
+  for (const [roomCm, partitionCm, expected] of [[30, 20, 30], [20, 30, 30]]) {
+    const result = optimizePlans(coincidentPartitionConfig({ roomCm, partitionCm }), {});
+    assert.equal(result.report.partitionsReconciled, 1);
+    assert.equal(result.config.spaces[0].partitions, undefined);
+    const intervals = wallIntervals(
+      result.config.spaces[0].rooms, result.config.spaces[0].walls, [],
+      S, 5, GRID_PITCH, 1,
+    ).filter((interval) => interval.kind === 'shared');
+    assert.equal(new Set(intervals.map((interval) => interval.cm)).size, 1);
+    assert.equal(intervals[0].cm, expected);
+  }
+});
+
+test('Optimize leaves partial and ambiguous coincident partitions untouched', () => {
+  const partial = coincidentPartitionConfig({ partial: true });
+  const partialResult = optimizePlans(partial, {});
+  assert.equal(partialResult.report.partitionsReconciled, 0);
+  assert.equal(partialResult.config.spaces[0].partitions.length, 1);
+  assert.ok(partialResult.config.spaces[0].openings[0].host);
+
+  const ambiguous = coincidentPartitionConfig();
+  ambiguous.spaces[0].partitions.push({
+    id: 'second', a: [0.5, 0], b: [0.5, 1], cm: 10,
+  });
+  const ambiguousResult = optimizePlans(ambiguous, {});
+  assert.equal(ambiguousResult.report.partitionsReconciled, 0);
+  assert.equal(ambiguousResult.config.spaces[0].partitions.length, 2);
+  assert.ok(ambiguousResult.config.spaces[0].openings[0].host);
+});
 
 // Privacy-minimised six-room topology from #218/#223. The relevant stored ULP
 // tails stay literal so this fixture proves that Optimize repairs the source,

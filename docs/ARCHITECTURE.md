@@ -534,6 +534,18 @@ Legacy key-only records follow an unambiguous whole-edge/midpoint move without
 inventing a splittable length. This same helper serves edge drag, corner scale
 and optimizer geometry, while commit/degrade remains the persistence boundary.
 
+`reconcileCoincidentPartitions()` is an explicit-Optimize-only structural
+canonicalizer (#276). It consumes canonical shared wall intervals and the
+partition-opening compatibility resolver; it does not implement a second
+nearest-wall model. An independent wall is removed only after an exact
+endpoint-to-endpoint, two-room, uniform-solid proof. Its hosted openings are
+materialised onto the ordinary room wall, and `max(roomCm, partitionCm)` keeps
+the original centred physical union envelope. Unknown partition semantics,
+partial/composite matches, overlapping openings and adjacent independent
+bodies fail closed. The candidate then crosses the existing whole-plan
+geometry preflight and one atomic Optimize write/Undo boundary. No render or
+ordinary save path invokes this pass, so `PLAN_MODEL_VERSION` remains unchanged.
+
 `boundary` is one contextual UI tool over the existing `open_spans` model.
 Before the first click, independent physical bodies block the room boundary
 below them; otherwise a dashed span wins over a solid shared boundary, and an

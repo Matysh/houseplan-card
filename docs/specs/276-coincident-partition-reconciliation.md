@@ -78,7 +78,7 @@ independent partitions. Первая пара имеет 20/20 см, втора�
 3. Shared interval не virtual/open и имеет одну ненулевую эффективную толщину
    на всей длине.
 4. `partition.cm` конечна и положительна. Итоговая effective thickness
-   `max(sharedCm, partition.cm)` даёт точно тот же centred physical envelope,
+   `max(roomCm, partition.cm)` даёт точно тот же centred physical envelope,
    что исходный union. Сравниваются физические сантиметры, а не SVG half-depth
    либо compatibility key.
 5. На той же оси нет второй independent partition/draft/column и нет
@@ -234,7 +234,7 @@ result после Apply.
 
 | AC | Критерий | Доказательство |
 |---|---|---|
-| AC1 | Exact same-thickness shared-wall partition определяется независимо от направления endpoints и порядка комнат. | Unit matrix. |
+| AC1 | Exact shared-wall partition определяется независимо от направления endpoints и порядка комнат. | Unit matrix. |
 | AC2 | Exact same-cm, narrower-partition (20 внутри 30) и wider-partition (30 поверх 20) канонизируются с итогом `max`; partial/longer/shorter/composite/non-shared/virtual/non-uniform/ambiguous-extra cases остаются byte-equivalent. | Positive/negative unit matrix. |
 | AC3 | Один и несколько hosted door/window/gate переводятся в ordinary openings без сдвига центра/угла и без потери любых полей. | Unit + schema/unknown-field test. |
 | AC4 | Orphan, non-fitting, overlapping или ambiguous opening запрещает преобразование без частичного результата. | Unit mutation matrix. |
@@ -251,7 +251,7 @@ result после Apply.
 
 ## 13. План тестов
 
-- `test/coincident-partition-reconciliation.test.mjs`: AC1–AC5, AC8;
+- `test/coincident-partitions.test.mjs`: AC1–AC5, AC8;
 - расширение `test/plan-optimizer.test.mjs`: report, idempotence, backend echo;
 - расширение `test/partition-openings.test.mjs`: exact rehost и ambiguity;
 - `demo/smoke_optimize_coincident_partition.mjs`: production bundle,

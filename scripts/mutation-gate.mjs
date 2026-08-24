@@ -805,6 +805,36 @@ export const MUTANTS = [
     }],
   },
   {
+    id: 'optimizer-coincident-opening-rehost-disabled',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="issue 276 reconciles" '
+      + 'test/coincident-partitions.test.mjs',
+    because: 'removing the redundant independent wall without materialising its hosted opening '
+      + 'would leave a dangling host and make the door disappear after explicit Optimize (#276)',
+    patches: [{
+      file: 'src/coincident-partitions.ts',
+      find: '    openings = openings.map((opening) => replacement.get(opening.id) || opening);',
+      replace: '    openings = openings.map((opening) => opening);',
+    }],
+  },
+  {
+    id: 'optimizer-coincident-partial-accepted',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="partial and ambiguous" '
+      + 'test/plan-optimizer.test.mjs',
+    because: 'a merely collinear partial partition is not the same physical wall and must never '
+      + 'be deleted just because its hosted opening happens to fit the longer room boundary (#276)',
+    patches: [{
+      file: 'src/coincident-partitions.ts',
+      find: '      .filter((interval) => sameSegment(\n'
+        + '        interval.a, interval.b, partition.a, partition.b, eps,\n'
+        + '      ));',
+      replace: '      .filter((interval) => collinearOverlap(\n'
+        + '        interval.a, interval.b, partition.a, partition.b, eps,\n'
+        + '      ) > eps);',
+    }],
+  },
+  {
     id: 'atomic-child-thickness-parent-fallback',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="exact parent|atomic solid children" '

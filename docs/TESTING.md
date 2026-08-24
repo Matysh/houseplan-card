@@ -2810,6 +2810,20 @@ require hands on real hardware — they remain for the human pass.
       endpoint still blocks cleanup [unit: test/plan-optimizer.test.mjs; auto:
       smoke_optimize_micro_interval; mutation:
       `optimizer-single-topology-island-blocked`].
+- [ ] **Optimize reconciles only one exact coincident wall (#276)**: the
+      anonymized two-room fixture keeps its two 5 cm endpoint offsets while an
+      exact independent wall is removed, its hosted door becomes an ordinary
+      opening at the same centre/angle with all bindings and unknown fields,
+      and the wider centred thickness survives. Direction and room order do
+      not matter; partial/extra/unknown/draft/column/opening-conflict cases are
+      byte-preserved. Preview writes nothing, Apply uses one WS transaction,
+      reload is idempotent, Undo restores the hosted form, and Boundary plus
+      Thickness target the resulting shared wall [unit:
+      test/coincident-partitions.test.mjs + test/plan-optimizer.test.mjs;
+      auto: smoke_optimize_coincident_partition; mutations:
+      `optimizer-coincident-opening-rehost-disabled`,
+      `optimizer-coincident-partial-accepted`, existing
+      `optimize-preflight-bypassed`].
 - [ ] **Unit + backend**: inset/mitre/bevel, key from either end, degrade,
       rekey, cm↔inches; `walls` schema bounds
       [auto: test/wall-thickness.test.mjs + tests_backend/test_validation.py]

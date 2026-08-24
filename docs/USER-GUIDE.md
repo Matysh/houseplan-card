@@ -653,6 +653,15 @@ wall do not move. A fragment between two room vertices or touching an opening
 boundary is preserved. Ordinary opening, rendering, Save and editing never
 perform this cleanup without explicit Optimize confirmation.
 
+When an old plan contains an independent wall exactly on top of one complete
+solid boundary shared by two rooms, Optimize can replace the duplicate with
+the single room wall. Doors, windows and gates hosted by that independent wall
+stay in place and keep their contact/lock settings. The resulting thickness is
+the wider original thickness, so the visible masonry does not shrink during
+maintenance; use **Thickness** afterwards to choose a new value or **Boundary**
+to make the shared wall virtual. Partial, composite and ambiguous overlaps are
+left unchanged for manual correction.
+
 Old positions are classified before Apply. A position whose room label, device
 or light-group owner is proven absent is removed automatically and counted by a
 plain-language category. A live owner in a deleted space is named and preserved

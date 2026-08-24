@@ -28,6 +28,7 @@ import {
   setWallThickness, type WallEntry,
 } from './wall-thickness';
 import { applyOpeningMoves, mergeCollinearPartitions, spaceMergeGeometry } from './wall-merge';
+import { reconcileCoincidentPartitions } from './coincident-partitions';
 import {
   repairSpaceReferences, type SpaceReferenceRepairContext, type SpaceReferenceReport,
 } from './space-reference-repair';
@@ -59,6 +60,10 @@ export interface OptimizeReport extends AlignReport, SpaceReferenceReport {
   spansMerged: number;
   /** Collinear independent-wall records collapsed into one (#229). */
   partitionsMerged: number;
+  /** Independent walls converted into an exact coincident shared room wall. */
+  partitionsReconciled: number;
+  /** Hosted openings materialised onto the coincident shared room wall. */
+  openingsRehosted: number;
 }
 
 export interface OptimizeResult {
@@ -424,6 +429,8 @@ export function optimizePlans(
   let wallsMerged = 0;
   let spansMerged = 0;
   let partitionsMerged = 0;
+  let partitionsReconciled = 0;
+  let openingsRehosted = 0;
   let canonicalized = 0;
   for (let i = 0; i < config.spaces.length; i++) {
     const before = beforeSpaces[i];
@@ -532,6 +539,32 @@ export function optimizePlans(
         gridPitch: GRID_PITCH,
       });
     }
+    // An independent wall can be a redundant centred body over one exact
+    // shared room wall. Reconcile it only after ordinary partition merging so
+    // the proof sees the final host axis, and before the exact geometry
+    // preflight checks the candidate (#276).
+    const reconciledModel = modelOf(space);
+    if (reconciledModel) {
+      const reconciled = reconcileCoincidentPartitions(
+        space, reconciledModel, space.walls || [], cuts,
+        {
+          pitch: GRID_STEP_N,
+          cellCm: Number(space.cell_cm) > 0 ? Number(space.cell_cm) : DEFAULT_CELL_CM,
+          gridPitch: GRID_PITCH,
+          coordScale: NORM_W,
+        },
+      );
+      if (reconciled.partitionsReconciled) {
+        partitionsReconciled += reconciled.partitionsReconciled;
+        openingsRehosted += reconciled.openingsRehosted;
+        if (reconciled.partitions.length) space.partitions = reconciled.partitions;
+        else delete space.partitions;
+        if (reconciled.openings.length) space.openings = reconciled.openings;
+        else delete space.openings;
+        if (reconciled.walls.length) space.walls = reconciled.walls;
+        else delete space.walls;
+      }
+    }
     const canonicalAfter = JSON.stringify({
       spans: space.open_spans || [],
       links: (space.rooms || []).map((r: any) => [r.id, r.open_to || []]),
@@ -602,6 +635,8 @@ export function optimizePlans(
       wallsMerged: changed ? wallsMerged : 0,
       spansMerged: changed ? spansMerged : 0,
       partitionsMerged: changed ? partitionsMerged : 0,
+      partitionsReconciled: changed ? partitionsReconciled : 0,
+      openingsRehosted: changed ? openingsRehosted : 0,
       ...persistedReferences,
     },
     changed,

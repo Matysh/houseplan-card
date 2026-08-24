@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- “Optimize plans” now repairs an exact redundant independent wall drawn over
+  one solid shared room boundary. Its hosted door/window/gate is reattached to
+  the room wall without moving or losing bindings, the wider of the two
+  centred wall bodies is preserved, and Boundary/Thickness then operate on one
+  canonical wall. Partial or ambiguous overlaps remain untouched
+  ([#276](https://github.com/Matysh/houseplan-card/issues/276)).
+
 ## v1.67.0-beta.7 — 2026-08-24
 
 - Perpendicular T/X wall junctions now keep the complete finite width of every

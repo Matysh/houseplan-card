@@ -28,6 +28,13 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    symbols: ['reconcileCoincidentPartitions', 'CoincidentPartitionResult'],
+    smokes: ['smoke_optimize_coincident_partition.mjs'],
+    because: 'the production-bundle scenario observes the Optimize report, atomic Apply, reload, '
+      + 'one-shot Undo and the resulting Boundary/Thickness targets, while the pure reconciliation '
+      + 'helper is not exposed on the card instance (#276)',
+  },
+  {
     // #263: пикер называет себя (`_bindingCandidates`) и потому находится
     // прямым совпадением. Регистрируются только чистые помощники надгробий:
     // смок не произносит ни одного их имени — он видит лишь список, который

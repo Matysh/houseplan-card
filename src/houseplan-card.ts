@@ -15150,7 +15150,8 @@ class HouseplanCard extends LitElement {
         n: String(d.report.moved),
         m: String(d.report.migrated + d.report.canonicalized
           + d.report.coordsCanonicalized + d.report.wallsMerged + d.report.spansMerged
-          + d.report.partitionsMerged),
+          + d.report.partitionsMerged + d.report.partitionsReconciled
+          + d.report.openingsRehosted),
         r: String(d.report.spaceRefsRemapped + d.report.roomRefsRemapped
           + d.report.positionsRemapped + d.report.markersDetached
           + d.report.orphanRoomLabelsRemoved + d.report.orphanDevicePositionsRemoved
@@ -16156,7 +16157,8 @@ class HouseplanCard extends LitElement {
     const repaired = r.spaceRefsRemapped + r.roomRefsRemapped
       + r.positionsRemapped + r.markersDetached;
     const modelMaintenance = r.migrated + r.canonicalized + r.coordsCanonicalized
-      + r.wallsMerged + r.spansMerged + r.partitionsMerged;
+      + r.wallsMerged + r.spansMerged + r.partitionsMerged
+      + r.partitionsReconciled + r.openingsRehosted;
     const gridWarning = r.moved + r.rotated + r.removedDrafts + r.coordsCanonicalized;
     const removed = r.orphanRoomLabelsRemoved + r.orphanDevicePositionsRemoved
       + r.orphanGroupPositionsRemoved;
@@ -16230,6 +16232,12 @@ class HouseplanCard extends LitElement {
                   p: String(r.coordsCanonicalized), w: String(r.wallsMerged),
                   s: String(r.spansMerged), i: String(r.partitionsMerged),
                 })}</p>` : nothing}
+              ${r.partitionsReconciled ? html`<p class="alignmsg">${this._t(
+                  'gs.optimize_coincident_partitions', { n: String(r.partitionsReconciled) },
+                )}</p>` : nothing}
+              ${r.openingsRehosted ? html`<p class="alignmsg">${this._t(
+                  'gs.optimize_openings_rehosted', { n: String(r.openingsRehosted) },
+                )}</p>` : nothing}
               ${r.glowSpacesMigrated || r.glowRoomsMigrated
                 ? html`<p class="alignmsg">${this._t('gs.optimize_glow_migration', {
                     spaces: String(r.glowSpacesMigrated),
