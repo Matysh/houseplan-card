@@ -1,0 +1,12 @@
+{
+  "provenance": "Minimized and anonymized from the private #289 before/after resize evidence; names, ids, markers, layout and unrelated geometry were removed.",
+  "gridStep": 1,
+  "forbiddenDelta": 43,
+  "rooms": [
+    { "id": "main", "poly": [[0, 0], [200, 0], [200, 928], [0, 928]] },
+    { "id": "right", "poly": [[200, 0], [400, 0], [400, 928], [200, 928]] },
+    { "id": "left", "poly": [[-200, 0], [0, 0], [0, 928], [-200, 928]] }
+  ],
+  "selected": { "roomId": "main", "edge": 2 },
+  "expectedReason": "partial-shared"
+}

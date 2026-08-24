@@ -34,7 +34,8 @@ reason, in this priority order:
 2. `side-angle` — either adjacent edge is not perpendicular;
 3. `duplicate-physical-wall` — a partition, unfinished outline or column
    overlaps the moving wall;
-4. `partial-shared` — another room owns only part of the edge;
+4. `partial-shared` — another room owns only part of the moving edge, or a
+   side wall would change between shared and outer material;
 5. `unequal-shared` — the candidate neighbour has different endpoints/length;
 6. `multiple-rooms` — the operation would involve more than two rooms;
 7. `thickness-conflict` — the physical profile cannot be mapped losslessly;
@@ -51,7 +52,8 @@ The production controller reaches only four pure operations in `src/resize.ts`:
 
 1. `resolveSafeResize(rooms, openings, roomId, edge, options)` captures the
    immutable plan: one/two room ids, exact edge indices, original endpoints,
-   topology signatures and moving ordinary openings.
+   topology signatures, moving ordinary openings and the atomic physical-owner
+   profile of both side walls. The profile is built once, not on pointermove.
 2. `clampSafeResize(...)` walks grid deltas contiguously from zero and stops at
    the first invalid position. It cannot jump through an opening/corner to a
    later valid position. Exact delta results are memoized per active plan and
@@ -77,6 +79,10 @@ The closest stop in either direction wins:
   half the moving wall thickness included;
 - moving-wall opening that would no longer fit;
 - loss of exact shared endpoints or any structural candidate failure.
+- the first atomic side-wall run that would change from shared to outer or
+  outer to shared. A safe direction remains enabled and stops at the exact
+  ownership boundary; Resize never stretches one thickness record across both
+  roles.
 
 The final persisted position is the last safe grid node. Eligibility probes one
 grid step in both directions through the same exact validator. If neither step
@@ -134,9 +140,12 @@ building the preview frame itself.
 ## Verification
 
 - `test/resize.test.mjs`: eligibility, exact pair, first-corner clamp, third
-  room, physical jamb, moving opening, obstacles and bounded memoization;
+  room, physical jamb, moving opening, side-wall ownership and bounded
+  memoization;
 - `test/fixtures/resize-safe-regression.json`: minimized/anonymized private
   repro whose one long edge is owned by two neighbours;
+- `test/fixtures/289-mixed-role-resize.json`: the anonymized 43-step regression
+  whose two shared side walls would otherwise gain outer continuations;
 - `test/resize-production-path.test.mjs`: old handlers unreachable, corner
   frame absent and all reasons localized;
 - `demo/smoke_room_resize.mjs`: production bundle pointer handlers,
@@ -150,8 +159,8 @@ building the preview frame itself.
 - `demo/benchmark_safe_resize.mjs`: same-run pointer and cached pointerup budgets;
 - `demo/benchmark_safe_resize_render.mjs`: warm 20-room/80-handle layer p95
   and exactly one geometry snapshot per rendered frame;
-- mutation gate: eligibility, third-room, topology, jamb and commit-preflight
-  bypass mutants.
+- mutation gate: eligibility, third-room, topology, side ownership, jamb and
+  commit-preflight bypass mutants.
 
 Targeted light/dark golden scenes cover enabled/disabled handles, opening/corner
 stops and final masonry. Full golden, smoke and performance matrices run before

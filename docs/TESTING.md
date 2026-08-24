@@ -1976,6 +1976,12 @@ require hands on real hardware — they remain for the human pass.
       would change the moving segment or collapse a side. No third room can
       join the gesture. The anonymized private #277 topology stays predictably
       disabled [unit fixture + production pointer smoke]
+- [ ] Side-wall ownership stays atomic (#289): the anonymized 43-step repro is
+      disabled before pointer capture in both directions, while an outer side
+      reaches but cannot cross the next room's edge. No thickness record can
+      become partly shared and partly outer
+      [unit: resize.test + fixture 289-mixed-role-resize; auto:
+      smoke_room_resize; mutation: safe-resize-side-ownership-bypassed]
 - [ ] Live badges while dragging: lengths of the dragged wall + both
       adjacent walls, and the m² area at the room centre; dragging a shared
       wall shows BOTH areas; all numbers update continuously
@@ -2010,8 +2016,8 @@ require hands on real hardware — they remain for the human pass.
 - [ ] `npm run benchmark:safe-resize-render`: on the 20-room/80-handle floor,
       a warm Resize layer takes one geometry snapshot per frame and stays at
       p95 ≤25 ms
-- [ ] Five #277 mutants are caught: axis eligibility, third-room cascade,
-      topology signature, physical jamb and commit preflight
+- [ ] Six Resize mutants are caught: axis eligibility, third-room cascade,
+      topology signature, side ownership, physical jamb and commit preflight
 - [ ] Device markers do not move; the room settings gear re-centres itself
 - [ ] Smoke: `node demo/smoke_room_resize.mjs`
 

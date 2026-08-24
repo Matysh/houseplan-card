@@ -87,7 +87,7 @@
   "resize.disabled.diagonal": "Стена расположена под углом: Resize поддерживает только горизонтальные и вертикальные стены",
   "resize.disabled.side-angle": "У этой стены нет двух перпендикулярных примыкающих стен",
   "resize.disabled.duplicate-physical-wall": "Стену перекрывает перегородка, незавершённый контур или колонна",
-  "resize.disabled.partial-shared": "Соседняя комната использует только часть этой стены",
+  "resize.disabled.partial-shared": "Нельзя сдвинуть только часть общей стены",
   "resize.disabled.unequal-shared": "У соседней комнаты другая длина стены или другие конечные точки",
   "resize.disabled.multiple-rooms": "Перемещение затронуло бы больше двух комнат",
   "resize.disabled.thickness-conflict": "Толщину стены нельзя безопасно сохранить",

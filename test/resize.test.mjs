@@ -308,6 +308,51 @@ test('#277 partial shared and third-owner topology never enter a resize plan', (
   assert.match(fixture.provenance, /anonymized/);
 });
 
+test('#289 side ownership blocks mixed-role thickness and clamps at the exact owner boundary', () => {
+  const fixture = JSON.parse(fs.readFileSync(
+    new URL('./fixtures/289-mixed-role-resize.json', import.meta.url), 'utf8',
+  ));
+  const main = { id: 'main', poly: [[0, 0], [100, 0], [100, 100], [0, 100]] };
+  const neighbours = (end) => [
+    { id: 'right', poly: [[100, 0], [200, 0], [200, end], [100, end]] },
+    { id: 'left', poly: [[-100, 0], [0, 0], [0, end], [-100, end]] },
+  ];
+
+  assert.deepEqual(
+    resolveSafeResize(
+      fixture.rooms, [], fixture.selected.roomId, fixture.selected.edge,
+      { ...SAFE, step: fixture.gridStep },
+    ),
+    { enabled: false, reason: fixture.expectedReason },
+    'both directions would change a shared side run into an outer run',
+  );
+  const prepared = resolveSafeResize(
+    fixture.rooms, [], fixture.selected.roomId, fixture.selected.edge, SAFE,
+  );
+  assert.equal(prepared.enabled, true);
+  assert.equal(validateSafeResize(
+    fixture.rooms, [], prepared.plan, fixture.forbiddenDelta, SAFE,
+  ), false);
+  assert.equal(validateSafeResize(
+    fixture.rooms, [], prepared.plan, -fixture.forbiddenDelta, SAFE,
+  ), false);
+  assert.match(fixture.provenance, /anonymized/);
+
+  const ranged = [
+    main,
+    { id: 'future-left', poly: [[-100, 120], [0, 120], [0, 200], [-100, 200]] },
+  ];
+  const resolution = resolveSafeResize(ranged, [], 'main', 2, { ...SAFE, step: 5 });
+  assert.equal(resolution.enabled, true, 'the safe outward direction keeps the handle enabled');
+  assert.equal(clampSafeResize(ranged, [], resolution.plan, 40, 5, SAFE), 20,
+    'the wall stopped where endpoint-to-endpoint side ownership stopped');
+  assert.equal(clampSafeResize(ranged, [], resolution.plan, -40, 5, SAFE), -40,
+    'the reverse outer direction remains available');
+
+  const outer = resolveSafeResize([main], [], 'main', 2, { ...SAFE, step: 5 });
+  assert.equal(outer.enabled, true, 'an ordinary outer resize was not blanket-disabled');
+});
+
 test('#277 irregular exact pair clamps at the first corner and never removes a vertex', () => {
   const left = A();
   const irregular = {

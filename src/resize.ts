@@ -63,6 +63,38 @@ export interface SafeResizePlan extends EdgeDragPlan {
   edgeByRoom: Record<string, number>;
   topology: Record<string, number>;
   movingOpeningIds: string[];
+  /** Prepared physical-owner profiles for the two side walls of every owner. */
+  sideOwnership: SafeResizeSideOwnership[];
+}
+
+export interface SafeResizeOwnershipInterval {
+  roomId: string;
+  edge: number;
+  lo: number;
+  hi: number;
+}
+
+export interface SafeResizeOwnershipRun {
+  lo: number;
+  hi: number;
+  owners: string[];
+}
+
+/**
+ * One side edge whose moving endpoint follows the selected wall. Intervals are
+ * collected once from the immutable gesture snapshot; candidate validation
+ * only adjusts intervals belonging to the one/two changed rooms.
+ */
+export interface SafeResizeSideOwnership {
+  roomId: string;
+  edge: number;
+  movedEndpoint: 0 | 1;
+  axis: Axis;
+  line: number;
+  fixed: number;
+  moving: number;
+  intervals: SafeResizeOwnershipInterval[];
+  baseline: SafeResizeOwnershipRun[];
 }
 
 export type SafeResizeResolution =
@@ -624,6 +656,168 @@ function obstacleOverlaysMovingEdge(
   return collinearOverlapLength(a, b, obstacle.a, obstacle.b, eps) > eps;
 }
 
+const axisCoordinate = (point: number[], axis: Axis): number => (
+  axis === 'h' ? point[0] : point[1]
+);
+
+const lineCoordinate = (point: number[], axis: Axis): number => (
+  axis === 'h' ? point[1] : point[0]
+);
+
+function ownershipIntervalsOnLine(
+  rooms: RoomIn[], axis: Axis, line: number, eps: number,
+): SafeResizeOwnershipInterval[] {
+  const intervals: SafeResizeOwnershipInterval[] = [];
+  for (const room of rooms) {
+    for (let edge = 0; edge < room.poly.length; edge++) {
+      const a = room.poly[edge];
+      const b = room.poly[(edge + 1) % room.poly.length];
+      if (axisOf(a, b, eps) !== axis
+          || Math.abs(lineCoordinate(a, axis) - line) > eps
+          || Math.abs(lineCoordinate(b, axis) - line) > eps) continue;
+      const ca = axisCoordinate(a, axis);
+      const cb = axisCoordinate(b, axis);
+      const lo = Math.min(ca, cb), hi = Math.max(ca, cb);
+      if (hi - lo > eps) intervals.push({ roomId: room.id, edge, lo, hi });
+    }
+  }
+  return intervals.sort((a, b) => a.lo - b.lo || a.hi - b.hi
+    || a.roomId.localeCompare(b.roomId) || a.edge - b.edge);
+}
+
+function ownershipRuns(
+  intervals: SafeResizeOwnershipInterval[], lo: number, hi: number, eps: number,
+): SafeResizeOwnershipRun[] {
+  const breaks = [lo, hi];
+  for (const interval of intervals) {
+    const start = Math.max(lo, interval.lo);
+    const end = Math.min(hi, interval.hi);
+    if (end - start > eps) breaks.push(start, end);
+  }
+  const sorted = [...new Set(breaks)].sort((a, b) => a - b);
+  const runs: SafeResizeOwnershipRun[] = [];
+  for (let i = 0; i + 1 < sorted.length; i++) {
+    const start = sorted[i], end = sorted[i + 1];
+    if (end - start <= eps) continue;
+    const mid = (start + end) / 2;
+    const owners = [...new Set(intervals.filter((interval) => (
+      mid > interval.lo - eps && mid < interval.hi + eps
+    )).map((interval) => interval.roomId))].sort();
+    runs.push({ lo: start, hi: end, owners });
+  }
+  return runs;
+}
+
+function buildSideOwnership(
+  rooms: RoomIn[], roomId: string, edge: number, movedEndpoint: 0 | 1, eps: number,
+): SafeResizeSideOwnership | null {
+  const room = rooms.find((candidate) => candidate.id === roomId);
+  if (!room) return null;
+  const a = room.poly[edge];
+  const b = room.poly[(edge + 1) % room.poly.length];
+  const axis = axisOf(a, b, eps);
+  if (!axis) return null;
+  const fixedPoint = movedEndpoint === 0 ? b : a;
+  const movingPoint = movedEndpoint === 0 ? a : b;
+  const fixed = axisCoordinate(fixedPoint, axis);
+  const moving = axisCoordinate(movingPoint, axis);
+  const line = lineCoordinate(fixedPoint, axis);
+  const intervals = ownershipIntervalsOnLine(rooms, axis, line, eps);
+  const baseline = ownershipRuns(intervals, Math.min(fixed, moving), Math.max(fixed, moving), eps);
+  if (!baseline.length || baseline.some((run) => run.owners.length < 1 || run.owners.length > 2)) {
+    return null;
+  }
+  return { roomId, edge, movedEndpoint, axis, line, fixed, moving, intervals, baseline };
+}
+
+function candidateOwnershipIntervals(
+  profile: SafeResizeSideOwnership, result: EdgeDragResult, eps: number,
+): SafeResizeOwnershipInterval[] {
+  const intervals: SafeResizeOwnershipInterval[] = [];
+  for (const source of profile.intervals) {
+    const poly = result.polys[source.roomId];
+    if (!poly) {
+      intervals.push(source);
+      continue;
+    }
+    if (source.edge < 0 || source.edge >= poly.length) continue;
+    const a = poly[source.edge];
+    const b = poly[(source.edge + 1) % poly.length];
+    if (axisOf(a, b, eps) !== profile.axis
+        || Math.abs(lineCoordinate(a, profile.axis) - profile.line) > eps
+        || Math.abs(lineCoordinate(b, profile.axis) - profile.line) > eps) continue;
+    const ca = axisCoordinate(a, profile.axis);
+    const cb = axisCoordinate(b, profile.axis);
+    const lo = Math.min(ca, cb), hi = Math.max(ca, cb);
+    if (hi - lo > eps) intervals.push({ ...source, lo, hi });
+  }
+  return intervals;
+}
+
+function ownerCountAt(intervals: SafeResizeOwnershipInterval[], coordinate: number, eps: number): number {
+  return new Set(intervals.filter((interval) => (
+    coordinate > interval.lo - eps && coordinate < interval.hi + eps
+  )).map((interval) => interval.roomId)).size;
+}
+
+/**
+ * Preserve the physical role (outer/shared) of every atomic side-wall run.
+ * Extending a shared run into outer space, or shortening it so the neighbour
+ * keeps an outer continuation, is the mixed-role corruption from #289.
+ */
+function sideOwnershipPreserved(
+  result: EdgeDragResult, plan: SafeResizePlan, eps: number,
+): boolean {
+  for (const profile of plan.sideOwnership) {
+    const nextRoom = result.polys[profile.roomId];
+    if (!nextRoom) return false;
+    const a = nextRoom[profile.edge];
+    const b = nextRoom[(profile.edge + 1) % nextRoom.length];
+    if (axisOf(a, b, eps) !== profile.axis) return false;
+    const nextMoving = axisCoordinate(profile.movedEndpoint === 0 ? a : b, profile.axis);
+    const candidate = candidateOwnershipIntervals(profile, result, eps);
+    const terminalRun = profile.moving >= profile.fixed
+      ? profile.baseline[profile.baseline.length - 1]
+      : profile.baseline[0];
+    const terminalRole = terminalRun.owners.length;
+    if (terminalRole < 1 || terminalRole > 2) return false;
+
+    const lo = Math.min(profile.fixed, profile.moving, nextMoving);
+    const hi = Math.max(profile.fixed, profile.moving, nextMoving);
+    const breaks = [lo, hi, profile.fixed, profile.moving, nextMoving];
+    for (const interval of profile.intervals) breaks.push(interval.lo, interval.hi);
+    for (const interval of candidate) breaks.push(interval.lo, interval.hi);
+    const sorted = [...new Set(breaks.filter((value) => value >= lo && value <= hi))]
+      .sort((x, y) => x - y);
+    const oldLo = Math.min(profile.fixed, profile.moving);
+    const oldHi = Math.max(profile.fixed, profile.moving);
+    const newLo = Math.min(profile.fixed, nextMoving);
+    const newHi = Math.max(profile.fixed, nextMoving);
+    for (let i = 0; i + 1 < sorted.length; i++) {
+      const start = sorted[i], end = sorted[i + 1];
+      if (end - start <= eps) continue;
+      const mid = (start + end) / 2;
+      const oldOwns = mid > oldLo - eps && mid < oldHi + eps;
+      const newOwns = mid > newLo - eps && mid < newHi + eps;
+      if (!oldOwns && !newOwns) continue;
+      const oldRole = ownerCountAt(profile.intervals, mid, eps);
+      const nextRole = ownerCountAt(candidate, mid, eps);
+      if (oldRole > 2 || nextRole > 2) return false;
+      if (oldOwns && newOwns) {
+        if (oldRole !== nextRole) return false;
+      } else if (!oldOwns && newOwns) {
+        // Empty space may receive a new outer continuation. Existing physical
+        // material, however, must keep its role: an outer wall cannot become
+        // shared merely because this room grows onto it (and vice versa).
+        if (nextRole !== terminalRole || (oldRole > 0 && oldRole !== nextRole)) return false;
+      } else if (oldRole === 2 ? nextRole !== 2 : nextRole > 1) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
 /** Resolve eligibility once at gesture start. Partial shared stretches and a
  * third owner fail closed; the old vertex-insertion cascade is never planned. */
 export function resolveSafeResize(
@@ -701,9 +895,20 @@ export function resolveSafeResize(
   const topology = Object.fromEntries(roomIds.map((id) => [
     id, rooms.find((candidate) => candidate.id === id)!.poly.length,
   ]));
+  const sideOwnership: SafeResizeSideOwnership[] = [];
+  for (const id of roomIds) {
+    const owner = rooms.find((candidate) => candidate.id === id)!;
+    const ownerEdge = edgeByRoom[id];
+    const prev = (ownerEdge - 1 + owner.poly.length) % owner.poly.length;
+    const next = (ownerEdge + 1) % owner.poly.length;
+    const before = buildSideOwnership(rooms, id, prev, 1, eps);
+    const after = buildSideOwnership(rooms, id, next, 0, eps);
+    if (!before || !after) return { enabled: false, reason: 'partial-shared' };
+    sideOwnership.push(before, after);
+  }
   const plan: SafeResizePlan = {
     roomId, edge, a: [...a], b: [...b], n: edgeNormal(room.poly, edge),
-    roomIds, edgeByRoom, topology, movingOpeningIds,
+    roomIds, edgeByRoom, topology, movingOpeningIds, sideOwnership,
   };
   if (!validateSafeResize(rooms, openings, plan, 0, opts)) {
     return { enabled: false, reason: 'invalid-geometry' };
@@ -714,6 +919,9 @@ export function resolveSafeResize(
     if (!neighbours.some((delta) => validateSafeResize(
       rooms, openings, plan, delta, opts,
     ))) {
+      if (!neighbours.some((delta) => sideOwnershipPreserved(
+        applySafeResize(rooms, openings, plan, delta), plan, eps,
+      ))) return { enabled: false, reason: 'partial-shared' };
       const withoutObstacles = { ...opts, obstacles: [] };
       if (neighbours.some((delta) => validateSafeResize(
         rooms, openings, plan, delta, withoutObstacles,
@@ -796,6 +1004,7 @@ export function validateSafeResize(
   if (!Number.isFinite(d) || plan.roomIds.length < 1 || plan.roomIds.length > 2) return false;
   const result = applySafeResize(rooms, openings, plan, d);
   if (Object.keys(result.polys).length !== plan.roomIds.length) return false;
+  if (!sideOwnershipPreserved(result, plan, eps)) return false;
   const changed = new Set(plan.roomIds);
   const polyOf = (room: RoomIn) => result.polys[room.id] || room.poly;
 

@@ -338,6 +338,10 @@ plan may remain unchanged when **Optimize plans** is run.
 Resize changes one room, or exactly two rooms when their shared wall coincides
 endpoint-to-endpoint. The wall stops at the first corner, opening, foreign room
 or other position that would change topology; no more than two rooms can change.
+It also stops where extending or shortening an adjacent wall would turn shared
+material into outer material (or the reverse), so one saved thickness never
+silently serves both roles. If neither direction has even one safe grid step,
+the handle explains that only part of a shared wall cannot be moved.
 Partial shared walls, diagonal walls and walls overlapped by an independent
 partition/draft/column keep a dimmed handle with an explanatory tooltip and
 cannot start a drag. The former corner scale frame was removed. An ordinary

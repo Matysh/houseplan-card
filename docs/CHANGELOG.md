@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Resize now checks both side walls before starting a drag. It stops at the
+  exact grid node where a wall would switch between shared and outer material,
+  and disables a gesture with no safe direction, so a 20 cm shared thickness
+  can no longer be stretched onto a new outer section
+  ([#289](https://github.com/Matysh/houseplan-card/issues/289)).
+
 ## v1.67.0-beta.9 — 2026-08-24
 
 - “Optimize plans” now safely removes exact redundant partitions over outer

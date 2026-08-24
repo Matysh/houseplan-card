@@ -2,6 +2,7 @@
 // reasons, exact shared preview/commit, one Undo, corner clamp and zero-write
 // cancellation. The smoke loads the tracked production bundle.
 import { launch, check, finish } from './serve.mjs';
+import { checkMixedRoleRecords } from '../scripts/model-invariants.mjs';
 
 const { page, browser } = await launch();
 
@@ -154,6 +155,62 @@ await pointer('pointerdown', dx, dy, { cx: 331, cy: 245, pointerId: 78 });
 await settle();
 check('safe_resize.disabled_no_drag', await page.evaluate(() => window.__card._rszDrag), null);
 check('safe_resize.disabled_zero_write', await page.evaluate(() => window.__card._geometryHistory.size), historyBefore);
+
+// #289: the selected outer wall would lengthen two formerly shared side walls
+// by exactly 43 grid steps. Both directions are disabled before capture: grow
+// would append outer material to a shared run, shrink would leave the
+// neighbour's continuation outer.
+await setRooms([
+  rect('mixed-main', 0, 0, 200, 928),
+  rect('mixed-right', 200, 0, 400, 928),
+  rect('mixed-left', -200, 0, 0, 928),
+]);
+await enter();
+const mixedBefore = JSON.stringify(await roomPoly('mixed-main'));
+const mixedHandle = await page.evaluate(() => {
+  const target = [...window.__card.renderRoot.querySelectorAll('.rszhandle')]
+    .find((handle) => Math.abs(Number(handle.getAttribute('cx')) - 100) < 1
+      && Math.abs(Number(handle.getAttribute('cy')) - 928) < 1);
+  return { disabled: target?.getAttribute('aria-disabled'), label: target?.getAttribute('aria-label') || '' };
+});
+check('safe_resize.mixed_role_disabled', mixedHandle.disabled, 'true');
+check('safe_resize.mixed_role_reason', /part of a shared wall|часть общей стены/i.test(mixedHandle.label), true);
+const [mx, my] = await screenPt(100, 928);
+const [, mixed43] = await screenPt(100, 971);
+await pointer('pointerdown', mx, my, { cx: 100, cy: 928, pointerId: 82 });
+await pointer('pointermove', mx, mixed43, { pointerId: 82 });
+await pointer('pointerup', mx, mixed43, { pointerId: 82 });
+await settle();
+check('safe_resize.mixed_role_no_drag', await page.evaluate(() => window.__card._rszDrag), null);
+check('safe_resize.mixed_role_geometry_exact', JSON.stringify(await roomPoly('mixed-main')), mixedBefore);
+check('safe_resize.mixed_role_zero_write', await page.evaluate(() => window.__card._geometryHistory.size), 0);
+
+// An outer side may grow through empty space to another exact grid node. It
+// stops before it would overlap a different room's outer edge and turn both
+// runs into one newly shared stretch.
+await setRooms([
+  rect('range-main', 0, 0, 100, 100),
+  rect('range-future-left', -100, 125, 0, 200),
+], [], [
+  { key: '0.000000,0.050000@1.5708', cm: 30, a: [0, 0], b: [0, 0.1] },
+  { key: '0.000000,0.162500@1.5708', cm: 30, a: [0, 0.125], b: [0, 0.2] },
+]);
+await enter();
+const [rx, ry] = await screenPt(50, 100);
+const [, rangeFar] = await screenPt(50, 150);
+await pointer('pointerdown', rx, ry, { cx: 50, cy: 100, pointerId: 83 });
+await pointer('pointermove', rx, rangeFar, { pointerId: 83 });
+await pointer('pointerup', rx, rangeFar, { pointerId: 83 });
+await settle();
+const rangePoly = await roomPoly('range-main');
+check('safe_resize.owner_boundary_clamped', Math.abs(rangePoly[2][1] * 1000 - 125) < 1, true);
+check('safe_resize.owner_boundary_topology', rangePoly.length, 4);
+const rangeConfig = await page.evaluate(() => JSON.parse(JSON.stringify(window.__card._serverCfg)));
+check('safe_resize.owner_boundary_no_mixed_role', checkMixedRoleRecords(rangeConfig).length, 0);
+check('safe_resize.owner_boundary_cm_preserved', await page.evaluate(() => {
+  const walls = window.__card._serverCfg.spaces.find((space) => space.id === window.__card._space).walls || [];
+  return JSON.stringify(walls.map((wall) => wall.cm).sort((a, b) => a - b));
+}), '[30,30]');
 
 // Irregular exact pair reaches the first safe grid position before its inner
 // corner; neither polygon gains or loses a vertex.

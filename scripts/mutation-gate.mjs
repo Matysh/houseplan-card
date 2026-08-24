@@ -260,6 +260,18 @@ export const MUTANTS = [
     }],
   },
   {
+    id: 'safe-resize-side-ownership-bypassed',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#289 side ownership" test/resize.test.mjs',
+    because: 'extending or shortening a shared side wall must stop before one thickness record '
+      + 'describes both shared and outer material; the exact 43-step #289 fixture pins both directions',
+    patches: [{
+      file: 'src/resize.ts',
+      find: '  if (!sideOwnershipPreserved(result, plan, eps)) return false;',
+      replace: '  if (false && !sideOwnershipPreserved(result, plan, eps)) return false;',
+    }],
+  },
+  {
     id: 'safe-resize-opening-jamb-bypassed',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="physical jamb" test/resize.test.mjs',
