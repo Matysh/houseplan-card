@@ -102,6 +102,10 @@ git config core.untrackedCache true
 - IMPORTANT (audit lesson): the rollup typescript plugin reports a syntax error as a WARNING and still
   builds the bundle — a truncated file can "pass". That is why the build starts with `tsc --noEmit`,
   which fails on such errors. Always build with `npm run build`, never bare `rollup -c`.
+- Before committing a frontend source change, run `npm run bundle:sync`: `npm run build`
+  writes `dist/houseplan-card.js` only, while the release contract also requires the
+  committed `custom_components/houseplan/frontend/houseplan-card.js` snapshot to be
+  byte-identical. The demo copy is refreshed by the same command but remains untracked.
 
 ## Maintenance diagnostics
 
