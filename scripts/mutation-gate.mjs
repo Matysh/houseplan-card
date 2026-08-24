@@ -697,9 +697,9 @@ export const MUTANTS = [
     patches: [{
       file: 'src/plan-optimizer.ts',
       find: '  const persistedConfig = canonicalizeConfigGeometry(config);\n'
-        + '  const persistedLayout = canonicalizeLayoutGeometry(aligned.layout);',
+        + '  const persistedLayout = canonicalizeLayoutGeometry(finalAligned.layout);',
       replace: '  const persistedConfig = config;\n'
-        + '  const persistedLayout = aligned.layout;',
+        + '  const persistedLayout = finalAligned.layout;',
     }],
   },
   {
@@ -939,6 +939,40 @@ export const MUTANTS = [
       file: 'src/houseplan-card.ts',
       find: '      if (pointInOpaquePlanBody(sourcePoint, masonryGeometry, opaqueBodies)) {',
       replace: '      if (false && pointInOpaquePlanBody(sourcePoint, masonryGeometry, opaqueBodies)) {',
+    }],
+  },
+  {
+    id: 'near-axis-threshold-weakened',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#290 near-axis boundary" test/near-axis.test.mjs',
+    because: 'the measured 316x1 wall must stay inside the one shared 0.25 degree drafting '
+      + 'tolerance while 316x2 and a true diagonal remain outside (#290)',
+    patches: [{
+      file: 'src/near-axis.ts',
+      find: 'export const NEAR_AXIS_MAX_DEGREES = 0.25;',
+      replace: 'export const NEAR_AXIS_MAX_DEGREES = 0.1;',
+    }],
+  },
+  {
+    id: 'near-axis-inclusive-boundary-disabled',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#290 near-axis boundary" test/near-axis.test.mjs',
+    because: 'the product contract includes an edge exactly on the 0.25 degree boundary (#290)',
+    patches: [{
+      file: 'src/near-axis.ts',
+      find: '  if (minor / major > NEAR_AXIS_MAX_SLOPE) return null;',
+      replace: '  if (minor / major >= NEAR_AXIS_MAX_SLOPE) return null;',
+    }],
+  },
+  {
+    id: 'near-axis-authoring-snap-bypassed',
+    guard: 'npm run bundle:sync && node demo/smoke_plan_drawing_repairs.mjs',
+    because: 'the production Walls hover and click must persist the exact same straight endpoint '
+      + 'instead of merely repairing old data through Optimize (#290)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '    const point = anchor ? snapNearAxisEndpoint(anchor, snapped) : snapped;',
+      replace: '    const point = snapped;',
     }],
   },
   {

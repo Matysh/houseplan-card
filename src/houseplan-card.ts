@@ -189,6 +189,7 @@ import {
   clampCanvasR, clampCanvasN, type ContentItem, type Rect,
 } from './space-geometry';
 import { optimizePlans, type OptimizeReport } from './plan-optimizer';
+import { snapNearAxisEndpoint } from './near-axis';
 import type { SpaceReferenceRepairContext } from './space-reference-repair';
 import { collectSpaceMarkerDependencies } from './space-deletion';
 import {
@@ -6916,9 +6917,15 @@ class HouseplanCard extends LitElement {
       ? resolveStrictPlanSnap(snapshot.value, raw, { ...options, anchor })
       : resolvePlanSnapResult(snapshot.value, raw, options);
     const candidate = resolution.kind === 'resolved' ? resolution.candidate : null;
+    const snapped = candidate ? [...candidate.point] : this._snapDrawPoint(raw, lock45);
+    const point = anchor ? snapNearAxisEndpoint(anchor, snapped) : snapped;
+    // A nearby topology endpoint loses snap ownership when the drafting rule
+    // moves the actually persisted point away from it. Preview and click must
+    // describe the exact same geometry (#290).
+    const effectiveCandidate = candidate && samePoint(point, candidate.point) ? candidate : null;
     return {
-      point: candidate ? [...candidate.point] : this._snapDrawPoint(raw, lock45),
-      candidate,
+      point,
+      candidate: effectiveCandidate,
       conflicts: resolution.kind === 'ambiguous' ? resolution.conflicts : [],
       ambiguous: resolution.kind === 'ambiguous',
       contextKey: this._planSnapContextKey(snapshot.key),
@@ -7528,7 +7535,9 @@ class HouseplanCard extends LitElement {
       if (this._path.length < 3) return;
       // Preserve the established shortcut, but commit its closing wall through
       // the same graph/draft path as an ordinary click on the first node.
-      pt = [...this._path[0]];
+      pt = snapNearAxisEndpoint(
+        this._path[this._path.length - 1], this._path[0],
+      );
     }
     // Island rooms (v1.34.0): drawing INSIDE an existing room is legal — the
     // contour may become a nested room (a column, an inner room). Partial
@@ -15326,7 +15335,7 @@ class HouseplanCard extends LitElement {
         m: String(d.report.migrated + d.report.canonicalized
           + d.report.coordsCanonicalized + d.report.wallsMerged + d.report.spansMerged
           + d.report.partitionsMerged + d.report.partitionsReconciled
-          + d.report.openingsRehosted),
+          + d.report.openingsRehosted + d.report.wallsStraightened),
         r: String(d.report.spaceRefsRemapped + d.report.roomRefsRemapped
           + d.report.positionsRemapped + d.report.markersDetached
           + d.report.orphanRoomLabelsRemoved + d.report.orphanDevicePositionsRemoved
@@ -16337,7 +16346,14 @@ class HouseplanCard extends LitElement {
     const modelMaintenance = r.migrated + r.canonicalized + r.coordsCanonicalized
       + r.wallsMerged + r.spansMerged + r.partitionsMerged
       + r.partitionsReconciled + r.openingsRehosted;
-    const gridWarning = r.moved + r.rotated + r.removedDrafts + r.coordsCanonicalized;
+    const gridWarning = r.moved + r.rotated + r.removedDrafts
+      + r.coordsCanonicalized + r.wallsStraightened;
+    const straightenCm = Math.ceil(r.maxStraightenShiftCm * 10) / 10;
+    const straightenSpace = (this._serverCfg?.spaces || []).find(
+      (space: any) => String(space?.id || '') === r.maxStraightenSpace,
+    );
+    const straightenWhere = (this._serverCfg?.spaces || []).length > 1 && straightenSpace
+      ? String(straightenSpace.title || straightenSpace.id) : '';
     const removed = r.orphanRoomLabelsRemoved + r.orphanDevicePositionsRemoved
       + r.orphanGroupPositionsRemoved;
     const liveNames = r.liveMissingPositions.map((item) => item.name).filter(Boolean);
@@ -16416,6 +16432,14 @@ class HouseplanCard extends LitElement {
               ${r.openingsRehosted ? html`<p class="alignmsg">${this._t(
                   'gs.optimize_openings_rehosted', { n: String(r.openingsRehosted) },
                 )}</p>` : nothing}
+              ${r.wallsStraightened ? html`<p class="alignmsg">${this._t(
+                  'gs.optimize_walls_straightened', {
+                    n: String(r.wallsStraightened), cm: String(straightenCm),
+                  },
+                )}</p>` : nothing}
+              ${straightenWhere ? html`<p class="alignmsg">${this._t(
+                  'gs.optimize_walls_straightened_where', { s: straightenWhere },
+                )}</p>` : nothing}
               ${r.glowSpacesMigrated || r.glowRoomsMigrated
                 ? html`<p class="alignmsg">${this._t('gs.optimize_glow_migration', {
                     spaces: String(r.glowSpacesMigrated),
@@ -16423,6 +16447,11 @@ class HouseplanCard extends LitElement {
                   })}</p>`
                 : nothing}
               ${gridWarning ? html`<div class="rhint">${this._t('gs.align_warn')}</div>` : nothing}`}
+          ${!failed && r.wallsStraightenSkipped ? html`<p class="rhint">${this._t(
+              'gs.optimize_walls_straighten_skipped', {
+                n: String(r.wallsStraightenSkipped),
+              },
+            )}</p>` : nothing}
           ${repaired
             ? html`<p class="alignmsg">${this._t('gs.optimize_references', {
                 spaces: String(r.spaceRefsRemapped), rooms: String(r.roomRefsRemapped),

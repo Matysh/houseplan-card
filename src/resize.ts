@@ -14,6 +14,7 @@ import { intersection } from 'polyclip-ts';
 import {
   polygonArea, segmentsProperlyCross, polyContainsPoly, roomsOverlap,
 } from './logic';
+import { classifyNearAxisSegment } from './near-axis';
 
 /** Minimal room dimension in centimetres (owner: «мин. габарит ~30 см»). */
 export const MIN_ROOM_CM = 30;
@@ -1014,6 +1015,9 @@ export function validateSafeResize(
     const edge = plan.edgeByRoom[roomId];
     if (!original || !next || next.length !== plan.topology[roomId]
         || next.length !== original.poly.length || !polyIsSimple(next)) return false;
+    for (let index = 0; index < next.length; index++) {
+      if (classifyNearAxisSegment(next[index], next[(index + 1) % next.length])) return false;
+    }
     const s0 = signedArea(original.poly);
     const s1 = signedArea(next);
     if (Math.abs(s1) < eps || s0 * s1 <= 0) return false;

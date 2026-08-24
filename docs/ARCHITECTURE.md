@@ -548,6 +548,15 @@ scale helpers remain pure-test history only and are tree-shaken from the
 production interaction path. Exact `a/b` wall endpoints remain identity and
 the quantised midpoint/direction `key` remains only a compatibility index.
 
+Near-axis geometry has one shared classifier in `src/near-axis.ts` (#290).
+Walls applies it after architectural/grid resolution and before hover/commit,
+moving only the free endpoint. Resize validates that its fixed-topology output
+contains no near-axis edge. Explicit Optimize runs the lossy legacy repair only
+after grid alignment, moves coincident room endpoint owners atomically, then
+reuses ordinary opening projection and wall/open-span rekeying. Unique physical
+count, maximum centimetres and skipped candidates stay separate from ordinary
+grid movement; no load/save migration invokes this repair.
+
 All physical-geometry writers share the same transaction boundary (#278).
 `checkSpacePhysicalGeometry()` validates the exact candidate through canonical
 wall and floor builders before history or save. A failed or degraded candidate

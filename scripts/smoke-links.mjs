@@ -28,6 +28,16 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    symbols: [
+      'classifyNearAxisSegment', 'snapNearAxisEndpoint', 'repairNearAxisRoomWalls',
+      'NEAR_AXIS_MAX_DEGREES', 'NEAR_AXIS_MAX_SLOPE',
+    ],
+    smokes: ['smoke_plan_drawing_repairs.mjs', 'smoke_near_axis_optimize.mjs'],
+    because: 'the production bundle must make the Walls hover/click candidate exact-axis, then '
+      + 'preview one deduplicated real shared wall, pass production geometry preflight, apply one '
+      + 'atomic Optimize write, reload idempotently and restore the original through one Undo (#290)',
+  },
+  {
     // #285: смок не произносит ни одного имени продуктового кода — он подставляет
     // геометрию реального этажа и спрашивает сам продукт через isPointInFill,
     // есть ли кладка там, где модель её обещает. Поиском по тексту такая связь

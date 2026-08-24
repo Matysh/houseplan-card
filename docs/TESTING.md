@@ -2852,6 +2852,18 @@ require hands on real hardware — they remain for the human pass.
       onto a longer query, and scale/direction/row order do not change the
       resolver [auto: test/wall-thickness.test.mjs + test/open-spans.test.mjs +
       smoke_resize_virtual_thick + mutation-gate].
+- [ ] **Near-axis authoring and explicit repair (#290)**: the shared
+      `0.25°` classifier includes `316×1`, excludes `316×2` and 30° diagonals,
+      and Walls preview/click persist `316×0` without claiming the wrong saved
+      endpoint. Optimize deduplicates the tracked shared wall across two room
+      owners, reports one wall and an exact physical maximum, rekeys thickness,
+      passes production preflight, applies one atomic write, reloads as a no-op
+      and restores the original through one Undo. Saved drafts and independent
+      walls use the same classifier; unsafe candidates are counted as skipped
+      [unit: test/near-axis.test.mjs; auto: smoke_plan_drawing_repairs +
+      smoke_near_axis_optimize; mutations: `near-axis-threshold-weakened`,
+      `near-axis-inclusive-boundary-disabled`,
+      `near-axis-authoring-snap-bypassed`].
 - [ ] **Explicit Optimize cleans only an isolated micro-interval (#198)**:
       `22 → 15 → 22` with a centre shorter than half a grid step and no
       room/opening node becomes one 22 cm run in Preview and Apply; Cancel

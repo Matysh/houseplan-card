@@ -41,6 +41,14 @@ const out = await page.evaluate(async () => {
   ];
 
   await reset();
+  const stage = root().querySelector('.stage');
+  const rect = stage.getBoundingClientRect();
+  const view = card._viewOr(card._baseVb());
+  const clickAt = (x, y, shiftKey = false, ctrlKey = false) => new MouseEvent('click', {
+    clientX: rect.left + ((x - view.x) / view.w) * rect.width,
+    clientY: rect.top + ((y - view.y) / view.h) * rect.height,
+    bubbles: true, shiftKey, ctrlKey,
+  });
   card._path = [[100, 600]];
   card._cursorPt = [200, 600];
   await update();
@@ -60,6 +68,30 @@ const out = await page.evaluate(async () => {
   result.angleColourMatchesActualVector = exactLabelGreen
     && !root().querySelector('.measurelabel')?.classList.contains('on45');
 
+  await reset();
+  const nearRaw = [100 + card._gridPitch * 316, 100 + card._gridPitch];
+  card._path = [[100, 100]];
+  const near = card._resolvePlanDrawPoint(nearRaw, false);
+  card._cursorPt = near.point;
+  await update();
+  const previewLine = root().querySelector('.active-axis');
+  result.nearAxisPreviewIsStraight = near.point[1] === 100
+    && +previewLine?.getAttribute('y1') === +previewLine?.getAttribute('y2');
+  card._markupClick(clickAt(...nearRaw));
+  await update();
+  result.nearAxisClickPersistsStraightDraft = card._path.length === 2
+    && card._path[1][1] === 100
+    && card._curSpaceCfg.room_drafts?.[0]?.points?.[1]?.[1] === 0.1;
+
+  await reset({ partitions: [{
+    id: 'near-target', a: [nearRaw[0] / 1000, nearRaw[1] / 1000],
+    b: [nearRaw[0] / 1000, nearRaw[1] / 1000 + 0.1], cm: 20,
+  }] });
+  card._path = [[100, 100]];
+  const conflictWithAxis = card._resolvePlanDrawPoint(nearRaw, false);
+  result.nearAxisRuleDoesNotClaimWrongEndpoint = !conflictWithAxis.candidate
+    && conflictWithAxis.point[0] === nearRaw[0] && conflictWithAxis.point[1] === 100;
+
   await reset({ partitions: [
     { id: 'near-a', a: [0.1, 0.1], b: [0.1, 0.3], cm: 20 },
     { id: 'near-b', a: [0.106, 0.1], b: [0.106, 0.3], cm: 20 },
@@ -76,14 +108,6 @@ const out = await page.evaluate(async () => {
   result.keepExistingFaceIsNoop = JSON.stringify(card._curSpaceCfg) === exactBefore
     && !card._roomDialog && !card._wallFaceBatch;
   card._path = [];
-  const stage = root().querySelector('.stage');
-  const rect = stage.getBoundingClientRect();
-  const view = card._viewOr(card._baseVb());
-  const clickAt = (x, y, shiftKey = false) => new MouseEvent('click', {
-    clientX: rect.left + ((x - view.x) / view.w) * rect.width,
-    clientY: rect.top + ((y - view.y) / view.h) * rect.height,
-    bubbles: true, shiftKey,
-  });
   card._markupClick(clickAt(300, 300, true));
   result.shiftBypassesExistingFaceOffer = card._path.length === 1 && !card._roomDialog;
   card._cancelPath();

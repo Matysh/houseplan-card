@@ -302,6 +302,12 @@ Existing segment endpoints and lines appear above walls while drawing. An
 endpoint grows when the next click will join it. A point on a line shows where
 the click will create a valid junction.
 
+A segment which is visually horizontal or vertical within `0.25°` is stored as
+an exact axis: House Plan moves only the free endpoint, and preview already
+shows the final result. A real diagonal remains unchanged. Older invisible
+one-grid-step slopes are offered separately by **Optimize plans**, with the
+number of walls and maximum movement shown before confirmation.
+
 ### Plan tools at a glance
 
 | Tool | Result | Room area | Light and shadow | Main limit |
@@ -335,6 +341,10 @@ small enclosed hole. At a perpendicular T/X junction, the complete physical
 width of every participating wall remains solid through the node, including
 closely spaced neighbouring junctions. This is a rendering correction: a valid
 plan may remain unchanged when **Optimize plans** is run.
+Legacy near-axis walls are different: **Optimize plans** may explicitly
+straighten them, counts a shared wall once across both rooms and leaves an
+unsafe candidate unchanged. Cancel writes nothing and the confirmed batch has
+the normal one-deep Undo.
 Resize changes one room, or exactly two rooms when their shared wall coincides
 endpoint-to-endpoint. The wall stops at the first corner, opening, foreign room
 or other position that would change topology; no more than two rooms can change.

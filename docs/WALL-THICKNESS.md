@@ -156,6 +156,13 @@ short ray to the global radius and never treats an unrelated outer continuation
 as node-owned material. This closes the real `349 / 120 / 5`-step gaps while
 preserving the finite-ray and opening contracts from #271.
 
+`NEAR_AXIS_MAX_DEGREES` in `src/near-axis.ts` is the single `0.25°` product
+constant (#290). The masonry pair classifier derives its sine tolerance from
+that source; Walls authoring and explicit Optimize use the corresponding
+minor/major slope. Rendering may tolerate a legacy saved slope, but new Walls
+segments are exact-axis and Optimize changes legacy geometry only after its
+lossy preview is confirmed.
+
 Clean-floor consumers subtract the cached, repaired canonical room masonry from
 their source room and take its outer component. The result is clipped to the
 source room on fallback. Openings and independent partitions are deliberately

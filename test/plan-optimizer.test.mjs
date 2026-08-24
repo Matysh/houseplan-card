@@ -43,6 +43,7 @@ const assertNoPersistedChanges = (result) => {
     'moved', 'coordsCanonicalized', 'rotated', 'removedDrafts', 'migrated',
     'glowSpacesMigrated', 'glowRoomsMigrated', 'canonicalized', 'wallsMerged',
     'spansMerged', 'partitionsMerged', 'partitionsReconciled', 'openingsRehosted',
+    'wallsStraightened',
     'spaceRefsRemapped', 'roomRefsRemapped',
     'positionsRemapped', 'markersDetached', 'orphanRoomLabelsRemoved',
     'orphanDevicePositionsRemoved', 'orphanGroupPositionsRemoved',
@@ -51,6 +52,8 @@ const assertNoPersistedChanges = (result) => {
   assert.equal(result.report.maxShift, 0);
   assert.equal(result.report.maxShiftCm, 0);
   assert.equal(result.report.maxSpace, '');
+  assert.equal(result.report.maxStraightenShiftCm, 0);
+  assert.equal(result.report.maxStraightenSpace, '');
 };
 
 const coincidentPartitionConfig = ({ roomCm = 20, partitionCm = 20, partial = false } = {}) => ({

@@ -12,6 +12,12 @@
   gaps from the real second-floor plan are now closed consistently in every
   wall consumer without extending the short arm or changing saved geometry
   ([#288](https://github.com/Matysh/houseplan-card/issues/288)).
+- Walls now stores visually horizontal or vertical segments on an exact axis
+  instead of allowing an invisible one-grid-step slope. **Optimize plans** can
+  explicitly straighten the same defect in older plans, counting a shared wall
+  once, reporting the maximum movement before confirmation and preserving true
+  diagonals; Cancel and one-deep Undo keep the operation reversible
+  ([#290](https://github.com/Matysh/houseplan-card/issues/290)).
 
 ## v1.67.0-beta.9 — 2026-08-24
 

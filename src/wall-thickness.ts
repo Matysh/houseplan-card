@@ -8,6 +8,7 @@
  */
 import { union, difference, intersection } from 'polyclip-ts';
 import { polygonArea, roomPoly, roomEdges, sharedBoundary, paperRoomShapes } from './logic';
+import { NEAR_AXIS_MAX_DEGREES } from './near-axis';
 
 export interface WallEntry {
   key: string;
@@ -81,7 +82,7 @@ export const MITRE_LIMIT = 4;
 export const MULTI_WALL_JOIN_LIMIT = 1.25;
 
 /** Maximum drafting deviation still rendered as a physical T/X junction (#279). */
-export const MULTI_WALL_NEAR_ORTHOGONAL_MAX_DEGREES = 0.25;
+export const MULTI_WALL_NEAR_ORTHOGONAL_MAX_DEGREES = NEAR_AXIS_MAX_DEGREES;
 
 /** Normalized dot-product tolerance for a physically near-orthogonal ray pair. */
 export const MULTI_WALL_ORTHOGONAL_DOT_EPSILON = Math.sin(

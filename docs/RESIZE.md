@@ -62,7 +62,9 @@ The production controller reaches only four pure operations in `src/resize.ts`:
    planned room and translates each ordinary moving-wall opening once.
 4. `validateSafeResize(...)` proves room identity/count, topology, orientation,
    simplicity, minimum clearance, exact shared endpoints, foreign-room
-   relations, physical obstacles and opening jamb clearance.
+   relations, physical obstacles and opening jamb clearance. It also rejects
+   any near-axis postcondition: a safe candidate is exact horizontal/vertical,
+   never a sub-`0.25°` arithmetic slope (#290).
 
 Historical general-transform helpers remain only for old pure-test history.
 `houseplan-card.ts` must not import or call `applyRoomScale`,

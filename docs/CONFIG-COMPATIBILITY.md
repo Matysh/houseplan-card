@@ -97,6 +97,14 @@ block the repair. Normal read, render, Save and editor paths remain lossless;
 only confirmed Optimize applies it, with the ordinary preview and server Undo
 (#198, #273).
 
+Explicit Optimize may also straighten a stored wall whose slope is non-zero
+but no more than `0.25°` from an axis (#290). This is a confirmed lossy repair,
+not a read migration or schema change. All coincident room-owner endpoints move
+together, wall/opening identities are reprojected by the canonical pipeline,
+and true diagonals survive byte-equivalent. Older clients continue reading the
+result as ordinary polygon geometry; reverting code does not require a storage
+migration.
+
 ## Open-passage opening type (#157)
 
 `space.openings[].type` additionally accepts the literal `passage`. Its

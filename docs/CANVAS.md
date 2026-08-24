@@ -429,6 +429,13 @@ the user is asked to zoom. Exact coincident endpoints are still one node. The
 active thick rubber-band always paints its centreline and final node above the
 body; an active snap marker replaces, rather than duplicates, that final node.
 
+After architectural snapping, a Walls segment within `0.25°` of a horizontal
+or vertical axis is made exact by moving only its free endpoint (#290). Hover,
+the active marker and click consume that same point. A nearby saved endpoint
+which would require the forbidden one-step slope therefore loses snap
+ownership instead of being joined invisibly. Shift-selected 45° rays and true
+diagonals outside the shared tolerance are unchanged.
+
 On an axis-aligned wall whose corners are on the grid — every wall the
 editor itself draws — the two rules give the same point. An opening is
 also kept inside its wall by half its own length.
@@ -490,6 +497,13 @@ rekeys exact wall/open-span endpoints onto the moved rooms, merges
 touching virtual spans per room pair, compacts consecutive real-wall
 intervals of equal thickness and stamps `model_version`. Unknown fields
 are preserved and every pass is idempotent.
+
+The explicit pass also repairs pre-existing near-axis room walls, saved wall
+chains and independent walls after ordinary grid alignment (#290). Coincident
+room-owner copies count as one physical wall and move as one endpoint
+equivalence class. The preview reports the unique count, maximum physical
+movement and unsafe skipped candidates; only Confirm writes, and Undo restores
+the prior geometry. Exact axes and true diagonals are not candidates.
 
 The optimizer deliberately does **not** alter backdrop calibration or saved
 view boxes, deduplicate markers, or delete files. It may delete an unattached

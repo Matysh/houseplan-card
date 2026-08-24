@@ -4,7 +4,7 @@
  *
  *   npm run invariants -- --config <файл>            # экспорт, config/get или сырой config
  *   npm run invariants -- --config <файл> --layout <файл>
- *   npm run invariants -- --config <файл> --json
+ *   npm run invariants -- --config <файл> --near-axis --json
  *
  * Зачем это существует. Самый дорогой класс дефектов проекта — не ошибки
  * формул, а потеря согласованности между геометрией и ссылками на неё: #253
@@ -19,6 +19,7 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { checkOptimizeGeometry } from '../test-build/plan-geometry-preflight.js';
+import { classifyNearAxisSegment } from '../test-build/near-axis.js';
 
 /** Доля шага сетки, в пределах которой запись считается лежащей на ребре. */
 const EDGE_TOLERANCE = 0.004;
@@ -43,6 +44,42 @@ const roomPolygon = (room) => {
 };
 
 const edgesOf = (poly) => poly.map((a, index) => [a, poly[(index + 1) % poly.length]]);
+
+/** Deduplicated physical near-axis segments, including both room-owner copies. */
+export function nearAxisProfile(config) {
+  const spaces = [];
+  let total = 0;
+  const keyOf = (a, b) => {
+    const ka = `${a[0]},${a[1]}`, kb = `${b[0]},${b[1]}`;
+    return ka < kb ? `${ka}|${kb}` : `${kb}|${ka}`;
+  };
+  for (const space of config?.spaces || []) {
+    const found = new Set();
+    for (const room of space?.rooms || []) {
+      const poly = roomPolygon(room);
+      if (!poly) continue;
+      for (const [a, b] of edgesOf(poly)) {
+        if (classifyNearAxisSegment(a, b)) found.add(keyOf(a, b));
+      }
+    }
+    for (const draft of space?.room_drafts || []) {
+      for (let index = 0; index + 1 < (draft?.points || []).length; index++) {
+        const a = point(draft.points[index]), b = point(draft.points[index + 1]);
+        if (a && b && classifyNearAxisSegment(a, b)) found.add(`draft:${draft.id}:${index}`);
+      }
+    }
+    for (const partition of space?.partitions || []) {
+      const a = point(partition?.a), b = point(partition?.b);
+      if (a && b && classifyNearAxisSegment(a, b)) {
+        found.add(`partition:${partition.id || keyOf(a, b)}`);
+      }
+    }
+    const count = found.size;
+    spaces.push({ spaceId: String(space?.id || ''), count });
+    total += count;
+  }
+  return { total, spaces };
+}
 
 const distToSegment = (p, a, b) => {
   const dx = b[0] - a[0], dy = b[1] - a[1];
@@ -587,7 +624,7 @@ function main(argv) {
   const configPath = arg('--config');
   if (!configPath) {
     console.error('использование: model-invariants.mjs --config <файл> [--layout <файл>]'
-      + ' [--lattice] [--json]');
+      + ' [--lattice|--near-axis] [--json]');
     return 2;
   }
   const model = readModel(readFileSync(configPath, 'utf8'));
@@ -597,6 +634,17 @@ function main(argv) {
     const profile = latticeProfile(model);
     if (argv.includes('--json')) console.log(JSON.stringify({ lattice: profile }, null, 2));
     else console.log(latticeReport(profile));
+    return 0;
+  }
+  if (argv.includes('--near-axis')) {
+    const profile = nearAxisProfile(model.config);
+    if (argv.includes('--json')) console.log(JSON.stringify({ nearAxis: profile }, null, 2));
+    else {
+      console.log(`Почти осевых физических стен: ${profile.total}.`);
+      for (const space of profile.spaces.filter((item) => item.count)) {
+        console.log(`  ${space.spaceId || '(без id)'}: ${space.count}`);
+      }
+    }
     return 0;
   }
   const violations = [

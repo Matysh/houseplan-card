@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 import {
   checkMixedRoleRecords, checkReferences, checkWallKeys, checkWallRecordsPreserved,
-  keyMidpoint, latticeProfile, readModel, wallKey,
+  keyMidpoint, latticeProfile, nearAxisProfile, readModel, wallKey,
 } from '../scripts/model-invariants.mjs';
 import { wallKey as productWallKey } from '../test-build/wall-thickness.js';
 import { GRID_STEP_N } from '../test-build/space-geometry.js';
@@ -494,4 +494,12 @@ test('#287: реальные планы проекта эту проверку �
     assert.deepEqual(checkMixedRoleRecords({ spaces: [space] }), [],
       `${file}: ложное срабатывание на реальном плане`);
   }
+});
+
+test('#290 near-axis audit deduplicates shared room-owner copies', () => {
+  const fixture = JSON.parse(readFileSync(
+    resolve(repoRoot, 'test/fixtures/279-near-orthogonal-junction.json'), 'utf8',
+  ));
+  const profile = nearAxisProfile({ spaces: [{ id: 'near', ...fixture }] });
+  assert.deepEqual(profile, { total: 1, spaces: [{ spaceId: 'near', count: 1 }] });
 });

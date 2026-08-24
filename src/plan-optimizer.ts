@@ -32,6 +32,7 @@ import { reconcileCoincidentPartitions } from './coincident-partitions';
 import {
   repairSpaceReferences, type SpaceReferenceRepairContext, type SpaceReferenceReport,
 } from './space-reference-repair';
+import { repairNearAxisRoomWalls } from './near-axis';
 
 /** Bump when a new lossless maintenance pass is added. */
 export const PLAN_MODEL_VERSION = 7;
@@ -64,6 +65,14 @@ export interface OptimizeReport extends AlignReport, SpaceReferenceReport {
   partitionsReconciled: number;
   /** Hosted openings materialised onto the coincident shared room wall. */
   openingsRehosted: number;
+  /** Unique physical near-axis walls accepted for explicit straightening. */
+  wallsStraightened: number;
+  /** Near-axis walls found but rejected by structural safety checks. */
+  wallsStraightenSkipped: number;
+  /** Largest accepted endpoint movement in centimetres. */
+  maxStraightenShiftCm: number;
+  /** Space owning the largest accepted straightening movement. */
+  maxStraightenSpace: string;
 }
 
 export interface OptimizeResult {
@@ -431,8 +440,41 @@ export function optimizePlans(
 
   const beforeSpaces = clone(config.spaces || []);
   const aligned = alignAllToGrid(config.spaces || [], references.layout);
-  config.spaces = aligned.spaces;
-  const alignReport: AlignReport = { ...aligned.report };
+  let wallsStraightened = 0;
+  let wallsStraightenSkipped = 0;
+  let maxStraightenShiftCm = 0;
+  let maxStraightenSpace = '';
+  const straightenedSpaces = aligned.spaces.map((space: any) => {
+    const repaired = repairNearAxisRoomWalls(space);
+    wallsStraightened += repaired.report.wallsStraightened;
+    wallsStraightenSkipped += repaired.report.wallsStraightenSkipped;
+    const cellCm = Number(space?.cell_cm) > 0 ? Number(space.cell_cm) : DEFAULT_CELL_CM;
+    const shiftCm = (repaired.report.maxStraightenShift / GRID_STEP_N) * cellCm;
+    if (shiftCm > maxStraightenShiftCm) {
+      maxStraightenShiftCm = shiftCm;
+      maxStraightenSpace = String(space?.id || '');
+    }
+    return repaired.space;
+  });
+  // Openings are wall-bound. Once a room endpoint has been straightened, run
+  // the same production alignment once more so their centres/angles follow
+  // the final host instead of the pre-repair edge.
+  const finalAligned = wallsStraightened
+    ? alignAllToGrid(straightenedSpaces, aligned.layout)
+    : { ...aligned, spaces: straightenedSpaces };
+  config.spaces = finalAligned.spaces;
+  const alignReport: AlignReport = wallsStraightened ? {
+    ...aligned.report,
+    moved: aligned.report.moved + finalAligned.report.moved,
+    coordsCanonicalized: aligned.report.coordsCanonicalized
+      + finalAligned.report.coordsCanonicalized,
+    maxShift: Math.max(aligned.report.maxShift, finalAligned.report.maxShift),
+    maxShiftCm: Math.max(aligned.report.maxShiftCm, finalAligned.report.maxShiftCm),
+    maxSpace: finalAligned.report.maxShiftCm > aligned.report.maxShiftCm
+      ? finalAligned.report.maxSpace : aligned.report.maxSpace,
+    rotated: aligned.report.rotated + finalAligned.report.rotated,
+    removedDrafts: aligned.report.removedDrafts + finalAligned.report.removedDrafts,
+  } : { ...aligned.report };
 
   let wallsMerged = 0;
   let spansMerged = 0;
@@ -588,7 +630,7 @@ export function optimizePlans(
   // Canonicalise the complete pair before both the diff and the return so the
   // preview, durable intent, live stores and next preview all see one target.
   const persistedConfig = canonicalizeConfigGeometry(config);
-  const persistedLayout = canonicalizeLayoutGeometry(aligned.layout);
+  const persistedLayout = canonicalizeLayoutGeometry(finalAligned.layout);
 
   // A version marker is bookkeeping, not maintenance by itself. Persist it
   // only alongside a real config/layout transformation; otherwise an already
@@ -645,6 +687,10 @@ export function optimizePlans(
       partitionsMerged: changed ? partitionsMerged : 0,
       partitionsReconciled: changed ? partitionsReconciled : 0,
       openingsRehosted: changed ? openingsRehosted : 0,
+      wallsStraightened: changed ? wallsStraightened : 0,
+      wallsStraightenSkipped,
+      maxStraightenShiftCm: changed ? maxStraightenShiftCm : 0,
+      maxStraightenSpace: changed ? maxStraightenSpace : '',
       ...persistedReferences,
     },
     changed,
