@@ -73,6 +73,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#276](https://github.com/Matysh/houseplan-card/issues/276) Совпадающая partition становится одной общей стеной | [276-coincident-partition-reconciliation.md](276-coincident-partition-reconciliation.md) |
 | [#277](https://github.com/Matysh/houseplan-card/issues/277) Безопасный Resize без изменения топологии | [277-safe-resize.md](277-safe-resize.md) |
 | [#278](https://github.com/Matysh/houseplan-card/issues/278) Локальный сбой extra-body union не гасит всю кладку | [278-wall-union-isolation.md](278-wall-union-isolation.md) |
+| [#279](https://github.com/Matysh/houseplan-card/issues/279) Сплошной почти ортогональный T-стык | [279-near-orthogonal-junction.md](279-near-orthogonal-junction.md) |
 
 ## P2
 
