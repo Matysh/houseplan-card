@@ -51,10 +51,9 @@ const arg = (name, fallback) => {
  * Известный долг фикстур, а не «должно быть ноль».
  *
  * `real-plan-second-floor.json` содержит перегородку `partition-mt2on9ou-0`,
- * лежащую на наружной стене трёх комнат: это живой дефект из плана владельца,
- * предмет #296. Обход обязан замечать НОВЫЕ нарушения, а не падать на старом —
- * иначе он не заработает до починки #296 и никого не защитит в промежутке.
- * Когда #296 закроется, число здесь станет нулём, и тест это потребует.
+ * лежащую на наружной стене трёх комнат. #296 научил явный Optimize безопасно
+ * удалять этот объект, но исходная raw-фикстура намеренно не переписана: обход
+ * обязан отделять её исходный долг от НОВЫХ нарушений каждого жеста.
  */
 const PLANS = [
   { file: 'real-plan-second-floor.json', debt: 1 },
@@ -70,26 +69,10 @@ const PLANS = [
  * `partition-mt2on9ou-0`, проживший в плане владельца от беты 9 до rc.1.
  * Починили — обновить строку в этой таблице тем же коммитом.
  */
-const KNOWN = {
-  // #298 убрал producer off-grid/wall-carrier на первом Resize. Обход теперь
-  // доходит до независимого долга удаления комнаты/смешанной роли #299 и
-  // существующей скрытой перегородки #296; эти строки не выдают его за норму,
-  // а держат следующий заведённый дефект видимым до его собственного фикса.
-  'real-plan-second-floor.json:1': {
-    step: 9, kinds: ['mixed_role_record'],
-  },
-  'real-plan-second-floor.json:2': {
-    step: 1, kinds: ['mixed_role_record'],
-  },
-  'real-plan-second-floor.json:3': {
-    step: 1, kinds: ['mixed_role_record'],
-  },
-  // На первом этаже оставшиеся mixed-role записи также рождаются Optimize или
-  // удалением комнаты с сохранением стен, а не fixed-topology Resize #298.
-  'real-plan-first-floor.json:1': { step: 1, kinds: ['mixed_role_record'] },
-  'real-plan-first-floor.json:2': { step: 3, kinds: ['mixed_role_record'] },
-  'real-plan-first-floor.json:3': { step: 1, kinds: ['mixed_role_record'] },
-};
+// #298 убрал off-grid/carrier producer Resize, а #299 — mixed-role producer
+// Optimize/Delete-room. Поэтому все шесть 24-шаговых обходов теперь обязаны
+// завершаться без нового нарушения; исходный fixture debt учтён отдельно выше.
+const KNOWN = {};
 const STEPS = Number(arg('--steps', 24));
 const SEEDS = arg('--seed') ? [Number(arg('--seed'))] : [1, 2, 3];
 
