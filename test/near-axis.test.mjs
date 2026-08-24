@@ -17,6 +17,21 @@ const fixture = JSON.parse(readFileSync(
   new URL('./fixtures/279-near-orthogonal-junction.json', import.meta.url), 'utf8',
 ));
 const clone = (value) => JSON.parse(JSON.stringify(value));
+const sourceOf = (file) => readFileSync(new URL(`../src/${file}`, import.meta.url), 'utf8');
+
+test('#290 authoring, Optimize and renderer use one near-axis threshold source', () => {
+  const renderer = sourceOf('wall-thickness.ts');
+  const authoring = sourceOf('houseplan-card.ts');
+  const optimizer = sourceOf('plan-optimizer.ts');
+
+  assert.match(renderer, /import \{ NEAR_AXIS_MAX_DEGREES \} from '\.\/near-axis';/);
+  assert.match(renderer,
+    /export const MULTI_WALL_NEAR_ORTHOGONAL_MAX_DEGREES = NEAR_AXIS_MAX_DEGREES;/);
+  assert.match(authoring, /import \{ snapNearAxisEndpoint \} from '\.\/near-axis';/);
+  assert.match(authoring, /snapNearAxisEndpoint\(/);
+  assert.match(optimizer, /import \{ repairNearAxisRoomWalls \} from '\.\/near-axis';/);
+  assert.match(optimizer, /repairNearAxisRoomWalls\(space\)/);
+});
 
 test('#290 near-axis boundary is shared, inclusive and bounded', () => {
   assert.equal(NEAR_AXIS_MAX_DEGREES, 0.25);
