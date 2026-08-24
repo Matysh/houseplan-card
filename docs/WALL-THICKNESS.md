@@ -147,6 +147,15 @@ must not erase a strip restored by an earlier one. The result is still clipped
 to the canonical physical paper envelope and explicit opening slots are cut
 afterwards, so no wall is extended and no real doorway is filled.
 
+A short incident ray may end inside the bounded replacement mask, with a
+different shared wall attached at that real far endpoint (#288). The node map
+records that attached strip separately from the incident ray, including its
+own direction, finite length and half-depth. Local reconstruction restores only
+the part of this finite shared strip inside the mask. It never projects the
+short ray to the global radius and never treats an unrelated outer continuation
+as node-owned material. This closes the real `349 / 120 / 5`-step gaps while
+preserving the finite-ray and opening contracts from #271.
+
 Clean-floor consumers subtract the cached, repaired canonical room masonry from
 their source room and take its outer component. The result is clipped to the
 source room on fallback. Openings and independent partitions are deliberately
@@ -321,6 +330,8 @@ opening endpoints and spans between two room topology nodes stay protected
 (#273); exact `cell_cm: 5` and `cell_cm: 1` orthogonal T fixtures derived from
 the two #275 owner backups, including overlapping neighbouring node masks,
 mixed depth and the unchanged non-orthogonal #249 wedge;
+the real `349 / 120 / 5` short-ray handoff to a 20 cm shared wall at
+`cell_cm: 1/5/30`, reversed endpoints and permuted input (#288);
 exact parent-run thickness inherited by atomic children when
 closing a virtual neighbour, without partial-span leakage (#201).
 Browser: seamless frame; fill not in hatch; m² drops with thickness; partial

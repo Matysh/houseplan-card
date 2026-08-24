@@ -7,6 +7,11 @@
   and disables a gesture with no safe direction, so a 20 cm shared thickness
   can no longer be stretched onto a new outer section
   ([#289](https://github.com/Matysh/houseplan-card/issues/289)).
+- A short arm at a multi-wall junction no longer lets the local bevel mask
+  erase the shared wall attached to its far endpoint. The four 45-step masonry
+  gaps from the real second-floor plan are now closed consistently in every
+  wall consumer without extending the short arm or changing saved geometry
+  ([#288](https://github.com/Matysh/houseplan-card/issues/288)).
 
 ## v1.67.0-beta.9 — 2026-08-24
 

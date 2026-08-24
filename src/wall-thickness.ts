@@ -95,6 +95,14 @@ export interface MultiWallNodeRaySupport {
   length: number;
 }
 
+/** A finite shared strip attached to an incident support's far endpoint. */
+export interface MultiWallNodeRayContinuation extends MultiWallNodeRaySupport {
+  /** Real near endpoint; it may turn instead of continuing co-directionally. */
+  start: [number, number];
+  /** Unit direction from `start` to the continuation's real far endpoint. */
+  u: [number, number];
+}
+
 export interface MultiWallNodeRay {
   /** Unit direction from the canonical node toward the interval's other end. */
   u: [number, number];
@@ -104,6 +112,8 @@ export interface MultiWallNodeRay {
   length: number;
   /** Non-dominated finite strips whose union is the physical ray support. */
   supports: MultiWallNodeRaySupport[];
+  /** Shared finite strips attached at a support's far endpoint (#288). */
+  continuations: MultiWallNodeRayContinuation[];
 }
 
 export interface MultiWallNode {
@@ -1520,6 +1530,14 @@ interface PendingMultiWallNode {
   }>;
 }
 
+interface MultiWallEndpoint {
+  point: [number, number];
+  other: number[];
+  halfDepth: number;
+  kind: WallKind;
+  key: string;
+}
+
 function spatialBucket(point: number[], epsilon: number): [number, number] {
   return [Math.floor(point[0] / epsilon), Math.floor(point[1] / epsilon)];
 }
@@ -1583,12 +1601,26 @@ export function buildMultiWallNodeMap(
   }
   const intervals = [...byPhysicalKey.values()];
 
-  const endpoints = intervals.flatMap((iv) => [
-    { point: [iv.a[0], iv.a[1]] as [number, number], other: iv.b, halfDepth: iv.half },
-    { point: [iv.b[0], iv.b[1]] as [number, number], other: iv.a, halfDepth: iv.half },
+  const endpoints: MultiWallEndpoint[] = intervals.flatMap((iv) => [
+    {
+      point: [iv.a[0], iv.a[1]] as [number, number], other: iv.b, halfDepth: iv.half,
+      kind: iv.kind as WallKind, key: iv.key,
+    },
+    {
+      point: [iv.b[0], iv.b[1]] as [number, number], other: iv.a, halfDepth: iv.half,
+      kind: iv.kind as WallKind, key: iv.key,
+    },
   ]).sort((a, b) => a.point[0] - b.point[0] || a.point[1] - b.point[1]
     || a.other[0] - b.other[0] || a.other[1] - b.other[1]
     || a.halfDepth - b.halfDepth);
+  const endpointIndex = new Map<string, MultiWallEndpoint[]>();
+  for (const endpoint of endpoints) {
+    const [bx, by] = spatialBucket(endpoint.point, eps);
+    const key = spatialBucketKey(bx, by);
+    const bucket = endpointIndex.get(key) || [];
+    bucket.push(endpoint);
+    endpointIndex.set(key, bucket);
+  }
 
   const pending: PendingMultiWallNode[] = [];
   const pendingIndex = new Map<string, PendingMultiWallNode[]>();
@@ -1671,11 +1703,50 @@ export function buildMultiWallNodeMap(
     if (rays.length < 3) continue;
     const canonicalRays = rays.map((ray) => {
       const supports = canonicalSupports(ray.supports);
+      const continuationKeys = new Set<string>();
+      const continuations: MultiWallNodeRayContinuation[] = [];
+      for (const support of supports) {
+        const end = [
+          node.point[0] + ray.u[0] * support.length,
+          node.point[1] + ray.u[1] * support.length,
+        ];
+        for (const candidate of nearbyBuckets(endpointIndex, end, eps)) {
+          if (candidate.kind !== 'shared'
+              || Math.hypot(candidate.point[0] - end[0], candidate.point[1] - end[1]) > eps)
+            continue;
+          const dx = candidate.other[0] - candidate.point[0];
+          const dy = candidate.other[1] - candidate.point[1];
+          const length = Math.hypot(dx, dy);
+          if (!(length > eps)) continue;
+          const ux = dx / length, uy = dy / length;
+          // The interval that supplied this support also has an endpoint here,
+          // directed back to the node. It is already rebuilt by `supports`;
+          // only a different finite shared strip attached at the far endpoint
+          // needs protection (it may continue straight or turn a corner).
+          if (Math.hypot(
+            candidate.other[0] - node.point[0], candidate.other[1] - node.point[1],
+          ) <= eps) continue;
+          const key = `${candidate.key}|${candidate.point[0]}|${candidate.point[1]}`
+            + `|${candidate.other[0]}|${candidate.other[1]}|${candidate.halfDepth}`;
+          if (continuationKeys.has(key)) continue;
+          continuationKeys.add(key);
+          continuations.push({
+            start: [candidate.point[0], candidate.point[1]],
+            u: [ux, uy],
+            length,
+            halfDepth: candidate.halfDepth,
+          });
+        }
+      }
+      continuations.sort((a, b) => a.start[0] - b.start[0]
+        || a.start[1] - b.start[1] || a.u[0] - b.u[0] || a.u[1] - b.u[1]
+        || a.length - b.length || a.halfDepth - b.halfDepth);
       return {
         u: [...ray.u] as [number, number],
         halfDepth: Math.max(...supports.map((support) => support.halfDepth)),
         length: Math.max(...supports.map((support) => support.length)),
         supports,
+        continuations,
       };
     }).filter((ray) => Number.isFinite(ray.halfDepth) && ray.halfDepth > 0
       && Number.isFinite(ray.length) && ray.length > eps);
@@ -2232,6 +2303,47 @@ function multiWallRayStripGeometry(
   return geometry;
 }
 
+/**
+ * Shared masonry that begins at the real far endpoint of a short incident ray.
+ *
+ * It is not one of this node's rays and must never be rebuilt as one, but the
+ * node-wide replacement mask may overlap it. Keeping the exact finite
+ * continuation here prevents that mask from deleting a neighbouring shared
+ * wall while leaving unrelated/crossing room-ring material under the existing
+ * bevel rules.
+ */
+function multiWallContinuationStripGeometry(
+  node: MultiWallNode,
+  map: MultiWallNodeMap,
+  maskGeometry: any,
+): any {
+  let geometry: any = null;
+  for (const ray of node.rays) {
+    for (const continuation of ray.continuations) {
+      const n = [-continuation.u[1], continuation.u[0]];
+      const end = [
+        continuation.start[0] + continuation.u[0] * continuation.length,
+        continuation.start[1] + continuation.u[1] * continuation.length,
+      ];
+      const rectangle = stableJunctionPatch([
+        [continuation.start[0] + n[0] * continuation.halfDepth,
+          continuation.start[1] + n[1] * continuation.halfDepth],
+        [end[0] + n[0] * continuation.halfDepth,
+          end[1] + n[1] * continuation.halfDepth],
+        [end[0] - n[0] * continuation.halfDepth,
+          end[1] - n[1] * continuation.halfDepth],
+        [continuation.start[0] - n[0] * continuation.halfDepth,
+          continuation.start[1] - n[1] * continuation.halfDepth],
+      ], map.coordinateScale);
+      if (!rectangle) continue;
+      const piece = intersection(closedRing(rectangle) as any, maskGeometry);
+      if (!Array.isArray(piece) || piece.length === 0) continue;
+      geometry = geometry ? union(geometry, piece) : piece;
+    }
+  }
+  return geometry;
+}
+
 /** Finite local strips protected by at least one perpendicular partner. */
 export function multiWallProtectedStripGeometry(
   node: MultiWallNode,
@@ -2334,16 +2446,22 @@ function bevelMultiWallBody(
       // exactly the valid T-junction wedge this reconstruction must retain.
       if (envelope) localInside = intersection(localInside, envelope);
       else if (centre) localInside = intersection(localInside, centre);
-      const outside = difference(boundedCurrent, closedRing(mask) as any);
+      const maskGeometry = closedRing(mask) as any;
+      const outside = difference(boundedCurrent, maskGeometry);
       const preservedExterior = centre
-        ? difference(
-            intersection(boundedCurrent, closedRing(mask) as any),
-            centre,
-          )
+        ? difference(intersection(boundedCurrent, maskGeometry), centre)
         : null;
-      current = preservedExterior
-        ? union(outside, preservedExterior, localInside)
-        : union(outside, localInside);
+      // The square replacement removes legacy mitre/room-ring material before
+      // rebuilding this node's finite rays. A short ray can end inside it and
+      // hand off to a shared wall that is not incident to this node; preserve
+      // that exact continuation, never a global square/radius projection.
+      const foreignFinite = multiWallContinuationStripGeometry(node, map, maskGeometry);
+      current = union(
+        outside,
+        ...(preservedExterior ? [preservedExterior] : []),
+        ...(foreignFinite ? [foreignFinite] : []),
+        localInside,
+      );
     } catch {
       // Isolate the failed node. Other valid nodes still receive their repair;
       // mandatory surrounding structural failures remain fail-dark upstream.

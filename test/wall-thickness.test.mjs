@@ -1239,6 +1239,57 @@ test('issue #271 keeps finite co-directional ray supports and never rebuilds pas
   );
 });
 
+test('issue #288 keeps a shared wall attached beyond a short node ray finite', () => {
+  for (const scale of [1, 5, 30]) {
+    const interval = (key, a, b, kind, half) => ({
+      roomId: key,
+      a: a.map((value) => value * scale),
+      b: b.map((value) => value * scale),
+      key,
+      kind,
+      cm: half * 2,
+      open: false,
+      half: half * scale,
+    });
+    const source = [
+      interval('east', [0, 0], [120, 0], 'outer', 15),
+      interval('north', [0, 0], [0, -349], 'outer', 15),
+      interval('short', [0, 0], [0, 5], 'shared', 15),
+      interval('foreign-shared', [0, 5], [-200, 5], 'shared', 10),
+    ];
+    const variants = [
+      source,
+      [...source].reverse().map((item) => ({ ...item, a: item.b, b: item.a })),
+    ];
+    for (const input of variants) {
+      const map = buildMultiWallNodeMap(input, 1e-6 * scale, scale);
+      const node = map.nodes.find((candidate) => Math.hypot(...candidate.point) < 1e-7 * scale);
+      assert.ok(node, `scale ${scale}: degree-3 node disappeared`);
+      assert.deepEqual(
+        node.rays.map((ray) => Math.round(ray.length / scale)).sort((a, b) => a - b),
+        [5, 120, 349],
+      );
+      const short = node.rays.find((ray) => ray.u[1] > 0.99);
+      assert.ok(short, `scale ${scale}: short ray disappeared`);
+      assert.equal(short.continuations.length, 1);
+      const [continuation] = short.continuations;
+      assert.deepEqual(continuation.start.map((value) => value / scale), [0, 5]);
+      assert.deepEqual(continuation.u, [-1, 0]);
+      closeTo(continuation.length / scale, 200, 1e-9);
+      closeTo(continuation.halfDepth / scale, 10, 1e-9);
+    }
+
+    const outerContinuation = source.map((item) => item.key === 'foreign-shared'
+      ? { ...item, kind: 'outer' }
+      : item);
+    const outerMap = buildMultiWallNodeMap(outerContinuation, 1e-6 * scale, scale);
+    const outerNode = outerMap.nodes.find((candidate) => Math.hypot(...candidate.point) < 1e-7 * scale);
+    assert.ok(outerNode);
+    assert.equal(outerNode.rays.find((ray) => ray.u[1] > 0.99).continuations.length, 0,
+      'an outer continuation bypassed the established finite-ray/exterior bevel contract');
+  }
+});
+
 test('issue #271 keeps a nearby door slot and its light-side approach free of a phantom ray', () => {
   const fixture = JSON.parse(readFileSync(
     new URL('./fixtures/197-junction-patch.json', import.meta.url), 'utf8',

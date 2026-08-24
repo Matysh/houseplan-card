@@ -428,6 +428,20 @@ export const MUTANTS = [
     }],
   },
   {
+    id: 'multi-wall-shared-continuation-protection-disabled',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="issue #288 keeps" '
+      + 'test/wall-thickness.test.mjs',
+    because: 'a node-wide replacement mask must retain the finite shared wall attached to the '
+      + 'far endpoint of a short ray; dropping that ownership recreates the four 45-step gaps '
+      + 'from the real second-floor fixture (#288)',
+    patches: [{
+      file: 'src/wall-thickness.ts',
+      find: "          if (candidate.kind !== 'shared'\n",
+      replace: "          if (candidate.kind === 'shared'\n",
+    }],
+  },
+  {
     id: 'multi-wall-exterior-corridor-disabled',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="issue #249 bounds" '

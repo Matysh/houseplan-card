@@ -27,12 +27,12 @@ import { launch, checkAll, finish } from './serve.mjs';
  * синтетика не воспроизводит.
  */
 const PLANS = [
-  { file: 'real-plan-second-floor.json', gapCount: 4, gapSteps: 181 },
+  { file: 'real-plan-second-floor.json', gapCount: 0, gapSteps: 0 },
   { file: 'real-plan-first-floor.json', gapCount: 0, gapSteps: 0 },
 ];
 
 /**
- * Признанный долг beta.9, ведётся в #284 вместе с #271/#275.
+ * Регрессия #288: beta.9 содержала четыре разрыва на 181 шаг.
  *
  * Четыре разрыва — это две стены, посчитанные с двух сторон каждой общей пары:
  * «Элина | Холл» и «Холл | Кабинет» в исходных названиях.
@@ -43,11 +43,11 @@ const PLANS = [
  * стены 20 см вырезается 60 − 15 = 45. Совпадение с измерением показывает, что
  * съедает кладку именно коридор стыка.
  *
- * Числа проверяются точно. Станет лучше — тест потребует их обновить и тем
- * самым докажет улучшение; станет хуже — поймает регрессию.
+ * После #288 оба значения обязаны оставаться точным нулём: локальная mask
+ * сохраняет finite shared wall, прикреплённую к дальнему концу короткого луча.
  */
-const KNOWN_GAP_COUNT = 4;
-const KNOWN_GAP_STEPS = 181;
+const KNOWN_GAP_COUNT = 0;
+const KNOWN_GAP_STEPS = 0;
 
 const { page, browser } = await launch();
 const out = {};

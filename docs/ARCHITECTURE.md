@@ -462,6 +462,12 @@ node's material. Non-orthogonal rays keep the bounded #249 cut. The shared
 result remains pre-opening geometry: explicit opening slots are subtracted
 afterward, and all SVG, paper, clean-floor, Iso and light consumers receive the
 same canonical topology.
+When a short ray ends inside another replacement window, the endpoint map also
+records any finite shared strip attached at that far endpoint (#288). The mask
+restores that attached strip in its own direction and depth, clipped to the
+local window; it does not turn the strip into another incident ray or scan
+unrelated walls. Canonical room masonry remains continuous without undoing the
+finite-ray phantom removal from #271.
 `wallBodiesGeometry.roomGeom` caches this repaired room masonry before openings
 and independent bodies; clean-floor consumers subtract it from each source room
 and clip their fallback, so fill cannot escape the building or silently drop a

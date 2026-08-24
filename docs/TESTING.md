@@ -1758,6 +1758,17 @@ applied canonical storage and JSON reload without printing or committing plan
 contents. Mutation `multi-wall-orthogonal-strip-protection-disabled` restores
 the release escape and must be killed by the containment tests.
 
+For #288, the node-map unit fixes the real topology class: `349 / 120 / 5`
+steps, a 30 cm short ray and a perpendicular 20 cm shared wall beginning at its
+far endpoint. It runs at scales corresponding to `cell_cm: 1/5/30`, reversed
+endpoints and input permutations, while an outer continuation remains under
+the established #271 contract. `demo/smoke_real_plan_masonry.mjs` loads both
+tracked real-plan fixtures through the production bundle and densely samples
+every undeclared room edge with `SVGGeometryElement.isPointInFill()`. Both
+plans require exact `gapCount: 0` and `totalGapSteps: 0`. Mutation
+`multi-wall-shared-continuation-protection-disabled` removes the endpoint
+handoff and must be killed by the unit before the real-plan smoke.
+
 For #261, the anonymised #197 fixture also probes the real regression point
 `(895.5, 556)`: `roomGeom`, final masonry and paper must fill it, while every
 clean-floor contour must exclude it. The browser smoke repeats semantic point
@@ -2757,6 +2768,13 @@ require hands on real hardware — they remain for the human pass.
       orthogonal-strip-cell-1-view-dark; mutation:
       multi-wall-orthogonal-strip-protection-disabled; exact local gate:
       scripts/wall-strip-containment.mjs].
+- [ ] **A short multi-wall ray cannot erase its attached shared wall (#288)**:
+      the real second-floor `349 / 120 / 5` node keeps the 20 cm wall beginning
+      at the short ray's far endpoint; both tracked real plans have zero
+      undeclared centreline gaps, while the #271 outer phantom remains absent
+      [unit: test/wall-thickness.test.mjs; auto:
+      smoke_real_plan_masonry; mutation:
+      multi-wall-shared-continuation-protection-disabled].
 - [ ] **Openings cut the slab**: a door/window/gate on a thick wall leaves a gap in
       the body; the door swing is offset toward the inner face and gate leaves
       toward the exterior face; with
