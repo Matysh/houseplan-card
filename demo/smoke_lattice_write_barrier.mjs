@@ -1,8 +1,23 @@
 // #291: the production bundle's ordinary config and point-wise layout writers
 // must adopt and send the same exact lattice candidate without editor-specific
 // snap calls.
+import { execFileSync } from 'node:child_process';
+import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { launch, checkAll, finish } from './serve.mjs';
-import { latticeProfile } from '../scripts/model-invariants.mjs';
+
+// `model-invariants.mjs` intentionally imports compiled production geometry.
+// A standalone smoke must therefore create the same test-build that `npm test`
+// creates; relying on a developer's leftover directory made clean Linux CI
+// fail before the browser scenario even started.
+const root = fileURLToPath(new URL('..', import.meta.url));
+execFileSync(process.execPath, [
+  resolve(root, 'node_modules/typescript/bin/tsc'), '-p', 'tsconfig.test.json',
+], { cwd: root, stdio: 'inherit' });
+execFileSync(process.execPath, [resolve(root, 'scripts/fix-test-build.mjs')], {
+  cwd: root, stdio: 'inherit',
+});
+const { latticeProfile } = await import('../scripts/model-invariants.mjs');
 
 const { page, browser } = await launch({ width: 920, height: 840 });
 const out = await page.evaluate(async () => {
