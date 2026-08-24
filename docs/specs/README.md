@@ -78,6 +78,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#281](https://github.com/Matysh/houseplan-card/issues/281) Честный Resize после outer-partition reconciliation | [281-resize-zero-range.md](281-resize-zero-range.md) |
 | [#293](https://github.com/Matysh/houseplan-card/issues/293) Активная рукоятка Resize выполняет pointer-жест | [293-resize-pointer-noop.md](293-resize-pointer-noop.md) |
 | [#296](https://github.com/Matysh/houseplan-card/issues/296) Optimize удаляет доказанно избыточные скрытые стены | [296-optimize-hidden-obstacles.md](296-optimize-hidden-obstacles.md) |
+| [#298](https://github.com/Matysh/houseplan-card/issues/298) Resize сохраняет wall records на решётке и на carrier | [298-resize-wall-thickness-carrier.md](298-resize-wall-thickness-carrier.md) |
 
 ## P2
 

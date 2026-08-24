@@ -9,6 +9,7 @@
 import { union, difference, intersection } from 'polyclip-ts';
 import { polygonArea, roomPoly, roomEdges, sharedBoundary, paperRoomShapes } from './logic';
 import { NEAR_AXIS_MAX_DEGREES } from './near-axis';
+import { LATTICE_NOISE_STEPS } from './coordinate-canonicalization';
 
 export interface WallEntry {
   key: string;
@@ -530,15 +531,28 @@ export function wallAngleMatches(
  * so an exact whole-edge key map is insufficient: project every unmatched key
  * onto the old edge and carry that relative point onto the new one.
  */
-export function rekeyWallsAfterMove(
+export type WallRekeyMode = 'affine' | 'fixed-topology';
+
+export interface WallRekeyResult {
+  walls: WallEntry[];
+  /** Fixed-topology candidate is unsafe and must not reach preview/commit. */
+  rejected: boolean;
+}
+
+function rekeyWallsAfterMoveInternal(
   walls: WallEntry[] | null | undefined,
   oldSpans: [number[], number[]][],
   newSpans: [number[], number[]][],
   pitch: number,
   coordScale = 1,
+  mode: WallRekeyMode = 'affine',
+  reject?: () => void,
 ): WallEntry[] {
   if (!walls?.length) return [];
-  if (oldSpans.length !== newSpans.length) return walls.slice();
+  if (oldSpans.length !== newSpans.length) {
+    if (mode === 'fixed-topology') reject?.();
+    return walls.slice();
+  }
   const scale = coordScale > 0 ? coordScale : 1;
   const tol = Math.max(pitch * 0.5, 1e-9) * scale;
   const exactEps = Math.max(pitch * scale * 1e-6, 1e-9);
@@ -548,6 +562,12 @@ export function rekeyWallsAfterMove(
   };
   const moves: Move[] = [];
   const keyMoves = new Map<string, Set<string>>();
+  const wholeEdgeMoves = new Map<string, Set<string>>();
+  const addKeyMove = (map: Map<string, Set<string>>, from: string, to: string): void => {
+    const targets = map.get(from) || new Set<string>();
+    targets.add(to);
+    map.set(from, targets);
+  };
   for (let i = 0; i < oldSpans.length; i++) {
     const [oa, ob] = oldSpans[i];
     const [na, nb] = newSpans[i];
@@ -563,10 +583,14 @@ export function rekeyWallsAfterMove(
     moves.push({ oa, ob, na, nb, dx, dy, len2 });
     const ok = keyOf(oa, ob, pitch, coordScale);
     const nk = keyOf(na, nb, pitch, coordScale);
+    // Some pre-normalisation configurations carry render-space legacy keys.
+    // They have no endpoints with which to disambiguate storage generations,
+    // so recognise only the same whole-edge identity in either historical
+    // coordinate convention. Partial midpoint projection remains forbidden.
+    addKeyMove(wholeEdgeMoves, ok, nk);
+    addKeyMove(wholeEdgeMoves, keyOf(oa, ob, pitch, 1), keyOf(na, nb, pitch, 1));
     if (ok !== nk) {
-      const targets = keyMoves.get(ok) || new Set<string>();
-      targets.add(nk);
-      keyMoves.set(ok, targets);
+      addKeyMove(keyMoves, ok, nk);
     }
   }
   if (!moves.length) return walls.slice();
@@ -575,13 +599,32 @@ export function rekeyWallsAfterMove(
     a[0] + (b[0] - a[0]) * t,
     a[1] + (b[1] - a[1]) * t,
   ];
+  const closePoint = (a: number[], b: number[]): boolean =>
+    Math.hypot(a[0] - b[0], a[1] - b[1]) <= exactEps;
   const mapPoint = (p: number[], move: Move): number[] => {
+    if (mode === 'fixed-topology') {
+      const adx = move.na[0] - move.oa[0], ady = move.na[1] - move.oa[1];
+      const bdx = move.nb[0] - move.ob[0], bdy = move.nb[1] - move.ob[1];
+      // Safe Resize has only two legal transforms for one source edge:
+      //
+      // - the moving wall translates rigidly, so every physical breakpoint
+      //   follows by the same vector;
+      // - a perpendicular side wall changes length, so only its topology
+      //   endpoint moves and interior thickness breakpoints stay put.
+      //
+      // Reusing the historical affine `t` mapping for the second case is the
+      // producer behind #298: it creates a point that belongs to no polygon.
+      if (Math.hypot(adx - bdx, ady - bdy) <= exactEps) {
+        return [p[0] + adx, p[1] + ady];
+      }
+      if (closePoint(p, move.oa)) return [...move.na];
+      if (closePoint(p, move.ob)) return [...move.nb];
+      return [...p];
+    }
     const t = Math.max(0, Math.min(1,
       ((p[0] - move.oa[0]) * move.dx + (p[1] - move.oa[1]) * move.dy) / move.len2));
     return pointAt(move.na, move.nb, t);
   };
-  const closePoint = (a: number[], b: number[]): boolean =>
-    Math.hypot(a[0] - b[0], a[1] - b[1]) <= exactEps;
   const canonicalSpan = (a: number[], b: number[]): [number[], number[]] => {
     const [ux, uy] = wallDir(a, b);
     return (b[0] - a[0]) * ux + (b[1] - a[1]) * uy >= 0
@@ -633,7 +676,12 @@ export function rekeyWallsAfterMove(
       }
 
       if (!overlaps.length) {
-        pushExact(wa, wb, w.cm);
+        // A fixed-topology edit is not allowed to canonicalise an unrelated
+        // record as a side effect: its compatibility key and endpoints are
+        // observable storage identity. The generic historical transform keeps
+        // its previous normalising behaviour for isolated callers/tests.
+        if (mode === 'fixed-topology') out.push({ ...w });
+        else pushExact(wa, wb, w.cm);
         continue;
       }
 
@@ -688,6 +736,15 @@ export function rekeyWallsAfterMove(
           coalesced.push([[...atom[0]], [...atom[1]]]);
         }
       }
+      if (mode === 'fixed-topology' && coalesced.length === 1) {
+        const [nextA, nextB] = coalesced[0];
+        const sameSpan = (closePoint(nextA, exact[0]) && closePoint(nextB, exact[1]))
+          || (closePoint(nextA, exact[1]) && closePoint(nextB, exact[0]));
+        if (sameSpan) {
+          out.push({ ...w });
+          continue;
+        }
+      }
       for (const [a, b] of coalesced) {
         pushExact(a, b, w.cm);
       }
@@ -695,8 +752,34 @@ export function rekeyWallsAfterMove(
     }
 
     // Legacy entries carry only a midpoint/direction key, so they cannot be
-    // split without inventing a length.  Move an unambiguous whole-edge key or
-    // projected midpoint, and never deduplicate them merely by key.
+    // split without inventing a length. Safe Resize permits only an exact,
+    // unambiguous whole-edge identity. A partial/ambiguous affected key rejects
+    // the complete candidate; an unrelated key stays byte-equivalent.
+    if (mode === 'fixed-topology') {
+      const direct = wholeEdgeMoves.get(w.key);
+      if (direct?.size === 1) {
+        const key = [...direct][0];
+        out.push(key === w.key ? { ...w } : { ...w, key });
+        continue;
+      }
+      const parsedVariants = [parseKeys([w], scale)[0]];
+      if (scale !== 1) parsedVariants.push(parseKeys([w], 1)[0]);
+      const touchesChangedEdge = parsedVariants.filter(Boolean).some((parsed) =>
+        moves.some((move) => {
+          if (!angleClose(parsed!.ang, segAngle(move.oa, move.ob))) return false;
+          const t = ((parsed!.x - move.oa[0]) * move.dx
+            + (parsed!.y - move.oa[1]) * move.dy) / move.len2;
+          return t >= -1e-6 && t <= 1 + 1e-6
+            && distToSeg(parsed!.x, parsed!.y,
+              move.oa[0], move.oa[1], move.ob[0], move.ob[1]) <= tol;
+        }));
+      if ((direct?.size || 0) > 1 || touchesChangedEdge) reject?.();
+      out.push({ ...w });
+      continue;
+    }
+
+    // Historical affine transformations retain their projected-midpoint
+    // compatibility behaviour outside production Safe Resize.
     let nk = '';
     const direct = keyMoves.get(w.key);
     if (direct?.size === 1) nk = [...direct][0];
@@ -726,6 +809,131 @@ export function rekeyWallsAfterMove(
     out.push({ ...w, key: nk || w.key, cm: clampWallCm(w.cm) });
   }
   return out;
+}
+
+/** Historical array-only API retained for pure affine callers. */
+export function rekeyWallsAfterMove(
+  walls: WallEntry[] | null | undefined,
+  oldSpans: [number[], number[]][],
+  newSpans: [number[], number[]][],
+  pitch: number,
+  coordScale = 1,
+  mode: WallRekeyMode = 'affine',
+): WallEntry[] {
+  return rekeyWallsAfterMoveInternal(
+    walls, oldSpans, newSpans, pitch, coordScale, mode,
+  );
+}
+
+/** Production result: unsafe legacy correspondence is explicit and atomic. */
+export function rekeyWallsAfterMoveChecked(
+  walls: WallEntry[] | null | undefined,
+  oldSpans: [number[], number[]][],
+  newSpans: [number[], number[]][],
+  pitch: number,
+  coordScale = 1,
+  mode: WallRekeyMode = 'fixed-topology',
+): WallRekeyResult {
+  let rejected = false;
+  const next = rekeyWallsAfterMoveInternal(
+    walls, oldSpans, newSpans, pitch, coordScale, mode,
+    () => { rejected = true; },
+  );
+  return { walls: rejected ? (walls || []).map((wall) => ({ ...wall })) : next, rejected };
+}
+
+/**
+ * Fail-closed carrier/lattice proof for exact wall records after Safe Resize.
+ *
+ * A compact record may cross several collinear room edges, so checking that
+ * both endpoints touch one edge is insufficient. Project every collinear
+ * room-wall carrier onto the record and require their union to cover its full
+ * interval without gaps. Independent partitions are not carriers for
+ * `space.walls`. Legacy key-only records have no provable extent and remain a
+ * compatibility concern of `rekeyWallsAfterMoveChecked`.
+ */
+export function wallRecordCarrierViolations(
+  walls: WallEntry[] | null | undefined,
+  carriers: [number[], number[]][],
+  pitch: number,
+  coordScale = 1,
+  latticeDebt: WallEntry[] | null | undefined = [],
+): string[] {
+  const scale = coordScale > 0 ? coordScale : 1;
+  const latticePitch = Math.abs(pitch);
+  const eps = Math.max(latticePitch * scale * LATTICE_NOISE_STEPS, 1e-9);
+  const onLattice = (value: number): boolean => {
+    if (!(latticePitch > 0)) return true;
+    const normalised = value / scale;
+    const steps = normalised / latticePitch;
+    return Math.abs(steps - Math.round(steps)) < LATTICE_NOISE_STEPS;
+  };
+  // A Resize may need to rewrite a record whose other endpoint was authored
+  // off-grid historically. That coordinate is not newly produced by Resize:
+  // allow it only when the exact same physical endpoint already existed in the
+  // immutable source snapshot. Carrier coverage is still proved below.
+  const oldEndpoints = (latticeDebt || []).flatMap((wall) => {
+    const span = entrySpan(wall, scale);
+    return span ? span.map((point) => [...point]) : [];
+  });
+  const pointIsLatticeSafe = (point: number[]): boolean => point.every((value, axis) =>
+    onLattice(value) || oldEndpoints.some((old) => Math.abs(value - old[axis]) <= eps));
+
+  const violations: string[] = [];
+  const signature = (wall: WallEntry): string => JSON.stringify([
+    wall.key, wall.cm, wall.a, wall.b,
+  ]);
+  for (const wall of walls || []) {
+    const span = entrySpan(wall, scale);
+    if (!span) continue;
+    const [a, b] = span;
+    if (![a[0], a[1], b[0], b[1]].every(Number.isFinite)
+        || !pointIsLatticeSafe(a) || !pointIsLatticeSafe(b)) {
+      violations.push(signature(wall));
+      continue;
+    }
+    const dx = b[0] - a[0], dy = b[1] - a[1];
+    const length = Math.hypot(dx, dy);
+    if (length <= eps) {
+      violations.push(signature(wall));
+      continue;
+    }
+    const ux = dx / length, uy = dy / length;
+    const intervals: [number, number][] = [];
+    for (const carrier of carriers) {
+      const [ca, cb] = carrier;
+      if (![ca?.[0], ca?.[1], cb?.[0], cb?.[1]].every(Number.isFinite)) continue;
+      const lineDistance = (point: number[]): number =>
+        Math.abs((point[0] - a[0]) * uy - (point[1] - a[1]) * ux);
+      if (lineDistance(ca) > eps || lineDistance(cb) > eps) continue;
+      const ta = (ca[0] - a[0]) * ux + (ca[1] - a[1]) * uy;
+      const tb = (cb[0] - a[0]) * ux + (cb[1] - a[1]) * uy;
+      const lo = Math.max(0, Math.min(ta, tb));
+      const hi = Math.min(length, Math.max(ta, tb));
+      if (hi - lo > eps) intervals.push([lo, hi]);
+    }
+    intervals.sort((left, right) => left[0] - right[0] || left[1] - right[1]);
+    let covered = 0;
+    for (const [lo, hi] of intervals) {
+      if (lo > covered + eps) break;
+      covered = Math.max(covered, hi);
+      if (covered >= length - eps) break;
+    }
+    if (covered < length - eps) violations.push(signature(wall));
+  }
+  return violations;
+}
+
+export function wallRecordsHaveCarrierCoverage(
+  walls: WallEntry[] | null | undefined,
+  carriers: [number[], number[]][],
+  pitch: number,
+  coordScale = 1,
+  latticeDebt: WallEntry[] | null | undefined = [],
+): boolean {
+  return wallRecordCarrierViolations(
+    walls, carriers, pitch, coordScale, latticeDebt,
+  ).length === 0;
 }
 
 /** Upsert or remove a wall entry by endpoints. */

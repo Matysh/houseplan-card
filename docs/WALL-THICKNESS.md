@@ -59,12 +59,25 @@ from the immutable pre-drag snapshot and leaves every uncovered remainder on
 its old carrier. Equivalent transforms from two owners collapse to one; a
 conflicting pair fails closed by retaining the source atom. Results deduplicate
 only when canonical exact endpoints **and** centimetres match — the quantised
-compatibility key alone may never erase a record. Legacy entries without
-endpoints keep the unambiguous whole-key/midpoint fallback and are never split
-by inventing a length. `walls` stays in the resize snapshot. If lossless
+compatibility key alone may never erase a record. Generic affine transforms
+retain the historical key-only midpoint fallback and never invent a legacy
+length. Production fixed-topology Resize is stricter: only one whole-edge key
+with one destination can move; an affected partial or ambiguous key rejects the
+candidate before preview/commit. `walls` stays in the resize snapshot. If lossless
 partitioning takes a valid 500-record input above the backend limit, the
 frontend keeps every result so persistence rejects the transaction atomically;
 it does not truncate masonry to make the write fit.
+
+The production fixed-topology Resize path does not use the generic affine
+projection for side walls. A rigidly translated moving edge carries every
+breakpoint by the same vector; a side edge that only changes length moves its
+paired topology endpoint and leaves interior thickness boundaries fixed. A
+continuous carrier-coverage and lattice proof runs before preview/commit. It
+compares exact historical debt by record identity and endpoint identity, so an
+old off-grid endpoint is not silently migrated even when its record's other end
+moves, while a new or changed violation rejects the whole candidate. This is
+distinct from the retained generic scale/rotation helper
+used only by isolated historical pure tests.
 
 ## 2. Growth (centreline ±½)
 

@@ -71,18 +71,23 @@ const PLANS = [
  * Починили — обновить строку в этой таблице тем же коммитом.
  */
 const KNOWN = {
-  // Первый же жест пишет координату мимо решётки: запись толщины уезжает с
-  // ребра, по которому её потом ищут. Класс #253, заведено отдельно.
-  'real-plan-second-floor.json:1': { step: 0, kinds: ['off_lattice_coordinate'] },
-  'real-plan-second-floor.json:2': { step: 0, kinds: ['off_lattice_coordinate'] },
-  'real-plan-second-floor.json:3': { step: 0, kinds: ['off_lattice_coordinate'] },
-  // На первом этаже к тому же добавляется запись, потерявшая носителя,
-  // и запись со смешанной ролью — её рождают «Оптимизировать» и удаление
-  // комнаты с сохранением стен. Класс #287/#289.
-  'real-plan-first-floor.json:1': { step: 1, kinds: ['mixed_role_record'] },
-  'real-plan-first-floor.json:2': {
-    step: 0, kinds: ['off_lattice_coordinate', 'wall_carrier'],
+  // #298 убрал producer off-grid/wall-carrier на первом Resize. Обход теперь
+  // доходит до независимого долга удаления комнаты/смешанной роли #299 и
+  // существующей скрытой перегородки #296; эти строки не выдают его за норму,
+  // а держат следующий заведённый дефект видимым до его собственного фикса.
+  'real-plan-second-floor.json:1': {
+    step: 9, kinds: ['mixed_role_record'],
   },
+  'real-plan-second-floor.json:2': {
+    step: 1, kinds: ['mixed_role_record'],
+  },
+  'real-plan-second-floor.json:3': {
+    step: 1, kinds: ['mixed_role_record'],
+  },
+  // На первом этаже оставшиеся mixed-role записи также рождаются Optimize или
+  // удалением комнаты с сохранением стен, а не fixed-topology Resize #298.
+  'real-plan-first-floor.json:1': { step: 1, kinds: ['mixed_role_record'] },
+  'real-plan-first-floor.json:2': { step: 3, kinds: ['mixed_role_record'] },
   'real-plan-first-floor.json:3': { step: 1, kinds: ['mixed_role_record'] },
 };
 const STEPS = Number(arg('--steps', 24));

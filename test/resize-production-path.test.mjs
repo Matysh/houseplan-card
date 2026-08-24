@@ -76,6 +76,16 @@ test('#277 a lossy persistence rekey stops at the last complete preview', () => 
   assert.match(card, /g\.d = previousD/);
 });
 
+test('#298 production carrier proof uses room edges, never independent partitions', () => {
+  const carrierBlock = card.match(
+    /const wallCarriers: \[number\[\], number\[\]\]\[\] = \[\];[\s\S]*?const wallSignature/,
+  );
+  assert.ok(carrierBlock, 'production wall-carrier preflight is missing');
+  assert.match(carrierBlock[0], /for \(const room of sp\.rooms \|\| \[\]\)/);
+  assert.doesNotMatch(carrierBlock[0], /sp\.partitions/,
+    'independent partition geometry cannot carry space.walls metadata');
+});
+
 test('#277 Resize render fingerprints geometry once for the whole handle layer', () => {
   assert.match(card, /const renderSnapshot = this\._rszDrag\?\.snap \|\| this\._rszSnapshot\(\)/);
   assert.match(card, /this\._rszResolution\(r\.id, i, renderSnapshot\)/);

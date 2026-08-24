@@ -235,6 +235,33 @@ export const MUTANTS = [
     }],
   },
   {
+    id: 'safe-resize-wall-endpoints-affine-scaled',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="issue 298" test/wall-thickness.test.mjs',
+    because: 'fixed-topology Resize may translate a moving wall or move its topology endpoint, '
+      + 'but proportional scaling invents a wall-record coordinate with no carrier (#298)',
+    patches: [{
+      file: 'src/wall-thickness.ts',
+      find: "    if (mode === 'fixed-topology') {\n"
+        + '      const adx = move.na[0] - move.oa[0], ady = move.na[1] - move.oa[1];',
+      replace: "    if (false && mode === 'fixed-topology') {\n"
+        + '      const adx = move.na[0] - move.oa[0], ady = move.na[1] - move.oa[1];',
+    }],
+  },
+  {
+    id: 'safe-resize-legacy-midpoint-fail-open',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="issue 298 fixed-topology legacy" '
+      + 'test/wall-thickness.test.mjs',
+    because: 'Safe Resize must reject an affected key-only midpoint unless it names '
+      + 'one unambiguous whole changed edge (#298)',
+    patches: [{
+      file: 'src/wall-thickness.ts',
+      find: "    if (mode === 'fixed-topology') {\n      const direct = wholeEdgeMoves.get(w.key);",
+      replace: "    if (false && mode === 'fixed-topology') {\n      const direct = wholeEdgeMoves.get(w.key);",
+    }],
+  },
+  {
     id: 'safe-resize-third-room-cascade-enabled',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="partial shared and third-owner" test/resize.test.mjs',

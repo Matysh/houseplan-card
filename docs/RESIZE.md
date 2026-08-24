@@ -138,9 +138,24 @@ with zero Undo entries and zero writes.
 
 ## Thickness, virtual spans and openings
 
-`rekeyWallsAfterMove()` and `rekeyOpenSpansAfterMove()` map the immutable
+`rekeyWallsAfterMoveChecked()` and `rekeyOpenSpansAfterMove()` map the immutable
 snapshot to the fixed-topology candidate. Physical centimetre values and open
 span count must survive; the production geometry check is fail-closed.
+
+Safe Resize uses endpoint correspondence, not the historical affine mapping.
+Every breakpoint follows a moving wall by one rigid translation. On a side wall
+whose length changes, only the old topology endpoint moves to its paired new
+vertex; an interior thickness breakpoint stays on its physical boundary rather
+than keeping a proportional fraction of the new edge. Unrelated exact records
+remain byte-equivalent. The candidate then proves that every new exact record
+is lattice-safe and continuously covered by room-wall carriers. An
+unchanged historical endpoint may remain readable even when its record changes
+around it, but Resize cannot add or replace it with a different violation.
+Key-only legacy records move only when their key identifies one whole changed
+edge with one destination. An affected partial/ambiguous midpoint returns an
+explicit rejected result; preview, history and persistence remain untouched.
+The generic array-only helper retains its old affine fallback outside Safe
+Resize for compatibility with historical pure transforms.
 
 When the two owners of a shared moving seam split one physically continuous
 side-wall record at their meeting point, the mapped atoms are joined back only
@@ -197,6 +212,7 @@ building the preview frame itself.
 - `demo/benchmark_safe_resize_render.mjs`: warm 20-room/80-handle layer p95
   and exactly one geometry snapshot per rendered frame;
 - mutation gate: eligibility, third-room, topology, side ownership, jamb,
+  fixed-topology wall endpoint mapping,
   pointer displacement/capture, shared-seam coalescing, preview rejection and
   commit-preflight bypass mutants.
 

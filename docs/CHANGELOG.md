@@ -11,6 +11,11 @@
   independently proves the complete removed axis, including walls without
   openings, and the Optimize report names redundant saved chains separately
   ([#296](https://github.com/Matysh/houseplan-card/issues/296)).
+- Resize no longer proportionally shifts thickness-record endpoints on
+  neighbouring walls. Fixed-topology moves now preserve unrelated wall records,
+  keep new endpoints on the plan grid and their real carriers, and reject an
+  ambiguous candidate before it can damage a different wall
+  ([#298](https://github.com/Matysh/houseplan-card/issues/298)).
 - While drawing Walls, `Esc` now finishes all accepted segments as independent
   walls and releases the last point without deleting geometry or leaving the
   tool. The next click starts a new chain; `Ctrl/Cmd+Z` remains the shortcut
