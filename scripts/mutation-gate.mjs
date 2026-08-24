@@ -386,6 +386,53 @@ export const MUTANTS = [
     }],
   },
   {
+    id: 'resize-labels-drops-measured-edge',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/resize-labels.test.mjs',
+    because: 'each of the two remaining length badges must retain a matching side-wall '
+      + 'highlight; duplicating one edge silently drops the other measurement (#300)',
+    patches: [{
+      file: 'src/resize-labels.ts',
+      find: '  return [(movingEdge - 1 + n) % n, (movingEdge + 1) % n];',
+      replace: '  return [(movingEdge - 1 + n) % n, (movingEdge - 1 + n) % n];',
+    }],
+  },
+  {
+    id: 'resize-labels-same-side-areas',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/resize-labels.test.mjs',
+    because: 'the inward side must follow polygon winding; a shared wall needs its two room '
+      + 'areas on opposite sides instead of stacked together (#300)',
+    patches: [{
+      file: 'src/resize-labels.ts',
+      find: '  return signedArea(poly) >= 0\n',
+      replace: '  return true\n',
+    }],
+  },
+  {
+    id: 'resize-labels-ignore-gear-collision',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/resize-labels.test.mjs',
+    because: 'a visible room-settings button must move the area badge tangentially at current '
+      + 'zoom; keeping the nominal position recreates the overlap (#300)',
+    patches: [{
+      file: 'src/resize-labels.ts',
+      find: '  if (collides(0)) {',
+      replace: '  if (false && collides(0)) {',
+    }],
+  },
+  {
+    id: 'resize-labels-hide-narrow-area',
+    guard: 'node demo/smoke_resize_labels.mjs',
+    because: 'the owner chose always-visible area labels; keeping only one owner in a narrow '
+      + 'shared fixture loses the second room instead of using its leader (#300)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '    for (const id of ids) {\n      const poly = res.polys[id]',
+      replace: '    for (const id of ids.slice(0, 1)) {\n      const poly = res.polys[id]',
+    }],
+  },
+  {
     id: 'resize-wall-partial-overlap-not-split',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="issue 253 splits a longer exact wall" '

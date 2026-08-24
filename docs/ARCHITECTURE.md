@@ -548,6 +548,13 @@ scale helpers remain pure-test history only and are tree-shaken from the
 production interaction path. Exact `a/b` wall endpoints remain identity and
 the quantised midpoint/direction `key` remains only a compatibility index.
 
+Live measurement layout is isolated in pure `src/resize-labels.ts` (#300).
+The controller supplies the accepted candidate, current view, cached stage
+size and the room gear's `iconCqw()`-derived footprint. It produces exactly two
+side-wall highlights/lengths plus one area/leader per affected room. The SVG
+ink sits above wall bodies and below openings/handles; HTML labels are
+pointer-inert. No `getBoundingClientRect()` enters the pointer path.
+
 Near-axis geometry has one shared classifier in `src/near-axis.ts` (#290).
 Walls applies it after architectural/grid resolution and before hover/commit,
 moving only the free endpoint. Resize validates that its fixed-topology output

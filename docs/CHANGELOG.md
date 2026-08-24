@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Resize now labels and highlights only the two side walls being measured,
+  removes the redundant length from the moving wall, and shows each affected
+  room's live area beside its own side of that wall. Shared and narrow rooms
+  keep both areas visible with leader lines, without covering each other or the
+  room-settings button
+  ([#300](https://github.com/Matysh/houseplan-card/issues/300)).
 - While drawing Walls, `Esc` now finishes all accepted segments as independent
   walls and releases the last point without deleting geometry or leaving the
   tool. The next click starts a new chain; `Ctrl/Cmd+Z` remains the shortcut

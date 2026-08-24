@@ -48,6 +48,10 @@ import {
   type SafeResizePlan, type SafeResizeReason, type SafeResizeResolution,
 } from './resize';
 import {
+  placeResizeAreaLabel, resizeMeasuredEdges,
+  type ResizeAreaPlacement,
+} from './resize-labels';
+import {
   computeSunRays, dayPhase, northDegOf, bgModeOf, sunRaysOn,
   sunStateOf, rayPeakAlpha, raysVisible, rayColor, RAY_FADE_MS, type SunRay,
   rayStops, resolveDayCycle, dayCycleFingerprint, type DayCycleState,
@@ -306,6 +310,21 @@ import {
 import { applyOpeningMoves, mergeCollinearPartitions, spaceMergeGeometry } from './wall-merge';
 
 const CARD_VERSION = '1.67.0-rc.1';
+
+type ResizeLiveLabel = {
+  kind: 'length';
+  x: number;
+  y: number;
+  text: string;
+  edge: { a: [number, number]; b: [number, number] };
+} | {
+  kind: 'area';
+  roomId: string;
+  x: number;
+  y: number;
+  text: string;
+  placement: ResizeAreaPlacement;
+};
 const DISPLAY_LABEL_KEYS: Record<DeviceDisplayMode, I18nKey> = {
   badge: 'display.badge',
   icon_ripple: 'display.icon_ripple',
@@ -1629,7 +1648,7 @@ class HouseplanCard extends LitElement {
   } | null = null;
   /** HP-1550-01: the live resize preview, kept OUT of _serverCfg (see _rszApplyPreview). */
   private _rszPreview: { space: string; sp: any } | null = null;
-  private _rszLive: { x: number; y: number; text: string; area?: boolean }[] | null = null;
+  private _rszLive: ResizeLiveLabel[] | null = null;
   private _path: number[][] = []; // current outline (render units, vertices snapped to the grid)
   private _cursorPt: number[] | null = null;
   private _planSnapHover: {
@@ -8738,33 +8757,61 @@ class HouseplanCard extends LitElement {
 
   private _rszEdgeLabels(
     res: { polys: Record<string, number[][]> }, plan: SafeResizePlan,
-  ): { x: number; y: number; text: string; area?: boolean }[] {
+  ): ResizeLiveLabel[] {
     const g = this._rszDrag!;
-    const labels: { x: number; y: number; text: string; area?: boolean }[] = [];
+    const labels: ResizeLiveLabel[] = [];
     const own = res.polys[plan.roomId] || g.rooms.find((r) => r.id === plan.roomId)!.poly;
     const n = own.length;
-    const i = plan.edge, j = (i + 1) % n;
     // Длины — между внутренними гранями, как и площадь ниже (#233). Раньше
     // здесь считалась осевая длина, и одно облачко подписей несло две разные
     // конвенции: «3.00 × 4.00» по центрам стен рядом с площадью по полу.
     const spanCms = this._rszInnerSpanCms(plan.roomId, own, res.polys);
-    // the dragged wall and its two adjacent walls
-    for (const edge of [(i - 1 + n) % n, i, j]) {
+    // The moving wall is obvious under the pointer. Only its two side walls
+    // remain useful measurements, and each one owns the matching highlight.
+    for (const edge of resizeMeasuredEdges(own, plan.edge)) {
       const a = own[edge], b = own[(edge + 1) % n];
       const cm = spanCms?.[edge];
       labels.push({
+        kind: 'length',
         x: (a[0] + b[0]) / 2,
         y: (a[1] + b[1]) / 2,
         text: cm == null ? this._fmtLen(a, b)
           : formatLength(cm, this.hass?.config?.unit_system?.length === 'mi'),
+        edge: { a: [a[0], a[1]], b: [b[0], b[1]] },
       });
     }
-    // live areas of EVERY room the drag reshapes (both sides of a shared wall)
+    // Live areas sit beside the moving wall, one on each owner side. Placement
+    // is pure screen-space math fed by the stage size cached by ResizeObserver;
+    // no pointermove DOM measurement is allowed.
     const imperial = this.hass?.config?.unit_system?.length === 'mi';
-    const ids = Object.keys(res.polys).length ? Object.keys(res.polys) : [plan.roomId];
+    const ids = plan.roomIds;
     const walls = this._spaceWalls;
     const openCuts = this._openPairs().flatMap((p) => p.segs);
     const physical = this._physicalBodiesR();
+    const base = this._baseVb();
+    const currentView = this._view && this._view.w > 0 && this._view.h > 0
+      ? this._view
+      : { x: base[0], y: base[1], w: base[2], h: base[3] };
+    const [cachedW, cachedH] = this._lastValidStageSize || [currentView.w, currentView.h];
+    const view = {
+      ...currentView,
+      stageWidth: Math.max(1, cachedW),
+      stageHeight: Math.max(1, cachedH),
+    };
+    const space = this._spaceModel();
+    const cfgSize = this._config?.icon_size ?? 2.5;
+    const iconPct = cfgSize > 8 ? 2.5 : cfgSize;
+    const iconPx = space
+      ? iconCqw(iconPct, space, currentView.w, this._kiosk ? this._kioskScale.icon : 1)
+          * view.stageWidth / 100
+      : 24;
+    const gearHeightPx = Math.max(10, iconPx * 0.77);
+    const gearText = this._t('room.settings_short');
+    // Mirrors the CSS proportions conservatively: icon + gap + two paddings +
+    // localized text at the button's 0.42*height font size.
+    const gearWidthPx = gearHeightPx * (
+      0.55 + 0.35 * 0.42 + 0.76 + Math.max(1, gearText.length) * 0.66 * 0.42
+    );
     for (const id of ids) {
       const poly = res.polys[id] || g.rooms.find((r) => r.id === id)!.poly;
       const floor = walls.length
@@ -8773,12 +8820,24 @@ class HouseplanCard extends LitElement {
             id, walls, openCuts, this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
           ) || poly)
         : poly;
-      const c = poleOfInaccessibility(floor);
       const m2 = physical.length
         ? geometryArea(floorMinusBodies(floor, physical))
             * Math.pow(this._cellCm / this._gridPitch, 2) / 1e4
         : areaM2(floor, this._gridPitch, this._cellCm);
-      labels.push({ x: c[0], y: c[1], text: formatArea(m2, imperial), area: true });
+      const text = formatArea(m2, imperial);
+      const placement = placeResizeAreaLabel({
+        poly,
+        edge: plan.edgeByRoom[id],
+        text,
+        view,
+        gearCenter: poleOfInaccessibility(poly),
+        gearWidthPx,
+        gearHeightPx,
+      });
+      labels.push({
+        kind: 'area', roomId: id,
+        x: placement.anchor[0], y: placement.anchor[1], text, placement,
+      });
     }
     return labels;
   }
@@ -8808,6 +8867,26 @@ class HouseplanCard extends LitElement {
     if (!offsets || offsets.length !== own.length) return null;
     const perUnitCm = this._cellCm / this._gridPitch;
     return own.map((_, edge) => innerEdgeSpan(own, edge, offsets) * perUnitCm);
+  }
+
+  /** Pointer-inert measurement ink above masonry and below openings/handles. */
+  private _renderResizeMeasurements(): TemplateResult | typeof nothing {
+    if (!this._rszLive?.length) return nothing;
+    const lengths = this._rszLive.filter((label) => label.kind === 'length');
+    const areas = this._rszLive.filter((label) => label.kind === 'area');
+    return svg`<g class="rszmeasurelayer" aria-hidden="true" pointer-events="none">
+      ${lengths.map((label, index) => svg`<g class="rszmeasuredge"
+          data-hp="resize-measured-edge" data-edge-index=${index}>
+        <line class="rszmeasurehalo" x1=${label.edge.a[0]} y1=${label.edge.a[1]}
+          x2=${label.edge.b[0]} y2=${label.edge.b[1]}></line>
+        <line class="rszmeasureink" x1=${label.edge.a[0]} y1=${label.edge.a[1]}
+          x2=${label.edge.b[0]} y2=${label.edge.b[1]}></line>
+      </g>`)}
+      ${areas.map((label) => svg`<line class="rszleader" data-hp="resize-area-leader"
+        data-room=${label.roomId}
+        x1=${label.placement.leader.a[0]} y1=${label.placement.leader.a[1]}
+        x2=${label.placement.leader.b[0]} y2=${label.placement.leader.b[1]}></line>`)}
+    </g>`;
   }
 
   /** Fixed-topology wall handles. Disabled geometry remains visible and
@@ -17349,6 +17428,7 @@ class HouseplanCard extends LitElement {
                    inside thick jambs without changing the stored span. */}
             ${!this._editing ? this._renderOpenWalls(disp) : nothing}
             ${this._renderWallBodies(disp)}
+            ${this._markup && this._tool === 'resize' ? this._renderResizeMeasurements() : nothing}
             ${this._markup ? svg`<g class="hp-editor-only-layer"
               opacity="${modeVisual?.editorWeight ?? 1}">${this._renderPlanSnapOverlay()}</g>` : nothing}
             ${this._markup ? svg`<g class="hp-editor-only-layer"
@@ -17410,8 +17490,13 @@ class HouseplanCard extends LitElement {
             : nothing}
           ${this._rszLive
             ? html`<div class="measurelayer">${this._rszLive.map((l) => html`<div
-                class="measurelabel ${l.area ? 'rszarea' : ''}"
-                style="left:${(((l.x - view.x) / view.w) * 100).toFixed(2)}%;top:${(((l.y - view.y) / view.h) * 100).toFixed(2)}%">${l.text}</div>`)}</div>`
+                class="measurelabel ${l.kind === 'area' ? 'rszarea' : 'rszlength'}"
+                data-hp=${l.kind === 'area' ? 'resize-area-label' : 'resize-length-label'}
+                data-room=${l.kind === 'area' ? l.roomId : nothing}
+                data-side=${l.kind === 'area' ? l.placement.side : nothing}
+                style="left:${(((l.x - view.x) / view.w) * 100).toFixed(2)}%;top:${(((l.y - view.y) / view.h) * 100).toFixed(2)}%;${l.kind === 'area'
+                  ? `--rsz-label-x:${l.placement.offsetXPx.toFixed(2)}px;--rsz-label-y:${l.placement.offsetYPx.toFixed(2)}px;--rsz-label-tangent:${l.placement.tangentOffsetPx.toFixed(2)}px`
+                  : ''}">${l.text}</div>`)}</div>`
             : nothing}
           ${opMeasure
             ? html`<div class="measurelayer">${opMeasure.labels.map((l) => html`<div
@@ -18702,7 +18787,8 @@ class HouseplanCard extends LitElement {
     if (!c) return nothing;
     const left = ((c[0] - view.x) / view.w) * 100;
     const top = ((c[1] - view.y) / view.h) * 100;
-    return html`<button class="rlgearbtn" style="left:${left}%;top:${top}%"
+    return html`<button class="rlgearbtn" data-hp="room-settings" data-room=${r.id}
+      style="left:${left}%;top:${top}%"
       title=${this._t('room.settings_title')}
       @pointerdown=${(e: Event) => e.stopPropagation()}
       @click=${(e: Event) => { e.stopPropagation(); this._openRoomEdit(r); }}>
