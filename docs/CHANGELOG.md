@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- “Optimize plans” now safely removes exact redundant partitions over outer
+  room walls, including lossless reattachment of their hosted windows. Resize
+  then actually moves an eligible shared wall; a handle with no valid grid step
+  no longer looks enabled and explains the blocking reason
+  ([#281](https://github.com/Matysh/houseplan-card/issues/281)).
 - The backend now accepts a proved Optimize reconciliation of a coincident
   partition: its opening remains on the same shared wall through Apply, reload
   and Undo. Arbitrary host stripping by an ordinary write or crafted candidate

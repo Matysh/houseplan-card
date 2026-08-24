@@ -534,10 +534,15 @@ async def test_optimize_undo_restores_geometry_but_not_legacy_noisy_bits(
     assert restored_layout["lamp"]["x"] == -0.12345679
 
 
+@pytest.mark.parametrize(("source_name", "candidate_name", "partition_id"), [
+    ("276-coincident-partition.json", "280-optimize-rehost-candidate.json", "redundant"),
+    ("281-resize-outer-partitions.json", "281-resize-outer-candidate.json", "top-left"),
+])
 async def test_optimize_accepts_proved_rehost_and_undo_restores_host(
-    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator,
+    source_name: str, candidate_name: str, partition_id: str,
 ) -> None:
-    """#280: the real WS boundary accepts exactly the #276 candidate."""
+    """#280/#281: the real WS boundary accepts shared and outer proof."""
     from custom_components.houseplan.store import get_data
 
     await _setup(hass)
@@ -545,10 +550,10 @@ async def test_optimize_accepts_proved_rehost_and_undo_restores_host(
     runtime = get_data(hass)
     fixture_dir = Path(__file__).parents[1] / "test" / "fixtures"
     previous = json.loads(
-        (fixture_dir / "276-coincident-partition.json").read_text(encoding="utf-8")
+        (fixture_dir / source_name).read_text(encoding="utf-8")
     )
     candidate = json.loads(
-        (fixture_dir / "280-optimize-rehost-candidate.json").read_text(encoding="utf-8")
+        (fixture_dir / candidate_name).read_text(encoding="utf-8")
     )
     await runtime.config_store.async_save({"config": previous, "rev": 1})
     await runtime.store.async_save({"layout": {}, "rev": 1})
@@ -575,9 +580,9 @@ async def test_optimize_accepts_proved_rehost_and_undo_restores_host(
     assert undone["success"] and undone["result"]["can_undo"] is False
     restored = (await runtime.config_store.async_load())["config"]
     restored_space = restored["spaces"][0]
-    assert restored_space["partitions"][0]["id"] == "redundant"
+    assert any(item["id"] == partition_id for item in restored_space["partitions"])
     assert restored_space["openings"][0]["host"] == {
-        "kind": "partition", "id": "redundant", "t": 0.5,
+        "kind": "partition", "id": partition_id, "t": 0.5,
     }
 
 

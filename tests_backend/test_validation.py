@@ -1764,7 +1764,7 @@ def test_optimize_accepts_only_proved_partition_to_room_wall_rehost():
         "b": [0.504166667, 0.995833333],
         "cm": 20,
     }]))
-    rejected(lambda space: space["rooms"].pop())
+    rejected(lambda space: space.update(rooms=[]))
     rejected(lambda space: space["walls"][0].update(cm=10))
     rejected(lambda space: space["openings"][0].update(x=0.51))
     rejected(lambda space: space["openings"][0].update(angle=-89))
@@ -1780,6 +1780,43 @@ def test_optimize_accepts_only_proved_partition_to_room_wall_rehost():
     rejected(lambda space: space.update(open_spans=[{
         "a": [0.504166667, 0.2], "b": [0.504166667, 0.8],
     }]))
+
+
+def test_optimize_accepts_proved_outer_rehost_for_resize_preparation():
+    fixture_dir = os.path.join(_ROOT, "test", "fixtures")
+    previous = json.load(open(
+        os.path.join(fixture_dir, "281-resize-outer-partitions.json"),
+        encoding="utf-8",
+    ))
+    candidate = json.load(open(
+        os.path.join(fixture_dir, "281-resize-outer-candidate.json"),
+        encoding="utf-8",
+    ))
+    with pytest.raises(v.PartitionOpeningHostError):
+        v.validate_partition_opening_hosts(candidate, previous)
+    v.validate_partition_opening_hosts(
+        candidate, previous, allow_optimize_rehost=True
+    )
+
+    conflict = json.loads(json.dumps(candidate))
+    conflict["spaces"][0]["openings"].append({
+        "id": "overlap", "type": "window",
+        "x": 0.25, "y": 0, "angle": 0, "length": 0.1,
+    })
+    with pytest.raises(v.PartitionOpeningHostError):
+        v.validate_partition_opening_hosts(
+            conflict, previous, allow_optimize_rehost=True
+        )
+
+    partial_owner = json.loads(json.dumps(candidate))
+    partial_owner["spaces"][0]["rooms"].append({
+        "id": "partial", "name": "Partial", "area": None,
+        "poly": [[0.2, 0], [0.3, 0], [0.3, -0.2], [0.2, -0.2]],
+    })
+    with pytest.raises(v.PartitionOpeningHostError):
+        v.validate_partition_opening_hosts(
+            partial_owner, previous, allow_optimize_rehost=True
+        )
 
 
 def test_optimize_rehost_validation_is_atomic_across_the_batch():

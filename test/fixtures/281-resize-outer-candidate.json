@@ -1,0 +1,37 @@
+{
+  "model_version": 7,
+  "spaces": [
+    {
+      "id": "resize-outer",
+      "title": "Resize outer",
+      "view_box": [0, 0, 1, 1],
+      "cell_cm": 5,
+      "rooms": [
+        { "id": "left", "name": "Left", "area": null,
+          "poly": [[0, 0], [0.5, 0], [0.5, 1], [0, 1]] },
+        { "id": "right", "name": "Right", "area": null,
+          "poly": [[0.5, 0], [1, 0], [1, 1], [0.5, 1]] }
+      ],
+      "walls": [
+        { "key": "0.500000,0.500000@1.5706", "cm": 20, "a": [0.5, 0], "b": [0.5, 1] },
+        { "key": "0.250000,0.000000@0.0000", "cm": 30, "a": [0, 0], "b": [0.5, 0] },
+        { "key": "0.750000,0.000000@0.0000", "cm": 30, "a": [0.5, 0], "b": [1, 0] },
+        { "key": "0.750000,1.000000@0.0000", "cm": 20, "a": [1, 1], "b": [0.5, 1] }
+      ],
+      "openings": [
+        {
+          "id": "left-window", "type": "window",
+          "x": 0.25, "y": 0, "angle": 0, "length": 0.2,
+          "cover": "cover.left", "future_field": { "keep": "left" }
+        },
+        {
+          "id": "right-window", "type": "window",
+          "x": 0.75, "y": 0, "angle": 0, "length": 0.2,
+          "contact": "binary_sensor.right"
+        }
+      ]
+    }
+  ],
+  "markers": [],
+  "settings": {}
+}

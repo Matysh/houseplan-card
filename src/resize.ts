@@ -46,6 +46,8 @@ export type SafeResizeObstacle =
   | { kind: 'circle'; center: number[]; radius: number };
 
 export interface SafeResizeOptions extends StopOpts {
+  /** One snapped editor step; eligibility must permit a non-zero neighbour. */
+  step?: number;
   /** Physical half-depth of the moving wall in render units. */
   movingHalf?: number;
   /** Independent walls, drafts and columns. They are immutable hard stops. */
@@ -705,6 +707,22 @@ export function resolveSafeResize(
   };
   if (!validateSafeResize(rooms, openings, plan, 0, opts)) {
     return { enabled: false, reason: 'invalid-geometry' };
+  }
+  const step = Math.abs(Number(opts.step));
+  if (Number.isFinite(step) && step > eps) {
+    const neighbours = [-step, step];
+    if (!neighbours.some((delta) => validateSafeResize(
+      rooms, openings, plan, delta, opts,
+    ))) {
+      const withoutObstacles = { ...opts, obstacles: [] };
+      if (neighbours.some((delta) => validateSafeResize(
+        rooms, openings, plan, delta, withoutObstacles,
+      ))) return { enabled: false, reason: 'duplicate-physical-wall' };
+      if (openings.length && neighbours.some((delta) => validateSafeResize(
+        rooms, [], plan, delta, opts,
+      ))) return { enabled: false, reason: 'opening-conflict' };
+      return { enabled: false, reason: 'invalid-geometry' };
+    }
   }
   return { enabled: true, plan };
 }

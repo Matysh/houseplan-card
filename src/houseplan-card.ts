@@ -8403,6 +8403,7 @@ class HouseplanCard extends LitElement {
     return {
       minDim: this._cmToUnits(MIN_ROOM_CM),
       eps: this._gridPitch * 0.05,
+      step: this._gridPitch,
       movingHalf: cm > 0 ? wallCmToUnits(cm, this._cellCm, this._gridPitch) / 2 : 0,
       obstacles: this._rszObstacles(),
       thicknessConflict: exactCms.size > 1,

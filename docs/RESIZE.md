@@ -78,8 +78,17 @@ The closest stop in either direction wins:
 - moving-wall opening that would no longer fit;
 - loss of exact shared endpoints or any structural candidate failure.
 
-The final persisted position is the last safe grid node. A safe range containing
-only zero yields an explained no-op and no write.
+The final persisted position is the last safe grid node. Eligibility probes one
+grid step in both directions through the same exact validator. If neither step
+is safe, the handle remains visible and focusable but is disabled with the
+stable reason that blocks the move; it never starts a no-op gesture or write.
+
+An exact independent partition over a room boundary remains a physical blocker.
+The explicit **Optimize plans** action may remove that blocker first only when
+the complete partition is provably identical to one solid outer wall or one
+solid wall shared by exactly two rooms. Any hosted openings must be materialized
+without changing their centre, angle or fields, and the backend independently
+proves the complete rewrite. Resize itself never moves or ignores partitions.
 
 ## Preview and commit
 
@@ -133,6 +142,11 @@ building the preview frame itself.
 - `demo/smoke_room_resize.mjs`: production bundle pointer handlers,
   preview/commit/Undo, disabled accessibility, real fixture topology,
   production-preflight failure and cancellation;
+- `test/resize-optimize.test.mjs` and
+  `demo/smoke_resize_outer_reconciliation.mjs`: an exact outer-wall partition
+  blocks a zero-range handle, Optimize safely rehosts its windows and removes
+  the blocker, then the same production Resize gesture changes exactly two
+  rooms;
 - `demo/benchmark_safe_resize.mjs`: same-run pointer and cached pointerup budgets;
 - `demo/benchmark_safe_resize_render.mjs`: warm 20-room/80-handle layer p95
   and exactly one geometry snapshot per rendered frame;

@@ -137,10 +137,11 @@ explicit rebind.
 
 The sole host-removal exception is the explicit Optimize reconciliation from
 #276/#280. The server does not trust a client counter: it independently proves
-that the old partition was removed, its complete segment is a solid shared
-boundary of exactly two rooms, the replacement wall envelope is not narrower,
-the materialized centre/angle and every unrelated opening field are unchanged,
-and no new slot overlaps. This capability is enabled only by
+that the old partition was removed, its complete segment is either one solid
+outer boundary owned by exactly one room or one solid shared boundary owned by
+exactly two rooms, the replacement wall envelope is not narrower, the
+materialized centre/angle and every unrelated opening field are unchanged, and
+no new slot overlaps. This capability is enabled only by
 `houseplan/plan/optimize`; ordinary config writes and crafted candidates keep
 the fail-closed `invalid_partition_opening_host` result.
 

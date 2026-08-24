@@ -1,6 +1,6 @@
 /**
  * Lossless explicit-Optimize reconciliation for an independent partition that
- * is exactly the same centred physical wall as one solid shared room edge.
+ * is exactly the same centred physical wall as one solid room edge.
  * Runtime renderers never call this module and it never mutates its inputs.
  */
 import {
@@ -180,13 +180,14 @@ export function reconcileCoincidentPartitions(
     [b[0] / keyScale, b[1] / keyScale],
     options.pitch,
   );
-  const sharedByKey = new Map<string, WallInterval[]>();
+  const solidByKey = new Map<string, WallInterval[]>();
   for (const interval of intervals) {
-    if (interval.kind !== 'shared' || interval.open || !(interval.cm > 0)) continue;
+    if ((interval.kind !== 'shared' && interval.kind !== 'outer')
+        || interval.open || !(interval.cm > 0)) continue;
     const key = segmentKey(interval.a, interval.b);
-    const bucket = sharedByKey.get(key);
+    const bucket = solidByKey.get(key);
     if (bucket) bucket.push(interval);
-    else sharedByKey.set(key, [interval]);
+    else solidByKey.set(key, [interval]);
   }
   const modelById = new Map(model.partitions.map((partition) => [partition.id, partition]));
   let walls = walls0;
@@ -204,21 +205,25 @@ export function reconcileCoincidentPartitions(
       partition.b[0] - partition.a[0], partition.b[1] - partition.a[1],
     ) <= eps) continue;
 
-    const owners = (sharedByKey.get(segmentKey(partition.a, partition.b)) || [])
+    const owners = (solidByKey.get(segmentKey(partition.a, partition.b)) || [])
       .filter((interval) => sameSegment(
         interval.a, interval.b, partition.a, partition.b, eps,
       ));
-    if (owners.length !== 2) continue;
+    if (!owners.length) continue;
     const byRoom = new Map<string, WallInterval>();
     for (const owner of owners) byRoom.set(owner.roomId, owner);
-    if (byRoom.size !== 2) continue;
-    const shared = [...byRoom.values()];
-    if (shared.some((interval) => !sameSegment(
+    const solid = [...byRoom.values()];
+    const kinds = new Set(solid.map((interval) => interval.kind));
+    if (kinds.size !== 1) continue;
+    const kind = solid[0]?.kind;
+    if ((kind === 'shared' && byRoom.size !== 2)
+        || (kind === 'outer' && byRoom.size !== 1)) continue;
+    if (solid.some((interval) => !sameSegment(
       interval.a, interval.b, partition.a, partition.b, eps,
     ))) continue;
-    const sharedCms = new Set(shared.map((interval) => interval.cm));
-    if (sharedCms.size !== 1) continue;
-    const roomCm = shared[0].cm;
+    const solidCms = new Set(solid.map((interval) => interval.cm));
+    if (solidCms.size !== 1) continue;
+    const roomCm = solid[0].cm;
 
     const anotherPartition = model.partitions.some((other) => (
       other.id !== partition.id
@@ -244,7 +249,7 @@ export function reconcileCoincidentPartitions(
     }));
     if (resolvedHosted.some((item) => !item.resolved)) continue;
     if (resolvedHosted.some((item) => !partitionOpeningHasCompositeRoomWall(
-      item.resolved!, shared, eps,
+      item.resolved!, solid, eps,
     ))) continue;
 
     const finalCm = Math.max(roomCm, partition.cm);
@@ -282,7 +287,7 @@ export function reconcileCoincidentPartitions(
       model.rooms, nextWalls, openCuts,
       options.pitch, options.cellCm, options.gridPitch, options.coordScale,
     );
-    const roomIds = new Set(shared.map((interval) => interval.roomId));
+    const roomIds = new Set(solid.map((interval) => interval.roomId));
     const associationsOk = nextHosted.every((opening) => {
       const association = resolveOpeningWallAssociation(index, {
         x: opening.x * options.coordScale,
@@ -290,10 +295,11 @@ export function reconcileCoincidentPartitions(
         angle: opening.angle,
         length: opening.length * options.coordScale,
       }, true);
-      return !!association.negative?.full && !!association.positive?.full
-        && roomIds.has(association.negative.roomId)
-        && roomIds.has(association.positive.roomId)
-        && association.negative.roomId !== association.positive.roomId;
+      const full = [association.negative, association.positive]
+        .filter((side): side is NonNullable<typeof association.negative> => !!side?.full);
+      const associated = new Set(full.map((side) => side.roomId));
+      return full.length === roomIds.size && associated.size === roomIds.size
+        && [...roomIds].every((roomId) => associated.has(roomId));
     });
     if (!associationsOk) continue;
 

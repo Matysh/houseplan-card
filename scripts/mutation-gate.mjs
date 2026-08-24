@@ -953,20 +953,14 @@ export const MUTANTS = [
       + 'be deleted just because its hosted opening happens to fit the longer room boundary (#276)',
     patches: [{
       file: 'src/coincident-partitions.ts',
-      find: '      .filter((interval) => sameSegment(\n'
+      find: '    const owners = (solidByKey.get(segmentKey(partition.a, partition.b)) || [])\n'
+        + '      .filter((interval) => sameSegment(\n'
         + '        interval.a, interval.b, partition.a, partition.b, eps,\n'
         + '      ));',
-      replace: '      .filter((interval) => collinearOverlap(\n'
+      replace: '    const owners = (solidByKey.get(segmentKey(partition.a, partition.b)) || [])\n'
+        + '      .filter((interval) => collinearOverlap(\n'
         + '        interval.a, interval.b, partition.a, partition.b, eps,\n'
         + '      ) > eps);',
-    }, {
-      file: 'src/coincident-partitions.ts',
-      find: '    if (shared.some((interval) => !sameSegment(\n'
-        + '      interval.a, interval.b, partition.a, partition.b, eps,\n'
-        + '    ))) continue;',
-      replace: '    if (false && shared.some((interval) => !sameSegment(\n'
-        + '      interval.a, interval.b, partition.a, partition.b, eps,\n'
-        + '    ))) continue;',
     }],
   },
   {

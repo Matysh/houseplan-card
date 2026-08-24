@@ -153,9 +153,11 @@ Disabled handle:
 6. Openings moving shared wall смещаются один раз и остаются на той же shared
    boundary. Side-wall openings остаются на месте и ограничивают range.
 
-Если safe range после grid snap содержит только исходную позицию, handle
-остаётся visible enabled для объяснимости, но попытка drag даёт stop/no-op и не
-создаёт запись.
+Если safe range после grid snap содержит только исходную позицию, resolver
+проверяет один grid step в обе стороны тем же exact validator. Когда оба
+направления запрещены, handle остаётся visible/focusable, но disabled с
+приоритетной причиной; pointer capture, preview, history и write не создаются.
+Это уточнение принято в #281 и заменяет прежний enabled no-op контракт.
 
 ## 7. Stops и live clamp
 

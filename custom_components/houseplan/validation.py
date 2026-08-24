@@ -168,12 +168,18 @@ def _safe_optimize_partition_rehost(
         return False
 
     owners: set[str] = set()
+    collinear_rooms: set[str] = set()
     for room in space.get("rooms") or []:
         poly = _room_polygon(room)
-        if any(_segment_covers(poly[index], poly[(index + 1) % len(poly)], a, b)
-               for index in range(len(poly))):
-            owners.add(str(room.get("id", "")))
-    if len(owners) != 2:
+        room_id = str(room.get("id", ""))
+        edges = [(poly[index], poly[(index + 1) % len(poly)])
+                 for index in range(len(poly))]
+        if any(_segment_covers(edge_a, edge_b, a, b) for edge_a, edge_b in edges):
+            owners.add(room_id)
+        if any(_segments_overlap_on_axis(a, b, edge_a, edge_b)
+               for edge_a, edge_b in edges):
+            collinear_rooms.add(room_id)
+    if len(owners) not in (1, 2) or collinear_rooms != owners:
         return False
     if any(_segments_overlap_on_axis(a, b, span["a"], span["b"])
            for span in space.get("open_spans") or []):

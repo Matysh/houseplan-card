@@ -2868,6 +2868,19 @@ require hands on real hardware — they remain for the human pass.
       `optimize-preflight-bypassed`; performance:
       `npm run benchmark:coincident-partitions`; golden:
       `coincident-partition-{before,thin,thick,virtual}-dark`].
+- [ ] **Optimize unlocks only proved zero-range Resize handles (#281)**: three
+      exact independent partitions over solid one-room outer boundaries block
+      the affected shared-wall Resize before maintenance. Optimize removes all
+      three, materializes both hosted windows without changing their fields,
+      passes independent backend proof and is idempotent. Afterwards the target
+      handle has a non-zero grid step in both directions and one production
+      pointer gesture changes exactly the two adjacent rooms. Partial, unknown
+      or opening-overlapped outer candidates remain untouched. Every handle
+      reported enabled on the anonymized `44.json` fixture has a non-zero
+      contiguous range; a zero-range handle stays visible/focusable but disabled
+      and captures no pointer [unit: test/resize-optimize.test.mjs; backend:
+      tests_backend/test_validation.py + tests_backend/test_ha_websocket.py;
+      auto: smoke_resize_outer_reconciliation].
 - [ ] **Unit + backend**: inset/mitre/bevel, key from either end, degrade,
       rekey, cm↔inches; `walls` schema bounds
       [auto: test/wall-thickness.test.mjs + tests_backend/test_validation.py]
