@@ -1,5 +1,6 @@
-// #198: explicit Optimize removes only a proven isolated wall-thickness
-// micro-interval. Exercise the production bundle's Preview → Apply → Undo flow.
+// #198/#299: explicit Optimize removes only a proven isolated wall-thickness
+// micro-interval without compacting across a physical wall-owner role boundary.
+// Exercise the production bundle's Preview → Apply → Reload → Undo flow.
 import { launch, checkAll, finish } from './serve.mjs';
 
 const { page, browser } = await launch({ width: 900, height: 820 });
@@ -40,6 +41,19 @@ const out = await page.evaluate(async () => {
     }],
     markers: [], settings: {},
   };
+  const expectedRuns = [
+    [0.8, 203 / 240],
+    [203 / 240, 213 / 240],
+    [213 / 240, 0.95],
+  ];
+  const hasRoleAwareCanonicalRuns = (walls) => {
+    if (walls.length !== expectedRuns.length || walls.some((wall) => wall.cm !== 22)) return false;
+    const runs = walls.map((wall) => {
+      if (!wall.a || !wall.b || wall.a[1] !== canonicalY || wall.b[1] !== canonicalY) return null;
+      return [Math.min(wall.a[0], wall.b[0]), Math.max(wall.a[0], wall.b[0])];
+    }).filter(Boolean).sort((left, right) => left[0] - right[0]);
+    return JSON.stringify(runs) === JSON.stringify(expectedRuns);
+  };
   const clone = (value) => JSON.parse(JSON.stringify(value));
   let serverConfig = clone(original), serverLayout = {}, backup = null;
   const sent = [];
@@ -71,10 +85,9 @@ const out = await page.evaluate(async () => {
 
   card._openAlignDialog(); await card.updateComplete;
   const preview = card._alignDialog;
-  result.previewOffersChange = !!preview?.changed
-    && preview.report.canonicalized === 1 && preview.report.wallsMerged === 2
-    && preview.config.spaces[0].walls.length === 1
-    && preview.config.spaces[0].walls[0].cm === 22;
+  result.previewOffersRoleAwareChange = !!preview?.changed
+    && preview.report.canonicalized === 1 && preview.report.wallsMerged === 0
+    && hasRoleAwareCanonicalRuns(preview.config.spaces[0].walls);
   result.previewDoesNotWrite = sent.length === 0
     && JSON.stringify(card._serverCfg) === JSON.stringify(original);
   result.previewIsVisible = !!card.renderRoot.querySelector('hp-dialog .alignmsg');
@@ -87,16 +100,12 @@ const out = await page.evaluate(async () => {
   await card._runAlignToGrid(); await card.updateComplete;
   const appliedWalls = card._serverCfg.spaces[0].walls;
   result.applyUsesOneAtomicWrite = sent.filter((type) => type === 'houseplan/plan/optimize').length === 1;
-  result.applyStoresOneUniformRun = appliedWalls.length === 1 && appliedWalls[0].cm === 22
-    && JSON.stringify(appliedWalls[0].a) === JSON.stringify([0.8, canonicalY])
-    && JSON.stringify(appliedWalls[0].b) === JSON.stringify([0.95, canonicalY]);
+  result.applyStoresRoleAwareRuns = hasRoleAwareCanonicalRuns(appliedWalls);
   result.applyEnablesUndo = card._canOptimizeUndo === true;
 
   await card._loadFromServer(); await card.updateComplete;
   const reloadedWalls = card._serverCfg.spaces[0].walls;
-  result.reloadKeepsCanonicalRun = reloadedWalls.length === 1 && reloadedWalls[0].cm === 22
-    && JSON.stringify(reloadedWalls[0].a) === JSON.stringify([0.8, canonicalY])
-    && JSON.stringify(reloadedWalls[0].b) === JSON.stringify([0.95, canonicalY]);
+  result.reloadKeepsRoleAwareRuns = hasRoleAwareCanonicalRuns(reloadedWalls);
 
   await card._undoPlanOptimization(); await card.updateComplete;
   result.undoUsesServerSnapshot = sent.filter((type) => type === 'houseplan/plan/optimize_undo').length === 1;
