@@ -18,8 +18,18 @@
 import { readFileSync } from 'node:fs';
 import { launch, checkAll, finish } from './serve.mjs';
 
-const FIXTURE = new URL('../test/fixtures/real-plan-second-floor.json', import.meta.url);
-const { space } = JSON.parse(readFileSync(FIXTURE, 'utf8'));
+/**
+ * Реальные планы, каждый со своим классом дефектов (#285, #286).
+ *
+ * Второй этаж — стыки: коридор многостенного узла съедает соседнюю кладку.
+ * Первый этаж — другое: у него есть виртуальные пролёты, колонны и два
+ * сплошных ребра, у которых вообще нет записи толщины. Ни то, ни другое
+ * синтетика не воспроизводит.
+ */
+const PLANS = [
+  { file: 'real-plan-second-floor.json', gapCount: 4, gapSteps: 181 },
+  { file: 'real-plan-first-floor.json', gapCount: 0, gapSteps: 0 },
+];
 
 /**
  * Признанный долг beta.9, ведётся в #284 вместе с #271/#275.
@@ -42,7 +52,7 @@ const KNOWN_GAP_STEPS = 181;
 const { page, browser } = await launch();
 const out = {};
 
-const measured = await page.evaluate(async (space) => {
+const measure = (space) => page.evaluate(async (space) => {
   const card = window.__card;
   card._serverCfg = { spaces: [space], markers: [], settings: {} };
   card._cfgEpoch = (card._cfgEpoch || 0) + 1;
@@ -69,9 +79,25 @@ const measured = await page.evaluate(async (space) => {
   // достаточно грубо, чтобы прогон оставался быстрым.
   const SAMPLE = STEP / 4;
 
+  // Виртуальный пролёт — объявленный разрыв, а не дефект: там кладки быть не
+  // должно. Без этого исключения план с виртуальными границами покраснел бы
+  // на собственном контракте.
+  const spans = (space.open_spans || []).map((s) => [s.a, s.b]);
+  const onDeclaredSpan = (x, y) => spans.some(([a, b]) => {
+    const dx = b[0] - a[0], dy = b[1] - a[1];
+    const len2 = dx * dx + dy * dy;
+    if (len2 < 1e-18) return false;
+    const t = ((x - a[0]) * dx + (y - a[1]) * dy) / len2;
+    if (t < -0.02 || t > 1.02) return false;
+    const px = a[0] + dx * Math.max(0, Math.min(1, t));
+    const py = a[1] + dy * Math.max(0, Math.min(1, t));
+    return Math.hypot(x - px, y - py) <= 1 / 240;
+  });
+
   const gaps = [];
   let sampled = 0;
   let missing = 0;
+  let skipped = 0;
   for (const room of space.rooms) {
     const poly = room.poly;
     for (let i = 0; i < poly.length; i++) {
@@ -84,6 +110,14 @@ const measured = await page.evaluate(async (space) => {
         const t = k / count;
         const x = a[0] + (b[0] - a[0]) * t;
         const y = a[1] + (b[1] - a[1]) * t;
+        if (onDeclaredSpan(x, y)) {
+          skipped++;
+          if (runStart !== null) {
+            gaps.push({ room: room.id, edge: i, steps: (t - runStart) * length / STEP });
+            runStart = null;
+          }
+          continue;
+        }
         sampled++;
         const solid = wall.isPointInFill(at(x, y));
         if (!solid) {
@@ -102,6 +136,7 @@ const measured = await page.evaluate(async (space) => {
   const worst = gaps.slice().sort((x, y) => y.steps - x.steps).slice(0, 5);
   return {
     sampled,
+    skipped,
     missing,
     gapCount: gaps.length,
     totalGapSteps: gaps.reduce((sum, g) => sum + g.steps, 0),
@@ -109,15 +144,27 @@ const measured = await page.evaluate(async (space) => {
   };
 }, space);
 
-console.log(JSON.stringify(measured, null, 2));
-out.wallPathFound = !measured.error;
-out.sampledEnough = measured.sampled > 5000;
-out.gapCountMatchesKnownDebt = measured.gapCount === KNOWN_GAP_COUNT;
-out.gapLengthMatchesKnownDebt = Math.abs(measured.totalGapSteps - KNOWN_GAP_STEPS) < 1;
-if (!out.gapCountMatchesKnownDebt || !out.gapLengthMatchesKnownDebt) {
-  console.log(`Долг изменился: было ${KNOWN_GAP_COUNT} разрывов на ${KNOWN_GAP_STEPS} шага,`
-    + ` стало ${measured.gapCount} на ${measured.totalGapSteps.toFixed(2)}.`
-    + ' Меньше — обновите числа и приложите прогон; больше — это регрессия.');
+for (const plan of PLANS) {
+  const { space } = JSON.parse(readFileSync(
+    new URL(`../test/fixtures/${plan.file}`, import.meta.url), 'utf8'));
+  const measured = await measure(space);
+  const tag = plan.file.replace('real-plan-', '').replace('.json', '');
+  console.log(tag, JSON.stringify(measured, null, 2));
+  out[`${tag}:wallPath`] = !measured.error;
+  out[`${tag}:sampledEnough`] = measured.sampled > 5000;
+  if (plan.gapCount === null) {
+    console.log(`ИЗМЕРЕНИЕ ${tag}: разрывов ${measured.gapCount},`
+      + ` суммарно ${measured.totalGapSteps.toFixed(2)} шага`);
+  } else {
+    out[`${tag}:gapCount`] = measured.gapCount === plan.gapCount;
+    out[`${tag}:gapLength`] = Math.abs(measured.totalGapSteps - plan.gapSteps) < 1;
+    if (!out[`${tag}:gapCount`] || !out[`${tag}:gapLength`]) {
+      console.log(`Долг ${tag} изменился: было ${plan.gapCount} разрывов на`
+        + ` ${plan.gapSteps} шага, стало ${measured.gapCount} на`
+        + ` ${measured.totalGapSteps.toFixed(2)}. Меньше — обновите числа и приложите`
+        + ' прогон; больше — это регрессия.');
+    }
+  }
 }
 checkAll(out);
 await finish(browser, out);

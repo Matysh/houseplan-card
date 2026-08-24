@@ -369,3 +369,52 @@ test('модели проекта не несут шума решётки (#282)
       + `${profile.worstNoise ? ` — ${profile.worstNoise.owner}` : ''}`);
   }
 });
+
+// ------------------ реальные планы как фикстуры (#285, #286) -----------------
+// Синтетика не воспроизводит два класса сразу: координатный шум и конфигурации
+// живого плана. Здесь закреплены свойства, ради которых эти фикстуры и лежат в
+// репозитории. Если кто-то «почистит» их координаты, фикстуры потеряют смысл —
+// и тест скажет об этом раньше, чем это выяснится через месяц.
+
+const REAL_PLANS = [
+  { file: 'real-plan-first-floor.json', minNoise: 100, zeroThicknessSolidEdges: 2 },
+  { file: 'real-plan-second-floor.json', minNoise: 100, zeroThicknessSolidEdges: 0 },
+];
+
+test('реальные планы сохраняют координатный шум, ради которого их взяли (#286)', () => {
+  for (const plan of REAL_PLANS) {
+    const { space } = JSON.parse(
+      readFileSync(resolve(repoRoot, 'test/fixtures', plan.file), 'utf8'));
+    const profile = latticeProfile({ config: { spaces: [space] }, layout: {} });
+    assert.ok(profile.noise >= plan.minNoise,
+      `${plan.file}: шума ${profile.noise}, ожидалось не меньше ${plan.minNoise} —`
+      + ' фикстура канонизирована и больше не воспроизводит свой класс дефектов');
+    assert.equal(checkWallKeys({ spaces: [space] }, { notes: [] }).length, 0,
+      `${plan.file}: запись толщины объявлена неразрешимой`);
+  }
+});
+
+test('реальные планы: сплошные рёбра без записи толщины закреплены числом (#286)', async () => {
+  // Ребро, объявленное сплошным, но с нулевой толщиной, рисуется без кладки.
+  // На первом этаже таких два, длиной по 2 шага, и соседние тела их накрывают —
+  // поэтому браузерный смок разрывов не видит. Число закреплено здесь: станет
+  // больше или короче накрытие — увидим до того, как это станет дыркой.
+  const { spaceModels, GRID_STEP_N, GRID_PITCH, NORM_W } =
+    await import('../test-build/space-geometry.js');
+  const { wallIntervals } = await import('../test-build/wall-thickness.js');
+  const { resolveOpenCuts } = await import('../test-build/open-spans.js');
+  for (const plan of REAL_PLANS) {
+    const { space } = JSON.parse(
+      readFileSync(resolve(repoRoot, 'test/fixtures', plan.file), 'utf8'));
+    const model = spaceModels({ spaces: [space], markers: [], settings: {} })[0];
+    const cuts = resolveOpenCuts(
+      model.rooms, space.open_spans ?? null, NORM_W, GRID_PITCH * 0.02, true);
+    const intervals = wallIntervals(
+      model.rooms, space.walls, cuts, GRID_STEP_N,
+      space.cell_cm || 5, GRID_PITCH, NORM_W);
+    const zero = intervals.filter((item) => item.kind && !(item.cm > 0));
+    assert.equal(zero.length, plan.zeroThicknessSolidEdges,
+      `${plan.file}: сплошных рёбер без толщины ${zero.length},`
+      + ` ожидалось ${plan.zeroThicknessSolidEdges}`);
+  }
+});
