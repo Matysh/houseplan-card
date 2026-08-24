@@ -81,6 +81,7 @@ const target = await page.evaluate(() => {
     end: screen(cx + 10 * (1000 / 240), cy),
     mappedStart: screen(cx, cy),
     hitWidth: rect.width,
+    hitRadiusSvg: Number(handle.getAttribute('r')),
     count: handles.length,
   };
 });
@@ -105,6 +106,14 @@ const sharedX = () => page.evaluate(() => {
 const domHasSharedX = (x) => page.evaluate((wanted) =>
   [...window.__card.renderRoot.querySelectorAll('.rszhandle[aria-disabled="false"]')]
     .some((entry) => Math.abs(Number(entry.getAttribute('cx')) - wanted) < 1), x);
+const sharedHandleX = () => page.evaluate(() => {
+  const candidates = [...window.__card.renderRoot.querySelectorAll(
+    '.rszhandle[aria-disabled="false"]',
+  )].filter((entry) => Math.abs(Number(entry.getAttribute('cy')) - 529.166667) < 2);
+  return candidates
+    .map((entry) => Number(entry.getAttribute('cx')))
+    .sort((left, right) => Math.abs(left - 400) - Math.abs(right - 400))[0] ?? null;
+});
 
 check('resize_pointer.fixture_loaded', await page.evaluate(() =>
   window.__card._serverCfg.spaces[0].id), 'real-second-floor');
@@ -172,6 +181,8 @@ if (target) {
   await page.mouse.move(target.start[0] + outsideDistance, target.start[1], { steps: 12 });
   await settle();
   check('resize_pointer.capture_beyond_handle', await domHasSharedX(400), false);
+  check('resize_pointer.capture_travels_past_hit_area',
+    Math.abs((await sharedHandleX()) - 400) > target.hitRadiusSvg * 1.5, true);
   await page.keyboard.press('Escape');
   await page.mouse.up();
   await settle();
