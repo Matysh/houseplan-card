@@ -60,6 +60,8 @@ export interface SpacePhysicalGeometryInputs {
 export type OptimizeGeometryFailureReason =
   | 'prepare-exception'
   | 'wall-null'
+  | 'wall-degraded-extra'
+  | 'wall-failed-core'
   | 'wall-exception'
   | 'floor-null'
   | 'floor-exception';
@@ -88,6 +90,52 @@ export interface CheckOptimizeGeometryOptions {
   wallPass?: typeof wallBodiesGeometry;
   floorPass?: typeof floorFootprintGeometry;
   fingerprint?: typeof contentFingerprint;
+}
+
+export interface SpacePhysicalGeometryResult extends OptimizeSpaceGeometryCheck {
+  fingerprint: string;
+  ok: boolean;
+}
+
+/** Fingerprint only fields capable of changing canonical physical geometry. */
+export function spacePhysicalGeometryFingerprint(spaceConfig: any): string {
+  return contentFingerprint({
+    id: spaceConfig?.id ?? '',
+    cell_cm: spaceConfig?.cell_cm,
+    rooms: spaceConfig?.rooms || [],
+    walls: spaceConfig?.walls || [],
+    open_spans: spaceConfig?.open_spans || [],
+    openings: spaceConfig?.openings || [],
+    partitions: spaceConfig?.partitions || [],
+    room_drafts: spaceConfig?.room_drafts || [],
+    wall_columns: spaceConfig?.wall_columns || [],
+  });
+}
+
+/** Strict one-space barrier backed by the exact same pass as Optimize. */
+export function checkSpacePhysicalGeometry(
+  config: ServerConfig | any,
+  spaceId: string,
+  options: CheckOptimizeGeometryOptions = {},
+): SpacePhysicalGeometryResult {
+  const allSpaces = Array.isArray(config?.spaces) ? config.spaces : [];
+  const raw = allSpaces.find((space: any) => String(space?.id || '') === String(spaceId || ''));
+  const fingerprint = spacePhysicalGeometryFingerprint(raw);
+  if (!raw) {
+    return {
+      spaceId: String(spaceId || ''), displayName: '', status: 'failed',
+      reason: 'prepare-exception', fingerprint, ok: false,
+    };
+  }
+  const result = checkOptimizeGeometry(
+    { ...config, spaces: [raw] },
+    { ...options, fingerprint: () => fingerprint },
+  );
+  const space = result.spaces[0] || {
+    spaceId: String(spaceId || ''), displayName: '', status: 'failed' as const,
+    reason: 'prepare-exception' as const,
+  };
+  return { ...space, fingerprint, ok: space.status !== 'failed' };
 }
 
 /** Resolve explicit spans and the legacy open_to fallback exactly as the card. */
@@ -293,7 +341,7 @@ export function checkOptimizeGeometry(
       continue;
     }
 
-    let united: ReturnType<typeof wallBodiesGeometry> = null;
+    let united: ReturnType<typeof wallBodiesGeometry> | null = null;
     if (hasWallPass) {
       try {
         united = buildWalls(
@@ -307,6 +355,14 @@ export function checkOptimizeGeometry(
       }
       if (united == null) {
         spaces.push({ ...identity, status: 'failed', reason: 'wall-null' });
+        continue;
+      }
+      if (united.status === 'degraded-extra') {
+        spaces.push({ ...identity, status: 'failed', reason: 'wall-degraded-extra' });
+        continue;
+      }
+      if (united.status === 'failed-core') {
+        spaces.push({ ...identity, status: 'failed', reason: 'wall-failed-core' });
         continue;
       }
     }

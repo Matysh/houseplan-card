@@ -544,14 +544,23 @@ idempotence case in `test/plan-optimizer.test.mjs`:
 Before a changed preview can expose Apply, `checkOptimizeGeometry(config)`
 (`src/plan-geometry-preflight.ts`) runs the exact candidate through the shared
 production input projection and canonical wall/floor boolean builders for every
-space. `null` or an exception is a structural failure; an empty successful
-geometry and an empty/image-only space are not. One failure blocks the whole
-operation and the endpoint is not called. The dialog retains only bounded
-statuses plus `contentFingerprint(candidate.config)`: unchanged Apply reuses
-that result, while a changed fingerprint is checked again and fails closed.
+space. `failed-core`, `degraded-extra` or an exception is a structural failure;
+an empty successful geometry and an empty/image-only space are not. One failure
+blocks the whole operation and the endpoint is not called. The dialog retains
+only bounded statuses plus `contentFingerprint(candidate.config)`: unchanged
+Apply reuses that result, while a changed fingerprint is checked again and
+fails closed.
 This frontend barrier does not replace backend permission, schema, revision or
 crash-recovery checks and is not a security attestation from an untrusted
 client.
+
+The same projection has a one-space transaction entry point for ordinary
+physical edits (#278). Room/wall/open-span/opening/partition/draft/column
+candidates are validated before entering Undo or the save queue. A physical
+fingerprint is rechecked immediately before the deferred config write; failure
+restores the saved geometry and produces no WebSocket call. Presentation-only
+edits deliberately do not invoke this barrier, so a legacy degraded plan can
+still be renamed, exported and inspected.
 
 ### The report is a promise
 

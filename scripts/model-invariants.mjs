@@ -12,12 +12,13 @@
  * #252 (37 забытых позиций в layout), #248, #126. Каждый раз это находил
  * человек глазами. Здесь те же вопросы задаются машинно и одинаково.
  *
- * Модуль сознательно не импортирует `src/**`: он должен читать сырой JSON
- * экспорта и живого хранилища, не требуя сборки и не завися от того, что
- * продуктовый код считает «правильным» сегодня.
+ * Structural geometry is the exception: the CLI deliberately imports the
+ * compiled production preparation instead of maintaining a second boolean
+ * model which can drift from the renderer (#278).
  */
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { checkOptimizeGeometry } from '../test-build/plan-geometry-preflight.js';
 
 /** Доля шага сетки, в пределах которой запись считается лежащей на ребре. */
 const EDGE_TOLERANCE = 0.004;
@@ -286,6 +287,22 @@ export function readModel(text) {
   return { config, layout };
 }
 
+/** Production structural pass with bounded, anonymised diagnostics. */
+export function checkPhysicalGeometry(config) {
+  let result;
+  try { result = checkOptimizeGeometry(config); } catch {
+    return [{
+      invariant: 'physical_geometry', kind: 'geometry_exception', owner: 'config',
+      reference: 'prepare-exception', detail: 'production geometry check failed',
+    }];
+  }
+  return result.failures.map((failure, index) => ({
+    invariant: 'physical_geometry', kind: 'physical_geometry',
+    owner: `space[${index + 1}]`, reference: failure.reason,
+    detail: 'canonical wall geometry is not safe for a write',
+  }));
+}
+
 /** Наблюдения перечисляются по смыслу: «их 39» читателю ничего не говорит. */
 function noteSummary(notes) {
   const counts = new Map();
@@ -318,6 +335,8 @@ function report(violations, notes = []) {
     layout_owner: 'Позиции без владельца',
     wall_carrier: 'Записи толщины вне рёбер и перегородок',
     open_span_carrier: 'Виртуальные проёмы вне границ комнат',
+    physical_geometry: 'Небезопасная каноническая геометрия стен',
+    geometry_exception: 'Сбой проверки канонической геометрии стен',
     lost: 'Потерянные записи толщины',
     wall_key: 'Записи толщины, которые не найдутся по ключу',
   };
@@ -348,6 +367,7 @@ function main(argv) {
   const violations = [
     ...checkReferences(model, { notes }),
     ...checkWallKeys(model.config, { notes }),
+    ...checkPhysicalGeometry(model.config),
   ];
   if (argv.includes('--json')) console.log(JSON.stringify({ violations, notes }, null, 2));
   else console.log(report(violations, notes));

@@ -364,6 +364,16 @@ fully occluded instead of leaking around its own masonry. The same fail-dark
 placement rule applies to window tunnels and exterior door/gate openings;
 interior passages remain valid source positions (#92).
 
+The canonical result is component-aware (#278). A valid room body remains the
+primary component; every optional independent body and the exterior-shell merge
+is added transactionally. If two individually valid operands cannot be unioned,
+the latter is retained as a separate SVG/occlusion component and the result is
+`degraded-extra`, so one local boolean failure cannot erase the whole floor.
+Plan, View, Static, hidden Iso, paper and light use the same components, while
+`roomGeom` excludes independent bodies so room area remains unchanged. This is
+read-only recovery: strict Optimize and every physical-geometry edit reject a
+degraded candidate and never silently delete or rewrite the offending object.
+
 An opening with explicit `host:{kind:'partition',id,t}` is resolved from that
 partition alone and subtracted full-depth from its raw body before the joined
 presentation union. A precisely collinear room wall covering the same interval

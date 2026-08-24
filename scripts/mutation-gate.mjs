@@ -753,6 +753,69 @@ export const MUTANTS = [
     }],
   },
   {
+    id: 'wall-component-failure-kills-primary',
+    guard: 'node demo/smoke_wall_union_isolation.mjs',
+    because: 'a local shell/extra merge failure must remain a render-safe component set instead '
+      + 'of restoring the all-or-nothing blank wall layer from #278',
+    patches: [{
+      file: 'src/wall-thickness.ts',
+      find: "      status: degradedExtraCount || degradedCoreCount ? 'degraded-extra' : 'ok',",
+      replace: "      status: degradedExtraCount || degradedCoreCount ? 'failed-core' : 'ok',",
+    }],
+  },
+  {
+    id: 'wall-isolated-extra-discarded',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="isolates one failed independent-body" '
+      + 'test/wall-thickness.test.mjs',
+    because: 'keeping only the primary makes the floor look mostly repaired while silently '
+      + 'dropping the exact independent body whose union failed (#278)',
+    patches: [{
+      file: 'src/wall-thickness.ts',
+      find: '          isolated.push({ id: `extra-${index}`, geom: standalone });',
+      replace: '          // mutant: discard the valid isolated body',
+    }],
+  },
+  {
+    id: 'strict-wall-barrier-accepts-degraded',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="strict one-space barrier" '
+      + 'test/plan-geometry-preflight.test.mjs',
+    because: 'render-safe degradation is read compatibility, never permission to persist another '
+      + 'geometry mutation over the unsafe candidate (#278)',
+    patches: [{
+      file: 'src/plan-geometry-preflight.ts',
+      find: "      if (united.status === 'degraded-extra') {",
+      replace: "      if (false && united.status === 'degraded-extra') {",
+    }],
+  },
+  {
+    id: 'wall-thickness-writer-bypasses-common-barrier',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="production source routes physical writers" '
+      + 'test/wall-union-isolation.test.mjs',
+    because: 'one direct physical writer is enough to recreate the corrupt persisted geometry '
+      + 'even when Resize and the other editors use the shared transaction boundary (#278)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: "    if (this._commitPhysicalGeometry(this._t('history.wall_thickness'), before))",
+      replace: "    if ((this._recordGeometry(this._t('history.wall_thickness'), before), true))",
+    }],
+  },
+  {
+    id: 'model-invariants-bypasses-production-geometry',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="Optimize and model-invariants" '
+      + 'test/wall-union-isolation.test.mjs',
+    because: 'the CLI must fail on the same degraded result as Optimize instead of returning the '
+      + 'pre-#278 false green for a visually broken export',
+    patches: [{
+      file: 'scripts/model-invariants.mjs',
+      find: '  return result.failures.map((failure, index) => ({',
+      replace: '  return [].map((failure, index) => ({',
+    }],
+  },
+  {
     id: 'optimize-preflight-bypassed',
     guard: 'node demo/smoke_optimize_geometry_preflight.mjs',
     because: 'a red preview must remain a hard write barrier even if a caller invokes the '

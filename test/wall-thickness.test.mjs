@@ -80,6 +80,59 @@ const assertProbeInside = (geom, point, message) =>
 const assertProbeOutside = (geom, point, message) =>
   assert.ok(geometryProbeCoverage(geom, point) < 1e-7, message || `unexpected body at ${point}`);
 
+test('#278 isolates one failed independent-body union without losing core or later bodies', () => {
+  const roomPoly = [[0, 0], [100, 0], [100, 100], [0, 100]];
+  const rooms = [{ id: 'core', poly: roomPoly }];
+  const walls = roomPoly.map((a, index) => {
+    const b = roomPoly[(index + 1) % roomPoly.length];
+    return { key: wallKey(a, b, 20), a, b, cm: 20 };
+  });
+  const extras = [
+    [[120, 10], [130, 10], [130, 30], [120, 30]],
+    [[140, 10], [150, 10], [150, 30], [140, 30]],
+    [[160, 10], [170, 10], [170, 30], [160, 30]],
+  ];
+  const operations = {
+    mergeExtra(primary, extra, index) {
+      if (index === 1) throw new Error('local clipping failure');
+      return primary ? union(primary, extra) : extra;
+    },
+  };
+
+  const geometry = wallBodiesGeometry(
+    rooms, walls, [], [], 20, 5, 40, 1, extras, operations,
+  );
+  assert.equal(geometry.status, 'degraded-extra');
+  assert.equal(geometry.degradedExtraCount, 1);
+  assert.equal(geometry.components.length, 2, 'primary plus isolated body');
+  assertProbeInside(geometry.components[0].geom, [5, 5], 'core masonry survives');
+  assertProbeInside(geometry.components[0].geom, [165, 20], 'later extra still merges');
+  assertProbeInside(geometry.components[1].geom, [145, 20], 'failed extra stays isolated');
+
+  const projected = wallBodiesUnionPath(
+    rooms, walls, [], [], 20, 5, 40, 1, extras, operations,
+  );
+  assert.equal(projected?.status, 'degraded-extra');
+  assert.equal(projected?.paths.length, 2, 'isolated geometry has a separate SVG path');
+});
+
+test('#278 rejects degraded extras in strict preflight while render geometry remains usable', () => {
+  const result = wallBodiesGeometry(
+    [], [], [], [], 20, 5, 40, 1,
+    [
+      [[0, 0], [10, 0], [10, 10], [0, 10]],
+      [[20, 0], [30, 0], [30, 10], [20, 10]],
+    ],
+    { mergeExtra: (primary, extra, index) => {
+      if (index) throw new Error('one extra');
+      return primary ? union(primary, extra) : extra;
+    } },
+  );
+  assert.equal(result.status, 'degraded-extra');
+  assert.equal(result.components.length, 2);
+  assert.equal(result.roomGeom.length, 0, 'independent bodies never enter room area masonry');
+});
+
 const enclosedLocalHoleRings = (geometry, node) => {
   const radius = MITRE_LIMIT * node.halfDepth + 1e-6;
   return (geometry || []).flatMap((polygon) => (polygon || []).slice(1)).filter((ring) =>

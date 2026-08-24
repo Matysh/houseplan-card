@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- A local wall-union failure can no longer blank the masonry of an entire
+  space. Valid wall components remain visible consistently in Plan, View,
+  Static, hidden Iso and light barriers, while every edit that changes physical
+  geometry is checked before history or storage is touched. An unsafe change is
+  canceled with an explicit message; non-geometry edits remain available for
+  recovery and export ([#278](https://github.com/Matysh/houseplan-card/issues/278)).
 - Resize now moves only a provably safe horizontal or vertical room wall. An
   exact shared wall may reshape at most two rooms and stops at the first
   corner, opening jamb, third-room contact or other topology change; partial,

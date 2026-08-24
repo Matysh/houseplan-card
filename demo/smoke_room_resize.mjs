@@ -177,8 +177,8 @@ await setRooms([rect('preflight', 100, 100, 400, 400)]);
 await enter();
 await page.evaluate(() => {
   const card = window.__card;
-  card.__resizePreflight = card._checkOptimizeGeometry;
-  card._checkOptimizeGeometry = () => ({ ok: false, spaces: [] });
+  card.__resizePreflight = card._checkSpacePhysicalGeometry;
+  card._checkSpacePhysicalGeometry = () => ({ ok: false, status: 'failed' });
 });
 const preflightBefore = JSON.stringify(await roomPoly('preflight'));
 const [px, py] = await screenPt(400, 250);
@@ -189,7 +189,7 @@ await pointer('pointerup', preflightX, py, { pointerId: 80 });
 await settle();
 await page.evaluate(() => {
   const card = window.__card;
-  card._checkOptimizeGeometry = card.__resizePreflight;
+  card._checkSpacePhysicalGeometry = card.__resizePreflight;
   delete card.__resizePreflight;
 });
 check('safe_resize.preflight_no_commit', JSON.stringify(await roomPoly('preflight')), preflightBefore);

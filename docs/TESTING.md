@@ -2311,6 +2311,25 @@ require hands on real hardware — they remain for the human pass.
       `optimize-preflight-active-space-only`,
       `optimize-preflight-accepts-null`,
       `optimize-preflight-renders-apply-on-failure`].
+- [ ] **A local wall-union failure stays local and cannot be saved (#278)**:
+      the anonymized production-derived fixture returns `degraded-extra` with
+      two deterministic components instead of a global empty wall layer. Plan,
+      View, Static, hidden Iso, paper and light barriers retain both components
+      in light and dark themes. Every physical-geometry writer crosses the
+      common exact-candidate barrier; forced degradation restores the previous
+      state and creates zero Undo/WS calls, while a title-only edit still saves.
+      Optimize and `model-invariants` reject the same fixture with bounded
+      diagnostics. Valid large-house overhead is at most 10% and 20 ms p95;
+      degraded p95 is below 100 ms
+      [unit: wall-thickness + plan-geometry-preflight +
+      wall-union-isolation; auto: smoke_wall_union_isolation +
+      smoke_optimize_geometry_preflight + smoke_room_resize; golden:
+      wall-union-isolation-view-light/dark; benchmark:
+      benchmark_wall_union_isolation; mutations:
+      `wall-component-failure-kills-primary`,
+      `isolated-wall-extra-discarded`, `strict-accepts-degraded`,
+      `wall-thickness-writer-bypasses-barrier`,
+      `invariants-bypasses-production-geometry`].
 - [ ] **Missing space references recover without losing a marker (#244)**:
       exact import signatures remap space, room, marker/room-label positions
       and vacuum segments; Area remap and detach preserve the marker record and

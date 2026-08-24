@@ -535,6 +535,7 @@
   "toast.physical_range": "Enter a value from 1 to {max} {unit}",
   "toast.physical_angle": "Enter a rotation angle from 0° up to, but not including, 90°",
   "toast.physical_limit": "The space has reached the limit for this type of geometry",
+  "toast.geometry_unsafe": "Change canceled: wall geometry could not be built safely.",
   "markup.boundary_hint": "Select a shared room boundary or a dashed stretch",
   "markup.boundary_hint_open": "Click the start of the open stretch",
   "markup.boundary_hint_second": "Choose the end on the selected boundary · Esc to cancel",

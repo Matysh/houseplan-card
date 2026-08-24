@@ -17,6 +17,9 @@ const wallKeyRoundtripFixture = JSON.parse(readFileSync(
 const coincidentPartitionFixture = JSON.parse(readFileSync(
   new URL('../../test/fixtures/276-coincident-partition.json', import.meta.url), 'utf8',
 ));
+const wallUnionIsolationFixture = JSON.parse(readFileSync(
+  new URL('../../test/fixtures/278-wall-union-isolation.json', import.meta.url), 'utf8',
+));
 
 const fixtureFor = (scenario) => scenario.fixture === 'large'
   ? makeLargeHouseFixture()
@@ -234,6 +237,17 @@ export function prepareGoldenFixture(scenario) {
         fill_mode: 'none',
         show_borders: true,
         show_names: false,
+      },
+    });
+  }
+  if (scenario.wallUnionIsolation) {
+    const source = wallUnionIsolationFixture.config.spaces[0];
+    fixture.config.spaces.push({
+      ...structuredClone(source),
+      id: scenario.space,
+      title: 'Wall union isolation',
+      settings: {
+        ...(source.settings || {}), fill_mode: 'none', show_borders: true, show_names: false,
       },
     });
   }
@@ -653,6 +667,15 @@ export async function prepareGoldenScenario(page, scenario) {
       card._setMode(scenario.mode);
       await card.updateComplete;
       await settleMode(card);
+    }
+    if (scenario.wallUnionIsolation) {
+      const result = card._wallUnionGeometry?.();
+      const paths = [...card.renderRoot.querySelectorAll('[data-hp="wall"]')];
+      if (result?.status !== 'degraded-extra' || result.paths?.length !== 2
+          || paths.length !== 2
+          || new Set(paths.map((path) => path.dataset.component)).size !== 2) {
+        throw new Error(`golden wall-union isolation contract failed: ${scenario.id}`);
+      }
     }
     if (scenario.multiWallJunction) {
       const { node, discardedWedgeProbe, enclosedHoles } = scenario.multiWallJunction;

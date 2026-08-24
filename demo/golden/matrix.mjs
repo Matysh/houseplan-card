@@ -1,7 +1,7 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 43;
+export const GOLDEN_MATRIX_VERSION = 44;
 
 const stage = { capture: 'stage', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0005 } };
 const page = { capture: 'page', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0008 } };
@@ -287,6 +287,12 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     space: 'golden-junction-patch-resilience', junctionPatchResilience: true, mode: 'view',
     retainedWedgeProbe: [0.8955, 0.556],
     absentWallProbes: [[0.420833333, 0.37625], [0.92, 0.348]],
+    theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
+  { id: 'wall-union-isolation-view-light', fixture: 'visual',
+    space: 'golden-wall-union-isolation', wallUnionIsolation: true, mode: 'view',
+    theme: 'light', viewport: { width: 1000, height: 900 }, ...stage },
+  { id: 'wall-union-isolation-view-dark', fixture: 'visual',
+    space: 'golden-wall-union-isolation', wallUnionIsolation: true, mode: 'view',
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'multiwall-junction-bevel-view-dark', fixture: 'visual',
     space: 'golden-multiwall-junction', mode: 'view',

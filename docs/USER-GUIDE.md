@@ -659,6 +659,13 @@ wall do not move. A fragment between two room vertices or touching an opening
 boundary is preserved. Ordinary opening, rendering, Save and editing never
 perform this cleanup without explicit Optimize confirmation.
 
+Before an editor stores a change to rooms, walls, boundaries, openings,
+partitions, drafts or columns, House Plan builds the exact candidate with the
+same physical-geometry engine used for display. If the result is unsafe, the
+change is canceled before Undo history or server storage is touched and the
+card reports that the wall geometry could not be built safely. Titles, colours,
+markers and other non-geometry settings remain editable.
+
 When an old plan contains an independent wall exactly on top of one complete
 solid boundary shared by two rooms, Optimize can replace the duplicate with
 the single room wall. Doors, windows and gates hosted by that independent wall
@@ -816,6 +823,10 @@ space. The configuration package is limited to 2 MB.
 - use Fit all to include distant objects;
 - check wall thickness and whether a shared span is a virtual Boundary;
 - use desktop for precise nodes, Split and Resize.
+- if some masonry remains visible but Optimize or an edit reports unsafe wall
+  geometry, export the affected space and attach it to a bug report. House Plan
+  preserves known-valid wall components for inspection and does not repair or
+  delete the ambiguous object during rendering.
 
 ### Vacuum does not move
 

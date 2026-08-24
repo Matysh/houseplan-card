@@ -422,11 +422,15 @@ Virtual-wall junction patches are computed, scale-relatively normalised below
 the geometry epsilon, and unioned one at a time. Each such union is an optional
 transaction: a malformed/degenerate patch retains the previous canonical body
 and later patches still run. The surrounding structural pass is deliberately
-outside that fallback boundary: an exception escaping the existing
-exterior/body/opening/authoritative-extra passes still returns `null` and
-activates the established fail-dark consumer behaviour. This distinction
-prevents one cosmetic junction repair from blanking a whole plan without
-masking a real structural failure (#197).
+outside that fallback boundary: a core room-body failure remains `failed-core`
+and activates fail-dark behaviour. Successful geometry is a typed component
+set (`ok` or `degraded-extra`), not one all-or-nothing polygon. Every optional
+independent body and the final room-body/exterior-shell merge is transactional;
+if both operands are structurally valid but their union fails, the operand is
+retained as a separate non-cancelling component. Plan, View, Static, hidden Iso,
+paper and light consumers project the same component set. The strict mutation
+preflight rejects `degraded-extra`, while read-only rendering preserves all
+known-valid masonry without rewriting the saved plan (#197, #278).
 The same structural pass builds one scale-relative physical endpoint map for
 room profiles, exterior intervals and junction patches (#249). Co-directional
 duplicates collapse while opposite rays remain distinct. Each canonical
@@ -537,6 +541,15 @@ Failure or cancellation writes nothing. Historical partial-shared and corner
 scale helpers remain pure-test history only and are tree-shaken from the
 production interaction path. Exact `a/b` wall endpoints remain identity and
 the quantised midpoint/direction `key` remains only a compatibility index.
+
+All physical-geometry writers share the same transaction boundary (#278).
+`checkSpacePhysicalGeometry()` validates the exact candidate through canonical
+wall and floor builders before history or save. A failed or degraded candidate
+restores the immutable pre-edit state, creates no Undo entry and sends no
+WebSocket write. A physical fingerprint is checked again at the deferred write
+boundary so a stale success cannot approve a newer candidate. Marker, title,
+colour and other presentation edits bypass this structural check, allowing an
+old degraded plan to be exported or corrected without a background migration.
 
 `reconcileCoincidentPartitions()` is an explicit-Optimize-only structural
 canonicalizer (#276). It consumes canonical shared wall intervals and the

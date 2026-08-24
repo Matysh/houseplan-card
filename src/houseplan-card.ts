@@ -192,12 +192,14 @@ import { optimizePlans, type OptimizeReport } from './plan-optimizer';
 import type { SpaceReferenceRepairContext } from './space-reference-repair';
 import { collectSpaceMarkerDependencies } from './space-deletion';
 import {
+  checkSpacePhysicalGeometry,
   checkOptimizeGeometry,
   geometryOpenCuts,
   geometryOpenings,
   geometryOpenPairs,
   geometryPartitionOpeningCuts,
   geometryRoomOpeningInputs,
+  spacePhysicalGeometryFingerprint,
   type GeometryOpeningProjection,
   type OptimizeGeometryPreflightResult,
 } from './plan-geometry-preflight';
@@ -2704,8 +2706,7 @@ class HouseplanCard extends LitElement {
             segments: this._draftSegmentCms.map((cm) => ({ cm })),
           };
         }
-        this._recordGeometry(this._t('history.draft_segment_delete'), before);
-        this._saveConfig();
+        this._commitPhysicalGeometry(this._t('history.draft_segment_delete'), before);
       }
       return;
     }
@@ -3777,6 +3778,7 @@ class HouseplanCard extends LitElement {
       // A genuinely different baseline invalidates local geometry undo. A
       // reconnect echo with identical content deliberately does not.
       this._geometryHistory.clear();
+      this._pendingPhysicalWrites.clear();
       if (this._serverCfg) this._clearGeometryGesture();
       this._serverCfg = nextConfig;
       this._cfgContentFingerprint = nextCfgFingerprint;
@@ -5298,7 +5300,7 @@ class HouseplanCard extends LitElement {
               this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W, extras,
             )
           : null;
-        if ((walls.length || extras.length) && !united)
+        if (united && (united.status === 'failed-core' || united.status === 'not-applicable'))
           throw new Error('wall boolean geometry failed');
         const floor = united?.paperGeom ?? floorFootprintGeometry(
           space.rooms, walls, openCuts,
@@ -5325,7 +5327,10 @@ class HouseplanCard extends LitElement {
             : { ox: 0, oy: 0, cm: 0, side: -1 as -1 | 1 };
           return buildIsoOpeningBasis({ ...opening, face }, wallHeight);
         });
-        return { walls: united?.geom || [], floor, openings: Object.freeze(openingBases) };
+        return {
+          walls: united?.components.flatMap((component) => component.geom) || [],
+          floor, openings: Object.freeze(openingBases),
+        };
       },
     };
   }
@@ -6750,8 +6755,7 @@ class HouseplanCard extends LitElement {
       sp.room_drafts = sp.room_drafts.filter((draft: any) => draft.id !== this._activeDraftId);
       if (!sp.room_drafts.length) delete sp.room_drafts;
     }
-    this._recordGeometry(this._t('history.wall_chain_finish'), before);
-    this._saveConfig();
+    this._commitPhysicalGeometry(this._t('history.wall_chain_finish'), before);
     delete this._resumeDraftBySpace[this._space];
     this._path = [];
     this._activeDraftId = null;
@@ -7031,6 +7035,9 @@ class HouseplanCard extends LitElement {
    */
   private _writesPending = 0;
   private _writeChain: Promise<void> = Promise.resolve();
+  private _pendingPhysicalWrites = new Map<string, {
+    fingerprint: string; before: SpaceGeometryState;
+  }>();
 
   /** A config write is in flight — the card must not adopt a server revision. */
   private get _cfgWriting(): boolean {
@@ -7044,6 +7051,22 @@ class HouseplanCard extends LitElement {
       this._dropLegacySegments();
       const candidate = canonicalizeConfigGeometry(this._serverCfg);
       const candidateFingerprint = contentFingerprint(candidate);
+      const strictEntries = [...this._pendingPhysicalWrites.entries()];
+      for (const [spaceId, accepted] of strictEntries) {
+        const candidateSpace = candidate.spaces.find((space: any) => space.id === spaceId);
+        const exactFingerprint = spacePhysicalGeometryFingerprint(candidateSpace);
+        if (exactFingerprint === accepted.fingerprint) continue;
+        let safe = false;
+        try { safe = this._checkSpacePhysicalGeometry(candidate, spaceId).ok; } catch { safe = false; }
+        if (!safe) {
+          this._restoreGeometryStateLocal(accepted.before);
+          this._pendingPhysicalWrites.delete(spaceId);
+          this._geometryHistory.clear();
+          this._showToast(this._t('toast.geometry_unsafe'));
+          throw Object.assign(new Error('unsafe wall geometry'), { code: 'geometry-unsafe' });
+        }
+        accepted.fingerprint = exactFingerprint;
+      }
       // Do not replace the reactive root merely because the pure helper
       // returned a clone. Besides an unnecessary render, that used to expose
       // unrelated write-time cleanup as a visual change (#224 review H1).
@@ -7057,6 +7080,10 @@ class HouseplanCard extends LitElement {
         type: 'houseplan/config/set', config: candidate, expected_rev: this._cfgRev,
       });
       this._cfgRev = r?.rev ?? this._cfgRev + 1;
+      for (const [spaceId, accepted] of strictEntries) {
+        if (this._pendingPhysicalWrites.get(spaceId)?.fingerprint === accepted.fingerprint)
+          this._pendingPhysicalWrites.delete(spaceId);
+      }
     });
     const mine = this._writeChain.finally(() => { this._writesPending--; });
     // keep the chain itself unadorned so the next link waits for the write only
@@ -7112,6 +7139,65 @@ class HouseplanCard extends LitElement {
     if (!after || JSON.stringify(before) === JSON.stringify(after)) return;
     this._geometryHistory.push({ name, before, after });
     this.requestUpdate();
+  }
+
+  /** Replace only persisted geometry in memory; no history entry and no WS. */
+  private _restoreGeometryStateLocal(state: SpaceGeometryState): boolean {
+    const sp = this._serverCfg?.spaces.find((space: any) => space.id === state.spaceId);
+    if (!sp) return false;
+    const copy = <T>(value: T): T => JSON.parse(JSON.stringify(value));
+    sp.rooms = copy(state.rooms);
+    const assign = (key: 'openings' | 'walls' | 'open_spans' | 'room_drafts'
+      | 'partitions' | 'wall_columns' | 'decor', value: unknown): void => {
+      if (value !== undefined) (sp as any)[key] = copy(value);
+      else delete (sp as any)[key];
+    };
+    assign('openings', state.openings);
+    assign('walls', state.walls);
+    assign('open_spans', state.open_spans);
+    assign('room_drafts', state.room_drafts);
+    assign('partitions', state.partitions);
+    assign('wall_columns', state.wall_columns);
+    assign('decor', state.decor);
+    for (const key of ['plan_x', 'plan_y', 'plan_scale', 'plan_scale_x', 'plan_scale_y', 'plan_angle'] as const)
+      delete (sp as any)[key];
+    Object.assign(sp, copy(state.plan_transform || {}));
+    this._cfgEpoch++;
+    this._modelCache = null;
+    this._wallUnionCache = null;
+    this._physicalBodiesCache = null;
+    this._frame = null;
+    this.requestUpdate();
+    return true;
+  }
+
+  /** Shared fail-closed transaction boundary for every physical writer. */
+  private _commitPhysicalGeometry(name: string, before: SpaceGeometryState | null): boolean {
+    if (!before || !this._serverCfg) return false;
+    const after = this._geometrySnapshot(before.spaceId);
+    if (!after || spacePhysicalGeometryFingerprint(before)
+        === spacePhysicalGeometryFingerprint(after)) return false;
+    let safe = false;
+    try {
+      safe = this._checkSpacePhysicalGeometry(this._serverCfg, before.spaceId).ok;
+    } catch {
+      safe = false;
+    }
+    if (!safe) {
+      this._clearGeometryGesture();
+      this._restoreGeometryStateLocal(before);
+      this._showToast(this._t('toast.geometry_unsafe'));
+      return false;
+    }
+    this._recordGeometry(name, before);
+    const afterSpace = this._serverCfg.spaces.find((space: any) => space.id === before.spaceId);
+    const pending = this._pendingPhysicalWrites.get(before.spaceId);
+    this._pendingPhysicalWrites.set(before.spaceId, {
+      before: pending?.before || before,
+      fingerprint: spacePhysicalGeometryFingerprint(afterSpace),
+    });
+    this._saveConfig();
+    return true;
   }
 
   /** Drop every transient gesture before replacing committed geometry. */
@@ -7194,27 +7280,28 @@ class HouseplanCard extends LitElement {
 
   private _applyGeometryState(state: SpaceGeometryState): boolean {
     if (!this._canCommitSpace(state.spaceId)) return false;
-    const sp = this._serverCfg?.spaces.find((s: any) => s.id === state.spaceId);
-    if (!sp) return false;
-    const copy = <T>(value: T): T => JSON.parse(JSON.stringify(value));
-    sp.rooms = copy(state.rooms);
-    if (state.openings !== undefined) sp.openings = copy(state.openings);
-    else delete sp.openings;
-    if (state.walls !== undefined) sp.walls = copy(state.walls);
-    else delete sp.walls;
-    if (state.open_spans !== undefined) (sp as any).open_spans = copy(state.open_spans);
-    else delete (sp as any).open_spans;
-    if (state.room_drafts !== undefined) (sp as any).room_drafts = copy(state.room_drafts);
-    else delete (sp as any).room_drafts;
-    if (state.partitions !== undefined) (sp as any).partitions = copy(state.partitions);
-    else delete (sp as any).partitions;
-    if (state.wall_columns !== undefined) (sp as any).wall_columns = copy(state.wall_columns);
-    else delete (sp as any).wall_columns;
-    if (state.decor !== undefined) sp.decor = copy(state.decor);
-    else delete sp.decor;
-    for (const key of ['plan_x', 'plan_y', 'plan_scale', 'plan_scale_x', 'plan_scale_y', 'plan_angle'] as const)
-      delete sp[key];
-    Object.assign(sp, copy(state.plan_transform || {}));
+    const before = this._geometrySnapshot(state.spaceId);
+    if (!before || !this._restoreGeometryStateLocal(state)) return false;
+    const physicalChanged = spacePhysicalGeometryFingerprint(before)
+      !== spacePhysicalGeometryFingerprint(state);
+    if (physicalChanged) {
+      let safe = false;
+      try { safe = !!this._serverCfg
+        && this._checkSpacePhysicalGeometry(this._serverCfg, state.spaceId).ok; } catch { safe = false; }
+      if (!safe) {
+        this._restoreGeometryStateLocal(before);
+        this._showToast(this._t('toast.geometry_unsafe'));
+        return false;
+      }
+      const afterSpace = this._serverCfg?.spaces.find(
+        (space: any) => space.id === state.spaceId,
+      );
+      const pending = this._pendingPhysicalWrites.get(state.spaceId);
+      this._pendingPhysicalWrites.set(state.spaceId, {
+        before: pending?.before || before,
+        fingerprint: spacePhysicalGeometryFingerprint(afterSpace),
+      });
+    }
     this._clearGeometryGesture();
     if (this._space !== state.spaceId) {
       this._commitSpace(state.spaceId);
@@ -7277,7 +7364,9 @@ class HouseplanCard extends LitElement {
   private _saveConfigDebounced = debounce(() => {
     if (!this._serverCfg) return;
     this._writeConfig().catch((e: any) => {
-      if (e?.code === 'conflict') {
+      if (e?.code === 'geometry-unsafe') {
+        return;
+      } else if (e?.code === 'conflict') {
         // a real one now: another window wrote between our read and our write
         this._showToast(this._t('toast.conflict'));
         this._cancelPath();
@@ -7603,8 +7692,7 @@ class HouseplanCard extends LitElement {
       persistedPoints, persistedSegments.map((s: any) => Number(s.cm)), id,
     );
     this._physicalSel = null;
-    this._recordGeometry(this._t('history.draft_merge'), before);
-    this._saveConfig();
+    this._commitPhysicalGeometry(this._t('history.draft_merge'), before);
 
     if (connectorCm != null) {
       this._offerWallFaces(beforePath, beforePath.length - 1, beforeGraphSources);
@@ -7656,8 +7744,7 @@ class HouseplanCard extends LitElement {
     };
     if (i >= 0) sp.room_drafts[i] = saved;
     else sp.room_drafts.push(saved);
-    this._recordGeometry(this._t('history.draft_segment'), before);
-    this._saveConfig();
+    this._commitPhysicalGeometry(this._t('history.draft_segment'), before);
   }
 
   private _activeWallSourceKey(index: number): string {
@@ -7859,8 +7946,7 @@ class HouseplanCard extends LitElement {
     const sp = this._curSpaceCfg as any;
     sp.wall_columns ||= [];
     sp.wall_columns.push({ ...candidate, center: [center[0] / NORM_W, center[1] / NORM_W] });
-    this._recordGeometry(this._t('history.column_add'), before);
-    this._saveConfig();
+    this._commitPhysicalGeometry(this._t('history.column_add'), before);
   }
 
   private _openPhysicalDialog(
@@ -7940,9 +8026,9 @@ class HouseplanCard extends LitElement {
       const draft = (sp.room_drafts || []).find((x: any) => x.id === d.id);
       if (draft?.segments?.[d.segment || 0]) draft.segments[d.segment || 0].cm = cmRaw;
     }
-    this._recordGeometry(this._t('history.physical_edit'), before);
+    const committed = this._commitPhysicalGeometry(this._t('history.physical_edit'), before);
     this._physicalDialog = null;
-    this._saveConfig();
+    if (!committed) this.requestUpdate();
   };
 
   private _deletePhysicalSelection = (): void => {
@@ -7971,8 +8057,7 @@ class HouseplanCard extends LitElement {
     if (this._activeDraftId === sel.id) this._cancelPath();
     this._physicalSel = null;
     this._physicalDialog = null;
-    this._recordGeometry(this._t('history.physical_delete'), before);
-    this._saveConfig();
+    this._commitPhysicalGeometry(this._t('history.physical_delete'), before);
   };
 
   private _confirmPartitionDelete = (): void => {
@@ -7989,8 +8074,7 @@ class HouseplanCard extends LitElement {
     this._partitionDeleteDialog = null;
     this._physicalSel = null;
     this._physicalDialog = null;
-    this._recordGeometry(this._t('history.physical_delete'), before);
-    this._saveConfig();
+    this._commitPhysicalGeometry(this._t('history.physical_delete'), before);
   };
 
   private _deleteDraftWhole = (): void => {
@@ -8005,8 +8089,7 @@ class HouseplanCard extends LitElement {
     if (this._activeDraftId === id) this._cancelPath();
     this._physicalSel = null;
     this._physicalDialog = null;
-    this._recordGeometry(this._t('history.physical_delete'), before);
-    this._saveConfig();
+    this._commitPhysicalGeometry(this._t('history.physical_delete'), before);
   };
 
   private _deleteDraftSegment = (): void => {
@@ -8038,8 +8121,7 @@ class HouseplanCard extends LitElement {
     if (this._activeDraftId === draft.id) this._cancelPath();
     this._physicalDialog = null;
     this._physicalSel = pieces.length ? { kind: 'draft', id: pieces[0].id } : null;
-    this._recordGeometry(this._t('history.draft_segment_delete'), before);
-    this._saveConfig();
+    this._commitPhysicalGeometry(this._t('history.draft_segment_delete'), before);
   };
 
   private _physicalDown(ev: PointerEvent, kind: 'partition' | 'column', id: string): void {
@@ -8168,8 +8250,7 @@ class HouseplanCard extends LitElement {
         (base.center[1] + drag.delta[1]) / NORM_W,
       ];
     }
-    this._recordGeometry(this._t('history.physical_move'), drag.before);
-    this._saveConfig();
+    this._commitPhysicalGeometry(this._t('history.physical_move'), drag.before);
   }
 
   private _registerPhysicalTap(
@@ -8239,8 +8320,7 @@ class HouseplanCard extends LitElement {
     const stored = (this._curSpaceCfg as any).wall_columns?.find((c: any) => c.id === drag.id);
     if (!stored) return;
     stored.angle = drag.angle;
-    this._recordGeometry(this._t('history.physical_edit'), drag.before);
-    this._saveConfig();
+    this._commitPhysicalGeometry(this._t('history.physical_edit'), drag.before);
   }
 
 
@@ -8448,22 +8528,17 @@ class HouseplanCard extends LitElement {
     return true;
   }
 
-  /** Final fail-closed check for the exact overlay. With physical walls the
-   * production renderer has normally populated `_wallUnionCache` for this
-   * cfg epoch already; pointerup reuses that exact result instead of repeating
-   * a second multi-polygon union. A release before the frame still computes it
-   * here. Wall-less plans use the shared production floor preflight. */
+  /** Final fail-closed check for the exact overlay through the common barrier. */
   private _rszCandidateRenderable(preview: { space: string; sp: any } | null): boolean {
     if (!preview || preview.space !== this._space || this._rszPreview !== preview
         || !this._serverCfg) return false;
-    const hasPhysical = !!preview.sp.walls?.length
-      || !!preview.sp.partitions?.length || !!preview.sp.room_drafts?.length
-      || !!preview.sp.wall_columns?.length;
     try {
-      if (hasPhysical) return !!this._wallUnionGeometry();
-      return this._checkOptimizeGeometry({
-        ...this._serverCfg, spaces: [preview.sp],
-      } as ServerConfig).ok;
+      const candidate = {
+        ...this._serverCfg,
+        spaces: this._serverCfg.spaces.map((space: any) =>
+          space.id === preview.space ? preview.sp : space),
+      } as ServerConfig;
+      return this._checkSpacePhysicalGeometry(candidate, preview.space).ok;
     } catch {
       return false;
     }
@@ -8581,8 +8656,7 @@ class HouseplanCard extends LitElement {
     // the click synthesized after the drag must not re-pick the selection
     this._suppressClick = true;
     setTimeout(() => (this._suppressClick = false), 0);
-    this._recordGeometry(this._t('history.resize_room'), before);
-    this._saveConfig();
+    this._commitPhysicalGeometry(this._t('history.resize_room'), before);
     this._rszEligibilityCache = null;
     this.requestUpdate();
   }
@@ -11144,9 +11218,8 @@ class HouseplanCard extends LitElement {
     if (plan.walls.length) sp.walls = plan.walls;
     else delete sp.walls;
     this._persistOpenCuts(plan.cuts);
-    this._showToast(this._t('toast.boundary_restored'));
-    this._recordGeometry(this._t('history.close_boundary'), before);
-    this._saveConfig();
+    if (this._commitPhysicalGeometry(this._t('history.close_boundary'), before))
+      this._showToast(this._t('toast.boundary_restored'));
     this.requestUpdate();
   }
 
@@ -11196,13 +11269,12 @@ class HouseplanCard extends LitElement {
       else delete sp.walls;
       const beforeOp = (sp.openings || []).length;
       sp.openings = purgeOpeningsOnSpan(sp.openings, sg, NORM_W, this._gridPitch * 6);
-      if ((sp.openings || []).length < beforeOp) {
-        this._showToast(this._t('toast.openwall_openings_removed'));
-      }
+      const removedOpenings = (sp.openings || []).length < beforeOp;
       this._persistOpenCuts(next);
-      this._showToast(this._t('toast.boundary_opened'));
-      this._recordGeometry(this._t('history.open_boundary'), before);
-      this._saveConfig();
+      if (this._commitPhysicalGeometry(this._t('history.open_boundary'), before)) {
+        if (removedOpenings) this._showToast(this._t('toast.openwall_openings_removed'));
+        this._showToast(this._t('toast.boundary_opened'));
+      }
       this.requestUpdate();
       return;
     }
@@ -11334,10 +11406,9 @@ class HouseplanCard extends LitElement {
     if (normalized.length) sp.walls = normalized;
     else delete sp.walls;
     this._roomDeleteDialog = null;
-    this._recordGeometry(this._t(
+    this._commitPhysicalGeometry(this._t(
       keepWalls ? 'history.delete_room_keep_walls' : 'history.delete_room_with_walls',
     ), before);
-    this._saveConfig();
     this._regSignature = '';
     this._maybeRebuildDevices();
     this.requestUpdate();
@@ -11541,9 +11612,8 @@ class HouseplanCard extends LitElement {
     if (next.length) sp.walls = next;
     else delete sp.walls;
     this._wallDialog = null;
-    this._showToast(this._t(cm == null ? 'toast.wallthick_cleared' : 'toast.wallthick_set'));
-    this._recordGeometry(this._t('history.wall_thickness'), before);
-    this._saveConfig();
+    if (this._commitPhysicalGeometry(this._t('history.wall_thickness'), before))
+      this._showToast(this._t(cm == null ? 'toast.wallthick_cleared' : 'toast.wallthick_set'));
     this.requestUpdate();
   }
 
@@ -11795,14 +11865,16 @@ class HouseplanCard extends LitElement {
     // of the other. When the body is thinner than ~3px on screen the hatch
     // collapses into noise — keep the solid fill alone.
     return svg`<g class="wallbodies" style="--room-stroke:${stroke};--wall-fill:${wf.c};--wall-fill-op:${wf.a}">
-      <path class="wallbody-fill" d="${united.d}"
-        fill="${wf.c}" fill-opacity="${wf.a}" fill-rule=${united.fillRule}
-        stroke="none" pointer-events="none"></path>
-      <path class="wallbody ${solid ? 'solid' : ''}"
-        data-hp="wall" data-id="union" data-kind="union"
-        d="${united.d}" fill="${solid ? 'none' : 'url(#hp-wall-hatch)'}" fill-rule=${united.fillRule}
-        stroke="${stroke}" stroke-width="${gridVisualUnits(0.6, this._cellCm)}"
-        pointer-events="none"></path>
+      ${united.paths.map((component) => svg`
+        <path class="wallbody-fill" data-component=${component.id} d="${component.d}"
+          fill="${wf.c}" fill-opacity="${wf.a}" fill-rule=${component.fillRule}
+          stroke="none" pointer-events="none"></path>
+        <path class="wallbody ${solid ? 'solid' : ''}"
+          data-hp="wall" data-id="union" data-kind="union" data-component=${component.id}
+          d="${component.d}" fill="${solid ? 'none' : 'url(#hp-wall-hatch)'}"
+          fill-rule=${component.fillRule}
+          stroke="${stroke}" stroke-width="${gridVisualUnits(0.6, this._cellCm)}"
+          pointer-events="none"></path>`)}
     </g>` as unknown as TemplateResult;
   }
 
@@ -12459,8 +12531,7 @@ class HouseplanCard extends LitElement {
     this._opMeasure = null; // badges and the center tick live only through the drag
     // only write when the geometry actually changed (audit L4)
     if (moved && drag.dirty) {
-      this._recordGeometry(this._t('history.move_opening'), drag.before);
-      this._saveConfig();
+      this._commitPhysicalGeometry(this._t('history.move_opening'), drag.before);
     }
     // keep the flag until the click event that follows pointerup, then let it go
     if (moved) window.setTimeout(() => (this._opDrag = null), 0);
@@ -12559,8 +12630,9 @@ class HouseplanCard extends LitElement {
     const i = sp.openings.findIndex((x: OpeningCfg) => x.id === o.id);
     if (i >= 0) sp.openings[i] = o;
     else sp.openings.push(o);
-    this._recordGeometry(this._t(d.id ? 'history.edit_opening' : 'history.add_opening'), before);
-    this._saveConfig();
+    this._commitPhysicalGeometry(
+      this._t(d.id ? 'history.edit_opening' : 'history.add_opening'), before,
+    );
     this._openingDialog = null;
     this.requestUpdate();
   }
@@ -12571,8 +12643,7 @@ class HouseplanCard extends LitElement {
     if (!d?.id || !sp?.openings) return;
     const before = this._geometrySnapshot();
     sp.openings = sp.openings.filter((x: OpeningCfg) => x.id !== d.id);
-    this._recordGeometry(this._t('history.delete_opening'), before);
-    this._saveConfig();
+    this._commitPhysicalGeometry(this._t('history.delete_opening'), before);
     this._openingDialog = null;
     this.requestUpdate();
   }
@@ -12667,12 +12738,11 @@ class HouseplanCard extends LitElement {
     delete keep.x; delete keep.y; delete keep.w; delete keep.h; // a merged room is never a rect
     sp.rooms = sp.rooms.filter((r: any) => r.id !== dropId);
     this._commitOpenSpans();
-    this._recordGeometry(this._t('history.merge_rooms'), before);
-    this._saveConfig();
+    const committed = this._commitPhysicalGeometry(this._t('history.merge_rooms'), before);
     this._mergeDialog = null;
     this._regSignature = '';
     this._maybeRebuildDevices();
-    this._showToast(this._t('toast.rooms_merged', { name: keep.name || '' }));
+    if (committed) this._showToast(this._t('toast.rooms_merged', { name: keep.name || '' }));
   }
 
   /** Split: click the room, then two points on its walls. */
@@ -13162,8 +13232,7 @@ class HouseplanCard extends LitElement {
       else delete sp.walls;
     }
 
-    this._recordGeometry(this._t('history.wall_face_batch'), before);
-    this._saveConfig();
+    this._commitPhysicalGeometry(this._t('history.wall_face_batch'), before);
     delete this._resumeDraftBySpace[this._space];
     this._path = [];
     this._activeDraftId = null;
@@ -13303,8 +13372,9 @@ class HouseplanCard extends LitElement {
         else delete sp.walls;
       }
     }
-    this._recordGeometry(this._t(wasSplit ? 'history.split_room' : 'history.add_room'), before);
-    this._saveConfig();
+    const committed = this._commitPhysicalGeometry(
+      this._t(wasSplit ? 'history.split_room' : 'history.add_room'), before,
+    );
     this._path = [];
     delete this._resumeDraftBySpace[this._space];
     this._activeDraftId = null;
@@ -13318,6 +13388,7 @@ class HouseplanCard extends LitElement {
     this._roomDialog = false;
     this._regSignature = '';
     this._maybeRebuildDevices();
+    if (!committed) return;
     // auto-add the area's device icons + PIN their positions in the layout,
     // so that icons do not get reshuffled when the order in the HA registry changes.
     let added = 0;
@@ -13674,8 +13745,7 @@ class HouseplanCard extends LitElement {
       sp.room_drafts = sp.room_drafts.filter((d: any) => d.id !== this._activeDraftId);
       if (!sp.room_drafts.length) delete sp.room_drafts;
     }
-    this._recordGeometry(this._t('history.contour_to_partitions'), before);
-    this._saveConfig();
+    this._commitPhysicalGeometry(this._t('history.contour_to_partitions'), before);
     this._roomDialog = false;
     this._path = [];
     delete this._resumeDraftBySpace[this._space];
@@ -15109,6 +15179,13 @@ class HouseplanCard extends LitElement {
     });
   }
 
+  /** One strict production source shared by editor commits and stale rechecks. */
+  private _checkSpacePhysicalGeometry(config: ServerConfig, spaceId: string) {
+    return checkSpacePhysicalGeometry(config, spaceId, {
+      fallbackSpaceName: (index) => this._t('gs.align_preflight_space', { n: String(index) }),
+    });
+  }
+
   private _optimizeReferenceContext(
     removeLiveMissingPositions: boolean,
   ): SpaceReferenceRepairContext {
@@ -15957,8 +16034,10 @@ class HouseplanCard extends LitElement {
         this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W, lightPhysical,
       )
       : null;
-    if (masonry) {
-      for (const ring of geometryAllRings(masonry.geom)) occluders.push(...polygonSegments(ring));
+    if (masonry && (masonry.status === 'ok' || masonry.status === 'degraded-extra')) {
+      for (const component of masonry.components) {
+        for (const ring of geometryAllRings(component.geom)) occluders.push(...polygonSegments(ring));
+      }
     } else {
       // Malformed legacy geometry must remain opaque even when the canonical
       // boolean pass cannot produce a joined result.
@@ -15975,7 +16054,8 @@ class HouseplanCard extends LitElement {
       occluders: splitAtIntersections(occluders),
       floor: polys.map((x) => x.poly),
       fingerprint,
-      masonryGeometry: masonry?.geom || [],
+      masonryGeometry: masonry && (masonry.status === 'ok' || masonry.status === 'degraded-extra')
+        ? masonry.components.flatMap((component) => component.geom) : [],
       // The source guard must fail dark against the same type/floor-filtered
       // bodies used to build the light masonry. The ordinary render bodies are
       // cut by every hosted opening, including opaque windows and exterior

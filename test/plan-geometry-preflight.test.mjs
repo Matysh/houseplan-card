@@ -2,8 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  checkSpacePhysicalGeometry,
   checkOptimizeGeometry,
   prepareSpacePhysicalGeometryInputs,
+  spacePhysicalGeometryFingerprint,
 } from '../test-build/plan-geometry-preflight.js';
 import { GRID_STEP_N, spaceModels } from '../test-build/space-geometry.js';
 import { contentFingerprint } from '../test-build/visual-continuity.js';
@@ -137,6 +139,34 @@ test('null, exceptions and floor failure are bounded while successful empty geom
   });
   assert.equal(prepareThrows.failures[0].reason, 'prepare-exception');
   assert.doesNotMatch(JSON.stringify(prepareThrows), /private preparation detail/);
+});
+
+test('#278 strict one-space barrier rejects degraded render-safe geometry', () => {
+  const config = base([{
+    id: 'strict', title: 'Strict', view_box: [0, 0, 1, 1],
+    rooms: [room()], walls: [wall()],
+  }]);
+  const degraded = checkSpacePhysicalGeometry(config, 'strict', {
+    wallPass: () => ({
+      status: 'degraded-extra', geom: [], components: [], roomGeom: [], paperGeom: [],
+      depthUnits: 0, openingIndex: null, degradedExtraCount: 1,
+    }),
+  });
+  assert.equal(degraded.ok, false);
+  assert.equal(degraded.reason, 'wall-degraded-extra');
+  assert.equal(degraded.fingerprint, spacePhysicalGeometryFingerprint(config.spaces[0]));
+
+  const failedCore = checkSpacePhysicalGeometry(config, 'strict', {
+    wallPass: () => ({
+      status: 'failed-core', geom: [], components: [], roomGeom: [], paperGeom: [],
+      depthUnits: 0, openingIndex: null, degradedExtraCount: 0,
+    }),
+  });
+  assert.equal(failedCore.reason, 'wall-failed-core');
+
+  const missing = checkSpacePhysicalGeometry(config, 'missing');
+  assert.equal(missing.ok, false);
+  assert.equal(missing.reason, 'prepare-exception');
 });
 
 test('one failed space blocks the ordered whole-plan result and uses safe display fallbacks', () => {

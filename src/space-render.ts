@@ -541,12 +541,15 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
         ${passageGlowTunnels}
         ${wallUnion
           ? svg`<g class="wallbodies" style="--room-stroke:${wallStroke}">
-              <path class="wallbody-fill" d="${wallUnion.d}"
-                fill="${colors.wall_fill.c}" fill-opacity="${colors.wall_fill.a}" fill-rule=${wallUnion.fillRule}
-                stroke="none" pointer-events="none"></path>
-              <path class="wallbody ${solidWall ? 'solid' : ''}" data-hp="wall" data-id="union" data-kind="union"
-                d="${wallUnion.d}" fill="${solidWall ? 'none' : 'url(#hp-wall-hatch)'}" fill-rule=${wallUnion.fillRule}
-                stroke="${wallStroke}" stroke-width="${gridVisualUnits(0.6, cellCm)}" pointer-events="none"></path>
+              ${wallUnion.paths.map((component) => svg`
+                <path class="wallbody-fill" data-component=${component.id} d="${component.d}"
+                  fill="${colors.wall_fill.c}" fill-opacity="${colors.wall_fill.a}"
+                  fill-rule=${component.fillRule} stroke="none" pointer-events="none"></path>
+                <path class="wallbody ${solidWall ? 'solid' : ''}"
+                  data-hp="wall" data-id="union" data-kind="union" data-component=${component.id}
+                  d="${component.d}" fill="${solidWall ? 'none' : 'url(#hp-wall-hatch)'}"
+                  fill-rule=${component.fillRule} stroke="${wallStroke}"
+                  stroke-width="${gridVisualUnits(0.6, cellCm)}" pointer-events="none"></path>`)}
             </g>`
           : nothing}
         ${hostedOpeningSymbols}

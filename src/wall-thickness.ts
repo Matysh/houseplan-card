@@ -17,6 +17,38 @@ export interface WallEntry {
   b?: number[];
 }
 
+export type WallGeometryStatus =
+  | 'ok'
+  | 'degraded-extra'
+  | 'failed-core'
+  | 'not-applicable';
+
+/** One independently drawable/physical polygon-clipping component. */
+export interface WallGeometryComponent {
+  id: string;
+  geom: any;
+}
+
+export interface WallBodiesGeometryResult {
+  status: WallGeometryStatus;
+  /** Last successful primary union. Isolated fallback components stay separate. */
+  geom: any;
+  components: readonly WallGeometryComponent[];
+  /** Canonical room masonry before independent bodies. */
+  roomGeom: any;
+  paperGeom: any;
+  depthUnits: number;
+  openingIndex: OpeningWallIndex | null;
+  degradedExtraCount: number;
+}
+
+export interface WallGeometryOperations {
+  /** Test seam around the transaction which may fail for one independent body. */
+  mergeExtra?: (primary: any, extra: any, index: number) => any;
+  /** Bounded diagnostic seam; never receives coordinates, ids or exceptions. */
+  onCoreFailure?: (phase: string) => void;
+}
+
 export const WALL_MIN_CM = 1;
 export const WALL_MAX_CM = 100;
 /** Default thickness offered in the Draw toolbar (docs/WALL-THICKNESS.md §6). */
@@ -1988,9 +2020,13 @@ export function innerContourForRoom(
   const inset = insetContour(pr.poly, pr.offsets, multiWallNodes);
   if (!inset) return poly.map((p) => [p[0], p[1]]);
   if (!multiWallNodes.nodes.length) return inset;
-  const roomWallGeometry = sharedRoomWallGeometry ?? wallBodiesGeometry(
-    rooms, walls, openCuts, [], pitch, cellCm, gridPitch, coordScale,
-  )?.roomGeom;
+  const computedWallGeometry = sharedRoomWallGeometry === undefined
+    ? wallBodiesGeometry(rooms, walls, openCuts, [], pitch, cellCm, gridPitch, coordScale)
+    : null;
+  const roomWallGeometry = sharedRoomWallGeometry ?? (
+    computedWallGeometry?.status === 'ok' || computedWallGeometry?.status === 'degraded-extra'
+      ? computedWallGeometry.roomGeom : undefined
+  );
   if (roomWallGeometry) {
     try {
       const floor = difference(closedRing(pr.poly) as any, roomWallGeometry);
@@ -2008,6 +2044,15 @@ function closedRing(poly: number[][]): number[][][] {
   const ring = poly.map((p) => [p[0], p[1]]);
   ring.push([poly[0][0], poly[0][1]]);
   return [ring];
+}
+
+function structurallyValidWallGeometry(geometry: any): boolean {
+  if (!Array.isArray(geometry) || !geometry.length) return false;
+  return geometry.every((polygon: any) => Array.isArray(polygon) && polygon.length
+    && polygon.every((ring: any) => Array.isArray(ring) && ring.length >= 4
+      && ring.every((point: any) => Array.isArray(point) && point.length >= 2
+        && Number.isFinite(point[0]) && Number.isFinite(point[1])))
+    && Math.abs(polygonArea(polygon[0])) > 1e-9);
 }
 
 interface MultiWallRoomRing {
@@ -2559,7 +2604,7 @@ export function floorFootprintGeometry(
   }
 }
 
-function polyclipToPathD(geom: any): string {
+export function polyclipToPathD(geom: any): string {
   if (!geom) return '';
   let d = '';
   // polyclip Geom: MultiPolygon = Polygon[]; Polygon = Ring[] where ring[0]
@@ -2737,8 +2782,8 @@ export function wallBodyRings(
  * uses the same geometry as its occluders, so a wall blocks light exactly
  * where the plan shows a wall — with its real thickness, and with a doorway
  * that is a real gap between two jamb faces. A successful empty operation is
- * returned as an empty geometry; null means the boolean pass itself failed,
- * so drawing callers may distinguish it from "nothing solid" and fall back.
+ * returned as an empty typed result. Core failure is `failed-core`; an optional
+ * merge failure is `degraded-extra` with every known-valid component retained.
  */
 export function wallBodiesGeometry(
   rooms: any[],
@@ -2750,15 +2795,12 @@ export function wallBodiesGeometry(
   gridPitch: number,
   coordScale = 1,
   extraBodies: number[][][] = [],
-): {
-  geom: any;
-  /** Canonical room masonry before opening cuts and independent bodies. */
-  roomGeom: any;
-  paperGeom: any;
-  depthUnits: number;
-  openingIndex: OpeningWallIndex | null;
-} | null {
-  if (!walls?.length && !extraBodies.length) return null;
+  operations: WallGeometryOperations = {},
+): WallBodiesGeometryResult {
+  if (!walls?.length && !extraBodies.length) return {
+    status: 'not-applicable', geom: [], components: [], roomGeom: [], paperGeom: [],
+    depthUnits: 0, openingIndex: null, degradedExtraCount: 0,
+  };
   const roomRings: MultiWallRoomRing[] = [];
   const multiWallNodes = multiWallNodesForGeometry(
     rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale,
@@ -2795,12 +2837,14 @@ export function wallBodiesGeometry(
   const openingIndex = openings.length
     ? openingWallIndex(rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale)
     : null;
+  let corePhase = 'exterior';
   try {
     const exterior = exteriorEnvelopeGeometry(
       rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale, multiWallNodes,
     );
     // Paper and masonry share this one structural pass. Renderers cache the
     // returned pair, so a live HA state update never repeats exterior topology.
+    corePhase = 'paper';
     const rawPaperGeom = exterior
       ? (exterior.shell?.length ? union(exterior.centre, exterior.shell) : exterior.centre)
       : [];
@@ -2811,6 +2855,7 @@ export function wallBodiesGeometry(
       const outset: any = closedRing(ring.outset);
       return ring.inset ? difference(outset, closedRing(ring.inset) as any) : outset;
     };
+    corePhase = 'room-rings';
     let body: any = null;
     for (const ring of roomRings) {
       try {
@@ -2826,6 +2871,7 @@ export function wallBodiesGeometry(
     // also included so a rejected acute child ring cannot remove a divider or
     // an interior half-wall. Clipping them to the centre union gives a hard
     // facade boundary; the canonical exterior shell is added afterwards.
+    corePhase = 'edge-bodies';
     if (exterior) {
       for (const edge of wallEdgeBodies(
         rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale,
@@ -2842,14 +2888,37 @@ export function wallBodiesGeometry(
     // The room-ring subtraction above cannot infer a mitre between real arms
     // owned by different contours at a virtual T. Add only those missing
     // junction pieces, then let physical openings cut through them as usual.
+    corePhase = 'junctions';
     body = unionJunctionPatches(body, junctions, coordScale);
+    corePhase = 'facade-clip';
     if (body && exterior) body = intersection(body, exterior.centre);
-    if (exterior?.shell?.length)
-      body = body ? union(body, exterior.shell) : exterior.shell;
+    corePhase = 'exterior-shell';
+    const isolatedCore: WallGeometryComponent[] = [];
+    let degradedCoreCount = 0;
+    if (exterior?.shell?.length) {
+      if (!body) body = exterior.shell;
+      else {
+        try {
+          const merged = union(body, exterior.shell);
+          if (!structurallyValidWallGeometry(merged)) throw new Error('invalid shell union');
+          body = merged;
+        } catch {
+          // Both mandatory halves exist; only their boolean merge failed.
+          // Preserve them as non-cancelling components for read-only render,
+          // while strict writers still reject the degraded structural result.
+          if (!structurallyValidWallGeometry(body)
+              || !structurallyValidWallGeometry(exterior.shell)) throw new Error('invalid shell');
+          isolatedCore.push({ id: 'exterior-shell', geom: exterior.shell });
+          degradedCoreCount++;
+        }
+      }
+    }
+    corePhase = 'multi-wall-bevel';
     if (body && multiWallNodes.nodes.length)
       body = bevelMultiWallBody(body, multiWallNodes, exterior?.centre, paperGeom);
     const roomGeom = body || [];
     // cut opening tunnels (axis-aligned to opening angle)
+    corePhase = 'openings';
     for (const o of openings) {
       if (!(o.length > 0)) continue;
       const association = resolveOpeningWallAssociation(openingIndex!, o, true);
@@ -2866,16 +2935,59 @@ export function wallBodiesGeometry(
         [o.x - ux * half + nx * pad, o.y - uy * half + ny * pad],
       ];
       if (body) body = difference(body, closedRing(slot) as any);
+      for (const component of isolatedCore) {
+        component.geom = difference(component.geom, closedRing(slot) as any);
+      }
     }
-    // Independent bodies are physical but own no openings. Unioning here (not
-    // before the loop above) preserves them under coincident room openings.
-    for (const extra of extraBodies) {
-      if (extra.length < 3) continue;
-      body = body ? union(body, closedRing(extra) as any) : [closedRing(extra)];
+    // Independent bodies are physical but own no openings. Each merge is a
+    // transaction: a local boolean failure must not discard the last valid
+    // room/extra union. A valid offending body remains an isolated component,
+    // which renderers paint separately so coincident evenodd rings never punch
+    // a transparent hole in the primary masonry.
+    corePhase = 'extras';
+    const isolated: WallGeometryComponent[] = [];
+    let degradedExtraCount = 0;
+    const mergeExtra = operations.mergeExtra
+      || ((primary: any, extra: any) => primary ? union(primary, extra) : extra);
+    for (let index = 0; index < extraBodies.length; index++) {
+      const extra = extraBodies[index];
+      if (extra.length < 3 || !extra.every((point) => point.length >= 2
+          && Number.isFinite(point[0]) && Number.isFinite(point[1]))
+          || Math.abs(polygonArea(extra)) <= 1e-9) {
+        degradedExtraCount++;
+        continue;
+      }
+      const standalone: any = [closedRing(extra)];
+      try {
+        const merged = mergeExtra(body, standalone, index);
+        if (!structurallyValidWallGeometry(merged)) throw new Error('invalid extra union');
+        body = merged;
+      } catch {
+        degradedExtraCount++;
+        if (structurallyValidWallGeometry(standalone)) {
+          isolated.push({ id: `extra-${index}`, geom: standalone });
+        }
+      }
     }
-    return { geom: body || [], roomGeom, paperGeom, depthUnits: maxDepth, openingIndex };
+    isolated.push(...isolatedCore);
+    isolated.sort((left, right) => polyclipToPathD(left.geom).localeCompare(polyclipToPathD(right.geom)));
+    const primary = body || [];
+    const components: WallGeometryComponent[] = [
+      ...(structurallyValidWallGeometry(primary) ? [{ id: 'primary', geom: primary }] : []),
+      ...isolated.map((component, index) => ({ ...component, id: `isolated-${index}` })),
+    ];
+    return {
+      status: degradedExtraCount || degradedCoreCount ? 'degraded-extra' : 'ok',
+      geom: primary, components, roomGeom, paperGeom,
+      depthUnits: maxDepth, openingIndex,
+      degradedExtraCount: degradedExtraCount + degradedCoreCount,
+    };
   } catch {
-    return null;
+    operations.onCoreFailure?.(corePhase);
+    return {
+      status: 'failed-core', geom: [], components: [], roomGeom: [], paperGeom: [],
+      depthUnits: maxDepth, openingIndex: null, degradedExtraCount: 0,
+    };
   }
 }
 
@@ -2891,8 +3003,12 @@ export function wallBodiesUnionPath(
   /** Independent physical bodies are unioned only after room openings are cut,
    * so a door/window/gate can never punch a coincident partition or column. */
   extraBodies: number[][][] = [],
+  operations: WallGeometryOperations = {},
 ): {
+  status: 'ok' | 'degraded-extra';
   d: string;
+  paths: readonly { id: string; d: string; fillRule: 'evenodd' }[];
+  components: readonly WallGeometryComponent[];
   roomGeom: any;
   paperD: string;
   depthUnits: number;
@@ -2901,14 +3017,20 @@ export function wallBodiesUnionPath(
   if (!walls?.length && !extraBodies.length) return null;
   const united = wallBodiesGeometry(
     rooms, walls, openCuts, openings, pitch, cellCm, gridPitch, coordScale, extraBodies,
+    operations,
   );
-  const d = united ? polyclipToPathD(united.geom) : '';
-  const paperD = united ? polyclipToPathD(united.paperGeom) : '';
-  if (united && d) return {
-    d, roomGeom: united.roomGeom, paperD,
+  if (united.status === 'failed-core' || united.status === 'not-applicable') return null;
+  const paths = united.components.map((component) => ({
+    id: component.id, d: polyclipToPathD(component.geom), fillRule: 'evenodd' as const,
+  })).filter((component) => !!component.d);
+  const d = paths[0]?.d || '';
+  const paperD = polyclipToPathD(united.paperGeom);
+  if (paths.length) return {
+    status: united.status, d, paths, components: united.components,
+    roomGeom: united.roomGeom, paperD,
     depthUnits: united.depthUnits, fillRule: 'evenodd',
   };
-  if (united) return null; // successful empty result: do not resurrect raw rings
+  // successful empty result: do not resurrect raw rings
   // Fail closed. The old raw per-room-ring fallback is the exact algorithm
   // that creates an exterior tooth at a corner Split, so resurrecting it after
   // a boolean failure would make malformed input violate the facade invariant.

@@ -29,6 +29,16 @@
 export const SMOKE_LINKS = [
   {
     symbols: [
+      'WallGeometryStatus', 'WallGeometryComponent', 'WallBodiesGeometryResult',
+      'checkSpacePhysicalGeometry', 'spacePhysicalGeometryFingerprint',
+    ],
+    smokes: ['smoke_wall_union_isolation.mjs'],
+    because: 'the #278 production bundle must paint isolated canonical components in Plan, '
+      + 'View, Static, hidden Iso and light barriers, reject a physical write with zero WS/Undo, '
+      + 'and still allow a non-geometry edit on the same degraded legacy space',
+  },
+  {
+    symbols: [
       'resolveSafeResize', 'applySafeResize', 'validateSafeResize', 'clampSafeResize',
       'SafeResizePlan', 'SafeResizeResolution', 'SafeResizeReason', 'SafeResizeObstacle',
     ],
