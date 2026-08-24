@@ -1,16 +1,29 @@
-// The v1.55.0 resize audit (HP-1550-01/-03/-04), numeric regressions:
+// The Resize transaction audit (HP-1550-01/-03/-04, narrowed by #277):
 //   01 — a debounced config write pending from a PREVIOUS edit must never carry
 //        the live resize preview to the server; Esc leaves server === snapshot;
 //        a normal pointerup produces exactly one write;
 //   03 — pointercancel aborts the drag (no commit, no undo step, no write),
-//        for wall handles and corner handles alike; lostpointercapture after
-//        a cancel must not double-fire;
+//        for the surviving wall handles; lostpointercapture after a cancel
+//        must not double-fire; the removed scale corners stay absent;
 //   04 — a door at the exact midpoint of a wall must not shadow the resize
 //        handle: the handle wins the hit test, the wall drags WITH the door,
 //        and no opening-edit drag starts in the resize tool.
 import { launch, check, finish } from './serve.mjs';
 const { page, browser } = await launch();
 
+// Isolate one eligible non-shared rectangle. The demo house's x=550 boundary
+// is intentionally partial-shared and therefore disabled by #277.
+await page.evaluate(async () => {
+  const c = window.__card;
+  const sp = c._serverCfg.spaces.find((s) => s.id === 'f1');
+  sp.rooms = [{
+    id: 'r1', name: 'Safe resize room', area: null,
+    poly: [[0.04, 0.14], [0.55, 0.14], [0.55, 0.58], [0.04, 0.58]],
+  }];
+  delete sp.walls; delete sp.partitions; delete sp.room_drafts;
+  delete sp.wall_columns; delete sp.open_spans; delete sp.openings;
+  c._cfgEpoch++; c.requestUpdate(); await c.updateComplete;
+});
 const snap = await page.evaluate(() => JSON.stringify(window.__card._serverCfg));
 const restore = () => page.evaluate((s) => {
   const c = window.__card;
@@ -150,32 +163,8 @@ await settle();
   await page.mouse.up();
 }
 await restore();
-// the corner (scale) handle takes the same abort path
-await enter('resize');
-await page.evaluate(() => { const c = window.__card; c._rszSel = 'r4'; c.requestUpdate(); return c.updateComplete && true; });
-await settle();
-{
-  const w0 = await writes();
-  const [ax, ay] = await screenPt(550, 860);
-  const [bx, by] = await screenPt(448, 804); // ≈ k=0.8 about (40,580)
-  await page.mouse.move(ax, ay);
-  await page.mouse.down();
-  await page.mouse.move(bx, by, { steps: 3 });
-  await settle();
-  check('03_corner_preview', Math.abs((await roomLive('r4'))[2][0] - 0.55) > 0.02);
-  await page.evaluate(() => {
-    const c = window.__card;
-    const pid = c._rszDrag.pid;
-    const el = c.renderRoot.querySelector('.rszcorner') || c.renderRoot.querySelector('.rszhandle');
-    el.dispatchEvent(new PointerEvent('pointercancel', { pointerId: pid, bubbles: true }));
-  });
-  await settle();
-  check('03_corner_snapshot_back', Math.abs((await roomLive('r4'))[2][0] - 0.55) < 1e-6);
-  check('03_corner_undo_empty', await page.evaluate(() => window.__card._geometryHistory.size), 0);
-  await page.waitForTimeout(800);
-  check('03_corner_no_write', (await writes()) - w0, 0);
-  await page.mouse.up();
-}
+check('03_legacy_corner_scale_absent', await page.evaluate(() =>
+  !window.__card.renderRoot.querySelector('.rszcorner, .rszknob')));
 await restore();
 
 // ============ HP-1550-04: a door mid-wall must not shadow the handle =========

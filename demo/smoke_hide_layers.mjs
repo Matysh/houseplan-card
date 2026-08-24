@@ -142,16 +142,12 @@ const rad = await page.evaluate(async () => {
       && hit.getAttribute('cx') === knob.getAttribute('cx')
       && hit.getAttribute('cy') === knob.getAttribute('cy'),
   };
-  // …and the resize tool's corner beads follow the same rule
+  // #277 removed the Resize corner scale frame entirely; Backdrop keeps its
+  // own independent handle/bead contract above.
   c._setMode('plan'); c._tool = 'resize';
   c._rszSel = (c._curSpaceCfg.rooms || [])[0]?.id || null;
   c._cfgEpoch++; c.requestUpdate(); await c.updateComplete;
-  const rh = sr().querySelector('.rszcorner');
-  const rk = sr().querySelector('.rszknob');
-  o.rszBoth = !!rh && !!rk;
-  o.rszQuarter = rh && rk
-    ? Math.abs(Number(rk.getAttribute('r')) * 4 - Number(rh.getAttribute('r'))) < 0.05
-    : false;
+  o.rszLegacyCornersAbsent = !sr().querySelector('.rszcorner, .rszknob, .rszframe');
   c._setMode('view');
   return o;
 });
@@ -161,8 +157,7 @@ checkAll({
   beadIsAQuarter: Math.abs(rad.knobR * 4 - rad.hitR) < 0.05,
   beadTakesNoPointer: rad.knobInert,
   beadOnTheHandle: rad.sameCentre,
-  resizeCornerHasBead: rad.rszBoth,
-  resizeBeadIsAQuarter: rad.rszQuarter,
+  resizeLegacyCornerScaleAbsent: rad.rszLegacyCornersAbsent,
 });
 
 // ---- 7) every Background session starts on Select; image has its own tool --
