@@ -26,6 +26,15 @@ polygons, thickness records, independent partitions и hosted openings; один
 Если гарантии перестают выполняться, live preview физически упирается в первую
 границу безопасного диапазона либо handle остаётся disabled с понятной причиной.
 
+### Что человек увидит до и после
+
+**До:** после перетаскивания одна стена может стать визуально толще или тоньше,
+оставить куски на старом месте либо заставить исчезнуть все стены пространства.
+
+**После:** выбранная стена двигается, а всё остальное на плане остаётся как
+было; когда безопасно продолжать нельзя, стена видимо упирается и дальше не
+идёт. Неподходящую стену нельзя потянуть, и рядом с её handle написана причина.
+
 ## 2. Решения владельца
 
 Зафиксированы 2026-08-24:
@@ -240,6 +249,21 @@ Pure helpers могут временно оставаться для backward te
 6. No-op/failed drag не меняет `_serverCfg`, cfg epoch, history, layout или
    queued saves. Mid-drag previous save по-прежнему читает committed snapshot.
 
+## 12.1. Риски и меры
+
+| Риск | Мера |
+|---|---|
+| Сужение функции неожиданно делает привычную стену недоступной | Visible disabled handle и точная причина; positive/negative eligibility matrix AC1–AC4. |
+| Corner clamp схлопывает side edge либо меняет число segments | Last safe grid coordinate, fixed topology signature и mutant topology-simplify. |
+| Shared drag вовлекает третью комнату через T/partial contact | План содержит максимум два room ids; swept third-room stop и dedicated mutant. |
+| Opening stop рассчитан по оси и кладка всё равно перекрывает проём | Physical half-thickness + jamb calculation, все типы openings и targeted golden AC6. |
+| Preview проходит, а commit пересчитывает другую геометрию | Один immutable snapshot/`applySafeResize` для preview и commit, AC8/AC9. |
+| Thickness/open spans расходятся при переносе | Canonical interval mapping #253, preservation assertions и реальная fixture AC17. |
+| Параллельная реализация #264 создаёт второй controller boundary | #277 не зависит от #264 и реализуется на текущей границе; #264 не начинается параллельно, после #277 обязан rebase и refactor-only parity. |
+| #276/#278 меняют соседние geometry helpers во время работы | Порядок merge #276 → #277 → #278; перед код-ревью ветка содержит актуальный `dev`, конфликты разрешаются автором с повтором targeted fixtures. |
+| Strict checks ухудшают pointer latency | Range вычисляется до drag/мемоизируется, §13 budgets и call-count. |
+| Rollback возвращает опасный старый Resize | Полный revert допустим технически, release note предупреждает не редактировать geometry до обновления. |
+
 ## 13. Производительность
 
 Eligibility всех handles мемоизируется по exact geometry fingerprint и не
@@ -277,12 +301,17 @@ handles и остаются полностью поддержанными.
 | AC14 | Мутации eligibility bypass, third-room cascade, topology simplify, opening-stop bypass и commit-preflight bypass пойманы 1/1. | Mutation gate. |
 | AC15 | Typecheck, unit, build, targeted smokes зелёные; tracked bundles byte-identical. | Fast gates. |
 | AC16 | RU/EN changelog и RESIZE/user/canvas/architecture/testing docs описывают суженный контракт. | Docs gate + review. |
+| AC17 | Анонимизированная before-fixture из исходного пользовательского плана воспроизводит старое расхождение через production pointer handlers; новый Resize либо безопасно завершает тот же допустимый жест, либо предсказуемо clamp/disabled, сохраняет все walls/extras/openings и не даёт global wall-null. | Fixture provenance test + production-bundle smoke + model invariants. |
 
 ## 16. План тестов
 
 - переписать `test/resize.test.mjs` под eligibility/safe-range/fixed topology;
 - synthetic fixtures: non-shared rectangle/L-room, exact shared regular/irregular,
   corner clamp, third room, partition duplicate, all opening types;
+- `test/fixtures/resize-safe-regression.json`: минимизированная и
+  анонимизированная из пары реальных экспортов до/после (названия, ids,
+  markers/layout удалены), с provenance-комментарием #277; smoke исполняет
+  исходную последовательность pointer gestures, а не подставляет готовый after;
 - `demo/smoke_safe_resize.mjs`: реальные pointerdown/move/up, disabled reasons,
   preview/commit/Undo/Redo/reload и zero-write failures;
 - targeted golden light/dark: enabled/disabled handles, corner/opening clamp и
@@ -320,3 +349,5 @@ rollback вернётся широкий нестабильный UI, поэто
    side edges; конфликт на одном атомарном участке запрещает gesture.
 5. #276 реализуется раньше #277; exact redundant partition после Optimize
    исчезает, а оставшийся неоднозначный extra продолжает блокировать handle.
+6. Реальная fixture обязательна, но публикуется только после минимизации и
+   удаления пользовательских строк; исходные private exports в git не попадают.
