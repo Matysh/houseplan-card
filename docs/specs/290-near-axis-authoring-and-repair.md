@@ -189,7 +189,8 @@ grid nodes. Mutation, добавляющая minor component меньше пор
 
 ### AC4. Optimize чинит реальный `316×1`
 
-Minimized fixture из #284 содержит duplicated shared physical edge `316×1`.
+Tracked `test/fixtures/279-near-orthogonal-junction.json` содержит duplicated
+shared physical edge `316×1`.
 Preview сообщает `wallsStraightened: 1`, maximum одного grid step в корректных
 сантиметрах и ноль double-counting owners. Confirm создаёт exact horizontal
 shared edge; Cancel оставляет JSON byte-equivalent.
@@ -237,11 +238,26 @@ Dialog light/dark показывает отдельную строку lossy rep
 
 Каждый убивается соответствующим AC без повышения global golden tolerance.
 
-### AC10. Локальные гейты
+### AC10. Реальные планы и видимое снижение
+
+`npm run invariants` проходит на `real-plan-first-floor.json` и
+`real-plan-second-floor.json` до и после подтверждённого Optimize. Audit считает
+почти-ортогональные topology nodes до/после без удвоения shared owners; после
+Confirm их число строго уменьшается на плане с repair candidates. Принятая
+владельцем строка Optimize «Выпрямлено стен: N; максимальное перемещение: X»
+показывает это изменение до подтверждения, причём `N` равно числу уникальных
+исправляемых physical walls. Повторный Optimize сообщает ноль исправлений.
+Настоящие диагонали не входят ни в node count, ни в `N`.
+
+**Доказательство:** реальный invariants runner, production-bundle Optimize smoke
+и exact report assertions на обеих tracked fixtures.
+
+### AC11. Локальные гейты
 
 - `npm run typecheck`;
 - `npm test`;
 - `npm run build` и bundle parity;
+- `npm run invariants`;
 - `node scripts/check-docs.mjs`;
 - targeted Walls/Resize/Optimize smokes и mutation;
 - targeted semantic golden verify.
@@ -263,7 +279,27 @@ Optimize pass линейный по edges плюс существующий boun
 evaluation не может стать global unbounded combinatorial search. Safe Resize
 сохраняет p95 budgets из `docs/RESIZE.md`; full performance gate обязателен.
 
-## 10. Ожидаемые файлы
+## 10. Риски и меры
+
+- Автоматическое authoring-выравнивание без bypass может выбрать неверную ось
+  рядом с порогом. Мера: inclusive boundary matrix AC1, hover/commit parity AC2
+  и отрицательные true-diagonal cases AC6.
+- Lossy Optimize может сдвинуть только одного owner общей стены или потерять
+  opening/thickness metadata. Мера: immutable candidate, shared equivalence
+  class и полный набор invariants AC5/AC10.
+- Repair одного уступа может каскадно создать другой либо изменить больше
+  topology, чем показано в отчёте. Мера: кандидаты из immutable input,
+  conflict-as-skipped, верхняя граница AC7 и идемпотентность AC5/AC10.
+- Новый classifier может разойтись с renderer #279. Мера: один threshold source
+  и source guard AC1.
+
+## 11. Откат
+
+Чистый revert implementation-коммита возвращает прежнее authoring/Optimize
+поведение. Schema не меняется; уже явно подтверждённая пользователем обычная
+polygon geometry остаётся читаемой и не требует downgrade migration.
+
+## 12. Ожидаемые файлы
 
 Product code:
 
@@ -293,13 +329,13 @@ Tests/evidence:
   `docs/TESTING.md`, `docs/CONFIG-COMPATIBILITY.md`;
 - `docs/CHANGELOG.md`, `docs/CHANGELOG.ru.md`.
 
-## 11. Release
+## 13. Release
 
 Implementation-коммит имеет `Issue: #290`, `User-Visible: yes` и оба
 changelog. Изменившиеся editor/Optimize goldens и docs screenshots принимаются
 только из штатного Linux artifact после `npm run bundle:sync`.
 
-## 12. Принятые технические предположения
+## 14. Принятые технические предположения
 
 1. Выравнивается free endpoint, а не anchor текущего Walls segment; уже
    существующая geometry не сдвигается молча.
