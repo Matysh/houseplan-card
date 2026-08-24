@@ -305,13 +305,19 @@ test('#290 a remote near-axis edge does not disable an unrelated exact resize ha
     ...room,
     poly: room.poly.map(([x, y]) => [x * 1000, y * 1000]),
   }));
-  const resolution = resolveSafeResize(rooms, [], 'north-west', 3, {
+  const opts = {
     ...SAFE,
     step: 1000 / 240,
-  });
+  };
+  assert.deepEqual(
+    resolveSafeResize(rooms, [], 'north-west', 3, opts),
+    { enabled: false, reason: 'partial-shared' },
+    '#289 still blocks a handle that would change a side wall from shared to outer',
+  );
+  const resolution = resolveSafeResize(rooms, [], 'south-west', 1, opts);
   assert.equal(resolution.enabled, true);
   assert.equal(validateSafeResize(
-    rooms, [], resolution.plan, 1000 / 240, { ...SAFE, step: 1000 / 240 },
+    rooms, [], resolution.plan, 1000 / 240, opts,
   ), true);
 });
 
