@@ -9,6 +9,7 @@ const result = await page.evaluate(async () => {
   const root = () => card.shadowRoot || card.renderRoot;
   const update = async () => { card.requestUpdate(); await card.updateComplete; };
   const space = () => card._serverCfg.spaces[0];
+  const near = (actual, expected) => Math.abs(actual - expected) <= 1e-9;
   const keyDown = async (key, init = {}) => {
     window.dispatchEvent(new KeyboardEvent('keydown', {
       key, bubbles: true, cancelable: true, ...init,
@@ -118,14 +119,14 @@ const result = await page.evaluate(async () => {
     && card._tool === 'draw' && card._path.length === 0;
   await clickStage(500, 500);
   out.nextClickStartsIndependentChain = card._path.length === 1
-    && card._path[0][0] === 500 && card._path[0][1] === 500
+    && near(card._path[0][0], 500) && near(card._path[0][1], 500)
     && !space().room_drafts && (space().partitions || []).length === 2;
   await clickStage(700, 500);
   const independentDraft = space().room_drafts?.[0];
   out.secondClickCreatesOnlyIndependentSegment = card._path.length === 2
     && independentDraft?.points?.length === 2
-    && independentDraft.points[0][0] === 0.5 && independentDraft.points[0][1] === 0.5
-    && independentDraft.points[1][0] === 0.7 && independentDraft.points[1][1] === 0.5
+    && near(independentDraft.points[0][0], 0.5) && near(independentDraft.points[0][1], 0.5)
+    && near(independentDraft.points[1][0], 0.7) && near(independentDraft.points[1][1], 0.5)
     && (space().partitions || []).length === 2;
 
   await resetGeometry();
