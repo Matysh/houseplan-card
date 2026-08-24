@@ -29,6 +29,15 @@
 export const SMOKE_LINKS = [
   {
     symbols: [
+      'placeResizeAreaLabel', 'resizeInwardNormal', 'resizeMeasuredEdges',
+      'ResizeAreaPlacement', 'ResizeAreaPlacementInput', 'ResizeLabelView',
+    ],
+    smokes: ['smoke_resize_labels.mjs'],
+    because: 'the #300 production gesture observes the pure projection only through the '
+      + 'rendered side-wall highlights, area/leader DOM and actual gear rectangles at current zoom',
+  },
+  {
+    symbols: [
       'classifyNearAxisSegment', 'snapNearAxisEndpoint', 'repairNearAxisRoomWalls',
       'NEAR_AXIS_MAX_DEGREES', 'NEAR_AXIS_MAX_SLOPE',
     ],

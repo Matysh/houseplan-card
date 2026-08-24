@@ -70,16 +70,19 @@ const res = await page.evaluate(async () => {
   out.noCentrelineSpan = !!spans
     && !spans.some((s) => Math.abs(s - 300) < 0.5 || Math.abs(s - 400) < 0.5);
 
-  // The dragged-edge bubble, called the way `_rszLive` calls it.
+  // The two useful side-wall bubbles, called the way `_rszLive` calls them.
   c._rszSel = 'r233';
   c._rszDrag = { rooms: c._spaceModel().rooms.map((r) => ({ id: r.id, poly: r.poly })) };
   await upd();
-  const drag = c._rszEdgeLabels({ polys: { r233: render } }, { roomId: 'r233', edge: 0 });
-  const dragLens = drag.filter((l) => !l.area).map((l) => num(l.text));
-  out.dragLabelsThreeEdges = dragLens.length === 3;
+  const drag = c._rszEdgeLabels(
+    { polys: { r233: render } },
+    { roomId: 'r233', edge: 0, roomIds: ['r233'], edgeByRoom: { r233: 0 } },
+  );
+  const dragLens = drag.filter((l) => l.kind === 'length').map((l) => num(l.text));
+  out.dragLabelsTwoSideEdges = dragLens.length === 2;
   out.dragLabelsInner = dragLens.every((v) => Math.abs(v - 2.85) < 0.02 || Math.abs(v - 3.85) < 0.02);
   out.dragLabelsNotCentreline = !dragLens.some((v) => Math.abs(v - 3) < 0.005 || Math.abs(v - 4) < 0.005);
-  const dragArea = drag.find((l) => l.area);
+  const dragArea = drag.find((l) => l.kind === 'area');
   out.dragAreaStillInner = !!dragArea && Math.abs(num(dragArea.text) - 11) < 0.06;
 
   out.legacyScaleLabelsAbsent = typeof c._rszScaleLabels === 'undefined';

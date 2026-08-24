@@ -136,6 +136,24 @@ wall degradation or second geometry reconstruction. Failure, Esc,
 `pointercancel`, `lostpointercapture`, pinch and tool exit discard the overlay
 with zero Undo entries and zero writes.
 
+## Live measurements
+
+During an accepted drag, Resize labels only the two side walls whose clear
+lengths change. Each length has a matching accent highlight on that exact wall;
+the moving wall no longer repeats its own length under the pointer.
+
+The clean-floor area of every affected room is anchored beside its side of the
+moving wall. An outer wall therefore shows one area and an exactly shared wall
+shows two, on opposite sides. A short leader keeps ownership explicit. A label
+is never hidden or clipped merely because the room is narrow: it may leave the
+room outline, but two labels may not overlap.
+
+`src/resize-labels.ts` performs placement from the accepted preview, current
+view and cached stage size. It accounts for the zoom-dependent room-settings
+button and shifts a conflicting area label along the wall. The production
+pointer path performs no DOM measurement; browser smoke compares the actual
+post-render rectangles at default and non-default zoom.
+
 ## Thickness, virtual spans and openings
 
 `rekeyWallsAfterMoveChecked()` and `rekeyOpenSpansAfterMove()` map the immutable

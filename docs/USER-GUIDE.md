@@ -330,7 +330,7 @@ Other operations edit existing geometry:
 |---|---|
 | Merge | Joins adjacent rooms; a dialog chooses the surviving identity, name and area |
 | Split | Cuts a room from one wall to another; the larger part keeps the original room |
-| Resize | Moves one eligible horizontal/vertical wall without changing room topology. Live labels report **inner** dimensions — the clear distance between wall faces, the number a tape measure gives — and the area of each affected room |
+| Resize | Moves one eligible horizontal/vertical wall without changing room topology. Live labels report the two changing **inner** side-wall dimensions, highlight those walls, and place each affected room's area beside its side of the moving wall |
 | Thickness | Changes one physical span or every wall of a room |
 | Delete room | Deletes only the selected room after confirmation |
 
@@ -368,6 +368,11 @@ cannot start a drag. The former corner scale frame was removed. An ordinary
 opening on the moving wall follows it once; a side-wall opening stops the
 moving masonry at its physical jamb. Release creates one Undo step, while Esc
 or an interrupted pointer writes nothing.
+
+During the drag, the moving wall itself has no redundant length badge. An outer
+wall shows one area badge; a shared wall shows two on opposite sides, each with
+a short leader. In a narrow room the area stays visible and may extend outside
+the room rather than overlap another area or the room-settings button.
 
 ### HA area binding
 

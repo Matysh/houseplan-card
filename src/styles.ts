@@ -2876,6 +2876,29 @@ export const cardStyles = css`
     :host([data-pointer-hover]) .rszhandle:hover + .rszicon .rszink { stroke-width: 3; }
     .rszicon.disabled { opacity: 0.38; }
     :host([data-pointer-hover]) .rszhandle.disabled:hover + .rszicon .rszink { stroke-width: 2; }
+    .rszmeasurelayer,
+    .rszmeasurelayer * { pointer-events: none; }
+    .rszmeasurehalo,
+    .rszmeasureink,
+    .rszleader {
+      fill: none;
+      stroke-linecap: round;
+      vector-effect: non-scaling-stroke;
+    }
+    .rszmeasurehalo {
+      stroke: var(--hp-bg);
+      stroke-width: 7px;
+      opacity: 0.9;
+    }
+    .rszmeasureink {
+      stroke: var(--hp-accent);
+      stroke-width: 3px;
+    }
+    .rszleader {
+      stroke: var(--hp-accent);
+      stroke-width: 2px;
+      opacity: 0.95;
+    }
     /* the decor draft badge rides the MIDDLE of the shape, so it is centred
        horizontally and lifted clear of the line instead of trailing the
        cursor the way a wall badge does (owner 2026-08-04) */
@@ -2883,8 +2906,12 @@ export const cardStyles = css`
       transform: translate(-50%, -160%);
     }
     .measurelabel.rszarea {
-      transform: translate(-50%, -50%);
+      transform: translate(
+        calc(-50% + var(--rsz-label-x, 0px)),
+        calc(-50% + var(--rsz-label-y, 0px))
+      );
       background: rgba(0, 0, 0, 0.6);
+      border: 1px solid var(--hp-accent);
     }
     /* width and depth of a piece of furniture while its corner is dragged —
        centred on the edge they measure (docs/FURNITURE.md §6) */
