@@ -140,6 +140,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#258](https://github.com/Matysh/houseplan-card/issues/258) Канонический wall key после Optimize и storage round-trip | [258-wall-key-storage-roundtrip.md](258-wall-key-storage-roundtrip.md) |
 | [#262](https://github.com/Matysh/houseplan-card/issues/262) Повторное добавление entity после удаления родительского устройства | [262-readd-child-entity-after-device-delete.md](262-readd-child-entity-after-device-delete.md) |
 | [#274](https://github.com/Matysh/houseplan-card/issues/274) Беспроводной контроллер одинаково выглядит на плане и в preview | [274-wireless-controller-presentation-parity.md](274-wireless-controller-presentation-parity.md) |
+| [#294](https://github.com/Matysh/houseplan-card/issues/294) Esc завершает текущую цепочку стен без удаления геометрии | [294-wall-esc-detach.md](294-wall-esc-detach.md) |
 
 ## P3
 
