@@ -8434,9 +8434,12 @@ class HouseplanCard extends LitElement {
     }
     // Rekeying may change coordinates/keys, never the number or physical
     // thicknesses of persisted records. A lossy mapping is a stopped preview.
-    const beforeWallCms = new Set((s.walls || []).map((wall: any) => Number(wall.cm)));
-    const afterWallCms = new Set((sp.walls || []).map((wall: any) => Number(wall.cm)));
-    if ([...beforeWallCms].some((cm) => !afterWallCms.has(cm))
+    const wallThicknesses = (walls: any[]) => walls
+      .map((wall: any) => Number(wall.cm))
+      .sort((a: number, b: number) => a - b);
+    const beforeWallCms = wallThicknesses(s.walls || []);
+    const afterWallCms = wallThicknesses(sp.walls || []);
+    if (JSON.stringify(beforeWallCms) !== JSON.stringify(afterWallCms)
         || (s.open_spans || []).length !== ((sp as any).open_spans || []).length) return false;
     this._rszPreview = { space: this._space, sp };
     this._cfgEpoch++;
@@ -8510,11 +8513,23 @@ class HouseplanCard extends LitElement {
     const wanted = (sn[0] - plan.a[0]) * plan.n[0] + (sn[1] - plan.a[1]) * plan.n[1];
     let d = clampSafeResize(g.rooms, g.openings, plan, wanted, this._gridPitch, g.opts);
     if (d === g.d && g.moved) return;
+    const previousPreview = this._rszPreview;
+    const previousLive = this._rszLive;
+    const previousD = g.d;
+    let res = applySafeResize(g.rooms, g.openings, plan, d);
+    if (!this._rszApplyPreview(res.polys, res.openings)) {
+      // Persistence metadata is part of the geometry transaction. If wall or
+      // virtual-span rekeying would be lossy, keep the last complete preview:
+      // the pointer visibly stops there and pointerup can commit only that
+      // already-rendered safe candidate.
+      this._rszPreview = previousPreview;
+      this._rszLive = previousLive;
+      g.d = previousD;
+      this.requestUpdate();
+      return;
+    }
     g.moved = true;
     g.changed = [...plan.roomIds];
-    this._rszPreview = null;
-    let res = applySafeResize(g.rooms, g.openings, plan, d);
-    this._rszApplyPreview(res.polys, res.openings);
     g.d = d;
     this._rszLive = this._rszEdgeLabels(res, plan);
     this.requestUpdate();
