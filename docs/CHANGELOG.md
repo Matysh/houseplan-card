@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.67.0-beta.8 — 2026-08-24
+
 - A local wall-union failure can no longer blank the masonry of an entire
   space. Valid wall components remain visible consistently in Plan, View,
   Static, hidden Iso and light barriers, while every edit that changes physical
