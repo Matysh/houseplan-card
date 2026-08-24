@@ -28,6 +28,21 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    // #285: смок не произносит ни одного имени продуктового кода — он подставляет
+    // геометрию реального этажа и спрашивает сам продукт через isPointInFill,
+    // есть ли кладка там, где модель её обещает. Поиском по тексту такая связь
+    // не находится никогда.
+    symbols: [
+      'wallBodiesGeometry', 'wallEdgeBodies', 'buildMultiWallNodeMap',
+      'multiWallBevelTriangles', 'virtualJunctionPatches', 'linearWallJoinPatches',
+      'MITRE_LIMIT', 'MULTI_WALL_JOIN_LIMIT', 'insetContour', 'atomicPolyForRoom',
+    ],
+    smokes: ['smoke_real_plan_masonry.mjs'],
+    because: 'на реальном плане кладка рвётся там, где синтетические фикстуры целы: '
+      + 'восемь закрытых задач по стыкам вошли в beta.9, а разрыв в 45 шагов остался — '
+      + 'пиксельные пороги golden такую долю кадра не видят',
+  },
+  {
     symbols: [
       'WallGeometryStatus', 'WallGeometryComponent', 'WallBodiesGeometryResult',
       'checkSpacePhysicalGeometry', 'spacePhysicalGeometryFingerprint',
