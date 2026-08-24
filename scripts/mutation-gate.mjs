@@ -832,6 +832,14 @@ export const MUTANTS = [
       replace: '      .filter((interval) => collinearOverlap(\n'
         + '        interval.a, interval.b, partition.a, partition.b, eps,\n'
         + '      ) > eps);',
+    }, {
+      file: 'src/coincident-partitions.ts',
+      find: '    if (shared.some((interval) => !sameSegment(\n'
+        + '      interval.a, interval.b, partition.a, partition.b, eps,\n'
+        + '    ))) continue;',
+      replace: '    if (false && shared.some((interval) => !sameSegment(\n'
+        + '      interval.a, interval.b, partition.a, partition.b, eps,\n'
+        + '    ))) continue;',
     }],
   },
   {
