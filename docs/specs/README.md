@@ -74,6 +74,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#277](https://github.com/Matysh/houseplan-card/issues/277) Безопасный Resize без изменения топологии | [277-safe-resize.md](277-safe-resize.md) |
 | [#278](https://github.com/Matysh/houseplan-card/issues/278) Локальный сбой extra-body union не гасит всю кладку | [278-wall-union-isolation.md](278-wall-union-isolation.md) |
 | [#279](https://github.com/Matysh/houseplan-card/issues/279) Сплошной почти ортогональный T-стык | [279-near-orthogonal-junction.md](279-near-orthogonal-junction.md) |
+| [#280](https://github.com/Matysh/houseplan-card/issues/280) Backend принимает доказанный Optimize rehost | [280-optimize-rehost-validation.md](280-optimize-rehost-validation.md) |
 
 ## P2
 
