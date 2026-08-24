@@ -57,10 +57,15 @@
       unit/production smoke guards.
 - [ ] Fixed-topology wall records (#298): moving-wall breakpoints translate
       rigidly, side-wall interior endpoints never scale proportionally,
-      unrelated records remain byte-equivalent, and a full-span carrier/lattice
-      proof rejects gaps before preview [unit: `wall-thickness.test.mjs`;
-      auto: `smoke_resize_pointer_real_plan`, six `smoke_edit_walk` runs;
-      mutation: `safe-resize-wall-endpoints-affine-scaled`].
+      the exact first-floor 49→52 gesture ends on 17/52/57/101, unrelated
+      records remain byte-equivalent, and a full-span carrier/lattice proof
+      rejects gaps before preview. Key-only legacy records move only by one
+      whole-edge identity; partial midpoint ambiguity produces no preview,
+      history or config write [unit: `wall-thickness.test.mjs`; auto:
+      `smoke_resize_pointer_real_plan`, `smoke_resize_wall_thickness`, six
+      `smoke_edit_walk` runs; mutation:
+      `safe-resize-wall-endpoints-affine-scaled`,
+      `safe-resize-legacy-midpoint-fail-open`].
 
 ## Decor composition order (#231)
 

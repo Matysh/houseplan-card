@@ -60,7 +60,7 @@ import {
   cmToNorm, clampFurnSize, clampFurnCm, FURN_WALL_CELLS, type FurnitureGroup,
 } from './furniture';
 import {
-  degradeWalls, rekeyWallsAfterMove, wallRecordCarrierViolations,
+  degradeWalls, rekeyWallsAfterMoveChecked, wallRecordCarrierViolations,
   setWallThickness, setWallThicknessForRoom, cmToField, wallCmToUnits,
   wallEdgeBodies, wallBodiesGeometry, wallBodiesUnionPath,
   floorFootprintGeometry,
@@ -8541,9 +8541,11 @@ class HouseplanCard extends LitElement {
       if (movedOpen.length) (sp as any).open_spans = movedOpen;
       else delete (sp as any).open_spans;
       if (Array.isArray(sp.walls) && sp.walls.length) {
-        sp.walls = rekeyWallsAfterMove(
+        const rekeyed = rekeyWallsAfterMoveChecked(
           sp.walls, oldSpans, newSpans, this._wallKeyPitch, NORM_W, 'fixed-topology',
         );
+        if (rekeyed.rejected) return { ok: false, reason: 'wall-metadata' };
+        sp.walls = rekeyed.walls;
       }
     }
     // Rekeying may change coordinates/keys, never the number or physical
@@ -8570,13 +8572,6 @@ class HouseplanCard extends LitElement {
             poly[(index + 1) % poly.length][1] * NORM_W],
         ]);
       }
-    }
-    for (const partition of sp.partitions || []) {
-      if (!Array.isArray(partition?.a) || !Array.isArray(partition?.b)) continue;
-      wallCarriers.push([
-        [Number(partition.a[0]) * NORM_W, Number(partition.a[1]) * NORM_W],
-        [Number(partition.b[0]) * NORM_W, Number(partition.b[1]) * NORM_W],
-      ]);
     }
     // Old plans may contain explicit historical debt (for example an authored
     // off-grid thickness breakpoint). Safe Resize must not silently repair it,

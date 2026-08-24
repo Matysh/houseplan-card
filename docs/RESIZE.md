@@ -138,7 +138,7 @@ with zero Undo entries and zero writes.
 
 ## Thickness, virtual spans and openings
 
-`rekeyWallsAfterMove()` and `rekeyOpenSpansAfterMove()` map the immutable
+`rekeyWallsAfterMoveChecked()` and `rekeyOpenSpansAfterMove()` map the immutable
 snapshot to the fixed-topology candidate. Physical centimetre values and open
 span count must survive; the production geometry check is fail-closed.
 
@@ -148,9 +148,14 @@ whose length changes, only the old topology endpoint moves to its paired new
 vertex; an interior thickness breakpoint stays on its physical boundary rather
 than keeping a proportional fraction of the new edge. Unrelated exact records
 remain byte-equivalent. The candidate then proves that every new exact record
-is lattice-safe and continuously covered by room-wall/partition carriers. An
+is lattice-safe and continuously covered by room-wall carriers. An
 unchanged historical endpoint may remain readable even when its record changes
 around it, but Resize cannot add or replace it with a different violation.
+Key-only legacy records move only when their key identifies one whole changed
+edge with one destination. An affected partial/ambiguous midpoint returns an
+explicit rejected result; preview, history and persistence remain untouched.
+The generic array-only helper retains its old affine fallback outside Safe
+Resize for compatibility with historical pure transforms.
 
 When the two owners of a shared moving seam split one physically continuous
 side-wall record at their meeting point, the mapped atoms are joined back only

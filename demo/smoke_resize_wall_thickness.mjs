@@ -96,6 +96,53 @@ const res = await page.evaluate(async () => {
       rooms: sp().rooms, walls: sp().walls, openings: sp().openings,
     }) === before;
   }
+
+  // #298: an affected key-only record has no endpoints with which to prove a
+  // partial mapping. The handle remains eligible, but the runtime candidate
+  // must fail closed before preview, history and config/set.
+  sp().rooms = [
+    {
+      id: 'legacy-left', name: 'Legacy left',
+      poly: [[0.08, 0.12], [0.50, 0.12], [0.50, 0.55], [0.08, 0.55]],
+    },
+    {
+      id: 'legacy-right', name: 'Legacy right',
+      poly: [[0.50, 0.12], [0.92, 0.12], [0.92, 0.55], [0.50, 0.55]],
+    },
+  ];
+  sp().walls = [{ key: '0.250000,0.120833@0.0000', cm: 22 }];
+  sp().openings = [];
+  delete sp().open_spans;
+  await upd();
+
+  const legacyBefore = JSON.stringify({ rooms: sp().rooms, walls: sp().walls });
+  const legacyHistoryBefore = c._geometryHistory?.size || 0;
+  const originalCallWS = c.hass.callWS.bind(c.hass);
+  let legacyWrites = 0;
+  c.hass.callWS = async (message) => {
+    if (message.type === 'houseplan/config/set') legacyWrites++;
+    return originalCallWS(message);
+  };
+  const legacyHandle = [...sr().querySelectorAll('.rszhandle')].find((entry) =>
+    entry.getAttribute('aria-disabled') === 'false'
+      && Math.abs(+entry.getAttribute('cx') - 500) < 0.5
+      && Math.abs(+entry.getAttribute('cy') - 335) < 0.5);
+  out.legacyHandleEnabled = !!legacyHandle;
+  if (legacyHandle) {
+    const x = +legacyHandle.getAttribute('cx');
+    const y = +legacyHandle.getAttribute('cy');
+    pointer('pointerdown', legacyHandle, x, y);
+    pointer('pointermove', legacyHandle, x + c._gridPitch, y);
+    await c.updateComplete;
+    out.legacyPreviewRejected = !!c._rszDrag && !c._rszPreview;
+    pointer('pointerup', legacyHandle, x + c._gridPitch, y);
+    await c.updateComplete;
+    await new Promise((resolve) => setTimeout(resolve, 650));
+    out.legacyNoHistory = (c._geometryHistory?.size || 0) === legacyHistoryBefore;
+    out.legacyNoConfigWrite = legacyWrites === 0;
+    out.legacySourceUnchanged = JSON.stringify({ rooms: sp().rooms, walls: sp().walls })
+      === legacyBefore;
+  }
   return out;
 });
 

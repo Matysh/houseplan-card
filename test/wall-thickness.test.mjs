@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
   wallKey, lookupWall, thicknessCmAt, degradeWalls, rekeyWallsAfterMove,
+  rekeyWallsAfterMoveChecked,
   wallRecordsHaveCarrierCoverage,
   setWallThickness, setWallThicknessForRoom, applyWallThicknessToNewRoom,
   drawWallPreviewD, linearWallBody, linearWallJoinPatches,
@@ -683,6 +684,115 @@ test('issue 298 carrier proof covers collinear chains and rejects gaps or off-gr
     [{ ...offGrid[0], a: [0.00002, 0] }],
     [[[0.02, 0], [100, 0]]], pitch, 1000, offGrid,
   ), false, 'Resize may not replace old debt with a different off-grid endpoint');
+});
+
+test('issue 298 fixed-topology legacy records move only by unambiguous whole-edge identity', () => {
+  const oldEdge = [[0, 0], [80, 0]];
+  const newEdge = [[0, 0], [92, 0]];
+  const whole = { key: wallKey(...oldEdge, pitch), cm: 22 };
+  const moved = rekeyWallsAfterMoveChecked(
+    [whole], [oldEdge], [newEdge], pitch, 1, 'fixed-topology',
+  );
+  assert.equal(moved.rejected, false);
+  assert.deepEqual(moved.walls, [{ ...whole, key: wallKey(...newEdge, pitch) }]);
+
+  const renderSpaceWhole = {
+    key: wallKey([1 / 480, 0], [80 - 1 / 480, 0], pitch), cm: 22,
+  };
+  const renderMoved = rekeyWallsAfterMoveChecked(
+    [renderSpaceWhole], [oldEdge], [newEdge], pitch, 1000, 'fixed-topology',
+  );
+  assert.equal(renderMoved.rejected, false, 'historical render-space whole-edge key is unambiguous');
+  assert.equal(renderMoved.walls[0].key, wallKey(...newEdge, pitch));
+
+  const untouched = { key: wallKey([100, 10], [120, 10], pitch), cm: 19, future: 'kept' };
+  const untouchedResult = rekeyWallsAfterMoveChecked(
+    [untouched], [oldEdge], [newEdge], pitch, 1, 'fixed-topology',
+  );
+  assert.equal(untouchedResult.rejected, false);
+  assert.deepEqual(untouchedResult.walls, [untouched]);
+
+  const partial = { key: wallKey([10, 0], [30, 0], pitch), cm: 21 };
+  const ambiguous = rekeyWallsAfterMoveChecked(
+    [partial], [oldEdge], [newEdge], pitch, 1, 'fixed-topology',
+  );
+  assert.equal(ambiguous.rejected, true);
+  assert.deepEqual(ambiguous.walls, [partial], 'a rejected candidate cannot partially rekey storage');
+
+  const conflictingWhole = rekeyWallsAfterMoveChecked(
+    [whole], [oldEdge, oldEdge], [newEdge, [[0, 0], [96, 0]]],
+    pitch, 1, 'fixed-topology',
+  );
+  assert.equal(conflictingWhole.rejected, true,
+    'one whole-edge key with conflicting destinations must reject atomically');
+  assert.deepEqual(conflictingWhole.walls, [whole]);
+
+  const exactWithBadCompatibilityKey = {
+    key: 'stale-compatibility-key', cm: 24, a: [0, 0], b: [0.08, 0],
+  };
+  const exact = rekeyWallsAfterMoveChecked(
+    [exactWithBadCompatibilityKey], [oldEdge], [newEdge], pitch, 1000, 'fixed-topology',
+  );
+  assert.equal(exact.rejected, false);
+  assert.deepEqual(exact.walls[0].b, [0.092, 0]);
+  assert.equal(exact.walls[0].key, wallKey([0, 0], [0.092, 0], pitch));
+});
+
+test('issue 298 first-floor fixture keeps the room-b seam on 17/52/57/101 boundaries', () => {
+  const fixture = JSON.parse(readFileSync(new URL(
+    './fixtures/real-plan-first-floor.json', import.meta.url,
+  ), 'utf8')).space;
+  const changedIds = new Set(['room-b', 'room-g']);
+  const nextRooms = fixture.rooms.map((room) => {
+    const copy = structuredClone(room);
+    if (copy.id === 'room-b') copy.poly[0][0] = copy.poly[1][0] = 52 / 240;
+    if (copy.id === 'room-g') copy.poly[2][0] = copy.poly[3][0] = 52 / 240;
+    return copy;
+  });
+  const oldSpans = [];
+  const newSpans = [];
+  for (const oldRoom of fixture.rooms.filter((room) => changedIds.has(room.id))) {
+    const nextRoom = nextRooms.find((room) => room.id === oldRoom.id);
+    const oldPoly = oldRoom.poly.map((point) => point.map((value) => value * 1000));
+    const newPoly = nextRoom.poly.map((point) => point.map((value) => value * 1000));
+    for (let index = 0; index < oldPoly.length; index++) {
+      oldSpans.push([oldPoly[index], oldPoly[(index + 1) % oldPoly.length]]);
+      newSpans.push([newPoly[index], newPoly[(index + 1) % newPoly.length]]);
+    }
+  }
+
+  const result = rekeyWallsAfterMoveChecked(
+    fixture.walls, oldSpans, newSpans, pitch, 1000, 'fixed-topology',
+  );
+  assert.equal(result.rejected, false);
+  const next = result.walls;
+  const step = (value) => Number((value * 240).toFixed(6));
+  const y155 = next.filter((wall) => wall.a && wall.b
+    && Math.abs(step(wall.a[1]) - 155) < 0.001
+    && Math.abs(step(wall.b[1]) - 155) < 0.001);
+  const spans = y155.map((wall) => [step(wall.a[0]), step(wall.b[0])].sort((a, b) => a - b))
+    .sort((a, b) => a[0] - b[0]);
+  assert.deepEqual(spans, [[17, 57], [52, 101]]);
+  assert.equal(spans.flat().some((value) => Math.abs(value - 59.538461) < 0.001), false);
+
+  const untouched = fixture.walls.find((wall) => wall.key === '0.479167,0.050000@0.0000');
+  assert.ok(next.some((wall) => JSON.stringify(wall) === JSON.stringify(untouched)),
+    'an unrelated first-floor record stays byte-semantic');
+
+  const carriers = nextRooms.flatMap((room) => room.poly.map((point, index) => [
+    point.map((value) => value * 1000),
+    room.poly[(index + 1) % room.poly.length].map((value) => value * 1000),
+  ]));
+  assert.equal(wallRecordsHaveCarrierCoverage(
+    y155, carriers, pitch, 1000, fixture.walls,
+  ), true, 'all surviving first-floor endpoints remain lattice/carrier safe');
+
+  const affine = rekeyWallsAfterMove(
+    fixture.walls, oldSpans, newSpans, pitch, 1000, 'affine',
+  );
+  assert.equal(affine.some((wall) => [wall.a, wall.b].flat()
+    .some((value) => Math.abs(step(value) - 59.538461) < 0.001)), true,
+  'fixture must kill the historical proportional endpoint mapping');
 });
 
 test('issue 253 key collisions never erase different exact or legacy records', () => {

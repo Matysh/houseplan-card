@@ -531,16 +531,28 @@ export function wallAngleMatches(
  * so an exact whole-edge key map is insufficient: project every unmatched key
  * onto the old edge and carry that relative point onto the new one.
  */
-export function rekeyWallsAfterMove(
+export type WallRekeyMode = 'affine' | 'fixed-topology';
+
+export interface WallRekeyResult {
+  walls: WallEntry[];
+  /** Fixed-topology candidate is unsafe and must not reach preview/commit. */
+  rejected: boolean;
+}
+
+function rekeyWallsAfterMoveInternal(
   walls: WallEntry[] | null | undefined,
   oldSpans: [number[], number[]][],
   newSpans: [number[], number[]][],
   pitch: number,
   coordScale = 1,
-  mode: 'affine' | 'fixed-topology' = 'affine',
+  mode: WallRekeyMode = 'affine',
+  reject?: () => void,
 ): WallEntry[] {
   if (!walls?.length) return [];
-  if (oldSpans.length !== newSpans.length) return walls.slice();
+  if (oldSpans.length !== newSpans.length) {
+    if (mode === 'fixed-topology') reject?.();
+    return walls.slice();
+  }
   const scale = coordScale > 0 ? coordScale : 1;
   const tol = Math.max(pitch * 0.5, 1e-9) * scale;
   const exactEps = Math.max(pitch * scale * 1e-6, 1e-9);
@@ -550,6 +562,12 @@ export function rekeyWallsAfterMove(
   };
   const moves: Move[] = [];
   const keyMoves = new Map<string, Set<string>>();
+  const wholeEdgeMoves = new Map<string, Set<string>>();
+  const addKeyMove = (map: Map<string, Set<string>>, from: string, to: string): void => {
+    const targets = map.get(from) || new Set<string>();
+    targets.add(to);
+    map.set(from, targets);
+  };
   for (let i = 0; i < oldSpans.length; i++) {
     const [oa, ob] = oldSpans[i];
     const [na, nb] = newSpans[i];
@@ -565,10 +583,14 @@ export function rekeyWallsAfterMove(
     moves.push({ oa, ob, na, nb, dx, dy, len2 });
     const ok = keyOf(oa, ob, pitch, coordScale);
     const nk = keyOf(na, nb, pitch, coordScale);
+    // Some pre-normalisation configurations carry render-space legacy keys.
+    // They have no endpoints with which to disambiguate storage generations,
+    // so recognise only the same whole-edge identity in either historical
+    // coordinate convention. Partial midpoint projection remains forbidden.
+    addKeyMove(wholeEdgeMoves, ok, nk);
+    addKeyMove(wholeEdgeMoves, keyOf(oa, ob, pitch, 1), keyOf(na, nb, pitch, 1));
     if (ok !== nk) {
-      const targets = keyMoves.get(ok) || new Set<string>();
-      targets.add(nk);
-      keyMoves.set(ok, targets);
+      addKeyMove(keyMoves, ok, nk);
     }
   }
   if (!moves.length) return walls.slice();
@@ -730,8 +752,34 @@ export function rekeyWallsAfterMove(
     }
 
     // Legacy entries carry only a midpoint/direction key, so they cannot be
-    // split without inventing a length.  Move an unambiguous whole-edge key or
-    // projected midpoint, and never deduplicate them merely by key.
+    // split without inventing a length. Safe Resize permits only an exact,
+    // unambiguous whole-edge identity. A partial/ambiguous affected key rejects
+    // the complete candidate; an unrelated key stays byte-equivalent.
+    if (mode === 'fixed-topology') {
+      const direct = wholeEdgeMoves.get(w.key);
+      if (direct?.size === 1) {
+        const key = [...direct][0];
+        out.push(key === w.key ? { ...w } : { ...w, key });
+        continue;
+      }
+      const parsedVariants = [parseKeys([w], scale)[0]];
+      if (scale !== 1) parsedVariants.push(parseKeys([w], 1)[0]);
+      const touchesChangedEdge = parsedVariants.filter(Boolean).some((parsed) =>
+        moves.some((move) => {
+          if (!angleClose(parsed!.ang, segAngle(move.oa, move.ob))) return false;
+          const t = ((parsed!.x - move.oa[0]) * move.dx
+            + (parsed!.y - move.oa[1]) * move.dy) / move.len2;
+          return t >= -1e-6 && t <= 1 + 1e-6
+            && distToSeg(parsed!.x, parsed!.y,
+              move.oa[0], move.oa[1], move.ob[0], move.ob[1]) <= tol;
+        }));
+      if ((direct?.size || 0) > 1 || touchesChangedEdge) reject?.();
+      out.push({ ...w });
+      continue;
+    }
+
+    // Historical affine transformations retain their projected-midpoint
+    // compatibility behaviour outside production Safe Resize.
     let nk = '';
     const direct = keyMoves.get(w.key);
     if (direct?.size === 1) nk = [...direct][0];
@@ -763,14 +811,46 @@ export function rekeyWallsAfterMove(
   return out;
 }
 
+/** Historical array-only API retained for pure affine callers. */
+export function rekeyWallsAfterMove(
+  walls: WallEntry[] | null | undefined,
+  oldSpans: [number[], number[]][],
+  newSpans: [number[], number[]][],
+  pitch: number,
+  coordScale = 1,
+  mode: WallRekeyMode = 'affine',
+): WallEntry[] {
+  return rekeyWallsAfterMoveInternal(
+    walls, oldSpans, newSpans, pitch, coordScale, mode,
+  );
+}
+
+/** Production result: unsafe legacy correspondence is explicit and atomic. */
+export function rekeyWallsAfterMoveChecked(
+  walls: WallEntry[] | null | undefined,
+  oldSpans: [number[], number[]][],
+  newSpans: [number[], number[]][],
+  pitch: number,
+  coordScale = 1,
+  mode: WallRekeyMode = 'fixed-topology',
+): WallRekeyResult {
+  let rejected = false;
+  const next = rekeyWallsAfterMoveInternal(
+    walls, oldSpans, newSpans, pitch, coordScale, mode,
+    () => { rejected = true; },
+  );
+  return { walls: rejected ? (walls || []).map((wall) => ({ ...wall })) : next, rejected };
+}
+
 /**
  * Fail-closed carrier/lattice proof for exact wall records after Safe Resize.
  *
  * A compact record may cross several collinear room edges, so checking that
  * both endpoints touch one edge is insufficient. Project every collinear
- * carrier onto the record and require their union to cover its full interval
- * without gaps. Legacy key-only records have no provable extent and remain a
- * compatibility concern of `rekeyWallsAfterMove`.
+ * room-wall carrier onto the record and require their union to cover its full
+ * interval without gaps. Independent partitions are not carriers for
+ * `space.walls`. Legacy key-only records have no provable extent and remain a
+ * compatibility concern of `rekeyWallsAfterMoveChecked`.
  */
 export function wallRecordCarrierViolations(
   walls: WallEntry[] | null | undefined,
