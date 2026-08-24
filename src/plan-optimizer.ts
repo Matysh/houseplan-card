@@ -631,6 +631,11 @@ export function optimizePlans(
         if (reconciled.walls.length) space.walls = reconciled.walls;
         else delete space.walls;
       }
+      if (reconciled.removedDrafts) {
+        alignReport.removedDrafts += reconciled.removedDrafts;
+        if (reconciled.roomDrafts.length) space.room_drafts = reconciled.roomDrafts;
+        else delete space.room_drafts;
+      }
     }
     const canonicalAfter = JSON.stringify({
       spans: space.open_spans || [],

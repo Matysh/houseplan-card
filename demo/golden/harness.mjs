@@ -83,6 +83,13 @@ export function prepareGoldenFixture(scenario) {
     space.settings = {
       fill_mode: 'none', show_borders: true, show_names: true,
     };
+    if (scenario.hiddenWallDiagnostics) {
+      space.room_drafts = [{
+        id: 'hidden-saved-chain',
+        points: [[0, 0], [0, 1]],
+        segments: [{ cm: 15 }],
+      }];
+    }
     if (state !== 'before') {
       delete space.partitions;
       space.walls[0].cm = state === 'thin' ? 10 : state === 'thick' ? 30 : 20;

@@ -567,14 +567,16 @@ colour and other presentation edits bypass this structural check, allowing an
 old degraded plan to be exported or corrected without a background migration.
 
 `reconcileCoincidentPartitions()` is an explicit-Optimize-only structural
-canonicalizer (#276). It consumes canonical shared wall intervals and the
+canonicalizer (#276/#296). It consumes canonical room-wall intervals and the
 partition-opening compatibility resolver; it does not implement a second
-nearest-wall model. An independent wall is removed only after an exact
-endpoint-to-endpoint, two-room, uniform-solid proof. Its hosted openings are
-materialised onto the ordinary room wall, and `max(roomCm, partitionCm)` keeps
-the original centred physical union envelope. Unknown partition semantics,
-partial/composite matches, overlapping openings and adjacent independent
-bodies fail closed. The candidate then crosses the existing whole-plan
+nearest-wall model. A source axis is atomized at solid interval and opening
+boundaries. Exact one-owner outer or two-owner shared spans may be absorbed;
+ambiguous spans are recombined into deterministic residual partitions and keep
+their hosted openings. Converted openings are materialised onto ordinary room
+walls, and `max(roomCm, partitionCm)` keeps the original centred physical union
+envelope. Saved drafts use a separate all-or-nothing full-coverage proof.
+Unknown partition semantics, gaps, overlapping openings and adjacent
+independent bodies fail closed. The candidate then crosses the existing whole-plan
 geometry preflight and one atomic Optimize write/Undo boundary. No render or
 ordinary save path invokes this pass, so `PLAN_MODEL_VERSION` remains unchanged.
 `OptimizeDependencies` is a narrow test/benchmark seam: production uses the

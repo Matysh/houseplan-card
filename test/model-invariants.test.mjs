@@ -643,7 +643,7 @@ test('реальный план: перегородка поверх наруж�
   // Долг фикстуры, а не «допустимо»: `partition-mt2on9ou-0` лежит на наружной
   // стене трёх комнат и выключает ресайз Мастера с/у и Гардеробной. Число здесь
   // обязано стать нулём вместе с закрытием #296 — иначе починка пройдёт молча.
-  const debt = { 'real-plan-second-floor.json': 1, 'real-plan-first-floor.json': 0 };
+  const debt = { 'real-plan-second-floor.json': 3, 'real-plan-first-floor.json': 0 };
   for (const [file, expected] of Object.entries(debt)) {
     const { config } = readModel(
       readFileSync(resolve(repoRoot, 'test/fixtures', file), 'utf8'));

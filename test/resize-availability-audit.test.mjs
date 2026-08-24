@@ -125,23 +125,23 @@ const EXPECTED = {
   },
   'real-plan-second-floor.json': {
     total: 37,
-    enabled: 5,
+    enabled: 9,
     disabled: {
-      diagonal: 0, 'side-angle': 3, 'duplicate-physical-wall': 7,
-      'partial-shared': 15, 'unequal-shared': 7, 'multiple-rooms': 0,
+      diagonal: 0, 'side-angle': 3, 'duplicate-physical-wall': 0,
+      'partial-shared': 18, 'unequal-shared': 7, 'multiple-rooms': 0,
       'thickness-conflict': 0, 'opening-conflict': 0, 'invalid-geometry': 0,
     },
     byRoom: {
       'room-a': 'partial-shared partial-shared enabled partial-shared',
       'room-b': 'partial-shared unequal-shared enabled partial-shared',
-      'room-c': 'duplicate-physical-wall duplicate-physical-wall side-angle partial-shared',
-      'room-d': 'duplicate-physical-wall duplicate-physical-wall partial-shared duplicate-physical-wall',
-      'room-e': 'duplicate-physical-wall unequal-shared unequal-shared duplicate-physical-wall',
+      'room-c': 'partial-shared enabled side-angle partial-shared',
+      'room-d': 'partial-shared enabled partial-shared enabled',
+      'room-e': 'partial-shared unequal-shared unequal-shared enabled',
       'room-f': 'side-angle unequal-shared enabled partial-shared side-angle',
       'room-g': 'enabled unequal-shared partial-shared partial-shared',
       'room-h': 'partial-shared unequal-shared partial-shared enabled partial-shared unequal-shared partial-shared partial-shared',
     },
-    idDigest: 'f734d6d9df20244eb7bf0f72937ae9af3d9a2c1984aea89d2b5b884c8536b9e6',
+    idDigest: 'dc6abb9c55fbcc81e32a53b1b76eee35ca51033b71ecd08433551e2af38cf6f2',
   },
 };
 

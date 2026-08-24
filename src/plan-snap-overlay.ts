@@ -21,6 +21,16 @@ export interface PlanSnapGeometry {
   endpoints: PlanSnapEndpoint[];
 }
 
+export interface HiddenWallDiagnosticEndpoint extends PlanSnapEndpoint {
+  sourceKind: 'draft' | 'partition';
+  sourceId: string;
+}
+
+export interface HiddenWallDiagnosticGeometry {
+  segments: PlanSnapSegment[];
+  endpoints: HiddenWallDiagnosticEndpoint[];
+}
+
 export interface PlanSnapExtraEndpoint {
   point: readonly number[];
   key: string;
@@ -126,6 +136,87 @@ function sourceRank(kind: PlanSnapSourceKind): number {
 function touches(point: readonly number[], segment: readonly number[], epsilon: number): boolean {
   return pointsEqual(point, [segment[0], segment[1]], epsilon)
     || pointsEqual(point, [segment[2], segment[3]], epsilon);
+}
+
+function positiveCollinearOverlap(
+  first: SourceSegment, second: SourceSegment, epsilon: number,
+): boolean {
+  const dx = first.b[0] - first.a[0];
+  const dy = first.b[1] - first.a[1];
+  const length = Math.hypot(dx, dy);
+  if (!(length > epsilon)) return false;
+  const ux = dx / length, uy = dy / length;
+  const across = (point: readonly number[]) => Math.abs(
+    (point[0] - first.a[0]) * uy - (point[1] - first.a[1]) * ux
+  );
+  if (across(second.a) > epsilon || across(second.b) > epsilon) return false;
+  const firstAlong = (second.a[0] - first.a[0]) * ux
+    + (second.a[1] - first.a[1]) * uy;
+  const secondAlong = (second.b[0] - first.a[0]) * ux
+    + (second.b[1] - first.a[1]) * uy;
+  return Math.min(length, Math.max(firstAlong, secondAlong))
+    - Math.max(0, Math.min(firstAlong, secondAlong)) > epsilon;
+}
+
+/**
+ * Preserve the identity of an independent source which is visually hidden by
+ * another wall. Unlike buildPlanSnapGeometry this projection deliberately does
+ * not deduplicate a room-owned axis over a partition/draft-owned one.
+ */
+export function buildHiddenWallDiagnosticGeometry(options: {
+  space: Pick<SpaceModel, 'rooms' | 'room_drafts' | 'partitions'>;
+  activeDraftId?: string | null;
+  epsilon?: number;
+}): HiddenWallDiagnosticGeometry {
+  const epsilon = options.epsilon ?? DEFAULT_EPSILON;
+  const sources: SourceSegment[] = [];
+  for (const [index, segment] of roomEdges(options.space.rooms).entries()) {
+    if (segment.length < 4) continue;
+    sources.push({
+      a: [segment[0], segment[1]], b: [segment[2], segment[3]],
+      kind: 'room', id: `room-edge-${index}`, cuts: [],
+    });
+  }
+  for (const draft of options.space.room_drafts || []) {
+    if (draft.id === options.activeDraftId) continue;
+    for (let index = 0; index + 1 < draft.points.length; index++) {
+      const a = draft.points[index], b = draft.points[index + 1];
+      if (!finitePoint(a) || !finitePoint(b) || pointsEqual(a, b, epsilon)) continue;
+      sources.push({
+        a: [a[0], a[1]], b: [b[0], b[1]],
+        kind: 'draft', id: `${draft.id}:${index}`, cuts: [],
+      });
+    }
+  }
+  for (const partition of options.space.partitions || []) {
+    if (!finitePoint(partition.a) || !finitePoint(partition.b)
+        || pointsEqual(partition.a, partition.b, epsilon)) continue;
+    sources.push({
+      a: [partition.a[0], partition.a[1]],
+      b: [partition.b[0], partition.b[1]],
+      kind: 'partition', id: partition.id, cuts: [],
+    });
+  }
+
+  const hidden = sources.filter((source) => source.kind !== 'room'
+    && sources.some((other) => other !== source
+      && positiveCollinearOverlap(source, other, epsilon)));
+  const segments = hidden.map((source): PlanSnapSegment => {
+    const [a, b] = canonicalPair(source.a, source.b);
+    return {
+      a, b, key: `hidden|${segmentKey(source, a, b)}`,
+      sourceKind: source.kind, sourceId: source.id,
+    };
+  }).sort((a, b) => a.key.localeCompare(b.key));
+  const endpoints = hidden.flatMap((source): HiddenWallDiagnosticEndpoint[] => (
+    [source.a, source.b].map((point, index) => ({
+      point: [point[0], point[1]],
+      key: `hidden|${sourceKey(source)}|endpoint-${index}`,
+      sourceKind: source.kind as 'draft' | 'partition',
+      sourceId: source.id,
+    }))
+  )).sort((a, b) => a.key.localeCompare(b.key));
+  return { segments, endpoints };
 }
 
 /**

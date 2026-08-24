@@ -189,6 +189,10 @@ building the preview frame itself.
   blocks a zero-range handle, Optimize safely rehosts its windows and removes
   the blocker, then the same production Resize gesture changes exactly two
   rooms;
+- `test/optimize-hidden-obstacles.test.mjs`: a real plan's composite hidden
+  independent walls and wholly redundant saved chain are removed by explicit
+  Optimize, while partial/free residuals remain and the post-Optimize Resize
+  audit loses only the proven `duplicate-physical-wall` blockers (#296);
 - `demo/benchmark_safe_resize.mjs`: same-run pointer and cached pointerup budgets;
 - `demo/benchmark_safe_resize_render.mjs`: warm 20-room/80-handle layer p95
   and exactly one geometry snapshot per rendered frame;

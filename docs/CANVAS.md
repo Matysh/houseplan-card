@@ -683,6 +683,17 @@ current anchor is excluded to prevent zero-length segments. The static geometry
 is cached by structural editor state; pointer movement changes at most the
 single active candidate and never writes config, layout or storage.
 
+A separate diagnostic projection is present throughout the Plan editor (#296),
+including tools other than **Walls**. For every saved draft or independent wall
+segment with a positive exact collinear overlap against another wall, it keeps
+that source segment's complete axis and original endpoints visible. It is
+painted after every real and virtual wall body and before openings, selection
+chrome and transient previews. The layer is `pointer-events:none`,
+`aria-hidden`, absent from View and cached by structural revision; it neither
+deduplicates source identities nor participates in the architectural snap
+resolver above. The 1 CSS px non-scaling axis and physical 5 cm nodes therefore
+diagnose an otherwise invisible Resize blocker without changing any hit target.
+
 ## Planar wall faces
 
 Every completed Walls segment is first persisted in the active `room_drafts`

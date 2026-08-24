@@ -1247,27 +1247,21 @@ export const MUTANTS = [
       + 'would leave a dangling host and make the door disappear after explicit Optimize (#276)',
     patches: [{
       file: 'src/coincident-partitions.ts',
-      find: '    openings = openings.map((opening) => replacement.get(opening.id) || opening);',
-      replace: '    openings = openings.map((opening) => opening);',
+      find: '    const nextOpenings = openings.map((opening) => openingReplacement.get(opening.id) || opening);',
+      replace: '    const nextOpenings = openings.map((opening) => opening);',
     }],
   },
   {
-    id: 'optimizer-coincident-partial-accepted',
+    id: 'optimizer-coincident-residual-dropped',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
-      + '&& node --test --test-name-pattern="partial and ambiguous" '
-      + 'test/plan-optimizer.test.mjs',
-    because: 'a merely collinear partial partition is not the same physical wall and must never '
-      + 'be deleted just because its hosted opening happens to fit the longer room boundary (#276)',
+      + '&& node --test --test-name-pattern="covered middle" '
+      + 'test/optimize-hidden-obstacles.test.mjs',
+    because: 'piecewise Optimize may absorb only the exactly covered middle of an independent '
+      + 'wall and must preserve both free residual spans with stable identifiers (#296)',
     patches: [{
       file: 'src/coincident-partitions.ts',
-      find: '    const owners = (solidByKey.get(segmentKey(partition.a, partition.b)) || [])\n'
-        + '      .filter((interval) => sameSegment(\n'
-        + '        interval.a, interval.b, partition.a, partition.b, eps,\n'
-        + '      ));',
-      replace: '    const owners = (solidByKey.get(segmentKey(partition.a, partition.b)) || [])\n'
-        + '      .filter((interval) => collinearOverlap(\n'
-        + '        interval.a, interval.b, partition.a, partition.b, eps,\n'
-        + '      ) > eps);',
+      find: '    const residualRuns = runs.filter((run) => !run.safe);',
+      replace: '    const residualRuns: PieceRun[] = [];',
     }],
   },
   {

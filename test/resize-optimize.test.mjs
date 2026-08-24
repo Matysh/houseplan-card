@@ -87,9 +87,6 @@ test('issue 281 disables the old zero-range handle and enables it after Optimize
 
 test('issue 281 leaves unsafe outer duplicates as hard stops', () => {
   const variants = [];
-  const partial = clone(source);
-  partial.spaces[0].partitions[0].b = [0.4, 0];
-  variants.push(partial);
   const unknown = clone(source);
   unknown.spaces[0].partitions[0].future_semantics = true;
   variants.push(unknown);
@@ -107,6 +104,14 @@ test('issue 281 leaves unsafe outer duplicates as hard stops', () => {
       'unsafe outer partition must remain explicit',
     );
   }
+});
+
+test('issue 296 removes a shorter outer duplicate which is entirely hidden', () => {
+  const partial = clone(source);
+  partial.spaces[0].partitions[0].b = [0.4, 0];
+  const result = optimizePlans(partial, {});
+  assert.equal(result.config.spaces[0].partitions
+    ?.some((partition) => partition.id === 'top-left') ?? false, false);
 });
 
 test('issue 281 private exact fixture has no enabled zero-range handle', (t) => {

@@ -1819,6 +1819,58 @@ def test_optimize_accepts_proved_outer_rehost_for_resize_preparation():
         )
 
 
+def test_issue_296_backend_accepts_only_a_composite_room_edge_rehost():
+    room = {
+        "id": "room", "name": "Room", "area": None,
+        "poly": [[0, 0], [0.5, 0], [1, 0], [1, 1], [0, 1]],
+    }
+    partition = {"id": "host", "a": [0, 0], "b": [1, 0], "cm": 20}
+    hosted = {
+        "id": "window", "type": "window", "x": 0, "y": 0,
+        "angle": 0, "length": 0.1,
+        "host": {"kind": "partition", "id": "host", "t": 0.25},
+    }
+    previous = {"spaces": [{
+        "id": "floor", "rooms": [room], "partitions": [partition],
+        "openings": [hosted],
+    }]}
+    candidate = {"spaces": [{
+        "id": "floor", "rooms": [room], "partitions": [],
+        "walls": [{
+            "key": "0.250000,0.000000@0.0000", "cm": 20,
+            "a": [0.2, 0], "b": [0.3, 0],
+        }],
+        "openings": [{
+            "id": "window", "type": "window", "x": 0.25, "y": 0,
+            "angle": 0, "length": 0.1,
+        }],
+    }]}
+    v.validate_partition_opening_hosts(
+        candidate, previous, allow_optimize_rehost=True
+    )
+
+    for mutate in ("gap", "thin", "residual", "third-owner"):
+        changed = json.loads(json.dumps(candidate))
+        space = changed["spaces"][0]
+        if mutate == "gap":
+            space["open_spans"] = [{"a": [0.24, 0], "b": [0.26, 0]}]
+        elif mutate == "thin":
+            space["walls"][0]["cm"] = 10
+        elif mutate == "residual":
+            space["partitions"] = [{
+                "id": "host", "a": [0.22, 0], "b": [0.28, 0], "cm": 20,
+            }]
+        else:
+            space["rooms"].append({
+                "id": "partial", "name": "Partial", "area": None,
+                "poly": [[0.23, 0], [0.27, 0], [0.27, -0.2], [0.23, -0.2]],
+            })
+        with pytest.raises(v.PartitionOpeningHostError, match="opening=window"):
+            v.validate_partition_opening_hosts(
+                changed, previous, allow_optimize_rehost=True
+            )
+
+
 def test_optimize_rehost_validation_is_atomic_across_the_batch():
     root = os.path.dirname(os.path.dirname(__file__))
     fixture_dir = os.path.join(root, "test", "fixtures")
