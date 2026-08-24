@@ -19,12 +19,28 @@
 // поэтому воспроизводится одной командой:
 //   node demo/smoke_edit_walk.mjs --seed 7 --plan real-plan-second-floor.json
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { launch, checkAll, finish } from './serve.mjs';
-import { optimizePlans } from '../test-build/plan-optimizer.js';
-import {
+
+// `model-invariants.mjs` и оптимизатор — скомпилированный продуктовый код, а не
+// вторая модель. Значит смок обязан собрать тот же `test-build`, который делает
+// `npm test`: на чистом Linux CI этого каталога нет, и опора на оставшийся от
+// разработчика падает до запуска браузера. Ровно эту ошибку уже проходил
+// `smoke_lattice_write_barrier.mjs` — здесь она повторена по той же причине.
+const root = fileURLToPath(new URL('..', import.meta.url));
+execFileSync(process.execPath, [
+  resolve(root, 'node_modules/typescript/bin/tsc'), '-p', 'tsconfig.test.json',
+], { cwd: root, stdio: 'inherit' });
+execFileSync(process.execPath, [resolve(root, 'scripts/fix-test-build.mjs')], {
+  cwd: root, stdio: 'inherit',
+});
+const { optimizePlans } = await import('../test-build/plan-optimizer.js');
+const {
   checkHiddenObstacles, checkMixedRoleRecords, checkWallKeys, checkReferences,
   checkPhysicalGeometry, latticeProfile, readModel,
-} from '../scripts/model-invariants.mjs';
+} = await import('../scripts/model-invariants.mjs');
 
 const arg = (name, fallback) => {
   const index = process.argv.indexOf(name);
