@@ -1015,8 +1015,11 @@ export function validateSafeResize(
     const edge = plan.edgeByRoom[roomId];
     if (!original || !next || next.length !== plan.topology[roomId]
         || next.length !== original.poly.length || !polyIsSimple(next)) return false;
-    for (let index = 0; index < next.length; index++) {
-      if (classifyNearAxisSegment(next[index], next[(index + 1) % next.length])) return false;
+    const n = original.poly.length;
+    const prev = (edge - 1 + n) % n;
+    const involvedEdges = [prev, edge, (edge + 1) % n];
+    for (const index of involvedEdges) {
+      if (classifyNearAxisSegment(next[index], next[(index + 1) % n])) return false;
     }
     const s0 = signedArea(original.poly);
     const s1 = signedArea(next);
@@ -1029,8 +1032,6 @@ export function validateSafeResize(
     const newClearance = minSpanClearance(next, newSpan, eps);
     if (newClearance < Math.min(minDim, oldClearance) - eps) return false;
 
-    const n = original.poly.length;
-    const prev = (edge - 1 + n) % n;
     const sideAOld: [number[], number[]] = [original.poly[prev], original.poly[edge]];
     const sideANew: [number[], number[]] = [next[prev], next[edge]];
     const sideBOld: [number[], number[]] = [original.poly[(edge + 1) % n], original.poly[(edge + 2) % n]];

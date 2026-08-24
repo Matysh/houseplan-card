@@ -976,6 +976,42 @@ export const MUTANTS = [
     }],
   },
   {
+    id: 'near-axis-shared-owner-repair-partial',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#290 repairs a duplicated" test/near-axis.test.mjs',
+    because: 'a shared physical wall must move every coincident room-owner copy atomically (#290)',
+    patches: [{
+      file: 'src/near-axis.ts',
+      find: 'const replaceRoomPoints = (rooms: any[], move: EndpointMove): any[] => rooms.map((room) => {',
+      replace: 'const replaceRoomPoints = (rooms: any[], move: EndpointMove): any[] => rooms.map((room, index) => {\n'
+        + '  if (index > 0) return room;',
+    }],
+  },
+  {
+    id: 'near-axis-shared-owner-double-counted',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#290 repairs a duplicated" test/near-axis.test.mjs',
+    because: 'coincident room-owner copies are one physical wall in the Optimize report (#290)',
+    patches: [{
+      file: 'src/near-axis.ts',
+      find: '      const key = segmentKey(a, b);',
+      replace: '      const key = `${segmentKey(a, b)}:${candidates.size}`;',
+    }],
+  },
+  {
+    id: 'near-axis-optimize-confirmation-bypassed',
+    guard: 'npm run bundle:sync && node demo/smoke_near_axis_optimize.mjs',
+    because: 'opening the Optimize preview or cancelling it must never persist a lossy repair (#290)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '  private _openAlignDialog = (): void => this._previewAlignDialog(false);',
+      replace: '  private _openAlignDialog = (): void => {\n'
+        + '    this._previewAlignDialog(false);\n'
+        + '    void this._runAlignToGrid();\n'
+        + '  };',
+    }],
+  },
+  {
     id: 'optimizer-micro-interval-cleanup-disabled',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="isolated thickness micro-interval" '

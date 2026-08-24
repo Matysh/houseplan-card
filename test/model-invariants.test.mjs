@@ -197,6 +197,10 @@ test('readModel понимает экспорт, ответ config/get и сыр
     { config, layout: { a: 1 } });
   assert.deepEqual(readModel(JSON.stringify({ result: { config } })), { config, layout: {} });
   assert.deepEqual(readModel(JSON.stringify(config)), { config, layout: {} });
+  const space = { id: 'tracked-real-plan', rooms: [] };
+  assert.deepEqual(readModel(JSON.stringify({ note: 'fixture', space })), {
+    config: { spaces: [space] }, layout: {},
+  });
 });
 
 // --------------------------- инвариант 3: ключи ------------------------------

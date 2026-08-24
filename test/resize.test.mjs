@@ -297,6 +297,24 @@ test('#277 diagonal and non-perpendicular side walls are disabled deterministica
   assert.deepEqual(resolveSafeResize(badSide, [], 'S', 0, SAFE), { enabled: false, reason: 'side-angle' });
 });
 
+test('#290 a remote near-axis edge does not disable an unrelated exact resize handle', () => {
+  const source = JSON.parse(fs.readFileSync(
+    new URL('./fixtures/279-near-orthogonal-junction.json', import.meta.url), 'utf8',
+  ));
+  const rooms = source.rooms.map((room) => ({
+    ...room,
+    poly: room.poly.map(([x, y]) => [x * 1000, y * 1000]),
+  }));
+  const resolution = resolveSafeResize(rooms, [], 'north-west', 3, {
+    ...SAFE,
+    step: 1000 / 240,
+  });
+  assert.equal(resolution.enabled, true);
+  assert.equal(validateSafeResize(
+    rooms, [], resolution.plan, 1000 / 240, { ...SAFE, step: 1000 / 240 },
+  ), true);
+});
+
 test('#277 partial shared and third-owner topology never enter a resize plan', () => {
   const partial = resolveSafeResize([A(), B()], [], 'A', 1, SAFE);
   assert.deepEqual(partial, { enabled: false, reason: 'partial-shared' });

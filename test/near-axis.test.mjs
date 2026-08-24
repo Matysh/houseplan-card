@@ -11,6 +11,7 @@ import {
 } from '../test-build/near-axis.js';
 import { optimizePlans } from '../test-build/plan-optimizer.js';
 import { MULTI_WALL_NEAR_ORTHOGONAL_MAX_DEGREES } from '../test-build/wall-thickness.js';
+import { nearAxisProfile } from '../scripts/model-invariants.mjs';
 
 const fixture = JSON.parse(readFileSync(
   new URL('./fixtures/279-near-orthogonal-junction.json', import.meta.url), 'utf8',
@@ -101,4 +102,31 @@ test('#290 Optimize reports physical count, exact max centimetres and is idempot
   assert.equal(second.changed, false);
   assert.equal(second.report.wallsStraightened, 0);
   assert.equal(second.report.maxStraightenShiftCm, 0);
+});
+
+test('#290 Optimize reduces the tracked real-plan near-axis profile and stays idempotent', () => {
+  for (const file of ['real-plan-first-floor.json', 'real-plan-second-floor.json']) {
+    const { space } = JSON.parse(readFileSync(
+      new URL(`./fixtures/${file}`, import.meta.url), 'utf8',
+    ));
+    const config = { spaces: [clone(space)] };
+    const before = nearAxisProfile(config);
+    const first = optimizePlans(config, {});
+    const after = nearAxisProfile(first.config);
+    const second = optimizePlans(first.config, first.layout);
+
+    assert.equal(after.total, before.total - first.report.wallsStraightened, file);
+    assert.equal(after.total <= before.total, true, file);
+    assert.equal(second.report.wallsStraightened, 0, file);
+    assert.equal(nearAxisProfile(second.config).total, after.total, file);
+  }
+  const { space } = JSON.parse(readFileSync(
+    new URL('./fixtures/real-plan-second-floor.json', import.meta.url), 'utf8',
+  ));
+  const config = { spaces: [clone(space)] };
+  const before = nearAxisProfile(config);
+  const repaired = optimizePlans(config, {});
+  assert.equal(before.total, 1);
+  assert.equal(repaired.report.wallsStraightened, 1);
+  assert.equal(nearAxisProfile(repaired.config).total, 0);
 });

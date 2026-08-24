@@ -516,10 +516,13 @@ export function checkMixedRoleRecords(config) {
   return violations;
 }
 
-/** Разобрать любой из трёх форматов, в которых приходит конфигурация. */
+/** Разобрать runtime-ответы, сырой config и tracked single-space fixtures. */
 export function readModel(text) {
   const parsed = JSON.parse(text);
-  const config = parsed?.payload?.config ?? parsed?.result?.config ?? parsed?.config ?? parsed;
+  const source = parsed?.payload?.config ?? parsed?.result?.config ?? parsed?.config ?? parsed;
+  const config = !Array.isArray(source?.spaces) && parsed?.space
+    ? { spaces: [parsed.space] }
+    : source;
   const layout = parsed?.payload?.layout ?? parsed?.result?.layout ?? parsed?.layout ?? {};
   return { config, layout };
 }
