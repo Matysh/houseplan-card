@@ -6,7 +6,8 @@ import { makeLargeHouseFixture, LARGE_HOUSE_COUNTS } from './fixtures/large-hous
 import { optimizePlans } from '../test-build/plan-optimizer.js';
 
 const WARMUPS = 5;
-const SAMPLES = 40;
+const SAMPLES = 20;
+const BATCH_SIZE = 10;
 const RELATIVE_OVERHEAD = 0.15;
 const ABSOLUTE_OVERHEAD_MS = 25;
 
@@ -24,9 +25,11 @@ const baseline = () => optimizePlans(fixture.config, {}, {}, {
 const candidate = () => optimizePlans(fixture.config, {});
 const timed = (operation) => {
   const start = performance.now();
-  const result = operation();
-  if (!result || !result.report) throw new Error('Optimize candidate returned no report');
-  return performance.now() - start;
+  for (let index = 0; index < BATCH_SIZE; index++) {
+    const result = operation();
+    if (!result || !result.report) throw new Error('Optimize candidate returned no report');
+  }
+  return (performance.now() - start) / BATCH_SIZE;
 };
 for (let index = 0; index < WARMUPS; index++) {
   baseline();
@@ -37,11 +40,15 @@ const baselineTimes = [];
 const candidateTimes = [];
 const overheadTimes = [];
 for (let index = 0; index < SAMPLES; index++) {
+  // ABBA/BAAB cancels first-order clock drift and balances cache/GC order;
+  // batching then averages timer noise before the paired p95 is computed.
   const candidateFirst = index % 2 === 1;
   const first = timed(candidateFirst ? candidate : baseline);
   const second = timed(candidateFirst ? baseline : candidate);
-  const baselineMs = candidateFirst ? second : first;
-  const candidateMs = candidateFirst ? first : second;
+  const third = timed(candidateFirst ? baseline : candidate);
+  const fourth = timed(candidateFirst ? candidate : baseline);
+  const baselineMs = candidateFirst ? (second + third) / 2 : (first + fourth) / 2;
+  const candidateMs = candidateFirst ? (first + fourth) / 2 : (second + third) / 2;
   baselineTimes.push(baselineMs);
   candidateTimes.push(candidateMs);
   overheadTimes.push(candidateMs - baselineMs);
@@ -60,7 +67,7 @@ const summary = (values) => ({
 const baselineSummary = summary(baselineTimes);
 const candidateSummary = summary(candidateTimes);
 const overheadSummary = summary(overheadTimes);
-const measuredOverheadP95 = Math.max(0, candidateSummary.p95 - baselineSummary.p95);
+const measuredOverheadP95 = Math.max(0, overheadSummary.p95);
 const relativeP95 = measuredOverheadP95
   / Math.max(baselineSummary.p95, Number.EPSILON);
 const pass = measuredOverheadP95 <= ABSOLUTE_OVERHEAD_MS
@@ -70,6 +77,7 @@ const report = {
   fixture: LARGE_HOUSE_COUNTS,
   warmups: WARMUPS,
   samples: SAMPLES,
+  batchSize: BATCH_SIZE,
   baseline: baselineSummary,
   candidate: candidateSummary,
   pairedOverhead: overheadSummary,
