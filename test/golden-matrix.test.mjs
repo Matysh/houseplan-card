@@ -255,6 +255,36 @@ test('corner Split golden captures before, thin and thick facade states', () => 
   }
 });
 
+test('issue 276 golden captures 5 cm offsets and hosted door before/after 10/30/virtual', () => {
+  const scenarios = GOLDEN_SCENARIOS.filter((scenario) => scenario.coincidentPartition);
+  assert.deepEqual(
+    scenarios.map((scenario) => scenario.coincidentPartition),
+    ['before', 'thin', 'thick', 'virtual'],
+  );
+  for (const scenario of scenarios) {
+    const fixture = prepareGoldenFixture(scenario);
+    const space = fixture.config.spaces.find((item) => item.id === scenario.space);
+    assert.ok(space);
+    assert.equal(space.cell_cm, 5);
+    assert.ok(space.rooms[0].poly.some((point) => point[0] === 0.5
+      && point[1] === 0.004166666666666667), 'short 5 cm offset must be visible');
+    assert.equal(space.openings.length, 1);
+    if (scenario.coincidentPartition === 'before') {
+      assert.equal(space.partitions.length, 1);
+      assert.equal(space.openings[0].host.id, 'redundant');
+      continue;
+    }
+    assert.equal(space.partitions, undefined);
+    assert.equal(space.openings[0].host, undefined);
+    assert.equal(space.openings[0].x, 0.504166667);
+    if (scenario.coincidentPartition === 'virtual') {
+      assert.equal(space.open_spans.length, 1);
+    } else {
+      assert.equal(space.walls[0].cm, scenario.coincidentPartition === 'thin' ? 10 : 30);
+    }
+  }
+});
+
 test('filled opening golden has a pixel-level seam detector', () => {
   const scenario = GOLDEN_SCENARIOS.find((item) => item.id === 'openings-filled-tunnel-dark');
   assert.ok(scenario);
@@ -322,7 +352,7 @@ test('sun-ray golden requires browser-painted light from a state-only sun entity
   assert.ok(scenario);
   const fixture = prepareGoldenFixture(scenario);
   const space = fixture.config.spaces.find((item) => item.id === scenario.space);
-  assert.equal(GOLDEN_MATRIX_VERSION, 41);
+  assert.equal(GOLDEN_MATRIX_VERSION, 42);
   assert.equal(space.settings.sun_rays, true);
   assert.equal(scenario.northDeg, 90,
     'the sign-sensitive golden must keep a non-zero north direction');

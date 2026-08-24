@@ -545,6 +545,11 @@ partial/composite matches, overlapping openings and adjacent independent
 bodies fail closed. The candidate then crosses the existing whole-plan
 geometry preflight and one atomic Optimize write/Undo boundary. No render or
 ordinary save path invokes this pass, so `PLAN_MODEL_VERSION` remains unchanged.
+`OptimizeDependencies` is a narrow test/benchmark seam: production uses the
+real helper, while the committed large-house benchmark substitutes a no-op to
+measure only this pass and the unit contract instruments its exact per-space
+call count. A source-ownership assertion fails if a render/pointer module ever
+imports the helper.
 
 `boundary` is one contextual UI tool over the existing `open_spans` model.
 Before the first click, independent physical bodies block the room boundary

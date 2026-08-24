@@ -14,6 +14,9 @@ const orthogonalStripFixture = JSON.parse(readFileSync(
 const wallKeyRoundtripFixture = JSON.parse(readFileSync(
   new URL('../../test/fixtures/258-wall-key-roundtrip.json', import.meta.url), 'utf8',
 ));
+const coincidentPartitionFixture = JSON.parse(readFileSync(
+  new URL('../../test/fixtures/276-coincident-partition.json', import.meta.url), 'utf8',
+));
 
 const fixtureFor = (scenario) => scenario.fixture === 'large'
   ? makeLargeHouseFixture()
@@ -67,6 +70,33 @@ async function stableEnvironment(page, scenario) {
 /** Apply every data-only scenario override before the fixture crosses into the browser. */
 export function prepareGoldenFixture(scenario) {
   const fixture = fixtureFor(scenario);
+  if (scenario.coincidentPartition) {
+    const state = scenario.coincidentPartition;
+    if (!['before', 'thin', 'thick', 'virtual'].includes(state))
+      throw new Error(`unknown coincidentPartition state: ${state}`);
+    const space = structuredClone(coincidentPartitionFixture.spaces[0]);
+    space.id = scenario.space;
+    space.title = `Coincident partition ${state}`;
+    space.settings = {
+      fill_mode: 'none', show_borders: true, show_names: true,
+    };
+    if (state !== 'before') {
+      delete space.partitions;
+      space.walls[0].cm = state === 'thin' ? 10 : state === 'thick' ? 30 : 20;
+      const opening = space.openings[0];
+      delete opening.host;
+      opening.x = 0.504166667;
+      opening.y = 0.5;
+      opening.angle = -90;
+      if (state === 'virtual') {
+        space.open_spans = [{
+          a: [0.5041666666666667, 0.004166666666666667],
+          b: [0.5041666666666667, 0.9958333333333333],
+        }];
+      }
+    }
+    fixture.config.spaces.push(space);
+  }
   if (scenario.cornerSplitWall) {
     const stage = scenario.cornerSplitWall;
     if (!['before', 'thin', 'thick', 'zero-taper'].includes(stage))

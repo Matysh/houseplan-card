@@ -73,6 +73,11 @@ export interface OptimizeResult {
   changed: boolean;
 }
 
+/** Test/benchmark seam for proving that structural maintenance stays inside Optimize. */
+export interface OptimizeDependencies {
+  reconcileCoincidentPartitions?: typeof reconcileCoincidentPartitions;
+}
+
 const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value));
 const own = (o: any, key: string): boolean => Object.prototype.hasOwnProperty.call(o, key);
 const clamp = (value: number, min: number, max: number): number => (
@@ -393,7 +398,10 @@ export function optimizePlans(
   configIn: any,
   layoutIn: Record<string, any>,
   context: SpaceReferenceRepairContext = {},
+  dependencies: OptimizeDependencies = {},
 ): OptimizeResult {
+  const reconcilePartitions = dependencies.reconcileCoincidentPartitions
+    ?? reconcileCoincidentPartitions;
   const references = repairSpaceReferences(configIn, layoutIn, context);
   const config = references.config;
   const original = JSON.stringify(configIn || {});
@@ -545,7 +553,7 @@ export function optimizePlans(
     // preflight checks the candidate (#276).
     const reconciledModel = modelOf(space);
     if (reconciledModel) {
-      const reconciled = reconcileCoincidentPartitions(
+      const reconciled = reconcilePartitions(
         space, reconciledModel, space.walls || [], cuts,
         {
           pitch: GRID_STEP_N,

@@ -1,7 +1,7 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 41;
+export const GOLDEN_MATRIX_VERSION = 42;
 
 const stage = { capture: 'stage', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0005 } };
 const page = { capture: 'page', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0008 } };
@@ -165,6 +165,18 @@ const decorLayerProbes = {
 };
 
 export const GOLDEN_SCENARIOS = Object.freeze([
+  { id: 'coincident-partition-before-dark', fixture: 'visual',
+    space: 'golden-coincident-partition', coincidentPartition: 'before',
+    mode: 'view', theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
+  { id: 'coincident-partition-thin-dark', fixture: 'visual',
+    space: 'golden-coincident-partition', coincidentPartition: 'thin',
+    mode: 'view', theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
+  { id: 'coincident-partition-thick-dark', fixture: 'visual',
+    space: 'golden-coincident-partition', coincidentPartition: 'thick',
+    mode: 'view', theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
+  { id: 'coincident-partition-virtual-dark', fixture: 'visual',
+    space: 'golden-coincident-partition', coincidentPartition: 'virtual',
+    mode: 'view', theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'split-corner-wall-before-dark', fixture: 'visual', space: 'golden-corner-split',
     cornerSplitWall: 'before', mode: 'view', theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'split-corner-wall-thin-dark', fixture: 'visual', space: 'golden-corner-split',

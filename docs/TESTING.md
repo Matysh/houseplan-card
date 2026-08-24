@@ -2815,15 +2815,23 @@ require hands on real hardware — they remain for the human pass.
       exact independent wall is removed, its hosted door becomes an ordinary
       opening at the same centre/angle with all bindings and unknown fields,
       and the wider centred thickness survives. Direction and room order do
-      not matter; partial/extra/unknown/draft/column/opening-conflict cases are
-      byte-preserved. Preview writes nothing, Apply uses one WS transaction,
+      not matter; three non-overlapping hosted door/window/gate records are
+      rehosted atomically, while a hosted-hosted overlap and all other
+      partial/extra/unknown/draft/column/opening conflicts fail closed. Preview
+      writes nothing, Apply uses one WS transaction,
       reload is idempotent, Undo restores the hosted form, and Boundary plus
-      Thickness target the resulting shared wall [unit:
+      Thickness target the resulting shared wall. Four targeted golden scenes
+      retain the 5 cm offset and show before, 10 cm, 30 cm and virtual results;
+      the paired large-house benchmark enforces p95 overhead ≤15% and ≤25 ms,
+      while source ownership plus an injected counter keep the helper out of
+      render/pointer paths [unit:
       test/coincident-partitions.test.mjs + test/plan-optimizer.test.mjs;
       auto: smoke_optimize_coincident_partition; mutations:
       `optimizer-coincident-opening-rehost-disabled`,
       `optimizer-coincident-partial-accepted`, existing
-      `optimize-preflight-bypassed`].
+      `optimize-preflight-bypassed`; performance:
+      `npm run benchmark:coincident-partitions`; golden:
+      `coincident-partition-{before,thin,thick,virtual}-dark`].
 - [ ] **Unit + backend**: inset/mitre/bevel, key from either end, degrade,
       rekey, cm↔inches; `walls` schema bounds
       [auto: test/wall-thickness.test.mjs + tests_backend/test_validation.py]
