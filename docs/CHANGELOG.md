@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- A nearly perpendicular T-junction now preserves all physical masonry when
+  its saved axis has a small valid slope. The two white wedges disappear in
+  every mode without straightening stored coordinates, while deliberately
+  diagonal bevels stay bounded
+  ([#279](https://github.com/Matysh/houseplan-card/issues/279)).
+
 ## v1.67.0-beta.8 — 2026-08-24
 
 - A local wall-union failure can no longer blank the masonry of an entire

@@ -135,7 +135,10 @@ Exterior connectivity alone is not sufficient (#275). At a degree-3+ node,
 every finite ray that has a perpendicular partner owns its complete physical
 strip through the local repair window. The effective bevel cut excludes the
 union of those protected strips, then the reconstruction unions them back as a
-boolean fail-safe. Rays are classified pair by pair: a diagonal ray in a mixed
+boolean fail-safe. A pair remains physically near-orthogonal when its angular
+deviation from 90° is at most `0.25°` (#279); this small drafting tolerance is
+independent of `cell_cm` and does not rewrite the saved axes. Rays are
+classified pair by pair: a diagonal ray in a mixed
 orthogonal/diagonal node remains subject to the bounded #249 bevel unless it
 has its own perpendicular partner. The non-orthogonal #249 fixture therefore
 keeps its approved empty wedge. Protected strips are unioned once for the

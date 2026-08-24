@@ -13,6 +13,7 @@ import {
   innerContourForRoom, innerEdgeSpan, ownEdgeOffsets,
   paperRoomShapesWithWalls, WALL_MIN_CM, WALL_MAX_CM, MITRE_LIMIT,
   MULTI_WALL_JOIN_LIMIT, buildMultiWallNodeMap, multiWallBevelTriangles,
+  MULTI_WALL_NEAR_ORTHOGONAL_MAX_DEGREES,
   MULTI_WALL_ORTHOGONAL_DOT_EPSILON, multiWallProtectedRayIndexes,
   multiWallProtectedStripGeometry,
   atomicPolyForRoom, insetOffsetsForRoom, wallIntervals, materializeWallIntervals,
@@ -1077,6 +1078,88 @@ test('issue #275 classifies orthogonal rays by pair, including mixed-node and ep
     [],
     'a physically diagonal ray beyond normalization noise must stay unprotected',
   );
+});
+
+test('issue #279 protects the exact near-orthogonal T without changing #249', () => {
+  const fixture = JSON.parse(readFileSync(
+    new URL('./fixtures/279-near-orthogonal-junction.json', import.meta.url), 'utf8',
+  ));
+  const rooms = fixture.rooms.map((room) => ({
+    ...room,
+    poly: room.poly.map(([x, y]) => [x * NORM_W, y * NORM_W]),
+  }));
+  let walls = [];
+  for (const wall of fixture.walls) {
+    walls = setWallThickness(
+      walls,
+      wall.a.map((value) => value * NORM_W),
+      wall.b.map((value) => value * NORM_W),
+      wall.cm,
+      pitch,
+      NORM_W,
+    );
+  }
+  const map = buildMultiWallNodeMap(
+    wallIntervals(rooms, walls, [], pitch, fixture.cell_cm, GRID_PITCH, NORM_W),
+    pitch * NORM_W * 0.04 * 4,
+    NORM_W,
+  );
+  const expectedNode = fixture.node.map((value) => value * NORM_W);
+  const node = map.nodes.find((candidate) => Math.hypot(
+    candidate.point[0] - expectedNode[0], candidate.point[1] - expectedNode[1],
+  ) <= map.epsilon);
+  assert.ok(node, 'the exact beta.8 junction disappeared');
+  assert.equal(node.rays.length, 3);
+  assert.deepEqual(
+    multiWallProtectedRayIndexes(node, 1e-9),
+    [],
+    'the fixture must still reproduce the strict-dot regression',
+  );
+  assert.deepEqual(multiWallProtectedRayIndexes(node), [0, 1, 2]);
+
+  const protectedStrips = multiWallProtectedStripGeometry(node, map);
+  const geometry = wallBodiesGeometry(
+    rooms, walls, [], [], pitch, fixture.cell_cm, GRID_PITCH, NORM_W,
+  );
+  assert.ok(protectedStrips && geometry);
+  closeTo(geometryDifferenceArea(protectedStrips, geometry.roomGeom), 0, 1e-6);
+  closeTo(geometryDifferenceArea(protectedStrips, geometry.geom), 0, 1e-6);
+  for (const ray of node.rays) {
+    assertProbeInside(geometry.geom, [
+      node.point[0] + ray.u[0] * node.halfDepth * 2,
+      node.point[1] + ray.u[1] * node.halfDepth * 2,
+    ], 'a near-orthogonal arm detached from the junction');
+  }
+});
+
+test('issue #279 near-orthogonal boundary is explicit, mirrored and bounded', () => {
+  const ray = (degrees) => {
+    const radians = degrees * Math.PI / 180;
+    return {
+      u: [Math.cos(radians), Math.sin(radians)],
+      halfDepth: 5,
+      length: 100,
+      supports: [{ halfDepth: 5, length: 100 }],
+    };
+  };
+  const node = (deviation) => ({
+    point: [0, 0],
+    rays: [ray(0), ray(90 + deviation), ray(180)],
+    halfDepth: 5,
+    limit: 5 * MULTI_WALL_JOIN_LIMIT,
+  });
+  const inside = MULTI_WALL_NEAR_ORTHOGONAL_MAX_DEGREES - 1e-6;
+  const outside = MULTI_WALL_NEAR_ORTHOGONAL_MAX_DEGREES + 1e-6;
+  for (const deviation of [0, 0.181315, -0.181315, inside, -inside]) {
+    assert.deepEqual(multiWallProtectedRayIndexes(node(deviation)), [0, 1, 2]);
+  }
+  for (const deviation of [outside, -outside, 1, -1]) {
+    assert.deepEqual(
+      multiWallProtectedRayIndexes(node(deviation)),
+      [],
+      `${deviation} degrees must retain the bounded non-orthogonal bevel`,
+    );
+  }
 });
 
 test('issue #271 keeps finite co-directional ray supports and never rebuilds past an endpoint', () => {

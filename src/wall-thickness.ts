@@ -80,8 +80,13 @@ export const MITRE_LIMIT = 4;
 /** Multi-ray joins stay inside this × the largest incident half-depth (#249). */
 export const MULTI_WALL_JOIN_LIMIT = 1.25;
 
-/** Normalized dot-product tolerance for a physically orthogonal ray pair. */
-export const MULTI_WALL_ORTHOGONAL_DOT_EPSILON = 1e-9;
+/** Maximum drafting deviation still rendered as a physical T/X junction (#279). */
+export const MULTI_WALL_NEAR_ORTHOGONAL_MAX_DEGREES = 0.25;
+
+/** Normalized dot-product tolerance for a physically near-orthogonal ray pair. */
+export const MULTI_WALL_ORTHOGONAL_DOT_EPSILON = Math.sin(
+  MULTI_WALL_NEAR_ORTHOGONAL_MAX_DEGREES * Math.PI / 180,
+);
 
 export interface MultiWallNodeRaySupport {
   /** Physical half-depth owned by this finite co-directional interval. */
