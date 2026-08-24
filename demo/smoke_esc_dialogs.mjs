@@ -76,9 +76,11 @@ const res = await page.evaluate(async () => {
   c._openSettingsDialog(); c._infoCard = c._devices[0]; await c.updateComplete;
   await esc(); out.stacked = !c._infoCard && !!c._settingsDialog;
   await esc(); out.stacked2 = !c._settingsDialog;
-  // Esc в разметке по-прежнему откатывает точку, а не только диалоги
+  // #294: once no dialog remains, Escape is still routed to the Plan tool.
+  // It finishes and detaches the accepted chain while keeping Walls armed;
+  // Ctrl/Cmd+Z, not Escape, owns one-point undo.
   c._setMode('plan'); c._tool = 'draw'; c._path = [[1, 2], [3, 4]]; await c.updateComplete;
-  await esc(); out.undoPointStillWorks = c._path.length === 1;
+  await esc(); out.wallChainDetaches = c._path.length === 0 && c._tool === 'draw';
   return out;
 });
 checkAll(res);
