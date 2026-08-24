@@ -692,14 +692,13 @@ export const MUTANTS = [
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="issue 248 Optimize stays" '
       + 'test/plan-optimizer.test.mjs',
-    because: 'the pure Optimize candidate must already equal the nine-decimal pair that the '
-      + 'backend writes, or a server-event reload turns 1/240 into fresh coordinate noise (#248)',
+    because: 'Optimize must remove near-node tails before visible Align so storage-only cleanup '
+      + 'is not misreported as a user-visible move and the exact candidate survives reload (#291)',
     patches: [{
       file: 'src/plan-optimizer.ts',
-      find: '  const persistedConfig = canonicalizeConfigGeometry(config);\n'
-        + '  const persistedLayout = canonicalizeLayoutGeometry(finalAligned.layout);',
-      replace: '  const persistedConfig = config;\n'
-        + '  const persistedLayout = finalAligned.layout;',
+      find: '  canonicalizeConfigGeometryInPlace(config);\n'
+        + '  canonicalizeLayoutGeometryInPlace(references.layout);',
+      replace: '  // mutant: skip the pre-Align lattice boundary',
     }],
   },
   {
@@ -770,14 +769,98 @@ export const MUTANTS = [
   {
     id: 'quantization-hits-allowlist',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
-      + '&& node --test --test-name-pattern="nine-decimal fixture contract" '
+      + '&& node --test --test-name-pattern="scalar\\+lattice fixture contract" '
       + 'test/coordinate-canonicalization.test.mjs',
     because: 'presentation and calibration values are deliberately outside geometry; widening '
       + 'the allow-list silently changes user data that has no ULP topology problem',
     patches: [{
       file: 'src/coordinate-canonicalization.ts',
-      find: "  for (const marker of records(root.markers)) fields(marker, ['angle']);",
-      replace: "  for (const marker of records(root.markers)) fields(marker, ['angle', 'size']);",
+      find: "  for (const marker of records(root.markers)) scalarFields(marker, ['angle']);",
+      replace: "  for (const marker of records(root.markers)) scalarFields(marker, ['angle', 'size']);",
+    }],
+  },
+  {
+    id: 'lattice-round-truncates',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="all 4801 lattice nodes" '
+      + 'test/coordinate-canonicalization.test.mjs',
+    because: 'truncating toward zero maps every negative and fractional node to the wrong exact '
+      + 'double, recreating topology drift even though the output still looks grid-like (#291)',
+    patches: [{
+      file: 'src/coordinate-canonicalization.ts',
+      find: '  const scaled = value * LATTICE_GRID_N;\n'
+        + '  const nearest = Math.round(scaled);\n'
+        + '  const deviation = Math.abs(scaled - nearest);',
+      replace: '  const scaled = value * LATTICE_GRID_N;\n'
+        + '  const nearest = Math.trunc(scaled);\n'
+        + '  const deviation = Math.abs(scaled - nearest);',
+    }],
+  },
+  {
+    id: 'python-lattice-round-truncates',
+    guard: 'node scripts/backend-test-guard.mjs all_4801_lattice_nodes '
+      + 'tests_backend/test_coordinate_canonicalization.py',
+    because: 'the backend must use the JavaScript Math.round tie direction and nearest-node '
+      + 'semantics; truncation would make old-client writes diverge from the card (#291)',
+    patches: [{
+      file: 'custom_components/houseplan/coordinate_canonicalization.py',
+      find: '    nearest = math.floor(scaled + 0.5)',
+      replace: '    nearest = math.trunc(scaled)',
+    }],
+  },
+  {
+    id: 'lattice-noise-threshold-too-small',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="all 4801 lattice nodes" '
+      + 'test/coordinate-canonicalization.test.mjs',
+    because: 'a threshold below the measured nine-decimal tail leaves the real 1/240 noise '
+      + 'population intact while nominal exact nodes continue to pass (#291)',
+    patches: [{
+      file: 'src/coordinate-canonicalization.ts',
+      find: 'export const LATTICE_NOISE_STEPS = 1e-4;',
+      replace: 'export const LATTICE_NOISE_STEPS = 1e-9;',
+    }],
+  },
+  {
+    id: 'lattice-noise-threshold-too-large',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="all 4801 lattice nodes" '
+      + 'test/coordinate-canonicalization.test.mjs',
+    because: 'a broad threshold silently attracts authored off-grid geometry instead of only '
+      + 'removing the measured storage tail (#291)',
+    patches: [{
+      file: 'src/coordinate-canonicalization.ts',
+      find: 'export const LATTICE_NOISE_STEPS = 1e-4;',
+      replace: 'export const LATTICE_NOISE_STEPS = 0.5;',
+    }],
+  },
+  {
+    id: 'lattice-layout-allowlist-omitted',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="scalar\\+lattice fixture contract" '
+      + 'test/coordinate-canonicalization.test.mjs',
+    because: 'config-only canonicalization lets marker and room-label writes recreate the same '
+      + 'noise through the independent layout Store (#291)',
+    patches: [{
+      file: 'src/coordinate-canonicalization.ts',
+      find: '  for (const value of Object.values(root)) {\n'
+        + '    const item = record(value);\n'
+        + "    if (item) latticeFields(item, ['x', 'y']);\n"
+        + '  }\n  return result;',
+      replace: '  // mutant: omit all layout x/y values\n  return result;',
+    }],
+  },
+  {
+    id: 'lattice-unknown-fields-recursive',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="scalar\\+lattice fixture contract" '
+      + 'test/coordinate-canonicalization.test.mjs',
+    because: 'recursively rounding future, physical and calibration numbers corrupts data which '
+      + 'is deliberately outside the persisted coordinate allow-list (#291)',
+    patches: [{
+      file: 'src/coordinate-canonicalization.ts',
+      find: '  }\n  return value;\n}\n\n/** Existing scalar contract',
+      replace: '  }\n  return canonicalizeNumber(value);\n}\n\n/** Existing scalar contract',
     }],
   },
   {

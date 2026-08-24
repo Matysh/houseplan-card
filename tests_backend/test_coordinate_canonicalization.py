@@ -12,7 +12,10 @@ import pytest
 from custom_components.houseplan import virtual_lights
 from custom_components.houseplan.coordinate_canonicalization import (
     COORDINATE_DECIMALS,
+    LATTICE_GRID_N,
+    LATTICE_NOISE_STEPS,
     canonicalize_config_geometry,
+    canonicalize_lattice_coordinate,
     canonicalize_layout_geometry,
     canonicalize_number,
 )
@@ -45,7 +48,7 @@ def _fixture() -> dict:
     return json.loads(FIXTURE.read_text(encoding="utf-8"))
 
 
-def test_python_and_frontend_share_the_nine_decimal_fixture_contract() -> None:
+def test_python_and_frontend_share_the_scalar_lattice_fixture_contract() -> None:
     fixture = _fixture()
     config_input = fixture["configInput"]
     layout_input = fixture["layoutInput"]
@@ -73,6 +76,24 @@ def test_scalar_contract_is_symmetric_and_keeps_off_grid_geometry() -> None:
     assert abs(canonicalize_number(value) - value) <= 5e-10
     assert math.isnan(canonicalize_number(float("nan")))
     assert canonicalize_number(float("inf")) == float("inf")
+
+
+def test_all_4801_lattice_nodes_and_nine_decimal_forms_share_exact_bits() -> None:
+    assert LATTICE_GRID_N == 240
+    assert LATTICE_NOISE_STEPS == 1e-4
+    for index in range(-2400, 2401):
+        node = index / LATTICE_GRID_N
+        nine_decimal = float(f"{node:.9f}")
+        assert canonicalize_lattice_coordinate(node) == node
+        assert canonicalize_lattice_coordinate(nine_decimal) == node
+        assert canonicalize_lattice_coordinate(
+            canonicalize_lattice_coordinate(nine_decimal)
+        ) == node
+    assert math.copysign(1.0, canonicalize_lattice_coordinate(-0.0)) == 1.0
+    assert canonicalize_lattice_coordinate(0.06) == 0.06
+    assert canonicalize_lattice_coordinate(0.2875) == 0.2875
+    assert canonicalize_lattice_coordinate((1 + 0.999e-4) / 240) == 1 / 240
+    assert canonicalize_lattice_coordinate((1 + 1.001e-4) / 240) == 0.004167084
 
 
 def test_backend_schemas_apply_the_same_allowlist() -> None:

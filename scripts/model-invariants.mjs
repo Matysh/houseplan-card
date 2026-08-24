@@ -20,12 +20,14 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { checkOptimizeGeometry } from '../test-build/plan-geometry-preflight.js';
 import { classifyNearAxisSegment } from '../test-build/near-axis.js';
+import {
+  LATTICE_GRID_N as GRID_N,
+  LATTICE_NOISE_STEPS as NOISE_STEPS,
+} from '../test-build/coordinate-canonicalization.js';
 
 /** Доля шага сетки, в пределах которой запись считается лежащей на ребре. */
 const EDGE_TOLERANCE = 0.004;
 
-/** Решётка редактора: та же, что `GRID_N` в `src/space-geometry.ts`. */
-const GRID_N = 240;
 const GRID_STEP_N = 1 / GRID_N;
 
 const isFiniteNumber = (value) => typeof value === 'number' && Number.isFinite(value);
@@ -342,8 +344,6 @@ export function checkWallKeys(config, { notes = [] } = {}) {
  * Взята на четыре порядка ниже шага, то есть заведомо ниже любого осмысленного
  * пользовательского ввода и заведомо выше двоичного мусора одиночной операции.
  */
-const NOISE_STEPS = 1e-4;
-
 const latticeDeviation = (value) => {
   const steps = value * GRID_N;
   return Math.abs(steps - Math.round(steps));
@@ -359,11 +359,10 @@ function* modelCoordinates(config, layout = {}) {
         const point = pointOf(p);
         if (point) yield { kind: 'room', owner: `${spaceId}:${room?.id ?? '?'}#${index}`, point };
       }
-      for (const field of ['x', 'y', 'w', 'h']) {
-        if (isFiniteNumber(room?.[field])) {
-          yield { kind: 'room', owner: `${spaceId}:${room?.id ?? '?'}.${field}`, point: [room[field], room[field]] };
-        }
-      }
+      const origin = pointOf([room?.x, room?.y]);
+      if (origin) yield { kind: 'room', owner: `${spaceId}:${room?.id ?? '?'}.origin`, point: origin };
+      const size = pointOf([room?.w, room?.h]);
+      if (size) yield { kind: 'room', owner: `${spaceId}:${room?.id ?? '?'}.size`, point: size };
     }
     for (const part of space?.partitions || []) {
       for (const end of ['a', 'b']) {
@@ -386,6 +385,33 @@ function* modelCoordinates(config, layout = {}) {
     for (const column of space?.wall_columns || []) {
       const point = pointOf(column?.center);
       if (point) yield { kind: 'column', owner: `${spaceId}:${column?.id ?? '?'}`, point };
+    }
+    for (const opening of space?.openings || []) {
+      const point = pointOf([opening?.x, opening?.y]);
+      if (point) yield { kind: 'opening', owner: `${spaceId}:${opening?.id ?? '?'}`, point };
+    }
+    for (const draft of space?.room_drafts || []) {
+      for (const [index, value] of (draft?.points || []).entries()) {
+        const point = pointOf(value);
+        if (point) yield { kind: 'room_draft', owner: `${spaceId}:${draft?.id ?? '?'}#${index}`, point };
+      }
+    }
+    for (const decor of space?.decor || []) {
+      const id = `${spaceId}:${decor?.id ?? '?'}`;
+      if (decor?.kind === 'line') {
+        const a = pointOf([decor?.x1, decor?.y1]);
+        const b = pointOf([decor?.x2, decor?.y2]);
+        if (a) yield { kind: 'decor', owner: `${id}.a`, point: a };
+        if (b) yield { kind: 'decor', owner: `${id}.b`, point: b };
+      } else if (['rect', 'ellipse', 'furniture'].includes(decor?.kind)) {
+        const origin = pointOf([decor?.x, decor?.y]);
+        const size = pointOf([decor?.w, decor?.h]);
+        if (origin) yield { kind: 'decor', owner: `${id}.origin`, point: origin };
+        if (size) yield { kind: 'decor', owner: `${id}.size`, point: size };
+      } else if (decor?.kind === 'text') {
+        const point = pointOf([decor?.x, decor?.y]);
+        if (point) yield { kind: 'decor', owner: id, point };
+      }
     }
   }
   for (const [key, position] of Object.entries(layout || {})) {

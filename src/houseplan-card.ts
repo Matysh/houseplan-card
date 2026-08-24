@@ -208,6 +208,7 @@ import {
   canonicalizeConfigGeometry,
   canonicalizeLayoutGeometry,
   canonicalizePosition,
+  formatLatticeShiftCm,
 } from './coordinate-canonicalization';
 import { enqueueSerializedWrite } from './serialized-write-queue';
 import { hasTranslation, langOf, t, type I18nKey } from './i18n';
@@ -14205,7 +14206,13 @@ class HouseplanCard extends LitElement {
         this._layout = { ...this._layout, [id]: newPos };
       }
       await this._saveConfigNow();
-      if (newPos) this._noteLayoutRev(await this.hass.callWS({ type: 'houseplan/layout/update', device_id: id, pos: newPos }));
+      if (newPos) {
+        const pos = canonicalizePosition(newPos);
+        this._layout = { ...this._layout, [id]: pos };
+        this._noteLayoutRev(await this.hass.callWS({
+          type: 'houseplan/layout/update', device_id: id, pos,
+        }));
+      }
       const obsoleteIds = new Set(replacedRemovedIds);
       if (oldId && oldId !== id) obsoleteIds.add(oldId);
       obsoleteIds.delete(id);
@@ -15333,7 +15340,8 @@ class HouseplanCard extends LitElement {
       this._showToast(this._t('gs.align_done', {
         n: String(d.report.moved),
         m: String(d.report.migrated + d.report.canonicalized
-          + d.report.coordsCanonicalized + d.report.wallsMerged + d.report.spansMerged
+          + d.report.coordsCanonicalized + d.report.latticeCoordinatesCanonicalized
+          + d.report.wallsMerged + d.report.spansMerged
           + d.report.partitionsMerged + d.report.partitionsReconciled
           + d.report.openingsRehosted + d.report.wallsStraightened),
         r: String(d.report.spaceRefsRemapped + d.report.roomRefsRemapped
@@ -16410,6 +16418,19 @@ class HouseplanCard extends LitElement {
               ${r.moved ? html`<p class="alignmsg">${this._t('gs.align_count', {
                   n: String(r.moved), total: String(r.total), cm: String(d.cm),
                 })}</p>` : nothing}
+              ${r.latticeCoordinatesCanonicalized ? html`
+                <p class="alignmsg">${this._t('gs.optimize_lattice_summary', {
+                  n: String(r.latticeCoordinatesCanonicalized),
+                  cm: formatLatticeShiftCm(r.latticeMaxShiftCm),
+                })}</p>
+                ${r.latticeSpaces.map((space) => html`<p class="alignmsg">${this._t(
+                  'gs.optimize_lattice_space', {
+                    space: space.space,
+                    n: String(space.canonicalized),
+                    far: String(space.far),
+                  },
+                )}</p>`)}
+              ` : nothing}
               ${d.where
                 ? html`<p class="alignmsg">${this._t('gs.align_where', { s: d.where })}</p>`
                 : nothing}

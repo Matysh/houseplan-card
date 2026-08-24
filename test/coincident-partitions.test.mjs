@@ -36,7 +36,7 @@ test('issue 276 reconciles the anonymized 5 cm offset fixture without moving its
   assert.equal(space.openings.length, 1);
   assert.deepEqual(space.openings[0], {
     id: 'hosted-door', type: 'door',
-    x: 0.504166667, y: 0.5, angle: -90, length: 0.2,
+    x: 121 / 240, y: 0.5, angle: -90, length: 0.2,
     contact: 'binary_sensor.test_door', lock: 'lock.test_door',
     invert: true, flip_h: true, future_field: { keep: true },
   });
@@ -100,7 +100,7 @@ test('issue 276 rehosts three non-overlapping door/window/gate openings atomical
     ['hosted-door', 'hosted-window', 'hosted-gate']);
   assert.deepEqual(openings.map((opening) => opening.type), ['door', 'window', 'gate']);
   assert.ok(openings.every((opening) => opening.host === undefined));
-  assert.ok(openings.every((opening) => opening.x === 0.504166667));
+  assert.ok(openings.every((opening) => opening.x === 121 / 240));
   assert.ok(openings[0].y < openings[1].y && openings[1].y < openings[2].y);
   assert.equal(openings[0].contact, 'binary_sensor.door');
   assert.equal(openings[1].cover, 'cover.window');

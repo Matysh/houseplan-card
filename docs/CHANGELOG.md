@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Every saved plan coordinate now converges to the exact shared `1/240` grid
+  value when it differs only by an invisible floating-point tail. Authored
+  off-grid/diagonal geometry is preserved. “Optimize plans” reports the number
+  of cleaned values, their sub-millimetre maximum movement and only the floors
+  actually touched, while ordinary config/layout writes prevent the noise from
+  returning ([#291](https://github.com/Matysh/houseplan-card/issues/291)).
 - Resize now checks both side walls before starting a drag. It stops at the
   exact grid node where a wall would switch between shared and outer material,
   and disables a gesture with no safe direction, so a 20 cm shared thickness

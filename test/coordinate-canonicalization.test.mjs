@@ -4,10 +4,16 @@ import test from 'node:test';
 
 import {
   COORDINATE_DECIMALS,
+  LATTICE_GRID_N,
+  LATTICE_NOISE_STEPS,
   canonicalizeConfigGeometry,
+  canonicalizeConfigGeometryInPlace,
+  canonicalizeLatticeCoordinate,
   canonicalizeLayoutGeometry,
   canonicalizeNumber,
   canonicalizePosition,
+  formatLatticeShiftCm,
+  latticeCanonicalizationReport,
 } from '../test-build/coordinate-canonicalization.js';
 
 const fixture = JSON.parse(readFileSync(
@@ -15,7 +21,7 @@ const fixture = JSON.parse(readFileSync(
   'utf8',
 ));
 
-test('frontend and backend share the nine-decimal fixture contract (#224)', () => {
+test('frontend and backend share the scalar+lattice fixture contract (#291)', () => {
   assert.equal(COORDINATE_DECIMALS, fixture.decimals);
   const configBefore = structuredClone(fixture.configInput);
   const layoutBefore = structuredClone(fixture.layoutInput);
@@ -41,13 +47,64 @@ test('scalar canonicalization is symmetric and never snaps off-grid geometry (#2
   assert.equal(canonicalizeNumber(Number.POSITIVE_INFINITY), Number.POSITIVE_INFINITY);
 });
 
+test('all 4801 lattice nodes and their nine-decimal forms share exact bits (#291)', () => {
+  assert.equal(LATTICE_GRID_N, 240);
+  assert.equal(LATTICE_NOISE_STEPS, 1e-4);
+  for (let k = -2400; k <= 2400; k++) {
+    const node = k / LATTICE_GRID_N;
+    const nineDecimal = Number(node.toFixed(COORDINATE_DECIMALS));
+    assert.equal(canonicalizeLatticeCoordinate(node), node, `node ${k}`);
+    assert.equal(canonicalizeLatticeCoordinate(nineDecimal), node, `stored node ${k}`);
+    assert.equal(canonicalizeLatticeCoordinate(
+      canonicalizeLatticeCoordinate(nineDecimal),
+    ), node, `idempotent node ${k}`);
+  }
+  assert.equal(Object.is(canonicalizeLatticeCoordinate(-0), -0), false);
+  assert.equal(canonicalizeLatticeCoordinate(0.06), 0.06);
+  assert.equal(canonicalizeLatticeCoordinate(0.2875), 0.2875);
+  assert.equal(canonicalizeLatticeCoordinate((1 + 0.999e-4) / 240), 1 / 240);
+  assert.equal(canonicalizeLatticeCoordinate((1 + 1.001e-4) / 240), 0.004167084);
+});
+
+test('lattice report separates noise, far values and physical per-space maxima (#291)', () => {
+  const node = 83 / 240;
+  const noise = Number(node.toFixed(9));
+  const report = latticeCanonicalizationReport({ spaces: [
+    { id: 'quiet', title: 'Quiet', cell_cm: 1, rooms: [{ poly: [[0, 0], [0.06, 0]] }] },
+    { id: 'touched', title: 'Touched', cell_cm: 10, rooms: [{ poly: [[noise, node], [0.06, 0]] }] },
+  ] }, { marker: { s: 'touched', x: noise, y: 0 }, orphan: { x: noise, y: 0 } });
+  assert.equal(report.canonicalized, 3);
+  assert.equal(report.far, 2);
+  assert.equal(report.spaces.length, 1, 'unchanged spaces stay out of the breakdown');
+  assert.deepEqual(report.spaces[0], {
+    spaceId: 'touched', space: 'Touched', canonicalized: 2, far: 1,
+    maxShift: Math.abs(node - noise),
+    maxShiftCm: Math.abs(node - noise) * 240 * 10,
+  });
+  assert.equal(report.maxShift, Math.abs(node - noise));
+  assert.equal(report.maxShiftCm, Math.abs(node - noise) * 240 * 10);
+});
+
+test('lattice movement format keeps three significant digits without fake 0.1 cm (#291)', () => {
+  assert.equal(formatLatticeShiftCm(0), '0');
+  assert.equal(formatLatticeShiftCm(0.000033), '3.30e-5');
+  assert.equal(formatLatticeShiftCm(0.0012345), '0.00123');
+  assert.equal(formatLatticeShiftCm(1.2), '1.2');
+});
+
+test('Optimize can apply the same barrier in-place without a second clone (#291)', () => {
+  const input = structuredClone(fixture.configInput);
+  assert.equal(canonicalizeConfigGeometryInPlace(input), input);
+  assert.deepEqual(input, fixture.configExpected);
+});
+
 test('one position changes only x/y and preserves future metadata (#224)', () => {
   const input = {
     s: 'floor', x: 0.1000000006, y: -0.0000000004,
     k: 1.0000000004, nested: { numeric: 0.1234567896 },
   };
   assert.deepEqual(canonicalizePosition(input), {
-    s: 'floor', x: 0.100000001, y: 0,
+    s: 'floor', x: 0.1, y: 0,
     k: 1.0000000004, nested: { numeric: 0.1234567896 },
   });
 });

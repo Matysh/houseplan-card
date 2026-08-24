@@ -10,7 +10,8 @@
 
 import { alignAllToGrid, type AlignReport } from './align-grid';
 import {
-  canonicalizeConfigGeometry, canonicalizeLayoutGeometry,
+  canonicalizeConfigGeometryInPlace, canonicalizeLayoutGeometryInPlace,
+  latticeCanonicalizationReport, type LatticeSpaceReport,
 } from './coordinate-canonicalization';
 import {
   DECOR_TEXT_BASE, decorTextScale, liveTextReference, liveTextToken, roomPoly,
@@ -73,6 +74,16 @@ export interface OptimizeReport extends AlignReport, SpaceReferenceReport {
   maxStraightenShiftCm: number;
   /** Space owning the largest accepted straightening movement. */
   maxStraightenSpace: string;
+  /** Near-node coordinate components rewritten to the exact 1/240 double. */
+  latticeCoordinatesCanonicalized: number;
+  /** Authored off-grid components observed and deliberately left for Align. */
+  latticeCoordinatesFar: number;
+  /** Largest storage-only coordinate shift in normalized units. */
+  latticeMaxShift: number;
+  /** Largest storage-only coordinate shift through its owning space scale. */
+  latticeMaxShiftCm: number;
+  /** Only user-named spaces with at least one rewritten coordinate. */
+  latticeSpaces: LatticeSpaceReport[];
 }
 
 export interface OptimizeResult {
@@ -413,6 +424,12 @@ export function optimizePlans(
     ?? reconcileCoincidentPartitions;
   const references = repairSpaceReferences(configIn, layoutIn, context);
   const config = references.config;
+  const lattice = latticeCanonicalizationReport(config, references.layout);
+  // repairSpaceReferences already owns the immutable candidate clone. Apply
+  // the boundary in-place here so Optimize does not allocate a second full
+  // config/layout clone merely to remove sub-pixel storage tails (#291).
+  canonicalizeConfigGeometryInPlace(config);
+  canonicalizeLayoutGeometryInPlace(references.layout);
   const original = JSON.stringify(configIn || {});
   const originalLayout = JSON.stringify(layoutIn || {});
   const modelFrom = Number.isInteger(Number(config.model_version))
@@ -629,8 +646,8 @@ export function optimizePlans(
   // canonical form look dirty again after the update event reloads it (#248).
   // Canonicalise the complete pair before both the diff and the return so the
   // preview, durable intent, live stores and next preview all see one target.
-  const persistedConfig = canonicalizeConfigGeometry(config);
-  const persistedLayout = canonicalizeLayoutGeometry(finalAligned.layout);
+  const persistedConfig = canonicalizeConfigGeometryInPlace(config);
+  const persistedLayout = canonicalizeLayoutGeometryInPlace(finalAligned.layout);
 
   // A version marker is bookkeeping, not maintenance by itself. Persist it
   // only alongside a real config/layout transformation; otherwise an already
@@ -691,6 +708,11 @@ export function optimizePlans(
       wallsStraightenSkipped,
       maxStraightenShiftCm: changed ? maxStraightenShiftCm : 0,
       maxStraightenSpace: changed ? maxStraightenSpace : '',
+      latticeCoordinatesCanonicalized: changed ? lattice.canonicalized : 0,
+      latticeCoordinatesFar: changed ? lattice.far : 0,
+      latticeMaxShift: changed ? lattice.maxShift : 0,
+      latticeMaxShiftCm: changed ? lattice.maxShiftCm : 0,
+      latticeSpaces: changed ? lattice.spaces : [],
       ...persistedReferences,
     },
     changed,

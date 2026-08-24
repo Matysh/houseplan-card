@@ -10,6 +10,9 @@ import {
 } from '../scripts/model-invariants.mjs';
 import { wallKey as productWallKey } from '../test-build/wall-thickness.js';
 import { GRID_STEP_N } from '../test-build/space-geometry.js';
+import {
+  canonicalizeConfigGeometry, latticeCanonicalizationReport,
+} from '../test-build/coordinate-canonicalization.js';
 
 const repoRoot = fileURLToPath(new URL('..', import.meta.url));
 
@@ -355,6 +358,28 @@ test('профиль видит все виды объектов, а не тол
   assert.equal(profile.total, 18);
 });
 
+test('профиль решётки покрывает полный persisted allow-list (#291)', () => {
+  const off = 0.0605;
+  const profile = latticeProfile({
+    config: { spaces: [{
+      id: 'sp1',
+      rooms: [{ id: 'legacy', x: off, y: off, w: off, h: off }],
+      openings: [{ id: 'door', x: off, y: off }],
+      room_drafts: [{ id: 'draft', points: [[off, off]] }],
+      decor: [
+        { id: 'line', kind: 'line', x1: off, y1: off, x2: off, y2: off },
+        { id: 'rect', kind: 'rect', x: off, y: off, w: off, h: off },
+        { id: 'text', kind: 'text', x: off, y: off },
+      ],
+    }] },
+    layout: {},
+  });
+  assert.deepEqual(Object.keys(profile.byKind).sort(),
+    ['decor', 'opening', 'room', 'room_draft']);
+  assert.equal(profile.total, 18);
+  assert.equal(profile.offGrid, 18);
+});
+
 test('модели проекта не несут шума решётки (#282)', async () => {
   // Свойство, которое стоит знать про себя: тестовые данные проекта чисты —
   // весь их офф-грид авторский. Значит воспроизвести на них #258/#279 нельзя
@@ -400,6 +425,24 @@ test('реальные планы сохраняют координатный ш
       + ' фикстура канонизирована и больше не воспроизводит свой класс дефектов');
     assert.equal(checkWallKeys({ spaces: [space] }, { notes: [] }).length, 0,
       `${plan.file}: запись толщины объявлена неразрешимой`);
+  }
+});
+
+test('барьер очищает клоны реальных планов, не переписывая source fixtures (#291)', () => {
+  for (const plan of REAL_PLANS) {
+    const path = resolve(repoRoot, 'test/fixtures', plan.file);
+    const rawBefore = readFileSync(path, 'utf8');
+    const { space } = JSON.parse(rawBefore);
+    const source = { spaces: [space], markers: [], settings: {} };
+    const measured = latticeCanonicalizationReport(source, {});
+    assert.ok(measured.canonicalized >= plan.minNoise, `${plan.file}: cleanup must be measurable`);
+    const candidate = canonicalizeConfigGeometry(source);
+    const profile = latticeProfile({ config: candidate, layout: {} });
+    assert.equal(profile.noise, 0, `${plan.file}: boundary must remove all near-node tails`);
+    assert.equal(profile.offGrid, measured.far, `${plan.file}: authored off-grid population survives`);
+    assert.equal(checkWallKeys(candidate, { notes: [] }).length, 0);
+    assert.equal(checkMixedRoleRecords(candidate).length, 0);
+    assert.equal(readFileSync(path, 'utf8'), rawBefore, 'the raw regression fixture is immutable');
   }
 });
 

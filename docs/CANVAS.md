@@ -48,15 +48,17 @@ isometric renderers share this classification.
 ### Persisted coordinate canonicalisation
 
 Every current config/layout write removes IEEE-754 representation tails from
-persisted geometry by rounding an explicit allow-list to nine decimal places.
-This is not grid snapping: an off-grid or diagonal coordinate stays where the
-editor put it, with a maximum normalized change of `5e-10`. The contract is
-mirrored in Python and TypeScript and normalizes negative zero.
+the explicit persisted-coordinate allow-list. A value less than `1e-4` of one
+grid step from a `1/240` node becomes the exact same `k / 240` double in Python
+and TypeScript. A farther off-grid or diagonal value stays where the editor put
+it and receives only the existing nine-decimal storage canonicalisation.
+Negative zero becomes positive zero.
 
-The allow-list covers room outlines/extents, exact wall endpoints, openings
-(including angle, length and hosted `t`), decor transforms, drafts,
-partitions, columns, open spans, backdrop transforms, marker angle and layout
-`x/y`. It deliberately excludes `cell_cm`, `plan_aspect`, `view_box`,
+The lattice allow-list covers room outlines/extents, exact wall endpoints,
+opening `x/y`, decor origins/sizes/endpoints, drafts, partitions, columns, open
+spans and layout `x/y`. Angles, opening length/host `t`, decor scale and
+backdrop transforms retain the nine-decimal scalar contract. The traversal
+deliberately excludes `cell_cm`, `plan_aspect`, `view_box`,
 physical centimetre fields, colours/opacities/live values, presentation scales
 and vacuum affine calibration. Unknown/future numeric fields round-trip
 unchanged.
@@ -526,15 +528,13 @@ either store changes, commits both revisions, and retains one snapshot.
 has changed since the optimization. A crash between store writes is
 completed from the intent on the next integration setup.
 
-The pair returned by `optimizePlans` is canonicalized through the same
-nine-decimal allowlist as the storage writers **before** `changed` is computed.
+The pair returned by `optimizePlans` passes the same lattice-aware boundary as
+the storage writers **before** visible Align and before `changed` is computed.
 This boundary is required because the normalized grid step `1 / 240` has no
-finite decimal representation: a raw binary grid node and its persisted JSON
-number are semantically identical but not `===`. Update-event reload and a cold
-read therefore receive exactly the pair the preview already retained, and a
-second run cannot manufacture fresh coordinate noise (#248). Counters describe
-only the final persisted delta; an intermediate double which canonicalizes
-back to the input is not reported as work.
+finite decimal representation: an exact node and a nine-decimal JSON echo may
+be visually identical but not `===`. Update-event reload and a cold read
+therefore receive exactly the pair retained by the preview, and a second run
+cannot manufacture fresh coordinate noise (#248, #291).
 
 Guarantees are covered by `test/align-grid.test.mjs` and the orchestration/
 idempotence case in `test/plan-optimizer.test.mjs`:
@@ -549,9 +549,9 @@ idempotence case in `test/plan-optimizer.test.mjs`:
   it unfixable);
 * a stray opening with no wall within 6 steps is left exactly where it
   is rather than teleported;
-* **idempotent across storage**: a second run in memory, after the nine-decimal
+* **idempotent across storage**: a second run in memory, after the lattice-aware
   writer round-trip, after update-event reload or after a cold read reports
-  `moved: 0`, `changed: false`, and `coordsCanonicalized: 0`, and returns
+  `moved: 0`, `changed: false`, and `latticeCoordinatesCanonicalized: 0`, and returns
   objects deep-equal to the first persisted result;
 * the report is an **upper bound**, not a sample (AUD-158B1-01).
 
@@ -597,11 +597,14 @@ The confirmation is the decision gate in front of a geometry rewrite, so
   says which space the maximum is in; openings corrected in angle alone
   are counted on a line of their own.
 
-`coordsCanonicalized` counts individual near-node coordinate values actually
-written to the candidate. It excludes ordinary shifts above `EPS`, rejected
-partition snaps and wall/open-span maintenance. Those values do not increase
-`moved` or `maxShift*`; the dialog instead labels them as removed coordinate
-noise and keeps the existing updated-space counter separate.
+`latticeCoordinatesCanonicalized` counts individual near-node coordinate
+components actually rewritten by the storage boundary. Its maximum is measured
+in each value's own `cell_cm`, displayed with three significant digits and kept
+separate from visible `moved/maxShift*`. Only touched spaces receive a detail
+line; each line also states how many authored off-grid components were observed
+and left unchanged. Layout values without a named space contribute only to the
+summary. The older `coordsCanonicalized` remains an internal Align counter and
+does not absorb this storage-only work.
 
 One undo is available until the next config or layout edit. It restores
 the stored snapshot; re-running optimization itself is never treated as

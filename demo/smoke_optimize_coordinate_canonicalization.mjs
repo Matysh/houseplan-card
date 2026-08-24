@@ -1,5 +1,5 @@
-// #223/#248: explicit Optimize removes stored ULP noise once and stays a no-op
-// after the backend's nine-decimal write, event reload and cold reload.
+// #223/#248/#291: explicit Optimize removes stored ULP noise once and stays a
+// no-op after the lattice-aware backend write, event reload and cold reload.
 import { launch, checkAll, finish } from './serve.mjs';
 
 const { page, browser } = await launch({ width: 920, height: 840 });
@@ -27,23 +27,33 @@ const out = await page.evaluate(async () => {
     markers: [], settings: {},
   };
   const clone = (value) => JSON.parse(JSON.stringify(value));
-  const canonicalNumber = (value) => {
+  const canonicalScalar = (value) => {
     const sign = value < 0 || Object.is(value, -0) ? -1 : 1;
     const result = sign * (Math.floor(Math.abs(value) * 1e9 + 0.5) / 1e9);
     return result === 0 ? 0 : result;
+  };
+  const canonicalCoordinate = (value) => {
+    const scaled = value * 240;
+    const nearest = Math.round(scaled);
+    if (Math.abs(scaled - nearest) < 1e-4) return nearest / 240 || 0;
+    return canonicalScalar(value);
   };
   const canonicalConfig = (source) => {
     const value = clone(source);
     for (const space of value.spaces || []) {
       for (const room of space.rooms || []) {
-        if (room.poly) room.poly = room.poly.map(([x, y]) => [canonicalNumber(x), canonicalNumber(y)]);
+        if (room.poly) room.poly = room.poly.map(([x, y]) => [
+          canonicalCoordinate(x), canonicalCoordinate(y),
+        ]);
       }
     }
     return value;
   };
   const canonicalLayout = (source) => Object.fromEntries(Object.entries(clone(source))
-    .map(([id, pos]) => [id, { ...pos, x: canonicalNumber(pos.x), y: canonicalNumber(pos.y) }]));
-  const isCanonical = (value) => value === canonicalNumber(value);
+    .map(([id, pos]) => [id, {
+      ...pos, x: canonicalCoordinate(pos.x), y: canonicalCoordinate(pos.y),
+    }]));
+  const isCanonical = (value) => value === canonicalCoordinate(value);
   let serverConfig = clone(original), serverLayout = {}, backup = null;
   let configRev = 1, layoutRev = 1;
   let lastToast = '';
@@ -90,11 +100,19 @@ const out = await page.evaluate(async () => {
   const previewText = card.renderRoot.querySelector('hp-dialog .body')?.textContent || '';
   result.previewOffersInvisibleCleanup = !!preview?.changed
     && preview.report.moved === 0
-    && preview.report.coordsCanonicalized > 0
+    && preview.report.coordsCanonicalized === 0
+    && preview.report.latticeCoordinatesCanonicalized > 0
     && preview.report.maxShift === 0
-    && preview.report.maxShiftCm === 0;
-  result.previewNamesBothReportUnits = previewText.includes('spaces updated:')
-    && previewText.includes('noisy coordinate values removed:');
+    && preview.report.maxShiftCm === 0
+    && preview.report.latticeMaxShiftCm > 0;
+  result.previewNamesLatticeWorkAndSpace = previewText.includes(
+    'Noisy coordinate values canonicalized:',
+  ) && previewText.includes('maximum movement:')
+    && previewText.includes('Noisy floor: coordinate values canonicalized:')
+    && previewText.includes('off-grid values left unchanged: 0.');
+  result.previewKeepsSubMillimetrePrecision = /maximum movement: [0-9.]+e-[0-9]+ cm/.test(
+    previewText,
+  );
   result.previewOffersApply = !!card.renderRoot.querySelector('hp-dialog .btn.on');
   result.previewDoesNotWrite = sent.length === 0
     && JSON.stringify(card._serverCfg) === JSON.stringify(original);
@@ -119,7 +137,7 @@ const out = await page.evaluate(async () => {
   await Promise.all([card._reloadConfigOnly(true), card._reloadLayoutOnly()]);
   card._openAlignDialog(); await card.updateComplete;
   result.serverEventReloadIsExactNoOp = card._alignDialog?.changed === false
-    && card._alignDialog.report.coordsCanonicalized === 0
+    && card._alignDialog.report.latticeCoordinatesCanonicalized === 0
     && !card.renderRoot.querySelector('hp-dialog .btn.on');
   card._alignDialog = null; await card.updateComplete;
 
@@ -129,7 +147,7 @@ const out = await page.evaluate(async () => {
   await card._loadFromServer();
   card._openAlignDialog(); await card.updateComplete;
   result.coldReloadIsExactNoOp = card._alignDialog?.changed === false
-    && card._alignDialog.report.coordsCanonicalized === 0
+    && card._alignDialog.report.latticeCoordinatesCanonicalized === 0
     && !card.renderRoot.querySelector('hp-dialog .btn.on');
   card._alignDialog = null; await card.updateComplete;
 

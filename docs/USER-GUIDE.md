@@ -665,6 +665,13 @@ there is no exact copy, an active real device follows its unambiguous HA Area;
 otherwise only its missing placement is detached, so the marker becomes
 available on a valid plan without losing its settings.
 
+Old plans can also contain invisible floating-point tails around ordinary grid
+nodes. Optimize reports how many coordinate values it will canonicalize, the
+maximum physical movement and only the affected spaces. This cleanup does not
+pull intentional off-grid or diagonal geometry to a node. Current ordinary
+edits apply the same invisible boundary automatically, so the noise cannot
+return after a later room, opening, decor or marker-position save.
+
 Equal neighbouring wall-thickness fragments are compacted. Optimize may also
 remove a different-thickness fragment shorter than half a grid step when equal
 pieces of the same straight wall prove the replacement. This includes a

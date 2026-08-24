@@ -6,7 +6,7 @@ import {
   collapseIsolatedWallThicknessIslands, optimizePlans, PLAN_MODEL_VERSION,
 } from '../test-build/plan-optimizer.js';
 import {
-  canonicalizeConfigGeometry, canonicalizeLayoutGeometry, canonicalizeNumber,
+  canonicalizeConfigGeometry, canonicalizeLatticeCoordinate, canonicalizeLayoutGeometry,
 } from '../test-build/coordinate-canonicalization.js';
 import { pointInPhysicalGeometry, unionBodies } from '../test-build/physical-geometry.js';
 import { GRID_PITCH, GRID_STEP_N as S, NORM_W } from '../test-build/space-geometry.js';
@@ -48,7 +48,10 @@ const assertNoPersistedChanges = (result) => {
     'positionsRemapped', 'markersDetached', 'orphanRoomLabelsRemoved',
     'orphanDevicePositionsRemoved', 'orphanGroupPositionsRemoved',
     'liveMissingPositionsRemoved',
+    'latticeCoordinatesCanonicalized', 'latticeCoordinatesFar',
+    'latticeMaxShift', 'latticeMaxShiftCm',
   ]) assert.equal(result.report[field], 0, `${field} must describe the persisted delta`);
+  assert.deepEqual(result.report.latticeSpaces, []);
   assert.equal(result.report.maxShift, 0);
   assert.equal(result.report.maxShiftCm, 0);
   assert.equal(result.report.maxSpace, '');
@@ -237,8 +240,9 @@ test('issue 273 Optimize collapses the beta.5 island beside one T-node', () => {
     'T coordinate and perpendicular incident room stay byte-equivalent');
   assert.equal(first.config.spaces[0].walls.length, 1);
   assert.equal(first.config.spaces[0].walls[0].cm, 22);
-  assert.deepEqual(first.config.spaces[0].walls[0].a, [0.8, 0.345833333]);
-  assert.deepEqual(first.config.spaces[0].walls[0].b, [0.95, 0.345833333]);
+  const exactNode = 83 / 240;
+  assert.deepEqual(first.config.spaces[0].walls[0].a, [0.8, exactNode]);
+  assert.deepEqual(first.config.spaces[0].walls[0].b, [0.95, exactNode]);
 
   const afterIntervals = wallIntervals(
     first.config.spaces[0].rooms, first.config.spaces[0].walls, [], S, 5, S,
@@ -250,7 +254,7 @@ test('issue 273 Optimize collapses the beta.5 island beside one T-node', () => {
   assert.ok(geometry, 'optimized profile must render a masonry body');
   for (const x of [fixture.split - S, (fixture.split + fixture.microEnd) / 2,
     fixture.microEnd + S]) {
-    assert.equal(pointInPhysicalGeometry([x, 0.345833333 - 0.008], geometry.geom), true,
+    assert.equal(pointInPhysicalGeometry([x, exactNode - 0.008], geometry.geom), true,
       `22 cm outer face must stay continuous at x=${x}`);
   }
 
@@ -276,12 +280,14 @@ test('Optimize canonicalizes the six-room ULP source without claiming a visible 
   assert.equal(first.report.moved, 0);
   assert.equal(first.report.maxShift, 0);
   assert.equal(first.report.maxShiftCm, 0);
-  assert.ok(first.report.coordsCanonicalized > 0);
+  assert.ok(first.report.latticeCoordinatesCanonicalized > 0);
+  assert.equal(first.report.coordsCanonicalized, 0,
+    'storage-only tails are not presented as visible grid alignment');
   assert.deepEqual(first.config.future, { kept: true });
   for (const item of first.config.spaces[0].rooms) {
     for (const [x, y] of item.poly) {
-      assert.equal(x, canonicalizeNumber(Math.round(x / S) * S));
-      assert.equal(y, canonicalizeNumber(Math.round(y / S) * S));
+      assert.equal(x, canonicalizeLatticeCoordinate(Math.round(x / S) * S));
+      assert.equal(y, canonicalizeLatticeCoordinate(Math.round(y / S) * S));
     }
   }
   assert.ok(unionBodies(first.config.spaces[0].rooms.map((item) => item.poly)),
@@ -290,11 +296,12 @@ test('Optimize canonicalizes the six-room ULP source without claiming a visible 
   const second = optimizePlans(first.config, first.layout);
   assert.equal(second.changed, false);
   assert.equal(second.report.coordsCanonicalized, 0);
+  assert.equal(second.report.latticeCoordinatesCanonicalized, 0);
   assert.deepEqual(second.config, first.config);
   assert.deepEqual(second.layout, first.layout);
 });
 
-test('issue 248 Optimize stays a no-op across the nine-decimal storage round-trip', () => {
+test('issue 248 Optimize stays a no-op across the lattice storage round-trip', () => {
   const inputBefore = structuredClone(storageRoundtripFixture.input);
   const first = optimizePlans(
     storageRoundtripFixture.input.config,
@@ -303,7 +310,7 @@ test('issue 248 Optimize stays a no-op across the nine-decimal storage round-tri
 
   assert.deepEqual(storageRoundtripFixture.input, inputBefore, 'preview must keep fixture input');
   assert.equal(first.changed, true);
-  assert.ok(first.report.coordsCanonicalized > 0);
+  assert.ok(first.report.latticeCoordinatesCanonicalized > 0);
   assert.deepEqual(first.config, storageRoundtripFixture.expected.config);
   assert.deepEqual(first.layout, storageRoundtripFixture.expected.layout);
   assert.deepEqual(canonicalizeConfigGeometry(first.config), first.config);
@@ -339,8 +346,9 @@ test('issue 258 Optimize canonicalizes an affected wall key across storage round
   const repaired = first.config.spaces[0].walls.find((wall) => wall.cm === 29);
   assert.ok(repaired);
   assert.equal(repaired.cm, 29);
-  assert.deepEqual(repaired.a, wallKeyRoundtripFixture.space.walls[0].a);
-  assert.deepEqual(repaired.b, wallKeyRoundtripFixture.space.walls[0].b);
+  const canonicalSource = canonicalizeConfigGeometry({ spaces: [wallKeyRoundtripFixture.space] });
+  assert.deepEqual(repaired.a, canonicalSource.spaces[0].walls[0].a);
+  assert.deepEqual(repaired.b, canonicalSource.spaces[0].walls[0].b);
   assert.equal(repaired.key, wallKeyRoundtripFixture.canonical_key);
   assert.equal(repaired.key, wallKey(repaired.a, repaired.b, S));
   assert.deepEqual(canonicalizeConfigGeometry(first.config), first.config);

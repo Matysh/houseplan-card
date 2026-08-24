@@ -62,7 +62,29 @@ test('Optimize distinguishes updated spaces from cleaned coordinate noise', () =
   assert.match(cardSource, /i: String\(r\.partitionsMerged\)/);
   assert.match(cardSource, /gs\.optimize_coincident_partitions/);
   assert.match(cardSource, /gs\.optimize_openings_rehosted/);
-  assert.match(cardSource, /d\.report\.coordsCanonicalized \+ d\.report\.wallsMerged/);
+  assert.match(cardSource,
+    /d\.report\.coordsCanonicalized \+ d\.report\.latticeCoordinatesCanonicalized/);
+});
+
+test('issue 291 Optimize reports lattice cleanup separately in both languages', () => {
+  assert.equal(
+    en['gs.optimize_lattice_summary'],
+    'Noisy coordinate values canonicalized: {n}; maximum movement: {cm} cm.',
+  );
+  assert.equal(
+    ru['gs.optimize_lattice_summary'],
+    'Канонизировано шумовых значений координат: {n}; максимальный сдвиг: {cm} см.',
+  );
+  assert.equal(
+    en['gs.optimize_lattice_space'],
+    '{space}: coordinate values canonicalized: {n}; off-grid values left unchanged: {far}.',
+  );
+  assert.equal(
+    ru['gs.optimize_lattice_space'],
+    '{space}: канонизировано значений координат: {n}; оставлено значений вне сетки: {far}.',
+  );
+  assert.match(cardSource, /formatLatticeShiftCm\(r\.latticeMaxShiftCm\)/);
+  assert.match(cardSource, /r\.latticeSpaces\.map/);
 });
 
 test('issue 252 Optimize keeps internal ids out of the main orphan report', () => {

@@ -922,6 +922,17 @@ previous one returned. The debounce still spaces out *when* a write starts;
 what it cannot do — and used to be relied on for — is keep two writes from
 overlapping, which produced a self-inflicted conflict and lost the newer edit.
 
+**Persisted coordinates have one lattice-aware write boundary** (#291).
+`canonicalizeConfigGeometry()` / `canonicalizeLayoutGeometry()` /
+`canonicalizePosition()` own the frontend candidate; mirrored Python functions
+run in validation and again in `async_save_config_state()` /
+`async_save_layout_state()`. Only allow-listed coordinate/size components less
+than `1e-4` grid steps from a `1/240` node become the exact node double.
+Authored off-grid values and unknown numbers are not recursively snapped. The
+executable `coordinate-write-barrier-guard.mjs` inventories every outbound
+config/layout writer and permits direct plan Store writes only inside the two
+central helpers; trails remain an explicit operational-Store exception.
+
 **Plan uploads are copy-on-write, and collection belongs to the commit**
 (reviews R2-1, R3-1). The file system is not part of the config's
 optimistic-locking transaction, so nothing referenced may be overwritten or

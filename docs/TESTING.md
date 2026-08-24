@@ -1182,6 +1182,22 @@ separately promised workflows:
       requests the unsigned path and Home Assistant logs no failed login. A
       failed signing request is retried on the next render
       [auto: smoke_space_card_bg]
+- [ ] Lattice write boundary (#291): a nine-decimal echo of every one of the
+      4801 nodes from `-2400/240` through `2400/240` becomes the exact same
+      Python/TypeScript double; authored off-grid and unknown numeric fields
+      survive. Ordinary config and point-wise layout writers adopt the exact
+      payload, while Optimize shows a separate total/physical maximum and only
+      touched spaces. Apply writes one pair, Cancel writes zero, Undo/reload are
+      exact and the second preview is a no-op
+      [auto: `coordinate-canonicalization.test`, backend shared fixture,
+      `coordinate-write-barrier-guard.test`, `smoke_lattice_write_barrier`,
+      `smoke_optimize_coordinate_canonicalization`].
+- [ ] Lattice regressions are fail-dark: raw real-plan fixtures remain noisy,
+      their boundary clones have zero noise, every required truncation/
+      threshold/layout/frontend/backend/recursive mutant is killed, and the
+      large-house boundary p95 is no more than 20% over the same-run full-clone
+      baseline [auto: `model-invariants.test`, `mutation-gate`,
+      `benchmark_coordinate_write_barrier`].
 - [ ] Rejected save leaves the plan intact (v1.45.0, review R2-1): attach a new
       background, make the config write fail (a second tab saving first is
       enough) — the previously stored plan is still served, with the same or a

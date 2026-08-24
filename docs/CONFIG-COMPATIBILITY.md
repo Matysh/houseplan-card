@@ -48,13 +48,17 @@ Unknown future fields remain outside this report and continue to follow the
 backend's forward-compatibility policy. Absence from the report is therefore
 not permission to delete a field.
 
-## Canonical geometry on write (#224)
+## Canonical geometry on write (#224, #291)
 
-Config and layout schemas canonicalize only named geometry numbers to nine
-decimal places. The common storage helpers repeat the same idempotent contract
-for internal writers, while the frontend adopts the exact candidate it sends.
-This prevents ULP noise without changing the schema, JSON number type,
-model/store version or any user-visible placement.
+Config and layout schemas canonicalize only named persisted numbers. Lattice
+coordinate/size components use the exact nearest `k / 240` double only when
+their deviation is below `1e-4` of one grid step; authored values farther from
+a node keep the nine-decimal scalar storage contract. Backdrop transforms,
+angles, lengths and normalized ratios always use that scalar contract. Common
+storage helpers repeat the same idempotent operation for internal writers,
+while the frontend adopts the exact candidate it sends. This removes ULP noise
+without changing the schema, JSON number type, model/store version or visible
+placement.
 
 The operation is lossless at the product scale and intentionally narrow.
 `view_box`, `cell_cm`, `plan_aspect`, physical centimetre values,
@@ -69,11 +73,13 @@ unknown fields in canonical representation, not the invisible noisy IEEE-754
 tail. A repeated canonical Save with the current revision is a no-op and does
 not invalidate the one-deep maintenance backup.
 
-Optimize itself returns and compares that storage-canonical config/layout pair,
-not the higher-precision intermediate produced by the `1 / 240` grid formula.
-Consequently the normal commit, durable pending recovery, update-event reload
-and a cold read all converge on one JSON value set; feeding any of them back to
-Optimize is a no-op (#248).
+Optimize itself removes measured near-node tails before visible grid alignment,
+then returns and compares the same storage-canonical config/layout pair as the
+writers. Consequently the normal commit, durable pending recovery, update-event
+reload and a cold read all converge on one JSON value set; feeding any of them
+back to Optimize is a no-op (#248). Its separate lattice report counts cleaned
+coordinate components and untouched authored off-grid values without mixing
+their sub-pixel maximum with visible grid movement.
 
 Wall-thickness compatibility keys use the same boundary without depending on
 which side of it produced the key (#258). A `wallKey` endpoint already within
