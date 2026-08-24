@@ -41,11 +41,30 @@ bucket (#258), а Optimize после round-trip снова видит рабо�
 3. После migration и после произвольной editing session noise population
    должна быть нулевой.
 
-Открытых продуктовых вопросов нет.
+Открыт Q1 в issue: насколько подробно показывать изменения по пространствам в
+видимом отчёте Optimize. До решения ТЗ остаётся `S3-spec` + `blocked`.
 
-## 3. Термины и scalar contract
+## 3. Пользовательский контекст и результат
 
-### 3.1 Одна решётка и одна граница noise
+**Кто и где:** владелец дома с несколькими этажами/пространствами, который
+импортировал старый план либо продолжает редактировать его в Plan. Проблема
+проявляется в обслуживающем действии Optimize и после обычной записи geometry,
+хотя на экране субпиксельный хвост координаты неразличим.
+
+**До:** один визуальный узел может иметь разные double-биты в зависимости от
+истории вычислений. Пользователь видит повторную «работу» Optimize, неверный
+wall key или последующий дефект стыка, но не может связать его с координатным
+шумом.
+
+**После:** любой сохранённый config/layout не содержит near-node noise. Обычная
+запись убирает только измеренный невидимый хвост без перемещения authored
+off-grid geometry. Перед явным Optimize пользователь видит отдельное от
+физических перемещений описание координатной очистки, решает Confirm/Cancel и
+получает один Undo. Точная форма multi-space breakdown зависит от Q1.
+
+## 4. Термины и scalar contract
+
+### 4.1 Одна решётка и одна граница noise
 
 - `GRID_N = 240`, canonical node: `Math.round(value × GRID_N) / GRID_N`;
 - deviation измеряется в шагах:
@@ -61,7 +80,7 @@ bucket (#258), а Optimize после round-trip снова видит рабо�
 никогда не бывает больше половины шага, поэтому рабочее разделение намеренного
 off-grid и noise обязано использовать измеренный `1e-4` threshold.
 
-### 3.2 Две канонизации, не одна рекурсивная
+### 4.2 Две канонизации, не одна рекурсивная
 
 `canonicalizeLatticeCoordinate(value)`:
 
@@ -79,7 +98,7 @@ allow-listed angles, transforms, lengths и normalized ratios, которые н
 physical centimetres, colours, brightness, vacuum calibration и остальные
 неперечисленные значения byte-equivalent.
 
-## 4. Allow-list lattice fields
+## 5. Allow-list lattice fields
 
 Near-node canonicalization применяется только к coordinate/size components:
 
@@ -101,9 +120,9 @@ Allow-list реализуется зеркально в frontend и backend и �
 fixture. Добавление нового persisted coordinate field требует обновить оба
 runtime и registry/test в одном коммите.
 
-## 5. Непроходимый write barrier
+## 6. Непроходимый write barrier
 
-### 5.1 Frontend
+### 6.1 Frontend
 
 Все product mutations могут работать с immutable/local candidate, но ни один
 config/layout/position payload не отправляется и не принимается в committed
@@ -120,7 +139,7 @@ state до общей boundary-функции:
 все outbound config/layout writer methods и падает при новом writer, который
 не проходит общий boundary.
 
-### 5.2 Backend
+### 6.2 Backend
 
 `async_save_config_state()` и `async_save_layout_state()` остаются единственной
 Store boundary для config/layout. Их shared payload builders применяют Python
@@ -133,7 +152,7 @@ Backend validation возвращает canonical candidate, поэтому stal
 не может занести noise. Frontend/Python shared fixture сравнивает точные JSON
 numbers, а не tolerance.
 
-## 6. Existing data и explicit Optimize report
+## 7. Existing data и explicit Optimize report
 
 Read существующего Store не переписывает данные. Первая последующая обычная
 config/layout write проходит barrier и устраняет near-node noise во всём
@@ -143,8 +162,8 @@ candidate; это невидимый sub-pixel canonicalization, уже разр
 
 - total `latticeCoordinatesCanonicalized`;
 - `latticeCoordinatesFar` — untouched off-grid coordinate components;
-- per-space breakdown `{spaceId, canonicalized, far}`;
-- отдельная строка для layout entries без существующего space, если они есть;
+- форма разбивки по изменённым пространствам и layout entries фиксируется
+  решением Q1; до ответа это не acceptance contract;
 - maximum shift для canonicalized noise в physical units не смешивается с
   видимым `moved/maxShiftCm` обычного grid alignment.
 
@@ -156,7 +175,7 @@ Confirm сохраняет exact preview config/layout revision-guarded transact
 один Undo. Cancel/close не пишет. Повторный Optimize после storage/event/cold
 reload даёт нулевой noise counter и no-op, если других maintenance changes нет.
 
-## 7. Scope
+## 8. Scope
 
 ### Входит
 
@@ -178,7 +197,7 @@ reload даёт нулевой noise counter и no-op, если других mai
 - изменение grid resolution, unit system или physical cm;
 - очистка source fixtures с noise.
 
-## 8. Acceptance criteria
+## 9. Acceptance criteria
 
 ### AC1. Scalar idempotence и exact bits
 
@@ -239,10 +258,10 @@ tests работают только с clones. Отдельно доказано
 
 ### AC7. Optimize report и transaction
 
-Preview per-space counts суммируются в total, far не считается moved, maximum
-noise shift не занижается. Cancel — zero writes; stale revision — no partial
-pair; Confirm — один config/layout transaction и один Undo; reload/cold read
-deep-equal preview; второй run no-op.
+Preview total согласован с выбранной владельцем формой multi-space breakdown;
+far не считается moved, maximum noise shift не занижается. Cancel — zero
+writes; stale revision — no partial pair; Confirm — один config/layout
+transaction и один Undo; reload/cold read deep-equal preview; второй run no-op.
 
 ### AC8. Compatibility paths
 
@@ -289,7 +308,7 @@ deep clone сверх существующего candidate contract.
 
 Полные golden, smoke, performance и Linux HA harness выполняются перед beta.
 
-## 9. Совместимость, UX, touch и security
+## 10. Совместимость, UX, touch и security
 
 JSON numbers и field shapes не меняются, old clients continue reading. Old
 writer cannot persist near-node noise because backend owns the boundary. Read
@@ -300,7 +319,31 @@ View/touch/kiosk appearance не меняется на видимом масшт
 на touch получает тот же final boundary; Plan editor остаётся desktop-first.
 Новых HA actions, external data, URL/HTML и permission boundaries нет.
 
-## 10. Ожидаемые файлы
+## 11. Риски и меры
+
+- Ошибочно широкий threshold может притянуть намеренную off-grid geometry.
+  Мера: measured `1e-4`, boundary cases AC1, typed allow-list AC2 и сохранение
+  far population AC3/AC7.
+- TS и Python могут получить разные округления одного узла и снова создать
+  wall-key drift. Мера: shared exact fixture/JSON bits AC1–AC2 и запрет
+  tolerance-сравнения.
+- Новый writer может обойти barrier. Мера: executable frontend/backend guard и
+  bypass mutants AC5/AC10.
+- Full-candidate traversal может удвоить clone/save cost. Мера: один boundary
+  pass и same-run benchmark AC11.
+- Обычная следующая запись очистит старый noise без отдельного Optimize. Мера:
+  граница ограничена доказанным невидимым хвостом; authored off-grid и unknown
+  fields byte-equivalent, а explicit bulk path сохраняет preview/Cancel/Undo.
+
+## 12. Откат
+
+Чистый revert implementation-коммита прекращает новую canonicalization; schema
+и Store migration откатывать не требуется. Уже сохранённые canonical lattice
+bits не восстанавливаются автоматически: они семантически равны прежнему узлу,
+а обратное внесение noise было бы новой порчей. Явный Optimize до следующей
+операции можно отменить штатным Undo, который хранит pre-transaction snapshot.
+
+## 13. Ожидаемые файлы
 
 Product/frontend:
 
@@ -328,14 +371,14 @@ Tests/evidence:
   `docs/USER-GUIDE.md`, `docs/USER-GUIDE.ru.md`, `docs/TESTING.md`, ADR note;
 - `docs/CHANGELOG.md`, `docs/CHANGELOG.ru.md`.
 
-## 11. Release
+## 14. Release
 
 Implementation-коммит имеет `Issue: #291`, `User-Visible: yes` и оба
 changelog. Visual baselines не перепринимаются без semantic change; если
 Optimize dialog меняется визуально, targeted golden/docs screenshots
 принимаются только из штатного Linux artifact после bundle sync.
 
-## 12. Принятые технические предположения
+## 15. Принятые технические предположения
 
 1. Owner intent «не трогать дальние» означает не grid-snap'ить Stage-0
    `offGrid` population; existing invisible nine-decimal scalar storage
@@ -347,3 +390,5 @@ Optimize dialog меняется визуально, targeted golden/docs screen
 4. Diagonal wall-bound coordinates, не попадающие в noise population, остаются
    off-grid; их независимый X/Y snap запрещён.
 5. Touch editor: best effort; View/kiosk fully supported.
+6. Форма per-space breakdown не является техническим предположением и будет
+   зафиксирована только после ответа владельца на Q1.
