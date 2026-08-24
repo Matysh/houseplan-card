@@ -43,6 +43,7 @@ const assertNoPersistedChanges = (result) => {
     'moved', 'coordsCanonicalized', 'rotated', 'removedDrafts', 'migrated',
     'glowSpacesMigrated', 'glowRoomsMigrated', 'canonicalized', 'wallsMerged',
     'spansMerged', 'partitionsMerged', 'partitionsReconciled', 'openingsRehosted',
+    'redundantDraftsRemoved',
     'wallsStraightened',
     'spaceRefsRemapped', 'roomRefsRemapped',
     'positionsRemapped', 'markersDetached', 'orphanRoomLabelsRemoved',

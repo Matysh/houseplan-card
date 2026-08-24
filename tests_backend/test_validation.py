@@ -1837,8 +1837,8 @@ def test_issue_296_backend_accepts_only_a_composite_room_edge_rehost():
     candidate = {"spaces": [{
         "id": "floor", "rooms": [room], "partitions": [],
         "walls": [{
-            "key": "0.250000,0.000000@0.0000", "cm": 20,
-            "a": [0.2, 0], "b": [0.3, 0],
+            "key": "0.500000,0.000000@0.0000", "cm": 20,
+            "a": [0, 0], "b": [1, 0],
         }],
         "openings": [{
             "id": "window", "type": "window", "x": 0.25, "y": 0,
@@ -1869,6 +1869,75 @@ def test_issue_296_backend_accepts_only_a_composite_room_edge_rehost():
             v.validate_partition_opening_hosts(
                 changed, previous, allow_optimize_rehost=True
             )
+
+
+def test_issue_296_backend_proves_full_partition_delta_without_openings_and_residual_rehost():
+    room = {
+        "id": "room", "name": "Room", "area": None,
+        "poly": [[0, 0], [1, 0], [1, 1], [0, 1]],
+    }
+    partition = {"id": "host", "a": [0, 0], "b": [1, 0], "cm": 20}
+    previous = {"spaces": [{
+        "id": "floor", "rooms": [room], "partitions": [partition], "openings": [],
+    }]}
+    candidate = {"spaces": [{
+        "id": "floor", "rooms": [room], "partitions": [], "openings": [],
+        "walls": [{"a": [0, 0], "b": [1, 0], "cm": 20}],
+    }]}
+    v.validate_partition_opening_hosts(candidate, previous, allow_optimize_rehost=True)
+
+    for mutator in (
+        lambda space: space.update(walls=[]),
+        lambda space: space["walls"][0].update(b=[0.5, 0]),
+    ):
+        changed = json.loads(json.dumps(candidate))
+        mutator(changed["spaces"][0])
+        with pytest.raises(v.PartitionOpeningHostError, match="partition=host"):
+            v.validate_partition_opening_hosts(
+                changed, previous, allow_optimize_rehost=True
+            )
+
+    unknown_previous = json.loads(json.dumps(previous))
+    unknown_previous["spaces"][0]["partitions"][0]["future_semantics"] = True
+    with pytest.raises(v.PartitionOpeningHostError, match="partition=host"):
+        v.validate_partition_opening_hosts(
+            candidate, unknown_previous, allow_optimize_rehost=True
+        )
+
+    middle_room = {
+        "id": "middle", "name": "Middle", "area": None,
+        "poly": [[0.25, 0], [0.75, 0], [0.75, 1], [0.25, 1]],
+    }
+    hosted = {
+        "id": "door", "type": "door", "x": 0, "y": 0,
+        "angle": 0, "length": 0.1,
+        "host": {"kind": "partition", "id": "host", "t": 0.875},
+    }
+    residual_previous = {"spaces": [{
+        "id": "floor", "cell_cm": 5, "rooms": [middle_room],
+        "partitions": [partition], "openings": [hosted],
+    }]}
+    residual_candidate = {"spaces": [{
+        "id": "floor", "cell_cm": 5, "rooms": [middle_room],
+        "walls": [{"a": [0.25, 0], "b": [0.75, 0], "cm": 20}],
+        "partitions": [
+            {"id": "host", "a": [0, 0], "b": [0.25, 0], "cm": 20},
+            {"id": "host~r-test", "a": [0.75, 0], "b": [1, 0], "cm": 20},
+        ],
+        "openings": [{
+            **hosted, "x": 0.875, "y": 0, "angle": 0,
+            "host": {"kind": "partition", "id": "host~r-test", "t": 0.5},
+        }],
+    }]}
+    v.validate_partition_opening_hosts(
+        residual_candidate, residual_previous, allow_optimize_rehost=True
+    )
+    shifted = json.loads(json.dumps(residual_candidate))
+    shifted["spaces"][0]["openings"][0]["x"] = 0.88
+    with pytest.raises(v.PartitionOpeningHostError, match="opening=door"):
+        v.validate_partition_opening_hosts(
+            shifted, residual_previous, allow_optimize_rehost=True
+        )
 
 
 def test_optimize_rehost_validation_is_atomic_across_the_batch():

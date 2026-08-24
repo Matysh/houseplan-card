@@ -246,6 +246,16 @@ const out = await page.evaluate(async () => {
       || !!(editorVirtualWalls.compareDocumentPosition(diagnostic) & Node.DOCUMENT_POSITION_FOLLOWING));
   result.hiddenDiagnosticIsPointerTransparent = diagnostic?.getAttribute('pointer-events') === 'none'
     && getComputedStyle(diagnostic).pointerEvents === 'none';
+  card._activateMarkupTool('draw');
+  await update();
+  const drawDiagnostic = root().querySelector('[data-hp="hidden-wall-diagnostic"]');
+  const drawSnap = overlay();
+  result.drawToolKeepsHiddenDiagnosticAndSnapOverlay = !!drawDiagnostic && !!drawSnap
+    && drawDiagnostic.querySelectorAll('.hidden-wall-line').length === 1
+    && drawDiagnostic.querySelectorAll('.hidden-wall-node').length === 2;
+  result.hiddenDiagnosticPaintsBeforeTransientSnap = !!(
+    drawDiagnostic.compareDocumentPosition(drawSnap) & Node.DOCUMENT_POSITION_FOLLOWING
+  );
   card._setMode('view');
   await update();
   result.viewHasNoOverlay = !overlay()

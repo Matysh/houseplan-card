@@ -66,6 +66,8 @@ export interface OptimizeReport extends AlignReport, SpaceReferenceReport {
   partitionsReconciled: number;
   /** Hosted openings materialised onto the coincident shared room wall. */
   openingsRehosted: number;
+  /** Saved wall chains removed because solid room masonry covers every segment. */
+  redundantDraftsRemoved: number;
   /** Unique physical near-axis walls accepted for explicit straightening. */
   wallsStraightened: number;
   /** Near-axis walls found but rejected by structural safety checks. */
@@ -498,6 +500,7 @@ export function optimizePlans(
   let partitionsMerged = 0;
   let partitionsReconciled = 0;
   let openingsRehosted = 0;
+  let redundantDraftsRemoved = 0;
   let canonicalized = 0;
   for (let i = 0; i < config.spaces.length; i++) {
     const before = beforeSpaces[i];
@@ -632,7 +635,7 @@ export function optimizePlans(
         else delete space.walls;
       }
       if (reconciled.removedDrafts) {
-        alignReport.removedDrafts += reconciled.removedDrafts;
+        redundantDraftsRemoved += reconciled.removedDrafts;
         if (reconciled.roomDrafts.length) space.room_drafts = reconciled.roomDrafts;
         else delete space.room_drafts;
       }
@@ -709,6 +712,7 @@ export function optimizePlans(
       partitionsMerged: changed ? partitionsMerged : 0,
       partitionsReconciled: changed ? partitionsReconciled : 0,
       openingsRehosted: changed ? openingsRehosted : 0,
+      redundantDraftsRemoved: changed ? redundantDraftsRemoved : 0,
       wallsStraightened: changed ? wallsStraightened : 0,
       wallsStraightenSkipped,
       maxStraightenShiftCm: changed ? maxStraightenShiftCm : 0,

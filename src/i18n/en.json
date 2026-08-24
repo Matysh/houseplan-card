@@ -811,6 +811,7 @@
   "gs.align_where": "The largest shift is in “{s}”.",
   "gs.align_turned": "Openings whose angle is corrected: {n}.",
   "gs.align_removed_drafts": "Invalid outlines collapsed by the grid and removed: {n}.",
+  "gs.optimize_redundant_drafts": "Saved wall chains hidden by solid room walls and removed: {n}.",
   "gs.align_preflight_failed": "Could not safely verify the geometry of the following spaces: {spaces}{more}.",
   "gs.align_preflight_hint": "Plans were not changed. Update House Plan and try again. If the error persists, attach a space export to the bug report.",
   "gs.align_preflight_space": "Space {n}",

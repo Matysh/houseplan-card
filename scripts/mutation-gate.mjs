@@ -1265,6 +1265,51 @@ export const MUTANTS = [
     }],
   },
   {
+    id: 'optimizer-coincident-max-thickness-lost',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="max thickness independently" '
+      + 'test/optimize-hidden-obstacles.test.mjs',
+    because: 'each absorbed piece must retain the thicker of room masonry and the hidden '
+      + 'partition instead of silently thinning an authored wall (#296)',
+    patches: [{
+      file: 'src/coincident-partitions.ts',
+      find: '      const finalCm = proofOk ? Math.max(roomCm, source.cm) : source.cm;',
+      replace: '      const finalCm = proofOk ? roomCm : source.cm;',
+    }],
+  },
+  {
+    id: 'optimizer-backend-trusts-frontend-delta',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'backend_proves_full_partition_delta_without_openings tests_backend/test_validation.py',
+    because: 'the backend must reconstruct every removed partition atom independently; '
+      + 'trusting the frontend candidate lets a no-opening partition disappear without masonry (#296)',
+    patches: [{
+      file: 'custom_components/houseplan/validation.py',
+      find: 'def _safe_optimize_partition_delta(space: dict, old_partition: dict) -> bool:\n'
+        + '    """Independently prove every removed atom of one old partition axis."""\n'
+        + '    if not _known_optimize_partition(old_partition):',
+      replace: 'def _safe_optimize_partition_delta(space: dict, old_partition: dict) -> bool:\n'
+        + '    """Independently prove every removed atom of one old partition axis."""\n'
+        + '    return True\n'
+        + '    if not _known_optimize_partition(old_partition):',
+    }],
+  },
+  {
+    id: 'hidden-diagnostic-under-virtual-walls',
+    guard: 'node demo/smoke_plan_snap_overlay.mjs',
+    because: 'hidden wall axes and source endpoints must remain visible above every real and '
+      + 'virtual wall body while staying below transient tool previews (#296)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '            ${this._editing ? this._renderOpenWalls(disp) : nothing}\n'
+        + '            ${this._markup ? svg`<g class="hp-editor-only-layer"\n'
+        + '              opacity="${modeVisual?.editorWeight ?? 1}">${this._renderHiddenWallDiagnosticOverlay()}</g>` : nothing}',
+      replace: '            ${this._markup ? svg`<g class="hp-editor-only-layer"\n'
+        + '              opacity="${modeVisual?.editorWeight ?? 1}">${this._renderHiddenWallDiagnosticOverlay()}</g>` : nothing}\n'
+        + '            ${this._editing ? this._renderOpenWalls(disp) : nothing}',
+    }],
+  },
+  {
     id: 'atomic-child-thickness-parent-fallback',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="exact parent|atomic solid children" '

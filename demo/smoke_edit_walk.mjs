@@ -57,7 +57,7 @@ const arg = (name, fallback) => {
  * Когда #296 закроется, число здесь станет нулём, и тест это потребует.
  */
 const PLANS = [
-  { file: 'real-plan-second-floor.json', debt: 3 },
+  { file: 'real-plan-second-floor.json', debt: 1 },
   { file: 'real-plan-first-floor.json', debt: 0 },
 ];
 

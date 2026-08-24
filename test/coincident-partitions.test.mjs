@@ -205,7 +205,8 @@ test('issue 296 removes a fully hidden saved chain before reconciling its partit
     segments: [{ cm: 15 }],
   }];
   const result = optimize(input);
-  assert.equal(result.report.removedDrafts, 1);
+  assert.equal(result.report.removedDrafts, 0);
+  assert.equal(result.report.redundantDraftsRemoved, 1);
   assert.equal(result.report.partitionsReconciled, 1);
   assert.equal(result.config.spaces[0].room_drafts, undefined);
   assert.equal(result.config.spaces[0].partitions, undefined);
