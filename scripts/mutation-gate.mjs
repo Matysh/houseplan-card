@@ -292,6 +292,10 @@ export const MUTANTS = [
       file: 'src/houseplan-card.ts',
       find: '    const candidateValid = this._rszCandidateRenderable(preview);',
       replace: '    const candidateValid = !!preview;',
+    }, {
+      file: 'src/houseplan-card.ts',
+      find: '      safe = this._checkSpacePhysicalGeometry(this._serverCfg, before.spaceId).ok;',
+      replace: '      safe = true;',
     }],
   },
   {
