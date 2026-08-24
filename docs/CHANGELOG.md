@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Resize availability on real plans is now protected by an exact per-wall
+  audit using the production safety resolver. Disabled handles explain the
+  actual geometric restriction in clearer language; click, tap, Enter and
+  Space expose the same reason, and a separate overlapping partition, draft or
+  column now includes the safe action to remove or move it
+  ([#292](https://github.com/Matysh/houseplan-card/issues/292)).
 - An enabled Resize handle now follows the real pointer on the affected
   second-floor layout instead of staying inert. The gesture measures movement
   from the press point, preserves one continuous side-wall thickness record,

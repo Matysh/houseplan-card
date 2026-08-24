@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 
 const card = fs.readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
+const resize = fs.readFileSync(new URL('../src/resize.ts', import.meta.url), 'utf8');
 const styles = fs.readFileSync(new URL('../src/styles.ts', import.meta.url), 'utf8');
 const en = JSON.parse(fs.readFileSync(new URL('../src/i18n/en.json', import.meta.url), 'utf8'));
 const ru = JSON.parse(fs.readFileSync(new URL('../src/i18n/ru.json', import.meta.url), 'utf8'));
@@ -41,6 +42,30 @@ test('#277 every stable disabled reason and commit failure is localized RU/EN', 
   }
   assert.ok(en['resize.commit_failed']);
   assert.ok(ru['resize.commit_failed']);
+});
+
+test('#292 audit and production render share one resolver and reason contract', () => {
+  const audit = resize.match(/export function auditSafeResizeEligibility[\s\S]*?\n}\n\n\/\*\* Apply/);
+  assert.ok(audit, 'eligibility audit source is missing');
+  assert.match(audit[0], /resolveSafeResize\(/);
+  assert.match(card, /const result = resolveSafeResize\(/);
+  assert.match(resize, /export type SafeResizeReason = typeof SAFE_RESIZE_REASONS\[number\]/);
+  assert.doesNotMatch(audit[0], /sideEdgesArePerpendicular|validateSafeResize|obstacleOverlaysMovingEdge/,
+    'the audit must not grow a second eligibility implementation');
+});
+
+test('#292 disabled explanations are human-readable and only unconditional repair is actionable', () => {
+  for (const dictionary of [en, ru]) {
+    for (const reason of [
+      'diagonal', 'side-angle', 'duplicate-physical-wall', 'partial-shared',
+      'unequal-shared', 'multiple-rooms', 'thickness-conflict',
+      'opening-conflict', 'invalid-geometry',
+    ]) assert.equal(dictionary[`resize.disabled.${reason}`].includes(reason), false);
+  }
+  assert.match(en['resize.disabled.duplicate-physical-wall'], /remove or move/i);
+  assert.match(ru['resize.disabled.duplicate-physical-wall'], /удалите или переместите/i);
+  assert.doesNotMatch(en['resize.disabled.diagonal'] + en['resize.disabled.side-angle'], /Optimize/i);
+  assert.doesNotMatch(ru['resize.disabled.diagonal'] + ru['resize.disabled.side-angle'], /Оптимиз/i);
 });
 
 test('#277 a lossy persistence rekey stops at the last complete preview', () => {

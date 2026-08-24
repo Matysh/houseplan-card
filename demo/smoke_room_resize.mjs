@@ -149,11 +149,46 @@ check('safe_resize.disabled_visible', disabled.count > 0, true);
 check('safe_resize.disabled_reason', /part|част/i.test(disabled.label), true);
 check('safe_resize.disabled_focusable', disabled.tab, '0');
 const historyBefore = await page.evaluate(() => window.__card._geometryHistory.size);
+await page.evaluate(() => {
+  const card = window.__card;
+  card.__resizeDisabledWrite = card._writeConfig;
+  card.__resizeDisabledWrites = 0;
+  card._writeConfig = async () => { card.__resizeDisabledWrites++; };
+});
+const disabledActivation = await page.evaluate(() => {
+  const card = window.__card;
+  const target = [...card.renderRoot.querySelectorAll('.rszhandle[aria-disabled="true"]')]
+    .find((circle) => circle.getAttribute('aria-label')?.includes('part'))
+    || card.renderRoot.querySelector('.rszhandle[aria-disabled="true"]');
+  const expected = target?.getAttribute('aria-label') || '';
+  const activate = (event) => {
+    card._toast = '';
+    target?.dispatchEvent(event);
+    return card._toast;
+  };
+  return {
+    expected,
+    click: activate(new MouseEvent('click', { bubbles: true, cancelable: true })),
+    enter: activate(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true })),
+    space: activate(new KeyboardEvent('keydown', { key: ' ', bubbles: true, cancelable: true })),
+  };
+});
+check('safe_resize.disabled_click_reason', disabledActivation.click, disabledActivation.expected);
+check('safe_resize.disabled_enter_reason', disabledActivation.enter, disabledActivation.expected);
+check('safe_resize.disabled_space_reason', disabledActivation.space, disabledActivation.expected);
 const [dx, dy] = await screenPt(331, 245);
 await pointer('pointerdown', dx, dy, { cx: 331, cy: 245, pointerId: 78 });
 await settle();
 check('safe_resize.disabled_no_drag', await page.evaluate(() => window.__card._rszDrag), null);
-check('safe_resize.disabled_zero_write', await page.evaluate(() => window.__card._geometryHistory.size), historyBefore);
+check('safe_resize.disabled_zero_history', await page.evaluate(() => window.__card._geometryHistory.size), historyBefore);
+check('safe_resize.disabled_zero_write', await page.evaluate(() => {
+  const card = window.__card;
+  const writes = card.__resizeDisabledWrites;
+  card._writeConfig = card.__resizeDisabledWrite;
+  delete card.__resizeDisabledWrite;
+  delete card.__resizeDisabledWrites;
+  return writes;
+}), 0);
 
 // #289: the selected outer wall would lengthen two formerly shared side walls
 // by exactly 43 grid steps. Both directions are disabled before capture: grow
@@ -173,7 +208,7 @@ const mixedHandle = await page.evaluate(() => {
   return { disabled: target?.getAttribute('aria-disabled'), label: target?.getAttribute('aria-label') || '' };
 });
 check('safe_resize.mixed_role_disabled', mixedHandle.disabled, 'true');
-check('safe_resize.mixed_role_reason', /part of a shared wall|часть общей стены/i.test(mixedHandle.label), true);
+check('safe_resize.mixed_role_reason', /only part of this wall|часть этой стены/i.test(mixedHandle.label), true);
 const [mx, my] = await screenPt(100, 928);
 const [, mixed43] = await screenPt(100, 971);
 await pointer('pointerdown', mx, my, { cx: 100, cy: 928, pointerId: 82 });

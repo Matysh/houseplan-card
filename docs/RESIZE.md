@@ -46,6 +46,12 @@ reason, in this priority order:
 The numerical epsilon only absorbs storage noise. It never snaps a visibly
 angled edge into eligibility.
 
+`auditSafeResizeEligibility()` is the test-only diagnostic over this same
+resolver. It enumerates every room-edge handle, reports exact enabled and
+per-reason counts, and gives each handle a stable id made from room id, edge
+index and canonical endpoints. It contains no independent eligibility rules;
+the two tracked real-plan fixtures pin the post-Optimize result edge by edge.
+
 ## Pure pipeline
 
 The production controller reaches only four pure operations in `src/resize.ts`:
@@ -97,6 +103,11 @@ the complete partition is provably identical to one solid outer wall or one
 solid wall shared by exactly two rooms. Any hosted openings must be materialized
 without changing their centre, angle or fields, and the backend independently
 proves the complete rewrite. Resize itself never moves or ignores partitions.
+
+Disabled handles explain the blocking geometry in ordinary RU/EN text. Click,
+tap, Enter and Space repeat the same text in a toast. Only the independent
+partition/draft/column case suggests a repair (remove or move that object);
+angled walls never promise that Optimize can repair arbitrary authored shapes.
 
 ## Preview and commit
 

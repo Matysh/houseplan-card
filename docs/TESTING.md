@@ -2079,6 +2079,16 @@ require hands on real hardware — they remain for the human pass.
       p95 ≤25 ms
 - [ ] Six Resize mutants are caught: axis eligibility, third-room cascade,
       topology signature, side ownership, physical jamb and commit preflight
+- [ ] The test-only Resize eligibility audit calls the production resolver,
+      pins exact post-Optimize totals/reason counts and per-handle identities
+      for both real-plan fixtures, and reports stable handle ids when the
+      baseline changes. The known second-floor shared seam has two enabled
+      owner handles; raw-vs-optimized classification proves near-axis repair
+      removes only false angle reasons [unit: resize-availability-audit.test;
+      source: resize-production-path; mutation: resize-audit-resolver-bypassed]
+- [ ] Disabled Resize handles expose the same actionable localized explanation
+      through aria-label, click, Enter and Space; pointerdown starts no drag and
+      creates no history/write [auto: smoke_room_resize]
 - [ ] Device markers do not move; the room settings gear re-centres itself
 - [ ] Smoke: `node demo/smoke_room_resize.mjs`
 

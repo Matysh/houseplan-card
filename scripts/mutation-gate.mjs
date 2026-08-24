@@ -310,6 +310,20 @@ export const MUTANTS = [
     }],
   },
   {
+    id: 'resize-audit-resolver-bypassed',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/resize-availability-audit.test.mjs',
+    because: 'the real-plan availability counter must classify every handle through the same '
+      + 'resolver as production render; an always-enabled audit would make the baseline meaningless (#292)',
+    patches: [{
+      file: 'src/resize.ts',
+      find: '      const resolution = resolveSafeResize(\n'
+        + '        rooms, openings, room.id, edge, optionsFor(room.id, edge, a, b),\n'
+        + '      );',
+      replace: '      const resolution: SafeResizeResolution = { enabled: true, plan: {} as SafeResizePlan };',
+    }],
+  },
+  {
     id: 'resize-pointer-delta-zeroed',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="#293 pointer displacement" test/resize.test.mjs',

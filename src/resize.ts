@@ -31,16 +31,19 @@ export interface SafeOpeningIn extends OpeningIn {
   type?: string;
 }
 
-export type SafeResizeReason =
-  | 'diagonal'
-  | 'side-angle'
-  | 'duplicate-physical-wall'
-  | 'partial-shared'
-  | 'unequal-shared'
-  | 'multiple-rooms'
-  | 'thickness-conflict'
-  | 'opening-conflict'
-  | 'invalid-geometry';
+export const SAFE_RESIZE_REASONS = [
+  'diagonal',
+  'side-angle',
+  'duplicate-physical-wall',
+  'partial-shared',
+  'unequal-shared',
+  'multiple-rooms',
+  'thickness-conflict',
+  'opening-conflict',
+  'invalid-geometry',
+] as const;
+
+export type SafeResizeReason = typeof SAFE_RESIZE_REASONS[number];
 
 export type SafeResizeObstacle =
   | { kind: 'segment'; a: number[]; b: number[]; half?: number }
@@ -101,6 +104,21 @@ export interface SafeResizeSideOwnership {
 export type SafeResizeResolution =
   | { enabled: true; plan: SafeResizePlan }
   | { enabled: false; reason: SafeResizeReason };
+
+export interface SafeResizeAuditHandle {
+  id: string;
+  roomId: string;
+  edge: number;
+  endpoints: [number[], number[]];
+  resolution: SafeResizeResolution;
+}
+
+export interface SafeResizeEligibilityAudit {
+  total: number;
+  enabled: number;
+  disabled: Record<SafeResizeReason, number>;
+  handles: SafeResizeAuditHandle[];
+}
 
 export interface EdgeDragPlan {
   roomId: string;
@@ -946,6 +964,50 @@ export function resolveSafeResize(
     }
   }
   return { enabled: true, plan };
+}
+
+/** Test/diagnostic audit over the exact production resolver. The caller owns
+ * controller-specific options (wall thickness and physical obstacles); this
+ * helper owns only enumeration, stable handle identity and reason accounting,
+ * so it cannot drift into a second eligibility implementation (#292). */
+export function auditSafeResizeEligibility(
+  rooms: RoomIn[], openings: SafeOpeningIn[],
+  optionsFor: (
+    roomId: string, edge: number, a: number[], b: number[],
+  ) => SafeResizeOptions,
+): SafeResizeEligibilityAudit {
+  const disabled = Object.fromEntries(
+    SAFE_RESIZE_REASONS.map((reason) => [reason, 0]),
+  ) as Record<SafeResizeReason, number>;
+  const pointId = (point: number[]) => point.slice(0, 2).map((value) => {
+    const finite = Number.isFinite(value) ? (Object.is(value, -0) ? 0 : value) : 0;
+    return finite.toFixed(9);
+  }).join(',');
+  const handles: SafeResizeAuditHandle[] = [];
+  let enabled = 0;
+  for (const room of rooms) {
+    for (let edge = 0; edge < (room.poly?.length || 0); edge++) {
+      const a = room.poly[edge];
+      const b = room.poly[(edge + 1) % room.poly.length];
+      const endpoints = [[...a], [...b]].sort((left, right) => (
+        left[0] - right[0] || left[1] - right[1]
+      )) as [number[], number[]];
+      const resolution = resolveSafeResize(
+        rooms, openings, room.id, edge, optionsFor(room.id, edge, a, b),
+      );
+      if (resolution.enabled) enabled++;
+      else disabled[resolution.reason]++;
+      handles.push({
+        id: `${room.id}:${edge}:${pointId(endpoints[0])}~${pointId(endpoints[1])}`,
+        roomId: room.id,
+        edge,
+        endpoints,
+        resolution,
+      });
+    }
+  }
+  handles.sort((left, right) => left.id.localeCompare(right.id));
+  return { total: handles.length, enabled, disabled, handles };
 }
 
 /** Apply the same vector to the same two vertices in one or two rooms. No
