@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
   wallKey, lookupWall, thicknessCmAt, degradeWalls, rekeyWallsAfterMove,
+  wallRecordsHaveCarrierCoverage,
   setWallThickness, setWallThicknessForRoom, applyWallThicknessToNewRoom,
   drawWallPreviewD, linearWallBody, linearWallJoinPatches,
   DRAW_WALL_DEFAULT_CM, clampWallCm, cmToField, fieldToCm,
@@ -605,6 +606,76 @@ test('issue 293 moving a shared seam keeps one continuous side-wall record', () 
     pitch,
   );
   assert.equal(bent.length, 2, 'meeting atoms with different directions must remain losslessly split');
+});
+
+test('issue 298 fixed-topology rekey never scales an interior side-wall endpoint', () => {
+  const wall = setWallThickness([], [-85, 304], [577, 304], 20, pitch, 1000);
+  const next = rekeyWallsAfterMove(
+    wall,
+    [[[-100, 304], [100, 304]]],
+    [[[-96, 304], [100, 304]]],
+    pitch,
+    1000,
+    'fixed-topology',
+  );
+  assert.equal(next.length, 1);
+  assert.deepEqual([next[0].a, next[0].b], [wall[0].a, wall[0].b]);
+  assert.equal(next[0].key, wall[0].key);
+
+  const affine = rekeyWallsAfterMove(
+    wall,
+    [[[-100, 304], [100, 304]]],
+    [[[-96, 304], [100, 304]]],
+    pitch,
+    1000,
+  );
+  assert.notDeepEqual(affine[0].a, wall[0].a,
+    'regression fixture must kill the historical proportional mapping');
+});
+
+test('issue 298 fixed-topology rekey translates every breakpoint of the moving wall', () => {
+  const wall = setWallThickness([], [20, 0], [80, 0], 25, pitch, 1000);
+  const next = rekeyWallsAfterMove(
+    wall,
+    [[[0, 0], [100, 0]]],
+    [[[0, 5], [100, 5]]],
+    pitch,
+    1000,
+    'fixed-topology',
+  );
+  assert.deepEqual([next[0].a, next[0].b], [[0.02, 0.005], [0.08, 0.005]]);
+  assert.equal(next[0].cm, 25);
+});
+
+test('issue 298 fixed-topology rekey preserves an unrelated exact record byte-semantically', () => {
+  const wall = {
+    key: 'compatibility-key-that-must-not-change', cm: 21,
+    a: [0, 0], b: [0.1, 0],
+  };
+  const next = rekeyWallsAfterMove(
+    [wall],
+    [[[0, 200], [100, 200]]],
+    [[[0, 205], [100, 205]]],
+    pitch,
+    1000,
+    'fixed-topology',
+  );
+  assert.deepEqual(next, [wall]);
+});
+
+test('issue 298 carrier proof covers collinear chains and rejects gaps or off-grid endpoints', () => {
+  const exact = setWallThickness([], [0, 0], [100, 0], 20, pitch, 1000);
+  assert.equal(wallRecordsHaveCarrierCoverage(
+    exact, [[[0, 0], [40, 0]], [[40, 0], [100, 0]]], pitch, 1000,
+  ), true);
+  assert.equal(wallRecordsHaveCarrierCoverage(
+    exact, [[[0, 0], [40, 0]], [[41, 0], [100, 0]]], pitch, 1000,
+  ), false, 'endpoint-only validation must not accept a carrier gap');
+
+  const offGrid = [{ ...exact[0], a: [0.00001, 0] }];
+  assert.equal(wallRecordsHaveCarrierCoverage(
+    offGrid, [[[0.01, 0], [100, 0]]], pitch, 1000,
+  ), false, 'a true off-grid coordinate is not storage noise');
 });
 
 test('issue 253 key collisions never erase different exact or legacy records', () => {

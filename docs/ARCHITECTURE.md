@@ -540,6 +540,12 @@ The controller rebuilds every live candidate from one immutable
 `SpaceGeometryState`. `rekeyWallsAfterMove()` and
 `rekeyOpenSpansAfterMove()` map exact wall-owned records into that overlay;
 partitions, drafts, columns, decor and plan transform stay byte-equivalent.
+Wall rekey has a production-only fixed-topology mode: rigid moving edges
+translate all breakpoints, while length-changing side edges move only proven
+old-vertex → new-vertex endpoints. Before the overlay is accepted, the union of
+collinear room/partition carriers must cover every new exact wall record and no
+new lattice/carrier violation may appear. Historical invalid records are
+compared as an exact multiset rather than repaired during an unrelated Resize.
 The renderer's canonical wall/floor result for the final preview cfg epoch is
 the pointerup preflight result. Success copies that exact overlay once and
 records one Undo/save; there is no commit-time simplify/degrade/reconstruction.

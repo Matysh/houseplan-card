@@ -9,6 +9,7 @@
 import { union, difference, intersection } from 'polyclip-ts';
 import { polygonArea, roomPoly, roomEdges, sharedBoundary, paperRoomShapes } from './logic';
 import { NEAR_AXIS_MAX_DEGREES } from './near-axis';
+import { LATTICE_NOISE_STEPS } from './coordinate-canonicalization';
 
 export interface WallEntry {
   key: string;
@@ -536,6 +537,7 @@ export function rekeyWallsAfterMove(
   newSpans: [number[], number[]][],
   pitch: number,
   coordScale = 1,
+  mode: 'affine' | 'fixed-topology' = 'affine',
 ): WallEntry[] {
   if (!walls?.length) return [];
   if (oldSpans.length !== newSpans.length) return walls.slice();
@@ -575,13 +577,32 @@ export function rekeyWallsAfterMove(
     a[0] + (b[0] - a[0]) * t,
     a[1] + (b[1] - a[1]) * t,
   ];
+  const closePoint = (a: number[], b: number[]): boolean =>
+    Math.hypot(a[0] - b[0], a[1] - b[1]) <= exactEps;
   const mapPoint = (p: number[], move: Move): number[] => {
+    if (mode === 'fixed-topology') {
+      const adx = move.na[0] - move.oa[0], ady = move.na[1] - move.oa[1];
+      const bdx = move.nb[0] - move.ob[0], bdy = move.nb[1] - move.ob[1];
+      // Safe Resize has only two legal transforms for one source edge:
+      //
+      // - the moving wall translates rigidly, so every physical breakpoint
+      //   follows by the same vector;
+      // - a perpendicular side wall changes length, so only its topology
+      //   endpoint moves and interior thickness breakpoints stay put.
+      //
+      // Reusing the historical affine `t` mapping for the second case is the
+      // producer behind #298: it creates a point that belongs to no polygon.
+      if (Math.hypot(adx - bdx, ady - bdy) <= exactEps) {
+        return [p[0] + adx, p[1] + ady];
+      }
+      if (closePoint(p, move.oa)) return [...move.na];
+      if (closePoint(p, move.ob)) return [...move.nb];
+      return [...p];
+    }
     const t = Math.max(0, Math.min(1,
       ((p[0] - move.oa[0]) * move.dx + (p[1] - move.oa[1]) * move.dy) / move.len2));
     return pointAt(move.na, move.nb, t);
   };
-  const closePoint = (a: number[], b: number[]): boolean =>
-    Math.hypot(a[0] - b[0], a[1] - b[1]) <= exactEps;
   const canonicalSpan = (a: number[], b: number[]): [number[], number[]] => {
     const [ux, uy] = wallDir(a, b);
     return (b[0] - a[0]) * ux + (b[1] - a[1]) * uy >= 0
@@ -633,7 +654,12 @@ export function rekeyWallsAfterMove(
       }
 
       if (!overlaps.length) {
-        pushExact(wa, wb, w.cm);
+        // A fixed-topology edit is not allowed to canonicalise an unrelated
+        // record as a side effect: its compatibility key and endpoints are
+        // observable storage identity. The generic historical transform keeps
+        // its previous normalising behaviour for isolated callers/tests.
+        if (mode === 'fixed-topology') out.push({ ...w });
+        else pushExact(wa, wb, w.cm);
         continue;
       }
 
@@ -688,6 +714,15 @@ export function rekeyWallsAfterMove(
           coalesced.push([[...atom[0]], [...atom[1]]]);
         }
       }
+      if (mode === 'fixed-topology' && coalesced.length === 1) {
+        const [nextA, nextB] = coalesced[0];
+        const sameSpan = (closePoint(nextA, exact[0]) && closePoint(nextB, exact[1]))
+          || (closePoint(nextA, exact[1]) && closePoint(nextB, exact[0]));
+        if (sameSpan) {
+          out.push({ ...w });
+          continue;
+        }
+      }
       for (const [a, b] of coalesced) {
         pushExact(a, b, w.cm);
       }
@@ -726,6 +761,85 @@ export function rekeyWallsAfterMove(
     out.push({ ...w, key: nk || w.key, cm: clampWallCm(w.cm) });
   }
   return out;
+}
+
+/**
+ * Fail-closed carrier/lattice proof for exact wall records after Safe Resize.
+ *
+ * A compact record may cross several collinear room edges, so checking that
+ * both endpoints touch one edge is insufficient. Project every collinear
+ * carrier onto the record and require their union to cover its full interval
+ * without gaps. Legacy key-only records have no provable extent and remain a
+ * compatibility concern of `rekeyWallsAfterMove`.
+ */
+export function wallRecordCarrierViolations(
+  walls: WallEntry[] | null | undefined,
+  carriers: [number[], number[]][],
+  pitch: number,
+  coordScale = 1,
+): string[] {
+  const scale = coordScale > 0 ? coordScale : 1;
+  const latticePitch = Math.abs(pitch);
+  const eps = Math.max(latticePitch * scale * LATTICE_NOISE_STEPS, 1e-9);
+  const onLattice = (value: number): boolean => {
+    if (!(latticePitch > 0)) return true;
+    const normalised = value / scale;
+    const steps = normalised / latticePitch;
+    return Math.abs(steps - Math.round(steps)) < LATTICE_NOISE_STEPS;
+  };
+
+  const violations: string[] = [];
+  const signature = (wall: WallEntry): string => JSON.stringify([
+    wall.key, wall.cm, wall.a, wall.b,
+  ]);
+  for (const wall of walls || []) {
+    const span = entrySpan(wall, scale);
+    if (!span) continue;
+    const [a, b] = span;
+    if (![a[0], a[1], b[0], b[1]].every(Number.isFinite)
+        || ![a[0], a[1], b[0], b[1]].every(onLattice)) {
+      violations.push(signature(wall));
+      continue;
+    }
+    const dx = b[0] - a[0], dy = b[1] - a[1];
+    const length = Math.hypot(dx, dy);
+    if (length <= eps) {
+      violations.push(signature(wall));
+      continue;
+    }
+    const ux = dx / length, uy = dy / length;
+    const intervals: [number, number][] = [];
+    for (const carrier of carriers) {
+      const [ca, cb] = carrier;
+      if (![ca?.[0], ca?.[1], cb?.[0], cb?.[1]].every(Number.isFinite)) continue;
+      const lineDistance = (point: number[]): number =>
+        Math.abs((point[0] - a[0]) * uy - (point[1] - a[1]) * ux);
+      if (lineDistance(ca) > eps || lineDistance(cb) > eps) continue;
+      const ta = (ca[0] - a[0]) * ux + (ca[1] - a[1]) * uy;
+      const tb = (cb[0] - a[0]) * ux + (cb[1] - a[1]) * uy;
+      const lo = Math.max(0, Math.min(ta, tb));
+      const hi = Math.min(length, Math.max(ta, tb));
+      if (hi - lo > eps) intervals.push([lo, hi]);
+    }
+    intervals.sort((left, right) => left[0] - right[0] || left[1] - right[1]);
+    let covered = 0;
+    for (const [lo, hi] of intervals) {
+      if (lo > covered + eps) break;
+      covered = Math.max(covered, hi);
+      if (covered >= length - eps) break;
+    }
+    if (covered < length - eps) violations.push(signature(wall));
+  }
+  return violations;
+}
+
+export function wallRecordsHaveCarrierCoverage(
+  walls: WallEntry[] | null | undefined,
+  carriers: [number[], number[]][],
+  pitch: number,
+  coordScale = 1,
+): boolean {
+  return wallRecordCarrierViolations(walls, carriers, pitch, coordScale).length === 0;
 }
 
 /** Upsert or remove a wall entry by endpoints. */

@@ -142,6 +142,16 @@ with zero Undo entries and zero writes.
 snapshot to the fixed-topology candidate. Physical centimetre values and open
 span count must survive; the production geometry check is fail-closed.
 
+Safe Resize uses endpoint correspondence, not the historical affine mapping.
+Every breakpoint follows a moving wall by one rigid translation. On a side wall
+whose length changes, only the old topology endpoint moves to its paired new
+vertex; an interior thickness breakpoint stays on its physical boundary rather
+than keeping a proportional fraction of the new edge. Unrelated exact records
+remain byte-equivalent. The candidate then proves that every new exact record
+is lattice-safe and continuously covered by room-wall/partition carriers. An
+unchanged historical violation may remain readable, but Resize cannot add or
+replace it with a different violation.
+
 When the two owners of a shared moving seam split one physically continuous
 side-wall record at their meeting point, the mapped atoms are joined back only
 if their endpoints still meet exactly and their directions remain collinear.
@@ -193,6 +203,7 @@ building the preview frame itself.
 - `demo/benchmark_safe_resize_render.mjs`: warm 20-room/80-handle layer p95
   and exactly one geometry snapshot per rendered frame;
 - mutation gate: eligibility, third-room, topology, side ownership, jamb,
+  fixed-topology wall endpoint mapping,
   pointer displacement/capture, shared-seam coalescing, preview rejection and
   commit-preflight bypass mutants.
 

@@ -235,6 +235,18 @@ export const MUTANTS = [
     }],
   },
   {
+    id: 'safe-resize-wall-endpoints-affine-scaled',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="issue 298" test/wall-thickness.test.mjs',
+    because: 'fixed-topology Resize may translate a moving wall or move its topology endpoint, '
+      + 'but proportional scaling invents a wall-record coordinate with no carrier (#298)',
+    patches: [{
+      file: 'src/wall-thickness.ts',
+      find: "    if (mode === 'fixed-topology') {\n",
+      replace: "    if (false && mode === 'fixed-topology') {\n",
+    }],
+  },
+  {
     id: 'safe-resize-third-room-cascade-enabled',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="partial shared and third-owner" test/resize.test.mjs',

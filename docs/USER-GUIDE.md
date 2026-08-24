@@ -359,6 +359,9 @@ It also stops where extending or shortening an adjacent wall would turn shared
 material into outer material (or the reverse), so one saved thickness never
 silently serves both roles. If neither direction has even one safe grid step,
 the handle explains that only part of a shared wall cannot be moved.
+Resize also preserves every unrelated wall exactly: changing the length of a
+neighbouring wall cannot shift a thickness boundary to an invented off-grid
+point. An ambiguous candidate is rejected instead of damaging another wall.
 Partial shared walls, diagonal walls and walls overlapped by an independent
 partition/draft/column keep a dimmed handle with an explanatory tooltip and
 cannot start a drag. The former corner scale frame was removed. An ordinary

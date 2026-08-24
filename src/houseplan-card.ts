@@ -60,7 +60,7 @@ import {
   cmToNorm, clampFurnSize, clampFurnCm, FURN_WALL_CELLS, type FurnitureGroup,
 } from './furniture';
 import {
-  degradeWalls, rekeyWallsAfterMove,
+  degradeWalls, rekeyWallsAfterMove, wallRecordCarrierViolations,
   setWallThickness, setWallThicknessForRoom, cmToField, wallCmToUnits,
   wallEdgeBodies, wallBodiesGeometry, wallBodiesUnionPath,
   floorFootprintGeometry,
@@ -8542,7 +8542,7 @@ class HouseplanCard extends LitElement {
       else delete (sp as any).open_spans;
       if (Array.isArray(sp.walls) && sp.walls.length) {
         sp.walls = rekeyWallsAfterMove(
-          sp.walls, oldSpans, newSpans, this._wallKeyPitch, NORM_W,
+          sp.walls, oldSpans, newSpans, this._wallKeyPitch, NORM_W, 'fixed-topology',
         );
       }
     }
@@ -8559,6 +8559,49 @@ class HouseplanCard extends LitElement {
     if ((s.open_spans || []).length !== ((sp as any).open_spans || []).length) {
       return { ok: false, reason: 'open-span-metadata' };
     }
+    const wallCarriers: [number[], number[]][] = [];
+    for (const room of sp.rooms || []) {
+      const poly = roomPoly(room);
+      if (!poly || poly.length < 2) continue;
+      for (let index = 0; index < poly.length; index++) {
+        wallCarriers.push([
+          [poly[index][0] * NORM_W, poly[index][1] * NORM_W],
+          [poly[(index + 1) % poly.length][0] * NORM_W,
+            poly[(index + 1) % poly.length][1] * NORM_W],
+        ]);
+      }
+    }
+    for (const partition of sp.partitions || []) {
+      if (!Array.isArray(partition?.a) || !Array.isArray(partition?.b)) continue;
+      wallCarriers.push([
+        [Number(partition.a[0]) * NORM_W, Number(partition.a[1]) * NORM_W],
+        [Number(partition.b[0]) * NORM_W, Number(partition.b[1]) * NORM_W],
+      ]);
+    }
+    // Old plans may contain explicit historical debt (for example an authored
+    // off-grid thickness breakpoint). Safe Resize must not silently repair it,
+    // but it may not create a new invalid record either. Remove byte-identical
+    // old records as a multiset and prove only newly written/split records.
+    // That keeps pointermove bounded by the touched thickness profile instead
+    // of comparing every historical record with every carrier twice per frame.
+    const wallSignature = (wall: any): string => JSON.stringify([
+      wall?.key, wall?.cm, wall?.a, wall?.b,
+    ]);
+    const oldWallCounts = new Map<string, number>();
+    for (const wall of s.walls || []) {
+      const key = wallSignature(wall);
+      oldWallCounts.set(key, (oldWallCounts.get(key) || 0) + 1);
+    }
+    const changedWalls: WallEntry[] = [];
+    for (const wall of sp.walls || []) {
+      const key = wallSignature(wall);
+      const remaining = oldWallCounts.get(key) || 0;
+      if (remaining) oldWallCounts.set(key, remaining - 1);
+      else changedWalls.push(wall);
+    }
+    if (wallRecordCarrierViolations(
+      changedWalls, wallCarriers, this._wallKeyPitch, NORM_W,
+    ).length) return { ok: false, reason: 'wall-metadata' };
     if (!this._rszSpaceCandidateRenderable(this._space, sp)) {
       return { ok: false, reason: 'physical-geometry' };
     }

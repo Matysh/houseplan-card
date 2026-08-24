@@ -66,6 +66,16 @@ partitioning takes a valid 500-record input above the backend limit, the
 frontend keeps every result so persistence rejects the transaction atomically;
 it does not truncate masonry to make the write fit.
 
+The production fixed-topology Resize path does not use the generic affine
+projection for side walls. A rigidly translated moving edge carries every
+breakpoint by the same vector; a side edge that only changes length moves its
+paired topology endpoint and leaves interior thickness boundaries fixed. A
+continuous carrier-coverage and lattice proof runs before preview/commit. It
+compares exact historical debt by record identity, so an old off-grid record is
+not silently migrated, while a new or changed violation rejects the whole
+candidate. This is distinct from the retained generic scale/rotation helper
+used only by isolated historical pure tests.
+
 ## 2. Growth (centreline ±½)
 
 Every thick wall grows **half outward and half inward** from the polygon edge

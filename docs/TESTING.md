@@ -55,6 +55,12 @@
       `resize-preview-reject-silent` и
       `safe-resize-commit-preflight-bypassed` обязаны красить соответствующие
       unit/production smoke guards.
+- [ ] Fixed-topology wall records (#298): moving-wall breakpoints translate
+      rigidly, side-wall interior endpoints never scale proportionally,
+      unrelated records remain byte-equivalent, and a full-span carrier/lattice
+      proof rejects gaps before preview [unit: `wall-thickness.test.mjs`;
+      auto: `smoke_resize_pointer_real_plan`, six `smoke_edit_walk` runs;
+      mutation: `safe-resize-wall-endpoints-affine-scaled`].
 
 ## Decor composition order (#231)
 
