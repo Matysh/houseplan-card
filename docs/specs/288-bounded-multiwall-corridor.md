@@ -8,7 +8,7 @@
 - **Область:** canonical wall bodies, degree-3+ junction cuts, Plan/View/Static/Iso,
   real-plan smoke, semantic golden и structural consumers
 - **Модель данных:** schema, config, layout и Optimize не меняются
-- **Связано:** #249, #261, #271, #272, #275, #278, #284–#286,
+- **Связано:** #249, #261, #271, #272, #275, #278, #279, #284–#286,
   `docs/WALL-THICKNESS.md`, `docs/ARCHITECTURE.md`, `docs/TESTING.md`
 
 ## 1. Сценарий и подтверждённая причина
@@ -167,7 +167,24 @@ kiosk получает тот же canonical result; editor touch contract не 
 сохранить действующие masonry/render budgets; exact fixture дополнительно
 проверяет детерминизм при permutation без роста числа local patches.
 
-## 7. Ожидаемые файлы
+## 7. Риски и меры
+
+- Изменение общего `bevelMultiWallBody` может вернуть дефект любого из прежних
+  junction-контрактов #249/#261/#271/#272/#275/#278/#279. Мера: полная
+  table-driven матрица AC4, оба реальных плана и semantic golden без повышения
+  tolerance.
+- Слишком широкий corridor недосечёт соседнюю стену и оставит наложение;
+  слишком узкий снова вырежет её глубже собственного half-depth. Мера: численные
+  верхние границы AC3, structural consumers AC5 и чувствительный мутант AC7.
+- Локально правильный polygon может разойтись между Plan/View/Static/Iso. Мера:
+  один canonical source AC5 и запрет consumer-specific post-fix.
+
+## 8. Откат
+
+Чистый revert implementation-коммита возвращает прежнюю renderer geometry;
+feature flag и миграция не требуются, потому что persisted model не меняется.
+
+## 9. Ожидаемые файлы
 
 Product code:
 
@@ -186,7 +203,7 @@ Tests/evidence:
 - `docs/WALL-THICKNESS.md`, `docs/ARCHITECTURE.md`, `docs/TESTING.md`;
 - `docs/CHANGELOG.md`, `docs/CHANGELOG.ru.md`.
 
-## 8. Release и порядок интеграции
+## 10. Release и порядок интеграции
 
 Implementation-коммит имеет `Issue: #288`, `User-Visible: yes` и оба
 changelog. Если меняются canonical docs screenshots, они снимаются только
@@ -197,7 +214,7 @@ changelog. Если меняются canonical docs screenshots, они сним
 docs screenshots, как требует issue. Она не входит в product scope #288 и не
 обходится ручным слиянием автора продуктовой задачи.
 
-## 9. Принятые технические предположения
+## 11. Принятые технические предположения
 
 1. Ограничение «не больше half-depth соседней стены» — верхняя граница ущерба,
    а не требование обязательно вырезать этот half-depth.
