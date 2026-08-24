@@ -181,6 +181,23 @@ Confirm сохраняет exact preview config/layout revision-guarded transact
 один Undo. Cancel/close не пишет. Повторный Optimize после storage/event/cold
 reload даёт нулевой noise counter и no-op, если других maintenance changes нет.
 
+### 7.1 i18n-контракт отчёта
+
+Новые строки не расширяют общий `gs.optimize_changes`: координатная
+канонизация имеет отдельный maximum и не должна смешиваться с обычным
+grid-alignment. Добавляются два ключа с нейтральными числовыми формулировками,
+не требующими отдельной pluralisation:
+
+| Ключ | English | Русский |
+|---|---|---|
+| `gs.optimize_lattice_summary` | `Noisy coordinate values canonicalized: {n}; maximum movement: {cm} cm.` | `Канонизировано шумовых значений координат: {n}; максимальный сдвиг: {cm} см.` |
+| `gs.optimize_lattice_space` | `{space}: coordinate values canonicalized: {n}; off-grid values left unchanged: {far}.` | `{space}: канонизировано значений координат: {n}; оставлено значений вне сетки: {far}.` |
+
+`gs.optimize_lattice_summary` показывается только при `n > 0`.
+`gs.optimize_lattice_space` показывается только для затронутых пространств;
+layout без собственного пользовательского имени входит только в summary.
+Кнопки Confirm/Cancel/Undo и общий lossy-warning используют существующие ключи.
+
 ## 8. Scope
 
 ### Входит
@@ -228,7 +245,7 @@ input immutable. Scalar/unknown/off-grid values сохраняют #224 semantic
 
 ```
 npm run invariants -- --config <candidate> --lattice
-noise: 0 (0.00%)
+  шум у узла          0 (0.00%)  — ближе 0.0001 шага, но не точно
 ```
 
 для обоих spaces и layout. `checkWallKeys`, `checkMixedRoleRecords`, references
