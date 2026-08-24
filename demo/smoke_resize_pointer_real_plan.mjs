@@ -80,6 +80,7 @@ const target = await page.evaluate(() => {
     start: [rect.left + rect.width / 2, rect.top + rect.height / 2],
     end: screen(cx + 10 * (1000 / 240), cy),
     mappedStart: screen(cx, cy),
+    hitWidth: rect.width,
     count: handles.length,
   };
 });
@@ -148,9 +149,10 @@ if (target) {
   // The second gesture leaves the circle by much more than its hit radius.
   // Pointer capture must keep the real browser stream alive; Esc then cancels
   // the already-visible overlay without a second persistence write.
+  const outsideDistance = Math.max(120, target.hitWidth * 2);
   await page.mouse.move(...target.start);
   await page.mouse.down();
-  await page.mouse.move(target.start[0] + 60, target.start[1], { steps: 12 });
+  await page.mouse.move(target.start[0] + outsideDistance, target.start[1], { steps: 12 });
   await settle();
   check('resize_pointer.capture_beyond_handle', await domHasSharedX(400), false);
   await page.keyboard.press('Escape');

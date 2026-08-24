@@ -171,7 +171,8 @@ building the preview frame itself.
 - `demo/smoke_resize_pointer_real_plan.mjs`: the tracked second-floor fixture
   entering through `config/get`, real browser mouse events, ten-grid-step live
   preview and atomic commit, wall metadata, Undo, pointer capture outside the
-  handle, foreign-pointer isolation, Escape and capture-loss cancellation;
+  handle by at least two hit diameters, foreign-pointer isolation, Escape and
+  capture-loss cancellation;
 - `test/resize-optimize.test.mjs` and
   `demo/smoke_resize_outer_reconciliation.mjs`: an exact outer-wall partition
   blocks a zero-range handle, Optimize safely rehosts its windows and removes
