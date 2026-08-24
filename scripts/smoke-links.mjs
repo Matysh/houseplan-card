@@ -38,6 +38,19 @@ export const SMOKE_LINKS = [
       + 'atomic Optimize write, reload idempotently and restore the original through one Undo (#290)',
   },
   {
+    // #297: обход не проверяет снимок — он расшатывает план продуктовыми жестами
+    // и спрашивает инварианты после каждого. Поиском по тексту связь между этим
+    // смоком и кодом ресайза, удаления комнаты и «Оптимизировать» не находится.
+    symbols: [
+      'resolveSafeResize', 'applySafeResize', 'clampSafeResize', 'validateSafeResize',
+      'planRoomDeletion', 'materializeWallIntervals', 'optimizePlans',
+      'reconcileCoincidentPartitions',
+    ],
+    smokes: ['smoke_edit_walk.mjs'],
+    because: 'дефекты геометрии рождаются в редактировании, а не в хранении: #289, #296 и '
+      + '#298 прошли все снимковые гейты — обход находит их на первом-втором жесте',
+  },
+  {
     // #285: смок не произносит ни одного имени продуктового кода — он подставляет
     // геометрию реального этажа и спрашивает сам продукт через isPointInFill,
     // есть ли кладка там, где модель её обещает. Поиском по тексту такая связь

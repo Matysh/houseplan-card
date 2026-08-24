@@ -542,6 +542,103 @@ export function checkMixedRoleRecords(config) {
   return violations;
 }
 
+/**
+ * Геометрия, которая ничего не рисует, но выключает ручки ресайза (#296).
+ *
+ * Зачем отдельная проверка. Перегородка, лежащая ровно под стеной комнаты, и
+ * черновик из двух точек не видны на плане и не портят ни один снимок модели —
+ * ни ключи, ни роли, ни решётку, ни кладку. При этом `resolveSafeResize`
+ * законно отказывает по ним `duplicate-physical-wall`, и пользователь получает
+ * выключенную ручку с подсказкой про объект, который нельзя ни увидеть, ни
+ * выделить, ни удалить. Ни один прежний гейт этого класса не видит: все они
+ * измеряют снимок, а эта геометрия снимок не портит.
+ *
+ * Судится только доказуемое: перекрытие по длине больше шага решётки — то есть
+ * не касание углом, — и черновик, который не может стать комнатой ни при какой
+ * последующей правке.
+ */
+const collinearOverlapN = (a, b, c, d) => {
+  const dx = b[0] - a[0], dy = b[1] - a[1];
+  const length = Math.hypot(dx, dy);
+  if (!(length > GRID_STEP_N)) return 0;
+  const ux = dx / length, uy = dy / length;
+  const across = (p) => Math.abs((p[0] - a[0]) * uy - (p[1] - a[1]) * ux);
+  if (across(c) > EDGE_TOLERANCE || across(d) > EDGE_TOLERANCE) return 0;
+  const along = (p) => (p[0] - a[0]) * ux + (p[1] - a[1]) * uy;
+  const lo = Math.max(0, Math.min(along(c), along(d)));
+  const hi = Math.min(length, Math.max(along(c), along(d)));
+  return Math.max(0, hi - lo);
+};
+
+/** Точки черновика как есть: замыкание контура здесь не предполагается. */
+const draftSegments = (draft) => {
+  const points = Array.isArray(draft?.points) ? draft.points.map(point).filter(Boolean) : [];
+  const segments = [];
+  for (let i = 0; i + 1 < points.length; i++) segments.push([points[i], points[i + 1]]);
+  return { points, segments };
+};
+
+export function checkHiddenObstacles(config) {
+  const violations = [];
+  for (const space of Array.isArray(config?.spaces) ? config.spaces : []) {
+    const spaceId = String(space?.id ?? '?');
+    const edges = [];
+    for (const room of space?.rooms || []) {
+      const poly = roomPolygon(room);
+      if (!poly) continue;
+      for (const [a, b] of edgesOf(poly)) edges.push({ a, b, room: String(room?.id ?? '?') });
+    }
+    const longestOverlap = (a, b) => {
+      let best = null;
+      for (const edge of edges) {
+        const overlap = collinearOverlapN(edge.a, edge.b, a, b);
+        if (overlap > GRID_STEP_N && (!best || overlap > best.overlap)) {
+          best = { overlap, room: edge.room };
+        }
+      }
+      return best;
+    };
+    for (const partition of space?.partitions || []) {
+      const a = point(partition?.a), b = point(partition?.b);
+      if (!a || !b) continue;
+      const hit = longestOverlap(a, b);
+      if (!hit) continue;
+      violations.push({
+        invariant: 'hidden_obstacles', kind: 'partition_over_room_wall',
+        owner: `${spaceId}:${partition?.id ?? '?'}`,
+        reference: `${(hit.overlap / GRID_STEP_N).toFixed(0)} шагов по стене ${hit.room}`,
+        detail: 'перегородка лежит на стене комнаты: на плане её не видно,'
+          + ' а ресайз этой стены она выключает',
+      });
+    }
+    for (const draft of space?.room_drafts || []) {
+      const { points, segments } = draftSegments(draft);
+      if (points.length < 3) {
+        violations.push({
+          invariant: 'hidden_obstacles', kind: 'unusable_draft',
+          owner: `${spaceId}:${draft?.id ?? '?'}`,
+          reference: `${points.length} точки`,
+          detail: 'контур не может стать комнатой ни при какой правке,'
+            + ' но препятствием для ресайза остаётся',
+        });
+        continue;
+      }
+      for (const [a, b] of segments) {
+        const hit = longestOverlap(a, b);
+        if (!hit) continue;
+        violations.push({
+          invariant: 'hidden_obstacles', kind: 'draft_over_room_wall',
+          owner: `${spaceId}:${draft?.id ?? '?'}`,
+          reference: `${(hit.overlap / GRID_STEP_N).toFixed(0)} шагов по стене ${hit.room}`,
+          detail: 'незакрытый контур лежит на стене комнаты и выключает её ресайз',
+        });
+        break;
+      }
+    }
+  }
+  return violations;
+}
+
 /** Разобрать runtime-ответы, сырой config и tracked single-space fixtures. */
 export function readModel(text) {
   const parsed = JSON.parse(text);
@@ -633,6 +730,9 @@ function report(violations, notes = []) {
     lost: 'Потерянные записи толщины',
     wall_key: 'Записи толщины, которые не найдутся по ключу',
     mixed_role_record: 'Записи толщины, описывающие сразу общую и наружную стену',
+    partition_over_room_wall: 'Перегородки, лежащие на стенах комнат',
+    draft_over_room_wall: 'Незакрытые контуры, лежащие на стенах комнат',
+    unusable_draft: 'Черновики, которые не могут стать комнатой',
   };
   for (const [kind, list] of byKind) {
     lines.push(`${titles[kind] || kind}: ${list.length}`);
@@ -680,6 +780,7 @@ function main(argv) {
     ...checkReferences(model, { notes }),
     ...checkWallKeys(model.config, { notes }),
     ...checkMixedRoleRecords(model.config),
+    ...checkHiddenObstacles(model.config),
     ...checkPhysicalGeometry(model.config),
   ];
   if (argv.includes('--json')) console.log(JSON.stringify({ violations, notes }, null, 2));

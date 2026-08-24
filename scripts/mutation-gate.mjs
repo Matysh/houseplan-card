@@ -583,6 +583,44 @@ export const MUTANTS = [
     }],
   },
   {
+    id: 'invariant-hidden-counts-corner-touch',
+    guard: 'node --test --test-name-pattern="касание углом" test/model-invariants.test.mjs',
+    because: 'перегородка, продолжающая стену за угол, законна: общего с ребром у неё ровно '
+      + 'точка. Порог в шаг решётки — единственное, что отделяет находку от ложного '
+      + 'срабатывания на каждом углу плана (#296)',
+    patches: [{
+      file: 'scripts/model-invariants.mjs',
+      find: '        if (overlap > GRID_STEP_N && (!best || overlap > best.overlap)) {',
+      replace: '        if (overlap >= 0 && (!best || overlap > best.overlap)) {',
+    }],
+  },
+  {
+    id: 'invariant-hidden-tolerates-two-point-draft',
+    guard: 'node --test --test-name-pattern="черновик из двух точек" '
+      + 'test/model-invariants.test.mjs',
+    because: 'ровно это условие пропускает вырожденный черновик в align-grid: `points.length '
+      + '>= 2` считает контур из двух точек годным, а комнатой он не станет никогда — '
+      + 'и остаётся невидимым препятствием для ресайза (#296)',
+    patches: [{
+      file: 'scripts/model-invariants.mjs',
+      find: '      if (points.length < 3) {',
+      replace: '      if (points.length < 2) {',
+    }],
+  },
+  {
+    id: 'invariant-hidden-ignores-collinearity',
+    guard: 'node --test --test-name-pattern="перегородка поперёк комнаты" '
+      + 'test/model-invariants.test.mjs',
+    because: 'перегородка поперёк комнаты — единственный смысл существования перегородки; '
+      + 'без проверки поперечного отклонения проверка ловит её и будет отключена в первую '
+      + 'неделю (#296)',
+    patches: [{
+      file: 'scripts/model-invariants.mjs',
+      find: '  if (across(c) > EDGE_TOLERANCE || across(d) > EDGE_TOLERANCE) return 0;',
+      replace: '  if (false) return 0;',
+    }],
+  },
+  {
     id: 'invariant-roles-sample-endpoints',
     guard: 'node --test --test-name-pattern="реальные планы проекта эту проверку" '
       + 'test/model-invariants.test.mjs',

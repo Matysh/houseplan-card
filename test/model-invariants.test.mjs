@@ -5,8 +5,9 @@ import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
-  checkMixedRoleRecords, checkReferences, checkWallKeys, checkWallRecordsPreserved,
-  keyMidpoint, latticeProfile, nearAxisProfile, readModel, wallKey,
+  checkHiddenObstacles, checkMixedRoleRecords, checkReferences, checkWallKeys,
+  checkWallRecordsPreserved, keyMidpoint, latticeProfile, nearAxisProfile,
+  readModel, wallKey,
 } from '../scripts/model-invariants.mjs';
 import { wallKey as productWallKey } from '../test-build/wall-thickness.js';
 import { GRID_STEP_N } from '../test-build/space-geometry.js';
@@ -549,4 +550,103 @@ test('#290 near-axis audit deduplicates shared room-owner copies', () => {
   ));
   const profile = nearAxisProfile({ spaces: [{ id: 'near', ...fixture }] });
   assert.deepEqual(profile, { total: 1, spaces: [{ spaceId: 'near', count: 1 }] });
+});
+
+// #296/#297. Геометрия, которая ничего не рисует, но выключает ручки ресайза.
+// Проверка нужна ровно потому, что все прежние гейтики её не видят: перегородка
+// под стеной комнаты не портит ни ключи, ни роли, ни решётку, ни кладку.
+const hidden = (space) => checkHiddenObstacles({ spaces: [{ id: 'sp1', cell_cm: 1, ...space }] });
+const roomAt = (x0, y0, x1, y1) => ({ id: 'r1', poly: rect(x0, y0, x1, y1) });
+
+test('перегородка под стеной комнаты — нарушение (#296)', () => {
+  const step = GRID_STEP_N;
+  const found = hidden({
+    rooms: [roomAt(0, 0, 40 * step, 30 * step)],
+    // Ровно нижнее ребро комнаты: на плане неотличимо от стены.
+    partitions: [{ id: 'p1', a: [0, 0], b: [40 * step, 0], cm: 20 }],
+  });
+  assert.equal(found.length, 1);
+  assert.equal(found[0].kind, 'partition_over_room_wall');
+});
+
+test('перегородка, лежащая на части стены, — тоже нарушение (#296)', () => {
+  const step = GRID_STEP_N;
+  const found = hidden({
+    rooms: [roomAt(0, 0, 40 * step, 30 * step)],
+    partitions: [{ id: 'p1', a: [10 * step, 0], b: [25 * step, 0], cm: 20 }],
+  });
+  assert.equal(found.length, 1);
+  assert.equal(found[0].kind, 'partition_over_room_wall');
+});
+
+test('перегородка поперёк комнаты законна и не ловится (#296)', () => {
+  // Единственный смысл существования перегородки: разделить комнату внутри.
+  // Инвариант, кричащий на это, отключат в первую неделю.
+  const step = GRID_STEP_N;
+  const found = hidden({
+    rooms: [roomAt(0, 0, 40 * step, 30 * step)],
+    partitions: [{ id: 'p1', a: [20 * step, 0], b: [20 * step, 30 * step], cm: 20 }],
+  });
+  assert.deepEqual(found, []);
+});
+
+test('касание углом перекрытием не считается (#296)', () => {
+  const step = GRID_STEP_N;
+  const found = hidden({
+    rooms: [roomAt(0, 0, 40 * step, 30 * step)],
+    // Продолжение нижнего ребра за угол: общего с ребром — ровно точка.
+    partitions: [{ id: 'p1', a: [40 * step, 0], b: [60 * step, 0], cm: 20 }],
+  });
+  assert.deepEqual(found, []);
+});
+
+test('черновик из двух точек не может стать комнатой (#296)', () => {
+  const step = GRID_STEP_N;
+  const found = hidden({
+    rooms: [roomAt(0, 0, 40 * step, 30 * step)],
+    room_drafts: [{
+      id: 'd1', points: [[50 * step, 0], [70 * step, 0]], segments: [{ cm: 30 }],
+    }],
+  });
+  assert.equal(found.length, 1);
+  assert.equal(found[0].kind, 'unusable_draft');
+});
+
+test('черновик из трёх точек в стороне от стен законен (#296)', () => {
+  const step = GRID_STEP_N;
+  const found = hidden({
+    rooms: [roomAt(0, 0, 40 * step, 30 * step)],
+    room_drafts: [{
+      id: 'd1',
+      points: [[50 * step, 0], [70 * step, 0], [70 * step, 20 * step]],
+      segments: [{ cm: 30 }, { cm: 30 }],
+    }],
+  });
+  assert.deepEqual(found, []);
+});
+
+test('незакрытый контур на стене комнаты — нарушение (#296)', () => {
+  const step = GRID_STEP_N;
+  const found = hidden({
+    rooms: [roomAt(0, 0, 40 * step, 30 * step)],
+    room_drafts: [{
+      id: 'd1',
+      points: [[5 * step, 0], [35 * step, 0], [35 * step, 20 * step]],
+      segments: [{ cm: 30 }, { cm: 30 }],
+    }],
+  });
+  assert.equal(found.length, 1);
+  assert.equal(found[0].kind, 'draft_over_room_wall');
+});
+
+test('реальный план: перегородка поверх наружной стены закреплена числом (#296)', () => {
+  // Долг фикстуры, а не «допустимо»: `partition-mt2on9ou-0` лежит на наружной
+  // стене трёх комнат и выключает ресайз Мастера с/у и Гардеробной. Число здесь
+  // обязано стать нулём вместе с закрытием #296 — иначе починка пройдёт молча.
+  const debt = { 'real-plan-second-floor.json': 1, 'real-plan-first-floor.json': 0 };
+  for (const [file, expected] of Object.entries(debt)) {
+    const { config } = readModel(
+      readFileSync(resolve(repoRoot, 'test/fixtures', file), 'utf8'));
+    assert.equal(checkHiddenObstacles(config).length, expected, file);
+  }
 });
