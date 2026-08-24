@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.67.0-rc.2 — 2026-08-25
+
 - Hidden independent wall sections and saved wall chains now keep their axes
   and original endpoints visible above all masonry in every Plan tool. “Optimize
   plans” can absorb every exactly covered section into one or more consecutive
