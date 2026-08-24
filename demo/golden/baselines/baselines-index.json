@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "matrixVersion": 44,
-  "acceptedAt": "2026-08-24T12:13:09.090Z",
-  "sourceFingerprint": "3421993bc267f4708472dfdee1f48d6186a1144b6c02ab3be39c15f46af87333",
+  "acceptedAt": "2026-08-24T12:31:07.645Z",
+  "sourceFingerprint": "8452e513ecc4906ec0994bd64c4195a805dd8b1802b359fd220428667206c469",
   "chromium": "151.0.7922.34",
   "scenarios": {
     "coincident-partition-before-dark": "c0e38cfff096725cf1eb5dc91e005b2af983172d04e6573075db635275cabca3",
@@ -32,8 +32,8 @@
     "day-cycle-dusk-dark": "a856187898fc425a48dd165f5ec01f0f50b78043b382f708dbffd810bfdbf043",
     "day-cycle-night-dark": "b863260250d739fd369140356e195a64d3ac58478ab2c1e43415abd8f96a7fbd",
     "geometry-plan-editor-dark": "a1ca4219a1e7b2c4749b72edad87cd0bdee793390cd6efe972aca1d41d0d2478",
-    "safe-resize-handles-clamp-light": "a6028dcb9ffddc31da883dd6a3a14384f5143019bf1a298015b5975bc7d715bd",
-    "safe-resize-handles-clamp-dark": "a90a91342206d0fbc22bfab5e7d453d764cbc0e5310fad74f94ddd252873bd5d",
+    "safe-resize-handles-clamp-light": "298670cc94642968e58c45560597e8277c405cf61c2a8b5e08f1544612a6ed4b",
+    "safe-resize-handles-clamp-dark": "64f32f2038238f423ba3cc1ed618bf9d32704c8161042751d447c3f884e37e4a",
     "space-tab-drop-before-light": "86d8159ac6191980f2ac91b137c3947219da45fef81bc2b358442958eda9d0f8",
     "space-tab-drop-after-dark": "2e2bde063f9fa34284beb27457f1542e8b6085033be67fd0dc1923b81c6af1bf",
     "plan-snap-endpoint-light": "78225caf0522f69c294b299212a717260c31e9620bdefdc970dc84730ae06e17",
