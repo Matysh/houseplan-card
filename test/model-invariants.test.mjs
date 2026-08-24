@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 import {
   checkReferences, checkWallKeys, checkWallRecordsPreserved, keyMidpoint,
-  readModel, wallKey,
+  latticeProfile, readModel, wallKey,
 } from '../scripts/model-invariants.mjs';
 import { wallKey as productWallKey } from '../test-build/wall-thickness.js';
 import { GRID_STEP_N } from '../test-build/space-geometry.js';
@@ -297,4 +297,75 @@ test('near-grid key normalization removes last-bit grading (#258, #259)', () => 
   const notes = [];
   assert.deepEqual(checkWallKeys({ spaces: [{ id: 'sp2', cell_cm: 1, walls }] }, { notes }), []);
   assert.deepEqual(notes, []);
+});
+
+// ------------------- стадия 0 ADR #282: профиль решётки ----------------------
+// Мера, а не приговор. Нарушений здесь не бывает по построению: авторская
+// координата вне сетки законна, а «шум» — это отдельное население, из которого
+// растут #258, #279 и несходящийся Optimize.
+
+const oneRoom = (poly) => ({
+  config: { spaces: [{ id: 'sp1', cell_cm: 5, rooms: [{ id: 'r1', poly }] }] },
+  layout: {},
+});
+
+test('профиль различает узел, шум и законную геометрию вне сетки (#282)', () => {
+  // 83/240 выбрано не случайно: это та самая вершина с дачи владельца. В
+  // двоичном виде она 0.34583333333333333, в хранилище лежит как 0.345833333 —
+  // и эти 8e-8 шага перебросили ключ стены в соседний бакет в #258. Узел вида
+  // 24/240 = 0.1 для примера не годится: он выживает округление до девяти
+  // знаков без изменений, и «шума» на нём не получить.
+  const node = 83 / 240;
+  const noise = Number((83 / 240).toFixed(9));
+  assert.notEqual(node, noise, 'выбранный узел обязан терять точность при записи');
+  const offGrid = 0.06;                  // 14.4 шага от узла — авторская координата
+  const profile = latticeProfile(oneRoom([[node, node], [noise, noise], [offGrid, offGrid]]));
+  assert.equal(profile.total, 6);
+  assert.equal(profile.exact, 2, 'узел обязан считаться точным');
+  assert.equal(profile.noise, 2, '9 знаков от того же узла — это шум, а не узел');
+  assert.equal(profile.offGrid, 2, '0.06 — законная геометрия, а не дефект');
+  assert.equal(profile.worstNoise.kind, 'room');
+  assert.ok(profile.worstNoise.steps > 0 && profile.worstNoise.steps < profile.noiseSteps);
+});
+
+test('профиль видит все виды объектов, а не только комнаты (#282)', () => {
+  const off = 0.0605;
+  const profile = latticeProfile({
+    config: { spaces: [{
+      id: 'sp1',
+      rooms: [{ id: 'r1', poly: [[off, off]] }],
+      partitions: [{ id: 'p1', a: [off, off], b: [off, off] }],
+      walls: [{ key: 'k', cm: 20, a: [off, off], b: [off, off] }],
+      open_spans: [{ id: 's1', a: [off, off], b: [off, off] }],
+      wall_columns: [{ id: 'c1', center: [off, off] }],
+    }] },
+    layout: { m1: { s: 'sp1', x: off, y: off } },
+  });
+  assert.deepEqual(Object.keys(profile.byKind).sort(),
+    ['column', 'layout', 'open_span', 'partition', 'room', 'wall']);
+  assert.equal(profile.total, 18);
+});
+
+test('модели проекта не несут шума решётки (#282)', async () => {
+  // Свойство, которое стоит знать про себя: тестовые данные проекта чисты —
+  // весь их офф-грид авторский. Значит воспроизвести на них #258/#279 нельзя
+  // по построению, а на реальном плане владельца шум составляет две трети
+  // координат. Именно поэтому этот класс дефектов находит владелец, а не гейт.
+  const models = [];
+  for (const file of fixtureModules()) {
+    const loaded = await import(`../demo/fixtures/${file}`);
+    for (const [name, value] of Object.entries(loaded)) {
+      if (typeof value !== 'function' || !/^make.*Fixture$/.test(name)) continue;
+      const fixture = value();
+      if (fixture?.config) models.push([`${file}:${name}`, fixture]);
+    }
+  }
+  models.push(['demo/srv/demo.html', demoStandModel()]);
+  assert.ok(models.length >= 3);
+  for (const [label, fixture] of models) {
+    const profile = latticeProfile({ config: fixture.config, layout: fixture.layout || {} });
+    assert.equal(profile.noise, 0,
+      `${label}: в тестовых данных появился шум решётки`
+      + `${profile.worstNoise ? ` — ${profile.worstNoise.owner}` : ''}`);
+  }
 });

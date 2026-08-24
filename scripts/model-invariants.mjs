@@ -279,6 +279,119 @@ export function checkWallKeys(config, { notes = [] } = {}) {
   return violations;
 }
 
+/**
+ * Стадия 0 из ADR #282: профиль отклонений от решётки.
+ *
+ * Весь класс #258/#279/#248 держится на одном свойстве представления: узел
+ * решётки это `k/240`, число без точного двоичного представления, а хранимая
+ * координата это float. Сколько реальной геометрии лежит вне решётки и
+ * насколько далеко — не знает никто, а Optimize берётся «убрать шум
+ * координат», не имея проверяемого определения шума.
+ *
+ * Здесь ничего не судится и не чинится: считается профиль. Три населения
+ * разделены намеренно, потому что это разные проблемы, а не разные степени
+ * одной:
+ *
+ *   exact — точно на узле, делать нечего;
+ *   noise — рядом с узлом, но не точно. ЭТО класс дефектов: ключ стены
+ *           попадает не в тот бакет, Optimize не сходится, «почти
+ *           ортогональная» стена рисует клин;
+ *   offGrid — далеко от узла. Законная по нынешней модели геометрия: авторские
+ *           координаты фикстур (0.06 — это 14.4 шага от узла) ничем не
+ *           запрещены. Объявить их нарушением значит получить проверку,
+ *           которую отключат в первую неделю.
+ *
+ * Граница между noise и offGrid — доля шага, а не абсолют: `NOISE_STEPS`.
+ * Взята на четыре порядка ниже шага, то есть заведомо ниже любого осмысленного
+ * пользовательского ввода и заведомо выше двоичного мусора одиночной операции.
+ */
+const NOISE_STEPS = 1e-4;
+
+const latticeDeviation = (value) => {
+  const steps = value * GRID_N;
+  return Math.abs(steps - Math.round(steps));
+};
+
+/** Все координаты модели с адресом, по которому их можно найти глазами. */
+function* modelCoordinates(config, layout = {}) {
+  for (const space of Array.isArray(config?.spaces) ? config.spaces : []) {
+    const spaceId = String(space?.id ?? '?');
+    for (const room of space?.rooms || []) {
+      const poly = Array.isArray(room?.poly) ? room.poly : [];
+      for (const [index, p] of poly.entries()) {
+        const point = pointOf(p);
+        if (point) yield { kind: 'room', owner: `${spaceId}:${room?.id ?? '?'}#${index}`, point };
+      }
+      for (const field of ['x', 'y', 'w', 'h']) {
+        if (isFiniteNumber(room?.[field])) {
+          yield { kind: 'room', owner: `${spaceId}:${room?.id ?? '?'}.${field}`, point: [room[field], room[field]] };
+        }
+      }
+    }
+    for (const part of space?.partitions || []) {
+      for (const end of ['a', 'b']) {
+        const point = pointOf(part?.[end]);
+        if (point) yield { kind: 'partition', owner: `${spaceId}:${part?.id ?? '?'}.${end}`, point };
+      }
+    }
+    for (const wall of space?.walls || []) {
+      for (const end of ['a', 'b']) {
+        const point = pointOf(wall?.[end]);
+        if (point) yield { kind: 'wall', owner: `${spaceId}:${wall?.key ?? '?'}.${end}`, point };
+      }
+    }
+    for (const span of space?.open_spans || []) {
+      for (const end of ['a', 'b']) {
+        const point = pointOf(span?.[end]);
+        if (point) yield { kind: 'open_span', owner: `${spaceId}:${span?.id ?? '?'}.${end}`, point };
+      }
+    }
+    for (const column of space?.wall_columns || []) {
+      const point = pointOf(column?.center);
+      if (point) yield { kind: 'column', owner: `${spaceId}:${column?.id ?? '?'}`, point };
+    }
+  }
+  for (const [key, position] of Object.entries(layout || {})) {
+    const point = pointOf([position?.x, position?.y]);
+    if (point) yield { kind: 'layout', owner: key, point };
+  }
+}
+
+const pointOf = (value) => (Array.isArray(value) && isFiniteNumber(value[0])
+  && isFiniteNumber(value[1]) ? [value[0], value[1]] : null);
+
+/**
+ * Профиль модели: сколько координат точно на узле, сколько в шуме, сколько
+ * законно вне сетки. Ни одного нарушения не возвращается — по построению.
+ */
+export function latticeProfile({ config, layout = {} } = {}) {
+  const buckets = { exact: 0, noise: 0, offGrid: 0 };
+  const byKind = new Map();
+  let worstNoise = null;
+  let total = 0;
+  for (const { kind, owner, point } of modelCoordinates(config, layout)) {
+    for (const [axis, value] of [['x', point[0]], ['y', point[1]]]) {
+      const deviation = latticeDeviation(value);
+      const bucket = deviation === 0 ? 'exact' : deviation < NOISE_STEPS ? 'noise' : 'offGrid';
+      total++;
+      buckets[bucket]++;
+      const seen = byKind.get(kind) || { exact: 0, noise: 0, offGrid: 0 };
+      seen[bucket]++;
+      byKind.set(kind, seen);
+      if (bucket === 'noise' && (!worstNoise || deviation > worstNoise.steps)) {
+        worstNoise = { kind, owner, axis, value, steps: deviation };
+      }
+    }
+  }
+  return {
+    total,
+    ...buckets,
+    noiseSteps: NOISE_STEPS,
+    worstNoise,
+    byKind: Object.fromEntries([...byKind].map(([kind, counts]) => [kind, counts])),
+  };
+}
+
 /** Разобрать любой из трёх форматов, в которых приходит конфигурация. */
 export function readModel(text) {
   const parsed = JSON.parse(text);
@@ -312,6 +425,33 @@ function noteSummary(notes) {
     stale_wall_key: 'записей толщины используют exact endpoints вместо своего ключа',
   };
   return [...counts].map(([kind, n]) => `${n} — ${titles[kind] || kind}`).join('; ') + '.';
+}
+
+/** Профиль решётки на языке решения, а не на языке счётчиков (ADR #282). */
+function latticeReport(profile) {
+  const share = (n) => (profile.total ? `${(n / profile.total * 100).toFixed(2)}%` : '—');
+  const lines = [
+    `Координат в модели: ${profile.total}.`,
+    '',
+    `  точно на узле       ${profile.exact} (${share(profile.exact)})`,
+    `  шум у узла          ${profile.noise} (${share(profile.noise)})`
+      + `  — ближе ${profile.noiseSteps} шага, но не точно`,
+    `  законно вне сетки   ${profile.offGrid} (${share(profile.offGrid)})`,
+    '',
+  ];
+  if (profile.worstNoise) {
+    const w = profile.worstNoise;
+    lines.push(`Худший шум: ${w.owner} по ${w.axis} = ${w.value}`
+      + ` — ${w.steps.toExponential(2)} шага от узла.`, '');
+  }
+  lines.push('По видам объектов (точно / шум / вне сетки):');
+  for (const [kind, counts] of Object.entries(profile.byKind)) {
+    lines.push(`  ${kind.padEnd(11)} ${counts.exact} / ${counts.noise} / ${counts.offGrid}`);
+  }
+  lines.push('', 'Шум — это класс дефектов #258/#279/#248: ключ стены попадает не в тот',
+    'бакет, Optimize не сходится. «Вне сетки» — законная геометрия нынешней модели.',
+    'Стадия 0 ADR #282 измеряет, а не судит: нарушений здесь не бывает.');
+  return lines.join('\n');
 }
 
 function report(violations, notes = []) {
@@ -358,12 +498,19 @@ function main(argv) {
   };
   const configPath = arg('--config');
   if (!configPath) {
-    console.error('использование: model-invariants.mjs --config <файл> [--layout <файл>] [--json]');
+    console.error('использование: model-invariants.mjs --config <файл> [--layout <файл>]'
+      + ' [--lattice] [--json]');
     return 2;
   }
   const model = readModel(readFileSync(configPath, 'utf8'));
   if (arg('--layout')) model.layout = readModel(readFileSync(arg('--layout'), 'utf8')).layout;
   const notes = [];
+  if (argv.includes('--lattice')) {
+    const profile = latticeProfile(model);
+    if (argv.includes('--json')) console.log(JSON.stringify({ lattice: profile }, null, 2));
+    else console.log(latticeReport(profile));
+    return 0;
+  }
   const violations = [
     ...checkReferences(model, { notes }),
     ...checkWallKeys(model.config, { notes }),
