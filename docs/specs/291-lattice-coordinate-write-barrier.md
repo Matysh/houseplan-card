@@ -40,9 +40,10 @@ bucket (#258), а Optimize после round-trip снова видит рабо�
    перечисляется в отчёте.
 3. После migration и после произвольной editing session noise population
    должна быть нулевой.
-
-Открыт Q1 в issue: насколько подробно показывать изменения по пространствам в
-видимом отчёте Optimize. До решения ТЗ остаётся `S3-spec` + `blocked`.
+4. Видимый отчёт Optimize остаётся компактным: общий счётчик исправленных
+   координат и максимальный физический сдвиг, затем строки только для
+   пространств, где действительно были изменения, с их счётчиками.
+   Неизменённые пространства не перечисляются.
 
 ## 3. Пользовательский контекст и результат
 
@@ -60,7 +61,8 @@ wall key или последующий дефект стыка, но не мож
 запись убирает только измеренный невидимый хвост без перемещения authored
 off-grid geometry. Перед явным Optimize пользователь видит отдельное от
 физических перемещений описание координатной очистки, решает Confirm/Cancel и
-получает один Undo. Точная форма multi-space breakdown зависит от Q1.
+получает один Undo. В доме с несколькими этажами отчёт показывает общий итог и
+только затронутые пространства, не превращая диалог в полный технический лог.
 
 ## 4. Термины и scalar contract
 
@@ -162,8 +164,12 @@ candidate; это невидимый sub-pixel canonicalization, уже разр
 
 - total `latticeCoordinatesCanonicalized`;
 - `latticeCoordinatesFar` — untouched off-grid coordinate components;
-- форма разбивки по изменённым пространствам и layout entries фиксируется
-  решением Q1; до ответа это не acceptance contract;
+- maximum shift для canonicalized noise в physical units;
+- ниже — только изменённые пространства с их
+  `latticeCoordinatesCanonicalized` и `latticeCoordinatesFar`; пространства с
+  нулём изменений не показываются;
+- layout entries входят в общий итог и, если UI имеет отдельного именованного
+  owner для layout, показываются по тому же правилу «только изменённые»;
 - maximum shift для canonicalized noise в physical units не смешивается с
   видимым `moved/maxShiftCm` обычного grid alignment.
 
@@ -258,10 +264,12 @@ tests работают только с clones. Отдельно доказано
 
 ### AC7. Optimize report и transaction
 
-Preview total согласован с выбранной владельцем формой multi-space breakdown;
-far не считается moved, maximum noise shift не занижается. Cancel — zero
-writes; stale revision — no partial pair; Confirm — один config/layout
-transaction и один Undo; reload/cold read deep-equal preview; второй run no-op.
+Preview показывает общий счётчик canonicalized coordinates, maximum physical
+noise shift и строки только для пространств с ненулевыми изменениями;
+неизменённые пространства отсутствуют. Сумма строк согласована с total; far не
+считается moved, maximum noise shift не занижается. Cancel — zero writes; stale
+revision — no partial pair; Confirm — один config/layout transaction и один
+Undo; reload/cold read deep-equal preview; второй run no-op.
 
 ### AC8. Compatibility paths
 
@@ -390,5 +398,7 @@ Optimize dialog меняется визуально, targeted golden/docs screen
 4. Diagonal wall-bound coordinates, не попадающие в noise population, остаются
    off-grid; их независимый X/Y snap запрещён.
 5. Touch editor: best effort; View/kiosk fully supported.
-6. Форма per-space breakdown не является техническим предположением и будет
-   зафиксирована только после ответа владельца на Q1.
+6. Layout без самостоятельного пользовательского имени агрегируется только в
+   общий итог; если UI уже показывает именованного layout-owner, для него
+   действует то же правило отчёта, что для пространства: строка появляется
+   только при ненулевых изменениях.
