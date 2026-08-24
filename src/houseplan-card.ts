@@ -2727,7 +2727,7 @@ class HouseplanCard extends LitElement {
       this._undoPoint();
       return;
     }
-    if (!this._applyGeometryState(command.before)) {
+    if (!this._applyGeometryState(command.before, true)) {
       this._geometryHistory.clear();
       return;
     }
@@ -7289,7 +7289,9 @@ class HouseplanCard extends LitElement {
     if (viewportGestureEnded && this._pointers.size === 0) this.requestUpdate();
   }
 
-  private _applyGeometryState(state: SpaceGeometryState): boolean {
+  private _applyGeometryState(
+    state: SpaceGeometryState, allowHistoryBoundaryRepair = false,
+  ): boolean {
     if (!this._canCommitSpace(state.spaceId)) return false;
     const before = this._geometrySnapshot(state.spaceId);
     if (!before || !this._restoreGeometryStateLocal(state)) return false;
@@ -7297,8 +7299,18 @@ class HouseplanCard extends LitElement {
       !== spacePhysicalGeometryFingerprint(state);
     if (physicalChanged) {
       let safe = false;
-      try { safe = !!this._serverCfg
-        && this._checkSpacePhysicalGeometry(this._serverCfg, state.spaceId).ok; } catch { safe = false; }
+      try {
+        const check = this._serverCfg
+          ? this._checkSpacePhysicalGeometry(this._serverCfg, state.spaceId)
+          : null;
+        // A history snapshot can predate the write-time wall degradation that
+        // canonicalized its command. Restore that one repairable baseline so
+        // Undo remains byte-exact immediately; _writeConfig still degrades and
+        // strictly validates the outbound candidate before it can leave the
+        // card. Every other preflight failure stays fail-closed.
+        safe = !!check?.ok || !!(allowHistoryBoundaryRepair
+          && check?.reason === 'wall-degraded-extra');
+      } catch { safe = false; }
       if (!safe) {
         this._restoreGeometryStateLocal(before);
         this._showToast(this._t('toast.geometry_unsafe'));
@@ -7342,7 +7354,7 @@ class HouseplanCard extends LitElement {
     if (this._rszDrag) { this._rszCancelDrag(); return; }
     const command = this._geometryHistory.undo();
     if (!command) return;
-    if (!this._applyGeometryState(command.before)) {
+    if (!this._applyGeometryState(command.before, true)) {
       this._geometryHistory.clear();
       return;
     }
@@ -7365,7 +7377,7 @@ class HouseplanCard extends LitElement {
     if (this._rszDrag) { this._rszCancelDrag(); return; }
     const command = this._geometryHistory.redo();
     if (!command) return;
-    if (!this._applyGeometryState(command.after)) {
+    if (!this._applyGeometryState(command.after, true)) {
       this._geometryHistory.clear();
       return;
     }

@@ -137,6 +137,15 @@ if (target) {
     window.__card._geometryHistory.size), 1);
   await page.waitForTimeout(650);
   check('resize_pointer.one_atomic_write', await page.evaluate(() => window.__resizeWrites.length), writesBefore + 1);
+  check('resize_pointer.undo_ready_after_write_ack', await page.evaluate(() => {
+    const card = window.__card;
+    return {
+      history: card._geometryHistory.size,
+      mode: card._mode,
+      tool: card._tool,
+      canCommit: card._canCommitSpace('real-second-floor'),
+    };
+  }), { history: 1, mode: 'plan', tool: 'resize', canCommit: true });
   check('resize_pointer.wall_metadata_preserved', await page.evaluate(() => {
     const walls = window.__card._serverCfg.spaces[0].walls || [];
     return { count: walls.length, cms: walls.map((wall) => wall.cm).sort((a, b) => a - b) };
@@ -144,7 +153,15 @@ if (target) {
 
   await page.keyboard.press('Control+z');
   await settle();
+  check('resize_pointer.undo_keyboard_consumed_history', await page.evaluate(() => ({
+    history: window.__card._geometryHistory.size,
+    canRedo: window.__card._geometryHistory.canRedo,
+  })), { history: 0, canRedo: true });
   check('resize_pointer.undo_byte_exact', await persistedGeometry(), before);
+  await page.waitForTimeout(650);
+  check('resize_pointer.undo_one_atomic_write', await page.evaluate(() =>
+    window.__resizeWrites.length), writesBefore + 2);
+  const stableAfterUndo = await persistedGeometry();
 
   // The second gesture leaves the circle by much more than its hit radius.
   // Pointer capture must keep the real browser stream alive; Esc then cancels
@@ -158,7 +175,7 @@ if (target) {
   await page.keyboard.press('Escape');
   await page.mouse.up();
   await settle();
-  check('resize_pointer.escape_restores_config', await persistedGeometry(), before);
+  check('resize_pointer.escape_restores_config', await persistedGeometry(), stableAfterUndo);
   await page.waitForTimeout(650);
   check('resize_pointer.escape_zero_extra_write', await page.evaluate(() => window.__resizeWrites.length), writesBefore + 2);
 
@@ -193,7 +210,7 @@ if (target) {
   await page.mouse.up();
   await settle();
   check('resize_pointer.capture_loss_restores_dom', await domHasSharedX(400), true);
-  check('resize_pointer.capture_loss_restores_config', await persistedGeometry(), before);
+  check('resize_pointer.capture_loss_restores_config', await persistedGeometry(), stableAfterUndo);
   await page.waitForTimeout(650);
   check('resize_pointer.capture_loss_zero_extra_write', await page.evaluate(() => window.__resizeWrites.length), writesBefore + 2);
 }

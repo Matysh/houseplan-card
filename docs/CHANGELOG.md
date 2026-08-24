@@ -7,7 +7,9 @@
   from the press point, preserves one continuous side-wall thickness record,
   keeps working outside the handle through pointer capture, and stops at the
   last renderable preview with an explicit message instead of silently doing
-  nothing ([#293](https://github.com/Matysh/houseplan-card/issues/293)).
+  nothing. Undo remains available after the write acknowledgement, including
+  for an older plan that the storage boundary repairs while saving
+  ([#293](https://github.com/Matysh/houseplan-card/issues/293)).
 - Every saved plan coordinate now converges to the exact shared `1/240` grid
   value when it differs only by an invisible floating-point tail. Authored
   off-grid/diagonal geometry is preserved. “Optimize plans” reports the number

@@ -299,6 +299,17 @@ export const MUTANTS = [
     }],
   },
   {
+    id: 'resize-history-boundary-repair-removed',
+    guard: 'node demo/smoke_resize_pointer_real_plan.mjs',
+    because: 'write-time wall degradation must not erase the one Resize Undo command; '
+      + 'the strict outbound barrier remains authoritative after the local restore (#293)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: "          && check?.reason === 'wall-degraded-extra');",
+      replace: '          && false);',
+    }],
+  },
+  {
     id: 'resize-pointer-delta-zeroed',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="#293 pointer displacement" test/resize.test.mjs',
