@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.67.0-beta.9 — 2026-08-24
+
 - “Optimize plans” now safely removes exact redundant partitions over outer
   room walls, including lossless reattachment of their hosted windows. Resize
   then actually moves an eligible shared wall; a handle with no valid grid step
