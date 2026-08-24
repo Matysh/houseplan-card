@@ -2,7 +2,6 @@
 // reasons, exact shared preview/commit, one Undo, corner clamp and zero-write
 // cancellation. The smoke loads the tracked production bundle.
 import { launch, check, finish } from './serve.mjs';
-import { checkMixedRoleRecords } from '../scripts/model-invariants.mjs';
 
 const { page, browser } = await launch();
 
@@ -205,8 +204,16 @@ await settle();
 const rangePoly = await roomPoly('range-main');
 check('safe_resize.owner_boundary_clamped', Math.abs(rangePoly[2][1] * 1000 - 125) < 1, true);
 check('safe_resize.owner_boundary_topology', rangePoly.length, 4);
-const rangeConfig = await page.evaluate(() => JSON.parse(JSON.stringify(window.__card._serverCfg)));
-check('safe_resize.owner_boundary_no_mixed_role', checkMixedRoleRecords(rangeConfig).length, 0);
+check('safe_resize.owner_boundary_no_mixed_role', await page.evaluate(() => {
+  const card = window.__card;
+  const walls = card._serverCfg.spaces.find((space) => space.id === card._space).walls || [];
+  const boundary = 0.125;
+  return walls.every((wall) => {
+    const ys = [wall?.a?.[1], wall?.b?.[1]].filter(Number.isFinite);
+    if (ys.length !== 2) return true;
+    return !(Math.min(...ys) < boundary - 1e-9 && Math.max(...ys) > boundary + 1e-9);
+  });
+}), true);
 check('safe_resize.owner_boundary_cm_preserved', await page.evaluate(() => {
   const walls = window.__card._serverCfg.spaces.find((space) => space.id === window.__card._space).walls || [];
   return JSON.stringify(walls.map((wall) => wall.cm).sort((a, b) => a - b));

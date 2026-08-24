@@ -117,7 +117,7 @@ Object.assign(out, await page.evaluate(async () => {
 
   // a) resize handle: the wall moves, the view does not
   c._setMode('plan'); c._tool = 'resize'; c._applyView(1); await c.updateComplete;
-  const h = sr.querySelector('.rszhandle');
+  const h = sr.querySelector('.rszhandle[aria-disabled="false"]');
   o.resizeHandlePresent = !!h;
   if (h) {
     const v0 = { ...c._viewOr(c._baseVb()) };
