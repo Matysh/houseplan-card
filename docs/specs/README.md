@@ -76,6 +76,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#279](https://github.com/Matysh/houseplan-card/issues/279) Сплошной почти ортогональный T-стык | [279-near-orthogonal-junction.md](279-near-orthogonal-junction.md) |
 | [#280](https://github.com/Matysh/houseplan-card/issues/280) Backend принимает доказанный Optimize rehost | [280-optimize-rehost-validation.md](280-optimize-rehost-validation.md) |
 | [#281](https://github.com/Matysh/houseplan-card/issues/281) Честный Resize после outer-partition reconciliation | [281-resize-zero-range.md](281-resize-zero-range.md) |
+| [#293](https://github.com/Matysh/houseplan-card/issues/293) Активная рукоятка Resize выполняет pointer-жест | [293-resize-pointer-noop.md](293-resize-pointer-noop.md) |
 
 ## P2
 

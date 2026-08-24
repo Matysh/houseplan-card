@@ -185,7 +185,26 @@ bounded `clampSafeResize` и snapshot cache; нельзя сериализова
 пересчитывать весь model сверх текущего preview path более одного раза на
 candidate. Safe Resize performance budget из `docs/RESIZE.md` сохраняется.
 
-## 9. Ожидаемые файлы
+## 9. Риски и меры
+
+- Точная причина интеграционного no-op устанавливается только на этапе
+  реализации: screen-to-SVG conversion и молчаливый reject live-preview дают
+  одинаковый внешний симптом. AC1, AC6 и AC8 требуют реальный pointer smoke и
+  mutation для обоих путей, поэтому частичное исправление не пройдёт.
+- Pointer capture и обработка отмены могут задеть touch safety floor. AC2 и AC5
+  отдельно закрепляют выход за handle, `pointercancel`, lost capture и чужой
+  `pointerId`, а AC9 сохраняет существующие сценарии.
+- Исправление live-preview может случайно ослабить safe Resize. AC7 оставляет
+  topology, metadata и physical preflight обязательными и ограничивает
+  изменение двумя комнатами.
+
+## 10. Откат
+
+Откат — полный revert implementation-коммита #293 вместе с тестами и
+документацией. Schema, model version и сохранённые данные не меняются, отдельная
+миграция или восстановление конфигурации не требуются.
+
+## 11. Ожидаемые файлы
 
 - `src/houseplan-card.ts`, при необходимости `src/resize.ts`;
 - `src/i18n/en.json`, `src/i18n/ru.json`, если добавляется runtime reason;
@@ -194,12 +213,12 @@ candidate. Safe Resize performance budget из `docs/RESIZE.md` сохраняе
 - `docs/RESIZE.md`, `docs/TESTING.md`, при необходимости `docs/ARCHITECTURE.md`;
 - `docs/CHANGELOG.md`, `docs/CHANGELOG.ru.md`.
 
-## 10. Release
+## 12. Release
 
 Implementation-коммит имеет `Issue: #293`, `User-Visible: yes` и обновляет оба
 changelog. Issue не закрывается вручную: она закрывается выпуском beta.
 
-## 11. Принятые предположения
+## 13. Принятые предположения
 
 1. Скриншот владельца и реальная fixture имеют приоритет над ограничением
    первоначального программно собранного стенда; новый smoke обязан устранить
