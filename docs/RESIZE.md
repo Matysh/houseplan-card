@@ -134,6 +134,8 @@ building the preview frame itself.
   preview/commit/Undo, disabled accessibility, real fixture topology,
   production-preflight failure and cancellation;
 - `demo/benchmark_safe_resize.mjs`: same-run pointer and cached pointerup budgets;
+- `demo/benchmark_safe_resize_render.mjs`: warm 20-room/80-handle layer p95
+  and exactly one geometry snapshot per rendered frame;
 - mutation gate: eligibility, third-room, topology, jamb and commit-preflight
   bypass mutants.
 

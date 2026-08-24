@@ -49,3 +49,9 @@ test('#277 a lossy persistence rekey stops at the last complete preview', () => 
   assert.match(card, /this\._rszPreview = previousPreview/);
   assert.match(card, /g\.d = previousD/);
 });
+
+test('#277 Resize render fingerprints geometry once for the whole handle layer', () => {
+  assert.match(card, /const renderSnapshot = this\._rszDrag\?\.snap \|\| this\._rszSnapshot\(\)/);
+  assert.match(card, /this\._rszResolution\(r\.id, i, renderSnapshot\)/);
+  assert.doesNotMatch(card, /const resolution = this\._rszResolution\(r\.id, i\);/);
+});

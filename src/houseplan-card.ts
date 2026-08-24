@@ -8329,8 +8329,10 @@ class HouseplanCard extends LitElement {
     };
   }
 
-  private _rszResolution(roomId: string, edge: number): SafeResizeResolution {
-    const snap = this._rszDrag?.snap || this._rszSnapshot();
+  private _rszResolution(
+    roomId: string, edge: number, renderSnapshot?: string,
+  ): SafeResizeResolution {
+    const snap = this._rszDrag?.snap || renderSnapshot || this._rszSnapshot();
     const key = `${this._space}|${this._cellCm}|${this._gridPitch}|${snap}`;
     if (!this._rszEligibilityCache || this._rszEligibilityCache.key !== key) {
       this._rszEligibilityCache = { key, values: new Map() };
@@ -8699,13 +8701,18 @@ class HouseplanCard extends LitElement {
       ` M 0 ${f(0.22 * s)} V ${f(s)} M ${f(-0.32 * s)} ${f(0.6 * s)} L 0 ${f(s)} L ${f(0.32 * s)} ${f(0.6 * s)}`;
     const parts: TemplateResult[] = [];
     const rooms = this._rszRooms();
+    // A geometry snapshot is a deep clone/serialization. It is the cache key
+    // for every handle in this frame, so compute it once per layer render —
+    // never once per room edge. During a drag the immutable gesture snapshot
+    // remains authoritative inside _rszResolution.
+    const renderSnapshot = this._rszDrag?.snap || this._rszSnapshot();
     for (const r of rooms) {
       for (let i = 0; i < r.poly.length; i++) {
         const a = r.poly[i], b = r.poly[(i + 1) % r.poly.length];
         if (Math.hypot(b[0] - a[0], b[1] - a[1]) < this._gridPitch) continue;
         const mx = f((a[0] + b[0]) / 2), my = f((a[1] + b[1]) / 2);
         const ang = f(Math.atan2(b[1] - a[1], b[0] - a[0]) * 180 / Math.PI);
-        const resolution = this._rszResolution(r.id, i);
+        const resolution = this._rszResolution(r.id, i, renderSnapshot);
         const disabled = !resolution.enabled;
         const reason = disabled ? this._rszReasonText(resolution.reason) : this._t('title.markup_resize');
         parts.push(svg`<circle class="rszhandle ${disabled ? 'disabled' : ''}"

@@ -23,6 +23,7 @@
     "benchmark:optimize-geometry-preflight": "node demo/benchmark_optimize_geometry_preflight.mjs",
     "benchmark:coincident-partitions": "node demo/benchmark_coincident_partitions.mjs",
     "benchmark:safe-resize": "node demo/benchmark_safe_resize.mjs",
+    "benchmark:safe-resize-render": "node demo/benchmark_safe_resize_render.mjs",
     "golden:capture": "node demo/golden/run.mjs --mode=capture",
     "golden:verify": "node demo/golden/run.mjs --mode=verify",
     "continuity:screencast": "node demo/screencast_visual_continuity.mjs",

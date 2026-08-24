@@ -2001,6 +2001,9 @@ require hands on real hardware — they remain for the human pass.
 - [ ] `npm run benchmark:safe-resize`: pointer clamp p95 ≤16 ms, ≤20% over the
       same-run historical baseline (with bounded noise); cached pointerup
       preflight p95 ≤75 ms; active-plan delta cache ≤4096 entries
+- [ ] `npm run benchmark:safe-resize-render`: on the 20-room/80-handle floor,
+      a warm Resize layer takes one geometry snapshot per frame and stays at
+      p95 ≤25 ms
 - [ ] Five #277 mutants are caught: axis eligibility, third-room cascade,
       topology signature, physical jamb and commit preflight
 - [ ] Device markers do not move; the room settings gear re-centres itself
