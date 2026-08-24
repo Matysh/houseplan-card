@@ -180,12 +180,14 @@ HTML-плашка якорится на midpoint moving edge. CSS-смещени
 стене строится одна плашка на стороне комнаты.
 
 Для collision check используется консервативный screen-space footprint
-плашки, вычисленный из форматированного текста, font/padding tokens и
-screen-fixed footprint `.rlgearbtn`. Nominal position сначала проверяется
-против gear той же комнаты. При пересечении helper выбирает минимальный сдвиг
-по касательной к moving wall; при равных вариантах стабильный порядок — к
-меньшей screen-coordinate. Выход за room polygon разрешён решением владельца,
-поэтому такой сдвиг не скрывает число и не требует менять сторону стены.
+плашки, вычисленный из форматированного текста и font/padding tokens, а также
+zoom-dependent footprint `.rlgearbtn`, вычисленный для текущего `view.w` по той
+же `iconCqw()`-семантике, что использует CSS кнопки. Nominal position сначала
+проверяется против gear той же комнаты. При пересечении helper выбирает
+минимальный сдвиг по касательной к moving wall; при равных вариантах стабильный
+порядок — к меньшей screen-coordinate. Выход за room polygon разрешён решением
+владельца, поэтому такой сдвиг не скрывает число и не требует менять сторону
+стены.
 Production gesture path не вызывает `getBoundingClientRect()` и не читает
 layout; фактические DOM rectangles проверяются браузерным smoke как post-render
 доказательство консервативности footprint.
@@ -307,6 +309,8 @@ Open/Save ничего не материализует.
    - shared wall с двумя rooms;
    - positive/negative drag;
    - narrow room с фактической проверкой `getBoundingClientRect()` двух badges;
+   - default и non-default zoom, чтобы фактический zoom-dependent rectangle
+     `.rlgearbtn` оставался вне area-плашки;
    - фактическое отсутствие overlap с видимой room settings button и все abort
      paths.
 3. `demo/smoke_resize_inner_dimensions.mjs` остаётся зелёным и доказывает, что
@@ -383,9 +387,10 @@ measured-edge/leader layers. Данных и миграции нет, backend о
    Это избегает forced layout read и сохраняет стабильную ownership-связь без
    визуального переключения режима во время drag.
 4. Collision helper использует консервативную расчётную ширину текста и
-   screen-fixed footprint room gear. Допустима другая pure screen-space
-   стратегия, если кнопка остаётся видимой, фактические rectangles не
-   пересекаются и pointermove не читает layout.
+   zoom-dependent footprint room gear для текущего `view.w`, согласованный с
+   `iconCqw()`. Допустима другая pure screen-space стратегия, если кнопка
+   остаётся видимой, фактические rectangles не пересекаются на default и
+   non-default zoom и pointermove не читает layout.
 5. Highlight использует два screen-fixed strokes (halo + accent); точные
    ширины являются темизацией, не продуктовым решением.
 
