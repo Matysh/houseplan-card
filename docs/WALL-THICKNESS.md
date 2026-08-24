@@ -71,9 +71,10 @@ projection for side walls. A rigidly translated moving edge carries every
 breakpoint by the same vector; a side edge that only changes length moves its
 paired topology endpoint and leaves interior thickness boundaries fixed. A
 continuous carrier-coverage and lattice proof runs before preview/commit. It
-compares exact historical debt by record identity, so an old off-grid record is
-not silently migrated, while a new or changed violation rejects the whole
-candidate. This is distinct from the retained generic scale/rotation helper
+compares exact historical debt by record identity and endpoint identity, so an
+old off-grid endpoint is not silently migrated even when its record's other end
+moves, while a new or changed violation rejects the whole candidate. This is
+distinct from the retained generic scale/rotation helper
 used only by isolated historical pure tests.
 
 ## 2. Growth (centreline ±½)

@@ -676,6 +676,13 @@ test('issue 298 carrier proof covers collinear chains and rejects gaps or off-gr
   assert.equal(wallRecordsHaveCarrierCoverage(
     offGrid, [[[0.01, 0], [100, 0]]], pitch, 1000,
   ), false, 'a true off-grid coordinate is not storage noise');
+  assert.equal(wallRecordsHaveCarrierCoverage(
+    offGrid, [[[0.01, 0], [100, 0]]], pitch, 1000, offGrid,
+  ), true, 'an identical historical endpoint is debt, not a new Resize coordinate');
+  assert.equal(wallRecordsHaveCarrierCoverage(
+    [{ ...offGrid[0], a: [0.00002, 0] }],
+    [[[0.02, 0], [100, 0]]], pitch, 1000, offGrid,
+  ), false, 'Resize may not replace old debt with a different off-grid endpoint');
 });
 
 test('issue 253 key collisions never erase different exact or legacy records', () => {

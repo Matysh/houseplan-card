@@ -149,8 +149,8 @@ vertex; an interior thickness breakpoint stays on its physical boundary rather
 than keeping a proportional fraction of the new edge. Unrelated exact records
 remain byte-equivalent. The candidate then proves that every new exact record
 is lattice-safe and continuously covered by room-wall/partition carriers. An
-unchanged historical violation may remain readable, but Resize cannot add or
-replace it with a different violation.
+unchanged historical endpoint may remain readable even when its record changes
+around it, but Resize cannot add or replace it with a different violation.
 
 When the two owners of a shared moving seam split one physically continuous
 side-wall record at their meeting point, the mapped atoms are joined back only

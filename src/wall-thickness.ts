@@ -777,6 +777,7 @@ export function wallRecordCarrierViolations(
   carriers: [number[], number[]][],
   pitch: number,
   coordScale = 1,
+  latticeDebt: WallEntry[] | null | undefined = [],
 ): string[] {
   const scale = coordScale > 0 ? coordScale : 1;
   const latticePitch = Math.abs(pitch);
@@ -787,6 +788,16 @@ export function wallRecordCarrierViolations(
     const steps = normalised / latticePitch;
     return Math.abs(steps - Math.round(steps)) < LATTICE_NOISE_STEPS;
   };
+  // A Resize may need to rewrite a record whose other endpoint was authored
+  // off-grid historically. That coordinate is not newly produced by Resize:
+  // allow it only when the exact same physical endpoint already existed in the
+  // immutable source snapshot. Carrier coverage is still proved below.
+  const oldEndpoints = (latticeDebt || []).flatMap((wall) => {
+    const span = entrySpan(wall, scale);
+    return span ? span.map((point) => [...point]) : [];
+  });
+  const pointIsLatticeSafe = (point: number[]): boolean => point.every((value, axis) =>
+    onLattice(value) || oldEndpoints.some((old) => Math.abs(value - old[axis]) <= eps));
 
   const violations: string[] = [];
   const signature = (wall: WallEntry): string => JSON.stringify([
@@ -797,7 +808,7 @@ export function wallRecordCarrierViolations(
     if (!span) continue;
     const [a, b] = span;
     if (![a[0], a[1], b[0], b[1]].every(Number.isFinite)
-        || ![a[0], a[1], b[0], b[1]].every(onLattice)) {
+        || !pointIsLatticeSafe(a) || !pointIsLatticeSafe(b)) {
       violations.push(signature(wall));
       continue;
     }
@@ -838,8 +849,11 @@ export function wallRecordsHaveCarrierCoverage(
   carriers: [number[], number[]][],
   pitch: number,
   coordScale = 1,
+  latticeDebt: WallEntry[] | null | undefined = [],
 ): boolean {
-  return wallRecordCarrierViolations(walls, carriers, pitch, coordScale).length === 0;
+  return wallRecordCarrierViolations(
+    walls, carriers, pitch, coordScale, latticeDebt,
+  ).length === 0;
 }
 
 /** Upsert or remove a wall entry by endpoints. */

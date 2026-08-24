@@ -8600,7 +8600,7 @@ class HouseplanCard extends LitElement {
       else changedWalls.push(wall);
     }
     if (wallRecordCarrierViolations(
-      changedWalls, wallCarriers, this._wallKeyPitch, NORM_W,
+      changedWalls, wallCarriers, this._wallKeyPitch, NORM_W, s.walls || [],
     ).length) return { ok: false, reason: 'wall-metadata' };
     if (!this._rszSpaceCandidateRenderable(this._space, sp)) {
       return { ok: false, reason: 'physical-geometry' };
