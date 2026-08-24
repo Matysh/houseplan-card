@@ -158,6 +158,13 @@ const out = await page.evaluate(async () => {
 
   // ---- 2) «Оптимизировать планы» -----------------------------------------
   c._setMode('view'); await c.updateComplete;
+  // The preceding real editor gestures schedule a physical config write.
+  // Finish it before replacing the whole server snapshot with the next
+  // synthetic fixture: production adoption does this at a revision boundary,
+  // while a direct private-field assignment cannot invalidate #278's pending
+  // exact-candidate approval by itself.
+  if (c._saveConfigDebounced.pending()) c._saveConfigDebounced.flush();
+  await c._writeChain;
   // a deliberately detuned fixture: a third of a step off, everywhere
   const D = 1 / GRID_N / 3;
   const FIX = { spaces: [{
