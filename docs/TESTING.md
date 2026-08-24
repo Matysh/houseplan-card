@@ -2327,9 +2327,9 @@ require hands on real hardware — they remain for the human pass.
       wall-union-isolation-view-light/dark; benchmark:
       benchmark_wall_union_isolation; mutations:
       `wall-component-failure-kills-primary`,
-      `isolated-wall-extra-discarded`, `strict-accepts-degraded`,
-      `wall-thickness-writer-bypasses-barrier`,
-      `invariants-bypasses-production-geometry`].
+      `wall-isolated-extra-discarded`, `strict-wall-barrier-accepts-degraded`,
+      `wall-thickness-writer-bypasses-common-barrier`,
+      `model-invariants-bypasses-production-geometry`].
 - [ ] **Missing space references recover without losing a marker (#244)**:
       exact import signatures remap space, room, marker/room-label positions
       and vacuum segments; Area remap and detach preserve the marker record and
