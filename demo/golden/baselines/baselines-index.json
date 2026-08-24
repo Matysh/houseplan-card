@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "matrixVersion": 44,
-  "acceptedAt": "2026-08-24T12:31:07.645Z",
-  "sourceFingerprint": "8452e513ecc4906ec0994bd64c4195a805dd8b1802b359fd220428667206c469",
+  "acceptedAt": "2026-08-24T16:12:22.415Z",
+  "sourceFingerprint": "7a687db9aadb86ee4af8374678c06f3697fb98935ea9bfa3df7b2cd0b652543a",
   "chromium": "151.0.7922.34",
   "scenarios": {
     "coincident-partition-before-dark": "c0e38cfff096725cf1eb5dc91e005b2af983172d04e6573075db635275cabca3",
@@ -43,8 +43,8 @@
     "wall-junctions-view-dark": "7b859c4f25f8a5dd4fca64d5b2f7aa64b65845fabbe83bc2388c2f99d29f71b1",
     "junction-patch-resilience-plan-dark": "5dac2f2f81c801b0d9b1c0ee786f1f531906c80ddeec36f9c91b524468c13608",
     "junction-patch-resilience-view-dark": "efe6e3ebd0e08e936bfa79886d5f55185198cf770a5d2473160cf2335be46340",
-    "wall-union-isolation-view-light": "749e787d8eda09ef3f859c220cef718a4719065c85271338e2a93e9bcfcd71e4",
-    "wall-union-isolation-view-dark": "e8d233d629dedb76ed2396474d18791af41e19f1c847da362d3814e9c3ae2626",
+    "wall-union-isolation-view-light": "291c045758be2814be88d12ab46bdc3d12cb99a03dbbcc9a1539c2c9a5931edf",
+    "wall-union-isolation-view-dark": "616fc6cc7144c9596ae52421027914e222f30f26de45215fa7e7b6175ca78543",
     "multiwall-junction-bevel-view-dark": "70f7f0e7c60beb33853fc26445b6901d48299c2c92ddc41f6e1e2cfb4cac2320",
     "orthogonal-strip-cell-5-view-dark": "9b8e4bd22cbf1a82ff48f052822967c61179290a3234ae48ef547642329b5a90",
     "orthogonal-strip-cell-1-view-dark": "44e245db41ab9a4e575cefbf7656055dba7e27fc62c2b1215445517a9ea81386",
