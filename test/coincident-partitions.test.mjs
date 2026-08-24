@@ -14,6 +14,10 @@ const fixture = JSON.parse(readFileSync(
   new URL('./fixtures/276-coincident-partition.json', import.meta.url),
   'utf8',
 ));
+const backendCandidate = JSON.parse(readFileSync(
+  new URL('./fixtures/280-optimize-rehost-candidate.json', import.meta.url),
+  'utf8',
+));
 const clone = (value) => structuredClone(value);
 
 const optimize = (config) => optimizePlans(config, {});
@@ -42,6 +46,11 @@ test('issue 276 reconciles the anonymized 5 cm offset fixture without moving its
   assert.equal(intervals.length, 2);
   assert.deepEqual(new Set(intervals.map((interval) => interval.cm)), new Set([20]));
   assert.equal(checkOptimizeGeometry(result.config).ok, true);
+  assert.deepEqual(
+    result.config,
+    backendCandidate,
+    'the frontend result must stay identical to the candidate proved by Python',
+  );
 
   const second = optimize(result.config);
   assert.equal(second.changed, false);

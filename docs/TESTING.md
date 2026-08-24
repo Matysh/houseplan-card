@@ -324,6 +324,12 @@
 - [ ] Backend rejects missing host references, out-of-range `t`, non-fitting or
       overlapping hosted openings and stale host stripping; exports round-trip
       the host. [auto: test_validation, test_ha_import_export]
+- [ ] The exact #276 Optimize candidate is shared by frontend and backend tests:
+      Python independently proves the removed partition, two-room solid wall,
+      envelope, opening identity and non-overlap; config/set and every partial
+      or mutated candidate remain rejected. Linux HA WS persists and reloads
+      the implicit opening, then Undo restores the partition and explicit host.
+      [auto: coincident-partitions, test_validation, test_ha_websocket]
 
 ## Independent-wall opening jamb margin (#186)
 

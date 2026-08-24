@@ -1,0 +1,57 @@
+{
+  "model_version": 7,
+  "spaces": [
+    {
+      "id": "offset-shared-wall",
+      "title": "Offset shared wall",
+      "view_box": [0, 0, 1, 1],
+      "cell_cm": 5,
+      "rooms": [
+        {
+          "id": "left",
+          "name": "Left",
+          "area": null,
+          "poly": [
+            [0, 0], [0.5, 0], [0.5, 0.004166667],
+            [0.504166667, 0.004166667], [0.504166667, 0.995833333],
+            [0.5, 0.995833333], [0.5, 1], [0, 1]
+          ]
+        },
+        {
+          "id": "right",
+          "name": "Right",
+          "area": null,
+          "poly": [
+            [0.504166667, 0.004166667], [1, 0.004166667],
+            [1, 0.995833333], [0.504166667, 0.995833333]
+          ]
+        }
+      ],
+      "walls": [
+        {
+          "key": "0.504167,0.500000@1.5706",
+          "cm": 20,
+          "a": [0.504166667, 0.004166667],
+          "b": [0.504166667, 0.995833333]
+        }
+      ],
+      "openings": [
+        {
+          "id": "hosted-door",
+          "type": "door",
+          "x": 0.504166667,
+          "y": 0.5,
+          "angle": -90,
+          "length": 0.2,
+          "contact": "binary_sensor.test_door",
+          "lock": "lock.test_door",
+          "invert": true,
+          "flip_h": true,
+          "future_field": { "keep": true }
+        }
+      ]
+    }
+  ],
+  "markers": [],
+  "settings": {}
+}

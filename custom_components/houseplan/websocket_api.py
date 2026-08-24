@@ -1624,7 +1624,10 @@ async def ws_plan_optimize(hass: HomeAssistant, connection, msg: dict[str, Any])
             validate_marker_light_entities(msg["config"], config_data.get("config"))
             validate_marker_value_badges(msg["config"], config_data.get("config"))
             validate_opening_passages(msg["config"], config_data.get("config"))
-            validate_partition_opening_hosts(msg["config"], config_data.get("config"))
+            validate_partition_opening_hosts(
+                msg["config"], config_data.get("config"),
+                allow_optimize_rehost=True,
+            )
         except (
             MarkerControlError, OpeningPassageError, PartitionOpeningHostError,
             PartitionOpeningJambMarginError,

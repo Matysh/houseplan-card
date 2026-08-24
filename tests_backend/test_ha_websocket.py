@@ -534,6 +534,53 @@ async def test_optimize_undo_restores_geometry_but_not_legacy_noisy_bits(
     assert restored_layout["lamp"]["x"] == -0.12345679
 
 
+async def test_optimize_accepts_proved_rehost_and_undo_restores_host(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+) -> None:
+    """#280: the real WS boundary accepts exactly the #276 candidate."""
+    from custom_components.houseplan.store import get_data
+
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    runtime = get_data(hass)
+    fixture_dir = Path(__file__).parents[1] / "test" / "fixtures"
+    previous = json.loads(
+        (fixture_dir / "276-coincident-partition.json").read_text(encoding="utf-8")
+    )
+    candidate = json.loads(
+        (fixture_dir / "280-optimize-rehost-candidate.json").read_text(encoding="utf-8")
+    )
+    await runtime.config_store.async_save({"config": previous, "rev": 1})
+    await runtime.store.async_save({"layout": {}, "rev": 1})
+
+    await client.send_json_auto_id({
+        "type": "houseplan/plan/optimize",
+        "config": candidate,
+        "layout": {},
+        "expected_config_rev": 1,
+        "expected_layout_rev": 1,
+    })
+    optimized = await client.receive_json()
+    assert optimized["success"]
+    stored = (await runtime.config_store.async_load())["config"]
+    assert stored["spaces"][0].get("partitions") in (None, [])
+    assert "host" not in stored["spaces"][0]["openings"][0]
+
+    await client.send_json_auto_id({
+        "type": "houseplan/plan/optimize_undo",
+        "expected_config_rev": 2,
+        "expected_layout_rev": 2,
+    })
+    undone = await client.receive_json()
+    assert undone["success"] and undone["result"]["can_undo"] is False
+    restored = (await runtime.config_store.async_load())["config"]
+    restored_space = restored["spaces"][0]
+    assert restored_space["partitions"][0]["id"] == "redundant"
+    assert restored_space["openings"][0]["host"] == {
+        "kind": "partition", "id": "redundant", "t": 0.5,
+    }
+
+
 async def test_plan_optimize_persists_exact_storage_roundtrip_target(
     hass: HomeAssistant, hass_ws_client: WebSocketGenerator, monkeypatch
 ) -> None:

@@ -4,12 +4,29 @@ import importlib.util
 import json
 import os
 import subprocess
+import sys
+import types
 
 import pytest
 import voluptuous as vol
 
+_ROOT = os.path.dirname(os.path.dirname(__file__))
+_PACKAGE_ROOT = os.path.join(_ROOT, "custom_components")
+_HOUSEPLAN_ROOT = os.path.join(_PACKAGE_ROOT, "houseplan")
+
+# Keep this pure test independent of Home Assistant even though Python normally
+# executes package __init__.py before resolving the validation submodule.
+if "custom_components" not in sys.modules:
+    package = types.ModuleType("custom_components")
+    package.__path__ = [_PACKAGE_ROOT]
+    sys.modules["custom_components"] = package
+if "custom_components.houseplan" not in sys.modules:
+    package = types.ModuleType("custom_components.houseplan")
+    package.__path__ = [_HOUSEPLAN_ROOT]
+    sys.modules["custom_components.houseplan"] = package
+
 _PATH = os.path.join(
-    os.path.dirname(os.path.dirname(__file__)),
+    _ROOT,
     "custom_components", "houseplan", "validation.py",
 )
 _spec = importlib.util.spec_from_file_location("hp_validation", _PATH)
@@ -1715,6 +1732,108 @@ def test_partition_opening_host_schema_fit_overlap_and_downgrade_guard():
     with pytest.raises(v.PartitionOpeningHostError):
         v.validate_partition_opening_hosts(current, previous)
     v.validate_partition_opening_hosts({"spaces": [{**base, "openings": []}]}, previous)
+
+
+def test_optimize_accepts_only_proved_partition_to_room_wall_rehost():
+    root = os.path.dirname(os.path.dirname(__file__))
+    fixture_dir = os.path.join(root, "test", "fixtures")
+    with open(os.path.join(fixture_dir, "276-coincident-partition.json"),
+              encoding="utf-8") as stream:
+        previous = json.load(stream)
+    with open(os.path.join(fixture_dir, "280-optimize-rehost-candidate.json"),
+              encoding="utf-8") as stream:
+        candidate = json.load(stream)
+
+    with pytest.raises(v.PartitionOpeningHostError):
+        v.validate_partition_opening_hosts(candidate, previous)
+    v.validate_partition_opening_hosts(
+        candidate, previous, allow_optimize_rehost=True
+    )
+
+    def rejected(mutator):
+        changed = json.loads(json.dumps(candidate))
+        mutator(changed["spaces"][0])
+        with pytest.raises(v.PartitionOpeningHostError):
+            v.validate_partition_opening_hosts(
+                changed, previous, allow_optimize_rehost=True
+            )
+
+    rejected(lambda space: space.update(partitions=[{
+        "id": "redundant",
+        "a": [0.504166667, 0.004166667],
+        "b": [0.504166667, 0.995833333],
+        "cm": 20,
+    }]))
+    rejected(lambda space: space["rooms"].pop())
+    rejected(lambda space: space["walls"][0].update(cm=10))
+    rejected(lambda space: space["openings"][0].update(x=0.51))
+    rejected(lambda space: space["openings"][0].update(angle=-89))
+    rejected(lambda space: space["openings"][0].update(length=0.19))
+    rejected(lambda space: space["openings"][0].update(type="window"))
+    rejected(lambda space: space["openings"][0].update(
+        contact="binary_sensor.other"
+    ))
+    rejected(lambda space: space["openings"].append({
+        "id": "overlap", "type": "door",
+        "x": 0.504166667, "y": 0.5, "angle": -90, "length": 0.1,
+    }))
+    rejected(lambda space: space.update(open_spans=[{
+        "a": [0.504166667, 0.2], "b": [0.504166667, 0.8],
+    }]))
+
+
+def test_optimize_rehost_validation_is_atomic_across_the_batch():
+    root = os.path.dirname(os.path.dirname(__file__))
+    fixture_dir = os.path.join(root, "test", "fixtures")
+    previous = json.load(open(
+        os.path.join(fixture_dir, "276-coincident-partition.json"),
+        encoding="utf-8",
+    ))
+    candidate = json.load(open(
+        os.path.join(fixture_dir, "280-optimize-rehost-candidate.json"),
+        encoding="utf-8",
+    ))
+    old_space = previous["spaces"][0]
+    new_space = candidate["spaces"][0]
+    old_space["openings"].append({
+        **old_space["openings"][0], "id": "second", "length": 0.1,
+        "host": {"kind": "partition", "id": "redundant", "t": 0.75},
+    })
+    new_space["openings"].append({
+        **new_space["openings"][0], "id": "second", "length": 0.1,
+        "x": 0.6, "y": 0.747916667,
+    })
+    with pytest.raises(v.PartitionOpeningHostError) as raised:
+        v.validate_partition_opening_hosts(
+            candidate, previous, allow_optimize_rehost=True
+        )
+    assert "opening=second" in str(raised.value)
+
+
+def test_optimize_rehost_private_exact_fixture_when_available():
+    """Local owner acceptance; CI intentionally uses the anonymized contract."""
+    source = r"C:\Temp\44.json"
+    if not os.path.exists(source):
+        pytest.skip("private #280 fixture is not present")
+    script = (
+        "import {readFileSync} from 'node:fs';"
+        "import {optimizePlans} from './test-build/plan-optimizer.js';"
+        "const raw=JSON.parse(readFileSync(process.argv[1],'utf8'));"
+        "const previous=raw.payload?.config||raw.config||raw;"
+        "process.stdout.write(JSON.stringify(optimizePlans(previous,{}).config));"
+    )
+    completed = subprocess.run(
+        ["node", "--input-type=module", "-e", script, source],
+        cwd=_ROOT, capture_output=True, text=True, check=True,
+    )
+    candidate = json.loads(completed.stdout)
+    raw = json.load(open(source, encoding="utf-8"))
+    previous = raw.get("payload", {}).get("config", raw.get("config", raw))
+    with pytest.raises(v.PartitionOpeningHostError):
+        v.validate_partition_opening_hosts(candidate, previous)
+    v.validate_partition_opening_hosts(
+        candidate, previous, allow_optimize_rehost=True
+    )
 
 
 @pytest.mark.parametrize("cm,cell_cm", [(1, 5), (15, 5), (100, 2.5)])

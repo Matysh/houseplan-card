@@ -135,6 +135,15 @@ hosted opening with an old bundle is unsupported. A missing/invalid host is not
 re-associated automatically: current renderers fail dark and Plan offers an
 explicit rebind.
 
+The sole host-removal exception is the explicit Optimize reconciliation from
+#276/#280. The server does not trust a client counter: it independently proves
+that the old partition was removed, its complete segment is a solid shared
+boundary of exactly two rooms, the replacement wall envelope is not narrower,
+the materialized centre/angle and every unrelated opening field are unchanged,
+and no new slot overlaps. This capability is enabled only by
+`houseplan/plan/optimize`; ordinary config writes and crafted candidates keep
+the fail-closed `invalid_partition_opening_host` result.
+
 New hosted openings and direct changes to `host.id`, `host.t`, `length`, host
 span or host thickness reserve a jamb at both endpoints equal to half the
 actual partition thickness. This is semantic delta validation, not a schema or

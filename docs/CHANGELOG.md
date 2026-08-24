@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- The backend now accepts a proved Optimize reconciliation of a coincident
+  partition: its opening remains on the same shared wall through Apply, reload
+  and Undo. Arbitrary host stripping by an ordinary write or crafted candidate
+  is still rejected ([#280](https://github.com/Matysh/houseplan-card/issues/280)).
 - A nearly perpendicular T-junction now preserves all physical masonry when
   its saved axis has a small valid slope. The two white wedges disappear in
   every mode without straightening stored coordinates, while deliberately

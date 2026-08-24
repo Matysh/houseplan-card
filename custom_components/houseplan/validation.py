@@ -5,6 +5,7 @@ Kept separate so it can be covered by unit tests (only voluptuous is needed).
 from __future__ import annotations
 
 from collections import Counter
+import math
 import re
 
 import voluptuous as vol
@@ -80,10 +81,167 @@ class PartitionOpeningJambMarginError(ValueError):
 # sync with GRID_STEP_N/NORM_W in the frontend; it is a geometry scale, not a
 # user setting.
 NORMALIZED_CANVAS_CELLS = 240.0
+_DEFAULT_ROOM_WALL_CM = 15.0
+_OPTIMIZE_REHOST_EPSILON = 1e-8
+
+
+def _room_polygon(room: dict) -> list[list[float]]:
+    poly = room.get("poly")
+    if isinstance(poly, list) and len(poly) >= 3:
+        return poly
+    if all(key in room for key in ("x", "y", "w", "h")):
+        x, y = float(room["x"]), float(room["y"])
+        w, h = float(room["w"]), float(room["h"])
+        return [[x, y], [x + w, y], [x + w, y + h], [x, y + h]]
+    return []
+
+
+def _segment_metrics(a: list, b: list) -> tuple[float, float, float]:
+    dx, dy = float(b[0]) - float(a[0]), float(b[1]) - float(a[1])
+    return dx, dy, math.hypot(dx, dy)
+
+
+def _line_distance(point: list, a: list, b: list) -> float:
+    dx, dy, length = _segment_metrics(a, b)
+    if length <= _OPTIMIZE_REHOST_EPSILON:
+        return math.inf
+    return abs((float(point[0]) - float(a[0])) * dy
+               - (float(point[1]) - float(a[1])) * dx) / length
+
+
+def _projection(point: list, a: list, b: list) -> float:
+    dx, dy, length = _segment_metrics(a, b)
+    if length <= _OPTIMIZE_REHOST_EPSILON:
+        return math.inf
+    return ((float(point[0]) - float(a[0])) * dx
+            + (float(point[1]) - float(a[1])) * dy) / length
+
+
+def _segment_covers(a: list, b: list, target_a: list, target_b: list) -> bool:
+    """Return whether one exact collinear segment covers the target."""
+    _, _, length = _segment_metrics(a, b)
+    if length <= _OPTIMIZE_REHOST_EPSILON:
+        return False
+    if (_line_distance(target_a, a, b) > _OPTIMIZE_REHOST_EPSILON
+            or _line_distance(target_b, a, b) > _OPTIMIZE_REHOST_EPSILON):
+        return False
+    for point in (target_a, target_b):
+        along = _projection(point, a, b)
+        if along < -_OPTIMIZE_REHOST_EPSILON or along > length + _OPTIMIZE_REHOST_EPSILON:
+            return False
+    return True
+
+
+def _segments_overlap_on_axis(a: list, b: list, other_a: list, other_b: list) -> bool:
+    if (_line_distance(other_a, a, b) > _OPTIMIZE_REHOST_EPSILON
+            or _line_distance(other_b, a, b) > _OPTIMIZE_REHOST_EPSILON):
+        return False
+    _, _, length = _segment_metrics(a, b)
+    lo, hi = sorted((_projection(other_a, a, b), _projection(other_b, a, b)))
+    return min(length, hi) - max(0.0, lo) > _OPTIMIZE_REHOST_EPSILON
+
+
+def _angle_delta_mod_180(first: float, second: float) -> float:
+    return abs((first - second + 90.0) % 180.0 - 90.0)
+
+
+def _safe_optimize_partition_rehost(
+    space: dict, old_space: dict, opening: dict, old_opening: dict,
+) -> bool:
+    """Independently prove the exact #276 partition-to-room-wall transition."""
+    old_host = old_opening.get("host")
+    if not isinstance(old_host, dict) or old_host.get("kind") != "partition":
+        return False
+    partition_id = str(old_host.get("id", ""))
+    old_partition = next((item for item in old_space.get("partitions") or []
+                          if str(item.get("id", "")) == partition_id), None)
+    if old_partition is None or any(
+        str(item.get("id", "")) == partition_id
+        for item in space.get("partitions") or []
+    ):
+        return False
+    a, b = old_partition.get("a"), old_partition.get("b")
+    if not (isinstance(a, list) and len(a) == 2 and isinstance(b, list) and len(b) == 2):
+        return False
+    dx, dy, length = _segment_metrics(a, b)
+    if length <= _OPTIMIZE_REHOST_EPSILON:
+        return False
+
+    owners: set[str] = set()
+    for room in space.get("rooms") or []:
+        poly = _room_polygon(room)
+        if any(_segment_covers(poly[index], poly[(index + 1) % len(poly)], a, b)
+               for index in range(len(poly))):
+            owners.add(str(room.get("id", "")))
+    if len(owners) != 2:
+        return False
+    if any(_segments_overlap_on_axis(a, b, span["a"], span["b"])
+           for span in space.get("open_spans") or []):
+        return False
+
+    covering_walls = []
+    for wall in space.get("walls") or []:
+        wall_a, wall_b = wall.get("a"), wall.get("b")
+        if not (isinstance(wall_a, list) and isinstance(wall_b, list)):
+            continue
+        if _segment_covers(wall_a, wall_b, a, b):
+            covering_walls.append((_segment_metrics(wall_a, wall_b)[2], float(wall["cm"])))
+    effective_cm = min(covering_walls, key=lambda item: item[0])[1] \
+        if covering_walls else _DEFAULT_ROOM_WALL_CM
+    if effective_cm + _OPTIMIZE_REHOST_EPSILON < float(old_partition.get("cm", 0)):
+        return False
+
+    ignored = {"host", "x", "y", "angle"}
+    old_stable = {key: value for key, value in old_opening.items() if key not in ignored}
+    new_stable = {key: value for key, value in opening.items() if key not in ignored}
+    if old_stable != new_stable:
+        return False
+    try:
+        t = float(old_host["t"])
+        x, y = float(opening["x"]), float(opening["y"])
+        opening_angle = float(opening["angle"])
+        opening_length = float(opening["length"])
+    except (KeyError, TypeError, ValueError):
+        return False
+    if not (0 <= t <= 1 and opening_length > 0):
+        return False
+    expected_x, expected_y = float(a[0]) + dx * t, float(a[1]) + dy * t
+    expected_angle = math.degrees(math.atan2(dy, dx))
+    if expected_angle >= 90:
+        expected_angle -= 180
+    elif expected_angle < -90:
+        expected_angle += 180
+    if (abs(x - expected_x) > _OPTIMIZE_REHOST_EPSILON
+            or abs(y - expected_y) > _OPTIMIZE_REHOST_EPSILON
+            or _angle_delta_mod_180(opening_angle, expected_angle) > 1e-7):
+        return False
+    along = t * length
+    if (along - opening_length / 2 < -_OPTIMIZE_REHOST_EPSILON
+            or along + opening_length / 2 > length + _OPTIMIZE_REHOST_EPSILON):
+        return False
+
+    for other in space.get("openings") or []:
+        if other is opening or str(other.get("id", "")) == str(opening.get("id", "")):
+            continue
+        try:
+            center = [float(other["x"]), float(other["y"])]
+            other_angle = float(other["angle"])
+            other_length = float(other["length"])
+        except (KeyError, TypeError, ValueError):
+            continue
+        if (_line_distance(center, a, b) > _OPTIMIZE_REHOST_EPSILON
+                or _angle_delta_mod_180(other_angle, expected_angle) > 1e-7):
+            continue
+        other_along = _projection(center, a, b)
+        if (min(along + opening_length / 2, other_along + other_length / 2)
+                - max(along - opening_length / 2, other_along - other_length / 2)
+                > _OPTIMIZE_REHOST_EPSILON):
+            return False
+    return True
 
 
 def validate_partition_opening_hosts(
-    config: dict, previous: dict | None = None
+    config: dict, previous: dict | None = None, *, allow_optimize_rehost: bool = False
 ) -> None:
     """Validate hosted-opening write deltas without rejecting legacy reads.
 
@@ -114,9 +272,13 @@ def validate_partition_opening_hosts(
             opening_id = str(opening.get("id", ""))
             old = old_openings.get(opening_id)
             if old and old.get("host") is not None and opening.get("host") is None:
-                raise PartitionOpeningHostError(
-                    f"space={space_id}; opening={opening_id}; host removed"
-                )
+                if not (allow_optimize_rehost and old_space
+                        and _safe_optimize_partition_rehost(
+                            space, old_space, opening, old
+                        )):
+                    raise PartitionOpeningHostError(
+                        f"space={space_id}; opening={opening_id}; host removed"
+                    )
             host = opening.get("host")
             if host is None:
                 continue
