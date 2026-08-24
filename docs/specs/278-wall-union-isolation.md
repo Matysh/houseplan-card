@@ -222,6 +222,21 @@ source of truth, а дублирующий adapter удаляется.
    мутирует config in place, adapter обязан восстановить before до toast и
    requestUpdate; предпочтителен candidate-first путь.
 
+## 12.1. Риски и меры
+
+| Риск | Мера |
+|---|---|
+| #276/#277 ещё проходят ревью, хотя §18 задаёт их раньше #278 | Параллельны только независимые ТЗ/review. Код строго последователен: #278 не переходит в S6, пока #276 и #277 не merged; перед началом ветка пересоздаётся/rebase от актуального `dev`. |
+| Legacy plan навсегда остаётся `degraded-extra`, если не подходит под безопасный repair #276 | Render сохраняет стены, но strict geometry edits остаются заблокированы; user guide предлагает Optimize, затем export/bug report, без скрытого удаления данных. |
+| Временный strict adapter #277 переживает merge и создаёт две расходящиеся проверки | #278 удаляет adapter в том же implementation commit; source guard/call-site inventory и mutant writer-bypass требуют один exported barrier. |
+| Отдельный isolated path визуально вычитает coincident masonry из-за evenodd | Отдельные non-cancelling path fragments/groups, AC4 golden и permutation tests. |
+| Renderer показывает extra, а Glow/sun/static его теряют | Typed component set является общим входом; consumer parity AC5 и code-review call table. |
+| Полностью malformed extra нельзя даже представить отдельно и возникает локальная утечка света/стены | Только этот body получает bounded degraded reason; strict write запрещён, остальные стены сохраняются; invalid-extra negative fixture фиксирует известную локальную деградацию. |
+| Generic barrier блокирует marker/color edit на старом degraded плане | Проверяются только geometry writers; AC8 call-count и non-geometry browser smoke. |
+| In-place handler оставляет candidate после отказа | Immutable before + mandatory rollback before toast/requestUpdate, AC7/AC9 mutation. |
+| Component-aware union замедляет каждый render | Existing structural cache, §13 valid/degraded budgets и bounded cache test. |
+| Per-piece catch скрывает core structural failure и возвращает старый опасный raw-ring fallback | Typed `failed-core` остаётся fail-dark; #197/core regressions AC11 и global-catch mutant. |
+
 ## 13. Производительность
 
 На валидном large-house fixture новый component-aware pass не более чем на 10%
