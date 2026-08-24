@@ -1300,6 +1300,19 @@ export const MUTANTS = [
     }],
   },
   {
+    id: 'wall-compaction-owner-role-bypassed',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#299" test/wall-thickness.test.mjs',
+    because: 'equal centimetres must not merge shared(A,B) with outer(A) or shared(A,C); '
+      + 'dropping the owner signature recreates the mixed-role wall record from #299',
+    patches: [{
+      file: 'src/wall-thickness.ts',
+      find: '          if (pr.kinds[next] === null || pr.cms[next] !== cm\n'
+        + '              || ownerSignatureFor(nextKey) !== ownerSignature) break;',
+      replace: '          if (pr.kinds[next] === null || pr.cms[next] !== cm) break;',
+    }],
+  },
+  {
     id: 'optimizer-single-topology-island-blocked',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="issue 273 Optimize" '

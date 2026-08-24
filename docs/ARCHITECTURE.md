@@ -570,6 +570,14 @@ reuses ordinary opening projection and wall/open-span rekeying. Unique physical
 count, maximum centimetres and skipped candidates stay separate from ordinary
 grid movement; no load/save migration invokes this repair.
 
+`normalizeWallIntervals()` compacts atomic real-wall intervals only when both
+their centimetre thickness and ownership signature match (#299). The signature
+is `outer(A)` or the stable sorted pair `shared(A,B)`; an outer/shared transition,
+a change of shared pair, or ambiguous multi-owner geometry is a hard breakpoint.
+Explicit Optimize and the room-deletion transaction call this same normalizer,
+so neither path can create one saved record whose physical role changes halfway
+through its exact span. Ambiguous ownership fails closed per atom.
+
 All physical-geometry writers share the same transaction boundary (#278).
 `checkSpacePhysicalGeometry()` validates the exact candidate through canonical
 wall and floor builders before history or save. A failed or degraded candidate

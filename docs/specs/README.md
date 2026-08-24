@@ -79,6 +79,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#293](https://github.com/Matysh/houseplan-card/issues/293) Активная рукоятка Resize выполняет pointer-жест | [293-resize-pointer-noop.md](293-resize-pointer-noop.md) |
 | [#296](https://github.com/Matysh/houseplan-card/issues/296) Optimize удаляет доказанно избыточные скрытые стены | [296-optimize-hidden-obstacles.md](296-optimize-hidden-obstacles.md) |
 | [#298](https://github.com/Matysh/houseplan-card/issues/298) Resize сохраняет wall records на решётке и на carrier | [298-resize-wall-thickness-carrier.md](298-resize-wall-thickness-carrier.md) |
+| [#299](https://github.com/Matysh/houseplan-card/issues/299) Записи толщины не пересекают границу роли стены | [299-mixed-role-wall-records.md](299-mixed-role-wall-records.md) |
 
 ## P2
 

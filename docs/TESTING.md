@@ -2054,6 +2054,14 @@ require hands on real hardware — they remain for the human pass.
       become partly shared and partly outer
       [unit: resize.test + fixture 289-mixed-role-resize; auto:
       smoke_room_resize; mutation: safe-resize-side-ownership-bypassed]
+- [ ] Wall compaction preserves physical ownership (#299): equal thickness on
+      `shared(A,B) -> outer(A)` and `shared(A,B) -> shared(A,C)` remains split
+      at the exact role breakpoint, while equal neighbouring atoms inside one
+      role still compact. Optimize on `real-plan-first-floor.json` is immutable,
+      invariant-clean and idempotent; real-plan edit-walk seeds 1 and 3 exercise
+      Optimize and Delete-room/Keep-walls without producing a mixed-role record
+      [unit: wall-thickness + plan-optimizer; auto: smoke_edit_walk seeds 1/3;
+      mutation: wall-compaction-owner-role-bypassed]
 - [ ] Live badges while dragging: lengths of the dragged wall + both
       adjacent walls, and the m² area at the room centre; dragging a shared
       wall shows BOTH areas; all numbers update continuously

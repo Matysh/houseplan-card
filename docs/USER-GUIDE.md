@@ -332,7 +332,7 @@ Other operations edit existing geometry:
 | Split | Cuts a room from one wall to another; the larger part keeps the original room |
 | Resize | Moves one eligible horizontal/vertical wall without changing room topology. Live labels report the two changing **inner** side-wall dimensions, highlight those walls, and place each affected room's area beside its side of the moving wall |
 | Thickness | Changes one physical span or every wall of a room |
-| Delete room | Deletes only the selected room after confirmation |
+| Delete room | Deletes the room after choosing whether its exclusive physical walls remain; shared walls always remain |
 
 ![Selected partition and its Plan context tray](images/05-plan-context-tray.png)
 
@@ -687,7 +687,10 @@ pull intentional off-grid or diagonal geometry to a node. Current ordinary
 edits apply the same invisible boundary automatically, so the noise cannot
 return after a later room, opening, decor or marker-position save.
 
-Equal neighbouring wall-thickness fragments are compacted. Optimize may also
+Equal neighbouring wall-thickness fragments are compacted only while they have
+the same physical role: one outer room or the same pair of shared rooms. A
+shared-to-outer transition or a change of shared-room pair stays as an exact
+breakpoint even when the thickness is equal. Optimize may also
 remove a different-thickness fragment shorter than half a grid step when equal
 pieces of the same straight wall prove the replacement. This includes a
 fragment touching exactly one room T-junction: the junction and perpendicular

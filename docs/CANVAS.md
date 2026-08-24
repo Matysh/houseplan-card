@@ -497,7 +497,9 @@ orchestrator. It converts only legacy fields with an exact lossless
 mapping, materialises legacy `open_to`, calls the grid projection,
 rekeys exact wall/open-span endpoints onto the moved rooms, merges
 touching virtual spans per room pair, compacts consecutive real-wall
-intervals of equal thickness and stamps `model_version`. Unknown fields
+intervals only when their thickness and physical ownership both match, and
+stamps `model_version`. Outer/shared transitions and changes of shared-room
+pair remain exact breakpoints even at equal thickness. Unknown fields
 are preserved and every pass is idempotent.
 
 The explicit pass also repairs pre-existing near-axis room walls, saved wall

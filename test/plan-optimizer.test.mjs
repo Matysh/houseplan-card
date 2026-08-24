@@ -13,6 +13,7 @@ import { GRID_PITCH, GRID_STEP_N as S, NORM_W } from '../test-build/space-geomet
 import {
   wallBodiesGeometry, wallIntervals, wallKey,
 } from '../test-build/wall-thickness.js';
+import { checkMixedRoleRecords, checkWallKeys } from '../scripts/model-invariants.mjs';
 
 const room = (id, x0, x1, openTo) => ({
   id,
@@ -34,6 +35,10 @@ const storageRoundtripFixture = JSON.parse(readFileSync(
 ));
 const wallKeyRoundtripFixture = JSON.parse(readFileSync(
   new URL('./fixtures/258-wall-key-roundtrip.json', import.meta.url),
+  'utf8',
+));
+const realFirstFloorFixture = JSON.parse(readFileSync(
+  new URL('./fixtures/real-plan-first-floor.json', import.meta.url),
   'utf8',
 ));
 
@@ -235,15 +240,20 @@ test('issue 273 Optimize collapses the beta.5 island beside one T-node', () => {
   assert.deepEqual(config, before, 'preview must not mutate the T-node source');
   assert.equal(first.changed, true);
   assert.equal(first.report.canonicalized, 1);
-  assert.equal(first.report.wallsMerged, 2);
+  assert.equal(first.report.wallsMerged, 0,
+    'role breakpoints may keep the record count even after the micro island is repaired');
   const canonicalBefore = canonicalizeConfigGeometry(before);
   assert.deepEqual(first.config.spaces[0].rooms, canonicalBefore.spaces[0].rooms,
     'T coordinate and perpendicular incident room stay byte-equivalent');
-  assert.equal(first.config.spaces[0].walls.length, 1);
-  assert.equal(first.config.spaces[0].walls[0].cm, 22);
+  assert.equal(first.config.spaces[0].walls.length, 3);
+  assert.ok(first.config.spaces[0].walls.every((wall) => wall.cm === 22),
+    'the micro thickness is repaired without merging outer/shared owner roles');
   const exactNode = 83 / 240;
-  assert.deepEqual(first.config.spaces[0].walls[0].a, [0.8, exactNode]);
-  assert.deepEqual(first.config.spaces[0].walls[0].b, [0.95, exactNode]);
+  const roleBreaks = first.config.spaces[0].walls
+    .flatMap((wall) => [wall.a?.[0], wall.b?.[0]])
+    .filter(Number.isFinite);
+  assert.ok(roleBreaks.includes(203 / 240), 'outer→shared owner boundary stays exact');
+  assert.ok(roleBreaks.includes(213 / 240), 'shared→outer owner boundary stays exact');
 
   const afterIntervals = wallIntervals(
     first.config.spaces[0].rooms, first.config.spaces[0].walls, [], S, 5, S,
@@ -262,6 +272,33 @@ test('issue 273 Optimize collapses the beta.5 island beside one T-node', () => {
   const second = optimizePlans(first.config, first.layout);
   assertNoPersistedChanges(second);
   assert.deepEqual(second.config, first.config);
+});
+
+test('#299 Optimize keeps the real first-floor shared/outer role breakpoint', () => {
+  const config = {
+    model_version: PLAN_MODEL_VERSION,
+    spaces: [structuredClone(realFirstFloorFixture.space)],
+    markers: [], settings: {},
+  };
+  const before = structuredClone(config);
+  const first = optimizePlans(config, {});
+  assert.deepEqual(config, before, 'Optimize preview must not mutate the real fixture');
+  assert.equal(first.changed, true);
+  assert.deepEqual(checkMixedRoleRecords(first.config), []);
+  assert.deepEqual(checkWallKeys(first.config, { notes: [] }), []);
+
+  const y = 83 / 240;
+  const line = first.config.spaces[0].walls.filter((wall) => wall.a && wall.b
+    && Math.abs(wall.a[1] - y) < 1e-9 && Math.abs(wall.b[1] - y) < 1e-9);
+  assert.equal(line.length, 2, 'micro cleanup keeps one exact record per owner role');
+  assert.ok(line.every((wall) => wall.cm === 22));
+  assert.ok(line.every((wall) => wall.a[0] === 213 / 240 || wall.b[0] === 213 / 240),
+    'both runs stop at the exact shared/outer boundary');
+
+  const second = optimizePlans(first.config, first.layout);
+  assertNoPersistedChanges(second);
+  assert.deepEqual(second.config, first.config);
+  assert.deepEqual(second.layout, first.layout);
 });
 
 test('Optimize canonicalizes the six-room ULP source without claiming a visible move', () => {
