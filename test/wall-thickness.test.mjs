@@ -30,7 +30,7 @@ import { polygonArea, paperRoomShapes, splitRoomPath, sharedBoundary } from '../
 import { resolveOpenCuts } from '../test-build/open-spans.js';
 import { GRID_PITCH, NORM_W } from '../test-build/space-geometry.js';
 import { geometryArea } from '../test-build/physical-geometry.js';
-import { checkWallRecordsPreserved } from '../scripts/model-invariants.mjs';
+import { checkMixedRoleRecords, checkWallRecordsPreserved } from '../scripts/model-invariants.mjs';
 import { difference, intersection, union } from 'polyclip-ts';
 
 const closeTo = (got, want, tol = 1e-6) =>
@@ -918,18 +918,57 @@ test('a compacted exact wall covers a shorter collinear side in another room', (
   assert.ok(right && right.half > 0, 'hover/body profile must use the real inner face');
 });
 
-test('equal solid atomic pieces compact back to one whole-wall key', () => {
+test('#299 equal thickness does not compact across a shared-to-outer role boundary', () => {
   const rooms = partialRooms();
   const walls = [
     { key: wallKey([5, 0], [5, 4], pitch), cm: 30 },
     { key: wallKey([5, 4], [5, 10], pitch), cm: 30 },
   ];
   const next = normalizeWallIntervals(rooms, walls, [], pitch, cellCm, GRID_PITCH);
+  assert.equal(next.length, 2);
+  assert.ok(next.some((wall) => wall.key === wallKey([5, 0], [5, 4], pitch)));
+  assert.ok(next.some((wall) => wall.key === wallKey([5, 4], [5, 10], pitch)));
+  assert.ok(next.every((wall) => wall.cm === 30));
+  assert.deepEqual(checkMixedRoleRecords({ spaces: [{ id: 'roles', rooms, walls: next }] }), []);
+
+  const reversed = normalizeWallIntervals(
+    [...rooms].reverse(), [...walls].reverse(), [], pitch, cellCm, GRID_PITCH,
+  );
+  assert.deepEqual(
+    reversed.map((wall) => wall.key).sort(),
+    next.map((wall) => wall.key).sort(),
+    'room/input order must not change the physical role breakpoint',
+  );
+});
+
+test('#299 the shared owner pair is part of the compaction role', () => {
+  const rooms = [
+    { id: 'a', poly: [[0, 0], [5, 0], [5, 10], [0, 10]] },
+    { id: 'b', poly: [[5, 0], [10, 0], [10, 5], [5, 5]] },
+    { id: 'c', poly: [[5, 5], [10, 5], [10, 10], [5, 10]] },
+  ];
+  const walls = [
+    { key: wallKey([5, 0], [5, 5], pitch), cm: 22 },
+    { key: wallKey([5, 5], [5, 10], pitch), cm: 22 },
+  ];
+  const next = normalizeWallIntervals(rooms, walls, [], pitch, cellCm, GRID_PITCH);
+  const vertical = next.filter((wall) => wall.a?.[0] === 5 && wall.b?.[0] === 5);
+  assert.equal(vertical.length, 2);
+  assert.ok(vertical.some((wall) => wall.key === wallKey([5, 0], [5, 5], pitch)));
+  assert.ok(vertical.some((wall) => wall.key === wallKey([5, 5], [5, 10], pitch)));
+  assert.deepEqual(checkMixedRoleRecords({ spaces: [{ id: 'pairs', rooms, walls: next }] }), []);
+});
+
+test('#299 equal neighbouring outer atoms of one room still compact', () => {
+  const rooms = [{ id: 'a', poly: [[0, 0], [5, 0], [5, 10], [0, 10]] }];
+  const walls = [
+    { key: wallKey([5, 0], [5, 4], pitch), a: [5, 0], b: [5, 4], cm: 30 },
+    { key: wallKey([5, 4], [5, 10], pitch), a: [5, 4], b: [5, 10], cm: 30 },
+  ];
+  const next = normalizeWallIntervals(rooms, walls, [], pitch, cellCm, GRID_PITCH);
   assert.equal(next.length, 1);
   assert.equal(next[0].key, wallKey([5, 0], [5, 10], pitch));
   assert.equal(next[0].cm, 30);
-  assert.deepEqual(next[0].a, [5, 0]);
-  assert.deepEqual(next[0].b, [5, 10]);
 });
 
 test('different solid thicknesses remain separate atomic keys', () => {

@@ -43,8 +43,10 @@ grades a different stored key as an observation, not a violation: valid exact
 endpoints now prove that the record is resolvable even when its compatibility
 key is old or unparsable. Exact endpoints make a thickness boundary independent of whichever
 room topology later happens to split the same straight line. Normalisation
-merges consecutive solid pieces into each maximal run of equal thickness; a
-different thickness or a virtual gap remains a real break. Likewise,
+merges consecutive solid pieces only inside a maximal run of equal thickness
+with the same physical ownership: one outer room or the same sorted pair of
+shared rooms. A different thickness, virtual gap, outer/shared transition or
+change of shared-room pair remains a real break. Likewise,
 touching/overlapping `open_spans` of the same room pair are stored as one span;
 pair ownership remains a hard boundary so Split can derive exact `open_to` links.
 When a maximal wall run crosses a collinear vertex belonging to another room,
@@ -324,7 +326,10 @@ gaps and zero-thickness edges are not materialised. **Delete walls** removes the
 room without that conversion and cascades only openings owned by its exclusive
 walls. Shared masonry, existing partitions, partition-hosted openings and their
 physical thickness remain intact in both cases. The room, wall profile,
-partitions and openings are one Undo/Redo and persistence transaction.
+partitions and openings are one Undo/Redo and persistence transaction. The
+remaining wall profile is normalised against its post-delete ownership, so an
+equal thickness cannot be compacted across an outer/shared boundary or across
+two different shared-room pairs.
 
 ## 7. Out of scope
 
@@ -354,6 +359,11 @@ the real `349 / 120 / 5` short-ray handoff to a 20 cm shared wall at
 `cell_cm: 1/5/30`, reversed endpoints and permuted input (#288);
 exact parent-run thickness inherited by atomic children when
 closing a virtual neighbour, without partial-span leakage (#201).
+Role-aware compaction tests keep `shared(A,B)`, `outer(A)` and `shared(A,C)` as
+separate records even at equal thickness, while equal neighbouring atoms within
+one role still compact; the real first-floor fixture proves explicit Optimize
+is invariant-free and idempotent (#299). The edit-walk real-plan seeds 1 and 3
+exercise the same Optimize and Keep-walls entry points.
 Browser: seamless frame; fill not in hatch; m² drops with thickness; partial
 shared walls, mixed-thickness shared walls and walls containing a partial
 virtual stretch keep a visible disabled Resize handle and cannot split or

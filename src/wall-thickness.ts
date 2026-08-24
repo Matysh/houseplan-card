@@ -2142,18 +2142,41 @@ export function normalizeWallIntervals(
   coordScale = 1,
 ): WallEntry[] {
   if (!walls?.length) return [];
-  const atomic: WallInterval[] = [];
+  type OwnedInterval = WallInterval & { ownerSignature: string };
+  const resolved = wallIntervals(
+    rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale,
+  );
+  const ownersByKey = new Map<string, Set<string>>();
+  for (const interval of resolved) {
+    if (interval.open || !interval.kind || !interval.roomId) continue;
+    const owners = ownersByKey.get(interval.key) || new Set<string>();
+    owners.add(interval.roomId);
+    ownersByKey.set(interval.key, owners);
+  }
+  const ownerSignatureFor = (key: string): string => {
+    const owners = [...(ownersByKey.get(key) || [])].sort();
+    // A physical wall has one outer owner or two shared owners. Invalid
+    // multi-owner geometry is preserved fail-closed, one atom at a time: it
+    // must not become the bridge which compacts two otherwise separate roles.
+    if (owners.length !== 1 && owners.length !== 2) return `ambiguous:${key}`;
+    return `${owners.length === 1 ? 'outer' : 'shared'}:${owners.join('|')}`;
+  };
+  const atomic: OwnedInterval[] = [];
   const atomicKeys = new Set<string>();
-  for (const iv of wallIntervals(rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale)) {
+  for (const iv of resolved) {
     if (iv.open || !(iv.cm > 0) || atomicKeys.has(iv.key)) continue;
     atomicKeys.add(iv.key);
-    atomic.push(iv);
+    atomic.push({ ...iv, ownerSignature: ownerSignatureFor(iv.key) });
   }
 
-  // Compact every maximal solid run of one thickness. This still restores one
-  // whole-edge entry when all children agree, but retains an exact breakpoint
-  // when neighbouring real intervals intentionally have different thicknesses.
-  const parents: Array<{ a: number[]; b: number[]; key: string; cm: number; len: number }> = [];
+  // Compact every maximal solid run of one thickness AND one physical owner
+  // role. Equal centimetres cannot bridge shared(A,B) to outer(A), nor one
+  // shared pair to another: that creates a record whose thickness changes
+  // meaning halfway through its own span (#299).
+  const parents: Array<{
+    a: number[]; b: number[]; key: string; cm: number; len: number;
+    ownerSignature: string;
+  }> = [];
   for (const room of rooms || []) {
     if (!room?.id) continue;
     const pr = roomWallProfile(rooms, room.id, walls, openCuts, pitch, cellCm, gridPitch, coordScale);
@@ -2168,10 +2191,16 @@ export function normalizeWallIntervals(
         const first = children[at];
         const cm = pr.cms[first];
         if (!(cm > 0) || pr.kinds[first] === null) { at++; continue; }
+        const firstKey = keyOf(pr.poly[first], pr.poly[(first + 1) % pr.poly.length], pitch, coordScale);
+        const ownerSignature = ownerSignatureFor(firstKey);
         let end = at;
         while (end + 1 < children.length) {
           const next = children[end + 1];
-          if (pr.kinds[next] === null || pr.cms[next] !== cm) break;
+          const nextKey = keyOf(
+            pr.poly[next], pr.poly[(next + 1) % pr.poly.length], pitch, coordScale,
+          );
+          if (pr.kinds[next] === null || pr.cms[next] !== cm
+              || ownerSignatureFor(nextKey) !== ownerSignature) break;
           end++;
         }
         const last = children[end];
@@ -2179,7 +2208,7 @@ export function normalizeWallIntervals(
         const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
         if (len > 0) parents.push({
           a: [a[0], a[1]], b: [b[0], b[1]],
-          key: keyOf(a, b, pitch, coordScale), cm, len,
+          key: keyOf(a, b, pitch, coordScale), cm, len, ownerSignature,
         });
         at = end + 1;
       }
@@ -2194,6 +2223,7 @@ export function normalizeWallIntervals(
   for (const parent of parents) {
     const matches = atomic.filter((iv) => (
       !covered.has(iv.key) && iv.cm === parent.cm &&
+      iv.ownerSignature === parent.ownerSignature &&
       angleClose(segAngle(iv.a, iv.b), segAngle(parent.a, parent.b)) &&
       distToSeg(iv.a[0], iv.a[1], parent.a[0], parent.a[1], parent.b[0], parent.b[1]) <= tol &&
       distToSeg(iv.b[0], iv.b[1], parent.a[0], parent.a[1], parent.b[0], parent.b[1]) <= tol

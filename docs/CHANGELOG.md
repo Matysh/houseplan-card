@@ -22,6 +22,11 @@
   keep both areas visible with leader lines, without covering each other or the
   room-settings button
   ([#300](https://github.com/Matysh/houseplan-card/issues/300)).
+- “Optimize plans” and room deletion no longer combine an equal wall thickness
+  across a shared-to-outer boundary or between different pairs of rooms. The
+  saved wall profile keeps each physical role at its exact breakpoint, avoiding
+  a record that changes meaning halfway through its span
+  ([#299](https://github.com/Matysh/houseplan-card/issues/299)).
 - While drawing Walls, `Esc` now finishes all accepted segments as independent
   walls and releases the last point without deleting geometry or leaving the
   tool. The next click starts a new chain; `Ctrl/Cmd+Z` remains the shortcut
