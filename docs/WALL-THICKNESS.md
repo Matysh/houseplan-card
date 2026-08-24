@@ -320,11 +320,14 @@ the two #275 owner backups, including overlapping neighbouring node masks,
 mixed depth and the unchanged non-orthogonal #249 wedge;
 exact parent-run thickness inherited by atomic children when
 closing a virtual neighbour, without partial-span leakage (#201).
-Browser: seamless frame; fill not in hatch; m² drops with thickness; a partial
-virtual stretch, its solid thick remainders and Undo move as one real resize;
-a shorter moved room edge splits a longer 33 cm record, moves only its covered
-part together with its opening, commits both pieces and restores the exact
-source with Undo (`demo/smoke_resize_wall_thickness.mjs`);
+Browser: seamless frame; fill not in hatch; m² drops with thickness; partial
+shared walls, mixed-thickness shared walls and walls containing a partial
+virtual stretch keep a visible disabled Resize handle and cannot split or
+re-key their atomic records (`demo/smoke_wall_thickness.mjs`,
+`demo/smoke_resize_virtual_thick.mjs`,
+`demo/smoke_resize_wall_thickness.mjs`); an eligible uniformly thick exact
+wall moves through the fixed-topology safe pipeline and Undo restores its
+source (`demo/smoke_room_resize.mjs`);
 the virtual rubber band paints above the real body; sun starts at the room-side
 opening corners; nav mode restores after `can_write`; a 1 cm body uses
 solid-only in both full and static cards while a 20 cm body keeps its hatch;

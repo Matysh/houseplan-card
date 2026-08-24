@@ -2756,14 +2756,15 @@ require hands on real hardware — they remain for the human pass.
       10°. A lock badge and Glow tunnel behave exactly like a door
       [auto: test/logic.test.mjs + test/wall-thickness.test.mjs +
       tests_backend/test_validation.py + smoke_styling_hooks]
-- [ ] **Shared once / clear → line / resize re-keys**: one body for a shared
-      wall; clearing thickness restores the centreline; resizing a thick wall
-      keeps the thickness on the moved stretch, including both atomic solid
-      remainders around a partial virtual span. When the moved room edge covers
-      only part of a longer exact thickness entry, it splits losslessly and a
-      compatibility-key collision cannot erase either result
+- [ ] **Shared once / clear → line / safe Resize**: one body for a shared wall;
+      clearing thickness restores the centreline. Resize preserves thickness
+      on an eligible uniformly thick exact wall. Partial/unequal shared walls,
+      mixed-thickness walls and walls containing a partial virtual span remain
+      visibly disabled; an attempted drag changes no rooms, openings, virtual
+      spans, thickness records or Undo history
       [auto: smoke_wall_thickness + smoke_resize_virtual_thick +
-      smoke_resize_wall_thickness + test/wall-thickness.test.mjs + mutation-gate]
+      smoke_resize_wall_thickness + smoke_room_resize +
+      test/wall-thickness.test.mjs + mutation-gate]
 - [ ] **Wall key survives storage round-trip (#258)**: exact grid endpoints and
       their nine-decimal stored form produce one midpoint key, including odd
       and even lengths, negative/reversed coordinates and render-space scale.

@@ -2,7 +2,7 @@
  * Wall thickness (docs/WALL-THICKNESS.md): tool, hatch body, floor area drops
  * with thickness, opening cuts, centred/default and flipped door symbols,
  * shared once, clear→line,
- * degrade/rekey, real resize+undo keeps walls.
+ * degrade/rekey, safe Resize rejects a mixed-thickness shared wall.
  */
 import { launch, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch();
@@ -214,7 +214,9 @@ const res = await page.evaluate(async () => {
   }
   out.rekeyReady = !!(sp().walls || []).find((w) => w.cm === 30);
 
-  // Real resize: drag shared-wall handle one grid step, then undo (AUD-159B4-01).
+  // #277: this shared wall deliberately contains 25/30 cm atomic records.
+  // The handle remains visible but Resize must refuse it without creating a
+  // history command or changing any persisted thickness record.
   c._setMode('plan');
   c._tool = 'resize';
   c._wallDialog = null;
@@ -247,23 +249,23 @@ const res = await page.evaluate(async () => {
   }
   out.resizeEdgeFound = !!sharedHandle;
   const wallsBefore = JSON.stringify(sp().walls || []);
+  const historyBefore = c._geometryHistory.size;
   if (sharedHandle) {
     const cx = +sharedHandle.getAttribute('cx');
     const cy = +sharedHandle.getAttribute('cy');
     const step = c._gridPitch;
+    out.mixedThicknessResizeDisabled = sharedHandle.getAttribute('aria-disabled') === 'true';
     pev('pointerdown', sharedHandle, cx, cy);
     pev('pointermove', sharedHandle, cx + step, cy);
     pev('pointerup', sharedHandle, cx + step, cy);
     await upd();
-    out.resizeKeeps = (sp().walls || []).some((w) => w.cm === 30);
-    c._undoGeometry();
-    await upd();
-    out.resizeUndoRestores = (sp().walls || []).some((w) => w.cm === 30)
-      && JSON.stringify(sp().walls || []) === wallsBefore;
+    out.disabledResizeKeepsWalls = JSON.stringify(sp().walls || []) === wallsBefore;
+    out.disabledResizeCreatesNoHistory = c._geometryHistory.size === historyBefore;
   } else {
     c._dropLegacySegments();
-    out.resizeKeeps = (sp().walls || []).some((w) => w.cm === 30);
-    out.resizeUndoRestores = false;
+    out.mixedThicknessResizeDisabled = false;
+    out.disabledResizeKeepsWalls = false;
+    out.disabledResizeCreatesNoHistory = false;
   }
 
   out.pixelProbe = !!sr().querySelector('.wallbody');
