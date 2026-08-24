@@ -65,12 +65,13 @@ export const SMOKE_LINKS = [
   {
     symbols: [
       'resolveSafeResize', 'applySafeResize', 'validateSafeResize', 'clampSafeResize',
-      'SafeResizePlan', 'SafeResizeResolution', 'SafeResizeReason', 'SafeResizeObstacle',
+      'safeResizePointerDisplacement', 'SafeResizePlan', 'SafeResizeResolution',
+      'SafeResizeReason', 'SafeResizeObstacle',
     ],
-    smokes: ['smoke_room_resize.mjs'],
-    because: 'the #277 production-bundle scenario drives the private pointer controller and '
-      + 'observes fixed topology, the first-corner clamp, disabled accessibility, one Undo and '
-      + 'zero-write cancellation; pure safe-resize helpers are tree-shaken behind that controller',
+    smokes: ['smoke_room_resize.mjs', 'smoke_resize_pointer_real_plan.mjs'],
+    because: 'the #277 synthetic scenario covers fixed topology, first-corner clamp and disabled '
+      + 'accessibility, while #293 recreates the card from config/get and drives real browser mouse '
+      + 'events on the tracked second-floor plan; pure helpers are hidden behind both controllers',
   },
   {
     symbols: ['reconcileCoincidentPartitions', 'CoincidentPartitionResult'],
@@ -126,7 +127,7 @@ export const SMOKE_LINKS = [
       'rekeyWallsAfterMove', 'WallEntry', 'angleClose', 'clampWallCm',
       'closePoint', 'distToSeg', 'keyOf', 'pointAt', 'segAngle', 'wallDir', 'wallEntry',
     ],
-    smokes: ['smoke_resize_wall_thickness.mjs'],
+    smokes: ['smoke_resize_wall_thickness.mjs', 'smoke_resize_pointer_real_plan.mjs'],
     because: 'the real pointer-handler smoke proves that a partial overlap is split losslessly '
       + 'through live preview, commit, opening movement and Undo, but the browser bundle does '
       + 'not expose the pure transformer name to the scenario',

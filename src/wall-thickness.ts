@@ -641,6 +641,7 @@ export function rekeyWallsAfterMove(
         .sort((a, b) => a - b)
         .filter((value, index, list) => index === 0
           || Math.abs(value - list[index - 1]) * wallLen > exactEps);
+      const mappedAtoms: [number[], number[]][] = [];
       for (let i = 0; i + 1 < bounds.length; i++) {
         const lo = bounds[i], hi = bounds[i + 1];
         if ((hi - lo) * wallLen <= exactEps) continue;
@@ -649,7 +650,7 @@ export function rekeyWallsAfterMove(
         const candidates = overlaps.filter((overlap) =>
           mid >= overlap.lo - 1e-12 && mid <= overlap.hi + 1e-12);
         if (!candidates.length) {
-          pushExact(a, b, w.cm);
+          mappedAtoms.push([a, b]);
           continue;
         }
         const first: [number[], number[]] = [
@@ -661,8 +662,34 @@ export function rekeyWallsAfterMove(
         });
         // Conflicting room transforms are invalid planner input.  Preserve the
         // source atom rather than selecting by array order or losing masonry.
-        if (conflict) pushExact(a, b, w.cm);
-        else pushExact(first[0], first[1], w.cm);
+        mappedAtoms.push(conflict ? [a, b] : first);
+      }
+
+      // Two rooms on opposite sides of one shared seam contribute separate
+      // side-edge moves. Moving the seam changes their meeting point, but the
+      // physical wall covering both side edges is still one straight,
+      // continuous record. Reassemble only atoms that meet exactly and stay
+      // collinear; a real partial perpendicular move still leaves disjoint or
+      // angled atoms and therefore keeps the lossless split from #253.
+      const collinearForward = (left: [number[], number[]], right: [number[], number[]]): boolean => {
+        const ldx = left[1][0] - left[0][0], ldy = left[1][1] - left[0][1];
+        const rdx = right[1][0] - right[0][0], rdy = right[1][1] - right[0][1];
+        const leftLength = Math.hypot(ldx, ldy);
+        if (leftLength <= exactEps || ldx * rdx + ldy * rdy <= 0) return false;
+        return Math.abs(ldx * rdy - ldy * rdx) / leftLength <= exactEps;
+      };
+      const coalesced: [number[], number[]][] = [];
+      for (const atom of mappedAtoms) {
+        const previous = coalesced[coalesced.length - 1];
+        if (previous && closePoint(previous[1], atom[0])
+            && collinearForward(previous, atom)) {
+          previous[1] = atom[1];
+        } else {
+          coalesced.push([[...atom[0]], [...atom[1]]]);
+        }
+      }
+      for (const [a, b] of coalesced) {
+        pushExact(a, b, w.cm);
       }
       continue;
     }

@@ -295,6 +295,54 @@ export const MUTANTS = [
     }],
   },
   {
+    id: 'resize-pointer-delta-zeroed',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#293 pointer displacement" test/resize.test.mjs',
+    because: 'an enabled handle must turn real pointer travel into a signed wall displacement; '
+      + 'returning zero recreates the active-but-inert user report from #293',
+    patches: [{
+      file: 'src/resize.ts',
+      find: '  return (current[0] - start[0]) * normal[0]',
+      replace: '  return (current[0] - start[0]) * 0',
+    }],
+  },
+  {
+    id: 'resize-shared-seam-not-coalesced',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="moving a shared seam" test/wall-thickness.test.mjs',
+    because: 'two owners moving one internal seam must keep the continuous side wall as one '
+      + 'record; atomising it changes metadata cardinality and silently rejects every preview (#293)',
+    patches: [{
+      file: 'src/wall-thickness.ts',
+      find: '        if (previous && closePoint(previous[1], atom[0])\n'
+        + '            && collinearForward(previous, atom)) {',
+      replace: '        if (false && previous && closePoint(previous[1], atom[0])\n'
+        + '            && collinearForward(previous, atom)) {',
+    }],
+  },
+  {
+    id: 'resize-pointer-capture-removed',
+    guard: 'node demo/smoke_resize_pointer_real_plan.mjs',
+    because: 'the real pointer must keep driving the gesture after it leaves the small SVG handle; '
+      + 'without capture the visible preview freezes as soon as the cursor exits (#293)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '    capturePointer(ev);\n    const plan = resolution.plan;',
+      replace: '    // mutant: pointer capture removed\n    const plan = resolution.plan;',
+    }],
+  },
+  {
+    id: 'resize-preview-reject-silent',
+    guard: 'node demo/smoke_room_resize.mjs',
+    because: 'an unexpected runtime preflight rejection must explain why an enabled handle '
+      + 'stopped instead of restoring the original silent no-op (#293)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: "        this._showToast(this._t('resize.preview_failed'));",
+      replace: '        // mutant: reject remains silent',
+    }],
+  },
+  {
     id: 'resize-labels-show-centreline',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="innerEdgeSpan measures between wall faces" '

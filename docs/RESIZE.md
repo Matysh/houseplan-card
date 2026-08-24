@@ -105,8 +105,17 @@ from it; `_serverCfg` is untouched until pointerup. The overlay contains rooms,
 openings, re-keyed wall thickness/open spans and byte-equivalent partitions,
 drafts, columns, decor and plan transform.
 
+Pointer displacement is measured from the exact pointerdown position and
+projected onto the moving wall's immutable normal. It does not depend on which
+part of the handle was pressed. The handle captures the owning pointer, ignores
+other pointer ids and continues receiving movement outside its visible hit
+area. `pointercancel` or `lostpointercapture` aborts the gesture.
+
 The renderer consumes that exact overlay, so fills, masonry, openings, labels
-and measurements show one candidate. Its production wall/floor result is cached
+and measurements show one candidate. Before an overlay becomes visible it must
+pass the same fail-closed physical-geometry barrier as persistence. A rejected
+candidate leaves the wall at the last safe visible position and shows one
+localized explanation per gesture. Its production wall/floor result is cached
 for the preview cfg epoch. Pointerup reuses that exact result (or computes it if
 the release happened before a frame) and then re-runs the pure invariants.
 
@@ -121,6 +130,12 @@ with zero Undo entries and zero writes.
 `rekeyWallsAfterMove()` and `rekeyOpenSpansAfterMove()` map the immutable
 snapshot to the fixed-topology candidate. Physical centimetre values and open
 span count must survive; the production geometry check is fail-closed.
+
+When the two owners of a shared moving seam split one physically continuous
+side-wall record at their meeting point, the mapped atoms are joined back only
+if their endpoints still meet exactly and their directions remain collinear.
+This preserves one record and its thickness for the continuous wall without
+undoing the lossless split required by a genuinely partial or angled move.
 
 Ordinary openings centred on the moving wall translate by the same vector.
 Their type, angle, length and compatibility fields stay unchanged. Hosted
@@ -153,6 +168,10 @@ building the preview frame itself.
 - `demo/smoke_room_resize.mjs`: production bundle pointer handlers,
   preview/commit/Undo, disabled accessibility, real fixture topology,
   production-preflight failure and cancellation;
+- `demo/smoke_resize_pointer_real_plan.mjs`: the tracked second-floor fixture
+  entering through `config/get`, real browser mouse events, ten-grid-step live
+  preview and atomic commit, wall metadata, Undo, pointer capture outside the
+  handle, foreign-pointer isolation, Escape and capture-loss cancellation;
 - `test/resize-optimize.test.mjs` and
   `demo/smoke_resize_outer_reconciliation.mjs`: an exact outer-wall partition
   blocks a zero-range handle, Optimize safely rehosts its windows and removes
@@ -161,7 +180,8 @@ building the preview frame itself.
 - `demo/benchmark_safe_resize.mjs`: same-run pointer and cached pointerup budgets;
 - `demo/benchmark_safe_resize_render.mjs`: warm 20-room/80-handle layer p95
   and exactly one geometry snapshot per rendered frame;
-- mutation gate: eligibility, third-room, topology, side ownership, jamb and
+- mutation gate: eligibility, third-room, topology, side ownership, jamb,
+  pointer displacement/capture, shared-seam coalescing, preview rejection and
   commit-preflight bypass mutants.
 
 Targeted light/dark golden scenes cover enabled/disabled handles, opening/corner

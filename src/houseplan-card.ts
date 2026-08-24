@@ -42,6 +42,7 @@ import {
 } from './logic';
 import {
   resolveSafeResize, applySafeResize, clampSafeResize, validateSafeResize,
+  safeResizePointerDisplacement,
   polyIsSimple, areaM2, formatArea, MIN_ROOM_CM,
   type SafeOpeningIn, type SafeResizeObstacle, type SafeResizeOptions,
   type SafeResizePlan, type SafeResizeReason, type SafeResizeResolution,
@@ -1610,6 +1611,7 @@ class HouseplanCard extends LitElement {
   private _rszSel: string | null = null;
   private _rszDrag: {
     pid: number;
+    start: [number, number];
     roomId: string;
     plan: SafeResizePlan;
     opts: SafeResizeOptions;
@@ -1619,6 +1621,7 @@ class HouseplanCard extends LitElement {
     moved: boolean;
     d: number;
     changed: string[];
+    rejectNotified: boolean;
   } | null = null;
   private _rszEligibilityCache: {
     key: string;
@@ -8464,10 +8467,13 @@ class HouseplanCard extends LitElement {
    *  config — the single point where a resize becomes visible to _writeConfig. */
   private _rszApplyPreview(
     polys: Record<string, number[][]>, ops: Record<string, [number, number]>,
-  ): boolean {
+  ): { ok: true } | {
+    ok: false;
+    reason: 'missing-context' | 'wall-metadata' | 'open-span-metadata' | 'physical-geometry';
+  } {
     const g = this._rszDrag;
     const real = this._serverCfg?.spaces.find((s: any) => s.id === this._space);
-    if (!g || !real || !this._serverCfg) return false;
+    if (!g || !real || !this._serverCfg) return { ok: false, reason: 'missing-context' };
     const s = JSON.parse(g.snap); // fresh deep copies every move — free to mutate
     const sp: any = {
       ...real,
@@ -8532,27 +8538,39 @@ class HouseplanCard extends LitElement {
       .sort((a: number, b: number) => a - b);
     const beforeWallCms = wallThicknesses(s.walls || []);
     const afterWallCms = wallThicknesses(sp.walls || []);
-    if (JSON.stringify(beforeWallCms) !== JSON.stringify(afterWallCms)
-        || (s.open_spans || []).length !== ((sp as any).open_spans || []).length) return false;
+    if (JSON.stringify(beforeWallCms) !== JSON.stringify(afterWallCms)) {
+      return { ok: false, reason: 'wall-metadata' };
+    }
+    if ((s.open_spans || []).length !== ((sp as any).open_spans || []).length) {
+      return { ok: false, reason: 'open-span-metadata' };
+    }
+    if (!this._rszSpaceCandidateRenderable(this._space, sp)) {
+      return { ok: false, reason: 'physical-geometry' };
+    }
     this._rszPreview = { space: this._space, sp };
     this._cfgEpoch++;
-    return true;
+    return { ok: true };
   }
 
-  /** Final fail-closed check for the exact overlay through the common barrier. */
-  private _rszCandidateRenderable(preview: { space: string; sp: any } | null): boolean {
-    if (!preview || preview.space !== this._space || this._rszPreview !== preview
-        || !this._serverCfg) return false;
+  /** Fail-closed check for one exact candidate through the common barrier. */
+  private _rszSpaceCandidateRenderable(spaceId: string, sp: any): boolean {
+    if (!this._serverCfg) return false;
     try {
       const candidate = {
         ...this._serverCfg,
         spaces: this._serverCfg.spaces.map((space: any) =>
-          space.id === preview.space ? preview.sp : space),
+          space.id === spaceId ? sp : space),
       } as ServerConfig;
-      return this._checkSpacePhysicalGeometry(candidate, preview.space).ok;
+      return this._checkSpacePhysicalGeometry(candidate, spaceId).ok;
     } catch {
       return false;
     }
+  }
+
+  /** Final identity guard for the exact overlay already shown to the user. */
+  private _rszCandidateRenderable(preview: { space: string; sp: any } | null): boolean {
+    return !!preview && preview.space === this._space && this._rszPreview === preview
+      && this._rszSpaceCandidateRenderable(preview.space, preview.sp);
   }
 
   private _rszEdgeDown(ev: PointerEvent, roomId: string, edge: number): void {
@@ -8567,10 +8585,12 @@ class HouseplanCard extends LitElement {
     }
     capturePointer(ev);
     const plan = resolution.plan;
+    const start = this._svgPoint(ev);
     this._rszDrag = {
-      pid: ev.pointerId, roomId, plan, opts: this._rszOptsFor(plan.a, plan.b),
+      pid: ev.pointerId, start: [start[0], start[1]], roomId, plan,
+      opts: this._rszOptsFor(plan.a, plan.b),
       rooms, openings: this._rszOpenings(), snap: this._rszSnapshot(),
-      moved: false, d: 0, changed: [...plan.roomIds],
+      moved: false, d: 0, changed: [...plan.roomIds], rejectNotified: false,
     };
   }
 
@@ -8595,7 +8615,7 @@ class HouseplanCard extends LitElement {
     ev.stopPropagation();
     const p = this._svgPoint(ev);
     const plan = g.plan;
-    const dRaw = (p[0] - plan.a[0]) * plan.n[0] + (p[1] - plan.a[1]) * plan.n[1];
+    const dRaw = safeResizePointerDisplacement(g.start, p, plan.n);
     // the moved wall LINE lands on the grid, like every drawn wall
     const sn = this._snap([plan.a[0] + plan.n[0] * dRaw, plan.a[1] + plan.n[1] * dRaw]);
     const wanted = (sn[0] - plan.a[0]) * plan.n[0] + (sn[1] - plan.a[1]) * plan.n[1];
@@ -8605,7 +8625,8 @@ class HouseplanCard extends LitElement {
     const previousLive = this._rszLive;
     const previousD = g.d;
     let res = applySafeResize(g.rooms, g.openings, plan, d);
-    if (!this._rszApplyPreview(res.polys, res.openings)) {
+    const previewResult = this._rszApplyPreview(res.polys, res.openings);
+    if (!previewResult.ok) {
       // Persistence metadata is part of the geometry transaction. If wall or
       // virtual-span rekeying would be lossy, keep the last complete preview:
       // the pointer visibly stops there and pointerup can commit only that
@@ -8613,6 +8634,10 @@ class HouseplanCard extends LitElement {
       this._rszPreview = previousPreview;
       this._rszLive = previousLive;
       g.d = previousD;
+      if (!g.rejectNotified) {
+        g.rejectNotified = true;
+        this._showToast(this._t('resize.preview_failed'));
+      }
       this.requestUpdate();
       return;
     }

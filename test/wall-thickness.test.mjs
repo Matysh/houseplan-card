@@ -586,6 +586,27 @@ test('issue 253 equivalent shared-room transforms apply once and conflicts fail 
   assert.deepEqual([conflictA[0].a, conflictA[0].b], old);
 });
 
+test('issue 293 moving a shared seam keeps one continuous side-wall record', () => {
+  const wall = setWallThickness([], [0, 0], [2, 0], 20, pitch);
+  const next = rekeyWallsAfterMove(
+    wall,
+    [[[0, 0], [1, 0]], [[2, 0], [1, 0]]],
+    [[[0, 0], [1.2, 0]], [[2, 0], [1.2, 0]]],
+    pitch,
+  );
+  assert.equal(next.length, 1, 'a moving internal seam must not atomise one physical wall');
+  assert.deepEqual([next[0].a, next[0].b], [[0, 0], [2, 0]]);
+  assert.equal(next[0].cm, 20);
+
+  const bent = rekeyWallsAfterMove(
+    wall,
+    [[[0, 0], [1, 0]], [[2, 0], [1, 0]]],
+    [[[0, 0], [1, 0.005]], [[2, 0], [1, 0.005]]],
+    pitch,
+  );
+  assert.equal(bent.length, 2, 'meeting atoms with different directions must remain losslessly split');
+});
+
 test('issue 253 key collisions never erase different exact or legacy records', () => {
   const exact = [
     { key: wallKey([-1, 0], [1, 0], pitch), cm: 20, a: [-1, 0], b: [1, 0] },

@@ -32,6 +32,29 @@
 полный прогон — workflow `mutation-gate.yml`, перед стабильным релизом и по
 понедельникам. Дешёвая половина идёт с юнитами: `test/mutation-gate.test.mjs`.
 
+## Resize: реальный pointer pipeline (#293)
+
+- [ ] `demo/smoke_resize_pointer_real_plan.mjs` загружает tracked fixture
+      второго этажа обычным `houseplan/config/get`, включает Resize кнопкой и
+      двигает доступную общую стену только реальными `page.mouse` событиями.
+      Прямые вызовы приватных resize-методов в этом smoke запрещены source
+      guard-юнитом.
+- [ ] На десятом шаге сетки обе комнаты имеют видимый preview, а server config
+      ещё байт-в-байт исходный. Pointerup создаёт одну history-команду и одну
+      запись; wall count и набор толщин сохраняются; Ctrl+Z возвращает исходную
+      геометрию.
+- [ ] Pointer capture продолжает жест более чем в 60 px от хэндла, чужой
+      pointer id игнорируется, а Escape и `lostpointercapture` возвращают DOM и
+      config без дополнительной записи.
+- [ ] Невозможная физическая preview-геометрия останавливает стену на последней
+      безопасной позиции и показывает один локализованный toast за жест. Отдельно
+      проверяется отказ финального preflight без commit/history.
+- [ ] Мутанты `resize-pointer-delta-zeroed`,
+      `resize-shared-seam-not-coalesced`, `resize-pointer-capture-removed`,
+      `resize-preview-reject-silent` и
+      `safe-resize-commit-preflight-bypassed` обязаны красить соответствующие
+      unit/production smoke guards.
+
 ## Decor composition order (#231)
 
 - [ ] All five decor kinds render in one `.decorlayer` after opaque room/data

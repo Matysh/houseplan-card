@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- An enabled Resize handle now follows the real pointer on the affected
+  second-floor layout instead of staying inert. The gesture measures movement
+  from the press point, preserves one continuous side-wall thickness record,
+  keeps working outside the handle through pointer capture, and stops at the
+  last renderable preview with an explicit message instead of silently doing
+  nothing ([#293](https://github.com/Matysh/houseplan-card/issues/293)).
 - Every saved plan coordinate now converges to the exact shared `1/240` grid
   value when it differs only by an invisible floating-point tail. Authored
   off-grid/diagonal geometry is preserved. “Optimize plans” reports the number

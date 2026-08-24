@@ -242,22 +242,67 @@ await enter();
 await page.evaluate(() => {
   const card = window.__card;
   card.__resizePreflight = card._checkSpacePhysicalGeometry;
+  card.__resizeShowToast = card._showToast;
+  card.__resizeRejectToasts = 0;
   card._checkSpacePhysicalGeometry = () => ({ ok: false, status: 'failed' });
+  card._showToast = function resizeRejectToast(message) {
+    if (/last safe position|последн/i.test(message)) card.__resizeRejectToasts++;
+    return card.__resizeShowToast.call(card, message);
+  };
 });
 const preflightBefore = JSON.stringify(await roomPoly('preflight'));
 const [px, py] = await screenPt(400, 250);
 const [preflightX] = await screenPt(500, 250);
 await pointer('pointerdown', px, py, { cx: 400, cy: 250, pointerId: 80 });
 await pointer('pointermove', preflightX, py, { pointerId: 80 });
+await pointer('pointermove', preflightX + 20, py, { pointerId: 80 });
+await settle();
+check('safe_resize.preflight_visible_reason', await page.evaluate(() =>
+  /last safe position|последн/i.test(window.__card._toast)), true);
+check('safe_resize.preflight_reason_once', await page.evaluate(() =>
+  window.__card.__resizeRejectToasts), 1);
 await pointer('pointerup', preflightX, py, { pointerId: 80 });
 await settle();
 await page.evaluate(() => {
   const card = window.__card;
   card._checkSpacePhysicalGeometry = card.__resizePreflight;
+  card._showToast = card.__resizeShowToast;
   delete card.__resizePreflight;
+  delete card.__resizeShowToast;
+  delete card.__resizeRejectToasts;
 });
 check('safe_resize.preflight_no_commit', JSON.stringify(await roomPoly('preflight')), preflightBefore);
 check('safe_resize.preflight_zero_write', await page.evaluate(() => window.__card._geometryHistory.size), 0);
+
+// The candidate may become invalid after a valid preview (for example a
+// concurrent structural update). Pointerup repeats the common preflight and
+// must not trust the fact that an overlay was shown.
+await setRooms([rect('commit-preflight', 100, 100, 400, 400)]);
+await enter();
+const commitPreflightBefore = JSON.stringify(await roomPoly('commit-preflight'));
+const [cpx, cpy] = await screenPt(400, 250);
+const [commitPreflightX] = await screenPt(500, 250);
+await pointer('pointerdown', cpx, cpy, { cx: 400, cy: 250, pointerId: 84 });
+await pointer('pointermove', commitPreflightX, cpy, { pointerId: 84 });
+await settle();
+check('safe_resize.commit_preflight_preview_exists',
+  Math.abs((await edgeX('commit-preflight', 1, true)) - 500) < 6, true);
+await page.evaluate(() => {
+  const card = window.__card;
+  card.__resizeCommitPreflight = card._checkSpacePhysicalGeometry;
+  card._checkSpacePhysicalGeometry = () => ({ ok: false, status: 'failed' });
+});
+await pointer('pointerup', commitPreflightX, cpy, { pointerId: 84 });
+await settle();
+await page.evaluate(() => {
+  const card = window.__card;
+  card._checkSpacePhysicalGeometry = card.__resizeCommitPreflight;
+  delete card.__resizeCommitPreflight;
+});
+check('safe_resize.commit_preflight_no_commit',
+  JSON.stringify(await roomPoly('commit-preflight')), commitPreflightBefore);
+check('safe_resize.commit_preflight_zero_write',
+  await page.evaluate(() => window.__card._geometryHistory.size), 0);
 
 // pointercancel follows the abort path: no persistence, history or hidden save.
 await setRooms([rect('solo', 100, 100, 400, 400)]);

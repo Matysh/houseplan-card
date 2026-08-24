@@ -8,7 +8,7 @@ import {
   validateEdgeDrag, clampEdgeDrag, applyRoomScale, validateRoomScale,
   clampRoomScale, areaM2, formatArea, MIN_ROOM_CM,
   resolveSafeResize, applySafeResize, validateSafeResize, clampSafeResize,
-  safeResizeCachedDeltaCount,
+  safeResizeCachedDeltaCount, safeResizePointerDisplacement,
 } from '../test-build/resize.js';
 import { roomPoly } from '../test-build/logic.js';
 import fs from 'node:fs';
@@ -263,6 +263,24 @@ test('HP-1550-02: an already-thin triangle may improve but never worsen', () => 
 // ================= #277: production uses only this fixed-topology pipeline.
 
 const SAFE = { minDim: 25, eps: 0.1, movingHalf: 10, obstacles: [] };
+
+test('#293 pointer displacement is relative to the click and only follows the normal', () => {
+  const normal = [1, 0];
+  for (const start of [[50, 100], [5, 100], [95, 100]]) {
+    assert.equal(safeResizePointerDisplacement(start, [start[0] + 40, start[1]], normal), 40);
+    assert.equal(safeResizePointerDisplacement(start, [start[0], start[1] + 60], normal), 0);
+  }
+  assert.equal(safeResizePointerDisplacement([50, 100], [90, 100], [-1, 0]), -40);
+  assert.equal(safeResizePointerDisplacement([NaN, 0], [10, 0], normal), 0);
+});
+
+test('#293 real-plan smoke cannot bypass the production pointer pipeline', () => {
+  const source = fs.readFileSync(new URL('../demo/smoke_resize_pointer_real_plan.mjs', import.meta.url), 'utf8');
+  assert.match(source, /page\.mouse\.down\(\)/);
+  assert.match(source, /real-plan-second-floor\.json/);
+  assert.doesNotMatch(source, /\._rsz(?:Move|ApplyPreview|Up)\s*\(/);
+  assert.doesNotMatch(source, /\b(?:applySafeResize|clampSafeResize|validateSafeResize)\s*\(/);
+});
 
 test('#277 non-shared: exactly two existing vertices move and topology stays fixed', () => {
   const rooms = [A()];

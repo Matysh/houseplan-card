@@ -45,7 +45,8 @@ test('#277 every stable disabled reason and commit failure is localized RU/EN', 
 
 test('#277 a lossy persistence rekey stops at the last complete preview', () => {
   assert.match(card, /JSON\.stringify\(beforeWallCms\) !== JSON\.stringify\(afterWallCms\)/);
-  assert.match(card, /if \(!this\._rszApplyPreview\(res\.polys, res\.openings\)\)/);
+  assert.match(card, /const previewResult = this\._rszApplyPreview\(res\.polys, res\.openings\)/);
+  assert.match(card, /if \(!previewResult\.ok\)/);
   assert.match(card, /this\._rszPreview = previousPreview/);
   assert.match(card, /g\.d = previousD/);
 });

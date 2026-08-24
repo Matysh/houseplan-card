@@ -126,6 +126,18 @@ const add2 = (p: number[], d: number[]) => [p[0] + d[0], p[1] + d[1]];
 const dot = (p: number[], q: number[]) => p[0] * q[0] + p[1] * q[1];
 const len2d = (p: number[]) => Math.hypot(p[0], p[1]);
 
+/** Signed pointer travel along the immutable wall normal (#293). The click
+ * point itself is the origin: clicking near either jamb must not add the
+ * wall's absolute position to the gesture. */
+export function safeResizePointerDisplacement(
+  start: number[], current: number[], normal: [number, number],
+): number {
+  if (![start?.[0], start?.[1], current?.[0], current?.[1], normal?.[0], normal?.[1]]
+    .every(Number.isFinite)) return 0;
+  return (current[0] - start[0]) * normal[0]
+    + (current[1] - start[1]) * normal[1];
+}
+
 function signedArea(poly: number[][]): number {
   let s = 0;
   for (let i = 0; i < poly.length; i++) {

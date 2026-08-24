@@ -110,7 +110,8 @@ test('#278 production source routes physical writers through one barrier and dec
   assert.match(source, /_commitPhysicalGeometry\([\s\S]{0,160}history\.split_room/);
   assert.match(source, /_recordGeometry\(this\._t\('history\.decor_edit'/);
   assert.doesNotMatch(source, /_commitPhysicalGeometry\(this\._t\('history\.decor_/);
-  assert.match(source, /this\._checkSpacePhysicalGeometry\(candidate, preview\.space\)/);
+  assert.match(source, /this\._rszSpaceCandidateRenderable\(preview\.space, preview\.sp\)/);
+  assert.match(source, /this\._checkSpacePhysicalGeometry\(candidate, spaceId\)\.ok/);
   assert.match(source, /if \(physicalChanged\)[\s\S]{0,900}_pendingPhysicalWrites\.set\(state\.spaceId/,
     'physical Undo/Redo must retain the deferred-write barrier');
   assert.match(source, /if \(configChanged\)[\s\S]{0,300}_pendingPhysicalWrites\.clear\(\)/,
