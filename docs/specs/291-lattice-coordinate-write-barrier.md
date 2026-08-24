@@ -260,16 +260,26 @@ npm run invariants -- --config <candidate> --lattice
 
 ### AC4. Произвольная editing session не возвращает noise
 
-Production-bundle smoke последовательно:
+Поведение доказывается композицией, а не вторым mega-smoke, дублирующим все
+редакторы:
 
-- рисует/продолжает Walls chain;
-- делает разрешённый Resize;
-- ставит/двигает opening, partition, column и decor;
-- двигает device marker и room label;
-- выполняет config/layout write, reload и export.
+- production-bundle smokes `smoke_wall_chain_thickness`, `smoke_room_resize`,
+  `smoke_opening_preview`, `smoke_free_walls`, `smoke_decor` и
+  `smoke_drag_bounds` проходят реальные controller paths для Walls chain,
+  Resize, opening, partition, column, decor, device marker и room label;
+- executable `coordinate-write-barrier-guard.test` доказывает, что у этих
+  controllers нет отдельного outbound config/layout writer и что добавление
+  writer мимо общей boundary красит gate;
+- `smoke_lattice_write_barrier` исполняет все найденные production writers на
+  шумном candidate и после каждой принятой config/layout пары проверяет именно
+  `latticeProfile(...).noise === 0`;
+- `smoke_optimize_coordinate_canonicalization` отдельно проходит bulk write,
+  reload/export-equivalent server snapshot и повторный no-op.
 
-После каждого committed pair `latticeProfile.noise === 0`; операция не может
-потребовать отдельного ручного snap call в каждом controller.
+Таким образом после каждого committed pair `latticeProfile.noise === 0`, а
+операция не может потребовать отдельного ручного snap call в каждом controller.
+Это явная запись способа доказательства AC4 по PROCESS.md §7.1; отдельный
+гигантский session-smoke не является дополнительным требованием.
 
 ### AC5. Write barrier нельзя обойти
 

@@ -2,6 +2,7 @@
 // must adopt and send the same exact lattice candidate without editor-specific
 // snap calls.
 import { launch, checkAll, finish } from './serve.mjs';
+import { latticeProfile } from '../scripts/model-invariants.mjs';
 
 const { page, browser } = await launch({ width: 920, height: 840 });
 const out = await page.evaluate(async () => {
@@ -90,7 +91,19 @@ const out = await page.evaluate(async () => {
     && positionWrites.every((write) => write.pos.x === node && write.pos.y === node)
     && Object.values(card._layout).every((position) => position.x === node && position.y === node);
   result.layoutMetadataSurvives = card._layout.marker.future === unknown;
-  return result;
+  return {
+    result,
+    // Profile the exact candidates adopted by the production writers, not the
+    // noisy objects injected above. This is the common-boundary half of AC4;
+    // the controller half is exercised by the production smokes named in the
+    // specification and docs/TESTING.md.
+    committedPairs: [
+      { config: structuredClone(sent), layout: {} },
+      { config: structuredClone(sent), layout: structuredClone(card._layout) },
+    ],
+  };
 });
 
-await finish(browser, checkAll(out));
+out.result.latticeProfileNoiseZeroAfterEveryCommittedPair = out.committedPairs
+  .every((model) => latticeProfile(model).noise === 0);
+await finish(browser, checkAll(out.result));

@@ -1192,6 +1192,16 @@ separately promised workflows:
       [auto: `coordinate-canonicalization.test`, backend shared fixture,
       `coordinate-write-barrier-guard.test`, `smoke_lattice_write_barrier`,
       `smoke_optimize_coordinate_canonicalization`].
+- [ ] An arbitrary editing session cannot reintroduce lattice noise. The proof
+      is compositional: production smokes for wall chain, Resize, openings,
+      free walls/columns, decor and marker/room-label drag exercise the real
+      controllers; the executable writer inventory forbids a private outbound
+      path; `smoke_lattice_write_barrier` feeds noise through every inventoried
+      production writer and checks `latticeProfile(...).noise === 0` after
+      every committed config/layout pair [auto: `smoke_wall_chain_thickness`,
+      `smoke_room_resize`, `smoke_opening_preview`, `smoke_free_walls`,
+      `smoke_decor`, `smoke_drag_bounds`,
+      `coordinate-write-barrier-guard.test`, `smoke_lattice_write_barrier`].
 - [ ] Lattice regressions are fail-dark: raw real-plan fixtures remain noisy,
       their boundary clones have zero noise, every required truncation/
       threshold/layout/frontend/backend/recursive mutant is killed, and the
