@@ -31,8 +31,9 @@ partition.
 ## 2. Подтверждённая причина
 
 На исследованном экспорте две shared room boundaries полностью совпадают с
-independent partitions одинаковой толщины. Обе partitions содержат hosted
-doors; у концов границ есть корректные короткие ортогональные рёбра.
+independent partitions. Первая пара имеет 20/20 см, вторая — room wall 30 см и
+вложенную в неё partition 20 см. Обе partitions содержат hosted doors; у концов
+границ есть корректные короткие ортогональные рёбра.
 
 - `physicalBodyParts()` добавляет partition независимо от room masonry;
 - hosted cut режет partition и, через composite-room-wall resolver, room wall,
@@ -54,8 +55,11 @@ doors; у концов границ есть корректные коротки
 3. Все hosted openings удаляемой partition сохраняются как ordinary room-wall
    openings с теми же id, типом, длиной, ориентацией, contact/lock и прочими
    неизвестными полями.
-4. Неоднозначный случай остаётся без изменений. Optimize никогда не выбирает
-   одну из конфликтующих толщин, не удаляет проём и не угадывает ближайшую стену.
+4. Для одного exact coincident body каноническая толщина room wall равна
+   `max(roomCm, partitionCm)`: это не эвристический выбор, а точный внешний
+   envelope union двух соосных прямоугольных тел. Неоднозначный/неоднородный
+   случай остаётся без изменений; Optimize не удаляет проём и не угадывает
+   ближайшую стену.
 5. После успешной канонизации видимая кладка и проёмы не меняют положение;
    Thickness и Boundary начинают работать с единственной общей стеной.
 6. Рендер сам по себе ничего не записывает. Общая защита от исчезновения всей
@@ -73,8 +77,10 @@ doors; у концов границ есть корректные коротки
    несколько составных intervals и внешний/одиночный room edge не подходят.
 3. Shared interval не virtual/open и имеет одну ненулевую эффективную толщину
    на всей длине.
-4. `partition.cm` равна этой эффективной толщине. Сравниваются физические
-   сантиметры, а не SVG half-depth либо compatibility key.
+4. `partition.cm` конечна и положительна. Итоговая effective thickness
+   `max(sharedCm, partition.cm)` даёт точно тот же centred physical envelope,
+   что исходный union. Сравниваются физические сантиметры, а не SVG half-depth
+   либо compatibility key.
 5. На той же оси нет второй independent partition/draft/column и нет
    неоднозначного перекрытия с другой room boundary.
 6. Каждый hosted opening partition успешно разрешается compat-resolver'ом,
@@ -97,9 +103,10 @@ coordinates, persisted `partition.a/b`, `walls[].a/b` и openings — в сво�
 2. для каждого opening записать совместимые `x/y/angle` из разрешённого центра,
    удалить только `host`, сохранить все остальные известные и неизвестные поля;
 3. удалить partition;
-4. не создавать новую wall-запись, если effective room wall уже имеет ту же
-   толщину; существующие `walls` и `open_spans` не переписывать сверх обычной
-   lossless canonicalization Optimize;
+4. если partition не толще room wall, не создавать новую wall-запись; если
+   толще — lossless установить exact shared interval в
+   `max(roomCm, partitionCm)`. Остальные `walls` и `open_spans` не переписывать
+   сверх обычной lossless canonicalization Optimize;
 5. после всей пачки повторно подготовить exact production geometry и выполнить
    preflight;
 6. если любой шаг либо preflight неуспешен, весь Optimize candidate отклоняется
@@ -147,7 +154,8 @@ Preview добавляет две строки/счётчика:
 ## 8. Не входит
 
 - частично совпадающие, более длинные/короткие либо составные partitions;
-- разные толщины room wall и partition;
+- неоднородный effective room profile, несколько coincident partitions либо
+  конфликты, для которых один `max` не описывает исходный physical envelope;
 - перенос или удаление drafts/columns;
 - автоматическая запись при render/load;
 - nearest-wall восстановление orphan hosted opening;
@@ -206,6 +214,7 @@ Backend Python, schema/manifest и unrelated editor modules не меняютс�
 | Риск | Мера |
 |---|---|
 | Partial либо merely-near partition ошибочно удаляется | Exact endpoint-to-endpoint + one atomic shared interval + negative AC2/mutant. |
+| Разные 20/30 см ошибочно считаются конфликтом либо меняют видимый envelope | Явный `max(roomCm, partitionCm)` для centred exact bodies, nested/wider fixtures и geometry-equivalence AC2/AC5. |
 | Rehost сдвигает/разворачивает проём или теряет sensor fields | Resolve исходного host, materialize centre/angle, unknown-field round-trip AC3. |
 | Конфликтующий ordinary opening превращается в duplicate | Ambiguity fail-closed AC4; автоматического dedup нет. |
 | Candidate выглядит эквивалентно, но ломает canonical boolean geometry | Shared post-pass preflight #199 до WS, zero-write AC9. |
@@ -226,7 +235,7 @@ result после Apply.
 | AC | Критерий | Доказательство |
 |---|---|---|
 | AC1 | Exact same-thickness shared-wall partition определяется независимо от направления endpoints и порядка комнат. | Unit matrix. |
-| AC2 | Partial/longer/shorter/composite/non-shared/virtual/different-cm/ambiguous-extra cases остаются byte-equivalent. | Negative unit matrix. |
+| AC2 | Exact same-cm, narrower-partition (20 внутри 30) и wider-partition (30 поверх 20) канонизируются с итогом `max`; partial/longer/shorter/composite/non-shared/virtual/non-uniform/ambiguous-extra cases остаются byte-equivalent. | Positive/negative unit matrix. |
 | AC3 | Один и несколько hosted door/window/gate переводятся в ordinary openings без сдвига центра/угла и без потери любых полей. | Unit + schema/unknown-field test. |
 | AC4 | Orphan, non-fitting, overlapping или ambiguous opening запрещает преобразование без частичного результата. | Unit mutation matrix. |
 | AC5 | После candidate physical geometry и opening cuts эквивалентны исходному видимому результату; после 20→10/30 существует ровно одно тело выбранной толщины. | Canonical geometry unit + targeted golden. |
@@ -274,8 +283,9 @@ Rollback — revert implementation commit. Уже преобразованный
 ## 15. Принятые технические предположения
 
 1. Geometry helper/module names и внутренние reason codes не являются API.
-2. Equality thickness использует точное persisted integer/finite `cm` после
-   действующей validation, без цветового/пиксельного сравнения.
+2. Thickness envelope использует конечные physical `cm` после действующей
+   validation и точный `max` для centered coincident bodies, без
+   цветового/пиксельного сравнения.
 3. Report хранит два счётчика, потому что один partition может иметь несколько
    openings; UI показывает человеку и structural, и reference change.
 4. Короткие 5-см рёбра fixture сохраняются; pass не упрощает room topology.
