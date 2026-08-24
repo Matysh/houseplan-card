@@ -1,8 +1,8 @@
 /**
- * #253: a thickness record may be longer than the room edge being resized.
- * The real pointer handlers must split that record, move only the covered
- * interval, keep its centimetres live and committed, move its opening, and
- * restore the exact source geometry with one Undo.
+ * #277 supersedes the permissive #253 resize path. A room edge that covers
+ * only part of a neighbouring contour is an unequal/partial shared wall and
+ * must now be disabled. Activating its handle must not split the thickness
+ * record, move an opening, create history, or change persisted geometry.
  */
 import { launch, checkAll, finish } from './serve.mjs';
 
@@ -29,7 +29,6 @@ const res = await page.evaluate(async () => {
   const join = 0.204166667;
   const right = 0.420833333;
   const oldY = 0.4375;
-  const newY = 0.4625;
   sp().rooms = [
     {
       id: 'sauna', name: 'Sauna',
@@ -51,6 +50,7 @@ const res = await page.evaluate(async () => {
   const before = JSON.stringify({
     rooms: sp().rooms, walls: sp().walls, openings: sp().openings,
   });
+  const historyBefore = c._geometryHistory?.length || 0;
 
   c._setMode('plan');
   c._tool = 'resize';
@@ -83,30 +83,16 @@ const res = await page.evaluate(async () => {
   if (handle) {
     const x = +handle.getAttribute('cx');
     const y = +handle.getAttribute('cy');
+    out.partialSharedDisabled = handle.getAttribute('aria-disabled') === 'true';
+    out.disabledReasonExposed = !!handle.getAttribute('aria-label')
+      && !!handle.querySelector('title')?.textContent;
     pointer('pointerdown', handle, x, y);
-    pointer('pointermove', handle, x, newY * 1000);
+    pointer('pointermove', handle, x, y + c._gridPitch);
+    pointer('pointerup', handle, x, y + c._gridPitch);
     await c.updateComplete;
-
-    const liveWalls = c._curSpaceCfg?.walls || [];
-    out.liveKeepsBothIntervals = liveWalls.length === 2
-      && hasWall(liveWalls, [left, newY], [join, newY])
-      && hasWall(liveWalls, [join, oldY], [right, oldY]);
-    out.liveOpeningMoves = close(c._curSpaceCfg?.openings?.[0]?.y, newY);
-    out.liveThicknessVisible = c._intervalCm(
-      [left * 1000, newY * 1000, join * 1000, newY * 1000],
-    ) === 33;
-
-    pointer('pointerup', handle, x, newY * 1000);
-    await upd();
-    const committed = sp().walls || [];
-    out.commitKeepsBothIntervals = committed.length === 2
-      && hasWall(committed, [left, newY], [join, newY])
-      && hasWall(committed, [join, oldY], [right, oldY]);
-    out.commitOpeningMoves = close(sp().openings?.[0]?.y, newY);
-
-    c._undoGeometry();
-    await upd();
-    out.undoRestoresExactSource = JSON.stringify({
+    out.noDragStarted = !c._rszDrag && !c._rszPreview;
+    out.noHistoryCreated = (c._geometryHistory?.length || 0) === historyBefore;
+    out.sourceUnchanged = JSON.stringify({
       rooms: sp().rooms, walls: sp().walls, openings: sp().openings,
     }) === before;
   }

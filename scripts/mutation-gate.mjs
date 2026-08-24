@@ -219,6 +219,70 @@ export const MUTANTS = [
     }],
   },
   {
+    id: 'safe-resize-axis-eligibility-bypassed',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="diagonal and non-perpendicular" test/resize.test.mjs',
+    because: 'an angled wall must never enter the production resize plan; accepting it restores '
+      + 'the topology-changing path that #277 removes',
+    patches: [{
+      file: 'src/resize.ts',
+      find: '  const movingAxis = axisOf(a, b, eps);',
+      replace: "  const movingAxis = axisOf(a, b, eps) || 'h';",
+    }, {
+      file: 'src/resize.ts',
+      find: "  if (!movingAxis) return { enabled: false, reason: 'diagonal' };",
+      replace: "  if (false && !movingAxis) return { enabled: false, reason: 'diagonal' };",
+    }],
+  },
+  {
+    id: 'safe-resize-third-room-cascade-enabled',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="partial shared and third-owner" test/resize.test.mjs',
+    because: 'a long edge split between neighbours may not turn into a three-room cascade or '
+      + 'insert vertices; the anonymized #277 regression pins that exact topology',
+    patches: [{
+      file: 'src/resize.ts',
+      find: "  if (partial) return { enabled: false, reason: 'partial-shared' };",
+      replace: "  if (false && partial) return { enabled: false, reason: 'partial-shared' };",
+    }],
+  },
+  {
+    id: 'safe-resize-topology-signature-bypassed',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="exactly two existing vertices" test/resize.test.mjs',
+    because: 'preview and commit must reject a candidate whose vertex count no longer matches '
+      + 'the gesture plan; otherwise simplify/insert can silently return through another path',
+    patches: [{
+      file: 'src/resize.ts',
+      find: '    if (!original || !next || next.length !== plan.topology[roomId]\n'
+        + '        || next.length !== original.poly.length || !polyIsSimple(next)) return false;',
+      replace: '    if (!original || !next || !polyIsSimple(next)) return false;',
+    }],
+  },
+  {
+    id: 'safe-resize-opening-jamb-bypassed',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="physical jamb" test/resize.test.mjs',
+    because: 'the moving wall body must stop before a perpendicular opening, including half its '
+      + 'physical thickness; centreline-only fitting overlaps the jamb',
+    patches: [{
+      file: 'src/resize.ts',
+      find: '    >= opening.length / 2 + movingHalf - eps;',
+      replace: '    >= -Infinity;',
+    }],
+  },
+  {
+    id: 'safe-resize-commit-preflight-bypassed',
+    guard: 'node demo/smoke_room_resize.mjs',
+    because: 'a candidate rejected by the exact production wall/floor preflight must create '
+      + 'neither preview nor commit; polygon-only success previously persisted disappearing walls',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '    const candidateValid = this._rszCandidateRenderable(preview);',
+      replace: '    const candidateValid = !!preview;',
+    }],
+  },
+  {
     id: 'resize-labels-show-centreline',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="innerEdgeSpan measures between wall faces" '

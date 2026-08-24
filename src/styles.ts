@@ -2849,6 +2849,10 @@ export const cardStyles = css`
       touch-action: none;
     }
     .rszhandle:active { cursor: grabbing; }
+    .rszhandle.disabled,
+    .rszhandle.disabled:active {
+      cursor: not-allowed;
+    }
     /* wall-with-arrows glyph: accent ink over a bg halo, readable on any plan */
     .rszicon { pointer-events: none; }
     .rszicon path {
@@ -2860,29 +2864,8 @@ export const cardStyles = css`
     .rszhalo { stroke: var(--hp-bg); stroke-width: 6; }
     .rszink { stroke: var(--hp-accent); stroke-width: 2; }
     :host([data-pointer-hover]) .rszhandle:hover + .rszicon .rszink { stroke-width: 3; }
-    /* corner (scale-frame) handles: hit circle invisible, .rszknob is the bead */
-    .rszcorner {
-      fill: transparent;
-      stroke: none;
-      cursor: nwse-resize;
-    }
-    .rszknob {
-      fill: var(--hp-bg);
-      stroke: var(--hp-accent);
-      stroke-width: 2;
-      vector-effect: non-scaling-stroke;
-      pointer-events: none;
-    }
-    :host([data-pointer-hover]) .rszcorner:hover + .rszknob { fill: var(--hp-accent); }
-    .rszcorner:active { cursor: nwse-resize; }
-    .rszframe {
-      fill: none;
-      stroke: var(--hp-accent);
-      stroke-width: 1.5;
-      stroke-dasharray: 6 5;
-      vector-effect: non-scaling-stroke;
-      pointer-events: none;
-    }
+    .rszicon.disabled { opacity: 0.38; }
+    :host([data-pointer-hover]) .rszhandle.disabled:hover + .rszicon .rszink { stroke-width: 2; }
     /* the decor draft badge rides the MIDDLE of the shape, so it is centred
        horizontally and lifted clear of the line instead of trailing the
        cursor the way a wall badge does (owner 2026-08-04) */

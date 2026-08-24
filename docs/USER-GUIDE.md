@@ -317,7 +317,7 @@ Other operations edit existing geometry:
 |---|---|
 | Merge | Joins adjacent rooms; a dialog chooses the surviving identity, name and area |
 | Split | Cuts a room from one wall to another; the larger part keeps the original room |
-| Resize | Moves a wall with shared geometry or scales a room by corner handles. Live labels report **inner** dimensions — the clear distance between wall faces, the number a tape measure gives — and the room area |
+| Resize | Moves one eligible horizontal/vertical wall without changing room topology. Live labels report **inner** dimensions — the clear distance between wall faces, the number a tape measure gives — and the area of each affected room |
 | Thickness | Changes one physical span or every wall of a room |
 | Delete room | Deletes only the selected room after confirmation |
 
@@ -335,9 +335,15 @@ small enclosed hole. At a perpendicular T/X junction, the complete physical
 width of every participating wall remains solid through the node, including
 closely spaced neighbouring junctions. This is a rendering correction: a valid
 plan may remain unchanged when **Optimize plans** is run.
-If Resize moves only part of a longer thick wall, the moved part keeps its
-thickness and follows the room while the remaining continuation stays in
-place. Openings on the moved part follow it in the same Undo/Redo operation.
+Resize changes one room, or exactly two rooms when their shared wall coincides
+endpoint-to-endpoint. The wall stops at the first corner, opening, foreign room
+or other position that would change topology; no more than two rooms can change.
+Partial shared walls, diagonal walls and walls overlapped by an independent
+partition/draft/column keep a dimmed handle with an explanatory tooltip and
+cannot start a drag. The former corner scale frame was removed. An ordinary
+opening on the moving wall follows it once; a side-wall opening stops the
+moving masonry at its physical jamb. Release creates one Undo step, while Esc
+or an interrupted pointer writes nothing.
 
 ### HA area binding
 

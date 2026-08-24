@@ -1,177 +1,142 @@
-# Room resize — the spec (source of truth)
+# Room Resize — fixed-topology wall move
 
-Status: approved by the owner 2026-08-01. Dev-branch feature, **no
-release**. Scope decisions final: a dedicated tool mode, wall-drag with
-shared walls always moving together, a corner-scale frame for the
-selected room, live numbers (wall lengths + room areas), grid snap,
-Esc-cancel, one drag = one undo step.
+This document is the source of truth for the Plan editor Resize tool. The
+contract was narrowed in [#277](https://github.com/Matysh/houseplan-card/issues/277)
+after the former general-purpose transform corrupted wall thickness and could
+make all masonry disappear.
 
-## Principle
+## User contract
 
-Until now room geometry could only be changed by split/merge or by
-redrawing the outline — there was no vertex or wall dragging at all
-(the `.rlhandle` corners belong to the room LABEL card, not to the
-room). Resize adds exactly two mechanisms, both living ONLY inside a
-dedicated Plan-editor tool «Изменение размера комнат» (`_tool ===
-'resize'`). In every other tool the plan looks and behaves exactly as
-before — no handles, no new hit areas.
+Resize moves one existing horizontal or vertical room wall parallel to itself.
+The two adjacent walls only change length. It never adds, removes, reorders or
+simplifies room vertices.
 
-## Mechanism A — wall drag
+- A non-shared wall changes exactly one room.
+- An exactly shared endpoint-to-endpoint wall changes exactly two rooms.
+- An irregular room is allowed while that exact pairing remains true. The wall
+  stops at the first corner/grid position after which the moving segment or its
+  topology would change.
+- A third room is always a stop; it never joins the gesture.
+- The old corner scale frame, diagonal resize and partial-shared cascade are
+  removed.
 
-- Every visible room shows a small handle at the midpoint of every
-  wall (handles for all rooms at once — owner's UX pick). The visible
-  glyph is a compact icon — a wall segment with two arrows pointing
-  perpendicular to it (the directions the wall drags), rotated to the
-  wall's orientation; accent ink over a `--hp-bg` halo. It is half the
-  size of the old circle, but the HIT area is an invisible circle of
-  the original finger-sized radius (derived from `view.w` like
-  `.vacfithandle`), so touch targets did not shrink. Cursor: `grab`,
-  `grabbing` while dragging.
-- Dragging a handle moves the wall along its outward normal; **both
-  ends of the edge translate together** (the wall stays parallel to
-  itself; adjacent walls stretch/shrink). Works for any polygon
-  (L-shaped included) and for legacy `x/y/w/h` rectangles — those are
-  converted through `roomPoly` and are **saved back as `poly`**.
-- The moved wall position snaps to the drawing grid (`snapToGrid`,
-  same pitch as the draw tool).
-- **Handles own the hit test** (HP-1550-04): inside the resize tool
-  openings are not editable — their transparent hit area is inert
-  (`pointer-events: none`) and the resize layer renders above the
-  openings, so a door sitting exactly at the midpoint of a wall can
-  never shadow that wall's handle. A drag of such a wall carries the
-  door along through the normal anchor pipeline; clicking over a door
-  falls through to room picking. Every other Plan tool keeps the
-  openings interactive exactly as before.
+Every room edge keeps a visible finger-sized handle. An ineligible handle is
+dimmed, focusable and marked `aria-disabled`; mouse hover/focus exposes the
+localized reason and click/tap repeats it in the card toast. It captures no
+pointer and creates no history or save.
 
-## Shared walls — ALWAYS together
+## Eligibility
 
-If a stretch of the dragged wall coincides with a neighbour's boundary
-(collinear overlap with an epsilon, the `sharedBoundary` notion), the
-coinciding stretches of the neighbour move synchronously: your room
-grows — the neighbour shrinks. Gaps and overlaps cannot appear by
-construction.
+`resolveSafeResize()` returns either `enabled + SafeResizePlan` or one stable
+reason, in this priority order:
 
-Partial contact (T-junctions): only the coinciding stretch of the
-neighbour moves. Where the stretch ends inside a neighbour wall, new
-vertices are inserted into the neighbour outline, which may legally
-become L-shaped. All of this is shown as a live preview during the
-drag. On commit collinear leftovers are simplified away
-(`simplifyPoly`), so geometry stays clean.
+1. `diagonal` — the moving edge is not numerically horizontal/vertical;
+2. `side-angle` — either adjacent edge is not perpendicular;
+3. `duplicate-physical-wall` — a partition, unfinished outline or column
+   overlaps the moving wall;
+4. `partial-shared` — another room owns only part of the edge;
+5. `unequal-shared` — the candidate neighbour has different endpoints/length;
+6. `multiple-rooms` — the operation would involve more than two rooms;
+7. `thickness-conflict` — the physical profile cannot be mapped losslessly;
+8. `opening-conflict` — an opening on the moving wall is hosted/ambiguous or
+   does not fit;
+9. `invalid-geometry` — the initial polygon fails structural checks.
 
-## Stops (the wall stops dead)
+The numerical epsilon only absorbs storage noise. It never snaps a visibly
+angled edge into eligibility.
 
-1. **Minimum size** — neither the own room nor a shrinking neighbour
-   may get thinner than ~30 cm (`MIN_ROOM_CM`, expressed in canvas
-   units through `cell_cm`). The measure is orientation-independent
-   (HP-1550-02): for a wall drag it is the smallest perpendicular
-   distance from the moved stretch to any part of the room boundary
-   inside the band the stretch sweeps along its normal — vertices and
-   crossing walls count whether parallel or not (a triangle's apex, a
-   slanted obstacle), while collinear remainders and the step corners
-   a T-junction inserts at the very ends of the stretch do not. For
-   the scale frame it is the TRUE minimum width of the outline
-   (rotating calipers over the convex hull) scaled by `k` — the
-   axis-aligned bbox is never consulted, so rotation cannot hide the
-   short side. Rooms that are ALREADY thinner keep their clearance
-   (the drag may improve it, never worsen it).
-2. **Self-intersection** — a wall never passes through the opposite
-   side; the outline must stay a simple polygon with its orientation
-   and a positive area.
-3. **Foreign rooms** — a growing wall stops when it would overlap a
-   room that is not a shared-wall neighbour (`roomsOverlap`; touching
-   walls are legal, crossing is not).
-4. **Island rooms** — islands inside the room (`islandsOf`) must stay
-   fully inside; a wall shrinking onto an island stops.
-5. **Openings are anchors** — a door/window/gate ON the moving stretch
-   travels with the wall (its `openings[].x/y` centre is shifted, the
-   angle is unchanged). A wall that carries openings cannot get too
-   short for them: every opening previously sitting on a wall of an
-   affected room must still fit fully on some wall afterwards — for
-   the own room AND for the neighbour.
+## Pure pipeline
 
-## Mechanism B — the scale frame
+The production controller reaches only four pure operations in `src/resize.ts`:
 
-- In the resize tool a click inside a room SELECTS it: a dashed
-  bounding frame with 4 corner handles appears.
-- Dragging a corner scales ALL vertices proportionally (uniform
-  similarity) about the opposite bbox corner — the same maths family
-  as the vacuum fit panel (`reanchorFit`), only without rotation.
-- The same stops apply (minimum size, foreign overlap, islands,
-  openings; self-intersection is impossible under a similarity).
-- **The one exception to «shared walls always together»:** a scale
-  breaks collinear coincidence (walls move apart at an angle-preserving
-  ratio, not along a normal), so neighbours are NOT dragged along.
-  Growing into a neighbour simply stops the scale (the neighbour is a
-  wall to hit); shrinking away from a neighbour legally opens a gap.
-- Openings exclusive to the scaled room follow the transform
-  (position scales, physical length does not); openings on a wall
-  shared with an unchanged neighbour stay with the neighbour's wall.
+1. `resolveSafeResize(rooms, openings, roomId, edge, options)` captures the
+   immutable plan: one/two room ids, exact edge indices, original endpoints,
+   topology signatures and moving ordinary openings.
+2. `clampSafeResize(...)` walks grid deltas contiguously from zero and stops at
+   the first invalid position. It cannot jump through an opening/corner to a
+   later valid position. Exact delta results are memoized per active plan and
+   options, weakly held and capped at 4096 entries.
+3. `applySafeResize(...)` moves exactly the two endpoint vertices in each
+   planned room and translates each ordinary moving-wall opening once.
+4. `validateSafeResize(...)` proves room identity/count, topology, orientation,
+   simplicity, minimum clearance, exact shared endpoints, foreign-room
+   relations, physical obstacles and opening jamb clearance.
 
-## Live numbers
+Historical general-transform helpers remain only for old pure-test history.
+`houseplan-card.ts` must not import or call `applyRoomScale`,
+`clampRoomScale`, `shiftSharedSpans` or `simplifyPoly`.
 
-While a handle is being dragged:
+## Stops
 
-- length badges (`.measurelabel` style, `segmentCm`/`formatLength`,
-  metric or imperial per the HA unit system) on the dragged wall and
-  its two adjacent walls;
-- the room area in m² (`polygonArea` × scale²) at the room centre,
-  live; when a shared wall is dragged — the areas of BOTH rooms
-  (owner picked «стены + площадь»);
-- Esc cancels the current drag and puts the original geometry back;
-- releasing the handle (pointerup) commits: one write through the
-  standard debounced `_saveConfig` path;
-- `pointercancel` / `lostpointercapture` (the system interrupted the
-  stream: app switch, palm rejection) takes the CANCEL path, never the
-  commit path — snapshot geometry back, no undo step, no write
-  (HP-1550-03).
+The closest stop in either direction wins:
 
-## Preview vs commit (HP-1550-01)
+- zero/too-short side edge, orientation reversal or the 30 cm room clearance;
+- first irregular-room corner that would change moving-edge correspondence;
+- third/foreign room, island, independent partition/draft or column;
+- perpendicular side-wall opening: the moving wall axis stops at the jamb with
+  half the moving wall thickness included;
+- moving-wall opening that would no longer fit;
+- loss of exact shared endpoints or any structural candidate failure.
 
-The live drag preview never touches the shared `_serverCfg`: it lives
-in a separate overlay (`_rszPreview`) that `_curSpaceCfg`/`_renderCfg`
-substitute into every render. Config writes are serialized and read
-`_serverCfg` at the moment they run (HP-1454-03), so a debounced write
-still queued from a previous edit can fire mid-drag — with the overlay
-it carries only committed geometry. The overlay moves into the real
-config exactly once, on pointerup; a cancel (Esc, pointercancel) just
-drops the overlay, leaving nothing to restore and nothing to write.
+The final persisted position is the last safe grid node. A safe range containing
+only zero yields an explained no-op and no write.
 
-Wall thickness and virtual-boundary spans are derived on every preview from
-that same immutable snapshot. An exact thickness entry may extend beyond the
-room edge being moved. In that case it is partitioned at the overlap endpoints:
-only the covered part follows the wall, while the uncovered continuation stays
-on its original edge. Compatibility keys are rebuilt from exact endpoints and
-never used alone to discard another interval. A shared part encountered from
-both adjacent rooms is transformed once; inconsistent destinations fail closed
-and retain the source part.
+## Preview and commit
 
-## Undo
+The gesture owns an immutable `_geometrySnapshot()`. Every preview is rebuilt
+from it; `_serverCfg` is untouched until pointerup. The overlay contains rooms,
+openings, re-keyed wall thickness/open spans and byte-equivalent partitions,
+drafts, columns, decor and plan transform.
 
-One operation (handle release that changed something) = one undo step.
-Resize uses the same named 50-command Undo/Redo stack as every other
-committed plan-geometry operation. Its snapshot includes rooms, openings,
-wall thickness intervals and virtual boundary spans, so one Ctrl+Z/⌘Z
-restores the entire transaction. Ctrl+Shift+Z/Ctrl+Y reapplies it.
+The renderer consumes that exact overlay, so fills, masonry, openings, labels
+and measurements show one candidate. Its production wall/floor result is cached
+for the preview cfg epoch. Pointerup reuses that exact result (or computes it if
+the release happened before a frame) and then re-runs the pure invariants.
 
-## Out of scope / invariants
+Success copies the exact overlay into the real space, creates one named Undo
+command and schedules one config write. There is no commit-time simplification,
+wall degradation or second geometry reconstruction. Failure, Esc,
+`pointercancel`, `lostpointercapture`, pinch and tool exit discard the overlay
+with zero Undo entries and zero writes.
 
-- Device positions are not touched; the room settings button (pole of
-  inaccessibility) recomputes itself from the new outline.
-- Saving goes through the standard config path (`houseplan/config/set`
-  with `expected_rev`); backend validation already covers polygons
-  (`_GEOM` ±4, `MAX_POLY_POINTS` 500) — inserted neighbour vertices are
-  just polygon points, openings keep their schema, nothing new to
-  validate server-side.
-- Touch: handles are finger-sized, use pointer capture and swallow
-  `pointerdown`, so the stage pan/pinch never fights a handle drag.
-- The label-card corners (`.rlhandle`, `_rlResizeDown`) are untouched.
+## Thickness, virtual spans and openings
 
-## Geometry home
+`rekeyWallsAfterMove()` and `rekeyOpenSpansAfterMove()` map the immutable
+snapshot to the fixed-topology candidate. Physical centimetre values and open
+span count must survive; the production geometry check is fail-closed.
 
-All pure geometry lives in `src/resize.ts` (edge normals, edge move,
-shared-span search and vertex insertion, all stops — including the
-orientation-independent `minSpanClearance` band measure and the
-`minPolyWidth` calipers width — the scale clamp, area formatting)
-under node:test units in `test/resize.test.mjs`;
-`src/houseplan-card.ts` only wires pointers, the preview overlay,
-badges and undo.
+Ordinary openings centred on the moving wall translate by the same vector.
+Their type, angle, length and compatibility fields stay unchanged. Hosted
+partition openings never move with a room wall. Openings on the two side walls
+stay fixed and limit the axis by `opening.length / 2 + movingWallHalfDepth`.
+
+## Performance
+
+- eligibility is memoized by the committed geometry snapshot;
+- pointer clamp p95 budget is 16 ms and no more than 20% over the historical
+  same-run edge-drag baseline (small timer-noise allowance applies);
+- pointerup reads the final preview's cached production result and has a 75 ms
+  p95 budget;
+- cache lifetime is the active committed geometry/gesture and is bounded.
+
+The existing large-house render benchmark remains responsible for the cost of
+building the preview frame itself.
+
+## Verification
+
+- `test/resize.test.mjs`: eligibility, exact pair, first-corner clamp, third
+  room, physical jamb, moving opening, obstacles and bounded memoization;
+- `test/fixtures/resize-safe-regression.json`: minimized/anonymized private
+  repro whose one long edge is owned by two neighbours;
+- `test/resize-production-path.test.mjs`: old handlers unreachable, corner
+  frame absent and all reasons localized;
+- `demo/smoke_room_resize.mjs`: production bundle pointer handlers,
+  preview/commit/Undo, disabled accessibility, real fixture topology,
+  production-preflight failure and cancellation;
+- `demo/benchmark_safe_resize.mjs`: same-run pointer and cached pointerup budgets;
+- mutation gate: eligibility, third-room, topology, jamb and commit-preflight
+  bypass mutants.
+
+Targeted light/dark golden scenes cover enabled/disabled handles, opening/corner
+stops and final masonry. Full golden, smoke and performance matrices run before
+every beta; Linux CI is canonical for the complete HA harness.

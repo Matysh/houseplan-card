@@ -352,7 +352,7 @@ test('sun-ray golden requires browser-painted light from a state-only sun entity
   assert.ok(scenario);
   const fixture = prepareGoldenFixture(scenario);
   const space = fixture.config.spaces.find((item) => item.id === scenario.space);
-  assert.equal(GOLDEN_MATRIX_VERSION, 42);
+  assert.equal(GOLDEN_MATRIX_VERSION, 43);
   assert.equal(space.settings.sun_rays, true);
   assert.equal(scenario.northDeg, 90,
     'the sign-sensitive golden must keep a non-zero north direction');
@@ -368,6 +368,20 @@ test('sun-ray golden requires browser-painted light from a state-only sun entity
   assert.equal(scenario.allLightsOff, true);
   assert.equal(scenario.sunRayPixels.minPixels >= 500, true);
   assert.equal(scenario.sunRayPixels.minChannelDelta >= 4, true);
+});
+
+test('issue #277 golden pairs safe/disabled handles and an opening clamp in both themes', () => {
+  const scenarios = GOLDEN_SCENARIOS.filter((item) => item.safeResizePreview);
+  assert.deepEqual(scenarios.map((item) => item.theme).sort(), ['dark', 'light']);
+  for (const scenario of scenarios) {
+    assert.equal(scenario.safeResizeFixture, true);
+    assert.equal(scenario.mode, 'plan');
+    const fixture = prepareGoldenFixture(scenario);
+    const space = fixture.config.spaces.find((item) => item.id === scenario.space);
+    assert.equal(space.rooms.length, 3);
+    assert.equal(space.rooms.some((room) => room.id === 'resize-diagonal'), true);
+    assert.equal(space.openings.some((opening) => opening.id === 'resize-side-door'), true);
+  }
 });
 
 test('issue 252 golden matrix covers owner-aware cleanup in both themes and languages', () => {

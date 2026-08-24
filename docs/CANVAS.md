@@ -406,7 +406,7 @@ wall runs diagonally is broken geometry, not a tidy plan:
 | the backdrop picture: move (its top-left corner) and proportional/independent corner scale | `_bdMove` → `_snap` / `snapToGrid` (docs/BACKDROP.md) |
 | room vertices (draw tool) | `_markupClick` → `_snap` |
 | split tool's interior vertices | `_splitClick` → `_snap` |
-| resize edge drag / corner scale | `_rszMove` → `_snap` |
+| fixed-topology room-wall resize | `_rszMove` → `_snap`; the last safe node before a corner/opening/third room wins |
 | decor draft endpoints, text anchor | `_decorPointerDown` / `_stagePointerMove` → `_snap` |
 | decor move | `_decorMoveUpdate` → `_snap` of the resulting ANCHOR |
 | device markers | `_savePos` |

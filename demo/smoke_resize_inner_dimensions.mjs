@@ -9,8 +9,8 @@
  * sides, so every clear span is exactly 15 cm shorter than the axis it sits on:
  * 285 and 385 cm. Thickness is set through the card's own dialog path
  * (`_wallThickClick` → `_wallThickApply(true)`), and both label producers are
- * then called as the drag handlers call them. What is deliberately NOT covered:
- * the pointer sequence itself — `_rszEdgeDown`/`_rszMove` are unchanged by #233.
+ * then called as the drag handlers call them. The legacy room-scale frame was
+ * deliberately removed by #277, so only fixed-topology edge labels remain.
  */
 import { launch, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch();
@@ -18,6 +18,7 @@ const { page, browser } = await launch();
 const res = await page.evaluate(async () => {
   const out = {};
   const c = window.__card;
+  const sr = c.shadowRoot || c.renderRoot;
   const upd = async () => { c._cfgEpoch++; c.requestUpdate(); await c.updateComplete; };
   // First number of a label: both formatters emit a dot, so this is locale-safe.
   const num = (text) => Number((String(text).match(/-?\d+(?:\.\d+)?/) || [])[0]);
@@ -81,19 +82,8 @@ const res = await page.evaluate(async () => {
   const dragArea = drag.find((l) => l.area);
   out.dragAreaStillInner = !!dragArea && Math.abs(num(dragArea.text) - 11) < 0.06;
 
-  // The corner frame: same convention as the area beside it.
-  const labels = c._rszScaleLabels(render);
-  const size = labels.find((l) => !l.area);
-  const area = labels.find((l) => l.area);
-  out.frameLabelsPresent = !!size && !!area;
-  // Compare against the card's own formatter so the check survives a change of
-  // units: inner is 57×77 cells, the centreline it replaced was 60×80.
-  const fmt = (wCells, hCells) =>
-    `${c._fmtLen([0, 0], [wCells * g, 0])} × ${c._fmtLen([0, 0], [hCells * g, 0])}`;
-  out.frameIsInner = size?.text === fmt(57, 77);
-  out.frameIsNotCentreline = size?.text !== fmt(60, 80);
-  // 2.85 × 3.85 = 10.97 m² → «11.0»; the centreline rectangle would say «12.0».
-  out.frameAreaAgreesWithSize = Math.abs(num(area?.text) - 11) < 0.06;
+  out.legacyScaleLabelsAbsent = typeof c._rszScaleLabels === 'undefined';
+  out.legacyCornerHandlesAbsent = !sr.querySelector('.rszcorner');
 
   c._rszDrag = null;
   c._rszSel = null;

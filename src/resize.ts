@@ -1,10 +1,11 @@
 /**
  * Room resize geometry — pure functions only (docs/RESIZE.md).
  *
- * Mechanism A: dragging a wall along its normal, shared stretches of
- * neighbours move together (T-junctions insert vertices). Mechanism B:
- * uniform scale of one room about a bbox corner. Every stop («упор») is
- * decided here so it can be unit-tested; the card only wires pointers.
+ * The production path is the fixed-topology safe resolver/apply/validate
+ * pipeline: one horizontal or vertical wall moves along its normal, with at
+ * most one exact endpoint-matched neighbour. Historical permissive helpers
+ * remain below only for migration regression tests; the card does not import
+ * their vertex-insertion or whole-room-scale paths.
  *
  * All coordinates are render units (NORM_W-scaled), same as the card's
  * space model. Nothing here touches Lit or the DOM.
@@ -20,6 +21,51 @@ export const MIN_ROOM_CM = 30;
 export interface RoomIn { id: string; poly: number[][] }
 /** Opening in render units: centre, wall angle (deg), full length. */
 export interface OpeningIn { id: string; x: number; y: number; length: number }
+
+/** Fields relevant to the fixed-topology resize contract. Hosted openings
+ * belong to independent walls and therefore never travel with a room edge. */
+export interface SafeOpeningIn extends OpeningIn {
+  hosted?: boolean;
+  angle?: number;
+  type?: string;
+}
+
+export type SafeResizeReason =
+  | 'diagonal'
+  | 'side-angle'
+  | 'duplicate-physical-wall'
+  | 'partial-shared'
+  | 'unequal-shared'
+  | 'multiple-rooms'
+  | 'thickness-conflict'
+  | 'opening-conflict'
+  | 'invalid-geometry';
+
+export type SafeResizeObstacle =
+  | { kind: 'segment'; a: number[]; b: number[]; half?: number }
+  | { kind: 'circle'; center: number[]; radius: number };
+
+export interface SafeResizeOptions extends StopOpts {
+  /** Physical half-depth of the moving wall in render units. */
+  movingHalf?: number;
+  /** Independent walls, drafts and columns. They are immutable hard stops. */
+  obstacles?: SafeResizeObstacle[];
+  /** The controller found incompatible exact thickness records on this axis. */
+  thicknessConflict?: boolean;
+}
+
+/** One immutable fixed-topology gesture plan. `edgeByRoom` contains either one
+ * room or one exact endpoint-to-endpoint shared pair — never a cascade. */
+export interface SafeResizePlan extends EdgeDragPlan {
+  roomIds: string[];
+  edgeByRoom: Record<string, number>;
+  topology: Record<string, number>;
+  movingOpeningIds: string[];
+}
+
+export type SafeResizeResolution =
+  | { enabled: true; plan: SafeResizePlan }
+  | { enabled: false; reason: SafeResizeReason };
 
 export interface EdgeDragPlan {
   roomId: string;
@@ -496,6 +542,372 @@ export function clampEdgeDrag(
     if (validateEdgeDrag(rooms, openings, plan, d, opts)) return d;
   }
   return 0;
+}
+
+// ---------------- safe fixed-topology wall move (#277) ----------------
+
+type Axis = 'h' | 'v';
+
+function axisOf(a: number[], b: number[], eps: number): Axis | null {
+  const dx = Math.abs(b[0] - a[0]);
+  const dy = Math.abs(b[1] - a[1]);
+  if (dx <= eps && dy > eps) return 'v';
+  if (dy <= eps && dx > eps) return 'h';
+  return null;
+}
+
+function samePt(a: number[], b: number[], eps: number): boolean {
+  return Math.abs(a[0] - b[0]) <= eps && Math.abs(a[1] - b[1]) <= eps;
+}
+
+function sameEndpoints(a: number[], b: number[], c: number[], d: number[], eps: number): boolean {
+  return (samePt(a, c, eps) && samePt(b, d, eps))
+    || (samePt(a, d, eps) && samePt(b, c, eps));
+}
+
+function collinearOverlapLength(
+  a: number[], b: number[], c: number[], d: number[], eps: number,
+): number {
+  const axis = axisOf(a, b, eps);
+  if (!axis || axisOf(c, d, eps) !== axis) return 0;
+  if (axis === 'h') {
+    if (Math.abs(a[1] - c[1]) > eps || Math.abs(a[1] - d[1]) > eps) return 0;
+    return Math.max(0, Math.min(Math.max(a[0], b[0]), Math.max(c[0], d[0]))
+      - Math.max(Math.min(a[0], b[0]), Math.min(c[0], d[0])));
+  }
+  if (Math.abs(a[0] - c[0]) > eps || Math.abs(a[0] - d[0]) > eps) return 0;
+  return Math.max(0, Math.min(Math.max(a[1], b[1]), Math.max(c[1], d[1]))
+    - Math.max(Math.min(a[1], b[1]), Math.min(c[1], d[1])));
+}
+
+function sideEdgesArePerpendicular(poly: number[][], edge: number, moving: Axis, eps: number): boolean {
+  const n = poly.length;
+  const prev = axisOf(poly[(edge - 1 + n) % n], poly[edge], eps);
+  const next = axisOf(poly[(edge + 1) % n], poly[(edge + 2) % n], eps);
+  const side = moving === 'h' ? 'v' : 'h';
+  return prev === side && next === side;
+}
+
+function segmentDistance(a: number[], b: number[], c: number[], d: number[]): number {
+  if (segmentsProperlyCross(a, b, c, d)) return 0;
+  return Math.min(
+    distPointToSpan(a, c, d), distPointToSpan(b, c, d),
+    distPointToSpan(c, a, b), distPointToSpan(d, a, b),
+  );
+}
+
+function bboxOf(poly: number[][]): [number, number, number, number] {
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (const point of poly) {
+    x0 = Math.min(x0, point[0]); y0 = Math.min(y0, point[1]);
+    x1 = Math.max(x1, point[0]); y1 = Math.max(y1, point[1]);
+  }
+  return [x0, y0, x1, y1];
+}
+
+function bboxesDisjoint(a: number[][], b: number[][], eps: number): boolean {
+  const aa = bboxOf(a), bb = bboxOf(b);
+  return aa[2] < bb[0] - eps || bb[2] < aa[0] - eps
+    || aa[3] < bb[1] - eps || bb[3] < aa[1] - eps;
+}
+
+function obstacleOverlaysMovingEdge(
+  obstacle: SafeResizeObstacle, a: number[], b: number[], opts: SafeResizeOptions,
+): boolean {
+  const eps = opts.eps;
+  if (obstacle.kind === 'circle') {
+    return distPointToSpan(obstacle.center, a, b)
+      < obstacle.radius + (opts.movingHalf || 0) - eps;
+  }
+  return collinearOverlapLength(a, b, obstacle.a, obstacle.b, eps) > eps;
+}
+
+/** Resolve eligibility once at gesture start. Partial shared stretches and a
+ * third owner fail closed; the old vertex-insertion cascade is never planned. */
+export function resolveSafeResize(
+  rooms: RoomIn[], openings: SafeOpeningIn[], roomId: string, edge: number,
+  opts: SafeResizeOptions,
+): SafeResizeResolution {
+  const { eps } = opts;
+  const room = rooms.find((candidate) => candidate.id === roomId);
+  if (!room || edge < 0 || edge >= (room.poly?.length || 0)
+      || room.poly.length < 4 || !polyIsSimple(room.poly)) {
+    return { enabled: false, reason: 'invalid-geometry' };
+  }
+  const a = room.poly[edge];
+  const b = room.poly[(edge + 1) % room.poly.length];
+  const movingAxis = axisOf(a, b, eps);
+  if (!movingAxis) return { enabled: false, reason: 'diagonal' };
+  if (!sideEdgesArePerpendicular(room.poly, edge, movingAxis, eps)) {
+    return { enabled: false, reason: 'side-angle' };
+  }
+  if (opts.thicknessConflict) {
+    return { enabled: false, reason: 'thickness-conflict' };
+  }
+  for (const obstacle of opts.obstacles || []) {
+    if (obstacleOverlaysMovingEdge(obstacle, a, b, opts)) {
+      return { enabled: false, reason: 'duplicate-physical-wall' };
+    }
+  }
+
+  const targetLength = len2d(sub(b, a));
+  const exact: Array<{ room: RoomIn; edge: number }> = [];
+  const touchedRooms = new Set<string>();
+  let partial = false;
+  let unequal = false;
+  for (const other of rooms) {
+    if (other.id === roomId) continue;
+    for (let i = 0; i < other.poly.length; i++) {
+      const c = other.poly[i];
+      const d = other.poly[(i + 1) % other.poly.length];
+      const overlap = collinearOverlapLength(a, b, c, d, eps);
+      if (overlap <= eps) continue;
+      touchedRooms.add(other.id);
+      if (sameEndpoints(a, b, c, d, eps)) exact.push({ room: other, edge: i });
+      else if (overlap < targetLength - eps) partial = true;
+      else unequal = true;
+    }
+  }
+  if (partial) return { enabled: false, reason: 'partial-shared' };
+  if (unequal) return { enabled: false, reason: 'unequal-shared' };
+  if (touchedRooms.size > 1 || exact.length > 1) {
+    return { enabled: false, reason: 'multiple-rooms' };
+  }
+
+  const edgeByRoom: Record<string, number> = { [roomId]: edge };
+  const roomIds = [roomId];
+  if (exact.length === 1) {
+    const neighbour = exact[0];
+    if (!polyIsSimple(neighbour.room.poly)) {
+      return { enabled: false, reason: 'invalid-geometry' };
+    }
+    if (!sideEdgesArePerpendicular(neighbour.room.poly, neighbour.edge, movingAxis, eps)) {
+      return { enabled: false, reason: 'side-angle' };
+    }
+    roomIds.push(neighbour.room.id);
+    edgeByRoom[neighbour.room.id] = neighbour.edge;
+  }
+
+  const movingOpeningIds: string[] = [];
+  for (const opening of openings) {
+    if (distPointToSpan([opening.x, opening.y], a, b) > eps * 2) continue;
+    if (opening.hosted || opening.length > targetLength + eps * 2) {
+      return { enabled: false, reason: 'opening-conflict' };
+    }
+    movingOpeningIds.push(opening.id);
+  }
+  const topology = Object.fromEntries(roomIds.map((id) => [
+    id, rooms.find((candidate) => candidate.id === id)!.poly.length,
+  ]));
+  const plan: SafeResizePlan = {
+    roomId, edge, a: [...a], b: [...b], n: edgeNormal(room.poly, edge),
+    roomIds, edgeByRoom, topology, movingOpeningIds,
+  };
+  if (!validateSafeResize(rooms, openings, plan, 0, opts)) {
+    return { enabled: false, reason: 'invalid-geometry' };
+  }
+  return { enabled: true, plan };
+}
+
+/** Apply the same vector to the same two vertices in one or two rooms. No
+ * insertion, simplification, sorting or ownership inference occurs here. */
+export function applySafeResize(
+  rooms: RoomIn[], openings: SafeOpeningIn[], plan: SafeResizePlan, d: number,
+): EdgeDragResult {
+  const D: [number, number] = [plan.n[0] * d, plan.n[1] * d];
+  const result: EdgeDragResult = { polys: {}, openings: {}, movedSpans: {} };
+  for (const roomId of plan.roomIds) {
+    const room = rooms.find((candidate) => candidate.id === roomId);
+    const edge = plan.edgeByRoom[roomId];
+    if (!room || edge == null) continue;
+    const next = (edge + 1) % room.poly.length;
+    result.polys[roomId] = room.poly.map((point, index) => (
+      index === edge || index === next ? add2(point, D) : [...point]
+    ));
+    result.movedSpans[roomId] = [[
+      add2(room.poly[edge], D), add2(room.poly[next], D),
+    ]];
+  }
+  for (const opening of openings) {
+    if (plan.movingOpeningIds.includes(opening.id)) {
+      result.openings[opening.id] = [opening.x + D[0], opening.y + D[1]];
+    }
+  }
+  return result;
+}
+
+function openingOnEdge(opening: SafeOpeningIn, a: number[], b: number[], eps: number): boolean {
+  if (distPointToSpan([opening.x, opening.y], a, b) > eps * 2) return false;
+  const edgeLength = len2d(sub(b, a));
+  if (edgeLength <= eps) return false;
+  const u = [(b[0] - a[0]) / edgeLength, (b[1] - a[1]) / edgeLength];
+  const t = (opening.x - a[0]) * u[0] + (opening.y - a[1]) * u[1];
+  return t >= -eps && t <= edgeLength + eps;
+}
+
+function sideOpeningFits(
+  opening: SafeOpeningIn, oldA: number[], oldB: number[], newA: number[], newB: number[],
+  movedEndpoint: 0 | 1, movingHalf: number, eps: number,
+): boolean {
+  if (!openingOnEdge(opening, oldA, oldB, eps)) return true;
+  if (distPointToSpan([opening.x, opening.y], newA, newB) > eps * 2) return false;
+  const moved = movedEndpoint === 0 ? newA : newB;
+  return len2d(sub([opening.x, opening.y], moved))
+    >= opening.length / 2 + movingHalf - eps;
+}
+
+function obstacleBlocksCandidate(
+  obstacle: SafeResizeObstacle, a: number[], b: number[], opts: SafeResizeOptions,
+): boolean {
+  const half = opts.movingHalf || 0;
+  if (obstacle.kind === 'circle') {
+    return distPointToSpan(obstacle.center, a, b) < obstacle.radius + half - opts.eps;
+  }
+  return segmentDistance(a, b, obstacle.a, obstacle.b)
+    < (obstacle.half || 0) + half - opts.eps;
+}
+
+/** Exact candidate check used by preview and pointerup. The check is deliberately
+ * stricter than the historical polygon-only validator: changed-room identity,
+ * topology and shared endpoints are part of validity. */
+export function validateSafeResize(
+  rooms: RoomIn[], openings: SafeOpeningIn[], plan: SafeResizePlan, d: number,
+  opts: SafeResizeOptions,
+): boolean {
+  const { eps, minDim } = opts;
+  if (!Number.isFinite(d) || plan.roomIds.length < 1 || plan.roomIds.length > 2) return false;
+  const result = applySafeResize(rooms, openings, plan, d);
+  if (Object.keys(result.polys).length !== plan.roomIds.length) return false;
+  const changed = new Set(plan.roomIds);
+  const polyOf = (room: RoomIn) => result.polys[room.id] || room.poly;
+
+  for (const roomId of plan.roomIds) {
+    const original = rooms.find((room) => room.id === roomId);
+    const next = result.polys[roomId];
+    const edge = plan.edgeByRoom[roomId];
+    if (!original || !next || next.length !== plan.topology[roomId]
+        || next.length !== original.poly.length || !polyIsSimple(next)) return false;
+    const s0 = signedArea(original.poly);
+    const s1 = signedArea(next);
+    if (Math.abs(s1) < eps || s0 * s1 <= 0) return false;
+    const oldSpan: [number[], number[]] = [
+      original.poly[edge], original.poly[(edge + 1) % original.poly.length],
+    ];
+    const newSpan = result.movedSpans[roomId];
+    const oldClearance = minSpanClearance(original.poly, [oldSpan], eps);
+    const newClearance = minSpanClearance(next, newSpan, eps);
+    if (newClearance < Math.min(minDim, oldClearance) - eps) return false;
+
+    const n = original.poly.length;
+    const prev = (edge - 1 + n) % n;
+    const sideAOld: [number[], number[]] = [original.poly[prev], original.poly[edge]];
+    const sideANew: [number[], number[]] = [next[prev], next[edge]];
+    const sideBOld: [number[], number[]] = [original.poly[(edge + 1) % n], original.poly[(edge + 2) % n]];
+    const sideBNew: [number[], number[]] = [next[(edge + 1) % n], next[(edge + 2) % n]];
+    const movingAxis = axisOf(next[edge], next[(edge + 1) % n], eps);
+    const sideAxis = movingAxis === 'h' ? 'v' : movingAxis === 'v' ? 'h' : null;
+    if (!sideAxis || axisOf(...sideANew, eps) !== sideAxis
+        || axisOf(...sideBNew, eps) !== sideAxis) return false;
+    for (const opening of openings) {
+      if (plan.movingOpeningIds.includes(opening.id)) continue;
+      if (!sideOpeningFits(opening, ...sideAOld, ...sideANew, 1, opts.movingHalf || 0, eps)) return false;
+      if (!sideOpeningFits(opening, ...sideBOld, ...sideBNew, 0, opts.movingHalf || 0, eps)) return false;
+    }
+  }
+
+  if (plan.roomIds.length === 2) {
+    const [leftId, rightId] = plan.roomIds;
+    const left = result.polys[leftId];
+    const right = result.polys[rightId];
+    const li = plan.edgeByRoom[leftId];
+    const ri = plan.edgeByRoom[rightId];
+    if (!sameEndpoints(
+      left[li], left[(li + 1) % left.length],
+      right[ri], right[(ri + 1) % right.length], eps,
+    )) return false;
+  }
+
+  for (const roomId of plan.roomIds) {
+    const original = rooms.find((room) => room.id === roomId)!;
+    const next = result.polys[roomId];
+    for (const other of rooms) {
+      if (other.id === roomId || changed.has(other.id)) continue;
+      const otherNext = polyOf(other);
+      if (bboxesDisjoint(original.poly, other.poly, eps)
+          && bboxesDisjoint(next, otherNext, eps)) continue;
+      if (polyContainsPoly(original.poly, other.poly, eps)) {
+        if (!polyContainsPoly(next, otherNext, eps)) return false;
+      } else if (polyContainsPoly(other.poly, original.poly, eps)) {
+        if (!polyContainsPoly(otherNext, next, eps)) return false;
+      } else if (polyContainsPoly(next, otherNext, eps)
+          || polyContainsPoly(otherNext, next, eps)
+          || illegalOverlap(next, otherNext, eps)) return false;
+    }
+  }
+
+  const movingRoom = rooms.find((room) => room.id === plan.roomId)!;
+  const movingPoly = result.polys[plan.roomId];
+  const movingEdge = plan.edgeByRoom[plan.roomId];
+  const ma = movingPoly[movingEdge];
+  const mb = movingPoly[(movingEdge + 1) % movingPoly.length];
+  if (Math.abs(d) > eps) {
+    for (const obstacle of opts.obstacles || []) {
+      if (obstacleBlocksCandidate(obstacle, ma, mb, opts)) return false;
+    }
+  }
+
+  for (const opening of openings) {
+    if (!plan.movingOpeningIds.includes(opening.id)) continue;
+    const center = result.openings[opening.id];
+    if (!center || opening.hosted) return false;
+    if (!openingFits({ ...opening, x: center[0], y: center[1] }, [ma, mb].length ? [movingPoly] : [], eps * 2)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/** Contiguous clamp from zero: once a wall reaches the first unsafe grid node,
+ * it cannot jump through an opening/corner and become valid again beyond it. */
+export function clampSafeResize(
+  rooms: RoomIn[], openings: SafeOpeningIn[], plan: SafeResizePlan,
+  dWanted: number, step: number, opts: SafeResizeOptions,
+): number {
+  if (!Number.isFinite(dWanted) || Math.abs(dWanted) < 1e-9) return 0;
+  const sign = Math.sign(dWanted);
+  const wanted = Math.abs(dWanted);
+  const stride = Math.max(Math.abs(step), 1e-6);
+  let cached = safeClampValidationCache.get(plan);
+  if (!cached || cached.opts !== opts) {
+    cached = { opts, values: new Map() };
+    safeClampValidationCache.set(plan, cached);
+  }
+  const cache = cached.values;
+  let good = 0;
+  for (let magnitude = Math.min(stride, wanted), guard = 0;
+    guard < 4096 && magnitude <= wanted + 1e-9;
+    guard++, magnitude = Math.min(wanted, magnitude + stride)) {
+    const candidate = sign * magnitude;
+    const cacheKey = `${candidate.toFixed(9)}|${stride.toFixed(9)}`;
+    let valid = cache.get(cacheKey);
+    if (valid === undefined) {
+      valid = validateSafeResize(rooms, openings, plan, candidate, opts);
+      if (cache.size < 4096) cache.set(cacheKey, valid);
+    }
+    if (!valid) break;
+    good = candidate;
+    if (Math.abs(magnitude - wanted) <= 1e-9) break;
+  }
+  return good;
+}
+
+const safeClampValidationCache = new WeakMap<
+SafeResizePlan, { opts: SafeResizeOptions; values: Map<string, boolean> }
+>();
+
+/** Test/benchmark diagnostic; active plans are weakly held and individually bounded. */
+export function safeResizeCachedDeltaCount(plan: SafeResizePlan): number {
+  return safeClampValidationCache.get(plan)?.values.size || 0;
 }
 
 // ---------------- mechanism B: the scale frame ----------------

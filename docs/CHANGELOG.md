@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Resize now moves only a provably safe horizontal or vertical room wall. An
+  exact shared wall may reshape at most two rooms and stops at the first
+  corner, opening jamb, third-room contact or other topology change; partial,
+  diagonal and ambiguous walls remain visible but explain why they are
+  disabled. Preview and commit use the same fixed-topology result, so resizing
+  can no longer split thickness records, leave wall fragments behind or make
+  the space masonry disappear
+  ([#277](https://github.com/Matysh/houseplan-card/issues/277)).
 - “Optimize plans” now repairs an exact redundant independent wall drawn over
   one solid shared room boundary. Its hosted door/window/gate is reattached to
   the room wall without moving or losing bindings, the wider of the two

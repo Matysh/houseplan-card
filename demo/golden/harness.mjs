@@ -183,6 +183,37 @@ export function prepareGoldenFixture(scenario) {
       wall_columns: [],
     });
   }
+  if (scenario.safeResizeFixture) {
+    const edge = (a, b, cm = 15) => ({
+      key: fixtureWallKey(a, b), a: [...a], b: [...b], cm,
+    });
+    const l0 = [0.08, 0.12], lm0 = [0.50, 0.12], lm1 = [0.50, 0.55], l1 = [0.08, 0.55];
+    const r0 = [0.92, 0.12], r1 = [0.92, 0.55];
+    const d0 = [0.35, 0.70], d1 = [0.50, 0.62], d2 = [0.65, 0.70], d3 = [0.50, 0.82];
+    fixture.config.spaces.push({
+      id: scenario.space,
+      title: 'Safe Resize contract',
+      plan_url: null,
+      view_box: [0, 0, 1, 1],
+      cell_cm: 1,
+      settings: { fill_mode: 'none', show_borders: true, show_names: false },
+      rooms: [
+        { id: 'resize-left', name: 'Resizable A', area: null, poly: [l0, lm0, lm1, l1] },
+        { id: 'resize-right', name: 'Resizable B', area: null, poly: [lm0, r0, r1, lm1] },
+        { id: 'resize-diagonal', name: 'Disabled diagonal', area: null, poly: [d0, d1, d2, d3] },
+      ],
+      walls: [
+        edge(l0, lm0), edge(lm0, r0), edge(r0, r1), edge(r1, lm1),
+        edge(lm1, l1), edge(l1, l0), edge(lm0, lm1),
+        edge(d0, d1), edge(d1, d2), edge(d2, d3), edge(d3, d0),
+      ],
+      openings: [{
+        id: 'resize-side-door', type: 'door', x: 0.38, y: 0.12,
+        angle: 0, length: 0.08,
+      }],
+      partitions: [], room_drafts: [], wall_columns: [], decor: [],
+    });
+  }
   if (scenario.junctionPatchResilience) {
     if (!Array.isArray(scenario.retainedWedgeProbe)
         || scenario.retainedWedgeProbe.length !== 2
@@ -550,7 +581,8 @@ export async function prepareGoldenScenario(page, scenario) {
     }
     const host = document.getElementById('host');
     const cardConfig = {
-      type: 'custom:houseplan-card', title: `Golden ${scenario.id}`, icon_size: 3.4,
+      type: 'custom:houseplan-card', title: `Golden ${scenario.id}`,
+      icon_size: Number.isFinite(scenario.iconSize) ? scenario.iconSize : 3.4,
       language: scenario.language || 'en',
       ...(scenario.kiosk ? { kiosk: true } : {}),
     };
@@ -836,6 +868,38 @@ export async function prepareGoldenScenario(page, scenario) {
       if (!overlay || active?.getAttribute('data-kind') !== expectedKind
           || overlay.querySelectorAll('.plan-snap-node[data-active="true"]').length !== 1) {
         throw new Error(`golden plan snap candidate did not render: ${scenario.id}`);
+      }
+    }
+    if (scenario.safeResizePreview) {
+      card._tool = 'resize';
+      card.requestUpdate();
+      await card.updateComplete;
+      await frame();
+      const handles = [...card.renderRoot.querySelectorAll('.rszhandle')];
+      const enabled = handles.filter((handle) => handle.getAttribute('aria-disabled') === 'false');
+      const disabled = handles.filter((handle) => handle.getAttribute('aria-disabled') === 'true');
+      const handle = enabled.find((entry) =>
+        Math.abs(+entry.getAttribute('cx') - 500) < 0.5
+        && Math.abs(+entry.getAttribute('cy') - 335) < 0.5);
+      if (!handle || !disabled.length || disabled.some((entry) => !entry.querySelector('title'))) {
+        throw new Error(`golden safe Resize handle matrix is incomplete: ${scenario.id}`);
+      }
+      const svgRoot = card.renderRoot.querySelector('.stage svg');
+      const point = (x, y) => new DOMPoint(x, y).matrixTransform(svgRoot.getScreenCTM());
+      const from = point(+handle.getAttribute('cx'), +handle.getAttribute('cy'));
+      const wanted = point(250, +handle.getAttribute('cy'));
+      const send = (type, at) => handle.dispatchEvent(new PointerEvent(type, {
+        bubbles: true, composed: true, cancelable: true, pointerId: 277,
+        pointerType: 'mouse', button: 0, isPrimary: true,
+        clientX: at.x, clientY: at.y,
+      }));
+      send('pointerdown', from);
+      send('pointermove', wanted);
+      await card.updateComplete;
+      await frame();
+      const delta = Math.abs(card._rszDrag?.d || 0);
+      if (!card._rszPreview || !card._rszLive?.length || !(delta > 0 && delta < 250)) {
+        throw new Error(`golden safe Resize opening clamp did not render: ${scenario.id}`);
       }
     }
     if (scenario.openingPreview) {

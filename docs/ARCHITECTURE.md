@@ -517,22 +517,26 @@ a newer external config revision is adopted. Positional placement is always quan
 grid. Shift may alter a gesture's geometry (square/circle creation, independent
 resize axes or free rotation), but it cannot create off-grid coordinates.
 
-Room Resize keeps its live geometry in an immutable-snapshot overlay. Modern
-wall-thickness entries use exact `a/b` endpoints as identity; their quantised
-midpoint/direction `key` is only a compatibility index. `wallKey()` stabilises
-endpoint coordinates already within storage precision of a grid node before
-quantising the midpoint, so exact and nine-decimal forms of the same node have
-one index. Resolution prefers exact key, then strict endpoint-pair identity,
-then the legacy midpoint fallback; containment is intentionally excluded from
-the identity step and remains an explicit parent-run compatibility path. This
-lets every structural consumer repair an affected record on read without
-mutating config, while explicit Optimize rewrites the stable index. When a moved polygon
-edge overlaps only part of a longer entry, `rekeyWallsAfterMove()` partitions
-the source interval at all overlap endpoints, maps only covered atoms and
-retains the rest. Exact geometry plus `cm`, never key alone, defines a duplicate.
-Legacy key-only records follow an unambiguous whole-edge/midpoint move without
-inventing a splittable length. This same helper serves edge drag, corner scale
-and optimizer geometry, while commit/degrade remains the persistence boundary.
+Room Resize (#277) is a fixed-topology wall move, not a general polygon
+transform. `resolveSafeResize` admits one axis-aligned edge of one room or one
+exact endpoint-to-endpoint pair of two rooms. `applySafeResize` moves only the
+two existing endpoint vertices in those rooms; partial shared boundaries,
+diagonals, physical duplicates and third-room cascades remain visible disabled
+handles. `clampSafeResize` explores grid deltas contiguously from zero and
+memoizes exact checks in a weak, per-plan, 4096-entry cache, so an irregular
+pair stops at its first corner and cannot jump through it.
+
+The controller rebuilds every live candidate from one immutable
+`SpaceGeometryState`. `rekeyWallsAfterMove()` and
+`rekeyOpenSpansAfterMove()` map exact wall-owned records into that overlay;
+partitions, drafts, columns, decor and plan transform stay byte-equivalent.
+The renderer's canonical wall/floor result for the final preview cfg epoch is
+the pointerup preflight result. Success copies that exact overlay once and
+records one Undo/save; there is no commit-time simplify/degrade/reconstruction.
+Failure or cancellation writes nothing. Historical partial-shared and corner
+scale helpers remain pure-test history only and are tree-shaken from the
+production interaction path. Exact `a/b` wall endpoints remain identity and
+the quantised midpoint/direction `key` remains only a compatibility index.
 
 `reconcileCoincidentPartitions()` is an explicit-Optimize-only structural
 canonicalizer (#276). It consumes canonical shared wall intervals and the

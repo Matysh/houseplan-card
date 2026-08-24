@@ -1,8 +1,9 @@
 /**
- * Regression: resize a shared wall whose middle is virtual and whose solid
- * remainders carry thickness. The live overlay, commit and Undo must move one
- * geometry transaction. Virtual drawing paints above the real wall body in
- * editors, but below it in View so thick-wall jambs mask the dash ends.
+ * Regression: the demo's x=550 boundary is partial-shared (Living continues
+ * past Kitchen), so #277 must disable its Resize handle without disturbing
+ * the virtual middle or atomic thickness records. Virtual drawing still
+ * paints above the real wall body in editors, but below it in View so thick
+ * wall jambs mask the dash ends.
  */
 import { launch, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch();
@@ -83,6 +84,7 @@ const res = await page.evaluate(async () => {
     walls: sp().walls,
     open_spans: sp().open_spans,
   });
+  const historyBefore = c._geometryHistory?.length || 0;
   c._tool = 'resize';
   await upd();
   const stage = () => sr().querySelector('.stage');
@@ -110,30 +112,22 @@ const res = await page.evaluate(async () => {
     const x = +handle.getAttribute('cx');
     const y = +handle.getAttribute('cy');
     const step = c._gridPitch;
+    out.partialSharedResizeDisabled = handle.getAttribute('aria-disabled') === 'true';
+    out.disabledReasonExposed = !!handle.getAttribute('aria-label')
+      && !!handle.querySelector('title')?.textContent;
     pev('pointerdown', handle, x, y);
     pev('pointermove', handle, x + step, y);
+    pev('pointerup', handle, x + step, y);
     await c.updateComplete;
     const liveCut = c._openCuts()[0];
-    const liveX = liveCut?.[0];
-    out.liveSpanMoves = Number.isFinite(liveX) && Math.abs(liveX - (550 + step)) < 0.1;
-    out.liveThicknessStays = c._intervalCm([liveX, 145, liveX, 195]) === 20
-      && c._intervalCm([liveX, 205, liveX, 295]) === 0
-      && c._intervalCm([liveX, 305, liveX, 455]) === 20;
-    out.liveBodyStays = !!sr().querySelector('.wallbodies');
-
-    pev('pointerup', handle, x + step, y);
-    await upd();
-    const finalCut = c._openCuts()[0];
-    const finalX = finalCut?.[0];
-    out.commitSpanMoves = Number.isFinite(finalX) && Math.abs(finalX - (550 + step)) < 0.1;
-    out.commitThicknessStays = c._intervalCm([finalX, 145, finalX, 195]) === 20
-      && c._intervalCm([finalX, 205, finalX, 295]) === 0
-      && c._intervalCm([finalX, 305, finalX, 455]) === 20;
-    out.commitKeepsAtomicKeys = (sp().walls || []).filter((w) => w.cm === 20).length >= 2;
-
-    c._undoGeometry();
-    await upd();
-    out.undoRestoresAll = JSON.stringify({
+    out.noDragStarted = !c._rszDrag && !c._rszPreview;
+    out.virtualSpanUnchanged = Number.isFinite(liveCut?.[0]) && Math.abs(liveCut[0] - 550) < 0.1;
+    out.atomicThicknessUnchanged = c._intervalCm([550, 145, 550, 195]) === 20
+      && c._intervalCm([550, 205, 550, 295]) === 0
+      && c._intervalCm([550, 305, 550, 455]) === 20;
+    out.realBodyStays = !!sr().querySelector('.wallbodies');
+    out.noHistoryCreated = (c._geometryHistory?.length || 0) === historyBefore;
+    out.sourceUnchanged = JSON.stringify({
       rooms: sp().rooms,
       walls: sp().walls,
       open_spans: sp().open_spans,

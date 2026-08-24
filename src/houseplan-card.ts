@@ -41,8 +41,10 @@ import {
   DECOR_TEXT_BASE,
 } from './logic';
 import {
-  planEdgeDrag, applyEdgeDrag, clampEdgeDrag, applyRoomScale, clampRoomScale,
-  simplifyPoly, polyIsSimple, areaM2, formatArea, MIN_ROOM_CM, type EdgeDragPlan,
+  resolveSafeResize, applySafeResize, clampSafeResize, validateSafeResize,
+  polyIsSimple, areaM2, formatArea, MIN_ROOM_CM,
+  type SafeOpeningIn, type SafeResizeObstacle, type SafeResizeOptions,
+  type SafeResizePlan, type SafeResizeReason, type SafeResizeResolution,
 } from './resize';
 import {
   computeSunRays, dayPhase, northDegOf, bgModeOf, sunRaysOn,
@@ -71,7 +73,7 @@ import {
   intervalCmAt, wallBodyNeedsSolid, wallHatchNeedsSolid, wallHatchStepUnits,
   HATCH_BASE_STEP_UNITS, type OpeningTunnelGeometry, type OpeningWallIndex,
   type LinearWallSegment, type WallEntry, type WallInterval,
-  innerEdgeSpan, ownEdgeOffsets,
+  innerEdgeSpan, ownEdgeOffsets, thicknessCmAt,
 } from './wall-thickness';
 import {
   resolveOpenCuts, resolveBoundaryTarget, snapOpenPoint,
@@ -1603,19 +1605,20 @@ class HouseplanCard extends LitElement {
   // room resize tool (docs/RESIZE.md): selection and an immutable live preview
   private _rszSel: string | null = null;
   private _rszDrag: {
-    kind: 'edge' | 'scale';
     pid: number;
     roomId: string;
-    plan?: EdgeDragPlan;
-    fixed?: [number, number];
-    span0?: number;
+    plan: SafeResizePlan;
+    opts: SafeResizeOptions;
     rooms: { id: string; poly: number[][] }[];
-    openings: { id: string; x: number; y: number; length: number }[];
+    openings: SafeOpeningIn[];
     snap: string;
     moved: boolean;
     d: number;
-    k: number;
     changed: string[];
+  } | null = null;
+  private _rszEligibilityCache: {
+    key: string;
+    values: Map<string, SafeResizeResolution>;
   } | null = null;
   /** HP-1550-01: the live resize preview, kept OUT of _serverCfg (see _rszApplyPreview). */
   private _rszPreview: { space: string; sp: any } | null = null;
@@ -8255,12 +8258,96 @@ class HouseplanCard extends LitElement {
     return out;
   }
 
-  private _rszOpenings(): { id: string; x: number; y: number; length: number }[] {
-    return this._openingsR.map((o) => ({ id: o.id, x: o.rx, y: o.ry, length: o.rlen }));
+  private _rszOpenings(): SafeOpeningIn[] {
+    return this._openingsR.map((o) => ({
+      id: o.id, x: o.rx, y: o.ry, length: o.rlen,
+      hosted: !!o.host, angle: o.angle, type: o.type,
+    }));
   }
 
-  private _rszOpts(): { minDim: number; eps: number } {
-    return { minDim: this._cmToUnits(MIN_ROOM_CM), eps: this._gridPitch * 0.05 };
+  private _rszObstacles(): SafeResizeObstacle[] {
+    const space = this._spaceModel();
+    if (!space) return [];
+    const obstacles: SafeResizeObstacle[] = [];
+    for (const partition of space.partitions || []) {
+      obstacles.push({
+        kind: 'segment', a: [...partition.a], b: [...partition.b],
+        half: wallCmToUnits(partition.cm, this._cellCm, this._gridPitch) / 2,
+      });
+    }
+    for (const draft of space.room_drafts || []) {
+      for (let i = 0; i + 1 < draft.points.length; i++) {
+        obstacles.push({
+          kind: 'segment', a: [...draft.points[i]], b: [...draft.points[i + 1]],
+          half: wallCmToUnits(
+            Number(draft.segments?.[i]?.cm) || DRAW_WALL_DEFAULT_CM,
+            this._cellCm, this._gridPitch,
+          ) / 2,
+        });
+      }
+    }
+    for (const column of space.wall_columns || []) {
+      const half = wallCmToUnits(column.cm, this._cellCm, this._gridPitch) / 2;
+      obstacles.push({
+        kind: 'circle', center: [...column.center],
+        radius: column.shape === 'square' ? half * Math.SQRT2 : half,
+      });
+    }
+    return obstacles;
+  }
+
+  private _rszOptsFor(a: number[], b: number[]): SafeResizeOptions {
+    const cm = thicknessCmAt(this._spaceWalls, a, b, this._wallKeyPitch, NORM_W);
+    const exact = this._spaceWalls.filter((wall) => Array.isArray(wall.a) && Array.isArray(wall.b)
+      && wall.a.length >= 2 && wall.b.length >= 2).map((wall) => ({
+      wall,
+      a: [wall.a![0] * NORM_W, wall.a![1] * this._spaceH],
+      b: [wall.b![0] * NORM_W, wall.b![1] * this._spaceH],
+    }));
+    const axis = Math.abs(a[0] - b[0]) <= this._gridPitch * 0.05 ? 'v'
+      : Math.abs(a[1] - b[1]) <= this._gridPitch * 0.05 ? 'h' : null;
+    const overlaps = exact.filter((entry) => {
+      if (!axis) return false;
+      if (axis === 'h') {
+        if (Math.abs(entry.a[1] - a[1]) > this._gridPitch * 0.05
+            || Math.abs(entry.b[1] - a[1]) > this._gridPitch * 0.05) return false;
+        return Math.min(Math.max(a[0], b[0]), Math.max(entry.a[0], entry.b[0]))
+          - Math.max(Math.min(a[0], b[0]), Math.min(entry.a[0], entry.b[0])) > this._gridPitch * 0.05;
+      }
+      if (Math.abs(entry.a[0] - a[0]) > this._gridPitch * 0.05
+          || Math.abs(entry.b[0] - a[0]) > this._gridPitch * 0.05) return false;
+      return Math.min(Math.max(a[1], b[1]), Math.max(entry.a[1], entry.b[1]))
+        - Math.max(Math.min(a[1], b[1]), Math.min(entry.a[1], entry.b[1])) > this._gridPitch * 0.05;
+    });
+    const exactCms = new Set(overlaps.map((entry) => Number(entry.wall.cm)).filter((value) => value > 0));
+    return {
+      minDim: this._cmToUnits(MIN_ROOM_CM),
+      eps: this._gridPitch * 0.05,
+      movingHalf: cm > 0 ? wallCmToUnits(cm, this._cellCm, this._gridPitch) / 2 : 0,
+      obstacles: this._rszObstacles(),
+      thicknessConflict: exactCms.size > 1,
+    };
+  }
+
+  private _rszResolution(roomId: string, edge: number): SafeResizeResolution {
+    const snap = this._rszDrag?.snap || this._rszSnapshot();
+    const key = `${this._space}|${this._cellCm}|${this._gridPitch}|${snap}`;
+    if (!this._rszEligibilityCache || this._rszEligibilityCache.key !== key) {
+      this._rszEligibilityCache = { key, values: new Map() };
+    }
+    const cacheKey = `${roomId}:${edge}`;
+    const cached = this._rszEligibilityCache.values.get(cacheKey);
+    if (cached) return cached;
+    const rooms = this._rszDrag?.rooms || this._rszRooms();
+    const room = rooms.find((candidate) => candidate.id === roomId);
+    const a = room?.poly?.[edge] || [0, 0];
+    const b = room?.poly?.[(edge + 1) % (room?.poly?.length || 1)] || [0, 0];
+    const result = resolveSafeResize(
+      rooms, this._rszDrag?.openings || this._rszOpenings(), roomId, edge,
+      this._rszOptsFor(a, b),
+    );
+    this._rszEligibilityCache.values.set(cacheKey, result);
+    return result;
   }
 
   private _rszSnapshot(): string {
@@ -8282,19 +8369,26 @@ class HouseplanCard extends LitElement {
    *  live geometry therefore lives in the `_rszPreview` overlay; _curSpaceCfg /
    *  _renderCfg feed it to every render, and only _rszUp moves it into the real
    *  config — the single point where a resize becomes visible to _writeConfig. */
-  private _rszApplyPreview(polys: Record<string, number[][]>, ops: Record<string, [number, number]>): void {
+  private _rszApplyPreview(
+    polys: Record<string, number[][]>, ops: Record<string, [number, number]>,
+  ): boolean {
     const g = this._rszDrag;
     const real = this._serverCfg?.spaces.find((s: any) => s.id === this._space);
-    if (!g || !real) return;
+    if (!g || !real || !this._serverCfg) return false;
     const s = JSON.parse(g.snap); // fresh deep copies every move — free to mutate
-    const sp = {
+    const sp: any = {
       ...real,
       rooms: s.rooms,
-      openings: s.openings,
-      walls: s.walls,
-      open_spans: s.open_spans,
+      openings: s.openings || [],
     };
-    if (!Array.isArray(s.open_spans) || !s.open_spans.length) delete (sp as any).open_spans;
+    for (const key of ['walls', 'open_spans', 'room_drafts', 'partitions', 'wall_columns', 'decor'] as const) {
+      if (s[key] !== undefined) (sp as any)[key] = s[key];
+      else delete (sp as any)[key];
+    }
+    for (const key of ['plan_x', 'plan_y', 'plan_scale', 'plan_scale_x', 'plan_scale_y', 'plan_angle'] as const) {
+      if (s.plan_transform?.[key] !== undefined) (sp as any)[key] = s.plan_transform[key];
+      else delete (sp as any)[key];
+    }
     const H = this._spaceH;
     for (const [id, poly] of Object.entries(polys)) {
       const r = sp.rooms.find((x: any) => x.id === id);
@@ -8338,36 +8432,70 @@ class HouseplanCard extends LitElement {
         );
       }
     }
+    // Rekeying may change coordinates/keys, never the number or physical
+    // thicknesses of persisted records. A lossy mapping is a stopped preview.
+    const beforeWallCms = new Set((s.walls || []).map((wall: any) => Number(wall.cm)));
+    const afterWallCms = new Set((sp.walls || []).map((wall: any) => Number(wall.cm)));
+    if ([...beforeWallCms].some((cm) => !afterWallCms.has(cm))
+        || (s.open_spans || []).length !== ((sp as any).open_spans || []).length) return false;
     this._rszPreview = { space: this._space, sp };
     this._cfgEpoch++;
+    return true;
+  }
+
+  /** Final fail-closed check for the exact overlay. With physical walls the
+   * production renderer has normally populated `_wallUnionCache` for this
+   * cfg epoch already; pointerup reuses that exact result instead of repeating
+   * a second multi-polygon union. A release before the frame still computes it
+   * here. Wall-less plans use the shared production floor preflight. */
+  private _rszCandidateRenderable(preview: { space: string; sp: any } | null): boolean {
+    if (!preview || preview.space !== this._space || this._rszPreview !== preview
+        || !this._serverCfg) return false;
+    const hasPhysical = !!preview.sp.walls?.length
+      || !!preview.sp.partitions?.length || !!preview.sp.room_drafts?.length
+      || !!preview.sp.wall_columns?.length;
+    try {
+      if (hasPhysical) return !!this._wallUnionGeometry();
+      return this._checkOptimizeGeometry({
+        ...this._serverCfg, spaces: [preview.sp],
+      } as ServerConfig).ok;
+    } catch {
+      return false;
+    }
   }
 
   private _rszEdgeDown(ev: PointerEvent, roomId: string, edge: number): void {
     if (this._tool !== 'resize' || this._rszDrag) return;
     ev.stopPropagation();
     ev.preventDefault();
-    capturePointer(ev);
     const rooms = this._rszRooms();
-    const plan = planEdgeDrag(rooms, roomId, edge);
-    if (!plan) return;
+    const resolution = this._rszResolution(roomId, edge);
+    if (!resolution.enabled) {
+      this._showToast(this._rszReasonText(resolution.reason));
+      return;
+    }
+    capturePointer(ev);
+    const plan = resolution.plan;
     this._rszDrag = {
-      kind: 'edge', pid: ev.pointerId, roomId, plan,
+      pid: ev.pointerId, roomId, plan, opts: this._rszOptsFor(plan.a, plan.b),
       rooms, openings: this._rszOpenings(), snap: this._rszSnapshot(),
-      moved: false, d: 0, k: 1, changed: [],
+      moved: false, d: 0, changed: [...plan.roomIds],
     };
   }
 
-  private _rszCornerDown(ev: PointerEvent, roomId: string, corner: number[], fixed: [number, number]): void {
-    if (this._tool !== 'resize' || this._rszDrag) return;
+  private _rszReasonText(reason: SafeResizeReason): string {
+    return this._t(`resize.disabled.${reason}` as I18nKey);
+  }
+
+  private _rszDisabledActivate(ev: Event, reason: SafeResizeReason): void {
     ev.stopPropagation();
     ev.preventDefault();
-    capturePointer(ev);
-    this._rszDrag = {
-      kind: 'scale', pid: ev.pointerId, roomId, fixed,
-      span0: Math.hypot(corner[0] - fixed[0], corner[1] - fixed[1]) || 1,
-      rooms: this._rszRooms(), openings: this._rszOpenings(), snap: this._rszSnapshot(),
-      moved: false, d: 0, k: 1, changed: [],
-    };
+    this._showToast(this._rszReasonText(reason));
+  }
+
+  private _rszDisabledKey(ev: KeyboardEvent, reason: SafeResizeReason): void {
+    if (ev.key !== 'Enter' && ev.key !== ' ') return;
+    this._rszDisabledActivate(ev, reason);
   }
 
   private _rszMove(ev: PointerEvent): void {
@@ -8375,36 +8503,20 @@ class HouseplanCard extends LitElement {
     if (!g || g.pid !== ev.pointerId) return;
     ev.stopPropagation();
     const p = this._svgPoint(ev);
-    if (g.kind === 'edge') {
-      const plan = g.plan!;
-      const dRaw = (p[0] - plan.a[0]) * plan.n[0] + (p[1] - plan.a[1]) * plan.n[1];
-      // the moved wall LINE lands on the grid, like every drawn wall
-      const sn = this._snap([plan.a[0] + plan.n[0] * dRaw, plan.a[1] + plan.n[1] * dRaw]);
-      let d = (sn[0] - plan.a[0]) * plan.n[0] + (sn[1] - plan.a[1]) * plan.n[1];
-      d = clampEdgeDrag(g.rooms, g.openings, plan, d, this._gridPitch, this._rszOpts());
-      if (d === g.d && g.moved) return;
-      g.d = d;
-      g.moved = true;
-      const res = applyEdgeDrag(g.rooms, g.openings, plan, d, this._rszOpts().eps);
-      g.changed = Object.keys(res.polys);
-      this._rszApplyPreview(res.polys, res.openings);
-      this._rszLive = this._rszEdgeLabels(res, plan);
-    } else {
-      const fixed = g.fixed!;
-      const sn = this._snap(p); // the dragged corner aims at grid nodes
-      let k = Math.hypot(sn[0] - fixed[0], sn[1] - fixed[1]) / (g.span0 || 1);
-      k = Math.max(0.05, Math.min(20, k));
-      k = clampRoomScale(g.rooms, g.openings, g.roomId, fixed, k, this._rszOpts());
-      if (k === g.k && g.moved) return;
-      g.k = k;
-      g.moved = true;
-      const room = g.rooms.find((r) => r.id === g.roomId)!;
-      const others = g.rooms.filter((r) => r.id !== g.roomId).map((r) => r.poly);
-      const res = applyRoomScale(room, g.openings, others, fixed, k, this._rszOpts().eps * 2);
-      g.changed = [g.roomId];
-      this._rszApplyPreview({ [g.roomId]: res.poly }, res.openings);
-      this._rszLive = this._rszScaleLabels(res.poly);
-    }
+    const plan = g.plan;
+    const dRaw = (p[0] - plan.a[0]) * plan.n[0] + (p[1] - plan.a[1]) * plan.n[1];
+    // the moved wall LINE lands on the grid, like every drawn wall
+    const sn = this._snap([plan.a[0] + plan.n[0] * dRaw, plan.a[1] + plan.n[1] * dRaw]);
+    const wanted = (sn[0] - plan.a[0]) * plan.n[0] + (sn[1] - plan.a[1]) * plan.n[1];
+    let d = clampSafeResize(g.rooms, g.openings, plan, wanted, this._gridPitch, g.opts);
+    if (d === g.d && g.moved) return;
+    g.moved = true;
+    g.changed = [...plan.roomIds];
+    this._rszPreview = null;
+    let res = applySafeResize(g.rooms, g.openings, plan, d);
+    this._rszApplyPreview(res.polys, res.openings);
+    g.d = d;
+    this._rszLive = this._rszEdgeLabels(res, plan);
     this.requestUpdate();
   }
 
@@ -8413,20 +8525,28 @@ class HouseplanCard extends LitElement {
     if (!g || g.pid !== ev.pointerId) return;
     ev.stopPropagation();
     const preview = this._rszPreview;
+    const wantedCommit = g.moved && Math.abs(g.d) > 1e-9;
+    const snapshotStillCurrent = this._rszSnapshot() === g.snap;
+    const topologyValid = validateSafeResize(g.rooms, g.openings, g.plan, g.d, g.opts);
+    const candidateValid = this._rszCandidateRenderable(preview);
     this._rszDrag = null;
     this._rszLive = null;
     this._rszPreview = null; // the overlay is gone either way; renders read the real config again
-    const changed = g.moved && (g.kind === 'edge' ? Math.abs(g.d) > 1e-9 : Math.abs(g.k - 1) > 1e-9);
-    if (!changed || !preview) {
+    if (!wantedCommit || !preview) {
       // HP-1550-01: nothing to restore — the preview never touched the config
       this._cfgEpoch++;
       this.requestUpdate();
       return;
     }
+    if (!snapshotStillCurrent || !topologyValid || !candidateValid) {
+      this._cfgEpoch++;
+      this._showToast(this._t('resize.commit_failed'));
+      this.requestUpdate();
+      return;
+    }
     const before = JSON.parse(g.snap) as SpaceGeometryState;
-    // commit: the preview moves into the REAL config in one step (the only point
-    // where _writeConfig can see a resize), collinear T-insert leftovers cleaned,
-    // then ONE undo step + ONE write
+    // Commit the exact preview in one step. No simplify/rebuild pass is allowed:
+    // preview and persistence share the same fixed-topology candidate.
     const sp = this._curSpaceCfg;
     if (sp) {
       sp.rooms = preview.sp.rooms;
@@ -8440,25 +8560,13 @@ class HouseplanCard extends LitElement {
       } else {
         delete (sp as any).open_spans;
       }
-      for (const id of g.changed) {
-        const r = sp.rooms.find((x: any) => x.id === id);
-        if (r?.poly) r.poly = simplifyPoly(r.poly, 1e-9);
-      }
-      // The preview was derived from the immutable snapshot and already moved
-      // both explicit spans and every whole/atomic thickness key. Commit only
-      // clips that geometry to the simplified final rooms, rebuilds open_to,
-      // and drops keys that genuinely no longer name a live interval.
-      this._commitOpenSpans();
-      if (Array.isArray(sp.walls) && sp.walls.length) {
-        sp.walls = degradeWalls(sp.walls, sp.rooms || [], GRID_STEP_N, 1, this._cfgOpenCuts());
-        if (!sp.walls.length) delete sp.walls;
-      }
     }
     // the click synthesized after the drag must not re-pick the selection
     this._suppressClick = true;
     setTimeout(() => (this._suppressClick = false), 0);
     this._recordGeometry(this._t('history.resize_room'), before);
     this._saveConfig();
+    this._rszEligibilityCache = null;
     this.requestUpdate();
   }
 
@@ -8487,7 +8595,7 @@ class HouseplanCard extends LitElement {
   }
 
   private _rszEdgeLabels(
-    res: { polys: Record<string, number[][]> }, plan: EdgeDragPlan,
+    res: { polys: Record<string, number[][]> }, plan: SafeResizePlan,
   ): { x: number; y: number; text: string; area?: boolean }[] {
     const g = this._rszDrag!;
     const labels: { x: number; y: number; text: string; area?: boolean }[] = [];
@@ -8560,34 +8668,8 @@ class HouseplanCard extends LitElement {
     return own.map((_, edge) => innerEdgeSpan(own, edge, offsets) * perUnitCm);
   }
 
-  private _rszScaleLabels(poly: number[][]): { x: number; y: number; text: string; area?: boolean }[] {
-    const imperial = this.hass?.config?.unit_system?.length === 'mi';
-    const xs = poly.map((p) => p[0]), ys = poly.map((p) => p[1]);
-    const walls = this._spaceWalls;
-    const floor = walls.length && this._rszSel
-      ? (innerContourForRoom(
-          [{ id: this._rszSel, poly }], this._rszSel, walls, [],
-          this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
-        ) || poly)
-      : poly;
-    const c = poleOfInaccessibility(floor);
-    const physical = this._physicalBodiesR();
-    const area = physical.length
-      ? geometryArea(floorMinusBodies(floor, physical))
-          * Math.pow(this._cellCm / this._gridPitch, 2) / 1e4
-      : areaM2(floor, this._gridPitch, this._cellCm);
-    // Габарит — по внутреннему контуру, который уже посчитан выше для площади
-    // (#233): та же конвенция, что у площади, и никакой отдельной математики.
-    const fxs = floor.map((p) => p[0]), fys = floor.map((p) => p[1]);
-    const w = Math.max(...fxs) - Math.min(...fxs);
-    const h = Math.max(...fys) - Math.min(...fys);
-    return [
-      { x: Math.min(...xs), y: Math.min(...ys), text: `${this._fmtLen([0, 0], [w, 0])} × ${this._fmtLen([0, 0], [h, 0])}` },
-      { x: c[0], y: c[1], text: formatArea(area, imperial), area: true },
-    ];
-  }
-
-  /** Handles of the resize tool: wall midpoints + the scale frame of the selected room. */
+  /** Fixed-topology wall handles. Disabled geometry remains visible and
+   * explains why it cannot start a gesture; the old corner scale is gone. */
   private _renderResizeLayer(view: { x: number; y: number; w: number; h: number }): TemplateResult {
     const hr = Math.max(view.w * 0.013, 5); // finger-sized HIT radius on touch, like .vacfithandle
     // Wall-handle glyph: half the old circle — a wall segment with two arrows
@@ -8608,29 +8690,22 @@ class HouseplanCard extends LitElement {
         if (Math.hypot(b[0] - a[0], b[1] - a[1]) < this._gridPitch) continue;
         const mx = f((a[0] + b[0]) / 2), my = f((a[1] + b[1]) / 2);
         const ang = f(Math.atan2(b[1] - a[1], b[0] - a[0]) * 180 / Math.PI);
-        parts.push(svg`<circle class="rszhandle" cx="${mx}" cy="${my}" r="${f(hr)}"
+        const resolution = this._rszResolution(r.id, i);
+        const disabled = !resolution.enabled;
+        const reason = disabled ? this._rszReasonText(resolution.reason) : this._t('title.markup_resize');
+        parts.push(svg`<circle class="rszhandle ${disabled ? 'disabled' : ''}"
+          cx="${mx}" cy="${my}" r="${f(hr)}" tabindex="0" role="button"
+          aria-disabled="${disabled ? 'true' : 'false'}" aria-label="${reason}"
           @pointerdown=${(e: PointerEvent) => this._rszEdgeDown(e, r.id, i)}
           @pointermove=${(e: PointerEvent) => this._rszMove(e)}
           @pointerup=${(e: PointerEvent) => this._rszUp(e)}
           @pointercancel=${(e: PointerEvent) => this._rszPointerCancel(e)}
-          @lostpointercapture=${(e: PointerEvent) => this._rszPointerCancel(e)}></circle>`);
-        parts.push(svg`<g class="rszicon" transform="translate(${mx} ${my}) rotate(${ang})"><path class="rszhalo" d="${iconD}"></path><path class="rszink" d="${iconD}"></path></g>`);
-      }
-    }
-    const sel = this._rszSel ? rooms.find((r) => r.id === this._rszSel) : null;
-    if (sel) {
-      const xs = sel.poly.map((p) => p[0]), ys = sel.poly.map((p) => p[1]);
-      const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
-      parts.push(svg`<rect class="rszframe" x="${x0}" y="${y0}" width="${x1 - x0}" height="${y1 - y0}"></rect>`);
-      for (const [cx, cy, fx, fy] of [[x0, y0, x1, y1], [x1, y0, x0, y1], [x1, y1, x0, y0], [x0, y1, x1, y0]]) {
-        parts.push(svg`<circle class="rszhandle rszcorner" cx="${cx}" cy="${cy}" r="${(hr * 1.15).toFixed(1)}"
-          @pointerdown=${(e: PointerEvent) => this._rszCornerDown(e, sel.id, [cx, cy], [fx, fy] as [number, number])}
-          @pointermove=${(e: PointerEvent) => this._rszMove(e)}
-          @pointerup=${(e: PointerEvent) => this._rszUp(e)}
-          @pointercancel=${(e: PointerEvent) => this._rszPointerCancel(e)}
-          @lostpointercapture=${(e: PointerEvent) => this._rszPointerCancel(e)}></circle>`);
-        // the bead: a quarter of the hit radius, painted, pointer-inert
-        parts.push(svg`<circle class="rszknob" cx="${cx}" cy="${cy}" r="${(hr * 1.15 / 4).toFixed(2)}"></circle>`);
+          @lostpointercapture=${(e: PointerEvent) => this._rszPointerCancel(e)}
+          @click=${disabled ? (e: Event) => this._rszDisabledActivate(e, resolution.reason) : null}
+          @keydown=${disabled ? (e: KeyboardEvent) => this._rszDisabledKey(e, resolution.reason) : null}>
+          <title>${reason}</title>
+        </circle>`);
+        parts.push(svg`<g class="rszicon ${disabled ? 'disabled' : ''}" transform="translate(${mx} ${my}) rotate(${ang})"><path class="rszhalo" d="${iconD}"></path><path class="rszink" d="${iconD}"></path></g>`);
       }
     }
     return svg`${parts}`;

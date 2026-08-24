@@ -1,0 +1,20 @@
+{
+  "provenance": "Minimized and anonymized from the private #277 resize regression export; user names, ids, markers, layout and unrelated geometry were removed.",
+  "gridStep": 5,
+  "rooms": [
+    {
+      "id": "room-main",
+      "poly": [[0, 0], [662, 0], [662, -5], [782, -5], [782, 250], [662, 250], [662, 245], [0, 245]]
+    },
+    {
+      "id": "room-neighbour-a",
+      "poly": [[0, 245], [0, 100], [339, 100], [339, 245]]
+    },
+    {
+      "id": "room-neighbour-b",
+      "poly": [[339, 245], [339, 100], [662, 100], [662, 245]]
+    }
+  ],
+  "selected": { "roomId": "room-main", "edge": 6 },
+  "expectedReason": "partial-shared"
+}

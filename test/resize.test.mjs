@@ -7,8 +7,11 @@ import {
   polyIsSimple, minParallelClearance, planEdgeDrag, applyEdgeDrag,
   validateEdgeDrag, clampEdgeDrag, applyRoomScale, validateRoomScale,
   clampRoomScale, areaM2, formatArea, MIN_ROOM_CM,
+  resolveSafeResize, applySafeResize, validateSafeResize, clampSafeResize,
+  safeResizeCachedDeltaCount,
 } from '../test-build/resize.js';
 import { roomPoly } from '../test-build/logic.js';
+import fs from 'node:fs';
 
 const OPTS = { minDim: 25, eps: 0.5 }; // 25 units ≈ 30 cm at cell_cm=5, pitch 1000/240
 const STEP = 5;
@@ -255,4 +258,121 @@ test('HP-1550-02: an already-thin triangle may improve but never worsen', () => 
   const plan = planEdgeDrag(rooms, 'T', 0);
   assert.equal(validateEdgeDrag(rooms, [], plan, -5, OPTS), false); // 20 → 15: worse
   assert.equal(validateEdgeDrag(rooms, [], plan, 50, OPTS), true);  // 20 → 70: better
+});
+
+// ================= #277: production uses only this fixed-topology pipeline.
+
+const SAFE = { minDim: 25, eps: 0.1, movingHalf: 10, obstacles: [] };
+
+test('#277 non-shared: exactly two existing vertices move and topology stays fixed', () => {
+  const rooms = [A()];
+  const resolution = resolveSafeResize(rooms, [], 'A', 1, SAFE);
+  assert.equal(resolution.enabled, true);
+  const result = applySafeResize(rooms, [], resolution.plan, 50);
+  polyEq(result.polys.A, [[100, 100], [450, 100], [450, 400], [100, 400]]);
+  assert.equal(result.polys.A.length, rooms[0].poly.length);
+  assert.deepEqual(Object.keys(result.polys), ['A']);
+  assert.equal(validateSafeResize(rooms, [], resolution.plan, 50, SAFE), true);
+  assert.equal(validateSafeResize(
+    rooms, [], { ...resolution.plan, topology: { A: 5 } }, 50, SAFE,
+  ), false);
+});
+
+test('#277 exact shared: two rooms move, endpoints remain exact, no third room changes', () => {
+  const rooms = [A(), R(), { id: 'F', poly: [[900, 100], [1000, 100], [1000, 400], [900, 400]] }];
+  const resolution = resolveSafeResize(rooms, [], 'A', 1, SAFE);
+  assert.equal(resolution.enabled, true);
+  assert.deepEqual(resolution.plan.roomIds, ['A', 'R']);
+  const result = applySafeResize(rooms, [], resolution.plan, 50);
+  assert.deepEqual(Object.keys(result.polys), ['A', 'R']);
+  assert.equal(result.polys.F, undefined);
+  polyEq(result.polys.A, [[100, 100], [450, 100], [450, 400], [100, 400]]);
+  polyEq(result.polys.R, [[450, 100], [700, 100], [700, 400], [450, 400]]);
+});
+
+test('#277 diagonal and non-perpendicular side walls are disabled deterministically', () => {
+  const diagonal = [{ id: 'D', poly: [[0, 0], [100, 20], [100, 100], [0, 100]] }];
+  assert.deepEqual(resolveSafeResize(diagonal, [], 'D', 0, SAFE), { enabled: false, reason: 'diagonal' });
+  const badSide = [{ id: 'S', poly: [[0, 0], [100, 0], [120, 100], [0, 100]] }];
+  assert.deepEqual(resolveSafeResize(badSide, [], 'S', 0, SAFE), { enabled: false, reason: 'side-angle' });
+});
+
+test('#277 partial shared and third-owner topology never enter a resize plan', () => {
+  const partial = resolveSafeResize([A(), B()], [], 'A', 1, SAFE);
+  assert.deepEqual(partial, { enabled: false, reason: 'partial-shared' });
+  const fixture = JSON.parse(fs.readFileSync(new URL('./fixtures/resize-safe-regression.json', import.meta.url), 'utf8'));
+  const realRegression = resolveSafeResize(
+    fixture.rooms, [], fixture.selected.roomId, fixture.selected.edge, SAFE,
+  );
+  assert.deepEqual(realRegression, { enabled: false, reason: fixture.expectedReason });
+  assert.match(fixture.provenance, /anonymized/);
+});
+
+test('#277 irregular exact pair clamps at the first corner and never removes a vertex', () => {
+  const left = A();
+  const irregular = {
+    id: 'I',
+    poly: [[400, 100], [700, 100], [700, 200], [650, 200], [650, 400], [400, 400]],
+  };
+  const rooms = [left, irregular];
+  const resolution = resolveSafeResize(rooms, [], 'A', 1, SAFE);
+  assert.equal(resolution.enabled, true);
+  assert.equal(validateSafeResize(rooms, [], resolution.plan, 250, SAFE), false);
+  // The 25-unit minimum clearance is reached before the zero-length corner.
+  assert.equal(clampSafeResize(rooms, [], resolution.plan, 300, 5, SAFE), 225);
+  const result = applySafeResize(rooms, [], resolution.plan, 225);
+  assert.equal(result.polys.A.length, 4);
+  assert.equal(result.polys.I.length, 6);
+  assert.equal(result.polys.I[5][0], 625);
+});
+
+test('#277 side opening stops at the physical jamb and cannot be jumped', () => {
+  const rooms = [A()];
+  const openings = [{ id: 'door', x: 250, y: 100, length: 80 }];
+  const resolution = resolveSafeResize(rooms, openings, 'A', 1, SAFE);
+  assert.equal(resolution.enabled, true);
+  // Opening ends at x=290; a 10-unit wall half-depth stops its axis at x=300.
+  assert.equal(validateSafeResize(rooms, openings, resolution.plan, -100, SAFE), true);
+  assert.equal(validateSafeResize(rooms, openings, resolution.plan, -105, SAFE), false);
+  assert.equal(clampSafeResize(rooms, openings, resolution.plan, -200, 5, SAFE), -100);
+});
+
+test('#277 moving opening travels once; hosted moving opening is disabled', () => {
+  const rooms = [A(), R()];
+  const opening = { id: 'door', x: 400, y: 220, length: 80 };
+  const resolution = resolveSafeResize(rooms, [opening], 'A', 1, SAFE);
+  assert.equal(resolution.enabled, true);
+  assert.deepEqual(applySafeResize(rooms, [opening], resolution.plan, 50).openings.door, [450, 220]);
+  assert.deepEqual(
+    resolveSafeResize(rooms, [{ ...opening, hosted: true }], 'A', 1, SAFE),
+    { enabled: false, reason: 'opening-conflict' },
+  );
+});
+
+test('#277 coincident independent wall disables the handle; a column is a hard stop', () => {
+  const duplicate = { ...SAFE, obstacles: [{ kind: 'segment', a: [400, 100], b: [400, 400], half: 10 }] };
+  assert.deepEqual(
+    resolveSafeResize([A()], [], 'A', 1, duplicate),
+    { enabled: false, reason: 'duplicate-physical-wall' },
+  );
+  assert.deepEqual(
+    resolveSafeResize([A()], [], 'A', 1, { ...SAFE, thicknessConflict: true }),
+    { enabled: false, reason: 'thickness-conflict' },
+  );
+  const blocked = { ...SAFE, obstacles: [{ kind: 'circle', center: [500, 250], radius: 20 }] };
+  const resolution = resolveSafeResize([A()], [], 'A', 1, blocked);
+  assert.equal(resolution.enabled, true);
+  assert.equal(clampSafeResize([A()], [], resolution.plan, 150, 5, blocked), 70);
+});
+
+test('#277 pointer clamp memoizes exact deltas and bounds the active-plan cache', () => {
+  const rooms = [A()];
+  const resolution = resolveSafeResize(rooms, [], 'A', 1, SAFE);
+  assert.equal(resolution.enabled, true);
+  assert.equal(clampSafeResize(rooms, [], resolution.plan, 100, 5, SAFE), 100);
+  const once = safeResizeCachedDeltaCount(resolution.plan);
+  assert.equal(once, 20);
+  assert.equal(clampSafeResize(rooms, [], resolution.plan, 100, 5, SAFE), 100);
+  assert.equal(safeResizeCachedDeltaCount(resolution.plan), once);
+  assert.ok(once <= 4096);
 });

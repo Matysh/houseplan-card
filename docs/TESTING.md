@@ -1955,30 +1955,36 @@ require hands on real hardware — they remain for the human pass.
 
 - [ ] The «Размер» tool appears in the Plan editor toolbar; in EVERY other
       tool (and in Devices/Decor/View) there is not a single `.rszhandle`
-- [ ] Handles sit at the midpoint of every wall of every room; they are
-      finger-sized, capture the pointer and never start a stage pan
-- [ ] Dragging a handle moves the wall along its normal, both edge ends
-      together; the wall line snaps to the drawing grid
-- [ ] A wall fully shared with a neighbour drags the neighbour's wall with
-      it — the neighbour shrinks/grows, no gap and no overlap can appear
-- [ ] A partially shared wall (T-junction) moves only the coinciding
-      stretch: the neighbour becomes L-shaped (new vertices), shown live
-- [ ] Legacy x/y/w/h rectangle rooms resize the same way and are saved back
-      as polygons
+- [ ] Every edge has a finger-sized midpoint handle. Eligible handles capture
+      the pointer; ineligible handles remain visible/dimmed, expose a localized
+      reason through hover/focus/tap, carry `aria-disabled=true`, and create no
+      drag, Undo or write [auto: smoke_room_resize + resize-production-path]
+- [ ] Only a numerically horizontal/vertical wall with perpendicular side
+      edges is eligible. Diagonal, partial/unequal shared, coincident physical
+      extra and third-owner cases fail closed with the stable reason matrix
+      [unit: resize.test]
+- [ ] A non-shared drag changes exactly one room; an exact endpoint-to-endpoint
+      shared drag changes exactly two. Both existing endpoints move by one
+      vector and every room keeps its vertex count/order [unit + smoke]
+- [ ] An irregular exact pair moves only until the first corner/grid node that
+      would change the moving segment or collapse a side. No third room can
+      join the gesture. The anonymized private #277 topology stays predictably
+      disabled [unit fixture + production pointer smoke]
 - [ ] Live badges while dragging: lengths of the dragged wall + both
       adjacent walls, and the m² area at the room centre; dragging a shared
       wall shows BOTH areas; all numbers update continuously
-- [ ] Stops: ~30 cm minimum for the own room AND the shrinking neighbour;
-      a foreign room in the path (touch is ok, overlap never); islands
-      inside; a door/window/gate on a shortening wall (the wall corner can not
-      pass the opening edge)
-- [ ] A door/window/gate ON the moving wall travels with it (openings x/y
-      recompute; angle unchanged)
-- [ ] Esc mid-drag cancels: the original geometry is back instantly
-- [ ] Click a room in the resize tool → dashed bbox frame with 4 corner
-      handles; dragging a corner scales all vertices proportionally about
-      the opposite corner; neighbours are NOT dragged along (the one
-      exception to «shared walls together»), growing into one stops
+- [ ] Stops are contiguous from zero: 30 cm room clearance, first topology
+      corner, foreign room/island, partition/draft/column and every side-wall
+      opening. The opening jamb includes half the moving wall thickness, and a
+      wall cannot jump through an invalid interval to a later valid position
+- [ ] An ordinary door/window/gate ON the moving wall travels exactly once;
+      length/type/angle/other fields remain byte-equivalent. A hosted opening
+      never transfers to a room wall through Resize
+- [ ] The corner scale frame and its four handles are absent. Source guard
+      proves `applyRoomScale`, `clampRoomScale`, partial-shared insertion and
+      commit-time `simplifyPoly` are unreachable from `houseplan-card.ts`
+- [ ] Esc, pointercancel and lost capture cancel instantly with original
+      persisted geometry, zero Undo and zero config writes
 - [ ] Ctrl+Z / ⌘Z after releasing a handle restores the previous geometry —
       one release = one undo step (rooms AND openings)
 - [ ] The Plan toolbar names the next Undo/Redo operation; Ctrl+Shift+Z and
@@ -1989,14 +1995,14 @@ require hands on real hardware — they remain for the human pass.
       labelled keys: Cyrillic Ctrl/Cmd+Z works, QWERTZ Ctrl+Z/Ctrl+Y pick the
       labelled command, and AZERTY Ctrl+W never becomes Undo. Focused inputs
       keep native history [auto: smoke_editor_tabs]
-- [ ] A moved shared wall with a partial virtual middle and thick solid
-      remainders keeps the dash and both thickness values during live drag and
-      after release; Undo restores rooms, `open_spans` and `walls` together
-      [auto: smoke_resize_virtual_thick]
-- [ ] A short room edge cut from a longer 33 cm wall entry moves only its
-      covered interval through the real pointer handlers. Live preview and
-      commit retain both exact pieces, the opening follows, and Undo restores
-      the source bytes [auto: smoke_resize_wall_thickness]
+- [ ] Exact eligible wall thickness/open spans re-key losslessly in the same
+      overlay; unrelated extras and rooms are byte-equivalent. Any production
+      wall/floor failure on the exact final preview cancels before save
+- [ ] `npm run benchmark:safe-resize`: pointer clamp p95 ≤16 ms, ≤20% over the
+      same-run historical baseline (with bounded noise); cached pointerup
+      preflight p95 ≤75 ms; active-plan delta cache ≤4096 entries
+- [ ] Five #277 mutants are caught: axis eligibility, third-room cascade,
+      topology signature, physical jamb and commit preflight
 - [ ] Device markers do not move; the room settings gear re-centres itself
 - [ ] Smoke: `node demo/smoke_room_resize.mjs`
 
@@ -2384,9 +2390,10 @@ require hands on real hardware — they remain for the human pass.
 - [ ] **The corner handles are beads, not blobs** (owner 2026-08-05,
       «уменьшить в 4 раза… они постоянно гигантские»): the four dots on the
       picture's frame are small — they must not cover the picture — yet a
-      finger still lands on them without aiming. Same on the room-resize
-      frame (Plan → «Размер», click a room) and on the robot-map calibration
-      [auto: smoke_hide_layers, smoke_backdrop, smoke_room_resize]
+      finger still lands on them without aiming. Room Resize deliberately has
+      wall-midpoint handles only (its former corner frame is removed); robot-map
+      calibration keeps its own frame [auto: smoke_hide_layers, smoke_backdrop,
+      smoke_room_resize]
 - [ ] **Dragging the picture moves the picture, and nothing else** (owner
       2026-08-04): with the «Картинка-подложка» tool (the cursor over the
       picture is a hand), grab the picture by its body and pull it aside.

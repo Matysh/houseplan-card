@@ -28,6 +28,16 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    symbols: [
+      'resolveSafeResize', 'applySafeResize', 'validateSafeResize', 'clampSafeResize',
+      'SafeResizePlan', 'SafeResizeResolution', 'SafeResizeReason', 'SafeResizeObstacle',
+    ],
+    smokes: ['smoke_room_resize.mjs'],
+    because: 'the #277 production-bundle scenario drives the private pointer controller and '
+      + 'observes fixed topology, the first-corner clamp, disabled accessibility, one Undo and '
+      + 'zero-write cancellation; pure safe-resize helpers are tree-shaken behind that controller',
+  },
+  {
     symbols: ['reconcileCoincidentPartitions', 'CoincidentPartitionResult'],
     smokes: ['smoke_optimize_coincident_partition.mjs'],
     because: 'the production-bundle scenario observes the Optimize report, atomic Apply, reload, '
