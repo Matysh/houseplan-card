@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## v1.67.0-rc.1 — 2026-08-24
+
+- Republished the reviewed beta.10 candidate under an RC identifier so HACS
+  discovers it after beta.9; the application code and user-visible behaviour
+  are unchanged.
+
 ## v1.67.0-beta.10 — 2026-08-24
 
 - Resize availability on real plans is now protected by an exact per-wall

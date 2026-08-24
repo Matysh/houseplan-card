@@ -1,4 +1,4 @@
-<!-- release: v1.67.0-beta.10 -->
+<!-- release: v1.67.0-rc.1 -->
 
 ## Основное
 
@@ -14,5 +14,5 @@
 - Nearly axial walls and invisible coordinate noise are repaired predictably: Walls stores an exact axis, while Optimize plans and the common write barrier converge older values onto the canonical grid.
 - Small fixes and improvements.
 
-[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.67.0-beta.10/docs/CHANGELOG.ru.md)
-· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.67.0-beta.10/docs/CHANGELOG.md)
+[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.67.0-rc.1/docs/CHANGELOG.ru.md)
+· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.67.0-rc.1/docs/CHANGELOG.md)
