@@ -9,7 +9,7 @@
   Wall thickness, Boundary, Plan/View/static/hidden Iso и световая геометрия
 - **Модель данных:** без schema migration; явная lossless-канонизация по команде
 - **Связано:** #132, #173, #177, #186, #199, #229, #276, #277, #278,
-  `docs/WALL-THICKNESS.md`, `docs/PLAN-OPTIMIZE.md`
+  `docs/WALL-THICKNESS.md`, `docs/USER-GUIDE.ru.md`, `docs/ARCHITECTURE.md`
 
 ## 1. Сценарий и персона
 
@@ -127,8 +127,9 @@ Preview добавляет две строки/счётчика:
 - Boundary разрешает сделать общую стену virtual;
 - door/window/gate остаётся на прежнем месте и продолжает использовать
   прежние contact/lock bindings;
-- Undo одним действием восстанавливает partition и исходный hosted `host`, Redo
-  снова канонизирует.
+- одноразовый серверный Undo Optimize восстанавливает partition и исходный
+  hosted `host`. Отдельного Redo у Optimize нет; следующая edit-операция делает
+  server backup устаревшим по действующему контракту.
 
 ## 7. В скоупе
 
@@ -139,7 +140,7 @@ Preview добавляет две строки/счётчика:
 - parity канонической геометрии всех runtime consumers после Apply;
 - синтетическая fixture с двумя комнатами, короткими 5-см end offsets,
   совпадающей partition и hosted door;
-- unit, production-bundle smoke, Optimize preflight, Undo/Redo, mutation и
+- unit, production-bundle smoke, Optimize preflight, one-shot Undo, mutation и
   targeted visual regression;
 - документация и release artifacts.
 
@@ -179,6 +180,40 @@ fixture дополнительный p95 не превышает 15% от тек
 и 25 ms абсолютного overhead на той же машине. Память не кэширует geometry
 между диалогами.
 
+## 10.1. Затронутые файлы и модули
+
+Ожидаемый implementation scope:
+
+- новый pure helper `src/coincident-partition-reconciliation.ts` либо
+  эквивалентный узкий модуль;
+- `src/plan-optimizer.ts` — вызов pass, идемпотентность и новые counters;
+- `src/partition-openings.ts` — переиспользуемое exact rehost/materialization;
+- `src/plan-geometry-preflight.ts` — проверка точного post-pass candidate без
+  отдельной модели production inputs;
+- `src/houseplan-card.ts` — строки отчёта Optimize и one-shot Undo integration;
+- `src/types.ts` только если existing types нельзя переиспользовать без копии;
+- `src/i18n/en.json`, `src/i18n/ru.json`;
+- `test/coincident-partition-reconciliation.test.mjs`,
+  `test/plan-optimizer.test.mjs`, `test/partition-openings.test.mjs`;
+- `demo/smoke_optimize_coincident_partition.mjs`, targeted benchmark/golden и
+  `scripts/mutation-gate.mjs`/smoke registry;
+- перечисленные в §14 release/docs artifacts и tracked bundles.
+
+Backend Python, schema/manifest и unrelated editor modules не меняются.
+
+## 10.2. Риски и меры
+
+| Риск | Мера |
+|---|---|
+| Partial либо merely-near partition ошибочно удаляется | Exact endpoint-to-endpoint + one atomic shared interval + negative AC2/mutant. |
+| Rehost сдвигает/разворачивает проём или теряет sensor fields | Resolve исходного host, materialize centre/angle, unknown-field round-trip AC3. |
+| Конфликтующий ordinary opening превращается в duplicate | Ambiguity fail-closed AC4; автоматического dedup нет. |
+| Candidate выглядит эквивалентно, но ломает canonical boolean geometry | Shared post-pass preflight #199 до WS, zero-write AC9. |
+| Optimize перестаёт быть идемпотентным после backend rounding | Storage canonicalization + second pass/backend echo AC8. |
+| UI обещает несуществующий Redo | Только действующий one-shot Undo; smoke проверяет disappearance/expiry server backup. |
+| Новый pass замедляет обычный render | Helper вызывается только в Optimize candidate/recheck; §10 benchmark и call-count. |
+| Старые версии не смогут прочитать результат | Результат использует существующие ordinary openings/room walls; rollback §14 без schema migration. |
+
 ## 11. Touch и accessibility
 
 Новых жестов нет. Optimize dialog доступен мышью и touch; failure и Apply не
@@ -196,7 +231,7 @@ result после Apply.
 | AC4 | Orphan, non-fitting, overlapping или ambiguous opening запрещает преобразование без частичного результата. | Unit mutation matrix. |
 | AC5 | После candidate physical geometry и opening cuts эквивалентны исходному видимому результату; после 20→10/30 существует ровно одно тело выбранной толщины. | Canonical geometry unit + targeted golden. |
 | AC6 | Boundary после Apply не blocked и virtual conversion сохраняет opening; до Apply никакого скрытого config write нет. | Production-bundle smoke. |
-| AC7 | Optimize report показывает точные RU/EN counters; Apply — один WS call, Undo/Redo восстанавливают обе формы. | i18n unit + browser smoke. |
+| AC7 | Optimize report показывает точные RU/EN counters; Apply — один WS call, одноразовый server Undo восстанавливает исходную форму и становится недоступен после следующей edit по действующему контракту. | i18n unit + browser smoke. |
 | AC8 | Первый Optimize меняет fixture, второй является no-op; backend echo/canonical coordinates не создают третий diff. | Optimizer round-trip unit. |
 | AC9 | Exact candidate проходит shared #199 preflight; forced failure блокирует весь Apply и делает 0 writes. | Injectable unit + browser smoke. |
 | AC10 | Plan, View/static, hidden Iso, floor/paper, Glow/source guard и солнце получают один canonical body после Apply. | Consumer parity test + code review. |
@@ -211,7 +246,7 @@ result после Apply.
 - расширение `test/plan-optimizer.test.mjs`: report, idempotence, backend echo;
 - расширение `test/partition-openings.test.mjs`: exact rehost и ambiguity;
 - `demo/smoke_optimize_coincident_partition.mjs`: production bundle,
-  RU/EN preview, Apply/Undo/Redo, Thickness/Boundary;
+  RU/EN preview, Apply/one-shot Undo, Thickness/Boundary;
 - targeted golden: short 5-cm offsets + hosted door до/после 10/30/virtual;
 - mutation ids для AC12;
 - targeted benchmark поверх large-house fixture.
@@ -225,7 +260,7 @@ result после Apply.
 
 - `docs/CHANGELOG.md`, `docs/CHANGELOG.ru.md` со ссылкой #276;
 - `docs/USER-GUIDE.md`, `docs/USER-GUIDE.ru.md` — что исправляет Optimize;
-- `docs/PLAN-OPTIMIZE.md`, `docs/WALL-THICKNESS.md`, `docs/ARCHITECTURE.md`;
+- `docs/WALL-THICKNESS.md`, `docs/ARCHITECTURE.md`;
 - `docs/TESTING.md`, `docs/STATUS.md`;
 - RU/EN i18n, tests/smoke/mutations/benchmark и reviewed golden candidate;
 - синхронные tracked bundles и docs screenshot fingerprint при необходимости.
