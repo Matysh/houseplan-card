@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "matrixVersion": 44,
-  "acceptedAt": "2026-08-25T10:30:56.376Z",
-  "sourceFingerprint": "4ddc43c01b0ad22d60e6ea461b5b834926ee32579f0ac0eb3f1e2e4156eb41cc",
+  "acceptedAt": "2026-08-25T12:07:52.399Z",
+  "sourceFingerprint": "b866f4e85930183f5c63e7e049127d1ae7987a1da56f85dc77fe105809b936ec",
   "chromium": "151.0.7922.34",
   "scenarios": {
     "hidden-wall-diagnostics-plan-light": "6470ed8b09b21144ec1399389e9a57774e977a6473b8eaa7de7e9b5df3273f21",
@@ -34,8 +34,8 @@
     "day-cycle-dusk-dark": "ec95e99ac3c7e4d6affa2f7944759727251dc4f1b62e2855e421a7e48f7280eb",
     "day-cycle-night-dark": "cc49dc53dabb63b7dd800eaa65c8748972fcf3c1abd948b34d1e0f973e63f0d2",
     "geometry-plan-editor-dark": "fd8d067daa3b2a4e572dea9644486e6324318e8ea4e5f43e3df2069a05389a88",
-    "safe-resize-handles-clamp-light": "e95afcb097416b6f0c1497077c2c61c9cedc3de722c7ac59979f51f2f725aa39",
-    "safe-resize-handles-clamp-dark": "94f893caa4aaba2c0159b1c71c39d4cee9fcbed9e218b5a16db896e05e5bf468",
+    "safe-resize-handles-clamp-light": "42c18ad9e8c9778507d0d315ca8632c1f00c1abd461849c663e5b83dcff9154e",
+    "safe-resize-handles-clamp-dark": "b84b12da7ecbba41c75cab3d99d5722ea3d2f572a0176195ef462bb845522883",
     "space-tab-drop-before-light": "401dded3d7fdff3e823d46eac1b3cef2d6e0eb05f48b5ea289cdd8ecd941dee0",
     "space-tab-drop-after-dark": "a851621040e14f911b1080488f2c75e3d9bc0d5fef74fb5d0081f80b023ff0a2",
     "plan-snap-endpoint-light": "db967076cd9fd50c2a2a1337e4ecbf4ef67cb7f800401f6227497c75415951d5",
@@ -122,14 +122,14 @@
     "junction-x-90-mixed-dark": "deabce4c2b5fa7866a4f56d25404c6a515d47437298bde114442bc80a6339560",
     "junction-x-45-alternating-dark": "56a85069baafd6e7af921389b55b916b74cc5d76df908782013b94c2b5b87752",
     "junction-star5-equal15-dark": "1b9714dffa3f37b9f1e8d848244c4585d38539b74fe582e8d974e2b9e8fdd01a",
-    "junction-y-60-equal50-dark": "a5f2c0fdf05bfa265ae3cb096b7e4ce4030a1caecdf6986fa2f699755264bbdd",
-    "junction-acute30-mixed-dark": "8c432f3c970d33dfaa6366827d7ab1d0bdeba0243f868d5a96ae41cdf6e388b2",
+    "junction-y-60-equal50-dark": "f90d46cfe79a95bb3ec73253d0b7f77948164e90c49561d79b1e0db655cc0847",
+    "junction-acute30-mixed-dark": "9ea64ae5864295a1d93a6819efb6e210de2599030fe650913862d99f40b11a69",
     "junction-acute15-equal50-dark": "3327caf8bc1ccddb317aa7c4c330e09c098122a4f6d2e4df64502cdc033cb2e4",
-    "junction-splay10-170-dark": "e98071bcfce9ab20bdd1ef9fbba3de179801a74544e8923d7f58e750eb426538",
+    "junction-splay10-170-dark": "ae27454bb4213237313f1fe9e2591ada48facf20baca5517968f92aebbfb330e",
     "junction-t-virtual-arm-dark": "d325dc112e2f56c31d4511fd586adaa92b6785fc676c2a60ed5aba69c164fd6e",
     "junction-x-virtual-through-dark": "cce24ac9d7678959844803c6306e65ab48f723ec0375ee6d3f2dbf1c7def7be1",
     "junction-column-node-dark": "fed083eaaaf1588222002c23f7edd741645c76f57c49a3db8cc5ec22af0b6e7d",
     "junction-draft-end-node-dark": "6453bb8463ffdc9a42dbd7acb171c6249fe6d5beec0eae0c789e40f48e65a1f9",
-    "junction-owner-repro-dark": "a6bf2e320b3be0d72bef205159370220cc4543dd79dabfd78ec90e23d45e6cfd"
+    "junction-owner-repro-dark": "23ae216c2637b8ee9ea8f852002693f74d64021a66d4494e2086a53db8ca6520"
   }
 }
