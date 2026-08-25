@@ -202,12 +202,26 @@ export function evaluateCommit(c) {
 // уезжает назад, и в диапазон попадают коммиты `dev` с чужими номерами issue —
 // каждый из них выглядел бы нарушением. Проверено на реальной истории: сидя на
 // issue/89 с диапазоном по dev, гейт дал 26 ложных отказов из 26 коммитов.
+// Документ ревью, доказанно созданный конвейером (#305): точный subject
+// «docs: review document for #NN» и дифф ТОЛЬКО в docs/reviews/. Такой коммит
+// попадает в чужую issue-ветку легитимно — шаг «Привести ветку к dev»
+// вносит свежую историю dev, где конвейер только что опубликовал документ
+// соседней задачи, а локальный origin/dev автора мог отстать и не вычесть его
+// из диапазона. Кода в таком коммите нет по построению (files-критерий), и
+// судить им правило 2 — ложный отказ, чинимый только --no-verify.
+export function isPipelineReviewDocCommit(c) {
+  return /^docs: review document for #\d+$/.test(c.subject ?? '')
+    && (c.files?.length ?? 0) > 0
+    && c.files.every((f) => f.startsWith('docs/reviews/'));
+}
+
 export function checkBranchRule(branch, commits) {
   const m = (branch ?? '').match(/^issue\/(\d+)-/);
   if (!m) return [];
   const want = `#${m[1]}`;
   const out = [];
   for (const c of commits) {
+    if (isPipelineReviewDocCommit(c)) continue;
     for (const t of c.issues) {
       if (t !== want) {
         out.push({
@@ -541,8 +555,11 @@ function main(argv) {
       const hasDev = spawnSync('git', ['-C', repo, 'rev-parse', '--verify', 'origin/dev'],
         { encoding: 'utf8' }).status === 0;
       if (!hasDev) return checkedCommits;
+      // filesOf обязателен: исключение #305 доказывается диффом коммита
+      // (только docs/reviews/), а без файлов оно не срабатывает fail-closed.
       const own = parseRecords(
         git(['log', '--reverse', `--pretty=format:${LOG_FORMAT}`, 'origin/dev..HEAD'], repo),
+        filesOf,
       );
       return commitsNeedingTargetValidation(own, { targetRef, isCommitOnMain });
     })()

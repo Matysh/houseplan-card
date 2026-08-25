@@ -11,6 +11,7 @@ import {
   STRICT_STATUS,
   buildReport,
   checkBranchRule,
+  isPipelineReviewDocCommit,
   checkIssueStatuses,
   checkReviewDocLimit,
   REVIEW_DOC_LIMIT,
@@ -647,4 +648,35 @@ test('the CLI waives the issue status for a class-B-only range but not with clas
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
+});
+
+test('rule 2 exempts a pipeline review document proven by subject and diff (#305)', () => {
+  const doc = makeCommit({
+    sha: 'a'.repeat(40),
+    subject: 'docs: review document for #304',
+    body: 'Issue: #304\nUser-Visible: no',
+    files: ['docs/reviews/CODE-REVIEW-304-r1.md'],
+  });
+  assert.equal(isPipelineReviewDocCommit(doc), true);
+  assert.deepEqual(checkBranchRule('issue/302-junction-node-material', [doc]), []);
+
+  // Any code beside the document voids the proof — rule 2 fires again.
+  const forged = makeCommit({
+    sha: 'b'.repeat(40),
+    subject: 'docs: review document for #304',
+    body: 'Issue: #304',
+    files: ['docs/reviews/CODE-REVIEW-304-r1.md', 'src/houseplan-card.ts'],
+  });
+  assert.equal(isPipelineReviewDocCommit(forged), false);
+  assert.equal(checkBranchRule('issue/302-junction-node-material', [forged]).length, 1);
+
+  // Fail-closed: without a file list the exemption cannot prove itself.
+  const blind = makeCommit({
+    sha: 'c'.repeat(40),
+    subject: 'docs: review document for #304',
+    body: 'Issue: #304',
+    files: [],
+  });
+  assert.equal(isPipelineReviewDocCommit(blind), false);
+  assert.equal(checkBranchRule('issue/302-junction-node-material', [blind]).length, 1);
 });
