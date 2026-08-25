@@ -92,6 +92,22 @@ def _document(tmp_path: Path, kind: str = "full") -> dict:
     return document
 
 
+def _downgrade_document_to_v7(document: dict) -> dict:
+    """Turn a current export into the exact accepted pre-v8 carrier."""
+    document["model_version"] = 7
+    for space in document["payload"]["config"].get("spaces") or []:
+        space.pop("wall_segments", None)
+        for room in space.get("rooms") or []:
+            room.pop("wall_ids", None)
+        for opening in space.get("openings") or []:
+            if (opening.get("host") or {}).get("kind") == "wall":
+                opening.pop("host", None)
+        for draft in space.get("room_drafts") or []:
+            for segment in draft.get("segments") or []:
+                segment.pop("id", None)
+    return document
+
+
 def test_issue_265_python_lineage_matches_shared_fixture() -> None:
     fixture = json.loads(
         (Path(__file__).parents[1] / "test" / "fixtures" / "import-id-lineage.json").read_text()
@@ -113,8 +129,16 @@ def test_issue_265_python_lineage_matches_shared_fixture() -> None:
 
 def test_import_document_canonicalizes_external_coordinates(tmp_path: Path) -> None:
     document = _document(tmp_path)
-    room = document["payload"]["config"]["spaces"][0]["rooms"][0]
+    space = document["payload"]["config"]["spaces"][0]
+    room = space["rooms"][0]
     room["poly"][0][0] = 0.1234567896
+    # A v8 external document is one structural transaction: compatibility
+    # geometry must accompany the edited room projection. Stable IDs do not
+    # change merely because their carrier moved.
+    by_id = {segment["id"]: segment for segment in space["wall_segments"]}
+    for index, segment_id in enumerate(room["wall_ids"]):
+        by_id[segment_id]["a"] = room["poly"][index]
+        by_id[segment_id]["b"] = room["poly"][(index + 1) % len(room["poly"])]
     document["payload"]["layout"]["lamp"]["x"] = -0.1234567896
 
     parsed = parse_document(json.dumps(document).encode("utf-8"))
@@ -421,6 +445,7 @@ def test_invalid_passage_import_is_rejected_before_preview(kind: str, tmp_path: 
         "id": "forged-passage", "type": "passage", "x": 0.5, "y": 0.5,
         "angle": 0, "length": 0.09, "lock": "lock.private",
     }]
+    _downgrade_document_to_v7(document)
     with pytest.raises(ImportFailure) as invalid:
         create_preview(
             SimpleNamespace(instance_id="instance-a", import_previews={}),
@@ -435,9 +460,10 @@ def test_invalid_passage_import_is_rejected_before_preview(kind: str, tmp_path: 
 def test_canonical_passage_import_survives_space_id_remap(tmp_path: Path) -> None:
     document = _document(tmp_path, "space")
     document["payload"]["config"]["spaces"][0]["openings"] = [{
-        "id": "passage", "type": "passage", "x": 0.5, "y": 0.5,
+        "id": "passage", "type": "passage", "x": 0.5, "y": 0,
         "angle": 0, "length": 0.09, "future": {"kept": True},
     }]
+    _downgrade_document_to_v7(document)
     runtime = SimpleNamespace(instance_id="instance-a", import_previews={})
     response = create_preview(
         runtime, json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
@@ -445,9 +471,10 @@ def test_canonical_passage_import_survives_space_id_remap(tmp_path: Path) -> Non
         current_layout_data={"layout": {}, "rev": 1}, config_root=tmp_path,
     )
     candidate = get_candidate(runtime, response["token"], "alice")
-    merged, _layout, _details = build_space_merge(
-        candidate["document"], _config(), {}, "skip", same_source=True,
-    )
+    # create_preview owns the v7→v8 materialization before the merge. Calling
+    # build_space_merge again with the untouched v7 source would deliberately
+    # bypass that production boundary and mix model versions.
+    merged = candidate["target_config"]
     passage = merged["spaces"][-1]["openings"][0]
     assert passage["type"] == "passage"
     assert passage["id"] != "passage"
@@ -457,9 +484,10 @@ def test_canonical_passage_import_survives_space_id_remap(tmp_path: Path) -> Non
 def test_canonical_passage_full_preview_preserves_geometry_and_extensions(tmp_path: Path) -> None:
     document = _document(tmp_path, "full")
     document["payload"]["config"]["spaces"][0]["openings"] = [{
-        "id": "passage", "type": "passage", "x": 0.4, "y": 0.6,
-        "angle": 90, "length": 0.12, "future": {"kept": True},
+        "id": "passage", "type": "passage", "x": 0.4, "y": 0,
+        "angle": 0, "length": 0.12, "future": {"kept": True},
     }]
+    _downgrade_document_to_v7(document)
     runtime = SimpleNamespace(instance_id="instance-a", import_previews={})
     response = create_preview(
         runtime, json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
@@ -468,8 +496,8 @@ def test_canonical_passage_full_preview_preserves_geometry_and_extensions(tmp_pa
     )
     candidate = get_candidate(runtime, response["token"], "alice")
     assert candidate["document"]["payload"]["config"]["spaces"][0]["openings"] == [{
-        "id": "passage", "type": "passage", "x": 0.4, "y": 0.6,
-        "angle": 90, "length": 0.12, "future": {"kept": True},
+        "id": "passage", "type": "passage", "x": 0.4, "y": 0,
+        "angle": 0, "length": 0.12, "future": {"kept": True},
     }]
 
 
@@ -564,10 +592,15 @@ def _plan_only_source() -> tuple[dict[str, Any], dict[str, Any]]:
             "host": {"kind": "partition", "id": "partition", "t": 0.5},
             "future_opening": "sensor.secret",
         }],
-        "walls": [{"key": "wall-1", "cm": 20, "future_wall": "sensor.secret"}],
+        # The current v8 fixture must retain the catalogue's exact compatibility
+        # projection; legacy key-only walls are covered by the v7 import cases.
+        "walls": [],
         "room_drafts": [{
             "id": "draft", "points": [[0, 0], [0.2, 0]],
-            "segments": [{"cm": 10, "future_segment": "sensor.secret"}],
+            "segments": [{
+                "id": "draft-segment", "cm": 10,
+                "future_segment": "sensor.secret",
+            }],
         }],
         "partitions": [{"id": "partition", "a": [0, 0.5], "b": [1, 0.5], "cm": 12}],
         "wall_columns": [{"id": "column", "shape": "circle", "center": [0.2, 0.2], "cm": 30}],
