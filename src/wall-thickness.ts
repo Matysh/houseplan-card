@@ -2078,44 +2078,60 @@ export function junctionNodeGeometry(
     for (let i = 0; i < rays.length; i++) {
       const A = rays[i];
       const B = rays[(i + 1) % rays.length];
-      // A reflex sector (> 180°) is the OUTSIDE of a convex corner: the two
-      // strips already form it and the space between them is legitimately
-      // empty — nothing to add there.
       const sector = (() => {
         const raw = B.angle - A.angle;
         return raw > 0 ? raw : raw + Math.PI * 2;
       })();
-      if (sector > Math.PI + 1e-9) continue;
-      // Strip edges facing the sector between A and B (in increasing-angle
-      // order): A's edge sits at angle+90°, B's at angle−90°. This is a pure
-      // angular statement, valid in either screen orientation.
+      if (sector < 1e-9) continue;
+      const reflex = sector > Math.PI + 1e-9;
+      const limit = MITRE_LIMIT * Math.max(A.halfDepth, B.halfDepth);
+      // Facing strip edges: A's at angle+90°, B's at angle−90°.
       const EA = [P[0] - A.u[1] * A.halfDepth, P[1] + A.u[0] * A.halfDepth];
       const EB = [P[0] + B.u[1] * B.halfDepth, P[1] - B.u[0] * B.halfDepth];
       const cross = A.u[0] * B.u[1] - A.u[1] * B.u[0];
-      const limit = node.limit;
+      const inSector = (point: number[]): boolean => {
+        let angle = Math.atan2(point[1] - P[1], point[0] - P[0]) - A.angle;
+        while (angle < 0) angle += Math.PI * 2;
+        return angle <= sector + 1e-9;
+      };
       let mitre: number[] | null = null;
-      let mitreWithinStrips = false;
       if (Math.abs(cross) > 1e-9) {
         const tA = ((EB[0] - EA[0]) * B.u[1] - (EB[1] - EA[1]) * B.u[0]) / cross;
         const tB = ((EB[0] - EA[0]) * A.u[1] - (EB[1] - EA[1]) * A.u[0]) / cross;
-        if (tA > 0) {
-          mitre = [EA[0] + A.u[0] * tA, EA[1] + A.u[1] * tA];
-          mitreWithinStrips = tA <= A.thickLength && tB <= B.thickLength;
+        const candidate = [EA[0] + A.u[0] * tA, EA[1] + A.u[1] * tA];
+        // The mitre is only a corner when it actually sits IN the sector —
+        // forward along the rays for an ordinary pair, backward for a reflex
+        // outer corner — inside the classic bound, and never past a thick
+        // support (#271: overshooting one paints a lateral phantom).
+        const directionOk = reflex
+          ? tA <= 1e-9 && tB <= 1e-9
+          : tA > 1e-9 && tA <= A.thickLength && tB <= B.thickLength;
+        if (directionOk
+            && Math.hypot(candidate[0] - P[0], candidate[1] - P[1]) <= limit
+            && inSector(candidate)) {
+          mitre = candidate;
         }
       }
-      const push = (list: number[][][], poly: number[][]) => {
-        if (Math.abs(signedArea(poly)) > areaEps) list.push(poly);
+      const push = (poly: number[][]) => {
+        if (Math.abs(signedArea(poly)) > areaEps) out.fans.push(poly);
       };
-      if (mitre && mitreWithinStrips
-          && Math.hypot(mitre[0] - P[0], mitre[1] - P[1]) <= limit) {
-        push(out.fans, [[P[0], P[1]], EA, mitre, EB]);
+      if (mitre) {
+        push([[P[0], P[1]], EA, mitre, EB]);
         continue;
       }
-      // Bevel: walk each offset line up to the join limit (never past the
-      // thick support's real end) and close with a chord. The wedge past the
-      // chord belongs to the chamfer layer, which is left exactly as approved.
+      if (reflex) {
+        // A degenerate reflex mitre (parallel or out-of-bound edges) closes
+        // with the plain chord between the two strip edges.
+        push([[P[0], P[1]], EA, EB]);
+        continue;
+      }
+      // Bevel: walk each offset line a LOCAL distance — bounded by the thick
+      // support, by the classic limit and by twice the pair's depth, so the
+      // chord stays a corner detail and cannot fold across the plan.
       const reach = (half: number, length: number) => Math.min(
-        length, Math.sqrt(Math.max(limit ** 2 - half ** 2, 0)),
+        length,
+        Math.sqrt(Math.max(limit ** 2 - half ** 2, 0)),
+        2 * Math.max(A.halfDepth, B.halfDepth),
       );
       const A2 = [
         EA[0] + A.u[0] * reach(A.halfDepth, A.thickLength),
@@ -2125,7 +2141,7 @@ export function junctionNodeGeometry(
         EB[0] + B.u[0] * reach(B.halfDepth, B.thickLength),
         EB[1] + B.u[1] * reach(B.halfDepth, B.thickLength),
       ];
-      push(out.fans, [[P[0], P[1]], EA, A2, B2, EB]);
+      push([[P[0], P[1]], EA, A2, B2, EB]);
     }
   }
   return out;
@@ -3177,7 +3193,7 @@ export function floorFootprintGeometry(
       : exterior.centre;
     return multiWallNodes.nodes.length
       ? paperWithNodeCorners(
-        bevelMultiWallPaper(paper, exterior.centre, multiWallNodes), multiWallNodes,
+        paper, multiWallNodes,
         junctionNodeBound(
           rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale,
           multiWallNodes,
@@ -3504,10 +3520,9 @@ export function wallBodiesGeometry(
       : [];
     // Paper: the approved chamfer first, then the same additive fans that
     // complete the masonry corner complete the paper beneath it (#302).
-    const paperGeom = multiWallNodes.nodes.length && exterior
+    const paperGeom = multiWallNodes.nodes.length
       ? paperWithNodeCorners(
-        bevelMultiWallPaper(rawPaperGeom, exterior.centre, multiWallNodes),
-        multiWallNodes,
+        rawPaperGeom, multiWallNodes,
         junctionNodeBound(
           rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale,
           multiWallNodes,
@@ -3576,16 +3591,31 @@ export function wallBodiesGeometry(
         }
       }
     }
-    // The approved #249 chamfer layer stays exactly as is (owner 2026-08-25)…
-    corePhase = 'multi-wall-bevel';
-    if (body && multiWallNodes.nodes.length)
-      body = bevelMultiWallBody(body, multiWallNodes, exterior?.centre, paperGeom);
-    // …and AFTER it the node gets back what a chamfer must never eat (#302):
-    // the exact support quads of its rays — each bounded by its own finite
-    // length, so a trimmed lateral phantom (#271) cannot come back — and one
-    // fan per pair of angularly adjacent rays, bounded by the same node
-    // limit as the chamfer chord, covering every sector the subtractive
-    // layer keeps leaving open. Both halves are purely additive.
+    // The old bevel layer survives only as a TARGETED lateral trim: it
+    // removes the ring material a base contour paints past a degenerately
+    // short thick support (#271) — something no additive piece can undo. It
+    // runs ONLY on nodes that actually have such a support: everywhere else
+    // it used to leave the steps and horns the owner rejected (decision #5),
+    // and the node stays purely additive.
+    corePhase = 'multi-wall-trim';
+    if (body && multiWallNodes.nodes.length) {
+      const needsTrim = (node: MultiWallNode): boolean => node.rays.some(
+        (ray) => ray.supports.some(
+          (support) => support.length < support.halfDepth * 2,
+        ),
+      );
+      const trimNodes = multiWallNodes.nodes.filter(needsTrim);
+      if (trimNodes.length) {
+        const trimMap: MultiWallNodeMap = {
+          ...multiWallNodes, nodes: trimNodes,
+        };
+        body = bevelMultiWallBody(body, trimMap, exterior?.centre, paperGeom);
+      }
+    }
+    // Then the node gets its additive corners: the exact support quads of its
+    // rays — each bounded by its own finite length, so the trimmed lateral
+    // phantom cannot come back — and one mitre/bevel fan per pair of
+    // angularly adjacent rays, bounded by the classic MITRE_LIMIT.
     corePhase = 'junction-corners';
     if (multiWallNodes.nodes.length) {
       const corners = junctionNodeGeometry(multiWallNodes);
@@ -3944,8 +3974,7 @@ export function paperRoomShapesWithWalls(
       );
       const paper = multiWallNodes.nodes.length
         ? paperWithNodeCorners(
-          bevelMultiWallPaper(rawPaper, exterior.centre, multiWallNodes),
-          multiWallNodes,
+          rawPaper, multiWallNodes,
           junctionNodeBound(
             rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale,
             multiWallNodes,

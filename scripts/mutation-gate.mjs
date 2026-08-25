@@ -2211,16 +2211,16 @@ export const MUTANTS = [
   },
   {
     id: 'junction-fans-disabled',
-    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test --test-name-pattern="issue 302" test/wall-thickness.test.mjs',
+    guard: 'node demo/smoke_junction_holes.mjs',
     because: 'без вееров сектор между соседними полосами узла остаётся дырой — '
       + 'это и есть класс артефактов #302',
     patches: [{
       file: 'src/wall-thickness.ts',
-      find: '      if (mitre && mitreWithinStrips',
-      replace: '      if (false && mitre && mitreWithinStrips',
+      find: '      if (mitre) {\n        push([[P[0], P[1]], EA, mitre, EB]);\n        continue;\n      }',
+      replace: '      if (mitre) {\n        continue;\n      }',
     }, {
       file: 'src/wall-thickness.ts',
-      find: '      push(out.fans, [[P[0], P[1]], EA, A2, B2, EB]);',
+      find: '      push([[P[0], P[1]], EA, A2, B2, EB]);',
       replace: '      void A2; void B2;',
     }],
   },
@@ -2238,23 +2238,34 @@ export const MUTANTS = [
   {
     id: 'junction-fan-ignores-thick-length',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test --test-name-pattern="issue 302" test/wall-thickness.test.mjs',
-    because: 'веер, шагающий за короткий толстый саппорт, рисует латеральный '
+    because: 'mitre, шагнувший за короткий толстый саппорт, рисует латеральный '
       + 'фантом рядом с тонким продолжением (#271)',
     patches: [{
       file: 'src/wall-thickness.ts',
-      find: '          mitreWithinStrips = tA <= A.thickLength && tB <= B.thickLength;',
-      replace: '          mitreWithinStrips = true;',
+      find: '          : tA > 1e-9 && tA <= A.thickLength && tB <= B.thickLength;',
+      replace: '          : tA > 1e-9;',
     }],
   },
   {
-    id: 'junction-reflex-sector-fanned',
+    id: 'junction-reflex-outer-mitre-missing',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test --test-name-pattern="issue 302" test/wall-thickness.test.mjs',
-    because: 'рефлексный сектор — внешность выпуклого угла; веер там — лишний '
-      + 'фасадный материал (контракт вогнутого Split)',
+    because: 'рефлексный сектор — наружный угол между крайними лучами; без '
+      + 'обратного mitre там остаётся вырез Y-60 из отчёта владельца',
     patches: [{
       file: 'src/wall-thickness.ts',
-      find: '      if (sector > Math.PI + 1e-9) continue;',
-      replace: '      void sector;',
+      find: '        const directionOk = reflex\n          ? tA <= 1e-9 && tB <= 1e-9',
+      replace: '        const directionOk = reflex\n          ? false',
+    }],
+  },
+  {
+    id: 'junction-fan-limit-back-to-249',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test --test-name-pattern="issue 302" test/wall-thickness.test.mjs',
+    because: 'лимит веера 1.25·h — это отставка решения №5: узлы снова с '
+      + 'вырезами и ступеньками вместо полного mitre',
+    patches: [{
+      file: 'src/wall-thickness.ts',
+      find: '      const limit = MITRE_LIMIT * Math.max(A.halfDepth, B.halfDepth);\n      // Facing strip edges',
+      replace: '      const limit = node.limit;\n      // Facing strip edges',
     }],
   },
   {

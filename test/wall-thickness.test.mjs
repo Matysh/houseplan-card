@@ -217,27 +217,43 @@ const assertBoundedMultiWallBevels = (
       (base[0] + triangle[2][0]) / 2,
       (base[1] + triangle[2][1]) / 2,
     ];
-    // #302 contract: the chamfer is strip-safe. A wedge probe that falls
-    // inside any of the node's ray strips stays FILLED (an acute junction is
-    // solid masonry — the very fix of #302); outside every strip the wedge is
-    // cut, which is exactly the approved #249 chamfer.
-    const inNodeStrip = node.rays.some((ray) => ray.supports.some((support) => {
+    // #302 contract (owner decision #5): the node is purely additive. A
+    // probe inside the node's support strips or mitre/bevel fans — within the
+    // plain facade bound — is FILLED; outside all of them the wedge is empty.
+    const nodeCorners = junctionNodeGeometry({
+      epsilon: map.epsilon, coordinateScale: map.coordinateScale,
+      nodes: [node], index: new Map(),
+    });
+    const inPolygonProbe = (points) => {
+      let inside = false;
+      for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
+        const [xi, yi] = points[i];
+        const [xj, yj] = points[j];
+        if ((yi > probe[1]) !== (yj > probe[1])
+            && probe[0] < ((xj - xi) * (probe[1] - yi)) / (yj - yi) + xi) inside = !inside;
+      }
+      return inside;
+    };
+    const inStrips = node.rays.some((ray) => ray.supports.some((support) => {
       const rx = probe[0] - node.point[0];
       const ry = probe[1] - node.point[1];
       const along = rx * ray.u[0] + ry * ray.u[1];
       if (along < 0 || along > support.length) return false;
       return Math.abs(rx * ray.u[1] - ry * ray.u[0]) <= support.halfDepth - 1e-7;
-    })) && (!facadeBound || geometryProbeCoverage(facadeBound, probe) > 1e-7);
+    }));
+    const inFans = nodeCorners.fans.some((fan) => inPolygonProbe(fan));
+    const inContract = (inStrips || inFans)
+      && (!facadeBound || geometryProbeCoverage(facadeBound, probe) > 1e-7);
     const actualCoverage = geometryProbeCoverage(geometry.geom, probe);
-    if (inNodeStrip) {
+    if (inContract) {
       assert.ok(
         actualCoverage > 1e-7,
-        `the strip-safe chamfer still removed strip material at ${probe}`,
+        `the additive node lost contract material at ${probe}`,
       );
     } else {
       assert.ok(
         actualCoverage < 1e-7,
-        `an excessive multi-wall wedge outside every strip remains filled at ${probe}`,
+        `a wedge outside every strip and fan remains filled at ${probe}`,
       );
     }
   }
@@ -2223,9 +2239,10 @@ test('issue #197 keeps the full masonry when one virtual-junction patch has ULP 
   // #271 removes only the area that the old node-wide 8H rectangles invented
   // after finite ray endpoints; all semantic #197/#249/#261 probes above stay.
   // #272 additionally opens any point-contact bevel cut to the exterior.
-  // #302: the node's support quads and sector fans add a sliver of masonry
-  // (+0.208 units²) along the chamfer chords of this fixture's junctions.
-  closeTo(geometryArea(geometry.geom), 124534.81716317777, 1e-6);
+  // #302: the node's support quads and mitre fans (reflex outer corners
+  // included) add a sliver of masonry (+0.6 units²) at this fixture's
+  // junctions.
+  closeTo(geometryArea(geometry.geom), 124535.20808099362, 1e-6);
   closeTo(geometryArea(geometry.paperGeom), 727303.8194444444, 1e-6);
   assert.equal(
     JSON.stringify({ rooms, walls, cuts, openings, extraBodies }), before,
@@ -2922,14 +2939,36 @@ test('issue 302 a T node covers every sector with a fan or a mitre', () => {
   assert.equal(fans.length, 2);
 });
 
-test('issue 302 a reflex sector adds nothing', () => {
+test('issue 302 a reflex sector closes with the outer mitre', () => {
   const map = nodeMapOf(starIntervals([
     { deg: 0, half: 5 }, { deg: 30, half: 5 }, { deg: 100, half: 5 },
   ]));
   const { fans } = junctionNodeGeometry(map);
-  // [0..30] and [30..100] are real sectors; [100..360] (260°) is the outside
-  // of the convex corner — legitimately empty, no fan.
-  assert.equal(fans.length, 2);
+  // [0..30], [30..100] and the reflex [100..360]: the outer corner between
+  // the extreme rays closes with a BACKWARD mitre — the Y-60 notch of the
+  // owner's report lived exactly in a skipped reflex sector.
+  assert.equal(fans.length, 3);
+  // The reflex fan must be the four-point mitre, not the flat chord fallback:
+  // its apex sits deeper than either strip edge.
+  const node0 = map.nodes[0];
+  const reflexFan = fans.find((poly) => poly.some((point) => {
+    const dx = point[0] - node0.point[0], dy = point[1] - node0.point[1];
+    const deg = ((Math.atan2(dy, dx) * 180) / Math.PI + 360) % 360;
+    // The apex of the backward mitre: strictly inside the reflex sector and
+    // deeper than a strip edge (a chord fallback never leaves the edges).
+    return deg > 110 && deg < 350 && Math.hypot(dx, dy) > node0.halfDepth * 1.05;
+  }));
+  assert.ok(reflexFan, 'the reflex sector fell back to the chord — no outer mitre');
+  const node = map.nodes[0];
+  for (const fan of fans) {
+    for (const point of fan) {
+      assert.ok(
+        Math.hypot(point[0] - node.point[0], point[1] - node.point[1])
+          <= MITRE_LIMIT * node.halfDepth + 1e-7,
+        `fan escaped the classic corner bound: ${point}`,
+      );
+    }
+  }
 });
 
 test('issue 302 a mitre past the short thick support degrades to a bevel', () => {
@@ -2945,13 +2984,14 @@ test('issue 302 a mitre past the short thick support degrades to a bevel', () =>
   const { fans } = junctionNodeGeometry(map);
   // The [0°..90°] fan: mitre would sit at (502.5, 510) — inside the limit
   // (10.3 < 12.5) but past the thick support (t = 2.5 > 2) → five-point bevel.
-  const fan = fans.find((poly) => poly.some((point) => point[1] > 505));
-  assert.ok(fan, 'the sector fan between the thick and the vertical ray is gone');
-  assert.equal(fan.length, 5, 'the mitre past the thick support was accepted');
+  const fan = fans.find((poly) => poly.length === 5
+    && poly.some((point) => point[1] > 505));
+  assert.ok(fan, 'the mitre past the thick support was accepted instead of a bevel');
+  const bound = MITRE_LIMIT * Math.max(10, 2.5);
   for (const point of fan) {
     assert.ok(
-      Math.hypot(point[0] - 500, point[1] - 500) <= map.nodes[0].limit + 1e-7,
-      `fan escaped the node limit: ${point}`,
+      Math.hypot(point[0] - 500, point[1] - 500) <= bound + 1e-7,
+      `fan escaped the classic corner bound: ${point}`,
     );
   }
 });
@@ -3011,4 +3051,22 @@ test('issue 302 the owner repro is hole-free end to end', () => {
     [],
     'the владелец repro still has junction holes',
   );
+});
+
+test('issue 302 the 57° mixed-thickness pair takes the full mitre (decision #5)', () => {
+  // The owner's repro corner: mitre at ~8.7 units — beyond the retired 1.25×h
+  // join limit (6.1) but well inside the classic MITRE_LIMIT bound. It must
+  // be a four-point mitre fan, not a bevel: this is the visible difference
+  // between decision #5 and the #249 look.
+  const map = nodeMapOf(starIntervals([
+    { deg: 45, half: 4.861 }, { deg: 102.3, half: 3.472 }, { deg: 332.2, half: 3.472 },
+  ]));
+  assert.equal(map.nodes.length, 1);
+  const { fans } = junctionNodeGeometry(map);
+  const sectorFan = fans.find((poly) => poly.length === 4 && poly.some((point) => {
+    const dx = point[0] - 500, dy = point[1] - 500;
+    const angle = ((Math.atan2(dy, dx) * 180) / Math.PI + 360) % 360;
+    return Math.hypot(dx, dy) > 6.2 && angle > 45 && angle < 103;
+  }));
+  assert.ok(sectorFan, 'the 57° sector fell back to a bevel — the 1.25×h limit is back');
 });

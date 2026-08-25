@@ -4,9 +4,9 @@
 
 - Wall junctions no longer leave white wedges and notches. A node where three
   or more walls meet is now completed with sector fans and the exact strips of
-  its rays on top of the existing chamfer: an acute junction is solid masonry,
-  and the chamfer cut survives only where it does not touch the walls
-  themselves. The no-holes invariant is checked automatically on a set of 16
+  its rays: a node closes with a full mitre, like an ordinary wall
+  intersection on a drawing — the old junction chamfers are gone. The
+  no-holes invariant is checked automatically on a set of 16
   close-up junction scenes and on the plan from the original report
   ([#302](https://github.com/Matysh/houseplan-card/issues/302)).
 - Every Plan editor tool now shows the same complete set of wall axes and
