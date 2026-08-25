@@ -46,7 +46,7 @@ from custom_components.houseplan.store import (
     layout_store_payload,
     migrate_config_background_mode,
 )
-from custom_components.houseplan.validation import MAX_LAYOUT
+from custom_components.houseplan.validation import MAX_LAYOUT, MAX_MARKERS
 
 
 @pytest.fixture(autouse=True)
@@ -1115,6 +1115,55 @@ def test_issue_244_space_import_repairs_existing_target_refs_with_exact_map(tmp_
     assert details["repaired_target_refs"] == 6
 
 
+def test_issue_265_space_import_repairs_unique_previous_generation_lineage(
+    tmp_path: Path,
+) -> None:
+    document = _document(tmp_path, "space")
+    current = {
+        "spaces": [],
+        "markers": [{
+            "id": "target-vac", "binding": "virtual",
+            "space": "space_ground_aaaaaaaa",
+            "room_id": "room_living_bbbbbbbb",
+            "vacuum": {"segment_map": {"12": "room_living_cccccccc"}},
+        }],
+        "settings": {},
+    }
+    current_layout = {
+        "target-vac": {
+            "s": "space_ground_dddddddd", "x": 0.2, "y": 0.3,
+        },
+        "rl_room_living_eeeeeeee": {
+            "s": "space_ground_ffffffff", "x": 0.6, "y": 0.7,
+        },
+    }
+
+    merged, layout, details = build_space_merge(
+        document, current, current_layout, "skip",
+    )
+    imported = next(space for space in merged["spaces"] if space["id"] == details["space_id"])
+    imported_room = imported["rooms"][0]["id"]
+    marker = next(item for item in merged["markers"] if item["id"] == "target-vac")
+
+    assert marker["space"] == details["space_id"]
+    assert marker["room_id"] == imported_room
+    assert marker["vacuum"]["segment_map"] == {"12": imported_room}
+    assert layout["target-vac"] == {
+        "s": details["space_id"], "x": 0.2, "y": 0.3,
+    }
+    assert "rl_room_living_eeeeeeee" not in layout
+    assert layout["rl_" + imported_room]["s"] == details["space_id"]
+    assert details["repaired_target_refs"] == 6
+    assert details["reference_report"]["remapped"]["target"] == {
+        "marker.space": 1,
+        "marker.room_id": 1,
+        "marker.vacuum.segment_map": 1,
+        "layout.space": 2,
+        "layout.room_label": 1,
+    }
+    assert details["preserved_unresolved_refs"] == 0
+
+
 def test_issue_244_space_import_does_not_repair_target_while_source_exists(tmp_path: Path) -> None:
     document = _document(tmp_path, "space")
     current = _config()
@@ -1230,6 +1279,35 @@ def test_issue_265_bounded_lineage_report_counts_unique_ids_once(tmp_path: Path)
     )
 
     assert details["reference_report"]["boundedLineages"] == 1
+
+
+def test_issue_265_maximum_marker_candidate_keeps_report_bounded(tmp_path: Path) -> None:
+    document = _document(tmp_path, "space")
+    current = {
+        "spaces": [],
+        "markers": [
+            {
+                "id": f"legacy-{index}",
+                "binding": "virtual",
+                "space": "space_ground_aaaaaaaa",
+            }
+            for index in range(MAX_MARKERS - 1)
+        ],
+        "settings": {},
+    }
+
+    merged, _layout, details = build_space_merge(document, current, {}, "skip")
+
+    assert len(merged["markers"]) == MAX_MARKERS
+    assert details["repaired_target_refs"] == MAX_MARKERS - 1
+    assert details["reference_report"]["remapped"]["target"] == {
+        "marker.space": MAX_MARKERS - 1,
+    }
+    assert len(details["reference_report"]["examples"]) == 24
+    assert all(
+        marker["space"] == details["space_id"]
+        for marker in merged["markers"]
+    )
 
 
 def test_issue_265_apply_uses_the_exact_materialized_preview_candidate(
