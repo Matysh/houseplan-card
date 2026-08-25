@@ -6,7 +6,25 @@
 - **Целевая версия модели:** `PLAN_MODEL_VERSION = 8`
 - **Пользовательское изменение:** да
 
-## 1. Цель
+## 1. Сценарий
+
+Администратор дома создаёт или исправляет планировку в Plan editor на десктопе.
+В момент рисования новой стены, изменения толщины существующего участка или
+настройки пространства ему нужно обозначить границу без физической толщины, не
+переключаясь на отдельный инструмент с другой логикой.
+
+Задача закрывает J4 и J6 из `docs/SCOPE.md`: первоначальная настройка становится
+понятнее, а последующее обслуживание плана использует одну систему стен без
+рассинхронизации площади, света и геометрии.
+
+## 2. Что человек увидит до и после
+
+**До:** граница без физической стены создаётся отдельным неочевидным инструментом
+и ведёт себя иначе обычной стены. **После:** пользователь рисует и меняет её как
+обычную стену с толщиной 0, а в настройках пространства выбирает, показывать её
+пунктиром с пропусканием света или сплошной линией с блокировкой света.
+
+## 3. Цель
 
 Убрать из продукта отдельный инструмент **«Граница»** и канонические сущности
 `space.open_spans` / `rooms[].open_to`. Их роль выполняют обычные атомарные
@@ -23,7 +41,7 @@
 **«Толщина»**. Настройка пространства определяет, показываются ли все нулевые
 стены пунктиром или сплошной линией и пропускают ли они свет.
 
-## 2. Зафиксированные продуктовые решения
+## 4. Зафиксированные продуктовые решения
 
 1. Кнопка, сессия и термин **«Граница»** удаляются из UI.
 2. Толщина обычной стены и перегородки принимает `0..100 см`; колонны сохраняют
@@ -50,9 +68,9 @@
 
 Открытых продуктовых вопросов нет.
 
-## 3. Термины и инварианты
+## 5. Термины и инварианты
 
-### 3.1 Атом стены
+### 5.1 Атом стены
 
 Атом — максимальный коллинеарный интервал с одними и теми же:
 
@@ -66,7 +84,7 @@
 носителя и `cm`. Нельзя сливать `outer(A)` с `shared(A,B)`, разные пары shared,
 room-wall с independent wall или пересекать узел/проём.
 
-### 3.2 Три состояния разреженного room-wall слоя
+### 5.2 Три состояния разреженного room-wall слоя
 
 Пока не реализована целевая объектная модель #282, `space.walls[]` остаётся
 разреженным слоем поверх осей комнат:
@@ -83,7 +101,7 @@ room-wall с independent wall или пересекать узел/проём.
 `room_drafts[].segments[].cm`. При замыкании draft его нулевые сегменты
 переносятся в явные `walls[]` атомы созданной комнаты.
 
-### 3.3 Единый resolver
+### 5.3 Единый resolver
 
 Новый pure-модуль `src/zero-walls.ts` (имя можно уточнить без изменения
 контракта) является единственной точкой для:
@@ -98,9 +116,9 @@ Glow и солнце не имеют собственных проверок `da
 результат этого resolver. Визуальный renderer получает тот же `style`, но не
 определяет световое поведение через CSS.
 
-## 4. Persisted schema
+## 6. Persisted schema
 
-### 4.1 Новое поле пространства
+### 6.1 Новое поле пространства
 
 ```ts
 type ZeroWallStyle = 'dashed' | 'solid';
@@ -121,7 +139,7 @@ wall records обязаны иметь точные `a/b`; key-only `cm:0` но�
 записи хотя бы одного затронутого пространства. Открытие карточки и
 неструктурные изменения версию не повышают.
 
-### 4.2 Deprecated compatibility fields
+### 6.2 Deprecated compatibility fields
 
 `space.open_spans` и `rooms[].open_to`:
 
@@ -132,8 +150,10 @@ wall records обязаны иметь точные `a/b`; key-only `cm:0` но�
   канонической миграции;
 - никогда не создаются новым frontend;
 - в экспорте канонического v8 отсутствуют;
-- добавляются в `docs/CONFIG-COMPATIBILITY.md` как
-  `deprecated-read / project-in-memory / migrate-on-structural-write`.
+- регистрируются в `docs/CONFIG-COMPATIBILITY.md` и
+  `scripts/config-field-registry.mjs` существующими статусами
+  `deprecated-read` для compatibility-read и `migrate-on-write` для
+  документированных structural-write/Optimize/import путей.
 
 Если одновременно есть валидные `open_spans` и `open_to`, источником геометрии
 являются `open_spans`; `open_to` не расширяет их. Если `open_spans` отсутствует
@@ -141,9 +161,9 @@ wall records обязаны иметь точные `a/b`; key-only `cm:0` но�
 
 Unknown sibling-поля сохраняются на read/write как сейчас.
 
-## 5. UX редактора
+## 7. UX редактора
 
-### 5.1 Основная панель
+### 7.1 Основная панель
 
 - Кнопка **«Граница»**, её submenu/context tray, подсказки и состояния удаляются.
 - Поле толщины у **«Стен»** принимает локализованный эквивалент `0..100 см`.
@@ -154,7 +174,7 @@ Unknown sibling-поля сохраняются на read/write как сейч�
 - Pointer cancel, pinch и уход из редактора не записывают незавершённый нулевой
   сегмент.
 
-### 5.2 Инструмент «Толщина»
+### 7.2 Инструмент «Толщина»
 
 - Диалог/поле принимает `0..100 см` для room wall, draft и partition.
 - `positive → 0` атомизирует только выбранный доказанный интервал и сохраняет
@@ -165,7 +185,7 @@ Unknown sibling-поля сохраняются на read/write как сейч�
   атомарно отклоняется с сообщением удалить проём прежде. Остальной план не
   меняется.
 
-### 5.3 Рисование по существующей оси
+### 7.3 Рисование по существующей оси
 
 Рисование `cm:0` поверх доказанного участка room wall изменяет/атомизирует этот
 участок. Оно не создаёт совпадающую `partition`. Повторное рисование того же
@@ -176,7 +196,7 @@ Unknown sibling-поля сохраняются на read/write как сейч�
 ролей отклоняются до write с локализованным сообщением. Частичный кандидат не
 сохраняется.
 
-### 5.4 Настройки пространства
+### 7.4 Настройки пространства
 
 В секции отображения стен добавляется radio/select:
 
@@ -184,15 +204,15 @@ Unknown sibling-поля сохраняются на read/write как сейч�
 - варианты RU: **«Пунктирные»**, **«Сплошные»**;
 - видимое пояснение RU: **«Пунктирные стены пропускают свет. Сплошные стены
   блокируют свет, даже при нулевой толщине.»**;
-- эквивалентные EN-строки перечислены в §13.
+- эквивалентные EN-строки перечислены в §15.
 
 Изменение применяется сразу ко всем нулевым стенам пространства одной config
 транзакцией, поддерживает обычную отмену несохранённого диалога и не переписывает
 геометрию.
 
-## 6. Геометрия и операции
+## 8. Геометрия и операции
 
-### 6.1 Физическое тело, площадь и пол
+### 8.1 Физическое тело, площадь и пол
 
 - `cm:0` никогда не передаётся в wall-body union как полигон и не заменяется
   внутренним epsilon/`1 см`.
@@ -202,7 +222,7 @@ Unknown sibling-поля сохраняются на read/write как сейч�
 - Замкнутая цепочка independent нулевых стен не создаёт комнату сама по себе;
   комната возникает только через существующий flow предложения комнаты.
 
-### 6.2 Проёмы
+### 8.2 Проёмы
 
 - Picker/placement не предлагает нулевой wall interval как host.
 - Изменение host wall в `0` запрещено, пока любой door/window/gate/passage
@@ -212,7 +232,7 @@ Unknown sibling-поля сохраняются на read/write как сейч�
   пространства. Runtime остаётся читаемым по legacy projection; Optimize и
   структурная запись показывают конкретный blocker и не удаляют проём.
 
-### 6.3 Split, Merge, Delete, Resize
+### 8.3 Split, Merge, Delete, Resize
 
 - Split переносит `cm:0` на соответствующий новый room-wall atom без подстановки
   fallback thickness.
@@ -228,7 +248,7 @@ Unknown sibling-поля сохраняются на read/write как сейч�
   если миграция входила в эту транзакцию. `zero_wall_style` следует текущему
   контракту Save/Cancel настроек пространства и не добавляется в geometry stack.
 
-### 6.4 Нормализация и Optimize
+### 8.4 Нормализация и Optimize
 
 - Общий `normalizeWallIntervals()` сохраняет явные нули и объединяет только
   role-equivalent соседние атомы.
@@ -239,9 +259,9 @@ Unknown sibling-поля сохраняются на read/write как сейч�
   пространстве отменяет весь candidate и оставляет one-deep Optimize Undo.
 - Повторный Optimize канонического v8 — byte/semantic no-op.
 
-## 7. Свет и отображение
+## 9. Свет и отображение
 
-### 7.1 Свет
+### 9.1 Свет
 
 Для `dashed` нулевые сегменты исключаются из Glow/sun barriers. Shared нулевой
 атом добавляет пару комнат в derived light connectivity. Для `solid` тот же
@@ -261,7 +281,7 @@ Outer и independent `cm:0` следуют тому же правилу barrier:
 solid блокирует пересечение луча. Нулевая outer wall сама не создаёт источник
 солнечного света — источник по-прежнему возникает только из валидного окна.
 
-### 7.2 Flat, isometric и редакторы
+### 9.2 Flat, isometric и редакторы
 
 - Flat View, kiosk, isometric View и визуальный export используют выбранный
   solid/dashed стиль.
@@ -275,7 +295,7 @@ solid блокирует пересечение луча. Нулевая outer w
 - Hover/hit target остаётся доступным минимумом текущего wall editor и не
   ограничивается визуальной толщиной линии.
 
-## 8. Алгоритм миграции v7 → v8
+## 10. Алгоритм миграции v7 → v8
 
 Миграция pure, deterministic, idempotent и возвращает либо полный candidate,
 либо typed blocker.
@@ -300,7 +320,7 @@ solid блокирует пересечение луча. Нулевая outer w
    или любого лимита отказать целиком; усечение запрещено.
 10. При записи установить `model_version: 8`. Повторный запуск возвращает no-op.
 
-### 8.1 Когда выполняется write
+### 10.1 Когда выполняется write
 
 - Read adapter всегда строит runtime projection без persistence.
 - Структурная транзакция конкретного пространства (изменение rooms, walls,
@@ -313,14 +333,14 @@ solid блокирует пересечение луча. Нулевая outer w
 - Full/space import старого документа проецирует и валидирует migration в
   preview; Apply сохраняет canonical v8 candidate либо отказывает целиком.
 
-### 8.2 Масштаб и round-trip
+### 10.2 Масштаб и round-trip
 
 Координаты переносимых `a/b` проходят существующий lattice write barrier.
 Space-only import с другим `cell_cm` сохраняет нормализованную геометрию и
 сантиметровый `cm:0` без масштабирования значения. Full export/import и
 config/layout round-trip не восстанавливают deprecated fields.
 
-## 9. Backend, import/export и concurrency
+## 11. Backend, import/export и concurrency
 
 - `custom_components/houseplan/validation.py` принимает новый enum и `cm:0`, но
   различает новый explicit zero и отсутствие record.
@@ -334,16 +354,16 @@ config/layout round-trip не восстанавливают deprecated fields.
 - Permissions, HA service calls, entity registry и security boundary не
   меняются. Новые данные не исполняются и проходят существующие bounds.
 
-## 10. Совместимость и откат
+## 12. Совместимость и откат
 
-### 10.1 Forward compatibility
+### 12.1 Forward compatibility
 
 Старые конфигурации отображаются прежним пунктиром и пропускают свет до любой
 записи. Миграция не изменяет area, positive wall thickness, openings или
 координаты. Backend сохраняет compatibility-reader минимум весь релизный цикл
 v1.68.x; удаление reader требует отдельного issue и данных telemetry/fixtures.
 
-### 10.2 Downgrade / rollback
+### 12.2 Downgrade / rollback
 
 Старая версия клиента не понимает explicit `cm:0`, поэтому downgrade после
 canonical write не поддерживается. До первой структурной записи пользователь
@@ -355,7 +375,7 @@ canonical write не поддерживается. До первой струк�
 сохранением v8 reader. Labs-флаг не используется: две одновременно пишущие
 модели создадут больший риск, чем feature flag способен снять.
 
-## 11. Производительность
+## 13. Производительность
 
 - Migration/atomization выполняется только на structural write/Optimize/import,
   не на HA state tick и не на каждом render.
@@ -369,7 +389,7 @@ canonical write не поддерживается. До первой струк�
 - Нулевые line barriers не превращаются в полигоны, что ограничивает рост
   polyclip input.
 
-## 12. Touch и accessibility
+## 14. Touch и accessibility
 
 - View/kiosk: нулевые стены, свет и `show_borders` обязаны совпадать с desktop;
   pinch/tap не оставляет sticky hover и не меняет стену.
@@ -382,7 +402,7 @@ canonical write не поддерживается. До первой струк�
 - `prefers-reduced-motion` не требует отдельного поведения: новая фича не
   добавляет animation.
 
-## 13. i18n
+## 15. i18n
 
 Добавляются симметрично в `src/i18n/ru.json` и `src/i18n/en.json`:
 
@@ -401,7 +421,7 @@ canonical write не поддерживается. До первой струк�
 только после проверки отсутствия consumers. Compatibility import error codes
 локализуются UI, backend возвращает стабильный machine code без текста интерфейса.
 
-## 14. Затронутые модули
+## 16. Затронутые модули
 
 Обязательный минимум; точное разбиение большого `houseplan-card.ts` допускается
 без изменения контракта:
@@ -422,14 +442,15 @@ canonical write не поддерживается. До первой струк�
   `coordinate_canonicalization.py` — model version, schema и import/export;
 - `src/i18n/en.json`, `src/i18n/ru.json`;
 - `docs/WALL-THICKNESS.md`, `docs/LIGHT.md`, `docs/USER-GUIDE.md`,
+  `docs/USER-GUIDE.ru.md`,
   `docs/CONFIG-COMPATIBILITY.md`, `docs/ARCHITECTURE.md`, `docs/STATUS.md`, оба
   changelog;
-- unit/backend/smoke/golden/performance fixtures из §15.
+- unit/backend/smoke/golden/performance fixtures из §17.
 
 Противоречащие актуальные ТЗ #148 и #173 получают короткую superseded-note со
 ссылкой на #306; история их acceptance contract не переписывается задним числом.
 
-## 15. Acceptance criteria и доказательства
+## 17. Acceptance criteria и доказательства
 
 ### AC1. Один пользовательский инструмент
 
@@ -566,7 +587,7 @@ best effort и не блокирует.
 
 ### AC17. Производительность и кэши
 
-Large-house v7 projection/v8 canonical проходят бюджеты §11; HA state tick не
+Large-house v7 projection/v8 canonical проходят бюджеты §13; HA state tick не
 запускает atomization/barrier rebuild; style toggle запускает ровно одну
 инвалидацию требуемых geometry/light caches.
 
@@ -580,7 +601,7 @@ Boundary. Bundle-копии синхронны.
 
 **Доказательство:** i18n/docs/bundle tests и ревью артефактов.
 
-## 16. Обязательные проверки реализации
+## 18. Обязательные проверки реализации
 
 Минимальный implementation gate до code review:
 
@@ -596,7 +617,7 @@ Code-review/release gate дополнительно выполняет:
 - `demo/smoke_zero_walls.mjs` desktop + touch safety;
 - Glow и sun deterministic golden matrix;
 - flat/isometric/show_borders golden review;
-- large-house performance capture с бюджетами §11;
+- large-house performance capture с бюджетами §13;
 - полный импорт v7 full/space fixtures и v8 round-trip;
 - сверку `dist/houseplan-card.js` и
   `custom_components/houseplan/frontend/houseplan-card.js`.
@@ -604,13 +625,14 @@ Code-review/release gate дополнительно выполняет:
 Golden принимаются только через действующую policy после визуального review;
 изменение baseline ради зелёного CI запрещено.
 
-## 17. Release-артефакты
+## 19. Release-артефакты
 
 В том же коммите, что пользовательское поведение:
 
 - `docs/CHANGELOG.md` и `docs/CHANGELOG.ru.md`: удаление «Границы», стены `0`,
   настройка пунктир/сплошная и предупреждение о migration backup;
-- `docs/USER-GUIDE.md`, `docs/WALL-THICKNESS.md`, `docs/LIGHT.md`;
+- `docs/USER-GUIDE.md`, `docs/USER-GUIDE.ru.md`, `docs/WALL-THICKNESS.md`,
+  `docs/LIGHT.md`;
 - `docs/CONFIG-COMPATIBILITY.md`, `docs/ARCHITECTURE.md`, `docs/STATUS.md`;
 - RU/EN screenshots/golden: toolbar, space setting, dashed/solid flat и iso,
   Glow/sun matrix;
@@ -618,7 +640,7 @@ Golden принимаются только через действующую pol
 - security artefact не требуется: permissions/service boundary не меняется;
   backend bounds покрываются tests.
 
-## 18. Риски и защита
+## 20. Риски и защита
 
 | Риск | Защита |
 |---|---|
@@ -632,7 +654,7 @@ Golden принимаются только через действующую pol
 | Cache переживёт style toggle | style in fingerprint + AC7/AC17 |
 | Две модели продолжат писаться | source-contract запрещает production legacy writers |
 
-## 19. Зависимости и вне скоупа
+## 21. Зависимости и вне скоупа
 
 ### Зависимости
 
