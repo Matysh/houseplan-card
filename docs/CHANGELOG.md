@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Re-importing an already imported space no longer grows nested internal-ID
+  prefixes. Preview and Apply now share one immutable candidate, safely repair
+  only uniquely proven references to earlier copies, and preserve ambiguous
+  references without guessing or deletion; the import dialog exposes the
+  reference details ([#265](https://github.com/Matysh/houseplan-card/issues/265)).
 - The wall-thickness tool now highlights a real wall at its actual physical
   width instead of inflating thin walls according to the plan's grid size.
   Zero-thickness walls keep a visible, scale-independent highlight and the

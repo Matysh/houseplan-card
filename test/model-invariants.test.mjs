@@ -61,6 +61,43 @@ test('#244: удалённый маркер не считается наруше
   assert.deepEqual(checkReferences(m), []);
 });
 
+test('#265: полный внутренний ссылочный граф проверяется независимо от импорта', () => {
+  const m = model();
+  m.config.spaces[0].rooms[0].open_to = ['missing-room'];
+  m.config.spaces[0].openings = [{
+    id: 'door', type: 'door', x: 0.2, y: 0.1, angle: 0, length: 0.1,
+    host: { kind: 'partition', id: 'missing-partition', t: 0.5 },
+  }];
+  Object.assign(m.config.markers[0], {
+    room_id: 'missing-room',
+    vacuum: { segment_map: { 12: 'missing-room' } },
+    controls: ['marker:missing-light'],
+    value_badge: {
+      enabled: true,
+      source: { kind: 'derived_marker_state', ref: 'marker:missing-source' },
+    },
+  });
+
+  assert.deepEqual(checkReferences(m).map((item) => item.kind).sort(), [
+    'marker_badge', 'marker_control', 'marker_room', 'opening_host',
+    'room_open_to', 'vacuum_room',
+  ]);
+});
+
+test('#265: marker-ссылки принимают только активную цель-источник света', () => {
+  const m = model();
+  m.config.markers.push({ id: 'plain', binding: 'virtual', space: 'sp1' });
+  m.config.markers[0].controls = ['marker:plain'];
+  m.config.markers[0].value_badge = {
+    enabled: true,
+    source: { kind: 'derived_marker_state', ref: 'marker:plain' },
+  };
+
+  assert.deepEqual(checkReferences(m).map((item) => item.kind).sort(), [
+    'marker_badge', 'marker_control',
+  ]);
+});
+
 test('#252: позиция на удалённое пространство и позиция без владельца', () => {
   const m = model({ layout: {
     m1: { s: 'sp1', x: 0.2, y: 0.2 },

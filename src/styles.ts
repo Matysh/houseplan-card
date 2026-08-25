@@ -3329,6 +3329,15 @@ export const cardStyles = css`
     }
     .backupwarn { background: color-mix(in srgb, var(--hp-accent) 12%, transparent); }
     .backuperror { background: rgba(179, 64, 42, .16); color: #ff7a5c; }
+    .backupdetails {
+      border: 1px solid var(--hp-line);
+      border-radius: var(--rad-s);
+      padding: var(--sp-2) var(--sp-3);
+      font-size: var(--fs-s);
+    }
+    .backupdetails summary { cursor: pointer; font-weight: 700; }
+    .backupdetails > div { display: grid; gap: var(--sp-1); padding-block-start: var(--sp-2); }
+    .backupdetails code { overflow-wrap: anywhere; color: var(--hp-muted); }
     .backupchoices {
       display: flex;
       flex-direction: column;

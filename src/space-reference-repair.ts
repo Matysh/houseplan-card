@@ -65,6 +65,26 @@ const reversibleStem = (prefix: 'space' | 'room', value: string): boolean => (
   value.length > 0 && value.length <= 35
   && (prefix === 'space' ? /^[a-z0-9_-]+$/.test(value) : /^[A-Za-z0-9_-]+$/.test(value))
 );
+
+export interface ImportLineageRoot {
+  root: string;
+  layers: number;
+  bounded: boolean;
+}
+
+/** Same strict, bounded import-id envelope as the backend import seam. */
+export function canonicalImportRoot(prefix: string, value: string): ImportLineageRoot {
+  let root = String(value ?? '');
+  const escaped = prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const pattern = new RegExp(`^${escaped}_(.+)_([0-9a-f]{8})$`);
+  let layers = 0;
+  for (; layers < 16; layers++) {
+    const match = pattern.exec(root);
+    if (!match) return { root, layers, bounded: false };
+    root = match[1];
+  }
+  return { root, layers, bounded: pattern.test(root) };
+}
 const addCandidate = (map: Map<string, string[]>, oldId: string, candidate: string): void => {
   const values = map.get(oldId) || [];
   values.push(candidate);
@@ -94,8 +114,10 @@ export function repairSpaceReferences(
   const existingSpaceIds = new Set(spaceIds);
   const spaceSignatures = new Map<string, string[]>();
   for (const spaceId of spaceIds) {
-    const signature = /^space_(.+)_([0-9a-f]{8})$/.exec(spaceId);
-    if (signature) addCandidate(spaceSignatures, signature[1], spaceId);
+    const signature = canonicalImportRoot('space', spaceId);
+    if (signature.layers > 0 && reversibleStem('space', signature.root)) {
+      addCandidate(spaceSignatures, signature.root, spaceId);
+    }
   }
   const roomSignaturesBySpace = new Map<string, Map<string, string[]>>();
   const roomOwner = new Map<string, string>();
@@ -108,8 +130,10 @@ export function repairSpaceReferences(
     for (const room of Array.isArray(space.rooms) ? space.rooms : []) {
       const roomId = typeof room?.id === 'string' ? room.id : '';
       if (!roomId) continue;
-      const signature = /^room_(.+)_([0-9a-f]{8})$/.exec(roomId);
-      if (signature) addCandidate(roomSignatures, signature[1], roomId);
+      const signature = canonicalImportRoot('room', roomId);
+      if (signature.layers > 0 && reversibleStem('room', signature.root)) {
+        addCandidate(roomSignatures, signature.root, roomId);
+      }
       if (!roomOwner.has(roomId)) roomOwner.set(roomId, spaceId);
       if (!roomNames.has(roomId)) roomNames.set(roomId, String(room.name || ''));
       const area = typeof room.area === 'string' ? room.area : '';
@@ -152,13 +176,19 @@ export function repairSpaceReferences(
   const handledLayout = new Set<string>();
 
   const signatureSpace = (oldId: string): string | null => (
-    existingSpaceIds.has(oldId) || !reversibleStem('space', oldId)
+    existingSpaceIds.has(oldId)
       ? null
-      : (spaceSignatures.get(oldId)?.length === 1 ? spaceSignatures.get(oldId)![0] : null)
+      : (() => {
+        const root = canonicalImportRoot('space', oldId).root;
+        if (!reversibleStem('space', root)) return null;
+        const candidates = spaceSignatures.get(root) || [];
+        return candidates.length === 1 ? candidates[0] : null;
+      })()
   );
   const exactRoom = (oldId: string, targetSpace: string): string | null => {
-    if (!reversibleStem('room', oldId)) return null;
-    const candidates = roomSignaturesBySpace.get(targetSpace)?.get(oldId) || [];
+    const root = canonicalImportRoot('room', oldId).root;
+    if (!reversibleStem('room', root)) return null;
+    const candidates = roomSignaturesBySpace.get(targetSpace)?.get(root) || [];
     return candidates.length === 1 ? candidates[0] : null;
   };
   const uniqueAreaRoom = (markerId: string): { spaceId: string; roomId: string } | null => {

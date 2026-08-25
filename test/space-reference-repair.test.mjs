@@ -1,7 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 
-import { repairSpaceReferences } from '../test-build/space-reference-repair.js';
+import {
+  canonicalImportRoot, repairSpaceReferences,
+} from '../test-build/space-reference-repair.js';
+
+const lineageFixture = JSON.parse(readFileSync(
+  new URL('./fixtures/import-id-lineage.json', import.meta.url), 'utf8',
+));
 
 const space = (id, rooms = []) => ({
   id, title: id, cell_cm: 5, view_box: [0, 0, 1, 1], rooms,
@@ -16,6 +23,42 @@ const emptyOwnerReport = {
   liveMissingPositions: [],
   unverifiedPositions: [],
 };
+
+test('issue 265 Python/TypeScript lineage fixture stays strict and bounded', () => {
+  for (const item of lineageFixture.cases) {
+    assert.deepEqual(canonicalImportRoot(item.prefix, item.value), {
+      root: item.root, layers: item.layers, bounded: item.bounded,
+    });
+  }
+  for (const item of lineageFixture.generated) {
+    let value = item.seed;
+    for (let index = 0; index < item.wraps; index++) {
+      value = `${item.prefix}_${value}_deadbeef`;
+    }
+    assert.deepEqual(canonicalImportRoot(item.prefix, value), {
+      root: item.root, layers: item.layers, bounded: item.bounded,
+    });
+  }
+});
+
+test('issue 265 Optimize resolves an import-of-import lineage without guessing', () => {
+  const importedSpace = 'space_space_f1_deadbeef_cafebabe';
+  const importedRoom = 'room_room_living_0123abcd_deadbeef';
+  const result = repairSpaceReferences({
+    spaces: [space(importedSpace, [room(importedRoom)])],
+    markers: [{
+      id: 'vac', binding: 'device:vac', space: 'space_f1_11111111',
+      room_id: 'room_living_22222222',
+      vacuum: { segment_map: { 12: 'room_living_33333333' } },
+    }],
+    settings: {},
+  }, { vac: { s: 'space_f1_11111111', x: 0.2, y: 0.3 } });
+
+  assert.equal(result.config.markers[0].space, importedSpace);
+  assert.equal(result.config.markers[0].room_id, importedRoom);
+  assert.equal(result.config.markers[0].vacuum.segment_map[12], importedRoom);
+  assert.equal(result.layout.vac.s, importedSpace);
+});
 
 test('issue 252 detaches a live marker but preserves its stale coordinates until explicit cleanup', () => {
   const marker = {

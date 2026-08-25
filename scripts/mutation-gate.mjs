@@ -232,8 +232,10 @@ export const MUTANTS = [
       + 'by array order; exact signature repair is safe only when the candidate is unique (#244)',
     patches: [{
       file: 'src/space-reference-repair.ts',
-      find: ': (spaceSignatures.get(oldId)?.length === 1 ? spaceSignatures.get(oldId)![0] : null)',
-      replace: ': (spaceSignatures.get(oldId)?.[0] || null)',
+      find: '        const candidates = spaceSignatures.get(root) || [];\n'
+        + '        return candidates.length === 1 ? candidates[0] : null;',
+      replace: '        const candidates = spaceSignatures.get(root) || [];\n'
+        + '        return candidates[0] || null;',
     }],
   },
   {

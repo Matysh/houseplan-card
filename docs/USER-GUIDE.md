@@ -754,6 +754,12 @@ assigns new internal IDs and adds the copy without replacing global settings.
 When that exact import map matches orphan references already present in the
 target, the preview reports them and Apply restores them together with the
 space.
+Re-importing a copy still creates an independent space, but no longer grows
+nested service prefixes in internal IDs. Preview and **Add space** use the same
+prepared candidate. **Import reference details** reports links updated inside
+the copy and in the existing plan. If more than one target is possible, House
+Plan preserves the reference instead of guessing and recommends running
+**Optimize plans** after the import.
 Internal uploaded files are not embedded in JSON; an import to another HA
 instance must explicitly detach those links.
 

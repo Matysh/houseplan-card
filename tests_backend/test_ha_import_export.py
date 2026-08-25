@@ -20,6 +20,7 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 from custom_components.houseplan.import_export import (
     ImportFailure,
     build_space_merge,
+    canonical_import_root,
     create_export,
     create_preview,
     get_candidate,
@@ -86,6 +87,25 @@ def _document(tmp_path: Path, kind: str = "full") -> dict:
         config_root=tmp_path,
     )
     return document
+
+
+def test_issue_265_python_lineage_matches_shared_fixture() -> None:
+    fixture = json.loads(
+        (Path(__file__).parents[1] / "test" / "fixtures" / "import-id-lineage.json").read_text()
+    )
+    for item in fixture["cases"]:
+        root, layers, bounded = canonical_import_root(item["prefix"], item["value"])
+        assert root == item["root"]
+        assert layers == item["layers"]
+        assert bounded is item["bounded"]
+    for item in fixture["generated"]:
+        value = item["seed"]
+        for _index in range(item["wraps"]):
+            value = f"{item['prefix']}_{value}_deadbeef"
+        root, layers, bounded = canonical_import_root(item["prefix"], value)
+        assert root == item["root"]
+        assert layers == item["layers"]
+        assert bounded is item["bounded"]
 
 
 def test_import_document_canonicalizes_external_coordinates(tmp_path: Path) -> None:
@@ -1109,6 +1129,133 @@ def test_issue_244_space_import_does_not_repair_target_while_source_exists(tmp_p
     assert marker["room_id"] == "living"
     assert layout["lamp"]["s"] == "ground"
     assert details["repaired_target_refs"] == 0
+
+
+def test_issue_265_import_of_import_flattens_every_owned_namespace(tmp_path: Path) -> None:
+    document = _document(tmp_path, "space")
+    space = document["payload"]["config"]["spaces"][0]
+    space["partitions"] = [{
+        "id": "part", "a": [0, 0.5], "b": [1, 0.5], "cm": 15,
+    }]
+    space["openings"] = [{
+        "id": "door", "type": "door", "x": 0.5, "y": 0.5,
+        "angle": 0, "length": 0.2,
+        "host": {"kind": "partition", "id": "part", "t": 0.5},
+    }]
+    first, _layout, first_details = build_space_merge(
+        document, {"spaces": [], "markers": [], "settings": {}}, {}, "skip",
+    )
+    imported = first["spaces"][0]
+    document["payload"]["config"]["spaces"] = [imported]
+    document["payload"]["config"]["markers"] = []
+    document["payload"]["layout"] = {}
+    document["placement_manifest"] = []
+    second, _layout, second_details = build_space_merge(
+        document, {"spaces": [], "markers": [], "settings": {}}, {}, "skip",
+    )
+    copied = second["spaces"][0]
+
+    assert first_details["space_id"].startswith("space_ground_")
+    assert second_details["space_id"].startswith("space_ground_")
+    assert "space_space_" not in second_details["space_id"]
+    for collection, nested_prefix in (
+        ("rooms", "room_room_"),
+        ("partitions", "partition_partition_"),
+        ("openings", "opening_opening_"),
+    ):
+        assert all(nested_prefix not in item["id"] for item in copied[collection])
+
+
+def test_issue_265_cross_generation_target_repair_fails_closed_when_ambiguous(
+    tmp_path: Path,
+) -> None:
+    document = _document(tmp_path, "space")
+    current = {
+        "spaces": [{
+            "id": "space_ground_aaaaaaaa", "title": "Existing",
+            "view_box": [0, 0, 1, 1], "rooms": [],
+        }],
+        "markers": [{
+            "id": "orphan", "binding": "virtual", "space": "space_ground_bbbbbbbb",
+        }],
+        "settings": {},
+    }
+    merged, _layout, details = build_space_merge(document, current, {}, "skip")
+    marker = next(item for item in merged["markers"] if item["id"] == "orphan")
+
+    assert marker["space"] == "space_ground_bbbbbbbb"
+    assert details["repaired_target_refs"] == 0
+    assert details["preserved_unresolved_refs"] == 1
+    assert details["reference_report"]["preservedUnresolved"] == {
+        "marker.space": 1,
+    }
+
+
+def test_issue_265_target_marker_links_require_an_imported_light_target(
+    tmp_path: Path,
+) -> None:
+    document = _document(tmp_path, "space")
+    # The copied owner is still a marker/layout target, but cannot become a
+    # marker:* light target after the transfer policy removes light semantics.
+    document["payload"]["config"]["markers"][0]["is_light"] = False
+    current = {
+        "spaces": [],
+        "markers": [{
+            "id": "controller", "binding": "virtual", "space": "ground",
+            "controls": ["marker:lamp"],
+        }],
+        "settings": {},
+    }
+
+    merged, _layout, details = build_space_merge(document, current, {}, "skip")
+    controller = next(item for item in merged["markers"] if item["id"] == "controller")
+
+    assert controller["controls"] == ["marker:lamp"]
+    assert details["reference_report"]["preservedUnresolved"] == {
+        "marker.controls": 1,
+    }
+
+
+def test_issue_265_bounded_lineage_report_counts_unique_ids_once(tmp_path: Path) -> None:
+    document = _document(tmp_path, "space")
+    nested = "ground"
+    for _index in range(17):
+        nested = f"space_{nested}_deadbeef"
+    document["payload"]["config"]["spaces"][0]["id"] = nested
+    document["payload"]["config"]["markers"][0]["space"] = nested
+    document["payload"]["layout"]["lamp"]["s"] = nested
+
+    _merged, _layout, details = build_space_merge(
+        document, {"spaces": [], "markers": [], "settings": {}}, {}, "skip",
+    )
+
+    assert details["reference_report"]["boundedLineages"] == 1
+
+
+def test_issue_265_apply_uses_the_exact_materialized_preview_candidate(
+    tmp_path: Path, monkeypatch,
+) -> None:
+    document = _document(tmp_path, "space")
+    runtime = SimpleNamespace(instance_id="instance-a", import_previews={})
+    response = create_preview(
+        runtime, json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
+        current_config_data={"config": {"spaces": [], "markers": []}, "rev": 2},
+        current_layout_data={"layout": {}, "rev": 3}, config_root=tmp_path,
+    )
+    candidate = get_candidate(runtime, response["token"], "alice")
+    preview_space = candidate["details"]["space_id"]
+
+    def fail_if_rebuilt(*_args, **_kwargs):
+        raise AssertionError("Apply must not allocate another import id")
+
+    monkeypatch.setattr(import_export_api, "_fresh", fail_if_rebuilt)
+    config, layout, details = prepare_apply(
+        candidate, {"spaces": [], "markers": []}, {}, confirm_missing_content=False,
+    )
+    assert config == candidate["target_config"]
+    assert layout == candidate["target_layout"]
+    assert details == candidate["details"]
+    assert details["space_id"] == preview_space
 
 
 def test_space_merge_remaps_every_space_owned_id_and_room_link(tmp_path: Path) -> None:

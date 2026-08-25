@@ -121,6 +121,12 @@ export function checkReferences({ config, layout = {} } = {}, { notes = [] } = {
   const spaceIds = new Set(spaces.map((space) => String(space?.id ?? '')).filter(Boolean));
   const markerIds = new Set((config?.markers || [])
     .map((marker) => String(marker?.id ?? '')).filter(Boolean));
+  const activeMarkerIds = new Set((config?.markers || [])
+    .filter((marker) => marker?.removed !== true)
+    .map((marker) => String(marker?.id ?? '')).filter(Boolean));
+  const activeLightMarkerIds = new Set((config?.markers || [])
+    .filter((marker) => marker?.removed !== true && marker?.is_light === true)
+    .map((marker) => String(marker?.id ?? '')).filter(Boolean));
   const roomIdsBySpace = new Map(spaces.map((space) => [String(space?.id ?? ''),
     new Set((space?.rooms || []).map((room) => String(room?.id ?? '')).filter(Boolean))]));
   const areasBySpace = new Map(spaces.map((space) => [String(space?.id ?? ''),
@@ -130,9 +136,45 @@ export function checkReferences({ config, layout = {} } = {}, { notes = [] } = {
 
   for (const marker of config?.markers || []) {
     if (marker?.removed) continue;
+    const markerId = String(marker.id ?? '?');
     const space = marker?.space == null ? '' : String(marker.space);
     if (space && !spaceIds.has(space)) {
-      add('marker_space', String(marker.id ?? '?'), space, 'пространства не существует');
+      add('marker_space', markerId, space, 'пространства не существует');
+    }
+    const room = marker?.room_id == null ? '' : String(marker.room_id);
+    if (room && spaceIds.has(space) && !roomIdsBySpace.get(space)?.has(room)) {
+      add('marker_room', markerId, room, 'комнаты не существует в пространстве маркера');
+    }
+    const segments = marker?.vacuum?.segment_map;
+    if (segments && typeof segments === 'object' && !Array.isArray(segments)) {
+      for (const [segment, value] of Object.entries(segments)) {
+        const roomId = String(value ?? '');
+        if (roomId && spaceIds.has(space) && !roomIdsBySpace.get(space)?.has(roomId)) {
+          add('vacuum_room', `${markerId}:${segment}`, roomId,
+            'комнаты сегмента не существует в пространстве маркера');
+        }
+      }
+    }
+    for (const value of Array.isArray(marker?.controls) ? marker.controls : []) {
+      if (typeof value !== 'string' || !value.startsWith('marker:')) continue;
+      const target = value.slice('marker:'.length);
+      if (!activeLightMarkerIds.has(target)) {
+        add('marker_control', markerId, target,
+          activeMarkerIds.has(target)
+            ? 'маркер-цель не является источником света'
+            : 'активного маркера-цели не существует');
+      }
+    }
+    const badgeSource = marker?.value_badge?.source;
+    if (badgeSource?.kind === 'derived_marker_state') {
+      const ref = String(badgeSource.ref ?? '');
+      const target = ref.startsWith('marker:') ? ref.slice('marker:'.length) : '';
+      if (!target || !activeLightMarkerIds.has(target)) {
+        add('marker_badge', markerId, ref || '?',
+          target && activeMarkerIds.has(target)
+            ? 'маркер-источник не является источником света'
+            : 'активного маркера-источника не существует');
+      }
     }
   }
 
@@ -171,6 +213,28 @@ export function checkReferences({ config, layout = {} } = {}, { notes = [] } = {
 
   for (const space of spaces) {
     const spaceId = String(space?.id ?? '?');
+    const roomIds = roomIdsBySpace.get(spaceId) || new Set();
+    for (const room of space?.rooms || []) {
+      const roomId = String(room?.id ?? '?');
+      for (const target of Array.isArray(room?.open_to) ? room.open_to : []) {
+        const targetId = String(target ?? '');
+        if (targetId && !roomIds.has(targetId)) {
+          add('room_open_to', `${spaceId}:${roomId}`, targetId,
+            'комнаты назначения не существует в том же пространстве');
+        }
+      }
+    }
+    const partitionIds = new Set((space?.partitions || [])
+      .map((partition) => String(partition?.id ?? '')).filter(Boolean));
+    for (const opening of space?.openings || []) {
+      const host = opening?.host;
+      if (host?.kind !== 'partition') continue;
+      const target = String(host.id ?? '');
+      if (!target || !partitionIds.has(target)) {
+        add('opening_host', `${spaceId}:${opening?.id ?? '?'}`, target || '?',
+          'перегородки-хоста не существует в том же пространстве');
+      }
+    }
     const list = carriers(space);
     const tolerance = EDGE_TOLERANCE;
     for (const wall of space?.walls || []) {
@@ -721,6 +785,12 @@ function report(violations, notes = []) {
   }
   const titles = {
     marker_space: 'Маркеры ссылаются на несуществующие пространства',
+    marker_room: 'Маркеры ссылаются на несуществующие комнаты',
+    vacuum_room: 'Сегменты пылесоса ссылаются на несуществующие комнаты',
+    marker_control: 'Управление светом ссылается на несовместимый маркер',
+    marker_badge: 'Бейдж значения ссылается на несовместимый маркер',
+    room_open_to: 'Связи комнат ссылаются на несуществующие комнаты',
+    opening_host: 'Проёмы ссылаются на несуществующие перегородки',
     layout_space: 'Позиции ссылаются на несуществующие пространства',
     layout_owner: 'Позиции без владельца',
     wall_carrier: 'Записи толщины вне рёбер и перегородок',

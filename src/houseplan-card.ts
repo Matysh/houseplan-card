@@ -15856,6 +15856,23 @@ class HouseplanCard extends LitElement {
     const d = this._backupImportDialog!;
     const p = d.preview;
     const counts = p?.counts || {};
+    const report = p?.reference_report || {};
+    const sum = (values: any): number => Object.values(values || {}).reduce(
+      (total: number, value: any) => total + (Number(value) || 0), 0,
+    );
+    const allReportRows: Array<[
+      'incoming_remapped' | 'target_repaired' | 'preserved_unresolved'
+      | 'collisions' | 'dropped_links' | 'bounded_lineages',
+      number,
+    ]> = [
+      ['incoming_remapped', sum(report.remapped?.incoming)],
+      ['target_repaired', sum(report.remapped?.target)],
+      ['preserved_unresolved', sum(report.preservedUnresolved)],
+      ['collisions', sum(report.collisions)],
+      ['dropped_links', sum(report.droppedIncomingLinks)],
+      ['bounded_lineages', Number(report.boundedLineages) || 0],
+    ];
+    const reportRows = allReportRows.filter(([, value]) => value > 0);
     return html`<hp-dialog .hass=${this.hass} .title=${this._t('backup.import_title')}
       icon="mdi:upload" wide dismiss-on-scrim @hp-close=${() => (this._backupImportDialog = null)}>
       <div class="body backupbody" aria-busy=${d.busy ? 'true' : 'false'}>
@@ -15905,6 +15922,22 @@ class HouseplanCard extends LitElement {
           ${p.repaired_target_refs ? html`<div class="rhint">${this._t('backup.repaired_target_refs', {
             n: String(p.repaired_target_refs),
           })}</div>` : nothing}
+          ${p.preserved_unresolved_refs ? html`
+            <div class="backupwarn">${this._t('backup.preserved_unresolved_refs', {
+              n: String(p.preserved_unresolved_refs),
+            })}<br />${this._t('backup.preserved_unresolved_hint')}</div>
+          ` : nothing}
+          ${reportRows.length ? html`<details class="backupdetails">
+            <summary>${this._t('backup.import_details')}</summary>
+            <div>
+              ${reportRows.map(([key, value]) => html`<span>${this._t(
+                `backup.import_detail.${key}`, { n: String(value) },
+              )}</span>`)}
+              ${(report.examples || []).slice(0, 8).map((item: any) => html`
+                <code>${item.owner} → ${item.reference}</code>
+              `)}
+            </div>
+          </details>` : nothing}
           ${p.kind === 'full' ? html`
             <div class="backupwarn">${this._t('backup.replace_warning')}</div>
             ${p.source === 'foreign' ? html`<div class="rhint">${this._t('backup.foreign_bookkeeping')}</div>` : nothing}` : html`

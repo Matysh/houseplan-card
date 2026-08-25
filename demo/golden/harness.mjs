@@ -1193,6 +1193,22 @@ export async function prepareGoldenScenario(page, scenario) {
           created_at: '2026-08-11T10:00:00Z', space_title: 'Ground (2)',
           counts: { spaces: 1, rooms: 4, markers: full ? 12 : 0, layout: full ? 15 : 4 },
           duplicates: 0,
+          repaired_target_refs: full ? 0 : 3,
+          preserved_unresolved_refs: full ? 0 : 1,
+          reference_report: full ? {} : {
+            remapped: {
+              incoming: { 'layout.space': 4, 'room.open_to': 1 },
+              target: { 'marker.space': 3 },
+            },
+            collisions: {},
+            preservedUnresolved: { 'marker.room_id': 1 },
+            droppedIncomingLinks: {},
+            boundedLineages: 0,
+            examples: [{
+              bucket: 'preservedUnresolved', category: 'marker.room_id',
+              owner: 'legacy-thermostat', reference: 'room_old-generation_deadbeef',
+            }],
+          },
           confirmation_required: full,
           content: full
             ? [{ url: '/api/houseplan/content/plans/_/ground.svg', state: 'detach_required' }]

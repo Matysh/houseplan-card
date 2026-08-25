@@ -82,6 +82,18 @@ const result = await page.evaluate(async () => {
       counts: { spaces: 1, rooms: 2, markers: 0, layout: 2 },
       bindings: { device: 0, entity: 0, virtual: 0, active: 0, disabled: 0, missing: 0 },
       duplicates: 0, confirmation_required: false, content: [],
+      repaired_target_refs: 2, preserved_unresolved_refs: 1,
+      reference_report: {
+        remapped: {
+          incoming: { 'layout.space': 2 }, target: { 'marker.space': 2 },
+        },
+        collisions: {}, preservedUnresolved: { 'marker.room_id': 1 },
+        droppedIncomingLinks: {}, boundedLineages: 0,
+        examples: [{
+          bucket: 'preservedUnresolved', category: 'marker.room_id',
+          owner: 'legacy-marker', reference: 'room_old_deadbeef',
+        }],
+      },
     },
     expectedConfigRev: 1, expectedLayoutRev: 2, duplicatePolicy: 'skip',
     confirmMissing: false, busy: false, error: '',
@@ -93,6 +105,11 @@ const result = await page.evaluate(async () => {
     noDuplicatePolicy: !root().querySelector('.backupchoices'),
     noHorizontalOverflow: root().querySelector('hp-dialog').scrollWidth
       <= root().querySelector('hp-dialog').clientWidth,
+    hasReferenceReport: !!root().querySelector('.backupdetails')
+      && root().querySelector('.backupdetails')?.textContent
+        .includes(card._t('backup.import_details')),
+    warnsWithoutDiscarding: root().querySelector('.backupwarn')?.textContent
+      .includes(card._t('backup.preserved_unresolved_hint')) === true,
   };
   return {
     group, actions, keyboardImport, exportRadios, exportWarning,
@@ -112,6 +129,9 @@ checkAll(result, {
   planOnlyResetForFull: true,
   planOnlyRequest: { kind: 'space', planOnly: true, space: 'f1' },
   importSafe: { danger: true, disabledUntilConfirmed: true, noHorizontalOverflow: true },
-  planOnlyPreview: { visible: true, noDuplicatePolicy: true, noHorizontalOverflow: true },
+  planOnlyPreview: {
+    visible: true, noDuplicatePolicy: true, noHorizontalOverflow: true,
+    hasReferenceReport: true, warnsWithoutDiscarding: true,
+  },
 });
 await finish(browser, result);

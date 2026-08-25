@@ -1,0 +1,14 @@
+{
+  "cases": [
+    { "prefix": "space", "value": "f1", "root": "f1", "layers": 0, "bounded": false },
+    { "prefix": "space", "value": "space_f1_deadbeef", "root": "f1", "layers": 1, "bounded": false },
+    { "prefix": "space", "value": "space_space_f1_deadbeef_cafebabe", "root": "f1", "layers": 2, "bounded": false },
+    { "prefix": "room", "value": "room_room_living_0123abcd_deadbeef", "root": "living", "layers": 2, "bounded": false },
+    { "prefix": "space", "value": "space_f1_DEADBEEF", "root": "space_f1_DEADBEEF", "layers": 0, "bounded": false },
+    { "prefix": "space", "value": "room_f1_deadbeef", "root": "room_f1_deadbeef", "layers": 0, "bounded": false },
+    { "prefix": "space", "value": "space_дом_deadbeef", "root": "дом", "layers": 1, "bounded": false }
+  ],
+  "generated": [
+    { "prefix": "space", "seed": "f1", "wraps": 17, "root": "space_f1_deadbeef", "layers": 16, "bounded": true }
+  ]
+}

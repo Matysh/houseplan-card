@@ -511,6 +511,8 @@ async def ws_import_apply(hass: HomeAssistant, connection, msg: dict[str, Any]) 
         "counts": details.get("counts", {}),
         "space_id": details.get("space_id"),
         "repaired_target_refs": details.get("repaired_target_refs", 0),
+        "preserved_unresolved_refs": details.get("preserved_unresolved_refs", 0),
+        "reference_report": details.get("reference_report", {}),
         "can_undo": kind == "full",
     })
 
