@@ -367,7 +367,7 @@ test('sun-ray golden requires browser-painted light from a state-only sun entity
   assert.ok(scenario);
   const fixture = prepareGoldenFixture(scenario);
   const space = fixture.config.spaces.find((item) => item.id === scenario.space);
-  assert.equal(GOLDEN_MATRIX_VERSION, 44);
+  assert.equal(GOLDEN_MATRIX_VERSION, 45);
   assert.equal(space.settings.sun_rays, true);
   assert.equal(scenario.northDeg, 90,
     'the sign-sensitive golden must keep a non-zero north direction');
@@ -466,7 +466,7 @@ test('issue #249 golden isolates a bounded physical three-ray bevel', () => {
   assert.equal(scenario.theme, 'dark');
   assert.equal(scenario.multiWallJunction.rays, 3);
   assert.equal(scenario.multiWallJunction.node.length, 2);
-  assert.equal(scenario.multiWallJunction.discardedWedgeProbe.length, 2);
+  assert.equal(scenario.multiWallJunction.retainedOverlapProbe.length, 2);
   assert.equal(scenario.multiWallJunction.enclosedHoles, 0,
     'the product contract must not preserve the temporary two-hole inventory');
   const fixture = prepareGoldenFixture(scenario);

@@ -2,6 +2,9 @@ import { makeLargeHouseFixture } from '../fixtures/large-house.mjs';
 import { fixtureWallKey, makeVisualMatrixFixture } from '../fixtures/visual-matrix.mjs';
 import { readFileSync } from 'node:fs';
 
+const junctionArtifactsFixture = JSON.parse(readFileSync(
+  new URL('../../test/fixtures/302-junction-artifacts.json', import.meta.url), 'utf8',
+));
 const junctionPatchFixture = JSON.parse(readFileSync(
   new URL('../../test/fixtures/197-junction-patch.json', import.meta.url), 'utf8',
 ));
@@ -224,6 +227,75 @@ export function prepareGoldenFixture(scenario) {
       partitions: [], room_drafts: [], wall_columns: [], decor: [],
     });
   }
+  if (scenario.junctionNode) {
+    // #302: a close-up star node. Pie-slice rooms around the centre; every
+    // arm is a shared edge carrying its own thickness; a virtual arm is the
+    // same edge released by an open span.
+    const spec = scenario.junctionNode;
+    const C = [0.5, 0.5];
+    const R = 0.3;
+    const arms = spec.arms
+      .map((arm) => ({ ...arm, rad: (arm.deg * Math.PI) / 180 }))
+      .sort((a, b) => a.deg - b.deg);
+    const endOf = (arm) => [
+      C[0] + Math.cos(arm.rad) * R, C[1] + Math.sin(arm.rad) * R,
+    ];
+    const rooms = [];
+    for (let index = 0; index < arms.length; index++) {
+      const a = arms[index];
+      const b = arms[(index + 1) % arms.length];
+      const sweep = ((b.deg - a.deg + 360) % 360) || 360;
+      const arc = [];
+      const steps = Math.max(1, Math.ceil(sweep / 60));
+      for (let step = 0; step <= steps; step++) {
+        const rad = ((a.deg + (sweep * step) / steps) * Math.PI) / 180;
+        arc.push([C[0] + Math.cos(rad) * R, C[1] + Math.sin(rad) * R]);
+      }
+      rooms.push({
+        id: `junction-slice-${index}`, name: `S${index}`, area: null,
+        poly: [C.map((v) => v), ...arc],
+      });
+    }
+    const walls = arms.map((arm) => {
+      const end = endOf(arm);
+      return { key: fixtureWallKey(C, end), a: [...C], b: [...end], cm: arm.cm };
+    });
+    const space = {
+      id: scenario.space, title: 'Junction node', view_box: [0, 0, 1, 1],
+      cell_cm: 5,
+      rooms, walls,
+      settings: { fill_mode: 'none', show_borders: true, show_names: false },
+    };
+    const virtual = arms.filter((arm) => arm.virtual);
+    if (virtual.length) {
+      space.open_spans = virtual.map((arm) => {
+        const end = endOf(arm);
+        return { a: [...C], b: [...end] };
+      });
+    }
+    if (spec.column) {
+      space.wall_columns = [{
+        id: 'junction-column', center: [...C], shape: 'circle', size_cm: 40,
+      }];
+    }
+    if (spec.draft) {
+      space.room_drafts = [{
+        id: 'junction-draft',
+        points: [[0.5, 0.5], [0.75, 0.62]],
+        segments: [{ cm: 15 }],
+      }];
+    }
+    fixture.config.spaces.push(space);
+  }
+  if (scenario.junctionArtifacts) {
+    fixture.config.spaces.push({
+      ...structuredClone(junctionArtifactsFixture),
+      id: scenario.space,
+      title: 'Junction artifacts repro',
+      view_box: [0, 0, 1, 1],
+      settings: { fill_mode: 'none', show_borders: true, show_names: false },
+    });
+  }
   if (scenario.junctionPatchResilience) {
     if (!Array.isArray(scenario.retainedWedgeProbe)
         || scenario.retainedWedgeProbe.length !== 2
@@ -262,7 +334,7 @@ export function prepareGoldenFixture(scenario) {
     const contract = scenario.multiWallJunction;
     const validPoint = (point) => Array.isArray(point) && point.length === 2
       && point.every(Number.isFinite);
-    if (!validPoint(contract.node) || !validPoint(contract.discardedWedgeProbe)
+    if (!validPoint(contract.node) || !validPoint(contract.retainedOverlapProbe)
         || !Number.isInteger(contract.rays) || contract.rays < 3
         || !Number.isInteger(contract.enclosedHoles) || contract.enclosedHoles < 0) {
       throw new Error(`invalid golden multiWallJunction: ${scenario.id}`);
@@ -728,11 +800,11 @@ export async function prepareGoldenScenario(page, scenario) {
       }
     }
     if (scenario.multiWallJunction) {
-      const { node, discardedWedgeProbe, enclosedHoles } = scenario.multiWallJunction;
+      const { node, retainedOverlapProbe, enclosedHoles } = scenario.multiWallJunction;
       const wall = card.renderRoot.querySelector('[data-hp="wall"]');
       const at = (point) => new DOMPoint(point[0] * 1000, point[1] * card._spaceH);
       if (!wall?.isPointInFill?.(at(node))
-          || wall.isPointInFill(at(discardedWedgeProbe))) {
+          || !wall.isPointInFill(at(retainedOverlapProbe))) {
         throw new Error(`golden multi-wall bevel contract failed: ${scenario.id}`);
       }
       // A pixel threshold missed the reported triangles because they occupy a
@@ -885,7 +957,8 @@ export async function prepareGoldenScenario(page, scenario) {
       await until(() => card._renderProjection === 'iso');
     }
     if (Number.isFinite(scenario.zoom)) {
-      card._applyView(scenario.zoom, 500, 500);
+      const [zx, zy] = Array.isArray(scenario.zoomCenter) ? scenario.zoomCenter : [500, 500];
+      card._applyView(scenario.zoom, zx, zy);
       card.requestUpdate();
       await card.updateComplete;
     }

@@ -25,7 +25,7 @@ import {
   WALL_HATCH_MIN_PX,
   wallHatchStepUnits, wallHatchNeedsSolid,
   HATCH_BASE_STEP_UNITS, HATCH_MIN_STEP_UNITS, HATCH_MAX_STEP_UNITS,
-  junctionNodeBound,
+  junctionNodeBound, junctionNodeGeometry, junctionContractHoles,
 } from '../test-build/wall-thickness.js';
 import { polygonArea, paperRoomShapes, splitRoomPath, sharedBoundary } from '../test-build/logic.js';
 import { resolveOpenCuts } from '../test-build/open-spans.js';
@@ -2896,4 +2896,119 @@ test('ownEdgeOffsets reads the atomic profile, not a whole-edge lookup (#233)', 
   // Комната без стен: все нули — вызывающий покажет осевую длину.
   assert.deepEqual(ownEdgeOffsets(rooms, 'r', [], [], pitch, 5, GRID_PITCH, 1), [0, 0, 0, 0]);
   assert.equal(ownEdgeOffsets(rooms, 'missing', whole, [], pitch, 5, GRID_PITCH, 1), null);
+});
+
+// --- issue #302: junction node corners --------------------------------------
+
+const nodeMapOf = (intervals, eps = 1e-6) => buildMultiWallNodeMap(intervals, eps, 1);
+const starIntervals = (arms) => arms.flatMap(({ deg, half, len = 300 }, index) => {
+  const rad = (deg * Math.PI) / 180;
+  const b = [500 + Math.cos(rad) * len, 500 + Math.sin(rad) * len];
+  return [{
+    key: `arm-${index}`, a: [500, 500], b, half, cm: half * 2,
+    kind: 'outer', open: false, roomId: `r${index}`,
+  }];
+});
+
+test('issue 302 a T node covers every sector with a fan or a mitre', () => {
+  const map = nodeMapOf(starIntervals([
+    { deg: 0, half: 5 }, { deg: 90, half: 5 }, { deg: 180, half: 5 },
+  ]));
+  assert.equal(map.nodes.length, 1);
+  const { fans, supports } = junctionNodeGeometry(map);
+  assert.equal(supports.length, 3, 'one quad per support');
+  // Sectors: [0..90], [90..180] (two quarter fans) and [180..360] reflex —
+  // skipped: the outside of the bar corner is legitimately empty.
+  assert.equal(fans.length, 2);
+});
+
+test('issue 302 a reflex sector adds nothing', () => {
+  const map = nodeMapOf(starIntervals([
+    { deg: 0, half: 5 }, { deg: 30, half: 5 }, { deg: 100, half: 5 },
+  ]));
+  const { fans } = junctionNodeGeometry(map);
+  // [0..30] and [30..100] are real sectors; [100..360] (260°) is the outside
+  // of the convex corner — legitimately empty, no fan.
+  assert.equal(fans.length, 2);
+});
+
+test('issue 302 a mitre past the short thick support degrades to a bevel', () => {
+  // The mitre point lies inside the node limit but PAST the 2-unit thick
+  // support of the 0° ray: accepting it would paint a lateral phantom beside
+  // the thin continuation (#271), so the pair must fall back to a bevel.
+  const map = nodeMapOf([
+    ...starIntervals([{ deg: 90, half: 2.5 }, { deg: 210, half: 2.5 }]),
+    { key: 'short-thick', a: [500, 500], b: [502, 500], half: 10, cm: 20,
+      kind: 'outer', open: false, roomId: 'rt' },
+  ]);
+  assert.equal(map.nodes.length, 1);
+  const { fans } = junctionNodeGeometry(map);
+  // The [0°..90°] fan: mitre would sit at (502.5, 510) — inside the limit
+  // (10.3 < 12.5) but past the thick support (t = 2.5 > 2) → five-point bevel.
+  const fan = fans.find((poly) => poly.some((point) => point[1] > 505));
+  assert.ok(fan, 'the sector fan between the thick and the vertical ray is gone');
+  assert.equal(fan.length, 5, 'the mitre past the thick support was accepted');
+  for (const point of fan) {
+    assert.ok(
+      Math.hypot(point[0] - 500, point[1] - 500) <= map.nodes[0].limit + 1e-7,
+      `fan escaped the node limit: ${point}`,
+    );
+  }
+});
+
+test('issue 302 the hole detector is not blind: a deliberately holed body is red', () => {
+  const map = nodeMapOf(starIntervals([
+    { deg: 0, half: 5 }, { deg: 120, half: 5 }, { deg: 240, half: 5 },
+  ]));
+  // A body that covers only two of the three strips: the third is a hole.
+  const quad = (deg, half, len) => {
+    const rad = (deg * Math.PI) / 180;
+    const u = [Math.cos(rad), Math.sin(rad)];
+    const e = [-u[1] * half, u[0] * half];
+    return [[
+      [500 + e[0], 500 + e[1]],
+      [500 + u[0] * len + e[0], 500 + u[1] * len + e[1]],
+      [500 + u[0] * len - e[0], 500 + u[1] * len - e[1]],
+      [500 - e[0], 500 - e[1]],
+      [500 + e[0], 500 + e[1]],
+    ]];
+  };
+  const holed = [quad(0, 5, 300), quad(120, 5, 300)];
+  const reports = junctionContractHoles(holed, map, { step: 2 });
+  assert.equal(reports.length, 1, 'the detector missed the missing strip');
+  assert.ok(reports[0].holes.length > 10);
+  const full = [quad(0, 5, 300), quad(120, 5, 300), quad(240, 5, 300),
+    ...junctionNodeGeometry(map).fans.map((fan) => [[...fan, fan[0]]])];
+  assert.equal(junctionContractHoles(full, map, { step: 2 }).length, 0,
+    'the detector flags a body that covers the whole contract');
+});
+
+test('issue 302 the owner repro is hole-free end to end', () => {
+  const fixture = JSON.parse(readFileSync(
+    new URL('./fixtures/302-junction-artifacts.json', import.meta.url), 'utf8',
+  ));
+  const rooms = fixture.rooms.map((room) => ({
+    ...room, poly: room.poly.map(([x, y]) => [x * NORM_W, y * NORM_W]),
+  }));
+  const geometry = wallBodiesGeometry(
+    rooms, fixture.walls, [], [], pitch, fixture.cell_cm, GRID_PITCH, NORM_W,
+  );
+  assert.equal(geometry.status, 'ok');
+  const map = buildMultiWallNodeMap(
+    wallIntervals(rooms, fixture.walls, [], pitch, fixture.cell_cm, GRID_PITCH, NORM_W)
+      .filter((iv) => !iv.open && iv.half > 0),
+    pitch * NORM_W * 0.04 * 4, NORM_W,
+  );
+  assert.ok(map.nodes.length >= 2, 'the repro lost its multi-wall nodes');
+  const bound = junctionNodeBound(
+    rooms, fixture.walls, [], pitch, fixture.cell_cm, GRID_PITCH, NORM_W, map,
+  );
+  const reports = junctionContractHoles(geometry.geom, map, {
+    step: GRID_PITCH * 0.2, bound,
+  });
+  assert.deepEqual(
+    reports.map((report) => ({ node: report.node, holes: report.holes.length })),
+    [],
+    'the владелец repro still has junction holes',
+  );
 });

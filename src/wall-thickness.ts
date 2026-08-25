@@ -2138,6 +2138,66 @@ export function junctionNodeFans(
   return junctionNodeGeometry(map).fans;
 }
 
+/**
+ * The objective no-holes invariant of #302 (spec §8.4).
+ *
+ * A probe is a HOLE when the contract says the point is masonry — inside one
+ * of the node's support strips or sector fans, and inside the approved facade
+ * bound — yet the produced geometry does not cover it. Legitimate floor of an
+ * acute room corner never trips this (it is outside both strips and fans),
+ * which is what the first "surrounded by masonry" formulation got wrong.
+ */
+export function junctionContractHoles(
+  geometry: any,
+  map: MultiWallNodeMap | null | undefined,
+  options: { step: number; bound?: any },
+): { node: [number, number]; holes: number[][] }[] {
+  if (!map?.nodes?.length || !(options.step > 0)) return [];
+  const corners = junctionNodeGeometry(map);
+  const inPolygon = (points: number[][], x: number, y: number): boolean => {
+    let inside = false;
+    for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
+      const [xi, yi] = points[i];
+      const [xj, yj] = points[j];
+      if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi)
+        inside = !inside;
+    }
+    return inside;
+  };
+  const inGeometry = (geom: any, x: number, y: number): boolean => {
+    let inside = false;
+    for (const polygon of geom || []) for (const ring of polygon || []) {
+      if (inPolygon(ring, x, y)) inside = !inside;
+    }
+    return inside;
+  };
+  const reports: { node: [number, number]; holes: number[][] }[] = [];
+  for (const node of map.nodes) {
+    const radius = MITRE_LIMIT * node.halfDepth + node.halfDepth;
+    const holes: number[][] = [];
+    for (let dx = -radius; dx <= radius; dx += options.step) {
+      for (let dy = -radius; dy <= radius; dy += options.step) {
+        const x = node.point[0] + dx;
+        const y = node.point[1] + dy;
+        const inStrip = node.rays.some((ray) => ray.supports.some((support) => {
+          const rx = x - node.point[0];
+          const ry = y - node.point[1];
+          const along = rx * ray.u[0] + ry * ray.u[1];
+          if (along < 0 || along > support.length) return false;
+          return Math.abs(rx * ray.u[1] - ry * ray.u[0])
+            <= support.halfDepth - options.step * 0.25;
+        }));
+        const inFan = !inStrip && corners.fans.some((fan) => inPolygon(fan, x, y));
+        if (!inStrip && !inFan) continue;
+        if (options.bound && !inGeometry(options.bound, x, y)) continue;
+        if (!inGeometry(geometry, x, y)) holes.push([x, y]);
+      }
+    }
+    if (holes.length) reports.push({ node: [...node.point], holes });
+  }
+  return reports;
+}
+
 /** Find the canonical degree-3+ node matching a contour vertex. */
 export function multiWallNodeAt(
   map: MultiWallNodeMap | null | undefined,

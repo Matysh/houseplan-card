@@ -185,6 +185,21 @@ excluded from this shared `roomGeom`, so a door does not change the room fill
 and a detached body cannot punch it. Full and Static render paths reuse the same
 structural cache instead of rebuilding wall booleans once per room.
 
+**Junction nodes (#302).** A degree-3+ node keeps the approved #249 chamfer
+(`bevelMultiWallBody`, bounded by the node's join limit
+`MULTI_WALL_JOIN_LIMIT × halfDepth`), and AFTER it the node additively gets
+back what a chamfer must never eat: the exact support quads of its rays (each
+bounded by its own finite length, so a trimmed lateral phantom — #271 — cannot
+come back) and one sector fan per pair of angularly adjacent rays
+(`junctionNodeGeometry`): mitre up to the node limit, bevel chord past it,
+reflex sectors skipped. The pieces are clipped by the plain-corner facade
+bound (`junctionNodeBound`), so a node can never grow new facade at a concave
+vertex. The result is strip-safe: an acute junction is solid masonry, and the
+objective invariant «body ⊇ support strips ∪ fans, inside the facade bound» is
+machine-checked by `junctionContractHoles` in tests and the
+`smoke_junction_holes` wiring probe. Degenerate zero-area rings left by
+coincident chords are dropped.
+
 **Hatch density is physical (#230).** The pattern step is a distance on the
 plan, not a count of coordinate units: `wallHatchStepUnits(cellCm)` returns
 `8 × (5 / cell_cm)`, which is 9.6 cm at every grid scale and exactly the

@@ -2210,6 +2210,77 @@ export const MUTANTS = [
     }],
   },
   {
+    id: 'junction-fans-disabled',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test --test-name-pattern="issue 302" test/wall-thickness.test.mjs',
+    because: 'без вееров сектор между соседними полосами узла остаётся дырой — '
+      + 'это и есть класс артефактов #302',
+    patches: [{
+      file: 'src/wall-thickness.ts',
+      find: '      if (mitre && mitreWithinStrips',
+      replace: '      if (false && mitre && mitreWithinStrips',
+    }, {
+      file: 'src/wall-thickness.ts',
+      find: '      push(out.fans, [[P[0], P[1]], EA, A2, B2, EB]);',
+      replace: '      void A2; void B2;',
+    }],
+  },
+  {
+    id: 'junction-supports-not-restored',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test --test-name-pattern="hole-free end to end" test/wall-thickness.test.mjs',
+    because: 'фаска старого слоя срезает материал полос на острых стыках; '
+      + 'без возврата саппорт-квадов узла репро владельца снова дырявое',
+    patches: [{
+      file: 'src/wall-thickness.ts',
+      find: '      for (const piece of [...corners.supports, ...corners.fans]) {',
+      replace: '      for (const piece of corners.fans) {',
+    }],
+  },
+  {
+    id: 'junction-fan-ignores-thick-length',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test --test-name-pattern="issue 302" test/wall-thickness.test.mjs',
+    because: 'веер, шагающий за короткий толстый саппорт, рисует латеральный '
+      + 'фантом рядом с тонким продолжением (#271)',
+    patches: [{
+      file: 'src/wall-thickness.ts',
+      find: '          mitreWithinStrips = tA <= A.thickLength && tB <= B.thickLength;',
+      replace: '          mitreWithinStrips = true;',
+    }],
+  },
+  {
+    id: 'junction-reflex-sector-fanned',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test --test-name-pattern="issue 302" test/wall-thickness.test.mjs',
+    because: 'рефлексный сектор — внешность выпуклого угла; веер там — лишний '
+      + 'фасадный материал (контракт вогнутого Split)',
+    patches: [{
+      file: 'src/wall-thickness.ts',
+      find: '      if (sector > Math.PI + 1e-9) continue;',
+      replace: '      void sector;',
+    }],
+  },
+  {
+    id: 'junction-detector-blind',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test --test-name-pattern="issue 302" test/wall-thickness.test.mjs',
+    because: 'слепой детектор превращает инвариант «нет дыр» в декорацию — '
+      + 'самопроверка на заведомо дырявой фикстуре обязана краснеть',
+    patches: [{
+      file: 'src/wall-thickness.ts',
+      find: '        if (!inGeometry(geometry, x, y)) holes.push([x, y]);',
+      replace: '        void x; void y;',
+    }],
+  },
+  {
+    id: 'junction-pieces-unbounded',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="concave vertex" test/wall-thickness.test.mjs',
+    because: 'куски узла без клипа гладкой фасадной границей отращивают новый '
+      + 'фасад на вогнутой вершине',
+    patches: [{
+      file: 'src/wall-thickness.ts',
+      find: '          if (bound) ring = intersection(ring, bound);',
+      replace: '          void bound;',
+    }],
+  },
+  {
     id: 'hatch-step-ignores-cell-cm',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="issue 230" test/wall-thickness.test.mjs',

@@ -1,7 +1,7 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 44;
+export const GOLDEN_MATRIX_VERSION = 45;
 
 const stage = { capture: 'stage', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0005 } };
 const page = { capture: 'page', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0008 } };
@@ -306,7 +306,10 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     space: 'golden-multiwall-junction', mode: 'view',
     multiWallJunction: {
       node: [0.329166667, 0.141666667], rays: 3,
-      discardedWedgeProbe: [0.3303808442725, 0.1488560107825],
+      // #302: the chamfer is strip-safe — this point sits in the overlap of
+      // two incident strips and must stay FILLED (it used to be discarded by
+      // the old subtractive bevel, which is exactly the hole class fixed).
+      retainedOverlapProbe: [0.3303808442725, 0.1488560107825],
       // Product contract (#272): a bounded exterior bevel is allowed, but no
       // empty component may remain trapped inside the continuous masonry.
       enclosedHoles: 0,
@@ -571,6 +574,53 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     hoverRoom: 'light-right', theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'hover-nested-room-dark', fixture: 'visual', space: 'golden-geometry', mode: 'view',
     hoverRoom: 'geo-nested', theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
+  // --- #302: junction close-ups. One node per scene, the node fills the
+  // frame; the same scenes carry the objective no-holes detector in tests.
+  ...[
+    ['junction-t-90-equal15-dark', { arms: [
+      { deg: 0, cm: 15 }, { deg: 90, cm: 15 }, { deg: 180, cm: 15 }] }],
+    ['junction-t-90-bar50-leg15-dark', { arms: [
+      { deg: 0, cm: 50 }, { deg: 90, cm: 15 }, { deg: 180, cm: 50 }] }],
+    ['junction-t-90-bar70-leg15-dark', { arms: [
+      { deg: 0, cm: 70 }, { deg: 90, cm: 15 }, { deg: 180, cm: 70 }] }],
+    ['junction-x-90-equal15-dark', { arms: [
+      { deg: 0, cm: 15 }, { deg: 90, cm: 15 }, { deg: 180, cm: 15 },
+      { deg: 270, cm: 15 }] }],
+    ['junction-x-90-mixed-dark', { arms: [
+      { deg: 0, cm: 15 }, { deg: 90, cm: 50 }, { deg: 180, cm: 15 },
+      { deg: 270, cm: 70 }] }],
+    ['junction-x-45-alternating-dark', { arms: [
+      { deg: 45, cm: 15 }, { deg: 135, cm: 50 }, { deg: 225, cm: 15 },
+      { deg: 315, cm: 50 }] }],
+    ['junction-star5-equal15-dark', { arms: [
+      { deg: 0, cm: 15 }, { deg: 72, cm: 15 }, { deg: 144, cm: 15 },
+      { deg: 216, cm: 15 }, { deg: 288, cm: 15 }] }],
+    ['junction-y-60-equal50-dark', { arms: [
+      { deg: 0, cm: 50 }, { deg: 60, cm: 50 }, { deg: 120, cm: 50 }] }],
+    ['junction-acute30-mixed-dark', { arms: [
+      { deg: 0, cm: 50 }, { deg: 30, cm: 70 }, { deg: 180, cm: 15 }] }],
+    ['junction-acute15-equal50-dark', { arms: [
+      { deg: 0, cm: 50 }, { deg: 15, cm: 50 }, { deg: 180, cm: 50 }] }],
+    ['junction-splay10-170-dark', { arms: [
+      { deg: 0, cm: 15 }, { deg: 10, cm: 15 }, { deg: 180, cm: 50 }] }],
+    ['junction-t-virtual-arm-dark', { arms: [
+      { deg: 0, cm: 15 }, { deg: 90, cm: 15, virtual: true },
+      { deg: 180, cm: 15 }] }],
+    ['junction-x-virtual-through-dark', { arms: [
+      { deg: 0, cm: 15 }, { deg: 90, cm: 15, virtual: true },
+      { deg: 180, cm: 15 }, { deg: 270, cm: 15, virtual: true }] }],
+    ['junction-column-node-dark', { column: true, arms: [
+      { deg: 0, cm: 15 }, { deg: 90, cm: 15 }, { deg: 180, cm: 15 }] }],
+    ['junction-draft-end-node-dark', { draft: true, arms: [
+      { deg: 0, cm: 15 }, { deg: 90, cm: 15 }, { deg: 180, cm: 15 }] }],
+  ].map(([id, junctionNode]) => ({
+    id, fixture: 'visual', space: `golden-${id}`, mode: 'view', junctionNode,
+    zoom: 4, theme: 'dark', viewport: { width: 900, height: 900 }, ...stage,
+  })),
+  { id: 'junction-owner-repro-dark', fixture: 'visual',
+    space: 'golden-junction-owner-repro', mode: 'view', junctionArtifacts: true,
+    zoom: 6, zoomCenter: [329.17, 141.67], theme: 'dark',
+    viewport: { width: 900, height: 900 }, ...stage },
   { id: 'large-house-zoom-040-dark', fixture: 'large', space: 'perf-floor-1', mode: 'view',
     zoom: 0.4, theme: 'dark', viewport: { width: 1180, height: 900 }, ...stage },
   { id: 'large-house-zoom-250-dark', fixture: 'large', space: 'perf-floor-1', mode: 'view',
