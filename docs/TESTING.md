@@ -2790,6 +2790,13 @@ require hands on real hardware — they remain for the human pass.
       the whole wall; click opens the cm/in field; empty/0 clears; Esc closes
       without applying; «Apply to all walls of this room» fills every allowed
       edge [auto: smoke_wall_thickness]
+- [ ] **Hover width follows wall centimetres (#303)**: on a 30 cm cell a
+      50 cm wall's hover fill matches the masonry within 2%; a zero-thickness
+      wall keeps the same physical visual minimum across cell sizes, while the
+      pointer still hits at five grid pitches from the axis
+      [unit: grid-scale.test.mjs; auto: smoke_wallthick_hover_width;
+      mutations: wallthick-hover-floor-back,
+      wallthick-zero-strip-not-visual, wallthick-hit-narrowed]
 - [ ] **Hatched body, clean-floor area**: after setting thickness a `.wallbody`
       path appears; room-card and tooltip m² both decrease to the same inner-
       contour area

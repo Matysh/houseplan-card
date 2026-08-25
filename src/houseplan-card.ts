@@ -303,7 +303,8 @@ import {
 } from './opening-dimensions';
 import { safeStoredColor } from './color';
 import {
-  gridCellFieldToCm, gridCellFieldValue, gridVisualScale, gridVisualUnits, newSpaceCellCm,
+  gridCellFieldToCm, gridCellFieldValue, gridVisualScale, gridVisualUnits,
+  newSpaceCellCm, wallThickHoverHalfUnits,
 } from './grid-scale';
 import {
   applySpaceOrder, canStartTabDrag, markersNeedingPlacement, passedDragThreshold,
@@ -11746,13 +11747,10 @@ class HouseplanCard extends LitElement {
     if (!this._markup || this._tool !== 'wallthick' || !this._cursorPt || this._wallDialog) return null;
     const hit = this._wallThickHit(this._cursorPt);
     if (!hit) return null;
-    // Whole-wall strip: real half-depth when thickness is set, else a visible
-    // minimum so thin centreline walls still light up under the cursor.
-    const cm = hit.cm;
-    const depth = cm > 0
-      ? wallCmToUnits(cm, this._cellCm, this._gridPitch)
-      : this._gridPitch * 3;
-    const half = Math.max(depth / 2, this._gridPitch * 1.25);
+    // The visible strip follows the physical wall body. Only a zero-thickness
+    // centreline receives a scale-independent visual minimum; hit testing keeps
+    // its deliberately generous and separate radius in _wallThickHit().
+    const half = wallThickHoverHalfUnits(hit.cm, this._cellCm, this._gridPitch);
     let d = '';
     for (const sg of hit.segs) {
       d += (d ? ' ' : '') + drawWallPreviewD(

@@ -1,3 +1,5 @@
+import { wallCmToUnits } from './wall-thickness';
+
 /** Historical plan-cell size whose raw SVG constants define the visual baseline. */
 export const GRID_VISUAL_REFERENCE_CELL_CM = 5;
 
@@ -14,6 +16,20 @@ export function gridVisualScale(cellCm: unknown): number {
 
 export function gridVisualUnits(baseUnits: number, cellCm: unknown): number {
   return baseUnits * gridVisualScale(cellCm);
+}
+
+/** Half-width of the Plan-editor wall-thickness hover strip, in plan units. */
+export function wallThickHoverHalfUnits(
+  cm: number, cellCm: number, gridPitch: number,
+): number {
+  const thicknessCm = Number.isFinite(cm) && cm > 0 ? cm : 0;
+  const normalizedCellCm = Number.isFinite(cellCm) && cellCm > 0
+    ? cellCm
+    : GRID_VISUAL_REFERENCE_CELL_CM;
+  const normalizedPitch = Number.isFinite(gridPitch) && gridPitch > 0 ? gridPitch : 0;
+  return thicknessCm > 0
+    ? wallCmToUnits(thicknessCm, normalizedCellCm, normalizedPitch) / 2
+    : gridVisualUnits(normalizedPitch * 1.5, normalizedCellCm);
 }
 
 /** Default only for newly-created spaces. Read compatibility keeps its own 5 cm fallback. */

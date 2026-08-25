@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- The wall-thickness tool now highlights a real wall at its actual physical
+  width instead of inflating thin walls according to the plan's grid size.
+  Zero-thickness walls keep a visible, scale-independent highlight and the
+  generous pointer hit area is unchanged
+  ([#303](https://github.com/Matysh/houseplan-card/issues/303)).
 - Contact sensors and locks in the opening properties dialog can now be
   searched by friendly name or full entity ID. The selector keeps door/window
   candidates prioritised and shows the entity ID beside every result

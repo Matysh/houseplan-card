@@ -41,6 +41,52 @@ import { fileURLToPath } from 'node:url';
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 export const MUTANTS = [
   {
+    id: 'wallthick-hover-floor-back',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="uses the exact physical wall width" '
+      + 'test/grid-scale.test.mjs',
+    because: 'restoring the raw grid-unit floor inflates a 50 cm hover strip to 75 cm '
+      + 'on a 30 cm cell instead of matching the physical wall body from #303',
+    patches: [{
+      file: 'src/grid-scale.ts',
+      find: '    ? wallCmToUnits(thicknessCm, normalizedCellCm, normalizedPitch) / 2\n',
+      replace: '    ? Math.max(\n'
+        + '      wallCmToUnits(thicknessCm, normalizedCellCm, normalizedPitch) / 2,\n'
+        + '      normalizedPitch * 1.25,\n'
+        + '    )\n',
+    }],
+  },
+  {
+    id: 'wallthick-zero-strip-not-visual',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="zero-thickness hover" '
+      + 'test/grid-scale.test.mjs',
+    because: 'the visible strip for a zero-thickness wall must have one physical size across '
+      + 'cell scales rather than growing with the coordinate grid',
+    patches: [{
+      file: 'src/grid-scale.ts',
+      find: '    : gridVisualUnits(normalizedPitch * 1.5, normalizedCellCm);',
+      replace: '    : normalizedPitch * 1.5;',
+    }],
+  },
+  {
+    id: 'wallthick-hit-narrowed',
+    guard: 'node demo/smoke_wallthick_hover_width.mjs',
+    because: 'the visual correction must not make the Thickness tool harder to hit with a '
+      + 'pointer or finger; its six-pitch hit radius is a separate UX contract',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '    const space = this._spaceModel();\n'
+        + '    if (!space) return null;\n'
+        + '    const pull = this._gridPitch * 6;\n'
+        + '    const cuts = this._openCuts();',
+      replace: '    const space = this._spaceModel();\n'
+        + '    if (!space) return null;\n'
+        + '    const pull = this._gridPitch * 2;\n'
+        + '    const cuts = this._openCuts();',
+    }],
+  },
+  {
     id: 'opening-search-filter-dead',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="matches friendly name" '
