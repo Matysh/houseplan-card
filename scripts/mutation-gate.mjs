@@ -615,45 +615,6 @@ export const MUTANTS = [
     }],
   },
   {
-    id: 'multi-wall-paper-full-origin-cut',
-    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
-      + '&& node --test --test-name-pattern="issue #197 keeps" '
-      + 'test/wall-thickness.test.mjs',
-    because: 'the exterior paper must retain valid multi-wall overlap up to R; cutting from the '
-      + 'offset origins recreates the measured white T-junction wedge from #261',
-    patches: [{
-      file: 'src/wall-thickness.ts',
-      find: '      const cuts = multiWallEffectiveCutGeometry(\n'
-        + '        node, map, true, true, protectedStrips,\n'
-        + '      );',
-      replace: '      const cuts = multiWallEffectiveCutGeometry(\n'
-        + '        node, map, false, true, protectedStrips,\n'
-        + '      );',
-    }, {
-      file: 'src/wall-thickness.ts',
-      find: '      if (envelope) localInside = intersection(localInside, envelope);\n'
-        + '      else if (centre) localInside = intersection(localInside, centre);',
-      replace: '      if (centre) localInside = intersection(localInside, centre);\n'
-        + '      else if (envelope) localInside = intersection(localInside, envelope);',
-    }, {
-      file: 'src/wall-thickness.ts',
-      find: '  return cuts && protectedStrips ? difference(cuts, protectedStrips) : cuts;',
-      replace: '  return cuts;',
-    }, {
-      file: 'src/wall-thickness.ts',
-      find: '      if (protectedStrips) local = union(local, protectedStrips);',
-      replace: '      // protected-strip fail-safe intentionally disabled by the mutant',
-    }, {
-      file: 'src/wall-thickness.ts',
-      find: '  if (protectedStrips) {\n'
-        + '    try {\n'
-        + '      let protectedInside = protectedStrips;',
-      replace: '  if (protectedStrips && false) {\n'
-        + '    try {\n'
-        + '      let protectedInside = protectedStrips;',
-    }],
-  },
-  {
     id: 'multi-wall-orthogonal-strip-protection-disabled',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="issue #275 preserves" '
@@ -2211,7 +2172,9 @@ export const MUTANTS = [
   },
   {
     id: 'junction-fans-disabled',
-    guard: 'node demo/smoke_junction_holes.mjs',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& npm run build >/dev/null 2>&1 && cp dist/houseplan-card.js demo/srv/assets/houseplan-card.js '
+      + '&& node demo/smoke_junction_holes.mjs',
     because: 'без вееров сектор между соседними полосами узла остаётся дырой — '
       + 'это и есть класс артефактов #302',
     patches: [{

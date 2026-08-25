@@ -2952,40 +2952,6 @@ function bevelMultiWallBody(
   return current;
 }
 
-function bevelMultiWallPaper(
-  paper: any,
-  centre: any,
-  map: MultiWallNodeMap,
-): any {
-  let beveled = paper;
-  let protectedStrips: any = null;
-  try {
-    protectedStrips = multiWallProtectedMapGeometry(map);
-  } catch {
-    return paper;
-  }
-  for (const node of map.nodes) {
-    try {
-      const cuts = multiWallEffectiveCutGeometry(
-        node, map, true, true, protectedStrips,
-      );
-      if (cuts) beveled = difference(beveled, cuts);
-    } catch {
-      // Isolate a failed optional node cut; retain the last valid paper.
-    }
-  }
-  try {
-    if (protectedStrips) {
-      const protectedPaper = intersection(protectedStrips, paper);
-      beveled = union(beveled, protectedPaper);
-    }
-    // Paper is the complete room footprint. Interior bevel cuts expose floor,
-    // not the scene background, so the centre union must always remain solid.
-    return union(centre, beveled);
-  } catch {
-    return paper;
-  }
-}
 
 /**
  * Collapse arithmetic noise on computed junction vertices before polyclip sees
@@ -3191,15 +3157,7 @@ export function floorFootprintGeometry(
     const paper = exterior.shell?.length
       ? union(exterior.centre, exterior.shell)
       : exterior.centre;
-    return multiWallNodes.nodes.length
-      ? paperWithNodeCorners(
-        paper, multiWallNodes,
-        junctionNodeBound(
-          rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale,
-          multiWallNodes,
-        ),
-      )
-      : paper;
+    return paper;
   } catch {
     return null;
   }
@@ -3260,19 +3218,6 @@ export function junctionNodeBound(
   }
 }
 
-/** Paper under the node corner: the same additive supports and fans (#302). */
-function paperWithNodeCorners(paper: any, map: MultiWallNodeMap, bound?: any): any {
-  const corners = junctionNodeGeometry(map);
-  let out = paper;
-  for (const piece of [...corners.supports, ...corners.fans]) {
-    try {
-      let ring: any = [closedRing(piece)];
-      if (bound) ring = intersection(ring, bound);
-      if (ring?.length) out = union(out, ring);
-    } catch { /* keep paper */ }
-  }
-  return dropDegenerateRings(out, Math.max(map.epsilon, 1e-9) ** 2);
-}
 
 export function polyclipToPathD(geom: any): string {
   if (!geom) return '';
@@ -3520,15 +3465,11 @@ export function wallBodiesGeometry(
       : [];
     // Paper: the approved chamfer first, then the same additive fans that
     // complete the masonry corner complete the paper beneath it (#302).
-    const paperGeom = multiWallNodes.nodes.length
-      ? paperWithNodeCorners(
-        rawPaperGeom, multiWallNodes,
-        junctionNodeBound(
-          rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale,
-          multiWallNodes,
-        ),
-      )
-      : rawPaperGeom;
+    // Paper needs no node pieces: the footprint-plus-shell union already
+    // covers every junction (measured on #197 and the owner repro — byte-equal
+    // with and without them), and with the subtractive paper bevel gone the
+    // #261 white-wedge class is impossible by construction.
+    const paperGeom = rawPaperGeom;
     const bodyOf = (ring: typeof roomRings[number]): any => {
       const outset: any = closedRing(ring.outset);
       return ring.inset ? difference(outset, closedRing(ring.inset) as any) : outset;
@@ -3972,15 +3913,7 @@ export function paperRoomShapesWithWalls(
       const multiWallNodes = multiWallNodesForGeometry(
         rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale,
       );
-      const paper = multiWallNodes.nodes.length
-        ? paperWithNodeCorners(
-          rawPaper, multiWallNodes,
-          junctionNodeBound(
-            rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale,
-            multiWallNodes,
-          ),
-        )
-        : rawPaper;
+      const paper = rawPaper;
       const path = polyclipToPathD(paper);
       if (path) return [{ path }];
     }

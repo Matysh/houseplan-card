@@ -185,18 +185,21 @@ excluded from this shared `roomGeom`, so a door does not change the room fill
 and a detached body cannot punch it. Full and Static render paths reuse the same
 structural cache instead of rebuilding wall booleans once per room.
 
-**Junction nodes (#302).** A degree-3+ node keeps the approved #249 chamfer
-(`bevelMultiWallBody`, bounded by the node's join limit
-`MULTI_WALL_JOIN_LIMIT × halfDepth`), and AFTER it the node additively gets
-back what a chamfer must never eat: the exact support quads of its rays (each
-bounded by its own finite length, so a trimmed lateral phantom — #271 — cannot
-come back) and one sector fan per pair of angularly adjacent rays
-(`junctionNodeGeometry`): mitre up to the node limit, bevel chord past it,
-reflex sectors skipped. The pieces are clipped by the plain-corner facade
-bound (`junctionNodeBound`), so a node can never grow new facade at a concave
-vertex. The result is strip-safe: an acute junction is solid masonry, and the
-objective invariant «body ⊇ support strips ∪ fans, inside the facade bound» is
-machine-checked by `junctionContractHoles` in tests and the
+**Junction nodes (#302, owner decision #5).** A degree-3+ node closes with a
+FULL mitre, like an ordinary wall intersection on a drawing — the #249 chamfer
+is retired. For every pair of angularly adjacent rays `junctionNodeGeometry`
+builds one additive fan: the mitre is accepted when it sits IN the sector
+(forward along the rays for an ordinary pair, backward for a reflex outer
+corner), within the classic `MITRE_LIMIT` and never past a ray's thick
+support (#271); a reflex pair without a valid mitre closes with the plain
+chord, an ordinary one with a local bevel bounded by the support, the limit
+and twice the pair's depth. The node also gets the exact support quads of its
+rays. All pieces are clipped by the plain-corner facade bound
+(`junctionNodeBound`), so a node cannot grow new facade at a concave vertex.
+`bevelMultiWallBody` survives only as a TARGETED lateral trim for nodes with a
+degenerately short thick support (#271); every other node is purely additive.
+The objective invariant «body ⊇ support strips ∪ fans, inside the facade
+bound» is machine-checked by `junctionContractHoles` in tests and the
 `smoke_junction_holes` wiring probe. Degenerate zero-area rings left by
 coincident chords are dropped.
 
