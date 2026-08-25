@@ -1,5 +1,5 @@
 {
-  "model_version": 7,
+  "model_version": 8,
   "spaces": [
     {
       "id": "offset-shared-wall",
@@ -13,8 +13,15 @@
           "area": null,
           "poly": [
             [0, 0], [0.5, 0], [0.5, 0.004166666666666667],
-            [0.5041666666666667, 0.004166666666666667], [0.5041666666666667, 0.9958333333333333],
+            [0.5041666666666667, 0.004166666666666667],
+            [0.5041666666666667, 0.9958333333333333],
             [0.5, 0.9958333333333333], [0.5, 1], [0, 1]
+          ],
+          "wall_ids": [
+            "wall-jqm76ztdnzk4hxxq4f2v", "wall-lpihsklwsegsow7swcot",
+            "wall-rsillbgj56qyurceosfa", "wall-r3tuoz4rgdawcgnhkcha",
+            "wall-6zxvpkmnrthjifm2mnzt", "wall-vq6hgauic4zxd5r7zlet",
+            "wall-mkjekzxnixddfnfewsg7", "wall-l4hjd3v6q2ih4lmhyebi"
           ]
         },
         {
@@ -22,8 +29,13 @@
           "name": "Right",
           "area": null,
           "poly": [
-            [0.5041666666666667, 0.004166666666666667], [1, 0.004166666666666667],
-            [1, 0.9958333333333333], [0.5041666666666667, 0.9958333333333333]
+            [0.5041666666666667, 0.004166666666666667],
+            [1, 0.004166666666666667], [1, 0.9958333333333333],
+            [0.5041666666666667, 0.9958333333333333]
+          ],
+          "wall_ids": [
+            "wall-phv7rbxb7jl4tbhwnlkk", "wall-kl2kghjvpn3k72ogi7nk",
+            "wall-2fff2kin2gzrvrkxytbz", "wall-r3tuoz4rgdawcgnhkcha"
           ]
         }
       ],
@@ -47,8 +59,22 @@
           "lock": "lock.test_door",
           "invert": true,
           "flip_h": true,
-          "future_field": { "keep": true }
+          "future_field": { "keep": true },
+          "host": { "kind": "wall", "id": "wall-r3tuoz4rgdawcgnhkcha", "t": 0.5 }
         }
+      ],
+      "wall_segments": [
+        { "id": "wall-l4hjd3v6q2ih4lmhyebi", "a": [0, 0], "b": [0, 1], "cm": 0 },
+        { "id": "wall-jqm76ztdnzk4hxxq4f2v", "a": [0, 0], "b": [0.5, 0], "cm": 0 },
+        { "id": "wall-mkjekzxnixddfnfewsg7", "a": [0, 1], "b": [0.5, 1], "cm": 0 },
+        { "id": "wall-lpihsklwsegsow7swcot", "a": [0.5, 0], "b": [0.5, 0.004166666666666667], "cm": 0 },
+        { "id": "wall-rsillbgj56qyurceosfa", "a": [0.5, 0.004166666666666667], "b": [0.5041666666666667, 0.004166666666666667], "cm": 0 },
+        { "id": "wall-vq6hgauic4zxd5r7zlet", "a": [0.5, 0.9958333333333333], "b": [0.5, 1], "cm": 0 },
+        { "id": "wall-6zxvpkmnrthjifm2mnzt", "a": [0.5, 0.9958333333333333], "b": [0.5041666666666667, 0.9958333333333333], "cm": 0 },
+        { "id": "wall-r3tuoz4rgdawcgnhkcha", "a": [0.5041666666666667, 0.004166666666666667], "b": [0.5041666666666667, 0.9958333333333333], "cm": 20 },
+        { "id": "wall-phv7rbxb7jl4tbhwnlkk", "a": [0.5041666666666667, 0.004166666666666667], "b": [1, 0.004166666666666667], "cm": 0 },
+        { "id": "wall-2fff2kin2gzrvrkxytbz", "a": [0.5041666666666667, 0.9958333333333333], "b": [1, 0.9958333333333333], "cm": 0 },
+        { "id": "wall-kl2kghjvpn3k72ogi7nk", "a": [1, 0.004166666666666667], "b": [1, 0.9958333333333333], "cm": 0 }
       ]
     }
   ],

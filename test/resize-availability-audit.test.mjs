@@ -27,6 +27,7 @@ function auditSpace(space) {
   const rooms = (space.rooms || []).map((room) => ({
     id: room.id,
     poly: room.poly.map(([x, y]) => [x * NORM_W, y * NORM_W]),
+    wall_ids: Array.isArray(room.wall_ids) ? [...room.wall_ids] : undefined,
   }));
   const openings = (space.openings || []).map((opening) => ({
     id: opening.id,
@@ -124,24 +125,24 @@ const EXPECTED = {
     idDigest: 'bac14112c65ddbabd3e92867d3db722eeb6f5e9a54c56af8c29994e3e69345ec',
   },
   'real-plan-second-floor.json': {
-    total: 37,
+    total: 36,
     enabled: 9,
     disabled: {
-      diagonal: 0, 'side-angle': 3, 'duplicate-physical-wall': 0,
-      'partial-shared': 18, 'unequal-shared': 7, 'multiple-rooms': 0,
+      diagonal: 0, 'side-angle': 0, 'duplicate-physical-wall': 0,
+      'partial-shared': 19, 'unequal-shared': 8, 'multiple-rooms': 0,
       'thickness-conflict': 0, 'opening-conflict': 0, 'invalid-geometry': 0,
     },
     byRoom: {
       'room-a': 'partial-shared partial-shared enabled partial-shared',
       'room-b': 'partial-shared unequal-shared enabled partial-shared',
-      'room-c': 'partial-shared enabled side-angle partial-shared',
+      'room-c': 'partial-shared enabled unequal-shared partial-shared',
       'room-d': 'partial-shared enabled partial-shared enabled',
       'room-e': 'partial-shared unequal-shared unequal-shared enabled',
-      'room-f': 'side-angle unequal-shared enabled partial-shared side-angle',
+      'room-f': 'unequal-shared enabled partial-shared partial-shared',
       'room-g': 'enabled unequal-shared partial-shared partial-shared',
       'room-h': 'partial-shared unequal-shared partial-shared enabled partial-shared unequal-shared partial-shared partial-shared',
     },
-    idDigest: 'dc6abb9c55fbcc81e32a53b1b76eee35ca51033b71ecd08433551e2af38cf6f2',
+    idDigest: '8eb10ad91a2d8bb9d6804d5e08ee2c7ed65b9839c58109d0107ed270378ef566',
   },
 };
 
@@ -199,8 +200,7 @@ test('issue 292 Optimize removes the confirmed false near-axis reasons only', ()
   assert.deepEqual({
     diagonal: optimized.disabled.diagonal,
     sideAngle: optimized.disabled['side-angle'],
-  }, { diagonal: 0, sideAngle: 3 });
-  assert.equal(optimized.handles.some((handle) =>
-    !handle.resolution.enabled && handle.resolution.reason === 'side-angle'), true,
-  'true angled adjacency must remain disabled after near-axis repair');
+  }, { diagonal: 0, sideAngle: 0 });
+  assert.equal(optimized.enabled, 9,
+    'identity-only collinear atoms must not add, remove or enable Resize gestures');
 });

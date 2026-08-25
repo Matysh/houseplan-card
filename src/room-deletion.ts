@@ -19,7 +19,7 @@ export interface DeletionOpening {
   x: number;
   y: number;
   angle: number;
-  host?: { kind: 'partition'; id: string; t: number };
+  host?: { kind: 'partition' | 'wall'; id: string; t: number };
 }
 
 export interface RoomDeletionMaterialization {

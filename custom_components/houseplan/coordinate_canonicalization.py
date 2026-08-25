@@ -136,6 +136,10 @@ def canonicalize_config_geometry(config: Any) -> Any:
             _lattice_point(wall.get("a"))
             _lattice_point(wall.get("b"))
 
+        for segment in _records(space.get("wall_segments")):
+            _lattice_point(segment.get("a"))
+            _lattice_point(segment.get("b"))
+
         for opening in _records(space.get("openings")):
             _lattice_fields(opening, ("x", "y"))
             _scalar_fields(opening, ("angle", "length"))

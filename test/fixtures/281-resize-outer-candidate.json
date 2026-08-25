@@ -1,37 +1,57 @@
 {
-  "model_version": 7,
-  "spaces": [
-    {
-      "id": "resize-outer",
-      "title": "Resize outer",
-      "view_box": [0, 0, 1, 1],
-      "cell_cm": 5,
-      "rooms": [
-        { "id": "left", "name": "Left", "area": null,
-          "poly": [[0, 0], [0.5, 0], [0.5, 1], [0, 1]] },
-        { "id": "right", "name": "Right", "area": null,
-          "poly": [[0.5, 0], [1, 0], [1, 1], [0.5, 1]] }
-      ],
-      "walls": [
-        { "key": "0.500000,0.500000@1.5706", "cm": 20, "a": [0.5, 0], "b": [0.5, 1] },
-        { "key": "0.250000,0.000000@0.0000", "cm": 30, "a": [0, 0], "b": [0.5, 0] },
-        { "key": "0.750000,0.000000@0.0000", "cm": 30, "a": [0.5, 0], "b": [1, 0] },
-        { "key": "0.750000,1.000000@0.0000", "cm": 20, "a": [1, 1], "b": [0.5, 1] }
-      ],
-      "openings": [
-        {
-          "id": "left-window", "type": "window",
-          "x": 0.25, "y": 0, "angle": 0, "length": 0.2,
-          "cover": "cover.left", "future_field": { "keep": "left" }
-        },
-        {
-          "id": "right-window", "type": "window",
-          "x": 0.75, "y": 0, "angle": 0, "length": 0.2,
-          "contact": "binary_sensor.right"
-        }
-      ]
-    }
-  ],
+  "model_version": 8,
+  "spaces": [{
+    "id": "resize-outer",
+    "title": "Resize outer",
+    "view_box": [0, 0, 1, 1],
+    "cell_cm": 5,
+    "rooms": [
+      {
+        "id": "left", "name": "Left", "area": null,
+        "poly": [[0, 0], [0.5, 0], [0.5, 1], [0, 1]],
+        "wall_ids": [
+          "wall-efvwngyqwvt3i2wtucjl", "wall-xhivulbmxmricwrsavtk",
+          "wall-m7fvm7py63vewrj25txx", "wall-5mx4b2qfylbnhqigyosw"
+        ]
+      },
+      {
+        "id": "right", "name": "Right", "area": null,
+        "poly": [[0.5, 0], [1, 0], [1, 1], [0.5, 1]],
+        "wall_ids": [
+          "wall-yvbffwd5yd237kwqwlsj", "wall-ret3zsfn72ub2hil6ap3",
+          "wall-3w4swceywbniqg2o7ux4", "wall-xhivulbmxmricwrsavtk"
+        ]
+      }
+    ],
+    "walls": [
+      { "key": "0.250000,0.000000@0.0000", "cm": 30, "a": [0, 0], "b": [0.5, 0] },
+      { "key": "0.500000,0.500000@1.5706", "cm": 20, "a": [0.5, 0], "b": [0.5, 1] },
+      { "key": "0.750000,0.000000@0.0000", "cm": 30, "a": [0.5, 0], "b": [1, 0] },
+      { "key": "0.750000,1.000000@0.0000", "cm": 20, "a": [0.5, 1], "b": [1, 1] }
+    ],
+    "openings": [
+      {
+        "id": "left-window", "type": "window", "x": 0.25, "y": 0,
+        "angle": 0, "length": 0.2, "cover": "cover.left",
+        "future_field": { "keep": "left" },
+        "host": { "kind": "wall", "id": "wall-efvwngyqwvt3i2wtucjl", "t": 0.5 }
+      },
+      {
+        "id": "right-window", "type": "window", "x": 0.75, "y": 0,
+        "angle": 0, "length": 0.2, "contact": "binary_sensor.right",
+        "host": { "kind": "wall", "id": "wall-yvbffwd5yd237kwqwlsj", "t": 0.5 }
+      }
+    ],
+    "wall_segments": [
+      { "id": "wall-5mx4b2qfylbnhqigyosw", "a": [0, 0], "b": [0, 1], "cm": 0 },
+      { "id": "wall-efvwngyqwvt3i2wtucjl", "a": [0, 0], "b": [0.5, 0], "cm": 30 },
+      { "id": "wall-m7fvm7py63vewrj25txx", "a": [0, 1], "b": [0.5, 1], "cm": 0 },
+      { "id": "wall-xhivulbmxmricwrsavtk", "a": [0.5, 0], "b": [0.5, 1], "cm": 20 },
+      { "id": "wall-yvbffwd5yd237kwqwlsj", "a": [0.5, 0], "b": [1, 0], "cm": 30 },
+      { "id": "wall-3w4swceywbniqg2o7ux4", "a": [0.5, 1], "b": [1, 1], "cm": 20 },
+      { "id": "wall-ret3zsfn72ub2hil6ap3", "a": [1, 0], "b": [1, 1], "cm": 0 }
+    ]
+  }],
   "markers": [],
   "settings": {}
 }

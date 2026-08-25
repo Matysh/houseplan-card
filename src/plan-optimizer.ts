@@ -34,9 +34,12 @@ import {
   repairSpaceReferences, type SpaceReferenceRepairContext, type SpaceReferenceReport,
 } from './space-reference-repair';
 import { repairNearAxisRoomWalls } from './near-axis';
+import {
+  commitWallSegmentModelInPlace,
+} from './wall-segment-model';
 
 /** Bump when a new lossless maintenance pass is added. */
-export const PLAN_MODEL_VERSION = 7;
+export const PLAN_MODEL_VERSION = 8;
 const DEFAULT_CELL_CM = 5;
 const CELL_CM_MIN = 0.1;
 const CELL_CM_MAX = 1000;
@@ -56,6 +59,8 @@ export interface OptimizeReport extends AlignReport, SpaceReferenceReport {
   glowRoomsMigrated: number;
   /** Spaces whose wall/open-span representation was rewritten canonically. */
   canonicalized: number;
+  /** Contour-wall atoms materialised into the stable v8 catalogue. */
+  wallSegmentsMigrated: number;
   /** Redundant equal-thickness wall entries removed by canonicalisation. */
   wallsMerged: number;
   /** Touching/overlapping virtual pieces merged on the same room pair. */
@@ -648,6 +653,14 @@ export function optimizePlans(
     if (canonicalAfter !== canonicalBefore) canonicalized++;
   }
 
+  // Stage 1 of ADR 282 is itself a lossless maintenance pass.  Run it after
+  // every geometry repair so its catalogue describes the final candidate, not
+  // the pre-Optimize shape. Future model versions remain opaque/fail-soft.
+  let wallSegmentsMigrated = 0;
+  if (modelFrom <= PLAN_MODEL_VERSION) {
+    wallSegmentsMigrated = commitWallSegmentModelInPlace(config).migratedSegments;
+  }
+
   // The storage barrier (#224) is part of Optimize's idempotence contract.
   // A 1/240 grid node has no finite decimal representation: comparing or
   // returning the raw binary result would let the backend's nine-decimal
@@ -707,6 +720,7 @@ export function optimizePlans(
       glowSpacesMigrated: changed ? migration.glowSpaces : 0,
       glowRoomsMigrated: changed ? migration.glowRooms : 0,
       canonicalized: changed ? canonicalized : 0,
+      wallSegmentsMigrated: changed ? wallSegmentsMigrated : 0,
       wallsMerged: changed ? wallsMerged : 0,
       spansMerged: changed ? spansMerged : 0,
       partitionsMerged: changed ? partitionsMerged : 0,

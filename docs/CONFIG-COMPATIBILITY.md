@@ -48,6 +48,27 @@ Unknown future fields remain outside this report and continue to follow the
 backend's forward-compatibility policy. Absence from the report is therefore
 not permission to delete a field.
 
+## Stable wall identity — model v8 (#282)
+
+Model v8 adds `space.wall_segments[]`, ordered `rooms[].wall_ids[]`, IDs on
+`room_drafts[].segments[]`, and tagged wall hosts on room-wall openings. These
+fields are authoritative for wall identity, thickness and opening ownership.
+The historical `rooms[].poly`, `space.walls[]` and opening coordinates remain
+materialised compatibility projections.
+
+Reading a v7 store is side-effect free. A v8 wall catalog is materialised only
+before a structural write, through **Optimize plans**, or when a v7 candidate is
+imported into a v8 target. A v7-to-v7 import remains v7. Full and space-only
+export/import preserve IDs; copy/merge deterministically remaps IDs together
+with all references. There is no automatic downgrade from v8 to v7.
+
+An older frontend may read the compatibility projection of a v8 config. Its
+byte-equivalent legacy round-trip is accepted and the backend restores the v8
+fields. If the legacy-visible structural projection changed, the backend
+rejects the write instead of allowing thickness, draft identity or an opening
+host to detach. A migration or transition conflict is fail-closed: the previous
+config and revision remain unchanged.
+
 ## Canonical geometry on write (#224, #291)
 
 Config and layout schemas canonicalize only named persisted numbers. Lattice

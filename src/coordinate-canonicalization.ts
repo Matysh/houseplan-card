@@ -148,6 +148,10 @@ function visitLatticeCoordinates(
         pointValues(wall.a);
         pointValues(wall.b);
       }
+      for (const segment of records(space.wall_segments)) {
+        pointValues(segment.a);
+        pointValues(segment.b);
+      }
       for (const opening of records(space.openings)) fieldValues(opening, ['x', 'y']);
       for (const decor of records(space.decor)) {
         if (decor.kind === 'line') fieldValues(decor, ['x1', 'y1', 'x2', 'y2']);
@@ -316,6 +320,10 @@ export function canonicalizeConfigGeometryInPlace<T>(config: T): T {
     for (const wall of records(space.walls)) {
       latticePoint(wall.a);
       latticePoint(wall.b);
+    }
+    for (const segment of records(space.wall_segments)) {
+      latticePoint(segment.a);
+      latticePoint(segment.b);
     }
 
     for (const opening of records(space.openings)) {

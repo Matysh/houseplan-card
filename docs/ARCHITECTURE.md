@@ -361,7 +361,8 @@ not be added to an individual sink.
                "plan_x","plan_y","plan_scale_x","plan_scale_y","plan_angle",
                "plan_scale",   // legacy optional fallback, docs/BACKDROP.md
                "view_box":[4],
-               "rooms":[{"id","name","area","poly|x/y/w/h","open_to","settings"}],
+               "rooms":[{"id","name","area","poly|x/y/w/h","wall_ids":[…],"open_to","settings"}],
+               "wall_segments":[{"id","a","b","cm","owners":[…]}],
                "room_drafts":[…], "partitions":[…], "wall_columns":[…],
                "openings":[…], "decor":[…], "settings":{…} }],
   "markers": [{ "id","binding":"device:<id>|entity:<eid>|virtual","hidden","removed",
@@ -389,6 +390,26 @@ bounded ±5000). Plan files: `<config>/houseplan/plans/<space>.<token>.<ext>`
 quotas, nothing is ever deleted for being old (docs/SCOPE.md).
 
 ## Room and independent wall geometry
+
+Model v8 separates a wall's durable identity from its current geometric lookup
+(#282). `wall_segments[]` is the authoritative catalog of atomic room-wall
+intervals; `rooms[].wall_ids[]` owns their ordered contour references. The
+historical polygon and `walls[]` list remain render/read compatibility
+projections. Room-wall openings reference `{kind:'wall', id, t}`; partition
+openings continue to reference `{kind:'partition', id, t}`. The shared
+frontend/backend materialiser lives in `src/wall-segment-model.ts` and
+`custom_components/houseplan/wall_segment_model.py`, with a common parity
+fixture.
+
+Read is projection-only. Before any physical-geometry mutation the card builds
+a local candidate, canonicalizes coordinates, materialises/updates the wall
+catalog, validates references and only then commits one config transaction.
+Initial v7 IDs are deterministic so frontend/backend and repeated migrations
+converge; genuinely new v8 segments use UUIDs. Split lineage assigns the old ID
+to one deterministic child, and draft promotion carries the draft ID into the
+resulting wall or partition. Ambiguity fails closed with no partial config,
+history or revision update. `scripts/mutation-gate.mjs` guards every structural
+writer entrance.
 
 Room-boundary walls remain *derived* from room outlines (`roomEdges`, deduped by
 `segKey`), so deleting a room keeps the boundaries its neighbours still

@@ -5,6 +5,7 @@ Kept separate so it can be covered by unit tests (only voluptuous is needed).
 from __future__ import annotations
 
 from collections import Counter
+import copy
 import math
 import re
 
@@ -74,6 +75,84 @@ class PartitionOpeningJambMarginError(ValueError):
         super().__init__(
             f"space={space_id}; opening={opening_id}; "
             f"margin={margin:.12g}; margin_cm={margin_cm:.12g}"
+        )
+
+
+class WallModelClientOutdatedError(ValueError):
+    """A stale client tried to replace an already-migrated v8 document."""
+
+    code = "wall_model_client_outdated"
+
+
+def _legacy_wall_model_projection(config: dict) -> dict:
+    """Structural view an older client can faithfully round-trip."""
+    projected = copy.deepcopy(config)
+    projected.pop("model_version", None)
+    for space in projected.get("spaces") or []:
+        space.pop("wall_segments", None)
+        for room in space.get("rooms") or []:
+            room.pop("wall_ids", None)
+        for draft in space.get("room_drafts") or []:
+            for segment in draft.get("segments") or []:
+                segment.pop("id", None)
+        for opening in space.get("openings") or []:
+            host = opening.get("host")
+            if isinstance(host, dict) and host.get("kind") == "wall":
+                opening.pop("host", None)
+    return projected
+
+
+def _restore_wall_model_fields(config: dict, previous: dict) -> None:
+    """Hydrate only v8 identity fields after an exact legacy round-trip."""
+    config["model_version"] = previous["model_version"]
+    old_spaces = {str(space.get("id")): space for space in previous.get("spaces") or []}
+    for space in config.get("spaces") or []:
+        old_space = old_spaces.get(str(space.get("id")))
+        if old_space is None:
+            continue
+        space["wall_segments"] = copy.deepcopy(old_space.get("wall_segments") or [])
+        old_rooms = {str(room.get("id")): room for room in old_space.get("rooms") or []}
+        for room in space.get("rooms") or []:
+            old_room = old_rooms.get(str(room.get("id")))
+            if old_room is not None and "wall_ids" in old_room:
+                room["wall_ids"] = copy.deepcopy(old_room["wall_ids"])
+        old_drafts = {str(draft.get("id")): draft for draft in old_space.get("room_drafts") or []}
+        for draft in space.get("room_drafts") or []:
+            old_draft = old_drafts.get(str(draft.get("id")))
+            if old_draft is None:
+                continue
+            old_segments = old_draft.get("segments") or []
+            for index, segment in enumerate(draft.get("segments") or []):
+                if index < len(old_segments) and old_segments[index].get("id"):
+                    segment["id"] = old_segments[index]["id"]
+        old_openings = {
+            str(opening.get("id")): opening for opening in old_space.get("openings") or []
+        }
+        for opening in space.get("openings") or []:
+            old_opening = old_openings.get(str(opening.get("id")))
+            old_host = (old_opening or {}).get("host")
+            if isinstance(old_host, dict) and old_host.get("kind") == "wall":
+                opening["host"] = copy.deepcopy(old_host)
+
+
+def validate_wall_model_transition(config: dict, previous: dict | None) -> None:
+    """Do not let omission of model_version bypass v8 semantic validation."""
+    try:
+        old_model = int((previous or {}).get("model_version", 0))
+        new_model = int(config.get("model_version", 0))
+    except (TypeError, ValueError):
+        return  # CONFIG_SCHEMA owns malformed values.
+    if old_model >= 8 and new_model < 8:
+        if _legacy_wall_model_projection(config) == _legacy_wall_model_projection(previous or {}):
+            _restore_wall_model_fields(config, previous or {})
+            # Re-run semantic parity after hydration; previous identity is
+            # accepted only when it still matches the submitted projections.
+            validated = CONFIG_SCHEMA(config)
+            config.clear()
+            config.update(validated)
+            return
+        raise WallModelClientOutdatedError(
+            f"stored model={old_model}; submitted model={new_model}"
         )
 
 
@@ -520,34 +599,39 @@ def validate_partition_opening_hosts(
         for opening in space.get("openings") or []:
             opening_id = str(opening.get("id", ""))
             old = old_openings.get(opening_id)
-            if old and old.get("host") is not None and opening.get("host") is None:
-                if not (allow_optimize_rehost and old_space
-                        and _safe_optimize_partition_rehost(
-                            space, old_space, opening, old
-                        )):
-                    raise PartitionOpeningHostError(
-                        f"space={space_id}; opening={opening_id}; host removed"
-                    )
+            old_host = (old or {}).get("host")
             host = opening.get("host")
+            if (old and isinstance(old_host, dict)
+                    and old_host.get("kind") == "partition"):
+                same_partition = (
+                    isinstance(host, dict) and host.get("kind") == "partition"
+                    and str(host.get("id", "")) == str(old_host.get("id", ""))
+                )
+                residual_rehost = (
+                    isinstance(host, dict) and host.get("kind") == "partition"
+                    and not same_partition
+                )
+                proved = same_partition or (
+                    allow_optimize_rehost and old_space is not None
+                    and (_safe_optimize_residual_rehost(
+                        space, old_space, opening, old
+                    ) if residual_rehost else _safe_optimize_partition_rehost(
+                        space, old_space, opening, old
+                    ))
+                )
+                if not proved:
+                    raise PartitionOpeningHostError(
+                        f"space={space_id}; opening={opening_id}; host changed"
+                    )
             if host is None:
+                continue
+            if host.get("kind") != "partition":
                 continue
             partition = partitions.get(str(host.get("id", "")))
             if partition is None:
                 # SPACE_SCHEMA owns missing-host diagnostics.
                 continue
-            old_host = (old or {}).get("host")
             old_partition = old_partitions.get(str((old_host or {}).get("id", "")))
-            if (allow_optimize_rehost and old and old_space
-                    and isinstance(old_host, dict)
-                    and old_host.get("kind") == "partition"
-                    and isinstance(host, dict) and host.get("kind") == "partition"
-                    and old_host.get("id") != host.get("id")
-                    and not _safe_optimize_residual_rehost(
-                        space, old_space, opening, old
-                    )):
-                raise PartitionOpeningHostError(
-                    f"space={space_id}; opening={opening_id}; residual host changed"
-                )
             ax, ay = partition["a"]
             bx, by = partition["b"]
             span = ((bx - ax) ** 2 + (by - ay) ** 2) ** 0.5
@@ -910,7 +994,11 @@ MAX_ROOMS = 400
 MAX_MARKERS = 2000
 MAX_OPENINGS = 500
 MAX_DECOR = 1000
-MAX_WALLS = 500
+# v8 atomises room boundaries. The 2 MiB wire cap is the practical bound; this
+# structural cap mirrors MAX_ROOMS * MAX_POLY_POINTS without depending on the
+# later constant declaration.
+MAX_WALLS = 200_000
+MAX_WALL_SEGMENTS = 200_000
 MAX_ROOM_DRAFTS = 200
 MAX_DRAFT_SEGMENTS = 2000
 MAX_PARTITIONS = 2000
@@ -1075,6 +1163,10 @@ ROOM_SCHEMA = vol.All(
             vol.Optional("w"): _EXTENT,
             vol.Optional("h"): _EXTENT,
             vol.Optional("poly"): vol.All([POINT], vol.Length(min=3, max=MAX_POLY_POINTS)),
+            vol.Optional("wall_ids"): vol.All(
+                [vol.All(str, vol.Length(min=1, max=64))],
+                vol.Length(min=3, max=MAX_POLY_POINTS),
+            ),
         },
         extra=vol.ALLOW_EXTRA,
     ),
@@ -1246,6 +1338,26 @@ WALL_SCHEMA = vol.All(
 )
 
 
+def _wall_segment_nonzero(value: dict) -> dict:
+    if value["a"] == value["b"]:
+        raise vol.Invalid("wall segment endpoints must differ")
+    return value
+
+
+WALL_SEGMENT_SCHEMA = vol.All(
+    vol.Schema(
+        {
+            vol.Required("id"): vol.All(str, vol.Length(min=1, max=64)),
+            vol.Required("a"): POINT,
+            vol.Required("b"): POINT,
+            vol.Required("cm"): vol.All(_finite, vol.Range(min=0, max=100)),
+        },
+        extra=vol.ALLOW_EXTRA,
+    ),
+    _wall_segment_nonzero,
+)
+
+
 def _room_draft_segments(value: dict) -> dict:
     """An open draft has exactly one thickness per consecutive edge."""
     if len(value.get("segments", [])) != max(0, len(value.get("points", [])) - 1):
@@ -1261,7 +1373,10 @@ ROOM_DRAFT_SCHEMA = vol.All(
             vol.Required("id"): vol.All(str, vol.Length(min=1, max=64)),
             vol.Required("points"): vol.All([POINT], vol.Length(min=2, max=500)),
             vol.Required("segments"): vol.All(
-                [vol.Schema({vol.Required("cm"): vol.All(_finite, vol.Range(min=1, max=100))},
+                [vol.Schema({
+                    vol.Optional("id"): vol.All(str, vol.Length(min=1, max=64)),
+                    vol.Required("cm"): vol.All(_finite, vol.Range(min=1, max=100)),
+                },
                             extra=vol.ALLOW_EXTRA)],
                 vol.Length(min=1, max=499),
             ),
@@ -1325,11 +1440,22 @@ PARTITION_OPENING_HOST_SCHEMA = vol.Schema(
     extra=vol.PREVENT_EXTRA,
 )
 
+WALL_OPENING_HOST_SCHEMA = vol.Schema(
+    {
+        vol.Required("kind"): vol.Equal("wall"),
+        vol.Required("id"): vol.All(str, vol.Length(min=1, max=64)),
+        vol.Required("t"): vol.All(_finite, vol.Range(min=0, max=1)),
+    },
+    extra=vol.PREVENT_EXTRA,
+)
+
+OPENING_HOST_SCHEMA = vol.Any(PARTITION_OPENING_HOST_SCHEMA, WALL_OPENING_HOST_SCHEMA)
+
 
 def _space_geometry_invariants(value: dict) -> dict:
     """All stored geometry shares ids; draft segments also have a space cap."""
     seen: set[str] = set()
-    for key in ("rooms", "openings", "decor", "room_drafts", "partitions", "wall_columns"):
+    for key in ("rooms", "openings", "decor", "room_drafts", "partitions", "wall_columns", "wall_segments"):
         for item in value.get(key, []):
             item_id = item.get("id")
             if not item_id:
@@ -1342,6 +1468,14 @@ def _space_geometry_invariants(value: dict) -> dict:
     )
     if draft_segments > MAX_DRAFT_SEGMENTS:
         raise vol.Invalid("too many saved room-draft segments")
+    for draft in value.get("room_drafts", []):
+        for segment in draft.get("segments", []):
+            segment_id = segment.get("id")
+            if not segment_id:
+                continue
+            if segment_id in seen:
+                raise vol.Invalid("geometry object ids must be unique within a space")
+            seen.add(segment_id)
     partitions = {
         item.get("id"): item for item in value.get("partitions", []) if item.get("id")
     }
@@ -1349,6 +1483,8 @@ def _space_geometry_invariants(value: dict) -> dict:
     for opening in value.get("openings", []):
         host = opening.get("host")
         if host is None:
+            continue
+        if host["kind"] != "partition":
             continue
         partition = partitions.get(host["id"])
         if partition is None:
@@ -1430,7 +1566,7 @@ SPACE_SCHEMA = vol.All(vol.Schema(
                     vol.Optional("invert"): bool,
                     vol.Optional("flip_h"): bool,
                     vol.Optional("flip_v"): bool,
-                    vol.Optional("host"): PARTITION_OPENING_HOST_SCHEMA,
+                    vol.Optional("host"): OPENING_HOST_SCHEMA,
                 },
                 extra=vol.ALLOW_EXTRA,
             )
@@ -1439,6 +1575,9 @@ SPACE_SCHEMA = vol.All(vol.Schema(
         # (midpoint + direction), thickness always in centimetres. Optional —
         # a space without `walls` validates and renders exactly as before.
         vol.Optional("walls"): vol.All([WALL_SCHEMA], vol.Length(max=MAX_WALLS)),
+        vol.Optional("wall_segments"): vol.All(
+            [WALL_SEGMENT_SCHEMA], vol.Length(max=MAX_WALL_SEGMENTS)
+        ),
         vol.Optional("room_drafts"): vol.All(
             [ROOM_DRAFT_SCHEMA], vol.Length(max=MAX_ROOM_DRAFTS)
         ),
@@ -1567,9 +1706,114 @@ MARKER_SCHEMA = vol.Schema(
     },
     extra=vol.ALLOW_EXTRA,
 )
+
+
+def _canonical_segment_key(a: list, b: list) -> tuple:
+    """Endpoint-order-independent exact key after the shared canonicalizer."""
+    pa = (round(float(a[0]), 12), round(float(a[1]), 12))
+    pb = (round(float(b[0]), 12), round(float(b[1]), 12))
+    return (pa, pb) if pa <= pb else (pb, pa)
+
+
+def _config_wall_segment_invariants(value: dict) -> dict:
+    """Fail closed when a v8 writer sends stale ids or a stale walls projection."""
+    try:
+        model = int(value.get("model_version", 0))
+    except (TypeError, ValueError):
+        raise vol.Invalid("model_version must be an integer") from None
+    if model < 8:
+        return value
+
+    for space in value.get("spaces", []):
+        segments = space.get("wall_segments")
+        if segments is None:
+            raise vol.Invalid("v8 space requires wall_segments")
+        by_id = {segment["id"]: segment for segment in segments}
+        if len(by_id) != len(segments):
+            raise vol.Invalid("wall segment ids must be unique")
+
+        owners: dict[str, set[str]] = {segment_id: set() for segment_id in by_id}
+        for room in space.get("rooms", []):
+            poly = room.get("poly")
+            wall_ids = room.get("wall_ids")
+            if not poly or not wall_ids or len(poly) != len(wall_ids):
+                raise vol.Invalid("v8 room wall_ids must match poly edges")
+            room_id = room["id"]
+            for index, segment_id in enumerate(wall_ids):
+                segment = by_id.get(segment_id)
+                if segment is None:
+                    raise vol.Invalid("room wall id must reference the same space")
+                edge_key = _canonical_segment_key(poly[index], poly[(index + 1) % len(poly)])
+                if edge_key != _canonical_segment_key(segment["a"], segment["b"]):
+                    raise vol.Invalid("room wall reference geometry must match its edge")
+                owners[segment_id].add(room_id)
+        if any(len(room_ids) not in (1, 2) for room_ids in owners.values()):
+            raise vol.Invalid("wall segment must have one or two room owners")
+
+        expected_walls = {
+            _canonical_segment_key(segment["a"], segment["b"]): float(segment["cm"])
+            for segment in segments if float(segment["cm"]) > 0
+        }
+        actual_walls: dict[tuple, float] = {}
+        for wall in space.get("walls", []):
+            if "a" not in wall or "b" not in wall:
+                raise vol.Invalid("v8 compatibility walls require exact endpoints")
+            key = _canonical_segment_key(wall["a"], wall["b"])
+            if key in actual_walls:
+                raise vol.Invalid("v8 compatibility walls must be unique")
+            actual_walls[key] = float(wall["cm"])
+        if actual_walls != expected_walls:
+            raise vol.Invalid("v8 compatibility walls must match wall_segments")
+
+        for draft in space.get("room_drafts", []):
+            if any(not segment.get("id") for segment in draft.get("segments", [])):
+                raise vol.Invalid("v8 draft wall segments require ids")
+
+        partitions = {item["id"]: item for item in space.get("partitions", [])}
+        wall_opening_intervals: dict[str, list[tuple[float, float]]] = {}
+        for opening in space.get("openings", []):
+            host = opening.get("host")
+            if host is None:
+                raise vol.Invalid("v8 opening requires an explicit host")
+            if host["kind"] == "partition":
+                if host["id"] not in partitions:
+                    raise vol.Invalid("partition opening host must exist in the same space")
+                continue
+            segment = by_id.get(host["id"])
+            if segment is None:
+                raise vol.Invalid("wall opening host must exist in the same space")
+            t = float(host["t"])
+            x = float(segment["a"][0]) + (float(segment["b"][0]) - float(segment["a"][0])) * t
+            y = float(segment["a"][1]) + (float(segment["b"][1]) - float(segment["a"][1])) * t
+            if abs(x - float(opening["x"])) > 2e-8 or abs(y - float(opening["y"])) > 2e-8:
+                raise vol.Invalid("wall opening geometry must match its host")
+            expected_angle = math.degrees(math.atan2(
+                float(segment["b"][1]) - float(segment["a"][1]),
+                float(segment["b"][0]) - float(segment["a"][0]),
+            ))
+            if _angle_delta_mod_180(float(opening["angle"]), expected_angle) > 8:
+                raise vol.Invalid("wall opening angle must match its host")
+            span = ((segment["b"][0] - segment["a"][0]) ** 2
+                    + (segment["b"][1] - segment["a"][1]) ** 2) ** 0.5
+            along = t * span
+            length = float(opening["length"])
+            if length > span or along - length / 2 < -1e-9 or along + length / 2 > span + 1e-9:
+                raise vol.Invalid("wall opening must fit inside its host")
+            lo, hi = along - length / 2, along + length / 2
+            occupied = wall_opening_intervals.setdefault(host["id"], [])
+            if any(max(lo, old_lo) < min(hi, old_hi) - 1e-9
+                   for old_lo, old_hi in occupied):
+                raise vol.Invalid("wall openings must not overlap")
+            occupied.append((lo, hi))
+    return value
+
+
 CONFIG_SCHEMA = vol.All(
     vol.Schema(
         {
+            vol.Optional("model_version"): vol.All(
+                vol.Coerce(int), vol.Range(min=0, max=1_000_000)
+            ),
             vol.Required("spaces"): vol.All([SPACE_SCHEMA], vol.Length(max=MAX_SPACES)),
             vol.Optional("markers", default=list): vol.All([MARKER_SCHEMA], vol.Length(max=MAX_MARKERS)),
             vol.Optional("settings", default=dict): vol.Schema(
@@ -1604,4 +1848,5 @@ CONFIG_SCHEMA = vol.All(
         extra=vol.ALLOW_EXTRA,  # unknown (legacy) keys do not break loading
     ),
     canonicalize_config_geometry,
+    _config_wall_segment_invariants,
 )

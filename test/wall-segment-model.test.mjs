@@ -1,0 +1,205 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+
+import {
+  commitWallSegmentModel,
+  deterministicWallSegmentId,
+  WallSegmentModelError,
+  WALL_SEGMENT_MODEL_VERSION,
+} from '../test-build/wall-segment-model.js';
+import { wallKey } from '../test-build/wall-thickness.js';
+import { GRID_STEP_N } from '../test-build/space-geometry.js';
+
+const rectangle = (id, x1 = 0, y1 = 0, x2 = 1, y2 = 1) => ({
+  id,
+  poly: [[x1, y1], [x2, y1], [x2, y2], [x1, y2]],
+});
+const configOf = (space) => ({ spaces: [space], markers: [], settings: {} });
+const segmentFor = (room, index, catalogue) => (
+  catalogue.find((segment) => segment.id === room.wall_ids[index])
+);
+
+test('frontend migration matches the shared backend parity fixture', () => {
+  const fixture = JSON.parse(readFileSync(
+    new URL('./fixtures/282-wall-identity-parity.json', import.meta.url), 'utf8',
+  ));
+  const space = commitWallSegmentModel(fixture.input).config.spaces[0];
+  assert.deepEqual(space.rooms[0].wall_ids, fixture.expected.large_wall_ids);
+  assert.deepEqual(space.rooms[1].wall_ids, fixture.expected.small_wall_ids);
+  assert.deepEqual(space.openings[0].host, fixture.expected.opening_host);
+  assert.deepEqual(
+    space.room_drafts[0].segments.map((segment) => segment.id), fixture.expected.draft_ids,
+  );
+});
+
+test('wall ids use the specified SHA-256/base32 seed and ignore endpoint order', () => {
+  const a = [0, 0], b = [1, 0], owners = ['room-b', 'room-a'];
+  const seed = 'floor|0.000000000000,0.000000000000|1.000000000000,0.000000000000|room-a,room-b';
+  const digest = createHash('sha256').update(seed).digest();
+  const alphabet = 'abcdefghijklmnopqrstuvwxyz234567';
+  let bits = 0, value = 0, encoded = '';
+  for (const byte of digest) {
+    value = (value << 8) | byte;
+    bits += 8;
+    while (bits >= 5) {
+      encoded += alphabet[(value >>> (bits - 5)) & 31];
+      bits -= 5;
+    }
+  }
+  if (bits) encoded += alphabet[(value << (5 - bits)) & 31];
+  const expected = `wall-${encoded.slice(0, 20)}`;
+  assert.equal(deterministicWallSegmentId('floor', a, b, owners), expected);
+  assert.equal(deterministicWallSegmentId('floor', b, a, [...owners].reverse()), expected);
+});
+
+test('v7 rectangle migrates atomically to the complete id catalogue and is idempotent', () => {
+  const input = configOf({
+    id: 'floor', title: 'Floor', rooms: [rectangle('room')],
+    walls: [{
+      key: wallKey([0, 0], [1, 0], GRID_STEP_N),
+      a: [0, 0], b: [1, 0], cm: 15,
+    }],
+  });
+  const first = commitWallSegmentModel(input);
+  assert.equal(first.config.model_version, WALL_SEGMENT_MODEL_VERSION);
+  assert.equal(first.config.spaces[0].wall_segments.length, 4);
+  assert.equal(first.config.spaces[0].rooms[0].wall_ids.length, 4);
+  assert.equal(segmentFor(
+    first.config.spaces[0].rooms[0], 0, first.config.spaces[0].wall_segments,
+  ).cm, 15);
+  assert.equal(first.config.spaces[0].wall_segments.filter((segment) => segment.cm === 0).length, 3);
+  assert.deepEqual(first.config.spaces[0].walls, [{
+    key: wallKey([0, 0], [1, 0], GRID_STEP_N), cm: 15, a: [0, 0], b: [1, 0],
+  }]);
+  assert.deepEqual(input.spaces[0].rooms[0], rectangle('room'), 'pure barrier cannot mutate v7');
+
+  const second = commitWallSegmentModel(first.config);
+  assert.equal(second.changed, false);
+  assert.equal(second.migratedSegments, 0);
+  assert.deepEqual(second.config, first.config);
+});
+
+test('partial shared side is atomised once and every atom has one or two owners', () => {
+  const result = commitWallSegmentModel(configOf({
+    id: 'floor', title: 'Floor',
+    rooms: [rectangle('large', 0, 0, 1, 1), rectangle('small', 1, 0.25, 1.5, 0.75)],
+  })).config.spaces[0];
+  assert.equal(result.rooms[0].poly.length, 6);
+  const counts = new Map(result.wall_segments.map((segment) => [segment.id, 0]));
+  for (const room of result.rooms) for (const id of room.wall_ids) counts.set(id, counts.get(id) + 1);
+  assert.ok([...counts.values()].every((count) => count === 1 || count === 2));
+  assert.equal([...counts.values()].filter((count) => count === 2).length, 1);
+});
+
+test('existing ids survive rigid geometry edits and split lineage chooses midpoint then old a', () => {
+  const base = commitWallSegmentModel(configOf({
+    id: 'floor', title: 'Floor', rooms: [rectangle('room')],
+  })).config;
+  const moved = structuredClone(base);
+  moved.spaces[0].rooms[0].poly = moved.spaces[0].rooms[0].poly.map(([x, y]) => [x + 1, y]);
+  const movedResult = commitWallSegmentModel(moved).config;
+  assert.deepEqual(movedResult.spaces[0].rooms[0].wall_ids, base.spaces[0].rooms[0].wall_ids);
+
+  const split = structuredClone(base);
+  split.spaces[0].rooms[0].poly.splice(1, 0, [0.25, 0]);
+  // The old top segment midpoint lies in [0.25, 1], so that child inherits it.
+  const oldTop = base.spaces[0].rooms[0].wall_ids[0];
+  const splitResult = commitWallSegmentModel(split).config.spaces[0];
+  assert.notEqual(splitResult.rooms[0].wall_ids[0], oldTop);
+  assert.equal(splitResult.rooms[0].wall_ids[1], oldTop);
+});
+
+test('room openings acquire a stable wall host while partition hosts stay untouched', () => {
+  const result = commitWallSegmentModel(configOf({
+    id: 'floor', title: 'Floor', rooms: [rectangle('room')],
+    openings: [
+      { id: 'door', type: 'door', x: 0.5, y: 0, angle: 0, length: 0.2 },
+      {
+        id: 'partition-door', type: 'door', x: 0.5, y: 0.5, angle: 0, length: 0.2,
+        host: { kind: 'partition', id: 'partition', t: 0.5 },
+      },
+    ],
+    partitions: [{ id: 'partition', a: [0, 0.5], b: [1, 0.5], cm: 15 }],
+  })).config.spaces[0];
+  assert.equal(result.openings[0].host.kind, 'wall');
+  assert.equal(result.openings[0].host.t, 0.5);
+  assert.deepEqual(result.openings[1].host, { kind: 'partition', id: 'partition', t: 0.5 });
+});
+
+test('an ambiguous room opening blocks the complete candidate without mutating input', () => {
+  const input = configOf({
+    id: 'floor', title: 'Floor',
+    rooms: [rectangle('room')],
+    openings: [{ id: 'door', type: 'door', x: 0, y: 0, angle: 0, length: 0.2 }],
+  });
+  const before = structuredClone(input);
+  assert.throws(
+    () => commitWallSegmentModel(input),
+    (error) => error instanceof WallSegmentModelError && error.reason === 'opening-host',
+  );
+  assert.deepEqual(input, before);
+});
+
+test('draft segment ids materialise once and remain stable', () => {
+  const first = commitWallSegmentModel(configOf({
+    id: 'floor', title: 'Floor', rooms: [],
+    room_drafts: [{
+      id: 'draft', points: [[0, 0], [0.5, 0], [1, 0]],
+      segments: [{ cm: 10 }, { cm: 20 }],
+    }],
+  })).config;
+  const ids = first.spaces[0].room_drafts[0].segments.map((segment) => segment.id);
+  assert.ok(ids.every(Boolean));
+  assert.deepEqual(
+    commitWallSegmentModel(first).config.spaces[0].room_drafts[0].segments.map((segment) => segment.id),
+    ids,
+  );
+});
+
+test('post-v8 atoms use fresh identity while promoted draft carriers keep theirs', () => {
+  const base = commitWallSegmentModel(configOf({
+    id: 'floor', title: 'Floor', rooms: [rectangle('room')],
+  })).config;
+  const changed = structuredClone(base);
+  changed.spaces[0].rooms.push({
+    id: 'promoted',
+    poly: [[2, 0], [3, 0], [3, 1], [2, 1]],
+    wall_ids: ['draft-top', '', '', ''],
+  });
+  const result = commitWallSegmentModel(changed).config.spaces[0];
+  const promoted = result.rooms.find((room) => room.id === 'promoted');
+  assert.equal(promoted.wall_ids[0], 'draft-top');
+  assert.match(promoted.wall_ids[1], /^wall-[0-9a-f-]{36}$/,
+    'new v8 identity comes from the UUID factory, not its coordinates');
+  assert.notEqual(
+    promoted.wall_ids[1],
+    deterministicWallSegmentId('floor', [3, 0], [3, 1], ['promoted']),
+  );
+});
+
+test('initial migration resolves a reserved deterministic id with the documented suffix', () => {
+  const baseId = deterministicWallSegmentId('floor', [0, 0], [1, 0], ['room']);
+  const result = commitWallSegmentModel(configOf({
+    id: 'floor', title: 'Floor', rooms: [rectangle('room')],
+    partitions: [{ id: baseId, a: [2, 0], b: [3, 0], cm: 15 }],
+  })).config.spaces[0];
+  assert.equal(result.rooms[0].wall_ids[0], `${baseId}-2`);
+});
+
+test('every frontend structural transaction crosses the wall identity barrier', () => {
+  const source = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
+  const methodSource = (name) => {
+    const start = source.indexOf(`private ${name}(`);
+    assert.notEqual(start, -1, `${name} must remain a named structural boundary`);
+    const end = source.indexOf('\n  private ', start + 10);
+    return source.slice(start, end < 0 ? source.length : end);
+  };
+  const commitMethod = methodSource('_commitPhysicalGeometry');
+  const restoreMethod = methodSource('_applyGeometryState');
+  assert.match(commitMethod, /commitWallSegmentModel\(liveCandidate\)/);
+  assert.match(restoreMethod, /commitWallSegmentModel\(restoredCandidate\)/);
+  assert.doesNotMatch(commitMethod, /this\._writeConfig\(/,
+    'the common barrier must finish before the existing persistence path runs');
+});

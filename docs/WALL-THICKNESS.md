@@ -15,6 +15,32 @@ Code: `src/wall-thickness.ts`, render in `src/houseplan-card.ts` /
 
 ## 1. Model
 
+### Stable stored identity (model v8, #282)
+
+From model v8 every atomic room-wall interval has a stable record in
+`space.wall_segments[]`. Its `id`, endpoints and `cm` are authoritative;
+`rooms[].wall_ids[]` references the ordered atoms that form each contour.
+`space.walls[]` remains a generated compatibility projection for older readers
+and must not be used as the identity of a wall. A door, window, gate or passage
+on a room wall stores a tagged `{kind:'wall', id, t}` host. Independent
+partitions keep their existing stable IDs, and unfinished draft segments receive
+IDs which survive promotion to a room wall or partition.
+
+Existing v7 plans are not rewritten on read. The model is materialised
+atomically before the first structural edit, by **Optimize plans**, or when a
+v7 plan is imported into a v8 target. Ambiguous or conflicting geometry blocks
+the operation and leaves the stored plan unchanged. Ordinary settings and
+presentation writes do not trigger the migration. A zero-centimetre atom is an
+internal representation of the existing non-physical contour interval; #282
+does not expose zero-thickness drawing and does not replace the current virtual
+boundary model.
+
+Every structural writer passes through the same wall-model barrier. A split
+keeps the parent ID on the child containing the old midpoint (then the old first
+endpoint on a tie), while the other child receives a new UUID. Merge, Resize,
+room deletion, opening edits, Undo/Redo/recovery, Optimize and import/export
+apply the same lineage and validation rules before one atomic persistence write.
+
 Per space: `walls: [{ key, cm, a?, b? }]`. `key` remains the quantised midpoint
 and direction (modulo 180°) compatibility lookup; new or rewritten entries also
 carry exact endpoints `a` / `b` in normalised plan coordinates. Config always

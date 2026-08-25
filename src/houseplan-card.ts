@@ -42,6 +42,7 @@ import {
 } from './logic';
 import {
   resolveSafeResize, applySafeResize, clampSafeResize, validateSafeResize,
+  coalesceResizeRooms,
   safeResizePointerDisplacement,
   polyIsSimple, areaM2, formatArea, MIN_ROOM_CM,
   type SafeOpeningIn, type SafeResizeObstacle, type SafeResizeOptions,
@@ -196,6 +197,9 @@ import {
   clampCanvasR, clampCanvasN, type ContentItem, type Rect,
 } from './space-geometry';
 import { optimizePlans, type OptimizeReport } from './plan-optimizer';
+import {
+  commitWallSegmentModel, WallSegmentModelError,
+} from './wall-segment-model';
 import { snapNearAxisEndpoint } from './near-axis';
 import type { SpaceReferenceRepairContext } from './space-reference-repair';
 import { collectSpaceMarkerDependencies } from './space-deletion';
@@ -653,6 +657,7 @@ interface SpaceGeometryState {
   rooms: any[];
   openings?: OpeningCfg[];
   walls?: WallEntry[];
+  wall_segments?: any[];
   open_spans?: OpenSpanEntry[];
   room_drafts?: RoomDraftCfg[];
   partitions?: PartitionCfg[];
@@ -6774,9 +6779,15 @@ class HouseplanCard extends LitElement {
     sp.partitions ||= [];
     const seed = Date.now().toString(36);
     const drawnIds: string[] = [];
+    const activeDraft = this._activeDraftId
+      ? (sp.room_drafts || []).find((draft: any) => draft.id === this._activeDraftId)
+      : null;
+    const lineage = this._draftSegmentsForPath(
+      this._path, activeDraft, segments.map((segment) => segment.cm),
+    );
     for (let i = 0; i < segmentCount; i++) {
       const segment = segments[i];
-      const id = `partition-${seed}-${i}`;
+      const id = lineage[i]?.id || `partition-${seed}-${i}`;
       drawnIds.push(id);
       sp.partitions.push({
         id,
@@ -7016,7 +7027,7 @@ class HouseplanCard extends LitElement {
     if (clearCursor) this._cursorPt = null;
   }
 
-  private _samePt(a: number[], b: number[]): boolean {
+  private _samePt(a: readonly number[], b: readonly number[]): boolean {
     return samePoint(a, b);
   }
 
@@ -7183,6 +7194,7 @@ class HouseplanCard extends LitElement {
       rooms: copy(sp.rooms || []),
       ...(Array.isArray(sp.openings) ? { openings: copy(sp.openings) } : {}),
       ...(Array.isArray(sp.walls) ? { walls: copy(sp.walls) } : {}),
+      ...(Array.isArray(sp.wall_segments) ? { wall_segments: copy(sp.wall_segments) } : {}),
       ...(Array.isArray((sp as any).open_spans)
         ? { open_spans: copy((sp as any).open_spans) }
         : {}),
@@ -7215,13 +7227,14 @@ class HouseplanCard extends LitElement {
     if (!sp) return false;
     const copy = <T>(value: T): T => JSON.parse(JSON.stringify(value));
     sp.rooms = copy(state.rooms);
-    const assign = (key: 'openings' | 'walls' | 'open_spans' | 'room_drafts'
+    const assign = (key: 'openings' | 'walls' | 'wall_segments' | 'open_spans' | 'room_drafts'
       | 'partitions' | 'wall_columns' | 'decor', value: unknown): void => {
       if (value !== undefined) (sp as any)[key] = copy(value);
       else delete (sp as any)[key];
     };
     assign('openings', state.openings);
     assign('walls', state.walls);
+    assign('wall_segments', state.wall_segments);
     assign('open_spans', state.open_spans);
     assign('room_drafts', state.room_drafts);
     assign('partitions', state.partitions);
@@ -7240,11 +7253,35 @@ class HouseplanCard extends LitElement {
   }
 
   /** Shared fail-closed transaction boundary for every physical writer. */
+  private _wallModelBlockerLabel(error: unknown): string {
+    const reason = error instanceof WallSegmentModelError ? error.reason : 'invalid-room';
+    return this._t(`wall_model.reason.${reason}`);
+  }
+
   private _commitPhysicalGeometry(name: string, before: SpaceGeometryState | null): boolean {
     if (!before || !this._serverCfg) return false;
+    const liveCandidate = this._serverCfg;
+    try {
+      // ADR 282 Stage 1: every structural writer crosses the same atomic
+      // canonicalisation/identity barrier.  The pure candidate is adopted only
+      // after every space migrated successfully, so a blocker leaves the live
+      // config byte-equivalent.
+      this._serverCfg = commitWallSegmentModel(liveCandidate).config;
+    } catch (error) {
+      this._serverCfg = liveCandidate;
+      this._clearGeometryGesture();
+      this._restoreGeometryStateLocal(before);
+      this._showToast(this._t('toast.wall_model_migration_blocked', {
+        reason: this._wallModelBlockerLabel(error),
+      }));
+      return false;
+    }
     const after = this._geometrySnapshot(before.spaceId);
     if (!after || spacePhysicalGeometryFingerprint(before)
-        === spacePhysicalGeometryFingerprint(after)) return false;
+        === spacePhysicalGeometryFingerprint(after)) {
+      this._serverCfg = liveCandidate;
+      return false;
+    }
     let safe = false;
     try {
       safe = this._checkSpacePhysicalGeometry(this._serverCfg, before.spaceId).ok;
@@ -7252,6 +7289,7 @@ class HouseplanCard extends LitElement {
       safe = false;
     }
     if (!safe) {
+      this._serverCfg = liveCandidate;
       this._clearGeometryGesture();
       this._restoreGeometryStateLocal(before);
       this._showToast(this._t('toast.geometry_unsafe'));
@@ -7352,6 +7390,17 @@ class HouseplanCard extends LitElement {
     if (!this._canCommitSpace(state.spaceId)) return false;
     const before = this._geometrySnapshot(state.spaceId);
     if (!before || !this._restoreGeometryStateLocal(state)) return false;
+    const restoredCandidate = this._serverCfg;
+    try {
+      this._serverCfg = commitWallSegmentModel(restoredCandidate).config;
+    } catch (error) {
+      this._serverCfg = restoredCandidate;
+      this._restoreGeometryStateLocal(before);
+      this._showToast(this._t('toast.wall_model_migration_blocked', {
+        reason: this._wallModelBlockerLabel(error),
+      }));
+      return false;
+    }
     const physicalChanged = spacePhysicalGeometryFingerprint(before)
       !== spacePhysicalGeometryFingerprint(state);
     if (physicalChanged) {
@@ -7369,6 +7418,7 @@ class HouseplanCard extends LitElement {
           && check?.reason === 'wall-degraded-extra');
       } catch { safe = false; }
       if (!safe) {
+        this._serverCfg = restoredCandidate;
         this._restoreGeometryStateLocal(before);
         this._showToast(this._t('toast.geometry_unsafe'));
         return false;
@@ -7446,6 +7496,8 @@ class HouseplanCard extends LitElement {
     this._writeConfig().catch((e: any) => {
       if (e?.code === 'geometry-unsafe') {
         return;
+      } else if (e?.code === 'wall_model_client_outdated') {
+        this._showToast(this._t('toast.wall_model_client_outdated'));
       } else if (e?.code === 'conflict') {
         // a real one now: another window wrote between our read and our write
         this._showToast(this._t('toast.conflict'));
@@ -7718,9 +7770,9 @@ class HouseplanCard extends LitElement {
     const connectorCm = touching ? null : this._drawWallCm;
     if (!touching && connectorCm == null) { this._showPhysicalRange(100); return; }
 
-    const activeSegments = this._draftSegmentCms.map((cm, i) => ({
-      ...(activeRaw?.segments?.[i] || {}), cm,
-    }));
+    const activeSegments = this._draftSegmentsForPath(
+      this._path, activeRaw, this._draftSegmentCms,
+    );
     const mergedPoints = [
       ...this._path.map((p) => [...p]),
       ...(touching ? otherPoints.slice(1) : otherPoints),
@@ -7802,6 +7854,34 @@ class HouseplanCard extends LitElement {
   }
 
   /**
+   * Carry persisted draft identity by its physical carrier, not by array index.
+   * Resuming a chain from its opposite end reverses the path, and positional
+   * copying used to silently attach every ID to the neighbouring segment.
+   */
+  private _draftSegmentsForPath(
+    path: readonly (readonly number[])[], draft: any,
+    cms: readonly (number | null | undefined)[],
+  ): Array<{ id?: string; cm: number; [key: string]: any }> {
+    const points = Array.isArray(draft?.points)
+      ? draft.points.map((p: any) => [Number(p?.[0]) * NORM_W, Number(p?.[1]) * NORM_W])
+      : [];
+    const stored = Array.isArray(draft?.segments) ? draft.segments : [];
+    const resolved = chainSegmentCms(
+      Math.max(0, path.length - 1), cms, this._drawWallCm, DRAW_WALL_DEFAULT_CM,
+    );
+    return resolved.map((cm, index) => {
+      const a = path[index], b = path[index + 1];
+      const oldIndex = points.findIndex((oldA: number[], candidate: number) => {
+        if (candidate + 1 >= points.length) return false;
+        const oldB = points[candidate + 1];
+        return (this._samePt(a, oldA) && this._samePt(b, oldB))
+          || (this._samePt(a, oldB) && this._samePt(b, oldA));
+      });
+      return { ...(oldIndex >= 0 ? stored[oldIndex] : {}), cm };
+    });
+  }
+
+  /**
    * Persist every completed draft segment immediately.
    *
    * The thickness of the new segment is already recorded by the caller (#234):
@@ -7820,9 +7900,9 @@ class HouseplanCard extends LitElement {
       ...(i >= 0 ? sp.room_drafts[i] : {}),
       id: this._activeDraftId,
       points: this._path.map((p) => [p[0] / NORM_W, p[1] / NORM_W]),
-      segments: this._draftSegmentCms.map((v, j) => ({
-        ...(i >= 0 ? sp.room_drafts[i]?.segments?.[j] : {}), cm: v,
-      })),
+      segments: this._draftSegmentsForPath(
+        this._path, i >= 0 ? sp.room_drafts[i] : null, this._draftSegmentCms,
+      ),
     };
     if (i >= 0) sp.room_drafts[i] = saved;
     else sp.room_drafts.push(saved);
@@ -8409,15 +8489,18 @@ class HouseplanCard extends LitElement {
   // ================= room resize tool (docs/RESIZE.md) =================
 
   /** Rooms of the current space as render-unit polygons (legacy rects converted). */
-  private _rszRooms(): { id: string; poly: number[][] }[] {
-    const out: { id: string; poly: number[][] }[] = [];
+  private _rszRooms(): { id: string; poly: number[][]; wall_ids?: string[] }[] {
+    const out: { id: string; poly: number[][]; wall_ids?: string[] }[] = [];
     const space = this._spaceModel();
     if (!space) return out;
     for (const r of space.rooms) {
       const poly = r.id ? roomPoly(r) : null;
-      if (poly) out.push({ id: r.id!, poly });
+      if (poly) out.push({
+        id: r.id!, poly,
+        wall_ids: Array.isArray(r.wall_ids) ? [...r.wall_ids] : undefined,
+      });
     }
-    return out;
+    return coalesceResizeRooms(out, Math.max(1e-12, this._gridPitch * 1e-12));
   }
 
   private _rszOpenings(): SafeOpeningIn[] {
@@ -9020,7 +9103,9 @@ class HouseplanCard extends LitElement {
       const fallback: RenderOpening = {
         ...o, rx: o.x * NORM_W, ry: o.y * H, rlen: o.length * NORM_W,
       };
-      if (!o.host) return [fallback];
+      // Contour-wall hosts are identity metadata; their materialised x/y/angle
+      // stay the legacy render input until the Stage 3 graph renderer.
+      if (!o.host || o.host.kind === 'wall') return [fallback];
       const resolution = resolvePartitionOpeningCompat(
         o, space.partitions, NORM_W, this._cellCm, this._gridPitch,
       );
@@ -11566,6 +11651,15 @@ class HouseplanCard extends LitElement {
       sp.partitions ||= [];
       const targetByInterval = new Map<string, PartitionCfg>();
       const createdByKey = new Map<string, PartitionCfg>();
+      const sourceWallId = (interval: { a: readonly number[]; b: readonly number[] }): string | null => {
+        const match = (sp.wall_segments || []).find((segment: any) => {
+          const a = [Number(segment.a?.[0]) * NORM_W, Number(segment.a?.[1]) * NORM_W];
+          const b = [Number(segment.b?.[0]) * NORM_W, Number(segment.b?.[1]) * NORM_W];
+          return (this._samePt(interval.a, a) && this._samePt(interval.b, b))
+            || (this._samePt(interval.a, b) && this._samePt(interval.b, a));
+        });
+        return typeof match?.id === 'string' && match.id ? match.id : null;
+      };
       const seed = Date.now().toString(36);
       for (const item of plan.materialize) {
         let target = item.reusePartitionId
@@ -11573,7 +11667,7 @@ class HouseplanCard extends LitElement {
           : createdByKey.get(item.interval.key);
         if (!target) {
           target = {
-            id: `partition-room-${seed}-${createdByKey.size}`,
+            id: sourceWallId(item.interval) || `partition-room-${seed}-${createdByKey.size}`,
             a: [item.interval.a[0] / NORM_W, item.interval.a[1] / NORM_W],
             b: [item.interval.b[0] / NORM_W, item.interval.b[1] / NORM_W],
             cm: item.interval.cm,
@@ -12578,7 +12672,7 @@ class HouseplanCard extends LitElement {
       invert: !!o.invert,
       flipH: !!o.flip_h,
       flipV: !!o.flip_v,
-      ...(o.host ? { host: { ...o.host } } : {}),
+      ...(o.host?.kind === 'partition' ? { host: { ...o.host } } : {}),
       x: o.rx, y: o.ry, angle: o.angle,
     };
   }
@@ -12770,7 +12864,7 @@ class HouseplanCard extends LitElement {
         : this._cmToUnits(Math.max(20, d.lengthCm)) / NORM_W,
       ...(d.host ? { host: { ...d.host } } : {}),
     };
-    if (o.host) {
+    if (o.host?.kind === 'partition') {
       const strict = partitionOpeningNeedsStrictValidation(previous, o);
       const resolution = strict
         ? resolvePartitionOpeningStrict(
@@ -13336,7 +13430,7 @@ class HouseplanCard extends LitElement {
     const activeSourceCms = new Map<string, number>();
     for (let i = 0; i < batch.activeCms.length; i++)
       activeSourceCms.set(this._activeWallSourceKey(i), batch.activeCms[i]);
-    const partitions: Array<{ a: number[]; b: number[]; cm: number }> = [];
+    const partitions: Array<{ id?: string; a: number[]; b: number[]; cm: number }> = [];
     if (!accepted.length) {
       partitions.push(...wallChainSegments(
         effectiveActivePath,
@@ -13357,6 +13451,61 @@ class HouseplanCard extends LitElement {
     if ((sp.partitions || []).length + partitions.length > MAX_PARTITIONS) {
       abort('toast.physical_limit');
       return;
+    }
+
+    // A face decision may split one persisted draft segment between a room
+    // contour and leftover partitions. Pick the single physical child that
+    // inherits the old ID by the same midpoint/old-a rule as the catalogue.
+    const roomLineage = accepted.map((decision) =>
+      decision.candidate.ring.map(() => ''));
+    const activeDraft = batch.activeDraftId
+      ? (sp.room_drafts || []).find((draft: any) => draft.id === batch.activeDraftId)
+      : null;
+    const draftLineage = this._draftSegmentsForPath(
+      batch.activePath, activeDraft, batch.activeCms,
+    );
+    const geometryKey = (a: readonly number[], b: readonly number[]): string => {
+      const ka = `${a[0].toFixed(9)},${a[1].toFixed(9)}`;
+      const kb = `${b[0].toFixed(9)},${b[1].toFixed(9)}`;
+      return ka <= kb ? `${ka}|${kb}` : `${kb}|${ka}`;
+    };
+    for (let sourceIndex = 0; sourceIndex < draftLineage.length; sourceIndex++) {
+      const id = draftLineage[sourceIndex]?.id;
+      if (!id) continue;
+      const sourceA = batch.activePath[sourceIndex];
+      const sourceB = batch.activePath[sourceIndex + 1];
+      const sourceSpan = [sourceA[0], sourceA[1], sourceB[0], sourceB[1]];
+      const candidates: Array<{
+        kind: 'room' | 'partition'; owner: number; edge: number; a: number[]; b: number[];
+      }> = [];
+      accepted.forEach((decision, owner) => decision.candidate.ring.forEach((a, edge) => {
+        const b = decision.candidate.ring[(edge + 1) % decision.candidate.ring.length];
+        if (distToSegment(a, sourceSpan) <= epsilon && distToSegment(b, sourceSpan) <= epsilon)
+          candidates.push({ kind: 'room', owner, edge, a, b });
+      }));
+      partitions.forEach((partition, owner) => {
+        if (distToSegment(partition.a, sourceSpan) <= epsilon
+            && distToSegment(partition.b, sourceSpan) <= epsilon)
+          candidates.push({ kind: 'partition', owner, edge: 0, a: partition.a, b: partition.b });
+      });
+      const midpoint = [(sourceA[0] + sourceB[0]) / 2, (sourceA[1] + sourceB[1]) / 2];
+      candidates.sort((left, right) => {
+        const leftSpan = [left.a[0], left.a[1], left.b[0], left.b[1]];
+        const rightSpan = [right.a[0], right.a[1], right.b[0], right.b[1]];
+        return (distToSegment(midpoint, leftSpan) <= epsilon ? 0 : 1)
+          - (distToSegment(midpoint, rightSpan) <= epsilon ? 0 : 1)
+          || (distToSegment(sourceA, leftSpan) <= epsilon ? 0 : 1)
+          - (distToSegment(sourceA, rightSpan) <= epsilon ? 0 : 1)
+          || geometryKey(left.a, left.b).localeCompare(geometryKey(right.a, right.b));
+      });
+      const winner = candidates[0];
+      if (!winner) continue;
+      const winnerKey = geometryKey(winner.a, winner.b);
+      for (const candidate of candidates) {
+        if (geometryKey(candidate.a, candidate.b) !== winnerKey) continue;
+        if (candidate.kind === 'room') roomLineage[candidate.owner][candidate.edge] = id;
+        else partitions[candidate.owner].id = id;
+      }
     }
 
     const before = this._geometrySnapshot();
@@ -13394,6 +13543,7 @@ class HouseplanCard extends LitElement {
         area: decision.area || null,
         poly: decision.candidate.ring.map((point) =>
           [point[0] / NORM_W, point[1] / this._spaceH]),
+        ...(roomLineage[index].some(Boolean) ? { wall_ids: roomLineage[index] } : {}),
         ...(decision.settings ? { settings: JSON.parse(JSON.stringify(decision.settings)) } : {}),
       };
       sp.rooms.push(room);
@@ -13407,7 +13557,7 @@ class HouseplanCard extends LitElement {
     if (partitions.length) {
       sp.partitions ||= [];
       partitions.forEach((partition, index) => sp.partitions.push({
-        id: `partition-${seed}-${index}`,
+        id: partition.id || `partition-${seed}-${index}`,
         a: [partition.a[0] / NORM_W, partition.a[1] / NORM_W],
         b: [partition.b[0] / NORM_W, partition.b[1] / NORM_W],
         cm: partition.cm,
@@ -13533,13 +13683,27 @@ class HouseplanCard extends LitElement {
       verts = this._path.slice(0, -1); // without the duplicated closing vertex
     }
     const areaName = this._areaSel ? this.hass.areas[this._areaSel]?.name : '';
-    const newRoom = {
+    const newRoom: any = {
       id: 'r' + Date.now().toString(36),
       name: this._nameSel || areaName || this._t('room.default_name'),
       area: this._areaSel || null,
       poly: verts.map((p) => [p[0] / NORM_W, p[1] / H]),
       ...(this._roomSettingsFromDialog() ? { settings: this._roomSettingsFromDialog() } : {}),
     };
+    if (!wasSplit && this._activeDraftId) {
+      const activeDraft = Array.isArray((sp as any).room_drafts)
+        ? (sp as any).room_drafts.find((draft: any) => draft.id === this._activeDraftId)
+        : null;
+      const cms = chainSegmentCms(
+        verts.length,
+        [...this._draftSegmentCms, this._closingWallCm ?? undefined],
+        this._drawWallCm, DRAW_WALL_DEFAULT_CM,
+      );
+      const lineage = this._draftSegmentsForPath(this._path, activeDraft, cms);
+      if (lineage.length === verts.length && lineage.every((segment) => !!segment.id)) {
+        newRoom.wall_ids = lineage.map((segment) => segment.id!);
+      }
+    }
     sp.rooms.push(newRoom);
     // Closing a saved draft promotes it into a room in the same transaction.
     if (!wasSplit && this._activeDraftId && Array.isArray((sp as any).room_drafts)) {
@@ -13959,10 +14123,14 @@ class HouseplanCard extends LitElement {
     );
     sp.partitions ||= [];
     const seed = Date.now().toString(36);
+    const activeDraft = this._activeDraftId
+      ? (sp.room_drafts || []).find((draft: any) => draft.id === this._activeDraftId)
+      : null;
+    const lineage = this._draftSegmentsForPath(this._path, activeDraft, cms);
     for (let i = 0; i < verts.length; i++) {
       const a = verts[i], b = verts[(i + 1) % verts.length];
       sp.partitions.push({
-        id: `partition-${seed}-${i}`,
+        id: lineage[i]?.id || `partition-${seed}-${i}`,
         a: [a[0] / NORM_W, a[1] / NORM_W],
         b: [b[0] / NORM_W, b[1] / NORM_W],
         cm: cms[i],
@@ -15482,11 +15650,19 @@ class HouseplanCard extends LitElement {
   private _previewAlignDialog(removeLiveMissingPositions: boolean): void {
     if (!this._norm || !this._serverCfg) return;
     const spaces = this._serverCfg.spaces || [];
-    const r = optimizePlans(
-      this._serverCfg,
-      this._layout || {},
-      this._optimizeReferenceContext(removeLiveMissingPositions),
-    );
+    let r;
+    try {
+      r = optimizePlans(
+        this._serverCfg,
+        this._layout || {},
+        this._optimizeReferenceContext(removeLiveMissingPositions),
+      );
+    } catch (error) {
+      this._showToast(this._t('toast.wall_model_migration_blocked', {
+        reason: this._wallModelBlockerLabel(error),
+      }));
+      return;
+    }
     const preflight = r.changed ? this._checkOptimizeGeometry(r.config) : null;
     // The maximum geometry shift is an UPPER BOUND, not a sample. The run
     // measured every element in the centimetres of ITS OWN space — converting
@@ -15567,6 +15743,10 @@ class HouseplanCard extends LitElement {
       }));
     } catch (e: any) {
       if (this._alignDialog) this._alignDialog = { ...this._alignDialog, busy: false };
+      if (e?.code === 'wall_model_client_outdated') {
+        this._showToast(this._t('toast.wall_model_client_outdated'));
+        return;
+      }
       if (e?.code === 'conflict') {
         await Promise.all([this._reloadConfigOnly(true), this._reloadLayoutOnly()]);
       }
@@ -16601,6 +16781,7 @@ class HouseplanCard extends LitElement {
     const repaired = r.spaceRefsRemapped + r.roomRefsRemapped
       + r.positionsRemapped + r.markersDetached;
     const modelMaintenance = r.migrated + r.canonicalized + r.coordsCanonicalized
+      + r.wallSegmentsMigrated
       + r.wallsMerged + r.spansMerged + r.partitionsMerged
       + r.partitionsReconciled + r.openingsRehosted + r.redundantDraftsRemoved;
     const gridWarning = r.moved + r.rotated + r.removedDrafts
@@ -16696,6 +16877,9 @@ class HouseplanCard extends LitElement {
                     n: String(r.redundantDraftsRemoved),
                   })}</p>`
                 : nothing}
+              ${r.wallSegmentsMigrated ? html`<p class="alignmsg">${this._t(
+                  'gs.wall_segments_migrated', { n: String(r.wallSegmentsMigrated) },
+                )}</p>` : nothing}
               ${modelMaintenance ? html`<p class="alignmsg">${this._t('gs.optimize_changes', {
                   m: String(r.migrated), c: String(r.canonicalized),
                   p: String(r.coordsCanonicalized), w: String(r.wallsMerged),

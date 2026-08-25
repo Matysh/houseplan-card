@@ -214,6 +214,8 @@ export function checkReferences({ config, layout = {} } = {}, { notes = [] } = {
   for (const space of spaces) {
     const spaceId = String(space?.id ?? '?');
     const roomIds = roomIdsBySpace.get(spaceId) || new Set();
+    const wallSegments = new Map((space?.wall_segments || [])
+      .map((segment) => [String(segment?.id ?? ''), segment]).filter(([id]) => id));
     for (const room of space?.rooms || []) {
       const roomId = String(room?.id ?? '?');
       for (const target of Array.isArray(room?.open_to) ? room.open_to : []) {
@@ -223,16 +225,40 @@ export function checkReferences({ config, layout = {} } = {}, { notes = [] } = {
             'комнаты назначения не существует в том же пространстве');
         }
       }
+      if (Number(config?.model_version || 0) >= 8) {
+        const wallIds = Array.isArray(room?.wall_ids) ? room.wall_ids : [];
+        const poly = roomPolygon(room) || [];
+        if (wallIds.length !== poly.length) {
+          add('room_wall_ids', `${spaceId}:${roomId}`, String(wallIds.length),
+            `ожидалось по одному id для ${poly.length} рёбер`);
+        }
+        for (const target of wallIds) {
+          const targetId = String(target ?? '');
+          if (!targetId || !wallSegments.has(targetId)) {
+            add('room_wall_ids', `${spaceId}:${roomId}`, targetId || '?',
+              'сегмента стены не существует в том же пространстве');
+          }
+        }
+      }
     }
     const partitionIds = new Set((space?.partitions || [])
       .map((partition) => String(partition?.id ?? '')).filter(Boolean));
     for (const opening of space?.openings || []) {
       const host = opening?.host;
-      if (host?.kind !== 'partition') continue;
+      if (!host) {
+        if (Number(config?.model_version || 0) >= 8) {
+          add('opening_host', `${spaceId}:${opening?.id ?? '?'}`, '?',
+            'в model v8 у проёма нет явной стены-хоста');
+        }
+        continue;
+      }
       const target = String(host.id ?? '');
-      if (!target || !partitionIds.has(target)) {
+      const exists = host?.kind === 'partition'
+        ? partitionIds.has(target)
+        : host?.kind === 'wall' && wallSegments.has(target);
+      if (!target || !exists) {
         add('opening_host', `${spaceId}:${opening?.id ?? '?'}`, target || '?',
-          'перегородки-хоста не существует в том же пространстве');
+          'стены-хоста не существует в том же пространстве');
       }
     }
     const list = carriers(space);
@@ -790,7 +816,8 @@ function report(violations, notes = []) {
     marker_control: 'Управление светом ссылается на несовместимый маркер',
     marker_badge: 'Бейдж значения ссылается на несовместимый маркер',
     room_open_to: 'Связи комнат ссылаются на несуществующие комнаты',
-    opening_host: 'Проёмы ссылаются на несуществующие перегородки',
+    opening_host: 'Проёмы ссылаются на несуществующие стены',
+    room_wall_ids: 'Комнаты ссылаются на несуществующие сегменты стен',
     layout_space: 'Позиции ссылаются на несуществующие пространства',
     layout_owner: 'Позиции без владельца',
     wall_carrier: 'Записи толщины вне рёбер и перегородок',

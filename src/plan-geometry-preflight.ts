@@ -104,6 +104,7 @@ export function spacePhysicalGeometryFingerprint(spaceConfig: any): string {
     cell_cm: spaceConfig?.cell_cm,
     rooms: spaceConfig?.rooms || [],
     walls: spaceConfig?.walls || [],
+    wall_segments: spaceConfig?.wall_segments || [],
     open_spans: spaceConfig?.open_spans || [],
     openings: spaceConfig?.openings || [],
     partitions: spaceConfig?.partitions || [],

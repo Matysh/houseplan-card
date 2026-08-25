@@ -101,8 +101,15 @@ test('issue 296 draft cleanup is all-or-nothing and preserves legal unfinished w
   assert.deepEqual(result.config.spaces[0].room_drafts.map((draft) => draft.id), [
     'free', 'partial', 'thicker',
   ]);
-  assert.deepEqual(result.config.spaces[0].room_drafts,
-    space.room_drafts.filter((draft) => draft.id !== 'hidden'));
+  assert.deepEqual(
+    result.config.spaces[0].room_drafts.map((draft) => ({
+      ...draft, segments: draft.segments.map(({ id: _id, ...segment }) => segment),
+    })),
+    space.room_drafts.filter((draft) => draft.id !== 'hidden'),
+  );
+  assert.ok(result.config.spaces[0].room_drafts.every((draft) => (
+    draft.segments.every((segment) => typeof segment.id === 'string' && segment.id.startsWith('wall-'))
+  )));
 });
 
 test('issue 296 an opening across a structural breakpoint keeps the source partition intact', () => {
@@ -202,7 +209,12 @@ test('issue 296 applies column and unfinished-draft blockers to each piece and p
   const draftResult = optimizePlans(configOf(draftSpace), {});
   assert.equal(draftResult.report.partitionsReconciled, 0);
   assert.equal(draftResult.report.redundantDraftsRemoved, 0);
-  assert.deepEqual(draftResult.config.spaces[0].room_drafts, draftSpace.room_drafts);
+  assert.deepEqual(
+    draftResult.config.spaces[0].room_drafts.map((draft) => ({
+      ...draft, segments: draft.segments.map(({ id: _id, ...segment }) => segment),
+    })),
+    draftSpace.room_drafts,
+  );
 });
 
 test('issue 296 fails closed at MAX_PARTITIONS and MAX_WALLS', () => {

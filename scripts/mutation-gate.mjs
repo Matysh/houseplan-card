@@ -1012,9 +1012,9 @@ export const MUTANTS = [
     patches: [{
       file: 'custom_components/houseplan/validation.py',
       find: '        extra=vol.ALLOW_EXTRA,  # unknown (legacy) keys do not break loading\n'
-        + '    ),\n    canonicalize_config_geometry,\n)',
+        + '    ),\n    canonicalize_config_geometry,\n    _config_wall_segment_invariants,\n)',
       replace: '        extra=vol.ALLOW_EXTRA,  # unknown (legacy) keys do not break loading\n'
-        + '    ),\n    lambda value: value,\n)',
+        + '    ),\n    lambda value: value,\n    _config_wall_segment_invariants,\n)',
     }],
   },
   {
@@ -1134,8 +1134,8 @@ export const MUTANTS = [
       + 'must enter preview and storage through the same canonical schema as the live card',
     patches: [{
       file: 'custom_components/houseplan/import_export.py',
-      find: '        config = CONFIG_SCHEMA(_json_copy(payload.get("config")))',
-      replace: '        config = _json_copy(payload.get("config"))',
+      find: '        config = CONFIG_SCHEMA(config_candidate)',
+      replace: '        config = config_candidate',
     }],
   },
   {
@@ -1686,8 +1686,8 @@ export const MUTANTS = [
       + 'projection/roundtrip тест обязан увидеть HA Area даже при нулевых markers',
     patches: [{
       file: 'custom_components/houseplan/import_export.py',
-      find: '_ROOM_PLAN_FIELDS = ("id", "name", "open_to", "x", "y", "w", "h", "poly")',
-      replace: '_ROOM_PLAN_FIELDS = ("id", "name", "area", "open_to", "x", "y", "w", "h", "poly")',
+      find: '_ROOM_PLAN_FIELDS = ("id", "name", "open_to", "x", "y", "w", "h", "poly", "wall_ids")',
+      replace: '_ROOM_PLAN_FIELDS = ("id", "name", "area", "open_to", "x", "y", "w", "h", "poly", "wall_ids")',
     }],
   },
   {
@@ -2908,6 +2908,19 @@ export const MUTANTS = [
       file: 'src/render/opening-symbol.ts',
       find: '    const gateAngle = spec.face.side * 10 * amount;',
       replace: '    const gateAngle = spec.face.side * sy * 10 * amount;',
+    }],
+  },
+  {
+    id: 'wall-identity-structural-barrier-bypassed',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="structural transaction crosses" '
+      + 'test/wall-segment-model.test.mjs',
+    because: 'a geometry writer that persists the mutable v7/v8 projection without rebuilding '
+      + 'stable ids can detach thickness and opening hosts during any later editor operation (#282)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '      this._serverCfg = commitWallSegmentModel(liveCandidate).config;',
+      replace: '      this._serverCfg = liveCandidate;',
     }],
   },
 ];

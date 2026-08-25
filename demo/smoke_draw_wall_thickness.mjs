@@ -27,9 +27,8 @@ const res = await page.evaluate(async () => {
 
   // draw a small room away from existing rooms (garden/demo f1 may have rooms)
   // use empty space if available, else clear rooms on a copy path
-  const space = sp();
-  const savedRooms = JSON.parse(JSON.stringify(space.rooms || []));
-  const savedWalls = space.walls ? JSON.parse(JSON.stringify(space.walls)) : null;
+  let space = sp();
+  const savedSpace = JSON.parse(JSON.stringify(space));
   space.rooms = [];
   delete space.walls;
   await upd();
@@ -61,9 +60,18 @@ const res = await page.evaluate(async () => {
   c._commitRoom();
   await upd();
 
+  // Structural commits adopt one fully validated config candidate. Never keep
+  // an object identity from before that atomic swap as test evidence.
+  space = sp();
+
   out.roomSaved = (space.rooms || []).some((r) => r.name === 'ThickDraw');
   out.wallsApplied = (space.walls || []).length >= 4
     && (space.walls || []).every((w) => w.cm === 15);
+  const firstRoom = (space.rooms || []).find((r) => r.name === 'ThickDraw');
+  out.wallIdentityMaterialized = c._serverCfg.model_version === 8
+    && firstRoom?.wall_ids?.length === 4
+    && new Set(firstRoom.wall_ids).size === 4
+    && (space.wall_segments || []).length === 4;
   out.bodyDrawn = sr().querySelectorAll('[data-hp="wall"]').length >= 1;
 
   // second room sharing the right edge — neighbour keeps 15, new edges get 20
@@ -83,14 +91,21 @@ const res = await page.evaluate(async () => {
   c._commitRoom();
   await upd();
 
+  space = sp();
+
   const sharedStill15 = (space.walls || []).some((w) => w.cm === 15);
   const has20 = (space.walls || []).some((w) => w.cm === 20);
   out.sharedKept = sharedStill15 && has20;
+  const rooms = (space.rooms || []).filter((room) =>
+    room.name === 'ThickDraw' || room.name === 'Neighbour');
+  const sharedIds = rooms.length === 2
+    ? rooms[0].wall_ids.filter((id) => rooms[1].wall_ids.includes(id)) : [];
+  out.sharedIdentityKept = sharedIds.length === 1
+    && space.wall_segments.some((segment) => segment.id === sharedIds[0] && segment.cm === 15);
 
   // restore demo space
-  space.rooms = savedRooms;
-  if (savedWalls) space.walls = savedWalls;
-  else delete space.walls;
+  for (const key of Object.keys(space)) delete space[key];
+  Object.assign(space, savedSpace);
   c._path = [];
   await upd();
 

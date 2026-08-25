@@ -673,6 +673,18 @@ space: ground
 
 ## 19. Plan maintenance
 
+Current plans give every stored wall segment a stable internal identity. This
+keeps the wall's thickness and its door, window, gate or passage attached while
+Resize, Split, Merge and other structural tools change surrounding geometry.
+There is no new control and the plan is not rewritten merely by opening it.
+
+An older plan is upgraded atomically on its first structural edit or when you
+run **Optimize plans**. Names, colours and other presentation settings do not
+trigger the upgrade. If old geometry is ambiguous, House Plan cancels the edit
+without partially saving it and asks you to run **Optimize plans**. If the same
+message remains, fix the reported conflicting wall geometry or attach that
+space's export to a bug report.
+
 Optimization compacts old off-grid geometry and repairs the plan's reference
 graph while preserving rooms, bindings and supported settings. An exact
 independent-import signature restores the copied space, room and positions. If

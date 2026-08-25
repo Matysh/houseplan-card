@@ -1,7 +1,7 @@
 # ADR #282 — Wall geometry representation
 
 - Issue: https://github.com/Matysh/houseplan-card/issues/282
-- Status: accepted as direction; stage 0 accepted for implementation
+- Status: accepted; Stage 1 stored identity implemented, Stages 2–3 deferred
 - Date: 2026-08-24
 - Related: #34 (frontend decomposition), #264 (resize controller slice),
   `docs/WALL-THICKNESS.md`, `docs/ARCHITECTURE.md`

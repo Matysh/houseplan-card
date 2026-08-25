@@ -2,7 +2,7 @@
 
 - **Issue:** https://github.com/Matysh/houseplan-card/issues/282
 - **ADR:** [`docs/adr/282-wall-geometry-representation.md`](../adr/282-wall-geometry-representation.md)
-- **Статус:** первая редакция для независимого ревью
+- **Статус:** принято независимым ревью; Stage 1 реализован
 - **Тип / приоритет:** tech-debt / P1
 - **Поставляемый этап:** Stage 1 — stored identity
 - **Целевая версия модели:** `PLAN_MODEL_VERSION = 8`

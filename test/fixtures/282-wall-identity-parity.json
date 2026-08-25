@@ -1,0 +1,58 @@
+{
+  "input": {
+    "spaces": [{
+      "id": "floor",
+      "title": "Floor",
+      "rooms": [
+        { "id": "large", "poly": [[0, 0], [1, 0], [1, 1], [0, 1]] },
+        { "id": "small", "poly": [[1, 0.25], [1.5, 0.25], [1.5, 0.75], [1, 0.75]] }
+      ],
+      "walls": [{
+        "key": "0.500000,0.000000@0.0000",
+        "a": [0, 0],
+        "b": [1, 0],
+        "cm": 15
+      }],
+      "openings": [{
+        "id": "door",
+        "type": "door",
+        "x": 0.5,
+        "y": 0,
+        "angle": 0,
+        "length": 0.2
+      }],
+      "room_drafts": [{
+        "id": "draft",
+        "points": [[2, 0], [2.5, 0], [3, 0]],
+        "segments": [{ "cm": 10 }, { "cm": 20 }]
+      }]
+    }],
+    "markers": [],
+    "settings": {}
+  },
+  "expected": {
+    "large_wall_ids": [
+      "wall-7cu6gpb7e44ucopgzjm2",
+      "wall-vgpy3fkbbprvy2cofyq3",
+      "wall-g33xjvyd5marxwkowoqm",
+      "wall-tqy5sdtydjrx7syybupl",
+      "wall-j2ti4ktyymgw4e2r5ns5",
+      "wall-oq2aqjdsktorqgxatdwh"
+    ],
+    "small_wall_ids": [
+      "wall-d2hfqa5fvueqwrwo2da7",
+      "wall-ybr4j2bztfx2wkbwvbwd",
+      "wall-qancsrbiwkhhy5hos7io",
+      "wall-g33xjvyd5marxwkowoqm"
+    ],
+    "opening_host": {
+      "kind": "wall",
+      "id": "wall-7cu6gpb7e44ucopgzjm2",
+      "t": 0.5
+    },
+    "draft_ids": [
+      "wall-ulziozdfsjzlriamibvg",
+      "wall-bvlpyhrsy6xjgox3g6e6"
+    ]
+  }
+}

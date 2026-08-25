@@ -36,6 +36,10 @@ from .const import (
     VERSION,
 )
 from .store import HouseplanData
+from .wall_segment_model import (
+    WallSegmentMigrationError,
+    commit_wall_segment_model,
+)
 from .validation import (
     CONFIG_SCHEMA,
     LAYOUT_SCHEMA,
@@ -64,7 +68,8 @@ _LIVE_TEXT_ENTITY = re.compile(r"^[a-z0-9_]+\.[a-z0-9_]+$")
 _LIVE_TEXT_ATTRIBUTE = re.compile(r"^[a-zA-Z0-9_.-]+$")
 _PLAN_ONLY_DASH = "—"
 _IMPORT_ID_NAMESPACES = {
-    "space", "room", "marker", "partition", "opening", "decor", "draft", "column",
+    "space", "room", "marker", "partition", "wall", "opening", "decor", "draft",
+    "draft_segment", "column",
 }
 _MAX_IMPORT_LINEAGE_DEPTH = 16
 _REPORT_EXAMPLE_LIMIT = 24
@@ -80,7 +85,7 @@ _SPACE_DISPLAY_FIELDS = (
     "label_lqi", "label_light", "card_font_scale", "north_deg", "bg_mode",
     "sun_rays",
 )
-_ROOM_PLAN_FIELDS = ("id", "name", "open_to", "x", "y", "w", "h", "poly")
+_ROOM_PLAN_FIELDS = ("id", "name", "open_to", "x", "y", "w", "h", "poly", "wall_ids")
 _ROOM_DISPLAY_FIELDS = (
     "fill_mode", "custom_fill", "glow", "name_scale", "label_scale",
 )
@@ -249,6 +254,7 @@ def _project_plan_only_space(space: dict[str, Any]) -> dict[str, Any]:
     ]
     collections: tuple[tuple[str, tuple[str, ...]], ...] = (
         ("walls", ("key", "cm", "a", "b")),
+        ("wall_segments", ("id", "a", "b", "cm")),
         ("room_drafts", ("id", "points", "segments")),
         ("partitions", ("id", "a", "b", "cm")),
         ("wall_columns", ("id", "shape", "center", "cm", "angle")),
@@ -262,7 +268,7 @@ def _project_plan_only_space(space: dict[str, Any]) -> dict[str, Any]:
             selected = _pick_fields(item, fields)
             if name == "room_drafts" and "segments" in selected:
                 selected["segments"] = [
-                    _pick_fields(segment, ("cm",))
+                    _pick_fields(segment, ("id", "cm"))
                     for segment in selected.get("segments") or []
                 ]
             values.append(selected)
@@ -584,7 +590,14 @@ def parse_document(raw: bytes) -> dict[str, Any]:
     if not isinstance(payload, dict):
         raise ImportFailure("invalid_format", "Missing payload")
     try:
-        config = CONFIG_SCHEMA(_json_copy(payload.get("config")))
+        config_candidate = _json_copy(payload.get("config"))
+        # The envelope is authoritative. Export deliberately omits this field
+        # inside payload.config, but v8 semantic validation still has to run
+        # before an import token can be issued.
+        if model > 0:
+            config_candidate["model_version"] = model
+        config = CONFIG_SCHEMA(config_candidate)
+        config.pop("model_version", None)
     except (vol.Invalid, TypeError, ValueError) as err:
         raise ImportFailure("invalid_config", str(err)) from err
     if document["kind"] == "full":
@@ -1154,7 +1167,8 @@ def build_space_merge(
         for sp in current_config.get("spaces") or []
         for collection in (
             (sp,), sp.get("rooms") or [], sp.get("room_drafts") or [],
-            sp.get("partitions") or [], sp.get("wall_columns") or [],
+            sp.get("partitions") or [], sp.get("wall_segments") or [],
+            sp.get("wall_columns") or [],
             sp.get("openings") or [], sp.get("decor") or [],
         )
         for item in collection
@@ -1165,12 +1179,18 @@ def build_space_merge(
         str(m.get("id")) for m in current_config.get("markers") or []
         if m.get("id") is not None
     } | {
+        str(segment.get("id"))
+        for sp in current_config.get("spaces") or []
+        for draft in sp.get("room_drafts") or []
+        for segment in draft.get("segments") or []
+        if isinstance(segment, dict) and segment.get("id") is not None
+    } | {
         str(value)
         for incoming_space in spaces
         for collection in (
             (incoming_space,), incoming_space.get("rooms") or [],
             incoming_space.get("room_drafts") or [],
-            incoming_space.get("partitions") or [],
+            incoming_space.get("partitions") or [], incoming_space.get("wall_segments") or [],
             incoming_space.get("wall_columns") or [],
             incoming_space.get("openings") or [], incoming_space.get("decor") or [],
         )
@@ -1181,6 +1201,12 @@ def build_space_merge(
     } | {
         str(m.get("id")) for m in incoming.get("markers") or []
         if m.get("id") is not None
+    } | {
+        str(segment.get("id"))
+        for incoming_space in spaces
+        for draft in incoming_space.get("room_drafts") or []
+        for segment in draft.get("segments") or []
+        if isinstance(segment, dict) and segment.get("id") is not None
     }
     old_space_id = str(space.get("id"))
     _record_bounded_lineage(
@@ -1194,6 +1220,7 @@ def build_space_merge(
     id_maps["space"][old_space_id] = new_space_id
     for collection, prefix in (
         ("rooms", "room"), ("room_drafts", "draft"), ("partitions", "partition"),
+        ("wall_segments", "wall"),
         ("wall_columns", "column"), ("openings", "opening"), ("decor", "decor"),
     ):
         for item in space.get(collection) or []:
@@ -1205,6 +1232,18 @@ def build_space_merge(
                 id_map[old] = _fresh(prefix, old, used)
                 id_maps[prefix][old] = id_map[old]
                 item["id"] = id_map[old]
+    for draft in space.get("room_drafts") or []:
+        for segment in draft.get("segments") or []:
+            if not isinstance(segment, dict) or segment.get("id") is None:
+                continue
+            old = str(segment["id"])
+            _record_bounded_lineage(
+                reference_report, bounded_seen, "draft_segment", old,
+            )
+            new = _fresh("draft_segment", old, used)
+            id_map[old] = new
+            id_maps["draft_segment"][old] = new
+            segment["id"] = new
     old_room_ids = id_maps["room"]
     for room in space.get("rooms") or []:
         if room.get("open_to"):
@@ -1219,13 +1258,18 @@ def build_space_merge(
                         str(room.get("id", "?")), old_value,
                     )
             room["open_to"] = remapped_open_to
+        if room.get("wall_ids"):
+            room["wall_ids"] = [
+                id_maps["wall"].get(str(value), str(value))
+                for value in room["wall_ids"]
+            ]
     # Opening ownership is part of the same space-local id graph. Remap the
     # nested reference together with the partition itself; otherwise the
     # invariant validator correctly rejects a copied space whose host.id still
     # names the source partition.
     for opening in space.get("openings") or []:
         host = opening.get("host") if isinstance(opening, dict) else None
-        if isinstance(host, dict) and host.get("kind") == "partition":
+        if isinstance(host, dict) and host.get("kind") in ("partition", "wall"):
             old_host_id = str(host.get("id"))
             if old_host_id in id_map:
                 host["id"] = id_map[old_host_id]
@@ -1591,6 +1635,22 @@ def _materialize_import_candidate(
     imported_config = prepared["payload"]["config"]
     if confirmation_required:
         _detach_missing(imported_config, content)
+    incoming_model = int(prepared.get("model_version", 0) or 0)
+    target_model = int(current_config.get("model_version", 0) or 0)
+    requires_v8 = incoming_model >= 8 or target_model >= 8
+    if requires_v8:
+        try:
+            # A v8 target cannot be downgraded by a v7 backup, while an
+            # incoming v8 graph must retain its already-persisted IDs. When
+            # both sides are v7 the accepted compatibility contract keeps the
+            # import v7 until a later structural write or explicit Optimize.
+            imported_config["model_version"] = incoming_model
+            imported_config, _ = commit_wall_segment_model(imported_config)
+            prepared["payload"]["config"] = imported_config
+            if prepared["kind"] == "space":
+                current_config, _ = commit_wall_segment_model(current_config)
+        except WallSegmentMigrationError as err:
+            raise ImportFailure(err.code, str(err)) from err
     if prepared["kind"] == "space":
         config, layout, details = build_space_merge(
             prepared, current_config, current_layout, duplicate_policy,
@@ -1598,11 +1658,9 @@ def _materialize_import_candidate(
         )
     else:
         config = imported_config
+        if not requires_v8 and incoming_model > 0:
+            config["model_version"] = incoming_model
         _materialize_global_background(config)
-        model_version = prepared.get("model_version", 0)
-        if isinstance(model_version, int) and not isinstance(model_version, bool) \
-                and model_version > 0:
-            config["model_version"] = model_version
         layout = _json_copy(prepared["payload"]["layout"])
         if not same_source:
             settings = config.get("settings") or {}

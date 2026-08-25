@@ -32,6 +32,30 @@
 полный прогон — workflow `mutation-gate.yml`, перед стабильным релизом и по
 понедельникам. Дешёвая половина идёт с юнитами: `test/mutation-gate.test.mjs`.
 
+## Stable wall-segment identity (#282)
+
+- [ ] Shared fixture `test/fixtures/282-wall-identity-parity.json` produces the
+      same exact v8 catalog, room references, opening host and draft IDs in
+      TypeScript and Python.
+- [ ] Initial v7 migration is deterministic and idempotent; new post-v8 atoms
+      use UUIDs. A split/promoted draft keeps one documented carrier ID, while
+      reserved/colliding deterministic IDs receive stable `-2`, `-3` suffixes.
+- [ ] Structural writers are enumerated by `scripts/mutation-gate.mjs`; bypassing
+      the wall-model barrier must fail the source guard. A rejected migration
+      changes neither config, Undo history nor revision.
+- [ ] Full/space imports cover v7→v7 (no upgrade), v7→v8 and v8→v8; copy/merge
+      remaps every ID and reference together. A byte-equivalent legacy-client
+      round-trip of v8 is accepted, while a structural legacy change is rejected.
+- [ ] Resize, Split/Merge, opening edit and Optimize browser smokes retain wall
+      thickness and ownership across reload. Performance gate:
+      `npm run benchmark:wall-model` materialises 10,000 atoms with p95 below
+      500 ms on the reference Windows machine.
+- [ ] Local commands: `npm test`, `npm run typecheck`,
+      `npm run benchmark:wall-model`; backend parity/schema tests run through
+      `tests_backend/test_wall_segment_model.py` and
+      `tests_backend/test_validation.py`. HA import/export coverage runs in the
+      normal Linux/CI Home Assistant harness when unavailable natively.
+
 ## Resize: реальный pointer pipeline (#293)
 
 - [ ] `demo/smoke_resize_pointer_real_plan.mjs` загружает tracked fixture

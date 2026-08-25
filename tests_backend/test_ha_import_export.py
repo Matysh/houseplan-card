@@ -7,6 +7,7 @@ individual test exercises an otherwise pure helper.
 from __future__ import annotations
 
 import asyncio
+import copy
 import json
 from pathlib import Path
 from types import SimpleNamespace
@@ -47,6 +48,7 @@ from custom_components.houseplan.store import (
     migrate_config_background_mode,
 )
 from custom_components.houseplan.validation import MAX_LAYOUT, MAX_MARKERS
+from custom_components.houseplan.wall_segment_model import commit_wall_segment_model
 
 
 @pytest.fixture(autouse=True)
@@ -56,8 +58,8 @@ def _enable_custom_integrations(enable_custom_integrations):
 
 
 def _config() -> dict:
-    return {
-        "model_version": PLAN_MODEL_VERSION,
+    legacy = {
+        "model_version": PLAN_MODEL_VERSION - 1,
         "spaces": [{
             "id": "ground", "title": "Ground", "view_box": [0, 0, 1, 1],
             "rooms": [{"id": "living", "name": "Living", "poly": [[0, 0], [1, 0], [1, 1]]}],
@@ -73,6 +75,7 @@ def _config() -> dict:
             "new_device_ids": ["new-device"],
         },
     }
+    return commit_wall_segment_model(legacy)[0]
 
 
 def _document(tmp_path: Path, kind: str = "full") -> dict:
@@ -806,6 +809,48 @@ def test_full_export_import_round_trip_restores_model_version(tmp_path: Path) ->
     )
     assert config["model_version"] == document["model_version"] == PLAN_MODEL_VERSION
     assert config == _config()
+
+
+@pytest.mark.parametrize("kind", ["full", "space"])
+@pytest.mark.parametrize(("target_v8", "expected_model"), [(False, 7), (True, 8)])
+def test_v7_import_materializes_only_when_target_requires_v8(
+    tmp_path: Path, kind: str, target_v8: bool, expected_model: int,
+) -> None:
+    legacy = _config()
+    legacy["model_version"] = 7
+    for space in legacy["spaces"]:
+        space.pop("wall_segments", None)
+        for room in space.get("rooms") or []:
+            room.pop("wall_ids", None)
+        for opening in space.get("openings") or []:
+            if (opening.get("host") or {}).get("kind") == "wall":
+                opening.pop("host", None)
+        for draft in space.get("room_drafts") or []:
+            for segment in draft.get("segments") or []:
+                segment.pop("id", None)
+    document, _ = create_export(
+        SimpleNamespace(instance_id="instance-a"),
+        {"config": legacy}, {"layout": {}}, kind=kind,
+        space_id="ground" if kind == "space" else None,
+        card_version="review", config_root=tmp_path,
+    )
+    target = _config() if target_v8 else copy.deepcopy(legacy)
+    if kind == "space":
+        target["spaces"] = []
+        target["markers"] = []
+    runtime = SimpleNamespace(instance_id="instance-a", import_previews={})
+    response = create_preview(
+        runtime, json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
+        current_config_data={"config": target, "rev": 0},
+        current_layout_data={"layout": {}, "rev": 0}, config_root=tmp_path,
+    )
+    candidate = get_candidate(runtime, response["token"], "alice")
+    result = candidate["target_config"]
+    assert result.get("model_version", 0) == expected_model
+    if expected_model == 8:
+        assert all("wall_segments" in space for space in result["spaces"])
+    else:
+        assert all("wall_segments" not in space for space in result["spaces"])
 
 
 def test_preview_tokens_are_bounded_owned_expiring_and_single_use(

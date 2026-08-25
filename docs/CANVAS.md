@@ -538,6 +538,16 @@ be visually identical but not `===`. Update-event reload and a cold read
 therefore receive exactly the pair retained by the preview, and a second run
 cannot manufacture fresh coordinate noise (#248, #291).
 
+Model v8 adds a second, identity-preserving stage at this write boundary
+(#282). `materializeWallSegmentModel()` atomizes canonical room contours into
+`wall_segments[]`, keeps the deterministic parent ID on one split child, emits
+UUIDs only for genuinely new v8 atoms, and refreshes `rooms[].wall_ids[]`,
+draft IDs and tagged opening hosts together. The historical `walls[]` entries
+are regenerated from this catalog as a compatibility view. Reading or fitting
+the canvas never runs this migration; only physical edits, Optimize and a
+v7-to-v8 import may materialise it. Failure keeps the previous view, history
+and persisted revision intact.
+
 Guarantees are covered by `test/align-grid.test.mjs` and the orchestration/
 idempotence case in `test/plan-optimizer.test.mjs`:
 

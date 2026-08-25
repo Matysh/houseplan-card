@@ -150,6 +150,7 @@ export function spaceModels(cfg: ServerConfig | null): SpaceModel[] {
       w: r.w != null ? r.w * NORM_W : undefined,
       h: r.h != null ? r.h * H : undefined,
       poly: r.poly ? r.poly.map((p: number[]) => [p[0] * NORM_W, p[1] * H]) : undefined,
+      wall_ids: Array.isArray(r.wall_ids) ? [...r.wall_ids] : undefined,
     }; };
     const vb = safeViewBox(s.view_box);
     return {
@@ -166,7 +167,10 @@ export function spaceModels(cfg: ServerConfig | null): SpaceModel[] {
       room_drafts: (s.room_drafts || []).map((d: any) => ({
         id: d.id,
         points: (d.points || []).map((p: number[]) => [p[0] * NORM_W, p[1] * H]),
-        segments: (d.segments || []).map((sg: any) => ({ cm: Number(sg.cm) })),
+        segments: (d.segments || []).map((sg: any) => ({
+          ...(typeof sg.id === 'string' && sg.id ? { id: sg.id } : {}),
+          cm: Number(sg.cm),
+        })),
       })),
       partitions: (s.partitions || []).map((p: any) => ({
         id: p.id,

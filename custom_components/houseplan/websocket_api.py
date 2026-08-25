@@ -63,10 +63,11 @@ from .projection import project_config, project_layout
 from .validation import (
     CONFIG_SCHEMA, LAYOUT_SCHEMA, MAX_CONFIG_BYTES, MAX_PLAN_BYTES,
     PLAN_EXTENSIONS, POS_SCHEMA, MarkerControlError, OpeningPassageError,
-    PartitionOpeningHostError, PartitionOpeningJambMarginError, sanitize_filename,
+    PartitionOpeningHostError, PartitionOpeningJambMarginError,
+    WallModelClientOutdatedError, sanitize_filename,
     validate_opening_passages, validate_partition_opening_hosts,
     validate_marker_controls, validate_marker_light_entities,
-    validate_marker_value_badges, valid_space_id,
+    validate_marker_value_badges, validate_wall_model_transition, valid_space_id,
 )
 
 
@@ -1309,6 +1310,7 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
         # the lossless controls array. Validate only edges introduced by this
         # write so an unrelated edit can still round-trip a legacy broken ref.
         try:
+            validate_wall_model_transition(msg["config"], data.get("config"))
             validate_marker_controls(msg["config"], data.get("config"))
             validate_marker_light_entities(msg["config"], data.get("config"))
             validate_marker_value_badges(msg["config"], data.get("config"))
@@ -1316,7 +1318,7 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             validate_partition_opening_hosts(msg["config"], data.get("config"))
         except (
             MarkerControlError, OpeningPassageError, PartitionOpeningHostError,
-            PartitionOpeningJambMarginError,
+            PartitionOpeningJambMarginError, WallModelClientOutdatedError,
         ) as err:
             connection.send_error(msg["id"], err.code, str(err))
             return
@@ -1622,6 +1624,7 @@ async def ws_plan_optimize(hass: HomeAssistant, connection, msg: dict[str, Any])
         # layout transaction. It must enforce the same marker-link semantics
         # as config/set; otherwise a crafted client can persist a new cycle.
         try:
+            validate_wall_model_transition(msg["config"], config_data.get("config"))
             validate_marker_controls(msg["config"], config_data.get("config"))
             validate_marker_light_entities(msg["config"], config_data.get("config"))
             validate_marker_value_badges(msg["config"], config_data.get("config"))
@@ -1632,7 +1635,7 @@ async def ws_plan_optimize(hass: HomeAssistant, connection, msg: dict[str, Any])
             )
         except (
             MarkerControlError, OpeningPassageError, PartitionOpeningHostError,
-            PartitionOpeningJambMarginError,
+            PartitionOpeningJambMarginError, WallModelClientOutdatedError,
         ) as err:
             connection.send_error(msg["id"], err.code, str(err))
             return

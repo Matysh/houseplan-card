@@ -371,7 +371,7 @@ export function isActiveState(state?: string | null): boolean {
 }
 
 /** Point equality within a tolerance. */
-export function samePoint(a: number[], b: number[], eps = 0.001): boolean {
+export function samePoint(a: readonly number[], b: readonly number[], eps = 0.001): boolean {
   return Math.abs(a[0] - b[0]) < eps && Math.abs(a[1] - b[1]) < eps;
 }
 

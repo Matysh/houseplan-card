@@ -14,7 +14,12 @@
   mixed-thickness crosses no longer show a step in a foreign quadrant. Square
   corners are untouched
   ([#309](https://github.com/Matysh/houseplan-card/issues/309)).
-
+- Structural wall edits now keep thickness, draft lineage and door/window/gate/
+  passage ownership attached to stable wall-segment IDs. Existing plans upgrade
+  atomically on their first structural edit or through **Optimize plans**;
+  ambiguous legacy geometry is left unchanged with a recovery prompt. No Plan
+  editor controls or zero-thickness-wall behaviour changed
+  ([#282](https://github.com/Matysh/houseplan-card/issues/282)).
 - The active wall chain keeps its axis and node markers visible on already
   placed segments while drawing. The chain ink now paints above the wall
   masonry (and below the snap overlay), so each click no longer buries the

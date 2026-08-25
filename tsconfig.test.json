@@ -35,6 +35,7 @@
     "src/hp-help.ts", "src/hp-dialog.ts", "src/hp-color-opacity.ts",
     "src/opening-placement.ts", "src/opening-dimensions.ts", "src/partition-openings.ts", "src/plan-snap-overlay.ts", "src/wall-face-graph.ts", "src/wall-face-repair.ts", "src/room-deletion.ts", "src/render/opening-symbol.ts",
     "src/wall-thickness.ts",
+    "src/wall-segment-model.ts",
     "src/wall-merge.ts",
     "src/physical-geometry.ts",
     "src/labs.ts", "src/iso-projection.ts", "src/iso-walls.ts", "src/iso-openings.ts",

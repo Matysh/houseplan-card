@@ -19,7 +19,7 @@ import { classifyNearAxisSegment } from './near-axis';
 /** Minimal room dimension in centimetres (owner: «мин. габарит ~30 см»). */
 export const MIN_ROOM_CM = 30;
 
-export interface RoomIn { id: string; poly: number[][] }
+export interface RoomIn { id: string; poly: number[][]; wall_ids?: string[] }
 /** Opening in render units: centre, wall angle (deg), full length. */
 export interface OpeningIn { id: string; x: number; y: number; length: number }
 
@@ -118,6 +118,43 @@ export interface SafeResizeEligibilityAudit {
   enabled: number;
   disabled: Record<SafeResizeReason, number>;
   handles: SafeResizeAuditHandle[];
+}
+
+/**
+ * The v8 wall catalogue stores every structural breakpoint as a polygon
+ * vertex.  Resize is a user-facing side gesture, however, and must not expose
+ * those identity-only atoms as extra handles.  Collapse consecutive forward
+ * collinear edges for the resize projection; the structural write barrier
+ * atomises the committed result again afterwards.
+ */
+export function coalesceResizeRooms<T extends RoomIn>(rooms: readonly T[], eps: number): T[] {
+  return rooms.map((room) => {
+    if (!Array.isArray(room.wall_ids) || room.wall_ids.length !== room.poly.length) {
+      return { ...room, poly: room.poly.map((point) => [...point]) };
+    }
+    const poly = room.poly.map((point) => [...point]);
+    let changed = true;
+    while (changed && poly.length > 3) {
+      changed = false;
+      for (let index = 0; index < poly.length; index++) {
+        const previous = poly[(index - 1 + poly.length) % poly.length];
+        const current = poly[index];
+        const next = poly[(index + 1) % poly.length];
+        const first = sub(current, previous);
+        const second = sub(next, current);
+        const firstLength = len2d(first), secondLength = len2d(second);
+        if (firstLength <= eps || secondLength <= eps) continue;
+        const cross = Math.abs(first[0] * second[1] - first[1] * second[0]);
+        const dot = first[0] * second[0] + first[1] * second[1];
+        if (cross <= eps * (firstLength + secondLength) && dot > 0) {
+          poly.splice(index, 1);
+          changed = true;
+          break;
+        }
+      }
+    }
+    return { ...room, poly };
+  });
 }
 
 export interface EdgeDragPlan {
@@ -976,6 +1013,9 @@ export function auditSafeResizeEligibility(
     roomId: string, edge: number, a: number[], b: number[],
   ) => SafeResizeOptions,
 ): SafeResizeEligibilityAudit {
+  rooms = coalesceResizeRooms(rooms, Math.max(1e-12, ...rooms.map((room) => (
+    room.poly.length ? Math.max(...room.poly.flatMap((point) => point.map(Math.abs))) * 1e-12 : 0
+  ))));
   const disabled = Object.fromEntries(
     SAFE_RESIZE_REASONS.map((reason) => [reason, 0]),
   ) as Record<SafeResizeReason, number>;

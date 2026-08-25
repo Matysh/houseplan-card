@@ -55,7 +55,7 @@ test('issue 281 Optimize removes exact outer duplicates and rehosts their window
   assert.equal(result.report.partitionsReconciled, 3);
   assert.equal(result.report.openingsRehosted, 2);
   assert.deepEqual(result.config, expected);
-  assert.ok(result.config.spaces[0].openings.every((opening) => !opening.host));
+  assert.ok(result.config.spaces[0].openings.every((opening) => opening.host?.kind === 'wall'));
   const second = optimizePlans(result.config, result.layout);
   assert.equal(second.changed, false);
   assert.deepEqual(second.config, result.config);

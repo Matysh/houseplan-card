@@ -29,6 +29,8 @@ export interface RoomCfg {
   w?: number;
   h?: number;
   poly?: number[][]; // polygon in render units (model) / normalized (config)
+  /** v8: one stable contour-wall id for every edge in `poly`. */
+  wall_ids?: string[];
 }
 
 /** Wall thickness entry (docs/WALL-THICKNESS.md) — always centimetres in config. */
@@ -40,13 +42,22 @@ export interface WallEntry {
   b?: number[];
 }
 
+/** Canonical v8 contour-wall atom. `cm: 0` is a thin contour, not masonry. */
+export interface WallSegmentEntry {
+  id: string;
+  a: number[];
+  b: number[];
+  cm: number;
+  [key: string]: unknown;
+}
+
 /** Persisted open room contour. Coordinates are normalised in config and
  * render units in SpaceModel, exactly like rooms. */
 export interface RoomDraftCfg {
   id: string;
   points: number[][];
   /** One thickness entry for every consecutive pair of points. */
-  segments: Array<{ cm: number }>;
+  segments: Array<{ id?: string; cm: number }>;
 }
 
 /** A single independent physical wall which never owns or splits a room. */
@@ -176,6 +187,16 @@ export interface PartitionOpeningHost {
   t: number;
 }
 
+export interface WallOpeningHost {
+  kind: 'wall';
+  /** Stable id of one v8 contour-wall atom in the same space. */
+  id: string;
+  /** Centre position along the canonical stored segment a -> b. */
+  t: number;
+}
+
+export type OpeningHost = PartitionOpeningHost | WallOpeningHost;
+
 export interface OpeningCfg {
   id: string;
   type: 'door' | 'window' | 'gate' | 'passage';
@@ -189,10 +210,11 @@ export interface OpeningCfg {
   flip_h?: boolean; // hinge on the other jamb
   flip_v?: boolean; // opens to the other side of the wall
   /** Explicit owner for an opening cut into an independent wall. */
-  host?: PartitionOpeningHost;
+  host?: OpeningHost;
 }
 
 export interface ServerConfig {
+  model_version?: number;
   spaces: any[];
   markers: Marker[];
   settings: {

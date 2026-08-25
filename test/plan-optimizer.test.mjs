@@ -100,10 +100,11 @@ test('Optimize reconciles an exact coincident partition and losslessly rehosts i
   const space = first.config.spaces[0];
   assert.equal(space.partitions, undefined);
   assert.equal(space.openings.length, 1);
-  assert.equal(space.openings[0].host, undefined);
+  assert.equal(space.openings[0].host?.kind, 'wall');
   assert.deepEqual(space.openings[0], {
     id: 'door', type: 'door', x: 0.5, y: 0.5, angle: -90, length: 0.2,
     contact: 'binary_sensor.door', lock: 'lock.door', invert: true,
+    host: { kind: 'wall', id: space.openings[0].host.id, t: 0.5 },
   });
 
   const second = optimizePlans(first.config, first.layout);
@@ -132,7 +133,7 @@ test('Optimize reconciles fully hidden subspans but leaves ambiguous partitions 
   const partialResult = optimizePlans(partial, {});
   assert.equal(partialResult.report.partitionsReconciled, 1);
   assert.equal(partialResult.config.spaces[0].partitions, undefined);
-  assert.equal(partialResult.config.spaces[0].openings[0].host, undefined);
+  assert.equal(partialResult.config.spaces[0].openings[0].host?.kind, 'wall');
 
   const ambiguous = coincidentPartitionConfig();
   ambiguous.spaces[0].partitions.push({
@@ -243,8 +244,21 @@ test('issue 273 Optimize collapses the beta.5 island beside one T-node', () => {
   assert.equal(first.report.wallsMerged, 0,
     'role breakpoints may keep the record count even after the micro island is repaired');
   const canonicalBefore = canonicalizeConfigGeometry(before);
-  assert.deepEqual(first.config.spaces[0].rooms, canonicalBefore.spaces[0].rooms,
-    'T coordinate and perpendicular incident room stay byte-equivalent');
+  assert.deepEqual(
+    first.config.spaces[0].rooms.map((room) => room.id),
+    canonicalBefore.spaces[0].rooms.map((room) => room.id),
+    'T migration preserves room identity and order',
+  );
+  assert.deepEqual(
+    first.config.spaces[0].rooms.map((room) => room.poly.filter((point) => (
+      point[0] === 83 / 240 || point[0] === 203 / 240 || point[0] === 213 / 240
+    ))),
+    [
+      [[203 / 240, 83 / 240], [213 / 240, 83 / 240]],
+      [[203 / 240, 59 / 240], [213 / 240, 59 / 240], [213 / 240, 83 / 240], [203 / 240, 83 / 240]],
+    ],
+    'atomization materialises the exact T-node and owner-role breakpoints',
+  );
   assert.equal(first.config.spaces[0].walls.length, 3);
   assert.ok(first.config.spaces[0].walls.every((wall) => wall.cm === 22),
     'the micro thickness is repaired without merging outer/shared owner roles');
@@ -349,7 +363,14 @@ test('issue 248 Optimize stays a no-op across the lattice storage round-trip', (
   assert.deepEqual(storageRoundtripFixture.input, inputBefore, 'preview must keep fixture input');
   assert.equal(first.changed, true);
   assert.ok(first.report.latticeCoordinatesCanonicalized > 0);
-  assert.deepEqual(first.config, storageRoundtripFixture.expected.config);
+  assert.equal(first.config.model_version, PLAN_MODEL_VERSION);
+  assert.ok(first.config.spaces.every((space) => Array.isArray(space.wall_segments)));
+  assert.deepEqual(
+    first.config.spaces.map((space) => space.rooms.map((room) => room.poly)),
+    storageRoundtripFixture.expected.config.spaces.map((space) => (
+      space.rooms.map((room) => room.poly)
+    )),
+  );
   assert.deepEqual(first.layout, storageRoundtripFixture.expected.layout);
   assert.deepEqual(canonicalizeConfigGeometry(first.config), first.config);
   assert.deepEqual(canonicalizeLayoutGeometry(first.layout), first.layout);
@@ -623,10 +644,11 @@ test('model version bookkeeping does not claim a data migration', () => {
     model_version: PLAN_MODEL_VERSION - 1,
     spaces: [], markers: [], settings: {},
   }, {});
-  assert.equal(result.changed, false);
-  assert.equal(result.config.model_version, PLAN_MODEL_VERSION - 1);
-  assert.equal(result.report.modelTo, PLAN_MODEL_VERSION - 1);
+  assert.equal(result.changed, true, 'explicit Optimize materialises model v8 even without rooms');
+  assert.equal(result.config.model_version, PLAN_MODEL_VERSION);
+  assert.equal(result.report.modelTo, PLAN_MODEL_VERSION);
   assert.equal(result.report.migrated, 0);
+  assert.equal(result.report.wallSegmentsMigrated, 0);
 });
 
 test('issue 252 Optimize detaches a live marker without silently deleting its old position', () => {

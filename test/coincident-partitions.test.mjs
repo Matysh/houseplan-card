@@ -39,7 +39,10 @@ test('issue 276 reconciles the anonymized 5 cm offset fixture without moving its
     x: 121 / 240, y: 0.5, angle: -90, length: 0.2,
     contact: 'binary_sensor.test_door', lock: 'lock.test_door',
     invert: true, flip_h: true, future_field: { keep: true },
+    host: { kind: 'wall', id: space.openings[0].host.id, t: 0.5 },
   });
+  assert.ok(space.wall_segments.some((wall) => wall.id === space.openings[0].host.id),
+    'the migrated opening is hosted by a stored contour wall');
   const intervals = wallIntervals(
     space.rooms, space.walls, [], S, 5, GRID_PITCH, 1,
   ).filter((interval) => interval.kind === 'shared');
@@ -99,7 +102,8 @@ test('issue 276 rehosts three non-overlapping door/window/gate openings atomical
   assert.deepEqual(openings.map((opening) => opening.id),
     ['hosted-door', 'hosted-window', 'hosted-gate']);
   assert.deepEqual(openings.map((opening) => opening.type), ['door', 'window', 'gate']);
-  assert.ok(openings.every((opening) => opening.host === undefined));
+  assert.ok(openings.every((opening) => opening.host?.kind === 'wall'));
+  assert.equal(new Set(openings.map((opening) => opening.host.id)).size, 1);
   assert.ok(openings.every((opening) => opening.x === 121 / 240));
   assert.ok(openings[0].y < openings[1].y && openings[1].y < openings[2].y);
   assert.equal(openings[0].contact, 'binary_sensor.door');
