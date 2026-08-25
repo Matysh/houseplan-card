@@ -29,8 +29,9 @@
 
 Единственное новое видимое состояние — честный отказ от структурной записи,
 если старый план невозможно преобразовать без потери данных. View продолжает
-работать по compatibility reader; диалог/тост называет причину и предлагает
-Optimize либо исправление конфликтной геометрии.
+работать по compatibility reader; диалог/тост называет причину, предлагает
+сначала запустить «Оптимизировать планы», а при повторном отказе — исправить
+конфликтующую геометрию стен.
 
 ## 3. Проблема и подтверждённая причина
 
@@ -195,6 +196,14 @@ Re-key остаётся только деталью compatibility serializer. Н
 
 ### 7.1 Breakpoints
 
+До вычисления breakpoint в том же local candidate и до любых v8 ID/ref
+запускается существующий write-barrier #291 `canonicalizeConfigGeometry`.
+Порог и правило принадлежат только ему: текущий `LATTICE_NOISE_STEPS = 1e-4`
+шага сетки. Все слова `exact` ниже означают побитовое равенство **уже
+канонизированных** координат; дополнительный wall-thickness epsilon и третий
+допуск Stage 1 не вводит. Если канонизация или последующая атомизация
+отклоняет candidate, исходный v7 document остаётся byte-equivalent.
+
 Каждая room boundary разбивается в точках:
 
 - vertices всех room polygons;
@@ -321,8 +330,12 @@ Undo/Redo восстанавливает exact snapshots с теми же IDs. C
 - ID lineage split/merge/rehost;
 - persisted/runtime fingerprints.
 
-Каждая structural mutation работает над local candidate и проходит
-`commitWallSegmentModel(candidate)` до `_commitPhysicalGeometry`/backend write.
+Каждая structural mutation работает над local candidate, сначала пропускает
+его через `canonicalizeConfigGeometry` #291, затем через
+`commitWallSegmentModel(candidate)` и только после этого достигает
+`_commitPhysicalGeometry`/backend write. Канонизация и identity migration входят
+в одну атомарную commit-транзакцию; результат первой является единственным
+координатным input второй.
 Source guard перечисляет все structural writer entrances и падает, если новый
 путь записывает `rooms.poly`, `walls`, `wall_segments`, `partitions`, drafts или
 architectural openings мимо barrier.
@@ -396,7 +409,7 @@ compatibility `poly/walls`; безопасное редактирование с
 
 | Key | RU | EN |
 |---|---|---|
-| `toast.wall_model_migration_blocked` | `Не удалось обновить модель стен: {reason}. План не изменён.` | `The wall model could not be updated: {reason}. The plan was not changed.` |
+| `toast.wall_model_migration_blocked` | `Не удалось обновить модель стен: {reason}. План не изменён. Запустите «Оптимизировать планы»; если ошибка повторится, исправьте конфликтующую геометрию стен.` | `The wall model could not be updated: {reason}. The plan was not changed. Run “Optimize plans”; if the error repeats, fix the conflicting wall geometry.` |
 | `toast.wall_model_client_outdated` | `Обновите карточку и перезагрузите страницу перед редактированием плана.` | `Update the card and reload the page before editing the plan.` |
 | `gs.wall_segments_migrated` | `Стабилизировано сегментов стен: {n}.` | `Wall segments stabilised: {n}.` |
 
@@ -423,10 +436,13 @@ exception text и config values не интерполируются.
 
 ### AC1. Детерминированная lossless migration
 
-v7 fixtures с outer/shared/partial-overlap/T/X/diagonal/open span/key-only и
-exact walls дважды дают byte-equivalent v8 candidate. Polygon area, winding,
-wall-body path, clean floor, opening projection, Glow/sun barriers и isometric
-geometry до/после равны по существующим строгим/golden контрактам.
+v7 fixtures с outer/shared/partial-overlap/T/X/diagonal/open span/key-only,
+exact walls и lattice-noise по обе стороны порога #291 дважды дают
+byte-equivalent v8 candidate. Шум внутри порога сначала канонизируется и не
+создаёт micro-segments; координата вне порога не схлопывается молча. Polygon
+area, winding, wall-body path, clean floor, opening projection, Glow/sun
+barriers и isometric geometry до/после равны по существующим строгим/golden
+контрактам.
 
 **Доказательство:** TS migration unit matrix + golden/static path comparison +
 backend fixture parity.
@@ -637,7 +653,8 @@ materialization старый stable release может показать compatib
 4. `cm:0` нужен для полного catalog, но не открывает пользователю функционал
    #306 и не заменяет `open_spans/open_to` этой задачей.
 5. Migration выполняется lazy on structural write/Optimize, не на read и не на
-   device/layout-only save.
+   device/layout-only save; внутри одной транзакции она всегда получает
+   candidate после `canonicalizeConfigGeometry` #291 с его порогом `1e-4` шага.
 6. Старый client может читать projection, но structural writes в v8 fail-closed.
 7. Deterministic hash используется только для первоначальной migration; после
    неё geometry никогда не определяет ID.
