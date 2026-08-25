@@ -4,6 +4,7 @@ import test from 'node:test';
 import {
   hexToRgb, hsvToHex, hsvToRgb, normalizeHexColor, normalizeHue, rgbToHex, rgbToHsv,
 } from '../test-build/color-picker.js';
+import { readAllStylesSource } from './styles-source.mjs';
 
 test('hex drafts accept only three or six digits and normalize on commit', () => {
   assert.equal(normalizeHexColor('#AbC'), '#aabbcc');
@@ -80,7 +81,7 @@ test('the hue range exposes one cyclic spectrum without restyling other ranges',
 
 test('activity color and ripple size keep independent readable rows', () => {
   const card = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
-  const styles = readFileSync(new URL('../src/styles.ts', import.meta.url), 'utf8');
+  const styles = readAllStylesSource();
   const start = card.indexOf("d.display === 'icon_ripple'");
   const end = card.indexOf("marker.activity_alarm_note", start);
   const ripple = card.slice(start, end);

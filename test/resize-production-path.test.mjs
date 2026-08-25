@@ -1,10 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { readAllStylesSource } from './styles-source.mjs';
 
 const card = fs.readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
 const resize = fs.readFileSync(new URL('../src/resize.ts', import.meta.url), 'utf8');
-const styles = fs.readFileSync(new URL('../src/styles.ts', import.meta.url), 'utf8');
+const styles = readAllStylesSource();
 const en = JSON.parse(fs.readFileSync(new URL('../src/i18n/en.json', import.meta.url), 'utf8'));
 const ru = JSON.parse(fs.readFileSync(new URL('../src/i18n/ru.json', import.meta.url), 'utf8'));
 

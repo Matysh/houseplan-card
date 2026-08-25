@@ -2,7 +2,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-const source = (name) => readFileSync(new URL(`../src/${name}`, import.meta.url), 'utf8');
+import { readAllStylesSource } from './styles-source.mjs';
+
+// #266: styles.ts is being split into surface files — style greps must
+// see the whole sheet, other sources keep the direct read.
+const source = (name) => name === 'styles.ts'
+  ? readAllStylesSource()
+  : readFileSync(new URL(`../src/${name}`, import.meta.url), 'utf8');
 
 test('issue 213 resolves the effective base before the face without a late visual factor', () => {
   const styles = source('styles.ts');

@@ -1,9 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { readAllStylesSource } from './styles-source.mjs';
 
 const card = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
-const styles = readFileSync(new URL('../src/styles.ts', import.meta.url), 'utf8');
+const styles = readAllStylesSource();
 const openings = readFileSync(new URL('../src/iso-openings.ts', import.meta.url), 'utf8');
 const packageJson = readFileSync(new URL('../package.json', import.meta.url), 'utf8');
 const spaceCard = readFileSync(new URL('../src/space-card.ts', import.meta.url), 'utf8');

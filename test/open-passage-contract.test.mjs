@@ -1,9 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { readAllStylesSource } from './styles-source.mjs';
 
 const card = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
-const styles = readFileSync(new URL('../src/styles.ts', import.meta.url), 'utf8');
+const styles = readAllStylesSource();
 const staticRender = readFileSync(new URL('../src/space-render.ts', import.meta.url), 'utf8');
 const backend = readFileSync(new URL('../custom_components/houseplan/websocket_api.py', import.meta.url), 'utf8');
 const importer = readFileSync(new URL('../custom_components/houseplan/import_export.py', import.meta.url), 'utf8');
