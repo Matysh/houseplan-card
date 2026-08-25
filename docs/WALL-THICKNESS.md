@@ -410,6 +410,15 @@ Boundary/Thickness targets (`demo/smoke_optimize_coincident_partition.mjs`). The
 copying their contents into Git and checks raw, Optimize preview, applied
 canonical storage and reload states.
 
+### Junction tooling (#302)
+
+Purpose-built checks for node material: `junctionContractHoles` (the objective
+«body ⊇ strips ∪ fans inside the facade bound» invariant, self-checked against
+a deliberately holed fixture), the `smoke_junction_holes` wiring probe that
+verifies the same contract against the rendered `d` path, sixteen close-up
+golden scenes (`junction-*`) plus the owner's repro scene, and the
+`junction-*` mutants in `scripts/mutation-gate.mjs`.
+
 ## 9. Independent partitions, drafts and columns
 
 Their thickness is stored directly in centimetres: 1–100 cm for draft and
