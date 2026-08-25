@@ -16,41 +16,40 @@
 `docs/specs/258-wall-key-storage-roundtrip.md`,
 `docs/specs/262-readd-child-entity-after-device-delete.md`.
 
-## 1. Пользовательский сценарий
+## 1. Сценарий и персона
 
-Администратор переносит один этаж между экземплярами Home Assistant или
-несколько раз импортирует экспортированную ранее копию. Импорт должен каждый
-раз добавлять независимое пространство, сохранять все внутренние связи и
-показывать до Apply точный результат, который будет записан.
+Администратор House Plan переносит отдельный этаж между своими экземплярами
+Home Assistant, сохраняет резервную копию импортированного этажа и позднее
+импортирует её ещё раз. Он ожидает получить ещё одну независимую копию этажа:
+комнаты, устройства, подписи и связи должны остаться на своих местах, а окно
+импорта — честно показать все исправления и проблемы до нажатия «Добавить».
 
-Сейчас каждый следующий экспорт/импорт добавляет ещё один служебный префикс:
-`f1` → `space_f1_<hash>` → `space_space_f1_<hash>_<hash>`. Ссылка target на
-предыдущее поколение того же импортированного пространства не распознаётся:
-exact-map из #244 знает только id, приехавший в текущем файле. Кроме того,
-перечень внутренних ссылок размазан по нескольким подсистемам, а preview и
-Apply независимо генерируют случайные id и поэтому описывают разные кандидаты.
+Пользователю не нужно понимать внутренние идентификаторы, поколения импорта или
+устройство хранилища. Если безопасно восстановить связь нельзя, House Plan
+сохраняет данные, сообщает о проблеме и предлагает запустить «Оптимизировать
+планы», а не выбирает цель наугад.
 
-### До
+Импорт и его подробности относятся к административному desktop-редактированию.
+В View, kiosk и обычном просмотре ничего нового не появляется. На touch-
+устройствах диалог остаётся доступен, но применяется общая политика проекта:
+полноценная работа редакторов гарантируется на desktop, touch-редактирование
+поддерживается по остаточному принципу.
 
-- повторные импорты наращивают вложенные префиксы;
-- мёртвая target-ссылка на предыдущее поколение не переносится к новому;
-- часть типов ссылок проверяется импортом, но отсутствует в независимом
-  `model-invariants`;
-- preview сообщает свойства одного случайно собранного кандидата, Apply может
-  собрать другой.
+## 2. Что человек увидит до и после
 
-### После
+**До:** несколько циклов «экспортировать импортированный этаж → импортировать
+снова» постепенно усложняют служебные имена. Некоторые сохранённые связи со
+старой копией этажа не восстанавливаются. Предпросмотр может описать не совсем
+тот набор новых объектов, который фактически будет создан после подтверждения.
 
-- новый id всегда строится от канонического корня lineage и остаётся коротким;
-- доказанная единственная мёртвая ссылка между поколениями переносится, а
-  неоднозначная сохраняется и явно попадает в отчёт;
-- импорт использует одну типизированную матрицу plan-id ссылок;
-- Apply пишет ровно тот неизменяемый кандидат, который прошёл preview и
-  подтверждение;
-- Optimize остаётся единственным общим инспектором модели, import preview
-  показывает только локальный результат импорта.
+**После:** каждый повторный импорт создаёт обычную независимую копию без
+наращивания служебного «хвоста». В предпросмотре отдельными строками показано,
+сколько существующих связей восстановлено, сколько проблем сохранено без
+изменений и сколько связей пришлось отбросить по уже действующему правилу
+переноса. Кнопка «Добавить» применяет именно показанный вариант. Неоднозначные
+данные не исчезают; для их обслуживания остаётся «Оптимизировать планы».
 
-## 2. Подтверждённое состояние кода
+## 3. Подтверждённое состояние кода
 
 1. `build_space_merge()` в `import_export.py` строит id через `_fresh(prefix,
    old, used)`. Stem берётся из текущего `old`, поэтому import-of-import
@@ -68,7 +67,7 @@ Apply независимо генерируют случайные id и поэ�
    plan-id ссылки. Они должны проверяться отдельными инвариантами и не должны
    участвовать в id-remap.
 
-## 3. Унаследованные продуктовые решения
+## 4. Унаследованные продуктовые решения
 
 Эта задача не переоткрывает уже принятые решения.
 
@@ -85,7 +84,7 @@ Apply независимо генерируют случайные id и поэ�
    превращается в update/replace существующего пространства.
 5. Full restore, одношаговый Undo и crash-safe paired commit из #50 не меняются.
 
-## 4. Цели и границы
+## 5. Цели и границы
 
 ### Входит
 
@@ -108,9 +107,9 @@ Apply независимо генерируют случайные id и поэ�
 - автоматический Optimize после импорта;
 - изменение full-import semantics или новый слот Undo.
 
-## 5. Канонический lineage id
+## 6. Канонический lineage id
 
-### 5.1 Формат
+### 6.1 Формат
 
 Для namespace `P` новый id имеет вид:
 
@@ -144,7 +143,7 @@ space, room, marker, partition, opening, decor, draft, column
 пользовательский suffix. Это не криптографическое доказательство происхождения,
 а только стабильная signature для уже известного формата импортных id.
 
-### 5.2 Равенство lineage
+### 6.2 Равенство lineage
 
 Два id одного namespace принадлежат одному lineage, если их канонические roots
 равны. Равенство lineage разрешает remap только при одновременном выполнении
@@ -153,23 +152,23 @@ space, room, marker, partition, opening, decor, draft, column
 1. исходная ссылка мертва в текущей target-модели;
 2. среди живых кандидатов нужного типа существует ровно один совместимый
    lineage;
-3. тип владельца и поля разрешает такую цель по матрице §7;
+3. тип владельца и поля разрешает такую цель по матрице §8;
 4. exact live id отсутствует;
 5. нет второго живого кандидата с тем же root.
 
 При неоднозначности ссылка сохраняется буквально и отражается в
 `preservedUnresolved`; выбор по порядку массива запрещён.
 
-### 5.3 Один алгоритм для Python и TypeScript
+### 6.3 Один алгоритм для Python и TypeScript
 
 Backend import и frontend Optimize используют одинаковый conformance fixture с
 валидными, вложенными, ложнопохожими, слишком глубокими и unicode-случаями.
 Python и TypeScript могут иметь отдельные реализации, но CI требует одинаковый
 результат fixture. Это предотвращает расхождение импортного ремонта и Optimize.
 
-## 6. Неизменяемый кандидат preview/apply
+## 7. Неизменяемый кандидат preview/apply
 
-### 6.1 `SpaceMergeCandidate`
+### 7.1 `SpaceMergeCandidate`
 
 Первый успешный preview один раз строит серверный кандидат и сохраняет под
 одноразовым token:
@@ -187,7 +186,7 @@ Token имеет существующие TTL, owner binding и общие count
 хранилища. Candidate не возвращается клиенту целиком и не принимается обратно
 от клиента.
 
-### 6.2 Apply
+### 7.2 Apply
 
 Apply под `write_lock` повторно проверяет token, owner, TTL, candidate digest,
 revision и обязательные подтверждения. После этого paired commit записывает
@@ -202,7 +201,7 @@ revision и обязательные подтверждения. После эт
 Существующий Undo snapshot, attachment-detach, missing-plan preflight,
 permissions и recovery contract #50 сохраняются.
 
-## 7. Матрица внутренних ссылок
+## 8. Матрица внутренних ссылок
 
 Матрица является нормативной. Код может быть разделён по владельцам, но новые
 plan-id поля нельзя добавить без обновления матрицы и invariant tests.
@@ -239,7 +238,7 @@ plan-id поля нельзя добавить без обновления ма�
 Обнаруженное plan-id поле добавляется в эту таблицу и тесты; молчаливое
 исключение запрещено.
 
-## 8. Порядок remap и конфликты
+## 9. Порядок remap и конфликты
 
 1. Валидировать и нормализовать source без мутации target.
 2. Построить index target по точному id, типу и canonical lineage.
@@ -261,7 +260,7 @@ plan-id поля нельзя добавить без обновления ма�
 duplicate-policy сняла свойства источника света, не может автоматически стать
 целью `marker:*` light link.
 
-## 9. Структурированный отчёт
+## 10. Структурированный отчёт
 
 Backend возвращает стабильный report с агрегатами и ограниченными примерами:
 
@@ -290,7 +289,25 @@ Import preview показывает:
 Ноль новых результатов не добавляет визуальный шум. Report preview и ответ
 Apply имеют одинаковый candidate digest и одинаковые counters.
 
-## 10. Инварианты и отказоустойчивость
+Обязательные RU/EN i18n-ключи этой поверхности:
+
+- существующие `backup.repaired_target_refs` и
+  `backup.dropped_marker_links` сохраняются;
+- `backup.preserved_unresolved_refs` — количество сохранённых неразрешимых
+  ссылок;
+- `backup.preserved_unresolved_hint` — пояснение про сохранение данных и
+  «Оптимизировать планы»;
+- `backup.import_details` — действие раскрытия подробностей;
+- `backup.import_detail.incoming_remapped`,
+  `backup.import_detail.target_repaired`,
+  `backup.import_detail.collisions`,
+  `backup.import_detail.dropped_links` и
+  `backup.import_detail.bounded_lineages` — подписи категорий.
+
+Тексты реализуются синхронно в `src/i18n/en.json` и `src/i18n/ru.json`; raw key
+или техническое английское имя категории в пользовательский UI не попадает.
+
+## 11. Инварианты и отказоустойчивость
 
 Перед выдачей token candidate проходит те же backend validators, что Apply, и
 новый typed reference invariant. `scripts/model-invariants.mjs` получает
@@ -316,7 +333,7 @@ refs считаются ошибкой и блокируют preview/apply.
 детерминирован: различаться может новый случайный suffix, но не root, матрица
 решений и counts. Один сохранённый candidate полностью детерминирован.
 
-## 11. Совместимость и миграция
+## 12. Совместимость и миграция
 
 - `schema_version` и `model_version` не меняются;
 - существующие nested ids остаются читаемыми и не переписываются фоново;
@@ -327,7 +344,20 @@ refs считаются ошибкой и блокируют preview/apply.
 - Optimize использует lineage только в доказуемом repair path и остаётся
   идемпотентным после Save + reload.
 
-## 12. Edge cases
+## 13. Риски
+
+| Риск | Последствие | Снижение риска / обязательное доказательство |
+|---|---|---|
+| Ложное совпадение lineage пользовательских id | связь переносится не к тому объекту | strict parser, совпадение namespace/типа, только dead ref, unique candidate; ambiguity fixture |
+| Расхождение Python import и TypeScript Optimize | один путь снова создаёт долг другого | общий conformance fixture и parity CI |
+| Preview хранит крупный готовый candidate | рост памяти backend | действующие per-document, global-count и TTL limits; отказ до token при превышении модели |
+| Новая матрица неполна | часть ссылок остаётся dangling | сверка validation/serializers, registry tests и мутанты каждой категории |
+| Duplicate marker policy меняет допустимость light-link | связь ведёт к virtual copy без семантики света | duplicate policy выполняется до remap; positive/negative tests skip и virtual |
+| Жёсткий invariant ломает legacy config | старый план нельзя импортировать | fail-closed registry применяется только к candidate-generated дефектам; legacy unresolved сохраняется и отчитывается |
+| Revalidate незаметно меняет решение | пользователь подтверждает не тот import | новый digest/report, сброс подтверждений и повторный явный preview |
+| Target-remap повреждает геометрию | визуальная регрессия стен/проёмов | wall keys/open spans исключены из registry; semantic preservation fixtures |
+
+## 14. Edge cases
 
 1. Пользовательский id случайно похож на import id — strict parser снимает
    только полный слой своего namespace с 8 lowercase hex.
@@ -349,7 +379,7 @@ refs считаются ошибкой и блокируют preview/apply.
 11. `walls[*].key` текстово похож на id — остаётся неизменным.
 12. Кандидат превышает лимиты памяти/модели — preview отклоняется до token.
 
-## 13. Acceptance criteria
+## 15. Acceptance criteria
 
 ### AC1 — плоский lineage
 
@@ -365,7 +395,7 @@ ids с одним namespace-префиксом. Ни один новый id не
 
 ### AC3 — полная матрица
 
-Для каждой строки §7 есть positive и unresolved/conflict test. Geometry carrier
+Для каждой строки §8 есть positive и unresolved/conflict test. Geometry carrier
 fixtures доказывают byte/semantic preservation wall keys и open spans.
 
 ### AC4 — точный preview
@@ -404,14 +434,26 @@ Index/remap линейны по числу owners + refs; нет полного 
 
 ### AC10 — пользовательские артефакты
 
-Если новый report виден пользователю, обновлены RU/EN i18n,
-`docs/USER-GUIDE.md`, `docs/USER-GUIDE.ru.md`, `docs/CHANGELOG.md` и
-`docs/CHANGELOG.ru.md`. Изменённый import preview покрыт canonical-doc
-screenshots/golden review. Если итоговая реализация не меняет видимый UI,
-changelog фиксирует только `small fixes and improvements`, а screenshot delta
-не требуется.
+Обновлены перечисленные в §10 RU/EN i18n, `docs/USER-GUIDE.md`,
+`docs/USER-GUIDE.ru.md`, `docs/CHANGELOG.md` и `docs/CHANGELOG.ru.md`.
+Изменённый import preview покрыт canonical-doc screenshots и golden review.
 
-## 14. План реализации
+### 15.1 Матрица доказательств
+
+| AC | Обязательное доказательство до S7 |
+|---|---|
+| AC1 | Python unit/backend import-of-import для каждого namespace + shared lineage fixture |
+| AC2 | Backend positive/live/ambiguous/type-mismatch tests и regression #244 |
+| AC3 | Parameterized unit/backend test каждой строки §8 + geometry preservation fixture |
+| AC4 | Backend preview/apply/revalidate tests с зафиксированным digest и мутантом повторного `_fresh()` |
+| AC5 | Backend active/tombstone/unresolved fixtures + regressions #252/#262 |
+| AC6 | Python/TS fixture parity и `model-invariants` mutant fixture каждой новой категории |
+| AC7 | Frontend Optimize unit: first pass, Save/reload, zero-op second pass + regression #248 |
+| AC8 | Targeted backend/frontend suites #50/#244/#248/#252/#258/#262; permissions/revision/tamper/recovery cases |
+| AC9 | Synthetic maximum-size backend test, owner/TTL/limit security tests и code review отсутствия O(n²) lookup |
+| AC10 | `check-i18n`, `check-docs`, RU/EN guide/changelog diff, targeted browser smoke и reviewed canonical golden import preview |
+
+## 16. План реализации
 
 1. Добавить shared lineage conformance fixture и чистые helpers Python/TS.
 2. Выделить typed reference registry/matrix и покрыть её unit tests.
@@ -423,7 +465,7 @@ changelog фиксирует только `small fixes and improvements`, а scr
 7. Добавить UI/i18n report без нового modal.
 8. Обновить canonical docs/changelog и targeted browser/backend tests.
 
-## 15. Проверки этапа реализации
+## 17. Проверки этапа реализации
 
 До S7 обязательны:
 
@@ -438,14 +480,14 @@ changelog фиксирует только `small fixes and improvements`, а scr
 Полный smoke/golden/performance прогон остаётся на пре-релизном цикле по
 каноническому процессу проекта.
 
-## 16. Rollback
+## 18. Rollback
 
 Кодовый rollback возвращает прежнее построение candidate и exact-map, не
 требуя миграции сохранённых данных: новые ids валидны для старого reader.
 Откат не переписывает уже созданные пространства. Пользовательский rollback
 конкретного Apply выполняется существующим одношаговым Undo #50.
 
-## 17. Допущения
+## 19. Допущения
 
 - формат импортного suffix остаётся ровно 8 lowercase hex;
 - новые plan-id namespace добавляются только вместе с обновлением registry,
