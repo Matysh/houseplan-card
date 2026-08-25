@@ -30,7 +30,8 @@
 
 import { spawnSync } from 'node:child_process';
 import {
-  cpSync, existsSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync,
+  cpSync, existsSync, mkdtempSync, readFileSync, rmSync, symlinkSync, unlinkSync,
+  writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -3016,6 +3017,11 @@ function makeWorktree() {
 }
 
 function dropWorktree(dir) {
+  // On Windows a directory junction can be traversed by recursive worktree
+  // cleanup. Detach it first; otherwise removing the mutant may empty the real
+  // repository's node_modules target instead of deleting only the junction.
+  const modules = join(dir, 'node_modules');
+  if (existsSync(modules)) unlinkSync(modules);
   spawnSync('git', ['-C', repoRoot, 'worktree', 'remove', '--force', dir], { encoding: 'utf8' });
   rmSync(dir, { recursive: true, force: true });
 }
