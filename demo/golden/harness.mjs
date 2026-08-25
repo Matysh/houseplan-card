@@ -675,6 +675,43 @@ export async function prepareGoldenScenario(page, scenario) {
       await card.updateComplete;
       await settleMode(card);
     }
+    // #304: the two existing hidden-wall golden scenes also guard the static
+    // architectural overlay in every Plan tool. Finish in draw so the reviewed
+    // pixels stay stable; a missing/changed tool projection fails before capture.
+    if (scenario.hiddenWallDiagnostics) {
+      const tools = [
+        'select', 'draw', 'column', 'merge', 'split', 'resize',
+        'opening', 'boundary', 'wallthick', 'delroom',
+      ];
+      const snapshot = () => {
+        const overlay = card.renderRoot.querySelector('[data-hp="plan-snap-overlay"]');
+        if (!overlay || overlay.getAttribute('pointer-events') !== 'none') return null;
+        return JSON.stringify({
+          lines: [...overlay.querySelectorAll('.plan-snap-line')].map((line) => [
+            line.getAttribute('data-key'), line.getAttribute('x1'), line.getAttribute('y1'),
+            line.getAttribute('x2'), line.getAttribute('y2'),
+          ]),
+          endpoints: [...overlay.querySelectorAll('.plan-snap-node[data-kind="endpoint"]')]
+            .map((node) => [node.getAttribute('data-key'), node.getAttribute('cx'), node.getAttribute('cy')]),
+        });
+      };
+      let expected = null;
+      for (const tool of tools) {
+        card._tool = tool;
+        card._clearPlanSnapHover();
+        card.requestUpdate();
+        await card.updateComplete;
+        const current = snapshot();
+        if (expected == null) expected = current;
+        if (!current || current !== expected) {
+          throw new Error(`golden plan-axis parity failed for ${tool}: ${scenario.id}`);
+        }
+      }
+      card._tool = 'draw';
+      card.requestUpdate();
+      await card.updateComplete;
+      await frame();
+    }
     if (scenario.wallUnionIsolation) {
       const result = card._wallUnionGeometry?.();
       const paths = [...card.renderRoot.querySelectorAll('[data-hp="wall"]')];

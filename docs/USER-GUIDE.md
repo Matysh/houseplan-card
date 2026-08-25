@@ -716,11 +716,13 @@ when every one of its segments is fully redundant; a free, partly covered or
 thicker chain remains byte-for-byte unchanged. The report counts absorbed
 independent-wall sections and removed whole chains, not source records.
 
-In the Plan editor, an independent wall or saved chain hidden under other wall
-bodies retains a thin centre axis and its original endpoint nodes above the
-masonry. These pointer-transparent diagnostics do not change snapping or
-selection and are absent from View. They disappear after Apply only when the
-corresponding independent geometry was safely absorbed or removed.
+Every Plan editor tool draws room, independent-wall and saved-chain centre axes
+and endpoint nodes through the same layer above wall bodies. An independent
+wall or saved chain hidden under other masonry additionally retains its source
+diagnostic axis and nodes. These pointer-transparent layers do not change
+snapping or selection and are absent outside the Plan editor. The diagnostic
+disappears after Apply only when the corresponding independent geometry was
+safely absorbed or removed.
 
 Old positions are classified before Apply. A position whose room label, device
 or light-group owner is proven absent is removed automatically and counted by a

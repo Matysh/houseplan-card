@@ -236,7 +236,7 @@ const out = await page.evaluate(async () => {
   card._activateMarkupTool('select');
   await update();
   const diagnostic = root().querySelector('[data-hp="hidden-wall-diagnostic"]');
-  result.otherPlanToolsHaveHiddenDiagnostic = !overlay() && !!diagnostic
+  result.otherPlanToolsKeepFullOverlayAndHiddenDiagnostic = !!overlay() && !!diagnostic
     && diagnostic.querySelectorAll('.hidden-wall-line').length === 1
     && diagnostic.querySelectorAll('.hidden-wall-node').length === 2;
   const editorVirtualWalls = root().querySelector('.openwalls');
@@ -256,9 +256,96 @@ const out = await page.evaluate(async () => {
   result.hiddenDiagnosticPaintsBeforeTransientSnap = !!(
     drawDiagnostic.compareDocumentPosition(drawSnap) & Node.DOCUMENT_POSITION_FOLLOWING
   );
+
+  // #304 regression fixture: one room plus two independent walls which overlap
+  // its left/bottom axes and continue beyond them. The six source endpoints are
+  // the exact topology from the field report, reduced to deterministic data.
+  const parityCfg = {
+    model_version: 7,
+    spaces: [{
+      id: 'axis-parity', title: 'Axis parity', cell_cm: 5, view_box: [0, 0, 1, 0.75],
+      rooms: [{
+        id: 'room', name: 'Room', area: null,
+        poly: [[0.2, 0.2], [0.6, 0.2], [0.6, 0.6], [0.2, 0.6]],
+      }],
+      room_drafts: [], openings: [], open_spans: [],
+      partitions: [
+        { id: 'vertical', a: [0.2, 0.05], b: [0.2, 0.6], cm: 20 },
+        { id: 'horizontal', a: [0.2, 0.6], b: [0.9, 0.6], cm: 20 },
+      ],
+      settings: { fill_mode: 'none', show_borders: true, show_names: false },
+    }],
+    markers: [], settings: {},
+  };
+  card._serverCfg = JSON.parse(JSON.stringify(parityCfg));
+  card._layout = {};
+  card._space = 'axis-parity';
+  card._modelCache = null;
+  card._frame = null;
+  card._activeDraftId = null;
+  card._path = [];
+  card._cfgEpoch++;
+  card._setMode('plan');
+  await update();
+
+  const staticSnapshot = () => {
+    const current = overlay();
+    return JSON.stringify({
+      lines: [...current.querySelectorAll('.plan-snap-line')].map((line) => [
+        line.getAttribute('data-key'), line.getAttribute('data-source-kind'),
+        line.getAttribute('x1'), line.getAttribute('y1'),
+        line.getAttribute('x2'), line.getAttribute('y2'),
+      ]),
+      endpoints: [...current.querySelectorAll('.plan-snap-node[data-kind="endpoint"]')]
+        .map((node) => [
+          node.getAttribute('data-key'), node.getAttribute('cx'), node.getAttribute('cy'),
+        ]),
+    });
+  };
+  const tools = [
+    'select', 'draw', 'column', 'merge', 'split', 'resize',
+    'opening', 'boundary', 'wallthick', 'delroom',
+  ];
+  let expectedSnapshot = null;
+  let everyToolMatches = true;
+  let everyToolIsPassive = true;
+  let everyToolPaintsAboveWalls = true;
+  let thicknessHasSixNodes = false;
+  for (const tool of tools) {
+    card._tool = tool;
+    card._clearPlanSnapHover();
+    await update();
+    const current = overlay();
+    const bodies = root().querySelector('.wallbodies');
+    const snapshot = current ? staticSnapshot() : null;
+    if (expectedSnapshot == null) expectedSnapshot = snapshot;
+    everyToolMatches &&= !!current && snapshot === expectedSnapshot;
+    everyToolIsPassive &&= current?.getAttribute('pointer-events') === 'none'
+      && getComputedStyle(current).pointerEvents === 'none'
+      && !current.querySelector('.plan-snap-node[data-active="true"]');
+    everyToolPaintsAboveWalls &&= !!bodies && !!current
+      && !!(bodies.compareDocumentPosition(current) & Node.DOCUMENT_POSITION_FOLLOWING);
+    if (tool === 'wallthick') {
+      thicknessHasSixNodes = current.querySelectorAll(
+        '.plan-snap-node[data-kind="endpoint"]',
+      ).length === 6 && current.querySelectorAll('.plan-snap-line').length === 6;
+    }
+  }
+  result.allPlanToolsShareStaticAxesAndNodes = everyToolMatches;
+  result.allPlanToolOverlaysStayPointerTransparent = everyToolIsPassive;
+  result.allPlanToolOverlaysPaintAboveWallBodies = everyToolPaintsAboveWalls;
+  result.thicknessShowsCompleteSixNodeFixture = thicknessHasSixNodes;
+
+  card._setMode('devices');
+  await update();
+  const devicesHaveNoPlanOverlay = !overlay();
+  card._setMode('decor');
+  await update();
+  const decorHasNoPlanOverlay = !overlay();
   card._setMode('view');
   await update();
-  result.viewHasNoOverlay = !overlay()
+  result.nonPlanModesHaveNoOverlay = devicesHaveNoPlanOverlay && decorHasNoPlanOverlay
+    && !overlay()
     && !root().querySelector('[data-hp="hidden-wall-diagnostic"]');
 
   return result;

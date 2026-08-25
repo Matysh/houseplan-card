@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Every Plan editor tool now shows the same complete set of wall axes and
+  structural endpoints. Switching from Walls to Thickness no longer hides room
+  axes, while each tool keeps its own hints and live preview
+  ([#304](https://github.com/Matysh/houseplan-card/issues/304)).
 - Re-importing an already imported space no longer grows nested internal-ID
   prefixes. Preview and Apply now share one immutable candidate, safely repair
   only uniquely proven references to earlier copies, and preserve ambiguous

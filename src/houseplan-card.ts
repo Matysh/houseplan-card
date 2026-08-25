@@ -17575,7 +17575,10 @@ class HouseplanCard extends LitElement {
               opacity="${modeVisual?.editorWeight ?? 1}">${this._renderOpeningPlacementPreview()}</g>` : nothing}
             ${opMeasure ? this._renderOpeningDimensionGuides(opMeasure) : nothing}
             ${opMeasure?.guide ? this._renderOpeningCenterTick(opMeasure.guide) : nothing}
-            ${this._markup && this._tool === 'draw' ? svg`<g class="hp-editor-only-layer"
+            ${''/* Static architectural axes and endpoints are a Plan-editor
+                   invariant. Tool-specific hover/snap state is resolved inside
+                   the overlay and remains exclusive to Walls. */}
+            ${this._markup ? svg`<g class="hp-editor-only-layer"
               opacity="${modeVisual?.editorWeight ?? 1}">${this._renderPlanSnapOverlay()}</g>` : nothing}
             ${disp.hideOpenings && !this._markup
               ? nothing
@@ -19838,7 +19841,7 @@ class HouseplanCard extends LitElement {
   }
 
   private _renderPlanSnapOverlay(): TemplateResult {
-    if (!this._markup || this._tool !== 'draw') {
+    if (!this._markup) {
       return svg`` as unknown as TemplateResult;
     }
     const geometry = this._planSnapGeometrySnapshot().value;

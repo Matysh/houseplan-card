@@ -33,6 +33,31 @@ test('collector includes room rectangles, polygons, saved drafts and partitions'
   assert.ok(geometry.endpoints.some((entry) => entry.point[0] === 150 && entry.point[1] === 100));
 });
 
+test('room with two coincident extended partitions keeps six structural endpoints', () => {
+  const geometry = buildPlanSnapGeometry({
+    space: space({
+      rooms: [{
+        id: 'room', area: null,
+        poly: [[200, 200], [600, 200], [600, 600], [200, 600]],
+      }],
+      partitions: [
+        { id: 'vertical', a: [200, 50], b: [200, 600], cm: 20 },
+        { id: 'horizontal', a: [200, 600], b: [900, 600], cm: 20 },
+      ],
+    }),
+  });
+  assert.equal(geometry.segments.length, 6);
+  assert.deepEqual(geometry.endpoints.map((entry) => entry.point)
+    .sort((left, right) => left[0] - right[0] || left[1] - right[1]), [
+    [200, 50],
+    [200, 200],
+    [200, 600],
+    [600, 200],
+    [600, 600],
+    [900, 600],
+  ]);
+});
+
 test('coincident endpoints and axes are deduplicated independently of direction', () => {
   const geometry = buildPlanSnapGeometry({
     space: space({
