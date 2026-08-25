@@ -19517,7 +19517,7 @@ class HouseplanCard extends LitElement {
                 @input=${(e: Event) => this._filterOpeningEntities(
                   kind, (e.target as HTMLInputElement).value,
                 )} />
-              <div class="candlist" role="listbox">
+              <div class="candlist">
                 <button type="button" class="cand opening-entity-candidate ${cur ? '' : 'sel'}"
                   data-opening-entity="" @click=${() => this._selectOpeningEntity(kind, '')}>
                   <span class="cl">${this._t('opening.none')}</span>
