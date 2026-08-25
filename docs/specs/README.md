@@ -1,6 +1,6 @@
 # Спецификации задач
 
-Актуально на 2026-08-19.
+Актуально на 2026-08-25.
 
 GitHub Issues и GitHub Projects (v2) остаются единственным каноническим backlog проекта. Этот каталог содержит развёрнутые ТЗ: каждое ТЗ ссылается на issue, а issue — на соответствующий файл. Статус, приоритет и факт завершения меняются только в GitHub.
 
@@ -81,6 +81,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#298](https://github.com/Matysh/houseplan-card/issues/298) Resize сохраняет wall records на решётке и на carrier | [298-resize-wall-thickness-carrier.md](298-resize-wall-thickness-carrier.md) |
 | [#299](https://github.com/Matysh/houseplan-card/issues/299) Записи толщины не пересекают границу роли стены | [299-mixed-role-wall-records.md](299-mixed-role-wall-records.md) |
 | [#314](https://github.com/Matysh/houseplan-card/issues/314) Атомарная запись v8 drafts и независимой геометрии | [314-v8-draft-write-regression.md](314-v8-draft-write-regression.md) |
+| [#306](https://github.com/Matysh/houseplan-card/issues/306) Нулевые стены вместо виртуальных границ | [306-zero-thickness-walls.md](306-zero-thickness-walls.md) |
 
 ## P2
 
