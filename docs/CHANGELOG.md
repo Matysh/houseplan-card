@@ -19,7 +19,10 @@
   atomically on their first structural edit or through **Optimize plans**;
   Resize, Undo/Redo and repeated edits preserve the same identities without
   accumulating off-grid coordinates. The backend Optimize transaction also
-  enforces this upgrade when invoked directly. Ambiguous legacy geometry is
+  enforces this upgrade when invoked directly. An authored wall chain remains
+  valid when it becomes a room or independent walls, while a rejected
+  transaction stores no partial result and no longer reports false success.
+  Ambiguous legacy geometry is
   left unchanged with a recovery prompt. No Plan editor controls or
   zero-thickness-wall behaviour changed
   ([#282](https://github.com/Matysh/houseplan-card/issues/282)).

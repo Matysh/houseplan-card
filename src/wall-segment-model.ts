@@ -80,7 +80,9 @@ const canonicalSpan = (a: number[], b: number[]): [Point, Point] => (
 const lengthOf = (a: number[], b: number[]): number => Math.hypot(b[0] - a[0], b[1] - a[1]);
 
 /** Unique authored/derived contour coordinates that are materially off-grid. */
-export const wallModelOffGridValueCount = (space: any): number => {
+export const wallModelOffGridValueCount = (
+  space: any, additionalPoints: readonly (readonly number[])[] = [],
+): number => {
   const values = new Set<string>();
   const inspect = (value: unknown): void => {
     const number = Number(value);
@@ -100,6 +102,9 @@ export const wallModelOffGridValueCount = (space: any): number => {
       inspect(segment?.a?.[0]); inspect(segment?.a?.[1]);
       inspect(segment?.b?.[0]); inspect(segment?.b?.[1]);
     }
+  }
+  for (const additionalPoint of additionalPoints) {
+    inspect(additionalPoint?.[0]); inspect(additionalPoint?.[1]);
   }
   return values.size;
 };

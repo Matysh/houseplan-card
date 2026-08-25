@@ -7353,7 +7353,15 @@ class HouseplanCard extends LitElement {
     let safe = false;
     try {
       const afterSpace = committedCandidate.spaces.find((space: any) => space.id === before.spaceId);
-      safe = wallModelOffGridValueCount(afterSpace) <= wallModelOffGridValueCount(historyBefore)
+      // A completed point of the active, grid-snapped chain is authored input,
+      // even before its first draft record exists in `before`. Include that
+      // transient carrier in the growth baseline; later conversion from draft
+      // to room/partition must not count the same coordinate as newly derived.
+      const authoredPoints = this._path.length >= 2
+        ? this._path.map((point) => [point[0] / NORM_W, point[1] / NORM_W])
+        : [];
+      safe = wallModelOffGridValueCount(afterSpace)
+        <= wallModelOffGridValueCount(historyBefore, authoredPoints)
         && this._checkSpacePhysicalGeometry(committedCandidate, before.spaceId).ok;
     } catch {
       safe = false;
@@ -13692,7 +13700,7 @@ class HouseplanCard extends LitElement {
       else delete sp.walls;
     }
 
-    this._commitPhysicalGeometry(this._t('history.wall_face_batch'), before);
+    if (!this._commitPhysicalGeometry(this._t('history.wall_face_batch'), before)) return;
     delete this._resumeDraftBySpace[this._space];
     this._path = [];
     this._activeDraftId = null;

@@ -144,6 +144,11 @@ test('off-grid contour guard counts values once across compatibility projections
     wall_segments: [{ id: 'wall', a: [point, 0], b: [point, 1], cm: 20 }],
     walls: [{ key: 'legacy', a: [point, 0], b: [point, 1], cm: 20 }],
   }), 1);
+  assert.equal(
+    wallModelOffGridValueCount({ rooms: [] }, [[point, 0], [point, 1]]),
+    1,
+    'a transient authored path contributes its coordinates to the baseline once',
+  );
 });
 
 test('room openings acquire a stable wall host while partition hosts stay untouched', () => {
