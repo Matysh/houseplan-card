@@ -1,4 +1,4 @@
-globalThis.__HOUSEPLAN_BUILD_FINGERPRINT__="0ce1342d2e18ecd2b827db41c7e711753340167800530c3c8fca8471c42b13f6";const t=globalThis,e=t.ShadowRoot&&(void 0===t.ShadyCSS||t.ShadyCSS.nativeShadow)&&"adoptedStyleSheets"in Document.prototype&&"replace"in CSSStyleSheet.prototype,i=Symbol(),s=new WeakMap;let n=class{constructor(t,e,s){if(this._$cssResult$=!0,s!==i)throw Error("CSSResult is not constructable. Use `unsafeCSS` or `css` instead.");this.cssText=t,this.t=e}get styleSheet(){let t=this.o;const i=this.t;if(e&&void 0===t){const e=void 0!==i&&1===i.length;e&&(t=s.get(i)),void 0===t&&((this.o=t=new CSSStyleSheet).replaceSync(this.cssText),e&&s.set(i,t))}return t}toString(){return this.cssText}};const o=(t,...e)=>{const s=1===t.length?t[0]:e.reduce((e,i,s)=>e+(t=>{if(!0===t._$cssResult$)return t.cssText;if("number"==typeof t)return t;throw Error("Value passed to 'css' function must be a 'css' function result: "+t+". Use 'unsafeCSS' to pass non-literal values, but take care to ensure page security.")})(i)+t[s+1],t[0]);return new n(s,t,i)},a=e?t=>t:t=>t instanceof CSSStyleSheet?(t=>{let e="";for(const i of t.cssRules)e+=i.cssText;return(t=>new n("string"==typeof t?t:t+"",void 0,i))(e)})(t):t,{is:r,defineProperty:l,getOwnPropertyDescriptor:c,getOwnPropertyNames:h,getOwnPropertySymbols:d,getPrototypeOf:p}=Object,u=globalThis,_=u.trustedTypes,m=_?_.emptyScript:"",g=u.reactiveElementPolyfillSupport,f=(t,e)=>t,v={toAttribute(t,e){switch(e){case Boolean:t=t?m:null;break;case Object:case Array:t=null==t?t:JSON.stringify(t)}return t},fromAttribute(t,e){let i=t;switch(e){case Boolean:i=null!==t;break;case Number:i=null===t?null:Number(t);break;case Object:case Array:try{i=JSON.parse(t)}catch(t){i=null}}return i}},y=(t,e)=>!r(t,e),b={attribute:!0,type:String,converter:v,reflect:!1,useDefault:!1,hasChanged:y};Symbol.metadata??=Symbol("metadata"),u.litPropertyMetadata??=new WeakMap;let w=class extends HTMLElement{static addInitializer(t){this._$Ei(),(this.l??=[]).push(t)}static get observedAttributes(){return this.finalize(),this._$Eh&&[...this._$Eh.keys()]}static createProperty(t,e=b){if(e.state&&(e.attribute=!1),this._$Ei(),this.prototype.hasOwnProperty(t)&&((e=Object.create(e)).wrapped=!0),this.elementProperties.set(t,e),!e.noAccessor){const i=Symbol(),s=this.getPropertyDescriptor(t,i,e);void 0!==s&&l(this.prototype,t,s)}}static getPropertyDescriptor(t,e,i){const{get:s,set:n}=c(this.prototype,t)??{get(){return this[e]},set(t){this[e]=t}};return{get:s,set(e){const o=s?.call(this);n?.call(this,e),this.requestUpdate(t,o,i)},configurable:!0,enumerable:!0}}static getPropertyOptions(t){return this.elementProperties.get(t)??b}static _$Ei(){if(this.hasOwnProperty(f("elementProperties")))return;const t=p(this);t.finalize(),void 0!==t.l&&(this.l=[...t.l]),this.elementProperties=new Map(t.elementProperties)}static finalize(){if(this.hasOwnProperty(f("finalized")))return;if(this.finalized=!0,this._$Ei(),this.hasOwnProperty(f("properties"))){const t=this.properties,e=[...h(t),...d(t)];for(const i of e)this.createProperty(i,t[i])}const t=this[Symbol.metadata];if(null!==t){const e=litPropertyMetadata.get(t);if(void 0!==e)for(const[t,i]of e)this.elementProperties.set(t,i)}this._$Eh=new Map;for(const[t,e]of this.elementProperties){const i=this._$Eu(t,e);void 0!==i&&this._$Eh.set(i,t)}this.elementStyles=this.finalizeStyles(this.styles)}static finalizeStyles(t){const e=[];if(Array.isArray(t)){const i=new Set(t.flat(1/0).reverse());for(const t of i)e.unshift(a(t))}else void 0!==t&&e.push(a(t));return e}static _$Eu(t,e){const i=e.attribute;return!1===i?void 0:"string"==typeof i?i:"string"==typeof t?t.toLowerCase():void 0}constructor(){super(),this._$Ep=void 0,this.isUpdatePending=!1,this.hasUpdated=!1,this._$Em=null,this._$Ev()}_$Ev(){this._$ES=new Promise(t=>this.enableUpdating=t),this._$AL=new Map,this._$E_(),this.requestUpdate(),this.constructor.l?.forEach(t=>t(this))}addController(t){(this._$EO??=new Set).add(t),void 0!==this.renderRoot&&this.isConnected&&t.hostConnected?.()}removeController(t){this._$EO?.delete(t)}_$E_(){const t=new Map,e=this.constructor.elementProperties;for(const i of e.keys())this.hasOwnProperty(i)&&(t.set(i,this[i]),delete this[i]);t.size>0&&(this._$Ep=t)}createRenderRoot(){const i=this.shadowRoot??this.attachShadow(this.constructor.shadowRootOptions);return((i,s)=>{if(e)i.adoptedStyleSheets=s.map(t=>t instanceof CSSStyleSheet?t:t.styleSheet);else for(const e of s){const s=document.createElement("style"),n=t.litNonce;void 0!==n&&s.setAttribute("nonce",n),s.textContent=e.cssText,i.appendChild(s)}})(i,this.constructor.elementStyles),i}connectedCallback(){this.renderRoot??=this.createRenderRoot(),this.enableUpdating(!0),this._$EO?.forEach(t=>t.hostConnected?.())}enableUpdating(t){}disconnectedCallback(){this._$EO?.forEach(t=>t.hostDisconnected?.())}attributeChangedCallback(t,e,i){this._$AK(t,i)}_$ET(t,e){const i=this.constructor.elementProperties.get(t),s=this.constructor._$Eu(t,i);if(void 0!==s&&!0===i.reflect){const n=(void 0!==i.converter?.toAttribute?i.converter:v).toAttribute(e,i.type);this._$Em=t,null==n?this.removeAttribute(s):this.setAttribute(s,n),this._$Em=null}}_$AK(t,e){const i=this.constructor,s=i._$Eh.get(t);if(void 0!==s&&this._$Em!==s){const t=i.getPropertyOptions(s),n="function"==typeof t.converter?{fromAttribute:t.converter}:void 0!==t.converter?.fromAttribute?t.converter:v;this._$Em=s;const o=n.fromAttribute(e,t.type);this[s]=o??this._$Ej?.get(s)??o,this._$Em=null}}requestUpdate(t,e,i,s=!1,n){if(void 0!==t){const o=this.constructor;if(!1===s&&(n=this[t]),i??=o.getPropertyOptions(t),!((i.hasChanged??y)(n,e)||i.useDefault&&i.reflect&&n===this._$Ej?.get(t)&&!this.hasAttribute(o._$Eu(t,i))))return;this.C(t,e,i)}!1===this.isUpdatePending&&(this._$ES=this._$EP())}C(t,e,{useDefault:i,reflect:s,wrapped:n},o){i&&!(this._$Ej??=new Map).has(t)&&(this._$Ej.set(t,o??e??this[t]),!0!==n||void 0!==o)||(this._$AL.has(t)||(this.hasUpdated||i||(e=void 0),this._$AL.set(t,e)),!0===s&&this._$Em!==t&&(this._$Eq??=new Set).add(t))}async _$EP(){this.isUpdatePending=!0;try{await this._$ES}catch(t){Promise.reject(t)}const t=this.scheduleUpdate();return null!=t&&await t,!this.isUpdatePending}scheduleUpdate(){return this.performUpdate()}performUpdate(){if(!this.isUpdatePending)return;if(!this.hasUpdated){if(this.renderRoot??=this.createRenderRoot(),this._$Ep){for(const[t,e]of this._$Ep)this[t]=e;this._$Ep=void 0}const t=this.constructor.elementProperties;if(t.size>0)for(const[e,i]of t){const{wrapped:t}=i,s=this[e];!0!==t||this._$AL.has(e)||void 0===s||this.C(e,void 0,i,s)}}let t=!1;const e=this._$AL;try{t=this.shouldUpdate(e),t?(this.willUpdate(e),this._$EO?.forEach(t=>t.hostUpdate?.()),this.update(e)):this._$EM()}catch(e){throw t=!1,this._$EM(),e}t&&this._$AE(e)}willUpdate(t){}_$AE(t){this._$EO?.forEach(t=>t.hostUpdated?.()),this.hasUpdated||(this.hasUpdated=!0,this.firstUpdated(t)),this.updated(t)}_$EM(){this._$AL=new Map,this.isUpdatePending=!1}get updateComplete(){return this.getUpdateComplete()}getUpdateComplete(){return this._$ES}shouldUpdate(t){return!0}update(t){this._$Eq&&=this._$Eq.forEach(t=>this._$ET(t,this[t])),this._$EM()}updated(t){}firstUpdated(t){}};w.elementStyles=[],w.shadowRootOptions={mode:"open"},w[f("elementProperties")]=new Map,w[f("finalized")]=new Map,g?.({ReactiveElement:w}),(u.reactiveElementVersions??=[]).push("2.1.2");const k=globalThis,x=t=>t,$=k.trustedTypes,S=$?$.createPolicy("lit-html",{createHTML:t=>t}):void 0,M="$lit$",C=`lit$${Math.random().toFixed(9).slice(2)}$`,D="?"+C,P=`<${D}>`,T=document,R=()=>T.createComment(""),I=t=>null===t||"object"!=typeof t&&"function"!=typeof t,A=Array.isArray,z="[ \t\n\f\r]",F=/<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g,E=/-->/g,N=/>/g,O=RegExp(`>|${z}(?:([^\\s"'>=/]+)(${z}*=${z}*(?:[^ \t\n\f\r"'\`<>=]|("|')|))|$)`,"g"),H=/'/g,L=/"/g,B=/^(?:script|style|textarea|title)$/i,q=t=>(e,...i)=>({_$litType$:t,strings:e,values:i}),W=q(1),j=q(2),U=Symbol.for("lit-noChange"),G=Symbol.for("lit-nothing"),V=new WeakMap,K=T.createTreeWalker(T,129);function Y(t,e){if(!A(t)||!t.hasOwnProperty("raw"))throw Error("invalid template strings array");return void 0!==S?S.createHTML(e):e}const J=(t,e)=>{const i=t.length-1,s=[];let n,o=2===e?"<svg>":3===e?"<math>":"",a=F;for(let e=0;e<i;e++){const i=t[e];let r,l,c=-1,h=0;for(;h<i.length&&(a.lastIndex=h,l=a.exec(i),null!==l);)h=a.lastIndex,a===F?"!--"===l[1]?a=E:void 0!==l[1]?a=N:void 0!==l[2]?(B.test(l[2])&&(n=RegExp("</"+l[2],"g")),a=O):void 0!==l[3]&&(a=O):a===O?">"===l[0]?(a=n??F,c=-1):void 0===l[1]?c=-2:(c=a.lastIndex-l[2].length,r=l[1],a=void 0===l[3]?O:'"'===l[3]?L:H):a===L||a===H?a=O:a===E||a===N?a=F:(a=O,n=void 0);const d=a===O&&t[e+1].startsWith("/>")?" ":"";o+=a===F?i+P:c>=0?(s.push(r),i.slice(0,c)+M+i.slice(c)+C+d):i+C+(-2===c?e:d)}return[Y(t,o+(t[i]||"<?>")+(2===e?"</svg>":3===e?"</math>":"")),s]};class X{constructor({strings:t,_$litType$:e},i){let s;this.parts=[];let n=0,o=0;const a=t.length-1,r=this.parts,[l,c]=J(t,e);if(this.el=X.createElement(l,i),K.currentNode=this.el.content,2===e||3===e){const t=this.el.content.firstChild;t.replaceWith(...t.childNodes)}for(;null!==(s=K.nextNode())&&r.length<a;){if(1===s.nodeType){if(s.hasAttributes())for(const t of s.getAttributeNames())if(t.endsWith(M)){const e=c[o++],i=s.getAttribute(t).split(C),a=/([.?@])?(.*)/.exec(e);r.push({type:1,index:n,name:a[2],strings:i,ctor:"."===a[1]?it:"?"===a[1]?st:"@"===a[1]?nt:et}),s.removeAttribute(t)}else t.startsWith(C)&&(r.push({type:6,index:n}),s.removeAttribute(t));if(B.test(s.tagName)){const t=s.textContent.split(C),e=t.length-1;if(e>0){s.textContent=$?$.emptyScript:"";for(let i=0;i<e;i++)s.append(t[i],R()),K.nextNode(),r.push({type:2,index:++n});s.append(t[e],R())}}}else if(8===s.nodeType)if(s.data===D)r.push({type:2,index:n});else{let t=-1;for(;-1!==(t=s.data.indexOf(C,t+1));)r.push({type:7,index:n}),t+=C.length-1}n++}}static createElement(t,e){const i=T.createElement("template");return i.innerHTML=t,i}}function Z(t,e,i=t,s){if(e===U)return e;let n=void 0!==s?i._$Co?.[s]:i._$Cl;const o=I(e)?void 0:e._$litDirective$;return n?.constructor!==o&&(n?._$AO?.(!1),void 0===o?n=void 0:(n=new o(t),n._$AT(t,i,s)),void 0!==s?(i._$Co??=[])[s]=n:i._$Cl=n),void 0!==n&&(e=Z(t,n._$AS(t,e.values),n,s)),e}class Q{constructor(t,e){this._$AV=[],this._$AN=void 0,this._$AD=t,this._$AM=e}get parentNode(){return this._$AM.parentNode}get _$AU(){return this._$AM._$AU}u(t){const{el:{content:e},parts:i}=this._$AD,s=(t?.creationScope??T).importNode(e,!0);K.currentNode=s;let n=K.nextNode(),o=0,a=0,r=i[0];for(;void 0!==r;){if(o===r.index){let e;2===r.type?e=new tt(n,n.nextSibling,this,t):1===r.type?e=new r.ctor(n,r.name,r.strings,this,t):6===r.type&&(e=new ot(n,this,t)),this._$AV.push(e),r=i[++a]}o!==r?.index&&(n=K.nextNode(),o++)}return K.currentNode=T,s}p(t){let e=0;for(const i of this._$AV)void 0!==i&&(void 0!==i.strings?(i._$AI(t,i,e),e+=i.strings.length-2):i._$AI(t[e])),e++}}class tt{get _$AU(){return this._$AM?._$AU??this._$Cv}constructor(t,e,i,s){this.type=2,this._$AH=G,this._$AN=void 0,this._$AA=t,this._$AB=e,this._$AM=i,this.options=s,this._$Cv=s?.isConnected??!0}get parentNode(){let t=this._$AA.parentNode;const e=this._$AM;return void 0!==e&&11===t?.nodeType&&(t=e.parentNode),t}get startNode(){return this._$AA}get endNode(){return this._$AB}_$AI(t,e=this){t=Z(this,t,e),I(t)?t===G||null==t||""===t?(this._$AH!==G&&this._$AR(),this._$AH=G):t!==this._$AH&&t!==U&&this._(t):void 0!==t._$litType$?this.$(t):void 0!==t.nodeType?this.T(t):(t=>A(t)||"function"==typeof t?.[Symbol.iterator])(t)?this.k(t):this._(t)}O(t){return this._$AA.parentNode.insertBefore(t,this._$AB)}T(t){this._$AH!==t&&(this._$AR(),this._$AH=this.O(t))}_(t){this._$AH!==G&&I(this._$AH)?this._$AA.nextSibling.data=t:this.T(T.createTextNode(t)),this._$AH=t}$(t){const{values:e,_$litType$:i}=t,s="number"==typeof i?this._$AC(t):(void 0===i.el&&(i.el=X.createElement(Y(i.h,i.h[0]),this.options)),i);if(this._$AH?._$AD===s)this._$AH.p(e);else{const t=new Q(s,this),i=t.u(this.options);t.p(e),this.T(i),this._$AH=t}}_$AC(t){let e=V.get(t.strings);return void 0===e&&V.set(t.strings,e=new X(t)),e}k(t){A(this._$AH)||(this._$AH=[],this._$AR());const e=this._$AH;let i,s=0;for(const n of t)s===e.length?e.push(i=new tt(this.O(R()),this.O(R()),this,this.options)):i=e[s],i._$AI(n),s++;s<e.length&&(this._$AR(i&&i._$AB.nextSibling,s),e.length=s)}_$AR(t=this._$AA.nextSibling,e){for(this._$AP?.(!1,!0,e);t!==this._$AB;){const e=x(t).nextSibling;x(t).remove(),t=e}}setConnected(t){void 0===this._$AM&&(this._$Cv=t,this._$AP?.(t))}}class et{get tagName(){return this.element.tagName}get _$AU(){return this._$AM._$AU}constructor(t,e,i,s,n){this.type=1,this._$AH=G,this._$AN=void 0,this.element=t,this.name=e,this._$AM=s,this.options=n,i.length>2||""!==i[0]||""!==i[1]?(this._$AH=Array(i.length-1).fill(new String),this.strings=i):this._$AH=G}_$AI(t,e=this,i,s){const n=this.strings;let o=!1;if(void 0===n)t=Z(this,t,e,0),o=!I(t)||t!==this._$AH&&t!==U,o&&(this._$AH=t);else{const s=t;let a,r;for(t=n[0],a=0;a<n.length-1;a++)r=Z(this,s[i+a],e,a),r===U&&(r=this._$AH[a]),o||=!I(r)||r!==this._$AH[a],r===G?t=G:t!==G&&(t+=(r??"")+n[a+1]),this._$AH[a]=r}o&&!s&&this.j(t)}j(t){t===G?this.element.removeAttribute(this.name):this.element.setAttribute(this.name,t??"")}}class it extends et{constructor(){super(...arguments),this.type=3}j(t){this.element[this.name]=t===G?void 0:t}}class st extends et{constructor(){super(...arguments),this.type=4}j(t){this.element.toggleAttribute(this.name,!!t&&t!==G)}}class nt extends et{constructor(t,e,i,s,n){super(t,e,i,s,n),this.type=5}_$AI(t,e=this){if((t=Z(this,t,e,0)??G)===U)return;const i=this._$AH,s=t===G&&i!==G||t.capture!==i.capture||t.once!==i.once||t.passive!==i.passive,n=t!==G&&(i===G||s);s&&this.element.removeEventListener(this.name,this,i),n&&this.element.addEventListener(this.name,this,t),this._$AH=t}handleEvent(t){"function"==typeof this._$AH?this._$AH.call(this.options?.host??this.element,t):this._$AH.handleEvent(t)}}class ot{constructor(t,e,i){this.element=t,this.type=6,this._$AN=void 0,this._$AM=e,this.options=i}get _$AU(){return this._$AM._$AU}_$AI(t){Z(this,t)}}const at={I:tt},rt=k.litHtmlPolyfillSupport;rt?.(X,tt),(k.litHtmlVersions??=[]).push("3.3.3");const lt=(t,e,i)=>{const s=i?.renderBefore??e;let n=s._$litPart$;if(void 0===n){const t=i?.renderBefore??null;s._$litPart$=n=new tt(e.insertBefore(R(),t),t,void 0,i??{})}return n._$AI(t),n},ct=globalThis;let ht=class extends w{constructor(){super(...arguments),this.renderOptions={host:this},this._$Do=void 0}createRenderRoot(){const t=super.createRenderRoot();return this.renderOptions.renderBefore??=t.firstChild,t}update(t){const e=this.render();this.hasUpdated||(this.renderOptions.isConnected=this.isConnected),super.update(t),this._$Do=lt(e,this.renderRoot,this.renderOptions)}connectedCallback(){super.connectedCallback(),this._$Do?.setConnected(!0)}disconnectedCallback(){super.disconnectedCallback(),this._$Do?.setConnected(!1)}render(){return U}};ht._$litElement$=!0,ht.finalized=!0,ct.litElementHydrateSupport?.({LitElement:ht});const dt=ct.litElementPolyfillSupport;dt?.({LitElement:ht}),(ct.litElementVersions??=[]).push("4.2.2");const pt=2,ut=t=>(...e)=>({_$litDirective$:t,values:e});let _t=class{constructor(t){}get _$AU(){return this._$AM._$AU}_$AT(t,e,i){this._$Ct=t,this._$AM=e,this._$Ci=i}_$AS(t,e){return this.update(t,e)}update(t,e){return this.render(...e)}};const mt={},gt=ut(class extends _t{constructor(){super(...arguments),this.ot=mt}render(t,e){return e()}update(t,[e,i]){if(Array.isArray(e)){if(Array.isArray(this.ot)&&this.ot.length===e.length&&e.every((t,e)=>t===this.ot[e]))return U}else if(this.ot===e)return U;return this.ot=Array.isArray(e)?Array.from(e):e,this.render(e,i)}}),{I:ft}=at,vt=t=>t,yt=()=>document.createComment(""),bt=(t,e,i)=>{const s=t._$AA.parentNode,n=void 0===e?t._$AB:e._$AA;if(void 0===i){const e=s.insertBefore(yt(),n),o=s.insertBefore(yt(),n);i=new ft(e,o,t,t.options)}else{const e=i._$AB.nextSibling,o=i._$AM,a=o!==t;if(a){let e;i._$AQ?.(t),i._$AM=t,void 0!==i._$AP&&(e=t._$AU)!==o._$AU&&i._$AP(e)}if(e!==n||a){let t=i._$AA;for(;t!==e;){const e=vt(t).nextSibling;vt(s).insertBefore(t,n),t=e}}}return i},wt=(t,e,i=t)=>(t._$AI(e,i),t),kt={},xt=(t,e=kt)=>t._$AH=e,$t=t=>{t._$AR(),t._$AA.remove()},St=(t,e,i)=>{const s=new Map;for(let n=e;n<=i;n++)s.set(t[n],n);return s},Mt=ut(class extends _t{constructor(t){if(super(t),t.type!==pt)throw Error("repeat() can only be used in text expressions")}dt(t,e,i){let s;void 0===i?i=e:void 0!==e&&(s=e);const n=[],o=[];let a=0;for(const e of t)n[a]=s?s(e,a):a,o[a]=i(e,a),a++;return{values:o,keys:n}}render(t,e,i){return this.dt(t,e,i).values}update(t,[e,i,s]){const n=(t=>t._$AH)(t),{values:o,keys:a}=this.dt(e,i,s);if(!Array.isArray(n))return this.ut=a,o;const r=this.ut??=[],l=[];let c,h,d=0,p=n.length-1,u=0,_=o.length-1;for(;d<=p&&u<=_;)if(null===n[d])d++;else if(null===n[p])p--;else if(r[d]===a[u])l[u]=wt(n[d],o[u]),d++,u++;else if(r[p]===a[_])l[_]=wt(n[p],o[_]),p--,_--;else if(r[d]===a[_])l[_]=wt(n[d],o[_]),bt(t,l[_+1],n[d]),d++,_--;else if(r[p]===a[u])l[u]=wt(n[p],o[u]),bt(t,n[d],n[p]),p--,u++;else if(void 0===c&&(c=St(a,u,_),h=St(r,d,p)),c.has(r[d]))if(c.has(r[p])){const e=h.get(a[u]),i=void 0!==e?n[e]:null;if(null===i){const e=bt(t,n[d]);wt(e,o[u]),l[u]=e}else l[u]=wt(i,o[u]),bt(t,n[d],i),n[e]=null;u++}else $t(n[p]),p--;else $t(n[d]),d++;for(;u<=_;){const e=bt(t,l[_+1]);wt(e,o[u]),l[u++]=e}for(;d<=p;){const t=n[d++];null!==t&&$t(t)}return this.ut=a,xt(t,l),U}}),Ct=new WeakMap;let Dt=0;class Pt extends ht{constructor(){super(...arguments),this.title="",this.icon="",this.wide=!1,this.dismissOnScrim=!1,this.hass=null,this._opener=null,this._focusRoot=null,this._useHaDialog=!1,this._closing=!1,this._overlays=[],this._titleId="hp-dialog-title-"+ ++Dt,this._focusInitial=()=>{const t=this._focusableElements(),e=t.find(t=>t.hasAttribute("autofocus"))||t[0]||(this._useHaDialog?null:this.renderRoot.querySelector(".close"))||this.renderRoot.querySelector(".surface")||this.renderRoot.querySelector("ha-dialog");e?.focus({preventScroll:!0})},this._requestClose=()=>{this._closing||(this._closing=!0,this.dispatchEvent(new CustomEvent("hp-close",{bubbles:!0,composed:!0})))},this._onKeyDown=t=>{if("Escape"===t.key){t.preventDefault(),t.stopImmediatePropagation(),this._pruneOverlays();const e=this._overlays[this._overlays.length-1];return e?void this._closeOverlay(e,"escape"):void this._requestClose()}if("Tab"!==t.key||this._useHaDialog)return;const e=this.renderRoot.querySelector(".close"),i=e?[e,...this._focusableElements()]:this._focusableElements();if(!i.length)return t.preventDefault(),void this.renderRoot.querySelector(".surface")?.focus({preventScroll:!0});const s=this._deepActiveElement(),n=i[0],o=i[i.length-1];!t.shiftKey||s!==n&&i.includes(s)?t.shiftKey||s!==o||(t.preventDefault(),n.focus()):(t.preventDefault(),o.focus())},this._onFallbackCancel=t=>{t.preventDefault(),this._requestClose()},this._onFallbackClick=t=>{this.dismissOnScrim&&t.target===t.currentTarget&&this._requestClose()}}connectedCallback(){super.connectedCallback(),this._opener=this._deepActiveElement();const t=this.getRootNode();this._focusRoot=t;const e=Ct.get(t)||{dialogs:new Set,opener:this._opener};e.dialogs.add(this),Ct.set(t,e),this._useHaDialog=!!customElements.get("ha-dialog"),this.addEventListener("keydown",this._onKeyDown,!0)}disconnectedCallback(){this.removeEventListener("keydown",this._onKeyDown,!0);const t=[...this._overlays];this._overlays=[];for(const e of t.reverse())e.close("disconnect");const e=this._focusRoot,i=this._opener;this._opener=null,this._focusRoot=null;const s=e?Ct.get(e):void 0;s?.dialogs.delete(this),super.disconnectedCallback(),e&&s&&requestAnimationFrame(()=>{const t=Ct.get(e);if(!t)return;if(!t.dialogs.size)return t.opener?.isConnected&&t.opener.focus({preventScroll:!0}),void Ct.delete(e);const s=i?.closest("hp-dialog");i?.isConnected&&s&&t.dialogs.has(s)&&i.focus({preventScroll:!0})})}firstUpdated(t){if(super.firstUpdated(t),!this._useHaDialog){const t=this.renderRoot.querySelector("dialog");t&&!t.open&&t.showModal()}queueMicrotask(()=>this._focusInitial())}_deepActiveElement(){let t=document.activeElement;for(;t?.shadowRoot?.activeElement;)t=t.shadowRoot.activeElement;return t&&t!==document.body?t:null}_focusableElements(){const t=["[autofocus]","a[href]","button:not([disabled])",'input:not([disabled]):not([type="hidden"])',"select:not([disabled])","textarea:not([disabled])",'[contenteditable="true"]','[tabindex]:not([tabindex="-1"])'].join(","),e=[],i=new Set,s=n=>{if(!i.has(n)){if(i.add(n),n instanceof HTMLElement){if(n.matches(t)&&e.push(n),n instanceof HTMLSlotElement){for(const t of n.assignedNodes({flatten:!0}))s(t);return}if(n.shadowRoot){for(const t of n.shadowRoot.childNodes)s(t);return}}for(const t of n.childNodes)s(t)}};for(const t of this.childNodes)s(t);const n=this.overlayPortal();return n&&s(n),e.filter(t=>{let e=t;for(;e;){const t=getComputedStyle(e);if(e.hidden||e.inert||"true"===e.getAttribute("aria-hidden")||"none"===t.display||"hidden"===t.visibility)return!1;if(e=e.assignedSlot||e.parentElement||(e.getRootNode()instanceof ShadowRoot?e.getRootNode().host:null),e===this)break}return!0})}_pruneOverlays(){this._overlays=this._overlays.filter(t=>t.owner.isConnected)}_closeOverlay(t,e){const i=this._overlays.findIndex(e=>e.token===t.token);i>=0&&this._overlays.splice(i,1),t.close(e)}registerOverlay(t){this._pruneOverlays();const e=this._overlays.find(e=>e.owner===t.owner);e&&this._overlays.splice(this._overlays.indexOf(e),1);const i=t.group||"transient";for(const t of[...this._overlays].reverse())t.group===i&&this._closeOverlay(t,"exclusive");const s={...t,group:i,token:Symbol("hp-overlay")};this._overlays.push(s);let n=!1;return()=>{if(n)return;n=!0;const t=this._overlays.findIndex(t=>t.token===s.token);t>=0&&this._overlays.splice(t,1)}}closeTransientOverlays(t="outside"){this._pruneOverlays();const e=[...this._overlays].filter(t=>"transient"===(t.group||"transient"));for(const i of e.reverse())this._closeOverlay(i,t);return e.length>0}overlayPortal(){return this.renderRoot.querySelector(".overlay-portal")}render(){const t=W`<span class="title" id=${this._titleId}>
+globalThis.__HOUSEPLAN_BUILD_FINGERPRINT__="47c11152f339db49cd2c896cc72bdcd8de20c7c531f6dbc3339253dc21637ecf";const t=globalThis,e=t.ShadowRoot&&(void 0===t.ShadyCSS||t.ShadyCSS.nativeShadow)&&"adoptedStyleSheets"in Document.prototype&&"replace"in CSSStyleSheet.prototype,i=Symbol(),s=new WeakMap;let n=class{constructor(t,e,s){if(this._$cssResult$=!0,s!==i)throw Error("CSSResult is not constructable. Use `unsafeCSS` or `css` instead.");this.cssText=t,this.t=e}get styleSheet(){let t=this.o;const i=this.t;if(e&&void 0===t){const e=void 0!==i&&1===i.length;e&&(t=s.get(i)),void 0===t&&((this.o=t=new CSSStyleSheet).replaceSync(this.cssText),e&&s.set(i,t))}return t}toString(){return this.cssText}};const o=(t,...e)=>{const s=1===t.length?t[0]:e.reduce((e,i,s)=>e+(t=>{if(!0===t._$cssResult$)return t.cssText;if("number"==typeof t)return t;throw Error("Value passed to 'css' function must be a 'css' function result: "+t+". Use 'unsafeCSS' to pass non-literal values, but take care to ensure page security.")})(i)+t[s+1],t[0]);return new n(s,t,i)},a=e?t=>t:t=>t instanceof CSSStyleSheet?(t=>{let e="";for(const i of t.cssRules)e+=i.cssText;return(t=>new n("string"==typeof t?t:t+"",void 0,i))(e)})(t):t,{is:r,defineProperty:l,getOwnPropertyDescriptor:c,getOwnPropertyNames:h,getOwnPropertySymbols:d,getPrototypeOf:p}=Object,u=globalThis,_=u.trustedTypes,m=_?_.emptyScript:"",g=u.reactiveElementPolyfillSupport,f=(t,e)=>t,v={toAttribute(t,e){switch(e){case Boolean:t=t?m:null;break;case Object:case Array:t=null==t?t:JSON.stringify(t)}return t},fromAttribute(t,e){let i=t;switch(e){case Boolean:i=null!==t;break;case Number:i=null===t?null:Number(t);break;case Object:case Array:try{i=JSON.parse(t)}catch(t){i=null}}return i}},y=(t,e)=>!r(t,e),b={attribute:!0,type:String,converter:v,reflect:!1,useDefault:!1,hasChanged:y};Symbol.metadata??=Symbol("metadata"),u.litPropertyMetadata??=new WeakMap;let w=class extends HTMLElement{static addInitializer(t){this._$Ei(),(this.l??=[]).push(t)}static get observedAttributes(){return this.finalize(),this._$Eh&&[...this._$Eh.keys()]}static createProperty(t,e=b){if(e.state&&(e.attribute=!1),this._$Ei(),this.prototype.hasOwnProperty(t)&&((e=Object.create(e)).wrapped=!0),this.elementProperties.set(t,e),!e.noAccessor){const i=Symbol(),s=this.getPropertyDescriptor(t,i,e);void 0!==s&&l(this.prototype,t,s)}}static getPropertyDescriptor(t,e,i){const{get:s,set:n}=c(this.prototype,t)??{get(){return this[e]},set(t){this[e]=t}};return{get:s,set(e){const o=s?.call(this);n?.call(this,e),this.requestUpdate(t,o,i)},configurable:!0,enumerable:!0}}static getPropertyOptions(t){return this.elementProperties.get(t)??b}static _$Ei(){if(this.hasOwnProperty(f("elementProperties")))return;const t=p(this);t.finalize(),void 0!==t.l&&(this.l=[...t.l]),this.elementProperties=new Map(t.elementProperties)}static finalize(){if(this.hasOwnProperty(f("finalized")))return;if(this.finalized=!0,this._$Ei(),this.hasOwnProperty(f("properties"))){const t=this.properties,e=[...h(t),...d(t)];for(const i of e)this.createProperty(i,t[i])}const t=this[Symbol.metadata];if(null!==t){const e=litPropertyMetadata.get(t);if(void 0!==e)for(const[t,i]of e)this.elementProperties.set(t,i)}this._$Eh=new Map;for(const[t,e]of this.elementProperties){const i=this._$Eu(t,e);void 0!==i&&this._$Eh.set(i,t)}this.elementStyles=this.finalizeStyles(this.styles)}static finalizeStyles(t){const e=[];if(Array.isArray(t)){const i=new Set(t.flat(1/0).reverse());for(const t of i)e.unshift(a(t))}else void 0!==t&&e.push(a(t));return e}static _$Eu(t,e){const i=e.attribute;return!1===i?void 0:"string"==typeof i?i:"string"==typeof t?t.toLowerCase():void 0}constructor(){super(),this._$Ep=void 0,this.isUpdatePending=!1,this.hasUpdated=!1,this._$Em=null,this._$Ev()}_$Ev(){this._$ES=new Promise(t=>this.enableUpdating=t),this._$AL=new Map,this._$E_(),this.requestUpdate(),this.constructor.l?.forEach(t=>t(this))}addController(t){(this._$EO??=new Set).add(t),void 0!==this.renderRoot&&this.isConnected&&t.hostConnected?.()}removeController(t){this._$EO?.delete(t)}_$E_(){const t=new Map,e=this.constructor.elementProperties;for(const i of e.keys())this.hasOwnProperty(i)&&(t.set(i,this[i]),delete this[i]);t.size>0&&(this._$Ep=t)}createRenderRoot(){const i=this.shadowRoot??this.attachShadow(this.constructor.shadowRootOptions);return((i,s)=>{if(e)i.adoptedStyleSheets=s.map(t=>t instanceof CSSStyleSheet?t:t.styleSheet);else for(const e of s){const s=document.createElement("style"),n=t.litNonce;void 0!==n&&s.setAttribute("nonce",n),s.textContent=e.cssText,i.appendChild(s)}})(i,this.constructor.elementStyles),i}connectedCallback(){this.renderRoot??=this.createRenderRoot(),this.enableUpdating(!0),this._$EO?.forEach(t=>t.hostConnected?.())}enableUpdating(t){}disconnectedCallback(){this._$EO?.forEach(t=>t.hostDisconnected?.())}attributeChangedCallback(t,e,i){this._$AK(t,i)}_$ET(t,e){const i=this.constructor.elementProperties.get(t),s=this.constructor._$Eu(t,i);if(void 0!==s&&!0===i.reflect){const n=(void 0!==i.converter?.toAttribute?i.converter:v).toAttribute(e,i.type);this._$Em=t,null==n?this.removeAttribute(s):this.setAttribute(s,n),this._$Em=null}}_$AK(t,e){const i=this.constructor,s=i._$Eh.get(t);if(void 0!==s&&this._$Em!==s){const t=i.getPropertyOptions(s),n="function"==typeof t.converter?{fromAttribute:t.converter}:void 0!==t.converter?.fromAttribute?t.converter:v;this._$Em=s;const o=n.fromAttribute(e,t.type);this[s]=o??this._$Ej?.get(s)??o,this._$Em=null}}requestUpdate(t,e,i,s=!1,n){if(void 0!==t){const o=this.constructor;if(!1===s&&(n=this[t]),i??=o.getPropertyOptions(t),!((i.hasChanged??y)(n,e)||i.useDefault&&i.reflect&&n===this._$Ej?.get(t)&&!this.hasAttribute(o._$Eu(t,i))))return;this.C(t,e,i)}!1===this.isUpdatePending&&(this._$ES=this._$EP())}C(t,e,{useDefault:i,reflect:s,wrapped:n},o){i&&!(this._$Ej??=new Map).has(t)&&(this._$Ej.set(t,o??e??this[t]),!0!==n||void 0!==o)||(this._$AL.has(t)||(this.hasUpdated||i||(e=void 0),this._$AL.set(t,e)),!0===s&&this._$Em!==t&&(this._$Eq??=new Set).add(t))}async _$EP(){this.isUpdatePending=!0;try{await this._$ES}catch(t){Promise.reject(t)}const t=this.scheduleUpdate();return null!=t&&await t,!this.isUpdatePending}scheduleUpdate(){return this.performUpdate()}performUpdate(){if(!this.isUpdatePending)return;if(!this.hasUpdated){if(this.renderRoot??=this.createRenderRoot(),this._$Ep){for(const[t,e]of this._$Ep)this[t]=e;this._$Ep=void 0}const t=this.constructor.elementProperties;if(t.size>0)for(const[e,i]of t){const{wrapped:t}=i,s=this[e];!0!==t||this._$AL.has(e)||void 0===s||this.C(e,void 0,i,s)}}let t=!1;const e=this._$AL;try{t=this.shouldUpdate(e),t?(this.willUpdate(e),this._$EO?.forEach(t=>t.hostUpdate?.()),this.update(e)):this._$EM()}catch(e){throw t=!1,this._$EM(),e}t&&this._$AE(e)}willUpdate(t){}_$AE(t){this._$EO?.forEach(t=>t.hostUpdated?.()),this.hasUpdated||(this.hasUpdated=!0,this.firstUpdated(t)),this.updated(t)}_$EM(){this._$AL=new Map,this.isUpdatePending=!1}get updateComplete(){return this.getUpdateComplete()}getUpdateComplete(){return this._$ES}shouldUpdate(t){return!0}update(t){this._$Eq&&=this._$Eq.forEach(t=>this._$ET(t,this[t])),this._$EM()}updated(t){}firstUpdated(t){}};w.elementStyles=[],w.shadowRootOptions={mode:"open"},w[f("elementProperties")]=new Map,w[f("finalized")]=new Map,g?.({ReactiveElement:w}),(u.reactiveElementVersions??=[]).push("2.1.2");const k=globalThis,x=t=>t,$=k.trustedTypes,S=$?$.createPolicy("lit-html",{createHTML:t=>t}):void 0,M="$lit$",C=`lit$${Math.random().toFixed(9).slice(2)}$`,D="?"+C,P=`<${D}>`,T=document,R=()=>T.createComment(""),I=t=>null===t||"object"!=typeof t&&"function"!=typeof t,A=Array.isArray,z="[ \t\n\f\r]",F=/<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g,E=/-->/g,N=/>/g,O=RegExp(`>|${z}(?:([^\\s"'>=/]+)(${z}*=${z}*(?:[^ \t\n\f\r"'\`<>=]|("|')|))|$)`,"g"),H=/'/g,L=/"/g,B=/^(?:script|style|textarea|title)$/i,q=t=>(e,...i)=>({_$litType$:t,strings:e,values:i}),W=q(1),j=q(2),U=Symbol.for("lit-noChange"),G=Symbol.for("lit-nothing"),V=new WeakMap,K=T.createTreeWalker(T,129);function Y(t,e){if(!A(t)||!t.hasOwnProperty("raw"))throw Error("invalid template strings array");return void 0!==S?S.createHTML(e):e}const J=(t,e)=>{const i=t.length-1,s=[];let n,o=2===e?"<svg>":3===e?"<math>":"",a=F;for(let e=0;e<i;e++){const i=t[e];let r,l,c=-1,h=0;for(;h<i.length&&(a.lastIndex=h,l=a.exec(i),null!==l);)h=a.lastIndex,a===F?"!--"===l[1]?a=E:void 0!==l[1]?a=N:void 0!==l[2]?(B.test(l[2])&&(n=RegExp("</"+l[2],"g")),a=O):void 0!==l[3]&&(a=O):a===O?">"===l[0]?(a=n??F,c=-1):void 0===l[1]?c=-2:(c=a.lastIndex-l[2].length,r=l[1],a=void 0===l[3]?O:'"'===l[3]?L:H):a===L||a===H?a=O:a===E||a===N?a=F:(a=O,n=void 0);const d=a===O&&t[e+1].startsWith("/>")?" ":"";o+=a===F?i+P:c>=0?(s.push(r),i.slice(0,c)+M+i.slice(c)+C+d):i+C+(-2===c?e:d)}return[Y(t,o+(t[i]||"<?>")+(2===e?"</svg>":3===e?"</math>":"")),s]};class X{constructor({strings:t,_$litType$:e},i){let s;this.parts=[];let n=0,o=0;const a=t.length-1,r=this.parts,[l,c]=J(t,e);if(this.el=X.createElement(l,i),K.currentNode=this.el.content,2===e||3===e){const t=this.el.content.firstChild;t.replaceWith(...t.childNodes)}for(;null!==(s=K.nextNode())&&r.length<a;){if(1===s.nodeType){if(s.hasAttributes())for(const t of s.getAttributeNames())if(t.endsWith(M)){const e=c[o++],i=s.getAttribute(t).split(C),a=/([.?@])?(.*)/.exec(e);r.push({type:1,index:n,name:a[2],strings:i,ctor:"."===a[1]?it:"?"===a[1]?st:"@"===a[1]?nt:et}),s.removeAttribute(t)}else t.startsWith(C)&&(r.push({type:6,index:n}),s.removeAttribute(t));if(B.test(s.tagName)){const t=s.textContent.split(C),e=t.length-1;if(e>0){s.textContent=$?$.emptyScript:"";for(let i=0;i<e;i++)s.append(t[i],R()),K.nextNode(),r.push({type:2,index:++n});s.append(t[e],R())}}}else if(8===s.nodeType)if(s.data===D)r.push({type:2,index:n});else{let t=-1;for(;-1!==(t=s.data.indexOf(C,t+1));)r.push({type:7,index:n}),t+=C.length-1}n++}}static createElement(t,e){const i=T.createElement("template");return i.innerHTML=t,i}}function Z(t,e,i=t,s){if(e===U)return e;let n=void 0!==s?i._$Co?.[s]:i._$Cl;const o=I(e)?void 0:e._$litDirective$;return n?.constructor!==o&&(n?._$AO?.(!1),void 0===o?n=void 0:(n=new o(t),n._$AT(t,i,s)),void 0!==s?(i._$Co??=[])[s]=n:i._$Cl=n),void 0!==n&&(e=Z(t,n._$AS(t,e.values),n,s)),e}class Q{constructor(t,e){this._$AV=[],this._$AN=void 0,this._$AD=t,this._$AM=e}get parentNode(){return this._$AM.parentNode}get _$AU(){return this._$AM._$AU}u(t){const{el:{content:e},parts:i}=this._$AD,s=(t?.creationScope??T).importNode(e,!0);K.currentNode=s;let n=K.nextNode(),o=0,a=0,r=i[0];for(;void 0!==r;){if(o===r.index){let e;2===r.type?e=new tt(n,n.nextSibling,this,t):1===r.type?e=new r.ctor(n,r.name,r.strings,this,t):6===r.type&&(e=new ot(n,this,t)),this._$AV.push(e),r=i[++a]}o!==r?.index&&(n=K.nextNode(),o++)}return K.currentNode=T,s}p(t){let e=0;for(const i of this._$AV)void 0!==i&&(void 0!==i.strings?(i._$AI(t,i,e),e+=i.strings.length-2):i._$AI(t[e])),e++}}class tt{get _$AU(){return this._$AM?._$AU??this._$Cv}constructor(t,e,i,s){this.type=2,this._$AH=G,this._$AN=void 0,this._$AA=t,this._$AB=e,this._$AM=i,this.options=s,this._$Cv=s?.isConnected??!0}get parentNode(){let t=this._$AA.parentNode;const e=this._$AM;return void 0!==e&&11===t?.nodeType&&(t=e.parentNode),t}get startNode(){return this._$AA}get endNode(){return this._$AB}_$AI(t,e=this){t=Z(this,t,e),I(t)?t===G||null==t||""===t?(this._$AH!==G&&this._$AR(),this._$AH=G):t!==this._$AH&&t!==U&&this._(t):void 0!==t._$litType$?this.$(t):void 0!==t.nodeType?this.T(t):(t=>A(t)||"function"==typeof t?.[Symbol.iterator])(t)?this.k(t):this._(t)}O(t){return this._$AA.parentNode.insertBefore(t,this._$AB)}T(t){this._$AH!==t&&(this._$AR(),this._$AH=this.O(t))}_(t){this._$AH!==G&&I(this._$AH)?this._$AA.nextSibling.data=t:this.T(T.createTextNode(t)),this._$AH=t}$(t){const{values:e,_$litType$:i}=t,s="number"==typeof i?this._$AC(t):(void 0===i.el&&(i.el=X.createElement(Y(i.h,i.h[0]),this.options)),i);if(this._$AH?._$AD===s)this._$AH.p(e);else{const t=new Q(s,this),i=t.u(this.options);t.p(e),this.T(i),this._$AH=t}}_$AC(t){let e=V.get(t.strings);return void 0===e&&V.set(t.strings,e=new X(t)),e}k(t){A(this._$AH)||(this._$AH=[],this._$AR());const e=this._$AH;let i,s=0;for(const n of t)s===e.length?e.push(i=new tt(this.O(R()),this.O(R()),this,this.options)):i=e[s],i._$AI(n),s++;s<e.length&&(this._$AR(i&&i._$AB.nextSibling,s),e.length=s)}_$AR(t=this._$AA.nextSibling,e){for(this._$AP?.(!1,!0,e);t!==this._$AB;){const e=x(t).nextSibling;x(t).remove(),t=e}}setConnected(t){void 0===this._$AM&&(this._$Cv=t,this._$AP?.(t))}}class et{get tagName(){return this.element.tagName}get _$AU(){return this._$AM._$AU}constructor(t,e,i,s,n){this.type=1,this._$AH=G,this._$AN=void 0,this.element=t,this.name=e,this._$AM=s,this.options=n,i.length>2||""!==i[0]||""!==i[1]?(this._$AH=Array(i.length-1).fill(new String),this.strings=i):this._$AH=G}_$AI(t,e=this,i,s){const n=this.strings;let o=!1;if(void 0===n)t=Z(this,t,e,0),o=!I(t)||t!==this._$AH&&t!==U,o&&(this._$AH=t);else{const s=t;let a,r;for(t=n[0],a=0;a<n.length-1;a++)r=Z(this,s[i+a],e,a),r===U&&(r=this._$AH[a]),o||=!I(r)||r!==this._$AH[a],r===G?t=G:t!==G&&(t+=(r??"")+n[a+1]),this._$AH[a]=r}o&&!s&&this.j(t)}j(t){t===G?this.element.removeAttribute(this.name):this.element.setAttribute(this.name,t??"")}}class it extends et{constructor(){super(...arguments),this.type=3}j(t){this.element[this.name]=t===G?void 0:t}}class st extends et{constructor(){super(...arguments),this.type=4}j(t){this.element.toggleAttribute(this.name,!!t&&t!==G)}}class nt extends et{constructor(t,e,i,s,n){super(t,e,i,s,n),this.type=5}_$AI(t,e=this){if((t=Z(this,t,e,0)??G)===U)return;const i=this._$AH,s=t===G&&i!==G||t.capture!==i.capture||t.once!==i.once||t.passive!==i.passive,n=t!==G&&(i===G||s);s&&this.element.removeEventListener(this.name,this,i),n&&this.element.addEventListener(this.name,this,t),this._$AH=t}handleEvent(t){"function"==typeof this._$AH?this._$AH.call(this.options?.host??this.element,t):this._$AH.handleEvent(t)}}class ot{constructor(t,e,i){this.element=t,this.type=6,this._$AN=void 0,this._$AM=e,this.options=i}get _$AU(){return this._$AM._$AU}_$AI(t){Z(this,t)}}const at={I:tt},rt=k.litHtmlPolyfillSupport;rt?.(X,tt),(k.litHtmlVersions??=[]).push("3.3.3");const lt=(t,e,i)=>{const s=i?.renderBefore??e;let n=s._$litPart$;if(void 0===n){const t=i?.renderBefore??null;s._$litPart$=n=new tt(e.insertBefore(R(),t),t,void 0,i??{})}return n._$AI(t),n},ct=globalThis;let ht=class extends w{constructor(){super(...arguments),this.renderOptions={host:this},this._$Do=void 0}createRenderRoot(){const t=super.createRenderRoot();return this.renderOptions.renderBefore??=t.firstChild,t}update(t){const e=this.render();this.hasUpdated||(this.renderOptions.isConnected=this.isConnected),super.update(t),this._$Do=lt(e,this.renderRoot,this.renderOptions)}connectedCallback(){super.connectedCallback(),this._$Do?.setConnected(!0)}disconnectedCallback(){super.disconnectedCallback(),this._$Do?.setConnected(!1)}render(){return U}};ht._$litElement$=!0,ht.finalized=!0,ct.litElementHydrateSupport?.({LitElement:ht});const dt=ct.litElementPolyfillSupport;dt?.({LitElement:ht}),(ct.litElementVersions??=[]).push("4.2.2");const pt=2,ut=t=>(...e)=>({_$litDirective$:t,values:e});let _t=class{constructor(t){}get _$AU(){return this._$AM._$AU}_$AT(t,e,i){this._$Ct=t,this._$AM=e,this._$Ci=i}_$AS(t,e){return this.update(t,e)}update(t,e){return this.render(...e)}};const mt={},gt=ut(class extends _t{constructor(){super(...arguments),this.ot=mt}render(t,e){return e()}update(t,[e,i]){if(Array.isArray(e)){if(Array.isArray(this.ot)&&this.ot.length===e.length&&e.every((t,e)=>t===this.ot[e]))return U}else if(this.ot===e)return U;return this.ot=Array.isArray(e)?Array.from(e):e,this.render(e,i)}}),{I:ft}=at,vt=t=>t,yt=()=>document.createComment(""),bt=(t,e,i)=>{const s=t._$AA.parentNode,n=void 0===e?t._$AB:e._$AA;if(void 0===i){const e=s.insertBefore(yt(),n),o=s.insertBefore(yt(),n);i=new ft(e,o,t,t.options)}else{const e=i._$AB.nextSibling,o=i._$AM,a=o!==t;if(a){let e;i._$AQ?.(t),i._$AM=t,void 0!==i._$AP&&(e=t._$AU)!==o._$AU&&i._$AP(e)}if(e!==n||a){let t=i._$AA;for(;t!==e;){const e=vt(t).nextSibling;vt(s).insertBefore(t,n),t=e}}}return i},wt=(t,e,i=t)=>(t._$AI(e,i),t),kt={},xt=(t,e=kt)=>t._$AH=e,$t=t=>{t._$AR(),t._$AA.remove()},St=(t,e,i)=>{const s=new Map;for(let n=e;n<=i;n++)s.set(t[n],n);return s},Mt=ut(class extends _t{constructor(t){if(super(t),t.type!==pt)throw Error("repeat() can only be used in text expressions")}dt(t,e,i){let s;void 0===i?i=e:void 0!==e&&(s=e);const n=[],o=[];let a=0;for(const e of t)n[a]=s?s(e,a):a,o[a]=i(e,a),a++;return{values:o,keys:n}}render(t,e,i){return this.dt(t,e,i).values}update(t,[e,i,s]){const n=(t=>t._$AH)(t),{values:o,keys:a}=this.dt(e,i,s);if(!Array.isArray(n))return this.ut=a,o;const r=this.ut??=[],l=[];let c,h,d=0,p=n.length-1,u=0,_=o.length-1;for(;d<=p&&u<=_;)if(null===n[d])d++;else if(null===n[p])p--;else if(r[d]===a[u])l[u]=wt(n[d],o[u]),d++,u++;else if(r[p]===a[_])l[_]=wt(n[p],o[_]),p--,_--;else if(r[d]===a[_])l[_]=wt(n[d],o[_]),bt(t,l[_+1],n[d]),d++,_--;else if(r[p]===a[u])l[u]=wt(n[p],o[u]),bt(t,n[d],n[p]),p--,u++;else if(void 0===c&&(c=St(a,u,_),h=St(r,d,p)),c.has(r[d]))if(c.has(r[p])){const e=h.get(a[u]),i=void 0!==e?n[e]:null;if(null===i){const e=bt(t,n[d]);wt(e,o[u]),l[u]=e}else l[u]=wt(i,o[u]),bt(t,n[d],i),n[e]=null;u++}else $t(n[p]),p--;else $t(n[d]),d++;for(;u<=_;){const e=bt(t,l[_+1]);wt(e,o[u]),l[u++]=e}for(;d<=p;){const t=n[d++];null!==t&&$t(t)}return this.ut=a,xt(t,l),U}}),Ct=new WeakMap;let Dt=0;class Pt extends ht{constructor(){super(...arguments),this.title="",this.icon="",this.wide=!1,this.dismissOnScrim=!1,this.hass=null,this._opener=null,this._focusRoot=null,this._useHaDialog=!1,this._closing=!1,this._overlays=[],this._titleId="hp-dialog-title-"+ ++Dt,this._focusInitial=()=>{const t=this._focusableElements(),e=t.find(t=>t.hasAttribute("autofocus"))||t[0]||(this._useHaDialog?null:this.renderRoot.querySelector(".close"))||this.renderRoot.querySelector(".surface")||this.renderRoot.querySelector("ha-dialog");e?.focus({preventScroll:!0})},this._requestClose=()=>{this._closing||(this._closing=!0,this.dispatchEvent(new CustomEvent("hp-close",{bubbles:!0,composed:!0})))},this._onKeyDown=t=>{if("Escape"===t.key){t.preventDefault(),t.stopImmediatePropagation(),this._pruneOverlays();const e=this._overlays[this._overlays.length-1];return e?void this._closeOverlay(e,"escape"):void this._requestClose()}if("Tab"!==t.key||this._useHaDialog)return;const e=this.renderRoot.querySelector(".close"),i=e?[e,...this._focusableElements()]:this._focusableElements();if(!i.length)return t.preventDefault(),void this.renderRoot.querySelector(".surface")?.focus({preventScroll:!0});const s=this._deepActiveElement(),n=i[0],o=i[i.length-1];!t.shiftKey||s!==n&&i.includes(s)?t.shiftKey||s!==o||(t.preventDefault(),n.focus()):(t.preventDefault(),o.focus())},this._onFallbackCancel=t=>{t.preventDefault(),this._requestClose()},this._onFallbackClick=t=>{this.dismissOnScrim&&t.target===t.currentTarget&&this._requestClose()}}connectedCallback(){super.connectedCallback(),this._opener=this._deepActiveElement();const t=this.getRootNode();this._focusRoot=t;const e=Ct.get(t)||{dialogs:new Set,opener:this._opener};e.dialogs.add(this),Ct.set(t,e),this._useHaDialog=!!customElements.get("ha-dialog"),this.addEventListener("keydown",this._onKeyDown,!0)}disconnectedCallback(){this.removeEventListener("keydown",this._onKeyDown,!0);const t=[...this._overlays];this._overlays=[];for(const e of t.reverse())e.close("disconnect");const e=this._focusRoot,i=this._opener;this._opener=null,this._focusRoot=null;const s=e?Ct.get(e):void 0;s?.dialogs.delete(this),super.disconnectedCallback(),e&&s&&requestAnimationFrame(()=>{const t=Ct.get(e);if(!t)return;if(!t.dialogs.size)return t.opener?.isConnected&&t.opener.focus({preventScroll:!0}),void Ct.delete(e);const s=i?.closest("hp-dialog");i?.isConnected&&s&&t.dialogs.has(s)&&i.focus({preventScroll:!0})})}firstUpdated(t){if(super.firstUpdated(t),!this._useHaDialog){const t=this.renderRoot.querySelector("dialog");t&&!t.open&&t.showModal()}queueMicrotask(()=>this._focusInitial())}_deepActiveElement(){let t=document.activeElement;for(;t?.shadowRoot?.activeElement;)t=t.shadowRoot.activeElement;return t&&t!==document.body?t:null}_focusableElements(){const t=["[autofocus]","a[href]","button:not([disabled])",'input:not([disabled]):not([type="hidden"])',"select:not([disabled])","textarea:not([disabled])",'[contenteditable="true"]','[tabindex]:not([tabindex="-1"])'].join(","),e=[],i=new Set,s=n=>{if(!i.has(n)){if(i.add(n),n instanceof HTMLElement){if(n.matches(t)&&e.push(n),n instanceof HTMLSlotElement){for(const t of n.assignedNodes({flatten:!0}))s(t);return}if(n.shadowRoot){for(const t of n.shadowRoot.childNodes)s(t);return}}for(const t of n.childNodes)s(t)}};for(const t of this.childNodes)s(t);const n=this.overlayPortal();return n&&s(n),e.filter(t=>{let e=t;for(;e;){const t=getComputedStyle(e);if(e.hidden||e.inert||"true"===e.getAttribute("aria-hidden")||"none"===t.display||"hidden"===t.visibility)return!1;if(e=e.assignedSlot||e.parentElement||(e.getRootNode()instanceof ShadowRoot?e.getRootNode().host:null),e===this)break}return!0})}_pruneOverlays(){this._overlays=this._overlays.filter(t=>t.owner.isConnected)}_closeOverlay(t,e){const i=this._overlays.findIndex(e=>e.token===t.token);i>=0&&this._overlays.splice(i,1),t.close(e)}registerOverlay(t){this._pruneOverlays();const e=this._overlays.find(e=>e.owner===t.owner);e&&this._overlays.splice(this._overlays.indexOf(e),1);const i=t.group||"transient";for(const t of[...this._overlays].reverse())t.group===i&&this._closeOverlay(t,"exclusive");const s={...t,group:i,token:Symbol("hp-overlay")};this._overlays.push(s);let n=!1;return()=>{if(n)return;n=!0;const t=this._overlays.findIndex(t=>t.token===s.token);t>=0&&this._overlays.splice(t,1)}}closeTransientOverlays(t="outside"){this._pruneOverlays();const e=[...this._overlays].filter(t=>"transient"===(t.group||"transient"));for(const i of e.reverse())this._closeOverlay(i,t);return e.length>0}overlayPortal(){return this.renderRoot.querySelector(".overlay-portal")}render(){const t=W`<span class="title" id=${this._titleId}>
       ${this.icon?W`<ha-icon icon=${this.icon}></ha-icon>`:G}
       <span class="title-text">${this.title}</span>
     </span>`;return this._useHaDialog?W`<ha-dialog
@@ -728,19 +728,8 @@ globalThis.__HOUSEPLAN_BUILD_FINGERPRINT__="0ce1342d2e18ecd2b827db41c7e711753340
     .empty .btn {
       margin-top: var(--sp-4);
     }
-    .fixedfloor-loading {
-      animation: fixedfloor-spin 1.1s linear infinite;
-    }
-    .fixedfloor-error p {
-      max-width: 42rem;
-      margin: 0;
-      overflow-wrap: anywhere;
-    }
     @keyframes fixedfloor-spin {
       to { transform: rotate(360deg); }
-    }
-    @media (prefers-reduced-motion: reduce) {
-      .fixedfloor-loading { animation: none; }
     }
     :host([data-pointer-hover]) .tab:hover {
       color: var(--hp-txt);
@@ -750,6 +739,193 @@ globalThis.__HOUSEPLAN_BUILD_FINGERPRINT__="0ce1342d2e18ecd2b827db41c7e711753340
     }
     :host([data-pointer-hover]) .btn:hover {
       border-color: var(--hp-accent);
+    }
+    .bootveil {
+      position: absolute;
+      inset: 0;
+      z-index: 40;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--hp-bg, #16212e);
+      opacity: 1;
+      transition: opacity 0.15s ease;
+      pointer-events: none;
+    }
+    .bootveil.off {
+      opacity: 0;
+    }
+    .bootveil .boothouse {
+      position: static; /* the main .zoomwrap SVG is pinned to inset:0 — not this icon */
+      width: 56px;
+      height: 56px;
+      fill: var(--hp-accent);
+      opacity: 0.85;
+      animation: hp-boot-pulse 1.3s ease-in-out infinite;
+    }
+    @keyframes hp-boot-pulse {
+      0%, 100% { opacity: 0.3; transform: scale(0.94); }
+      50% { opacity: 0.9; transform: scale(1); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .bootveil .boothouse {
+        animation: none;
+        opacity: 0.7;
+      }
+      .recoveryoverlay {
+        transition: none;
+      }
+      .stage.hpsettle {
+        transition: none;
+      }
+    }
+    :host([data-pointer-hover]) .stage.mode-view .room.overlay:not(.styled):hover {
+      stroke: var(--hp-accent);
+      stroke-opacity: 1;
+    }
+    :host([data-pointer-hover]) .stage.mode-view .room.yard:not(.styled):hover {
+      stroke: var(--hp-accent);
+      stroke-opacity: 1;
+    }
+    /* The explicit late room-hover layer owns the wash and halo. Keeping CSS
+       filters off room paths prevents Chromium from recompositing the sibling
+       screen-blended Glow layer for one bright frame on every hover. */
+    :host([data-pointer-hover]) .stage.mode-view .room.styled:hover {
+      stroke: var(--hp-accent);
+      stroke-opacity: 1;
+    }
+    :host([data-pointer-hover]) .stage.markup g.opening:hover .op-outline {
+      opacity: 0.9;
+    }
+    @keyframes hp-pulse-short {
+      0% { transform: scale(1); opacity: 0.55; }
+      70% { opacity: 0.22; }
+      100% { transform: scale(var(--ripple-scale, 1.5)); opacity: 0; }
+    }
+    /* Alternate identity: a rapid retrigger restarts the browser timeline. */
+    @keyframes hp-pulse-short-b {
+      0% { transform: scale(1); opacity: 0.55; }
+      70% { opacity: 0.22; }
+      100% { transform: scale(var(--ripple-scale, 1.5)); opacity: 0; }
+    }
+    @keyframes hp-pulse-continuous {
+      0% { transform: scale(1); opacity: 0.55; }
+      65% { opacity: 0.18; }
+      100% { transform: scale(var(--ripple-scale, 1.5)); opacity: 0; }
+    }
+    @keyframes hp-pulse-alarm {
+      0% { transform: scale(1); opacity: 0.72; }
+      100% { transform: scale(1.5); opacity: 0; }
+    }
+    /* Space changes keep their direction, but travel only a few percent: the
+       motion explains what changed without making the whole plan fly around. */
+    @keyframes hp-slide-left {
+      0%   { transform: translateX(4%); opacity: 0.72; }
+      100% { transform: translateX(0);   opacity: 1; }
+    }
+    @keyframes hp-slide-right {
+      0%   { transform: translateX(-4%); opacity: 0.72; }
+      100% { transform: translateX(0);    opacity: 1; }
+    }
+    :host([data-pointer-hover]) .rlgearbtn:hover { opacity: 1; filter: brightness(1.18); }
+    :host([data-pointer-hover]) .rlgear:hover { opacity: 1; }
+    :host([data-pointer-hover]) .stage.mode-view .rlgo:hover { opacity: 1; }
+    :host([data-pointer-hover]) .ctrlopt:hover {
+      background: var(--secondary-background-color, rgba(128,128,128,0.15));
+    }
+    :host([data-pointer-hover]) .stage.markup .roomlabel:hover .rlhandle { display: block; }
+    :host([data-pointer-hover]) .bdframe .bdhandle:hover + .bdknob {
+      fill: #fff;
+      stroke: var(--hp-accent);
+    }
+    :host([data-pointer-hover]) .dtframe .dthandle:hover + .dtknob {
+      fill: #fff;
+      stroke: var(--hp-accent);
+    }
+    :host([data-pointer-hover]) .modetab .closex:hover { opacity: 1; }
+    @keyframes hp-sunfade-in {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes hp-sunfade-out {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
+    /* Interaction wins ordinary state colours. Alarm keeps priority through
+       the more-specific rule below. Unavailable has no visual hover. */
+    :host([data-pointer-hover]) .dev:not(.unavail):hover {
+      --device-face-bg: #0C82F0;
+      --device-face-fg: light-dark(#fff, #252525);
+      --device-shell-stroke: var(--device-shell-base-stroke);
+    }
+    :host([data-pointer-hover]) .dev.theme-light:not(.unavail):hover { --device-face-fg: #fff; }
+    :host([data-pointer-hover]) .dev.theme-dark:not(.unavail):hover { --device-face-fg: #252525; }
+    :host([data-pointer-hover]) .dev:hover,
+    .dev:focus-visible { z-index: 5; }
+    /* Alert stays above focus, selection, hover and ordinary semantic paint. */
+    .dev.alarm,
+    :host([data-pointer-hover]) .dev.alarm:hover,
+    .dev.alarm:focus-visible {
+      --device-face-bg: #F0410C;
+      --device-face-fg: light-dark(#fff, #252525);
+      --device-shell-stroke: #F0410C;
+    }
+    :host([data-pointer-hover]) .tab:hover .tabedit {
+      opacity: 0.9;
+    }
+    :host([data-pointer-hover]) .rszhandle:hover + .rszicon .rszink { stroke-width: 3; }
+    :host([data-pointer-hover]) .rszhandle.disabled:hover + .rszicon .rszink { stroke-width: 2; }
+    :host([data-pointer-hover]) .furnitem:hover { background: rgba(127, 127, 127, 0.18); }
+    :host([data-pointer-hover]) .cand:hover {
+      background: rgba(127, 127, 127, 0.15);
+    }
+    :host([data-pointer-hover]) .pdftag .x:hover {
+      color: #ff7a5c;
+    }
+    .sr-only {
+      position: absolute !important;
+      width: 1px !important;
+      height: 1px !important;
+      padding: 0 !important;
+      margin: -1px !important;
+      overflow: hidden !important;
+      clip: rect(0, 0, 0, 0) !important;
+      white-space: nowrap !important;
+      border: 0 !important;
+    }
+    :host([data-pointer-hover]) .rrow .ract:hover { color: var(--hp-txt); }
+    :host([data-pointer-hover]) .rrow .ract.del:hover { color: #ff7a5c; }
+    :host([data-pointer-hover]) .aboutlink:hover { text-decoration: underline; }
+    :host([data-pointer-hover]) .menu .it:hover {
+      background: rgba(127, 127, 127, 0.15);
+    }
+    .toast {
+      position: fixed;
+      pointer-events: none;
+      left: 50%;
+      bottom: 22px;
+      transform: translateX(-50%);
+      background: var(--hp-bg);
+      border: 1px solid var(--hp-accent);
+      color: var(--hp-txt);
+      padding: var(--sp-4) var(--sp-6);
+      border-radius: var(--rad-l);
+      font-size: var(--fs-m);
+      box-shadow: var(--shadow-2);
+      z-index: 120;
+      max-width: 90vw;
+    }
+`,o`
+    .fixedfloor-loading {
+      animation: fixedfloor-spin 1.1s linear infinite;
+    }
+    .fixedfloor-error p {
+      max-width: 42rem;
+      margin: 0;
+      overflow-wrap: anywhere;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .fixedfloor-loading { animation: none; }
     }
     .stage.noplan {
       background: #ffffff;
@@ -896,45 +1072,6 @@ globalThis.__HOUSEPLAN_BUILD_FINGERPRINT__="0ce1342d2e18ecd2b827db41c7e711753340
        along the transition, so a late panel glides instead of jumping. */
     .stage.hpsettle {
       transition: height 0.25s ease;
-    }
-    .bootveil {
-      position: absolute;
-      inset: 0;
-      z-index: 40;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--hp-bg, #16212e);
-      opacity: 1;
-      transition: opacity 0.15s ease;
-      pointer-events: none;
-    }
-    .bootveil.off {
-      opacity: 0;
-    }
-    .bootveil .boothouse {
-      position: static; /* the main .zoomwrap SVG is pinned to inset:0 — not this icon */
-      width: 56px;
-      height: 56px;
-      fill: var(--hp-accent);
-      opacity: 0.85;
-      animation: hp-boot-pulse 1.3s ease-in-out infinite;
-    }
-    @keyframes hp-boot-pulse {
-      0%, 100% { opacity: 0.3; transform: scale(0.94); }
-      50% { opacity: 0.9; transform: scale(1); }
-    }
-    @media (prefers-reduced-motion: reduce) {
-      .bootveil .boothouse {
-        animation: none;
-        opacity: 0.7;
-      }
-      .recoveryoverlay {
-        transition: none;
-      }
-      .stage.hpsettle {
-        transition: none;
-      }
     }
     .zoomctl {
       display: inline-flex;
@@ -1136,18 +1273,10 @@ globalThis.__HOUSEPLAN_BUILD_FINGERPRINT__="0ce1342d2e18ecd2b827db41c7e711753340
       stroke: transparent;
       stroke-width: calc(2px * var(--hp-cell-visual-scale, 1));
     }
-    :host([data-pointer-hover]) .stage.mode-view .room.overlay:not(.styled):hover {
-      stroke: var(--hp-accent);
-      stroke-opacity: 1;
-    }
     .room.yard {
       fill: rgba(75, 140, 90, 0.14);
       stroke: #4b8c5a;
       stroke-width: calc(2px * var(--hp-cell-visual-scale, 1));
-    }
-    :host([data-pointer-hover]) .stage.mode-view .room.yard:not(.styled):hover {
-      stroke: var(--hp-accent);
-      stroke-opacity: 1;
     }
     .room.styled {
       stroke: var(--room-stroke, transparent);
@@ -1190,13 +1319,6 @@ globalThis.__HOUSEPLAN_BUILD_FINGERPRINT__="0ce1342d2e18ecd2b827db41c7e711753340
         transition: none;
       }
     }
-    /* The explicit late room-hover layer owns the wash and halo. Keeping CSS
-       filters off room paths prevents Chromium from recompositing the sibling
-       screen-blended Glow layer for one bright frame on every hover. */
-    :host([data-pointer-hover]) .stage.mode-view .room.styled:hover {
-      stroke: var(--hp-accent);
-      stroke-opacity: 1;
-    }
     /* doors, windows & gates */
     .op-leaf {
       transition: transform 0.6s ease;
@@ -1213,9 +1335,6 @@ globalThis.__HOUSEPLAN_BUILD_FINGERPRINT__="0ce1342d2e18ecd2b827db41c7e711753340
       opacity: 0;
       transition: opacity 0.15s;
       pointer-events: none;
-    }
-    :host([data-pointer-hover]) .stage.markup g.opening:hover .op-outline {
-      opacity: 0.9;
     }
     /* openings are pure status graphics outside Plan mode: no cursor, no hover,
        no hit target — View must not interact with them at all */
@@ -1264,26 +1383,6 @@ globalThis.__HOUSEPLAN_BUILD_FINGERPRINT__="0ce1342d2e18ecd2b827db41c7e711753340
     @media (prefers-reduced-motion: reduce) {
       .op-leaf, .op-arc { transition: none; }
     }
-    @keyframes hp-pulse-short {
-      0% { transform: scale(1); opacity: 0.55; }
-      70% { opacity: 0.22; }
-      100% { transform: scale(var(--ripple-scale, 1.5)); opacity: 0; }
-    }
-    /* Alternate identity: a rapid retrigger restarts the browser timeline. */
-    @keyframes hp-pulse-short-b {
-      0% { transform: scale(1); opacity: 0.55; }
-      70% { opacity: 0.22; }
-      100% { transform: scale(var(--ripple-scale, 1.5)); opacity: 0; }
-    }
-    @keyframes hp-pulse-continuous {
-      0% { transform: scale(1); opacity: 0.55; }
-      65% { opacity: 0.18; }
-      100% { transform: scale(var(--ripple-scale, 1.5)); opacity: 0; }
-    }
-    @keyframes hp-pulse-alarm {
-      0% { transform: scale(1); opacity: 0.72; }
-      100% { transform: scale(1.5); opacity: 0; }
-    }
     .roomlabel {
       pointer-events: none; /* draggable only in plan mode (rule below) */
       position: absolute;
@@ -1306,16 +1405,6 @@ globalThis.__HOUSEPLAN_BUILD_FINGERPRINT__="0ce1342d2e18ecd2b827db41c7e711753340
       align-items: center;
       gap: 0.25em;
       font-size: calc(1em * var(--rl-name, 1));
-    }
-    /* Space changes keep their direction, but travel only a few percent: the
-       motion explains what changed without making the whole plan fly around. */
-    @keyframes hp-slide-left {
-      0%   { transform: translateX(4%); opacity: 0.72; }
-      100% { transform: translateX(0);   opacity: 1; }
-    }
-    @keyframes hp-slide-right {
-      0%   { transform: translateX(-4%); opacity: 0.72; }
-      100% { transform: translateX(0);    opacity: 1; }
     }
     .zoomwrap.slide-left  { animation: hp-slide-left 0.18s cubic-bezier(0.2, 0.7, 0.2, 1); }
     .zoomwrap.slide-right { animation: hp-slide-right 0.18s cubic-bezier(0.2, 0.7, 0.2, 1); }
@@ -1357,7 +1446,6 @@ globalThis.__HOUSEPLAN_BUILD_FINGERPRINT__="0ce1342d2e18ecd2b827db41c7e711753340
       z-index: 2;
     }
     .rlgearbtn { transition: opacity 0.15s, filter 0.15s; }
-    :host([data-pointer-hover]) .rlgearbtn:hover { opacity: 1; filter: brightness(1.18); }
     .rlgearbtn ha-icon { --mdc-icon-size: calc(var(--gear-h) * 0.55); display: inline-flex; }
     .rlgear {
       --mdc-icon-size: 0.9em;
@@ -1367,7 +1455,6 @@ globalThis.__HOUSEPLAN_BUILD_FINGERPRINT__="0ce1342d2e18ecd2b827db41c7e711753340
       cursor: pointer;
       pointer-events: auto;
     }
-    :host([data-pointer-hover]) .rlgear:hover { opacity: 1; }
     .rlgo {
       --mdc-icon-size: 0.85em;
       display: inline-flex;
@@ -1377,7 +1464,6 @@ globalThis.__HOUSEPLAN_BUILD_FINGERPRINT__="0ce1342d2e18ecd2b827db41c7e711753340
       pointer-events: auto;
       cursor: pointer;
     }
-    :host([data-pointer-hover]) .stage.mode-view .rlgo:hover { opacity: 1; }
     .roomlabel .rlmetrics {
       position: absolute; /* below the name, outside the centring math */
       top: calc(100% + 0.15em);
@@ -1402,9 +1488,6 @@ globalThis.__HOUSEPLAN_BUILD_FINGERPRINT__="0ce1342d2e18ecd2b827db41c7e711753340
       display: inline-flex;
     }
     .roomlabel .rlm.lit { opacity: 1; }
-    :host([data-pointer-hover]) .ctrlopt:hover {
-      background: var(--secondary-background-color, rgba(128,128,128,0.15));
-    }
     .rlhandle {
       display: none;
       position: absolute;
@@ -1419,7 +1502,6 @@ globalThis.__HOUSEPLAN_BUILD_FINGERPRINT__="0ce1342d2e18ecd2b827db41c7e711753340
     .rlhandle.br { right: -6px; bottom: -6px; cursor: nwse-resize; }
     .rlhandle.tr { right: -6px; top: -6px; cursor: nesw-resize; }
     .rlhandle.bl { left: -6px; bottom: -6px; cursor: nesw-resize; }
-    :host([data-pointer-hover]) .stage.markup .roomlabel:hover .rlhandle { display: block; }
     .stage.markup .roomlabel { pointer-events: auto; }
     .roomlabel:active { cursor: grabbing; }
     .measurelayer {
@@ -1581,10 +1663,6 @@ globalThis.__HOUSEPLAN_BUILD_FINGERPRINT__="0ce1342d2e18ecd2b827db41c7e711753340
       vector-effect: non-scaling-stroke;
       pointer-events: none;
     }
-    :host([data-pointer-hover]) .bdframe .bdhandle:hover + .bdknob {
-      fill: #fff;
-      stroke: var(--hp-accent);
-    }
     .bdframe .bd-nwse { cursor: nwse-resize; }
     .bdframe .bd-nesw { cursor: nesw-resize; }
     /* the picture itself is the drag target for a move (grab, then grabbing) */
@@ -1630,10 +1708,6 @@ globalThis.__HOUSEPLAN_BUILD_FINGERPRINT__="0ce1342d2e18ecd2b827db41c7e711753340
       stroke-width: 1;
       vector-effect: non-scaling-stroke;
       pointer-events: none;
-    }
-    :host([data-pointer-hover]) .dtframe .dthandle:hover + .dtknob {
-      fill: #fff;
-      stroke: var(--hp-accent);
     }
     .dtframe .dt-nwse { cursor: nwse-resize; }
     .dtframe .dt-nesw { cursor: nesw-resize; }
@@ -1873,7 +1947,6 @@ globalThis.__HOUSEPLAN_BUILD_FINGERPRINT__="0ce1342d2e18ecd2b827db41c7e711753340
       outline: 2px solid var(--hp-accent);
       outline-offset: -2px;
     }
-    :host([data-pointer-hover]) .modetab .closex:hover { opacity: 1; }
     .room.outlined {
       stroke: rgba(62, 166, 255, 0.55);
       fill: rgba(62, 166, 255, 0.06);
@@ -2062,14 +2135,6 @@ globalThis.__HOUSEPLAN_BUILD_FINGERPRINT__="0ce1342d2e18ecd2b827db41c7e711753340
     .sunlayer.out {
       animation: hp-sunfade-out 2s linear both;
     }
-    @keyframes hp-sunfade-in {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-    @keyframes hp-sunfade-out {
-      from { opacity: 1; }
-      to { opacity: 0; }
-    }
     @media (prefers-reduced-motion: reduce) {
       /* no fade at all: the rays are simply there or simply gone */
       .sunlayer, .sunlayer.out { animation: none; }
@@ -2083,17 +2148,6 @@ globalThis.__HOUSEPLAN_BUILD_FINGERPRINT__="0ce1342d2e18ecd2b827db41c7e711753340
     }
     .stage.mode-devices .dev { cursor: grab; }
     .stage.mode-devices .dev:active { cursor: grabbing; }
-    /* Interaction wins ordinary state colours. Alarm keeps priority through
-       the more-specific rule below. Unavailable has no visual hover. */
-    :host([data-pointer-hover]) .dev:not(.unavail):hover {
-      --device-face-bg: #0C82F0;
-      --device-face-fg: light-dark(#fff, #252525);
-      --device-shell-stroke: var(--device-shell-base-stroke);
-    }
-    :host([data-pointer-hover]) .dev.theme-light:not(.unavail):hover { --device-face-fg: #fff; }
-    :host([data-pointer-hover]) .dev.theme-dark:not(.unavail):hover { --device-face-fg: #252525; }
-    :host([data-pointer-hover]) .dev:hover,
-    .dev:focus-visible { z-index: 5; }
     .physical-hit {
       fill: transparent;
       stroke: transparent;
@@ -2146,17 +2200,6 @@ globalThis.__HOUSEPLAN_BUILD_FINGERPRINT__="0ce1342d2e18ecd2b827db41c7e711753340
     .drawwall.invalid .rangehint { color: var(--error-color, #db4437); opacity: 1; }
     .stage.markup.tool-partition,
     .stage.markup.tool-column { cursor: crosshair; }
-    /* Alert stays above focus, selection, hover and ordinary semantic paint. */
-    .dev.alarm,
-    :host([data-pointer-hover]) .dev.alarm:hover,
-    .dev.alarm:focus-visible {
-      --device-face-bg: #F0410C;
-      --device-face-fg: light-dark(#fff, #252525);
-      --device-shell-stroke: #F0410C;
-    }
-    :host([data-pointer-hover]) .tab:hover .tabedit {
-      opacity: 0.9;
-    }
     /* room resize tool (docs/RESIZE.md) */
     /* wall handle: invisible finger-sized hit circle (HP-1550-04 hit priority
        kept), the visible glyph lives in the sibling .rszicon */
@@ -2182,9 +2225,7 @@ globalThis.__HOUSEPLAN_BUILD_FINGERPRINT__="0ce1342d2e18ecd2b827db41c7e711753340
     }
     .rszhalo { stroke: var(--hp-bg); stroke-width: 6; }
     .rszink { stroke: var(--hp-accent); stroke-width: 2; }
-    :host([data-pointer-hover]) .rszhandle:hover + .rszicon .rszink { stroke-width: 3; }
     .rszicon.disabled { opacity: 0.38; }
-    :host([data-pointer-hover]) .rszhandle.disabled:hover + .rszicon .rszink { stroke-width: 2; }
     .rszmeasurelayer,
     .rszmeasurelayer * { pointer-events: none; }
     .rszmeasurehalo,
@@ -2228,47 +2269,7 @@ globalThis.__HOUSEPLAN_BUILD_FINGERPRINT__="0ce1342d2e18ecd2b827db41c7e711753340
       transform: translate(-50%, -50%);
       border: 1px solid var(--hp-accent);
     }
-    :host([data-pointer-hover]) .furnitem:hover { background: rgba(127, 127, 127, 0.18); }
-    :host([data-pointer-hover]) .cand:hover {
-      background: rgba(127, 127, 127, 0.15);
-    }
-    :host([data-pointer-hover]) .pdftag .x:hover {
-      color: #ff7a5c;
-    }
-    .sr-only {
-      position: absolute !important;
-      width: 1px !important;
-      height: 1px !important;
-      padding: 0 !important;
-      margin: -1px !important;
-      overflow: hidden !important;
-      clip: rect(0, 0, 0, 0) !important;
-      white-space: nowrap !important;
-      border: 0 !important;
-    }
-    :host([data-pointer-hover]) .rrow .ract:hover { color: var(--hp-txt); }
-    :host([data-pointer-hover]) .rrow .ract.del:hover { color: #ff7a5c; }
     .alignmsg { margin: 0 0 8px; font-size: 13px; line-height: 1.45; }
-    :host([data-pointer-hover]) .aboutlink:hover { text-decoration: underline; }
-    :host([data-pointer-hover]) .menu .it:hover {
-      background: rgba(127, 127, 127, 0.15);
-    }
-    .toast {
-      position: fixed;
-      pointer-events: none;
-      left: 50%;
-      bottom: 22px;
-      transform: translateX(-50%);
-      background: var(--hp-bg);
-      border: 1px solid var(--hp-accent);
-      color: var(--hp-txt);
-      padding: var(--sp-4) var(--sp-6);
-      border-radius: var(--rad-l);
-      font-size: var(--fs-m);
-      box-shadow: var(--shadow-2);
-      z-index: 120;
-      max-width: 90vw;
-    }
 `,o`
     /* Unified device activity: alarm, short event and continuous state all
        share this one renderer. No static rings are allowed. */
