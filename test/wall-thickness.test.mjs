@@ -3344,3 +3344,58 @@ test('issue 310 pair grid contract: masonry equals strips plus patch minus wedge
     }
   }
 });
+
+test('issue 310 a short deep support pair bounds the wedge by its own length and stays hole-free', () => {
+  // ТЗ §5 risk 3: interference of the two addressed trims. Structurally the
+  // #271 lateral trim lives in the multi-wall node map (3+ canonical rays)
+  // and can never fire on a pair node; what CAN go wrong on a short deep
+  // support is the #310 wedge reaching past the wall's own far end. Both are
+  // pinned here: the wedge is bounded by min(2·halfDepth, length), and the
+  // grid contract stays clean on the short-support pair.
+  const segments = [
+    { a: [0, 0], b: [300, 0], halfDepth: 10 },
+    // deep wall SHORTER than 2·halfDepth: length 30 < 2·20
+    { a: [0, 0], b: [30, 3], halfDepth: 20 },
+  ];
+  const wedges = pairButtEndTrimWedges(segments, 1e-6);
+  for (const { segmentIndex, wedge } of wedges) {
+    const segment = segments[segmentIndex];
+    const length = Math.hypot(segment.b[0] - segment.a[0], segment.b[1] - segment.a[1]);
+    const u = [(segment.b[0] - segment.a[0]) / length, (segment.b[1] - segment.a[1]) / length];
+    for (const point of wedge) {
+      const along = point[0] * u[0] + point[1] * u[1];
+      assert.ok(along <= Math.min(2 * segment.halfDepth, length) + 1e-6,
+        `wedge vertex ${point} reaches past the wall's own end`);
+    }
+  }
+  // grid contract on the short-support pair (same oracle as the pair contract test)
+  const bodies = segments.map((segment) => linearWallBody(segment));
+  const patches = linearWallJoinPatches(segments, 1e-6);
+  const h = Math.max(...segments.map((segment) => segment.halfDepth));
+  const step = Math.max(h / 4, 2);
+  for (let dx = -3 * h; dx <= 3 * h; dx += step) {
+    for (let dy = -3 * h; dy <= 3 * h; dy += step) {
+      const point = [dx, dy];
+      const inStrip = bodies.some((body) => body && pointInPoly(point, body));
+      const inPatch = patches.some((patch) => pointInPoly(point, patch));
+      const inWedge = wedges.some(({ wedge }) => pointInPoly(point, wedge));
+      const expected = (inStrip || inPatch) && !inWedge;
+      const actual = bodies.some((body, index) => body && pointInPoly(point, body)
+        && !wedges.some(({ segmentIndex, wedge }) =>
+          segmentIndex === index && pointInPoly(point, wedge)))
+        || inPatch;
+      const nearEdge = [...bodies.filter(Boolean), ...patches,
+        ...wedges.map(({ wedge }) => wedge)].some((poly) =>
+        poly.some((a, i) => {
+          const b = poly[(i + 1) % poly.length];
+          const t = Math.max(0, Math.min(1,
+            ((point[0] - a[0]) * (b[0] - a[0]) + (point[1] - a[1]) * (b[1] - a[1]))
+            / (((b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2) || 1e-12)));
+          return Math.hypot(point[0] - (a[0] + (b[0] - a[0]) * t),
+            point[1] - (a[1] + (b[1] - a[1]) * t)) < step / 4;
+        }));
+      if (nearEdge) continue;
+      assert.equal(actual, expected, `short-support contract mismatch at [${dx}, ${dy}]`);
+    }
+  }
+});
