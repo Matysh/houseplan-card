@@ -2172,9 +2172,11 @@ export const MUTANTS = [
   },
   {
     id: 'junction-fans-disabled',
+    // Юниты формы, не детектор: контрактные пробы детектора строятся из той
+    // же функции и слепнут вместе с ней, а «T-узел даёт два веера» — внешняя
+    // истина, не зависящая от мутируемого кода.
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
-      + '&& npm run build >/dev/null 2>&1 && cp dist/houseplan-card.js demo/srv/assets/houseplan-card.js '
-      + '&& node demo/smoke_junction_holes.mjs',
+      + '&& node --test --test-name-pattern="issue 302" test/wall-thickness.test.mjs',
     because: 'без вееров сектор между соседними полосами узла остаётся дырой — '
       + 'это и есть класс артефактов #302',
     patches: [{
