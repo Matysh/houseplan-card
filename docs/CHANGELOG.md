@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.67.0-rc.3 — 2026-08-25
+
 - Wall junctions no longer leave white wedges and notches. A node where three
   or more walls meet is now completed with sector fans and the exact strips of
   its rays: a node closes with a full mitre, like an ordinary wall
