@@ -1647,6 +1647,12 @@ async def ws_plan_optimize(hass: HomeAssistant, connection, msg: dict[str, Any])
             # validated verbatim: the backend must never invent lineage for a
             # graph already authored by a current client.
             candidate_config = CONFIG_SCHEMA(msg["config"])
+            # Keep the established public validation contract ahead of the
+            # structural migration barrier. A malformed passage can also make
+            # wall-host materialisation impossible, but callers must still get
+            # the actionable `invalid_passage_fields` code rather than the
+            # generic wall-model blocker.
+            validate_opening_passages(candidate_config, config_data.get("config"))
             if submitted_model < WALL_SEGMENT_MODEL_VERSION:
                 candidate_config, _ = commit_wall_segment_model(candidate_config)
             validated_config = CONFIG_SCHEMA(candidate_config)

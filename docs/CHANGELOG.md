@@ -22,6 +22,8 @@
   enforces this upgrade when invoked directly. An authored wall chain remains
   valid when it becomes a room or independent walls, while a rejected
   transaction stores no partial result and no longer reports false success.
+  An invalid open passage also retains its specific actionable error instead
+  of being masked by the generic wall-model migration blocker.
   Ambiguous legacy geometry is
   left unchanged with a recovery prompt. No Plan editor controls or
   zero-thickness-wall behaviour changed
