@@ -3,6 +3,20 @@
 Updated: 2026-08-19 (#113 optional space-model lifecycle). The repository = a HACS integration (category **Integration**)
 that contains both the backend (`custom_components/houseplan`) and the Lovelace card (`src/` → `dist/`).
 
+## Styles (#266)
+
+`src/styles.ts` is a 19-line aggregator: `cardStyles = [baseStyles, planStyles,
+devicesStyles, chromeStyles, dialogsStyles]` from `src/styles/*.styles.ts`.
+The array ORDER is part of the cascade contract — rules of equal specificity
+resolve by position, and the golden set is accepted against exactly this
+order. Surface ownership: `base` (host, variables, cross-surface groups),
+`plan` (stage scene, walls/axes/snap/decor/iso/resize ink), `devices`
+(markers, shells, vacuums), `chrome` (toolbars, tabs, menus), `dialogs`
+(dialogs, forms, pickers). A rule serving two surfaces lives in `base`; the
+invariants (no duplicate selectors across files, aggregator composition,
+media-wrapper survival) are pinned by `test/styles-split.test.mjs`, and
+`scripts/dev/styles-diff.mjs` proves any restyle-move refactor-only.
+
 ## Layout
 
 ```
