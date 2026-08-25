@@ -2171,6 +2171,57 @@ export const MUTANTS = [
     }],
   },
   {
+    id: 'visual-mitre-limit-back-to-4',
+    // #309: порог визуального среза возвращается к классическим 4·h — шип на
+    // острой паре и горб над узлом 3×50 отрастают обратно.
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="issue 309" test/wall-thickness.test.mjs',
+    because: 'без визуального лимита mitre снова торчит на 2–4 толщины за габарит узла',
+    patches: [{
+      file: 'src/wall-thickness.ts',
+      find: 'export const VISUAL_MITRE_LIMIT = 1.5;',
+      replace: 'export const VISUAL_MITRE_LIMIT = 4;',
+    }],
+  },
+  {
+    id: 'chamfer-disabled-full-mitre',
+    // #309: фаска отключена — сверх лимита рисуется сырой mitre.
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="issue 309" test/wall-thickness.test.mjs',
+    because: 'сектор сверх визуального лимита обязан закрываться фаской, а не вершиной',
+    patches: [{
+      file: 'src/wall-thickness.ts',
+      find: '  const ux = apex[0] - node[0], uy = apex[1] - node[1];\n  const d = Math.hypot(ux, uy);\n  if (!(d > 0) || d <= limit + 1e-9) return null;',
+      replace: '  const ux = apex[0] - node[0], uy = apex[1] - node[1];\n  const d = Math.hypot(ux, uy);\n  if (d >= 0) return null;',
+    }],
+  },
+  {
+    id: 'pair-patches-at-multiwall-nodes',
+    // #309: скип узлов ≥3 лучей отключён — парный патч через чужой сектор
+    // снова красит ступень на кресте смешанных толщин.
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="issue 309" test/wall-thickness.test.mjs',
+    because: 'парный патч в узле ≥3 лучей живёт в чужом секторе и красит ступень поверх тонких полос',
+    patches: [{
+      file: 'src/wall-thickness.ts',
+      find: '  for (const node of nodes) {\n    if (coveredByFans(node)) continue;',
+      replace: '  for (const node of nodes) {',
+    }],
+  },
+  {
+    id: 'chamfer-chord-instead-of-perpendicular',
+    // #309: срез хордой pA–pB вместо перпендикуляра на пороге — это возврат
+    // формы #249 (плоский бевел у самого узла), сектор худеет.
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="issue 309" test/wall-thickness.test.mjs',
+    because: 'фаска обязана резать перпендикулярно направлению вершины на пороге, а не хордой между гранями',
+    patches: [{
+      file: 'src/wall-thickness.ts',
+      find: '  const cA = cut(pA), cB = cut(pB);\n  if (!cA || !cB) return null;\n  return [[node[0], node[1]], pA, cA, cB, pB];',
+      replace: '  return null;',
+    }],
+  },
+  {
     id: 'junction-fans-disabled',
     // Юниты формы, не детектор: контрактные пробы детектора строятся из той
     // же функции и слепнут вместе с ней, а «T-узел даёт два веера» — внешняя
@@ -2181,8 +2232,8 @@ export const MUTANTS = [
       + 'это и есть класс артефактов #302',
     patches: [{
       file: 'src/wall-thickness.ts',
-      find: '      if (mitre) {\n        push([[P[0], P[1]], EA, mitre, EB]);\n        continue;\n      }',
-      replace: '      if (mitre) {\n        continue;\n      }',
+      find: '        push(chamferApex([P[0], P[1]], EA, mitre, EB, visual)\n          ?? [[P[0], P[1]], EA, mitre, EB]);\n        continue;',
+      replace: '        continue;',
     }, {
       file: 'src/wall-thickness.ts',
       find: '      push([[P[0], P[1]], EA, A2, B2, EB]);',

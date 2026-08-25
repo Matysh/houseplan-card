@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Wall junctions no longer sprout teeth: a mitre apex is limited to 1.5
+  half-depths and anything longer is closed with a flat drafting chamfer, so
+  acute pairs lose their tails, thick multi-wall nodes lose their peaks, and
+  mixed-thickness crosses no longer show a step in a foreign quadrant. Square
+  corners are untouched
+  ([#309](https://github.com/Matysh/houseplan-card/issues/309)).
+
 - The active wall chain keeps its axis and node markers visible on already
   placed segments while drawing. The chain ink now paints above the wall
   masonry (and below the snap overlay), so each click no longer buries the

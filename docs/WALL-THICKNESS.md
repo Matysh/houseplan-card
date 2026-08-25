@@ -203,6 +203,21 @@ bound» is machine-checked by `junctionContractHoles` in tests and the
 `smoke_junction_holes` wiring probe. Degenerate zero-area rings left by
 coincident chords are dropped.
 
+**Visual mitre limit (#309, owner decision 2026-08-25).** A mitre apex may
+protrude at most `VISUAL_MITRE_LIMIT = 1.5` maximal half-depths from the node
+(a square corner of equal depths peaks at ~1.41·h, so right and obtuse
+corners are byte-identical); a longer apex is closed with a flat chamfer
+perpendicular to the apex direction at the limit (`chamferApex`). The rule
+applies to both the junction fans and the pair patches of
+`linearWallJoinPatches`; `MITRE_LIMIT = 4` survives only as the sanity bound
+for candidate construction. At a node of three or more canonical rays the
+pair patches are not built at all: a pair patch lives in the sector OPPOSITE
+its pair and painted a step over the thinner strips owning that sector (the
+15/15/30/30 cross of the owner report) — such nodes are closed with the same
+sector fans via a local multi-wall node map inside `linearWallJoinPatches`.
+The #249 machinery (`MULTI_WALL_JOIN_LIMIT = 1.25`, `multiWallBevelCutsAt`,
+room-contour mitres) is untouched.
+
 **Hatch density is physical (#230).** The pattern step is a distance on the
 plan, not a count of coordinate units: `wallHatchStepUnits(cellCm)` returns
 `8 × (5 / cell_cm)`, which is 9.6 cm at every grid scale and exactly the

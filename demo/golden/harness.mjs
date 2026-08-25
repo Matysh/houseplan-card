@@ -5,6 +5,9 @@ import { readFileSync } from 'node:fs';
 const junctionArtifactsFixture = JSON.parse(readFileSync(
   new URL('../../test/fixtures/302-junction-artifacts.json', import.meta.url), 'utf8',
 ));
+const junctionTeethFixture = JSON.parse(readFileSync(
+  new URL('../../test/fixtures/309-junction-teeth.json', import.meta.url), 'utf8',
+));
 const junctionPatchFixture = JSON.parse(readFileSync(
   new URL('../../test/fixtures/197-junction-patch.json', import.meta.url), 'utf8',
 ));
@@ -293,6 +296,17 @@ export function prepareGoldenFixture(scenario) {
       id: scenario.space,
       title: 'Junction artifacts repro',
       view_box: [0, 0, 1, 1],
+      settings: { fill_mode: 'none', show_borders: true, show_names: false },
+    });
+  }
+  if (scenario.junctionTeeth) {
+    fixture.config.spaces.push({
+      id: scenario.space,
+      title: 'Junction teeth repro',
+      cell_cm: junctionTeethFixture.cell_cm,
+      partitions: structuredClone(junctionTeethFixture.partitions),
+      rooms: [],
+      view_box: [0.1, 0.65, 3.05, 1.75],
       settings: { fill_mode: 'none', show_borders: true, show_names: false },
     });
   }

@@ -79,6 +79,41 @@ export const HATCH_MIN_STEP_PX = 2;
 /** Mitre spikes longer than this × thickness fall back to a bevel. */
 export const MITRE_LIMIT = 4;
 
+/**
+ * Visual mitre limit (#309, owner decision 2026-08-25). A mitre apex may
+ * protrude at most this many maximal half-depths from the node; anything
+ * longer is closed with a flat chamfer perpendicular to the apex direction.
+ * A square corner of equal depths peaks at ~1.41·h, so 1.5 keeps every
+ * right and obtuse corner byte-identical and only trims acute spikes.
+ * MITRE_LIMIT above stays as the sanity bound for candidate construction.
+ */
+export const VISUAL_MITRE_LIMIT = 1.5;
+
+/**
+ * Flat chamfer of an over-long mitre apex (#309). Returns the clipped
+ * polygon [node, pA, cA, cB, pB] where cA/cB sit on the fan edges at the
+ * visual limit along the apex direction, or null when the apex is within
+ * the limit (keep the mitre) or the cut degenerates (fall back to the
+ * caller's bevel/chord).
+ */
+function chamferApex(
+  node: number[], pA: number[], apex: number[], pB: number[], limit: number,
+): number[][] | null {
+  const ux = apex[0] - node[0], uy = apex[1] - node[1];
+  const d = Math.hypot(ux, uy);
+  if (!(d > 0) || d <= limit + 1e-9) return null;
+  const nx = ux / d, ny = uy / d;
+  const cut = (from: number[]): number[] | null => {
+    const f = (from[0] - node[0]) * nx + (from[1] - node[1]) * ny;
+    const t = (limit - f) / (d - f);
+    if (!Number.isFinite(t) || t < -1e-9 || t > 1 + 1e-9) return null;
+    return [from[0] + (apex[0] - from[0]) * t, from[1] + (apex[1] - from[1]) * t];
+  };
+  const cA = cut(pA), cB = cut(pB);
+  if (!cA || !cB) return null;
+  return [[node[0], node[1]], pA, cA, cB, pB];
+}
+
 /** Multi-ray joins stay inside this × the largest incident half-depth (#249). */
 export const MULTI_WALL_JOIN_LIMIT = 1.25;
 
@@ -1099,7 +1134,22 @@ export function linearWallJoinPatches(
   }
 
   const patches: number[][][] = [];
+  // #309: a node of three or more canonical rays is closed with the sector
+  // fans of the multi-wall junction machinery (visual mitre limit included)
+  // instead of pair patches. A pair patch lives in the sector OPPOSITE its
+  // pair and, at such a node, paints a step over the thinner strips that own
+  // that sector (owner report: the 15/15/30/30 cross).
+  const intervals: WallInterval[] = segments.map((segment, i) => ({
+    roomId: '', a: [segment.a[0], segment.a[1]], b: [segment.b[0], segment.b[1]],
+    key: `join-${i}`, kind: 'outer', cm: 0, open: false,
+    half: segment.halfDepth,
+  }));
+  const multiWallNodes = buildMultiWallNodeMap(intervals, eps);
+  for (const fan of junctionNodeGeometry(multiWallNodes).fans) patches.push(fan);
+  const coveredByFans = (point: number[]): boolean =>
+    !!multiWallNodeAt(multiWallNodes, point);
   for (const node of nodes) {
+    if (coveredByFans(node)) continue;
     const rays: JunctionRay[] = [];
     for (const segment of segments) {
       if (closePoint(node, segment.a, eps)) {
@@ -1141,10 +1191,10 @@ export function linearWallJoinPatches(
           node[1] - nB[1] * b.halfDepth * sign,
         ];
         const hit = lineIntersect(pA, a.u, pB, b.u);
-        const limit = MITRE_LIMIT * Math.max(a.halfDepth, b.halfDepth);
-        const patch = hit && Math.hypot(hit[0] - node[0], hit[1] - node[1]) <= limit
+        const visual = VISUAL_MITRE_LIMIT * Math.max(a.halfDepth, b.halfDepth);
+        const patch = hit && Math.hypot(hit[0] - node[0], hit[1] - node[1]) <= visual
           ? [node.slice(), pA, hit, pB]
-          : [node.slice(), pA, pB];
+          : (hit && chamferApex(node, pA, hit, pB, visual)) || [node.slice(), pA, pB];
         if (Math.abs(signedArea(patch)) > eps * eps) patches.push(patch);
       }
     }
@@ -2116,7 +2166,12 @@ export function junctionNodeGeometry(
         if (Math.abs(signedArea(poly)) > areaEps) out.fans.push(poly);
       };
       if (mitre) {
-        push([[P[0], P[1]], EA, mitre, EB]);
+        // #309: the accepted apex may still be visually too long (the classic
+        // bound admits 4·h). Past the visual limit the fan is closed with a
+        // flat chamfer perpendicular to the apex direction.
+        const visual = VISUAL_MITRE_LIMIT * Math.max(A.halfDepth, B.halfDepth);
+        push(chamferApex([P[0], P[1]], EA, mitre, EB, visual)
+          ?? [[P[0], P[1]], EA, mitre, EB]);
         continue;
       }
       if (reflex) {

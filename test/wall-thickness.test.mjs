@@ -13,7 +13,7 @@ import {
   wallBodyRings, wallBodiesGeometry, wallBodiesUnionPath, floorFootprintGeometry,
   virtualJunctionPatches, stableJunctionPatch, unionJunctionPatches,
   innerContourForRoom, innerEdgeSpan, ownEdgeOffsets,
-  paperRoomShapesWithWalls, WALL_MIN_CM, WALL_MAX_CM, MITRE_LIMIT,
+  paperRoomShapesWithWalls, WALL_MIN_CM, WALL_MAX_CM, MITRE_LIMIT, VISUAL_MITRE_LIMIT,
   MULTI_WALL_JOIN_LIMIT, buildMultiWallNodeMap, multiWallBevelTriangles,
   MULTI_WALL_NEAR_ORTHOGONAL_MAX_DEGREES,
   MULTI_WALL_ORTHOGONAL_DOT_EPSILON, multiWallProtectedRayIndexes,
@@ -30,7 +30,7 @@ import {
 import { polygonArea, paperRoomShapes, splitRoomPath, sharedBoundary } from '../test-build/logic.js';
 import { resolveOpenCuts } from '../test-build/open-spans.js';
 import { GRID_PITCH, NORM_W } from '../test-build/space-geometry.js';
-import { geometryArea } from '../test-build/physical-geometry.js';
+import { geometryArea, physicalBodySet } from '../test-build/physical-geometry.js';
 import { checkMixedRoleRecords, checkWallRecordsPreserved } from '../scripts/model-invariants.mjs';
 import { difference, intersection, union } from 'polyclip-ts';
 
@@ -2754,8 +2754,12 @@ test('linear wall joins bevel an excessive mitre and ignore malformed or near-mi
     { a: [0, 0], b: [10, 0.1], halfDepth: 1 },
   ], 1e-6);
   assert.equal(acute.length, 1);
-  assert.equal(acute[0].length, 3, 'a mitre beyond the limit becomes a bevel triangle');
-  assert.ok(acute[0].every((point) => Math.hypot(point[0], point[1]) <= MITRE_LIMIT));
+  assert.equal(acute[0].length, 5, 'a mitre beyond the visual limit becomes a flat chamfer (#309)');
+  // The chamfer bounds the APEX projection at 1.5·h; a chamfer corner can sit
+  // at most hypot(limit, h) from the node (limit along the axis, h across).
+  assert.ok(acute[0].every((point) =>
+    Math.hypot(point[0], point[1]) <= Math.hypot(VISUAL_MITRE_LIMIT, 1) + 1e-6),
+  'chamfer keeps every vertex near the node instead of the far apex');
 
   const separate = linearWallJoinPatches([
     { a: [-2, 0], b: [0, 0], halfDepth: 1 },
@@ -3053,20 +3057,144 @@ test('issue 302 the owner repro is hole-free end to end', () => {
   );
 });
 
-test('issue 302 the 57° mixed-thickness pair takes the full mitre (decision #5)', () => {
-  // The owner's repro corner: mitre at ~8.7 units — beyond the retired 1.25×h
-  // join limit (6.1) but well inside the classic MITRE_LIMIT bound. It must
-  // be a four-point mitre fan, not a bevel: this is the visible difference
-  // between decision #5 and the #249 look.
+test('issue 309 the 57° mixed-thickness pair chamfers past the visual limit', () => {
+  // The #302 owner's repro corner: the raw mitre lands at ~8.7 units — beyond
+  // the visual limit 1.5·4.861 ≈ 7.29 (#309), so the sector closes with a
+  // five-point flat chamfer. It must still reach past the retired 1.25×h join
+  // limit (6.1): the chamfer is a trimmed mitre, not the #249 bevel.
   const map = nodeMapOf(starIntervals([
     { deg: 45, half: 4.861 }, { deg: 102.3, half: 3.472 }, { deg: 332.2, half: 3.472 },
   ]));
   assert.equal(map.nodes.length, 1);
   const { fans } = junctionNodeGeometry(map);
-  const sectorFan = fans.find((poly) => poly.length === 4 && poly.some((point) => {
+  const limit = VISUAL_MITRE_LIMIT * 4.861;
+  const sectorFan = fans.find((poly) => poly.length === 5 && poly.some((point) => {
     const dx = point[0] - 500, dy = point[1] - 500;
     const angle = ((Math.atan2(dy, dx) * 180) / Math.PI + 360) % 360;
     return Math.hypot(dx, dy) > 6.2 && angle > 45 && angle < 103;
   }));
-  assert.ok(sectorFan, 'the 57° sector fell back to a bevel — the 1.25×h limit is back');
+  assert.ok(sectorFan, 'the 57° sector lost its chamfered mitre — #249 bevel or raw apex is back');
+  for (const poly of fans) {
+    for (const point of poly) {
+      assert.ok(Math.hypot(point[0] - 500, point[1] - 500) <= limit + map.epsilon + 0.1,
+        `vertex ${point} escapes the visual limit`);
+    }
+  }
+});
+
+// --- issue #309: visual mitre limit and node teeth ---------------------------
+
+const teethFixture = () => JSON.parse(readFileSync(
+  new URL('./fixtures/309-junction-teeth.json', import.meta.url), 'utf8',
+));
+const teethSegments = () => teethFixture().partitions.map((p) => ({
+  a: [p.a[0] * NORM_W, p.a[1] * NORM_W],
+  b: [p.b[0] * NORM_W, p.b[1] * NORM_W],
+  halfDepth: wallCmToUnits(p.cm, 1, GRID_PITCH) / 2,
+}));
+const pointInPoly = (point, body) => {
+  let inside = false;
+  for (let i = 0, j = body.length - 1; i < body.length; j = i++) {
+    const a = body[i], b = body[j];
+    if (((a[1] > point[1]) !== (b[1] > point[1]))
+        && point[0] < ((b[0] - a[0]) * (point[1] - a[1]))
+          / ((b[1] - a[1]) || 1e-12) + a[0]) inside = !inside;
+  }
+  return inside;
+};
+
+test('issue 309 the acute 10/20 pair keeps its tail within the visual limit', () => {
+  const node = [2220.833333333333, 1350];
+  const segments = teethSegments().filter((segment) =>
+    [segment.a, segment.b].some((end) =>
+      Math.hypot(end[0] - node[0], end[1] - node[1]) < 0.5));
+  assert.equal(segments.length, 2);
+  const hMax = Math.max(...segments.map((segment) => segment.halfDepth));
+  const patches = linearWallJoinPatches(segments, 0.2);
+  assert.ok(patches.length >= 1, 'the acute pair still closes its outer sector');
+  for (const patch of patches) {
+    assert.equal(patch.length, 5, 'the over-long apex is a flat chamfer, not a spike');
+    for (const point of patch) {
+      assert.ok(Math.hypot(point[0] - node[0], point[1] - node[1])
+        <= Math.hypot(VISUAL_MITRE_LIMIT * hMax, hMax) + 0.5,
+      `spike vertex ${point} survived past the visual limit`);
+    }
+  }
+});
+
+test('issue 309 the 3×50 node fans stay within the visual limit', () => {
+  const node = [1758.3333333333333, 1612.5];
+  const segments = teethSegments();
+  const intervals = segments.map((segment, index) => ({
+    roomId: '', a: segment.a, b: segment.b, key: `iv-${index}`,
+    kind: 'outer', cm: 0, open: false, half: segment.halfDepth,
+  }));
+  const map = buildMultiWallNodeMap(intervals, 0.2);
+  const target = map.nodes.find((candidate) =>
+    Math.hypot(candidate.point[0] - node[0], candidate.point[1] - node[1]) < 0.5);
+  assert.ok(target, 'the 3×50 node is a multi-wall node');
+  const h = Math.max(...target.rays.map((ray) => ray.halfDepth));
+  const { fans } = junctionNodeGeometry(map);
+  let sawChamfer = false;
+  for (const fan of fans) {
+    if (!fan.some((p) => Math.hypot(p[0] - node[0], p[1] - node[1]) < 0.5)) continue;
+    if (fan.length === 5) sawChamfer = true;
+    for (const point of fan) {
+      const along = Math.hypot(point[0] - node[0], point[1] - node[1]);
+      assert.ok(along <= Math.hypot(VISUAL_MITRE_LIMIT * h, h) + 0.5,
+        `hump vertex ${point} escapes the node envelope`);
+    }
+  }
+  assert.ok(sawChamfer, 'the 1.95·h apex must be chamfered into a five-point fan');
+});
+
+test('issue 309 the mixed-thickness cross has no step in a foreign quadrant', () => {
+  const node = [808.3333333333334, 1233.3333333333333];
+  const segments = teethSegments();
+  const patches = linearWallJoinPatches(segments, 0.2);
+  // The parasite pair patch used to cover this probe: thick-half deep into the
+  // quadrant owned by the two thin rays (owner report, the 15/15/30/30 cross).
+  const probe = [node[0] - 47, node[1] + 47];
+  assert.equal(patches.some((patch) => pointInPoly(probe, patch)), false,
+    'a pair patch across a foreign sector paints the step again');
+  // The thin-owned corner itself stays closed by its sector fan.
+  const corner = [node[0] - 25, node[1] + 25];
+  assert.equal(patches.some((patch) => pointInPoly(corner, patch)), true,
+    'the thin corner lost its fan coverage');
+});
+
+test('issue 309 a square corner of equal depths keeps its byte-identical mitre', () => {
+  const patches = linearWallJoinPatches([
+    { a: [0, 0], b: [100, 0], halfDepth: 10 },
+    { a: [0, 0], b: [0, 100], halfDepth: 10 },
+  ], 1e-6);
+  assert.equal(patches.length, 1);
+  assert.equal(patches[0].length, 4, 'a 1.41·h apex stays a full mitre');
+  const apex = patches[0][2];
+  assert.ok(Math.abs(Math.hypot(apex[0], apex[1]) - 10 * Math.SQRT2) < 1e-9,
+    'the square mitre apex is exactly √2·h from the node');
+});
+
+test('issue 309 the full teeth fixture leaves no junction holes', () => {
+  const segments = teethSegments();
+  const intervals = segments.map((segment, index) => ({
+    roomId: '', a: segment.a, b: segment.b, key: `iv-${index}`,
+    kind: 'outer', cm: 0, open: false, half: segment.halfDepth,
+  }));
+  const map = buildMultiWallNodeMap(intervals, 0.2);
+  assert.ok(map.nodes.length >= 2, 'fixture keeps its multi-wall nodes');
+  const space = {
+    partitions: teethFixture().partitions.map((partition) => ({
+      ...partition,
+      a: [partition.a[0] * NORM_W, partition.a[1] * NORM_W],
+      b: [partition.b[0] * NORM_W, partition.b[1] * NORM_W],
+    })),
+    room_drafts: [], wall_columns: [],
+  };
+  const frame = physicalBodySet(space, 1, GRID_PITCH, 0.2);
+  const reports = junctionContractHoles(frame.geometry, map, { step: 2 });
+  assert.deepEqual(
+    reports.map((report) => ({ node: report.node, holes: report.holes.length })), [],
+    'the teeth fixture has junction holes',
+  );
 });

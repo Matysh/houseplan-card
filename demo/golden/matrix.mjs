@@ -1,7 +1,7 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 45;
+export const GOLDEN_MATRIX_VERSION = 46;
 
 const stage = { capture: 'stage', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0005 } };
 const page = { capture: 'page', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0008 } };
@@ -616,6 +616,14 @@ export const GOLDEN_SCENARIOS = Object.freeze([
   ].map(([id, junctionNode]) => ({
     id, fixture: 'visual', space: `golden-${id}`, mode: 'view', junctionNode,
     zoom: 4, theme: 'dark', viewport: { width: 900, height: 900 }, ...stage,
+  })),
+  ...[
+    ['junction-309-step-dark', 8, [808.33, 1233.33]],
+    ['junction-309-spike-dark', 8, [2220.83, 1350]],
+    ['junction-309-hump-dark', 6, [1758.33, 1612.5]],
+  ].map(([id, zoom, zoomCenter]) => ({
+    id, fixture: 'visual', space: `golden-${id}`, mode: 'view', junctionTeeth: true,
+    zoom, zoomCenter, theme: 'dark', viewport: { width: 900, height: 900 }, ...stage,
   })),
   { id: 'junction-owner-repro-dark', fixture: 'visual',
     space: 'golden-junction-owner-repro', mode: 'view', junctionArtifacts: true,
