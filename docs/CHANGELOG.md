@@ -25,7 +25,8 @@
   An invalid open passage also retains its specific actionable error instead
   of being masked by the generic wall-model migration blocker. The compact
   space card keeps wall-hosted doors, windows, gates and passages visible after
-  the migration as well. Wall-hosted windows keep casting sunlight after an
+  the migration as well, including the physical gap in masonry for a passage.
+  Wall-hosted windows keep casting sunlight after an
   edit, partial open boundaries remain writable on migrated plans, and clearing
   wall thickness no longer restores its previous value.
   Ambiguous legacy geometry is

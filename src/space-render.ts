@@ -434,7 +434,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   const canonicalWallGeometry = needsCanonicalWallGeometry
     ? cachedStaticWallGeometry(o.cfg, space.id, wallGeometryFingerprint, () => wallBodiesUnionPath(
       space.rooms, walls, [], [
-        ...staticPassages.filter((opening) => !opening.host).map((opening) => ({
+        ...staticPassages.filter((opening) => opening.host?.kind !== 'partition').map((opening) => ({
           x: opening.rx, y: opening.ry, angle: opening.angle, length: opening.rlen,
         })),
         ...hostedCompositeOpenings,

@@ -160,7 +160,12 @@ const out = await page.evaluate(async () => {
   await staticCard.updateComplete;
   await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
   const staticRoot = staticCard.shadowRoot || staticCard.renderRoot;
-  result.staticCutsAndFillsPassage = !!staticRoot.querySelector('.wallbodies')
+  const staticWallBodyPaths = [...staticRoot.querySelectorAll('.wallbodies path')];
+  const passagePoint = new DOMPoint(500, 450);
+  const solidWallPoint = new DOMPoint(500, 260);
+  result.staticCutsAndFillsPassage = staticWallBodyPaths.length > 0
+    && staticWallBodyPaths.every((path) => !path.isPointInFill(passagePoint))
+    && staticWallBodyPaths.some((path) => path.isPointInFill(solidWallPoint))
     && !!staticRoot.querySelector('.static-opening-tunnels [data-kind="passage"]');
   result.staticDoesNotInventPassageSymbol = staticRoot.querySelectorAll('[data-hp="opening"]').length === 0;
   staticCard.remove();
