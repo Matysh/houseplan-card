@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "matrixVersion": 46,
-  "acceptedAt": "2026-08-25T18:45:47.300Z",
-  "sourceFingerprint": "45ac1765a98f48f8b097462c558ddad82f0ffbf0f87422aef513e02a2a0aa8ab",
+  "acceptedAt": "2026-08-25T20:12:50.448Z",
+  "sourceFingerprint": "e28606975682347f90f12971053825ce474085cbddd56082e867370b1039d14d",
   "chromium": "151.0.7922.34",
   "scenarios": {
     "hidden-wall-diagnostics-plan-light": "6470ed8b09b21144ec1399389e9a57774e977a6473b8eaa7de7e9b5df3273f21",
@@ -132,7 +132,7 @@
     "card-editor-invalid-default-floor-light-en": "dbf251ece014cfee252e0dcb2d7c00eda66aa4b5bd125e4c83e248d4319d24b3",
     "card-editor-invalid-default-floor-dark-ru": "422b74bb391b87e383350247ef1bc1f10ca48c8f6fe418f75bde94e62e3b8bc0",
     "junction-309-step-dark": "f5e0e649ee19197026b87687fd3512b18536883f071348589ec3a7f0ea2a216f",
-    "junction-309-spike-dark": "71d23d09765a230a389322237a5a0026b6b50076c5368995e59ed11daf25f77c",
+    "junction-309-spike-dark": "98e709aa2fa58a01fe280635c6a3799e3a5f4158b2ada12c31c38818f92c4f44",
     "junction-309-hump-dark": "abae96fd96ed8515d7b1e33b84858bdf08ac28a888898549874baa8c98202e7a"
   }
 }
