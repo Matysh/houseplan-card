@@ -13,6 +13,34 @@ const res = await page.evaluate(async () => {
   const sr = () => c.shadowRoot || c.renderRoot;
   const upd = async () => { c._cfgEpoch++; c.requestUpdate(); await c.updateComplete; };
   const sp = () => c._serverCfg.spaces.find((s) => s.id === c._space);
+  const hostContourOpenings = () => {
+    for (const opening of sp().openings || []) {
+      if (opening.host) continue;
+      const centre = [Number(opening.x), Number(opening.y)];
+      const candidates = (sp().wall_segments || []).filter((segment) => {
+        const dx = segment.b[0] - segment.a[0], dy = segment.b[1] - segment.a[1];
+        const len2 = dx * dx + dy * dy;
+        if (!(len2 > 0)) return false;
+        const t = ((centre[0] - segment.a[0]) * dx
+          + (centre[1] - segment.a[1]) * dy) / len2;
+        const q = [segment.a[0] + dx * t, segment.a[1] + dy * t];
+        const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+        const delta = Math.abs((((angle - Number(opening.angle)) % 180) + 270) % 180 - 90);
+        const half = Number(opening.length) / 2;
+        const len = Math.sqrt(len2);
+        return t >= 0 && t <= 1 && Math.hypot(centre[0] - q[0], centre[1] - q[1]) < 1e-8
+          && Math.min(delta, Math.abs(180 - delta)) < 1e-6
+          && t * len >= half - 1e-9 && (1 - t) * len >= half - 1e-9;
+      });
+      if (candidates.length === 1) {
+        const segment = candidates[0];
+        const dx = segment.b[0] - segment.a[0], dy = segment.b[1] - segment.a[1];
+        const t = ((centre[0] - segment.a[0]) * dx
+          + (centre[1] - segment.a[1]) * dy) / (dx * dx + dy * dy);
+        opening.host = { kind: 'wall', id: segment.id, t };
+      }
+    }
+  };
   const floorAreaOf = (id) => {
     const rooms = c._spaceModel().rooms;
     const walls = sp().walls || [];
@@ -76,6 +104,7 @@ const res = await page.evaluate(async () => {
   sp().openings = [{
     id: 'wtSun', type: 'window', x: 0.04, y: 0.25, angle: 90, length: 0.09,
   }];
+  hostContourOpenings();
   sp().settings = { ...(sp().settings || {}), north_deg: 0, sun_rays: true };
   c.hass = { ...c.hass, states: { ...c.hass.states, 'sun.sun': {
     entity_id: 'sun.sun', state: 'above_horizon',
@@ -107,6 +136,7 @@ const res = await page.evaluate(async () => {
   sp().openings = [{
     id: 'wt1', type: 'door', x: 0.55, y: 0.25, angle: 90, length: 0.09, flip_v: false,
   }];
+  hostContourOpenings();
   await upd();
   out.doorDrawn = !!sr().querySelector('[data-hp="opening"][data-kind="door"]');
   const bodyD = shared[0]?.getAttribute('d') || sr().querySelector('[data-hp="wall"]')?.getAttribute('d') || '';
@@ -133,6 +163,7 @@ const res = await page.evaluate(async () => {
     { id: 'wtGateFlipped', type: 'gate', x: 0.55, y: 0.30, angle: 90, length: 0.08,
       flip_v: true },
   ];
+  hostContourOpenings();
   await upd();
   const sharedGateDefault = firstGateTurn('wtGateDefault');
   const sharedGateFlipped = firstGateTurn('wtGateFlipped');
@@ -158,6 +189,7 @@ const res = await page.evaluate(async () => {
   sp().openings = [{
     id: 'wt1', type: 'door', x: 0.55, y: 0.25, angle: 90, length: 0.09, flip_v: true,
   }];
+  hostContourOpenings();
   await upd();
 
   sp().settings = { ...(sp().settings || {}), hide_openings: true, show_borders: true };

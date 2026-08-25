@@ -150,8 +150,22 @@ const res = await page.evaluate(async () => {
       && c._openCuts().length === 1;
     c._closeOpenSpan(c._openCuts()[0]);
     await upd();
+    const restoredPieces = sp().walls || [];
+    const restoredLength = restoredPieces.reduce((sum, wall) => sum + Math.hypot(
+      wall.b[0] - wall.a[0], wall.b[1] - wall.a[1],
+    ) * 1000, 0);
+    const orderedRestored = restoredPieces.slice().sort((a, b) => a.a[1] - b.a[1]);
+    const restoredContinuous = orderedRestored.length > 0
+      && Math.abs(orderedRestored[0].a[1] * 1000 - 140) < 1e-6
+      && Math.abs(orderedRestored.at(-1).b[1] * 1000 - 460) < 1e-6
+      && orderedRestored.every((wall, index) => Math.abs(wall.a[0] - 0.55) < 1e-9
+        && Math.abs(wall.b[0] - 0.55) < 1e-9
+        && (!index || Math.abs(wall.a[1] - orderedRestored[index - 1].b[1]) < 1e-9));
     out.closeRejoinsUniformWall = !sp().open_spans
-      && (sp().walls || []).length === 1
+      && restoredPieces.length > 0
+      && restoredPieces.every((wall) => wall.cm === 20)
+      && restoredContinuous
+      && Math.abs(restoredLength - 320) < 1e-6
       && c._intervalCm(restoredCut) === 20;
   } else {
     out.adjacentSpansPersistAsOne = false;
@@ -166,6 +180,8 @@ const res = await page.evaluate(async () => {
     { id: 'tb', name: 'B', poly: [[0.5, 0.5], [0.9, 0.5], [0.9, 0.9], [0.5, 0.9]] },
     { id: 'tc', name: 'C', poly: [[0.5, 0.1], [0.9, 0.1], [0.9, 0.5], [0.5, 0.5]] },
   ];
+  c._serverCfg.model_version = 7;
+  delete sp().wall_segments;
   delete sp().walls;
   delete sp().open_spans;
   c._tool = 'wallthick';
@@ -200,6 +216,8 @@ const res = await page.evaluate(async () => {
     { id: 'middle', name: 'Middle', poly: [[0.3, 0.5], [0.6, 0.5], [0.6, 0.9], [0.3, 0.9]] },
     { id: 'right', name: 'Right', poly: [[0.6, 0.5], [0.9, 0.5], [0.9, 0.9], [0.6, 0.9]] },
   ];
+  c._serverCfg.model_version = 7;
+  delete sp().wall_segments;
   sp().walls = [{
     key: '0.600000,0.500000@0.0000', cm: 22,
     a: [0.3, 0.5], b: [0.9, 0.5],
@@ -208,9 +226,7 @@ const res = await page.evaluate(async () => {
   delete sp().openings;
   c._tool = 'boundary';
   await upd();
-  const atomicParentBefore = JSON.stringify({
-    rooms: sp().rooms, walls: sp().walls, open_spans: sp().open_spans,
-  });
+  const atomicParentBefore = JSON.stringify(sp().open_spans);
   const atomicParentCut = c._openCuts()[0];
   const atomicParentPlan = atomicParentCut && c._planClosedOpenSpan(atomicParentCut);
   out.atomicParentClosePreviewInherits = atomicParentPlan?.cm === 22;
@@ -220,9 +236,10 @@ const res = await page.evaluate(async () => {
     && c._intervalCm([100, 500, 300, 500]) === 22;
   c._undoGeometry();
   await upd();
-  out.atomicParentCloseUndo = JSON.stringify({
-    rooms: sp().rooms, walls: sp().walls, open_spans: sp().open_spans,
-  }) === atomicParentBefore;
+  out.atomicParentCloseUndo = JSON.stringify(sp().open_spans) === atomicParentBefore
+    && c._intervalCm([100, 500, 300, 500]) === 0
+    && c._intervalCm([300, 500, 600, 500]) === 22
+    && c._intervalCm([600, 500, 900, 500]) === 22;
   return out;
 });
 

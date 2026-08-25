@@ -84,6 +84,23 @@ test('v7 rectangle migrates atomically to the complete id catalogue and is idemp
   assert.deepEqual(second.config, first.config);
 });
 
+test('an explicit canonical zero is not resurrected from the old thickness projection', () => {
+  const base = commitWallSegmentModel(configOf({
+    id: 'floor', title: 'Floor', rooms: [rectangle('room')],
+    walls: [{
+      key: wallKey([0, 0], [1, 0], GRID_STEP_N),
+      a: [0, 0], b: [1, 0], cm: 20,
+    }],
+  })).config;
+  const edited = structuredClone(base);
+  const topId = edited.spaces[0].rooms[0].wall_ids[0];
+  edited.spaces[0].wall_segments.find((segment) => segment.id === topId).cm = 0;
+  delete edited.spaces[0].walls;
+  const result = commitWallSegmentModel(edited).config.spaces[0];
+  assert.equal(result.wall_segments.find((segment) => segment.id === topId).cm, 0);
+  assert.equal(result.walls, undefined);
+});
+
 test('partial shared side is atomised once and every atom has one or two owners', () => {
   const result = commitWallSegmentModel(configOf({
     id: 'floor', title: 'Floor',

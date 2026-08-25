@@ -93,9 +93,9 @@ const res = await page.evaluate(async () => {
   const probeR3 = [802, 480];
   const beforeReachesR3 = isLit(probeR3);
   if (rr3) {
-    rr2.open_to = [...(rr2.open_to || []), 'r3'];
-    rr3.open_to = [...(rr3.open_to || []), 'r2'];
-    // legacy open_to without spans still expands on read for cuts — force spans for r2-r3
+    // Create the second span through the same production boundary tool. Direct
+    // legacy open_to injection would make the first click close that already
+    // open wall instead of anchoring a new partial span.
     c._setMode('plan'); c._tool = 'boundary';
     // shared r2|r3 at y=460, x 550..960
     c._boundaryClick([700, 460]);

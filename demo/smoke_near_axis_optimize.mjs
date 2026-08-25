@@ -75,9 +75,10 @@ const out = await page.evaluate(async (sourceSpace) => {
   const north = card._serverCfg.spaces[0].rooms.find((room) => room.id === 'north-west');
   const south = card._serverCfg.spaces[0].rooms.find((room) => room.id === 'south-west');
   result.applyUsesOneAtomicWrite = sent.filter((type) => type === 'houseplan/plan/optimize').length === 1;
+  const samePoint = (left, right) => JSON.stringify(left) === JSON.stringify(right);
   result.applyMovesBothOwnersToExactAxis = north.poly[1][1] === north.poly[2][1]
-    && JSON.stringify(north.poly[1]) === JSON.stringify(south.poly[0])
-    && JSON.stringify(north.poly[2]) === JSON.stringify(south.poly[3]);
+    && south.poly.some((point) => samePoint(point, north.poly[1]))
+    && south.poly.some((point) => samePoint(point, north.poly[2]));
   result.applyRekeysWall = card._serverCfg.spaces[0].walls.some((wall) => (
     wall.a[1] === wall.b[1] && wall.key.endsWith('@0.0000')
   ));

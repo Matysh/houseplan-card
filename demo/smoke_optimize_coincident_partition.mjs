@@ -7,6 +7,8 @@ const out = await page.evaluate(async () => {
   const result = {};
   const card = window.__card;
   const clone = (value) => JSON.parse(JSON.stringify(value));
+  const wallHostResolves = (space, opening) => opening.host?.kind === 'wall'
+    && (space.wall_segments || []).some((segment) => segment.id === opening.host.id);
   const sharedX = 0.5;
   const original = {
     model_version: 7,
@@ -64,11 +66,13 @@ const out = await page.evaluate(async () => {
 
   card._openAlignDialog(); await card.updateComplete;
   const preview = card._alignDialog;
+  const previewSpace = preview?.config?.spaces?.[0];
   result.previewIsExact = !!preview?.changed && preview.preflight?.ok === true
     && preview.report.partitionsReconciled === 1
     && preview.report.openingsRehosted === 1
-    && preview.config.spaces[0].partitions == null
-    && preview.config.spaces[0].openings[0].host == null;
+    && preview.config.model_version === 8
+    && previewSpace.partitions == null
+    && wallHostResolves(previewSpace, previewSpace.openings[0]);
   result.previewDoesNotWrite = sent.length === 0
     && JSON.stringify(card._serverCfg) === JSON.stringify(original);
   result.reportRendersBothCounters = card.renderRoot.querySelectorAll('hp-dialog .alignmsg').length >= 2;
@@ -77,7 +81,7 @@ const out = await page.evaluate(async () => {
   const applied = card._serverCfg.spaces[0];
   result.applyUsesOneAtomicWrite = sent.filter((type) => type === 'houseplan/plan/optimize').length === 1;
   result.applyKeepsOpeningFields = applied.partitions == null
-    && applied.openings[0].host == null
+    && wallHostResolves(applied, applied.openings[0])
     && applied.openings[0].id === 'door'
     && applied.openings[0].contact === 'binary_sensor.test_door'
     && applied.openings[0].lock === 'lock.test_door'
@@ -88,7 +92,7 @@ const out = await page.evaluate(async () => {
 
   await card._loadFromServer(); await card.updateComplete;
   result.reloadKeepsCanonicalBody = card._serverCfg.spaces[0].partitions == null
-    && card._serverCfg.spaces[0].openings[0].host == null;
+    && wallHostResolves(card._serverCfg.spaces[0], card._serverCfg.spaces[0].openings[0]);
 
   await card._undoPlanOptimization(); await card.updateComplete;
   result.undoRestoresHostedPartition = JSON.stringify(card._serverCfg.spaces[0].partitions)
@@ -113,7 +117,7 @@ const out = await page.evaluate(async () => {
   const finalSpace = card._serverCfg.spaces[0];
   result.thicknessChangesSingleBody = finalSpace.partitions == null
     && finalSpace.walls.length === 1 && finalSpace.walls[0].cm === 10
-    && finalSpace.openings[0].host == null;
+    && wallHostResolves(finalSpace, finalSpace.openings[0]);
   return result;
 });
 

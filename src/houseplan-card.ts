@@ -7293,7 +7293,11 @@ class HouseplanCard extends LitElement {
     return this._t(`wall_model.reason.${reason}`);
   }
 
-  private _commitPhysicalGeometry(name: string, before: SpaceGeometryState | null): boolean {
+  private _commitPhysicalGeometry(
+    name: string,
+    before: SpaceGeometryState | null,
+    additionalAuthoredPoints: readonly (readonly number[])[] = [],
+  ): boolean {
     if (!before || !this._serverCfg) return false;
     const liveCandidate = this._serverCfg;
     const editedState = this._geometrySnapshotFromConfig(liveCandidate, before.spaceId);
@@ -7360,6 +7364,7 @@ class HouseplanCard extends LitElement {
       const authoredPoints = this._path.length >= 2
         ? this._path.map((point) => [point[0] / NORM_W, point[1] / NORM_W])
         : [];
+      authoredPoints.push(...additionalAuthoredPoints.map((point) => [point[0], point[1]]));
       safe = wallModelOffGridValueCount(afterSpace)
         <= wallModelOffGridValueCount(historyBefore, authoredPoints)
         && this._checkSpacePhysicalGeometry(committedCandidate, before.spaceId).ok;
@@ -11650,7 +11655,10 @@ class HouseplanCard extends LitElement {
       sp.openings = purgeOpeningsOnSpan(sp.openings, sg, NORM_W, this._gridPitch * 6);
       const removedOpenings = (sp.openings || []).length < beforeOp;
       this._persistOpenCuts(next);
-      if (this._commitPhysicalGeometry(this._t('history.open_boundary'), before)) {
+      if (this._commitPhysicalGeometry(this._t('history.open_boundary'), before, [
+        [sg[0] / NORM_W, sg[1] / NORM_W],
+        [sg[2] / NORM_W, sg[3] / NORM_W],
+      ])) {
         if (removedOpenings) this._showToast(this._t('toast.openwall_openings_removed'));
         this._showToast(this._t('toast.boundary_opened'));
       }
@@ -11994,6 +12002,15 @@ class HouseplanCard extends LitElement {
       next = setWallThickness(sp.walls, d.a, d.b, cm, this._wallKeyPitch, NORM_W);
     }
     next = this._normalizeWalls(next, openCuts);
+    // ADR 282 Stage 1: this writer knows that absence from `next` is an
+    // explicit zero chosen by the user, not a missing compatibility record.
+    // Mirror that intent into the canonical catalogue before the common
+    // barrier; otherwise its lineage fallback would resurrect the old cm.
+    for (const segment of sp.wall_segments || []) {
+      segment.cm = thicknessCmAt(
+        next, segment.a, segment.b, GRID_STEP_N, 1,
+      );
+    }
     if (next.length) sp.walls = next;
     else delete sp.walls;
     this._wallDialog = null;
@@ -15448,8 +15465,10 @@ class HouseplanCard extends LitElement {
         .map((r) => ({ id: r.id || '', poly: roomPoly(r) }))
         .filter((r): r is { id: string; poly: number[][] } => !!r.id && !!r.poly);
       const windows = this._openingsR
-        // An independent-wall window is not an exterior sun source (#132).
-        .filter((o) => o.type === 'window' && !o.host)
+        // A contour-wall host is stable identity metadata, not a different
+        // physical carrier. Only an independent partition window is excluded
+        // from exterior sunlight (#132, ADR 282 Stage 1).
+        .filter((o) => o.type === 'window' && o.host?.kind !== 'partition')
         .map((o) => ({ id: o.id, x: o.rx, y: o.ry, angle: o.angle, length: o.rlen }));
       const walls = this._spaceWalls;
       const openCuts = this._openPairs().flatMap((p) => p.segs);

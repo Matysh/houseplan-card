@@ -14,6 +14,8 @@ const out = await page.evaluate(async (fixture) => {
   const result = {};
   const card = window.__card;
   const copy = (value) => JSON.parse(JSON.stringify(value));
+  const wallHostResolves = (space, opening) => opening.host?.kind === 'wall'
+    && (space.wall_segments || []).some((segment) => segment.id === opening.host.id);
   let serverConfig = copy(fixture);
   let serverLayout = {};
   const sent = [];
@@ -82,21 +84,22 @@ const out = await page.evaluate(async (fixture) => {
 
   card._openAlignDialog();
   await card.updateComplete;
+  const previewSpace = card._alignDialog?.config?.spaces?.[0];
   result.previewProvesOuterRewrite = card._alignDialog?.changed === true
     && card._alignDialog?.preflight?.ok === true
     && card._alignDialog?.report?.partitionsReconciled === 3
     && card._alignDialog?.report?.openingsRehosted === 2
-    && card._alignDialog?.config?.spaces?.[0]?.partitions == null
-    && card._alignDialog?.config?.spaces?.[0]?.openings?.every((opening) => opening.host == null);
+    && card._alignDialog?.config?.model_version === 8
+    && previewSpace?.partitions == null
+    && previewSpace?.openings?.every((opening) => wallHostResolves(previewSpace, opening));
   await card._runAlignToGrid();
   await card.updateComplete;
   result.optimizeUsesOneWrite = sent.filter((type) => type === 'houseplan/plan/optimize').length === 1;
   const optimized = card._serverCfg.spaces[0];
   result.optimizePreservesOpeningFields = optimized.partitions == null
-    && optimized.openings[0].host == null
+    && optimized.openings.every((opening) => wallHostResolves(optimized, opening))
     && optimized.openings[0].cover === 'cover.left'
     && optimized.openings[0].future_field?.keep === 'left'
-    && optimized.openings[1].host == null
     && optimized.openings[1].contact === 'binary_sensor.right';
 
   await resetResize();

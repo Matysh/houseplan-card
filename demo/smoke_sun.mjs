@@ -218,12 +218,14 @@ const rayInfo = () => page.evaluate(() => {
   const c = window.__card;
   const rays = c._sunRaysCache?.rays || [];
   const r = rays.find((q) => q.openingId === 'wE');
+  const space = c._serverCfg.spaces.find((s) => s.id === 'f1');
+  const opening = space.openings.find((o) => o.id === 'wE');
   return {
     ids: rays.map((q) => q.openingId).sort(),
     midY: r ? (r.a[1] + r.b[1]) / 2 : NaN,
     minX: r ? Math.min(...r.polys.flat().map((p) => p[0])) : NaN,
     rev: c._cfgRev,
-    wEy: c._serverCfg.spaces.find((s) => s.id === 'f1').openings.find((o) => o.id === 'wE').y,
+    wEy: opening.y,
   };
 });
 
@@ -276,8 +278,9 @@ check('b701_ray_not_stale', Math.abs(moved.midY - 600) > 50, true);
 const clipped = await page.evaluate(async () => {
   const c = window.__card;
   const sp = c._serverCfg.spaces.find((s) => s.id === 'f1');
+  const before = c._geometrySnapshot();
   sp.rooms.find((r) => r.id === 'r3').poly = [[0.90, 0.46], [0.96, 0.46], [0.96, 0.86], [0.90, 0.86]];
-  c._saveConfig(); // the one true local-save entry point
+  c._commitPhysicalGeometry('sun smoke room edit', before);
   c.requestUpdate(); await c.updateComplete;
   return true;
 });
@@ -321,10 +324,12 @@ const thr = await page.evaluate(async () => {
   // either absent or at FULL strength, and crossing 3° fades the whole LAYER
   // (never the geometry) in or out over exactly two seconds
   await setSun(90, 10);
-  out.aboveThresholdDrawn = domPolys().length > 0 && !layer().classList.contains('out');
+  out.aboveThresholdDrawn = domPolys().length > 0 && !layer()?.classList.contains('out');
   {
-    const cs = getComputedStyle(layer());
-    out.fadeInTakesTwoSeconds = cs.animationName === 'hp-sunfade-in' && cs.animationDuration === '2s';
+    const current = layer();
+    const cs = current && getComputedStyle(current);
+    out.fadeInTakesTwoSeconds = !!cs
+      && cs.animationName === 'hp-sunfade-in' && cs.animationDuration === '2s';
   }
   out.fullAlphaWellAboveThreshold = Math.abs(stopAlpha() - 0.3) < 1e-6;
   await setSun(90, 3.2);
@@ -346,7 +351,7 @@ const thr = await page.evaluate(async () => {
   await setSun(90, 1);
   out.coldStartBelowThresholdEmpty = domPolys().length === 0 && !layer();
   await setSun(90, 5);
-  out.backAboveThreshold = domPolys().length > 0 && !layer().classList.contains('out');
+  out.backAboveThreshold = domPolys().length > 0 && !layer()?.classList.contains('out');
   return out;
 });
 Object.assign(res, thr);
