@@ -3564,7 +3564,11 @@ export function wallBodiesGeometry(
         rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale,
         multiWallNodes,
       );
-      for (const piece of [...corners.supports, ...corners.fans]) {
+      // Fans only: with the trim now TARGETED (it never cuts an ordinary
+      // node's strips) the support re-union became dead weight — measured by
+      // the full unit suite staying green without it. The support quads stay
+      // exported: the detector and the tests use them as the contract truth.
+      for (const piece of corners.fans) {
         try {
           let ring: any = [closedRing(piece)];
           if (bound) ring = intersection(ring, bound);

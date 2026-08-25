@@ -2190,17 +2190,6 @@ export const MUTANTS = [
     }],
   },
   {
-    id: 'junction-supports-not-restored',
-    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test --test-name-pattern="hole-free end to end" test/wall-thickness.test.mjs',
-    because: 'фаска старого слоя срезает материал полос на острых стыках; '
-      + 'без возврата саппорт-квадов узла репро владельца снова дырявое',
-    patches: [{
-      file: 'src/wall-thickness.ts',
-      find: '      for (const piece of [...corners.supports, ...corners.fans]) {',
-      replace: '      for (const piece of corners.fans) {',
-    }],
-  },
-  {
     id: 'junction-fan-ignores-thick-length',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test --test-name-pattern="issue 302" test/wall-thickness.test.mjs',
     because: 'mitre, шагнувший за короткий толстый саппорт, рисует латеральный '
