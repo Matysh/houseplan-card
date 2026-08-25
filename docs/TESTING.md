@@ -523,6 +523,10 @@ directory's README.
 - [ ] Opening binding/registry-less/lock-action smokes preserve the secure
       no-toggle-on-plan invariant while checking compact Light/Dark
       locked/unlocked/unknown shell/core presentation.
+- [ ] `node demo/smoke_opening_entity_search.mjs` checks the real opening
+      dialog: contact and lock search by friendly name/entity ID, preserved
+      contact priority, visible IDs, persistent **none** option and unchanged
+      `opening.contact`/`opening.lock` storage.
 - [ ] Unit presentation coverage compares marker LQI colour with the shared
       continuous `lqiColor()` across former 40/41 and 179/180 boundaries; bands
       remain semantic metadata only.

@@ -140,6 +140,7 @@
   "opening.contact_label": "Датчик открытия",
   "opening.lock_label": "Замок",
   "opening.none": "— нет —",
+  "opening.search_ph": "Поиск: имя или entity_id…",
   "opening.invert": "Инвертировать открыто/закрыто",
   "opening.flip_h": "Петли с другой стороны",
   "opening.flip_v": "Открывается в другую сторону",

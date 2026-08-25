@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Contact sensors and locks in the opening properties dialog can now be
+  searched by friendly name or full entity ID. The selector keeps door/window
+  candidates prioritised and shows the entity ID beside every result
+  ([#301](https://github.com/Matysh/houseplan-card/issues/301)).
+
 ## v1.67.0-rc.2 — 2026-08-25
 
 - Hidden independent wall sections and saved wall chains now keep their axes

@@ -140,6 +140,7 @@
   "opening.contact_label": "Open/close sensor",
   "opening.lock_label": "Lock",
   "opening.none": "— none —",
+  "opening.search_ph": "Search: name or entity id…",
   "opening.invert": "Invert open/closed",
   "opening.flip_h": "Hinge on the other jamb",
   "opening.flip_v": "Opens to the other side",

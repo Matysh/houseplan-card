@@ -41,6 +41,72 @@ import { fileURLToPath } from 'node:url';
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 export const MUTANTS = [
   {
+    id: 'opening-search-filter-dead',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="matches friendly name" '
+      + 'test/opening-entity-search.test.mjs',
+    because: 'the opening picker must actually apply the typed query; returning the unfiltered '
+      + 'candidate list recreates the original hundred-row scrolling problem from #301',
+    patches: [{
+      file: 'src/logic.ts',
+      find: '  const normalized = query.trim().toLowerCase();',
+      replace: "  const normalized = '';",
+    }],
+  },
+  {
+    id: 'opening-search-name-only',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="matches entity id" '
+      + 'test/opening-entity-search.test.mjs',
+    because: 'large HA installations often identify the wanted opening by entity_id rather '
+      + 'than a duplicated friendly name, so a label-only search violates #301 directly',
+    patches: [{
+      file: 'src/logic.ts',
+      find: '      candidate.label.toLowerCase().includes(normalized)\n'
+        + '        || candidate.value.toLowerCase().includes(normalized))',
+      replace: '      candidate.label.toLowerCase().includes(normalized))',
+    }],
+  },
+  {
+    id: 'opening-search-order-resorted',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="preserves resolver order" '
+      + 'test/opening-entity-search.test.mjs',
+    because: 're-sorting a filtered contact list hides door/window device classes behind '
+      + 'generic binary sensors and discards the deliberate resolver priority from #301',
+    patches: [{
+      file: 'src/logic.ts',
+      find: '  return filtered.slice(0, Math.max(0, limit));',
+      replace: '  return [...filtered].sort((a, b) => a.label.localeCompare(b.label))'
+        + '.slice(0, Math.max(0, limit));',
+    }],
+  },
+  {
+    id: 'opening-search-hides-none',
+    guard: 'node demo/smoke_opening_entity_search.mjs',
+    because: 'the clear-binding action must remain first and visible for every query, including '
+      + 'a query with no matches; hiding it can trap a stale contact or lock on the opening',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '                <button type="button" class="cand opening-entity-candidate ${cur ? \'\' : \'sel\'}"\n'
+        + '                  data-opening-entity="" @click=${() => this._selectOpeningEntity(kind, \'\')}>\n'
+        + '                  <span class="cl">${this._t(\'opening.none\')}</span>\n'
+        + '                </button>\n',
+      replace: '',
+    }],
+  },
+  {
+    id: 'opening-search-select-not-wired',
+    guard: 'node demo/smoke_opening_entity_search.mjs',
+    because: 'a visually filtered result is useless unless its click writes the exact entity_id '
+      + 'into opening.contact or opening.lock and closes the picker as required by #301',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '                    @click=${() => this._selectOpeningEntity(kind, candidate.value)}>',
+      replace: '                    @click=${() => this._selectOpeningEntity(kind, \'\')}>',
+    }],
+  },
+  {
     id: 'device-tombstone-blocks-child-picker',
     guard: 'node demo/smoke_binding_picker.mjs',
     because: 'a device tombstone must expose an active child in Add when Show entities is on; '

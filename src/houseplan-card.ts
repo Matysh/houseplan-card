@@ -24,7 +24,7 @@ import {
   segmentCm, formatLength, roomEdges, roomPoly, paperRoomShapes, pointStrictlyInside, roomsOverlap,
   pointOnBoundary, mergeRooms, splitRoomPath, polygonArea, closestPointOnBoundary, pointStrictlyInside as ptInside, islandsOf, sharedBoundary, distToSegment, outlineWithout, cutSegments, alignGuides, segmentAngle, is45, isExact45Vector, type AlignGuide, swipeTarget, clampScale, migratePdfUrls, roomFillModeOf, roomGlowOf, contentUrl,
   snapToWall, snapPointAlongPoly, openingAmount, openingShoulders, interiorPoint,
-  isInteriorLightOpeningType, openingEntityReferences,
+  isInteriorLightOpeningType, openingEntityReferences, filterOpeningEntityCandidates,
   poleOfInaccessibility, subst,
   averageLqi, fitView, declump, safeUrl, floorsOf, type FloorInfo,
   stateIcon, lightColorOf, parseRoomRef, diffNewDevices, resolveGlowValues, resolveGlowAppearance,
@@ -1677,6 +1677,10 @@ class HouseplanCard extends LitElement {
     lengthTouched?: boolean;
     contact: string;
     lock: string;
+    contactOpen?: boolean;
+    contactFilter?: string;
+    lockOpen?: boolean;
+    lockFilter?: string;
     invert: boolean;
     flipH: boolean;
     flipV: boolean;
@@ -12892,6 +12896,33 @@ class HouseplanCard extends LitElement {
       .sort((a, b) => a.label.localeCompare(b.label));
   }
 
+  private _toggleOpeningEntityPicker(kind: 'contact' | 'lock'): void {
+    const d = this._openingDialog;
+    if (!d) return;
+    const nextOpen = kind === 'contact' ? !d.contactOpen : !d.lockOpen;
+    this._openingDialog = {
+      ...d,
+      contactOpen: kind === 'contact' ? nextOpen : false,
+      lockOpen: kind === 'lock' ? nextOpen : false,
+    };
+  }
+
+  private _filterOpeningEntities(kind: 'contact' | 'lock', value: string): void {
+    const d = this._openingDialog;
+    if (!d) return;
+    this._openingDialog = kind === 'contact'
+      ? { ...d, contactFilter: value }
+      : { ...d, lockFilter: value };
+  }
+
+  private _selectOpeningEntity(kind: 'contact' | 'lock', value: string): void {
+    const d = this._openingDialog;
+    if (!d) return;
+    this._openingDialog = kind === 'contact'
+      ? { ...d, contact: value, contactOpen: false, contactFilter: '' }
+      : { ...d, lock: value, lockOpen: false, lockFilter: '' };
+  }
+
   /** Merge: first click picks a room, second picks the room to merge it with. */
   private _mergeClick(raw: number[]): void {
     const space = this._spaceModel();
@@ -19460,11 +19491,52 @@ class HouseplanCard extends LitElement {
     const icon = d.type === 'gate' ? 'mdi:gate'
       : d.type === 'window' ? 'mdi:window-closed-variant'
         : d.type === 'passage' ? 'mdi:arch' : 'mdi:door';
-    const opt = (list: { value: string; label: string }[], cur: string, set: (v: string) => void) =>
-      html`<select class="areasel" @change=${(e: Event) => set((e.target as HTMLSelectElement).value)}>
-        <option value="" ?selected=${!cur}>${this._t('opening.none')}</option>
-        ${list.map((c) => html`<option value=${c.value} ?selected=${c.value === cur}>${c.label}</option>`)}
-      </select>`;
+    const picker = (kind: 'contact' | 'lock', list: { value: string; label: string }[]) => {
+      const cur = kind === 'contact' ? d.contact : d.lock;
+      const open = kind === 'contact' ? !!d.contactOpen : !!d.lockOpen;
+      const filter = kind === 'contact' ? d.contactFilter || '' : d.lockFilter || '';
+      const selected = list.find((candidate) => candidate.value === cur);
+      const selectedLabel = selected?.label
+        || this.hass.states[cur]?.attributes?.friendly_name
+        || this._fullRegistryHass.entities[cur]?.name
+        || cur;
+      const filtered = filterOpeningEntityCandidates(list, filter);
+      return html`
+        <button type="button" class="dropbtn opening-entity-drop ${open ? 'open' : ''}"
+          data-opening-picker=${kind} aria-expanded=${open ? 'true' : 'false'}
+          @click=${() => this._toggleOpeningEntityPicker(kind)}>
+          ${cur
+            ? html`<b>${selectedLabel}</b><span class="ref">${cur}</span>`
+            : html`<span class="muted">${this._t('opening.none')}</span>`}
+          <ha-icon icon=${open ? 'mdi:chevron-up' : 'mdi:chevron-down'}></ha-icon>
+        </button>
+        ${open
+          ? html`<div class="droppanel opening-entity-panel" data-opening-panel=${kind}>
+              <input class="namein opening-entity-search" type="text"
+                placeholder=${this._t('opening.search_ph')} .value=${filter}
+                @input=${(e: Event) => this._filterOpeningEntities(
+                  kind, (e.target as HTMLInputElement).value,
+                )} />
+              <div class="candlist" role="listbox">
+                <button type="button" class="cand opening-entity-candidate ${cur ? '' : 'sel'}"
+                  data-opening-entity="" @click=${() => this._selectOpeningEntity(kind, '')}>
+                  <span class="cl">${this._t('opening.none')}</span>
+                </button>
+                ${filtered.map((candidate) => html`
+                  <button type="button"
+                    class="cand opening-entity-candidate ${candidate.value === cur ? 'sel' : ''}"
+                    data-opening-entity=${candidate.value}
+                    @click=${() => this._selectOpeningEntity(kind, candidate.value)}>
+                    <span class="cl">${candidate.label}</span>
+                    <span class="cs">${candidate.value}</span>
+                  </button>`)}
+                ${!filtered.length
+                  ? html`<div class="cand muted opening-entity-empty">${this._t('marker.nothing_found')}</div>`
+                  : nothing}
+              </div>
+            </div>`
+          : nothing}`;
+    };
     return html`<hp-dialog .hass=${this.hass} wide
       .title=${d.id ? this._t('opening.edit') : this._t('opening.new')} icon=${icon}
       @hp-close=${() => (this._openingDialog = null)}>
@@ -19483,22 +19555,26 @@ class HouseplanCard extends LitElement {
           <label class="srcrow"><input type="radio" name="optype" .checked=${d.type === 'window'}
             @change=${() => (this._openingDialog = {
               ...d, type: 'window', lengthCm: d.id ? d.lengthCm : openingDefaultLengthCm('window'),
+              contactOpen: false, lockOpen: false,
             })} />
             <span>${this._t('opening.window')}</span></label>
           <label class="srcrow"><input type="radio" name="optype" .checked=${d.type === 'door'}
             @change=${() => (this._openingDialog = {
               ...d, type: 'door', lengthCm: d.id ? d.lengthCm : openingDefaultLengthCm('door'),
+              contactOpen: false, lockOpen: false,
             })} />
             <span>${this._t('opening.door')}</span></label>
           <label class="srcrow"><input type="radio" name="optype" .checked=${d.type === 'passage'}
             @change=${() => (this._openingDialog = {
               ...d, type: 'passage', lengthCm: d.id ? d.lengthCm : openingDefaultLengthCm('passage'),
+              contactOpen: false, lockOpen: false,
             })} />
             <span>${this._t('opening.passage')}</span></label>
           <label class="srcrow"><input type="radio" name="optype" .checked=${d.type === 'gate'}
             @change=${() => (this._openingDialog = {
               ...d, type: 'gate',
               lengthCm: d.id ? d.lengthCm : openingDefaultLengthCm('gate'), flipH: false,
+              contactOpen: false, lockOpen: false,
             })} />
             <span>${this._t('opening.gate')}</span></label>
 
@@ -19518,7 +19594,7 @@ class HouseplanCard extends LitElement {
 
           ${d.type !== 'passage'
             ? html`<label>${this._t('opening.contact_label')}</label>
-                ${opt(this._contactCandidates(), d.contact, (v) => (this._openingDialog = { ...d, contact: v }))}
+                ${picker('contact', this._contactCandidates())}
                 ${d.contact
                   ? html`<label class="srcrow">${this._boolInput(d.invert, (v) => (this._openingDialog = { ...d, invert: v }))}
                       <span>${this._t('opening.invert')}</span></label>`
@@ -19527,7 +19603,7 @@ class HouseplanCard extends LitElement {
 
           ${d.type === 'door' || d.type === 'gate'
             ? html`<label>${this._t('opening.lock_label')}</label>
-                ${opt(this._lockCandidates(), d.lock, (v) => (this._openingDialog = { ...d, lock: v }))}`
+                ${picker('lock', this._lockCandidates())}`
             : nothing}
 
           ${d.type !== 'gate' && d.type !== 'passage'

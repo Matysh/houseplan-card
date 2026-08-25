@@ -3063,6 +3063,19 @@ export const cardStyles = css`
       font-size: var(--fs-s);
       white-space: nowrap;
     }
+    .opening-entity-candidate {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      text-align: left;
+    }
+    .opening-entity-candidate.sel {
+      background: var(--hp-accent);
+      color: var(--text-primary-color, #fff);
+    }
+    .opening-entity-empty { cursor: default; }
     .cand.sel .cs {
       color: var(--text-primary-color, #fff);
       opacity: 0.85;

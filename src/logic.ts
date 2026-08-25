@@ -339,6 +339,28 @@ export function openingEntityReferences(opening: {
     .filter((entityId): entityId is string => typeof entityId === 'string' && entityId.length > 0);
 }
 
+export interface OpeningEntityCandidate {
+  value: string;
+  label: string;
+}
+
+/**
+ * Search opening bindings without changing the candidate resolver's order.
+ * Contact candidates deliberately put door/window classes first, so this
+ * helper must only filter and cap the incoming array — never sort it again.
+ */
+export function filterOpeningEntityCandidates(
+  candidates: readonly OpeningEntityCandidate[], query: string, limit = 200,
+): OpeningEntityCandidate[] {
+  const normalized = query.trim().toLowerCase();
+  const filtered = normalized
+    ? candidates.filter((candidate) =>
+      candidate.label.toLowerCase().includes(normalized)
+        || candidate.value.toLowerCase().includes(normalized))
+    : candidates;
+  return filtered.slice(0, Math.max(0, limit));
+}
+
 /**
  * Coarse active/open predicate used by bound architectural openings and
  * compatibility helpers. Device activity itself is classified semantically
