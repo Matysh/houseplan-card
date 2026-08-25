@@ -60,6 +60,11 @@ from .virtual_lights import (
 )
 from .registry_snapshot import import_registry_snapshot
 from .projection import project_config, project_layout
+from .wall_segment_model import (
+    WALL_SEGMENT_MODEL_VERSION,
+    WallSegmentMigrationError,
+    commit_wall_segment_model,
+)
 from .validation import (
     CONFIG_SCHEMA, LAYOUT_SCHEMA, MAX_CONFIG_BYTES, MAX_PLAN_BYTES,
     PLAN_EXTENSIONS, POS_SCHEMA, MarkerControlError, OpeningPassageError,
@@ -1633,7 +1638,26 @@ async def ws_plan_optimize(hass: HomeAssistant, connection, msg: dict[str, Any])
         # as config/set; otherwise a crafted client can persist a new cycle.
         try:
             validate_wall_model_transition(msg["config"], config_data.get("config"))
-            validated_config = CONFIG_SCHEMA(msg["config"])
+            try:
+                submitted_model = int(msg["config"].get("model_version", 0) or 0)
+            except (TypeError, ValueError):
+                submitted_model = WALL_SEGMENT_MODEL_VERSION
+            # Optimize is an explicit structural writer and therefore the
+            # server-side v7 -> v8 barrier as well. Current v8 candidates are
+            # validated verbatim: the backend must never invent lineage for a
+            # graph already authored by a current client.
+            candidate_config = CONFIG_SCHEMA(msg["config"])
+            if submitted_model < WALL_SEGMENT_MODEL_VERSION:
+                candidate_config, _ = commit_wall_segment_model(candidate_config)
+            validated_config = CONFIG_SCHEMA(candidate_config)
+            migrated_size = len(json.dumps(validated_config, separators=(",", ":")))
+            if migrated_size > MAX_CONFIG_BYTES:
+                connection.send_error(
+                    msg["id"], "too_large",
+                    f"Configuration is {migrated_size // 1024} KB, "
+                    f"the limit is {MAX_CONFIG_BYTES // 1024} KB",
+                )
+                return
             msg["config"].clear()
             msg["config"].update(validated_config)
             validate_marker_controls(msg["config"], config_data.get("config"))
@@ -1647,6 +1671,7 @@ async def ws_plan_optimize(hass: HomeAssistant, connection, msg: dict[str, Any])
         except (
             MarkerControlError, OpeningPassageError, PartitionOpeningHostError,
             PartitionOpeningJambMarginError, WallModelClientOutdatedError,
+            WallSegmentMigrationError,
         ) as err:
             connection.send_error(msg["id"], err.code, str(err))
             return

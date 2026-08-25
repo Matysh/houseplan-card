@@ -568,8 +568,13 @@ async def test_optimize_accepts_proved_rehost_and_undo_restores_host(
     optimized = await client.receive_json()
     assert optimized["success"]
     stored = (await runtime.config_store.async_load())["config"]
-    assert stored["spaces"][0].get("partitions") in (None, [])
-    assert "host" not in stored["spaces"][0]["openings"][0]
+    stored_space = stored["spaces"][0]
+    assert stored_space.get("partitions") in (None, [])
+    wall_ids = {segment["id"] for segment in stored_space["wall_segments"]}
+    assert wall_ids
+    for opening in stored_space["openings"]:
+        assert opening["host"]["kind"] == "wall"
+        assert opening["host"]["id"] in wall_ids
 
     await client.send_json_auto_id({
         "type": "houseplan/plan/optimize_undo",

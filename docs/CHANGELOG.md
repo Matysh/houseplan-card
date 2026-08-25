@@ -18,8 +18,9 @@
   passage ownership attached to stable wall-segment IDs. Existing plans upgrade
   atomically on their first structural edit or through **Optimize plans**;
   Resize, Undo/Redo and repeated edits preserve the same identities without
-  accumulating off-grid coordinates. Ambiguous legacy geometry is left
-  unchanged with a recovery prompt. No Plan editor controls or
+  accumulating off-grid coordinates. The backend Optimize transaction also
+  enforces this upgrade when invoked directly. Ambiguous legacy geometry is
+  left unchanged with a recovery prompt. No Plan editor controls or
   zero-thickness-wall behaviour changed
   ([#282](https://github.com/Matysh/houseplan-card/issues/282)).
 - The active wall chain keeps its axis and node markers visible on already
