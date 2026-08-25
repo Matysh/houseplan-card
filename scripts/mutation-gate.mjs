@@ -2106,7 +2106,7 @@ export const MUTANTS = [
     because: 'Text and Double must expose the complete dynamic value; the new shared shell '
       + 'must not regress to the old clipped satellite',
     patches: [{
-      file: 'src/styles.ts',
+      file: 'src/styles/devices.styles.ts',
       find: '    .dev .valtext {\n      overflow: visible;',
       replace: '    .dev .valtext {\n      overflow: hidden;\n      text-overflow: ellipsis;',
     }],
@@ -2129,7 +2129,7 @@ export const MUTANTS = [
     because: 'the current effective size must be resolved once at the surface boundary; '
       + 'restoring a late face-level 0.9 factor would shrink every marker a second time',
     patches: [{
-      file: 'src/styles.ts',
+      file: 'src/styles/devices.styles.ts',
       find: '      --dev-size: calc(var(--device-base-size, 2.25cqw) * var(--dev-scale, 1));',
       replace: '      --dev-size: calc(var(--device-base-size, 2.25cqw) * var(--dev-scale, 1) * 0.9);',
     }],
@@ -2141,7 +2141,7 @@ export const MUTANTS = [
     because: 'a wide Text core must keep a radius based on its height instead of reverting '
       + 'to the elliptical 50% rule',
     patches: [{
-      file: 'src/styles.ts',
+      file: 'src/styles/devices.styles.ts',
       find: '      border-radius: calc(var(--dev-size, var(--icon-size, 2.5cqw)) / 2);',
       replace: '      border-radius: 50%;',
     }],
