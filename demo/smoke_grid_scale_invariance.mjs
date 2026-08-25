@@ -391,6 +391,13 @@ const isoDarkDiff = await pixelDiff(isoDark.reference.pixels, isoDark.detailed.p
 const pixelEquivalent = (diff) => diff.sameSize
   && diff.changed <= 150 && diff.maxDelta <= 40 && diff.meanDelta <= 0.05;
 
+// Diagnostic only: the raw diff numbers behind every pixel verdict, so a CI
+// failure reports HOW FAR a pair drifted instead of a bare boolean (#302).
+console.error('pixel-diffs', JSON.stringify({
+  flat: flatDiff, static: staticDiff, plan: planDiff, darkView: darkViewDiff,
+  devices: devicesDiff, background: backgroundDiff,
+  isoLight: isoLightDiff, isoDark: isoDarkDiff,
+}));
 const out = {
   referenceFactorIsOne: referenceView.metrics.factor === 1,
   detailedFactorIsFive: detailedView.metrics.factor === 5,
