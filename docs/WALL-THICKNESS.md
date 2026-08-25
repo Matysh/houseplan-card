@@ -208,15 +208,28 @@ protrude at most `VISUAL_MITRE_LIMIT = 1.5` maximal half-depths from the node
 (a square corner of equal depths peaks at ~1.41·h, so right and obtuse
 corners are byte-identical); a longer apex is closed with a flat chamfer
 perpendicular to the apex direction at the limit (`chamferApex`). The rule
-applies to both the junction fans and the pair patches of
-`linearWallJoinPatches`; `MITRE_LIMIT = 4` survives only as the sanity bound
-for candidate construction. At a node of three or more canonical rays the
+applies to the junction fans; `MITRE_LIMIT = 4` survives only as the sanity
+bound for candidate construction. At a node of three or more canonical rays the
 pair patches are not built at all: a pair patch lives in the sector OPPOSITE
 its pair and painted a step over the thinner strips owning that sector (the
 15/15/30/30 cross of the owner report) — such nodes are closed with the same
 sector fans via a local multi-wall node map inside `linearWallJoinPatches`.
 The #249 machinery (`MULTI_WALL_JOIN_LIMIT = 1.25`, `multiWallBevelCutsAt`,
 room-contour mitres) is untouched.
+
+**Pair apex and butt-end trim (#310, owner decision 2026-08-25).** A node of
+exactly two rays keeps the FULL mitre at any length: two walls meet in a
+drawing point, the #309 chamfer does not apply there. What does get removed is
+the butt-end tooth: the deeper wall's rectangular end may poke sideways past
+the outer face of its thinner partner right at the node —
+`pairButtEndTrimWedges` returns, per wall, the addressed wedge (outside the
+partner's apex-side outer face, within 2·halfDepth of the node along the
+axis) which consumers subtract from the owning body before opening cuts. This
+is the SECOND addressed subtraction of the junction pipeline, next to the
+lateral trim of #271; both are strictly local to their node. Two-ray nodes are
+invisible to `junctionContractHoles` (the node map requires 3+ canonical
+rays), so their no-holes contract is a grid probe in the unit suite: masonry
+inside the node neighbourhood equals (strips ∪ patch) − wedges.
 
 **Hatch density is physical (#230).** The pattern step is a distance on the
 plan, not a count of coordinate units: `wallHatchStepUnits(cellCm)` returns

@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Two walls meeting at an acute angle keep their full drawing point again —
+  the #309 chamfer now applies only to nodes of three and more walls. The
+  real tooth is gone instead: the deeper wall's butt end no longer pokes
+  sideways past the face of its thinner partner
+  ([#310](https://github.com/Matysh/houseplan-card/issues/310)).
+
 - Wall junctions no longer sprout teeth: a mitre apex is limited to 1.5
   half-depths and anything longer is closed with a flat drafting chamfer, so
   acute pairs lose their tails, thick multi-wall nodes lose their peaks, and

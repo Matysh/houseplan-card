@@ -2171,6 +2171,44 @@ export const MUTANTS = [
     }],
   },
   {
+    id: 'pair-chamfer-returns',
+    // #310: фаска возвращается в узел-двойку — остриё пары снова срезано
+    // вопреки решению владельца.
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="issue 310" test/wall-thickness.test.mjs',
+    because: 'узел ровно двух лучей обязан закрываться полным mitre — стены сходятся в точку',
+    patches: [{
+      file: 'src/wall-thickness.ts',
+      find: '        const patch = hit\n          ? [node.slice(), pA, hit, pB]\n          : [node.slice(), pA, pB];',
+      replace: '        const visual = VISUAL_MITRE_LIMIT * Math.max(a.halfDepth, b.halfDepth);\n        const patch = hit && Math.hypot(hit[0] - node[0], hit[1] - node[1]) <= visual\n          ? [node.slice(), pA, hit, pB]\n          : (hit && chamferApex(node, pA, hit, pB, visual)) || [node.slice(), pA, pB];',
+    }],
+  },
+  {
+    id: 'butt-end-trim-disabled',
+    // #310: торцевой трим отключён — зубец торца толстой стены снова торчит
+    // из тонкой.
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="issue 310" test/wall-thickness.test.mjs',
+    because: 'выступ прямоугольного торца за грань тонкой стены — это и есть зубец из отчёта владельца',
+    patches: [{
+      file: 'src/physical-geometry.ts',
+      find: '  for (const { segmentIndex, wedge } of pairButtEndTrimWedges(allSegments, epsilon)) {',
+      replace: '  for (const { segmentIndex, wedge } of pairButtEndTrimWedges([], epsilon)) {',
+    }],
+  },
+  {
+    id: 'butt-end-trim-unbounded',
+    // #310: трим без ограничения окрестностью узла режет всё тело стены.
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="issue 310" test/wall-thickness.test.mjs',
+    because: 'торцевой трим обязан быть адресным — не дальше 2·halfDepth от узла вдоль оси',
+    patches: [{
+      file: 'src/wall-thickness.ts',
+      find: '      const reach = Math.min(2 * self.halfDepth, self.length);',
+      replace: '      const reach = self.length;',
+    }],
+  },
+  {
     id: 'visual-mitre-limit-back-to-4',
     // #309: порог визуального среза возвращается к классическим 4·h — шип на
     // острой паре и горб над узлом 3×50 отрастают обратно.

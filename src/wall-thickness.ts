@@ -1114,6 +1114,123 @@ function addJunctionRay(rays: JunctionRay[], dx: number, dy: number, halfDepth: 
  * same bounded mitre/bevel used by room contours. Unioning these patches with
  * the raw bodies removes the tooth without changing caps at degree-one nodes.
  */
+/** #310: subtract one butt-end wedge from a simple body (largest ring wins). */
+function clipBodyByWedge(body: number[][], wedge: number[][]): number[][] | null {
+  try {
+    const result: any = difference(
+      closedRing(body) as any, closedRing(wedge) as any,
+    );
+    let best: number[][] | null = null;
+    let bestArea = 0;
+    for (const polygon of result || []) {
+      const ring = (polygon?.[0] || []) as number[][];
+      const area = Math.abs(signedArea(ring));
+      if (ring.length >= 4 && area > bestArea) {
+        bestArea = area;
+        best = ring.slice(0, -1).map((point) => [point[0], point[1]]);
+      }
+    }
+    return best;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Butt-end trim of a two-ray node (#310, owner decision). With the full pair
+ * mitre restored, the rectangular butt end of the deeper wall can still poke
+ * sideways past the outer face of its thinner partner right at the node — the
+ * «tooth sticking out of the thin wall» of the owner report. For every
+ * two-ray node with an accepted mitre this returns, per input segment, the
+ * wedges to subtract: the part of that segment's body OUTSIDE the partner's
+ * outer face and within 2·halfDepth of the node along the segment's axis.
+ * The rule is symmetric; for the thinner wall the wedge is empty. This is the
+ * SECOND addressed subtraction of the junction pipeline, next to the lateral
+ * trim of #271 — both strictly local to their node.
+ */
+export function pairButtEndTrimWedges(
+  input: LinearWallSegment[], epsilon = 1e-6,
+): { segmentIndex: number; wedge: number[][] }[] {
+  const segments = (input || []).map((segment, index) => ({ segment, index }))
+    .filter(({ segment }) =>
+      segment && Array.isArray(segment.a) && Array.isArray(segment.b)
+        && segment.a.length >= 2 && segment.b.length >= 2
+        && segment.a.every(Number.isFinite) && segment.b.every(Number.isFinite)
+        && Number.isFinite(segment.halfDepth) && segment.halfDepth > 0
+        && Math.hypot(segment.b[0] - segment.a[0], segment.b[1] - segment.a[1]) > 1e-9);
+  if (segments.length < 2) return [];
+  const eps = Math.max(Number.isFinite(epsilon) ? epsilon : 0, 1e-9);
+  const endpoints = segments.flatMap(({ segment }) => [segment.a, segment.b])
+    .map((point) => [point[0], point[1]])
+    .sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  const nodes: number[][] = [];
+  for (const point of endpoints) {
+    if (!nodes.some((node) => closePoint(node, point, eps))) nodes.push(point);
+  }
+  const out: { segmentIndex: number; wedge: number[][] }[] = [];
+  for (const node of nodes) {
+    // Endpoint rays only: an interior (T) hit makes the node degree-3+ and
+    // the fans of the multi-wall machinery own it, not the pair mitre.
+    const rays: { u: number[]; halfDepth: number; length: number; index: number }[] = [];
+    let interior = false;
+    for (const { segment, index } of segments) {
+      const length = Math.hypot(segment.b[0] - segment.a[0], segment.b[1] - segment.a[1]);
+      if (closePoint(node, segment.a, eps)) {
+        rays.push({ u: [(segment.b[0] - segment.a[0]) / length,
+          (segment.b[1] - segment.a[1]) / length], halfDepth: segment.halfDepth, length, index });
+      } else if (closePoint(node, segment.b, eps)) {
+        rays.push({ u: [(segment.a[0] - segment.b[0]) / length,
+          (segment.a[1] - segment.b[1]) / length], halfDepth: segment.halfDepth, length, index });
+      } else if (pointOnSegmentInterior(node, segment, eps)) {
+        interior = true;
+      }
+    }
+    if (interior || rays.length !== 2) continue;
+    const [a, b] = rays;
+    const cross = a.u[0] * b.u[1] - a.u[1] * b.u[0];
+    if (Math.abs(cross) < 1e-9) continue;
+    const sign = cross < 0 ? 1 : -1;
+    const nA = [-a.u[1], a.u[0]];
+    const nB = [-b.u[1], b.u[0]];
+    const pA = [node[0] + nA[0] * a.halfDepth * sign, node[1] + nA[1] * a.halfDepth * sign];
+    const pB = [node[0] - nB[0] * b.halfDepth * sign, node[1] - nB[1] * b.halfDepth * sign];
+    if (!lineIntersect(pA, a.u, pB, b.u)) continue; // no mitre — nothing pokes
+    // For each wall: clip its near-node body rectangle by the OUTSIDE
+    // half-plane of the partner's outer face (the face owning the apex side).
+    const pairs: [typeof a, typeof b, number[], number[]][] = [
+      [a, b, pB, [nB[0] * -sign, nB[1] * -sign]],
+      [b, a, pA, [nA[0] * sign, nA[1] * sign]],
+    ];
+    for (const [self, , faceP, faceOut] of pairs) {
+      const reach = Math.min(2 * self.halfDepth, self.length);
+      const ex = [-self.u[1] * self.halfDepth, self.u[0] * self.halfDepth];
+      const rect = [
+        [node[0] + ex[0], node[1] + ex[1]],
+        [node[0] + self.u[0] * reach + ex[0], node[1] + self.u[1] * reach + ex[1]],
+        [node[0] + self.u[0] * reach - ex[0], node[1] + self.u[1] * reach - ex[1]],
+        [node[0] - ex[0], node[1] - ex[1]],
+      ];
+      // Sutherland–Hodgman clip of the rectangle by dot(x - faceP, faceOut) >= 0.
+      const side = (point: number[]): number =>
+        (point[0] - faceP[0]) * faceOut[0] + (point[1] - faceP[1]) * faceOut[1];
+      const clipped: number[][] = [];
+      for (let i = 0; i < rect.length; i++) {
+        const cur = rect[i], nxt = rect[(i + 1) % rect.length];
+        const sc = side(cur), sn = side(nxt);
+        if (sc >= -1e-12) clipped.push(cur);
+        if ((sc > 1e-12 && sn < -1e-12) || (sc < -1e-12 && sn > 1e-12)) {
+          const t = sc / (sc - sn);
+          clipped.push([cur[0] + (nxt[0] - cur[0]) * t, cur[1] + (nxt[1] - cur[1]) * t]);
+        }
+      }
+      if (clipped.length >= 3 && Math.abs(signedArea(clipped)) > eps * eps) {
+        out.push({ segmentIndex: self.index, wedge: clipped });
+      }
+    }
+  }
+  return out;
+}
+
 export function linearWallJoinPatches(
   input: LinearWallSegment[], epsilon = 1e-6,
 ): number[][][] {
@@ -1191,10 +1308,12 @@ export function linearWallJoinPatches(
           node[1] - nB[1] * b.halfDepth * sign,
         ];
         const hit = lineIntersect(pA, a.u, pB, b.u);
-        const visual = VISUAL_MITRE_LIMIT * Math.max(a.halfDepth, b.halfDepth);
-        const patch = hit && Math.hypot(hit[0] - node[0], hit[1] - node[1]) <= visual
+        // #310 (owner decision): a node of exactly two rays keeps the FULL
+        // mitre — two walls meet in a point like on a drawing. The #309
+        // chamfer applies only to the fans of >=3-ray nodes above.
+        const patch = hit
           ? [node.slice(), pA, hit, pB]
-          : (hit && chamferApex(node, pA, hit, pB, visual)) || [node.slice(), pA, pB];
+          : [node.slice(), pA, pB];
         if (Math.abs(signedArea(patch)) > eps * eps) patches.push(patch);
       }
     }
@@ -1257,8 +1376,21 @@ export function drawWallPreviewD(
     if (Math.hypot(b[0] - a[0], b[1] - a[1]) >= 1e-9 && h > 0)
       segments.push({ a, b, halfDepth: h });
   }
-  const bodies = segments.map(linearWallBody).filter((body): body is number[][] => !!body);
-  const joined = [...bodies, ...linearWallJoinPatches(segments)];
+  // Index-aligned with `segments`: the #310 wedge below addresses its owner
+  // body by segment index, so the null filter happens only at the join.
+  const bodies = segments.map(linearWallBody);
+  // #310: the preview shares the butt-end trim with persisted masonry, so the
+  // rubber-band silhouette matches what the click will save.
+  for (const { segmentIndex, wedge } of pairButtEndTrimWedges(segments)) {
+    const body = bodies[segmentIndex];
+    if (!body) continue;
+    const trimmed = clipBodyByWedge(body, wedge);
+    if (trimmed) bodies[segmentIndex] = trimmed;
+  }
+  const joined = [
+    ...bodies.filter((body): body is number[][] => !!body),
+    ...linearWallJoinPatches(segments),
+  ];
   const geom = unionSimpleBodies(joined);
   if (geom) return polyclipToPathD(geom);
   return joined.map((body) => polyToPath(body)).join(' ');

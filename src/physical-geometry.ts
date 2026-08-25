@@ -2,7 +2,7 @@
 import { difference, intersection, union } from 'polyclip-ts';
 import { polygonArea } from './logic';
 import {
-  linearWallBody, linearWallJoinPatches, wallCmToUnits,
+  linearWallBody, linearWallJoinPatches, pairButtEndTrimWedges, wallCmToUnits,
   type LinearWallSegment,
 } from './wall-thickness';
 import type {
@@ -189,6 +189,35 @@ export function cutPartitionBody(
  * Most runtime consumers need these polygons directly and must not pay for an
  * additional polygon union which they never read.
  */
+/**
+ * Subtract one #310 butt-end wedge from a simple wall body. The wedge sits at
+ * a body corner, so the difference is expected to stay one simple ring; on
+ * any degenerate polygon-clipping outcome the body is left untouched.
+ */
+function subtractWedgeFromBody(
+  body: number[][], wedge: number[][],
+): number[][] | null {
+  try {
+    const result: any = difference(
+      [[...body.map((point) => [point[0], point[1]]), [body[0][0], body[0][1]]]] as any,
+      [[...wedge.map((point) => [point[0], point[1]]), [wedge[0][0], wedge[0][1]]]] as any,
+    );
+    let best: number[][] | null = null;
+    let bestArea = 0;
+    for (const polygon of result || []) {
+      const ring = (polygon?.[0] || []) as number[][];
+      const area = Math.abs(polygonArea(ring));
+      if (ring.length >= 4 && area > bestArea) {
+        bestArea = area;
+        best = ring.slice(0, -1).map((point) => [point[0], point[1]]);
+      }
+    }
+    return best;
+  } catch {
+    return null;
+  }
+}
+
 export function physicalBodyParts(
   space: Pick<SpaceModel, 'partitions' | 'room_drafts' | 'wall_columns'>,
   cellCm: number,
@@ -219,6 +248,7 @@ export function physicalBodyParts(
       drafts.push(body);
     }
   }
+  const partitionMeta: { id: string; body: number[][] }[] = [];
   for (const partition of space.partitions || []) {
     const segment = {
       a: partition.a,
@@ -229,8 +259,27 @@ export function physicalBodyParts(
     if (!body) continue;
     partitionSegments.push(segment);
     partitions.push(body);
+    partitionMeta.push({ id: partition.id, body });
+  }
+  // #310: at a two-ray node the deeper wall's rectangular butt end may poke
+  // past its thin partner's outer face; subtract the addressed wedge from the
+  // owning body BEFORE opening cuts, so jambs inherit the clean silhouette.
+  const allSegments = [...draftSegments, ...partitionSegments];
+  for (const { segmentIndex, wedge } of pairButtEndTrimWedges(allSegments, epsilon)) {
+    const target = segmentIndex < draftSegments.length
+      ? { list: drafts, at: segmentIndex }
+      : { list: partitions, at: segmentIndex - draftSegments.length };
+    const trimmed = subtractWedgeFromBody(target.list[target.at], wedge);
+    if (trimmed) {
+      target.list[target.at] = trimmed;
+      if (segmentIndex >= draftSegments.length) {
+        partitionMeta[target.at].body = trimmed;
+      }
+    }
+  }
+  for (const meta of partitionMeta) {
     presentedPartitions.push(...cutPartitionBody(
-      body, cutsByPartition.get(partition.id) || [], epsilon,
+      meta.body, cutsByPartition.get(meta.id) || [], epsilon,
     ));
   }
   const columns = (space.wall_columns || []).map((column) =>

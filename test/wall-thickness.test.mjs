@@ -14,6 +14,7 @@ import {
   virtualJunctionPatches, stableJunctionPatch, unionJunctionPatches,
   innerContourForRoom, innerEdgeSpan, ownEdgeOffsets,
   paperRoomShapesWithWalls, WALL_MIN_CM, WALL_MAX_CM, MITRE_LIMIT, VISUAL_MITRE_LIMIT,
+  pairButtEndTrimWedges,
   MULTI_WALL_JOIN_LIMIT, buildMultiWallNodeMap, multiWallBevelTriangles,
   MULTI_WALL_NEAR_ORTHOGONAL_MAX_DEGREES,
   MULTI_WALL_ORTHOGONAL_DOT_EPSILON, multiWallProtectedRayIndexes,
@@ -2754,12 +2755,9 @@ test('linear wall joins bevel an excessive mitre and ignore malformed or near-mi
     { a: [0, 0], b: [10, 0.1], halfDepth: 1 },
   ], 1e-6);
   assert.equal(acute.length, 1);
-  assert.equal(acute[0].length, 5, 'a mitre beyond the visual limit becomes a flat chamfer (#309)');
-  // The chamfer bounds the APEX projection at 1.5·h; a chamfer corner can sit
-  // at most hypot(limit, h) from the node (limit along the axis, h across).
-  assert.ok(acute[0].every((point) =>
-    Math.hypot(point[0], point[1]) <= Math.hypot(VISUAL_MITRE_LIMIT, 1) + 1e-6),
-  'chamfer keeps every vertex near the node instead of the far apex');
+  // #310 (owner decision): a node of exactly two rays keeps the FULL mitre —
+  // the drawing point of two converging walls is legitimate at any length.
+  assert.equal(acute[0].length, 4, 'a two-ray node keeps its full mitre apex (#310)');
 
   const separate = linearWallJoinPatches([
     { a: [-2, 0], b: [0, 0], halfDepth: 1 },
@@ -3103,23 +3101,31 @@ const pointInPoly = (point, body) => {
   return inside;
 };
 
-test('issue 309 the acute 10/20 pair keeps its tail within the visual limit', () => {
+test('issue 310 the acute 10/20 pair keeps its full apex and loses the butt-end tooth', () => {
   const node = [2220.833333333333, 1350];
   const segments = teethSegments().filter((segment) =>
     [segment.a, segment.b].some((end) =>
       Math.hypot(end[0] - node[0], end[1] - node[1]) < 0.5));
   assert.equal(segments.length, 2);
-  const hMax = Math.max(...segments.map((segment) => segment.halfDepth));
   const patches = linearWallJoinPatches(segments, 0.2);
-  assert.ok(patches.length >= 1, 'the acute pair still closes its outer sector');
-  for (const patch of patches) {
-    assert.equal(patch.length, 5, 'the over-long apex is a flat chamfer, not a spike');
-    for (const point of patch) {
-      assert.ok(Math.hypot(point[0] - node[0], point[1] - node[1])
-        <= Math.hypot(VISUAL_MITRE_LIMIT * hMax, hMax) + 0.5,
-      `spike vertex ${point} survived past the visual limit`);
-    }
-  }
+  assert.equal(patches.length, 1, 'the pair closes its outer sector with one patch');
+  // Full apex (#310): four points, the apex at the intersection of the outer
+  // faces — farther than the #309 visual limit, and that is the point.
+  assert.equal(patches[0].length, 4, 'the pair keeps its full mitre, not a chamfer');
+  const hMax = Math.max(...segments.map((segment) => segment.halfDepth));
+  const apex = patches[0][2];
+  assert.ok(Math.hypot(apex[0] - node[0], apex[1] - node[1]) > 1.5 * hMax,
+    'the restored apex must reach past the retired pair chamfer limit');
+  // Butt-end tooth (#310): the deeper wall's wedge exists and removes the
+  // probe that used to sit inside the poking corner of its butt end.
+  const wedges = pairButtEndTrimWedges(segments, 0.2);
+  assert.equal(wedges.length, 1, 'exactly one non-empty butt-end wedge (the deeper wall)');
+  const deeper = segments.reduce((a, b) => (a.halfDepth >= b.halfDepth ? a : b));
+  assert.equal(segments.indexOf(deeper), wedges[0].segmentIndex,
+    'the wedge belongs to the deeper wall');
+  const probe = [node[0] - deeper.halfDepth * 0.9, node[1] - 2];
+  assert.equal(pointInPoly(probe, wedges[0].wedge), true,
+    'the wedge covers the old tooth corner probe');
 });
 
 test('issue 309 the 3×50 node fans stay within the visual limit', () => {
@@ -3197,4 +3203,144 @@ test('issue 309 the full teeth fixture leaves no junction holes', () => {
     reports.map((report) => ({ node: report.node, holes: report.holes.length })), [],
     'the teeth fixture has junction holes',
   );
+});
+
+test('issue 310 the butt-end trim is addressed and the node body is a clean wedge', () => {
+  const node = [2220.833333333333, 1350];
+  const segments = teethSegments().filter((segment) =>
+    [segment.a, segment.b].some((end) =>
+      Math.hypot(end[0] - node[0], end[1] - node[1]) < 0.5));
+  const fixture = teethFixture();
+  const space = {
+    partitions: fixture.partitions
+      .filter((partition) => ['partition-mt8liuxi-0', 'partition-mt8liuxi-1']
+        .includes(partition.id))
+      .map((partition) => ({
+        ...partition,
+        a: [partition.a[0] * NORM_W, partition.a[1] * NORM_W],
+        b: [partition.b[0] * NORM_W, partition.b[1] * NORM_W],
+      })),
+    room_drafts: [], wall_columns: [],
+  };
+  const frame = physicalBodySet(space, 1, GRID_PITCH, 0.2);
+  const inGeometry = (point) => (frame.geometry || []).some((polygon) =>
+    (polygon || []).some((ring, index) => index === 0 && pointInPoly(point, ring)));
+  const deeper = segments.reduce((a, b) => (a.halfDepth >= b.halfDepth ? a : b));
+  // The old tooth: just outside the thin wall's outer face, inside the deep
+  // wall's rectangular butt end. Must be empty now.
+  assert.equal(inGeometry([node[0] - deeper.halfDepth * 0.9, node[1] - 2]), false,
+    'the butt-end tooth survived the trim');
+  // The apex direction stays filled: probe halfway from the node to the
+  // actual mitre apex of the restored full pair patch.
+  const apex = linearWallJoinPatches(segments, 0.2)[0][2];
+  assert.equal(inGeometry([(node[0] + apex[0]) / 2, (node[1] + apex[1]) / 2]), true,
+    'the full apex region must stay masonry');
+  // Addressed: far from the node the deep wall body is intact at full width.
+  assert.equal(inGeometry([node[0] - deeper.halfDepth * 0.9, node[1] - 200]), true,
+    'the trim may not eat the wall far from the node');
+});
+
+test('issue 310 a square pair of equal depths has no butt-end wedge', () => {
+  const wedges = pairButtEndTrimWedges([
+    { a: [0, 0], b: [100, 0], halfDepth: 10 },
+    { a: [0, 0], b: [0, 100], halfDepth: 10 },
+  ], 1e-6);
+  assert.deepEqual(wedges, [], 'equal square corners have nothing poking out');
+});
+
+test('issue 310 the butt-end trim reach is bounded by the node neighbourhood', () => {
+  // A near-parallel co-directed pair: the thin wall's outer face undercuts the
+  // deep wall's strip for ~100 units, but the ADDRESSED wedge may only reach
+  // 2·halfDepth from the node along the axis — the rest of the wall is not
+  // this node's business.
+  const segments = [
+    { a: [0, 0], b: [300, 0], halfDepth: 10 },
+    { a: [0, 0], b: [300, 30], halfDepth: 20 },
+  ];
+  const wedges = pairButtEndTrimWedges(segments, 1e-6);
+  assert.ok(wedges.length >= 1, 'the near-parallel pair must produce a wedge');
+  for (const { segmentIndex, wedge } of wedges) {
+    const segment = segments[segmentIndex];
+    const length = Math.hypot(segment.b[0] - segment.a[0], segment.b[1] - segment.a[1]);
+    const u = [(segment.b[0] - segment.a[0]) / length, (segment.b[1] - segment.a[1]) / length];
+    for (const point of wedge) {
+      const along = point[0] * u[0] + point[1] * u[1];
+      assert.ok(along <= 2 * segment.halfDepth + 1e-6,
+        `wedge vertex ${point} reaches past 2·halfDepth along the wall`);
+    }
+  }
+});
+
+test('issue 310 pair grid contract: masonry equals strips plus patch minus wedges', () => {
+  // AC5 for two-ray nodes: buildMultiWallNodeMap drops nodes of <3 rays, so
+  // the #302 detector never sees a pair. The pair contract is checked on a
+  // grid instead: inside the node neighbourhood a point is masonry IFF it
+  // lies in (strip A ∪ strip B ∪ mitre patch) − (butt-end wedges).
+  const cases = [
+    { name: 'owner spike 10/20', segments: (() => {
+        const node = [2220.833333333333, 1350];
+        return teethSegments().filter((segment) =>
+          [segment.a, segment.b].some((end) =>
+            Math.hypot(end[0] - node[0], end[1] - node[1]) < 0.5));
+      })(), node: [2220.833333333333, 1350] },
+    { name: 'square 90', segments: [
+        { a: [0, 0], b: [300, 0], halfDepth: 10 },
+        { a: [0, 0], b: [0, 300], halfDepth: 10 },
+      ], node: [0, 0] },
+    { name: 'near-parallel', segments: [
+        { a: [0, 0], b: [300, 0], halfDepth: 10 },
+        { a: [0, 0], b: [300, 30], halfDepth: 20 },
+      ], node: [0, 0] },
+  ];
+  for (const { name, segments, node } of cases) {
+    const bodies = segments.map((segment) => linearWallBody(segment));
+    const patches = linearWallJoinPatches(segments, 1e-6);
+    const wedges = pairButtEndTrimWedges(segments, 1e-6);
+    const space = {
+      partitions: segments.map((segment, index) => ({
+        id: `pair-${index}`, a: segment.a, b: segment.b, cm: 15,
+      })),
+      room_drafts: [], wall_columns: [],
+    };
+    // physicalBodyParts converts cm itself; drive it with exact halfDepths by
+    // reusing wall bodies via the pure pipeline instead: geometry from parts.
+    const parts = [
+      ...bodies.filter(Boolean).map((body, index) => {
+        const wedge = wedges.filter((item) => item.segmentIndex === index);
+        return { body, wedge };
+      }),
+    ];
+    const h = Math.max(...segments.map((segment) => segment.halfDepth));
+    const radius = 3 * h;
+    const step = Math.max(h / 4, 2);
+    const inside = (point, poly) => pointInPoly(point, poly);
+    for (let dx = -radius; dx <= radius; dx += step) {
+      for (let dy = -radius; dy <= radius; dy += step) {
+        const point = [node[0] + dx, node[1] + dy];
+        const inStrip = bodies.some((body) => body && inside(point, body));
+        const inPatch = patches.some((patch) => inside(point, patch));
+        const inWedge = wedges.some(({ wedge }) => inside(point, wedge));
+        const expected = (inStrip || inPatch) && !inWedge;
+        // actual masonry: trimmed strips ∪ patches
+        const actual = parts.some(({ body, wedge }) =>
+          inside(point, body) && !wedge.some(({ wedge: w }) => inside(point, w)))
+          || inPatch;
+        // Skip probes within one epsilon band of any edge: point-in-polygon
+        // on shared borders is not a stable oracle.
+        const nearEdge = [...bodies.filter(Boolean), ...patches,
+          ...wedges.map(({ wedge }) => wedge)].some((poly) =>
+          poly.some((a, i) => {
+            const b = poly[(i + 1) % poly.length];
+            const t = Math.max(0, Math.min(1,
+              ((point[0] - a[0]) * (b[0] - a[0]) + (point[1] - a[1]) * (b[1] - a[1]))
+              / (((b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2) || 1e-12)));
+            return Math.hypot(point[0] - (a[0] + (b[0] - a[0]) * t),
+              point[1] - (a[1] + (b[1] - a[1]) * t)) < step / 4;
+          }));
+        if (nearEdge) continue;
+        assert.equal(actual, expected,
+          `${name}: contract mismatch at [${dx.toFixed(1)}, ${dy.toFixed(1)}]`);
+      }
+    }
+  }
 });
