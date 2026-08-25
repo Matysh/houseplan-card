@@ -107,12 +107,15 @@ const result = await page.evaluate(async (source) => {
   const canonical = card._wallUnionGeometry();
   const node = new DOMPoint(source.node[0] * 1000, source.node[1] * 1000);
   // Midpoint between the R-bounded straight bevel and the old 1.80×H mitre.
-  const discardedWedge = new DOMPoint(330.3808442725, 148.8560107825);
+  // #302: this point lies in the OVERLAP of two incident strips, and the
+  // chamfer is strip-safe now — it must stay filled (it used to be discarded,
+  // which is exactly the hole class #302 removed).
+  const retainedOverlap = new DOMPoint(330.3808442725, 148.8560107825);
   out.fixtureLoaded = card._spaceModel()?.rooms.length === 2
     && card._spaceWalls.length === 7;
   out.planUsesCanonicalPath = !!planD && canonical?.d === planD;
   out.nodeRemainsFilled = !!path?.isPointInFill(node);
-  out.excessWedgeIsEmpty = path && !path.isPointInFill(discardedWedge);
+  out.stripOverlapRetained = !!path?.isPointInFill(retainedOverlap);
   out.planHasNoEnclosedHoles = enclosedSvgHoles(path, node) === 0;
   out.paperRemainsSolid = !!canonical?.paperD
     && !!root().querySelector('.hp-paper');
