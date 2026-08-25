@@ -25,6 +25,7 @@ import {
   WALL_HATCH_MIN_PX,
   wallHatchStepUnits, wallHatchNeedsSolid,
   HATCH_BASE_STEP_UNITS, HATCH_MIN_STEP_UNITS, HATCH_MAX_STEP_UNITS,
+  junctionNodeBound,
 } from '../test-build/wall-thickness.js';
 import { polygonArea, paperRoomShapes, splitRoomPath, sharedBoundary } from '../test-build/logic.js';
 import { resolveOpenCuts } from '../test-build/open-spans.js';
@@ -196,6 +197,11 @@ const assertBoundedMultiWallBevels = (
   );
   const triangles = multiWallBevelTriangles(map);
   assert.ok(triangles.length > 0, 'fixture no longer exercises an oversized multi-wall join');
+  // Strips live only inside the approved facade bound: a giant shared wall
+  // poking past the building outline is clipped there, exactly as before.
+  const facadeBound = junctionNodeBound(
+    rooms, walls, [], pitch, cell, GRID_PITCH, scale, map,
+  );
   for (const triangle of triangles) {
     const node = map.nodes.find((candidate) => triangle.slice(0, 2).every((point) =>
       Math.hypot(
@@ -211,20 +217,27 @@ const assertBoundedMultiWallBevels = (
       (base[0] + triangle[2][0]) / 2,
       (base[1] + triangle[2][1]) / 2,
     ];
-    const protectedStrips = multiWallProtectedStripGeometry(node, map);
-    const protectedCoverage = protectedStrips
-      ? geometryProbeCoverage(protectedStrips, probe)
-      : 0;
+    // #302 contract: the chamfer is strip-safe. A wedge probe that falls
+    // inside any of the node's ray strips stays FILLED (an acute junction is
+    // solid masonry — the very fix of #302); outside every strip the wedge is
+    // cut, which is exactly the approved #249 chamfer.
+    const inNodeStrip = node.rays.some((ray) => ray.supports.some((support) => {
+      const rx = probe[0] - node.point[0];
+      const ry = probe[1] - node.point[1];
+      const along = rx * ray.u[0] + ry * ray.u[1];
+      if (along < 0 || along > support.length) return false;
+      return Math.abs(rx * ray.u[1] - ry * ray.u[0]) <= support.halfDepth - 1e-7;
+    })) && (!facadeBound || geometryProbeCoverage(facadeBound, probe) > 1e-7);
     const actualCoverage = geometryProbeCoverage(geometry.geom, probe);
-    if (protectedCoverage > 1e-7) {
+    if (inNodeStrip) {
       assert.ok(
-        actualCoverage + 1e-7 >= protectedCoverage,
-        `a bevel removed protected orthogonal material at ${probe}`,
+        actualCoverage > 1e-7,
+        `the strip-safe chamfer still removed strip material at ${probe}`,
       );
     } else {
       assert.ok(
         actualCoverage < 1e-7,
-        `an unprotected excessive multi-wall wedge remains filled at ${probe}`,
+        `an excessive multi-wall wedge outside every strip remains filled at ${probe}`,
       );
     }
   }
@@ -1196,15 +1209,35 @@ test('issue #249 bounds the exported three-wall junction with straight bevels', 
       nodePoint[1] + ray.u[1] * node.halfDepth * 2,
     ], 'an incident wall arm no longer touches the junction');
   }
+  // #302: the chamfer is strip-safe now. A wedge probe inside the strips the
+  // node actually owns stays FILLED (an acute junction is solid masonry);
+  // outside every strip the wedge is still discarded, as approved in #249.
+  const bound = junctionNodeBound(
+    rooms, walls, [], pitch, fixture.cell_cm, GRID_PITCH, NORM_W, nodes,
+  );
   for (const triangle of localTriangles) {
     const base = [
       (triangle[0][0] + triangle[1][0]) / 2,
       (triangle[0][1] + triangle[1][1]) / 2,
     ];
-    assertProbeOutside(geometry.geom, [
+    const probe = [
       (base[0] + triangle[2][0]) / 2,
       (base[1] + triangle[2][1]) / 2,
-    ], 'the discarded mitre wedge is still filled');
+    ];
+    const inStrip = node.rays.some((ray) => ray.supports.some((support) => {
+      const rx = probe[0] - node.point[0];
+      const ry = probe[1] - node.point[1];
+      const along = rx * ray.u[0] + ry * ray.u[1];
+      if (along < 0 || along > support.length) return false;
+      return Math.abs(rx * ray.u[1] - ry * ray.u[0]) <= support.halfDepth - 1e-7;
+    })) && (!bound || geometryProbeCoverage(bound, probe) > 1e-7);
+    if (inStrip) {
+      assertProbeInside(
+        geometry.geom, probe, 'the strip-safe chamfer removed strip material',
+      );
+    } else {
+      assertProbeOutside(geometry.geom, probe, 'the discarded mitre wedge is still filled');
+    }
   }
   const repeated = wallBodiesGeometry(
     rooms, walls, [], [], pitch, fixture.cell_cm, GRID_PITCH, NORM_W,
@@ -2190,7 +2223,9 @@ test('issue #197 keeps the full masonry when one virtual-junction patch has ULP 
   // #271 removes only the area that the old node-wide 8H rectangles invented
   // after finite ray endpoints; all semantic #197/#249/#261 probes above stay.
   // #272 additionally opens any point-contact bevel cut to the exterior.
-  closeTo(geometryArea(geometry.geom), 124534.6091222676, 1e-6);
+  // #302: the node's support quads and sector fans add a sliver of masonry
+  // (+0.208 units²) along the chamfer chords of this fixture's junctions.
+  closeTo(geometryArea(geometry.geom), 124534.81716317777, 1e-6);
   closeTo(geometryArea(geometry.paperGeom), 727303.8194444444, 1e-6);
   assert.equal(
     JSON.stringify({ rooms, walls, cuts, openings, extraBodies }), before,

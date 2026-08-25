@@ -2008,6 +2008,136 @@ export function buildMultiWallNodeMap(
   return { epsilon: eps, coordinateScale: scale, nodes, index };
 }
 
+/**
+ * Corner geometry of one node (#302 + the #249 chamfer, owner 2026-08-25).
+ *
+ * One angular walk produces both halves of the corner rule:
+ *  - a FAN per pair of adjacent rays — additive sector material from the node
+ *    out to the mitre point, or to the bevel chord when the mitre runs past
+ *    the node's approved join limit;
+ *  - a CUT per over-limit pair — the wedge beyond that same chord, which is
+ *    how the approved #249 chamfer looks.
+ * Fan and cut of one pair meet exactly at the chord and never overlap, and the
+ * cut lies strictly between the two strip edges: subtracting it can touch
+ * neither strip's interior. That bound is what the old bevel layer kept
+ * failing to hold — its cuts reached past the limit with a separate
+ * "protection" pass patching the damage after the fact.
+ */
+export interface JunctionNodeGeometry {
+  fans: number[][][];
+  /** Exact support quads of every ray — the strips the node actually owns. */
+  supports: number[][][];
+}
+
+export function junctionNodeGeometry(
+  map: MultiWallNodeMap | null | undefined,
+): JunctionNodeGeometry {
+  const out: JunctionNodeGeometry = { fans: [], supports: [] };
+  if (!map?.nodes?.length) return out;
+  const areaEps = Math.max(map.epsilon, 1e-9) ** 2;
+  for (const node of map.nodes) {
+    const rays = node.rays
+      .filter((ray) => Number.isFinite(ray.halfDepth) && ray.halfDepth > 0)
+      .map((ray) => ({
+        ...ray,
+        // The fan follows the strip that actually exists at the node: the
+        // ray's max half-depth is only valid as far as the support that owns
+        // it. Walking past a short thick support would paint a phantom beside
+        // a thinner continuation (#271).
+        thickLength: Math.max(...ray.supports
+          .filter((support) => support.halfDepth >= ray.halfDepth - 1e-12)
+          .map((support) => support.length), 0),
+        angle: (() => {
+          const a = Math.atan2(ray.u[1], ray.u[0]);
+          return a < 0 ? a + Math.PI * 2 : a;
+        })(),
+      }))
+      .sort((a, b) => a.angle - b.angle);
+    if (rays.length < 2) continue;
+    const P = node.point;
+    // The support quads are the ground truth the chamfer must never eat:
+    // each is bounded by its own finite length, so re-adding them can never
+    // repaint a lateral phantom beyond a short support (#271).
+    for (const ray of rays) {
+      for (const support of ray.supports) {
+        if (!(support.halfDepth > 0) || !(support.length > 0)) continue;
+        const ex = -ray.u[1] * support.halfDepth;
+        const ey = ray.u[0] * support.halfDepth;
+        const far = [
+          P[0] + ray.u[0] * support.length,
+          P[1] + ray.u[1] * support.length,
+        ];
+        out.supports.push([
+          [P[0] + ex, P[1] + ey],
+          [far[0] + ex, far[1] + ey],
+          [far[0] - ex, far[1] - ey],
+          [P[0] - ex, P[1] - ey],
+        ]);
+      }
+    }
+    for (let i = 0; i < rays.length; i++) {
+      const A = rays[i];
+      const B = rays[(i + 1) % rays.length];
+      // A reflex sector (> 180°) is the OUTSIDE of a convex corner: the two
+      // strips already form it and the space between them is legitimately
+      // empty — nothing to add there.
+      const sector = (() => {
+        const raw = B.angle - A.angle;
+        return raw > 0 ? raw : raw + Math.PI * 2;
+      })();
+      if (sector > Math.PI + 1e-9) continue;
+      // Strip edges facing the sector between A and B (in increasing-angle
+      // order): A's edge sits at angle+90°, B's at angle−90°. This is a pure
+      // angular statement, valid in either screen orientation.
+      const EA = [P[0] - A.u[1] * A.halfDepth, P[1] + A.u[0] * A.halfDepth];
+      const EB = [P[0] + B.u[1] * B.halfDepth, P[1] - B.u[0] * B.halfDepth];
+      const cross = A.u[0] * B.u[1] - A.u[1] * B.u[0];
+      const limit = node.limit;
+      let mitre: number[] | null = null;
+      let mitreWithinStrips = false;
+      if (Math.abs(cross) > 1e-9) {
+        const tA = ((EB[0] - EA[0]) * B.u[1] - (EB[1] - EA[1]) * B.u[0]) / cross;
+        const tB = ((EB[0] - EA[0]) * A.u[1] - (EB[1] - EA[1]) * A.u[0]) / cross;
+        if (tA > 0) {
+          mitre = [EA[0] + A.u[0] * tA, EA[1] + A.u[1] * tA];
+          mitreWithinStrips = tA <= A.thickLength && tB <= B.thickLength;
+        }
+      }
+      const push = (list: number[][][], poly: number[][]) => {
+        if (Math.abs(signedArea(poly)) > areaEps) list.push(poly);
+      };
+      if (mitre && mitreWithinStrips
+          && Math.hypot(mitre[0] - P[0], mitre[1] - P[1]) <= limit) {
+        push(out.fans, [[P[0], P[1]], EA, mitre, EB]);
+        continue;
+      }
+      // Bevel: walk each offset line up to the join limit (never past the
+      // thick support's real end) and close with a chord. The wedge past the
+      // chord belongs to the chamfer layer, which is left exactly as approved.
+      const reach = (half: number, length: number) => Math.min(
+        length, Math.sqrt(Math.max(limit ** 2 - half ** 2, 0)),
+      );
+      const A2 = [
+        EA[0] + A.u[0] * reach(A.halfDepth, A.thickLength),
+        EA[1] + A.u[1] * reach(A.halfDepth, A.thickLength),
+      ];
+      const B2 = [
+        EB[0] + B.u[0] * reach(B.halfDepth, B.thickLength),
+        EB[1] + B.u[1] * reach(B.halfDepth, B.thickLength),
+      ];
+      push(out.fans, [[P[0], P[1]], EA, A2, B2, EB]);
+    }
+  }
+  return out;
+}
+
+/** The fans alone — kept for callers that only ever add material. */
+export function junctionNodeFans(
+  map: MultiWallNodeMap | null | undefined,
+): number[][][] {
+  return junctionNodeGeometry(map).fans;
+}
+
 /** Find the canonical degree-3+ node matching a contour vertex. */
 export function multiWallNodeAt(
   map: MultiWallNodeMap | null | undefined,
@@ -2986,11 +3116,86 @@ export function floorFootprintGeometry(
       ? union(exterior.centre, exterior.shell)
       : exterior.centre;
     return multiWallNodes.nodes.length
-      ? bevelMultiWallPaper(paper, exterior.centre, multiWallNodes)
+      ? paperWithNodeCorners(
+        bevelMultiWallPaper(paper, exterior.centre, multiWallNodes), multiWallNodes,
+        junctionNodeBound(
+          rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale,
+          multiWallNodes,
+        ),
+      )
       : paper;
   } catch {
     return null;
   }
+}
+
+/**
+ * Drop zero-area rings a boolean union leaves where two chords coincide
+ * exactly (fan chord over chamfer chord). They paint nothing, but they are
+ * topological holes and every downstream ring-counting consumer sees them.
+ */
+function dropDegenerateRings(geom: any, areaEps: number): any {
+  if (!Array.isArray(geom)) return geom;
+  const polygons = geom
+    .map((polygon: any) => {
+      if (!Array.isArray(polygon) || !polygon.length) return polygon;
+      const [outer, ...holes] = polygon;
+      if (Math.abs(signedArea(outer || [])) <= areaEps) return null;
+      return [outer, ...holes.filter(
+        (ring: number[][]) => Math.abs(signedArea(ring || [])) > areaEps,
+      )];
+    })
+    .filter((polygon: any) => !!polygon);
+  return polygons;
+}
+
+/**
+ * The approved outer boundary for node pieces: the building footprint plus
+ * the exterior wall band with PLAIN corners — the very shape the contour had
+ * before any node existed. Fans and support tips are clipped to it, so the
+ * node can never grow new facade (the concave-Split contract), while the
+ * plain corners — unlike the node-notched envelope — never reopen the sector
+ * holes the pieces exist to close.
+ */
+export function junctionNodeBound(
+  rooms: any[],
+  walls: WallEntry[] | null | undefined,
+  openCuts: number[][],
+  pitch: number,
+  cellCm: number,
+  gridPitch: number,
+  coordScale: number,
+  map: MultiWallNodeMap,
+): any | null {
+  try {
+    const plain: MultiWallNodeMap = {
+      epsilon: map.epsilon, coordinateScale: map.coordinateScale,
+      nodes: [], index: new Map(),
+    };
+    const exterior = exteriorEnvelopeGeometry(
+      rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale, plain,
+    );
+    if (!exterior) return null;
+    return exterior.shell?.length
+      ? union(exterior.centre, exterior.shell)
+      : exterior.centre;
+  } catch {
+    return null;
+  }
+}
+
+/** Paper under the node corner: the same additive supports and fans (#302). */
+function paperWithNodeCorners(paper: any, map: MultiWallNodeMap, bound?: any): any {
+  const corners = junctionNodeGeometry(map);
+  let out = paper;
+  for (const piece of [...corners.supports, ...corners.fans]) {
+    try {
+      let ring: any = [closedRing(piece)];
+      if (bound) ring = intersection(ring, bound);
+      if (ring?.length) out = union(out, ring);
+    } catch { /* keep paper */ }
+  }
+  return dropDegenerateRings(out, Math.max(map.epsilon, 1e-9) ** 2);
 }
 
 export function polyclipToPathD(geom: any): string {
@@ -3237,8 +3442,17 @@ export function wallBodiesGeometry(
     const rawPaperGeom = exterior
       ? (exterior.shell?.length ? union(exterior.centre, exterior.shell) : exterior.centre)
       : [];
+    // Paper: the approved chamfer first, then the same additive fans that
+    // complete the masonry corner complete the paper beneath it (#302).
     const paperGeom = multiWallNodes.nodes.length && exterior
-      ? bevelMultiWallPaper(rawPaperGeom, exterior.centre, multiWallNodes)
+      ? paperWithNodeCorners(
+        bevelMultiWallPaper(rawPaperGeom, exterior.centre, multiWallNodes),
+        multiWallNodes,
+        junctionNodeBound(
+          rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale,
+          multiWallNodes,
+        ),
+      )
       : rawPaperGeom;
     const bodyOf = (ring: typeof roomRings[number]): any => {
       const outset: any = closedRing(ring.outset);
@@ -3302,9 +3516,36 @@ export function wallBodiesGeometry(
         }
       }
     }
+    // The approved #249 chamfer layer stays exactly as is (owner 2026-08-25)…
     corePhase = 'multi-wall-bevel';
     if (body && multiWallNodes.nodes.length)
       body = bevelMultiWallBody(body, multiWallNodes, exterior?.centre, paperGeom);
+    // …and AFTER it the node gets back what a chamfer must never eat (#302):
+    // the exact support quads of its rays — each bounded by its own finite
+    // length, so a trimmed lateral phantom (#271) cannot come back — and one
+    // fan per pair of angularly adjacent rays, bounded by the same node
+    // limit as the chamfer chord, covering every sector the subtractive
+    // layer keeps leaving open. Both halves are purely additive.
+    corePhase = 'junction-corners';
+    if (multiWallNodes.nodes.length) {
+      const corners = junctionNodeGeometry(multiWallNodes);
+      const bound = junctionNodeBound(
+        rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale,
+        multiWallNodes,
+      );
+      for (const piece of [...corners.supports, ...corners.fans]) {
+        try {
+          let ring: any = [closedRing(piece)];
+          if (bound) ring = intersection(ring, bound);
+          if (!ring?.length) continue;
+          body = body ? union(body, ring) : ring;
+        } catch {
+          // A degenerate piece must not take the whole node down; the rest
+          // still stands on its own.
+        }
+      }
+      body = dropDegenerateRings(body, Math.max(multiWallNodes.epsilon, 1e-9) ** 2);
+    }
     const roomGeom = body || [];
     // cut opening tunnels (axis-aligned to opening angle)
     corePhase = 'openings';
@@ -3642,7 +3883,14 @@ export function paperRoomShapesWithWalls(
         rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale,
       );
       const paper = multiWallNodes.nodes.length
-        ? bevelMultiWallPaper(rawPaper, exterior.centre, multiWallNodes)
+        ? paperWithNodeCorners(
+          bevelMultiWallPaper(rawPaper, exterior.centre, multiWallNodes),
+          multiWallNodes,
+          junctionNodeBound(
+            rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale,
+            multiWallNodes,
+          ),
+        )
         : rawPaper;
       const path = polyclipToPathD(paper);
       if (path) return [{ path }];
