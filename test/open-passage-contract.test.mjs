@@ -47,6 +47,10 @@ test('passage bindings cannot reach subscriptions, locks or the info card', () =
 
 test('static passage cuts and tunnels are passage-only additions', () => {
   assert.match(staticRender, /staticPassageOpenings\(resolvedRawOpenings, NORM_W\)/);
+  assert.match(staticRender, /opening\.host\?\.kind !== 'partition'/,
+    'only independent-wall hosts go through the partition resolver');
+  assert.match(staticRender, /!opening\.host \|\| opening\.host\.kind === 'wall'/,
+    'stable contour-wall hosts retain the legacy raw-opening projection');
   assert.match(staticRender, /passages: staticPassages\.map/);
   assert.match(staticRender, /renderOpeningTunnelFills/);
   assert.match(staticRender, /passageDataTunnels/);
@@ -69,7 +73,11 @@ test('placement preview adds passage-only cut geometry without changing saved sy
 });
 
 test('all write/import paths invoke the semantic passage validator', () => {
-  assert.equal((backend.match(/validate_opening_passages\(/g) || []).length, 2);
+  assert.equal((backend.match(/validate_opening_passages\(/g) || []).length, 3);
+  assert.match(backend, /validate_opening_passages\(candidate_config, config_data\.get\("config"\)\)/,
+    'Optimize validates the submitted v7 model before the identity barrier');
+  assert.match(backend, /validate_opening_passages\(msg\["config"\], config_data\.get\("config"\)\)/,
+    'Optimize validates the committed v8 model before persistence');
   assert.match(importer, /validate_opening_passages\(merged_config, current_config\)/);
   assert.match(importer, /validate_opening_passages\(incoming_config, validate_all=True\)/);
 });

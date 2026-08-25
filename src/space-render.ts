@@ -215,7 +215,10 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   const walls: WallEntry[] = Array.isArray(spCfg.walls) ? spCfg.walls : [];
   const cellCm = Number(spCfg.cell_cm) > 0 ? Number(spCfg.cell_cm) : 5;
   const resolvedHosted = (spCfg.openings || []).flatMap((opening: OpeningCfg) => {
-    if (!opening.host) return [];
+    // Contour-wall hosts keep the same saved x/y/angle projection as legacy
+    // room openings. Only independent partitions need to be materialised from
+    // their host because that geometry is stored separately from the opening.
+    if (opening.host?.kind !== 'partition') return [];
     const resolved = resolvePartitionOpeningCompat(
       opening, space.partitions, NORM_W, cellCm, GRID_PITCH,
     ).resolved;
@@ -273,7 +276,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   // Static intentionally keeps the historical door/window/gate wall output.
   // Only the new negative-space type participates in its masonry fingerprint.
   const resolvedRawOpenings = (spCfg.openings || []).flatMap((opening: OpeningCfg) => {
-    if (!opening.host) return [opening];
+    if (!opening.host || opening.host.kind === 'wall') return [opening];
     const resolved = resolvedHosted.find((item) => item.opening.id === opening.id);
     return resolved ? [materializePartitionOpening(opening, resolved, NORM_W)] : [];
   });
