@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- The active wall chain keeps its axis and node markers visible on already
+  placed segments while drawing. The chain ink now paints above the wall
+  masonry (and below the snap overlay), so each click no longer buries the
+  yellow axis under the freshly persisted wall body
+  ([#307](https://github.com/Matysh/houseplan-card/issues/307)).
+
 ## v1.67.0-rc.3 — 2026-08-25
 
 - Wall junctions no longer leave white wedges and notches. A node where three

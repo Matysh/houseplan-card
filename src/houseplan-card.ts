@@ -17578,6 +17578,12 @@ class HouseplanCard extends LitElement {
             ${''/* Static architectural axes and endpoints are a Plan-editor
                    invariant. Tool-specific hover/snap state is resolved inside
                    the overlay and remains exclusive to Walls. */}
+            ${''/* Active chain ink paints above the wall bodies: persisted
+                   draft segments already own opaque masonry, which would
+                   otherwise cover the chain axis and nodes (#307). It stays
+                   below the snap overlay so snap highlights keep priority. */}
+            ${this._markup ? svg`<g class="hp-editor-only-layer"
+              opacity="${modeVisual?.editorWeight ?? 1}">${this._renderActiveChainInk()}</g>` : nothing}
             ${this._markup ? svg`<g class="hp-editor-only-layer"
               opacity="${modeVisual?.editorWeight ?? 1}">${this._renderPlanSnapOverlay()}</g>` : nothing}
             ${disp.hideOpenings && !this._markup
@@ -20025,18 +20031,6 @@ class HouseplanCard extends LitElement {
         x1=${repairPreview.from[0]} y1=${repairPreview.from[1]}
         x2=${repairPreview.to[0]} y2=${repairPreview.to[1]}
         aria-hidden="true" pointer-events="none"></line>` : nothing}
-      ${path.length > 1
-        ? svg`<polyline class="pathline" points="${path.map((p) => p.join(',')).join(' ')}"></polyline>`
-        : nothing}
-      ${path.length && this._cursorPt && this._tool === 'draw' && !this._contourClosed
-        ? svg`<line class="active-axis" x1="${path[path.length - 1][0]}" y1="${path[path.length - 1][1]}"
-            x2="${this._cursorPt[0]}" y2="${this._cursorPt[1]}" aria-hidden="true"></line>
-            ${!this._activePlanSnapCandidate && !this._activePlanSnapConflicts.length
-              ? svg`<circle class="active-vertex" cx="${this._cursorPt[0]}" cy="${this._cursorPt[1]}"
-                  r="${gridVisualUnits(g * 0.22, this._cellCm)}" aria-hidden="true"></circle>` : nothing}`
-        : nothing}
-      ${path.map((p, i) => svg`<circle class="vertex ${i === 0 ? 'first' : ''}"
-        cx="${p[0]}" cy="${p[1]}" r="${gridVisualUnits(g * 0.22, this._cellCm)}"></circle>`)}
       ${this._tool === 'split' && this._splitSel?.pts?.length
         ? svg`${this._splitSel.pts.length > 1
               ? svg`<polyline class="pathline" points="${this._splitSel.pts.map((p) => p.join(',')).join(' ')}"></polyline>`
@@ -20049,6 +20043,34 @@ class HouseplanCard extends LitElement {
               : nothing}`
         : nothing}
     `;
+  }
+
+  /**
+   * Axis and node ink of the active wall/room chain. Every click persists the
+   * segment into `room_drafts`, whose opaque masonry paints ABOVE the markup
+   * layer, so drawing this ink inside `_renderMarkupLayer` left already-placed
+   * segments looking like bare walls (#307). The chain ink therefore paints in
+   * its own layer after the wall bodies and before the snap overlay: yellow
+   * "work in progress" styling stays distinct from finished walls, and the
+   * snap geometry keeps excluding the active draft (no self-snapping).
+   */
+  private _renderActiveChainInk(): TemplateResult {
+    const path = this._path;
+    const g = this._gridPitch;
+    return svg`
+      ${path.length > 1
+        ? svg`<polyline class="pathline" points="${path.map((p) => p.join(',')).join(' ')}"></polyline>`
+        : nothing}
+      ${path.length && this._cursorPt && this._tool === 'draw' && !this._contourClosed
+        ? svg`<line class="active-axis" x1="${path[path.length - 1][0]}" y1="${path[path.length - 1][1]}"
+            x2="${this._cursorPt[0]}" y2="${this._cursorPt[1]}" aria-hidden="true"></line>
+            ${!this._activePlanSnapCandidate && !this._activePlanSnapConflicts.length
+              ? svg`<circle class="active-vertex" cx="${this._cursorPt[0]}" cy="${this._cursorPt[1]}"
+                  r="${gridVisualUnits(g * 0.22, this._cellCm)}" aria-hidden="true"></circle>` : nothing}`
+        : nothing}
+      ${path.map((p, i) => svg`<circle class="vertex ${i === 0 ? 'first' : ''}"
+        cx="${p[0]}" cy="${p[1]}" r="${gridVisualUnits(g * 0.22, this._cellCm)}"></circle>`)}
+    ` as unknown as TemplateResult;
   }
 
   private _renderPartitionDeleteDialog(): TemplateResult {
