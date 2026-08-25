@@ -160,11 +160,12 @@ export const SMOKE_LINKS = [
     symbols: [
       'repairSpaceReferences', 'collectSpaceMarkerDependencies',
       'createSpaceDeletionCandidate', 'invalidDefaultFloor',
+      'ImportLineageRoot', 'canonicalImportRoot', 'reversibleStem', 'addCandidate',
     ],
     smokes: ['smoke_orphan_space_references.mjs'],
     because: 'the production-bundle smoke proves the Optimize candidate, live marker rebuild, '
-      + 'delete blocker and card-editor warning, while those UI surfaces do not expose the '
-      + 'pure helper names at runtime',
+      + 'nested import-lineage collapse, delete blocker and card-editor warning, while those UI '
+      + 'surfaces do not expose the pure helper names at runtime',
   },
   {
     // #242: pure placement is called inside shared SVG/Iso renderers, while

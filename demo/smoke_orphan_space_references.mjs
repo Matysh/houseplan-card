@@ -15,7 +15,8 @@ const out = await page.evaluate(async () => {
     }, {
       // Keep `home` non-final so this fixture proves the normal blocker; the
       // final-space safe-detach exception is covered by #113's lifecycle smoke.
-      id: 'other', title: 'Other', view_box: [0, 0, 1, 1], cell_cm: 5, rooms: [],
+      id: 'space_space_other_deadbeef_cafebabe', title: 'Other',
+      view_box: [0, 0, 1, 1], cell_cm: 5, rooms: [],
     }],
     markers: [
       {
@@ -28,6 +29,10 @@ const out = await page.evaluate(async () => {
         id: 'home-blocker', binding: 'virtual', space: 'home', name: 'Home blocker',
       },
       { id: 'removed-marker', binding: 'virtual', removed: true, space: 'gone', name: 'Old marker' },
+      {
+        id: 'lineage-marker', binding: 'virtual',
+        space: 'space_other_11111111', name: 'Nested lineage marker',
+      },
     ],
     settings: { known_devices: ['removed-auto-device'] },
   };
@@ -38,6 +43,7 @@ const out = await page.evaluate(async () => {
     'removed-marker': { s: 'gone', x: 0.3, y: 0.4 },
     'removed-auto-device': { s: 'gone', x: 0.4, y: 0.5 },
     'lg_light.removed_group': { s: 'gone', x: 0.5, y: 0.6 },
+    'lineage-marker': { s: 'space_other_11111111', x: 0.7, y: 0.8 },
   };
   let serverConfig = clone(original);
   let serverLayout = clone(originalLayout);
@@ -114,6 +120,10 @@ const out = await page.evaluate(async () => {
     && preview.layout['removed-marker'] === undefined
     && preview.layout['removed-auto-device'] === undefined
     && preview.layout['lg_light.removed_group'] === undefined;
+  const lineageMarker = preview?.config.markers.find((marker) => marker.id === 'lineage-marker');
+  result.nestedImportLineageRepairsToOneCanonicalOwner = lineageMarker?.space
+    === 'space_space_other_deadbeef_cafebabe'
+    && preview.layout['lineage-marker']?.s === 'space_space_other_deadbeef_cafebabe';
   const details = previewBody?.querySelector('details.optimize-details');
   result.idsExistOnlyInClosedDetails = details && details.open === false
     && details.textContent.includes('opaque_owner') && details.textContent.includes('gone');
