@@ -201,7 +201,10 @@ export function geometryOpenings(
       ry: Number(opening.y) * coordScale,
       rlen: Number(opening.length) * coordScale,
     };
-    if (!opening.host) return [fallback];
+    // A contour-wall host is stable identity metadata. Its materialised
+    // x/y/angle remain the room-opening projection until the graph renderer;
+    // only partition hosts need spatial resolution here.
+    if (!opening.host || opening.host.kind === 'wall') return [fallback];
     const resolution = resolvePartitionOpeningCompat(
       opening, space.partitions, coordScale, cellCm, gridPitch,
     );
@@ -253,7 +256,7 @@ export function geometryRoomOpeningInputs(
       angle: Number(opening.angle) || 0,
       length: opening.rlen,
     };
-    if (!opening.host) return [input];
+    if (!opening.host || opening.host.kind === 'wall') return [input];
     if (!opening.partitionHost) return [];
     return partitionOpeningHasCompositeRoomWall(
       opening.partitionHost, intervals, gridPitch * 0.0002,

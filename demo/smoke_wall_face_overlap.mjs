@@ -88,7 +88,8 @@ const result = await page.evaluate(async () => {
   // отдаёт куски разреза, каждый из которых либо вложен в комнату, либо лежит
   // снаружи. Частично перекрывающейся комнаты из этого жеста не построить.
   await resetGeometry([roomAt('base', base)]);
-  const configBefore = JSON.stringify(space().rooms);
+  const legacyRooms = () => (space().rooms || []).map(({ wall_ids: _wallIds, ...room }) => room);
+  const configBefore = JSON.stringify(legacyRooms());
   const drawnRing = ring(300, 300, 500, 500);
   const drawnArea = 200 * 200;
   await draw(closed(drawnRing));
@@ -101,7 +102,7 @@ const result = await page.evaluate(async () => {
   out.partialOverlapFacesSumToTheUnion =
     Math.abs(offered.reduce((sum, candidate) => sum + candidate.area, 0) - drawnArea * 1.75) < 1;
   out.partialOverlapKeepsRoomsUntilDecision =
-    JSON.stringify(space().rooms) === configBefore;
+    JSON.stringify(legacyRooms()) === configBefore;
 
   // 3a) Вложенность внутрь: контур целиком внутри существующей комнаты.
   await resetGeometry([roomAt('outer', ring(100, 100, 600, 600))]);

@@ -7,7 +7,9 @@
  * the frontend and migration contracts can be exercised as pure tests.
  */
 
-import { canonicalizeConfigGeometryInPlace } from './coordinate-canonicalization';
+import {
+  canonicalizeConfigGeometryInPlace, LATTICE_NOISE_STEPS,
+} from './coordinate-canonicalization';
 import { roomPoly } from './logic';
 import { sanitizeOpenSpans } from './open-spans';
 import { GRID_STEP_N } from './space-geometry';
@@ -40,6 +42,12 @@ export interface WallSegmentCommitResult<T = any> {
   migratedSegments: number;
 }
 
+export interface WallSegmentCommitOptions {
+  /** Atom-key → existing ID, supplied only by a proven local topology edit. */
+  lineageHints?: ReadonlyMap<string, string>;
+  lineageSpaceId?: string;
+}
+
 type Point = [number, number];
 type Atom = {
   key: string;
@@ -47,6 +55,7 @@ type Atom = {
   b: Point;
   owners: Set<string>;
   preferredIds: Set<string>;
+  positionalIds: Set<string>;
   preferredCarriers: Map<string, { a: Point; b: Point }>;
   parentKeys: Set<string>;
   id?: string;
@@ -69,6 +78,31 @@ const canonicalSpan = (a: number[], b: number[]): [Point, Point] => (
   pointKey(a) <= pointKey(b) ? [point(a), point(b)] : [point(b), point(a)]
 );
 const lengthOf = (a: number[], b: number[]): number => Math.hypot(b[0] - a[0], b[1] - a[1]);
+
+/** Unique authored/derived contour coordinates that are materially off-grid. */
+export const wallModelOffGridValueCount = (space: any): number => {
+  const values = new Set<string>();
+  const inspect = (value: unknown): void => {
+    const number = Number(value);
+    if (!Number.isFinite(number)) return;
+    const steps = number / GRID_STEP_N;
+    if (Math.abs(steps - Math.round(steps)) >= LATTICE_NOISE_STEPS)
+      values.add(number.toFixed(12));
+  };
+  for (const room of Array.isArray(space?.rooms) ? space.rooms : []) {
+    for (const point of roomPoly(room) || []) {
+      inspect(point[0]);
+      inspect(point[1]);
+    }
+  }
+  for (const collection of [space?.wall_segments, space?.walls]) {
+    for (const segment of Array.isArray(collection) ? collection : []) {
+      inspect(segment?.a?.[0]); inspect(segment?.a?.[1]);
+      inspect(segment?.b?.[0]); inspect(segment?.b?.[1]);
+    }
+  }
+  return values.size;
+};
 const projectT = (p: number[], a: number[], b: number[]): number => {
   const dx = b[0] - a[0], dy = b[1] - a[1];
   const den = dx * dx + dy * dy;
@@ -216,6 +250,17 @@ const oldSegmentMap = (space: any): Map<string, WallSegmentEntry> => {
   return result;
 };
 
+const translatedSegmentDelta = (
+  a: number[], b: number[], previous: WallSegmentEntry,
+): [number, number] | null => {
+  const matches = (pa: number[], pb: number[]): [number, number] | null => {
+    const dx = a[0] - pa[0], dy = a[1] - pa[1];
+    return Math.abs((b[0] - pb[0]) - dx) <= EPS
+      && Math.abs((b[1] - pb[1]) - dy) <= EPS ? [dx, dy] : null;
+  };
+  return matches(previous.a, previous.b) || matches(previous.b, previous.a);
+};
+
 const openingHostCounts = (openings: readonly OpeningCfg[]): Map<string, number> => {
   const result = new Map<string, number>();
   for (const opening of openings) {
@@ -225,7 +270,9 @@ const openingHostCounts = (openings: readonly OpeningCfg[]): Map<string, number>
   return result;
 };
 
-const buildAtoms = (space: any): { atoms: Atom[]; rooms: any[] } => {
+const buildAtoms = (
+  space: any, old: ReadonlyMap<string, WallSegmentEntry>,
+): { atoms: Atom[]; rooms: any[] } => {
   const rooms = Array.isArray(space.rooms) ? space.rooms : [];
   const cuts = sanitizeOpenSpans(space.open_spans).map((entry) => [
     entry.a[0], entry.a[1], entry.b[0], entry.b[1],
@@ -240,6 +287,24 @@ const buildAtoms = (space: any): { atoms: Atom[]; rooms: any[] } => {
     if (!atomic || atomic.poly.length < 3) throw new WallSegmentModelError('invalid-room', id);
     const oldIds = Array.isArray(rawRoom.wall_ids) ? rawRoom.wall_ids : [];
     const indexedLineageIsValid = oldIds.length === original.length;
+    let rigidDelta: [number, number] | null = null;
+    let rigidIndexedLineage = indexedLineageIsValid;
+    if (rigidIndexedLineage) {
+      for (let index = 0; index < original.length; index++) {
+        const previous = old.get(oldIds[index]);
+        const delta = previous
+          ? translatedSegmentDelta(original[index], original[(index + 1) % original.length], previous)
+          : null;
+        if (!delta || (rigidDelta && (
+          Math.abs(delta[0] - rigidDelta[0]) > EPS
+          || Math.abs(delta[1] - rigidDelta[1]) > EPS
+        ))) {
+          rigidIndexedLineage = false;
+          break;
+        }
+        rigidDelta = delta;
+      }
+    }
     const wallIds: string[] = [];
     for (let index = 0; index < atomic.poly.length; index++) {
       const a = atomic.poly[index], b = atomic.poly[(index + 1) % atomic.poly.length];
@@ -250,6 +315,7 @@ const buildAtoms = (space: any): { atoms: Atom[]; rooms: any[] } => {
         const [ca, cb] = canonicalSpan(a, b);
         atom = {
           key, a: ca, b: cb, owners: new Set(), preferredIds: new Set(),
+          positionalIds: new Set(),
           preferredCarriers: new Map(), parentKeys: new Set(),
         };
         byKey.set(key, atom);
@@ -258,7 +324,16 @@ const buildAtoms = (space: any): { atoms: Atom[]; rooms: any[] } => {
       if (atom.owners.size > 2) throw new WallSegmentModelError('third-owner', key);
       const preferred = indexedLineageIsValid ? oldIds[atomic.parent[index]] : undefined;
       if (typeof preferred === 'string' && preferred) {
-        atom.preferredIds.add(preferred);
+        const previous = old.get(preferred);
+        // An index is a strong hint only while it still names the same
+        // physical carrier. During a room split an edge can keep its ordinal
+        // but become the new divider; a promoted draft ID on that divider must
+        // outrank the stale ordinal. Pure rigid moves retain the ordinal as a
+        // fallback because none of their old carriers overlap new geometry.
+        if (rigidIndexedLineage || !previous
+            || collinearOverlap(a, b, previous.a, previous.b) > EPS)
+          atom.preferredIds.add(preferred);
+        else atom.positionalIds.add(preferred);
         atom.preferredCarriers.set(preferred, {
           a: point(original[atomic.parent[index]]),
           b: point(original[(atomic.parent[index] + 1) % original.length]),
@@ -285,13 +360,75 @@ const buildAtoms = (space: any): { atoms: Atom[]; rooms: any[] } => {
   return { atoms: [...byKey.values()].sort((a, b) => a.key.localeCompare(b.key)), rooms: nextRooms };
 };
 
+/**
+ * Preserve ordinal carrier identity for an operation that kept every edited
+ * room's coarse topology. Atom counts must agree edge-by-edge; otherwise the
+ * ordinary split/merge lineage rules remain authoritative.
+ */
+export const fixedTopologyWallLineageHints = (
+  baselineSpace: any, beforeRooms: readonly any[], editedSpace: any,
+): Map<string, string> => {
+  const hints = new Map<string, string>();
+  const baselineRooms = new Map((baselineSpace?.rooms || []).map((room: any) => [room.id, room]));
+  const sourceRooms = new Map((beforeRooms || []).map((room: any) => [room.id, room]));
+  const { rooms: editedRooms } = buildAtoms(editedSpace, oldSegmentMap(baselineSpace));
+  for (const editedRoom of editedRooms) {
+    const source: any = sourceRooms.get(editedRoom.id);
+    const baseline: any = baselineRooms.get(editedRoom.id);
+    const sourcePoly = roomPoly(source), editedRaw = (editedSpace.rooms || [])
+      .find((room: any) => room.id === editedRoom.id);
+    const editedRawPoly = roomPoly(editedRaw), baselinePoly = roomPoly(baseline);
+    if (!sourcePoly || !editedRawPoly || !baselinePoly
+        || sourcePoly.length !== editedRawPoly.length
+        || baselinePoly.length !== baseline?.wall_ids?.length
+        || editedRoom.poly.length !== editedRoom.wall_ids.length) continue;
+    for (let edge = 0; edge < sourcePoly.length; edge++) {
+      const orderedPieces = (poly: number[][], ids: string[], a: number[], b: number[]) => {
+        const pieces: Array<{ start: number; id: string }> = [];
+        for (let index = 0; index < poly.length; index++) {
+          const pa = poly[index], pb = poly[(index + 1) % poly.length];
+          if (distanceToSegment(pa, a, b) > EPS || distanceToSegment(pb, a, b) > EPS) continue;
+          const start = projectT(pa, a, b), end = projectT(pb, a, b);
+          if (start < -EPS || end > 1 + EPS || end <= start + EPS) continue;
+          pieces.push({ start, id: ids[index] });
+        }
+        return pieces.sort((left, right) => left.start - right.start);
+      };
+      const oldPieces = orderedPieces(
+        baselinePoly, baseline.wall_ids,
+        sourcePoly[edge], sourcePoly[(edge + 1) % sourcePoly.length],
+      );
+      const newPieces = orderedPieces(
+        editedRoom.poly, editedRoom.wall_ids,
+        editedRawPoly[edge], editedRawPoly[(edge + 1) % editedRawPoly.length],
+      );
+      if (!oldPieces.length || oldPieces.length !== newPieces.length) continue;
+      for (let index = 0; index < oldPieces.length; index++) {
+        const existing = hints.get(newPieces[index].id);
+        if (existing && existing !== oldPieces[index].id)
+          throw new WallSegmentModelError('duplicate-id', newPieces[index].id);
+        hints.set(newPieces[index].id, oldPieces[index].id);
+      }
+    }
+  }
+  return hints;
+};
+
 const assignLineage = (
   space: any, atoms: Atom[], old: Map<string, WallSegmentEntry>, initialMigration: boolean,
+  lineageHints?: ReadonlyMap<string, string>,
 ): void => {
   const oldByKey = new Map([...old.values()].map((segment) => [atomKey(segment.a, segment.b), segment]));
   const hostCounts = openingHostCounts(space.openings || []);
   const proposed = new Map<Atom, WallSegmentEntry>();
   for (const atom of atoms) {
+    const hintedId = lineageHints?.get(atom.key);
+    if (hintedId) {
+      const hinted = old.get(hintedId);
+      if (!hinted) throw new WallSegmentModelError('duplicate-id', hintedId);
+      proposed.set(atom, hinted);
+      continue;
+    }
     if (atom.preferredIds.size > 1) {
       throw new WallSegmentModelError('duplicate-id', [...atom.preferredIds].sort().join(','));
     }
@@ -322,6 +459,10 @@ const assignLineage = (
       || left.id.localeCompare(right.id)
     ));
     if (candidates[0]) proposed.set(atom, candidates[0]);
+    else if (atom.positionalIds.size === 1) {
+      const positional = old.get([...atom.positionalIds][0]);
+      if (positional) proposed.set(atom, positional);
+    }
   }
   const byId = new Map<string, Atom[]>();
   for (const [atom, segment] of proposed) {
@@ -464,10 +605,12 @@ const resolvedThicknessCm = (
   return Number(previous?.cm) > 0 ? Number(previous!.cm) : 0;
 };
 
-const migrateSpace = (space: any, initialMigration: boolean): number => {
+const migrateSpace = (
+  space: any, initialMigration: boolean, lineageHints?: ReadonlyMap<string, string>,
+): number => {
   const old = oldSegmentMap(space);
-  const { atoms, rooms } = buildAtoms(space);
-  assignLineage(space, atoms, old, initialMigration);
+  const { atoms, rooms } = buildAtoms(space, old);
+  assignLineage(space, atoms, old, initialMigration, lineageHints);
   const segments = atoms.map((atom): WallSegmentEntry => {
     const previous = atom.id ? old.get(atom.id) : undefined;
     const cm = resolvedThicknessCm(space, atom, previous);
@@ -490,25 +633,73 @@ const migrateSpace = (space: any, initialMigration: boolean): number => {
 };
 
 /** Pure, atomic structural candidate. Read paths must never call this helper. */
-export function commitWallSegmentModel<T>(input: T): WallSegmentCommitResult<T> {
+export function commitWallSegmentModel<T>(
+  input: T, options: WallSegmentCommitOptions = {},
+): WallSegmentCommitResult<T> {
   const before = JSON.stringify(input);
   const config: any = clone(input);
   canonicalizeConfigGeometryInPlace(config);
   let migratedSegments = 0;
   const initialMigration = Number(config?.model_version || 0) < WALL_SEGMENT_MODEL_VERSION;
   for (const space of Array.isArray(config?.spaces) ? config.spaces : []) {
-    migratedSegments += migrateSpace(space, initialMigration);
+    const hints = options.lineageSpaceId === String(space?.id || '')
+      ? options.lineageHints : undefined;
+    migratedSegments += migrateSpace(space, initialMigration, hints);
   }
   config.model_version = WALL_SEGMENT_MODEL_VERSION;
   canonicalizeConfigGeometryInPlace(config);
   return { config, changed: before !== JSON.stringify(config), migratedSegments };
 }
 
+const isRecord = (value: unknown): value is Record<string, any> => (
+  !!value && typeof value === 'object' && !Array.isArray(value)
+);
+
+/**
+ * Adopt an already validated candidate without invalidating references held by
+ * an active editor gesture.  The editor historically mutates the current
+ * space and its id-bearing children in place; replacing the complete config
+ * after the identity barrier would leave those references attached to a
+ * detached document until the next interaction.
+ */
+export function adoptWallSegmentModelCandidateInPlace<T>(target: T, candidate: T): T {
+  const adopt = (current: any, next: any): any => {
+    if (Array.isArray(current) && Array.isArray(next)) {
+      const currentById = new Map<string, any>();
+      for (const item of current) {
+        if (isRecord(item) && typeof item.id === 'string' && item.id)
+          currentById.set(item.id, item);
+      }
+      const adopted = next.map((item, index) => {
+        if (isRecord(item) && typeof item.id === 'string' && item.id) {
+          const existing = currentById.get(item.id);
+          return existing ? adopt(existing, item) : clone(item);
+        }
+        return index < current.length ? adopt(current[index], item) : clone(item);
+      });
+      current.splice(0, current.length, ...adopted);
+      return current;
+    }
+    if (isRecord(current) && isRecord(next)) {
+      const entries = Object.entries(next).map(([key, value]) => [
+        key,
+        key in current ? adopt(current[key], value) : clone(value),
+      ] as const);
+      // Reinsert in candidate order as well as adopting candidate values.
+      // JSON byte idempotence is part of Optimize and history snapshots; an
+      // in-place adapter must not retain stale property order from its target.
+      for (const key of Object.keys(current)) delete current[key];
+      for (const [key, value] of entries) current[key] = value;
+      return current;
+    }
+    return clone(next);
+  };
+  return adopt(target, candidate);
+}
+
 /** In-place adapter for the already-pure Optimize candidate. */
 export function commitWallSegmentModelInPlace<T>(input: T): WallSegmentCommitResult<T> {
   const result = commitWallSegmentModel(input);
-  const target: any = input;
-  for (const key of Object.keys(target || {})) delete target[key];
-  Object.assign(target, result.config);
+  adoptWallSegmentModelCandidateInPlace(input, result.config);
   return { ...result, config: input };
 }

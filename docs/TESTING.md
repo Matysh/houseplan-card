@@ -40,9 +40,10 @@
 - [ ] Initial v7 migration is deterministic and idempotent; new post-v8 atoms
       use UUIDs. A split/promoted draft keeps one documented carrier ID, while
       reserved/colliding deterministic IDs receive stable `-2`, `-3` suffixes.
-- [ ] Structural writers are enumerated by `scripts/mutation-gate.mjs`; bypassing
-      the wall-model barrier must fail the source guard. A rejected migration
-      changes neither config, Undo history nor revision.
+- [ ] The three structural writer families — interactive commit, Undo/Redo
+      restore and Optimize — are enumerated by the source guard and each has an
+      independent bypass mutant in `scripts/mutation-gate.mjs`. A rejected
+      migration changes neither config, Undo history nor revision.
 - [ ] Full/space imports cover v7→v7 (no upgrade), v7→v8 and v8→v8; copy/merge
       remaps every ID and reference together. A byte-equivalent legacy-client
       round-trip of v8 is accepted, while a structural legacy change is rejected.

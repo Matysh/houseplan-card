@@ -363,14 +363,7 @@ test('issue 248 Optimize stays a no-op across the lattice storage round-trip', (
   assert.deepEqual(storageRoundtripFixture.input, inputBefore, 'preview must keep fixture input');
   assert.equal(first.changed, true);
   assert.ok(first.report.latticeCoordinatesCanonicalized > 0);
-  assert.equal(first.config.model_version, PLAN_MODEL_VERSION);
-  assert.ok(first.config.spaces.every((space) => Array.isArray(space.wall_segments)));
-  assert.deepEqual(
-    first.config.spaces.map((space) => space.rooms.map((room) => room.poly)),
-    storageRoundtripFixture.expected.config.spaces.map((space) => (
-      space.rooms.map((room) => room.poly)
-    )),
-  );
+  assert.deepEqual(first.config, storageRoundtripFixture.expected.config);
   assert.deepEqual(first.layout, storageRoundtripFixture.expected.layout);
   assert.deepEqual(canonicalizeConfigGeometry(first.config), first.config);
   assert.deepEqual(canonicalizeLayoutGeometry(first.layout), first.layout);

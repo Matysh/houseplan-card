@@ -198,7 +198,8 @@ import {
 } from './space-geometry';
 import { optimizePlans, type OptimizeReport } from './plan-optimizer';
 import {
-  commitWallSegmentModel, WallSegmentModelError,
+  adoptWallSegmentModelCandidateInPlace, commitWallSegmentModel,
+  fixedTopologyWallLineageHints, wallModelOffGridValueCount, WallSegmentModelError,
 } from './wall-segment-model';
 import { snapNearAxisEndpoint } from './near-axis';
 import type { SpaceReferenceRepairContext } from './space-reference-repair';
@@ -7181,8 +7182,8 @@ class HouseplanCard extends LitElement {
   }
 
   /** Deep, immutable geometry state from the real config (never Resize preview). */
-  private _geometrySnapshot(spaceId = this._space): SpaceGeometryState | null {
-    const sp = this._serverCfg?.spaces.find((s: any) => s.id === spaceId);
+  private _geometrySnapshotFromConfig(config: any, spaceId: string): SpaceGeometryState | null {
+    const sp = config?.spaces?.find((s: any) => s.id === spaceId);
     if (!sp) return null;
     const copy = <T>(value: T): T => JSON.parse(JSON.stringify(value));
     const plan_transform: SpaceGeometryState['plan_transform'] = {};
@@ -7212,6 +7213,10 @@ class HouseplanCard extends LitElement {
     };
   }
 
+  private _geometrySnapshot(spaceId = this._space): SpaceGeometryState | null {
+    return this._geometrySnapshotFromConfig(this._serverCfg, spaceId);
+  }
+
   /** Finish one geometry transaction and invalidate the redo branch. */
   private _recordGeometry(name: string, before: SpaceGeometryState | null): void {
     if (!before) return;
@@ -7222,16 +7227,28 @@ class HouseplanCard extends LitElement {
   }
 
   /** Replace only persisted geometry in memory; no history entry and no WS. */
-  private _restoreGeometryStateLocal(state: SpaceGeometryState): boolean {
-    const sp = this._serverCfg?.spaces.find((space: any) => space.id === state.spaceId);
+  private _restoreGeometryStateInConfig(
+    config: any, state: SpaceGeometryState, preserveIdentityHints = false,
+  ): boolean {
+    const sp = config?.spaces?.find((space: any) => space.id === state.spaceId);
     if (!sp) return false;
     const copy = <T>(value: T): T => JSON.parse(JSON.stringify(value));
+    const oldRooms = new Map((sp.rooms || []).map((room: any) => [room.id, room]));
     sp.rooms = copy(state.rooms);
+    if (preserveIdentityHints) {
+      for (const room of sp.rooms) {
+        const old: any = oldRooms.get(room.id);
+        if (!Array.isArray(room.wall_ids) && Array.isArray(old?.wall_ids)
+            && old.wall_ids.length === room.poly?.length) room.wall_ids = copy(old.wall_ids);
+      }
+    }
     const assign = (key: 'openings' | 'walls' | 'wall_segments' | 'open_spans' | 'room_drafts'
       | 'partitions' | 'wall_columns' | 'decor', value: unknown): void => {
       if (value !== undefined) (sp as any)[key] = copy(value);
-      else delete (sp as any)[key];
+      else if (!(preserveIdentityHints && key === 'wall_segments')) delete (sp as any)[key];
     };
+    const oldOpenings = new Map((sp.openings || []).map((opening: any) => [opening.id, opening]));
+    const oldDrafts = new Map((sp.room_drafts || []).map((draft: any) => [draft.id, draft]));
     assign('openings', state.openings);
     assign('walls', state.walls);
     assign('wall_segments', state.wall_segments);
@@ -7240,9 +7257,27 @@ class HouseplanCard extends LitElement {
     assign('partitions', state.partitions);
     assign('wall_columns', state.wall_columns);
     assign('decor', state.decor);
+    if (preserveIdentityHints) {
+      for (const opening of sp.openings || []) {
+        const old: any = oldOpenings.get(opening.id);
+        if (!opening.host && old?.host?.kind === 'wall') opening.host = copy(old.host);
+      }
+      for (const draft of sp.room_drafts || []) {
+        const old: any = oldDrafts.get(draft.id);
+        for (let index = 0; index < (draft.segments || []).length; index++) {
+          if (!draft.segments[index]?.id && old?.segments?.[index]?.id)
+            draft.segments[index].id = old.segments[index].id;
+        }
+      }
+    }
     for (const key of ['plan_x', 'plan_y', 'plan_scale', 'plan_scale_x', 'plan_scale_y', 'plan_angle'] as const)
       delete (sp as any)[key];
     Object.assign(sp, copy(state.plan_transform || {}));
+    return true;
+  }
+
+  private _restoreGeometryStateLocal(state: SpaceGeometryState): boolean {
+    if (!this._restoreGeometryStateInConfig(this._serverCfg, state)) return false;
     this._cfgEpoch++;
     this._modelCache = null;
     this._wallUnionCache = null;
@@ -7261,14 +7296,53 @@ class HouseplanCard extends LitElement {
   private _commitPhysicalGeometry(name: string, before: SpaceGeometryState | null): boolean {
     if (!before || !this._serverCfg) return false;
     const liveCandidate = this._serverCfg;
+    const editedState = this._geometrySnapshotFromConfig(liveCandidate, before.spaceId);
+    const liveSpace = liveCandidate.spaces.find((space: any) => space.id === before.spaceId);
+    if (!liveSpace || spacePhysicalGeometryFingerprint(before)
+        === spacePhysicalGeometryFingerprint(liveSpace)) return false;
+    // Preserve #278's existing fail-closed guard. Identity materialisation may
+    // repair/atomise a degraded legacy projection, but it must never be used to
+    // make an otherwise rejected user edit look safe.
+    let legacySafe = false;
+    try { legacySafe = this._checkSpacePhysicalGeometry(liveCandidate, before.spaceId).ok; }
+    catch { legacySafe = false; }
+    if (!legacySafe) {
+      this._clearGeometryGesture();
+      this._restoreGeometryStateLocal(before);
+      this._showToast(this._t('toast.geometry_unsafe'));
+      return false;
+    }
+    let committedCandidate: any;
+    let historyBefore = before;
     try {
       // ADR 282 Stage 1: every structural writer crosses the same atomic
       // canonicalisation/identity barrier.  The pure candidate is adopted only
       // after every space migrated successfully, so a blocker leaves the live
       // config byte-equivalent.
-      this._serverCfg = commitWallSegmentModel(liveCandidate).config;
+      if (Number(liveCandidate.model_version || 0) < 8) {
+        // The first edit of a v7 document must derive identity from the
+        // pre-edit carrier, not from its already moved/split coordinates.
+        // Materialise that baseline locally, then replay the edited legacy
+        // projection over it so lineage and Undo share the same stable IDs.
+        const baselineSource = JSON.parse(JSON.stringify(liveCandidate));
+        if (!this._restoreGeometryStateInConfig(baselineSource, before))
+          throw new WallSegmentModelError('invalid-room', before.spaceId);
+        const baseline = commitWallSegmentModel(baselineSource).config;
+        historyBefore = this._geometrySnapshotFromConfig(baseline, before.spaceId) || before;
+        const editedWithIdentity = JSON.parse(JSON.stringify(baseline));
+        if (!editedState || !this._restoreGeometryStateInConfig(
+          editedWithIdentity, editedState, true,
+        )) throw new WallSegmentModelError('invalid-room', before.spaceId);
+        const baselineSpace = baseline.spaces.find((space: any) => space.id === before.spaceId);
+        const editedSpace = editedWithIdentity.spaces.find((space: any) => space.id === before.spaceId);
+        const lineageHints = fixedTopologyWallLineageHints(
+          baselineSpace, before.rooms, editedSpace,
+        );
+        committedCandidate = commitWallSegmentModel(editedWithIdentity, {
+          lineageHints, lineageSpaceId: before.spaceId,
+        }).config;
+      } else committedCandidate = commitWallSegmentModel(liveCandidate).config;
     } catch (error) {
-      this._serverCfg = liveCandidate;
       this._clearGeometryGesture();
       this._restoreGeometryStateLocal(before);
       this._showToast(this._t('toast.wall_model_migration_blocked', {
@@ -7276,30 +7350,26 @@ class HouseplanCard extends LitElement {
       }));
       return false;
     }
-    const after = this._geometrySnapshot(before.spaceId);
-    if (!after || spacePhysicalGeometryFingerprint(before)
-        === spacePhysicalGeometryFingerprint(after)) {
-      this._serverCfg = liveCandidate;
-      return false;
-    }
     let safe = false;
     try {
-      safe = this._checkSpacePhysicalGeometry(this._serverCfg, before.spaceId).ok;
+      const afterSpace = committedCandidate.spaces.find((space: any) => space.id === before.spaceId);
+      safe = wallModelOffGridValueCount(afterSpace) <= wallModelOffGridValueCount(historyBefore)
+        && this._checkSpacePhysicalGeometry(committedCandidate, before.spaceId).ok;
     } catch {
       safe = false;
     }
     if (!safe) {
-      this._serverCfg = liveCandidate;
       this._clearGeometryGesture();
       this._restoreGeometryStateLocal(before);
       this._showToast(this._t('toast.geometry_unsafe'));
       return false;
     }
-    this._recordGeometry(name, before);
-    const afterSpace = this._serverCfg.spaces.find((space: any) => space.id === before.spaceId);
+    adoptWallSegmentModelCandidateInPlace(liveCandidate, committedCandidate);
+    this._recordGeometry(name, historyBefore);
+    const afterSpace = liveCandidate.spaces.find((space: any) => space.id === before.spaceId);
     const pending = this._pendingPhysicalWrites.get(before.spaceId);
     this._pendingPhysicalWrites.set(before.spaceId, {
-      before: pending?.before || before,
+      before: pending?.before || historyBefore,
       fingerprint: spacePhysicalGeometryFingerprint(afterSpace),
     });
     this._saveConfig();
@@ -7391,23 +7461,38 @@ class HouseplanCard extends LitElement {
     const before = this._geometrySnapshot(state.spaceId);
     if (!before || !this._restoreGeometryStateLocal(state)) return false;
     const restoredCandidate = this._serverCfg;
+    const physicalChanged = spacePhysicalGeometryFingerprint(before)
+      !== spacePhysicalGeometryFingerprint(state);
+    if (physicalChanged) {
+      let safe = false;
+      try {
+        const check = restoredCandidate
+          ? this._checkSpacePhysicalGeometry(restoredCandidate, state.spaceId)
+          : null;
+        safe = !!check?.ok || !!(allowHistoryBoundaryRepair
+          && check?.reason === 'wall-degraded-extra');
+      } catch { safe = false; }
+      if (!safe) {
+        this._restoreGeometryStateLocal(before);
+        this._showToast(this._t('toast.geometry_unsafe'));
+        return false;
+      }
+    }
+    let committedCandidate: any;
     try {
-      this._serverCfg = commitWallSegmentModel(restoredCandidate).config;
+      committedCandidate = commitWallSegmentModel(restoredCandidate).config;
     } catch (error) {
-      this._serverCfg = restoredCandidate;
       this._restoreGeometryStateLocal(before);
       this._showToast(this._t('toast.wall_model_migration_blocked', {
         reason: this._wallModelBlockerLabel(error),
       }));
       return false;
     }
-    const physicalChanged = spacePhysicalGeometryFingerprint(before)
-      !== spacePhysicalGeometryFingerprint(state);
     if (physicalChanged) {
       let safe = false;
       try {
-        const check = this._serverCfg
-          ? this._checkSpacePhysicalGeometry(this._serverCfg, state.spaceId)
+        const check = committedCandidate
+          ? this._checkSpacePhysicalGeometry(committedCandidate, state.spaceId)
           : null;
         // A history snapshot can predate the write-time wall degradation that
         // canonicalized its command. Restore that one repairable baseline so
@@ -7418,20 +7503,18 @@ class HouseplanCard extends LitElement {
           && check?.reason === 'wall-degraded-extra');
       } catch { safe = false; }
       if (!safe) {
-        this._serverCfg = restoredCandidate;
         this._restoreGeometryStateLocal(before);
         this._showToast(this._t('toast.geometry_unsafe'));
         return false;
       }
-      const afterSpace = this._serverCfg?.spaces.find(
-        (space: any) => space.id === state.spaceId,
-      );
+      adoptWallSegmentModelCandidateInPlace(restoredCandidate, committedCandidate);
+      const afterSpace = restoredCandidate?.spaces.find((space: any) => space.id === state.spaceId);
       const pending = this._pendingPhysicalWrites.get(state.spaceId);
       this._pendingPhysicalWrites.set(state.spaceId, {
         before: pending?.before || before,
         fingerprint: spacePhysicalGeometryFingerprint(afterSpace),
       });
-    }
+    } else adoptWallSegmentModelCandidateInPlace(restoredCandidate, committedCandidate);
     this._clearGeometryGesture();
     if (this._space !== state.spaceId) {
       this._commitSpace(state.spaceId);

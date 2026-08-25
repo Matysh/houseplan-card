@@ -4,8 +4,11 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 
 import {
+  adoptWallSegmentModelCandidateInPlace,
   commitWallSegmentModel,
   deterministicWallSegmentId,
+  fixedTopologyWallLineageHints,
+  wallModelOffGridValueCount,
   WallSegmentModelError,
   WALL_SEGMENT_MODEL_VERSION,
 } from '../test-build/wall-segment-model.js';
@@ -111,6 +114,38 @@ test('existing ids survive rigid geometry edits and split lineage chooses midpoi
   assert.equal(splitResult.rooms[0].wall_ids[1], oldTop);
 });
 
+test('fixed-topology Resize hints preserve every shared and side-wall id', () => {
+  const legacy = configOf({
+    id: 'floor', title: 'Floor',
+    rooms: [rectangle('left', 0, 0, 0.5, 1), rectangle('right', 0.5, 0, 1, 1)],
+  });
+  const baseline = commitWallSegmentModel(legacy).config;
+  const candidate = structuredClone(baseline);
+  candidate.spaces[0].rooms = [
+    rectangle('left', 0, 0, 0.6, 1), rectangle('right', 0.6, 0, 1, 1),
+  ];
+  const hints = fixedTopologyWallLineageHints(
+    baseline.spaces[0], legacy.spaces[0].rooms, candidate.spaces[0],
+  );
+  const result = commitWallSegmentModel(candidate, {
+    lineageHints: hints, lineageSpaceId: 'floor',
+  }).config.spaces[0];
+  assert.deepEqual(
+    [...result.wall_segments.map((segment) => segment.id)].sort(),
+    [...baseline.spaces[0].wall_segments.map((segment) => segment.id)].sort(),
+  );
+  assert.equal(result.rooms[0].wall_ids[1], result.rooms[1].wall_ids[3]);
+});
+
+test('off-grid contour guard counts values once across compatibility projections', () => {
+  const point = 0.0605;
+  assert.equal(wallModelOffGridValueCount({
+    rooms: [{ id: 'room', poly: [[point, 0], [1, 0], [1, 1], [point, 1]] }],
+    wall_segments: [{ id: 'wall', a: [point, 0], b: [point, 1], cm: 20 }],
+    walls: [{ key: 'legacy', a: [point, 0], b: [point, 1], cm: 20 }],
+  }), 1);
+});
+
 test('room openings acquire a stable wall host while partition hosts stay untouched', () => {
   const result = commitWallSegmentModel(configOf({
     id: 'floor', title: 'Floor', rooms: [rectangle('room')],
@@ -179,6 +214,40 @@ test('post-v8 atoms use fresh identity while promoted draft carriers keep theirs
   );
 });
 
+test('promoted divider identity outranks a stale same-index room hint', () => {
+  const base = commitWallSegmentModel(configOf({
+    id: 'floor', title: 'Floor', rooms: [rectangle('parent')],
+  })).config;
+  const changed = structuredClone(base);
+  const oldIds = changed.spaces[0].rooms[0].wall_ids;
+  changed.spaces[0].rooms = [{
+    id: 'parent', poly: [[0, 0], [0.5, 0], [0.5, 1], [0, 1]], wall_ids: oldIds,
+  }, {
+    id: 'child', poly: [[0.5, 0], [1, 0], [1, 1], [0.5, 1]],
+    wall_ids: ['', '', '', 'draft-divider'],
+  }];
+  const result = commitWallSegmentModel(changed).config.spaces[0];
+  const parent = result.rooms.find((room) => room.id === 'parent');
+  const child = result.rooms.find((room) => room.id === 'child');
+  assert.equal(parent.wall_ids[1], 'draft-divider');
+  assert.equal(child.wall_ids[3], 'draft-divider');
+});
+
+test('validated candidate adoption preserves active editor object identity', () => {
+  const target = configOf({
+    id: 'floor', title: 'Floor', rooms: [rectangle('room')],
+    openings: [{ id: 'door', type: 'door', x: 0.5, y: 0, angle: 0, length: 0.2 }],
+  });
+  const space = target.spaces[0];
+  const opening = space.openings[0];
+  const candidate = commitWallSegmentModel(target).config;
+  adoptWallSegmentModelCandidateInPlace(target, candidate);
+  assert.equal(target.spaces[0], space);
+  assert.equal(space.openings[0], opening);
+  assert.equal(target.model_version, WALL_SEGMENT_MODEL_VERSION);
+  assert.equal(opening.host.kind, 'wall');
+});
+
 test('initial migration resolves a reserved deterministic id with the documented suffix', () => {
   const baseId = deterministicWallSegmentId('floor', [0, 0], [1, 0], ['room']);
   const result = commitWallSegmentModel(configOf({
@@ -190,6 +259,7 @@ test('initial migration resolves a reserved deterministic id with the documented
 
 test('every frontend structural transaction crosses the wall identity barrier', () => {
   const source = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
+  const optimizer = readFileSync(new URL('../src/plan-optimizer.ts', import.meta.url), 'utf8');
   const methodSource = (name) => {
     const start = source.indexOf(`private ${name}(`);
     assert.notEqual(start, -1, `${name} must remain a named structural boundary`);
@@ -198,8 +268,12 @@ test('every frontend structural transaction crosses the wall identity barrier', 
   };
   const commitMethod = methodSource('_commitPhysicalGeometry');
   const restoreMethod = methodSource('_applyGeometryState');
-  assert.match(commitMethod, /commitWallSegmentModel\(liveCandidate\)/);
-  assert.match(restoreMethod, /commitWallSegmentModel\(restoredCandidate\)/);
+  assert.match(commitMethod, /commitWallSegmentModel\(liveCandidate\)/,
+    'ordinary structural commits must cross the identity barrier');
+  assert.match(restoreMethod, /commitWallSegmentModel\(restoredCandidate\)/,
+    'Undo/Redo restoration must cross the identity barrier');
+  assert.match(optimizer, /commitWallSegmentModelInPlace\(config\)/,
+    'Optimize must cross the identity barrier after its geometry repairs');
   assert.doesNotMatch(commitMethod, /this\._writeConfig\(/,
     'the common barrier must finish before the existing persistence path runs');
 });

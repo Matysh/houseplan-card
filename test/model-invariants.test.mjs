@@ -374,6 +374,7 @@ test('профиль различает узел, шум и законную г�
   assert.equal(profile.exact, 2, 'узел обязан считаться точным');
   assert.equal(profile.noise, 2, '9 знаков от того же узла — это шум, а не узел');
   assert.equal(profile.offGrid, 2, '0.06 — законная геометрия, а не дефект');
+  assert.equal(profile.offGridUnique, 1, 'compatibility projections do not multiply one carrier');
   assert.equal(profile.worstNoise.kind, 'room');
   assert.ok(profile.worstNoise.steps > 0 && profile.worstNoise.steps < profile.noiseSteps);
 });

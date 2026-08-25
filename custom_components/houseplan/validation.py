@@ -102,6 +102,49 @@ def _legacy_wall_model_projection(config: dict) -> dict:
     return projected
 
 
+def _legacy_wall_geometry_projection(config: dict) -> list[dict]:
+    """Only geometry whose edit requires a matching v8 identity update."""
+    result: list[dict] = []
+    for space in config.get("spaces") or []:
+        rooms = []
+        for room in space.get("rooms") or []:
+            rooms.append({key: copy.deepcopy(room.get(key)) for key in (
+                "id", "poly", "x", "y", "w", "h", "open_to"
+            ) if key in room})
+        openings = []
+        for opening in space.get("openings") or []:
+            openings.append({key: copy.deepcopy(opening.get(key)) for key in (
+                "id", "type", "x", "y", "angle", "length"
+            ) if key in opening})
+        drafts = []
+        for draft in space.get("room_drafts") or []:
+            drafts.append({
+                "id": draft.get("id"),
+                "points": copy.deepcopy(draft.get("points")),
+                "segments": [
+                    {"cm": segment.get("cm")} for segment in draft.get("segments") or []
+                ],
+            })
+        result.append({
+            "id": space.get("id"),
+            "rooms": rooms,
+            "walls": copy.deepcopy(space.get("walls") or []),
+            "open_spans": copy.deepcopy(space.get("open_spans") or []),
+            "room_drafts": drafts,
+            "partitions": copy.deepcopy(space.get("partitions") or []),
+            "openings": openings,
+        })
+    return result
+
+
+def _wall_catalog_projection(config: dict) -> list[dict]:
+    """Authoritative part a current v8 structural writer must update."""
+    return [{
+        "id": space.get("id"),
+        "wall_segments": copy.deepcopy(space.get("wall_segments")),
+    } for space in config.get("spaces") or []]
+
+
 def _restore_wall_model_fields(config: dict, previous: dict) -> None:
     """Hydrate only v8 identity fields after an exact legacy round-trip."""
     config["model_version"] = previous["model_version"]
@@ -142,8 +185,13 @@ def validate_wall_model_transition(config: dict, previous: dict | None) -> None:
         new_model = int(config.get("model_version", 0))
     except (TypeError, ValueError):
         return  # CONFIG_SCHEMA owns malformed values.
+    previous = previous or {}
+    geometry_changed = (
+        _legacy_wall_geometry_projection(config)
+        != _legacy_wall_geometry_projection(previous)
+    )
     if old_model >= 8 and new_model < 8:
-        if _legacy_wall_model_projection(config) == _legacy_wall_model_projection(previous or {}):
+        if not geometry_changed:
             _restore_wall_model_fields(config, previous or {})
             # Re-run semantic parity after hydration; previous identity is
             # accepted only when it still matches the submitted projections.
@@ -154,6 +202,16 @@ def validate_wall_model_transition(config: dict, previous: dict | None) -> None:
         raise WallModelClientOutdatedError(
             f"stored model={old_model}; submitted model={new_model}"
         )
+    if old_model >= 8 and new_model >= 8 and geometry_changed:
+        # The realistic stale-client case echoes model_version and the unknown
+        # catalogue verbatim while changing rooms/walls/openings. Let the
+        # frontend show the dedicated reload guidance instead of a generic
+        # schema error. A current writer necessarily changes the catalogue in
+        # the same transaction.
+        if _wall_catalog_projection(config) == _wall_catalog_projection(previous):
+            raise WallModelClientOutdatedError(
+                f"stored model={old_model}; unchanged wall catalogue"
+            )
 
 
 # One normalized canvas width contains this many physical grid cells. Keep in

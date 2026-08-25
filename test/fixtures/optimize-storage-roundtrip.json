@@ -58,7 +58,7 @@
   },
   "expected": {
     "config": {
-      "model_version": 7,
+      "model_version": 8,
       "spaces": [
         {
           "id": "fine",
@@ -74,7 +74,39 @@
                 [0.008333333333333333, 0],
                 [0.008333333333333333, 0.008333333333333333],
                 [0.004166666666666667, 0.008333333333333333]
+              ],
+              "wall_ids": [
+                "wall-wjksr7kt5pqii5mdfjlm",
+                "wall-eivcyotdqeqxur4vnhtm",
+                "wall-vazlh4lrawmx44cgu4gq",
+                "wall-2p5v3xgwtvsbainkhyk4"
               ]
+            }
+          ],
+          "wall_segments": [
+            {
+              "id": "wall-2p5v3xgwtvsbainkhyk4",
+              "a": [0.004166666666666667, 0],
+              "b": [0.004166666666666667, 0.008333333333333333],
+              "cm": 0
+            },
+            {
+              "id": "wall-wjksr7kt5pqii5mdfjlm",
+              "a": [0.004166666666666667, 0],
+              "b": [0.008333333333333333, 0],
+              "cm": 0
+            },
+            {
+              "id": "wall-vazlh4lrawmx44cgu4gq",
+              "a": [0.004166666666666667, 0.008333333333333333],
+              "b": [0.008333333333333333, 0.008333333333333333],
+              "cm": 0
+            },
+            {
+              "id": "wall-eivcyotdqeqxur4vnhtm",
+              "a": [0.008333333333333333, 0],
+              "b": [0.008333333333333333, 0.008333333333333333],
+              "cm": 0
             }
           ]
         },
@@ -92,7 +124,39 @@
                 [0.2, 0.1],
                 [0.2, 0.2],
                 [0.1, 0.2]
+              ],
+              "wall_ids": [
+                "wall-5yfzignil3ysguqdo4df",
+                "wall-oyjp2s67gzz4m6vwvfiq",
+                "wall-47i5wxqm2645m5tsrnvu",
+                "wall-kzjn7273gogxtjkjtbs6"
               ]
+            }
+          ],
+          "wall_segments": [
+            {
+              "id": "wall-kzjn7273gogxtjkjtbs6",
+              "a": [0.1, 0.1],
+              "b": [0.1, 0.2],
+              "cm": 0
+            },
+            {
+              "id": "wall-5yfzignil3ysguqdo4df",
+              "a": [0.1, 0.1],
+              "b": [0.2, 0.1],
+              "cm": 0
+            },
+            {
+              "id": "wall-47i5wxqm2645m5tsrnvu",
+              "a": [0.1, 0.2],
+              "b": [0.2, 0.2],
+              "cm": 0
+            },
+            {
+              "id": "wall-oyjp2s67gzz4m6vwvfiq",
+              "a": [0.2, 0.1],
+              "b": [0.2, 0.2],
+              "cm": 0
             }
           ]
         }

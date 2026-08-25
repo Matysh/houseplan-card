@@ -101,7 +101,11 @@ const sharedX = () => page.evaluate(() => {
   const space = window.__card._serverCfg.spaces.find((entry) => entry.id === 'real-second-floor');
   const a = space.rooms.find((room) => room.id === 'room-a');
   const b = space.rooms.find((room) => room.id === 'room-b');
-  return [a.poly[2][0], a.poly[3][0], b.poly[2][0], b.poly[3][0]];
+  // v8 may add owner-role breakpoints to either contour. Locate the two
+  // physical shared endpoints instead of relying on their legacy ordinals.
+  return a.poly.filter((point) => b.poly.some((other) => (
+    Math.abs(point[0] - other[0]) < 1e-9 && Math.abs(point[1] - other[1]) < 1e-9
+  ))).map((point) => point[0]);
 });
 const domHasSharedX = (x) => page.evaluate((wanted) =>
   [...window.__card.renderRoot.querySelectorAll('.rszhandle[aria-disabled="false"]')]
@@ -127,10 +131,6 @@ check('resize_pointer.target_enabled', !!target, true);
 if (target) {
   const before = await persistedGeometry();
   const writesBefore = await page.evaluate(() => window.__resizeWrites.length);
-  const beforeWalls = await page.evaluate(() => {
-    const walls = window.__card._serverCfg.spaces[0].walls || [];
-    return { count: walls.length, cms: walls.map((wall) => wall.cm).sort((a, b) => a - b) };
-  });
   await page.mouse.move(...target.start);
   await page.mouse.down();
   await page.mouse.move(...target.end, { steps: 8 });
@@ -156,9 +156,27 @@ if (target) {
     };
   }), { history: 1, mode: 'plan', tool: 'resize', canCommit: true });
   check('resize_pointer.wall_metadata_preserved', await page.evaluate(() => {
-    const walls = window.__card._serverCfg.spaces[0].walls || [];
-    return { count: walls.length, cms: walls.map((wall) => wall.cm).sort((a, b) => a - b) };
-  }), beforeWalls);
+    const beforeSegments = window.__card._geometryHistory._undo.at(-1)?.before?.wall_segments || [];
+    const afterSegments = window.__card._serverCfg.spaces[0].wall_segments || [];
+    const beforeById = new Map(beforeSegments.map((segment) => [segment.id, segment]));
+    return beforeSegments.length === afterSegments.length
+      && afterSegments.every((segment) => beforeById.get(segment.id)?.cm === segment.cm);
+  }), true);
+
+  const migratedBefore = await page.evaluate(() => {
+    const command = window.__card._geometryHistory._undo.at(-1);
+    const state = command?.before;
+    return JSON.stringify({
+      rooms: state?.rooms || [], openings: state?.openings || [],
+      walls: state?.walls || [], open_spans: state?.open_spans || [],
+    });
+  });
+  check('resize_pointer.first_edit_materializes_identity', await page.evaluate(() => {
+    const space = window.__card._serverCfg.spaces[0];
+    return window.__card._serverCfg.model_version === 8
+      && space.rooms.every((room) => room.wall_ids?.length === room.poly.length)
+      && space.wall_segments?.length > 0;
+  }), true);
 
   await page.keyboard.press('Control+z');
   await settle();
@@ -166,7 +184,7 @@ if (target) {
     history: window.__card._geometryHistory.size,
     canRedo: window.__card._geometryHistory.canRedo,
   })), { history: 0, canRedo: true });
-  check('resize_pointer.undo_byte_exact', await persistedGeometry(), before);
+  check('resize_pointer.undo_byte_exact', await persistedGeometry(), migratedBefore);
   await page.waitForTimeout(650);
   check('resize_pointer.undo_one_atomic_write', await page.evaluate(() =>
     window.__resizeWrites.length), writesBefore + 2);

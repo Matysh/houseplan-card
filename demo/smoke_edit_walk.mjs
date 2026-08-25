@@ -37,6 +37,7 @@ execFileSync(process.execPath, [resolve(root, 'scripts/fix-test-build.mjs')], {
   cwd: root, stdio: 'inherit',
 });
 const { optimizePlans } = await import('../test-build/plan-optimizer.js');
+const { WallSegmentModelError } = await import('../test-build/wall-segment-model.js');
 const {
   checkHiddenObstacles, checkMixedRoleRecords, checkWallKeys, checkReferences,
   checkPhysicalGeometry, latticeProfile, readModel,
@@ -112,6 +113,7 @@ const inspect = (config, layout = {}) => {
     ],
     noise: lattice.noise,
     offGrid: lattice.offGrid,
+    offGridUnique: lattice.offGridUnique,
   };
 };
 
@@ -262,18 +264,24 @@ for (const plan of PLANS) {
         action = `удаление комнаты ${roomId} с сохранением стен`;
       } else {
         const before = await currentConfig();
-        const result = optimizePlans(before, {}, {}, {});
-        await install(result.config);
-        action = `оптимизация (изменений: ${result.report.total})`;
+        try {
+          const result = optimizePlans(before, {}, {}, {});
+          await install(result.config);
+          action = `оптимизация (изменений: ${result.report.total})`;
+        } catch (error) {
+          if (!(error instanceof WallSegmentModelError)) throw error;
+          action = `оптимизация безопасно заблокирована (${error.reason})`;
+        }
       }
       trace.push(action);
       config = await currentConfig();
       const state = inspect(config);
       const found = [...state.violations];
-      if (state.offGrid > baseline.offGrid) {
+      if (state.offGridUnique > baseline.offGridUnique) {
         found.push({
           kind: 'off_lattice_coordinate', owner: 'config',
-          reference: `вне сетки ${baseline.offGrid} → ${state.offGrid}`
+          reference: `уникальных значений вне сетки ${baseline.offGridUnique} → ${state.offGridUnique}`
+            + ` (координат ${baseline.offGrid} → ${state.offGrid})`
             + ` (подшаговый шум ${baseline.noise} → ${state.noise})`,
           detail: 'жест записал координату мимо решётки',
         });

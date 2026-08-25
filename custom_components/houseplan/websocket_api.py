@@ -1260,7 +1260,9 @@ def _missing_internal_attachments(
 @websocket_api.websocket_command(
     {
         vol.Required("type"): "houseplan/config/set",
-        vol.Required("config"): CONFIG_SCHEMA,
+        # Semantic stale-client detection needs the stored v8 document and
+        # therefore runs inside the write lock before CONFIG_SCHEMA.
+        vol.Required("config"): dict,
         vol.Optional("expected_rev"): int,
     }
 )
@@ -1311,6 +1313,9 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
         # write so an unrelated edit can still round-trip a legacy broken ref.
         try:
             validate_wall_model_transition(msg["config"], data.get("config"))
+            validated_config = CONFIG_SCHEMA(msg["config"])
+            msg["config"].clear()
+            msg["config"].update(validated_config)
             validate_marker_controls(msg["config"], data.get("config"))
             validate_marker_light_entities(msg["config"], data.get("config"))
             validate_marker_value_badges(msg["config"], data.get("config"))
@@ -1321,6 +1326,9 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             PartitionOpeningJambMarginError, WallModelClientOutdatedError,
         ) as err:
             connection.send_error(msg["id"], err.code, str(err))
+            return
+        except vol.Invalid as err:
+            connection.send_error(msg["id"], "invalid_format", str(err))
             return
         # An internal plan url must name a file that exists. The card can pick a
         # plan and then delete it from the same dialog, and two clients can do
@@ -1579,7 +1587,7 @@ async def ws_space_delete(hass: HomeAssistant, connection, msg: dict[str, Any]) 
 @websocket_api.websocket_command(
     {
         vol.Required("type"): "houseplan/plan/optimize",
-        vol.Required("config"): CONFIG_SCHEMA,
+        vol.Required("config"): dict,
         vol.Required("layout"): LAYOUT_SCHEMA,
         vol.Required("expected_config_rev"): int,
         vol.Required("expected_layout_rev"): int,
@@ -1625,6 +1633,9 @@ async def ws_plan_optimize(hass: HomeAssistant, connection, msg: dict[str, Any])
         # as config/set; otherwise a crafted client can persist a new cycle.
         try:
             validate_wall_model_transition(msg["config"], config_data.get("config"))
+            validated_config = CONFIG_SCHEMA(msg["config"])
+            msg["config"].clear()
+            msg["config"].update(validated_config)
             validate_marker_controls(msg["config"], config_data.get("config"))
             validate_marker_light_entities(msg["config"], config_data.get("config"))
             validate_marker_value_badges(msg["config"], config_data.get("config"))
@@ -1638,6 +1649,9 @@ async def ws_plan_optimize(hass: HomeAssistant, connection, msg: dict[str, Any])
             PartitionOpeningJambMarginError, WallModelClientOutdatedError,
         ) as err:
             connection.send_error(msg["id"], err.code, str(err))
+            return
+        except vol.Invalid as err:
+            connection.send_error(msg["id"], "invalid_format", str(err))
             return
 
         missing = await hass.async_add_executor_job(

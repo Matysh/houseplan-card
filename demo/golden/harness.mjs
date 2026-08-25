@@ -1178,6 +1178,15 @@ export async function prepareGoldenScenario(page, scenario) {
     if (scenario.dialog === 'optimize-orphan-references') {
       card._openAlignDialog();
       await card.updateComplete;
+      // This golden owns orphan-reference copy/layout only. The shared visual
+      // fixture is intentionally v7, but wall-model migration has its own
+      // semantic browser assertions; suppress that independent report row so
+      // adding a model version does not invalidate this unrelated baseline.
+      if (card._alignDialog?.report) {
+        card._alignDialog.report.wallSegmentsMigrated = 0;
+        card.requestUpdate();
+        await card.updateComplete;
+      }
       const dialog = card.renderRoot.querySelector('hp-dialog');
       const report = card._alignDialog?.report;
       const body = dialog?.querySelector('.body');

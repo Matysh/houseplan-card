@@ -435,8 +435,8 @@ export const MUTANTS = [
       replace: '    const candidateValid = !!preview;',
     }, {
       file: 'src/houseplan-card.ts',
-      find: '      safe = this._checkSpacePhysicalGeometry(this._serverCfg, before.spaceId).ok;',
-      replace: '      safe = true;',
+      find: '    if (!legacySafe) {',
+      replace: '    if (false && !legacySafe) {',
     }],
   },
   {
@@ -446,8 +446,39 @@ export const MUTANTS = [
       + 'the strict outbound barrier remains authoritative after the local restore (#293)',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: "          && check?.reason === 'wall-degraded-extra');",
-      replace: '          && false);',
+      find: '    const physicalChanged = spacePhysicalGeometryFingerprint(before)\n'
+        + '      !== spacePhysicalGeometryFingerprint(state);\n'
+        + '    if (physicalChanged) {\n'
+        + '      let safe = false;\n'
+        + '      try {\n'
+        + '        const check = restoredCandidate\n'
+        + '          ? this._checkSpacePhysicalGeometry(restoredCandidate, state.spaceId)\n'
+        + '          : null;\n'
+        + "        safe = !!check?.ok || !!(allowHistoryBoundaryRepair\n"
+        + "          && check?.reason === 'wall-degraded-extra');\n"
+        + '      } catch { safe = false; }\n'
+        + '      if (!safe) {',
+      replace: '    const physicalChanged = spacePhysicalGeometryFingerprint(before)\n'
+        + '      !== spacePhysicalGeometryFingerprint(state);\n'
+        + '    if (physicalChanged) {\n'
+        + '      let safe = false;\n'
+        + '      try {\n'
+        + '        const check = restoredCandidate\n'
+        + '          ? this._checkSpacePhysicalGeometry(restoredCandidate, state.spaceId)\n'
+        + '          : null;\n'
+        + '        safe = !!check?.ok;\n'
+        + '      } catch { safe = false; }\n'
+        + '      if (!safe) {',
+    }, {
+      file: 'src/houseplan-card.ts',
+      find: "        // A history snapshot can predate the write-time wall degradation that\n"
+        + "        // canonicalized its command. Restore that one repairable baseline so\n"
+        + "        // Undo remains byte-exact immediately; _writeConfig still degrades and\n"
+        + "        // strictly validates the outbound candidate before it can leave the\n"
+        + "        // card. Every other preflight failure stays fail-closed.\n"
+        + "        safe = !!check?.ok || !!(allowHistoryBoundaryRepair\n"
+        + "          && check?.reason === 'wall-degraded-extra');",
+      replace: "        safe = !!check?.ok;",
     }],
   },
   {
@@ -2911,7 +2942,7 @@ export const MUTANTS = [
     }],
   },
   {
-    id: 'wall-identity-structural-barrier-bypassed',
+    id: 'wall-identity-editor-commit-barrier-bypassed',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="structural transaction crosses" '
       + 'test/wall-segment-model.test.mjs',
@@ -2919,8 +2950,34 @@ export const MUTANTS = [
       + 'stable ids can detach thickness and opening hosts during any later editor operation (#282)',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: '      this._serverCfg = commitWallSegmentModel(liveCandidate).config;',
-      replace: '      this._serverCfg = liveCandidate;',
+      find: '      } else committedCandidate = commitWallSegmentModel(liveCandidate).config;',
+      replace: '      } else committedCandidate = liveCandidate;',
+    }],
+  },
+  {
+    id: 'wall-identity-history-restore-barrier-bypassed',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="structural transaction crosses" '
+      + 'test/wall-segment-model.test.mjs',
+    because: 'Undo and Redo are a separate structural writer family; restoring a snapshot '
+      + 'without rebuilding v8 references can persist stale room and opening identities (#282)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '      committedCandidate = commitWallSegmentModel(restoredCandidate).config;',
+      replace: '      committedCandidate = restoredCandidate;',
+    }],
+  },
+  {
+    id: 'wall-identity-optimize-barrier-bypassed',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="structural transaction crosses" '
+      + 'test/wall-segment-model.test.mjs',
+    because: 'Optimize repairs geometry outside the interactive editor; omitting its identity '
+      + 'barrier would leave the authoritative catalogue behind the repaired projections (#282)',
+    patches: [{
+      file: 'src/plan-optimizer.ts',
+      find: '    wallSegmentsMigrated = commitWallSegmentModelInPlace(config).migratedSegments;',
+      replace: '    wallSegmentsMigrated = 0;',
     }],
   },
 ];

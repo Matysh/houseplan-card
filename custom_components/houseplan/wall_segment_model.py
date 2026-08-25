@@ -164,7 +164,21 @@ def deterministic_wall_segment_id(
     return f"wall-{encoded[:20]}"
 
 
-def _atomize(space: dict[str, Any]) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+def _translated_segment_delta(
+    a: list[float], b: list[float], previous: dict[str, Any],
+) -> tuple[float, float] | None:
+    def matches(pa: list[float], pb: list[float]) -> tuple[float, float] | None:
+        dx, dy = a[0] - pa[0], a[1] - pa[1]
+        if abs((b[0] - pb[0]) - dx) <= EPS and abs((b[1] - pb[1]) - dy) <= EPS:
+            return dx, dy
+        return None
+
+    return matches(previous["a"], previous["b"]) or matches(previous["b"], previous["a"])
+
+
+def _atomize(
+    space: dict[str, Any], old: dict[str, dict[str, Any]],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     rooms = space.get("rooms") or []
     room_polys = {str(room.get("id", "")): _room_poly(room) for room in rooms}
     global_breaks: list[list[float]] = []
@@ -216,13 +230,29 @@ def _atomize(space: dict[str, Any]) -> tuple[list[dict[str, Any]], list[dict[str
 
         old_ids = raw_room.get("wall_ids") if isinstance(raw_room.get("wall_ids"), list) else []
         indexed_lineage = len(old_ids) == len(original)
+        rigid_delta: tuple[float, float] | None = None
+        rigid_indexed_lineage = indexed_lineage
+        if rigid_indexed_lineage:
+            for index, a in enumerate(original):
+                previous = old.get(old_ids[index])
+                delta = _translated_segment_delta(
+                    a, original[(index + 1) % len(original)], previous,
+                ) if previous else None
+                if delta is None or (rigid_delta is not None and (
+                    abs(delta[0] - rigid_delta[0]) > EPS
+                    or abs(delta[1] - rigid_delta[1]) > EPS
+                )):
+                    rigid_indexed_lineage = False
+                    break
+                rigid_delta = delta
         wall_keys: list[str] = []
         for index, a in enumerate(poly):
             b = poly[(index + 1) % len(poly)]
             key = _span_key(a, b)
             atom = atoms_by_key.setdefault(key, {
                 "key": key, "a": _canonical_span(a, b)[0], "b": _canonical_span(a, b)[1],
-                "owners": set(), "preferred": set(), "preferred_carriers": {},
+                "owners": set(), "preferred": set(), "positional": set(),
+                "preferred_carriers": {},
                 "parent_keys": set(),
             })
             atom["owners"].add(room_id)
@@ -231,7 +261,13 @@ def _atomize(space: dict[str, Any]) -> tuple[list[dict[str, Any]], list[dict[str
             parent_index = parents[index]
             atom["parent_keys"].add(_wall_key(original[parent_index], original[(parent_index + 1) % len(original)]))
             if indexed_lineage and isinstance(old_ids[parent_index], str) and old_ids[parent_index]:
-                atom["preferred"].add(old_ids[parent_index])
+                previous = old.get(old_ids[parent_index])
+                if rigid_indexed_lineage or previous is None or _collinear_overlap(
+                    a, b, previous["a"], previous["b"]
+                ) > EPS:
+                    atom["preferred"].add(old_ids[parent_index])
+                else:
+                    atom["positional"].add(old_ids[parent_index])
                 atom["preferred_carriers"][old_ids[parent_index]] = {
                     "a": list(original[parent_index]),
                     "b": list(original[(parent_index + 1) % len(original)]),
@@ -329,6 +365,10 @@ def _assign_lineage(
         ))
         if overlaps:
             proposals[atom["key"]] = overlaps[0]
+        elif len(atom["positional"]) == 1:
+            positional = old.get(next(iter(atom["positional"])))
+            if positional:
+                proposals[atom["key"]] = positional
 
     by_id: dict[str, list[dict[str, Any]]] = {}
     for atom in atoms:
@@ -434,7 +474,7 @@ def _migrate_space(space: dict[str, Any], initial_migration: bool) -> int:
         if not segment_id or segment_id in old:
             raise WallSegmentMigrationError("duplicate-id", segment_id)
         old[segment_id] = segment
-    atoms, rooms = _atomize(space)
+    atoms, rooms = _atomize(space, old)
     _assign_lineage(space, atoms, old, initial_migration)
     segments = []
     for atom in atoms:

@@ -116,6 +116,26 @@ def test_post_v8_new_atoms_are_random_and_promoted_draft_id_survives() -> None:
     )
 
 
+def test_promoted_divider_outweighs_stale_room_edge_ordinal() -> None:
+    base, _ = commit_wall_segment_model(_config({
+        "id": "floor", "rooms": [_room("parent")],
+    }))
+    old_ids = base["spaces"][0]["rooms"][0]["wall_ids"]
+    base["spaces"][0]["rooms"] = [{
+        "id": "parent", "name": "parent",
+        "poly": [[0, 0], [0.5, 0], [0.5, 1], [0, 1]],
+        "wall_ids": old_ids,
+    }, {
+        "id": "child", "name": "child",
+        "poly": [[0.5, 0], [1, 0], [1, 1], [0.5, 1]],
+        "wall_ids": ["", "", "", "draft-divider"],
+    }]
+    result, _ = commit_wall_segment_model(base)
+    parent, child = result["spaces"][0]["rooms"]
+    assert parent["wall_ids"][1] == "draft-divider"
+    assert child["wall_ids"][3] == "draft-divider"
+
+
 def test_initial_id_collision_uses_documented_suffix() -> None:
     base_id = deterministic_wall_segment_id("floor", [0, 0], [1, 0], ["room"])
     migrated, _ = commit_wall_segment_model(_config({
@@ -166,3 +186,19 @@ def test_stale_client_round_trip_is_hydrated_but_structural_change_is_rejected()
         {"model_version": 8, "spaces": [], "markers": [], "settings": {}},
         {"model_version": 8, "spaces": [], "markers": [], "settings": {}},
     )
+
+
+def test_stale_client_echoing_v8_catalog_gets_the_named_error() -> None:
+    previous, _ = commit_wall_segment_model(_config({
+        "id": "floor", "rooms": [_room("room")],
+    }))
+    stale = copy.deepcopy(previous)
+    stale["spaces"][0]["rooms"][0]["poly"][0][0] = 0.25
+    # A real stale card echoes unknown v8 fields unchanged rather than
+    # explicitly downgrading model_version.
+    with pytest.raises(WallModelClientOutdatedError, match="unchanged wall catalogue"):
+        validate_wall_model_transition(stale, previous)
+
+    non_structural = copy.deepcopy(previous)
+    non_structural["settings"]["language"] = "ru"
+    validate_wall_model_transition(non_structural, previous)

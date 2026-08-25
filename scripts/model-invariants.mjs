@@ -519,6 +519,7 @@ const pointOf = (value) => (Array.isArray(value) && isFiniteNumber(value[0])
  */
 export function latticeProfile({ config, layout = {} } = {}) {
   const buckets = { exact: 0, noise: 0, offGrid: 0 };
+  const offGridValues = new Set();
   const byKind = new Map();
   let worstNoise = null;
   let total = 0;
@@ -526,6 +527,7 @@ export function latticeProfile({ config, layout = {} } = {}) {
     for (const [axis, value] of [['x', point[0]], ['y', point[1]]]) {
       const deviation = latticeDeviation(value);
       const bucket = deviation === 0 ? 'exact' : deviation < NOISE_STEPS ? 'noise' : 'offGrid';
+      if (bucket === 'offGrid') offGridValues.add(Number(value).toFixed(12));
       total++;
       buckets[bucket]++;
       const seen = byKind.get(kind) || { exact: 0, noise: 0, offGrid: 0 };
@@ -539,6 +541,7 @@ export function latticeProfile({ config, layout = {} } = {}) {
   return {
     total,
     ...buckets,
+    offGridUnique: offGridValues.size,
     noiseSteps: NOISE_STEPS,
     worstNoise,
     byKind: Object.fromEntries([...byKind].map(([kind, counts]) => [kind, counts])),

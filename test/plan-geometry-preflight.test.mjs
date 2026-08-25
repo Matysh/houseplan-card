@@ -83,6 +83,10 @@ test('production preparation resolves ordinary and hosted openings once for maso
     openings: [
       { id: 'ordinary', type: 'door', x: 0.3, y: 0.1, angle: 0, length: 0.08 },
       {
+        id: 'wall-hosted', type: 'window', x: 0.5, y: 0.1, angle: 0, length: 0.08,
+        host: { kind: 'wall', id: 'wall-segment', t: 0.5 },
+      },
+      {
         id: 'hosted', type: 'passage', x: 0, y: 0, angle: 0, length: 0.08,
         host: { kind: 'partition', id: 'partition', t: 0.7 },
       },
@@ -95,9 +99,9 @@ test('production preparation resolves ordinary and hosted openings once for maso
   const model = spaceModels(base([raw]))[0];
   const input = prepareSpacePhysicalGeometryInputs(raw, model);
 
-  assert.deepEqual(input.openings.map((opening) => opening.id), ['ordinary', 'hosted']);
+  assert.deepEqual(input.openings.map((opening) => opening.id), ['ordinary', 'wall-hosted', 'hosted']);
   assert.equal(input.partitionCuts.length, 1);
-  assert.equal(input.roomOpenings.length, 2, 'coincident hosted wall cuts room masonry too');
+  assert.equal(input.roomOpenings.length, 3, 'wall hosts remain room cuts; coincident partition hosts cut masonry too');
   assert.ok(input.physicalBodies.length >= 2, 'partition and its opening jamb bodies are retained');
   assert.equal(input.wallKeyPitch, GRID_STEP_N);
   assert.equal(input.cellCm, 5);
