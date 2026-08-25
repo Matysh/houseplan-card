@@ -451,7 +451,7 @@ Index/remap линейны по числу owners + refs; нет полного 
 | AC7 | Frontend Optimize unit: first pass, Save/reload, zero-op second pass + regression #248 |
 | AC8 | Targeted backend/frontend suites #50/#244/#248/#252/#258/#262; permissions/revision/tamper/recovery cases |
 | AC9 | Synthetic maximum-size backend test, owner/TTL/limit security tests и code review отсутствия O(n²) lookup |
-| AC10 | `check-i18n`, `check-docs`, RU/EN guide/changelog diff, targeted browser smoke и reviewed canonical golden import preview |
+| AC10 | `npm test` (включая `test/i18n.test.mjs`), `check-docs`, RU/EN guide/changelog diff, targeted browser smoke и reviewed canonical golden import preview |
 
 ## 16. План реализации
 
