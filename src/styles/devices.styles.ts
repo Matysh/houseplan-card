@@ -324,6 +324,17 @@ export const devicesStyles = css`
       --device-face-fg: #252525;
       --device-shell-stroke-ratio: .025;
     }
+    /* Interaction wins ordinary state colours. Alarm keeps priority through
+       the more-specific rule below. Unavailable has no visual hover. */
+    :host([data-pointer-hover]) .dev:not(.unavail):hover {
+      --device-face-bg: #0C82F0;
+      --device-face-fg: light-dark(#fff, #252525);
+      --device-shell-stroke: var(--device-shell-base-stroke);
+    }
+    :host([data-pointer-hover]) .dev.theme-light:not(.unavail):hover { --device-face-fg: #fff; }
+    :host([data-pointer-hover]) .dev.theme-dark:not(.unavail):hover { --device-face-fg: #252525; }
+    :host([data-pointer-hover]) .dev:hover,
+    .dev:focus-visible { z-index: 5; }
     .dev.unavail {
       opacity: 0.35;
       --device-face-bg: #B5BAC1;
@@ -390,6 +401,14 @@ export const devicesStyles = css`
     }
     .dev:not(.on):not(.open):not(.alarm):not(.lock-locked):not(.lock-unlocked):not(.unavail):focus-visible {
       --device-face-fg: #0C82F0;
+    }
+    /* Alert stays above focus, selection, hover and ordinary semantic paint. */
+    .dev.alarm,
+    :host([data-pointer-hover]) .dev.alarm:hover,
+    .dev.alarm:focus-visible {
+      --device-face-bg: #F0410C;
+      --device-face-fg: light-dark(#fff, #252525);
+      --device-shell-stroke: #F0410C;
     }
     .dev.theme-light.alarm { --device-face-fg: #fff; }
     .dev.theme-dark.alarm {

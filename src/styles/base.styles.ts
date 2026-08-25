@@ -61,14 +61,8 @@ export const baseStyles = css`
     @keyframes fixedfloor-spin {
       to { transform: rotate(360deg); }
     }
-    :host([data-pointer-hover]) .tab:hover {
-      color: var(--hp-txt);
-    }
     .spacer {
       flex: 1;
-    }
-    :host([data-pointer-hover]) .btn:hover {
-      border-color: var(--hp-accent);
     }
     .bootveil {
       position: absolute;
@@ -102,30 +96,6 @@ export const baseStyles = css`
         animation: none;
         opacity: 0.7;
       }
-      .recoveryoverlay {
-        transition: none;
-      }
-      .stage.hpsettle {
-        transition: none;
-      }
-    }
-    :host([data-pointer-hover]) .stage.mode-view .room.overlay:not(.styled):hover {
-      stroke: var(--hp-accent);
-      stroke-opacity: 1;
-    }
-    :host([data-pointer-hover]) .stage.mode-view .room.yard:not(.styled):hover {
-      stroke: var(--hp-accent);
-      stroke-opacity: 1;
-    }
-    /* The explicit late room-hover layer owns the wash and halo. Keeping CSS
-       filters off room paths prevents Chromium from recompositing the sibling
-       screen-blended Glow layer for one bright frame on every hover. */
-    :host([data-pointer-hover]) .stage.mode-view .room.styled:hover {
-      stroke: var(--hp-accent);
-      stroke-opacity: 1;
-    }
-    :host([data-pointer-hover]) .stage.markup g.opening:hover .op-outline {
-      opacity: 0.9;
     }
     @keyframes hp-pulse-short {
       0% { transform: scale(1); opacity: 0.55; }
@@ -157,22 +127,6 @@ export const baseStyles = css`
       0%   { transform: translateX(-4%); opacity: 0.72; }
       100% { transform: translateX(0);    opacity: 1; }
     }
-    :host([data-pointer-hover]) .rlgearbtn:hover { opacity: 1; filter: brightness(1.18); }
-    :host([data-pointer-hover]) .rlgear:hover { opacity: 1; }
-    :host([data-pointer-hover]) .stage.mode-view .rlgo:hover { opacity: 1; }
-    :host([data-pointer-hover]) .ctrlopt:hover {
-      background: var(--secondary-background-color, rgba(128,128,128,0.15));
-    }
-    :host([data-pointer-hover]) .stage.markup .roomlabel:hover .rlhandle { display: block; }
-    :host([data-pointer-hover]) .bdframe .bdhandle:hover + .bdknob {
-      fill: #fff;
-      stroke: var(--hp-accent);
-    }
-    :host([data-pointer-hover]) .dtframe .dthandle:hover + .dtknob {
-      fill: #fff;
-      stroke: var(--hp-accent);
-    }
-    :host([data-pointer-hover]) .modetab .closex:hover { opacity: 1; }
     @keyframes hp-sunfade-in {
       from { opacity: 0; }
       to { opacity: 1; }
@@ -180,37 +134,6 @@ export const baseStyles = css`
     @keyframes hp-sunfade-out {
       from { opacity: 1; }
       to { opacity: 0; }
-    }
-    /* Interaction wins ordinary state colours. Alarm keeps priority through
-       the more-specific rule below. Unavailable has no visual hover. */
-    :host([data-pointer-hover]) .dev:not(.unavail):hover {
-      --device-face-bg: #0C82F0;
-      --device-face-fg: light-dark(#fff, #252525);
-      --device-shell-stroke: var(--device-shell-base-stroke);
-    }
-    :host([data-pointer-hover]) .dev.theme-light:not(.unavail):hover { --device-face-fg: #fff; }
-    :host([data-pointer-hover]) .dev.theme-dark:not(.unavail):hover { --device-face-fg: #252525; }
-    :host([data-pointer-hover]) .dev:hover,
-    .dev:focus-visible { z-index: 5; }
-    /* Alert stays above focus, selection, hover and ordinary semantic paint. */
-    .dev.alarm,
-    :host([data-pointer-hover]) .dev.alarm:hover,
-    .dev.alarm:focus-visible {
-      --device-face-bg: #F0410C;
-      --device-face-fg: light-dark(#fff, #252525);
-      --device-shell-stroke: #F0410C;
-    }
-    :host([data-pointer-hover]) .tab:hover .tabedit {
-      opacity: 0.9;
-    }
-    :host([data-pointer-hover]) .rszhandle:hover + .rszicon .rszink { stroke-width: 3; }
-    :host([data-pointer-hover]) .rszhandle.disabled:hover + .rszicon .rszink { stroke-width: 2; }
-    :host([data-pointer-hover]) .furnitem:hover { background: rgba(127, 127, 127, 0.18); }
-    :host([data-pointer-hover]) .cand:hover {
-      background: rgba(127, 127, 127, 0.15);
-    }
-    :host([data-pointer-hover]) .pdftag .x:hover {
-      color: #ff7a5c;
     }
     .sr-only {
       position: absolute !important;
@@ -222,12 +145,6 @@ export const baseStyles = css`
       clip: rect(0, 0, 0, 0) !important;
       white-space: nowrap !important;
       border: 0 !important;
-    }
-    :host([data-pointer-hover]) .rrow .ract:hover { color: var(--hp-txt); }
-    :host([data-pointer-hover]) .rrow .ract.del:hover { color: #ff7a5c; }
-    :host([data-pointer-hover]) .aboutlink:hover { text-decoration: underline; }
-    :host([data-pointer-hover]) .menu .it:hover {
-      background: rgba(127, 127, 127, 0.15);
     }
     .toast {
       position: fixed;

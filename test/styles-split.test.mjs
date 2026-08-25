@@ -56,23 +56,20 @@ test('issue 266 surface files do not share a single selector', () => {
       }
     }
   }
-  // Spec §1.3.2: every allowed exception is named with its reason.
-  const allowed = [
-    // The `:host([data-pointer-hover]) .dev:hover, .dev:focus-visible` GROUP
-    // is cross-surface (host gate + device selector) and therefore lives in
-    // base per spec §1.1, while the plain `.dev:focus-visible` outline rule
-    // stays with its surface. Their source order (group first, outline
-    // second) is preserved by the [base, …, devices] assembly order — golden
-    // holds the cascade.
-    '.dev:focus-visible (base ∩ devices)',
-  ];
-  assert.deepEqual(clashes, allowed);
+  // Spec §1.3.2: the exception list is empty — a leading :host(...) gate is
+  // not ownership, so gated device groups live with their surface and no
+  // selector is shared between files.
+  assert.deepEqual(clashes, []);
 });
 
 test('issue 266 the media wrappers survived the move', () => {
   const all = FILES.map((name) => sourceOf(name)).join('\n');
   assert.equal((all.match(/@media \(forced-colors: active\)/g) || []).length, 2,
     'both forced-colors blocks must survive — golden never emulates them');
-  assert.equal((all.match(/@media \(prefers-reduced-motion: reduce\)/g) || []).length, 10,
-    'all ten reduced-motion blocks must survive — golden always shoots reduced');
+  // 10 source wrappers; two of them were MIXED-zone and are split into
+  // per-zone copies by the generator (cascade fix), hence 12 wrappers over
+  // the same 10 wrappers' worth of rules — the scope-keyed refactor diff
+  // proves no rule lost its wrapper.
+  assert.equal((all.match(/@media \(prefers-reduced-motion: reduce\)/g) || []).length, 12,
+    'reduced-motion wrappers must survive — golden always shoots reduced');
 });

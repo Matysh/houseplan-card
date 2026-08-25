@@ -31,6 +31,9 @@ export const chromeStyles = css`
       transition: 0.15s;
       font-family: inherit;
     }
+    :host([data-pointer-hover]) .tab:hover {
+      color: var(--hp-txt);
+    }
     .tab.active {
       background: var(--hp-accent);
       color: var(--text-primary-color, #fff);
@@ -166,6 +169,7 @@ export const chromeStyles = css`
       cursor: pointer;
       border-radius: var(--rad-s);
     }
+    :host([data-pointer-hover]) .modetab .closex:hover { opacity: 1; }
     .editbar .barclose {
       box-sizing: border-box;
       width: 40px;
@@ -217,6 +221,9 @@ export const chromeStyles = css`
       align-items: center;
       margin-left: var(--sp-3);
       opacity: 0.4;
+    }
+    :host([data-pointer-hover]) .tab:hover .tabedit {
+      opacity: 0.9;
     }
     .tab.tabadd {
       padding: var(--sp-3) var(--sp-4);
@@ -355,6 +362,9 @@ export const chromeStyles = css`
     .menu .it ha-icon {
       --mdc-icon-size: 16px;
       color: var(--hp-muted);
+    }
+    :host([data-pointer-hover]) .menu .it:hover {
+      background: rgba(127, 127, 127, 0.15);
     }
     .menu .it.all {
       color: var(--hp-accent);

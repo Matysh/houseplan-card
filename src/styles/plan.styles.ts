@@ -159,6 +159,11 @@ export const planStyles = css`
     .stage.hpsettle {
       transition: height 0.25s ease;
     }
+    @media (prefers-reduced-motion: reduce) {
+      .stage.hpsettle {
+        transition: none;
+      }
+    }
     .zoomctl {
       display: inline-flex;
       gap: var(--sp-1);
@@ -359,10 +364,18 @@ export const planStyles = css`
       stroke: transparent;
       stroke-width: calc(2px * var(--hp-cell-visual-scale, 1));
     }
+    :host([data-pointer-hover]) .stage.mode-view .room.overlay:not(.styled):hover {
+      stroke: var(--hp-accent);
+      stroke-opacity: 1;
+    }
     .room.yard {
       fill: rgba(75, 140, 90, 0.14);
       stroke: #4b8c5a;
       stroke-width: calc(2px * var(--hp-cell-visual-scale, 1));
+    }
+    :host([data-pointer-hover]) .stage.mode-view .room.yard:not(.styled):hover {
+      stroke: var(--hp-accent);
+      stroke-opacity: 1;
     }
     .room.styled {
       stroke: var(--room-stroke, transparent);
@@ -405,6 +418,13 @@ export const planStyles = css`
         transition: none;
       }
     }
+    /* The explicit late room-hover layer owns the wash and halo. Keeping CSS
+       filters off room paths prevents Chromium from recompositing the sibling
+       screen-blended Glow layer for one bright frame on every hover. */
+    :host([data-pointer-hover]) .stage.mode-view .room.styled:hover {
+      stroke: var(--hp-accent);
+      stroke-opacity: 1;
+    }
     /* doors, windows & gates */
     .op-leaf {
       transition: transform 0.6s ease;
@@ -421,6 +441,9 @@ export const planStyles = css`
       opacity: 0;
       transition: opacity 0.15s;
       pointer-events: none;
+    }
+    :host([data-pointer-hover]) .stage.markup g.opening:hover .op-outline {
+      opacity: 0.9;
     }
     /* openings are pure status graphics outside Plan mode: no cursor, no hover,
        no hit target — View must not interact with them at all */
@@ -532,6 +555,7 @@ export const planStyles = css`
       z-index: 2;
     }
     .rlgearbtn { transition: opacity 0.15s, filter 0.15s; }
+    :host([data-pointer-hover]) .rlgearbtn:hover { opacity: 1; filter: brightness(1.18); }
     .rlgearbtn ha-icon { --mdc-icon-size: calc(var(--gear-h) * 0.55); display: inline-flex; }
     .rlgear {
       --mdc-icon-size: 0.9em;
@@ -541,6 +565,7 @@ export const planStyles = css`
       cursor: pointer;
       pointer-events: auto;
     }
+    :host([data-pointer-hover]) .rlgear:hover { opacity: 1; }
     .rlgo {
       --mdc-icon-size: 0.85em;
       display: inline-flex;
@@ -550,6 +575,7 @@ export const planStyles = css`
       pointer-events: auto;
       cursor: pointer;
     }
+    :host([data-pointer-hover]) .stage.mode-view .rlgo:hover { opacity: 1; }
     .roomlabel .rlmetrics {
       position: absolute; /* below the name, outside the centring math */
       top: calc(100% + 0.15em);
@@ -588,6 +614,7 @@ export const planStyles = css`
     .rlhandle.br { right: -6px; bottom: -6px; cursor: nwse-resize; }
     .rlhandle.tr { right: -6px; top: -6px; cursor: nesw-resize; }
     .rlhandle.bl { left: -6px; bottom: -6px; cursor: nesw-resize; }
+    :host([data-pointer-hover]) .stage.markup .roomlabel:hover .rlhandle { display: block; }
     .stage.markup .roomlabel { pointer-events: auto; }
     .roomlabel:active { cursor: grabbing; }
     .measurelayer {
@@ -749,6 +776,10 @@ export const planStyles = css`
       vector-effect: non-scaling-stroke;
       pointer-events: none;
     }
+    :host([data-pointer-hover]) .bdframe .bdhandle:hover + .bdknob {
+      fill: #fff;
+      stroke: var(--hp-accent);
+    }
     .bdframe .bd-nwse { cursor: nwse-resize; }
     .bdframe .bd-nesw { cursor: nesw-resize; }
     /* the picture itself is the drag target for a move (grab, then grabbing) */
@@ -794,6 +825,10 @@ export const planStyles = css`
       stroke-width: 1;
       vector-effect: non-scaling-stroke;
       pointer-events: none;
+    }
+    :host([data-pointer-hover]) .dtframe .dthandle:hover + .dtknob {
+      fill: #fff;
+      stroke: var(--hp-accent);
     }
     .dtframe .dt-nwse { cursor: nwse-resize; }
     .dtframe .dt-nesw { cursor: nesw-resize; }
@@ -1311,7 +1346,9 @@ export const planStyles = css`
     }
     .rszhalo { stroke: var(--hp-bg); stroke-width: 6; }
     .rszink { stroke: var(--hp-accent); stroke-width: 2; }
+    :host([data-pointer-hover]) .rszhandle:hover + .rszicon .rszink { stroke-width: 3; }
     .rszicon.disabled { opacity: 0.38; }
+    :host([data-pointer-hover]) .rszhandle.disabled:hover + .rszicon .rszink { stroke-width: 2; }
     .rszmeasurelayer,
     .rszmeasurelayer * { pointer-events: none; }
     .rszmeasurehalo,

@@ -93,13 +93,20 @@ while (i < cssBody.length) {
 }
 
 const zoneOfSelector = (header) => {
-  const first = (sel) => {
-    const t = sel.trim().match(/^[.:#\[]?[\w-]+/);
+  // A leading :host(...) compound GATES a rule, it does not own it: the owner
+  // is the first meaningful token after the gate. Classifying such groups
+  // into base moved them AHEAD of their surface in the cascade and flipped
+  // equal-specificity winners (smoke_device_icon_design caught alert shells
+  // and dark-unavailable cores) — the owner surface keeps their position.
+  const owner = (sel) => {
+    let rest = sel.trim().replace(/^:host(\([^)]*\))?\s*/, '');
+    if (!rest) return ':host';
+    const t = rest.match(/^[.:#\[]?[\w-]+/);
     return t ? t[0] : null;
   };
   const zones = new Set();
   for (const sel of header.split(',')) {
-    const token = first(sel);
+    const token = owner(sel);
     if (!token) continue;
     const zone = T[token];
     if (!zone) throw new Error(`unclassified token «${token}» in «${header.slice(0, 80)}»`);
@@ -118,10 +125,54 @@ for (const block of blocks) {
     zone = /^(hp-dev|dev|pulse|vac)/.test(name) ? 'devices'
       : /^(hp-spin|spin|fade|toast)/.test(name) ? 'base' : 'base';
   } else if (/^@(media|supports)/.test(block.header)) {
-    // classify by the first inner selector
-    const inner = block.text.slice(block.text.indexOf('{') + 1);
-    const sel = inner.slice(0, inner.indexOf('{')).replace(/\/\*[\s\S]*?\*\//g, '').trim();
-    zone = zoneOfSelector(sel);
+    // Classify by ALL inner rules. A single-zone wrapper moves whole; a mixed
+    // one is split into consecutive per-zone copies of the wrapper so every
+    // rule stays with its owner surface without crossing zone order.
+    const openAt = block.text.indexOf('{');
+    const inner = block.text.slice(openAt + 1, block.text.lastIndexOf('}'));
+    const innerBlocks = [];
+    {
+      let k = 0, pend = '';
+      while (k < inner.length) {
+        const rest2 = inner.slice(k);
+        const cm2 = rest2.match(/^\s*\/\*[\s\S]*?\*\//);
+        if (cm2 && !rest2.slice(0, rest2.indexOf('/*')).includes('{')) {
+          pend += cm2[0]; k += cm2[0].length; continue;
+        }
+        const o2 = inner.indexOf('{', k);
+        if (o2 === -1) break;
+        const h2 = inner.slice(k, o2);
+        let d2 = 1, j2 = o2 + 1;
+        while (j2 < inner.length && d2 > 0) {
+          if (inner[j2] === '{') d2++;
+          else if (inner[j2] === '}') d2--;
+          j2++;
+        }
+        innerBlocks.push({ text: pend + h2 + inner.slice(o2, j2), header: h2.trim() });
+        pend = '';
+        k = j2;
+      }
+    }
+    const innerZones = innerBlocks.map((b) => zoneOfSelector(b.header));
+    const uniq = [...new Set(innerZones)];
+    if (uniq.length <= 1) {
+      zone = uniq[0] ?? 'base';
+    } else {
+      const wrapperHeader = block.text.slice(0, openAt).trimEnd();
+      let g = 0;
+      while (g < innerBlocks.length) {
+        const zg = innerZones[g];
+        let h = g;
+        while (h < innerBlocks.length && innerZones[h] === zg) h++;
+        const bodyPart = innerBlocks.slice(g, h).map((b) => b.text).join('');
+        const copy = `${wrapperHeader} {${bodyPart}\n    }`;
+        ZONES[zg].push(copy);
+        g = h;
+      }
+      // mark handled: skip the shared push below
+      block.zone = 'SPLIT';
+      continue;
+    }
   } else {
     zone = zoneOfSelector(block.header);
   }

@@ -48,6 +48,9 @@ export const dialogsStyles = css`
     .btn ha-icon {
       --mdc-icon-size: 17px;
     }
+    :host([data-pointer-hover]) .btn:hover {
+      border-color: var(--hp-accent);
+    }
     .btn.on {
       background: var(--hp-accent);
       color: var(--text-primary-color, #fff);
@@ -110,6 +113,11 @@ export const dialogsStyles = css`
     .recoveryoverlay ha-icon {
       --mdc-icon-size: 44px;
       color: var(--hp-accent);
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .recoveryoverlay {
+        transition: none;
+      }
     }
     .oplock {
       --oplock-size: calc(var(--icon-size, 2.5cqw) * 0.62);
@@ -238,6 +246,9 @@ export const dialogsStyles = css`
       display: flex; align-items: center; gap: var(--sp-4); text-align: left;
       border: 0; background: transparent; color: var(--hp-txt);
       padding: var(--sp-3) var(--sp-4); border-radius: var(--rad-s); cursor: pointer; font-family: inherit; font-size: var(--fs-m);
+    }
+    :host([data-pointer-hover]) .ctrlopt:hover {
+      background: var(--secondary-background-color, rgba(128,128,128,0.15));
     }
     .ctrlopt .sub { color: var(--hp-muted); font-size: var(--fs-s); margin-left: auto; }
     .ctrlopt ha-icon { --mdc-icon-size: 16px; }
@@ -669,6 +680,7 @@ export const dialogsStyles = css`
       text-align: center;
       cursor: pointer;
     }
+    :host([data-pointer-hover]) .furnitem:hover { background: rgba(127, 127, 127, 0.18); }
     .furnitem.on {
       border-color: var(--hp-accent);
       background: rgba(38, 166, 154, 0.18);
@@ -749,6 +761,9 @@ export const dialogsStyles = css`
       border-radius: var(--rad-s);
       font-size: var(--fs-m);
     }
+    :host([data-pointer-hover]) .cand:hover {
+      background: rgba(127, 127, 127, 0.15);
+    }
     .cand.sel {
       background: var(--hp-accent);
       color: var(--text-primary-color, #fff);
@@ -806,6 +821,9 @@ export const dialogsStyles = css`
       --mdc-icon-size: 15px;
       cursor: pointer;
       color: var(--hp-muted);
+    }
+    :host([data-pointer-hover]) .pdftag .x:hover {
+      color: #ff7a5c;
     }
     .entlist {
       display: flex;
@@ -919,6 +937,8 @@ export const dialogsStyles = css`
       color: var(--hp-muted);
       cursor: pointer;
     }
+    :host([data-pointer-hover]) .rrow .ract:hover { color: var(--hp-txt); }
+    :host([data-pointer-hover]) .rrow .ract.del:hover { color: #ff7a5c; }
     .gsrow .gsl {
       min-width: 150px;
       font-size: var(--fs-m);
@@ -1037,6 +1057,7 @@ export const dialogsStyles = css`
       font-size: var(--fs-m);
       padding: var(--sp-1) 0;
     }
+    :host([data-pointer-hover]) .aboutlink:hover { text-decoration: underline; }
     .aboutlink ha-icon { --mdc-icon-size: 18px; line-height: 1; }
     hp-dialog .body {
       padding: var(--sp-5) var(--sp-6);

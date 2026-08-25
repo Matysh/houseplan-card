@@ -1999,7 +1999,7 @@ export const MUTANTS = [
     because: 'unavailable keeps click/keyboard access but must never regain the blue visual hover '
       + 'which makes an offline device look live',
     patches: [{
-      file: 'src/styles/base.styles.ts',
+      file: 'src/styles/devices.styles.ts',
       find: '.dev:not(.unavail):hover {',
       replace: '.dev.unavail:hover {',
     }],
@@ -2165,7 +2165,7 @@ export const MUTANTS = [
     because: 'touch must not leave a browser-matched device hover painted after the JS tooltip '
       + 'has already been cleared',
     patches: [{
-      file: 'src/styles/base.styles.ts',
+      file: 'src/styles/devices.styles.ts',
       find: '    :host([data-pointer-hover]) .dev:not(.unavail):hover {',
       replace: '    .dev:not(.unavail):hover {',
     }],
