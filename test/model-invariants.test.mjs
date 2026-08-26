@@ -688,3 +688,30 @@ test('реальный план: перегородка поверх наруж�
     assert.equal(checkHiddenObstacles(config).length, expected, file);
   }
 });
+
+test('#316: непривязанный контурный проём — валидное состояние v9, но не v8', () => {
+  const base = () => ({
+    config: {
+      model_version: 9,
+      spaces: [{
+        id: 'sp316', title: 'S', view_box: [0, 0, 1, 1],
+        rooms: [], openings: [{
+          id: 'orphan', type: 'door', x: 0.9, y: 0.65, angle: 90, length: 0.05,
+        }],
+      }],
+      markers: [], settings: {},
+    },
+    layout: {},
+  });
+  const v9 = base();
+  assert.deepEqual(
+    checkReferences(v9).filter((item) => item.kind === 'opening_host'), [],
+    'model v9 keeps the unhosted degraded state of #316 §3.3 without a violation',
+  );
+  const v8 = base();
+  v8.config.model_version = 8;
+  assert.equal(
+    checkReferences(v8).filter((item) => item.kind === 'opening_host').length, 1,
+    'model v8 still requires an explicit host on every opening',
+  );
+});

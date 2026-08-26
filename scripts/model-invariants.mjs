@@ -225,7 +225,7 @@ export function checkReferences({ config, layout = {} } = {}, { notes = [] } = {
             'комнаты назначения не существует в том же пространстве');
         }
       }
-      if (Number(config?.model_version || 0) >= 8) {
+      if (Number(config?.model_version || 0) === 8) {
         const wallIds = Array.isArray(room?.wall_ids) ? room.wall_ids : [];
         const poly = roomPolygon(room) || [];
         if (wallIds.length !== poly.length) {
@@ -246,7 +246,11 @@ export function checkReferences({ config, layout = {} } = {}, { notes = [] } = {
     for (const opening of space?.openings || []) {
       const host = opening?.host;
       if (!host) {
-        if (Number(config?.model_version || 0) >= 8) {
+        // #316 §3.3: since model v9 an unhosted contour opening is a valid
+        // degraded state (the migration keeps an opening with no in-place
+        // carrier as data, inert until re-placed). Only model v8 documents
+        // still require an explicit host on every opening.
+        if (Number(config?.model_version || 0) === 8) {
           add('opening_host', `${spaceId}:${opening?.id ?? '?'}`, '?',
             'в model v8 у проёма нет явной стены-хоста');
         }
