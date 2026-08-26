@@ -1,8 +1,10 @@
 # Issue #314 — атомарная запись v8 drafts и независимой геометрии
 
-Статус документа: согласовано, реализация начата.
-Issue: [#314](https://github.com/Matysh/houseplan-card/issues/314)  
-Предшественник: [#282](https://github.com/Matysh/houseplan-card/issues/282)  
+Статус документа: согласовано, реализация завершена и передана в code review.
+Issue: [#314](https://github.com/Matysh/houseplan-card/issues/314)
+
+Предшественник: [#282](https://github.com/Matysh/houseplan-card/issues/282)
+
 Целевая ветка: `issue/314-v8-draft-write-regression`
 
 ## 1. Сценарий и пользовательский результат
@@ -211,13 +213,15 @@ physical writes:
 Model-v8 draft с минимум тремя segments после outbound sanitation сохраняет все
 ID и соответствующие `cm`. Fixture с повторной соседней точкой удаляет только
 нулевое ребро и не сдвигает ID следующих рёбер. Кандидат проходит backend v8
-schema.  
+schema.
+
 **Доказательство:** frontend unit + backend schema fixture.
 
 ### AC2. Undo сохраняет lineage
 
 После Undo последней точки draft содержит первые `N-1` segments с теми же ID и
-толщиной; Redo/новый клик создаёт identity только для нового ребра.  
+толщиной; Redo/новый клик создаёт identity только для нового ребра.
+
 **Доказательство:** frontend unit либо DOM smoke с проверкой полного payload.
 
 ### AC3. Валидные independent writes не считаются stale
@@ -229,14 +233,16 @@ schema.
 3. add/move/type change opening с согласованным v8 host;
 4. add/move/resize column.
 
-Каждый кандидат затем проходит `CONFIG_SCHEMA`.  
+Каждый кандидат затем проходит `CONFIG_SCHEMA`.
+
 **Доказательство:** parametrized backend tests.
 
 ### AC4. Настоящий stale contour writer остаётся закрыт
 
 Current-v8 и downgraded writer, меняющие room/compatibility contour без
 согласованного `wall_segments`, получают `wall_model_client_outdated`.
-Невалидные draft IDs и opening hosts отклоняются schema.  
+Невалидные draft IDs и opening hosts отклоняются schema.
+
 **Доказательство:** backend negative tests, включая сохранение существующих
 проверок #282.
 
@@ -246,7 +252,8 @@ Browser smoke на model v8 рисует не менее трёх рёбер. П
 ребра fake WS пропускает полный payload через эквивалент backend-v8 validation;
 после замыкания комната присутствует в принятой конфигурации и после simulated
 reload. Не создаются лишние `partitions` и orphan `room_drafts`, нет обоих toast
-из отчёта. Тест обязан падать на `dev` до исправления.  
+из отчёта. Тест обязан падать на `dev` до исправления.
+
 **Доказательство:** browser/fake-WS smoke.
 
 ### AC6. Rejected write не оставляет transient geometry
@@ -254,28 +261,32 @@ reload. Не создаются лишние `partitions` и orphan `room_drafts
 Fake WS отклоняет промежуточный draft write. До следующего пользовательского
 действия локальный space возвращён к earliest snapshot, pending map и geometry
 history очищены. Смена инструмента не создаёт partition; failed authoritative
-reload не возвращает отвергнутый draft.  
+reload не возвращает отвергнутый draft.
+
 **Доказательство:** browser smoke + unit сериализованной очереди/rollback.
 
 ### AC7. Успешная очередь не теряет более новую команду
 
 При F1 in-flight и новой локальной F2 успешный ответ F1 очищает только F1;
 F2 остаётся pending и следующим write сохраняется. При отказе F1 обе команды
-откатываются до общей earliest server-accepted базы.  
+откатываются до общей earliest server-accepted базы.
+
 **Доказательство:** deterministic writer-queue unit/smoke.
 
 ### AC8. Данные владельца не чистятся молча
 
 Минимизированная синтетическая fixture с intentional partitions и unusable draft
 после обычного чтения/записи не теряет существующие объекты автоматически. Новая
-комната не создаёт дополнительных hidden obstacles.  
+комната не создаёт дополнительных hidden obstacles.
+
 **Доказательство:** model-invariant unit + review кода.
 
 ### AC9. Совместимость, View и touch
 
 Persisted schema остаётся v8; v7 safe round-trip и v8 read path не меняют
 визуальный результат. View/kiosk/touch rendering не получает новых контролов,
-listeners или ветвей поведения. Plan editor остаётся desktop-first.  
+listeners или ветвей поведения. Plan editor остаётся desktop-first.
+
 **Доказательство:** backend compatibility tests + существующие smoke/golden;
 review кода для отсутствия UI-дельты.
 
@@ -283,7 +294,8 @@ review кода для отсутствия UI-дельты.
 
 Обновлены RU+EN changelog, compatibility/architecture/testing contract. Проходят
 `npm run typecheck`, релевантные unit/backend/smoke, `npm run build` и
-`node scripts/check-docs.mjs --external`.  
+`node scripts/check-docs.mjs --external`.
+
 **Доказательство:** команды локального гейта и CI.
 
 ## 11. Производительность, accessibility, touch и security
