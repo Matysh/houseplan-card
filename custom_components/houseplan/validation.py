@@ -1831,7 +1831,10 @@ def _config_wall_segment_invariants(value: dict) -> dict:
         for opening in space.get("openings", []):
             host = opening.get("host")
             if host is None:
-                raise vol.Invalid("v8+ opening requires an explicit host")
+                # #316 §3.3: a degraded migration may leave a contour opening
+                # unhosted. It is inert (no body/tunnel/cut) and excluded from
+                # the interval checks; a later edit can re-place it.
+                continue
             if host["kind"] == "partition":
                 if host["id"] not in partitions:
                     raise vol.Invalid("partition opening host must exist in the same space")

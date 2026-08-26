@@ -1,0 +1,258 @@
+{
+  "comment": "stored: a pre-migration v8 document — a room whose top wall carries a door and is fully covered by a legacy open_span; migrated: the same document after the current initial migration (#316 §3.1) — the door keeps its carrying atom, the border is zero on both sides. The golden scene renders `migrated`; the unit test pins it to the real writer byte for byte.",
+  "stored": {
+    "model_version": 8,
+    "spaces": [
+      {
+        "id": "golden-span-over-door",
+        "title": "Span over door",
+        "cell_cm": 5,
+        "view_box": [
+          0,
+          0,
+          1,
+          0.7
+        ],
+        "settings": {
+          "fill_mode": "none",
+          "show_borders": true,
+          "show_names": true
+        },
+        "rooms": [
+          {
+            "id": "sod-room",
+            "name": "Room",
+            "area": null,
+            "poly": [
+              [
+                0.2,
+                0.3
+              ],
+              [
+                0.6,
+                0.3
+              ],
+              [
+                0.6,
+                0.6
+              ],
+              [
+                0.2,
+                0.6
+              ]
+            ]
+          }
+        ],
+        "walls": [
+          {
+            "key": "0.400000,0.300000@0.0000",
+            "a": [
+              0.2,
+              0.3
+            ],
+            "b": [
+              0.6,
+              0.3
+            ],
+            "cm": 15
+          }
+        ],
+        "open_spans": [
+          {
+            "a": [
+              0.2,
+              0.3
+            ],
+            "b": [
+              0.6,
+              0.3
+            ]
+          }
+        ],
+        "openings": [
+          {
+            "id": "sod-door",
+            "type": "door",
+            "x": 0.4,
+            "y": 0.3,
+            "angle": 0,
+            "length": 0.09,
+            "cm": 90,
+            "flip_v": true
+          }
+        ]
+      }
+    ],
+    "markers": [],
+    "settings": {}
+  },
+  "migrated": {
+    "model_version": 9,
+    "spaces": [
+      {
+        "id": "golden-span-over-door",
+        "title": "Span over door",
+        "cell_cm": 5,
+        "view_box": [
+          0,
+          0,
+          1,
+          0.7
+        ],
+        "settings": {
+          "fill_mode": "none",
+          "show_borders": true,
+          "show_names": true
+        },
+        "rooms": [
+          {
+            "id": "sod-room",
+            "name": "Room",
+            "area": null,
+            "poly": [
+              [
+                0.2,
+                0.3
+              ],
+              [
+                0.355,
+                0.3
+              ],
+              [
+                0.445,
+                0.3
+              ],
+              [
+                0.6,
+                0.3
+              ],
+              [
+                0.6,
+                0.6
+              ],
+              [
+                0.2,
+                0.6
+              ]
+            ],
+            "wall_ids": [
+              "wall-s2g2iw3nbbxkym6sodv4",
+              "wall-qmhko777ctlb3hey6c3v",
+              "wall-odwfy5lyxkwsum2jewma",
+              "wall-l3r6mytgo2l4so24dljp",
+              "wall-mzbb6mwcqxj67rhw7mc5",
+              "wall-uyhvjlqcorfj3orzvhhj"
+            ]
+          }
+        ],
+        "walls": [
+          {
+            "key": "0.400000,0.300000@0.0000",
+            "cm": 15,
+            "a": [
+              0.355,
+              0.3
+            ],
+            "b": [
+              0.445,
+              0.3
+            ]
+          }
+        ],
+        "openings": [
+          {
+            "id": "sod-door",
+            "type": "door",
+            "x": 0.4,
+            "y": 0.3,
+            "angle": 0,
+            "length": 0.09,
+            "cm": 90,
+            "flip_v": true,
+            "host": {
+              "kind": "wall",
+              "id": "wall-qmhko777ctlb3hey6c3v",
+              "t": 0.5
+            }
+          }
+        ],
+        "wall_segments": [
+          {
+            "id": "wall-uyhvjlqcorfj3orzvhhj",
+            "a": [
+              0.2,
+              0.3
+            ],
+            "b": [
+              0.2,
+              0.6
+            ],
+            "cm": 0
+          },
+          {
+            "id": "wall-s2g2iw3nbbxkym6sodv4",
+            "a": [
+              0.2,
+              0.3
+            ],
+            "b": [
+              0.355,
+              0.3
+            ],
+            "cm": 0
+          },
+          {
+            "id": "wall-mzbb6mwcqxj67rhw7mc5",
+            "a": [
+              0.2,
+              0.6
+            ],
+            "b": [
+              0.6,
+              0.6
+            ],
+            "cm": 0
+          },
+          {
+            "id": "wall-qmhko777ctlb3hey6c3v",
+            "a": [
+              0.355,
+              0.3
+            ],
+            "b": [
+              0.445,
+              0.3
+            ],
+            "cm": 15
+          },
+          {
+            "id": "wall-odwfy5lyxkwsum2jewma",
+            "a": [
+              0.445,
+              0.3
+            ],
+            "b": [
+              0.6,
+              0.3
+            ],
+            "cm": 0
+          },
+          {
+            "id": "wall-l3r6mytgo2l4so24dljp",
+            "a": [
+              0.6,
+              0.3
+            ],
+            "b": [
+              0.6,
+              0.6
+            ],
+            "cm": 0
+          }
+        ]
+      }
+    ],
+    "markers": [],
+    "settings": {}
+  }
+}

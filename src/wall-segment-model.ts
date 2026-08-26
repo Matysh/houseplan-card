@@ -332,13 +332,54 @@ const buildAtoms = (
     }
   }
   const cuts = [...canonicalZeroCuts, ...legacyCuts];
+  // #316 §3.1: a legacy open_spans/open_to cut never zeroes the atom that
+  // carries an existing contour opening — if a door stands inside a former
+  // "border", the wall under it was real and stays real. The zero run
+  // continues on both sides, so the opening's edges become atom boundaries.
+  const legacyEraOpenings: OpeningCfg[] = legacyCuts.length
+    ? ((Array.isArray(space.openings) ? space.openings : []) as OpeningCfg[])
+      .filter((opening) => opening.host?.kind !== 'partition'
+        && [Number(opening.x), Number(opening.y)].every(Number.isFinite)
+        && Number.isFinite(Number(opening.angle))
+        && Number(opening.length) > 0
+        // Only an opening that actually stands on a legacy cut changes the
+        // atomization; unrelated openings must not churn the catalogue.
+        && legacyCuts.some((cut) => distanceToSegment(
+          [Number(opening.x), Number(opening.y)],
+          [cut[0], cut[1]], [cut[2], cut[3]],
+        ) <= GRID_STEP_N * 0.04))
+    : [];
+  const openingEdgeBreaks: WallEntry[] = legacyEraOpenings.map((opening) => {
+    const rad = (Number(opening.angle) * Math.PI) / 180;
+    const dir = [Math.cos(rad), Math.sin(rad)];
+    const half = Number(opening.length) / 2;
+    const centre = [Number(opening.x), Number(opening.y)];
+    return {
+      a: [centre[0] - dir[0] * half, centre[1] - dir[1] * half],
+      b: [centre[0] + dir[0] * half, centre[1] + dir[1] * half],
+    } as WallEntry;
+  });
+  const atomCarriesOpening = (a: number[], b: number[]): boolean => (
+    legacyEraOpenings.some((opening) => {
+      const centre = [Number(opening.x), Number(opening.y)];
+      if (!wallAngleMatches(a, b, Number(opening.angle))) return false;
+      if (distanceToSegment(centre, a, b) > GRID_STEP_N * 0.02) return false;
+      const span = lengthOf(a, b);
+      const tc = projectT(centre, a, b) * span;
+      const half = Number(opening.length) / 2;
+      return tc + half >= -EPS && tc - half <= span + EPS;
+    })
+  );
   const byKey = new Map<string, Atom>();
   const nextRooms: any[] = [];
   for (const rawRoom of rooms) {
     const id = String(rawRoom?.id || '');
     const original = roomPoly(rawRoom);
     if (!id || !original || original.length < 3) throw new WallSegmentModelError('invalid-room', id);
-    const atomic = atomicPolyForRoom(rooms, id, cuts, GRID_STEP_N, 1, space.walls || []);
+    const atomic = atomicPolyForRoom(
+      rooms, id, cuts, GRID_STEP_N, 1,
+      [...(space.walls || []), ...openingEdgeBreaks],
+    );
     if (!atomic || atomic.poly.length < 3) throw new WallSegmentModelError('invalid-room', id);
     const oldIds = Array.isArray(rawRoom.wall_ids) ? rawRoom.wall_ids : [];
     const indexedLineageIsValid = oldIds.length === original.length;
@@ -399,9 +440,13 @@ const buildAtoms = (
         original[parent], original[(parent + 1) % original.length], GRID_STEP_N,
       ));
       const midpoint = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
-      atom.zeroWall ||= cuts.some((cut) => distanceToSegment(
+      const coveredBy = (list: number[][]): boolean => list.some((cut) => distanceToSegment(
         midpoint, [cut[0], cut[1]], [cut[2], cut[3]],
       ) <= GRID_STEP_N * 0.04);
+      // Canonical cm:0 atoms stay zero; a LEGACY cut spares the atom that
+      // carries an opening (#316 §3.1).
+      atom.zeroWall ||= coveredBy(canonicalZeroCuts)
+        || (coveredBy(legacyCuts) && !atomCarriesOpening(a, b));
       wallIds.push(key); // replaced with stable ids after lineage resolution
     }
     // Re-add the owned field last on every pass.  Several legacy maintenance
@@ -614,13 +659,74 @@ export const resolveRoomOpeningHost = (
   };
 };
 
-const hostRoomOpenings = (space: any, segments: readonly WallSegmentEntry[]): void => {
+/** #316 §3.2/§3.3: deterministic migration-time host resolution. Returns null
+ * only when the space has no usable carrier at all — the opening then persists
+ * unhosted (§3.3) instead of blocking the migration. */
+const migrateRoomOpeningHost = (
+  opening: OpeningCfg, segments: readonly WallSegmentEntry[],
+): WallOpeningHost | null => {
+  const centre = [Number(opening.x), Number(opening.y)];
+  if (!centre.every(Number.isFinite)) return null;
+  const half = Number(opening.length) / 2;
+  const eligible = segments.filter((segment) => {
+    if (!(Number(segment.cm) > 0)) return false;
+    const t = projectT(centre, segment.a, segment.b);
+    const span = lengthOf(segment.a, segment.b);
+    return t >= -EPS && t <= 1 + EPS
+      && distanceToSegment(centre, segment.a, segment.b) <= GRID_STEP_N * 0.02
+      && wallAngleMatches(segment.a, segment.b, Number(opening.angle))
+      && Number.isFinite(half) && half >= 0
+      && t * span - half >= -EPS && t * span + half <= span + EPS;
+  });
+  // §3.2 tie-break: current host → distance → thicker cm → smaller id.
+  const pick = (candidates: readonly WallSegmentEntry[]): WallSegmentEntry | null => {
+    if (!candidates.length) return null;
+    const current = opening.host?.kind === 'wall'
+      ? candidates.find((segment) => segment.id === opening.host!.id) : null;
+    if (current) return current;
+    return [...candidates].sort((x, y) => (
+      distanceToSegment(centre, x.a, x.b) - distanceToSegment(centre, y.a, y.b)
+      || Number(y.cm) - Number(x.cm)
+      || (x.id < y.id ? -1 : x.id > y.id ? 1 : 0)
+    ))[0];
+  };
+  // §3.3 degraded pool: angle- and capacity-compatible positive walls at any
+  // distance, nearest first.
+  const degraded = segments.filter((segment) => (
+    Number(segment.cm) > 0
+    && wallAngleMatches(segment.a, segment.b, Number(opening.angle))
+    && Number.isFinite(half) && half >= 0
+    && lengthOf(segment.a, segment.b) + EPS >= Number(opening.length)
+  ));
+  const host = pick(eligible) ?? pick(degraded);
+  if (!host) return null;
+  return {
+    kind: 'wall', id: host.id,
+    t: Math.max(0, Math.min(1, projectT(centre, host.a, host.b))),
+  };
+};
+
+const hostRoomOpenings = (
+  space: any, segments: readonly WallSegmentEntry[], initialMigration: boolean,
+): void => {
   const openings: OpeningCfg[] = Array.isArray(space.openings) ? space.openings : [];
   for (const opening of openings) {
     if (opening.host?.kind === 'partition') continue;
-    const host = resolveRoomOpeningHost(opening, segments);
-    if (!host) throw new WallSegmentModelError('opening-host', opening.id);
-    opening.host = host;
+    // #316 §3.3: an unhosted opening is a valid degraded v9 state — inert in
+    // the physics, rendered by its own x/y. A later write keeps it and may
+    // self-heal it when a unique carrier appears; it never blocks the write.
+    if (!opening.host && !initialMigration) {
+      const healed = resolveRoomOpeningHost(opening, segments);
+      if (healed) opening.host = healed;
+      continue;
+    }
+    const host = resolveRoomOpeningHost(opening, segments)
+      ?? (initialMigration ? migrateRoomOpeningHost(opening, segments) : null);
+    if (host) { opening.host = host; continue; }
+    // #316 §3.4: the initial migration never throws over an opening; a
+    // post-v9 write that LOST a carrier keeps the fail-closed refusal.
+    if (initialMigration) { delete opening.host; continue; }
+    throw new WallSegmentModelError('opening-host', opening.id);
   }
 };
 
@@ -703,7 +809,7 @@ const migrateSpace = (
   delete space.open_spans;
   for (const room of space.rooms) delete room.open_to;
   migrateDraftSegments(space, initialMigration);
-  hostRoomOpenings(space, segments);
+  hostRoomOpenings(space, segments, initialMigration);
   return segments.reduce((count, segment) => count + (old.has(segment.id) ? 0 : 1), 0);
 };
 

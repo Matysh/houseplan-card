@@ -90,9 +90,16 @@ transmit Glow and sunlight, while solid zero walls are exact line barriers.
 documents only. Explicit valid spans win; `open_to` expands to the full proven
 shared boundary only when spans are absent. The first structural write,
 confirmed **Optimize plans**, or import into a current target atomizes that
-geometry into stable `wall_segments[].cm=0`, preserves surviving IDs, verifies
-that no opening would acquire a zero host, and then removes both legacy fields
-in one transaction. A conflict rejects the complete candidate. Presentation,
+geometry into stable `wall_segments[].cm=0`, preserves surviving IDs, and then
+removes both legacy fields in one transaction. An opening never blocks that
+migration (#316): the atom carrying an existing opening keeps its positive
+thickness (the zero run continues on both sides), an ambiguous carrier is
+resolved deterministically (current host, then distance, thicker cm, smaller
+id), and an opening with no usable carrier at all persists **unhosted** — a
+valid degraded v9 state that is inert in the physics (no body, tunnel or cut),
+renders by its own `x/y`, survives later writes untouched and may be re-placed
+in the editor. Post-migration structural writes keep the fail-closed refusal
+for an opening that LOST its carrier. Presentation,
 marker and ordinary space-settings writes do not trigger the migration.
 
 There is deliberately no provenance flag. Existing v8 `cm:0` and atoms derived

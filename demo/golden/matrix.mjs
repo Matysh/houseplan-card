@@ -1,7 +1,7 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 46;
+export const GOLDEN_MATRIX_VERSION = 47;
 
 const stage = { capture: 'stage', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0005 } };
 const page = { capture: 'page', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0008 } };
@@ -184,6 +184,11 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     mode: 'view', theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'coincident-partition-virtual-dark', fixture: 'visual',
     space: 'golden-coincident-partition', coincidentPartition: 'virtual',
+    mode: 'view', theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
+  // #316 §3.1: a legacy span over a wall with a door — after the migration the
+  // door keeps its carrying atom while the border is zero on both sides.
+  { id: 'span-over-door-migrated-dark', fixture: 'visual',
+    space: 'golden-span-over-door', spanOverDoor: true,
     mode: 'view', theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'split-corner-wall-before-dark', fixture: 'visual', space: 'golden-corner-split',
     cornerSplitWall: 'before', mode: 'view', theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },

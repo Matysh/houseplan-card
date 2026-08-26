@@ -7,6 +7,12 @@
   example one that still carried an orphan legacy border) instead of demanding
   a card update that was already installed
   ([#319](https://github.com/Matysh/houseplan-card/issues/319)).
+- Drawing works again everywhere: converting a plan to the new wall model no
+  longer stops on a legacy border/opening conflict. A door standing inside a
+  former «border» keeps its real wall (the gap continues on both sides), an
+  ambiguous carrier is resolved deterministically, and an opening with no
+  usable wall at all is kept as data — inert until you re-place it
+  ([#316](https://github.com/Matysh/houseplan-card/issues/316)).
 
 ## v1.68.0-beta.3 — 2026-08-26
 

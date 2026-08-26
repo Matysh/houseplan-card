@@ -103,7 +103,13 @@ def test_partial_shared_boundary_has_exactly_one_two_owner_atom() -> None:
     assert list(owners.values()).count(2) == 1
 
 
-def test_ambiguous_opening_blocks_without_mutating_source() -> None:
+def test_corner_opening_on_bodyless_walls_migrates_unhosted() -> None:
+    """#316 §3.3/§3.4: the initial migration degrades instead of blocking.
+
+    Since #306 an unconfigured contour is explicitly bodyless (cm 0) and a
+    zero wall is never an opening carrier, so the corner door persists
+    unhosted; the migration never throws over an opening.
+    """
     source = _config({
         "id": "floor", "rooms": [_room("room")],
         "openings": [{
@@ -112,9 +118,10 @@ def test_ambiguous_opening_blocks_without_mutating_source() -> None:
         }],
     })
     original = copy.deepcopy(source)
-    with pytest.raises(WallSegmentMigrationError, match="opening-host"):
-        commit_wall_segment_model(source)
+    migrated, _ = commit_wall_segment_model(source)
     assert source == original
+    assert "host" not in migrated["spaces"][0]["openings"][0]
+    assert commit_wall_segment_model(migrated)[0] == migrated
 
 
 def test_post_v8_new_atoms_are_random_and_promoted_draft_id_survives() -> None:
@@ -369,7 +376,7 @@ def test_v8_open_span_migrates_to_zero_atoms_and_removes_legacy_fields() -> None
     assert commit_wall_segment_model(migrated)[0] == migrated
 
 
-def test_v8_open_span_over_an_opening_blocks_atomically() -> None:
+def test_v8_open_span_over_an_opening_spares_the_carrying_atom() -> None:
     base, _ = commit_wall_segment_model(_config({
         "id": "floor", "rooms": [_room("room")],
     }))
@@ -390,6 +397,50 @@ def test_v8_open_span_over_an_opening_blocks_atomically() -> None:
     base["model_version"] = 8
     before = copy.deepcopy(base)
 
+    # #316 §3.1: the atom carrying the hosted door keeps its thickness while
+    # the rest of the span run turns to zero on both sides of the opening.
+    migrated, _ = commit_wall_segment_model(base)
+    assert base == before
+    space = migrated["spaces"][0]
+    bottom = sorted(
+        (segment for segment in space["wall_segments"]
+         if abs(segment["a"][1]) < 1e-9 and abs(segment["b"][1]) < 1e-9),
+        key=lambda segment: segment["a"][0],
+    )
+    assert [segment["cm"] for segment in bottom] == [0.0, 15.0, 0.0]
+    host = space["openings"][0]["host"]
+    assert host["kind"] == "wall" and host["id"] == bottom[1]["id"]
+    assert "open_spans" not in space
+    assert commit_wall_segment_model(migrated)[0] == migrated
+
+
+def test_unhosted_contour_opening_is_a_valid_degraded_v9_state() -> None:
+    """#316 AC4: schema and repeat writes keep the unhosted opening."""
+    source = _config({
+        "id": "floor", "rooms": [_room("room")],
+        "openings": [{
+            "id": "orphan", "type": "door", "x": 0.9, "y": 0.65,
+            "angle": 90, "length": 0.05,
+        }],
+    })
+    migrated, _ = commit_wall_segment_model(source)
+    opening = migrated["spaces"][0]["openings"][0]
+    assert "host" not in opening
+    validated = CONFIG_SCHEMA(copy.deepcopy(migrated))
+    assert "host" not in validated["spaces"][0]["openings"][0]
+    assert commit_wall_segment_model(migrated)[0] == migrated
+
+
+def test_post_v9_write_that_lost_its_carrier_keeps_the_refusal() -> None:
+    """#316 AC5: only the INITIAL migration degrades; a v9 write fails closed."""
+    base, _ = commit_wall_segment_model(_config({
+        "id": "floor", "rooms": [_room("room")],
+    }))
+    space = base["spaces"][0]
+    space["openings"] = [{
+        "id": "door", "type": "door", "x": 0.9, "y": 0.65,
+        "angle": 90, "length": 0.05,
+        "host": {"kind": "wall", "id": "wall-gone", "t": 0.5},
+    }]
     with pytest.raises(WallSegmentMigrationError, match="opening-host"):
         commit_wall_segment_model(base)
-    assert base == before

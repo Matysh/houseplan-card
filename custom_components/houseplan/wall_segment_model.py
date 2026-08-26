@@ -225,6 +225,53 @@ def _atomize(
         global_breaks.extend((segment[:2], segment[2:]))
     zero_segments = canonical_zero_segments + legacy_segments
 
+    # #316 §3.1: a legacy open_spans/open_to cut never zeroes the atom that
+    # carries an existing contour opening; its edges become atom boundaries so
+    # the zero run continues on both sides of the opening.
+    legacy_era_openings: list[dict[str, Any]] = []
+    if legacy_segments:
+        for opening in space.get("openings") or []:
+            if not isinstance(opening, dict):
+                continue
+            host = opening.get("host")
+            if isinstance(host, dict) and host.get("kind") == "partition":
+                continue
+            try:
+                centre = [float(opening["x"]), float(opening["y"])]
+                angle = float(opening["angle"])
+                half = float(opening["length"]) / 2
+            except (KeyError, TypeError, ValueError):
+                continue
+            if half <= 0:
+                continue
+            # Only an opening that actually stands on a legacy cut changes the
+            # atomization; unrelated openings must not churn the catalogue.
+            if not any(
+                _distance_to_segment(centre, cut[:2], cut[2:]) <= GRID_STEP_N * 0.04
+                for cut in legacy_segments
+            ):
+                continue
+            legacy_era_openings.append(
+                {"centre": centre, "angle": angle, "half": half}
+            )
+            direction = (math.cos(math.radians(angle)), math.sin(math.radians(angle)))
+            global_breaks.extend((
+                [centre[0] - direction[0] * half, centre[1] - direction[1] * half],
+                [centre[0] + direction[0] * half, centre[1] + direction[1] * half],
+            ))
+
+    def _atom_carries_opening(a: list[float], b: list[float]) -> bool:
+        for entry in legacy_era_openings:
+            if not _angle_matches(a, b, entry["angle"]):
+                continue
+            if _distance_to_segment(entry["centre"], a, b) > GRID_STEP_N * 0.02:
+                continue
+            span = _length(a, b)
+            tc = _project_t(entry["centre"], a, b) * span
+            if tc + entry["half"] >= -EPS and tc - entry["half"] <= span + EPS:
+                return True
+        return False
+
     for wall in space.get("walls") or []:
         if isinstance(wall, dict) and isinstance(wall.get("a"), list) and isinstance(wall.get("b"), list):
             global_breaks.extend((wall["a"], wall["b"]))
@@ -301,9 +348,14 @@ def _atomize(
             parent_index = parents[index]
             atom["parent_keys"].add(_wall_key(original[parent_index], original[(parent_index + 1) % len(original)]))
             midpoint = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]
-            atom["zero_wall"] = atom["zero_wall"] or any(
+            covered_by = lambda cuts: any(
                 _distance_to_segment(midpoint, cut[:2], cut[2:]) <= GRID_STEP_N * 0.04
-                for cut in zero_segments
+                for cut in cuts
+            )
+            # Canonical cm:0 atoms stay zero; a LEGACY cut spares the atom
+            # that carries an opening (#316 §3.1).
+            atom["zero_wall"] = atom["zero_wall"] or covered_by(canonical_zero_segments) or (
+                covered_by(legacy_segments) and not _atom_carries_opening(a, b)
             )
             if indexed_lineage and isinstance(old_ids[parent_index], str) and old_ids[parent_index]:
                 previous = old.get(old_ids[parent_index])
@@ -478,7 +530,9 @@ def _angle_matches(a: list[float], b: list[float], angle: float) -> bool:
     return difference <= 8
 
 
-def _host_openings(space: dict[str, Any], segments: list[dict[str, Any]]) -> None:
+def _host_openings(
+    space: dict[str, Any], segments: list[dict[str, Any]], initial_migration: bool,
+) -> None:
     for opening in space.get("openings") or []:
         host = opening.get("host")
         if isinstance(host, dict) and host.get("kind") == "partition":
@@ -487,6 +541,10 @@ def _host_openings(space: dict[str, Any], segments: list[dict[str, Any]]) -> Non
             centre = [float(opening["x"]), float(opening["y"])]
             angle, half = float(opening["angle"]), float(opening["length"]) / 2
         except (KeyError, TypeError, ValueError):
+            if initial_migration:
+                # #316 §3.4: the initial migration never throws over an opening.
+                opening.pop("host", None)
+                continue
             raise WallSegmentMigrationError("opening-host", str(opening.get("id", ""))) from None
 
         def eligible(segment: dict[str, Any]) -> bool:
@@ -501,19 +559,52 @@ def _host_openings(space: dict[str, Any], segments: list[dict[str, Any]]) -> Non
                     and half >= 0 and t * span - half >= -EPS
                     and t * span + half <= span + EPS)
 
+        def materialize(carrier: dict[str, Any]) -> None:
+            opening["host"] = {
+                "kind": "wall", "id": carrier["id"],
+                "t": max(0.0, min(1.0, _project_t(centre, carrier["a"], carrier["b"]))),
+            }
+
         current = None
         if isinstance(host, dict) and host.get("kind") == "wall":
             current = next((segment for segment in segments if segment["id"] == host.get("id")), None)
         candidates = [current] if current is not None and eligible(current) else [
             segment for segment in segments if eligible(segment)
         ]
-        if len(candidates) != 1:
+        if len(candidates) == 1:
+            materialize(candidates[0])
+            continue
+        # #316 §3.3: an unhosted opening is a valid degraded v9 state. A later
+        # write keeps it, may self-heal it, and never fails over it.
+        if host is None and not initial_migration:
+            continue
+        if not initial_migration:
             raise WallSegmentMigrationError("opening-host", str(opening.get("id", "")))
-        carrier = candidates[0]
-        opening["host"] = {
-            "kind": "wall", "id": carrier["id"],
-            "t": max(0.0, min(1.0, _project_t(centre, carrier["a"], carrier["b"]))),
-        }
+
+        def pick(pool: list[dict[str, Any]]) -> dict[str, Any] | None:
+            if not pool:
+                return None
+            if current is not None and any(item is current for item in pool):
+                return current
+            return sorted(pool, key=lambda segment: (
+                _distance_to_segment(centre, segment["a"], segment["b"]),
+                -float(segment.get("cm", 0)),
+                str(segment.get("id", "")),
+            ))[0]
+
+        # #316 §3.2 tie-break, then the §3.3 degraded pool (angle- and
+        # capacity-compatible positive walls at any distance, nearest first).
+        degraded = [segment for segment in segments if (
+            float(segment.get("cm", 0)) > 0
+            and _angle_matches(segment["a"], segment["b"], angle)
+            and half >= 0
+            and _length(segment["a"], segment["b"]) + EPS >= half * 2
+        )]
+        carrier = pick([segment for segment in segments if eligible(segment)]) or pick(degraded)
+        if carrier is not None:
+            materialize(carrier)
+        else:
+            opening.pop("host", None)
 
 
 def _migrate_space(space: dict[str, Any], initial_migration: bool) -> int:
@@ -579,7 +670,7 @@ def _migrate_space(space: dict[str, Any], initial_migration: bool) -> int:
             else:
                 segment["id"] = _fresh_wall_segment_id(draft_used)
             draft_used.add(segment["id"])
-    _host_openings(space, segments)
+    _host_openings(space, segments, initial_migration)
     return sum(1 for segment in segments if segment["id"] not in old)
 
 

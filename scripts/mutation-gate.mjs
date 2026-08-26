@@ -2258,6 +2258,35 @@ export const MUTANTS = [
     }],
   },
   {
+    id: 'span-cut-erases-the-door-wall',
+    // #316 §3.1: легаси-кат обязан щадить атом, несущий проём — иначе дверь
+    // остаётся на нулевой стене и миграция деградирует без нужды.
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="keeps its wall through a legacy span cut" '
+      + 'test/wall-segment-model.test.mjs',
+    because: 'дверь внутри бывшей «границы» стояла в настоящей стене — занулять её атом значит переписать план (#316)',
+    patches: [{
+      file: 'src/wall-segment-model.ts',
+      find: "      atom.zeroWall ||= coveredBy(canonicalZeroCuts)\n        || (coveredBy(legacyCuts) && !atomCarriesOpening(a, b));",
+      replace: "      atom.zeroWall ||= coveredBy(canonicalZeroCuts) || coveredBy(legacyCuts);",
+    }],
+  },
+  {
+    id: 'migration-throws-over-an-opening-again',
+    // #316 §3.4: initial migration никогда не кидает opening-host — реверт
+    // возвращает глобальный блокер рисования beta.3.
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="migrates unhosted instead of blocking" '
+      + 'test/wall-segment-model.test.mjs '
+      + '&& node demo/smoke_zero_wall_migration_unblocked.mjs',
+    because: 'один конфликтный проём снова заблокировал бы структурные записи во всех пространствах (#316)',
+    patches: [{
+      file: 'src/wall-segment-model.ts',
+      find: "    if (initialMigration) { delete opening.host; continue; }",
+      replace: "    if (initialMigration) throw new WallSegmentModelError('opening-host', opening.id);",
+    }],
+  },
+  {
     id: 'preflight-fallback-survives-dialog-close',
     // CODE-REVIEW-295-r1 M2: инлайн-фолбэк живёт одно показание диалога;
     // переживший закрытие блок подсунет в отчёт диагностику чужого отказа.

@@ -262,18 +262,23 @@ test('room opening host resolver updates t and rejects ambiguous or zero walls',
   ]), null);
 });
 
-test('an ambiguous room opening blocks the complete candidate without mutating input', () => {
+test('a corner opening on bodyless walls migrates unhosted instead of blocking (#316 §3.3/§3.4)', () => {
+  // Until #316 the initial migration refused this candidate outright; the
+  // reviewed contract degrades it instead and never blocks the write.
   const input = configOf({
     id: 'floor', title: 'Floor',
     rooms: [rectangle('room')],
     openings: [{ id: 'door', type: 'door', x: 0, y: 0, angle: 0, length: 0.2 }],
   });
   const before = structuredClone(input);
-  assert.throws(
-    () => commitWallSegmentModel(input),
-    (error) => error instanceof WallSegmentModelError && error.reason === 'opening-host',
-  );
-  assert.deepEqual(input, before);
+  const out = commitWallSegmentModel(input).config;
+  assert.deepEqual(input, before, 'the input candidate is never mutated');
+  // Since #306 an unconfigured contour is explicitly bodyless (cm: 0), and a
+  // zero wall is never an opening carrier — the corner door therefore
+  // migrates UNHOSTED (§3.3) instead of blocking the whole candidate.
+  assert.equal('host' in out.spaces[0].openings[0], false);
+  const again = commitWallSegmentModel(structuredClone(out)).config;
+  assert.equal(JSON.stringify(again), JSON.stringify(out), 'the outcome is stable');
 });
 
 test('draft segment ids materialise once and remain stable', () => {
@@ -390,4 +395,101 @@ test('every frontend structural transaction crosses the wall identity barrier', 
     'Optimize must cross the identity barrier after its geometry repairs');
   assert.doesNotMatch(commitMethod, /this\._writeConfig\(/,
     'the common barrier must finish before the existing persistence path runs');
+});
+
+// --- #316: the initial migration auto-resolves opening-host conflicts ---
+
+const spanDoorConfig = () => ({
+  model_version: 8,
+  spaces: [{
+    id: 'B', title: 'B', cell_cm: 5, view_box: [0, 0, 1, 0.7],
+    rooms: [{ id: 'rB', poly: [[0.2, 0.2], [0.6, 0.2], [0.6, 0.5], [0.2, 0.5]] }],
+    walls: [{ key: wallKey([0.2, 0.2], [0.6, 0.2], GRID_STEP_N),
+      a: [0.2, 0.2], b: [0.6, 0.2], cm: 15 }],
+    open_spans: [{ a: [0.2, 0.2], b: [0.6, 0.2] }],
+    openings: [{ id: 'op1', type: 'door', x: 0.4, y: 0.2, angle: 0, length: 0.09, cm: 90 }],
+  }],
+  markers: [], settings: {},
+});
+
+test('an opening keeps its wall through a legacy span cut (#316 §3.1) and the run stays idempotent', () => {
+  const out = commitWallSegmentModel(spanDoorConfig()).config;
+  const space = out.spaces[0];
+  const top = space.wall_segments
+    .filter((s) => Math.abs(s.a[1] - 0.2) < 1e-9 && Math.abs(s.b[1] - 0.2) < 1e-9)
+    .sort((x, y) => x.a[0] - y.a[0]);
+  assert.equal(top.length, 3, 'the opening edges split the span run into three atoms');
+  assert.equal(top[0].cm, 0, 'left of the door the border stays zero');
+  assert.ok(top[1].cm > 0, 'the atom under the door keeps its real thickness');
+  assert.equal(top[2].cm, 0, 'right of the door the border stays zero');
+  assert.deepEqual(space.openings[0].host, { kind: 'wall', id: top[1].id, t: 0.5 });
+  assert.equal('open_spans' in space, false);
+  const again = commitWallSegmentModel(structuredClone(out)).config;
+  assert.equal(JSON.stringify(again), JSON.stringify(out), 'commit(commit(x)) == commit(x)');
+});
+
+test('an ambiguous carrier is resolved deterministically at a thickness boundary (#316 §3.2)', () => {
+  // Two contour atoms of one wall meet at x=0.4 (thickness change); a short
+  // opening centred exactly on the junction fits inside either atom.
+  const config = {
+    model_version: 8,
+    spaces: [{
+      id: 'S', title: 'S', cell_cm: 5, view_box: [0, 0, 1, 0.7],
+      rooms: [{ id: 'r', poly: [[0.2, 0.2], [0.6, 0.2], [0.6, 0.5], [0.2, 0.5]] }],
+      walls: [
+        { key: wallKey([0.2, 0.2], [0.4, 0.2], GRID_STEP_N),
+          a: [0.2, 0.2], b: [0.4, 0.2], cm: 10 },
+        { key: wallKey([0.4, 0.2], [0.6, 0.2], GRID_STEP_N),
+          a: [0.4, 0.2], b: [0.6, 0.2], cm: 20 },
+      ],
+      openings: [{ id: 'op', type: 'door', x: 0.4, y: 0.2, angle: 0, length: 0, cm: 0 }],
+    }],
+    markers: [], settings: {},
+  };
+  const out = commitWallSegmentModel(structuredClone(config)).config;
+  const space = out.spaces[0];
+  const host = space.openings[0].host;
+  assert.equal(host?.kind, 'wall');
+  const carrier = space.wall_segments.find((s) => s.id === host.id);
+  assert.ok(carrier, 'the picked carrier exists in the catalogue');
+  // §3.2: equal distance → the thicker atom wins.
+  assert.equal(carrier.cm, 20);
+  const again = commitWallSegmentModel(structuredClone(out)).config;
+  assert.equal(JSON.stringify(again), JSON.stringify(out), 'the pick is stable');
+});
+
+test('an opening with no usable carrier migrates unhosted and survives later writes (#316 §3.3/§3.4)', () => {
+  const config = spanDoorConfig();
+  // The opening is far from every wall and across the grain — no carrier.
+  config.spaces[0].openings[0] = {
+    id: 'orphan', type: 'door', x: 0.9, y: 0.65, angle: 90, length: 0.05, cm: 90,
+  };
+  const out = commitWallSegmentModel(structuredClone(config)).config;
+  const opening = out.spaces[0].openings[0];
+  assert.equal('host' in opening, false, 'the orphan persists unhosted');
+  // A later structural write keeps it and does not throw (§3.3).
+  const again = commitWallSegmentModel(structuredClone(out)).config;
+  assert.equal('host' in again.spaces[0].openings[0], false);
+  assert.equal(JSON.stringify(again), JSON.stringify(out));
+});
+
+test('a post-v9 write that LOST its carrier keeps the fail-closed refusal (#316 AC5)', () => {
+  const migrated = commitWallSegmentModel(spanDoorConfig()).config;
+  const broken = structuredClone(migrated);
+  // Point the hosted opening at a segment id that no longer exists.
+  broken.spaces[0].openings[0].host = { kind: 'wall', id: 'wall-gone', t: 0.5 };
+  broken.spaces[0].openings[0].x = 0.9; broken.spaces[0].openings[0].y = 0.65;
+  broken.spaces[0].openings[0].angle = 90;
+  assert.throws(
+    () => commitWallSegmentModel(broken),
+    (error) => error instanceof WallSegmentModelError && error.reason === 'opening-host',
+  );
+});
+
+test('the #316 golden fixture matches the current initial migration byte for byte', () => {
+  const fixture = JSON.parse(readFileSync(
+    new URL('./fixtures/316-span-over-door-migrated.json', import.meta.url), 'utf8',
+  ));
+  const migrated = commitWallSegmentModel(structuredClone(fixture.stored)).config;
+  assert.deepEqual(migrated, fixture.migrated);
 });

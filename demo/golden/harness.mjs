@@ -23,6 +23,9 @@ const wallKeyRoundtripFixture = JSON.parse(readFileSync(
 const coincidentPartitionFixture = JSON.parse(readFileSync(
   new URL('../../test/fixtures/276-coincident-partition.json', import.meta.url), 'utf8',
 ));
+const spanOverDoorFixture = JSON.parse(readFileSync(
+  new URL('../../test/fixtures/316-span-over-door-migrated.json', import.meta.url), 'utf8',
+));
 const wallUnionIsolationFixture = JSON.parse(readFileSync(
   new URL('../../test/fixtures/278-wall-union-isolation.json', import.meta.url), 'utf8',
 ));
@@ -79,6 +82,15 @@ async function stableEnvironment(page, scenario) {
 /** Apply every data-only scenario override before the fixture crosses into the browser. */
 export function prepareGoldenFixture(scenario) {
   const fixture = fixtureFor(scenario);
+  if (scenario.spanOverDoor) {
+    // #316 §3.1: the scene renders the MIGRATED document — the door keeps its
+    // carrying atom while the former span is zero (dashed) on both sides. The
+    // fixture is produced by the real writer and pinned byte-for-byte by the
+    // wall-segment-model unit test, so it cannot drift from the migration.
+    const migrated = structuredClone(spanOverDoorFixture.migrated);
+    fixture.config.model_version = migrated.model_version;
+    fixture.config.spaces.push(...migrated.spaces);
+  }
   if (scenario.coincidentPartition) {
     const state = scenario.coincidentPartition;
     if (!['before', 'thin', 'thick', 'virtual'].includes(state))
