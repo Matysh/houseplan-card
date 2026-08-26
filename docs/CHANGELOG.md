@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.68.0-beta.3 — 2026-08-26
+
 - Walls now use one model at every thickness. The separate **Boundary** tool
   and virtual-wall entity are gone: **Walls** and **Thickness** accept `0 cm`
   for room contours, saved drafts and independent walls. Each space can draw
