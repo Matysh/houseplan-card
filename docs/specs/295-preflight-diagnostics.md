@@ -1,7 +1,7 @@
 # ТЗ #295 — Отказ геометрического preflight называет причину и отдаёт диагностику
 
 Issue: https://github.com/Matysh/houseplan-card/issues/295
-Статус: ревизия 1.
+Статус: ревизия 2 (после SPEC-REVIEW-295-r1: H1 — граница приватности #199 сохраняется, detail = класс исключения; M1 — integration_version добавляется в houseplan/config/get; L1/L2).
 База: #199 (fail-closed барьер — работает и не меняется), #291 (решётка), #265 (непроверенные позиции — воспроизводимая часть отчёта владельца).
 
 ## 0. Сценарий
@@ -13,9 +13,9 @@ Issue: https://github.com/Matysh/houseplan-card/issues/295
 
 ## 1. Контракт
 
-### 1.1 `plan-geometry-preflight.ts`: `detail` в отчёте
+### 1.1 `plan-geometry-preflight.ts`: `detail` в отчёте — граница #199 сохраняется
 
-`OptimizeSpaceGeometryCheck` получает `detail?: string`: catch-блоки prepare/wall/floor кладут `String((error as Error)?.message ?? error).slice(0, 200)`; для не-exception причин (`wall-null`, `wall-degraded-extra`, `wall-failed-core`, `floor-null`) detail не заполняется (тип причины самодостаточен). Публичная форма результата в остальном не меняется; существующие потребители не ломаются (поле опциональное).
+Барьер #199 документированно запрещает выпуск текста исключений из `checkOptimizeGeometry` («Geometry values never escape this call… not polygon output or exception text», plan-geometry-preflight.ts:312, docs/CANVAS.md, docs/ARCHITECTURE.md; три `assert.doesNotMatch` в тестах). Решение H1 — вариант (а) с усилением: **raw `error.message` не выносится никуда**. `OptimizeSpaceGeometryCheck` получает `detail?: string` = **класс исключения** (`error.name`, для не-Error — `typeof`), только для `*-exception` причин; для остальных причин поле не задаётся (остаётся `undefined`, тип самодостаточен). Класс — это тип, не содержимое: приватная граница не расширяется, три privacy-теста остаются и дополняются позитивной проверкой `detail === 'Error'`. Docs #199 не требуют правки — «exception text» по-прежнему не покидает вызов. Публичная форма результата в остальном не меняется.
 
 ### 1.2 i18n: причины и действия
 
@@ -48,21 +48,21 @@ EN-формулировки — прямые переводы. Тексты вы
   "preflightFingerprint": "<fingerprint из результата>",
   "failures": [{
     "spaceId": "…", "displayName": "…", "reason": "wall-exception",
-    "detail": "<message или null>",
+    "detail": "<класс исключения, например Error/TypeError; null в JSON, если причина не *-exception>",
     "spaceGeometryFingerprint": "<spacePhysicalGeometryFingerprint(raw)>"
   }]
 }
 ```
 
-`origin: runtime` — явное признание AC4: отказ зависит от состояния карточки, экспорт его может не воспроизводить; блок несёт то, чего в экспорте нет (отпечатки, момент, версия). Тот же объект уходит в `console.warn('[houseplan] optimize preflight failed', block)` в ЕДИНОЙ точке — хелпер `_reportPreflightFailure(preflight)` вызывается из обоих мест вычисления не-ok результата (`:15860` и повторная проверка `:15891`).
+В самом результате preflight незаполненный `detail` — `undefined` (поле отсутствует); в JSON-блоке диагностики он сериализуется явным `null` (`failure.detail ?? null`) — это разные слои, формулировка разведена по находке L1. `origin: runtime` — явное признание AC4: отказ зависит от состояния карточки, экспорт его может не воспроизводить; блок несёт то, чего в экспорте нет (отпечатки, момент, версия). Тот же объект уходит в `console.warn('[houseplan] optimize preflight failed', block)` в ЕДИНОЙ точке — хелпер `_reportPreflightFailure(preflight)` вызывается из обоих мест вычисления не-ok результата (`:15860` и повторная проверка `:15891`).
 
 ### 1.5 Условный совет «обновите»
 
-`gs.preflight_update_hint` показывается только если `версия карточки !== версия интеграции` (доступно из hass-конфига интеграции/manifest; если сравнение недоступно — строка не показывается). На актуальном фронте совета нет.
+Канала с текущей версией интеграции у фронта нет (находка M1: `houseplan/config/get` её не возвращает; `hass.config` — core-конфиг HA; `integration_version` бэкапа — версия на момент экспорта файла). Поэтому: **бэкенд `websocket_api.py` добавляет `integration_version` в ответ `houseplan/config/get`** (значение — тот же `VERSION`, что кладёт import_export.py:526); карточка запоминает его при загрузке конфига. `gs.preflight_update_hint` показывается только если полученная версия непуста и `!== CARD_VERSION`; при отсутствии поля (старый бэкенд) строка не показывается — отсутствующая подсказка честнее вводящей в заблуждение.
 
 ## 2. Скоуп и не-скоуп
 
-**Скоуп:** perечисленное в §1; юниты preflight на `detail`; смок диалога; мутант на потерю reason; docs (USER-GUIDE раздел «Оптимизировать» — абзац о диагностике; CHANGELOG RU+EN).
+**Скоуп:** перечисленное в §1; `custom_components/houseplan/websocket_api.py` (+ его тест) — `integration_version` в `houseplan/config/get`; юниты preflight на `detail`; смок диалога; мутант на потерю reason; docs (USER-GUIDE раздел «Оптимизировать» — абзац о диагностике; CHANGELOG RU+EN).
 **Не-скоуп:** сам рантайм-отказ владельца (станет диагностируемым — на его данные заводится/дополняется отдельный issue после первого же скопированного блока); механика барьера #199; внерешёточная запись из «побочного наблюдения» (кандидат в отдельный issue); экспортный формат.
 
 ## 3. UX, данные, i18n, touch
@@ -74,6 +74,7 @@ UI: расширение существующего диалога (список
 1. **Clipboard в HA-вебвью/insecure context** — фолбэк `<details><pre>` обязателен и покрывается смоком (мок writeText, бросающий исключение).
 2. **Рост шума dev-лога** — лог пишется один раз на вычисление не-ok preflight (не на рендер) — хелпер с дедупликацией по fingerprint.
 3. **Паритет i18n** — существующий тест паритета ловит.
+4. **Производительность** — не затрагивается (L2): диагностика строится только в отказной ветке уже вычисленного preflight; ok-путь не получает ни одной новой операции; dev-лог дедуплицирован по fingerprint.
 
 ## 5. AC (сведены с issue)
 
