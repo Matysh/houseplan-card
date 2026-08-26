@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- The Russian binding dialog names its entities toggle exactly as the user
+  guide does: «Показывать сущности»
+  ([#269](https://github.com/Matysh/houseplan-card/issues/269)).
+
 - The Thickness tool now serves every wall: standalone partitions and saved
   draft segments can be picked and resized just like room contours, with the
   independent wall winning an exact overlap. Zero stays refused for
