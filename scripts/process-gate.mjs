@@ -87,6 +87,7 @@ export const RULES = {
   7: 'лимит документов ревью',
   8: 'статус issue',
   9: 'Gates: light',
+  10: 'DoR по моменту коммита',
 };
 
 export function classify(path) {
@@ -103,9 +104,9 @@ export function classify(path) {
 // коммите с абзацем в теле.
 export const FS = '\x1f';
 export const RS = '\x1e';
-export const LOG_FORMAT = `%H${FS}%s${FS}%b${RS}`;
+export const LOG_FORMAT = `%H${FS}%s${FS}%aI${FS}%b${RS}`;
 
-export function makeCommit({ sha = '', subject = '', body = '', files = [] }) {
+export function makeCommit({ sha = '', subject = '', body = '', files = [], authorDate = '' }) {
   const text = `${subject}\n${body}`;
   const all = (name) =>
     [...text.matchAll(new RegExp(`^${name}:\\s*(.+)$`, 'gmi'))].map((m) => m[1].trim());
@@ -114,6 +115,7 @@ export function makeCommit({ sha = '', subject = '', body = '', files = [] }) {
     sha,
     short: sha.slice(0, 8),
     subject,
+    authorDate,
     files,
     classes: new Set(files.map(classify)),
     issues: all('Issue'),
@@ -135,8 +137,8 @@ export function parseRecords(raw, filesOf = () => []) {
     .map((r) => r.replace(/^\n/, ''))
     .filter((r) => r.trim())
     .map((rec) => {
-      const [sha, subject, body = ''] = rec.split(FS);
-      return makeCommit({ sha, subject, body, files: filesOf(sha) });
+      const [sha, subject, authorDate = '', body = ''] = rec.split(FS);
+      return makeCommit({ sha, subject, body, files: filesOf(sha), authorDate });
     });
 }
 
@@ -418,6 +420,67 @@ export function checkIssueStatuses(
   return out;
 }
 
+// 10. DoR по моменту коммита (#311). Правило 8 читает ТЕКУЩУЮ метку issue:
+// нарушение «код написан до Готово к разработке» становится невидимым, как
+// только статус штатно продвигается. Здесь метка сверяется с моментом
+// НАПИСАНИЯ кода: authorDate коммита класса A не может предшествовать первому
+// достижению issue разрешённого статуса (labeled-событие из timeline).
+// authorDate переживает ребейзы конвейера — окно нарушения не закрывается.
+// Проверка вторичная к правилу 8, поэтому недоступный timeline — warn, а не
+// fail: основная fail-closed проверка статуса остаётся за правилом 8.
+export function checkCommitEraStatuses(
+  commits, timelineRunner, { allowed = ALLOWED_STATUS } = {},
+) {
+  const out = [];
+  const byIssue = new Map();
+  for (const c of commits) {
+    if (!c.classes.has('A') || c.isRelease) continue;
+    if (!c.authorDate) continue;
+    for (const t of c.issues) {
+      const nn = t.slice(1);
+      const list = byIssue.get(nn) ?? [];
+      list.push(c);
+      byIssue.set(nn, list);
+    }
+  }
+  for (const [nn, list] of byIssue) {
+    const r = timelineRunner(nn);
+    if (!r || r.ok !== true || !Array.isArray(r.events)) {
+      out.push({
+        level: 'warn', rule: 10, sha: '-',
+        msg: `issue #${nn}: timeline недоступен — проверка DoR по моменту коммита пропущена`,
+      });
+      continue;
+    }
+    const readyAt = r.events
+      .filter((e) => allowed.includes(e.label) && e.at)
+      .map((e) => Date.parse(e.at))
+      .filter(Number.isFinite)
+      .sort((a, b) => a - b)[0];
+    if (readyAt === undefined) {
+      // Правило 8 уже требует текущий разрешённый статус; отсутствие событий
+      // при живом статусе — неполный timeline, честный warn.
+      out.push({
+        level: 'warn', rule: 10, sha: '-',
+        msg: `issue #${nn}: в timeline нет событий ${allowed.join('/')} — проверка DoR по моменту коммита пропущена`,
+      });
+      continue;
+    }
+    for (const c of list) {
+      const wrote = Date.parse(c.authorDate);
+      if (Number.isFinite(wrote) && wrote < readyAt) {
+        out.push({
+          level: 'fail', rule: 10, sha: c.short,
+          msg: `issue #${nn}: коммит класса A написан ${c.authorDate}, `
+            + `до первого достижения задачей статуса из ${allowed.join('/')} `
+            + `(${new Date(readyAt).toISOString()}) — код раньше «Готово к разработке» (§12)`,
+        });
+      }
+    }
+  }
+  return out;
+}
+
 export function buildReport({ range, branch, commits, findings }) {
   const fails = findings.filter((f) => f.level === 'fail');
   return {
@@ -439,6 +502,25 @@ function git(args, repo) {
     process.exit(2);
   }
   return r.stdout;
+}
+
+function ghTimelineRunner(nwo, bin) {
+  return (nn) => {
+    const r = spawnSync(bin, ['api', `repos/${nwo}/issues/${nn}/timeline`, '--paginate',
+      '-q', '[.[] | select(.event == "labeled") | {label: .label.name, at: .created_at}]'],
+      { encoding: 'utf8' });
+    if (r.status !== 0) {
+      return { ok: false, error: (r.stderr || 'gh api завершился с ошибкой').trim() };
+    }
+    try {
+      // --paginate печатает по массиву на страницу — склеиваем все.
+      const events = r.stdout.trim().split('\n').filter(Boolean)
+        .flatMap((line) => JSON.parse(line));
+      return { ok: true, events };
+    } catch (e) {
+      return { ok: false, error: e.message };
+    }
+  };
 }
 
 function ghRunner(nwo, bin) {
@@ -603,6 +685,16 @@ function main(argv) {
       });
     }
     findings.push(...checkIssueStatuses(numbers, cached, { allowed, statusOptional }));
+    if (!statusOptional) {
+      const timelineRunner = ghTimelineRunner(
+        process.env.HP_REPO ?? 'Matysh/houseplan-card', process.env.GH_BIN ?? 'gh',
+      );
+      const timelineCache = new Map();
+      findings.push(...checkCommitEraStatuses(statusCommits, (nn) => {
+        if (!timelineCache.has(nn)) timelineCache.set(nn, timelineRunner(nn));
+        return timelineCache.get(nn);
+      }, { allowed }));
+    }
     labelsOf = (nn) => {
       const r = cached(nn);
       if (!r || r.ok !== true) return null;

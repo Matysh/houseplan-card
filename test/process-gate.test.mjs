@@ -11,6 +11,7 @@ import {
   STRICT_STATUS,
   buildReport,
   checkBranchRule,
+  checkCommitEraStatuses,
   isPipelineReviewDocCommit,
   checkIssueStatuses,
   checkReviewDocLimit,
@@ -309,14 +310,16 @@ test('issue status check accepts the working statuses and refuses the rest', () 
 
 test('the log record parser survives multi-line commit bodies', () => {
   // Разбор по строкам ломался здесь: тело содержит пустые строки и абзацы.
+  // Формат несёт четыре поля (#311 добавил authorDate третьим).
   const raw = [
-    `aaaaaaaaaaaa${FS}First subject${FS}Some prose.\n\nMore prose.\n\nIssue: #1\nUser-Visible: no\n${RS}`,
-    `bbbbbbbbbbbb${FS}Second subject${FS}Issue: #2\nUser-Visible: yes\n${RS}`,
+    `aaaaaaaaaaaa${FS}First subject${FS}2026-08-25T19:00:00+03:00${FS}Some prose.\n\nMore prose.\n\nIssue: #1\nUser-Visible: no\n${RS}`,
+    `bbbbbbbbbbbb${FS}Second subject${FS}2026-08-25T20:00:00+03:00${FS}Issue: #2\nUser-Visible: yes\n${RS}`,
   ].join('');
   const list = parseRecords(raw, () => ['src/a.ts']);
   assert.equal(list.length, 2);
   assert.deepEqual(list.map((c) => c.issues), [['#1'], ['#2']]);
   assert.equal(list[0].subject, 'First subject');
+  assert.equal(list[0].authorDate, '2026-08-25T19:00:00+03:00');
   assert.deepEqual(parseRecords('', () => []), []);
 });
 
@@ -679,4 +682,41 @@ test('rule 2 exempts a pipeline review document proven by subject and diff (#305
   });
   assert.equal(isPipelineReviewDocCommit(blind), false);
   assert.equal(checkBranchRule('issue/302-junction-node-material', [blind]).length, 1);
+});
+
+test('rule 10 pins DoR to the commit author date, not to the current label (#311)', () => {
+  const codeAt = (iso) => makeCommit({
+    sha: 'e'.repeat(40), subject: 'feat: work (#266)',
+    body: 'Issue: #266\nUser-Visible: no',
+    files: ['src/houseplan-card.ts'], authorDate: iso,
+  });
+  const timeline = (events) => () => ({ ok: true, events });
+  const ready = [{ label: 'S5-ready', at: '2026-08-25T20:00:00Z' }];
+
+  // Written BEFORE the issue ever reached S5-ready — the violation stays
+  // visible no matter how far the label has advanced since.
+  const early = checkCommitEraStatuses([codeAt('2026-08-25T19:00:00Z')], timeline(ready));
+  assert.equal(early.length, 1);
+  assert.equal(early[0].level, 'fail');
+  assert.equal(early[0].rule, 10);
+
+  // Written after readiness — clean.
+  assert.deepEqual(
+    checkCommitEraStatuses([codeAt('2026-08-25T21:00:00Z')], timeline(ready)), []);
+
+  // Secondary check degrades to a warn without timeline data; rule 8 stays
+  // the fail-closed primary.
+  const blind = checkCommitEraStatuses([codeAt('2026-08-25T19:00:00Z')], () => ({ ok: false }));
+  assert.equal(blind.length, 1);
+  assert.equal(blind[0].level, 'warn');
+  const empty = checkCommitEraStatuses([codeAt('2026-08-25T19:00:00Z')], timeline([]));
+  assert.equal(empty.length, 1);
+  assert.equal(empty[0].level, 'warn');
+
+  // Non-code commits (spec/docs before S5) are legitimate and out of scope.
+  const doc = makeCommit({
+    sha: 'f'.repeat(40), subject: 'docs: spec for #266',
+    body: 'Issue: #266', files: ['docs/specs/266-x.md'], authorDate: '2026-08-25T19:00:00Z',
+  });
+  assert.deepEqual(checkCommitEraStatuses([doc], timeline(ready)), []);
 });

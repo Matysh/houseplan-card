@@ -287,6 +287,16 @@ jobs:
           echo "note=Ветка приведена к dev конвейером до ревью: поверх легло $behind коммит(ов) dev, $short_before -> $short_after. После ребейза это другой код (§7.2) — разбор полный, а не по дельте." >> "$GITHUB_OUTPUT"
           echo "ветка $BRANCH приведена к dev: $short_before -> $short_after"
 
+      # Материал ревью — конкретный SHA (#312). Вердикт применим только к
+      # нему: если во время ревью в ветку прилетит коммит, шаг слияния обязан
+      # это заметить и отказаться, а не молча увезти в dev непроверенный код.
+      - name: Зафиксировать SHA материала ревью
+        id: material
+        if: steps.rebase.outputs.conflict != 'true'
+        run: |
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "материал ревью: $(git rev-parse --short HEAD)"
+
       # Конфликт возвращает задачу автору ДО ревью. Инвариант «после прогона
       # метка меняется всегда» при этом держится: возврат в S6-in-progress —
       # тоже смена метки, и автор не ждёт впустую.
@@ -701,14 +711,42 @@ jobs:
           GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
           BRANCH: ${{ steps.branch.outputs.name }}
           NUM: ${{ github.event.issue.number }}
+          MATERIAL_SHA: ${{ steps.material.outputs.sha }}
         run: |
           if [ -z "$BRANCH" ]; then
             echo "::error::ветки задачи нет — сливать нечего"
             echo "merged=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          git fetch -q origin dev
-          git checkout -q -B merge-into-dev "origin/$BRANCH"
+          git fetch -q origin dev "$BRANCH"
+          # #312: сливается только проверенный код. Допустимые вершины ветки:
+          # сам SHA материала либо он же плюс ровно один коммит публикации
+          # документа ревью (дифф только docs/reviews/). Любой другой коммит —
+          # ветка уехала после ревью, вердикт к ней не применим: возврат в
+          # S6-in-progress через merged=false, как при конфликте.
+          actual=$(git rev-parse "origin/$BRANCH")
+          reviewed="$MATERIAL_SHA"
+          fresh=false
+          if [ "$actual" = "$reviewed" ]; then
+            fresh=true
+          elif [ "$(git rev-parse "$actual^" 2>/dev/null)" = "$reviewed" ] \
+            && [ -z "$(git diff --name-only "$reviewed" "$actual" -- . ':!docs/reviews')" ]; then
+            fresh=true
+          fi
+          if [ "$fresh" != true ]; then
+            echo "merged=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::ветка $BRANCH уехала после проверенного SHA $reviewed (сейчас $actual) — слияние отменено (#312)"
+            cat > /tmp/stale-verdict.md <<EOF
+          **Слияние отменено: ветка изменилась после проверенного материала (#312).**
+
+          Ревью выполнялось на \\`$(git rev-parse --short "$reviewed")\\`, а вершина ветки сейчас \\`$(git rev-parse --short "$actual")\\` — в ней есть коммиты, которых вердикт не покрывает. Зелёный вердикт остаётся в силе только для проверенного SHA.
+
+          Задача переведена в \\`S6-in-progress\\`. Дальше: убедиться, что вершина ветки — именно то, что должно ехать в dev, и вернуть метку \\`S7-code-review\\` — новый заход ревью проверит актуальный код.
+          EOF
+            gh issue comment "$NUM" --repo "${{ github.repository }}" --body-file /tmp/stale-verdict.md
+            exit 0
+          fi
+          git checkout -q -B merge-into-dev "$actual"
           if ! git -c user.name="claude[bot]" \
                    -c user.email="209825114+claude[bot]@users.noreply.github.com" \
                    rebase origin/dev; then
