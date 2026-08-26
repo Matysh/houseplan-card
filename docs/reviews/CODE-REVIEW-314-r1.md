@@ -1,99 +1,111 @@
-# CODE-REVIEW-314-r1
+# CODE-REVIEW-314-r2
 
 Issue: [#314](https://github.com/Matysh/houseplan-card/issues/314) — Model v8: рисование комнат
 отклоняется, draft IDs теряются, возможны ложные перегородки.
+Этап: code (PROCESS.md §2.7).
 
 Ветка: `issue/314-v8-draft-write-regression`. Материал ревью: диапазон
-`origin/dev...HEAD`, вершина `ce18012fb9f3c2addc957f19360a1beb9dbf96f7`
-(`git rev-parse HEAD`, сверено непосредственно перед подведением итогов — §2.7).
-Спека: `docs/specs/314-v8-draft-write-regression.md`. Спек-ревью r1 зелёное,
-High: 0, Medium: 0 (комментарий issue от `claude`, 2026-08-26T05:38:59Z).
-Заход код-ревью: **r1** — первый реальный прогон; две предыдущие попытки
-(06:05:40Z, 06:10:57Z) не состоялись из-за конфликта ребейза на `dev` и не
-расходуют бюджет циклов (код не читался, вердикта не было).
+`origin/dev...HEAD`, вершина `64e9bf8f6b7dca3be5431613875e287b2cecc7be`
+(`git rev-parse HEAD`, сверено непосредственно перед подведением итогов).
 
-## Скоуп
+## Поправка нумерации захода
 
-18 файлов, +1219/-196: `src/houseplan-card.ts`, `src/wall-segment-model.ts`,
-`custom_components/houseplan/validation.py`, новый
-`demo/smoke_v8_draft_write.mjs`, `test/wall-segment-model.test.mjs`,
-`tests_backend/test_wall_segment_model.py`, два мутанта в
-`scripts/mutation-gate.mjs`, документация (`ARCHITECTURE.md`,
-`CONFIG-COMPATIBILITY.md`, `TESTING.md`, оба `CHANGELOG`, `specs/README.md`),
-сгенерированные копии бандла и `docs/images/screenshots.json` (только
-`sourceFingerprint`, `imageSha256` не изменился — визуал не тронут).
+Вводная к этой сессии называла заход **r1** с бюджетом **0/4**. Это не
+соответствует фактическому состоянию issue: в репозитории уже лежит
+`docs/reviews/CODE-REVIEW-314-r1.md` (закоммичен `069c4867`) — это реальный
+завершённый прогон код-ревью с **жёлтым** вердиктом, опубликованным
+комментарием issue в `2026-08-26T06:43:32Z`:
 
-Три коммита класса A/B несут поведение и трейлеры `Issue: #314`; коммит с
-поведением (`2347e8df`, `User-Visible: yes`) правит оба changelog в том же
-коммите. Два後 hoc-коммита (`0e18038c`, `ce18012f`) — правки provenance
-скриншотов и статуса спеки после ребейза, `User-Visible: no`, без
-продуктового кода — проверено чтением diff каждого.
+> Вердикт: жёлтый · заход r1 · блокирующих циклов 1/4 · High: 0 · Medium: 1 → в задаче
+
+Автор ответил хендофф-комментарием `2026-08-26T06:59:45Z` («Code review r1 —
+M1 исправлено» → «Возвращаю в S7 для code review r2») с точным SHA `64e9bf8`.
+Жёлтый вердикт расходует бюджет циклов (§4; зелёный — нет, #227), поэтому
+фактическое состояние — **заход r2, блокирующих циклов израсходовано 1/4**, а
+не 0/4. Действую по фактическому состоянию, а не по (неверной) вводной:
+дальше в этом документе — разбор по дельте (PROCESS.md §2.9), с разделами
+«Закрытие раунда r1» и «Унаследовано из r1». SHA предыдущего вердикта назван
+в самом комментарии (`ce18012f`, подтверждён и в шапке
+`CODE-REVIEW-314-r1.md`) — находки тут нет.
+
+## Скоуп разбора
+
+1. Вердикт r1 и его SHA найдены в issue (см. выше): жёлтый, `ce18012f`,
+   Medium M1 — не хватает обязательного по ТЗ (AC8) исполняемого теста на
+   плотной обезличенной fixture с прогоном `npm run invariants`.
+2. Дельта: `git diff ce18012f..64e9bf8f` — 8 файлов, +452/-20:
+   `demo/fixtures/v8-draft-regression.mjs` (новый, 86 строк), правки
+   `demo/smoke_v8_draft_write.mjs` (+83/-3), `docs/TESTING.md` (+7),
+   `docs/specs/314-v8-draft-write-regression.md` (+7, AC8), плюс перегенерированные
+   `dist/houseplan-card.js` и `custom_components/houseplan/frontend/houseplan-card.js`
+   (байт-в-байт синхронизированы между собой и с текущим `npm run build`,
+   проверено `sha256sum` — совпадают), `docs/images/screenshots.json`
+   (только `sourceFingerprint`, все 10 `imageSha256` не изменились), и
+   собственно `docs/reviews/CODE-REVIEW-314-r1.md` (публикация предыдущего
+   ревью — не продуктовый код).
+3. Дельта не трогает ни одного файла `src/**/*.ts`, ни
+   `custom_components/houseplan/*.py`, ни `tests_backend/**` — она
+   полностью в тестовом/фикстурном/документационном слое. Это подтверждено
+   `git diff ce18012f..64e9bf8f --stat` (список выше) и независимо
+   `node scripts/smoke-select.mjs --base ce18012f --head 64e9bf8f`, который
+   прямо сообщил: «Исполняемого frontend-диффа нет (src/**/*.ts не тронут)».
+4. Дельта локальна: не ребейз на ушедший вперёд `dev` (это тот же топ ветки,
+   `origin/dev` не двигался между раундами — `git merge-base` совпадает),
+   не меняет контракт поведения (контракт §5–§6 спеки не правился, только
+   добавлен абзац AC8 с указанием, где лежит доказательство), не задевает
+   новую подсистему. Полный повторный разбор не требуется: проверяется
+   закрытие M1 и всё, до чего дельта дотягивается — а именно AC8 целиком (обе
+   его половины: «не удаляет» и «не плодит новые violations») и общие
+   гейты, которые дёшевы и гоняются каждый раунд независимо от размера
+   дельты (§2.10).
 
 ## Как проверялось
 
-### Дешёвые гейты (гоняются в каждом раунде, §2.10)
+### Дешёвые гейты — прогнаны заново на актуальном HEAD
 
 | Команда | Результат |
 |---|---|
-| `npx tsc --noEmit` | зелёный |
-| `npm test` | 1336 passed, 1 skipped |
-| `npm run build` + `cmp dist/… custom_components/…` + `bundle:sync` | три копии бандла байт-в-байт идентичны (SHA-256 `29f2d4c7…`) |
-| `node scripts/check-docs.mjs` | «Documentation checks passed (7 files, 10 external links)» — обязателен, diff трогает `src/**` |
+| `npx tsc --noEmit` | зелёный, без вывода |
+| `npm test` | 1336 passed, 1 skipped, 0 failed — совпадает с числом из r1 |
+| `npm run build` | успешно; `sha256sum dist/houseplan-card.js custom_components/houseplan/frontend/houseplan-card.js` — идентичные хеши |
+| `npm run bundle:sync` | зелёный, `git status --porcelain` после — пусто (бандл уже был синхронизирован автором) |
+| `node scripts/check-docs.mjs` | «Documentation checks passed (7 files, 10 external links)» — обязателен, полный `origin/dev...HEAD` трогает `src/**` (правки унаследованы из r1) |
 
-### Смоки — выбор по дельте, не весь набор
+### Смок AC8 — прогнан лично, не со слов автора
 
-`node scripts/smoke-select.mjs --base origin/dev --head HEAD` даёт 46 прямых
-совпадений и 50 слабых (порог «широкого» превышен: 29 символов на
-изменённых строках). Причина раздутого числа прямых совпадений —
-`_frame`/`_modelCache`/`_wallUnionCache`/`_physicalBodiesCache = null` внутри
-нового `_rollbackRejectedPhysicalWrites`: это стандартная идиома
-инвалидации кэша, которая уже встречается по всему файлу, а не признак
-того, что диф действительно затрагивает рендер/юнионы стен/junction-логику.
-Полный прогон 46+ смоков здесь не задача ревью — это предрелизный масштаб.
-Прогнаны сам как ревьюер, независимо от заявленного автором списка:
+`node demo/smoke_v8_draft_write.mjs` → **16/16 checks, OK** (~11 c с учётом
+запуска браузера и двух реальных прогонов `npm run invariants` внутри). Пять
+новых проверок из дельты все `true`:
+`denseFixtureHasOwnerReportShape`, `denseFixtureRoomSurvivesReload`,
+`denseFixturePreservesIndependentGeometry`,
+`denseFixtureKnownDebtIsExplicit`, `denseFixtureAddsNoInvariantViolations`.
 
-| Смок | Результат | Почему выбран |
-|---|---|---|
-| `smoke_v8_draft_write.mjs` (новый) | OK, 11/11 | прямое совпадение, написан для #314 |
-| `smoke_config_writer.mjs` | OK | прямое совпадение, ядро write-serialization |
-| `smoke_lattice_write_barrier.mjs` | OK | прямое совпадение, `_pendingPhysicalWrites` — центральная структура фикса |
-| `smoke_room_autoclose.mjs` | OK | прямое совпадение, AC5 закрывает комнату тем же путём |
-| `smoke_unified_wall_tool.mjs` | OK | прямое совпадение, `_draftSegmentCms`/`_geometryHistory` в цепочке рисования |
-| `smoke_wall_chain_merge.mjs` | OK | прямое совпадение, промоушен draft→partition — риск root cause C |
-| `smoke_save_race.mjs` | OK | прямое совпадение `_reloadConfigOnly`, ровно про очередь записи под конфликт |
-| `smoke_ws_resilience.mjs` | OK | прямое совпадение `_reloadConfigOnly`, отказ WS/восстановление |
+Отдельно проверил вручную, что CLI действительно вычисляет то, что смок
+утверждает, а не что смок просто доверяет своей же обёртке:
 
-Первые шесть — то же, что назвал автор в хендоффе; `smoke_save_race` и
-`smoke_ws_resilience` добавлены мной: они прямо совпадают по
-`_reloadConfigOnly`, который получил новую ветку вызова
-(`_reloadRejectedPhysicalWrite`), и не были явно упомянуты в отчёте автора.
-Остальные 38 прямых и все 50 слабых совпадений не прогонялись — они
-объясняются тем же кэш-инвалидационным идиомом или общими полями
-(`_maybeRebuildDevices`, `_cfgRev` в несвязанных смоках устройств/освещения),
-без содержательной связи с сегментной identity, stale-guard или rollback.
+```
+npm run invariants -- --config <fixture as JSON> --json
+```
 
-`golden:verify` не запускался: визуальный результат не меняется —
-`imageSha256` во всех 10 сценариях `screenshots.json` идентичен дифу,
-только `sourceFingerprint` сдвинулся вслед за `src/**`.
+на выходе ровно один violation — `hidden_obstacles/unusable_draft`,
+`owner: "space-314-dense:draft-314-known-debt"` — байт-в-байт то, что
+проверяет `denseFixtureKnownDebtIsExplicit`. Это реальный вызов канонического
+`scripts/model-invariants.mjs` (`spawnSync('npm', ['run', 'invariants', ...])`
+в самом смоке — не мок, не заглушка), совпадает с текстом AC10 п.15 и
+формулировкой M1 «нужен прогон `npm run invariants` до/после».
 
-### Бэкенд — реально исполнено, не переписано с чужих слов
+Тест умеет падать не декларативно, а по конструкции: `denseFixtureAddsNoInvariantViolations`
+сравнивает строгое JSON-равенство сигнатур находок до/после через
+`checkAll()` (`demo/serve.mjs`), которая при любом `false` выставляет
+`process.exitCode = 1` — появление хотя бы одной новой находки после
+закрытия комнаты немедленно красит смок.
 
-В песочнице изначально не было `homeassistant`; установил его
-(`pip install homeassistant`, кэшированные wheels, ~15 c) и прогнал:
+`smoke-select.mjs` по дельте `ce18012f..64e9bf8f` не выбрал ни одного
+дополнительного браузерного смока (выбирать нечего — дельта не в `src/**`),
+что корректно: сама дельта — это и есть новый/расширенный смок, его я и
+прогнал напрямую.
 
-- `python -m pytest tests_backend/test_wall_segment_model.py -q` →
-  **13 passed** — совпадает с заявленным автором числом;
-- `python -m pytest tests_backend -q --ignore-glob="tests_backend/test_ha_*.py"` →
-  206 passed, 1 skipped, 1 failed. Упавший тест —
-  `test_coordinate_canonicalization.py::test_storage_helpers_are_the_final_canonical_barrier`,
-  падает из-за отсутствия плагина `pytest-asyncio` в этой песочнице
-  (`async def functions are not natively supported`), файл дифом не
-  тронут — не регрессия #314, а гэп окружения.
-- `test_ha_*.py` пропущены офлайн-частью (нет `pytest-homeassistant-custom-component`),
-  как и предупреждает `AGENTS.md`: «зелёный результат без HA ничего не
-  доказывает» — сказано прямо здесь, а не заявлено «verified».
-
-### Мутационные гейты — оба новых мутанта проверены лично
+### Мутационные гейты #314 — оба перепроверены
 
 ```
 node scripts/mutation-gate.mjs --id=v8-draft-sanitation-shifts-segment-identity
@@ -102,159 +114,138 @@ node scripts/mutation-gate.mjs --id=v8-rejected-physical-write-keeps-optimistic-
   → поймано 1 из 1
 ```
 
-### Дисциплина «тест умеет падать» — проверено самостоятельно, не со слов автора
+Второй мутант гоняет «чистый прогон»
+`npm run bundle:sync && node demo/smoke_v8_draft_write.mjs` — значит baseline
+уже включает пять новых dense-fixture проверок и остаётся зелёным на чистом
+коде, а мутация ловится (тест краснеет) с грязным — обе половины дисциплины
+подтверждены.
 
-Спека требует для AC5: «Тест обязан падать на `dev` до исправления». Поднял
-временный `git worktree` на `origin/dev@98a0a24` (до фикса), перенёс туда
-**только** новый `demo/smoke_v8_draft_write.mjs` и `tests_backend/test_wall_segment_model.py`,
-собрал бандл этой (старой) ветки и прогнал:
+### Бэкенд, инварианты проекта, golden — унаследованы из r1 без повторного прогона
 
-- `node demo/smoke_v8_draft_write.mjs` на pre-fix коде →
-  завершается некэймд-исключением (`Cannot read properties of undefined
-  (reading '0')` — `server.spaces[0].room_drafts` пуст, потому что fake WS
-  отверг payload с `v8 draft wall segments require ids` ровно как
-  предсказывает root cause A), exit code 1;
-- `pytest -k "test_current_v8_independent_geometry… or test_downgraded_independent_partition_round_trip_is_hydrated"`
-  на pre-fix `validation.py` → оба падают с
-  `WallModelClientOutdatedError: stored model=8; unchanged wall catalogue` /
-  `submitted model=0` — ровно root cause B.
+Дельта не трогает `custom_components/houseplan/*.py`, `tests_backend/**`,
+`src/**` — доказательства r1 для AC1–AC7, AC9 не могли быть задеты этой
+правкой. `npm run invariants -- --config <export>` на отдельном экспорте
+владельца не прогонялся отдельно — предмет именно этой правки уже покрыт
+реальным вызовом того же CLI внутри `smoke_v8_draft_write.mjs` (см. выше).
+`golden:verify` не прогонялся повторно: `imageSha256` во всех 10 сценариях
+`screenshots.json` не изменились между r1 и r2 (сверено `git diff` по файлу),
+предмета для повторной проверки нет.
 
-Оба падения воспроизводят ровно те симптомы, которые ТЗ приписывает
-исходному багу. Тесты не декоративны.
+## Закрытие раунда r1
 
-### Инварианты модели — не прогонялись, с обоснованием
+| Находка r1 | Чем закрыта | Где это видно |
+|---|---|---|
+| **M1** — ТЗ требует для AC8 исполняемый тест на минимизированной обезличенной fixture формы отчёта владельца (13 комнат/44 wall_segments/24 partitions/1 unusable draft) с прогоном `npm run invariants` до/после; в дифе r1 такого теста не было, только generic-проверка на одном объекте | Добавлена fixture `demo/fixtures/v8-draft-regression.mjs`, воспроизводящая ровно заявленную форму (13/44/24/1, проверено `wallSegments.length !== 44` guard внутри самой fixture и явными счётчиками в новых assertion). `smoke_v8_draft_write.mjs` загружает её, рисует и закрывает новую комнату реальным editor-путём, дважды по-настоящему вызывает `npm run invariants -- --config <snapshot> --json` (до/после) и сравнивает сигнатуры находок строгим равенством | `demo/fixtures/v8-draft-regression.mjs` (весь файл); `demo/smoke_v8_draft_write.mjs` строки с `runInvariants`/`denseFixtureKnownDebtIsExplicit`/`denseFixtureAddsNoInvariantViolations`; лично воспроизведено прогоном смока (16/16) и отдельным ручным вызовом CLI на той же fixture (см. «Как проверялось») |
 
-Диф не трогает вычисление рёбер/толщины (`degradeWalls`, `commitWallSegmentModel`,
-`deterministicWallSegmentId`) и не меняет `layout`/`marker.space`/`open_spans`.
-Правки исчерпываются: (a) сохранением уже существующего client-side
-`draft.segments[].id` при санитации/Undo — сама геометрия точек не
-пересчитывается, дедуп той же функцией `samePoint`, что и раньше; (b) веткой
-сравнения на backend, определяющей, что считать «изменением каталога»; (c)
-атомарным откатом уже существующего `SpaceGeometryState`. Ни один из трёх
-классов дефектов, для которых заведены инварианты (#253 потеря записи
-толщины, #244/#252 неразрешимая ссылка, #258/#259 несовпадение ключа записи
-толщины с ключом решёточного ребра), этой правкой не затрагивается: draft ID
-— клиентский временный идентификатор с префиксом `draft:`, а не решёточный
-ключ. `npm run invariants` сознательно не прогонялся.
+Единственная Medium-находка r1 закрыта буквальным исполняемым тестом, а не
+формальной отпиской: я независимо перезапустил и смок, и сам CLI на той же
+fixture и получил тот же результат, который проверяет assertion.
+
+## Унаследовано из r1
+
+Без повторной проверки в r2 принято по документу
+`docs/reviews/CODE-REVIEW-314-r1.md` (SHA вердикта `ce18012fb9f3c2addc957f19360a1beb9dbf96f7`) —
+дельта r1→r2 не трогает ни один из затронутых файлов:
+
+- **AC1** (ID переживают sanitation) — `test/wall-segment-model.test.mjs` +
+  backend schema fixture, прогнаны в r1, код `_dropLegacySegments()` не
+  менялся.
+- **AC2** (Undo сохраняет lineage) — `smoke_v8_draft_write.mjs:successfulWriteHasStableIds`,
+  прогнан повторно в составе моего перезапуска смока (16/16), логика `_undoPoint()` не менялась.
+- **AC3** (валидные independent writes не stale) — backend parametrized
+  tests, прогнаны в r1 (`test_current_v8_independent_geometry_does_not_require_contour_catalog_change`
+  и др.), `validation.py` дельтой не тронут.
+- **AC4** (настоящий stale writer остаётся закрыт) — backend negative tests,
+  прогнаны в r1 (13/13 в `test_wall_segment_model.py`), файл не менялся.
+- **AC5** (комната сохраняется end-to-end) — `smoke_v8_draft_write.mjs`
+  основной сценарий, лично подтверждено падение на pre-fix `dev@98a0a24` в
+  r1 (worktree-эксперимент), продуктовый код `_writeConfig()` не менялся.
+- **AC6/AC7** (rollback rejected write, серийная очередь F1/F2) —
+  `rejectionRollsBackSynchronously`/`successQueueRetainsF2` и построчный разбор
+  `_rollbackRejectedPhysicalWrites()`/`_pendingPhysicalWrites` в r1, код не
+  менялся.
+- **AC9** (совместимость/View/touch) — `imageSha256` не изменились (проверено
+  и в r2), backend compatibility tests из r1 не затронуты дельтой.
+- **AC10** (документация и локальный гейт) — RU/EN changelog обновлены в
+  коммите `2347e8df` (`User-Visible: yes`) ещё в r1; в r2 дополнительно
+  обновлён `docs/TESTING.md` (сам предмет этого раунда) — см. выше.
+- **Трейлеры и changelog** — `2347e8df` (`User-Visible: yes`) правит оба
+  changelog в том же коммите, ‑ подтверждено в r1 и не переоткрывалось. Новый
+  коммит раунда `64e9bf8f` — `User-Visible: no`, поведения не меняет
+  (тест/фикстура/документация), changelog ему не нужен — проверил трейлеры
+  напрямую (`git show -s --format=%B 64e9bf8f`).
 
 ## Находки
 
-### Medium (в скоупе, чинится в этом issue) — M1: не поставлен обязательный тест AC8
+Ни одной High или Medium-находки не обнаружено. Одно наблюдение без статуса
+находки:
 
-**Файл:** `docs/specs/314-v8-draft-write-regression.md` (контракт) vs
-отсутствие соответствующего теста в дифе.
+Мой прогон `npm test` дал **1336 passed, 1 skipped** (дважды подряд,
+детерминированно) — тем же числом, что и в r1. Хендофф-комментарий автора
+после исправления M1 заявляет «1335 passed, 2 skipped». Разница — не
+регрессия: оба пропускаемых теста в проекте условны и зависят от окружения
+(`test/process-gate.test.mjs` — доступность `git`/`gh`-стаба;
+`test/resize-optimize.test.mjs` — наличие приватной fixture #281), значит
+дополнительный skip у автора — вопрос локального окружения, а не кода. Не
+завожу как Low: 0 failed в обоих случаях, число и причина расхождения
+объяснимы существующими условными `t.skip()` в этих же двух файлах, которые
+дельтой не тронуты.
 
-Раздел «Обязательные регрессионные тесты» реви́юенного (зелёного) ТЗ прямо
-требует:
-
-> минимизированная обезличенная fixture из отчёта владельца: исправление не
-> меняет существующие намеренные стены и не создаёт новых invariant
-> violations.
-
-AC8 называет способ доказательства «model-invariant unit + review кода».
-В дифе нет ни одной синтетической fixture в форме отчёта владельца (13
-комнат / 44 wall_segments / 24 partitions / 1 draft с уже существующим
-`unusable_draft`), и нигде в новых тестах не вызывается
-`npm run invariants` / модуль `scripts/model-invariants.mjs` — я проверил
-это `grep` по всему дифу, совпадений нет. Единственный имеющийся прокси —
-блок `sanitationPreservesExistingIndependentObjects` в
-`demo/smoke_v8_draft_write.mjs`: это синтетическая пара «одна intentional
-partition + один intentional draft», подтверждающая, что `_dropLegacySegments()`
-их не роняет, но она не воспроизводит масштаб/плотность реального отчёта и
-не считает инварианты вообще — только присутствие ID.
-
-**Почему это не «нашёл к чему придраться»:** сама спека ставит именно этот
-тест в раздел «Обязательные», и спек-ревью r1 прошло по контракту, где этот
-пункт уже был. Раз AC8 не имеет требуемого автотеста, по §2.7 остаётся
-только «проверено чтением, не исполнением» — и чтением я могу подтвердить
-первую половину claim (существующая логика фильтрации/дедупа `partitions`
-и `wall_columns` в `_dropLegacySegments()` дифом не тронута, значит
-персистентные объекты не удаляются новым кодом), но не вторую («не создаёт
-новых invariant violations» на реалистично плотном плане) — это по природе
-эмпирическое утверждение, а не то, что можно установить чтением diff'а.
-Риск невысокий (никакая изменённая ветка не пишет геометрию заново), но
-контракт, под который заведено зелёное ревью ТЗ, не выполнен буквально.
-
-**Воспроизведение отсутствия:** `git diff origin/dev...HEAD | grep -i invariant`
-даёт только упоминания в тексте спеки/спек-ревью, ни одного исполняемого
-вызова.
-
-**Что нужно:** синтетическая (обезличенная) fixture с формой отчёта
-владельца — несколько комнат, независимые partitions, один заведомо
-`unusable_draft` — и тест/скрипт-прогон `npm run invariants` до/после
-операции «нарисовать и закрыть новую комнату», сравнивающий число findings.
-Либо, если автор считает это избыточным против уже имеющегося покрытия
-(AC5–AC7 через `smoke_v8_draft_write.mjs` косвенно проверяют тот же риск
-через `rejectionCannotCreateGhostPartition`), явно снять пункт из ТЗ по
-согласованию — но не оставлять расхождение между зелёным спек-ревью и
-не выполненным пунктом молча.
-
-Других High/Medium/Low находок нет.
-
-## Проверка AC — сводно
+## Проверка AC — сводно (только то, что задела дельта)
 
 | AC | Доказательство | Статус |
 |---|---|---|
-| AC1 (ID переживают sanitation) | `test/wall-segment-model.test.mjs` unit + `tests_backend` schema, оба прогнаны | подтверждён |
-| AC2 (Undo сохраняет lineage) | `smoke_v8_draft_write.mjs: successfulWriteHasStableIds`, прогнан | подтверждён |
-| AC3 (валидные independent writes не stale) | `test_current_v8_independent_geometry_does_not_require_contour_catalog_change`, прогнан, падает на pre-fix | подтверждён |
-| AC4 (настоящий stale writer блокируется) | 3 сохранённых негативных backend-теста, прогнаны в составе 13/13 | подтверждён |
-| AC5 (комната сохраняется end-to-end) | `smoke_v8_draft_write.mjs`, реальный click/close/reload путь; лично проверено падение на pre-fix `dev` | подтверждён |
-| AC6 (rejected write не оставляет transient geometry) | `rejectionRollsBackSynchronously`/`rejectionCannotCreateGhostPartition`, прогнаны; код `_rollbackRejectedPhysicalWrites` прочитан построчно | подтверждён |
-| AC7 (успешная очередь не теряет новую команду) | `successQueueIsSerialized`/`successQueueRetainsF2`, прогнаны; логика earliest-`before`/selective-fingerprint-очистки прослежена по коду вручную (F1/F2 сценарий) | подтверждён |
-| AC8 (данные владельца не чистятся молча) | частично: код-ревью подтверждает «не удаляет», «не плодит новые violations» не доказано автотестом | **см. M1**, дочитано, не подтверждено полностью |
-| AC9 (совместимость/View/touch) | `imageSha256` неизменны, compatibility-тесты в составе 206 backend passed, UI-веток в дифе нет (grep по `render`/`html\`` в патче пуст вне уже обсуждённых мест) | подтверждён |
-| AC10 (документация и локальный гейт) | все команды выше зелёные, `ARCHITECTURE/CONFIG-COMPATIBILITY/TESTING/CHANGELOG×2` обновлены в том же коммите | подтверждён |
+| AC8 (данные владельца не чистятся молча, включая «не плодит новые invariant violations» на реалистичной плотности) | `demo/fixtures/v8-draft-regression.mjs` + `smoke_v8_draft_write.mjs` (`denseFixture*` группа, 5/5 checks); лично перезапущен смок и отдельно CLI `npm run invariants` на той же fixture | **подтверждён полностью** (в r1 была подтверждена только первая половина чтением, вторая — предмет M1) |
+
+Остальные девять AC — «Унаследовано из r1» выше.
 
 ## Что проверено чтением, не исполнением
 
-- Полная логика `_writeConfig()`/`_rollbackRejectedPhysicalWrites()` для
-  сценария «F1 в полёте, F2 создан локально, F1 отклонён» — прослежена по
-  ссылкам объектов в `Map`, подтверждено, что `strictEntries` держит старую
-  ссылку, а `_pendingPhysicalWrites.get()` во время отката возвращает
-  актуальную запись с исходным (earliest) `before` — откатываются обе
-  команды на общую базу, как требует AC7. Смоковый сценарий это же
-  подтверждает эмпирически (см. таблицу выше), чтение было для проверки
-  «почему», а не единственным доказательством.
-- `_restoreGeometryStateInConfig()` (не новый код, не в дифе) — подтверждено,
-  что при вызове без `preserveIdentityHints` (как в новом rollback-пути) он
-  делает полную замену полей геометрии, а не merge — соответствует
-  «восстановить earliest snapshot» из §6.3.
-- `_cancelPath()` vs `_clearGeometryGesture()`: в rollback-пути используется
-  именно `_clearGeometryGesture()`, которая (в отличие от `_cancelPath()`) не
-  кладёт отклонённый `_activeDraftId` в `_resumeDraftBySpace` для
-  последующего «возобновления рисования» — иначе отвергнутый draft мог бы
-  быть предложен пользователю повторно тем же ID. Это осознанный и
-  правильный выбор, не описанный явно в тексте спеки, но соответствующий
-  её духу (п. 3 §6.3: «Undo или смена инструмента не могли воскресить
-  отклонённый draft»).
-- Backend-проекции `_catalog_coupled_wall_geometry_projection` /
-  `_wall_catalog_projection`: построчно сверены со спекой §5.1/§5.2,
-  расхождений нет.
+- `demo/fixtures/v8-draft-regression.mjs`: корректность формы (13 комнат ×
+  4 стены с одним разрезанным верхним ребром у первых четырёх = 44
+  catalogue walls) проверена подсчётом по коду генератора и внутренним
+  guard'ом `if (wallSegments.length !== 44) throw`, который сам себя
+  проверяет при каждом запуске смока — не только чтением, но и исполнением
+  (смок прогнан).
+- Диагональные `partitions` в fixture (`b: point(x + 8, y + 2)`, не
+  axis-aligned) — прочитано и подтверждено исполнением: реальный вызов
+  `npm run invariants` на этой fixture не даёт никаких находок про них
+  (единственная находка — заранее известный `unusable_draft`), значит для
+  целей этого теста (fake-WS смок, не backend-schema round-trip) форма
+  геометрична допустима.
 
 ## Чего не проверял
 
-- `npm run invariants` — не прогонялся, см. обоснование выше и находку M1.
-- `npm run golden:verify` — не прогонялся: визуальный вывод не меняется
-  (byte-equal `imageSha256`), AC9 явно говорит «не меняют визуальный
-  результат», основание не «пропуск», а отсутствие предмета проверки.
-- Полный набор `demo/smoke_*.mjs` (192 файла) и «слабые связи» (50 файлов из
-  вывода `smoke-select.mjs`) — не прогонялся; это предрелизный масштаб
-  (§8), выбраны только прямые совпадения с содержательной связью к дифу
-  (см. таблицу «Как проверялось»).
+- `tests_backend/**`, `python -m pytest` — не прогонял повторно: дельта
+  r1→r2 не касается `custom_components/houseplan/*.py` ни одной строкой;
+  результат r1 (206 passed, 1 skipped, 1 не связанный с #314 fail из-за
+  отсутствия `pytest-asyncio` в песочнице) наследуется без изменений.
+- `npm run invariants -- --config <реальный экспорт владельца>` отдельной
+  командой — не запускал: сырой экспорт владельца недоступен в этой сессии
+  и не должен коммититься (см. спека §3); тот же CLI на той же по форме
+  синтетической fixture уже реально исполнен дважды (мной и внутри смока).
+- `npm run golden:verify` — не прогонялся: `imageSha256` неизменны между r1
+  и r2, предмета для проверки нет (AC9 явно требует «не меняют визуальный
+  результат»).
+- Полный набор `demo/smoke_*.mjs` — не прогонялся: дельта не в `src/**`,
+  `smoke-select.mjs` по дельте `ce18012f..64e9bf8f` не выбрал ни одного
+  дополнительного файла; смок, который и есть предмет этого раунда, прогнан
+  напрямую.
 - `tests_backend/test_ha_*.py` — недоступны без
-  `pytest-homeassistant-custom-component`, канон для них — Linux CI.
-- Performance-профили — не названы в AC, диф не в горячем пути рендера.
-- Реальный экспорт владельца (13 комнат/44 сегмента/24 partitions) —
-  недоступен в этой сессии и не должен коммититься сырым; именно его
-  отсутствие как обезличенной fixture — предмет M1.
+  `pytest-homeassistant-custom-component`, канон для них — Linux CI;
+  дельта их не касается.
+- Performance-профили — не названы в AC, дельта не в горячем пути рендера
+  (только тестовый код).
 
 ## Итог
 
-High: 0. Medium: 1, в скоупе задачи (M1 — отсутствует обязательный по ТЗ
-регрессионный тест AC8 на реалистичной обезличенной fixture с проверкой
-инвариантов). Все остальные девять AC подтверждены прогнанными автотестами
-или отслеживаемым по коду рассуждением; для двух самых рискованных
-сценариев (AC3, AC5) лично воспроизведено падение на pre-fix `dev`.
-Вердикт — жёлтый: без High это возврат автору на доработку в рамках
-текущего issue, не новый issue (#202).
+High: 0. Medium: 0. Единственная Medium-находка r1 (M1 — отсутствие
+обязательного по ТЗ исполняемого теста AC8 на плотной fixture с реальным
+прогоном `npm run invariants`) закрыта буквально: новая fixture нужной формы,
+расширенный смок, лично перезапущенный и подтверждённый независимым ручным
+вызовом того же CLI. Все десять AC подтверждены (девять унаследованы из
+зелёной части r1, AC8 переподтверждён полностью в этом раунде). Дешёвые
+гейты (`tsc`, `test`, `build`+bundle-sync, `check-docs`) зелёные на
+актуальном HEAD, оба мутанта #314 пойманы.
+
+Вердикт: зелёный · заход r2 · блокирующих циклов 1/4 · High: 0 · Medium: 0
