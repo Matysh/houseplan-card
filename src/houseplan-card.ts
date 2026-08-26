@@ -11971,9 +11971,14 @@ class HouseplanCard extends LitElement {
       for (let i = 0; i + 1 < draft.points.length; i++) {
         const a = [draft.points[i][0], draft.points[i][1]];
         const b = [draft.points[i + 1][0], draft.points[i + 1][1]];
+        // Zero is a legitimate stored value («Empty / 0 leaves the new wall
+        // thin», docs/WALL-THICKNESS.md §6) — only a MISSING record falls
+        // back to the drawing default. `|| 15` would silently turn a stored
+        // 0 into 15 on Apply (CODE-REVIEW-313-r1 High).
+        const rawCm = Number(draft.segments[i]?.cm);
         offer({
           a, b, roomId: '', segs: [[a[0], a[1], b[0], b[1]]],
-          open: false, cm: Number(draft.segments[i]?.cm) || 15,
+          open: false, cm: Number.isFinite(rawCm) ? rawCm : 15,
           source: { kind: 'draft', id: draft.id, segment: i },
         }, distToSegment(raw, [a[0], a[1], b[0], b[1]]), true);
       }

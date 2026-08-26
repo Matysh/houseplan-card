@@ -104,8 +104,17 @@ test('#278 production source routes physical writers through one barrier and dec
     'physical_move', 'resize_room', 'close_boundary', 'open_boundary', 'wall_thickness',
     'move_opening', 'delete_opening', 'merge_rooms', 'contour_to_partitions',
   ]) {
-    assert.match(source, new RegExp(`_commitPhysicalGeometry\\(this\\._t\\('history\\.${historyKey}'`), historyKey);
+    // The pattern tolerates a line break after the opening parenthesis: a
+    // wrapped call must not slip past the barrier check (CODE-REVIEW-313-r1).
+    assert.match(source,
+      new RegExp(`_commitPhysicalGeometry\\(\\s*this\\._t\\('history\\.${historyKey}'`), historyKey);
   }
+  // #313 introduced a second thickness commit point (independent masonry).
+  // BOTH must go through the barrier: replacing either with _recordGeometry
+  // reduces the count and reddens this line.
+  assert.equal(
+    (source.match(/_commitPhysicalGeometry\(\s*this\._t\('history\.wall_thickness'/g) || []).length,
+    2, 'both thickness writers route through the common barrier');
   assert.match(source, /_commitPhysicalGeometry\([\s\S]{0,160}history\.edit_opening/);
   assert.match(source, /_commitPhysicalGeometry\([\s\S]{0,160}history\.split_room/);
   assert.match(source, /_recordGeometry\(this\._t\('history\.decor_edit'/);

@@ -20,7 +20,8 @@ const out = await page.evaluate(async () => {
       // exact duplicate over the room's top edge — the #308 layout
       { id: 'overlay', a: [0.1, 0.1], b: [0.5, 0.1], cm: 30 },
     ],
-    room_drafts: [{ id: 'saved-draft', points: [[0.6, 0.5], [0.9, 0.5]], segments: [{ cm: 12 }] }],
+    room_drafts: [{ id: 'saved-draft', points: [[0.6, 0.5], [0.9, 0.5], [0.9, 0.7]],
+      segments: [{ cm: 12 }, { cm: 0 }] }],
   }], markers: [], settings: {} };
   card._layout = {}; card._space = 'wt'; card._modelCache = null; card._frame = null;
   card._cfgEpoch++; card._setMode('plan'); card._tool = 'wallthick'; await update();
@@ -52,6 +53,15 @@ const out = await page.evaluate(async () => {
   card._wallDialog = { ...card._wallDialog, value: '18' };
   card._wallThickApply(false); await update();
   result.draftWritten = sp().room_drafts[0].segments[0].cm === 18;
+  // CODE-REVIEW-313-r1 High: a STORED zero must surface as zero (empty field),
+  // and Apply without editing must refuse — never silently turn 0 into 15.
+  const zeroSegHit = card._wallThickHit([0.9 * NORM_W, 0.6 * NORM_W]);
+  result.zeroSegmentSurvives = zeroSegHit?.source?.kind === 'draft' && zeroSegHit.cm === 0;
+  card._wallThickClick([0.9 * NORM_W, 0.6 * NORM_W]); await update();
+  result.zeroSegmentFieldEmpty = card._wallDialog?.value === '';
+  card._wallThickApply(false); await update();
+  result.zeroSegmentNotCorrupted = sp().room_drafts[0].segments[1].cm === 0;
+  card._wallDialog = null; await update();
   // 4) #308 overlap: the independent wall owns the hit
   const overlapHit = card._wallThickHit([0.3 * NORM_W, 0.1 * NORM_W]);
   result.overlapPrefersIndependent = overlapHit?.source?.kind === 'partition'
