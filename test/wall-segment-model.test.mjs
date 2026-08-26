@@ -473,6 +473,22 @@ test('an opening with no usable carrier migrates unhosted and survives later wri
   assert.equal(JSON.stringify(again), JSON.stringify(out));
 });
 
+test('a far same-angle wall is NOT a degraded carrier — the opening migrates unhosted (#316 H1)', () => {
+  // CODE-REVIEW-316-r1 H1: a host away from the opening's own x/y would break
+  // the backend geometry-match invariant and wedge the write on the schema
+  // layer. The opening must therefore stay unhosted, not adopt a distant wall.
+  const config = spanDoorConfig();
+  config.spaces[0].openings[0] = {
+    id: 'far', type: 'door', x: 0.4, y: 0.45, angle: 0, length: 0.09, cm: 90,
+  };
+  delete config.spaces[0].open_spans;
+  const out = commitWallSegmentModel(structuredClone(config)).config;
+  const opening = out.spaces[0].openings[0];
+  assert.equal('host' in opening, false, 'no distant fallback host');
+  const again = commitWallSegmentModel(structuredClone(out)).config;
+  assert.equal(JSON.stringify(again), JSON.stringify(out));
+});
+
 test('a post-v9 write that LOST its carrier keeps the fail-closed refusal (#316 AC5)', () => {
   const migrated = commitWallSegmentModel(spanDoorConfig()).config;
   const broken = structuredClone(migrated);

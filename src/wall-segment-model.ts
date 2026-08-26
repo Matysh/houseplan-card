@@ -690,15 +690,12 @@ const migrateRoomOpeningHost = (
       || (x.id < y.id ? -1 : x.id > y.id ? 1 : 0)
     ))[0];
   };
-  // §3.3 degraded pool: angle- and capacity-compatible positive walls at any
-  // distance, nearest first.
-  const degraded = segments.filter((segment) => (
-    Number(segment.cm) > 0
-    && wallAngleMatches(segment.a, segment.b, Number(opening.angle))
-    && Number.isFinite(half) && half >= 0
-    && lengthOf(segment.a, segment.b) + EPS >= Number(opening.length)
-  ));
-  const host = pick(eligible) ?? pick(degraded);
+  // §3.3 (CODE-REVIEW-316-r1 H1): no distant fallback pool. A host away from
+  // the opening's own x/y would violate the backend geometry-match invariant
+  // («wall opening geometry must match its host») and wedge the write on the
+  // schema layer — the very failure mode #316 removes. An opening without an
+  // in-place carrier goes straight to the unhosted degraded state.
+  const host = pick(eligible);
   if (!host) return null;
   return {
     kind: 'wall', id: host.id,

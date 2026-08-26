@@ -592,15 +592,12 @@ def _host_openings(
                 str(segment.get("id", "")),
             ))[0]
 
-        # #316 §3.2 tie-break, then the §3.3 degraded pool (angle- and
-        # capacity-compatible positive walls at any distance, nearest first).
-        degraded = [segment for segment in segments if (
-            float(segment.get("cm", 0)) > 0
-            and _angle_matches(segment["a"], segment["b"], angle)
-            and half >= 0
-            and _length(segment["a"], segment["b"]) + EPS >= half * 2
-        )]
-        carrier = pick([segment for segment in segments if eligible(segment)]) or pick(degraded)
+        # #316 §3.2 tie-break. No distant fallback pool (CODE-REVIEW-316-r1
+        # H1): a host away from the opening's own x/y would violate the
+        # geometry-match invariant of CONFIG_SCHEMA and wedge the write on the
+        # schema layer; without an in-place carrier the opening goes straight
+        # to the unhosted degraded state.
+        carrier = pick([segment for segment in segments if eligible(segment)])
         if carrier is not None:
             materialize(carrier)
         else:

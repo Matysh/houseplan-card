@@ -10,7 +10,9 @@ import pytest
 
 from custom_components.houseplan.validation import (
     CONFIG_SCHEMA,
+    PartitionOpeningHostError,
     WallModelClientOutdatedError,
+    validate_partition_opening_hosts,
     validate_wall_model_transition,
 )
 from custom_components.houseplan.wall_segment_model import (
@@ -444,3 +446,53 @@ def test_post_v9_write_that_lost_its_carrier_keeps_the_refusal() -> None:
     }]
     with pytest.raises(WallSegmentMigrationError, match="opening-host"):
         commit_wall_segment_model(base)
+
+
+def test_far_same_angle_wall_is_not_a_degraded_carrier() -> None:
+    """CODE-REVIEW-316-r1 H1: a distant host would break the schema invariant
+    «wall opening geometry must match its host» and wedge the write again.
+    The opening must migrate unhosted and the migrated document must pass
+    CONFIG_SCHEMA."""
+    base, _ = commit_wall_segment_model(_config({
+        "id": "floor", "rooms": [_room("room")],
+    }))
+    space = base["spaces"][0]
+    for segment in space["wall_segments"]:
+        segment["cm"] = 15
+    space["walls"] = [{
+        "key": f"legacy-{index}", "a": copy.deepcopy(segment["a"]),
+        "b": copy.deepcopy(segment["b"]), "cm": 15,
+    } for index, segment in enumerate(space["wall_segments"])]
+    # Same angle as the bottom wall (y=0), but far away from every wall.
+    space["openings"] = [{
+        "id": "far", "type": "door", "x": 0.5, "y": 0.5,
+        "angle": 0, "length": 0.2,
+    }]
+    base["model_version"] = 8
+    migrated, _ = commit_wall_segment_model(base)
+    opening = migrated["spaces"][0]["openings"][0]
+    assert "host" not in opening
+    validated = CONFIG_SCHEMA(copy.deepcopy(migrated))
+    assert "host" not in validated["spaces"][0]["openings"][0]
+    assert commit_wall_segment_model(migrated)[0] == migrated
+
+
+def test_dropping_a_partition_host_is_still_rejected_after_the_unhosted_relaxation() -> None:
+    """CODE-REVIEW-316-r2 M2: the schema now tolerates a missing host (the
+    unhosted contour state of #316 §3.3), so the #132 protection against a
+    stale writer silently dropping a PARTITION host must keep holding on the
+    semantic layer — pinned here so a future relaxation cannot slip through.
+    """
+    base, _ = commit_wall_segment_model(_config({
+        "id": "floor", "rooms": [_room("room")],
+        "partitions": [{"id": "p1", "a": [0.2, 0.5], "b": [0.8, 0.5], "cm": 10}],
+        "openings": [{
+            "id": "pdoor", "type": "door", "x": 0.5, "y": 0.5,
+            "angle": 0, "length": 0.2,
+            "host": {"kind": "partition", "id": "p1", "t": 0.5},
+        }],
+    }))
+    stale = copy.deepcopy(base)
+    del stale["spaces"][0]["openings"][0]["host"]
+    with pytest.raises(PartitionOpeningHostError):
+        validate_partition_opening_hosts(stale, base)
