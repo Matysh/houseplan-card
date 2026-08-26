@@ -2,7 +2,7 @@
   "schema": 1,
   "matrixVersion": 46,
   "acceptedAt": "2026-08-26T07:07:19.995Z",
-  "sourceFingerprint": "2bd6abd8fa9674748b19b3ae12d65e093d804d4d9e4f0294e3fbdd6773effaab",
+  "sourceFingerprint": "b89040573ef8a8f6e1088d115b634f50ed7169240c5cf7e745d6287fce83980e",
   "chromium": "151.0.7922.34",
   "scenarios": {
     "hidden-wall-diagnostics-plan-light": "6470ed8b09b21144ec1399389e9a57774e977a6473b8eaa7de7e9b5df3273f21",
