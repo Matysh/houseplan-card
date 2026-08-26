@@ -349,8 +349,8 @@ identity barrier #282 и только затем этот алгоритм; от
    fallback `dashed` применяется ко всем `cm:0`. Это намеренно может изменить
    вид и свет старых bodyless-физических осей после обновления.
 10. Прогнать geometry preflight, model invariants и backend schema. При
-    превышении 500 `wall_segments[]` или любого лимита отказать целиком;
-    усечение запрещено.
+    превышении `MAX_WALL_SEGMENTS` (сейчас 200 000) или любого другого
+    актуального backend-лимита отказать целиком; усечение запрещено.
 11. При записи установить `model_version: 9`. Повторный запуск возвращает no-op.
 
 ### 10.1 Когда выполняется write
@@ -420,7 +420,8 @@ write не поддерживается. До первой структурно�
 - Runtime projection, wall-role index, light barriers и render geometry
   fingerprint/cache включают `space id + geometry revision + zero_wall_style`.
 - Смена HA state не пересобирает wall atoms, connectivity или sun barriers.
-- Лимит записей остаётся 500; результат не truncates.
+- Лимит authoritative-каталога остаётся равен backend-константе
+  `MAX_WALL_SEGMENTS` (сейчас 200 000); результат не truncates.
 - Benchmark на large-house fixture сравнивает v8 compatibility projection и v9 canonical:
   p95 построения barrier/first render не должен регрессировать более чем на 10%,
   steady HA-state render — более чем на 5% относительно baseline ветки.
@@ -601,8 +602,8 @@ space мигрирует его в той же CAS transaction.
 Optimize preview показывает counts и мигрирует все spaces после Confirm; one-deep
 Undo возвращает исходные v8/legacy data в сессии. Full/space v8 или более старый
 import создаёт v9 candidate через последовательные identity и zero-wall barriers.
-Лимит 500, invalid span, opening conflict или revision conflict отклоняет весь
-candidate без truncation/partial apply.
+Превышение любого актуального backend-лимита, invalid span, opening conflict
+или revision conflict отклоняет весь candidate без truncation/partial apply.
 
 **Доказательство:** optimizer unit, `tests_backend/test_ha_import_export.py`,
 `tests_backend/test_validation.py`, browser backup transfer smoke.
