@@ -70,28 +70,26 @@ test('chainSegmentCms gives the live rubber-band the current field value (#234)'
   assert.deepEqual(chainSegmentCms(3, [30, undefined], null, 15), [30, 30, 30]);
 });
 
-test('chainSegmentCms treats only strictly positive records as valid (#234)', () => {
-  // Прежняя wallChainSegments считала записанный 0 валидным; через UI ноль
-  // недостижим (1..100 см), но в старом черновике лежать может.
-  assert.deepEqual(chainSegmentCms(3, [0, 30, 0], 25, 15), [25, 30, 25]);
+test('chainSegmentCms preserves zero wall records (#234, #306)', () => {
+  assert.deepEqual(chainSegmentCms(3, [0, 30, 0], 25, 15), [0, 30, 0]);
   assert.deepEqual(chainSegmentCms(4, [NaN, -5, null, 'x'], 18, 15), [18, 18, 18, 18]);
   assert.deepEqual(chainSegmentCms(2, [Infinity, 40], 18, 15), [18, 40]);
 });
 
-test('chainSegmentCms always returns exactly segmentCount positive numbers (#234)', () => {
+test('chainSegmentCms always returns exactly segmentCount valid wall numbers (#234, #306)', () => {
   // Инвариант: длина результата равна числу отрезков при любом входе — именно
   // его отсутствие и позволяло массиву разъехаться с путём.
   for (const count of [0, 1, 5]) {
     for (const recorded of [[], [30], [30, 30, 30, 30, 30, 30, 30], [null, 0, NaN]]) {
       const out = chainSegmentCms(count, recorded, 20, 15);
       assert.equal(out.length, count);
-      assert.ok(out.every((cm) => typeof cm === 'number' && cm > 0), JSON.stringify(out));
+      assert.ok(out.every((cm) => typeof cm === 'number' && cm >= 0), JSON.stringify(out));
     }
   }
   // Мусор в самих аргументах длины и дефолта не роняет резолвер.
   assert.deepEqual(chainSegmentCms(-1, [30], 20, 15), []);
   assert.deepEqual(chainSegmentCms(2, [30], null, NaN), [30, 30]);
-  assert.deepEqual(chainSegmentCms(2, null, null, null), [1, 1]);
+  assert.deepEqual(chainSegmentCms(2, null, null, null), [0, 0]);
 });
 
 test('wallChainSegments owns no fallback of its own (#234)', () => {

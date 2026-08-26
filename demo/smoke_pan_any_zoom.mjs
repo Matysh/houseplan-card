@@ -49,7 +49,7 @@ Object.assign(out, await page.evaluate(async () => {
   };
 
   await inMode('view', async () => { c._setMode('view'); });
-  for (const tool of ['draw', 'merge', 'split', 'resize', 'opening', 'boundary', 'delroom']) {
+  for (const tool of ['draw', 'merge', 'split', 'resize', 'opening', 'wallthick', 'delroom']) {
     await inMode('plan_' + tool, async () => { c._setMode('plan'); c._tool = tool; });
   }
   await inMode('devices', async () => { c._setMode('devices'); });

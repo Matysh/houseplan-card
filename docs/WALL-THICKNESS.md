@@ -15,7 +15,7 @@ Code: `src/wall-thickness.ts`, render in `src/houseplan-card.ts` /
 
 ## 1. Model
 
-### Stable stored identity (model v8, #282)
+### Stable stored identity and zero walls (model v9, #282/#306)
 
 From model v8 every atomic room-wall interval has a stable record in
 `space.wall_segments[]`. Its `id`, endpoints and `cm` are authoritative;
@@ -26,14 +26,13 @@ on a room wall stores a tagged `{kind:'wall', id, t}` host. Independent
 partitions keep their existing stable IDs, and unfinished draft segments receive
 IDs which survive promotion to a room wall or partition.
 
-Existing v7 plans are not rewritten on read. The model is materialised
+Existing legacy plans are not rewritten on read. The model is materialised
 atomically before the first structural edit, by **Optimize plans**, or when a
-v7 plan is imported into a v8 target. Ambiguous or conflicting geometry blocks
+legacy plan is imported into a current target. Ambiguous or conflicting geometry blocks
 the operation and leaves the stored plan unchanged. Ordinary settings and
-presentation writes do not trigger the migration. A zero-centimetre atom is an
-internal representation of the existing non-physical contour interval; #282
-does not expose zero-thickness drawing and does not replace the current virtual
-boundary model.
+presentation writes do not trigger the migration. Model v9 makes `cm:0` a
+public, canonical wall value for contour atoms, drafts and independent walls.
+There is no separate virtual-boundary entity or editor tool.
 
 Every structural writer passes through the same wall-model barrier. A split
 keeps the parent ID on the child containing the old midpoint (then the old first
@@ -45,7 +44,7 @@ Per space: `walls: [{ key, cm, a?, b? }]`. `key` remains the quantised midpoint
 and direction (modulo 180°) compatibility lookup; new or rewritten entries also
 carry exact endpoints `a` / `b` in normalised plan coordinates. Config always
 stores centimetres. Old `{key, cm}` data remains readable and is upgraded when
-the affected boundary is edited. Open boundaries refuse thickness. One physical
+the affected boundary is edited. One physical
 stretch has one thickness (atomic collinear spans when neighbours overlap only
 partially). For valid plan geometry, **the key is computed from lattice-stable
 endpoints**, never from a storage-rounded approximation of the same node.
@@ -69,12 +68,12 @@ grades a different stored key as an observation, not a violation: valid exact
 endpoints now prove that the record is resolvable even when its compatibility
 key is old or unparsable. Exact endpoints make a thickness boundary independent of whichever
 room topology later happens to split the same straight line. Normalisation
-merges consecutive solid pieces only inside a maximal run of equal thickness
+merges consecutive pieces only inside a maximal run of equal thickness
 with the same physical ownership: one outer room or the same sorted pair of
-shared rooms. A different thickness, virtual gap, outer/shared transition or
-change of shared-room pair remains a real break. Likewise,
-touching/overlapping `open_spans` of the same room pair are stored as one span;
-pair ownership remains a hard boundary so Split can derive exact `open_to` links.
+shared rooms. A different thickness, outer/shared transition or change of
+shared-room pair remains a real break. Adjacent zero atoms follow the same
+role-aware compaction; canonical model v9 never writes compatibility
+`open_spans` or `open_to`.
 When a maximal wall run crosses a collinear vertex belonging to another room,
 its exact endpoints cover that room's shorter child side too; lookup does not
 depend on the compacted run's midpoint remaining inside every room.
@@ -309,14 +308,14 @@ parallel room beyond that tolerance is not an opening side; when only one real
 owner remains, its fill continues through the full wall depth. Legacy openings
 outside the same angle/distance contract no longer cut or offset a nearby wall
 and must be re-snapped in the Plan editor.
-At an `open_span` endpoint, real arms owned by different room contours receive
-the same bounded mitre patch as arms from one contour; a virtual T therefore
-has one clean outer corner rather than two butt caps forming a step.
-The virtual segment itself remains centreline-based. View paints it before the
-wall body, which masks the part inside each adjoining thick jamb; editors paint
-it after the body so its full stored extent and live preview stay visible.
+At a zero-thickness endpoint, positive arms owned by different room contours
+receive the same bounded mitre patch as arms from one contour; the junction has
+one clean outer corner rather than two butt caps forming a step. The zero wall
+itself remains centreline-based. View paints it before the wall body, which
+masks the part inside each adjoining thick jamb; editors paint it after the
+body so its full stored extent stays visible.
 
-Computed virtual-wall junction patches cross the polygon-boolean boundary only
+Computed zero-wall junction patches cross the polygon-boolean boundary only
 after scale-relative sub-epsilon coordinate stabilisation. They are optional
 local additions: each patch union is transactional, so an invalid, zero-area or
 numerically rejected patch keeps the last valid body and does not prevent later
@@ -356,13 +355,13 @@ invoke it.
   shared wall each room owns its half, with a hard colour change exactly on the
   wall centreline. This is a base-fill layer only: Glow and sun remain above it
   with their existing aperture, clipping, colour and opacity.
-- A zero-thickness wall, virtual span, orphan opening or opening associated only
+- A zero-thickness wall, orphan opening or opening associated only
   with an unfinished room draft has no coloured tunnel. Mixed-thickness legacy
   spans are clipped to their actual atomic wall bodies.
 - Glow leaving through a door uses the clear rectangular opening tunnel: its
   sector is the intersection of the doorway spans at the near and far inner
-  faces. The two jamb returns therefore clip off-axis light; a zero-depth wall
-  keeps the original centreline sector.
+  faces. The two jamb returns therefore clip off-axis light. Zero-thickness
+  walls cannot host openings.
 - Displayed **m²** = area of the inner contour (clean floor). Wall-length
   rulers and opening anchors stay on the centreline.
 - With no thickness, inner = poly (parity with pre-thickness behaviour).
@@ -377,8 +376,9 @@ centreline/full-span wedge. `hide_openings` hides the symbol only.
 
 ## 6. Tool / hooks / i18n
 
-Plan-editor tool «Thickness»; hover whole wall; cm/in from HA; empty/0
-clears; apply-to-room. Hooks: `data-hp="wall"`. i18n en/ru.
+Plan-editor tool «Thickness»; hover whole wall; cm/in from HA; exact `0..100`
+is valid for room walls, drafts and partitions, while empty/invalid input is
+rejected; apply-to-room. Hooks: `data-hp="wall"`. i18n en/ru.
 
 **Draw with thickness.** The Plan toolbar's **Walls** button carries its session
 thickness field immediately on the right (default **15 cm**, or inches when HA
@@ -387,14 +387,16 @@ was placed. Finishing an open chain transfers those values to the resulting
 independent walls. If a segment creates rooms, consumed boundary atoms receive
 their source value and unconsumed atoms become independent walls with the same
 value; existing shared masonry remains authoritative. Empty / 0 leaves the new
-wall thin. Live thick preview follows the rubber-band while drawing. Split does
+wall at zero thickness. Live preview follows the rubber-band while drawing.
+Split does
 not use this field. The Thickness tool remains for later edits.
 
 **Deleting a room.** The accessible confirmation offers two explicit physical
 consequences. **Keep walls** converts only that room's exclusive positive solid
 wall intervals into exact independent partitions, preserving their centimetre
-thickness and rehosting openings to those partitions. Shared intervals, virtual
-gaps and zero-thickness edges are not materialised. **Delete walls** removes the
+thickness and rehosting openings to those partitions. Shared intervals remain;
+exclusive zero-thickness edges become zero-thickness partitions. **Delete
+walls** removes the
 room without that conversion and cascades only openings owned by its exclusive
 walls. Shared masonry, existing partitions, partition-hosted openings and their
 physical thickness remain intact in both cases. The room, wall profile,
@@ -410,7 +412,7 @@ Decor-line thickness, per-side finish, auto-from-backdrop, plan-wide default.
 ## 8. Testing
 
 Unit: ring closed at corners; half-out; inner area; atomic partial shared;
-virtual-T mitre; angle-aware opening; 45° wall; T-junction; detached parallel
+zero-wall T mitre; angle-aware opening; 45° wall; T-junction; detached parallel
 room; nested-room tie; partially out-of-span legacy opening; overlapping
 opening de-duplication; shared symbol/cut/tunnel rejection; thick-door tunnel
 clipping and room-side colour ownership; whole and
@@ -429,22 +431,21 @@ the two #275 owner backups, including overlapping neighbouring node masks,
 mixed depth and the unchanged non-orthogonal #249 wedge;
 the real `349 / 120 / 5` short-ray handoff to a 20 cm shared wall at
 `cell_cm: 1/5/30`, reversed endpoints and permuted input (#288);
-exact parent-run thickness inherited by atomic children when
-closing a virtual neighbour, without partial-span leakage (#201).
+exact parent-run thickness inherited by atomic children across a zero-depth
+neighbour, without partial-span leakage (#201/#306).
 Role-aware compaction tests keep `shared(A,B)`, `outer(A)` and `shared(A,C)` as
 separate records even at equal thickness, while equal neighbouring atoms within
 one role still compact; the real first-floor fixture proves explicit Optimize
 is invariant-free and idempotent (#299). The edit-walk real-plan seeds 1 and 3
 exercise the same Optimize and Keep-walls entry points.
 Browser: seamless frame; fill not in hatch; m² drops with thickness; partial
-shared walls, mixed-thickness shared walls and walls containing a partial
-virtual stretch keep a visible disabled Resize handle and cannot split or
-re-key their atomic records (`demo/smoke_wall_thickness.mjs`,
-`demo/smoke_resize_virtual_thick.mjs`,
+shared walls and mixed-thickness shared walls keep a visible disabled Resize
+handle and cannot split or re-key their atomic records
+(`demo/smoke_wall_thickness.mjs`, `demo/smoke_zero_walls.mjs`,
 `demo/smoke_resize_wall_thickness.mjs`); an eligible uniformly thick exact
 wall moves through the fixed-topology safe pipeline and Undo restores its
 source (`demo/smoke_room_resize.mjs`);
-the virtual rubber band paints above the real body; sun starts at the room-side
+the zero-wall preview paints above the real body; sun starts at the room-side
 opening corners; nav mode restores after `can_write`; a 1 cm body uses
 solid-only in both full and static cards while a 20 cm body keeps its hatch;
 door/window/gate tunnels repeat outer/shared room fills without an axis seam
@@ -478,7 +479,7 @@ golden scenes (`junction-*`) plus the owner's repro scene, and the
 
 ## 9. Independent partitions, drafts and columns
 
-Their thickness is stored directly in centimetres: 1–100 cm for draft and
+Their thickness is stored directly in centimetres: 0–100 cm for draft and
 partition segments, 1–150 cm for a column's outer side/diameter. Invalid input
 blocks the commit and reports the valid range; no editor path silently clamps
 it. These bodies are unioned with room-wall bodies only after door/window/gate cuts,

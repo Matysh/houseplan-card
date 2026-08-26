@@ -56,7 +56,7 @@ override them; a room may override its space; a marker may override its room.
 | Global settings | Defaults for all spaces | Fill palette, background, Glow radius, north, sun, weather and icon rules |
 | Space | Floor, yard, garage or building | Plan image, scale, rooms, walls, openings, decor and display settings |
 | Room | A closed outline | Name, optional HA area, temperature/humidity source and local fill |
-| Wall | A side of a room outline | Optional physical thickness and virtual spans on a shared boundary |
+| Wall | A room-contour or independent segment | Stable identity and thickness from 0 to 100 cm; zero-thickness appearance is selected per space |
 | Opening | Door, window or gate on a wall | Size, orientation, contact and optional lock |
 | Marker | A device shown on the plan | HA binding, room, action, presentation, light role and attachments |
 | Background item | Visual context | Line, shape, text, furniture or plan-image transform |
@@ -319,9 +319,8 @@ number of walls and maximum movement shown before confirmation.
 
 | Tool | Result | Room area | Light and shadow | Main limit |
 |---|---|---|---|---|
-| Walls | Continuous wall chain; offers rooms when it closes faces and finishes open chains as independent walls | Only a confirmed room has area | Physical segments block light; openings pass it | Partial room overlap is rejected; there is no separate Partition drawing tool |
+| Walls | Continuous wall chain; offers rooms when it closes faces and finishes open chains as independent walls | Only a confirmed room has area | Positive thickness blocks light; zero thickness follows the space's dashed/solid policy | Partial room overlap is rejected; there is no separate Partition or Boundary drawing tool |
 | Column | Square or circular support | Does not change area | Blocks light inside its shape | One shape/size/rotation; not a wall or room |
-| Boundary | Virtual span of a shared wall | Geometry and area stay unchanged | Light passes; no physical wall is painted | Only a shared boundary between adjacent rooms |
 | Opening | Door, window or gate | Does not change area | Door/gate passage follows state; window may cast sun | Must fit completely on a suitable wall segment |
 
 Other operations edit existing geometry:
@@ -331,7 +330,7 @@ Other operations edit existing geometry:
 | Merge | Joins adjacent rooms; a dialog chooses the surviving identity, name and area |
 | Split | Cuts a room from one wall to another; the larger part keeps the original room |
 | Resize | Moves one eligible horizontal/vertical wall without changing room topology. Live labels report the two changing **inner** side-wall dimensions, highlight those walls, and place each affected room's area beside its side of the moving wall |
-| Thickness | Changes one physical span or every wall of a room |
+| Thickness | Changes one span or every wall of a room, including zero-thickness walls |
 | Delete room | Deletes the room after choosing whether its exclusive physical walls remain; shared walls always remain |
 
 ![Selected partition and its Plan context tray](images/05-plan-context-tray.png)
@@ -368,6 +367,15 @@ cannot start a drag. The former corner scale frame was removed. An ordinary
 opening on the moving wall follows it once; a side-wall opening stops the
 moving masonry at its physical jamb. Release creates one Undo step, while Esc
 or an interrupted pointer writes nothing.
+
+A wall thickness of **0 cm** is a real wall-axis record without a masonry body:
+it does not create hatch, wall area, an opening tunnel or a valid opening host.
+It is drawn and edited with the same Walls and Thickness tools as every other
+wall. In Space settings choose whether all zero-thickness walls are
+**Dashed** or **Solid**. Dashed zero walls let Glow and sun through; solid zero
+walls are zero-area light barriers. Missing settings use Dashed. Changing the
+style affects every `0 cm` wall in that space; there is no separate Boundary
+tool or separate virtual-wall type.
 
 During the drag, the moving wall itself has no redundant length badge. An outer
 wall shows one area badge; a shared wall shows two on opposite sides, each with
@@ -854,15 +862,15 @@ Marker attachments accept PDF/PNG/JPG/WebP/TXT up to 50 MB, with a
 |---|---|
 | Rooms must be closed | An open path is walls, not a room with area |
 | One HA area per room | To split one HA area visually, assign devices manually |
-| Boundary requires adjacent rooms | It cannot open an exterior wall or branch from empty space |
+| Zero-thickness walls cannot host openings | Give the target wall a positive thickness before adding a door, window, gate or passage |
 | Editors are desktop-first | Touch editing may be awkward, limited or absent |
 | Room details use hover in View | A touch-only user may need an editor or another visible metric |
 | Sun has no exterior 3D model | It cannot know shadows from trees, awnings or neighbouring structures |
 | Icon rules use regular expressions | First matching rule wins and invalid expressions are rejected |
 
 Storage guards allow up to 50 spaces, 400 rooms per space, 2,000 markers, 500
-openings, 1,000 Background items, 500 wall records and 500 virtual spans per
-space. The configuration package is limited to 2 MB.
+openings, 1,000 Background items and bounded wall/physical-object catalogues
+per space. The configuration package is limited to 2 MB.
 
 <!-- docs-section: diagnostics -->
 
@@ -888,7 +896,7 @@ space. The configuration package is limited to 2 MB.
 
 - confirm grid cell size before judging physical dimensions;
 - use Fit all to include distant objects;
-- check wall thickness and whether a shared span is a virtual Boundary;
+- check wall thickness and the space's zero-thickness wall style;
 - use desktop for precise nodes, Split and Resize.
 - if some masonry remains visible but Optimize or an edit reports unsafe wall
   geometry, export the affected space and attach it to a bug report. House Plan

@@ -93,9 +93,10 @@ Header in View: space tabs, device count, zoom cluster. Nothing else.
 - Toolbar tools: **Walls** (one continuous chain with its session wall-thickness
   field, default 15 cm — docs/WALL-THICKNESS.md §6), Delete room, Merge, Split,
   Resize, Column,
-  Opening (place / drag along walls / properties), Boundary, Thickness
+  Opening (place / drag along walls / properties), Thickness
   (docs/WALL-THICKNESS.md — click a wall, set cm/inches from HA's unit system;
-  empty/0 clears), Room labels (drag positions — labels are part of the plan).
+  `0..100`, while empty/invalid values are rejected), Room labels (drag
+  positions — labels are part of the plan).
 - Space gear dialog (title, plan image / hand-drawn, scale, Display section, show_lqi),
   add space, floors import, delete space. Saving a **new** space opens this
   editor with the draw tool armed (an empty floor has nothing useful in View).
@@ -112,10 +113,10 @@ Header in View: space tabs, device count, zoom cluster. Nothing else.
   independent Walls segment. A hosted opening moves with that segment; deleting
   the segment requires an explicit cascade confirmation. Its physical gap does
   not break the structural wall axis used to recognize closed rooms (#185).
-- Boundary is contextual: two points on one solid shared wall make the selected
-  stretch virtual; one click on an existing dashed stretch restores it whole.
-  Outer walls and room boundaries hidden under independent masonry are not
-  edited through the object above them.
+- Zero thickness is part of the ordinary wall system. **Walls** may draw it and
+  **Thickness** may apply it to a contour, draft or independent segment. Space
+  settings choose one common dashed/solid appearance: dashed transmits Glow and
+  sun; solid is a zero-area light barrier. A zero wall cannot host an opening.
 
 ### What a space may choose not to draw (2026-08-05)
 
@@ -126,25 +127,25 @@ layer you cannot see is a layer you cannot edit.
 
 | Setting | Off (default) | On | Always drawn in |
 |---|---|---|---|
-| `show_borders` — «Всегда отображать границы комнат» | in View, borders and dashed **virtual walls** are hidden | both are drawn | room borders: Plan; virtual walls: all editors |
+| `show_borders` — «Всегда отображать границы комнат» | in View, room borders and zero-thickness wall lines are hidden | both are drawn | room borders: Plan; zero-thickness walls: all editors |
 | `show_names` — «Показывать названия» | no room name/card is drawn in View, kiosk or the static card | the HTML room card is drawn | Plan, for positioning only |
 | `hide_decor` — «Скрыть декоративный слой» | decor is drawn | lines, shapes, labels and furniture are hidden | the Background editor |
 | `hide_openings` — «Скрыть проёмы» | doors, windows and gates are drawn | their symbols are hidden | the Plan editor |
 
-- **Virtual walls follow `show_borders` in View** (owner, 2026-08-05). They are
-  walls — dashed ones. Drawing them on a View with no borders left a plan whose
-  only walls were a few floating dashed stretches. Every editor deliberately
-  shows them regardless of the switch: hiding geometry while editing a plan,
-  device placement or its underlay makes those modes visually ambiguous.
+- **Zero-thickness walls follow `show_borders` in View.** Every editor
+  deliberately shows their axes regardless of the switch: hiding geometry
+  while editing a plan, device placement or its underlay makes those modes
+  visually ambiguous. Their solid/dashed choice still affects light while the
+  line itself is hidden.
 - **`show_names: false` means no permanent fallback label.** View, kiosk,
   hidden isometric and `houseplan-space-card` all omit the room name. Plan may
   show the same HTML card temporarily so its saved position remains editable;
   returning to View hides it again. Re-enabling names restores the saved
   layout rather than creating a new one.
-- **Their geometry and their presentation are separate.** Every virtual span
-  still ends on the real wall centreline. In View the thick wall body is
-  painted over the dash ends, so they visually stop at its faces; editors paint
-  the full dash (and live preview) over the body for unambiguous editing.
+- **Their geometry and their presentation are separate.** Every zero wall ends
+  on its saved axis node. In View a neighbouring thick body may paint over the
+  line end so it visually stops at the masonry face; editors paint the full
+  axis over the body for unambiguous editing.
 - **`hide_openings` hides the symbol, not the opening.** Light still spills
   through it, the sun still enters at a window, a contact sensor still opens
   it, and the resize tool still anchors to it. Anything else would be a second

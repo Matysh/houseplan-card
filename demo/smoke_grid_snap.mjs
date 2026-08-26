@@ -17,6 +17,23 @@ const out = await page.evaluate(async () => {
   const sr = () => c.shadowRoot || c.renderRoot;
   const NORM_W = 1000, GRID_N = 240;
   const PITCH = NORM_W / GRID_N;
+  const makePhysical = (space) => {
+    delete space.wall_segments;
+    delete space.open_spans;
+    space.walls = (space.rooms || []).flatMap((room) => {
+      const poly = room.poly || (Number.isFinite(room.x) ? [
+        [room.x, room.y], [room.x + room.w, room.y],
+        [room.x + room.w, room.y + room.h], [room.x, room.y + room.h],
+      ] : []);
+      delete room.wall_ids;
+      return poly.map((a, index) => ({
+        key: `${room.id}-${index}`, a, b: poly[(index + 1) % poly.length], cm: 15,
+      }));
+    });
+  };
+  c._serverCfg.model_version = 7;
+  makePhysical(c._serverCfg.spaces.find((space) => space.id === c._space));
+  c._modelCache = null; c._frame = null; c._cfgEpoch++;
   const onGridN = (v) => Math.abs(v * GRID_N - Math.round(v * GRID_N)) < 1e-9;
   const onGridR = (v) => Math.abs(v / PITCH - Math.round(v / PITCH)) < 1e-7;
 
@@ -175,6 +192,9 @@ const out = await page.evaluate(async () => {
       { id: 'r2', name: 'B', area: 'kitchen', x: 0.5, y: 0.2, w: 0.3 + D, h: 0.3 },
     ],
     openings: [{ id: 'o1', type: 'window', x: 0.3 + D, y: 0.2 + D / 2, angle: 0, length: 0.06 }],
+    walls: [{
+      key: 'r1-top', a: [0.2 + D, 0.2], b: [0.5, 0.2 - D], cm: 15,
+    }],
     decor: [{ id: 'd1', kind: 'line', x1: 0.1 + D, y1: 0.7, x2: 0.9, y2: 0.7 - D }],
   }], markers: [], settings: {} };
   const FIXLAY = { d_light1: { s: 'g1', x: 0.3 + D, y: 0.3 }, rl_r1: { s: 'g1', x: 0.25 + D, y: 0.25 } };
@@ -252,6 +272,7 @@ const out = await page.evaluate(async () => {
   const TURN = { spaces: [{ id: 'a1', title: 'Flat', cell_cm: 5, view_box: [0, 0, 1, 1],
     rooms: [{ id: 'r1', name: 'A', area: 'living_room',
       poly: [[0.2, 0.2], [0.5, 0.2], [0.5, 0.5], [0.2, 0.5]] }],
+    walls: [{ key: 'r1-top', a: [0.2, 0.2], b: [0.5, 0.2], cm: 15 }],
     openings: [{ id: 'oa', type: 'window', x: 0.35, y: 0.2, angle: 90, length: 0.1 }],
   }], markers: [], settings: {} };
   c._serverCfg = JSON.parse(JSON.stringify(TURN));

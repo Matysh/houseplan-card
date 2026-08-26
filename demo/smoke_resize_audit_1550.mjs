@@ -15,13 +15,21 @@ const { page, browser } = await launch();
 // is intentionally partial-shared and therefore disabled by #277.
 await page.evaluate(async () => {
   const c = window.__card;
-  const sp = c._serverCfg.spaces.find((s) => s.id === 'f1');
-  sp.rooms = [{
-    id: 'r1', name: 'Safe resize room', area: null,
-    poly: [[0.04, 0.14], [0.55, 0.14], [0.55, 0.58], [0.04, 0.58]],
-  }];
-  delete sp.walls; delete sp.partitions; delete sp.room_drafts;
-  delete sp.wall_columns; delete sp.open_spans; delete sp.openings;
+  const poly = [[0.04, 0.14], [0.55, 0.14], [0.55, 0.58], [0.04, 0.58]];
+  c._serverCfg = {
+    model_version: 7,
+    spaces: [{
+      id: 'f1', title: 'Safe resize', view_box: [0, 0, 1, 1], cell_cm: 5,
+      rooms: [{ id: 'r1', name: 'Safe resize room', area: null, poly }],
+      walls: poly.map((a, index) => ({
+        key: `r1-${index}`, a, b: poly[(index + 1) % poly.length], cm: 15,
+      })),
+      openings: [], partitions: [], room_drafts: [], wall_columns: [],
+    }],
+    markers: [], settings: {},
+  };
+  c._space = 'f1';
+  c._modelCache = null; c._frame = null;
   c._cfgEpoch++; c.requestUpdate(); await c.updateComplete;
 });
 const snap = await page.evaluate(() => JSON.stringify(window.__card._serverCfg));
@@ -31,6 +39,7 @@ const restore = () => page.evaluate((s) => {
   c._rszSel = null; c._rszDrag = null; c._rszLive = null;
   c._geometryHistory.clear();
   if ('_rszPreview' in c) c._rszPreview = null;
+  c._modelCache = null; c._frame = null;
   c._cfgEpoch++; c.requestUpdate();
   return c.updateComplete && true;
 }, snap);

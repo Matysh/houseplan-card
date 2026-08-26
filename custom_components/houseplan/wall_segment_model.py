@@ -1,4 +1,4 @@
-"""Deterministic persisted contour-wall identity (model v8, issue #282).
+"""Deterministic persisted contour-wall identity (model v9, issues #282/#306).
 
 This is the backend twin of ``src/wall-segment-model.ts``.  Import preview is
 a server-side structural writer, so it cannot depend on a browser being open
@@ -16,7 +16,7 @@ from typing import Any
 from .coordinate_canonicalization import canonicalize_config_geometry
 
 
-WALL_SEGMENT_MODEL_VERSION = 8
+WALL_SEGMENT_MODEL_VERSION = 9
 GRID_STEP_N = 1 / 240
 EPS = 1e-9
 
@@ -182,9 +182,49 @@ def _atomize(
     rooms = space.get("rooms") or []
     room_polys = {str(room.get("id", "")): _room_poly(room) for room in rooms}
     global_breaks: list[list[float]] = []
-    for span in space.get("open_spans") or []:
+    explicit_spans = space.get("open_spans") or []
+    legacy_segments: list[list[float]] = []
+    for span in explicit_spans:
         if isinstance(span, dict) and isinstance(span.get("a"), list) and isinstance(span.get("b"), list):
             global_breaks.extend((span["a"], span["b"]))
+            legacy_segments.append([
+                float(span["a"][0]), float(span["a"][1]),
+                float(span["b"][0]), float(span["b"][1]),
+            ])
+    if not legacy_segments:
+        linked = lambda first, second: (
+            str(second.get("id", "")) in (first.get("open_to") or [])
+            or str(first.get("id", "")) in (second.get("open_to") or [])
+        )
+        for first_index, first in enumerate(rooms):
+            for second in rooms[first_index + 1:]:
+                if not linked(first, second):
+                    continue
+                for shared in _shared_boundaries(
+                    room_polys.get(str(first.get("id", "")), []),
+                    room_polys.get(str(second.get("id", "")), []),
+                ):
+                    legacy_segments.append(shared)
+                    global_breaks.extend(([shared[0], shared[1]], [shared[2], shared[3]]))
+    canonical_zero_segments: list[list[float]] = []
+    for room in rooms:
+        poly = room_polys.get(str(room.get("id", ""))) or []
+        wall_ids = room.get("wall_ids") or []
+        if len(wall_ids) != len(poly):
+            continue
+        for index, segment_id in enumerate(wall_ids):
+            previous = old.get(str(segment_id)) if isinstance(segment_id, str) else None
+            if previous is None or float(previous.get("cm", 0)) != 0:
+                continue
+            following = (index + 1) % len(poly)
+            canonical_zero_segments.append([
+                float(poly[index][0]), float(poly[index][1]),
+                float(poly[following][0]), float(poly[following][1]),
+            ])
+    for segment in canonical_zero_segments:
+        global_breaks.extend((segment[:2], segment[2:]))
+    zero_segments = canonical_zero_segments + legacy_segments
+
     for wall in space.get("walls") or []:
         if isinstance(wall, dict) and isinstance(wall.get("a"), list) and isinstance(wall.get("b"), list):
             global_breaks.extend((wall["a"], wall["b"]))
@@ -253,13 +293,18 @@ def _atomize(
                 "key": key, "a": _canonical_span(a, b)[0], "b": _canonical_span(a, b)[1],
                 "owners": set(), "preferred": set(), "positional": set(),
                 "preferred_carriers": {},
-                "parent_keys": set(),
+                "parent_keys": set(), "zero_wall": False,
             })
             atom["owners"].add(room_id)
             if len(atom["owners"]) > 2:
                 raise WallSegmentMigrationError("third-owner", key)
             parent_index = parents[index]
             atom["parent_keys"].add(_wall_key(original[parent_index], original[(parent_index + 1) % len(original)]))
+            midpoint = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]
+            atom["zero_wall"] = atom["zero_wall"] or any(
+                _distance_to_segment(midpoint, cut[:2], cut[2:]) <= GRID_STEP_N * 0.04
+                for cut in zero_segments
+            )
             if indexed_lineage and isinstance(old_ids[parent_index], str) and old_ids[parent_index]:
                 previous = old.get(old_ids[parent_index])
                 if rigid_indexed_lineage or previous is None or _collinear_overlap(
@@ -281,6 +326,8 @@ def _atomize(
 
 
 def _thickness(space: dict[str, Any], atom: dict[str, Any], previous: dict[str, Any] | None) -> float:
+    if atom.get("zero_wall"):
+        return 0.0
     candidates: list[float] = []
     query_key = _wall_key(atom["a"], atom["b"])
     query_length = _length(atom["a"], atom["b"])
@@ -443,6 +490,8 @@ def _host_openings(space: dict[str, Any], segments: list[dict[str, Any]]) -> Non
             raise WallSegmentMigrationError("opening-host", str(opening.get("id", ""))) from None
 
         def eligible(segment: dict[str, Any]) -> bool:
+            if float(segment.get("cm", 0)) <= 0:
+                return False
             t = _project_t(centre, segment["a"], segment["b"])
             span = _length(segment["a"], segment["b"])
             return (-EPS <= t <= 1 + EPS
@@ -498,6 +547,9 @@ def _migrate_space(space: dict[str, Any], initial_migration: bool) -> int:
         space["walls"] = walls
     else:
         space.pop("walls", None)
+    space.pop("open_spans", None)
+    for room in space.get("rooms") or []:
+        room.pop("open_to", None)
     draft_used = {
         str(item["id"])
         for name in ("rooms", "openings", "decor", "room_drafts", "partitions",

@@ -493,14 +493,13 @@ Why an action rather than a silent migration:
    can also simply not be pressed.
 
 `optimizePlans(config, layout)` (`src/plan-optimizer.ts`) is the pure
-orchestrator. It converts only legacy fields with an exact lossless
-mapping, materialises legacy `open_to`, calls the grid projection,
-rekeys exact wall/open-span endpoints onto the moved rooms, merges
-touching virtual spans per room pair, compacts consecutive real-wall
-intervals only when their thickness and physical ownership both match, and
-stamps `model_version`. Outer/shared transitions and changes of shared-room
-pair remain exact breakpoints even at equal thickness. Unknown fields
-are preserved and every pass is idempotent.
+orchestrator. It converts legacy fields with an exact mapping, projects
+`open_spans` (or the `open_to` fallback) into stable zero-thickness wall atoms,
+calls the grid projection, rekeys exact wall endpoints onto moved rooms,
+compacts consecutive atoms only when thickness and physical ownership both
+match, and stamps `model_version`. Outer/shared transitions and changes of
+shared-room pair remain exact breakpoints even at equal thickness. Unknown
+fields are preserved and every pass is idempotent.
 
 The explicit pass also repairs pre-existing near-axis room walls, saved wall
 chains and independent walls after ordinary grid alignment (#290). Coincident
@@ -699,7 +698,7 @@ A separate diagnostic projection is present throughout the Plan editor (#296),
 including tools other than **Walls**. For every saved draft or independent wall
 segment with a positive exact collinear overlap against another wall, it keeps
 that source segment's complete axis and original endpoints visible. It is
-painted after every real and virtual wall body and before openings, selection
+painted after every wall body and zero-thickness axis and before openings, selection
 chrome and transient previews. The layer is `pointer-events:none`,
 `aria-hidden`, absent from View and cached by structural revision; it neither
 deduplicates source identities nor participates in the architectural snap
@@ -712,7 +711,8 @@ Every completed Walls segment is first persisted in the active `room_drafts`
 chain. On the click path only, an immutable planar graph is built from structural
 room edges, independent partitions, inactive drafts and the active chain both
 before and after the latest segment. Unlike the presentation/snap snapshot, this
-face graph ignores door/window/gate/passage cuts but still applies `open_spans`.
+face graph ignores door/window/gate/passage cuts; zero-thickness wall axes remain
+structural graph edges even though they have no masonry body.
 Endpoint, T, X and
 collinear-overlap junctions atomize that computed graph without rewriting any
 saved wall. A deterministic half-edge walk extracts bounded faces; canonical

@@ -26,17 +26,15 @@ const res = await page.evaluate(async () => {
   c._setMode('plan');
   await upd();
   const space = c._curSpaceCfg;
-  const saved = {
-    rooms: JSON.parse(JSON.stringify(space.rooms || [])),
-    walls: space.walls ? JSON.parse(JSON.stringify(space.walls)) : null,
-    partitions: JSON.parse(JSON.stringify(space.partitions || [])),
-    cell: space.cell_cm,
-  };
+  const savedConfig = JSON.parse(JSON.stringify(c._serverCfg));
 
   // 5 cm to a grid cell, so 300×400 cm is 60×80 cells of the plan.
   space.cell_cm = 5;
+  c._serverCfg.model_version = 7;
   space.partitions = [];
   delete space.walls;
+  delete space.wall_segments;
+  delete space.open_spans;
   const g = c._gridPitch;
   const x0 = 20 * g, y0 = 20 * g;
   const render = [
@@ -56,8 +54,12 @@ const res = await page.evaluate(async () => {
   if (c._wallDialog) c._wallDialog = { ...c._wallDialog, value: '15' };
   c._wallThickApply(true);
   await upd();
-  out.fourWallsRecorded = (c._curSpaceCfg.walls || []).length === 4;
-  out.everyWallFifteen = (c._curSpaceCfg.walls || []).every((w) => Math.abs(w.cm - 15) < 0.01);
+  const committed = c._curSpaceCfg;
+  const committedRoom = committed.rooms.find((room) => room.id === 'r233');
+  const byId = new Map((committed.wall_segments || []).map((segment) => [segment.id, segment]));
+  out.fourWallsRecorded = committedRoom?.wall_ids?.length === 4;
+  out.everyWallFifteen = committedRoom?.wall_ids?.every((id) =>
+    Math.abs((byId.get(id)?.cm ?? -1) - 15) < 0.01) === true;
 
   // Wall labels: the clear span across is 285 cm, along it 385 cm.
   const spans = c._rszInnerSpanCms('r233', render, {});
@@ -91,13 +93,8 @@ const res = await page.evaluate(async () => {
   c._rszDrag = null;
   c._rszSel = null;
   c._tool = null;
-  // Re-read: `_wallThickApply` saves, and a save may hand back a fresh config
-  // object, which would leave the reference captured above pointing at nothing.
-  const cur = c._curSpaceCfg;
-  cur.rooms = saved.rooms;
-  cur.partitions = saved.partitions;
-  cur.cell_cm = saved.cell;
-  if (saved.walls) cur.walls = saved.walls; else delete cur.walls;
+  c._serverCfg = savedConfig;
+  c._modelCache = null; c._frame = null;
   await upd();
   return out;
 });

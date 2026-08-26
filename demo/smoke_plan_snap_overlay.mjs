@@ -67,7 +67,7 @@ const out = await page.evaluate(async () => {
   const wallBodies = root().querySelector('.wallbodies');
   result.overlayAfterWallBodies = !!wallBodies && !!overlay()
     && !!(wallBodies.compareDocumentPosition(overlay()) & Node.DOCUMENT_POSITION_FOLLOWING);
-  result.oneLinePerSolidInterval = overlay()?.querySelectorAll('.plan-snap-line').length === 13;
+  result.oneLinePerSolidInterval = overlay()?.querySelectorAll('.plan-snap-line').length === 12;
   result.uniqueSourceEndpointsOnly = overlay()?.querySelectorAll('.plan-snap-node[data-kind="endpoint"]').length === 11;
   result.columnIsNotACandidate = ![...overlay().querySelectorAll('.plan-snap-node')].some((node) =>
     close(+node.getAttribute('cx'), 800) && close(+node.getAttribute('cy'), 350));
@@ -86,12 +86,29 @@ const out = await page.evaluate(async () => {
   ]);
   result.openingGapHasNoLine = !lines().some((line) => crosses(...line, 300, 100));
   result.partitionOpeningGapHasNoLine = !lines().some((line) => crosses(...line, 840, 600));
-  result.openSpanHasNoLine = !lines().some((line) => crosses(...line, 500, 250));
+  result.zeroWallKeepsAxis = lines().some((line) => crosses(...line, 500, 250));
   result.cutBoundariesAreNotEndpoints = ![...overlay().querySelectorAll('[data-kind="endpoint"]')].some((node) => {
     const x = +node.getAttribute('cx'), y = +node.getAttribute('cy');
     return (close(y, 100) && (close(x, 250) || close(x, 350)))
       || (close(x, 500) && (close(y, 200) || close(y, 300)));
   });
+  stage.dispatchEvent(eventAt(300, 100));
+  await card.updateComplete;
+  result.openingGapDoesNotActivateSnap = !active();
+  stage.dispatchEvent(eventAt(840, 600));
+  await card.updateComplete;
+  result.partitionOpeningGapDoesNotActivateSnap = !active();
+  stage.dispatchEvent(new PointerEvent('pointerleave', { bubbles: true, pointerId: 41 }));
+  await card.updateComplete;
+  result.pointerLeaveClearsActiveNode = !active();
+
+  // The remainder exercises structural writes, not opening migration. Remove
+  // the intentionally legacy/unhosted gap fixtures after their assertions so
+  // the v9 fail-closed host barrier does not reject an unrelated wall edit.
+  delete card._curSpaceCfg.openings;
+  card._modelCache = null;
+  card._cfgEpoch++;
+  await update();
   const cachedGeometry = card._planSnapGeometryCache?.value;
   const staticNodesBefore = [...overlay().querySelectorAll(
     '.plan-snap-line, .plan-snap-node[data-kind="endpoint"]',
@@ -111,7 +128,7 @@ const out = await page.evaluate(async () => {
   stage.dispatchEvent(eventAt(735, 606));
   await card.updateComplete;
   const initialLineActive = active()?.getAttribute('data-kind') === 'line';
-  stage.dispatchEvent(eventAt(300, 100));
+  stage.dispatchEvent(eventAt(500, 650));
   await card.updateComplete;
   const initialMissInactive = !active();
   stage.dispatchEvent(eventAt(104, 104));
@@ -130,6 +147,15 @@ const out = await page.evaluate(async () => {
   result.endpointOverridesGridAndShift = card._path.length === 1
     && close(card._path[0][0], 100) && close(card._path[0][1], 100);
 
+  // Keep the line-snap append scenario independent from the room corner just
+  // verified above. In v9 that corner is a canonical zero-wall topology node,
+  // so a wall from it may legitimately complete a face and open the room flow.
+  card._cancelPath();
+  card._markupClick(eventAt(504, 654, 'click'));
+  await card.updateComplete;
+  result.freeStartForLineSnap = card._path.length === 1
+    && Number.isFinite(card._path[0][0]) && Number.isFinite(card._path[0][1]);
+
   stage.dispatchEvent(eventAt(735, 606));
   await card.updateComplete;
   const lineNode = active();
@@ -145,20 +171,20 @@ const out = await page.evaluate(async () => {
   const originalPartition = JSON.stringify(card._curSpaceCfg.partitions[0]);
   card._markupClick(eventAt(735, 606, 'click'));
   await card.updateComplete;
+  result.drawPathLength = card._path.length;
   result.drawCommitUsesExactLineNode = card._path.length === 2
     && close(card._path[1][0], linePoint[0]) && close(card._path[1][1], linePoint[1]);
   result.existingPartitionWasNotSplit = card._curSpaceCfg.partitions.length === 1
     && JSON.stringify(card._curSpaceCfg.partitions[0]) === originalPartition;
 
-  stage.dispatchEvent(eventAt(300, 100));
-  await card.updateComplete;
-  result.openingGapDoesNotActivateSnap = !active();
-  stage.dispatchEvent(eventAt(840, 600));
-  await card.updateComplete;
-  result.partitionOpeningGapDoesNotActivateSnap = !active();
-  stage.dispatchEvent(new PointerEvent('pointerleave', { bubbles: true, pointerId: 41 }));
-  await card.updateComplete;
-  result.pointerLeaveClearsActiveNode = !active();
+  // The line-snap append above intentionally remains an unfinished draft.
+  // Remove that synthetic record before the independent finish-on-tool-change
+  // scenario below; the fixture's original `saved` draft remains untouched.
+  card._curSpaceCfg.room_drafts = (card._curSpaceCfg.room_drafts || [])
+    .filter((draft) => draft.id === 'saved');
+  delete card._resumeDraftBySpace[card._space];
+  card._modelCache = null;
+  card._cfgEpoch++;
 
   card._cancelPath();
   card._activeDraftId = 'saved';
@@ -194,12 +220,21 @@ const out = await page.evaluate(async () => {
       Math.round((card._path[0][0] - 600) / card._gridPitch));
   card._markupClick(eventAt(896, 496, 'click'));
   await card.updateComplete;
+  result.secondPathLengthBeforeSelect = card._path.length;
+  result.secondNoRoomDialog = card._roomDialog !== true;
+  result.secondDraftCountBeforeSelect = (card._curSpaceCfg.room_drafts || []).length;
+  result.secondToast = String(card._toast || '');
   card._activateMarkupTool('select');
   await update();
+  result.partitionCountAfterDraw = card._curSpaceCfg.partitions.length;
+  const drawnPartition = card._curSpaceCfg.partitions.find(
+    (partition) => partition.id !== 'base-partition',
+  );
   result.secondWallsClickFinishesSnappedPartition = card._path.length === 0
     && card._curSpaceCfg.partitions.length === 2
-    && close(card._curSpaceCfg.partitions[1].b[0] * 1000, 900)
-    && close(card._curSpaceCfg.partitions[1].b[1] * 1000, 500);
+    && !!drawnPartition
+    && [drawnPartition.a, drawnPartition.b].some((point) =>
+      close(point[0] * 1000, 900) && close(point[1] * 1000, 500));
   result.originalSegmentStillUnchanged = JSON.stringify(card._curSpaceCfg.partitions[0]) === originalPartition;
 
   const gestureGeometry = JSON.stringify({
@@ -239,11 +274,11 @@ const out = await page.evaluate(async () => {
   result.otherPlanToolsKeepFullOverlayAndHiddenDiagnostic = !!overlay() && !!diagnostic
     && diagnostic.querySelectorAll('.hidden-wall-line').length === 1
     && diagnostic.querySelectorAll('.hidden-wall-node').length === 2;
-  const editorVirtualWalls = root().querySelector('.openwalls');
+  const editorZeroWalls = root().querySelector('.zero-walls');
   result.hiddenDiagnosticAboveAllWallBodies = !!diagnostic && !!wallBodies
     && !!(wallBodies.compareDocumentPosition(diagnostic) & Node.DOCUMENT_POSITION_FOLLOWING)
-    && (!editorVirtualWalls
-      || !!(editorVirtualWalls.compareDocumentPosition(diagnostic) & Node.DOCUMENT_POSITION_FOLLOWING));
+    && (!editorZeroWalls
+      || !!(editorZeroWalls.compareDocumentPosition(diagnostic) & Node.DOCUMENT_POSITION_FOLLOWING));
   result.hiddenDiagnosticIsPointerTransparent = diagnostic?.getAttribute('pointer-events') === 'none'
     && getComputedStyle(diagnostic).pointerEvents === 'none';
   card._activateMarkupTool('draw');
@@ -304,7 +339,7 @@ const out = await page.evaluate(async () => {
   };
   const tools = [
     'select', 'draw', 'column', 'merge', 'split', 'resize',
-    'opening', 'boundary', 'wallthick', 'delroom',
+    'opening', 'wallthick', 'delroom',
   ];
   let expectedSnapshot = null;
   let everyToolMatches = true;
@@ -369,4 +404,10 @@ out.forcedColorsStayReadable = await page.evaluate(async () => {
     && nodeStyle?.fill !== 'none';
 });
 
-await finish(browser, checkAll(out));
+await finish(browser, checkAll(out, {
+  drawPathLength: 2,
+  secondPathLengthBeforeSelect: 2,
+  secondDraftCountBeforeSelect: 2,
+  secondToast: '',
+  partitionCountAfterDraw: 2,
+}));

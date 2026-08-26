@@ -173,7 +173,7 @@ if (target) {
   });
   check('resize_pointer.first_edit_materializes_identity', await page.evaluate(() => {
     const space = window.__card._serverCfg.spaces[0];
-    return window.__card._serverCfg.model_version === 8
+    return window.__card._serverCfg.model_version === 9
       && space.rooms.every((room) => room.wall_ids?.length === room.poly.length)
       && space.wall_segments?.length > 0;
   }), true);

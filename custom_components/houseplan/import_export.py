@@ -77,6 +77,7 @@ _REPORT_EXAMPLE_LIMIT = 24
 _SPACE_PLAN_FIELDS = (
     "id", "title", "cell_cm", "plan_url", "plan_aspect", "plan_x", "plan_y",
     "plan_scale", "plan_scale_x", "plan_scale_y", "plan_angle", "view_box",
+    "zero_wall_style",
 )
 _SPACE_DISPLAY_FIELDS = (
     "show_borders", "show_names", "room_color", "bg_color", "room_opacity",

@@ -1,7 +1,7 @@
 /**
  * Wall thickness (docs/WALL-THICKNESS.md): tool, hatch body, floor area drops
  * with thickness, opening cuts, centred/default and flipped door symbols,
- * shared once, clear→line,
+ * shared once, zero→line,
  * degrade/rekey, safe Resize rejects a mixed-thickness shared wall.
  */
 import { launch, checkAll, finish } from './serve.mjs';
@@ -205,38 +205,37 @@ const res = await page.evaluate(async () => {
   c._wallThickClick(outer);
   await upd();
   c._wallDialog = { ...c._wallDialog, value: '' };
+  c._toast = null;
   c._wallThickApply(false);
   await upd();
-  out.cleared = !(sp().walls || []).some((w) => w.cm === 20);
+  out.emptyRejected = !!c._wallDialog && !!c._toast
+    && c._intervalCm([40, 180, 40, 420]) === 20;
+  c._wallDialog = { ...c._wallDialog, value: '0' };
+  c._wallThickApply(false);
+  await upd();
+  out.zeroApplied = c._intervalCm([40, 180, 40, 420]) === 0;
 
   sp().walls = [...(sp().walls || []), { key: '9.99,9.99@1.5708', cm: 15 }];
   c._dropLegacySegments();
   out.degrade = !(sp().walls || []).some((w) => w.key.startsWith('9.99'));
 
-  // Opening a stretch takes TWO clicks since v1.59.0-beta.6: anchor, then the
-  // second point on the same shared wall. A span over y=150..350 must refuse
-  // thickness at y=250, and the solid remainder above/below must keep its own.
-  c._tool = 'boundary';
-  c._boundaryClick([550, 150]);
-  c._boundaryClick([550, 350]);
-  await upd();
-  out.spanOpened = ((sp().open_spans || []).length === 1);
+  // The current door is hosted by the shared wall. Turning that carrier into
+  // a zero wall is rejected atomically; after removing the opening, zero and
+  // a later positive thickness use the ordinary Thickness flow.
   c._tool = 'wallthick';
   c._toast = null;
   c._wallThickClick([550, 250]);
   await upd();
-  out.openRefused = !!c._toast && !c._wallDialog;
-  // the closed parts of the same wall still carry the 25 cm they had
-  out.solidRemainderKeepsCm = c._intervalCm([550, 140, 550, 148]) === 25
-    && c._intervalCm([550, 350, 550, 460]) === 25
-    && c._intervalCm([550, 200, 550, 300]) === 0;
-
-  c._tool = 'boundary';
-  c._boundaryClick([550, 250]);
+  c._wallDialog = { ...c._wallDialog, value: '0' };
+  c._wallThickApply(false);
   await upd();
-  out.spanClosed = !(sp().open_spans || []).length;
+  out.openingBlocksZero = !!c._wallDialog && !!c._toast
+    && c._intervalCm([550, 200, 550, 300]) === 25;
   delete sp().openings;
-  c._tool = 'wallthick';
+  c._wallDialog = { ...c._wallDialog, value: '0' };
+  c._wallThickApply(false);
+  await upd();
+  out.sharedZero = c._intervalCm([550, 200, 550, 300]) === 0;
   c._wallThickClick([550, 250]);
   await upd();
   if (c._wallDialog) {

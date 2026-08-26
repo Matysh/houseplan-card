@@ -91,35 +91,6 @@ out.splitKeepsLegacyWallThickness = await page.evaluate(() => {
 });
 await restore();
 
-// AUD-159B7-01: one open span crossing the Split point belongs to two room
-// pairs afterwards. The card transaction must persist both pieces and derive
-// light-zone connectivity for both children, not keep only the first half.
-const spanSplit = await page.evaluate(() => {
-  const c = window.__card;
-  const sp = c._serverCfg.spaces.find((x) => x.id === 'f1');
-  sp.rooms = [
-    { id: 'left_top', name: 'Left top', area: null, poly: [[0, 0], [.5, 0], [.5, .2], [0, .2]] },
-    { id: 'left_bottom', name: 'Left bottom', area: null, poly: [[0, .2], [.5, .2], [.5, .4], [0, .4]] },
-    { id: 'right', name: 'Right', area: null, poly: [[.5, 0], [1, 0], [1, .4], [.5, .4]] },
-  ];
-  sp.open_spans = [{ a: [.5, .1], b: [.5, .3] }];
-  c._commitOpenSpans();
-  const pieces = (sp.open_spans || []).map((e) =>
-    [Math.min(e.a[1], e.b[1]), Math.max(e.a[1], e.b[1])]);
-  const links = Object.fromEntries(sp.rooms.map((r) => [r.id, r.open_to || []]));
-  return { pieces, links };
-});
-out.splitKeepsOpenPieces = spanSplit.pieces.length === 2
-  && Math.abs(spanSplit.pieces[0][0] - .1) < 1e-9
-  && Math.abs(spanSplit.pieces[0][1] - .2) < 1e-9
-  && Math.abs(spanSplit.pieces[1][0] - .2) < 1e-9
-  && Math.abs(spanSplit.pieces[1][1] - .3) < 1e-9;
-out.splitSyncsBothSides = spanSplit.links.left_top?.includes('right')
-  && spanSplit.links.left_bottom?.includes('right')
-  && spanSplit.links.right?.includes('left_top')
-  && spanSplit.links.right?.includes('left_bottom');
-await restore();
-
 // SPLIT along a wall → refused (both pts on top wall of rg)
 await page.evaluate(()=>{const c=window.__card; c._serverCfg.spaces.find(s=>s.id==='f1').rooms.push(
   {id:'rg2', name:'G2', area:null, poly:[[0.05,0.0625],[0.5,0.0625],[0.5,0.5],[0.05,0.5]]});

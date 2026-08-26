@@ -51,7 +51,7 @@ VERSION = "1.68.0-beta.2"
 # Portable backup format.  This is deliberately independent from the Home
 # Assistant Store version above: storage migrations and files exported by a
 # user have different compatibility lifecycles.
-PLAN_MODEL_VERSION = 8
+PLAN_MODEL_VERSION = 9
 EXPORT_VERSION = 1
 MAX_EXPORT_BYTES = 8 * 1024 * 1024
 IMPORT_PREVIEW_TTL_S = 10 * 60

@@ -219,7 +219,7 @@ export function clampWallCm(cm: number): number {
 
 /** Config cm → the thickness field (cm, or inches when HA is imperial). */
 export function cmToField(cm: number, imperial: boolean): string {
-  if (!Number.isFinite(cm) || cm <= 0) return '';
+  if (!Number.isFinite(cm) || cm < 0) return '';
   if (imperial) return String(Math.round((cm / 2.54) * 100) / 100);
   return String(Math.round(cm * 100) / 100);
 }
@@ -237,6 +237,7 @@ export function fieldToCm(raw: string | number, imperial: boolean): number | nul
 
 /** Real cm → length in the same units as the room polygon (via cell_cm). */
 export function wallCmToUnits(cm: number, cellCm: number, gridPitch: number): number {
+  if (!Number.isFinite(cm) || cm <= 0) return 0;
   const c = Number(cellCm) > 0 ? Number(cellCm) : 5;
   return (clampWallCm(cm) / c) * gridPitch;
 }

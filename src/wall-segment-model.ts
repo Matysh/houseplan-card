@@ -11,14 +11,14 @@ import {
   canonicalizeConfigGeometryInPlace, LATTICE_NOISE_STEPS,
 } from './coordinate-canonicalization';
 import { roomPoly, samePoint } from './logic';
-import { sanitizeOpenSpans } from './open-spans';
+import { resolveOpenCuts, sanitizeOpenSpans } from './open-spans';
 import { GRID_STEP_N } from './space-geometry';
 import {
   atomicPolyForRoom, thicknessCmAt, wallAngleMatches, wallKey, type WallEntry,
 } from './wall-thickness';
-import type { OpeningCfg, WallSegmentEntry } from './types';
+import type { OpeningCfg, WallOpeningHost, WallSegmentEntry } from './types';
 
-export const WALL_SEGMENT_MODEL_VERSION = 8;
+export const WALL_SEGMENT_MODEL_VERSION = 9;
 const EPS = 1e-9;
 
 export type WallSegmentModelBlocker =
@@ -58,6 +58,7 @@ type Atom = {
   positionalIds: Set<string>;
   preferredCarriers: Map<string, { a: Point; b: Point }>;
   parentKeys: Set<string>;
+  zeroWall: boolean;
   id?: string;
 };
 
@@ -98,7 +99,8 @@ export const sanitizeRoomDraftPath = (draft: any): {
     const source = draft.segments?.[index - 1];
     segments.push({
       ...(source && typeof source === 'object' ? source : {}),
-      cm: Math.max(1, Math.min(100, Number(source?.cm) || 15)),
+      cm: Number.isFinite(Number(source?.cm))
+        ? Math.max(0, Math.min(100, Number(source.cm))) : 15,
     });
   }
   return { points, segments };
@@ -304,9 +306,32 @@ const buildAtoms = (
   space: any, old: ReadonlyMap<string, WallSegmentEntry>,
 ): { atoms: Atom[]; rooms: any[] } => {
   const rooms = Array.isArray(space.rooms) ? space.rooms : [];
-  const cuts = sanitizeOpenSpans(space.open_spans).map((entry) => [
+  const explicitLegacyCuts = sanitizeOpenSpans(space.open_spans).map((entry) => [
     entry.a[0], entry.a[1], entry.b[0], entry.b[1],
   ]);
+  const legacyCuts = explicitLegacyCuts.length ? explicitLegacyCuts : resolveOpenCuts(
+    rooms, null, 1, GRID_STEP_N * 0.04, true,
+  );
+  // Since v9 every bodyless contour atom is authoritative in wall_segments.
+  // Feed its CURRENT carrier back into atomisation on every structural write:
+  // a partial zero run must survive after the deprecated open_spans/open_to
+  // projection has been removed, while Resize must not leave its old endpoint
+  // behind as a phantom breakpoint.
+  const canonicalZeroCuts: number[][] = [];
+  for (const room of rooms) {
+    const poly = roomPoly(room);
+    const ids = Array.isArray(room?.wall_ids) ? room.wall_ids : [];
+    if (!poly || ids.length !== poly.length) continue;
+    for (let index = 0; index < ids.length; index++) {
+      const previous = typeof ids[index] === 'string' ? old.get(ids[index]) : null;
+      if (Number(previous?.cm) !== 0) continue;
+      canonicalZeroCuts.push([
+        poly[index][0], poly[index][1],
+        poly[(index + 1) % poly.length][0], poly[(index + 1) % poly.length][1],
+      ]);
+    }
+  }
+  const cuts = [...canonicalZeroCuts, ...legacyCuts];
   const byKey = new Map<string, Atom>();
   const nextRooms: any[] = [];
   for (const rawRoom of rooms) {
@@ -346,7 +371,7 @@ const buildAtoms = (
         atom = {
           key, a: ca, b: cb, owners: new Set(), preferredIds: new Set(),
           positionalIds: new Set(),
-          preferredCarriers: new Map(), parentKeys: new Set(),
+          preferredCarriers: new Map(), parentKeys: new Set(), zeroWall: false,
         };
         byKey.set(key, atom);
       }
@@ -373,6 +398,10 @@ const buildAtoms = (
       atom.parentKeys.add(wallKey(
         original[parent], original[(parent + 1) % original.length], GRID_STEP_N,
       ));
+      const midpoint = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+      atom.zeroWall ||= cuts.some((cut) => distanceToSegment(
+        midpoint, [cut[0], cut[1]], [cut[2], cut[3]],
+      ) <= GRID_STEP_N * 0.04);
       wallIds.push(key); // replaced with stable ids after lineage resolution
     }
     // Re-add the owned field last on every pass.  Several legacy maintenance
@@ -553,32 +582,45 @@ const assignLineage = (
   }
 };
 
+/** Resolve one contour-opening owner using the same fail-closed rule as the
+ * structural writer. UI gestures use this before entering the v9 barrier, so
+ * the live candidate never contains a stale/missing host during a valid move. */
+export const resolveRoomOpeningHost = (
+  opening: OpeningCfg, segments: readonly WallSegmentEntry[],
+): WallOpeningHost | null => {
+  if (opening.host?.kind === 'partition') return null;
+  const centre = [Number(opening.x), Number(opening.y)];
+  if (!centre.every(Number.isFinite)) return null;
+  const eligible = (segment: WallSegmentEntry): boolean => {
+    if (!(Number(segment.cm) > 0)) return false;
+    const t = projectT(centre, segment.a, segment.b);
+    const span = lengthOf(segment.a, segment.b);
+    const half = Number(opening.length) / 2;
+    return t >= -EPS && t <= 1 + EPS
+      && distanceToSegment(centre, segment.a, segment.b) <= GRID_STEP_N * 0.02
+      && wallAngleMatches(segment.a, segment.b, Number(opening.angle))
+      && Number.isFinite(half) && half >= 0
+      && t * span - half >= -EPS && t * span + half <= span + EPS;
+  };
+  const current = opening.host?.kind === 'wall'
+    ? segments.find((segment) => segment.id === opening.host!.id)
+    : null;
+  const candidates = current && eligible(current) ? [current] : segments.filter(eligible);
+  if (candidates.length !== 1) return null;
+  const host = candidates[0];
+  return {
+    kind: 'wall', id: host.id,
+    t: Math.max(0, Math.min(1, projectT(centre, host.a, host.b))),
+  };
+};
+
 const hostRoomOpenings = (space: any, segments: readonly WallSegmentEntry[]): void => {
   const openings: OpeningCfg[] = Array.isArray(space.openings) ? space.openings : [];
   for (const opening of openings) {
     if (opening.host?.kind === 'partition') continue;
-    const centre = [Number(opening.x), Number(opening.y)];
-    if (!centre.every(Number.isFinite)) throw new WallSegmentModelError('opening-host', opening.id);
-    const eligible = (segment: WallSegmentEntry): boolean => {
-      const t = projectT(centre, segment.a, segment.b);
-      const span = lengthOf(segment.a, segment.b);
-      const half = Number(opening.length) / 2;
-      return t >= -EPS && t <= 1 + EPS
-        && distanceToSegment(centre, segment.a, segment.b) <= GRID_STEP_N * 0.02
-        && wallAngleMatches(segment.a, segment.b, Number(opening.angle))
-        && Number.isFinite(half) && half >= 0
-        && t * span - half >= -EPS && t * span + half <= span + EPS;
-    };
-    const current = opening.host?.kind === 'wall'
-      ? segments.find((segment) => segment.id === opening.host!.id)
-      : null;
-    const candidates = current && eligible(current) ? [current] : segments.filter(eligible);
-    if (candidates.length !== 1) throw new WallSegmentModelError('opening-host', opening.id);
-    const host = candidates[0];
-    opening.host = {
-      kind: 'wall', id: host.id,
-      t: Math.max(0, Math.min(1, projectT(centre, host.a, host.b))),
-    };
+    const host = resolveRoomOpeningHost(opening, segments);
+    if (!host) throw new WallSegmentModelError('opening-host', opening.id);
+    opening.host = host;
   }
 };
 
@@ -619,6 +661,7 @@ const migrateDraftSegments = (space: any, initialMigration: boolean): void => {
 const resolvedThicknessCm = (
   space: any, atom: Atom, previous: WallSegmentEntry | undefined,
 ): number => {
+  if (atom.zeroWall) return 0;
   const walls: WallEntry[] = Array.isArray(space.walls) ? space.walls : [];
   const ownKey = wallKey(atom.a, atom.b, GRID_STEP_N);
   const candidates = walls.filter((wall) => {
@@ -657,6 +700,8 @@ const migrateSpace = (
     cm: segment.cm, a: [...segment.a], b: [...segment.b],
   }));
   if (!space.walls.length) delete space.walls;
+  delete space.open_spans;
+  for (const room of space.rooms) delete room.open_to;
   migrateDraftSegments(space, initialMigration);
   hostRoomOpenings(space, segments);
   return segments.reduce((count, segment) => count + (old.has(segment.id) ? 0 : 1), 0);

@@ -590,7 +590,12 @@ test('optimizePlans migrates, aligns and canonicalises idempotently', () => {
   assert.equal(first.config.spaces[0].plan_scale_y, 0.75);
   assert.equal('plan_scale' in first.config.spaces[0], false);
   assert.equal('entity' in first.config.spaces[0].decor[0], false);
-  assert.equal(first.config.spaces[0].open_spans.length, 1);
+  assert.equal('open_spans' in first.config.spaces[0], false);
+  assert.ok(first.config.spaces[0].rooms.every((item) => !('open_to' in item)));
+  const [left, right] = first.config.spaces[0].rooms;
+  const sharedIds = left.wall_ids.filter((id) => right.wall_ids.includes(id));
+  assert.ok(sharedIds.some((id) => first.config.spaces[0].wall_segments
+    .some((segment) => segment.id === id && segment.cm === 0)));
   assert.equal(first.config.spaces[0].walls.length, 1);
   assert.equal(first.layout.m1.x % S, 0);
 

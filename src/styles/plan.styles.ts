@@ -862,7 +862,7 @@ export const planStyles = css`
     .stage .opening-tunnels,
     .stage .glow-base-layer,
     .stage .glow-pools-frame,
-    .stage .openwalls {
+    .stage .zero-walls {
       opacity: var(--hp-mode-architecture-opacity, 1);
     }
     .opening-preview {
@@ -952,13 +952,8 @@ export const planStyles = css`
       fill: var(--error-color, #f44336);
       stroke: var(--error-color, #f44336);
     }
-    /* Boundary is neutral off-target, then advertises its resolved action. */
-    .stage.markup.tool-boundary { cursor: default; }
-    .stage.markup.tool-boundary.boundary-solid { cursor: crosshair; }
-    .stage.markup.tool-boundary.boundary-open { cursor: pointer; }
-    .stage.markup.tool-boundary.boundary-invalid { cursor: not-allowed; }
-    .openwall {
-      stroke: var(--ow-stroke, var(--hp-muted));
+    .zero-wall {
+      stroke: var(--zero-wall-stroke, var(--hp-muted));
       stroke-width: calc(2.5px * var(--hp-cell-visual-scale, 1));
       stroke-dasharray:
         calc(7px * var(--hp-cell-visual-scale, 1))
@@ -967,7 +962,10 @@ export const planStyles = css`
       pointer-events: none;
       opacity: 0.9;
     }
-    /* Rooms with open/thick stretches: the polygon's own stroke is fully off.
+    .zero-walls.solid .zero-wall {
+      stroke-dasharray: none;
+    }
+    /* Rooms with zero/thick stretches: the polygon's own stroke is fully off.
        The trimmed .room-outline draws normal walls; View hover gets its own
        top overlay after the wall bodies. */
     .room.noedge {
@@ -1015,43 +1013,6 @@ export const planStyles = css`
       stroke-linejoin: round;
       stroke-linecap: round;
       pointer-events: none;
-    }
-    .openwall-preview {
-      stroke: #ffc14d;
-      stroke-width: calc(5px * var(--hp-cell-visual-scale, 1));
-      stroke-dasharray:
-        calc(7px * var(--hp-cell-visual-scale, 1))
-        calc(7px * var(--hp-cell-visual-scale, 1));
-      stroke-linecap: round;
-      pointer-events: none;
-      opacity: 0.95;
-    }
-    .openwall-preview.boundary-range.invalid {
-      stroke: var(--error-color, #f44336);
-    }
-    .openwall-preview.boundary-restore {
-      fill: rgba(255, 193, 77, 0.28);
-      fill-rule: evenodd;
-      stroke: #ffc14d;
-      stroke-width: calc(2.5px * var(--hp-cell-visual-scale, 1));
-      stroke-dasharray: none;
-      stroke-linejoin: round;
-    }
-    .boundary-point {
-      fill: #ffc14d;
-      stroke: #24262d;
-      stroke-width: 1.5;
-      vector-effect: non-scaling-stroke;
-      pointer-events: none;
-    }
-    .boundary-point.invalid circle {
-      fill: var(--error-color, #f44336);
-    }
-    .boundary-point.invalid path {
-      fill: none;
-      stroke: #fff;
-      stroke-width: 1.7;
-      vector-effect: non-scaling-stroke;
     }
     .stage.markup .room {
       pointer-events: none;
@@ -1154,6 +1115,20 @@ export const planStyles = css`
       stroke-width: calc(0.5px * var(--hp-cell-visual-scale, 1));
       stroke-opacity: 0.7;
       pointer-events: none;
+    }
+    .drawwall-zero-preview {
+      fill: none;
+      stroke: var(--accent-color, #03a9f4);
+      stroke-width: calc(3px * var(--hp-cell-visual-scale, 1));
+      stroke-linecap: butt;
+      stroke-linejoin: round;
+      opacity: 0.72;
+      pointer-events: none;
+    }
+    .drawwall-zero-preview.dashed {
+      stroke-dasharray:
+        calc(7px * var(--hp-cell-visual-scale, 1))
+        calc(7px * var(--hp-cell-visual-scale, 1));
     }
     .vertex {
       fill: #ffc14d;

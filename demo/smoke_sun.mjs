@@ -232,6 +232,33 @@ const rayInfo = () => page.evaluate(() => {
 // baseline: morning east sun, only wE glows, window sits at y = 600
 await page.evaluate(async () => {
   const c = window.__card;
+  // This section exercises a production structural write. Give it a compact
+  // canonical v9 fixture: the broad legacy fixture above intentionally omits
+  // wall identity and is valid for read/render compatibility only (#282).
+  const sp = c._serverCfg.spaces.find((space) => space.id === 'f1');
+  const edges = [
+    { id: 'sun-top', a: [0.55, 0.46], b: [0.96, 0.46] },
+    { id: 'sun-east', a: [0.96, 0.46], b: [0.96, 0.86] },
+    { id: 'sun-bottom', a: [0.96, 0.86], b: [0.55, 0.86] },
+    { id: 'sun-west', a: [0.55, 0.86], b: [0.55, 0.46] },
+  ];
+  sp.rooms = [{
+    id: 'r3', name: 'Bedroom', area: 'bedroom',
+    poly: edges.map((edge) => [...edge.a]),
+    wall_ids: edges.map((edge) => edge.id),
+  }];
+  sp.wall_segments = edges.map((edge) => ({ ...edge, cm: 15 }));
+  sp.walls = edges.map((edge) => ({
+    key: edge.id, a: [...edge.a], b: [...edge.b], cm: 15,
+  }));
+  sp.openings = [{
+    id: 'wE', type: 'window', x: 0.96, y: 0.60, angle: 90, length: 0.08,
+    host: { kind: 'wall', id: 'sun-east', t: 0.35 },
+  }];
+  c._serverCfg.spaces = [sp];
+  c._serverCfg.model_version = 9;
+  c._modelCache = null;
+  c._cfgEpoch++;
   c.hass = { ...c.hass, states: { ...c.hass.states, 'sun.sun': {
     entity_id: 'sun.sun', state: 'above_horizon', attributes: { azimuth: 90, elevation: 5 },
   } } };
@@ -247,7 +274,10 @@ await page.evaluate(async () => {
   c._setMode('plan'); c._tool = 'opening';
   c.requestUpdate(); await c.updateComplete;
 });
-await page.waitForTimeout(220); // stage coordinates settle with editor chrome
+// The mode/chrome transition owns the stage geometry. Wait for its public
+// completion signal before converting plan coordinates to screen pixels;
+// a fixed delay races slower CI and drags empty canvas instead of the window.
+await page.waitForFunction(() => !window.__card._modeTransitionBusy, { timeout: 2000 });
 await settle();
 const [dx, dy] = await screenPt(960, 600);
 const [, dty] = await screenPt(960, 700);

@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+- Walls now use one model at every thickness. The separate **Boundary** tool
+  and virtual-wall entity are gone: **Walls** and **Thickness** accept `0 cm`
+  for room contours, saved drafts and independent walls. Each space can draw
+  all zero-thickness walls dashed (default, transmits Glow and sun) or solid
+  (an exact zero-area light barrier). Legacy virtual spans migrate atomically
+  into stable model-v9 wall segments; all existing `cm:0` segments deliberately
+  receive the same semantics, so a small number of old plans may change
+  appearance or light transmission. Zero walls create no masonry, area or
+  opening tunnel and cannot host an opening
+  ([#306](https://github.com/Matysh/houseplan-card/issues/306)).
+
 ## v1.68.0-beta.2 — 2026-08-26
 
 - The Russian binding dialog names its entities toggle exactly as the user

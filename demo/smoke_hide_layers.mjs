@@ -1,11 +1,11 @@
 /**
- * The two "draw less" space options and the virtual-wall rule (owner
- * 2026-08-05), plus the handle beads that came with them.
+ * The two "draw less" space options and the zero-wall rule (#306), plus the
+ * handle beads that came with them.
  *
  *   • «Скрыть декоративный слой» hides decor everywhere EXCEPT its own editor;
  *   • «Скрыть проёмы» hides doors/windows everywhere EXCEPT the plan editor,
  *     and does not touch what an opening MEANS (the light still gets through);
- *   • a space that does not draw room borders draws no dashed virtual walls
+ *   • a space that does not draw room borders draws no zero-thickness walls
  *     in View; every editor still does, because the complete centreline span
  *     must remain visible while editing;
  *   • both switches survive a round trip through the dialog;
@@ -28,6 +28,14 @@ const res = await page.evaluate(async () => {
   };
   const mode = async (m) => { c._setMode(m); await upd(); };
   const n = (sel) => sr().querySelectorAll(sel).length;
+  const setThickness = async (point, value) => {
+    c._setMode('plan'); c._tool = 'wallthick'; await upd();
+    c._wallThickClick(point); await c.updateComplete;
+    if (!c._wallDialog) return false;
+    c._wallDialog = { ...c._wallDialog, value: String(value) };
+    c._wallThickApply(false); await c.updateComplete;
+    return true;
+  };
 
   // a shape and an opening to look for, on the space we are on
   const s0 = sp();
@@ -69,27 +77,30 @@ const res = await page.evaluate(async () => {
   await set({ hide_openings: undefined });
   out.openingsBackAfterOff = opCount() === before;
 
-  // ---- 4) virtual walls follow the borders switch ------------------------
-  // an open boundary is a link between two rooms that share a wall; the demo's
-  // first two rooms do (smoke_render_parity relies on the same fact)
-  const rooms = sp().rooms || [];
-  rooms[0].open_to = [rooms[1].id];
+  // ---- 4) zero walls follow the borders switch ---------------------------
+  // The demo's first two rooms share x=550. Apply zero through the public
+  // Thickness workflow so the smoke exercises the canonical v9 catalogue.
+  // The synthetic unhosted opening above has finished its own assertions and
+  // must not participate in the structural migration exercised here.
+  delete sp().openings;
   await upd();
-  out.openWallsFound = c._openPairs().length > 0;
+  out.zeroWallCreated = await setThickness([550, 250], 0);
+  sp().zero_wall_style = 'dashed';
+  await upd();
+  await mode('view');
   await set({ show_borders: true });
-  out.openWallsDrawnWithBorders = n('.openwalls .openwall') > 0;
+  out.zeroWallsDrawnWithBorders = n('.zero-walls .zero-wall') > 0;
   await set({ show_borders: false });
-  out.openWallsGoneWithoutBorders = n('.openwalls .openwall') === 0;
+  out.zeroWallsGoneWithoutBorders = n('.zero-walls .zero-wall') === 0;
   // Every editor still draws them. The dash deliberately reaches the physical
   // centreline there, even if show_borders is off; only View hides it.
   await mode('plan');
-  c._tool = 'boundary';
   await upd();
-  out.openWallsVisibleInPlanEditor = n('.openwalls .openwall') > 0;
+  out.zeroWallsVisibleInPlanEditor = n('.zero-walls .zero-wall') > 0;
   await mode('devices');
-  out.openWallsVisibleInDevicesEditor = n('.openwalls .openwall') > 0;
+  out.zeroWallsVisibleInDevicesEditor = n('.zero-walls .zero-wall') > 0;
   await mode('decor');
-  out.openWallsVisibleInDecorEditor = n('.openwalls .openwall') > 0;
+  out.zeroWallsVisibleInDecorEditor = n('.zero-walls .zero-wall') > 0;
   await mode('view');
   await set({ show_borders: true });
 

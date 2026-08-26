@@ -8,6 +8,7 @@ import {
   commitWallSegmentModel,
   deterministicWallSegmentId,
   fixedTopologyWallLineageHints,
+  resolveRoomOpeningHost,
   sanitizeRoomDraftPath,
   wallModelOffGridValueCount,
   WallSegmentModelError,
@@ -102,6 +103,24 @@ test('an explicit canonical zero is not resurrected from the old thickness proje
   assert.equal(result.walls, undefined);
 });
 
+test('v8 virtual spans migrate to ordinary zero atoms and legacy fields disappear', () => {
+  const base = commitWallSegmentModel(configOf({
+    id: 'floor', title: 'Floor',
+    rooms: [rectangle('left', 0, 0, 0.5, 1), rectangle('right', 0.5, 0, 1, 1)],
+  })).config;
+  base.model_version = 8;
+  base.spaces[0].open_spans = [{ a: [0.5, 0.25], b: [0.5, 0.75] }];
+  base.spaces[0].rooms[0].open_to = ['right'];
+  const result = commitWallSegmentModel(base).config.spaces[0];
+  const shared = result.wall_segments.filter((segment) => (
+    Math.abs(segment.a[0] - 0.5) < 1e-9 && Math.abs(segment.b[0] - 0.5) < 1e-9
+  ));
+  assert.equal(result.open_spans, undefined);
+  assert.equal(result.rooms.some((room) => Object.hasOwn(room, 'open_to')), false);
+  assert.ok(shared.some((segment) => segment.cm === 0
+    && segment.a[1] >= 0.25 - 1e-9 && segment.b[1] <= 0.75 + 1e-9));
+});
+
 test('partial shared side is atomised once and every atom has one or two owners', () => {
   const result = commitWallSegmentModel(configOf({
     id: 'floor', title: 'Floor',
@@ -155,6 +174,28 @@ test('fixed-topology Resize hints preserve every shared and side-wall id', () =>
   assert.equal(result.rooms[0].wall_ids[1], result.rooms[1].wall_ids[3]);
 });
 
+test('fixed-topology move carries zero walls without leaving phantom breakpoints', () => {
+  const baseline = commitWallSegmentModel(configOf({
+    id: 'floor', title: 'Floor', rooms: [rectangle('room', 0, 0, 1, 1)],
+  })).config;
+  const candidate = structuredClone(baseline);
+  const room = candidate.spaces[0].rooms[0];
+  room.poly = [[0, 0], [1, 0], [1, 1.25], [0, 1.25]];
+  const hints = fixedTopologyWallLineageHints(
+    baseline.spaces[0], baseline.spaces[0].rooms, candidate.spaces[0],
+  );
+  const result = commitWallSegmentModel(candidate, {
+    lineageHints: hints, lineageSpaceId: 'floor',
+  }).config.spaces[0];
+  assert.equal(result.rooms[0].poly.length, 4);
+  assert.deepEqual(result.rooms[0].poly, room.poly);
+  assert.equal(result.wall_segments.length, 4);
+  assert.ok(result.wall_segments.every((segment) => segment.cm === 0));
+  assert.ok(result.wall_segments.some((segment) => (
+    segment.a[1] === 1.25 || segment.b[1] === 1.25
+  )));
+});
+
 test('off-grid contour guard counts values once across compatibility projections', () => {
   const point = 0.0605;
   assert.equal(wallModelOffGridValueCount({
@@ -172,6 +213,7 @@ test('off-grid contour guard counts values once across compatibility projections
 test('room openings acquire a stable wall host while partition hosts stay untouched', () => {
   const result = commitWallSegmentModel(configOf({
     id: 'floor', title: 'Floor', rooms: [rectangle('room')],
+    walls: [{ key: wallKey([0, 0], [1, 0], GRID_STEP_N), a: [0, 0], b: [1, 0], cm: 15 }],
     openings: [
       { id: 'door', type: 'door', x: 0.5, y: 0, angle: 0, length: 0.2 },
       {
@@ -184,6 +226,23 @@ test('room openings acquire a stable wall host while partition hosts stay untouc
   assert.equal(result.openings[0].host.kind, 'wall');
   assert.equal(result.openings[0].host.t, 0.5);
   assert.deepEqual(result.openings[1].host, { kind: 'partition', id: 'partition', t: 0.5 });
+});
+
+test('room opening host resolver updates t and rejects ambiguous or zero walls', () => {
+  const opening = {
+    id: 'door', type: 'door', x: 0.75, y: 0, angle: 0, length: 0.2,
+    host: { kind: 'wall', id: 'top', t: 0.5 },
+  };
+  assert.deepEqual(resolveRoomOpeningHost(opening, [
+    { id: 'top', a: [0, 0], b: [1, 0], cm: 15 },
+  ]), { kind: 'wall', id: 'top', t: 0.75 });
+  assert.equal(resolveRoomOpeningHost({ ...opening, host: undefined }, [
+    { id: 'a', a: [0, 0], b: [1, 0], cm: 15 },
+    { id: 'b', a: [0, 0], b: [1, 0], cm: 15 },
+  ]), null);
+  assert.equal(resolveRoomOpeningHost({ ...opening, host: undefined }, [
+    { id: 'top', a: [0, 0], b: [1, 0], cm: 0 },
+  ]), null);
 });
 
 test('an ambiguous room opening blocks the complete candidate without mutating input', () => {
@@ -273,6 +332,7 @@ test('promoted divider identity outranks a stale same-index room hint', () => {
 test('validated candidate adoption preserves active editor object identity', () => {
   const target = configOf({
     id: 'floor', title: 'Floor', rooms: [rectangle('room')],
+    walls: [{ key: wallKey([0, 0], [1, 0], GRID_STEP_N), a: [0, 0], b: [1, 0], cm: 15 }],
     openings: [{ id: 'door', type: 'door', x: 0.5, y: 0, angle: 0, length: 0.2 }],
   });
   const space = target.spaces[0];

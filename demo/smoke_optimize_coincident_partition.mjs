@@ -70,7 +70,7 @@ const out = await page.evaluate(async () => {
   result.previewIsExact = !!preview?.changed && preview.preflight?.ok === true
     && preview.report.partitionsReconciled === 1
     && preview.report.openingsRehosted === 1
-    && preview.config.model_version === 8
+    && preview.config.model_version === 9
     && previewSpace.partitions == null
     && wallHostResolves(previewSpace, previewSpace.openings[0]);
   result.previewDoesNotWrite = sent.length === 0
@@ -102,13 +102,11 @@ const out = await page.evaluate(async () => {
     && card._canOptimizeUndo === false;
 
   // Apply once more and prove the ordinary shared wall is no longer hidden
-  // underneath an independent-wall blocker in the two wall tools.
+  // underneath an independent-wall blocker in the remaining Thickness tool.
   card._openAlignDialog(); await card.updateComplete;
   await card._runAlignToGrid(); await card.updateComplete;
-  card._setMode('plan'); card._markup = true; card._tool = 'boundary';
+  card._setMode('plan'); card._markup = true;
   card._modelCache = null; card.requestUpdate(); await card.updateComplete;
-  result.boundarySeesSharedWall = card._boundaryTargetAt([500, 500]).kind === 'shared';
-
   card._tool = 'wallthick';
   card._wallThickClick([500, 500]);
   result.thicknessToolSelectsCanonicalWall = !!card._wallDialog;

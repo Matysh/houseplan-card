@@ -24,10 +24,16 @@ const setRooms = async (rooms, openings = [], walls = []) => {
   await page.evaluate(({ rooms, openings, walls }) => {
     const card = window.__card;
     const space = card._serverCfg.spaces.find((candidate) => candidate.id === card._space);
+    // Each scenario below injects the deliberately compact pre-identity
+    // projection. Mark it as such so the production transaction exercises the
+    // same atomic v8 -> v9 materialisation as a real legacy document instead
+    // of presenting invalid v9 data with missing wall_ids.
+    card._serverCfg.model_version = 8;
     space.rooms = rooms;
     space.openings = openings;
     if (walls.length) space.walls = walls;
     else delete space.walls;
+    delete space.wall_segments;
     delete space.open_spans;
     delete space.partitions;
     delete space.room_drafts;
@@ -92,7 +98,9 @@ await setRooms([
   rect('left', 100, 100, 400, 400),
   rect('right', 400, 100, 700, 400),
   rect('third', 850, 100, 950, 400),
-], [{ id: 'moving-door', type: 'door', x: 0.4, y: 0.25, angle: 90, length: 0.08 }]);
+], [{ id: 'moving-door', type: 'door', x: 0.4, y: 0.25, angle: 90, length: 0.08 }], [{
+  key: '0.400000,0.250000@1.5708', cm: 15, a: [0.4, 0.1], b: [0.4, 0.4],
+}]);
 await enter();
 check('safe_resize.handles_visible', await page.evaluate(() =>
   window.__card.renderRoot.querySelectorAll('.rszhandle').length), 12);

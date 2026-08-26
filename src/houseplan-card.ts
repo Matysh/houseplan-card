@@ -82,12 +82,8 @@ import {
   innerEdgeSpan, ownEdgeOffsets, thicknessCmAt,
 } from './wall-thickness';
 import {
-  resolveOpenCuts, resolveBoundaryTarget, snapOpenPoint,
-  clampToEdgeEnds, jointsOnEdge, cutsToSpanEntries, syncOpenToFromCuts,
-  applyThicknessOnClose, purgeOpeningsOnSpan,
-  pointOnOpenCut, removeCut, rekeyOpenSpansAfterMove, clipOpenSpansToShared,
-  sanitizeOpenSpans, entryToSeg,
-  type OpenSpanEntry, type BoundaryTarget,
+  pointOnOpenCut, sanitizeOpenSpans,
+  type OpenSpanEntry,
 } from './open-spans';
 import { ContentSigner } from './signing';
 import {
@@ -144,7 +140,7 @@ import type {
   OpeningCfg, PartitionOpeningHost,
   RoomCfg, RoomDraftCfg, PartitionCfg, WallColumnCfg,
   SpaceModel, PdfRef, Marker, ServerConfig, DevItem, CardConfig,
-  MarkerValueBadge, ValueBadgePosition, ValueBadgeSource,
+  MarkerValueBadge, ValueBadgePosition, ValueBadgeSource, ZeroWallStyle,
 } from './types';
 import {
   COLUMN_MAX_CM, canonicalColumnAngle, clampColumnCm, columnBody,
@@ -200,8 +196,12 @@ import { optimizePlans, type OptimizeReport } from './plan-optimizer';
 import {
   adoptWallSegmentModelCandidateInPlace, commitWallSegmentModel,
   fixedTopologyWallLineageHints, sanitizeRoomDraftPath,
-  wallModelOffGridValueCount, WallSegmentModelError,
+  resolveRoomOpeningHost, wallModelOffGridValueCount, WallSegmentModelError,
 } from './wall-segment-model';
+import {
+  legacyZeroContourLines, resolveZeroWalls, zeroContourLines,
+  zeroWallHasOpening, zeroWallStyleOf,
+} from './zero-walls';
 import { snapNearAxisEndpoint } from './near-axis';
 import type { SpaceReferenceRepairContext } from './space-reference-repair';
 import { collectSpaceMarkerDependencies } from './space-deletion';
@@ -210,7 +210,6 @@ import {
   checkOptimizeGeometry,
   geometryOpenCuts,
   geometryOpenings,
-  geometryOpenPairs,
   geometryPartitionOpeningCuts,
   geometryRoomOpeningInputs,
   spacePhysicalGeometryFingerprint,
@@ -600,7 +599,7 @@ type WallThickHit = {
   open: boolean; cm: number; source: WallThickSource;
 };
 
-type MarkupTool = 'select' | 'draw' | 'column' | 'merge' | 'split' | 'resize' | 'opening' | 'boundary' | 'wallthick' | 'delroom';
+type MarkupTool = 'select' | 'draw' | 'column' | 'merge' | 'split' | 'resize' | 'opening' | 'wallthick' | 'delroom';
 type RoomFillFrame = {
   byRoom: Map<RoomCfg, ResolvedRoomFill | null>;
   byId: Map<string, ResolvedRoomFill | null>;
@@ -635,11 +634,10 @@ type WallFaceBatch = {
 type GlowClipGeometry = { lit: string[] };
 const MARKUP_TOOLS = new Set<MarkupTool>([
   'select', 'draw', 'column', 'merge', 'split', 'resize',
-  'opening', 'boundary', 'wallthick', 'delroom',
+  'opening', 'wallthick', 'delroom',
 ]);
 /** Warm viewport is page-memory, so it may contain a tool name from the old bundle. */
 const normalizeMarkupTool = (value: unknown): MarkupTool => {
-  if (value === 'openwall' || value === 'closewall') return 'boundary';
   // #173 replaces the public one-shot Partition tool with one Walls chain.
   // A warm page may still carry the old session token; reading it is inert.
   value = normalizeUnifiedWallTool(value);
@@ -650,12 +648,6 @@ const normalizeMarkupTool = (value: unknown): MarkupTool => {
     ? value as MarkupTool
     : 'draw';
 };
-type BoundaryUiTarget = BoundaryTarget | { kind: 'blocked' };
-type BoundaryPreview =
-  | { kind: 'anchor'; point: number[] }
-  | { kind: 'range'; seg: number[]; invalid: boolean }
-  | { kind: 'restore'; seg: number[]; body: number[][] | null }
-  | { kind: 'invalid'; point: number[] };
 const MAX_ROOM_DRAFTS = 200;
 const MAX_DRAFT_POINTS = 500;
 const MAX_DRAFT_SEGMENTS = 2000;
@@ -1304,8 +1296,6 @@ class HouseplanCard extends LitElement {
     this._clearPlanSnapHover();
     this._clearOpeningPlacement(true);
     this._tool = 'draw';
-    this._openWallAnchor = null;
-    this._boundaryRestoreGuard = null;
     this._activeDraftId = null;
     this._draftSegmentCms = [];
     this._closingWallCm = null;
@@ -1547,11 +1537,10 @@ class HouseplanCard extends LitElement {
   private _wallDialog: {
     a: number[]; b: number[];
     value: string; roomId: string | null;
-    // #313: the Thickness tool serves independent masonry too. `room` keeps
+    // The Thickness tool serves independent masonry too. `room` keeps
     // the historical shape (walls records + «apply to room»); the other two
     // write partition.cm / draft.segments[i].cm. The switch in
-    // _wallThickApply is the single seam where #306 will later hang the
-    // «zero turns a partition virtual» branch.
+    // `_wallThickApply` applies the same `0..100` contract to every source.
     source: WallThickSource;
     sx: number; sy: number;
   } | null = null;
@@ -1718,13 +1707,6 @@ class HouseplanCard extends LitElement {
   // live ruler badges + the "centered on the wall" tick while an opening is dragged
   private _opMeasure: OpMeasure | null = null;
   private _mergeDialog: { aId: string; bId: string; poly: number[][]; pick: 'a' | 'b' } | null = null;
-  /** Open-boundary tool: first click anchor on a shared wall (render units). */
-  private _openWallAnchor: { p: number[]; edge: number[]; aId: string; bId: string } | null = null;
-  /** Pointer-specific hit widths must follow the gesture, not a global media query. */
-  private _boundaryPointerType = 'mouse';
-  private _boundaryRestoreGuard: { until: number; point: number[] } | null = null;
-  private _boundaryTargetMemo: { key: string; value: BoundaryUiTarget } | null = null;
-  private _boundaryPreviewMemo: { key: string; value: BoundaryPreview | null } | null = null;
   private _splitSel: { roomId: string; pts: number[][] } | null = null; // room being cut + the cut path so far
   // a split is applied only when the new room's dialog is confirmed — cancel leaves the room intact
   private _pendingSplit: { roomId: string; mainPoly: number[][]; newPoly: number[][] } | null = null;
@@ -1963,6 +1945,7 @@ class HouseplanCard extends LitElement {
     source: 'file' | 'draw';       // draw = no background image, hand-drawn rooms
     showBorders: boolean;
     showNames: boolean;
+    zeroWallStyle: ZeroWallStyle;
     /** Create-only source-default guard; never persisted. Edit starts touched. */
     displayTouched: boolean;
     hideDecor: boolean;            // the decorative layer is not drawn outside its editor
@@ -2212,8 +2195,6 @@ class HouseplanCard extends LitElement {
       this._clearPlanSnapHover();
       this._clearOpeningPlacement(true);
       this._tool = 'draw';
-      this._openWallAnchor = null;
-      this._boundaryRestoreGuard = null;
       this._activeDraftId = null;
       this._draftSegmentCms = [];
       this._closingWallCm = null;
@@ -2268,7 +2249,6 @@ class HouseplanCard extends LitElement {
     _openingDialog: { state: true },
     _openingInfo: { state: true },
     _mergeDialog: { state: true },
-    _openWallAnchor: { state: true },
     _splitSel: { state: true },
     _decorTool: { state: true },
     _decorStyle: { state: true },
@@ -2508,11 +2488,6 @@ class HouseplanCard extends LitElement {
     clearTimeout(this._warmReviveTimer);
     this._warmReviveTimer = undefined;
     this._warmRelease();
-    // A Boundary P1 is a local pointer gesture, not persisted editor state.
-    // Never let it survive a card replacement/reconnect and unexpectedly turn
-    // the user's first click after returning into P2.
-    this._openWallAnchor = null;
-    this._boundaryRestoreGuard = null;
     this._clearPlanSnapHover();
     this._clearOpeningPlacement(true);
     this._touchContacts.clear();
@@ -2728,12 +2703,6 @@ class HouseplanCard extends LitElement {
     if (this._wallDialog) {
       e.preventDefault();
       this._wallDialog = null;
-      return;
-    }
-    if (this._tool === 'boundary') {
-      e.preventDefault();
-      if (this._openWallAnchor) this._cancelBoundaryAnchor();
-      else this._tool = 'draw';
       return;
     }
     if (this._tool === 'opening' || this._tool === 'wallthick' || this._tool === 'delroom'
@@ -3540,8 +3509,8 @@ class HouseplanCard extends LitElement {
 
   private get _model(): SpaceModel[] {
     if (!this._serverCfg) return [];
-    // same reasoning as _openPairs: mutations in place mean the epoch can lag,
-    // so the key also carries the config's structural fingerprint
+    // In-place mutations mean the epoch can lag, so the key also carries the
+    // config's structural fingerprint.
     const key = this._cfgEpoch + '|' + this._cfgFingerprint();
     if (this._modelCache && this._modelCache.key === key) return this._modelCache.model;
     const built = this._buildModel();
@@ -5343,7 +5312,7 @@ class HouseplanCard extends LitElement {
     const space = this._spaceModel();
     if (!space) return null;
     const walls = this._spaceWalls;
-    const openCuts = this._openPairs().flatMap((pair) => pair.segs);
+    const openCuts = this._openCuts();
     const openings = this._openingsR.map((opening, sourceIndex) => ({
       id: String(opening.id || sourceIndex),
       sourceIndex,
@@ -5924,12 +5893,10 @@ class HouseplanCard extends LitElement {
       this._panLock = null; // undecided until the finger moves
       this._suppressClick = false;
     } else if (this._pointers.size === 2) {
-      // A second pointer turns the gesture into navigation. An unfinished
-      // two-click Boundary edit and an Opening hover must never survive
-      // underneath that pinch. Keep the selected opening preset: lifting the
+      // A second pointer turns the gesture into navigation. An Opening hover
+      // must never survive underneath that pinch. Keep the selected preset: lifting the
       // fingers returns to the same placement session, just without a stale
       // preview at the pre-gesture coordinate.
-      this._cancelBoundaryAnchor();
       if (this._tool === 'opening') {
         this._cursorPt = null;
         this._clearOpeningPlacement(false);
@@ -6255,7 +6222,6 @@ class HouseplanCard extends LitElement {
 
   /** The latest real pointer event, not a page-global first-touch latch, owns hover. */
   private _notePointer(ev: PointerEvent): void {
-    this._boundaryPointerType = ev.pointerType || 'mouse';
     const previous = this._pointerModality.modality;
     const modality = this._pointerModality.note(ev);
     if ((modality === 'touch' || modality === 'pen')
@@ -6685,8 +6651,6 @@ class HouseplanCard extends LitElement {
     this._path = [];
     this._clearPlanSnapHover();
     this._clearOpeningPlacement(true);
-    this._openWallAnchor = null;
-    this._boundaryRestoreGuard = null;
     this._tool = 'draw';
     this._mergeSel = null;
     this._mergeDialog = null;
@@ -6735,18 +6699,20 @@ class HouseplanCard extends LitElement {
 
   private get _drawWallCm(): number | null {
     const raw = strictNumber(this._drawWallFieldValue);
-    if (raw == null || raw <= 0) return null;
+    if (raw == null || raw < 0) return null;
     const cm = this._imperial ? raw * 2.54 : raw;
     const max = this._tool === 'column' ? COLUMN_MAX_CM : 100;
-    return cm >= 1 && cm <= max ? cm : null;
+    const min = this._tool === 'column' ? 1 : 0;
+    return cm >= min && cm <= max ? cm : null;
   }
 
   private get _drawWallMaxCm(): number {
     return this._tool === 'column' ? COLUMN_MAX_CM : 100;
   }
 
-  private _showPhysicalRange(max = this._drawWallMaxCm): void {
+  private _showPhysicalRange(max = this._drawWallMaxCm, min = 0): void {
     this._showToast(this._t('toast.physical_range', {
+      min: cmToField(min, this._imperial),
       max: cmToField(max, this._imperial),
       unit: this._t(this._imperial ? 'wallthick.unit_in' : 'wallthick.unit_cm'),
     }));
@@ -6859,7 +6825,7 @@ class HouseplanCard extends LitElement {
     this._tool = tool;
     if (tool === 'draw') this._resumeLastDraft();
     if (tool === 'resize') this._rszSel = null;
-    if (tool === 'boundary' || tool === 'wallthick') this._wallDialog = null;
+    if (tool === 'wallthick') this._wallDialog = null;
   }
 
   private _limitReached(kind: 'draft' | 'partition' | 'column'): boolean {
@@ -6928,11 +6894,13 @@ class HouseplanCard extends LitElement {
       space.rooms.length, space.room_drafts.length, space.partitions.length,
     ].join('|');
     if (this._planSnapGeometryCache?.key === key) return this._planSnapGeometryCache;
-    const openCuts = this._openCuts();
+    const zeroCuts = this._openCuts();
     const value = buildPlanSnapGeometry({
       space,
       activeDraftId: this._activeDraftId,
-      roomCuts: [...openCuts, ...this._planSnapOpeningCuts(space, openCuts)],
+      // A zero-thickness wall is still a canonical wall axis and snap target.
+      // Only an actual opening removes the presentation interval (#306).
+      roomCuts: this._planSnapOpeningCuts(space, zeroCuts),
       partitionCuts: this._partitionOpeningCuts(space),
       epsilon: this._gridPitch * 0.0002,
     });
@@ -6967,8 +6935,8 @@ class HouseplanCard extends LitElement {
   /**
    * Room-face topology deliberately ignores door/window/gate/passage slots:
    * an opening cuts masonry but does not remove the owning wall from a room
-   * contour (#185). Real open_spans remain structural gaps. Keeping this
-   * snapshot separate preserves the established overlay/snap presentation.
+   * contour (#185). A zero-thickness wall also remains topology (#306).
+   * Keeping this snapshot separate preserves the established face contract.
    */
   private _planStructuralGeometrySnapshot(): { key: string; value: PlanSnapGeometry } {
     const space = this._spaceModel();
@@ -6985,7 +6953,6 @@ class HouseplanCard extends LitElement {
     const value = buildPlanSnapGeometry({
       space,
       activeDraftId: this._activeDraftId,
-      roomCuts: this._openCuts(),
       epsilon: this._gridPitch * 0.0002,
     });
     this._planStructuralGeometryCache = { key, value };
@@ -7091,7 +7058,10 @@ class HouseplanCard extends LitElement {
           p && validId(p.id) && point(p.a) && point(p.b)
           && Math.hypot(p.a[0] - p.b[0], p.a[1] - p.b[1]) > 1e-9
           && keepId(p.id))
-          .map((p: any) => ({ ...p, cm: Math.max(1, Math.min(100, Number(p.cm) || 15)) }));
+          .map((p: any) => ({
+            ...p,
+            cm: Number.isFinite(Number(p.cm)) ? Math.max(0, Math.min(100, Number(p.cm))) : 15,
+          }));
         if (!(sp as any).partitions.length) delete (sp as any).partitions;
       }
       if (Array.isArray((sp as any).wall_columns)) {
@@ -7117,8 +7087,12 @@ class HouseplanCard extends LitElement {
         if (!(sp as any).room_drafts.length) delete (sp as any).room_drafts;
       }
       if (Array.isArray(sp.walls)) {
-        const cuts = sanitizeOpenSpans((sp as any).open_spans)
-          .map((e) => [e.a[0], e.a[1], e.b[0], e.b[1]]);
+        const model = selectSpaceModelById(spaceModels({ spaces: [sp] } as any), sp.id);
+        const cuts = model
+          ? resolveZeroWalls(sp, model, NORM_W, GRID_PITCH * 0.02).contour
+            .map((cut) => cut.map((value) => value / NORM_W))
+          : sanitizeOpenSpans((sp as any).open_spans)
+            .map((e) => [e.a[0], e.a[1], e.b[0], e.b[1]]);
         sp.walls = degradeWalls(sp.walls, sp.rooms || [], GRID_STEP_N, 1, cuts);
         if (!sp.walls.length) delete sp.walls;
       }
@@ -7403,9 +7377,10 @@ class HouseplanCard extends LitElement {
       // canonicalisation/identity barrier.  The pure candidate is adopted only
       // after every space migrated successfully, so a blocker leaves the live
       // config byte-equivalent.
-      if (Number(liveCandidate.model_version || 0) < 8) {
-        // The first edit of a v7 document must derive identity from the
-        // pre-edit carrier, not from its already moved/split coordinates.
+      if (Number(liveCandidate.model_version || 0) < 9) {
+        // The first edit of a pre-v9 document must derive identity and legacy
+        // zero-wall projection from the pre-edit carrier, not from its already
+        // moved/split coordinates.
         // Materialise that baseline locally, then replay the edited legacy
         // projection over it so lineage and Undo share the same stable IDs.
         const baselineSource = JSON.parse(JSON.stringify(liveCandidate));
@@ -7419,6 +7394,19 @@ class HouseplanCard extends LitElement {
         )) throw new WallSegmentModelError('invalid-room', before.spaceId);
         const baselineSpace = baseline.spaces.find((space: any) => space.id === before.spaceId);
         const editedSpace = editedWithIdentity.spaces.find((space: any) => space.id === before.spaceId);
+        // A fixed-topology pre-catalogue edit expresses thickness through the
+        // legacy `walls[]` projection. Replay it onto the baseline catalogue
+        // before v9 treats `cm` as authoritative. Geometry-changing writers
+        // instead rely on lineage: projecting moved walls onto old baseline
+        // coordinates would incorrectly turn the moved atom into zero.
+        if (!Array.isArray(editedState.wall_segments)
+            && JSON.stringify(before.rooms) === JSON.stringify(editedState.rooms)) {
+          for (const segment of editedSpace?.wall_segments || []) {
+            segment.cm = thicknessCmAt(
+              editedState.walls, segment.a, segment.b, GRID_STEP_N, 1,
+            );
+          }
+        }
         const lineageHints = fixedTopologyWallLineageHints(
           baselineSpace, before.rooms, editedSpace,
         );
@@ -7481,8 +7469,6 @@ class HouseplanCard extends LitElement {
     this._wallFaceBatch = null;
     this._wallRepairDiagnostic = null;
     this._roomDeleteDialog = null;
-    this._openWallAnchor = null;
-    this._boundaryRestoreGuard = null;
     this._wallDialog = null;
     this._physicalDialog = null;
     this._physicalSel = null;
@@ -7500,16 +7486,6 @@ class HouseplanCard extends LitElement {
     this._decorMove = null;
     this._dtDrag = null;
     this._bdDrag = null;
-  }
-
-  /** Cancel only the uncommitted first click of the Boundary tool. */
-  private _cancelBoundaryAnchor(): boolean {
-    if (this._tool !== 'boundary' || !this._openWallAnchor) return false;
-    this._openWallAnchor = null;
-    this._boundaryRestoreGuard = null;
-    this._clearPlanSnapHover();
-    this.requestUpdate();
-    return true;
   }
 
   /** Browser/OS cancellation is an aborted transaction, never a commit. */
@@ -7530,7 +7506,6 @@ class HouseplanCard extends LitElement {
       this._cancelDecorGesture();
       return;
     }
-    this._cancelBoundaryAnchor();
     if (this._tool === 'opening') {
       this._cursorPt = null;
       this._clearOpeningPlacement(false);
@@ -7624,7 +7599,6 @@ class HouseplanCard extends LitElement {
   }
 
   private _undoGeometry = (): void => {
-    if (this._cancelBoundaryAnchor()) return;
     if (this._physicalDrag || this._physicalRotate) {
       this._cancelPhysicalGesture();
       return;
@@ -7647,7 +7621,6 @@ class HouseplanCard extends LitElement {
   private _redoGeometry = (): void => {
     // Redo and Undo share the same transaction boundary. The first invocation
     // cancels an in-progress transform; only the next one navigates history.
-    if (this._cancelBoundaryAnchor()) return;
     if (this._physicalDrag || this._physicalRotate) {
       this._cancelPhysicalGesture();
       return;
@@ -7774,10 +7747,7 @@ class HouseplanCard extends LitElement {
     if (this._drag || this._rlResize) return;
     const path = (ev.composedPath?.() || []) as any[];
     if (path.some((n) => n?.classList?.contains?.('roomlabel') || n?.classList?.contains?.('rlhandle'))) return;
-    if (path.some((n) => n?.classList?.contains?.('physical-hit'))) {
-      if (this._tool === 'boundary') this._showToast(this._t('toast.boundary_blocked'));
-      return;
-    }
+    if (path.some((n) => n?.classList?.contains?.('physical-hit'))) return;
     const raw = this._svgPoint(ev);
     if (this._tool === 'select') {
       this._physicalSel = null;
@@ -7804,10 +7774,6 @@ class HouseplanCard extends LitElement {
     }
     if (this._tool === 'wallthick') {
       this._wallThickClick(raw);
-      return;
-    }
-    if (this._tool === 'boundary') {
-      this._boundaryClick(raw);
       return;
     }
     if (this._tool === 'split') {
@@ -8266,7 +8232,7 @@ class HouseplanCard extends LitElement {
   private _columnClick(raw: number[]): void {
     const center = this._snap(raw);
     const cm = this._drawWallCm;
-    if (cm == null) { this._showPhysicalRange(COLUMN_MAX_CM); return; }
+    if (cm == null) { this._showPhysicalRange(COLUMN_MAX_CM, 1); return; }
     if (!this._curSpaceCfg || this._limitReached('column')) return;
     const model = this._spaceModel();
     if (!model) return;
@@ -8324,13 +8290,16 @@ class HouseplanCard extends LitElement {
     if (!d || !sp || !model) return;
     const raw = strictNumber(d.cm);
     if (raw == null) {
-      this._showPhysicalRange(d.kind === 'column' ? COLUMN_MAX_CM : 100);
+      this._showPhysicalRange(
+        d.kind === 'column' ? COLUMN_MAX_CM : 100, d.kind === 'column' ? 1 : 0,
+      );
       return;
     }
     const cmRaw = this._imperial ? raw * 2.54 : raw;
     const max = d.kind === 'column' ? COLUMN_MAX_CM : 100;
-    if (!Number.isFinite(cmRaw) || cmRaw < 1 || cmRaw > max) {
-      this._showPhysicalRange(max);
+    const min = d.kind === 'column' ? 1 : 0;
+    if (!Number.isFinite(cmRaw) || cmRaw < min || cmRaw > max) {
+      this._showPhysicalRange(max, min);
       return;
     }
     if (d.kind === 'column') {
@@ -8355,6 +8324,12 @@ class HouseplanCard extends LitElement {
     const before = this._geometrySnapshot();
     if (d.kind === 'partition') {
       const p = (sp.partitions || []).find((x: any) => x.id === d.id);
+      if (p && cmRaw === 0 && zeroWallHasOpening(sp.openings, {
+        kind: 'partition', id: d.id,
+      })) {
+        this._showToast(this._t('toast.zero_wall_opening'));
+        return;
+      }
       if (p) p.cm = cmRaw;
     } else if (d.kind === 'column') {
       const c = (sp.wall_columns || []).find((x: any) => x.id === d.id);
@@ -8705,7 +8680,8 @@ class HouseplanCard extends LitElement {
         obstacles.push({
           kind: 'segment', a: [...draft.points[i]], b: [...draft.points[i + 1]],
           half: wallCmToUnits(
-            Number(draft.segments?.[i]?.cm) || DRAW_WALL_DEFAULT_CM,
+            Number.isFinite(Number(draft.segments?.[i]?.cm))
+              ? Number(draft.segments[i].cm) : DRAW_WALL_DEFAULT_CM,
             this._cellCm, this._gridPitch,
           ) / 2,
         });
@@ -8801,7 +8777,7 @@ class HouseplanCard extends LitElement {
     polys: Record<string, number[][]>, ops: Record<string, [number, number]>,
   ): { ok: true } | {
     ok: false;
-    reason: 'missing-context' | 'wall-metadata' | 'open-span-metadata' | 'physical-geometry';
+    reason: 'missing-context' | 'wall-metadata' | 'physical-geometry';
   } {
     const g = this._rszDrag;
     const real = this._serverCfg?.spaces.find((s: any) => s.id === this._space);
@@ -8812,7 +8788,7 @@ class HouseplanCard extends LitElement {
       rooms: s.rooms,
       openings: s.openings || [],
     };
-    for (const key of ['walls', 'open_spans', 'room_drafts', 'partitions', 'wall_columns', 'decor'] as const) {
+    for (const key of ['walls', 'wall_segments', 'open_spans', 'room_drafts', 'partitions', 'wall_columns', 'decor'] as const) {
       if (s[key] !== undefined) (sp as any)[key] = s[key];
       else delete (sp as any)[key];
     }
@@ -8835,9 +8811,8 @@ class HouseplanCard extends LitElement {
     }
     // Geometry that belongs to a wall must ride in the SAME live overlay as
     // its room polygons. Map from the immutable snapshot on every move (never
-    // from the previous preview), so partial virtual stretches and the atomic
-    // thickness keys on their solid remainders cannot lag behind or accumulate
-    // rounding error during a long drag.
+    // from the previous preview), so atomic identity and thickness cannot lag
+    // behind or accumulate rounding error during a long drag.
     const oldSpans: [number[], number[]][] = [];
     const newSpans: [number[], number[]][] = [];
     for (const id of g.changed) {
@@ -8846,17 +8821,24 @@ class HouseplanCard extends LitElement {
       if (!oldR || !nr?.poly) continue;
       const newPoly = nr.poly.map((p: number[]) => [p[0] * NORM_W, p[1] * H] as number[]);
       if (oldR.poly.length !== newPoly.length) continue;
+      const ids = Array.isArray((oldR as any).wall_ids) ? (oldR as any).wall_ids : [];
       for (let i = 0; i < oldR.poly.length; i++) {
         oldSpans.push([oldR.poly[i], oldR.poly[(i + 1) % oldR.poly.length]]);
         newSpans.push([newPoly[i], newPoly[(i + 1) % newPoly.length]]);
+        const id = ids[i];
+        const segment = typeof id === 'string'
+          ? (sp.wall_segments || []).find((item: any) => item.id === id)
+          : null;
+        if (segment) {
+          segment.a = [newPoly[i][0] / NORM_W, newPoly[i][1] / NORM_W];
+          segment.b = [
+            newPoly[(i + 1) % newPoly.length][0] / NORM_W,
+            newPoly[(i + 1) % newPoly.length][1] / NORM_W,
+          ];
+        }
       }
     }
     if (oldSpans.length) {
-      const movedOpen = rekeyOpenSpansAfterMove(
-        sanitizeOpenSpans((sp as any).open_spans), oldSpans, newSpans, NORM_W,
-      );
-      if (movedOpen.length) (sp as any).open_spans = movedOpen;
-      else delete (sp as any).open_spans;
       if (Array.isArray(sp.walls) && sp.walls.length) {
         const rekeyed = rekeyWallsAfterMoveChecked(
           sp.walls, oldSpans, newSpans, this._wallKeyPitch, NORM_W, 'fixed-topology',
@@ -8874,9 +8856,6 @@ class HouseplanCard extends LitElement {
     const afterWallCms = wallThicknesses(sp.walls || []);
     if (JSON.stringify(beforeWallCms) !== JSON.stringify(afterWallCms)) {
       return { ok: false, reason: 'wall-metadata' };
-    }
-    if ((s.open_spans || []).length !== ((sp as any).open_spans || []).length) {
-      return { ok: false, reason: 'open-span-metadata' };
     }
     const wallCarriers: [number[], number[]][] = [];
     for (const room of sp.rooms || []) {
@@ -9053,11 +9032,7 @@ class HouseplanCard extends LitElement {
         if (preview.sp.walls.length) sp.walls = preview.sp.walls;
         else delete sp.walls;
       }
-      if (Array.isArray(preview.sp.open_spans) && preview.sp.open_spans.length) {
-        (sp as any).open_spans = preview.sp.open_spans;
-      } else {
-        delete (sp as any).open_spans;
-      }
+      if (Array.isArray(preview.sp.wall_segments)) sp.wall_segments = preview.sp.wall_segments;
     }
     // the click synthesized after the drag must not re-pick the selection
     this._suppressClick = true;
@@ -9122,7 +9097,7 @@ class HouseplanCard extends LitElement {
     const imperial = this.hass?.config?.unit_system?.length === 'mi';
     const ids = plan.roomIds;
     const walls = this._spaceWalls;
-    const openCuts = this._openPairs().flatMap((p) => p.segs);
+    const openCuts = this._openCuts();
     const physical = this._physicalBodiesR();
     const base = this._baseVb();
     const currentView = this._view && this._view.w > 0 && this._view.h > 0
@@ -9195,7 +9170,7 @@ class HouseplanCard extends LitElement {
     if (!rooms?.length) return null;
     const walls = this._spaceWalls;
     if (!walls.length) return null;
-    const openCuts = this._openPairs().flatMap((pair) => pair.segs);
+    const openCuts = this._openCuts();
     const offsets = ownEdgeOffsets(
       rooms, roomId, walls, openCuts,
       this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
@@ -9331,7 +9306,7 @@ class HouseplanCard extends LitElement {
     space: SpaceModel | undefined = this._spaceModel(),
   ): Array<{ x: number; y: number; angle: number; length: number }> {
     if (!space) return [];
-    const openCuts = this._openPairs().flatMap((pair) => pair.segs);
+    const openCuts = this._openCuts();
     return geometryRoomOpeningInputs(
       openings as readonly GeometryOpeningProjection[],
       space, this._spaceWalls, openCuts,
@@ -10856,7 +10831,7 @@ class HouseplanCard extends LitElement {
     if (this._mode === 'plan') {
       const sel = this._physicalSel;
       if (sel) return `${base}:selection:${sel.kind}:${sel.id}:${sel.segment ?? ''}`;
-      return `${base}:tool:${this._tool}:${this._path.length}:${this._openWallAnchor ? 1 : 0}`;
+      return `${base}:tool:${this._tool}:${this._path.length}`;
     }
     if (this._mode === 'decor') {
       if (this._decorTool === 'furniture')
@@ -10881,9 +10856,10 @@ class HouseplanCard extends LitElement {
   }
 
   private _renderDrawWallControl(): TemplateResult {
+    const min = this._tool === 'column' ? 1 : 0;
     return html`<label class="drawwall ${this._drawWallCm == null ? 'invalid' : ''}">${this._t('wallthick.field')}
-      <input type="number" min=${cmToField(1, this._imperial)}
-        max=${cmToField(150, this._imperial)} step="any"
+      <input type="number" min=${cmToField(min, this._imperial)}
+        max=${cmToField(this._drawWallMaxCm, this._imperial)} step="any"
         .value=${this._drawWallFieldValue}
         @input=${(e: Event) => {
           this._drawWallField = (e.target as HTMLInputElement).value;
@@ -10892,6 +10868,7 @@ class HouseplanCard extends LitElement {
           : 'physical.column_size_title')} />
       <span class="opl">${this._t(this._imperial ? 'wallthick.unit_in' : 'wallthick.unit_cm')}</span>
       <span class="rangehint">${this._t('physical.allowed_range', {
+        min: cmToField(min, this._imperial),
         max: cmToField(this._drawWallMaxCm, this._imperial),
         unit: this._t(this._imperial ? 'wallthick.unit_in' : 'wallthick.unit_cm'),
       })}</span>
@@ -10930,15 +10907,13 @@ class HouseplanCard extends LitElement {
     const hintKey = this._tool === 'column' ? 'markup.hint_column'
       : this._tool === 'resize' ? 'markup.hint_resize'
       : this._tool === 'wallthick' ? 'markup.hint_wallthick'
-      : this._tool === 'boundary' ? this._boundaryHintKey
       : null;
     const drawHint = this._tool === 'draw'
       ? this._t(this._path.length ? 'markup.hint_points' : 'markup.hint_start',
           this._path.length ? { n: this._path.length } : undefined)
       : '';
     if (!hasThickness && !hintKey && !drawHint) return null;
-    const operation = (this._tool === 'draw' && this._path.length > 0)
-      || (this._tool === 'boundary' && !!this._openWallAnchor);
+    const operation = this._tool === 'draw' && this._path.length > 0;
     return {
       contextId,
       kind: operation ? 'operation' : 'tool',
@@ -10946,14 +10921,12 @@ class HouseplanCard extends LitElement {
         tool: this._t((this._tool === 'draw' ? 'markup.add'
           : this._tool === 'column' ? 'markup.column'
           : this._tool === 'resize' ? 'markup.resize'
-          : this._tool === 'wallthick' ? 'markup.wallthick'
-          : 'markup.boundary') as any),
+          : 'markup.wallthick') as any),
       }),
       content: html`
         ${hasThickness ? this._renderDrawWallControl() : nothing}
         ${drawHint ? html`<span class="hint">${drawHint}</span>` : nothing}
-        ${hintKey ? html`<span class="hint" role=${this._tool === 'boundary' ? 'status' : nothing}
-          aria-live=${this._tool === 'boundary' ? 'polite' : nothing}>${this._t(hintKey as any)}</span>` : nothing}
+        ${hintKey ? html`<span class="hint">${this._t(hintKey as any)}</span>` : nothing}
         ${this._tool === 'draw' && this._path.length
           ? html`<button class="btn ghost" @click=${() => this._runEditorContext(contextId, () => this._cancelPath())}>
               ${this._t('btn.reset')}
@@ -11354,434 +11327,31 @@ class HouseplanCard extends LitElement {
     return Math.max(view.w / stage.clientWidth, view.h / stage.clientHeight) * px;
   }
 
-  private get _boundaryCoarse(): boolean {
-    return this._boundaryPointerType === 'touch' || this._boundaryPointerType === 'pen';
-  }
-
-  private _boundaryTolerances(): { hit: number; cap: number; ambiguity: number } {
-    return {
-      hit: this._cssPxToRender(this._boundaryCoarse ? 22 : 12),
-      cap: this._cssPxToRender(this._boundaryCoarse ? 10 : 6),
-      ambiguity: this._cssPxToRender(6),
-    };
-  }
-
-  /** Independent masonry owns its hit zone and blocks a room boundary below. */
-  private _boundaryBlocked(raw: number[], hit: number): boolean {
-    const space = this._spaceModel();
-    if (!space) return false;
-    const nearBody = (body: number[][]): boolean => pointInPhysicalBody(raw, body)
-      || body.some((a, i) => {
-        const b = body[(i + 1) % body.length];
-        return distToSegment(raw, [a[0], a[1], b[0], b[1]]) <= hit;
-      });
-    for (const c of space.wall_columns || []) {
-      if (nearBody(columnBody(c, this._cellCm, this._gridPitch))) return true;
-    }
-    for (const p of space.partitions || []) {
-      const half = wallCmToUnits(p.cm, this._cellCm, this._gridPitch) / 2;
-      if (distToSegment(raw, [p.a[0], p.a[1], p.b[0], p.b[1]]) <= Math.max(hit, half)) return true;
-    }
-    for (const draft of space.room_drafts || []) {
-      for (let i = 0; i + 1 < draft.points.length; i++) {
-        const a = draft.points[i], b = draft.points[i + 1];
-        const half = wallCmToUnits(draft.segments[i]?.cm || 15, this._cellCm, this._gridPitch) / 2;
-        if (distToSegment(raw, [a[0], a[1], b[0], b[1]]) <= Math.max(hit, half)) return true;
-      }
-    }
-    return false;
-  }
-
-  private _solidBoundaryPull(seg: number[], cuts = this._openCuts()): number {
-    const tol = this._boundaryTolerances();
-    const space = this._spaceModel();
-    if (!space) return tol.hit;
-    const cm = intervalCmAt(
-      space.rooms, this._spaceWalls, cuts, seg,
-      this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
-    );
-    return Math.max(
-      tol.hit,
-      cm > 0 ? wallCmToUnits(cm, this._cellCm, this._gridPitch) / 2 : 0,
-    );
-  }
-
-  /** One resolver drives cursor, preview, hint and click semantics. */
-  private _boundaryTargetAt(raw: number[]): BoundaryUiTarget {
-    const view = this._viewOr(this._baseVb());
-    const stage = this._stageEl;
-    const key = [
-      this._space, this._cfgEpoch, raw[0], raw[1], this._boundaryPointerType,
-      view.x, view.y, view.w, view.h, stage?.clientWidth || 0, stage?.clientHeight || 0,
-    ].join('|');
-    if (this._boundaryTargetMemo?.key === key) return this._boundaryTargetMemo.value;
-    const tol = this._boundaryTolerances();
-    const cuts = this._openCuts();
-    const space = this._spaceModel();
-    if (!space) return { kind: 'none' };
-    let value: BoundaryUiTarget = resolveBoundaryTarget(raw, space.rooms, cuts, {
-      openPull: tol.hit,
-      openEndCap: tol.cap,
-      ambiguity: tol.ambiguity,
-      eps: this._gridPitch * 0.02,
-      solidPull: (seg) => this._solidBoundaryPull(seg, cuts),
-    });
-    // Independent masonry blocks only a real room boundary underneath it. A
-    // bare click on a partition/column/draft elsewhere remains a neutral miss.
-    if ((value.kind === 'shared' || value.kind === 'open') && this._boundaryBlocked(raw, tol.hit)) {
-      value = { kind: 'blocked' };
-    }
-    this._boundaryTargetMemo = { key, value };
-    return value;
-  }
-
-  private get _boundaryTarget(): BoundaryUiTarget | null {
-    if (!this._markup || this._tool !== 'boundary' || !this._cursorPt) return null;
-    return this._boundaryTargetAt(this._cursorPt);
-  }
-
-  /** Exact predicted action under the pointer, including restored wall body. */
-  private get _boundaryPreview(): BoundaryPreview | null {
-    const view = this._viewOr(this._baseVb());
-    const stage = this._stageEl;
-    const raw = this._cursorPt;
-    const anchor = this._openWallAnchor;
-    const key = [
-      this._markup, this._tool, this._space, this._cfgEpoch, this._boundaryPointerType,
-      raw?.[0] ?? 'none', raw?.[1] ?? 'none',
-      anchor?.p?.[0] ?? 'none', anchor?.p?.[1] ?? 'none',
-      anchor?.edge?.join(',') ?? 'none', anchor?.aId ?? 'none', anchor?.bId ?? 'none',
-      view.x, view.y, view.w, view.h, stage?.clientWidth || 0, stage?.clientHeight || 0,
-    ].join('|');
-    if (this._boundaryPreviewMemo?.key === key) return this._boundaryPreviewMemo.value;
-    const remember = (value: BoundaryPreview | null): BoundaryPreview | null => {
-      this._boundaryPreviewMemo = { key, value };
-      return value;
-    };
-    if (!this._markup || this._tool !== 'boundary') return remember(null);
-    // A touch tap need not emit pointermove. The committed P1 marker therefore
-    // comes from the anchor itself and never depends on a hover-only cursor.
-    if (anchor && !raw) return remember({ kind: 'anchor', point: [...anchor.p] });
-    if (!raw) return remember(null);
-    const cuts = this._openCuts();
-    const eps = this._gridPitch * 0.02;
-    if (anchor) {
-      const { p, edge } = anchor;
-      const joints = jointsOnEdge(edge, cuts, eps);
-      const p2 = snapOpenPoint(raw, edge, joints, this._gridPitch, this._gridPitch * 1.5);
-      const q = clampToEdgeEnds(p2, edge);
-      const invalid = this._boundaryBlocked(raw, this._boundaryTolerances().hit)
-        || distToSegment(raw, edge) > this._solidBoundaryPull(edge, cuts);
-      return remember({ kind: 'range', seg: [p[0], p[1], q[0], q[1]], invalid });
-    }
-    const target = this._boundaryTargetAt(raw);
-    if (target.kind === 'shared') {
-      const point = snapOpenPoint(
-        raw, target.edge, jointsOnEdge(target.edge, cuts, eps),
-        this._gridPitch, this._gridPitch * 1.5,
-      );
-      return remember({ kind: 'anchor', point });
-    }
-    if (target.kind === 'open') {
-      const plan = this._planClosedOpenSpan(target.seg);
-      const body = plan
-        ? partitionBody(
-            [target.seg[0], target.seg[1]], [target.seg[2], target.seg[3]],
-            plan.cm, this._cellCm, this._gridPitch,
-          )
-        : null;
-      return remember({ kind: 'restore', seg: target.seg, body });
-    }
-    if (target.kind === 'blocked' || target.kind === 'ambiguous' || target.kind === 'outer') {
-      return remember({ kind: 'invalid', point: raw });
-    }
-    return remember(null);
-  }
-
-  private get _boundaryHintKey(): I18nKey {
-    if (this._openWallAnchor) {
-      const preview = this._boundaryPreview;
-      return preview?.kind === 'range' && preview.invalid
-        ? 'markup.boundary_hint_retry'
-        : 'markup.boundary_hint_second';
-    }
-    const target = this._boundaryTarget;
-    if (!target || target.kind === 'none') return 'markup.boundary_hint';
-    if (target.kind === 'open') return 'markup.boundary_hint_restore';
-    if (target.kind === 'shared') return 'markup.boundary_hint_open';
-    if (target.kind === 'outer') return 'markup.boundary_hint_outer';
-    if (target.kind === 'blocked') return 'markup.boundary_hint_blocked';
-    return 'markup.boundary_hint_ambiguous';
-  }
-
-  private get _boundaryStageClass(): string {
-    if (!this._markup || this._tool !== 'boundary') return '';
-    if (this._openWallAnchor) {
-      const preview = this._boundaryPreview;
-      return preview?.kind === 'range' && preview.invalid ? ' boundary-invalid' : ' boundary-solid';
-    }
-    const target = this._boundaryTarget;
-    if (target?.kind === 'open') return ' boundary-open';
-    if (target?.kind === 'shared') return ' boundary-solid';
-    if (target && target.kind !== 'none') return ' boundary-invalid';
-    return '';
-  }
-
-  /** Dashed virtual boundaries plus the unified tool's local action preview. */
-  private _renderOpenWalls(disp?: SpaceDisplay): TemplateResult {
+  /** Zero-thickness walls. Their paint and light policy share one resolver. */
+  private _renderZeroWalls(disp?: SpaceDisplay): TemplateResult {
     if (disp && !disp.showBorders && !this._editing) return svg`` as unknown as TemplateResult;
-    const cuts = this._openCuts();
-    const preview = this._boundaryPreview;
-    if (!cuts.length && !preview) return svg`` as unknown as TemplateResult;
+    const zero = this._zeroWalls();
+    if (!zero.lines.length) return svg`` as unknown as TemplateResult;
     const stroke = disp?.color || 'var(--hp-muted)';
-    const bodyPath = (body: number[][]) => `M ${body.map((p) => `${p[0]} ${p[1]}`).join(' L ')} Z`;
-    const marker = (point: number[], invalid = false) => invalid
-      ? svg`<g class="boundary-point invalid">
-          <circle cx=${point[0]} cy=${point[1]} r=${this._cssPxToRender(5)}></circle>
-          <path d="M ${point[0] - this._cssPxToRender(4)} ${point[1] - this._cssPxToRender(4)}
-            L ${point[0] + this._cssPxToRender(4)} ${point[1] + this._cssPxToRender(4)}
-            M ${point[0] + this._cssPxToRender(4)} ${point[1] - this._cssPxToRender(4)}
-            L ${point[0] - this._cssPxToRender(4)} ${point[1] + this._cssPxToRender(4)}"></path>
-        </g>`
-      : svg`<circle class="boundary-point" cx=${point[0]} cy=${point[1]}
-          r=${this._cssPxToRender(5)}></circle>`;
-    return svg`<g class="openwalls" style="--ow-stroke:${stroke}">
-      ${cuts.map((sg) => svg`<line class="openwall"
+    return svg`<g class="zero-walls ${zero.style}"
+      data-zero-wall-style=${zero.style} style="--zero-wall-stroke:${stroke}">
+      ${zero.lines.map((sg) => svg`<line class="zero-wall"
         x1="${sg[0]}" y1="${sg[1]}" x2="${sg[2]}" y2="${sg[3]}"></line>`)}
-      ${preview?.kind === 'range'
-        ? svg`<line class="openwall-preview boundary-range ${preview.invalid ? 'invalid' : ''}"
-            x1="${preview.seg[0]}" y1="${preview.seg[1]}"
-            x2="${preview.seg[2]}" y2="${preview.seg[3]}"></line>
-            ${marker([preview.seg[0], preview.seg[1]])}
-            ${marker([preview.seg[2], preview.seg[3]], preview.invalid)}`
-        : nothing}
-      ${preview?.kind === 'restore' && preview.body
-        ? svg`<path class="openwall-preview boundary-restore"
-            d=${bodyPath(preview.body)}></path>`
-        : nothing}
-      ${preview?.kind === 'anchor'
-        ? marker(preview.point)
-        : preview?.kind === 'invalid'
-          ? marker(preview.point, true)
-        : nothing}
     </g>` as unknown as TemplateResult;
   }
 
-  /** Open cuts in render units (from open_spans or legacy open_to). */
+  private _zeroWalls() {
+    const space = this._spaceModel();
+    return space
+      ? resolveZeroWalls(
+          this._curSpaceCfg, space, NORM_W, this._gridPitch * 0.02,
+        )
+      : { style: zeroWallStyleOf(this._curSpaceCfg), lines: [], contour: [], barriers: [], transmissive: [] };
+  }
+
+  /** Every contour atom without a body is a cut in physical wall geometry. */
   private _openCuts(): number[][] {
-    const sp = this._curSpaceCfg;
-    const space = this._spaceModel();
-    if (!space) return [];
-    return geometryOpenCuts(sp, space, this._gridPitch, NORM_W);
-  }
-
-  /** Open cuts grouped by room pair (for per-room outline trimming). */
-  private _openPairs(): { a: RoomCfg; b: RoomCfg; segs: number[][] }[] {
-    const cuts = this._openCuts();
-    return geometryOpenPairs(this._spaceModel()?.rooms || [], cuts, this._gridPitch);
-  }
-
-  /**
-   * One geometry transaction for open spans (AUD-159B6-02). Called by EVERY
-   * operation that rewrites the room set — resize/scale commit, Undo-adjacent
-   * commits, Split, Merge, Delete: rekey explicit spans onto the moved edges,
-   * drop/clip them against the NEW rooms, then derive `open_to` from what is
-   * left. The order matters: the legacy `open_to` index is never read in the
-   * middle, or a removed explicit span resurrects a different stretch.
-   */
-  private _commitOpenSpans(
-    rekey?: { old: [number[], number[]][]; next: [number[], number[]][] },
-  ): void {
-    const sp = this._curSpaceCfg;
-    const space = this._spaceModel();
-    if (!sp || !space) return;
-    const eps = this._gridPitch * 0.02;
-    this._cfgEpoch++; // the room set changed under the model memo
-    const rooms = space.rooms;
-    let spans = sanitizeOpenSpans((sp as any).open_spans);
-    if (spans.length && rekey?.old.length) {
-      spans = rekeyOpenSpansAfterMove(spans, rekey.old, rekey.next, NORM_W);
-    } else if (!spans.length) {
-      // A legacy `open_to`-only space: its truth is connectivity, so the
-      // stretches are re-derived on the new geometry and persisted here (the
-      // first-save migration the spec asks for).
-      spans = cutsToSpanEntries(resolveOpenCuts(rooms, null, NORM_W, eps), NORM_W);
-    }
-    spans = clipOpenSpansToShared(spans, rooms, NORM_W, eps);
-    this._persistOpenCuts(spans.map((e) => entryToSeg(e, NORM_W)));
-  }
-
-  /** Write cuts into space.open_spans and sync open_to. */
-  private _persistOpenCuts(cuts: number[][]): void {
-    const sp = this._curSpaceCfg;
-    const space = this._spaceModel();
-    if (!sp || !space) return;
-    const eps = this._gridPitch * 0.02;
-    const entries = clipOpenSpansToShared(
-      cutsToSpanEntries(cuts, NORM_W), space.rooms, NORM_W, eps,
-    );
-    const canonicalCuts = entries.map((e) => entryToSeg(e, NORM_W));
-    if (entries.length) (sp as any).open_spans = entries;
-    else delete (sp as any).open_spans;
-    syncOpenToFromCuts(sp.rooms || [], space.rooms, canonicalCuts, eps);
-  }
-
-  /** Pure close plan shared by the body preview and the actual mutation. */
-  private _planClosedOpenSpan(sg: number[]): { cuts: number[][]; walls: WallEntry[]; cm: number } | null {
-    const sp = this._curSpaceCfg;
-    const space = this._spaceModel();
-    if (!sp || !space) return null;
-    const eps = this._gridPitch * 0.02;
-    const oldCuts = this._openCuts();
-    // Materialise exact endpoints of every real remainder before removing the
-    // cut. Older entries carry only midpoint+angle; without this one cut can be
-    // the sole record of the boundary between (for example) 20 and 30 cm.
-    let seededWalls = Array.isArray(sp.walls) ? sp.walls.slice() : [];
-    for (const iv of wallIntervals(
-      space.rooms, seededWalls, oldCuts,
-      this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
-    )) {
-      if (iv.open || !(iv.cm > 0)) continue;
-      seededWalls = setWallThickness(
-        seededWalls, iv.a, iv.b, iv.cm, this._wallKeyPitch, NORM_W,
-      );
-    }
-    const cuts = removeCut(oldCuts, sg, eps);
-    // The stretch is solid again: rekey thickness onto the merged intervals
-    // first — a partially opened wall keeps the cm of the part that stayed
-    // closed. Only a wall that was open end to end has nothing to inherit and
-    // takes the default (owner 2026-08-05).
-    let walls = this._normalizeWalls(seededWalls, cuts);
-    let cm = intervalCmAt(
-      space.rooms, walls, cuts, sg,
-      this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
-    );
-    if (!(cm > 0)) {
-      const solid: number[][] = [];
-      for (const iv of wallIntervals(
-        space.rooms, walls, cuts,
-        this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
-      )) {
-        if (iv.open) continue;
-        solid.push([iv.a[0], iv.a[1], iv.b[0], iv.b[1]]);
-      }
-      walls = applyThicknessOnClose(
-        walls, sg, solid, this._wallKeyPitch, NORM_W, DRAW_WALL_DEFAULT_CM,
-      );
-      walls = this._normalizeWalls(walls, cuts);
-      cm = intervalCmAt(
-        space.rooms, walls, cuts, sg,
-        this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
-      );
-    }
-    return { cuts, walls, cm: cm > 0 ? cm : DRAW_WALL_DEFAULT_CM };
-  }
-
-  private _closeOpenSpan(sg: number[]): void {
-    const sp = this._curSpaceCfg;
-    if (!sp) return;
-    const before = this._geometrySnapshot();
-    const plan = this._planClosedOpenSpan(sg);
-    if (!plan) return;
-    if (plan.walls.length) sp.walls = plan.walls;
-    else delete sp.walls;
-    this._persistOpenCuts(plan.cuts);
-    if (this._commitPhysicalGeometry(this._t('history.close_boundary'), before))
-      this._showToast(this._t('toast.boundary_restored'));
-    this.requestUpdate();
-  }
-
-  /** Unified Boundary tool: restore a dash, or choose two points on one shared wall. */
-  private _boundaryClick(raw: number[]): void {
-    // Ignore a same-place follow-up after restoring a span. Some touch browsers
-    // report both taps with detail=0/1, so time and position are the stable guard.
-    const guard = this._boundaryRestoreGuard;
-    if (guard && Date.now() > guard.until) this._boundaryRestoreGuard = null;
-    if (guard && Date.now() <= guard.until
-        && Math.hypot(raw[0] - guard.point[0], raw[1] - guard.point[1]) <= this._boundaryTolerances().hit) return;
-    const eps = this._gridPitch * 0.02;
-    const cuts = this._openCuts();
-
-    if (this._openWallAnchor) {
-      const { p, edge } = this._openWallAnchor;
-      if (distToSegment(raw, edge) > this._solidBoundaryPull(edge, cuts)) {
-        this._showToast(this._t('toast.boundary_same_edge'));
-        return; // keep P1 for a retry
-      }
-      if (this._boundaryBlocked(raw, this._boundaryTolerances().hit)) {
-        this._showToast(this._t('toast.boundary_blocked'));
-        return;
-      }
-      const joints = jointsOnEdge(edge, cuts, eps);
-      const p2 = snapOpenPoint(raw, edge, joints, this._gridPitch, this._gridPitch * 1.5);
-      const clamped = clampToEdgeEnds(p2, edge);
-      const len = Math.hypot(clamped[0] - p[0], clamped[1] - p[1]);
-      this._openWallAnchor = null;
-      this._cursorPt = null;
-      if (len < this._gridPitch * 0.5) {
-        this._showToast(this._t('toast.openwall_short'));
-        return;
-      }
-      const sg = [p[0], p[1], clamped[0], clamped[1]];
-      const next = [...cuts, sg];
-      const sp = this._curSpaceCfg;
-      if (!sp) return;
-      const before = this._geometrySnapshot();
-      // A virtual stretch carries no thickness: the key of the wall it cuts is
-      // SPLIT here — the covered piece is dropped, the solid remainder keeps
-      // the cm under its own atomic key (spec invariant, AUD-159B6-01). Simply
-      // deleting every key that touches the span, as this used to do, threw the
-      // remainder away with it.
-      const walls = this._normalizeWalls(sp.walls, next);
-      if (walls.length) sp.walls = walls;
-      else delete sp.walls;
-      const beforeOp = (sp.openings || []).length;
-      sp.openings = purgeOpeningsOnSpan(sp.openings, sg, NORM_W, this._gridPitch * 6);
-      const removedOpenings = (sp.openings || []).length < beforeOp;
-      this._persistOpenCuts(next);
-      if (this._commitPhysicalGeometry(this._t('history.open_boundary'), before, [
-        [sg[0] / NORM_W, sg[1] / NORM_W],
-        [sg[2] / NORM_W, sg[3] / NORM_W],
-      ])) {
-        if (removedOpenings) this._showToast(this._t('toast.openwall_openings_removed'));
-        this._showToast(this._t('toast.boundary_opened'));
-      }
-      this.requestUpdate();
-      return;
-    }
-
-    const target = this._boundaryTargetAt(raw);
-    if (target.kind === 'open') {
-      this._boundaryRestoreGuard = { until: Date.now() + 450, point: [...raw] };
-      this._cursorPt = null;
-      this._closeOpenSpan(target.seg);
-      return;
-    }
-    if (target.kind === 'ambiguous') {
-      this._showToast(this._t('toast.boundary_ambiguous'));
-      return;
-    }
-    if (target.kind === 'blocked') {
-      this._showToast(this._t('toast.boundary_blocked'));
-      return;
-    }
-    if (target.kind === 'outer') {
-      this._showToast(this._t('toast.openwall_shared_only'));
-      return;
-    }
-    if (target.kind !== 'shared') {
-      this._showToast(this._t('toast.openwall_pick'));
-      return;
-    }
-    const joints = jointsOnEdge(target.edge, cuts, eps);
-    const p1 = snapOpenPoint(raw, target.edge, joints, this._gridPitch, this._gridPitch * 1.5);
-    this._openWallAnchor = {
-      p: p1,
-      edge: target.edge,
-      aId: target.a.id!,
-      bId: target.b.id!,
-    };
-    this.requestUpdate();
+    return this._zeroWalls().contour;
   }
 
   /** Delete tool: defer all wall consequences to one explicit accessible choice. */
@@ -11881,7 +11451,6 @@ class HouseplanCard extends LitElement {
     }
     sp.rooms = sp.rooms.filter((r: any) => r.id !== room.id);
     this._cfgEpoch++;
-    this._commitOpenSpans();
     const normalized = this._normalizeWalls(materializedWalls, this._openCuts());
     if (normalized.length) sp.walls = normalized;
     else delete sp.walls;
@@ -11915,8 +11484,22 @@ class HouseplanCard extends LitElement {
    * remainder under an atomic key that is only "live" when the cut is known.
    */
   private _cfgOpenCuts(): number[][] {
-    return sanitizeOpenSpans((this._curSpaceCfg as any)?.open_spans)
-      .map((e) => [e.a[0], e.a[1], e.b[0], e.b[1]]);
+    const sp = this._curSpaceCfg;
+    const model = this._spaceModel();
+    if (!sp || !model) return [];
+    const canonical = zeroContourLines(sp, 1);
+    const legacy = legacyZeroContourLines(sp, model.rooms, NORM_W, this._gridPitch * 0.02)
+      .map((line) => line.map((value) => value / NORM_W));
+    const seen = new Set<string>();
+    return [...canonical, ...legacy].filter((line) => {
+      const forward = line.map((value) => Number(value).toFixed(9)).join(',');
+      const reverse = [line[2], line[3], line[0], line[1]]
+        .map((value) => Number(value).toFixed(9)).join(',');
+      const key = forward < reverse ? forward : reverse;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
   }
 
   /** Thickness of the atomic stretch under a segment (docs/WALL-THICKNESS.md). */
@@ -11960,7 +11543,7 @@ class HouseplanCard extends LitElement {
     const walls = this._spaceWalls;
     const extras = this._physicalBodiesR();
     if (!walls.length && !extras.length) return null;
-    const openCuts = this._openPairs().flatMap((p) => p.segs);
+    const openCuts = this._openCuts();
     const openings = this._roomWallOpeningInputs();
     const unionKey = `${this._space}|${this._cfgEpoch}|${space.rooms.length}`;
     if (!this._wallUnionCache || this._wallUnionCache.key !== unionKey) {
@@ -11981,7 +11564,7 @@ class HouseplanCard extends LitElement {
     if (!space) return [];
     const walls = this._spaceWalls;
     if (!walls.length) return [];
-    const openCuts = this._openPairs().flatMap((p) => p.segs);
+    const openCuts = this._openCuts();
     return wallEdgeBodies(
       space.rooms, walls, openCuts,
       this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
@@ -12078,10 +11661,6 @@ class HouseplanCard extends LitElement {
       this._showToast(this._t('toast.wallthick_pick'));
       return;
     }
-    if (hit.open) {
-      this._showToast(this._t('toast.wallthick_open'));
-      return;
-    }
     const cm = hit.cm;
     const view = this._viewOr(this._baseVb());
     const mx = (hit.a[0] + hit.b[0]) / 2, my = (hit.a[1] + hit.b[1]) / 2;
@@ -12102,30 +11681,27 @@ class HouseplanCard extends LitElement {
     const space = this._spaceModel();
     if (!sp || !space) return;
     const text = d.value.trim();
-    const raw = text ? strictNumber(text) : 0;
+    const raw = text ? strictNumber(text) : null;
     if (raw == null) { this._showPhysicalRange(100); return; }
     const cmRaw = this._imperial ? raw * 2.54 : raw;
-    if (text && (!Number.isFinite(cmRaw) || cmRaw < 0 || (cmRaw > 0 && cmRaw < 1)
-        || cmRaw > 100)) {
+    if (!Number.isFinite(cmRaw) || cmRaw < 0 || cmRaw > 100) {
       this._showPhysicalRange(100);
       return;
     }
-    // #313: independent masonry writes its own record. This switch is the
-    // single seam for #306: the future «zero turns the wall virtual» branch
-    // belongs here, next to the range refusal below.
+    // Independent walls and saved drafts own their records. Zero is the same
+    // canonical bodyless state here as it is for a contour atom (#306).
     if (d.source.kind !== 'room') {
-      // A partition or draft segment without thickness does not exist in the
-      // model (owner decision 2026-08-26): zero and empty are refused with
-      // the ordinary range toast until #306 gives zero a meaning.
-      if (!text || !(cmRaw > 0)) {
-        this._showPhysicalRange(100);
-        return;
-      }
       const before = this._geometrySnapshot();
       if (d.source.kind === 'partition') {
         const partition = (sp.partitions || [])
           .find((item: PartitionCfg) => item.id === (d.source as { id: string }).id);
         if (!partition) return;
+        if (cmRaw === 0 && zeroWallHasOpening(sp.openings, {
+          kind: 'partition', id: partition.id,
+        })) {
+          this._showToast(this._t('toast.zero_wall_opening'));
+          return;
+        }
         partition.cm = cmRaw;
       } else {
         const draft = (sp.room_drafts || [])
@@ -12143,8 +11719,68 @@ class HouseplanCard extends LitElement {
       return;
     }
     const before = this._geometrySnapshot();
-    const cm = text && cmRaw > 0 ? cmRaw : null;
-    const openCuts = this._openCuts();
+    const cm = cmRaw > 0 ? cmRaw : null;
+    if (cmRaw === 0) {
+      const eps = this._gridPitch * 0.02;
+      const target = [d.a[0], d.a[1], d.b[0], d.b[1]];
+      const room = (sp.rooms || []).find((item: any) => item.id === d.roomId);
+      const ids = new Set<string>(allRoom && room && Array.isArray(room.wall_ids)
+        ? room.wall_ids
+        : (sp.wall_segments || []).filter((segment: any) => {
+            const a = [Number(segment.a?.[0]) * NORM_W, Number(segment.a?.[1]) * NORM_W];
+            const b = [Number(segment.b?.[0]) * NORM_W, Number(segment.b?.[1]) * NORM_W];
+            return distToSegment(a, target) <= eps && distToSegment(b, target) <= eps;
+          }).map((segment: any) => String(segment.id)));
+      const blocked = (sp.openings || []).some((opening: OpeningCfg) => {
+        if (opening.host?.kind === 'partition') return false;
+        if (opening.host?.kind === 'wall' && ids.has(opening.host.id)) return true;
+        if (opening.host) return false;
+        const point = [Number(opening.x) * NORM_W, Number(opening.y) * NORM_W];
+        return point.every(Number.isFinite) && distToSegment(point, target) <= eps;
+      });
+      if (blocked) {
+        this._showToast(this._t('toast.zero_wall_opening'));
+        return;
+      }
+    }
+    let openCuts = this._openCuts();
+    if (cmRaw > 0 && openCuts.length) {
+      // The selected zero axis is a cut only in the PRE-edit body profile.
+      // Remove exactly the carriers being restored before the compatibility
+      // wall normalizer runs; otherwise it discards the new positive record as
+      // if the segment were still a zero interval (#306).
+      const targets: number[][] = [];
+      if (allRoom && d.roomId) {
+        const room = (sp.rooms || []).find((item: any) => item.id === d.roomId);
+        const ids = new Set<string>(Array.isArray(room?.wall_ids) ? room.wall_ids : []);
+        for (const segment of sp.wall_segments || []) {
+          if (!ids.has(segment.id)) continue;
+          targets.push([
+            Number(segment.a?.[0]) * NORM_W, Number(segment.a?.[1]) * NORM_W,
+            Number(segment.b?.[0]) * NORM_W, Number(segment.b?.[1]) * NORM_W,
+          ]);
+        }
+        // A pre-v9 room has no catalogue IDs yet. Its current zero axes still
+        // come from the rendered room outline, so use that outline as the
+        // carrier set for this first explicit positive-thickness edit. The
+        // common v9 barrier below will materialise stable IDs atomically.
+        if (!targets.length) {
+          const renderedRoom = space.rooms.find((item: any) => item.id === d.roomId);
+          const poly = renderedRoom ? roomPoly(renderedRoom) : null;
+          for (let index = 0; poly && index < poly.length; index++) {
+            const a = poly[index], b = poly[(index + 1) % poly.length];
+            targets.push([a[0], a[1], b[0], b[1]]);
+          }
+        }
+      } else targets.push([d.a[0], d.a[1], d.b[0], d.b[1]]);
+      const eps = this._gridPitch * 0.02;
+      openCuts = openCuts.filter((cut) => !targets.some((target) => (
+        distToSegment([cut[0], cut[1]], target) <= eps
+        && distToSegment([cut[2], cut[3]], target) <= eps
+        && distToSegment([target[0], target[1]], cut) <= eps
+        && distToSegment([target[2], target[3]], cut) <= eps
+      )));
+    }
     let next: WallEntry[];
     if (allRoom && d.roomId) {
       next = setWallThicknessForRoom(
@@ -12167,7 +11803,7 @@ class HouseplanCard extends LitElement {
     else delete sp.walls;
     this._wallDialog = null;
     if (this._commitPhysicalGeometry(this._t('history.wall_thickness'), before))
-      this._showToast(this._t(cm == null ? 'toast.wallthick_cleared' : 'toast.wallthick_set'));
+      this._showToast(this._t(cmRaw === 0 ? 'toast.wallthick_cleared' : 'toast.wallthick_set'));
     this.requestUpdate();
   }
 
@@ -12305,7 +11941,7 @@ class HouseplanCard extends LitElement {
     // needless opening-index work on plans that do not use the overlay.
     if (layer === 'glow-base' && ![...roomFills.byRoom.values()].some(Boolean))
       return svg`` as unknown as TemplateResult;
-    const openCuts = this._openPairs().flatMap((p) => p.segs);
+    const openCuts = this._openCuts();
     const geometryInputs = this._openingsR.map((opening) => ({
       x: opening.rx, y: opening.ry, angle: opening.angle, length: opening.rlen,
     }));
@@ -12360,7 +11996,7 @@ class HouseplanCard extends LitElement {
     const polys = new Map<RoomCfg, number[][] | null>(
       space.rooms.map((room) => [room, roomPoly(room)]),
     );
-    const openCuts = this._openPairs().flatMap((pair) => pair.segs);
+    const openCuts = this._openCuts();
     const roomWalls = this._wallUnionGeometry()?.roomGeom;
     const pathD = (points: number[][]) =>
       'M ' + points.map((point) => point[0] + ' ' + point[1]).join(' L ') + ' Z';
@@ -12563,11 +12199,14 @@ class HouseplanCard extends LitElement {
       .map((r) => ({ room: r, poly: roomPoly(r) }))
       .filter((v): v is { room: RoomCfg; poly: number[][] } => !!v.poly);
     const islandPolys = islandsOf(poly, others.map((v) => v.poly));
-    const pairs = this._openPairs();
-    const allOpenCuts = pairs.flatMap((p) => p.segs);
-    const openCuts = room.id
-      ? pairs.filter((p) => p.a.id === room.id || p.b.id === room.id).flatMap((p) => p.segs)
-      : pairs.flatMap((p) => p.segs);
+    const allOpenCuts = this._openCuts();
+    const eps = this._gridPitch * 0.02;
+    const openCuts = allOpenCuts.filter((cut) => {
+      const midpoint = [(cut[0] + cut[2]) / 2, (cut[1] + cut[3]) / 2];
+      return poly.some((point, index) => distToSegment(
+        midpoint, [point[0], point[1], ...poly[(index + 1) % poly.length]],
+      ) <= eps * 4);
+    });
     const walls = this._spaceWalls;
     const roomWalls = this._wallUnionGeometry()?.roomGeom;
     const floor = walls.length && room.id
@@ -12598,8 +12237,6 @@ class HouseplanCard extends LitElement {
       const dy = (Math.sin(rad) * o.length) / 2;
       return [o.x - dx, o.y - dy, o.x + dx, o.y + dy];
     });
-    const eps = this._gridPitch * 0.02;
-
     // Cuts are stored on wall centrelines. Project each relevant cut onto the
     // clean-floor face before trimming; otherwise a door on a thick wall would
     // no longer intersect the inset hover contour.
@@ -12732,7 +12369,7 @@ class HouseplanCard extends LitElement {
     if (!roughHits.length) return null;
     const space = this._spaceModel();
     if (!space) return null;
-    const openCuts = this._openPairs().flatMap((pair) => pair.segs);
+    const openCuts = this._openCuts();
     const wallIndex = this._openingWallIndexFor(space, openCuts).value;
     return roughHits.find(({ o, localY }) => {
       const faceFlipV = o.type === 'gate' ? !o.flip_v : o.flip_v;
@@ -12805,7 +12442,9 @@ class HouseplanCard extends LitElement {
       renderedLength: this._cmToUnits(preset.lengthCm),
       intervals: this._openingPlacementIntervalsCache.value,
       baseTolerance: this._gridPitch * 1.5,
-      bodyPointerPadding: this._cssPxToRender(this._boundaryCoarse ? 10 : 6),
+      bodyPointerPadding: this._cssPxToRender(
+        this._pointerModality.modality === 'touch' || this._pointerModality.modality === 'pen' ? 10 : 6,
+      ),
       gridStep: this._gridPitch,
     });
     this._openingJambBlockCm = resolution.jambBlockedTarget
@@ -12891,7 +12530,7 @@ class HouseplanCard extends LitElement {
       const eps = this._gridPitch * 1.5;
       const snap = snapToWall(raw, space.rooms, eps);
       if (snap && pointOnOpenCut(snap.x, snap.y, snap.angle, this._openCuts(), eps)) {
-        this._showToast(this._t('toast.opening_on_virtual'));
+        this._showToast(this._t('toast.opening_on_zero_wall'));
         return;
       }
       this._showToast(this._t('toast.opening_no_wall'));
@@ -13019,6 +12658,11 @@ class HouseplanCard extends LitElement {
     cfg.x = nx;
     cfg.y = ny;
     cfg.angle = snap.angle;
+    if (Number(this._serverCfg?.model_version || 0) >= 9) {
+      const host = resolveRoomOpeningHost(cfg, sp?.wall_segments || []);
+      if (host) cfg.host = host;
+      else delete cfg.host;
+    }
     // The wall cut and room-coloured tunnel are geometry caches too. Advance
     // the preview epoch so both follow the live opening instead of remaining at
     // its pre-drag location until pointerup/save.
@@ -13162,6 +12806,13 @@ class HouseplanCard extends LitElement {
         return;
       }
       Object.assign(o, materializePartitionOpening(o, resolution.resolved, NORM_W));
+    } else if (Number(this._serverCfg?.model_version || 0) >= 9) {
+      const host = resolveRoomOpeningHost(o, sp.wall_segments || []);
+      if (!host) {
+        this._showToast(this._t('toast.opening_no_wall'));
+        return;
+      }
+      o.host = host;
     } else {
       delete o.host;
     }
@@ -13319,7 +12970,6 @@ class HouseplanCard extends LitElement {
     keep.poly = d.poly.map((p) => [p[0] / NORM_W, p[1] / H]);
     delete keep.x; delete keep.y; delete keep.w; delete keep.h; // a merged room is never a rect
     sp.rooms = sp.rooms.filter((r: any) => r.id !== dropId);
-    this._commitOpenSpans();
     const committed = this._commitPhysicalGeometry(this._t('history.merge_rooms'), before);
     this._mergeDialog = null;
     this._regSignature = '';
@@ -13408,13 +13058,11 @@ class HouseplanCard extends LitElement {
 
   private _markupMove(ev: MouseEvent): void {
     if (!this._markup) return;
-    const pointerType = (ev as PointerEvent).pointerType;
-    if (pointerType) this._boundaryPointerType = pointerType;
     if (this._tool === 'column') {
       this._cursorPt = this._snap(this._svgPoint(ev));
       return;
     }
-    if (this._tool === 'opening' || this._tool === 'boundary' || this._tool === 'wallthick') {
+    if (this._tool === 'opening' || this._tool === 'wallthick') {
       // hover preview: raw cursor point; snapping happens in the preview getters
       this._cursorPt = this._svgPoint(ev);
       return;
@@ -13826,7 +13474,6 @@ class HouseplanCard extends LitElement {
     }
 
     if (hasSplit) {
-      this._commitOpenSpans();
       const next = this._normalizeWalls(splitWalls, this._openCuts());
       if (next.length) sp.walls = next;
       else if (!wallsBeforeSplit?.length) delete sp.walls;
@@ -13977,7 +13624,6 @@ class HouseplanCard extends LitElement {
     // trimming reads the new geometry while glow reads the old connectivity
     // (AUD-159B6-02).
     if (wasSplit) {
-      this._commitOpenSpans();
       const next = this._normalizeWalls(splitWalls, this._openCuts());
       if (next.length) sp.walls = next;
       else if (!wallsBeforeSplit?.length) delete sp.walls;
@@ -14081,8 +13727,6 @@ class HouseplanCard extends LitElement {
     this._splitSel = null;
     this._mergeSel = null;
     this._mergeDialog = null;
-    this._openWallAnchor = null;
-    this._boundaryRestoreGuard = null;
     this._physicalSel = null;
     this._physicalDrag = null;
     this._physicalRotate = null;
@@ -14970,6 +14614,7 @@ class HouseplanCard extends LitElement {
         mode, spaceId, title: sp.title, planUrl: sp.plan_url || null, planFile: null,
         source: sp.plan_url ? 'file' : 'draw',
         showBorders: disp.showBorders, showNames: disp.showNames,
+        zeroWallStyle: zeroWallStyleOf(sp),
         displayTouched: true,
         hideDecor: disp.hideDecor, hideOpenings: disp.hideOpenings,
         roomColor: disp.color, roomOpacity: disp.opacity,
@@ -14998,7 +14643,7 @@ class HouseplanCard extends LitElement {
       this._spaceDialog = {
         mode, title: '', planUrl: null, planFile: null,
         ...initialSpaceDisplayDraft(),
-        hideDecor: false, hideOpenings: false,
+        hideDecor: false, hideOpenings: false, zeroWallStyle: 'dashed',
         roomColor: DEFAULT_ROOM_COLOR, roomOpacity: DEFAULT_ROOM_OPACITY, fillMode: 'custom',
         // `custom` replaces the old `none` choice in the editor, but creating
         // a space must preserve the old no-floor visual by default. The user
@@ -15265,6 +14910,8 @@ class HouseplanCard extends LitElement {
         label_lqi: d.labelLqi,
         label_light: d.labelLight,
       };
+      // This is a geometry policy of the space, not a visual room setting.
+      sp.zero_wall_style = d.zeroWallStyle;
       sp.cell_cm = Number.isFinite(d.cellCm) && d.cellCm > 0
         ? Math.max(CELL_CM_MIN, Math.min(CELL_CM_MAX, d.cellCm)) : 5;
       // Nothing to clean up from here: the backend collects the superseded
@@ -15417,7 +15064,7 @@ class HouseplanCard extends LitElement {
     this._spaceDialog = {
       mode: 'create', title, planUrl: null, planFile: null,
       ...initialSpaceDisplayDraft(),
-      hideDecor: false, hideOpenings: false,
+      hideDecor: false, hideOpenings: false, zeroWallStyle: 'dashed',
       roomColor: DEFAULT_ROOM_COLOR, roomOpacity: DEFAULT_ROOM_OPACITY, fillMode: 'custom',
       customFill: null,
       glowEnabled: true,
@@ -15613,7 +15260,10 @@ class HouseplanCard extends LitElement {
     // SYNCHRONOUSLY; _cfgRev only moves after the debounced WS write is
     // acked, so a rev-keyed memo served wedges for the OLD window position
     // during the whole write window (and forever if the write failed).
-    const key = `${space.id}|${sun.azimuth}|${sun.elevation}|${north}|${this._cfgEpoch}`;
+    const zeroWalls = this._zeroWalls();
+    const zeroKey = zeroWalls.barriers.map((line) => line.join(',')).join(';');
+    const key = `${space.id}|${sun.azimuth}|${sun.elevation}|${north}|${this._cfgEpoch}`
+      + `|${zeroWalls.style}|${zeroKey}`;
     if (!this._sunRaysCache || this._sunRaysCache.key !== key) {
       const rooms = space.rooms
         .map((r) => ({ id: r.id || '', poly: roomPoly(r) }))
@@ -15625,7 +15275,7 @@ class HouseplanCard extends LitElement {
         .filter((o) => o.type === 'window' && o.host?.kind !== 'partition')
         .map((o) => ({ id: o.id, x: o.rx, y: o.ry, angle: o.angle, length: o.rlen }));
       const walls = this._spaceWalls;
-      const openCuts = this._openPairs().flatMap((p) => p.segs);
+      const openCuts = this._openCuts();
       const openingWallIndex = this._openingWallIndexFor(space, openCuts).value;
       const innerByRoom: Record<string, number[][]> = {};
       const wallDepthByOpening: Record<string, number> = {};
@@ -15654,9 +15304,18 @@ class HouseplanCard extends LitElement {
         walls.length ? wallDepthByOpening : undefined,
       );
       const physical = this._physicalBodiesR(space);
-      if (physical.length) {
+      // A two-point body has zero area at rest, but its extrusion along the
+      // sun direction is a real shadow polygon. This is the exact-line
+      // counterpart of Glow's visibility barrier and never affects floor area.
+      const sunOccluders = [
+        ...physical,
+        ...zeroWalls.barriers.map((line) => [
+          [line[0], line[1]], [line[2], line[3]],
+        ]),
+      ];
+      if (sunOccluders.length) {
         rays = rays.map((ray) => {
-          const shadows = directionalOccluders(physical, ray.dir, ray.len);
+          const shadows = directionalOccluders(sunOccluders, ray.dir, ray.len);
           const clipped = ray.polys.map((poly) => floorMinusBodies(poly, shadows));
           return {
             ...ray,
@@ -16745,8 +16404,15 @@ class HouseplanCard extends LitElement {
   } {
     // Gates are door-like: their different symbol must not change how light
     // crosses the clear opening.
-    const openCuts = this._openPairs().flatMap((p) => p.segs);
-    const cuts: number[][] = [...openCuts];
+    const zeroWalls = this._zeroWalls();
+    // Physical masonry has no body at every zero wall, independent of style.
+    // Light transport differs: solid zero walls are added back below as exact
+    // centre-line barriers rather than inflated fake masonry.
+    const openCuts = this._openCuts();
+    // Only dashed zero axes are openings in the visibility contour. Solid
+    // zero axes stay in the room outline and are also registered below as
+    // exact standalone barriers for independent/outer-wall parity.
+    const cuts: number[][] = [...zeroWalls.transmissive];
     // An opening is transparent only where it leads from floor to floor. A
     // front door has nothing behind it to light, so for light it is masonry
     // like a window — otherwise its tunnel glows halfway, up to the centreline
@@ -16803,6 +16469,8 @@ class HouseplanCard extends LitElement {
     mix(this._wallKeyPitch);
     for (const { poly } of polys) { mix(poly.length); for (const p of poly) { mix(p[0]); mix(p[1]); } }
     for (const cut of cuts) for (const value of cut) mix(value);
+    mix(zeroWalls.style === 'solid' ? 1 : 0);
+    for (const barrier of zeroWalls.barriers) for (const value of barrier) mix(value);
     for (const body of lightPhysical) {
       mix(body.length);
       for (const point of body) { mix(point[0]); mix(point[1]); }
@@ -16843,6 +16511,12 @@ class HouseplanCard extends LitElement {
       for (const seg of (cuts.length ? outlineWithout(poly, cuts, eps) : polygonSegments(poly))) {
         occluders.push(seg as LightSegment);
       }
+    }
+    // A solid zero wall has topology and opacity but deliberately no area.
+    // Add its axis directly to the visibility sweep; do not manufacture a
+    // narrow polygon, because that would alter floor area and doorway maths.
+    for (const barrier of zeroWalls.barriers) {
+      occluders.push(barrier as LightSegment);
     }
     const value = {
       occluders: splitAtIntersections(occluders),
@@ -16954,7 +16628,7 @@ class HouseplanCard extends LitElement {
         geometry = cachedClip.value;
       } else {
         // The entire light model, in two lines: what can this lamp see, and
-        // where is there floor to light. Doorways, gates and virtual walls are
+        // where is there floor to light. Doorways, gates and dashed zero walls are
         // simply missing from `occluders`, so light crosses them without any
         // notion of a "spill", a "sector", a "tunnel" or an "open zone" — and
         // a wall corner two rooms away casts its shadow for exactly the same
@@ -16996,9 +16670,7 @@ class HouseplanCard extends LitElement {
     // above still crosses a disabled room, but no base/pool pixels are painted
     // there. For the common all-enabled case this extra clip is omitted.
     const walls = this._spaceWalls;
-    const openCuts = enabled.length === polys.length
-      ? []
-      : this._openPairs().flatMap((pair) => pair.segs);
+    const openCuts = enabled.length === polys.length ? [] : this._openCuts();
     const roomWalls = this._wallUnionGeometry()?.roomGeom;
     const enabledClip = enabled.length === polys.length ? null : enabled.map(({ r, poly }) => {
       const floorPoly = walls.length && r.id
@@ -17876,7 +17548,7 @@ class HouseplanCard extends LitElement {
           : nothing}
         </div>
 
-        <div class="stage ${this._markup ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + (this._tool === 'boundary' ? this._boundaryStageClass : '') + (this._tool === 'wallthick' && this._wallThickHover ? ' wallhot' : '') : ''} ${this._mode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}${this._bdMovable ? ' bdgrab' : ''}${this._bdDrag ? ' bdgrabbing' : ''}${dayCycle ? ` daycycle phase-${dayCycle.phase}` : ''}${this._booting ? ' hpboot' : ''}${this._bootSoft ? ' hpsettle' : ''}${this._modeTransitionBusy ? ' mode-transition' : ''}"
+        <div class="stage ${this._markup ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + (this._tool === 'wallthick' && this._wallThickHover ? ' wallhot' : '') : ''} ${this._mode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}${this._bdMovable ? ' bdgrab' : ''}${this._bdDrag ? ' bdgrabbing' : ''}${dayCycle ? ` daycycle phase-${dayCycle.phase}` : ''}${this._booting ? ' hpboot' : ''}${this._bootSoft ? ' hpsettle' : ''}${this._modeTransitionBusy ? ' mode-transition' : ''}"
           ?inert=${this._modeTransitionBusy}
           style="height:${modeVisual ? `${modeVisual.stageHeight}px` : this._kiosk ? '100dvh' : `calc(100dvh - ${this._hdrH}px)`}${transitionStageBg ? `;background:${transitionStageBg}` : ''};--hp-cell-visual-scale:${gridVisualScale(this._cellCm)};--wall-fill:${this._fillColors.wall_fill.c};--wall-fill-op:${this._fillColors.wall_fill.a};--hp-mode-architecture-opacity:${modeVisual ? modeVisual.architectureOpacity : this._mode === 'decor' ? 0.35 : 1};--hp-mode-view-weight:${modeVisual?.viewWeight ?? (this._mode === 'view' ? 1 : 0)};--hp-mode-editor-weight:${modeVisual?.editorWeight ?? (this._mode === 'view' ? 0 : 1)}${modeVisual ? `;--hp-mode-paper:${modeVisual.paperColor}` : ''}${dayCycle ? `;${dayCycleStageVars(dayCycle)}` : ''}"
           @click=${(e: MouseEvent) => this._markupClick(e)}
@@ -17945,7 +17617,7 @@ class HouseplanCard extends LitElement {
             ${(() => {
               // audit L1: hoisted out of the per-room map — these depend on the
               // config, not on entity state, and were recomputed per room.
-              const allPairs = this._openPairs();
+              const allZeroCuts = this._openCuts();
               const polyCache = new Map<any, number[][] | null>();
               const polyOf = (rr: any) => {
                 if (!polyCache.has(rr)) polyCache.set(rr, roomPoly(rr));
@@ -17986,24 +17658,31 @@ class HouseplanCard extends LitElement {
                   this._roomHum(r),
                 );
               };
-              // open boundaries: this room's solid stroke must not run beneath
-              // the dashed stretches — suppress it and draw a trimmed outline.
+              const myPoly = polyOf(r);
+              // A room's ordinary solid stroke must not run beneath its zero
+              // wall overlay — suppress it and draw a trimmed outline. This
+              // includes exterior zero atoms, not only shared room boundaries.
               // Applies in the Plan editor too (picked rooms keep their full
               // amber highlight — the merge/split selection must stay visible).
               const isPicked = this._markup && (r.id === this._mergeSel || r.id === this._splitSel?.roomId);
-              const openCuts = r.id && !isPicked
-                ? allPairs.filter((pp) => pp.a.id === r.id || pp.b.id === r.id).flatMap((pp) => pp.segs)
+              const zeroCuts = myPoly && !isPicked
+                ? allZeroCuts.filter((cut) => {
+                    const midpoint = [(cut[0] + cut[2]) / 2, (cut[1] + cut[3]) / 2];
+                    return myPoly.some((point, index) => distToSegment(
+                      midpoint,
+                      [point[0], point[1], ...myPoly[(index + 1) % myPoly.length]],
+                    ) <= this._gridPitch * 0.08);
+                  })
                 : [];
               const thickCuts = !isPicked ? this._thickWallCuts() : [];
-              const edgeCuts = openCuts.concat(thickCuts);
+              const edgeCuts = zeroCuts.concat(thickCuts);
               if (edgeCuts.length) cls += ' noedge';
               // island rooms punch holes in their parent's fill (evenodd)
-              const myPoly = polyOf(r);
               const walls = this._spaceWalls;
               const fillPoly = (walls.length && r.id && myPoly)
                 ? (innerContourForRoom(
                     space.rooms, r.id, walls,
-                    this._openPairs().flatMap((p) => p.segs),
+                    allZeroCuts,
                     this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
                     this._wallUnionGeometry()?.roomGeom,
                   ) || myPoly)
@@ -18106,18 +17785,18 @@ class HouseplanCard extends LitElement {
                    an opening MEANS is untouched: light still spills through
                    it, the sun still comes in at its window, and the contact
                    sensor still opens it. */}
-            ${''/* View: virtual geometry still meets real walls on their
+            ${''/* View: zero-thickness geometry still meets thick walls on their
                    centreline, but paints BELOW the physical wall body. The
                    hatch therefore masks the visually awkward half-dashes
                    inside thick jambs without changing the stored span. */}
-            ${!this._editing ? this._renderOpenWalls(disp) : nothing}
+            ${!this._editing ? this._renderZeroWalls(disp) : nothing}
             ${this._renderWallBodies(disp)}
             ${this._markup && this._tool === 'resize' ? this._renderResizeMeasurements() : nothing}
             ${this._renderRoomHoverOutline(roomHover)}
-            ${''/* Editors: saved virtual boundaries and the live two-click
-                   preview deliberately paint AFTER real wall bodies. Their
+            ${''/* Editors: saved zero-thickness walls deliberately paint AFTER
+                   thick wall bodies. Their
                    full centreline geometry remains visible for editing. */}
-            ${this._editing ? this._renderOpenWalls(disp) : nothing}
+            ${this._editing ? this._renderZeroWalls(disp) : nothing}
             ${this._markup ? svg`<g class="hp-editor-only-layer"
               opacity="${modeVisual?.editorWeight ?? 1}">${this._renderHiddenWallDiagnosticOverlay()}</g>` : nothing}
             ${this._markup ? svg`<g class="hp-editor-only-layer"
@@ -19182,7 +18861,7 @@ class HouseplanCard extends LitElement {
     const floor = walls.length && r.id
       ? (innerContourForRoom(
           space.rooms, r.id, walls,
-          this._openPairs().flatMap((p) => p.segs),
+          this._openCuts(),
           this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
           this._wallUnionGeometry()?.roomGeom,
         ) || poly)
@@ -19862,7 +19541,7 @@ class HouseplanCard extends LitElement {
     if (!space) return svg``;
     const base = disp.color;
     const walls = this._spaceWalls;
-    const openCuts = this._openPairs().flatMap((pair) => pair.segs);
+    const openCuts = this._openCuts();
     const openingWallIndex = this._openingWallIndexFor(space, openCuts).value;
     return svg`${items.map((o) => {
       if (o.orphanReason) return svg`<g class="opening orphan" data-hp="opening-orphan"
@@ -19928,7 +19607,7 @@ class HouseplanCard extends LitElement {
     if (!items.length) return html``;
     const space = this._spaceModel();
     if (!space) return html``;
-    const openCuts = this._openPairs().flatMap((pair) => pair.segs);
+    const openCuts = this._openCuts();
     const openingWallIndex = this._openingWallIndexFor(space, openCuts).value;
     return html`${items.map((o) => {
       const st = this._renderPlanHass.states[o.lock!]?.state;
@@ -20279,7 +19958,10 @@ class HouseplanCard extends LitElement {
       || (kind === 'column' && this._duplicateColumnId === id);
     const draftSegs = (space.room_drafts || []).flatMap((d) => d.points.slice(0, -1).map((a, i) => {
       const b = d.points[i + 1];
-      const depth = wallCmToUnits(d.segments[i]?.cm || 15, this._cellCm, this._gridPitch);
+      const storedCm = Number(d.segments[i]?.cm);
+      const depth = wallCmToUnits(
+        Number.isFinite(storedCm) ? storedCm : 15, this._cellCm, this._gridPitch,
+      );
       return svg`<line class="physical-hit ${selected('draft', d.id) ? 'selected' : ''}"
         data-hp="room-draft" data-kind="segment" data-id=${d.id} data-segment=${i}
         x1=${a[0]} y1=${a[1]} x2=${b[0]} y2=${b[1]}
@@ -20292,13 +19974,20 @@ class HouseplanCard extends LitElement {
     }));
     const partitions = (space.partitions || []).map((p) => {
       const body = partitionBody(p.a, p.b, p.cm, this._cellCm, this._gridPitch);
-      if (!body) return nothing;
-      return svg`<path class="physical-hit ${selected('partition', p.id) ? 'selected' : ''}"
-        data-hp="partition" data-kind="partition" data-id=${p.id} d=${path(body)}
-        stroke-width=${touchStroke} vector-effect="non-scaling-stroke"
-        @pointerdown=${(e: PointerEvent) => this._physicalDown(e, 'partition', p.id)}
-        @pointermove=${(e: PointerEvent) => this._physicalMove(e)}
-        @pointerup=${(e: PointerEvent) => this._physicalUp(e)}></path>`;
+      return body
+        ? svg`<path class="physical-hit ${selected('partition', p.id) ? 'selected' : ''}"
+            data-hp="partition" data-kind="partition" data-id=${p.id} d=${path(body)}
+            stroke-width=${touchStroke} vector-effect="non-scaling-stroke"
+            @pointerdown=${(e: PointerEvent) => this._physicalDown(e, 'partition', p.id)}
+            @pointermove=${(e: PointerEvent) => this._physicalMove(e)}
+            @pointerup=${(e: PointerEvent) => this._physicalUp(e)}></path>`
+        : svg`<line class="physical-hit ${selected('partition', p.id) ? 'selected' : ''}"
+            data-hp="partition" data-kind="partition" data-id=${p.id}
+            x1=${p.a[0]} y1=${p.a[1]} x2=${p.b[0]} y2=${p.b[1]}
+            stroke-width=${touchStroke} vector-effect="non-scaling-stroke"
+            @pointerdown=${(e: PointerEvent) => this._physicalDown(e, 'partition', p.id)}
+            @pointermove=${(e: PointerEvent) => this._physicalMove(e)}
+            @pointerup=${(e: PointerEvent) => this._physicalUp(e)}></line>`;
     });
     const columns = (space.wall_columns || []).map((c) => {
       const shown = this._physicalRotate?.id === c.id
@@ -20314,6 +20003,13 @@ class HouseplanCard extends LitElement {
     const drag = this._physicalDrag;
     const ghost = (() => {
       if (!drag?.moved) return nothing;
+      if (drag.kind === 'partition' && Number((drag.base as PartitionCfg).cm) === 0) {
+        const partition = drag.base as PartitionCfg;
+        return svg`<line class="physical-drag zero"
+          x1=${partition.a[0]} y1=${partition.a[1]}
+          x2=${partition.b[0]} y2=${partition.b[1]}
+          transform="translate(${drag.delta[0]} ${drag.delta[1]})"></line>`;
+      }
       const poly = drag.kind === 'partition'
         ? partitionBody((drag.base as PartitionCfg).a, (drag.base as PartitionCfg).b,
             (drag.base as PartitionCfg).cm, this._cellCm, this._gridPitch)
@@ -20336,10 +20032,12 @@ class HouseplanCard extends LitElement {
         const p = space.partitions.find((x) => x.id === sel.id);
         if (!p) return nothing;
         const body = partitionBody(p.a, p.b, p.cm, this._cellCm, this._gridPitch);
-        if (!body) return nothing;
         const mx = (p.a[0] + p.b[0]) / 2, my = (p.a[1] + p.b[1]) / 2;
         return svg`<g class="physical-chrome" data-kind="partition-selection">
-          <path class="frame" d=${path(body)}></path>
+          ${body
+            ? svg`<path class="frame" d=${path(body)}></path>`
+            : svg`<line class="frame" x1=${p.a[0]} y1=${p.a[1]}
+                x2=${p.b[0]} y2=${p.b[1]}></line>`}
           <circle class="move-dot" cx=${p.a[0]} cy=${p.a[1]} r=${handleR * 0.55}></circle>
           <circle class="move-dot" cx=${p.b[0]} cy=${p.b[1]} r=${handleR * 0.55}></circle>
           <circle class="move-dot" cx=${mx} cy=${my} r=${handleR}></circle>
@@ -20513,8 +20211,9 @@ class HouseplanCard extends LitElement {
   }
 
   private _renderMarkupLayer(vb: number[]): TemplateResult {
-    // derived walls minus the open stretches — those are drawn dashed on top
-    const openCuts = this._openPairs().flatMap((p) => p.segs);
+    // Derived axes omit zero and positive-body stretches; their dedicated
+    // layers paint those segments with the correct style and z-order.
+    const openCuts = this._openCuts();
     const thickCuts = this._thickWallCuts();
     const allCuts = openCuts.concat(thickCuts);
     const segs = allCuts.length
@@ -20525,7 +20224,7 @@ class HouseplanCard extends LitElement {
     const view = this._viewOr(this._baseVb());
     const drawCm = this._tool === 'draw' ? this._drawWallCm : null;
     const previewPts = (() => {
-      if (this._tool !== 'draw' || !path.length || !(drawCm != null && drawCm > 0)) return null;
+      if (this._tool !== 'draw' || !path.length || drawCm == null) return null;
       if (this._contourClosed) return path;
       if (this._cursorPt) return [...path, this._cursorPt];
       return path.length >= 2 ? path : null;
@@ -20571,6 +20270,10 @@ class HouseplanCard extends LitElement {
       ${previewD
         ? svg`<path class="drawwall-preview-fill" d="${previewD}"></path>
              <path class="drawwall-preview" d="${previewD}"></path>`
+        : nothing}
+      ${previewPts && drawCm === 0
+        ? svg`<polyline class="drawwall-zero-preview ${zeroWallStyleOf(this._curSpaceCfg)}"
+            points=${previewPts.map((point) => point.join(',')).join(' ')}></polyline>`
         : nothing}
       ${previewJoinPatchD
         ? svg`<path class="drawwall-preview-fill" d="${previewJoinPatchD}"></path>
@@ -20702,7 +20405,7 @@ class HouseplanCard extends LitElement {
             ? d.shape === 'circle' ? 'physical.diameter' : 'physical.side'
             : 'wallthick.field')}</label>
           <div class="row"><input class="namein tempin" type="number"
-            min=${cmToField(1, this._imperial)}
+            min=${cmToField(column ? 1 : 0, this._imperial)}
             max=${cmToField(column ? 150 : 100, this._imperial)} step="any" .value=${d.cm}
             @input=${(e: Event) => (this._physicalDialog = {
               ...d, cm: (e.target as HTMLInputElement).value,
@@ -20743,15 +20446,10 @@ class HouseplanCard extends LitElement {
   private _renderMarkupBar(): TemplateResult {
     const undoName = this._geometryHistory.undoName;
     const redoName = this._geometryHistory.redoName;
-    const boundaryPending = this._tool === 'boundary' && !!this._openWallAnchor;
-    const undoTitle = boundaryPending
-      ? this._t('markup.boundary_cancel')
-      : undoName
+    const undoTitle = undoName
       ? this._t('history.undo_named', { name: undoName })
       : this._t('history.undo_empty');
-    const redoTitle = boundaryPending
-      ? this._t('markup.boundary_cancel')
-      : redoName
+    const redoTitle = redoName
       ? this._t('history.redo_named', { name: redoName })
       : this._t('history.redo_empty');
     return html`<div class="editbar planbar">
@@ -20791,12 +20489,6 @@ class HouseplanCard extends LitElement {
         <ha-icon icon="mdi:arrow-expand-all"></ha-icon>${this._t('markup.resize')}
       </button>
       ${this._editorToolbarGroups.map((group) => this._renderEditorGroupLauncher(group))}
-      <button class="btn ${this._tool === 'boundary' ? 'on' : ''}"
-        @click=${() => this._activateMarkupTool('boundary')}
-        aria-pressed=${this._tool === 'boundary' ? 'true' : 'false'}
-        title=${this._t('title.markup_boundary')}>
-        <ha-icon icon="mdi:border-style"></ha-icon>${this._t('markup.boundary')}
-      </button>
       <button class="btn ${this._tool === 'wallthick' ? 'on' : ''}"
         @click=${() => this._activateMarkupTool('wallthick')}
         title=${this._t('title.markup_wallthick')}>
@@ -20808,12 +20500,12 @@ class HouseplanCard extends LitElement {
         <ha-icon icon="mdi:delete-outline"></ha-icon>${this._t('markup.delete_room')}
       </button>
       <button class="btn ghost" @click=${this._undoGeometry}
-        ?disabled=${!undoName && !boundaryPending}
+        ?disabled=${!undoName}
         title=${undoTitle} aria-label=${undoTitle}>
         <ha-icon icon="mdi:undo-variant" aria-hidden="true"></ha-icon>
       </button>
       <button class="btn ghost" @click=${this._redoGeometry}
-        ?disabled=${!redoName && !boundaryPending}
+        ?disabled=${!redoName}
         title=${redoTitle} aria-label=${redoTitle}>
         <ha-icon icon="mdi:redo-variant" aria-hidden="true"></ha-icon>
       </button>
@@ -22141,6 +21833,22 @@ class HouseplanCard extends LitElement {
             ${this._boolInput(d.showBorders, (v) => (this._spaceDialog = touchSpaceDisplay(d, 'showBorders', v)))}
             <span>${this._t('space.show_borders')}</span>
           </label>
+          <label>${this._t('space.zero_wall_style')}</label>
+          <select class="areasel"
+            @change=${(e: Event) => {
+              const value = (e.target as HTMLSelectElement).value;
+              this._spaceDialog = {
+                ...d, zeroWallStyle: value === 'solid' ? 'solid' : 'dashed',
+              };
+            }}>
+            <option value="dashed" ?selected=${d.zeroWallStyle === 'dashed'}>
+              ${this._t('space.zero_wall_dashed')}
+            </option>
+            <option value="solid" ?selected=${d.zeroWallStyle === 'solid'}>
+              ${this._t('space.zero_wall_solid')}
+            </option>
+          </select>
+          <div class="rhint">${this._t('space.zero_wall_help')}</div>
           <label class="srcrow">
             ${this._boolInput(d.showNames, (v) => (this._spaceDialog = touchSpaceDisplay(d, 'showNames', v)))}
             <span>${this._t('space.show_names')}</span>

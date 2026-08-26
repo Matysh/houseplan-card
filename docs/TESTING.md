@@ -1372,12 +1372,6 @@ separately promised workflows:
       an untouched open dialog follows a newly resolved light primary instead
       of retaining a stale Device-card label (#97); explicit per-device
       "Device card" wins over the default [auto: smoke_light_default_tap]
-- [ ] Derived walls cut too (v1.38.4): in the Plan editor the derived wall
-      segments (.seg) no longer run solid through an open stretch — only the
-      dash remains there [auto: smoke_openwall]
-- [ ] Dashed boundaries in the Plan editor (v1.38.3): open stretches render as
-      a true dash in markup too (blue trimmed outlines); merge/split-picked
-      rooms keep their full amber highlight [auto: smoke_openwall]
 - [ ] Nav persistence (#93): reload or another-HA-route → return restores only
       the last space and always starts in View; legacy `{space, mode}` ignores
       `mode` and is rewritten without it. A `#space=` deep link beats the saved
@@ -1402,41 +1396,34 @@ separately promised workflows:
       itself when nothing is chosen, closes on pick; Save is blocked until a
       binding is chosen in HA mode; groups/helpers listed always, device
       entities only with the checkbox; editing pre-selects everything [auto: smoke_binding_ui]
-- [ ] True dashed boundary (v1.37.3): the open stretch is a REAL dash — the
-      rooms' solid strokes are trimmed out beneath it (hover doesn't bring
-      them back), walls elsewhere stay solid; the dashes render ABOVE the
-      glow pools [auto: smoke_openwall]
-- [ ] Unified Boundary tool: the Plan toolbar has exactly one Boundary button
-      and no separate Virtual wall / Physical wall buttons. A solid shared
-      wall shows a local start marker; two points on that same wall open the
-      chosen range. A dashed span previews the inherited physical wall body
-      and restores the whole canonical span with one click [auto:
-      smoke_openwall, smoke_openwall_hover]
+- [ ] Canonical zero walls (#306): the Plan toolbar has no Boundary, Virtual
+      wall or Physical wall tool. Walls and Thickness accept exact `0..100`;
+      zero works for room atoms, drafts and partitions, while columns remain
+      `1..150`. Empty/invalid input writes nothing [auto: unit +
+      `smoke_zero_walls`].
 - [ ] Decor line style: a newly drawn or legacy line is solid and the drawing
       toolbar has no dash control. Double-click it under Select, switch the
       properties radio to Dashed and save: only that line receives
       `line_style: dashed`, renders with a dash array, stays clickable inside
       its gaps, and Undo restores the solid version [auto: smoke_decor]
-- [ ] Boundary hit safety: target widths remain 12 CSS px for a fine pointer
-      and 22 CSS px for touch at every zoom (or half the physical wall body,
-      whichever is larger); a dash accepts only 6/10 px past its endpoints.
-      Near an ambiguous junction the edit is refused until the pointer moves
-      farther away. Outer walls and boundaries covered by a partition, column
-      or unfinished contour are refused with an explanatory toast [manual +
-      auto: smoke_openwall_hover + open-spans unit resolver]
-- [ ] Boundary transient state: an invalid second point keeps P1 for retry; a
-      too-short range clears it. Esc, first Undo/Redo, editor/space navigation,
-      external config adoption, pointercancel and a second touch cancel P1
-      without advancing history. A double-click on a dash restores it once and
-      does not immediately arm a new opening [manual]
-- [ ] Open boundaries (v1.37.0): virtual stretches exist only between two
-      rooms on their shared wall and render dashed; glow light floods the whole
-      connected floor transitively wherever the source has line of sight;
-      merge/split keep links by room id [auto: smoke_openwall]
+- [ ] Zero-wall interaction target remains usable at every zoom even though
+      the visual line is thin. Changing `positive ↔ 0` atomizes only the picked
+      carrier, preserves neighbouring thickness and stable IDs, and creates one
+      Undo step. A target with any door/window/gate/passage is rejected before
+      mutation [auto: unit + `smoke_zero_walls`].
+- [ ] Zero-wall style: missing setting and `dashed` render one true dash and
+      transmit Glow/sun; `solid` renders one solid axis and blocks both as a
+      zero-area barrier. `show_borders:false` hides the line in View/kiosk but
+      not its light semantics or editor axis [auto: `smoke_zero_walls`, golden].
+- [ ] v8 migration: explicit `open_spans` wins over `open_to`; otherwise full
+      proven shared boundaries are atomized. Stable IDs survive, all existing
+      `cm:0` is treated identically, canonical v9 removes both legacy fields,
+      repeat migration is a no-op, and a zero/opening conflict fails atomically
+      [auto: frontend/backend wall-segment model parity tests].
 - [ ] Light transport (#71, model: `docs/LIGHT.md`): a source paints exactly
       ONE region — the floor it can see. Opaque: the drawn wall bodies with their real thickness, plus
-      independent bodies, plus untouched outlines of edges without thickness.
-      Transparent: doorways, gates and virtual boundaries — but only
+      independent bodies, plus solid zero-wall axes. Transparent: doorways,
+      gates and dashed zero walls — but only
       where BOTH sides are floor; a window and an outside door are opaque, and
       an outside door must not change the lit region at all (no half-lit
       tunnel). A source centred inside an exterior door, gate or window
@@ -1457,9 +1444,9 @@ separately promised workflows:
       `feGaussianBlur` feathers the complete layer, and the pool
       clip may never leave the rooms. The pool gradient falls off monotonically
       over the whole radius (no plateau; at 70% at most 75% of the centre
-      alpha). A lamp lights a room across a virtual boundary, and across two of
+      alpha). A lamp lights a room across a dashed zero wall, and across two of
       them in sequence, only where it can actually see through both
-      [auto: smoke_glow, smoke_openwall;
+      [auto: smoke_glow, smoke_zero_walls;
       unit: light-visibility, golden-matrix;
       golden: lighting-opaque-glow-two-doorways-dark]
 - [ ] Glow floor resilience (#218): a six-room floor containing the captured
@@ -1575,9 +1562,9 @@ separately promised workflows:
 - [ ] Grid in all editors + decor fade (v1.33.1): the dot grid shows in the
       Device and Background editors too (instant "I'm editing" cue), not in
       View; in the Background editor rooms/devices/openings/labels plus solid,
-      thick and dashed virtual walls fade to 35% while decor shapes stay fully
+      thick and zero-thickness walls fade to 35% while decor shapes stay fully
       opaque; no fade in the other editors [auto: smoke_decor / smoke_grid_fade /
-      smoke_resize_virtual_thick]
+      smoke_zero_walls]
 - [ ] Background editor (unified after v1.59.2): it always opens on Select and
       has Select / optional Plan backdrop / Line / Rectangle / Oval / Text /
       Furniture / Erase, colour+opacity, physical line width, optional
@@ -2950,13 +2937,12 @@ require hands on real hardware — they remain for the human pass.
       10°. A lock badge and Glow tunnel behave exactly like a door
       [auto: test/logic.test.mjs + test/wall-thickness.test.mjs +
       tests_backend/test_validation.py + smoke_styling_hooks]
-- [ ] **Shared once / clear → line / safe Resize**: one body for a shared wall;
-      clearing thickness restores the centreline. Resize preserves thickness
-      on an eligible uniformly thick exact wall. Partial/unequal shared walls,
-      mixed-thickness walls and walls containing a partial virtual span remain
-      visibly disabled; an attempted drag changes no rooms, openings, virtual
-      spans, thickness records or Undo history
-      [auto: smoke_wall_thickness + smoke_resize_virtual_thick +
+- [ ] **Shared once / zero → line / safe Resize**: one body for a shared wall;
+      setting thickness to zero restores the centreline. Resize preserves
+      thickness on an eligible uniformly thick exact wall. Partial/unequal
+      shared and mixed-thickness walls remain visibly disabled; an attempted
+      drag changes no rooms, openings, wall atoms or Undo history
+      [auto: smoke_wall_thickness + smoke_zero_walls +
       smoke_resize_wall_thickness + smoke_room_resize +
       test/wall-thickness.test.mjs + mutation-gate]
 - [ ] **Wall key survives storage round-trip (#258)**: exact grid endpoints and
@@ -2971,29 +2957,18 @@ require hands on real hardware — they remain for the human pass.
       test/model-invariants.test.mjs; auto: smoke_wall_key_roundtrip; golden:
       wall-key-roundtrip-view-dark; mutation: wall-key-storage-normalization-disabled +
       wall-exact-span-fallback-disabled + invariant-wall-key-storage-normalization-disabled].
-- [ ] **Virtual T-junction**: when two real thick arms from different room
-      contours meet at an `open_span` endpoint, the outside corner is a clean
-      mitre with no stair-step. In every editor the saved dash and the two-click
-      rubber band paint above the real hatch right up to the centreline; in
-      View the same saved dash paints below the body, so each thick jamb masks
-      its centreline end without shortening the stored span
-      [auto: test/wall-thickness.test.mjs + smoke_resize_virtual_thick]
-- [ ] **Fragment normalisation**: draw adjacent/overlapping virtual stretches
-      along the same pair of rooms — they persist and select as one span. Close
-      the last virtual stretch — consecutive solid fragments merge into maximal
-      runs of equal thickness; equal neighbours become one, a thickness change
-      remains an exact endpoint. Resize transforms those endpoints. Repeat
-      across a Split boundary: spans owned by different room pairs must stay separate
-      [auto: test/open-spans.test.mjs + test/wall-thickness.test.mjs +
-      smoke_resize_virtual_thick]
-- [ ] **Atomic child inherits its exact parent on Close (#201)**: let a third
-      room split a non-default exact wall run into atomic solid children, then
-      close a fully virtual collinear neighbour. Preview and persisted masonry
-      inherit the nearest parent's real thickness instead of the 15 cm draw
-      default; Undo restores the virtual span. A partial exact span never leaks
-      onto a longer query, and scale/direction/row order do not change the
-      resolver [auto: test/wall-thickness.test.mjs + test/open-spans.test.mjs +
-      smoke_resize_virtual_thick + mutation-gate].
+- [ ] **Zero-wall T-junction**: when two positive thick arms from different
+      room contours meet at a zero-wall endpoint, the outside corner is a clean
+      mitre with no stair-step. Editors paint the complete zero axis above the
+      real hatch; View paints it below the body so jambs mask its ends without
+      changing stored geometry [auto: test/wall-thickness.test.mjs +
+      smoke_zero_walls].
+- [ ] **Zero fragment normalisation**: adjacent or overlapping `cm:0` atoms
+      with the same ownership compact without losing the exact breakpoint at a
+      positive thickness or owner-role change. Resize transforms their stable
+      endpoints without recreating legacy `open_spans/open_to`
+      [auto: test/wall-segment-model.test.mjs + test/wall-thickness.test.mjs +
+      smoke_zero_walls].
 - [ ] **Near-axis authoring and explicit repair (#290)**: the shared
       `0.25°` classifier includes `316×1`, excludes `316×2` and 30° diagonals,
       and Walls preview/click persist `316×0` without claiming the wrong saved
@@ -3191,7 +3166,7 @@ require hands on real hardware — they remain for the human pass.
       Popover and forced portal fallback have the same no-layout-shift contract
       [auto: `smoke_help_affordance`].
 
-## Hiding layers: decor, openings, virtual walls (docs/UX-MODES.md, dev, unreleased)
+## Hiding layers: decor, openings, zero-thickness walls (docs/UX-MODES.md)
 
 - [ ] **Room names have one literal off state (#203)**: disable «Показывать
       названия» in the live space dialog, save and reopen it. Full View, kiosk,
@@ -3220,13 +3195,11 @@ require hands on real hardware — they remain for the human pass.
       still comes in at the window, a door with a contact sensor still reports
       open/closed in the room card, and the resize tool still refuses to
       shorten a wall past its opening [auto: smoke_hide_layers, smoke_glow]
-- [ ] **Virtual walls follow the borders switch only in View** (owner 2026-08-05): make an
-      open boundary between two rooms (Plan → «Граница», two points), then turn
-      **«Всегда отображать границы комнат» OFF**. The dashed stretch goes with
-      the borders — no floating dashes on a plan that draws no walls. Turn the
-      borders back on and it returns. In Plan, Devices and Background editors
-      the dashes are always visible, whatever the switch says
-      [auto: smoke_hide_layers, smoke_openwall]
+- [ ] **Zero walls follow the borders switch only in View**: set a wall to
+      `0 cm`, then turn **«Всегда отображать границы комнат» OFF**. Its line
+      disappears with the borders and returns when enabled. Plan, Devices and
+      Background editors always show the line. Dashed/solid light behaviour is
+      unchanged while hidden [auto: `smoke_hide_layers`, `smoke_zero_walls`].
 - [ ] **Nothing is stored when nothing is hidden**: with both boxes unticked,
       the space's config carries no `hide_decor` / `hide_openings` at all, and
       a plan saved by an older card still opens here unchanged

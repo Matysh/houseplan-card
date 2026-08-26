@@ -221,9 +221,9 @@ export function buildHiddenWallDiagnosticGeometry(options: {
 
 /**
  * Build the immutable architectural axes used by both the overlay and snap resolver.
- * Opening/open-span cuts apply to room-owned walls, while hosted opening cuts apply
- * only to their explicit partition source. Saved drafts keep complete axes. Cut
- * boundaries never become static nodes.
+ * Opening cuts apply to room-owned walls, while hosted opening cuts apply only to
+ * their explicit partition source. Zero-thickness walls and saved drafts keep
+ * complete axes. Cut boundaries never become static nodes.
  */
 export function buildPlanSnapGeometry(options: BuildPlanSnapGeometryOptions): PlanSnapGeometry {
   const epsilon = options.epsilon ?? DEFAULT_EPSILON;

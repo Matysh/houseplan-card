@@ -12,7 +12,29 @@ const { page, browser } = await launch();
 
 await page.evaluate(() => {
   const c = window.__card;
+  window.__physicalizeOpeningFixture = (sp) => {
+    // Exercise the real pre-v9 -> v9 edit barrier instead of fabricating a
+    // catalogue: partially shared room edges must be atomised before IDs are
+    // assigned, which a naive edge-by-edge fixture cannot reproduce.
+    c._serverCfg.model_version = 7;
+    delete sp.open_spans;
+    delete sp.walls;
+    delete sp.wall_segments;
+    for (const room of sp.rooms || []) delete room.wall_ids;
+    c._modelCache = null; c._frame = null;
+    for (const room of [...(sp.rooms || [])]) {
+      const rendered = c._spaceModel()?.rooms?.find((item) => item.id === room.id);
+      if (!rendered?.poly?.length) continue;
+      c._wallDialog = {
+        a: rendered.poly[0], b: rendered.poly[1], value: '15', roomId: room.id,
+        source: { kind: 'room' }, sx: 0, sy: 0,
+      };
+      c._wallThickApply(true);
+    }
+    c._geometryHistory.length = 0;
+  };
   const sp = c._serverCfg.spaces.find((s) => s.id === 'f1');
+  window.__physicalizeOpeningFixture(sp);
   // 80-unit door on r1's top wall (y = 0.14), off-center
   sp.openings = [{ id: 'op1', type: 'door', x: 0.2, y: 0.14, angle: 0, length: 0.08 }];
   c._setMode('plan'); c._tool = 'opening';
@@ -136,6 +158,8 @@ await page.evaluate(() => {
     { id: 'r1', name: 'Living room', poly: [[0.04, 0.14], [0.55, 0.14], [0.55, 0.46], [0.04, 0.46]] },
     { id: 'r2', name: 'Kitchen', poly: [[0.55, 0.14], [0.96, 0.14], [0.96, 0.58], [0.55, 0.58]] },
   ];
+  sp.openings = [];
+  window.__physicalizeOpeningFixture(sp);
   sp.openings = [{ id: 'op1', type: 'door', x: 0.55, y: 0.3, angle: 90, length: 0.08 }];
   c._cfgEpoch++; c.requestUpdate();
   return c.updateComplete && true;
@@ -186,6 +210,7 @@ await page.evaluate(() => {
     { id: 'r2', name: 'Kitchen', poly: [[0.55, 0.14], [0.96, 0.14], [0.96, 0.46], [0.55, 0.46]] },
   ];
   sp.openings = [];
+  window.__physicalizeOpeningFixture(sp);
   c._setMode('plan'); c._activateOpeningPlacement('door');
   c._cfgEpoch++; c.requestUpdate();
   return c.updateComplete && true;
@@ -201,10 +226,11 @@ const previews = () => page.evaluate(() =>
   await settle();
   check('place_preview_shown', await previews(), 1);
   check('place_two_badges', (await badges()).length, 2);
-  // edges 422.5 / 497.5 -> 382.5 u (4.59 m) left, 52.5 u (0.63 m) right
+  // The ruler terminates at the inner faces of the 15 cm end walls: subtract
+  // 6.25 u from each centreline shoulder -> 4.52 m left / 0.56 m right.
   const [a, b] = await nums();
-  check('place_badge_right_0_63', near(a, 0.63, 0.05));
-  check('place_badge_left_4_59', near(b, 4.59, 0.05));
+  check('place_badge_right_0_56', near(a, 0.56, 0.05));
+  check('place_badge_left_4_52', near(b, 4.52, 0.05));
   check('place_no_tick_off_center', await tick(), 0);
 }
 
@@ -213,10 +239,10 @@ const previews = () => page.evaluate(() =>
   const [hx, hy] = await screenPt(200, 141);
   await page.mouse.move(hx, hy, { steps: 3 });
   await settle();
-  // edges 162.5 / 237.5 -> 122.5 u (1.47 m) left, 312.5 u (3.75 m) right
+  // Physical-face shoulders are 116.25 / 306.25 u -> 1.40 / 3.68 m.
   const [a, b] = await nums();
-  check('place_badge_updates_1_47', near(a, 1.47, 0.05));
-  check('place_badge_updates_3_75', near(b, 3.75, 0.05));
+  check('place_badge_updates_1_40', near(a, 1.40, 0.05));
+  check('place_badge_updates_3_68', near(b, 3.68, 0.05));
 }
 
 // near the wall centre (40+550)/2 = 295: tick appears and the magnet bites
@@ -225,8 +251,8 @@ const previews = () => page.evaluate(() =>
   await page.mouse.move(hx, hy, { steps: 3 });
   await settle();
   check('place_tick_at_center', await tick(), 1);
-  // equal shoulders after the magnet: (510 - 75) / 2 = 217.5 u -> 2.61 m
-  check('place_badges_equal_at_center', await badges(), ['2.61 m', '2.61 m']);
+  // Equal physical-face shoulders: 217.5 - 6.25 = 211.25 u -> 2.53 m.
+  check('place_badges_equal_at_center', await badges(), ['2.53 m', '2.53 m']);
   const g = await page.evaluate(() => {
     const el = window.__card.renderRoot.querySelector('.opcentertick');
     return el && { x1: +el.getAttribute('x1'), x2: +el.getAttribute('x2'),
@@ -276,7 +302,7 @@ const previews = () => page.evaluate(() =>
   await page.evaluate(() => { const c = window.__card; c._saveOpening(); return c.updateComplete && true; });
   await settle();
   check('place_committed_x_center', near(await page.evaluate(() =>
-    window.__card._serverCfg.spaces.find((s) => s.id === 'f1').openings[0].x), 0.295, 1e-6));
+    window.__card._serverCfg.spaces.find((s) => s.id === 'f1').openings[0]?.x ?? Number.NaN), 0.295, 1e-6));
 }
 
 await finish(browser, { done: true });

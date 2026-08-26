@@ -3,7 +3,7 @@
 import type { HaBindingStatus } from './ha-binding-status';
 
 export interface RoomCfg {
-  /** Rooms this one has an OPEN (virtual) boundary with - light flows through. */
+  /** Deprecated pre-v9 room links used only by legacy compatibility readers. */
   open_to?: string[] | null;
   /** Room-level settings (tier 3 of 4: global > space > ROOM > device). */
   settings?: {
@@ -51,6 +51,8 @@ export interface WallSegmentEntry {
   [key: string]: unknown;
 }
 
+export type ZeroWallStyle = 'dashed' | 'solid';
+
 /** Persisted open room contour. Coordinates are normalised in config and
  * render units in SpaceModel, exactly like rooms. */
 export interface RoomDraftCfg {
@@ -81,6 +83,8 @@ export interface SpaceModel {
   vb: number[]; // render units
   bg: { href: string; x: number; y: number; w: number; h: number; angle?: number } | null;
   rooms: RoomCfg[]; // render units
+  /** Canonical contour-wall atoms in render units. */
+  wall_segments: WallSegmentEntry[];
   room_drafts: RoomDraftCfg[];
   partitions: PartitionCfg[];
   wall_columns: WallColumnCfg[];
@@ -189,7 +193,7 @@ export interface PartitionOpeningHost {
 
 export interface WallOpeningHost {
   kind: 'wall';
-  /** Stable id of one v8 contour-wall atom in the same space. */
+  /** Stable id of one authoritative contour-wall atom in the same space. */
   id: string;
   /** Centre position along the canonical stored segment a -> b. */
   t: number;

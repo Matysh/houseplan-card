@@ -44,6 +44,19 @@ const out = await page.evaluate(async () => {
     },
   };
   const space = c._serverCfg.spaces.find((item) => item.id === 'f1');
+  // This interaction is about entity selectors, not zero-wall hosting. Make
+  // the synthetic room edges explicitly physical before adding the door;
+  // under model v9 an omitted thickness is intentionally a zero wall.
+  c._serverCfg.model_version = 7;
+  delete space.wall_segments;
+  delete space.open_spans;
+  space.walls = (space.rooms || []).flatMap((room) => {
+    delete room.wall_ids;
+    return room.poly.map((a, index) => ({
+      key: `${room.id}-${index}`,
+      a, b: room.poly[(index + 1) % room.poly.length], cm: 15,
+    }));
+  });
   space.openings = [{
     id: 'hp301-door', type: 'door', x: 0.22, y: 0.14, angle: 0, length: 0.09,
   }];

@@ -53,12 +53,12 @@ const out = await page.evaluate(async () => {
   card._wallDialog = { ...card._wallDialog, value: '18' };
   card._wallThickApply(false); await update();
   result.draftWritten = sp().room_drafts[0].segments[0].cm === 18;
-  // CODE-REVIEW-313-r1 High: a STORED zero must surface as zero (empty field),
-  // and Apply without editing must refuse — never silently turn 0 into 15.
+  // A stored zero is now a first-class wall value and must surface literally;
+  // opening the dialog and applying it unchanged must preserve that value.
   const zeroSegHit = card._wallThickHit([0.9 * NORM_W, 0.6 * NORM_W]);
   result.zeroSegmentSurvives = zeroSegHit?.source?.kind === 'draft' && zeroSegHit.cm === 0;
   card._wallThickClick([0.9 * NORM_W, 0.6 * NORM_W]); await update();
-  result.zeroSegmentFieldEmpty = card._wallDialog?.value === '';
+  result.zeroSegmentFieldShowsZero = card._wallDialog?.value === '0';
   card._wallThickApply(false); await update();
   result.zeroSegmentNotCorrupted = sp().room_drafts[0].segments[1].cm === 0;
   card._wallDialog = null; await update();

@@ -361,7 +361,7 @@ not be added to an individual sink.
                "plan_x","plan_y","plan_scale_x","plan_scale_y","plan_angle",
                "plan_scale",   // legacy optional fallback, docs/BACKDROP.md
                "view_box":[4],
-               "rooms":[{"id","name","area","poly|x/y/w/h","wall_ids":[…],"open_to","settings"}],
+               "rooms":[{"id","name","area","poly|x/y/w/h","wall_ids":[…],"settings"}],
                "wall_segments":[{"id","a","b","cm","owners":[…]}],
                "room_drafts":[…], "partitions":[…], "wall_columns":[…],
                "openings":[…], "decor":[…], "settings":{…} }],
@@ -391,10 +391,11 @@ quotas, nothing is ever deleted for being old (docs/SCOPE.md).
 
 ## Room and independent wall geometry
 
-Model v8 separates a wall's durable identity from its current geometric lookup
-(#282). `wall_segments[]` is the authoritative catalog of atomic room-wall
+Model v9 separates a wall's durable identity from its current geometric lookup
+and gives zero thickness one canonical meaning (#282, #306).
+`wall_segments[]` is the authoritative catalog of atomic room-wall
 intervals; `rooms[].wall_ids[]` owns their ordered contour references. The
-historical polygon and `walls[]` list remain render/read compatibility
+historical polygon and positive-only `walls[]` list remain render/read compatibility
 projections. Room-wall openings reference `{kind:'wall', id, t}`; partition
 openings continue to reference `{kind:'partition', id, t}`. The shared
 frontend/backend materialiser lives in `src/wall-segment-model.ts` and
@@ -404,15 +405,15 @@ fixture.
 Read is projection-only. Before any physical-geometry mutation the card builds
 a local candidate, canonicalizes coordinates, materialises/updates the wall
 catalog, validates references and only then commits one config transaction.
-Initial v7 IDs are deterministic so frontend/backend and repeated migrations
-converge; genuinely new v8 segments use UUIDs. Split lineage assigns the old ID
+Initial legacy IDs are deterministic so frontend/backend and repeated migrations
+converge; genuinely new segments use UUIDs. Split lineage assigns the old ID
 to one deterministic child, and draft promotion carries the draft ID into the
 resulting wall or partition. Ambiguity fails closed with no partial config,
 history or revision update. `scripts/mutation-gate.mjs` guards every structural
 writer entrance.
 
 Draft sanitation and Undo preserve the complete record of every surviving
-segment, including its stable v8 ID; only a genuinely new edge receives a new
+segment, including its stable ID; only a genuinely new edge receives a new
 identity. The backend stale-client guard compares only room/compatibility
 contour geometry with `wall_segments[]`. Drafts, partitions, columns and
 explicitly hosted openings own their identity and may be written without a
@@ -427,6 +428,18 @@ They do not create a room or HA area and never split a room implicitly. Their
 physical bodies are unioned with room walls for rendering and light occlusion,
 and subtracted from clean room floor area. A finished partition may explicitly
 host a door, window, gate or passage; unfinished drafts and columns may not.
+
+`cm:0` is valid for contour atoms, drafts and partitions. It preserves the
+structural axis and stable identity but contributes no masonry body, floor
+subtraction, paper, opening tunnel or opening host. `space.zero_wall_style`
+selects one policy for all of them: missing/unknown and `dashed` paint a dash
+and omit the segment from Glow/sun barriers; `solid` paints one line and adds
+the exact axis as a zero-area visibility barrier. The resolver in
+`src/zero-walls.ts` is shared by flat/static/isometric presentation and light.
+Legacy `open_spans` (or `rooms[].open_to` only when spans are absent) are
+read-projected and atomized into `wall_segments[].cm=0` on the v8→v9 structural
+write. Canonical v9 writes remove both deprecated fields; existing `cm:0`
+receives the same policy regardless of its provenance.
 
 Independent linear objects have two deliberate projections. Raw flat-capped
 quads preserve source identity for hit/selection/drag/properties/delete/history
@@ -557,7 +570,7 @@ uses the Stage 1 latched Flat fallback. Details and fixed ratios are recorded in
 ## Markup editor (v1.4.0+)
 
 State inside the card: `_markup` (mode), `_tool` (draw/column/merge/split/resize/opening/
-boundary/wallthick/delroom), `_path` (the current outline,
+wallthick/delroom), `_path` (the current outline,
 vertices on the GRID_N=240 grid). Clicks on the stage → `_svgPoint`→`_snap`. The outline is closed
 = a click on the first vertex → area select (hass.areas) + name → room {poly}. Polygon rooms and
 rectangles are rendered uniformly (hit-test: point-in-polygon / rect).
@@ -579,8 +592,8 @@ memoizes exact checks in a weak, per-plan, 4096-entry cache, so an irregular
 pair stops at its first corner and cannot jump through it.
 
 The controller rebuilds every live candidate from one immutable
-`SpaceGeometryState`. `rekeyWallsAfterMove()` and
-`rekeyOpenSpansAfterMove()` map exact wall-owned records into that overlay;
+`SpaceGeometryState`. `rekeyWallsAfterMove()` maps exact wall-owned records
+into that overlay;
 partitions, drafts, columns, decor and plan transform stay byte-equivalent.
 Wall rekey has a production-only fixed-topology mode: rigid moving edges
 translate all breakpoints, while length-changing side edges move only proven
@@ -608,7 +621,7 @@ Walls applies it after architectural/grid resolution and before hover/commit,
 moving only the free endpoint. Resize validates that its fixed-topology output
 contains no near-axis edge. Explicit Optimize runs the lossy legacy repair only
 after grid alignment, moves coincident room endpoint owners atomically, then
-reuses ordinary opening projection and wall/open-span rekeying. Unique physical
+reuses ordinary opening projection and wall rekeying. Unique physical
 count, maximum centimetres and skipped candidates stay separate from ordinary
 grid movement; no load/save migration invokes this repair.
 
@@ -648,15 +661,12 @@ measure only this pass and the unit contract instruments its exact per-space
 call count. A source-ownership assertion fails if a render/pointer module ever
 imports the helper.
 
-`boundary` is one contextual UI tool over the existing `open_spans` model.
-Before the first click, independent physical bodies block the room boundary
-below them; otherwise a dashed span wins over a solid shared boundary, and an
-outer wall is rejected. A solid shared wall takes two points to open, while a
-dashed canonical span is restored whole with one click. Interaction widths and
-junction ambiguity are measured in CSS pixels and converted through the live
-viewBox, so zoom never changes the effective target. The first point is a
-transient gesture only: Esc, Undo/Redo, navigation, external config adoption,
-pointer cancellation and multi-touch discard it without touching history.
+There is no separate Boundary tool or virtual-wall session. A wall chain and
+the Thickness editor both accept `0..100 cm`; an exact zero remains a normal
+stable wall carrier. Transitioning a positive hosted segment to zero is
+rejected atomically while any opening uses that target. Hit widths and junction
+ambiguity are still measured in CSS pixels and converted through the live
+viewBox, so the editable target does not collapse to the visual one-pixel line.
 
 Every completed Walls segment is persisted in `room_drafts`, including the
 thickness selected when that segment was placed. Changing Plan tool, editor or
@@ -806,8 +816,8 @@ changes opt it into the strict rule.
 Deleting a host with openings requires an explicit cascade dialog; an invalid
 host fails dark and is visible only as a rebind diagnostic in Plan. Structural
 room-face topology deliberately keeps every valid wall axis continuous through
-all opening types (#185); only `open_spans` and absent walls are connectivity
-gaps.
+all opening types (#185). Zero-thickness axes remain graph edges; whether they
+transmit light is the separate `zero_wall_style` policy.
 
 ## Integration WS API
 
@@ -1202,7 +1212,8 @@ its configured space.
   any edge that carries no thickness. It cuts out the exceptions: doorways
   and gates — cut through the masonry, so an opening is a real gap
   between two jamb faces and a beam is narrowed by the returns of a thick wall
-  — plus virtual (open) boundaries, which are not walls at all. Windows stay
+  — plus dashed zero-thickness walls. Solid zero-thickness walls instead add
+  their exact axes as zero-area barriers. Windows stay
   solid, so an indoor lamp never washes the street; the light's masonry is cut
   by passages only and therefore differs on purpose from the drawn one. So does
   a door with no floor behind it: an opening is transparent only where BOTH
@@ -1220,7 +1231,7 @@ its configured space.
   of those segments and returns the region the lamp reaches; intersecting it
   with the room floors gives ONE clip for ONE circle. A beam through a doorway, the
   room it lands in, the shadow of a column, a wall corner cutting that beam
-  two rooms away and light crossing a virtual boundary are all the same
+  two rooms away and light crossing a dashed zero wall are all the same
   computation, so they cannot disagree with each other — which is what every
   earlier bug here was made of (a doorway painted as an unlit bar, a beam
   detached from its aperture, a shadow blurred into a smear, walls in a farther
@@ -1246,17 +1257,14 @@ its configured space.
   touching translucent rectangles. The negative and positive halves use the
   same nonzero winding across their tiny centre overlap, so fractional SVG
   rasterisation cannot cancel the fill into a seam or stack its opacity.
-- **Open boundaries** (v1.37, revised 2026-08): `space.open_spans` hold
-  geometric virtual stretches; `room.open_to` remains the light-zone index
-  derived from spans (legacy `open_to`-only configs expand to full
-  `sharedBoundary` on read). Shared stretches drawn as a TRUE dash; outlines
-  trimmed (`outlineWithout`/`cutSegments`). In View the dash group is painted
-  before thick wall bodies, letting real jambs mask its centreline ends; in all
-  editors it is painted after the bodies so saved spans and previews remain
-  fully visible. Geometry mutations clip one stored
-  span to **every** surviving shared segment. Adjacent pieces owned by different
-  room pairs stay separate: their midpoints are the source of the corresponding
-  `open_to` links after Split (`AUD-159B7-01`).
+- **Zero-thickness walls** (#306): canonical v9 stores them only as
+  `wall_segments[]`, `partitions[]` or draft segments with `cm:0`.
+  `resolveZeroWalls()` supplies their exact line geometry and the space-level
+  solid/dashed light policy to every renderer, Glow and sun. In View a line is
+  painted before thick bodies so adjoining masonry masks its centreline ends;
+  editors paint it after the bodies. `open_spans` and `room.open_to` are
+  compatibility reads only and disappear together after a successful v9
+  structural migration.
 - **Marker controls** (v1.36): persisted `marker.controls[]` is a lossless,
   ordered external-target list. Opening and saving the dialog preserves
   duplicates and temporarily unknown/vendor targets, removing only the

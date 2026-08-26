@@ -71,6 +71,24 @@ def test_migration_is_pure_complete_idempotent_and_schema_valid() -> None:
     assert CONFIG_SCHEMA(first) == first
 
 
+def test_zero_wall_identity_follows_current_carrier_without_phantom_breakpoints() -> None:
+    baseline, _ = commit_wall_segment_model(_config({
+        "id": "floor", "rooms": [_room("room")],
+    }))
+    candidate = copy.deepcopy(baseline)
+    candidate["spaces"][0]["rooms"][0]["poly"] = [
+        [0, 0], [1, 0], [1, 1.25], [0, 1.25],
+    ]
+
+    migrated, _ = commit_wall_segment_model(candidate)
+    space = migrated["spaces"][0]
+
+    assert space["rooms"][0]["poly"] == candidate["spaces"][0]["rooms"][0]["poly"]
+    assert len(space["rooms"][0]["poly"]) == 4
+    assert len(space["wall_segments"]) == 4
+    assert all(float(segment["cm"]) == 0 for segment in space["wall_segments"])
+
+
 def test_partial_shared_boundary_has_exactly_one_two_owner_atom() -> None:
     migrated, _ = commit_wall_segment_model(_config({
         "id": "floor",
@@ -205,10 +223,14 @@ def test_stale_client_echoing_v8_catalog_gets_the_named_error() -> None:
     validate_wall_model_transition(non_structural, previous)
 
 
-def test_current_v8_independent_geometry_does_not_require_contour_catalog_change() -> None:
+def test_current_wall_model_independent_geometry_does_not_require_contour_catalog_change() -> None:
     """Drafts, partitions, columns and hosted openings own their identity (#314)."""
     previous, _ = commit_wall_segment_model(_config({
         "id": "floor", "rooms": [_room("room")],
+        # #306 makes every unconfigured contour atom explicitly bodyless.
+        # The opening branch of this #314 identity test therefore needs one
+        # real host; otherwise the v9 validator correctly rejects it.
+        "walls": [{"key": "bottom", "a": [0, 0], "b": [1, 0], "cm": 15}],
     }))
     previous_catalog = copy.deepcopy(previous["spaces"][0]["wall_segments"])
 
@@ -235,7 +257,10 @@ def test_current_v8_independent_geometry_does_not_require_contour_catalog_change
     candidates.append(column)
 
     opening = copy.deepcopy(previous)
-    host = opening["spaces"][0]["wall_segments"][0]
+    host = next(
+        segment for segment in opening["spaces"][0]["wall_segments"]
+        if float(segment["cm"]) > 0
+    )
     dx = float(host["b"][0]) - float(host["a"][0])
     dy = float(host["b"][1]) - float(host["a"][1])
     opening["spaces"][0]["openings"] = [{
@@ -271,3 +296,61 @@ def test_downgraded_independent_partition_round_trip_is_hydrated() -> None:
     assert legacy["model_version"] == WALL_SEGMENT_MODEL_VERSION
     assert legacy["spaces"][0]["wall_segments"] == previous["spaces"][0]["wall_segments"]
     assert CONFIG_SCHEMA(legacy) == legacy
+
+
+def test_v8_open_span_migrates_to_zero_atoms_and_removes_legacy_fields() -> None:
+    base, _ = commit_wall_segment_model(_config({
+        "id": "floor",
+        "rooms": [_room("left", 0, 0, 0.5, 1), _room("right", 0.5, 0, 1, 1)],
+    }))
+    space = base["spaces"][0]
+    for segment in space["wall_segments"]:
+        segment["cm"] = 15
+    space["walls"] = [{
+        "key": f"legacy-{index}", "a": copy.deepcopy(segment["a"]),
+        "b": copy.deepcopy(segment["b"]), "cm": 15,
+    } for index, segment in enumerate(space["wall_segments"])]
+    base["model_version"] = 8
+    space["open_spans"] = [{"a": [0.5, 0.25], "b": [0.5, 0.75]}]
+    for room in space["rooms"]:
+        room["open_to"] = ["right" if room["id"] == "left" else "left"]
+
+    migrated, _ = commit_wall_segment_model(base)
+    migrated_space = migrated["spaces"][0]
+    shared_ids = set(migrated_space["rooms"][0]["wall_ids"]).intersection(
+        migrated_space["rooms"][1]["wall_ids"]
+    )
+    shared = [segment for segment in migrated_space["wall_segments"]
+              if segment["id"] in shared_ids]
+
+    assert migrated["model_version"] == 9
+    assert "open_spans" not in migrated_space
+    assert all("open_to" not in room for room in migrated_space["rooms"])
+    assert sorted(segment["cm"] for segment in shared) == [0.0, 15.0, 15.0]
+    assert commit_wall_segment_model(migrated)[0] == migrated
+
+
+def test_v8_open_span_over_an_opening_blocks_atomically() -> None:
+    base, _ = commit_wall_segment_model(_config({
+        "id": "floor", "rooms": [_room("room")],
+    }))
+    space = base["spaces"][0]
+    bottom_id = space["rooms"][0]["wall_ids"][0]
+    for segment in space["wall_segments"]:
+        segment["cm"] = 15
+    space["walls"] = [{
+        "key": f"legacy-{index}", "a": copy.deepcopy(segment["a"]),
+        "b": copy.deepcopy(segment["b"]), "cm": 15,
+    } for index, segment in enumerate(space["wall_segments"])]
+    space["openings"] = [{
+        "id": "door", "type": "door", "x": 0.5, "y": 0,
+        "angle": 0, "length": 0.2,
+        "host": {"kind": "wall", "id": bottom_id, "t": 0.5},
+    }]
+    space["open_spans"] = [{"a": [0, 0], "b": [1, 0]}]
+    base["model_version"] = 8
+    before = copy.deepcopy(base)
+
+    with pytest.raises(WallSegmentMigrationError, match="opening-host"):
+        commit_wall_segment_model(base)
+    assert base == before

@@ -7,7 +7,7 @@ the layered model of v1.61.0-beta.5 and earlier.
 
 **A lamp lights the floor it can see.** That is the whole model. Everything the
 plan shows — a beam through a doorway, a shadow behind a column, a wall corner
-cutting that beam two rooms away, light flowing across a virtual boundary —
+cutting that beam two rooms away, light flowing across a dashed zero wall —
 is one computation, so those things cannot disagree with each other.
 
 The previous model computed them separately: a clip for the source's "open
@@ -29,14 +29,21 @@ plan geometry and shares it between every lamp in the space.
 - independent bodies: partitions, columns and room drafts. Exact connected
   draft/partition segments enter as one joined volume, not as raw rectangles
   whose former butt faces could become false barriers;
-- the bare outline of any room edge that carries no thickness — a wall is still
-  a wall when it is drawn as a line.
+- every zero-thickness wall when its space uses the **Solid** style. It enters
+  the sweep as its exact axis, a zero-area barrier rather than fake masonry.
 
 **Transparent**
 
 - doorways, gates and saved `passage` openings — cut through the masonry, so an opening is a real
   gap between two jamb faces and a thick wall's returns narrow the beam;
-- virtual (open) boundaries, which are not walls to begin with.
+- every zero-thickness wall when its space uses the **Dashed** style.
+
+The setting is intentionally one semantic switch, not just paint. Missing or
+unknown `zero_wall_style` means `dashed`; `solid` blocks Glow and sunlight.
+It applies equally to room-contour atoms, independent partitions and saved
+draft segments. `resolveZeroWalls()` supplies both the lines and barrier set,
+so renderers and light cannot disagree. The deprecated `open_spans/open_to`
+input is only a v8 read projection and migrates to ordinary `cm:0` atoms.
 
 **Deliberately opaque, although the plan draws an opening there**
 
@@ -215,8 +222,8 @@ The complete UI and runtime truth table lives in
   the lit→unlit border is at most 4 px wide, a spot has exactly one painted
   child, the light layer contains exactly one blur and no mask, and an outside
   door does not change the lit region at all.
-- `demo/smoke_openwall.mjs` — a lamp lights across one virtual boundary, and
-  across two in sequence, only where it can see through both.
+- `demo/smoke_zero_walls.mjs` — dashed zero walls transmit Glow while the same
+  axes in solid mode stop it; changing the style invalidates the cached region.
 - `test/golden-matrix.test.mjs` — the source contract: one region per source, no
   second layer of light, no barrier cache keyed by the epoch.
 - Golden: `lighting-opaque-glow-two-doorways-dark` and the other `lighting-*`

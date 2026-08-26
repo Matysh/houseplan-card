@@ -241,7 +241,9 @@ export function alignAllToGrid(
         written.push([sourcePoints[i + 1], next]);
         segments.push({
           ...(draft.segments?.[i] || {}),
-          cm: Number(draft.segments?.[i]?.cm) || 15,
+          cm: Number.isFinite(Number(draft.segments?.[i]?.cm))
+            ? Math.max(0, Math.min(100, Number(draft.segments[i].cm)))
+            : 15,
         });
       }
       draft.points = points;

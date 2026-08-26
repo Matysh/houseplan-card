@@ -109,8 +109,9 @@ export function draftBodies(
 ): number[][][] {
   const out: number[][][] = [];
   for (let i = 0; i + 1 < draft.points.length; i++) {
+    const rawCm = Number(draft.segments[i]?.cm);
     const body = partitionBody(
-      draft.points[i], draft.points[i + 1], draft.segments[i]?.cm || 15,
+      draft.points[i], draft.points[i + 1], Number.isFinite(rawCm) ? rawCm : 15,
       cellCm, gridPitch,
     );
     if (body) out.push(body);
@@ -238,9 +239,11 @@ export function physicalBodyParts(
   const presentedPartitions: number[][][] = [];
   for (const draft of space.room_drafts || []) {
     for (let i = 0; i + 1 < draft.points.length; i++) {
+      const rawCm = Number(draft.segments[i]?.cm);
       const halfDepth = wallCmToUnits(
-        draft.segments[i]?.cm || 15, cellCm, gridPitch,
+        Number.isFinite(rawCm) ? rawCm : 15, cellCm, gridPitch,
       ) / 2;
+      if (!(halfDepth > 0)) continue;
       const segment = { a: draft.points[i], b: draft.points[i + 1], halfDepth };
       const body = linearWallBody(segment);
       if (!body) continue;
@@ -255,6 +258,7 @@ export function physicalBodyParts(
       b: partition.b,
       halfDepth: wallCmToUnits(partition.cm, cellCm, gridPitch) / 2,
     };
+    if (!(segment.halfDepth > 0)) continue;
     const body = linearWallBody(segment);
     if (!body) continue;
     partitionSegments.push(segment);

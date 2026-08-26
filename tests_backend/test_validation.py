@@ -1653,6 +1653,20 @@ def test_space_independent_physical_objects():
     out = v.SPACE_SCHEMA({**base, **physical})
     assert out["wall_columns"][0]["angle"] == 45
     assert "angle" not in out["wall_columns"][1]
+    zero = v.SPACE_SCHEMA({
+        **base,
+        "room_drafts": [{
+            "id": "zero-draft", "points": [[0, 0], [1, 0]],
+            "segments": [{"id": "zero-draft-wall", "cm": 0}],
+        }],
+        "partitions": [{"id": "zero-partition", "a": [0, 0], "b": [1, 0], "cm": 0}],
+    })
+    assert zero["room_drafts"][0]["segments"][0]["cm"] == 0
+    assert zero["partitions"][0]["cm"] == 0
+    with pytest.raises(vol.Invalid):
+        v.SPACE_SCHEMA({**base, "wall_columns": [{
+            "id": "zero-column", "shape": "square", "center": [0, 0], "cm": 0,
+        }]})
 
     for bad_column in (
         {"id": "neg", "shape": "square", "center": [0, 0], "cm": 20,
@@ -1690,6 +1704,42 @@ def test_space_independent_physical_objects():
         v.SPACE_SCHEMA({**base, "partitions": [
             {"id": f"p{i}", "a": [0, i / 10000], "b": [1, i / 10000], "cm": 15}
             for i in range(v.MAX_PARTITIONS + 1)]})
+
+
+def test_zero_wall_style_and_v9_legacy_fields_are_strict():
+    base = {"id": "s1", "title": "S", "view_box": [0, 0, 1, 1], "rooms": []}
+    assert v.SPACE_SCHEMA({**base, "zero_wall_style": "dashed"})["zero_wall_style"] == "dashed"
+    assert v.SPACE_SCHEMA({**base, "zero_wall_style": "solid"})["zero_wall_style"] == "solid"
+    with pytest.raises(vol.Invalid):
+        v.SPACE_SCHEMA({**base, "zero_wall_style": "unknown"})
+
+    canonical = {
+        "model_version": 9, "markers": [], "settings": {},
+        "spaces": [{**base, "wall_segments": []}],
+    }
+    assert v.CONFIG_SCHEMA(canonical) == canonical
+    with pytest.raises(vol.Invalid, match="legacy open boundaries"):
+        v.CONFIG_SCHEMA({
+            **canonical,
+            "spaces": [{**canonical["spaces"][0], "open_spans": [
+                {"a": [0, 0], "b": [1, 0]},
+            ]}],
+        })
+
+
+def test_v9_opening_host_must_have_positive_thickness():
+    space = {
+        "id": "s1", "title": "S", "view_box": [0, 0, 1, 1], "rooms": [],
+        "wall_segments": [],
+        "partitions": [{"id": "zero", "a": [0, 0], "b": [1, 0], "cm": 0}],
+        "openings": [{
+            "id": "door", "type": "door", "x": 0.5, "y": 0,
+            "angle": 0, "length": 0.2,
+            "host": {"kind": "partition", "id": "zero", "t": 0.5},
+        }],
+    }
+    with pytest.raises(vol.Invalid, match="positive thickness"):
+        v.CONFIG_SCHEMA({"model_version": 9, "spaces": [space], "markers": [], "settings": {}})
 
 
 def test_partition_opening_host_schema_fit_overlap_and_downgrade_guard():

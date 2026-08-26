@@ -51,7 +51,7 @@ Layer order, top to bottom:
 
 ```text
 devices and room labels
-opening symbols / physical and virtual walls / late room-hover outline
+opening symbols / positive and zero-thickness walls / late room-hover outline
 sun rays
 live Glow pools
 decor

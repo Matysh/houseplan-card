@@ -1495,21 +1495,6 @@ export const MUTANTS = [
     }],
   },
   {
-    id: 'hidden-diagnostic-under-virtual-walls',
-    guard: 'node demo/smoke_plan_snap_overlay.mjs',
-    because: 'hidden wall axes and source endpoints must remain visible above every real and '
-      + 'virtual wall body while staying below transient tool previews (#296)',
-    patches: [{
-      file: 'src/houseplan-card.ts',
-      find: '            ${this._editing ? this._renderOpenWalls(disp) : nothing}\n'
-        + '            ${this._markup ? svg`<g class="hp-editor-only-layer"\n'
-        + '              opacity="${modeVisual?.editorWeight ?? 1}">${this._renderHiddenWallDiagnosticOverlay()}</g>` : nothing}',
-      replace: '            ${this._markup ? svg`<g class="hp-editor-only-layer"\n'
-        + '              opacity="${modeVisual?.editorWeight ?? 1}">${this._renderHiddenWallDiagnosticOverlay()}</g>` : nothing}\n'
-        + '            ${this._editing ? this._renderOpenWalls(disp) : nothing}',
-    }],
-  },
-  {
     id: 'atomic-child-thickness-parent-fallback',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="exact parent|atomic solid children" '
@@ -1640,10 +1625,10 @@ export const MUTANTS = [
   },
   {
     id: 'barrier-cache-never-invalidated',
-    guard: 'node demo/smoke_openwall.mjs',
+    guard: 'node demo/smoke_zero_walls.mjs',
     because: 'кэш барьеров, который не инвалидируется по содержимому, — это свет '
-      + 'сквозь стену, которая уже существует; смок переключает виртуальную границу '
-      + 'и обязан увидеть смену освещённости соседней комнаты',
+      + 'сквозь стену, которая уже существует; смок переключает пунктирную нулевую '
+      + 'стену в сплошную и обязан увидеть смену освещённости соседней комнаты',
     patches: [{
       file: 'src/houseplan-card.ts',
       find: 'if (this._lightBarrierCache?.key === cacheKey) return this._lightBarrierCache.value;',

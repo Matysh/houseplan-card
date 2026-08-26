@@ -105,6 +105,14 @@ def _downgrade_document_to_v7(document: dict) -> dict:
         for draft in space.get("room_drafts") or []:
             for segment in draft.get("segments") or []:
                 segment.pop("id", None)
+        # The import tests below place a passage on the top room edge. In v9
+        # an omitted thickness is a real zero wall and therefore cannot host
+        # an opening; keep this legacy carrier explicitly physical instead of
+        # relying on the pre-v9 ambiguity of a missing `walls` entry.
+        space["walls"] = [{
+            "key": "0.500000,0.000000@0.0000",
+            "a": [0, 0], "b": [1, 0], "cm": 15,
+        }]
     return document
 
 
@@ -471,7 +479,7 @@ def test_canonical_passage_import_survives_space_id_remap(tmp_path: Path) -> Non
         current_layout_data={"layout": {}, "rev": 1}, config_root=tmp_path,
     )
     candidate = get_candidate(runtime, response["token"], "alice")
-    # create_preview owns the v7→v8 materialization before the merge. Calling
+    # create_preview owns the v7→current-model materialization before the merge. Calling
     # build_space_merge again with the untouched v7 source would deliberately
     # bypass that production boundary and mix model versions.
     merged = candidate["target_config"]
@@ -604,7 +612,6 @@ def _plan_only_source() -> tuple[dict[str, Any], dict[str, Any]]:
         }],
         "partitions": [{"id": "partition", "a": [0, 0.5], "b": [1, 0.5], "cm": 12}],
         "wall_columns": [{"id": "column", "shape": "circle", "center": [0.2, 0.2], "cm": 30}],
-        "open_spans": [{"a": [0.4, 0], "b": [0.6, 0], "future_span": "sensor.secret"}],
         "decor": [
             {
                 "id": "modern", "kind": "text", "x": 0.2, "y": 0.2,
@@ -845,9 +852,12 @@ def test_full_export_import_round_trip_restores_model_version(tmp_path: Path) ->
 
 
 @pytest.mark.parametrize("kind", ["full", "space"])
-@pytest.mark.parametrize(("target_v8", "expected_model"), [(False, 7), (True, 8)])
-def test_v7_import_materializes_only_when_target_requires_v8(
-    tmp_path: Path, kind: str, target_v8: bool, expected_model: int,
+@pytest.mark.parametrize(
+    ("target_current", "expected_model"),
+    [(False, 7), (True, PLAN_MODEL_VERSION)],
+)
+def test_v7_import_materializes_only_when_target_requires_current_model(
+    tmp_path: Path, kind: str, target_current: bool, expected_model: int,
 ) -> None:
     legacy = _config()
     legacy["model_version"] = 7
@@ -867,7 +877,7 @@ def test_v7_import_materializes_only_when_target_requires_v8(
         space_id="ground" if kind == "space" else None,
         card_version="review", config_root=tmp_path,
     )
-    target = _config() if target_v8 else copy.deepcopy(legacy)
+    target = _config() if target_current else copy.deepcopy(legacy)
     if kind == "space":
         target["spaces"] = []
         target["markers"] = []
@@ -880,7 +890,7 @@ def test_v7_import_materializes_only_when_target_requires_v8(
     candidate = get_candidate(runtime, response["token"], "alice")
     result = candidate["target_config"]
     assert result.get("model_version", 0) == expected_model
-    if expected_model == 8:
+    if expected_model == PLAN_MODEL_VERSION:
         assert all("wall_segments" in space for space in result["spaces"])
     else:
         assert all("wall_segments" not in space for space in result["spaces"])

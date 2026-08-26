@@ -180,8 +180,8 @@ For every opening of type «window» sitting on an EXTERIOR wall — a
 wall stretch with no other room on its outer side, decided by probing
 the existing room geometry just off both sides of the window; windows
 on interior walls do not participate, windows explicitly hosted by independent
-partitions do not participate, and open (virtual) boundaries
-never qualify because both sides are rooms — the card draws a wedge
+partitions do not participate, and a zero-thickness wall cannot host an
+opening — the card draws a wedge
 when BOTH hold:
 
 - the sun is above the horizon (`elevation > 0`), and
@@ -214,6 +214,13 @@ opacity is `RAY_MAX_ALPHA` = 0.30 (owner 2026-08-03: «лучи поярче,
 иногда плохо видны» — raised from 0.18; two overlapping wedges
 still stay under a readable ceiling on white paper and on the dark glow
 canvas alike).
+
+After room clipping, physical bodies and zero-thickness wall policy cast the
+same directional shadows as Glow barriers. A **Dashed** zero wall is absent
+from sun occluders; a **Solid** zero wall extrudes its exact axis along the ray
+direction and clips the wedge without inventing wall area. The choice is
+space-wide, remains active when `show_borders:false` hides the line, and is part
+of the sun-geometry cache key.
 
 ### Dissolving — along the ray only (owner 2026-08-04)
 

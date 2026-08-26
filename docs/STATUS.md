@@ -17,12 +17,12 @@ change must pass through a published beta/RC before stable. Stable release
 commits are promotion-only (versions, generated bundles and release/changelog
 metadata). Only an explicit owner-approved emergency hotfix may skip this gate.
 
-## Snapshot (2026-08-25)
+## Snapshot (2026-08-26)
 
 | Item | State |
 |---|---|
 | Version | **v1.68.0-beta.2 candidate** everywhere (manifest, const.py, package.json, CARD_VERSION) |
-| Current local cycle | v1.68.0-beta.1 is published. Current `dev` adds self-explaining optimize-preflight refusals with copyable diagnostics (#295), the Thickness tool for standalone walls and draft segments (#313), reliable model-v8 room drawing through intermediate saves and Undo (#314), and the user-guide wording for the binding dialog toggle (#269). v1.68.0-beta.2 packages the reviewed S8 product work and remains gated by exact-SHA Validate before publication. |
+| Current local cycle | v1.68.0-beta.1 is published. Current `dev` adds self-explaining optimize-preflight refusals with copyable diagnostics (#295), the Thickness tool for standalone walls and draft segments (#313), reliable model-v8 room drawing through intermediate saves and Undo (#314), and the user-guide wording for the binding dialog toggle (#269). v1.68.0-beta.2 packages the reviewed S8 product work and remains gated by exact-SHA Validate before publication. Work on #306 advances the persisted wall model to v9: the separate Boundary/virtual-wall UX is removed, all `cm:0` walls share one canonical representation, and each space selects dashed/light-transmitting or solid/light-blocking zero-wall semantics. Legacy `open_spans/open_to` remain read-compatible until the next structural transaction or Optimize. |
 | Hidden Labs Stage | #89 Stage 1 ships in v1.63.0-beta.1. #122 Stage 2 ships in v1.64.0 and evolves the same hidden, expiring `iso` experiment with matte walls, a low exterior floor edge, restrained shared shadows and live vertical door/window/gate panels. Flat remains default; editors and `houseplan-space-card` remain flat; live floor effects and HA actions remain unchanged. Public activation remains a separate task. |
 | Workflow | Superseded 2026-08-12: the pre-1.62 rule of "local edits without tests or commits" is **dead** — since release 1.62 every product change follows `PROCESS.md` (issue in `S5-ready`+, branch `issue/<NN>-slug`, trailers on every commit, review pipeline; `AGENTS.md` is the summary). Release mechanics below remain current. A requested pre-release gets a production build plus the smallest targeted unit/smoke set covering the changed surfaces, one tested `dev` commit/tag and a GitHub Release with `prerelease=true`; `main` stays untouched. The complete local frontend/backend/smoke gate runs only before a stable release, after which `main` is fast-forwarded to the exact tested `dev` SHA and the GitHub Release uses `prerelease=false`. Release bodies are short and bilingual (Russian first): only significant user changes get individual bullets, while minor/code-only work is grouped as `Мелкие исправления и улучшения` / `Small fixes and improvements`; every body ends with separate links to the Russian and English changelogs. Detailed RU/EN changelog bullets may link the corresponding closed GitHub Issues; open or partially delivered issues are never presented as shipped. Telegram announcements are sent only for stable releases; beta and RC publication is silent. `docs/RELEASE-NOTES.md` is the current canonical body instance; `npm run release:prerelease -- <tag> --issues=… --yes` is the primary local publication path and the manual `Publish prerelease` workflow is its GitHub-only equivalent once present on `main`. Nothing is copied to the home instance by hand |
 | GitHub | https://github.com/Matysh/houseplan-card — [Issues](https://github.com/Matysh/houseplan-card/issues) are the canonical task records; their labels carry priority and workflow status (`PROCESS.md` §9). GitHub Projects is no longer used. `main` carries stable releases; pre-release tags may point directly at `dev`. Work lands on `dev` and is merged into `main` for a stable release, so `dev` is normally equal to or ahead of `main`, never behind. Push via SSH key `ha_jb` (remote git@github.com:…); API releases via the fine-grained PAT in `~/.git-credentials` (Contents R/W, issued 2026-07-23) |
@@ -74,6 +74,11 @@ metadata). Only an explicit owner-approved emergency hotfix may skip this gate.
   (v1.34), smart guides + 45° angle badge (v1.40), opening hover preview.
   Openings support doors, windows and compact wide gates; gates retain door
   contact/lock/Glow semantics but use two leaves opening only 10° outwards.
+- **Canonical zero-thickness walls** (#306, current dev): Walls and Thickness
+  accept `0..100 cm` for contour, draft and independent segments. Model v9
+  migrates legacy virtual spans into stable `cm:0` atoms; a per-space
+  dashed/solid selector controls both line style and Glow/sun transmission.
+  Zero walls have no body, area or opening host, and there is no Boundary tool.
 - **Rooms**: room cards with metrics (temp/hum/lqi/light "1 of 3") and
   proportional resize (v1.31); link icon to the HA area (v1.40.1, room taps
   removed). **New-device red dot** (v1.29), lock action button (v1.30).

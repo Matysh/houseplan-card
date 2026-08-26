@@ -101,7 +101,7 @@ test('#278 production source routes physical writers through one barrier and dec
   const source = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
   for (const historyKey of [
     'draft_segment', 'wall_chain_finish', 'column_add', 'physical_edit', 'physical_delete',
-    'physical_move', 'resize_room', 'close_boundary', 'open_boundary', 'wall_thickness',
+    'physical_move', 'resize_room', 'wall_thickness',
     'move_opening', 'delete_opening', 'merge_rooms', 'contour_to_partitions',
   ]) {
     // The pattern tolerates a line break after the opening parenthesis: a

@@ -73,6 +73,36 @@ const res = await page.evaluate(async () => {
 
   // Return to Door for geometry assertions.
   await choose('door');
+  out.typeChoicesDoNotMutateGeometry = card._cfgEpoch === epochBeforeMenu
+    && JSON.stringify(card._curSpaceCfg.openings || []) === geometryBeforeMenu;
+  // The tracked demo document predates explicit wall identity. Give the room
+  // under test real 15 cm carriers: #306 deliberately forbids placing an
+  // opening on a bodyless cm:0 wall.
+  const storedRoom = card._curSpaceCfg.rooms.find((item) => item.id === 'r1')
+    || card._curSpaceCfg.rooms[0];
+  const storedPoly = storedRoom.poly || [
+    [storedRoom.x, storedRoom.y], [storedRoom.x + storedRoom.w, storedRoom.y],
+    [storedRoom.x + storedRoom.w, storedRoom.y + storedRoom.h],
+    [storedRoom.x, storedRoom.y + storedRoom.h],
+  ];
+  const wallKey = (a, b) => {
+    const pitch = 1 / 240;
+    const q = (value) => Math.round(value / pitch) * pitch;
+    let dx = b[0] - a[0], dy = b[1] - a[1];
+    const length = Math.hypot(dx, dy) || 1;
+    dx /= length; dy /= length;
+    if (dx < -1e-12 || (Math.abs(dx) <= 1e-12 && dy < 0)) { dx = -dx; dy = -dy; }
+    let angle = Math.atan2(dy, dx);
+    if (angle < 0) angle += Math.PI;
+    angle = Math.round(angle * 1800) / 1800;
+    return `${q((a[0] + b[0]) / 2).toFixed(6)},${q((a[1] + b[1]) / 2).toFixed(6)}@${angle.toFixed(4)}`;
+  };
+  card._curSpaceCfg.walls = storedPoly.map((a, index) => {
+    const b = storedPoly[(index + 1) % storedPoly.length];
+    return { key: wallKey(a, b), cm: 15, a: [...a], b: [...b] };
+  });
+  card._cfgEpoch++;
+  await settle();
   const room = card._spaceModel().rooms.find((item) => item.id === 'r1')
     || card._spaceModel().rooms[0];
   const poly = room.poly || [
@@ -144,9 +174,6 @@ const res = await page.evaluate(async () => {
     && passagePreview.querySelectorAll('.op-leaf,.op-arc,.op-glass').length === 0;
   out.otherPreviewHasNoPassageGeometry = windowPreview
     ?.querySelectorAll('.passage-preview-cut,.passage-preview-boundary').length === 0;
-  out.typeChoicesDoNotMutateGeometry = card._cfgEpoch === epochBeforeMenu
-    && JSON.stringify(card._curSpaceCfg.openings || []) === geometryBeforeMenu;
-
   // Passage click and save use the same candidate, but the committed opening
   // keeps only the canonical masonry cut and never the transient overlay.
   const passageWallMid = [

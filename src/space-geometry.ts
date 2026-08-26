@@ -164,6 +164,13 @@ export function spaceModels(cfg: ServerConfig | null): SpaceModel[] {
       // backdrop frame has stored (plan_x/y, per-axis scale and angle)
       bg: s.plan_url ? { href: contentUrl(s.plan_url), ...planRect(s, NORM_W) } : null,
       rooms: (s.rooms || []).map(scale),
+      wall_segments: (s.wall_segments || []).map((wall: any) => ({
+        ...wall,
+        id: String(wall.id),
+        a: [Number(wall.a?.[0]) * NORM_W, Number(wall.a?.[1]) * H],
+        b: [Number(wall.b?.[0]) * NORM_W, Number(wall.b?.[1]) * H],
+        cm: Number(wall.cm),
+      })),
       room_drafts: (s.room_drafts || []).map((d: any) => ({
         id: d.id,
         points: (d.points || []).map((p: number[]) => [p[0] * NORM_W, p[1] * H]),

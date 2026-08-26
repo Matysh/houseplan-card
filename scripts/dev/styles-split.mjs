@@ -14,8 +14,8 @@ const assign = (zone, tokens) => { for (const t of tokens.split(/\s+/)) T[t] = z
 assign('base', ':host .sr-only ha-card .bootveil .toast .empty .spacer');
 assign('plan', `.stage .plan-svg .hp-paper .hp-static-stage .hp-day-cycle-bg .hp-day-cycle-sun .hp-day-cycle-env
   .seg .vertex .pathline .preview .active-axis .active-vertex .physical-hit .physical-chrome .physical-drag
-  .drawwall .drawwall-preview .drawwall-preview-fill .openwall .openwall-preview .wall-repair-preview
-  .wallbody .wallbody-fill .wallthick-hover .griddot .boundary-point
+  .drawwall .drawwall-preview .drawwall-preview-fill .zero-wall .wall-repair-preview
+  .wallbody .wallbody-fill .wallthick-hover .griddot
   .plan-snap-node .plan-snap-line .plan-snap-overlay .hidden-wall-line .hidden-wall-node .hidden-wall-diagnostic
   .room .room-outline .room-hover-fill .room-hover-halo .room-hover-outline .roomlabel
   .rlhandle .rlgear .rlgearbtn .rlname .rlgo

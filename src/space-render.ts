@@ -11,7 +11,7 @@ import { buildDevices, areaLqi, areaTemp, resolvedLightSources, resolvedLightSta
 import {
   spaceDisplayOf, fillColorsOf, roomFillModeOf, roomGlowOf,
   roomCustomFillOf, resolveEffectiveRoomFill, stageBgOf, paperRoomShapes,
-  openingAmount,
+  openingAmount, roomPoly, outlineWithout,
   type ResolvedRoomFill,
 } from './logic';
 import {
@@ -50,6 +50,7 @@ import {
   GRID_STEP_N, GRID_PITCH, staticPassageOpenings,
   type Layout, type ContentItem,
 } from './space-geometry';
+import { resolveZeroWalls } from './zero-walls';
 
 export { spaceModels } from './space-geometry';
 
@@ -214,6 +215,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   const spCfg: any = o.cfg.spaces.find((s: any) => s.id === o.spaceId) || {};
   const walls: WallEntry[] = Array.isArray(spCfg.walls) ? spCfg.walls : [];
   const cellCm = Number(spCfg.cell_cm) > 0 ? Number(spCfg.cell_cm) : 5;
+  const zeroWalls = resolveZeroWalls(spCfg, space, NORM_W, GRID_PITCH * 0.02);
   const resolvedHosted = (spCfg.openings || []).flatMap((opening: OpeningCfg) => {
     // Contour-wall hosts keep the same saved x/y/angle projection as legacy
     // room openings. Only independent partitions need to be materialised from
@@ -248,6 +250,10 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
       maxX: Math.max(...xs), maxY: Math.max(...ys),
     });
   }
+  for (const line of zeroWalls.lines) placed.push({
+    minX: Math.min(line[0], line[2]), minY: Math.min(line[1], line[3]),
+    maxX: Math.max(line[0], line[2]), maxY: Math.max(line[1], line[3]),
+  });
   const fr = spaceFrame(space, placed);
   const vb = [fr.x, fr.y, fr.w, fr.h];
 
@@ -282,7 +288,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   });
   const staticPassages = staticPassageOpenings(resolvedRawOpenings, NORM_W);
   const roomIntervals = wallIntervals(
-    space.rooms, walls, [], GRID_STEP_N, cellCm, GRID_PITCH, NORM_W,
+    space.rooms, walls, zeroWalls.contour, GRID_STEP_N, cellCm, GRID_PITCH, NORM_W,
   );
   const hostedCompositeOpenings = resolvedHosted
     .filter((resolved) => partitionOpeningHasCompositeRoomWall(
@@ -302,7 +308,8 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
       const fill = roomFillModeOf(disp.fill, r);
       if (disp.showBorders || fill !== 'none') {
         cls += ' styled';
-        const parts = [`--room-stroke:${disp.color}`, `--room-stroke-op:${disp.showBorders ? disp.opacity : 0}`];
+        const parts = [`--room-stroke:${disp.color}`, `--room-stroke-op:${
+          disp.showBorders && !zeroWalls.contour.length ? disp.opacity : 0}`];
         // fill rendered exactly as configured on the full card (snapshot of current states)
         const fillC = resolvedRoomFills.get(r) || null;
         if (fillC) {
@@ -426,14 +433,15 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   const needsCanonicalWallGeometry = !!(walls.length || (extras.length && disp.showBorders));
   const wallGeometryFingerprint = needsCanonicalWallGeometry
     ? contentFingerprint(staticPassages.length
-      ? { rooms: space.rooms, walls, extras, cellCm, passages: staticPassages.map((opening) => ({
+      ? { rooms: space.rooms, walls, extras, cellCm, zero: zeroWalls.contour,
+          passages: staticPassages.map((opening) => ({
           x: opening.rx, y: opening.ry, angle: opening.angle, length: opening.rlen,
         })), hostedCompositeOpenings }
-      : { rooms: space.rooms, walls, extras, cellCm })
+      : { rooms: space.rooms, walls, extras, cellCm, zero: zeroWalls.contour })
     : '';
   const canonicalWallGeometry = needsCanonicalWallGeometry
     ? cachedStaticWallGeometry(o.cfg, space.id, wallGeometryFingerprint, () => wallBodiesUnionPath(
-      space.rooms, walls, [], [
+      space.rooms, walls, zeroWalls.contour, [
         ...staticPassages.filter((opening) => opening.host?.kind !== 'partition').map((opening) => ({
           x: opening.rx, y: opening.ry, angle: opening.angle, length: opening.rlen,
         })),
@@ -447,7 +455,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
       staticPassages.map((opening) => ({
         x: opening.rx, y: opening.ry, angle: opening.angle, length: opening.rlen,
       })),
-      walls, [], GRID_STEP_N, cellCm, GRID_PITCH, NORM_W,
+      walls, zeroWalls.contour, GRID_STEP_N, cellCm, GRID_PITCH, NORM_W,
     )
     : staticPassages.map(() => null);
   const passageDataTunnels = staticPassages.length
@@ -537,6 +545,19 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
               preserveAspectRatio="none" />`
           : nothing}
         ${roomShapes}
+        ${disp.showBorders && zeroWalls.contour.length
+          ? svg`<g class="room-outlines" aria-hidden="true" pointer-events="none">
+              ${space.rooms.map((room) => {
+                const poly = roomPoly(room);
+                if (!poly) return nothing;
+                const segments = outlineWithout(poly, zeroWalls.contour, GRID_PITCH * 0.02);
+                return svg`<path class="room-outline" fill="none" stroke=${disp.color}
+                  stroke-opacity=${disp.opacity}
+                  stroke-width=${gridVisualUnits(2.5, cellCm)}
+                  d=${segments.map((line) => `M ${line[0]} ${line[1]} L ${line[2]} ${line[3]}`).join(' ')}></path>`;
+              })}
+            </g>`
+          : nothing}
         ${passageDataTunnels}
         ${glowBaseShapes.length
           ? svg`<g class="glow-base-layer" aria-hidden="true" pointer-events="none">${glowBaseShapes}</g>`
@@ -553,6 +574,16 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
                   d="${component.d}" fill="${solidWall ? 'none' : 'url(#hp-wall-hatch)'}"
                   fill-rule=${component.fillRule} stroke="${wallStroke}"
                   stroke-width="${gridVisualUnits(0.6, cellCm)}" pointer-events="none"></path>`)}
+            </g>`
+          : nothing}
+        ${disp.showBorders && zeroWalls.lines.length
+          ? svg`<g class="zero-walls ${zeroWalls.style}"
+              data-zero-wall-style=${zeroWalls.style} aria-hidden="true" pointer-events="none">
+              ${zeroWalls.lines.map((line) => svg`<line class="zero-wall"
+                x1=${line[0]} y1=${line[1]} x2=${line[2]} y2=${line[3]}
+                stroke=${wallStroke} stroke-width=${gridVisualUnits(2.5, cellCm)}
+                stroke-dasharray=${zeroWalls.style === 'dashed'
+                  ? `${gridVisualUnits(7, cellCm)} ${gridVisualUnits(7, cellCm)}` : nothing}></line>`)}
             </g>`
           : nothing}
         ${hostedOpeningSymbols}

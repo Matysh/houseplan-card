@@ -71,9 +71,8 @@ export function normalizeUnifiedWallTool(value: unknown): unknown {
  * toolbar field must win before the previous segment. Otherwise changing the
  * field between clicks previews the old thickness and commits the new one.
  *
- * Strictly positive is the validity boundary. The previous `wallChainSegments`
- * accepted a recorded zero, which cannot be drawn through the UI (1..100 cm,
- * `docs/WALL-THICKNESS.md`) but can sit in an old draft.
+ * Zero is an explicit bodyless wall (#306). Negative and non-finite values are
+ * still invalid and therefore fall through to the documented inheritance.
  */
 export function chainSegmentCms(
   segmentCount: number,
@@ -84,15 +83,14 @@ export function chainSegmentCms(
   const count = Number.isFinite(segmentCount) && segmentCount > 0
     ? Math.floor(segmentCount) : 0;
   const valid = (value: unknown): number | null =>
-    typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : null;
+    typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : null;
   // `defaultCm` — ответственность вызывающего: он передаёт
   // DRAW_WALL_DEFAULT_CM. Константа сюда не импортируется намеренно — этот
   // модуль не зависит ни от чего, и второе место, где живёт число 15, было бы
   // ровно тем дублированием, которое задача и убирает. Невалидный default —
-  // дефект вызывающего, поэтому он приводится к минимальной допустимой
-  // толщине (1 см, docs/WALL-THICKNESS.md), а не к выдуманному значению.
+  // дефект вызывающего; безопасный fallback теперь валидная стена без тела.
   const active = valid(activeCm);
-  const fallback = valid(defaultCm) ?? 1;
+  const fallback = valid(defaultCm) ?? 0;
   const out: number[] = [];
   let previous: number | null = null;
   for (let i = 0; i < count; i++) {
@@ -121,7 +119,7 @@ export function wallChainSegments(
     const b = path[i + 1];
     if (!finitePoint(a) || !finitePoint(b)
         || Math.hypot(b[0] - a[0], b[1] - a[1]) <= Number.EPSILON) continue;
-    // The resolver guarantees a positive number per index; a caller that skips
+    // The resolver guarantees a non-negative number per index; a caller that skips
     // it is a defect, so the value is used as given rather than re-defaulted.
     result.push({ a: [a[0], a[1]], b: [b[0], b[1]], cm: cms[i] });
   }

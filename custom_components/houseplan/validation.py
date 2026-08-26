@@ -1422,7 +1422,7 @@ ROOM_DRAFT_SCHEMA = vol.All(
             vol.Required("segments"): vol.All(
                 [vol.Schema({
                     vol.Optional("id"): vol.All(str, vol.Length(min=1, max=64)),
-                    vol.Required("cm"): vol.All(_finite, vol.Range(min=1, max=100)),
+                    vol.Required("cm"): vol.All(_finite, vol.Range(min=0, max=100)),
                 },
                             extra=vol.ALLOW_EXTRA)],
                 vol.Length(min=1, max=499),
@@ -1445,7 +1445,7 @@ PARTITION_SCHEMA = vol.All(
             vol.Required("id"): vol.All(str, vol.Length(min=1, max=64)),
             vol.Required("a"): POINT,
             vol.Required("b"): POINT,
-            vol.Required("cm"): vol.All(_finite, vol.Range(min=1, max=100)),
+            vol.Required("cm"): vol.All(_finite, vol.Range(min=0, max=100)),
         },
         extra=vol.ALLOW_EXTRA,
     ),
@@ -1625,6 +1625,7 @@ SPACE_SCHEMA = vol.All(vol.Schema(
         vol.Optional("wall_segments"): vol.All(
             [WALL_SEGMENT_SCHEMA], vol.Length(max=MAX_WALL_SEGMENTS)
         ),
+        vol.Optional("zero_wall_style"): vol.In(["dashed", "solid"]),
         vol.Optional("room_drafts"): vol.All(
             [ROOM_DRAFT_SCHEMA], vol.Length(max=MAX_ROOM_DRAFTS)
         ),
@@ -1763,7 +1764,7 @@ def _canonical_segment_key(a: list, b: list) -> tuple:
 
 
 def _config_wall_segment_invariants(value: dict) -> dict:
-    """Fail closed when a v8 writer sends stale ids or a stale walls projection."""
+    """Fail closed when a v8+ writer sends stale ids or wall projections."""
     try:
         model = int(value.get("model_version", 0))
     except (TypeError, ValueError):
@@ -1772,9 +1773,12 @@ def _config_wall_segment_invariants(value: dict) -> dict:
         return value
 
     for space in value.get("spaces", []):
+        if model >= 9:
+            if "open_spans" in space or any("open_to" in room for room in space.get("rooms", [])):
+                raise vol.Invalid("v9 config must not contain legacy open boundaries")
         segments = space.get("wall_segments")
         if segments is None:
-            raise vol.Invalid("v8 space requires wall_segments")
+            raise vol.Invalid("v8+ space requires wall_segments")
         by_id = {segment["id"]: segment for segment in segments}
         if len(by_id) != len(segments):
             raise vol.Invalid("wall segment ids must be unique")
@@ -1784,7 +1788,7 @@ def _config_wall_segment_invariants(value: dict) -> dict:
             poly = room.get("poly")
             wall_ids = room.get("wall_ids")
             if not poly or not wall_ids or len(poly) != len(wall_ids):
-                raise vol.Invalid("v8 room wall_ids must match poly edges")
+                raise vol.Invalid("v8+ room wall_ids must match poly edges")
             room_id = room["id"]
             for index, segment_id in enumerate(wall_ids):
                 segment = by_id.get(segment_id)
@@ -1804,31 +1808,35 @@ def _config_wall_segment_invariants(value: dict) -> dict:
         actual_walls: dict[tuple, float] = {}
         for wall in space.get("walls", []):
             if "a" not in wall or "b" not in wall:
-                raise vol.Invalid("v8 compatibility walls require exact endpoints")
+                raise vol.Invalid("wall compatibility projection requires exact endpoints")
             key = _canonical_segment_key(wall["a"], wall["b"])
             if key in actual_walls:
-                raise vol.Invalid("v8 compatibility walls must be unique")
+                raise vol.Invalid("wall compatibility projection must be unique")
             actual_walls[key] = float(wall["cm"])
         if actual_walls != expected_walls:
-            raise vol.Invalid("v8 compatibility walls must match wall_segments")
+            raise vol.Invalid("wall compatibility projection must match wall_segments")
 
         for draft in space.get("room_drafts", []):
             if any(not segment.get("id") for segment in draft.get("segments", [])):
-                raise vol.Invalid("v8 draft wall segments require ids")
+                raise vol.Invalid("v8+ draft wall segments require ids")
 
         partitions = {item["id"]: item for item in space.get("partitions", [])}
         wall_opening_intervals: dict[str, list[tuple[float, float]]] = {}
         for opening in space.get("openings", []):
             host = opening.get("host")
             if host is None:
-                raise vol.Invalid("v8 opening requires an explicit host")
+                raise vol.Invalid("v8+ opening requires an explicit host")
             if host["kind"] == "partition":
                 if host["id"] not in partitions:
                     raise vol.Invalid("partition opening host must exist in the same space")
+                if float(partitions[host["id"]]["cm"]) <= 0:
+                    raise vol.Invalid("opening host must have positive thickness")
                 continue
             segment = by_id.get(host["id"])
             if segment is None:
                 raise vol.Invalid("wall opening host must exist in the same space")
+            if float(segment["cm"]) <= 0:
+                raise vol.Invalid("opening host must have positive thickness")
             t = float(host["t"])
             x = float(segment["a"][0]) + (float(segment["b"][0]) - float(segment["a"][0])) * t
             y = float(segment["a"][1]) + (float(segment["b"][1]) - float(segment["a"][1])) * t

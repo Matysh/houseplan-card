@@ -78,6 +78,29 @@ ID. If a physical `config/set` is rejected, the frontend restores the earliest
 snapshot in that pending batch before attempting a best-effort authoritative
 reload; rejected draft geometry cannot be promoted by a later gesture (#314).
 
+## Canonical zero-thickness walls — model v9 (#306)
+
+Model v9 removes the separate virtual-boundary representation. A contour atom,
+independent partition or draft segment with `cm:0` is the only current form of
+a wall axis without masonry. `space.zero_wall_style` is optional and accepts
+`dashed | solid`; missing or unknown values read as `dashed`. Dashed zero walls
+transmit Glow and sunlight, while solid zero walls are exact line barriers.
+
+`space.open_spans[]` and `rooms[].open_to[]` remain compatibility reads for v8
+documents only. Explicit valid spans win; `open_to` expands to the full proven
+shared boundary only when spans are absent. The first structural write,
+confirmed **Optimize plans**, or import into a current target atomizes that
+geometry into stable `wall_segments[].cm=0`, preserves surviving IDs, verifies
+that no opening would acquire a zero host, and then removes both legacy fields
+in one transaction. A conflict rejects the complete candidate. Presentation,
+marker and ordinary space-settings writes do not trigger the migration.
+
+There is deliberately no provenance flag. Existing v8 `cm:0` and atoms derived
+from legacy virtual spans are identical. Consequently some old plans may change
+line style or light transmission after upgrade; this is the accepted migration
+trade-off. Canonical v9 export/import never recreates `open_spans/open_to`, and
+downgrade after the first v9 structural write is unsupported.
+
 ## Canonical geometry on write (#224, #291)
 
 Config and layout schemas canonicalize only named persisted numbers. Lattice

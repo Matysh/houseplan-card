@@ -1,7 +1,7 @@
 # #306 — Нулевые стены вместо виртуальных границ
 
 - **Issue:** [#306](https://github.com/Matysh/houseplan-card/issues/306)
-- **Статус документа:** актуализировано после #282; готово к независимому ревью ТЗ
+- **Статус документа:** принятый контракт; рабочий статус хранится в метках issue
 - **Приоритет / тип:** P1 / feature
 - **Целевая версия модели:** `PLAN_MODEL_VERSION = 9`
 - **Пользовательское изменение:** да
@@ -93,7 +93,7 @@
 носителя и `cm`. Нельзя сливать `outer(A)` с `shared(A,B)`, разные пары shared,
 room-wall с independent wall или пересекать узел/проём.
 
-### 5.2 Authoritative wall model v8
+### 5.2 Authoritative wall identity from v8; current model v9
 
 #282 уже реализовала Stage 1 модели стен:
 

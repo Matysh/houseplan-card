@@ -17,16 +17,11 @@ import {
   DECOR_TEXT_BASE, decorTextScale, liveTextReference, liveTextToken, roomPoly,
 } from './logic';
 import {
-  clipOpenSpansToShared, cutsToSpanEntries, entryToSeg,
-  projectOnSeg, rekeyOpenSpansAfterMove, resolveOpenCuts, sanitizeOpenSpans,
-  snapOpenPoint, spanToEntry, syncOpenToFromCuts,
-} from './open-spans';
-import {
   GRID_PITCH, GRID_STEP_N, NORM_W, PLAN_SCALE_MAX, PLAN_SCALE_MIN, spaceModels,
 } from './space-geometry';
 import {
   degradeWalls, normalizeWallIntervals, rekeyWallsAfterMove, roomWallProfile,
-  setWallThickness, type WallEntry,
+  setWallThickness, wallKey, type WallEntry,
 } from './wall-thickness';
 import { applyOpeningMoves, mergeCollinearPartitions, spaceMergeGeometry } from './wall-merge';
 import { reconcileCoincidentPartitions } from './coincident-partitions';
@@ -37,9 +32,10 @@ import { repairNearAxisRoomWalls } from './near-axis';
 import {
   commitWallSegmentModelInPlace,
 } from './wall-segment-model';
+import { legacyZeroContourLines } from './zero-walls';
 
 /** Bump when a new lossless maintenance pass is added. */
-export const PLAN_MODEL_VERSION = 8;
+export const PLAN_MODEL_VERSION = 9;
 const DEFAULT_CELL_CM = 5;
 const CELL_CM_MIN = 0.1;
 const CELL_CM_MAX = 1000;
@@ -445,23 +441,6 @@ export function optimizePlans(
   const migration = migrateLosslessly(config);
   let migrated = migration.total;
 
-  // Materialise legacy open_to before geometry moves. Once explicit spans
-  // exist, they are the source of truth and open_to becomes a derived index.
-  for (const space of config.spaces || []) {
-    const model = modelOf(space);
-    if (!model) continue;
-    const existing = sanitizeOpenSpans(space.open_spans);
-    if (!existing.length) {
-      const cuts = resolveOpenCuts(
-        model.rooms, null, NORM_W, GRID_PITCH * 0.02, true,
-      );
-      if (cuts.length) {
-        space.open_spans = cutsToSpanEntries(cuts, NORM_W);
-        migrated++;
-      }
-    }
-  }
-
   const beforeSpaces = clone(config.spaces || []);
   const aligned = alignAllToGrid(config.spaces || [], references.layout);
   let wallsStraightened = 0;
@@ -511,8 +490,7 @@ export function optimizePlans(
     const before = beforeSpaces[i];
     const space = config.spaces[i];
     const canonicalBefore = JSON.stringify({
-      spans: before.open_spans || [],
-      links: (before.rooms || []).map((r: any) => [r.id, r.open_to || []]),
+      zero: (before.wall_segments || []).filter((wall: any) => Number(wall.cm) === 0),
       walls: before.walls || [],
     });
     const oldModel = modelOf(before);
@@ -523,58 +501,54 @@ export function optimizePlans(
     const nextEdges = edgePairs(nextModel.rooms);
     const eps = GRID_PITCH * 0.02;
 
-    const sourceSpans = sanitizeOpenSpans(before.open_spans);
-    let spans = rekeyOpenSpansAfterMove(sourceSpans, oldEdges, nextEdges, NORM_W);
-    const spanParts = spans.length;
-    spans = clipOpenSpansToShared(spans, nextModel.rooms, NORM_W, eps);
-    // Virtual endpoints are wall-bound: snap them by distance along the room
-    // edge, just like the drawing tool, instead of rounding X/Y independently
-    // (which would pull a point off a diagonal wall).
-    spans = spans.map((entry) => {
-      const sg = entryToSeg(entry, NORM_W);
-      const a = [sg[0], sg[1]], b = [sg[2], sg[3]];
-      const mid = [(sg[0] + sg[2]) / 2, (sg[1] + sg[3]) / 2];
-      const dx = sg[2] - sg[0], dy = sg[3] - sg[1];
-      const len = Math.hypot(dx, dy) || 1;
-      const edge = nextEdges
-        .map(([ea, eb]) => [ea[0], ea[1], eb[0], eb[1]])
-        .filter((candidate) => {
-          const ex = candidate[2] - candidate[0], ey = candidate[3] - candidate[1];
-          const elen = Math.hypot(ex, ey) || 1;
-          return Math.abs(dx * ey - dy * ex) / (len * elen) <= 1e-6
-            && projectOnSeg(mid, candidate).d <= eps * 4
-            && projectOnSeg(a, candidate).d <= eps * 4
-            && projectOnSeg(b, candidate).d <= eps * 4;
-        })
-        .sort((x, y) => Math.hypot(y[2] - y[0], y[3] - y[1])
-          - Math.hypot(x[2] - x[0], x[3] - x[1]))[0];
-      alignReport.total++;
-      if (!edge) return entry;
-      const joints = [[edge[0], edge[1]], [edge[2], edge[3]]];
-      const na = snapOpenPoint(a, edge, joints, GRID_PITCH, eps * 2);
-      const nb = snapOpenPoint(b, edge, joints, GRID_PITCH, eps * 2);
-      if (Math.hypot(nb[0] - na[0], nb[1] - na[1]) < GRID_PITCH * 0.5) return entry;
-      const shift = Math.max(Math.hypot(na[0] - a[0], na[1] - a[1]),
-        Math.hypot(nb[0] - b[0], nb[1] - b[1]));
-      if (shift > GRID_PITCH * 1e-6) {
-        alignReport.moved++;
-        const shiftN = shift / NORM_W;
-        if (shiftN > alignReport.maxShift) alignReport.maxShift = shiftN;
-        const shiftCm = (shift / GRID_PITCH)
-          * (Number(space.cell_cm) > 0 ? Number(space.cell_cm) : DEFAULT_CELL_CM);
-        if (shiftCm > alignReport.maxShiftCm) {
-          alignReport.maxShiftCm = shiftCm;
-          alignReport.maxSpace = String(space.id || '');
-        }
-      }
-      return spanToEntry(na, nb, NORM_W);
+    const sourceZeroWalls: WallEntry[] = (before.wall_segments || [])
+      .filter((wall: any) => Number(wall.cm) === 0)
+      .map((wall: any) => ({
+        ...wall,
+        key: wallKey(wall.a, wall.b, GRID_STEP_N),
+        cm: 0,
+      }));
+    // A pre-v9 plan is still allowed to reach Optimize. Project its legacy
+    // virtual spans in memory, move them with the same room carriers, and let
+    // the final identity barrier assign stable catalogue IDs. No production
+    // maintenance pass writes open_spans/open_to back into the candidate.
+    const knownZeroKeys = new Set(sourceZeroWalls.map((wall) => wall.key));
+    for (const line of legacyZeroContourLines(before, oldModel.rooms, NORM_W, eps)) {
+      const a = [line[0] / NORM_W, line[1] / NORM_W];
+      const b = [line[2] / NORM_W, line[3] / NORM_W];
+      const key = wallKey(a, b, GRID_STEP_N);
+      if (knownZeroKeys.has(key)) continue;
+      knownZeroKeys.add(key);
+      sourceZeroWalls.push({ key, a, b, cm: 0 });
+    }
+    const zeroParts = sourceZeroWalls.length;
+    const movedZeroWalls = rekeyWallsAfterMove(
+      sourceZeroWalls, oldEdges, nextEdges, GRID_STEP_N, NORM_W,
+    );
+    const pointDistance = (point: number[], a: number[], b: number[]): number => {
+      const dx = b[0] - a[0], dy = b[1] - a[1];
+      const length2 = dx * dx + dy * dy;
+      if (!(length2 > 0)) return Math.hypot(point[0] - a[0], point[1] - a[1]);
+      const t = Math.max(0, Math.min(1,
+        ((point[0] - a[0]) * dx + (point[1] - a[1]) * dy) / length2));
+      return Math.hypot(point[0] - (a[0] + dx * t), point[1] - (a[1] + dy * t));
+    };
+    const zeroWalls = movedZeroWalls.filter((wall) => {
+      if (!Array.isArray(wall.a) || !Array.isArray(wall.b)) return false;
+      const a = wall.a.map((value) => value * NORM_W);
+      const b = wall.b.map((value) => value * NORM_W);
+      return nextEdges.some(([ea, eb]) => (
+        pointDistance(a, ea, eb) <= eps * 4 && pointDistance(b, ea, eb) <= eps * 4
+      ));
     });
-    spans = clipOpenSpansToShared(spans, nextModel.rooms, NORM_W, eps);
-    spansMerged += Math.max(0, spanParts - spans.length);
-    const cuts = spans.map((entry) => entryToSeg(entry, NORM_W));
-    if (spans.length) space.open_spans = spans;
-    else delete space.open_spans;
-    syncOpenToFromCuts(space.rooms || [], nextModel.rooms, cuts, eps);
+    spansMerged += Math.max(0, zeroParts - zeroWalls.length);
+    const positiveCatalog = (space.wall_segments || [])
+      .filter((wall: any) => Number(wall.cm) > 0);
+    space.wall_segments = [...positiveCatalog, ...zeroWalls.map(({ key: _key, ...wall }) => wall)];
+    const cuts = zeroWalls.map((wall) => [
+      wall.a![0] * NORM_W, wall.a![1] * NORM_W,
+      wall.b![0] * NORM_W, wall.b![1] * NORM_W,
+    ]);
 
     const wallParts = Array.isArray(before.walls) ? before.walls.length : 0;
     let walls = rekeyWallsAfterMove(
@@ -646,8 +620,7 @@ export function optimizePlans(
       }
     }
     const canonicalAfter = JSON.stringify({
-      spans: space.open_spans || [],
-      links: (space.rooms || []).map((r: any) => [r.id, r.open_to || []]),
+      zero: (space.wall_segments || []).filter((wall: any) => Number(wall.cm) === 0),
       walls: space.walls || [],
     });
     if (canonicalAfter !== canonicalBefore) canonicalized++;
@@ -657,9 +630,8 @@ export function optimizePlans(
   // every geometry repair so its catalogue describes the final candidate, not
   // the pre-Optimize shape. Future model versions remain opaque/fail-soft.
   let wallSegmentsMigrated = 0;
-  if (modelFrom <= PLAN_MODEL_VERSION) {
+  if (modelFrom <= PLAN_MODEL_VERSION)
     wallSegmentsMigrated = commitWallSegmentModelInPlace(config).migratedSegments;
-  }
 
   // The storage barrier (#224) is part of Optimize's idempotence contract.
   // A 1/240 grid node has no finite decimal representation: comparing or
