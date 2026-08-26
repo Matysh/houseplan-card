@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.68.0-beta.1 — 2026-08-26
+
 - Two walls meeting at an acute angle keep their full drawing point again —
   the #309 chamfer now applies only to nodes of three and more walls. The
   real tooth is gone instead: the deeper wall's butt end no longer pokes
