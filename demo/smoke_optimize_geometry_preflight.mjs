@@ -75,11 +75,14 @@ const out = await page.evaluate(async () => {
     'Could not safely verify the geometry of the following spaces: Alpha, beta, Space 3, and 1 more.',
   );
   result.englishFailureHasExactHint = englishText.includes(
-    'Plans were not changed. Update House Plan and try again. If the error persists, attach a space export to the bug report.',
+    'Plans were not changed. Copy the diagnostics with the button below and attach them to the bug report together with a space export.',
   );
-  result.failureTitleIsEscapedAndFourthNameHidden =
+  // #295: every failure (up to 10) is listed with its reason; the injected
+  // title renders as inert text — lit escapes it, no element is created.
+  result.failureListsReasonsAndEscapesTitle =
     !card.renderRoot.querySelector('#preflight-injection')
-    && !englishText.includes('<img') && !englishText.includes('unsafe');
+    && englishText.includes('Alpha: The wall body did not build (the union came back empty)')
+    && englishText.includes('<img id="preflight-injection" src=x>');
   result.failureRendersNoApply = !card.renderRoot.querySelector('hp-dialog .btn.on');
   await card._runAlignToGrid(); await card.updateComplete;
   result.redPreflightMakesZeroWrites = sent.length === 0;
@@ -139,7 +142,9 @@ const out = await page.evaluate(async () => {
   result.russianFailureHasExactCopy = russianText.includes(
     'Не удалось безопасно проверить геометрию следующих пространств: Alpha, beta, Пространство 3 и ещё 1.',
   ) && russianText.includes(
-    'Планы не изменены. Обновите House Plan и повторите. Если ошибка останется, приложите экспорт пространства к отчёту об ошибке.',
+    'Планы не изменены. Скопируйте диагностику кнопкой ниже и приложите её к отчёту об ошибке вместе с экспортом пространства.',
+  ) && russianText.includes(
+    'Alpha: Тело стен не построилось (объединение вернуло пустоту)',
   );
   card.renderRoot.querySelector('hp-dialog')?.dispatchEvent(new CustomEvent(
     'hp-close', { bubbles: true, composed: true },

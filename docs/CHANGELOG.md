@@ -5,6 +5,12 @@
 - The Russian binding dialog names its entities toggle exactly as the user
   guide does: «Показывать сущности»
   ([#269](https://github.com/Matysh/houseplan-card/issues/269)).
+- A refused geometry preflight now explains itself: the dialog names the
+  reason per space, offers a one-click copyable diagnostics block (with an
+  inline fallback when the clipboard is unavailable) and logs one structured
+  dev record. The «update House Plan» advice only appears when the card and
+  integration versions actually differ
+  ([#295](https://github.com/Matysh/houseplan-card/issues/295)).
 
 - The Thickness tool now serves every wall: standalone partitions and saved
   draft segments can be picked and resized just like room contours, with the

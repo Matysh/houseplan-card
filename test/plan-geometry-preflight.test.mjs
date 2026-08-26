@@ -123,6 +123,9 @@ test('null, exceptions and floor failure are bounded while successful empty geom
   const wallThrows = checkOptimizeGeometry(wallConfig, { wallPass: () => { throw new Error('secret'); } });
   assert.equal(wallThrows.failures[0].reason, 'wall-exception');
   assert.doesNotMatch(JSON.stringify(wallThrows), /secret/);
+  // #295: the detail field carries the error CLASS only — diagnosable without
+  // breaking the privacy contract above.
+  assert.equal(wallThrows.failures[0].detail, 'Error');
 
   const successfulEmpty = checkOptimizeGeometry(wallConfig, {
     wallPass: () => ({ geom: [], paperGeom: [], depthUnits: 0, openingIndex: null }),

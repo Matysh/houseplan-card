@@ -154,6 +154,11 @@ async def test_issue_244_space_delete_is_authoritative_and_revision_guarded(
     unchanged_layout = await client.receive_json()
     assert unchanged_config["result"]["rev"] == config_set["result"]["rev"]
     assert unchanged_layout["result"]["rev"] == layout_set["result"]["rev"]
+    # #295: the card compares this against its own version before showing the
+    # «update House Plan» preflight hint — the field must be the live
+    # integration VERSION, not the export-document snapshot.
+    from custom_components.houseplan.const import VERSION
+    assert unchanged_config["result"]["integration_version"] == VERSION
 
     config["markers"] = [{
         "id": "device", "binding": "virtual", "space": "f1", "removed": True,

@@ -24,6 +24,7 @@ from .const import (
     CONTENT_URL, FILES_DIR, MAX_PLANS_BYTES, MAX_PLANS_FILES, MAX_PLANS_LISTED,
     MAX_SIGN_PATHS,
     PLANS_DIR, PLANS_URL,
+    VERSION,
 )
 from .coordinate_canonicalization import (
     canonicalize_config_geometry,
@@ -1157,6 +1158,9 @@ async def ws_config_get(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             "can_write": may_write(hass, getattr(connection, "user", None)),
             "can_optimize_undo": _optimizer_backup_is_current(data, layout_data),
             "undo_kind": _undo_kind(data, layout_data),
+            # #295: the card compares this against its own version to decide
+            # whether the «update House Plan» preflight hint can actually help.
+            "integration_version": VERSION,
         },
     )
 

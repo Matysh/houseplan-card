@@ -2247,6 +2247,42 @@ export const MUTANTS = [
     }],
   },
   {
+    id: 'preflight-reason-lost-in-dialog',
+    // #295: диалог обязан называть причину отказа по каждому пространству.
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node demo/smoke_preflight_diagnostics.mjs',
+    because: 'отказ preflight без причины недиагностируем — ровно исходный дефект #295',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: "                ${failure.displayName}: ${this._t(`gs.preflight_reason_${failure.reason}` as any)}",
+      replace: "                ${failure.displayName}",
+    }],
+  },
+  {
+    id: 'preflight-diagnostics-without-reason',
+    // #295: копируемый блок без reason бесполезен для отчёта об ошибке.
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node demo/smoke_preflight_diagnostics.mjs',
+    because: 'диагностический блок обязан нести reason каждого отказа',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: "        reason: failure.reason,",
+      replace: "        reason: undefined,",
+    }],
+  },
+  {
+    id: 'preflight-dev-log-disabled',
+    // #295: dev-лог — второй канал диагностики, его потерю обязан ловить смок.
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node demo/smoke_preflight_diagnostics.mjs',
+    because: 'структурированная запись отказа в консоли — часть контракта диагностики #295',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: "    console.warn('[houseplan] optimize preflight failed', this._preflightDiagnostics(preflight));",
+      replace: "    void preflight;",
+    }],
+  },
+  {
     id: 'visual-mitre-limit-back-to-4',
     // #309: порог визуального среза возвращается к классическим 4·h — шип на
     // острой паре и горб над узлом 3×50 отрастают обратно.

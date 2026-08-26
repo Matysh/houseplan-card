@@ -57,6 +57,17 @@ export interface SpacePhysicalGeometryInputs {
   coordScale: number;
 }
 
+/**
+ * #295: a PRIVACY-SAFE marker of the caught exception. The result deliberately
+ * carries the error CLASS, never the message: messages can leak entity ids,
+ * file paths or user data, and the existing preflight contract (unit «null,
+ * exceptions and floor failure are bounded…») forbids them in the payload.
+ */
+export function preflightErrorDetail(error: unknown): string {
+  if (error instanceof Error) return error.name || 'Error';
+  return typeof error;
+}
+
 export type OptimizeGeometryFailureReason =
   | 'prepare-exception'
   | 'wall-null'
@@ -73,6 +84,12 @@ export interface OptimizeSpaceGeometryCheck {
   displayName: string;
   status: OptimizeSpaceGeometryStatus;
   reason?: OptimizeGeometryFailureReason;
+  /**
+   * #295: the caught exception's CLASS (never the message — privacy contract)
+   * for the *-exception reasons. Non-exception reasons are self-describing
+   * and leave it unset. Diagnostic payloads carry it; user strings do not.
+   */
+  detail?: string;
 }
 
 export interface OptimizeGeometryPreflightResult {
@@ -334,8 +351,11 @@ export function checkOptimizeGeometry(
       const model = spaceModels({ ...config, spaces: [raw] } as ServerConfig)[0];
       if (!model) throw new Error('missing space model');
       input = prepare(raw, model);
-    } catch {
-      spaces.push({ ...identity, status: 'failed', reason: 'prepare-exception' });
+    } catch (error) {
+      spaces.push({
+        ...identity, status: 'failed', reason: 'prepare-exception',
+        detail: preflightErrorDetail(error),
+      });
       continue;
     }
 
@@ -353,8 +373,11 @@ export function checkOptimizeGeometry(
           input.wallKeyPitch, input.cellCm, input.gridPitch, input.coordScale,
           input.physicalBodies,
         );
-      } catch {
-        spaces.push({ ...identity, status: 'failed', reason: 'wall-exception' });
+      } catch (error) {
+        spaces.push({
+          ...identity, status: 'failed', reason: 'wall-exception',
+          detail: preflightErrorDetail(error),
+        });
         continue;
       }
       if (united == null) {
@@ -378,8 +401,11 @@ export function checkOptimizeGeometry(
           input.space.rooms, input.walls, input.openCuts,
           input.wallKeyPitch, input.cellCm, input.gridPitch, input.coordScale,
         );
-      } catch {
-        spaces.push({ ...identity, status: 'failed', reason: 'floor-exception' });
+      } catch (error) {
+        spaces.push({
+          ...identity, status: 'failed', reason: 'floor-exception',
+          detail: preflightErrorDetail(error),
+        });
         continue;
       }
       if (floor == null) {

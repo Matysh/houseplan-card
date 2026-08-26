@@ -1826,6 +1826,10 @@ class HouseplanCard extends LitElement {
 
   private _rulesDialog: { rules: IconRule[]; test: string; busy: boolean } | null = null;
   /** Optimization preview plus the exact pair, so commit cannot differ from it. */
+  /** #295: diagnostics text shown inline when the clipboard is unavailable. */
+  private _preflightClipboardFallback: string | null = null;
+  /** #295: integration version from houseplan/config/get; null on old backends. */
+  private _haIntegrationVersion: string | null = null;
   private _alignDialog: {
     report: OptimizeReport; config: any; layout: Record<string, any>;
     preflight: OptimizeGeometryPreflightResult | null;
@@ -2300,6 +2304,7 @@ class HouseplanCard extends LitElement {
     _rulesDialog: { state: true },
     _settingsDialog: { state: true },
     _alignDialog: { state: true },
+    _preflightClipboardFallback: { state: true },
     _backupExportDialog: { state: true },
     _backupImportDialog: { state: true },
     _importDialog: { state: true },
@@ -3879,6 +3884,8 @@ class HouseplanCard extends LitElement {
     }
 
     this._canOptimizeUndo = !!(cfgResp?.can_optimize_undo || layResp?.can_optimize_undo);
+      this._haIntegrationVersion = typeof cfgResp?.integration_version === 'string'
+        ? cfgResp.integration_version : this._haIntegrationVersion;
     this._undoKind = (cfgResp?.undo_kind || layResp?.undo_kind || null) as any;
     if (typeof cfgResp?.can_write === 'boolean') this._serverCanWrite = cfgResp.can_write;
     if (configChanged) this._continuity.note('config-candidate', { configRev: this._cfgRev });
@@ -3933,6 +3940,8 @@ class HouseplanCard extends LitElement {
       // absent can_write = older backend / demo stub → keep null (legacy admin fallback)
       if (typeof cfgResp?.can_write === 'boolean') this._serverCanWrite = cfgResp.can_write;
       this._canOptimizeUndo = !!(cfgResp?.can_optimize_undo || layResp?.can_optimize_undo);
+      this._haIntegrationVersion = typeof cfgResp?.integration_version === 'string'
+        ? cfgResp.integration_version : this._haIntegrationVersion;
       this._adoptStructuralResponses(cfgResp, layResp);
       this._adoptInitialSpace(this._model, true);
       this._resumePendingNavMode();
@@ -4544,6 +4553,8 @@ class HouseplanCard extends LitElement {
       }
       this._layoutRev = resp?.rev ?? this._layoutRev;
       this._canOptimizeUndo = !!resp?.can_optimize_undo;
+      this._haIntegrationVersion = typeof resp?.integration_version === 'string'
+        ? resp.integration_version : this._haIntegrationVersion;
       this._undoKind = (resp?.undo_kind || null) as any;
       this._cacheSnapshot();
       this.requestUpdate();
@@ -15824,6 +15835,70 @@ class HouseplanCard extends LitElement {
    * Preview whole-plan maintenance. Nothing is written here: the pure run
    * produces both the report and the exact config/layout pair to commit.
    */
+  /**
+   * #295: one diagnostics payload for the clipboard, the inline fallback and
+   * the dev log. `origin: runtime` is the honest part of the contract — the
+   * refusal depends on live card state and a saved export may not reproduce
+   * it, so the payload carries what the export cannot.
+   */
+  private _preflightDiagnostics(preflight: OptimizeGeometryPreflightResult): object {
+    const spacesById = new Map((this._serverCfg?.spaces || [])
+      .map((space: any) => [String(space?.id || ''), space]));
+    return {
+      kind: 'houseplan-optimize-preflight',
+      origin: 'runtime',
+      cardVersion: CARD_VERSION,
+      checkedAt: new Date().toISOString(),
+      preflightFingerprint: preflight.fingerprint,
+      failures: preflight.failures.map((failure) => ({
+        spaceId: failure.spaceId,
+        displayName: failure.displayName,
+        reason: failure.reason,
+        detail: failure.detail ?? null,
+        spaceGeometryFingerprint: spacesById.has(failure.spaceId)
+          ? spacePhysicalGeometryFingerprint(spacesById.get(failure.spaceId))
+          : null,
+      })),
+    };
+  }
+
+  /** #295: dev-log once per distinct failing preflight, not once per render. */
+  private _reportedPreflightFingerprint: string | null = null;
+  private _reportPreflightFailure(preflight: OptimizeGeometryPreflightResult): void {
+    if (preflight.ok || preflight.fingerprint === this._reportedPreflightFingerprint) return;
+    this._reportedPreflightFingerprint = preflight.fingerprint;
+    // eslint-disable-next-line no-console
+    console.warn('[houseplan] optimize preflight failed', this._preflightDiagnostics(preflight));
+  }
+
+  /**
+   * #295: the «update House Plan» advice only helps when the frontend is
+   * actually stale. houseplan/config/get now reports the integration
+   * version; an old backend does not, and then the advice is simply not
+   * shown — a missing hint is better than a misleading one (the rc.1
+   * report where the owner had nothing newer to update to).
+   */
+  private _preflightVersionsDiffer(): boolean {
+    const integration = this._haIntegrationVersion;
+    return typeof integration === 'string' && integration.length > 0
+      && integration !== CARD_VERSION;
+  }
+
+  private async _copyPreflightDiagnostics(): Promise<void> {
+    const preflight = this._alignDialog?.preflight;
+    if (!preflight || preflight.ok) return;
+    const text = JSON.stringify(this._preflightDiagnostics(preflight), null, 2);
+    try {
+      await navigator.clipboard.writeText(text);
+      this._preflightClipboardFallback = null;
+      this._showToast(this._t('gs.preflight_copied'));
+    } catch {
+      // Insecure context / embedded webview: surface the block inline so the
+      // owner can select and copy it by hand.
+      this._preflightClipboardFallback = text;
+    }
+  }
+
   private _checkOptimizeGeometry(config: ServerConfig): OptimizeGeometryPreflightResult {
     return checkOptimizeGeometry(config, {
       fallbackSpaceName: (index) => this._t('gs.align_preflight_space', {
@@ -15916,6 +15991,7 @@ class HouseplanCard extends LitElement {
       return;
     }
     const preflight = r.changed ? this._checkOptimizeGeometry(r.config) : null;
+    if (preflight) this._reportPreflightFailure(preflight);
     // The maximum geometry shift is an UPPER BOUND, not a sample. The run
     // measured every element in the centimetres of ITS OWN space — converting
     // one normalised maximum through the first space's `cell_cm` understated
@@ -15948,6 +16024,7 @@ class HouseplanCard extends LitElement {
     const fingerprint = contentFingerprint(d.config);
     if (d.preflight.fingerprint !== fingerprint) {
       const preflight = this._checkOptimizeGeometry(d.config);
+      this._reportPreflightFailure(preflight);
       d = { ...d, preflight };
       this._alignDialog = d;
       if (!preflight.ok) return;
@@ -17089,7 +17166,25 @@ class HouseplanCard extends LitElement {
           ${failed
             ? html`
               <p class="alignmsg">${this._t('gs.align_preflight_failed', { spaces, more })}</p>
-              <div class="rhint">${this._t('gs.align_preflight_hint')}</div>`
+              ${failures.slice(0, 10).map((failure) => html`<p class="alignmsg">
+                ${failure.displayName}: ${this._t(`gs.preflight_reason_${failure.reason}` as any)}
+              </p>`)}
+              ${failures.length > 10 ? html`<p class="alignmsg">
+                ${this._t('gs.align_preflight_more', { n: String(failures.length - 10) })}
+              </p>` : nothing}
+              <div class="rhint">${this._t('gs.align_preflight_hint')}</div>
+              ${this._preflightVersionsDiffer() ? html`
+                <div class="rhint">${this._t('gs.preflight_update_hint')}</div>` : nothing}
+              <div class="row">
+                <button class="btn ghost" @click=${() => this._copyPreflightDiagnostics()}>
+                  <ha-icon icon="mdi:content-copy"></ha-icon>
+                  ${this._t('gs.preflight_copy')}
+                </button>
+              </div>
+              ${this._preflightClipboardFallback ? html`<details open>
+                <summary>${this._t('gs.preflight_copy')}</summary>
+                <pre style="user-select:text;white-space:pre-wrap">${this._preflightClipboardFallback}</pre>
+              </details>` : nothing}`
             : !d.changed
             ? html`<p class="alignmsg">${this._t(
                 r.liveMissingPositions.length || r.unverifiedPositions.length
