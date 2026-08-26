@@ -590,6 +590,15 @@ const unionRect = (a: Rect, b: Rect): Rect => {
   return { x, y, w: Math.max(a.x + a.w, b.x + b.w) - x, h: Math.max(a.y + a.h, b.y + b.h) - y };
 };
 
+/** #313: one Thickness-tool hit — a room interval or independent masonry. */
+type WallThickSource = { kind: 'room' }
+  | { kind: 'partition'; id: string }
+  | { kind: 'draft'; id: string; segment: number };
+type WallThickHit = {
+  a: number[]; b: number[]; roomId: string; segs: number[][];
+  open: boolean; cm: number; source: WallThickSource;
+};
+
 type MarkupTool = 'select' | 'draw' | 'column' | 'merge' | 'split' | 'resize' | 'opening' | 'boundary' | 'wallthick' | 'delroom';
 type RoomFillFrame = {
   byRoom: Map<RoomCfg, ResolvedRoomFill | null>;
@@ -1537,6 +1546,12 @@ class HouseplanCard extends LitElement {
   private _wallDialog: {
     a: number[]; b: number[];
     value: string; roomId: string | null;
+    // #313: the Thickness tool serves independent masonry too. `room` keeps
+    // the historical shape (walls records + «apply to room»); the other two
+    // write partition.cm / draft.segments[i].cm. The switch in
+    // _wallThickApply is the single seam where #306 will later hang the
+    // «zero turns a partition virtual» branch.
+    source: WallThickSource;
     sx: number; sy: number;
   } | null = null;
   /**
@@ -11912,28 +11927,58 @@ class HouseplanCard extends LitElement {
    * wall wrote a key that the renderer then spread over the shared part as
    * well. The unit of the tool is now the same interval the renderer draws.
    */
-  private _wallThickHit(raw: number[]): {
-    a: number[]; b: number[]; roomId: string; segs: number[][]; open: boolean; cm: number;
-  } | null {
+  private _wallThickHit(raw: number[]): WallThickHit | null {
     const space = this._spaceModel();
     if (!space) return null;
     const pull = this._gridPitch * 6;
     const cuts = this._openCuts();
-    let best: { iv: ReturnType<typeof wallIntervals>[number]; d: number } | null = null;
+    type Hit = WallThickHit;
+    // #313: the tool serves every wall — room intervals AND independent
+    // masonry. On an exact overlap (the #308 duplicate) the independent wall
+    // wins: it owns the hit zone, exactly like the select tool, and it is
+    // the body the eye actually sees.
+    let best: { hit: Hit; d: number; independent: boolean } | null = null;
+    const offer = (hit: Hit, d: number, independent: boolean): void => {
+      if (d > pull) return;
+      if (!best || d < best.d - 1e-9
+          || (independent && !best.independent && d <= best.d + 1e-9)) {
+        best = { hit, d, independent };
+      }
+    };
     for (const iv of wallIntervals(
       space.rooms, this._spaceWalls, cuts,
       this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
     )) {
-      const d = distToSegment(raw, [iv.a[0], iv.a[1], iv.b[0], iv.b[1]]);
-      if (d <= pull && (!best || d < best.d)) best = { iv, d };
+      offer({
+        a: iv.a, b: iv.b, roomId: iv.roomId,
+        segs: [[iv.a[0], iv.a[1], iv.b[0], iv.b[1]]],
+        open: iv.open, cm: iv.cm, source: { kind: 'room' },
+      }, distToSegment(raw, [iv.a[0], iv.a[1], iv.b[0], iv.b[1]]), false);
     }
-    if (!best) return null;
-    const iv = best.iv;
-    return {
-      a: iv.a, b: iv.b, roomId: iv.roomId,
-      segs: [[iv.a[0], iv.a[1], iv.b[0], iv.b[1]]],
-      open: iv.open, cm: iv.cm,
-    };
+    for (const partition of space.partitions || []) {
+      const a = [partition.a[0], partition.a[1]];
+      const b = [partition.b[0], partition.b[1]];
+      offer({
+        a, b, roomId: '', segs: [[a[0], a[1], b[0], b[1]]],
+        open: false, cm: Number(partition.cm) || 0,
+        source: { kind: 'partition', id: partition.id },
+      }, distToSegment(raw, [a[0], a[1], b[0], b[1]]), true);
+    }
+    for (const draft of space.room_drafts || []) {
+      // The active chain belongs to the draw tool; like the snap geometry,
+      // Thickness only sees saved drafts.
+      if (draft.id === this._activeDraftId) continue;
+      for (let i = 0; i + 1 < draft.points.length; i++) {
+        const a = [draft.points[i][0], draft.points[i][1]];
+        const b = [draft.points[i + 1][0], draft.points[i + 1][1]];
+        offer({
+          a, b, roomId: '', segs: [[a[0], a[1], b[0], b[1]]],
+          open: false, cm: Number(draft.segments[i]?.cm) || 15,
+          source: { kind: 'draft', id: draft.id, segment: i },
+        }, distToSegment(raw, [a[0], a[1], b[0], b[1]]), true);
+      }
+    }
+    return best ? (best as { hit: Hit }).hit : null;
   }
 
   private get _wallThickHover(): { segs: number[][]; open: boolean; d: string } | null {
@@ -11970,6 +12015,7 @@ class HouseplanCard extends LitElement {
       a: hit.a, b: hit.b,
       value: cmToField(cm, this._imperial),
       roomId: hit.roomId,
+      source: hit.source,
       sx: ((mx - view.x) / view.w) * 100,
       sy: ((my - view.y) / view.h) * 100,
     };
@@ -11988,6 +12034,38 @@ class HouseplanCard extends LitElement {
     if (text && (!Number.isFinite(cmRaw) || cmRaw < 0 || (cmRaw > 0 && cmRaw < 1)
         || cmRaw > 100)) {
       this._showPhysicalRange(100);
+      return;
+    }
+    // #313: independent masonry writes its own record. This switch is the
+    // single seam for #306: the future «zero turns the wall virtual» branch
+    // belongs here, next to the range refusal below.
+    if (d.source.kind !== 'room') {
+      // A partition or draft segment without thickness does not exist in the
+      // model (owner decision 2026-08-26): zero and empty are refused with
+      // the ordinary range toast until #306 gives zero a meaning.
+      if (!text || !(cmRaw > 0)) {
+        this._showPhysicalRange(100);
+        return;
+      }
+      const before = this._geometrySnapshot();
+      if (d.source.kind === 'partition') {
+        const partition = (sp.partitions || [])
+          .find((item: PartitionCfg) => item.id === (d.source as { id: string }).id);
+        if (!partition) return;
+        partition.cm = cmRaw;
+      } else {
+        const draft = (sp.room_drafts || [])
+          .find((item: any) => item.id === (d.source as { id: string }).id);
+        const segment = draft?.segments?.[(d.source as { segment: number }).segment];
+        if (!segment) return;
+        segment.cm = cmRaw;
+      }
+      this._wallDialog = null;
+      const committed = this._commitPhysicalGeometry(
+        this._t('history.wall_thickness'), before,
+      );
+      if (committed) this._showToast(this._t('toast.wallthick_set'));
+      this.requestUpdate();
       return;
     }
     const before = this._geometrySnapshot();
@@ -12555,9 +12633,10 @@ class HouseplanCard extends LitElement {
         <span class="opl">${this._t(this._imperial ? 'wallthick.unit_in' : 'wallthick.unit_cm')}</span>
       </div>
       <div class="row">
-        <button class="btn ghost" @click=${() => this._wallThickApply(true)}>
+        ${d.source.kind === 'room' ? html`<button class="btn ghost"
+          @click=${() => this._wallThickApply(true)}>
           ${this._t('wallthick.apply_room')}
-        </button>
+        </button>` : nothing}
         <span class="spacer"></span>
         <button class="btn on" @click=${() => this._wallThickApply(false)}>
           <ha-icon icon="mdi:check"></ha-icon>

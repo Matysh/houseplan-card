@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- The Thickness tool now serves every wall: standalone partitions and saved
+  draft segments can be picked and resized just like room contours, with the
+  independent wall winning an exact overlap. Zero stays refused for
+  standalone walls — a wall without thickness does not exist
+  ([#313](https://github.com/Matysh/houseplan-card/issues/313)).
+
 ## v1.68.0-beta.1 — 2026-08-26
 
 - Two walls meeting at an acute angle keep their full drawing point again —

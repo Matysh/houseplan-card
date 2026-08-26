@@ -1218,6 +1218,12 @@ export const MUTANTS = [
       file: 'src/houseplan-card.ts',
       find: "    if (this._commitPhysicalGeometry(this._t('history.wall_thickness'), before))",
       replace: "    if ((this._recordGeometry(this._t('history.wall_thickness'), before), true))",
+    }, {
+      // #313: the independent-masonry writer is a second thickness commit
+      // point — bypassing the barrier there recreates the same #278 hole.
+      file: 'src/houseplan-card.ts',
+      find: "      const committed = this._commitPhysicalGeometry(\n        this._t('history.wall_thickness'), before,\n      );",
+      replace: "      const committed = (this._recordGeometry(this._t('history.wall_thickness'), before), true);",
     }],
   },
   {
