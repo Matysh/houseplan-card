@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "matrixVersion": 46,
-  "acceptedAt": "2026-08-25T20:12:50.448Z",
-  "sourceFingerprint": "e28606975682347f90f12971053825ce474085cbddd56082e867370b1039d14d",
+  "acceptedAt": "2026-08-26T07:07:19.995Z",
+  "sourceFingerprint": "2bd6abd8fa9674748b19b3ae12d65e093d804d4d9e4f0294e3fbdd6773effaab",
   "chromium": "151.0.7922.34",
   "scenarios": {
     "hidden-wall-diagnostics-plan-light": "6470ed8b09b21144ec1399389e9a57774e977a6473b8eaa7de7e9b5df3273f21",
@@ -125,8 +125,8 @@
     "backup-full-preview-desktop-en": "c9fe8ca1cf63b9ed98e2d517a2c06639d044d460011d958573e70c6b22bd7a2f",
     "backup-plan-only-export-desktop-en": "c48b3ccdd7d85d36f132c2d7b4c5dba94a1027e3e3f2ef495b4eb89a23f8ca33",
     "backup-space-preview-mobile-ru": "82cd93cb495ad77b92d635b4a3715601b1ae0e5e2974edcbbd461fe872c75bad",
-    "optimize-preflight-dialog-dark-en": "6e0706b951db73c7d699173d9cd0cd3cd8857238e3d7e95bc38eeb3691f907b6",
-    "optimize-preflight-dialog-light-ru": "a96af4b4428297d2c672f0d0e8f376e81c27765ecc941781a2d3873a054e2ec3",
+    "optimize-preflight-dialog-dark-en": "0473d7f16dd830aaddbec5c33f2b423fde48e2053a1094dbab052e6a2cbad9d4",
+    "optimize-preflight-dialog-light-ru": "a4eb6ef9930652bd7e55fbb725fd1bcc5a0e5b71e8060dbf6f772dd62cec5d36",
     "optimize-orphan-references-dark-en": "cdf4eb8c79a9961a1e961a4eed4107d4d849ebc5b922ad88ce07befee6b65a9a",
     "optimize-orphan-references-light-ru": "c07151ac896e43bef6150128cbef8a5798ee113083961ed8eaf97113a0b56e1e",
     "card-editor-invalid-default-floor-light-en": "dbf251ece014cfee252e0dcb2d7c00eda66aa4b5bd125e4c83e248d4319d24b3",
