@@ -57,9 +57,11 @@ export interface OptimizeReport extends AlignReport, SpaceReferenceReport {
   canonicalized: number;
   /** Contour-wall atoms materialised into the stable v8 catalogue. */
   wallSegmentsMigrated: number;
+  /** Read-compatible legacy virtual spans converted into zero-wall atoms. */
+  legacyZeroWallsMigrated: number;
   /** Redundant equal-thickness wall entries removed by canonicalisation. */
   wallsMerged: number;
-  /** Touching/overlapping virtual pieces merged on the same room pair. */
+  /** Touching/overlapping zero-wall atoms merged on the same room pair. */
   spansMerged: number;
   /** Collinear independent-wall records collapsed into one (#229). */
   partitionsMerged: number;
@@ -480,6 +482,7 @@ export function optimizePlans(
   } : { ...aligned.report };
 
   let wallsMerged = 0;
+  let legacyZeroWallsMigrated = 0;
   let spansMerged = 0;
   let partitionsMerged = 0;
   let partitionsReconciled = 0;
@@ -513,7 +516,9 @@ export function optimizePlans(
     // the final identity barrier assign stable catalogue IDs. No production
     // maintenance pass writes open_spans/open_to back into the candidate.
     const knownZeroKeys = new Set(sourceZeroWalls.map((wall) => wall.key));
-    for (const line of legacyZeroContourLines(before, oldModel.rooms, NORM_W, eps)) {
+    const legacyZeroLines = legacyZeroContourLines(before, oldModel.rooms, NORM_W, eps);
+    legacyZeroWallsMigrated += legacyZeroLines.length;
+    for (const line of legacyZeroLines) {
       const a = [line[0] / NORM_W, line[1] / NORM_W];
       const b = [line[2] / NORM_W, line[3] / NORM_W];
       const key = wallKey(a, b, GRID_STEP_N);
@@ -693,6 +698,7 @@ export function optimizePlans(
       glowRoomsMigrated: changed ? migration.glowRooms : 0,
       canonicalized: changed ? canonicalized : 0,
       wallSegmentsMigrated: changed ? wallSegmentsMigrated : 0,
+      legacyZeroWallsMigrated: changed ? legacyZeroWallsMigrated : 0,
       wallsMerged: changed ? wallsMerged : 0,
       spansMerged: changed ? spansMerged : 0,
       partitionsMerged: changed ? partitionsMerged : 0,

@@ -7347,6 +7347,25 @@ class HouseplanCard extends LitElement {
     return this._t(`wall_model.reason.${reason}`);
   }
 
+  /** A legacy virtual-wall projection is still present only until its first
+   * structural v9 write. Keep its atomic-failure copy distinct from generic
+   * wall-model validation without persisting provenance on the new atoms. */
+  private _hasLegacyZeroWallFields(config: any = this._serverCfg): boolean {
+    return (config?.spaces || []).some((space: any) => (
+      (Array.isArray(space?.open_spans) && space.open_spans.length > 0)
+      || (space?.rooms || []).some((room: any) => (
+        Array.isArray(room?.open_to) && room.open_to.length > 0
+      ))
+    ));
+  }
+
+  private _showWallModelMigrationBlocked(error: unknown): void {
+    const key = this._hasLegacyZeroWallFields()
+      ? 'toast.zero_wall_migration_blocked'
+      : 'toast.wall_model_migration_blocked';
+    this._showToast(this._t(key, { reason: this._wallModelBlockerLabel(error) }));
+  }
+
   private _commitPhysicalGeometry(
     name: string,
     before: SpaceGeometryState | null,
@@ -7417,9 +7436,7 @@ class HouseplanCard extends LitElement {
     } catch (error) {
       this._clearGeometryGesture();
       this._restoreGeometryStateLocal(before);
-      this._showToast(this._t('toast.wall_model_migration_blocked', {
-        reason: this._wallModelBlockerLabel(error),
-      }));
+      this._showWallModelMigrationBlocked(error);
       return false;
     }
     let safe = false;
@@ -7551,9 +7568,7 @@ class HouseplanCard extends LitElement {
       committedCandidate = commitWallSegmentModel(restoredCandidate).config;
     } catch (error) {
       this._restoreGeometryStateLocal(before);
-      this._showToast(this._t('toast.wall_model_migration_blocked', {
-        reason: this._wallModelBlockerLabel(error),
-      }));
+      this._showWallModelMigrationBlocked(error);
       return false;
     }
     if (physicalChanged) {
@@ -8124,7 +8139,9 @@ class HouseplanCard extends LitElement {
       });
       if (repair.kind === 'ambiguous') {
         this._wallRepairDiagnostic = repair.proposals[0] || null;
-        this._showToast(this._t('toast.wall_repair_ambiguous'));
+        this._showToast(this._t(
+          this._drawWallCm === 0 ? 'toast.zero_wall_ambiguous' : 'toast.wall_repair_ambiguous',
+        ));
         return;
       }
       if (repair.kind === 'repair' && !this._overlapRoom(repair.face.ring)) {
@@ -8200,7 +8217,9 @@ class HouseplanCard extends LitElement {
         });
         if (result.kind === 'ambiguous') {
           this._wallRepairDiagnostic = result.proposals[0] || null;
-          this._showToast(this._t('toast.wall_repair_ambiguous'));
+          this._showToast(this._t(
+            this._drawWallCm === 0 ? 'toast.zero_wall_ambiguous' : 'toast.wall_repair_ambiguous',
+          ));
           return true;
         }
         if (result.kind === 'repair') {
@@ -8327,7 +8346,7 @@ class HouseplanCard extends LitElement {
       if (p && cmRaw === 0 && zeroWallHasOpening(sp.openings, {
         kind: 'partition', id: d.id,
       })) {
-        this._showToast(this._t('toast.zero_wall_opening'));
+        this._showToast(this._t('toast.zero_wall_opening_conflict'));
         return;
       }
       if (p) p.cm = cmRaw;
@@ -11699,7 +11718,7 @@ class HouseplanCard extends LitElement {
         if (cmRaw === 0 && zeroWallHasOpening(sp.openings, {
           kind: 'partition', id: partition.id,
         })) {
-          this._showToast(this._t('toast.zero_wall_opening'));
+          this._showToast(this._t('toast.zero_wall_opening_conflict'));
           return;
         }
         partition.cm = cmRaw;
@@ -11739,7 +11758,7 @@ class HouseplanCard extends LitElement {
         return point.every(Number.isFinite) && distToSegment(point, target) <= eps;
       });
       if (blocked) {
-        this._showToast(this._t('toast.zero_wall_opening'));
+        this._showToast(this._t('toast.zero_wall_opening_conflict'));
         return;
       }
     }
@@ -15657,9 +15676,7 @@ class HouseplanCard extends LitElement {
         this._optimizeReferenceContext(removeLiveMissingPositions),
       );
     } catch (error) {
-      this._showToast(this._t('toast.wall_model_migration_blocked', {
-        reason: this._wallModelBlockerLabel(error),
-      }));
+      this._showWallModelMigrationBlocked(error);
       return;
     }
     const preflight = r.changed ? this._checkOptimizeGeometry(r.config) : null;
@@ -16916,6 +16933,9 @@ class HouseplanCard extends LitElement {
                 : nothing}
               ${r.wallSegmentsMigrated ? html`<p class="alignmsg">${this._t(
                   'gs.wall_segments_migrated', { n: String(r.wallSegmentsMigrated) },
+                )}</p>` : nothing}
+              ${r.legacyZeroWallsMigrated ? html`<p class="alignmsg">${this._t(
+                  'gs.zero_walls_migrated', { n: String(r.legacyZeroWallsMigrated) },
                 )}</p>` : nothing}
               ${modelMaintenance ? html`<p class="alignmsg">${this._t('gs.optimize_changes', {
                   m: String(r.migrated), c: String(r.canonicalized),

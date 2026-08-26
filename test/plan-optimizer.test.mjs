@@ -47,7 +47,8 @@ const assertNoPersistedChanges = (result) => {
   for (const field of [
     'moved', 'coordsCanonicalized', 'rotated', 'removedDrafts', 'migrated',
     'glowSpacesMigrated', 'glowRoomsMigrated', 'canonicalized', 'wallsMerged',
-    'spansMerged', 'partitionsMerged', 'partitionsReconciled', 'openingsRehosted',
+    'legacyZeroWallsMigrated', 'spansMerged', 'partitionsMerged',
+    'partitionsReconciled', 'openingsRehosted',
     'redundantDraftsRemoved',
     'wallsStraightened',
     'spaceRefsRemapped', 'roomRefsRemapped',
@@ -596,6 +597,7 @@ test('optimizePlans migrates, aligns and canonicalises idempotently', () => {
   const sharedIds = left.wall_ids.filter((id) => right.wall_ids.includes(id));
   assert.ok(sharedIds.some((id) => first.config.spaces[0].wall_segments
     .some((segment) => segment.id === id && segment.cm === 0)));
+  assert.equal(first.report.legacyZeroWallsMigrated, 1);
   assert.equal(first.config.spaces[0].walls.length, 1);
   assert.equal(first.layout.m1.x % S, 0);
 

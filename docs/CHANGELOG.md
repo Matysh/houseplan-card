@@ -10,7 +10,10 @@
   into stable model-v9 wall segments; all existing `cm:0` segments deliberately
   receive the same semantics, so a small number of old plans may change
   appearance or light transmission. Zero walls create no masonry, area or
-  opening tunnel and cannot host an opening
+  opening tunnel and cannot host an opening. Export a backup before the first
+  structural save, import or **Optimize plans** that writes model v9: downgrade
+  to an older version does not understand the new wall model, and restoring
+  that backup is the supported way back
   ([#306](https://github.com/Matysh/houseplan-card/issues/306)).
 
 ## v1.68.0-beta.2 — 2026-08-26

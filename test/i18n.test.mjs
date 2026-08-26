@@ -51,12 +51,15 @@ test('issue 251 unavailable controls toast has exact singular and plural copy', 
 test('Optimize distinguishes updated spaces from cleaned coordinate noise', () => {
   assert.equal(
     en['gs.optimize_changes'],
-    'Model migrations: {m}; spaces updated: {c}; noisy coordinate values removed: {p}; merged real-wall fragments: {w}; virtual fragments: {s}; independent walls: {i}.',
+    'Model migrations: {m}; spaces updated: {c}; noisy coordinate values removed: {p}; merged real-wall fragments: {w}; merged zero-thickness wall fragments: {s}; independent walls: {i}.',
   );
   assert.equal(
     ru['gs.optimize_changes'],
-    'Миграций модели: {m}; обновлено пространств: {c}; устранён шум координат: {p}; объединено отрезков реальных стен: {w}; виртуальных: {s}; независимых: {i}.',
+    'Миграций модели: {m}; обновлено пространств: {c}; устранён шум координат: {p}; объединено отрезков реальных стен: {w}; объединено отрезков стен нулевой толщины: {s}; независимых: {i}.',
   );
+  assert.equal(en['gs.zero_walls_migrated'], 'Virtual wall spans converted: {n}.');
+  assert.equal(ru['gs.zero_walls_migrated'], 'Преобразовано виртуальных участков: {n}.');
+  assert.match(cardSource, /gs\.zero_walls_migrated/);
   assert.match(cardSource, /p: String\(r\.coordsCanonicalized\)/);
   // #229: the independent-wall counter is reported, not silently accumulated
   assert.match(cardSource, /i: String\(r\.partitionsMerged\)/);
@@ -64,6 +67,28 @@ test('Optimize distinguishes updated spaces from cleaned coordinate noise', () =
   assert.match(cardSource, /gs\.optimize_openings_rehosted/);
   assert.match(cardSource,
     /d\.report\.coordsCanonicalized \+ d\.report\.latticeCoordinatesCanonicalized/);
+});
+
+test('issue 306 zero-wall failures have dedicated symmetric copy', () => {
+  const expected = {
+    'toast.zero_wall_opening_conflict': [
+      'Remove the opening on this wall segment first.',
+      'Сначала удалите проём на этом участке стены.',
+    ],
+    'toast.zero_wall_ambiguous': [
+      'The wall segment is ambiguous. Simplify or adjust the junction.',
+      'Не удалось однозначно выбрать участок стены. Уточните геометрию узла.',
+    ],
+    'toast.zero_wall_migration_blocked': [
+      'The space was not converted: {reason}. No data was changed.',
+      'Пространство не преобразовано: {reason}. Данные не изменены.',
+    ],
+  };
+  for (const [key, [english, russian]] of Object.entries(expected)) {
+    assert.equal(en[key], english);
+    assert.equal(ru[key], russian);
+    assert.match(cardSource, new RegExp(key.replaceAll('.', '\\.')));
+  }
 });
 
 test('issue 291 Optimize reports lattice cleanup separately in both languages', () => {
