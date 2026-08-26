@@ -225,7 +225,7 @@ export function checkReferences({ config, layout = {} } = {}, { notes = [] } = {
             'комнаты назначения не существует в том же пространстве');
         }
       }
-      if (Number(config?.model_version || 0) === 8) {
+      if (Number(config?.model_version || 0) >= 8) {
         const wallIds = Array.isArray(room?.wall_ids) ? room.wall_ids : [];
         const poly = roomPolygon(room) || [];
         if (wallIds.length !== poly.length) {

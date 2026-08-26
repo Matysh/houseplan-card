@@ -715,3 +715,33 @@ test('#316: непривязанный контурный проём — вал�
     'model v8 still requires an explicit host on every opening',
   );
 });
+
+test('#316 r4: room_wall_ids проверяется и в v9 — фантомные ссылки ловятся', () => {
+  // CODE-REVIEW-316-r4 H1: правка условия opening_host не имеет права трогать
+  // независимый инвариант room_wall_ids (#244/#252) — он действует для v8 и
+  // всех последующих версий модели.
+  const m = {
+    config: {
+      model_version: 9,
+      spaces: [{
+        id: 'sp316b', title: 'S', view_box: [0, 0, 1, 1],
+        rooms: [{
+          id: 'r', name: 'R', area: null,
+          poly: [[0.1, 0.1], [0.5, 0.1], [0.5, 0.4], [0.1, 0.4]],
+          wall_ids: ['wall-ghost-1', 'wall-ghost-2', 'wall-ghost-3', 'wall-ghost-4'],
+        }],
+        wall_segments: [],
+      }],
+      markers: [], settings: {},
+    },
+    layout: {},
+  };
+  const kinds = checkReferences(m).filter((item) => item.kind === 'room_wall_ids');
+  assert.ok(kinds.length >= 1, 'phantom wall_ids must be reported on model v9');
+  const v8 = structuredClone(m);
+  v8.config.model_version = 8;
+  assert.ok(
+    checkReferences(v8).filter((item) => item.kind === 'room_wall_ids').length >= 1,
+    'and stay reported on model v8',
+  );
+});
