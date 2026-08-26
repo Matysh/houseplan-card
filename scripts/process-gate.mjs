@@ -575,13 +575,20 @@ function main(argv) {
 
   let range = value('range');
   if (!range && flag('github-range')) {
+    // gitObjectExists ловит исключение, чтобы подменить осиротевший после
+    // force-push BEFORE_SHA на origin/dev (#315). Раннер обязан бросать,
+    // а не завершать процесс, как это делает git() ниже.
     range = resolveValidationRange({
       eventName: process.env.EVENT_NAME,
       beforeSha: process.env.BEFORE_SHA,
       baseSha: process.env.BASE_SHA,
       headSha: process.env.HEAD_SHA,
       developmentBranch: process.env.DEVELOPMENT_BRANCH,
-    }, (args) => git(args, repo).trim());
+    }, (args) => {
+      const r = spawnSync('git', ['-C', repo, ...args], { encoding: 'utf8' });
+      if (r.status !== 0) throw new Error(`git ${args.join(' ')} → ${(r.stderr || '').trim()}`);
+      return r.stdout.trim();
+    });
   }
   if (!range) {
     const hasDev = spawnSync('git', ['-C', repo, 'rev-parse', '--verify', 'origin/dev'],

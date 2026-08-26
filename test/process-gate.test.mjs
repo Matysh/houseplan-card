@@ -535,6 +535,64 @@ test('the CLI judges a rebased issue branch by its own commits (#190)', (t) => {
   }
 });
 
+test('the CLI falls back to origin/dev when BEFORE_SHA is orphaned by a force-push (#315)', (t) => {
+  const probe = spawnSync('git', ['--version'], { encoding: 'utf8' });
+  if (probe.status !== 0) {
+    t.skip('git недоступен');
+    return;
+  }
+  const dir = mkdtempSync(join(tmpdir(), 'hp-gate-315-'));
+  const gate = fileURLToPath(new URL('../scripts/process-gate.mjs', import.meta.url));
+  const git = (...args) => {
+    const r = spawnSync('git', ['-C', dir, ...args], { encoding: 'utf8' });
+    assert.equal(r.status, 0, `git ${args.join(' ')}: ${r.stderr}`);
+    return r.stdout;
+  };
+  const write = (rel, text) => {
+    const full = join(dir, rel);
+    mkdirSync(join(full, '..'), { recursive: true });
+    writeFileSync(full, text);
+  };
+  const commitAll = (message) => {
+    git('add', '-A');
+    git('-c', 'user.name=t', '-c', 'user.email=t@t', '-c', 'core.hooksPath=/dev/null',
+      'commit', '-q', '-m', message);
+  };
+
+  try {
+    git('init', '-q', '-b', 'dev');
+    write('README.md', 'base\n');
+    commitAll('Base');
+    git('update-ref', 'refs/remotes/origin/dev', git('rev-parse', 'HEAD').trim());
+
+    git('checkout', '-q', '-b', 'issue/7-own-work');
+    write('scripts/w.mjs', 'export const w = 1;\n');
+    commitAll('Own work\n\nIssue: #7\nUser-Visible: no');
+
+    // Push-событие после force-push: BEFORE_SHA указывает на переписанную
+    // вершину, которой в клоне больше нет. Раньше первый же cat-file убивал
+    // процесс кодом 2; теперь диапазон берётся от merge-base с origin/dev.
+    const r = spawnSync(process.execPath, [gate, '--repo', dir, '--github-range', '--json'], {
+      encoding: 'utf8',
+      env: {
+        ...process.env,
+        EVENT_NAME: 'push',
+        BEFORE_SHA: 'f'.repeat(40),
+        BASE_SHA: '',
+        HEAD_SHA: git('rev-parse', 'HEAD').trim(),
+        DEVELOPMENT_BRANCH: 'dev',
+        TARGET_REF: 'refs/heads/issue/7-own-work',
+      },
+    });
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+    const report = JSON.parse(r.stdout);
+    assert.equal(report.commits, 1, JSON.stringify(report));
+    assert.equal(report.ok, true, JSON.stringify(report.findings));
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test('an infrastructure range is recognised by the absence of class A files (#207)', () => {
   const infra = makeCommit({
     sha: 'a'.repeat(40), subject: 'Tune CI', body: 'Issue: #206\nUser-Visible: no',
