@@ -41,11 +41,15 @@ const out = await page.evaluate(async () => {
     && logged.failures[0].reason === 'wall-exception' && logged.failures[0].detail === 'Error'
     && typeof logged.preflightFingerprint === 'string' && typeof logged.checkedAt === 'string';
 
-  // Dialog: failed branch renders per-failure reasons
+  // Dialog: failed branch renders per-failure reasons. The dialog carries the
+  // CANDIDATE config the preflight judged — its geometry differs from the
+  // saved one, exactly like a real refused optimize run (r.changed === true).
+  const candidateCfg = structuredClone(card._serverCfg);
+  candidateCfg.spaces[0].rooms[0].poly = [[0.1, 0.1], [0.6, 0.1], [0.6, 0.4], [0.1, 0.4]];
   card._alignDialog = {
     cm: 5, where: '', changed: true, busy: false, removeLiveMissingPositions: false,
     preflight,
-    config: card._serverCfg, layout: {},
+    config: candidateCfg, layout: {},
     report: { moved: 0, total: 0, rotated: 0, removedDrafts: 0, migrated: 0, canonicalized: 0,
       coordsCanonicalized: 0, latticeCoordinatesCanonicalized: 0, wallSegmentsMigrated: 0,
       wallsMerged: 0, spansMerged: 0, partitionsMerged: 0, partitionsReconciled: 0,
@@ -80,6 +84,21 @@ const out = await page.evaluate(async () => {
     && block.origin === 'runtime' && block.failures.length === 2
     && block.failures[0].reason === 'wall-exception' && block.failures[1].detail === null;
 
+  // CODE-REVIEW-295-r1 M1: the geometry hash comes from the candidate the
+  // preflight judged, not from the saved config — the block must carry what
+  // a space export cannot reproduce.
+  const candidateHash = block.failures[0].spaceGeometryFingerprint;
+  const saved = card._alignDialog;
+  card._alignDialog = { ...saved, config: card._serverCfg };
+  copied = null;
+  await card._copyPreflightDiagnostics(); await update();
+  const savedHash = JSON.parse(copied).failures[0].spaceGeometryFingerprint;
+  card._alignDialog = saved; await update();
+  result.fingerprintTracksCandidate = typeof candidateHash === 'string'
+    && candidateHash.length > 0 && candidateHash !== savedHash;
+
+  Object.defineProperty(navigator, 'clipboard', { value: clipboard, configurable: true });
+
   // Copy: clipboard failure -> inline fallback with the same JSON
   Object.defineProperty(navigator, 'clipboard', {
     value: { writeText: async () => { throw new Error('denied'); } }, configurable: true,
@@ -87,6 +106,16 @@ const out = await page.evaluate(async () => {
   await card._copyPreflightDiagnostics(); await update();
   const pre = root().querySelector('hp-dialog details pre');
   result.inlineFallback = !!pre && pre.textContent.includes('houseplan-optimize-preflight');
+
+  // CODE-REVIEW-295-r1 M2: the inline fallback belongs to one dialog showing.
+  // Closing through the real hp-close path clears it, so a later refusal can
+  // never exhibit the previous refusal's JSON.
+  root().querySelector('hp-dialog')?.dispatchEvent(new CustomEvent(
+    'hp-close', { bubbles: true, composed: true },
+  ));
+  await update();
+  result.fallbackClearedOnClose = card._alignDialog === null
+    && card._preflightClipboardFallback === null;
 
   console.warn = origWarn;
   return result;

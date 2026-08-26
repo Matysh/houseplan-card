@@ -2549,7 +2549,7 @@ class HouseplanCard extends LitElement {
       if (this._openingInfo) { this._openingInfo = null; return; }
       if (this._infoCard) { this._closeInfoCard(); return; }
       if (this._rulesDialog) { this._rulesDialog = null; return; }
-      if (this._alignDialog) { this._alignDialog = null; return; }
+      if (this._alignDialog) { this._alignDialog = null; this._preflightClipboardFallback = null; return; }
       if (this._backupImportDialog) { this._backupImportDialog = null; return; }
       if (this._backupExportDialog) { this._backupExportDialog = null; return; }
       if (this._settingsDialog) { this._settingsDialog = null; return; }
@@ -6481,6 +6481,7 @@ class HouseplanCard extends LitElement {
     this._closeInfoCard();
     this._rulesDialog = null;
     this._alignDialog = null;
+    this._preflightClipboardFallback = null;
     this._backupImportDialog = null;
     this._backupExportDialog = null;
     this._settingsDialog = null;
@@ -15841,8 +15842,15 @@ class HouseplanCard extends LitElement {
    * refusal depends on live card state and a saved export may not reproduce
    * it, so the payload carries what the export cannot.
    */
-  private _preflightDiagnostics(preflight: OptimizeGeometryPreflightResult): object {
-    const spacesById = new Map((this._serverCfg?.spaces || [])
+  private _preflightDiagnostics(
+    preflight: OptimizeGeometryPreflightResult,
+    candidate: ServerConfig | null,
+  ): object {
+    // CODE-REVIEW-295-r1 M1: hash the CANDIDATE spaces the preflight judged,
+    // not the already-saved config — a saved-config hash is exactly what a
+    // space export would reproduce, and the block promises what the export
+    // does not carry.
+    const spacesById = new Map(((candidate as any)?.spaces || [])
       .map((space: any) => [String(space?.id || ''), space]));
     return {
       kind: 'houseplan-optimize-preflight',
@@ -15864,11 +15872,14 @@ class HouseplanCard extends LitElement {
 
   /** #295: dev-log once per distinct failing preflight, not once per render. */
   private _reportedPreflightFingerprint: string | null = null;
-  private _reportPreflightFailure(preflight: OptimizeGeometryPreflightResult): void {
+  private _reportPreflightFailure(
+    preflight: OptimizeGeometryPreflightResult,
+    candidate: ServerConfig | null,
+  ): void {
     if (preflight.ok || preflight.fingerprint === this._reportedPreflightFingerprint) return;
     this._reportedPreflightFingerprint = preflight.fingerprint;
     // eslint-disable-next-line no-console
-    console.warn('[houseplan] optimize preflight failed', this._preflightDiagnostics(preflight));
+    console.warn('[houseplan] optimize preflight failed', this._preflightDiagnostics(preflight, candidate));
   }
 
   /**
@@ -15887,7 +15898,9 @@ class HouseplanCard extends LitElement {
   private async _copyPreflightDiagnostics(): Promise<void> {
     const preflight = this._alignDialog?.preflight;
     if (!preflight || preflight.ok) return;
-    const text = JSON.stringify(this._preflightDiagnostics(preflight), null, 2);
+    const text = JSON.stringify(
+      this._preflightDiagnostics(preflight, this._alignDialog?.config ?? null), null, 2,
+    );
     try {
       await navigator.clipboard.writeText(text);
       this._preflightClipboardFallback = null;
@@ -15991,7 +16004,7 @@ class HouseplanCard extends LitElement {
       return;
     }
     const preflight = r.changed ? this._checkOptimizeGeometry(r.config) : null;
-    if (preflight) this._reportPreflightFailure(preflight);
+    if (preflight) this._reportPreflightFailure(preflight, r.config);
     // The maximum geometry shift is an UPPER BOUND, not a sample. The run
     // measured every element in the centimetres of ITS OWN space — converting
     // one normalised maximum through the first space's `cell_cm` understated
@@ -16000,6 +16013,10 @@ class HouseplanCard extends LitElement {
     const cm = Math.ceil(r.report.maxShiftCm * 10) / 10;
     const sp = spaces.find((x: any) => x?.id != null && String(x.id) === r.report.maxSpace);
     const where = spaces.length > 1 && sp ? String(sp.title || sp.id) : '';
+    // CODE-REVIEW-295-r1 M2: the inline clipboard fallback belongs to one
+    // dialog showing — a reopened dialog must not display the previous
+    // refusal's JSON while the visible reasons already describe a new one.
+    this._preflightClipboardFallback = null;
     this._alignDialog = {
       report: r.report, config: r.config, layout: r.layout, cm, where,
       preflight, changed: r.changed, busy: false, removeLiveMissingPositions,
@@ -16024,7 +16041,7 @@ class HouseplanCard extends LitElement {
     const fingerprint = contentFingerprint(d.config);
     if (d.preflight.fingerprint !== fingerprint) {
       const preflight = this._checkOptimizeGeometry(d.config);
-      this._reportPreflightFailure(preflight);
+      this._reportPreflightFailure(preflight, d.config);
       d = { ...d, preflight };
       this._alignDialog = d;
       if (!preflight.ok) return;
@@ -16057,6 +16074,7 @@ class HouseplanCard extends LitElement {
       this._maybeRebuildDevices();
       this._cacheSnapshot();
       this._alignDialog = null;
+      this._preflightClipboardFallback = null;
       this.requestUpdate();
       this._showToast(this._t('gs.align_done', {
         n: String(d.report.moved),
@@ -17161,7 +17179,7 @@ class HouseplanCard extends LitElement {
     const visibleDetails = referenceDetails.slice(0, 10);
     const remainingDetails = Math.max(0, referenceDetails.length - visibleDetails.length);
     return html`<hp-dialog .hass=${this.hass} .title=${this._t('gs.align_title')} icon="mdi:broom"
-      dismiss-on-scrim @hp-close=${() => (this._alignDialog = null)}>
+      dismiss-on-scrim @hp-close=${() => { this._alignDialog = null; this._preflightClipboardFallback = null; }}>
         <div class="body">
           ${failed
             ? html`
@@ -17324,7 +17342,7 @@ class HouseplanCard extends LitElement {
         </div>
         <div class="row" slot="footer">
           <span class="spacer"></span>
-          <button class="btn ghost" @click=${() => (this._alignDialog = null)}>${this._t('btn.cancel')}</button>
+          <button class="btn ghost" @click=${() => { this._alignDialog = null; this._preflightClipboardFallback = null; }}>${this._t('btn.cancel')}</button>
           ${!d.changed || !d.preflight?.ok ? nothing : html`
             <button class="btn on" @click=${this._runAlignToGrid} ?disabled=${d.busy}>
               <ha-icon icon="mdi:check"></ha-icon>${d.busy ? '…' : this._t('gs.align_run')}

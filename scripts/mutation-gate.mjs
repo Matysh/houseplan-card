@@ -2259,6 +2259,33 @@ export const MUTANTS = [
     }],
   },
   {
+    id: 'preflight-fingerprint-from-saved-config',
+    // CODE-REVIEW-295-r1 M1: хэш геометрии обязан браться из кандидата,
+    // который проверял preflight, а не из сохранённого конфига — иначе блок
+    // повторяет то, что и так даст экспорт пространства.
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node demo/smoke_preflight_diagnostics.mjs',
+    because: 'диагностика с хэшем сохранённой геометрии не несёт ничего сверх экспорта (AC4)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: "    const spacesById = new Map(((candidate as any)?.spaces || [])",
+      replace: "    const spacesById = new Map(((this._serverCfg as any)?.spaces || [])",
+    }],
+  },
+  {
+    id: 'preflight-fallback-survives-dialog-close',
+    // CODE-REVIEW-295-r1 M2: инлайн-фолбэк живёт одно показание диалога;
+    // переживший закрытие блок подсунет в отчёт диагностику чужого отказа.
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node demo/smoke_preflight_diagnostics.mjs',
+    because: 'застрявший фолбэк отдаёт в баг-репорт JSON предыдущего отказа, не текущего (AC4)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: "dismiss-on-scrim @hp-close=${() => { this._alignDialog = null; this._preflightClipboardFallback = null; }}>",
+      replace: "dismiss-on-scrim @hp-close=${() => { this._alignDialog = null; }}>",
+    }],
+  },
+  {
     id: 'preflight-diagnostics-without-reason',
     // #295: копируемый блок без reason бесполезен для отчёта об ошибке.
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
@@ -2278,8 +2305,8 @@ export const MUTANTS = [
     because: 'структурированная запись отказа в консоли — часть контракта диагностики #295',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: "    console.warn('[houseplan] optimize preflight failed', this._preflightDiagnostics(preflight));",
-      replace: "    void preflight;",
+      find: "    console.warn('[houseplan] optimize preflight failed', this._preflightDiagnostics(preflight, candidate));",
+      replace: "    void preflight; void candidate;",
     }],
   },
   {
