@@ -1,18 +1,18 @@
-<!-- release: v1.68.0-beta.1 -->
+<!-- release: v1.68.0-beta.2 -->
 
 ## Основное
 
-- Структурные правки стен теперь сохраняют толщину и проёмы благодаря стабильным ID сегментов; старые планы обновляются атомарно.
-- Острые и многолучевые стыки стен больше не оставляют длинных зубцов, пиков и торчащих торцов.
-- При рисовании цепочки стен её ось и узлы остаются видимыми поверх кладки.
+- Отказ проверки геометрии перед оптимизацией теперь объясняет себя: причина по каждому пространству, копируемый диагностический блок и совет обновиться только при реальном расхождении версий.
+- Инструмент «Толщина» берёт любую стену — отдельно стоящие перегородки и сегменты черновиков меняются так же, как контуры комнат.
+- Рисование комнат на планах model v8 снова надёжно: цепочка стен переживает промежуточные сохранения и отмену, отклонённая запись сразу возвращает принятую геометрию.
 - Мелкие исправления и улучшения.
 
 ## Highlights
 
-- Structural wall edits now keep thickness and openings attached through stable segment IDs; existing plans upgrade atomically.
-- Acute and multi-wall junctions no longer leave long teeth, peaks or protruding butt ends.
-- While drawing a wall chain, its axis and nodes remain visible above the masonry.
+- A refused pre-optimize geometry check now explains itself: a reason per space, a copyable diagnostics block, and update advice only when the card and integration versions actually differ.
+- The Thickness tool serves every wall — standalone partitions and saved draft segments resize just like room contours.
+- Drawing rooms on model-v8 plans is reliable again: a wall chain survives intermediate saves and Undo, and a rejected save restores the accepted geometry at once.
 - Small fixes and improvements.
 
-[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.68.0-beta.1/docs/CHANGELOG.ru.md)
-· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.68.0-beta.1/docs/CHANGELOG.md)
+[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.68.0-beta.2/docs/CHANGELOG.ru.md)
+· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.68.0-beta.2/docs/CHANGELOG.md)

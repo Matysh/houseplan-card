@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.68.0-beta.2 — 2026-08-26
+
 - The Russian binding dialog names its entities toggle exactly as the user
   guide does: «Показывать сущности»
   ([#269](https://github.com/Matysh/houseplan-card/issues/269)).
