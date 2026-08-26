@@ -1,9 +1,18 @@
 /** #314: model-v8 draft identities survive writes/Undo; rejected writes fail closed. */
+import { spawnSync } from 'node:child_process';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+import { makeV8DraftRegressionFixture } from './fixtures/v8-draft-regression.mjs';
 import { launch, checkAll, finish } from './serve.mjs';
 
 const { page, browser } = await launch({ width: 900, height: 760 });
+const repoRoot = fileURLToPath(new URL('..', import.meta.url));
+const denseFixture = makeV8DraftRegressionFixture();
 
-const result = await page.evaluate(async () => {
+const result = await page.evaluate(async (denseFixture) => {
   const out = {};
   const card = window.__card;
   const clone = (value) => JSON.parse(JSON.stringify(value));
@@ -48,10 +57,10 @@ const result = await page.evaluate(async () => {
     } };
   };
 
-  const reset = async () => {
+  const reset = async (initialConfig = emptyConfig()) => {
     card._saveConfigDebounced.cancel();
     await card._writeChain.catch(() => undefined);
-    server = emptyConfig();
+    server = clone(initialConfig);
     rev = 1;
     writes = [];
     writeBehavior = null;
@@ -62,7 +71,7 @@ const result = await page.evaluate(async () => {
     card._geometryHistory.clear();
     card._clearGeometryGesture();
     card._toast = '';
-    card._space = 'v8-draft';
+    card._space = server.spaces[0].id;
     card._layout = {};
     card._modelCache = null;
     card._wallUnionCache = null;
@@ -221,7 +230,70 @@ const result = await page.evaluate(async () => {
     && !server.spaces[0].room_drafts?.length
     && !server.spaces[0].partitions?.length;
 
-  return out;
-});
+  // AC8: repeat the real click/close/reload path on an anonymised fixture with
+  // the same population shape as the owner's report.  Existing independent
+  // geometry and the one known unusable draft must survive byte-for-byte.
+  await reset(denseFixture);
+  const invariantBefore = clone(server);
+  const originalPartitionIds = server.spaces[0].partitions.map((item) => item.id);
+  const originalDraft = JSON.stringify(server.spaces[0].room_drafts[0]);
+  for (const point of [[800, 100], [900, 100], [900, 200], [800, 200], [800, 100]]) {
+    await clickPoint(point[0], point[1]);
+    card._saveConfigDebounced.flush();
+    await settleWrites();
+  }
+  card._nameSel = 'Invariant room';
+  card._saveRoom();
+  card._saveConfigDebounced.flush();
+  await settleWrites();
+  await card._reloadConfigOnly(true);
+  const denseAfter = card._serverCfg.spaces[0];
+  out.denseFixtureHasOwnerReportShape = invariantBefore.spaces[0].rooms.length === 13
+    && invariantBefore.spaces[0].wall_segments.length === 44
+    && originalPartitionIds.length === 24
+    && invariantBefore.spaces[0].room_drafts.length === 1;
+  out.denseFixtureRoomSurvivesReload = denseAfter.rooms.length === 14
+    && denseAfter.rooms.some((room) => room.name === 'Invariant room');
+  out.denseFixturePreservesIndependentGeometry = JSON.stringify(
+    denseAfter.partitions.map((item) => item.id),
+  ) === JSON.stringify(originalPartitionIds)
+    && denseAfter.room_drafts.length === 1
+    && JSON.stringify(denseAfter.room_drafts[0]) === originalDraft;
 
-await finish(browser, checkAll(result));
+  return { checks: out, invariantBefore, invariantAfter: clone(card._serverCfg) };
+}, denseFixture);
+
+const runInvariants = (config, label) => {
+  const dir = mkdtempSync(join(tmpdir(), `houseplan-314-${label}-`));
+  const path = join(dir, 'config.json');
+  try {
+    writeFileSync(path, JSON.stringify(config));
+    const run = spawnSync('npm', [
+      'run', 'invariants', '--', '--config', path, '--json',
+    ], { cwd: repoRoot, encoding: 'utf8', shell: process.platform === 'win32' });
+    const stdout = run.stdout || '';
+    const jsonStart = stdout.indexOf('{');
+    if (jsonStart < 0) {
+      throw new Error(`invariant CLI produced no JSON (status ${run.status}):\n`
+        + `${stdout}\n${run.stderr || run.error || ''}`);
+    }
+    const parsed = JSON.parse(stdout.slice(jsonStart));
+    return { status: run.status, violations: parsed.violations, notes: parsed.notes };
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+};
+
+const before = runInvariants(result.invariantBefore, 'before');
+const after = runInvariants(result.invariantAfter, 'after');
+const signature = (run) => run.violations.map((item) => [
+  item.invariant, item.kind, item.owner,
+]);
+result.checks.denseFixtureKnownDebtIsExplicit = before.status === 1
+  && before.violations.length === 1
+  && before.violations[0].kind === 'unusable_draft'
+  && before.violations[0].owner.endsWith(':draft-314-known-debt');
+result.checks.denseFixtureAddsNoInvariantViolations = after.status === 1
+  && JSON.stringify(signature(after)) === JSON.stringify(signature(before));
+
+await finish(browser, checkAll(result.checks));

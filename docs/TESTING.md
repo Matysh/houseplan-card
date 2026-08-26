@@ -66,6 +66,13 @@
       observes synchronous rollback of its whole pending batch: active path,
       pending map and command history are empty, and finishing the tool cannot
       create a ghost partition.
+- [ ] The smoke also loads the anonymised
+      `demo/fixtures/v8-draft-regression.mjs` population (13 rooms, 44 wall
+      catalogue segments, 24 intentional partitions, one known unusable
+      draft), closes and reloads a new room through the real editor path, then
+      runs the `model-invariants.mjs` CLI before and after. The exact existing
+      `unusable_draft` finding must remain the only violation; no independent
+      object may disappear and no new hidden obstacle may appear.
 - [ ] `tests_backend/test_wall_segment_model.py` accepts valid independent v8
       draft/partition/column/hosted-opening changes with an unchanged contour
       catalog, while the existing current/downgraded stale-contour negatives

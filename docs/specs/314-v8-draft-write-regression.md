@@ -281,6 +281,13 @@ F2 остаётся pending и следующим write сохраняется. 
 
 **Доказательство:** model-invariant unit + review кода.
 
+Исполняемое доказательство находится в `demo/smoke_v8_draft_write.mjs`: оно
+загружает обезличенную `demo/fixtures/v8-draft-regression.mjs` с формой отчёта
+13 rooms / 44 wall segments / 24 partitions / 1 unusable draft, закрывает новую
+комнату реальным editor path и запускает CLI `model-invariants.mjs` на снимках
+до и после. Единственная заранее известная находка обязана сохраниться без
+новых violations.
+
 ### AC9. Совместимость, View и touch
 
 Persisted schema остаётся v8; v7 safe round-trip и v8 read path не меняют
