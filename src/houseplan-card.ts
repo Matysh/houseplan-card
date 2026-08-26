@@ -199,7 +199,8 @@ import {
 import { optimizePlans, type OptimizeReport } from './plan-optimizer';
 import {
   adoptWallSegmentModelCandidateInPlace, commitWallSegmentModel,
-  fixedTopologyWallLineageHints, wallModelOffGridValueCount, WallSegmentModelError,
+  fixedTopologyWallLineageHints, sanitizeRoomDraftPath,
+  wallModelOffGridValueCount, WallSegmentModelError,
 } from './wall-segment-model';
 import { snapNearAxisEndpoint } from './near-axis';
 import type { SpaceReferenceRepairContext } from './space-reference-repair';
@@ -2753,6 +2754,8 @@ class HouseplanCard extends LitElement {
       const sp = this._curSpaceCfg as any;
       const i = (sp.room_drafts || []).findIndex((d: any) => d.id === this._activeDraftId);
       if (i >= 0) {
+        const previousSegments = Array.isArray(sp.room_drafts[i]?.segments)
+          ? sp.room_drafts[i].segments : [];
         if (this._path.length < 2) {
           sp.room_drafts.splice(i, 1);
           if (!sp.room_drafts.length) delete sp.room_drafts;
@@ -2761,7 +2764,12 @@ class HouseplanCard extends LitElement {
           sp.room_drafts[i] = {
             id: this._activeDraftId,
             points: this._path.map((p) => [p[0] / NORM_W, p[1] / NORM_W]),
-            segments: this._draftSegmentCms.map((cm) => ({ cm })),
+            // Undo removes the terminal edge; it must not rename every edge
+            // that survived it. The v8 identity barrier only creates an id
+            // for a genuinely new segment (#314).
+            segments: this._draftSegmentCms.map((cm, index) => ({
+              ...(previousSegments[index] || {}), cm,
+            })),
           };
         }
         this._commitPhysicalGeometry(this._t('history.draft_segment_delete'), before);
@@ -7090,17 +7098,8 @@ class HouseplanCard extends LitElement {
           d && validId(d.id) && Array.isArray(d.points)
           && d.points.length >= 2 && d.points.every(point) && keepId(d.id))
           .map((d: any) => {
-            const points: number[][] = [[Number(d.points[0][0]), Number(d.points[0][1])]];
-            const segments: Array<{ cm: number }> = [];
-            for (let i = 1; i < d.points.length; i++) {
-              const next = [Number(d.points[i][0]), Number(d.points[i][1])];
-              if (this._samePt(points[points.length - 1], next)) continue;
-              points.push(next);
-              segments.push({
-                cm: Math.max(1, Math.min(100, Number(d.segments?.[i - 1]?.cm) || 15)),
-              });
-            }
-            return { id: d.id, points, segments };
+            const sanitized = sanitizeRoomDraftPath(d);
+            return { id: d.id, ...sanitized };
           })
           .filter((d: any) => d.points.length >= 2);
         if (!(sp as any).room_drafts.length) delete (sp as any).room_drafts;
@@ -7133,6 +7132,46 @@ class HouseplanCard extends LitElement {
   private _pendingPhysicalWrites = new Map<string, {
     fingerprint: string; before: SpaceGeometryState;
   }>();
+
+  /**
+   * A rejected config/set accepted no part of its payload. Restore every
+   * physical space carried by that request to the earliest server-backed
+   * snapshot, including newer edits made on the same unaccepted base while the
+   * request was in flight. Ambiguous persisted walls are never inspected or
+   * cleaned here: this is transaction rollback, not repair (#314).
+   */
+  private _rollbackRejectedPhysicalWrites(
+    entries: Array<[string, { fingerprint: string; before: SpaceGeometryState }]>,
+  ): boolean {
+    if (!this._serverCfg || !entries.length) return false;
+    let restored = false;
+    for (const [spaceId] of entries) {
+      const pending = this._pendingPhysicalWrites.get(spaceId);
+      if (!pending) continue;
+      restored = this._restoreGeometryStateInConfig(this._serverCfg, pending.before) || restored;
+      this._pendingPhysicalWrites.delete(spaceId);
+    }
+    if (!restored) return false;
+    this._clearGeometryGesture();
+    this._geometryHistory.clear();
+    this._cfgEpoch++;
+    this._modelCache = null;
+    this._wallUnionCache = null;
+    this._physicalBodiesCache = null;
+    this._frame = null;
+    this._regSignature = '';
+    this._cfgContentFingerprint = contentFingerprint(this._serverCfg);
+    this._maybeRebuildDevices();
+    this.requestUpdate();
+    return true;
+  }
+
+  /** Revalidate the synchronous rollback after every write already queued. */
+  private async _reloadRejectedPhysicalWrite(): Promise<void> {
+    const queued = this._writeChain;
+    await queued.catch(() => undefined);
+    await this._reloadConfigOnly(true);
+  }
 
   /** A config write is in flight — the card must not adopt a server revision. */
   private get _cfgWriting(): boolean {
@@ -7171,9 +7210,23 @@ class HouseplanCard extends LitElement {
         this._serverCfg = candidate;
       }
       this._cfgContentFingerprint = candidateFingerprint;
-      const r = await this.hass.callWS({
-        type: 'houseplan/config/set', config: candidate, expected_rev: this._cfgRev,
-      });
+      let r: any;
+      try {
+        r = await this.hass.callWS({
+          type: 'houseplan/config/set', config: candidate, expected_rev: this._cfgRev,
+        });
+      } catch (error) {
+        const rolledBack = this._rollbackRejectedPhysicalWrites(strictEntries);
+        if (!rolledBack) throw error;
+        // HA normally rejects with an Error-like object, but integrations and
+        // test doubles may reject with a string.  Never lose the rollback tag:
+        // the caller still has to schedule an authoritative re-read after the
+        // synchronous, fail-closed restoration (#314).
+        const failure: any = error && typeof error === 'object'
+          ? error : Object.assign(new Error(String(error)), { cause: error });
+        failure.physicalGeometryRolledBack = true;
+        throw failure;
+      }
       this._cfgRev = r?.rev ?? this._cfgRev + 1;
       for (const [spaceId, accepted] of strictEntries) {
         if (this._pendingPhysicalWrites.get(spaceId)?.fingerprint === accepted.fingerprint)
@@ -7605,6 +7658,7 @@ class HouseplanCard extends LitElement {
   private _saveConfigDebounced = debounce(() => {
     if (!this._serverCfg) return;
     this._writeConfig().catch((e: any) => {
+      const physicalRollback = e?.physicalGeometryRolledBack === true;
       if (e?.code === 'geometry-unsafe') {
         return;
       } else if (e?.code === 'wall_model_client_outdated') {
@@ -7612,11 +7666,14 @@ class HouseplanCard extends LitElement {
       } else if (e?.code === 'conflict') {
         // a real one now: another window wrote between our read and our write
         this._showToast(this._t('toast.conflict'));
-        this._cancelPath();
-        this._reloadConfigOnly(true);
+        if (!physicalRollback) {
+          this._cancelPath();
+          void this._reloadConfigOnly(true);
+        }
       } else {
         this._showToast(this._t('toast.cfg_save_failed', { err: this._errText(e) }));
       }
+      if (physicalRollback) void this._reloadRejectedPhysicalWrite();
     });
   }, 500);
 
@@ -15318,7 +15375,8 @@ class HouseplanCard extends LitElement {
       // write is still out must not race it into a self-inflicted conflict
       await this._writeConfig();
     } catch (e: any) {
-      if (e?.code === 'conflict') await this._reloadConfigOnly();
+      if (e?.physicalGeometryRolledBack) await this._reloadRejectedPhysicalWrite();
+      else if (e?.code === 'conflict') await this._reloadConfigOnly();
       throw e;
     }
   }

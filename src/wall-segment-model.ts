@@ -10,7 +10,7 @@
 import {
   canonicalizeConfigGeometryInPlace, LATTICE_NOISE_STEPS,
 } from './coordinate-canonicalization';
-import { roomPoly } from './logic';
+import { roomPoly, samePoint } from './logic';
 import { sanitizeOpenSpans } from './open-spans';
 import { GRID_STEP_N } from './space-geometry';
 import {
@@ -78,6 +78,31 @@ const canonicalSpan = (a: number[], b: number[]): [Point, Point] => (
   pointKey(a) <= pointKey(b) ? [point(a), point(b)] : [point(b), point(a)]
 );
 const lengthOf = (a: number[], b: number[]): number => Math.hypot(b[0] - a[0], b[1] - a[1]);
+
+/**
+ * Remove zero-length adjacent draft edges without moving identity to a
+ * neighbouring carrier.  The caller owns whole-record validation; this pure
+ * write-boundary helper owns the index relationship between points and
+ * segments (#314).
+ */
+export const sanitizeRoomDraftPath = (draft: any): {
+  points: number[][];
+  segments: Array<{ id?: string; cm: number; [key: string]: any }>;
+} => {
+  const points: number[][] = [[Number(draft.points[0][0]), Number(draft.points[0][1])]];
+  const segments: Array<{ id?: string; cm: number; [key: string]: any }> = [];
+  for (let index = 1; index < draft.points.length; index++) {
+    const next = [Number(draft.points[index][0]), Number(draft.points[index][1])];
+    if (samePoint(points[points.length - 1], next)) continue;
+    points.push(next);
+    const source = draft.segments?.[index - 1];
+    segments.push({
+      ...(source && typeof source === 'object' ? source : {}),
+      cm: Math.max(1, Math.min(100, Number(source?.cm) || 15)),
+    });
+  }
+  return { points, segments };
+};
 
 /** Unique authored/derived contour coordinates that are materially off-grid. */
 export const wallModelOffGridValueCount = (

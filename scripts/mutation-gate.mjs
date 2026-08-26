@@ -2987,6 +2987,30 @@ export const MUTANTS = [
       replace: '    wallSegmentsMigrated = 0;',
     }],
   },
+  {
+    id: 'v8-draft-sanitation-shifts-segment-identity',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="draft sanitation drops only" '
+      + 'test/wall-segment-model.test.mjs',
+    because: 'skipping a duplicate adjacent point must drop its own zero edge instead of '
+      + 'shifting the following model-v8 segment id onto the wrong carrier (#314)',
+    patches: [{
+      file: 'src/wall-segment-model.ts',
+      find: '    const source = draft.segments?.[index - 1];',
+      replace: '    const source = draft.segments?.[segments.length];',
+    }],
+  },
+  {
+    id: 'v8-rejected-physical-write-keeps-optimistic-draft',
+    guard: 'npm run bundle:sync && node demo/smoke_v8_draft_write.mjs',
+    because: 'a rejected config/set must synchronously discard its whole pending physical batch '
+      + 'before the active draft can be promoted into a ghost partition (#314)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '        const rolledBack = this._rollbackRejectedPhysicalWrites(strictEntries);',
+      replace: '        const rolledBack = false;',
+    }],
+  },
 ];
 
 // --- механика ---------------------------------------------------------------

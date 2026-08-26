@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import copy
 import json
+import math
 from pathlib import Path
 
 import pytest
@@ -202,3 +203,71 @@ def test_stale_client_echoing_v8_catalog_gets_the_named_error() -> None:
     non_structural = copy.deepcopy(previous)
     non_structural["settings"]["language"] = "ru"
     validate_wall_model_transition(non_structural, previous)
+
+
+def test_current_v8_independent_geometry_does_not_require_contour_catalog_change() -> None:
+    """Drafts, partitions, columns and hosted openings own their identity (#314)."""
+    previous, _ = commit_wall_segment_model(_config({
+        "id": "floor", "rooms": [_room("room")],
+    }))
+    previous_catalog = copy.deepcopy(previous["spaces"][0]["wall_segments"])
+
+    candidates = []
+
+    draft = copy.deepcopy(previous)
+    draft["spaces"][0]["room_drafts"] = [{
+        "id": "draft-new", "points": [[2, 0], [3, 0]],
+        "segments": [{"id": "draft-segment-new", "cm": 15}],
+    }]
+    candidates.append(draft)
+
+    partition = copy.deepcopy(previous)
+    partition["spaces"][0]["partitions"] = [{
+        "id": "partition-new", "a": [2, 0], "b": [3, 0], "cm": 15,
+    }]
+    candidates.append(partition)
+
+    column = copy.deepcopy(previous)
+    column["spaces"][0]["wall_columns"] = [{
+        "id": "column-new", "shape": "square", "center": [2, 2],
+        "cm": 30, "angle": 0,
+    }]
+    candidates.append(column)
+
+    opening = copy.deepcopy(previous)
+    host = opening["spaces"][0]["wall_segments"][0]
+    dx = float(host["b"][0]) - float(host["a"][0])
+    dy = float(host["b"][1]) - float(host["a"][1])
+    opening["spaces"][0]["openings"] = [{
+        "id": "opening-new", "type": "door",
+        "x": (float(host["a"][0]) + float(host["b"][0])) / 2,
+        "y": (float(host["a"][1]) + float(host["b"][1])) / 2,
+        "angle": math.degrees(math.atan2(dy, dx)), "length": 0.2,
+        "host": {"kind": "wall", "id": host["id"], "t": 0.5},
+    }]
+    candidates.append(opening)
+
+    for candidate in candidates:
+        assert candidate["spaces"][0]["wall_segments"] == previous_catalog
+        validate_wall_model_transition(candidate, previous)
+        assert CONFIG_SCHEMA(candidate) == candidate
+
+
+def test_downgraded_independent_partition_round_trip_is_hydrated() -> None:
+    previous, _ = commit_wall_segment_model(_config({
+        "id": "floor", "rooms": [_room("room")],
+    }))
+    legacy = copy.deepcopy(previous)
+    legacy.pop("model_version")
+    legacy["spaces"][0].pop("wall_segments")
+    for room in legacy["spaces"][0]["rooms"]:
+        room.pop("wall_ids")
+    legacy["spaces"][0]["partitions"] = [{
+        "id": "partition-legacy", "a": [2, 0], "b": [3, 0], "cm": 15,
+    }]
+
+    validate_wall_model_transition(legacy, previous)
+
+    assert legacy["model_version"] == WALL_SEGMENT_MODEL_VERSION
+    assert legacy["spaces"][0]["wall_segments"] == previous["spaces"][0]["wall_segments"]
+    assert CONFIG_SCHEMA(legacy) == legacy

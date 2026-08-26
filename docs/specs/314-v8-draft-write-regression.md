@@ -1,6 +1,6 @@
 # Issue #314 — атомарная запись v8 drafts и независимой геометрии
 
-Статус документа: ТЗ на ревью.  
+Статус документа: согласовано, реализация начата.
 Issue: [#314](https://github.com/Matysh/houseplan-card/issues/314)  
 Предшественник: [#282](https://github.com/Matysh/houseplan-card/issues/282)  
 Целевая ветка: `issue/314-v8-draft-write-regression`

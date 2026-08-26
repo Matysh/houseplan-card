@@ -57,6 +57,26 @@
       `tests_backend/test_validation.py`. HA import/export coverage runs in the
       normal Linux/CI Home Assistant harness when unavailable natively.
 
+## Atomic model-v8 draft writes (#314)
+
+- [ ] `demo/smoke_v8_draft_write.mjs` proves that write sanitation preserves
+      the carrier ID after duplicate adjacent points, Undo keeps all surviving
+      IDs, and two successful queued physical writes retain the newer edge.
+- [ ] The same fake-WS smoke rejects the first in-flight physical write and
+      observes synchronous rollback of its whole pending batch: active path,
+      pending map and command history are empty, and finishing the tool cannot
+      create a ghost partition.
+- [ ] `tests_backend/test_wall_segment_model.py` accepts valid independent v8
+      draft/partition/column/hosted-opening changes with an unchanged contour
+      catalog, while the existing current/downgraded stale-contour negatives
+      and complete `CONFIG_SCHEMA` checks remain fail-closed.
+- [ ] Local commands: `npm run typecheck`, `npm run bundle:sync`,
+      `node demo/smoke_v8_draft_write.mjs`, targeted backend pytest and
+      `node scripts/check-docs.mjs --external`.
+- [ ] Mutations `v8-draft-sanitation-shifts-segment-identity` and
+      `v8-rejected-physical-write-keeps-optimistic-draft` prove that the pure
+      ID fixture and browser rollback scenario fail on the original defects.
+
 ## Resize: реальный pointer pipeline (#293)
 
 - [ ] `demo/smoke_resize_pointer_real_plan.mjs` загружает tracked fixture

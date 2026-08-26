@@ -69,6 +69,15 @@ rejects the write instead of allowing thickness, draft identity or an opening
 host to detach. A migration or transition conflict is fail-closed: the previous
 config and revision remain unchanged.
 
+The stale-client comparison is deliberately limited to contour-coupled legacy
+geometry: rooms, compatibility `walls` and `open_spans`. Self-identifying
+`room_drafts`, `partitions`, `wall_columns` and explicitly hosted `openings` may
+change without rewriting the room-wall catalog, but still pass the complete v8
+schema. Write-time sanitation and Undo preserve every surviving draft-segment
+ID. If a physical `config/set` is rejected, the frontend restores the earliest
+snapshot in that pending batch before attempting a best-effort authoritative
+reload; rejected draft geometry cannot be promoted by a later gesture (#314).
+
 ## Canonical geometry on write (#224, #291)
 
 Config and layout schemas canonicalize only named persisted numbers. Lattice

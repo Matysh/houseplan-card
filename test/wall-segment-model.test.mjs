@@ -8,6 +8,7 @@ import {
   commitWallSegmentModel,
   deterministicWallSegmentId,
   fixedTopologyWallLineageHints,
+  sanitizeRoomDraftPath,
   wallModelOffGridValueCount,
   WallSegmentModelError,
   WALL_SEGMENT_MODEL_VERSION,
@@ -213,6 +214,20 @@ test('draft segment ids materialise once and remain stable', () => {
     commitWallSegmentModel(first).config.spaces[0].room_drafts[0].segments.map((segment) => segment.id),
     ids,
   );
+});
+
+test('draft sanitation drops only the segment carried by a duplicate point', () => {
+  const draft = sanitizeRoomDraftPath({
+    points: [[0, 0], [0, 0], [1, 0], [1, 0], [1, 1]],
+    segments: [
+      { id: 'zero-a', cm: 11 }, { id: 'edge-a', cm: 21 },
+      { id: 'zero-b', cm: 12 }, { id: 'edge-b', cm: 22 },
+    ],
+  });
+  assert.deepEqual(draft.points, [[0, 0], [1, 0], [1, 1]]);
+  assert.deepEqual(draft.segments, [
+    { id: 'edge-a', cm: 21 }, { id: 'edge-b', cm: 22 },
+  ]);
 });
 
 test('post-v8 atoms use fresh identity while promoted draft carriers keep theirs', () => {

@@ -411,6 +411,13 @@ resulting wall or partition. Ambiguity fails closed with no partial config,
 history or revision update. `scripts/mutation-gate.mjs` guards every structural
 writer entrance.
 
+Draft sanitation and Undo preserve the complete record of every surviving
+segment, including its stable v8 ID; only a genuinely new edge receives a new
+identity. The backend stale-client guard compares only room/compatibility
+contour geometry with `wall_segments[]`. Drafts, partitions, columns and
+explicitly hosted openings own their identity and may be written without a
+contour-catalog change, subject to the full schema (#314).
+
 Room-boundary walls remain *derived* from room outlines (`roomEdges`, deduped by
 `segKey`), so deleting a room keeps the boundaries its neighbours still
 contribute. Three explicitly typed exceptions are stored per space:
@@ -979,6 +986,12 @@ single promise: one `config/set` in flight, each carrying the revision the
 previous one returned. The debounce still spaces out *when* a write starts;
 what it cannot do — and used to be relied on for — is keep two writes from
 overlapping, which produced a self-inflicted conflict and lost the newer edit.
+Physical edits additionally form a pending transaction per space. A successful
+write clears only the exact accepted fingerprint, so a newer queued edit stays
+pending. A rejected write synchronously restores the earliest server-backed
+snapshot for every affected space, clears its gestures and geometry history,
+then best-effort reloads authoritative config. Thus a newer edit made while the
+rejected request was in flight cannot survive on an unaccepted base (#314).
 
 **Persisted coordinates have one lattice-aware write boundary** (#291).
 `canonicalizeConfigGeometry()` / `canonicalizeLayoutGeometry()` /

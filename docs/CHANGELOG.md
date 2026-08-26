@@ -11,6 +11,11 @@
   independent wall winning an exact overlap. Zero stays refused for
   standalone walls — a wall without thickness does not exist
   ([#313](https://github.com/Matysh/houseplan-card/issues/313)).
+- Drawing rooms on model-v8 plans is reliable again: unfinished wall chains
+  keep their segment identity through intermediate saves and Undo, while a
+  rejected save immediately restores the last server-accepted geometry instead
+  of leaving a temporary room or stray partition on the plan
+  ([#314](https://github.com/Matysh/houseplan-card/issues/314)).
 
 ## v1.68.0-beta.1 — 2026-08-26
 
