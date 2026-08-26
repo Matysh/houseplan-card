@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Updating to the new wall model no longer freezes editing: the server now
+  recognises the first write of a newer card over an older document (for
+  example one that still carried an orphan legacy border) instead of demanding
+  a card update that was already installed
+  ([#319](https://github.com/Matysh/houseplan-card/issues/319)).
+
 ## v1.68.0-beta.3 — 2026-08-26
 
 - Walls now use one model at every thickness. The separate **Boundary** tool

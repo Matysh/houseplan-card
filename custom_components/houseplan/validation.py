@@ -190,13 +190,19 @@ def validate_wall_model_transition(config: dict, previous: dict | None) -> None:
         raise WallModelClientOutdatedError(
             f"stored model={old_model}; submitted model={new_model}"
         )
-    if old_model >= 8 and new_model >= 8 and contour_geometry_changed:
+    if old_model >= 8 and 8 <= new_model <= old_model and contour_geometry_changed:
         # The realistic stale-client case echoes model_version and the unknown
         # catalogue verbatim while changing room/contour geometry. Let the
         # frontend show the dedicated reload guidance instead of a generic
         # schema error. Independent drafts, partitions, columns and explicitly
         # hosted openings are validated by CONFIG_SCHEMA without requiring a
         # contour catalogue change (#314).
+        #
+        # A submitted model ABOVE the stored one is excluded on purpose (#319):
+        # a stale client can only echo the stored version, never raise it. The
+        # first write of a newer client legitimately drops legacy projection
+        # fields (an orphan open_span/open_to) without touching the catalogue;
+        # treating that as "outdated" wedged every structural write forever.
         if _wall_catalog_projection(config) == _wall_catalog_projection(previous):
             raise WallModelClientOutdatedError(
                 f"stored model={old_model}; unchanged wall catalogue"

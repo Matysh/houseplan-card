@@ -26,6 +26,23 @@ const segmentFor = (room, index, catalogue) => (
   catalogue.find((segment) => segment.id === room.wall_ids[index])
 );
 
+test('the #319 pair fixture matches the current initial migration byte for byte', () => {
+  // Guards the fixture against drift: `sent` must stay exactly what the
+  // current writer produces from `stored` (a v1.68.0-beta.2 document with one
+  // orphan open_span), and the wall catalogue must stay byte-identical —
+  // that combination is the whole point of the backend regression test.
+  const fixture = JSON.parse(readFileSync(
+    new URL('./fixtures/319-orphan-span-migration.json', import.meta.url), 'utf8',
+  ));
+  const migrated = commitWallSegmentModel(structuredClone(fixture.stored)).config;
+  assert.deepEqual(migrated, fixture.sent);
+  assert.equal(
+    JSON.stringify(fixture.stored.spaces[0].wall_segments),
+    JSON.stringify(fixture.sent.spaces[0].wall_segments),
+  );
+  assert.equal('open_spans' in fixture.sent.spaces[0], false);
+});
+
 test('frontend migration matches the shared backend parity fixture', () => {
   const fixture = JSON.parse(readFileSync(
     new URL('./fixtures/282-wall-identity-parity.json', import.meta.url), 'utf8',
