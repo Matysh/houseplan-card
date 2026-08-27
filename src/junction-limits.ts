@@ -195,6 +195,34 @@ export function checkRoomClearance(
   return [];
 }
 
+/**
+ * Violations introduced BY THIS WRITE, counted per rule.
+ *
+ * Subject identity churns across a structural write (segments are re-atomised
+ * and re-keyed), so matching by subject would report an inherited violation as
+ * new the moment its carrier is re-keyed — that alone refused legitimate
+ * resizes of a real plan. Counting per rule keeps the spec's boundary (§3)
+ * without depending on identity: a write may keep existing violations, never
+ * add one.
+ */
+export function increasedViolations(
+  candidate: readonly JunctionLimitViolation[],
+  previous: readonly JunctionLimitViolation[],
+): JunctionLimitViolation[] {
+  const before = new Map<JunctionLimitRule, number>();
+  for (const item of previous || []) before.set(item.rule, (before.get(item.rule) || 0) + 1);
+  const after = new Map<JunctionLimitRule, JunctionLimitViolation[]>();
+  for (const item of candidate || []) {
+    after.set(item.rule, [...(after.get(item.rule) || []), item]);
+  }
+  const introduced: JunctionLimitViolation[] = [];
+  for (const [rule, items] of after) {
+    const grew = items.length - (before.get(rule) || 0);
+    if (grew > 0) introduced.push(...items.slice(0, grew));
+  }
+  return introduced;
+}
+
 /** Violations introduced BY THIS WRITE: inherited ones are never reported. */
 export function newViolations(
   candidate: readonly JunctionLimitViolation[],

@@ -87,7 +87,7 @@ import {
 } from './wall-thickness';
 import {
   checkNodeDistances, checkNodes, checkRoomClearance, checkSegmentLengths,
-  newViolations, type JunctionLimitViolation, type LimitSegment,
+  increasedViolations, type JunctionLimitViolation, type LimitSegment,
 } from './junction-limits';
 import {
   pointOnOpenCut, sanitizeOpenSpans,
@@ -7450,13 +7450,24 @@ class HouseplanCard extends LitElement {
   private _junctionLimitsIntroduced(
     candidate: any, previousConfig: any, spaceId: string,
   ): JunctionLimitViolation[] {
+    // The baseline must be the previous document AS THE CANDIDATE SEES IT: a
+    // legacy space carries no wall catalogue at all, so comparing it raw with
+    // a migrated candidate reported every inherited short segment as new and
+    // refused legitimate resizes of real plans. Both sides therefore cross
+    // the same identity barrier first.
     let inherited: JunctionLimitViolation[] = [];
-    try { inherited = this._junctionLimitViolations(previousConfig, spaceId); }
-    catch { inherited = []; }
+    try {
+      const migrated = commitWallSegmentModel(previousConfig).config;
+      inherited = this._junctionLimitViolations(migrated, spaceId);
+    } catch {
+      // An unmigratable baseline proves nothing about inheritance; never
+      // refuse the write on that basis.
+      return [];
+    }
     let next: JunctionLimitViolation[] = [];
     try { next = this._junctionLimitViolations(candidate, spaceId); }
     catch { return []; }
-    return newViolations(next, inherited);
+    return increasedViolations(next, inherited);
   }
 
   private _commitPhysicalGeometry(

@@ -135,3 +135,25 @@ test('§4: вырожденная вершина сходится в точку 
   // Нулевая толщина не создаёт вырожденной зоны.
   assert.equal(isDegenerateApexCorner(spike, [0, 0, 0], 1), false);
 });
+
+test('наследование считается по правилам, а не по id носителя', async () => {
+  const { increasedViolations } = await import('../test-build/junction-limits.js');
+  const inherited = [
+    { rule: 'length', subject: 'wall-old-1', actual: 5, limit: 20 },
+    { rule: 'length', subject: 'wall-old-2', actual: 7, limit: 20 },
+  ];
+  // Структурная запись переатомизировала стены: те же два нарушения под
+  // новыми id — запись законна (ровно кейс ресайза реального плана).
+  const rekeyed = [
+    { rule: 'length', subject: 'wall-new-a', actual: 5, limit: 20 },
+    { rule: 'length', subject: 'wall-new-b', actual: 7, limit: 20 },
+  ];
+  assert.deepEqual(increasedViolations(rekeyed, inherited), []);
+  // Появилось третье — вот оно и есть новое.
+  const worse = [...rekeyed, { rule: 'length', subject: 'wall-new-c', actual: 3, limit: 20 }];
+  assert.equal(increasedViolations(worse, inherited).length, 1);
+  // Новое правило на чистом плане.
+  assert.equal(increasedViolations(
+    [{ rule: 'angle', subject: 'n', actual: 9, limit: 15 }], [],
+  ).length, 1);
+});
