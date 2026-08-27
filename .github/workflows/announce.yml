@@ -1,4 +1,4 @@
-name: Announce release
+name: Анонс релиза
 # Telegram notifications for t.me/ha_houseplan (owner request, 2026-08-07).
 # Stable releases are announced; prereleases are deliberately silent.
 # workflow_dispatch exists purely as a connectivity test button and therefore
@@ -36,6 +36,7 @@ permissions:
   contents: read
 jobs:
   telegram:
+    name: Оповещение в Telegram (только стабильные)
     if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'release' && github.event.release.prerelease == false) || (github.event_name == 'workflow_call' && inputs.prerelease == false) }}
     runs-on: ubuntu-latest
     steps:

@@ -1,4 +1,4 @@
-name: Publish prerelease
+name: Публикация пре-релиза (ручная)
 run-name: Publish ${{ inputs.tag }}
 
 on:
@@ -19,6 +19,7 @@ concurrency:
 
 jobs:
   gate:
+    name: "Гейт: зелёная Проверка и релизный контракт"
     runs-on: ubuntu-latest
     outputs:
       sha: ${{ steps.candidate.outputs.sha }}
@@ -61,6 +62,7 @@ jobs:
         run: node scripts/release-gate.mjs "$SHA"
 
   publish:
+    name: Публикация тега и релиза
     needs: gate
     runs-on: ubuntu-latest
     outputs:
@@ -198,6 +200,7 @@ jobs:
   # A manual step after a successful release is the worst kind: by the time it is
   # due, the work already looks finished, which is exactly why it gets forgotten.
   close-merged:
+    name: Закрытие вошедших issue
     needs: [gate, publish]
     if: ${{ needs.publish.outputs.newly_published == 'true' }}
     runs-on: ubuntu-latest
@@ -245,6 +248,7 @@ jobs:
           }
 
   announce:
+    name: Комментарий о публикации
     needs: [gate, publish]
     if: ${{ needs.publish.outputs.newly_published == 'true' }}
     uses: ./.github/workflows/announce.yml

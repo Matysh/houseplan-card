@@ -1,4 +1,4 @@
-name: Full Performance
+name: Полные бенчмарки производительности
 
 on:
   # Every main promotion is a stable-release candidate and must have an
@@ -24,6 +24,7 @@ concurrency:
 
 jobs:
   performance:
+    name: Бенчмарки рендера и геометрии
     # Every profile keeps base and candidate sequential on one hosted runner.
     # Independent profile pairs run in parallel: cross-profile timing is never
     # compared, while serialising all five pairs cannot fit the job timeout.

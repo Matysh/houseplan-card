@@ -1,4 +1,4 @@
-name: Release
+name: "Релиз: ассеты после зелёной проверки"
 on:
   release:
     types: [published]
@@ -14,6 +14,7 @@ jobs:
   # Needs a push with a token that has the `workflow` scope (the ordinary
   # Personal Access Token used for `git push` refuses workflow file updates).
   gate:
+    name: "Гейт: зелёная Проверка точного SHA тега"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -44,6 +45,7 @@ jobs:
           SHA=$(git rev-parse HEAD)
           node scripts/release-gate.mjs "$SHA" --workflow=performance.yml --label="Full Performance"
   build:
+    name: Сборка бандла и загрузка ассетов
     needs: gate
     runs-on: ubuntu-latest
     steps:
@@ -71,6 +73,7 @@ jobs:
         with:
           files: dist/houseplan-card.js
   hacs-discovery:
+    name: HACS-видимость пре-релиза (порядок бет)
     # HACS 2.0.x takes the first prerelease in GitHub's response instead of
     # sorting SemVer. A valid asset can therefore be invisible to beta users
     # (beta.10 appeared after beta.9). Keep the release asset, but
