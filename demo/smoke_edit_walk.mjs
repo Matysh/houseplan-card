@@ -37,6 +37,7 @@ execFileSync(process.execPath, [resolve(root, 'scripts/fix-test-build.mjs')], {
   cwd: root, stdio: 'inherit',
 });
 const { optimizePlans } = await import('../test-build/plan-optimizer.js');
+const { checkOptimizeGeometry } = await import('../test-build/plan-geometry-preflight.js');
 const { WallSegmentModelError } = await import('../test-build/wall-segment-model.js');
 const {
   checkHiddenObstacles, checkMixedRoleRecords, checkWallKeys, checkReferences,
@@ -266,8 +267,18 @@ for (const plan of PLANS) {
         const before = await currentConfig();
         try {
           const result = optimizePlans(before, {}, {}, {});
-          await install(result.config);
-          action = `оптимизация (изменений: ${result.report.total})`;
+          // The product shows the preview but refuses to apply a candidate
+          // rejected by the exact geometry preflight. The walk must exercise
+          // that same transaction boundary rather than installing the pure
+          // optimizer's intermediate result behind the card's back.
+          const preflight = result.changed ? checkOptimizeGeometry(result.config) : null;
+          if (preflight && !preflight.ok) {
+            const reasons = [...new Set(preflight.failures.map((failure) => failure.reason))];
+            action = `оптимизация безопасно заблокирована (${reasons.join(', ')})`;
+          } else {
+            await install(result.config);
+            action = `оптимизация (изменений: ${result.report.total})`;
+          }
         } catch (error) {
           if (!(error instanceof WallSegmentModelError)) throw error;
           action = `оптимизация безопасно заблокирована (${error.reason})`;
