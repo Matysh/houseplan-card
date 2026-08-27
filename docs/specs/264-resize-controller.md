@@ -68,9 +68,13 @@ preview останавливается либо commit отменяется с �
 6. Opened/disabled handles и мышь/клавиатура/touch сохраняют поведение #277.
    Осознанная desktop-first деградация редакторов из `docs/TOUCH-SUPPORT.md`
    не расширяется.
-7. Мёртвое session-only поле `_rszSel` удаляется: после #277 оно не имеет
-   renderer-потребителя и не влияет на пиксели, config или Undo. Escape в
-   idle Resize, как и фактически сейчас, сразу возвращает neutral Draw.
+7. `_rszSel` не имеет renderer-потребителя после #277, но не является полностью
+   мёртвым: клик по площади комнаты запоминает latent selection, после чего
+   первый Escape очищает её и оставляет Resize активным, а второй возвращает
+   neutral Draw. Это наблюдаемое keyboard-поведение сохраняется. Само поле
+   уезжает из root в controller как `selectedRoomId`; warm viewport продолжает
+   переносить это session-only значение через typed getter/restore, не меняя
+   сериализуемый config.
 
 Открытых продуктовых вопросов нет.
 
@@ -100,14 +104,15 @@ preview останавливается либо commit отменяется с �
 Новый `src/resize-controller.ts` владеет только Resize orchestration:
 
 1. состояниями `idle` и `dragging`; наличие принятого preview — часть
-   `dragging`, не параллельный флаг;
+   `dragging`, не параллельный флаг; idle дополнительно хранит необязательный
+   `selectedRoomId`, который сохраняет существующую двухшаговую Escape-ветку;
 2. pointer id, start point, `SafeResizePlan`, immutable rooms/openings/options,
    snapshot identity, current accepted delta, moved flag, changed room ids и
    однократным preview-rejection notification flag;
 3. eligibility cache, ограниченным одним space/snapshot/grid context;
 4. ссылкой на exact accepted preview, live measurement model и retained
    pre-drag wall-union token как opaque generic value;
-5. переходами `resolve → begin → move* → finish` и
+5. переходами `select/clearSelection`, `resolve → begin → move* → finish` и
    `begin/move → cancel`; wrong pointer id даёт no-op;
 6. вызовом существующих pure `safeResizePointerDisplacement`, snap adapter,
    `clampSafeResize`, `applySafeResize` и `validateSafeResize` в прежнем порядке;
@@ -186,6 +191,9 @@ Root исполняет только `kind: 'commit'` и только один �
 | Текущее состояние | Команда | Условие | Результат |
 |---|---|---|---|
 | `idle` | `resolve` | тот же context identity | cache hit либо один pure resolver call |
+| `idle` | `selectRoom` | клик по площади комнаты | сохранить latent `selectedRoomId`, без visual/config effect |
+| `idle` | `escape` | `selectedRoomId` существует | очистить selection, остаться в Resize |
+| `idle` | `escape` | selection отсутствует | typed outcome `exit-tool`; root включает Draw |
 | `idle` | `begin` | tool Resize, enabled plan | `dragging`, immutable session captured |
 | `idle` | `begin` | disabled | `idle`, no capture/preview/write; root показывает reason |
 | `dragging` | `move` | wrong pointer id | no-op |
@@ -267,8 +275,9 @@ finish.
   отбрасывается.
 - Preview по-прежнему увеличивает structural epoch и запрещает reuse clean-floor
   cache. После cancel/no-op/reject root возвращается к committed model.
-- Warm remount не переносит active gesture/preview. Удаление неиспользуемого
-  `rszSel` из `WarmViewport` не меняет сериализуемый config или видимый state.
+- Warm remount не переносит active gesture/preview. `WarmViewport.rszSel`
+  продолжает сохранять latent selection, но читает/восстанавливает его только
+  через controller API; это module/session state, не сериализуемый config.
 - `dispose`/disconnect, tool switch, space switch and mode exit must leave
   controller idle and release opaque retained references.
 
@@ -277,7 +286,8 @@ finish.
 - новый controller и перенос в него Resize state/transitions/cache;
 - typed root adapters и commit outcome;
 - extraction единого production wall-record invariant;
-- удаление controller-owned `_rsz*` mirrors и мёртвого `_rszSel`;
+- удаление controller-owned `_rsz*` mirrors из root и перенос latent
+  `_rszSel`-семантики в controller;
 - unit tests state machine/invariant, source-boundary guard и действующие
   production pointer smokes;
 - актуализация architecture/Resize/testing/status docs;
@@ -319,8 +329,10 @@ finish.
     cancel, exact committed geometry, zero write/Undo;
 15. late cancel after up — no second outcome;
 16. success — one outcome, one history command, one scheduled write;
-17. Undo/Redo/reload — exact parity с поведением #277;
-18. disconnected root не оставляет controller references/timers/listeners.
+17. room-area click в idle Resize + Escape + Escape сохраняет текущую
+    последовательность «очистить latent selection → выйти в Draw»;
+18. Undo/Redo/reload — exact parity с поведением #277;
+19. disconnected root не оставляет controller references/timers/listeners.
 
 ## 13. Performance
 
@@ -359,7 +371,8 @@ guard, pointercancel/lost capture and pinch cancellation remain exactly as in
 - `test/wall-record-preservation.test.mjs` и/или
   `test/model-invariants.test.mjs` — shared semantics;
 - `test/resize-production-path.test.mjs` — source boundary/exact guard;
-- существующие `demo/smoke_safe_resize.mjs`,
+- существующие `demo/smoke_room_resize.mjs`,
+  `demo/smoke_resize_pointer_real_plan.mjs`,
   `demo/smoke_resize_wall_thickness.mjs`,
   `demo/smoke_resize_inner_dimensions.mjs` — behavioral parity;
 - `docs/ARCHITECTURE.md`, `docs/RESIZE.md`, `docs/TESTING.md`,
@@ -437,7 +450,7 @@ not a substitute for targeted implementation checks.
 | Zero-thickness walls from #306 disappear silently | Exact profile includes finite numeric `cm:0`. |
 | Adapter exception leaks partial state | Boundary catches and maps to bounded reject, state cleared atomically. |
 | Cancel loses expensive pre-drag wall union reuse | Opaque retained token and snapshot-identity restore test. |
-| Removal of `_rszSel` changes warm/Escape behavior | Source/runtime parity test; it has no render consumer and idle Escape ends at Draw. |
+| Перенос `_rszSel` меняет warm/Escape behavior | Controller сохраняет latent selection, warm getter/restore и двухшаговый Escape; dedicated unit/browser assertion. |
 | Large mechanical diff hides behavior change | Separate spec and implementation commits, targeted source guard, selected smokes, golden no-diff and independent review. |
 
 ## 20. Rollback
