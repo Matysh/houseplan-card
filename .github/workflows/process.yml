@@ -1,4 +1,4 @@
-name: Process
+name: Ревью-конвейер
 
 # Событийный конвейер процесса (PROCESS.md). Смена статусной метки — это
 # сообщение: она порождает событие, событие запускает следующий шаг.
@@ -35,6 +35,7 @@ permissions:
 
 jobs:
   guard:
+    name: "Страж: ребейз на dev и предпосылки ревью"
     runs-on: ubuntu-latest
     outputs:
       stage: ${{ steps.decide.outputs.stage }}
@@ -162,6 +163,7 @@ jobs:
           echo "limit=$limit" >> "$GITHUB_OUTPUT"
 
   review:
+    name: "Ревью (Claude): вердикт в issue"
     needs: guard
     if: needs.guard.outputs.stage != ''
     runs-on: ubuntu-latest

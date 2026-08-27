@@ -1,4 +1,4 @@
-name: Attach HACS zip to release
+name: HACS-zip к релизу
 # hacs.json declares zip_release + filename=houseplan.zip, so every release
 # (prereleases included) must carry the asset — HACS installs from it and
 # GitHub's public download counter becomes a free per-version install metric
@@ -19,6 +19,7 @@ permissions:
   contents: write
 jobs:
   zip:
+    name: Собрать houseplan.zip и приложить к релизу
     runs-on: ubuntu-latest
     steps:
       - name: Resolve tag

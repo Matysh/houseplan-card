@@ -9,7 +9,7 @@
 # локально через `npm run docs:accept -- --reviewed --from=<распакованный>`.
 # Та же конструкция, что у golden-эталонов, и по той же причине: картинки
 # попадают в репозиторий через явное решение, а не через бота.
-name: Docs screenshots
+name: Скриншоты документации
 
 on:
   workflow_dispatch:
@@ -24,6 +24,7 @@ permissions:
 
 jobs:
   capture:
+    name: Съёмка и сверка скриншот-индекса
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7

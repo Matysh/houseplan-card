@@ -1,4 +1,4 @@
-name: Validate
+name: Проверка (CI)
 
 on:
   push:
@@ -22,6 +22,7 @@ concurrency:
 
 jobs:
   docs:
+    name: "Документация: гайды, ченджлоги, скриншот-индекс"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -34,6 +35,7 @@ jobs:
   # совпадать в `main` и `dev`. До этой проверки совпадение держалось на
   # дисциплине: каждая правка требовала двух пушей и ручной сверки.
   process-workflow-sync:
+    name: "Процесс: process.yml идентичен в main и dev"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -53,6 +55,7 @@ jobs:
           fi
 
   provenance:
+    name: "Провенанс коммитов: трейлеры и эталоны"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -76,6 +79,7 @@ jobs:
   # где нарушение правила №1 ловится машиной. Job независимый: краснеет сам и
   # не роняет остальные, откат — удалить его отсюда, скрипт остаётся рабочим.
   process-gate:
+    name: "Процессный гейт: диапазон, трейлеры, статусы issue"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -104,6 +108,7 @@ jobs:
   # экономят на ветках задач, где Validate — ранний сигнал: настоящую приёмку
   # там делает код-ревью, которое гоняет гейты само (#127).
   changes:
+    name: Классификация изменённых файлов
     runs-on: ubuntu-latest
     outputs:
       frontend: ${{ steps.classify.outputs.frontend }}
@@ -158,6 +163,7 @@ jobs:
   # CARD_VERSION и package.json входят в фингерпринт, поэтому ключи кандидата
   # заведомо новые и полный набор гейтов перед бетой и релизом идёт всегда.
   reuse:
+    name: "Переиспользование: это дерево уже проверено"
     runs-on: ubuntu-latest
     outputs:
       smoke: ${{ steps.probe.outputs.smoke }}
@@ -237,6 +243,7 @@ jobs:
           waive backend "$BACKEND"
 
   hacs:
+    name: "HACS: валидация репозитория"
     needs: changes
     if: needs.changes.outputs.integration == 'true'
     runs-on: ubuntu-latest
@@ -248,6 +255,7 @@ jobs:
           category: integration
 
   hassfest:
+    name: "Hassfest: манифест интеграции"
     needs: changes
     if: needs.changes.outputs.integration == 'true'
     runs-on: ubuntu-latest
@@ -257,6 +265,7 @@ jobs:
         uses: home-assistant/actions/hassfest@master
 
   frontend:
+    name: "Фронтенд: типы, юниты, мутанты, синхрон бандла"
     needs: changes
     if: needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
@@ -278,6 +287,7 @@ jobs:
         run: cmp dist/houseplan-card.js custom_components/houseplan/frontend/houseplan-card.js
 
   smoke:
+    name: Смоки в браузере (шард ${{ matrix.shard }} из 3)
     # Gated on `frontend` so a typecheck failure does not burn browser minutes.
     needs: [frontend, reuse]
     if: needs.reuse.outputs.smoke != 'true'
@@ -350,6 +360,7 @@ jobs:
   # Маркер переиспользования пишется ОДИН раз и только когда прошли все шарды:
   # частично прогнанная матрица не имеет права выглядеть как выполненная работа.
   smoke_done:
+    name: "Смоки: все шарды зелёные"
     needs: [smoke, reuse]
     if: needs.reuse.outputs.smoke != 'true'
     runs-on: ubuntu-latest
@@ -370,6 +381,7 @@ jobs:
           key: reuse-smoke-${{ needs.reuse.outputs.smoke_key }}
 
   golden:
+    name: Golden-кадры против принятых эталонов
     # Deterministic visual correctness stays in every prerelease gate: it is
     # inexpensive and catches a different class of regressions than timings.
     needs: [frontend, reuse]
@@ -432,6 +444,7 @@ jobs:
           key: reuse-golden-${{ needs.reuse.outputs.golden_key }}
 
   performance_smoke:
+    name: "Перф-смок: бюджет времени кадра"
     # Candidate-only catastrophic-regression guard for ordinary pushes and
     # prereleases. The expensive same-runner comparison lives in performance.yml.
     needs: [frontend, reuse]
@@ -494,6 +507,7 @@ jobs:
           key: reuse-performance_smoke-${{ needs.reuse.outputs.performance_smoke_key }}
 
   backend:
+    name: "Бэкенд: pytest в Home Assistant"
     needs: [changes, reuse]
     if: needs.changes.outputs.backend == 'true' && needs.reuse.outputs.backend != 'true'
     runs-on: ubuntu-latest
