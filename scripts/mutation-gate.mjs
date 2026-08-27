@@ -329,7 +329,7 @@ export const MUTANTS = [
       + 'places that agreed with each other, and the mixed result reads as a logic defect (#236)',
     patches: [{
       file: 'demo/serve.mjs',
-      find: '  await assertFreshDemoBundleUnlessAllowed(page, REPO_ROOT);',
+      find: '  await assertFreshDemoBundleUnlessAllowed(page, repoRoot);',
       replace: '  // freshness intentionally skipped by the mutant',
     }],
   },
