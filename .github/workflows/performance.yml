@@ -24,10 +24,20 @@ concurrency:
 
 jobs:
   performance:
-    # Base and candidate stay sequential on one hosted runner. Splitting them
-    # across runners would turn machine variance into a false regression.
+    # Every profile keeps base and candidate sequential on one hosted runner.
+    # Independent profile pairs run in parallel: cross-profile timing is never
+    # compared, while serialising all five pairs cannot fit the job timeout.
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        profile:
+          - large-house
+          - isometric
+          - plan-snap
+          - blend
+          - overlay
     steps:
       - name: Check out candidate
         uses: actions/checkout@v7
@@ -158,36 +168,69 @@ jobs:
             cp baseline/dist/houseplan-card.js baseline/demo/srv/assets/houseplan-card.js
           fi
 
-      - name: Capture base and candidate profiles
+      - name: Capture base and candidate profile
         working-directory: candidate
+        env:
+          PROFILE: ${{ matrix.profile }}
         run: |
-          npm run benchmark:large-house -- --target-root=../baseline --samples=7 --warmups=1 --output=../artifacts/performance/baseline.json
-          npm run benchmark:large-house -- --target-root=. --samples=7 --warmups=1 --output=../artifacts/performance/candidate.json
-          npm run benchmark:large-house-isometric -- --target-root=../baseline --samples=7 --warmups=1 --output=../artifacts/performance/isometric-baseline.json
-          npm run benchmark:large-house-isometric -- --target-root=. --samples=7 --warmups=1 --output=../artifacts/performance/isometric-candidate.json
-          npm run benchmark:large-house-plan-snap -- --target-root=../baseline --samples=7 --warmups=1 --output=../artifacts/performance/plan-snap-baseline.json
-          npm run benchmark:large-house-plan-snap -- --target-root=. --samples=7 --warmups=1 --output=../artifacts/performance/plan-snap-candidate.json
-          npm run benchmark:glow -- --profile=large-light-blend-v1 --target-root=../baseline --samples=7 --warmups=1 --output=../artifacts/performance/blend-baseline.json
-          npm run benchmark:glow -- --profile=large-light-blend-v1 --target-root=. --samples=7 --warmups=1 --output=../artifacts/performance/blend-candidate.json
-          npm run benchmark:glow -- --profile=large-house-glow-overlay-v1 --target-root=../baseline --samples=7 --warmups=1 --output=../artifacts/performance/overlay-baseline.json
-          npm run benchmark:glow -- --profile=large-house-glow-overlay-v1 --target-root=. --samples=7 --warmups=1 --output=../artifacts/performance/overlay-candidate.json
-          if ! grep -q "glow_enabled" ../baseline/src/logic.ts; then
-            echo "Base predates independent Glow; bootstrap relative overlay baseline, keep absolute gate"
-            cp ../artifacts/performance/overlay-candidate.json ../artifacts/performance/overlay-baseline.json
-          fi
+          mkdir -p ../artifacts/performance
+          case "$PROFILE" in
+            large-house)
+              npm run benchmark:large-house -- --target-root=../baseline --samples=7 --warmups=1 --output=../artifacts/performance/baseline.json
+              npm run benchmark:large-house -- --target-root=. --samples=7 --warmups=1 --output=../artifacts/performance/candidate.json
+              ;;
+            isometric)
+              npm run benchmark:large-house-isometric -- --target-root=../baseline --samples=7 --warmups=1 --output=../artifacts/performance/isometric-baseline.json
+              npm run benchmark:large-house-isometric -- --target-root=. --samples=7 --warmups=1 --output=../artifacts/performance/isometric-candidate.json
+              ;;
+            plan-snap)
+              npm run benchmark:large-house-plan-snap -- --target-root=../baseline --samples=7 --warmups=1 --output=../artifacts/performance/plan-snap-baseline.json
+              npm run benchmark:large-house-plan-snap -- --target-root=. --samples=7 --warmups=1 --output=../artifacts/performance/plan-snap-candidate.json
+              ;;
+            blend)
+              npm run benchmark:glow -- --profile=large-light-blend-v1 --target-root=../baseline --samples=7 --warmups=1 --output=../artifacts/performance/blend-baseline.json
+              npm run benchmark:glow -- --profile=large-light-blend-v1 --target-root=. --samples=7 --warmups=1 --output=../artifacts/performance/blend-candidate.json
+              ;;
+            overlay)
+              npm run benchmark:glow -- --profile=large-house-glow-overlay-v1 --target-root=../baseline --samples=7 --warmups=1 --output=../artifacts/performance/overlay-baseline.json
+              npm run benchmark:glow -- --profile=large-house-glow-overlay-v1 --target-root=. --samples=7 --warmups=1 --output=../artifacts/performance/overlay-candidate.json
+              if ! grep -q "glow_enabled" ../baseline/src/logic.ts; then
+                echo "Base predates independent Glow; bootstrap relative overlay baseline, keep absolute gate"
+                cp ../artifacts/performance/overlay-candidate.json ../artifacts/performance/overlay-baseline.json
+              fi
+              ;;
+            *)
+              echo "::error::Unknown performance profile: $PROFILE"
+              exit 1
+              ;;
+          esac
 
-      - name: Enforce relative and absolute performance budgets
+      - name: Enforce relative and absolute performance budget
         working-directory: candidate
+        env:
+          PROFILE: ${{ matrix.profile }}
         run: |
-          npm run benchmark:compare -- --baseline=../artifacts/performance/baseline.json --candidate=../artifacts/performance/candidate.json --output=../artifacts/performance/comparison.json
-          npm run benchmark:compare -- --budgets=demo/performance/budgets-large-house-isometric.json --baseline=../artifacts/performance/isometric-baseline.json --candidate=../artifacts/performance/isometric-candidate.json --output=../artifacts/performance/isometric-comparison.json
-          npm run benchmark:compare -- --budgets=demo/performance/budgets-large-house-plan-snap.json --baseline=../artifacts/performance/plan-snap-baseline.json --candidate=../artifacts/performance/plan-snap-candidate.json --output=../artifacts/performance/plan-snap-comparison.json
-          npm run benchmark:compare -- --budgets=demo/performance/budgets-large-light-blend.json --baseline=../artifacts/performance/blend-baseline.json --candidate=../artifacts/performance/blend-candidate.json --output=../artifacts/performance/blend-comparison.json
-          npm run benchmark:compare -- --budgets=demo/performance/budgets-large-house-glow-overlay.json --baseline=../artifacts/performance/overlay-baseline.json --candidate=../artifacts/performance/overlay-candidate.json --output=../artifacts/performance/overlay-comparison.json
+          case "$PROFILE" in
+            large-house)
+              npm run benchmark:compare -- --baseline=../artifacts/performance/baseline.json --candidate=../artifacts/performance/candidate.json --output=../artifacts/performance/comparison.json
+              ;;
+            isometric)
+              npm run benchmark:compare -- --budgets=demo/performance/budgets-large-house-isometric.json --baseline=../artifacts/performance/isometric-baseline.json --candidate=../artifacts/performance/isometric-candidate.json --output=../artifacts/performance/isometric-comparison.json
+              ;;
+            plan-snap)
+              npm run benchmark:compare -- --budgets=demo/performance/budgets-large-house-plan-snap.json --baseline=../artifacts/performance/plan-snap-baseline.json --candidate=../artifacts/performance/plan-snap-candidate.json --output=../artifacts/performance/plan-snap-comparison.json
+              ;;
+            blend)
+              npm run benchmark:compare -- --budgets=demo/performance/budgets-large-light-blend.json --baseline=../artifacts/performance/blend-baseline.json --candidate=../artifacts/performance/blend-candidate.json --output=../artifacts/performance/blend-comparison.json
+              ;;
+            overlay)
+              npm run benchmark:compare -- --budgets=demo/performance/budgets-large-house-glow-overlay.json --baseline=../artifacts/performance/overlay-baseline.json --candidate=../artifacts/performance/overlay-candidate.json --output=../artifacts/performance/overlay-comparison.json
+              ;;
+          esac
 
-      - name: Upload full performance reports
+      - name: Upload full performance report
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: full-performance
+          name: full-performance-${{ matrix.profile }}
           path: artifacts/performance

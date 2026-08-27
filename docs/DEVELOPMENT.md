@@ -147,10 +147,13 @@ npm run golden:accept -- --reviewed
 
 The config audit performs no network requests and does not rewrite the input.
 Its registry and lifecycle rules are documented in `CONFIG-COMPATIBILITY.md`.
-The blocking performance job captures the base SHA and candidate sequentially
-on one pinned Chromium/CI profile, applies relative and absolute budgets, and
-uploads both reports plus the comparison. A developer-laptop report remains a
-diagnostic and must not be used to loosen CI limits. See
+The blocking performance workflow runs its independent profile pairs in
+parallel. Inside each pair it captures the base SHA and candidate sequentially
+on one pinned Chromium/CI runner, applies the same relative and absolute budget,
+and uploads both reports plus the comparison. This preserves same-machine
+comparability without serialising the whole matrix beyond the job timeout. A
+developer-laptop report remains a diagnostic and must not be used to loosen CI
+limits. See
 `demo/performance/README.md`.
 When the comparison base predates `scripts/bundle-sync.mjs`, the workflow still
 builds that exact tree and materializes its fresh bundle through the equivalent

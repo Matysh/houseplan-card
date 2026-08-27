@@ -65,9 +65,11 @@ regressions. Small fast operations receive an absolute noise
 allowance so normal scheduler jitter does not become a false regression. Heap,
 Long Tasks, warmed-cache growth and the expected rendered-device count are
 gated separately. Long-Task maximum/count/total checks use the same
-relative-plus-absolute policy as timings. Both raw reports and the comparison
-are always uploaded as the `full-performance` artifact, and the table is
-written to the GitHub job summary. Stable release assets require both exact-SHA
+relative-plus-absolute policy as timings. Each independent profile pair runs in
+parallel with the other pairs, but its base and candidate remain sequential on
+one runner. Its raw reports and comparison are uploaded as
+`full-performance-<profile>`, and the table is written to that GitHub job
+summary. Stable release assets require both exact-SHA
 `Validate` and exact-SHA `Full Performance`; prereleases require only
 `Validate`.
 

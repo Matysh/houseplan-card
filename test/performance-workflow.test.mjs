@@ -27,9 +27,20 @@ test('full performance is isolated to stable, scheduled and manual entry points'
     '- main',
     'schedule:',
     'workflow_dispatch:',
-    'Capture base and candidate profiles',
+    'Capture base and candidate profile',
+    'profile:',
+    '- large-house',
+    '- isometric',
+    '- plan-snap',
+    '- blend',
+    '- overlay',
+    'PROFILE: ${{ matrix.profile }}',
+    'name: full-performance-${{ matrix.profile }}',
     '--samples=7 --warmups=1',
   ]) assert.ok(workflow.includes(contract), `missing full-gate contract: ${contract}`);
+
+  assert.ok(workflow.includes('if [ -f baseline/scripts/bundle-sync.mjs ]; then'));
+  assert.equal((workflow.match(/--samples=7 --warmups=1/g) || []).length, 10);
 
   const release = readWorkflow('release.yml');
   assert.ok(release.includes('if: ${{ !github.event.release.prerelease }}'));
