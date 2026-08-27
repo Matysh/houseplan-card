@@ -193,6 +193,11 @@ Schema и persisted config не меняются. Миграции нет.
   сопровождаться по действующим правилам проекта;
 - RTL — отдельная продуктовая задача.
 
+Существующая строка в `Ground rules` про «one JSON file + registering it in
+`src/i18n.ts`» не остаётся рядом вторым контрактом: она заменяется ссылкой на
+новый раздел и формулировкой про frontend/backend JSON и
+`src/i18n/registry.ts`.
+
 Докстрока `src/i18n.ts` приводится в соответствие реальному flow.
 
 ## 10. Acceptance criteria и доказательства
@@ -201,6 +206,7 @@ Schema и persisted config не меняются. Миграции нет.
   registry. **Доказательство:** typecheck + unit на registry/options.
 - **AC2.** Exact tag, primary subtag, `_`/case normalization, explicit config,
   invalid explicit config и English fallback покрыты матрицей unit-тестов.
+  **Доказательство:** unit-тест pure resolver.
 - **AC3.** Frontend locale file set, backend locale file set и registry взаимно
   однозначны. **Доказательство:** i18n file-set unit test.
 - **AC4.** Каждый зарегистрированный словарь автоматически проходит key,
@@ -208,7 +214,7 @@ Schema и persisted config не меняются. Миграции нет.
   `test/i18n.test.mjs`.
 - **AC5.** Selector имеет порядок Auto/English/Русский и строит registered
   options без ручного списка `en`/`ru`. **Доказательство:** unit на pure options
-  helper и inspection compiled schema.
+  helper и source diff `src/editor.ts` без ручного списка локалей.
 - **AC6.** Неизвестный сохранённый язык не ломает card/editor, использует Auto
   fallback и не затирается изменением другого editor field. **Доказательство:**
   unit для resolver/options/form normalization.
@@ -216,7 +222,7 @@ Schema и persisted config не меняются. Миграции нет.
   **Доказательство:** git diff словарей + существующие unit/build gates.
 - **AC8.** В production bundle нет locale fetch, dynamic import, Promise-based
   translation path или нового первого пустого кадра. **Доказательство:** static
-  registry implementation + production build inspection.
+  registry source diff + успешный production build.
 - **AC9.** CONTRIBUTING и комментарии описывают фактический contribution flow и
   plural limitation. **Доказательство:** documentation diff.
 
