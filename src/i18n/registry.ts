@@ -23,16 +23,21 @@ export type Lang = (typeof LANGUAGE_REGISTRY)[number]['code'];
 export const FALLBACK_LANGUAGE_CODE: Lang = 'en';
 export const FALLBACK_DICTIONARY = en;
 
-const LANGUAGE_BY_CODE = new Map<string, LanguageEntry>(
-  LANGUAGE_REGISTRY.map((entry) => [entry.code, entry]),
-);
-
 /** Normalize HA locale tags for registry lookup. */
 export function normalizeLanguageTag(value: unknown): string {
   return typeof value === 'string'
     ? value.trim().replaceAll('_', '-').toLowerCase()
     : '';
 }
+
+/** Build a case-insensitive BCP 47 lookup while retaining canonical codes. */
+export function buildLanguageLookup<T extends { code: string }>(
+  entries: readonly T[],
+): ReadonlyMap<string, T> {
+  return new Map(entries.map((entry) => [normalizeLanguageTag(entry.code), entry]));
+}
+
+const LANGUAGE_BY_CODE = buildLanguageLookup(LANGUAGE_REGISTRY);
 
 /** Return the canonical registry entry for a locale code, if it is shipped. */
 export function languageEntry(value: unknown): LanguageEntry | undefined {

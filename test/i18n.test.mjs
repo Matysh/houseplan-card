@@ -5,6 +5,8 @@ import { readdirSync, readFileSync } from 'node:fs';
 import {
   FALLBACK_LANGUAGE_CODE,
   LANGUAGE_REGISTRY,
+  buildLanguageLookup,
+  languageEntry,
   languageOptions,
   normalizeLanguageTag,
   resolveLanguageCode,
@@ -35,6 +37,16 @@ test('i18n: registry codes and English fallback are valid', () => {
     assert.match(code, /^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/u);
     assert.ok(nativeLabel.trim(), `${code} has no native label`);
     assert.ok(dictionary && typeof dictionary === 'object', `${code} has no dictionary`);
+  }
+});
+
+test('i18n: canonical regional codes use normalized lookup keys', () => {
+  const regional = { code: 'pt-BR', nativeLabel: 'Português (Brasil)', dictionary: {} };
+  const lookup = buildLanguageLookup([regional]);
+  assert.equal(lookup.get('pt-br'), regional);
+  assert.equal(lookup.get(normalizeLanguageTag('PT_br')), regional);
+  for (const entry of LANGUAGE_REGISTRY) {
+    assert.equal(languageEntry(entry.code.toUpperCase()), entry);
   }
 });
 
