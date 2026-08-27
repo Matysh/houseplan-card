@@ -68,6 +68,7 @@ import {
   degradeWalls, rekeyWallsAfterMoveChecked, wallRecordCarrierViolations,
   setWallThickness, setWallThicknessForRoom, cmToField, wallCmToUnits,
   wallEdgeBodies, wallBodiesGeometry, wallBodiesGeometryPath, wallBodiesUnionPath,
+  recutWallBodiesGeometry,
   floorFootprintGeometry,
   innerContourForRoom, roomWallProfile, outsetContour,
   openingInnerFaceOffsetFromIndex, openingTunnelGeometriesFromIndex,
@@ -1649,6 +1650,9 @@ class HouseplanCard extends LitElement {
       masonryGeometry: any; opaqueBodies: number[][][];
     };
   } | null = null;
+  /** Space switching is presentation-only. Keep recently resolved light
+   * topology just like wall topology, rather than rebuilding both per tab. */
+  private _lightBarrierPool = new Map<string, NonNullable<typeof this._lightBarrierCache>>();
   /** Freeze the SVG blur while a pinch/pan emits animation frames, then adopt
    *  the final screen-space value after the gesture. */
   private _glowFeatherUnits: number | null = null;
@@ -8944,6 +8948,10 @@ class HouseplanCard extends LitElement {
       const projected = wallBodiesGeometryPath(preflight.wallGeometry);
       if (projected) {
         const key = `${this._space}|${this._cfgEpoch}|${sp.rooms.length}`;
+        Object.defineProperty(projected, 'sourceFingerprint', {
+          value: contentFingerprint([sp, this._cellCm, this._gridPitch]),
+          enumerable: false,
+        });
         const entry = { key, value: projected };
         lruWrite(this._wallUnionPool, key, entry, 8);
         this._wallUnionCache = entry;
@@ -11615,19 +11623,27 @@ class HouseplanCard extends LitElement {
     const walls = this._spaceWalls;
     const extras = this._physicalBodiesR();
     if (!walls.length && !extras.length) return null;
-    const openCuts = this._openCuts();
-    const openings = this._roomWallOpeningInputs();
     const unionKey = `${this._space}|${this._cfgEpoch}|${space.rooms.length}`;
     if (!this._wallUnionCache || this._wallUnionCache.key !== unionKey) {
       const cached = lruRead(this._wallUnionPool, unionKey);
       if (cached.hit) this._wallUnionCache = cached.value;
       else {
+        // Opening association and physical-body extraction are structural
+        // work. Do them only for a real cache miss; this method is intentionally
+        // called by many room consumers in one render.
+        const openCuts = this._openCuts();
+        const openings = this._roomWallOpeningInputs();
+        const value = wallBodiesUnionPath(
+          space.rooms, walls, openCuts, openings,
+          this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W, extras,
+        );
+        if (value) Object.defineProperty(value, 'sourceFingerprint', {
+          value: contentFingerprint([this._curSpaceCfg, this._cellCm, this._gridPitch]),
+          enumerable: false,
+        });
         const entry = {
           key: unionKey,
-          value: wallBodiesUnionPath(
-            space.rooms, walls, openCuts, openings,
-            this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W, extras,
-          ),
+          value,
         };
         lruWrite(this._wallUnionPool, unionKey, entry, 8);
         this._wallUnionCache = entry;
@@ -16499,6 +16515,19 @@ class HouseplanCard extends LitElement {
     occluders: LightSegment[]; floor: number[][][]; fingerprint: string;
     masonryGeometry: any; opaqueBodies: number[][][];
   } {
+    const raw = this._curSpaceCfg;
+    // Exact content identity keeps the old in-place-mutation protection while
+    // moving the cache lookup ahead of passage classification, physical-body
+    // booleans and wall topology. `_cfgEpoch` alone is deliberately not used:
+    // old editor paths and third-party harnesses can still mutate a structure
+    // before advancing it.
+    const fingerprint = contentFingerprint([raw, this._cellCm, this._gridPitch]);
+    const cacheKey = `${space.id}|${fingerprint}`;
+    const pooled = lruRead(this._lightBarrierPool, cacheKey);
+    if (pooled.hit) {
+      this._lightBarrierCache = pooled.value;
+      return pooled.value.value;
+    }
     // Gates are door-like: their different symbol must not change how light
     // crosses the clear opening.
     const zeroWalls = this._zeroWalls();
@@ -16552,47 +16581,27 @@ class HouseplanCard extends LitElement {
       };
     }
     const lightPhysical = this._lightPhysicalBodiesCache.all;
-    // Keyed by what it is made of, never by `_cfgEpoch`: geometry edited in
-    // place leaves the epoch behind, and a stale barrier set is invisible —
-    // the plan simply keeps lighting through a wall that now exists.
-    let hash = 0x811c9dc5;
-    const mix = (value: number) => {
-      hash ^= Math.round((Number.isFinite(value) ? value : 0) * 64);
-      hash = Math.imul(hash, 0x01000193) >>> 0;
-    };
     const walls = this._spaceWalls;
-    mix(this._cellCm);
-    mix(this._gridPitch);
-    mix(this._wallKeyPitch);
-    for (const { poly } of polys) { mix(poly.length); for (const p of poly) { mix(p[0]); mix(p[1]); } }
-    for (const cut of cuts) for (const value of cut) mix(value);
-    mix(zeroWalls.style === 'solid' ? 1 : 0);
-    for (const barrier of zeroWalls.barriers) for (const value of barrier) mix(value);
-    for (const body of lightPhysical) {
-      mix(body.length);
-      for (const point of body) { mix(point[0]); mix(point[1]); }
-    }
-    for (const wall of walls) {
-      mix(wall.cm);
-      mix(wall.a?.[0] ?? 0); mix(wall.a?.[1] ?? 0);
-      mix(wall.b?.[0] ?? 0); mix(wall.b?.[1] ?? 0);
-    }
-    const fingerprint = hash.toString(36);
-    const cacheKey = `${space.id}|${fingerprint}`;
-    if (this._lightBarrierCache?.key === cacheKey) return this._lightBarrierCache.value;
     const eps = this._gridPitch * 0.02;
     const occluders: LightSegment[] = [];
     // The masonry the plan draws, cut by passages only — real thickness, real
     // jamb faces. Treating a wall as its centreline let light bleed half a wall
     // deep (a bright bar at every opening) and started every shadow half a wall
     // away from the corner that casts it.
-    const masonry = walls.length || lightPhysical.length
-      ? wallBodiesGeometry(
-        space.rooms, walls, openCuts,
-        roomPassages,
-        this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W, lightPhysical,
-      )
+    const sharedWallGeometry = this._wallUnionGeometry();
+    const sharedFingerprint = (sharedWallGeometry as unknown as {
+      sourceFingerprint?: string;
+    } | null)?.sourceFingerprint;
+    const recut = sharedWallGeometry && sharedFingerprint === fingerprint
+      ? recutWallBodiesGeometry(sharedWallGeometry, roomPassages, lightPhysical)
       : null;
+    const masonry = recut || (walls.length || lightPhysical.length
+      ? wallBodiesGeometry(
+          space.rooms, walls, openCuts,
+          roomPassages,
+          this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W, lightPhysical,
+        )
+      : null);
     if (masonry && (masonry.status === 'ok' || masonry.status === 'degraded-extra')) {
       for (const component of masonry.components) {
         for (const ring of geometryAllRings(component.geom)) occluders.push(...polygonSegments(ring));
@@ -16627,7 +16636,9 @@ class HouseplanCard extends LitElement {
       // doors, and therefore cannot be used when the boolean geometry is empty.
       opaqueBodies: lightPhysical,
     };
-    this._lightBarrierCache = { key: cacheKey, value };
+    const entry = { key: cacheKey, value };
+    lruWrite(this._lightBarrierPool, cacheKey, entry, 8);
+    this._lightBarrierCache = entry;
     return value;
   }
 

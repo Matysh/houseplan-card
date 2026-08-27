@@ -10,7 +10,8 @@ import {
   drawWallPreviewD, linearWallBody, linearWallJoinPatches,
   DRAW_WALL_DEFAULT_CM, clampWallCm, cmToField, fieldToCm,
   wallCmToUnits, insetContour, outsetContour, inwardNormal, edgeKinds, wallEdgeBodies,
-  wallBodyRings, wallBodiesGeometry, wallBodiesUnionPath, floorFootprintGeometry,
+  wallBodyRings, wallBodiesGeometry, wallBodiesUnionPath, recutWallBodiesGeometry,
+  floorFootprintGeometry,
   virtualJunctionPatches, stableJunctionPatch, unionJunctionPatches,
   innerContourForRoom, innerEdgeSpan, ownEdgeOffsets,
   paperRoomShapesWithWalls, WALL_MIN_CM, WALL_MAX_CM, MITRE_LIMIT, VISUAL_MITRE_LIMIT,
@@ -136,6 +137,36 @@ test('#278 rejects degraded extras in strict preflight while render geometry rem
   assert.equal(result.status, 'degraded-extra');
   assert.equal(result.components.length, 2);
   assert.equal(result.roomGeom.length, 0, 'independent bodies never enter room area masonry');
+});
+
+test('alternate opening policy recuts the retained room masonry exactly', () => {
+  const rooms = [
+    { id: 'left', poly: [[0, 0], [100, 0], [100, 100], [0, 100]] },
+    { id: 'right', poly: [[100, 0], [200, 0], [200, 100], [100, 100]] },
+  ];
+  const unique = new Map();
+  for (const room of rooms) for (let index = 0; index < room.poly.length; index++) {
+    const a = room.poly[index], b = room.poly[(index + 1) % room.poly.length];
+    const key = wallKey(a, b, 1);
+    if (!unique.has(key)) unique.set(key, { key, a, b, cm: 20 });
+  }
+  const walls = [...unique.values()];
+  const interiorDoor = { x: 100, y: 50, angle: 90, length: 30 };
+  const exteriorWindow = { x: 50, y: 0, angle: 0, length: 24 };
+  const extras = [[[130, 35], [150, 35], [150, 45], [130, 45]]];
+  const visual = wallBodiesGeometry(
+    rooms, walls, [], [interiorDoor, exteriorWindow], 1, 5, 5, 1, extras,
+  );
+  const directLight = wallBodiesGeometry(
+    rooms, walls, [], [interiorDoor], 1, 5, 5, 1, extras,
+  );
+  const recutLight = recutWallBodiesGeometry(visual, [interiorDoor], extras);
+  assert.equal(visual.status, 'ok');
+  assert.ok(visual.roomComponents?.length, 'uncut room masonry is retained');
+  assert.equal(directLight.status, 'ok');
+  assert.equal(recutLight?.status, 'ok');
+  closeTo(geometryDifferenceArea(directLight.geom, recutLight.geom), 0, 1e-6);
+  closeTo(geometryDifferenceArea(recutLight.geom, directLight.geom), 0, 1e-6);
 });
 
 const enclosedLocalHoleRings = (geometry, node) => {

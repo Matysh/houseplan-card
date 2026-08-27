@@ -764,11 +764,11 @@ test('a light source paints exactly one region: the floor it can see', () => {
   // Barriers are keyed by their own content: `_cfgEpoch` lags behind geometry
   // edited in place, and a stale barrier set lights straight through a wall.
   assert.doesNotMatch(glow, /_cfgEpoch/);
-  assert.match(source, /const fingerprint = hash\.toString\(36\)/);
-  assert.match(source, /for \(const point of body\) \{ mix\(point\[0\]\); mix\(point\[1\]\); \}/);
-  assert.match(source, /mix\(wall\.b\?\.\[0\] \?\? 0\); mix\(wall\.b\?\.\[1\] \?\? 0\)/);
+  assert.match(source, /const fingerprint = contentFingerprint\(\[/);
+  assert.match(source, /contentFingerprint\(\[raw, this\._cellCm, this\._gridPitch\]\)/);
   assert.match(source, /const cacheKey = `\$\{space\.id\}\|\$\{fingerprint\}`/);
-  assert.match(source, /mix\(this\._cellCm\)[\s\S]*mix\(this\._gridPitch\)/);
+  assert.match(source, /sharedFingerprint === fingerprint/,
+    'an in-place edit must never recut stale shared masonry');
 });
 
 test('all destructive editor dialogs use the medium shell and shared responsive footer groups', () => {

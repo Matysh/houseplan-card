@@ -111,3 +111,31 @@ test('room inner faces are structurally cached and shared by both fill layers', 
   assert.equal([...viewRooms.matchAll(/innerContourForRoom\(/g)].length, 0);
   assert.match(viewRooms, /this\._innerRoomContour\(space, r\.id, allZeroCuts, roomWallGeometry\)/);
 });
+
+test('wall and light geometry reuse bounded caches before structural work', () => {
+  const source = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
+
+  const unionStart = source.indexOf('private _wallUnionGeometry()');
+  const unionEnd = source.indexOf('\n  /** Thick-wall spans', unionStart);
+  assert.ok(unionStart >= 0 && unionEnd > unionStart, 'wall-union helper is present');
+  const union = source.slice(unionStart, unionEnd);
+  assert.ok(
+    union.indexOf('lruRead(this._wallUnionPool, unionKey)')
+      < union.indexOf('const openCuts = this._openCuts();'),
+    'a cached wall union must avoid resolving openings',
+  );
+  assert.match(union, /lruWrite\(this\._wallUnionPool, unionKey, entry, 8\)/);
+
+  const lightStart = source.indexOf('private _lightBarriers(');
+  const lightEnd = source.indexOf('\n  /** Light pools', lightStart);
+  assert.ok(lightStart >= 0 && lightEnd > lightStart, 'light-barrier helper is present');
+  const light = source.slice(lightStart, lightEnd);
+  assert.ok(
+    light.indexOf('lruRead(this._lightBarrierPool, cacheKey)')
+      < light.indexOf('const zeroWalls = this._zeroWalls();'),
+    'a cached light barrier must return before geometry classification',
+  );
+  assert.match(light, /contentFingerprint\(\[/);
+  assert.match(light, /recutWallBodiesGeometry\(sharedWallGeometry, roomPassages, lightPhysical\)/);
+  assert.match(light, /lruWrite\(this\._lightBarrierPool, cacheKey, entry, 8\)/);
+});

@@ -1631,8 +1631,8 @@ export const MUTANTS = [
       + 'стену в сплошную и обязан увидеть смену освещённости соседней комнаты',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: 'if (this._lightBarrierCache?.key === cacheKey) return this._lightBarrierCache.value;',
-      replace: 'if (this._lightBarrierCache) return this._lightBarrierCache.value;',
+      find: '    const cacheKey = `${space.id}|${fingerprint}`;',
+      replace: '    const cacheKey = space.id; // mutant: ignore changed geometry',
     }],
   },
   {
