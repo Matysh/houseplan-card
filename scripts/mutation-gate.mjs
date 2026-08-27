@@ -438,6 +438,10 @@ export const MUTANTS = [
       file: 'src/houseplan-card.ts',
       find: '    if (!legacySafe) {',
       replace: '    if (false && !legacySafe) {',
+    }, {
+      file: 'src/houseplan-card.ts',
+      find: '        && this._checkSpacePhysicalGeometry(committedCandidate, before.spaceId).ok;',
+      replace: '        && true;',
     }],
   },
   {
