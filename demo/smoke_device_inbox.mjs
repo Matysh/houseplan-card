@@ -39,6 +39,31 @@ const out = await page.evaluate(async () => {
   result.onPlanHasRows = root().querySelectorAll('.device-inbox-row[data-category="on_plan"]').length > 0;
   result.noHorizontalOverflow = !!dialog && dialog.scrollWidth <= dialog.clientWidth + 1;
 
+  // The catalog speaks in the plan's room names, not a stale HA Area name.
+  const initialRoomRow = c._deviceInboxRows()
+    .find((item) => item.areaId && c._areaToSpace[item.areaId]);
+  const roomTarget = initialRoomRow ? c._areaToSpace[initialRoomRow.areaId] : null;
+  const sourceRoom = roomTarget ? c._serverCfg.spaces.find((space) => space.id === roomTarget.space)
+    ?.rooms?.find((room) => room.id === roomTarget.room.id) : null;
+  result.hasCatalogRowInPlanRoom = !!roomTarget && !!initialRoomRow && !!sourceRoom;
+  if (roomTarget && initialRoomRow && sourceRoom) {
+    const originalRoomName = sourceRoom?.name;
+    const planRoomName = 'Renamed room on plan';
+    sourceRoom.name = planRoomName;
+    c._cfgEpoch++;
+    c._deviceInboxMemo = null;
+    await c.updateComplete;
+    const roomRow = c._deviceInboxRows().find((item) => item.binding === initialRoomRow.binding);
+    result.planRoomNameWins = roomRow?.areaName === planRoomName;
+    result.planRoomNameIsSearchable = !!roomRow?.searchText.includes(planRoomName.toLowerCase());
+    sourceRoom.name = originalRoomName;
+    c._cfgEpoch++;
+    c._deviceInboxMemo = null;
+  } else {
+    result.planRoomNameWins = false;
+    result.planRoomNameIsSearchable = false;
+  }
+
   const search = root().querySelector('.device-inbox-search');
   search.value = 'Ceiling light';
   search.dispatchEvent(new Event('input', { bubbles: true, composed: true }));

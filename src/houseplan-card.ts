@@ -14097,11 +14097,20 @@ class HouseplanCard extends LitElement {
     const statuses = new Map<string, HaBindingStatus>();
     for (const binding of bindings) statuses.set(binding, this._bindingStatus(binding));
 
+    const areaMap = this._areaToSpace;
     const areaNames: Record<string, string> = {};
-    for (const [id, area] of Object.entries<any>(this.hass?.areas || {})) areaNames[id] = area?.name || id;
+    for (const [id, area] of Object.entries<any>(this.hass?.areas || {})) {
+      areaNames[id] = areaMap[id]?.room?.name || area?.name || id;
+    }
+    // A room may keep a valid HA area reference even when the current user has
+    // only a limited area-registry snapshot.  Its plan-visible name is still
+    // authoritative for the catalog and search.
+    for (const [id, target] of Object.entries(areaMap)) {
+      areaNames[id] = target.room.name || areaNames[id] || id;
+    }
     const spaceNames = Object.fromEntries(this._model.map((space) => [space.id, space.title]));
     const spaceByArea = Object.fromEntries(
-      Object.entries(this._areaToSpace).map(([area, value]) => [area, value.space]),
+      Object.entries(areaMap).map(([area, value]) => [area, value.space]),
     );
     const integrationByBinding: Record<string, string> = {};
     const devicePlatforms = new Map<string, Set<string>>();

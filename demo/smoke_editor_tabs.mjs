@@ -156,7 +156,7 @@ const res = await page.evaluate(async () => {
   tabs()[1].click(); await c.updateComplete;
   out.directSwitch = c._mode === 'devices';
   out.devBar = !!sr().querySelector('.editbar.devbar');
-  out.devBarBtns = sr().querySelectorAll('.editbar.devbar .btn:not(.barclose)').length === 3; // add/show-all/rules (v1.33.2: Reset removed)
+  out.devBarBtns = sr().querySelectorAll('.editbar.devbar .btn:not(.barclose)').length === 2; // devices catalog + icon rules (#29)
   const swapChrome = sr().querySelector('.editorchrome');
   const swapInner = swapChrome.querySelector('.editorchrome-inner');
   out.editorSwapAnimatesHeight = c._modeTransitionBusy

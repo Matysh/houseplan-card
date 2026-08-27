@@ -152,7 +152,6 @@ export interface DeviceInboxRow {
   canHide: boolean;
   canShow: boolean;
   canAdd: boolean;
-  canOpenHa: boolean;
 }
 
 export interface DeviceInboxInput {
@@ -242,7 +241,6 @@ export function buildDeviceInbox(input: DeviceInboxInput): DeviceInboxRow[] {
     const active = status.kind === 'active';
     const canFind = isRendered && (active
       || (status.kind === 'ha_disabled' && showHiddenOnPlan));
-    const canOpenHa = kind === 'device' || kind === 'entity';
     const searchText = [
       name, model, integrationByBinding[binding], areaNames[areaId], spaceNames[spaceId],
       binding, candidate?.sub,
@@ -261,7 +259,6 @@ export function buildDeviceInbox(input: DeviceInboxInput): DeviceInboxRow[] {
       canHide: category === 'on_plan' && active,
       canShow: category === 'hidden' && active,
       canAdd: (category === 'available' || category === 'readd') && active,
-      canOpenHa,
     });
   }
   const statusRank = (row: DeviceInboxRow): number => row.status.kind === 'active' ? 1 : 0;
