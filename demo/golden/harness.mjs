@@ -5,6 +5,9 @@ import { readFileSync } from 'node:fs';
 const junctionArtifactsFixture = JSON.parse(readFileSync(
   new URL('../../test/fixtures/302-junction-artifacts.json', import.meta.url), 'utf8',
 ));
+const sharpApexFixture = JSON.parse(readFileSync(
+  new URL('../../test/fixtures/329-sharp-apex.json', import.meta.url), 'utf8',
+));
 const junctionTeethFixture = JSON.parse(readFileSync(
   new URL('../../test/fixtures/309-junction-teeth.json', import.meta.url), 'utf8',
 ));
@@ -308,6 +311,23 @@ export function prepareGoldenFixture(scenario) {
       id: scenario.space,
       title: 'Junction artifacts repro',
       view_box: [0, 0, 1, 1],
+      settings: { fill_mode: 'none', show_borders: true, show_names: false },
+    });
+  }
+  if (scenario.sharpApex) {
+    // #329 §4: легаси-план, где вершина ≈9.9° раньше распадалась на
+    // «трезубец». Сцена смотрит вплотную на остриё — фаска, складка-«бабочка»
+    // и микро-ступеньки на гранях обязаны быть видимы как регресс.
+    fixture.config.spaces.push({
+      id: scenario.space,
+      title: 'Sharp apex (legacy)',
+      cell_cm: sharpApexFixture.cell_cm,
+      model_version: sharpApexFixture.model_version,
+      rooms: structuredClone(sharpApexFixture.rooms),
+      walls: structuredClone(sharpApexFixture.walls),
+      wall_segments: structuredClone(sharpApexFixture.wall_segments),
+      openings: [], room_drafts: [], partitions: [], wall_columns: [],
+      view_box: [3.58, 0.20, 0.40, 0.40],
       settings: { fill_mode: 'none', show_borders: true, show_names: false },
     });
   }
