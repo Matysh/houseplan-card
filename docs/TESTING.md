@@ -29,8 +29,13 @@
    но не при её неработоспособности.
 
 Проверка: `node scripts/mutation-gate.mjs --check` — якоря патчей живы;
-полный прогон — workflow `mutation-gate.yml`, перед стабильным релизом и по
-понедельникам. Дешёвая половина идёт с юнитами: `test/mutation-gate.test.mjs`.
+полный прогон — workflow `mutation-gate.yml` (четыре чересполосных шарда,
+`--shard=i/4`), перед стабильным релизом и по понедельникам. Дешёвая половина
+идёт с юнитами: `test/mutation-gate.test.mjs`. Локально для дельты задачи —
+`node scripts/mutation-gate.mjs --changed origin/dev..HEAD`: гоняются только
+мутанты, чьи patch-файлы задеты диффом (#332). Бандл собирается только
+мутантам с браузерным гвардом; компиляция тестов в worktree стартует с
+тёплого `test-build/` основного дерева.
 
 ## Stable wall-segment identity (#282)
 

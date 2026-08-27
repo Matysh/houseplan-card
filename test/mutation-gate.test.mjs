@@ -5,7 +5,10 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { MUTANTS, applyPatches, guardNeedsTestBuild } from '../scripts/mutation-gate.mjs';
+import {
+  MUTANTS, applyPatches, guardNeedsBundle, guardNeedsTestBuild,
+  selectChangedMutants, shardMutants,
+} from '../scripts/mutation-gate.mjs';
 
 const repoRoot = fileURLToPath(new URL('..', import.meta.url));
 
@@ -105,4 +108,75 @@ test('no mutant guard is left unable to resolve test-build (#235)', () => {
       + 'и никто этот каталог в мутанте не соберёт',
     );
   }
+});
+
+// --- #332: бандл собирается только тем, кто его читает ---
+
+test('#332: guardNeedsBundle отличает браузерные гварды от остальных', () => {
+  // Браузерные: смоки, golden и явный bundle:sync.
+  assert.equal(guardNeedsBundle('node demo/smoke_junction_limits.mjs'), true);
+  assert.equal(guardNeedsBundle(
+    'node demo/golden/run.mjs --mode=capture --scenario=openings-filled-tunnel-dark',
+  ), true);
+  assert.equal(guardNeedsBundle('npm run bundle:sync && node demo/smoke_v8_draft_write.mjs'), true);
+  // Юнит, бэкенд и хелперы бандл не открывают.
+  assert.equal(guardNeedsBundle(
+    'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+    + '&& node --test --test-name-pattern="x" test/junction-limits.test.mjs',
+  ), false);
+  assert.equal(guardNeedsBundle(
+    'node scripts/backend-test-guard.mjs some_pattern tests_backend/test_trails.py',
+  ), false);
+  assert.equal(guardNeedsBundle('node scripts/trail-resume-test-guard.mjs'), false);
+});
+
+test('#332: каждый гвард реестра классифицируется, смешанных нет', () => {
+  // Гвард, который гоняет и юниты, и смок, обязан получить бандл: критерий
+  // demo/ это покрывает. Здесь фиксируется, что доля браузерных гвардов не
+  // «схлопнулась» молча — экономия #332 живёт только пока классификация умна.
+  const bundle = MUTANTS.filter((m) => guardNeedsBundle(m.guard)).length;
+  const rest = MUTANTS.length - bundle;
+  assert.ok(bundle >= 40, `браузерных гвардов подозрительно мало: ${bundle}`);
+  assert.ok(rest >= 150, `небраузерных гвардов подозрительно мало: ${rest}`);
+});
+
+// --- #332: дифф-режим и шарды ---
+
+test('#332: selectChangedMutants берёт мутанта при любом задетом patch.file', () => {
+  const mutants = [
+    { id: 'a', patches: [{ file: 'src/one.ts' }] },
+    { id: 'b', patches: [{ file: 'src/two.ts' }, { file: 'src/three.ts' }] },
+    { id: 'c', patches: [{ file: 'custom_components/houseplan/x.py' }] },
+  ];
+  assert.deepEqual(
+    selectChangedMutants(mutants, ['src/three.ts', 'docs/README.md']).map((m) => m.id),
+    ['b'],
+  );
+  assert.deepEqual(selectChangedMutants(mutants, ['docs/README.md']), []);
+  assert.deepEqual(
+    selectChangedMutants(mutants, ['src/one.ts', 'custom_components/houseplan/x.py'])
+      .map((m) => m.id),
+    ['a', 'c'],
+  );
+});
+
+test('#332: шарды покрывают реестр целиком и не пересекаются', () => {
+  const TOTAL = 4;
+  const seen = new Map();
+  for (let index = 1; index <= TOTAL; index++) {
+    for (const mutant of shardMutants(MUTANTS, index, TOTAL)) {
+      assert.equal(seen.has(mutant.id), false, `мутант ${mutant.id} попал в два шарда`);
+      seen.set(mutant.id, index);
+    }
+  }
+  assert.equal(seen.size, MUTANTS.length, 'объединение шардов не равно реестру');
+  // Чересполосная нарезка: дорогие смок-мутанты размазаны, а не в одном шарде.
+  const perShard = new Map();
+  for (const [id, shard] of seen) {
+    const isBundle = guardNeedsBundle(MUTANTS.find((m) => m.id === id).guard);
+    if (isBundle) perShard.set(shard, (perShard.get(shard) || 0) + 1);
+  }
+  const counts = [...perShard.values()];
+  assert.ok(Math.max(...counts) - Math.min(...counts) <= MUTANTS.length / TOTAL / 2,
+    `браузерные мутанты скучковались: ${counts.join(', ')}`);
 });

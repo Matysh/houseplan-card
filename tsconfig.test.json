@@ -5,7 +5,9 @@
     "outDir": "test-build",
     "noEmit": false,
     "declaration": false,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "incremental": true,
+    "tsBuildInfoFile": "test-build/.tsbuildinfo"
   },
   "include": [
     "src/color.ts", "src/styles.ts", "src/styles/*.styles.ts", "src/logic.ts", "src/glow-blend.ts", "src/grid-scale.ts", "src/device-visual.ts", "src/device-pulse.ts", "src/device-presentation.ts", "src/device-marker-geometry.ts",

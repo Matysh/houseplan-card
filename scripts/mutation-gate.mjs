@@ -3412,6 +3412,36 @@ export function guardNeedsTestBuild(guard) {
 }
 
 /**
+ * Нужен ли гварду СОБРАННЫЙ бандл (#332).
+ *
+ * Бандл читают только браузерные проверки: смоки и golden-сцены грузят
+ * `demo/srv/assets/houseplan-card.js`, и мутант обязан попасть в него, иначе
+ * guard проверяет чистый код. Юнит- и бэкенд-гварды бандл не открывают ни в
+ * каком виде (проверено по реестру и по исходникам тестов: dist/** читается
+ * только как git-чекаут, который в worktree и так есть). Rollup-сборка —
+ * самая дорогая часть прогона (255 мутантов × ~15-20 с), поэтому она
+ * выполняется только там, где её результат кто-то откроет.
+ */
+export function guardNeedsBundle(guard) {
+  return guard.includes('demo/') || guard.includes('bundle:sync');
+}
+
+/**
+ * Тёплый старт компиляции мутанта (#332): скопировать `test-build/` вместе с
+ * `.tsbuildinfo` из основного дерева. Мутант меняет один-два файла, и
+ * инкрементальный tsc пересобирает только их дельту вместо всего проекта;
+ * `.tsbuildinfo` сверяет файлы по хэшу содержимого, поэтому свежие mtime
+ * worktree его не сбивают, а мутированный файл гарантированно пересобирается.
+ * Отсутствие каталога в основном дереве — не ошибка: холодная сборка просто
+ * идёт прежним полным путём.
+ */
+function seedTestBuild(dir) {
+  const warm = join(repoRoot, 'test-build');
+  if (!existsSync(warm)) return;
+  cpSync(warm, join(dir, 'test-build'), { recursive: true });
+}
+
+/**
  * Собрать `test-build/` из мутированного src в каталоге мутанта.
  *
  * Код выхода `tsc` игнорируется сознательно, по той же причине, что и в
@@ -3420,6 +3450,7 @@ export function guardNeedsTestBuild(guard) {
  * если его нет, падаем громко, а не отдаём тесту пустоту.
  */
 function buildTestBuild(dir) {
+  seedTestBuild(dir);
   sh('npx tsc -p tsconfig.test.json', dir);
   const fixed = sh('node scripts/fix-test-build.mjs', dir);
   if (!existsSync(join(dir, 'test-build'))) {
@@ -3441,7 +3472,7 @@ function runMutant(mutant) {
   const dir = makeWorktree();
   try {
     applyPatches(dir, mutant.patches);
-    buildBundle(dir);
+    if (guardNeedsBundle(mutant.guard)) buildBundle(dir);
     if (guardNeedsTestBuild(mutant.guard)) buildTestBuild(dir);
     const guard = sh(mutant.guard, dir);
     if (guard.status === 0) {
@@ -3463,7 +3494,7 @@ function runCleanGuards(mutants) {
   const guards = [...new Set(mutants.map((m) => m.guard))];
   const dir = makeWorktree();
   try {
-    buildBundle(dir);
+    if (guards.some(guardNeedsBundle)) buildBundle(dir);
     // Один worktree на все чистые гварды — значит и компиляция одна.
     if (guards.some(guardNeedsTestBuild)) buildTestBuild(dir);
     for (const guard of guards) {
@@ -3481,12 +3512,66 @@ function runCleanGuards(mutants) {
   }
 }
 
+/**
+ * Мутанты, чьи патч-файлы задеты диффом (#332). Дифф-режим — для локальной
+ * проверки и ревью-циклов; полный набор остаётся предрелизным контрактом,
+ * поэтому пустая выборка — честный успех с явным сообщением, а не ошибка.
+ */
+export function selectChangedMutants(mutants, changedFiles) {
+  const changed = new Set(changedFiles);
+  return mutants.filter((m) => m.patches.some((patch) => changed.has(patch.file)));
+}
+
+/**
+ * Детерминированный шард `index/total` (#332): реестр сортируется по id и
+ * режется чересполосно, чтобы дорогие смок-мутанты (соседи по алфавиту)
+ * не скапливались в одном шарде. Объединение шардов равно реестру,
+ * пересечений нет — закреплено юнитом.
+ */
+export function shardMutants(mutants, index, total) {
+  const ordered = [...mutants].sort((a, b) => a.id.localeCompare(b.id));
+  return ordered.filter((_, position) => position % total === index - 1);
+}
+
 function main(argv) {
   const idArg = argv.find((a) => a.startsWith('--id='))?.slice(5);
-  const selected = idArg ? MUTANTS.filter((m) => m.id === idArg) : MUTANTS;
+  let selected = idArg ? MUTANTS.filter((m) => m.id === idArg) : MUTANTS;
   if (idArg && !selected.length) {
     console.error(`мутант «${idArg}» не объявлен; --list покажет реестр`);
     return 2;
+  }
+
+  const changedArg = argv.find((a) => a === '--changed' || a.startsWith('--changed='));
+  if (changedArg) {
+    const range = changedArg.includes('=') ? changedArg.split('=')[1] : 'origin/dev..HEAD';
+    const diff = spawnSync('git', ['-C', repoRoot, 'diff', '--name-only', range],
+      { encoding: 'utf8' });
+    if (diff.status !== 0) {
+      console.error(`git diff ${range} не удался:\n${diff.stderr}`);
+      return 2;
+    }
+    const files = diff.stdout.split('\n').filter(Boolean);
+    const before = selected.length;
+    selected = selectChangedMutants(selected, files);
+    console.log(`дифф-режим ${range}: файлов в диффе ${files.length}, `
+      + `мутантов затронуто ${selected.length} из ${before}`);
+    if (!selected.length) {
+      console.log('дифф не задевает ни одного patch.file — гонять нечего; '
+        + 'полный реестр остаётся предрелизным контрактом');
+      return 0;
+    }
+  }
+
+  const shardArg = argv.find((a) => a.startsWith('--shard='))?.slice(8);
+  if (shardArg) {
+    const match = /^([1-9]\d*)\/([1-9]\d*)$/.exec(shardArg);
+    if (!match || Number(match[1]) > Number(match[2])) {
+      console.error(`--shard ожидает i/n с 1 <= i <= n, получено «${shardArg}»`);
+      return 2;
+    }
+    const before = selected.length;
+    selected = shardMutants(selected, Number(match[1]), Number(match[2]));
+    console.log(`шард ${shardArg}: ${selected.length} из ${before} мутантов`);
   }
 
   if (argv.includes('--list')) {
