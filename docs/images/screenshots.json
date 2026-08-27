@@ -2,7 +2,7 @@
   "version": 1,
   "fixture": "synthetic-only",
   "chromium": "151.0.7922.34",
-  "sourceFingerprint": "fbb90504645a375ae23c8073e12b73b897fa64ed1820c9c230c2ff2c6e6643d1",
+  "sourceFingerprint": "3a81ad744dfb6f19f9cfc7dd90c2b5e06f0a784356d5daf2d3a112f6ff3f6617",
   "captureScriptSha256": "ce2e9542fed9dade3085be87d16f69adb2ac8262893ad78ad966b1b9673f2983",
   "command": "npm run build && node demo/docs/capture.mjs",
   "scenarios": {
@@ -14,7 +14,7 @@
       },
       "theme": "dark",
       "language": "en",
-      "sourceSha256": "fbb90504645a375ae23c8073e12b73b897fa64ed1820c9c230c2ff2c6e6643d1",
+      "sourceSha256": "3a81ad744dfb6f19f9cfc7dd90c2b5e06f0a784356d5daf2d3a112f6ff3f6617",
       "imageSha256": "0ca982495a7749907c48ebbddfd089c54385a4347f79f64e94af2c5a8d5c03eb"
     },
     "view-touch": {
@@ -25,7 +25,7 @@
       },
       "theme": "dark",
       "language": "en",
-      "sourceSha256": "fbb90504645a375ae23c8073e12b73b897fa64ed1820c9c230c2ff2c6e6643d1",
+      "sourceSha256": "3a81ad744dfb6f19f9cfc7dd90c2b5e06f0a784356d5daf2d3a112f6ff3f6617",
       "imageSha256": "1c8e28ff34736b936ba7c9ec047d1da27aaf6fbb01411155f2d5c05282c02c41"
     },
     "space-create": {
@@ -36,7 +36,7 @@
       },
       "theme": "dark",
       "language": "en",
-      "sourceSha256": "fbb90504645a375ae23c8073e12b73b897fa64ed1820c9c230c2ff2c6e6643d1",
+      "sourceSha256": "3a81ad744dfb6f19f9cfc7dd90c2b5e06f0a784356d5daf2d3a112f6ff3f6617",
       "imageSha256": "a55b463055a565892ca139014e314a8f63fb5301c87fff2e48d7e69210fe9b6c"
     },
     "room-contour-close": {
@@ -47,7 +47,7 @@
       },
       "theme": "dark",
       "language": "en",
-      "sourceSha256": "fbb90504645a375ae23c8073e12b73b897fa64ed1820c9c230c2ff2c6e6643d1",
+      "sourceSha256": "3a81ad744dfb6f19f9cfc7dd90c2b5e06f0a784356d5daf2d3a112f6ff3f6617",
       "imageSha256": "dfad9a27371cfa397a3fd8dce7005f42d24649743f5322105ee894067d3a9f16"
     },
     "plan-context-tray": {
@@ -58,7 +58,7 @@
       },
       "theme": "dark",
       "language": "en",
-      "sourceSha256": "fbb90504645a375ae23c8073e12b73b897fa64ed1820c9c230c2ff2c6e6643d1",
+      "sourceSha256": "3a81ad744dfb6f19f9cfc7dd90c2b5e06f0a784356d5daf2d3a112f6ff3f6617",
       "imageSha256": "b75f348c632296da5c2fc142d53df613f757e1516acac315be50f5b4557729cc"
     },
     "device-editor": {
@@ -69,7 +69,7 @@
       },
       "theme": "dark",
       "language": "en",
-      "sourceSha256": "fbb90504645a375ae23c8073e12b73b897fa64ed1820c9c230c2ff2c6e6643d1",
+      "sourceSha256": "3a81ad744dfb6f19f9cfc7dd90c2b5e06f0a784356d5daf2d3a112f6ff3f6617",
       "imageSha256": "6b9cd281450e7782cff292f11efc58d227bedd0df86afc3be987feb2edec9dc3"
     },
     "device-display-preview": {
@@ -80,7 +80,7 @@
       },
       "theme": "dark",
       "language": "en",
-      "sourceSha256": "fbb90504645a375ae23c8073e12b73b897fa64ed1820c9c230c2ff2c6e6643d1",
+      "sourceSha256": "3a81ad744dfb6f19f9cfc7dd90c2b5e06f0a784356d5daf2d3a112f6ff3f6617",
       "imageSha256": "6f628abe6b89d7c4b352e6d73ac0b126526f6fdba5927bb774c5b884e484ca19"
     },
     "background-editor": {
@@ -91,7 +91,7 @@
       },
       "theme": "dark",
       "language": "en",
-      "sourceSha256": "fbb90504645a375ae23c8073e12b73b897fa64ed1820c9c230c2ff2c6e6643d1",
+      "sourceSha256": "3a81ad744dfb6f19f9cfc7dd90c2b5e06f0a784356d5daf2d3a112f6ff3f6617",
       "imageSha256": "a1d1a905f1410f73231d2ea5d1dfbd8ae79c2fe8b0a79cff87ebb977ac7a3103"
     },
     "room-card": {
@@ -102,7 +102,7 @@
       },
       "theme": "dark",
       "language": "en",
-      "sourceSha256": "fbb90504645a375ae23c8073e12b73b897fa64ed1820c9c230c2ff2c6e6643d1",
+      "sourceSha256": "3a81ad744dfb6f19f9cfc7dd90c2b5e06f0a784356d5daf2d3a112f6ff3f6617",
       "imageSha256": "48a5685039a5e0de2a28190d857b193c86e2e63606e3c7a8c40fc9d2b190da4e"
     },
     "device-info": {
@@ -113,7 +113,7 @@
       },
       "theme": "dark",
       "language": "en",
-      "sourceSha256": "fbb90504645a375ae23c8073e12b73b897fa64ed1820c9c230c2ff2c6e6643d1",
+      "sourceSha256": "3a81ad744dfb6f19f9cfc7dd90c2b5e06f0a784356d5daf2d3a112f6ff3f6617",
       "imageSha256": "29a342811aaedaebc54ba337792d60cb454a7cf4c3063b210f6c4bafe0a4d87b"
     }
   }

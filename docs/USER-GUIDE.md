@@ -404,8 +404,9 @@ another wall) is not forbidden by the distance rule.
 The check runs on writes only. An already saved plan is never re-judged:
 migration, import and backup restore are never blocked, and an edit that does
 not touch the offending element passes as usual. The refusal appears where you
-work: drawing and Thickness raise a toast naming the rule, while Resize stops
-the wall at the last allowed position.
+work: drawing and Thickness leave the value unapplied and raise a toast naming
+the rule, while Resize stops the wall at the last allowed position and, once
+per gesture, names the rule the next step would break.
 
 ### HA area binding
 
