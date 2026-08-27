@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.68.0-beta.4 — 2026-08-27
+
 - Updating to the new wall model no longer freezes editing: the server now
   recognises the first write of a newer card over an older document (for
   example one that still carried an orphan legacy border) instead of demanding
