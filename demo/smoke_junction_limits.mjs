@@ -119,5 +119,89 @@ const out = await page.evaluate(async () => {
   return result;
 });
 
-checkAll(out);
+// AC7a (канал Resize): стена упирается в последнюю ДОПУСТИМУЮ позицию, а не
+// проезжает нарушение. Сетка 2 см: две комнаты в 10 см друг от друга, тяга
+// на 6 см вправо оставила бы 4 см между чужими узлами (П4 — минимум 5 см).
+// Жест настоящий: pointer по ручке, без вызовов внутренних методов Resize.
+const settle = () => page.evaluate(() => new Promise((resolve) =>
+  requestAnimationFrame(() => requestAnimationFrame(resolve))));
+
+await page.evaluate(async () => {
+  const card = window.__card;
+  window.__toasts = [];
+  card._showToast = (text) => { window.__toasts.push(String(text)); };
+  const cm = (value) => (value / 2) * (1000 / 240);
+  card._serverCfg = { spaces: [{
+    id: 'limits', title: 'Limits', cell_cm: 2, view_box: [0, 0, 1, 1],
+    rooms: [], openings: [], room_drafts: [], partitions: [], wall_columns: [],
+  }], markers: [], settings: {} };
+  card._space = 'limits'; card._layout = {};
+  card._cfgEpoch++; card._modelCache = null; card._frame = null;
+  card._setMode('plan'); card._tool = 'draw'; card._drawWallField = '15';
+  card.requestUpdate(); await card.updateComplete;
+  const draw = (points, name) => {
+    card._path = [...points, points[0]];
+    card._nameSel = name; card._areaSel = '';
+    card._commitRoom();
+    card._path = [];
+  };
+  draw([[200, 700], [200 + cm(200), 700], [200 + cm(200), 700 - cm(200)],
+    [200, 700 - cm(200)]], 'A');
+  draw([[200 + cm(210), 700], [200 + cm(400), 700],
+    [200 + cm(400), 700 - cm(200)], [200 + cm(210), 700 - cm(200)]], 'B');
+  card._tool = 'resize';
+  card.requestUpdate(); await card.updateComplete;
+  window.__toasts.length = 0;
+});
+await settle();
+await page.waitForTimeout(700);
+await page.evaluate(() => { window.__toasts.length = 0; });
+
+// Просвет между правой гранью A и левой гранью B, в сантиметрах.
+const gapCm = () => page.evaluate(() => {
+  const rooms = window.__card._curSpaceCfg.rooms;
+  const a = Math.max(...rooms.find((room) => room.name === 'A').poly.map((p) => p[0]));
+  const b = Math.min(...rooms.find((room) => room.name === 'B').poly.map((p) => p[0]));
+  return Math.round(((b - a) * 1000) / (1000 / 240) * 2);
+});
+const handle = await page.evaluate(() => {
+  const card = window.__card;
+  const handles = [...card.renderRoot.querySelectorAll('.rszhandle[aria-disabled="false"]')];
+  const rooms = card._curSpaceCfg.rooms;
+  const aRight = Math.max(...rooms.find((room) => room.name === 'A').poly.map((p) => p[0])) * 1000;
+  const found = handles.find((entry) => Math.abs(Number(entry.getAttribute('cx')) - aRight) < 1.5);
+  if (!found) return null;
+  const svg = found.ownerSVGElement;
+  const map = (x, y) => {
+    const point = svg.createSVGPoint();
+    point.x = x; point.y = y;
+    const mapped = point.matrixTransform(found.getScreenCTM());
+    return [mapped.x, mapped.y];
+  };
+  const cx = Number(found.getAttribute('cx'));
+  const cy = Number(found.getAttribute('cy'));
+  return { start: map(cx, cy), end: map(cx + (6 / 2) * (1000 / 240), cy) };
+});
+
+const resize = { resizeHandleFound: !!handle, resizeGapBefore: await gapCm() };
+if (handle) {
+  await page.mouse.move(...handle.start);
+  await page.mouse.down();
+  await page.mouse.move(...handle.end, { steps: 10 });
+  await settle();
+  await page.mouse.up();
+  await settle();
+  await page.waitForTimeout(700);
+  const toasts = await page.evaluate(() => window.__toasts.slice());
+  // 6 см дало бы 4 см — отказ; стена стоит на 6 см, последней допустимой.
+  resize.resizeStoppedAtLastAllowed = await gapCm();
+  resize.resizeRefusalNamesRule = toasts.some((text) => text.includes('5'));
+  resize.resizeRefusalOnce = toasts.length;
+}
+
+checkAll({ ...out, ...resize }, {
+  resizeGapBefore: 10,
+  resizeStoppedAtLastAllowed: 6,
+  resizeRefusalOnce: 1,
+});
 await finish(browser);
