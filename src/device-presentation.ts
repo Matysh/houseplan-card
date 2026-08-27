@@ -585,7 +585,7 @@ export function resolveDevicePresentation(
   const haDisabled = status?.kind === 'ha_disabled';
   const orphaned = status?.kind === 'orphaned';
   const lifecycle: BindingPresentationLifecycle = haDisabled ? 'ha_disabled'
-    : orphaned ? 'orphaned' : status?.kind === 'unverified' ? 'unverified' : 'active';
+    : orphaned ? 'orphaned' : 'active';
   const userHidden = d.userHidden === true || d.marker?.hidden === true;
   const combined = combineVisualSamples(sources.samples);
   const lockSource = sources.visualSources.find((source) => source.eid.startsWith('lock.'));

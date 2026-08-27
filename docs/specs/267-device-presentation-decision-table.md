@@ -135,7 +135,7 @@
 | L03 | HA-disabled в служебном Device editor | диагностический marker/preview с причиной, без live state/action |
 | L04 | user-hidden в View/киоске/static card | marker и hit-area отсутствуют |
 | L05 | user-hidden в design preview | реальный сохранённый дизайн видим, notice `hidden_design_preview`, preview inert |
-| L06 | orphaned/unverified binding | сохраняется действующая диагностическая проекция и причина; pulse/service не оживают |
+| L06 | orphaned binding | сохраняется действующая диагностическая проекция и причина; pulse/service не оживают |
 
 ### 6.2 Source / availability
 
@@ -154,6 +154,7 @@
 | S11 | registry role временно отсутствует, есть live primary | deterministic `primary` fallback без смены сохранённого binding |
 | S12 | нет пригодного source | neutral icon fallback; не выбирается случайная sibling entity |
 | S13 | critical alarm sibling вне обычного face source | alarm добавляется к semantic aggregate и имеет публичный приоритет |
+| S14 | static plan fast path с `sourceDetails:false` | source graph не вычисляется; trace явно фиксирует пропуск, static face остаётся neutral |
 
 ### 6.3 Face / content / diagnostics
 
@@ -209,7 +210,7 @@ semantic facts, не читает HA registry/state и не строит light g
 
 ```ts
 interface DevicePresentationPolicyInput {
-  bindingLifecycle: 'active' | 'ha_disabled' | 'orphaned' | 'unverified';
+  bindingLifecycle: 'active' | 'ha_disabled' | 'orphaned';
   userHidden: boolean;
   designPreview: boolean;
   display: DeviceDisplayMode;
@@ -250,7 +251,7 @@ Production decision IDs описывают **правила**, а не test fixt
 - `device-toggle.ts` и surface handlers владеют action/security/interactivity;
 - `resolvePresentationSources()` продолжает владеть HA/light graph, но
   возвращает дополнительно явный source-decision ID либо эквивалентный trace,
-  чтобы S01…S13 не зависели от чтения порядка `if`;
+  чтобы S01…S14 не зависели от чтения порядка `if`;
 - `houseplan-card.ts`, `space-card.ts`, `space-render.ts` не получают права
   переопределять policy result.
 
@@ -409,7 +410,7 @@ renderer и surfaces не принимают альтернативных реш
 ### AC3 — source decisions названы
 
 Каждая ветка `cover|controls|light|device_role|primary|none` и critical sibling
-возвращает стабильный decision ID/trace; S01…S13 проверяют наблюдаемый output.
+возвращает стабильный decision ID/trace; S01…S14 проверяют наблюдаемый output.
 
 **Доказательство:** parameterized unit.
 
@@ -545,4 +546,3 @@ node scripts/mutation-gate.mjs --id=<каждый новый/изменённы�
    является самоцелью.
 5. Existing browser smoke расширяется только если это остаётся узким сценарием;
    иначе создаётся новый `smoke_device_presentation_matrix.mjs`.
-

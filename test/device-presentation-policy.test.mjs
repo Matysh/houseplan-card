@@ -135,10 +135,7 @@ const rowRunners = {
   }),
   L06: () => {
     const orphaned = resolveDevicePresentationPolicy(basePolicy({ bindingLifecycle: 'orphaned' }));
-    const unverified = resolveDevicePresentationPolicy(basePolicy({ bindingLifecycle: 'unverified' }));
     assert.equal(orphaned.bindingUnavailable, true);
-    assert.equal(unverified.bindingUnavailable, true);
-    assertDecision(unverified, 'lifecycle.unverified_diagnostic');
     return orphaned;
   },
   S01: sourceRow({ entities: ['cover.main'], primary: 'cover.main', tapAction: 'info' },
@@ -204,6 +201,12 @@ const rowRunners = {
   }, {}, (r) => {
     assert.equal(r.visual.status, 'alarm');
     assert.equal(r.criticalSources[0].eid, 'binary_sensor.smoke');
+  }),
+  S14: presentationRow({
+    marker: { id: 'd1', binding: 'device:d1', display: 'static_icon' },
+  }, { sourceDetails: false }, (r) => {
+    assert.equal(r.sourceKind, 'none');
+    assert.deepEqual(r.visual, neutral);
   }),
   F01: policyRow({
     sourceVisual: { availability: 'available', status: 'alarm', activity: 'none' },
@@ -399,11 +402,6 @@ test('device presentation decision table rows exercise lifecycle and ordered pol
   const orphaned = resolveDevicePresentationPolicy(basePolicy({ bindingLifecycle: 'orphaned' }));
   assertDecision(orphaned, 'lifecycle.orphaned_diagnostic');
   assert.equal(orphaned.bindingUnavailable, true);
-  const unverified = resolveDevicePresentationPolicy(basePolicy({ bindingLifecycle: 'unverified' }));
-  assertDecision(unverified, 'lifecycle.unverified_diagnostic');
-  assert.equal(unverified.bindingUnavailable, true);
-  assert.equal(unverified.pulseEligible, false);
-
   const staticFace = resolveDevicePresentationPolicy(basePolicy({
     display: 'static_icon', valueAvailable: true, vacuumLiveRequested: true,
     sourceVisual: { availability: 'available', status: 'alarm', activity: 'running' },

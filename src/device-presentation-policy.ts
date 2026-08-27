@@ -27,7 +27,7 @@ export type PresentationReason =
   | 'orphaned';
 
 export type BindingPresentationLifecycle =
-  | 'active' | 'ha_disabled' | 'orphaned' | 'unverified';
+  | 'active' | 'ha_disabled' | 'orphaned';
 
 export type PresentationFace = 'icon' | 'value';
 export type ValueFallbackReason =
@@ -77,8 +77,7 @@ export function resolveDevicePresentationPolicy(
 ): DevicePresentationPolicyResult {
   const decisions: string[] = [];
   const bindingUnavailable = input.bindingLifecycle === 'ha_disabled'
-    || input.bindingLifecycle === 'orphaned'
-    || input.bindingLifecycle === 'unverified';
+    || input.bindingLifecycle === 'orphaned';
 
   let effectiveHidden = false;
   if (input.bindingLifecycle === 'ha_disabled') {
@@ -91,8 +90,6 @@ export function resolveDevicePresentationPolicy(
     decisions.push('lifecycle.user_hidden_preview');
   } else if (input.bindingLifecycle === 'orphaned') {
     decisions.push('lifecycle.orphaned_diagnostic');
-  } else if (input.bindingLifecycle === 'unverified') {
-    decisions.push('lifecycle.unverified_diagnostic');
   } else {
     decisions.push('lifecycle.active');
   }

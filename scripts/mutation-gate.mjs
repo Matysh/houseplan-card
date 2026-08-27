@@ -2146,12 +2146,68 @@ export const MUTANTS = [
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="every documented decision row" '
       + 'test/device-presentation-policy.test.mjs',
-    because: 'HA-disabled and user-hidden markers must not leak live faces back into View; '
-      + 'the pure policy test exercises both hidden output and the explicit design-preview exception',
+    because: 'HA-disabled markers must not leak live faces back into View or the device editor; '
+      + 'the pure policy test exercises the shared lifecycle gate on both surfaces',
     patches: [{
       file: 'src/device-presentation-policy.ts',
       find: "  if (input.bindingLifecycle === 'ha_disabled') {\n    effectiveHidden = true;",
       replace: "  if (input.bindingLifecycle === 'ha_disabled') {\n    effectiveHidden = false;",
+    }],
+  },
+  {
+    id: 'device-presentation-policy-user-hidden',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="every documented decision row" '
+      + 'test/device-presentation-policy.test.mjs',
+    because: 'a user-hidden marker must stay out of View while the separate design-preview '
+      + 'exception remains explicit and independently protected',
+    patches: [{
+      file: 'src/device-presentation-policy.ts',
+      find: '  } else if (input.userHidden && !input.designPreview) {\n'
+        + '    effectiveHidden = true;',
+      replace: '  } else if (input.userHidden && !input.designPreview) {\n'
+        + '    effectiveHidden = false;',
+    }],
+  },
+  {
+    id: 'device-presentation-policy-user-hidden-preview',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="every documented decision row" '
+      + 'test/device-presentation-policy.test.mjs',
+    because: 'design preview must keep the saved face of a user-hidden marker instead of '
+      + 'collapsing it into the ordinary active lifecycle',
+    patches: [{
+      file: 'src/device-presentation-policy.ts',
+      find: "  } else if (input.userHidden) {\n    decisions.push('lifecycle.user_hidden_preview');",
+      replace: "  } else if (false && input.userHidden) {\n    decisions.push('lifecycle.user_hidden_preview');",
+    }],
+  },
+  {
+    id: 'device-presentation-policy-orphaned',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="every documented decision row" '
+      + 'test/device-presentation-policy.test.mjs',
+    because: 'an orphaned saved binding must retain its diagnostic lifecycle decision and '
+      + 'must not be treated as an ordinary active marker',
+    patches: [{
+      file: 'src/device-presentation-policy.ts',
+      find: "  } else if (input.bindingLifecycle === 'orphaned') {\n"
+        + "    decisions.push('lifecycle.orphaned_diagnostic');",
+      replace: "  } else if (false && input.bindingLifecycle === 'orphaned') {\n"
+        + "    decisions.push('lifecycle.orphaned_diagnostic');",
+    }],
+  },
+  {
+    id: 'presentation-static-source-fast-path',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="every documented decision row" '
+      + 'test/device-presentation-policy.test.mjs',
+    because: 'the static plan fast path deliberately skips source discovery and must expose '
+      + 'that bounded decision instead of silently looking like an evaluated empty graph',
+    patches: [{
+      file: 'src/device-presentation.ts',
+      find: "  sourceKind: 'none', decisionIds: ['source.skipped_static_fast_path'],",
+      replace: "  sourceKind: 'none', decisionIds: ['source.none'],",
     }],
   },
   {

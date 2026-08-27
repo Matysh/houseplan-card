@@ -27,9 +27,9 @@ mutation evidence в одном pull request.
 | L01 | `marker.removed:true` | `pre.lifecycle.removed` | marker отсутствует в roster/DOM | отсутствует | `devices` tombstone test; `presentation-row-contract` |
 | L02 | HA-disabled, View/киоск/static | `lifecycle.ha_disabled_hidden` | face скрыт, live state не участвует | отсутствует на View | `device-presentation-policy-lifecycle`; `presentation-row-contract` |
 | L03 | HA-disabled, Device editor | `lifecycle.ha_disabled_hidden` | служебный ghost/preview с причиной `ha_disabled`, без live face | editor-owned, без service action | `device-presentation-policy-lifecycle`; `presentation-row-contract` |
-| L04 | user-hidden, View/киоск/static | `lifecycle.user_hidden` | marker и hit-area скрыты | отсутствует | `device-presentation-policy-lifecycle`; `presentation-row-contract` |
-| L05 | user-hidden, design preview | `lifecycle.user_hidden_preview` | сохранённый дизайн видим; notice `hidden_design_preview` | preview inert | `device-presentation-policy-lifecycle`; `presentation-row-contract` |
-| L06 | orphaned/unverified | `lifecycle.orphaned_diagnostic` / `lifecycle.unverified_diagnostic` | нейтральная диагностическая проекция с причиной, pulse/service не оживают | surface-owned safe path | `device-presentation-policy-lifecycle`; `presentation-row-contract` |
+| L04 | user-hidden, View/киоск/static | `lifecycle.user_hidden` | marker и hit-area скрыты | отсутствует | `device-presentation-policy-user-hidden`; `presentation-row-contract` |
+| L05 | user-hidden, design preview | `lifecycle.user_hidden_preview` | сохранённый дизайн видим; notice `hidden_design_preview` | preview inert | `device-presentation-policy-user-hidden-preview`; `presentation-row-contract` |
+| L06 | orphaned binding | `lifecycle.orphaned_diagnostic` | нейтральная диагностическая проекция с причиной, pulse/service не оживают | surface-owned safe path | `device-presentation-policy-orphaned`; `presentation-row-contract` |
 
 ## Источник лица и доступность
 
@@ -48,6 +48,7 @@ mutation evidence в одном pull request.
 | S11 | registry role временно отсутствует, есть primary | `source.primary_fallback` | deterministic primary fallback | normal | `presentation-source-decision-trace`; `presentation-row-contract` |
 | S12 | пригодного source нет | `source.none` | neutral base-icon fallback | normal | `presentation-source-decision-trace`; `presentation-row-contract` |
 | S13 | critical alarm sibling вне обычного source | `source.critical_sibling` + `status.alarm` | alarm добавлен в aggregate и побеждает normal status | normal | `device-presentation-policy-alarm`; `presentation-row-contract` |
+| S14 | static plan fast path без source details | `source.skipped_static_fast_path` | source graph намеренно не вычисляется; static face остаётся neutral | normal; без source-derived данных | `presentation-static-source-fast-path`; `presentation-row-contract` |
 
 ## Финальное лицо, контент и диагностика
 
