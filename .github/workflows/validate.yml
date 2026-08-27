@@ -21,27 +21,34 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  docs:
-    name: "Документация: гайды, ченджлоги, скриншот-индекс"
+  # Четыре секундных скрипта жили четырьмя job, каждая со своим checkout и
+  # setup-node ради нескольких секунд работы (#336). Здесь они шаги одной job.
+  #
+  # Независимость при этом сохранена намеренно: у каждого шага
+  # `continue-on-error`, поэтому упавший провенанс не прячет результат
+  # процессного гейта, а вердикт в конце падает, если упал хоть один. Прежняя
+  # запись «job независимый: краснеет сам и не роняет остальные» продолжает
+  # действовать — на уровне шагов, с той же гранулярностью в логе.
+  preflight:
+    name: "Предполётные проверки: документация, провенанс, процесс"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with: { fetch-depth: 0 }
       - uses: actions/setup-node@v7
         with: { node-version: 22 }
-      - name: Validate public documentation
+
+      - name: "Документация: гайды, ченджлоги, скриншот-индекс"
+        id: docs
+        continue-on-error: true
         run: node scripts/check-docs.mjs --external
 
-  # Конвейер читает `process.yml` из ветки по умолчанию, поэтому файл обязан
-  # совпадать в `main` и `dev`. До этой проверки совпадение держалось на
-  # дисциплине: каждая правка требовала двух пушей и ручной сверки.
-  process-workflow-sync:
-    name: "Процесс: process.yml идентичен в main и dev"
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-      - name: process.yml идентичен в main и dev
+      # Конвейер читает `process.yml` из ветки по умолчанию, поэтому файл обязан
+      # совпадать в `main` и `dev`. До этой проверки совпадение держалось на
+      # дисциплине: каждая правка требовала двух пушей и ручной сверки.
+      - name: "Процесс: process.yml идентичен в main и dev"
+        id: workflow_sync
+        continue-on-error: true
         run: |
           git fetch --quiet origin main dev
           if diff <(git show origin/main:.github/workflows/process.yml) \
@@ -54,15 +61,9 @@ jobs:
             exit 1
           fi
 
-  provenance:
-    name: "Провенанс коммитов: трейлеры и эталоны"
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-        with: { fetch-depth: 0 }
-      - uses: actions/setup-node@v7
-        with: { node-version: 22 }
-      - name: Validate commit trailers and hook mode
+      - name: "Провенанс коммитов: трейлеры и эталоны"
+        id: provenance
+        continue-on-error: true
         env:
           EVENT_NAME: ${{ github.event_name }}
           BEFORE_SHA: ${{ github.event.before }}
@@ -73,20 +74,14 @@ jobs:
           git fetch -q origin "refs/heads/$DEVELOPMENT_BRANCH:refs/remotes/origin/$DEVELOPMENT_BRANCH"
           node scripts/validate-commit-provenance.mjs --check-hook-mode --github-range
 
-  # Догоняющая проверка процесса (PROCESS.md §10.3). Хуки ловят нарушение на
-  # машине автора, но их можно обойти `--no-verify`, а коммиты идут прямо в dev
-  # без PR — GitHub на своей стороне не блокирует ничего. Это последнее место,
-  # где нарушение правила №1 ловится машиной. Job независимый: краснеет сам и
-  # не роняет остальные, откат — удалить его отсюда, скрипт остаётся рабочим.
-  process-gate:
-    name: "Процессный гейт: диапазон, трейлеры, статусы issue"
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-        with: { fetch-depth: 0 }
-      - uses: actions/setup-node@v7
-        with: { node-version: 22 }
-      - name: Process gate
+      # Догоняющая проверка процесса (PROCESS.md §10.3). Хуки ловят нарушение на
+      # машине автора, но их можно обойти `--no-verify`, а коммиты идут прямо в
+      # dev без PR — GitHub на своей стороне не блокирует ничего. Это последнее
+      # место, где нарушение правила №1 ловится машиной. Откат — удалить шаг,
+      # скрипт остаётся рабочим.
+      - name: "Процессный гейт: диапазон, трейлеры, статусы issue"
+        id: process_gate
+        continue-on-error: true
         env:
           EVENT_NAME: ${{ github.event_name }}
           BEFORE_SHA: ${{ github.event.before }}
@@ -99,6 +94,33 @@ jobs:
         run: |
           git fetch -q origin "refs/heads/$DEVELOPMENT_BRANCH:refs/remotes/origin/$DEVELOPMENT_BRANCH"
           node scripts/process-gate.mjs --github-range --issues
+
+      # Вердикт обязан быть громким и перечислять всё упавшее сразу: иначе
+      # слияние job стоило бы автору лишнего круга «починил одно — узнал о
+      # втором».
+      - name: Вердикт предполётных проверок
+        env:
+          DOCS: ${{ steps.docs.outcome }}
+          WORKFLOW_SYNC: ${{ steps.workflow_sync.outcome }}
+          PROVENANCE: ${{ steps.provenance.outcome }}
+          PROCESS_GATE: ${{ steps.process_gate.outcome }}
+        run: |
+          fail=0
+          check() {
+            if [ "$2" = "success" ]; then
+              echo "ok   $1"
+            else
+              echo "FAIL $1 ($2)"
+              echo "- **$1**: $2" >> "$GITHUB_STEP_SUMMARY"
+              fail=1
+            fi
+          }
+          echo "### Предполётные проверки" >> "$GITHUB_STEP_SUMMARY"
+          check "документация" "$DOCS"
+          check "process.yml в main и dev" "$WORKFLOW_SYNC"
+          check "провенанс коммитов" "$PROVENANCE"
+          check "процессный гейт" "$PROCESS_GATE"
+          exit $fail
 
   # Классификация изменённых путей: тяжёлые job идут только там, где менялось
   # относящееся к ним. НА DEV ФИЛЬТРОВ НЕТ: гейт беты принимает «зелёный Validate
@@ -285,6 +307,20 @@ jobs:
       # Копия стенда больше не коммитится (#255): сверяются две обязательные.
       - name: Card bundle snapshots in sync
         run: cmp dist/houseplan-card.js custom_components/houseplan/frontend/houseplan-card.js
+      # Бандл собирается один раз и уезжает артефактом (#336). Прежде каждая из
+      # пяти браузерных job собирала его заново: `bundle:sync` — это `tsc
+      # --noEmit` плюс rollup, около минуты на job.
+      #
+      # Подмену артефакта ловить не нужно отдельной проверкой: `assertFreshDemoBundle`
+      # сверяет вшитый в бандл отпечаток с `sourceFingerprint` выкачанного
+      # дерева, и каждая браузерная job делает это перед первым кадром.
+      - name: Выложить бандл для браузерных job
+        uses: actions/upload-artifact@v7
+        with:
+          name: card-bundle
+          path: dist/houseplan-card.js
+          retention-days: 1
+          if-no-files-found: error
 
   smoke:
     name: Смоки в браузере (шард ${{ matrix.shard }} из 3)
@@ -320,8 +356,16 @@ jobs:
       - name: Install pinned Chromium
         if: steps.pw.outputs.cache-hit != 'true'
         run: npx playwright install chromium
-      - name: Build a fresh bundle for the smokes
-        run: npm run bundle:sync
+      # Бандл приходит артефактом из job `frontend` (#336): та же сборка, но
+      # один раз на прогон. Свежесть проверяет сам продукт — `assertFreshDemoBundle`
+      # сверяет вшитый отпечаток с исходниками этого дерева.
+      - name: Забрать собранный бандл
+        uses: actions/download-artifact@v7
+        with:
+          name: card-bundle
+          path: dist
+      - name: Разложить бандл по копиям
+        run: node scripts/bundle-sync.mjs
       - name: Smoke suite (шард ${{ matrix.shard }} из 3)
         env:
           SHARD: ${{ matrix.shard }}
@@ -408,8 +452,16 @@ jobs:
       - name: Install pinned Chromium
         if: steps.pw.outputs.cache-hit != 'true'
         run: npx playwright install chromium
-      - name: Build the exact source under review
-        run: npm run bundle:sync
+      # Бандл приходит артефактом из job `frontend` (#336): та же сборка, но
+      # один раз на прогон. Свежесть проверяет сам продукт — `assertFreshDemoBundle`
+      # сверяет вшитый отпечаток с исходниками этого дерева.
+      - name: Забрать собранный бандл
+        uses: actions/download-artifact@v7
+        with:
+          name: card-bundle
+          path: dist
+      - name: Разложить бандл по копиям
+        run: node scripts/bundle-sync.mjs
       - name: Capture or verify golden matrix
         id: golden
         run: |
@@ -475,8 +527,16 @@ jobs:
       - name: Install pinned Chromium
         if: steps.pw.outputs.cache-hit != 'true'
         run: npx playwright install chromium
-      - name: Build the exact candidate source
-        run: npm run bundle:sync
+      # Бандл приходит артефактом из job `frontend` (#336): та же сборка, но
+      # один раз на прогон. Свежесть проверяет сам продукт — `assertFreshDemoBundle`
+      # сверяет вшитый отпечаток с исходниками этого дерева.
+      - name: Забрать собранный бандл
+        uses: actions/download-artifact@v7
+        with:
+          name: card-bundle
+          path: dist
+      - name: Разложить бандл по копиям
+        run: node scripts/bundle-sync.mjs
       - name: Capture the heaviest Glow state
         run: |
           npm run benchmark:glow -- --profile=large-house-glow-overlay-v1 --variants=60 --samples=3 --warmups=1 --output=artifacts/performance-smoke/candidate.json
