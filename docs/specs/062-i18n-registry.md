@@ -1,45 +1,78 @@
-# Issue #62 — реестр языков и масштабируемая i18n-инфраструктура
+# Issue #62 — единый реестр языков и масштабируемые проверки i18n
 
 - **Issue:** https://github.com/Matysh/houseplan-card/issues/62
-- **Статус документа:** готово к будущей реализации; issue остаётся на `S3-spec`
+- **Статус документа:** актуализировано 2026-08-28, готово к ревью ТЗ
 - **Приоритет:** P3
-- **Тип:** tech-debt, обычный продуктовый трек
-- **Пользовательское изменение:** нет для существующих English/Russian установок
+- **Тип:** tech-debt, полный трек: задача меняет class A i18n и затрагивает
+  несколько поверхностей; критерий `small` «одна поверхность» не выполняется
+- **Пользовательское изменение:** нет для существующих English/Russian
+  установок
 
-## 1. Контекст
+## 1. Сценарий
 
-House Plan сейчас поставляет английский и русский словари. Формально строки
-вынесены в `src/i18n/*.json`, но список языков продублирован в
-`src/i18n.ts`, `src/editor.ts`, `test/i18n.test.mjs` и backend translations.
-Добавление третьей локали поэтому нельзя проверить одной общей процедурой.
+Основной потребитель результата — contributor/maintainer House Plan. На этапе
+добавления будущего языка он добавляет словарь и одну запись в реестр, а сборка
+сама подключает язык к определению локали, visual editor и проверкам паритета.
 
-Задача подготавливает инфраструктуру до выбора следующего языка. Она не должна
-изменить язык ни у одного существующего пользователя и не должна добавлять
-асинхронный пустой первый кадр.
+Для всех трёх пользовательских персон из `docs/SCOPE.md` поверхность остаётся
+той же: карточка и visual editor продолжают синхронно работать на English или
+Russian согласно явной настройке либо языку профиля Home Assistant.
 
-## 2. Цели
+## 2. Что человек увидит до и после
 
-1. Сделать один frontend registry источником кодов, словарей и native labels.
-2. Вывести `Lang`, language resolution и editor options из registry.
-3. Расширить parity gate на каждый зарегистрированный словарь и backend locale.
-4. Описать минимальный contribution flow и ограничения текущей подстановки.
-5. Оставить проверяемую границу для будущего code splitting, не внедряя его
-   раньше появления третьей локали.
+Пользователь English/Russian не увидит изменений; будущий переводчик вместо
+нескольких несвязанных правок получает один описанный и автоматически
+проверяемый путь добавления языка.
 
-## 3. Не входит в задачу
+## 3. Проблема
+
+Список языков сейчас продублирован в нескольких местах:
+
+- `src/i18n.ts` вручную задаёт `Lang`, imports, `DICTS` и русский fallback;
+- `src/editor.ts` вручную перечисляет English/Russian в selector;
+- `test/i18n.test.mjs` вручную проверяет только пару `en`/`ru`;
+- frontend и backend translation directories никак не сверяются.
+
+Из-за этого новый JSON может не попасть в runtime, selector или gate. Докстрока
+`src/i18n.ts` при этом ошибочно обещает добавление языка без правок TypeScript.
+
+Словари уже заметны по размеру, но при двух текущих языках асинхронная загрузка
+создала бы новый loading/error lifecycle без пользовательской пользы. Поэтому
+lazy loading исключён из #62 и должен стать отдельной задачей одновременно с
+добавлением третьей локали или при подтверждённой проблеме размера bundle.
+
+## 4. Цели и scope
+
+1. Ввести один frontend registry как источник кодов, словарей, native labels и
+   стабильного порядка языков.
+2. Вывести из registry тип `Lang`, language resolution и options visual editor.
+3. Расширить i18n gates на все зарегистрированные frontend dictionaries и набор
+   backend translations.
+4. Описать contribution flow и ограничения текущей подстановки placeholders.
+5. Сохранить синхронный первый render и существующее поведение English/Russian.
+6. Исправить устаревший комментарий `CardConfig.language` в `src/types.ts`.
+
+## 5. Не входит в задачу
 
 - добавление немецкого или любого другого языка;
-- выбор следующей локали по предполагаемой географии;
-- Weblate/Crowdin или другой внешний сервис;
+- выбор следующей локали по географии пользователей;
+- Weblate, Crowdin или другой внешний сервис;
+- code splitting, динамический import и сетевой fetch словаря;
 - RTL и зеркалирование геометрического UI;
-- локализация всей пользовательской документации;
-- изменение английских и русских формулировок;
-- асинхронная загрузка словаря при двух текущих локалях.
+- новая политика локализации пользовательской документации;
+- изменение видимых английских или русских формулировок;
+- plural rules/ICU MessageFormat;
+- связывание Python runtime с TypeScript registry.
 
-## 4. Канонический frontend registry
+Упоминание lazy dictionaries удаляется из заголовка issue: #62 не должно
+выглядеть как обещание асинхронной загрузки, которой в acceptance criteria нет.
 
-В `src/i18n/registry.ts` вводится статически анализируемый registry. Одна запись
-содержит:
+## 6. Контракт поведения
+
+### 6.1. Registry
+
+В `src/i18n/registry.ts` вводится статически анализируемый реестр. Каждая запись
+задаёт:
 
 ```ts
 interface LanguageEntry {
@@ -49,185 +82,211 @@ interface LanguageEntry {
 }
 ```
 
-`en` остаётся обязательной fallback-записью. `Lang` выводится из ключей
-registry, а не перечисляется вручную. Registry экспортирует:
+`en` — обязательная fallback-запись. `Lang` выводится из литеральных кодов
+registry, а не поддерживается отдельным union. Registry экспортирует:
 
-- упорядоченный список кодов для UI;
-- O(1) lookup по коду;
-- английский fallback dictionary;
-- native label, который не зависит от активного языка.
+- упорядоченный readonly список записей;
+- lookup зарегистрированной записи по нормализованному коду;
+- тип `Lang`;
+- английскую fallback-запись.
 
-До третьей локали registry использует обычные статические JSON imports. Это
-сохраняет синхронный `t()` и нынешний первый кадр. Динамический import не должен
-быть спрятан за `Promise` внутри существующего `t()`.
+При двух локалях используются обычные static JSON imports. Добавление локали
+требует её frontend JSON, backend JSON и одной логической записи registry
+(включая её static import в том же модуле); `src/editor.ts`, `langOf()` и список
+локалей в тестах больше не редактируются.
 
-Добавление локали после этой задачи требует одного JSON-словаря и одной записи
-registry. `src/editor.ts`, `langOf()` и тесты больше не редактируются.
+Существующие `editor.lang_en` и `editor.lang_ru` не используются selector после
+рефакторинга, но в рамках #62 не удаляются: задача не смешивает инфраструктуру с
+чисткой словарей.
 
-## 5. Разрешение языка
+### 6.2. Разрешение языка
 
 `langOf(hass, configLanguage)` работает детерминированно:
 
-1. валидный явный `configLanguage` побеждает;
+1. зарегистрированное явное `configLanguage` побеждает;
 2. для HA locale проверяется нормализованный exact tag;
 3. затем primary subtag до первого `-` или `_`;
 4. иначе возвращается `en`.
 
-Сравнение регистронезависимое. Например, `ru-RU` и `ru_RU` разрешаются в `ru`,
-если региональная запись отсутствует. Неизвестное явное legacy-значение не
-падает: оно трактуется как Auto и проходит HA locale → English fallback.
+Сравнение регистронезависимое, `_` нормализуется в `-`. Например, `ru-RU` и
+`ru_RU` разрешаются в `ru`, если отдельная региональная запись отсутствует.
+Неизвестное явное legacy-значение не падает: оно трактуется как Auto и проходит
+HA locale → English fallback.
 
-`t()` и `tr()` сохраняют текущую цепочку `selected dictionary → en → key` и
-существующий `subst()` без изменения plural semantics.
+`t()` и `hasTranslation()` сохраняют цепочку `selected dictionary → en → key`.
+`subst()` и plural semantics не меняются.
 
-## 6. Language selector
+### 6.3. Visual editor
 
-Visual editor строит options из registry в стабильном порядке:
+Selector строит options в стабильном порядке:
 
-1. `Auto`;
-2. зарегистрированные языки в порядке registry.
+1. локализованный `Auto`;
+2. все registry entries в порядке registry.
 
-Подпись языка — native label (`English`, `Русский`), поэтому добавление языка не
-требует `editor.lang_<code>` в каждом словаре. Существующие сохранённые
-`language: en|ru` читаются без миграции. Неизвестное значение показывается как
-Auto и не перезаписывается до явного сохранения пользователем.
+Подпись языка — compile-time native label (`English`, `Русский`), а не ключ
+`editor.lang_<code>` во всех словарях.
 
-## 7. Parity gate
+Существующие `language: en|ru|''` читаются без миграции. Если в сохранённом
+config встретился неизвестный код, selector показывает отдельную временную
+option с этим кодом и не меняет config при редактировании другого поля. После
+явного выбора Auto/зарегистрированного языка временная option исчезает. Runtime
+до такого выбора применяет обычный HA locale → English fallback.
 
-`test/i18n.test.mjs` больше не содержит пары `en/ru`. Gate читает тот же
-машиночитаемый список registry либо скомпилированный pure export и проверяет:
+### 6.4. Parity gate
 
-- registry code уникален и нормализован;
-- у каждой записи есть непустой dictionary и native label;
-- каждый frontend JSON зарегистрирован и у каждой записи есть ровно один JSON;
+`test/i18n.test.mjs` получает данные из скомпилированного pure registry export,
+а не парсит TypeScript регулярным выражением. Для этого `src/i18n.ts` и
+`src/i18n/registry.ts` включаются в `tsconfig.test.json`.
+
+Gate проверяет:
+
+- коды уникальны, lowercase и нормализованы;
+- `en` существует и является fallback;
+- у каждой записи есть непустые `nativeLabel` и dictionary;
+- каждый `src/i18n/<code>.json` зарегистрирован и у каждой записи есть ровно
+  один такой JSON;
 - key set каждой локали равен English;
-- значения непусты;
-- placeholders совпадают с English;
-- help body/aria contract проверяется для всех локалей;
-- в `custom_components/houseplan/translations/` есть те же locale codes и нет
-  незарегистрированного файла.
+- значения непусты, placeholders совпадают с English;
+- текущий help body/aria contract выполняется для всех словарей;
+- набор `<code>.json` в `custom_components/houseplan/translations/` совпадает с
+  кодами registry, без незарегистрированных и отсутствующих файлов.
 
-`src/i18n/registry.ts` добавляется в `tsconfig.test.json`, если тест использует
-скомпилированный export. Тест не парсит TypeScript регулярным выражением.
+Тестовая fixture с третьей локалью не добавляется в production registry: вместо
+этого unit-тесты проверяют generic resolution на искусственном registry/helper,
+либо доказывают отсутствие ветвления по `ru` в resolver. Production file-set
+gate остаётся только на реально поставляемых локалях.
 
-## 8. Будущий lazy-loading seam
+## 7. UX
 
-При двух локалях словари остаются eager: это дешевле и не создаёт нового
-loading/error lifecycle. Registry проектируется так, чтобы следующая отдельная
-задача могла заменить `dictionary` на loader и вынести locale chunks.
+Внешний вид selector для Auto/English/Russian и выбранные значения остаются
+прежними. Порядок остаётся `Auto`, `English`, `Русский`.
 
-До такого перехода должны быть отдельно определены:
+Единственный новый защитный UX — неизвестный сохранённый код виден как временная
+option вместо пустого/ложного выбора и не затирается несвязанным изменением.
 
-- синхронный English bootstrap;
-- атомарная смена языка без смешанного кадра;
-- offline/HACS cache и ошибка загрузки;
-- bundle naming и cache busting;
-- отсутствие network request для English fallback.
+Новых loading indicators, flashes, requests или error messages нет.
 
-Эти решения не реализуются и не тестируются в #62. Упоминание «ленивых
-словарей» в названии означает подготовленную границу, а не скрытый async diff.
+## 8. Модель данных и миграция
 
-## 9. Backend и документация
+Schema и persisted config не меняются. Миграции нет.
 
-Backend следует HA convention и продолжает хранить отдельные JSON. #62 не
-создаёт runtime dependency Python backend от TypeScript registry; parity test
-служит связью между двумя наборами.
+- `language: en`, `language: ru`, пустая строка и отсутствие поля сохраняют
+  прежний смысл;
+- неизвестная строка сохраняется до явного изменения пользователем;
+- runtime безопасно использует Auto fallback;
+- `CardConfig.language` остаётся `string`, потому что обязан читать будущие и
+  неизвестные сохранённые значения; комментарий больше не перечисляет только
+  `en|ru`.
 
-`CONTRIBUTING.md` получает раздел о переводах:
+## 9. i18n и документация
 
-- файл + registry entry + оба frontend/backend parity gates;
-- placeholders нельзя менять или переводить;
-- `subst()` не поддерживает plural rules, поэтому строки формулируются без
-  грамматической зависимости от счётчика;
-- English documentation остаётся основной, Russian — поддерживаемой legacy;
-- RTL требует отдельного product issue.
+Новых видимых строк нет. Native labels доверенные compile-time literals.
 
-Докстрока `src/i18n.ts` приводится в соответствие реальному contribution flow.
+`CONTRIBUTING.md` получает раздел «Translations»:
 
-## 10. Совместимость и безопасность
+- frontend JSON + backend JSON + registry entry;
+- placeholders нельзя удалять, добавлять или переводить;
+- `subst()` не поддерживает plural rules, поэтому строка должна избегать
+  грамматической формы, зависящей от `{n}`;
+- добавление языка интерфейса само по себе не создаёт новый комплект
+  пользовательской документации; текущие English/Russian документы продолжают
+  сопровождаться по действующим правилам проекта;
+- RTL — отдельная продуктовая задача.
 
-- config schema и stored values не меняются;
-- `en` и `ru` должны давать те же строки для каждого существующего ключа;
-- первый render остаётся синхронным;
-- CSP/network поверхность не меняется;
-- HTML не строится из native label или перевода как unsafe markup;
-- неизвестный locale всегда безопасно падает в English.
+Докстрока `src/i18n.ts` приводится в соответствие реальному flow.
 
-## 11. Acceptance criteria
+## 10. Acceptance criteria и доказательства
 
-1. `Lang`, `langOf()` и language selector получают список языков только из
-   одного frontend registry.
-2. Добавление fixture locale требует JSON + одной registry entry и автоматически
-   попадает во все parity проверки и selector.
-3. Exact tag, primary subtag, explicit config и English fallback покрыты unit.
-4. English/Russian keys, placeholders и видимый текст не изменены.
-5. Unknown saved language не ломает editor/card и не перезаписывается без Save.
-6. Frontend и backend locale file sets сверяются с registry.
-7. При обычной работе нет locale fetch, loading flash или нового Promise path.
-8. CONTRIBUTING и докстрока описывают фактический flow и plural limitation.
+- **AC1.** `Lang`, `langOf()` и options visual editor получают языки из одного
+  registry. **Доказательство:** typecheck + unit на registry/options.
+- **AC2.** Exact tag, primary subtag, `_`/case normalization, explicit config,
+  invalid explicit config и English fallback покрыты матрицей unit-тестов.
+- **AC3.** Frontend locale file set, backend locale file set и registry взаимно
+  однозначны. **Доказательство:** i18n file-set unit test.
+- **AC4.** Каждый зарегистрированный словарь автоматически проходит key,
+  non-empty, placeholder и help-key parity. **Доказательство:** registry-driven
+  `test/i18n.test.mjs`.
+- **AC5.** Selector имеет порядок Auto/English/Русский и строит registered
+  options без ручного списка `en`/`ru`. **Доказательство:** unit на pure options
+  helper и inspection compiled schema.
+- **AC6.** Неизвестный сохранённый язык не ломает card/editor, использует Auto
+  fallback и не затирается изменением другого editor field. **Доказательство:**
+  unit для resolver/options/form normalization.
+- **AC7.** English/Russian dictionary values и видимый selector не меняются.
+  **Доказательство:** git diff словарей + существующие unit/build gates.
+- **AC8.** В production bundle нет locale fetch, dynamic import, Promise-based
+  translation path или нового первого пустого кадра. **Доказательство:** static
+  registry implementation + production build inspection.
+- **AC9.** CONTRIBUTING и комментарии описывают фактический contribution flow и
+  plural limitation. **Доказательство:** documentation diff.
 
-## 12. План тестирования
+## 11. План автотестов
 
 ### Unit
 
-- exact/primary/fallback locale matrix;
-- case and `_` normalization;
+- registry uniqueness, code format, English presence/fallback;
+- exact/primary/fallback locale matrix, case and `_` normalization;
 - invalid explicit config;
-- registry uniqueness и English presence;
-- dictionary/file/backend parity;
-- placeholder/help-key parity для всех entries;
-- generated selector order и native labels.
+- registry-driven dictionary/file/backend parity;
+- placeholders и help keys для всех entries;
+- selector order/native labels/unknown temporary option;
+- сохранение неизвестного значения при несвязанном form change.
 
-### Интеграция
+### Обязательные локальные gates
 
-- visual editor round-trip Auto/en/ru;
-- HA locale `ru-RU` без явного config;
-- неизвестный HA locale → English;
-- fixture third locale доказывает отсутствие hardcoded `en/ru` в gate.
+```text
+npm run typecheck
+npm test
+npm run build
+npm run inventory
+```
 
-### Регрессия
+Browser smoke, golden, backend HA harness и performance capture не требуются:
+пиксели, backend runtime, bundle topology и пользовательские сценарии не
+меняются. Production build обязателен для подтверждения static bundling.
 
-- `npm run typecheck`;
-- полный unit suite;
-- production build и bundle smoke для English/Russian.
-
-Golden, browser visual smoke, backend HA harness и performance profile не нужны:
-существующие пиксели, backend runtime и eager bundle topology не меняются.
-
-## 13. План реализации
-
-1. Выделить registry и вывести из него `Lang`/lookups.
-2. Переписать `langOf()` и editor options.
-3. Перевести parity tests на registry и включить backend file-set check.
-4. Обновить CONTRIBUTING и i18n docstring.
-5. Запустить typecheck, unit и build; проверить production bundle на en/ru.
-
-## 14. Release-артефакты
-
-- **Changelog:** не нужен, поскольку пользовательское поведение и строки не
-  меняются (`User-Visible: no`).
-- **User guide:** не меняется.
-- **Developer docs:** `CONTRIBUTING.md` и комментарий i18n обязательны.
-- **Golden/screenshots:** не требуются.
-- **Performance/security:** достаточно production build и доказательства, что
-  сетевой locale-loading не появился.
-
-## 15. Риски и откат
+## 12. Риски
 
 | Риск | Мера |
 | --- | --- |
-| Third locale не попадает в gate | registry-driven fixture и file-set parity |
-| Unknown locale меняет старый fallback | полная resolution matrix |
-| Registry добавляет async flash | eager-only контракт #62 |
-| Native label требует переводов | self-name хранится в registry |
-| Backend/frontend расходятся | CI file-set check |
+| Locale зарегистрирован не во всех местах | взаимная file-set проверка |
+| Resolver меняет старый fallback | полная матрица language resolution |
+| Visual editor стирает неизвестное значение | временная option + unit round-trip |
+| Рефакторинг добавляет async flash | static imports и запрет async path в AC8 |
+| Backend/frontend расходятся | CI parity по обоим каталогам |
+| Типы registry превращаются в общий `string` | compile-time `Lang` из `as const` codes |
 
-Откат удаляет registry abstraction и возвращает прежние imports без миграции
-данных. Словари и сохранённый config при этом остаются совместимыми.
+## 13. Откат
 
-## 16. Принятые технические предположения
+Откат возвращает ручные imports/`DICTS`/selector options. Config schema,
+словари и сохранённые значения не меняются, поэтому data rollback не нужен.
 
-- code splitting откладывается до отдельной задачи с третьей локалью;
-- native labels являются доверенными compile-time literals;
-- порядок registry определяет порядок selector;
-- документация не размножается по числу локалей в рамках #62.
+## 14. Release-артефакты
+
+- **Changelog:** не нужен (`User-Visible: no`), поскольку English/Russian UX не
+  меняется; защитное отображение неизвестного кода — compatibility guard.
+- **User guide:** не меняется.
+- **Developer docs:** `CONTRIBUTING.md`, комментарий `src/i18n.ts` и комментарий
+  `CardConfig.language` обязательны.
+- **Generated bundle:** пересобрать и синхронизировать штатно перед code review.
+- **Golden/screenshots:** не требуются.
+
+## 15. План реализации
+
+1. Выделить registry и pure helpers resolution/options.
+2. Перевести `src/i18n.ts` и `src/editor.ts` на registry.
+3. Добавить compatibility handling неизвестного editor value.
+4. Перевести i18n tests на compiled registry и включить locale file-set checks.
+5. Обновить CONTRIBUTING/comments.
+6. Выполнить обязательные gates, собрать и синхронизировать bundle.
+
+## 16. Технические предположения — можно менять на ревью
+
+- `src/i18n/registry.ts` содержит static imports и readonly entries; отдельный
+  generated manifest не нужен при двух языках.
+- Pure helper для selector может жить рядом с registry, чтобы тесты не зависели
+  от Lit/`ha-form`.
+- Backend runtime не импортирует и не генерирует registry; связь обеспечивается
+  только test gate.
+- Code splitting заводится отдельным issue не раньше третьей локали или
+  измеримого bundle-size bottleneck.
