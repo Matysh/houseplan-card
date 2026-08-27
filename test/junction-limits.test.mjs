@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 
 import {
   MAX_JUNCTION_VALENCE, MIN_JUNCTION_ANGLE_DEG, MIN_NODE_DISTANCE_CM,
@@ -376,36 +377,23 @@ test('#330 AC2: индекс byNode не меняет вердикт П3', async
     'прямой вызов без индекса меряет тот же прогон');
 });
 
-test('#330 AC4: baseline считается один раз для одного документа и эпохи', async () => {
-  // Юнит на чистую механику кэша: WeakMap по идентичности документа + эпоха.
-  // Полный класс карточки здесь не поднять — механика воспроизводится тем же
-  // алгоритмом, каким её исполняет _junctionLimitsIntroduced.
-  const { commitWallSegmentModel } = await import('../test-build/wall-segment-model.js');
-  const cache = new WeakMap();
-  let migrations = 0;
-  const introduced = (candidate, previousConfig, spaceId, epoch) => {
-    const cached = cache.get(previousConfig);
-    let inherited = cached && cached.epoch === epoch && cached.spaceId === spaceId
-      ? cached.violations : undefined;
-    if (!inherited) {
-      const baseline = Number(previousConfig?.model_version || 0) >= 9
-        ? previousConfig
-        : (migrations++, commitWallSegmentModel(previousConfig).config);
-      inherited = [];
-      void baseline;
-      cache.set(previousConfig, { epoch, spaceId, violations: inherited });
-    }
-    return inherited;
-  };
-  const legacyDoc = { model_version: 0, spaces: [{ id: 's', cell_cm: 5, view_box: [0, 0, 1, 1], rooms: [], walls: [], openings: [], room_drafts: [], partitions: [], wall_columns: [] }], markers: [], settings: {} };
-  // Жест: десять move с одним и тем же документом и эпохой — одна миграция.
-  for (let move = 0; move < 10; move++) introduced({}, legacyDoc, 's', 1);
-  assert.equal(migrations, 1, 'десять move — одна миграция baseline');
-  // Реальный write меняет эпоху — кэш инвалидируется.
-  introduced({}, legacyDoc, 's', 2);
-  assert.equal(migrations, 2, 'новая эпоха пересчитывает baseline');
-  // Документ текущей версии не мигрируется вовсе (#330 §4.6).
-  const v9doc = { ...legacyDoc, model_version: 9 };
-  introduced({}, v9doc, 's', 3);
-  assert.equal(migrations, 2, 'v9-документ не мигрируется');
+test('#330 AC4: кэш baseline инвалидируется по конфиг-эпохе (контракт исходника)', () => {
+  // houseplan-card.ts не компилируется в test-build (монолит вне
+  // tsconfig.test.json), поэтому контракт кэша пинится по исходнику — тем же
+  // приёмом, каким #293 пинит обвязку смока. Поведенческая половина AC4
+  // (N move → N+1 вычислений в реальном жесте) живёт в
+  // demo/smoke_junction_limits.mjs (resizeBaselineCachedPerGesture).
+  const source = readFileSync(
+    new URL('../src/houseplan-card.ts', import.meta.url), 'utf8',
+  );
+  const method = source.slice(
+    source.indexOf('private _junctionLimitsIntroduced('),
+    source.indexOf('private _commitPhysicalGeometry('),
+  );
+  assert.match(method, /cached\.epoch === this\._cfgEpoch/,
+    'кэш baseline обязан сверять конфиг-эпоху — иначе он переживает write и судит план, которого больше нет');
+  assert.match(method, /_junctionBaselineCache\.set\(previousConfig/,
+    'кэш ключуется идентичностью документа');
+  assert.match(method, />= WALL_SEGMENT_MODEL_VERSION\s*\n?\s*\? previousConfig/,
+    'документ текущей версии используется как есть (#330 §4.6)');
 });
