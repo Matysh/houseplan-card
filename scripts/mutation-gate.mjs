@@ -2040,10 +2040,10 @@ export const MUTANTS = [
     because: 'a live controller must not inherit unavailable from its controlled lamp; '
       + 'the focused matrix keeps own availability and target working as separate facts (#251)',
     patches: [{
-      file: 'src/device-presentation.ts',
-      find: "  let visual = controllerFace\n"
-        + "    ? { ...combined, availability: controllerAvailability(hass, d) }",
-      replace: "  let visual = controllerFace\n    ? combined",
+      file: 'src/device-presentation-policy.ts',
+      find: "  let visual = input.controllerFace\n"
+        + "    ? { ...input.sourceVisual, availability: input.controllerAvailability }",
+      replace: "  let visual = input.controllerFace\n    ? input.sourceVisual",
     }],
   },
   {
@@ -2126,6 +2126,153 @@ export const MUTANTS = [
       file: 'src/device-presentation.ts',
       find: '  if (lqi <= 40) return \'low\';',
       replace: '  if (lqi < 40) return \'low\';',
+    }],
+  },
+  {
+    id: 'presentation-row-contract',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="every documented decision row" '
+      + 'test/device-presentation-policy.test.mjs',
+    because: 'a removed marker must stay outside the presentation roster; the matrix checks '
+      + 'the documented pre-resolver lifecycle owner instead of pretending the face can hide it later',
+    patches: [{
+      file: 'src/devices.ts',
+      find: '    if (m.removed) continue;',
+      replace: '    if (false && m.removed) continue;',
+    }],
+  },
+  {
+    id: 'device-presentation-policy-lifecycle',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="every documented decision row" '
+      + 'test/device-presentation-policy.test.mjs',
+    because: 'HA-disabled and user-hidden markers must not leak live faces back into View; '
+      + 'the pure policy test exercises both hidden output and the explicit design-preview exception',
+    patches: [{
+      file: 'src/device-presentation-policy.ts',
+      find: "  if (input.bindingLifecycle === 'ha_disabled') {\n    effectiveHidden = true;",
+      replace: "  if (input.bindingLifecycle === 'ha_disabled') {\n    effectiveHidden = false;",
+    }],
+  },
+  {
+    id: 'device-presentation-policy-static',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="every documented decision row" '
+      + 'test/device-presentation-policy.test.mjs',
+    because: 'static_icon is the strongest visible face gate and must suppress state, value, '
+      + 'metrics, pulse and vacuum live together rather than relying on renderer-specific checks',
+    patches: [{
+      file: 'src/device-presentation-policy.ts',
+      find: '  } else if (staticIcon) {\n    visual = NEUTRAL_VISUAL;',
+      replace: '  } else if (false && staticIcon) {\n    visual = NEUTRAL_VISUAL;',
+    }],
+  },
+  {
+    id: 'device-presentation-policy-alarm',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="every documented decision row" '
+      + 'test/device-presentation-policy.test.mjs',
+    because: 'critical alarm must survive live_states:false for every dynamic face; removing '
+      + 'the alarm exception turns the safety state into an ordinary neutral marker',
+    patches: [{
+      file: 'src/device-presentation-policy.ts',
+      find: "  } else if (input.sourceVisual.status !== 'alarm' && !input.liveStates) {",
+      replace: '  } else if (!input.liveStates) {',
+    }],
+  },
+  {
+    id: 'device-presentation-policy-unavailable',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="every documented decision row" '
+      + 'test/device-presentation-policy.test.mjs',
+    because: 'unavailable is a distinct renderer state after lifecycle and alarm; losing its '
+      + 'decision lets offline markers masquerade as neutral available devices',
+    patches: [{
+      file: 'src/device-presentation-policy.ts',
+      find: "  else if (visual.availability === 'unavailable') decisions.push('status.unavailable');",
+      replace: "  else if (false && visual.availability === 'unavailable') decisions.push('status.unavailable');",
+    }],
+  },
+  {
+    id: 'device-presentation-policy-status',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="every documented decision row" '
+      + 'test/device-presentation-policy.test.mjs',
+    because: 'working, open and neutral are ordered stable states; the focused table must catch '
+      + 'a reordered or removed working branch before it changes the marker plate',
+    patches: [{
+      file: 'src/device-presentation-policy.ts',
+      find: "  else if (visual.status === 'working') decisions.push('status.working');",
+      replace: "  else if (false && visual.status === 'working') decisions.push('status.working');",
+    }],
+  },
+  {
+    id: 'device-presentation-policy-live-gate',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="every documented decision row" '
+      + 'test/device-presentation-policy.test.mjs',
+    because: 'live_states:false must neutralise every ordinary dynamic state without suppressing '
+      + 'alarm; the matrix proves the gate with observable visual output',
+    patches: [{
+      file: 'src/device-presentation-policy.ts',
+      find: "  } else if (input.sourceVisual.status !== 'alarm' && !input.liveStates) {",
+      replace: "  } else if (input.sourceVisual.status !== 'alarm' && false) {",
+    }],
+  },
+  {
+    id: 'device-presentation-policy-value',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="every documented decision row" '
+      + 'test/device-presentation-policy.test.mjs',
+    because: 'value mode may render text only with one available scalar source; bypassing that '
+      + 'single gate either hides valid values or revives ambiguous arbitrary registry rows',
+    patches: [{
+      file: 'src/device-presentation-policy.ts',
+      find: "  const face: PresentationFace = input.display === 'value'\n"
+        + "    && !effectiveHidden && input.valueAvailable ? 'value' : 'icon';",
+      replace: "  const face: PresentationFace = false\n"
+        + "    && !effectiveHidden && input.valueAvailable ? 'value' : 'icon';",
+    }],
+  },
+  {
+    id: 'device-presentation-policy-diagnostics',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="every documented decision row" '
+      + 'test/device-presentation-policy.test.mjs',
+    because: 'metrics and vacuum overlays share the static/hidden gate; forcing metrics on lets '
+      + 'satellites escape a static face even though the core itself remains neutral',
+    patches: [{
+      file: 'src/device-presentation-policy.ts',
+      find: '  const metrics = !staticIcon && !effectiveHidden;',
+      replace: '  const metrics = true;',
+    }],
+  },
+  {
+    id: 'device-presentation-policy-pulse-gate',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="every documented decision row" '
+      + 'test/device-presentation-policy.test.mjs',
+    because: 'ordinary activity belongs only to icon_ripple while alarm is independent; '
+      + 'dropping the display gate recreates ambiguous activity on the default badge mode',
+    patches: [{
+      file: 'src/device-presentation-policy.ts',
+      find: "    && visual.availability === 'available'\n"
+        + "    && (visual.status === 'alarm' || (input.liveStates && input.display === 'icon_ripple'));",
+      replace: "    && visual.availability === 'available'\n"
+        + "    && (visual.status === 'alarm' || input.liveStates);",
+    }],
+  },
+  {
+    id: 'presentation-source-decision-trace',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="every documented decision row" '
+      + 'test/device-presentation-policy.test.mjs',
+    because: 'source precedence must remain named and executable; erasing the cover winner must '
+      + 'break the matrix even if the renderer happens to retain the same pixels for one fixture',
+    patches: [{
+      file: 'src/device-presentation.ts',
+      find: "    decisionIds.push('source.cover');",
+      replace: "    decisionIds.push('source.cover_mutant');",
     }],
   },
   {

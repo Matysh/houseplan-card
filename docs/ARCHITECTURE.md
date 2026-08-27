@@ -248,8 +248,11 @@ container-type: inline-size }` + sizes in `cqw`. Legacy px values (>8) are ignor
 ## Device markers (v1.6.0+)
 
 Per-marker appearance: `display: badge|icon_ripple|value|static_icon`. Entity semantics originate in
-`src/device-visual.ts`; `src/device-presentation.ts` resolves the complete renderer-ready
-projection (sources, value, icon, classes, metrics and explanation),
+`src/device-visual.ts`; `src/device-presentation.ts` resolves HA/registry/light sources and the
+complete renderer-ready projection, while the pure `src/device-presentation-policy.ts`
+is the single owner of lifecycle, availability, static/live/value and diagnostics
+priority. Its stable internal decision trace is specified by
+[`DEVICE-PRESENTATION.md`](DEVICE-PRESENTATION.md) and never enters stored config or UI.
 `src/device-pulse.ts` is the single pure projection from semantic activity to
 `none|alarm|short|continuous`, and
 `src/device-face.ts` renders one package-derived shell/core DOM on the full plan,

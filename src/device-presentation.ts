@@ -27,6 +27,12 @@ import {
   DEVICE_PULSE_DEFAULT_SCALE, resolveDevicePulse, type ResolvedDevicePulse,
 } from './device-pulse';
 import { isManualVirtualLightMarker } from './virtual-light-state';
+import {
+  resolveDevicePresentationPolicy, resolvePresentationReason,
+  type BindingPresentationLifecycle, type PresentationReason, type ValueFallbackReason,
+} from './device-presentation-policy';
+
+export type { PresentationReason, ValueFallbackReason } from './device-presentation-policy';
 
 export type PresentationSourceKind =
   | 'cover' | 'light' | 'controls' | 'device_role' | 'primary' | 'none';
@@ -34,9 +40,6 @@ export type PresentationSourceKind =
 export type PresentationSourceRole =
   | 'cover' | 'light' | 'control' | 'forced_light' | 'device_role'
   | 'lifecycle' | 'power_gate' | 'primary' | 'critical';
-
-export type ValueFallbackReason =
-  | 'value_no_state' | 'value_ambiguous_sources' | 'value_non_scalar' | 'value_virtual';
 
 export type DeviceLockState = 'locked' | 'unlocked' | null;
 export type DeviceLqiBand = 'low' | 'mid' | 'high';
@@ -65,31 +68,6 @@ export function deviceA11yState(presentation: Pick<
   if (presentation.visual.status === 'open') return 'open';
   return 'neutral';
 }
-
-export type PresentationReason =
-  | 'neutral'
-  | 'working'
-  | 'working_activity'
-  | 'open'
-  | 'cover_icon_state'
-  | 'presence'
-  | 'event'
-  | 'transition'
-  | 'media_neutral'
-  | 'unavailable'
-  | 'alarm'
-  | 'live_states_disabled'
-  | 'value_no_state'
-  | 'value_ambiguous_sources'
-  | 'value_non_scalar'
-  | 'value_virtual'
-  | 'vacuum_live_plan_only'
-  | 'hidden_design_preview'
-  | 'composite_power_source'
-  | 'activity_display_disabled'
-  | 'static_icon'
-  | 'ha_disabled'
-  | 'orphaned';
 
 export interface ResolvedPresentationSource {
   eid: string;
@@ -151,6 +129,8 @@ export interface ResolvedDevicePresentation {
   criticalSources: ResolvedPresentationSource[];
   valueSource: ResolvedValueSource | null;
   sourceSignature: string;
+  /** Stable internal trace for the documented decision matrix. */
+  decisionIds: readonly string[];
 
   visual: DeviceVisualState;
   lockState: DeviceLockState;
@@ -187,6 +167,7 @@ export interface ResolvedDevicePresentation {
 
 export interface ResolvedPresentationSources {
   sourceKind: PresentationSourceKind;
+  decisionIds: readonly string[];
   visualSources: ResolvedPresentationSource[];
   criticalSources: ResolvedPresentationSource[];
   samples: EntityVisualSample[];
@@ -194,7 +175,8 @@ export interface ResolvedPresentationSources {
 
 const ACTIVITY_WINDOW_MS = 3300;
 const EMPTY_SOURCES: ResolvedPresentationSources = {
-  sourceKind: 'none', visualSources: [], criticalSources: [], samples: [],
+  sourceKind: 'none', decisionIds: ['source.skipped_static_fast_path'],
+  visualSources: [], criticalSources: [], samples: [],
 };
 
 function sourceName(hass: any, eid: string): string {
@@ -259,6 +241,7 @@ export function resolvePresentationSources(
   const d = device.hidden && device.userHidden ? { ...device, hidden: false } : device;
   let sourceKind: PresentationSourceKind = 'none';
   let visualSources: ResolvedPresentationSource[] = [];
+  const decisionIds: string[] = [];
 
   // A cover remains the device's visual state source even when tap_action is
   // More info. Resolve the same exact cover role/capability path as the toggle
@@ -331,12 +314,19 @@ export function resolvePresentationSources(
     || d.primary?.startsWith('cover.')
     || resolvedDeviceRole.some((eid) => eid.startsWith('cover.'))
   );
+  if (cover && !coverOwnsFace) decisionIds.push('source.cover_capability_bypassed');
   if (coverOwnsFace) {
     sourceKind = 'cover';
+    decisionIds.push('source.cover');
     visualSources = [sourceOf(hass, cover, 'cover')];
   } else if (lights.length) {
     sourceKind = !manualVirtualFace && lights.some((source) => source.via === 'controls')
       ? 'controls' : 'light';
+    if (manualVirtualFace) decisionIds.push('source.manual_virtual_light');
+    else decisionIds.push(sourceKind === 'controls' ? 'source.controls' : 'source.owned_light');
+    if (sourceKind === 'controls' && (d.virtual || d.bindingKind === 'virtual')) {
+      decisionIds.push('source.virtual_controller');
+    }
     visualSources = lights.map((source) => {
       const role = source.via === 'controls' ? 'control'
         : source.via === 'forced' ? 'forced_light' : 'light';
@@ -367,6 +357,7 @@ export function resolvePresentationSources(
       : d.entities.filter((eid) => !!hass?.states?.[eid]);
     if (ids.length) {
       sourceKind = 'device_role';
+      decisionIds.push('source.device_role');
       // Registry metadata chooses the role, while the live hass snapshot owns
       // its state. Keep those authorities together for composite lifecycle
       // classification even during a frozen/partial registry projection.
@@ -383,8 +374,15 @@ export function resolvePresentationSources(
       });
     } else if (d.primary) {
       sourceKind = 'primary';
+      decisionIds.push('source.primary_fallback');
       visualSources = [sourceOf(hass, d.primary, 'primary')];
+    } else {
+      decisionIds.push('source.none');
     }
+  }
+  if (persistedControls.length > 0 && sourceKind !== 'controls'
+      && sourceKind !== 'light' && sourceKind !== 'cover') {
+    decisionIds.push('source.filtered_saved_controls');
   }
 
   const criticalSources: ResolvedPresentationSource[] = [];
@@ -393,8 +391,10 @@ export function resolvePresentationSources(
     if (sample.status !== 'alarm' || visualSources.some((source) => source.eid === eid)) continue;
     criticalSources.push(sourceOf(hass, eid, 'critical', sample));
   }
+  if (criticalSources.length) decisionIds.push('source.critical_sibling');
   return {
     sourceKind,
+    decisionIds,
     visualSources,
     criticalSources,
     samples: [...visualSources, ...criticalSources].map((source) => source.sample),
@@ -543,34 +543,6 @@ export function activitySourceSignature(
   return signatureOf(d, sources, null).replace(/\nvalue:none$/, '');
 }
 
-function explanationReason(
-  d: DevItem,
-  visual: DeviceVisualState,
-  activity: DeviceActivity,
-  sourceKind: PresentationSourceKind,
-  liveStates: boolean,
-  haDisabled: boolean,
-  orphaned: boolean,
-  display: ResolvedDevicePresentation['display'],
-): PresentationReason {
-  if (haDisabled) return 'ha_disabled';
-  if (orphaned) return 'orphaned';
-  if (display === 'static_icon') return 'static_icon';
-  if (visual.status === 'alarm') return 'alarm';
-  if (!liveStates) return 'live_states_disabled';
-  if (visual.availability === 'unavailable') return 'unavailable';
-  if (sourceKind === 'cover') return 'cover_icon_state';
-  if (activity === 'presence') return 'presence';
-  if (activity === 'event') return 'event';
-  if (activity === 'transition') return 'transition';
-  if (visual.status === 'working') {
-    return display === 'icon_ripple' && activity !== 'none' ? 'working_activity' : 'working';
-  }
-  if (visual.status === 'open') return 'open';
-  if ((d.primary || '').startsWith('media_player.')) return 'media_neutral';
-  return 'neutral';
-}
-
 export function presentationClasses(presentation: Pick<
   ResolvedDevicePresentation,
   'visual' | 'lockState' | 'activity' | 'display' | 'effectiveHidden' | 'activityGeneration' | 'pulse'
@@ -612,8 +584,9 @@ export function resolveDevicePresentation(
   const status = d.bindingStatus;
   const haDisabled = status?.kind === 'ha_disabled';
   const orphaned = status?.kind === 'orphaned';
+  const lifecycle: BindingPresentationLifecycle = haDisabled ? 'ha_disabled'
+    : orphaned ? 'orphaned' : status?.kind === 'unverified' ? 'unverified' : 'active';
   const userHidden = d.userHidden === true || d.marker?.hidden === true;
-  const effectiveHidden = haDisabled || (userHidden && !options.designPreview);
   const combined = combineVisualSamples(sources.samples);
   const lockSource = sources.visualSources.find((source) => source.eid.startsWith('lock.'));
   const lockState: DeviceLockState = lockSource
@@ -635,15 +608,6 @@ export function resolveDevicePresentation(
     ).length > 0;
   const controllerFace = sources.sourceKind === 'controls'
     || (configuredController && sources.sourceKind !== 'light' && sources.sourceKind !== 'cover');
-  let visual = controllerFace
-    ? { ...combined, availability: controllerAvailability(hass, d) }
-    : combined;
-  if (effectiveHidden) visual = { availability: 'available', status: 'neutral', activity: 'none' };
-  else if (staticIcon) visual = { availability: 'available', status: 'neutral', activity: 'none' };
-  else if (combined.status !== 'alarm' && !options.liveStates) {
-    visual = { availability: 'available', status: 'neutral', activity: 'none' };
-  }
-
   const value = staticIcon && options.sourceDetails === false
     ? { source: null, text: null, fallback: null }
     : resolveValue(hass, d, sources, options.showTemperature);
@@ -652,15 +616,29 @@ export function resolveDevicePresentation(
   const rt = options.activityRuntime;
   const now = options.now ?? Date.now();
   const shortExpiresAt = rt?.expiresAt || (rt?.flashTs ? rt.flashTs + ACTIVITY_WINDOW_MS : 0);
-  if (!staticIcon && !effectiveHidden && options.liveStates && combined.status !== 'alarm'
-      && rt?.sources === activitySignature && rt.flashTs && rt.flashKind
-      && shortExpiresAt > now) {
-    visual = { ...visual, activity: rt.flashKind };
-  }
+  const shortActivity = rt?.sources === activitySignature && rt.flashTs && rt.flashKind
+      && shortExpiresAt > now ? rt.flashKind : null;
+  const policy = resolveDevicePresentationPolicy({
+    bindingLifecycle: lifecycle,
+    userHidden,
+    designPreview: options.designPreview === true,
+    display,
+    liveStates: options.liveStates,
+    sourceVisual: combined,
+    controllerFace,
+    // Preserve the ordinary-marker O(1) fast path: controller evidence is
+    // scanned only when this marker actually projects external controls.
+    controllerAvailability: controllerFace ? controllerAvailability(hass, d) : 'available',
+    shortActivity,
+    valueAvailable: value.text != null,
+    valueFallback: value.fallback,
+    vacuumLiveRequested: d.marker?.vacuum?.live === true,
+  });
+  const { effectiveHidden, visual } = policy;
 
   const activity = display === 'icon_ripple' && !effectiveHidden
     && options.liveStates && visual.status !== 'alarm' ? visual.activity : 'none';
-  const temp = !staticIcon && !effectiveHidden && options.showTemperature
+  const temp = policy.metrics && options.showTemperature
     ? (d.marker?.use_climate_temp === true ? climateTempFor(hass, d.entities)
       : (d.icon === 'mdi:thermometer' || d.icon === 'mdi:air-filter') ? tempFor(hass, d.entities) : null)
     : null;
@@ -668,10 +646,10 @@ export function resolveDevicePresentation(
   // diagnostic humidity sibling must not turn a composite device into a
   // humidity marker; users can still select that sibling explicitly through
   // the configurable value badge.
-  const hum = !staticIcon && !effectiveHidden && options.showTemperature
+  const hum = policy.metrics && options.showTemperature
     && !!d.primary && isHumEntity(hass, d.primary)
     ? humFor(hass, d.entities) : null;
-  const lqi = !staticIcon && !effectiveHidden && options.showSignal && !d.virtual ? lqiFor(hass, d.entities) : null;
+  const lqi = policy.metrics && options.showSignal && !d.virtual ? lqiFor(hass, d.entities) : null;
   const markerStateGraph = options.lightSources || (d.marker?.value_badge?.source?.kind === 'derived_marker_state'
     ? resolvedLightSources(hass, options.lightDevices || [d])
     : []);
@@ -689,10 +667,10 @@ export function resolveDevicePresentation(
     ? realVisualSource?.eid
     : d.primary || realVisualSource?.eid;
   const state = actEid ? hass?.states?.[actEid] : null;
-  const icon = options.liveStates && !staticIcon && !effectiveHidden
+  const icon = policy.dynamicIcon
     ? stateIcon(d.icon, actEid?.split('.')[0], state?.attributes?.device_class, state?.state, !!d.marker?.icon)
     : d.icon;
-  const lightColor = options.liveStates && !staticIcon && !effectiveHidden
+  const lightColor = policy.liveColor
     ? sources.visualSources
         .filter((source) => !source.eid.startsWith('marker:'))
         .map((source) => lightColorOf(hass?.states?.[source.eid]))
@@ -714,16 +692,22 @@ export function resolveDevicePresentation(
     now,
     liveStates: options.liveStates,
     effectiveHidden,
-    bindingUnavailable: haDisabled || orphaned,
+    bindingUnavailable: policy.bindingUnavailable,
     reducedMotion: options.reducedMotion,
     color: rippleColor,
     diameterScale: rippleScale,
   });
-  const valueText = display === 'value' && !effectiveHidden ? value.text : null;
+  const valueText = policy.face === 'value' ? value.text : null;
   const disabledReason = status?.kind === 'ha_disabled' ? status.reason : null;
-  const reason = explanationReason(
-    d, visual, activity, sources.sourceKind, options.liveStates, haDisabled, orphaned, display,
-  );
+  const reason = resolvePresentationReason({
+    lifecycle,
+    display,
+    liveStates: options.liveStates,
+    sourceKind: sources.sourceKind,
+    primaryDomain: (d.primary || '').split('.')[0],
+    visual,
+    activity,
+  });
   const notices: PresentationReason[] = [];
   if (options.designPreview && userHidden) notices.push('hidden_design_preview');
   if (!staticIcon && d.marker?.vacuum?.live === true) notices.push('vacuum_live_plan_only');
@@ -747,6 +731,13 @@ export function resolveDevicePresentation(
     criticalSources: sources.criticalSources,
     valueSource: value.source,
     sourceSignature,
+    decisionIds: [
+      ...sources.decisionIds,
+      ...policy.decisionIds,
+      ...(valueBadge ? ['diagnostics.value_badge'] : []),
+      ...(lqi == null ? [] : [`diagnostics.lqi_${markerLqiBand(lqi)}`]),
+      `pulse.${pulse.kind}_${pulse.reason}`,
+    ],
     visual,
     lockState,
     display,
@@ -774,7 +765,7 @@ export function resolveDevicePresentation(
     haDisabled,
     disabledReason,
     orphaned,
-    vacuumLive: !staticIcon && d.marker?.vacuum?.live === true,
+    vacuumLive: policy.vacuumLive,
     explanation: { reason, notices },
   };
   return { ...presentation, classes: presentationClasses(presentation) };
