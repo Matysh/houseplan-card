@@ -79,9 +79,9 @@ or column affects the physical rendering and light but does not create a room.
 
 ### HACS
 
-1. Add `https://github.com/Matysh/houseplan-card` to HACS as a custom
-   **Integration** repository.
-2. Install House Plan and restart Home Assistant.
+1. Search for **House Plan** in HACS and install it — the integration is in
+   the HACS default catalog, no custom repository needed.
+2. Restart Home Assistant.
 3. Open **Settings → Devices & services → Add integration → House Plan**.
 4. Keep “administrators only” enabled unless other users must edit the plan.
 
