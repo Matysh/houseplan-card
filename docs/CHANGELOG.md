@@ -2,6 +2,26 @@
 
 ## Unreleased
 
+## v1.68.0 — 2026-08-27
+
+- Structural plan edits now rely on stable wall-segment IDs: thickness, draft
+  lineage and opening ownership survive Resize, Undo/Redo, import, optimization
+  and repeated editing. The model-v9 upgrade is atomic, while conflicts between
+  legacy boundaries and openings resolve automatically and deterministically.
+  Exporting a backup before the first structural save or Optimize plans run is
+  recommended because older versions do not understand the new wall model
+  ([#282](https://github.com/Matysh/houseplan-card/issues/282),
+  [#316](https://github.com/Matysh/houseplan-card/issues/316),
+  [#319](https://github.com/Matysh/houseplan-card/issues/319)).
+- Virtual walls are replaced by ordinary `0 cm` walls. They can be drawn and
+  changed with the Walls and Thickness tools, while each space can render them
+  dashed, transmitting Glow and sunlight, or solid as an exact zero-area light
+  barrier ([#306](https://github.com/Matysh/houseplan-card/issues/306)).
+- Wall editing is more reliable: axes and nodes remain visible across tools,
+  standalone and saved-draft walls work with Thickness, and complex junctions
+  and acute corners no longer leave teeth, steps or white wedges.
+- Small fixes and improvements.
+
 ## v1.68.0-beta.4 — 2026-08-27
 
 - Updating to the new wall model no longer freezes editing: the server now
