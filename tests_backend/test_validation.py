@@ -1718,6 +1718,12 @@ def test_zero_wall_style_and_v9_legacy_fields_are_strict():
         "spaces": [{**base, "wall_segments": []}],
     }
     assert v.CONFIG_SCHEMA(canonical) == canonical
+    with pytest.raises(vol.Invalid, match=r"v8\+ space requires wall_segments"):
+        v.CONFIG_SCHEMA({
+            **canonical,
+            "spaces": [{key: value for key, value in canonical["spaces"][0].items()
+                        if key != "wall_segments"}],
+        })
     with pytest.raises(vol.Invalid, match="legacy open boundaries"):
         v.CONFIG_SCHEMA({
             **canonical,

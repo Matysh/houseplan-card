@@ -2,10 +2,22 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  createEmptySpaceConfig,
   initialSpaceDisplayDraft,
   switchSpacePlanSource,
   touchSpaceDisplay,
 } from '../test-build/space-dialog.js';
+
+test('a fresh space is a complete empty v8/v9 wall-model document (#324)', () => {
+  assert.deepEqual(createEmptySpaceConfig('floor', 'Ground floor'), {
+    id: 'floor',
+    title: 'Ground floor',
+    plan_url: null,
+    view_box: [0, 0, 1, 1],
+    rooms: [],
+    wall_segments: [],
+  });
+});
 
 test('fresh create projects honest File and Draw display defaults', () => {
   const file = initialSpaceDisplayDraft();

@@ -8,6 +8,23 @@ export interface SpaceDisplayDraft {
   displayTouched: boolean;
 }
 
+/**
+ * A current empty space is still a complete wall-model document.  In
+ * particular, model v8+ forbids using an absent catalogue to mean "no walls":
+ * absence means an outdated/partial writer, while an empty array is the
+ * canonical empty catalogue.
+ */
+export function createEmptySpaceConfig(id: string, title: string): Record<string, unknown> {
+  return {
+    id,
+    title,
+    plan_url: null,
+    view_box: [0, 0, 1, 1],
+    rooms: [],
+    wall_segments: [],
+  };
+}
+
 /** Source-specific visible defaults for a fresh create/onboarding step. */
 export function initialSpaceDisplayDraft(source: SpacePlanSource = 'file'): SpaceDisplayDraft {
   const visible = source === 'draw';
