@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.68.1 — 2026-08-27
+
 - Creating a space no longer reports `v8+ space requires wall_segments` while
   leaving an unsaved ghost space on screen; a failed space save now restores
   the server-backed state before another create or delete
