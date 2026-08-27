@@ -199,6 +199,9 @@ if (target) {
   // The second gesture leaves the circle by much more than its hit radius.
   // Pointer capture must keep the real browser stream alive; Esc then cancels
   // the already-visible overlay without a second persistence write.
+  await page.evaluate(() => {
+    window.__resizeWallUnionBefore = window.__card._wallUnionGeometry();
+  });
   const outsideDistance = Math.max(120, target.hitWidth * 2);
   await page.mouse.move(...target.start);
   await page.mouse.down();
@@ -211,11 +214,16 @@ if (target) {
   await page.mouse.up();
   await settle();
   check('resize_pointer.escape_restores_config', await persistedGeometry(), stableAfterUndo);
+  check('resize_pointer.escape_reuses_pre_drag_wall_union', await page.evaluate(() =>
+    window.__card._wallUnionGeometry() === window.__resizeWallUnionBefore), true);
   await page.waitForTimeout(650);
   check('resize_pointer.escape_zero_extra_write', await page.evaluate(() => window.__resizeWrites.length), writesBefore + 2);
 
   // A different pointer cannot take over an active drag. Losing capture for
   // the owning pointer is an abort, never a commit of the visible preview.
+  await page.evaluate(() => {
+    window.__resizeWallUnionBefore = window.__card._wallUnionGeometry();
+  });
   await page.mouse.move(...target.start);
   await page.mouse.down();
   await page.evaluate(({ x, y }) => {
@@ -246,6 +254,8 @@ if (target) {
   await settle();
   check('resize_pointer.capture_loss_restores_dom', await domHasSharedX(400), true);
   check('resize_pointer.capture_loss_restores_config', await persistedGeometry(), stableAfterUndo);
+  check('resize_pointer.capture_loss_reuses_pre_drag_wall_union', await page.evaluate(() =>
+    window.__card._wallUnionGeometry() === window.__resizeWallUnionBefore), true);
   await page.waitForTimeout(650);
   check('resize_pointer.capture_loss_zero_extra_write', await page.evaluate(() => window.__resizeWrites.length), writesBefore + 2);
 }

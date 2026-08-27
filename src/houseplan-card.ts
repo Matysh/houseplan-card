@@ -1684,6 +1684,9 @@ class HouseplanCard extends LitElement {
     d: number;
     changed: string[];
     rejectNotified: boolean;
+    /** Exact pre-drag masonry retained so Cancel can restore the real frame
+     * without rebuilding the same expensive boolean union under a new epoch. */
+    wallUnionBefore: ReturnType<typeof wallBodiesUnionPath>;
   } | null = null;
   private _rszEligibilityCache: {
     key: string;
@@ -9016,11 +9019,15 @@ class HouseplanCard extends LitElement {
     capturePointer(ev);
     const plan = resolution.plan;
     const start = this._svgPoint(ev);
+    const wallUnionKey = `${this._space}|${this._cfgEpoch}|${rooms.length}`;
+    const wallUnionBefore = this._wallUnionCache?.key === wallUnionKey
+      ? this._wallUnionCache.value : null;
     this._rszDrag = {
       pid: ev.pointerId, start: [start[0], start[1]], roomId, plan,
       opts: this._rszOptsFor(plan.a, plan.b),
       rooms, openings: this._rszOpenings(), snap: this._rszSnapshot(),
       moved: false, d: 0, changed: [...plan.roomIds], rejectNotified: false,
+      wallUnionBefore,
     };
   }
 
@@ -9126,12 +9133,27 @@ class HouseplanCard extends LitElement {
   private _rszCancelDrag(): void {
     const g = this._rszDrag;
     if (!g) return;
+    const snapshotStillCurrent = this._rszSnapshot() === g.snap;
     this._rszDrag = null;
     this._rszLive = null;
     // HP-1550-01/-03: a cancel just drops the overlay — the real config was
     // never touched, so there is nothing to restore, no undo step and no write
     this._rszPreview = null;
     this._cfgEpoch++;
+    if (snapshotStillCurrent && g.wallUnionBefore) {
+      // The server-backed geometry did not change during the gesture. The
+      // preview advanced the structural epoch and temporarily selected its
+      // candidate union, but Cancel returns to the byte-identical pre-drag
+      // config. Alias that already-proved result under the fresh epoch instead
+      // of paying another O(n log n) polygon union on the next paint.
+      const space = this._spaceModel();
+      if (space) {
+        const key = `${this._space}|${this._cfgEpoch}|${space.rooms.length}`;
+        const entry = { key, value: g.wallUnionBefore };
+        lruWrite(this._wallUnionPool, key, entry, 8);
+        this._wallUnionCache = entry;
+      }
+    }
     this.requestUpdate();
   }
 
