@@ -327,6 +327,41 @@ jobs:
             --add-label S6-in-progress --remove-label S7-code-review
           echo "S7-code-review -> S6-in-progress (ревью не запускалось)"
 
+      # Ревьюер перегонял tsc, юниты и сборку заново в каждом раунде, хотя
+      # Validate на том же SHA уже зелёный (#343). Это не тщательность: бюджет
+      # ревью тратится на повторение CI вместо чтения кода.
+      #
+      # Доказательство здесь такое же строгое, как у reuse-маркеров (#208): не
+      # «недавно было зелено», а «completed success ровно на этом SHA». После
+      # ребейза SHA другой, прогона для него нет — и ревьюер честно гоняет сам.
+      - name: Зелёные гейты на этом SHA
+        id: validated
+        if: steps.rebase.outputs.conflict != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
+        run: |
+          sha=$(git rev-parse HEAD)
+          short=$(git rev-parse --short HEAD)
+          row=$(gh run list --repo "${{ github.repository }}" --workflow validate.yml \
+            --commit "$sha" --limit 5 \
+            --json status,conclusion,url \
+            --jq '[.[] | select(.status=="completed" and .conclusion=="success")][0] // empty')
+          {
+            echo 'note<<EOF_NOTE'
+            if [ -n "$row" ]; then
+              url=$(printf '%s' "$row" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>process.stdout.write(JSON.parse(s).url||""))')
+              echo "**Дешёвые гейты на этом SHA уже подтверждены** (#343). Validate на \`$short\` завершился success: $url"
+              echo ""
+              echo "Значит \`npx tsc --noEmit\`, \`npm test\` и \`npm run build\` со сверкой копий бандла перегонять не нужно — сошлись на этом прогоне, назвав его ссылкой. Бюджет раунда тратится на чтение кода."
+              echo ""
+              echo "Что Validate НЕ покрывает и остаётся за тобой: смоки, выбранные по диффу; golden, если diff трогает рендер; инварианты модели на конкретной конфигурации; и любой гейт, который требуют AC задачи."
+            else
+              echo "**Зелёного Validate на этом SHA (\`$short\`) нет** — прогон не найден, не завершён либо не success. Дешёвые гейты прогоняешь сам и называешь результат."
+            fi
+            echo 'EOF_NOTE'
+          } >> "$GITHUB_OUTPUT"
+          if [ -n "$row" ]; then echo "Validate на $short: зелёный"; else echo "Validate на $short: зелёного нет"; fi
+
       # Зависимости ставятся ПОСЛЕ переключения на ветку задачи: lockfile мог
       # измениться именно в ней, и установка по копии из dev дала бы не то дерево.
       - name: Установить зависимости
@@ -453,8 +488,10 @@ jobs:
             правке — не тщательность, а потеря времени: полные наборы это
             предрелизный гейт (PROCESS.md §8), а не гейт ревью.
 
-            Всегда, они дешёвые, и в повторном раунде тоже: код изменился,
-            а стоят они минуты:
+            ${{ steps.validated.outputs.note }}
+
+            Если зелёного прогона на этом SHA нет — прогоняешь сам, они дешёвые,
+            и в повторном раунде тоже: код изменился, а стоят они минуты:
               `npx tsc --noEmit`, `npm test`, `npm run build` со сверкой трёх
               копий бандла. Плюс `node scripts/check-docs.mjs`, если diff трогает
               `src/**`: отпечаток скриншотов документации считается по всему
