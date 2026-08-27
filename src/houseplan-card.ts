@@ -11600,14 +11600,20 @@ class HouseplanCard extends LitElement {
   ): number[][] | null {
     const cutsKey = openCuts.map((cut) => cut.join(',')).join(';');
     const key = `${space.id}|${this._cfgEpoch}|${roomId}|${cutsKey}`;
-    const cached = lruRead(this._innerContourCache, key);
-    if (cached.hit) return cached.value;
+    // Editor previews can replace room polygons without advancing the saved
+    // config epoch. Cache only the immutable View surface; otherwise a Resize
+    // drag would keep painting (and hit-testing) the pre-drag contour.
+    const cacheable = this._mode === 'view' && !this._rszPreview;
+    if (cacheable) {
+      const cached = lruRead(this._innerContourCache, key);
+      if (cached.hit) return cached.value;
+    }
     const value = innerContourForRoom(
       space.rooms, roomId, this._spaceWalls, openCuts,
       this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
       roomWalls,
     );
-    lruWrite(this._innerContourCache, key, value, 600);
+    if (cacheable) lruWrite(this._innerContourCache, key, value, 600);
     return value;
   }
 

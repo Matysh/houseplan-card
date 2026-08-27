@@ -92,6 +92,7 @@ test('room inner faces are structurally cached and shared by both fill layers', 
   const helperEnd = source.indexOf('\n  /**', helperStart);
   assert.ok(helperStart >= 0 && helperEnd > helperStart, 'inner-contour cache helper is present');
   const helper = source.slice(helperStart, helperEnd);
+  assert.match(helper, /const cacheable = this\._mode === 'view' && !this\._rszPreview;/);
   assert.match(helper, /lruRead\(this\._innerContourCache, key\)/);
   assert.match(helper, /lruWrite\(this\._innerContourCache, key, value, 600\)/);
 

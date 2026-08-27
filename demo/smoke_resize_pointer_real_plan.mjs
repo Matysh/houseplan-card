@@ -51,6 +51,12 @@ await page.evaluate(async () => {
   await card.updateComplete;
 });
 await page.waitForFunction(() => window.__card.renderRoot.querySelectorAll('.rszhandle').length > 0);
+// Entering Plan animates the editor chrome and stage for 220 ms. Reading a
+// handle's screen CTM while that transition is still moving makes the real
+// mouse click land at a stale coordinate and turns this pointer smoke flaky.
+await page.waitForFunction(() => !window.__card._modeTransitionBusy);
+await page.evaluate(() => new Promise((resolve) =>
+  requestAnimationFrame(() => requestAnimationFrame(resolve))));
 
 await page.evaluate(() => {
   window.__resizePointerId = null;
