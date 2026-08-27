@@ -1,34 +1,42 @@
 /**
- * Card UI localization. Dictionaries live in src/i18n/<lang>.json so that new
- * languages can be contributed without touching TypeScript. The language is
- * resolved from the card config (`language: en|ru`) or, by default, from the
- * HA user profile (hass.locale.language); anything that is not a known
- * language falls back to English.
+ * Card UI localization. Shipped languages live in the typed registry; see the
+ * translation contribution flow in CONTRIBUTING.md. The language is resolved
+ * from the card config or, by default, from the HA user profile. Unknown
+ * languages fall back to English synchronously.
  */
 import { subst } from './logic';
-import en from './i18n/en.json';
-import ru from './i18n/ru.json';
+import {
+  FALLBACK_DICTIONARY,
+  FALLBACK_LANGUAGE_CODE,
+  LANGUAGE_REGISTRY,
+  languageEntry,
+  resolveLanguageCode,
+  type Lang,
+} from './i18n/registry';
 
-export type Lang = 'en' | 'ru';
-type Key = keyof typeof en;
+type Key = keyof typeof FALLBACK_DICTIONARY;
 
-const DICTS: Record<Lang, Record<string, string>> = { en, ru };
+export type { Lang } from './i18n/registry';
 
 /** Resolve the UI language: explicit config option wins, then the HA profile. */
 export function langOf(hass: any, configLang?: string | null): Lang {
-  if (configLang && configLang in DICTS) return configLang as Lang;
-  const l = (hass?.locale?.language || hass?.language || 'en').toLowerCase();
-  return l.startsWith('ru') ? 'ru' : 'en';
+  return resolveLanguageCode(
+    configLang,
+    hass?.locale?.language || hass?.language,
+    LANGUAGE_REGISTRY.map(({ code }) => code),
+    FALLBACK_LANGUAGE_CODE,
+  );
 }
 
 /** Translate a key with optional {placeholder} substitution. */
 export function t(lang: Lang, key: Key, vars?: Record<string, string | number>): string {
-  return subst(DICTS[lang][key] ?? en[key] ?? key, vars);
+  const dictionary = languageEntry(lang)?.dictionary;
+  return subst(dictionary?.[key] ?? FALLBACK_DICTIONARY[key] ?? key, vars);
 }
 
 /** Whether a localized value exists and contains useful text after fallback. */
 export function hasTranslation(lang: Lang, key: string): boolean {
-  const value = DICTS[lang][key] ?? DICTS.en[key];
+  const value = languageEntry(lang)?.dictionary[key] ?? FALLBACK_DICTIONARY[key];
   return typeof value === 'string' && value.trim().length > 0;
 }
 

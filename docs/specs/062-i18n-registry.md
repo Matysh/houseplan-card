@@ -140,7 +140,10 @@ option с этим кодом и не меняет config при редакти�
 
 Gate проверяет:
 
-- коды уникальны, lowercase и нормализованы;
+- коды являются BCP 47 tags и уникальны после case-insensitive нормализации
+  (`_` считается эквивалентом `-`); canonical spelling registry сохраняется в
+  selector и точных именах frontend/backend файлов (`pt-BR`, а не принудительно
+  `pt-br`);
 - `en` существует и является fallback;
 - у каждой записи есть непустые `nativeLabel` и dictionary;
 - каждый `src/i18n/<code>.json` зарегистрирован и у каждой записи есть ровно
@@ -230,7 +233,8 @@ Schema и persisted config не меняются. Миграции нет.
 
 ### Unit
 
-- registry uniqueness, code format, English presence/fallback;
+- registry uniqueness после нормализации, BCP 47 code format, English
+  presence/fallback;
 - exact/primary/fallback locale matrix, case and `_` normalization;
 - invalid explicit config;
 - registry-driven dictionary/file/backend parity;

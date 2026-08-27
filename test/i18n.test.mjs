@@ -1,21 +1,72 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 
-const en = JSON.parse(readFileSync(new URL('../src/i18n/en.json', import.meta.url)));
-const ru = JSON.parse(readFileSync(new URL('../src/i18n/ru.json', import.meta.url)));
+import {
+  FALLBACK_LANGUAGE_CODE,
+  LANGUAGE_REGISTRY,
+  languageOptions,
+  normalizeLanguageTag,
+  resolveLanguageCode,
+} from '../test-build/i18n/registry.js';
+import { langOf } from '../test-build/i18n.js';
+
+const dictionaries = new Map(
+  LANGUAGE_REGISTRY.map(({ code, dictionary }) => [code, dictionary]),
+);
+const en = dictionaries.get('en');
+const ru = dictionaries.get('ru');
 const cardSource = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
 
-test('i18n: en and ru dictionaries carry the same key set', () => {
+test('i18n: registry codes and English fallback are valid', () => {
+  const codes = LANGUAGE_REGISTRY.map(({ code }) => code);
+  const normalizedCodes = codes.map(normalizeLanguageTag);
+  assert.equal(FALLBACK_LANGUAGE_CODE, 'en');
+  assert.ok(dictionaries.has(FALLBACK_LANGUAGE_CODE));
+  assert.equal(new Set(codes).size, codes.length, 'registry codes must be unique');
+  assert.equal(
+    new Set(normalizedCodes).size,
+    normalizedCodes.length,
+    'registry codes must be unique after locale normalization',
+  );
+  for (const { code, nativeLabel, dictionary } of LANGUAGE_REGISTRY) {
+    assert.equal(code, code.trim(), `${code} has surrounding whitespace`);
+    assert.doesNotMatch(code, /_/u, `${code} must use BCP 47 hyphens`);
+    assert.match(code, /^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/u);
+    assert.ok(nativeLabel.trim(), `${code} has no native label`);
+    assert.ok(dictionary && typeof dictionary === 'object', `${code} has no dictionary`);
+  }
+});
+
+test('i18n: registry matches frontend and backend locale files', () => {
+  const registryCodes = LANGUAGE_REGISTRY.map(({ code }) => code).sort();
+  const localeCodes = (url) => readdirSync(url)
+    .filter((name) => name.endsWith('.json'))
+    .map((name) => name.slice(0, -'.json'.length))
+    .sort();
+  assert.deepEqual(
+    localeCodes(new URL('../src/i18n/', import.meta.url)),
+    registryCodes,
+    'frontend locale files and registry differ',
+  );
+  assert.deepEqual(
+    localeCodes(new URL('../custom_components/houseplan/translations/', import.meta.url)),
+    registryCodes,
+    'backend locale files and registry differ',
+  );
+});
+
+test('i18n: every registered dictionary carries the English key set', () => {
   const enKeys = Object.keys(en).sort();
-  const ruKeys = Object.keys(ru).sort();
-  assert.deepEqual(enKeys, ruKeys);
+  for (const { code, dictionary } of LANGUAGE_REGISTRY) {
+    assert.deepEqual(Object.keys(dictionary).sort(), enKeys, `${code} key set differs`);
+  }
 });
 
 test('i18n: no empty values', () => {
-  for (const [lang, d] of [['en', en], ['ru', ru]]) {
-    for (const [k, v] of Object.entries(d)) {
-      assert.ok(typeof v === 'string' && v.length > 0, `${lang}:${k} is empty`);
+  for (const { code, dictionary } of LANGUAGE_REGISTRY) {
+    for (const [k, v] of Object.entries(dictionary)) {
+      assert.ok(typeof v === 'string' && v.length > 0, `${code}:${k} is empty`);
     }
   }
 });
@@ -23,8 +74,47 @@ test('i18n: no empty values', () => {
 test('i18n: placeholders match between languages', () => {
   const ph = (s) => (s.match(/\{\w+\}/g) || []).sort().join(',');
   for (const k of Object.keys(en)) {
-    assert.equal(ph(en[k]), ph(ru[k]), `placeholder mismatch in ${k}`);
+    for (const { code, dictionary } of LANGUAGE_REGISTRY) {
+      assert.equal(ph(en[k]), ph(dictionary[k]), `placeholder mismatch in ${code}:${k}`);
+    }
   }
+});
+
+test('i18n: resolver supports exact, primary, explicit and fallback paths', () => {
+  const supported = ['en', 'ru', 'pt-BR'];
+  const cases = [
+    { explicit: 'RU', ha: 'en-US', expected: 'ru' },
+    { explicit: 'pt_BR', ha: 'ru-RU', expected: 'pt-BR' },
+    { explicit: 'unknown', ha: 'ru_RU', expected: 'ru' },
+    { explicit: '', ha: 'pt-br', expected: 'pt-BR' },
+    { explicit: null, ha: 'ru-RU', expected: 'ru' },
+    { explicit: 'ru-RU', ha: 'en-GB', expected: 'en' },
+    { explicit: undefined, ha: 'pt-PT', expected: 'en' },
+    { explicit: undefined, ha: 'de-DE', expected: 'en' },
+  ];
+  for (const { explicit, ha, expected } of cases) {
+    assert.equal(resolveLanguageCode(explicit, ha, supported, 'en'), expected);
+  }
+});
+
+test('i18n: langOf wires card config and both HA locale shapes to the registry', () => {
+  assert.equal(langOf({ locale: { language: 'ru_RU' }, language: 'en' }), 'ru');
+  assert.equal(langOf({ locale: { language: 'en-GB' }, language: 'ru' }, 'RU'), 'ru');
+  assert.equal(langOf({ language: 'ru-RU' }, 'unknown'), 'ru');
+  assert.equal(langOf({ locale: { language: 'de-DE' } }, 'unknown'), 'en');
+});
+
+test('i18n: editor options follow registry order and preserve unknown raw values', () => {
+  assert.deepEqual(languageOptions('Auto'), [
+    { value: '', label: 'Auto' },
+    ...LANGUAGE_REGISTRY.map(({ code, nativeLabel }) => ({ value: code, label: nativeLabel })),
+  ]);
+  assert.deepEqual(languageOptions('Auto', 'ru'), languageOptions('Auto'));
+  assert.deepEqual(languageOptions('Auto', 'de').at(-1), { value: 'de', label: 'de' });
+  assert.deepEqual(
+    languageOptions('Auto', ' RU ').at(-1),
+    { value: ' RU ', label: 'Русский' },
+  );
 });
 
 test('issue 251 unavailable controls toast has exact singular and plural copy', () => {
@@ -139,9 +229,9 @@ test('i18n: every literal help call has body and full aria keys in both language
   assert.equal(helpKeys.length, allCalls.length, 'every _help call must use one string literal ending in .help');
   assert.ok(helpKeys.length > 0, 'the help affordance pilot disappeared');
   for (const key of helpKeys) {
-    for (const [lang, dictionary] of [['en', en], ['ru', ru]]) {
-      assert.ok(dictionary[key]?.trim(), `${lang}:${key} is missing or empty`);
-      assert.ok(dictionary[`${key}.aria`]?.trim(), `${lang}:${key}.aria is missing or empty`);
+    for (const { code, dictionary } of LANGUAGE_REGISTRY) {
+      assert.ok(dictionary[key]?.trim(), `${code}:${key} is missing or empty`);
+      assert.ok(dictionary[`${key}.aria`]?.trim(), `${code}:${key}.aria is missing or empty`);
     }
   }
 });
@@ -171,7 +261,7 @@ test('help hosts do not duplicate their explanation in a title attribute', () =>
 });
 
 test('vac toasts never mention the removed point calibration (HP-1540-06)', () => {
-  for (const [lang, d] of [['en', en], ['ru', ru]]) {
+  for (const { code: lang, dictionary: d } of LANGUAGE_REGISTRY) {
     for (const k of ['vac.autocal_no_rooms', 'vac.autocal_no_match', 'vac.residual_message']) {
       assert.ok(!/point|точк/i.test(d[k]), `${lang}:${k} still points at point calibration`);
     }

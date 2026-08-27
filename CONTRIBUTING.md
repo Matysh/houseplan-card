@@ -9,6 +9,35 @@ User-visible changes go into **both** changelogs in the same commit:
 `docs/CHANGELOG.md` (English) and `docs/CHANGELOG.ru.md` (Russian). Entries
 older than v1.42.0 exist only in the English file — no need to backfill them.
 
+## Translations
+
+A shipped UI language has three matching parts:
+
+1. `src/i18n/<code>.json` for the card;
+2. `custom_components/houseplan/translations/<code>.json` for the Home Assistant
+   integration;
+3. one static entry (dictionary import, code and native label) in
+   `src/i18n/registry.ts`.
+
+Use the canonical Home Assistant/BCP 47 language tag as `<code>` (for example,
+`fr` or `pt-BR`) and use that exact spelling for both JSON filenames. Lookup is
+case-insensitive and also accepts `_` from legacy locale sources.
+
+The registry drives language resolution, the visual-editor selector and parity
+tests. The tests reject missing or extra locale files; frontend dictionaries
+also fail on mismatched keys, empty values and changed placeholders.
+Placeholders such as `{name}` and `{n}` are a contract: do not translate, add
+or remove them.
+
+The current `subst()` helper does not implement plural rules. Phrase strings so
+their grammar does not depend on the numeric value (for example, use a neutral
+label followed by `{n}` rather than an English singular/plural pair).
+
+Adding a UI locale does not automatically create another full documentation
+set; maintain the existing English and Russian documentation according to the
+project's normal rules. Right-to-left layout is a separate product project,
+because the plan canvas and editors cannot be mirrored by translations alone.
+
 ## Where to ask
 
 Not sure whether something is a bug, or just want to discuss an idea before
@@ -45,8 +74,8 @@ every push — locally they are skipped when `homeassistant` is not importable.
 
 - **Docs in the same commit**: CHANGELOG entry for user-visible changes;
   `docs/STATUS.md` for state changes; `docs/DEVELOPMENT.md` for new gotchas.
-- Every UI string goes through `src/i18n/<lang>.json` (tests enforce en/ru key parity).
-  Adding a language = adding one JSON file + registering it in `src/i18n.ts`.
+- Every UI string goes through `src/i18n/<lang>.json`; follow the
+  [Translations](#translations) flow for registry and backend parity.
 - The built card must be committed in sync: `cp dist/houseplan-card.js
   custom_components/houseplan/frontend/` (CI compares them byte-for-byte).
 - Tap actions have a security model (locks/alarms never toggle from the plan) —

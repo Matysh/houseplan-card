@@ -273,7 +273,8 @@ export interface CardConfig {
   show_temperature?: boolean;
   live_states?: boolean;
   show_signal?: boolean;
-  language?: string; // 'en' | 'ru' | '' (auto — HA profile)
+  /** Registry language code, or empty/absent for the Home Assistant profile. */
+  language?: string;
   /** @deprecated Ignored since v1.38.1 — per-marker `tap_action` only.
    *  Kept so old YAML does not break; no runtime action reads this field. */
   tap_action?: string;

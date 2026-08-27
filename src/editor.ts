@@ -1,6 +1,7 @@
 /** Card configuration editor (Lovelace GUI). */
 import { LitElement, html, nothing } from 'lit';
 import { langOf, t, type Lang } from './i18n';
+import { languageOptions } from './i18n/registry';
 import { invalidDefaultFloor } from './card-editor-validation';
 
 class HouseplanCardEditor extends LitElement {
@@ -97,11 +98,7 @@ class HouseplanCardEditor extends LitElement {
         selector: {
           select: {
             mode: 'dropdown',
-            options: [
-              { value: '', label: t(L, 'editor.lang_auto') },
-              { value: 'en', label: t(L, 'editor.lang_en') },
-              { value: 'ru', label: t(L, 'editor.lang_ru') },
-            ],
+            options: languageOptions(t(L, 'editor.lang_auto'), this._config?.language),
           },
         },
       },
