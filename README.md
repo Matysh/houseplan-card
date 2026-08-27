@@ -1,6 +1,6 @@
 # 🏠 House Plan — a live home map for Home Assistant
 
-[![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
+[![HACS Default](https://img.shields.io/badge/HACS-Default-41BDF5.svg)](https://github.com/hacs/integration)
 [![GitHub release](https://img.shields.io/github/v/release/Matysh/houseplan-card)](https://github.com/Matysh/houseplan-card/releases)
 [![CI](https://github.com/Matysh/houseplan-card/actions/workflows/validate.yml/badge.svg)](https://github.com/Matysh/houseplan-card/actions)
 [![Live demo](https://img.shields.io/badge/demo-try_it_live-00c853?logo=homeassistant&logoColor=white)](https://demo.houseplan.tech)
@@ -88,10 +88,11 @@ The [Background editor contract](docs/DECOR-EDITOR.md) and
 
 [![Open the repository in HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Matysh&repository=houseplan-card&category=integration)
 
-1. In HACS open **⋮ → Custom repositories**.
-2. Add `https://github.com/Matysh/houseplan-card` as an **Integration**.
-3. Install House Plan and restart Home Assistant.
-4. Open **Settings → Devices & services → Add integration → House Plan**.
+House Plan is in the HACS default catalog — no custom repository needed.
+
+1. In HACS search for **House Plan** and install it.
+2. Restart Home Assistant.
+3. Open **Settings → Devices & services → Add integration → House Plan**.
 
 The card is registered automatically. If you manage Lovelace resources
 manually, use the URL served by the integration:

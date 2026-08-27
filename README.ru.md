@@ -1,6 +1,6 @@
 # 🏠 House Plan — живой план дома для Home Assistant
 
-[![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
+[![HACS Default](https://img.shields.io/badge/HACS-Default-41BDF5.svg)](https://github.com/hacs/integration)
 [![GitHub release](https://img.shields.io/github/v/release/Matysh/houseplan-card)](https://github.com/Matysh/houseplan-card/releases)
 [![CI](https://github.com/Matysh/houseplan-card/actions/workflows/validate.yml/badge.svg)](https://github.com/Matysh/houseplan-card/actions)
 [![Live demo](https://img.shields.io/badge/демо-попробовать-00c853?logo=homeassistant&logoColor=white)](https://demo.houseplan.tech)
@@ -91,10 +91,12 @@ Assistant — и устройства появятся на плане авто�
 
 [![Открыть репозиторий в HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Matysh&repository=houseplan-card&category=integration)
 
-1. В HACS откройте **⋮ → Пользовательские репозитории**.
-2. Добавьте `https://github.com/Matysh/houseplan-card` с типом **Интеграция**.
-3. Установите House Plan и перезапустите Home Assistant.
-4. Откройте **Настройки → Устройства и службы → Добавить интеграцию → House Plan**.
+House Plan входит в основной каталог HACS — пользовательский репозиторий
+добавлять не нужно.
+
+1. Найдите **House Plan** в поиске HACS и установите.
+2. Перезапустите Home Assistant.
+3. Откройте **Настройки → Устройства и службы → Добавить интеграцию → House Plan**.
 
 Карточка регистрируется автоматически. Если ресурсы Lovelace управляются вручную,
 добавьте именно URL, который публикует интеграция:
