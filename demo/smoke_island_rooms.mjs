@@ -9,7 +9,11 @@ const res = await page.evaluate(async () => {
   // r1 — комната; рисуем остров-«колонну» внутри неё
   const r1 = c._spaceModel().rooms.find((r) => r.id === 'r1');
   const [cx, cy] = c._roomCenter(r1).map((v) => Math.round(v / g) * g);
-  const pts = [[cx, cy], [cx + g * 2, cy], [cx + g * 2, cy + g * 2], [cx, cy + g * 2]];
+  // #329 П3: сегмент стены не короче 20 см. Остров 2 клетки (10 см) — это
+  // колонна, у неё свой инструмент; островная КОМНАТА берётся реалистичного
+  // размера, 5 клеток = 25 см.
+  const side = g * 5;
+  const pts = [[cx, cy], [cx + side, cy], [cx + side, cy + side], [cx, cy + side]];
   // 1) клики внутри комнаты больше не отклоняются
   for (const p of pts) c._markupClick({ clientX: 0, clientY: 0, composedPath: () => [], ...{} , __pt: p });
   // _markupClick берёт координаты из _svgPoint(ev) — подменим напрямую через _path:
@@ -25,11 +29,11 @@ const res = await page.evaluate(async () => {
   const clash = c._overlapRoom([...c._path]);
   out.nestedAllowed = !clash;
   // частичное перекрытие всё ещё запрещено
-  const partial = [[cx - g * 4, cy], [cx + g * 2, cy], [cx + g * 2, cy + g * 2], [cx - g * 4, cy + g * 2]];
+  const partial = [[cx - g * 4, cy], [cx + side, cy], [cx + side, cy + side], [cx - g * 4, cy + side]];
   // сдвинем так, чтобы вылезло за границу r1: возьмём точку заведомо снаружи
   const poly1 = r1.poly || [[r1.x, r1.y], [r1.x + r1.w, r1.y], [r1.x + r1.w, r1.y + r1.h], [r1.x, r1.y + r1.h]];
   const minX = Math.min(...poly1.map((p) => p[0]));
-  const cross = [[minX - g * 2, cy], [cx, cy], [cx, cy + g * 2], [minX - g * 2, cy + g * 2]];
+  const cross = [[minX - g * 2, cy], [cx, cy], [cx, cy + side], [minX - g * 2, cy + side]];
   out.partialStillRejected = !!c._overlapRoom(cross);
   // 2) сохранить остров как комнату без зоны (замкнуть контур)
   c._path = [...pts, pts[0]];
@@ -38,6 +42,13 @@ const res = await page.evaluate(async () => {
   await c.updateComplete;
   const island = c._spaceModel().rooms.find((r) => r.name === 'Колонна');
   out.islandSaved = !!island;
+  // #329 П3: остров мельче 20 см отклоняется — такому месту служит колонна.
+  const tiny = [[cx, cy], [cx + g * 2, cy], [cx + g * 2, cy + g * 2], [cx, cy + g * 2]];
+  c._path = [...tiny, tiny[0]];
+  c._nameSel = 'Слишком мелкий'; c._areaSel = '';
+  c._commitRoom();
+  await c.updateComplete;
+  out.tinyIslandRejected = !c._spaceModel().rooms.some((r) => r.name === 'Слишком мелкий');
   // 3) внешняя комната рендерится как path с evenodd и дыркой
   c._setMode('view'); await c.updateComplete;
   // включим границы, чтобы r1 рендерился
