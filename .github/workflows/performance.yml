@@ -149,7 +149,14 @@ jobs:
           npm --prefix candidate run build
           (cd candidate && node scripts/bundle-sync.mjs)
           npm --prefix baseline run build
-          (cd baseline && node scripts/bundle-sync.mjs)
+          if [ -f baseline/scripts/bundle-sync.mjs ]; then
+            (cd baseline && node scripts/bundle-sync.mjs)
+          else
+            echo "::notice::The comparison base predates bundle-sync.mjs; materializing its freshly built bundle with the legacy copy path."
+            mkdir -p baseline/custom_components/houseplan/frontend baseline/demo/srv/assets
+            cp baseline/dist/houseplan-card.js baseline/custom_components/houseplan/frontend/houseplan-card.js
+            cp baseline/dist/houseplan-card.js baseline/demo/srv/assets/houseplan-card.js
+          fi
 
       - name: Capture base and candidate profiles
         working-directory: candidate

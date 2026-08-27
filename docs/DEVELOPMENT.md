@@ -152,6 +152,10 @@ on one pinned Chromium/CI profile, applies relative and absolute budgets, and
 uploads both reports plus the comparison. A developer-laptop report remains a
 diagnostic and must not be used to loosen CI limits. See
 `demo/performance/README.md`.
+When the comparison base predates `scripts/bundle-sync.mjs`, the workflow still
+builds that exact tree and materializes its fresh bundle through the equivalent
+legacy copy path. This keeps old stable releases usable as performance baselines
+without borrowing build output from the candidate.
 Both browser diagnostics require a freshly built/copied demo bundle. Rollup
 embeds a SHA-256 fingerprint of `src/` plus the locked package and
 Rollup/TypeScript build inputs; benchmark/golden runners fail before
