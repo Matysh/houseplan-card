@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Creating a space no longer reports `v8+ space requires wall_segments` while
+  leaving an unsaved ghost space on screen; a failed space save now restores
+  the server-backed state before another create or delete
+  ([#324](https://github.com/Matysh/houseplan-card/issues/324)).
+
 ## v1.68.0 — 2026-08-27
 
 - Structural plan edits now rely on stable wall-segment IDs: thickness, draft

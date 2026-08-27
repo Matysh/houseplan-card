@@ -41,6 +41,8 @@ const res = await page.evaluate(async () => {
   await c._saveSpaceDialog(); await c.updateComplete;
   const mixed = c._serverCfg.spaces.find((s) => s.title === 'Mixed display defaults');
   out.savedMixed = [mixed?.settings?.show_borders, mixed?.settings?.show_names];
+  out.savedMixedHasEmptyWallCatalog = Array.isArray(mixed?.wall_segments)
+    && mixed.wall_segments.length === 0;
   c._openSpaceDialog('edit', mixed.id); await c.updateComplete;
   out.reopenedMixed = state();
   await choose('file');
@@ -77,6 +79,38 @@ const res = await page.evaluate(async () => {
   await c._saveSpaceDialog(); await c.updateComplete;
   const file = c._serverCfg.spaces.find((s) => s.title === 'File display defaults');
   out.savedFileDefaults = [file?.settings?.show_borders, file?.settings?.show_names];
+
+  // #324: a server-rejected create must not survive merely because the dialog
+  // mutated the reactive config before config/set.  Reproduce invalid_format,
+  // then let config/get return the last accepted document.
+  const serverTruth = structuredClone(c._serverCfg);
+  const baseCall = c.hass.callWS.bind(c.hass);
+  let rejectedCandidate = null;
+  let authoritativeReads = 0;
+  c.hass = { ...c.hass, callWS: async (message) => {
+    if (message.type === 'houseplan/config/set') {
+      rejectedCandidate = structuredClone(message.config);
+      const error = new Error('v8+ space requires wall_segments');
+      error.code = 'invalid_format';
+      throw error;
+    }
+    if (message.type === 'houseplan/config/get') {
+      authoritativeReads++;
+      return { config: structuredClone(serverTruth), rev: c._cfgRev, can_write: true };
+    }
+    return baseCall(message);
+  } };
+  c._openSpaceDialog('create'); await c.updateComplete;
+  await choose('draw');
+  c._spaceDialog = { ...c._spaceDialog, title: 'Rejected ghost' };
+  await c._saveSpaceDialog(); await c.updateComplete;
+  const rejectedSpace = rejectedCandidate?.spaces?.find((s) => s.title === 'Rejected ghost');
+  out.rejectedCandidateHasEmptyWallCatalog = Array.isArray(rejectedSpace?.wall_segments)
+    && rejectedSpace.wall_segments.length === 0;
+  out.rejectedCreateReloadsServerTruth = authoritativeReads === 1
+    && !c._serverCfg.spaces.some((s) => s.title === 'Rejected ghost');
+  out.rejectedCreateKeepsDialogForRetry = c._spaceDialog?.title === 'Rejected ghost'
+    && c._spaceDialog.busy === false;
 
   return out;
 });

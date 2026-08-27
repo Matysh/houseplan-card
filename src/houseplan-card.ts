@@ -93,7 +93,7 @@ import {
 } from './initial-load';
 import { selectActiveSpaceModel, selectSpaceModelById } from './space-model-selection';
 import {
-  initialSpaceDisplayDraft, switchSpacePlanSource, touchSpaceDisplay,
+  createEmptySpaceConfig, initialSpaceDisplayDraft, switchSpacePlanSource, touchSpaceDisplay,
 } from './space-dialog';
 import { mdiHomeCityOutline } from '@mdi/js';
 import {
@@ -14978,14 +14978,7 @@ class HouseplanCard extends LitElement {
       const cfg = this._serverCfg!;
       let sp: any;
       if (d.mode === 'create') {
-        sp = {
-          id: spaceId,
-          title: d.title.trim(),
-          plan_url: null,
-
-          view_box: [0, 0, 1, 1],
-          rooms: [],
-        };
+        sp = createEmptySpaceConfig(spaceId, d.title.trim());
         cfg.spaces.push(sp);
       } else {
         sp = cfg.spaces.find((x: any) => x.id === spaceId);
@@ -15085,6 +15078,14 @@ class HouseplanCard extends LitElement {
         }
       }
     } catch (e: any) {
+      // The dialog edits the reactive config optimistically before config/set.
+      // A rejected create used to leave that unsaved space on screen; the next
+      // delete then flushed the same malformed write and repeated its error.
+      // Re-adopt server truth for every failed space transaction.  Conflict is
+      // already reloaded by _saveConfigNow; do not issue the same read twice.
+      // A lost response is safe too: if the server did commit, config/get
+      // returns it.
+      if (e?.code !== 'conflict') await this._reloadConfigOnly(true);
       // audit L3: the dialog may have been closed (Esc) while the save was
       // in flight — spreading null yields a truthy husk and the renderer
       // then crashes, blanking the whole card. The toast below is the
