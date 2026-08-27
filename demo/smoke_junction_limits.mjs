@@ -183,6 +183,18 @@ const handle = await page.evaluate(() => {
   return { start: map(cx, cy), end: map(cx + (6 / 2) * (1000 / 240), cy) };
 });
 
+// #330 AC4: в одном жесте baseline считается один раз — N move дают N+1
+// вызовов _junctionLimitViolations (кандидаты + один baseline), не 2N.
+await page.evaluate(() => {
+  const card = window.__card;
+  window.__jlCalls = 0;
+  const original = card._junctionLimitViolations.bind(card);
+  card._junctionLimitViolations = (...args) => {
+    window.__jlCalls += 1;
+    return original(...args);
+  };
+});
+
 const resize = { resizeHandleFound: !!handle, resizeGapBefore: await gapCm() };
 if (handle) {
   await page.mouse.move(...handle.start);
@@ -197,6 +209,11 @@ if (handle) {
   resize.resizeStoppedAtLastAllowed = await gapCm();
   resize.resizeRefusalNamesRule = toasts.some((text) => text.includes('5'));
   resize.resizeRefusalOnce = toasts.length;
+  const jlCalls = await page.evaluate(() => window.__jlCalls);
+  // Жест из 10 move: без кэша (#330 §4.4) было бы ~2N вызовов; с кэшем —
+  // N кандидатов + один baseline. Верхняя граница с запасом на дребезг
+  // квантования шагов, но заведомо ниже 2N.
+  resize.resizeBaselineCachedPerGesture = jlCalls > 0 && jlCalls <= 12;
 }
 
 checkAll({ ...out, ...resize }, {

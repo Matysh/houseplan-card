@@ -108,6 +108,18 @@ const collinear = (left: LimitSegment, right: LimitSegment, toleranceDeg = 1): b
   return Math.min(delta, 180 - delta) <= toleranceDeg;
 };
 
+const buildNodeIndex = (segments: readonly LimitSegment[]): Map<string, LimitSegment[]> => {
+  const byNode = new Map<string, LimitSegment[]>();
+  for (const item of segments) {
+    for (const point of [item.a, item.b]) {
+      const list = byNode.get(key(point));
+      if (list) list.push(item);
+      else byNode.set(key(point), [item]);
+    }
+  }
+  return byNode;
+};
+
 /**
  * Length of the whole WALL a segment belongs to, not of the atom.
  *
@@ -120,14 +132,13 @@ const collinear = (left: LimitSegment, right: LimitSegment, toleranceDeg = 1): b
  */
 export function collinearRunLengthUnits(
   segment: LimitSegment, segments: readonly LimitSegment[],
+  byNodeIndex?: Map<string, LimitSegment[]>,
 ): number {
   const usable = usableSegments(segments);
-  const byNode = new Map<string, LimitSegment[]>();
-  for (const item of usable) {
-    for (const point of [item.a, item.b]) {
-      byNode.set(key(point), [...(byNode.get(key(point)) || []), item]);
-    }
-  }
+  // #330 §4.3: building the node index per SEGMENT made П3 quadratic
+  // (289 ms on 576 atoms). The caller that loops over every segment builds
+  // it once and passes it in; a direct call still builds its own.
+  const byNode = byNodeIndex ?? buildNodeIndex(usable);
   const visited = new Set<LimitSegment>([segment]);
   let total = length(segment.a, segment.b);
   const walk = (from: LimitSegment, node: number[]): void => {
@@ -155,8 +166,9 @@ export function checkSegmentLengths(
 ): JunctionLimitViolation[] {
   const violations: JunctionLimitViolation[] = [];
   const usable = usableSegments(segments);
+  const byNode = buildNodeIndex(usable);
   for (const segment of usable) {
-    const units = collinearRunLengthUnits(segment, usable);
+    const units = collinearRunLengthUnits(segment, usable, byNode);
     const cm = (units / gridPitch) * (cellCm || 1);
     const limit = Math.max(minLengthCm, Number(segment.cm) > 0 ? Number(segment.cm) : 0);
     if (cm < limit - 1e-9) {
@@ -176,7 +188,15 @@ const distanceToSegment = (point: number[], a: number[], b: number[]): number =>
   return Math.hypot(point[0] - (a[0] + dx * t), point[1] - (a[1] + dy * t));
 };
 
-/** П4: non-incident nodes and node-to-foreign-wall clearance (absolute cm). */
+/**
+ * П4: non-incident nodes and node-to-foreign-wall clearance (absolute cm).
+ *
+ * #330 §4.5: the all-pairs form cost 104 ms on 576 atoms and grew
+ * quadratically. Nodes and segment bounding boxes (padded by the threshold)
+ * are hashed into a grid with the threshold as cell size, so each node is
+ * compared only against its 9-cell neighbourhood — verdicts are identical
+ * (equivalence pinned by unit tests and the TS↔Python parity suite).
+ */
 export function checkNodeDistances(
   segments: readonly LimitSegment[],
   cellCm: number,
@@ -190,25 +210,58 @@ export function checkNodeDistances(
     nodes.set(key(segment.b), segment.b);
   }
   const minUnits = cmToUnits(minDistanceCm, cellCm, gridPitch);
-  const violations: JunctionLimitViolation[] = [];
-  const entries = [...nodes.entries()];
-  for (let i = 0; i < entries.length; i++) {
-    for (let j = i + 1; j < entries.length; j++) {
-      const distance = length(entries[i][1], entries[j][1]);
-      if (distance < minUnits - 1e-9) {
-        violations.push({
-          rule: 'distance', subject: `${entries[i][0]} ↔ ${entries[j][0]}`,
-          actual: (distance / gridPitch) * (cellCm || 1), limit: minDistanceCm,
-        });
+  const size = minUnits > EPS ? minUnits : 1;
+  const cellOf = (x: number, y: number): string =>
+    `${Math.floor(x / size)},${Math.floor(y / size)}`;
+
+  const nodeGrid = new Map<string, [string, number[]][]>();
+  for (const [nodeKey, point] of nodes) {
+    const cell = cellOf(point[0], point[1]);
+    const list = nodeGrid.get(cell);
+    if (list) list.push([nodeKey, point]);
+    else nodeGrid.set(cell, [[nodeKey, point]]);
+  }
+  const segmentGrid = new Map<string, LimitSegment[]>();
+  for (const segment of usable) {
+    const x0 = Math.min(segment.a[0], segment.b[0]) - minUnits;
+    const x1 = Math.max(segment.a[0], segment.b[0]) + minUnits;
+    const y0 = Math.min(segment.a[1], segment.b[1]) - minUnits;
+    const y1 = Math.max(segment.a[1], segment.b[1]) + minUnits;
+    for (let cx = Math.floor(x0 / size); cx <= Math.floor(x1 / size); cx++) {
+      for (let cy = Math.floor(y0 / size); cy <= Math.floor(y1 / size); cy++) {
+        const cell = `${cx},${cy}`;
+        const list = segmentGrid.get(cell);
+        if (list) list.push(segment);
+        else segmentGrid.set(cell, [segment]);
       }
     }
   }
-  for (const [nodeKey, node] of nodes) {
-    for (const segment of usable) {
+
+  const violations: JunctionLimitViolation[] = [];
+  for (const [nodeKey, point] of nodes) {
+    const cx = Math.floor(point[0] / size);
+    const cy = Math.floor(point[1] / size);
+    for (let dx = -1; dx <= 1; dx++) {
+      for (let dy = -1; dy <= 1; dy++) {
+        for (const [otherKey, other] of nodeGrid.get(`${cx + dx},${cy + dy}`) || []) {
+          // Each unordered pair once: the lexicographic order replaces the
+          // i<j of the all-pairs loop, so the verdict set is identical.
+          if (nodeKey >= otherKey) continue;
+          const distance = length(point, other);
+          if (distance < minUnits - 1e-9) {
+            violations.push({
+              rule: 'distance', subject: `${nodeKey} ↔ ${otherKey}`,
+              actual: (distance / gridPitch) * (cellCm || 1), limit: minDistanceCm,
+            });
+          }
+        }
+      }
+    }
+    for (const segment of segmentGrid.get(`${cx},${cy}`) || []) {
       // A node that belongs to the wall (either end) is a legal T-joint or
       // corner — the rule is about NEAR misses, not incidence.
       if (key(segment.a) === nodeKey || key(segment.b) === nodeKey) continue;
-      const distance = distanceToSegment(node, segment.a, segment.b);
+      const distance = distanceToSegment(point, segment.a, segment.b);
       // Sitting exactly ON the wall is the other legal incidence: a T-joint
       // into the middle of a foreign wall (spec П4). Only a real gap counts.
       if (distance <= INCIDENT_EPS) continue;

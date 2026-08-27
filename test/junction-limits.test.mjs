@@ -310,3 +310,102 @@ test('AC10: привязка к решётке не утаскивает узе�
   assert.equal(after.distance || 0, 0,
     'после Оптимизации узлы не сблизились под 5 см');
 });
+
+// --- #330: производительность без смены вердиктов ---
+
+test('#330 AC2: П4 через bucket эквивалентен перебору на границах', async () => {
+  const { checkNodeDistances } = await import('../test-build/junction-limits.js');
+  // Простейший перебор — эталон, с которым обязана совпасть решётка.
+  const brute = (segments, cellCm) => {
+    const key = (p) => `${p[0].toFixed(6)},${p[1].toFixed(6)}`;
+    const nodes = new Map();
+    for (const s of segments) { nodes.set(key(s.a), s.a); nodes.set(key(s.b), s.b); }
+    const mu = cmToUnits(MIN_NODE_DISTANCE_CM, cellCm, PITCH);
+    const out = [];
+    const es = [...nodes.entries()];
+    for (let i = 0; i < es.length; i++) for (let j = i + 1; j < es.length; j++) {
+      const d = Math.hypot(es[i][1][0] - es[j][1][0], es[i][1][1] - es[j][1][1]);
+      if (d < mu - 1e-9) out.push('nn');
+    }
+    for (const [k, p] of nodes) for (const s of segments) {
+      if (key(s.a) === k || key(s.b) === k) continue;
+      const dx = s.b[0] - s.a[0], dy = s.b[1] - s.a[1];
+      const l2 = dx * dx + dy * dy;
+      const t = l2 <= 1e-18 ? 0 : Math.max(0, Math.min(1, ((p[0] - s.a[0]) * dx + (p[1] - s.a[1]) * dy) / l2));
+      const d = Math.hypot(p[0] - (s.a[0] + dx * t), p[1] - (s.a[1] + dy * t));
+      if (d > 1e-9 && d < mu - 1e-9) out.push('ns');
+    }
+    return out.length;
+  };
+  const cases = [
+    // ровно 5 см между узлами — проходит; 4 см — нет; T-стык; почти-касание
+    [{ id: 'a', a: [0, 0], b: [cm(300), 0], cm: 15 },
+     { id: 'b', a: [0, cm(5)], b: [cm(300), cm(5)], cm: 15 }],
+    [{ id: 'a', a: [0, 0], b: [cm(300), 0], cm: 15 },
+     { id: 'b', a: [0, cm(4)], b: [cm(300), cm(4)], cm: 15 }],
+    [{ id: 'a', a: [0, 0], b: [cm(300), 0], cm: 15 },
+     { id: 'b', a: [cm(150), 0], b: [cm(150), cm(300)], cm: 15 }],
+    [{ id: 'a', a: [0, 0], b: [cm(300), 0], cm: 15 },
+     { id: 'b', a: [cm(150), cm(4)], b: [cm(450), cm(4)], cm: 15 }],
+    // узлы в разных ячейках решётки, но ближе порога через границу ячейки
+    [{ id: 'a', a: [cm(4.9), 0], b: [cm(304.9), 0], cm: 15 },
+     { id: 'b', a: [cm(9.7), cm(0.5)], b: [cm(309.7), cm(0.5)], cm: 15 }],
+  ];
+  for (const [index, segments] of cases.entries()) {
+    const grid = checkNodeDistances(segments, CELL, PITCH).length;
+    assert.equal(grid, brute(segments, CELL),
+      `кейс ${index}: решётка и перебор разошлись`);
+  }
+});
+
+test('#330 AC2: индекс byNode не меняет вердикт П3', async () => {
+  const { checkSegmentLengths, collinearRunLengthUnits } =
+    await import('../test-build/junction-limits.js');
+  // Доборный атом 5 см при перепаде толщин остаётся законным (АС3b #329),
+  // одиночные 19 см — нарушением; прямой вызов без индекса согласован.
+  const run = [
+    { id: 'long', a: [0, 0], b: [cm(349), 0], cm: 30 },
+    { id: 'filler', a: [cm(349), 0], b: [cm(354), 0], cm: 30 },
+    { id: 'thin', a: [cm(354), 0], b: [cm(554), 0], cm: 20 },
+  ];
+  assert.equal(checkSegmentLengths(run, CELL, PITCH).length, 0);
+  const short = [{ id: 's', a: [0, 0], b: [cm(19), 0], cm: 15 }];
+  assert.equal(checkSegmentLengths(short, CELL, PITCH).length, 1);
+  const direct = collinearRunLengthUnits(run[1], run);
+  assert.ok(Math.abs(direct - cmToUnits(354, CELL, PITCH)) < 1e-9,
+    'прямой вызов без индекса меряет тот же прогон');
+});
+
+test('#330 AC4: baseline считается один раз для одного документа и эпохи', async () => {
+  // Юнит на чистую механику кэша: WeakMap по идентичности документа + эпоха.
+  // Полный класс карточки здесь не поднять — механика воспроизводится тем же
+  // алгоритмом, каким её исполняет _junctionLimitsIntroduced.
+  const { commitWallSegmentModel } = await import('../test-build/wall-segment-model.js');
+  const cache = new WeakMap();
+  let migrations = 0;
+  const introduced = (candidate, previousConfig, spaceId, epoch) => {
+    const cached = cache.get(previousConfig);
+    let inherited = cached && cached.epoch === epoch && cached.spaceId === spaceId
+      ? cached.violations : undefined;
+    if (!inherited) {
+      const baseline = Number(previousConfig?.model_version || 0) >= 9
+        ? previousConfig
+        : (migrations++, commitWallSegmentModel(previousConfig).config);
+      inherited = [];
+      void baseline;
+      cache.set(previousConfig, { epoch, spaceId, violations: inherited });
+    }
+    return inherited;
+  };
+  const legacyDoc = { model_version: 0, spaces: [{ id: 's', cell_cm: 5, view_box: [0, 0, 1, 1], rooms: [], walls: [], openings: [], room_drafts: [], partitions: [], wall_columns: [] }], markers: [], settings: {} };
+  // Жест: десять move с одним и тем же документом и эпохой — одна миграция.
+  for (let move = 0; move < 10; move++) introduced({}, legacyDoc, 's', 1);
+  assert.equal(migrations, 1, 'десять move — одна миграция baseline');
+  // Реальный write меняет эпоху — кэш инвалидируется.
+  introduced({}, legacyDoc, 's', 2);
+  assert.equal(migrations, 2, 'новая эпоха пересчитывает baseline');
+  // Документ текущей версии не мигрируется вовсе (#330 §4.6).
+  const v9doc = { ...legacyDoc, model_version: 9 };
+  introduced({}, v9doc, 's', 3);
+  assert.equal(migrations, 2, 'v9-документ не мигрируется');
+});

@@ -33,7 +33,8 @@
     "release:check": "node scripts/release-prerelease.mjs --check",
     "release:prerelease": "node scripts/release-prerelease.mjs",
     "release:notes": "node scripts/release-notes.mjs",
-    "prepare": "node scripts/install-hooks.mjs"
+    "prepare": "node scripts/install-hooks.mjs",
+    "benchmark:junction-limits": "tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node demo/benchmark_junction_limits.mjs"
   },
   "devDependencies": {
     "@mdi/js": "^7.4.47",

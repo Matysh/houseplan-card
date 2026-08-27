@@ -261,3 +261,151 @@ process.stdin.on('end', () => {
     )
     assert result.returncode == 0, result.stderr
     assert json.loads(result.stdout) == mine
+
+
+# --- #330: производительность без смены вердиктов ---
+
+def test_330_current_version_document_is_judged_as_is():
+    """AC5: v9-документ «как есть» и «через миграцию» дают один вердикт."""
+    spike = triangle()
+    legacy = {"spaces": [room_space(
+        [{"id": "r1", "name": "a", "area": None, "poly": spike}],
+        walls_of(spike, "w"),
+    )]}
+    migrated, _ = jl.commit_wall_segment_model(json.loads(json.dumps(legacy)))
+    as_is = jl.space_violation_counts(jl._migrated_spaces(migrated))
+    forced, _ = jl.commit_wall_segment_model(json.loads(json.dumps(migrated)))
+    through = jl.space_violation_counts(jl._migrated_spaces(forced))
+    assert as_is == through
+    # Как есть — значит БЕЗ вызова миграции: подмена должна не выполниться.
+    calls = []
+    original = jl.commit_wall_segment_model
+    jl.commit_wall_segment_model = lambda cfg: calls.append(1) or original(cfg)
+    try:
+        jl._migrated_spaces(migrated)
+    finally:
+        jl.commit_wall_segment_model = original
+    assert calls == [], "v9-документ не должен мигрироваться повторно"
+
+
+def test_330_baseline_counts_replace_the_previous_document():
+    """AC3: с baseline_counts вердикт идентичен пути с previous, а сам
+    previous не читается вовсе."""
+    spike = triangle()
+    previous = {"spaces": [room_space(
+        [{"id": "r1", "name": "a", "area": None, "poly": spike}],
+        walls_of(spike, "w"),
+    )]}
+    candidate = json.loads(json.dumps(previous))
+    candidate["spaces"][0]["rooms"][0]["name"] = "b"
+    counts = jl.validate_junction_limits(
+        json.loads(json.dumps(previous)), json.loads(json.dumps(previous)),
+    )
+    # Эквивалентность: унаследованное нарушение проходит обоими путями.
+    jl.validate_junction_limits(candidate, json.loads(json.dumps(previous)))
+    jl.validate_junction_limits(candidate, None, baseline_counts=counts)
+    # Новое нарушение отклоняется обоими путями.
+    box = square()
+    clean = {"spaces": [room_space(
+        [{"id": "r1", "name": "box", "area": None, "poly": box}],
+        walls_of(box, "b"),
+    )]}
+    clean_counts = jl.validate_junction_limits(
+        json.loads(json.dumps(clean)), json.loads(json.dumps(clean)),
+    )
+    broken = json.loads(json.dumps(clean))
+    broken["spaces"][0]["rooms"].append(
+        {"id": "r2", "name": "spike", "area": None, "poly": spike}
+    )
+    broken["spaces"][0]["walls"].extend(walls_of(spike, "w"))
+    for kwargs in ({"previous": json.loads(json.dumps(clean))},
+                   {"baseline_counts": clean_counts}):
+        with pytest.raises(jl.JunctionLimitError):
+            jl.validate_junction_limits(json.loads(json.dumps(broken)), **kwargs)
+    # baseline_counts действительно замещает previous: считаем обращения.
+    calls = []
+    original = jl._migrated_spaces
+    def spy(config):
+        calls.append(config)
+        return original(config)
+    jl._migrated_spaces = spy
+    try:
+        jl.validate_junction_limits(
+            json.loads(json.dumps(candidate)), None, baseline_counts=counts,
+        )
+    finally:
+        jl._migrated_spaces = original
+    assert len(calls) == 1, "мигрируется только кандидат"
+
+
+def test_330_p4_bucket_matches_bruteforce_on_cell_borders():
+    """П4-решётка обязана совпасть с перебором и через границы ячеек."""
+    def brute_count(space):
+        segs = jl.limit_segments(space)
+        nodes = {}
+        for seg in segs:
+            nodes[jl._key(seg["a"])] = seg["a"]
+            nodes[jl._key(seg["b"])] = seg["b"]
+        mu = jl.cm_to_units(jl.MIN_NODE_DISTANCE_CM, space["cell_cm"])
+        count = 0
+        entries = list(nodes.items())
+        for i in range(len(entries)):
+            for j in range(i + 1, len(entries)):
+                if jl._length(entries[i][1], entries[j][1]) < mu - 1e-9:
+                    count += 1
+        for node_key, point in nodes.items():
+            for seg in segs:
+                if jl._key(seg["a"]) == node_key or jl._key(seg["b"]) == node_key:
+                    continue
+                d = jl._distance_to_segment(point, seg["a"], seg["b"])
+                if d > 1e-9 and d < mu - 1e-9:
+                    count += 1
+        return count
+
+    def sp(pairs):
+        return room_space([], [
+            {"key": f"w{i}", "a": a, "b": b, "cm": 15}
+            for i, (a, b) in enumerate(pairs)
+        ], legacy=False)
+
+    cases = [
+        sp([(( 0.0, 0.0), (cm(300), 0.0)), ((0.0, cm(5)), (cm(300), cm(5)))]),
+        sp([(( 0.0, 0.0), (cm(300), 0.0)), ((0.0, cm(4)), (cm(300), cm(4)))]),
+        sp([(( 0.0, 0.0), (cm(300), 0.0)), ((cm(150), 0.0), (cm(150), cm(300)))]),
+        sp([((cm(4.9), 0.0), (cm(304.9), 0.0)),
+            ((cm(9.7), cm(0.5)), (cm(309.7), cm(0.5)))]),
+    ]
+    for index, space in enumerate(cases):
+        segs = jl.limit_segments(space)
+        grid = len(jl.check_node_distances(segs, CELL))
+        assert grid == brute_count(space), f"кейс {index}: решётка != перебор"
+
+
+def test_330_ac1_validator_chain_is_cheap_without_documents():
+    """AC1 (модульная половина): с baseline_counts и v9-кандидатом validate
+    не выполняет ни одной миграции — время линейно от проверок, не от
+    _atomize. Полный loop-замер живёт в ws_config_set (executor), где HA
+    недоступен этому набору; здесь пинится сама причина дороговизны."""
+    import time as _time
+    box = square()
+    doc = {"spaces": [room_space(
+        [{"id": "r1", "name": "box", "area": None, "poly": box}],
+        walls_of(box, "b"),
+    )]}
+    migrated, _ = jl.commit_wall_segment_model(json.loads(json.dumps(doc)))
+    counts = jl.validate_junction_limits(
+        json.loads(json.dumps(migrated)), json.loads(json.dumps(migrated)),
+    )
+    calls = []
+    original = jl.commit_wall_segment_model
+    jl.commit_wall_segment_model = lambda cfg: calls.append(1) or original(cfg)
+    try:
+        start = _time.perf_counter()
+        jl.validate_junction_limits(
+            json.loads(json.dumps(migrated)), None, baseline_counts=counts,
+        )
+        elapsed = _time.perf_counter() - start
+    finally:
+        jl.commit_wall_segment_model = original
+    assert calls == [], "тёплый путь не мигрирует ни один документ"
+    assert elapsed < 0.5, f"тёплый validate неожиданно дорог: {elapsed:.3f}s"

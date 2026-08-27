@@ -70,6 +70,7 @@ import {
 import {
   degradeWalls, rekeyWallsAfterMoveChecked, wallRecordCarrierViolations,
   setWallThickness, setWallThicknessForRoom, cmToField, wallCmToUnits,
+  multiWallNodesForGeometry,
   wallEdgeBodies, wallBodiesGeometry, wallBodiesGeometryPath, wallBodiesUnionPath,
   recutWallBodiesGeometry,
   floorFootprintGeometry,
@@ -206,6 +207,7 @@ import {
 } from './space-geometry';
 import { optimizePlans, type OptimizeReport } from './plan-optimizer';
 import {
+  WALL_SEGMENT_MODEL_VERSION,
   adoptWallSegmentModelCandidateInPlace, commitWallSegmentModel,
   fixedTopologyWallLineageHints, sanitizeRoomDraftPath,
   resolveRoomOpeningHost, wallModelOffGridValueCount, WallSegmentModelError,
@@ -7430,7 +7432,12 @@ class HouseplanCard extends LitElement {
   }
 
   /** #329 П1-П5 over one space. Pure input, no side effects. */
-  private _junctionLimitViolations(config: any, spaceId: string): JunctionLimitViolation[] {
+  private _junctionLimitViolations(
+    config: any, spaceId: string,
+    /** #330 §4.7: an already computed masonry pass of THIS config (e.g. the
+     * resize preflight's artifact) — the union is never paid twice. */
+    sharedGeometry?: any,
+  ): JunctionLimitViolation[] {
     const space = (config?.spaces || []).find((item: any) => item?.id === spaceId);
     if (!space) return [];
     const cellCm = Number(space.cell_cm) > 0 ? Number(space.cell_cm) : 5;
@@ -7440,6 +7447,33 @@ class HouseplanCard extends LitElement {
       ...checkSegmentLengths(segments, cellCm, GRID_STEP_N),
       ...checkNodeDistances(segments, cellCm, GRID_STEP_N),
     ];
+    // #330 §4.7: without the shared passes every room recomputed the FULL
+    // junction topology and masonry union for itself — 144 rooms × a whole-
+    // plan polyclip pass cost 4.2 s per candidate. innerContourForRoom
+    // already accepts both caches (the render path uses them); compute each
+    // once per check and hand them to every room.
+    let sharedNodes: ReturnType<typeof multiWallNodesForGeometry> | null = null;
+    try {
+      sharedNodes = multiWallNodesForGeometry(
+        space.rooms || [], space.walls || [], [], GRID_STEP_N, cellCm, GRID_STEP_N, 1,
+      );
+    } catch { sharedNodes = null; }
+    let sharedRoomGeometry: any = sharedGeometry?.status === 'ok'
+      || sharedGeometry?.status === 'degraded-extra'
+      ? sharedGeometry.roomGeom : null;
+    // The masonry union is the expensive pass (seconds on a large plan), and
+    // innerContourForRoom only reaches for it when the junction topology is
+    // non-trivial — with no multi-wall nodes it returns the room's own inset
+    // early. Pay for the union once, and only when someone will read it.
+    if (!sharedRoomGeometry && sharedNodes && sharedNodes.nodes.length) {
+      try {
+        const geometry = wallBodiesGeometry(
+          space.rooms || [], space.walls || [], [], [], GRID_STEP_N, cellCm, GRID_STEP_N, 1,
+        );
+        sharedRoomGeometry = geometry?.status === 'ok' || geometry?.status === 'degraded-extra'
+          ? geometry.roomGeom : null;
+      } catch { sharedRoomGeometry = null; }
+    }
     for (const room of (space.rooms || [])) {
       const roomId = String(room?.id || '');
       if (!roomId) continue;
@@ -7448,6 +7482,7 @@ class HouseplanCard extends LitElement {
         inner = innerContourForRoom(
           space.rooms || [], roomId, space.walls || [], [],
           GRID_STEP_N, cellCm, GRID_STEP_N, 1,
+          sharedRoomGeometry ?? undefined, sharedNodes,
         );
       } catch { inner = null; }
       violations.push(...checkRoomClearance(roomId, inner, cellCm, GRID_STEP_N));
@@ -7463,26 +7498,52 @@ class HouseplanCard extends LitElement {
     });
   }
 
+  /** #330 §4.4: baseline violations per (document identity, epoch, space). */
+  private _junctionBaselineCache = new WeakMap<object, {
+    epoch: number; spaceId: string; violations: JunctionLimitViolation[];
+  }>();
+
   /** #329: violations this write would ADD; inherited ones stay untouched. */
   private _junctionLimitsIntroduced(
     candidate: any, previousConfig: any, spaceId: string,
+    candidateGeometry?: any,
   ): JunctionLimitViolation[] {
     // The baseline must be the previous document AS THE CANDIDATE SEES IT: a
     // legacy space carries no wall catalogue at all, so comparing it raw with
     // a migrated candidate reported every inherited short segment as new and
-    // refused legitimate resizes of real plans. Both sides therefore cross
-    // the same identity barrier first.
-    let inherited: JunctionLimitViolation[] = [];
-    try {
-      const migrated = commitWallSegmentModel(previousConfig).config;
-      inherited = this._junctionLimitViolations(migrated, spaceId);
-    } catch {
-      // An unmigratable baseline proves nothing about inheritance; never
-      // refuse the write on that basis.
-      return [];
+    // refused legitimate resizes of real plans. A LEGACY document therefore
+    // crosses the identity barrier first; a current-version document already
+    // carries the catalogue and is judged as-is (#330 §4.6) — a no-op
+    // re-migration cost 69 ms per pointermove on a 576-atom plan.
+    let inherited: JunctionLimitViolation[] | undefined;
+    // #330 §4.4: a resize gesture judges the SAME previous document on every
+    // pointermove. Object identity plus the config epoch make the cache both
+    // exact and self-invalidating — any real write bumps the epoch, and a
+    // freshly built baseline object simply never hits.
+    const cached = previousConfig && typeof previousConfig === 'object'
+      ? this._junctionBaselineCache.get(previousConfig) : undefined;
+    if (cached && cached.epoch === this._cfgEpoch && cached.spaceId === spaceId) {
+      inherited = cached.violations;
+    }
+    if (!inherited) {
+      try {
+        const baseline = Number(previousConfig?.model_version || 0) >= WALL_SEGMENT_MODEL_VERSION
+          ? previousConfig
+          : commitWallSegmentModel(previousConfig).config;
+        inherited = this._junctionLimitViolations(baseline, spaceId);
+      } catch {
+        // An unmigratable baseline proves nothing about inheritance; never
+        // refuse the write on that basis.
+        return [];
+      }
+      if (previousConfig && typeof previousConfig === 'object') {
+        this._junctionBaselineCache.set(previousConfig, {
+          epoch: this._cfgEpoch, spaceId, violations: inherited,
+        });
+      }
     }
     let next: JunctionLimitViolation[] = [];
-    try { next = this._junctionLimitViolations(candidate, spaceId); }
+    try { next = this._junctionLimitViolations(candidate, spaceId, candidateGeometry); }
     catch { return []; }
     return increasedViolations(next, inherited);
   }
@@ -9053,8 +9114,10 @@ class HouseplanCard extends LitElement {
         (space: any) => (space?.id === this._space ? sp : space),
       ),
     };
+    // #330 §4.7: the preflight just built the candidate's masonry — hand it
+    // to П5 so the pointermove never pays the union twice.
     const limited = this._junctionLimitsIntroduced(
-      limitCandidate, this._serverCfg, this._space,
+      limitCandidate, this._serverCfg, this._space, preflight.wallGeometry,
     );
     if (limited.length) {
       this._rszLimitViolation = limited[0];

@@ -536,6 +536,44 @@ export const MUTANTS = [
     }],
   },
   {
+    id: 'junction-limit-p3-quadratic-again',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node demo/benchmark_junction_limits.mjs',
+    because: 'П3 rebuilding its node index per segment is the exact O(n²) #330 removed '
+      + '(289 ms per call on 576 atoms, twice per pointermove) — the benchmark budget '
+      + 'must turn red the day it returns',
+    patches: [{
+      file: 'src/junction-limits.ts',
+      find: '    const units = collinearRunLengthUnits(segment, usable, byNode);',
+      replace: '    const units = collinearRunLengthUnits(segment, usable);',
+    }],
+  },
+  {
+    id: 'junction-limit-p4-bruteforce-again',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node demo/benchmark_junction_limits.mjs',
+    because: 'П4 is architecturally quadratic without the bucket grid (#330 §4.5); feeding '
+      + 'every node the whole segment list instead of its cell brings the 104-372 ms cost '
+      + 'back and the benchmark must catch it',
+    patches: [{
+      file: 'src/junction-limits.ts',
+      find: '    for (const segment of segmentGrid.get(`${cx},${cy}`) || []) {',
+      replace: '    for (const segment of usable) {',
+    }],
+  },
+  {
+    id: 'junction-limit-baseline-cache-stale',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#330 AC4" test/junction-limits.test.mjs',
+    because: 'a baseline cache that survives a config epoch change serves verdicts of a '
+      + 'plan that no longer exists — the epoch check IS the invalidation contract (#330 §4.4)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: "    if (cached && cached.epoch === this._cfgEpoch && cached.spaceId === spaceId) {",
+      replace: '    if (cached && cached.spaceId === spaceId) {',
+    }],
+  },
+  {
     id: 'junction-limit-backend-raw-baseline',
     guard: 'node scripts/backend-test-guard.mjs '
       + 'test_legacy_baseline_is_judged_after_the_same_migration '

@@ -101,6 +101,11 @@ class HouseplanData:
     # Parsed import candidates are short-lived, user-bound and memory-only.
     # dict keeps insertion order, which lets the preview service evict oldest.
     import_previews: dict[str, dict[str, Any]] = field(default_factory=dict)
+    # #330 §4.2: junction-limit violation counts of the STORED document,
+    # keyed by its rev — (rev, {space_id: {rule: count}}). One slot,
+    # memory-only, invalidated by a rev mismatch; the previous document is
+    # not re-judged on every write. Counts only — documents are never held.
+    junction_baseline: tuple[int, dict[str, dict[str, int]]] | None = None
 
 
 HouseplanConfigEntry = ConfigEntry[HouseplanData]

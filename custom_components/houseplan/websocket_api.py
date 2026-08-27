@@ -1321,17 +1321,31 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
         # Marker-to-marker light links are a semantic graph layered on top of
         # the lossless controls array. Validate only edges introduced by this
         # write so an unrelated edit can still round-trip a legacy broken ref.
-        try:
+        # #330 §4.1/§4.2: the CPU part of validation runs in the executor —
+        # schema + semantic validators cost seconds on a large plan and the
+        # event loop must not carry that (HA guideline: >50 ms). write_lock
+        # is still held across the await: writes stay serialised, only the
+        # loop is freed. The junction baseline of the STORED document is
+        # cached by rev, so a repeated write does not re-judge `previous`.
+        baseline = rt.junction_baseline
+        baseline_counts = baseline[1] if baseline and baseline[0] == current_rev else None
+
+        def _validate_config_cpu():
             validate_wall_model_transition(msg["config"], data.get("config"))
-            validated_config = CONFIG_SCHEMA(msg["config"])
+            checked = CONFIG_SCHEMA(msg["config"])
             msg["config"].clear()
-            msg["config"].update(validated_config)
+            msg["config"].update(checked)
             validate_marker_controls(msg["config"], data.get("config"))
             validate_marker_light_entities(msg["config"], data.get("config"))
             validate_marker_value_badges(msg["config"], data.get("config"))
             validate_opening_passages(msg["config"], data.get("config"))
             validate_partition_opening_hosts(msg["config"], data.get("config"))
-            validate_junction_limits(msg["config"], data.get("config"))
+            return validate_junction_limits(
+                msg["config"], data.get("config"),
+                baseline_counts=baseline_counts,
+            )
+        try:
+            candidate_counts = await hass.async_add_executor_job(_validate_config_cpu)
         except (
             JunctionLimitError, MarkerControlError, OpeningPassageError,
             PartitionOpeningHostError, PartitionOpeningJambMarginError,
@@ -1377,6 +1391,9 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             new_rev,
             previous_rev=int(current_rev),
         )
+        # The candidate just became the stored document: its counts are the
+        # next write's baseline (#330 §4.2).
+        rt.junction_baseline = (int(new_rev), candidate_counts)
         try:
             await _discard_optimizer_snapshot(rt)
         except Exception:  # noqa: BLE001 — stale backup cleanup is best-effort
@@ -1643,7 +1660,10 @@ async def ws_plan_optimize(hass: HomeAssistant, connection, msg: dict[str, Any])
         # Optimization is a normal configuration write with an additional
         # layout transaction. It must enforce the same marker-link semantics
         # as config/set; otherwise a crafted client can persist a new cycle.
-        try:
+        # #330 §4.1: the same executor treatment as config/set — Optimize
+        # carries schema + a possible full migration, the costliest CPU path
+        # of all writers, and it used to run on the event loop.
+        def _validate_optimize_cpu():
             validate_wall_model_transition(msg["config"], config_data.get("config"))
             try:
                 submitted_model = int(msg["config"].get("model_version", 0) or 0)
@@ -1662,17 +1682,12 @@ async def ws_plan_optimize(hass: HomeAssistant, connection, msg: dict[str, Any])
             validate_opening_passages(candidate_config, config_data.get("config"))
             if submitted_model < WALL_SEGMENT_MODEL_VERSION:
                 candidate_config, _ = commit_wall_segment_model(candidate_config)
-            validated_config = CONFIG_SCHEMA(candidate_config)
-            migrated_size = len(json.dumps(validated_config, separators=(",", ":")))
+            checked = CONFIG_SCHEMA(candidate_config)
+            migrated_size = len(json.dumps(checked, separators=(",", ":")))
             if migrated_size > MAX_CONFIG_BYTES:
-                connection.send_error(
-                    msg["id"], "too_large",
-                    f"Configuration is {migrated_size // 1024} KB, "
-                    f"the limit is {MAX_CONFIG_BYTES // 1024} KB",
-                )
-                return
+                return migrated_size
             msg["config"].clear()
-            msg["config"].update(validated_config)
+            msg["config"].update(checked)
             validate_marker_controls(msg["config"], config_data.get("config"))
             validate_marker_light_entities(msg["config"], config_data.get("config"))
             validate_marker_value_badges(msg["config"], config_data.get("config"))
@@ -1681,6 +1696,16 @@ async def ws_plan_optimize(hass: HomeAssistant, connection, msg: dict[str, Any])
                 msg["config"], config_data.get("config"),
                 allow_optimize_rehost=True,
             )
+            return None
+        try:
+            oversize = await hass.async_add_executor_job(_validate_optimize_cpu)
+            if oversize is not None:
+                connection.send_error(
+                    msg["id"], "too_large",
+                    f"Configuration is {oversize // 1024} KB, "
+                    f"the limit is {MAX_CONFIG_BYTES // 1024} KB",
+                )
+                return
         except (
             JunctionLimitError, MarkerControlError, OpeningPassageError,
             PartitionOpeningHostError, PartitionOpeningJambMarginError,

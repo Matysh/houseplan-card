@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Saving and resizing large plans no longer freezes Home Assistant: the
+  junction-limit checks (#329) are orders of magnitude faster — the heavy
+  part left the server's main loop, repeated work is cached
+  ([#330](https://github.com/Matysh/houseplan-card/issues/330)).
+
 - Sharp room corners are honest again: a very acute apex used to break into a
   «trident» of pikes and notches, and drawing now refuses the shapes that
   cause it — walls closer than 15°, more than six walls in one node, segments
