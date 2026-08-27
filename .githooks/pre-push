@@ -31,6 +31,16 @@ fi
 
 status=0
 
+# Локальный набор гейтов (#343). Выключен по умолчанию намеренно: 20-45 секунд на
+# каждый пуш, включая пуши одной строки документации, — цена, которую стоит
+# платить осознанно. Документация: docs/TESTING.md.
+if [ "${HP_PREPUSH_GATE:-}" = "1" ] && [ -f "$repo_root/scripts/pre-push-gate.mjs" ]; then
+  echo "pre-push-gate: HP_PREPUSH_GATE=1, прогоняю локальный набор" >&2
+  if ! node "$repo_root/scripts/pre-push-gate.mjs" >&2; then
+    status=1
+  fi
+fi
+
 while read -r local_ref local_sha remote_ref remote_sha; do
   # Deleting a remote branch pushes nothing to examine.
   if [ "$local_sha" = "$zero" ]; then
