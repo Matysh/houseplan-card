@@ -6,6 +6,9 @@ import {
   goldenRunFailed,
   goldenScenarioSetsMatch,
 } from '../demo/golden/policy.mjs';
+import {
+  goldenAcceptanceRefusal, goldenSilentDeclarations,
+} from '../scripts/golden-acceptance.mjs';
 
 test('golden metadata cannot be mistaken for a Home Assistant integration manifest', () => {
   assert.equal(GOLDEN_BASELINE_MANIFEST, 'baselines-index.json');
@@ -35,4 +38,53 @@ test('golden baseline inventory rejects orphan hashes and PNGs', () => {
   assert.equal(goldenScenarioSetsMatch(['a'], ['a', 'orphan'], ['a']), false);
   assert.equal(goldenScenarioSetsMatch(['a'], ['a'], ['a', 'orphan']), false);
   assert.equal(goldenScenarioSetsMatch(['a', 'b'], ['a'], ['a', 'b']), false);
+});
+
+// #334. Локальная съёмка допустима не по доверию, а по доказательству: среда
+// равна раннеру, если всё, что менять не собирались, совпало с эталонами.
+const results = (entries) => entries.map(([id, status]) => ({ id, status }));
+
+test('приёмка отвергает расхождение в сцене, которую менять не собирались (#334)', () => {
+  const refusal = goldenAcceptanceRefusal(
+    results([['a', 'different'], ['b', 'different'], ['c', 'passed']]), ['a'],
+  );
+  assert.match(refusal, /^съёмка разошлась/);
+  assert.match(refusal, / b\./);
+  // Объявленная сцена в перечислении не появляется — иначе сообщение
+  // указывало бы на автора вместо среды.
+  assert.equal(/ a[,.]/.test(refusal), false);
+});
+
+test('приёмка проходит, когда разошлись ровно объявленные сцены (#334)', () => {
+  assert.equal(goldenAcceptanceRefusal(
+    results([['a', 'different'], ['b', 'passed'], ['c', 'missing-baseline']]), ['a'],
+  ), null);
+});
+
+test('новая сцена объявления не требует: эталона, которому противоречить, нет (#334)', () => {
+  assert.equal(goldenAcceptanceRefusal(results([['new', 'missing-baseline']]), []), null);
+});
+
+test('приёмка без объявлений запрещает «принять всё, чтобы CI позеленел» (#334)', () => {
+  // Ровно то, чем эталон перестаёт быть эталоном: одна команда, три подмены,
+  // ни одного названного намерения.
+  const refusal = goldenAcceptanceRefusal(
+    results([['a', 'different'], ['b', 'different'], ['c', 'different']]), [],
+  );
+  assert.match(refusal, /a, b, c/);
+});
+
+test('приёмка отвергает объявление сцены, которой нет в отчёте (#334)', () => {
+  const refusal = goldenAcceptanceRefusal(results([['a', 'passed']]), ['a', 'опечатка']);
+  assert.match(refusal, /которых нет в отчёте: опечатка/);
+});
+
+test('приёмка отвергает отчёт без результатов сцен (#334)', () => {
+  assert.match(goldenAcceptanceRefusal(null, []), /не содержит результатов/);
+});
+
+test('объявленная, но совпавшая сцена называется, а не проглатывается (#334)', () => {
+  const list = results([['a', 'passed'], ['b', 'different']]);
+  assert.deepEqual(goldenSilentDeclarations(list, ['a', 'b']), ['a']);
+  assert.deepEqual(goldenSilentDeclarations(list, ['b']), []);
 });
