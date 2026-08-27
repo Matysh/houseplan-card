@@ -153,6 +153,15 @@ test('#278 strict one-space barrier rejects degraded render-safe geometry', () =
     id: 'strict', title: 'Strict', view_box: [0, 0, 1, 1],
     rooms: [room()], walls: [wall()],
   }]);
+  let captured = null;
+  const accepted = checkSpacePhysicalGeometry(config, 'strict', {
+    captureWallGeometry: (input, geometry) => { captured = { input, geometry }; },
+  });
+  assert.equal(accepted.ok, true);
+  assert.equal(captured?.input?.space?.id, 'strict');
+  assert.equal(captured?.geometry?.status, 'ok');
+  assert.ok(captured?.geometry?.multiWallNodes);
+
   const degraded = checkSpacePhysicalGeometry(config, 'strict', {
     wallPass: () => ({
       status: 'degraded-extra', geom: [], components: [], roomGeom: [], paperGeom: [],

@@ -107,6 +107,12 @@ export interface CheckOptimizeGeometryOptions {
   wallPass?: typeof wallBodiesGeometry;
   floorPass?: typeof floorFootprintGeometry;
   fingerprint?: typeof contentFingerprint;
+  /** Internal reuse seam: receives the exact successful wall pass without
+   * adding private plan geometry to the serializable preflight result. */
+  captureWallGeometry?: (
+    input: SpacePhysicalGeometryInputs,
+    geometry: ReturnType<typeof wallBodiesGeometry>,
+  ) => void;
 }
 
 export interface SpacePhysicalGeometryResult extends OptimizeSpaceGeometryCheck {
@@ -392,6 +398,7 @@ export function checkOptimizeGeometry(
         spaces.push({ ...identity, status: 'failed', reason: 'wall-failed-core' });
         continue;
       }
+      options.captureWallGeometry?.(input, united);
     }
 
     if (input.space.rooms.length && united?.paperGeom == null) {

@@ -41,6 +41,8 @@ export interface WallBodiesGeometryResult {
   paperGeom: any;
   depthUnits: number;
   openingIndex: OpeningWallIndex | null;
+  /** Canonical junction topology reused by per-room inner contours. */
+  multiWallNodes: MultiWallNodeMap | null;
   degradedExtraCount: number;
 }
 
@@ -2416,7 +2418,7 @@ export function multiWallNodeAt(
       || a.point[0] - b.point[0] || a.point[1] - b.point[1])[0] || null;
 }
 
-function multiWallNodesForGeometry(
+export function multiWallNodesForGeometry(
   rooms: any[],
   walls: WallEntry[] | null | undefined,
   openCuts: number[][],
@@ -2743,6 +2745,8 @@ export function innerContourForRoom(
   coordScale = 1,
   /** Canonical room-wall masonry before opening cuts; pass the render cache. */
   sharedRoomWallGeometry?: any,
+  /** Canonical junction topology from the same wall-geometry pass. */
+  sharedMultiWallNodes?: MultiWallNodeMap | null,
 ): number[][] | null {
   const room = (rooms || []).find((r) => r?.id === roomId);
   const poly = roomPoly(room);
@@ -2750,7 +2754,7 @@ export function innerContourForRoom(
   if (!walls?.length) return poly.map((p) => [p[0], p[1]]);
   const pr = roomWallProfile(rooms, roomId, walls, openCuts, pitch, cellCm, gridPitch, coordScale);
   if (!pr || !pr.offsets.some((o) => o > 0)) return poly.map((p) => [p[0], p[1]]);
-  const multiWallNodes = multiWallNodesForGeometry(
+  const multiWallNodes = sharedMultiWallNodes || multiWallNodesForGeometry(
     rooms, walls, openCuts, pitch, cellCm, gridPitch, coordScale,
   );
   const inset = insetContour(pr.poly, pr.offsets, multiWallNodes);
@@ -3602,7 +3606,7 @@ export function wallBodiesGeometry(
 ): WallBodiesGeometryResult {
   if (!walls?.length && !extraBodies.length) return {
     status: 'not-applicable', geom: [], components: [], roomGeom: [], paperGeom: [],
-    depthUnits: 0, openingIndex: null, degradedExtraCount: 0,
+    depthUnits: 0, openingIndex: null, multiWallNodes: null, degradedExtraCount: 0,
   };
   const roomRings: MultiWallRoomRing[] = [];
   const multiWallNodes = multiWallNodesForGeometry(
@@ -3832,14 +3836,14 @@ export function wallBodiesGeometry(
     return {
       status: degradedExtraCount || degradedCoreCount ? 'degraded-extra' : 'ok',
       geom: primary, components, roomGeom, paperGeom,
-      depthUnits: maxDepth, openingIndex,
+      depthUnits: maxDepth, openingIndex, multiWallNodes,
       degradedExtraCount: degradedExtraCount + degradedCoreCount,
     };
   } catch {
     operations.onCoreFailure?.(corePhase);
     return {
       status: 'failed-core', geom: [], components: [], roomGeom: [], paperGeom: [],
-      depthUnits: maxDepth, openingIndex: null, degradedExtraCount: 0,
+      depthUnits: maxDepth, openingIndex: null, multiWallNodes, degradedExtraCount: 0,
     };
   }
 }
@@ -3863,6 +3867,7 @@ export function wallBodiesUnionPath(
   paths: readonly { id: string; d: string; fillRule: 'evenodd' }[];
   components: readonly WallGeometryComponent[];
   roomGeom: any;
+  multiWallNodes: MultiWallNodeMap | null;
   paperD: string;
   depthUnits: number;
   fillRule: 'evenodd' | 'nonzero';
@@ -3872,6 +3877,23 @@ export function wallBodiesUnionPath(
     rooms, walls, openCuts, openings, pitch, cellCm, gridPitch, coordScale, extraBodies,
     operations,
   );
+  return wallBodiesGeometryPath(united);
+}
+
+/** Project one already validated wall-geometry pass into the SVG payload. */
+export function wallBodiesGeometryPath(
+  united: WallBodiesGeometryResult,
+): {
+  status: 'ok' | 'degraded-extra';
+  d: string;
+  paths: readonly { id: string; d: string; fillRule: 'evenodd' }[];
+  components: readonly WallGeometryComponent[];
+  roomGeom: any;
+  multiWallNodes: MultiWallNodeMap | null;
+  paperD: string;
+  depthUnits: number;
+  fillRule: 'evenodd' | 'nonzero';
+} | null {
   if (united.status === 'failed-core' || united.status === 'not-applicable') return null;
   const paths = united.components.map((component) => ({
     id: component.id, d: polyclipToPathD(component.geom), fillRule: 'evenodd' as const,
@@ -3880,7 +3902,7 @@ export function wallBodiesUnionPath(
   const paperD = polyclipToPathD(united.paperGeom);
   if (paths.length) return {
     status: united.status, d, paths, components: united.components,
-    roomGeom: united.roomGeom, paperD,
+    roomGeom: united.roomGeom, multiWallNodes: united.multiWallNodes, paperD,
     depthUnits: united.depthUnits, fillRule: 'evenodd',
   };
   // successful empty result: do not resurrect raw rings

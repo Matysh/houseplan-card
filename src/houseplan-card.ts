@@ -67,7 +67,7 @@ import {
 import {
   degradeWalls, rekeyWallsAfterMoveChecked, wallRecordCarrierViolations,
   setWallThickness, setWallThicknessForRoom, cmToField, wallCmToUnits,
-  wallEdgeBodies, wallBodiesGeometry, wallBodiesUnionPath,
+  wallEdgeBodies, wallBodiesGeometry, wallBodiesGeometryPath, wallBodiesUnionPath,
   floorFootprintGeometry,
   innerContourForRoom, roomWallProfile, outsetContour,
   openingInnerFaceOffsetFromIndex, openingTunnelGeometriesFromIndex,
@@ -1578,10 +1578,31 @@ class HouseplanCard extends LitElement {
   private _physicalPickCycle: {
     signature: string; index: number; x: number; y: number; at: number;
   } | null = null;
-  private _wallUnionCache: {
+  private _wallUnionCacheValue: {
     key: string;
     value: ReturnType<typeof wallBodiesUnionPath>;
   } | null = null;
+  /** A floor switch is presentation-only: retain the bounded structural union
+   * for recently shown floors instead of rebuilding it on every tab click. */
+  private _wallUnionPool = new Map<string, {
+    key: string;
+    value: ReturnType<typeof wallBodiesUnionPath>;
+  }>();
+  /** Keep the historical cache property observable by performance/smoke
+   * contracts. Explicit test/product invalidation also clears the pool. */
+  private get _wallUnionCache(): {
+    key: string;
+    value: ReturnType<typeof wallBodiesUnionPath>;
+  } | null {
+    return this._wallUnionCacheValue;
+  }
+  private set _wallUnionCache(value: {
+    key: string;
+    value: ReturnType<typeof wallBodiesUnionPath>;
+  } | null) {
+    this._wallUnionCacheValue = value;
+    if (value === null) this._wallUnionPool.clear();
+  }
   private _isoGeometryCache = new Map<string, {
     geometry: IsoWallGeometry;
     floor: IsoFloorGeometry;
@@ -8913,12 +8934,44 @@ class HouseplanCard extends LitElement {
     if (wallRecordCarrierViolations(
       changedWalls, wallCarriers, this._wallKeyPitch, NORM_W, s.walls || [],
     ).length) return { ok: false, reason: 'wall-metadata' };
-    if (!this._rszSpaceCandidateRenderable(this._space, sp)) {
+    const preflight = this._rszSpaceCandidateGeometry(this._space, sp);
+    if (!preflight.ok) {
       return { ok: false, reason: 'physical-geometry' };
     }
     this._rszPreview = { space: this._space, sp };
     this._cfgEpoch++;
+    if (preflight.wallGeometry) {
+      const projected = wallBodiesGeometryPath(preflight.wallGeometry);
+      if (projected) {
+        const key = `${this._space}|${this._cfgEpoch}|${sp.rooms.length}`;
+        const entry = { key, value: projected };
+        lruWrite(this._wallUnionPool, key, entry, 8);
+        this._wallUnionCache = entry;
+      }
+    }
     return { ok: true };
+  }
+
+  /** Validate once and retain the exact geometry pass for the preview render. */
+  private _rszSpaceCandidateGeometry(spaceId: string, sp: any): {
+    ok: boolean;
+    wallGeometry: ReturnType<typeof wallBodiesGeometry> | null;
+  } {
+    if (!this._serverCfg) return { ok: false, wallGeometry: null };
+    const candidate = {
+      ...this._serverCfg,
+      spaces: this._serverCfg.spaces.map((space: any) =>
+        space.id === spaceId ? sp : space),
+    } as ServerConfig;
+    let wallGeometry: ReturnType<typeof wallBodiesGeometry> | null = null;
+    try {
+      const check = this._checkSpacePhysicalGeometry(
+        candidate, spaceId, (geometry) => { wallGeometry = geometry; },
+      );
+      return { ok: check.ok, wallGeometry };
+    } catch {
+      return { ok: false, wallGeometry: null };
+    }
   }
 
   /** Fail-closed check for one exact candidate through the common barrier. */
@@ -9117,7 +9170,6 @@ class HouseplanCard extends LitElement {
     const imperial = this.hass?.config?.unit_system?.length === 'mi';
     const ids = plan.roomIds;
     const walls = this._spaceWalls;
-    const openCuts = this._openCuts();
     const physical = this._physicalBodiesR();
     const base = this._baseVb();
     const currentView = this._view && this._view.w > 0 && this._view.h > 0
@@ -9145,11 +9197,11 @@ class HouseplanCard extends LitElement {
     );
     for (const id of ids) {
       const poly = res.polys[id] || g.rooms.find((r) => r.id === id)!.poly;
-      const floor = walls.length
-        ? (innerContourForRoom(
-            Object.entries(res.polys).map(([rid, p]) => ({ id: rid, poly: p })),
-            id, walls, openCuts, this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
-          ) || poly)
+      // The preview is already the active render model. Reuse the same shared
+      // masonry union + contour cache that the following render consumes;
+      // rebuilding both independently here doubled one Resize frame.
+      const floor = walls.length && space
+        ? (this._innerRoomContour(space, id) || poly)
         : poly;
       const m2 = physical.length
         ? geometryArea(floorMinusBodies(floor, physical))
@@ -11567,13 +11619,19 @@ class HouseplanCard extends LitElement {
     const openings = this._roomWallOpeningInputs();
     const unionKey = `${this._space}|${this._cfgEpoch}|${space.rooms.length}`;
     if (!this._wallUnionCache || this._wallUnionCache.key !== unionKey) {
-      this._wallUnionCache = {
-        key: unionKey,
-        value: wallBodiesUnionPath(
-          space.rooms, walls, openCuts, openings,
-          this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W, extras,
-        ),
-      };
+      const cached = lruRead(this._wallUnionPool, unionKey);
+      if (cached.hit) this._wallUnionCache = cached.value;
+      else {
+        const entry = {
+          key: unionKey,
+          value: wallBodiesUnionPath(
+            space.rooms, walls, openCuts, openings,
+            this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W, extras,
+          ),
+        };
+        lruWrite(this._wallUnionPool, unionKey, entry, 8);
+        this._wallUnionCache = entry;
+      }
     }
     return this._wallUnionCache.value;
   }
@@ -11597,23 +11655,21 @@ class HouseplanCard extends LitElement {
     roomId: string,
     openCuts: number[][] = this._openCuts(),
     roomWalls = this._wallUnionGeometry()?.roomGeom,
+    multiWallNodes = this._wallUnionGeometry()?.multiWallNodes,
   ): number[][] | null {
     const cutsKey = openCuts.map((cut) => cut.join(',')).join(';');
     const key = `${space.id}|${this._cfgEpoch}|${roomId}|${cutsKey}`;
-    // Editor previews can replace room polygons without advancing the saved
-    // config epoch. Cache only the immutable View surface; otherwise a Resize
-    // drag would keep painting (and hit-testing) the pre-drag contour.
-    const cacheable = this._mode === 'view' && !this._rszPreview;
-    if (cacheable) {
-      const cached = lruRead(this._innerContourCache, key);
-      if (cached.hit) return cached.value;
-    }
+    // Resize advances the structural epoch before publishing every preview,
+    // so editor and View consumers can safely share one per-epoch answer.
+    const cached = lruRead(this._innerContourCache, key);
+    if (cached.hit) return cached.value;
     const value = innerContourForRoom(
       space.rooms, roomId, this._spaceWalls, openCuts,
       this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
       roomWalls,
+      multiWallNodes,
     );
-    if (cacheable) lruWrite(this._innerContourCache, key, value, 600);
+    lruWrite(this._innerContourCache, key, value, 600);
     return value;
   }
 
@@ -15614,9 +15670,18 @@ class HouseplanCard extends LitElement {
   }
 
   /** One strict production source shared by editor commits and stale rechecks. */
-  private _checkSpacePhysicalGeometry(config: ServerConfig, spaceId: string) {
+  private _checkSpacePhysicalGeometry(
+    config: ServerConfig,
+    spaceId: string,
+    captureWallGeometry?: (
+      geometry: ReturnType<typeof wallBodiesGeometry>,
+    ) => void,
+  ) {
     return checkSpacePhysicalGeometry(config, spaceId, {
       fallbackSpaceName: (index) => this._t('gs.align_preflight_space', { n: String(index) }),
+      captureWallGeometry: captureWallGeometry
+        ? (_input, geometry) => captureWallGeometry(geometry)
+        : undefined,
     });
   }
 
