@@ -538,13 +538,55 @@ export const MUTANTS = [
     }],
   },
   {
+    id: 'junction-limit-angle-not-enforced',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="П1" test/junction-limits.test.mjs',
+    because: 'the owner-approved 15° minimum between neighbouring walls is a hard limit; '
+      + 'lowering it silently lets the trident apex of #329 be drawn again',
+    patches: [{
+      file: 'src/junction-limits.ts',
+      find: 'export const MIN_JUNCTION_ANGLE_DEG = 15;',
+      replace: 'export const MIN_JUNCTION_ANGLE_DEG = 0;',
+    }],
+  },
+  {
+    id: 'junction-limit-write-gate-removed',
+    guard: 'node demo/smoke_junction_limits.mjs',
+    because: 'the limits must refuse the WRITE, not merely report it — without the barrier '
+      + 'an impossible junction reaches the saved document (#329 §2)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '    if (introduced.length) {\n      this._clearGeometryGesture();',
+      replace: '    if (false && introduced.length) {\n      this._clearGeometryGesture();',
+    }],
+  },
+  {
+    id: 'degenerate-apex-bevelled-again',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="§4" test/junction-limits.test.mjs',
+    because: 'a sharp apex must end in ONE point on both faces; the two-point bevel is the '
+      + 'flat cut the owner rejected and the bow-tie fold that carved the jags (#329 §4)',
+    patches: [{
+      file: 'src/wall-thickness.ts',
+      find: '      if (isDegenerateApexCorner(poly, offsets, i)) {\n'
+        + '        out.push([poly[i][0], poly[i][1]]);\n'
+        + '        continue;\n      }',
+      replace: '      // mutant: degenerate apex falls back to the bevel',
+    }],
+  },
+  {
     id: 'resize-preview-reject-silent',
     guard: 'node demo/smoke_room_resize.mjs',
     because: 'an unexpected runtime preflight rejection must explain why an enabled handle '
       + 'stopped instead of restoring the original silent no-op (#293)',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: "        this._showToast(this._t('resize.preview_failed'));",
+      find: [
+        '        this._showToast(this._rszLimitViolation',
+        '          ? `${this._t(\'resize.limit_stopped\')} — `',
+        '            + this._junctionLimitLabel(this._rszLimitViolation)',
+        "          : this._t('resize.preview_failed'));",
+      ].join('\n'),
       replace: '        // mutant: reject remains silent',
     }],
   },

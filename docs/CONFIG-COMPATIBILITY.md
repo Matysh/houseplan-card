@@ -429,3 +429,28 @@ operational Store — for example after downgrade, an old writer or an interrupt
 pair — all off bits are cleared rather than resurrected against unknown marker
 lifecycle history. Older integrations safely ignore the separate Store on
 downgrade.
+
+## Wall junction limits (#329)
+
+Junction limits (minimum 15° between neighbouring walls of one node, at most
+six walls per node, a wall at least 20 cm long and never shorter than its own
+thickness, 5 cm between non-incident nodes and node to foreign wall, at least
+25 cm² of room interior left after the masonry) are a WRITE contract, not a
+document contract. An existing plan that violates them stays valid and stays
+readable: migration to model v9, JSON import, backup restore and full/space
+transfer never run the check, and an edit that does not touch the offending
+element still saves.
+
+The gate compares the candidate against the pre-edit document **after both
+have gone through the same `commitWallSegmentModel` migration**, and counts
+violations **per rule**, not per subject id — a structural write re-keys
+contour atoms, so subject identity is not stable across the barrier. Only a
+rule whose violation count grows is a refusal.
+
+Compatibility matrix:
+
+| Frontend | Backend | Behaviour |
+|---|---|---|
+| old | new | No change: the limits live in the card's write barrier, the backend contract is untouched |
+| new | old | No change: an inherited violation is never re-judged, so an old backend's documents keep loading and editing |
+| new | new | A write that ADDS a violation is refused in the surface where it was made — a toast naming the rule for drawing and Thickness, a stopped wall for Resize |

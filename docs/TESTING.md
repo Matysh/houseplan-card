@@ -34,6 +34,21 @@
 
 ## Stable wall-segment identity (#282)
 
+- [ ] Wall junction limits (#329): drawing refuses an apex under 15°, a seventh
+      wall in one node, a wall shorter than 20 cm or than its own thickness,
+      nodes closer than 5 cm and a room with under 25 cm² of interior, each
+      through the surface's own channel — a toast naming the rule for drawing
+      and Thickness, a stopped wall for Resize. A T-joint stays legal, a short
+      filler atom compensating a thickness step stays legal (length is measured
+      along the collinear same-thickness wall run), and an inherited violation
+      never blocks an unrelated edit
+      [unit: junction-limits; auto: smoke_junction_limits, smoke_island_rooms;
+      mutants: junction-limit-angle-not-enforced,
+      junction-limit-write-gate-removed, degenerate-apex-bevelled-again].
+- [ ] A degenerate sharp apex renders as ONE point on both faces — no flat
+      chamfer, no bow-tie fold, no jags between the inner and outer vertex; the
+      room ring of the #329 fixture triangle has exactly three distinct
+      vertices [unit: junction-limits §4].
 - [ ] Shared fixture `test/fixtures/282-wall-identity-parity.json` produces the
       same exact v8 catalog, room references, opening host and draft IDs in
       TypeScript and Python.

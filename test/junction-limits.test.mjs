@@ -185,3 +185,34 @@ test('§4: у вырожденной вершины грани прямые — 
     assert.ok(side > cm(7.5), `сторона ${index} не вырождена: ${side}`);
   }
 });
+
+test('П3 меряет стену, а не атом: компенсация перепада толщин законна', async () => {
+  const { collinearRunLengthUnits } = await import('../test-build/junction-limits.js');
+  // Репорт владельца 2026-08-27: на стыке 30 см и 20 см атомизация оставляет
+  // кусок (30−20)/2 = 5 см — коллинеарное продолжение той же стены.
+  const run = [
+    { id: 'long', a: [0, 0], b: [0, cm(349)], cm: 30 },
+    { id: 'step', a: [0, cm(349)], b: [0, cm(354)], cm: 30 },
+    { id: 'cross', a: [0, cm(354)], b: [cm(482), cm(354)], cm: 20 },
+  ];
+  assert.deepEqual(checkSegmentLengths(run, CELL, PITCH), [],
+    'короткий атом внутри прямого прогона не нарушение');
+  const runLength = collinearRunLengthUnits(run[1], run);
+  assert.ok(Math.abs((runLength / PITCH) * CELL - 354) < 1e-6, 'меряется весь прогон');
+
+  // Одинокая короткая стена по-прежнему отклоняется: коллинеарного
+  // продолжения нет.
+  const lonely = [
+    { id: 'a', a: [0, 0], b: [cm(10), 0], cm: 15 },
+    { id: 'b', a: [cm(10), 0], b: [cm(10), cm(10)], cm: 15 },
+  ];
+  assert.equal(checkSegmentLengths(lonely, CELL, PITCH).length, 2);
+
+  // Продолжение ДРУГОЙ толщины прогоном не считается.
+  const mixed = [
+    { id: 'thin', a: [0, 0], b: [0, cm(10)], cm: 15 },
+    { id: 'thick', a: [0, cm(10)], b: [0, cm(400)], cm: 40 },
+  ];
+  assert.ok(checkSegmentLengths(mixed, CELL, PITCH)
+    .some((item) => item.subject === 'thin'));
+});

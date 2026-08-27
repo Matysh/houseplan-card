@@ -6,7 +6,8 @@
   «trident» of pikes and notches, and drawing now refuses the shapes that
   cause it — walls closer than 15°, more than six walls in one node, segments
   shorter than 20 cm or than their own thickness, nodes closer than 5 cm and
-  rooms with no interior left
+  rooms with no interior left. Length is measured along the whole wall, so a
+  short filler segment compensating a thickness step stays legal
   ([#329](https://github.com/Matysh/houseplan-card/issues/329)).
 
 ## v1.68.1 — 2026-08-27

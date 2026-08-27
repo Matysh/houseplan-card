@@ -1683,6 +1683,8 @@ class HouseplanCard extends LitElement {
   private _resize = new ResizeController<
     ResizePreview, ResizeLiveLabel[], SpaceGeometryState, ResizeWallUnion, ResizeWallArtifact
   >();
+  /** #329 AC7a: the limit the LAST projection broke, or null if it broke none. */
+  private _rszLimitViolation: JunctionLimitViolation | null = null;
   private _path: number[][] = []; // current outline (render units, vertices snapped to the grid)
   private _cursorPt: number[] | null = null;
   private _planSnapHover: {
@@ -8917,6 +8919,9 @@ class HouseplanCard extends LitElement {
     changedRoomIds: readonly string[],
     sourceRooms: readonly { id: string; poly: number[][]; wall_ids?: string[] }[],
   ): ResizeProjectionResult<ResizePreview, ResizeWallArtifact> {
+    // #329 AC7a: only the LAST projection may explain the refusal, so the
+    // previous verdict never leaks into a rejection of another kind.
+    this._rszLimitViolation = null;
     const real = this._serverCfg?.spaces.find((s: any) => s.id === this._space);
     if (!real || !this._serverCfg) return { ok: false, reason: 'missing-context' };
     const s = JSON.parse(snapshot); // fresh deep copies every move — free to mutate
@@ -9023,6 +9028,22 @@ class HouseplanCard extends LitElement {
     const preflight = this._rszSpaceCandidateGeometry(this._space, sp);
     if (!preflight.ok) {
       return { ok: false, reason: 'physical-geometry' };
+    }
+    // #329 AC7a: a step that would ADD a junction-limit violation is never
+    // projected, so the drag stops at the last allowed position instead of
+    // committing an impossible plan.
+    const limitCandidate = {
+      ...this._serverCfg,
+      spaces: (this._serverCfg?.spaces || []).map(
+        (space: any) => (space?.id === this._space ? sp : space),
+      ),
+    };
+    const limited = this._junctionLimitsIntroduced(
+      limitCandidate, this._serverCfg, this._space,
+    );
+    if (limited.length) {
+      this._rszLimitViolation = limited[0];
+      return { ok: false, reason: 'junction-limit' };
     }
     return {
       ok: true,
@@ -9160,7 +9181,13 @@ class HouseplanCard extends LitElement {
       // the pointer visibly stops there and pointerup can commit only that
       // already-rendered safe candidate.
       if (result.notify) {
-        this._showToast(this._t('resize.preview_failed'));
+        // #329 AC7a: a step stopped by a junction limit names THAT rule — the
+        // generic "geometry cannot be saved" wording would hide which limit
+        // the wall ran into.
+        this._showToast(this._rszLimitViolation
+          ? `${this._t('resize.limit_stopped')} — `
+            + this._junctionLimitLabel(this._rszLimitViolation)
+          : this._t('resize.preview_failed'));
       }
       this.requestUpdate();
       return;

@@ -24,7 +24,10 @@ export interface ResizeProjection<TPreview, TArtifact> {
 
 export type ResizeProjectionResult<TPreview, TArtifact> =
   | { ok: true; value: ResizeProjection<TPreview, TArtifact> }
-  | { ok: false; reason: 'missing-context' | 'wall-metadata' | 'physical-geometry' };
+  | { ok: false;
+      // 'junction-limit' is #329: the step would ADD a wall-junction violation.
+      reason: 'missing-context' | 'wall-metadata' | 'physical-geometry'
+        | 'junction-limit' };
 
 export type ResizeMoveOutcome<TPreview, TLabels, TArtifact> =
   | { kind: 'accepted'; preview: TPreview; labels: TLabels; artifact: TArtifact | null }

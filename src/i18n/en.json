@@ -92,6 +92,7 @@
   "resize.disabled.thickness-conflict": "The wall thickness cannot be preserved safely",
   "resize.disabled.opening-conflict": "An opening on this wall cannot be moved safely",
   "resize.disabled.invalid-geometry": "This wall cannot be resized without changing the plan structure",
+  "resize.limit_stopped": "Wall stopped: the next step would break a junction limit",
   "resize.commit_failed": "Resize was cancelled because the final plan did not pass the geometry check",
   "resize.preview_failed": "Resize stopped at the last safe position because the plan geometry could not be preserved",
   "markup.opening": "Opening",

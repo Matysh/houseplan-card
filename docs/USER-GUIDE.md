@@ -382,6 +382,31 @@ wall shows one area badge; a shared wall shows two on opposite sides, each with
 a short leader. In a narrow room the area stays visible and may extend outside
 the room rather than overlap another area or the room-settings button.
 
+### Wall junction limits
+
+To keep a plan physically meaningful, the editor refuses a write that would
+create an impossible junction. The thresholds are absolute — they do not scale
+with `cell_cm`:
+
+| Rule | Threshold |
+|---|---|
+| Angle between neighbouring walls of one node | at least 15° |
+| Walls meeting in one node | at most 6 |
+| Wall length | at least 20 cm and never below its own thickness |
+| Distance between non-incident nodes, and node to foreign wall | at least 5 cm |
+| Room interior left after subtracting the masonry | at least 25 cm² |
+
+Length is measured along the WALL, not along a single contour piece: a short
+filler segment that compensates a thickness step is legal as long as the whole
+wall is longer than 20 cm. A T-joint (a wall end landing on the middle of
+another wall) is not forbidden by the distance rule.
+
+The check runs on writes only. An already saved plan is never re-judged:
+migration, import and backup restore are never blocked, and an edit that does
+not touch the offending element passes as usual. The refusal appears where you
+work: drawing and Thickness raise a toast naming the rule, while Resize stops
+the wall at the last allowed position.
+
 ### HA area binding
 
 One HA area may be bound to one room. The binding drives automatic device

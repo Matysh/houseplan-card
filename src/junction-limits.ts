@@ -96,7 +96,57 @@ export function checkNodes(
   return violations;
 }
 
-/** П3: a segment is at least 20 cm and never shorter than its own thickness. */
+/** Direction of a segment normalised to [0, 180). */
+const axisDegrees = (segment: LimitSegment): number => {
+  const degrees = (Math.atan2(segment.b[1] - segment.a[1], segment.b[0] - segment.a[0])
+    * 180) / Math.PI;
+  return ((degrees % 180) + 180) % 180;
+};
+
+const collinear = (left: LimitSegment, right: LimitSegment, toleranceDeg = 1): boolean => {
+  const delta = Math.abs(axisDegrees(left) - axisDegrees(right));
+  return Math.min(delta, 180 - delta) <= toleranceDeg;
+};
+
+/**
+ * Length of the whole WALL a segment belongs to, not of the atom.
+ *
+ * The model splits a straight wall into atoms at every junction, so a plain
+ * run picks up short pieces that no one drew: where a 30 cm wall meets a
+ * 20 cm one, atomisation leaves a (30−20)/2 = 5 cm piece that compensates the
+ * thickness step (owner report 2026-08-27). Those pieces are collinear
+ * continuations of the same wall at the same thickness, so П3 measures the
+ * maximal collinear chain through the segment's nodes.
+ */
+export function collinearRunLengthUnits(
+  segment: LimitSegment, segments: readonly LimitSegment[],
+): number {
+  const usable = usableSegments(segments);
+  const byNode = new Map<string, LimitSegment[]>();
+  for (const item of usable) {
+    for (const point of [item.a, item.b]) {
+      byNode.set(key(point), [...(byNode.get(key(point)) || []), item]);
+    }
+  }
+  const visited = new Set<LimitSegment>([segment]);
+  let total = length(segment.a, segment.b);
+  const walk = (from: LimitSegment, node: number[]): void => {
+    const next = (byNode.get(key(node)) || []).find((candidate) => (
+      !visited.has(candidate)
+      && collinear(candidate, from)
+      && Number(candidate.cm || 0) === Number(from.cm || 0)
+    ));
+    if (!next) return;
+    visited.add(next);
+    total += length(next.a, next.b);
+    walk(next, key(next.a) === key(node) ? next.b : next.a);
+  };
+  walk(segment, segment.a);
+  walk(segment, segment.b);
+  return total;
+}
+
+/** П3: a wall is at least 20 cm and never shorter than its own thickness. */
 export function checkSegmentLengths(
   segments: readonly LimitSegment[],
   cellCm: number,
@@ -104,8 +154,9 @@ export function checkSegmentLengths(
   { minLengthCm = MIN_SEGMENT_LENGTH_CM } = {},
 ): JunctionLimitViolation[] {
   const violations: JunctionLimitViolation[] = [];
-  for (const segment of usableSegments(segments)) {
-    const units = length(segment.a, segment.b);
+  const usable = usableSegments(segments);
+  for (const segment of usable) {
+    const units = collinearRunLengthUnits(segment, usable);
     const cm = (units / gridPitch) * (cellCm || 1);
     const limit = Math.max(minLengthCm, Number(segment.cm) > 0 ? Number(segment.cm) : 0);
     if (cm < limit - 1e-9) {
