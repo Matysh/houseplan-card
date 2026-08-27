@@ -216,3 +216,97 @@ test('П3 меряет стену, а не атом: компенсация пе
   assert.ok(checkSegmentLengths(mixed, CELL, PITCH)
     .some((item) => item.subject === 'thin'));
 });
+
+// --- #329 AC10: Optimize — ремонтный путь, а не источник новых нарушений ---
+
+/**
+ * Нарушения одного пространства так, как их считает барьер записи: обе
+ * стороны сперва проходят одну и ту же миграцию каталога.
+ */
+async function violationsByRule(config, spaceId) {
+  const { commitWallSegmentModel } = await import('../test-build/wall-segment-model.js');
+  const { checkNodes, checkSegmentLengths, checkNodeDistances } =
+    await import('../test-build/junction-limits.js');
+  const { config: migrated } = commitWallSegmentModel(
+    JSON.parse(JSON.stringify(config)),
+  );
+  const space = (migrated.spaces || []).find(
+    (item) => String(item.id) === String(spaceId),
+  );
+  // Молчаливое «пространства нет» превратило бы тест в проверку пустоты.
+  assert.ok(space, `пространство ${spaceId} есть после миграции`);
+  assert.ok((space.wall_segments || []).length > 0, 'каталог стен непуст');
+  const segments = [
+    ...(space.wall_segments || []).map((item) => ({ id: item.id, a: item.a, b: item.b, cm: Number(item.cm) })),
+    ...(space.partitions || []).map((item) => ({ id: item.id, a: item.a, b: item.b, cm: Number(item.cm) })),
+  ];
+  const cellCm = Number(space.cell_cm) || 1;
+  const all = [
+    ...checkNodes(segments),
+    ...checkSegmentLengths(segments, cellCm, GRID_STEP_N),
+    ...checkNodeDistances(segments, cellCm, GRID_STEP_N),
+  ];
+  const counts = {};
+  for (const item of all) counts[item.rule] = (counts[item.rule] || 0) + 1;
+  return counts;
+}
+
+test('AC10: Optimize на легаси-плане с нарушением не добавляет новых', async () => {
+  const { optimizePlans } = await import('../test-build/plan-optimizer.js');
+  const { readFileSync } = await import('node:fs');
+  const fixture = JSON.parse(readFileSync(
+    new URL('./fixtures/329-sharp-apex.json', import.meta.url), 'utf8',
+  ));
+  // Легаси-хранение: только контуры и `walls`, без каталога — то состояние,
+  // в котором план приходит на Оптимизацию в первый раз.
+  const space = {
+    id: 'legacy', title: 'legacy', cell_cm: fixture.cell_cm,
+    view_box: [0, 0, 1, 1],
+    rooms: fixture.rooms.map(({ id, name, area, poly }) => ({ id, name, area, poly })),
+    walls: fixture.walls.map(({ id, a, b, cm }) => ({ key: id, a, b, cm })),
+    openings: [], room_drafts: [], partitions: [], wall_columns: [],
+  };
+  const config = { spaces: [space], markers: [], settings: {} };
+  const before = await violationsByRule(config, 'legacy');
+  // Шпиль владельца обязан читаться как унаследованное нарушение — иначе
+  // тест доказывал бы «ничего не выросло» на пустом месте.
+  assert.equal((before.angle || 0) > 0, true, 'фикстура несёт нарушение угла');
+
+  const result = optimizePlans(config, {});
+  const after = await violationsByRule(result.config, 'legacy');
+  for (const rule of new Set([...Object.keys(before), ...Object.keys(after)])) {
+    assert.equal((after[rule] || 0) <= (before[rule] || 0), true,
+      `Оптимизация добавила нарушений по правилу ${rule}: `
+      + `${before[rule] || 0} → ${after[rule] || 0}`);
+  }
+});
+
+test('AC10: привязка к решётке не утаскивает узел на пороге П4 под лимит', async () => {
+  const { optimizePlans } = await import('../test-build/plan-optimizer.js');
+  // Две комнаты, между гранями ровно 5 см — П4 выполняется впритык, и
+  // сдвиг на доли сантиметра при выравнивании увёл бы его под порог.
+  const CELL_LOCAL = 2;
+  const u = (value) => (value / CELL_LOCAL) * GRID_STEP_N;
+  const box = (x, y, w, h) => [[x, y], [x + w, y], [x + w, y + h], [x, y + h]];
+  const left = box(u(100), u(100), u(200), u(200));
+  const right = box(u(100) + u(205), u(100), u(200), u(200));
+  const wallsOf = (poly, prefix) => poly.map((point, index) => ({
+    key: `${prefix}${index}`, a: point, b: poly[(index + 1) % poly.length], cm: 15,
+  }));
+  const config = { spaces: [{
+    id: 'edge', title: 'edge', cell_cm: CELL_LOCAL, view_box: [0, 0, 1, 1],
+    rooms: [
+      { id: 'a', name: 'a', area: null, poly: left },
+      { id: 'b', name: 'b', area: null, poly: right },
+    ],
+    walls: [...wallsOf(left, 'l'), ...wallsOf(right, 'r')],
+    openings: [], room_drafts: [], partitions: [], wall_columns: [],
+  }], markers: [], settings: {} };
+
+  const before = await violationsByRule(config, 'edge');
+  assert.equal(before.distance || 0, 0, 'исходный план по П4 чист');
+  const result = optimizePlans(config, {});
+  const after = await violationsByRule(result.config, 'edge');
+  assert.equal(after.distance || 0, 0,
+    'после Оптимизации узлы не сблизились под 5 см');
+});
