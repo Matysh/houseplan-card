@@ -66,6 +66,7 @@ from .wall_segment_model import (
     WallSegmentMigrationError,
     commit_wall_segment_model,
 )
+from .junction_limits import JunctionLimitError, validate_junction_limits
 from .validation import (
     CONFIG_SCHEMA, LAYOUT_SCHEMA, MAX_CONFIG_BYTES, MAX_PLAN_BYTES,
     PLAN_EXTENSIONS, POS_SCHEMA, MarkerControlError, OpeningPassageError,
@@ -1330,9 +1331,11 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             validate_marker_value_badges(msg["config"], data.get("config"))
             validate_opening_passages(msg["config"], data.get("config"))
             validate_partition_opening_hosts(msg["config"], data.get("config"))
+            validate_junction_limits(msg["config"], data.get("config"))
         except (
-            MarkerControlError, OpeningPassageError, PartitionOpeningHostError,
-            PartitionOpeningJambMarginError, WallModelClientOutdatedError,
+            JunctionLimitError, MarkerControlError, OpeningPassageError,
+            PartitionOpeningHostError, PartitionOpeningJambMarginError,
+            WallModelClientOutdatedError,
         ) as err:
             connection.send_error(msg["id"], err.code, str(err))
             return
@@ -1679,8 +1682,9 @@ async def ws_plan_optimize(hass: HomeAssistant, connection, msg: dict[str, Any])
                 allow_optimize_rehost=True,
             )
         except (
-            MarkerControlError, OpeningPassageError, PartitionOpeningHostError,
-            PartitionOpeningJambMarginError, WallModelClientOutdatedError,
+            JunctionLimitError, MarkerControlError, OpeningPassageError,
+            PartitionOpeningHostError, PartitionOpeningJambMarginError,
+            WallModelClientOutdatedError,
             WallSegmentMigrationError,
         ) as err:
             connection.send_error(msg["id"], err.code, str(err))
