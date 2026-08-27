@@ -158,7 +158,9 @@ limits. See
 When the comparison base predates `scripts/bundle-sync.mjs`, the workflow still
 builds that exact tree and materializes its fresh bundle through the equivalent
 legacy copy path. This keeps old stable releases usable as performance baselines
-without borrowing build output from the candidate.
+without borrowing build output from the candidate. Comparative benchmark
+launches also pass that target tree as the freshness authority; the ordinary
+smoke launcher continues to default to the current repository root.
 Both browser diagnostics require a freshly built/copied demo bundle. Rollup
 embeds a SHA-256 fingerprint of `src/` plus the locked package and
 Rollup/TypeScript build inputs; benchmark/golden runners fail before

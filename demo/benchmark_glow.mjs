@@ -87,7 +87,7 @@ const viewport = { width: 1280, height: 900 };
 const { page, browser } = await launch(
   viewport, 1,
   ['--enable-precise-memory-info', '--js-flags=--expose-gc'],
-  {}, resolve(targetRoot, 'demo/srv'),
+  {}, resolve(targetRoot, 'demo/srv'), targetRoot,
 );
 await page.addScriptTag({
   content: `window.__hpAssertCardContract = ${assertCardContract.toString()};`,

@@ -50,6 +50,7 @@ export async function launch(
   browserArgs = [],
   contextOptions = {},
   serveRoot = ROOT,
+  repoRoot = REPO_ROOT,
 ) {
   const browser = await chromium.launch({ args: ['--no-sandbox', ...browserArgs] });
   const page = await (await browser.newContext({
@@ -75,7 +76,7 @@ export async function launch(
   // круга разбора: три проверки упали, четвёртая ложно прошла, поскольку старый
   // код одинаково врал в двух местах, которые сверялись друг с другом.
   // golden и бенчмарки эту защиту имели с самого начала, смоки — нет.
-  await assertFreshDemoBundleUnlessAllowed(page, REPO_ROOT);
+  await assertFreshDemoBundleUnlessAllowed(page, repoRoot);
   // HP-1552: the first-open boot veil hides the plan (visibility:hidden) until
   // the stage height settles — real pointer interaction cannot hit a hidden
   // plan, so every smoke starts where the user does: with the plan revealed.

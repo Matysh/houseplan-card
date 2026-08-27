@@ -123,6 +123,14 @@ test('the smoke launcher enforces the gate on the repository root (#236)', async
   const source = readFileSync(
     new URL('../demo/serve.mjs', import.meta.url), 'utf8',
   );
-  assert.match(source, /assertFreshDemoBundleUnlessAllowed\(page, REPO_ROOT\)/);
+  assert.match(source, /repoRoot = REPO_ROOT/);
+  assert.match(source, /assertFreshDemoBundleUnlessAllowed\(page, repoRoot\)/);
   assert.match(source, /const REPO_ROOT = dirname\(dirname\(/);
+});
+
+test('comparative benchmarks pass the target repository root to the launcher', () => {
+  for (const file of ['benchmark_large_house.mjs', 'benchmark_glow.mjs']) {
+    const source = readFileSync(new URL(`../demo/${file}`, import.meta.url), 'utf8');
+    assert.match(source, /resolve\(targetRoot, 'demo\/srv'\)[\s\S]{0,40}targetRoot/);
+  }
 });

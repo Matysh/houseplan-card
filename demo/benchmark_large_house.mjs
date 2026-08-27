@@ -43,6 +43,7 @@ const { page, browser } = await launch(
   ['--enable-precise-memory-info', '--js-flags=--expose-gc'],
   {},
   resolve(targetRoot, 'demo/srv'),
+  targetRoot,
 );
 await page.emulateMedia({ reducedMotion: 'reduce' });
 await page.addStyleTag({
