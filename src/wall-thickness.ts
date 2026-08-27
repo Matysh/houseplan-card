@@ -2811,8 +2811,6 @@ function structurallyValidWallGeometry(geometry: any): boolean {
 interface MultiWallRoomRing {
   outset: number[][];
   inset: number[][] | null;
-  /** #329 §4: clip regions for degenerate apexes of this room. */
-  apexCaps?: number[][][];
 }
 
 /** Excess pairwise overlap cuts removed to expose the straight bevel. */
@@ -3599,73 +3597,22 @@ export function wallBodyRings(
  * and tiny holes at junctions.
  */
 /**
- * The masonry itself, as polygons: room wall rings joined at their mitres,
- * with opening slots cut through. Drawing uses it as one path; the light model
- * uses the same geometry as its occluders, so a wall blocks light exactly
- * where the plan shows a wall — with its real thickness, and with a doorway
- * that is a real gap between two jamb faces. A successful empty operation is
- * returned as an empty typed result. Core failure is `failed-core`; an optional
- * merge failure is `degraded-extra` with every known-valid component retained.
- */
-/**
- * #329 §4 — honest apex for a legacy sharp corner.
- *
- * When two walls meet at an angle so small that their INNER faces converge
- * inside both walls (distance `h/tan(θ/2)` shorter than either edge), the
- * zone above that convergence has no room interior at all: the two bodies
- * overlap completely. Rendering it produced the "trident" of #329 — pikes
- * and V-notches instead of a tip. Return, per such corner, a large quad
- * covering everything BEYOND the convergence point along the bisector; the
- * caller subtracts it, so the masonry ends in one flat chamfer.
- *
- * Corners whose convergence lies outside the walls are ordinary sharp pairs
- * (#310) and are never returned.
- */
-/**
  * Corners at or above this angle are ordinary sharp pairs (#310). Below it a
- * write is refused today (#329 П1), so only legacy documents reach the
- * degenerate-apex chamfer.
+ * write is refused today (#329 П1), so only a legacy document can still hold
+ * such an apex, and only it takes the degenerate path below.
  */
 export const DEGENERATE_APEX_MAX_DEGREES = 15;
 
 /**
- * Keep the part of `poly` on the far side of a degenerate-apex cap (#329 §4).
- * The cap's first edge is the chamfer line; everything on the apex side of it
- * is dropped. Sutherland–Hodgman against one half-plane keeps a simple
- * polygon simple and unfolds the bow-tie of a degenerate inset contour.
+ * True when corner `index` is so sharp that the two wall bodies overlap
+ * completely near it (#329 §4): their inner faces converge at
+ * `h/tan(θ/2)`, inside BOTH edges, so the zone above that point holds no
+ * room interior at all. Rendering it with the ordinary bevel produced the
+ * "trident" of #329 — pikes and V-notches instead of a tip. Such a corner
+ * ends in ONE point on both faces instead: the plan vertex outside, its own
+ * mitre inside. A corner whose convergence lies outside the walls is an
+ * ordinary sharp pair (#310) and is never degenerate.
  */
-export function clipPolygonOutsideCap(
-  poly: number[][] | null | undefined, cap: number[][],
-): number[][] | null {
-  if (!poly || poly.length < 3 || !cap || cap.length < 4) return poly ?? null;
-  const [p0, p1, , p3] = cap;
-  const edge = [p1[0] - p0[0], p1[1] - p0[1]];
-  const edgeLength = Math.hypot(edge[0], edge[1]);
-  if (!(edgeLength > 1e-12)) return poly;
-  // Inward normal of the KEPT side: the cap's fourth point lies there.
-  let nx = -edge[1] / edgeLength, ny = edge[0] / edgeLength;
-  if ((p3[0] - p0[0]) * nx + (p3[1] - p0[1]) * ny > 0) { nx = -nx; ny = -ny; }
-  const side = (point: number[]): number =>
-    (point[0] - p0[0]) * nx + (point[1] - p0[1]) * ny;
-  const out: number[][] = [];
-  for (let index = 0; index < poly.length; index++) {
-    const current = poly[index];
-    const next = poly[(index + 1) % poly.length];
-    const dCurrent = side(current), dNext = side(next);
-    if (dCurrent >= -1e-12) out.push([current[0], current[1]]);
-    if ((dCurrent > 0 && dNext < 0) || (dCurrent < 0 && dNext > 0)) {
-      const t = dCurrent / (dCurrent - dNext);
-      out.push([
-        current[0] + (next[0] - current[0]) * t,
-        current[1] + (next[1] - current[1]) * t,
-      ]);
-    }
-  }
-  return out.length >= 3 ? out : null;
-}
-
-/** True when corner `index` is sharp enough that the two wall bodies overlap
- * completely near it (#329 §4) — the only case that may not use a mitre. */
 export function isDegenerateApexCorner(
   poly: number[][], offsets: number[], index: number,
 ): boolean {
@@ -3693,59 +3640,15 @@ export function isDegenerateApexCorner(
     && distance < lenPrev - 1e-9 && distance < lenNext - 1e-9;
 }
 
-export function degenerateApexCaps(
-  poly: number[][], offsets: number[],
-): number[][][] {
-  const n = poly?.length || 0;
-  if (n < 3 || offsets?.length !== n) return [];
-  const caps: number[][][] = [];
-  for (let index = 0; index < n; index++) {
-    const previous = poly[(index - 1 + n) % n];
-    const vertex = poly[index];
-    const next = poly[(index + 1) % n];
-    const toPrev = [previous[0] - vertex[0], previous[1] - vertex[1]];
-    const toNext = [next[0] - vertex[0], next[1] - vertex[1]];
-    const lenPrev = Math.hypot(toPrev[0], toPrev[1]);
-    const lenNext = Math.hypot(toNext[0], toNext[1]);
-    if (!(lenPrev > 1e-9) || !(lenNext > 1e-9)) continue;
-    const uPrev = [toPrev[0] / lenPrev, toPrev[1] / lenPrev];
-    const uNext = [toNext[0] / lenNext, toNext[1] / lenNext];
-    const cos = Math.max(-1, Math.min(1, uPrev[0] * uNext[0] + uPrev[1] * uNext[1]));
-    const theta = Math.acos(cos);
-    if (!(theta > 1e-9) || theta >= Math.PI - 1e-9) continue;
-    // Only a corner sharper than what a write may create today (#329 П1) can
-    // be degenerate. An ordinary corner also has a finite inner-face meeting
-    // point — cutting there would eat legitimate masonry.
-    if (theta >= (DEGENERATE_APEX_MAX_DEGREES * Math.PI) / 180) continue;
-    // Offsets are half-depths of the two incident edges; the wider one owns
-    // the convergence distance.
-    const half = Math.max(
-      Math.max(0, offsets[(index - 1 + n) % n]), Math.max(0, offsets[index]),
-    );
-    if (!(half > 0)) continue;
-    const distance = half / Math.tan(theta / 2);
-    if (!Number.isFinite(distance) || distance <= 0) continue;
-    // Not degenerate: the bodies stop overlapping inside the walls.
-    if (distance >= lenPrev - 1e-9 || distance >= lenNext - 1e-9) continue;
-    const bisector = [uPrev[0] + uNext[0], uPrev[1] + uNext[1]];
-    const bisLength = Math.hypot(bisector[0], bisector[1]);
-    if (!(bisLength > 1e-9)) continue;
-    // Inward bisector points into the corner; the cap covers the opposite
-    // (apex) side, starting at the convergence point.
-    const inward = [bisector[0] / bisLength, bisector[1] / bisLength];
-    const cut = [vertex[0] + inward[0] * distance, vertex[1] + inward[1] * distance];
-    const side = [-inward[1], inward[0]];
-    const reach = (lenPrev + lenNext + distance) * 4 + half * 8;
-    caps.push([
-      [cut[0] + side[0] * reach, cut[1] + side[1] * reach],
-      [cut[0] - side[0] * reach, cut[1] - side[1] * reach],
-      [cut[0] - side[0] * reach - inward[0] * reach, cut[1] - side[1] * reach - inward[1] * reach],
-      [cut[0] + side[0] * reach - inward[0] * reach, cut[1] + side[1] * reach - inward[1] * reach],
-    ]);
-  }
-  return caps;
-}
-
+/**
+ * The masonry itself, as polygons: room wall rings joined at their mitres,
+ * with opening slots cut through. Drawing uses it as one path; the light model
+ * uses the same geometry as its occluders, so a wall blocks light exactly
+ * where the plan shows a wall — with its real thickness, and with a doorway
+ * that is a real gap between two jamb faces. A successful empty operation is
+ * returned as an empty typed result. Core failure is `failed-core`; an optional
+ * merge failure is `degraded-extra` with every known-valid component retained.
+ */
 export function wallBodiesGeometry(
   rooms: any[],
   walls: WallEntry[] | null | undefined,
