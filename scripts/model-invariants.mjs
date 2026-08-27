@@ -20,6 +20,8 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { checkOptimizeGeometry } from '../test-build/plan-geometry-preflight.js';
 import { classifyNearAxisSegment } from '../test-build/near-axis.js';
+import { checkWallRecordsPreserved } from '../test-build/wall-record-preservation.js';
+export { checkWallRecordsPreserved } from '../test-build/wall-record-preservation.js';
 import {
   LATTICE_GRID_N as GRID_N,
   LATTICE_NOISE_STEPS as NOISE_STEPS,
@@ -282,42 +284,6 @@ export function checkReferences({ config, layout = {} } = {}, { notes = [] } = {
         add('open_span_carrier', `${spaceId}:${span?.id ?? '?'}`, 'open_span',
           'виртуальный проём не лежит на границе существующих комнат');
       }
-    }
-  }
-  return violations;
-}
-
-/**
- * Инвариант 1: запись толщины не исчезает.
- *
- * Сравнивается мультимножество значений `cm`, а не суммарная длина: ресайз
- * законно укорачивает стены, а склейка двух одинаковых записей законно
- * уменьшает их число. Незаконно ровно одно — исчезновение значения целиком,
- * как в #253, где 33 см пропали вместе с кладкой соседних комнат.
- *
- * `allowClear` — единственное исключение, и оно объявляется вызывающим:
- * пользователь очистил толщину явно.
- */
-export function checkWallRecordsPreserved(before, after, { allowClear = false } = {}) {
-  if (allowClear) return [];
-  const counts = (walls) => {
-    const map = new Map();
-    for (const wall of walls || []) {
-      if (!isFiniteNumber(wall?.cm) || !(wall.cm > 0)) continue;
-      const key = String(wall.cm);
-      map.set(key, (map.get(key) || 0) + 1);
-    }
-    return map;
-  };
-  const from = counts(before), to = counts(after);
-  const violations = [];
-  for (const [cm, was] of from) {
-    const now = to.get(cm) || 0;
-    if (now === 0) {
-      violations.push({
-        invariant: 'wall_records', kind: 'lost', owner: `${cm} см`,
-        reference: `было ${was}`, detail: 'записи этой толщины исчезли целиком',
-      });
     }
   }
   return violations;

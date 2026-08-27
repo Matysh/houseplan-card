@@ -90,7 +90,7 @@ const res = await page.evaluate(async () => {
     pointer('pointermove', handle, x, y + c._gridPitch);
     pointer('pointerup', handle, x, y + c._gridPitch);
     await c.updateComplete;
-    out.noDragStarted = !c._rszDrag && !c._rszPreview;
+    out.noDragStarted = !c._resize.dragging && !c._resize.preview;
     out.noHistoryCreated = (c._geometryHistory?.length || 0) === historyBefore;
     out.sourceUnchanged = JSON.stringify({
       rooms: sp().rooms, walls: sp().walls, openings: sp().openings,
@@ -134,7 +134,7 @@ const res = await page.evaluate(async () => {
     pointer('pointerdown', legacyHandle, x, y);
     pointer('pointermove', legacyHandle, x + c._gridPitch, y);
     await c.updateComplete;
-    out.legacyPreviewRejected = !!c._rszDrag && !c._rszPreview;
+    out.legacyPreviewRejected = c._resize.dragging && !c._resize.preview;
     pointer('pointerup', legacyHandle, x + c._gridPitch, y);
     await c.updateComplete;
     await new Promise((resolve) => setTimeout(resolve, 650));

@@ -123,15 +123,15 @@ Object.assign(out, await page.evaluate(async () => {
     const v0 = { ...c._viewOr(c._baseVb()) };
     const r = h.getBoundingClientRect();
     fire(h, 'pointerdown', 21, r.left + r.width / 2, r.top + r.height / 2);
-    o.resizeHandleTakesThePointer = !!c._rszDrag && c._panStart === null;
+    o.resizeHandleTakesThePointer = c._resize?.dragging === true && c._panStart === null;
     fire(h, 'pointermove', 21, r.left + r.width / 2 + 40, r.top + r.height / 2 + 40);
     const v1 = { ...c._viewOr(c._baseVb()) };
     o.resizeHandleDoesNotPan = Math.abs(v1.x - v0.x) < 0.5 && Math.abs(v1.y - v0.y) < 0.5;
-    o.resizeHandleResizes = !!c._rszDrag && c._rszDrag.moved === true;
+    o.resizeHandleResizes = c._resize?.dragging === true && c._resize.moved === true;
     c._rszCancelDrag?.();
     fire(h, 'pointerup', 21, r.left + r.width / 2 + 40, r.top + r.height / 2 + 40);
   }
-  c._rszSel = null;
+  c._resize?.selectRoom(null);
 
   // b) a device badge in the devices editor drags the DEVICE
   c._setMode('devices'); c._applyView(1); await c.updateComplete;

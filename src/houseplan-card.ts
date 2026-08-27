@@ -41,13 +41,16 @@ import {
   DECOR_TEXT_BASE,
 } from './logic';
 import {
-  resolveSafeResize, applySafeResize, clampSafeResize, validateSafeResize,
+  resolveSafeResize,
   coalesceResizeRooms,
-  safeResizePointerDisplacement,
   polyIsSimple, areaM2, formatArea, MIN_ROOM_CM,
   type SafeOpeningIn, type SafeResizeObstacle, type SafeResizeOptions,
   type SafeResizePlan, type SafeResizeReason, type SafeResizeResolution,
 } from './resize';
+import {
+  ResizeController,
+  type ResizeProjectionResult,
+} from './resize-controller';
 import {
   placeResizeAreaLabel, resizeMeasuredEdges,
   type ResizeAreaPlacement,
@@ -334,6 +337,9 @@ type ResizeLiveLabel = {
   text: string;
   placement: ResizeAreaPlacement;
 };
+type ResizePreview = { space: string; sp: any };
+type ResizeWallUnion = ReturnType<typeof wallBodiesUnionPath>;
+type ResizeWallArtifact = ReturnType<typeof wallBodiesGeometry>;
 const DISPLAY_LABEL_KEYS: Record<DeviceDisplayMode, I18nKey> = {
   badge: 'display.badge',
   icon_ripple: 'display.icon_ripple',
@@ -1669,32 +1675,10 @@ class HouseplanCard extends LitElement {
   private _glowScreenBlend = false;
   private _duplicateColumnId: string | null = null;
   private _duplicateColumnTimer = 0;
-  // room resize tool (docs/RESIZE.md): selection and an immutable live preview
-  private _rszSel: string | null = null;
-  private _rszDrag: {
-    pid: number;
-    start: [number, number];
-    roomId: string;
-    plan: SafeResizePlan;
-    opts: SafeResizeOptions;
-    rooms: { id: string; poly: number[][] }[];
-    openings: SafeOpeningIn[];
-    snap: string;
-    moved: boolean;
-    d: number;
-    changed: string[];
-    rejectNotified: boolean;
-    /** Exact pre-drag masonry retained so Cancel can restore the real frame
-     * without rebuilding the same expensive boolean union under a new epoch. */
-    wallUnionBefore: ReturnType<typeof wallBodiesUnionPath>;
-  } | null = null;
-  private _rszEligibilityCache: {
-    key: string;
-    values: Map<string, SafeResizeResolution>;
-  } | null = null;
-  /** HP-1550-01: the live resize preview, kept OUT of _serverCfg (see _rszApplyPreview). */
-  private _rszPreview: { space: string; sp: any } | null = null;
-  private _rszLive: ResizeLiveLabel[] | null = null;
+  // Room Resize orchestration is isolated from this Lit/config composition shell (#264).
+  private _resize = new ResizeController<
+    ResizePreview, ResizeLiveLabel[], SpaceGeometryState, ResizeWallUnion, ResizeWallArtifact
+  >();
   private _path: number[][] = []; // current outline (render units, vertices snapped to the grid)
   private _cursorPt: number[] | null = null;
   private _planSnapHover: {
@@ -2268,8 +2252,6 @@ class HouseplanCard extends LitElement {
     _physicalDrag: { state: true },
     _physicalRotate: { state: true },
     _duplicateColumnId: { state: true },
-    _rszSel: { state: true },
-    _rszLive: { state: true },
     _opMeasure: { state: true },
     _path: { state: true },
     _cursorPt: { state: true },
@@ -2647,7 +2629,7 @@ class HouseplanCard extends LitElement {
     }
     if (undo) {
       e.preventDefault();
-      if (this._rszDrag) {
+      if (this._resize.dragging) {
         this._rszCancelDrag();
         return;
       }
@@ -2700,13 +2682,13 @@ class HouseplanCard extends LitElement {
     }
     if (this._tool === 'resize') {
       e.preventDefault();
-      if (this._rszDrag) {
+      if (this._resize.dragging) {
         // Esc mid-drag: the immutable preview is simply discarded
         this._rszCancelDrag();
         return;
       }
-      if (this._rszSel) this._rszSel = null;
-      else this._tool = 'draw';
+      if (this._resize.escapeIdle() === 'exit-tool') this._tool = 'draw';
+      this.requestUpdate();
       return;
     }
     // Esc walks back out of merge/split: point by point, then the room pick,
@@ -3095,7 +3077,7 @@ class HouseplanCard extends LitElement {
     this._showHidden = vp.showHidden;
     if (this._showFar !== vp.showFar) { this._showFar = vp.showFar; this._frame = null; }
     this._selId = vp.selId;
-    this._rszSel = vp.rszSel;
+    this._resize.restoreSelection(vp.rszSel);
     this._decorSel = vp.decorSel;
     this._warmVpArmed = true; // _loadFromServer must not re-centre this
   }
@@ -3150,7 +3132,7 @@ class HouseplanCard extends LitElement {
       showHidden: this._showHidden,
       showFar: this._showFar,
       selId: this._selId,
-      rszSel: this._rszSel,
+      rszSel: this._resize.selectedRoomId,
       decorSel: this._decorSel,
     };
   }
@@ -6395,14 +6377,14 @@ class HouseplanCard extends LitElement {
     // HP-1550-01: while a resize drag is live, every render-path reader sees
     // the preview overlay; _writeConfig deliberately reads _serverCfg instead,
     // so a queued write can never pick the preview up.
-    const pv = this._rszPreview;
+    const pv = this._resize.preview;
     if (pv && pv.space === this._space) return pv.sp;
     return this._serverCfg?.spaces.find((s: any) => s.id === this._space);
   }
 
   /** The config AS RENDERED: _serverCfg with the live resize preview substituted in. */
   private get _renderCfg(): ServerConfig | null {
-    const pv = this._rszPreview;
+    const pv = this._resize.preview;
     if (!pv || !this._serverCfg) return this._serverCfg;
     return {
       ...this._serverCfg,
@@ -6689,10 +6671,7 @@ class HouseplanCard extends LitElement {
     this._physicalSel = null;
     this._physicalDialog = null;
     this._physicalDrag = null;
-    this._rszSel = null;
-    this._rszDrag = null;
-    this._rszLive = null;
-    this._rszPreview = null;
+    this._rszResetController();
     this._tip = null;
     this._hoverRoom = null;
     this._decorDraft = null;
@@ -6851,9 +6830,13 @@ class HouseplanCard extends LitElement {
     if (this._wallFaceBatch) this._roomDialogCancel();
     if (this._tool === 'draw' && !this._finishWallChain()) return;
     else this._cancelPath();
+    if (this._tool === 'resize') {
+      if (this._resize.dragging) this._rszCancelDrag();
+      else this._resize.reset();
+    }
     this._tool = tool;
     if (tool === 'draw') this._resumeLastDraft();
-    if (tool === 'resize') this._rszSel = null;
+    if (tool === 'resize') this._resize.selectRoom(null);
     if (tool === 'wallthick') this._wallDialog = null;
   }
 
@@ -7524,10 +7507,7 @@ class HouseplanCard extends LitElement {
     this._draftSegmentCms = [];
     this._closingWallCm = null;
     this._openingDialog = null;
-    this._rszSel = null;
-    this._rszDrag = null;
-    this._rszPreview = null;
-    this._rszLive = null;
+    this._rszResetController();
     this._decorDraft = null;
     this._decorMove = null;
     this._dtDrag = null;
@@ -7652,7 +7632,7 @@ class HouseplanCard extends LitElement {
       this._cancelDecorGesture();
       return;
     }
-    if (this._rszDrag) { this._rszCancelDrag(); return; }
+    if (this._resize.dragging) { this._rszCancelDrag(); return; }
     const command = this._geometryHistory.undo();
     if (!command) return;
     if (!this._applyGeometryState(command.before, true)) {
@@ -7674,7 +7654,7 @@ class HouseplanCard extends LitElement {
       this._cancelDecorGesture();
       return;
     }
-    if (this._rszDrag) { this._rszCancelDrag(); return; }
+    if (this._resize.dragging) { this._rszCancelDrag(); return; }
     const command = this._geometryHistory.redo();
     if (!command) return;
     if (!this._applyGeometryState(command.after, true)) {
@@ -7799,9 +7779,10 @@ class HouseplanCard extends LitElement {
     }
     if (this._tool === 'resize') {
       // a click picks the room for the scale frame; handle drags never get here
-      if (this._rszDrag || path.some((n) => n?.classList?.contains?.('rszhandle'))) return;
+      if (this._resize.dragging || path.some((n) => n?.classList?.contains?.('rszhandle'))) return;
       const room = [...space.rooms].reverse().find((r) => this._pointInRoom(raw, r));
-      this._rszSel = room?.id || null;
+      this._resize.selectRoom(room?.id || null);
+      this.requestUpdate();
       return;
     }
     if (this._tool === 'delroom') {
@@ -8782,30 +8763,32 @@ class HouseplanCard extends LitElement {
   private _rszResolution(
     roomId: string, edge: number, renderSnapshot?: string,
   ): SafeResizeResolution {
-    const snap = this._rszDrag?.snap || renderSnapshot || this._rszSnapshot();
+    const snap = this._resize.snapshotIdentity || renderSnapshot || this._rszSnapshot();
     const key = `${this._space}|${this._cellCm}|${this._gridPitch}|${snap}`;
-    if (!this._rszEligibilityCache || this._rszEligibilityCache.key !== key) {
-      this._rszEligibilityCache = { key, values: new Map() };
-    }
     const cacheKey = `${roomId}:${edge}`;
-    const cached = this._rszEligibilityCache.values.get(cacheKey);
-    if (cached) return cached;
-    const rooms = this._rszDrag?.rooms || this._rszRooms();
-    const room = rooms.find((candidate) => candidate.id === roomId);
-    const a = room?.poly?.[edge] || [0, 0];
-    const b = room?.poly?.[(edge + 1) % (room?.poly?.length || 1)] || [0, 0];
-    const result = resolveSafeResize(
-      rooms, this._rszDrag?.openings || this._rszOpenings(), roomId, edge,
-      this._rszOptsFor(a, b),
-    );
-    this._rszEligibilityCache.values.set(cacheKey, result);
-    return result;
+    return this._resize.resolve(key, cacheKey, () => {
+      const rooms = [...(this._resize.rooms || this._rszRooms())];
+      const room = rooms.find((candidate) => candidate.id === roomId);
+      const a = room?.poly?.[edge] || [0, 0];
+      const b = room?.poly?.[(edge + 1) % (room?.poly?.length || 1)] || [0, 0];
+      return resolveSafeResize(
+        rooms, [...(this._resize.openings || this._rszOpenings())], roomId, edge,
+        this._rszOptsFor(a, b),
+      );
+    });
   }
 
   private _rszSnapshot(): string {
     return JSON.stringify(this._geometrySnapshot() || {
       spaceId: this._space, rooms: [], openings: [], walls: [], open_spans: [],
     });
+  }
+
+  /** Lifecycle reset which cannot leave the memoized model on a discarded preview. */
+  private _rszResetController(): void {
+    const hadPreview = this._resize.preview !== null;
+    this._resize.reset();
+    if (hadPreview) this._cfgEpoch++;
   }
 
   /** Live preview of the candidate geometry, based on the immutable pre-drag snapshot —
@@ -8818,19 +8801,19 @@ class HouseplanCard extends LitElement {
    *  server before pointerup, and an Esc after that left the abandoned geometry
    *  persisted (reload resurrected it). Flushing the queue before the drag would
    *  not close it: the queued write reads the mutable config later anyway. The
-   *  live geometry therefore lives in the `_rszPreview` overlay; _curSpaceCfg /
+   *  live geometry therefore lives in the controller preview overlay; _curSpaceCfg /
    *  _renderCfg feed it to every render, and only _rszUp moves it into the real
    *  config — the single point where a resize becomes visible to _writeConfig. */
-  private _rszApplyPreview(
-    polys: Record<string, number[][]>, ops: Record<string, [number, number]>,
-  ): { ok: true } | {
-    ok: false;
-    reason: 'missing-context' | 'wall-metadata' | 'physical-geometry';
-  } {
-    const g = this._rszDrag;
+  private _rszProjectPreview(
+    snapshot: string,
+    polys: Record<string, number[][]>,
+    ops: Record<string, [number, number]>,
+    changedRoomIds: readonly string[],
+    sourceRooms: readonly { id: string; poly: number[][]; wall_ids?: string[] }[],
+  ): ResizeProjectionResult<ResizePreview, ResizeWallArtifact> {
     const real = this._serverCfg?.spaces.find((s: any) => s.id === this._space);
-    if (!g || !real || !this._serverCfg) return { ok: false, reason: 'missing-context' };
-    const s = JSON.parse(g.snap); // fresh deep copies every move — free to mutate
+    if (!real || !this._serverCfg) return { ok: false, reason: 'missing-context' };
+    const s = JSON.parse(snapshot); // fresh deep copies every move — free to mutate
     const sp: any = {
       ...real,
       rooms: s.rooms,
@@ -8863,8 +8846,8 @@ class HouseplanCard extends LitElement {
     // behind or accumulate rounding error during a long drag.
     const oldSpans: [number[], number[]][] = [];
     const newSpans: [number[], number[]][] = [];
-    for (const id of g.changed) {
-      const oldR = g.rooms.find((r) => r.id === id);
+    for (const id of changedRoomIds) {
+      const oldR = sourceRooms.find((r) => r.id === id);
       const nr = sp.rooms.find((x: any) => x.id === id);
       if (!oldR || !nr?.poly) continue;
       const newPoly = nr.poly.map((p: number[]) => [p[0] * NORM_W, p[1] * H] as number[]);
@@ -8894,16 +8877,6 @@ class HouseplanCard extends LitElement {
         if (rekeyed.rejected) return { ok: false, reason: 'wall-metadata' };
         sp.walls = rekeyed.walls;
       }
-    }
-    // Rekeying may change coordinates/keys, never the number or physical
-    // thicknesses of persisted records. A lossy mapping is a stopped preview.
-    const wallThicknesses = (walls: any[]) => walls
-      .map((wall: any) => Number(wall.cm))
-      .sort((a: number, b: number) => a - b);
-    const beforeWallCms = wallThicknesses(s.walls || []);
-    const afterWallCms = wallThicknesses(sp.walls || []);
-    if (JSON.stringify(beforeWallCms) !== JSON.stringify(afterWallCms)) {
-      return { ok: false, reason: 'wall-metadata' };
     }
     const wallCarriers: [number[], number[]][] = [];
     for (const room of sp.rooms || []) {
@@ -8945,22 +8918,33 @@ class HouseplanCard extends LitElement {
     if (!preflight.ok) {
       return { ok: false, reason: 'physical-geometry' };
     }
-    this._rszPreview = { space: this._space, sp };
+    return {
+      ok: true,
+      value: {
+        preview: { space: this._space, sp },
+        beforeWalls: s.walls || [],
+        afterWalls: sp.walls || [],
+        artifact: preflight.wallGeometry,
+      },
+    };
+  }
+
+  /** Publish one controller-accepted preview and retain its validated masonry pass. */
+  private _rszAcceptPreview(
+    preview: ResizePreview | null, wallGeometry: ResizeWallArtifact | null,
+  ): void {
     this._cfgEpoch++;
-    if (preflight.wallGeometry) {
-      const projected = wallBodiesGeometryPath(preflight.wallGeometry);
-      if (projected) {
-        const key = `${this._space}|${this._cfgEpoch}|${sp.rooms.length}`;
-        Object.defineProperty(projected, 'sourceFingerprint', {
-          value: contentFingerprint([sp, this._cellCm, this._gridPitch]),
-          enumerable: false,
-        });
-        const entry = { key, value: projected };
-        lruWrite(this._wallUnionPool, key, entry, 8);
-        this._wallUnionCache = entry;
-      }
-    }
-    return { ok: true };
+    if (!preview || !wallGeometry) return;
+    const projected = wallBodiesGeometryPath(wallGeometry);
+    if (!projected) return;
+    const key = `${this._space}|${this._cfgEpoch}|${preview.sp.rooms.length}`;
+    Object.defineProperty(projected, 'sourceFingerprint', {
+      value: contentFingerprint([preview.sp, this._cellCm, this._gridPitch]),
+      enumerable: false,
+    });
+    const entry = { key, value: projected };
+    lruWrite(this._wallUnionPool, key, entry, 8);
+    this._wallUnionCache = entry;
   }
 
   /** Validate once and retain the exact geometry pass for the preview render. */
@@ -9002,12 +8986,12 @@ class HouseplanCard extends LitElement {
 
   /** Final identity guard for the exact overlay already shown to the user. */
   private _rszCandidateRenderable(preview: { space: string; sp: any } | null): boolean {
-    return !!preview && preview.space === this._space && this._rszPreview === preview
+    return !!preview && preview.space === this._space
       && this._rszSpaceCandidateRenderable(preview.space, preview.sp);
   }
 
   private _rszEdgeDown(ev: PointerEvent, roomId: string, edge: number): void {
-    if (this._tool !== 'resize' || this._rszDrag) return;
+    if (this._tool !== 'resize' || this._resize.dragging) return;
     ev.stopPropagation();
     ev.preventDefault();
     const rooms = this._rszRooms();
@@ -9022,13 +9006,14 @@ class HouseplanCard extends LitElement {
     const wallUnionKey = `${this._space}|${this._cfgEpoch}|${rooms.length}`;
     const wallUnionBefore = this._wallUnionCache?.key === wallUnionKey
       ? this._wallUnionCache.value : null;
-    this._rszDrag = {
-      pid: ev.pointerId, start: [start[0], start[1]], roomId, plan,
-      opts: this._rszOptsFor(plan.a, plan.b),
-      rooms, openings: this._rszOpenings(), snap: this._rszSnapshot(),
-      moved: false, d: 0, changed: [...plan.roomIds], rejectNotified: false,
+    const snapshotIdentity = this._rszSnapshot();
+    this._resize.begin({
+      pointerId: ev.pointerId, start: [start[0], start[1]], roomId, plan,
+      options: this._rszOptsFor(plan.a, plan.b), rooms,
+      openings: this._rszOpenings(), snapshotIdentity,
+      before: JSON.parse(snapshotIdentity) as SpaceGeometryState,
       wallUnionBefore,
-    };
+    });
   }
 
   private _rszReasonText(reason: SafeResizeReason): string {
@@ -9047,72 +9032,60 @@ class HouseplanCard extends LitElement {
   }
 
   private _rszMove(ev: PointerEvent): void {
-    const g = this._rszDrag;
-    if (!g || g.pid !== ev.pointerId) return;
+    if (!this._resize.ownsPointer(ev.pointerId)) return;
     ev.stopPropagation();
     const p = this._svgPoint(ev);
-    const plan = g.plan;
-    const dRaw = safeResizePointerDisplacement(g.start, p, plan.n);
-    // the moved wall LINE lands on the grid, like every drawn wall
-    const sn = this._snap([plan.a[0] + plan.n[0] * dRaw, plan.a[1] + plan.n[1] * dRaw]);
-    const wanted = (sn[0] - plan.a[0]) * plan.n[0] + (sn[1] - plan.a[1]) * plan.n[1];
-    let d = clampSafeResize(g.rooms, g.openings, plan, wanted, this._gridPitch, g.opts);
-    if (d === g.d && g.moved) return;
-    const previousPreview = this._rszPreview;
-    const previousLive = this._rszLive;
-    const previousD = g.d;
-    let res = applySafeResize(g.rooms, g.openings, plan, d);
-    const previewResult = this._rszApplyPreview(res.polys, res.openings);
-    if (!previewResult.ok) {
+    const result = this._resize.move({
+      pointerId: ev.pointerId,
+      point: [p[0], p[1]],
+      step: this._gridPitch,
+      snap: (point) => {
+        const snapped = this._snap(point);
+        return [snapped[0], snapped[1]];
+      },
+      project: (snapshot, polys, openings, changedRoomIds, rooms) =>
+        this._rszProjectPreview(snapshot, polys, openings, changedRoomIds, rooms),
+      publish: (preview, artifact) => this._rszAcceptPreview(preview, artifact),
+      measure: (candidate, plan) => this._rszEdgeLabels(candidate, plan),
+    });
+    if (result.kind === 'rejected') {
       // Persistence metadata is part of the geometry transaction. If wall or
       // virtual-span rekeying would be lossy, keep the last complete preview:
       // the pointer visibly stops there and pointerup can commit only that
       // already-rendered safe candidate.
-      this._rszPreview = previousPreview;
-      this._rszLive = previousLive;
-      g.d = previousD;
-      if (!g.rejectNotified) {
-        g.rejectNotified = true;
+      if (result.notify) {
         this._showToast(this._t('resize.preview_failed'));
       }
       this.requestUpdate();
       return;
     }
-    g.moved = true;
-    g.changed = [...plan.roomIds];
-    g.d = d;
-    this._rszLive = this._rszEdgeLabels(res, plan);
-    this.requestUpdate();
+    if (result.kind === 'accepted') this.requestUpdate();
   }
 
   private _rszUp(ev: PointerEvent): void {
-    const g = this._rszDrag;
-    if (!g || g.pid !== ev.pointerId) return;
+    if (!this._resize.ownsPointer(ev.pointerId)) return;
     ev.stopPropagation();
-    const preview = this._rszPreview;
-    const wantedCommit = g.moved && Math.abs(g.d) > 1e-9;
-    const snapshotStillCurrent = this._rszSnapshot() === g.snap;
-    const topologyValid = validateSafeResize(g.rooms, g.openings, g.plan, g.d, g.opts);
-    const candidateValid = this._rszCandidateRenderable(preview);
-    this._rszDrag = null;
-    this._rszLive = null;
-    this._rszPreview = null; // the overlay is gone either way; renders read the real config again
-    if (!wantedCommit || !preview) {
+    const result = this._resize.finish({
+      pointerId: ev.pointerId,
+      currentSnapshotIdentity: this._rszSnapshot(),
+      validatePreview: (preview) => this._rszCandidateRenderable(preview),
+    });
+    if (result.kind === 'no-op') {
       // HP-1550-01: nothing to restore — the preview never touched the config
       this._cfgEpoch++;
       this.requestUpdate();
       return;
     }
-    if (!snapshotStillCurrent || !topologyValid || !candidateValid) {
+    if (result.kind === 'rejected') {
       this._cfgEpoch++;
       this._showToast(this._t('resize.commit_failed'));
       this.requestUpdate();
       return;
     }
-    const before = JSON.parse(g.snap) as SpaceGeometryState;
     // Commit the exact preview in one step. No simplify/rebuild pass is allowed:
     // preview and persistence share the same fixed-topology candidate.
-    const sp = this._curSpaceCfg;
+    const preview = result.preview;
+    const sp = this._serverCfg?.spaces.find((space: any) => space.id === preview.space);
     if (sp) {
       sp.rooms = preview.sp.rooms;
       sp.openings = preview.sp.openings;
@@ -9125,22 +9098,17 @@ class HouseplanCard extends LitElement {
     // the click synthesized after the drag must not re-pick the selection
     this._suppressClick = true;
     setTimeout(() => (this._suppressClick = false), 0);
-    this._commitPhysicalGeometry(this._t('history.resize_room'), before);
-    this._rszEligibilityCache = null;
+    this._commitPhysicalGeometry(this._t('history.resize_room'), result.before);
     this.requestUpdate();
   }
 
-  private _rszCancelDrag(): void {
-    const g = this._rszDrag;
-    if (!g) return;
-    const snapshotStillCurrent = this._rszSnapshot() === g.snap;
-    this._rszDrag = null;
-    this._rszLive = null;
+  private _rszCancelDrag(pointerId?: number): void {
+    const result = this._resize.cancel(this._rszSnapshot(), pointerId);
+    if (result.kind === 'no-op') return;
     // HP-1550-01/-03: a cancel just drops the overlay — the real config was
     // never touched, so there is nothing to restore, no undo step and no write
-    this._rszPreview = null;
     this._cfgEpoch++;
-    if (snapshotStillCurrent && g.wallUnionBefore) {
+    if (result.restoreWallUnion) {
       // The server-backed geometry did not change during the gesture. The
       // preview advanced the structural epoch and temporarily selected its
       // candidate union, but Cancel returns to the byte-identical pre-drag
@@ -9149,7 +9117,7 @@ class HouseplanCard extends LitElement {
       const space = this._spaceModel();
       if (space) {
         const key = `${this._space}|${this._cfgEpoch}|${space.rooms.length}`;
-        const entry = { key, value: g.wallUnionBefore };
+        const entry = { key, value: result.restoreWallUnion };
         lruWrite(this._wallUnionPool, key, entry, 8);
         this._wallUnionCache = entry;
       }
@@ -9163,18 +9131,19 @@ class HouseplanCard extends LitElement {
    *  guard also absorbs the lostpointercapture that follows a normal pointerup
    *  or a pointercancel (the drag is already gone — no double cancel/commit). */
   private _rszPointerCancel(ev: PointerEvent): void {
-    const g = this._rszDrag;
-    if (!g || g.pid !== ev.pointerId) return;
+    if (!this._resize.ownsPointer(ev.pointerId)) return;
     ev.stopPropagation();
-    this._rszCancelDrag();
+    this._rszCancelDrag(ev.pointerId);
   }
 
   private _rszEdgeLabels(
     res: { polys: Record<string, number[][]> }, plan: SafeResizePlan,
+    sourceRooms: readonly { id: string; poly: number[][] }[] | null = this._resize.rooms,
   ): ResizeLiveLabel[] {
-    const g = this._rszDrag!;
+    const rooms = sourceRooms;
     const labels: ResizeLiveLabel[] = [];
-    const own = res.polys[plan.roomId] || g.rooms.find((r) => r.id === plan.roomId)!.poly;
+    const own = res.polys[plan.roomId] || rooms?.find((r) => r.id === plan.roomId)!.poly;
+    if (!own || !rooms) return labels;
     const n = own.length;
     // Длины — между внутренними гранями, как и площадь ниже (#233). Раньше
     // здесь считалась осевая длина, и одно облачко подписей несло две разные
@@ -9226,7 +9195,7 @@ class HouseplanCard extends LitElement {
       0.55 + 0.35 * 0.42 + 0.76 + Math.max(1, gearText.length) * 0.66 * 0.42
     );
     for (const id of ids) {
-      const poly = res.polys[id] || g.rooms.find((r) => r.id === id)!.poly;
+      const poly = res.polys[id] || rooms.find((r) => r.id === id)!.poly;
       // The preview is already the active render model. Reuse the same shared
       // masonry union + contour cache that the following render consumes;
       // rebuilding both independently here doubled one Resize frame.
@@ -9284,9 +9253,10 @@ class HouseplanCard extends LitElement {
 
   /** Pointer-inert measurement ink above masonry and below openings/handles. */
   private _renderResizeMeasurements(): TemplateResult | typeof nothing {
-    if (!this._rszLive?.length) return nothing;
-    const lengths = this._rszLive.filter((label) => label.kind === 'length');
-    const areas = this._rszLive.filter((label) => label.kind === 'area');
+    const live = this._resize.liveLabels;
+    if (!live?.length) return nothing;
+    const lengths = live.filter((label) => label.kind === 'length');
+    const areas = live.filter((label) => label.kind === 'area');
     return svg`<g class="rszmeasurelayer" aria-hidden="true" pointer-events="none">
       ${lengths.map((label, index) => svg`<g class="rszmeasuredge"
           data-hp="resize-measured-edge" data-edge-index=${index}>
@@ -9322,7 +9292,7 @@ class HouseplanCard extends LitElement {
     // for every handle in this frame, so compute it once per layer render —
     // never once per room edge. During a drag the immutable gesture snapshot
     // remains authoritative inside _rszResolution.
-    const renderSnapshot = this._rszDrag?.snap || this._rszSnapshot();
+    const renderSnapshot = this._resize.snapshotIdentity || this._rszSnapshot();
     for (const r of rooms) {
       for (let i = 0; i < r.poly.length; i++) {
         const a = r.poly[i], b = r.poly[(i + 1) % r.poly.length];
@@ -14221,7 +14191,7 @@ class HouseplanCard extends LitElement {
     }
     const roomKey = room.id || `#${space.rooms.indexOf(room)}`;
     const key = `${space.id}|${this._cfgEpoch}|${roomKey}`;
-    if (!this._rszPreview) {
+    if (!this._resize.preview) {
       const cached = lruRead(this._cleanFloorCache, key);
       if (cached.hit) return cached.value;
     }
@@ -14239,7 +14209,7 @@ class HouseplanCard extends LitElement {
       path: geom ? polyclipPathD(geom) : '',
       area: geom ? geometryArea(geom) : geometryArea([[[...floor, floor[0]]]]),
     };
-    if (!this._rszPreview) {
+    if (!this._resize.preview) {
       lruWrite(this._cleanFloorCache, key, result, 600);
     }
     return result;
@@ -17717,7 +17687,7 @@ class HouseplanCard extends LitElement {
                    picture with transparency and no rooms under it shows the
                    scene through, which is the deliberate consequence.
                    `space` comes from _renderCfg, so a live resize preview
-                   (_rszPreview) moves the paper together with the rooms.
+                   controller preview moves the paper together with the rooms.
                    One <g> around ALL paper shapes: the external day-cycle outline
                    (styles.ts) is composited once for the whole sheet, so
                    adjacent rooms never cast seams onto each other's paper. */}
@@ -17989,8 +17959,8 @@ class HouseplanCard extends LitElement {
           ${this._measureAnchor
             ? html`<div class="measurelayer">${this._renderMeasureLabel(view)}</div>`
             : nothing}
-          ${this._rszLive
-            ? html`<div class="measurelayer">${this._rszLive.map((l) => html`<div
+          ${this._resize.liveLabels
+            ? html`<div class="measurelayer">${this._resize.liveLabels?.map((l) => html`<div
                 class="measurelabel ${l.kind === 'area' ? 'rszarea' : 'rszlength'}"
                 data-hp=${l.kind === 'area' ? 'resize-area-label' : 'resize-length-label'}
                 data-room=${l.kind === 'area' ? l.roomId : nothing}

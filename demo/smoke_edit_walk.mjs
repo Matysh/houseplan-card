@@ -201,13 +201,13 @@ const dragHandle = (roomId, edge, mid, steps) => page.evaluate(
       target: card._stageEl, preventDefault() {}, stopPropagation() {},
     });
     card._rszEdgeDown(ev(clientX, clientY), roomId, edge);
-    if (!card._rszDrag) return 'жест не начался';
-    const plan = card._rszDrag.plan;
+    if (!card._resize?.dragging) return 'жест не начался';
+    const plan = card._resize.plan;
     const shift = card._gridPitch * steps;
     const dx = plan.n[0] * shift / perClientX;
     const dy = plan.n[1] * shift / perClientY;
     card._rszMove(ev(clientX + dx, clientY + dy));
-    const moved = !!card._rszDrag?.moved;
+    const moved = card._resize?.moved === true;
     card._rszUp(ev(clientX + dx, clientY + dy));
     card.requestUpdate();
     await card.updateComplete;

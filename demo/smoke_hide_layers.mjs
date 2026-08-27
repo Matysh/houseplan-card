@@ -156,7 +156,7 @@ const rad = await page.evaluate(async () => {
   // #277 removed the Resize corner scale frame entirely; Backdrop keeps its
   // own independent handle/bead contract above.
   c._setMode('plan'); c._tool = 'resize';
-  c._rszSel = (c._curSpaceCfg.rooms || [])[0]?.id || null;
+  c._resize.selectRoom((c._curSpaceCfg.rooms || [])[0]?.id || null);
   c._cfgEpoch++; c.requestUpdate(); await c.updateComplete;
   o.rszLegacyCornersAbsent = !sr().querySelector('.rszcorner, .rszknob, .rszframe');
   c._setMode('view');

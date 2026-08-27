@@ -5,6 +5,9 @@ import { readAllStylesSource } from './styles-source.mjs';
 
 const card = fs.readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
 const resize = fs.readFileSync(new URL('../src/resize.ts', import.meta.url), 'utf8');
+const controller = fs.readFileSync(new URL('../src/resize-controller.ts', import.meta.url), 'utf8');
+const wallInvariant = fs.readFileSync(new URL('../src/wall-record-preservation.ts', import.meta.url), 'utf8');
+const invariantCli = fs.readFileSync(new URL('../scripts/model-invariants.mjs', import.meta.url), 'utf8');
 const styles = readAllStylesSource();
 const en = JSON.parse(fs.readFileSync(new URL('../src/i18n/en.json', import.meta.url), 'utf8'));
 const ru = JSON.parse(fs.readFileSync(new URL('../src/i18n/ru.json', import.meta.url), 'utf8'));
@@ -16,7 +19,7 @@ test('#277 production controller reaches only fixed-topology Resize', () => {
     'simplifyPoly(',
   ]) assert.equal(card.includes(removed), false, `${removed} remains reachable in the card`);
   for (const required of ['resolveSafeResize', 'applySafeResize', 'clampSafeResize', 'validateSafeResize']) {
-    assert.equal(card.includes(required), true, `${required} is missing from the controller`);
+    assert.equal((card + controller).includes(required), true, `${required} is missing from the controller path`);
   }
 });
 
@@ -49,7 +52,7 @@ test('#292 audit and production render share one resolver and reason contract', 
   const audit = resize.match(/export function auditSafeResizeEligibility[\s\S]*?\n}\n\n\/\*\* Apply/);
   assert.ok(audit, 'eligibility audit source is missing');
   assert.match(audit[0], /resolveSafeResize\(/);
-  assert.match(card, /const result = resolveSafeResize\(/);
+  assert.match(card, /return resolveSafeResize\(/);
   assert.match(resize, /export type SafeResizeReason = typeof SAFE_RESIZE_REASONS\[number\]/);
   assert.doesNotMatch(audit[0], /sideEdgesArePerpendicular|validateSafeResize|obstacleOverlaysMovingEdge/,
     'the audit must not grow a second eligibility implementation');
@@ -70,11 +73,10 @@ test('#292 disabled explanations are human-readable and only unconditional repai
 });
 
 test('#277 a lossy persistence rekey stops at the last complete preview', () => {
-  assert.match(card, /JSON\.stringify\(beforeWallCms\) !== JSON\.stringify\(afterWallCms\)/);
-  assert.match(card, /const previewResult = this\._rszApplyPreview\(res\.polys, res\.openings\)/);
-  assert.match(card, /if \(!previewResult\.ok\)/);
-  assert.match(card, /this\._rszPreview = previousPreview/);
-  assert.match(card, /g\.d = previousD/);
+  assert.match(controller, /checkWallRecordsPreserved\([\s\S]*?exactMultiplicity: true/);
+  assert.match(controller, /return this\._projectionRejected\(session\)/);
+  assert.match(controller, /const previous = session\.accepted/);
+  assert.match(controller, /session\.accepted = previous/);
 });
 
 test('#298 production carrier proof uses room edges, never independent partitions', () => {
@@ -88,7 +90,23 @@ test('#298 production carrier proof uses room edges, never independent partition
 });
 
 test('#277 Resize render fingerprints geometry once for the whole handle layer', () => {
-  assert.match(card, /const renderSnapshot = this\._rszDrag\?\.snap \|\| this\._rszSnapshot\(\)/);
+  assert.match(card, /const renderSnapshot = this\._resize\.snapshotIdentity \|\| this\._rszSnapshot\(\)/);
   assert.match(card, /this\._rszResolution\(r\.id, i, renderSnapshot\)/);
   assert.doesNotMatch(card, /const resolution = this\._rszResolution\(r\.id, i\);/);
+});
+
+test('#264 Resize controller is the sole mutable gesture owner', () => {
+  for (const mirror of ['_rszSel', '_rszDrag', '_rszPreview', '_rszLive', '_rszEligibilityCache']) {
+    assert.equal(card.includes(`private ${mirror}`), false, `${mirror} remains a root state mirror`);
+  }
+  assert.match(card, /new ResizeController</);
+  assert.match(controller, /class ResizeController/);
+  assert.doesNotMatch(controller, /LitElement|PointerEvent|requestUpdate|_serverCfg|_writeConfig/);
+});
+
+test('#264 runtime and CLI share one wall-record preservation algorithm', () => {
+  assert.match(controller, /from '\.\/wall-record-preservation'/);
+  assert.match(invariantCli, /from '\.\.\/test-build\/wall-record-preservation\.js'/);
+  assert.doesNotMatch(invariantCli, /function checkWallRecordsPreserved/);
+  assert.equal((wallInvariant.match(/function checkWallRecordsPreserved/g) || []).length, 1);
 });

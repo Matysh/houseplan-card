@@ -591,7 +591,11 @@ handles. `clampSafeResize` explores grid deltas contiguously from zero and
 memoizes exact checks in a weak, per-plan, 4096-entry cache, so an irregular
 pair stops at its first corner and cannot jump through it.
 
-The controller rebuilds every live candidate from one immutable
+`src/resize-controller.ts` is the sole owner of Resize selection, gesture,
+accepted preview, live labels and eligibility-cache state. The card remains a
+DOM/render/persistence adapter: it supplies immutable snapshots and pure
+callbacks, then applies only the controller's accepted commit result. The
+controller rebuilds every live candidate from one immutable
 `SpaceGeometryState`. `rekeyWallsAfterMove()` maps exact wall-owned records
 into that overlay;
 partitions, drafts, columns, decor and plan transform stay byte-equivalent.
@@ -600,7 +604,11 @@ translate all breakpoints, while length-changing side edges move only proven
 old-vertex → new-vertex endpoints. Before the overlay is accepted, the union of
 collinear room/partition carriers must cover every new exact wall record and no
 new lattice/carrier violation may appear. Historical invalid records are
-compared as an exact multiset rather than repaired during an unrelated Resize.
+compared through the shared production helper in
+`src/wall-record-preservation.ts`, rather than repaired during an unrelated
+Resize. The controller uses exact multiplicity for every finite centimetre
+value, including `cm: 0`; the CLI migration/invariant adapter keeps its
+historical positive-value presence check.
 The renderer's canonical wall/floor result for the final preview cfg epoch is
 the pointerup preflight result. Success copies that exact overlay once and
 records one Undo/save; there is no commit-time simplify/degrade/reconstruction.

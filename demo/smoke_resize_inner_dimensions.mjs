@@ -72,13 +72,13 @@ const res = await page.evaluate(async () => {
   out.noCentrelineSpan = !!spans
     && !spans.some((s) => Math.abs(s - 300) < 0.5 || Math.abs(s - 400) < 0.5);
 
-  // The two useful side-wall bubbles, called the way `_rszLive` calls them.
-  c._rszSel = 'r233';
-  c._rszDrag = { rooms: c._spaceModel().rooms.map((r) => ({ id: r.id, poly: r.poly })) };
+  // The two useful side-wall bubbles, called with the controller's room snapshot.
+  const resizeRooms = c._spaceModel().rooms.map((r) => ({ id: r.id, poly: r.poly }));
   await upd();
   const drag = c._rszEdgeLabels(
     { polys: { r233: render } },
     { roomId: 'r233', edge: 0, roomIds: ['r233'], edgeByRoom: { r233: 0 } },
+    resizeRooms,
   );
   const dragLens = drag.filter((l) => l.kind === 'length').map((l) => num(l.text));
   out.dragLabelsTwoSideEdges = dragLens.length === 2;
@@ -90,8 +90,7 @@ const res = await page.evaluate(async () => {
   out.legacyScaleLabelsAbsent = typeof c._rszScaleLabels === 'undefined';
   out.legacyCornerHandlesAbsent = !sr.querySelector('.rszcorner');
 
-  c._rszDrag = null;
-  c._rszSel = null;
+  c._resize.reset();
   c._tool = null;
   c._serverCfg = savedConfig;
   c._modelCache = null; c._frame = null;

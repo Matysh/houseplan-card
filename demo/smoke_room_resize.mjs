@@ -10,10 +10,7 @@ const enter = async (tool = 'resize') => {
     const card = window.__card;
     if (!card._markup) card._setMode('plan');
     card._tool = next;
-    card._rszDrag = null;
-    card._rszPreview = null;
-    card._rszLive = null;
-    card._rszEligibilityCache = null;
+    card._resize.reset();
     card.requestUpdate();
     return card.updateComplete;
   }, tool);
@@ -39,7 +36,7 @@ const setRooms = async (rooms, openings = [], walls = []) => {
     delete space.room_drafts;
     delete space.wall_columns;
     card._geometryHistory.clear();
-    card._rszEligibilityCache = null;
+    card._resize.reset();
     card._cfgEpoch++;
     card.requestUpdate();
     return card.updateComplete;
@@ -113,7 +110,7 @@ check('safe_resize.shared_enabled_handles', await page.evaluate(() =>
 const [sx, sy] = await screenPt(400, 250);
 const [tx] = await screenPt(450, 250);
 await pointer('pointerdown', sx, sy, { cx: 400, cy: 250 });
-check('safe_resize.drag_started', await page.evaluate(() => !!window.__card._rszDrag), true);
+check('safe_resize.drag_started', await page.evaluate(() => window.__card._resize.dragging), true);
 await pointer('pointermove', tx, sy);
 await settle();
 check('safe_resize.preview_moved', Math.abs((await edgeX('left', 1, true)) - 450) < 6, true);
@@ -187,7 +184,7 @@ check('safe_resize.disabled_space_reason', disabledActivation.space, disabledAct
 const [dx, dy] = await screenPt(331, 245);
 await pointer('pointerdown', dx, dy, { cx: 331, cy: 245, pointerId: 78 });
 await settle();
-check('safe_resize.disabled_no_drag', await page.evaluate(() => window.__card._rszDrag), null);
+check('safe_resize.disabled_no_drag', await page.evaluate(() => window.__card._resize.dragging), false);
 check('safe_resize.disabled_zero_history', await page.evaluate(() => window.__card._geometryHistory.size), historyBefore);
 check('safe_resize.disabled_zero_write', await page.evaluate(() => {
   const card = window.__card;
@@ -223,7 +220,7 @@ await pointer('pointerdown', mx, my, { cx: 100, cy: 928, pointerId: 82 });
 await pointer('pointermove', mx, mixed43, { pointerId: 82 });
 await pointer('pointerup', mx, mixed43, { pointerId: 82 });
 await settle();
-check('safe_resize.mixed_role_no_drag', await page.evaluate(() => window.__card._rszDrag), null);
+check('safe_resize.mixed_role_no_drag', await page.evaluate(() => window.__card._resize.dragging), false);
 check('safe_resize.mixed_role_geometry_exact', JSON.stringify(await roomPoly('mixed-main')), mixedBefore);
 check('safe_resize.mixed_role_zero_write', await page.evaluate(() => window.__card._geometryHistory.size), 0);
 

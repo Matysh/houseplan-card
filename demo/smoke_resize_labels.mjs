@@ -32,7 +32,7 @@ const result = await page.evaluate(async () => {
   delete space.partitions;
   delete space.room_drafts;
   delete space.wall_columns;
-  card._rszEligibilityCache = null;
+  card._resize.reset();
   await update();
 
   const handle = [...card.renderRoot.querySelectorAll('.rszhandle')]
@@ -57,10 +57,10 @@ const result = await page.evaluate(async () => {
   dispatch('pointermove', tx, sy);
   await update();
 
-  const live = card._rszLive || [];
+  const live = card._resize?.liveLabels || [];
   const lengths = live.filter((label) => label.kind === 'length');
   const areas = live.filter((label) => label.kind === 'area');
-  out.dragStarted = !!card._rszDrag;
+  out.dragStarted = card._resize?.dragging === true;
   out.twoLengths = lengths.length === 2;
   out.movingWallLengthAbsent = lengths.every((label) =>
     Math.abs(label.edge.a[0] - label.edge.b[0]) > 1);
@@ -93,7 +93,7 @@ const result = await page.evaluate(async () => {
 
   dispatch('pointerup', tx, sy);
   await update();
-  out.cleanedAfterCommit = card._rszLive === null
+  out.cleanedAfterCommit = card._resize?.liveLabels === null
     && card.renderRoot.querySelectorAll('[data-hp^="resize-"]').length === 0;
 
   // Repeat the actual browser gesture at a non-default zoom. The footprint is
@@ -102,7 +102,7 @@ const result = await page.evaluate(async () => {
     rectRoom('label-left', 200, 100, 300, 500),
     rectRoom('label-right', 300, 100, 400, 500),
   ];
-  card._rszEligibilityCache = null;
+  card._resize.reset();
   card._zoomAt(stage.clientWidth / 2, stage.clientHeight / 2, 2);
   await update();
   const zoomHandle = [...card.renderRoot.querySelectorAll('.rszhandle')]
@@ -138,7 +138,7 @@ const result = await page.evaluate(async () => {
   });
   zoomDispatch('pointercancel', ztx, zsy);
   await update();
-  out.cleanedAfterZoomCancel = card._rszLive === null;
+  out.cleanedAfterZoomCancel = card._resize?.liveLabels === null;
   return out;
 });
 

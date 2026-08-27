@@ -2074,6 +2074,14 @@ require hands on real hardware — they remain for the human pass.
 
 ## Room resize (docs/RESIZE.md)
 
+- [ ] `ResizeController` is the sole owner of selection, gesture, preview,
+      labels and eligibility cache. The card is only the DOM/render/persistence
+      adapter; controller state-machine unit tests cover foreign pointers,
+      repeated deltas, rejection rollback, cancel and exact commit
+- [ ] One production wall-record preservation helper serves Resize and the
+      invariant CLI. Resize checks exact multiplicity for every finite value,
+      including `cm: 0`; the CLI keeps positive-value presence semantics
+      [unit: wall-record-preservation + resize-controller]
 - [ ] The «Размер» tool appears in the Plan editor toolbar; in EVERY other
       tool (and in Devices/Decor/View) there is not a single `.rszhandle`
 - [ ] Every edge has a finger-sized midpoint handle. Eligible handles capture
@@ -2140,7 +2148,8 @@ require hands on real hardware — they remain for the human pass.
       a warm Resize layer takes one geometry snapshot per frame and stays at
       p95 ≤25 ms
 - [ ] Six Resize mutants are caught: axis eligibility, third-room cascade,
-      topology signature, side ownership, physical jamb and commit preflight
+      topology signature, side ownership, physical jamb and controller commit
+      preflight
 - [ ] The test-only Resize eligibility audit calls the production resolver,
       pins exact post-Optimize totals/reason counts and per-handle identities
       for both real-plan fixtures, and reports stable handle ids when the

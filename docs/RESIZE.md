@@ -54,6 +54,13 @@ the two tracked real-plan fixtures pin the post-Optimize result edge by edge.
 
 ## Pure pipeline
 
+`src/resize-controller.ts` owns the complete interaction state machine:
+selection, pointer ownership, immutable gesture snapshot, accepted preview,
+live labels and the bounded eligibility cache. `houseplan-card.ts` only adapts
+DOM events, rendering and persistence. A rejected move restores the last
+accepted candidate, and cancel/foreign-pointer paths cannot leak provisional
+geometry into the root configuration.
+
 The production controller reaches only four pure operations in `src/resize.ts`:
 
 1. `resolveSafeResize(rooms, openings, roomId, edge, options)` captures the
@@ -160,6 +167,11 @@ post-render rectangles at default and non-default zoom.
 snapshot to the fixed-topology candidate. Physical centimetre values and open
 span count must survive; the production geometry check is fail-closed.
 
+`src/wall-record-preservation.ts` is the single wall-record preservation
+implementation used by both production Resize and the model-invariant CLI.
+Resize requests exact multiplicity for every finite value, including `cm: 0`;
+the CLI intentionally preserves its older positive-value presence semantics.
+
 Safe Resize uses endpoint correspondence, not the historical affine mapping.
 Every breakpoint follows a moving wall by one rigid translation. On a side wall
 whose length changes, only the old topology endpoint moves to its paired new
@@ -208,7 +220,11 @@ building the preview frame itself.
 - `test/fixtures/289-mixed-role-resize.json`: the anonymized 43-step regression
   whose two shared side walls would otherwise gain outer continuations;
 - `test/resize-production-path.test.mjs`: old handlers unreachable, corner
-  frame absent and all reasons localized;
+  frame absent, one controller boundary and all reasons localized;
+- `test/resize-controller.test.mjs`: selection, pointer ownership, accepted
+  preview rollback, cancellation and exact commit state-machine behaviour;
+- `test/wall-record-preservation.test.mjs`: shared presence/exact-multiplicity
+  invariant semantics, including zero-thickness records;
 - `demo/smoke_room_resize.mjs`: production bundle pointer handlers,
   preview/commit/Undo, disabled accessibility, real fixture topology,
   production-preflight failure and cancellation;

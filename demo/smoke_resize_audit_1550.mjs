@@ -36,9 +36,8 @@ const snap = await page.evaluate(() => JSON.stringify(window.__card._serverCfg))
 const restore = () => page.evaluate((s) => {
   const c = window.__card;
   c._serverCfg = JSON.parse(s);
-  c._rszSel = null; c._rszDrag = null; c._rszLive = null;
+  c._resize.reset();
   c._geometryHistory.clear();
-  if ('_rszPreview' in c) c._rszPreview = null;
   c._modelCache = null; c._frame = null;
   c._cfgEpoch++; c.requestUpdate();
   return c.updateComplete && true;
@@ -48,7 +47,7 @@ const enter = async (tool) => {
     const c = window.__card;
     const changed = !c._markup;
     if (changed) c._setMode('plan');
-    c._tool = t; c._rszSel = null; c.requestUpdate();
+    c._tool = t; c._resize.selectRoom(null); c.requestUpdate();
     return Promise.resolve(c.updateComplete).then(() => changed);
   }, tool);
   if (changed) await page.waitForTimeout(220);
@@ -156,7 +155,7 @@ await settle();
   // the system interrupts the stream (app switch, palm rejection)
   await page.evaluate(() => {
     const c = window.__card;
-    const pid = c._rszDrag.pid;
+    const pid = c._resize.activePointerId;
     const el = c.renderRoot.querySelector('.rszhandle');
     el.dispatchEvent(new PointerEvent('pointercancel', { pointerId: pid, bubbles: true }));
     // the lostpointercapture that follows a cancel must not double-fire
@@ -166,7 +165,7 @@ await settle();
   check('03_snapshot_back_live', Math.abs((await roomLive('r1'))[1][0] - 0.55) < 1e-6);
   check('03_server_untouched', Math.abs((await roomSrv('r1'))[1][0] - 0.55) < 1e-6);
   check('03_undo_empty', await page.evaluate(() => window.__card._geometryHistory.size), 0);
-  check('03_drag_cleared', await page.evaluate(() => window.__card._rszDrag === null));
+  check('03_drag_cleared', await page.evaluate(() => !window.__card._resize.dragging));
   await page.waitForTimeout(800);
   check('03_no_pending_write', (await writes()) - w0, 0);
   await page.mouse.up();
@@ -201,7 +200,7 @@ await settle();
   await page.mouse.move(tx, hy, { steps: 4 });
   await settle();
   check('04_no_opening_drag', await page.evaluate(() => !window.__card._opDrag));
-  check('04_wall_drag_started', await page.evaluate(() => !!window.__card._rszDrag));
+  check('04_wall_drag_started', await page.evaluate(() => window.__card._resize.dragging));
   await page.mouse.up();
   await settle();
   check('04_wall_moved', Math.abs((await roomSrv('r1'))[1][0] - 0.65) < 0.011);

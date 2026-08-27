@@ -346,7 +346,7 @@ try {
           target: null,
         };
         card._rszEdgeDown(quietEvent, room.id, 1);
-        const plan = card._rszDrag?.plan;
+        const plan = card._resize?.plan;
         if (!plan) throw new Error('large-house resize plan was not created');
         const target = [
           plan.a[0] + plan.n[0] * card._gridPitch,

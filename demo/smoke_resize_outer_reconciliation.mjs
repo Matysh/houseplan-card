@@ -40,10 +40,7 @@ const out = await page.evaluate(async (fixture) => {
   const resetResize = async () => {
     card._setMode('plan');
     card._tool = 'resize';
-    card._rszDrag = null;
-    card._rszPreview = null;
-    card._rszLive = null;
-    card._rszEligibilityCache = null;
+    card._resize.reset();
     card._modelCache = null;
     card._frame = null;
     card.requestUpdate();
@@ -79,7 +76,7 @@ const out = await page.evaluate(async (fixture) => {
       && /independent wall|partition|перегород/i.test(handle.getAttribute('aria-label') || ''));
   const [beforeX, beforeY] = screenPoint(500, 500);
   dispatch(beforeHandles[0], 'pointerdown', beforeX, beforeY);
-  result.disabledCapturesNothing = card._rszDrag == null
+  result.disabledCapturesNothing = !card._resize.dragging
     && card._geometryHistory.size === 0;
 
   card._openAlignDialog();
@@ -109,7 +106,7 @@ const out = await page.evaluate(async (fixture) => {
   const [startX, startY] = screenPoint(500, 500);
   const [moveX] = screenPoint(550, 500);
   dispatch(afterHandles[0], 'pointerdown', startX, startY);
-  result.dragStarts = card._rszDrag != null;
+  result.dragStarts = card._resize.dragging;
   dispatch(afterHandles[0], 'pointermove', moveX, startY);
   await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
   dispatch(afterHandles[0], 'pointerup', moveX, startY);

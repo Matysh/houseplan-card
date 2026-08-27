@@ -97,7 +97,7 @@ test('room inner faces are structurally cached and shared by both fill layers', 
   assert.match(helper, /multiWallNodes/);
   assert.match(source, /lruRead\(this\._wallUnionPool, unionKey\)/);
   assert.match(source, /lruWrite\(this\._wallUnionPool, unionKey, entry, 8\)/);
-  assert.match(source, /wallBodiesGeometryPath\(preflight\.wallGeometry\)/);
+  assert.match(source, /wallBodiesGeometryPath\(wallGeometry\)/);
 
   const glowStart = source.indexOf('private _renderGlowBaseRooms(');
   const glowEnd = source.indexOf('\n  private _renderWallBodies(', glowStart);

@@ -1069,17 +1069,17 @@ export async function prepareGoldenScenario(page, scenario) {
       send('pointermove', wanted);
       await card.updateComplete;
       await frame();
-      const delta = Math.abs(card._rszDrag?.d || 0);
-      if (!card._rszPreview || !card._rszLive?.length || !(delta > 0 && delta < 250)) {
+      const delta = Math.abs(card._resize?.delta || 0);
+      if (!card._resize?.preview || !card._resize?.liveLabels?.length || !(delta > 0 && delta < 250)) {
         throw new Error(`golden safe Resize opening clamp did not render: ${scenario.id}`);
       }
-      const resizeLengths = card._rszLive.filter((label) => label.kind === 'length');
-      const resizeAreas = card._rszLive.filter((label) => label.kind === 'area');
+      const resizeLengths = card._resize.liveLabels.filter((label) => label.kind === 'length');
+      const resizeAreas = card._resize.liveLabels.filter((label) => label.kind === 'area');
       const measuredEdges = card.renderRoot.querySelectorAll('[data-hp="resize-measured-edge"]');
       const areaLabels = card.renderRoot.querySelectorAll('[data-hp="resize-area-label"]');
       const leaders = card.renderRoot.querySelectorAll('[data-hp="resize-area-leader"]');
       if (resizeLengths.length !== 2 || measuredEdges.length !== 2
-          || resizeAreas.length !== card._rszDrag.plan.roomIds.length
+          || resizeAreas.length !== card._resize.plan.roomIds.length
           || areaLabels.length !== resizeAreas.length || leaders.length !== resizeAreas.length) {
         throw new Error(`golden Resize measurement contract is incomplete: ${scenario.id}`);
       }

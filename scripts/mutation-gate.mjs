@@ -431,9 +431,9 @@ export const MUTANTS = [
     because: 'a candidate rejected by the exact production wall/floor preflight must create '
       + 'neither preview nor commit; polygon-only success previously persisted disappearing walls',
     patches: [{
-      file: 'src/houseplan-card.ts',
-      find: '    const candidateValid = this._rszCandidateRenderable(preview);',
-      replace: '    const candidateValid = !!preview;',
+      file: 'src/resize-controller.ts',
+      find: '      try { valid = input.validatePreview(accepted.preview); } catch { valid = false; }',
+      replace: '      try { valid = true; } catch { valid = false; }',
     }, {
       file: 'src/houseplan-card.ts',
       find: '    if (!legacySafe) {',
@@ -753,12 +753,13 @@ export const MUTANTS = [
   },
   {
     id: 'invariant-loses-wall-record',
-    guard: 'node --test --test-name-pattern="исчезнувшая запись толщины" '
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="исчезнувшая запись толщины" '
       + 'test/model-invariants.test.mjs',
     because: 'потеря записи толщины — это дефект #253, найденный человеком глазами; если '
       + 'инвариант перестанет её замечать, класс вернётся в продукт незамеченным (#254)',
     patches: [{
-      file: 'scripts/model-invariants.mjs',
+      file: 'src/wall-record-preservation.ts',
       find: '    if (now === 0) {',
       replace: '    if (false) {',
     }],

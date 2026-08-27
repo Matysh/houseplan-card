@@ -273,8 +273,8 @@ Object.assign(res, paper);
 // plus a detached building must NOT grow a white bounding rectangle. One
 // paper shape per room, in exactly the room's own geometry; the acid scene
 // colour shows in the L's pocket and between the buildings, right up to the
-// exterior walls; inside the rooms it never shows. A live resize preview
-// (_rszPreview) moves the paper together with the dragged wall.
+// exterior walls; inside the rooms it never shows. A live controller preview
+// moves the paper together with the dragged wall.
 const drawn = await page.evaluate(async () => {
   const out = {};
   const c = window.__card;
@@ -314,14 +314,33 @@ const drawn = await page.evaluate(async () => {
     && !!first.firstElementChild && first.firstElementChild.classList.contains('hp-paper');
   // live resize preview: drag the L's right wall 0.625 -> 0.6875 — the paper
   // must move WITH the room, not lag behind until the drop
-  const pv = JSON.parse(JSON.stringify(sp));
-  pv.rooms[0].poly = pv.rooms[0].poly.map(([x, y]) => [x === 0.625 ? 0.6875 : x, y]);
-  c._rszPreview = { space: c._space, sp: pv };
-  c._cfgEpoch++;
+  const resizeRooms = c._rszRooms();
+  const snapshot = c._rszSnapshot();
+  c._resize.begin({
+    pointerId: 912, start: [625, 250], roomId: 'rL',
+    plan: {
+      roomId: 'rL', edge: 1, a: [625, 125], b: [625, 375], n: [1, 0],
+      roomIds: ['rL'], edgeByRoom: { rL: 1 }, topology: { rL: 6 },
+      movingOpeningIds: [], sideOwnership: [],
+    },
+    options: { minDim: 1, eps: 0.01 }, rooms: resizeRooms, openings: [],
+    snapshotIdentity: snapshot, before: JSON.parse(snapshot), wallUnionBefore: null,
+  });
+  c._resize.move({
+    pointerId: 912, point: [687.5, 250], step: 0.5, snap: (point) => point,
+    project: (_snapshot, polys) => {
+      const pv = JSON.parse(JSON.stringify(sp));
+      pv.rooms[0].poly = polys.rL.map(([x, y]) => [x / 1000, y / 1000]);
+      return { ok: true, value: {
+        preview: { space: c._space, sp: pv }, beforeWalls: [], afterWalls: [], artifact: null,
+      } };
+    },
+    publish: (preview, artifact) => c._rszAcceptPreview(preview, artifact),
+    measure: () => [],
+  });
   await upd();
   out.previewMovesPaper = (papers()[0]?.getAttribute('points') || '').includes('687.5,125');
-  c._rszPreview = null;
-  c._cfgEpoch++;
+  c._rszCancelDrag();
   await upd();
   out.previewRestores = (papers()[0]?.getAttribute('points') || '').includes('625,125');
   // screen coords for the pixel probes (svg user units -> viewport px)

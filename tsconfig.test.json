@@ -14,7 +14,7 @@
     "src/integration-provider.ts", "src/vacuum.ts",
     "src/sun.ts",
     "src/light-visibility.ts",
-    "src/resize.ts", "src/resize-labels.ts",
+    "src/resize.ts", "src/resize-labels.ts", "src/resize-controller.ts", "src/wall-record-preservation.ts",
     "src/rules.ts",
     "src/devices.ts",
     "src/virtual-light-state.ts",
