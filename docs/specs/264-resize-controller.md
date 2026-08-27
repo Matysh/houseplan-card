@@ -11,7 +11,14 @@
 - **Связано:** #34, #253, #254, #277; `docs/RESIZE.md`,
   `docs/specs/034-frontend-decomposition.md`
 
-## 1. Зачем это делается
+## 1. Сценарий, персона и проблема
+
+Домашний администратор на desktop открывает редактор плана существующего этажа,
+выбирает Resize и перетаскивает обычную либо общую стену. Для него этот слайс
+обязан быть полностью незаметен: допустимость ручки, движение, измерения,
+сохранение, отмена и повтор остаются теми же, что в выпущенном контракте #277.
+Задача нужна не ради нового пользовательского шага, а чтобы следующие изменения
+этого критичного пути можно было делать и проверять изолированно.
 
 После #277 Resize имеет безопасный fixed-topology контракт, но его конечный
 автомат по-прежнему встроен в `HouseplanCard`: там одновременно живут pointer
@@ -439,4 +446,3 @@ Rollback is a normal revert of the implementation commit(s), including generated
 bundle and documentation. There is no data migration, feature flag or persisted
 new field to undo. Because successful payloads remain byte-identical, a plan
 edited by the refactored controller opens unchanged after rollback.
-
