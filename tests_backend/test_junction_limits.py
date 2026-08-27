@@ -28,9 +28,15 @@ if "custom_components.houseplan" not in sys.modules:
     package.__path__ = [_HOUSEPLAN_ROOT]
     sys.modules["custom_components.houseplan"] = package
 
+# Loaded under its canonical package name: the module imports the migration
+# mirror relatively (`from .wall_segment_model import ...`), which only resolves
+# when the module knows the package it belongs to.
 _PATH = os.path.join(_HOUSEPLAN_ROOT, "junction_limits.py")
-_spec = importlib.util.spec_from_file_location("hp_junction_limits", _PATH)
+_spec = importlib.util.spec_from_file_location(
+    "custom_components.houseplan.junction_limits", _PATH,
+)
 jl = importlib.util.module_from_spec(_spec)
+sys.modules[_spec.name] = jl
 _spec.loader.exec_module(jl)
 
 CELL = 5.0
@@ -109,31 +115,99 @@ def test_distance_keeps_the_t_joint_legal():
     assert "distance" not in rules(tee)
 
 
+def room_space(rooms, walls, space_id="s", cell_cm=CELL, legacy=True):
+    """A space in the shape a real document has: rooms plus their walls.
+
+    `legacy=True` stores the walls the pre-catalogue way (`walls`, no
+    `wall_segments`) — the state every plan is in before its first structural
+    write on a current card, and the state H1 was about.
+    """
+    space = {
+        "id": space_id, "title": "L", "cell_cm": cell_cm, "view_box": [0, 0, 1, 1],
+        "rooms": rooms, "openings": [], "room_drafts": [],
+        "partitions": [], "wall_columns": [],
+    }
+    if legacy:
+        space["walls"] = walls
+    else:
+        space["wall_segments"] = walls
+    return space
+
+
+def triangle(apex_x=0.3167, apex_y=0.24):
+    """The owner's spike: an apex well under 15°."""
+    return [[0.30, 0.70], [apex_x, apex_y], [0.36, 0.68]]
+
+
+def square(x=0.60, y=0.60, side=0.20):
+    return [[x, y], [x + side, y], [x + side, y + side], [x, y + side]]
+
+
+def walls_of(poly, prefix, cm_value=15):
+    return [
+        {"key": f"{prefix}{index}", "a": poly[index],
+         "b": poly[(index + 1) % len(poly)], "cm": cm_value}
+        for index in range(len(poly))
+    ]
+
+
+def test_legacy_baseline_is_judged_after_the_same_migration():
+    """H1 (r1): a pre-catalogue baseline must not read as "no violations".
+
+    `limit_segments` reads `wall_segments`, so a legacy space answers "clean"
+    whatever its geometry. Comparing that against a candidate the client has
+    already migrated counted every inherited violation as new and refused an
+    unrelated edit — spec §3 forbids exactly that.
+    """
+    spike = triangle()
+    previous = {"spaces": [room_space(
+        [{"id": "r1", "name": "a", "area": None, "poly": spike}],
+        walls_of(spike, "w"),
+    )]}
+    # Raw, the legacy baseline claims to be clean...
+    assert rules(previous["spaces"][0]) == []
+    # ...while the same document, migrated, carries the inherited apex.
+    migrated, _ = jl.commit_wall_segment_model(json.loads(json.dumps(previous)))
+    assert "angle" in rules(migrated["spaces"][0])
+
+    # An unrelated edit (renaming the room) on the migrated candidate passes.
+    candidate = json.loads(json.dumps(migrated))
+    candidate["spaces"][0]["rooms"][0]["name"] = "b"
+    jl.validate_junction_limits(candidate, previous)
+
+
 def test_inherited_violation_does_not_block_an_unrelated_edit():
-    broken = space([(*ray(0), 15), (*ray(9), 15)])
-    previous = {"spaces": [broken]}
-    # The same broken space plus an unrelated, perfectly legal wall.
-    edited = json.loads(json.dumps(broken))
-    edited["wall_segments"].append({
-        "id": "unrelated", "a": [cm(1000), cm(1000)],
-        "b": [cm(1000), cm(1300)], "cm": 15,
-    })
-    jl.validate_junction_limits({"spaces": [edited]}, previous)
+    spike = triangle()
+    previous = {"spaces": [room_space(
+        [{"id": "r1", "name": "a", "area": None, "poly": spike}],
+        walls_of(spike, "w"),
+    )]}
+    # Adding a well-formed room next to the broken one is a legal write.
+    box = square()
+    candidate = json.loads(json.dumps(previous))
+    candidate["spaces"][0]["rooms"].append(
+        {"id": "r2", "name": "box", "area": None, "poly": box}
+    )
+    candidate["spaces"][0]["walls"].extend(walls_of(box, "b"))
+    jl.validate_junction_limits(candidate, previous)
 
 
 def test_a_write_that_adds_a_violation_is_refused_with_a_stable_code():
-    clean = space([
-        ([0.0, 0.0], [cm(300), 0.0], 15),
-        ([cm(300), 0.0], [cm(300), cm(300)], 15),
-    ])
-    previous = {"spaces": [clean]}
-    broken = json.loads(json.dumps(clean))
-    broken["wall_segments"].append({
-        "id": "spike", "a": [0.0, 0.0],
-        "b": [cm(300), cm(300) * 0.15], "cm": 15,
-    })
+    box = square()
+    previous = {"spaces": [room_space(
+        [{"id": "r1", "name": "box", "area": None, "poly": box}],
+        walls_of(box, "b"),
+    )]}
+    jl.validate_junction_limits(json.loads(json.dumps(previous)), previous)
+
+    spike = triangle()
+    candidate = json.loads(json.dumps(previous))
+    candidate["spaces"][0]["rooms"].append(
+        {"id": "r2", "name": "spike", "area": None, "poly": spike}
+    )
+    candidate["spaces"][0]["walls"].extend(walls_of(spike, "w"))
     with pytest.raises(jl.JunctionLimitError) as excinfo:
-        jl.validate_junction_limits({"spaces": [broken]}, previous)
+        jl.validate_junction_limits(candidate, previous)
     assert excinfo.value.code == "junction_limit_angle"
     assert excinfo.value.space_id == "s"
 

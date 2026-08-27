@@ -538,6 +538,18 @@ export const MUTANTS = [
     }],
   },
   {
+    id: 'junction-limit-backend-raw-baseline',
+    guard: 'python3 -m pytest tests_backend/test_junction_limits.py -q',
+    because: 'a legacy baseline carries no wall catalogue, so judging it raw reports "no '
+      + 'violations" whatever its geometry and turns every inherited one into a refusal of '
+      + 'an unrelated edit (#329 §3, code review r1 H1)',
+    patches: [{
+      file: 'custom_components/houseplan/junction_limits.py',
+      find: '        migrated, _ = commit_wall_segment_model(config)',
+      replace: '        migrated = config  # mutant: judge the raw document',
+    }],
+  },
+  {
     id: 'junction-limit-angle-not-enforced',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="П1" test/junction-limits.test.mjs',

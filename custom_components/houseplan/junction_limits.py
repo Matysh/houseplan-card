@@ -18,6 +18,8 @@ from __future__ import annotations
 
 import math
 
+from .wall_segment_model import commit_wall_segment_model
+
 MIN_JUNCTION_ANGLE_DEG = 15.0
 MAX_JUNCTION_VALENCE = 6
 MIN_SEGMENT_LENGTH_CM = 20.0
@@ -254,6 +256,33 @@ def space_violations(space: dict) -> list[tuple[str, str, float, float]]:
     ]
 
 
+def _migrated_spaces(config: dict | None) -> dict[str, dict]:
+    """Spaces of one document AFTER the wall-segment migration, by id.
+
+    The limits read `wall_segments`, so a document that predates the catalogue
+    reports NO walls at all — a legacy space would answer "no violations"
+    regardless of its geometry. Comparing such a baseline against a candidate
+    the client already migrated counts every inherited violation as new and
+    refuses an unrelated edit (spec §3 forbids exactly that). Both sides are
+    therefore judged after the SAME migration, mirroring the frontend barrier.
+
+    A document that cannot be migrated is not a reason to refuse the write:
+    the wall-model barrier owns that verdict and reports it with its own code.
+    Here it simply means there is no baseline to inherit from.
+    """
+    if not isinstance(config, dict):
+        return {}
+    try:
+        migrated, _ = commit_wall_segment_model(config)
+    except Exception:  # noqa: BLE001 — see the docstring: not our verdict
+        migrated = config
+    return {
+        str(space.get("id")): space
+        for space in (migrated or {}).get("spaces") or []
+        if isinstance(space, dict)
+    }
+
+
 def validate_junction_limits(config: dict, previous: dict | None = None) -> None:
     """Refuse a write that ADDS a junction violation; inherit the rest.
 
@@ -262,13 +291,13 @@ def validate_junction_limits(config: dict, previous: dict | None = None) -> None
     barrier and matching by it would report an inherited violation as new
     (the mistake that refused legitimate resizes on the frontend). Spec §3:
     a write may keep existing violations, it may never add one.
+
+    Both documents go through `commit_wall_segment_model` first, so a legacy
+    baseline is compared in the same terms as the candidate.
     """
-    old_spaces = {
-        str(space.get("id")): space
-        for space in (previous or {}).get("spaces") or []
-    }
-    for space in config.get("spaces") or []:
-        space_id = str(space.get("id", ""))
+    old_spaces = _migrated_spaces(previous)
+    new_spaces = _migrated_spaces(config)
+    for space_id, space in new_spaces.items():
         old_space = old_spaces.get(space_id)
         if old_space is None:
             # A brand-new space has nothing to inherit from — but neither is a

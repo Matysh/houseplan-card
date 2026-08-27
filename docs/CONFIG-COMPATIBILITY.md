@@ -442,10 +442,18 @@ transfer never run the check, and an edit that does not touch the offending
 element still saves.
 
 The gate compares the candidate against the pre-edit document **after both
-have gone through the same `commitWallSegmentModel` migration**, and counts
-violations **per rule**, not per subject id — a structural write re-keys
-contour atoms, so subject identity is not stable across the barrier. Only a
-rule whose violation count grows is a refusal.
+have gone through the same wall-segment migration** — `commitWallSegmentModel`
+on the card, `commit_wall_segment_model` in
+`custom_components/houseplan/junction_limits.py` — and counts violations **per
+rule**, not per subject id: a structural write re-keys contour atoms, so
+subject identity is not stable across the barrier. Only a rule whose violation
+count grows is a refusal.
+
+Migrating the baseline is not a detail. The limits read `wall_segments`, so a
+document older than the catalogue reports no walls at all and therefore no
+violations, whatever its geometry. Judged raw, such a baseline turns every
+inherited violation of a real plan into a "new" one on the first structural
+write after the card is updated, and an unrelated edit is refused.
 
 Compatibility matrix:
 
