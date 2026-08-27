@@ -157,3 +157,31 @@ test('наследование считается по правилам, а не
     [{ rule: 'angle', subject: 'n', actual: 9, limit: 15 }], [],
   ).length, 1);
 });
+
+test('§4: у вырожденной вершины грани прямые — ни зазубрин, ни щепок', async () => {
+  const { wallBodiesGeometry, insetContour, roomWallProfile } =
+    await import('../test-build/wall-thickness.js');
+  const room = {
+    id: 'spike', name: 'Spike', area: null,
+    poly: [[3.6417, 1.8333], [3.7167, 0.2417], [3.9083, 1.7667]],
+  };
+  const walls = room.poly.map((point, index) => ({
+    key: `w${index}`, a: point, b: room.poly[(index + 1) % room.poly.length], cm: 15,
+  }));
+  const profile = roomWallProfile([room], room.id, walls, [], PITCH, CELL, PITCH, 1);
+  // Внутренний контур сходится в СВОЮ вершину — четвёртой точки-складки нет.
+  const inset = insetContour(profile.poly, profile.offsets, null);
+  assert.equal(inset.length, 3, 'внутренний контур — треугольник, а не «бабочка»');
+
+  const geometry = wallBodiesGeometry([room], walls, [], [], PITCH, CELL, PITCH, 1);
+  assert.equal(geometry.status, 'ok');
+  const outer = geometry.roomGeom[0][0];
+  const distinct = outer.slice(0, -1);
+  assert.equal(distinct.length, 3, 'внешнее кольцо — треугольник без ступенек');
+  // Никаких микро-вершин: каждая сторона длиннее полутолщины.
+  for (let index = 0; index < distinct.length; index++) {
+    const next = distinct[(index + 1) % distinct.length];
+    const side = Math.hypot(next[0] - distinct[index][0], next[1] - distinct[index][1]);
+    assert.ok(side > cm(7.5), `сторона ${index} не вырождена: ${side}`);
+  }
+});

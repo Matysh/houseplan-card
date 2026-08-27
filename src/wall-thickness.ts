@@ -1670,6 +1670,14 @@ export function insetContour(
         out.push(hit);
         continue;
       }
+      // #329: at a degenerate apex the two-point bevel folds the contour over
+      // itself (a bow-tie), and subtracting that fold carved notches in the
+      // masonry. The interior simply ends in ITS own apex — the single mitre
+      // point — mirroring the sharp outer tip.
+      if (isDegenerateApexCorner(poly, offsets, i)) {
+        out.push(hit);
+        continue;
+      }
     }
     // bevel: two points, each edge's offset line stopped at the vertex offset
     if (oA > 0) out.push([poly[i][0] + nAx * oA, poly[i][1] + nAy * oA]);
@@ -3768,11 +3776,7 @@ export function wallBodiesGeometry(
     const outC = outsetContour(pr.poly, pr.offsets, multiWallNodes);
     const inC = insetContour(pr.poly, pr.offsets, multiWallNodes);
     if (!outC) continue;
-    // #329 §4: a legacy corner whose bodies overlap completely folds its
-    // inset contour over itself; carry the clip regions with the ring.
-    roomRings.push({
-      outset: outC, inset: inC, apexCaps: degenerateApexCaps(pr.poly, pr.offsets),
-    });
+    roomRings.push({ outset: outC, inset: inC });
   }
   for (const body of extraBodies) {
     const xs = body.map((p) => p[0]), ys = body.map((p) => p[1]);
@@ -3816,30 +3820,9 @@ export function wallBodiesGeometry(
     const bodyOf = (ring: typeof roomRings[number]): any => {
       const outset: any = closedRing(ring.outset);
       if (!ring.inset) return outset;
-      let insetPoly = ring.inset;
-      // #329 §4: at a degenerate apex the inset contour folds over itself
-      // (a bow-tie); differencing that fold carved the V-notches. Clip the
-      // fold away with the half-plane through the convergence point, so the
-      // interior simply ends there and the masonry above stays solid.
-      for (const cap of ring.apexCaps || []) {
-        const clipped = clipPolygonOutsideCap(insetPoly, cap);
-        if (clipped && clipped.length >= 3) insetPoly = clipped;
-      }
-      let hole: any = closedRing(insetPoly);
-      // #329 §4 (owner correction 2026-08-27): at a degenerate apex the two
-      // wall bodies overlap completely, and the inset contour folds over
-      // itself there — that fold is what carved the "trident" of pikes and
-      // V-notches. Clip the HOLE at the convergence point instead of cutting
-      // the masonry: above it the wall is solid and the apex stays a normal
-      // sharp point, exactly as a drawing would show it.
-      for (const cap of ring.apexCaps || []) {
-        try {
-          const clipped = difference(hole, closedRing(cap) as any);
-          if (clipped) hole = clipped;
-        } catch {
-          // Keep the hole we have; a failed clip must not lose the interior.
-        }
-      }
+      // #329: the interior now ends in its own apex point (insetContour),
+      // so the ring is a plain difference — no fold to clip, no slivers.
+      const hole: any = closedRing(ring.inset);
       return difference(outset, hole);
     };
     corePhase = 'room-rings';
