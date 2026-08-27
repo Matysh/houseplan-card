@@ -1617,6 +1617,7 @@ class HouseplanCard extends LitElement {
   private _cleanFloorCache = new Map<string, {
     floor: number[][]; geom: any; path: string; area: number;
   }>();
+  private _innerContourCache = new Map<string, number[][] | null>();
   private _glowClipCache = new Map<string, GlowClipGeometry | null>();
   /** Redacted, bounded dedupe for numerical floor fallbacks (#218). */
   private _glowGeometryWarnings = new Set<string>();
@@ -11590,6 +11591,26 @@ class HouseplanCard extends LitElement {
     ).map((b) => [b.a[0], b.a[1], b.b[0], b.b[1]]);
   }
 
+  /** Structural room face shared by every fill surface in the same frame. */
+  private _innerRoomContour(
+    space: SpaceModel,
+    roomId: string,
+    openCuts: number[][] = this._openCuts(),
+    roomWalls = this._wallUnionGeometry()?.roomGeom,
+  ): number[][] | null {
+    const cutsKey = openCuts.map((cut) => cut.join(',')).join(';');
+    const key = `${space.id}|${this._cfgEpoch}|${roomId}|${cutsKey}`;
+    const cached = lruRead(this._innerContourCache, key);
+    if (cached.hit) return cached.value;
+    const value = innerContourForRoom(
+      space.rooms, roomId, this._spaceWalls, openCuts,
+      this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
+      roomWalls,
+    );
+    lruWrite(this._innerContourCache, key, value, 600);
+    return value;
+  }
+
   /**
    * The ATOMIC wall stretch under the cursor for the wall-thickness tool.
    *
@@ -12024,11 +12045,7 @@ class HouseplanCard extends LitElement {
       const ownPoly = polys.get(room) || null;
       if (!fill || !ownPoly) return nothing;
       const floor = this._spaceWalls.length && room.id
-        ? (innerContourForRoom(
-            space.rooms, room.id, this._spaceWalls, openCuts,
-            this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
-            roomWalls,
-          ) || ownPoly)
+        ? (this._innerRoomContour(space, room.id, openCuts, roomWalls) || ownPoly)
         : ownPoly;
       const otherPolys = space.rooms
         .filter((other) => other !== room)
@@ -12229,11 +12246,7 @@ class HouseplanCard extends LitElement {
     const walls = this._spaceWalls;
     const roomWalls = this._wallUnionGeometry()?.roomGeom;
     const floor = walls.length && room.id
-      ? (innerContourForRoom(
-          space.rooms, room.id, walls, allOpenCuts,
-          this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
-          roomWalls,
-        ) || poly)
+      ? (this._innerRoomContour(space, room.id, allOpenCuts, roomWalls) || poly)
       : poly;
     const contours: { axis: number[][]; face: number[][] }[] = [{ axis: poly, face: floor }];
     for (const island of islandPolys) {
@@ -15301,11 +15314,7 @@ class HouseplanCard extends LitElement {
       const roomWalls = this._wallUnionGeometry()?.roomGeom;
       if (walls.length) {
         for (const r of rooms) {
-          const inn = innerContourForRoom(
-            space.rooms, r.id, walls, openCuts,
-            this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
-            roomWalls,
-          );
+          const inn = this._innerRoomContour(space, r.id, openCuts, roomWalls);
           if (inn) innerByRoom[r.id] = inn;
         }
         for (const o of windows) {
@@ -16691,11 +16700,7 @@ class HouseplanCard extends LitElement {
     const roomWalls = this._wallUnionGeometry()?.roomGeom;
     const enabledClip = enabled.length === polys.length ? null : enabled.map(({ r, poly }) => {
       const floorPoly = walls.length && r.id
-        ? (innerContourForRoom(
-            space.rooms, r.id, walls, openCuts,
-            this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
-            roomWalls,
-          ) || poly)
+        ? (this._innerRoomContour(space, r.id, openCuts, roomWalls) || poly)
         : poly;
       const clean = this._cleanFloor(r, floorPoly, space).path;
       const holes = islandsOf(
@@ -17638,6 +17643,8 @@ class HouseplanCard extends LitElement {
               // audit L1: hoisted out of the per-room map — these depend on the
               // config, not on entity state, and were recomputed per room.
               const allZeroCuts = this._openCuts();
+              const allThickCuts = this._thickWallCuts();
+              const roomWallGeometry = this._wallUnionGeometry()?.roomGeom;
               const polyCache = new Map<any, number[][] | null>();
               const polyOf = (rr: any) => {
                 if (!polyCache.has(rr)) polyCache.set(rr, roomPoly(rr));
@@ -17694,18 +17701,13 @@ class HouseplanCard extends LitElement {
                     ) <= this._gridPitch * 0.08);
                   })
                 : [];
-              const thickCuts = !isPicked ? this._thickWallCuts() : [];
+              const thickCuts = !isPicked ? allThickCuts : [];
               const edgeCuts = zeroCuts.concat(thickCuts);
               if (edgeCuts.length) cls += ' noedge';
               // island rooms punch holes in their parent's fill (evenodd)
               const walls = this._spaceWalls;
               const fillPoly = (walls.length && r.id && myPoly)
-                ? (innerContourForRoom(
-                    space.rooms, r.id, walls,
-                    allZeroCuts,
-                    this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
-                    this._wallUnionGeometry()?.roomGeom,
-                  ) || myPoly)
+                ? (this._innerRoomContour(space, r.id, allZeroCuts, roomWallGeometry) || myPoly)
                 : myPoly;
               const holes = fillPoly ? islandsOf(fillPoly, otherPolys(r)) : [];
               const pathD = (pts: number[][]) =>
@@ -18879,12 +18881,7 @@ class HouseplanCard extends LitElement {
     if (!space) return null;
     const walls = this._spaceWalls;
     const floor = walls.length && r.id
-      ? (innerContourForRoom(
-          space.rooms, r.id, walls,
-          this._openCuts(),
-          this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
-          this._wallUnionGeometry()?.roomGeom,
-        ) || poly)
+      ? (this._innerRoomContour(space, r.id) || poly)
       : poly;
     const clean = this._cleanFloor(r, floor);
     const cmPerUnit = this._cellCm / this._gridPitch;

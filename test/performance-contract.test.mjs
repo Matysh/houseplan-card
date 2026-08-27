@@ -64,3 +64,46 @@ test('contract accepts recent optional fields only when their runtime type is va
     /invalid private API types: _cleanFloorCache:map/,
   );
 });
+
+test('view render resolves structural wall cuts once per frame, not once per room', () => {
+  const source = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
+  const start = source.indexOf('const allZeroCuts = this._openCuts();');
+  const end = source.indexOf('${this._renderOpeningTunnelFills(space, roomFills)}', start);
+  assert.ok(start >= 0 && end > start, 'view room-render block is present');
+  const roomRender = source.slice(start, end);
+  assert.match(roomRender, /const allThickCuts = this\._thickWallCuts\(\);/);
+  assert.match(roomRender, /const roomWallGeometry = this\._wallUnionGeometry\(\)\?\.roomGeom;/);
+  assert.equal(
+    [...roomRender.matchAll(/this\._thickWallCuts\(\)/g)].length,
+    1,
+    'the structural resolver must stay outside the room map',
+  );
+  assert.match(roomRender, /const thickCuts = !isPicked \? allThickCuts : \[\];/);
+  assert.equal(
+    [...roomRender.matchAll(/this\._wallUnionGeometry\(\)/g)].length,
+    1,
+    'the wall union lookup must stay outside the room map',
+  );
+});
+
+test('room inner faces are structurally cached and shared by both fill layers', () => {
+  const source = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
+  const helperStart = source.indexOf('private _innerRoomContour(');
+  const helperEnd = source.indexOf('\n  /**', helperStart);
+  assert.ok(helperStart >= 0 && helperEnd > helperStart, 'inner-contour cache helper is present');
+  const helper = source.slice(helperStart, helperEnd);
+  assert.match(helper, /lruRead\(this\._innerContourCache, key\)/);
+  assert.match(helper, /lruWrite\(this\._innerContourCache, key, value, 600\)/);
+
+  const glowStart = source.indexOf('private _renderGlowBaseRooms(');
+  const glowEnd = source.indexOf('\n  private _renderWallBodies(', glowStart);
+  const glowBase = source.slice(glowStart, glowEnd);
+  assert.equal([...glowBase.matchAll(/innerContourForRoom\(/g)].length, 0);
+  assert.match(glowBase, /this\._innerRoomContour\(space, room\.id, openCuts, roomWalls\)/);
+
+  const viewStart = source.indexOf('const allZeroCuts = this._openCuts();');
+  const viewEnd = source.indexOf('${this._renderOpeningTunnelFills(space, roomFills)}', viewStart);
+  const viewRooms = source.slice(viewStart, viewEnd);
+  assert.equal([...viewRooms.matchAll(/innerContourForRoom\(/g)].length, 0);
+  assert.match(viewRooms, /this\._innerRoomContour\(space, r\.id, allZeroCuts, roomWallGeometry\)/);
+});
