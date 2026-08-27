@@ -709,7 +709,7 @@ separately promised workflows:
 
 ## Installation / upgrade / removal
 
-- [ ] Fresh install via HACS custom repository → integration appears, card auto-registers as a Lovelace resource (`?v=` matches manifest); no manual resource setup
+- [ ] Fresh install from the HACS default catalog (plain search) → integration appears, card auto-registers as a Lovelace resource (`?v=` matches manifest); no manual resource setup
 - [ ] `single_config_entry`: adding a second entry is impossible [manual]
 - [ ] Upgrade via HACS: `?v=` bumps after HA restart, browser picks the new bundle without cache clearing
 - [ ] YAML-mode Lovelace: falls back to `extra_module_url` (card loads)
