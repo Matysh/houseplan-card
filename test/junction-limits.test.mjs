@@ -100,3 +100,38 @@ test('унаследованные нарушения не считаются н
   const worse = [...inherited, { rule: 'angle', subject: 'other', actual: 3, limit: 15 }];
   assert.deepEqual(newViolations(worse, inherited).map((item) => item.subject), ['other']);
 });
+
+// --- #329 §4: честная вершина легаси-плана ---
+
+test('§4: вырожденная вершина сходится в точку плана, обычные углы нетронуты', async () => {
+  const { isDegenerateApexCorner, outsetContour, DEGENERATE_APEX_MAX_DEGREES } =
+    await import('../test-build/wall-thickness.js');
+  assert.equal(DEGENERATE_APEX_MAX_DEGREES, 15);
+
+  // Фикстура issue: вершина ≈9.85°, стены 15 см (полутолщина 7.5 см).
+  const apex = [3.7167, 0.2417];
+  const spike = [[3.6417, 1.8333], apex, [3.9083, 1.7667]];
+  const half = cm(7.5);
+  const offsets = [half, half, half];
+  assert.equal(isDegenerateApexCorner(spike, offsets, 1), true);
+  assert.equal(isDegenerateApexCorner(spike, offsets, 0), false);
+
+  // Внешний контур сходится РОВНО в вершине плана: ни плоского среза (две
+  // точки у вершины), ни иглы mitre, торчащей далеко за неё.
+  const outset = outsetContour(spike, offsets, null);
+  assert.ok(outset, 'контур строится');
+  const nearApex = outset.filter((point) => Math.hypot(point[0] - apex[0], point[1] - apex[1]) < half * 4);
+  assert.equal(nearApex.length, 1, 'у вершины ровно одна точка — остриё');
+  assert.ok(Math.hypot(nearApex[0][0] - apex[0], nearApex[0][1] - apex[1]) < 1e-9,
+    'остриё стоит в самой вершине плана');
+
+  // Прямоугольник: обычные углы, mitre сохраняется, вырожденных нет.
+  const square = [[0, 0], [cm(400), 0], [cm(400), cm(400)], [0, cm(400)]];
+  assert.equal(square.every((_, index) => !isDegenerateApexCorner(square, Array(4).fill(half), index)), true);
+  // Острый, но не вырожденный угол 30° — тоже обычный (#310 сохраняется).
+  const thirty = [[0, 0], [cm(400), 0],
+    [cm(400) * Math.cos(Math.PI / 6), cm(400) * Math.sin(Math.PI / 6)]];
+  assert.equal(isDegenerateApexCorner(thirty, Array(3).fill(half), 0), false);
+  // Нулевая толщина не создаёт вырожденной зоны.
+  assert.equal(isDegenerateApexCorner(spike, [0, 0, 0], 1), false);
+});

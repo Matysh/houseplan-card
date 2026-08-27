@@ -86,6 +86,10 @@ import {
   innerEdgeSpan, ownEdgeOffsets, thicknessCmAt,
 } from './wall-thickness';
 import {
+  checkNodeDistances, checkNodes, checkRoomClearance, checkSegmentLengths,
+  newViolations, type JunctionLimitViolation, type LimitSegment,
+} from './junction-limits';
+import {
   pointOnOpenCut, sanitizeOpenSpans,
   type OpenSpanEntry,
 } from './open-spans';
@@ -7378,6 +7382,83 @@ class HouseplanCard extends LitElement {
     this._showToast(this._t(key, { reason: this._wallModelBlockerLabel(error) }));
   }
 
+  /** #329: every wall of a space as the limit checks see it. */
+  private _limitSegmentsOf(space: any): LimitSegment[] {
+    const segments: LimitSegment[] = [];
+    for (const segment of (space?.wall_segments || [])) {
+      if (segment?.a && segment?.b) {
+        segments.push({
+          id: String(segment.id || ''), a: segment.a, b: segment.b, cm: Number(segment.cm),
+        });
+      }
+    }
+    for (const partition of (space?.partitions || [])) {
+      if (partition?.a && partition?.b) {
+        segments.push({
+          id: String(partition.id || ''), a: partition.a, b: partition.b, cm: Number(partition.cm),
+        });
+      }
+    }
+    for (const draft of (space?.room_drafts || [])) {
+      const points = Array.isArray(draft?.points) ? draft.points : [];
+      const drafted = Array.isArray(draft?.segments) ? draft.segments : [];
+      for (let index = 0; index + 1 < points.length; index++) {
+        segments.push({
+          id: String(drafted[index]?.id || `${draft?.id || 'draft'}-${index}`),
+          a: points[index], b: points[index + 1], cm: Number(drafted[index]?.cm),
+        });
+      }
+    }
+    return segments;
+  }
+
+  /** #329 П1-П5 over one space. Pure input, no side effects. */
+  private _junctionLimitViolations(config: any, spaceId: string): JunctionLimitViolation[] {
+    const space = (config?.spaces || []).find((item: any) => item?.id === spaceId);
+    if (!space) return [];
+    const cellCm = Number(space.cell_cm) > 0 ? Number(space.cell_cm) : 5;
+    const segments = this._limitSegmentsOf(space);
+    const violations = [
+      ...checkNodes(segments),
+      ...checkSegmentLengths(segments, cellCm, GRID_STEP_N),
+      ...checkNodeDistances(segments, cellCm, GRID_STEP_N),
+    ];
+    for (const room of (space.rooms || [])) {
+      const roomId = String(room?.id || '');
+      if (!roomId) continue;
+      let inner: number[][] | null = null;
+      try {
+        inner = innerContourForRoom(
+          space.rooms || [], roomId, space.walls || [], [],
+          GRID_STEP_N, cellCm, GRID_STEP_N, 1,
+        );
+      } catch { inner = null; }
+      violations.push(...checkRoomClearance(roomId, inner, cellCm, GRID_STEP_N));
+    }
+    return violations;
+  }
+
+  /** Localised refusal text for the first violation a write introduces. */
+  private _junctionLimitLabel(violation: JunctionLimitViolation): string {
+    const round = (value: number) => String(Math.round(value * 10) / 10);
+    return this._t(`junction.limit_${violation.rule}` as any, {
+      actual: round(violation.actual), limit: round(violation.limit),
+    });
+  }
+
+  /** #329: violations this write would ADD; inherited ones stay untouched. */
+  private _junctionLimitsIntroduced(
+    candidate: any, previousConfig: any, spaceId: string,
+  ): JunctionLimitViolation[] {
+    let inherited: JunctionLimitViolation[] = [];
+    try { inherited = this._junctionLimitViolations(previousConfig, spaceId); }
+    catch { inherited = []; }
+    let next: JunctionLimitViolation[] = [];
+    try { next = this._junctionLimitViolations(candidate, spaceId); }
+    catch { return []; }
+    return newViolations(next, inherited);
+  }
+
   private _commitPhysicalGeometry(
     name: string,
     before: SpaceGeometryState | null,
@@ -7472,6 +7553,20 @@ class HouseplanCard extends LitElement {
       this._clearGeometryGesture();
       this._restoreGeometryStateLocal(before);
       this._showToast(this._t('toast.geometry_unsafe'));
+      return false;
+    }
+    // #329: the owner's junction limits refuse the WRITE. An existing plan's
+    // inherited violations are never re-judged (spec §3), so the candidate is
+    // compared against the pre-edit document.
+    const beforeConfig = JSON.parse(JSON.stringify(liveCandidate));
+    this._restoreGeometryStateInConfig(beforeConfig, before);
+    const introduced = this._junctionLimitsIntroduced(
+      committedCandidate, beforeConfig, before.spaceId,
+    );
+    if (introduced.length) {
+      this._clearGeometryGesture();
+      this._restoreGeometryStateLocal(before);
+      this._showToast(this._junctionLimitLabel(introduced[0]));
       return false;
     }
     adoptWallSegmentModelCandidateInPlace(liveCandidate, committedCandidate);

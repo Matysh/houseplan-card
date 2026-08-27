@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Sharp room corners are honest again: a very acute apex used to break into a
+  «trident» of pikes and notches, and drawing now refuses the shapes that
+  cause it — walls closer than 15°, more than six walls in one node, segments
+  shorter than 20 cm or than their own thickness, nodes closer than 5 cm and
+  rooms with no interior left
+  ([#329](https://github.com/Matysh/houseplan-card/issues/329)).
+
 ## v1.68.1 — 2026-08-27
 
 - Creating a space no longer reports `v8+ space requires wall_segments` while
