@@ -43,7 +43,7 @@ jobs:
         run: |
           set -euo pipefail
           SHA=$(git rev-parse HEAD)
-          node scripts/release-gate.mjs "$SHA" --workflow=performance.yml --label="Full Performance"
+          node scripts/release-gate.mjs "$SHA" --workflow=performance.yml --label="Полные бенчмарки производительности"
   build:
     name: Сборка бандла и загрузка ассетов
     needs: gate
