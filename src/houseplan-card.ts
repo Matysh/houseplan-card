@@ -127,6 +127,10 @@ import {
   type AreaClimate,
 } from './devices';
 import {
+  bindingCandidates, buildDeviceInbox, filterDeviceInbox,
+  type DeviceInboxCategory, type DeviceInboxReason, type DeviceInboxRow,
+} from './device-inbox';
+import {
   formatToggleConfirmation, formatToggleIntent, projectedTapAction, resolveToggleIntent,
   sameToggleOperationTargets, toggleCoverEntity, toggleIntentName, toggleOperation,
   toggleEntityCandidates, unavailableToggleTargetNames,
@@ -780,6 +784,17 @@ type RenderOpening = OpeningCfg & {
   partitionHost?: ResolvedPartitionOpening;
   orphanReason?: PartitionOpeningOrphanReason;
 };
+
+interface DeviceInboxDialogState {
+  tab: DeviceInboxCategory;
+  search: string;
+  showEntities: boolean;
+  onlyNew: boolean;
+  limit: number;
+  /** Logical row restored after a nested marker dialog closes. */
+  anchor?: string;
+  busy?: string;
+}
 
 type FixedFloorState = FixedFloorSelection | { kind: 'pending'; value: unknown };
 
@@ -1874,6 +1889,9 @@ class HouseplanCard extends LitElement {
   private _infoCard: DevItem | null = null;
   /** Native HA more-info last opened by this card, for disabled mid-dialog cleanup. */
   private _nativeMoreInfoEntity: string | null = null;
+  private _deviceInbox: DeviceInboxDialogState | null = null;
+  private _deviceInboxReturn: DeviceInboxDialogState | null = null;
+  private _deviceInboxMemo: { key: string; rows: DeviceInboxRow[] } | null = null;
   private _markerDialog: {
     devId?: string;      // the icon being edited (if any)
     /**
@@ -2298,6 +2316,7 @@ class HouseplanCard extends LitElement {
     _roomLabelScale: { state: true },
     _spaceDialog: { state: true },
     _infoCard: { state: true },
+    _deviceInbox: { state: true },
     _rulesDialog: { state: true },
     _settingsDialog: { state: true },
     _alignDialog: { state: true },
@@ -2545,7 +2564,8 @@ class HouseplanCard extends LitElement {
       if (this._backupImportDialog) { this._backupImportDialog = null; return; }
       if (this._backupExportDialog) { this._backupExportDialog = null; return; }
       if (this._settingsDialog) { this._settingsDialog = null; return; }
-      if (this._markerDialog) { this._markerDialog = null; return; }
+      if (this._markerDialog) { this._closeMarkerDialog(); return; }
+      if (this._deviceInbox) { this._deviceInbox = null; return; }
       if (this._openingDialog) { this._openingDialog = null; return; }
       if (this._physicalDialog) { this._physicalDialog = null; return; }
       if (this._backdropDialog) { this._backdropDialog = null; return; }
@@ -3600,6 +3620,8 @@ class HouseplanCard extends LitElement {
     this._hoverRoom = null;
     this._openingInfo = null;
     this._closeInfoCard();
+    this._deviceInbox = null;
+    this._deviceInboxReturn = null;
     this._markerDialog = null;
     this._physicalDialog = null;
     this._backdropDialog = null;
@@ -3633,22 +3655,7 @@ class HouseplanCard extends LitElement {
   private _showHidden = false;
 
   private get _showAll(): boolean {
-    return this._settings.filter_seeded ? this._showHidden : !!this._settings.show_all;
-  }
-
-  private _toggleShowAll(): void {
-    if (!this._serverCfg) return;
-    if (this._settings.filter_seeded) {
-      this._showHidden = !this._showHidden;
-      this.requestUpdate();
-      return;
-    }
-    // legacy config: the old shared behaviour until an editor materialises it
-    this._serverCfg = { ...this._serverCfg, settings: { ...this._serverCfg.settings, show_all: !this._settings.show_all } };
-    this._regSignature = '';
-    this._maybeRebuildDevices();
-    this._saveConfig();
-    this.requestUpdate();
+    return this._showHidden || (!this._settings.filter_seeded && !!this._settings.show_all);
   }
 
   /**
@@ -6468,6 +6475,8 @@ class HouseplanCard extends LitElement {
     this._backupImportDialog = null;
     this._backupExportDialog = null;
     this._settingsDialog = null;
+    this._deviceInbox = null;
+    this._deviceInboxReturn = null;
     this._markerDialog = null;
     this._openingDialog = null;
     this._physicalDialog = null;
@@ -6590,6 +6599,12 @@ class HouseplanCard extends LitElement {
     if (previousMode === 'plan' && this._activeDraftId)
       this._resumeDraftBySpace[this._space] = this._activeDraftId;
     this._mode = mode;
+    if (previousMode === 'devices' && mode !== 'devices') {
+      this._showHidden = false;
+      this._deviceInbox = null;
+      this._deviceInboxReturn = null;
+      this._deviceInboxMemo = null;
+    }
     this._editorChromeMode = mode === 'view' ? previousMode as 'plan' | 'devices' | 'decor' : mode;
     if (mode === 'view') {
       if (previousMode !== 'view' && !retargeting) {
@@ -11245,7 +11260,7 @@ class HouseplanCard extends LitElement {
     return !!(this._tapConfirm || this._vacCalConfirm || this._roomDialog || this._mergeDialog
       || this._openingDialog || this._physicalDialog || this._openingInfo
       || this._decorTextDialog || this._decorShapeDialog || this._backdropDialog
-      || this._decorEraseConfirm || this._spaceDialog || this._markerDialog
+      || this._decorEraseConfirm || this._spaceDialog || this._markerDialog || this._deviceInbox
       || this._infoCard || this._rulesDialog || this._settingsDialog
       || this._alignDialog || this._importDialog || this._kioskDialog
       || this._backupExportDialog || this._backupImportDialog
@@ -14024,6 +14039,230 @@ class HouseplanCard extends LitElement {
 
   // ================= DEVICE EDITOR (markers) =================
 
+  private _openDeviceInbox(): void {
+    this._deviceInboxReturn = null;
+    this._deviceInbox = this._deviceInbox || {
+      tab: 'on_plan', search: '', showEntities: false, onlyNew: false, limit: 100,
+    };
+  }
+
+  private _closeMarkerDialog(): void {
+    this._markerDialog = null;
+    if (this._deviceInboxReturn) {
+      const restored = { ...this._deviceInboxReturn };
+      this._deviceInbox = restored;
+      this._deviceInboxReturn = null;
+      if (restored.anchor) {
+        void this.updateComplete.then(() => requestAnimationFrame(() => {
+          const selector = `.device-inbox-row[data-binding="${CSS.escape(restored.anchor!)}"]`;
+          this.renderRoot.querySelector<HTMLElement>(selector)?.scrollIntoView({ block: 'nearest' });
+        }));
+      }
+    }
+  }
+
+  private _deviceInboxCandidates(showEntities: boolean) {
+    return bindingCandidates({
+      hass: this._planHass,
+      devices: this._devices,
+      markers: this._markers,
+      showEntities,
+      labels: {
+        device: this._t('marker.sub_device'),
+        z2mGroup: this._t('marker.sub_z2m_group'),
+        group: this._t('marker.sub_group'),
+        helper: this._t('marker.sub_helper'),
+        entity: this._t('marker.sub_entity'),
+      },
+    });
+  }
+
+  private _deviceInboxRows(): DeviceInboxRow[] {
+    const dialog = this._deviceInbox || this._deviceInboxReturn;
+    const showEntities = !!dialog?.showEntities;
+    const key = [
+      this._haRegistry.revision, this._cfgRev, this._cfgEpoch, this._regSignature,
+      this._newSyncKey, showEntities ? 1 : 0, this._showAll ? 1 : 0,
+      langOf(this.hass, this._config?.language),
+    ].join('|');
+    if (this._deviceInboxMemo?.key === key) return this._deviceInboxMemo.rows;
+    const candidates = this._deviceInboxCandidates(showEntities);
+    const bindings = new Set<string>(candidates.map((item) => item.value));
+    for (const marker of this._markers) if (marker.binding && marker.binding !== 'virtual') bindings.add(marker.binding);
+    for (const device of this._devices) {
+      if (device.bindingKind && device.bindingKind !== 'virtual' && device.bindingRef) {
+        bindings.add(`${device.bindingKind}:${device.bindingRef}`);
+      }
+    }
+    const statuses = new Map<string, HaBindingStatus>();
+    for (const binding of bindings) statuses.set(binding, this._bindingStatus(binding));
+
+    const areaNames: Record<string, string> = {};
+    for (const [id, area] of Object.entries<any>(this.hass?.areas || {})) areaNames[id] = area?.name || id;
+    const spaceNames = Object.fromEntries(this._model.map((space) => [space.id, space.title]));
+    const spaceByArea = Object.fromEntries(
+      Object.entries(this._areaToSpace).map(([area, value]) => [area, value.space]),
+    );
+    const integrationByBinding: Record<string, string> = {};
+    const devicePlatforms = new Map<string, Set<string>>();
+    for (const [entityId, entity] of Object.entries<any>(this._fullRegistryHass.entities || {})) {
+      const platform = String(entity?.platform || '').trim();
+      if (platform) integrationByBinding[`entity:${entityId}`] = platform;
+      if (platform && entity?.device_id) {
+        const set = devicePlatforms.get(entity.device_id) || new Set<string>();
+        set.add(platform);
+        devicePlatforms.set(entity.device_id, set);
+      }
+    }
+    for (const [deviceId, platforms] of devicePlatforms) {
+      integrationByBinding[`device:${deviceId}`] = [...platforms].sort().join(', ');
+    }
+    const reasonByBinding: Record<string, DeviceInboxReason> = {};
+    for (const [deviceId, device] of Object.entries<any>(this._fullRegistryHass.devices || {})) {
+      const binding = `device:${deviceId}`;
+      const platforms = devicePlatforms.get(deviceId) || new Set<string>();
+      const identifierDomain = Array.isArray(device?.identifiers?.[0])
+        ? String(device.identifiers[0][0] || '') : '';
+      const excluded = [identifierDomain, ...platforms].some((domain) => this._excluded.has(domain));
+      if (device?.entry_type === 'service') reasonByBinding[binding] = 'service_entry';
+      else if (excluded) reasonByBinding[binding] = 'excluded_integration';
+      else if (device?.model === 'Group') reasonByBinding[binding] = 'grouped_light';
+      else if (/scene/i.test(device?.model || '')) reasonByBinding[binding] = 'excluded_domain';
+      else if (/bridge/i.test(`${device?.model || ''}${device?.name || ''}`)
+          || (identifierDomain === 'myheat' && device?.via_device_id)) {
+        reasonByBinding[binding] = 'represented_by_parent';
+      }
+    }
+    const rows = buildDeviceInbox({
+      devices: this._devices,
+      markers: this._markers,
+      candidates,
+      statuses,
+      newDeviceIds: this._newIds,
+      showHiddenOnPlan: this._showAll,
+      areaNames, spaceNames, spaceByArea, integrationByBinding, reasonByBinding,
+    });
+    this._deviceInboxMemo = { key, rows };
+    return rows;
+  }
+
+  private _deviceForInboxRow(row: DeviceInboxRow): DevItem | null {
+    const runtime = row.deviceId ? this._devices.find((item) => item.id === row.deviceId) : null;
+    if (runtime) return runtime;
+    const marker = row.markerId ? this._markers.find((item) => item.id === row.markerId) : null;
+    if (!marker || marker.removed) return null;
+    return {
+      id: marker.id,
+      name: row.name,
+      model: row.model,
+      area: row.areaId,
+      space: row.spaceId || this._space,
+      hidden: marker.hidden === true || row.status.kind === 'ha_disabled',
+      userHidden: marker.hidden === true,
+      bindingStatus: row.status,
+      icon: row.icon,
+      entities: row.status.kind === 'active' ? row.status.enabledEntityIds : [],
+      allEntities: row.status.allEntityIds,
+      primary: row.status.kind === 'active' ? row.status.enabledEntityIds[0] : undefined,
+      marker,
+      bindingKind: row.kind,
+      bindingRef: row.binding.slice(row.binding.indexOf(':') + 1),
+      pdfs: marker.pdfs || [],
+    };
+  }
+
+  private _openInboxMarker(row: DeviceInboxRow, add = false): void {
+    const snapshot = this._deviceInbox;
+    if (!snapshot) return;
+    this._deviceInboxReturn = { ...snapshot, anchor: row.key };
+    this._deviceInbox = null;
+    if (!add) {
+      const device = this._deviceForInboxRow(row);
+      if (device) this._openMarkerDialog(device);
+      else this._closeMarkerDialog();
+      return;
+    }
+    this._openMarkerDialog();
+    if (!this._markerDialog) {
+      this._closeMarkerDialog();
+      return;
+    }
+    this._markerDialog = {
+      ...this._markerDialog,
+      bindingMode: 'ha', binding: row.binding, bindingOpen: false,
+      showEntities: row.kind === 'entity', name: '',
+    };
+  }
+
+  private async _setInboxHidden(row: DeviceInboxRow, hidden: boolean): Promise<void> {
+    const dialog = this._deviceInbox;
+    const cfg = this._serverCfg;
+    if (!dialog || !cfg || dialog.busy || row.status.kind !== 'active') return;
+    const previous = cfg.markers || [];
+    const live = previous.find((marker) => !marker.removed && marker.binding === row.binding);
+    if (!hidden && !live) return;
+    const id = live?.id || markerIdForBinding(
+      row.binding, row.markerId, () => `m_${Date.now().toString(36)}`,
+    );
+    const next: Marker = live
+      ? { ...live, hidden }
+      : { id, binding: row.binding, hidden: true };
+    cfg.markers = [
+      ...previous.filter((marker) => marker.id !== id
+        && (marker.binding !== row.binding || marker.removed === true)),
+      next,
+    ];
+    this._deviceInbox = { ...dialog, busy: row.key, anchor: row.key };
+    try {
+      await this._saveConfigNow();
+      this._regSignature = '';
+      this._deviceInboxMemo = null;
+      this._maybeRebuildDevices();
+      if (this._deviceInbox) this._deviceInbox = { ...this._deviceInbox, busy: undefined };
+      this._showToast(this._t('device_inbox.saved' as any));
+    } catch (error: any) {
+      if (this._serverCfg === cfg) cfg.markers = previous;
+      if (this._deviceInbox) this._deviceInbox = { ...this._deviceInbox, busy: undefined };
+      this._showToast(this._t('toast.error', { err: this._errText(error) }));
+    }
+  }
+
+  private _findInboxDevice(row: DeviceInboxRow): void {
+    if (!row.canFind) return;
+    const device = this._deviceForInboxRow(row);
+    if (!device) return;
+    this._deviceInbox = null;
+    if (device.space && device.space !== this._space) {
+      if (!this._commitSpace(device.space)) return;
+      this._restoreZoom();
+    }
+    const focus = () => {
+      const current = this._devices.find((item) => item.id === device.id) || device;
+      const point = this._pos(current);
+      this._applyView(this._zoom, point.x, point.y);
+      this._selId = current.id;
+      this.requestUpdate();
+      window.setTimeout(() => {
+        if (this._selId === current.id) {
+          this._selId = null;
+          this.requestUpdate();
+        }
+      }, 1500);
+    };
+    requestAnimationFrame(() => requestAnimationFrame(focus));
+  }
+
+  private _deviceInboxTabKey(event: KeyboardEvent): void {
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+    const dialog = this._deviceInbox;
+    if (!dialog) return;
+    const tabs: DeviceInboxCategory[] = ['on_plan', 'available', 'hidden', 'readd'];
+    const offset = event.key === 'ArrowRight' ? 1 : -1;
+    const index = (tabs.indexOf(dialog.tab) + offset + tabs.length) % tabs.length;
+    this._deviceInbox = { ...dialog, tab: tabs[index], limit: 100, onlyNew: false };
+    event.preventDefault();
+  }
+
   private _openMarkerDialog(d?: DevItem): void {
     // A global-camera snapshot belongs to one explicit expansion only; never
     // carry it across device-dialog sessions.
@@ -14163,74 +14402,21 @@ class HouseplanCard extends LitElement {
 
   /** Binding candidates: HA devices + group/helper entities, minus the ones already placed. */
   private _bindingCandidates(): { value: string; label: string; sub: string }[] {
-    const h = this._planHass;
-    const removed = removedPlanBindings(this._markers);
-    const removedBindings = new Set(
-      this._markers.filter((m) => m.removed).map((m) => m.binding),
-    );
-    const taken = new Set<string>();
-    for (const dev of this._devices) {
-      if (dev.id === this._markerDialog?.devId) continue;
-      if (dev.bindingKind === 'device' && dev.bindingRef) taken.add('device:' + dev.bindingRef);
-      if (dev.bindingKind === 'entity' && dev.bindingRef) taken.add('entity:' + dev.bindingRef);
-    }
-    // dedup as on the plan: hide devices with the same “name|area” as already shown ones (Tuya duplicates)
-    const shownKeys = new Set<string>();
-    for (const dev of this._devices) {
-      if (dev.bindingKind === 'device' && dev.name) shownKeys.add(dev.name.trim() + '|' + (dev.area || ''));
-    }
-    const list: { value: string; label: string; sub: string }[] = [];
-    // devices (incl. Z2M groups with model=Group)
-    for (const dev of Object.values<any>(h.devices)) {
-      if (dev.entry_type === 'service') continue;
-      const v = 'device:' + dev.id;
-      if (taken.has(v)) continue;
-      const name = (dev.name_by_user || dev.name || dev.id).trim();
-      if (v !== this._markerDialog?.binding && !removedBindings.has(v)
-          && shownKeys.has(name + '|' + (dev.area_id || ''))) continue;
-      list.push({ value: v, label: name, sub: (dev.model || this._t('marker.sub_device')) + (dev.model === 'Group' ? this._t('marker.sub_z2m_group') : '') });
-    }
-    // group/helper entities without a physical device of their own
-    const helperPlatforms = new Set([
-      'group', 'template', 'derivative', 'min_max', 'threshold', 'integration',
-      'statistics', 'trend', 'utility_meter', 'tod', 'switch_as_x', 'schedule',
-    ]);
-    for (const [eid, reg] of Object.entries<any>(h.entities)) {
-      const v = 'entity:' + eid;
-      if (taken.has(v)) continue;
-      if (isRemovedPlanEntity(h, eid, removed) && !removedBindings.has(v)) continue;
-      const isHelper = helperPlatforms.has(reg.platform);
-      const isGroupEntity = reg.platform === 'group';
-      if (!isHelper && !isGroupEntity) continue;
-      if (reg.hidden && !removedBindings.has(v)) continue;
-      const st = h.states[eid];
-      list.push({
-        value: v,
-        label: reg.name || st?.attributes?.friendly_name || eid,
-        sub: eid.split('.')[0] + ' · ' + (reg.platform === 'group' ? this._t('marker.sub_group') : this._t('marker.sub_helper')),
-      });
-    }
-    // Individual entities of devices — behind the "show entities" checkbox
-    // (groups/helpers above are ALWAYS listed: they are standalone objects).
-    if (this._markerDialog?.showEntities) {
-      const seen = new Set(list.map((o) => o.value));
-      for (const [eid, reg] of Object.entries<any>(h.entities)) {
-        const v = 'entity:' + eid;
-        if (taken.has(v) || seen.has(v) || (reg.hidden && !removedBindings.has(v))) continue;
-        // A deleted device remains offered as a whole, but the person may also
-        // restore just one of its children. The runtime override begins only
-        // after that exact entity marker is saved; this picker-only exception
-        // is what makes the intentional transition possible (#262).
-        const childOfRemovedDevice = !!reg.device_id && removed.devices.has(reg.device_id);
-        if (isRemovedPlanEntity(h, eid, removed)
-            && !removedBindings.has(v) && !childOfRemovedDevice) continue;
-        const stt = h.states[eid];
-        const label = reg.name || stt?.attributes?.friendly_name || eid;
-        const dev = reg.device_id ? h.devices[reg.device_id] : null;
-        const devName = dev ? (dev.name_by_user || dev.name || '') : '';
-        list.push({ value: v, label, sub: eid.split('.')[0] + ' · ' + this._t('marker.sub_entity') + (devName ? ' · ' + devName : '') });
-      }
-    }
+    const list = bindingCandidates({
+      hass: this._planHass,
+      devices: this._devices,
+      markers: this._markers,
+      showEntities: !!this._markerDialog?.showEntities,
+      currentBinding: this._markerDialog?.binding,
+      currentDeviceId: this._markerDialog?.devId,
+      labels: {
+        device: this._t('marker.sub_device'),
+        z2mGroup: this._t('marker.sub_z2m_group'),
+        group: this._t('marker.sub_group'),
+        helper: this._t('marker.sub_helper'),
+        entity: this._t('marker.sub_entity'),
+      },
+    });
     const f = (this._markerDialog?.bindingFilter || '').toLowerCase().trim();
     const filtered = f
       ? list.filter((o) => (o.label + ' ' + o.sub + ' ' + o.value).toLowerCase().includes(f))
@@ -14752,7 +14938,7 @@ class HouseplanCard extends LitElement {
           .callWS({ type: 'houseplan/files/cleanup', marker_id: fileSrc })
           .catch(() => undefined); // leftovers are harmless; broken links are not
       }
-      this._markerDialog = null;
+      this._closeMarkerDialog();
       this._regSignature = '';
       this._maybeRebuildDevices();
       this._showToast(this._t('toast.marker_saved'));
@@ -14770,18 +14956,21 @@ class HouseplanCard extends LitElement {
     const dlg = this._markerDialog;
     if (!dlg || dlg.busy || !dlg.devId) return;
     const d = dlg.devId ? this._devices.find((x) => x.id === dlg.devId) : null;
-    if (!d) return;
+    const persisted = this._markers.find((marker) => marker.id === dlg.devId);
+    if (!d && !persisted) return;
     const label = dlg.name || this._t('device.fallback');
     if (!confirm(this._t('confirm.remove_marker', { name: label }))) return;
     const cfg = this._serverCfg!;
     cfg.markers = cfg.markers || [];
     const previousMarkers = cfg.markers;
-    const binding = d.bindingKind === 'virtual'
-      ? 'virtual'
-      : d.bindingKind && d.bindingRef ? `${d.bindingKind}:${d.bindingRef}` : '';
+    const targetId = d?.id || persisted!.id;
+    const binding = d
+      ? d.bindingKind === 'virtual' ? 'virtual'
+        : d.bindingKind && d.bindingRef ? `${d.bindingKind}:${d.bindingRef}` : ''
+      : persisted!.binding;
     if (!binding) return;
     const deletion = deletePlanMarkerRecords(
-      cfg.markers, d.id, binding, d.bindingKind === 'virtual',
+      cfg.markers, targetId, binding, binding === 'virtual',
     );
     cfg.markers = removeMarkerControlReferences(deletion.markers, deletion.cleanupIds);
     const cleanupIds = deletion.cleanupIds;
@@ -14808,10 +14997,13 @@ class HouseplanCard extends LitElement {
         await this.hass.callWS({ type: 'houseplan/trail/delete', marker_id: id })
           .catch(() => undefined);
       }
-      this._markerDialog = null;
-      if (this._infoCard?.id === d.id) this._closeInfoCard();
-      if (this._selId === d.id) this._selId = null;
-      if (this._drag?.id === d.id) this._drag = null;
+      if (this._deviceInboxReturn) {
+        this._deviceInboxReturn = { ...this._deviceInboxReturn, tab: 'readd', anchor: binding };
+      }
+      this._closeMarkerDialog();
+      if (this._infoCard?.id === targetId) this._closeInfoCard();
+      if (this._selId === targetId) this._selId = null;
+      if (this._drag?.id === targetId) this._drag = null;
       this._regSignature = '';
       this._maybeRebuildDevices();
       this._showToast(this._t('toast.marker_removed'));
@@ -18155,6 +18347,7 @@ class HouseplanCard extends LitElement {
         ${this._backdropDialog ? this._renderBackdropDialog() : nothing}
         ${this._decorEraseConfirm ? this._renderDecorEraseConfirm() : nothing}
         ${this._spaceDialog ? this._renderSpaceDialog() : nothing}
+        ${this._deviceInbox ? this._renderDeviceInbox() : nothing}
         ${this._markerDialog ? this._renderMarkerDialog() : nothing}
         ${this._vacCalConfirm ? html`<hp-dialog .hass=${this.hass}
           .title=${this._t('vac.residual_title')} icon="mdi:map-marker-alert-outline"
@@ -20749,12 +20942,9 @@ class HouseplanCard extends LitElement {
     return html`<div class="editbar devbar">
       <div class="editbar-tools" tabindex="-1" ?inert=${this._modeTransitionBusy}>
         <ha-icon icon="mdi:tune-variant" class="warn"></ha-icon>
-        <button class="btn" @click=${() => this._openMarkerDialog()} title=${this._t('title.add_device')}>
-          <ha-icon icon="mdi:plus-box-outline"></ha-icon>${this._t('devbar.add')}
-        </button>
-        <button class="btn ${this._showAll ? 'on' : ''}" @click=${this._toggleShowAll}
-          title=${this._t('title.show_all')}>
-          <ha-icon icon="${this._showAll ? 'mdi:eye' : 'mdi:eye-off-outline'}"></ha-icon>${this._t('devbar.show_all')}
+        <button class="btn ${this._showAll ? 'on' : ''}" @click=${this._openDeviceInbox}
+          title=${this._t('device_inbox.title' as any)}>
+          <ha-icon icon="mdi:devices"></ha-icon>${this._t('device_inbox.button' as any)}
         </button>
         <button class="btn" @click=${this._openRulesDialog} title=${this._t('title.icon_rules')}>
           <ha-icon icon="mdi:shape-plus-outline"></ha-icon>${this._t('devbar.rules')}
@@ -20769,6 +20959,144 @@ class HouseplanCard extends LitElement {
         </button>
       </div>
     </div>`;
+  }
+
+  private _renderDeviceInbox(): TemplateResult {
+    const dialog = this._deviceInbox!;
+    const rows = this._deviceInboxRows();
+    const counts = Object.fromEntries((['on_plan', 'available', 'hidden', 'readd'] as const)
+      .map((category) => [category, rows.filter((row) => row.category === category).length]));
+    const filtered = filterDeviceInbox(
+      rows, dialog.tab, dialog.search, dialog.tab === 'on_plan' && dialog.onlyNew,
+    );
+    const visible = filtered.slice(0, dialog.limit);
+    const tabLabel = (tab: DeviceInboxCategory) => this._t(`device_inbox.tab_${tab}` as any);
+    const emptyKey = `device_inbox.empty_${dialog.tab}` as any;
+    const openVirtual = () => {
+      this._deviceInboxReturn = { ...dialog };
+      this._deviceInbox = null;
+      this._openMarkerDialog();
+      if (!this._markerDialog) this._closeMarkerDialog();
+    };
+    return html`<hp-dialog class="device-inbox-dialog" .hass=${this.hass}
+      .title=${this._t('device_inbox.title' as any)} icon="mdi:devices" wide
+      @hp-close=${() => (this._deviceInbox = null)}>
+      <div class="device-inbox" ?inert=${!!dialog.busy}>
+        <div class="device-inbox-head">
+          <input class="device-inbox-search" type="search" autofocus
+            placeholder=${this._t('device_inbox.search' as any)} .value=${dialog.search}
+            @input=${(event: Event) => (this._deviceInbox = {
+              ...dialog, search: (event.target as HTMLInputElement).value, limit: 100,
+            })} />
+          <button type="button" class="btn" @click=${openVirtual}>
+            <ha-icon icon="mdi:map-marker-plus-outline"></ha-icon>
+            ${this._t('device_inbox.add_virtual' as any)}
+          </button>
+        </div>
+        <div class="device-inbox-tabs" role="tablist" @keydown=${this._deviceInboxTabKey}>
+          ${(['on_plan', 'available', 'hidden', 'readd'] as DeviceInboxCategory[]).map((tab) => html`
+            <button type="button" role="tab" aria-selected=${dialog.tab === tab ? 'true' : 'false'}
+              class=${dialog.tab === tab ? 'on' : ''}
+              @click=${() => (this._deviceInbox = { ...dialog, tab, limit: 100, onlyNew: false })}>
+              ${tabLabel(tab)} <span>${counts[tab]}</span>
+            </button>`)}
+        </div>
+        <div class="device-inbox-filters">
+          ${dialog.tab === 'on_plan' ? html`<label>
+            <input type="checkbox" .checked=${dialog.onlyNew}
+              @change=${(event: Event) => (this._deviceInbox = {
+                ...dialog, onlyNew: (event.target as HTMLInputElement).checked, limit: 100,
+              })} />${this._t('device_inbox.only_new' as any)}
+          </label>` : nothing}
+          ${dialog.tab === 'available' ? html`<label>
+            <input type="checkbox" .checked=${dialog.showEntities}
+              @change=${(event: Event) => {
+                this._deviceInboxMemo = null;
+                this._deviceInbox = {
+                  ...dialog, showEntities: (event.target as HTMLInputElement).checked, limit: 100,
+                };
+              }} />${this._t('device_inbox.show_entities' as any)}
+          </label>` : nothing}
+          <label>
+            <input type="checkbox" .checked=${this._showAll}
+              @change=${(event: Event) => {
+                this._showHidden = (event.target as HTMLInputElement).checked;
+                this._deviceInboxMemo = null;
+                this.requestUpdate();
+              }} />${this._t('device_inbox.show_hidden' as any)}
+          </label>
+        </div>
+        <div class="device-inbox-results" aria-live="polite">
+          ${visible.length ? visible.map((row) => {
+            const primary = row.category === 'on_plan'
+              ? row.canFind ? html`<button type="button" class="btn" @click=${() => this._findInboxDevice(row)}>
+                  <ha-icon icon="mdi:crosshairs-gps"></ha-icon>${this._t('device_inbox.find' as any)}</button>`
+                : html`<button type="button" class="btn" @click=${() => this._openInboxMarker(row)}
+                    ?disabled=${!row.canEdit}>${this._t('device_inbox.edit' as any)}</button>`
+              : row.category === 'hidden'
+                ? html`<button type="button" class="btn" @click=${() => this._setInboxHidden(row, false)}
+                    title=${row.canShow ? '' : this._t('device_inbox.show_disabled' as any)}
+                    ?disabled=${!row.canShow}>${this._t('device_inbox.show' as any)}</button>`
+                : html`<button type="button" class="btn" @click=${() => this._openInboxMarker(row, true)}
+                    ?disabled=${!row.canAdd}>${this._t(row.category === 'readd'
+                      ? 'device_inbox.readd' as any : 'device_inbox.add' as any)}</button>`;
+            const status = row.status.kind === 'active' ? ''
+              : this._t(`device_inbox.status_${row.status.kind}` as any);
+            return html`<article class="device-inbox-row" data-binding=${row.binding}
+              data-category=${row.category} data-status=${row.status.kind}>
+              <ha-icon class="device-inbox-icon" .icon=${row.icon}></ha-icon>
+              <div class="device-inbox-copy">
+                <div class="device-inbox-name"><b>${row.name}</b>
+                  ${row.isNew ? html`<span class="device-inbox-new">${this._t('device_inbox.new' as any)}</span>` : nothing}
+                </div>
+                <div class="device-inbox-meta">
+                  ${[row.model, row.integration, row.spaceName, row.areaName].filter(Boolean).join(' · ')}
+                </div>
+                <div class="device-inbox-reason">
+                  ${this._t(`device_inbox.reason_${row.reason}` as any)}
+                  ${status ? html`<span class="device-inbox-status">${status}</span>` : nothing}
+                </div>
+                <code>${row.binding}</code>
+              </div>
+              <div class="device-inbox-actions">
+                ${primary}
+                ${row.canEdit || row.canHide || row.category === 'available'
+                    || row.category === 'hidden' || this._bindingHasHaPage(row.binding) ? html`
+                  <details class="device-inbox-menu">
+                    <summary class="btn ghost" aria-label=${this._t('device_inbox.more_actions' as any)}
+                      title=${this._t('device_inbox.more_actions' as any)}>
+                      <ha-icon icon="mdi:dots-vertical"></ha-icon>
+                    </summary>
+                    <div class="device-inbox-menu-items">
+                      ${row.canEdit && !(row.category === 'on_plan' && !row.canFind)
+                        ? html`<button type="button" class="btn ghost" @click=${() => this._openInboxMarker(row)}>
+                            ${this._t('device_inbox.edit' as any)}</button>` : nothing}
+                      ${row.canHide ? html`<button type="button" class="btn ghost"
+                        @click=${() => this._setInboxHidden(row, true)}>${this._t('device_inbox.hide' as any)}</button>` : nothing}
+                      ${row.category === 'available' ? html`<button type="button" class="btn ghost"
+                        @click=${() => this._setInboxHidden(row, true)}>${this._t('device_inbox.hide_available' as any)}</button>` : nothing}
+                      ${row.category === 'hidden' ? html`<button type="button" class="btn ghost"
+                        title=${row.canFind ? '' : this._t('device_inbox.find_hidden_hint' as any)}
+                        ?disabled=${!row.canFind} @click=${() => this._findInboxDevice(row)}>
+                        <ha-icon icon="mdi:crosshairs-gps"></ha-icon>${this._t('device_inbox.find' as any)}</button>` : nothing}
+                      ${this._bindingHasHaPage(row.binding) ? html`<button type="button" class="btn ghost"
+                        @click=${() => this._openBindingInHa(row.binding)}>${this._t('btn.open_in_ha')}</button>` : nothing}
+                    </div>
+                  </details>` : nothing}
+              </div>
+            </article>`;
+          }) : html`<div class="device-inbox-empty">${this._t(emptyKey)}</div>`}
+        </div>
+        ${filtered.length > visible.length ? html`<button type="button" class="btn device-inbox-more"
+          @click=${() => (this._deviceInbox = { ...dialog, limit: dialog.limit + 100 })}>
+          ${this._t('device_inbox.show_more' as any)} (${filtered.length - visible.length})
+        </button>` : nothing}
+      </div>
+      <div slot="footer" class="row">
+        <button type="button" class="btn ghost" @click=${() => (this._deviceInbox = null)}>
+          ${this._t('btn.close')}</button>
+      </div>
+    </hp-dialog>`;
   }
 
   /** Entities of a device worth CONTROLLING or reading, in a sensible order. */
@@ -21407,7 +21735,7 @@ class HouseplanCard extends LitElement {
     })();
     return html`<hp-dialog .hass=${this.hass}
       .title=${d.devId ? this._t('info.device_header') : this._t('marker.new_device')}
-      icon="mdi:shape-plus" wide @hp-close=${() => (this._markerDialog = null)}>
+      icon="mdi:shape-plus" wide @hp-close=${this._closeMarkerDialog}>
         <div class="body">
           ${bindingStatus?.kind === 'ha_disabled'
             ? html`<div class="habindingbanner" role="status">
@@ -21963,7 +22291,7 @@ class HouseplanCard extends LitElement {
           </div>
           <div class="markersaveactions">
             <button class="btn ghost" ?disabled=${d.busy}
-              @click=${() => (this._markerDialog = null)}>${this._t('btn.cancel')}</button>
+              @click=${this._closeMarkerDialog}>${this._t('btn.cancel')}</button>
             <button class="btn on" @click=${this._saveMarker}
               ?disabled=${d.busy || (d.bindingMode === 'ha' && (!d.binding || d.binding === 'virtual'
                 || (!d.devId && bindingStatus?.kind !== 'active')))}

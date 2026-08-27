@@ -156,14 +156,12 @@ export const MUTANTS = [
   {
     id: 'device-tombstone-blocks-child-picker',
     guard: 'node demo/smoke_binding_picker.mjs',
-    because: 'a device tombstone must expose an active child in Add when Show entities is on; '
+    because: 'a device tombstone must expose an active child in the catalog/Add flow when Show entities is on; '
       + 'restoring only the exact device reproduces the user-visible dead end from #262',
     patches: [{
-      file: 'src/houseplan-card.ts',
-      find: '        if (isRemovedPlanEntity(h, eid, removed)\n'
-        + '            && !removedBindings.has(v) && !childOfRemovedDevice) continue;',
-      replace: '        if (isRemovedPlanEntity(h, eid, removed)\n'
-        + '            && !removedBindings.has(v)) continue;',
+      file: 'src/device-inbox.ts',
+      find: '      if (isRemovedPlanEntity(h, eid, removed) && !removedBindings.has(value) && !childOfRemovedDevice) continue;',
+      replace: '      if (isRemovedPlanEntity(h, eid, removed) && !removedBindings.has(value)) continue;',
     }],
   },
   {

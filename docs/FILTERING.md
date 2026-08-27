@@ -73,7 +73,7 @@ the old behaviour until an editing client materialises it.
 
 ## Behaviour
 
-| State | Renders | Hidden/disabled tool | Room/light/climate data | Add picker |
+| State | Renders | Devices catalog | Room/light/climate data | Add/re-add action |
 |---|---:|---:|---:|---:|
 | visible marker/device | yes | — | yes | no duplicate |
 | `hidden: true` | no | ghost | LQI/climate yes, visible light no | no duplicate |
@@ -85,10 +85,15 @@ the old behaviour until an editing client materialises it.
   except the device editor with "Show hidden devices" on — there they render
   ghosted (translucent, dashed) and clicking opens the dialog, where the
   bottom-left "Show" action restores it after saving.
-- "Hidden and disabled" (formerly "Show all") is LOCAL, ephemeral state of
-  the current tab. A disabled ghost is grey and explicitly labelled; it cannot
-  be dragged or shown until the binding is activated in HA. Its dialog still
-  permits metadata edits, Open in HA and Delete.
+- The Device editor exposes one lifecycle catalog built by the pure
+  `device-inbox.ts` projection. Exact bindings stay in one user-intent category
+  (`on_plan`, `available`, `hidden`, `readd`); HA disabled/orphaned/unverified
+  is an independent operational status and never silently moves a row.
+- **Show hidden on plan** in that catalog is LOCAL, ephemeral state of the
+  current editor session. A disabled ghost is grey and explicitly labelled;
+  it cannot be dragged or shown until the binding is activated in HA. Its
+  dialog still permits metadata edits, Open in HA and Delete. Opening,
+  searching, filtering and Find are read-only.
 - Room LQI counts hidden devices (owner's decision).
 - Hidden devices are NOT content for the CONTENT FRAME (docs/CANVAS.md §4,
   audit DEV-2C947-01). The frame is presentation: an object the plan does not
@@ -102,7 +107,8 @@ the old behaviour until an editing client materialises it.
 - Light fill and glow do NOT count hidden devices — an invisible device casts
   no visible light (owner's decision). Room climate is registry-wide and
   unaffected, as before.
-- The bottom-left "Hide" / "Show" action appears in the dialog of every
+- Hide/Show is also available from the lifecycle catalog; the bottom-left
+  "Hide" / "Show" action remains in the dialog of every
   existing device kind, virtual included; changing it is applied by "Save".
 - "Delete" appears beside Hide/Show for every existing marker. It asks for
   confirmation and commits immediately. HA device/entity markers leave only

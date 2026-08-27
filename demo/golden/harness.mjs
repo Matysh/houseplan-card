@@ -1265,6 +1265,26 @@ export async function prepareGoldenScenario(page, scenario) {
           || dialog.querySelector('.btn.on')) {
         throw new Error('golden Optimize preflight failure dialog is incomplete');
       }
+    } else if (scenario.dialog === 'device-inbox') {
+      card._setMode('devices');
+      await card.updateComplete;
+      await settleMode(card);
+      card._openDeviceInbox();
+      if (scenario.deviceInboxTab) {
+        card._deviceInbox = { ...card._deviceInbox, tab: scenario.deviceInboxTab };
+      }
+      await card.updateComplete;
+      await frame();
+      const dialog = card.renderRoot.querySelector('hp-dialog.device-inbox-dialog');
+      const tabs = dialog?.querySelectorAll('.device-inbox-tabs [role="tab"]');
+      const rows = dialog?.querySelectorAll('.device-inbox-row');
+      if (!dialog || tabs?.length !== 4 || !rows?.length) {
+        throw new Error(`golden device lifecycle catalog is incomplete: ${scenario.id}`);
+      }
+      const body = dialog.querySelector('.device-inbox');
+      if (body && body.scrollWidth > body.clientWidth + 1) {
+        throw new Error(`golden device lifecycle catalog overflows horizontally: ${scenario.id}`);
+      }
     } else if (scenario.dialog === 'device') {
       card._setMode('devices');
       await card.updateComplete;

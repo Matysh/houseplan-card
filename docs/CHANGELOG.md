@@ -9,6 +9,11 @@
   rooms with no interior left. Length is measured along the whole wall, so a
   short filler segment compensating a thickness step stays legal
   ([#329](https://github.com/Matysh/houseplan-card/issues/329)).
+- The Device editor now has one searchable lifecycle catalog for devices on
+  the plan, available bindings, hidden markers and bindings available to add
+  again. It explains Home Assistant status separately, can find markers on the
+  plan, and keeps hide/show/add/re-add flows in one place
+  ([#29](https://github.com/Matysh/houseplan-card/issues/29)).
 
 ## v1.68.1 — 2026-08-27
 
