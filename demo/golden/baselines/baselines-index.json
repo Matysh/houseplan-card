@@ -1,8 +1,8 @@
 {
   "schema": 1,
-  "matrixVersion": 47,
-  "acceptedAt": "2026-08-26T20:41:35.180774Z",
-  "sourceFingerprint": "80bd29ef9692067b706f221eaf8d62b4030e3a51b91bc9cff8d854aaee373700",
+  "matrixVersion": 48,
+  "acceptedAt": "2026-08-27T19:14:12.216Z",
+  "sourceFingerprint": "d3735b5ee1f41b4fbf52f95046ab81f8a4ca9e15b02b8b9ca4ff8e7eff3bb179",
   "chromium": "151.0.7922.34",
   "scenarios": {
     "hidden-wall-diagnostics-plan-light": "37ba151aa6b1ea7b1b270d461ccca348444c5eeb14a5592bf045a0e69b0fb83e",
@@ -11,6 +11,7 @@
     "coincident-partition-thin-dark": "3afede1f99b86454bf4e50d9628196a2240243e034644592c5c3efa1b4561930",
     "coincident-partition-thick-dark": "57960bd09e6cbbeb073561692690ca68a72d6dbf8242198ef73b8d4ae4d8fbcc",
     "coincident-partition-virtual-dark": "da7adbf931ad95f4e620d9d088177f1da20d88a21b9e85b6ff2675925d5557b4",
+    "span-over-door-migrated-dark": "a817f5baacf5ff80d1f236ffaa176cb6331b75423393dae5b16e54f67f37c7e0",
     "split-corner-wall-before-dark": "3176dc67f54d5309f87c94e1077b4f69eb1db9f660469fbf97953038323430f3",
     "split-corner-wall-thin-dark": "48062a49e12728c377a7c4352148381b1be2a5606b6792d754ae055b04c22be1",
     "split-corner-wall-thick-dark": "a5d795eec4561e3a1aa9c37843fadddcb04d888d5a49e6ffacf29c17b7798568",
@@ -111,6 +112,7 @@
     "junction-309-step-dark": "f5e0e649ee19197026b87687fd3512b18536883f071348589ec3a7f0ea2a216f",
     "junction-309-spike-dark": "98e709aa2fa58a01fe280635c6a3799e3a5f4158b2ada12c31c38818f92c4f44",
     "junction-309-hump-dark": "abae96fd96ed8515d7b1e33b84858bdf08ac28a888898549874baa8c98202e7a",
+    "sharp-apex-legacy-dark": "93a46c66f7263a0325d0c4d50fa0677f3c902647ea5880960b99dc8fa04a01a5",
     "junction-owner-repro-dark": "f5407d420449ebf897f94fcfcdaaf4630e818c043d3076b090f7d1944df5296b",
     "large-house-zoom-040-dark": "736af1c340646c4c1cbab3d2270f67a535995e1ea1e2abe49c91d2c396052097",
     "large-house-zoom-250-dark": "3f7abdd66a7b33301275983dbf83862bd24f91c65a7d731c411ebd3ed01b381d",
@@ -133,7 +135,6 @@
     "optimize-orphan-references-dark-en": "f40417298e126fa804ddafb91d62b728c86a56c5a28b4fad12b732070faa4ad6",
     "optimize-orphan-references-light-ru": "2d0319f681cfbe472ad5dede05d145a995dedee577d8d816e2fe46a519e019f5",
     "card-editor-invalid-default-floor-light-en": "dbf251ece014cfee252e0dcb2d7c00eda66aa4b5bd125e4c83e248d4319d24b3",
-    "card-editor-invalid-default-floor-dark-ru": "422b74bb391b87e383350247ef1bc1f10ca48c8f6fe418f75bde94e62e3b8bc0",
-    "span-over-door-migrated-dark": "a817f5baacf5ff80d1f236ffaa176cb6331b75423393dae5b16e54f67f37c7e0"
+    "card-editor-invalid-default-floor-dark-ru": "422b74bb391b87e383350247ef1bc1f10ca48c8f6fe418f75bde94e62e3b8bc0"
   }
 }
