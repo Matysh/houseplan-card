@@ -40,10 +40,16 @@ task records: problem, scope, acceptance criteria and discussion.
 of a status and `rejected` on a closed issue. Exactly one `S*` label per open
 issue. Labels are the whole of it: GitHub Projects is no longer used.
 
-Two shortcuts exist for small work. `small` — the light track: the spec lives in
-the issue body and its review is a comment. `trivial` — the short track: no spec
-stage at all, `S2-analysis` straight to `S5-ready`, with the AC written into the
-issue body first. `trivial` requires a bug confined to one surface with no new UX
+**The light track is the default, not a shortcut** (owner's decision 2026-08-27,
+issue #338). `small` — the spec lives in the issue body and its review is a
+comment. Analysis names the `small` criterion the task *fails* when it takes the
+full track; "ordinary track" without a named criterion is not a justification.
+The threshold itself did not move — only which side carries the proof. The full
+track stays what it was for geometry, config migrations and public contracts,
+where a criterion is broken plainly and saying which one is easy.
+
+`trivial` — the short track: no spec stage at all, `S2-analysis` straight to
+`S5-ready`, with the AC written into the issue body first. `trivial` requires a bug confined to one surface with no new UX
 contract, no migration, no i18n, no perf or touch impact, at most three checkable
 AC, **and expected behaviour already on record** — nothing left to decide. Code
 review is never skipped on either track; it is what stands in for testing.
@@ -274,7 +280,9 @@ the owner splits the task, rejects it, or arbitrates.
 
 On the light track (`small`: complexity ≤3, one surface, no config migration, no
 new UX contract, no perf or touch impact — all at once) the spec lives in the issue
-body and the spec review is a comment. Code review is never skipped.
+body and the spec review is a comment. Code review is never skipped. This track is
+the default: taking the full one means naming the criterion above that the task
+does not meet.
 
 ## Specs
 
