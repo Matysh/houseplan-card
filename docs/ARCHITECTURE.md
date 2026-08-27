@@ -29,6 +29,7 @@ houseplan-card/
 │  ├─ floating-surface-controller.ts # shared Popover/fallback portal DOM lifecycle
 │  ├─ editor-secondary.ts        # context tray model, groups, focus/dismiss lifecycle and stable template
 │  ├─ editor-secondary.styles.ts # styles owned by the context tray/submenu surface
+│  ├─ device-inbox.ts           # pure exact-binding lifecycle catalog + shared Add eligibility
 │  ├─ space-model-selection.ts   # active-or-first and exact optional space selectors
 │  ├─ render/opening-tunnels.ts  # immutable SVG projection of resolved tunnel geometry/fills
 │  ├─ editor.ts                  # GUI config editor (ha-form + selectors)
@@ -314,19 +315,24 @@ user-space shadows include the factor in their structural cache inputs.
 name?, icon?, model?, link?, description?, pdfs:[{name,url}]}`. A hybrid: auto-discovered HA devices
 appear on their own; a marker with `binding=device:<id>` overrides them (metadata/rebinding/hiding),
 `entity:<eid>` — for groups/helpers, `virtual` — a manual icon without HA. The marker id = device_id /
-`lg_<eid>` / `v_<rand>` (preserves the position in the layout). The binding picker excludes already-placed
-references and duplicates by name|area. Manual files: transactional HTTP upload into `<config>/houseplan/files/<id>/`
+`lg_<eid>` / `v_<rand>` (preserves the position in the layout). The binding picker and
+the Device editor lifecycle catalog use the same pure `bindingCandidates()`
+eligibility helper; filtering/paging happens only after the full candidate
+snapshot, so large registries cannot hide later exact entities. The catalog's
+`buildDeviceInbox()` projection combines runtime devices, markers, tombstones,
+HA binding statuses and `new_device_ids` without owning persistence or Lit
+state. Manual files: transactional HTTP upload into `<config>/houseplan/files/<id>/`
 (staging `up_*` folders promoted on save), served via signed
 `/api/houseplan/content/files/…` urls.
 
 `removed:true` is a binding tombstone, not a renderable marker. It claims an
 HA binding against automatic discovery while intentionally exposing that same
-binding to the Add picker. A device tombstone excludes all data of that device;
+binding to the catalog's re-add flow. A device tombstone excludes all data of that device;
 an entity tombstone excludes the standalone entity binding but does not mutate
 the same entity out of a still-live parent device. A live exact `entity:X`
 marker is the one narrow override: it may coexist with a `device:D` tombstone,
 restoring X while the parent claim continues to suppress D and every sibling
-without its own live exact marker. The Add picker exposes active children of a
+without its own live exact marker. The catalog exposes active children of a
 device tombstone only behind **Show entities**, so that combination is reachable
 without weakening ordinary runtime deletion. Runtime-filtered references such
 as `controls` and live text remain persisted and become active again after

@@ -1707,20 +1707,24 @@ separately promised workflows:
       for confirmation, Cancel changes nothing, Confirm closes the dialog
       immediately [manual]
 - [ ] Delete an auto device: no icon and no Show-hidden ghost; it does not
-      return on rebuild/reload, but its binding is offered by Add. Re-add it:
+      return on rebuild/reload, but its binding is offered in **Available again**. Re-add it:
       one marker only, fresh centred/grid position, no tombstone
       [auto: smoke_hidden_flag; unit + manual]
-- [ ] Delete `device:D`, enable Show entities in Add and restore only child
+- [ ] Delete `device:D`, enable Show entities in **Devices → Available** and restore only child
       `entity:X`: X receives one live marker and a fresh position; the parent
       tombstone remains, so D and sibling Y do not return or contribute to
       aggregates. Delete/re-add X is idempotent; explicitly re-adding D later
       leaves the intentional D + X pair from #226
       [auto: smoke_binding_picker; unit: devices.test.mjs; mutation x4]
 - [ ] Delete an entity marker and a virtual marker: the entity is offered by
-      Add (with Show entities when applicable); the virtual marker is gone and
+      the catalog (with Show entities when applicable); the virtual marker is gone and
       can be recreated manually. The exact deleted entity remains offered even
       if HA marks its registry entry hidden. Other virtual markers survive both
       Save and Delete [auto: smoke_hidden_flag; unit + manual]
+- [ ] The Device editor has one **Devices** entry point. Its four lifecycle
+      tabs, counts, search, keyboard arrows and narrow layout work; browsing,
+      Find and a nested Edit/Cancel round-trip write neither config nor layout
+      [auto: smoke_device_inbox; unit: device-inbox.test; golden: device-inbox-*].
 - [ ] Deleted device contributes to none of LQI, climate average, explicit room
       temp/humidity, resolved lights, Light fill, Glow, room stats or another
       marker's controls. Hidden device keeps the documented hidden semantics

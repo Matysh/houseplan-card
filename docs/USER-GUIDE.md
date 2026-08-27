@@ -478,19 +478,33 @@ to automatic parent discovery; its binding tombstone does not remove registry
 data from the live HA device.
 
 After deleting a complete HA device, you can restore only one of its entities:
-open **Add**, enable **Show entities**, and select that entity. House Plan
+open **Devices → Available**, enable **Show entities**, and select that entity. House Plan
 returns the selected marker with a fresh position while the complete device
 and its other entities remain deleted. The complete device stays available in
-Add if you later decide to restore it explicitly as well.
+**Available again** if you later decide to restore it explicitly as well.
 
 ### Device editor
 
 - drag a marker to save its server-side position;
 - click it to edit name, binding, room, tap action and presentation;
-- **Add** creates a virtual marker or picks a binding manually;
-- **Hidden and disabled** reveals user-hidden and HA-disabled records only in
-  the editor;
+- **Devices** opens one searchable lifecycle catalog. Its **On plan**,
+  **Available**, **Hidden** and **Available again** tabs explain where every
+  exact HA binding is and offer the next valid action;
+- **Add virtual device** lives at the top of that catalog. Enable **Show
+  entities** in **Available** to place an individual entity;
+- **Show hidden on plan** is a local catalog switch. It reveals user-hidden
+  and HA-disabled records as service ghosts only until you leave the Device
+  editor; it never changes the saved Hidden flag;
 - **Icon rules** edits the first-match regular-expression list.
+
+An automatically discovered marker is already **On plan** even before it has
+saved marker settings. The **New** badge is independent and remains until the
+marker settings are opened. **Find on plan** centres and briefly selects the
+marker without changing config or acknowledging that badge. Hide and Show are
+reversible; Delete leaves an exact binding tombstone and moves an active HA
+binding to **Available again**. A disabled or missing binding keeps its saved
+category and receives a separate Home Assistant status instead of silently
+moving to another tab.
 
 The dialog shows binding provenance, exact next tap result, skipped targets and
 a live presentation preview. A saved missing source is shown as missing rather
@@ -913,7 +927,7 @@ per space. The configuration package is limited to 2 MB.
 ### Devices or values are missing
 
 - confirm the room's HA-area binding and the device/entity registry area;
-- open Device → Hidden and disabled;
+- open Device → **Devices** and inspect **Hidden** / **Available again**;
 - verify the selected source still exists and is available;
 - remember that a virtual marker has no active state;
 - inspect the dialog's exact target and skipped-target explanation.

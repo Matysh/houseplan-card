@@ -34,10 +34,14 @@ Object.assign(out, await page.evaluate(async () => {
   o.stillBuilt = !!built && built.hidden === true;
   o.countExcludesHidden = (sr().querySelector('.count')?.textContent || '').includes(String(before - 1));
 
-  // в просмотре тумблера нет эффекта — призраки только в редакторе устройств
-  c._showHidden = true; c.requestUpdate(); await c.updateComplete;
+  // Ghost-режим теперь включается из единого каталога. В View каталога нет,
+  // а призраки по-прежнему существуют только в Device editor.
   o.noGhostsInView = !sr().querySelector('.dev.ghost');
-  c._setMode('devices'); c.requestUpdate(); await c.updateComplete;
+  c._setMode('devices'); c._openDeviceInbox(); await c.updateComplete;
+  const ghostToggle = [...sr().querySelectorAll('.device-inbox-filters input[type="checkbox"]')].at(-1);
+  o.ghostToggleMovedIntoCatalog = !!ghostToggle;
+  ghostToggle?.click(); await c.updateComplete;
+  c._deviceInbox = null; await c.updateComplete;
   o.ghostInEditor = !!sr().querySelector('.dev.ghost');
   // призрак — конфигурация, не статус: ни жёлтого, ни unavail, ни тревоги
   const g = sr().querySelector('.dev.ghost');

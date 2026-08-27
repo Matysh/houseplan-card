@@ -155,7 +155,7 @@ export class HpDialog extends LitElement {
     }
 
     :host([wide]) .surface {
-      width: min(500px, 94vw);
+      width: min(var(--hp-dialog-wide-width, 500px), 94vw);
     }
 
     .header {
