@@ -22,7 +22,7 @@ test('ordinary Validate keeps only the bounded candidate performance smoke', () 
 test('full performance is isolated to stable, scheduled and manual entry points', () => {
   const workflow = readWorkflow('performance.yml');
   for (const contract of [
-    'name: Full Performance',
+    'name: Полные бенчмарки производительности',
     'branches:',
     '- main',
     'schedule:',
@@ -44,5 +44,5 @@ test('full performance is isolated to stable, scheduled and manual entry points'
 
   const release = readWorkflow('release.yml');
   assert.ok(release.includes('if: ${{ !github.event.release.prerelease }}'));
-  assert.ok(release.includes('--workflow=performance.yml --label="Full Performance"'));
+  assert.ok(release.includes('--workflow=performance.yml --label="Полные бенчмарки производительности"'));
 });
