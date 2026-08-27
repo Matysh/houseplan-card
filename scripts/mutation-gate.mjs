@@ -539,7 +539,9 @@ export const MUTANTS = [
   },
   {
     id: 'junction-limit-backend-raw-baseline',
-    guard: 'python3 -m pytest tests_backend/test_junction_limits.py -q',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'test_legacy_baseline_is_judged_after_the_same_migration '
+      + 'tests_backend/test_junction_limits.py',
     because: 'a legacy baseline carries no wall catalogue, so judging it raw reports "no '
       + 'violations" whatever its geometry and turns every inherited one into a refusal of '
       + 'an unrelated edit (#329 §3, code review r1 H1)',
