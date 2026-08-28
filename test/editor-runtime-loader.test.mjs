@@ -120,3 +120,9 @@ test('source type references stay portable across build hosts', () => {
     'type imports must not capture an absolute Windows workspace path',
   );
 });
+
+test('documentation capture materializes the complete bundle tree', () => {
+  const capture = readFileSync(join(repoRoot, 'demo', 'docs', 'capture.mjs'), 'utf8');
+  assert.match(capture, /import ['"]\.\.\/\.\.\/scripts\/bundle-sync\.mjs['"]/);
+  assert.doesNotMatch(capture, /copyFileSync\(BUNDLE,\s*DEMO_BUNDLE\)/);
+});

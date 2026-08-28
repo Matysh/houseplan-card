@@ -1,8 +1,12 @@
 #!/usr/bin/env node
 import { createHash } from 'node:crypto';
-import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+// #337: a clean CI checkout has no ignored demo bundle. Materialize the whole
+// manifest-owned tree before launching Chromium; copying only the stable entry
+// leaves every content-hashed import at 404.
+import '../../scripts/bundle-sync.mjs';
 import { visualFingerprint } from '../../scripts/source-fingerprint.mjs';
 import { assertFreshDemoBundle } from '../bundle-freshness.mjs';
 import { goldenClip, prepareGoldenScenario } from '../golden/harness.mjs';
@@ -11,9 +15,6 @@ import { DOC_SCREENSHOT_VERSION, DOC_SCREENSHOTS } from './screenshots.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const OUTPUT = resolve(ROOT, 'docs/images');
-const BUNDLE = resolve(ROOT, 'dist/houseplan-card.js');
-const DEMO_BUNDLE = resolve(ROOT, 'demo/srv/assets/houseplan-card.js');
-const INTEGRATION_BUNDLE = resolve(ROOT, 'custom_components/houseplan/frontend/houseplan-card.js');
 const SCRIPT = fileURLToPath(import.meta.url);
 const sha256 = (value) => createHash('sha256').update(value).digest('hex');
 
@@ -103,8 +104,6 @@ const applyDocumentationState = (page, scenario) => page.evaluate(async (current
 }, scenario);
 
 mkdirSync(OUTPUT, { recursive: true });
-copyFileSync(BUNDLE, DEMO_BUNDLE);
-copyFileSync(BUNDLE, INTEGRATION_BUNDLE);
 
 const { page, browser } = await launch();
 const browserErrors = [];
