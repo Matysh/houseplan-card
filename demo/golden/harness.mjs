@@ -1274,6 +1274,41 @@ export async function prepareGoldenScenario(page, scenario) {
       if (!palette.querySelector(selector))
         throw new Error(`golden furniture palette level is empty: ${scenario.id}`);
     }
+    if (scenario.furniturePlacementPreview) {
+      const { symbol, widthCm, depthCm, pointer, free = false } = scenario.furniturePlacementPreview;
+      if (typeof symbol !== 'string' || !(widthCm > 0) || !(depthCm > 0)
+          || !Array.isArray(pointer) || pointer.length !== 2 || !pointer.every(Number.isFinite)) {
+        throw new Error(`invalid golden furniturePlacementPreview: ${scenario.id}`);
+      }
+      card._decorSel = null;
+      card._decorTool = 'furniture';
+      card._furnCategory = null;
+      card._furnPalette = { symbol, w: widthCm, h: depthCm };
+      card.requestUpdate();
+      await card.updateComplete;
+      await frame();
+      const svgRoot = card.renderRoot.querySelector('.stage svg');
+      const stageEl = card.renderRoot.querySelector('.stage');
+      const screen = new DOMPoint(pointer[0] * 1000, pointer[1] * card._spaceH)
+        .matrixTransform(svgRoot.getScreenCTM());
+      stageEl.dispatchEvent(new PointerEvent('pointermove', {
+        bubbles: true, composed: true, pointerId: 993, pointerType: 'mouse',
+        clientX: screen.x, clientY: screen.y, shiftKey: free,
+      }));
+      await card.updateComplete;
+      await frame();
+      const preview = card.renderRoot.querySelector('.furniture-placement-preview');
+      const wall = card.renderRoot.querySelector('[data-hp="wall"]');
+      const previewBeforeWall = !!wall
+        && !!(preview?.compareDocumentPosition(wall) & Node.DOCUMENT_POSITION_FOLLOWING);
+      if (!preview || preview.getAttribute('data-symbol') !== symbol
+          || preview.getAttribute('aria-hidden') !== 'true'
+          || getComputedStyle(preview).pointerEvents !== 'none'
+          || Math.abs(Number(getComputedStyle(preview).opacity) - 0.55) > 1e-6
+          || !preview.closest('.decorlayer') || !previewBeforeWall) {
+        throw new Error(`golden furniture placement preview contract is incomplete: ${scenario.id}`);
+      }
+    }
     if (scenario.hoverRoom) {
       const room = card._spaceModel().rooms.find((item) => item.id === scenario.hoverRoom);
       if (!room) throw new Error(`golden hover room missing: ${scenario.hoverRoom}`);
