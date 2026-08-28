@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.69.0-beta.2 — 2026-08-28
+
 - The Background furniture library now has 56 top-view symbols and a compact
   two-level picker: choose a front-view category, then the exact plan variant.
   Existing furniture keeps its saved geometry while 18 drawings receive the
