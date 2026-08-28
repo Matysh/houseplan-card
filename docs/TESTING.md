@@ -49,8 +49,9 @@
       [auto: `demo/smoke_vacuum.mjs`].
 - [ ] Flat and dormant-Iso projections retain the same curved live layer on
       touch and across HA updates [auto: `demo/smoke_isometric_live_touch.mjs`].
-- [ ] `vacuum-trail-smoothing-dark` contains two current subpaths plus a stored
-      previous run; its semantic guard requires two `M` sections, quadratic
+- [ ] `vacuum-trail-smoothing-dark` records the 17.5 cm default in fixture data,
+      contains two current subpaths plus a stored previous run, and its semantic
+      guard requires two `M` sections, quadratic
       commands and byte-identical case/core geometry before PNG comparison.
       The baseline is accepted only from reviewed Linux CI
       [golden: `demo/golden/matrix.mjs`].
