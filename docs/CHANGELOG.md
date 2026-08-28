@@ -11,8 +11,8 @@
 
 - View now starts without downloading the three editors; their shared runtime
   is loaded on first use and protected by one retry and a build-version check.
-  Release and test tooling now verify the complete multi-file frontend asset
-  tree rather than one JavaScript file
+  Release tooling verifies both runtime versions, while test tooling checks the
+  complete multi-file frontend asset tree rather than one JavaScript file
   ([#337](https://github.com/Matysh/houseplan-card/issues/337)).
 
 - The wall-junction checks are honest at the boundaries: false refusals on

@@ -17,14 +17,19 @@ export function versionFromTag(tag) {
   return { version, prerelease: !!match[4] };
 }
 
-export function parseVersionSources({ packageJson, packageLock, manifest, constSource, cardSource }) {
+export function parseVersionSources({
+  packageJson, packageLock, manifest, constSource, cardSource, editorRuntimeSource,
+}) {
   const pkg = JSON.parse(packageJson);
   const lock = JSON.parse(packageLock);
   const integration = JSON.parse(manifest);
   const constMatch = /^VERSION\s*=\s*["']([^"']+)["']/m.exec(constSource);
   const cardMatch = /\bCARD_VERSION\s*=\s*["']([^"']+)["']/m.exec(cardSource);
+  const editorRuntimeMatch = /\bCARD_VERSION\s*=\s*["']([^"']+)["']/m.exec(editorRuntimeSource);
   if (!constMatch) throw new Error('VERSION is missing from custom_components/houseplan/const.py');
   if (!cardMatch) throw new Error('CARD_VERSION is missing from src/houseplan-card.ts');
+  if (!editorRuntimeMatch)
+    throw new Error('CARD_VERSION is missing from src/houseplan-editor-runtime.ts');
   return {
     'package.json': pkg.version,
     'package-lock.json': lock.version,
@@ -32,6 +37,7 @@ export function parseVersionSources({ packageJson, packageLock, manifest, constS
     'custom_components/houseplan/manifest.json': integration.version,
     'custom_components/houseplan/const.py': constMatch[1],
     'src/houseplan-card.ts': cardMatch[1],
+    'src/houseplan-editor-runtime.ts': editorRuntimeMatch[1],
   };
 }
 
@@ -118,6 +124,7 @@ export function readReleaseContract(root = process.cwd()) {
       manifest: read('custom_components/houseplan/manifest.json'),
       constSource: read('custom_components/houseplan/const.py'),
       cardSource: read('src/houseplan-card.ts'),
+      editorRuntimeSource: read('src/houseplan-editor-runtime.ts'),
     }),
     changelogRu: read('docs/CHANGELOG.ru.md'),
     changelogEn: read('docs/CHANGELOG.md'),

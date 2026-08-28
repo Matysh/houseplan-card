@@ -63,9 +63,16 @@ test('version sources include every shipped authority and must match the tag', (
     manifest: '{"version":"1.2.3-beta.4"}',
     constSource: 'VERSION = "1.2.3-beta.4"',
     cardSource: "const CARD_VERSION = '1.2.3-beta.4';",
+    editorRuntimeSource: "const CARD_VERSION = '1.2.3-beta.4';",
   });
-  assert.equal(Object.keys(sources).length, 6);
+  assert.equal(Object.keys(sources).length, 7);
   assert.equal(validateVersionSources('v1.2.3-beta.4', sources).version, '1.2.3-beta.4');
+  assert.throws(
+    () => validateVersionSources('v1.2.3-beta.4', {
+      ...sources, 'src/houseplan-editor-runtime.ts': '1.2.3-beta.3',
+    }),
+    /src\/houseplan-editor-runtime\.ts="1\.2\.3-beta\.3"/,
+  );
   assert.throws(
     () => validateVersionSources('v1.2.3-beta.5', sources),
     /Version 1\.2\.3-beta\.5 is not synchronized/,
