@@ -12766,11 +12766,25 @@ export class HouseplanCard extends LitElement {
     return this._editorRuntimeOrThrow()._markerPreviewDevices(preview);
   }
 
-  private _toggleIntent(
+  /**
+   * #357: toggle resolution belongs to the eager View card. The lazy split
+   * #337 left these four methods delegating into the editor runtime, so a
+   * plain tap on a cold tab (kiosk, fresh page) threw synchronously inside
+   * the click handler until someone opened any editor surface. The resolver
+   * chain is a pure eager module (device-toggle.ts) over card-owned state —
+   * the editor runtime now delegates back here, not the other way round.
+   */
+  public _toggleIntent(
     device: DevItem,
     devices: readonly DevItem[] = this._devices,
   ): ResolvedToggleIntent | null {
-    return this._editorRuntimeOrThrow()._toggleIntent(device, devices);
+    return resolveToggleIntent({
+      hass: this._planHass,
+      registryHass: this._fullRegistryHass,
+      devices,
+      device,
+      virtualLights: this._virtualLights,
+    });
   }
 
   private _toggleIntentForDialog(
@@ -12779,18 +12793,57 @@ export class HouseplanCard extends LitElement {
     return this._editorRuntimeOrThrow()._toggleIntentForDialog(d);
   }
 
-  private _toggleStateText(entityId: string, fallback: string): string {
-    return this._editorRuntimeOrThrow()._toggleStateText(entityId, fallback);
+  public _toggleStateText(entityId: string, fallback: string): string {
+    const state = this._planHass?.states?.[entityId] || this.hass?.states?.[entityId];
+    try {
+      return state && typeof this.hass?.formatEntityState === 'function'
+        ? this.hass.formatEntityState(state) : fallback;
+    } catch {
+      return fallback;
+    }
   }
 
   /** Current-state copy is localized without teaching the dialog command semantics. */
-  private _toggleConfirmationStateText(target: ResolvedToggleTarget): string {
-    return this._editorRuntimeOrThrow()._toggleConfirmationStateText(target);
+  public _toggleConfirmationStateText(target: ResolvedToggleTarget): string {
+    const raw = String(target.state || 'unknown');
+    const formatted = target.entityId ? this._toggleStateText(target.entityId, raw) : raw;
+    if (formatted.trim().toLocaleLowerCase() !== raw.trim().toLocaleLowerCase()) return formatted;
+    const known: Partial<Record<string, I18nKey>> = {
+      on: 'confirm.state_on',
+      off: 'confirm.state_off',
+      open: 'confirm.state_open',
+      closed: 'confirm.state_closed',
+      opening: 'confirm.state_opening',
+      closing: 'confirm.state_closing',
+      unknown: 'confirm.state_unknown',
+    };
+    const key = known[raw];
+    if (key) return this._t(key);
+    // A future integration-specific token stays honest and readable even in a
+    // harness without HA's formatter; underscores are never exposed as UI.
+    return raw.replaceAll('_', ' ').replaceAll('-', ' ');
   }
 
   /** Snapshot lines shown by Toggle confirmation; execution still re-resolves later. */
-  private _toggleConfirmationLines(intent: ResolvedToggleIntent): string[] {
-    return this._editorRuntimeOrThrow()._toggleConfirmationLines(intent);
+  public _toggleConfirmationLines(intent: ResolvedToggleIntent): string[] {
+    const effectKeys: Record<Exclude<ToggleNextEffect, 'toggle'>, I18nKey> = {
+      'turn-on': 'confirm.state_on',
+      'turn-off': 'confirm.state_off',
+      open: 'confirm.state_open',
+      close: 'confirm.state_closed',
+      stop: 'confirm.state_stopped',
+    };
+    return formatToggleConfirmation(intent, {
+      state: (target) => this._toggleConfirmationStateText(target),
+      current: (state) => this._t('confirm.current_state', { state }),
+      expected: (state) => this._t('confirm.expected_state', { state }),
+      groupCurrent: (on, total) => this._t('confirm.group_current', { on, total }),
+      groupAllOn: () => this._t('confirm.group_all_on'),
+      groupAllOff: () => this._t('confirm.group_all_off'),
+      unavailable: (count) => this._t('confirm.unavailable_targets', { count }),
+      effect: (effect) => this._t(effectKeys[effect]),
+      expectedByHa: () => this._t('confirm.expected_by_ha'),
+    });
   }
 
   private _toggleHintLines(intent: ResolvedToggleIntent | null): string[] {

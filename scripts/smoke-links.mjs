@@ -45,6 +45,17 @@ export const SMOKE_LINKS = [
       + 'reuse and the bounded retry-to-English path cannot be proven from pure registry tests (#348)',
   },
   {
+    symbols: [
+      'resolveToggleIntent', 'toggleOperation', 'projectedTapAction',
+      'toggleOriginOf', 'resolvedLightSources',
+    ],
+    smokes: ['smoke_cold_view_toggle.mjs'],
+    because: 'the cold-view scenario proves a plain tap resolves and executes WITHOUT the lazy '
+      + 'editor runtime: a wall switch drives three passive virtual lamps, a controlled lamp '
+      + 'drives its switch, tap_confirm renders and confirms, and no editor chunk is requested '
+      + '(#357 — every warm smoke preloads the runtime and cannot see this class)',
+  },
+  {
     symbols: ['quantizeKeyCoord', 'INCIDENT_EPS', 'KEY_FACTOR'],
     smokes: ['smoke_junction_limits.mjs'],
     because: 'the smoke proves the write barrier verdicts (refusal toasts, resize stop, '

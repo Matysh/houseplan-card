@@ -681,6 +681,34 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'cold-view-toggle-delegated-to-runtime',
+    guard: 'node demo/smoke_cold_view_toggle.mjs',
+    because: 'the View card must resolve a tap without the lazy editor runtime — the #337 stub '
+      + 'threw inside the click handler on every cold tab and a wall switch controlling three '
+      + 'virtual lamps did nothing until an editor surface was opened (#357)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '  public _toggleIntent(\n'
+        + '    device: DevItem,\n'
+        + '    devices: readonly DevItem[] = this._devices,\n'
+        + '  ): ResolvedToggleIntent | null {\n'
+        + '    return resolveToggleIntent({\n'
+        + '      hass: this._planHass,\n'
+        + '      registryHass: this._fullRegistryHass,\n'
+        + '      devices,\n'
+        + '      device,\n'
+        + '      virtualLights: this._virtualLights,\n'
+        + '    });\n'
+        + '  }',
+      replace: '  public _toggleIntent(\n'
+        + '    device: DevItem,\n'
+        + '    devices: readonly DevItem[] = this._devices,\n'
+        + '  ): ResolvedToggleIntent | null {\n'
+        + "    return this._editorRuntimeOrThrow()._toggleIntent(device, devices);\n"
+        + '  }',
+    }],
+  },
+  {
     id: 'lazy-loader-network-failure-terminal',
     guard: 'node --test --test-name-pattern="#353 AC1" test/editor-runtime-loader.test.mjs',
     because: 'a transient network failure must re-arm the loader for the next explicit press — '

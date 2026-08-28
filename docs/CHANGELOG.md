@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Tapping a device on a freshly opened page works again without first
+  visiting any editor screen. A wall switch controlling virtual light sources
+  (and every other tap-to-toggle device) silently ignored the tap on a cold
+  tab until the device settings were opened once — the View card now resolves
+  the tap entirely on its own, without the lazy editor code
+  ([#357](https://github.com/Matysh/houseplan-card/issues/357)).
+
 ## v1.69.0-beta.2 — 2026-08-28
 
 - The Background furniture library now has 56 top-view symbols and a compact

@@ -1082,7 +1082,11 @@ export interface HouseplanEditorHostPort {
   _t: (key: I18nKey, vars?: Record<string, string | number>) => string;
   _thickWallCuts: () => number[][];
   _tip: { x: number; y: number; title: string; meta: string; lqi?: number | null; temp?: number | null; hum?: number | null; } | null;
+  _toggleConfirmationLines: (intent: ResolvedToggleIntent) => string[];
+  _toggleConfirmationStateText: (target: ResolvedToggleTarget) => string;
+  _toggleIntent: (device: DevItem, devices?: readonly DevItem[]) => ResolvedToggleIntent | null;
   _toggleMarkerDialogVisibility: () => void;
+  _toggleStateText: (entityId: string, fallback: string) => string;
   _tool: MarkupTool;
   _undoKind: "optimize" | "import" | null;
   _undoPoint: () => void;
@@ -11630,13 +11634,9 @@ public _toggleIntent(
     device: DevItem,
     devices: readonly DevItem[] = this.host._devices,
   ): ResolvedToggleIntent | null {
-    return resolveToggleIntent({
-      hass: this.host._planHass,
-      registryHass: this.host._fullRegistryHass,
-      devices,
-      device,
-      virtualLights: this.host._virtualLights,
-    });
+    // #357: the View card owns toggle resolution — a plain tap must work on a
+    // cold tab that never loaded this runtime. Editor consumers delegate back.
+    return this.host._toggleIntent(device, devices);
   }
 
 public _toggleIntentForDialog(
@@ -11649,54 +11649,15 @@ public _toggleIntentForDialog(
   }
 
 public _toggleStateText(entityId: string, fallback: string): string {
-    const state = this.host._planHass?.states?.[entityId] || this.host.hass?.states?.[entityId];
-    try {
-      return state && typeof this.host.hass?.formatEntityState === 'function'
-        ? this.host.hass.formatEntityState(state) : fallback;
-    } catch {
-      return fallback;
-    }
+    return this.host._toggleStateText(entityId, fallback);
   }
 
 public _toggleConfirmationStateText(target: ResolvedToggleTarget): string {
-    const raw = String(target.state || 'unknown');
-    const formatted = target.entityId ? this._toggleStateText(target.entityId, raw) : raw;
-    if (formatted.trim().toLocaleLowerCase() !== raw.trim().toLocaleLowerCase()) return formatted;
-    const known: Partial<Record<string, I18nKey>> = {
-      on: 'confirm.state_on',
-      off: 'confirm.state_off',
-      open: 'confirm.state_open',
-      closed: 'confirm.state_closed',
-      opening: 'confirm.state_opening',
-      closing: 'confirm.state_closing',
-      unknown: 'confirm.state_unknown',
-    };
-    const key = known[raw];
-    if (key) return this.host._t(key);
-    // A future integration-specific token stays honest and readable even in a
-    // harness without HA's formatter; underscores are never exposed as UI.
-    return raw.replaceAll('_', ' ').replaceAll('-', ' ');
+    return this.host._toggleConfirmationStateText(target);
   }
 
 public _toggleConfirmationLines(intent: ResolvedToggleIntent): string[] {
-    const effectKeys: Record<Exclude<ToggleNextEffect, 'toggle'>, I18nKey> = {
-      'turn-on': 'confirm.state_on',
-      'turn-off': 'confirm.state_off',
-      open: 'confirm.state_open',
-      close: 'confirm.state_closed',
-      stop: 'confirm.state_stopped',
-    };
-    return formatToggleConfirmation(intent, {
-      state: (target) => this._toggleConfirmationStateText(target),
-      current: (state) => this.host._t('confirm.current_state', { state }),
-      expected: (state) => this.host._t('confirm.expected_state', { state }),
-      groupCurrent: (on, total) => this.host._t('confirm.group_current', { on, total }),
-      groupAllOn: () => this.host._t('confirm.group_all_on'),
-      groupAllOff: () => this.host._t('confirm.group_all_off'),
-      unavailable: (count) => this.host._t('confirm.unavailable_targets', { count }),
-      effect: (effect) => this.host._t(effectKeys[effect]),
-      expectedByHa: () => this.host._t('confirm.expected_by_ha'),
-    });
+    return this.host._toggleConfirmationLines(intent);
   }
 
 public _toggleHintLines(intent: ResolvedToggleIntent | null): string[] {
