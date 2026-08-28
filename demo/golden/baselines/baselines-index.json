@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "matrixVersion": 50,
-  "acceptedAt": "2026-08-28T20:38:22.035Z",
-  "sourceFingerprint": "817110bad40d29ee0aa8e4ef2dadfda9e310dfa6346ddb5d2725ecafb359f073",
+  "acceptedAt": "2026-08-28T21:44:01.600Z",
+  "sourceFingerprint": "e6c51f2467ae4e22a792e536ae954291ab5a46915e728b216c8c45bc6816b209",
   "chromium": "151.0.7922.34",
   "witnesses": {
-    "count": 132,
+    "count": 133,
     "floor": 10
   },
   "scenarios": {
@@ -78,6 +78,7 @@
     "furniture-categories-light": "8ce8d9804a3b97f8c786c80c4859dc9635a80757b8ad4671a43256f51fdad1c0",
     "furniture-variants-dark": "79528f3607b32409d6d4d80330d1365a185f2c17641f88e386703222b0671bd9",
     "furniture-variants-light": "8236ce0e9d30fb55a359ced5b39c23ba2ad6ccd01bc2b782cbb817422642385a",
+    "furniture-placement-preview-light": "c297843d99a4e044d24b751b290c75b3a42cc93800b3bd152c576642d15d4e72",
     "furniture-plan-art-dark": "ed0cfdd8b9da903b34f7945eed6fa0e0140e215e6d5368bf81b953f86dea27bd",
     "tray-narrow-tool-ru": "95fa0f072efb595e1f9fe3f3287e7ce346fdee640e90dd70e4f5e5b31049ef29",
     "geometry-diagonal-45-opening-dark": "ba9462322da34b20fff1ee1f950c516855dd7ac56131e13863f576e2d0ba5177",
