@@ -3631,13 +3631,23 @@ export function isDegenerateApexCorner(
   const theta = Math.acos(cos);
   if (!(theta > 1e-9)) return false;
   if (theta >= (DEGENERATE_APEX_MAX_DEGREES * Math.PI) / 180) return false;
-  const half = Math.max(
-    Math.max(0, offsets[(index - 1 + n) % n]), Math.max(0, offsets[index]),
-  );
-  if (!(half > 0)) return false;
-  const distance = half / Math.tan(theta / 2);
-  return Number.isFinite(distance) && distance > 0
-    && distance < lenPrev - 1e-9 && distance < lenNext - 1e-9;
+  const halfPrev = Math.max(0, offsets[(index - 1 + n) % n]);
+  const halfNext = Math.max(0, offsets[index]);
+  if (!(halfPrev > 0) && !(halfNext > 0)) return false;
+  // #339: the inner faces sit halfPrev and halfNext away from their own
+  // edges; the true meeting point of two such lines lands at
+  // (hOther + hOwn·cosθ)/sinθ along each edge. The corner is degenerate only
+  // when the meeting point lies INSIDE both edges. With equal halves this
+  // reduces algebraically to the old h/tan(θ/2) — which, taken as
+  // max(h₁,h₂)/tan(θ/2) for mixed thicknesses, overstated the distance and
+  // left a 15+30 cm legacy apex rendering as the #329 trident.
+  const sin = Math.sin(theta);
+  if (!(sin > 1e-12)) return false;
+  const alongPrev = (halfNext + halfPrev * cos) / sin;
+  const alongNext = (halfPrev + halfNext * cos) / sin;
+  return Number.isFinite(alongPrev) && Number.isFinite(alongNext)
+    && alongPrev > 0 && alongNext > 0
+    && alongPrev < lenPrev - 1e-9 && alongNext < lenNext - 1e-9;
 }
 
 /**

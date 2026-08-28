@@ -578,3 +578,32 @@ test('#331 AC1: квантование .5-тика одинаково в обо�
   assert.ok(checkNodes(rays).some((item) => item.rule === 'valence'),
     '2.5e-7 квантуется вверх и сливается с 3e-7 — семь лучей в одном узле');
 });
+
+// --- #339: смешанные толщины у вырожденной вершины ---
+
+test('#339: вершина 10° со смежными рёбрами 15+30 см вырождена в оба обхода', async () => {
+  const { isDegenerateApexCorner, outsetContour } =
+    await import('../test-build/wall-thickness.js');
+  const th = (10 * Math.PI) / 180;
+  const reach = cm(160);
+  const tri = [[0, 0], [reach, 0], [reach * Math.cos(th), reach * Math.sin(th)]];
+  // AC1: оба порядка толщин на смежных рёбрах вершины 0 — вырождена.
+  for (const offsets of [[cm(7.5), cm(7.5), cm(15)], [cm(15), cm(7.5), cm(7.5)]]) {
+    // offsets[2] и offsets[0] — рёбра, смежные с вершиной 0.
+    assert.equal(isDegenerateApexCorner(tri, offsets, 0), true,
+      `смешанные толщины [prev=${offsets[2]}, next=${offsets[0]}] обязаны быть вырождены`);
+  }
+  // Рендер: внешний контур несёт РОВНО одну точку у вершины — остриё в
+  // вершине плана, как в §4 #329 для равных толщин.
+  const offsets = [cm(15), cm(7.5), cm(7.5)];
+  const outset = outsetContour(tri, offsets, null);
+  assert.ok(outset, 'контур строится');
+  const near = outset.filter((p) => Math.hypot(p[0], p[1]) < cm(30));
+  assert.equal(near.length, 1, 'у вершины ровно одна точка внешнего контура');
+  assert.ok(Math.hypot(near[0][0], near[0][1]) < 1e-9, 'остриё в вершине плана');
+  // AC3: 30° со смешанными — обычная пара #310; худая геометрия — false.
+  const th30 = (30 * Math.PI) / 180;
+  const tri30 = [[0, 0], [reach, 0], [reach * Math.cos(th30), reach * Math.sin(th30)]];
+  assert.equal(isDegenerateApexCorner(tri30, offsets, 0), false);
+  assert.equal(isDegenerateApexCorner(tri, [0, 0, 0], 0), false, 'нулевые толщины — нет тел');
+});

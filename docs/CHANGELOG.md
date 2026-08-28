@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- A very acute apex between walls of different thickness (say 15 and 30 cm)
+  on legacy plans renders as an honest tip again instead of the "trident":
+  the inner-face convergence accounts for both thicknesses, not just the
+  larger one ([#339](https://github.com/Matysh/houseplan-card/issues/339)).
+
 ## v1.69.0-beta.1 — 2026-08-28
 
 - House Plan now has a complete German interface. `Deutsch` can be selected
