@@ -2317,3 +2317,69 @@ async def test_a_noop_repair_does_not_eat_the_backup(
     await client.send_json_auto_id({"type": "houseplan/layout/get"})
     lay = (await client.receive_json())["result"]["layout"]
     assert lay["lamp"] == {"s": "wide", "x": 0.2, "y": 0.1}
+
+
+async def test_330_config_set_validators_run_in_the_executor(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator,
+) -> None:
+    """#330 AC1: CPU-цепочка валидаторов config/set исполняется вне event loop.
+
+    Полный тайминг loop в юните хрупок; контракт AC1 держится на том, что вся
+    дорогая работа (schema + junction limits) уходит из главного потока.
+    Патч-обёртка записывает поток, в котором реально исполнился
+    validate_junction_limits, — на event loop это был бы MainThread. Вердикты
+    при этом не меняются: чистая запись принята, запись с новым нарушением
+    отклонена тем же стабильным кодом из executor-пути.
+    """
+    import threading
+
+    from custom_components.houseplan import websocket_api as hp_ws_module
+
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+
+    seen_threads: list[str] = []
+    original_validate = hp_ws_module.validate_junction_limits
+
+    def recording(*args, **kwargs):
+        seen_threads.append(threading.current_thread().name)
+        return original_validate(*args, **kwargs)
+
+    hp_ws_module.validate_junction_limits = recording
+    try:
+        config = {
+            "spaces": [_space("f1", "r1")],
+            "markers": [],
+            "settings": {},
+        }
+        await client.send_json_auto_id({
+            "type": "houseplan/config/set", "config": config, "expected_rev": 0,
+        })
+        result = await client.receive_json()
+        assert result["success"], result
+        assert seen_threads, "validate_junction_limits не был вызван вовсе"
+        assert all(name != "MainThread" for name in seen_threads), (
+            "цепочка валидаторов обязана исполняться в executor (#330 §4.1), "
+            f"а исполнилась в: {seen_threads}"
+        )
+
+        # Вердикты не изменились: запись, добавляющая нарушение угла (шпиль
+        # ~2°), отклоняется стабильным кодом из того же executor-пути.
+        broken = copy.deepcopy(config)
+        broken["spaces"][0]["rooms"].append({
+            "id": "spike", "name": "spike",
+            "poly": [[0.30, 0.70], [0.3167, 0.24], [0.36, 0.68]],
+        })
+        broken["spaces"][0]["walls"] = [
+            {"key": "s0", "a": [0.30, 0.70], "b": [0.3167, 0.24], "cm": 15},
+            {"key": "s1", "a": [0.3167, 0.24], "b": [0.36, 0.68], "cm": 15},
+            {"key": "s2", "a": [0.36, 0.68], "b": [0.30, 0.70], "cm": 15},
+        ]
+        await client.send_json_auto_id({
+            "type": "houseplan/config/set", "config": broken, "expected_rev": 1,
+        })
+        refused = await client.receive_json()
+        assert not refused["success"]
+        assert refused["error"]["code"] == "junction_limit_angle"
+    finally:
+        hp_ws_module.validate_junction_limits = original_validate

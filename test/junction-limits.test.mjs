@@ -397,3 +397,42 @@ test('#330 AC4: кэш baseline инвалидируется по конфиг-�
   assert.match(method, />= WALL_SEGMENT_MODEL_VERSION\s*\n?\s*\? previousConfig/,
     'документ текущей версии используется как есть (#330 §4.6)');
 });
+
+test('#330 M2: §4.6 на границах — v9 как есть == v9 через миграцию (TS)', async () => {
+  const { commitWallSegmentModel } = await import('../test-build/wall-segment-model.js');
+  const { checkNodes, checkSegmentLengths, checkNodeDistances } =
+    await import('../test-build/junction-limits.js');
+  const countsOf = (space) => {
+    const segments = (space.wall_segments || []).map((item) => ({
+      id: item.id, a: item.a, b: item.b, cm: Number(item.cm),
+    }));
+    const all = [
+      ...checkNodes(segments),
+      ...checkSegmentLengths(segments, Number(space.cell_cm) || 1, PITCH),
+      ...checkNodeDistances(segments, Number(space.cell_cm) || 1, PITCH),
+    ];
+    const counts = {};
+    for (const item of all) counts[item.rule] = (counts[item.rule] || 0) + 1;
+    return counts;
+  };
+  const polys = {
+    spike: [[0.30, 0.70], [0.3167, 0.24], [0.36, 0.68]],
+    box: [[0.60, 0.60], [0.80, 0.60], [0.80, 0.80], [0.60, 0.80]],
+    narrow: [[0.30, 0.70], [0.32, 0.24], [0.36, 0.68]],
+  };
+  for (const [name, poly] of Object.entries(polys)) {
+    const legacy = { spaces: [{
+      id: 's', title: 's', cell_cm: CELL, view_box: [0, 0, 1, 1],
+      rooms: [{ id: 'r1', name, area: null, poly }],
+      walls: poly.map((point, index) => ({
+        key: `w${index}`, a: point, b: poly[(index + 1) % poly.length], cm: 15,
+      })),
+      openings: [], room_drafts: [], partitions: [], wall_columns: [],
+    }], markers: [], settings: {} };
+    const v9 = commitWallSegmentModel(JSON.parse(JSON.stringify(legacy))).config;
+    const asIs = countsOf(v9.spaces[0]);
+    const through = commitWallSegmentModel(JSON.parse(JSON.stringify(v9))).config;
+    assert.deepEqual(asIs, countsOf(through.spaces[0]),
+      `${name}: вердикт «как есть» разошёлся с «через миграцию»`);
+  }
+});

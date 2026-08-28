@@ -543,6 +543,10 @@ jobs:
       - name: Enforce absolute smoke ceilings
         run: |
           npm run benchmark:compare -- --absolute-only --budgets=demo/performance/budgets-glow-smoke.json --candidate=artifacts/performance-smoke/candidate.json --output=artifacts/performance-smoke/comparison.json
+      # #330 AC7: перф-контракт ограничений стыков — быстрый (без браузера),
+      # ловит возврат квадратичных путей в оба зеркала прямо на пуше.
+      - name: Бюджеты ограничений стыков (#330)
+        run: npm run benchmark:junction-limits
       - name: Upload performance smoke report
         if: always()
         uses: actions/upload-artifact@v7

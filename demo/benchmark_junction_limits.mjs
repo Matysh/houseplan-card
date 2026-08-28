@@ -29,12 +29,17 @@ const GRID_N = 12; // 576 contour atoms — the #330 S2 grid
 const WARMUPS = 2;
 const SAMPLES = 5;
 
+// Budgets are calibrated from the SLOWEST machine observed, not the
+// author's: the CI review runner measured tsFullCandidateMs at 169-171 ms
+// where the dev sandbox saw 88 (code-review 330-r1 H2). Each budget keeps
+// the spec's 2-3x allowance over that worst observation, so the bench turns
+// red for the O(n²) class (which costs seconds), not for a slower runner.
 const BUDGETS = {
-  tsSegmentLengthsMs: 40,
-  tsNodeDistancesMs: 40,
-  tsFullCandidateMs: 100,
-  pyWarmValidateMs: 250,
-  pyColdValidateMs: 3500,
+  tsSegmentLengthsMs: 60,
+  tsNodeDistancesMs: 80,
+  tsFullCandidateMs: 400,
+  pyWarmValidateMs: 300,
+  pyColdValidateMs: 5000,
 };
 
 const u = (cm) => cmToUnits(cm, CELL, GRID_STEP_N);

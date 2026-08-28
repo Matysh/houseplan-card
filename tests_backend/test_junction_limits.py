@@ -227,6 +227,15 @@ def test_parity_with_the_frontend_checks():
                        ([0.0, cm(4)], [cm(300), cm(4)], 15)],
         "tee": [([0.0, 0.0], [cm(300), 0.0], 15),
                 ([cm(150), 0.0], [cm(150), cm(300)], 15)],
+        # #330 M2: границы из плана тестов §7 — их вердикт обязан совпадать
+        # у зеркал и не зависеть от пути §4.6 (as-is или через миграцию).
+        "angle-15-exact": [(*ray(0), 15), (*ray(15.0), 15)],
+        "length-20-exact": [([0.0, 0.0], [cm(20), 0.0], 15)],
+        "filler-run": [([0.0, 0.0], [cm(349), 0.0], 30),
+                       ([cm(349), 0.0], [cm(354), 0.0], 30),
+                       ([cm(354), 0.0], [cm(554), 0.0], 20)],
+        "distance-5-exact": [([0.0, 0.0], [cm(300), 0.0], 15),
+                             ([0.0, cm(5)], [cm(300), cm(5)], 15)],
     }
     payload = {name: space(segments, space_id=name)
                for name, segments in fixtures.items()}
@@ -409,3 +418,24 @@ def test_330_ac1_validator_chain_is_cheap_without_documents():
         jl.commit_wall_segment_model = original
     assert calls == [], "тёплый путь не мигрирует ни один документ"
     assert elapsed < 0.5, f"тёплый validate неожиданно дорог: {elapsed:.3f}s"
+
+
+def test_330_as_is_equals_migrated_on_boundary_fixtures():
+    """#330 M2: §4.6 на границах — v9-документ «как есть» и «через
+    миграцию» дают одинаковые счётчики нарушений на каждой граничной
+    фикстуре, а не на одной."""
+    boundary_polys = {
+        "spike": triangle(),
+        "box": square(),
+        "narrow": [[0.30, 0.70], [0.32, 0.24], [0.36, 0.68]],
+    }
+    for name, poly in boundary_polys.items():
+        legacy = {"spaces": [room_space(
+            [{"id": "r1", "name": name, "area": None, "poly": poly}],
+            walls_of(poly, "w"),
+        )]}
+        migrated, _ = jl.commit_wall_segment_model(json.loads(json.dumps(legacy)))
+        as_is = jl.space_violation_counts(jl._migrated_spaces(migrated))
+        forced, _ = jl.commit_wall_segment_model(json.loads(json.dumps(migrated)))
+        through = jl.space_violation_counts(jl._migrated_spaces(forced))
+        assert as_is == through, f"{name}: as-is != migrated"
