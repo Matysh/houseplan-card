@@ -1005,6 +1005,31 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'no-new-any-judges-every-line',
+    guard: 'node --test --test-name-pattern="нетронутой строке гейт не блокирует" '
+      + 'test/no-new-any.test.mjs',
+    because: 'гейт, судящий все строки вместо добавленных, краснеет на 1034 существующих '
+      + 'вхождениях и будет отключён в первый же день — а долг типизации снимается при '
+      + 'извлечении подсистем, не разовой заменой (#342)',
+    patches: [{
+      file: 'scripts/no-new-any.mjs',
+      find: '      if (!file.addedLines.has(line)) continue;',
+      replace: '      if (false) continue;',
+    }],
+  },
+  {
+    id: 'no-new-any-accepts-bare-marker',
+    guard: 'node --test --test-name-pattern="только с конкретной причиной" '
+      + 'test/no-new-any.test.mjs',
+    because: 'голый `// any-ok` — это не обоснование, а способ обойти гейт одной строкой; '
+      + 'без проверки причины исключение перестаёт что-либо значить (#342)',
+    patches: [{
+      file: 'scripts/no-new-any.mjs',
+      find: '      if (exemption?.ok) continue;',
+      replace: '      if (exemption) continue;',
+    }],
+  },
+  {
     id: 'invariant-hidden-counts-corner-touch',
     guard: 'node --test --test-name-pattern="касание углом" test/model-invariants.test.mjs',
     because: 'перегородка, продолжающая стену за угол, законна: общего с ребром у неё ровно '

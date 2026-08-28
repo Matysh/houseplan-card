@@ -66,7 +66,9 @@ test('бандл собирается один раз и приезжает бр
 
 test('предполётные проверки не прячут друг друга (#336)', () => {
   const workflow = read('validate.yml');
-  const preflight = workflow.slice(workflow.indexOf('  preflight:'), workflow.indexOf('  changes:'));
+  const preflight = workflow.slice(
+    workflow.indexOf('\n  preflight:\n'), workflow.indexOf('\n  changes:\n'),
+  );
   for (const id of ['docs', 'workflow_sync', 'provenance', 'process_gate']) {
     assert.ok(preflight.includes(`id: ${id}`), `нет шага ${id}`);
     assert.ok(preflight.includes(`steps.${id}.outcome`), `вердикт не читает ${id}`);
@@ -82,8 +84,10 @@ test('джобы с полной историей качают её без бл�
   // Полный клон — 215 МБ .git, blobless — 26 МБ, история и теги в обоих полные
   // (замер в #345). Обе эти job читают сообщения коммитов и ИМЕНА изменённых
   // файлов; содержимое старых ревизий им не нужно ни на одном шаге.
-  for (const job of ['preflight', 'changes']) {
-    const start = workflow.indexOf(`  ${job}:`);
+  for (const job of ['preflight', 'changes', 'frontend']) {
+    // '  frontend:' встречается внутри `      frontend: ${{ ... }}` в outputs
+    // job `changes`, поэтому имя job ищется только с начала строки.
+    const start = workflow.indexOf(`\n  ${job}:\n`);
     assert.ok(start > 0, `нет job ${job}`);
     const chunk = workflow.slice(start, start + 1400);
     assert.match(chunk, /fetch-depth: 0, filter: 'blob:none'/,
@@ -94,4 +98,16 @@ test('джобы с полной историей качают её без бл�
   // диапазон origin/dev..HEAD.
   assert.equal(workflow.includes('fetch-depth: 1'), false,
     'shallow-клон ломает merge-base: диапазоны и процессный гейт перестают работать');
+});
+
+test('гейт «новый код не добавляет any» вызывается в frontend (#342)', () => {
+  const workflow = read('validate.yml');
+  const frontend = workflow.slice(
+    workflow.indexOf('\n  frontend:\n'), workflow.indexOf('\n  smoke:\n'),
+  );
+  assert.match(frontend, /node scripts\/no-new-any\.mjs --base/,
+    'гейт обязан вызываться, иначе долг типизации снова начнёт расти');
+  // Гейт diff-aware, поэтому без истории он бессмысленен: на глубине 1
+  // merge-base не считается и диапазон выродится в «всё».
+  assert.match(frontend, /fetch-depth: 0, filter: 'blob:none'/);
 });

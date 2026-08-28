@@ -320,7 +320,10 @@ jobs:
     if: needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
     steps:
+      # Полная история без блобов (#342): гейт «новый код не добавляет any»
+      # diff-aware, ему нужен диапазон, а содержимое старых ревизий — нет.
       - uses: actions/checkout@v7
+        with: { fetch-depth: 0, filter: 'blob:none' }
       - uses: actions/setup-node@v7
         with:
           node-version: 22
@@ -328,6 +331,33 @@ jobs:
       - run: npm ci
       - name: Typecheck
         run: npm run typecheck
+      # Долг типизации снимается при извлечении подсистем (#34), а не разовой
+      # заменой: в src/** его 1034 вхождения в 49 файлах. Гейт держит приращение
+      # на нуле — судит только добавленные строки (#342).
+      - name: "Новый код не добавляет any"
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BEFORE_SHA: ${{ github.event.before }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.sha }}
+          REF: ${{ github.ref }}
+        run: |
+          set -euo pipefail
+          git fetch -q origin dev
+          zero=$(printf '%040d' 0)
+          base="$BEFORE_SHA"
+          if [ "$EVENT_NAME" = "pull_request" ]; then base="$BASE_SHA"; fi
+          # Пуш прямо в dev: диапазон — то, что этот пуш добавил. Новая ветка или
+          # перезаписанная история: точки отсчёта нет, берём merge-base с dev.
+          if [ "$REF" != "refs/heads/dev" ] || [ -z "$base" ] || [ "$base" = "$zero" ] \
+             || ! git cat-file -e "$base" 2>/dev/null; then
+            base=$(git merge-base origin/dev "$HEAD_SHA" || echo "")
+          fi
+          if [ -z "$base" ]; then
+            echo "не нашёл базу диапазона — гейт пропущен, это увидит следующий пуш"
+            exit 0
+          fi
+          node scripts/no-new-any.mjs --base "$base" --head "$HEAD_SHA"
       - name: Unit tests
         run: npm test
       - name: Build
