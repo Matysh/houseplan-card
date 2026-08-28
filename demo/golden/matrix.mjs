@@ -224,6 +224,7 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     theme: 'light', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'vacuum-trail-smoothing-dark', fixture: 'visual', space: 'golden-geometry', mode: 'view',
     vacuumTrail: {
+      maxDeviationCm: 17.5,
       current: [
         [[180, 220], [360, 220], [360, 420], [520, 420]],
         [[650, 240], [780, 240], [780, 500], [650, 620], [850, 760]],

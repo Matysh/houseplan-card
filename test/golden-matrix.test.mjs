@@ -394,6 +394,7 @@ test('vacuum smoothing golden covers current gaps and the previous run', () => {
   const scenario = GOLDEN_SCENARIOS.find((item) => item.id === 'vacuum-trail-smoothing-dark');
   assert.ok(scenario);
   assert.equal(scenario.mode, 'view');
+  assert.equal(scenario.vacuumTrail?.maxDeviationCm, 17.5);
   assert.equal(scenario.vacuumTrail?.current.length, 2);
   assert.equal(scenario.vacuumTrail?.current.flat().length >= 8, true);
   assert.equal(scenario.vacuumTrail?.previous.length >= 4, true);
