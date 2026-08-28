@@ -131,7 +131,7 @@ title: House plan
 | `title` | empty | Card title |
 | `default_floor` | first/last opened | Initial/fallback space for an unpinned card |
 | `floor` | not pinned | Keep this card on one stable space ID or zero-based YAML index |
-| `language` | HA language | `auto`, `ru` or `en` |
+| `language` | HA language | `auto`, `en`, `ru` or `de` |
 | `icon_size` | `2.5` | Base marker size, 1–6% of plan width |
 | `show_temperature` | `true` | Compact temperature and humidity values |
 | `live_states` | `true` | Work/open/unavailable presentation and activity; alarms remain visible |
@@ -140,6 +140,12 @@ title: House plan
 | `cycle` | `0` | Kiosk auto-cycle interval in seconds; `0` disables it |
 
 The legacy card-level `tap_action` is ignored. Each marker owns its action.
+
+`auto` recognizes the primary Home Assistant locale: `de`, `de-DE`, `de-AT`
+and `de-CH` use German. German is downloaded once on first use and shared by
+all House Plan cards on the page. Until it is ready, a neutral busy surface is
+shown instead of briefly flashing English; if both bounded download attempts
+fail, the card becomes usable in English.
 
 <!-- docs-section: first-run -->
 

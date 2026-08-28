@@ -12,8 +12,18 @@ export function assertBundleBudget(manifest, budget = INITIAL_VIEW_GZIP_BUDGET) 
   if (!manifest.lazyEditorFiles?.length) {
     throw new Error('bundle has no lazy editor graph');
   }
+  if (!manifest.lazyLocaleFiles?.length) {
+    throw new Error('bundle has no lazy locale graph');
+  }
   if (manifest.initialViewFiles.some((path) => manifest.lazyEditorFiles.includes(path))) {
     throw new Error('initial View graph overlaps lazy editor graph');
+  }
+  if (manifest.initialViewFiles.some((path) => manifest.lazyLocaleFiles.includes(path))) {
+    throw new Error('initial View graph overlaps lazy locale graph');
+  }
+  if (manifest.lazyLocaleFiles.some((path) => manifest.lazyEditorFiles.includes(path)
+      || manifest.lazyOnboardingFiles?.includes(path))) {
+    throw new Error('lazy locale graph overlaps an editor graph');
   }
   if (manifest.initialViewGzipBytes > budget) {
     throw new Error(
@@ -23,6 +33,7 @@ export function assertBundleBudget(manifest, budget = INITIAL_VIEW_GZIP_BUDGET) 
   return {
     initialViewGzipBytes: manifest.initialViewGzipBytes,
     lazyEditorGzipBytes: manifest.lazyEditorGzipBytes,
+    lazyLocaleGzipBytes: manifest.lazyLocaleGzipBytes,
   };
 }
 
@@ -32,6 +43,7 @@ if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
     const result = assertBundleBudget(manifest);
     console.log(`initial View: ${result.initialViewGzipBytes} B gzip`);
     console.log(`lazy editor: ${result.lazyEditorGzipBytes} B gzip`);
+    console.log(`lazy locale: ${result.lazyLocaleGzipBytes} B gzip`);
   } catch (error) {
     console.error(error instanceof Error ? error.message : String(error));
     process.exit(1);

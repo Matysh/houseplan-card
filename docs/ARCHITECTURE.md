@@ -135,6 +135,13 @@ the same profiler available between stable promotions.
    affordance exists only when both its localized body and complete accessible
    label are non-empty; the card factory and `hp-help` enforce this independently,
    so incomplete content cannot leave a dead focus target or a layout gap.
+   English and Russian dictionaries remain in the synchronous graph. German is
+   a fingerprint-checked lazy locale shared page-wide: every root card/editor
+   uses the same render gate, keeps a previously committed frame stable during
+   a language switch, and shows a language-neutral busy frame on a German cold
+   start. Two failed content-hashed attempts settle on English rather than
+   leaving an inert surface. The bundle manifest classifies this graph as
+   `lazyLocaleFiles`, separate from editor and onboarding graphs.
 8. **One four-phase environment resolver.** `resolveDayCycle()` in `src/sun.ts`
    atomically chooses a strict real `sun.sun` sample or browser-local clock
    fallback and returns only phase/source/light tokens. `src/day-cycle-render.ts`

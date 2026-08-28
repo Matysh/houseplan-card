@@ -1,7 +1,8 @@
 /** Card configuration editor (Lovelace GUI). */
-import { LitElement, html, nothing } from 'lit';
+import { LitElement, html, nothing, noChange } from 'lit';
 import { langOf, t, type Lang } from './i18n';
-import { languageOptions } from './i18n/registry';
+import { LANGUAGE_RUNTIME, languageOptions } from './i18n/registry';
+import { languageLoadingTemplate, languageRenderGate } from './i18n/language-runtime';
 import { invalidDefaultFloor } from './card-editor-validation';
 
 class HouseplanCardEditor extends LitElement {
@@ -113,6 +114,11 @@ class HouseplanCardEditor extends LitElement {
 
   protected render() {
     if (!this.hass || !this._config) return nothing;
+    const localeGate = languageRenderGate(
+      this, LANGUAGE_RUNTIME, langOf(this.hass, this._config.language),
+    );
+    if (localeGate === 'cold') return languageLoadingTemplate();
+    if (localeGate === 'warm') return noChange;
     this._loadSpaces();
     const L = this._lang;
     const labels: Record<string, string> = {

@@ -2,7 +2,7 @@
 
 - **Issue:** https://github.com/Matysh/houseplan-card/issues/348
 - **Зависимость:** #62 — единый реестр языков и автоматические i18n-gates
-- **Статус документа:** готово к ревью ТЗ
+- **Статус документа:** реализовано, передано на код-ревью
 - **Приоритет / тип:** P1 / feature
 - **Трек:** полный: задача меняет публичный языковой контракт, несколько
   frontend/backend-поверхностей, первый render и performance budget
@@ -382,4 +382,3 @@ config не нужны.
 5. Добавить semantic/layout/network smoke и German golden scenarios.
 6. Обновить docs/changelogs, собрать и синхронизировать bundle.
 7. Прогнать gates, передать точный SHA на независимое code review.
-

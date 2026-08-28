@@ -28,6 +28,16 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    symbols: [
+      'LanguageRuntime', 'LanguageRuntimeContract', 'languageRenderGate',
+      'dictionaryFor', 'ensureLanguage',
+    ],
+    smokes: ['smoke_german_locale.mjs'],
+    because: 'the production-bundle scenario observes the lazy German chunk through network '
+      + 'requests and four root render gates: neutral cold frame, atomic German commit, page-cache '
+      + 'reuse and the bounded retry-to-English path cannot be proven from pure registry tests (#348)',
+  },
+  {
     symbols: ['quantizeKeyCoord', 'INCIDENT_EPS', 'KEY_FACTOR'],
     smokes: ['smoke_junction_limits.mjs'],
     because: 'the smoke proves the write barrier verdicts (refusal toasts, resize stop, '

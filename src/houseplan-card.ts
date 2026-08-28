@@ -6,7 +6,7 @@
  *  2) LEGACY fallback — baked-in country-house data (src/data/*), coordinates in a 1489×1053 canvas.
  * The icon layout is stored on the server (houseplan/layout/*), fallback — localStorage.
  */
-import { LitElement, html, svg, nothing, TemplateResult, PropertyValues } from 'lit';
+import { LitElement, html, svg, nothing, noChange, TemplateResult, PropertyValues } from 'lit';
 import { guard } from 'lit/directives/guard.js';
 import { repeat } from 'lit/directives/repeat.js';
 import './hp-dialog';
@@ -232,6 +232,8 @@ import {
 } from './coordinate-canonicalization';
 import { enqueueSerializedWrite } from './serialized-write-queue';
 import { hasTranslation, langOf, t, type I18nKey } from './i18n';
+import { LANGUAGE_RUNTIME } from './i18n/registry';
+import { languageLoadingTemplate, languageRenderGate } from './i18n/language-runtime';
 import { CommandStack } from './command-stack';
 import { resolvedSvgScreenBlend, svgScreenBlendSupported } from './glow-blend';
 import {
@@ -10700,7 +10702,13 @@ export class HouseplanCard extends LitElement {
     }
   }
 
-  protected render(): TemplateResult | typeof nothing {
+  protected render(): TemplateResult | typeof nothing | typeof noChange {
+    if (!this._config || !this.hass) return nothing;
+    const localeGate = languageRenderGate(
+      this, LANGUAGE_RUNTIME, langOf(this.hass, this._config.language),
+    );
+    if (localeGate === 'cold') return languageLoadingTemplate();
+    if (localeGate === 'warm') return noChange;
     const onboardingRuntimeRequested = !!this._importDialog
       || !!(this._spaceDialog && this._spaceDialogUsesOnboardingRuntime(this._spaceDialog.mode));
     const editorRuntimeRequested = this._mode !== 'view'
@@ -10717,7 +10725,6 @@ export class HouseplanCard extends LitElement {
       void this._ensureOnboardingRuntime();
     }
     if (editorRuntimeRequested && !this._editorRuntime) void this._ensureEditorRuntime();
-    if (!this._config || !this.hass) return nothing;
     const model = this._model;
     const diagnostics = this.houseplanDiagnostics();
     const fixed = this._fixedFloorState(model);

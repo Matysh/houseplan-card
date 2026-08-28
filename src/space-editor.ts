@@ -1,6 +1,8 @@
 /** Config editor (Lovelace GUI) for houseplan-space-card. */
-import { LitElement, html, nothing } from 'lit';
+import { LitElement, html, nothing, noChange } from 'lit';
 import { langOf, t, type Lang } from './i18n';
+import { LANGUAGE_RUNTIME } from './i18n/registry';
+import { languageLoadingTemplate, languageRenderGate } from './i18n/language-runtime';
 
 class HouseplanSpaceCardEditor extends LitElement {
   public hass?: any;
@@ -54,6 +56,11 @@ class HouseplanSpaceCardEditor extends LitElement {
 
   protected render() {
     if (!this.hass || !this._config) return nothing;
+    const localeGate = languageRenderGate(
+      this, LANGUAGE_RUNTIME, langOf(this.hass, this._config.language),
+    );
+    if (localeGate === 'cold') return languageLoadingTemplate();
+    if (localeGate === 'warm') return noChange;
     this._loadSpaces();
     const L = this._lang;
     const labels: Record<string, string> = {

@@ -6,6 +6,7 @@ import { gzipSync } from 'node:zlib';
 const BUILD_FINGERPRINT_TOKEN = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
 const EDITOR_RETRY_ASSET_TOKEN = '__HOUSEPLAN_EDITOR_RETRY_ASSET__';
 const ONBOARDING_RETRY_ASSET_TOKEN = '__HOUSEPLAN_ONBOARDING_RETRY_ASSET__';
+const DE_RETRY_ASSET_TOKEN = '__HOUSEPLAN_DE_RETRY_ASSET__';
 
 const sha256 = (value) => createHash('sha256').update(value).digest('hex');
 
@@ -27,6 +28,14 @@ export function buildBundleManifest(bundle, fingerprint) {
     .filter((item) => item.type === 'chunk')
     .map((chunk) => {
       const contents = Buffer.from(chunk.code, 'utf8');
+      const modules = Object.keys(chunk.modules || {}).map((id) => id.replaceAll('\\', '/'));
+      const role = modules.some((id) => id.endsWith('/src/i18n/de.ts'))
+        ? 'locale'
+        : modules.some((id) => id.endsWith('/src/houseplan-onboarding-runtime.ts'))
+          ? 'onboarding'
+          : modules.some((id) => id.endsWith('/src/houseplan-editor-runtime.ts'))
+            ? 'editor'
+            : undefined;
       return {
         path: chunk.fileName.replaceAll('\\', '/'),
         sha256: sha256(contents),
@@ -35,6 +44,7 @@ export function buildBundleManifest(bundle, fingerprint) {
         isEntry: chunk.isEntry,
         imports: [...chunk.imports].sort(),
         dynamicImports: [...chunk.dynamicImports].sort(),
+        _role: role,
       };
     })
     .sort((left, right) => left.path.localeCompare(right.path));
@@ -48,8 +58,13 @@ export function buildBundleManifest(bundle, fingerprint) {
   for (const root of dynamicRoots) {
     for (const path of reachable(root, byPath, 'imports')) if (!initial.has(path)) lazy.add(path);
   }
-  const onboardingRoots = dynamicRoots.filter((path) => path.includes('houseplan-onboarding-runtime-'));
-  const editorRoots = dynamicRoots.filter((path) => !onboardingRoots.includes(path));
+  const localeRoots = dynamicRoots.filter((path) => byPath.get(path)?._role === 'locale'
+    || /(?:^|\/)de-[^/]+\.js$/.test(path));
+  const onboardingRoots = dynamicRoots.filter((path) => byPath.get(path)?._role === 'onboarding'
+    || path.includes('houseplan-onboarding-runtime-'));
+  const editorRoots = dynamicRoots.filter((path) => (byPath.get(path)?._role === 'editor'
+    || /(?:^|\/)editor(?:-[^/]+)?\.js$/.test(path))
+    && !localeRoots.includes(path) && !onboardingRoots.includes(path));
   const graphFrom = (roots) => {
     const graph = new Set();
     for (const root of roots) {
@@ -59,6 +74,7 @@ export function buildBundleManifest(bundle, fingerprint) {
   };
   const lazyEditor = graphFrom(editorRoots);
   const lazyOnboarding = graphFrom(onboardingRoots);
+  const lazyLocale = graphFrom(localeRoots);
   const sum = (paths) => [...paths]
     .reduce((total, path) => total + (byPath.get(path)?.gzipBytes || 0), 0);
   return {
@@ -73,7 +89,9 @@ export function buildBundleManifest(bundle, fingerprint) {
     lazyEditorGzipBytes: sum(lazyEditor),
     lazyOnboardingFiles: [...lazyOnboarding].sort(),
     lazyOnboardingGzipBytes: sum(lazyOnboarding),
-    files,
+    lazyLocaleFiles: [...lazyLocale].sort(),
+    lazyLocaleGzipBytes: sum(lazyLocale),
+    files: files.map(({ _role, ...file }) => file),
   };
 }
 
@@ -120,10 +138,14 @@ export function editorRuntimeRetryUrlPlugin() {
         .some((id) => id.replaceAll('\\', '/').endsWith('/src/houseplan-editor-runtime.ts')));
       const onboarding = chunks.find((chunk) => Object.keys(chunk.modules)
         .some((id) => id.replaceAll('\\', '/').endsWith('/src/houseplan-onboarding-runtime.ts')));
+      const german = chunks.find((chunk) => Object.keys(chunk.modules)
+        .some((id) => id.replaceAll('\\', '/').endsWith('/src/i18n/de.ts')));
       if (!editor) throw new Error('editor runtime chunk was not emitted');
       if (!onboarding) throw new Error('onboarding runtime chunk was not emitted');
+      if (!german) throw new Error('German locale chunk was not emitted');
       let editorReplacements = 0;
       let onboardingReplacements = 0;
+      let germanReplacements = 0;
       for (const chunk of chunks) {
         if (chunk.code.includes(EDITOR_RETRY_ASSET_TOKEN)) {
           let asset = posix.relative(posix.dirname(chunk.fileName), editor.fileName);
@@ -137,10 +159,16 @@ export function editorRuntimeRetryUrlPlugin() {
           onboardingReplacements += chunk.code.split(ONBOARDING_RETRY_ASSET_TOKEN).length - 1;
           chunk.code = chunk.code.replaceAll(ONBOARDING_RETRY_ASSET_TOKEN, asset);
         }
+        if (chunk.code.includes(DE_RETRY_ASSET_TOKEN)) {
+          let asset = posix.relative(posix.dirname(chunk.fileName), german.fileName);
+          if (!asset.startsWith('.')) asset = `./${asset}`;
+          germanReplacements += chunk.code.split(DE_RETRY_ASSET_TOKEN).length - 1;
+          chunk.code = chunk.code.replaceAll(DE_RETRY_ASSET_TOKEN, asset);
+        }
       }
-      if (editorReplacements !== 1 || onboardingReplacements !== 1) {
+      if (editorReplacements !== 1 || onboardingReplacements !== 1 || germanReplacements !== 1) {
         throw new Error('lazy retry URL placeholder counts are '
-          + `${editorReplacements}/${onboardingReplacements}, expected 1/1`);
+          + `${editorReplacements}/${onboardingReplacements}/${germanReplacements}, expected 1/1/1`);
       }
     },
   };

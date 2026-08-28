@@ -368,7 +368,7 @@ test('sun-ray golden requires browser-painted light from a state-only sun entity
   assert.ok(scenario);
   const fixture = prepareGoldenFixture(scenario);
   const space = fixture.config.spaces.find((item) => item.id === scenario.space);
-  assert.equal(GOLDEN_MATRIX_VERSION, 48);
+  assert.equal(GOLDEN_MATRIX_VERSION, 49);
   assert.equal(space.settings.sun_rays, true);
   assert.equal(scenario.northDeg, 90,
     'the sign-sensitive golden must keep a non-zero north direction');
@@ -807,8 +807,8 @@ test('editor tray golden contract covers every adaptive width in English and Rus
 
 test('device dialog goldens expose the complete light-source controls at desktop and mobile widths', () => {
   const dialogs = GOLDEN_SCENARIOS.filter((scenario) => scenario.id.startsWith('device-dialog-'));
-  assert.equal(dialogs.length, 2);
-  assert.deepEqual(new Set(dialogs.map((scenario) => scenario.language)), new Set(['en', 'ru']));
+  assert.equal(dialogs.length, 3);
+  assert.deepEqual(new Set(dialogs.map((scenario) => scenario.language)), new Set(['en', 'ru', 'de']));
   for (const scenario of dialogs) {
     assert.equal(scenario.deviceLightControls, true, scenario.id);
     assert.equal(scenario.deviceId, 'golden-light-two', scenario.id);

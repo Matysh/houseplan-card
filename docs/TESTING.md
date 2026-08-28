@@ -781,7 +781,18 @@ separately promised workflows:
 - [ ] Tablet in kiosk/panel mode — View/kiosk, landscape, touch gestures
 - [ ] Phone portrait, narrow ≤400 px — View and View dialogs/actions
 - [ ] Dark theme and light theme (badges, dialogs, plan contrast)
-- [ ] RU profile locale and EN profile locale (+ `language:` card option forcing each)
+- [ ] RU, EN and DE profile locales (+ `language:` card option forcing each);
+      `de-DE`, `de-AT` and `de-CH` resolve to German, while an unknown locale
+      falls back to English [unit: i18n, i18n-runtime]
+- [ ] German cold start requests exactly one locale chunk, shows only a neutral
+      busy frame before commit and never flashes English; a second card reuses
+      the page cache. EN/RU request no locale chunk [auto: German locale smoke]
+- [ ] German locale download failure retries the content-hashed asset once and
+      then unblocks the card in English with one warning [unit: i18n-runtime;
+      auto: German locale smoke fault injection]
+- [ ] German View and a representative settings/device dialog fit at desktop
+      and 390 px without horizontal overflow or clipped actions [golden: German
+      desktop/mobile scenarios]
 
 ## Installation / upgrade / removal
 

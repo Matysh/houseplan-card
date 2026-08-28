@@ -9,7 +9,7 @@ import {
   FALLBACK_DICTIONARY,
   FALLBACK_LANGUAGE_CODE,
   LANGUAGE_REGISTRY,
-  languageEntry,
+  dictionaryFor,
   resolveLanguageCode,
   type Lang,
 } from './i18n/registry';
@@ -30,13 +30,13 @@ export function langOf(hass: any, configLang?: string | null): Lang {
 
 /** Translate a key with optional {placeholder} substitution. */
 export function t(lang: Lang, key: Key, vars?: Record<string, string | number>): string {
-  const dictionary = languageEntry(lang)?.dictionary;
-  return subst(dictionary?.[key] ?? FALLBACK_DICTIONARY[key] ?? key, vars);
+  const dictionary = dictionaryFor(lang);
+  return subst(dictionary[key] ?? FALLBACK_DICTIONARY[key] ?? key, vars);
 }
 
 /** Whether a localized value exists and contains useful text after fallback. */
 export function hasTranslation(lang: Lang, key: string): boolean {
-  const value = languageEntry(lang)?.dictionary[key] ?? FALLBACK_DICTIONARY[key];
+  const value = dictionaryFor(lang)[key] ?? FALLBACK_DICTIONARY[key];
   return typeof value === 'string' && value.trim().length > 0;
 }
 

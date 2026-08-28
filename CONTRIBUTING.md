@@ -16,8 +16,8 @@ A shipped UI language has three matching parts:
 1. `src/i18n/<code>.json` for the card;
 2. `custom_components/houseplan/translations/<code>.json` for the Home Assistant
    integration;
-3. one static entry (dictionary import, code and native label) in
-   `src/i18n/registry.ts`.
+3. one registry entry (code, native label and eager dictionary or lazy loader)
+   in `src/i18n/registry.ts`.
 
 Use the canonical Home Assistant/BCP 47 language tag as `<code>` (for example,
 `fr` or `pt-BR`) and use that exact spelling for both JSON filenames. Lookup is
@@ -28,6 +28,15 @@ tests. The tests reject missing or extra locale files; frontend dictionaries
 also fail on mismatched keys, empty values and changed placeholders.
 Placeholders such as `{name}` and `{n}` are a contract: do not translate, add
 or remove them.
+
+English and Russian are synchronous fallback/legacy locales. German is the
+reference lazy third-locale implementation: its module carries the same build
+fingerprint as the entry bundle, has one content-hashed retry URL and is listed
+under `lazyLocaleFiles` in `houseplan-assets.json`. New sizeable locales should
+follow that path unless a measured initial-bundle budget explicitly justifies
+an eager import. Extend the runtime, manifest, file/key/placeholder parity and
+regional-locale tests together; never bypass the registry by importing a locale
+directly in a component.
 
 The current `subst()` helper does not implement plural rules. Phrase strings so
 their grammar does not depend on the numeric value (for example, use a neutral

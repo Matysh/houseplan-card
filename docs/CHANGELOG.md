@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- House Plan now has a complete German interface. `Deutsch` can be selected
+  explicitly and is chosen automatically for German Home Assistant profiles;
+  the locale loads on demand without making the ordinary View bundle larger
+  ([#348](https://github.com/Matysh/houseplan-card/issues/348)).
+
 - View now starts without downloading the three editors; their shared runtime
   is loaded on first use and protected by one retry and a build-version check.
   Release and test tooling now verify the complete multi-file frontend asset

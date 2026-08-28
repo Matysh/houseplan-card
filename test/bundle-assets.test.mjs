@@ -45,6 +45,7 @@ test('bundle manifest separates static initial graph from dynamic editor graph',
       type: 'chunk', fileName: 'houseplan-card.js', code: 'entry', isEntry: true,
       imports: ['shared.js'], dynamicImports: [
         'houseplan-assets/editor.js', 'houseplan-assets/houseplan-onboarding-runtime-HASH.js',
+        'houseplan-assets/de-HASH.js',
       ],
     },
     'shared.js': {
@@ -60,14 +61,21 @@ test('bundle manifest separates static initial graph from dynamic editor graph',
       code: 'onboarding', isEntry: false,
       imports: ['shared.js'], dynamicImports: [],
     },
+    'houseplan-assets/de-HASH.js': {
+      type: 'chunk', fileName: 'houseplan-assets/de-HASH.js',
+      code: 'German locale', isEntry: false, imports: [], dynamicImports: [],
+      modules: { '/repo/src/i18n/de.ts': {} },
+    },
   }, 'fingerprint');
   assert.deepEqual(manifest.initialViewFiles, ['houseplan-card.js', 'shared.js']);
   assert.deepEqual(manifest.lazyEditorFiles, ['houseplan-assets/editor.js']);
   assert.deepEqual(manifest.lazyOnboardingFiles, [
     'houseplan-assets/houseplan-onboarding-runtime-HASH.js',
   ]);
+  assert.deepEqual(manifest.lazyLocaleFiles, ['houseplan-assets/de-HASH.js']);
   assert.deepEqual(manifest.lazyFiles, [
-    'houseplan-assets/editor.js', 'houseplan-assets/houseplan-onboarding-runtime-HASH.js',
+    'houseplan-assets/de-HASH.js', 'houseplan-assets/editor.js',
+    'houseplan-assets/houseplan-onboarding-runtime-HASH.js',
   ]);
   assert.doesNotThrow(() => assertBundleBudget(manifest, 1_000_000));
   assert.throws(() => assertBundleBudget(manifest, 1), /exceeds/);
@@ -89,7 +97,8 @@ test('retry URL points at the content-hashed runtime chunk after naming', () => 
     'houseplan-assets/houseplan-card.js': {
       type: 'chunk', fileName: 'houseplan-assets/houseplan-card.js',
       code: 'new URL("__HOUSEPLAN_EDITOR_RETRY_ASSET__", import.meta.url);'
-        + 'new URL("__HOUSEPLAN_ONBOARDING_RETRY_ASSET__", import.meta.url)', modules: {},
+        + 'new URL("__HOUSEPLAN_ONBOARDING_RETRY_ASSET__", import.meta.url);'
+        + 'new URL("__HOUSEPLAN_DE_RETRY_ASSET__", import.meta.url)', modules: {},
     },
     'houseplan-assets/houseplan-editor-runtime-HASH.js': {
       type: 'chunk', fileName: 'houseplan-assets/houseplan-editor-runtime-HASH.js', code: '',
@@ -99,12 +108,17 @@ test('retry URL points at the content-hashed runtime chunk after naming', () => 
       type: 'chunk', fileName: 'houseplan-assets/houseplan-onboarding-runtime-HASH.js', code: '',
       modules: { '/repo/src/houseplan-onboarding-runtime.ts': {} },
     },
+    'houseplan-assets/de-HASH.js': {
+      type: 'chunk', fileName: 'houseplan-assets/de-HASH.js', code: '',
+      modules: { '/repo/src/i18n/de.ts': {} },
+    },
   };
   plugin.generateBundle({}, bundle);
   assert.equal(
     bundle['houseplan-assets/houseplan-card.js'].code,
     'new URL("./houseplan-editor-runtime-HASH.js", import.meta.url);'
-      + 'new URL("./houseplan-onboarding-runtime-HASH.js", import.meta.url)',
+      + 'new URL("./houseplan-onboarding-runtime-HASH.js", import.meta.url);'
+      + 'new URL("./de-HASH.js", import.meta.url)',
   );
 });
 

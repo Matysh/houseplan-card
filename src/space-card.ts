@@ -5,11 +5,13 @@
  * (no clicks/hover/tooltips/drag/more-info). A footer button opens
  * the space in the full component via a deep-link (`#space=<id>`).
  */
-import { LitElement, html, nothing, css, type TemplateResult, type PropertyValues } from 'lit';
+import { LitElement, html, nothing, noChange, css, type TemplateResult, type PropertyValues } from 'lit';
 import { cardStyles } from './styles';
 import { buildSpaceDevices, renderSpaceStatic, spaceModels } from './space-render';
 import { getConfig, onConfigChange, cachedSnapshot, type HpConfigSnapshot } from './config-store';
 import { t, langOf, type Lang } from './i18n';
+import { LANGUAGE_RUNTIME } from './i18n/registry';
+import { languageLoadingTemplate, languageRenderGate } from './i18n/language-runtime';
 import { ContentSigner } from './signing';
 import { normalizeDeviceDisplay, openingEntityReferences, referencedContentUrls } from './logic';
 import { acquireHaRegistries, activeRegistryHass, haRegistrySnapshot } from './ha-binding-status';
@@ -758,8 +760,13 @@ class HouseplanSpaceCard extends LitElement {
       .map((event) => ({ ...event, ...(event.stage ? { stage: [...event.stage] as [number, number] } : {}) }));
   }
 
-  protected render(): TemplateResult | typeof nothing {
-    if (!this._config) return nothing;
+  protected render(): TemplateResult | typeof nothing | typeof noChange {
+    if (!this._config || !this.hass) return nothing;
+    const localeGate = languageRenderGate(
+      this, LANGUAGE_RUNTIME, langOf(this.hass, this._config.language),
+    );
+    if (localeGate === 'cold') return languageLoadingTemplate();
+    if (localeGate === 'warm') return noChange;
     const cfg = this._snap?.config;
     if (!cfg) {
       // still loading and no snapshot yet

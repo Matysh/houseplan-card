@@ -1,0 +1,30 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "House Plan",
+        "data": {
+          "admin_only": "Nur Administratoren dürfen den Grundriss bearbeiten"
+        }
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "Bereits konfiguriert – es ist nur eine Instanz zulässig."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "admin_only": "Nur Administratoren dürfen den Grundriss bearbeiten"
+        }
+      }
+    }
+  },
+  "issues": {
+    "broken_plan": {
+      "title": "Grundrissbild fehlt",
+      "description": "Die Plandatei `{file}` für den Bereich `{space}` wurde in `config/houseplan/plans/` nicht gefunden. In den Bereichseinstellungen der House-Plan-Karte den Plan erneut hochladen."
+    }
+  }
+}

@@ -5,6 +5,7 @@ import test from 'node:test';
 const cardSource = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
 const en = JSON.parse(readFileSync(new URL('../src/i18n/en.json', import.meta.url), 'utf8'));
 const ru = JSON.parse(readFileSync(new URL('../src/i18n/ru.json', import.meta.url), 'utf8'));
+const de = JSON.parse(readFileSync(new URL('../src/i18n/de.json', import.meta.url), 'utf8'));
 
 test('runtime exposes only the unified Walls tool state', () => {
   const toolType = cardSource.match(/type MarkupTool = ([^;]+);/)?.[1] || '';
@@ -18,7 +19,7 @@ test('runtime exposes only the unified Walls tool state', () => {
 });
 
 test('only old tool copy is removed while persisted partition copy remains', () => {
-  for (const locale of [en, ru]) {
+  for (const locale of [en, ru, de]) {
     for (const key of [
       'title.markup_partition',
       'markup.hint_partition',
