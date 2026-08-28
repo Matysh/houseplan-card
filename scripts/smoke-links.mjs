@@ -28,6 +28,13 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    symbols: ['quantizeKeyCoord', 'INCIDENT_EPS', 'KEY_FACTOR'],
+    smokes: ['smoke_junction_limits.mjs'],
+    because: 'the smoke proves the write barrier verdicts (refusal toasts, resize stop, '
+      + 'fail-closed candidate) through the rendered card, never naming the key-quantisation '
+      + 'internals that decide which nodes are one node (#331 §2.1)',
+  },
+  {
     symbols: [
       'placeResizeAreaLabel', 'resizeInwardNormal', 'resizeMeasuredEdges',
       'ResizeAreaPlacement', 'ResizeAreaPlacementInput', 'ResizeLabelView',
