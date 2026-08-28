@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.69.0-beta.3 — 2026-08-29
+
 - Furniture placement in the Background editor now shows a translucent mouse
   preview with the exact future size, rotation and wall snap. It follows live
   size edits and disappears without a config change on cancel; on touch,

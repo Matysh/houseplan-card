@@ -47,7 +47,7 @@ PLAN_ORPHAN_TTL_S = 3600
 SCHEDULED_GRACE_S = 30 * 24 * 3600
 FILES_DIR = "houseplan/files"
 CONF_ADMIN_ONLY = "admin_only"
-VERSION = "1.69.0-beta.2"
+VERSION = "1.69.0-beta.3"
 
 # Portable backup format.  This is deliberately independent from the Home
 # Assistant Store version above: storage migrations and files exported by a
