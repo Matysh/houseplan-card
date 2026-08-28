@@ -7,6 +7,10 @@ from pathlib import Path
 _MANIFEST = "houseplan-assets.json"
 _ASSET_DIR = "houseplan-assets"
 
+# Content-hashed chunk bodies never change under their URL (#353 К4). The
+# stable entry `houseplan-card.js` is served elsewhere and stays uncached.
+ASSET_CACHE_CONTROL = "public, max-age=31536000, immutable"
+
 
 def resolve_frontend_asset(frontend_root: Path, filename: object) -> Path | None:
     """Resolve one generated JS asset only when the current manifest lists it."""

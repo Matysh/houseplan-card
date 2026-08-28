@@ -23,6 +23,13 @@
   remains available only while the configuration store is empty
   ([#340](https://github.com/Matysh/houseplan-card/issues/340)).
 
+- The lazy editor survives flaky networks and updates: after a network
+  failure the "Edit" press retries the download instead of staying dead until
+  a page refresh, the toast says what to do, and a stale cached
+  `houseplan-card.js` after an update shows a "reload the page" panel instead
+  of an empty card. Content-hashed chunks are now served with immutable
+  caching ([#353](https://github.com/Matysh/houseplan-card/issues/353)).
+
 - A very acute apex between walls of different thickness (say 15 and 30 cm)
   on legacy plans renders as an honest tip again instead of the "trident":
   the inner-face convergence accounts for both thicknesses, not just the

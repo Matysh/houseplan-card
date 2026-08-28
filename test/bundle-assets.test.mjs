@@ -147,3 +147,52 @@ test('bundle tree verification fails for a missing or tampered manifest asset', 
     rmSync(temp, { recursive: true, force: true });
   }
 });
+
+test('entry facade fails loudly when the main chunk is unavailable (#353 AC3a)', () => {
+  const entry = readFileSync(new URL('../dist/houseplan-card.js', import.meta.url), 'utf8');
+  assert.match(
+    entry,
+    /^globalThis\.__HOUSEPLAN_BUILD_FINGERPRINT__="[0-9a-f]{64}";/,
+    'the fail-closed fingerprint intro must survive the rewrite',
+  );
+  assert.match(
+    entry,
+    /try\{await import\("\.\/houseplan-assets\/[^"]+\.js"\)\}catch\(/,
+    'the entry must await the main chunk so importers keep the happy-path guarantee',
+  );
+  assert.match(entry, /customElements\.define\("houseplan-card",/);
+  assert.match(entry, /reload the page/);
+  assert.doesNotMatch(
+    entry,
+    /(?:^|;)(?:export|import)[\s{"']/m,
+    'no static import/export may remain — a static edge aborts the module before any code runs',
+  );
+});
+
+test('bundle tree verification rejects orphan chunks (#353 AC4)', async () => {
+  const { mkdtempSync, writeFileSync, mkdirSync } = await import('node:fs');
+  const { tmpdir } = await import('node:os');
+  const { join } = await import('node:path');
+  const { verifyBundleTree, sha256Bytes } = await import('../scripts/bundle-tree.mjs');
+  const root = mkdtempSync(join(tmpdir(), 'hp-tree-'));
+  mkdirSync(join(root, 'houseplan-assets'));
+  const entryCode = 'try{await import("./houseplan-assets/main-abc.js")}catch(e){}';
+  const chunkCode = 'export const x = 1;';
+  writeFileSync(join(root, 'houseplan-card.js'), entryCode);
+  writeFileSync(join(root, 'houseplan-assets', 'main-abc.js'), chunkCode);
+  writeFileSync(join(root, 'houseplan-assets.json'), JSON.stringify({
+    schema: 1,
+    fingerprint: 'f'.repeat(64),
+    entry: 'houseplan-card.js',
+    files: [
+      { path: 'houseplan-card.js', sha256: sha256Bytes(Buffer.from(entryCode)) },
+      { path: 'houseplan-assets/main-abc.js', sha256: sha256Bytes(Buffer.from(chunkCode)) },
+    ],
+  }));
+  assert.equal(verifyBundleTree(root).files.length, 2, 'a clean tree verifies');
+  writeFileSync(join(root, 'houseplan-assets', 'junk-old.js'), 'stale');
+  assert.throws(
+    () => verifyBundleTree(root),
+    /orphan bundle asset: houseplan-assets\/junk-old\.js/,
+  );
+});

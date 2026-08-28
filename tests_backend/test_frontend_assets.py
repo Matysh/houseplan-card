@@ -66,3 +66,11 @@ def test_frontend_asset_refuses_wrong_schema_and_symlink_escape(tmp_path: Path) 
         "schema": 1, "files": [{"path": "houseplan-assets/linked.js"}],
     }), encoding="utf-8")
     assert resolve_frontend_asset(root, "linked.js") is None
+
+
+def test_hashed_chunks_are_immutably_cacheable() -> None:
+    """#353 AC3-в: content-hashed bodies never change under their URL."""
+    assert _MODULE.ASSET_CACHE_CONTROL == "public, max-age=31536000, immutable"
+    view_source = (_PATH.parent / "frontend_assets.py").read_text(encoding="utf-8")
+    assert "ASSET_CACHE_CONTROL" in view_source
+    assert '"no-cache"' not in view_source

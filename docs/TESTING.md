@@ -3336,16 +3336,24 @@ require hands on real hardware — they remain for the human pass.
       request for `houseplan-editor-runtime-*.js`. The first Plan/Devices/
       Background intent requests it once; later editor switches do not repeat
       the request [auto: `smoke_lazy_editor_chunk`].
-- [ ] Two failed requests, or a runtime with a different build fingerprint,
-      leave mode, camera and plan in View and show the localized refresh advice
-      [auto: `editor-runtime-loader.test`, `smoke_lazy_editor_chunk`].
+- [ ] Two failed network requests leave mode, camera and plan in View, show
+      the localized retry advice, and the next explicit press starts a fresh
+      load cycle that opens the editor once the network is back. A runtime with
+      a different build fingerprint is terminal and shows the refresh advice
+      (#353) [auto: `editor-runtime-loader.test`, `smoke_lazy_editor_chunk`].
+- [ ] A cached stale entry whose main chunk the server no longer lists shows a
+      localized "reload the page" panel instead of a silently dead card; hashed
+      chunks are served immutable and an orphan chunk on disk fails the bundle
+      tree check (#353) [auto: `smoke_entry_stale`, `bundle-assets.test`,
+      `test_frontend_assets`].
 - [ ] An empty installation requests the dedicated onboarding chunk, displays
       the first-space dialog and still has no editor request. Saving a drawn
       first space requests the editor once and continues into Plan; async
       `getConfigElement()` still returns `houseplan-card-editor`
       [auto: `smoke_lazy_editor_chunk`].
 - [ ] `bundle:budget` follows transitive static imports and keeps initial View
-      at or below 256000 B gzip. Bundle sync, demo freshness, CI artifacts and
+      at or below 282000 B gzip (#352: ~10% headroom over the calibrated fact,
+      printed with the trend on every run). Bundle sync, demo freshness, CI artifacts and
       release zip validation fail when any manifest-listed asset is missing or
       its SHA-256 differs [auto: `bundle-assets.test`, `bundle-freshness.test`,
       release-contract tests].

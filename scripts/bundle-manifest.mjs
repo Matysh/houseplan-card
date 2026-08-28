@@ -174,6 +174,55 @@ export function editorRuntimeRetryUrlPlugin() {
   };
 }
 
+/**
+ * Rewrite the entry facade so a stale cached `houseplan-card.js` fails loudly
+ * instead of killing the card silently (#353 К3). Rollup emits the facade as a
+ * STATIC re-export of the content-hashed main chunk; after an update a proxy-
+ * cached facade points at a chunk the manifest-gated server no longer serves,
+ * and a static import failure aborts the whole module before any code runs.
+ *
+ * The rewrite keeps the happy path intact via top-level await: an importer's
+ * `await import(entry)` does not resolve until the inner import settles, so
+ * `customElements.define` of the real card still happens-before the importer
+ * continues — demo, smokes and golden run unchanged. Only the failure branch
+ * is new: it defines a minimal fallback element with a human message.
+ *
+ * Must run BEFORE bundleManifestPlugin so the manifest hashes the final code.
+ */
+export function entryFallbackPlugin() {
+  return {
+    name: 'houseplan-entry-fallback',
+    generateBundle(_options, bundle) {
+      const entry = Object.values(bundle)
+        .find((item) => item.type === 'chunk' && item.isEntry);
+      if (!entry) throw new Error('entry chunk was not emitted');
+      const pattern = /export\{[^}]*\}from(["'])(\.\/houseplan-assets\/[^"']+\.js)\1;?/g;
+      const matches = [...entry.code.matchAll(pattern)];
+      if (matches.length !== 1) {
+        throw new Error(`entry facade re-export count is ${matches.length}, expected 1`);
+      }
+      const asset = matches[0][2];
+      const fallback = 'try{await import("' + asset + '")}'
+        + 'catch(e){if(!customElements.get("houseplan-card")){'
+        + 'const l=String(navigator.language||"en").toLowerCase();'
+        + 'const m=l.startsWith("ru")'
+        + '?"House Plan обновился — перезагрузите страницу (Ctrl+F5)."'
+        + ':l.startsWith("de")'
+        + '?"House Plan wurde aktualisiert — bitte laden Sie die Seite neu (Strg+F5)."'
+        + ':"House Plan was updated — please reload the page (Ctrl+F5).";'
+        + 'customElements.define("houseplan-card",class extends HTMLElement{'
+        + 'setConfig(){}getCardSize(){return 1}connectedCallback(){'
+        + 'this.style.cssText="display:block;box-sizing:border-box;padding:16px;'
+        + 'border:1px solid var(--divider-color,#e0e0e0);border-radius:var(--ha-card-border-radius,12px);'
+        + 'background:var(--card-background-color,#fff);color:var(--primary-text-color,#212121);'
+        + 'font:14px/1.4 var(--paper-font-body1_-_font-family,sans-serif)";'
+        + 'this.textContent=m}})}'
+        + 'console.error("[houseplan] stale entry: the main chunk is unavailable",e)}';
+      entry.code = entry.code.replace(pattern, fallback);
+    },
+  };
+}
+
 /** Remove only files named by the previous generated manifest. */
 export function cleanBundleOutputPlugin(outputRoot = 'dist') {
   return {

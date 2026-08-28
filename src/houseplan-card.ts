@@ -271,7 +271,12 @@ import {
   ModeTransitionController, viewportFromViewBox,
   type HouseplanMode, type ModeTransitionState, type ModeVisualState, type ModeViewBox,
 } from './mode-transition';
-import { EditorRuntimeLoader, type EditorRuntimeLoaderState } from './editor-runtime-loader';
+import { EditorRuntimeLoader, lazyLoadFailureMessage, type EditorRuntimeLoaderState } from './editor-runtime-loader';
+
+// Chromium records a FAILED module in the page module map permanently — a
+// retry of the same URL resolves from that map without touching the network.
+// Each retry therefore needs a fresh query nonce to become a new module (#353).
+let hpLazyRetrySeq = 0;
 import {
   currentLabs, hashSpace, noteLabsRender, subscribeLabs, type LabsSnapshot,
 } from './labs';
@@ -815,7 +820,7 @@ export class HouseplanCard extends LitElement {
         ? await import('./houseplan-editor-runtime')
         : await import(/* @vite-ignore */ (() => {
             const url = new URL(EDITOR_RETRY_ASSET, import.meta.url);
-            url.searchParams.set('hp_retry', CARD_VERSION);
+            url.searchParams.set('hp_retry', `${CARD_VERSION}-${++hpLazyRetrySeq}`);
             return url.href;
           })()) as typeof import('./houseplan-editor-runtime');
       return {
@@ -829,9 +834,9 @@ export class HouseplanCard extends LitElement {
       this._editorRuntime = runtime;
     },
     stateChanged: (state) => this._editorRuntimeStateChanged(state),
-    failed: (error) => {
+    failed: (error, info) => {
       console.error('[houseplan] unable to load editor runtime', error);
-      this._showToast(`${this._t('editor.load_failed')} ${this._t('editor.refresh_advice')}`);
+      this._showToast(lazyLoadFailureMessage((key) => this._t(key), info));
     },
   });
 
@@ -844,7 +849,7 @@ export class HouseplanCard extends LitElement {
         ? await import('./houseplan-onboarding-runtime')
         : await import(/* @vite-ignore */ (() => {
             const url = new URL('__HOUSEPLAN_ONBOARDING_RETRY_ASSET__', import.meta.url);
-            url.searchParams.set('hp_retry', CARD_VERSION);
+            url.searchParams.set('hp_retry', `${CARD_VERSION}-${++hpLazyRetrySeq}`);
             return url.href;
           })()) as typeof import('./houseplan-onboarding-runtime');
       return {
@@ -857,9 +862,9 @@ export class HouseplanCard extends LitElement {
     install: (runtime) => {
       this._onboardingRuntime = runtime;
     },
-    failed: (error) => {
+    failed: (error, info) => {
       console.error('[houseplan] unable to load onboarding runtime', error);
-      this._showToast(`${this._t('editor.load_failed')} ${this._t('editor.refresh_advice')}`);
+      this._showToast(lazyLoadFailureMessage((key) => this._t(key), info));
     },
   });
 

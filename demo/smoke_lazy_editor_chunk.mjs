@@ -96,27 +96,36 @@ out.guiEditorLoadsAsynchronously = await gui.page.evaluate(async () => {
   return editor?.localName === 'houseplan-card-editor';
 });
 
-// Two network failures are terminal for this page. View stays live and the
-// retry is the same immutable chunk with a cache-busting query string.
+// Two network failures end one load cycle, but are NOT terminal (#353): the
+// loader re-arms and the next explicit press starts a fresh cycle that heals
+// once the network is back. The retry inside a cycle is the same immutable
+// chunk with a cache-busting query string.
 const failed = await launchColdView();
 let failedRequests = 0;
 await failed.page.route(runtimeUrlPattern, async (route) => {
   failedRequests += 1;
   await route.abort('failed');
 });
-await failed.page.locator('houseplan-card').evaluate((card) => {
+const pressEditor = () => failed.page.locator('houseplan-card').evaluate((card) => {
   const root = card.shadowRoot || card.renderRoot;
   root.querySelectorAll('.modetab')[0]?.click();
 });
-await failed.page.waitForFunction(() => window.__card._editorRuntimeLoader.state === 'failed');
+await pressEditor();
+await failed.page.waitForFunction(() =>
+  window.__card._editorRuntimeLoader.state === 'idle' && window.__card._toast);
 out.networkFailureRetriesExactlyOnce = failedRequests === 2;
-out.networkFailureKeepsView = await failed.page.evaluate(() => {
+out.networkFailureKeepsViewWithRetryAdvice = await failed.page.evaluate(() => {
   const card = window.__card;
   return card._mode === 'view'
     && !card._editorRuntime
     && card._toast.includes(card._t('editor.load_failed'))
-    && card._toast.includes(card._t('editor.refresh_advice'));
+    && card._toast.includes(card._t('editor.retry_advice'));
 });
+await failed.page.unroute(runtimeUrlPattern);
+await pressEditor();
+await failed.page.waitForFunction(() =>
+  window.__card._editorRuntimeLoader.state === 'ready' && window.__card._mode === 'plan');
+out.secondPressAfterNetworkFailureOpensEditor = true;
 
 // A valid module from a different build is no safer than a 404. Both attempts
 // are fulfilled deliberately so this checks the fingerprint handshake rather
@@ -140,7 +149,8 @@ await mismatch.page.locator('houseplan-card').evaluate((card) => {
 await mismatch.page.waitForFunction(() => window.__card._editorRuntimeLoader.state === 'failed');
 out.fingerprintMismatchRetriesExactlyOnce = mismatchRequests === 2;
 out.fingerprintMismatchKeepsView = await mismatch.page.evaluate(() =>
-  window.__card._mode === 'view' && !window.__card._editorRuntime);
+  window.__card._mode === 'view' && !window.__card._editorRuntime
+  && window.__card._toast.includes(window.__card._t('editor.refresh_advice')));
 
 await failed.browser.close();
 await mismatch.browser.close();
