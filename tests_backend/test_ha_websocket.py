@@ -623,17 +623,26 @@ async def test_plan_optimize_persists_exact_storage_roundtrip_target(
         layout_writes.append(copy.deepcopy(value))
         await real_layout_save(value)
 
+    # #333: the junction gate treats an empty previous as "a first write may
+    # not arrive already broken", and the roundtrip fixture legitimately
+    # carries a 6 cm wall (below П3). The subject of #248 is byte-exact
+    # STORAGE of an optimize commit, not first-write semantics — so the
+    # fixture is seeded as the stored document first and optimize inherits
+    # its violations per rule, exactly like a real repair flow.
+    await runtime.config_store.async_save(
+        {"config": copy.deepcopy(source["config"]), "rev": 1}
+    )
     monkeypatch.setattr(runtime.store, "async_save", capture_layout_write)
     await client.send_json_auto_id({
         "type": "houseplan/plan/optimize",
         "config": source["config"],
         "layout": source["layout"],
-        "expected_config_rev": 0,
+        "expected_config_rev": 1,
         "expected_layout_rev": 0,
     })
     response = await client.receive_json()
-    assert response["success"]
-    assert response["result"]["config_rev"] == 1
+    assert response["success"], response
+    assert response["result"]["config_rev"] == 2
     assert response["result"]["layout_rev"] == 1
 
     intent_write = next(
