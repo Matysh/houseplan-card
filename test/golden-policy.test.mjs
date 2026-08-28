@@ -7,7 +7,7 @@ import {
   goldenScenarioSetsMatch,
 } from '../demo/golden/policy.mjs';
 import {
-  goldenAcceptanceRefusal, goldenSilentDeclarations,
+  goldenAcceptancePlan, goldenAcceptanceRefusal, goldenSilentDeclarations,
 } from '../scripts/golden-acceptance.mjs';
 
 test('golden metadata cannot be mistaken for a Home Assistant integration manifest', () => {
@@ -118,4 +118,61 @@ test('объявленная, но совпавшая сцена называе�
   const list = results([['a', 'passed'], ['b', 'different']]);
   assert.deepEqual(goldenSilentDeclarations(list, ['a', 'b']), ['a']);
   assert.deepEqual(goldenSilentDeclarations(list, ['b']), []);
+});
+
+// #351. `passed` означает «в пределах порога», а не «байт в байт». Прежняя
+// приёмка копировала кандидата поверх каждого эталона, поэтому подпороговый
+// дрейф уезжал в контракт молча и накапливался. Так 1e341c60 заменил 22
+// картинки, объявив четыре.
+
+test('необъявленная сцена сохраняет свой эталон и свой хеш (#351)', () => {
+  const plan = goldenAcceptancePlan({
+    scenarioIds: ['declared', 'drifted', 'fresh'],
+    results: [
+      { id: 'declared', status: 'different', actualSha256: 'new-declared' },
+      // Байты кандидата другие, но расхождение подпороговое — и именно поэтому
+      // сцена не имеет права попасть в эталоны без объявления.
+      { id: 'drifted', status: 'passed', actualSha256: 'new-drifted' },
+      { id: 'fresh', status: 'missing-baseline', actualSha256: 'new-fresh' },
+    ],
+    previousHashes: { declared: 'old-declared', drifted: 'old-drifted' },
+    declared: ['declared'],
+    declaredNew: ['fresh'],
+  });
+  assert.deepEqual(plan.replace.sort(), ['declared', 'fresh']);
+  assert.deepEqual(plan.keep, ['drifted']);
+  assert.deepEqual(plan.hashes, {
+    declared: 'new-declared',
+    drifted: 'old-drifted',
+    fresh: 'new-fresh',
+  });
+});
+
+test('индекс перезаписывается на полный набор сцен, а не на заменённые (#351)', () => {
+  // Полнота манифеста — инвариант goldenScenarioSetsMatch: сирота в индексе или
+  // пропавшая запись делают весь манифест недействительным.
+  const plan = goldenAcceptancePlan({
+    scenarioIds: ['a', 'b', 'c'],
+    results: [{ id: 'a', status: 'different', actualSha256: 'na' }],
+    previousHashes: { a: 'oa', b: 'ob', c: 'oc' },
+    declared: ['a'],
+  });
+  assert.deepEqual(Object.keys(plan.hashes).sort(), ['a', 'b', 'c']);
+});
+
+test('необъявленная сцена без прежнего эталона — ошибка, а не тихий кандидат (#351)', () => {
+  assert.throws(() => goldenAcceptancePlan({
+    scenarioIds: ['orphan'],
+    results: [{ id: 'orphan', status: 'missing-baseline', actualSha256: 'x' }],
+    previousHashes: {},
+  }), /без прежнего эталона: orphan/);
+});
+
+test('объявленная сцена без хеша кандидата — ошибка (#351)', () => {
+  assert.throws(() => goldenAcceptancePlan({
+    scenarioIds: ['a'],
+    results: [{ id: 'a', status: 'different' }],
+    previousHashes: { a: 'oa' },
+    declared: ['a'],
+  }), /без хеша кандидата: a/);
 });

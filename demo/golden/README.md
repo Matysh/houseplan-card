@@ -34,7 +34,11 @@ radial spokes visible instead of hiding them under a translucent room fill.
   baseline moved"; `--expect-new=<id,id>` means "I have looked at this new
   frame". Anything that differs, or arrives without a baseline, and is not named
   refuses the whole acceptance before a single file is copied; naming a scenario
-  under the wrong flag refuses it too. The first flag is what makes a local
+  under the wrong flag refuses it too. Only the named scenarios are written:
+  everything else keeps its reviewed bytes and its manifest hash, because
+  `passed` means "within threshold", not "byte-identical", and copying every
+  candidate let sub-threshold drift ratchet the baselines to the newest
+  environment unseen (#351). The first flag is what makes a local
   capture admissible (see below) and blocks the one-command "accept everything so
   CI turns green"; the second stops an empty or clipped frame from becoming the
   contract unseen (#350).

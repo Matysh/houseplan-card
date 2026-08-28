@@ -98,3 +98,46 @@ export const goldenAcceptanceRefusal = (results, declared = [], declaredNew = []
 export const goldenSilentDeclarations = (results, declared = []) => declared
   .filter((id) => results.find((result) => result.id === id)?.status === 'passed')
   .sort();
+
+/**
+ * План замены: что переписать, что оставить как было (#351).
+ *
+ * Чистая функция, потому что решение здесь одно и ошибка в нём дорога:
+ * `passed` означает «в пределах порога», а не «байт в байт». Прежняя приёмка
+ * копировала кандидата поверх КАЖДОГО эталона, поэтому подпороговый дрейф уезжал
+ * в контракт молча и накапливался: каждая приёмка подтягивала эталон к последней
+ * среде, порог не пересекался никогда, а эталон уходил. Так `1e341c60` заменил
+ * 22 картинки, объявив четыре.
+ *
+ * Необъявленная сцена сохраняет и файл, и свой хеш из прежнего индекса. Хеша нет
+ * только у сцены без эталона, а такая обязана быть названа в `--expect-new` —
+ * поэтому его отсутствие здесь ошибка, а не повод взять кандидата.
+ */
+export const goldenAcceptancePlan = ({
+  scenarioIds, results, previousHashes = {}, declared = [], declaredNew = [],
+}) => {
+  const accepted = new Set([...declared, ...declaredNew].filter(Boolean));
+  const byId = new Map((results || []).map((result) => [result.id, result]));
+  const replace = [];
+  const keep = [];
+  const hashes = {};
+  for (const id of scenarioIds) {
+    if (accepted.has(id)) {
+      const digest = byId.get(id)?.actualSha256;
+      if (typeof digest !== 'string' || !digest) {
+        throw new Error(`объявленная сцена без хеша кандидата: ${id}`);
+      }
+      replace.push(id);
+      hashes[id] = digest;
+      continue;
+    }
+    const existing = previousHashes[id];
+    if (typeof existing !== 'string' || !existing) {
+      throw new Error(`необъявленная сцена без прежнего эталона: ${id};`
+        + ' назовите её в --expect-new');
+    }
+    hashes[id] = existing;
+    keep.push(id);
+  }
+  return { replace, keep, hashes };
+};
