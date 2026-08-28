@@ -8,6 +8,7 @@ import { GOLDEN_MATRIX_VERSION, GOLDEN_SCENARIOS } from './matrix.mjs';
 import { GOLDEN_BASELINE_MANIFEST } from './policy.mjs';
 import {
   goldenAcceptancePlan, goldenAcceptanceRefusal, goldenSilentDeclarations,
+  goldenWitnessRefusal,
 } from '../../scripts/golden-acceptance.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -21,6 +22,9 @@ const list = (name) => {
 };
 const declared = list('expect-change');
 const declaredNew = list('expect-new');
+const skipWitnesses = process.argv.includes('--no-witnesses');
+const reasonArg = process.argv.find((arg) => arg.startsWith('--reason='));
+const skipReason = reasonArg ? reasonArg.slice('--reason='.length) : '';
 if (!reviewed) throw new Error('refusing to replace baselines without explicit --reviewed');
 
 const reportPath = resolve(from, 'golden-report.json');
@@ -55,6 +59,17 @@ const manifestPath = resolve(baselineRoot, GOLDEN_BASELINE_MANIFEST);
 const previous = existsSync(manifestPath)
   ? JSON.parse(readFileSync(manifestPath, 'utf8')).scenarios || {}
   : {};
+// #355: floor свидетелей — необъявленные сцены, совпавшие с эталоном
+// байт-в-байт, доказывают, что среда съёмки та же, что у принятого эталона.
+const witnessCheck = goldenWitnessRefusal({
+  results: report.results,
+  declared,
+  declaredNew,
+  previousHashes: previous,
+  skipWitnesses,
+  skipReason,
+});
+if (witnessCheck.refusal) throw new Error(witnessCheck.refusal);
 // Кандидат проверяется целиком, до всякого решения о замене: сломанный отчёт
 // не имеет права оставить каталог эталонов половинным.
 for (const scenario of GOLDEN_SCENARIOS) {
@@ -84,6 +99,10 @@ writeFileSync(resolve(baselineRoot, GOLDEN_BASELINE_MANIFEST), `${JSON.stringify
   acceptedAt: new Date().toISOString(),
   sourceFingerprint: report.buildFingerprint,
   chromium: report.chromium,
+  // #355: след приёмки в артефакте, не только в истории shell.
+  witnesses: skipWitnesses
+    ? { skipped: true, reason: skipReason }
+    : { count: witnessCheck.witnesses.length, floor: witnessCheck.floor },
   scenarios: hashes,
 }, null, 2)}\n`, 'utf8');
 const silent = goldenSilentDeclarations(report.results, declared);
@@ -94,3 +113,8 @@ console.log(`Заменено эталонов: ${plan.replace.length}`
   + `${plan.replace.length ? ` (${[...plan.replace].sort().join(', ')})` : ''}.`);
 console.log(`Сохранено без изменений: ${plan.keep.length}.`);
 console.log(`Индекс перезаписан на ${GOLDEN_SCENARIOS.length} сцен.`);
+if (skipWitnesses) {
+  console.log(`Свидетели пропущены осознанно (--no-witnesses): ${skipReason}`);
+} else {
+  console.log(`Свидетелей среды: ${witnessCheck.witnesses.length} (floor ${witnessCheck.floor}).`);
+}

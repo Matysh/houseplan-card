@@ -4,6 +4,13 @@
  *
  *   node scripts/golden-accept.mjs --reviewed --expect-change=<id,id>
  *   node scripts/golden-accept.mjs --reviewed --expect-new=<id,id>
+ *   node scripts/golden-accept.mjs --reviewed --expect-change=… --no-witnesses --reason="…"
+ *
+ * Floor свидетелей (#355): после вычета объявленных сцен должно остаться
+ * достаточно необъявленных, совпавших с эталоном байт-в-байт, — они доказывают,
+ * что среда съёмки та же, что у принятого эталона. Тотальная перерисовка
+ * обходится только явным `--no-witnesses --reason="…"`; причина уезжает в
+ * манифест эталонов.
  *
  * Обёртка появилась потому, что до #344 любой `.mjs` из `demo/golden` входил в
  * корпус отпечатка, и правка инструмента приёмки объявляла устаревшими бандл и

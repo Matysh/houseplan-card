@@ -176,3 +176,76 @@ test('объявленная сцена без хеша кандидата — �
     declared: ['a'],
   }), /без хеша кандидата: a/);
 });
+
+// #355. Floor свидетелей: перечислив всю матрицу в --expect-change, принять
+// чужую съёмку больше нельзя — среду доказывают только необъявленные сцены,
+// совпавшие с эталоном байт-в-байт.
+test('приёмка без свидетелей отказывает и называет дефицит (#355)', async () => {
+  const { goldenWitnessRefusal } = await import('../scripts/golden-acceptance.mjs');
+  const all = Array.from({ length: 20 }, (_, index) => ({
+    id: `scene-${index}`, status: 'different', actualSha256: `new-${index}`,
+  }));
+  const { refusal, floor } = goldenWitnessRefusal({
+    results: all,
+    declared: all.map((result) => result.id),
+    previousHashes: Object.fromEntries(all.map((result) => [result.id, `old-${result.id}`])),
+  });
+  assert.equal(floor, 2, '10% от 20 эталонных сцен');
+  assert.match(refusal, /0 из необходимых 2/);
+  assert.match(refusal, /--no-witnesses/);
+});
+
+test('обычная приёмка с достаточным числом свидетелей проходит (#355)', async () => {
+  const { goldenWitnessRefusal } = await import('../scripts/golden-acceptance.mjs');
+  const scenes = [
+    { id: 'edited', status: 'different', actualSha256: 'changed' },
+    ...Array.from({ length: 30 }, (_, index) => ({
+      id: `same-${index}`, status: 'passed', actualSha256: `sha-${index}`,
+    })),
+  ];
+  const previousHashes = Object.fromEntries(
+    scenes.filter((scene) => scene.id !== 'edited')
+      .map((scene) => [scene.id, scene.actualSha256]),
+  );
+  const { refusal, witnesses, floor } = goldenWitnessRefusal({
+    results: scenes, declared: ['edited'], previousHashes,
+  });
+  assert.equal(refusal, null);
+  assert.equal(floor, 4, '10% от 31 эталонной сцены');
+  assert.equal(witnesses.length, 30);
+});
+
+test('passed в пределах порога — не свидетель: среду доказывает байт-в-байт (#355)', async () => {
+  const { goldenWitnessRefusal } = await import('../scripts/golden-acceptance.mjs');
+  const scenes = Array.from({ length: 10 }, (_, index) => ({
+    id: `drifted-${index}`, status: 'passed', actualSha256: `candidate-${index}`,
+  }));
+  const previousHashes = Object.fromEntries(
+    scenes.map((scene) => [scene.id, `baseline-${scene.id}`]),
+  );
+  const { refusal, witnesses } = goldenWitnessRefusal({
+    results: scenes, declared: [], previousHashes,
+  });
+  assert.equal(witnesses.length, 0, 'подпороговый дрейф не доказывает среду');
+  assert.match(refusal, /0 из необходимых 1/);
+});
+
+test('--no-witnesses требует причину и с ней пропускает floor (#355)', async () => {
+  const { goldenWitnessRefusal } = await import('../scripts/golden-acceptance.mjs');
+  const bare = goldenWitnessRefusal({ results: [], skipWitnesses: true });
+  assert.match(bare.refusal, /--reason/);
+  const reasoned = goldenWitnessRefusal({
+    results: [], skipWitnesses: true, skipReason: 'полная перерисовка матрицы v49',
+  });
+  assert.equal(reasoned.refusal, null);
+});
+
+test('первичная съёмка без единого эталона свидетелей не требует (#355)', async () => {
+  const { goldenWitnessRefusal, goldenWitnessFloor } = await import('../scripts/golden-acceptance.mjs');
+  assert.equal(goldenWitnessFloor(0), 0);
+  const { refusal } = goldenWitnessRefusal({
+    results: [{ id: 'first', status: 'missing-baseline', actualSha256: 'x' }],
+    declaredNew: ['first'],
+  });
+  assert.equal(refusal, null, 'каждый кадр и так объявлен в --expect-new');
+});

@@ -141,3 +141,65 @@ export const goldenAcceptancePlan = ({
   }
   return { replace, keep, hashes };
 };
+
+/**
+ * Floor сцен-свидетелей (#355).
+ *
+ * Смысл непереименованных прошедших сцен — быть СВИДЕТЕЛЯМИ среды: если бы
+ * растеризация или окружение съёмки отличались от эталонных, они бы разошлись.
+ * Перечислив ВСЮ матрицу в `--expect-change`, можно принять полностью чужую
+ * съёмку — свидетелей не останется, а след останется только в истории команды.
+ * Практический сценарий — не злой умысел, а усталость: массовая framing-правка,
+ * автор перечисляет «всё, что покраснело», захватывая и сцены, разошедшиеся по
+ * причине среды.
+ *
+ * Свидетель — необъявленная сцена, чей кандидат совпал с принятым эталоном
+ * БАЙТ-В-БАЙТ: `passed` означает лишь «в пределах порога» (#351), а среду
+ * доказывает только точное совпадение. Floor — 10 свидетелей или 10% сцен с
+ * эталонами, что меньше; матрица без эталонов (первичная съёмка) свидетелей
+ * требовать не может — там каждый кадр и так объявляется в `--expect-new`.
+ *
+ * Осознанный обход для действительно тотальных перерисовок — `--no-witnesses`
+ * с обязательной причиной: она уезжает в манифест эталонов, то есть в артефакт
+ * и его git-историю, а не только в историю shell.
+ */
+export const goldenWitnessFloor = (baselineCount) => (baselineCount > 0
+  ? Math.min(10, Math.ceil(baselineCount * 0.1))
+  : 0);
+
+export const goldenWitnessRefusal = ({
+  results, declared = [], declaredNew = [], previousHashes = {},
+  skipWitnesses = false, skipReason = '',
+}) => {
+  if (skipWitnesses) {
+    if (typeof skipReason !== 'string' || !skipReason.trim()) {
+      return { refusal: '--no-witnesses требует --reason="…": причина обхода'
+        + ' обязана остаться в отчёте приёмки', witnesses: [], floor: 0 };
+    }
+    return { refusal: null, witnesses: [], floor: 0 };
+  }
+  const accepted = new Set([...declared, ...declaredNew].filter(Boolean));
+  const withBaseline = results.filter((result) => result.status !== 'missing-baseline');
+  const floor = goldenWitnessFloor(withBaseline.length);
+  const witnesses = withBaseline
+    .filter((result) => !accepted.has(result.id)
+      && result.status === 'passed'
+      && typeof result.actualSha256 === 'string'
+      && result.actualSha256 === previousHashes[result.id])
+    .map((result) => result.id)
+    .sort();
+  if (witnesses.length < floor) {
+    return {
+      refusal: 'сцен-свидетелей среды недостаточно:'
+        + ` ${witnesses.length} из необходимых ${floor}`
+        + ` (эталонных сцен ${withBaseline.length}, объявлено ${accepted.size}).`
+        + ' Свидетель — необъявленная сцена, совпавшая с эталоном байт-в-байт;'
+        + ' именно они доказывают, что среда съёмки та же, что у принятого'
+        + ' эталона. Если перерисовка действительно тотальная и осознанная —'
+        + ' --no-witnesses --reason="…" оставит причину в манифесте эталонов',
+      witnesses,
+      floor,
+    };
+  }
+  return { refusal: null, witnesses, floor };
+};
