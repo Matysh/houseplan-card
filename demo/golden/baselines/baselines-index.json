@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "matrixVersion": 50,
-  "acceptedAt": "2026-08-28T20:34:15.997Z",
+  "acceptedAt": "2026-08-28T20:38:22.035Z",
   "sourceFingerprint": "817110bad40d29ee0aa8e4ef2dadfda9e310dfa6346ddb5d2725ecafb359f073",
   "chromium": "151.0.7922.34",
   "witnesses": {
-    "count": 133,
+    "count": 132,
     "floor": 10
   },
   "scenarios": {
@@ -99,7 +99,7 @@
     "lighting-temp-glow-dark": "3ce504d83fda2ba5d772c25f8cbb47c379b335addd8650f6933b58f22f5655a7",
     "lighting-temp-glow-light": "e9f2db0a686a9e20bf71564c10bab826a2a473c73d572a6b67ef02a735d61e8e",
     "lighting-custom-glow-dark": "94cc6135573aa9462de9e7f309dea62e236668b84970bae35d48f1aad338f8f4",
-    "lighting-opaque-glow-two-doorways-dark": "ee3c53a408f6b62aa6b770925fa6948934e0c1c6e73877e379695bc260b0ceac",
+    "lighting-opaque-glow-two-doorways-dark": "5326856baf1e8073d2cba507a5d073889249ba3acc73f87616c0e60034dd1807",
     "lighting-custom-glow-light": "aa9477aaff4d137abfcb6d67a5cf62b91f41b3631383ee8edb7499802a5c9b87",
     "lighting-temp-glow-no-sources-dark": "cd992af54d1c9dcc58bbd0b21b15b475be6f19eaabcf9ea866bfa82f205460c9",
     "lighting-temp-glow-room-override-dark": "66a418829b51379d024c542f8b9a12bd42d72afa81a6bf66561d6498ac4cdb45",
