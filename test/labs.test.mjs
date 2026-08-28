@@ -55,3 +55,51 @@ test('malformed and unavailable storage are safe', () => {
   assert.deepEqual(resolve('', '', '{bad').active, []);
   assert.deepEqual(resolve('?hp-labs=iso', '', undefined).active, ['iso']);
 });
+
+test('a reloaded Labs module replaces both browser location listeners', async () => {
+  const previousWindow = globalThis.window;
+  const listeners = new Map();
+  const fakeWindow = {
+    location: { search: '', hash: '' },
+    localStorage: {
+      getItem: () => null,
+      setItem: () => {},
+    },
+    addEventListener(type, listener) {
+      const registered = listeners.get(type) ?? new Set();
+      registered.add(listener);
+      listeners.set(type, registered);
+    },
+    removeEventListener(type, listener) {
+      listeners.get(type)?.delete(listener);
+    },
+    dispatch(type) {
+      for (const listener of [...(listeners.get(type) ?? [])]) listener({ type });
+    },
+  };
+
+  try {
+    globalThis.window = fakeWindow;
+    const first = await import('../test-build/labs.js?listener-instance=first');
+    let firstPublishes = 0;
+    const unsubscribeFirst = first.subscribeLabs('1.62.0', () => { firstPublishes += 1; });
+
+    const second = await import('../test-build/labs.js?listener-instance=second');
+    let secondPublishes = 0;
+    const unsubscribeSecond = second.subscribeLabs('1.62.0', () => { secondPublishes += 1; });
+
+    assert.equal(listeners.get('hashchange')?.size, 1);
+    assert.equal(listeners.get('popstate')?.size, 1);
+
+    fakeWindow.dispatch('hashchange');
+    fakeWindow.dispatch('popstate');
+    assert.equal(firstPublishes, 1, 'the replaced module must not receive location events');
+    assert.equal(secondPublishes, 3, 'the current module receives initial, hash and popstate publishes');
+
+    unsubscribeFirst();
+    unsubscribeSecond();
+  } finally {
+    if (previousWindow === undefined) delete globalThis.window;
+    else globalThis.window = previousWindow;
+  }
+});

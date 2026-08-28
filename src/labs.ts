@@ -145,7 +145,10 @@ export function resolveLabs(
 }
 
 declare global {
-  interface Window { __hpLabs?: readonly string[]; }
+  interface Window {
+    __hpLabs?: readonly string[];
+    __hpLabsListenerCleanup?: () => void;
+  }
 }
 
 let snapshot: LabsSnapshot = { active: Object.freeze([]), space: '' };
@@ -179,8 +182,17 @@ function ensureBrowserLabs(version: string): LabsSnapshot {
   if (typeof window === 'undefined') return snapshot;
   if (!listening) {
     listening = true;
+    window.__hpLabsListenerCleanup?.();
     window.addEventListener('hashchange', onLocationChange);
     window.addEventListener('popstate', onLocationChange);
+    const cleanup = (): void => {
+      window.removeEventListener('hashchange', onLocationChange);
+      window.removeEventListener('popstate', onLocationChange);
+      if (window.__hpLabsListenerCleanup === cleanup) {
+        delete window.__hpLabsListenerCleanup;
+      }
+    };
+    window.__hpLabsListenerCleanup = cleanup;
   }
   return publishBrowserLabs();
 }
