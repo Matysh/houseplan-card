@@ -48,6 +48,29 @@ jobs:
         run: npx playwright install chromium
       - name: Build the bundle the screenshots must come from
         run: npm run build
+      # oxipng без потерь снимает с набора ~19% (замер в #345 на pyoxipng 9.1.1;
+      # у 10.2.0 пресеты уровней перебалансированы, точная доля может отличаться,
+      # но кадры остаются пиксельно идентичными в любой версии — это перепаковка).
+      #
+      # Пин версии и контрольной суммы намеренно, а не `apt-get install oxipng`:
+      # пакет из образа раннера может пропасть или переехать, а падение шага
+      # съёмки стоит целого цикла приёмки. Тот же урок, что с azure-зеркалом
+      # Playwright (#175, #206).
+      - name: Установить oxipng
+        env:
+          OXIPNG_VERSION: 10.2.0
+          OXIPNG_SHA256: b33f84c73d42cb592bea5d84c431030b1e97784817693380dfcec7d9575f871e
+        run: |
+          set -euo pipefail
+          asset="oxipng-${OXIPNG_VERSION}-x86_64-unknown-linux-gnu.tar.gz"
+          curl -fsSL -o "$asset" \
+            "https://github.com/oxipng/oxipng/releases/download/v${OXIPNG_VERSION}/${asset}"
+          echo "${OXIPNG_SHA256}  ${asset}" | sha256sum -c -
+          mkdir -p "$HOME/.local/bin"
+          tar -xzf "$asset" --strip-components=1 -C "$HOME/.local/bin" \
+            "oxipng-${OXIPNG_VERSION}-x86_64-unknown-linux-gnu/oxipng"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          "$HOME/.local/bin/oxipng" --version
       - name: Capture
         run: node demo/docs/capture.mjs
       # Вердикт до всякой приёмки. Само число изменившихся файлов ничего не
@@ -58,16 +81,30 @@ jobs:
       # разницу рендеринга.
       - name: Вердикт
         run: |
+          # Поле манифеста «до» — из закоммиченного состояния, «после» — из
+          # свежего. Читается одинаково для браузера и для упаковщика: оба
+          # переписывают все кадры сразу, и различить их причины обязан вердикт,
+          # а не человек по памяти (#345).
+          field() {
+            node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{console.log(JSON.parse(s).$1||'')}catch{console.log('')}})"
+          }
           git status --porcelain docs/images
           changed=$(git diff --name-only docs/images | grep -c png || true)
-          before=$(git show HEAD:docs/images/screenshots.json | node -e \
-            "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{console.log(JSON.parse(s).chromium||'')}catch{console.log('')}})")
+          before=$(git show HEAD:docs/images/screenshots.json | field chromium)
           after=$(node -e "console.log(require('./docs/images/screenshots.json').chromium)")
+          packer_before=$(git show HEAD:docs/images/screenshots.json | field oxipng)
+          packer_after=$(node -e "console.log(require('./docs/images/screenshots.json').oxipng || '')")
           echo "--- изменившихся PNG: $changed"
           echo "--- Chromium: было «${before:-не записан}», стало «$after»"
-          if [ "$before" = "$after" ] && [ "$changed" -gt 0 ]; then
-            echo "ВЕРДИКТ: тот же браузер, а картинки изменились — изменился продукт."
-            echo "Смотрите на кадры: если изменение ожидаемое, принимайте."
+          echo "--- oxipng: было «${packer_before:-не записан}», стало «${packer_after:-нет}»"
+          if [ "$packer_before" != "$packer_after" ] && [ "$changed" -gt 0 ]; then
+            echo "ВЕРДИКТ: изменился упаковщик, поэтому переписаны все кадры сразу."
+            echo "Это перепаковка без потерь: пиксели те же, размер меньше на ~19%."
+            echo "Ожидаемо один раз — при включении oxipng либо при смене его версии."
+            echo "Проверить можно сравнением декодированных кадров, а не байтов."
+          elif [ "$before" = "$after" ] && [ "$changed" -gt 0 ]; then
+            echo "ВЕРДИКТ: тот же браузер и тот же упаковщик, а картинки изменились —"
+            echo "изменился продукт. Смотрите на кадры: если изменение ожидаемое, принимайте."
           elif [ "$before" != "$after" ]; then
             echo "ВЕРДИКТ: браузер другой, поэтому переписаны все кадры сразу."
             echo "Это ожидаемо один раз — при переходе на канонический прогон."
