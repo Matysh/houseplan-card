@@ -139,6 +139,16 @@ Touch editor: **best effort / intentionally degraded**. Безопасное р�
   resize/rotate, erase и View-rendering мебели остаются зелёными.
   **Доказательство:** `test/furniture.test.mjs`, `demo/smoke_furniture.mjs`,
   общие `typecheck/test/build`.
+- **AC9 — неизвестный символ:** неизвестный/невалидный `symbol` не создаёт
+  `.furniture-placement-preview`, не добавляет предмет в `space.decor` и не
+  вызывает исключение; после выбора валидного символа инструмент продолжает
+  работать. **Доказательство:** unit-тест resolver на неизвестный id и
+  `demo/smoke_furniture.mjs` с принудительным invalid palette state.
+- **AC10 — композиция:** реальный рисунок ghost виден поверх уже сохранённого
+  decor и остаётся ниже физических стен в согласованном decor composition
+  layer. **Доказательство:** один детерминированный golden-сценарий
+  `furniture-placement-preview-light`, который программно вооружает предмет и
+  фиксирует pointer position рядом с существующей мебелью и стеной.
 
 ## План автотестов
 
@@ -146,17 +156,21 @@ Touch editor: **best effort / intentionally degraded**. Безопасное р�
    его unit-тестами для обычной точки, стены, `Shift`-пути и clamp у границы.
 2. Расширить `demo/smoke_furniture.mjs`: mouse preview, размеры без движения,
    Shift parity, отсутствие мутаций, commit parity, lifecycle clear и
-   touch/pointercancel safety.
+   touch/pointercancel safety, а также fail-dark неизвестного symbol с
+   последующим восстановлением валидного выбора.
 3. Добавить узкий source-contract test, если lifecycle очистка распределена
    между card shell и lazy editor runtime и её нельзя надёжно доказать одним
    smoke.
-4. Перед `S7`: `npm run typecheck`, `npm test`, `npm run build`,
+4. Добавить в `demo/golden/matrix.mjs` один светлый детерминированный сценарий
+   `furniture-placement-preview-light`: состояние preview задаётся программно,
+   без реального hover timing; рядом присутствуют сохранённый decor и стена,
+   чтобы растровое сравнение защищало z-order и композитинг. Новый baseline не
+   принимается локально или «ради зелёного CI»: после реализации используется
+   полный Linux artifact и `npm run golden:accept -- --reviewed` по правилам
+   `demo/golden/README.md`.
+5. Перед `S7`: `npm run typecheck`, `npm test`, `npm run build`,
    `npm run bundle:sync`, `npm run bundle:budget`,
    `node demo/smoke_furniture.mjs`.
-
-Новый golden baseline не требуется: smoke проверяет реальный SVG path,
-computed style и позиционную геометрию, а принятие нового изображения добавило
-бы дорогой платформенный шум к transient editor-only состоянию.
 
 ## Риски
 
@@ -185,7 +199,10 @@ computed style и позиционную геометрию, а принятие
   `docs/USER-GUIDE.ru.md`;
 - добавить короткие значимые записи со ссылкой на #359 в
   `docs/CHANGELOG.md` и `docs/CHANGELOG.ru.md`;
-- golden/screenshots не требуются;
+- добавить один детерминированный golden-сценарий
+  `furniture-placement-preview-light`; baseline принимается только по полному
+  Linux CI artifact через `npm run golden:accept -- --reviewed` и может быть
+  завершён после `S8` в pre-release gate, как требует политика эталонов;
 - performance/security/backend artifacts не требуются;
 - целевой browser artifact: зелёный `demo/smoke_furniture.mjs`.
 
