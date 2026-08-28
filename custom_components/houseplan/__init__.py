@@ -39,10 +39,12 @@ async def async_setup(hass: HomeAssistant, config) -> bool:
     hass.data.setdefault(DOMAIN, {})
     hp_ws.async_register(hass)
     from .http_api import HouseplanContentView, HouseplanImportPreviewView, HouseplanUploadView
+    from .frontend_assets import HouseplanFrontendAssetView
 
     hass.http.register_view(HouseplanUploadView())
     hass.http.register_view(HouseplanContentView())
     hass.http.register_view(HouseplanImportPreviewView())
+    hass.http.register_view(HouseplanFrontendAssetView())
     return True
 
 
@@ -98,7 +100,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: HouseplanConfigEntry) ->
                 static_paths.append(StaticPathConfig(FRONTEND_URL, str(card_path), cache_headers=False))
             # NOTE (audit B1): plans and marker files are NO LONGER static.
             # They are served by HouseplanContentView, which requires auth.
-            # Only the card bundle stays public — Lovelace resources must be.
+            # Only the entry and manifest-gated JS chunks stay public —
+            # Lovelace modules must be loadable without an auth header.
             if static_paths:
                 await hass.http.async_register_static_paths(static_paths)
         except ImportError:  # very old HA versions

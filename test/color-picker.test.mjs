@@ -5,6 +5,7 @@ import {
   hexToRgb, hsvToHex, hsvToRgb, normalizeHexColor, normalizeHue, rgbToHex, rgbToHsv,
 } from '../test-build/color-picker.js';
 import { readAllStylesSource } from './styles-source.mjs';
+import { readHouseplanProductionSource } from './houseplan-source.mjs';
 
 test('hex drafts accept only three or six digits and normalize on commit', () => {
   assert.equal(normalizeHexColor('#AbC'), '#aabbcc');
@@ -40,7 +41,7 @@ test('HSV helpers wrap hue, clamp finite dimensions and keep grayscale achromati
 
 test('the shared component keeps its API and contains no nested native color picker', () => {
   const component = readFileSync(new URL('../src/hp-color-opacity.ts', import.meta.url), 'utf8');
-  const card = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
+  const card = readHouseplanProductionSource();
   const sourceFiles = (directory) => readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
     const target = new URL(entry.name + (entry.isDirectory() ? '/' : ''), directory);
     return entry.isDirectory() ? sourceFiles(target) : entry.name.endsWith('.ts') ? [target] : [];
@@ -80,7 +81,7 @@ test('the hue range exposes one cyclic spectrum without restyling other ranges',
 });
 
 test('activity color and ripple size keep independent readable rows', () => {
-  const card = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
+  const card = readHouseplanProductionSource();
   const styles = readAllStylesSource();
   const start = card.indexOf("d.display === 'icon_ripple'");
   const end = card.indexOf("marker.activity_alarm_note", start);

@@ -1,8 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { readHouseplanProductionSource } from './houseplan-source.mjs';
 
-const source = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
+const source = readHouseplanProductionSource();
 
 const methodBody = (name) => {
   const start = source.search(new RegExp(`(?:private|protected)\\s+(?:get\\s+|async\\s+)?${name}(?:\\s*=)?(?:\\(|:)`));

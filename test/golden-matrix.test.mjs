@@ -6,6 +6,7 @@ import {
   GOLDEN_MATRIX_VERSION, GOLDEN_SCENARIOS, OPENING_SYMBOL_EXISTING_GOLDEN_IMPACT,
 } from '../demo/golden/matrix.mjs';
 import { fixtureWallKey } from '../demo/fixtures/visual-matrix.mjs';
+import { readHouseplanProductionSource } from './houseplan-source.mjs';
 
 test('golden matrix has stable unique ids and bounded comparison thresholds', () => {
   assert.equal(Number.isInteger(GOLDEN_MATRIX_VERSION) && GOLDEN_MATRIX_VERSION > 0, true);
@@ -739,7 +740,7 @@ test('golden overrides fail closed on misspelled fixture references', () => {
 });
 
 test('a light source paints exactly one region: the floor it can see', () => {
-  const source = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
+  const source = readHouseplanProductionSource();
   // One region per source, and it is the visibility polygon clipped to floor.
   assert.match(source, /visibilityPolygon\(\[pos\.x, pos\.y\], R, occluders/);
   assert.match(source,
@@ -772,7 +773,7 @@ test('a light source paints exactly one region: the floor it can see', () => {
 });
 
 test('all destructive editor dialogs use the medium shell and shared responsive footer groups', () => {
-  const source = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
+  const source = readHouseplanProductionSource();
   for (const method of ['_renderOpeningDialog', '_renderPhysicalDialog', '_renderSpaceDialog']) {
     const start = source.indexOf(`private ${method}`);
     assert.notEqual(start, -1, method);

@@ -18,6 +18,8 @@ const BUILD_INPUTS = [
   'rollup.config.mjs',
   'tsconfig.json',
   'scripts/source-fingerprint.mjs',
+  'scripts/css-template-minifier.mjs',
+  'scripts/bundle-manifest.mjs',
 ];
 
 const fingerprintFiles = (root) => {

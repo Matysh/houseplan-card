@@ -112,8 +112,10 @@ resources:
 
 ### Вручную
 
-Скопируйте `custom_components/houseplan` в `config/custom_components`,
-перезапустите Home Assistant и добавьте интеграцию House Plan.
+Скопируйте всю папку `custom_components/houseplan` из релиза в
+`config/custom_components`, перезапустите Home Assistant и добавьте интеграцию
+House Plan. Одного `houseplan-card.js` недостаточно: карточке также нужны
+внутренний манифест и хешированные модули из того же релиза.
 
 ### Добавление карточки
 

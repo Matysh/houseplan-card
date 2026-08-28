@@ -7,6 +7,7 @@ STORAGE_VIRTUAL_LIGHTS_KEY = f"{DOMAIN}.virtual_lights"
 STORAGE_VERSION = 1
 STORAGE_MINOR_VERSION = 2
 FRONTEND_URL = "/houseplan_files/houseplan-card.js"
+FRONTEND_ASSETS_URL = "/houseplan_files/houseplan-assets"
 PLANS_URL = "/houseplan_files/plans"
 PLANS_DIR = "houseplan/plans"  # relative to the HA configuration directory
 FILES_URL = "/houseplan_files/files"

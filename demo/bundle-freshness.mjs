@@ -1,5 +1,6 @@
-import { existsSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { createHash } from 'node:crypto';
+import { existsSync, readFileSync } from 'node:fs';
+import { relative, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { sourceFingerprint } from '../scripts/source-fingerprint.mjs';
 
@@ -13,17 +14,39 @@ const fingerprintForTree = async (root) => {
   return module.sourceFingerprint(root);
 };
 
+const verifyManifestTree = (root, expected) => {
+  const assetRoot = resolve(root, 'demo/srv/assets');
+  const manifestPath = resolve(assetRoot, 'houseplan-assets.json');
+  // Comparative benchmarks can target releases from before the multi-asset
+  // contract. Their own embedded fingerprint remains the legacy authority.
+  if (!existsSync(manifestPath)) return;
+  const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
+  if (manifest?.schema !== 1 || manifest.fingerprint !== expected
+      || !Array.isArray(manifest.files)) {
+    throw new Error('demo bundle manifest is stale or malformed; run npm run bundle:sync');
+  }
+  for (const file of manifest.files) {
+    const path = resolve(assetRoot, String(file?.path || ''));
+    const rel = relative(assetRoot, path);
+    if (!rel || rel.startsWith('..') || rel.includes(':') || !existsSync(path)) {
+      throw new Error(`demo bundle manifest asset is missing or unsafe: ${file?.path}`);
+    }
+    const hash = createHash('sha256').update(readFileSync(path)).digest('hex');
+    if (hash !== file.sha256) throw new Error(`demo bundle asset hash mismatch: ${file.path}`);
+  }
+};
+
 /** Refuse measurements/screenshots made by a committed bundle from old source. */
 export async function assertFreshDemoBundle(page, root = process.cwd()) {
   // A comparative performance run may load an older tree whose fingerprint
   // contract is intentionally different from the candidate's. Validate that
   // tree with the implementation that built it, not with today's algorithm.
   const expected = await fingerprintForTree(root);
+  verifyManifestTree(root, expected);
   const loaded = await page.evaluate(() => globalThis.__HOUSEPLAN_BUILD_FINGERPRINT__ ?? null);
   if (loaded !== expected) {
     throw new Error(
-      'demo/srv/assets/houseplan-card.js is stale. Run npm run build and copy '
-      + 'dist/houseplan-card.js to demo/srv/assets/houseplan-card.js first. '
+      'demo/srv/assets bundle tree is stale. Run npm run bundle:sync first. '
       + `Expected ${expected}, loaded ${loaded || 'no fingerprint'}.`,
     );
   }

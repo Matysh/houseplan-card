@@ -6,6 +6,7 @@ import {
   GLOW_CARD_CONTRACT,
   LARGE_HOUSE_CARD_CONTRACT,
 } from '../demo/performance/card-contract.mjs';
+import { readHouseplanProductionSource } from './houseplan-source.mjs';
 
 const directCardMembers = (relativePath) => {
   const source = readFileSync(new URL(`../${relativePath}`, import.meta.url), 'utf8');
@@ -38,10 +39,10 @@ test('Glow benchmark declares every private card member it consumes', () => {
 });
 
 test('performance contracts reference real production members', () => {
-  const source = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
+  const source = readHouseplanProductionSource();
   for (const contract of [LARGE_HOUSE_CARD_CONTRACT, GLOW_CARD_CONTRACT]) {
     for (const name of declaredMembers(contract)) {
-      assert.match(source, new RegExp(`\\b(?:private\\s+(?:get\\s+)?|get\\s+)${name}\\b`),
+      assert.match(source, new RegExp(`\\b(?:private\\s+(?:declare\\s+|get\\s+)?|get\\s+)${name}\\b`),
         `${contract.label} declares missing production member ${name}`);
     }
   }
@@ -66,7 +67,7 @@ test('contract accepts recent optional fields only when their runtime type is va
 });
 
 test('view render resolves structural wall cuts once per frame, not once per room', () => {
-  const source = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
+  const source = readHouseplanProductionSource();
   const start = source.indexOf('const allZeroCuts = this._openCuts();');
   const end = source.indexOf('${this._renderOpeningTunnelFills(space, roomFills)}', start);
   assert.ok(start >= 0 && end > start, 'view room-render block is present');
@@ -87,7 +88,7 @@ test('view render resolves structural wall cuts once per frame, not once per roo
 });
 
 test('room inner faces are structurally cached and shared by both fill layers', () => {
-  const source = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
+  const source = readHouseplanProductionSource();
   const helperStart = source.indexOf('private _innerRoomContour(');
   const helperEnd = source.indexOf('\n  /**', helperStart);
   assert.ok(helperStart >= 0 && helperEnd > helperStart, 'inner-contour cache helper is present');
@@ -113,7 +114,7 @@ test('room inner faces are structurally cached and shared by both fill layers', 
 });
 
 test('wall and light geometry reuse bounded caches before structural work', () => {
-  const source = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
+  const source = readHouseplanProductionSource();
 
   const unionStart = source.indexOf('private _wallUnionGeometry()');
   const unionEnd = source.indexOf('\n  /** Thick-wall spans', unionStart);

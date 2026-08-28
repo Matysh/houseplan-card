@@ -36,6 +36,16 @@ export const SMOKE_LINKS = [
   },
   {
     symbols: [
+      'EditorRuntimeLoader', 'EditorRuntimeLoaderState', 'EditorRuntimeModule',
+      'EDITOR_RUNTIME_FINGERPRINT', 'createHouseplanEditorRuntime',
+    ],
+    smokes: ['smoke_lazy_editor_chunk.mjs'],
+    because: 'the production-bundle scenario proves that the content-hashed editor chunk stays '
+      + 'off the View network path, is shared by all three editors, retries once, and refuses an '
+      + 'incompatible build before editor state is installed (#337)',
+  },
+  {
+    symbols: [
       'placeResizeAreaLabel', 'resizeInwardNormal', 'resizeMeasuredEdges',
       'ResizeAreaPlacement', 'ResizeAreaPlacementInput', 'ResizeLabelView',
     ],

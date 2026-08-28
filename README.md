@@ -108,8 +108,10 @@ serve that path as a JavaScript module.
 
 ### Manual installation
 
-Copy `custom_components/houseplan` to `config/custom_components`, restart Home
-Assistant, and add the House Plan integration.
+Copy the complete `custom_components/houseplan` release folder to
+`config/custom_components`, restart Home Assistant, and add the House Plan
+integration. Do not copy only `houseplan-card.js`: the card also uses an
+internal manifest and content-hashed modules from the same release.
 
 ### Add the card
 

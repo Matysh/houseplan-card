@@ -22,7 +22,10 @@ media-wrapper survival) are pinned by `test/styles-split.test.mjs`, and
 ```
 houseplan-card/
 ├─ src/                          # card sources (TypeScript + Lit 3)
-│  ├─ houseplan-card.ts          # the card: rendering, states, drag, tooltip, sticky header
+│  ├─ houseplan-card.ts          # eager View shell, HA lifecycle and projection
+│  ├─ editor-runtime-loader.ts   # lazy loader: dedupe, retry and build handshake
+│  ├─ houseplan-editor-runtime.ts # Plan/Devices/Background composition root
+│  ├─ houseplan-onboarding-runtime.ts # first-space/import dialogs, independent of editor
 │  ├─ hp-dialog.ts               # shared HA/native modal shell, focus and transient-overlay lifecycle
 │  ├─ hp-help.ts                 # presentation-only, localized contextual-help surface
 │  ├─ floating-surface.ts        # pure visual-viewport flip/shift geometry for dialog surfaces
@@ -37,7 +40,7 @@ houseplan-card/
 │  └─ data/
 │     ├─ house.ts                # geometry: ROOMS (rooms→area), FLOOR_VB (viewBox), names
 │     └─ backgrounds.ts          # VECTOR plans (SVG base64) + FLOOR_BG_RECT (positioning)
-├─ dist/houseplan-card.js        # build (rollup+terser), ~290 KB, plans embedded
+├─ dist/                         # entry + manifest + content-hashed JS chunks
 ├─ demo/golden/                  # deterministic HP-QA-01 matrix, capture/verify/accept
 ├─ demo/performance/             # large-house budgets and same-runner comparison
 ├─ scripts/release-*.mjs         # exact-SHA publication contract and local orchestrator
@@ -54,10 +57,16 @@ houseplan-card/
 └─ docs/                         # this documentation
 ```
 
-Rollup embeds a source fingerprint in the bundle. Performance and golden-image
-tooling compares it with the current `src/` tree before recording results, so a
-committed demo snapshot from an older source revision cannot produce a false
-baseline.
+Rollup embeds one source fingerprint in the eager entry and both lazy runtimes.
+`dist/houseplan-assets.json` records the import graph, sizes and SHA-256 of every
+generated asset. View loads only the initial graph; Plan, Devices and Background
+share one editor runtime loaded on first intent. An empty installation loads a
+separate onboarding dialog chunk, so creating the first space does not require
+the editor asset; saving it then continues into Plan as before. The backend keeps the public
+entry URL stable and serves only manifest-listed JS basenames below
+`/houseplan_files/houseplan-assets/`. Performance, golden and smoke tooling
+verify the manifest and every asset before recording results, so a stale or
+partially copied tree cannot produce a false baseline.
 
 Prerelease publication has one fail-closed contract shared by the local command
 and the manual GitHub workflow. The tag version must match all six shipped

@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs';
 import {
   createRenderDeviceSnapshot, presentationSnapshotKey, renderDeviceSnapshotPositions,
 } from '../test-build/render-device-snapshot.js';
+import { readHouseplanProductionSource } from './houseplan-source.mjs';
 
 test('snapshot positions skip resolution until a renderable plan exists', () => {
   const devices = [{ id: 'one' }, { id: 'two' }];
@@ -71,7 +72,7 @@ const methodBody = (source, name) => {
 };
 
 test('atomic plan render paths do not bypass RenderDeviceSnapshot with this.hass', () => {
-  const source = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
+  const source = readHouseplanProductionSource();
   for (const name of [
     '_roomLqi', '_resolvedRoomFills', '_sunNow', '_renderSunRays', '_renderGlowLayer',
     '_renderVacuums', '_renderVacFit', '_renderDevice', '_roomTemp', '_roomHum', '_openingAmt',
@@ -82,7 +83,7 @@ test('atomic plan render paths do not bypass RenderDeviceSnapshot with this.hass
 });
 
 test('the card gates snapshot positions on the render model', () => {
-  const source = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
+  const source = readHouseplanProductionSource();
   const capture = methodBody(source, '_captureRenderDeviceSnapshot');
   assert.match(
     capture,
@@ -97,7 +98,7 @@ test('the card gates snapshot positions on the render model', () => {
 });
 
 test('opening references use their own availability policy without weakening plan tombstones', () => {
-  const source = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
+  const source = readHouseplanProductionSource();
   for (const name of [
     '_contactCandidates', '_lockCandidates', '_openingAmt', '_renderOpenings',
     '_renderOpeningLocks', '_renderOpeningInfoCard', '_lockAction',
@@ -125,7 +126,7 @@ test('opening references use their own availability policy without weakening pla
 });
 
 test('lock actuation remains guarded inside the one sanctioned opening-card method', () => {
-  const source = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
+  const source = readHouseplanProductionSource();
   const action = methodBody(source, '_lockAction');
   const guardAt = action.indexOf('_openingEntityAvailable(entityId)');
   const confirmAt = action.indexOf('confirm(');
@@ -136,7 +137,7 @@ test('lock actuation remains guarded inside the one sanctioned opening-card meth
 });
 
 test('marker delete/re-add and opening save remain separate config transactions', () => {
-  const source = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
+  const source = readHouseplanProductionSource();
   const saveOpening = methodBody(source, '_saveOpening');
   const saveMarker = methodBody(source, '_saveMarker');
   assert.match(saveOpening, /sp\.openings/);

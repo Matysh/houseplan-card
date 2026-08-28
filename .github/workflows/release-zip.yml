@@ -34,7 +34,7 @@ jobs:
       - name: Build houseplan.zip (contents of custom_components/houseplan at zip root)
         run: cd custom_components/houseplan && zip -qr ../../houseplan.zip .
       - name: Sanity check
-        run: unzip -l houseplan.zip | grep -q "manifest.json"
+        run: node scripts/verify-houseplan-zip.mjs houseplan.zip custom_components/houseplan/frontend
       - name: Upload asset
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

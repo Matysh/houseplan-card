@@ -37,10 +37,96 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+const repoRoot = fileURLToPath(new URL('..', import.meta.url));
+
+const occurrenceCount = (source, needle) => source.split(needle).length - 1;
+
+/**
+ * Map a logical pre-split card anchor onto the lazy editor source.
+ *
+ * Keeping the mutation definitions in their original logical form makes the
+ * registry readable and preserves the history of each regression. At runtime
+ * we relocate only anchors that actually moved into the typed editor host.
+ * The mapping is deliberately strict: an ambiguous or missing anchor still
+ * fails the cheap mutation applicability gate.
+ */
+function relocateEditorPatch(patch, cardSource, editorSource) {
+  if (patch.file !== 'src/houseplan-card.ts'
+      || occurrenceCount(cardSource, patch.find) === 1) return patch;
+  if (occurrenceCount(editorSource, patch.find) === 1) {
+    return { ...patch, file: 'src/houseplan-editor-runtime.ts' };
+  }
+
+  const normalized = editorSource.replaceAll('this.host.', 'this.');
+  if (occurrenceCount(normalized, patch.find) !== 1) return patch;
+
+  const normalizedStart = normalized.indexOf(patch.find);
+  let rawIndex = 0;
+  let normalizedIndex = 0;
+  while (normalizedIndex < normalizedStart) {
+    if (editorSource.startsWith('this.host.', rawIndex)) {
+      rawIndex += 'this.host.'.length;
+      normalizedIndex += 'this.'.length;
+    } else {
+      rawIndex += 1;
+      normalizedIndex += 1;
+    }
+  }
+  const rawStart = rawIndex;
+  const hostFlags = [];
+  let findIndex = 0;
+  while (findIndex < patch.find.length) {
+    if (patch.find.startsWith('this.', findIndex)) {
+      hostFlags.push(editorSource.startsWith('this.host.', rawIndex));
+    }
+    if (editorSource.startsWith('this.host.', rawIndex)) {
+      rawIndex += 'this.host.'.length;
+      findIndex += 'this.'.length;
+    } else {
+      rawIndex += 1;
+      findIndex += 1;
+    }
+  }
+  const rawFind = editorSource.slice(rawStart, rawIndex);
+  let replacementThis = 0;
+  const rawReplace = patch.replace.replaceAll('this.', () => {
+    const host = hostFlags[replacementThis++] === true;
+    return host ? 'this.host.' : 'this.';
+  });
+  return {
+    ...patch,
+    file: 'src/houseplan-editor-runtime.ts',
+    find: rawFind,
+    replace: rawReplace,
+  };
+}
+
 // --- реестр ---------------------------------------------------------------
 // `find` обязан встречаться в файле ровно один раз: патч, который ложится «куда
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
-export const MUTANTS = [
+const MUTANT_DEFINITIONS = [
+  {
+    id: 'editor-runtime-fingerprint-handshake',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/editor-runtime-loader.test.mjs',
+    because: 'a mixed entry/editor build must fail closed instead of installing incompatible code (#337)',
+    patches: [{
+      file: 'src/editor-runtime-loader.ts',
+      find: '        if (module.fingerprint !== this.options.expectedFingerprint) {',
+      replace: '        if (false && module.fingerprint !== this.options.expectedFingerprint) {',
+    }],
+  },
+  {
+    id: 'editor-runtime-one-retry',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/editor-runtime-loader.test.mjs',
+    because: 'a transient chunk failure gets exactly one bounded retry (#337)',
+    patches: [{
+      file: 'src/editor-runtime-loader.ts',
+      find: '    for (const attempt of [0, 1] as const) {',
+      replace: '    for (const attempt of [0] as const) {',
+    }],
+  },
   {
     id: 'wallthick-hover-floor-back',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
@@ -1527,9 +1613,9 @@ export const MUTANTS = [
     guard: 'npm run bundle:sync && node demo/smoke_near_axis_optimize.mjs',
     because: 'opening the Optimize preview or cancelling it must never persist a lossy repair (#290)',
     patches: [{
-      file: 'src/houseplan-card.ts',
-      find: '  private _openAlignDialog = (): void => this._previewAlignDialog(false);',
-      replace: '  private _openAlignDialog = (): void => {\n'
+      file: 'src/houseplan-editor-runtime.ts',
+      find: 'public _openAlignDialog = (): void => this._previewAlignDialog(false);',
+      replace: 'public _openAlignDialog = (): void => {\n'
         + '    this._previewAlignDialog(false);\n'
         + '    void this._runAlignToGrid();\n'
         + '  };',
@@ -3432,8 +3518,16 @@ export const MUTANTS = [
   },
 ];
 
+const mutationCardSource = readFileSync(join(repoRoot, 'src/houseplan-card.ts'), 'utf8');
+const mutationEditorSource = readFileSync(join(repoRoot, 'src/houseplan-editor-runtime.ts'), 'utf8');
+export const MUTANTS = MUTANT_DEFINITIONS.map((mutant) => ({
+  ...mutant,
+  patches: mutant.patches.map((patch) => relocateEditorPatch(
+    patch, mutationCardSource, mutationEditorSource,
+  )),
+}));
+
 // --- механика ---------------------------------------------------------------
-const repoRoot = fileURLToPath(new URL('..', import.meta.url));
 
 export function applyPatches(root, patches) {
   for (const patch of patches) {
@@ -3493,7 +3587,8 @@ export function guardNeedsTestBuild(guard) {
  * Нужен ли гварду СОБРАННЫЙ бандл (#332).
  *
  * Бандл читают только браузерные проверки: смоки и golden-сцены грузят
- * `demo/srv/assets/houseplan-card.js`, и мутант обязан попасть в него, иначе
+ * дерево `demo/srv/assets/`, и мутант обязан попасть в entry и lazy chunks,
+ * иначе
  * guard проверяет чистый код. Юнит- и бэкенд-гварды бандл не открывают ни в
  * каком виде (проверено по реестру и по исходникам тестов: dist/** читается
  * только как git-чекаут, который в worktree и так есть). Rollup-сборка —
@@ -3543,7 +3638,10 @@ function buildBundle(dir) {
   if (built.status !== 0) {
     throw new Error(`сборка мутанта упала:\n${(built.stderr || built.stdout).slice(-2000)}`);
   }
-  cpSync(join(dir, 'dist', 'houseplan-card.js'), join(dir, 'demo', 'srv', 'assets', 'houseplan-card.js'));
+  const synced = sh('node scripts/bundle-sync.mjs', dir);
+  if (synced.status !== 0) {
+    throw new Error(`дерево бандла мутанта не синхронизировалось:\n${(synced.stderr || synced.stdout).slice(-2000)}`);
+  }
 }
 
 function runMutant(mutant) {

@@ -12,3 +12,5 @@ artifacts/
 # она только росла — 364 версии по 1.16 МБ за семь недель (#255). Обязательных
 # копий две: `dist/` (артефакт сборки) и `custom_components/` (её ставит HACS).
 demo/srv/assets/houseplan-card.js
+demo/srv/assets/houseplan-assets.json
+demo/srv/assets/houseplan-assets/

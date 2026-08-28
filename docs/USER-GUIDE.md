@@ -101,7 +101,14 @@ on-disk path, not the JavaScript URL served by Home Assistant.
 
 Copy the release folder to `config/custom_components/houseplan`, restart Home
 Assistant, add the integration, then add the resource above only if Lovelace
-resources are YAML-managed.
+resources are YAML-managed. Always copy the complete integration folder: the
+stable resource URL remains one file, but that entry loads internal
+content-hashed modules. A lone `houseplan-card.js` is not a supported install.
+
+The ordinary View does not download editor code. The first opening of Plan,
+Device or Background may therefore take a brief moment. If that internal module
+cannot be loaded after one retry, the plan stays in View and asks you to refresh
+the page; no half-open editor is kept.
 
 ### Permissions
 

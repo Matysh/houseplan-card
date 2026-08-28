@@ -314,9 +314,11 @@ jobs:
         run: npm test
       - name: Build
         run: npm run build
-      # Копия стенда больше не коммитится (#255): сверяются две обязательные.
-      - name: Card bundle snapshots in sync
-        run: cmp dist/houseplan-card.js custom_components/houseplan/frontend/houseplan-card.js
+      # Entry, manifest and every content-hashed chunk are one artifact (#337).
+      - name: Card bundle trees in sync
+        run: |
+          node scripts/bundle-tree.mjs dist custom_components/houseplan/frontend
+          npm run bundle:budget
       # Бандл собирается один раз и уезжает артефактом (#336). Прежде каждая из
       # пяти браузерных job собирала его заново: `bundle:sync` — это `tsc
       # --noEmit` плюс rollup, около минуты на job.
@@ -328,7 +330,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: card-bundle
-          path: dist/houseplan-card.js
+          path: dist/
           retention-days: 1
           if-no-files-found: error
 
