@@ -3,7 +3,9 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import test from 'node:test';
-import { sourceFingerprint, visualFingerprint } from '../scripts/source-fingerprint.mjs';
+import {
+  fingerprintCorpus, postCaptureInputs, sourceFingerprint, visualFingerprint,
+} from '../scripts/source-fingerprint.mjs';
 
 test('source fingerprint is stable across LF and CRLF checkouts', () => {
   const directory = mkdtempSync(resolve(tmpdir(), 'houseplan-fingerprint-'));
@@ -134,4 +136,77 @@ test('npm-скрипт не требует пересъёмки, а версия
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }
+});
+
+// #344. Корпус отпечатка обязан состоять из файлов, способных изменить кадр.
+// Пока в него входили `accept.mjs` и `policy.mjs`, правка инструмента приёмки
+// объявляла устаревшими бандл, манифест скриншотов и манифест эталонов — и в
+// #334 из-за этого правило приёмки пришлось вызывать обёрткой вместо того,
+// чтобы положить его туда, где ему место.
+
+const goldenFixture = () => {
+  const directory = mkdtempSync(resolve(tmpdir(), 'houseplan-fingerprint-corpus-'));
+  mkdirSync(resolve(directory, 'src'), { recursive: true });
+  mkdirSync(resolve(directory, 'demo/fixtures'), { recursive: true });
+  mkdirSync(resolve(directory, 'demo/golden'), { recursive: true });
+  writeFileSync(resolve(directory, 'src/example.ts'), 'export const value = 1;\n', 'utf8');
+  writeFileSync(resolve(directory, 'demo/fixtures/plan.mjs'), 'export const fixture = 1;\n', 'utf8');
+  for (const name of ['matrix', 'harness', 'run', 'accept', 'policy']) {
+    writeFileSync(resolve(directory, `demo/golden/${name}.mjs`),
+      `export const ${name} = 1;\n`, 'utf8');
+  }
+  return directory;
+};
+
+const editGolden = (directory, name, value) => writeFileSync(
+  resolve(directory, `demo/golden/${name}.mjs`), `export const ${name} = ${value};\n`, 'utf8',
+);
+
+test('правка инструмента приёмки не требует ни пересборки, ни пересъёмки (#344)', () => {
+  const directory = goldenFixture();
+  try {
+    const before = { bundle: sourceFingerprint(directory), visual: visualFingerprint(directory) };
+    editGolden(directory, 'accept', 2);
+    editGolden(directory, 'policy', 2);
+    assert.equal(sourceFingerprint(directory), before.bundle,
+      'accept.mjs и policy.mjs исполняются после съёмки: бандл от их правки не устаревает');
+    assert.equal(visualFingerprint(directory), before.visual,
+      'ни одного пикселя они изменить не могут — пересъёмка была бы нечестной');
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test('файлы, определяющие кадр, из корпуса не выпали (#344)', () => {
+  const directory = goldenFixture();
+  try {
+    // Обратная сторона важнее прямой: исключение, расползшееся на matrix,
+    // harness, run или фикстуры, сделает несвежий бандл неотличимым от свежего.
+    for (const name of ['matrix', 'harness', 'run']) {
+      const before = { bundle: sourceFingerprint(directory), visual: visualFingerprint(directory) };
+      editGolden(directory, name, 2);
+      assert.notEqual(sourceFingerprint(directory), before.bundle, `${name}.mjs влияет на кадр`);
+      assert.notEqual(visualFingerprint(directory), before.visual, `${name}.mjs требует пересъёмки`);
+    }
+    const before = sourceFingerprint(directory);
+    writeFileSync(resolve(directory, 'demo/fixtures/plan.mjs'), 'export const fixture = 2;\n', 'utf8');
+    assert.notEqual(sourceFingerprint(directory), before, 'фикстура — геометрия снимаемого плана');
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test('состав исключения объявлен списком, а не угадывается по имени (#344)', () => {
+  // Список закреплён целиком: расширение его новым файлом обязано быть
+  // осознанным решением с ответом на вопрос «как эта правка попадёт в кадр»,
+  // а не побочным следствием правки фильтра.
+  assert.deepEqual(postCaptureInputs(), ['demo/golden/accept.mjs', 'demo/golden/policy.mjs']);
+});
+
+test('в корпусе настоящего репозитория из demo/golden ровно три файла (#344)', () => {
+  const corpus = fingerprintCorpus(new URL('..', import.meta.url).pathname.replace(/\/$/, ''));
+  const golden = corpus.filter((file) => file.startsWith('demo/golden/')).sort();
+  assert.deepEqual(golden, ['demo/golden/harness.mjs', 'demo/golden/matrix.mjs', 'demo/golden/run.mjs']);
+  assert.ok(corpus.includes('scripts/source-fingerprint.mjs'), 'сам отпечаток остаётся входом сборки');
+  assert.ok(corpus.some((file) => file.startsWith('src/')), 'корпус без src был бы пуст по смыслу');
 });
