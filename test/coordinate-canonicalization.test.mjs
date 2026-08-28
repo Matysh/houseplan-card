@@ -112,10 +112,19 @@ test('one position changes only x/y and preserves future metadata (#224)', () =>
 
 test('frontend write paths adopt canonical candidates before persistence (#224)', () => {
   const source = readHouseplanProductionSource();
+  const eagerCardSource = readFileSync(
+    new URL('../src/houseplan-card.ts', import.meta.url),
+    'utf8',
+  );
   assert.match(source, /enqueueSerializedWrite\(this\._writeChain, async \(\) =>/);
   assert.match(
     source,
     /const candidate = canonicalizeConfigGeometry\(this\._serverCfg\);/,
+  );
+  assert.match(
+    eagerCardSource,
+    /const candidate = canonicalizeConfigGeometry\(this\._serverCfg\);/,
+    'the eager View writer keeps the same canonicalization barrier as the lazy editor writer',
   );
   assert.match(
     source,
