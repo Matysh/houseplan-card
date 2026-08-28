@@ -43,7 +43,7 @@ await page.waitForFunction(() => {
 
 await page.evaluate(async () => {
   const card = window.__card;
-  card._setMode('plan');
+  await card._requestMode('plan');
   await card.updateComplete;
   const button = [...card.renderRoot.querySelectorAll('button')]
     .find((entry) => entry.textContent?.trim() === 'Resize');
