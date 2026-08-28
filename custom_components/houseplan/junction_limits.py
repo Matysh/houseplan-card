@@ -148,9 +148,12 @@ def check_nodes(segments: list[dict]) -> list[tuple[str, str, float, float]]:
             if index == len(ordered) - 1:
                 delta += math.pi * 2
             degrees = (delta * 180) / math.pi
-            # #331 §2.2: a ~0° delta IS a violation — same-direction rays are
-            # a duplicated or overlaid wall (a butt joint yields 180°, not 0°).
-            if degrees < smallest:
+            # A ~0° pair is NOT a violation — and cannot be (#331 revision 4,
+            # learned in the field): a shared wall of two adjacent rooms is
+            # two co-located owner atoms ON ONE LINE, so every shared-wall
+            # node carries a legitimate 0° pair by construction. An exact
+            # duplicate stays a KNOWN LIMITATION of П1 at this level.
+            if _EPS < degrees < smallest:
                 smallest = degrees
         if smallest < MIN_JUNCTION_ANGLE_DEG - 1e-9:
             violations.append(("angle", node, smallest, MIN_JUNCTION_ANGLE_DEG))

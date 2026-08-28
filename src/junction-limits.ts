@@ -103,11 +103,15 @@ export function checkNodes(
       const next = sorted[(index + 1) % sorted.length];
       let delta = next - sorted[index];
       if (index === sorted.length - 1) delta += Math.PI * 2;
-      // #331 §2.2: a ~0° delta IS a violation — two rays leaving one node in
-      // the same direction are a duplicated or overlaid wall (a collinear
-      // butt joint of one straight wall yields a 180° pair, never 0°).
       const degrees = (delta * 180) / Math.PI;
-      if (degrees < smallest) smallest = degrees;
+      // A ~0° pair is NOT a violation — and cannot be (#331 revision 4,
+      // learned in the field): a shared wall of two adjacent rooms is two
+      // co-located owner atoms ON ONE LINE, so every shared-wall node
+      // carries a legitimate 0° pair by construction, and resizing a room
+      // until its wall lands on a neighbour's is an ordinary edit. An exact
+      // duplicate wall is therefore indistinguishable from the shared-wall
+      // model at this level and stays a KNOWN LIMITATION of П1.
+      if (degrees > EPS && degrees < smallest) smallest = degrees;
     }
     if (smallest < minAngleDeg - 1e-9) {
       violations.push({ rule: 'angle', subject: node, actual: smallest, limit: minAngleDeg });

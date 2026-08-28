@@ -536,18 +536,6 @@ export const MUTANTS = [
     }],
   },
   {
-    id: 'junction-limit-zero-wedge-invisible',
-    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
-      + '&& node --test --test-name-pattern="#331 AC2" test/junction-limits.test.mjs',
-    because: 'restoring the degrees > EPS filter makes an exact duplicate wall invisible to '
-      + 'П1 again — the worst degenerate junction passes while a 0.5° wedge is refused (#331 §2.2)',
-    patches: [{
-      file: 'src/junction-limits.ts',
-      find: '      if (degrees < smallest) smallest = degrees;',
-      replace: '      if (degrees > EPS && degrees < smallest) smallest = degrees;',
-    }],
-  },
-  {
     id: 'junction-limit-key-precision-lost',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="#331 AC1" test/junction-limits.test.mjs',

@@ -450,18 +450,25 @@ def test_330_as_is_equals_migrated_on_boundary_fixtures():
 
 
 def test_331_debris_is_one_node_and_duplicate_is_visible():
-    """AC1 + AC2 на python-зеркале."""
+    """AC1 + 0°-легальность (ревизия 4) на python-зеркале."""
     debris = space([(([-1e-8, 0.0]), [cm(300), 0.0], 15),
                     ([0.0, 0.0], [0.0, cm(300)], 15)])
     assert "distance" not in rules(debris)
-    dup = space([([0.0, 0.0], [cm(300), 0.0], 15),
-                 ([0.0, 0.0], [cm(300), 0.0], 15)])
-    segs = jl.limit_segments(dup)
-    angle = [v for v in jl.check_nodes(segs) if v[0] == "angle"]
-    assert angle and angle[0][2] < 0.001
+    # Ревизия 4 (полевые данные): co-located атомы — модель ОБЩЕЙ стены
+    # смежных комнат, 0°-пара легальна по построению; точный дубль остаётся
+    # известным ограничением П1.
+    shared = space([([0.0, 0.0], [cm(300), 0.0], 15),
+                    ([0.0, 0.0], [cm(300), 0.0], 15)])
+    assert "angle" not in rules(shared)
     butt = space([([0.0, 0.0], [cm(150), 0.0], 15),
                   ([cm(150), 0.0], [cm(300), 0.0], 15)])
     assert "angle" not in rules(butt)
+    # Перегородка ПОВЕРХ стены комнаты — легальная модель (#308).
+    overlay = space([([0.0, 0.0], [cm(300), 0.0], 15)])
+    overlay["partitions"] = [
+        {"id": "p1", "a": [0.0, 0.0], "b": [cm(300), 0.0], "cm": 20},
+    ]
+    assert "angle" not in rules(overlay)
 
 
 def test_331_iterative_run_and_forks():

@@ -3,9 +3,9 @@
 ## Unreleased
 
 - The wall-junction checks are honest at the boundaries: false refusals on
-  microscopic coordinate noise are gone, a wall duplicated along one line is
-  now visible, very long walls no longer crash the check, and an internal
-  check error refuses the write instead of waving it through
+  microscopic coordinate noise are gone, very long walls no longer crash the
+  check, and an internal check error refuses the write instead of waving it
+  through
   ([#331](https://github.com/Matysh/houseplan-card/issues/331)).
 
 - Saving and resizing large plans no longer freezes Home Assistant: the

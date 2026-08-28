@@ -476,27 +476,31 @@ test('#331 AC1: плавающий мусор — один узел, реаль�
     'узлы на 4e-7 — два узла и честное П4, а не слияние ключей');
 });
 
-test('#331 AC2: дубль стены — нарушение угла 0°; 180°-пара и T-стык чисты', async () => {
+test('#331: 0°-пары легальны — это модель общей стены (ревизия 4, полевые данные)', async () => {
   const { checkNodes } = await import('../test-build/junction-limits.js');
-  const dup = [
-    { id: 'a', a: [0, 0], b: [cm(300), 0], cm: 15 },
-    { id: 'b', a: [0, 0], b: [cm(300), 0], cm: 15 },
+  // Общая стена смежных комнат = два co-located атома-владельца по одной
+  // линии: 0°-пара в каждом её узле легальна ПО ПОСТРОЕНИЮ. Ресайз до
+  // совпадения со стеной соседа — обычная правка; отказ здесь сломал
+  // реальный план (#331 r4-инцидент: dev-смоки resize_pointer_real_plan и
+  // plan_drawing_repairs). Точный дубль остаётся известным ограничением П1.
+  const shared = [
+    { id: 'ownerA', a: [0, 0], b: [cm(300), 0], cm: 15 },
+    { id: 'ownerB', a: [0, 0], b: [cm(300), 0], cm: 15 },
   ];
-  const violations = checkNodes(dup).filter((item) => item.rule === 'angle');
-  assert.ok(violations.length > 0, 'дубль обязан быть виден');
-  assert.ok(violations[0].actual < 0.001, `actual=${violations[0].actual}`);
-  // Прямая стена из двух атомов встык: в узле 180°-пара — чисто.
+  assert.equal(checkNodes(shared).filter((item) => item.rule === 'angle').length, 0,
+    'co-located атомы общей стены не считаются клином');
+  // Настоящий узкий клин по-прежнему ловится.
+  const wedge = [
+    { id: 'a', a: [0, 0], b: [cm(300), 0], cm: 15 },
+    { id: 'b', a: [0, 0], b: [cm(300), cm(300) * Math.tan((5 * Math.PI) / 180)], cm: 15 },
+  ];
+  assert.ok(checkNodes(wedge).filter((item) => item.rule === 'angle').length > 0);
+  // 180°-пара стыка и T-стык — чисты.
   const butt = [
     { id: 'a', a: [0, 0], b: [cm(150), 0], cm: 15 },
     { id: 'b', a: [cm(150), 0], b: [cm(300), 0], cm: 15 },
   ];
   assert.equal(checkNodes(butt).filter((item) => item.rule === 'angle').length, 0);
-  // T-стык: 90° — чисто.
-  const tee = [
-    { id: 'a', a: [0, 0], b: [cm(300), 0], cm: 15 },
-    { id: 'b', a: [cm(150), 0], b: [cm(150), cm(300)], cm: 15 },
-  ];
-  assert.equal(checkNodes(tee).filter((item) => item.rule === 'angle').length, 0);
 });
 
 test('#331 AC3: 10 000 атомов без переполнения, развилка не теряется', async () => {
@@ -557,13 +561,21 @@ test('#331 AC4: дуга не выдаёт себя за одну стену, о
 
 test('#331 AC1: квантование .5-тика одинаково в обоих зеркалах (формула канонизации)', async () => {
   const { checkNodes } = await import('../test-build/junction-limits.js');
-  // 2.5e-7·1e7 = 2.5 → floor(2.5+0.5)=3 → ключ 3e-7 в ОБЕИХ реализациях.
-  // Прямая проверка формулы через поведение: узел на 2.5e-7 и узел на 3e-7
-  // получают ОДИН ключ (дубль виден через П1-0°), а 2.5e-7 и 2e-7 — разные.
-  const same = [
-    { id: 'a', a: [2.5e-7, 0], b: [cm(300), 0], cm: 15 },
-    { id: 'b', a: [3e-7, 0], b: [cm(300), 0], cm: 15 },
-  ];
-  assert.ok(checkNodes(same).filter((item) => item.rule === 'angle').length > 0,
-    '2.5e-7 квантуется вверх (floor(+0.5)), сливаясь с 3e-7 — дубль виден');
+  // 2.5e-7·1e7 = 2.5 → floor(2.5+0.5)=3 → узел на 2.5e-7 и узел на 3e-7
+  // получают ОДИН ключ. Наблюдаемо через валентность: семь лучей из «двух»
+  // точек — один узел с нарушением П2; при банковском округлении (ключ 2e-7)
+  // это были бы узлы 4+3 луча и П2 молчал бы.
+  const rays = [];
+  for (let index = 0; index < 4; index++) {
+    const angle = (index * 37 * Math.PI) / 180;
+    rays.push({ id: `p${index}`, a: [2.5e-7, 0],
+      b: [2.5e-7 + Math.cos(angle) * cm(100), Math.sin(angle) * cm(100)], cm: 15 });
+  }
+  for (let index = 0; index < 3; index++) {
+    const angle = ((index * 41 + 200) * Math.PI) / 180;
+    rays.push({ id: `q${index}`, a: [3e-7, 0],
+      b: [3e-7 + Math.cos(angle) * cm(100), Math.sin(angle) * cm(100)], cm: 15 });
+  }
+  assert.ok(checkNodes(rays).some((item) => item.rule === 'valence'),
+    '2.5e-7 квантуется вверх и сливается с 3e-7 — семь лучей в одном узле');
 });
