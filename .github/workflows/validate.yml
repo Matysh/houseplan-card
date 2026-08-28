@@ -33,8 +33,16 @@ jobs:
     name: "Предполётные проверки: документация, провенанс, процесс"
     runs-on: ubuntu-latest
     steps:
+      # `blob:none` при полной истории (#345): этой job нужны сообщения
+      # коммитов, трейлеры и ИМЕНА изменённых файлов, а не содержимое старых
+      # ревизий. Полный клон стоит 215 МБ против 26 МБ, и 32% этого веса —
+      # скриншоты документации, переснятые 196 раз.
+      #
+      # Коммиты и деревья скачиваются целиком, поэтому диапазоны и `merge-base`
+      # работают как раньше. Единственная догрузка по требованию здесь —
+      # `git show origin/main:.github/workflows/process.yml`: один блоб.
       - uses: actions/checkout@v7
-        with: { fetch-depth: 0 }
+        with: { fetch-depth: 0, filter: 'blob:none' }
       - uses: actions/setup-node@v7
         with: { node-version: 22 }
 
@@ -137,8 +145,10 @@ jobs:
       backend: ${{ steps.classify.outputs.backend }}
       integration: ${{ steps.classify.outputs.integration }}
     steps:
+      # `git diff --name-only` содержимого файлов не читает вовсе, поэтому
+      # блобы истории этой job не нужны ни на одном шаге (#345).
       - uses: actions/checkout@v7
-        with: { fetch-depth: 0 }
+        with: { fetch-depth: 0, filter: 'blob:none' }
       - id: classify
         env:
           EVENT_NAME: ${{ github.event_name }}

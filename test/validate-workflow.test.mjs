@@ -70,3 +70,22 @@ test('предполётные проверки не прячут друг др�
   assert.equal(preflight.match(/continue-on-error: true/g)?.length, 4);
   assert.ok(preflight.includes('exit $fail'), 'вердикт обязан падать сам');
 });
+
+test('джобы с полной историей качают её без блобов (#345)', () => {
+  const workflow = read('validate.yml');
+  // Полный клон — 215 МБ .git, blobless — 26 МБ, история и теги в обоих полные
+  // (замер в #345). Обе эти job читают сообщения коммитов и ИМЕНА изменённых
+  // файлов; содержимое старых ревизий им не нужно ни на одном шаге.
+  for (const job of ['preflight', 'changes']) {
+    const start = workflow.indexOf(`  ${job}:`);
+    assert.ok(start > 0, `нет job ${job}`);
+    const chunk = workflow.slice(start, start + 1400);
+    assert.match(chunk, /fetch-depth: 0, filter: 'blob:none'/,
+      `${job} обязана качать историю без блобов`);
+  }
+  // Обратная сторона: --depth=1 сюда подставлять нельзя. Он того же размера, но
+  // без merge-base, а на нём стоят процессный гейт, smoke-select и каждый
+  // диапазон origin/dev..HEAD.
+  assert.equal(workflow.includes('fetch-depth: 1'), false,
+    'shallow-клон ломает merge-base: диапазоны и процессный гейт перестают работать');
+});
