@@ -2153,6 +2153,11 @@ require hands on real hardware — they remain for the human pass.
   source/vacuum pair stays subscribed. A successful delete removes only that
   marker's pairs and immediately rebuilds the subscription
   [backend: test_trail_recorder.py].
+- A successful config edit purges trails for both a missing marker and its
+  `removed: true` tombstone, but keeps live/hidden markers; a semantic no-op
+  performs no surprise cleanup. A startup refresh that samples a new point
+  schedules one save and one throttled update event
+  [backend: test_ha_websocket.py + test_trail_recorder.py].
 - Trail style: cartography casing (dark halo 2.25 + light core 0.9),
   readable over any room fill.
 - Hidden marker: neither puck nor trail. Uncalibrated active map: no puck.

@@ -187,8 +187,11 @@ class TrailRecorder:
             # just finished calibrating) must start recording NOW, not at the
             # next state change — otherwise the first seconds of the path are
             # lost.
+            now = time.time()
+            changed = False
             for src in self.pairs:
-                self._sample(src, time.time())
+                changed |= self._sample(src, now)
+            self._handle_sample_change(changed, now)
 
     def _source_failure_reason(self, source: str) -> str | None:
         """Classify only refresh-time health evidence.
@@ -244,25 +247,70 @@ class TrailRecorder:
 
     async def async_delete(self, marker: str) -> bool:
         """Stop and erase one marker without racing subscription refresh/save."""
+        return bool(await self._async_delete_many({marker}))
+
+    async def async_purge_orphans(self, config: dict[str, Any]) -> int:
+        """Erase trails whose marker is absent or a removal tombstone.
+
+        A tombstone deliberately stays in config so discovery cannot resurrect
+        a deleted device.  For live tracking and trail ownership it is absent:
+        this is the same boundary used by ``async_refresh`` above.
+        """
+        live_marker_ids = {
+            str(marker.get("id"))
+            for marker in config.get("markers") or []
+            if marker.get("id") is not None and marker.get("removed") is not True
+        }
+        orphan_ids = set(self.book.data) - live_marker_ids
+        if not orphan_ids:
+            return 0
+        try:
+            return await self._async_delete_many(orphan_ids)
+        except Exception:  # noqa: BLE001 — config commit already succeeded
+            _LOGGER.exception(
+                "House Plan: removing orphan vacuum trails failed: markers=%s",
+                sorted(orphan_ids),
+            )
+            return 0
+
+    async def _async_delete_many(self, markers: set[str]) -> int:
+        """Delete one or more books with one subscription/store transaction."""
         async with self._refresh_lock:
             # The trail book owns deletion. When it has no such marker, this
             # is a no-op and must not silently damage the live tracking graph.
-            removed = self.book.delete(marker)
+            removed = {
+                marker: self.book.data.pop(marker)
+                for marker in markers
+                if marker in self.book.data
+            }
             if not removed:
-                return False
-            for src in list(self.pairs):
-                kept = [pair for pair in self.pairs[src] if pair[0] != marker]
-                if kept:
-                    self.pairs[src] = kept
-                else:
-                    del self.pairs[src]
-            self._resubscribe()
-            if self._unsub_save:
-                self._unsub_save()
-                self._unsub_save = None
-            await self.store.async_save(self.book.data)
+                return 0
+            previous_pairs = {src: list(pairs) for src, pairs in self.pairs.items()}
+            had_pending_save = self._unsub_save is not None
+            try:
+                for src in list(self.pairs):
+                    kept = [pair for pair in self.pairs[src] if pair[0] not in removed]
+                    if kept:
+                        self.pairs[src] = kept
+                    else:
+                        del self.pairs[src]
+                self._resubscribe()
+                if self._unsub_save:
+                    self._unsub_save()
+                    self._unsub_save = None
+                await self.store.async_save(self.book.data)
+            except Exception:
+                # The store is the durable authority. Restore the in-memory
+                # owner graph so the next successful config sync can retry
+                # instead of leaving an orphan on disk forever (#335).
+                self.book.data.update(removed)
+                self.pairs = previous_pairs
+                self._resubscribe()
+                if had_pending_save:
+                    self._schedule_save()
+                raise
         self.hass.bus.async_fire("houseplan_trail_updated", {})
-        return True
+        return len(removed)
 
     def _resubscribe(self) -> None:
         """Replace the state subscription for the current pair graph."""
@@ -344,6 +392,10 @@ class TrailRecorder:
         for src, pair_list in self.pairs.items():
             if eid == src or any(eid == vac for _, vac in pair_list):
                 changed |= self._sample(src, now)
+        self._handle_sample_change(changed, now)
+
+    def _handle_sample_change(self, changed: bool, now: float) -> None:
+        """Persist and announce one logical sampling pass when it changed."""
         if changed:
             self._schedule_save()
             if now - self._last_fire >= FIRE_THROTTLE_S:

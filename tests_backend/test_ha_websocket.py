@@ -367,6 +367,74 @@ async def test_trail_delete_rejects_non_admin_without_mutation(
     assert "m1" in recorder.book.data
 
 
+async def test_config_set_purges_tombstoned_and_absent_trails_durably(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator
+) -> None:
+    """#335 AC1/AC2: the durable config owns the durable trail book."""
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    initial = {
+        "spaces": [],
+        "markers": [
+            {"id": "tombstone", "binding": "entity:vacuum.tombstone"},
+            {"id": "hard_drop", "binding": "entity:vacuum.hard_drop"},
+            {"id": "live", "binding": "entity:vacuum.live"},
+            {
+                "id": "hidden", "binding": "entity:vacuum.hidden",
+                "hidden": True,
+            },
+        ],
+        "settings": {},
+    }
+    await client.send_json_auto_id({
+        "type": "houseplan/config/set", "config": initial, "expected_rev": 0,
+    })
+    first = await client.receive_json()
+    assert first["success"]
+    await hass.async_block_till_done()
+
+    recorder = hass.data[DOMAIN]["trail_recorder"]
+    recorder.book.data = {
+        marker_id: {"current": {"points": [[index, index + 1]]}}
+        for index, marker_id in enumerate(("tombstone", "hard_drop", "live", "hidden"))
+    }
+    await recorder.store.async_save(copy.deepcopy(recorder.book.data))
+
+    candidate = copy.deepcopy(initial)
+    candidate["markers"] = [
+        {
+            "id": "tombstone", "binding": "entity:vacuum.tombstone",
+            "removed": True, "hidden": True,
+        },
+        {"id": "live", "binding": "entity:vacuum.live"},
+        {
+            "id": "hidden", "binding": "entity:vacuum.hidden",
+            "hidden": True,
+        },
+    ]
+    await client.send_json_auto_id({
+        "type": "houseplan/config/set", "config": candidate,
+        "expected_rev": first["result"]["rev"],
+    })
+    removed = await client.receive_json()
+    assert removed["success"]
+    assert set(recorder.book.data) == {"live", "hidden"}
+    assert set(await recorder.store.async_load() or {}) == {"live", "hidden"}
+
+    # A semantic no-op is not a lifecycle transition and must not perform a
+    # surprise cleanup. A later real config commit will reconcile this orphan.
+    recorder.book.data["late_orphan"] = {"current": {"points": [[9, 10]]}}
+    await recorder.store.async_save(copy.deepcopy(recorder.book.data))
+    await client.send_json_auto_id({
+        "type": "houseplan/config/set", "config": candidate,
+        "expected_rev": removed["result"]["rev"],
+    })
+    noop = await client.receive_json()
+    assert noop["success"] and noop["result"]["rev"] == removed["result"]["rev"]
+    assert "late_orphan" in recorder.book.data
+    assert "late_orphan" in (await recorder.store.async_load() or {})
+
+
 async def test_config_rev_conflict(hass: HomeAssistant, hass_ws_client: WebSocketGenerator) -> None:
     await _setup(hass)
     client = await hass_ws_client(hass)

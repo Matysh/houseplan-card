@@ -143,7 +143,11 @@ marker.vacuum = {
 All fields are optional and old plans remain readable. Hiding retains the
 configuration. Deleting a vacuum marker removes its layout and server trails,
 creates the normal removal tombstone and makes the HA device available for a
-fresh add without resurrecting old runs.
+fresh add without resurrecting old runs. The backend reconciles both a removal
+tombstone and a completely absent marker with the trail store after every
+successful config change, so an interrupted browser-side cleanup is repaired.
+An initial position sampled during integration startup follows the same
+debounced persistence and live-update path as a later state event.
 
 ## Troubleshooting
 

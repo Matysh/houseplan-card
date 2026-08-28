@@ -7,6 +7,12 @@
   the inner-face convergence accounts for both thicknesses, not just the
   larger one ([#339](https://github.com/Matysh/houseplan-card/issues/339)).
 
+- Vacuum trails now reconcile with ordinary plan edits on the server: deleting
+  a marker also removes its stored runs even if the browser-side cleanup was
+  interrupted, and a position sampled during Home Assistant startup is saved
+  instead of remaining memory-only
+  ([#335](https://github.com/Matysh/houseplan-card/issues/335)).
+
 ## v1.69.0-beta.1 — 2026-08-28
 
 - House Plan now has a complete German interface. `Deutsch` can be selected

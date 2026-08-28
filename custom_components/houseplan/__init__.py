@@ -239,12 +239,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: HouseplanConfigEntry) ->
         hass.bus.async_fire("houseplan_config_updated", {"rev": optimize_revs[0]})
         hass.bus.async_fire("houseplan_layout_updated", {"rev": optimize_revs[1]})
         if recovered_import:
-            await recorder.async_refresh()
             current = (await data.config_store.async_load() or {}).get("config") or {}
-            live_ids = {str(marker.get("id")) for marker in current.get("markers") or []}
-            for marker_id in list(recorder.book.data):
-                if marker_id not in live_ids:
-                    await recorder.async_delete(marker_id)
+            await recorder.async_purge_orphans(current)
+            await recorder.async_refresh()
 
     await async_check_plan_files(hass, entry)
 
