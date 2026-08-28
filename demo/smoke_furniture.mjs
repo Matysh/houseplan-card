@@ -4,12 +4,14 @@
 //   2) выбранный символ ставится кликом по плану в РЕАЛЬНОМ размере — через
 //      cell_cm пространства, и сразу оказывается выделенным в «выбрать»;
 //   3) поля ширины/глубины в палитре меняют размер ДО размещения;
-//   4) магнит к стене: предмет прижимается к ближайшей стене и доворачивается
-//      по ней; Shift не отключает обязательную привязку (docs/CANVAS.md §9.4);
-//   5) у выделенного предмета та же рамка, что у текстового блока, — угловые
+//   4) мышь показывает точный полупрозрачный будущий символ без записи в
+//      конфиг; touch/pen не рисуют hover и сохраняют только чистый tap;
+//   5) магнит к стене: предмет прижимается к ближайшей стене и доворачивается
+//      по ней; Shift временно обходит магнит, сохраняя grid snap;
+//   6) у выделенного предмета та же рамка, что у текстового блока, — угловые
 //      ручки (НЕзависимые ширина и глубина) и ручка поворота с шагом 5°;
-//   6) во время растягивания угла показываются живые плашки размеров;
-//   7) фигура пишется в конфиг и переживает пересборку, хуки card-mod на месте.
+//   7) во время растягивания угла показываются живые плашки размеров;
+//   8) фигура пишется в конфиг и переживает пересборку, хуки card-mod на месте.
 // ПАДАЕТ на сборке до этой задачи: инструмента «Мебель» нет, палитры нет,
 // kind:'furniture' не рисуется, магнита и плашек не существует. Смок при этом
 // null-safe — он показывает СПИСОК провалов, а не одно исключение.
@@ -59,6 +61,16 @@ const res = await page.evaluate(async () => {
   await c.updateComplete;
   out.toolIsSelected = c._decorTool === 'furniture';
   const pal = () => sr().querySelector('.furnpalette');
+  const openFurniture = async () => {
+    if (c._decorTool !== 'furniture') {
+      c._editorSecondary.openPalette();
+      c._decorTool = 'furniture';
+      c._furnPalette = null;
+      c._furnCategory = null;
+      c.requestUpdate();
+      await c.updateComplete;
+    }
+  };
   out.paletteOpens = !!pal();
   const groups = [...(pal()?.querySelectorAll('.furngroup') || [])]
     .map((g) => g.getAttribute('data-group'));
@@ -126,9 +138,67 @@ const res = await page.evaluate(async () => {
   out.fieldsShowMetres = +(wIn()?.value ?? NaN) === 1.8 && +(hIn()?.value ?? NaN) === 0.9;
   out.selectedItemIsMarked = !!item('sofa')?.classList.contains('on');
 
-  // ================= 3. размещение в реальном размере ======================
+  // ================= 3. точное превью без мутации ==========================
+  const ghost = () => sr().querySelector('.furniture-placement-preview');
+  const beforePreview = {
+    decor: c._decorList.length,
+    epoch: c._cfgEpoch,
+    undo: c._geometryHistory.undoName,
+    redo: c._geometryHistory.redoName,
+  };
+  ev('pointermove', stageEl(), 300, 300, { pointerType: 'mouse' });
+  await c.updateComplete;
+  const firstPreview = c._furniturePreviewPlacement
+    ? JSON.parse(JSON.stringify(c._furniturePreviewPlacement)) : null;
+  const firstTransform = ghost()?.getAttribute('transform');
+  out.mouseHoverShowsRealSymbol = ghost()?.getAttribute('data-symbol') === 'sofa'
+    && (ghost()?.getAttribute('d') || '').length > 20;
+  out.previewIsTransientAndInert = ghost()?.getAttribute('aria-hidden') === 'true'
+    && getComputedStyle(ghost()).pointerEvents === 'none'
+    && near(Number(getComputedStyle(ghost()).opacity), 0.55, 1e-6);
+  out.previewDoesNotMutateConfigOrHistory = c._decorList.length === beforePreview.decor
+    && c._cfgEpoch === beforePreview.epoch
+    && c._geometryHistory.undoName === beforePreview.undo
+    && c._geometryHistory.redoName === beforePreview.redo;
+  if (wIn()) {
+    wIn().value = '1.85';
+    wIn().dispatchEvent(new Event('input', { bubbles: true }));
+  }
+  await c.updateComplete;
+  out.sizeUpdatesPreviewWithoutPointerMove = c._furniturePreviewPlacement?.w > firstPreview?.w
+    && ghost()?.getAttribute('transform') !== firstTransform;
+  if (wIn()) {
+    wIn().value = '1.8';
+    wIn().dispatchEvent(new Event('input', { bubbles: true }));
+  }
+  await c.updateComplete;
+  stageEl().dispatchEvent(new PointerEvent('pointerleave', {
+    bubbles: true, composed: true, pointerId: 11, pointerType: 'mouse',
+  }));
+  await c.updateComplete;
+  out.pointerLeaveClearsPreview = !ghost() && c._furnPreviewInput === null;
+
+  // Unknown/stale symbols fail dark: neither an invisible ghost nor a decor
+  // record is allowed. Restoring a valid selection resumes the same session.
+  c._furnPalette = { symbol: 'future_unknown_symbol', w: 180, h: 90 };
+  await c.updateComplete;
+  ev('pointermove', stageEl(), 300, 300, { pointerType: 'mouse' });
+  await c.updateComplete;
+  const beforeUnknown = c._decorList.length;
+  ev('pointerdown', stageEl(), 300, 300, { pointerType: 'mouse' });
+  await c.updateComplete;
+  out.unknownSymbolFailsDark = !ghost() && c._decorList.length === beforeUnknown
+    && c._decorTool === 'furniture';
+  c._furnPalette = { symbol: 'sofa', w: 180, h: 90 };
+  await c.updateComplete;
+
+  // ================= 4. размещение в реальном размере ======================
   // середина комнаты r1 (40..550 × 140..580) — до стен дальше порога магнита
-  ev('pointerdown', stageEl(), 300, 300);
+  ev('pointermove', stageEl(), 300, 300, { pointerType: 'mouse' });
+  await c.updateComplete;
+  const committedPreview = c._furniturePreviewPlacement
+    ? JSON.parse(JSON.stringify(c._furniturePreviewPlacement)) : null;
+  ev('pointerdown', stageEl(), 300, 300, { pointerType: 'mouse' });
   await c.updateComplete;
   const sofa = c._decorList.find((s) => s.kind === 'furniture');
   const sofaId = sofa?.id ?? null;
@@ -140,6 +210,10 @@ const res = await page.evaluate(async () => {
     && near((sofa.x + sofa.w / 2) * 1000, 300, 1e-6)
     && near((sofa.y + sofa.h / 2) * 1000, 300, 1e-6);
   out.noAngleWhenStraight = !!sofa && sofa.angle === undefined;
+  out.previewAndCommitAreIdentical = !!sofa && !!committedPreview
+    && ['x', 'y', 'w', 'h'].every((k) => near(sofa[k], committedPreview[k], 1e-12))
+    && (sofa.angle || 0) === committedPreview.angle;
+  out.previewClearsAfterCommit = !ghost() && c._furnPreviewInput === null;
   out.selectedRightAway = !!sofaId && c._decorSel === sofaId;
   out.toolWentBackToSelect = c._decorTool === 'select';
   out.paletteDisarmed = c._furnPalette === null;
@@ -154,8 +228,8 @@ const res = await page.evaluate(async () => {
     && /scale\(/.test(attr(sofaId, 'transform') || '')
     && attr(sofaId, 'vector-effect') === 'non-scaling-stroke';
 
-  // ================= 4. свой размер до размещения ==========================
-  c._decorTool = 'furniture'; await c.updateComplete;
+  // ================= 5. свой размер до размещения ==========================
+  await openFurniture();
   category('toilet')?.click(); await c.updateComplete;
   pick('toilet'); await c.updateComplete;
   if (wIn()) {
@@ -170,8 +244,8 @@ const res = await page.evaluate(async () => {
   out.typedSizeIsUsed = near((wc?.w ?? NaN) * 1000, cmToUnits(50), 1e-6)
     && near((wc?.h ?? NaN) * 1000, cmToUnits(70), 1e-6);
 
-  // ================= 5. магнит к стене =====================================
-  c._decorTool = 'furniture'; await c.updateComplete;
+  // ================= 6. магнит к стене =====================================
+  await openFurniture();
   category('bed')?.click(); await c.updateComplete;
   pick('bed_double'); await c.updateComplete;
   ev('pointerdown', stageEl(), 300, 150);           // 10 единиц от стены y=140
@@ -184,19 +258,42 @@ const res = await page.evaluate(async () => {
   out.wallMagnetQuantisesAlongTheWall = !!bed
     && Math.abs((bed.x + bed.w / 2) * 1000 - 300) <= PITCH + 1e-6;
 
-  // …Shift больше не отключает магнит
-  c._decorTool = 'furniture'; await c.updateComplete;
+  // Shift обходит магнит, но оставляет обычную привязку декора к сетке.
+  await openFurniture();
   category('bed')?.click(); await c.updateComplete;
   pick('bed_single'); await c.updateComplete;
   ev('pointerdown', stageEl(), 301.7, 151.3, { shiftKey: true });
   await c.updateComplete;
   const free = c._decorList.find((s) => s.symbol === 'bed_single');
-  out.shiftKeepsTheMagnet = !!free
+  out.shiftBypassesTheWallMagnet = !!free
     && !near((free.y + free.h / 2) * 1000, 151.3, 1e-6)
     && free.angle === undefined;
 
+  // Coarse pointers have no hover. A cancelled/dragged/second-contact gesture
+  // must not become an accidental furniture save. Keep this after the palette
+  // click checks because these synthetic pointer streams deliberately have no
+  // browser-generated compatibility click tail.
+  await openFurniture();
+  category('chair')?.click(); await c.updateComplete;
+  pick('chair'); await c.updateComplete;
+  const beforeTouch = c._decorList.length;
+  ev('pointerdown', stageEl(), 330, 330, { pointerType: 'touch', pointerId: 21 });
+  ev('pointermove', stageEl(), 350, 350, { pointerType: 'touch', pointerId: 21 });
+  ev('pointerup', stageEl(), 350, 350, { pointerType: 'touch', pointerId: 21 });
+  ev('pointerdown', stageEl(), 330, 330, { pointerType: 'touch', pointerId: 22 });
+  ev('pointercancel', stageEl(), 330, 330, { pointerType: 'touch', pointerId: 22 });
+  ev('pointerdown', stageEl(), 330, 330, { pointerType: 'touch', pointerId: 23 });
+  ev('pointerdown', stageEl(), 340, 340, { pointerType: 'touch', pointerId: 24, isPrimary: false });
+  ev('pointerup', stageEl(), 330, 330, { pointerType: 'touch', pointerId: 23 });
+  ev('pointerup', stageEl(), 340, 340, { pointerType: 'touch', pointerId: 24, isPrimary: false });
+  await c.updateComplete;
+  out.touchCancelMoveAndSecondContactDoNotSave = c._decorList.length === beforeTouch
+    && !ghost() && c._furnTouchPending === null;
+
   // …магнит работает и при ПЕРЕТАСКИВАНИИ: тянем диван к левой стене (x=40)
-  c._decorTool = 'select'; c._decorSel = sofaId; c.requestUpdate();
+  c._editorRuntime._clearFurniturePreview();
+  c._decorTool = 'select'; c._furnPalette = null; c._furnCategory = null;
+  c._decorSel = sofaId; c.requestUpdate();
   await c.updateComplete; await sleep(40); await c.updateComplete;
   ev('pointerdown', el(sofaId), 300, 300);
   out.dragStarted = !!sofaId && c._decorMove?.id === sofaId;
@@ -213,7 +310,7 @@ const res = await page.evaluate(async () => {
   ev('pointerup', stageEl(), 300, 300, { shiftKey: true });
   await c.updateComplete;
 
-  // ================= 6. рамка, углы, плашки, поворот =======================
+  // ================= 7. рамка, углы, плашки, поворот =======================
   c._decorSel = sofaId; c.requestUpdate();
   await c.updateComplete; await sleep(60); await c.updateComplete;
   const frame = () => sr().querySelector('.dtframe');
@@ -285,7 +382,7 @@ const res = await page.evaluate(async () => {
   await c.updateComplete;
   out.rotationIsRendered = /rotate\(/.test(attr(sofaId, 'transform') || '');
 
-  // ================= 7. конфиг и пересборка ================================
+  // ================= 8. конфиг и пересборка ================================
   const stored = JSON.parse(JSON.stringify(sofaNow()));
   out.storedShapeIsComplete = stored.kind === 'furniture' && typeof stored.symbol === 'string'
     && ['x', 'y', 'w', 'h'].every((k) => Number.isFinite(stored[k]));
@@ -305,7 +402,7 @@ const res = await page.evaluate(async () => {
   )?.value === stored.symbol;
   c._decorShapeDialog = null;
 
-  // ================= 8. инертность и удаление ==============================
+  // ================= 9. инертность и удаление ==============================
   c._decorTool = 'furniture'; c._furnPalette = null; await c.updateComplete;
   out.inertUnderTheStamp = pe(sofaId) === 'none';
   const n0 = c._decorList.length;
