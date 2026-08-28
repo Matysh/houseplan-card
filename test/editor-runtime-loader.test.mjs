@@ -103,3 +103,20 @@ test('lazy runtime boundary keeps the eager entry independent and does not grow 
   );
   assert.ok(anyCount <= 1123, `src any count grew from 1123 to ${anyCount}`);
 });
+
+test('source type references stay portable across build hosts', () => {
+  const sources = [];
+  const visit = (directory) => {
+    for (const name of readdirSync(directory)) {
+      const path = join(directory, name);
+      if (statSync(path).isDirectory()) visit(path);
+      else if (/\.ts$/.test(name)) sources.push(readFileSync(path, 'utf8'));
+    }
+  };
+  visit(join(repoRoot, 'src'));
+  assert.doesNotMatch(
+    sources.join('\n'),
+    /import\(["'][A-Za-z]:[\\/]/,
+    'type imports must not capture an absolute Windows workspace path',
+  );
+});

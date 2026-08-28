@@ -84,6 +84,7 @@ import {
   intervalCmAt, wallBodyNeedsSolid, wallHatchNeedsSolid, wallHatchStepUnits,
   HATCH_BASE_STEP_UNITS, type OpeningTunnelGeometry, type OpeningWallIndex,
   type LinearWallSegment, type WallEntry, type WallInterval,
+  type MultiWallNodeMap,
   innerEdgeSpan, ownEdgeOffsets, thicknessCmAt,
 } from './wall-thickness';
 import {
@@ -932,7 +933,10 @@ export interface HouseplanEditorHostPort {
   _importQueue: string[];
   _importTotal: number;
   _infoCard: DevItem | null;
-  _innerRoomContour: (space: SpaceModel, roomId: string, openCuts?: number[][], roomWalls?: any, multiWallNodes?: import("C:/Users/Sergey/Downloads/dev/houseplan-dev/houseplan-card-src/src/wall-thickness").MultiWallNodeMap | null | undefined) => number[][] | null;
+  _innerRoomContour: (space: SpaceModel, roomId: string, openCuts?: number[][], roomWalls?: any, multiWallNodes?: MultiWallNodeMap | null | undefined) => number[][] | null;
+  _junctionLimitViolations: (
+    config: unknown, spaceId: string, sharedGeometry?: unknown,
+  ) => JunctionLimitViolation[];
   _isVacDev: (d: DevItem) => boolean;
   _kiosk: boolean;
   _kioskDialog: boolean;
@@ -1025,7 +1029,9 @@ export interface HouseplanEditorHostPort {
   _renderPlanHass: any;
   _reportedPreflightFingerprint: string | null;
   _resign: () => void;
-  _resize: ResizeController<ResizePreview, ResizeLiveLabel[], SpaceGeometryState, { status: "ok" | "degraded-extra"; d: string; paths: readonly { id: string; d: string; fillRule: "evenodd"; }[]; components: readonly import("C:/Users/Sergey/Downloads/dev/houseplan-dev/houseplan-card-src/src/wall-thickness").WallGeometryComponent[]; roomGeom: any; roomComponents: readonly import("C:/Users/Sergey/Downloads/dev/houseplan-dev/houseplan-card-src/src/wall-thickness").WallGeometryComponent[]; openingIndex: OpeningWallIndex | null; multiWallNodes: import("C:/Users/Sergey/Downloads/dev/houseplan-dev/houseplan-card-src/src/wall-thickness").MultiWallNodeMap | null; paperD: string; depthUnits: number; openingPadUnits?: number; fillRule: "evenodd" | "nonzero"; } | null, import("C:/Users/Sergey/Downloads/dev/houseplan-dev/houseplan-card-src/src/wall-thickness").WallBodiesGeometryResult>;
+  _resize: ResizeController<
+    ResizePreview, ResizeLiveLabel[], SpaceGeometryState, ResizeWallUnion, ResizeWallArtifact
+  >;
   _restoreZoom: () => void;
   _resumeDraftBySpace: Record<string, string>;
   _rlResize: { id: string; space: string; k0: number; cx: number; cy: number; d0: number; } | null;
@@ -1115,7 +1121,7 @@ export interface HouseplanEditorHostPort {
   hass: any;
   isConnected: boolean;
   renderRoot: HTMLElement | DocumentFragment;
-  requestUpdate: (name?: PropertyKey, oldValue?: unknown, options?: import("C:/Users/Sergey/Downloads/dev/houseplan-dev/houseplan-card-src/node_modules/lit-element/development/lit-element").PropertyDeclaration, useNewValue?: boolean, newValue?: unknown) => void;
+  requestUpdate: (name?: PropertyKey, oldValue?: unknown) => void;
   updateComplete: Promise<boolean>;
 }
 
@@ -2008,7 +2014,7 @@ public _junctionLimitLabel(violation: JunctionLimitViolation): string {
 
 public _junctionLimitsIntroduced(
     candidate: any, previousConfig: any, spaceId: string,
-    candidateGeometry?: any,
+    candidateGeometry?: unknown,
   ): JunctionLimitViolation[] {
     // The baseline must be the previous document AS THE CANDIDATE SEES IT: a
     // legacy space carries no wall catalogue at all, so comparing it raw with
@@ -2033,7 +2039,7 @@ public _junctionLimitsIntroduced(
         const baseline = Number(previousConfig?.model_version || 0) >= WALL_SEGMENT_MODEL_VERSION
           ? previousConfig
           : commitWallSegmentModel(previousConfig).config;
-        inherited = this._junctionLimitViolations(baseline, spaceId);
+        inherited = this.host._junctionLimitViolations(baseline, spaceId);
       } catch {
         // An unmigratable baseline proves nothing about inheritance; never
         // refuse the write on that basis.
@@ -2046,7 +2052,7 @@ public _junctionLimitsIntroduced(
       }
     }
     let next: JunctionLimitViolation[] = [];
-    try { next = this._junctionLimitViolations(candidate, spaceId, candidateGeometry); }
+    try { next = this.host._junctionLimitViolations(candidate, spaceId, candidateGeometry); }
     catch {
       // #331 §2.5: candidate judgment fails closed; only an unprovable
       // baseline above is allowed to fail open.
