@@ -6918,8 +6918,10 @@ export class HouseplanCard extends LitElement {
   }
 
   /** #329 П1-П5 over one space. Pure input, no side effects. */
-  private _junctionLimitViolations(config: any, spaceId: string): JunctionLimitViolation[] {
-    return this._editorRuntimeOrThrow()._junctionLimitViolations(config, spaceId);
+  private _junctionLimitViolations(
+    config: any, spaceId: string, sharedGeometry?: any,
+  ): JunctionLimitViolation[] {
+    return this._editorRuntimeOrThrow()._junctionLimitViolations(config, spaceId, sharedGeometry);
   }
 
   /** Localised refusal text for the first violation a write introduces. */

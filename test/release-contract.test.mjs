@@ -168,7 +168,11 @@ test('release ZIP inspection is portable and does not depend on tar', () => {
     assert.equal(archived.status, 0, archived.stderr || archived.stdout);
     const entries = readZipEntries(zip, ['manifest.json', 'frontend/houseplan-card.js']);
     assert.equal(typeof JSON.parse(entries.get('manifest.json').toString('utf8')).version, 'string');
-    assert.ok(entries.get('frontend/houseplan-card.js').length > 1_000);
+    const entry = entries.get('frontend/houseplan-card.js');
+    // #337 deliberately turns the public entry into a tiny bootstrap; the
+    // manifest-driven verifier owns completeness of its hashed asset tree.
+    assert.ok(entry.length > 100);
+    assert.match(entry.toString('utf8'), /__HOUSEPLAN_BUILD_FINGERPRINT__/);
     const committedResult = spawnSync('git', ['show', 'HEAD:dist/houseplan-card.js'], {
       cwd: root,
       // The production bundle is larger than Node's spawnSync default buffer.
