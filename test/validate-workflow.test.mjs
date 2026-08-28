@@ -53,6 +53,12 @@ test('бандл собирается один раз и приезжает бр
   assert.equal(builds.length, 1, 'бандл должен собираться ровно в одной job');
   assert.equal(workflow.match(/name: card-bundle/g)?.length, 4,
     'один upload и три download артефакта бандла');
+  assert.equal(workflow.match(/name: card-test-build/g)?.length, 2,
+    'один upload и один download тестового дерева для smoke job');
+  assert.match(workflow, /name: card-test-build\n\s+path: test-build\//,
+    'frontend обязана публиковать созданное npm test дерево test-build');
+  assert.match(workflow, /name: card-test-build\n\s+path: test-build(?:\n|\r)/,
+    'smoke job обязана восстанавливать test-build в ожидаемый import path');
   // Каждая браузерная job раскладывает скачанный бандл по копиям: без этого
   // стенд читает вчерашний файл, а смок врёт согласованно (#236).
   assert.equal(workflow.match(/node scripts\/bundle-sync\.mjs/g)?.length, 3);

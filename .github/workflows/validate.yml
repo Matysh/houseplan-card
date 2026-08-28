@@ -351,6 +351,16 @@ jobs:
           path: dist/
           retention-days: 1
           if-no-files-found: error
+      # Несколько браузерных контрактов импортируют чистые функции из
+      # скомпилированного тестового дерева. Оно создаётся `npm test`, но не
+      # входит в production-бандл и потому едет отдельным артефактом (#336).
+      - name: Выложить тестовые модули для смоков
+        uses: actions/upload-artifact@v7
+        with:
+          name: card-test-build
+          path: test-build/
+          retention-days: 1
+          if-no-files-found: error
 
   smoke:
     name: Смоки в браузере (шард ${{ matrix.shard }} из 3)
@@ -394,6 +404,11 @@ jobs:
         with:
           name: card-bundle
           path: dist
+      - name: Забрать тестовые модули
+        uses: actions/download-artifact@v7
+        with:
+          name: card-test-build
+          path: test-build
       - name: Разложить бандл по копиям
         run: node scripts/bundle-sync.mjs
       - name: Smoke suite (шард ${{ matrix.shard }} из 3)

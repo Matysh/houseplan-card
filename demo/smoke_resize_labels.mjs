@@ -19,7 +19,10 @@ const result = await page.evaluate(async () => {
       .map(([x, y]) => [x / 1000, y / 1000]),
   });
 
-  card._setMode('plan');
+  // This smoke exercises Resize labels, not the View -> editor animation.
+  // Enter atomically so the transition controller cannot settle its saved
+  // camera over the explicit non-default zoom later in this scenario.
+  card._setMode('plan', false);
   card._tool = 'resize';
   const space = card._serverCfg.spaces.find((candidate) => candidate.id === card._space);
   space.rooms = [
