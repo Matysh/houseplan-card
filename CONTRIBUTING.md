@@ -57,7 +57,7 @@ issue, but they do not replace it or maintain a separate checklist.
 ## Five-minute setup
 
 ```bash
-git clone https://github.com/Matysh/houseplan-card && cd houseplan-card
+git clone --filter=blob:none https://github.com/Matysh/houseplan-card && cd houseplan-card
 npm ci                    # frontend toolchain
 npm run typecheck         # tsc --noEmit (strict)
 npm test                  # node:test — pure logic, i18n parity, tap-action security
@@ -65,6 +65,24 @@ npm run build             # tsc + rollup → dist/houseplan-card.js
 pip install pytest voluptuous && python -m pytest tests_backend -q   # pure backend tests
 npm install                # also installs .githooks through the prepare script
 ```
+
+### Why `--filter=blob:none` (#345)
+
+A full clone is **215 MB of `.git`**; a blobless one is **26 MB** — measured, not
+estimated. Both carry all 1611 commits and all 182 tags, so ranges, `merge-base`
+and `git diff` across history work identically; `git diff origin/dev~3..origin/dev`
+in a blobless clone takes about a second and grows `.git` by one megabyte.
+
+The difference is that historical *file contents* are fetched only if something
+actually asks for them. That matters here because 32% of the pack is documentation
+screenshots — ten PNGs re-captured 196 times — and another sizeable share is the
+committed bundle, one 1.16 MB file per product change. Almost nobody ever reads an
+old revision of either.
+
+Drop the flag if you work offline with history, or need `git log -p` over the whole
+tree repeatedly. Do **not** replace it with `--depth=1`: a shallow clone is about
+the same size but has no `merge-base`, so the process gate, `smoke-select` and
+every `origin/dev..HEAD` range stop working.
 
 The HA-harness backend tests (`tests_backend/test_ha_*.py`) need Python ≥3.13 and
 `pytest-homeassistant-custom-component home-assistant-frontend`; CI runs them on
