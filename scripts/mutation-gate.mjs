@@ -645,19 +645,26 @@ const MUTANT_DEFINITIONS = [
         + '  LANGUAGE_REGISTRY,\n'
         + '  BUILD_FINGERPRINT,\n'
         + '  console.warn,\n'
-        + '  (code) => {\n'
-        + '    for (const listener of languageLoadFailureListeners) listener(code);\n'
-        + '  },\n'
+        + '  notifyLanguageLoadFailures,\n'
         + ');',
       replace: 'const twin = new LanguageRuntime(LANGUAGE_REGISTRY, BUILD_FINGERPRINT, '
-        + 'console.warn, (code) => {\n'
-        + '  for (const listener of languageLoadFailureListeners) listener(code);\n'
-        + '});\n'
+        + 'console.warn, notifyLanguageLoadFailures);\n'
         + 'export const LANGUAGE_RUNTIME: LanguageRuntimeContract = {\n'
         + '  state: (code) => twin.state(code),\n'
         + '  dictionary: (code) => twin.dictionary(code),\n'
         + '  ensure: (code) => twin.ensure(code),\n'
         + '};',
+    }],
+  },
+  {
+    id: 'locale-failure-delivery-cut',
+    guard: 'node --test --test-name-pattern="#354" test/i18n-runtime.test.mjs',
+    because: 'cutting the listener loop leaves subscribeLanguageLoadFailures a decoy — the unit '
+      + 'must prove real code delivery, not only unsubscription (#354 r1-M1)',
+    patches: [{
+      file: 'src/i18n/registry.ts',
+      find: '  for (const listener of languageLoadFailureListeners) listener(code);',
+      replace: '  void code;',
     }],
   },
   {

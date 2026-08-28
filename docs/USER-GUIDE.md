@@ -149,7 +149,8 @@ The legacy card-level `tap_action` is ignored. Each marker owns its action.
 and `de-CH` use German. German is downloaded once on first use and shared by
 all House Plan cards on the page. Until it is ready, a neutral busy surface is
 shown instead of briefly flashing English; if both bounded download attempts
-fail, the card becomes usable in English.
+fail, the card becomes usable in English and says so with a "Could not load
+the language pack" toast.
 
 <!-- docs-section: first-run -->
 

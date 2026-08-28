@@ -143,6 +143,11 @@ test('the production runtime is the tested class, not a handwritten twin (#354)'
     /germanPending|germanFailed|settleGerman/,
     'the handwritten duplicate must not return — tests would look past production again',
   );
+  assert.match(
+    source,
+    /new LanguageRuntime\(\s*LANGUAGE_REGISTRY,\s*BUILD_FINGERPRINT,\s*console\.warn,\s*notifyLanguageLoadFailures,\s*\)/,
+    'the runtime must wire its loadFailed hook to the unit-proven delivery function',
+  );
 });
 
 test('a settled dictionary failure reaches the load-failed hook once (#354)', async () => {
@@ -166,15 +171,21 @@ test('a settled dictionary failure reaches the load-failed hook once (#354)', as
 });
 
 test('language load failure subscription delivers codes and unsubscribes (#354)', async () => {
-  const { subscribeLanguageLoadFailures } = await import('../test-build/i18n/registry.js');
+  const { subscribeLanguageLoadFailures, notifyLanguageLoadFailures } =
+    await import('../test-build/i18n/registry.js');
   const seen = [];
   const unsubscribe = subscribeLanguageLoadFailures((code) => seen.push(code));
-  // The registry instance wires its loadFailed hook into these listeners; the
-  // fan-out itself is observable without a network by a second subscriber
-  // triggering through the same set semantics.
   const second = subscribeLanguageLoadFailures((code) => seen.push(`2:${code}`));
+  notifyLanguageLoadFailures('de');
+  assert.deepEqual(seen, ['de', '2:de'], 'every live subscriber receives the failed code');
   unsubscribe();
+  notifyLanguageLoadFailures('de');
+  assert.deepEqual(
+    seen,
+    ['de', '2:de', '2:de'],
+    'an unsubscribed listener stays silent while the rest keep receiving',
+  );
   second();
-  assert.deepEqual(seen, [], 'listeners removed before any failure stay silent');
-  assert.equal(typeof unsubscribe, 'function');
+  notifyLanguageLoadFailures('de');
+  assert.deepEqual(seen, ['de', '2:de', '2:de'], 'no listeners — no deliveries');
 });

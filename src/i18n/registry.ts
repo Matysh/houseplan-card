@@ -56,6 +56,15 @@ export function subscribeLanguageLoadFailures(
 }
 
 /**
+ * Deliver one settled failure to every subscriber. Exported so a unit can
+ * prove the delivery itself (#354 r1-M1) — the runtime below wires its
+ * `loadFailed` hook straight to this function.
+ */
+export function notifyLanguageLoadFailures(code: string): void {
+  for (const listener of languageLoadFailureListeners) listener(code);
+}
+
+/**
  * The production runtime IS the tested class (#354): the previous handwritten
  * object duplicated its logic, so the whole i18n-runtime test suite proved
  * properties of code the card never ran. One page-scoped instance is shared
@@ -66,9 +75,7 @@ export const LANGUAGE_RUNTIME: LanguageRuntimeContract = new LanguageRuntime(
   LANGUAGE_REGISTRY,
   BUILD_FINGERPRINT,
   console.warn,
-  (code) => {
-    for (const listener of languageLoadFailureListeners) listener(code);
-  },
+  notifyLanguageLoadFailures,
 );
 
 /** Return a loaded dictionary, falling back synchronously to English. */
