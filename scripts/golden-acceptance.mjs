@@ -18,7 +18,19 @@
  * позеленел». Именно так эталон перестаёт быть эталоном — молча, одной
  * командой, без единого названного намерения.
  *
- * `missing-baseline` объявления не требует: у новой сцены нет эталона, которому
+ * Новая сцена объявляется отдельно, флагом `--expect-new` (#350). Прежде она
+ * проходила молча, и три кадра каталога устройств стали контрактом без единого
+ * взгляда. Половина прежнего обоснования верна и остаётся: расхождение
+ * растеризации новая сцена выявить не может, для доказательства параллельности
+ * среды годятся только сцены с эталонами. Но правило отвечало лишь на вопрос
+ * «та ли это среда» и молчало про второй — «правильный ли это кадр». Пустой,
+ * обрезанный или снятый в неверном состоянии кадр новая сцена закрепляет ровно
+ * так же надёжно, как испорченный старый.
+ *
+ * Поэтому два флага утверждают разное и не заменяют друг друга:
+ * `--expect-change` — «я знаю, почему старый кадр изменился», `--expect-new` —
+ * «я посмотрел на новый кадр». Путаница между ними тоже запрещена: имя в чужом
+ * флаге останавливает приёмку.
  * она могла бы противоречить.
  *
  * Почему это лежит в `scripts/`, а не рядом с `accept.mjs`. Отпечаток
@@ -31,14 +43,31 @@
  * требует пересборки бандла, потому что сам `source-fingerprint.mjs` в корпусе.
  */
 
-export const goldenAcceptanceRefusal = (results, declared = []) => {
+export const goldenAcceptanceRefusal = (results, declared = [], declaredNew = []) => {
   if (!Array.isArray(results)) return 'отчёт кандидатов не содержит результатов сцен';
   const expected = new Set(declared.filter(Boolean));
-  const known = new Set(results.map((result) => result.id));
-  const unknown = [...expected].filter((id) => !known.has(id));
+  const expectedNew = new Set(declaredNew.filter(Boolean));
+  const statusById = new Map(results.map((result) => [result.id, result.status]));
+
+  const unknown = [...expected, ...expectedNew].filter((id) => !statusById.has(id));
   if (unknown.length) {
-    return `в --expect-change названы сцены, которых нет в отчёте: ${unknown.sort().join(', ')}`;
+    return 'названы сцены, которых нет в отчёте:'
+      + ` ${[...new Set(unknown)].sort().join(', ')}`;
   }
+  // Путаница между флагами — не мелочь: она означает, что ревьюер думал об
+  // одной сцене, а утверждал про другую.
+  const newInWrongFlag = [...expected]
+    .filter((id) => statusById.get(id) === 'missing-baseline').sort();
+  if (newInWrongFlag.length) {
+    return `у этих сцен эталона ещё нет, их место в --expect-new: ${newInWrongFlag.join(', ')}`;
+  }
+  const oldInWrongFlag = [...expectedNew]
+    .filter((id) => statusById.get(id) !== 'missing-baseline').sort();
+  if (oldInWrongFlag.length) {
+    return 'у этих сцен эталон уже есть, их место в --expect-change:'
+      + ` ${oldInWrongFlag.join(', ')}`;
+  }
+
   const undeclared = results
     .filter((result) => result.status === 'different' && !expected.has(result.id))
     .map((result) => result.id)
@@ -49,6 +78,18 @@ export const goldenAcceptanceRefusal = (results, declared = []) => {
       + ' Либо это регрессия рендера, либо среда съёмки не совпадает с раннером —'
       + ' в обоих случаях приёмка запрещена. Намеренные сцены перечисляются в'
       + ' --expect-change=<id,id>';
+  }
+
+  const undeclaredNew = results
+    .filter((result) => result.status === 'missing-baseline' && !expectedNew.has(result.id))
+    .map((result) => result.id)
+    .sort();
+  if (undeclaredNew.length) {
+    return 'у этих сцен эталона ещё нет, и они станут контрактом:'
+      + ` ${undeclaredNew.join(', ')}.`
+      + ' Посмотрите кадры в artifacts/golden/actual — пустой или обрезанный кадр'
+      + ' закрепляется так же надёжно, как испорченный старый, — и перечислите их'
+      + ' в --expect-new=<id,id>';
   }
   return null;
 };

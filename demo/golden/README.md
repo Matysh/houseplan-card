@@ -29,11 +29,15 @@ radial spokes visible instead of hiding them under a translucent room fill.
   source fingerprint. It validates the whole set before copying anything and
   is the only command allowed to update baselines.
 - `scripts/golden-accept.mjs` wraps `accept` and additionally requires the
-  reviewer to declare intent: every scenario whose capture differs from its
-  accepted baseline must be named in `--expect-change=<id,id>`. Anything else
-  that differs refuses the whole acceptance, before a single file is copied.
-  This is what makes a local capture admissible (see below) and it
-  simultaneously blocks the one-command "accept everything so CI turns green".
+  reviewer to declare intent, with two separate flags because they assert two
+  different things. `--expect-change=<id,id>` means "I know why this existing
+  baseline moved"; `--expect-new=<id,id>` means "I have looked at this new
+  frame". Anything that differs, or arrives without a baseline, and is not named
+  refuses the whole acceptance before a single file is copied; naming a scenario
+  under the wrong flag refuses it too. The first flag is what makes a local
+  capture admissible (see below) and blocks the one-command "accept everything so
+  CI turns green"; the second stops an empty or clipped frame from becoming the
+  contract unseen (#350).
 
 ## Workflow
 

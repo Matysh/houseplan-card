@@ -57,12 +57,39 @@ test('приёмка отвергает расхождение в сцене, к
 
 test('приёмка проходит, когда разошлись ровно объявленные сцены (#334)', () => {
   assert.equal(goldenAcceptanceRefusal(
-    results([['a', 'different'], ['b', 'passed'], ['c', 'missing-baseline']]), ['a'],
+    results([['a', 'different'], ['b', 'passed'], ['c', 'missing-baseline']]), ['a'], ['c'],
   ), null);
 });
 
-test('новая сцена объявления не требует: эталона, которому противоречить, нет (#334)', () => {
-  assert.equal(goldenAcceptanceRefusal(results([['new', 'missing-baseline']]), []), null);
+test('новая сцена требует своего объявления, иначе станет контрактом молча (#350)', () => {
+  // Прежнее правило (#334) пропускало её без вопросов: эталона, которому
+  // противоречить, у неё нет. Половина обоснования верна — параллельность среды
+  // новая сцена доказать не может. Но правило молчало про второй вопрос: пустой
+  // или обрезанный кадр закрепляется так же надёжно, как испорченный старый.
+  // Так три эталона каталога устройств уехали в контракт без единого взгляда.
+  const refusal = goldenAcceptanceRefusal(results([['new', 'missing-baseline']]), []);
+  assert.match(refusal, /эталона ещё нет, и они станут контрактом: new/);
+  assert.match(refusal, /--expect-new/);
+  assert.equal(goldenAcceptanceRefusal(results([['new', 'missing-baseline']]), [], ['new']), null);
+});
+
+test('флаги не взаимозаменяемы: имя в чужом останавливает приёмку (#350)', () => {
+  // Путаница означает, что ревьюер думал об одной сцене, а утверждал про другую.
+  assert.match(
+    goldenAcceptanceRefusal(results([['new', 'missing-baseline']]), ['new'], []),
+    /эталона ещё нет, их место в --expect-new: new/,
+  );
+  assert.match(
+    goldenAcceptanceRefusal(results([['old', 'different']]), [], ['old']),
+    /эталон уже есть, их место в --expect-change: old/,
+  );
+});
+
+test('новая сцена не отменяет разбора изменившихся, и наоборот (#350)', () => {
+  const list = results([['old', 'different'], ['new', 'missing-baseline'], ['same', 'passed']]);
+  assert.match(goldenAcceptanceRefusal(list, [], ['new']), /^съёмка разошлась/);
+  assert.match(goldenAcceptanceRefusal(list, ['old'], []), /станут контрактом/);
+  assert.equal(goldenAcceptanceRefusal(list, ['old'], ['new']), null);
 });
 
 test('приёмка без объявлений запрещает «принять всё, чтобы CI позеленел» (#334)', () => {
@@ -77,6 +104,10 @@ test('приёмка без объявлений запрещает «приня
 test('приёмка отвергает объявление сцены, которой нет в отчёте (#334)', () => {
   const refusal = goldenAcceptanceRefusal(results([['a', 'passed']]), ['a', 'опечатка']);
   assert.match(refusal, /которых нет в отчёте: опечатка/);
+  assert.match(
+    goldenAcceptanceRefusal(results([['a', 'passed']]), [], ['опечатка']),
+    /которых нет в отчёте: опечатка/,
+  );
 });
 
 test('приёмка отвергает отчёт без результатов сцен (#334)', () => {
