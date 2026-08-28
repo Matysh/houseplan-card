@@ -681,6 +681,20 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'cold-view-vacuum-mapid-delegated',
+    guard: 'node demo/smoke_cold_view_vacuum.mjs',
+    because: 'map-id resolution runs inside willUpdate for every vacuum with telemetry — the '
+      + '#337 stub threw there on a cold tab and froze the whole Lit update cycle (#358); the '
+      + 'demo mower has no position attributes, so only this telemetry-bearing cold smoke sees it',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '    const ve = this._vacEntity(d);\n'
+        + '    const sel = ve ? planHass?.states?.[ve]?.attributes?.selected_map : null;\n'
+        + '    return vacMapIdWithFallback(tele.mapId, sel);',
+      replace: "    return this._editorRuntimeOrThrow()._vacMapId(d, tele, planHass);",
+    }],
+  },
+  {
     id: 'cold-view-toggle-delegated-to-runtime',
     guard: 'node demo/smoke_cold_view_toggle.mjs',
     because: 'the View card must resolve a tap without the lazy editor runtime — the #337 stub '

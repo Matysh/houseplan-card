@@ -7628,7 +7628,11 @@ export class HouseplanCard extends LitElement {
 
   /** Select tool: pointerdown on a shape starts moving it. */
   private _decorShapeDown(ev: PointerEvent, shape: DecorShape): void {
-    return this._editorRuntimeOrThrow()._decorShapeDown(ev, shape);
+    // #358: decor shapes render in View too; CSS pointer-events alone must
+    // not be what keeps a cold tab from throwing (its twin _decorShapeDbl
+    // got this guard in #337 already).
+    if (!this._editorRuntime) return;
+    return this._editorRuntime._decorShapeDown(ev, shape);
   }
 
   private _decorMoveUpdate(ev: PointerEvent): void {
@@ -11348,7 +11352,7 @@ export class HouseplanCard extends LitElement {
           : nothing}
         ${this._deviceInbox ? this._editorRuntime ? this._renderDeviceInbox() : nothing : nothing}
         ${this._markerDialog ? this._editorRuntime ? this._renderMarkerDialog() : nothing : nothing}
-        ${this._vacCalConfirm ? html`<hp-dialog .hass=${this.hass}
+        ${this._vacCalConfirm ? this._editorRuntime ? html`<hp-dialog .hass=${this.hass}
           .title=${this._t('vac.residual_title')} icon="mdi:map-marker-alert-outline"
           dismiss-on-scrim @hp-close=${() => (this._vacCalConfirm = null)}>
             <div class="body">
@@ -11362,7 +11366,7 @@ export class HouseplanCard extends LitElement {
                 <ha-icon icon="mdi:check"></ha-icon>${this._t('vac.apply_proposal')}
               </button>
             </div>
-        </hp-dialog>` : nothing}
+        </hp-dialog>` : nothing : nothing}
         ${this._infoCard ? this._renderInfoCard() : nothing}
         ${this._rulesDialog ? this._editorRuntime ? this._renderRulesDialog() : nothing : nothing}
         ${this._settingsDialog ? this._editorRuntime ? this._renderSettingsDialog() : nothing : nothing}
@@ -11704,8 +11708,18 @@ export class HouseplanCard extends LitElement {
    * human-readable one on the vacuum entity (selected_map, verified against a
    * live X50 Master) — without this both floors would share one matrix.
    */
-  private _vacMapId(d: DevItem, tele: { mapId: string }, planHass = this._planHass): string {
-    return this._editorRuntimeOrThrow()._vacMapId(d, tele, planHass);
+  /**
+   * #358: map-id resolution belongs to the eager View card — it runs inside
+   * willUpdate for every vacuum with telemetry, and the #337 stub killed the
+   * whole Lit update cycle on a cold tab. Same move as #357: the card owns
+   * the implementation, the editor runtime delegates back.
+   */
+  public _vacMapId(d: DevItem, tele: { mapId: string }, planHass = this._planHass): string {
+    // HP-1541-01: nullish, not truthy — selected_map: 0 is a real map id and
+    // must equal what trails.py resolve_map_id stores server-side.
+    const ve = this._vacEntity(d);
+    const sel = ve ? planHass?.states?.[ve]?.attributes?.selected_map : null;
+    return vacMapIdWithFallback(tele.mapId, sel);
   }
 
   /** Persist a solved matrix into marker.vacuum.calibration[mapId].

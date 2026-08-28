@@ -1095,6 +1095,7 @@ export interface HouseplanEditorHostPort {
   _vacCalConfirm: { markerId: string; source: string; mapId: string; matrix: Affine; rooms: number; error: string; } | null;
   _vacEnsureMarker: (d: DevItem) => Marker | null;
   _vacEntity: (d: DevItem) => string | null;
+  _vacMapId: (d: DevItem, tele: { mapId: string }, planHass?: any) => string;
   _vacFit: { markerId: string; source: string; mapId: string; p: FitParams; drag: null | { kind: "move" | "scale"; sx: number; sy: number; p0: FitParams; fx: number; fy: number; }; } | null;
   _vacOpenAllCameras: (d: DevItem) => void;
   _vacRt: Map<string, { trail: VacPt[]; lastKey: string; lastTs: number; moving: boolean; jump: boolean; endedTs: number; lastPos: VacPt | null; }>;
@@ -9977,11 +9978,9 @@ public _renderVacSection(dlg: any): TemplateResult | typeof nothing {
   }
 
 public _vacMapId(d: DevItem, tele: { mapId: string }, planHass = this.host._planHass): string {
-    // HP-1541-01: nullish, not truthy — selected_map: 0 is a real map id and
-    // must equal what trails.py resolve_map_id stores server-side.
-    const ve = this.host._vacEntity(d);
-    const sel = ve ? planHass?.states?.[ve]?.attributes?.selected_map : null;
-    return vacMapIdWithFallback(tele.mapId, sel);
+    // #358: the View card owns map-id resolution — it runs inside willUpdate
+    // for every vacuum with telemetry on tabs that never load this runtime.
+    return this.host._vacMapId(d, tele, planHass);
   }
 
 public _vacSaveMatrix(markerId: string, source: string, mapId: string, matrix: Affine): boolean {

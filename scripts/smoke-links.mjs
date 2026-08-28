@@ -45,6 +45,14 @@ export const SMOKE_LINKS = [
       + 'reuse and the bounded retry-to-English path cannot be proven from pure registry tests (#348)',
   },
   {
+    symbols: ['vacMapIdWithFallback', 'vacMapIdFromAttrs', 'readVacTelemetry'],
+    smokes: ['smoke_cold_view_vacuum.mjs'],
+    because: 'the telemetry-bearing cold scenario proves the vacuum render path (willUpdate '
+      + 'snapshot, map-id fallback with selected_map: 0, live position frames) survives without '
+      + 'the lazy editor runtime — the demo mower has no position attributes, so every other '
+      + 'smoke skips this branch (#358)',
+  },
+  {
     symbols: [
       'resolveToggleIntent', 'toggleOperation', 'projectedTapAction',
       'toggleOriginOf', 'resolvedLightSources',

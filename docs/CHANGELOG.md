@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- A robot vacuum that reports its live position no longer freezes the card
+  on a freshly opened page: the map-id lookup ran inside the render cycle
+  and required editor code that a cold tab has not loaded yet, so the very
+  first frame was also the last one
+  ([#358](https://github.com/Matysh/houseplan-card/issues/358)).
+
 - Tapping a device on a freshly opened page works again without first
   visiting any editor screen. A wall switch controlling virtual light sources
   (and every other tap-to-toggle device) silently ignored the tap on a cold
