@@ -803,6 +803,7 @@ export class HouseplanCard extends LitElement {
   private _editorRuntimeLoadingVisible = false;
   private _editorRuntimeLoadingTimer?: number;
   private _editorModeRequest = 0;
+  private _warmModeRequest = 0;
   private readonly _editorRuntimeLoader = new EditorRuntimeLoader<
     import('./houseplan-editor-runtime').HouseplanEditorRuntime
   >({
@@ -893,8 +894,19 @@ export class HouseplanCard extends LitElement {
     adopt = false,
   ): Promise<void> {
     const request = ++this._editorModeRequest;
-    if (mode !== 'view' && !(await this._ensureEditorRuntime())) return;
-    if (request !== this._editorModeRequest) return;
+    if (adopt) {
+      this._warmModeRequest = request;
+      if (this._refitRaf) { cancelAnimationFrame(this._refitRaf); this._refitRaf = 0; }
+      this._pendingRefitSize = null;
+    }
+    if (mode !== 'view' && !(await this._ensureEditorRuntime())) {
+      if (this._warmModeRequest === request) this._warmModeRequest = 0;
+      return;
+    }
+    if (request !== this._editorModeRequest || !this.isConnected) {
+      if (this._warmModeRequest === request) this._warmModeRequest = 0;
+      return;
+    }
     if (adopt) {
       this._adoptMode(mode);
       if (this._warmRevivePending) {
@@ -903,6 +915,14 @@ export class HouseplanCard extends LitElement {
         this._warmReviveDialog();
       }
       this.requestUpdate();
+      void this.updateComplete.then(() => requestAnimationFrame(() => requestAnimationFrame(() => {
+        if (this._warmModeRequest !== request || request !== this._editorModeRequest) return;
+        const stage = this._stageEl;
+        this._lastValidStageSize = stage && stage.clientWidth > 0 && stage.clientHeight > 0
+          ? [stage.clientWidth, stage.clientHeight] : null;
+        this._pendingRefitSize = null;
+        this._warmModeRequest = 0;
+      })));
       return;
     }
     this._setMode(mode, animate);
@@ -2526,6 +2546,7 @@ export class HouseplanCard extends LitElement {
     this._motionMedia = undefined;
     if (this._vacRaf) { cancelAnimationFrame(this._vacRaf); this._vacRaf = 0; }
     if (this._refitRaf) { cancelAnimationFrame(this._refitRaf); this._refitRaf = 0; }
+    this._warmModeRequest = 0;
     if (this._dayCycleTimer) { clearInterval(this._dayCycleTimer); this._dayCycleTimer = 0; }
     this._dayCycleClockKey = '';
     if (this._bootSettleRaf) { cancelAnimationFrame(this._bootSettleRaf); this._bootSettleRaf = 0; }
@@ -5856,7 +5877,7 @@ export class HouseplanCard extends LitElement {
 
   /** Recompute the view for a new scene size, preserving zoom and center. */
   private _refitView(): void {
-    if (this._modeTransitionBusy) return;
+    if (this._modeTransitionBusy || this._warmModeRequest) return;
     const stage = this._stageEl;
     // ResizeObserver may deliver a zero/transitional box while a browser tab
     // is frozen or while Lovelace replaces the card. Mutating `_view` from
@@ -6638,6 +6659,7 @@ export class HouseplanCard extends LitElement {
   }
 
   private _setMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate = true): void {
+    this._warmModeRequest = 0;
     if (!this._editorRuntime) {
       if (mode === 'view') {
         // Cancel a pending editor intent without disturbing the unchanged View.
