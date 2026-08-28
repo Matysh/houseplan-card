@@ -22,12 +22,53 @@ const BUILD_INPUTS = [
   'scripts/bundle-manifest.mjs',
 ];
 
+/**
+ * Файлы, которые исполняются ПОСЛЕ того, как картинка снята (#344).
+ *
+ * Критерий один и проверяется чтением: может ли правка этого файла изменить
+ * хотя бы один пиксель в кадре. `accept.mjs` копирует уже снятые PNG в каталог
+ * эталонов и пишет манифест; `policy.mjs` — чистые предикаты, вызываемые до и
+ * после съёмки. Ни тот, ни другой в момент рендера не исполняется вовсе.
+ *
+ * Почему это не косметика. Пока они входили в корпус, правка инструмента
+ * приёмки объявляла устаревшими сразу три вещи: закоммиченный бандл, манифест
+ * скриншотов документации и манифест эталонов. То есть каждая правка `accept.mjs`
+ * стоила пересборки и пересъёмки. В #334 из-за этого правило приёмки пришлось
+ * вынести в `scripts/` и вызывать обёрткой вместо того, чтобы положить его туда,
+ * где ему место.
+ *
+ * Список именно список, а не фильтр по имени: «всё, что похоже на инструмент» —
+ * правило, которое расползётся. Каждый пункт добавляется вручную и обязан
+ * выдерживать вопрос «а как эта правка попадёт в кадр».
+ *
+ * НЕ входят в этот список и входят в корпус: `matrix.mjs` (сцены, вьюпорт,
+ * тема, кадрирование), `harness.mjs` (состояние карточки перед съёмкой),
+ * `run.mjs` (аргументы браузера, опции скриншота, DPR) и все фикстуры
+ * (геометрия снимаемого плана).
+ *
+ * Возражение, которое здесь стоит снять заранее: `run.mjs` импортирует
+ * `policy.mjs`, а `run.mjs` в корпусе — значит ли это, что исключение протекает?
+ * Нет. Из `policy.mjs` он берёт `assertGoldenInvocation` (проверка аргументов,
+ * умеет только бросить), `goldenScenarioSetsMatch` и `goldenRunFailed`
+ * (действительность манифеста и код возврата) и имя файла манифеста. Ни одно из
+ * них не участвует в рендере: байты кадра определяются аргументами браузера и
+ * подготовкой сцены. Если в `policy.mjs` когда-нибудь появится что-то,
+ * влияющее на кадр, файл обязан вернуться в корпус.
+ */
+const POST_CAPTURE_INPUTS = new Set([
+  'demo/golden/accept.mjs',
+  'demo/golden/policy.mjs',
+]);
+
+const repoRelative = (root, file) => relative(root, file).replaceAll('\\', '/');
+
 const fingerprintFiles = (root) => {
   const deterministicFixtureInputs = ['demo/fixtures', 'demo/golden']
     .map((name) => resolve(root, name))
     .filter(existsSync)
     .flatMap(sourceFiles)
-    .filter((file) => file.endsWith('.mjs'));
+    .filter((file) => file.endsWith('.mjs'))
+    .filter((file) => !POST_CAPTURE_INPUTS.has(repoRelative(root, file)));
   return [
     ...sourceFiles(resolve(root, 'src')),
     ...deterministicFixtureInputs,
@@ -48,6 +89,13 @@ const digest = (root, files, normalize) => {
   }
   return hash.digest('hex');
 };
+
+/** Пути, исключённые из корпуса как исполняемые после съёмки (#344). */
+export const postCaptureInputs = () => [...POST_CAPTURE_INPUTS].sort();
+
+/** Файлы корпуса отпечатка относительно корня — для тестов и диагностики. */
+export const fingerprintCorpus = (root = process.cwd()) =>
+  fingerprintFiles(root).map((file) => repoRelative(root, file));
 
 /** Stable digest of frontend sources plus the files that control their build. */
 export const sourceFingerprint = (root = process.cwd()) =>
