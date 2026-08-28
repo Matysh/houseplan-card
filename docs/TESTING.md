@@ -792,7 +792,7 @@ separately promised workflows:
       auto: German locale smoke fault injection]
 - [ ] German View and a representative settings/device dialog fit at desktop
       and 390 px without horizontal overflow or clipped actions [golden: German
-      desktop/mobile scenarios]
+      desktop/mobile scenarios; auto: dialog footer width at desktop and 320 px]
 
 ## Installation / upgrade / removal
 

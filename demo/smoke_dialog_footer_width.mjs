@@ -14,6 +14,13 @@ const desktop = await page.evaluate(async () => {
     await card.updateComplete;
     await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
   };
+  const settleLanguage = async (language) => {
+    for (let attempt = 0; language === 'de' && card._t('btn.save') !== 'Speichern'
+      && attempt < 50; attempt++) {
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      await settle();
+    }
+  };
   card._serverStorage = true;
   card._serverCfg = {
     spaces: [{
@@ -80,6 +87,7 @@ const desktop = await page.evaluate(async () => {
       card._openSpaceDialog('edit', 'dialog-layout');
     }
     await settle();
+    await settleLanguage(language);
     const result = layout(kind, language);
     card._openingDialog = null;
     card._physicalDialog = null;
@@ -89,7 +97,7 @@ const desktop = await page.evaluate(async () => {
   };
 
   const metrics = [];
-  for (const language of ['en', 'ru']) {
+  for (const language of ['en', 'ru', 'de']) {
     metrics.push(await open('opening', language));
     metrics.push(await open('physical', language));
   }
@@ -105,8 +113,15 @@ const narrow = await page.evaluate(async () => {
     await card.updateComplete;
     await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
   };
-  const measure = async (kind) => {
-    card._config = { ...(card._config || {}), language: 'ru' };
+  const settleLanguage = async (language) => {
+    for (let attempt = 0; language === 'de' && card._t('btn.save') !== 'Speichern'
+      && attempt < 50; attempt++) {
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      await settle();
+    }
+  };
+  const measure = async (kind, language = 'ru') => {
+    card._config = { ...(card._config || {}), language };
     card._openingDialog = null;
     card._physicalDialog = null;
     card._spaceDialog = null;
@@ -128,6 +143,7 @@ const narrow = await page.evaluate(async () => {
       card._openSpaceDialog('edit', 'dialog-layout');
     }
     await settle();
+    await settleLanguage(language);
     const root = card.shadowRoot || card.renderRoot;
     const dialog = root.querySelector('hp-dialog');
     const surface = dialog?.shadowRoot?.querySelector('.surface');
@@ -146,6 +162,7 @@ const narrow = await page.evaluate(async () => {
     const buttons = [...(footer?.querySelectorAll('button') || [])];
     const result = {
       kind,
+      language,
       surfaceWidth: Number((surfaceRect?.width || 0).toFixed(2)),
       insideViewport: !!surfaceRect && surfaceRect.left >= -1
         && surfaceRect.right <= innerWidth + 1,
@@ -171,6 +188,9 @@ const narrow = await page.evaluate(async () => {
     physical: await measure('physical'),
     draft: await measure('draft'),
     space: await measure('space'),
+    opening_de: await measure('opening', 'de'),
+    physical_de: await measure('physical', 'de'),
+    space_de: await measure('space', 'de'),
   };
 });
 
@@ -188,7 +208,7 @@ checks.space_dialog_still_uses_medium_shell = desktop.space.widePreset
 checks.space_dialog_footer_not_regressed = desktop.space.buttons === 3
   && desktop.space.oneRow && desktop.space.noHorizontalOverflow;
 
-for (const kind of ['opening', 'physical']) {
+for (const kind of ['opening', 'physical', 'opening_de', 'physical_de']) {
   const metric = narrow[kind];
   checks[`${kind}_narrow_fits_viewport`] = metric.surfaceWidth <= NARROW_WIDTH * 0.94 + 1
     && metric.insideViewport && metric.noHorizontalOverflow && metric.buttonsContained;
@@ -200,6 +220,9 @@ checks.draft_four_actions_remain_contained = narrow.draft.buttons === 4
 checks.space_narrow_not_regressed = narrow.space.buttons === 3
   && narrow.space.insideViewport && narrow.space.noHorizontalOverflow
   && narrow.space.buttonsContained;
+checks.space_de_narrow_not_regressed = narrow.space_de.buttons === 3
+  && narrow.space_de.insideViewport && narrow.space_de.noHorizontalOverflow
+  && narrow.space_de.buttonsContained;
 
 checkAll(checks);
 await finish(browser, {
