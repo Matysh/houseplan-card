@@ -91,14 +91,12 @@ interface LanguageHostElement {
   inert: boolean;
   isConnected: boolean;
   requestUpdate(): void;
-  hasAttribute(name: string): boolean;
   setAttribute(name: string, value: string): void;
   removeAttribute(name: string): void;
 }
 
 const committedHosts = new WeakSet<LanguageHostElement>();
-const localeInertHosts = new WeakSet<LanguageHostElement>();
-const localeBusyHosts = new WeakSet<LanguageHostElement>();
+const pendingHosts = new WeakSet<LanguageHostElement>();
 
 /** Lightweight production render gate; generic controller below remains testable in isolation. */
 export function languageRenderGate(
@@ -108,21 +106,20 @@ export function languageRenderGate(
 ): LanguageRenderGate {
   const state = code ? runtime.state(code) : 'ready';
   if (!code || state !== 'pending') {
-    if (localeInertHosts.delete(host)) host.inert = false;
-    if (localeBusyHosts.delete(host)) host.removeAttribute('aria-busy');
+    if (pendingHosts.delete(host)) {
+      host.inert = false;
+      host.removeAttribute('aria-busy');
+    }
     if (code) {
       host.setAttribute('lang', state === 'fallback' ? 'en' : code);
       committedHosts.add(host);
     }
     return 'ready';
   }
-  if (!host.inert) {
+  if (!pendingHosts.has(host)) {
     host.inert = true;
-    localeInertHosts.add(host);
-  }
-  if (!host.hasAttribute('aria-busy')) {
     host.setAttribute('aria-busy', 'true');
-    localeBusyHosts.add(host);
+    pendingHosts.add(host);
   }
   void runtime.ensure(code).then(() => {
     if (host.isConnected) host.requestUpdate();

@@ -4,4 +4,3 @@ import dictionary from './de.json' with { type: 'json' };
 export const fingerprint = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
 
 export { dictionary };
-
