@@ -569,13 +569,8 @@ export const MUTANTS = [
       + 'understates the wall run — a legitimate thickness-step filler gets refused (#331 §2.3)',
     patches: [{
       file: 'src/junction-limits.ts',
-      find: '      visited.add(candidate);\n'
-        + '      total += length(candidate.a, candidate.b);\n'
-        + '      frontier.push(candidate.a, candidate.b);',
-      replace: '      visited.add(candidate);\n'
-        + '      total += length(candidate.a, candidate.b);\n'
-        + '      frontier.push(candidate.a, candidate.b);\n'
-        + '      break;',
+      find: '    for (const candidate of byNode.get(key(node)) || []) {',
+      replace: '    for (const candidate of (byNode.get(key(node)) || []).slice(0, 1)) {',
     }],
   },
   {
