@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- An outdated tab or third-party client can no longer silently replace a newer
+  saved plan by omitting its configuration revision. House Plan rejects that
+  write as a conflict and keeps the server copy intact; revision-less bootstrap
+  remains available only while the configuration store is empty
+  ([#340](https://github.com/Matysh/houseplan-card/issues/340)).
+
 - A very acute apex between walls of different thickness (say 15 and 30 cm)
   on legacy plans renders as an honest tip again instead of the "trident":
   the inner-face convergence accounts for both thicknesses, not just the

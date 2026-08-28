@@ -1064,8 +1064,12 @@ separately promised workflows:
       duplicate outline is still NOT containment [auto: smoke_inert_openings]
 - [ ] Backend hardening (v1.43.1, audit B2-B5): the admin check fails closed
       when the entry is unavailable; layout/set honours expected_rev; a
-      config/set without expected_rev over a non-empty store logs a warning;
-      NaN/Infinity coordinates and oversized collections are rejected [auto: unit: logic.test]
+      config/set without expected_rev may bootstrap revision zero, but over a
+      non-empty store returns `conflict` without changing config/rev/backup or
+      firing an event (including a no-op body); the production frontend writer
+      inventory requires expected_rev;
+      NaN/Infinity coordinates and oversized collections are rejected
+      [auto: tests_backend/test_ha_websocket.py + coordinate-write-barrier-guard.test]
 - [ ] Save race (v1.43.0, audit L2): make a markup edit, then press Save in any
       dialog within 500 ms (or let another client save) — the markup edit must
       survive and reach the server; a failed reload now shows a toast [auto: unit: tests_backend]

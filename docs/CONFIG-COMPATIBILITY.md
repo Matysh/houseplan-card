@@ -48,6 +48,21 @@ Unknown future fields remain outside this report and continue to follow the
 backend's forward-compatibility policy. Absence from the report is therefore
 not permission to delete a field.
 
+## Revision-less config writers (#340)
+
+The current frontend has sent `expected_rev` with every `config/set` since
+v1.4.4. A client without that field may initialise an empty configuration store
+at revision zero, where no newer work exists to overwrite. Once a document has
+been saved, omission is a `conflict` and leaves the config, revision, backup and
+events unchanged — including when the submitted document would otherwise be a
+semantic no-op.
+
+There is no version-based compatibility window for writes over a non-zero
+revision. Without a server-issued token, an old client and a stale concurrent
+writer produce the same request; accepting either would reopen last-writer-wins
+data loss. This changes only the WebSocket write contract. Stored config,
+model/store versions, exports and read compatibility are unchanged.
+
 ## Stable wall identity — model v8 (#282)
 
 Model v8 adds `space.wall_segments[]`, ordered `rooms[].wall_ids[]`, IDs on

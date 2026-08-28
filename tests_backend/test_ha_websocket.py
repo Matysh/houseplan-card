@@ -1,6 +1,7 @@
 """WebSocket API tests (CI): layout ops, config rev conflict, not_ready gate."""
 import copy
 import json
+import logging
 from pathlib import Path
 
 import pytest
@@ -452,6 +453,91 @@ async def test_config_rev_conflict(hass: HomeAssistant, hass_ws_client: WebSocke
     await client.send_json_auto_id({"type": "houseplan/config/get"})
     resp = await client.receive_json()
     assert resp["result"]["rev"] == 1
+
+
+async def test_issue_340_config_set_without_revision_is_bootstrap_only(
+    hass: HomeAssistant,
+    hass_ws_client: WebSocketGenerator,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """A missing revision may initialise an empty store, never replace it."""
+    from custom_components.houseplan.store import OPTIMIZE_BACKUP, get_data
+
+    await _setup(hass)
+    first_client = await hass_ws_client(hass)
+    stale_client = await hass_ws_client(hass)
+    first_config = {
+        "spaces": [],
+        "markers": [{"id": "first", "binding": "virtual", "name": "First"}],
+        "settings": {},
+    }
+    stale_config = {
+        "spaces": [],
+        "markers": [{"id": "stale-secret", "binding": "virtual", "name": "Stale"}],
+        "settings": {},
+    }
+    config_events: list[dict] = []
+    hass.bus.async_listen(
+        "houseplan_config_updated", lambda event: config_events.append(event.data)
+    )
+
+    # The sole legacy compatibility path: before any document exists there is
+    # no newer work to overwrite.  The write becomes rev 1 under write_lock.
+    await first_client.send_json_auto_id({
+        "type": "houseplan/config/set", "config": copy.deepcopy(first_config),
+    })
+    bootstrap = await first_client.receive_json()
+    await hass.async_block_till_done()
+    assert bootstrap["success"] and bootstrap["result"]["rev"] == 1
+    assert config_events == [{"rev": 1}]
+
+    runtime = get_data(hass)
+    assert runtime is not None
+    stored_before = copy.deepcopy(await runtime.config_store.async_load())
+    backup = {
+        "kind": "optimize",
+        "after_config_rev": 1,
+        "after_layout_rev": 7,
+        "sentinel": "keep",
+    }
+    await runtime.store.async_save({
+        "layout": {}, "rev": 7, OPTIMIZE_BACKUP: copy.deepcopy(backup),
+    })
+    config_events.clear()
+
+    with caplog.at_level(logging.WARNING, logger="custom_components.houseplan.websocket_api"):
+        await stale_client.send_json_auto_id({
+            "type": "houseplan/config/set", "config": copy.deepcopy(stale_config),
+        })
+        rejected = await stale_client.receive_json()
+    await hass.async_block_till_done()
+    assert not rejected["success"]
+    assert rejected["error"]["code"] == "conflict"
+    assert "revision is required" in rejected["error"]["message"].lower()
+    assert await runtime.config_store.async_load() == stored_before
+    assert (await runtime.store.async_load())[OPTIMIZE_BACKUP] == backup
+    assert config_events == []
+    assert "write rejected" in caplog.text
+    assert "stale-secret" not in caplog.text
+
+    # Even an exact semantic no-op may not be used to bypass the CAS guard.
+    await stale_client.send_json_auto_id({
+        "type": "houseplan/config/set", "config": copy.deepcopy(first_config),
+    })
+    noop_without_revision = await stale_client.receive_json()
+    await hass.async_block_till_done()
+    assert not noop_without_revision["success"]
+    assert noop_without_revision["error"]["code"] == "conflict"
+    assert await runtime.config_store.async_load() == stored_before
+    assert config_events == []
+
+    # The same client succeeds after reading and returning the current rev.
+    await stale_client.send_json_auto_id({
+        "type": "houseplan/config/set", "config": copy.deepcopy(stale_config),
+        "expected_rev": 1,
+    })
+    retried = await stale_client.receive_json()
+    assert retried["success"] and retried["result"]["rev"] == 2
 
 
 async def test_canonical_rewrites_are_noops_without_events_or_undo_loss(

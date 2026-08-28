@@ -863,7 +863,7 @@ transmit light is the separate `zero_wall_style` policy.
 | `houseplan/virtual_light/toggle` | `marker_id` | `{marker_id,on,rev}` / err `not_toggleable`; event `houseplan_virtual_light_updated` |
 | `houseplan/trail/get` | — | `{trails: {marker: {current, previous}}}` — vacuum runs, raw robot coords |
 | `houseplan/trail/delete` | `marker_id` | `{ok, removed}` — erase current/previous runs after marker deletion |
-| `houseplan/config/set` | `config`, `expected_rev?` | `{ok, rev}` / err `conflict`; event `houseplan_config_updated` |
+| `houseplan/config/set` | `config`, `expected_rev` | `{ok, rev}` / err `conflict`; event `houseplan_config_updated` |
 | `houseplan/plan/optimize` | `config`, `layout`, both expected revisions | crash-resumable two-store commit + one-deep backup |
 | `houseplan/plan/optimize_undo` | both expected revisions | restores backup only before any later edit |
 | `houseplan/plan/set` | `space_id`, `ext` (svg/png/jpg/webp), `data` (b64, ≤8 MB) | `{ok, url}` — writes `<space>.<token>.<ext>`, deletes nothing |
@@ -877,6 +877,13 @@ transmit light is the separate `zero_wall_style` policy.
 | `houseplan/export/create` | `kind`, `space_id?`, `plan_only?`, `card_version` | consistent versioned JSON document + safe filename; plan-only is valid only for one space |
 | `houseplan/import/revalidate` | preview `token`, `duplicate_policy?` | refreshed bounded preview and current expected revisions |
 | `houseplan/import/apply` | token, both expected revisions, content confirmation | crash-resumable paired config/layout commit; full import gets one-deep undo |
+
+`config/set.expected_rev` is semantically mandatory once a document exists.
+The wire schema permits omission only for the first empty-store bootstrap at
+revision zero, so the endpoint can return the stable `conflict` domain error
+instead of a generic format error. A revision-less write over `rev > 0` is
+rejected under the same `write_lock` before validation, no-op detection,
+backup cleanup, file collection or update events (#340).
 
 The normal frontend reaches `houseplan/plan/optimize` only after the exact
 preview candidate passes `src/plan-geometry-preflight.ts`. That pure barrier

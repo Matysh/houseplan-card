@@ -1294,14 +1294,22 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
         data = await rt.config_store.async_load() or {}
         current_rev = data.get("rev", 0)
         if "expected_rev" not in msg and current_rev:
-            # audit B4: expected_rev stays optional for old cards mid-upgrade,
-            # but a blind overwrite of a non-empty store is worth a warning —
-            # it is exactly how a stale client silently discards someone's work.
+            # #340: a request without the revision it read is indistinguishable
+            # from a stale writer.  Keep the schema field optional only for an
+            # empty-store bootstrap and so this path can return the same stable
+            # domain error as an explicit stale revision.  Accepting it over a
+            # saved document would bypass optimistic locking entirely.
             _LOGGER.warning(
                 "House Plan: config/set without expected_rev over rev %s — "
-                "the client bypasses conflict detection (outdated card?)",
+                "write rejected (outdated client?)",
                 current_rev,
             )
+            connection.send_error(
+                msg["id"], "conflict",
+                f"Configuration revision is required; reload the configuration "
+                f"(current rev {current_rev})",
+            )
+            return
         if "expected_rev" in msg and msg["expected_rev"] != current_rev:
             connection.send_error(
                 msg["id"], "conflict",

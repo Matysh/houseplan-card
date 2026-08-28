@@ -904,6 +904,12 @@ valid choice is made.
 - avoid editing the same object in two browsers: the second save may need a
   refresh and manual reapplication.
 
+Every client that saves the shared configuration must return the revision from
+`houseplan/config/get`. Omitting it is allowed only while the configuration
+store is still empty; afterwards House Plan rejects the save as a conflict
+instead of risking another client's work. If an old cached card repeatedly
+reports conflicts, update House Plan and refresh the dashboard.
+
 ### Files and quotas
 
 Plan files accept SVG/PNG/JPG/WebP up to 8 MB, with a 200-file/256-MB total.

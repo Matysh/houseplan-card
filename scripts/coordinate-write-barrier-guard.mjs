@@ -36,7 +36,7 @@ export function checkCoordinateWriteBarriers(root = defaultRoot) {
   if (configWrites.length !== 1) errors.push(`frontend config writer inventory: ${configWrites.length}`);
   for (const index of configWrites) requireWindow(
     errors, frontend, index,
-    /const canonicalCandidate = canonicalizeConfigGeometry\(candidate\);[\s\S]*config: canonicalCandidate/,
+    /const canonicalCandidate = canonicalizeConfigGeometry\(candidate\);[\s\S]*config: canonicalCandidate,[\s\S]*expected_rev: this\._cfgRev/,
     'frontend config/set', 600,
   );
   if (occurrences(frontend, '._sendConfigCandidate(candidate)').length !== 2) {
