@@ -857,7 +857,7 @@ transmit light is the separate `zero_wall_style` policy.
 | Command | Parameters | Response |
 |---|---|---|
 | `houseplan/layout/get` | — | `{layout: {device_id: {x,y}}, rev}` |
-| `houseplan/layout/set` | `layout`, `expected_rev?` | `{ok, rev}` / err `conflict`; event `houseplan_layout_updated` |
+| `houseplan/layout/set` | `layout`, `expected_rev?` (omission only at `rev=0` bootstrap) | `{ok, rev}` / err `conflict`; event `houseplan_layout_updated` |
 | `houseplan/layout/update` | `device_id`, `pos` | `{ok, rev}`; event `houseplan_layout_updated` |
 | `houseplan/config/get` | — | `{config, rev, virtual_lights:{rev,config_rev,off[]}}` (`virtual_lights` optional for rolling compatibility) |
 | `houseplan/virtual_light/toggle` | `marker_id` | `{marker_id,on,rev}` / err `not_toggleable`; event `houseplan_virtual_light_updated` |

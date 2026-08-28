@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- A stale or third-party client can no longer silently replace saved device
+  positions by sending a whole layout without its revision. Revision-less
+  bootstrap remains available only while the layout store is empty
+  ([#356](https://github.com/Matysh/houseplan-card/issues/356)).
+
 - Room temperature and humidity now follow where a real sensor is placed in
   House Plan instead of remaining in its Home Assistant Area. This also gives
   automatic climate values to rooms without an HA Area; labels, tooltips and

@@ -568,9 +568,9 @@ async def ws_layout_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
     """Replace the layout entirely, with optimistic locking (audit B3).
 
     Wholesale layout writes used to have no revision check at all, so two
-    clients silently overwrote each other. `expected_rev` is optional for
-    backwards compatibility with older cards, but when supplied it is enforced
-    exactly like the config store does.
+    clients silently overwrote each other. `expected_rev` remains schema-
+    optional only for an empty-store bootstrap; once a saved layout exists it
+    is required semantically and is enforced exactly like the config store.
     """
     if not _check_write(hass, connection):
         connection.send_error(msg["id"], "unauthorized", "Only administrators may edit the layout")
@@ -582,6 +582,22 @@ async def ws_layout_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
         config_data = await rt.config_store.async_load() or {}
         data = await rt.store.async_load() or {}
         current_rev = int(data.get("rev", 0))
+        if "expected_rev" not in msg and current_rev:
+            # #356: without the revision the client read, a wholesale write is
+            # indistinguishable from a stale writer.  Keep the schema field
+            # optional only for rev-zero bootstrap and return the stable domain
+            # conflict here rather than allowing canonical no-op to bypass CAS.
+            _LOGGER.warning(
+                "House Plan: layout/set without expected_rev over rev %s — "
+                "write rejected (outdated client?)",
+                current_rev,
+            )
+            connection.send_error(
+                msg["id"], "conflict",
+                f"Layout revision is required; reload the layout "
+                f"(current rev {current_rev})",
+            )
+            return
         if "expected_rev" in msg and msg["expected_rev"] != current_rev:
             connection.send_error(
                 msg["id"], "conflict", f"Layout changed elsewhere (rev {current_rev})"

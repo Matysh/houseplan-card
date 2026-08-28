@@ -1109,11 +1109,11 @@ separately promised workflows:
       L-shaped parent is accepted and punches the evenodd hole; a traced
       duplicate outline is still NOT containment [auto: smoke_inert_openings]
 - [ ] Backend hardening (v1.43.1, audit B2-B5): the admin check fails closed
-      when the entry is unavailable; layout/set honours expected_rev; a
-      config/set without expected_rev may bootstrap revision zero, but over a
-      non-empty store returns `conflict` without changing config/rev/backup or
-      firing an event (including a no-op body); the production frontend writer
-      inventory requires expected_rev;
+      when the entry is unavailable; layout/set and config/set without
+      expected_rev may bootstrap revision zero, but over a non-empty store each
+      returns `conflict` without changing its document/rev/backups or firing an
+      event (including a no-op body); explicit stale revisions are rejected; a
+      production config-writer inventory requires expected_rev;
       NaN/Infinity coordinates and oversized collections are rejected
       [auto: tests_backend/test_ha_websocket.py + coordinate-write-barrier-guard.test]
 - [ ] Save race (v1.43.0, audit L2): make a markup edit, then press Save in any

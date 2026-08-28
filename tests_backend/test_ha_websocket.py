@@ -540,6 +540,86 @@ async def test_issue_340_config_set_without_revision_is_bootstrap_only(
     assert retried["success"] and retried["result"]["rev"] == 2
 
 
+async def test_issue_356_layout_set_without_revision_is_bootstrap_only(
+    hass: HomeAssistant,
+    hass_ws_client: WebSocketGenerator,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """A revision-less wholesale layout may initialise, never replace, a store."""
+    from custom_components.houseplan.store import OPTIMIZE_BACKUP, get_data
+
+    await _setup(hass)
+    first_client = await hass_ws_client(hass)
+    stale_client = await hass_ws_client(hass)
+    first_layout = {"first": {"s": "floor", "x": 0.2, "y": 0.3}}
+    stale_layout = {"stale-secret": {"s": "floor", "x": 0.8, "y": 0.7}}
+    layout_events: list[dict] = []
+    hass.bus.async_listen(
+        "houseplan_layout_updated", lambda event: layout_events.append(event.data)
+    )
+
+    # Revision zero has no saved work to overwrite, so it is the sole
+    # compatibility path that may omit expected_rev.
+    await first_client.send_json_auto_id({
+        "type": "houseplan/layout/set", "layout": copy.deepcopy(first_layout),
+    })
+    bootstrap = await first_client.receive_json()
+    await hass.async_block_till_done()
+    assert bootstrap["success"] and bootstrap["result"]["rev"] == 1
+    assert layout_events == [{"rev": 1}]
+
+    runtime = get_data(hass)
+    assert runtime is not None
+    backup = {
+        "kind": "optimize",
+        "after_config_rev": 4,
+        "after_layout_rev": 1,
+        "sentinel": "keep",
+    }
+    stored_before = copy.deepcopy(await runtime.store.async_load())
+    await runtime.store.async_save({
+        **stored_before, OPTIMIZE_BACKUP: copy.deepcopy(backup),
+    })
+    stored_before = copy.deepcopy(await runtime.store.async_load())
+    layout_events.clear()
+
+    with caplog.at_level(
+        logging.WARNING, logger="custom_components.houseplan.websocket_api",
+    ):
+        await stale_client.send_json_auto_id({
+            "type": "houseplan/layout/set", "layout": copy.deepcopy(stale_layout),
+        })
+        rejected = await stale_client.receive_json()
+    await hass.async_block_till_done()
+    assert not rejected["success"]
+    assert rejected["error"]["code"] == "conflict"
+    assert "revision is required" in rejected["error"]["message"].lower()
+    assert await runtime.store.async_load() == stored_before
+    assert layout_events == []
+    assert "write rejected" in caplog.text
+    assert "stale-secret" not in caplog.text
+
+    # An equal body is still a write attempt and must not bypass the CAS guard.
+    await stale_client.send_json_auto_id({
+        "type": "houseplan/layout/set", "layout": copy.deepcopy(first_layout),
+    })
+    noop_without_revision = await stale_client.receive_json()
+    await hass.async_block_till_done()
+    assert not noop_without_revision["success"]
+    assert noop_without_revision["error"]["code"] == "conflict"
+    assert await runtime.store.async_load() == stored_before
+    assert layout_events == []
+
+    # Reading and returning the current revision preserves the ordinary path.
+    await stale_client.send_json_auto_id({
+        "type": "houseplan/layout/set",
+        "layout": copy.deepcopy(stale_layout),
+        "expected_rev": 1,
+    })
+    retried = await stale_client.receive_json()
+    assert retried["success"] and retried["result"]["rev"] == 2
+
+
 async def test_canonical_rewrites_are_noops_without_events_or_undo_loss(
     hass: HomeAssistant, hass_ws_client: WebSocketGenerator
 ) -> None:
