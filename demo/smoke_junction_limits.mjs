@@ -183,14 +183,16 @@ const handle = await page.evaluate(() => {
   return { start: map(cx, cy), end: map(cx + (6 / 2) * (1000 / 240), cy) };
 });
 
-// #330 AC4: в одном жесте baseline считается один раз — N move дают N+1
-// вызовов _junctionLimitViolations (кандидаты + один baseline), не 2N.
+// #330 AC4 (код-ревью r2-M1: общий счётчик не различал кэш — 11 против 12
+// вызовов тонули в шуме). Считаем ОТДЕЛЬНО вычисления baseline: вызовы
+// _junctionLimitViolations с документом === _serverCfg. С кэшем их ровно
+// один на жест; без кэша — по одному на каждый pointermove.
 await page.evaluate(() => {
   const card = window.__card;
-  window.__jlCalls = 0;
+  window.__jlBaselineCalls = 0;
   const original = card._junctionLimitViolations.bind(card);
   card._junctionLimitViolations = (...args) => {
-    window.__jlCalls += 1;
+    if (args[0] === card._serverCfg) window.__jlBaselineCalls += 1;
     return original(...args);
   };
 });
@@ -209,11 +211,47 @@ if (handle) {
   resize.resizeStoppedAtLastAllowed = await gapCm();
   resize.resizeRefusalNamesRule = toasts.some((text) => text.includes('5'));
   resize.resizeRefusalOnce = toasts.length;
-  const jlCalls = await page.evaluate(() => window.__jlCalls);
-  // Жест из 10 move: без кэша (#330 §4.4) было бы ~2N вызовов; с кэшем —
-  // N кандидатов + один baseline. Верхняя граница с запасом на дребезг
-  // квантования шагов, но заведомо ниже 2N.
-  resize.resizeBaselineCachedPerGesture = jlCalls > 0 && jlCalls <= 12;
+  const baselineCalls = await page.evaluate(() => window.__jlBaselineCalls);
+  // Ровно одно вычисление baseline на жест: второй и дальнейшие move обязаны
+  // попадать в кэш (#330 §4.4). Без кэша здесь было бы ~10 — порог различает
+  // рабочий кэш от отключённого без права на шум.
+  resize.resizeBaselineComputedOncePerGesture = baselineCalls === 1;
+
+  // Обратная сторона (r2-M1): кэш обязан ЧЕСТНО инвалидироваться. Первый
+  // жест закоммитил план — геометрия baseline изменилась, и второй жест
+  // обязан пересчитать его ровно один раз. Вечный кэш оставил бы счётчик на
+  // 1, отключённый — унёс к ~20; ожидание строго 2 различает все три мира.
+  const second = await page.evaluate(() => {
+    const card = window.__card;
+    const handles = [...card.renderRoot.querySelectorAll('.rszhandle[aria-disabled="false"]')];
+    const rooms = card._curSpaceCfg.rooms;
+    const aRight = Math.max(...rooms.find((room) => room.name === 'A').poly.map((p) => p[0])) * 1000;
+    const found = handles.find((entry) => Math.abs(Number(entry.getAttribute('cx')) - aRight) < 1.5);
+    if (!found) return null;
+    const svg = found.ownerSVGElement;
+    const map = (x, y) => {
+      const point = svg.createSVGPoint();
+      point.x = x; point.y = y;
+      const mapped = point.matrixTransform(found.getScreenCTM());
+      return [mapped.x, mapped.y];
+    };
+    const cx = Number(found.getAttribute('cx'));
+    const cy = Number(found.getAttribute('cy'));
+    // Один шаг назад: законное движение, границы П4 не задевает.
+    return { start: map(cx, cy), end: map(cx - (2 / 2) * (1000 / 240), cy) };
+  });
+  resize.resizeSecondHandleFound = !!second;
+  if (second) {
+    await page.mouse.move(...second.start);
+    await page.mouse.down();
+    await page.mouse.move(...second.end, { steps: 6 });
+    await settle();
+    await page.mouse.up();
+    await settle();
+    await page.waitForTimeout(700);
+    const afterSecond = await page.evaluate(() => window.__jlBaselineCalls);
+    resize.resizeBaselineRecomputedAfterCommit = afterSecond === 2;
+  }
 }
 
 checkAll({ ...out, ...resize }, {

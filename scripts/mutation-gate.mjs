@@ -563,13 +563,18 @@ export const MUTANTS = [
   },
   {
     id: 'junction-limit-baseline-cache-stale',
-    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+    // r2-M1: the behavioural guard — the smoke counts BASELINE computations
+    // (exactly one per gesture with a working cache, one per pointermove
+    // without) — plus the source-contract unit stays as the cheap first line.
+    guard: 'node demo/smoke_junction_limits.mjs '
+      + '&& npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="#330 AC4" test/junction-limits.test.mjs',
     because: 'a baseline cache that survives a config epoch change serves verdicts of a '
       + 'plan that no longer exists — the epoch check IS the invalidation contract (#330 §4.4)',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: "    if (cached && cached.epoch === this._cfgEpoch && cached.spaceId === spaceId) {",
+      find: "    if (cached && fingerprint && cached.fingerprint === fingerprint\n"
+        + '        && cached.spaceId === spaceId) {',
       replace: '    if (cached && cached.spaceId === spaceId) {',
     }],
   },

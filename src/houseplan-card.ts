@@ -7498,9 +7498,9 @@ class HouseplanCard extends LitElement {
     });
   }
 
-  /** #330 §4.4: baseline violations per (document identity, epoch, space). */
+  /** #330 §4.4: baseline violations per (document identity, space, geometry). */
   private _junctionBaselineCache = new WeakMap<object, {
-    epoch: number; spaceId: string; violations: JunctionLimitViolation[];
+    spaceId: string; fingerprint: string; violations: JunctionLimitViolation[];
   }>();
 
   /** #329: violations this write would ADD; inherited ones stay untouched. */
@@ -7517,12 +7517,21 @@ class HouseplanCard extends LitElement {
     // re-migration cost 69 ms per pointermove on a 576-atom plan.
     let inherited: JunctionLimitViolation[] | undefined;
     // #330 §4.4: a resize gesture judges the SAME previous document on every
-    // pointermove. Object identity plus the config epoch make the cache both
-    // exact and self-invalidating — any real write bumps the epoch, and a
-    // freshly built baseline object simply never hits.
+    // pointermove. The cache key is the document's identity plus the
+    // geometry fingerprint of ITS space — content, not a counter: the
+    // preview epoch (_cfgEpoch) ticks on every accepted preview overlay
+    // without the stored document changing (that miss cost one full baseline
+    // pass per pointermove, review 330-r2), while an in-place structural
+    // commit changes the fingerprint and honestly invalidates.
+    const previousSpace = (previousConfig?.spaces || [])
+      .find((space: any) => space?.id === spaceId);
+    let fingerprint = '';
+    try { fingerprint = spacePhysicalGeometryFingerprint(previousSpace); }
+    catch { fingerprint = ''; }
     const cached = previousConfig && typeof previousConfig === 'object'
       ? this._junctionBaselineCache.get(previousConfig) : undefined;
-    if (cached && cached.epoch === this._cfgEpoch && cached.spaceId === spaceId) {
+    if (cached && fingerprint && cached.fingerprint === fingerprint
+        && cached.spaceId === spaceId) {
       inherited = cached.violations;
     }
     if (!inherited) {
@@ -7536,9 +7545,9 @@ class HouseplanCard extends LitElement {
         // refuse the write on that basis.
         return [];
       }
-      if (previousConfig && typeof previousConfig === 'object') {
+      if (previousConfig && typeof previousConfig === 'object' && fingerprint) {
         this._junctionBaselineCache.set(previousConfig, {
-          epoch: this._cfgEpoch, spaceId, violations: inherited,
+          spaceId, fingerprint, violations: inherited,
         });
       }
     }

@@ -390,8 +390,10 @@ test('#330 AC4: кэш baseline инвалидируется по конфиг-�
     source.indexOf('private _junctionLimitsIntroduced('),
     source.indexOf('private _commitPhysicalGeometry('),
   );
-  assert.match(method, /cached\.epoch === this\._cfgEpoch/,
-    'кэш baseline обязан сверять конфиг-эпоху — иначе он переживает write и судит план, которого больше нет');
+  assert.match(method, /cached\.fingerprint === fingerprint/,
+    'кэш baseline обязан сверять геометрический fingerprint — счётчик превью тикает без изменения документа, а in-place commit меняет геометрию без смены identity');
+  assert.match(method, /spacePhysicalGeometryFingerprint\(previousSpace\)/,
+    'fingerprint берётся от пространства baseline-документа');
   assert.match(method, /_junctionBaselineCache\.set\(previousConfig/,
     'кэш ключуется идентичностью документа');
   assert.match(method, />= WALL_SEGMENT_MODEL_VERSION\s*\n?\s*\? previousConfig/,
