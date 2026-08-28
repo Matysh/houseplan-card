@@ -39,7 +39,7 @@ mutation evidence в одном pull request.
 | S02 | cover — побочная capability при light/role | `source.cover_capability_bypassed` | cover не перехватывает выбранный face | normal | `presentation-source-decision-trace`; `presentation-row-contract` |
 | S03 | есть active external controls | `source.controls` + `availability.controller_available` | status берётся от целей, availability — от контроллера | normal | `controller-availability-follows-target`; `presentation-row-contract` |
 | S04 | цели unavailable, controller имеет live diagnostic | `availability.controller_available` | доступная нейтральная подложка, не `unavail` | normal | `controller-diagnostics-do-not-prove-online`; `presentation-row-contract` |
-| S05 | цель работает, controller не имеет live entity | `availability.controller_unavailable` | faded controller; нет yellow/pulse | normal action сохраняется | `controller-availability-follows-target`; `presentation-row-contract` |
+| S05 | у controller есть собственные entities, но ни одной live entity; цель работает | `availability.controller_unavailable` | faded controller; нет yellow/pulse | normal action сохраняется | `controller-availability-follows-target`; `presentation-row-contract` |
 | S06 | virtual controller + controls | `source.virtual_controller` | controller доступен; status следует цели | normal | `presentation-source-decision-trace`; `presentation-row-contract` |
 | S07 | все saved controls отфильтрованы tombstone | `source.filtered_saved_controls` | controller-role сохранён, availability дают свои diagnostics | normal | `wireless-controller-loses-filtered-target-role`; `wireless-controller-preview-drops-sibling-markers` |
 | S08 | manual virtual light с outgoing controls | `source.manual_virtual_light` | собственный manual source владеет face | normal | `presentation-source-decision-trace`; `presentation-row-contract` |
@@ -49,6 +49,7 @@ mutation evidence в одном pull request.
 | S12 | пригодного source нет | `source.none` | neutral base-icon fallback | normal | `presentation-source-decision-trace`; `presentation-row-contract` |
 | S13 | critical alarm sibling вне обычного source | `source.critical_sibling` + `status.alarm` | alarm добавлен в aggregate и побеждает normal status | normal | `device-presentation-policy-alarm`; `presentation-row-contract` |
 | S14 | static plan fast path без source details | `source.skipped_static_fast_path` | source graph намеренно не вычисляется; static face остаётся neutral | normal; без source-derived данных | `presentation-static-source-fast-path`; `presentation-row-contract` |
+| S15 | active physical `device:` controller с пустым собственным roster + controls | `availability.controller_available` | status следует цели: working = yellow, off/unavailable/missing = neutral; controller не faded | normal | `entityless-active-controller-stays-available`; `presentation-row-contract` |
 
 ## Финальное лицо, контент и диагностика
 

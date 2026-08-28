@@ -231,10 +231,10 @@ npm run bundle:budget
 node scripts/check-docs.mjs
 node scripts/smoke-select.mjs --base origin/dev --head HEAD
 node demo/smoke_wireless_controller_parity.mjs
-node scripts/mutation-gate.mjs --only <new-empty-roster-mutant>
-node scripts/mutation-gate.mjs --only controller-availability-follows-target
-node scripts/mutation-gate.mjs --only wireless-controller-loses-filtered-target-role
-node scripts/mutation-gate.mjs --only wireless-controller-preview-drops-sibling-markers
+node scripts/mutation-gate.mjs --id=<new-empty-roster-mutant>
+node scripts/mutation-gate.mjs --id=controller-availability-follows-target
+node scripts/mutation-gate.mjs --id=wireless-controller-loses-filtered-target-role
+node scripts/mutation-gate.mjs --id=wireless-controller-preview-drops-sibling-markers
 ```
 
 Если `smoke-select` выберет дополнительные smokes, они также обязательны.

@@ -601,8 +601,13 @@ For a controller with `controls`, target work and controller availability are
 independent. The controlled lights still decide whether the marker is yellow,
 but only the controller's own active entities decide whether it fades. A live
 battery, Zigbee LQI or update entity therefore keeps a wireless switch neutral
-and opaque when all of its lamps are unavailable. A controller with no live own
-entity fades even if a target is on; a virtual controller is always available.
+and opaque when all of its lamps are unavailable. If an active physical HA
+device exposes no entities at all, House Plan also keeps its controller opaque:
+missing telemetry alone is not evidence that the device is offline, so its
+controlled target makes it yellow when working and neutral otherwise. If the
+device does expose own entities but all of them are missing, `unknown` or
+`unavailable`, the controller fades even if a target is on. A virtual controller
+is always available.
 This remains true when the same target was separately removed from the plan:
 the removed marker is not restored, but it cannot make the controller look
 offline or make its editor preview disagree with the plan.

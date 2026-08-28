@@ -352,6 +352,105 @@ test('issue 251 separates controller availability from controlled target status'
   assert.ok(alarm.classes.includes('alarm'));
 });
 
+test('issue 318 keeps an active entityless physical controller available', () => {
+  const h = hass({
+    'light.wall_group': state('light.wall_group', 'on', { friendly_name: 'Wall lights' }),
+  }, {
+    'light.wall_group': {
+      entity_id: 'light.wall_group', device_id: 'lights', platform: 'demo',
+    },
+  });
+  const controller = device({
+    id: 'entityless-wall', name: 'Entityless wall switch', entities: [], primary: null,
+    bindingRef: 'entityless-wall',
+    bindingStatus: { kind: 'active', enabledEntityIds: [], allEntityIds: [] },
+    marker: {
+      id: 'entityless-wall', binding: 'device:entityless-wall', tap_action: 'toggle',
+      controls: ['light.wall_group'],
+    },
+  });
+
+  let result = resolveDevicePresentation(h, controller, options);
+  assert.equal(result.sourceKind, 'controls');
+  assert.deepEqual(result.visual, {
+    availability: 'available', status: 'working', activity: 'running',
+  });
+  assert.ok(result.classes.includes('on'));
+  assert.ok(!result.classes.includes('unavail'));
+  assert.equal(deviceA11yState(result), 'working');
+
+  h.states['light.wall_group'].state = 'off';
+  result = resolveDevicePresentation(h, controller, options);
+  assert.deepEqual(result.visual, {
+    availability: 'available', status: 'neutral', activity: 'none',
+  });
+  assert.ok(!result.classes.includes('on'));
+  assert.ok(!result.classes.includes('unavail'));
+  assert.equal(deviceA11yState(result), 'neutral');
+
+  h.states['light.wall_group'].state = 'unavailable';
+  result = resolveDevicePresentation(h, controller, options);
+  assert.deepEqual(result.visual, {
+    availability: 'available', status: 'neutral', activity: 'none',
+  });
+
+  delete h.states['light.wall_group'];
+  result = resolveDevicePresentation(h, controller, options);
+  assert.equal(result.visual.availability, 'available');
+  assert.equal(result.visual.status, 'neutral');
+
+  const runtimeFiltered = resolveDevicePresentation(h, {
+    ...controller,
+    controls: [],
+  }, options);
+  assert.equal(runtimeFiltered.sourceKind, 'none');
+  assert.deepEqual(runtimeFiltered.visual, {
+    availability: 'available', status: 'neutral', activity: 'none',
+  });
+
+  h.states['light.wall_group'] = state('light.wall_group', 'on');
+  const provenOffline = resolveDevicePresentation(h, {
+    ...controller,
+    entities: ['event.entityless_wall_action'],
+    primary: 'event.entityless_wall_action',
+    bindingStatus: {
+      kind: 'active',
+      enabledEntityIds: ['event.entityless_wall_action'],
+      allEntityIds: ['event.entityless_wall_action'],
+    },
+  }, options);
+  assert.equal(provenOffline.visual.availability, 'unavailable');
+  assert.equal(provenOffline.visual.status, 'working');
+  assert.ok(provenOffline.classes.includes('unavail'));
+  assert.ok(!provenOffline.classes.includes('on'));
+  assert.equal(deviceA11yState(provenOffline), 'unavailable');
+
+  const entityBinding = resolveDevicePresentation(h, {
+    ...controller,
+    bindingKind: 'entity', bindingRef: 'switch.entityless_wall',
+    marker: {
+      ...controller.marker,
+      binding: 'entity:switch.entityless_wall',
+    },
+  }, options);
+  assert.equal(entityBinding.visual.availability, 'unavailable');
+
+  const orphaned = resolveDevicePresentation(h, {
+    ...controller,
+    bindingStatus: { kind: 'orphaned', reason: 'device_missing' },
+  }, options);
+  assert.equal(orphaned.visual.availability, 'unavailable');
+
+  const virtual = resolveDevicePresentation(h, {
+    ...controller,
+    virtual: true,
+    bindingKind: 'virtual', bindingRef: '',
+    marker: { ...controller.marker, binding: 'virtual' },
+  }, options);
+  assert.equal(virtual.visual.availability, 'available');
+  assert.equal(virtual.visual.status, 'working');
+});
+
 test('issue 274 keeps a wireless controller available and gives its draft the full marker roster', () => {
   const own = [
     'event.wall_action', 'sensor.wall_battery', 'sensor.wall_linkquality', 'update.wall',

@@ -155,6 +155,138 @@ const out = await page.evaluate(async () => {
   result.activeTargetWorksOnBothSurfaces = activePresentation.visual.status === 'working'
     && activePreview?.presentation?.visual?.status === 'working';
 
+  // #318: an active physical HA device may legitimately expose no entity
+  // registry rows. Empty telemetry is not evidence that this controller is
+  // offline; plan and preview must follow only the external target status.
+  const entitylessDeviceId = 'issue-318-entityless-device';
+  const entitylessMarkerId = 'issue-318-entityless-marker';
+  const entitylessTarget = 'light.issue_318_target';
+  const entitylessTargetDeviceId = 'issue-318-lights';
+  const entitylessMarker = {
+    id: entitylessMarkerId,
+    binding: `device:${entitylessDeviceId}`,
+    name: 'Issue 318 entityless switch',
+    icon: 'mdi:light-switch',
+    tap_action: 'toggle',
+    controls: [entitylessTarget],
+    space: c._space,
+    area: room.area,
+  };
+  c.hass = {
+    ...c.hass,
+    devices: {
+      ...c.hass.devices,
+      [entitylessDeviceId]: {
+        id: entitylessDeviceId,
+        name: 'Issue 318 entityless switch',
+        model: 'Entityless wireless switch',
+        area_id: room.area,
+        identifiers: [['demo', entitylessDeviceId]],
+        entry_type: null,
+        via_device_id: null,
+      },
+      [entitylessTargetDeviceId]: {
+        id: entitylessTargetDeviceId,
+        name: 'Issue 318 lights',
+        model: 'Demo light group',
+        area_id: room.area,
+        identifiers: [['demo', entitylessTargetDeviceId]],
+        entry_type: null,
+        via_device_id: null,
+      },
+    },
+    entities: {
+      ...c.hass.entities,
+      [entitylessTarget]: {
+        entity_id: entitylessTarget,
+        device_id: entitylessTargetDeviceId,
+        platform: 'demo',
+      },
+    },
+    states: {
+      ...c.hass.states,
+      [entitylessTarget]: { entity_id: entitylessTarget, state: 'on', attributes: {} },
+    },
+  };
+  c._serverCfg = {
+    ...c._serverCfg,
+    markers: [
+      ...c._serverCfg.markers.filter((item) => item.id !== entitylessMarkerId),
+      entitylessMarker,
+    ],
+  };
+  c._layout = {
+    ...c._layout,
+    [entitylessMarkerId]: { s: c._space, x: 0.58, y: 0.5 },
+  };
+  c._regSignature = '';
+  c._maybeRebuildDevices();
+  c._setMode('view');
+  c.requestUpdate();
+  await c.updateComplete;
+
+  const entitylessController = () => c._devices.find((item) => item.id === entitylessMarkerId);
+  const onPresentation = c._devicePresentation(entitylessController(), true);
+  const onElement = sr().querySelector(`.dev[data-id="${entitylessMarkerId}"]`);
+  result.entitylessDeviceHasEmptyRoster = entitylessController()?.entities?.length === 0;
+  result.entitylessOnIsAvailableWorking = onPresentation.visual.availability === 'available'
+    && onPresentation.visual.status === 'working'
+    && onElement?.getAttribute('data-state') === 'working'
+    && !onElement?.classList.contains('unavail');
+
+  c._setMode('devices');
+  await c.updateComplete;
+  c._openMarkerDialog(entitylessController());
+  await c.updateComplete;
+  const entitylessPreview = sr().querySelector('hp-device-preview');
+  await entitylessPreview?.updateComplete;
+  result.entitylessPreviewMatchesOnPlan = entitylessPreview?.presentation?.visual?.availability
+      === onPresentation.visual.availability
+    && entitylessPreview?.presentation?.visual?.status === onPresentation.visual.status
+    && entitylessPreview?.presentation?.sourceKind === onPresentation.sourceKind
+    && JSON.stringify(entitylessPreview?.presentation?.classes)
+      === JSON.stringify(onPresentation.classes);
+
+  c.hass = {
+    ...c.hass,
+    states: {
+      ...c.hass.states,
+      [entitylessTarget]: { ...c.hass.states[entitylessTarget], state: 'off' },
+    },
+  };
+  c.requestUpdate();
+  await c.updateComplete;
+  await entitylessPreview?.updateComplete;
+  const offPresentation = c._devicePresentation(entitylessController(), true, true);
+  result.entitylessOffIsAvailableNeutralEverywhere = offPresentation.visual.availability
+      === 'available'
+    && offPresentation.visual.status === 'neutral'
+    && entitylessPreview?.presentation?.visual?.availability === 'available'
+    && entitylessPreview?.presentation?.visual?.status === 'neutral'
+    && entitylessPreview?.presentation?.sourceKind === offPresentation.sourceKind
+    && JSON.stringify(entitylessPreview?.presentation?.classes)
+      === JSON.stringify(offPresentation.classes);
+
+  c.hass = {
+    ...c.hass,
+    states: {
+      ...c.hass.states,
+      [entitylessTarget]: { ...c.hass.states[entitylessTarget], state: 'unavailable' },
+    },
+  };
+  c.requestUpdate();
+  await c.updateComplete;
+  await entitylessPreview?.updateComplete;
+  const unavailableTargetPresentation = c._devicePresentation(entitylessController(), true, true);
+  result.entitylessUnavailableTargetIsAvailableNeutralEverywhere
+    = unavailableTargetPresentation.visual.availability === 'available'
+    && unavailableTargetPresentation.visual.status === 'neutral'
+    && entitylessPreview?.presentation?.visual?.availability === 'available'
+    && entitylessPreview?.presentation?.visual?.status === 'neutral'
+    && entitylessPreview?.presentation?.sourceKind === unavailableTargetPresentation.sourceKind
+    && JSON.stringify(entitylessPreview?.presentation?.classes)
+      === JSON.stringify(unavailableTargetPresentation.classes);
+
   return result;
 });
 

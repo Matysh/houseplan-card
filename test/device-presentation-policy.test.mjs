@@ -208,6 +208,14 @@ const rowRunners = {
     assert.equal(r.sourceKind, 'none');
     assert.deepEqual(r.visual, neutral);
   }),
+  S15: presentationRow({
+    entities: [], primary: null,
+    bindingStatus: { kind: 'active', enabledEntityIds: [], allEntityIds: [] },
+    marker: { id: 'd1', binding: 'device:d1', controls: ['light.main'] },
+  }, {}, (r) => {
+    assert.equal(r.sourceKind, 'controls');
+    assert.deepEqual([r.visual.availability, r.visual.status], ['available', 'working']);
+  }),
   F01: policyRow({
     sourceVisual: { availability: 'available', status: 'alarm', activity: 'none' },
   }, (r) => assert.equal(r.visual.status, 'alarm')),

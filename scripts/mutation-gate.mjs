@@ -2316,9 +2316,22 @@ const MUTANT_DEFINITIONS = [
       + 'controllers; excluding those siblings restores the field defect (#251)',
     patches: [{
       file: 'src/device-presentation.ts',
-      find: '  const live = (d.entities || []).some((eid) => {',
-      replace: "  const live = (d.entities || []).filter((eid) => !eid.startsWith('sensor.') "
+      find: '  const live = ownEntities.some((eid) => {',
+      replace: "  const live = ownEntities.filter((eid) => !eid.startsWith('sensor.') "
         + "&& !eid.startsWith('update.')).some((eid) => {",
+    }],
+  },
+  {
+    id: 'entityless-active-controller-stays-available',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="issue 318 keeps an active entityless physical controller available" '
+      + 'test/device-presentation.test.mjs',
+    because: 'an active physical controller whose HA device exposes no own entities has no offline '
+      + 'evidence; its face must remain available while controls decide working versus neutral (#318)',
+    patches: [{
+      file: 'src/device-presentation.ts',
+      find: "  if (activeEntitylessDevice) return 'available';",
+      replace: "  if (activeEntitylessDevice) return 'unavailable';",
     }],
   },
   {

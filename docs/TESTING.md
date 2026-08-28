@@ -1608,7 +1608,13 @@ separately promised workflows:
       controller is encountered first. Controller availability is independent
       (#251): live battery/LQI/update keeps it neutral and opaque when every
       target is unavailable, all unavailable own entities fade it even if a
-      target is on, and a virtual controller remains available. A separately
+      target is on, and a virtual controller remains available. An active
+      physical `device:` controller with an empty own roster remains available
+      (#318): target `on` is yellow, while target `off`, unavailable, missing or
+      runtime-filtered is neutral; the plan and device-dialog preview must agree.
+      This exception must not apply to a non-empty all-unavailable roster,
+      `entity:` bindings, HA-disabled/orphaned bindings or virtual lifecycle.
+      A separately
       deleted target marker also cannot turn a live wireless controller into
       `unavailable` or make dialog preview disagree with the saved plan (#274):
       both projections consume the complete marker roster, preserve the live
@@ -1620,6 +1626,7 @@ separately promised workflows:
       device-presentation.test.mjs, device-toggle.test.mjs; golden:
       device-icon-state-table light/dark; mutation: controller-availability-follows-target,
       controller-diagnostics-do-not-prove-online,
+      entityless-active-controller-stays-available,
       wireless-controller-loses-filtered-target-role,
       wireless-controller-preview-drops-sibling-markers,
       unavailable-toggle-stays-silent, partial-group-shows-noop-toast; #274:

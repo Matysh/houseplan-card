@@ -1315,8 +1315,13 @@ its configured space.
   icon working state mirrors the effective light graph. Controller availability
   is deliberately separate (#251): at least one live own active entity
   (including battery/LQI/update diagnostics) keeps a physical controller
-  available, while an all-unavailable target graph is neutral. A virtual
-  controller is available by definition. An explicit Toggle whose configured
+  available, while an all-unavailable target graph is neutral. An active
+  physical `device:` binding with an empty own entity roster is also available:
+  absence of telemetry is not proof that the device is offline, and its target
+  graph still decides working versus neutral (#318). Once that own roster is
+  non-empty, all-missing/`unknown`/`unavailable` states remain positive offline
+  evidence and fade the controller. A virtual controller is available by
+  definition. An explicit Toggle whose configured
   group has no executable unavailable/missing/HA-disabled target produces the
   card's standard local explanatory toast and no service/press feedback;
   partial groups keep executing their available subset.

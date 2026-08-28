@@ -25,6 +25,7 @@ const ROWS = [
   ['S12', 'source.none', 'presentation-source-decision-trace'],
   ['S13', 'source.critical_sibling', 'device-presentation-policy-alarm'],
   ['S14', 'source.skipped_static_fast_path', 'presentation-static-source-fast-path'],
+  ['S15', 'availability.controller_available', 'entityless-active-controller-stays-available'],
   ['F01', 'status.alarm', 'device-presentation-policy-alarm'],
   ['F02', 'status.unavailable', 'device-presentation-policy-unavailable'],
   ['F03', 'source.device_role', 'presentation-source-decision-trace'],

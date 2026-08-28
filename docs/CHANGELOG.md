@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Active physical wall controllers that Home Assistant exposes without any own
+  entities no longer look permanently unavailable: they now stay opaque and
+  follow their controlled target as yellow when working or neutral otherwise
+  ([#318](https://github.com/Matysh/houseplan-card/issues/318)).
+
 - An outdated tab or third-party client can no longer silently replace a newer
   saved plan by omitting its configuration revision. House Plan rejects that
   write as a conflict and keeps the server copy intact; revision-less bootstrap

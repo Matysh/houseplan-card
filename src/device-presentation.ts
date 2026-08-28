@@ -202,14 +202,21 @@ function sourceStateText(hass: any, eid: string): string {
  *
  * HA exposes entity states rather than one device state. Controls are not
  * controller evidence: a live battery/LQI/update sibling is, while an
- * event-only `unknown` entity is not. A virtual controller has no physical HA
- * binding which can go offline, so it is available by definition.
+ * event-only `unknown` entity is not. An active physical device with no entity
+ * roster has no evidence that it is offline, so it remains available while
+ * its target status is resolved independently. A virtual controller has no
+ * physical HA binding which can go offline, so it is available by definition.
  */
 export function controllerAvailability(hass: any, d: DevItem): DeviceAvailability {
   if (d.virtual || d.bindingKind === 'virtual' || d.marker?.binding === 'virtual') {
     return 'available';
   }
-  const live = (d.entities || []).some((eid) => {
+  const ownEntities = d.entities || [];
+  const activeEntitylessDevice = ownEntities.length === 0
+    && (d.bindingKind === 'device' || d.marker?.binding?.startsWith('device:'))
+    && d.bindingStatus?.kind === 'active';
+  if (activeEntitylessDevice) return 'available';
+  const live = ownEntities.some((eid) => {
     const state = String(hass?.states?.[eid]?.state ?? '').trim().toLowerCase();
     return state !== '' && state !== 'unknown' && state !== 'unavailable';
   });
