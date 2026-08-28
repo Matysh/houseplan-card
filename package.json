@@ -11,6 +11,7 @@
     "test": "tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test test/*.test.mjs",
     "benchmark:wall-model": "tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node scripts/benchmark-wall-segment-model.mjs",
     "bundle:sync": "npm run build && node scripts/bundle-sync.mjs",
+    "bundle:budget": "node scripts/bundle-budget.mjs",
     "invariants": "tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node scripts/model-invariants.mjs",
     "docs:accept": "node scripts/docs-accept.mjs",
     "smokes:select": "node scripts/smoke-select.mjs",

@@ -102,10 +102,16 @@ git config core.untrackedCache true
 - IMPORTANT (audit lesson): the rollup typescript plugin reports a syntax error as a WARNING and still
   builds the bundle — a truncated file can "pass". That is why the build starts with `tsc --noEmit`,
   which fails on such errors. Always build with `npm run build`, never bare `rollup -c`.
-- Before committing a frontend source change, run `npm run bundle:sync`: `npm run build`
-  writes `dist/houseplan-card.js` only, while the release contract also requires the
-  committed `custom_components/houseplan/frontend/houseplan-card.js` snapshot to be
-  byte-identical. The demo copy is refreshed by the same command but remains untracked.
+- Before committing a frontend source change, run `npm run bundle:sync`. Rollup writes
+  `dist/houseplan-card.js`, `dist/houseplan-assets.json` and content-hashed chunks under
+  `dist/houseplan-assets/`; the command synchronizes that complete tree to the committed
+  integration snapshot and the untracked demo copy, then verifies every manifest hash.
+  `node scripts/bundle-tree.mjs dist custom_components/houseplan/frontend` is the
+  read-only parity check used by CI and release automation.
+- The first-space/import dialog is a separate `houseplan-onboarding-runtime-*`
+  chunk. Do not fold it into `houseplan-editor-runtime-*`: empty-install
+  onboarding is a View prerequisite, while a configured View must request
+  neither lazy runtime until the corresponding user intent.
 
 ## Maintenance diagnostics
 
@@ -172,9 +178,9 @@ commands and the explicit review workflow are documented in
 
 ```bash
 cd /tmp/hpc && npm ci        # once
-npx rollup -c                # → dist/houseplan-card.js
-node --check dist/houseplan-card.js
-cp dist/houseplan-card.js custom_components/houseplan/frontend/
+npm run bundle:sync          # build + entry/manifest/chunks → integration + demo
+npm run bundle:budget        # initial View graph must stay <= 256000 B gzip
+node scripts/bundle-tree.mjs dist custom_components/houseplan/frontend
 ```
 
 ## Deployment to the dacha (ha.jbstudio.pro)
@@ -184,7 +190,9 @@ cp dist/houseplan-card.js custom_components/houseplan/frontend/
 - **The HA config root is `/mnt/data/supervisor/homeassistant`** — in this SSH
   environment `/config` does not exist; a deploy aimed at `/config/...` fails
   with "No such file or directory".
-- JS: `scp -P 22222 -i <key> dist/houseplan-card.js root@ha.jbstudio.pro:/mnt/data/supervisor/homeassistant/custom_components/houseplan/frontend/`
+- Frontend: copy the complete `custom_components/houseplan/frontend/` tree.
+  Copying only `houseplan-card.js` is unsupported: the entry imports hashed chunks and
+  validates its editor runtime against the build fingerprint.
 - Cache busting: `sed` the `?v=` version in `.storage/lovelace_resources`, then restart HA.
 - **The `frontend/` subfolder is not optional.** `__init__.py` registers
   `Path(__file__).parent / "frontend" / "houseplan-card.js"` as the static path.

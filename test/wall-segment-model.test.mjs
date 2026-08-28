@@ -16,6 +16,7 @@ import {
 } from '../test-build/wall-segment-model.js';
 import { wallKey } from '../test-build/wall-thickness.js';
 import { GRID_STEP_N } from '../test-build/space-geometry.js';
+import { readHouseplanProductionSource } from './houseplan-source.mjs';
 
 const rectangle = (id, x1 = 0, y1 = 0, x2 = 1, y2 = 1) => ({
   id,
@@ -377,7 +378,7 @@ test('initial migration resolves a reserved deterministic id with the documented
 });
 
 test('every frontend structural transaction crosses the wall identity barrier', () => {
-  const source = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
+  const source = readHouseplanProductionSource();
   const optimizer = readFileSync(new URL('../src/plan-optimizer.ts', import.meta.url), 'utf8');
   const methodSource = (name) => {
     const start = source.indexOf(`private ${name}(`);

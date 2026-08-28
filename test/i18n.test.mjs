@@ -12,13 +12,14 @@ import {
   resolveLanguageCode,
 } from '../test-build/i18n/registry.js';
 import { langOf } from '../test-build/i18n.js';
+import { readHouseplanProductionSource } from './houseplan-source.mjs';
 
 const dictionaries = new Map(
   LANGUAGE_REGISTRY.map(({ code, dictionary }) => [code, dictionary]),
 );
 const en = dictionaries.get('en');
 const ru = dictionaries.get('ru');
-const cardSource = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
+const cardSource = readHouseplanProductionSource();
 
 test('i18n: registry codes and English fallback are valid', () => {
   const codes = LANGUAGE_REGISTRY.map(({ code }) => code);

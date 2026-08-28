@@ -2,7 +2,8 @@
 
 House Plan is one HACS package with two parts plus a demo harness:
 
-- **Lovelace card** (`src/`, TypeScript + Lit) — the primary product, bundled to `dist/houseplan-card.js`.
+- **Lovelace card** (`src/`, TypeScript + Lit) — the primary product, bundled to
+  the entry, manifest and hashed chunks under `dist/`.
 - **Storage integration** (`custom_components/houseplan/`, Python) — the Home Assistant backend.
 - **Demo harness** (`demo/`) — a self-contained Playwright page (`demo/srv/demo.html`) that renders the card against a fake `hass`, used for screenshots and the `smoke_*.mjs` end-to-end suite.
 
@@ -93,7 +94,7 @@ Start with the spec?" is the correct answer, not a smaller patch.
 | **A — product** | `src/**`, `custom_components/houseplan/**/*.py`, `manifest.json`, `hacs.json`, i18n, `custom_components/**/translations/**` | yes |
 | **B — gates and tooling** | `test/**`, `tests_backend/**`, `demo/**`, `scripts/**`, `.github/workflows/**`, `rollup.config.mjs`, `tsconfig*.json` | yes; may reuse the issue it covers |
 | **C — documentation** | `docs/**`, `README*`, `CHANGELOG*`, `AGENTS.md` | not if it is part of its issue's DoD |
-| **D — generated** | `dist/**`, `custom_components/houseplan/frontend/**`, `demo/golden/baselines/**` | never changes on its own. The stand copy `demo/srv/assets/houseplan-card.js` is no longer committed (#255): build it with `npm run bundle:sync` |
+| **D — generated** | `dist/**`, `custom_components/houseplan/frontend/**`, `demo/golden/baselines/**` | never changes on its own. The stand copy `demo/srv/assets/**` is no longer committed (#255): build the complete tree with `npm run bundle:sync` |
 
 The table above is a summary; `PROCESS.md` §1 is the authority and now covers the
 configuration files this one omits — `package.json`, `package-lock.json`,
@@ -325,12 +326,12 @@ npm run inventory        # the only correct way to get test counts
 
 Never copy test counts into documents by hand; they go stale in days.
 
-After building, keep all three bundle snapshots in sync — CI compares them
-byte-for-byte:
+After building, keep the complete manifest-driven bundle trees in sync — CI
+verifies every listed file byte-for-byte:
 
 ```
-cp dist/houseplan-card.js custom_components/houseplan/frontend/houseplan-card.js
 npm run bundle:sync   # dist → custom_components + demo/srv/assets (#255)
+npm run bundle:budget # initial View graph <= 256000 B gzip (#337)
 ```
 
 During the implementation cycle the fast gates always run. Since 2026-08-14 the

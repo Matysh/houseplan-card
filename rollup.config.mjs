@@ -3,13 +3,22 @@ import json from '@rollup/plugin-json';
 import resolve from '@rollup/plugin-node-resolve';
 import terser from '@rollup/plugin-terser';
 import { sourceFingerprint } from './scripts/source-fingerprint.mjs';
+import { cssTemplateMinifier } from './scripts/css-template-minifier.mjs';
+import {
+  buildFingerprintPlugin,
+  bundleManifestPlugin,
+  cleanBundleOutputPlugin,
+  editorRuntimeRetryUrlPlugin,
+} from './scripts/bundle-manifest.mjs';
 
 const SOURCE_FINGERPRINT = sourceFingerprint();
 
 export default {
   input: 'src/houseplan-card.ts',
   output: {
-    file: 'dist/houseplan-card.js',
+    dir: 'dist',
+    entryFileNames: 'houseplan-card.js',
+    chunkFileNames: 'houseplan-assets/[name]-[hash].js',
     format: 'es',
     sourcemap: false,
     // Tooling reads this before recording screenshots/performance. A committed
@@ -17,5 +26,15 @@ export default {
     // plausible-looking but invalid baseline.
     intro: `globalThis.__HOUSEPLAN_BUILD_FINGERPRINT__=${JSON.stringify(SOURCE_FINGERPRINT)};`,
   },
-  plugins: [resolve(), json(), typescript(), terser({ format: { comments: false } })],
+  plugins: [
+    cleanBundleOutputPlugin(),
+    buildFingerprintPlugin(SOURCE_FINGERPRINT),
+    cssTemplateMinifier(),
+    resolve(),
+    json(),
+    typescript({ compilerOptions: { outDir: 'dist/.ts' } }),
+    terser({ format: { comments: false } }),
+    editorRuntimeRetryUrlPlugin(),
+    bundleManifestPlugin(SOURCE_FINGERPRINT),
+  ],
 };

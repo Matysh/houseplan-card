@@ -252,17 +252,33 @@ if (invokedDirectly) {
     // Копия стенда (`demo/srv/assets`) больше не коммитится (#255): её собирает
     // `npm run bundle:sync` перед браузерными прогонами. В релиз входят ровно
     // две копии — артефакт сборки и та, что ставит HACS.
-    const names = [
-      'dist/houseplan-card.js',
-      'custom_components/houseplan/frontend/houseplan-card.js',
-    ];
-    // Hash Git blobs, not checkout bytes. On Windows, Git can expose CRLF in
-    // the worktree while the exact tagged blobs and Linux release checkout use
-    // LF. The release must be bound to the immutable commit representation.
-    const hashes = names.map((name) => [name, sha256Bytes(committedFile(sha, name))]);
-    if (new Set(hashes.map(([, hash]) => hash)).size !== 1)
-      throw new Error(`Committed bundle snapshots differ: ${hashes.map(([name, hash]) => `${name}=${hash}`).join(', ')}`);
-    return hashes[0][1];
+    const distManifestBytes = committedFile(sha, 'dist/houseplan-assets.json');
+    const frontendManifestBytes = committedFile(
+      sha, 'custom_components/houseplan/frontend/houseplan-assets.json',
+    );
+    if (!distManifestBytes.equals(frontendManifestBytes)) {
+      throw new Error('Committed bundle manifests differ');
+    }
+    const manifest = JSON.parse(distManifestBytes.toString('utf8'));
+    if (manifest?.schema !== 1 || !Array.isArray(manifest.files)
+        || manifest.entry !== 'houseplan-card.js') {
+      throw new Error('Committed bundle manifest is invalid');
+    }
+    for (const file of manifest.files) {
+      if (typeof file?.path !== 'string' || !file.path.endsWith('.js')
+          || file.path.includes('..') || file.path.includes('\\')) {
+        throw new Error(`Committed bundle asset path is invalid: ${String(file?.path)}`);
+      }
+      const dist = committedFile(sha, `dist/${file.path}`);
+      const frontend = committedFile(sha, `custom_components/houseplan/frontend/${file.path}`);
+      if (!dist.equals(frontend)) throw new Error(`Committed bundle asset differs: ${file.path}`);
+      const actual = sha256Bytes(dist);
+      if (actual !== file.sha256) {
+        throw new Error(`Committed bundle asset hash mismatch: ${file.path}`);
+      }
+    }
+    const entry = manifest.files.find((file) => file.path === manifest.entry);
+    return { manifest, entrySha256: entry.sha256 };
   };
 
   const materializeCommittedBundle = (sha, expectedSha256, artifactsDir) => {
@@ -275,18 +291,31 @@ if (invokedDirectly) {
     return bundlePath;
   };
 
-  const verifyZipContents = (zipPath, version, bundleSha256) => {
-    const entries = readZipEntries(zipPath, ['manifest.json', 'frontend/houseplan-card.js']);
+  const verifyZipContents = (zipPath, version, bundleSnapshot) => {
+    const header = readZipEntries(zipPath, [
+      'manifest.json', 'frontend/houseplan-assets.json',
+    ]);
+    const frontendManifest = JSON.parse(header.get('frontend/houseplan-assets.json').toString('utf8'));
+    if (JSON.stringify(frontendManifest) !== JSON.stringify(bundleSnapshot.manifest)) {
+      throw new Error('houseplan.zip frontend manifest differs from committed bundle');
+    }
+    const required = [
+      'manifest.json', 'frontend/houseplan-assets.json',
+      ...bundleSnapshot.manifest.files.map((file) => `frontend/${file.path}`),
+    ];
+    const entries = readZipEntries(zipPath, required);
     const manifest = JSON.parse(entries.get('manifest.json').toString('utf8'));
     if (manifest.version !== version)
       throw new Error(`houseplan.zip manifest version ${manifest.version} != ${version}`);
-    const bundledHash = createHash('sha256')
-      .update(entries.get('frontend/houseplan-card.js')).digest('hex');
-    if (bundledHash !== bundleSha256)
-      throw new Error(`houseplan.zip frontend hash ${bundledHash} != committed bundle ${bundleSha256}`);
+    for (const file of bundleSnapshot.manifest.files) {
+      const bundledHash = sha256Bytes(entries.get(`frontend/${file.path}`));
+      if (bundledHash !== file.sha256) {
+        throw new Error(`houseplan.zip frontend hash mismatch: ${file.path}`);
+      }
+    }
   };
 
-  const buildZip = (sha, version, bundleSha256, artifactsDir) => {
+  const buildZip = (sha, version, bundleSnapshot, artifactsDir) => {
     const zipPath = resolve(artifactsDir, 'houseplan.zip');
     run('git', [
       // `git archive` on Windows otherwise applies local core.autocrlf and
@@ -294,11 +323,11 @@ if (invokedDirectly) {
       '-c', 'core.autocrlf=false', 'archive', '--format=zip', `--output=${zipPath}`,
       `${sha}:custom_components/houseplan`,
     ]);
-    verifyZipContents(zipPath, version, bundleSha256);
+    verifyZipContents(zipPath, version, bundleSnapshot);
     return zipPath;
   };
 
-  const verifyRemoteAssetContents = (version, bundleSha256) => {
+  const verifyRemoteAssetContents = (version, bundleSnapshot) => {
     const download = mkdtempSync(resolve(tmpdir(), 'houseplan-release-check-'));
     try {
       run('gh', [
@@ -308,9 +337,9 @@ if (invokedDirectly) {
       try {
         const cardPath = resolve(download, 'houseplan-card.js');
         const cardHash = sha256Path(cardPath);
-        if (cardHash !== bundleSha256)
-          throw new Error(`Published houseplan-card.js hash ${cardHash} != candidate ${bundleSha256}`);
-        verifyZipContents(resolve(download, 'houseplan.zip'), version, bundleSha256);
+        if (cardHash !== bundleSnapshot.entrySha256)
+          throw new Error(`Published houseplan-card.js hash ${cardHash} != candidate ${bundleSnapshot.entrySha256}`);
+        verifyZipContents(resolve(download, 'houseplan.zip'), version, bundleSnapshot);
       } catch (error) {
         throw new ReleaseAssetContentError(
           error instanceof Error ? error.message : String(error),
@@ -466,7 +495,8 @@ if (invokedDirectly) {
     const sha = run('git', ['rev-parse', 'HEAD']).stdout;
     const remoteBranch = run('git', ['rev-parse', `origin/${branch}`]).stdout;
     if (sha !== remoteBranch) throw new Error(`HEAD ${sha} is not synchronized with origin/${branch} ${remoteBranch}`);
-    const bundleSha256 = assertBundleSnapshots(sha);
+    const bundleSnapshot = assertBundleSnapshots(sha);
+    const bundleSha256 = bundleSnapshot.entrySha256;
     const validateRuns = assertGreenValidate(sha);
     validateIssues();
     const existingTag = remoteTag();
@@ -519,7 +549,7 @@ if (invokedDirectly) {
           // A matching name and non-zero size are insufficient: bind both
           // downloadable assets to this exact candidate before closing issues.
           try {
-            verifyRemoteAssetContents(contract.version, bundleSha256);
+            verifyRemoteAssetContents(contract.version, bundleSnapshot);
           } catch (error) {
             if (!(error instanceof ReleaseAssetContentError)) throw error;
             console.log(`Published release needs stale-asset recovery: ${error.message}`);
@@ -534,7 +564,7 @@ if (invokedDirectly) {
         }
       }
 
-      const zipPath = buildZip(sha, contract.version, bundleSha256, artifactsDir);
+      const zipPath = buildZip(sha, contract.version, bundleSnapshot, artifactsDir);
       if (!existingTag.exists) {
         const local = localTag();
         if (local.exists && (!local.annotated || local.commit !== sha)) {
@@ -577,7 +607,7 @@ if (invokedDirectly) {
       const finalTag = remoteTag();
       if (!finalTag.exists || finalTag.commit !== sha)
         throw new Error(`Published tag ${tag} no longer resolves to exact SHA ${sha}`);
-      verifyRemoteAssetContents(contract.version, bundleSha256);
+      verifyRemoteAssetContents(contract.version, bundleSnapshot);
       verifyHacsDiscovery();
       finishIssues(published.url);
       console.log(`Published and content-verified: ${published.url}`);

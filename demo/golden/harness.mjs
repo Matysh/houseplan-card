@@ -773,6 +773,12 @@ export async function prepareGoldenScenario(page, scenario) {
       const expectedDevices = Object.keys(fixture.devices || {}).length;
       if (expectedDevices) await until(() => card._devices?.length >= expectedDevices);
       await until(() => card._booting === false);
+      // Golden scenarios intentionally call internal editor commands directly.
+      // Preload the lazy runtime for that legacy harness contract; cold-View
+      // loading and retry semantics are covered by smoke_lazy_editor_chunk.
+      if (!(await card._ensureEditorRuntime())) {
+        throw new Error(`golden editor runtime failed to load: ${scenario.id}`);
+      }
       await frame();
       return card;
     };
@@ -1492,7 +1498,8 @@ export async function prepareGoldenScenario(page, scenario) {
         });
       }
       const raw = scenario.cardEditorInvalidDefaultFloor;
-      const editor = document.createElement('houseplan-card-editor');
+      const cardClass = customElements.get('houseplan-card');
+      const editor = await cardClass.getConfigElement();
       editor.setConfig({
         type: 'custom:houseplan-card', title: 'Golden invalid floor',
         language: scenario.language || 'en', default_floor: raw,

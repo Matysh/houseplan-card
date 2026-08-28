@@ -9,6 +9,7 @@ import {
   cmToUnits, newViolations,
 } from '../test-build/junction-limits.js';
 import { GRID_STEP_N } from '../test-build/space-geometry.js';
+import { readHouseplanProductionSource } from './houseplan-source.mjs';
 
 // #329, решения владельца 2026-08-27. Пороги абсолютные: 15°, 6 стен,
 // max(20 см, толщина), 5 см, 25 см². cell_cm на них не влияет.
@@ -383,9 +384,7 @@ test('#330 AC4: кэш baseline инвалидируется по конфиг-�
   // приёмом, каким #293 пинит обвязку смока. Поведенческая половина AC4
   // (N move → N+1 вычислений в реальном жесте) живёт в
   // demo/smoke_junction_limits.mjs (resizeBaselineCachedPerGesture).
-  const source = readFileSync(
-    new URL('../src/houseplan-card.ts', import.meta.url), 'utf8',
-  );
+  const source = readHouseplanProductionSource();
   const method = source.slice(
     source.indexOf('private _junctionLimitsIntroduced('),
     source.indexOf('private _commitPhysicalGeometry('),

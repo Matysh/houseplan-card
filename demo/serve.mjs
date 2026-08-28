@@ -44,7 +44,8 @@ export async function finish(browser, out) {
   }
 }
 
-export async function launch(
+async function launchInternal(
+  preloadEditorRuntime,
   viewport = { width: 820, height: 760 },
   scale = 1,
   browserArgs = [],
@@ -57,7 +58,7 @@ export async function launch(
     viewport, deviceScaleFactor: scale, ...contextOptions,
   })).newPage();
   // audit T1: an exception inside the card used to be logged and ignored
-  page.on('pageerror', (e) => { _pageErrors++; console.log('EXC', e.message); });
+  page.on('pageerror', (e) => { _pageErrors++; console.log('EXC', e.stack || e.message); });
   await page.route('**/*', (r) => {
     const u = new URL(r.request().url());
     let p = decodeURIComponent(u.pathname);
@@ -84,5 +85,15 @@ export async function launch(
   // hass flows continuously in production; the stub sets it once — nudge a rebuild
   await page.evaluate(() => { const c = window.__card; c.hass = { ...c.hass }; });
   await page.waitForFunction(() => window.__card._devices.length > 0, { timeout: 9000 });
+  // Existing product smokes exercise editor internals directly. They preload
+  // the new #337 runtime without changing mode; the dedicated network smoke
+  // uses launchColdView() and proves the real cold-View boundary separately.
+  if (preloadEditorRuntime) {
+    const ready = await page.evaluate(() => window.__card._ensureEditorRuntime());
+    if (!ready) throw new Error('editor runtime did not preload for browser smoke');
+  }
   return { page, browser };
 }
+
+export const launch = (...args) => launchInternal(true, ...args);
+export const launchColdView = (...args) => launchInternal(false, ...args);

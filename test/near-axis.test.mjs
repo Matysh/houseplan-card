@@ -12,6 +12,7 @@ import {
 import { optimizePlans } from '../test-build/plan-optimizer.js';
 import { MULTI_WALL_NEAR_ORTHOGONAL_MAX_DEGREES } from '../test-build/wall-thickness.js';
 import { nearAxisProfile } from '../scripts/model-invariants.mjs';
+import { readHouseplanProductionSource } from './houseplan-source.mjs';
 
 const fixture = JSON.parse(readFileSync(
   new URL('./fixtures/279-near-orthogonal-junction.json', import.meta.url), 'utf8',
@@ -21,7 +22,7 @@ const sourceOf = (file) => readFileSync(new URL(`../src/${file}`, import.meta.ur
 
 test('#290 authoring, Optimize and renderer use one near-axis threshold source', () => {
   const renderer = sourceOf('wall-thickness.ts');
-  const authoring = sourceOf('houseplan-card.ts');
+  const authoring = readHouseplanProductionSource();
   const optimizer = sourceOf('plan-optimizer.ts');
 
   assert.match(renderer, /import \{ NEAR_AXIS_MAX_DEGREES \} from '\.\/near-axis';/);

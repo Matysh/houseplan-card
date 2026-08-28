@@ -3,9 +3,10 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
+import { readHouseplanProductionSource } from './houseplan-source.mjs';
 
 const srcRoot = fileURLToPath(new URL('../src/', import.meta.url));
-const source = readFileSync(join(srcRoot, 'houseplan-card.ts'), 'utf8');
+const source = readHouseplanProductionSource();
 const walkTypescript = (directory) => readdirSync(directory, { withFileTypes: true })
   .flatMap((entry) => {
     const path = join(directory, entry.name);
@@ -27,7 +28,7 @@ test('native selects explicitly project selection unless they are command menus'
 
   // This is a command menu, not persisted state: it intentionally resets to
   // its empty first row after inserting an HA variable into decorative text.
-  assert.deepEqual(unsafe, ['houseplan-card.ts:decor-live-attribute']);
+  assert.deepEqual(unsafe, ['houseplan-editor-runtime.ts:decor-live-attribute']);
 });
 
 test('persisted dynamic marker selects project their selected option explicitly', () => {

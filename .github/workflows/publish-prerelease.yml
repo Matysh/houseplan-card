@@ -82,17 +82,13 @@ jobs:
           set -euo pipefail
           npm ci
           npm run build
-          cmp dist/houseplan-card.js custom_components/houseplan/frontend/houseplan-card.js
+          node scripts/bundle-tree.mjs dist custom_components/houseplan/frontend
+          npm run bundle:budget
           VERSION=${TAG#v}
-          grep -Fq "$VERSION" dist/houseplan-card.js
+          grep -RFq "$VERSION" dist
           (cd custom_components/houseplan && zip -qr ../../houseplan.zip .)
-          unzip -l houseplan.zip | grep -q "manifest.json"
-          ZIP_VERSION=$(unzip -p houseplan.zip manifest.json | node -e \
-            "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>process.stdout.write(JSON.parse(s).version))")
-          test "$ZIP_VERSION" = "$VERSION" || {
-            echo "::error::houseplan.zip manifest version $ZIP_VERSION != $VERSION"
-            exit 1
-          }
+          node scripts/verify-houseplan-zip.mjs houseplan.zip \
+            custom_components/houseplan/frontend "$VERSION"
           test -s dist/houseplan-card.js
           test -s houseplan.zip
       - name: Create or verify the annotated tag

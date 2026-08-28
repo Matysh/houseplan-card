@@ -24,15 +24,24 @@ const requireWindow = (errors, source, index, pattern, label, before = 650) => {
 
 export function checkCoordinateWriteBarriers(root = defaultRoot) {
   const errors = [];
-  const frontend = readFileSync(resolve(root, 'src/houseplan-card.ts'), 'utf8');
+  // The editor implementation is a lazy chunk, but the persisted-coordinate
+  // inventory remains one logical frontend. Normalize the typed host port so
+  // the existing boundary windows keep describing the production call sites.
+  const card = readFileSync(resolve(root, 'src/houseplan-card.ts'), 'utf8');
+  const editor = readFileSync(resolve(root, 'src/houseplan-editor-runtime.ts'), 'utf8')
+    .replaceAll('this.host.', 'this.');
+  const frontend = `${card}\n${editor}`;
 
   const configWrites = occurrences(frontend, "type: 'houseplan/config/set'");
   if (configWrites.length !== 1) errors.push(`frontend config writer inventory: ${configWrites.length}`);
   for (const index of configWrites) requireWindow(
     errors, frontend, index,
-    /const candidate = canonicalizeConfigGeometry\(this\._serverCfg\);[\s\S]*config: candidate/,
-    'frontend config/set', 3600,
+    /const canonicalCandidate = canonicalizeConfigGeometry\(candidate\);[\s\S]*config: canonicalCandidate/,
+    'frontend config/set', 600,
   );
+  if (occurrences(frontend, '._sendConfigCandidate(candidate)').length !== 2) {
+    errors.push('frontend canonical config transport callers changed');
+  }
 
   const positionWrites = occurrences(frontend, "type: 'houseplan/layout/update'");
   if (positionWrites.length !== 2) errors.push(`frontend position writer inventory: ${positionWrites.length}`);

@@ -3255,6 +3255,26 @@ require hands on real hardware — they remain for the human pass.
       Popover and forced portal fallback have the same no-layout-shift contract
       [auto: `smoke_help_affordance`].
 
+## Lazy editor runtime and frontend asset tree (#337)
+
+- [ ] A cold configured View reaches a complete interactive frame without any
+      request for `houseplan-editor-runtime-*.js`. The first Plan/Devices/
+      Background intent requests it once; later editor switches do not repeat
+      the request [auto: `smoke_lazy_editor_chunk`].
+- [ ] Two failed requests, or a runtime with a different build fingerprint,
+      leave mode, camera and plan in View and show the localized refresh advice
+      [auto: `editor-runtime-loader.test`, `smoke_lazy_editor_chunk`].
+- [ ] An empty installation requests the dedicated onboarding chunk, displays
+      the first-space dialog and still has no editor request. Saving a drawn
+      first space requests the editor once and continues into Plan; async
+      `getConfigElement()` still returns `houseplan-card-editor`
+      [auto: `smoke_lazy_editor_chunk`].
+- [ ] `bundle:budget` follows transitive static imports and keeps initial View
+      at or below 256000 B gzip. Bundle sync, demo freshness, CI artifacts and
+      release zip validation fail when any manifest-listed asset is missing or
+      its SHA-256 differs [auto: `bundle-assets.test`, `bundle-freshness.test`,
+      release-contract tests].
+
 ## Hiding layers: decor, openings, zero-thickness walls (docs/UX-MODES.md)
 
 - [ ] **Room names have one literal off state (#203)**: disable «Показывать

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
+import { readHouseplanProductionSource } from './houseplan-source.mjs';
 
 import {
   COORDINATE_DECIMALS,
@@ -110,11 +111,15 @@ test('one position changes only x/y and preserves future metadata (#224)', () =>
 });
 
 test('frontend write paths adopt canonical candidates before persistence (#224)', () => {
-  const source = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
+  const source = readHouseplanProductionSource();
   assert.match(source, /enqueueSerializedWrite\(this\._writeChain, async \(\) =>/);
   assert.match(
     source,
-    /const candidate = canonicalizeConfigGeometry\(this\._serverCfg\);[\s\S]*config: candidate/,
+    /const candidate = canonicalizeConfigGeometry\(this\._serverCfg\);/,
+  );
+  assert.match(
+    source,
+    /const canonicalCandidate = canonicalizeConfigGeometry\(candidate\);[\s\S]*config: canonicalCandidate/,
   );
   assert.match(
     source,

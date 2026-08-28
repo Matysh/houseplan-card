@@ -11,10 +11,7 @@ import { guard } from 'lit/directives/guard.js';
 import { repeat } from 'lit/directives/repeat.js';
 import './hp-dialog';
 import type { HpDialog } from './hp-dialog';
-import './hp-color-opacity';
 import type { ColorPickerLabels } from './hp-color-opacity';
-import './hp-help';
-import './hp-device-preview';
 import {
   EXCLUDED_DOMAINS, DEFAULT_ICON_RULES, compileIconRules, isValidPattern, iconFor,
   type IconRule, type CompiledIconRule,
@@ -43,12 +40,12 @@ import {
 import {
   resolveSafeResize,
   coalesceResizeRooms,
-  polyIsSimple, areaM2, formatArea, MIN_ROOM_CM,
+  polyIsSimple, MIN_ROOM_CM,
   type SafeOpeningIn, type SafeResizeObstacle, type SafeResizeOptions,
   type SafeResizePlan, type SafeResizeReason, type SafeResizeResolution,
 } from './resize';
+import { formatArea } from './area-format';
 import {
-  ResizeController,
   type ResizeProjectionResult,
 } from './resize-controller';
 import {
@@ -70,7 +67,6 @@ import {
 import {
   degradeWalls, rekeyWallsAfterMoveChecked, wallRecordCarrierViolations,
   setWallThickness, setWallThicknessForRoom, cmToField, wallCmToUnits,
-  multiWallNodesForGeometry,
   wallEdgeBodies, wallBodiesGeometry, wallBodiesGeometryPath, wallBodiesUnionPath,
   recutWallBodiesGeometry,
   floorFootprintGeometry,
@@ -178,9 +174,10 @@ import {
 } from './plan-snap-overlay';
 import {
   atomizeWallSegments, buildWallFaceGraph, findNewWallFacesInGraphs, findWallFaceAtPoint,
-  normalizeUnifiedWallTool, wallChainSegments, chainSegmentCms,
+  wallChainSegments, chainSegmentCms,
   type WallFaceGraph, type WallGraphFace, type WallGraphSourceSegment,
 } from './wall-face-graph';
+import { normalizeUnifiedWallTool } from './wall-tool-compat';
 import { parameterOnPartition, planRoomDeletion } from './room-deletion';
 import {
   planWallFaceRepair, repairMovesHostedPartition, type WallFaceRepairProposal,
@@ -188,12 +185,10 @@ import {
 import {
   LightSegment, polygonSegments, splitAtIntersections, visibilityPolygon,
 } from './light-visibility';
-import './editor';
 import './space-card';
 import { cardStyles } from './styles';
 import { editorSecondaryStyles } from './editor-secondary.styles';
 import {
-  EditorSecondaryController,
   type EditorSecondaryCopy,
   type EditorSecondaryModel,
   type EditorToolbarGroup,
@@ -207,7 +202,6 @@ import {
 } from './space-geometry';
 import { optimizePlans, type OptimizeReport } from './plan-optimizer';
 import {
-  WALL_SEGMENT_MODEL_VERSION,
   adoptWallSegmentModelCandidateInPlace, commitWallSegmentModel,
   fixedTopologyWallLineageHints, sanitizeRoomDraftPath,
   resolveRoomOpeningHost, wallModelOffGridValueCount, WallSegmentModelError,
@@ -275,6 +269,7 @@ import {
   ModeTransitionController, viewportFromViewBox,
   type HouseplanMode, type ModeTransitionState, type ModeVisualState, type ModeViewBox,
 } from './mode-transition';
+import { EditorRuntimeLoader, type EditorRuntimeLoaderState } from './editor-runtime-loader';
 import {
   currentLabs, hashSpace, noteLabsRender, subscribeLabs, type LabsSnapshot,
 } from './labs';
@@ -332,6 +327,8 @@ import {
 import { applyOpeningMoves, mergeCollinearPartitions, spaceMergeGeometry } from './wall-merge';
 
 const CARD_VERSION = '1.68.1';
+const ENTRY_BUILD_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
+const EDITOR_RETRY_ASSET = '__HOUSEPLAN_EDITOR_RETRY_ASSET__';
 
 type ResizeLiveLabel = {
   kind: 'length';
@@ -800,7 +797,105 @@ interface DeviceInboxDialogState {
 
 type FixedFloorState = FixedFloorSelection | { kind: 'pending'; value: unknown };
 
-class HouseplanCard extends LitElement {
+export class HouseplanCard extends LitElement {
+  public _editorRuntime: import('./houseplan-editor-runtime').HouseplanEditorRuntime | null = null;
+  public _onboardingRuntime: import('./houseplan-onboarding-runtime').HouseplanOnboardingRuntime | null = null;
+  private _editorRuntimeLoadingVisible = false;
+  private _editorRuntimeLoadingTimer?: number;
+  private _editorModeRequest = 0;
+  private readonly _editorRuntimeLoader = new EditorRuntimeLoader<
+    import('./houseplan-editor-runtime').HouseplanEditorRuntime
+  >({
+    expectedFingerprint: ENTRY_BUILD_FINGERPRINT,
+    load: async (attempt) => {
+      const module = attempt === 0
+        ? await import('./houseplan-editor-runtime')
+        : await import(/* @vite-ignore */ (() => {
+            const url = new URL(EDITOR_RETRY_ASSET, import.meta.url);
+            url.searchParams.set('hp_retry', CARD_VERSION);
+            return url.href;
+          })()) as typeof import('./houseplan-editor-runtime');
+      return {
+        fingerprint: module.EDITOR_RUNTIME_FINGERPRINT,
+        create: () => new module.HouseplanEditorRuntime(
+          this as unknown as import('./houseplan-editor-runtime').HouseplanEditorHostPort,
+        ),
+      };
+    },
+    install: (runtime) => {
+      this._editorRuntime = runtime;
+    },
+    stateChanged: (state) => this._editorRuntimeStateChanged(state),
+    failed: (error) => {
+      console.error('[houseplan] unable to load editor runtime', error);
+      this._showToast(`${this._t('editor.load_failed')} ${this._t('editor.refresh_advice')}`);
+    },
+  });
+
+  private readonly _onboardingRuntimeLoader = new EditorRuntimeLoader<
+    import('./houseplan-onboarding-runtime').HouseplanOnboardingRuntime
+  >({
+    expectedFingerprint: ENTRY_BUILD_FINGERPRINT,
+    load: async (attempt) => {
+      const module = attempt === 0
+        ? await import('./houseplan-onboarding-runtime')
+        : await import(/* @vite-ignore */ (() => {
+            const url = new URL('__HOUSEPLAN_ONBOARDING_RETRY_ASSET__', import.meta.url);
+            url.searchParams.set('hp_retry', CARD_VERSION);
+            return url.href;
+          })()) as typeof import('./houseplan-onboarding-runtime');
+      return {
+        fingerprint: module.ONBOARDING_RUNTIME_FINGERPRINT,
+        create: () => new module.HouseplanOnboardingRuntime(
+          this as unknown as import('./houseplan-editor-runtime').HouseplanEditorHostPort,
+        ),
+      };
+    },
+    install: (runtime) => {
+      this._onboardingRuntime = runtime;
+    },
+    failed: (error) => {
+      console.error('[houseplan] unable to load onboarding runtime', error);
+      this._showToast(`${this._t('editor.load_failed')} ${this._t('editor.refresh_advice')}`);
+    },
+  });
+
+  public _editorRuntimeOrThrow(): import('./houseplan-editor-runtime').HouseplanEditorRuntime {
+    if (!this._editorRuntime) throw new Error('Houseplan editor runtime is not loaded');
+    return this._editorRuntime;
+  }
+
+  public async _ensureEditorRuntime(): Promise<boolean> {
+    return this._editorRuntimeLoader.ensure();
+  }
+
+  public async _ensureOnboardingRuntime(): Promise<boolean> {
+    return this._onboardingRuntimeLoader.ensure();
+  }
+
+  private _editorRuntimeStateChanged(state: EditorRuntimeLoaderState): void {
+    clearTimeout(this._editorRuntimeLoadingTimer);
+    this._editorRuntimeLoadingTimer = undefined;
+    if (state === 'loading') {
+      this._editorRuntimeLoadingTimer = window.setTimeout(() => {
+        this._editorRuntimeLoadingVisible = true;
+        this.requestUpdate();
+      }, 150);
+      return;
+    }
+    this._editorRuntimeLoadingVisible = false;
+    this.requestUpdate();
+  }
+
+  public async _requestMode(
+    mode: 'view' | 'plan' | 'devices' | 'decor',
+    animate = true,
+  ): Promise<void> {
+    const request = ++this._editorModeRequest;
+    if (mode !== 'view' && !(await this._ensureEditorRuntime())) return;
+    if (request !== this._editorModeRequest) return;
+    this._setMode(mode, animate);
+  }
   public hass?: any;
   private _config?: CardConfig;
 
@@ -1013,12 +1108,7 @@ class HouseplanCard extends LitElement {
   });
   /** Explicit second-level toolbar group. No current tools are grouped yet;
    *  the shared host/API prevents future editors from inventing dropdowns. */
-  private readonly _editorSecondary = new EditorSecondaryController({
-    root: () => this.renderRoot as ShadowRoot,
-    requestUpdate: () => this.requestUpdate(),
-    updateComplete: () => this.updateComplete,
-    clearTip: () => { this._tip = null; },
-  });
+  private declare _editorSecondary: import('./editor-secondary').EditorSecondaryController;
   private readonly _editorSecondaryCopy: EditorSecondaryCopy = {
     groupActive: (group, item) => this._t('editor.group_active', { group, item }),
     openGroup: (group) => this._t('editor.open_group', { group }),
@@ -1329,7 +1419,7 @@ class HouseplanCard extends LitElement {
     this._closingWallCm = null;
     this._selId = null;
     this._physicalSel = null;
-    this._editorSecondary.closeForNavigation();
+    this._editorSecondary?.closeForNavigation();
     this._physicalDialog = null;
     this._physicalDrag = null;
     if (this._mode === 'plan' && this._tool === 'draw') this._resumeLastDraft();
@@ -1697,9 +1787,9 @@ class HouseplanCard extends LitElement {
   private _duplicateColumnId: string | null = null;
   private _duplicateColumnTimer = 0;
   // Room Resize orchestration is isolated from this Lit/config composition shell (#264).
-  private _resize = new ResizeController<
+  private declare _resize: import('./resize-controller').ResizeController<
     ResizePreview, ResizeLiveLabel[], SpaceGeometryState, ResizeWallUnion, ResizeWallArtifact
-  >();
+  >;
   /** #329 AC7a: the limit the LAST projection broke, or null if it broke none. */
   private _rszLimitViolation: JunctionLimitViolation | null = null;
   private _path: number[][] = []; // current outline (render units, vertices snapped to the grid)
@@ -2255,6 +2345,7 @@ class HouseplanCard extends LitElement {
     _bootFading: { state: true },
     _bootSoft: { state: true },
     _continuityEpoch: { state: true },
+    _editorRuntimeLoadingVisible: { state: true },
     _tapConfirm: { state: true },
     hass: { attribute: false },
     _config: { state: true },
@@ -2456,6 +2547,9 @@ class HouseplanCard extends LitElement {
     this._signer.dispose();
     clearTimeout(this._toastTimer);
     clearTimeout(this._slideTimer);
+    clearTimeout(this._editorRuntimeLoadingTimer);
+    this._editorRuntimeLoadingTimer = undefined;
+    this._editorRuntimeLoadingVisible = false;
     this._modeTransition.dispose();
     this._modeTransitionVisual = null;
     this._modeTransitionPreparing = false;
@@ -2536,7 +2630,7 @@ class HouseplanCard extends LitElement {
     this._pointerHoverObserver?.disconnect();
     this._pointerHoverObserver = undefined;
     this._pointerModality.disconnect();
-    this._editorSecondary.reset();
+    this._editorSecondary?.reset();
     // R1: the rAF is the only normal owner that clears this flag. Reset only
     // after the disconnect snapshot (which must still skip unstable geometry),
     // so a same-element reattach can start fresh instead of keeping the veil.
@@ -2580,9 +2674,9 @@ class HouseplanCard extends LitElement {
         this._importTotal = 0;
         return;
       }
-      if (this._editorSecondary.hasOpenGroup) {
+      if (this._editorSecondary?.hasOpenGroup) {
         e.preventDefault();
-        this._editorSecondary.closeGroup(true);
+        this._editorSecondary?.closeGroup(true);
         return;
       }
     }
@@ -2657,7 +2751,7 @@ class HouseplanCard extends LitElement {
     }
     if (undo) {
       e.preventDefault();
-      if (this._resize.dragging) {
+      if (this._resize?.dragging) {
         this._rszCancelDrag();
         return;
       }
@@ -2710,12 +2804,12 @@ class HouseplanCard extends LitElement {
     }
     if (this._tool === 'resize') {
       e.preventDefault();
-      if (this._resize.dragging) {
+      if (this._resize?.dragging) {
         // Esc mid-drag: the immutable preview is simply discarded
         this._rszCancelDrag();
         return;
       }
-      if (this._resize.escapeIdle() === 'exit-tool') this._tool = 'draw';
+      if (this._resize?.escapeIdle() === 'exit-tool') this._tool = 'draw';
       this.requestUpdate();
       return;
     }
@@ -2826,7 +2920,8 @@ class HouseplanCard extends LitElement {
     this._showToast(this._t('history.undone', { name: command.name }));
   }
 
-  public static getConfigElement() {
+  public static async getConfigElement() {
+    await import('./editor');
     return document.createElement('houseplan-card-editor');
   }
 
@@ -3105,7 +3200,7 @@ class HouseplanCard extends LitElement {
     this._showHidden = vp.showHidden;
     if (this._showFar !== vp.showFar) { this._showFar = vp.showFar; this._frame = null; }
     this._selId = vp.selId;
-    this._resize.restoreSelection(vp.rszSel);
+    this._resize?.restoreSelection(vp.rszSel);
     this._decorSel = vp.decorSel;
     this._warmVpArmed = true; // _loadFromServer must not re-centre this
   }
@@ -3160,7 +3255,7 @@ class HouseplanCard extends LitElement {
       showHidden: this._showHidden,
       showFar: this._showFar,
       selId: this._selId,
-      rszSel: this._resize.selectedRoomId,
+      rszSel: this._resize?.selectedRoomId,
       decorSel: this._decorSel,
     };
   }
@@ -3488,6 +3583,15 @@ class HouseplanCard extends LitElement {
       </div>`;
   }
 
+  private _renderEditorRuntimeLoading(): TemplateResult | typeof nothing {
+    if (!this._editorRuntimeLoadingVisible) return nothing;
+    return html`<div class="editorloading" role="status" aria-live="polite"
+      aria-label=${this._t('editor.loading_aria')}>
+        <ha-icon icon="mdi:loading"></ha-icon>
+        <span>${this._t('editor.loading')}</span>
+      </div>`;
+  }
+
   /** Redacted lifecycle diagnostics used by the deterministic sampler. */
   public houseplanContinuityTrace(): readonly import('./visual-continuity').ContinuityTraceEvent[] {
     return [...this._continuityHistory, ...this._continuity.trace].slice(-80)
@@ -3631,7 +3735,7 @@ class HouseplanCard extends LitElement {
     this._decorTextDialog = null;
     this._roomDialog = false;
     if (this._spaceDialog?.mode === 'edit') this._spaceDialog = null;
-    this._editorSecondary.closeForNavigation();
+    this._editorSecondary?.closeForNavigation();
     this._saveConfigDebounced.cancel();
     this._frame = null;
     this._planSnapGeometryCache = null;
@@ -3757,7 +3861,8 @@ class HouseplanCard extends LitElement {
     this._pruneDevicePressFeedback();
     this._syncDayCycleClock();
     this._warmSnapshot(); // DEV-B703-03: the memo follows what is on screen
-    this._dtMeasure();    // the selected label's frame follows the glyphs
+    // Decor selection cannot exist before the lazy editor runtime is ready.
+    if (this._editorRuntime) this._dtMeasure();
     const stage = this._stageEl;
     if (stage && !this._roViewport) {
       this._roViewport = new ResizeObserver(() => this._refitView());
@@ -3802,7 +3907,7 @@ class HouseplanCard extends LitElement {
       measure();
     }
     if (stage && !this._view) this._refitView();
-    this._editorSecondary.afterRender();
+    this._editorSecondary?.afterRender();
     this._settleContinuityFrame();
     // onboarding: on an empty server config, open the space dialog right away
     if (
@@ -5204,11 +5309,7 @@ class HouseplanCard extends LitElement {
 
   /** Localize both parts of a help affordance while hp-help stays presentation-only. */
   private _help(key: Extract<I18nKey, `${string}.help`>): TemplateResult | typeof nothing {
-    const ariaKey = `${key}.aria` as I18nKey;
-    const lang = langOf(this.hass, this._config?.language);
-    if (!hasTranslation(lang, key) || !hasTranslation(lang, ariaKey)) return nothing;
-    return html`<hp-help data-help-key=${key}
-      .text=${t(lang, key)} .ariaLabel=${t(lang, ariaKey)}></hp-help>`;
+    return this._editorRuntimeOrThrow()._help(key);
   }
 
   private get _stageEl(): HTMLElement | null {
@@ -6266,7 +6367,7 @@ class HouseplanCard extends LitElement {
    * `click` after the final pointerup rather than in the same task.
    */
   private _guardTouchGesture(ev: Event): void {
-    if (this._editorSecondary.handleOutsideDismiss(ev)) return;
+    if (this._editorSecondary?.handleOutsideDismiss(ev)) return;
     if (ev.type === 'click') {
       if (!this._suppressClick && !this._touchSequenceMultitouch
           && Date.now() > this._touchClickBlockUntil) return;
@@ -6392,14 +6493,14 @@ class HouseplanCard extends LitElement {
     // HP-1550-01: while a resize drag is live, every render-path reader sees
     // the preview overlay; _writeConfig deliberately reads _serverCfg instead,
     // so a queued write can never pick the preview up.
-    const pv = this._resize.preview;
+    const pv = this._resize?.preview;
     if (pv && pv.space === this._space) return pv.sp;
     return this._serverCfg?.spaces.find((s: any) => s.id === this._space);
   }
 
   /** The config AS RENDERED: _serverCfg with the live resize preview substituted in. */
   private get _renderCfg(): ServerConfig | null {
-    const pv = this._resize.preview;
+    const pv = this._resize?.preview;
     if (!pv || !this._serverCfg) return this._serverCfg;
     return {
       ...this._serverCfg,
@@ -6508,217 +6609,21 @@ class HouseplanCard extends LitElement {
   }
 
   private _setMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate = true): void {
-    this._endTabDrag();
-    // A mode command is newer than the editor remembered by a same-route warm
-    // remount. Clear it before the same-mode early return: while can_write is
-    // pending, Lit may still be presenting the previous editor DOM even though
-    // the new instance already fails closed to `view`. Its close button must
-    // cancel the deferred editor in one press, not let the server response
-    // reopen it and force a second press (#95).
-    this._pendingNavMode = null;
-    const space = this._spaceModel();
-    if (!space) {
-      this._cancelModeTransition(false);
-      this._mode = 'view';
-      return;
-    }
-    if (this._kiosk && mode !== 'view') return; // wall devices never edit
-    if (this._mode === mode) {
-      if (!animate && mode === 'view' && this._modeTransitionBusy) {
-        const from = this._currentModeVisual(mode);
-        const targetZoom = this._modeTransitionTargetZoom;
-        const targetCenterX = this._modeTransitionTargetCenterX;
-        const targetCenterY = this._modeTransitionTargetCenterY;
-        this._cancelModeTransition(false);
-        this._commitViewModeAtomic(from, targetZoom, targetCenterX, targetCenterY);
-      }
-      return;
-    }
-    this._bootSoftCancel(); // navigation owns its own short, bounded transition
-    if ((mode === 'plan' || mode === 'decor') && !this._norm) {
-      this._showToast(this._t('toast.markup_needs_server'));
-      return;
-    }
-    if (this._wallFaceBatch) this._roomDialogCancel();
-    if (this._mode === 'plan' && this._tool === 'draw' && !this._finishWallChain()) return;
-    this._clearTransientHover(true);
-    this._cancelDevicePressFeedback();
-    const previousMode = this._mode;
-    const previousProjection = this._effectiveProjection();
-    const capturedVisual = this._currentModeVisual(previousMode);
-    const retargeting = this._modeTransitionBusy;
-    // The target toolbar replaces the old editor markup during the hidden
-    // measurement frame. Give that incoming content its own coordinate on the
-    // shared controller so editor-to-editor switches do not pop abruptly.
-    const fromVisual = capturedVisual && previousMode !== 'view' && mode !== 'view'
-      ? { ...capturedVisual, toolbarContentOpacity: this._reducedMotion ? 1 : 0.35 }
-      : capturedVisual;
-    this._cancelModeTransition(false);
-    this._editorSecondary.closeForNavigation();
-    // A live decor transform is a transaction. Switching tabs must cancel and
-    // restore it, not merely forget its pointer record after the config has
-    // already been mutated by move/resize.
-    if (this._decorMove || this._dtDrag || this._bdDrag) this._cancelDecorGesture();
-    const baseChanges = !space.bg && (mode === 'view') !== (previousMode === 'view');
-    // A running/preparing transition has not committed its target to `_zoom`
-    // yet. Retarget from the painted frame, but preserve the latest camera
-    // intent; otherwise rapid View -> editor A -> editor B resurrects the old
-    // View zoom/center and settles somewhere a direct transition never would.
-    const returningToEditor = retargeting && previousMode === 'view' && mode !== 'view'
-      ? this._modeTransitionEditorCamera : null;
-    let targetZoom = returningToEditor?.zoom
-      ?? (retargeting ? this._modeTransitionTargetZoom : this._zoom);
-    let targetCenterX = returningToEditor
-      ? returningToEditor.centerX
-      : retargeting ? this._modeTransitionTargetCenterX : fromVisual?.viewport.centerX;
-    let targetCenterY = returningToEditor
-      ? returningToEditor.centerY
-      : retargeting ? this._modeTransitionTargetCenterY : fromVisual?.viewport.centerY;
-    if (previousMode === 'view' && mode !== 'view' && !retargeting) {
-      // remember the view-mode viewport: whatever zooming happens inside the
-      // editors is a working tool, not what the user wants to see afterwards
-      const v = this._view;
-      this._viewModeSnap = {
-        space: this._space,
-        zoom: this._zoom,
-        cx: v ? this._logicalViewCenter(previousProjection)?.x : undefined,
-        cy: v ? this._logicalViewCenter(previousProjection)?.y : undefined,
-      };
-      if (previousProjection === 'iso') {
-        const logical = this._logicalViewCenter('iso');
-        targetCenterX = logical?.x;
-        targetCenterY = logical?.y;
-        this._view = null;
-        this._mode = mode;
-        this._applyView(this._zoom, logical?.x, logical?.y);
-      }
-      if (baseChanges) {
-        targetZoom = 1;
-        targetCenterX = undefined;
-        targetCenterY = undefined;
-      }
-    }
-    if (previousMode === 'plan' && this._activeDraftId)
-      this._resumeDraftBySpace[this._space] = this._activeDraftId;
-    this._mode = mode;
-    if (previousMode === 'devices' && mode !== 'devices') {
-      this._showHidden = false;
-      this._deviceInbox = null;
-      this._deviceInboxReturn = null;
-      this._deviceInboxMemo = null;
-    }
-    this._editorChromeMode = mode === 'view' ? previousMode as 'plan' | 'devices' | 'decor' : mode;
-    if (mode === 'view') {
-      if (previousMode !== 'view' && !retargeting) {
-        this._modeTransitionEditorCamera = {
-          zoom: this._zoom,
-          centerX: fromVisual?.viewport.centerX,
-          centerY: fromVisual?.viewport.centerY,
-        };
-      }
-      const snap = this._viewModeSnap;
-      // restore the snapshot only for the space it was taken in
-      if (snap && snap.space === this._space) {
-        targetZoom = snap.zoom;
-        const targetProjection = this._labsIso && this._viewPreference[this._space] === 'iso'
-          ? 'iso' : 'flat';
-        const center = snap.cx != null && snap.cy != null && targetProjection === 'iso'
-          ? projectPlanPoint([snap.cx, snap.cy], 0) : null;
-        targetCenterX = center?.[0] ?? snap.cx;
-        targetCenterY = center?.[1] ?? snap.cy;
-      } else if (snap) {
-        // HP-1543-01: the floor CHANGED inside the editor — the snapshot
-        // belongs to the floor the editor was entered from, while _zoom still
-        // carries the editor's working zoom for the floor we are exiting on.
-        // Dropping the snapshot alone left that editor zoom (say 500%) on
-        // screen in view mode. The per-space store was never polluted
-        // (_saveZoom is view-only), so the standard centred
-        // _restoreZoom() puts back this floor's saved VIEW viewport. Its rAF
-        // reads _zoomBySpace, not the snapshot, so the same-tick floor-tab
-        // race the view-only guard protects against stays closed.
-        targetZoom = this._zoomBySpace[this._space] || 1;
-        targetCenterX = undefined;
-        targetCenterY = undefined;
-      }
-    } else {
-      this._modeTransitionEditorCamera = {
-        zoom: targetZoom, centerX: targetCenterX, centerY: targetCenterY,
-      };
-    }
-    this._modeTransitionTargetZoom = targetZoom;
-    this._modeTransitionTargetCenterX = targetCenterX;
-    this._modeTransitionTargetCenterY = targetCenterY;
-    if (previousProjection === 'iso'
-        || (mode === 'view' && this._labsIso && this._viewPreference[this._space] === 'iso')) {
-      this._modeTransitionForceAtomic = true;
-    }
-    const request = ++this._modeTransitionRequest;
-    if (!animate) {
-      // The only non-animated caller is route departure; keep the guard local
-      // so a future editor caller cannot accidentally use View geometry.
+    if (!this._editorRuntime) {
       if (mode === 'view') {
-        this._commitViewModeAtomic(fromVisual, targetZoom, targetCenterX, targetCenterY);
+        // Cancel a pending editor intent without disturbing the unchanged View.
+        this._editorModeRequest++;
+        return;
       }
-    } else if (fromVisual) {
-      this._modeTransitionPreparing = true;
-      this._modeTransitionVisual = fromVisual;
-      this._prepareModeTransition(
-        request, fromVisual, mode, targetZoom, targetCenterX, targetCenterY,
-      );
-    } else {
-      // A zero-sized stage cannot animate. Keep the functional fallback
-      // atomic and publish the exact target as soon as it is measurable.
-      this._modeTransitionPreparing = false;
-      this._modeTransitionVisual = null;
-      this._zoom = targetZoom;
-      this._view = null;
-      requestAnimationFrame(() => {
-        if (!this.isConnected || request !== this._modeTransitionRequest || this._mode !== mode) return;
-        this._applyView(targetZoom, targetCenterX, targetCenterY);
-        if (mode === 'view') {
-          this._viewModeSnap = null;
-          this._modeTransitionEditorCamera = null;
-        }
-        this.requestUpdate();
-      });
+      void this._requestMode(mode, animate);
+      return;
     }
-    this._path = [];
-    this._clearPlanSnapHover();
-    this._clearOpeningPlacement(true);
-    this._tool = 'draw';
-    this._mergeSel = null;
-    this._mergeDialog = null;
-    this._splitSel = null;
-    this._pendingSplit = null;
-    this._selId = null;
-    this._physicalSel = null;
-    this._physicalDialog = null;
-    this._physicalDrag = null;
-    this._rszResetController();
-    this._tip = null;
-    this._hoverRoom = null;
-    this._decorDraft = null;
-    this._decorSel = null;
-    this._decorMove = null;
-    this._backdropDialog = null;
-    // Every Background session starts predictably on Select. The image has an
-    // explicit tool of its own; only that tool may claim its body or frame.
-    this._decorTool = 'select';
-    this._bdDrag = null;
-    this._dtDrag = null;
-    this._dtBox = null;
-    if (mode === 'plan') {
-      this._primeDrawWallField();
-      this._resumeLastDraft();
-    }
-    this._saveNav();
+    return this._editorRuntime._setMode(mode, animate);
   }
 
   /** Prime the Draw thickness field to 15 cm once per Plan session. */
   private _primeDrawWallField(): void {
-    if (this._drawWallField === null) {
-      this._drawWallField = cmToField(DRAW_WALL_DEFAULT_CM, this._imperial);
-    }
+    return this._editorRuntimeOrThrow()._primeDrawWallField();
   }
 
   private get _drawWallFieldValue(): string {
@@ -6742,17 +6647,11 @@ class HouseplanCard extends LitElement {
   }
 
   private _showPhysicalRange(max = this._drawWallMaxCm, min = 0): void {
-    this._showToast(this._t('toast.physical_range', {
-      min: cmToField(min, this._imperial),
-      max: cmToField(max, this._imperial),
-      unit: this._t(this._imperial ? 'wallthick.unit_in' : 'wallthick.unit_cm'),
-    }));
+    return this._editorRuntimeOrThrow()._showPhysicalRange(max, min);
   }
 
   private _draftSegmentCount(sp = this._curSpaceCfg as any): number {
-    return (sp?.room_drafts || []).reduce(
-      (sum: number, d: any) => sum + (Array.isArray(d.segments) ? d.segments.length : 0), 0,
-    );
+    return this._editorRuntimeOrThrow()._draftSegmentCount(sp);
   }
 
   /**
@@ -6770,116 +6669,25 @@ class HouseplanCard extends LitElement {
    * `x/y/angle` projection that older readers still consume (#132).
    */
   private _mergeSpacePartitions(sp: any, seedIds?: string[]): number {
-    const partitions = (sp?.partitions || []) as PartitionCfg[];
-    if (partitions.length < 2) return 0;
-    const result = mergeCollinearPartitions(partitions, {
-      pitch: GRID_STEP_N,
-      seedIds,
-      geometry: spaceMergeGeometry(sp, { excludeDraftId: this._activeDraftId }),
-    });
-    if (!result.merged) return 0;
-    sp.partitions = result.partitions;
-    applyOpeningMoves(sp.openings, sp.partitions, result.openingMoves, {
-      coordScale: NORM_W, cellCm: this._cellCm, gridPitch: this._gridPitch,
-    });
-    return result.merged;
+    return this._editorRuntimeOrThrow()._mergeSpacePartitions(sp, seedIds);
   }
 
   private _finishWallChain(): boolean {
-    if (this._tool !== 'draw' || this._wallFaceBatch || this._roomDialog) return true;
-    const sp = this._curSpaceCfg as any;
-    if (!sp || this._path.length < 2) {
-      this._path = [];
-      this._activeDraftId = null;
-      this._draftSegmentCms = [];
-      this._closingWallCm = null;
-      this._clearPlanSnapHover();
-      return true;
-    }
-    const segments = wallChainSegments(
-      this._path,
-      chainSegmentCms(
-        this._path.length - 1, this._draftSegmentCms,
-        this._drawWallCm, DRAW_WALL_DEFAULT_CM,
-      ),
-    );
-    const segmentCount = segments.length;
-    if ((sp.partitions || []).length + segmentCount > MAX_PARTITIONS) {
-      this._showToast(this._t('toast.physical_limit'));
-      return false;
-    }
-    const before = this._geometrySnapshot();
-    sp.partitions ||= [];
-    const seed = Date.now().toString(36);
-    const drawnIds: string[] = [];
-    const activeDraft = this._activeDraftId
-      ? (sp.room_drafts || []).find((draft: any) => draft.id === this._activeDraftId)
-      : null;
-    const lineage = this._draftSegmentsForPath(
-      this._path, activeDraft, segments.map((segment) => segment.cm),
-    );
-    for (let i = 0; i < segmentCount; i++) {
-      const segment = segments[i];
-      const id = lineage[i]?.id || `partition-${seed}-${i}`;
-      drawnIds.push(id);
-      sp.partitions.push({
-        id,
-        a: [segment.a[0] / NORM_W, segment.a[1] / NORM_W],
-        b: [segment.b[0] / NORM_W, segment.b[1] / NORM_W],
-        cm: segment.cm,
-      });
-    }
-    // A straight run drawn in several clicks is one wall, not five (#229).
-    // Only what this chain touches is merged: what has piled up earlier waits
-    // for «Optimise plans», where the sweep is explicit and undoable.
-    this._mergeSpacePartitions(sp, drawnIds);
-    if (this._activeDraftId && Array.isArray(sp.room_drafts)) {
-      sp.room_drafts = sp.room_drafts.filter((draft: any) => draft.id !== this._activeDraftId);
-      if (!sp.room_drafts.length) delete sp.room_drafts;
-    }
-    this._commitPhysicalGeometry(this._t('history.wall_chain_finish'), before);
-    delete this._resumeDraftBySpace[this._space];
-    this._path = [];
-    this._activeDraftId = null;
-    this._draftSegmentCms = [];
-    this._closingWallCm = null;
-    this._clearPlanSnapHover();
-    return true;
+    return this._editorRuntimeOrThrow()._finishWallChain();
   }
 
   /** One transition gate for Plan toolbar tools. */
   private _activateMarkupTool(tool: MarkupTool): void {
-    if (tool === this._tool) return;
-    if (this._wallFaceBatch) this._roomDialogCancel();
-    if (this._tool === 'draw' && !this._finishWallChain()) return;
-    else this._cancelPath();
-    if (this._tool === 'resize') {
-      if (this._resize.dragging) this._rszCancelDrag();
-      else this._resize.reset();
-    }
-    this._tool = tool;
-    if (tool === 'draw') this._resumeLastDraft();
-    if (tool === 'resize') this._resize.selectRoom(null);
-    if (tool === 'wallthick') this._wallDialog = null;
+    return this._editorRuntimeOrThrow()._activateMarkupTool(tool);
   }
 
   private _limitReached(kind: 'draft' | 'partition' | 'column'): boolean {
-    const sp = this._curSpaceCfg as any;
-    if (!sp) return true;
-    const reached = kind === 'draft'
-      ? (sp.room_drafts || []).length >= MAX_ROOM_DRAFTS
-      : kind === 'partition'
-        ? (sp.partitions || []).length >= MAX_PARTITIONS
-        : (sp.wall_columns || []).length >= MAX_WALL_COLUMNS;
-    if (reached) this._showToast(this._t('toast.physical_limit'));
-    return reached;
+    return this._editorRuntimeOrThrow()._limitReached(kind);
   }
 
 
   private _svgPoint(ev: MouseEvent): number[] {
-    const stage = this.renderRoot.querySelector('.stage') as HTMLElement;
-    const r = stage.getBoundingClientRect();
-    return this._screenToVb(ev.clientX - r.left, ev.clientY - r.top);
+    return this._editorRuntimeOrThrow()._svgPoint(ev);
   }
 
   /**
@@ -6889,82 +6697,29 @@ class HouseplanCard extends LitElement {
    * to bump into any more, only the ±5000 the backend refuses to store.
    */
   private _snap(p: number[]): number[] {
-    const g = this._gridPitch;
-    return [clampCanvasR(snapToGrid(p[0], g)), clampCanvasR(snapToGrid(p[1], g))];
+    return this._editorRuntimeOrThrow()._snap(p);
   }
 
   /** Grid snap for the free end of the wall currently being drawn. */
   private _snapDrawPoint(p: number[], lock45 = false): number[] {
-    const anchor = this._path[this._path.length - 1];
-    const candidate = lock45 && anchor
-      ? snapSegment45(anchor, p, this._gridPitch, SANE_LIMIT)
-      : p;
-    return this._snap(candidate);
+    return this._editorRuntimeOrThrow()._snapDrawPoint(p, lock45);
   }
 
   /** Canonical physical opening slots on room-wall centrelines. */
   private _planSnapOpeningCuts(space: SpaceModel, openCuts: number[][]): number[][] {
-    if (!this._openingsR.length) return [];
-    const index = this._openingWallIndexFor(space, openCuts).value;
-    const cuts: number[][] = [];
-    for (const input of this._roomWallOpeningInputs(this._openingsR, space)) {
-      const association = resolveOpeningWallAssociation(index, input);
-      if (!association.negative && !association.positive) continue;
-      const rad = input.angle * Math.PI / 180;
-      const dx = Math.cos(rad) * input.length / 2;
-      const dy = Math.sin(rad) * input.length / 2;
-      cuts.push([input.x - dx, input.y - dy, input.x + dx, input.y + dy]);
-    }
-    return cuts;
+    return this._editorRuntimeOrThrow()._planSnapOpeningCuts(space, openCuts);
   }
 
   /** Static presentation axes shared by the overlay and its hit resolver. */
   private _planSnapGeometrySnapshot(): { key: string; value: PlanSnapGeometry } {
-    const space = this._spaceModel();
-    if (!space) {
-      return { key: `${this._space}|empty`, value: { segments: [], endpoints: [] } };
-    }
-    const key = [
-      this._space, this._cfgEpoch, this._activeDraftId || '',
-      space.rooms.length, space.room_drafts.length, space.partitions.length,
-    ].join('|');
-    if (this._planSnapGeometryCache?.key === key) return this._planSnapGeometryCache;
-    const zeroCuts = this._openCuts();
-    const value = buildPlanSnapGeometry({
-      space,
-      activeDraftId: this._activeDraftId,
-      // A zero-thickness wall is still a canonical wall axis and snap target.
-      // Only an actual opening removes the presentation interval (#306).
-      roomCuts: this._planSnapOpeningCuts(space, zeroCuts),
-      partitionCuts: this._partitionOpeningCuts(space),
-      epsilon: this._gridPitch * 0.0002,
-    });
-    this._planSnapGeometryCache = { key, value };
-    return this._planSnapGeometryCache;
+    return this._editorRuntimeOrThrow()._planSnapGeometrySnapshot();
   }
 
   /** Independent sources hidden under another wall, without snap deduplication. */
   private _hiddenWallDiagnosticSnapshot(): {
     key: string; value: HiddenWallDiagnosticGeometry;
   } {
-    const space = this._spaceModel();
-    if (!space) {
-      return { key: `${this._space}|hidden-empty`, value: { segments: [], endpoints: [] } };
-    }
-    const key = [
-      'hidden', this._space, this._cfgEpoch, this._activeDraftId || '',
-      space.rooms.length, space.room_drafts.length, space.partitions.length,
-    ].join('|');
-    if (this._hiddenWallDiagnosticCache?.key === key) {
-      return this._hiddenWallDiagnosticCache;
-    }
-    const value = buildHiddenWallDiagnosticGeometry({
-      space,
-      activeDraftId: this._activeDraftId,
-      epsilon: this._gridPitch * 0.0002,
-    });
-    this._hiddenWallDiagnosticCache = { key, value };
-    return this._hiddenWallDiagnosticCache;
+    return this._editorRuntimeOrThrow()._hiddenWallDiagnosticSnapshot();
   }
 
   /**
@@ -6974,34 +6729,11 @@ class HouseplanCard extends LitElement {
    * Keeping this snapshot separate preserves the established face contract.
    */
   private _planStructuralGeometrySnapshot(): { key: string; value: PlanSnapGeometry } {
-    const space = this._spaceModel();
-    if (!space) {
-      return { key: `${this._space}|structural-empty`, value: { segments: [], endpoints: [] } };
-    }
-    const key = [
-      'structural', this._space, this._cfgEpoch, this._activeDraftId || '',
-      space.rooms.length, space.room_drafts.length, space.partitions.length,
-    ].join('|');
-    if (this._planStructuralGeometryCache?.key === key) {
-      return this._planStructuralGeometryCache;
-    }
-    const value = buildPlanSnapGeometry({
-      space,
-      activeDraftId: this._activeDraftId,
-      epsilon: this._gridPitch * 0.0002,
-    });
-    this._planStructuralGeometryCache = { key, value };
-    return this._planStructuralGeometryCache;
+    return this._editorRuntimeOrThrow()._planStructuralGeometrySnapshot();
   }
 
   private _planSnapContextKey(geometryKey: string): string {
-    const first = this._path[0];
-    const anchor = this._path[this._path.length - 1];
-    return [
-      geometryKey, this._tool, this._path.length,
-      first ? `${first[0]},${first[1]}` : '',
-      anchor ? `${anchor[0]},${anchor[1]}` : '',
-    ].join('|');
+    return this._editorRuntimeOrThrow()._planSnapContextKey(geometryKey);
   }
 
   private _resolvePlanDrawPoint(
@@ -7010,36 +6742,7 @@ class HouseplanCard extends LitElement {
     point: number[]; candidate: PlanSnapCandidate | null;
     conflicts: PlanSnapEndpoint[]; ambiguous: boolean; contextKey: string;
   } {
-    const snapshot = this._planSnapGeometrySnapshot();
-    const anchor = this._path[this._path.length - 1];
-    const closure = this._tool === 'draw' && this._path.length >= 3
-      ? [{ point: this._path[0], key: 'closure:first-point' }]
-      : [];
-    const options = {
-      tolerance: this._cssPxToRender(12),
-      distinguishTolerance: this._cssPxToRender(8),
-      gridStep: this._gridPitch,
-      excludePoints: anchor ? [anchor] : [],
-      extraEndpoints: closure,
-      epsilon: this._gridPitch * 0.0002,
-    };
-    const resolution = lock45 && anchor
-      ? resolveStrictPlanSnap(snapshot.value, raw, { ...options, anchor })
-      : resolvePlanSnapResult(snapshot.value, raw, options);
-    const candidate = resolution.kind === 'resolved' ? resolution.candidate : null;
-    const snapped = candidate ? [...candidate.point] : this._snapDrawPoint(raw, lock45);
-    const point = anchor ? snapNearAxisEndpoint(anchor, snapped) : snapped;
-    // A nearby topology endpoint loses snap ownership when the drafting rule
-    // moves the actually persisted point away from it. Preview and click must
-    // describe the exact same geometry (#290).
-    const effectiveCandidate = candidate && samePoint(point, candidate.point) ? candidate : null;
-    return {
-      point,
-      candidate: effectiveCandidate,
-      conflicts: resolution.kind === 'ambiguous' ? resolution.conflicts : [],
-      ambiguous: resolution.kind === 'ambiguous',
-      contextKey: this._planSnapContextKey(snapshot.key),
-    };
+    return this._editorRuntimeOrThrow()._resolvePlanDrawPoint(raw, lock45);
   }
 
   private get _activePlanSnapCandidate(): PlanSnapCandidate | null {
@@ -7059,10 +6762,12 @@ class HouseplanCard extends LitElement {
   }
 
   private _clearPlanSnapHover(clearCursor = true): void {
-    this._planSnapHover = null;
-    this._syncPlanSnapActiveMarker(null);
-    this._syncPlanSnapConflictMarkers([]);
-    if (clearCursor) this._cursorPt = null;
+    if (!this._editorRuntime) {
+      this._planSnapHover = null;
+      if (clearCursor) this._cursorPt = null;
+      return;
+    }
+    return this._editorRuntimeOrThrow()._clearPlanSnapHover(clearCursor);
   }
 
   private _samePt(a: readonly number[], b: readonly number[]): boolean {
@@ -7075,63 +6780,7 @@ class HouseplanCard extends LitElement {
    * `partitions` collection and must never be confused with that legacy field.
    */
   private _dropLegacySegments(): void {
-    // «Ripple only» was removed from the UI: keep old configs readable, then
-    // materialise the recognisable icon+activity presentation on any write.
-    for (const marker of this._serverCfg?.markers || []) {
-      if (marker.display === 'ripple') marker.display = 'icon_ripple';
-    }
-    for (const sp of this._serverCfg?.spaces || []) {
-      delete (sp as any).segments;
-      const physicalIds = new Set<string>();
-      const validId = (id: any): id is string => typeof id === 'string'
-        && id.length >= 1 && id.length <= 64 && !physicalIds.has(id);
-      const keepId = (id: string): boolean => { physicalIds.add(id); return true; };
-      const point = (p: any): p is number[] => Array.isArray(p) && p.length === 2
-        && p.every((v: any) => Number.isFinite(Number(v)) && Math.abs(Number(v)) <= CANVAS_LIMIT);
-      if (Array.isArray((sp as any).partitions)) {
-        (sp as any).partitions = (sp as any).partitions.filter((p: any) =>
-          p && validId(p.id) && point(p.a) && point(p.b)
-          && Math.hypot(p.a[0] - p.b[0], p.a[1] - p.b[1]) > 1e-9
-          && keepId(p.id))
-          .map((p: any) => ({
-            ...p,
-            cm: Number.isFinite(Number(p.cm)) ? Math.max(0, Math.min(100, Number(p.cm))) : 15,
-          }));
-        if (!(sp as any).partitions.length) delete (sp as any).partitions;
-      }
-      if (Array.isArray((sp as any).wall_columns)) {
-        (sp as any).wall_columns = (sp as any).wall_columns.filter((c: any) =>
-          c && validId(c.id) && point(c.center) && keepId(c.id))
-          .map((c: any) => ({
-            id: c.id, shape: c.shape === 'circle' ? 'circle' : 'square',
-            center: [Number(c.center[0]), Number(c.center[1])],
-            cm: clampColumnCm(Number(c.cm) || 15),
-            ...(c.shape === 'circle' ? {} : { angle: canonicalColumnAngle(c.angle) }),
-          }));
-        if (!(sp as any).wall_columns.length) delete (sp as any).wall_columns;
-      }
-      if (Array.isArray((sp as any).room_drafts)) {
-        (sp as any).room_drafts = (sp as any).room_drafts.filter((d: any) =>
-          d && validId(d.id) && Array.isArray(d.points)
-          && d.points.length >= 2 && d.points.every(point) && keepId(d.id))
-          .map((d: any) => {
-            const sanitized = sanitizeRoomDraftPath(d);
-            return { id: d.id, ...sanitized };
-          })
-          .filter((d: any) => d.points.length >= 2);
-        if (!(sp as any).room_drafts.length) delete (sp as any).room_drafts;
-      }
-      if (Array.isArray(sp.walls)) {
-        const model = selectSpaceModelById(spaceModels({ spaces: [sp] } as any), sp.id);
-        const cuts = model
-          ? resolveZeroWalls(sp, model, NORM_W, GRID_PITCH * 0.02).contour
-            .map((cut) => cut.map((value) => value / NORM_W))
-          : sanitizeOpenSpans((sp as any).open_spans)
-            .map((e) => [e.a[0], e.a[1], e.b[0], e.b[1]]);
-        sp.walls = degradeWalls(sp.walls, sp.rooms || [], GRID_STEP_N, 1, cuts);
-        if (!sp.walls.length) delete sp.walls;
-      }
-    }
+    return this._editorRuntimeOrThrow()._dropLegacySegments();
   }
 
   /**
@@ -7164,34 +6813,12 @@ class HouseplanCard extends LitElement {
   private _rollbackRejectedPhysicalWrites(
     entries: Array<[string, { fingerprint: string; before: SpaceGeometryState }]>,
   ): boolean {
-    if (!this._serverCfg || !entries.length) return false;
-    let restored = false;
-    for (const [spaceId] of entries) {
-      const pending = this._pendingPhysicalWrites.get(spaceId);
-      if (!pending) continue;
-      restored = this._restoreGeometryStateInConfig(this._serverCfg, pending.before) || restored;
-      this._pendingPhysicalWrites.delete(spaceId);
-    }
-    if (!restored) return false;
-    this._clearGeometryGesture();
-    this._geometryHistory.clear();
-    this._cfgEpoch++;
-    this._modelCache = null;
-    this._wallUnionCache = null;
-    this._physicalBodiesCache = null;
-    this._frame = null;
-    this._regSignature = '';
-    this._cfgContentFingerprint = contentFingerprint(this._serverCfg);
-    this._maybeRebuildDevices();
-    this.requestUpdate();
-    return true;
+    return this._editorRuntimeOrThrow()._rollbackRejectedPhysicalWrites(entries);
   }
 
   /** Revalidate the synchronous rollback after every write already queued. */
   private async _reloadRejectedPhysicalWrite(): Promise<void> {
-    const queued = this._writeChain;
-    await queued.catch(() => undefined);
-    await this._reloadConfigOnly(true);
+    return this._editorRuntimeOrThrow()._reloadRejectedPhysicalWrite();
   }
 
   /** A config write is in flight — the card must not adopt a server revision. */
@@ -7199,63 +6826,37 @@ class HouseplanCard extends LitElement {
     return this._writesPending > 0;
   }
 
+  /**
+   * The sole frontend config transport.  Keeping the final canonicalization at
+   * this boundary makes View-owned metadata writes and strict editor writes
+   * converge on the same payload contract without making View load the editor.
+   */
+  private async _sendConfigCandidate(candidate: ServerConfig): Promise<void> {
+    const canonicalCandidate = canonicalizeConfigGeometry(candidate);
+    const response = await this.hass.callWS({
+      type: 'houseplan/config/set', config: canonicalCandidate, expected_rev: this._cfgRev,
+    });
+    this._cfgRev = response?.rev ?? this._cfgRev + 1;
+  }
+
   private _writeConfig(): Promise<void> {
+    if (this._editorRuntime) return this._editorRuntime._writeConfig();
+    // Registry discovery may update shared metadata while the card is still
+    // display-only. Persist that small View-owned mutation without pulling in
+    // the editor runtime; strict physical-write validation is impossible here
+    // because such writes can only be created by an installed editor.
     this._writesPending++;
     this._writeChain = enqueueSerializedWrite(this._writeChain, async () => {
       if (!this._serverCfg) return;
-      this._dropLegacySegments();
       const candidate = canonicalizeConfigGeometry(this._serverCfg);
       const candidateFingerprint = contentFingerprint(candidate);
-      const strictEntries = [...this._pendingPhysicalWrites.entries()];
-      for (const [spaceId, accepted] of strictEntries) {
-        const candidateSpace = candidate.spaces.find((space: any) => space.id === spaceId);
-        const exactFingerprint = spacePhysicalGeometryFingerprint(candidateSpace);
-        if (exactFingerprint === accepted.fingerprint) continue;
-        let safe = false;
-        try { safe = this._checkSpacePhysicalGeometry(candidate, spaceId).ok; } catch { safe = false; }
-        if (!safe) {
-          this._restoreGeometryStateLocal(accepted.before);
-          this._pendingPhysicalWrites.delete(spaceId);
-          this._geometryHistory.clear();
-          this._showToast(this._t('toast.geometry_unsafe'));
-          throw Object.assign(new Error('unsafe wall geometry'), { code: 'geometry-unsafe' });
-        }
-        accepted.fingerprint = exactFingerprint;
-      }
-      // Do not replace the reactive root merely because the pure helper
-      // returned a clone. Besides an unnecessary render, that used to expose
-      // unrelated write-time cleanup as a visual change (#224 review H1).
-      // A real coordinate change still adopts the exact object sent below;
-      // willUpdate owns the corresponding geometry-epoch bump.
       if (candidateFingerprint !== contentFingerprint(this._serverCfg)) {
         this._serverCfg = candidate;
       }
       this._cfgContentFingerprint = candidateFingerprint;
-      let r: any;
-      try {
-        r = await this.hass.callWS({
-          type: 'houseplan/config/set', config: candidate, expected_rev: this._cfgRev,
-        });
-      } catch (error) {
-        const rolledBack = this._rollbackRejectedPhysicalWrites(strictEntries);
-        if (!rolledBack) throw error;
-        // HA normally rejects with an Error-like object, but integrations and
-        // test doubles may reject with a string.  Never lose the rollback tag:
-        // the caller still has to schedule an authoritative re-read after the
-        // synchronous, fail-closed restoration (#314).
-        const failure: any = error && typeof error === 'object'
-          ? error : Object.assign(new Error(String(error)), { cause: error });
-        failure.physicalGeometryRolledBack = true;
-        throw failure;
-      }
-      this._cfgRev = r?.rev ?? this._cfgRev + 1;
-      for (const [spaceId, accepted] of strictEntries) {
-        if (this._pendingPhysicalWrites.get(spaceId)?.fingerprint === accepted.fingerprint)
-          this._pendingPhysicalWrites.delete(spaceId);
-      }
+      await this._sendConfigCandidate(candidate);
     });
     const mine = this._writeChain.finally(() => { this._writesPending--; });
-    // keep the chain itself unadorned so the next link waits for the write only
     return mine;
   }
 
@@ -7272,295 +6873,65 @@ class HouseplanCard extends LitElement {
 
   /** Deep, immutable geometry state from the real config (never Resize preview). */
   private _geometrySnapshotFromConfig(config: any, spaceId: string): SpaceGeometryState | null {
-    const sp = config?.spaces?.find((s: any) => s.id === spaceId);
-    if (!sp) return null;
-    const copy = <T>(value: T): T => JSON.parse(JSON.stringify(value));
-    const plan_transform: SpaceGeometryState['plan_transform'] = {};
-    for (const key of ['plan_x', 'plan_y', 'plan_scale', 'plan_scale_x', 'plan_scale_y', 'plan_angle'] as const) {
-      if (sp[key] !== undefined) plan_transform[key] = sp[key];
-    }
-    return {
-      spaceId,
-      rooms: copy(sp.rooms || []),
-      ...(Array.isArray(sp.openings) ? { openings: copy(sp.openings) } : {}),
-      ...(Array.isArray(sp.walls) ? { walls: copy(sp.walls) } : {}),
-      ...(Array.isArray(sp.wall_segments) ? { wall_segments: copy(sp.wall_segments) } : {}),
-      ...(Array.isArray((sp as any).open_spans)
-        ? { open_spans: copy((sp as any).open_spans) }
-        : {}),
-      ...(Array.isArray((sp as any).room_drafts)
-        ? { room_drafts: copy((sp as any).room_drafts) }
-        : {}),
-      ...(Array.isArray((sp as any).partitions)
-        ? { partitions: copy((sp as any).partitions) }
-        : {}),
-      ...(Array.isArray((sp as any).wall_columns)
-        ? { wall_columns: copy((sp as any).wall_columns) }
-        : {}),
-      ...(Array.isArray(sp.decor) ? { decor: copy(sp.decor) } : {}),
-      plan_transform,
-    };
+    return this._editorRuntimeOrThrow()._geometrySnapshotFromConfig(config, spaceId);
   }
 
   private _geometrySnapshot(spaceId = this._space): SpaceGeometryState | null {
-    return this._geometrySnapshotFromConfig(this._serverCfg, spaceId);
+    return this._editorRuntimeOrThrow()._geometrySnapshot(spaceId);
   }
 
   /** Finish one geometry transaction and invalidate the redo branch. */
   private _recordGeometry(name: string, before: SpaceGeometryState | null): void {
-    if (!before) return;
-    const after = this._geometrySnapshot(before.spaceId);
-    if (!after || JSON.stringify(before) === JSON.stringify(after)) return;
-    this._geometryHistory.push({ name, before, after });
-    this.requestUpdate();
+    return this._editorRuntimeOrThrow()._recordGeometry(name, before);
   }
 
   /** Replace only persisted geometry in memory; no history entry and no WS. */
   private _restoreGeometryStateInConfig(
     config: any, state: SpaceGeometryState, preserveIdentityHints = false,
   ): boolean {
-    const sp = config?.spaces?.find((space: any) => space.id === state.spaceId);
-    if (!sp) return false;
-    const copy = <T>(value: T): T => JSON.parse(JSON.stringify(value));
-    const oldRooms = new Map((sp.rooms || []).map((room: any) => [room.id, room]));
-    sp.rooms = copy(state.rooms);
-    if (preserveIdentityHints) {
-      for (const room of sp.rooms) {
-        const old: any = oldRooms.get(room.id);
-        if (!Array.isArray(room.wall_ids) && Array.isArray(old?.wall_ids)
-            && old.wall_ids.length === room.poly?.length) room.wall_ids = copy(old.wall_ids);
-      }
-    }
-    const assign = (key: 'openings' | 'walls' | 'wall_segments' | 'open_spans' | 'room_drafts'
-      | 'partitions' | 'wall_columns' | 'decor', value: unknown): void => {
-      if (value !== undefined) (sp as any)[key] = copy(value);
-      else if (!(preserveIdentityHints && key === 'wall_segments')) delete (sp as any)[key];
-    };
-    const oldOpenings = new Map((sp.openings || []).map((opening: any) => [opening.id, opening]));
-    const oldDrafts = new Map((sp.room_drafts || []).map((draft: any) => [draft.id, draft]));
-    assign('openings', state.openings);
-    assign('walls', state.walls);
-    assign('wall_segments', state.wall_segments);
-    assign('open_spans', state.open_spans);
-    assign('room_drafts', state.room_drafts);
-    assign('partitions', state.partitions);
-    assign('wall_columns', state.wall_columns);
-    assign('decor', state.decor);
-    if (preserveIdentityHints) {
-      for (const opening of sp.openings || []) {
-        const old: any = oldOpenings.get(opening.id);
-        if (!opening.host && old?.host?.kind === 'wall') opening.host = copy(old.host);
-      }
-      for (const draft of sp.room_drafts || []) {
-        const old: any = oldDrafts.get(draft.id);
-        for (let index = 0; index < (draft.segments || []).length; index++) {
-          if (!draft.segments[index]?.id && old?.segments?.[index]?.id)
-            draft.segments[index].id = old.segments[index].id;
-        }
-      }
-    }
-    for (const key of ['plan_x', 'plan_y', 'plan_scale', 'plan_scale_x', 'plan_scale_y', 'plan_angle'] as const)
-      delete (sp as any)[key];
-    Object.assign(sp, copy(state.plan_transform || {}));
-    return true;
+    return this._editorRuntimeOrThrow()._restoreGeometryStateInConfig(config, state, preserveIdentityHints);
   }
 
   private _restoreGeometryStateLocal(state: SpaceGeometryState): boolean {
-    if (!this._restoreGeometryStateInConfig(this._serverCfg, state)) return false;
-    this._cfgEpoch++;
-    this._modelCache = null;
-    this._wallUnionCache = null;
-    this._physicalBodiesCache = null;
-    this._frame = null;
-    this.requestUpdate();
-    return true;
+    return this._editorRuntimeOrThrow()._restoreGeometryStateLocal(state);
   }
 
   /** Shared fail-closed transaction boundary for every physical writer. */
   private _wallModelBlockerLabel(error: unknown): string {
-    const reason = error instanceof WallSegmentModelError ? error.reason : 'invalid-room';
-    return this._t(`wall_model.reason.${reason}`);
+    return this._editorRuntimeOrThrow()._wallModelBlockerLabel(error);
   }
 
   /** A legacy virtual-wall projection is still present only until its first
    * structural v9 write. Keep its atomic-failure copy distinct from generic
    * wall-model validation without persisting provenance on the new atoms. */
   private _hasLegacyZeroWallFields(config: any = this._serverCfg): boolean {
-    return (config?.spaces || []).some((space: any) => (
-      (Array.isArray(space?.open_spans) && space.open_spans.length > 0)
-      || (space?.rooms || []).some((room: any) => (
-        Array.isArray(room?.open_to) && room.open_to.length > 0
-      ))
-    ));
+    return this._editorRuntimeOrThrow()._hasLegacyZeroWallFields(config);
   }
 
   private _showWallModelMigrationBlocked(error: unknown): void {
-    const key = this._hasLegacyZeroWallFields()
-      ? 'toast.zero_wall_migration_blocked'
-      : 'toast.wall_model_migration_blocked';
-    this._showToast(this._t(key, { reason: this._wallModelBlockerLabel(error) }));
+    return this._editorRuntimeOrThrow()._showWallModelMigrationBlocked(error);
   }
 
   /** #329: every wall of a space as the limit checks see it. */
   private _limitSegmentsOf(space: any): LimitSegment[] {
-    const segments: LimitSegment[] = [];
-    for (const segment of (space?.wall_segments || [])) {
-      if (segment?.a && segment?.b) {
-        segments.push({
-          id: String(segment.id || ''), a: segment.a, b: segment.b, cm: Number(segment.cm),
-        });
-      }
-    }
-    for (const partition of (space?.partitions || [])) {
-      if (partition?.a && partition?.b) {
-        segments.push({
-          id: String(partition.id || ''), a: partition.a, b: partition.b, cm: Number(partition.cm),
-        });
-      }
-    }
-    for (const draft of (space?.room_drafts || [])) {
-      const points = Array.isArray(draft?.points) ? draft.points : [];
-      const drafted = Array.isArray(draft?.segments) ? draft.segments : [];
-      for (let index = 0; index + 1 < points.length; index++) {
-        segments.push({
-          id: String(drafted[index]?.id || `${draft?.id || 'draft'}-${index}`),
-          a: points[index], b: points[index + 1], cm: Number(drafted[index]?.cm),
-        });
-      }
-    }
-    return segments;
+    return this._editorRuntimeOrThrow()._limitSegmentsOf(space);
   }
 
   /** #329 П1-П5 over one space. Pure input, no side effects. */
-  private _junctionLimitViolations(
-    config: any, spaceId: string,
-    /** #330 §4.7: an already computed masonry pass of THIS config (e.g. the
-     * resize preflight's artifact) — the union is never paid twice. */
-    sharedGeometry?: any,
-  ): JunctionLimitViolation[] {
-    const space = (config?.spaces || []).find((item: any) => item?.id === spaceId);
-    if (!space) return [];
-    const cellCm = Number(space.cell_cm) > 0 ? Number(space.cell_cm) : 5;
-    const segments = this._limitSegmentsOf(space);
-    const violations = [
-      ...checkNodes(segments),
-      ...checkSegmentLengths(segments, cellCm, GRID_STEP_N),
-      ...checkNodeDistances(segments, cellCm, GRID_STEP_N),
-    ];
-    // #330 §4.7: without the shared passes every room recomputed the FULL
-    // junction topology and masonry union for itself — 144 rooms × a whole-
-    // plan polyclip pass cost 4.2 s per candidate. innerContourForRoom
-    // already accepts both caches (the render path uses them); compute each
-    // once per check and hand them to every room.
-    let sharedNodes: ReturnType<typeof multiWallNodesForGeometry> | null = null;
-    try {
-      sharedNodes = multiWallNodesForGeometry(
-        space.rooms || [], space.walls || [], [], GRID_STEP_N, cellCm, GRID_STEP_N, 1,
-      );
-    } catch { sharedNodes = null; }
-    let sharedRoomGeometry: any = sharedGeometry?.status === 'ok'
-      || sharedGeometry?.status === 'degraded-extra'
-      ? sharedGeometry.roomGeom : null;
-    // The masonry union is the expensive pass (seconds on a large plan), and
-    // innerContourForRoom only reaches for it when the junction topology is
-    // non-trivial — with no multi-wall nodes it returns the room's own inset
-    // early. Pay for the union once, and only when someone will read it.
-    if (!sharedRoomGeometry && sharedNodes && sharedNodes.nodes.length) {
-      try {
-        const geometry = wallBodiesGeometry(
-          space.rooms || [], space.walls || [], [], [], GRID_STEP_N, cellCm, GRID_STEP_N, 1,
-        );
-        sharedRoomGeometry = geometry?.status === 'ok' || geometry?.status === 'degraded-extra'
-          ? geometry.roomGeom : null;
-      } catch { sharedRoomGeometry = null; }
-    }
-    for (const room of (space.rooms || [])) {
-      const roomId = String(room?.id || '');
-      if (!roomId) continue;
-      let inner: number[][] | null = null;
-      try {
-        inner = innerContourForRoom(
-          space.rooms || [], roomId, space.walls || [], [],
-          GRID_STEP_N, cellCm, GRID_STEP_N, 1,
-          sharedRoomGeometry ?? undefined, sharedNodes,
-        );
-      } catch { inner = null; }
-      violations.push(...checkRoomClearance(roomId, inner, cellCm, GRID_STEP_N));
-    }
-    return violations;
+  private _junctionLimitViolations(config: any, spaceId: string): JunctionLimitViolation[] {
+    return this._editorRuntimeOrThrow()._junctionLimitViolations(config, spaceId);
   }
 
   /** Localised refusal text for the first violation a write introduces. */
   private _junctionLimitLabel(violation: JunctionLimitViolation): string {
-    const round = (value: number) => String(Math.round(value * 10) / 10);
-    return this._t(`junction.limit_${violation.rule}` as any, {
-      actual: round(violation.actual), limit: round(violation.limit),
-    });
+    return this._editorRuntimeOrThrow()._junctionLimitLabel(violation);
   }
-
-  /** #330 §4.4: baseline violations per (document identity, space, geometry). */
-  private _junctionBaselineCache = new WeakMap<object, {
-    spaceId: string; fingerprint: string; violations: JunctionLimitViolation[];
-  }>();
 
   /** #329: violations this write would ADD; inherited ones stay untouched. */
   private _junctionLimitsIntroduced(
     candidate: any, previousConfig: any, spaceId: string,
-    candidateGeometry?: any,
   ): JunctionLimitViolation[] {
-    // The baseline must be the previous document AS THE CANDIDATE SEES IT: a
-    // legacy space carries no wall catalogue at all, so comparing it raw with
-    // a migrated candidate reported every inherited short segment as new and
-    // refused legitimate resizes of real plans. A LEGACY document therefore
-    // crosses the identity barrier first; a current-version document already
-    // carries the catalogue and is judged as-is (#330 §4.6) — a no-op
-    // re-migration cost 69 ms per pointermove on a 576-atom plan.
-    let inherited: JunctionLimitViolation[] | undefined;
-    // #330 §4.4: a resize gesture judges the SAME previous document on every
-    // pointermove. The cache key is the document's identity plus the
-    // geometry fingerprint of ITS space — content, not a counter: the
-    // preview epoch (_cfgEpoch) ticks on every accepted preview overlay
-    // without the stored document changing (that miss cost one full baseline
-    // pass per pointermove, review 330-r2), while an in-place structural
-    // commit changes the fingerprint and honestly invalidates.
-    const previousSpace = (previousConfig?.spaces || [])
-      .find((space: any) => space?.id === spaceId);
-    let fingerprint = '';
-    try { fingerprint = spacePhysicalGeometryFingerprint(previousSpace); }
-    catch { fingerprint = ''; }
-    const cached = previousConfig && typeof previousConfig === 'object'
-      ? this._junctionBaselineCache.get(previousConfig) : undefined;
-    if (cached && fingerprint && cached.fingerprint === fingerprint
-        && cached.spaceId === spaceId) {
-      inherited = cached.violations;
-    }
-    if (!inherited) {
-      try {
-        const baseline = Number(previousConfig?.model_version || 0) >= WALL_SEGMENT_MODEL_VERSION
-          ? previousConfig
-          : commitWallSegmentModel(previousConfig).config;
-        inherited = this._junctionLimitViolations(baseline, spaceId);
-      } catch {
-        // An unmigratable baseline proves nothing about inheritance; never
-        // refuse the write on that basis.
-        return [];
-      }
-      if (previousConfig && typeof previousConfig === 'object' && fingerprint) {
-        this._junctionBaselineCache.set(previousConfig, {
-          spaceId, fingerprint, violations: inherited,
-        });
-      }
-    }
-    let next: JunctionLimitViolation[] = [];
-    try { next = this._junctionLimitViolations(candidate, spaceId, candidateGeometry); }
-    catch {
-      // #331 §2.5: an exception while judging the CANDIDATE is a refusal,
-      // not a pass — the same fail-closed stance as the #278 geometry guard.
-      // The baseline branch above stays fail-open on purpose: an unprovable
-      // inheritance is no reason to block an unrelated write.
-      return [{ rule: 'check_failed', subject: spaceId, actual: 0, limit: 0 }];
-    }
-    return increasedViolations(next, inherited);
+    return this._editorRuntimeOrThrow()._junctionLimitsIntroduced(candidate, previousConfig, spaceId);
   }
 
   private _commitPhysicalGeometry(
@@ -7568,300 +6939,68 @@ class HouseplanCard extends LitElement {
     before: SpaceGeometryState | null,
     additionalAuthoredPoints: readonly (readonly number[])[] = [],
   ): boolean {
-    if (!before || !this._serverCfg) return false;
-    const liveCandidate = this._serverCfg;
-    const editedState = this._geometrySnapshotFromConfig(liveCandidate, before.spaceId);
-    const liveSpace = liveCandidate.spaces.find((space: any) => space.id === before.spaceId);
-    if (!liveSpace || spacePhysicalGeometryFingerprint(before)
-        === spacePhysicalGeometryFingerprint(liveSpace)) return false;
-    // Preserve #278's existing fail-closed guard. Identity materialisation may
-    // repair/atomise a degraded legacy projection, but it must never be used to
-    // make an otherwise rejected user edit look safe.
-    let legacySafe = false;
-    try { legacySafe = this._checkSpacePhysicalGeometry(liveCandidate, before.spaceId).ok; }
-    catch { legacySafe = false; }
-    if (!legacySafe) {
-      this._clearGeometryGesture();
-      this._restoreGeometryStateLocal(before);
-      this._showToast(this._t('toast.geometry_unsafe'));
-      return false;
-    }
-    let committedCandidate: any;
-    let historyBefore = before;
-    try {
-      // ADR 282 Stage 1: every structural writer crosses the same atomic
-      // canonicalisation/identity barrier.  The pure candidate is adopted only
-      // after every space migrated successfully, so a blocker leaves the live
-      // config byte-equivalent.
-      if (Number(liveCandidate.model_version || 0) < 9) {
-        // The first edit of a pre-v9 document must derive identity and legacy
-        // zero-wall projection from the pre-edit carrier, not from its already
-        // moved/split coordinates.
-        // Materialise that baseline locally, then replay the edited legacy
-        // projection over it so lineage and Undo share the same stable IDs.
-        const baselineSource = JSON.parse(JSON.stringify(liveCandidate));
-        if (!this._restoreGeometryStateInConfig(baselineSource, before))
-          throw new WallSegmentModelError('invalid-room', before.spaceId);
-        const baseline = commitWallSegmentModel(baselineSource).config;
-        historyBefore = this._geometrySnapshotFromConfig(baseline, before.spaceId) || before;
-        const editedWithIdentity = JSON.parse(JSON.stringify(baseline));
-        if (!editedState || !this._restoreGeometryStateInConfig(
-          editedWithIdentity, editedState, true,
-        )) throw new WallSegmentModelError('invalid-room', before.spaceId);
-        const baselineSpace = baseline.spaces.find((space: any) => space.id === before.spaceId);
-        const editedSpace = editedWithIdentity.spaces.find((space: any) => space.id === before.spaceId);
-        // A fixed-topology pre-catalogue edit expresses thickness through the
-        // legacy `walls[]` projection. Replay it onto the baseline catalogue
-        // before v9 treats `cm` as authoritative. Geometry-changing writers
-        // instead rely on lineage: projecting moved walls onto old baseline
-        // coordinates would incorrectly turn the moved atom into zero.
-        if (!Array.isArray(editedState.wall_segments)
-            && JSON.stringify(before.rooms) === JSON.stringify(editedState.rooms)) {
-          for (const segment of editedSpace?.wall_segments || []) {
-            segment.cm = thicknessCmAt(
-              editedState.walls, segment.a, segment.b, GRID_STEP_N, 1,
-            );
-          }
-        }
-        const lineageHints = fixedTopologyWallLineageHints(
-          baselineSpace, before.rooms, editedSpace,
-        );
-        committedCandidate = commitWallSegmentModel(editedWithIdentity, {
-          lineageHints, lineageSpaceId: before.spaceId,
-        }).config;
-      } else committedCandidate = commitWallSegmentModel(liveCandidate).config;
-    } catch (error) {
-      this._clearGeometryGesture();
-      this._restoreGeometryStateLocal(before);
-      this._showWallModelMigrationBlocked(error);
-      return false;
-    }
-    let safe = false;
-    try {
-      const afterSpace = committedCandidate.spaces.find((space: any) => space.id === before.spaceId);
-      // A completed point of the active, grid-snapped chain is authored input,
-      // even before its first draft record exists in `before`. Include that
-      // transient carrier in the growth baseline; later conversion from draft
-      // to room/partition must not count the same coordinate as newly derived.
-      const authoredPoints = this._path.length >= 2
-        ? this._path.map((point) => [point[0] / NORM_W, point[1] / NORM_W])
-        : [];
-      authoredPoints.push(...additionalAuthoredPoints.map((point) => [point[0], point[1]]));
-      safe = wallModelOffGridValueCount(afterSpace)
-        <= wallModelOffGridValueCount(historyBefore, authoredPoints)
-        && this._checkSpacePhysicalGeometry(committedCandidate, before.spaceId).ok;
-    } catch {
-      safe = false;
-    }
-    if (!safe) {
-      this._clearGeometryGesture();
-      this._restoreGeometryStateLocal(before);
-      this._showToast(this._t('toast.geometry_unsafe'));
-      return false;
-    }
-    // #329: the owner's junction limits refuse the WRITE. An existing plan's
-    // inherited violations are never re-judged (spec §3), so the candidate is
-    // compared against the pre-edit document.
-    const beforeConfig = JSON.parse(JSON.stringify(liveCandidate));
-    this._restoreGeometryStateInConfig(beforeConfig, before);
-    const introduced = this._junctionLimitsIntroduced(
-      committedCandidate, beforeConfig, before.spaceId,
-    );
-    if (introduced.length) {
-      this._clearGeometryGesture();
-      this._restoreGeometryStateLocal(before);
-      this._showToast(this._junctionLimitLabel(introduced[0]));
-      return false;
-    }
-    adoptWallSegmentModelCandidateInPlace(liveCandidate, committedCandidate);
-    this._recordGeometry(name, historyBefore);
-    const afterSpace = liveCandidate.spaces.find((space: any) => space.id === before.spaceId);
-    const pending = this._pendingPhysicalWrites.get(before.spaceId);
-    this._pendingPhysicalWrites.set(before.spaceId, {
-      before: pending?.before || historyBefore,
-      fingerprint: spacePhysicalGeometryFingerprint(afterSpace),
-    });
-    this._saveConfig();
-    return true;
+    return this._editorRuntimeOrThrow()._commitPhysicalGeometry(name, before, additionalAuthoredPoints);
   }
 
   /** Drop every transient gesture before replacing committed geometry. */
   private _clearGeometryGesture(): void {
-    this._path = [];
-    this._clearPlanSnapHover();
-    this._clearOpeningPlacement(false);
-    this._mergeSel = null;
-    this._mergeDialog = null;
-    this._splitSel = null;
-    this._pendingSplit = null;
-    this._wallFaceBatch = null;
-    this._wallRepairDiagnostic = null;
-    this._roomDeleteDialog = null;
-    this._wallDialog = null;
-    this._physicalDialog = null;
-    this._physicalSel = null;
-    this._physicalDrag = null;
-    this._physicalRotate = null;
-    this._activeDraftId = null;
-    this._draftSegmentCms = [];
-    this._closingWallCm = null;
-    this._openingDialog = null;
-    this._rszResetController();
-    this._decorDraft = null;
-    this._decorMove = null;
-    this._dtDrag = null;
-    this._bdDrag = null;
+    if (!this._editorRuntime) {
+      // Empty-install onboarding is intentionally independent from the editor
+      // chunk.  Before that chunk exists there can be no live editor gesture,
+      // but warm state may still carry inert draft fields: clear them eagerly
+      // so the empty-state reset never pulls editor code into View.
+      this._path = [];
+      this._planSnapHover = null;
+      this._cursorPt = null;
+      this._openingHoverCandidate = null;
+      this._openingJambBlockCm = null;
+      this._openingPreset = null;
+      this._openingRebindId = null;
+      this._mergeSel = null;
+      this._mergeDialog = null;
+      this._splitSel = null;
+      this._pendingSplit = null;
+      this._wallFaceBatch = null;
+      this._wallRepairDiagnostic = null;
+      this._roomDeleteDialog = null;
+      this._wallDialog = null;
+      this._physicalDialog = null;
+      this._physicalSel = null;
+      this._physicalDrag = null;
+      this._physicalRotate = null;
+      this._activeDraftId = null;
+      this._draftSegmentCms = [];
+      this._closingWallCm = null;
+      this._openingDialog = null;
+      this._resize?.reset();
+      this._decorDraft = null;
+      this._decorMove = null;
+      this._dtDrag = null;
+      this._bdDrag = null;
+      return;
+    }
+    return this._editorRuntimeOrThrow()._clearGeometryGesture();
   }
 
   /** Browser/OS cancellation is an aborted transaction, never a commit. */
   private _stagePointerCancel(ev: PointerEvent): void {
-    clearTimeout(this._kioskHoldTimer);
-    if (this._swipeStart?.id === ev.pointerId) this._swipeStart = null;
-    if (this._physicalDrag?.pid === ev.pointerId || this._physicalRotate?.pid === ev.pointerId) {
-      this._cancelPhysicalGesture();
-      return;
-    }
-    if (this._decorDraft?.pid === ev.pointerId) {
-      this._decorDraft = null;
-      this.requestUpdate();
-      return;
-    }
-    if (this._decorMove?.pid === ev.pointerId || this._dtDrag?.pid === ev.pointerId
-        || this._bdDrag?.pid === ev.pointerId) {
-      this._cancelDecorGesture();
-      return;
-    }
-    if (this._tool === 'opening') {
-      this._cursorPt = null;
-      this._clearOpeningPlacement(false);
-    } else if (this._tool === 'draw') {
-      this._clearPlanSnapHover();
-    }
-    const viewportGestureEnded = !!this._pinchStart || !!this._panStart;
-    this._pointers.delete(ev.pointerId);
-    if (this._pointers.size < 2) this._pinchStart = null;
-    if (this._pointers.size === 0) {
-      this._panStart = null;
-      this._panLock = null;
-    }
-    if (viewportGestureEnded && this._pointers.size === 0) this.requestUpdate();
+    if (!this._editorRuntime) return;
+    return this._editorRuntime._stagePointerCancel(ev);
   }
 
   private _applyGeometryState(
     state: SpaceGeometryState, allowHistoryBoundaryRepair = false,
   ): boolean {
-    if (!this._canCommitSpace(state.spaceId)) return false;
-    const before = this._geometrySnapshot(state.spaceId);
-    if (!before || !this._restoreGeometryStateLocal(state)) return false;
-    const restoredCandidate = this._serverCfg;
-    const physicalChanged = spacePhysicalGeometryFingerprint(before)
-      !== spacePhysicalGeometryFingerprint(state);
-    if (physicalChanged) {
-      let safe = false;
-      try {
-        const check = restoredCandidate
-          ? this._checkSpacePhysicalGeometry(restoredCandidate, state.spaceId)
-          : null;
-        safe = !!check?.ok || !!(allowHistoryBoundaryRepair
-          && check?.reason === 'wall-degraded-extra');
-      } catch { safe = false; }
-      if (!safe) {
-        this._restoreGeometryStateLocal(before);
-        this._showToast(this._t('toast.geometry_unsafe'));
-        return false;
-      }
-    }
-    let committedCandidate: any;
-    try {
-      committedCandidate = commitWallSegmentModel(restoredCandidate).config;
-    } catch (error) {
-      this._restoreGeometryStateLocal(before);
-      this._showWallModelMigrationBlocked(error);
-      return false;
-    }
-    if (physicalChanged) {
-      let safe = false;
-      try {
-        const check = committedCandidate
-          ? this._checkSpacePhysicalGeometry(committedCandidate, state.spaceId)
-          : null;
-        // A history snapshot can predate the write-time wall degradation that
-        // canonicalized its command. Restore that one repairable baseline so
-        // Undo remains byte-exact immediately; _writeConfig still degrades and
-        // strictly validates the outbound candidate before it can leave the
-        // card. Every other preflight failure stays fail-closed.
-        safe = !!check?.ok || !!(allowHistoryBoundaryRepair
-          && check?.reason === 'wall-degraded-extra');
-      } catch { safe = false; }
-      if (!safe) {
-        this._restoreGeometryStateLocal(before);
-        this._showToast(this._t('toast.geometry_unsafe'));
-        return false;
-      }
-      adoptWallSegmentModelCandidateInPlace(restoredCandidate, committedCandidate);
-      const afterSpace = restoredCandidate?.spaces.find((space: any) => space.id === state.spaceId);
-      const pending = this._pendingPhysicalWrites.get(state.spaceId);
-      this._pendingPhysicalWrites.set(state.spaceId, {
-        before: pending?.before || before,
-        fingerprint: spacePhysicalGeometryFingerprint(afterSpace),
-      });
-    } else adoptWallSegmentModelCandidateInPlace(restoredCandidate, committedCandidate);
-    this._clearGeometryGesture();
-    if (this._space !== state.spaceId) {
-      this._commitSpace(state.spaceId);
-      this._saveNav();
-      this._restoreZoom();
-    }
-    this._modelCache = null;
-    this._frame = null;
-    this._regSignature = '';
-    this._maybeRebuildDevices();
-    this._saveConfig();
-    this.requestUpdate();
-    return true;
+    return this._editorRuntimeOrThrow()._applyGeometryState(state, allowHistoryBoundaryRepair);
   }
 
   private _undoGeometry = (): void => {
-    if (this._physicalDrag || this._physicalRotate) {
-      this._cancelPhysicalGesture();
-      return;
-    }
-    if (this._decorDraft) { this._decorDraft = null; this.requestUpdate(); return; }
-    if (this._decorMove || this._dtDrag || this._bdDrag) {
-      this._cancelDecorGesture();
-      return;
-    }
-    if (this._resize.dragging) { this._rszCancelDrag(); return; }
-    const command = this._geometryHistory.undo();
-    if (!command) return;
-    if (!this._applyGeometryState(command.before, true)) {
-      this._geometryHistory.clear();
-      return;
-    }
-    this._showToast(this._t('history.undone', { name: command.name }));
-  };
+    return this._editorRuntimeOrThrow()._undoGeometry();
+  }
 
   private _redoGeometry = (): void => {
-    // Redo and Undo share the same transaction boundary. The first invocation
-    // cancels an in-progress transform; only the next one navigates history.
-    if (this._physicalDrag || this._physicalRotate) {
-      this._cancelPhysicalGesture();
-      return;
-    }
-    if (this._decorDraft) { this._decorDraft = null; this.requestUpdate(); return; }
-    if (this._decorMove || this._dtDrag || this._bdDrag) {
-      this._cancelDecorGesture();
-      return;
-    }
-    if (this._resize.dragging) { this._rszCancelDrag(); return; }
-    const command = this._geometryHistory.redo();
-    if (!command) return;
-    if (!this._applyGeometryState(command.after, true)) {
-      this._geometryHistory.clear();
-      return;
-    }
-    this._showToast(this._t('history.redone', { name: command.name }));
-  };
+    return this._editorRuntimeOrThrow()._redoGeometry();
+  }
 
   private _saveConfigDebounced = debounce(() => {
     if (!this._serverCfg) return;
@@ -7890,205 +7029,33 @@ class HouseplanCard extends LitElement {
    * rooms share walls, so new vertices legitimately land on existing outlines.
    */
   private _roomAt(p: number[]): RoomCfg | undefined {
-    return this._spaceModel()?.rooms.find((r) => {
-      const poly = roomPoly(r);
-      return !!poly && pointStrictlyInside(p, poly);
-    });
+    return this._editorRuntimeOrThrow()._roomAt(p);
   }
 
   /** The first existing room the outline would overlap (rooms must not overlap). */
   private _overlapRoom(verts: number[][]): RoomCfg | undefined {
-    return this._spaceModel()?.rooms.find((r) => {
-      const poly = roomPoly(r);
-      return !!poly && roomsOverlap(verts, poly);
-    });
+    return this._editorRuntimeOrThrow()._overlapRoom(verts);
   }
 
   private _pointInRoom(p: number[], r: RoomCfg): boolean {
     if (r.poly) return pointInPolygon(p, r.poly);
-    return (
-      r.x != null && p[0] >= r.x! && p[0] <= r.x! + r.w! && p[1] >= r.y! && p[1] <= r.y! + r.h!
-    );
+    return r.x != null && p[0] >= r.x && p[0] <= r.x + r.w!
+      && p[1] >= r.y! && p[1] <= r.y! + r.h!;
   }
 
   /** A room ring may meet only at the endpoints of neighbouring edges. */
   private _contourSelfIntersects(poly: number[][]): boolean {
-    if (!polyIsSimple(poly)) return true; // transverse crossings
-    const n = poly.length;
-    const eps = 0.001;
-    for (let i = 0; i < n; i++) {
-      const a = poly[i], b = poly[(i + 1) % n];
-      for (let j = i + 1; j < n; j++) {
-        // Neighbours deliberately share one endpoint, including first ↔ last.
-        if (j === i + 1 || (i === 0 && j === n - 1)) continue;
-        const c = poly[j], d = poly[(j + 1) % n];
-        const cd = [c[0], c[1], d[0], d[1]];
-        const ab = [a[0], a[1], b[0], b[1]];
-        // This also catches a closing edge passing through an older vertex and
-        // collinear overlap, which a proper-crossing test intentionally omits.
-        if (distToSegment(a, cd) <= eps || distToSegment(b, cd) <= eps ||
-            distToSegment(c, ab) <= eps || distToSegment(d, ab) <= eps) return true;
-      }
-    }
-    return false;
+    return this._editorRuntimeOrThrow()._contourSelfIntersects(poly);
   }
 
   /** The same append limits guard both an ordinary point and an auto-close terminal point. */
   private _canAppendRoomDraftPoint(): boolean {
-    if (this._drawWallCm == null) { this._showPhysicalRange(100); return false; }
-    if (this._path.length >= MAX_DRAFT_POINTS) {
-      this._showToast(this._t('toast.physical_limit'));
-      return false;
-    }
-    const spCfg = this._curSpaceCfg as any;
-    const newDraft = !this._activeDraftId;
-    if ((newDraft && (spCfg?.room_drafts || []).length >= MAX_ROOM_DRAFTS)
-        || this._draftSegmentCount(spCfg) >= MAX_DRAFT_SEGMENTS
-        // Every accepted segment must be finishable later without trapping
-        // the user at the partition limit.
-        || (spCfg?.partitions || []).length + this._path.length > MAX_PARTITIONS) {
-      this._showToast(this._t('toast.physical_limit'));
-      return false;
-    }
-    return true;
+    return this._editorRuntimeOrThrow()._canAppendRoomDraftPoint();
   }
 
   private _markupClick(ev: MouseEvent): void {
-    if (this._vacFit) return; // the fit overlay owns all pointer input
-    if (!this._markup) return;
-    const space = this._spaceModel();
-    if (!space) {
-      this._clearGeometryGesture();
-      return;
-    }
-    // a pan or pinch just happened — the synthesized click is not a draw
-    if (this._suppressClick) return;
-    // Room cards swallow markup clicks: dragging, resizing or just clicking a
-    // card must not feed the active tool (draw point, delete room, merge/split
-    // pick, opening placement). The drag itself already stops pointer events,
-    // but the synthesized `click` afterwards still bubbles to the stage.
-    if (this._drag || this._rlResize) return;
-    const path = (ev.composedPath?.() || []) as any[];
-    if (path.some((n) => n?.classList?.contains?.('roomlabel') || n?.classList?.contains?.('rlhandle'))) return;
-    if (path.some((n) => n?.classList?.contains?.('physical-hit'))) return;
-    const raw = this._svgPoint(ev);
-    if (this._tool === 'select') {
-      this._physicalSel = null;
-      return;
-    }
-    if (this._tool === 'resize') {
-      // a click picks the room for the scale frame; handle drags never get here
-      if (this._resize.dragging || path.some((n) => n?.classList?.contains?.('rszhandle'))) return;
-      const room = [...space.rooms].reverse().find((r) => this._pointInRoom(raw, r));
-      this._resize.selectRoom(room?.id || null);
-      this.requestUpdate();
-      return;
-    }
-    if (this._tool === 'delroom') {
-      this._deleteRoomClick(raw);
-      return;
-    }
-    if (this._tool === 'opening') {
-      this._openingClick(raw);
-      return;
-    }
-    if (this._tool === 'merge') {
-      this._mergeClick(raw);
-      return;
-    }
-    if (this._tool === 'wallthick') {
-      this._wallThickClick(raw);
-      return;
-    }
-    if (this._tool === 'split') {
-      this._splitClick(raw);
-      return;
-    }
-    if (this._tool === 'column') {
-      this._columnClick(raw);
-      return;
-    }
-    // Walls: every completed segment is crash-safe in room_drafts until an
-    // explicit finish converts the chain or a confirmed face batch consumes it.
-    this._wallRepairDiagnostic = null;
-    const resolved = this._resolvePlanDrawPoint(raw, ev.shiftKey);
-    if (resolved.ambiguous) {
-      this._planSnapHover = {
-        contextKey: resolved.contextKey, candidate: null, conflicts: resolved.conflicts,
-      };
-      this._syncPlanSnapActiveMarker(null);
-      this._syncPlanSnapConflictMarkers(resolved.conflicts);
-      this._showToast(this._t('toast.plan_snap_ambiguous'));
-      return;
-    }
-    let pt = resolved.point;
-    if (ev.ctrlKey || ev.metaKey) {
-      // The closure shortcut owns the gesture even before the chain has the
-      // two existing edges required to form a room. Falling through here
-      // would turn a refused Ctrl/Cmd+click into an ordinary drawing click.
-      ev.preventDefault();
-      if (this._path.length < 3) return;
-      // Preserve the established shortcut, but commit its closing wall through
-      // the same graph/draft path as an ordinary click on the first node.
-      pt = snapNearAxisEndpoint(
-        this._path[this._path.length - 1], this._path[0],
-      );
-    }
-    // Island rooms (v1.34.0): drawing INSIDE an existing room is legal — the
-    // contour may become a nested room (a column, an inner room). Partial
-    // overlaps are still rejected, but only at closing time, when the whole
-    // outline is known (roomsOverlap treats full nesting as legal).
-    if (!this._path.length) {
-      // A free idle click can name a room inside masonry that was completed in
-      // an earlier session. Shift and architectural snap hits retain the Walls
-      // gesture, so this offer never steals an intentional new chain.
-      if (!ev.shiftKey && !resolved.candidate && this._offerExistingWallFace(raw)) return;
-      // After reload a saved open contour is resumed explicitly by clicking
-      // either free end. Mid-segment branching is deliberately unsupported.
-      const endHit = this._draftEndAt(pt);
-      if (endHit) {
-        this._activeDraftId = endHit.draft.id;
-        this._resumeDraftBySpace[this._space] = endHit.draft.id;
-        this._path = endHit.reverse
-          ? [...endHit.draft.points].reverse().map((p) => [...p])
-          : endHit.draft.points.map((p) => [...p]);
-        this._draftSegmentCms = this._adoptDraftCms(
-          this._path,
-          endHit.reverse
-            ? [...endHit.draft.segments].reverse().map((s) => s.cm)
-            : endHit.draft.segments.map((s) => s.cm),
-          endHit.draft.id,
-        );
-        return;
-      }
-      this._activeDraftId = null;
-      this._draftSegmentCms = [];
-      this._path = [pt];
-      return;
-    }
-    const last = this._path[this._path.length - 1];
-    if (this._samePt(pt, last)) return; // repeated click on the same point
-    // A saved outline may be continued into another saved outline, but only
-    // endpoint-to-endpoint. The two records become one atomic history step;
-    // mid-segment branching remains deliberately unsupported.
-    const join = this._draftEndAt(pt, this._activeDraftId || undefined);
-    if (join) {
-      this._mergeDraftEndpoint(join);
-      return;
-    }
-    if (!this._canAppendRoomDraftPoint()) return;
-    // Точка и толщина её отрезка пишутся вместе (#234). Раньше запись жила в
-    // отдельном методе, который молча выходил при невалидном поле толщины, и
-    // тогда `_draftSegmentCms` становился короче числа отрезков: превью
-    // показывало текущее поле, а запись — 15 см. Инвариант читается прямо
-    // здесь, а не выводится из двух проверок в разных местах.
-    const cm = this._drawWallCm;
-    if (cm == null) { this._showPhysicalRange(100); return; }
-    const beforePath = this._path.map((point) => [...point]);
-    this._path = [...this._path, pt];
-    this._draftSegmentCms = [...this._draftSegmentCms, cm];
-    this._persistActiveDraftSegment();
-    this._offerWallFaces(beforePath);
+    if (!this._editorRuntime) return;
+    return this._editorRuntime._markupClick(ev);
   }
 
   private _draftSegmentCms: number[] = [];
@@ -8097,110 +7064,13 @@ class HouseplanCard extends LitElement {
   private _draftEndAt(
     pt: number[], excludeId?: string,
   ): { draft: RoomDraftCfg; reverse: boolean } | null {
-    const space = this._spaceModel();
-    if (!space) return null;
-    const view = this._viewOr(this._baseVb());
-    const eps = Math.max(this._gridPitch * 0.15,
-      this._stageEl?.clientWidth ? (view.w / this._stageEl.clientWidth) * 12 : 0);
-    for (const draft of space.room_drafts || []) {
-      if (draft.id === excludeId) continue;
-      if (draft.points.length < 2) continue;
-      const first = draft.points[0], last = draft.points[draft.points.length - 1];
-      if (Math.hypot(pt[0] - last[0], pt[1] - last[1]) <= eps) return { draft, reverse: false };
-      if (Math.hypot(pt[0] - first[0], pt[1] - first[1]) <= eps) return { draft, reverse: true };
-    }
-    return null;
+    return this._editorRuntimeOrThrow()._draftEndAt(pt, excludeId);
   }
 
   private _mergeDraftEndpoint(
     hit: { draft: RoomDraftCfg; reverse: boolean },
   ): void {
-    const sp = this._curSpaceCfg as any;
-    if (!sp || !this._path.length) return;
-    const beforePath = this._path.map((point) => [...point]);
-    // Capture topology before the records are merged: the other draft is a
-    // static pre-existing source, not geometry introduced by this click.
-    const beforeGraphSources = this._wallGraphSources(beforePath);
-    const drafts = Array.isArray(sp.room_drafts) ? sp.room_drafts : [];
-    const activeRaw = this._activeDraftId
-      ? drafts.find((d: any) => d.id === this._activeDraftId) : null;
-    const otherRaw = drafts.find((d: any) => d.id === hit.draft.id);
-    if (!otherRaw) return;
-
-    // `_draftEndAt.reverse` describes how to resume WITH the clicked end at
-    // the tail. A merge needs that end at the head, hence the opposite order.
-    const otherPoints = hit.reverse
-      ? hit.draft.points.map((p) => [...p])
-      : [...hit.draft.points].reverse().map((p) => [...p]);
-    const otherSegments = hit.reverse
-      ? (otherRaw.segments || []).map((s: any) => ({ ...s }))
-      : [...(otherRaw.segments || [])].reverse().map((s: any) => ({ ...s }));
-    const last = this._path[this._path.length - 1];
-    const touching = this._samePt(last, otherPoints[0]);
-    const connectorCm = touching ? null : this._drawWallCm;
-    if (!touching && connectorCm == null) { this._showPhysicalRange(100); return; }
-
-    const activeSegments = this._draftSegmentsForPath(
-      this._path, activeRaw, this._draftSegmentCms,
-    );
-    const mergedPoints = [
-      ...this._path.map((p) => [...p]),
-      ...(touching ? otherPoints.slice(1) : otherPoints),
-    ];
-    const mergedSegments = [
-      ...activeSegments,
-      ...(connectorCm == null ? [] : [{ cm: connectorCm }]),
-      ...otherSegments,
-    ];
-    const closed = mergedPoints.length >= 4
-      && this._samePt(mergedPoints[0], mergedPoints[mergedPoints.length - 1]);
-    const persistedPoints = mergedPoints;
-    const persistedSegments = mergedSegments;
-    if (persistedPoints.length > MAX_DRAFT_POINTS) {
-      this._showToast(this._t('toast.physical_limit'));
-      return;
-    }
-    const oldSegments = (activeRaw?.segments?.length || 0) + (otherRaw.segments?.length || 0);
-    if (this._draftSegmentCount(sp) - oldSegments + persistedSegments.length > MAX_DRAFT_SEGMENTS) {
-      this._showToast(this._t('toast.physical_limit'));
-      return;
-    }
-    if (closed) {
-      const ring = persistedPoints.slice(0, -1);
-      if (this._contourSelfIntersects(ring) || polygonArea(ring) <= 1e-6) {
-        this._showToast(this._t('toast.contour_cannot_close'));
-        return;
-      }
-      const clash = this._overlapRoom(ring);
-      if (clash) {
-        this._showToast(this._t('toast.room_overlap', { name: clash.name || '' }));
-        return;
-      }
-    }
-
-    const before = this._geometrySnapshot();
-    const id = this._activeDraftId || hit.draft.id;
-    const base = activeRaw || otherRaw;
-    const saved = {
-      ...base, id,
-      points: persistedPoints.map((p) => [p[0] / NORM_W, p[1] / NORM_W]),
-      segments: persistedSegments,
-    };
-    sp.room_drafts = drafts.filter((d: any) => d.id !== hit.draft.id
-      && (!this._activeDraftId || d.id !== this._activeDraftId));
-    sp.room_drafts.push(saved);
-    this._activeDraftId = id;
-    this._resumeDraftBySpace[this._space] = id;
-    this._path = persistedPoints;
-    this._draftSegmentCms = this._adoptDraftCms(
-      persistedPoints, persistedSegments.map((s: any) => Number(s.cm)), id,
-    );
-    this._physicalSel = null;
-    this._commitPhysicalGeometry(this._t('history.draft_merge'), before);
-
-    if (connectorCm != null) {
-      this._offerWallFaces(beforePath, beforePath.length - 1, beforeGraphSources);
-    }
+    return this._editorRuntimeOrThrow()._mergeDraftEndpoint(hit);
   }
 
   /**
@@ -8213,14 +7083,7 @@ class HouseplanCard extends LitElement {
    * fix it.
    */
   private _adoptDraftCms(path: readonly (readonly number[])[], recorded: readonly (number | null | undefined)[], id?: string): number[] {
-    const count = Math.max(0, path.length - 1);
-    const resolved = chainSegmentCms(count, recorded, this._drawWallCm, DRAW_WALL_DEFAULT_CM);
-    if (recorded.length !== count) {
-      console.debug(
-        `[houseplan] draft ${id ?? '?'}: восстановлено толщин ${count - recorded.length} (#234)`,
-      );
-    }
-    return resolved;
+    return this._editorRuntimeOrThrow()._adoptDraftCms(path, recorded, id);
   }
 
   /**
@@ -8232,23 +7095,7 @@ class HouseplanCard extends LitElement {
     path: readonly (readonly number[])[], draft: any,
     cms: readonly (number | null | undefined)[],
   ): Array<{ id?: string; cm: number; [key: string]: any }> {
-    const points = Array.isArray(draft?.points)
-      ? draft.points.map((p: any) => [Number(p?.[0]) * NORM_W, Number(p?.[1]) * NORM_W])
-      : [];
-    const stored = Array.isArray(draft?.segments) ? draft.segments : [];
-    const resolved = chainSegmentCms(
-      Math.max(0, path.length - 1), cms, this._drawWallCm, DRAW_WALL_DEFAULT_CM,
-    );
-    return resolved.map((cm, index) => {
-      const a = path[index], b = path[index + 1];
-      const oldIndex = points.findIndex((oldA: number[], candidate: number) => {
-        if (candidate + 1 >= points.length) return false;
-        const oldB = points[candidate + 1];
-        return (this._samePt(a, oldA) && this._samePt(b, oldB))
-          || (this._samePt(a, oldB) && this._samePt(b, oldA));
-      });
-      return { ...(oldIndex >= 0 ? stored[oldIndex] : {}), cm };
-    });
+    return this._editorRuntimeOrThrow()._draftSegmentsForPath(path, draft, cms);
   }
 
   /**
@@ -8259,59 +7106,22 @@ class HouseplanCard extends LitElement {
    * drift apart the moment the toolbar field is mid-edit.
    */
   private _persistActiveDraftSegment(): void {
-    if (this._path.length < 2 || !this._curSpaceCfg) return;
-    const before = this._geometrySnapshot();
-    const sp = this._curSpaceCfg as any;
-    sp.room_drafts ||= [];
-    if (!this._activeDraftId) this._activeDraftId = 'draft-' + Date.now().toString(36);
-    this._resumeDraftBySpace[this._space] = this._activeDraftId;
-    const i = sp.room_drafts.findIndex((d: any) => d.id === this._activeDraftId);
-    const saved = {
-      ...(i >= 0 ? sp.room_drafts[i] : {}),
-      id: this._activeDraftId,
-      points: this._path.map((p) => [p[0] / NORM_W, p[1] / NORM_W]),
-      segments: this._draftSegmentsForPath(
-        this._path, i >= 0 ? sp.room_drafts[i] : null, this._draftSegmentCms,
-      ),
-    };
-    if (i >= 0) sp.room_drafts[i] = saved;
-    else sp.room_drafts.push(saved);
-    this._commitPhysicalGeometry(this._t('history.draft_segment'), before);
+    return this._editorRuntimeOrThrow()._persistActiveDraftSegment();
   }
 
   private _activeWallSourceKey(index: number): string {
-    return `active:${this._activeDraftId || 'session'}:${index}`;
+    return this._editorRuntimeOrThrow()._activeWallSourceKey(index);
   }
 
   /** Canonical solid axes plus one immutable projection of the active chain. */
   private _wallGraphSources(path: readonly (readonly number[])[]): WallGraphSourceSegment[] {
-    const staticGeometry = this._planStructuralGeometrySnapshot().value;
-    const sources: WallGraphSourceSegment[] = staticGeometry.segments.map((segment) => ({
-      a: segment.a, b: segment.b, key: `static:${segment.key}`,
-    }));
-    for (let i = 0; i + 1 < path.length; i++) {
-      sources.push({ a: path[i], b: path[i + 1], key: this._activeWallSourceKey(i) });
-    }
-    return sources;
+    return this._editorRuntimeOrThrow()._wallGraphSources(path);
   }
 
   private _wallFaceGraph(
     sources: readonly WallGraphSourceSegment[], epsilon: number,
   ): WallFaceGraph {
-    // Exact JSON identity avoids stale topology. Source keys include real
-    // open-span cuts/provenance; presentation opening cuts are intentionally
-    // absent from the structural graph (#185).
-    const key = `${this._space}|${epsilon}|${JSON.stringify(sources)}`;
-    const cachedIndex = this._wallFaceGraphCache.findIndex((entry) => entry.key === key);
-    if (cachedIndex >= 0) {
-      const [cached] = this._wallFaceGraphCache.splice(cachedIndex, 1);
-      this._wallFaceGraphCache.push(cached);
-      return cached.value;
-    }
-    const value = buildWallFaceGraph(sources, epsilon);
-    this._wallFaceGraphCache.push({ key, value });
-    if (this._wallFaceGraphCache.length > 4) this._wallFaceGraphCache.shift();
-    return value;
+    return this._editorRuntimeOrThrow()._wallFaceGraph(sources, epsilon);
   }
 
   /** Detect click-induced faces and open a mutation-free decision queue. */
@@ -8320,552 +7130,86 @@ class HouseplanCard extends LitElement {
     addedSegmentIndex = this._path.length - 2,
     beforeGraphSources?: WallGraphSourceSegment[],
   ): void {
-    if (this._path.length < 2 || this._wallFaceBatch || this._roomDialog) return;
-    const space = this._spaceModel();
-    if (!space) return;
-    const addedSourceKey = this._activeWallSourceKey(addedSegmentIndex);
-    const epsilon = this._gridPitch * 0.0002;
-    let faces: WallGraphFace[];
-    let after: WallGraphSourceSegment[];
-    try {
-      const before = beforeGraphSources || this._wallGraphSources(beforePath);
-      after = this._wallGraphSources(this._path);
-      faces = findNewWallFacesInGraphs(
-        this._wallFaceGraph(before, epsilon), this._wallFaceGraph(after, epsilon),
-        addedSourceKey,
-      );
-    } catch {
-      // Topology is advisory. The just-persisted draft remains the source of
-      // truth and drawing can continue when malformed legacy geometry exists.
-      return;
-    }
-    if (!faces.length) {
-      const repair = planWallFaceRepair(after, {
-        requiredSourceKey: addedSourceKey,
-        maxDistance: wallCmToUnits(2, this._cellCm, this._gridPitch),
-        gridStep: this._gridPitch,
-        epsilon,
-      });
-      if (repair.kind === 'ambiguous') {
-        this._wallRepairDiagnostic = repair.proposals[0] || null;
-        this._showToast(this._t(
-          this._drawWallCm === 0 ? 'toast.zero_wall_ambiguous' : 'toast.wall_repair_ambiguous',
-        ));
-        return;
-      }
-      if (repair.kind === 'repair' && !this._overlapRoom(repair.face.ring)) {
-        this._beginWallFaceBatch([{ ...repair.face, repair: repair.proposal }]);
-      }
-      return;
-    }
-
-    // A clean wall-to-wall cut is one product decision about the smaller part,
-    // even though the planar delta contains both resulting faces.
-    for (const room of space.rooms) {
-      const poly = roomPoly(room);
-      if (!room.id || !poly) continue;
-      const parts = splitRoomPath(poly, this._path, this._gridPitch * 0.02);
-      if (!parts) continue;
-      const [p1, p2] = parts;
-      const main = polygonArea(p1) >= polygonArea(p2) ? p1 : p2;
-      const fresh = main === p1 ? p2 : p1;
-      const matched = [...faces].sort((left, right) =>
-        Math.abs(left.area - polygonArea(fresh)) - Math.abs(right.area - polygonArea(fresh))
-        || left.key.localeCompare(right.key))[0];
-      if (!matched) return;
-      this._beginWallFaceBatch([{
-        ...matched,
-        ring: fresh.map((point) => [point[0], point[1]] as [number, number]),
-        split: { roomId: room.id, mainPoly: main, newPoly: fresh },
-        consumeAllActive: true,
-      }]);
-      return;
-    }
-
-    const eligible = faces.filter((face) => {
-      if (face.ring.length < 3 || this._contourSelfIntersects(face.ring)) return false;
-      // roomsOverlap rejects exact duplicates and partial overlap, while full
-      // nesting in either direction deliberately remains eligible.
-      return !this._overlapRoom(face.ring);
-    });
-    if (eligible.length) this._beginWallFaceBatch(eligible);
+    return this._editorRuntimeOrThrow()._offerWallFaces(beforePath, addedSegmentIndex, beforeGraphSources);
   }
 
   private _beginWallFaceBatch(candidates: WallFaceCandidate[]): void {
-    this._wallRepairDiagnostic = null;
-    this._wallFaceBatch = {
-      candidates: [...candidates].sort((left, right) =>
-        left.area - right.area || left.key.localeCompare(right.key)),
-      index: 0,
-      decisions: [],
-      activePath: this._path.map((point) => [...point]),
-      activeCms: [...this._draftSegmentCms],
-      activeDraftId: this._activeDraftId,
-    };
-    this._clearPlanSnapHover();
-    this._nameSel = '';
-    this._areaSel = '';
-    this._resetRoomDialogFields();
-    this._roomDialog = true;
+    return this._editorRuntimeOrThrow()._beginWallFaceBatch(candidates);
   }
 
   /** Offer the smallest unoccupied exact face under an idle Walls click. */
   private _offerExistingWallFace(raw: number[]): boolean {
-    if (this._path.length || this._wallFaceBatch || this._roomDialog) return false;
-    const epsilon = this._gridPitch * 0.0002;
-    try {
-      const graph = this._wallFaceGraph(this._wallGraphSources([]), epsilon);
-      let face = findWallFaceAtPoint(graph, raw, epsilon);
-      let repair: WallFaceRepairProposal | undefined;
-      if (!face) {
-        const result = planWallFaceRepair(this._wallGraphSources([]), {
-          point: raw,
-          maxDistance: wallCmToUnits(2, this._cellCm, this._gridPitch),
-          gridStep: this._gridPitch,
-          epsilon,
-        });
-        if (result.kind === 'ambiguous') {
-          this._wallRepairDiagnostic = result.proposals[0] || null;
-          this._showToast(this._t(
-            this._drawWallCm === 0 ? 'toast.zero_wall_ambiguous' : 'toast.wall_repair_ambiguous',
-          ));
-          return true;
-        }
-        if (result.kind === 'repair') {
-          face = result.face;
-          repair = result.proposal;
-        } else if (result.kind === 'none') {
-          const diagnostic = planWallFaceRepair(this._wallGraphSources([]), {
-            point: raw,
-            maxDistance: this._cssPxToRender(12),
-            gridStep: this._gridPitch,
-            epsilon,
-          });
-          if (diagnostic.kind === 'repair') {
-            this._wallRepairDiagnostic = diagnostic.proposal;
-            this._showToast(this._t('toast.wall_repair_too_large'));
-            return true;
-          }
-        }
-      }
-      if (!face || face.ring.length < 3 || this._contourSelfIntersects(face.ring)
-          || this._overlapRoom(face.ring)) return false;
-      this._beginWallFaceBatch([{ ...face, existing: !repair, repair }]);
-      return true;
-    } catch {
-      return false;
-    }
+    return this._editorRuntimeOrThrow()._offerExistingWallFace(raw);
   }
 
   private _columnClick(raw: number[]): void {
-    const center = this._snap(raw);
-    const cm = this._drawWallCm;
-    if (cm == null) { this._showPhysicalRange(COLUMN_MAX_CM, 1); return; }
-    if (!this._curSpaceCfg || this._limitReached('column')) return;
-    const model = this._spaceModel();
-    if (!model) return;
-    const candidate: WallColumnCfg = {
-      id: 'column-' + Date.now().toString(36), shape: 'square', center, cm: clampColumnCm(cm), angle: 0,
-    };
-    const duplicate = (model.wall_columns || []).find((c) =>
-      sameColumnPlacement(c, candidate, this._gridPitch * 0.02));
-    if (duplicate) {
-      clearTimeout(this._duplicateColumnTimer);
-      this._duplicateColumnId = duplicate.id;
-      this._duplicateColumnTimer = window.setTimeout(() => {
-        this._duplicateColumnId = null;
-      }, 900);
-      this._showToast(this._t('toast.column_duplicate'));
-      return;
-    }
-    const before = this._geometrySnapshot();
-    const sp = this._curSpaceCfg as any;
-    sp.wall_columns ||= [];
-    sp.wall_columns.push({ ...candidate, center: [center[0] / NORM_W, center[1] / NORM_W] });
-    this._commitPhysicalGeometry(this._t('history.column_add'), before);
+    return this._editorRuntimeOrThrow()._columnClick(raw);
   }
 
   private _openPhysicalDialog(
     kind: 'partition' | 'column' | 'draft', id: string, segment?: number,
   ): void {
-    const model = this._spaceModel();
-    if (!model) return;
-    if (kind === 'partition') {
-      const p = model.partitions.find((x) => x.id === id);
-      if (p) this._physicalDialog = {
-        kind, id, cm: cmToField(p.cm, this._imperial), length: this._fmtLen(p.a, p.b),
-      };
-    } else if (kind === 'column') {
-      const c = model.wall_columns.find((x) => x.id === id);
-      if (c) this._physicalDialog = {
-        kind, id, cm: cmToField(c.cm, this._imperial), shape: c.shape,
-        angle: this._angleField(c.shape === 'square' ? canonicalColumnAngle(c.angle) : 0),
-      };
-    } else {
-      const d = model.room_drafts.find((x) => x.id === id);
-      const i = Math.max(0, Math.min(d?.segments.length ? d.segments.length - 1 : 0, segment || 0));
-      if (d?.segments[i]) this._physicalDialog = {
-        kind, id, segment: i, cm: cmToField(d.segments[i].cm, this._imperial),
-        length: this._fmtLen(d.points[i], d.points[i + 1]),
-      };
-    }
+    return this._editorRuntimeOrThrow()._openPhysicalDialog(kind, id, segment);
   }
 
   private _savePhysicalDialog = (): void => {
-    const d = this._physicalDialog;
-    const sp = this._curSpaceCfg as any;
-    const model = this._spaceModel();
-    if (!d || !sp || !model) return;
-    const raw = strictNumber(d.cm);
-    if (raw == null) {
-      this._showPhysicalRange(
-        d.kind === 'column' ? COLUMN_MAX_CM : 100, d.kind === 'column' ? 1 : 0,
-      );
-      return;
-    }
-    const cmRaw = this._imperial ? raw * 2.54 : raw;
-    const max = d.kind === 'column' ? COLUMN_MAX_CM : 100;
-    const min = d.kind === 'column' ? 1 : 0;
-    if (!Number.isFinite(cmRaw) || cmRaw < min || cmRaw > max) {
-      this._showPhysicalRange(max, min);
-      return;
-    }
-    if (d.kind === 'column') {
-      const current = model.wall_columns.find((x) => x.id === d.id);
-      if (!current) return;
-      const rawAngle = strictNumber(d.angle || '0');
-      if (d.shape !== 'circle'
-          && (rawAngle == null || rawAngle < 0 || rawAngle >= 90)) {
-        this._showToast(this._t('toast.physical_angle'));
-        return;
-      }
-      const candidate: WallColumnCfg = d.shape === 'circle'
-        ? { id: d.id, shape: 'circle', center: current.center, cm: cmRaw }
-        : { id: d.id, shape: 'square', center: current.center, cm: cmRaw,
-            angle: rawAngle! };
-      if (model.wall_columns.some((c) => c.id !== d.id
-          && sameColumnPlacement(c, candidate, this._gridPitch * 0.02))) {
-        this._showToast(this._t('toast.column_duplicate'));
-        return;
-      }
-    }
-    const before = this._geometrySnapshot();
-    if (d.kind === 'partition') {
-      const p = (sp.partitions || []).find((x: any) => x.id === d.id);
-      if (p && cmRaw === 0 && zeroWallHasOpening(sp.openings, {
-        kind: 'partition', id: d.id,
-      })) {
-        this._showToast(this._t('toast.zero_wall_opening_conflict'));
-        return;
-      }
-      if (p) p.cm = cmRaw;
-    } else if (d.kind === 'column') {
-      const c = (sp.wall_columns || []).find((x: any) => x.id === d.id);
-      if (c) {
-        c.cm = clampColumnCm(cmRaw);
-        c.shape = d.shape === 'circle' ? 'circle' : 'square';
-        if (c.shape === 'square') c.angle = strictNumber(d.angle || '0')!;
-        else delete c.angle;
-      }
-    } else {
-      const draft = (sp.room_drafts || []).find((x: any) => x.id === d.id);
-      if (draft?.segments?.[d.segment || 0]) draft.segments[d.segment || 0].cm = cmRaw;
-    }
-    const committed = this._commitPhysicalGeometry(this._t('history.physical_edit'), before);
-    this._physicalDialog = null;
-    if (!committed) this.requestUpdate();
-  };
+    return this._editorRuntimeOrThrow()._savePhysicalDialog();
+  }
 
   private _deletePhysicalSelection = (): void => {
-    const sel = this._physicalSel;
-    const sp = this._curSpaceCfg as any;
-    if (!sel || !sp) return;
-    if (sel.kind === 'draft') { this._deleteDraftWhole(); return; }
-    const before = this._geometrySnapshot();
-    if (sel.kind === 'partition') {
-      const hosted = (sp.openings || [])
-        .filter((opening: OpeningCfg) => opening.host?.kind === 'partition'
-          && opening.host.id === sel.id)
-        .sort((a: OpeningCfg, b: OpeningCfg) => (a.host?.t || 0) - (b.host?.t || 0));
-      if (hosted.length) {
-        this._partitionDeleteDialog = {
-          id: sel.id,
-          openings: hosted.map((opening: OpeningCfg) => JSON.parse(JSON.stringify(opening))),
-        };
-        return;
-      }
-    }
-    const key = sel.kind === 'partition' ? 'partitions'
-      : sel.kind === 'column' ? 'wall_columns' : 'room_drafts';
-    sp[key] = (sp[key] || []).filter((x: any) => x.id !== sel.id);
-    if (!sp[key].length) delete sp[key];
-    if (this._activeDraftId === sel.id) this._cancelPath();
-    this._physicalSel = null;
-    this._physicalDialog = null;
-    this._commitPhysicalGeometry(this._t('history.physical_delete'), before);
-  };
+    return this._editorRuntimeOrThrow()._deletePhysicalSelection();
+  }
 
   private _confirmPartitionDelete = (): void => {
-    const dialog = this._partitionDeleteDialog;
-    const sp = this._curSpaceCfg as any;
-    if (!dialog || !sp) return;
-    const before = this._geometrySnapshot();
-    sp.partitions = (sp.partitions || []).filter((partition: PartitionCfg) =>
-      partition.id !== dialog.id);
-    if (!sp.partitions.length) delete sp.partitions;
-    sp.openings = (sp.openings || []).filter((opening: OpeningCfg) =>
-      opening.host?.kind !== 'partition' || opening.host.id !== dialog.id);
-    if (!sp.openings.length) delete sp.openings;
-    this._partitionDeleteDialog = null;
-    this._physicalSel = null;
-    this._physicalDialog = null;
-    this._commitPhysicalGeometry(this._t('history.physical_delete'), before);
-  };
+    return this._editorRuntimeOrThrow()._confirmPartitionDelete();
+  }
 
   private _deleteDraftWhole = (): void => {
-    const id = this._physicalDialog?.kind === 'draft'
-      ? this._physicalDialog.id
-      : this._physicalSel?.kind === 'draft' ? this._physicalSel.id : null;
-    const sp = this._curSpaceCfg as any;
-    if (!id || !sp || !confirm(this._t('confirm.delete_draft'))) return;
-    const before = this._geometrySnapshot();
-    sp.room_drafts = (sp.room_drafts || []).filter((x: any) => x.id !== id);
-    if (!sp.room_drafts.length) delete sp.room_drafts;
-    if (this._activeDraftId === id) this._cancelPath();
-    this._physicalSel = null;
-    this._physicalDialog = null;
-    this._commitPhysicalGeometry(this._t('history.physical_delete'), before);
-  };
+    return this._editorRuntimeOrThrow()._deleteDraftWhole();
+  }
 
   private _deleteDraftSegment = (): void => {
-    const dlg = this._physicalDialog;
-    const sp = this._curSpaceCfg as any;
-    if (!dlg || dlg.kind !== 'draft' || !sp) return;
-    if (!confirm(this._t('confirm.delete_draft_segment'))) return;
-    const index = (sp.room_drafts || []).findIndex((x: any) => x.id === dlg.id);
-    if (index < 0) return;
-    const draft = sp.room_drafts[index];
-    const cut = Math.max(0, Math.min(draft.segments.length - 1, dlg.segment || 0));
-    const pieces: any[] = [];
-    const leftPoints = draft.points.slice(0, cut + 1);
-    const rightPoints = draft.points.slice(cut + 1);
-    if (leftPoints.length >= 2) pieces.push({
-      id: draft.id, points: leftPoints, segments: draft.segments.slice(0, cut),
-    });
-    if (rightPoints.length >= 2) pieces.push({
-      id: pieces.length ? `${draft.id}-${Date.now().toString(36)}` : draft.id,
-      points: rightPoints, segments: draft.segments.slice(cut + 1),
-    });
-    if (pieces.length === 2 && sp.room_drafts.length >= MAX_ROOM_DRAFTS) {
-      this._showToast(this._t('toast.physical_limit'));
-      return;
-    }
-    const before = this._geometrySnapshot();
-    sp.room_drafts.splice(index, 1, ...pieces);
-    if (!sp.room_drafts.length) delete sp.room_drafts;
-    if (this._activeDraftId === draft.id) this._cancelPath();
-    this._physicalDialog = null;
-    this._physicalSel = pieces.length ? { kind: 'draft', id: pieces[0].id } : null;
-    this._commitPhysicalGeometry(this._t('history.draft_segment_delete'), before);
-  };
+    return this._editorRuntimeOrThrow()._deleteDraftSegment();
+  }
 
   private _physicalDown(ev: PointerEvent, kind: 'partition' | 'column', id: string): void {
-    const model = this._spaceModel();
-    if (!model) return;
-    ev.stopPropagation();
-    capturePointer(ev);
-    const point = this._svgPoint(ev);
-    const candidates: Array<{ kind: 'partition' | 'column'; id: string }> = [];
-    for (const c of [...model.wall_columns].reverse()) {
-      if (pointInPhysicalBody(point, columnBody(c, this._cellCm, this._gridPitch)))
-        candidates.push({ kind: 'column', id: c.id });
-    }
-    for (const p of [...model.partitions].reverse()) {
-      const body = partitionBody(p.a, p.b, p.cm, this._cellCm, this._gridPitch);
-      if (body && pointInPhysicalBody(point, body)) candidates.push({ kind: 'partition', id: p.id });
-    }
-    if (!candidates.some((x) => x.kind === kind && x.id === id)) candidates.unshift({ kind, id });
-    const signature = candidates.map((x) => `${x.kind}:${x.id}`).sort().join('|');
-    const now = performance.now();
-    const cycle = this._physicalPickCycle;
-    const repeat = candidates.length > 1 && cycle?.signature === signature
-      && now - cycle.at > 380 && now - cycle.at <= 1200
-      && Math.hypot(ev.clientX - cycle.x, ev.clientY - cycle.y) <= 10;
-    const index = repeat ? (cycle.index + 1) % candidates.length
-      : Math.max(0, candidates.findIndex((x) => x.kind === kind && x.id === id));
-    this._physicalPickCycle = { signature, index, x: ev.clientX, y: ev.clientY, at: now };
-    kind = candidates[index].kind;
-    id = candidates[index].id;
-    const base = kind === 'partition'
-      ? model.partitions.find((x) => x.id === id)
-      : model.wall_columns.find((x) => x.id === id);
-    if (!base) return;
-    this._physicalSel = { kind, id };
-    this._physicalDrag = {
-      pid: ev.pointerId, kind, id, start: this._svgPoint(ev),
-      startClient: [ev.clientX, ev.clientY],
-      before: this._geometrySnapshot(), moved: false,
-      base: JSON.parse(JSON.stringify(base)), delta: [0, 0],
-    };
+    return this._editorRuntimeOrThrow()._physicalDown(ev, kind, id);
   }
 
   private _clampPhysicalDelta(
     kind: 'partition' | 'column', base: PartitionCfg | WallColumnCfg, delta: number[],
   ): number[] {
-    const points = kind === 'partition'
-      ? [(base as PartitionCfg).a, (base as PartitionCfg).b]
-      : [(base as WallColumnCfg).center];
-    const xs = points.map((p) => p[0]), ys = points.map((p) => p[1]);
-    return [
-      Math.max(-CANVAS_LIMIT * NORM_W - Math.min(...xs),
-        Math.min(CANVAS_LIMIT * NORM_W - Math.max(...xs), delta[0])),
-      Math.max(-CANVAS_LIMIT * NORM_W - Math.min(...ys),
-        Math.min(CANVAS_LIMIT * NORM_W - Math.max(...ys), delta[1])),
-    ];
+    return this._editorRuntimeOrThrow()._clampPhysicalDelta(kind, base, delta);
   }
 
   private _physicalMove(ev: PointerEvent): void {
-    const drag = this._physicalDrag;
-    if (!drag || drag.pid !== ev.pointerId) return;
-    ev.stopPropagation();
-    const raw = this._svgPoint(ev);
-    const anchor = drag.kind === 'partition'
-      ? (drag.base as PartitionCfg).a : (drag.base as WallColumnCfg).center;
-    const target = this._snap([
-      anchor[0] + raw[0] - drag.start[0], anchor[1] + raw[1] - drag.start[1],
-    ]);
-    const delta = this._clampPhysicalDelta(
-      drag.kind, drag.base, [target[0] - anchor[0], target[1] - anchor[1]],
-    );
-    this._physicalDrag = {
-      ...drag, delta,
-      moved: drag.moved || Math.hypot(
-        ev.clientX - drag.startClient[0], ev.clientY - drag.startClient[1],
-      ) >= 5,
-    };
+    return this._editorRuntimeOrThrow()._physicalMove(ev);
   }
 
   private _physicalUp(ev: PointerEvent): void {
-    const drag = this._physicalDrag;
-    if (!drag || drag.pid !== ev.pointerId) return;
-    ev.stopPropagation();
-    this._physicalDrag = null;
-    if (!drag.moved) {
-      this._registerPhysicalTap(drag.kind, drag.id);
-      return;
-    }
-    const model = this._spaceModel();
-    if (!this._curSpaceCfg || !model) return;
-    const sp = this._curSpaceCfg as any;
-    if (drag.kind === 'partition') {
-      const p = (sp.partitions || []).find((x: any) => x.id === drag.id);
-      const base = drag.base as PartitionCfg;
-      if (p) {
-        const moved: PartitionCfg = {
-          ...base,
-          a: [base.a[0] + drag.delta[0], base.a[1] + drag.delta[1]],
-          b: [base.b[0] + drag.delta[0], base.b[1] + drag.delta[1]],
-        };
-        p.a = [moved.a[0] / NORM_W, moved.a[1] / NORM_W];
-        p.b = [moved.b[0] / NORM_W, moved.b[1] / NORM_W];
-        for (const opening of sp.openings || []) {
-          if (opening.host?.kind !== 'partition' || opening.host.id !== drag.id) continue;
-          const resolved = resolvePartitionOpeningCompat(
-            opening, [moved], NORM_W, this._cellCm, this._gridPitch,
-          ).resolved;
-          if (resolved) Object.assign(
-            opening, materializePartitionOpening(opening, resolved, NORM_W),
-          );
-        }
-      }
-    } else {
-      const c = (sp.wall_columns || []).find((x: any) => x.id === drag.id);
-      const base = drag.base as WallColumnCfg;
-      const candidate: WallColumnCfg = {
-        ...base,
-        center: [base.center[0] + drag.delta[0], base.center[1] + drag.delta[1]],
-      } as WallColumnCfg;
-      if (model.wall_columns.some((x) => x.id !== drag.id
-          && sameColumnPlacement(x, candidate, this._gridPitch * 0.02))) {
-        this._showToast(this._t('toast.column_duplicate'));
-        return;
-      }
-      if (c) c.center = [
-        (base.center[0] + drag.delta[0]) / NORM_W,
-        (base.center[1] + drag.delta[1]) / NORM_W,
-      ];
-    }
-    this._commitPhysicalGeometry(this._t('history.physical_move'), drag.before);
+    return this._editorRuntimeOrThrow()._physicalUp(ev);
   }
 
   private _registerPhysicalTap(
     kind: 'partition' | 'column' | 'draft', id: string, segment?: number,
   ): void {
-    const now = performance.now();
-    const twice = this._physicalLastTap?.kind === kind
-      && this._physicalLastTap.id === id
-      && this._physicalLastTap.segment === segment
-      && now - this._physicalLastTap.at <= 360;
-    this._physicalLastTap = { kind, id, segment, at: now };
-    if (twice) {
-      this._physicalLastTap = null;
-      this._openPhysicalDialog(kind, id, segment);
-    }
+    return this._editorRuntimeOrThrow()._registerPhysicalTap(kind, id, segment);
   }
 
   private _cancelPhysicalGesture(): void {
-    this._physicalDrag = null;
-    this._physicalRotate = null;
-    this.requestUpdate();
+    return this._editorRuntimeOrThrow()._cancelPhysicalGesture();
   }
 
   private _physicalRotateDown(ev: PointerEvent, c: WallColumnCfg): void {
-    if (c.shape !== 'square' || !this._spaceModel()) return;
-    ev.preventDefault();
-    ev.stopPropagation();
-    capturePointer(ev);
-    const p = this._svgPoint(ev);
-    this._physicalSel = { kind: 'column', id: c.id };
-    this._physicalRotate = {
-      pid: ev.pointerId, id: c.id, center: [...c.center],
-      startAngle: Math.atan2(p[1] - c.center[1], p[0] - c.center[0]) * 180 / Math.PI,
-      baseAngle: canonicalColumnAngle(c.angle), angle: canonicalColumnAngle(c.angle),
-      before: this._geometrySnapshot(), moved: false,
-    };
+    return this._editorRuntimeOrThrow()._physicalRotateDown(ev, c);
   }
 
   private _physicalRotateMove(ev: PointerEvent): void {
-    const drag = this._physicalRotate;
-    if (!drag || drag.pid !== ev.pointerId) return;
-    ev.preventDefault();
-    ev.stopPropagation();
-    const p = this._svgPoint(ev);
-    const pointerAngle = Math.atan2(p[1] - drag.center[1], p[0] - drag.center[0]) * 180 / Math.PI;
-    const raw = drag.baseAngle + pointerAngle - drag.startAngle;
-    const angle = canonicalColumnAngle(ev.shiftKey ? raw : Math.round(raw / 5) * 5);
-    this._physicalRotate = { ...drag, angle, moved: drag.moved || Math.abs(raw - drag.baseAngle) >= 0.5 };
+    return this._editorRuntimeOrThrow()._physicalRotateMove(ev);
   }
 
   private _physicalRotateUp(ev: PointerEvent): void {
-    const drag = this._physicalRotate;
-    if (!drag || drag.pid !== ev.pointerId) return;
-    ev.preventDefault();
-    ev.stopPropagation();
-    this._physicalRotate = null;
-    const model = this._spaceModel();
-    if (!drag.moved || !this._curSpaceCfg || !model) return;
-    const current = model.wall_columns.find((c) => c.id === drag.id);
-    if (!current || current.shape !== 'square') return;
-    const candidate: WallColumnCfg = { ...current, angle: drag.angle };
-    if (model.wall_columns.some((c) => c.id !== drag.id
-        && sameColumnPlacement(c, candidate, this._gridPitch * 0.02))) {
-      this._showToast(this._t('toast.column_duplicate'));
-      return;
-    }
-    const stored = (this._curSpaceCfg as any).wall_columns?.find((c: any) => c.id === drag.id);
-    if (!stored) return;
-    stored.angle = drag.angle;
-    this._commitPhysicalGeometry(this._t('history.physical_edit'), drag.before);
+    return this._editorRuntimeOrThrow()._physicalRotateUp(ev);
   }
 
 
@@ -8873,121 +7217,34 @@ class HouseplanCard extends LitElement {
 
   /** Rooms of the current space as render-unit polygons (legacy rects converted). */
   private _rszRooms(): { id: string; poly: number[][]; wall_ids?: string[] }[] {
-    const out: { id: string; poly: number[][]; wall_ids?: string[] }[] = [];
-    const space = this._spaceModel();
-    if (!space) return out;
-    for (const r of space.rooms) {
-      const poly = r.id ? roomPoly(r) : null;
-      if (poly) out.push({
-        id: r.id!, poly,
-        wall_ids: Array.isArray(r.wall_ids) ? [...r.wall_ids] : undefined,
-      });
-    }
-    return coalesceResizeRooms(out, Math.max(1e-12, this._gridPitch * 1e-12));
+    return this._editorRuntimeOrThrow()._rszRooms();
   }
 
   private _rszOpenings(): SafeOpeningIn[] {
-    return this._openingsR.map((o) => ({
-      id: o.id, x: o.rx, y: o.ry, length: o.rlen,
-      hosted: !!o.host, angle: o.angle, type: o.type,
-    }));
+    return this._editorRuntimeOrThrow()._rszOpenings();
   }
 
   private _rszObstacles(): SafeResizeObstacle[] {
-    const space = this._spaceModel();
-    if (!space) return [];
-    const obstacles: SafeResizeObstacle[] = [];
-    for (const partition of space.partitions || []) {
-      obstacles.push({
-        kind: 'segment', a: [...partition.a], b: [...partition.b],
-        half: wallCmToUnits(partition.cm, this._cellCm, this._gridPitch) / 2,
-      });
-    }
-    for (const draft of space.room_drafts || []) {
-      for (let i = 0; i + 1 < draft.points.length; i++) {
-        obstacles.push({
-          kind: 'segment', a: [...draft.points[i]], b: [...draft.points[i + 1]],
-          half: wallCmToUnits(
-            Number.isFinite(Number(draft.segments?.[i]?.cm))
-              ? Number(draft.segments[i].cm) : DRAW_WALL_DEFAULT_CM,
-            this._cellCm, this._gridPitch,
-          ) / 2,
-        });
-      }
-    }
-    for (const column of space.wall_columns || []) {
-      const half = wallCmToUnits(column.cm, this._cellCm, this._gridPitch) / 2;
-      obstacles.push({
-        kind: 'circle', center: [...column.center],
-        radius: column.shape === 'square' ? half * Math.SQRT2 : half,
-      });
-    }
-    return obstacles;
+    return this._editorRuntimeOrThrow()._rszObstacles();
   }
 
   private _rszOptsFor(a: number[], b: number[]): SafeResizeOptions {
-    const cm = thicknessCmAt(this._spaceWalls, a, b, this._wallKeyPitch, NORM_W);
-    const exact = this._spaceWalls.filter((wall) => Array.isArray(wall.a) && Array.isArray(wall.b)
-      && wall.a.length >= 2 && wall.b.length >= 2).map((wall) => ({
-      wall,
-      a: [wall.a![0] * NORM_W, wall.a![1] * this._spaceH],
-      b: [wall.b![0] * NORM_W, wall.b![1] * this._spaceH],
-    }));
-    const axis = Math.abs(a[0] - b[0]) <= this._gridPitch * 0.05 ? 'v'
-      : Math.abs(a[1] - b[1]) <= this._gridPitch * 0.05 ? 'h' : null;
-    const overlaps = exact.filter((entry) => {
-      if (!axis) return false;
-      if (axis === 'h') {
-        if (Math.abs(entry.a[1] - a[1]) > this._gridPitch * 0.05
-            || Math.abs(entry.b[1] - a[1]) > this._gridPitch * 0.05) return false;
-        return Math.min(Math.max(a[0], b[0]), Math.max(entry.a[0], entry.b[0]))
-          - Math.max(Math.min(a[0], b[0]), Math.min(entry.a[0], entry.b[0])) > this._gridPitch * 0.05;
-      }
-      if (Math.abs(entry.a[0] - a[0]) > this._gridPitch * 0.05
-          || Math.abs(entry.b[0] - a[0]) > this._gridPitch * 0.05) return false;
-      return Math.min(Math.max(a[1], b[1]), Math.max(entry.a[1], entry.b[1]))
-        - Math.max(Math.min(a[1], b[1]), Math.min(entry.a[1], entry.b[1])) > this._gridPitch * 0.05;
-    });
-    const exactCms = new Set(overlaps.map((entry) => Number(entry.wall.cm)).filter((value) => value > 0));
-    return {
-      minDim: this._cmToUnits(MIN_ROOM_CM),
-      eps: this._gridPitch * 0.05,
-      step: this._gridPitch,
-      movingHalf: cm > 0 ? wallCmToUnits(cm, this._cellCm, this._gridPitch) / 2 : 0,
-      obstacles: this._rszObstacles(),
-      thicknessConflict: exactCms.size > 1,
-    };
+    return this._editorRuntimeOrThrow()._rszOptsFor(a, b);
   }
 
   private _rszResolution(
     roomId: string, edge: number, renderSnapshot?: string,
   ): SafeResizeResolution {
-    const snap = this._resize.snapshotIdentity || renderSnapshot || this._rszSnapshot();
-    const key = `${this._space}|${this._cellCm}|${this._gridPitch}|${snap}`;
-    const cacheKey = `${roomId}:${edge}`;
-    return this._resize.resolve(key, cacheKey, () => {
-      const rooms = [...(this._resize.rooms || this._rszRooms())];
-      const room = rooms.find((candidate) => candidate.id === roomId);
-      const a = room?.poly?.[edge] || [0, 0];
-      const b = room?.poly?.[(edge + 1) % (room?.poly?.length || 1)] || [0, 0];
-      return resolveSafeResize(
-        rooms, [...(this._resize.openings || this._rszOpenings())], roomId, edge,
-        this._rszOptsFor(a, b),
-      );
-    });
+    return this._editorRuntimeOrThrow()._rszResolution(roomId, edge, renderSnapshot);
   }
 
   private _rszSnapshot(): string {
-    return JSON.stringify(this._geometrySnapshot() || {
-      spaceId: this._space, rooms: [], openings: [], walls: [], open_spans: [],
-    });
+    return this._editorRuntimeOrThrow()._rszSnapshot();
   }
 
   /** Lifecycle reset which cannot leave the memoized model on a discarded preview. */
   private _rszResetController(): void {
-    const hadPreview = this._resize.preview !== null;
-    this._resize.reset();
-    if (hadPreview) this._cfgEpoch++;
+    return this._editorRuntimeOrThrow()._rszResetController();
   }
 
   /** Live preview of the candidate geometry, based on the immutable pre-drag snapshot —
@@ -9010,161 +7267,14 @@ class HouseplanCard extends LitElement {
     changedRoomIds: readonly string[],
     sourceRooms: readonly { id: string; poly: number[][]; wall_ids?: string[] }[],
   ): ResizeProjectionResult<ResizePreview, ResizeWallArtifact> {
-    // #329 AC7a: only the LAST projection may explain the refusal, so the
-    // previous verdict never leaks into a rejection of another kind.
-    this._rszLimitViolation = null;
-    const real = this._serverCfg?.spaces.find((s: any) => s.id === this._space);
-    if (!real || !this._serverCfg) return { ok: false, reason: 'missing-context' };
-    const s = JSON.parse(snapshot); // fresh deep copies every move — free to mutate
-    const sp: any = {
-      ...real,
-      rooms: s.rooms,
-      openings: s.openings || [],
-    };
-    for (const key of ['walls', 'wall_segments', 'open_spans', 'room_drafts', 'partitions', 'wall_columns', 'decor'] as const) {
-      if (s[key] !== undefined) (sp as any)[key] = s[key];
-      else delete (sp as any)[key];
-    }
-    for (const key of ['plan_x', 'plan_y', 'plan_scale', 'plan_scale_x', 'plan_scale_y', 'plan_angle'] as const) {
-      if (s.plan_transform?.[key] !== undefined) (sp as any)[key] = s.plan_transform[key];
-      else delete (sp as any)[key];
-    }
-    const H = this._spaceH;
-    for (const [id, poly] of Object.entries(polys)) {
-      const r = sp.rooms.find((x: any) => x.id === id);
-      if (!r) continue;
-      r.poly = poly.map((p) => [p[0] / NORM_W, p[1] / H]);
-      delete r.x; delete r.y; delete r.w; delete r.h; // a resized room is saved as a polygon
-    }
-    for (const [id, c] of Object.entries(ops)) {
-      const o = (sp.openings || []).find((x: any) => x.id === id);
-      if (!o) continue;
-      o.x = c[0] / NORM_W;
-      o.y = c[1] / H;
-    }
-    // Geometry that belongs to a wall must ride in the SAME live overlay as
-    // its room polygons. Map from the immutable snapshot on every move (never
-    // from the previous preview), so atomic identity and thickness cannot lag
-    // behind or accumulate rounding error during a long drag.
-    const oldSpans: [number[], number[]][] = [];
-    const newSpans: [number[], number[]][] = [];
-    for (const id of changedRoomIds) {
-      const oldR = sourceRooms.find((r) => r.id === id);
-      const nr = sp.rooms.find((x: any) => x.id === id);
-      if (!oldR || !nr?.poly) continue;
-      const newPoly = nr.poly.map((p: number[]) => [p[0] * NORM_W, p[1] * H] as number[]);
-      if (oldR.poly.length !== newPoly.length) continue;
-      const ids = Array.isArray((oldR as any).wall_ids) ? (oldR as any).wall_ids : [];
-      for (let i = 0; i < oldR.poly.length; i++) {
-        oldSpans.push([oldR.poly[i], oldR.poly[(i + 1) % oldR.poly.length]]);
-        newSpans.push([newPoly[i], newPoly[(i + 1) % newPoly.length]]);
-        const id = ids[i];
-        const segment = typeof id === 'string'
-          ? (sp.wall_segments || []).find((item: any) => item.id === id)
-          : null;
-        if (segment) {
-          segment.a = [newPoly[i][0] / NORM_W, newPoly[i][1] / NORM_W];
-          segment.b = [
-            newPoly[(i + 1) % newPoly.length][0] / NORM_W,
-            newPoly[(i + 1) % newPoly.length][1] / NORM_W,
-          ];
-        }
-      }
-    }
-    if (oldSpans.length) {
-      if (Array.isArray(sp.walls) && sp.walls.length) {
-        const rekeyed = rekeyWallsAfterMoveChecked(
-          sp.walls, oldSpans, newSpans, this._wallKeyPitch, NORM_W, 'fixed-topology',
-        );
-        if (rekeyed.rejected) return { ok: false, reason: 'wall-metadata' };
-        sp.walls = rekeyed.walls;
-      }
-    }
-    const wallCarriers: [number[], number[]][] = [];
-    for (const room of sp.rooms || []) {
-      const poly = roomPoly(room);
-      if (!poly || poly.length < 2) continue;
-      for (let index = 0; index < poly.length; index++) {
-        wallCarriers.push([
-          [poly[index][0] * NORM_W, poly[index][1] * NORM_W],
-          [poly[(index + 1) % poly.length][0] * NORM_W,
-            poly[(index + 1) % poly.length][1] * NORM_W],
-        ]);
-      }
-    }
-    // Old plans may contain explicit historical debt (for example an authored
-    // off-grid thickness breakpoint). Safe Resize must not silently repair it,
-    // but it may not create a new invalid record either. Remove byte-identical
-    // old records as a multiset and prove only newly written/split records.
-    // That keeps pointermove bounded by the touched thickness profile instead
-    // of comparing every historical record with every carrier twice per frame.
-    const wallSignature = (wall: any): string => JSON.stringify([
-      wall?.key, wall?.cm, wall?.a, wall?.b,
-    ]);
-    const oldWallCounts = new Map<string, number>();
-    for (const wall of s.walls || []) {
-      const key = wallSignature(wall);
-      oldWallCounts.set(key, (oldWallCounts.get(key) || 0) + 1);
-    }
-    const changedWalls: WallEntry[] = [];
-    for (const wall of sp.walls || []) {
-      const key = wallSignature(wall);
-      const remaining = oldWallCounts.get(key) || 0;
-      if (remaining) oldWallCounts.set(key, remaining - 1);
-      else changedWalls.push(wall);
-    }
-    if (wallRecordCarrierViolations(
-      changedWalls, wallCarriers, this._wallKeyPitch, NORM_W, s.walls || [],
-    ).length) return { ok: false, reason: 'wall-metadata' };
-    const preflight = this._rszSpaceCandidateGeometry(this._space, sp);
-    if (!preflight.ok) {
-      return { ok: false, reason: 'physical-geometry' };
-    }
-    // #329 AC7a: a step that would ADD a junction-limit violation is never
-    // projected, so the drag stops at the last allowed position instead of
-    // committing an impossible plan.
-    const limitCandidate = {
-      ...this._serverCfg,
-      spaces: (this._serverCfg?.spaces || []).map(
-        (space: any) => (space?.id === this._space ? sp : space),
-      ),
-    };
-    // #330 §4.7: the preflight just built the candidate's masonry — hand it
-    // to П5 so the pointermove never pays the union twice.
-    const limited = this._junctionLimitsIntroduced(
-      limitCandidate, this._serverCfg, this._space, preflight.wallGeometry,
-    );
-    if (limited.length) {
-      this._rszLimitViolation = limited[0];
-      return { ok: false, reason: 'junction-limit' };
-    }
-    return {
-      ok: true,
-      value: {
-        preview: { space: this._space, sp },
-        beforeWalls: s.walls || [],
-        afterWalls: sp.walls || [],
-        artifact: preflight.wallGeometry,
-      },
-    };
+    return this._editorRuntimeOrThrow()._rszProjectPreview(snapshot, polys, ops, changedRoomIds, sourceRooms);
   }
 
   /** Publish one controller-accepted preview and retain its validated masonry pass. */
   private _rszAcceptPreview(
     preview: ResizePreview | null, wallGeometry: ResizeWallArtifact | null,
   ): void {
-    this._cfgEpoch++;
-    if (!preview || !wallGeometry) return;
-    const projected = wallBodiesGeometryPath(wallGeometry);
-    if (!projected) return;
-    const key = `${this._space}|${this._cfgEpoch}|${preview.sp.rooms.length}`;
-    Object.defineProperty(projected, 'sourceFingerprint', {
-      value: contentFingerprint([preview.sp, this._cellCm, this._gridPitch]),
-      enumerable: false,
-    });
-    const entry = { key, value: projected };
-    lruWrite(this._wallUnionPool, key, entry, 8);
-    this._wallUnionCache = entry;
+    return this._editorRuntimeOrThrow()._rszAcceptPreview(preview, wallGeometry);
   }
 
   /** Validate once and retain the exact geometry pass for the preview render. */
@@ -9172,183 +7282,45 @@ class HouseplanCard extends LitElement {
     ok: boolean;
     wallGeometry: ReturnType<typeof wallBodiesGeometry> | null;
   } {
-    if (!this._serverCfg) return { ok: false, wallGeometry: null };
-    const candidate = {
-      ...this._serverCfg,
-      spaces: this._serverCfg.spaces.map((space: any) =>
-        space.id === spaceId ? sp : space),
-    } as ServerConfig;
-    let wallGeometry: ReturnType<typeof wallBodiesGeometry> | null = null;
-    try {
-      const check = this._checkSpacePhysicalGeometry(
-        candidate, spaceId, (geometry) => { wallGeometry = geometry; },
-      );
-      return { ok: check.ok, wallGeometry };
-    } catch {
-      return { ok: false, wallGeometry: null };
-    }
+    return this._editorRuntimeOrThrow()._rszSpaceCandidateGeometry(spaceId, sp);
   }
 
   /** Fail-closed check for one exact candidate through the common barrier. */
   private _rszSpaceCandidateRenderable(spaceId: string, sp: any): boolean {
-    if (!this._serverCfg) return false;
-    try {
-      const candidate = {
-        ...this._serverCfg,
-        spaces: this._serverCfg.spaces.map((space: any) =>
-          space.id === spaceId ? sp : space),
-      } as ServerConfig;
-      return this._checkSpacePhysicalGeometry(candidate, spaceId).ok;
-    } catch {
-      return false;
-    }
+    return this._editorRuntimeOrThrow()._rszSpaceCandidateRenderable(spaceId, sp);
   }
 
   /** Final identity guard for the exact overlay already shown to the user. */
   private _rszCandidateRenderable(preview: { space: string; sp: any } | null): boolean {
-    return !!preview && preview.space === this._space
-      && this._rszSpaceCandidateRenderable(preview.space, preview.sp);
+    return this._editorRuntimeOrThrow()._rszCandidateRenderable(preview);
   }
 
   private _rszEdgeDown(ev: PointerEvent, roomId: string, edge: number): void {
-    if (this._tool !== 'resize' || this._resize.dragging) return;
-    ev.stopPropagation();
-    ev.preventDefault();
-    const rooms = this._rszRooms();
-    const resolution = this._rszResolution(roomId, edge);
-    if (!resolution.enabled) {
-      this._showToast(this._rszReasonText(resolution.reason));
-      return;
-    }
-    capturePointer(ev);
-    const plan = resolution.plan;
-    const start = this._svgPoint(ev);
-    const wallUnionKey = `${this._space}|${this._cfgEpoch}|${rooms.length}`;
-    const wallUnionBefore = this._wallUnionCache?.key === wallUnionKey
-      ? this._wallUnionCache.value : null;
-    const snapshotIdentity = this._rszSnapshot();
-    this._resize.begin({
-      pointerId: ev.pointerId, start: [start[0], start[1]], roomId, plan,
-      options: this._rszOptsFor(plan.a, plan.b), rooms,
-      openings: this._rszOpenings(), snapshotIdentity,
-      before: JSON.parse(snapshotIdentity) as SpaceGeometryState,
-      wallUnionBefore,
-    });
+    return this._editorRuntimeOrThrow()._rszEdgeDown(ev, roomId, edge);
   }
 
   private _rszReasonText(reason: SafeResizeReason): string {
-    return this._t(`resize.disabled.${reason}` as I18nKey);
+    return this._editorRuntimeOrThrow()._rszReasonText(reason);
   }
 
   private _rszDisabledActivate(ev: Event, reason: SafeResizeReason): void {
-    ev.stopPropagation();
-    ev.preventDefault();
-    this._showToast(this._rszReasonText(reason));
+    return this._editorRuntimeOrThrow()._rszDisabledActivate(ev, reason);
   }
 
   private _rszDisabledKey(ev: KeyboardEvent, reason: SafeResizeReason): void {
-    if (ev.key !== 'Enter' && ev.key !== ' ') return;
-    this._rszDisabledActivate(ev, reason);
+    return this._editorRuntimeOrThrow()._rszDisabledKey(ev, reason);
   }
 
   private _rszMove(ev: PointerEvent): void {
-    if (!this._resize.ownsPointer(ev.pointerId)) return;
-    ev.stopPropagation();
-    const p = this._svgPoint(ev);
-    const result = this._resize.move({
-      pointerId: ev.pointerId,
-      point: [p[0], p[1]],
-      step: this._gridPitch,
-      snap: (point) => {
-        const snapped = this._snap(point);
-        return [snapped[0], snapped[1]];
-      },
-      project: (snapshot, polys, openings, changedRoomIds, rooms) =>
-        this._rszProjectPreview(snapshot, polys, openings, changedRoomIds, rooms),
-      publish: (preview, artifact) => this._rszAcceptPreview(preview, artifact),
-      measure: (candidate, plan) => this._rszEdgeLabels(candidate, plan),
-    });
-    if (result.kind === 'rejected') {
-      // Persistence metadata is part of the geometry transaction. If wall or
-      // virtual-span rekeying would be lossy, keep the last complete preview:
-      // the pointer visibly stops there and pointerup can commit only that
-      // already-rendered safe candidate.
-      if (result.notify) {
-        // #329 AC7a: a step stopped by a junction limit names THAT rule — the
-        // generic "geometry cannot be saved" wording would hide which limit
-        // the wall ran into.
-        this._showToast(this._rszLimitViolation
-          ? `${this._t('resize.limit_stopped')} — `
-            + this._junctionLimitLabel(this._rszLimitViolation)
-          : this._t('resize.preview_failed'));
-      }
-      this.requestUpdate();
-      return;
-    }
-    if (result.kind === 'accepted') this.requestUpdate();
+    return this._editorRuntimeOrThrow()._rszMove(ev);
   }
 
   private _rszUp(ev: PointerEvent): void {
-    if (!this._resize.ownsPointer(ev.pointerId)) return;
-    ev.stopPropagation();
-    const result = this._resize.finish({
-      pointerId: ev.pointerId,
-      currentSnapshotIdentity: this._rszSnapshot(),
-      validatePreview: (preview) => this._rszCandidateRenderable(preview),
-    });
-    if (result.kind === 'no-op') {
-      // HP-1550-01: nothing to restore — the preview never touched the config
-      this._cfgEpoch++;
-      this.requestUpdate();
-      return;
-    }
-    if (result.kind === 'rejected') {
-      this._cfgEpoch++;
-      this._showToast(this._t('resize.commit_failed'));
-      this.requestUpdate();
-      return;
-    }
-    // Commit the exact preview in one step. No simplify/rebuild pass is allowed:
-    // preview and persistence share the same fixed-topology candidate.
-    const preview = result.preview;
-    const sp = this._serverCfg?.spaces.find((space: any) => space.id === preview.space);
-    if (sp) {
-      sp.rooms = preview.sp.rooms;
-      sp.openings = preview.sp.openings;
-      if (Array.isArray(preview.sp.walls)) {
-        if (preview.sp.walls.length) sp.walls = preview.sp.walls;
-        else delete sp.walls;
-      }
-      if (Array.isArray(preview.sp.wall_segments)) sp.wall_segments = preview.sp.wall_segments;
-    }
-    // the click synthesized after the drag must not re-pick the selection
-    this._suppressClick = true;
-    setTimeout(() => (this._suppressClick = false), 0);
-    this._commitPhysicalGeometry(this._t('history.resize_room'), result.before);
-    this.requestUpdate();
+    return this._editorRuntimeOrThrow()._rszUp(ev);
   }
 
   private _rszCancelDrag(pointerId?: number): void {
-    const result = this._resize.cancel(this._rszSnapshot(), pointerId);
-    if (result.kind === 'no-op') return;
-    // HP-1550-01/-03: a cancel just drops the overlay — the real config was
-    // never touched, so there is nothing to restore, no undo step and no write
-    this._cfgEpoch++;
-    if (result.restoreWallUnion) {
-      // The server-backed geometry did not change during the gesture. The
-      // preview advanced the structural epoch and temporarily selected its
-      // candidate union, but Cancel returns to the byte-identical pre-drag
-      // config. Alias that already-proved result under the fresh epoch instead
-      // of paying another O(n log n) polygon union on the next paint.
-      const space = this._spaceModel();
-      if (space) {
-        const key = `${this._space}|${this._cfgEpoch}|${space.rooms.length}`;
-        const entry = { key, value: result.restoreWallUnion };
-        lruWrite(this._wallUnionPool, key, entry, 8);
-        this._wallUnionCache = entry;
-      }
-    }
-    this.requestUpdate();
+    return this._editorRuntimeOrThrow()._rszCancelDrag(pointerId);
   }
 
   /** HP-1550-03: pointercancel / lostpointercapture is an ABORT, not a release —
@@ -9357,97 +7329,14 @@ class HouseplanCard extends LitElement {
    *  guard also absorbs the lostpointercapture that follows a normal pointerup
    *  or a pointercancel (the drag is already gone — no double cancel/commit). */
   private _rszPointerCancel(ev: PointerEvent): void {
-    if (!this._resize.ownsPointer(ev.pointerId)) return;
-    ev.stopPropagation();
-    this._rszCancelDrag(ev.pointerId);
+    return this._editorRuntimeOrThrow()._rszPointerCancel(ev);
   }
 
   private _rszEdgeLabels(
     res: { polys: Record<string, number[][]> }, plan: SafeResizePlan,
-    sourceRooms: readonly { id: string; poly: number[][] }[] | null = this._resize.rooms,
+    sourceRooms: readonly { id: string; poly: number[][] }[] | null = this._resize?.rooms,
   ): ResizeLiveLabel[] {
-    const rooms = sourceRooms;
-    const labels: ResizeLiveLabel[] = [];
-    const own = res.polys[plan.roomId] || rooms?.find((r) => r.id === plan.roomId)!.poly;
-    if (!own || !rooms) return labels;
-    const n = own.length;
-    // Длины — между внутренними гранями, как и площадь ниже (#233). Раньше
-    // здесь считалась осевая длина, и одно облачко подписей несло две разные
-    // конвенции: «3.00 × 4.00» по центрам стен рядом с площадью по полу.
-    const spanCms = this._rszInnerSpanCms(plan.roomId, own, res.polys);
-    // The moving wall is obvious under the pointer. Only its two side walls
-    // remain useful measurements, and each one owns the matching highlight.
-    for (const edge of resizeMeasuredEdges(own, plan.edge)) {
-      const a = own[edge], b = own[(edge + 1) % n];
-      const cm = spanCms?.[edge];
-      labels.push({
-        kind: 'length',
-        x: (a[0] + b[0]) / 2,
-        y: (a[1] + b[1]) / 2,
-        text: cm == null ? this._fmtLen(a, b)
-          : formatLength(cm, this.hass?.config?.unit_system?.length === 'mi'),
-        edge: { a: [a[0], a[1]], b: [b[0], b[1]] },
-      });
-    }
-    // Live areas sit beside the moving wall, one on each owner side. Placement
-    // is pure screen-space math fed by the stage size cached by ResizeObserver;
-    // no pointermove DOM measurement is allowed.
-    const imperial = this.hass?.config?.unit_system?.length === 'mi';
-    const ids = plan.roomIds;
-    const walls = this._spaceWalls;
-    const physical = this._physicalBodiesR();
-    const base = this._baseVb();
-    const currentView = this._view && this._view.w > 0 && this._view.h > 0
-      ? this._view
-      : { x: base[0], y: base[1], w: base[2], h: base[3] };
-    const [cachedW, cachedH] = this._lastValidStageSize || [currentView.w, currentView.h];
-    const view = {
-      ...currentView,
-      stageWidth: Math.max(1, cachedW),
-      stageHeight: Math.max(1, cachedH),
-    };
-    const space = this._spaceModel();
-    const cfgSize = this._config?.icon_size ?? 2.5;
-    const iconPct = cfgSize > 8 ? 2.5 : cfgSize;
-    const iconPx = space
-      ? iconCqw(iconPct, space, currentView.w, this._kiosk ? this._kioskScale.icon : 1)
-          * view.stageWidth / 100
-      : 24;
-    const gearHeightPx = Math.max(10, iconPx * 0.77);
-    const gearText = this._t('room.settings_short');
-    // Mirrors the CSS proportions conservatively: icon + gap + two paddings +
-    // localized text at the button's 0.42*height font size.
-    const gearWidthPx = gearHeightPx * (
-      0.55 + 0.35 * 0.42 + 0.76 + Math.max(1, gearText.length) * 0.66 * 0.42
-    );
-    for (const id of ids) {
-      const poly = res.polys[id] || rooms.find((r) => r.id === id)!.poly;
-      // The preview is already the active render model. Reuse the same shared
-      // masonry union + contour cache that the following render consumes;
-      // rebuilding both independently here doubled one Resize frame.
-      const floor = walls.length && space
-        ? (this._innerRoomContour(space, id) || poly)
-        : poly;
-      const m2 = physical.length
-        ? geometryArea(floorMinusBodies(floor, physical))
-            * Math.pow(this._cellCm / this._gridPitch, 2) / 1e4
-        : areaM2(floor, this._gridPitch, this._cellCm);
-      const text = formatArea(m2, imperial);
-      const placement = placeResizeAreaLabel({
-        poly,
-        edge: plan.edgeByRoom[id],
-        text,
-        view,
-        gearCenter: poleOfInaccessibility(poly),
-        gearWidthPx,
-        gearHeightPx,
-      });
-      labels.push({
-        kind: 'area', roomId: id,
-        x: placement.anchor[0], y: placement.anchor[1], text, placement,
-      });
-    }
-    return labels;
+    return this._editorRuntimeOrThrow()._rszEdgeLabels(res, plan, sourceRooms);
   }
 
   /**
@@ -9461,89 +7350,18 @@ class HouseplanCard extends LitElement {
   private _rszInnerSpanCms(
     roomId: string, own: number[][], polys: Record<string, number[][]>,
   ): number[] | null {
-    const rooms = Object.keys(polys).length
-      ? Object.entries(polys).map(([id, poly]) => ({ id, poly }))
-      : this._spaceModel()?.rooms;
-    if (!rooms?.length) return null;
-    const walls = this._spaceWalls;
-    if (!walls.length) return null;
-    const openCuts = this._openCuts();
-    const offsets = ownEdgeOffsets(
-      rooms, roomId, walls, openCuts,
-      this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
-    );
-    if (!offsets || offsets.length !== own.length) return null;
-    const perUnitCm = this._cellCm / this._gridPitch;
-    return own.map((_, edge) => innerEdgeSpan(own, edge, offsets) * perUnitCm);
+    return this._editorRuntimeOrThrow()._rszInnerSpanCms(roomId, own, polys);
   }
 
   /** Pointer-inert measurement ink above masonry and below openings/handles. */
   private _renderResizeMeasurements(): TemplateResult | typeof nothing {
-    const live = this._resize.liveLabels;
-    if (!live?.length) return nothing;
-    const lengths = live.filter((label) => label.kind === 'length');
-    const areas = live.filter((label) => label.kind === 'area');
-    return svg`<g class="rszmeasurelayer" aria-hidden="true" pointer-events="none">
-      ${lengths.map((label, index) => svg`<g class="rszmeasuredge"
-          data-hp="resize-measured-edge" data-edge-index=${index}>
-        <line class="rszmeasurehalo" x1=${label.edge.a[0]} y1=${label.edge.a[1]}
-          x2=${label.edge.b[0]} y2=${label.edge.b[1]}></line>
-        <line class="rszmeasureink" x1=${label.edge.a[0]} y1=${label.edge.a[1]}
-          x2=${label.edge.b[0]} y2=${label.edge.b[1]}></line>
-      </g>`)}
-      ${areas.map((label) => svg`<line class="rszleader" data-hp="resize-area-leader"
-        data-room=${label.roomId}
-        x1=${label.placement.leader.a[0]} y1=${label.placement.leader.a[1]}
-        x2=${label.placement.leader.b[0]} y2=${label.placement.leader.b[1]}></line>`)}
-    </g>`;
+    return this._editorRuntimeOrThrow()._renderResizeMeasurements();
   }
 
   /** Fixed-topology wall handles. Disabled geometry remains visible and
    * explains why it cannot start a gesture; the old corner scale is gone. */
   private _renderResizeLayer(view: { x: number; y: number; w: number; h: number }): TemplateResult {
-    const hr = Math.max(view.w * 0.013, 5); // finger-sized HIT radius on touch, like .vacfithandle
-    // Wall-handle glyph: half the old circle — a wall segment with two arrows
-    // pointing perpendicular to it (the directions the wall can be dragged).
-    // Drawn in local coords (wall along X), rotated per edge at render time.
-    // The invisible circle above keeps the full finger-sized hit area and the
-    // HP-1550-04 hit-test priority over openings.
-    const s = hr / 2, f = (v: number) => v.toFixed(1);
-    const iconD =
-      `M ${f(-0.7 * s)} 0 H ${f(0.7 * s)}` +
-      ` M 0 ${f(-0.22 * s)} V ${f(-s)} M ${f(-0.32 * s)} ${f(-0.6 * s)} L 0 ${f(-s)} L ${f(0.32 * s)} ${f(-0.6 * s)}` +
-      ` M 0 ${f(0.22 * s)} V ${f(s)} M ${f(-0.32 * s)} ${f(0.6 * s)} L 0 ${f(s)} L ${f(0.32 * s)} ${f(0.6 * s)}`;
-    const parts: TemplateResult[] = [];
-    const rooms = this._rszRooms();
-    // A geometry snapshot is a deep clone/serialization. It is the cache key
-    // for every handle in this frame, so compute it once per layer render —
-    // never once per room edge. During a drag the immutable gesture snapshot
-    // remains authoritative inside _rszResolution.
-    const renderSnapshot = this._resize.snapshotIdentity || this._rszSnapshot();
-    for (const r of rooms) {
-      for (let i = 0; i < r.poly.length; i++) {
-        const a = r.poly[i], b = r.poly[(i + 1) % r.poly.length];
-        if (Math.hypot(b[0] - a[0], b[1] - a[1]) < this._gridPitch) continue;
-        const mx = f((a[0] + b[0]) / 2), my = f((a[1] + b[1]) / 2);
-        const ang = f(Math.atan2(b[1] - a[1], b[0] - a[0]) * 180 / Math.PI);
-        const resolution = this._rszResolution(r.id, i, renderSnapshot);
-        const disabled = !resolution.enabled;
-        const reason = disabled ? this._rszReasonText(resolution.reason) : this._t('title.markup_resize');
-        parts.push(svg`<circle class="rszhandle ${disabled ? 'disabled' : ''}"
-          cx="${mx}" cy="${my}" r="${f(hr)}" tabindex="0" role="button"
-          aria-disabled="${disabled ? 'true' : 'false'}" aria-label="${reason}"
-          @pointerdown=${(e: PointerEvent) => this._rszEdgeDown(e, r.id, i)}
-          @pointermove=${(e: PointerEvent) => this._rszMove(e)}
-          @pointerup=${(e: PointerEvent) => this._rszUp(e)}
-          @pointercancel=${(e: PointerEvent) => this._rszPointerCancel(e)}
-          @lostpointercapture=${(e: PointerEvent) => this._rszPointerCancel(e)}
-          @click=${disabled ? (e: Event) => this._rszDisabledActivate(e, resolution.reason) : null}
-          @keydown=${disabled ? (e: KeyboardEvent) => this._rszDisabledKey(e, resolution.reason) : null}>
-          <title>${reason}</title>
-        </circle>`);
-        parts.push(svg`<g class="rszicon ${disabled ? 'disabled' : ''}" transform="translate(${mx} ${my}) rotate(${ang})"><path class="rszhalo" d="${iconD}"></path><path class="rszink" d="${iconD}"></path></g>`);
-      }
-    }
-    return svg`${parts}`;
+    return this._editorRuntimeOrThrow()._renderResizeLayer(view);
   }
 
   /** Openings of the current space in render units. */
@@ -9589,10 +7407,10 @@ class HouseplanCard extends LitElement {
   ): PartitionOpeningCut[] {
     if (!space) return [];
     const config = this._curSpaceCfg?.id === space.id ? this._curSpaceCfg : null;
-    const openings = geometryOpenings(
-      config, space, this._cellCm, this._gridPitch, NORM_W,
+    return geometryPartitionOpeningCuts(
+      geometryOpenings(config, space, this._cellCm, this._gridPitch, NORM_W),
+      accept,
     );
-    return geometryPartitionOpeningCuts(openings, accept);
   }
 
   /**
@@ -9708,484 +7526,72 @@ class HouseplanCard extends LitElement {
 
   /** Magnet candidates are intentionally limited to decor and room contours. */
   private _decorSnapGeometry(excludeId?: string): SnapGeometry {
-    const space = this._spaceModel();
-    if (!space) return { points: [], segments: [] };
-    const cacheKey = excludeId || '';
-    const cached = this._decorSnapCache;
-    if (cached && cached.epoch === this._cfgEpoch && cached.space === this._space
-        && cached.height === this._decorH && cached.exclude === cacheKey) {
-      return cached.geometry;
-    }
-    const parts: SnapGeometry[] = [];
-    for (const shape of this._decorList) {
-      if (shape.id === excludeId) continue;
-      if (shape.kind === 'line') {
-        const a = [shape.x1 * NORM_W, shape.y1 * this._decorH];
-        const b = [shape.x2 * NORM_W, shape.y2 * this._decorH];
-        parts.push({
-          points: [a, b, [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]],
-          segments: [{ a, b }],
-        });
-      } else if (shape.kind === 'text') {
-        parts.push({ points: [[shape.x * NORM_W, shape.y * this._decorH]], segments: [] });
-      } else {
-        const box = this._decorBoxOf(shape);
-        if (box) parts.push(boxAnchors(box));
-      }
-    }
-    for (const room of space.rooms) {
-      const poly = roomPoly(room);
-      if (!poly?.length) continue;
-      parts.push({
-        points: poly.flatMap((p, i) => {
-          const q = poly[(i + 1) % poly.length];
-          return [p, [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2]];
-        }),
-        segments: poly.map((p, i) => ({ a: p, b: poly[(i + 1) % poly.length] })),
-      });
-    }
-    const geometry = mergeSnapGeometry(parts);
-    this._decorSnapCache = {
-      epoch: this._cfgEpoch, space: this._space, height: this._decorH,
-      exclude: cacheKey, geometry,
-    };
-    return geometry;
+    return this._editorRuntimeOrThrow()._decorSnapGeometry(excludeId);
   }
 
   private _decorSnap(raw: number[], pointerType = 'mouse', excludeId?: string): number[] {
-    const stage = this._stageEl;
-    const view = this._viewOr(this._baseVb());
-    const px = pointerType === 'touch' || pointerType === 'pen' ? 14 : 8;
-    const tolerance = stage ? (view.w / Math.max(1, stage.clientWidth)) * px : this._gridPitch;
-    return snapDecorPoint(
-      raw, this._decorSnapGeometry(excludeId), tolerance,
-      (point) => this._snap(point),
-    ).point;
+    return this._editorRuntimeOrThrow()._decorSnap(raw, pointerType, excludeId);
   }
 
   private _replaceDecor(id: string, patch: Partial<DecorShape>): void {
-    const sp = this._curSpaceCfg;
-    if (!sp) return;
-    sp.decor = this._decorList.map((shape) => shape.id === id ? { ...shape, ...patch } : shape);
-    // The edited shape is excluded from the gesture's magnet candidates, so
-    // keep the cached geometry of every *other* object across pointermoves.
-    // A different exclude id/cache key rebuilds it when the next gesture starts.
-    this.requestUpdate();
+    return this._editorRuntimeOrThrow()._replaceDecor(id, patch);
   }
 
   /** Esc/Ctrl+Z during a live gesture restores its transaction start without creating history. */
   private _cancelDecorGesture(): void {
-    const before = this._decorMove?.before || this._dtDrag?.before || this._bdDrag?.before;
-    const sp = before && this._serverCfg?.spaces.find((space: any) => space.id === before.spaceId);
-    if (before && sp) {
-      const copy = <T>(value: T): T => JSON.parse(JSON.stringify(value));
-      if (before.decor !== undefined) sp.decor = copy(before.decor);
-      else delete sp.decor;
-      for (const key of ['plan_x', 'plan_y', 'plan_scale', 'plan_scale_x', 'plan_scale_y', 'plan_angle'] as const)
-        delete sp[key];
-      Object.assign(sp, copy(before.plan_transform || {}));
-      this._cfgEpoch++;
-    }
-    this._decorMove = null;
-    this._dtDrag = null;
-    this._bdDrag = null;
-    this.requestUpdate();
+    return this._editorRuntimeOrThrow()._cancelDecorGesture();
   }
 
   /** Begin a decor gesture. Returns true when the event is consumed (no pan). */
   private _decorPointerDown(ev: PointerEvent): boolean {
-    const t = this._decorTool;
-    // A DRAWING tool owns the whole canvas. Pressing on top of an existing
-    // shape must start a NEW figure at that very point — otherwise a line can
-    // never begin at the end of another line, because the old line grabs the
-    // press first (owner, 2026-08-04). Only select/erase talk to shapes, and
-    // only for them does the shape's own handler get to deal with the event.
-    const onShape = (t === 'select' || t === 'erase')
-      ? ((ev.target as HTMLElement).closest?.('.dshape') as SVGElement | null)
-      : null;
-    if (onShape) return true; // the shape's own handler deals with it
-    if (t === 'line' || t === 'rect' || t === 'ellipse') {
-      ev.preventDefault();
-      const p = this._decorSnap(this._svgPoint(ev), ev.pointerType);
-      this._decorDraft = { kind: t, a: p, b: p, pid: ev.pointerId };
-      capturePointer(ev);
-      return true;
-    }
-    if (t === 'text') {
-      // …and the press did NOT land on an existing label: those are the one
-      // exception to the inertness above (see _decorShapeDown).
-      const p = this._decorSnap(this._svgPoint(ev), ev.pointerType);
-      this._decorTextDialog = {
-        x: clampCanvasN(p[0] / NORM_W), y: clampCanvasN(p[1] / this._decorH),
-        text: '', color: this._decorStyle.color, opacity: this._decorStyle.opacity,
-        angle: '0', sizeCm: decorUnitsToCm(DECOR_TEXT_BASE, this._cellCm, this._gridPitch),
-      };
-      this._decorTextSelection = { start: 0, end: 0 };
-      return true;
-    }
-    if (t === 'furniture') {
-      // The furniture tool is a STAMP: the palette arms a symbol, the press
-      // puts it down at its real size and the editor goes back to `select`
-      // with the new piece selected (owner: «сразу выделен»). Without an armed
-      // symbol the press does nothing but keep the pan — pressing the canvas
-      // must not silently place whatever was chosen last week.
-      if (!this._furnPalette) return false;
-      ev.preventDefault();
-      this._furnPlace(this._svgPoint(ev), ev.shiftKey);
-      return true;
-    }
-    // Empty-space selection belongs only to Select. Erase is an object
-    // command: a miss must be a true no-op. With SVG text its painted glyphs
-    // do not cover the whole logical label box, so clearing here made a click
-    // between letters appear to erase only the selection outline.
-    if (t === 'select') this._decorSel = null;
-    // …and under its own tool the picture is grabbable by its body
-    // (docs/BACKDROP.md §2). Only INSIDE the image rect: press beside the
-    // picture and the plane still pans with one finger.
-    if (this._bdMovable) {
-      const r = this._bdRect!;
-      const p = this._svgPoint(ev);
-      const cx = r.x + r.w / 2, cy = r.y + r.h / 2;
-      const a = (-normalizeAngle(r.angle) * Math.PI) / 180;
-      const dx = p[0] - cx, dy = p[1] - cy;
-      const local = [cx + dx * Math.cos(a) - dy * Math.sin(a), cy + dx * Math.sin(a) + dy * Math.cos(a)];
-      if (local[0] >= r.x && local[0] <= r.x + r.w && local[1] >= r.y && local[1] <= r.y + r.h) {
-        ev.preventDefault();
-        return this._bdStart(ev);
-      }
-    }
-    return false; // pan is allowed
+    return this._editorRuntimeOrThrow()._decorPointerDown(ev);
   }
 
   /** Commit the dragged shape (ignore degenerate ones) and persist. */
   private _decorCommitDraft(): void {
-    const d = this._decorDraft;
-    this._decorDraft = null;
-    if (!d) return;
-    const min = this._gridPitch * 0.5;
-    if (!validDecorDraft(d.kind, d.a, d.b, min)) return;
-    const W = NORM_W, H = this._decorH;
-    const st = this._decorStyle;
-    const before = this._geometrySnapshot();
-    const id = 'dc' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
-    // creation had no canvas guard at all while the MOVE did — a draft could be
-    // born outside the range the mover then refused to leave. One limit, both
-    // ends of the gesture (docs/CANVAS.md §9).
-    const cn = clampCanvasN;
-    let shape: DecorShape;
-    if (d.kind === 'line') {
-      shape = { id, kind: 'line', x1: cn(d.a[0] / W), y1: cn(d.a[1] / H),
-        x2: cn(d.b[0] / W), y2: cn(d.b[1] / H), ...decorStylePatch(st, false) } as DecorShape;
-    } else {
-      const x = cn(Math.min(d.a[0], d.b[0]) / W), y = cn(Math.min(d.a[1], d.b[1]) / H);
-      const w = Math.abs(d.b[0] - d.a[0]) / W, h = Math.abs(d.b[1] - d.a[1]) / H;
-      shape = { id, kind: d.kind, x, y, w, h, ...decorStylePatch(st, true) } as DecorShape;
-    }
-    const sp = this._curSpaceCfg;
-    sp.decor = [...this._decorList, shape];
-    this._decorSel = id;
-    this._recordGeometry(this._t('history.decor_add'), before);
-    this._saveConfig();
-    this.requestUpdate();
+    return this._editorRuntimeOrThrow()._decorCommitDraft();
   }
 
   /** Select tool: pointerdown on a shape starts moving it. */
   private _decorShapeDown(ev: PointerEvent, shape: DecorShape): void {
-    if (this._mode !== 'decor') return;
-    // Under any other tool the shape is not a target at all: the press has to
-    // reach the stage, where the drawing tool starts a new figure (or the
-    // backdrop tool grabs the picture). Swallowing it here was the bug — the
-    // click on a line end did nothing but keep the old selection alive.
-    const t = this._decorTool;
-    // ONE exception (owner, 2026-08-04): under the TEXT tool an existing LABEL
-    // is a target again, and pressing it opens its editor instead of starting
-    // a new label on top of it. Everything else stays inert — a press on a
-    // line or a rectangle under the text tool still reaches the stage and
-    // creates a new label there (the CSS keeps them pointer-inert, this is
-    // the belt to that pair of braces).
-    if (t === 'text') {
-      if (shape.kind !== 'text') return;
-      ev.stopPropagation();
-      ev.preventDefault();
-      this._decorOpenText(shape);
-      return;
-    }
-    if (t !== 'select' && t !== 'erase') return;
-    ev.stopPropagation();
-    ev.preventDefault();
-    if (t === 'erase') {
-      this._decorEraseConfirm = { id: shape.id, kind: shape.kind };
-      return;
-    }
-    this._decorSel = shape.id;
-    this._decorMove = {
-      id: shape.id, start: this._svgPoint(ev), orig: JSON.parse(JSON.stringify(shape)),
-      pid: ev.pointerId, moved: false, before: this._geometrySnapshot(),
-    };
-    capturePointer(ev);
+    return this._editorRuntimeOrThrow()._decorShapeDown(ev, shape);
   }
 
   private _decorMoveUpdate(ev: PointerEvent): void {
-    const m = this._decorMove!;
-    // Furniture is dragged by its CENTRE and has a magnet of its own
-    // (docs/FURNITURE.md §5) — a different rule, not a different gesture.
-    if (m.orig?.kind === 'furniture') { this._furnMoveUpdate(ev); return; }
-    const p = this._svgPoint(ev);
-    const o0: any = m.orig;
-    // The delta used to be what got snapped, which preserves whatever off-grid
-    // offset the shape already had: a legacy shape at 0.3013 stayed at 0.3013
-    // for ever, one step at a time. Snap the RESULTING ANCHOR instead, so one
-    // drag is enough to put any shape on the grid (docs/CANVAS.md §9).
-    const ax0 = (o0.kind === 'line' ? o0.x1 : o0.x) * NORM_W;
-    const ay0 = (o0.kind === 'line' ? o0.y1 : o0.y) * this._decorH;
-    const anchor = this._decorSnap(
-      [ax0 + (p[0] - m.start[0]), ay0 + (p[1] - m.start[1])],
-      ev.pointerType, m.id,
-    );
-    let dx = (anchor[0] - ax0) / NORM_W;
-    let dy = (anchor[1] - ay0) / this._decorH;
-    // audit follow-up L4 gave decor a bounds clamp of -0.25..1.25 — the plan
-    // was a sheet with edges then. It is not any more (docs/CANVAS.md): the
-    // clamp is now the same garbage limit the backend enforces, so decor can
-    // follow a plan that lives at 2.7 and still cannot be flung to 1e100.
-    const o: any = m.orig;
-    const curX = o.kind === 'line' ? Math.min(o.x1, o.x2) : o.x;
-    const curY = o.kind === 'line' ? Math.min(o.y1, o.y2) : o.y;
-    const w = o.kind === 'line' ? Math.abs(o.x2 - o.x1) : (o.w || 0);
-    const h = o.kind === 'line' ? Math.abs(o.y2 - o.y1) : (o.h || 0);
-    const lim = CANVAS_LIMIT;
-    dx = Math.max(-lim - curX, Math.min(lim - curX - w, dx));
-    dy = Math.max(-lim - curY, Math.min(lim - curY - h, dy));
-    if (dx || dy) m.moved = true;
-    const sp = this._curSpaceCfg;
-    sp.decor = this._decorList.map((x) => {
-      if (x.id !== m.id) return x;
-      const o: any = m.orig;
-      if (x.kind === 'line') return { ...x, x1: o.x1 + dx, y1: o.y1 + dy, x2: o.x2 + dx, y2: o.y2 + dy };
-      return { ...x, x: o.x + dx, y: o.y + dy };
-    });
-    this.requestUpdate();
+    return this._editorRuntimeOrThrow()._decorMoveUpdate(ev);
   }
 
   /** Select tool: every decor object has a double-click properties dialog. */
   private _decorShapeDbl(ev: MouseEvent, shape: DecorShape): void {
-    if (this._mode !== 'decor' || this._decorTool !== 'select') return;
-    ev.preventDefault();
-    ev.stopPropagation();
-    this._decorMove = null;
-    this._decorSel = shape.id;
-    this._openDecorProperties(shape);
+    if (!this._editorRuntime) return;
+    return this._editorRuntime._decorShapeDbl(ev, shape);
   }
 
   /** One properties entry point shared by double click and the context tray. */
   private _openDecorProperties(shape: DecorShape): void {
-    if (this._mode !== 'decor' || this._decorTool !== 'select') return;
-    if (shape.kind === 'text') {
-      this._decorOpenText(shape);
-      return;
-    }
-    if (!['line', 'rect', 'ellipse', 'furniture'].includes(shape.kind)) return;
-    const style = this._decorResolvedStyle(shape);
-    const line = shape.kind === 'line' ? shape : null;
-    const box = this._decorBoxOf(shape);
-    this._decorShapeDialog = {
-      id: shape.id,
-      kind: shape.kind as 'line' | 'rect' | 'ellipse' | 'furniture',
-      color: style.color, opacity: style.opacity, widthCm: style.widthCm,
-      angle: this._angleField(line
-        ? normalizeAngle(segmentAngle(
-            [line.x1 * NORM_W, line.y1 * this._decorH],
-            [line.x2 * NORM_W, line.y2 * this._decorH],
-          ))
-        : normalizeAngle((shape as any).angle)),
-      ...(line ? {
-        lengthCm: decorUnitsToCm(
-          Math.hypot((line.x2 - line.x1) * NORM_W, (line.y2 - line.y1) * this._decorH),
-          this._cellCm, this._gridPitch,
-        ),
-        lineStyle: line.line_style === 'dashed' ? 'dashed' : 'solid',
-      } : {}),
-      ...(box ? {
-        sizeWCm: decorUnitsToCm(box.w, this._cellCm, this._gridPitch),
-        sizeHCm: decorUnitsToCm(box.h, this._cellCm, this._gridPitch),
-      } : {}),
-      ...(shape.kind === 'furniture' ? { symbol: shape.symbol } : {}),
-      ...(shape.kind === 'rect' || shape.kind === 'ellipse' ? {
-        fill: style.fill, fillColor: style.fillColor, fillOpacity: style.fillOpacity,
-      } : {}),
-    };
+    return this._editorRuntimeOrThrow()._openDecorProperties(shape);
   }
 
   /** Open the editor of an existing label (double click, or the text tool). */
   private _decorOpenText(shape: DecorShape): void {
-    if (shape.kind !== 'text') return;
-    let text = String(shape.text ?? '');
-    const hasInline = [...text.matchAll(/\{([^{}\r\n]+)\}/g)]
-      .some((m) => !!liveTextReference(m[1]));
-    const explicitUnit = String(shape.unit ?? '').trim();
-    // Old dialogs represented the entity state as attr="state"; inline text
-    // represents that same value with a bare `{entity}` token.
-    const legacyAttr = String(shape.attr ?? '').trim().toLowerCase() === 'state'
-      ? null
-      : shape.attr;
-    const legacyToken = !hasInline && !explicitUnit
-      ? liveTextToken(shape.entity, legacyAttr)
-      : '';
-    const preserveLegacy = !!String(shape.entity ?? '').trim() && !hasInline
-      && (!legacyToken || !!explicitUnit);
-    if (legacyToken && !preserveLegacy) {
-      const slot = text.indexOf('{}');
-      text = slot >= 0
-        ? text.slice(0, slot) + legacyToken + text.slice(slot + 2)
-        : `${text}${text ? ' ' : ''}${legacyToken}`;
-    }
-    this._decorTextDialog = {
-      id: shape.id, x: shape.x, y: shape.y, text,
-      color: safeStoredColor(shape.color, this._decorStyle.color),
-      opacity: clamp01(shape.opacity, this._decorStyle.opacity),
-      angle: this._angleField(shape.angle),
-      sizeCm: this._decorTextSizeCm(shape),
-      pickerEntity: shape.entity || '',
-      preserveLegacy: preserveLegacy || undefined,
-    };
-    this._decorTextSelection = { start: text.length, end: text.length };
+    return this._editorRuntimeOrThrow()._decorOpenText(shape);
   }
 
   private _decorRememberTextSelection(el: HTMLTextAreaElement): void {
-    this._decorTextSelection = {
-      start: el.selectionStart ?? el.value.length,
-      end: el.selectionEnd ?? el.value.length,
-    };
+    return this._editorRuntimeOrThrow()._decorRememberTextSelection(el);
   }
 
   /** Insert a complete reference without ever truncating it into broken text. */
   private _decorInsertLiveVariable(attr: string | null): void {
-    const d = this._decorTextDialog;
-    if (!d) return;
-    const token = liveTextToken(d.pickerEntity, attr);
-    if (!token) return;
-    const old = d.text;
-    const start = Math.max(0, Math.min(old.length, this._decorTextSelection.start));
-    const end = Math.max(start, Math.min(old.length, this._decorTextSelection.end));
-    if (old.length - (end - start) + token.length > 200) return;
-    const text = old.slice(0, start) + token + old.slice(end);
-    const caret = start + token.length;
-    this._decorTextSelection = { start: caret, end: caret };
-    // Inserting a new inline reference is the explicit replacement of any
-    // unrepresentable legacy link; the stale side fields can now be dropped.
-    this._decorTextDialog = { ...d, text, preserveLegacy: undefined };
-    this.updateComplete.then(() => {
-      const el = this.renderRoot.querySelector<HTMLTextAreaElement>('textarea.dtarea');
-      if (!el) return;
-      el.focus();
-      el.setSelectionRange(caret, caret);
-    });
+    return this._editorRuntimeOrThrow()._decorInsertLiveVariable(attr);
   }
 
   private _decorSaveText(): void {
-    const d = this._decorTextDialog;
-    // The user's own line breaks are kept; the surrounding whitespace is not.
-    const text = String(d?.text ?? '').replace(/\r\n?/g, '\n').trim();
-    if (!d || !text) { this._decorTextDialog = null; return; }
-    const before = this._geometrySnapshot();
-    const sp = this._curSpaceCfg;
-    const textStyle = {
-      color: d.color, opacity: clamp01(d.opacity),
-      size_cm: Number(Math.max(0.1, Math.min(DECOR_TEXT_CM_MAX, d.sizeCm)).toFixed(4)),
-      ...(normalizeAngle(d.angle) ? { angle: normalizeAngle(d.angle) } : {}),
-    };
-    if (d.id) {
-      sp.decor = this._decorList.map((x) => {
-        if (x.id !== d.id) return x;
-        if (x.kind !== 'text') return x;
-        // A legacy unit or non-canonical attribute cannot be represented by
-        // the inline grammar. Keep those fields until the user explicitly
-        // replaces the binding; ordinary representable links still migrate.
-        if (d.preserveLegacy) {
-          const { angle: _angle, size: _size, scale: _scale, ...straight } = x;
-          return { ...straight, text, ...textStyle };
-        }
-        // beta.9 and earlier stored one live link beside the text. Saving in
-        // the new editor migrates it to inline tokens and drops the old fields.
-        const { entity, attr, unit, ...rest } = x;
-        const { angle: _angle, size: _size, scale: _scale, ...straight } = rest;
-        return { ...straight, text, ...textStyle };
-      });
-    } else {
-      const id = 'dc' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
-      sp.decor = [...this._decorList, { id, kind: 'text', x: d.x, y: d.y,
-        text, ...textStyle }];
-      this._decorSel = id;
-    }
-    this._decorTextDialog = null;
-    this._recordGeometry(this._t(d.id ? 'history.decor_edit' : 'history.decor_add'), before);
-    this._saveConfig();
-    this.requestUpdate();
+    return this._editorRuntimeOrThrow()._decorSaveText();
   }
 
   private _decorSaveShape(): void {
-    const d = this._decorShapeDialog;
-    if (!d) return;
-    const before = this._geometrySnapshot();
-    const style: DecorStyle = {
-      color: d.color, opacity: clamp01(d.opacity),
-      widthCm: Math.max(0.1, Math.min(100, Number(d.widthCm) || 0.1)),
-      fill: !!d.fill, fillColor: d.fillColor || d.color,
-      fillOpacity: clamp01(d.fillOpacity, 0.25),
-    };
-    const sp = this._curSpaceCfg;
-    sp.decor = this._decorList.map((shape) => {
-      if (shape.id !== d.id) return shape;
-      const fillable = d.kind === 'rect' || d.kind === 'ellipse';
-      const visual = decorStylePatch(style, fillable);
-      if (shape.kind === 'line') {
-        const cx = ((shape.x1 + shape.x2) / 2) * NORM_W;
-        const cy = ((shape.y1 + shape.y2) / 2) * this._decorH;
-        const length = decorCmToUnits(Math.max(0.1, Number(d.lengthCm) || 0.1), this._cellCm, this._gridPitch);
-        const rad = (normalizeAngle(d.angle) * Math.PI) / 180;
-        const dx = Math.cos(rad) * length / 2, dy = Math.sin(rad) * length / 2;
-        const a = this._snap([cx - dx, cy - dy]);
-        const b = this._snap([cx + dx, cy + dy]);
-        const { width: _legacyWidth, line_style: _oldLineStyle, ...rest } = shape;
-        return { ...rest, ...visual,
-          x1: clampCanvasN(a[0] / NORM_W), y1: clampCanvasN(a[1] / this._decorH),
-          x2: clampCanvasN(b[0] / NORM_W), y2: clampCanvasN(b[1] / this._decorH),
-          ...(d.lineStyle === 'dashed' ? { line_style: 'dashed' as const } : {}),
-        } as DecorShape;
-      }
-      if (shape.kind === 'rect' || shape.kind === 'ellipse' || shape.kind === 'furniture') {
-        const oldW = shape.w * NORM_W, oldH = shape.h * this._decorH;
-        const w = Math.max(this._gridPitch, snapToGrid(
-          decorCmToUnits(Number(d.sizeWCm), this._cellCm, this._gridPitch), this._gridPitch,
-        ));
-        const h = Math.max(this._gridPitch, snapToGrid(
-          decorCmToUnits(Number(d.sizeHCm), this._cellCm, this._gridPitch), this._gridPitch,
-        ));
-        const cx = shape.x * NORM_W + oldW / 2, cy = shape.y * this._decorH + oldH / 2;
-        const angle = normalizeAngle(d.angle);
-        const topLeft = resizedBoxTopLeft(
-          { x: cx - w / 2, y: cy - h / 2 }, angle,
-          (point) => this._snap(point),
-        );
-        const { width: _legacyWidth, angle: _oldAngle, ...rest } = shape;
-        return { ...rest, ...visual,
-          x: clampCanvasN(topLeft[0] / NORM_W), y: clampCanvasN(topLeft[1] / this._decorH),
-          w: w / NORM_W, h: h / this._decorH,
-          ...(shape.kind === 'furniture' && d.symbol ? { symbol: d.symbol } : {}),
-          ...(angle ? { angle } : {}),
-        } as DecorShape;
-      }
-      return shape;
-    });
-    this._decorStyle = { ...style,
-      fill: d.kind === 'rect' || d.kind === 'ellipse' ? style.fill : this._decorStyle.fill,
-      fillColor: d.kind === 'rect' || d.kind === 'ellipse' ? style.fillColor : this._decorStyle.fillColor,
-      fillOpacity: d.kind === 'rect' || d.kind === 'ellipse' ? style.fillOpacity : this._decorStyle.fillOpacity,
-    };
-    this._decorShapeDialog = null;
-    this._recordGeometry(this._t('history.decor_edit'), before);
-    this._saveConfig();
-    this.requestUpdate();
+    return this._editorRuntimeOrThrow()._decorSaveShape();
   }
 
   // ---- common decor transform controller ----
@@ -10208,128 +7614,26 @@ class HouseplanCard extends LitElement {
    * their geometric centres.
    */
   private _dtPivot(sh: DecorShape): number[] {
-    if (sh.kind === 'line') return [
-      ((sh.x1 + sh.x2) / 2) * NORM_W,
-      ((sh.y1 + sh.y2) / 2) * this._decorH,
-    ];
-    if (sh.kind === 'furniture' || sh.kind === 'rect' || sh.kind === 'ellipse')
-      return [(sh.x + sh.w / 2) * NORM_W, (sh.y + sh.h / 2) * this._decorH];
-    return [sh.x * NORM_W, sh.y * this._decorH];
+    return this._editorRuntimeOrThrow()._dtPivot(sh);
   }
 
   /** Write physical text size/angle into the shape — live, without saving. */
   private _dtApply(id: string, patch: { textSizeCm?: number; angle?: number }): void {
-    const sp = this._curSpaceCfg;
-    if (!sp) return;
-    sp.decor = this._decorList.map((x) => {
-      if (x.id !== id) return x;
-      const rest: any = { ...x };
-      if (x.kind === 'text' && patch.textSizeCm !== undefined) {
-        delete rest.size;
-        delete rest.scale;
-      }
-      const out: any = { ...rest };
-      if (patch.textSizeCm !== undefined)
-        out.size_cm = Number(Math.max(0.1, Math.min(DECOR_TEXT_CM_MAX, patch.textSizeCm)).toFixed(4));
-      if (patch.angle !== undefined) {
-        if (patch.angle) out.angle = Number(patch.angle.toFixed(2));
-        else delete out.angle; // straight again = the field goes away
-      }
-      return out;
-    });
-    this._cfgEpoch++;
-    this.requestUpdate();
+    return this._editorRuntimeOrThrow()._dtApply(id, patch);
   }
 
   private _dtStart(
     ev: PointerEvent, kind: 'scale' | 'rotate', corner?: number[], lineEnd?: 0 | 1,
   ): void {
-    const sh = this._dtSel;
-    if (!sh) return;
-    ev.stopPropagation();
-    ev.preventDefault();
-    const [ax, ay] = this._dtPivot(sh);
-    const p = this._svgPoint(ev);
-    const box = this._decorBoxOf(sh);
-    this._dtDrag = {
-      id: sh.id, kind, pid: ev.pointerId, ax, ay,
-      r0: Math.hypot(p[0] - ax, p[1] - ay),
-      a0: (Math.atan2(p[1] - ay, p[0] - ax) * 180) / Math.PI,
-      textSizeCm0: sh.kind === 'text' ? this._decorTextSizeCm(sh) : 1,
-      angle0: sh.kind === 'line' ? 0 : Number(sh.angle) || 0,
-      // which corner is being pulled, and the box it started from: a piece of
-      // furniture is resized about the OPPOSITE corner, so both have to be
-      // remembered — a label, scaled about its anchor, needs neither
-      sgx: corner?.[0], sgy: corner?.[1],
-      orig: box || undefined,
-      origShape: JSON.parse(JSON.stringify(sh)),
-      before: this._geometrySnapshot(),
-      lineEnd,
-      moved: false,
-    };
-    capturePointer(ev);
+    return this._editorRuntimeOrThrow()._dtStart(ev, kind, corner, lineEnd);
   }
 
   private _dtMove(ev: PointerEvent): void {
-    const d = this._dtDrag;
-    if (!d) return;
-    const p = this._svgPoint(ev);
-    if (d.lineEnd !== undefined && d.origShape.kind === 'line') {
-      const at = this._decorSnap(p, ev.pointerType, d.id);
-      const nx = clampCanvasN(at[0] / NORM_W), ny = clampCanvasN(at[1] / this._decorH);
-      const old = d.origShape;
-      const ox = d.lineEnd === 0 ? old.x1 : old.x2;
-      const oy = d.lineEnd === 0 ? old.y1 : old.y2;
-      if (Math.abs(nx - ox) > 1e-9 || Math.abs(ny - oy) > 1e-9) d.moved = true;
-      this._replaceDecor(d.id, d.lineEnd === 0 ? { x1: nx, y1: ny } : { x2: nx, y2: ny });
-      return;
-    }
-    if (d.kind === 'scale' && d.orig) {
-      // Box geometry preserves ratio by default and separates axes with Shift.
-      // Each dimension lands on a whole cell.
-      const box = resizeDecorBox(
-        d.orig, d.sgx ?? 1, d.sgy ?? 1, p[0], p[1],
-        !ev.shiftKey, this._gridPitch, this._gridPitch,
-      );
-      const changed = Math.abs(box.x - d.orig.x) > 1e-6 || Math.abs(box.y - d.orig.y) > 1e-6
-        || Math.abs(box.w - d.orig.w) > 1e-6 || Math.abs(box.h - d.orig.h) > 1e-6;
-      if (!changed && !d.moved) return;
-      d.moved ||= changed;
-      this._decorApplyBox(d.id, box);
-      return;
-    }
-    if (d.kind === 'scale') {
-      // uniform, about the anchor: the distance from the anchor is invariant
-      // under the block's own rotation, so a rotated block scales the same way
-      const r = Math.hypot(p[0] - d.ax, p[1] - d.ay);
-      if (d.r0 < 1e-6) return;
-      const sizeCm = Math.max(0.1, Math.min(DECOR_TEXT_CM_MAX, d.textSizeCm0 * (r / d.r0)));
-      const changed = Math.abs(sizeCm - d.textSizeCm0) > 1e-6;
-      if (!changed && !d.moved) return;
-      d.moved ||= changed;
-      this._dtApply(d.id, { textSizeCm: sizeCm });
-      return;
-    }
-    const a = (Math.atan2(p[1] - d.ay, p[0] - d.ax) * 180) / Math.PI;
-    let ang = d.angle0 + (a - d.a0);
-    // 5° rotation steps; Shift remains an angle-only precision modifier.
-    if (!ev.shiftKey) ang = Math.round(ang / DT_ANGLE_STEP) * DT_ANGLE_STEP;
-    ang = ((ang % 360) + 360) % 360;
-    if (ang > 180) ang -= 360;
-    const changed = Math.abs(ang - d.angle0) > 1e-6;
-    if (!changed && !d.moved) return;
-    d.moved ||= changed;
-    this._dtApply(d.id, { angle: ang });
+    return this._editorRuntimeOrThrow()._dtMove(ev);
   }
 
   private _dtUp(): void {
-    const d = this._dtDrag;
-    this._dtDrag = null;
-    if (d?.moved) {
-      this._recordGeometry(this._t('history.decor_transform'), d.before);
-      this._saveConfig();
-    }
-    this.requestUpdate();
+    return this._editorRuntimeOrThrow()._dtUp();
   }
 
   /**
@@ -10340,59 +7644,19 @@ class HouseplanCard extends LitElement {
    * comparing the numbers before asking for another update.
    */
   private _dtMeasure(): void {
-    const sh = this._dtSel;
-    if (!sh) {
-      if (this._dtBox) { this._dtBox = null; this.requestUpdate(); }
-      return;
-    }
-    let box: { id: string; x: number; y: number; w: number; h: number };
-    if (sh.kind === 'line') {
-      const x1 = sh.x1 * NORM_W, y1 = sh.y1 * this._decorH;
-      const x2 = sh.x2 * NORM_W, y2 = sh.y2 * this._decorH;
-      box = { id: sh.id, x: Math.min(x1, x2), y: Math.min(y1, y2),
-        w: Math.abs(x2 - x1), h: Math.abs(y2 - y1) };
-    } else if (sh.kind === 'furniture' || sh.kind === 'rect' || sh.kind === 'ellipse') {
-      // …and furniture needs no measuring at all: its box IS the config. The
-      // frame therefore appears in the SAME frame as the selection, not one
-      // after it, and a resize can never be a render behind the shape.
-      box = { id: sh.id, x: sh.x * NORM_W, y: sh.y * this._decorH,
-        w: sh.w * NORM_W, h: sh.h * this._decorH };
-    } else {
-      const el = this.renderRoot.querySelector(`text.dtext[data-id="${sh.id}"]`) as SVGGraphicsElement | null;
-      if (!el || typeof (el as any).getBBox !== 'function') return;
-      let b: DOMRect;
-      try { b = el.getBBox(); } catch { return; } // not rendered yet (hidden card)
-      if (!b || (!b.width && !b.height)) return;
-      box = { id: sh.id, x: b.x, y: b.y, w: b.width, h: b.height };
-    }
-    const cur = this._dtBox;
-    const same = cur && cur.id === box.id && Math.abs(cur.x - box.x) < 0.01
-      && Math.abs(cur.y - box.y) < 0.01 && Math.abs(cur.w - box.w) < 0.01
-      && Math.abs(cur.h - box.h) < 0.01;
-    if (same) return;
-    this._dtBox = box;
-    this.requestUpdate();
+    return this._editorRuntimeOrThrow()._dtMeasure();
   }
 
   private _deleteDecor(id: string): void {
-    if (!this._decorList.some((shape) => shape.id === id)) return;
-    const before = this._geometrySnapshot();
-    const sp = this._curSpaceCfg;
-    sp.decor = this._decorList.filter((shape) => shape.id !== id);
-    if (this._decorSel === id) this._decorSel = null;
-    this._recordGeometry(this._t('history.decor_delete'), before);
-    this._saveConfig();
-    this.requestUpdate();
+    return this._editorRuntimeOrThrow()._deleteDecor(id);
   }
 
   private _decorDeleteSel(): void {
-    if (this._decorSel) this._deleteDecor(this._decorSel);
+    return this._editorRuntimeOrThrow()._decorDeleteSel();
   }
 
   private _confirmDecorErase(): void {
-    const pending = this._decorEraseConfirm;
-    this._decorEraseConfirm = null;
-    if (pending) this._deleteDecor(pending.id);
+    return this._editorRuntimeOrThrow()._confirmDecorErase();
   }
 
   // ================= the furniture library (docs/FURNITURE.md) =================
@@ -10418,20 +7682,19 @@ class HouseplanCard extends LitElement {
    *  `_imperial` it asks is the card's one answer to "feet or metres?", the
    *  same the glow radius reads. */
   private _furnFieldValue(cm: number): number {
-    return Math.round((this._imperial ? cm / 30.48 : cm / 100) * 100) / 100;
+    return this._editorRuntimeOrThrow()._furnFieldValue(cm);
   }
 
   /** …and back. The config never stores feet: a unit system is how a user
    *  reads a plan, not what the plan is (docs/STYLING-HOOKS.md §6). */
   private _furnFieldToCm(v: number): number {
-    return clampFurnCm(this._imperial ? v * 30.48 : v * 100);
+    return this._editorRuntimeOrThrow()._furnFieldToCm(v);
   }
 
   /** Arm a symbol: the palette remembers it with ITS default real size, which
    *  the two fields then let the user overrule before the click. */
   private _furnPick(symbol: string): void {
-    const d = furnitureDefaultCm(symbol);
-    this._furnPalette = { symbol, w: d.w, h: d.h };
+    return this._editorRuntimeOrThrow()._furnPick(symbol);
   }
 
   /**
@@ -10447,37 +7710,7 @@ class HouseplanCard extends LitElement {
    * case (put the bed against that wall) is one click and no dragging.
    */
   private _furnPlace(raw: number[], free = false): void {
-    const pal = this._furnPalette;
-    const sp = this._curSpaceCfg;
-    if (!pal || !sp) return;
-    const W = NORM_W, H = this._decorH;
-    const wN = clampFurnSize(cmToNorm(pal.w, this._cellCm, this._gridPitch, W));
-    const hN = clampFurnSize(cmToNorm(pal.h, this._cellCm, this._gridPitch, W));
-    const before = this._geometrySnapshot();
-    const c = this._decorSnap(raw);
-    let cx = c[0], cy = c[1];
-    let angle = 0;
-    const snap = free ? null : snapFurnitureToWall(cx, cy, hN * H, this._furnWalls,
-      this._furnWallReach, this._gridPitch);
-    if (snap) { cx = snap.cx; cy = snap.cy; angle = snap.angle; }
-    const id = 'df' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
-    const shape: any = {
-      id, kind: 'furniture', symbol: pal.symbol,
-      x: clampCanvasN(cx / W - wN / 2), y: clampCanvasN(cy / H - hN / 2),
-      w: wN, h: hN,
-      ...decorStylePatch(this._decorStyle, false),
-    };
-    // a straight piece stores no angle at all, exactly as a straight label
-    // stores none (docs/LIVE-TEXT.md §3)
-    if (angle) shape.angle = Number(angle.toFixed(2));
-    sp.decor = [...this._decorList, shape];
-    this._decorSel = id;
-    // …and the editor goes back to the tool that can move what was just placed
-    this._decorTool = 'select';
-    this._furnPalette = null;
-    this._recordGeometry(this._t('history.decor_add'), before);
-    this._saveConfig();
-    this.requestUpdate();
+    return this._editorRuntimeOrThrow()._furnPlace(raw, free);
   }
 
   /**
@@ -10488,62 +7721,12 @@ class HouseplanCard extends LitElement {
    * the angle it already had is kept.
    */
   private _furnMoveUpdate(ev: PointerEvent): void {
-    const m = this._decorMove!;
-    if (m.orig.kind !== 'furniture') return;
-    const o: any = m.orig;
-    const sp = this._curSpaceCfg;
-    if (!sp) return;
-    const W = NORM_W, H = this._decorH;
-    const p = this._svgPoint(ev);
-    const rawCx = (o.x + o.w / 2) * W + (p[0] - m.start[0]);
-    const rawCy = (o.y + o.h / 2) * H + (p[1] - m.start[1]);
-    let x: number, y: number;
-    let angle = Number(o.angle) || 0;
-    const snap = ev.shiftKey ? null : snapFurnitureToWall(
-      rawCx, rawCy, o.h * H, this._furnWalls, this._furnWallReach, this._gridPitch);
-    if (snap) {
-      x = snap.cx / W - o.w / 2;
-      y = snap.cy / H - o.h / 2;
-      angle = snap.angle;
-    } else {
-      const a = this._decorSnap(
-        [rawCx - (o.w / 2) * W, rawCy - (o.h / 2) * H], ev.pointerType, m.id,
-      );
-      x = a[0] / W;
-      y = a[1] / H;
-    }
-    x = clampCanvasN(x); y = clampCanvasN(y);
-    if (Math.abs(x - o.x) > 1e-9 || Math.abs(y - o.y) > 1e-9
-        || Math.abs(angle - (Number(o.angle) || 0)) > 1e-9) m.moved = true;
-    sp.decor = this._decorList.map((s) => {
-      if (s.id !== m.id) return s;
-      const out: any = { ...s, x, y };
-      if (angle) out.angle = Number(angle.toFixed(2));
-      else delete out.angle;
-      return out;
-    });
-    this.requestUpdate();
+    return this._editorRuntimeOrThrow()._furnMoveUpdate(ev);
   }
 
   /** Write a resized box into the shape — live, without saving. */
   private _decorApplyBox(id: string, box: { x: number; y: number; w: number; h: number }): void {
-    const sp = this._curSpaceCfg;
-    if (!sp) return;
-    const W = NORM_W, H = this._decorH;
-    sp.decor = this._decorList.map((s) => {
-      if (s.id !== id) return s;
-      const topLeft = resizedBoxTopLeft(
-        box, (s as any).angle, (point) => this._snap(point),
-      );
-      return {
-        ...s,
-        x: clampCanvasN(topLeft[0] / W), y: clampCanvasN(topLeft[1] / H),
-        w: Math.max(this._gridPitch / W, Math.min(CANVAS_LIMIT * 2, box.w / W)),
-        h: Math.max(this._gridPitch / H, Math.min(CANVAS_LIMIT * 2, box.h / H)),
-      } as DecorShape;
-    });
-    this._cfgEpoch++;
-    this.requestUpdate();
+    return this._editorRuntimeOrThrow()._decorApplyBox(id, box);
   }
 
   /**
@@ -10578,56 +7761,7 @@ class HouseplanCard extends LitElement {
    * symbol's real size and shown in metres or feet by the HA unit system.
    */
   private _renderFurnPalette(): TemplateResult {
-    const pal = this._furnPalette;
-    // the unit the fields are read in — the same two words the glow radius
-    // already uses, because a plan has one unit system, not one per control
-    const unit = this._t(this._imperial ? 'gs.unit_ft' : 'gs.unit_m');
-    const preview = (id: string): TemplateResult => {
-      const s = furnitureSymbol(id)!;
-      // fit the symbol into a 40×40 box keeping its real proportions, so a
-      // sofa reads as a sofa and a toilet does not become a square
-      const k = 36 / Math.max(s.w, s.h);
-      const w = s.w * k, h = s.h * k;
-      return svg`<svg class="furnprev" viewBox="0 0 40 40" aria-hidden="true"><g
-        transform="translate(${(40 - w) / 2} ${(40 - h) / 2})"><path
-        d=${furniturePathD(id, w, h)} fill="none" stroke="currentColor"
-        stroke-width="1.2" stroke-linejoin="round"></path></g></svg>` as unknown as TemplateResult;
-    };
-    return html`<div class="furnpalette" @pointerdown=${(e: Event) => e.stopPropagation()}>
-      <div class="furnhd">
-        <ha-icon icon="mdi:sofa-outline"></ha-icon>${this._t('furn.title')}
-        <span class="spacer"></span>
-        <button class="btn furnclose" title=${this._t('btn.close')}
-          @click=${() => { this._furnPalette = null; this._decorTool = 'select'; }}>
-          <ha-icon icon="mdi:close"></ha-icon>
-        </button>
-      </div>
-      <div class="furnbody">
-        ${FURNITURE_GROUPS.map((g) => html`
-          <div class="furngroup" data-group=${g}>${this._t(`furn.group_${g}` as any)}</div>
-          <div class="furnrow">
-            ${furnitureOfGroup(g as FurnitureGroup).map((s) => html`<button
-              class="furnitem ${pal?.symbol === s.id ? 'on' : ''}" data-symbol=${s.id}
-              title=${this._t(`furn.sym_${s.id}` as any)}
-              @click=${() => this._furnPick(s.id)}>
-              ${preview(s.id)}<span>${this._t(`furn.sym_${s.id}` as any)}</span>
-            </button>`)}
-          </div>`)}
-      </div>
-      ${pal ? html`<div class="furnsize">
-        <label>${this._t('furn.width')}<span class="furnunit">${unit}</span></label>
-        <input class="namein furnw" type="number" min="0.01" step="0.05"
-          .value=${String(this._furnFieldValue(pal.w))}
-          @input=${(e: Event) => (this._furnPalette = {
-            ...pal, w: this._furnFieldToCm(Number((e.target as HTMLInputElement).value)) })} />
-        <label>${this._t('furn.depth')}<span class="furnunit">${unit}</span></label>
-        <input class="namein furnh" type="number" min="0.01" step="0.05"
-          .value=${String(this._furnFieldValue(pal.h))}
-          @input=${(e: Event) => (this._furnPalette = {
-            ...pal, h: this._furnFieldToCm(Number((e.target as HTMLInputElement).value)) })} />
-        <span class="furnhint">${this._t('furn.place_hint')}</span>
-      </div>` : html`<div class="furnsize"><span class="furnhint">${this._t('furn.pick_hint')}</span></div>`}
-    </div>`;
+    return this._editorRuntimeOrThrow()._renderFurnPalette();
   }
 
   // ============ backdrop transform frame (docs/BACKDROP.md) ============
@@ -10661,44 +7795,12 @@ class HouseplanCard extends LitElement {
   }
 
   private _openBackdropDialog(ev?: Event): void {
-    if (!this._bdMovable || !this._bdRect) return;
-    ev?.preventDefault();
-    ev?.stopPropagation();
-    this._bdDrag = null;
-    const r = this._bdRect;
-    this._backdropDialog = {
-      widthCm: decorUnitsToCm(r.w, this._cellCm, this._gridPitch),
-      heightCm: decorUnitsToCm(r.h, this._cellCm, this._gridPitch),
-      angle: this._angleField(r.angle),
-    };
+    if (!this._editorRuntime) return;
+    return this._editorRuntime._openBackdropDialog(ev);
   }
 
   private _saveBackdropDialog(): void {
-    const d = this._backdropDialog;
-    const base = this._bdBase, current = this._bdRect;
-    if (!d || !base || !current) return;
-    const angle = normalizeAngle(d.angle);
-    const before = this._geometrySnapshot();
-    const w = Math.min(base.w * PLAN_SCALE_MAX, Math.max(
-      base.w * PLAN_SCALE_MIN, snapToGrid(
-        decorCmToUnits(d.widthCm, this._cellCm, this._gridPitch), this._gridPitch,
-      ),
-    ));
-    const h = Math.min(base.h * PLAN_SCALE_MAX, Math.max(
-      base.h * PLAN_SCALE_MIN, snapToGrid(
-        decorCmToUnits(d.heightCm, this._cellCm, this._gridPitch), this._gridPitch,
-      ),
-    ));
-    const cx = current.x + current.w / 2, cy = current.y + current.h / 2;
-    const topLeft = resizedBoxTopLeft(
-      { x: cx - w / 2, y: cy - h / 2 }, angle,
-      (point) => this._snap(point),
-    );
-    this._bdApply((topLeft[0] - base.x) / NORM_W, (topLeft[1] - base.y) / NORM_W,
-      w / base.w, h / base.h, angle);
-    this._backdropDialog = null;
-    this._recordGeometry(this._t('history.backdrop_transform'), before);
-    this._saveConfig();
+    return this._editorRuntimeOrThrow()._saveBackdropDialog();
   }
 
   /**
@@ -10725,20 +7827,7 @@ class HouseplanCard extends LitElement {
 
   /** Write a transform into the space config — live, without saving. */
   private _bdApply(dx: number, dy: number, sx: number, sy: number, angle: number): void {
-    const sp = this._curSpaceCfg;
-    if (!sp) return;
-    // 6 decimals: the same precision the rest of the normalised config keeps,
-    // and enough for a 1000-unit canvas to be exact to a thousandth of a pixel
-    sp.plan_x = Number(clampCanvasN(dx).toFixed(6));
-    sp.plan_y = Number(clampCanvasN(dy).toFixed(6));
-    delete sp.plan_scale;
-    sp.plan_scale_x = Number(Math.min(PLAN_SCALE_MAX, Math.max(PLAN_SCALE_MIN, sx)).toFixed(6));
-    sp.plan_scale_y = Number(Math.min(PLAN_SCALE_MAX, Math.max(PLAN_SCALE_MIN, sy)).toFixed(6));
-    const a = normalizeAngle(angle);
-    if (a) sp.plan_angle = Number(a.toFixed(2));
-    else delete sp.plan_angle;
-    this._cfgEpoch++;
-    this.requestUpdate();
+    return this._editorRuntimeOrThrow()._bdApply(dx, dy, sx, sy, angle);
   }
 
   /**
@@ -10747,26 +7836,7 @@ class HouseplanCard extends LitElement {
    * body, i.e. a move. Returns false when there is nothing to grab.
    */
   private _bdStart(ev: PointerEvent, corner?: number[], rotate = false): boolean {
-    const base = this._bdBase, r = this._bdRect;
-    if (!base || !r) return false;
-    const p = this._svgPoint(ev);
-    const sgx = corner ? corner[0] : 0;
-    const sgy = corner ? corner[1] : 0;
-    // the corner that stays put is the OPPOSITE one
-    const fx = sgx > 0 ? r.x : r.x + r.w;
-    const fy = sgy > 0 ? r.y : r.y + r.h;
-    this._bdDrag = {
-      kind: rotate ? 'rotate' : corner ? 'scale' : 'move',
-      pid: ev.pointerId,
-      sx: p[0], sy: p[1],
-      base, p0: this._bdParams,
-      fx, fy, sgx, sgy,
-      rect0: { x: r.x, y: r.y, w: r.w, h: r.h, angle: r.angle },
-      before: this._geometrySnapshot(),
-      moved: false,
-    };
-    capturePointer(ev);
-    return true;
+    return this._editorRuntimeOrThrow()._bdStart(ev, corner, rotate);
   }
 
   /**
@@ -10782,46 +7852,7 @@ class HouseplanCard extends LitElement {
    * Positional snapping is mandatory (UX-05).
    */
   private _bdMove(ev: PointerEvent): void {
-    const d = this._bdDrag;
-    if (!d) return;
-    const p = this._svgPoint(ev);
-    const b = d.base;
-    if (d.kind === 'move') {
-      const x0 = d.rect0.x, y0 = d.rect0.y;
-      const at = this._snap([x0 + (p[0] - d.sx), y0 + (p[1] - d.sy)]);
-      const changed = Math.abs(at[0] - x0) > 1e-9 || Math.abs(at[1] - y0) > 1e-9;
-      if (!changed && !d.moved) return;
-      d.moved ||= changed;
-      this._bdApply((at[0] - b.x) / NORM_W, (at[1] - b.y) / NORM_W,
-        d.p0.sx, d.p0.sy, d.p0.angle);
-      return;
-    }
-    if (d.kind === 'rotate') {
-      const cx = d.rect0.x + d.rect0.w / 2, cy = d.rect0.y + d.rect0.h / 2;
-      const a0 = Math.atan2(d.sy - cy, d.sx - cx) * 180 / Math.PI;
-      let angle = d.p0.angle + (Math.atan2(p[1] - cy, p[0] - cx) * 180 / Math.PI - a0);
-      if (!ev.shiftKey) angle = Math.round(angle / DT_ANGLE_STEP) * DT_ANGLE_STEP;
-      angle = normalizeAngle(angle);
-      const changed = Math.abs(angle - d.p0.angle) > 1e-9;
-      if (!changed && !d.moved) return;
-      d.moved ||= changed;
-      this._bdApply(d.p0.dx, d.p0.dy, d.p0.sx, d.p0.sy, angle);
-      return;
-    }
-    const box = resizeDecorBox(
-      d.rect0, d.sgx, d.sgy, p[0], p[1], !ev.shiftKey,
-      this._gridPitch, Math.min(b.w, b.h) * PLAN_SCALE_MIN,
-    );
-    const sx = box.w / Math.max(1e-9, b.w), sy = box.h / Math.max(1e-9, b.h);
-    const changed = Math.abs(sx - d.p0.sx) > 1e-9 || Math.abs(sy - d.p0.sy) > 1e-9
-      || Math.abs(box.x - d.rect0.x) > 1e-9 || Math.abs(box.y - d.rect0.y) > 1e-9;
-    if (!changed && !d.moved) return;
-    d.moved ||= changed;
-    const topLeft = resizedBoxTopLeft(
-      box, d.p0.angle, (point) => this._snap(point),
-    );
-    this._bdApply((topLeft[0] - b.x) / NORM_W, (topLeft[1] - b.y) / NORM_W,
-      sx, sy, d.p0.angle);
+    return this._editorRuntimeOrThrow()._bdMove(ev);
   }
 
   /** Has this space's picture been moved or scaled at all? */
@@ -10833,27 +7864,12 @@ class HouseplanCard extends LitElement {
 
   /** Put the picture back where an untouched plan has it: centred, own size. */
   private _bdReset(): void {
-    const sp = this._curSpaceCfg;
-    if (!sp) return;
-    const before = this._geometrySnapshot();
-    delete sp.plan_x; delete sp.plan_y; delete sp.plan_scale;
-    delete sp.plan_scale_x; delete sp.plan_scale_y; delete sp.plan_angle;
-    this._bdDrag = null;
-    this._recordGeometry(this._t('history.backdrop_transform'), before);
-    this._saveConfig();
-    this._showToast(this._t('decor.backdrop_reset_done'));
-    this.requestUpdate();
+    return this._editorRuntimeOrThrow()._bdReset();
   }
 
   /** Release: persist only when something actually moved. */
   private _bdUp(): void {
-    const d = this._bdDrag;
-    this._bdDrag = null;
-    if (d?.moved) {
-      this._recordGeometry(this._t('history.backdrop_transform'), d.before);
-      this._saveConfig();
-    }
-    this.requestUpdate();
+    return this._editorRuntimeOrThrow()._bdUp();
   }
 
   /**
@@ -10876,42 +7892,8 @@ class HouseplanCard extends LitElement {
 
   /** The transform frame itself: a dashed outline and four corner handles. */
   private _renderBackdropFrame(view: { x: number; y: number; w: number; h: number }): TemplateResult | typeof nothing {
-    const r = this._bdRect;
-    if (!this._bdActive || !r) return nothing;
-    // Two radii, one gesture — the split the text frame uses (docs/LIVE-TEXT.md
-    // §3) and, since 2026-08-05, every corner handle in the card. `hr` is the
-    // HIT radius: a fraction of the visible view, so the target stays
-    // finger-sized at any zoom. `kr` is what you SEE — a quarter of it, because
-    // a blob the size of a room is not a handle, it is an occlusion (owner:
-    // «уменьшить в 4 раза… они постоянно гигантские»). The clickable area is
-    // unchanged; only the ink shrank.
-    const hr = Math.max(view.w, view.h) * 0.02;
-    const kr = hr / 4;
-    const cx = r.x + r.w / 2, cy = r.y + r.h / 2;
-    const angle = normalizeAngle(r.angle);
-    const arm = hr * 2.2;
-    const corners: [number, number, string][] = [
-      [-1, -1, 'nwse'], [1, -1, 'nesw'], [1, 1, 'nwse'], [-1, 1, 'nesw'],
-    ];
-    return svg`<g class="bdframe" transform=${angle ? `rotate(${angle} ${cx} ${cy})` : nothing}>
-      <rect class="bdbox" x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}"></rect>
-      <line class="dtstem" x1="${cx}" y1="${r.y}" x2="${cx}" y2="${r.y - arm}"></line>
-      <circle class="bdhandle dtrot" cx="${cx}" cy="${r.y - arm}" r="${hr.toFixed(1)}"
-        @pointerdown=${(e: PointerEvent) => {
-          e.stopPropagation(); e.preventDefault(); this._bdStart(e, undefined, true);
-        }}></circle>
-      <circle class="bdknob" cx="${cx}" cy="${r.y - arm}" r="${kr.toFixed(2)}"></circle>
-      ${corners.map(([sx, sy, cur]) => {
-        const cx = sx < 0 ? r.x : r.x + r.w;
-        const cy = sy < 0 ? r.y : r.y + r.h;
-        return svg`<circle
-          class="bdhandle bd-${cur}" data-corner="${sx + ',' + sy}"
-          cx="${cx}" cy="${cy}" r="${hr.toFixed(1)}"
-          @pointerdown=${(e: PointerEvent) => {
-            e.stopPropagation(); e.preventDefault(); this._bdStart(e, [sx, sy]);
-          }}></circle><circle class="bdknob" cx="${cx}" cy="${cy}" r="${kr.toFixed(2)}"></circle>`;
-      })}
-    </g>` as unknown as TemplateResult;
+    if (!this._editorRuntime) return nothing;
+    return this._editorRuntimeOrThrow()._renderBackdropFrame(view);
   }
 
   /**
@@ -11114,18 +8096,14 @@ class HouseplanCard extends LitElement {
   }
 
   private _renderEditorGroupLauncher(group: EditorToolbarGroup): TemplateResult {
-    return this._editorSecondary.renderGroupLauncher(
-      group,
-      this._editorToolbarGroups,
-      this._editorSecondaryCopy,
-    );
+    return this._editorRuntimeOrThrow()._renderEditorGroupLauncher(group);
   }
 
   /** Stable target identity + current config epoch + operation revision. */
   private get _editorSecondaryContextId(): string {
     const base = `editor:${this._mode}:${this._space}:${this._cfgEpoch}`;
-    const group = this._editorSecondary.activeGroup(this._editorToolbarGroups);
-    if (group) return `${base}:group:${group.id}:${this._editorSecondary.groupGeneration}`;
+    const group = this._editorSecondary?.activeGroup(this._editorToolbarGroups);
+    if (group) return `${base}:group:${group.id}:${this._editorSecondary?.groupGeneration}`;
     if (this._mode === 'plan') {
       const sel = this._physicalSel;
       if (sel) return `${base}:selection:${sel.kind}:${sel.id}:${sel.segment ?? ''}`;
@@ -11142,196 +8120,30 @@ class HouseplanCard extends LitElement {
   }
 
   private _runEditorContext(contextId: string, action: () => void): void {
-    this._editorSecondary.runContext(contextId, this._editorSecondaryContextId, action);
+    return this._editorRuntimeOrThrow()._runEditorContext(contextId, action);
   }
 
   private _renderEditorGroupModel(group: EditorToolbarGroup): EditorSecondaryModel {
-    return this._editorSecondary.renderGroupModel(
-      group,
-      this._editorSecondaryContextId,
-      this._editorSecondaryCopy,
-    );
+    return this._editorRuntimeOrThrow()._renderEditorGroupModel(group);
   }
 
   private _renderDrawWallControl(): TemplateResult {
-    const min = this._tool === 'column' ? 1 : 0;
-    return html`<label class="drawwall ${this._drawWallCm == null ? 'invalid' : ''}">${this._t('wallthick.field')}
-      <input type="number" min=${cmToField(min, this._imperial)}
-        max=${cmToField(this._drawWallMaxCm, this._imperial)} step="any"
-        .value=${this._drawWallFieldValue}
-        @input=${(e: Event) => {
-          this._drawWallField = (e.target as HTMLInputElement).value;
-        }}
-        title=${this._t(this._tool === 'draw' ? 'markup.draw_wall_title'
-          : 'physical.column_size_title')} />
-      <span class="opl">${this._t(this._imperial ? 'wallthick.unit_in' : 'wallthick.unit_cm')}</span>
-      <span class="rangehint">${this._t('physical.allowed_range', {
-        min: cmToField(min, this._imperial),
-        max: cmToField(this._drawWallMaxCm, this._imperial),
-        unit: this._t(this._imperial ? 'wallthick.unit_in' : 'wallthick.unit_cm'),
-      })}</span>
-    </label>`;
+    return this._editorRuntimeOrThrow()._renderDrawWallControl();
   }
 
   private _renderPlanSecondary(): EditorSecondaryModel | null {
-    const contextId = this._editorSecondaryContextId;
-    const sel = this._physicalSel;
-    if (sel) {
-      const exists = sel.kind === 'partition'
-        ? !!this._curSpaceCfg.partitions?.some((item: PartitionCfg) => item.id === sel.id)
-        : sel.kind === 'column'
-          ? !!this._curSpaceCfg.wall_columns?.some((item: WallColumnCfg) => item.id === sel.id)
-          : !!this._curSpaceCfg.room_drafts?.some((item: RoomDraftCfg) => item.id === sel.id);
-      if (!exists) return null;
-      const label = sel.kind === 'partition' ? this._t('markup.partition')
-        : sel.kind === 'column' ? this._t('markup.column') : this._t('markup.add');
-      return {
-        contextId,
-        kind: 'selection',
-        ariaLabel: this._t('editor.context_actions', { object: label }),
-        visibleLabel: label,
-        content: html`
-          <button class="btn ghost" @click=${() => this._runEditorContext(contextId, () => {
-            const current = this._physicalSel;
-            if (current) this._openPhysicalDialog(current.kind, current.id, current.segment);
-          })}><ha-icon icon="mdi:tune"></ha-icon>${this._t('btn.properties')}</button>
-          <button class="btn danger" @click=${() => this._runEditorContext(contextId, () => this._deletePhysicalSelection())}>
-            <ha-icon icon="mdi:delete-outline"></ha-icon>${this._t('btn.delete')}
-          </button>`,
-      };
-    }
-
-    const hasThickness = this._tool === 'draw' || this._tool === 'column';
-    const hintKey = this._tool === 'column' ? 'markup.hint_column'
-      : this._tool === 'resize' ? 'markup.hint_resize'
-      : this._tool === 'wallthick' ? 'markup.hint_wallthick'
-      : null;
-    const drawHint = this._tool === 'draw'
-      ? this._t(this._path.length ? 'markup.hint_points' : 'markup.hint_start',
-          this._path.length ? { n: this._path.length } : undefined)
-      : '';
-    if (!hasThickness && !hintKey && !drawHint) return null;
-    const operation = this._tool === 'draw' && this._path.length > 0;
-    return {
-      contextId,
-      kind: operation ? 'operation' : 'tool',
-      ariaLabel: this._t('editor.tool_options', {
-        tool: this._t((this._tool === 'draw' ? 'markup.add'
-          : this._tool === 'column' ? 'markup.column'
-          : this._tool === 'resize' ? 'markup.resize'
-          : 'markup.wallthick') as any),
-      }),
-      content: html`
-        ${hasThickness ? this._renderDrawWallControl() : nothing}
-        ${drawHint ? html`<span class="hint">${drawHint}</span>` : nothing}
-        ${hintKey ? html`<span class="hint">${this._t(hintKey as any)}</span>` : nothing}
-        ${this._tool === 'draw' && this._path.length
-          ? html`<button class="btn ghost" @click=${() => this._runEditorContext(contextId, () => this._cancelPath())}>
-              ${this._t('btn.reset')}
-            </button>` : nothing}`,
-    };
+    return this._editorRuntimeOrThrow()._renderPlanSecondary();
   }
 
   private _renderDecorSecondary(): EditorSecondaryModel | null {
-    const contextId = this._editorSecondaryContextId;
-    if (this._decorTool === 'furniture') {
-      return {
-        contextId,
-        kind: 'palette',
-        ariaLabel: this._t('editor.palette', { tool: this._t('decor.furniture') }),
-        launcherId: 'furniture',
-        dismissPolicy: this._furnPalette ? 'stay-open-on-canvas' : 'outside',
-        dismiss: () => {
-          if (this._decorTool !== 'furniture') return;
-          this._furnPalette = null;
-          this._decorTool = 'select';
-          this.requestUpdate();
-        },
-        content: this._renderFurnPalette(),
-      };
-    }
-    const selected = this._dtSel;
-    if (selected) {
-      const label = this._t((`decor.${selected.kind}`) as any);
-      return {
-        contextId,
-        kind: 'selection',
-        ariaLabel: this._t('editor.context_actions', { object: label }),
-        visibleLabel: label,
-        content: html`
-          <button class="btn ghost" @click=${() => this._runEditorContext(contextId, () => {
-            const current = this._dtSel;
-            if (current) this._openDecorProperties(current);
-          })}><ha-icon icon="mdi:tune"></ha-icon>${this._t('btn.properties')}</button>
-          <button class="btn danger" @click=${() => this._runEditorContext(contextId, () => this._decorDeleteSel())}>
-            <ha-icon icon="mdi:delete-outline"></ha-icon>${this._t('btn.delete')}
-          </button>`,
-      };
-    }
-
-    const draws = this._decorTool === 'line' || this._decorTool === 'rect' || this._decorTool === 'ellipse';
-    const canFill = this._decorTool === 'rect' || this._decorTool === 'ellipse';
-    const backdrop = this._decorTool === 'backdrop' && !!this._bdRect;
-    if (!draws && !backdrop) return null;
-    return {
-      contextId,
-      kind: 'tool',
-      ariaLabel: this._t('editor.tool_options', {
-        tool: this._t((draws ? `decor.${this._decorTool}` : 'decor.backdrop') as any),
-      }),
-      content: html`
-        ${draws ? html`
-          <hp-color-opacity .label=${this._t('decor.color')} .color=${this._decorStyle.color}
-            .opacity=${this._decorStyle.opacity} .opacityLabel=${this._t('space.opacity')}
-            .pickerLabels=${this._colorPickerLabels}
-            @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) =>
-              (this._decorStyle = { ...this._decorStyle, ...e.detail })}></hp-color-opacity>
-          <label class="drawwall">${this._t('decor.width')}
-            <input type="number" min=${this._decorSmallField(0.1)}
-              max=${this._decorSmallField(100)} step="0.1"
-              .value=${String(this._decorSmallField(this._decorStyle.widthCm))}
-              @input=${(e: Event) => (this._decorStyle = { ...this._decorStyle,
-                widthCm: this._decorSmallCm(Number((e.target as HTMLInputElement).value)) })} />
-            <span class="opl">${this._t(this._imperial ? 'wallthick.unit_in' : 'wallthick.unit_cm')}</span>
-          </label>
-          ${canFill ? html`<label class="dfill"><input type="checkbox" .checked=${this._decorStyle.fill}
-              @change=${(e: Event) => (this._decorStyle = { ...this._decorStyle,
-                fill: (e.target as HTMLInputElement).checked })} />${this._t('decor.fill')}</label>
-            <hp-color-opacity .label=${this._t('decor.fill_color')} .color=${this._decorStyle.fillColor}
-              .opacity=${this._decorStyle.fillOpacity} .opacityLabel=${this._t('space.opacity')}
-              .pickerLabels=${this._colorPickerLabels}
-              .disabled=${!this._decorStyle.fill}
-              @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) =>
-                (this._decorStyle = { ...this._decorStyle,
-                  fillColor: e.detail.color, fillOpacity: e.detail.opacity })}></hp-color-opacity>` : nothing}
-        ` : nothing}
-        ${backdrop ? html`<span class="bdhint">${this._t('decor.backdrop_hint')}</span>` : nothing}`,
-    };
+    return this._editorRuntimeOrThrow()._renderDecorSecondary();
   }
 
   /** Backdrop reset is a space-level maintenance action, not a tool option.
    * Keep it reachable from every ordinary decor context as it was before the
    * contextual tray extraction; an explicit palette keeps priority. */
   private _withBackdropReset(model: EditorSecondaryModel | null): EditorSecondaryModel | null {
-    if (!this._bdMoved || this._bdDrag || model?.kind === 'palette') return model;
-    const contextId = this._editorSecondaryContextId;
-    const reset = html`<button class="btn bdreset" title=${this._t('decor.backdrop_reset')}
-      @click=${() => this._runEditorContext(contextId, () => this._bdReset())}>
-      <ha-icon icon="mdi:image-refresh-outline"></ha-icon>${this._t('decor.backdrop_reset')}
-    </button>`;
-    if (!model) {
-      return {
-        contextId,
-        kind: 'tool',
-        ariaLabel: this._t('editor.tool_options', { tool: this._t('decor.backdrop') }),
-        content: reset,
-      };
-    }
-    return {
-      ...model,
-      kind: model.kind === 'selection' ? 'mixed' : model.kind,
-      content: html`${model.content}${reset}`,
-    };
+    return this._editorRuntimeOrThrow()._withBackdropReset(model);
   }
 
   private get _editorSecondaryDialogBlocked(): boolean {
@@ -11346,283 +8158,32 @@ class HouseplanCard extends LitElement {
   }
 
   private _renderEditorSecondary(): TemplateResult | typeof nothing {
-    if (!this._editing) return nothing;
-    const group = this._editorSecondary.activeGroup(this._editorToolbarGroups);
-    const model = group ? this._renderEditorGroupModel(group)
-      : this._mode === 'plan' ? this._renderPlanSecondary()
-      : this._mode === 'decor' ? this._withBackdropReset(this._renderDecorSecondary())
-      : null;
-    return this._editorSecondary.render(model, this._editorSecondaryDialogBlocked);
+    return this._editorRuntimeOrThrow()._renderEditorSecondary();
   }
 
   private _renderDecorBar(): TemplateResult {
-    const tools = [
-      ['select', 'mdi:cursor-default-outline', 'decor.select'],
-      // moving the picture is a TOOL (docs/BACKDROP.md §2) — offered only when
-      // there IS a picture, so a hand-drawn space's bar is unchanged
-      ...(this._bdRect ? [['backdrop', 'mdi:image-move', 'decor.backdrop'] as const] : []),
-      ['line', 'mdi:vector-line', 'decor.line'],
-      ['rect', 'mdi:rectangle-outline', 'decor.rect'],
-      ['ellipse', 'mdi:ellipse-outline', 'decor.ellipse'],
-      ['text', 'mdi:format-text', 'decor.text'],
-      // the library sits next to the shapes it belongs with (docs/FURNITURE.md)
-      ['furniture', 'mdi:sofa-outline', 'decor.furniture'],
-      ['erase', 'mdi:eraser', 'decor.erase'],
-    ] as const;
-    const undoName = this._geometryHistory.undoName;
-    const redoName = this._geometryHistory.redoName;
-    return html`<div class="editbar decorbar">
-      <div class="editbar-tools" tabindex="-1" ?inert=${this._modeTransitionBusy}>
-      ${tools.map(
-        ([t, ic, k]) => html`<button class="btn dtool ${this._decorTool === t ? 'on' : ''}"
-          data-editor-palette=${t === 'furniture' ? 'furniture' : nothing}
-          @click=${() => {
-            if (t === 'furniture' && this._decorTool === 'furniture') {
-              this._furnPalette = null;
-              this._decorTool = 'select';
-              return;
-            }
-            if (t === 'furniture') this._editorSecondary.openPalette();
-            this._decorTool = t as typeof this._decorTool;
-            this._decorDraft = null;
-            // the palette belongs to its tool and to nothing else: leaving the
-            // tool disarms whatever was chosen, so no later click can stamp it
-            if (t !== 'furniture') this._furnPalette = null;
-          }}
-          title=${this._t(k)}>
-          <ha-icon icon=${ic}></ha-icon><span class="ml">${this._t(k)}</span>
-        </button>`,
-      )}
-      ${this._editorToolbarGroups.map((group) => this._renderEditorGroupLauncher(group))}
-      <button class="btn ghost" @click=${this._undoGeometry} ?disabled=${!undoName}
-        title=${undoName ? this._t('history.undo_named', { name: undoName }) : this._t('history.undo_empty')}>
-        <ha-icon icon="mdi:undo-variant"></ha-icon>${this._t('history.undo')}
-      </button>
-      <button class="btn ghost" @click=${this._redoGeometry} ?disabled=${!redoName}
-        title=${redoName ? this._t('history.redo_named', { name: redoName }) : this._t('history.redo_empty')}>
-        <ha-icon icon="mdi:redo-variant"></ha-icon>${this._t('history.redo')}
-      </button>
-      </div>
-      <div class="editbar-end">
-        <button class="btn barclose" title=${this._t('title.close_editor')}
-          data-editor-navigation="view"
-          @click=${() => this._setMode('view')}>
-          <ha-icon icon="mdi:close"></ha-icon>
-        </button>
-      </div>
-    </div>`;
+    return this._editorRuntimeOrThrow()._renderDecorBar();
   }
 
   private _renderDecorEraseConfirm(): TemplateResult {
-    const pending = this._decorEraseConfirm!;
-    const kind = this._t(`decor.${pending.kind}` as any);
-    return html`<hp-dialog .hass=${this.hass} .title=${this._t('decor.erase_confirm_title')}
-      icon="mdi:eraser" dismiss-on-scrim @hp-close=${() => (this._decorEraseConfirm = null)}>
-        <div class="body"><p>${this._t('confirm.erase_decor', { kind })}</p></div>
-        <div class="row" slot="footer">
-          <span class="spacer"></span>
-          <button class="btn ghost" @click=${() => (this._decorEraseConfirm = null)}>
-            ${this._t('btn.cancel')}
-          </button>
-          <button class="btn danger" @click=${this._confirmDecorErase}>
-            <ha-icon icon="mdi:eraser"></ha-icon>${this._t('decor.erase')}
-          </button>
-        </div>
-    </hp-dialog>`;
+    return this._editorRuntimeOrThrow()._renderDecorEraseConfirm();
   }
 
   private _renderDecorTextDialog(): TemplateResult {
-    const d = this._decorTextDialog!;
-    const ent = (d.pickerEntity || '').trim();
-    const st = ent ? this.hass?.states?.[ent] : null;
-    return html`<hp-dialog .hass=${this.hass} .title=${this._t('decor.text_title')}
-      icon="mdi:format-text" dismiss-on-scrim @hp-close=${() => (this._decorTextDialog = null)}>
-        <div class="body">
-          <label>${this._t('decor.text_label')}</label>
-          ${''/* a textarea, not an input: the user's own line breaks are kept
-                 and rendered (centred). Enter is a NEW LINE here, so saving
-                 moved to Ctrl/Cmd+Enter and the button. */}
-          <textarea class="namein dtarea" rows="3" maxlength="200" .value=${d.text} autofocus
-            @input=${(e: Event) => {
-              const el = e.target as HTMLTextAreaElement;
-              this._decorRememberTextSelection(el);
-              this._decorTextDialog = { ...d, text: el.value };
-            }}
-            @click=${(e: Event) => this._decorRememberTextSelection(e.target as HTMLTextAreaElement)}
-            @keyup=${(e: Event) => this._decorRememberTextSelection(e.target as HTMLTextAreaElement)}
-            @select=${(e: Event) => this._decorRememberTextSelection(e.target as HTMLTextAreaElement)}
-            @blur=${(e: Event) => this._decorRememberTextSelection(e.target as HTMLTextAreaElement)}
-            @keydown=${(e: KeyboardEvent) => {
-              e.stopPropagation();
-              if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) this._decorSaveText();
-            }}></textarea>
-          <hp-color-opacity .label=${this._t('decor.color')} .color=${d.color} .opacity=${d.opacity}
-            .opacityLabel=${this._t('space.opacity')} .pickerLabels=${this._colorPickerLabels}
-            @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) =>
-              (this._decorTextDialog = { ...d, ...e.detail })}></hp-color-opacity>
-          <label>${this._t('decor.text_size')}</label>
-          <div class="colorrow"><input class="namein" type="number" min="0.1"
-            max=${this._decorSmallField(DECOR_TEXT_CM_MAX)} step="0.1"
-            .value=${String(this._decorSmallField(d.sizeCm))}
-            @input=${(e: Event) => (this._decorTextDialog = { ...d,
-              sizeCm: this._decorTextCm(Number((e.target as HTMLInputElement).value)) })} />
-            <span class="opl">${this._t(this._imperial ? 'wallthick.unit_in' : 'wallthick.unit_cm')}</span></div>
-          <label>${this._t('decor.angle')}</label>
-          <input class="namein" type="number" min="-180" max="180" step="1" .value=${d.angle}
-            @input=${(e: Event) => (this._decorTextDialog = { ...d,
-              angle: (e.target as HTMLInputElement).value })} />
-          <label class="dispsection">${this._t('decor.live_group')}</label>
-          <label>${this._t('decor.live_entity')}</label>
-          <input class="namein" type="text" list="hp-dtext-ents" placeholder=${this._t('decor.live_entity_ph')}
-            .value=${d.pickerEntity || ''}
-            @input=${(e: Event) => (this._decorTextDialog = {
-              ...d, pickerEntity: (e.target as HTMLInputElement).value,
-            })} />
-          <datalist id="hp-dtext-ents">
-            ${Object.keys(this.hass?.states || {}).map((id) => html`<option value=${id}></option>`)}
-          </datalist>
-          ${ent ? html`
-            <label>${this._t('decor.live_attr')}</label>
-            <select id="decor-live-attribute" class="namein" .value=${''}
-              @change=${(e: Event) => {
-                const value = (e.target as HTMLSelectElement).value;
-                if (value) this._decorInsertLiveVariable(value === '__state__' ? null : value);
-              }}>
-              <option value="">${this._t('decor.live_attr_ph')}</option>
-              <option value="__state__">${this._t('decor.live_state')}</option>
-              ${Object.keys(st?.attributes || {})
-                .filter((a) => !!liveTextToken(ent, a))
-                .map((a) => html`<option value=${a}>${a}</option>`)}
-            </select>
-          ` : nothing}
-        </div>
-        <div class="row" slot="footer">
-          <span class="spacer"></span>
-          <button class="btn ghost" @click=${() => (this._decorTextDialog = null)}>${this._t('btn.cancel')}</button>
-          <button class="btn primary" ?disabled=${!d.text.trim()} @click=${() => this._decorSaveText()}>${this._t('btn.save')}</button>
-        </div>
-    </hp-dialog>`;
+    return this._editorRuntimeOrThrow()._renderDecorTextDialog();
   }
 
   private _renderDecorShapeDialog(): TemplateResult {
-    const d = this._decorShapeDialog!;
-    const canFill = d.kind === 'rect' || d.kind === 'ellipse';
-    const kindLabel = this._t(('decor.' + d.kind) as any);
-    const unit = this._t(this._imperial ? 'gs.unit_ft' : 'gs.unit_m');
-    return html`<hp-dialog .hass=${this.hass}
-      .title=${this._t('decor.object_title', { kind: kindLabel })} icon="mdi:pencil-outline"
-      dismiss-on-scrim @hp-close=${() => (this._decorShapeDialog = null)}>
-        <div class="body">
-          ${d.kind === 'furniture' ? html`
-            <label>${this._t('furn.symbol')}</label>
-            <select class="namein"
-              @change=${(e: Event) => (this._decorShapeDialog = {
-                ...d, symbol: (e.target as HTMLSelectElement).value,
-              })}>
-              ${FURNITURE_GROUPS.map((group) => html`<optgroup label=${this._t(`furn.group_${group}` as any)}>
-                ${furnitureOfGroup(group).map((symbol) => html`<option value=${symbol.id}
-                  ?selected=${symbol.id === d.symbol}>
-                  ${this._t(`furn.sym_${symbol.id}` as any)}
-                </option>`)}
-              </optgroup>`)}
-            </select>` : nothing}
-          <hp-color-opacity .label=${this._t('decor.color')} .color=${d.color} .opacity=${d.opacity}
-            .opacityLabel=${this._t('space.opacity')} .pickerLabels=${this._colorPickerLabels}
-            @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) =>
-              (this._decorShapeDialog = { ...d, ...e.detail })}></hp-color-opacity>
-          <label>${this._t('decor.width')}</label>
-          <div class="colorrow"><input class="namein" type="number"
-            min=${this._decorSmallField(0.1)} max=${this._decorSmallField(100)} step="0.1"
-            .value=${String(this._decorSmallField(d.widthCm))}
-            @input=${(e: Event) => (this._decorShapeDialog = {
-              ...d, widthCm: this._decorSmallCm(Number((e.target as HTMLInputElement).value)),
-            })} /><span class="opl">${this._t(this._imperial ? 'wallthick.unit_in' : 'wallthick.unit_cm')}</span></div>
-          ${d.kind === 'line' ? html`
-            <label>${this._t('decor.line_style')}</label>
-            <div role="radiogroup" aria-label=${this._t('decor.line_style')}>
-              <label class="srcrow"><input type="radio" name="decor-line-style"
-                .checked=${d.lineStyle !== 'dashed'}
-                @change=${() => (this._decorShapeDialog = { ...d, lineStyle: 'solid' })} />
-                <span>${this._t('decor.line_style_solid')}</span></label>
-              <label class="srcrow"><input type="radio" name="decor-line-style"
-                .checked=${d.lineStyle === 'dashed'}
-                @change=${() => (this._decorShapeDialog = { ...d, lineStyle: 'dashed' })} />
-                <span>${this._t('decor.line_style_dashed')}</span></label>
-            </div>
-            <label>${this._t('decor.length')}</label>
-            <div class="colorrow"><input class="namein" type="number" min="0.01" step="0.01"
-              .value=${String(this._decorLargeField(d.lengthCm || 0))}
-              @input=${(e: Event) => (this._decorShapeDialog = { ...d,
-                lengthCm: this._decorLargeCm(Number((e.target as HTMLInputElement).value)) })} />
-              <span class="opl">${unit}</span></div>` : html`
-            <label>${this._t('decor.size')}</label>
-            <div class="colorrow"><input class="namein" type="number" min="0.01" step="0.01"
-              .value=${String(this._decorLargeField(d.sizeWCm || 0))}
-              @input=${(e: Event) => (this._decorShapeDialog = { ...d,
-                sizeWCm: this._decorLargeCm(Number((e.target as HTMLInputElement).value)) })} />
-              <span>×</span><input class="namein" type="number" min="0.01" step="0.01"
-              .value=${String(this._decorLargeField(d.sizeHCm || 0))}
-              @input=${(e: Event) => (this._decorShapeDialog = { ...d,
-                sizeHCm: this._decorLargeCm(Number((e.target as HTMLInputElement).value)) })} />
-              <span class="opl">${unit}</span></div>`}
-          <label>${this._t('decor.angle')}</label>
-          <input class="namein" type="number" min="-180" max="180" step="1" .value=${d.angle}
-            @input=${(e: Event) => (this._decorShapeDialog = { ...d,
-              angle: (e.target as HTMLInputElement).value })} />
-          ${canFill ? html`<label class="dfill"><input type="checkbox" .checked=${!!d.fill}
-            @change=${(e: Event) => (this._decorShapeDialog = {
-              ...d, fill: (e.target as HTMLInputElement).checked,
-            })} />${this._t('decor.fill')}</label>
-            <hp-color-opacity .label=${this._t('decor.fill_color')}
-              .color=${d.fillColor || d.color} .opacity=${d.fillOpacity ?? 0.25}
-              .opacityLabel=${this._t('space.opacity')} .pickerLabels=${this._colorPickerLabels}
-              .disabled=${!d.fill}
-              @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) =>
-                (this._decorShapeDialog = { ...d,
-                  fillColor: e.detail.color, fillOpacity: e.detail.opacity })}></hp-color-opacity>` : nothing}
-        </div>
-        <div class="row" slot="footer">
-          <span class="spacer"></span>
-          <button class="btn ghost" @click=${() => (this._decorShapeDialog = null)}>${this._t('btn.cancel')}</button>
-          <button class="btn primary" @click=${() => this._decorSaveShape()}>${this._t('btn.save')}</button>
-        </div>
-    </hp-dialog>`;
+    return this._editorRuntimeOrThrow()._renderDecorShapeDialog();
   }
 
   private _renderBackdropDialog(): TemplateResult {
-    const d = this._backdropDialog!;
-    const unit = this._t(this._imperial ? 'gs.unit_ft' : 'gs.unit_m');
-    return html`<hp-dialog .hass=${this.hass} .title=${this._t('decor.backdrop_properties')}
-      icon="mdi:image-edit-outline" dismiss-on-scrim @hp-close=${() => (this._backdropDialog = null)}>
-      <div class="body">
-        <label>${this._t('decor.size')}</label>
-        <div class="colorrow"><input class="namein" type="number" min="0.01" step="0.01"
-          .value=${String(this._decorLargeField(d.widthCm))}
-          @input=${(e: Event) => (this._backdropDialog = { ...d,
-            widthCm: this._decorLargeCm(Number((e.target as HTMLInputElement).value)) })} />
-          <span>×</span><input class="namein" type="number" min="0.01" step="0.01"
-          .value=${String(this._decorLargeField(d.heightCm))}
-          @input=${(e: Event) => (this._backdropDialog = { ...d,
-            heightCm: this._decorLargeCm(Number((e.target as HTMLInputElement).value)) })} />
-          <span class="opl">${unit}</span></div>
-        <label>${this._t('decor.angle')}</label>
-        <input class="namein" type="number" min="-180" max="180" step="1" .value=${d.angle}
-          @input=${(e: Event) => (this._backdropDialog = { ...d,
-            angle: (e.target as HTMLInputElement).value })} />
-      </div>
-      <div class="row" slot="footer"><span class="spacer"></span>
-        <button class="btn ghost" @click=${() => (this._backdropDialog = null)}>${this._t('btn.cancel')}</button>
-        <button class="btn primary" @click=${() => this._saveBackdropDialog()}>${this._t('btn.save')}</button>
-      </div>
-    </hp-dialog>`;
+    return this._editorRuntimeOrThrow()._renderBackdropDialog();
   }
 
   /** CSS-pixel interaction constants stay stable at every plan zoom. */
   private _cssPxToRender(px: number): number {
-    const stage = this._stageEl;
-    const view = this._viewOr(this._baseVb());
-    if (!stage?.clientWidth || !stage.clientHeight) return (this._gridPitch / 8) * px;
-    return Math.max(view.w / stage.clientWidth, view.h / stage.clientHeight) * px;
+    return this._editorRuntimeOrThrow()._cssPxToRender(px);
   }
 
   /** Zero-thickness walls. Their paint and light policy share one resolver. */
@@ -11654,112 +8215,12 @@ class HouseplanCard extends LitElement {
 
   /** Delete tool: defer all wall consequences to one explicit accessible choice. */
   private _deleteRoomClick(raw: number[]): void {
-    const space = this._spaceModel();
-    if (!space) return;
-    const room = [...space.rooms].reverse().find((r) => this._pointInRoom(raw, r));
-    if (!room) {
-      this._showToast(this._t('toast.delete_room_pick'));
-      return;
-    }
-    if (!room.id) return;
-    this._roomDeleteDialog = { roomId: room.id, name: room.name };
+    return this._editorRuntimeOrThrow()._deleteRoomClick(raw);
   }
 
   private _confirmRoomDelete = (keepWalls: boolean): void => {
-    const dialog = this._roomDeleteDialog;
-    const sp = this._curSpaceCfg;
-    const space = this._spaceModel();
-    if (!dialog || !sp || !space) return;
-    const room = space.rooms.find((candidate) => candidate.id === dialog.roomId);
-    if (!room) { this._roomDeleteDialog = null; return; }
-    const openCuts = this._openCuts();
-    const allIntervals = wallIntervals(
-      space.rooms, this._spaceWalls, openCuts,
-      this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
-    );
-    const roomIntervals = allIntervals.filter((interval) => interval.roomId === room.id);
-    const plan = planRoomDeletion(
-      roomIntervals,
-      space.partitions,
-      this._openingsR.map((opening) => ({
-        ...opening, x: opening.rx, y: opening.ry,
-      })),
-      this._gridPitch * 0.02,
-    );
-    const newCount = new Set(plan.materialize
-      .filter((item) => !item.reusePartitionId)
-      .map((item) => item.interval.key)).size;
-    if (keepWalls && (sp.partitions || []).length + newCount > MAX_PARTITIONS) {
-      this._showToast(this._t('toast.physical_limit'));
-      return;
-    }
-    const before = this._geometrySnapshot();
-    const materializedWalls = materializeWallIntervals(
-      space.rooms, this._spaceWalls, openCuts,
-      this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
-    );
-    if (keepWalls) {
-      sp.partitions ||= [];
-      const targetByInterval = new Map<string, PartitionCfg>();
-      const createdByKey = new Map<string, PartitionCfg>();
-      const sourceWallId = (interval: { a: readonly number[]; b: readonly number[] }): string | null => {
-        const match = (sp.wall_segments || []).find((segment: any) => {
-          const a = [Number(segment.a?.[0]) * NORM_W, Number(segment.a?.[1]) * NORM_W];
-          const b = [Number(segment.b?.[0]) * NORM_W, Number(segment.b?.[1]) * NORM_W];
-          return (this._samePt(interval.a, a) && this._samePt(interval.b, b))
-            || (this._samePt(interval.a, b) && this._samePt(interval.b, a));
-        });
-        return typeof match?.id === 'string' && match.id ? match.id : null;
-      };
-      const seed = Date.now().toString(36);
-      for (const item of plan.materialize) {
-        let target = item.reusePartitionId
-          ? sp.partitions.find((partition: PartitionCfg) => partition.id === item.reusePartitionId)
-          : createdByKey.get(item.interval.key);
-        if (!target) {
-          target = {
-            id: sourceWallId(item.interval) || `partition-room-${seed}-${createdByKey.size}`,
-            a: [item.interval.a[0] / NORM_W, item.interval.a[1] / NORM_W],
-            b: [item.interval.b[0] / NORM_W, item.interval.b[1] / NORM_W],
-            cm: item.interval.cm,
-          };
-          sp.partitions.push(target);
-          createdByKey.set(item.interval.key, target);
-        }
-        targetByInterval.set(item.interval.key, target);
-      }
-      for (const opening of sp.openings || []) {
-        const intervalKey = plan.openingIntervals.get(opening.id);
-        const target = intervalKey ? targetByInterval.get(intervalKey) : null;
-        const rendered = this._openingsR.find((candidate) => candidate.id === opening.id);
-        if (!target || !rendered) continue;
-        const renderTarget = {
-          a: [target.a[0] * NORM_W, target.a[1] * NORM_W],
-          b: [target.b[0] * NORM_W, target.b[1] * NORM_W],
-        };
-        opening.host = {
-          kind: 'partition', id: target.id,
-          t: parameterOnPartition([rendered.rx, rendered.ry], renderTarget),
-        };
-      }
-    } else if (plan.removeOpeningIds.length) {
-      const remove = new Set(plan.removeOpeningIds);
-      sp.openings = (sp.openings || []).filter((opening: OpeningCfg) => !remove.has(opening.id));
-      if (!sp.openings.length) delete sp.openings;
-    }
-    sp.rooms = sp.rooms.filter((r: any) => r.id !== room.id);
-    this._cfgEpoch++;
-    const normalized = this._normalizeWalls(materializedWalls, this._openCuts());
-    if (normalized.length) sp.walls = normalized;
-    else delete sp.walls;
-    this._roomDeleteDialog = null;
-    this._commitPhysicalGeometry(this._t(
-      keepWalls ? 'history.delete_room_keep_walls' : 'history.delete_room_with_walls',
-    ), before);
-    this._regSignature = '';
-    this._maybeRebuildDevices();
-    this.requestUpdate();
-  };
+    return this._editorRuntimeOrThrow()._confirmRoomDelete(keepWalls);
+  }
 
 
   // ================= WALL THICKNESS (docs/WALL-THICKNESS.md) =================
@@ -11916,62 +8377,7 @@ class HouseplanCard extends LitElement {
    * well. The unit of the tool is now the same interval the renderer draws.
    */
   private _wallThickHit(raw: number[]): WallThickHit | null {
-    const space = this._spaceModel();
-    if (!space) return null;
-    const pull = this._gridPitch * 6;
-    const cuts = this._openCuts();
-    type Hit = WallThickHit;
-    // #313: the tool serves every wall — room intervals AND independent
-    // masonry. On an exact overlap (the #308 duplicate) the independent wall
-    // wins: it owns the hit zone, exactly like the select tool, and it is
-    // the body the eye actually sees.
-    let best: { hit: Hit; d: number; independent: boolean } | null = null;
-    const offer = (hit: Hit, d: number, independent: boolean): void => {
-      if (d > pull) return;
-      if (!best || d < best.d - 1e-9
-          || (independent && !best.independent && d <= best.d + 1e-9)) {
-        best = { hit, d, independent };
-      }
-    };
-    for (const iv of wallIntervals(
-      space.rooms, this._spaceWalls, cuts,
-      this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
-    )) {
-      offer({
-        a: iv.a, b: iv.b, roomId: iv.roomId,
-        segs: [[iv.a[0], iv.a[1], iv.b[0], iv.b[1]]],
-        open: iv.open, cm: iv.cm, source: { kind: 'room' },
-      }, distToSegment(raw, [iv.a[0], iv.a[1], iv.b[0], iv.b[1]]), false);
-    }
-    for (const partition of space.partitions || []) {
-      const a = [partition.a[0], partition.a[1]];
-      const b = [partition.b[0], partition.b[1]];
-      offer({
-        a, b, roomId: '', segs: [[a[0], a[1], b[0], b[1]]],
-        open: false, cm: Number(partition.cm) || 0,
-        source: { kind: 'partition', id: partition.id },
-      }, distToSegment(raw, [a[0], a[1], b[0], b[1]]), true);
-    }
-    for (const draft of space.room_drafts || []) {
-      // The active chain belongs to the draw tool; like the snap geometry,
-      // Thickness only sees saved drafts.
-      if (draft.id === this._activeDraftId) continue;
-      for (let i = 0; i + 1 < draft.points.length; i++) {
-        const a = [draft.points[i][0], draft.points[i][1]];
-        const b = [draft.points[i + 1][0], draft.points[i + 1][1]];
-        // Zero is a legitimate stored value («Empty / 0 leaves the new wall
-        // thin», docs/WALL-THICKNESS.md §6) — only a MISSING record falls
-        // back to the drawing default. `|| 15` would silently turn a stored
-        // 0 into 15 on Apply (CODE-REVIEW-313-r1 High).
-        const rawCm = Number(draft.segments[i]?.cm);
-        offer({
-          a, b, roomId: '', segs: [[a[0], a[1], b[0], b[1]]],
-          open: false, cm: Number.isFinite(rawCm) ? rawCm : 15,
-          source: { kind: 'draft', id: draft.id, segment: i },
-        }, distToSegment(raw, [a[0], a[1], b[0], b[1]]), true);
-      }
-    }
-    return best ? (best as { hit: Hit }).hit : null;
+    return this._editorRuntimeOrThrow()._wallThickHit(raw);
   }
 
   private get _wallThickHover(): { segs: number[][]; open: boolean; d: string } | null {
@@ -11992,168 +8398,18 @@ class HouseplanCard extends LitElement {
   }
 
   private _wallThickClick(raw: number[]): void {
-    const hit = this._wallThickHit(raw);
-    if (!hit) {
-      this._showToast(this._t('toast.wallthick_pick'));
-      return;
-    }
-    const cm = hit.cm;
-    const view = this._viewOr(this._baseVb());
-    const mx = (hit.a[0] + hit.b[0]) / 2, my = (hit.a[1] + hit.b[1]) / 2;
-    this._wallDialog = {
-      a: hit.a, b: hit.b,
-      value: cmToField(cm, this._imperial),
-      roomId: hit.roomId,
-      source: hit.source,
-      sx: ((mx - view.x) / view.w) * 100,
-      sy: ((my - view.y) / view.h) * 100,
-    };
+    return this._editorRuntimeOrThrow()._wallThickClick(raw);
   }
 
   private _wallThickApply(allRoom: boolean): void {
-    const d = this._wallDialog;
-    if (!d) return;
-    const sp = this._curSpaceCfg;
-    const space = this._spaceModel();
-    if (!sp || !space) return;
-    const text = d.value.trim();
-    const raw = text ? strictNumber(text) : null;
-    if (raw == null) { this._showPhysicalRange(100); return; }
-    const cmRaw = this._imperial ? raw * 2.54 : raw;
-    if (!Number.isFinite(cmRaw) || cmRaw < 0 || cmRaw > 100) {
-      this._showPhysicalRange(100);
-      return;
-    }
-    // Independent walls and saved drafts own their records. Zero is the same
-    // canonical bodyless state here as it is for a contour atom (#306).
-    if (d.source.kind !== 'room') {
-      const before = this._geometrySnapshot();
-      if (d.source.kind === 'partition') {
-        const partition = (sp.partitions || [])
-          .find((item: PartitionCfg) => item.id === (d.source as { id: string }).id);
-        if (!partition) return;
-        if (cmRaw === 0 && zeroWallHasOpening(sp.openings, {
-          kind: 'partition', id: partition.id,
-        })) {
-          this._showToast(this._t('toast.zero_wall_opening_conflict'));
-          return;
-        }
-        partition.cm = cmRaw;
-      } else {
-        const draft = (sp.room_drafts || [])
-          .find((item: any) => item.id === (d.source as { id: string }).id);
-        const segment = draft?.segments?.[(d.source as { segment: number }).segment];
-        if (!segment) return;
-        segment.cm = cmRaw;
-      }
-      this._wallDialog = null;
-      const committed = this._commitPhysicalGeometry(
-        this._t('history.wall_thickness'), before,
-      );
-      if (committed) this._showToast(this._t('toast.wallthick_set'));
-      this.requestUpdate();
-      return;
-    }
-    const before = this._geometrySnapshot();
-    const cm = cmRaw > 0 ? cmRaw : null;
-    if (cmRaw === 0) {
-      const eps = this._gridPitch * 0.02;
-      const target = [d.a[0], d.a[1], d.b[0], d.b[1]];
-      const room = (sp.rooms || []).find((item: any) => item.id === d.roomId);
-      const ids = new Set<string>(allRoom && room && Array.isArray(room.wall_ids)
-        ? room.wall_ids
-        : (sp.wall_segments || []).filter((segment: any) => {
-            const a = [Number(segment.a?.[0]) * NORM_W, Number(segment.a?.[1]) * NORM_W];
-            const b = [Number(segment.b?.[0]) * NORM_W, Number(segment.b?.[1]) * NORM_W];
-            return distToSegment(a, target) <= eps && distToSegment(b, target) <= eps;
-          }).map((segment: any) => String(segment.id)));
-      const blocked = (sp.openings || []).some((opening: OpeningCfg) => {
-        if (opening.host?.kind === 'partition') return false;
-        if (opening.host?.kind === 'wall' && ids.has(opening.host.id)) return true;
-        if (opening.host) return false;
-        const point = [Number(opening.x) * NORM_W, Number(opening.y) * NORM_W];
-        return point.every(Number.isFinite) && distToSegment(point, target) <= eps;
-      });
-      if (blocked) {
-        this._showToast(this._t('toast.zero_wall_opening_conflict'));
-        return;
-      }
-    }
-    let openCuts = this._openCuts();
-    if (cmRaw > 0 && openCuts.length) {
-      // The selected zero axis is a cut only in the PRE-edit body profile.
-      // Remove exactly the carriers being restored before the compatibility
-      // wall normalizer runs; otherwise it discards the new positive record as
-      // if the segment were still a zero interval (#306).
-      const targets: number[][] = [];
-      if (allRoom && d.roomId) {
-        const room = (sp.rooms || []).find((item: any) => item.id === d.roomId);
-        const ids = new Set<string>(Array.isArray(room?.wall_ids) ? room.wall_ids : []);
-        for (const segment of sp.wall_segments || []) {
-          if (!ids.has(segment.id)) continue;
-          targets.push([
-            Number(segment.a?.[0]) * NORM_W, Number(segment.a?.[1]) * NORM_W,
-            Number(segment.b?.[0]) * NORM_W, Number(segment.b?.[1]) * NORM_W,
-          ]);
-        }
-        // A pre-v9 room has no catalogue IDs yet. Its current zero axes still
-        // come from the rendered room outline, so use that outline as the
-        // carrier set for this first explicit positive-thickness edit. The
-        // common v9 barrier below will materialise stable IDs atomically.
-        if (!targets.length) {
-          const renderedRoom = space.rooms.find((item: any) => item.id === d.roomId);
-          const poly = renderedRoom ? roomPoly(renderedRoom) : null;
-          for (let index = 0; poly && index < poly.length; index++) {
-            const a = poly[index], b = poly[(index + 1) % poly.length];
-            targets.push([a[0], a[1], b[0], b[1]]);
-          }
-        }
-      } else targets.push([d.a[0], d.a[1], d.b[0], d.b[1]]);
-      const eps = this._gridPitch * 0.02;
-      openCuts = openCuts.filter((cut) => !targets.some((target) => (
-        distToSegment([cut[0], cut[1]], target) <= eps
-        && distToSegment([cut[2], cut[3]], target) <= eps
-        && distToSegment([target[0], target[1]], cut) <= eps
-        && distToSegment([target[2], target[3]], cut) <= eps
-      )));
-    }
-    let next: WallEntry[];
-    if (allRoom && d.roomId) {
-      next = setWallThicknessForRoom(
-        sp.walls, space.rooms, d.roomId, cm, this._wallKeyPitch, openCuts, NORM_W,
-      );
-    } else {
-      next = setWallThickness(sp.walls, d.a, d.b, cm, this._wallKeyPitch, NORM_W);
-    }
-    next = this._normalizeWalls(next, openCuts);
-    // ADR 282 Stage 1: this writer knows that absence from `next` is an
-    // explicit zero chosen by the user, not a missing compatibility record.
-    // Mirror that intent into the canonical catalogue before the common
-    // barrier; otherwise its lineage fallback would resurrect the old cm.
-    for (const segment of sp.wall_segments || []) {
-      segment.cm = thicknessCmAt(
-        next, segment.a, segment.b, GRID_STEP_N, 1,
-      );
-    }
-    if (next.length) sp.walls = next;
-    else delete sp.walls;
-    this._wallDialog = null;
-    if (this._commitPhysicalGeometry(this._t('history.wall_thickness'), before))
-      this._showToast(this._t(cmRaw === 0 ? 'toast.wallthick_cleared' : 'toast.wallthick_set'));
-    this.requestUpdate();
+    return this._editorRuntimeOrThrow()._wallThickApply(allRoom);
   }
 
   private _wallHatchDefs(color: string): TemplateResult {
-    if (!this._spaceWalls.length && !this._physicalBodiesR().length && !this._markup)
-      return svg`` as unknown as TemplateResult;
-    // The step is a physical distance now — 9.6 cm of plan, whatever the grid
-    // scale — so it must NOT be compensated for zoom: a wall that changes its
-    // hatching as you zoom is exactly what #230 is about (spec §4.2).
+    // Hatching is visible in View as well as in Plan, so its tiny SVG
+    // definition belongs to the eager projection rather than editor runtime.
     const step = wallHatchStepUnits(this._cellCm);
     const stripe = 2 * (step / HATCH_BASE_STEP_UNITS);
-    // Bake the wall colour into the pattern — CSS vars on <pattern> content
-    // do not inherit from the filled path, so var(--room-stroke) fell back
-    // to grey while the wall outline used the real border colour.
     const stroke = color || '#607d8b';
     return svg`<defs>
       <pattern id="hp-wall-hatch" patternUnits="userSpaceOnUse"
@@ -12648,354 +8904,61 @@ class HouseplanCard extends LitElement {
 
   /** Hover highlight for the wall-thickness tool (SVG). */
   private _renderWallThickUi(): TemplateResult {
-    const hover = this._wallThickHover;
-    if (!hover || !hover.d) return svg`` as unknown as TemplateResult;
-    return svg`<path class="wallthick-hover ${hover.open ? 'isopen' : ''}"
-      d="${hover.d}"></path>` as unknown as TemplateResult;
+    if (!this._editorRuntime) return svg`` as unknown as TemplateResult;
+    return this._editorRuntimeOrThrow()._renderWallThickUi();
   }
 
   /** Thickness input popover, anchored in stage % like measure labels. */
   private _renderWallThickDialog(): TemplateResult {
-    const d = this._wallDialog;
-    if (!d) return html``;
-    return html`<div class="wallthick-dlg" style="left:${d.sx.toFixed(2)}%;top:${d.sy.toFixed(2)}%"
-      @click=${(e: Event) => e.stopPropagation()}>
-      <div class="row">
-        <label>${this._t('wallthick.field')}</label>
-        <input type="number" min="0" max="100" step="any" .value=${d.value}
-          @input=${(e: Event) => {
-            this._wallDialog = { ...d, value: (e.target as HTMLInputElement).value };
-          }}
-          @keydown=${(e: KeyboardEvent) => {
-            if (e.key === 'Enter') { e.preventDefault(); this._wallThickApply(false); }
-          }} />
-        <span class="opl">${this._t(this._imperial ? 'wallthick.unit_in' : 'wallthick.unit_cm')}</span>
-      </div>
-      <div class="row">
-        ${d.source.kind === 'room' ? html`<button class="btn ghost"
-          @click=${() => this._wallThickApply(true)}>
-          ${this._t('wallthick.apply_room')}
-        </button>` : nothing}
-        <span class="spacer"></span>
-        <button class="btn on" @click=${() => this._wallThickApply(false)}>
-          <ha-icon icon="mdi:check"></ha-icon>
-        </button>
-      </div>
-    </div>`;
+    return this._editorRuntimeOrThrow()._renderWallThickDialog();
   }
 
 
   private _openingAt(raw: readonly number[]): RenderOpening | null {
-    if (!this._openingsR.length) return null;
-    const roughHits = this._openingsR.flatMap((o) => {
-      const rad = o.angle * Math.PI / 180;
-      const dx = raw[0] - o.rx, dy = raw[1] - o.ry;
-      const localX = dx * Math.cos(rad) + dy * Math.sin(rad);
-      if (Math.abs(localX) > o.rlen / 2 + gridVisualUnits(12, this._cellCm)) return [];
-      return [{ o, localY: -dx * Math.sin(rad) + dy * Math.cos(rad) }];
-    });
-    if (!roughHits.length) return null;
-    const space = this._spaceModel();
-    if (!space) return null;
-    const openCuts = this._openCuts();
-    const wallIndex = this._openingWallIndexFor(space, openCuts).value;
-    return roughHits.find(({ o, localY }) => {
-      const faceFlipV = o.type === 'gate' ? !o.flip_v : o.flip_v;
-      const face = o.partitionHost || this._spaceWalls.length || o.type === 'gate'
-        ? this._openingFace(o, wallIndex, !!faceFlipV)
-        : { ox: 0, oy: 0, cm: 0, side: -1 as -1 | 1 };
-      const metrics = openingVisibleMetrics({
-        type: o.type,
-        length: o.rlen,
-        angle: o.angle,
-        amount: this._openingAmt(o),
-        flipH: !!o.flip_h,
-        flipV: !!o.flip_v,
-        base: '', tone: '',
-        cellCm: this._cellCm,
-        gridPitch: this._gridPitch,
-        face,
-      });
-      // Match the committed `.op-hit` rectangle exactly. The old radial test
-      // made a 3 m gate suppress placement in a huge circular area far away
-      // from its visible/hit geometry.
-      return Math.abs(localY) <= metrics.hitHalf;
-    })?.o || null;
+    return this._editorRuntimeOrThrow()._openingAt(raw);
   }
 
   private _resolveOpeningPlacement(raw: readonly number[]): OpeningPlacementCandidate | null {
-    const preset = this._openingPreset;
-    if (this._tool !== 'opening' || !preset) return null;
-    const space = this._spaceModel();
-    if (!space) return null;
-    const openCuts = this._openCuts();
-    const wallIndex = this._openingWallIndexFor(space, openCuts);
-    const placementKey = `${wallIndex.key}|partitions:${this._cfgEpoch}`;
-    if (!this._openingPlacementIntervalsCache
-        || this._openingPlacementIntervalsCache.key !== placementKey) {
-      this._openingPlacementIntervalsCache = {
-        key: placementKey,
-        value: [
-          ...wallIntervals(
-            space.rooms, this._spaceWalls, openCuts,
-            this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
-          ),
-          ...partitionPlacementIntervals(space.partitions, this._cellCm, this._gridPitch),
-        ],
-      };
-    }
-    if (!this._openingDimensionContextCache
-        || this._openingDimensionContextCache.key !== placementKey) {
-      this._openingDimensionContextCache = {
-        key: placementKey,
-        value: buildOpeningDimensionContext({
-          rooms: space.rooms,
-          walls: this._spaceWalls,
-          openCuts,
-          partitions: space.partitions,
-          roomOpenings: this._roomWallOpeningInputs(),
-          partitionCuts: this._partitionOpeningCuts(space),
-          pitch: this._wallKeyPitch,
-          cellCm: this._cellCm,
-          gridPitch: this._gridPitch,
-          coordScale: NORM_W,
-          epsilon: this._gridPitch * 0.0002,
-        }),
-      };
-    }
-    const resolution = resolveOpeningPlacementResult({
-      pointer: [raw[0], raw[1]],
-      preset,
-      geometryRevision: this._cfgEpoch,
-      renderedLength: this._cmToUnits(preset.lengthCm),
-      intervals: this._openingPlacementIntervalsCache.value,
-      baseTolerance: this._gridPitch * 1.5,
-      bodyPointerPadding: this._cssPxToRender(
-        this._pointerModality.modality === 'touch' || this._pointerModality.modality === 'pen' ? 10 : 6,
-      ),
-      gridStep: this._gridPitch,
-    });
-    this._openingJambBlockCm = resolution.jambBlockedTarget
-      ? (resolution.jambBlockedTarget.physicalHalfWidth / this._gridPitch) * this._cellCm
-      : null;
-    const core = resolution.candidate;
-    if (!core) return null;
-    const faceFlipV = core.type === 'gate' ? !core.flipV : core.flipV;
-    let face: OpeningFaceOffset;
-    if (core.host) {
-      const hosted = resolvePartitionOpeningCompat({
-        id: 'preview', type: core.type,
-        x: core.x / NORM_W, y: core.y / NORM_W,
-        angle: core.angle, length: core.renderedLength / NORM_W,
-        host: core.host,
-      }, space.partitions, NORM_W, this._cellCm, this._gridPitch).resolved;
-      face = hosted
-        ? partitionOpeningFace(hosted, faceFlipV)
-        : { ox: 0, oy: 0, cm: 0, side: -1 };
-    } else {
-      face = openingInnerFaceOffsetFromIndex(
-        wallIndex.value,
-        { x: core.x, y: core.y, angle: core.angle, length: core.renderedLength, flip_v: faceFlipV },
-      );
-    }
-    const imperial = this.hass?.config?.unit_system?.length === 'mi';
-    // #238: placement labels are physical dimensions. They consume the ONE
-    // resolved candidate above and never re-run pointer snap; existing-opening
-    // drag deliberately keeps `_opRuler`/`openingShoulders` below.
-    const dimensions = resolveOpeningDimensions(
-      core, this._openingDimensionContextCache.value,
-    );
-    const labels = dimensions.map((dimension) => ({
-      x: dimension.label[0],
-      y: dimension.label[1],
-      text: formatLength((dimension.distance / this._gridPitch) * this._cellCm, imperial),
-      dimension,
-    }));
-    return { ...core, face, measure: { labels, guide: core.measure.guide } };
+    return this._editorRuntimeOrThrow()._resolveOpeningPlacement(raw);
   }
 
   private _activateOpeningPlacement(type: OpeningPlacementType): void {
-    this._activateMarkupTool('opening');
-    if (this._tool !== 'opening') return;
-    this._openingPreset = openingPlacementPreset(type, ++this._openingPresetRevision);
-    this._openingHoverCandidate = null;
-    this._cursorPt = null;
+    return this._editorRuntimeOrThrow()._activateOpeningPlacement(type);
   }
 
   private _clearOpeningPlacement(clearPreset: boolean): void {
-    this._openingHoverCandidate = null;
-    this._openingJambBlockCm = null;
-    if (clearPreset) {
-      this._openingPreset = null;
-      this._openingRebindId = null;
+    if (!this._editorRuntime) {
+      this._openingHoverCandidate = null;
+      this._openingJambBlockCm = null;
+      if (clearPreset) {
+        this._openingPreset = null;
+        this._openingRebindId = null;
+      }
+      return;
     }
+    return this._editorRuntimeOrThrow()._clearOpeningPlacement(clearPreset);
   }
 
   /** Opening tool: click an existing opening to edit it, or a wall to place one. */
   private _openingClick(raw: number[]): void {
-    const space = this._spaceModel();
-    if (!space) return;
-    // Rebind is an explicit one-shot placement: the orphan's stale fallback
-    // position must not win hit testing when the replacement wall crosses it.
-    const hit = this._openingRebindId ? null : this._openingAt(raw);
-    if (hit) {
-      this._editOpening(hit);
-      return;
-    }
-    const preset = this._openingPreset;
-    if (!preset) return;
-    const cached = this._openingHoverCandidate;
-    const place = cached && sameOpeningPlacementInput(
-      cached, [raw[0], raw[1]], preset.revision, this._cfgEpoch,
-    ) ? cached : this._resolveOpeningPlacement(raw);
-    if (!place) {
-      if (this._openingJambBlockCm != null) {
-        this._showToast(this._t('opening.partition_jamb_margin', {
-          distance: formatLength(this._openingJambBlockCm, this._imperial),
-        }));
-        return;
-      }
-      const eps = this._gridPitch * 1.5;
-      const snap = snapToWall(raw, space.rooms, eps);
-      if (snap && pointOnOpenCut(snap.x, snap.y, snap.angle, this._openCuts(), eps)) {
-        this._showToast(this._t('toast.opening_on_zero_wall'));
-        return;
-      }
-      this._showToast(this._t('toast.opening_no_wall'));
-      return;
-    }
-    const rebound = this._openingRebindId
-      ? this._curSpaceCfg?.openings?.find((item: OpeningCfg) => item.id === this._openingRebindId)
-      : null;
-    this._openingDialog = {
-      ...(rebound ? {
-        id: rebound.id,
-        type: rebound.type,
-        lengthCm: Math.round((rebound.length * NORM_W / this._gridPitch) * this._cellCm),
-        lengthTouched: false,
-        contact: rebound.contact || '', lock: rebound.lock || '',
-        invert: !!rebound.invert, flipH: !!rebound.flip_h, flipV: !!rebound.flip_v,
-      } : {
-        type: place.type, lengthCm: place.lengthCm, contact: '', lock: '',
-        invert: false, flipH: place.flipH, flipV: place.flipV,
-      }),
-      ...(place.host ? { host: place.host } : {}),
-      x: place.x, y: place.y, angle: place.angle,
-    };
-    this._openingRebindId = null;
-    // rulers, tick and ghost live only through the placement gesture
-    this._openingHoverCandidate = null;
-    this._cursorPt = null;
+    return this._editorRuntimeOrThrow()._openingClick(raw);
   }
 
   /** Open the properties dialog for an existing opening. */
   private _editOpening(o: RenderOpening): void {
-    this._openingDialog = {
-      id: o.id,
-      type: o.type,
-      lengthCm: Math.round((o.rlen / this._gridPitch) * this._cellCm),
-      lengthTouched: false,
-      contact: o.contact || '',
-      lock: o.lock || '',
-      invert: !!o.invert,
-      flipH: !!o.flip_h,
-      flipV: !!o.flip_v,
-      ...(o.host?.kind === 'partition' ? { host: { ...o.host } } : {}),
-      x: o.rx, y: o.ry, angle: o.angle,
-    };
+    if (!this._editorRuntime) return;
+    return this._editorRuntimeOrThrow()._editOpening(o);
   }
 
   /** Drag an opening along the walls (view mode): it re-snaps continuously. */
   private _opPointerDown(ev: PointerEvent, o: OpeningCfg): void {
-    if (this._mode !== 'plan' || !this._spaceModel()) return;
-    // HP-1550-04: in the resize tool the wall handles own the geometry — a door
-    // in the middle of a wall must neither swallow the handle nor start its own
-    // drag (it travels with the wall through the resize pipeline instead)
-    if (this._tool === 'resize') return;
-    ev.preventDefault();
-    ev.stopPropagation();
-    try {
-      capturePointer(ev);
-    } catch {
-      /* an inactive pointerId (synthetic events, some browsers) must not kill the drag */
-    }
-    this._opDrag = {
-      id: o.id, moved: false, sx: ev.clientX, sy: ev.clientY, dirty: false,
-      before: this._geometrySnapshot(),
-    };
+    if (!this._editorRuntime) return;
+    return this._editorRuntimeOrThrow()._opPointerDown(ev, o);
   }
 
   private _opPointerMove(ev: PointerEvent, o: OpeningCfg): void {
-    if (!this._opDrag || this._opDrag.id !== o.id) return;
-    // audit L4: the other drag pipelines require 3 px before calling it a drag.
-    // Without it every tap counted as a drag: the properties dialog never
-    // opened and an unchanged config was written (which then broadcast the
-    // event behind the L2 data loss).
-    if (Math.abs(ev.clientX - this._opDrag.sx) + Math.abs(ev.clientY - this._opDrag.sy) <= 3) return;
-    const space = this._spaceModel();
-    if (!space) return;
-    const raw = this._svgPoint(ev);
-    const sp = this._curSpaceCfg;
-    const cfg = sp?.openings?.find((x: OpeningCfg) => x.id === o.id);
-    if (!cfg) return;
-    if (cfg.host?.kind === 'partition') {
-      const partition = space.partitions.find((item) => item.id === cfg.host!.id);
-      if (!partition) return;
-      const dx = partition.b[0] - partition.a[0], dy = partition.b[1] - partition.a[1];
-      const length = Math.hypot(dx, dy);
-      if (!(length > 1e-9)) return;
-      const ux = dx / length, uy = dy / length;
-      const perpendicular = Math.abs(
-        (raw[0] - partition.a[0]) * uy - (raw[1] - partition.a[1]) * ux,
-      );
-      if (perpendicular > this._gridPitch * 4) return;
-      const half = cfg.length * NORM_W / 2;
-      const jamb = partitionOpeningJambMargin(partition, this._cellCm, this._gridPitch);
-      const shoulder = half + jamb;
-      let along = (raw[0] - partition.a[0]) * ux + (raw[1] - partition.a[1]) * uy;
-      along = Math.round(along / this._gridPitch) * this._gridPitch;
-      along = Math.max(shoulder, Math.min(length - shoulder, along));
-      if (length < shoulder * 2 - 1e-9) return;
-      const t = along / length;
-      const nx = (partition.a[0] + ux * along) / NORM_W;
-      const ny = (partition.a[1] + uy * along) / this._spaceH;
-      let angle = Math.atan2(dy, dx) * 180 / Math.PI;
-      if (angle >= 90) angle -= 180;
-      else if (angle < -90) angle += 180;
-      const changed = cfg.host.t !== t || cfg.x !== nx || cfg.y !== ny || cfg.angle !== angle;
-      this._opDrag.moved = true;
-      if (changed) this._opDrag.dirty = true;
-      cfg.host = { ...cfg.host, t };
-      cfg.x = nx; cfg.y = ny; cfg.angle = angle;
-      this._opMeasure = null;
-      if (changed) this._cfgEpoch++;
-      this.requestUpdate();
-      return;
-    }
-    const snap = snapToWall(raw, space.rooms, this._gridPitch * 4);
-    if (!snap) return; // too far from any wall: the opening stays where it was
-    this._opDrag.moved = true;
-    // ruler badges on both shoulders + soft magnet to the wall's center
-    // (owner 2026-08-03) — the very same helper the PLACEMENT preview uses
-    const r = this._opRuler(snap, cfg.length * NORM_W);
-    this._opMeasure = r.measure;
-    const nx = r.x / NORM_W;
-    const ny = r.y / this._spaceH;
-    const geometryChanged = cfg.x !== nx || cfg.y !== ny || cfg.angle !== snap.angle;
-    if (geometryChanged) this._opDrag.dirty = true;
-    cfg.x = nx;
-    cfg.y = ny;
-    cfg.angle = snap.angle;
-    if (Number(this._serverCfg?.model_version || 0) >= 9) {
-      const host = resolveRoomOpeningHost(cfg, sp?.wall_segments || []);
-      if (host) cfg.host = host;
-      else delete cfg.host;
-    }
-    // The wall cut and room-coloured tunnel are geometry caches too. Advance
-    // the preview epoch so both follow the live opening instead of remaining at
-    // its pre-drag location until pointerup/save.
-    if (geometryChanged) this._cfgEpoch++;
-    this.requestUpdate();
+    if (!this._editorRuntime) return;
+    return this._editorRuntimeOrThrow()._opPointerMove(ev, o);
   }
 
   /**
@@ -13010,369 +8973,65 @@ class HouseplanCard extends LitElement {
     snap: { x: number; y: number; angle: number },
     rlen: number,
   ): { x: number; y: number; angle: number; measure: OpMeasure | null } {
-    const rooms = this._spaceModel()?.rooms || [];
-    const tol = this._gridPitch / 2;
-    let cx = snap.x, cy = snap.y;
-    let sh = openingShoulders([cx, cy], snap.angle, rlen, rooms, tol);
-    if (sh && sh.centered && (cx !== sh.wallCenter[0] || cy !== sh.wallCenter[1])) {
-      [cx, cy] = sh.wallCenter;
-      sh = openingShoulders([cx, cy], snap.angle, rlen, rooms, tol);
-    } else if (sh) {
-      // Not centred: quantise the offset ALONG the wall to the grid step
-      // (docs/CANVAS.md §9.3). Grid-BOUND would lift the opening off a diagonal
-      // wall, so the wall stays the master and the grid only says WHERE on it.
-      // The magnet is consulted first on purpose — a wall whose middle is not a
-      // node must still be able to hold a centred window.
-      const [ax, ay] = sh.wallA, [bx, by] = sh.wallB;
-      const wx = bx - ax, wy = by - ay;
-      const len = Math.hypot(wx, wy);
-      if (len > 0) {
-        const g = this._gridPitch;
-        const half = Math.min(rlen / 2, len / 2);
-        let along = Math.round((((cx - ax) * wx + (cy - ay) * wy) / len) / g) * g;
-        along = Math.max(half, Math.min(len - half, along));
-        cx = ax + (along / len) * wx;
-        cy = ay + (along / len) * wy;
-        sh = openingShoulders([cx, cy], snap.angle, rlen, rooms, tol) || sh;
-      }
-    }
-    if (!sh) return { x: cx, y: cy, angle: snap.angle, measure: null };
-    const imperial = this.hass?.config?.unit_system?.length === 'mi';
-    const lbl = (d: number, m: number[]) =>
-      ({ x: m[0], y: m[1], text: formatLength((d / this._gridPitch) * this._cellCm, imperial) });
-    return {
-      x: cx, y: cy, angle: snap.angle,
-      measure: {
-        labels: [lbl(sh.sideA, sh.midA), lbl(sh.sideB, sh.midB)],
-        guide: sh.centered
-          ? { x: sh.wallCenter[0], y: sh.wallCenter[1], angle: snap.angle }
-          : null,
-      },
-    };
+    return this._editorRuntimeOrThrow()._opRuler(snap, rlen);
   }
 
   private _opPointerUp(ev: PointerEvent, o: OpeningCfg): void {
-    if (!this._opDrag || this._opDrag.id !== o.id) return;
-    const drag = this._opDrag;
-    const moved = drag.moved;
-    this._opMeasure = null; // badges and the center tick live only through the drag
-    // only write when the geometry actually changed (audit L4)
-    if (moved && drag.dirty) {
-      this._commitPhysicalGeometry(this._t('history.move_opening'), drag.before);
-    }
-    // keep the flag until the click event that follows pointerup, then let it go
-    if (moved) window.setTimeout(() => (this._opDrag = null), 0);
-    else this._opDrag = null;
+    if (!this._editorRuntime) return;
+    return this._editorRuntimeOrThrow()._opPointerUp(ev, o);
   }
 
   /** Click: the status card (delayed so a double click can cancel it). */
   private _opClick(ev: MouseEvent, o: RenderOpening): void {
-    // HP-1550-04: in the resize tool a click over an opening falls through to
-    // the stage (room picking) instead of opening the editor dialog
-    if (this._mode === 'plan' && this._tool === 'resize') return;
-    ev.stopPropagation();
-    if (this._opDrag?.moved) return; // that click was the tail of a drag
-    // openings are inert outside Plan mode (owner's decision: View must not
-    // interact with them at all); in Plan any click on an opening edits it
-    if (this._mode === 'plan') this._editOpening(o);
+    if (!this._editorRuntime) return;
+    return this._editorRuntimeOrThrow()._opClick(ev, o);
   }
 
   private _saveOpening(): void {
-    const d = this._openingDialog;
-    const sp = this._curSpaceCfg;
-    const model = this._spaceModel();
-    if (!d || !sp || !model) return;
-    const before = this._geometrySnapshot();
-    const H = this._spaceH;
-    const previous = (sp.openings || []).find((item: OpeningCfg) => item.id === d.id);
-    const o: OpeningCfg = {
-      ...(previous || {}),
-      id: d.id || 'o' + Date.now().toString(36),
-      type: d.type,
-      x: d.x / NORM_W,
-      y: d.y / H,
-      angle: d.angle,
-      length: previous && !d.lengthTouched
-        ? previous.length
-        : this._cmToUnits(Math.max(20, d.lengthCm)) / NORM_W,
-      ...(d.host ? { host: { ...d.host } } : {}),
-    };
-    if (o.host?.kind === 'partition') {
-      const strict = partitionOpeningNeedsStrictValidation(previous, o);
-      const resolution = strict
-        ? resolvePartitionOpeningStrict(
-            o, model.partitions, NORM_W, this._cellCm, this._gridPitch,
-          )
-        : resolvePartitionOpeningCompat(
-            o, model.partitions, NORM_W, this._cellCm, this._gridPitch,
-          );
-      if (!resolution.resolved) {
-        const partition = model.partitions.find((item) => item.id === o.host!.id);
-        if (resolution.reason === 'does-not-fit-jamb' && partition) {
-          const margin = partitionOpeningJambMargin(
-            partition, this._cellCm, this._gridPitch,
-          );
-          this._showToast(this._t('opening.partition_jamb_margin', {
-            distance: formatLength(
-              (margin / this._gridPitch) * this._cellCm, this._imperial,
-            ),
-          }));
-        } else {
-          this._showToast(this._t('opening.partition_orphan'));
-        }
-        return;
-      }
-      const siblings = (sp.openings || []).flatMap((item: OpeningCfg) => {
-        if (!item.host || item.id === o.id) return [];
-        const sibling = resolvePartitionOpeningCompat(
-          item, model.partitions, NORM_W, this._cellCm, this._gridPitch,
-        ).resolved;
-        return sibling ? [sibling] : [];
-      });
-      if (hostedOpeningIntervalsOverlap(resolution.resolved, siblings)) {
-        this._showToast(this._t('toast.opening_no_wall'));
-        return;
-      }
-      Object.assign(o, materializePartitionOpening(o, resolution.resolved, NORM_W));
-    } else if (Number(this._serverCfg?.model_version || 0) >= 9) {
-      const host = resolveRoomOpeningHost(o, sp.wall_segments || []);
-      if (!host) {
-        this._showToast(this._t('toast.opening_no_wall'));
-        return;
-      }
-      o.host = host;
-    } else {
-      delete o.host;
-    }
-    if (d.type === 'passage') {
-      // The canonical passage record contains geometry only. Delete keys
-      // instead of writing null/false so imports and old broken records have
-      // one unambiguous representation after an explicit edit.
-      delete o.contact;
-      delete o.lock;
-      delete o.invert;
-      delete o.flip_h;
-      delete o.flip_v;
-    } else {
-      o.contact = d.contact || null;
-      o.lock = d.type === 'door' || d.type === 'gate' ? d.lock || null : null;
-      o.invert = d.invert || undefined;
-      o.flip_h = d.type !== 'gate' && d.flipH || undefined;
-      o.flip_v = d.flipV || undefined;
-    }
-    sp.openings = sp.openings || [];
-    const i = sp.openings.findIndex((x: OpeningCfg) => x.id === o.id);
-    if (i >= 0) sp.openings[i] = o;
-    else sp.openings.push(o);
-    this._commitPhysicalGeometry(
-      this._t(d.id ? 'history.edit_opening' : 'history.add_opening'), before,
-    );
-    this._openingDialog = null;
-    this.requestUpdate();
+    return this._editorRuntimeOrThrow()._saveOpening();
   }
 
   private _deleteOpening(): void {
-    const d = this._openingDialog;
-    const sp = this._curSpaceCfg;
-    if (!d?.id || !sp?.openings) return;
-    const before = this._geometrySnapshot();
-    sp.openings = sp.openings.filter((x: OpeningCfg) => x.id !== d.id);
-    this._commitPhysicalGeometry(this._t('history.delete_opening'), before);
-    this._openingDialog = null;
-    this.requestUpdate();
+    return this._editorRuntimeOrThrow()._deleteOpening();
   }
 
   private _rebindPartitionOpening = (): void => {
-    const d = this._openingDialog;
-    if (!d?.id) return;
-    const openingId = d.id;
-    this._activateMarkupTool('opening');
-    if (this._tool !== 'opening') return;
-    // Tool activation clears every stale placement session. Publish the
-    // rebind identity only after that gate so the next click cannot degrade
-    // into creating a second opening.
-    this._openingRebindId = openingId;
-    this._openingPreset = {
-      type: d.type,
-      lengthCm: d.lengthCm,
-      flipH: d.flipH,
-      flipV: d.flipV,
-      revision: ++this._openingPresetRevision,
-    };
-    this._openingDialog = null;
-    this._openingHoverCandidate = null;
-  };
+    return this._editorRuntimeOrThrow()._rebindPartitionOpening();
+  }
 
   /** Contact-sensor candidates: door/window/gate-like classes first, then the rest. */
   private _contactCandidates(): { value: string; label: string }[] {
-    const out: [string, string, number][] = [];
-    for (const eid of Object.keys(this.hass.states)) {
-      if (!this._openingEntityAvailable(eid)) continue;
-      const dom = eid.split('.')[0];
-      if (dom !== 'binary_sensor' && dom !== 'cover') continue;
-      const st = this.hass.states[eid];
-      const dc = st?.attributes?.device_class || '';
-      const doorish = ['door', 'window', 'opening', 'garage_door', 'garage'].includes(dc);
-      if (dom === 'cover' && !doorish) continue;
-      out.push([eid, st?.attributes?.friendly_name || eid, doorish ? 0 : 1]);
-    }
-    return out
-      .sort((a, b) => a[2] - b[2] || a[1].localeCompare(b[1]))
-      .map(([value, label]) => ({ value, label }));
+    return this._editorRuntimeOrThrow()._contactCandidates();
   }
 
   private _lockCandidates(): { value: string; label: string }[] {
-    return Object.keys(this.hass.states)
-      .filter((eid) => eid.startsWith('lock.') && this._openingEntityAvailable(eid))
-      .map((eid) => ({ value: eid, label: this.hass.states[eid]?.attributes?.friendly_name || eid }))
-      .sort((a, b) => a.label.localeCompare(b.label));
+    return this._editorRuntimeOrThrow()._lockCandidates();
   }
 
   private _toggleOpeningEntityPicker(kind: 'contact' | 'lock'): void {
-    const d = this._openingDialog;
-    if (!d) return;
-    const nextOpen = kind === 'contact' ? !d.contactOpen : !d.lockOpen;
-    this._openingDialog = {
-      ...d,
-      contactOpen: kind === 'contact' ? nextOpen : false,
-      lockOpen: kind === 'lock' ? nextOpen : false,
-    };
+    return this._editorRuntimeOrThrow()._toggleOpeningEntityPicker(kind);
   }
 
   private _filterOpeningEntities(kind: 'contact' | 'lock', value: string): void {
-    const d = this._openingDialog;
-    if (!d) return;
-    this._openingDialog = kind === 'contact'
-      ? { ...d, contactFilter: value }
-      : { ...d, lockFilter: value };
+    return this._editorRuntimeOrThrow()._filterOpeningEntities(kind, value);
   }
 
   private _selectOpeningEntity(kind: 'contact' | 'lock', value: string): void {
-    const d = this._openingDialog;
-    if (!d) return;
-    this._openingDialog = kind === 'contact'
-      ? { ...d, contact: value, contactOpen: false, contactFilter: '' }
-      : { ...d, lock: value, lockOpen: false, lockFilter: '' };
+    return this._editorRuntimeOrThrow()._selectOpeningEntity(kind, value);
   }
 
   /** Merge: first click picks a room, second picks the room to merge it with. */
   private _mergeClick(raw: number[]): void {
-    const space = this._spaceModel();
-    if (!space) return;
-    const rooms = space.rooms;
-    const hit = [...rooms].reverse().find((r) => this._pointInRoom(raw, r));
-    if (!hit?.id) return;
-    const hitId = hit.id;
-    if (!this._mergeSel || this._mergeSel === hitId) {
-      this._mergeSel = this._mergeSel === hitId ? null : hitId; // click again = deselect
-      return;
-    }
-    const a = rooms.find((r) => r.id === this._mergeSel);
-    const pa = a ? roomPoly(a) : null;
-    const pb = roomPoly(hit);
-    const merged = pa && pb ? mergeRooms(pa, pb) : null;
-    if (!merged) {
-      // only rooms sharing a wall collapse into one outline (see mergeRooms)
-      this._showToast(this._t('toast.merge_not_adjacent'));
-      this._mergeSel = null;
-      return;
-    }
-    this._mergeDialog = { aId: this._mergeSel, bId: hitId, poly: merged, pick: 'a' };
-    this._mergeSel = null;
+    return this._editorRuntimeOrThrow()._mergeClick(raw);
   }
 
   private _commitMerge(): void {
-    const d = this._mergeDialog;
-    const sp = this._curSpaceCfg;
-    if (!d || !sp || !this._spaceModel()) return;
-    const before = this._geometrySnapshot();
-    const H = this._spaceH;
-    const keepId = d.pick === 'a' ? d.aId : d.bId;
-    const dropId = d.pick === 'a' ? d.bId : d.aId;
-    const keep = sp.rooms.find((r: any) => r.id === keepId);
-    if (!keep) {
-      this._mergeDialog = null;
-      return;
-    }
-    // the kept room keeps its id, so its label position and devices stay put
-    keep.poly = d.poly.map((p) => [p[0] / NORM_W, p[1] / H]);
-    delete keep.x; delete keep.y; delete keep.w; delete keep.h; // a merged room is never a rect
-    sp.rooms = sp.rooms.filter((r: any) => r.id !== dropId);
-    const committed = this._commitPhysicalGeometry(this._t('history.merge_rooms'), before);
-    this._mergeDialog = null;
-    this._regSignature = '';
-    this._maybeRebuildDevices();
-    if (committed) this._showToast(this._t('toast.rooms_merged', { name: keep.name || '' }));
+    return this._editorRuntimeOrThrow()._commitMerge();
   }
 
   /** Split: click the room, then two points on its walls. */
   private _splitClick(raw: number[]): void {
-    const space = this._spaceModel();
-    if (!space) return;
-    const rooms = space.rooms;
-    if (!this._splitSel) {
-      const hit = [...rooms].reverse().find((r) => this._pointInRoom(raw, r));
-      if (!hit?.id) return;
-      this._splitSel = { roomId: hit.id, pts: [] };
-      return;
-    }
-    const room = rooms.find((r) => r.id === this._splitSel!.roomId);
-    const poly = room ? roomPoly(room) : null;
-    if (!room || !poly) {
-      this._splitSel = null;
-      return;
-    }
-    // A split point lands on the room's nearest wall — the user aims at a wall,
-    // and rooms need not be grid-aligned (imported/legacy polygons), so snapping
-    // to the grid would miss the outline. The pull is capped: a click far from
-    // any wall (e.g. an accidental one in the middle of the room) is a miss and
-    // gets the toast, not a wall the user never meant. splitRoom() still rejects
-    // any cut that is not a clean wall-to-wall chord.
-    // …and it is still QUANTISED: the offset ALONG the wall moves in whole grid
-    // steps (docs/CANVAS.md §9), which on the axis-aligned, grid-drawn walls the
-    // editor itself makes IS a grid node. There is no free-position bypass.
-    const eps = this._gridPitch * 0.02;
-    const pull = this._gridPitch * 6; // ≈2.5% of the plan width — generous but intentional
-    const raw0 = closestPointOnBoundary(raw, poly);
-    const near = raw0 ? (snapPointAlongPoly(raw0, poly, this._gridPitch) || raw0) : raw0;
-    const wallPt = raw0 && near && Math.hypot(raw0[0] - raw[0], raw0[1] - raw[1]) <= pull ? near : null;
-    const onWall = !!wallPt && pointOnBoundary(wallPt, poly, eps);
-    const cur = this._splitSel.pts;
-    if (!cur.length) {
-      // the cut starts on a wall
-      if (!onWall) {
-        this._showToast(this._t('toast.split_pick_wall'));
-        return;
-      }
-      this._splitSel = { ...this._splitSel, pts: [wallPt!] };
-      return;
-    }
-    if (!onWall) {
-      // an interior click adds an intermediate vertex of the cut path
-      const mid = this._snap(raw);
-      if (!ptInside(mid, poly, eps)) {
-        this._showToast(this._t('toast.split_pick_inside'));
-        return;
-      }
-      this._splitSel = { ...this._splitSel, pts: [...cur, mid] };
-      return;
-    }
-    // a wall point finishes the cut
-    const parts = splitRoomPath(poly, [...cur, wallPt!], eps);
-    if (!parts) {
-      this._showToast(this._t('toast.split_bad_cut'));
-      return;
-    }
-    this._resetRoomDialogFields();
-    // the bigger part stays the room it was — name, area and devices go with it
-    const [p1, p2] = parts;
-    const main = polygonArea(p1) >= polygonArea(p2) ? p1 : p2;
-    const fresh = main === p1 ? p2 : p1;
-    this._pendingSplit = { roomId: room.id!, mainPoly: main, newPoly: fresh };
-    this._cursorPt = null;
-    this._nameSel = '';
-    this._areaSel = '';
-    this._roomDialog = true;
+    return this._editorRuntimeOrThrow()._splitClick(raw);
   }
 
   private get _contourClosed(): boolean {
@@ -13385,39 +9044,8 @@ class HouseplanCard extends LitElement {
   }
 
   private _markupMove(ev: MouseEvent): void {
-    if (!this._markup) return;
-    if (this._tool === 'column') {
-      this._cursorPt = this._snap(this._svgPoint(ev));
-      return;
-    }
-    if (this._tool === 'opening' || this._tool === 'wallthick') {
-      // hover preview: raw cursor point; snapping happens in the preview getters
-      this._cursorPt = this._svgPoint(ev);
-      return;
-    }
-    const architectural = this._tool === 'draw' && !this._contourClosed;
-    const cutting = this._tool === 'split' && !!this._splitSel?.pts?.length;
-    if (!architectural && !cutting) return;
-    const raw = this._svgPoint(ev);
-    if (architectural) {
-      const resolved = this._resolvePlanDrawPoint(raw, ev.shiftKey);
-      this._planSnapHover = {
-        contextKey: resolved.contextKey,
-        candidate: resolved.candidate,
-        conflicts: resolved.conflicts,
-      };
-      this._syncPlanSnapConflictMarkers(resolved.conflicts);
-      // Before the first click there is no rubber-band to repaint. Updating the
-      // dedicated marker avoids walking the complete large-house Lit tree for
-      // every mouse move while click still resolves from the event coordinate.
-      if (!this._path.length) {
-        this._syncPlanSnapActiveMarker(resolved.candidate);
-        return;
-      }
-      this._cursorPt = resolved.point;
-      return;
-    }
-    this._cursorPt = this._snap(raw);
+    if (!this._markup || !this._editorRuntime) return;
+    return this._editorRuntime._markupMove(ev);
   }
 
   /** One resolved architectural candidate shared by hover and click. */
@@ -13448,659 +9076,58 @@ class HouseplanCard extends LitElement {
   /** Save a room with an optional HA-area binding.
    *  An area supplies the fallback name; a room without one needs a name. */
   private _saveRoom(): void {
-    if (!this._areaSel && !this._nameSel.trim()) return;
-    if (this._wallFaceBatch) {
-      this._decideWallFace(true);
-      return;
-    }
-    this._commitRoom();
+    return this._editorRuntimeOrThrow()._saveRoom();
   }
 
   private _decideWallFace(create: boolean): void {
-    const batch = this._wallFaceBatch;
-    if (!batch) return;
-    const candidate = batch.candidates[batch.index];
-    if (!candidate) return;
-    if (!create && (candidate.existing || candidate.repair) && batch.candidates.length === 1) {
-      this._wallFaceBatch = null;
-      this._roomDialog = false;
-      this._nameSel = '';
-      this._areaSel = '';
-      this.requestUpdate();
-      return;
-    }
-    const decision: WallFaceDecision = create ? {
-      candidate,
-      create: true,
-      name: this._nameSel.trim(),
-      area: this._areaSel || null,
-      settings: this._roomSettingsFromDialog()
-        ? JSON.parse(JSON.stringify(this._roomSettingsFromDialog())) : null,
-    } : { candidate, create: false };
-    const decisions = [...batch.decisions, decision];
-    const nextIndex = batch.index + 1;
-    if (nextIndex < batch.candidates.length) {
-      this._wallFaceBatch = { ...batch, decisions, index: nextIndex };
-      this._nameSel = '';
-      this._areaSel = '';
-      this._resetRoomDialogFields();
-      this.requestUpdate();
-      return;
-    }
-    this._wallFaceBatch = { ...batch, decisions };
-    this._applyWallFaceBatch();
+    return this._editorRuntimeOrThrow()._decideWallFace(create);
   }
 
   private _wallSourceCmAt(
     point: number[], activePath: number[][], activeCms: number[],
   ): number {
-    const validCm = (value: unknown): number | null =>
-      typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : null;
-    const epsilon = this._gridPitch * 0.02;
-    const model = this._spaceModel();
-    if (!model) return DRAW_WALL_DEFAULT_CM;
-    // Already-saved independent masonry is authoritative when the new chain
-    // traces it. Room-owned walls are preserved by the canonical wall helpers.
-    for (const segment of this._planSnapGeometrySnapshot().value.segments) {
-      if (segment.sourceKind === 'room'
-          || distToSegment(point, [segment.a[0], segment.a[1], segment.b[0], segment.b[1]]) > epsilon) continue;
-      if (segment.sourceKind === 'partition') {
-        return validCm(model.partitions.find((item) => item.id === segment.sourceId)?.cm)
-          ?? DRAW_WALL_DEFAULT_CM;
-      }
-      const separator = segment.sourceId.lastIndexOf(':');
-      const draftId = separator >= 0 ? segment.sourceId.slice(0, separator) : segment.sourceId;
-      const index = separator >= 0 ? Number(segment.sourceId.slice(separator + 1)) : -1;
-      return validCm(model.room_drafts.find((item) => item.id === draftId)?.segments[index]?.cm)
-        ?? DRAW_WALL_DEFAULT_CM;
-    }
-    // Толщина отрезка активной цепочки решается тем же резолвером (#234):
-    // именно это значение подсвечивает инструмент «Толщина», и расхождение с
-    // записью здесь было тем способом, которым дефект и обнаружился.
-    const resolved = chainSegmentCms(
-      Math.max(0, activePath.length - 1), activeCms,
-      this._drawWallCm, DRAW_WALL_DEFAULT_CM,
-    );
-    for (let i = 0; i + 1 < activePath.length; i++) {
-      const a = activePath[i], b = activePath[i + 1];
-      if (distToSegment(point, [a[0], a[1], b[0], b[1]]) <= epsilon) {
-        return resolved[i] ?? DRAW_WALL_DEFAULT_CM;
-      }
-    }
-    return DRAW_WALL_DEFAULT_CM;
+    return this._editorRuntimeOrThrow()._wallSourceCmAt(point, activePath, activeCms);
   }
 
   private _activePathWithRepair(
     path: number[][], proposal: WallFaceRepairProposal | undefined,
   ): number[][] {
-    const result = path.map((point) => [...point]);
-    if (!proposal?.sourceKey.startsWith('active:')) return result;
-    const match = /:(\d+)$/.exec(proposal.sourceKey);
-    const index = match ? Number(match[1]) + (proposal.endpoint === 'b' ? 1 : 0) : -1;
-    if (index >= 0 && index < result.length) result[index] = [...proposal.to];
-    return result;
+    return this._editorRuntimeOrThrow()._activePathWithRepair(path, proposal);
   }
 
   private _validateWallRepair(
     proposal: WallFaceRepairProposal, activePath: number[][],
   ): boolean {
-    const epsilon = this._gridPitch * 0.0002;
-    const sources = this._wallGraphSources(activePath);
-    const source = sources.find((item) => item.key === proposal.sourceKey);
-    const target = sources.find((item) => item.key === proposal.targetSourceKey);
-    if (!source || !target) return false;
-    const current = proposal.endpoint === 'a' ? source.a : source.b;
-    if (Math.hypot(current[0] - proposal.from[0], current[1] - proposal.from[1]) > epsilon) return false;
-    if (distToSegment(proposal.to, [target.a[0], target.a[1], target.b[0], target.b[1]]) > epsilon) {
-      return false;
-    }
-    if (repairMovesHostedPartition(
-      proposal, (this._curSpaceCfg as any)?.openings || [],
-    )) return false;
-    return true;
+    return this._editorRuntimeOrThrow()._validateWallRepair(proposal, activePath);
   }
 
   /** Apply one revalidated endpoint move inside the surrounding room transaction. */
   private _applyWallRepair(
     proposal: WallFaceRepairProposal, batch: WallFaceBatch,
   ): boolean {
-    const sp = this._curSpaceCfg as any;
-    if (!sp || !this._validateWallRepair(proposal, batch.activePath)) return false;
-    const write = (point: number[]): void => {
-      point[0] = proposal.to[0] / NORM_W;
-      point[1] = proposal.to[1] / NORM_W;
-    };
-    if (proposal.sourceKey.startsWith('active:')) {
-      const match = /:(\d+)$/.exec(proposal.sourceKey);
-      const index = match ? Number(match[1]) + (proposal.endpoint === 'b' ? 1 : 0) : -1;
-      if (index < 0 || index >= batch.activePath.length) return false;
-      batch.activePath[index] = [...proposal.to];
-      const draft = (sp.room_drafts || []).find((item: any) => item.id === batch.activeDraftId);
-      if (draft?.points?.[index]) write(draft.points[index]);
-      return true;
-    }
-    if (!proposal.sourceKey.startsWith('static:')) return false;
-    const [kind, sourceId] = proposal.sourceKey.slice('static:'.length).split('|');
-    if (kind === 'partition') {
-      const partition = (sp.partitions || []).find((item: PartitionCfg) => item.id === sourceId);
-      if (!partition) return false;
-      const renderA = [partition.a[0] * NORM_W, partition.a[1] * NORM_W];
-      const renderB = [partition.b[0] * NORM_W, partition.b[1] * NORM_W];
-      const point = Math.hypot(renderA[0] - proposal.from[0], renderA[1] - proposal.from[1])
-          <= this._gridPitch * 0.0002 ? partition.a
-        : Math.hypot(renderB[0] - proposal.from[0], renderB[1] - proposal.from[1])
-          <= this._gridPitch * 0.0002 ? partition.b : null;
-      if (!point) return false;
-      write(point);
-      return true;
-    }
-    if (kind === 'draft') {
-      const separator = sourceId.lastIndexOf(':');
-      const draftId = separator >= 0 ? sourceId.slice(0, separator) : '';
-      const segment = separator >= 0 ? Number(sourceId.slice(separator + 1)) : -1;
-      const draft = (sp.room_drafts || []).find((item: any) => item.id === draftId);
-      if (!draft?.points?.[segment] || !draft?.points?.[segment + 1]) return false;
-      const candidates = [segment, segment + 1];
-      const index = candidates.find((candidate) => Math.hypot(
-        draft.points[candidate][0] * NORM_W - proposal.from[0],
-        draft.points[candidate][1] * NORM_W - proposal.from[1],
-      ) <= this._gridPitch * 0.0002);
-      if (index == null) return false;
-      write(draft.points[index]);
-      return true;
-    }
-    return false;
+    return this._editorRuntimeOrThrow()._applyWallRepair(proposal, batch);
   }
 
   /** Revalidate and apply every queued answer as one geometry transaction. */
   private _applyWallFaceBatch(): void {
-    const batch = this._wallFaceBatch;
-    const sp = this._curSpaceCfg as any;
-    const model = this._spaceModel();
-    if (!batch || !sp || !model) return;
-    const abort = (message: string, vars?: Record<string, string | number>): void => {
-      this._showToast(this._t(message as any, vars));
-      this._roomDialogCancel();
-    };
-    const accepted = batch.decisions.filter((decision) => decision.create);
-    const acceptedRings = accepted.map((decision) => decision.candidate.ring);
-    const existingRooms = model.rooms;
-    for (let i = 0; i < acceptedRings.length; i++) {
-      if (this._contourSelfIntersects(acceptedRings[i]) || polygonArea(acceptedRings[i]) <= 1e-6) {
-        abort('toast.contour_cannot_close');
-        return;
-      }
-      for (let j = i + 1; j < acceptedRings.length; j++) {
-        if (roomsOverlap(acceptedRings[i], acceptedRings[j])) {
-          abort('toast.contour_cannot_close');
-          return;
-        }
-      }
-      const ownSplit = accepted[i].candidate.split?.roomId;
-      const clash = existingRooms.find((room) => room.id !== ownSplit
-        && !!roomPoly(room) && roomsOverlap(acceptedRings[i], roomPoly(room)!));
-      if (clash) {
-        abort('toast.room_overlap', { name: clash.name || '' });
-        return;
-      }
-    }
-    if ((sp.rooms || []).length + accepted.length > MAX_ROOMS) {
-      abort('toast.physical_limit');
-      return;
-    }
-    if (accepted.some((decision) => decision.candidate.split
-        && !sp.rooms.some((room: any) => room.id === decision.candidate.split!.roomId))) {
-      abort('toast.contour_cannot_close');
-      return;
-    }
-
-    const repairs = accepted
-      .map((decision) => decision.candidate.repair)
-      .filter((repair): repair is WallFaceRepairProposal => !!repair);
-    if (repairs.length > 1 || (repairs[0] && !this._validateWallRepair(repairs[0], batch.activePath))) {
-      abort('toast.wall_repair_changed');
-      return;
-    }
-    const effectiveActivePath = this._activePathWithRepair(batch.activePath, repairs[0]);
-
-    const epsilon = this._gridPitch * 0.0002;
-    const activeSourceCms = new Map<string, number>();
-    for (let i = 0; i < batch.activeCms.length; i++)
-      activeSourceCms.set(this._activeWallSourceKey(i), batch.activeCms[i]);
-    const partitions: Array<{ id?: string; a: number[]; b: number[]; cm: number }> = [];
-    if (!accepted.length) {
-      partitions.push(...wallChainSegments(
-        effectiveActivePath,
-        chainSegmentCms(
-          effectiveActivePath.length - 1, batch.activeCms,
-          this._drawWallCm, DRAW_WALL_DEFAULT_CM,
-        ),
-      ));
-    } else {
-      const consumed = new Set(accepted.flatMap((decision) => decision.candidate.atomKeys));
-      const consumeAll = accepted.some((decision) => decision.candidate.consumeAllActive);
-      for (const atom of atomizeWallSegments(this._wallGraphSources(effectiveActivePath), epsilon)) {
-        const activeKey = atom.sourceKeys.find((key) => activeSourceCms.has(key));
-        if (!activeKey || consumeAll || consumed.has(atom.key)) continue;
-        partitions.push({ a: atom.a, b: atom.b, cm: activeSourceCms.get(activeKey)! });
-      }
-    }
-    if ((sp.partitions || []).length + partitions.length > MAX_PARTITIONS) {
-      abort('toast.physical_limit');
-      return;
-    }
-
-    // A face decision may split one persisted draft segment between a room
-    // contour and leftover partitions. Pick the single physical child that
-    // inherits the old ID by the same midpoint/old-a rule as the catalogue.
-    const roomLineage = accepted.map((decision) =>
-      decision.candidate.ring.map(() => ''));
-    const activeDraft = batch.activeDraftId
-      ? (sp.room_drafts || []).find((draft: any) => draft.id === batch.activeDraftId)
-      : null;
-    const draftLineage = this._draftSegmentsForPath(
-      batch.activePath, activeDraft, batch.activeCms,
-    );
-    const geometryKey = (a: readonly number[], b: readonly number[]): string => {
-      const ka = `${a[0].toFixed(9)},${a[1].toFixed(9)}`;
-      const kb = `${b[0].toFixed(9)},${b[1].toFixed(9)}`;
-      return ka <= kb ? `${ka}|${kb}` : `${kb}|${ka}`;
-    };
-    for (let sourceIndex = 0; sourceIndex < draftLineage.length; sourceIndex++) {
-      const id = draftLineage[sourceIndex]?.id;
-      if (!id) continue;
-      const sourceA = batch.activePath[sourceIndex];
-      const sourceB = batch.activePath[sourceIndex + 1];
-      const sourceSpan = [sourceA[0], sourceA[1], sourceB[0], sourceB[1]];
-      const candidates: Array<{
-        kind: 'room' | 'partition'; owner: number; edge: number; a: number[]; b: number[];
-      }> = [];
-      accepted.forEach((decision, owner) => decision.candidate.ring.forEach((a, edge) => {
-        const b = decision.candidate.ring[(edge + 1) % decision.candidate.ring.length];
-        if (distToSegment(a, sourceSpan) <= epsilon && distToSegment(b, sourceSpan) <= epsilon)
-          candidates.push({ kind: 'room', owner, edge, a, b });
-      }));
-      partitions.forEach((partition, owner) => {
-        if (distToSegment(partition.a, sourceSpan) <= epsilon
-            && distToSegment(partition.b, sourceSpan) <= epsilon)
-          candidates.push({ kind: 'partition', owner, edge: 0, a: partition.a, b: partition.b });
-      });
-      const midpoint = [(sourceA[0] + sourceB[0]) / 2, (sourceA[1] + sourceB[1]) / 2];
-      candidates.sort((left, right) => {
-        const leftSpan = [left.a[0], left.a[1], left.b[0], left.b[1]];
-        const rightSpan = [right.a[0], right.a[1], right.b[0], right.b[1]];
-        return (distToSegment(midpoint, leftSpan) <= epsilon ? 0 : 1)
-          - (distToSegment(midpoint, rightSpan) <= epsilon ? 0 : 1)
-          || (distToSegment(sourceA, leftSpan) <= epsilon ? 0 : 1)
-          - (distToSegment(sourceA, rightSpan) <= epsilon ? 0 : 1)
-          || geometryKey(left.a, left.b).localeCompare(geometryKey(right.a, right.b));
-      });
-      const winner = candidates[0];
-      if (!winner) continue;
-      const winnerKey = geometryKey(winner.a, winner.b);
-      for (const candidate of candidates) {
-        if (geometryKey(candidate.a, candidate.b) !== winnerKey) continue;
-        if (candidate.kind === 'room') roomLineage[candidate.owner][candidate.edge] = id;
-        else partitions[candidate.owner].id = id;
-      }
-    }
-
-    const before = this._geometrySnapshot();
-    if (repairs[0] && !this._applyWallRepair(repairs[0], batch)) {
-      abort('toast.wall_repair_changed');
-      return;
-    }
-    const hasSplit = accepted.some((decision) => !!decision.candidate.split);
-    const splitWalls = hasSplit
-      ? materializeWallIntervals(
-          model.rooms, sp.walls, this._openCuts(),
-          this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
-        )
-      : null;
-    const wallsBeforeSplit = hasSplit && Array.isArray(sp.walls) ? sp.walls : null;
-    for (const decision of accepted) {
-      const split = decision.candidate.split;
-      if (!split) continue;
-      const main = sp.rooms.find((room: any) => room.id === split.roomId);
-      if (!main) {
-        abort('toast.contour_cannot_close');
-        return;
-      }
-      main.poly = split.mainPoly.map((point) => [point[0] / NORM_W, point[1] / this._spaceH]);
-      delete main.x; delete main.y; delete main.w; delete main.h;
-    }
-
-    const seed = Date.now().toString(36);
-    const newRooms: Array<{ room: any; decision: WallFaceDecision }> = [];
-    accepted.forEach((decision, index) => {
-      const areaName = decision.area ? this.hass.areas[decision.area]?.name : '';
-      const room = {
-        id: `r${seed}-${index}`,
-        name: decision.name || areaName || this._t('room.default_name'),
-        area: decision.area || null,
-        poly: decision.candidate.ring.map((point) =>
-          [point[0] / NORM_W, point[1] / this._spaceH]),
-        ...(roomLineage[index].some(Boolean) ? { wall_ids: roomLineage[index] } : {}),
-        ...(decision.settings ? { settings: JSON.parse(JSON.stringify(decision.settings)) } : {}),
-      };
-      sp.rooms.push(room);
-      newRooms.push({ room, decision });
-    });
-
-    if (batch.activeDraftId && Array.isArray(sp.room_drafts)) {
-      sp.room_drafts = sp.room_drafts.filter((draft: any) => draft.id !== batch.activeDraftId);
-      if (!sp.room_drafts.length) delete sp.room_drafts;
-    }
-    if (partitions.length) {
-      sp.partitions ||= [];
-      partitions.forEach((partition, index) => sp.partitions.push({
-        id: partition.id || `partition-${seed}-${index}`,
-        a: [partition.a[0] / NORM_W, partition.a[1] / NORM_W],
-        b: [partition.b[0] / NORM_W, partition.b[1] / NORM_W],
-        cm: partition.cm,
-      }));
-    }
-
-    if (hasSplit) {
-      const next = this._normalizeWalls(splitWalls, this._openCuts());
-      if (next.length) sp.walls = next;
-      else if (!wallsBeforeSplit?.length) delete sp.walls;
-      else sp.walls = wallsBeforeSplit;
-    }
-    if (newRooms.length) {
-      // Make the new model visible to the canonical wall helpers before they
-      // key intervals. This is still inside the one history/save transaction.
-      this._cfgEpoch++;
-      const openCuts = this._openCuts();
-      const updatedModel = this._spaceModel();
-      if (!updatedModel) return;
-      let walls = sp.walls;
-      for (const { room, decision } of newRooms) {
-        const ring = decision.candidate.ring;
-        const fallback = this._wallSourceCmAt(
-          ring[0], batch.activePath, batch.activeCms,
-        );
-        walls = applyWallThicknessToNewRoom(
-          walls, updatedModel.rooms, room.id, fallback,
-          this._wallKeyPitch, openCuts, NORM_W,
-        );
-        for (const interval of wallIntervals(
-          updatedModel.rooms, walls, openCuts,
-          this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
-        )) {
-          if (interval.roomId !== room.id || interval.kind !== 'outer') continue;
-          const midpoint = [
-            (interval.a[0] + interval.b[0]) / 2,
-            (interval.a[1] + interval.b[1]) / 2,
-          ];
-          walls = setWallThickness(
-            walls, interval.a, interval.b,
-            this._wallSourceCmAt(midpoint, batch.activePath, batch.activeCms),
-            this._wallKeyPitch, NORM_W,
-          );
-        }
-      }
-      const normalized = this._normalizeWalls(walls, openCuts);
-      if (normalized.length) sp.walls = normalized;
-      else delete sp.walls;
-    }
-
-    if (!this._commitPhysicalGeometry(this._t('history.wall_face_batch'), before)) return;
-    delete this._resumeDraftBySpace[this._space];
-    this._path = [];
-    this._activeDraftId = null;
-    this._draftSegmentCms = [];
-    this._closingWallCm = null;
-    this._wallFaceBatch = null;
-    this._roomDialog = false;
-    this._nameSel = '';
-    this._areaSel = '';
-    this._regSignature = '';
-    this._maybeRebuildDevices();
-    // Match the ordinary room-save contract: newly area-bound devices are
-    // auto-added and their initial positions are pinned immediately, while a
-    // clean split leaves the surviving parent's existing layout untouched.
-    const boundAreas = new Set(accepted
-      .map((decision) => decision.area)
-      .filter((area): area is string => !!area));
-    if (boundAreas.size) {
-      const next = { ...this._layout };
-      for (const device of this._devices) {
-        if (!boundAreas.has(device.area || '') || device.space !== this._space) continue;
-        if (this._layout[device.id]) continue;
-        const position = this._defPos[device.id];
-        if (!position) continue;
-        next[device.id] = {
-          s: this._space, x: position.x / NORM_W, y: position.y / NORM_W,
-        };
-        this._dirtyPos.add(device.id);
-      }
-      this._layout = next;
-      this._persistLayout();
-    }
-    this._showToast(this._t(accepted.length ? 'toast.wall_rooms_saved' : 'toast.wall_chain_saved', {
-      n: accepted.length,
-    }));
+    return this._editorRuntimeOrThrow()._applyWallFaceBatch();
   }
 
   private _commitRoom(): void {
-    const sp = this._curSpaceCfg;
-    const space = this._spaceModel();
-    if (!sp || !space) return;
-    const before = this._geometrySnapshot();
-    const H = this._spaceH;
-    const wasSplit = !!this._pendingSplit;
-    // Split changes the two source-wall edges into shorter children. Preserve
-    // the effective old profile while the original outline still proves the
-    // full extent of legacy midpoint-only wall keys; after the mutation that
-    // information is irrecoverable and one child would normalise to 0 cm.
-    const splitWalls = wasSplit
-      ? materializeWallIntervals(
-          space.rooms, sp.walls, this._openCuts(),
-          this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
-        )
-      : null;
-    const wallsBeforeSplit = wasSplit && Array.isArray(sp.walls) ? sp.walls : null;
-    let verts: number[][];
-    if (this._pendingSplit) {
-      // apply the cut now: the bigger part keeps the original room, this dialog names the rest
-      const main = sp.rooms.find((r: any) => r.id === this._pendingSplit!.roomId);
-      if (!main) {
-        this._pendingSplit = null;
-        this._splitSel = null;
-        this._roomDialog = false;
-        return;
-      }
-      main.poly = this._pendingSplit.mainPoly.map((p) => [p[0] / NORM_W, p[1] / H]);
-      delete main.x; delete main.y; delete main.w; delete main.h;
-      verts = this._pendingSplit.newPoly;
-    } else {
-      if (!this._contourClosed) return;
-      verts = this._path.slice(0, -1); // without the duplicated closing vertex
-    }
-    const areaName = this._areaSel ? this.hass.areas[this._areaSel]?.name : '';
-    const newRoom: any = {
-      id: 'r' + Date.now().toString(36),
-      name: this._nameSel || areaName || this._t('room.default_name'),
-      area: this._areaSel || null,
-      poly: verts.map((p) => [p[0] / NORM_W, p[1] / H]),
-      ...(this._roomSettingsFromDialog() ? { settings: this._roomSettingsFromDialog() } : {}),
-    };
-    if (!wasSplit && this._activeDraftId) {
-      const activeDraft = Array.isArray((sp as any).room_drafts)
-        ? (sp as any).room_drafts.find((draft: any) => draft.id === this._activeDraftId)
-        : null;
-      const cms = chainSegmentCms(
-        verts.length,
-        [...this._draftSegmentCms, this._closingWallCm ?? undefined],
-        this._drawWallCm, DRAW_WALL_DEFAULT_CM,
-      );
-      const lineage = this._draftSegmentsForPath(this._path, activeDraft, cms);
-      if (lineage.length === verts.length && lineage.every((segment) => !!segment.id)) {
-        newRoom.wall_ids = lineage.map((segment) => segment.id!);
-      }
-    }
-    sp.rooms.push(newRoom);
-    // Closing a saved draft promotes it into a room in the same transaction.
-    if (!wasSplit && this._activeDraftId && Array.isArray((sp as any).room_drafts)) {
-      (sp as any).room_drafts = (sp as any).room_drafts.filter((d: any) => d.id !== this._activeDraftId);
-      if (!(sp as any).room_drafts.length) delete (sp as any).room_drafts;
-    }
-    // A Split rewrites the parent outline and adds a child, so a span that used
-    // to sit between the parent and a neighbour may now belong to the child.
-    // Geometry first, then spans and the derived open_to — otherwise border
-    // trimming reads the new geometry while glow reads the old connectivity
-    // (AUD-159B6-02).
-    if (wasSplit) {
-      const next = this._normalizeWalls(splitWalls, this._openCuts());
-      if (next.length) sp.walls = next;
-      else if (!wallsBeforeSplit?.length) delete sp.walls;
-      else sp.walls = wallsBeforeSplit;
-    }
-    // Draw-session wall thickness: apply to new edges only; keep neighbour cm
-    // on shared stretches. Split naming does not use the Draw field.
-    if (!wasSplit) {
-      const edgeCms = chainSegmentCms(
-        verts.length,
-        [...this._draftSegmentCms, this._closingWallCm ?? undefined],
-        this._drawWallCm, DRAW_WALL_DEFAULT_CM,
-      );
-      const cm = edgeCms[0];
-      if (cm != null) {
-        this._cfgEpoch++; // the new room must be in the model before keying
-        const openCuts = this._openCuts();
-        const updatedSpace = this._spaceModel();
-        if (!updatedSpace) return;
-        let next = applyWallThicknessToNewRoom(
-          sp.walls, updatedSpace.rooms, newRoom.id, cm,
-          this._wallKeyPitch, openCuts, NORM_W,
-        );
-        // The room may have been drawn while the toolbar thickness changed.
-        // Shared stretches keep the already-existing physical wall; every
-        // outer atomic stretch receives the value of its source draft edge.
-        for (const iv of wallIntervals(
-          updatedSpace.rooms, next, openCuts,
-          this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
-        )) {
-          if (iv.roomId !== newRoom.id || iv.kind !== 'outer') continue;
-          const mid = [(iv.a[0] + iv.b[0]) / 2, (iv.a[1] + iv.b[1]) / 2];
-          const source = verts.findIndex((a, i) => {
-            const b = verts[(i + 1) % verts.length];
-            return distToSegment(mid, [a[0], a[1], b[0], b[1]]) <= this._gridPitch * 0.02;
-          });
-          if (source >= 0) next = setWallThickness(
-            next, iv.a, iv.b, edgeCms[source],
-            this._wallKeyPitch, NORM_W,
-          );
-        }
-        next = this._normalizeWalls(next, openCuts);
-        if (next.length) sp.walls = next;
-        else delete sp.walls;
-      }
-    }
-    const committed = this._commitPhysicalGeometry(
-      this._t(wasSplit ? 'history.split_room' : 'history.add_room'), before,
-    );
-    this._path = [];
-    delete this._resumeDraftBySpace[this._space];
-    this._activeDraftId = null;
-    this._draftSegmentCms = [];
-    this._closingWallCm = null;
-    this._pendingSplit = null;
-    this._splitSel = null;
-    const boundArea = this._areaSel;
-    this._areaSel = '';
-    this._nameSel = '';
-    this._roomDialog = false;
-    this._regSignature = '';
-    this._maybeRebuildDevices();
-    if (!committed) return;
-    // auto-add the area's device icons + PIN their positions in the layout,
-    // so that icons do not get reshuffled when the order in the HA registry changes.
-    let added = 0;
-    if (boundArea) {
-      const H2 = NORM_W;
-      const next = { ...this._layout };
-      for (const d of this._devices) {
-        if (d.area !== boundArea || d.space !== this._space) continue;
-        added++;
-        if (this._layout[d.id]) continue; // placed manually — leave it alone
-        const dp = this._defPos[d.id];
-        if (!dp) continue;
-        next[d.id] = { s: this._space, x: dp.x / NORM_W, y: dp.y / H2 };
-        this._dirtyPos.add(d.id);
-      }
-      this._layout = next;
-      this._persistLayout();
-    }
-    const roomsN = this._model.find((s) => s.id === this._space)?.rooms.length || 0;
-    this._showToast(
-      boundArea
-        ? this._t('toast.room_saved', { n: roomsN, added })
-        : this._t('toast.room_saved_no_area', { n: roomsN }),
-    );
+    return this._editorRuntimeOrThrow()._commitRoom();
   }
 
   private _cancelPath(): void {
-    this._wallRepairDiagnostic = null;
-    if (this._activeDraftId) this._resumeDraftBySpace[this._space] = this._activeDraftId;
-    this._path = [];
-    this._activeDraftId = null;
-    this._draftSegmentCms = [];
-    this._closingWallCm = null;
-    this._clearPlanSnapHover();
-    this._roomDialog = false;
-    this._pendingSplit = null;
-    this._wallFaceBatch = null;
-    this._splitSel = null;
-    this._mergeSel = null;
-    this._mergeDialog = null;
-    this._physicalSel = null;
-    this._physicalDrag = null;
-    this._physicalRotate = null;
-    this._clearOpeningPlacement(true);
+    return this._editorRuntimeOrThrow()._cancelPath();
   }
 
   private _resumeLastDraft(): void {
-    const id = this._resumeDraftBySpace[this._space];
-    if (!id) return;
-    const draft = this._spaceModel()?.room_drafts.find((d) => d.id === id);
-    if (!draft) { delete this._resumeDraftBySpace[this._space]; return; }
-    this._activeDraftId = id;
-    this._path = draft.points.map((p) => [...p]);
-    this._draftSegmentCms = this._adoptDraftCms(
-      this._path, draft.segments.map((s: any) => s.cm), draft.id,
-    );
-    this._clearPlanSnapHover();
+    return this._editorRuntimeOrThrow()._resumeLastDraft();
   }
 
   /** Cancel a room flow without applying geometry; graph batches keep their terminal draft. */
   private _roomDialogCancel(): void {
-    this._roomDialog = false;
-    if (this._roomEditId) {
-      this._roomEditId = null;
-      this._nameSel = '';
-      this._areaSel = '';
-      return;
-    }
-    if (this._wallFaceBatch) {
-      const batch = this._wallFaceBatch;
-      this._wallFaceBatch = null;
-      this._path = batch.activePath.map((point) => [...point]);
-      this._draftSegmentCms = [...batch.activeCms];
-      this._activeDraftId = batch.activeDraftId;
-      this._nameSel = '';
-      this._areaSel = '';
-      this.requestUpdate();
-      return;
-    }
-    if (this._pendingSplit) {
-      // nothing was applied yet — drop the cut entirely, the room stays whole
-      this._pendingSplit = null;
-      this._splitSel = null;
-      return;
-    }
-    this._undoPoint();
+    return this._editorRuntimeOrThrow()._roomDialogCancel();
   }
 
   /** HA areas not yet assigned to any room in the config. */
@@ -14118,449 +9145,65 @@ class HouseplanCard extends LitElement {
   // ================= DEVICE EDITOR (markers) =================
 
   private _openDeviceInbox(): void {
-    this._deviceInboxReturn = null;
-    this._deviceInbox = this._deviceInbox || {
-      tab: 'on_plan', search: '', showEntities: false, onlyNew: false, limit: 100,
-    };
+    return this._editorRuntimeOrThrow()._openDeviceInbox();
   }
 
   private _closeMarkerDialog(): void {
-    this._markerDialog = null;
-    if (this._deviceInboxReturn) {
-      const restored = { ...this._deviceInboxReturn };
-      this._deviceInbox = restored;
-      this._deviceInboxReturn = null;
-      if (restored.anchor) {
-        void this.updateComplete.then(() => requestAnimationFrame(() => {
-          const selector = `.device-inbox-row[data-binding="${CSS.escape(restored.anchor!)}"]`;
-          this.renderRoot.querySelector<HTMLElement>(selector)?.scrollIntoView({ block: 'nearest' });
-        }));
-      }
-    }
+    return this._editorRuntimeOrThrow()._closeMarkerDialog();
   }
 
   private _deviceInboxCandidates(showEntities: boolean) {
-    return bindingCandidates({
-      hass: this._planHass,
-      devices: this._devices,
-      markers: this._markers,
-      showEntities,
-      labels: {
-        device: this._t('marker.sub_device'),
-        z2mGroup: this._t('marker.sub_z2m_group'),
-        group: this._t('marker.sub_group'),
-        helper: this._t('marker.sub_helper'),
-        entity: this._t('marker.sub_entity'),
-      },
-    });
+    return this._editorRuntimeOrThrow()._deviceInboxCandidates(showEntities);
   }
 
   private _deviceInboxRows(): DeviceInboxRow[] {
-    const dialog = this._deviceInbox || this._deviceInboxReturn;
-    const showEntities = !!dialog?.showEntities;
-    const key = [
-      this._haRegistry.revision, this._cfgRev, this._cfgEpoch, this._regSignature,
-      this._newSyncKey, showEntities ? 1 : 0, this._showAll ? 1 : 0,
-      langOf(this.hass, this._config?.language),
-    ].join('|');
-    if (this._deviceInboxMemo?.key === key) return this._deviceInboxMemo.rows;
-    const candidates = this._deviceInboxCandidates(showEntities);
-    const bindings = new Set<string>(candidates.map((item) => item.value));
-    for (const marker of this._markers) if (marker.binding && marker.binding !== 'virtual') bindings.add(marker.binding);
-    for (const device of this._devices) {
-      if (device.bindingKind && device.bindingKind !== 'virtual' && device.bindingRef) {
-        bindings.add(`${device.bindingKind}:${device.bindingRef}`);
-      }
-    }
-    const statuses = new Map<string, HaBindingStatus>();
-    for (const binding of bindings) statuses.set(binding, this._bindingStatus(binding));
-
-    const areaMap = this._areaToSpace;
-    const areaNames: Record<string, string> = {};
-    for (const [id, area] of Object.entries<any>(this.hass?.areas || {})) {
-      areaNames[id] = areaMap[id]?.room?.name || area?.name || id;
-    }
-    // A room may keep a valid HA area reference even when the current user has
-    // only a limited area-registry snapshot.  Its plan-visible name is still
-    // authoritative for the catalog and search.
-    for (const [id, target] of Object.entries(areaMap)) {
-      areaNames[id] = target.room.name || areaNames[id] || id;
-    }
-    const spaceNames = Object.fromEntries(this._model.map((space) => [space.id, space.title]));
-    const spaceByArea = Object.fromEntries(
-      Object.entries(areaMap).map(([area, value]) => [area, value.space]),
-    );
-    const integrationByBinding: Record<string, string> = {};
-    const devicePlatforms = new Map<string, Set<string>>();
-    for (const [entityId, entity] of Object.entries<any>(this._fullRegistryHass.entities || {})) {
-      const platform = String(entity?.platform || '').trim();
-      if (platform) integrationByBinding[`entity:${entityId}`] = platform;
-      if (platform && entity?.device_id) {
-        const set = devicePlatforms.get(entity.device_id) || new Set<string>();
-        set.add(platform);
-        devicePlatforms.set(entity.device_id, set);
-      }
-    }
-    for (const [deviceId, platforms] of devicePlatforms) {
-      integrationByBinding[`device:${deviceId}`] = [...platforms].sort().join(', ');
-    }
-    const reasonByBinding: Record<string, DeviceInboxReason> = {};
-    for (const [deviceId, device] of Object.entries<any>(this._fullRegistryHass.devices || {})) {
-      const binding = `device:${deviceId}`;
-      const platforms = devicePlatforms.get(deviceId) || new Set<string>();
-      const identifierDomain = Array.isArray(device?.identifiers?.[0])
-        ? String(device.identifiers[0][0] || '') : '';
-      const excluded = [identifierDomain, ...platforms].some((domain) => this._excluded.has(domain));
-      if (device?.entry_type === 'service') reasonByBinding[binding] = 'service_entry';
-      else if (excluded) reasonByBinding[binding] = 'excluded_integration';
-      else if (device?.model === 'Group') reasonByBinding[binding] = 'grouped_light';
-      else if (/scene/i.test(device?.model || '')) reasonByBinding[binding] = 'excluded_domain';
-      else if (/bridge/i.test(`${device?.model || ''}${device?.name || ''}`)
-          || (identifierDomain === 'myheat' && device?.via_device_id)) {
-        reasonByBinding[binding] = 'represented_by_parent';
-      }
-    }
-    const rows = buildDeviceInbox({
-      devices: this._devices,
-      markers: this._markers,
-      candidates,
-      statuses,
-      newDeviceIds: this._newIds,
-      showHiddenOnPlan: this._showAll,
-      areaNames, spaceNames, spaceByArea, integrationByBinding, reasonByBinding,
-    });
-    this._deviceInboxMemo = { key, rows };
-    return rows;
+    return this._editorRuntimeOrThrow()._deviceInboxRows();
   }
 
   private _deviceForInboxRow(row: DeviceInboxRow): DevItem | null {
-    const runtime = row.deviceId ? this._devices.find((item) => item.id === row.deviceId) : null;
-    if (runtime) return runtime;
-    const marker = row.markerId ? this._markers.find((item) => item.id === row.markerId) : null;
-    if (!marker || marker.removed) return null;
-    return {
-      id: marker.id,
-      name: row.name,
-      model: row.model,
-      area: row.areaId,
-      space: row.spaceId || this._space,
-      hidden: marker.hidden === true || row.status.kind === 'ha_disabled',
-      userHidden: marker.hidden === true,
-      bindingStatus: row.status,
-      icon: row.icon,
-      entities: row.status.kind === 'active' ? row.status.enabledEntityIds : [],
-      allEntities: row.status.allEntityIds,
-      primary: row.status.kind === 'active' ? row.status.enabledEntityIds[0] : undefined,
-      marker,
-      bindingKind: row.kind,
-      bindingRef: row.binding.slice(row.binding.indexOf(':') + 1),
-      pdfs: marker.pdfs || [],
-    };
+    return this._editorRuntimeOrThrow()._deviceForInboxRow(row);
   }
 
   private _openInboxMarker(row: DeviceInboxRow, add = false): void {
-    const snapshot = this._deviceInbox;
-    if (!snapshot) return;
-    this._deviceInboxReturn = { ...snapshot, anchor: row.key };
-    this._deviceInbox = null;
-    if (!add) {
-      const device = this._deviceForInboxRow(row);
-      if (device) this._openMarkerDialog(device);
-      else this._closeMarkerDialog();
-      return;
-    }
-    this._openMarkerDialog();
-    if (!this._markerDialog) {
-      this._closeMarkerDialog();
-      return;
-    }
-    this._markerDialog = {
-      ...this._markerDialog,
-      bindingMode: 'ha', binding: row.binding, bindingOpen: false,
-      showEntities: row.kind === 'entity', name: '',
-    };
+    return this._editorRuntimeOrThrow()._openInboxMarker(row, add);
   }
 
   private async _setInboxHidden(row: DeviceInboxRow, hidden: boolean): Promise<void> {
-    const dialog = this._deviceInbox;
-    const cfg = this._serverCfg;
-    if (!dialog || !cfg || dialog.busy || row.status.kind !== 'active') return;
-    const previous = cfg.markers || [];
-    const live = previous.find((marker) => !marker.removed && marker.binding === row.binding);
-    if (!hidden && !live) return;
-    const id = live?.id || markerIdForBinding(
-      row.binding, row.markerId, () => `m_${Date.now().toString(36)}`,
-    );
-    const next: Marker = live
-      ? { ...live, hidden }
-      : { id, binding: row.binding, hidden: true };
-    cfg.markers = [
-      ...previous.filter((marker) => marker.id !== id
-        && (marker.binding !== row.binding || marker.removed === true)),
-      next,
-    ];
-    this._deviceInbox = { ...dialog, busy: row.key, anchor: row.key };
-    try {
-      await this._saveConfigNow();
-      this._regSignature = '';
-      this._deviceInboxMemo = null;
-      this._maybeRebuildDevices();
-      if (this._deviceInbox) this._deviceInbox = { ...this._deviceInbox, busy: undefined };
-      this._showToast(this._t('device_inbox.saved' as any));
-    } catch (error: any) {
-      if (this._serverCfg === cfg) cfg.markers = previous;
-      if (this._deviceInbox) this._deviceInbox = { ...this._deviceInbox, busy: undefined };
-      this._showToast(this._t('toast.error', { err: this._errText(error) }));
-    }
+    return this._editorRuntimeOrThrow()._setInboxHidden(row, hidden);
   }
 
   private _findInboxDevice(row: DeviceInboxRow): void {
-    if (!row.canFind) return;
-    const device = this._deviceForInboxRow(row);
-    if (!device) return;
-    this._deviceInbox = null;
-    if (device.space && device.space !== this._space) {
-      if (!this._commitSpace(device.space)) return;
-      this._restoreZoom();
-    }
-    const focus = () => {
-      const current = this._devices.find((item) => item.id === device.id) || device;
-      const point = this._pos(current);
-      this._applyView(this._zoom, point.x, point.y);
-      this._selId = current.id;
-      this.requestUpdate();
-      window.setTimeout(() => {
-        if (this._selId === current.id) {
-          this._selId = null;
-          this.requestUpdate();
-        }
-      }, 1500);
-    };
-    requestAnimationFrame(() => requestAnimationFrame(focus));
+    return this._editorRuntimeOrThrow()._findInboxDevice(row);
   }
 
   private _deviceInboxTabKey(event: KeyboardEvent): void {
-    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
-    const dialog = this._deviceInbox;
-    if (!dialog) return;
-    const tabs: DeviceInboxCategory[] = ['on_plan', 'available', 'hidden', 'readd'];
-    const offset = event.key === 'ArrowRight' ? 1 : -1;
-    const index = (tabs.indexOf(dialog.tab) + offset + tabs.length) % tabs.length;
-    this._deviceInbox = { ...dialog, tab: tabs[index], limit: 100, onlyNew: false };
-    event.preventDefault();
+    return this._editorRuntimeOrThrow()._deviceInboxTabKey(event);
   }
 
   private _openMarkerDialog(d?: DevItem): void {
-    // A global-camera snapshot belongs to one explicit expansion only; never
-    // carry it across device-dialog sessions.
-    this._vacAllCamerasFor = null;
-    this._vacAllCameraCache = null;
-    if (d) this._ackNewDevice(d.id);
-    if (!this._norm) {
-      this._showToast(this._t('toast.marker_needs_server'));
+    if (!this._editorRuntime) {
+      void this._ensureEditorRuntime().then((ready) => {
+        if (ready) this._openMarkerDialog(d);
+      });
       return;
     }
-    if (d) {
-      const marker = d.marker;
-      const hasIsLight = Object.prototype.hasOwnProperty.call(marker || {}, 'is_light');
-      const hasLightEntity = Object.prototype.hasOwnProperty.call(marker || {}, 'light_entity');
-      const hasGlowColor = Object.prototype.hasOwnProperty.call(marker || {}, 'glow_color');
-      const hasValueBadge = Object.prototype.hasOwnProperty.call(marker || {}, 'value_badge');
-      const hasTapAction = Object.prototype.hasOwnProperty.call(marker || {}, 'tap_action');
-      const hasToggleEntity = Object.prototype.hasOwnProperty.call(marker || {}, 'toggle_entity');
-      const glowOverride = normalizeGlowColorOverride(marker?.glow_color);
-      const currentBadge = this._devicePresentation(d, true).valueBadge;
-      const badgeCandidates = valueBadgeCandidates(this._planHass, d, this._devices);
-      const recommendedBadge = recommendedValueBadgeSource(this._planHass, d, badgeCandidates);
-      this._markerDialog = {
-        devId: d.id,
-        name: d.name,
-        binding: d.bindingKind === 'virtual' ? 'virtual' : d.bindingKind + ':' + d.bindingRef,
-        bindingMode: d.bindingKind === 'virtual' ? 'virtual' : 'ha',
-        bindingOpen: false,
-        // a marker bound to an ENTITY of a device only shows up with the box on
-        showEntities: d.bindingKind === 'entity' && !!this._fullRegistryHass.entities[d.bindingRef || '']?.device_id,
-        bindingFilter: '',
-        icon: d.marker?.icon || '',
-        autoIcon: d.icon || '',
-        display: normalizeDeviceDisplay(d.marker?.display),
-        rippleColor: safeStoredColor(d.marker?.ripple_color, ''),
-        rippleSize: Number(d.marker?.ripple_size) > 0 ? Number(d.marker!.ripple_size) : 1.5,
-        size: Number(d.marker?.size) > 0 ? Number(d.marker!.size) : 1,
-        angle: Number(d.marker?.angle) || 0,
-        tapAction: projectedTapAction(d.marker?.tap_action, d.primary?.split('.')[0]),
-        tapActionTouched: false,
-        originalHasTapAction: hasTapAction,
-        originalTapAction: d.marker?.tap_action,
-        tapHintAnnouncement: '',
-        toggleEntity: marker?.toggle_entity || '',
-        toggleEntityTouched: false,
-        originalHasToggleEntity: hasToggleEntity,
-        originalToggleEntity: marker?.toggle_entity,
-        tapTarget: d.marker?.tap_target || '',
-        tapConfirm: d.marker?.tap_confirm === true,
-        runFilter: '',
-        // Keep unknown, temporarily inactive and duplicate external targets
-        // byte-for-byte across Open → Save. Runtime uses the filtered
-        // effective projection; a legacy self-reference is not a light source.
-        controls: persistedExternalControls(d.marker?.binding, d.marker?.controls, d.entities),
-        controlsFilter: '',
-        lightRole: marker?.is_light === true ? 'always' : marker?.is_light === false ? 'never' : 'auto',
-        lightRoleTouched: false,
-        originalHasIsLight: hasIsLight,
-        originalIsLight: marker?.is_light,
-        lightEntity: marker?.light_entity || '',
-        lightEntityTouched: false,
-        originalHasLightEntity: hasLightEntity,
-        originalLightEntity: marker?.light_entity,
-        glowMode: glowOverride?.bri != null ? 'fixed' : glowOverride ? 'color' : 'auto',
-        glowColor: glowOverride?.c || this._fillColors.glow_light.c,
-        glowBrightness: Math.max(1, Math.round((glowOverride?.bri ?? 1) * 100)),
-        glowColorDrafted: !!glowOverride,
-        glowBrightnessDrafted: glowOverride?.bri != null,
-        glowTouched: false,
-        originalHasGlowColor: hasGlowColor && (!!glowOverride || marker?.glow_color === null),
-        originalGlowColor: glowOverride || (marker?.glow_color === null ? null : undefined),
-        valueBadgeEnabled: hasValueBadge ? marker?.value_badge?.enabled === true : !!currentBadge,
-        valueBadgeSource: marker?.value_badge?.source || currentBadge?.source || recommendedBadge,
-        valueBadgePosition: marker?.value_badge?.position || currentBadge?.position || 'right',
-        valueBadgeTouched: false,
-        originalHasValueBadge: hasValueBadge,
-        originalValueBadge: marker?.value_badge,
-        useClimateTemp: d.marker?.use_climate_temp === true,
-        glowRadius: Number(d.marker?.glow_radius_cm) > 0
-          ? String(this._imperial
-              ? Math.round((Number(d.marker!.glow_radius_cm) / 30.48) * 10) / 10
-              : Math.round(Number(d.marker!.glow_radius_cm)) / 100)
-          : '',
-        model: d.model || '',
-        link: d.link || '',
-        description: d.description || '',
-        pdfs: [...(d.pdfs || [])],
-        room: d.marker?.room_id
-          ? d.space + '#@' + d.marker.room_id
-          : d.space && d.area ? d.space + '#' + d.area : '',
-        hideFromPlan: d.marker?.hidden === true,
-        busy: false,
-      };
-    } else {
-      this._markerDialog = {
-        name: '', binding: 'virtual', bindingMode: 'virtual', bindingOpen: false,
-        showEntities: false, bindingFilter: '', icon: '', autoIcon: '',
-        display: 'badge', rippleColor: '', rippleSize: 1.5, size: 1, angle: 0,
-        tapAction: 'info', tapActionTouched: false,
-        originalHasTapAction: false, originalTapAction: undefined, tapHintAnnouncement: '',
-        toggleEntity: '', toggleEntityTouched: false,
-        originalHasToggleEntity: false, originalToggleEntity: undefined,
-        tapTarget: '', tapConfirm: false, runFilter: '',
-        controls: [], controlsFilter: '',
-        lightRole: 'auto', lightRoleTouched: false,
-        originalHasIsLight: false, originalIsLight: undefined,
-        lightEntity: '', lightEntityTouched: false,
-        originalHasLightEntity: false, originalLightEntity: undefined,
-        glowMode: 'auto', glowColor: this._fillColors.glow_light.c, glowBrightness: 100,
-        glowColorDrafted: false, glowBrightnessDrafted: false, glowTouched: false,
-        originalHasGlowColor: false, originalGlowColor: undefined,
-        valueBadgeEnabled: false, valueBadgeSource: null, valueBadgePosition: 'right',
-        valueBadgeTouched: false, originalHasValueBadge: false, originalValueBadge: undefined,
-        useClimateTemp: false, glowRadius: '', model: '',
-        link: '', description: '', pdfs: [], room: '', hideFromPlan: false, busy: false,
-        uploadId: 'up_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-      };
-    }
+    return this._editorRuntime._openMarkerDialog(d);
   }
 
   /** Runnable targets for the 'run' tap action: automations, scripts, scenes. */
   private _runCandidates(): { value: string; label: string; sub: string }[] {
-    const out: { value: string; label: string; sub: string }[] = [];
-    for (const dom of RUN_TARGET_DOMAINS) {
-      for (const [eid, st] of Object.entries<any>(this.hass.states)) {
-        if (!eid.startsWith(dom + '.')) continue;
-        if (!this._planEntityAvailable(eid)) continue;
-        out.push({
-          value: eid,
-          label: st?.attributes?.friendly_name || eid,
-          sub: this._t(('run.' + dom) as any),
-        });
-      }
-    }
-    return out.sort((a, b) => a.sub.localeCompare(b.sub) || a.label.localeCompare(b.label));
+    return this._editorRuntimeOrThrow()._runCandidates();
   }
 
   /** Binding candidates: HA devices + group/helper entities, minus the ones already placed. */
   private _bindingCandidates(): { value: string; label: string; sub: string }[] {
-    const list = bindingCandidates({
-      hass: this._planHass,
-      devices: this._devices,
-      markers: this._markers,
-      showEntities: !!this._markerDialog?.showEntities,
-      currentBinding: this._markerDialog?.binding,
-      currentDeviceId: this._markerDialog?.devId,
-      labels: {
-        device: this._t('marker.sub_device'),
-        z2mGroup: this._t('marker.sub_z2m_group'),
-        group: this._t('marker.sub_group'),
-        helper: this._t('marker.sub_helper'),
-        entity: this._t('marker.sub_entity'),
-      },
-    });
-    const f = (this._markerDialog?.bindingFilter || '').toLowerCase().trim();
-    const filtered = f
-      ? list.filter((o) => (o.label + ' ' + o.sub + ' ' + o.value).toLowerCase().includes(f))
-      : list;
-    filtered.sort((a, b) => a.label.localeCompare(b.label));
-    return filtered.slice(0, 200);
+    return this._editorRuntimeOrThrow()._bindingCandidates();
   }
 
   /** A closed outline may intentionally remain a set of independent walls. */
   private _keepClosedAsPartitions = (): void => {
-    if (this._wallFaceBatch) {
-      this._decideWallFace(false);
-      return;
-    }
-    if (!this._contourClosed || this._pendingSplit || !this._curSpaceCfg) return;
-    const sp = this._curSpaceCfg as any;
-    const verts = this._path.slice(0, -1);
-    if ((sp.partitions || []).length + verts.length > MAX_PARTITIONS) {
-      this._showToast(this._t('toast.physical_limit'));
-      return;
-    }
-    const before = this._geometrySnapshot();
-    // Замкнутый контур: отрезков столько же, сколько вершин, и последний —
-    // закрывающий. Его известное значение подаётся резолверу как запись, всё
-    // остальное решает единое правило (#234).
-    const cms = chainSegmentCms(
-      verts.length,
-      [...this._draftSegmentCms, this._closingWallCm ?? undefined],
-      this._drawWallCm, DRAW_WALL_DEFAULT_CM,
-    );
-    sp.partitions ||= [];
-    const seed = Date.now().toString(36);
-    const activeDraft = this._activeDraftId
-      ? (sp.room_drafts || []).find((draft: any) => draft.id === this._activeDraftId)
-      : null;
-    const lineage = this._draftSegmentsForPath(this._path, activeDraft, cms);
-    for (let i = 0; i < verts.length; i++) {
-      const a = verts[i], b = verts[(i + 1) % verts.length];
-      sp.partitions.push({
-        id: lineage[i]?.id || `partition-${seed}-${i}`,
-        a: [a[0] / NORM_W, a[1] / NORM_W],
-        b: [b[0] / NORM_W, b[1] / NORM_W],
-        cm: cms[i],
-      });
-    }
-    if (this._activeDraftId && Array.isArray(sp.room_drafts)) {
-      sp.room_drafts = sp.room_drafts.filter((d: any) => d.id !== this._activeDraftId);
-      if (!sp.room_drafts.length) delete sp.room_drafts;
-    }
-    this._commitPhysicalGeometry(this._t('history.contour_to_partitions'), before);
-    this._roomDialog = false;
-    this._path = [];
-    delete this._resumeDraftBySpace[this._space];
-    this._activeDraftId = null;
-    this._draftSegmentCms = [];
-    this._closingWallCm = null;
-  };
+    return this._editorRuntimeOrThrow()._keepClosedAsPartitions();
+  }
 
   /** All independent physical bodies in render units. Physics intentionally
    * does not depend on show_borders. */
@@ -14597,7 +9240,7 @@ class HouseplanCard extends LitElement {
     }
     const roomKey = room.id || `#${space.rooms.indexOf(room)}`;
     const key = `${space.id}|${this._cfgEpoch}|${roomKey}`;
-    if (!this._resize.preview) {
+    if (!this._resize?.preview) {
       const cached = lruRead(this._cleanFloorCache, key);
       if (cached.hit) return cached.value;
     }
@@ -14615,7 +9258,7 @@ class HouseplanCard extends LitElement {
       path: geom ? polyclipPathD(geom) : '',
       area: geom ? geometryArea(geom) : geometryArea([[[...floor, floor[0]]]]),
     };
-    if (!this._resize.preview) {
+    if (!this._resize?.preview) {
       lruWrite(this._cleanFloorCache, key, result, 600);
     }
     return result;
@@ -14709,13 +9352,7 @@ class HouseplanCard extends LitElement {
   }
 
   private _backupErrorText(e: any): string {
-    const code = e?.code ?? e?.error;
-    if (typeof code === 'string') {
-      const key = `backup.error.${code}`;
-      const translated = this._t(key as I18nKey);
-      if (translated !== key) return translated;
-    }
-    return this._errText(e);
+    return this._editorRuntimeOrThrow()._backupErrorText(e);
   }
 
   /**
@@ -14723,382 +9360,38 @@ class HouseplanCard extends LitElement {
    * limit breaks the connection on large PDFs.
    */
   private async _pickMarkerFiles(ev: Event): Promise<void> {
-    const input = ev.target as HTMLInputElement;
-    const files = input.files ? [...input.files] : [];
-    input.value = '';
-    if (!files.length || !this._markerDialog) return;
-    const mid = this._markerDialog.uploadId || this._markerDialog.devId || 'new';
-    const uploaded: PdfRef[] = [];
-    for (const file of files) {
-      try {
-        const fd = new FormData();
-        fd.append('marker_id', mid);
-        fd.append('file', file, file.name);
-        // fetchWithAuth refreshes a stale access_token itself; the fallback is the raw token
-        const resp: Response = this.hass?.fetchWithAuth
-          ? await this.hass.fetchWithAuth('/api/houseplan/upload', { method: 'POST', body: fd })
-          : await fetch('/api/houseplan/upload', {
-              method: 'POST',
-              body: fd,
-              headers: this.hass?.auth?.data?.access_token
-                ? { authorization: `Bearer ${this.hass.auth.data.access_token}` }
-                : {},
-            });
-        const json = await resp.json().catch(() => ({}));
-        if (!resp.ok || json.error) {
-          const map: Record<string, string> = {
-            too_large: this._t('err.too_large', { mb: json.max_mb || 50 }),
-            bad_ext: this._t('err.bad_ext'),
-            unauthorized: this._t('err.unauthorized'),
-          };
-          throw new Error(map[json.error] || json.error || 'HTTP ' + resp.status);
-        }
-        uploaded.push({ name: json.name || file.name, url: json.url });
-      } catch (e: any) {
-        this._showToast(this._t('toast.file_failed', { name: file.name, err: this._errText(e) }));
-      }
-    }
-    // the dialog might have closed during the upload — add only if it is still open
-    if (uploaded.length && this._markerDialog) {
-      this._markerDialog = { ...this._markerDialog, pdfs: [...this._markerDialog.pdfs, ...uploaded] };
-      this._showToast(this._t('toast.files_attached', { n: uploaded.length }));
-    }
+    return this._editorRuntimeOrThrow()._pickMarkerFiles(ev);
   }
 
   private _removeMarkerPdf(url: string): void {
-    if (!this._markerDialog) return;
-    this._markerDialog = {
-      ...this._markerDialog,
-      pdfs: this._markerDialog.pdfs.filter((p) => p.url !== url),
-    };
+    return this._editorRuntimeOrThrow()._removeMarkerPdf(url);
   }
 
   /** Persist only deliberate role/appearance edits; untouched legacy absence stays absent. */
   private _markerLightFields(d: NonNullable<HouseplanCard['_markerDialog']>): Partial<Marker> {
-    const fields: Partial<Marker> = {};
-    if (!d.lightRoleTouched) {
-      if (d.originalHasIsLight) fields.is_light = d.originalIsLight ?? null;
-    } else if (d.lightRole === 'always') fields.is_light = true;
-    else if (d.lightRole === 'never') fields.is_light = false;
-
-    if (!d.lightEntityTouched) {
-      if (d.originalHasLightEntity) fields.light_entity = d.originalLightEntity ?? null;
-    } else if (d.lightEntity) {
-      fields.light_entity = d.lightEntity;
-    }
-
-    if (!d.glowTouched) {
-      if (d.originalHasGlowColor) fields.glow_color = d.originalGlowColor ?? null;
-    } else if (d.glowMode !== 'auto') {
-      const glow: NonNullable<Marker['glow_color']> = {
-        c: safeStoredColor(d.glowColor, this._fillColors.glow_light.c),
-      };
-      if (d.glowMode === 'fixed') {
-        glow.bri = Math.max(0.01, Math.min(1, Math.round(d.glowBrightness) / 100));
-      }
-      fields.glow_color = glow;
-    }
-    return fields;
+    return this._editorRuntimeOrThrow()._markerLightFields(d);
   }
 
   /** Preserve absent/default and legacy cover until the user edits the select. */
   private _markerTapActionFields(
     d: NonNullable<HouseplanCard['_markerDialog']>,
   ): Pick<Marker, 'tap_action'> | Record<string, never> {
-    if (!d.tapActionTouched) {
-      return d.originalHasTapAction ? { tap_action: d.originalTapAction ?? null } : {};
-    }
-    return { tap_action: d.tapAction || null };
+    return this._editorRuntimeOrThrow()._markerTapActionFields(d);
   }
 
   /** Preserve absence and stale/future literals until this exact selector is edited. */
   private _markerToggleEntityFields(
     d: NonNullable<HouseplanCard['_markerDialog']>,
   ): Pick<Marker, 'toggle_entity'> | Record<string, never> {
-    return toggleEntityWriteFields({
-      touched: d.toggleEntityTouched,
-      originalHas: d.originalHasToggleEntity,
-      original: d.originalToggleEntity,
-      value: d.toggleEntity,
-    });
+    return this._editorRuntimeOrThrow()._markerToggleEntityFields(d);
   }
 
   private async _saveMarker(): Promise<void> {
-    const dlg = this._markerDialog;
-    if (!dlg || dlg.busy) return;
-    const effectiveTapAction = this._effectiveMarkerTapAction(dlg);
-    if (dlg.bindingMode === 'ha' && (!dlg.binding || dlg.binding === 'virtual')) return;
-    if (dlg.binding === 'virtual' && !dlg.name.trim()) {
-      this._showToast(this._t('toast.virtual_name_required'));
-      return;
-    }
-    if (effectiveTapAction === 'run' && !dlg.tapTarget) {
-      this._showToast(this._t('toast.run_target_required'));
-      return;
-    }
-    if (dlg.valueBadgeTouched && dlg.valueBadgeEnabled && !dlg.valueBadgeSource) {
-      this._showToast(this._t('toast.value_badge_source_required'));
-      return;
-    }
-    if (dlg.bindingMode === 'ha') {
-      const status = this._bindingStatus(dlg.binding);
-      const previous = dlg.devId
-        ? this._markers.find((marker) => marker.id === dlg.devId) : null;
-      const replacingWithInactive = !previous || previous.binding !== dlg.binding;
-      if (status.kind !== 'active' && replacingWithInactive) {
-        this._showToast(this._t(status.kind === 'ha_disabled'
-          ? 'toast.ha_disabled_add' : 'toast.ha_binding_unverified'));
-        return;
-      }
-      // Saving metadata for an already-disabled binding is allowed, but a
-      // blocked Show attempt may never erase an older explicit user hidden.
-      if (status.kind === 'ha_disabled' && previous?.hidden === true && !dlg.hideFromPlan) {
-        this._markerDialog = { ...dlg, hideFromPlan: true };
-        this._showToast(this._t(status.reason === 'entity'
-          ? 'toast.ha_disabled_show_entity' : 'toast.ha_disabled_show_device'));
-        return;
-      }
-    }
-    const cfg = this._serverCfg;
-    if (!cfg) return;
-    const markers = cfg.markers || [];
-    const roomRef = parseRoomRef(dlg.room);
-    let space: string | null = roomRef?.space || null;
-    const area: string | null = roomRef?.area || null;
-    const roomId: string | null = roomRef?.roomId || null;
-    const id = markerIdForBinding(dlg.binding, dlg.devId, () => 'v_' + Date.now().toString(36));
-    const oldId = dlg.devId;
-    const prevDev = oldId ? this._devices.find((x) => x.id === oldId) : null;
-    const explicitSpaceId = roomRef?.space || prevDev?.space || null;
-    const targetSpaceModel = explicitSpaceId
-      ? this._spaceModelById(explicitSpaceId)
-      : this._spaceModel();
-    if (!targetSpaceModel) return;
-    const targetSpaceId = targetSpaceModel.id;
-    if (dlg.binding === 'virtual' && !space) space = targetSpaceId;
-    this._markerDialog = { ...dlg, busy: true };
-    try {
-      const replacedRemovedIds = dlg.binding === 'virtual'
-        ? []
-        : markers
-          .filter((m) => m.removed && m.binding === dlg.binding)
-          .map((m) => m.id);
-      const replacingRemoved = replacedRemovedIds.length > 0;
-      const controls = persistedExternalControls(
-        dlg.binding, dlg.controls, this._bindingEntities(dlg.binding),
-      );
-      // the vacuum block is edited live outside the dialog transaction —
-      // the rebuild below must carry it over, not erase it
-      const prevVac = markers.find((m0: Marker) => m0.id === id || m0.id === oldId)?.vacuum || null;
-      const marker: Marker = {
-        id,
-        vacuum: prevVac,
-        binding: dlg.binding,
-        name: dlg.name.trim() || null,
-        icon: dlg.icon || null,
-        display: dlg.display !== 'badge' ? dlg.display : null,
-        ripple_color: dlg.display === 'icon_ripple' && dlg.rippleColor ? dlg.rippleColor : null,
-        ripple_size: dlg.display === 'icon_ripple' && dlg.rippleSize !== 1.5 ? dlg.rippleSize : null,
-        size: dlg.size !== 1 ? dlg.size : null,
-        angle: dlg.angle ? dlg.angle : null,
-        ...this._markerTapActionFields(dlg),
-        ...this._markerToggleEntityFields(dlg),
-        tap_target: effectiveTapAction === 'run' ? dlg.tapTarget || null : null,
-        tap_confirm: dlg.tapConfirm ? true : null,
-        controls: controls.length ? controls : null,
-        // pdfs may be rewritten below when rebinding changes the marker id
-        ...this._markerLightFields(dlg),
-        ...this._markerValueBadgeFields(dlg),
-        use_climate_temp: dlg.useClimateTemp ? true : null,
-        glow_radius_cm: (() => {
-          const v = strictNumber(dlg.glowRadius);
-          if (v == null || v <= 0) return null;
-          return Math.round(this._imperial ? v * 30.48 : v * 100);
-        })(),
-        model: dlg.model.trim() || null,
-        link: dlg.link.trim() || null,
-        description: dlg.description.trim() || null,
-        pdfs: dlg.pdfs,
-        // Explicit false, not absence: a marker of any kind is what tells the
-        // seeder "the user decided" — unticking must not invite a re-hide
-        // (docs/FILTERING.md).
-        hidden: dlg.hideFromPlan ? true : false,
-      };
-      // save the room choice (always for virtual ones; for bound ones — if chosen)
-      if (dlg.binding === 'virtual' || dlg.room) {
-        marker.space = space;
-        marker.area = area;
-        marker.room_id = roomId;
-      }
-      // the room changed → move the icon to its center
-      const prevRoomId = prevDev?.marker?.room_id ?? null;
-      const roomChanged = !!dlg.room && prevDev != null
-        && (prevDev.space !== space || prevDev.area !== area || prevRoomId !== roomId);
-      // Rebinding changes the marker id, so the uploaded files must follow.
-      // Order matters (review CR-2): COPY first, save the config, and only then
-      // delete the old folder. If the save is rejected, the old urls in the
-      // stored config still resolve — the files never left. A failed copy
-      // leaves the urls untouched and tells the user (review CR-3).
-      let cleanupOldFiles = false;
-      // a new icon uploaded into its own staging folder; an edited one into its
-      // own id. Either way the files move to the final id here.
-      const fileSrc = dlg.uploadId || oldId;
-      if (fileSrc && fileSrc !== id && marker.pdfs?.length) {
-        try {
-          const res: any = await this.hass.callWS({
-            type: 'houseplan/files/migrate', from_id: fileSrc, to_id: id,
-          });
-          const mapping = res?.mapping || {};
-          marker.pdfs = migratePdfUrls(marker.pdfs, fileSrc, id, mapping);
-          cleanupOldFiles = Object.keys(mapping).length > 0;
-        } catch (e: any) {
-          this._showToast(this._t('toast.files_migrate_failed', { err: this._errText(e) }));
-        }
-      }
-      // Rebinding changes source identity. Rewrite every marker:* edge in the
-      // same config transaction before replacing the marker itself.
-      cfg.markers = markers;
-      if (oldId && oldId !== id) cfg.markers = rewriteMarkerControlReferences(cfg.markers, oldId, id);
-      if (oldId && oldId !== id && marker.value_badge?.source?.kind === 'derived_marker_state'
-          && marker.value_badge.source.ref === `marker:${oldId}`) {
-        marker.value_badge.source = { kind: 'derived_marker_state', ref: `marker:${id}` };
-      }
-      // remove the previous marker (by the old id and by the new id)
-      cfg.markers = cfg.markers.filter(
-        (m) => m.id !== id && m.id !== oldId
-          && (marker.binding === 'virtual' || m.binding !== marker.binding),
-      );
-      cfg.markers.push(marker);
-      // Position rule (owner's decision, v1.33.4): editing an existing icon —
-      // rebinding it to another HA device/entity or to another room — must NOT
-      // move it. Its current position (saved or the ephemeral auto one) is
-      // migrated to the new marker id. Only two cases still center the icon:
-      // a truly NEW icon, and a move to a room in a DIFFERENT space (keeping
-      // the old coordinates there would be meaningless).
-      // Write POINT-WISE (layout/update), not the whole layout — a full layout/set
-      // overwrites positions changed in other windows (the v1.4.4 incident).
-      let newPos: { s: string; x: number; y: number } | null = null;
-      const prevRec = oldId ? this._layout[oldId] : null;
-      const prevPos = prevRec
-        ? { s: prevRec.s || prevDev?.space || this._space, x: prevRec.x, y: prevRec.y }
-        : oldId && prevDev && this._defPos[oldId]
-          ? this._normPos(prevDev.space, this._defPos[oldId].x, this._defPos[oldId].y)
-          : null;
-      if (!replacingRemoved && prevPos && prevPos.s === targetSpaceId) {
-        // stays in place; pin it under the (possibly new) id
-        if (id !== oldId || !this._layout[id] || roomChanged) {
-          newPos = { s: prevPos.s, x: prevPos.x, y: prevPos.y };
-          this._layout = { ...this._layout, [id]: newPos };
-        }
-      } else if (replacingRemoved || !this._layout[id] || roomChanged) {
-        let cx = targetSpaceModel.vb[0] + targetSpaceModel.vb[2] / 2;
-        let cy = targetSpaceModel.vb[1] + targetSpaceModel.vb[3] / 2;
-        const room = roomId
-          ? targetSpaceModel.rooms.find((r) => r.id === roomId)
-          : area
-            ? targetSpaceModel.rooms.find((r) => r.area === area)
-            : undefined;
-        if (room) [cx, cy] = this._roomCenter(room);
-        newPos = this._normPos(targetSpaceId, cx, cy);
-        this._layout = { ...this._layout, [id]: newPos };
-      }
-      await this._saveConfigNow();
-      if (newPos) {
-        const pos = canonicalizePosition(newPos);
-        this._layout = { ...this._layout, [id]: pos };
-        this._noteLayoutRev(await this.hass.callWS({
-          type: 'houseplan/layout/update', device_id: id, pos,
-        }));
-      }
-      const obsoleteIds = new Set(replacedRemovedIds);
-      if (oldId && oldId !== id) obsoleteIds.add(oldId);
-      obsoleteIds.delete(id);
-      for (const obsoleteId of obsoleteIds) {
-        // Rebinding or replacing a legacy tombstone changed the icon id.
-        delete this._layout[obsoleteId];
-        await this.hass.callWS({ type: 'houseplan/layout/delete', device_id: obsoleteId })
-          .then((r: any) => this._noteLayoutRev(r)).catch(() => undefined);
-      }
-      // the config is committed — now it is safe to drop the old folder
-      if (cleanupOldFiles && fileSrc) {
-        await this.hass
-          .callWS({ type: 'houseplan/files/cleanup', marker_id: fileSrc })
-          .catch(() => undefined); // leftovers are harmless; broken links are not
-      }
-      this._closeMarkerDialog();
-      this._regSignature = '';
-      this._maybeRebuildDevices();
-      this._showToast(this._t('toast.marker_saved'));
-    } catch (e: any) {
-      // audit L3: the dialog may have been closed (Esc) while the save was
-      // in flight — spreading null yields a truthy husk and the renderer
-      // then crashes, blanking the whole card. The toast below is the
-      // only remaining signal, so it must still fire.
-      if (this._markerDialog) this._markerDialog = { ...this._markerDialog, busy: false };
-      this._showToast(this._t('toast.error', { err: this._errText(e) }));
-    }
+    return this._editorRuntimeOrThrow()._saveMarker();
   }
 
   private async _deleteMarker(): Promise<void> {
-    const dlg = this._markerDialog;
-    if (!dlg || dlg.busy || !dlg.devId) return;
-    const d = dlg.devId ? this._devices.find((x) => x.id === dlg.devId) : null;
-    const persisted = this._markers.find((marker) => marker.id === dlg.devId);
-    if (!d && !persisted) return;
-    const label = dlg.name || this._t('device.fallback');
-    if (!confirm(this._t('confirm.remove_marker', { name: label }))) return;
-    const cfg = this._serverCfg!;
-    cfg.markers = cfg.markers || [];
-    const previousMarkers = cfg.markers;
-    const targetId = d?.id || persisted!.id;
-    const binding = d
-      ? d.bindingKind === 'virtual' ? 'virtual'
-        : d.bindingKind && d.bindingRef ? `${d.bindingKind}:${d.bindingRef}` : ''
-      : persisted!.binding;
-    if (!binding) return;
-    const deletion = deletePlanMarkerRecords(
-      cfg.markers, targetId, binding, binding === 'virtual',
-    );
-    cfg.markers = removeMarkerControlReferences(deletion.markers, deletion.cleanupIds);
-    const cleanupIds = deletion.cleanupIds;
-    this._markerDialog = { ...dlg, busy: true };
-    try {
-      await this._saveConfigNow();
-      // Housekeeping follows the durable config write. Every call is
-      // idempotent and best-effort: the device is already deleted even if an
-      // old integration cannot yet serve one of the cleanup commands.
-      for (const id of cleanupIds) {
-        delete this._layout[id];
-        delete this._defPos[id];
-        this._dirtyPos.delete(id);
-        this._sentPos.delete(id);
-        const activity = this._activityRt.get(id);
-        if (activity) clearTimeout(activity.timer);
-        this._activityRt.delete(id);
-        this._vacRt.delete(id);
-        delete this._vacSrvTrails[id];
-        await this.hass.callWS({ type: 'houseplan/layout/delete', device_id: id })
-          .then((r: any) => this._noteLayoutRev(r)).catch(() => undefined);
-        await this.hass.callWS({ type: 'houseplan/files/cleanup', marker_id: id })
-          .catch(() => undefined);
-        await this.hass.callWS({ type: 'houseplan/trail/delete', marker_id: id })
-          .catch(() => undefined);
-      }
-      if (this._deviceInboxReturn) {
-        this._deviceInboxReturn = { ...this._deviceInboxReturn, tab: 'readd', anchor: binding };
-      }
-      this._closeMarkerDialog();
-      if (this._infoCard?.id === targetId) this._closeInfoCard();
-      if (this._selId === targetId) this._selId = null;
-      if (this._drag?.id === targetId) this._drag = null;
-      this._regSignature = '';
-      this._maybeRebuildDevices();
-      this._showToast(this._t('toast.marker_removed'));
-    } catch (e: any) {
-      if (this._serverCfg === cfg) cfg.markers = previousMarkers;
-      if (this._markerDialog) this._markerDialog = { ...this._markerDialog, busy: false };
-      this._showToast(this._t('toast.error', { err: this._errText(e) }));
-    }
+    return this._editorRuntimeOrThrow()._deleteMarker();
   }
 
   private _normPos(space: string, x: number, y: number): { s: string; x: number; y: number } {
@@ -15107,104 +9400,47 @@ class HouseplanCard extends LitElement {
 
   // ================= SPACE MANAGEMENT =================
 
+  private _spaceDialogUsesOnboardingRuntime(mode: 'edit' | 'create'): boolean {
+    return mode === 'create' && !this._editorRuntime && (
+      !!this._onboardingRuntime
+      ||
+      (this._serverCfg?.spaces.length || 0) === 0
+      || this._importTotal > 0
+      || this._importQueue.length > 0
+    );
+  }
+
+  private _spaceRuntimeOrThrow(): import('./houseplan-onboarding-runtime').HouseplanOnboardingRuntime {
+    if (!this._onboardingRuntime) throw new Error('Houseplan onboarding runtime is not loaded');
+    return this._onboardingRuntime;
+  }
+
   private _openSpaceDialog(mode: 'edit' | 'create', spaceId?: string): void {
-    if (!this._serverStorage || !this._serverCfg) {
-      this._showToast(this._t('toast.integration_missing'));
+    if (this._spaceDialogUsesOnboardingRuntime(mode)) {
+      if (this._onboardingRuntime) {
+        this._onboardingRuntime._openSpaceDialog(mode, spaceId);
+        return;
+      }
+      void this._ensureOnboardingRuntime().then((ready) => {
+        if (ready) this._spaceRuntimeOrThrow()._openSpaceDialog(mode, spaceId);
+      });
       return;
     }
-    if (mode === 'edit') {
-      const sp = this._serverCfg!.spaces.find((x: any) => x.id === spaceId);
-      if (!sp) return;
-      const disp = spaceDisplayOf(sp);
-      const storedCustom = sp.settings?.custom_fill && typeof sp.settings.custom_fill === 'object'
-        ? customFillOf(sp.settings.custom_fill) : null;
-      // Space-level None is no longer a separate UI choice. Project it to the
-      // same custom colour at zero opacity, so merely opening/saving settings
-      // cannot change either the visible floor or the Glow darkness.
-      const dialogCustom = disp.fill === 'none'
-        ? { ...(storedCustom || DEFAULT_CUSTOM_FILL), a: 0 }
-        : storedCustom;
-      this._spaceDialog = {
-        mode, spaceId, title: sp.title, planUrl: sp.plan_url || null, planFile: null,
-        source: sp.plan_url ? 'file' : 'draw',
-        showBorders: disp.showBorders, showNames: disp.showNames,
-        zeroWallStyle: zeroWallStyleOf(sp),
-        displayTouched: true,
-        hideDecor: disp.hideDecor, hideOpenings: disp.hideOpenings,
-        roomColor: disp.color, roomOpacity: disp.opacity,
-        // `none` is a legacy space token. The current editor represents its
-        // exact appearance as a transparent user colour.
-        fillMode: disp.fill === 'none' ? 'custom' : disp.fill,
-        customFill: dialogCustom,
-        glowEnabled: disp.glow,
-        bgColor: disp.bgColor,
-        bgMode: sp.settings?.bg_mode === 'static' || sp.settings?.bg_mode === 'daynight' ? sp.settings.bg_mode : null,
-        northDeg: northDegOf({}, sp.settings),
-        sunRays: typeof sp.settings?.sun_rays === 'boolean' ? sp.settings.sun_rays : null,
-        tempMin: disp.tempMin, tempMax: disp.tempMax,
-        showLqi: disp.showLqi ?? this._config?.show_signal ?? true,
-        cardFontScale: disp.cardFontScale,
-        labelTemp: disp.labelTemp, labelHum: disp.labelHum,
-        labelLqi: disp.labelLqi, labelLight: disp.labelLight,
-        cellCm: Number(sp.cell_cm) > 0 ? Number(sp.cell_cm) : 5,
-        cellCmInput: gridCellFieldValue(
-          Number(sp.cell_cm) > 0 ? Number(sp.cell_cm) : 5, this._imperial,
-        ),
-        cellCmTouched: false,
-        busy: false,
-      };
-    } else {
-      this._spaceDialog = {
-        mode, title: '', planUrl: null, planFile: null,
-        ...initialSpaceDisplayDraft(),
-        hideDecor: false, hideOpenings: false, zeroWallStyle: 'dashed',
-        roomColor: DEFAULT_ROOM_COLOR, roomOpacity: DEFAULT_ROOM_OPACITY, fillMode: 'custom',
-        // `custom` replaces the old `none` choice in the editor, but creating
-        // a space must preserve the old no-floor visual by default. The user
-        // can make this colour visible explicitly with the opacity control.
-        customFill: { ...DEFAULT_CUSTOM_FILL, a: 0 },
-        glowEnabled: true,
-        bgColor: null,
-        bgMode: 'daynight', northDeg: null, sunRays: null,
-        tempMin: DEFAULT_TEMP_MIN, tempMax: DEFAULT_TEMP_MAX,
-        showLqi: this._config?.show_signal ?? true,
-        cardFontScale: 1,
-        labelTemp: false, labelHum: false, labelLqi: false, labelLight: false,
-        cellCm: newSpaceCellCm(this._imperial),
-        cellCmInput: gridCellFieldValue(newSpaceCellCm(this._imperial), this._imperial),
-        cellCmTouched: false,
-        busy: false,
-      };
+    if (!this._editorRuntime) {
+      void this._ensureEditorRuntime().then((ready) => {
+        if (ready) this._openSpaceDialog(mode, spaceId);
+      });
+      return;
     }
+    return this._editorRuntime._openSpaceDialog(mode, spaceId);
   }
 
   /** Background file selection: read base64 and determine the aspect ratio. */
   private async _pickPlanFile(ev: Event): Promise<void> {
-    const input = ev.target as HTMLInputElement;
-    const file = input.files?.[0];
-    if (!file || !this._spaceDialog) return;
-    const extMap: Record<string, string> = {
-      'image/svg+xml': 'svg', 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp',
-    };
-    const ext = extMap[file.type] || (file.name.toLowerCase().endsWith('.svg') ? 'svg' : '');
-    if (!ext) {
-      this._showToast(this._t('toast.plan_formats'));
-      return;
+    if (this._onboardingRuntime && this._spaceDialogUsesOnboardingRuntime('create')) {
+      return this._onboardingRuntime._pickPlanFile(ev);
     }
-    const buf = new Uint8Array(await file.arrayBuffer());
-    let bin = '';
-    for (let i = 0; i < buf.length; i += 32768) bin += String.fromCharCode(...buf.subarray(i, i + 32768));
-    const b64 = btoa(bin);
-    // aspect ratio: render into an Image
-    const url = URL.createObjectURL(file);
-    const aspect = await new Promise<number>((res) => {
-      const img = new Image();
-      img.onload = () => res(img.naturalWidth && img.naturalHeight ? img.naturalWidth / img.naturalHeight : 1.414);
-      img.onerror = () => res(1.414);
-      img.src = url;
-    });
-    URL.revokeObjectURL(url);
-    this._spaceDialog = { ...this._spaceDialog, planFile: { ext, b64, aspect, name: file.name } };
+    return this._editorRuntimeOrThrow()._pickPlanFile(ev);
   }
 
   /**
@@ -15214,36 +9450,21 @@ class HouseplanCard extends LitElement {
    * it out of the list. It is also the only way one is ever deleted.
    */
   private _toggleServerPlans = async (): Promise<void> => {
-    const d = this._spaceDialog;
-    if (!d) return;
-    if (d.pickSaved) {
-      this._spaceDialog = { ...d, pickSaved: false };
-      return;
+    if (this._onboardingRuntime && this._spaceDialogUsesOnboardingRuntime('create')) {
+      return this._onboardingRuntime._toggleServerPlans();
     }
-    this._spaceDialog = { ...d, pickSaved: true, savedBusy: true };
-    try {
-      const r: any = await this.hass.callWS({ type: 'houseplan/plans/list' });
-      const cur = this._spaceDialog;
-      if (cur) this._spaceDialog = { ...cur, saved: r?.plans || [], savedBusy: false };
-    } catch (e: any) {
-      const cur = this._spaceDialog;
-      if (cur) this._spaceDialog = { ...cur, saved: [], savedBusy: false };
-      this._showToast(this._t('toast.plans_list_failed', { err: this._errText(e) }));
-    }
-  };
+    return this._editorRuntimeOrThrow()._toggleServerPlans();
+  }
 
   /** The in-flight proportions read for the last picked saved plan. Save
    *  awaits it rather than shipping whatever was there before (HP-1490-04). */
   private _aspectJob: Promise<number> | null = null;
 
   private _useServerPlan(url: string): void {
-    const d = this._spaceDialog;
-    if (!d) return;
-    // Attach immediately — the click should not wait for anything. The OLD
-    // file's proportions go right away: they describe the previous image, and
-    // a Save racing the read must get "unknown", never "the wrong shape".
-    this._spaceDialog = { ...d, planUrl: url, planFile: null, pickSaved: false, savedAspect: undefined };
-    this._aspectJob = this._readPlanAspect(url);
+    if (this._onboardingRuntime && this._spaceDialogUsesOnboardingRuntime('create')) {
+      return this._onboardingRuntime._useServerPlan(url);
+    }
+    return this._editorRuntimeOrThrow()._useServerPlan(url);
   }
 
   /**
@@ -15257,284 +9478,35 @@ class HouseplanCard extends LitElement {
    * answer would reshape whatever the user opened next.
    */
   private async _readPlanAspect(url: string): Promise<number> {
-    for (let i = 0; i < 40; i++) {           // ~6 s, then give up quietly
-      const src = this._display(url);
-      if (src) {
-        const ratio = await new Promise<number>((res) => {
-          const img = new Image();
-          img.onload = () => res(img.naturalWidth && img.naturalHeight
-            ? img.naturalWidth / img.naturalHeight : 0);
-          img.onerror = () => res(0);
-          img.src = src;
-        });
-        const cur = this._spaceDialog;
-        if (cur && cur.planUrl === url && Number.isFinite(ratio) && ratio > 0) {
-          this._spaceDialog = { ...cur, savedAspect: ratio };
-          return ratio;
-        }
-        return 0;
-      }
-      await new Promise((r) => setTimeout(r, 150));
-      if (this._spaceDialog?.planUrl !== url) return 0;   // the user moved on
+    if (this._onboardingRuntime && this._spaceDialogUsesOnboardingRuntime('create')) {
+      return this._onboardingRuntime._readPlanAspect(url);
     }
-    return 0;
+    return this._editorRuntimeOrThrow()._readPlanAspect(url);
   }
 
   private async _deleteServerPlan(name: string): Promise<void> {
-    if (!confirm(this._t('confirm.delete_plan', { name }))) return;
-    try {
-      await this.hass.callWS({ type: 'houseplan/plans/delete', name });
-      const d = this._spaceDialog;
-      if (d?.saved) this._spaceDialog = { ...d, saved: d.saved.filter((p) => p.name !== name) };
-    } catch (e: any) {
-      this._showToast(this._t('toast.plan_delete_failed', { err: this._errText(e) }));
+    if (this._onboardingRuntime && this._spaceDialogUsesOnboardingRuntime('create')) {
+      return this._onboardingRuntime._deleteServerPlan(name);
     }
+    return this._editorRuntimeOrThrow()._deleteServerPlan(name);
   }
 
   private _renderServerPlans(d: NonNullable<typeof this._spaceDialog>): TemplateResult {
-    if (d.savedBusy) return html`<div class="savedplans muted">${this._t('space.loading')}</div>`;
-    const list = d.saved || [];
-    if (!list.length) return html`<div class="savedplans muted">${this._t('space.no_saved')}</div>`;
-    const kb = (n: number) => (n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.round(n / 1024) + ' KB');
-    return html`<div class="savedplans">
-      ${list.map((p) => html`
-        <div class="savedplan ${p.url === d.planUrl ? 'cur' : ''}">
-          <img src=${this._display(p.url)} alt="" loading="lazy" decoding="async" />
-          <div class="savedmeta">
-            <b>${p.name}</b>
-            <span class="muted">${kb(p.size)}${p.used_by.length
-              ? ' · ' + this._t('space.used_by', { list: p.used_by.join(', ') })
-              : ''}</span>
-          </div>
-          <button class="btn ghost" @click=${() => this._useServerPlan(p.url)}
-            ?disabled=${p.url === d.planUrl}>${this._t('btn.use')}</button>
-          <button class="btn ghost danger"
-            title=${p.used_by.length || p.url === d.planUrl ? this._t('space.in_use') : this._t('btn.delete')}
-            ?disabled=${p.used_by.length > 0 || p.url === d.planUrl}
-            @click=${() => this._deleteServerPlan(p.name)}>
-            <ha-icon icon="mdi:trash-can-outline"></ha-icon>
-          </button>
-        </div>`)}
-    </div>`;
+    if (this._onboardingRuntime && this._spaceDialogUsesOnboardingRuntime(d.mode)) {
+      return this._onboardingRuntime._renderServerPlans(d);
+    }
+    return this._editorRuntimeOrThrow()._renderServerPlans(d);
   }
 
   private async _saveSpaceDialog(): Promise<void> {
-    const d = this._spaceDialog;
-    if (!d || d.busy || !d.title.trim()) return;
-    if (d.source === 'file' && !d.planFile && !d.planUrl) {
-      this._showToast(this._t('toast.plan_required'));
-      return;
+    if (this._onboardingRuntime && this._spaceDialogUsesOnboardingRuntime('create')) {
+      return this._onboardingRuntime._saveSpaceDialog();
     }
-    const wasFirst = d.mode === 'create' && (this._serverCfg?.spaces.length || 0) === 0;
-    this._spaceDialog = { ...d, busy: true };
-    try {
-      const spaceId = d.mode === 'create' ? 's' + Date.now().toString(36) : d.spaceId!;
-
-      /* Upload BEFORE touching the config, and never hold a reference to a
-         config object across an await. `houseplan/config/get` runs on every
-         `houseplan_config_updated` event and REPLACES `_serverCfg`; a space
-         object captured before the upload is then detached, so plan_url,
-         aspect and settings were written into an orphan and the save shipped
-         the untouched config. Symptom: the file lands on disk, the plan never
-         appears, and re-saving does not help (owner's install, 2026-07-27). */
-      let uploaded: { url: string; aspect: number } | null = null;
-      if (d.source === 'file' && d.planFile) {
-        const resp = await this.hass.callWS({
-          type: 'houseplan/plan/set', space_id: spaceId, ext: d.planFile.ext, data: d.planFile.b64,
-        });
-        uploaded = { url: resp.url, aspect: d.planFile.aspect };
-      }
-
-      // A plan picked from the server list reads its proportions from the
-      // image, and Save used to outrun that read: the snapshot still carried
-      // the PREVIOUS file's ratio and a wide plan came out at the old shape
-      // for good (HP-1490-04). Wait for the read — it is bounded (~6 s) and
-      // the dialog is already busy. Unknown stays unknown, never the old
-      // value: a square fallback is honest, an inherited ratio is not.
-      let pickedAspect: number | null = d.savedAspect || null;
-      if (!uploaded && d.source === 'file' && d.planUrl && !pickedAspect && this._aspectJob) {
-        pickedAspect = (await this._aspectJob) || null;
-      }
-
-      // from here on: no awaits until the save, so `sp` cannot be orphaned
-      const cfg = this._serverCfg!;
-      let sp: any;
-      if (d.mode === 'create') {
-        sp = createEmptySpaceConfig(spaceId, d.title.trim());
-        cfg.spaces.push(sp);
-      } else {
-        sp = cfg.spaces.find((x: any) => x.id === spaceId);
-        if (!sp) throw new Error('space ' + spaceId + ' is gone from the config');
-        sp.title = d.title.trim();
-      }
-      if (uploaded) {
-        sp.plan_url = uploaded.url;
-        // the image's own proportions, so it can be centred before it loads
-        sp.plan_aspect = uploaded.aspect;
-      } else if (d.source === 'file' && d.planUrl && d.planUrl !== sp.plan_url) {
-        // picked from the server list: no upload, just a reference — and the
-        // previous image's proportions never survive the switch
-        sp.plan_url = d.planUrl;
-        sp.plan_aspect = pickedAspect;
-      }
-      // switching an existing space to "draw" detaches its background image
-      // (the uploaded file stays on disk; only the reference is cleared).
-      // Its transform goes with it — there is nothing left for plan_x/plan_y/
-      // plan_scale to describe, and a stale one would silently apply to the
-      // NEXT picture uploaded here (docs/BACKDROP.md §1).
-      if (d.source === 'draw') {
-        sp.plan_url = null; sp.plan_aspect = null;
-        delete sp.plan_x; delete sp.plan_y; delete sp.plan_scale;
-        delete sp.plan_scale_x; delete sp.plan_scale_y; delete sp.plan_angle;
-      }
-      // Persist exactly what the dialog showed. Source defaults are projected
-      // visibly while editing the create state, never hidden here at Save.
-      sp.settings = {
-        ...(sp.settings || {}),
-        show_borders: d.showBorders,
-        show_names: d.showNames,
-        // written only when ON: a plan that never hid anything stores nothing
-        hide_decor: d.hideDecor || undefined,
-        hide_openings: d.hideOpenings || undefined,
-        room_color: d.roomColor,
-        room_opacity: d.roomOpacity,
-        bg_color: d.bgColor || undefined, // empty = inherit the general setting
-        bg_mode: d.bgMode || undefined,    // sun on the plan (docs/SUN.md); empty = inherit
-        north_deg: d.northDeg ?? undefined,
-        sun_rays: d.sunRays ?? undefined,
-        fill_mode: d.fillMode,
-        custom_fill: d.customFill || undefined,
-        // Always materialize the independent value. In particular, editing a
-        // legacy fill_mode:'glow' space preserves its appearance atomically
-        // while replacing the old token with the selected data fill.
-        glow_enabled: d.glowEnabled,
-        temp_min: Number.isFinite(d.tempMin) ? Math.min(d.tempMin, d.tempMax) : DEFAULT_TEMP_MIN,
-        temp_max: Number.isFinite(d.tempMax) ? Math.max(d.tempMin, d.tempMax) : DEFAULT_TEMP_MAX,
-        show_lqi: d.showLqi,
-        card_font_scale: d.cardFontScale !== 1 ? d.cardFontScale : undefined,
-        label_temp: d.labelTemp,
-        label_hum: d.labelHum,
-        label_lqi: d.labelLqi,
-        label_light: d.labelLight,
-      };
-      // This is a geometry policy of the space, not a visual room setting.
-      sp.zero_wall_style = d.zeroWallStyle;
-      sp.cell_cm = Number.isFinite(d.cellCm) && d.cellCm > 0
-        ? Math.max(CELL_CM_MIN, Math.min(CELL_CM_MAX, d.cellCm)) : 5;
-      // Nothing to clean up from here: the backend collects the superseded
-      // file inside the same locked transaction that accepted this config
-      // (review R3-1). A cleanup driven from the client could not be ordered
-      // against another client's commit and deleted its freshly saved plan.
-      await this._saveConfigNow();
-      this._spaceDialog = null;
-      if (d.mode === 'create') this._commitSpace(sp.id);
-      this._regSignature = '';
-      this._maybeRebuildDevices();
-      if (this._importQueue.length) {
-        // floors-import wizard: proceed to the next floor
-        this._openNextImport();
-      } else if (wasFirst || this._importTotal > 0) {
-        // guide the user onward: straight into room markup mode
-        this._importTotal = 0;
-        this._commitSpace(this._serverCfg!.spaces[0]?.id || this._space);
-        this._setMode('plan');
-        this._tool = 'draw';
-        this._path = [];
-        this._cursorPt = null;
-        this._primeDrawWallField();
-        this._showToast(this._t(wasFirst && !this._importTotal ? 'toast.space_added_onboard' : 'import.done'));
-      } else {
-        this._showToast(d.mode === 'create' ? this._t('toast.space_added') : this._t('toast.space_saved'));
-        // A freshly created space is empty — View has nothing to show. Open
-        // the plan editor (draw tool) so the user can mark rooms immediately,
-        // same as the first-space onboard path above.
-        if (d.mode === 'create') {
-          if (this._mode !== 'plan') this._setMode('plan');
-          else {
-            this._tool = 'draw';
-            this._path = [];
-            this._cursorPt = null;
-            this._primeDrawWallField();
-            this._saveNav();
-          }
-        }
-      }
-    } catch (e: any) {
-      // The dialog edits the reactive config optimistically before config/set.
-      // A rejected create used to leave that unsaved space on screen; the next
-      // delete then flushed the same malformed write and repeated its error.
-      // Re-adopt server truth for every failed space transaction.  Conflict is
-      // already reloaded by _saveConfigNow; do not issue the same read twice.
-      // A lost response is safe too: if the server did commit, config/get
-      // returns it.
-      if (e?.code !== 'conflict') await this._reloadConfigOnly(true);
-      // audit L3: the dialog may have been closed (Esc) while the save was
-      // in flight — spreading null yields a truthy husk and the renderer
-      // then crashes, blanking the whole card. The toast below is the
-      // only remaining signal, so it must still fire.
-      if (this._spaceDialog) this._spaceDialog = { ...this._spaceDialog, busy: false };
-      this._showToast(this._t('toast.error', { err: this._errText(e) }));
-    }
+    return this._editorRuntimeOrThrow()._saveSpaceDialog();
   }
 
   private async _deleteSpace(): Promise<void> {
-    const d = this._spaceDialog;
-    if (!d || d.mode !== 'edit') return;
-    const serverCfg = this._serverCfg;
-    if (!serverCfg) return;
-    const sp = serverCfg.spaces.find((x: any) => x.id === d.spaceId);
-    const dependencies = collectSpaceMarkerDependencies(
-      serverCfg, this._layout || {}, d.spaceId || '',
-    );
-    const deletingLastSpace = serverCfg.spaces.length === 1
-      && serverCfg.spaces[0]?.id === d.spaceId;
-    if (dependencies.count && !deletingLastSpace) {
-      this._spaceDialog = { ...d, deleteBlockers: dependencies.count };
-      return;
-    }
-    if (!confirm(this._t('confirm.delete_space', { title: sp.title }))) return;
-    this._spaceDialog = { ...d, deleteBlockers: 0, busy: true };
-    try {
-      if (this._saveConfigDebounced.pending()) this._saveConfigDebounced.flush();
-      if (this._persistLayout.pending()) this._persistLayout.flush();
-      await this._writeChain;
-      const response: any = await this.hass.callWS({
-        type: 'houseplan/space/delete',
-        space_id: d.spaceId,
-        expected_config_rev: this._cfgRev,
-        expected_layout_rev: this._layoutRev,
-      });
-      const [configResponse, layoutResponse] = await Promise.all([
-        this.hass.callWS({ type: 'houseplan/config/get' }),
-        this.hass.callWS({ type: 'houseplan/layout/get' }),
-      ]);
-      this._adoptStructuralResponses(configResponse, layoutResponse);
-      this._cfgRev = response?.config_rev ?? this._cfgRev;
-      this._layoutRev = response?.layout_rev ?? this._layoutRev;
-      this._spaceDialog = null;
-      if (this._space === d.spaceId) this._commitSpace(this._serverCfg!.spaces[0]?.id || '');
-      this._regSignature = '';
-      this._maybeRebuildDevices();
-      this._showToast(this._t('toast.space_deleted'));
-    } catch (e: any) {
-      if (e?.code === 'conflict' || e?.code === 'space_in_use') {
-        await Promise.all([this._reloadConfigOnly(true), this._reloadLayoutOnly()]);
-      }
-      const refreshedConfig = this._serverCfg;
-      if (this._spaceDialog && refreshedConfig) {
-        const refreshed = collectSpaceMarkerDependencies(
-          refreshedConfig, this._layout || {}, d.spaceId || '',
-        );
-        const stillLastSpace = refreshedConfig.spaces.length === 1
-          && refreshedConfig.spaces[0]?.id === d.spaceId;
-        this._spaceDialog = {
-          ...this._spaceDialog,
-          busy: false,
-          deleteBlockers: stillLastSpace ? 0 : refreshed.count,
-        };
-      }
-      this._showToast(this._t('toast.delete_failed', { err: this._errText(e) }));
-    }
+    return this._editorRuntimeOrThrow()._deleteSpace();
   }
 
   /** Immediate config save with a revision bump (no debounce).
@@ -15543,101 +9515,32 @@ class HouseplanCard extends LitElement {
   user's retry starts from the fresh config instead of hitting the same
   conflict again. */
   private async _saveConfigNow(): Promise<void> {
-    this._cfgEpoch++;
-    try {
-      // same queue as the debounced writer: a dialog saving while a background
-      // write is still out must not race it into a self-inflicted conflict
-      await this._writeConfig();
-    } catch (e: any) {
-      if (e?.physicalGeometryRolledBack) await this._reloadRejectedPhysicalWrite();
-      else if (e?.code === 'conflict') await this._reloadConfigOnly();
-      throw e;
-    }
+    return this._editorRuntimeOrThrow()._saveConfigNow();
   }
 
 
   // ================= FLOORS IMPORT WIZARD =================
 
   private _startImport(): void {
-    const dlg = this._importDialog;
-    if (!dlg) return;
-    const titles = dlg.floors.filter((f) => f.checked).map((f) => f.name);
-    this._importDialog = null;
-    if (!titles.length) {
-      this._openSpaceDialog('create');
-      return;
-    }
-    this._importQueue = titles;
-    this._importTotal = titles.length;
-    this._openNextImport();
+    if (this._onboardingRuntime) return this._onboardingRuntime._startImport();
+    return this._editorRuntimeOrThrow()._startImport();
   }
 
   /** Open the space dialog for the next queued floor (title prefilled, plan required). */
   private _openNextImport(): void {
-    const title = this._importQueue.shift();
-    if (title === undefined) return;
-    this._spaceDialog = {
-      mode: 'create', title, planUrl: null, planFile: null,
-      ...initialSpaceDisplayDraft(),
-      hideDecor: false, hideOpenings: false, zeroWallStyle: 'dashed',
-      roomColor: DEFAULT_ROOM_COLOR, roomOpacity: DEFAULT_ROOM_OPACITY, fillMode: 'custom',
-      customFill: null,
-      glowEnabled: true,
-      bgColor: null,
-      bgMode: 'daynight', northDeg: null, sunRays: null,
-      tempMin: DEFAULT_TEMP_MIN, tempMax: DEFAULT_TEMP_MAX,
-      showLqi: this._config?.show_signal ?? true,
-      cardFontScale: 1,
-      labelTemp: false, labelHum: false, labelLqi: false, labelLight: false,
-      cellCm: newSpaceCellCm(this._imperial),
-      cellCmInput: gridCellFieldValue(newSpaceCellCm(this._imperial), this._imperial),
-      cellCmTouched: false,
-      busy: false,
-    };
+    if (this._onboardingRuntime) return this._onboardingRuntime._openNextImport();
+    return this._editorRuntimeOrThrow()._openNextImport();
   }
 
   /** Skip the current floor of the wizard without creating a space. */
   private _skipImport(): void {
-    this._spaceDialog = null;
-    if (this._importQueue.length) this._openNextImport();
-    else if (this._importTotal > 0 && this._model.length) {
-      this._importTotal = 0;
-      this._commitSpace(this._serverCfg!.spaces[0]?.id || this._space);
-      this._setMode('plan');
-      this._showToast(this._t('import.done'));
-    }
+    if (this._onboardingRuntime) return this._onboardingRuntime._skipImport();
+    return this._editorRuntimeOrThrow()._skipImport();
   }
 
   private _renderImportDialog(): TemplateResult {
-    const d = this._importDialog!;
-    const n = d.floors.filter((f) => f.checked).length;
-    return html`<hp-dialog .hass=${this.hass} .title=${this._t('import.title')} icon="mdi:home-floor-1"
-      @hp-close=${() => (this._importDialog = null)}>
-        <div class="body">
-          <div class="rhint">${this._t('import.hint')}</div>
-          ${d.floors.map(
-            (f, i) => html`<label class="floorrow">
-              <input type="checkbox" .checked=${f.checked}
-                @change=${(e: Event) => {
-                  const floors = [...d.floors];
-                  floors[i] = { ...f, checked: (e.target as HTMLInputElement).checked };
-                  this._importDialog = { floors };
-                }} />
-              <span>${f.name}</span>
-              ${f.level != null ? html`<span class="floorlvl">L${f.level}</span>` : nothing}
-            </label>`,
-          )}
-        </div>
-        <div class="row" slot="footer">
-          <button class="btn ghost" @click=${() => { this._importDialog = null; this._openSpaceDialog('create'); }}>
-            ${this._t('import.manual')}
-          </button>
-          <span class="spacer"></span>
-          <button class="btn on" @click=${() => this._startImport()} ?disabled=${!n}>
-            <ha-icon icon="mdi:import"></ha-icon>${this._t('import.start', { n })}
-          </button>
-        </div>
-    </hp-dialog>`;
+    if (this._onboardingRuntime) return this._onboardingRuntime._renderImportDialog();
+    return this._editorRuntimeOrThrow()._renderImportDialog();
   }
 
   // ================= SUN ON THE PLAN (docs/SUN.md) =================
@@ -15985,22 +9888,14 @@ class HouseplanCard extends LitElement {
   // ================= GENERAL SETTINGS =================
 
   private _openSettingsDialog = (): void => {
-    if (!this._norm) return;
-    // deep copy so the dialog edits do not leak into the live palette
-    const cm = this._glowRadiusCm;
-    const glowRadius = this._imperial
-      ? Math.round((cm / 30.48) * 10) / 10
-      : Math.round(cm) / 100;
-    this._settingsDialog = {
-      colors: JSON.parse(JSON.stringify(this._fillColors)),
-      glowRadius,
-      bgColor: stageBgOf(this._settings, { bgColor: null }) || null,
-      northDeg: northDegOf(this._settings, {}),
-      bgMode: bgModeOf(this._settings, {}),
-      sunRays: sunRaysOn(this._settings, {}),
-      busy: false,
-    };
-  };
+    if (!this._editorRuntime) {
+      void this._ensureEditorRuntime().then((ready) => {
+        if (ready) this._openSettingsDialog();
+      });
+      return;
+    }
+    return this._editorRuntime._openSettingsDialog();
+  }
 
   /**
    * Preview whole-plan maintenance. Nothing is written here: the pure run
@@ -16016,28 +9911,7 @@ class HouseplanCard extends LitElement {
     preflight: OptimizeGeometryPreflightResult,
     candidate: ServerConfig | null,
   ): object {
-    // CODE-REVIEW-295-r1 M1: hash the CANDIDATE spaces the preflight judged,
-    // not the already-saved config — a saved-config hash is exactly what a
-    // space export would reproduce, and the block promises what the export
-    // does not carry.
-    const spacesById = new Map(((candidate as any)?.spaces || [])
-      .map((space: any) => [String(space?.id || ''), space]));
-    return {
-      kind: 'houseplan-optimize-preflight',
-      origin: 'runtime',
-      cardVersion: CARD_VERSION,
-      checkedAt: new Date().toISOString(),
-      preflightFingerprint: preflight.fingerprint,
-      failures: preflight.failures.map((failure) => ({
-        spaceId: failure.spaceId,
-        displayName: failure.displayName,
-        reason: failure.reason,
-        detail: failure.detail ?? null,
-        spaceGeometryFingerprint: spacesById.has(failure.spaceId)
-          ? spacePhysicalGeometryFingerprint(spacesById.get(failure.spaceId))
-          : null,
-      })),
-    };
+    return this._editorRuntimeOrThrow()._preflightDiagnostics(preflight, candidate);
   }
 
   /** #295: dev-log once per distinct failing preflight, not once per render. */
@@ -16046,10 +9920,7 @@ class HouseplanCard extends LitElement {
     preflight: OptimizeGeometryPreflightResult,
     candidate: ServerConfig | null,
   ): void {
-    if (preflight.ok || preflight.fingerprint === this._reportedPreflightFingerprint) return;
-    this._reportedPreflightFingerprint = preflight.fingerprint;
-    // eslint-disable-next-line no-console
-    console.warn('[houseplan] optimize preflight failed', this._preflightDiagnostics(preflight, candidate));
+    return this._editorRuntimeOrThrow()._reportPreflightFailure(preflight, candidate);
   }
 
   /**
@@ -16060,34 +9931,15 @@ class HouseplanCard extends LitElement {
    * report where the owner had nothing newer to update to).
    */
   private _preflightVersionsDiffer(): boolean {
-    const integration = this._haIntegrationVersion;
-    return typeof integration === 'string' && integration.length > 0
-      && integration !== CARD_VERSION;
+    return this._editorRuntimeOrThrow()._preflightVersionsDiffer();
   }
 
   private async _copyPreflightDiagnostics(): Promise<void> {
-    const preflight = this._alignDialog?.preflight;
-    if (!preflight || preflight.ok) return;
-    const text = JSON.stringify(
-      this._preflightDiagnostics(preflight, this._alignDialog?.config ?? null), null, 2,
-    );
-    try {
-      await navigator.clipboard.writeText(text);
-      this._preflightClipboardFallback = null;
-      this._showToast(this._t('gs.preflight_copied'));
-    } catch {
-      // Insecure context / embedded webview: surface the block inline so the
-      // owner can select and copy it by hand.
-      this._preflightClipboardFallback = text;
-    }
+    return this._editorRuntimeOrThrow()._copyPreflightDiagnostics();
   }
 
   private _checkOptimizeGeometry(config: ServerConfig): OptimizeGeometryPreflightResult {
-    return checkOptimizeGeometry(config, {
-      fallbackSpaceName: (index) => this._t('gs.align_preflight_space', {
-        n: String(index),
-      }),
-    });
+    return this._editorRuntimeOrThrow()._checkOptimizeGeometry(config);
   }
 
   /** One strict production source shared by editor commits and stale rechecks. */
@@ -16098,184 +9950,33 @@ class HouseplanCard extends LitElement {
       geometry: ReturnType<typeof wallBodiesGeometry>,
     ) => void,
   ) {
-    return checkSpacePhysicalGeometry(config, spaceId, {
-      fallbackSpaceName: (index) => this._t('gs.align_preflight_space', { n: String(index) }),
-      captureWallGeometry: captureWallGeometry
-        ? (_input, geometry) => captureWallGeometry(geometry)
-        : undefined,
-    });
+    return this._editorRuntimeOrThrow()._checkSpacePhysicalGeometry(config, spaceId, captureWallGeometry);
   }
 
   private _optimizeReferenceContext(
     removeLiveMissingPositions: boolean,
   ): SpaceReferenceRepairContext {
-    const registry = this._haRegistry;
-    const full = this._fullRegistryHass;
-    const names: Record<string, string> = {};
-    const humanName = (...values: unknown[]): string => {
-      for (const value of values) {
-        const name = String(value || '').trim();
-        if (name) return name;
-      }
-      return '';
-    };
-    for (const [deviceId, device] of Object.entries<any>(registry.devices || {})) {
-      names[deviceId] = humanName(device?.name_by_user, device?.name, device?.model);
-    }
-    for (const [entityId, entity] of Object.entries<any>(registry.entities || {})) {
-      names[`lg_${entityId}`] = humanName(
-        this.hass?.states?.[entityId]?.attributes?.friendly_name,
-        entity?.name,
-        entity?.original_name,
-      );
-    }
-    for (const device of this._devices) names[device.id] = humanName(device.name, names[device.id]);
-    for (const marker of this._serverCfg?.markers || []) {
-      const separator = String(marker.binding || '').indexOf(':');
-      const kind = separator > 0 ? marker.binding.slice(0, separator) : '';
-      const ref = separator > 0 ? marker.binding.slice(separator + 1) : '';
-      const bound = kind === 'device'
-        ? full?.devices?.[ref]
-        : kind === 'entity' ? full?.entities?.[ref] : null;
-      names[marker.id] = humanName(
-        marker.name,
-        kind === 'device' ? bound?.name_by_user : null,
-        bound?.name,
-        kind === 'entity' ? this.hass?.states?.[ref]?.attributes?.friendly_name : null,
-        names[marker.id],
-      );
-    }
-    return {
-      effectiveAreaByMarker: Object.fromEntries(
-        this._devices
-          .filter((device) => !device.virtual && !!device.area)
-          .map((device) => [device.id, device.area]),
-      ),
-      ownerRoster: {
-        authoritative: registry.authoritative,
-        deviceIds: Object.keys(registry.devices || {}),
-        // State-only YAML entities are positive existence evidence even though
-        // an authoritative Entity Registry cannot list them.
-        entityIds: [...new Set([
-          ...Object.keys(registry.entities || {}),
-          ...Object.keys(this.hass?.states || {}),
-        ])],
-        names,
-      },
-      removeLiveMissingPositions,
-    };
+    return this._editorRuntimeOrThrow()._optimizeReferenceContext(removeLiveMissingPositions);
   }
 
   private _previewAlignDialog(removeLiveMissingPositions: boolean): void {
-    if (!this._norm || !this._serverCfg) return;
-    const spaces = this._serverCfg.spaces || [];
-    let r;
-    try {
-      r = optimizePlans(
-        this._serverCfg,
-        this._layout || {},
-        this._optimizeReferenceContext(removeLiveMissingPositions),
-      );
-    } catch (error) {
-      this._showWallModelMigrationBlocked(error);
-      return;
-    }
-    const preflight = r.changed ? this._checkOptimizeGeometry(r.config) : null;
-    if (preflight) this._reportPreflightFailure(preflight, r.config);
-    // The maximum geometry shift is an UPPER BOUND, not a sample. The run
-    // measured every element in the centimetres of ITS OWN space — converting
-    // one normalised maximum through the first space's `cell_cm` understated
-    // a two-scale plan twentyfold (AUD-158B1-01) — and the last tenth is
-    // rounded UP, so the promise can never be smaller than the deed.
-    const cm = Math.ceil(r.report.maxShiftCm * 10) / 10;
-    const sp = spaces.find((x: any) => x?.id != null && String(x.id) === r.report.maxSpace);
-    const where = spaces.length > 1 && sp ? String(sp.title || sp.id) : '';
-    // CODE-REVIEW-295-r1 M2: the inline clipboard fallback belongs to one
-    // dialog showing — a reopened dialog must not display the previous
-    // refusal's JSON while the visible reasons already describe a new one.
-    this._preflightClipboardFallback = null;
-    this._alignDialog = {
-      report: r.report, config: r.config, layout: r.layout, cm, where,
-      preflight, changed: r.changed, busy: false, removeLiveMissingPositions,
-    };
+    return this._editorRuntimeOrThrow()._previewAlignDialog(removeLiveMissingPositions);
   }
 
-  private _openAlignDialog = (): void => this._previewAlignDialog(false);
+  private _openAlignDialog = (): void => {
+    return this._editorRuntimeOrThrow()._openAlignDialog();
+  }
 
   private _toggleOptimizeLivePositions = (): void => {
-    const dialog = this._alignDialog;
-    if (!dialog || dialog.busy || !dialog.report.liveMissingPositions.length) return;
-    this._previewAlignDialog(!dialog.removeLiveMissingPositions);
-  };
+    return this._editorRuntimeOrThrow()._toggleOptimizeLivePositions();
+  }
 
   /**
    * The backend persists an intent before either store changes, then keeps a
    * one-deep snapshot that remains undoable until the next plan edit.
    */
   private async _runAlignToGrid(): Promise<void> {
-    let d = this._alignDialog;
-    if (!d || d.busy || !this._serverCfg || !d.changed || !d.preflight?.ok) return;
-    const fingerprint = contentFingerprint(d.config);
-    if (d.preflight.fingerprint !== fingerprint) {
-      const preflight = this._checkOptimizeGeometry(d.config);
-      this._reportPreflightFailure(preflight, d.config);
-      d = { ...d, preflight };
-      this._alignDialog = d;
-      if (!preflight.ok) return;
-    }
-    this._clearGeometryGesture();
-    this._alignDialog = { ...d, busy: true };
-    try {
-      if (this._saveConfigDebounced.pending()) this._saveConfigDebounced.flush();
-      await this._writeChain;
-      const resp = await this.hass.callWS({
-        type: 'houseplan/plan/optimize',
-        config: d.config,
-        layout: d.layout,
-        expected_config_rev: this._cfgRev,
-        expected_layout_rev: this._layoutRev,
-      });
-      this._serverCfg = d.config;
-      this._layout = d.layout;
-      this._geometryHistory.clear();
-      this._cfgRev = resp?.config_rev ?? this._cfgRev + 1;
-      this._layoutRev = resp?.layout_rev ?? this._layoutRev + 1;
-      this._canOptimizeUndo = !!resp?.can_undo;
-      this._undoKind = resp?.can_undo ? 'optimize' : null;
-      this._dirtyPos.clear();
-      this._sentPos.clear();
-      this._cfgEpoch++;
-      this._modelCache = null;
-      this._frame = null;
-      this._regSignature = '';
-      this._maybeRebuildDevices();
-      this._cacheSnapshot();
-      this._alignDialog = null;
-      this._preflightClipboardFallback = null;
-      this.requestUpdate();
-      this._showToast(this._t('gs.align_done', {
-        n: String(d.report.moved),
-        m: String(d.report.migrated + d.report.canonicalized
-          + d.report.coordsCanonicalized + d.report.latticeCoordinatesCanonicalized
-          + d.report.wallsMerged + d.report.spansMerged
-          + d.report.partitionsMerged + d.report.partitionsReconciled
-          + d.report.openingsRehosted + d.report.wallsStraightened),
-        r: String(d.report.spaceRefsRemapped + d.report.roomRefsRemapped
-          + d.report.positionsRemapped + d.report.markersDetached
-          + d.report.orphanRoomLabelsRemoved + d.report.orphanDevicePositionsRemoved
-          + d.report.orphanGroupPositionsRemoved),
-      }));
-    } catch (e: any) {
-      if (this._alignDialog) this._alignDialog = { ...this._alignDialog, busy: false };
-      if (e?.code === 'wall_model_client_outdated') {
-        this._showToast(this._t('toast.wall_model_client_outdated'));
-        return;
-      }
-      if (e?.code === 'conflict') {
-        await Promise.all([this._reloadConfigOnly(true), this._reloadLayoutOnly()]);
-      }
-      this._showToast(this._t('toast.error', { err: this._errText(e) }));
-    }
+    return this._editorRuntimeOrThrow()._runAlignToGrid();
   }
 
   /** Prevent a double click from sending two restores of the same snapshot. */
@@ -16283,448 +9984,43 @@ class HouseplanCard extends LitElement {
 
   /** Restore the one-deep snapshot, provided no later plan edit exists. */
   private async _undoPlanOptimization(): Promise<void> {
-    if (!this._canOptimizeUndo || this._optimizeUndoBusy) return;
-    const undoKind = this._undoKind;
-    this._clearGeometryGesture();
-    this._optimizeUndoBusy = true;
-    this.requestUpdate();
-    try {
-      await this.hass.callWS({
-        type: 'houseplan/plan/optimize_undo',
-        expected_config_rev: this._cfgRev,
-        expected_layout_rev: this._layoutRev,
-      });
-      const [cfgResp, layResp] = await Promise.all([
-        this.hass.callWS({ type: 'houseplan/config/get' }),
-        this.hass.callWS({ type: 'houseplan/layout/get' }),
-      ]);
-      this._serverCfg = cfgResp?.config || this._serverCfg;
-      this._cfgRev = cfgResp?.rev ?? this._cfgRev;
-      this._layout = layResp?.layout || this._layout;
-      this._geometryHistory.clear();
-      this._layoutRev = layResp?.rev ?? this._layoutRev;
-      this._canOptimizeUndo = false;
-      this._undoKind = null;
-      this._cfgEpoch++;
-      this._modelCache = null;
-      this._frame = null;
-      this._regSignature = '';
-      this._maybeRebuildDevices();
-      this._cacheSnapshot();
-      this.requestUpdate();
-      this._showToast(this._t(undoKind === 'import' ? 'backup.import_undone' : 'gs.optimize_undone'));
-    } catch (e: any) {
-      this._canOptimizeUndo = false;
-      this._undoKind = null;
-      this._showToast(this._t('toast.error', { err: this._errText(e) }));
-    } finally {
-      this._optimizeUndoBusy = false;
-      this.requestUpdate();
-    }
+    return this._editorRuntimeOrThrow()._undoPlanOptimization();
   }
 
   private _openBackupExport = (): void => {
-    this._settingsDialog = null;
-    this._backupExportDialog = { kind: 'full', planOnly: false, busy: false, error: '' };
-  };
+    return this._editorRuntimeOrThrow()._openBackupExport();
+  }
 
   private async _runBackupExport(): Promise<void> {
-    const d = this._backupExportDialog;
-    if (!d || d.busy) return;
-    this._backupExportDialog = { ...d, busy: true, error: '' };
-    try {
-      const response: any = await this.hass.callWS({
-        type: 'houseplan/export/create',
-        kind: d.kind,
-        space_id: d.kind === 'space' ? this._space : undefined,
-        ...(d.kind === 'space' && d.planOnly ? { plan_only: true } : {}),
-        card_version: CARD_VERSION,
-      });
-      const blob = new Blob([JSON.stringify(response.document, null, 2) + '\n'], {
-        type: 'application/json;charset=utf-8',
-      });
-      const url = URL.createObjectURL(blob);
-      const anchor = document.createElement('a');
-      anchor.href = url;
-      anchor.download = response.filename || `houseplan-${d.kind}.json`;
-      anchor.style.display = 'none';
-      document.body.append(anchor);
-      anchor.click();
-      anchor.remove();
-      window.setTimeout(() => URL.revokeObjectURL(url), 0);
-      this._backupExportDialog = null;
-      this._showToast(this._t('backup.export_done'));
-    } catch (error: any) {
-      if (this._backupExportDialog) {
-        this._backupExportDialog = { ...this._backupExportDialog, busy: false, error: this._backupErrorText(error) };
-      }
-    }
+    return this._editorRuntimeOrThrow()._runBackupExport();
   }
 
   private async _pickBackupImport(ev: Event): Promise<void> {
-    const input = ev.target as HTMLInputElement;
-    const file = input.files?.[0];
-    input.value = '';
-    if (!file) return;
-    this._settingsDialog = null;
-    this._backupImportDialog = {
-      filename: file.name, size: file.size, token: '', preview: null,
-      expectedConfigRev: this._cfgRev, expectedLayoutRev: this._layoutRev,
-      duplicatePolicy: 'skip', confirmMissing: false, busy: true, error: '',
-    };
-    try {
-      if (this._saveConfigDebounced.pending()) this._saveConfigDebounced.flush();
-      await this._writeChain;
-      if (this._persistLayout.pending()) this._persistLayout.flush();
-      const path = '/api/houseplan/import/preview?duplicate_policy=skip';
-      const init = { method: 'POST', body: file, headers: { 'content-type': 'application/json' } };
-      const response: Response = this.hass?.fetchWithAuth
-        ? await this.hass.fetchWithAuth(path, init)
-        : await fetch(path, {
-            ...init,
-            headers: {
-              ...init.headers,
-              ...(this.hass?.auth?.data?.access_token
-                ? { authorization: `Bearer ${this.hass.auth.data.access_token}` } : {}),
-            },
-          });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok || data.error) throw Object.assign(new Error(data.message || data.error || `HTTP ${response.status}`), { code: data.error });
-      if (this._backupImportDialog) {
-        this._backupImportDialog = {
-          ...this._backupImportDialog,
-          token: data.token,
-          preview: data.preview,
-          expectedConfigRev: data.expected_config_rev,
-          expectedLayoutRev: data.expected_layout_rev,
-          busy: false,
-        };
-      }
-    } catch (error: any) {
-      if (this._backupImportDialog) {
-        this._backupImportDialog = { ...this._backupImportDialog, busy: false, error: this._backupErrorText(error) };
-      }
-    }
+    return this._editorRuntimeOrThrow()._pickBackupImport(ev);
   }
 
   private async _setBackupDuplicatePolicy(policy: 'skip' | 'virtual'): Promise<void> {
-    const d = this._backupImportDialog;
-    if (!d || d.busy || !d.token || policy === d.duplicatePolicy) return;
-    this._backupImportDialog = { ...d, duplicatePolicy: policy, busy: true, error: '' };
-    try {
-      const response: any = await this.hass.callWS({
-        type: 'houseplan/import/revalidate', token: d.token, duplicate_policy: policy,
-      });
-      if (this._backupImportDialog) {
-        this._backupImportDialog = {
-          ...this._backupImportDialog,
-          preview: { ...d.preview, ...response.preview },
-          expectedConfigRev: response.expected_config_rev,
-          expectedLayoutRev: response.expected_layout_rev,
-          confirmMissing: false,
-          busy: false,
-        };
-      }
-    } catch (error: any) {
-      if (this._backupImportDialog) {
-        this._backupImportDialog = {
-          ...this._backupImportDialog,
-          duplicatePolicy: d.duplicatePolicy,
-          preview: d.preview,
-          confirmMissing: d.confirmMissing,
-          busy: false,
-          error: this._backupErrorText(error),
-        };
-      }
-    }
+    return this._editorRuntimeOrThrow()._setBackupDuplicatePolicy(policy);
   }
 
   private async _applyBackupImport(): Promise<void> {
-    const d = this._backupImportDialog;
-    if (!d || d.busy || !d.token || !d.preview) return;
-    if (d.preview.confirmation_required && !d.confirmMissing) return;
-    this._backupImportDialog = { ...d, busy: true, error: '' };
-    const previousSpace = this._space;
-    try {
-      const result: any = await this.hass.callWS({
-        type: 'houseplan/import/apply',
-        token: d.token,
-        expected_config_rev: d.expectedConfigRev,
-        expected_layout_rev: d.expectedLayoutRev,
-        duplicate_policy: d.duplicatePolicy,
-        confirm_missing_content: d.confirmMissing,
-      });
-      const [configResponse, layoutResponse] = await Promise.all([
-        this.hass.callWS({ type: 'houseplan/config/get' }),
-        this.hass.callWS({ type: 'houseplan/layout/get' }),
-      ]);
-      this._adoptStructuralResponses(configResponse, layoutResponse);
-      this._geometryHistory.clear();
-      this._dirtyPos.clear();
-      this._sentPos.clear();
-      this._defPos = {};
-      this._cfgEpoch++;
-      this._modelCache = null;
-      this._frame = null;
-      this._visibleDeviceSnapshot = null;
-      this._candidateDeviceSnapshot = null;
-      this._stagedDeviceSnapshotToken = -1;
-      this._capturedSnapshotConfigEpoch = -1;
-      this._regSignature = '';
-      this._signer.invalidate(this.hass);
-      this._resign();
-      this._maybeRebuildDevices();
-      const spaces = this._serverCfg?.spaces || [];
-      const nextSpace = result.kind === 'space' && result.space_id
-        ? result.space_id
-        : spaces.some((space: any) => space.id === previousSpace)
-          ? previousSpace : spaces[0]?.id || this._space;
-      if (this._hasFixedFloor) this._adoptInitialSpace(this._model, true);
-      else this._commitSpace(nextSpace);
-      this._backupImportDialog = null;
-      this._cacheSnapshot();
-      this.requestUpdate();
-      const outcomeCounts = result.kind === 'space' ? d.preview.counts : result.counts;
-      this._showToast(this._t(result.kind === 'space' ? 'backup.space_done' : 'backup.full_done', {
-        spaces: String(outcomeCounts?.spaces || 0), rooms: String(outcomeCounts?.rooms || 0),
-        markers: String(outcomeCounts?.markers || 0),
-        refs: String(result.repaired_target_refs || 0),
-      }));
-    } catch (error: any) {
-      if (error?.code === 'conflict' && this._backupImportDialog?.token) {
-        try {
-          const current = this._backupImportDialog;
-          const refreshed: any = await this.hass.callWS({
-            type: 'houseplan/import/revalidate', token: current.token,
-            duplicate_policy: current.duplicatePolicy,
-          });
-          this._backupImportDialog = {
-            ...current,
-            preview: { ...current.preview, ...refreshed.preview },
-            expectedConfigRev: refreshed.expected_config_rev,
-            expectedLayoutRev: refreshed.expected_layout_rev,
-            confirmMissing: false,
-            busy: false,
-            error: this._t('backup.revalidated'),
-          };
-          return;
-        } catch (refreshError: any) {
-          error = refreshError;
-        }
-      }
-      if (this._backupImportDialog) {
-        this._backupImportDialog = { ...this._backupImportDialog, busy: false, error: this._backupErrorText(error) };
-      }
-    }
+    return this._editorRuntimeOrThrow()._applyBackupImport();
   }
 
   private _renderBackupExportDialog(): TemplateResult {
-    const d = this._backupExportDialog!;
-    const currentSpace = (this._serverCfg?.spaces || []).find((space: any) => space.id === this._space);
-    return html`<hp-dialog .hass=${this.hass} .title=${this._t('backup.export_title')}
-      icon="mdi:download" dismiss-on-scrim @hp-close=${() => (this._backupExportDialog = null)}>
-      <div class="body backupbody">
-        <div class="rhint">${this._t('backup.export_hint')}</div>
-        <label class="srcrow"><input type="radio" name="backup-kind" value="full"
-          .checked=${d.kind === 'full'}
-          @change=${() => (this._backupExportDialog = { ...d, kind: 'full', planOnly: false })} />
-          <span>${this._t('backup.full')}</span></label>
-        <label class="srcrow"><input type="radio" name="backup-kind" value="space"
-          .checked=${d.kind === 'space'} ?disabled=${!currentSpace}
-          @change=${() => (this._backupExportDialog = { ...d, kind: 'space' })} />
-          <span>${currentSpace
-            ? this._t('backup.current_space_title', { title: currentSpace.title || currentSpace.id })
-            : this._t('backup.no_current_space')}</span></label>
-        ${d.kind === 'space' && currentSpace ? html`<label class="srcrow backupplanonly">
-          <input type="checkbox" .checked=${d.planOnly}
-            @change=${(event: Event) => (this._backupExportDialog = {
-              ...d, planOnly: (event.target as HTMLInputElement).checked,
-            })} />
-          <span><b>${this._t('backup.plan_only')}</b><small>${this._t('backup.plan_only_hint')}</small></span>
-        </label>` : nothing}
-        <div class="backupwarn">${this._t('backup.privacy_warning')}</div>
-        ${d.error ? html`<div class="backuperror" role="alert">${d.error}</div>` : nothing}
-      </div>
-      <div class="row" slot="footer">
-        <button class="btn ghost" autofocus @click=${() => (this._backupExportDialog = null)}>${this._t('btn.cancel')}</button>
-        <span class="spacer"></span>
-        <button class="btn on" ?disabled=${d.busy || (d.kind === 'space' && !currentSpace)}
-          @click=${this._runBackupExport}>
-          <ha-icon icon="mdi:download"></ha-icon>${d.busy ? '…' : this._t('backup.download')}
-        </button>
-      </div>
-    </hp-dialog>`;
+    return this._editorRuntimeOrThrow()._renderBackupExportDialog();
   }
 
   private _renderBackupImportDialog(): TemplateResult {
-    const d = this._backupImportDialog!;
-    const p = d.preview;
-    const counts = p?.counts || {};
-    const report = p?.reference_report || {};
-    const sum = (values: any): number => Object.values(values || {}).reduce(
-      (total: number, value: any) => total + (Number(value) || 0), 0,
-    );
-    const allReportRows: Array<[
-      'incoming_remapped' | 'target_repaired' | 'preserved_unresolved'
-      | 'collisions' | 'dropped_links' | 'bounded_lineages',
-      number,
-    ]> = [
-      ['incoming_remapped', sum(report.remapped?.incoming)],
-      ['target_repaired', sum(report.remapped?.target)],
-      ['preserved_unresolved', sum(report.preservedUnresolved)],
-      ['collisions', sum(report.collisions)],
-      ['dropped_links', sum(report.droppedIncomingLinks)],
-      ['bounded_lineages', Number(report.boundedLineages) || 0],
-    ];
-    const reportRows = allReportRows.filter(([, value]) => value > 0);
-    return html`<hp-dialog .hass=${this.hass} .title=${this._t('backup.import_title')}
-      icon="mdi:upload" wide dismiss-on-scrim @hp-close=${() => (this._backupImportDialog = null)}>
-      <div class="body backupbody" aria-busy=${d.busy ? 'true' : 'false'}>
-        <div class="backupfile"><b>${d.filename}</b><span>${(d.size / 1024).toFixed(1)} KB</span></div>
-        ${d.busy && !p ? html`<div class="rhint" role="status" aria-live="polite">${this._t('backup.reading')}</div>` : nothing}
-        ${d.error ? html`<div class="backuperror" role="alert">${d.error}</div>` : nothing}
-        ${p ? html`
-          <div class="backupsummary">
-            <b>${this._t(p.kind === 'full' ? 'backup.full' : 'backup.current_space')}</b>
-            ${p.plan_only ? html`<span class="backupplanonlystatus">${this._t('backup.plan_only_preview')}</span>` : nothing}
-            <span>${this._t(p.source === 'same' ? 'backup.same_source' : 'backup.foreign_source')}</span>
-            <span>${this._t('backup.created', { value: p.created_at || '—' })}</span>
-            <span>${this._t('backup.versions', {
-              card: p.card_version || '—', integration: p.integration_version || '—',
-              model: String(p.model_version ?? '—'),
-            })}</span>
-          </div>
-          <div class="backupcounts">
-            <span>${this._t('backup.count_spaces', { n: p.kind === 'full'
-              ? `${p.current_counts?.spaces || 0} → ${counts.spaces || 0}` : String(counts.spaces || 0) })}</span>
-            <span>${this._t('backup.count_rooms', { n: p.kind === 'full'
-              ? `${p.current_counts?.rooms || 0} → ${counts.rooms || 0}` : String(counts.rooms || 0) })}</span>
-            <span>${this._t('backup.count_walls', { n: p.kind === 'full'
-              ? `${p.current_counts?.walls || 0} → ${counts.walls || 0}` : String(counts.walls || 0) })}</span>
-            <span>${this._t('backup.count_openings', { n: p.kind === 'full'
-              ? `${p.current_counts?.openings || 0} → ${counts.openings || 0}` : String(counts.openings || 0) })}</span>
-            <span>${this._t('backup.count_decor', { n: p.kind === 'full'
-              ? `${p.current_counts?.decor || 0} → ${counts.decor || 0}` : String(counts.decor || 0) })}</span>
-            <span>${this._t('backup.count_markers', { n: p.kind === 'full'
-              ? `${p.current_counts?.markers || 0} → ${counts.markers || 0}` : String(counts.markers || 0) })}</span>
-            <span>${this._t('backup.count_layout', { n: p.kind === 'full'
-              ? `${p.current_counts?.layout || 0} → ${counts.layout || 0}` : String(counts.layout || 0) })}</span>
-          </div>
-          ${p.bindings ? html`<div class="rhint">${this._t('backup.bindings', {
-            device: String(p.bindings.device || 0), entity: String(p.bindings.entity || 0),
-            virtual: String(p.bindings.virtual || 0), legacy: String(p.legacy_positions || 0),
-          })}</div><div class="rhint">${this._t('backup.binding_status', {
-            active: String(p.bindings.active || 0), disabled: String(p.bindings.disabled || 0),
-            missing: String(p.bindings.missing || 0),
-          })}</div>` : nothing}
-          ${p.missing_areas?.length ? html`<div class="backupwarn">${this._t('backup.missing_areas', {
-            areas: p.missing_areas.join(', '),
-          })}</div>` : nothing}
-          ${p.dropped_marker_links ? html`<div class="backupwarn">${this._t('backup.dropped_marker_links', {
-            n: String(p.dropped_marker_links),
-          })}</div>` : nothing}
-          ${p.repaired_target_refs ? html`<div class="rhint">${this._t('backup.repaired_target_refs', {
-            n: String(p.repaired_target_refs),
-          })}</div>` : nothing}
-          ${p.preserved_unresolved_refs ? html`
-            <div class="backupwarn">${this._t('backup.preserved_unresolved_refs', {
-              n: String(p.preserved_unresolved_refs),
-            })}<br />${this._t('backup.preserved_unresolved_hint')}</div>
-          ` : nothing}
-          ${reportRows.length ? html`<details class="backupdetails">
-            <summary>${this._t('backup.import_details')}</summary>
-            <div>
-              ${reportRows.map(([key, value]) => html`<span>${this._t(
-                `backup.import_detail.${key}`, { n: String(value) },
-              )}</span>`)}
-              ${(report.examples || []).slice(0, 8).map((item: any) => html`
-                <code>${item.owner} → ${item.reference}</code>
-              `)}
-            </div>
-          </details>` : nothing}
-          ${p.kind === 'full' ? html`
-            <div class="backupwarn">${this._t('backup.replace_warning')}</div>
-            ${p.source === 'foreign' ? html`<div class="rhint">${this._t('backup.foreign_bookkeeping')}</div>` : nothing}` : html`
-            <div class="backupsummary"><b>${this._t('backup.final_name')}</b><span>${p.space_title}</span></div>
-            <div class="rhint">${this._t('backup.target_settings')}</div>
-            ${p.duplicates ? html`<fieldset class="backupchoices"><legend>${this._t('backup.duplicates', { n: String(p.duplicates) })}</legend>
-              <label><input type="radio" name="duplicate-policy" .checked=${d.duplicatePolicy === 'skip'}
-                @change=${() => this._setBackupDuplicatePolicy('skip')} />${this._t('backup.skip')}</label>
-              <label><input type="radio" name="duplicate-policy" .checked=${d.duplicatePolicy === 'virtual'}
-                @change=${() => this._setBackupDuplicatePolicy('virtual')} />${this._t('backup.virtual_copy')}</label>
-            </fieldset>` : nothing}`}
-          ${p.content?.length ? html`<div class="backupcontent">
-            <b>${this._t('backup.content')}</b>
-            ${p.content.map((item: any) => html`<span>${item.url} · ${this._t(
-              item.state === 'available' ? 'backup.content_available'
-                : item.state === 'external' ? 'backup.content_external'
-                  : 'backup.content_detach_required',
-            )}</span>`)}
-          </div>` : nothing}
-          ${p.confirmation_required ? html`<label class="srcrow backupconfirm">
-            <input type="checkbox" .checked=${d.confirmMissing}
-              @change=${(e: Event) => (this._backupImportDialog = { ...d, confirmMissing: (e.target as HTMLInputElement).checked })} />
-            <span>${this._t('backup.confirm_detach')}</span>
-          </label>` : nothing}
-        ` : nothing}
-      </div>
-      <div class="row" slot="footer">
-        <button class="btn ghost" autofocus @click=${() => (this._backupImportDialog = null)}>${this._t('btn.cancel')}</button>
-        <span class="spacer"></span>
-        ${p ? html`<button class="btn ${p.kind === 'full' ? 'danger' : 'on'}"
-          ?disabled=${d.busy || (p.confirmation_required && !d.confirmMissing)} @click=${this._applyBackupImport}>
-          <ha-icon icon=${p.kind === 'full' ? 'mdi:database-import' : 'mdi:plus'}></ha-icon>
-          ${d.busy ? '…' : this._t(p.kind === 'full' ? 'backup.replace' : 'backup.add')}
-        </button>` : nothing}
-      </div>
-    </hp-dialog>`;
+    return this._editorRuntimeOrThrow()._renderBackupImportDialog();
   }
 
   private _setFillColor(key: keyof FillColors, patch: Partial<{ c: string; a: number }>): void {
-    const d = this._settingsDialog!;
-    this._settingsDialog = { ...d, colors: { ...d.colors, [key]: { ...d.colors[key], ...patch } } };
+    return this._editorRuntimeOrThrow()._setFillColor(key, patch);
   }
 
   private async _saveSettingsDialog(): Promise<void> {
-    const d = this._settingsDialog;
-    if (!d || d.busy) return;
-    this._settingsDialog = { ...d, busy: true };
-    try {
-      const cfg = this._serverCfg!;
-      const isDefault = JSON.stringify(d.colors) === JSON.stringify(DEFAULT_FILL_COLORS);
-      const settings: any = { ...cfg.settings };
-      if (isDefault) delete settings.fill_colors;
-      else settings.fill_colors = d.colors;
-      const cm = this._imperial ? d.glowRadius * 30.48 : d.glowRadius * 100;
-      if (Number.isFinite(cm) && cm > 0 && Math.round(cm) !== 300) settings.glow_radius_cm = Math.round(cm);
-      else delete settings.glow_radius_cm;
-      if (d.bgColor) settings.bg_color = d.bgColor;
-      else delete settings.bg_color;
-      // Sun background compatibility is explicit: legacy absence means static,
-      // while new installations and spaces materialise daynight.
-      if (d.northDeg !== null && Number.isInteger(d.northDeg) && d.northDeg >= 0 && d.northDeg <= 359)
-        settings.north_deg = d.northDeg;
-      else delete settings.north_deg;
-      settings.bg_mode = d.bgMode;
-      if (d.sunRays) settings.sun_rays = true;
-      else delete settings.sun_rays;
-      // Legacy compatibility: old configs may still contain this accepted
-      // field, but weather no longer affects sunlight and the UI no longer
-      // exposes it. Saving general settings cleans the obsolete value up.
-      delete settings.weather_entity;
-      this._serverCfg = { ...cfg, settings };
-      await this._saveConfigNow();
-      this._settingsDialog = null;
-      this.requestUpdate();
-      this._showToast(this._t('gs.saved'));
-    } catch (e: any) {
-      // audit L3: the dialog may have been closed (Esc) while the save was
-      // in flight — spreading null yields a truthy husk and the renderer
-      // then crashes, blanking the whole card. The toast below is the
-      // only remaining signal, so it must still fire.
-      if (this._settingsDialog) this._settingsDialog = { ...this._settingsDialog, busy: false };
-      this._showToast(this._t('toast.error', { err: this._errText(e) }));
-    }
+    return this._editorRuntimeOrThrow()._saveSettingsDialog();
   }
 
   /** Boolean toggle for dialog rows: the native ha-switch when the HA
@@ -16734,10 +10030,7 @@ class HouseplanCard extends LitElement {
    *  fire `change` and both are read back via `.checked` off the event
    *  target - one handler, two renderers. */
   private _boolInput(checked: boolean, onChange: (v: boolean) => void, disabled = false): TemplateResult {
-    const h = (e: Event) => onChange(!!(e.target as HTMLInputElement).checked);
-    return customElements.get('ha-switch')
-      ? html`<ha-switch .checked=${checked} .disabled=${disabled} @change=${h}></ha-switch>`
-      : html`<input type="checkbox" .checked=${checked} ?disabled=${disabled} @change=${h} />`;
+    return this._editorRuntimeOrThrow()._boolInput(checked, onChange, disabled);
   }
 
   /** Range slider for dialog rows: ha-slider when available, plain
@@ -16749,29 +10042,11 @@ class HouseplanCard extends LitElement {
     min: number, max: number, step: number, value: number,
     onInput: (v: number) => void, disabled = false, ariaLabel?: string,
   ): TemplateResult {
-    const h = (e: Event) => {
-      const n = Number((e.target as HTMLInputElement).value);
-      if (Number.isFinite(n)) onInput(n);
-    };
-    return customElements.get('ha-slider')
-      ? html`<ha-slider .min=${min} .max=${max} .step=${step} .value=${value}
-          .disabled=${disabled} aria-label=${ariaLabel || nothing} @input=${h} @change=${h}></ha-slider>`
-      : html`<input type="range" min=${min} max=${max} step=${step} .value=${String(value)}
-          ?disabled=${disabled} aria-label=${ariaLabel || nothing} @input=${h} />`;
+    return this._editorRuntimeOrThrow()._rangeInput(min, max, step, value, onInput, disabled, ariaLabel);
   }
 
   private _renderColorRow(key: keyof FillColors, labelKey: string): TemplateResult {
-    const d = this._settingsDialog!;
-    const v = d.colors[key];
-    return html`<div class="colorrow gsrow">
-      <hp-color-opacity .label=${this._t(labelKey as any)}
-        .opacityLabel=${this._t('space.opacity')}
-        .pickerLabels=${this._colorPickerLabels}
-        .color=${v.c} .opacity=${v.a} .showOpacity=${true}
-        @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) => {
-          this._setFillColor(key, { c: e.detail.color, a: e.detail.opacity });
-        }}></hp-color-opacity>
-    </div>`;
+    return this._editorRuntimeOrThrow()._renderColorRow(key, labelKey);
   }
 
   /** Glow radius: stored in cm (config.settings.glow_radius_cm), default 3 m. */
@@ -17294,530 +10569,38 @@ class HouseplanCard extends LitElement {
    * and promises the one-deep undo before either store is changed.
    */
   private _renderAlignDialog(): TemplateResult {
-    const d = this._alignDialog!;
-    const r = d.report;
-    const failed = d.changed && !d.preflight?.ok;
-    const failures = d.preflight?.failures || [];
-    const visibleNames = failures.slice(0, 3).map((failure) => failure.displayName);
-    const spaces = visibleNames.length
-      ? visibleNames.join(', ')
-      : this._t('gs.align_preflight_space', { n: '1' });
-    const remaining = Math.max(0, failures.length - visibleNames.length);
-    const more = remaining
-      ? this._t('gs.align_preflight_more', { n: String(remaining) })
-      : '';
-    const repaired = r.spaceRefsRemapped + r.roomRefsRemapped
-      + r.positionsRemapped + r.markersDetached;
-    const modelMaintenance = r.migrated + r.canonicalized + r.coordsCanonicalized
-      + r.wallSegmentsMigrated
-      + r.wallsMerged + r.spansMerged + r.partitionsMerged
-      + r.partitionsReconciled + r.openingsRehosted + r.redundantDraftsRemoved;
-    const gridWarning = r.moved + r.rotated + r.removedDrafts
-      + r.coordsCanonicalized + r.wallsStraightened;
-    const straightenCm = Math.ceil(r.maxStraightenShiftCm * 10) / 10;
-    const straightenSpace = (this._serverCfg?.spaces || []).find(
-      (space: any) => String(space?.id || '') === r.maxStraightenSpace,
-    );
-    const straightenWhere = (this._serverCfg?.spaces || []).length > 1 && straightenSpace
-      ? String(straightenSpace.title || straightenSpace.id) : '';
-    const removed = r.orphanRoomLabelsRemoved + r.orphanDevicePositionsRemoved
-      + r.orphanGroupPositionsRemoved;
-    const liveNames = r.liveMissingPositions.map((item) => item.name).filter(Boolean);
-    const visibleLiveNames = liveNames.slice(0, 3).join(', ');
-    const remainingLiveNames = Math.max(0, liveNames.length - 3);
-    const liveNamesText = visibleLiveNames
-      ? this._t('gs.optimize_live_names', {
-          names: visibleLiveNames,
-          more: remainingLiveNames
-            ? this._t('gs.optimize_reference_more', { n: String(remainingLiveNames) }) : '',
-        })
-      : '';
-    const registryLimited = r.unverifiedPositions.some(
-      (item) => item.reason === 'registry_unavailable',
-    );
-    const detailStatus = (item: typeof r.removedPositions[number]): string => {
-      if (r.removedPositions.some((removedItem) => removedItem.id === item.id)) {
-        return this._t('gs.optimize_detail_removed');
-      }
-      if (r.liveMissingPositions.some((liveItem) => liveItem.id === item.id)) {
-        return this._t('gs.optimize_detail_live');
-      }
-      return this._t('gs.optimize_detail_unverified');
-    };
-    const detailKind = (kind: typeof r.removedPositions[number]['kind']): string => this._t(
-      kind === 'room_label' ? 'gs.optimize_detail_room_label'
-        : kind === 'group' ? 'gs.optimize_detail_group'
-        : kind === 'device' ? 'gs.optimize_detail_device'
-        : 'gs.optimize_detail_unknown',
-    );
-    const referenceDetails = [
-      ...r.removedPositions,
-      ...r.liveMissingPositions.filter((item) => (
-        !r.removedPositions.some((removedItem) => removedItem.id === item.id)
-      )),
-      ...r.unverifiedPositions,
-    ];
-    const visibleDetails = referenceDetails.slice(0, 10);
-    const remainingDetails = Math.max(0, referenceDetails.length - visibleDetails.length);
-    return html`<hp-dialog .hass=${this.hass} .title=${this._t('gs.align_title')} icon="mdi:broom"
-      dismiss-on-scrim @hp-close=${() => { this._alignDialog = null; this._preflightClipboardFallback = null; }}>
-        <div class="body">
-          ${failed
-            ? html`
-              <p class="alignmsg">${this._t('gs.align_preflight_failed', { spaces, more })}</p>
-              ${failures.slice(0, 10).map((failure) => html`<p class="alignmsg">
-                ${failure.displayName}: ${this._t(`gs.preflight_reason_${failure.reason}` as any)}
-              </p>`)}
-              ${failures.length > 10 ? html`<p class="alignmsg">
-                ${this._t('gs.align_preflight_more', { n: String(failures.length - 10) })}
-              </p>` : nothing}
-              <div class="rhint">${this._t('gs.align_preflight_hint')}</div>
-              ${this._preflightVersionsDiffer() ? html`
-                <div class="rhint">${this._t('gs.preflight_update_hint')}</div>` : nothing}
-              <div class="row">
-                <button class="btn ghost" @click=${() => this._copyPreflightDiagnostics()}>
-                  <ha-icon icon="mdi:content-copy"></ha-icon>
-                  ${this._t('gs.preflight_copy')}
-                </button>
-              </div>
-              ${this._preflightClipboardFallback ? html`<details open>
-                <summary>${this._t('gs.preflight_copy')}</summary>
-                <pre style="user-select:text;white-space:pre-wrap">${this._preflightClipboardFallback}</pre>
-              </details>` : nothing}`
-            : !d.changed
-            ? html`<p class="alignmsg">${this._t(
-                r.liveMissingPositions.length || r.unverifiedPositions.length
-                  || r.nestedRefsUnresolved
-                  ? 'gs.optimize_no_automatic_changes' : 'gs.align_none',
-              )}</p>`
-            : html`
-              ${r.moved ? html`<p class="alignmsg">${this._t('gs.align_count', {
-                  n: String(r.moved), total: String(r.total), cm: String(d.cm),
-                })}</p>` : nothing}
-              ${r.latticeCoordinatesCanonicalized ? html`
-                <p class="alignmsg">${this._t('gs.optimize_lattice_summary', {
-                  n: String(r.latticeCoordinatesCanonicalized),
-                  cm: formatLatticeShiftCm(r.latticeMaxShiftCm),
-                })}</p>
-                ${r.latticeSpaces.map((space) => html`<p class="alignmsg">${this._t(
-                  'gs.optimize_lattice_space', {
-                    space: space.space,
-                    n: String(space.canonicalized),
-                    far: String(space.far),
-                  },
-                )}</p>`)}
-              ` : nothing}
-              ${d.where
-                ? html`<p class="alignmsg">${this._t('gs.align_where', { s: d.where })}</p>`
-                : nothing}
-              ${r.rotated
-                ? html`<p class="alignmsg">${this._t('gs.align_turned', { n: String(r.rotated) })}</p>`
-                : nothing}
-              ${r.removedDrafts
-                ? html`<p class="alignmsg">${this._t('gs.align_removed_drafts', {
-                    n: String(r.removedDrafts),
-                  })}</p>`
-                : nothing}
-              ${r.redundantDraftsRemoved
-                ? html`<p class="alignmsg">${this._t('gs.optimize_redundant_drafts', {
-                    n: String(r.redundantDraftsRemoved),
-                  })}</p>`
-                : nothing}
-              ${r.wallSegmentsMigrated ? html`<p class="alignmsg">${this._t(
-                  'gs.wall_segments_migrated', { n: String(r.wallSegmentsMigrated) },
-                )}</p>` : nothing}
-              ${r.legacyZeroWallsMigrated ? html`<p class="alignmsg">${this._t(
-                  'gs.zero_walls_migrated', { n: String(r.legacyZeroWallsMigrated) },
-                )}</p>` : nothing}
-              ${modelMaintenance ? html`<p class="alignmsg">${this._t('gs.optimize_changes', {
-                  m: String(r.migrated), c: String(r.canonicalized),
-                  p: String(r.coordsCanonicalized), w: String(r.wallsMerged),
-                  s: String(r.spansMerged), i: String(r.partitionsMerged),
-                })}</p>` : nothing}
-              ${r.partitionsReconciled ? html`<p class="alignmsg">${this._t(
-                  'gs.optimize_coincident_partitions', { n: String(r.partitionsReconciled) },
-                )}</p>` : nothing}
-              ${r.openingsRehosted ? html`<p class="alignmsg">${this._t(
-                  'gs.optimize_openings_rehosted', { n: String(r.openingsRehosted) },
-                )}</p>` : nothing}
-              ${r.wallsStraightened ? html`<p class="alignmsg">${this._t(
-                  'gs.optimize_walls_straightened', {
-                    n: String(r.wallsStraightened), cm: String(straightenCm),
-                  },
-                )}</p>` : nothing}
-              ${straightenWhere ? html`<p class="alignmsg">${this._t(
-                  'gs.optimize_walls_straightened_where', { s: straightenWhere },
-                )}</p>` : nothing}
-              ${r.glowSpacesMigrated || r.glowRoomsMigrated
-                ? html`<p class="alignmsg">${this._t('gs.optimize_glow_migration', {
-                    spaces: String(r.glowSpacesMigrated),
-                    rooms: String(r.glowRoomsMigrated),
-                  })}</p>`
-                : nothing}
-              ${gridWarning ? html`<div class="rhint">${this._t('gs.align_warn')}</div>` : nothing}`}
-          ${!failed && r.wallsStraightenSkipped ? html`<p class="rhint">${this._t(
-              'gs.optimize_walls_straighten_skipped', {
-                n: String(r.wallsStraightenSkipped),
-              },
-            )}</p>` : nothing}
-          ${repaired
-            ? html`<p class="alignmsg">${this._t('gs.optimize_references', {
-                spaces: String(r.spaceRefsRemapped), rooms: String(r.roomRefsRemapped),
-                positions: String(r.positionsRemapped), detached: String(r.markersDetached),
-              })}</p>`
-            : nothing}
-          ${removed
-            ? html`<p class="alignmsg">${this._t('gs.optimize_orphans_removed', {
-                total: String(removed),
-                rooms: String(r.orphanRoomLabelsRemoved),
-                devices: String(r.orphanDevicePositionsRemoved),
-                groups: String(r.orphanGroupPositionsRemoved),
-              })}</p>`
-            : nothing}
-          ${r.liveMissingPositions.length
-            ? html`<div class="optimize-live">
-                <p class="alignmsg">${this._t(d.removeLiveMissingPositions
-                  ? 'gs.optimize_live_positions_remove' : 'gs.optimize_live_positions', {
-                  n: String(r.liveMissingPositions.length), names: liveNamesText,
-                })}</p>
-                <button class="btn ghost optimize-cleanup" type="button"
-                  aria-pressed=${d.removeLiveMissingPositions ? 'true' : 'false'}
-                  @click=${this._toggleOptimizeLivePositions} ?disabled=${d.busy}>
-                  <ha-icon icon=${d.removeLiveMissingPositions ? 'mdi:undo' : 'mdi:map-marker-remove-outline'}></ha-icon>
-                  ${this._t(d.removeLiveMissingPositions
-                    ? 'gs.optimize_live_keep' : 'gs.optimize_live_remove')}
-                </button>
-                ${d.removeLiveMissingPositions
-                  ? html`<div class="rhint optimize-selected" role="status">
-                      ${this._t('gs.optimize_live_selected')}
-                    </div>`
-                  : nothing}
-              </div>`
-            : nothing}
-          ${r.unverifiedPositions.length
-            ? html`<div class="rhint" role="alert">
-                ${this._t('gs.optimize_unverified', {
-                  n: String(r.unverifiedPositions.length),
-                })}
-                ${registryLimited ? ` ${this._t('gs.optimize_registry_limited')}` : ''}
-              </div>`
-            : nothing}
-          ${r.nestedRefsUnresolved
-            ? html`<div class="rhint" role="alert">${this._t('gs.optimize_vacuum_warning', {
-                n: String(r.nestedRefsUnresolved),
-              })}</div>`
-            : nothing}
-          ${referenceDetails.length
-            ? html`<details class="optimize-details">
-                <summary>${this._t('gs.optimize_details')}</summary>
-                <ul>
-                  ${visibleDetails.map((item) => html`<li>${this._t('gs.optimize_detail_item', {
-                    status: detailStatus(item), kind: detailKind(item.kind),
-                    id: item.id, space: item.spaceId,
-                  })}</li>`)}
-                </ul>
-                ${remainingDetails
-                  ? html`<div class="rhint">${this._t('gs.optimize_details_more', {
-                      n: String(remainingDetails),
-                    })}</div>`
-                  : nothing}
-              </details>`
-            : nothing}
-        </div>
-        <div class="row" slot="footer">
-          <span class="spacer"></span>
-          <button class="btn ghost" @click=${() => { this._alignDialog = null; this._preflightClipboardFallback = null; }}>${this._t('btn.cancel')}</button>
-          ${!d.changed || !d.preflight?.ok ? nothing : html`
-            <button class="btn on" @click=${this._runAlignToGrid} ?disabled=${d.busy}>
-              <ha-icon icon="mdi:check"></ha-icon>${d.busy ? '…' : this._t('gs.align_run')}
-            </button>`}
-        </div>
-    </hp-dialog>`;
+    return this._editorRuntimeOrThrow()._renderAlignDialog();
   }
 
   private _renderSettingsDialog(): TemplateResult {
-    return html`<hp-dialog .hass=${this.hass} .title=${this._t('gs.title')} icon="mdi:cog-outline" wide
-      @hp-close=${() => (this._settingsDialog = null)}>
-        <div class="body">
-          <div class="rhint">${this._t('gs.hint')}</div>
-          <label class="dispsection">${this._t('gs.light_group')}</label>
-          ${this._renderColorRow('light_on', 'gs.light_on')}
-          ${this._renderColorRow('light_off', 'gs.light_off')}
-          ${this._renderColorRow('light_none', 'gs.light_none')}
-          <label class="dispsection">${this._t('gs.temp_group')}</label>
-          ${this._renderColorRow('temp_cold', 'gs.temp_cold')}
-          ${this._renderColorRow('temp_ok', 'gs.temp_ok')}
-          ${this._renderColorRow('temp_hot', 'gs.temp_hot')}
-          <label class="dispsection">${this._t('gs.lqi_group')}</label>
-          ${this._renderColorRow('lqi_low', 'gs.lqi_low')}
-          ${this._renderColorRow('lqi_high', 'gs.lqi_high')}
-          <label class="dispsection">${this._t('gs.glow_group')}</label>
-          ${this._renderColorRow('glow_base', 'gs.glow_base')}
-          ${this._renderColorRow('glow_light', 'gs.glow_light')}
-          <div class="colorrow gsrow">
-            <span class="gsl">${this._t('gs.glow_radius')}</span>
-            <input type="number" class="tempin" min="0.5" step="0.5"
-              .value=${String(this._settingsDialog!.glowRadius)}
-              @input=${(e: Event) => {
-                const v = strictNumber((e.target as HTMLInputElement).value);
-                if (v != null && v > 0)
-                  this._settingsDialog = { ...this._settingsDialog!, glowRadius: v };
-              }} />
-            <span class="opl">${this._imperial ? this._t('gs.unit_ft') : this._t('gs.unit_m')}</span>
-          </div>
-          <label class="dispsection">${this._t('gs.wall_group')}</label>
-          ${this._renderColorRow('wall_fill', 'gs.wall_fill')}
-          <label class="dispsection">${this._t('gs.bg_group')}</label>
-          <div class="colorrow gsrow">
-            <span class="gsl">${this._t('gs.bg_mode')}</span>
-            <select class="areasel"
-              @change=${(e: Event) =>
-                (this._settingsDialog = { ...this._settingsDialog!, bgMode: (e.target as HTMLSelectElement).value === 'daynight' ? 'daynight' : 'static' })}>
-              <option value="static" ?selected=${this._settingsDialog!.bgMode === 'static'}>${this._t('gs.bg_static')}</option>
-              <option value="daynight" ?selected=${this._settingsDialog!.bgMode === 'daynight'}>${this._t('gs.bg_daynight')}</option>
-            </select>
-          </div>
-          ${this._settingsDialog!.bgMode === 'static'
-            ? html`<div class="colorrow gsrow">
-                <hp-color-opacity .label=${this._t('gs.bg_color')}
-                  .pickerLabels=${this._colorPickerLabels}
-                  .color=${this._settingsDialog!.bgColor || this._stageBgHex()}
-                  .opacity=${1} .showOpacity=${false}
-                  @hp-color-opacity-change=${(e: CustomEvent<{ color: string }>) => {
-                    this._settingsDialog = { ...this._settingsDialog!, bgColor: e.detail.color };
-                  }}></hp-color-opacity>
-                ${this._settingsDialog!.bgColor
-                  ? html`<button class="btn ghost" @click=${() =>
-                      (this._settingsDialog = { ...this._settingsDialog!, bgColor: null })}>${this._t('gs.bg_default')}</button>`
-                  : html`<span class="opl">${this._t('gs.bg_theme')}</span>`}
-              </div>`
-            : html`<div class="rhint">${this._t('gs.bg_daynight_hint')}</div>`}
-          <label class="dispsection">${this._t('gs.sun_group')}</label>
-          ${!sunStateOf(this.hass)
-            ? html`<div class="rhint">${this._t('gs.sun_missing')}</div>`
-            : nothing}
-          <div class="sunrow">
-            ${this._renderCompass()}
-            <div class="suncol">
-              <span class="gsl">${this._t('gs.north')}</span>
-              <div class="colorrow">
-                <input class="namein tempin" type="number" min="0" max="359" step="1"
-                  placeholder=${this._t('gs.north_ph')}
-                  .value=${this._settingsDialog!.northDeg === null ? '' : String(this._settingsDialog!.northDeg)}
-                  @input=${(e: Event) => {
-                    const raw = (e.target as HTMLInputElement).value.trim();
-                    const n = raw === '' ? null : Math.round(Number(raw));
-                    this._settingsDialog = {
-                      ...this._settingsDialog!,
-                      northDeg: n !== null && Number.isFinite(n) ? Math.min(359, Math.max(0, n)) : null,
-                    };
-                  }} />
-                ${this._settingsDialog!.northDeg !== null
-                  ? html`<button class="btn ghost" @click=${() =>
-                      (this._settingsDialog = { ...this._settingsDialog!, northDeg: null })}>${this._t('gs.north_clear')}</button>`
-                  : nothing}
-              </div>
-              ${this._settingsDialog!.northDeg === null
-                ? html`<div class="rhint">${this._t('gs.north_hint')}</div>`
-                : nothing}
-            </div>
-          </div>
-          <label class="srcrow">
-            ${this._boolInput(this._settingsDialog!.sunRays, (v) =>
-              (this._settingsDialog = { ...this._settingsDialog!, sunRays: v }))}
-            <span>${this._t('gs.sun_rays')}</span>
-          </label>
-          ${this._canEdit ? html`
-            <label class="dispsection">${this._t('gs.backup_group')}</label>
-            <div class="rhint">${this._t('gs.backup_hint')}</div>
-            <div class="backupactions">
-              <button class="btn ghost" @click=${this._openBackupExport}>
-                <ha-icon icon="mdi:download"></ha-icon>${this._t('backup.export_open')}
-              </button>
-              <span class="backupupload">
-                <button class="btn ghost" type="button" @click=${(e: Event) =>
-                  ((e.currentTarget as HTMLElement).nextElementSibling as HTMLInputElement | null)?.click()}>
-                  <ha-icon icon="mdi:upload"></ha-icon>${this._t('backup.import_open')}
-                </button>
-                <input type="file" accept="application/json,.json" @change=${this._pickBackupImport} />
-              </span>
-              ${this._canOptimizeUndo && this._undoKind === 'import' ? html`
-                <button class="btn ghost" @click=${this._undoPlanOptimization}
-                  ?disabled=${this._optimizeUndoBusy}>
-                  <ha-icon icon="mdi:undo-variant"></ha-icon>${this._t('backup.undo_import')}
-                </button>` : nothing}
-            </div>` : nothing}
-          <label class="dispsection">${this._t('gs.grid_group')}</label>
-          <div class="rhint">${this._t('gs.grid_hint')}</div>
-          <div class="colorrow gsrow">
-            <button class="btn ghost alignall" @click=${this._openAlignDialog}>
-              <ha-icon icon="mdi:broom"></ha-icon>${this._t('gs.align_all')}
-            </button>
-          </div>
-          ${this._canOptimizeUndo && this._undoKind !== 'import' ? html`<div class="colorrow gsrow">
-            <button class="btn ghost alignall" @click=${this._undoPlanOptimization}
-              ?disabled=${this._optimizeUndoBusy}>
-              <ha-icon icon="mdi:undo-variant"></ha-icon>${this._t('gs.optimize_undo')}
-            </button>
-          </div>` : nothing}
-          <label class="dispsection">${this._t('gs.about_group')}</label>
-          <div class="aboutver">${this._t('gs.about_version', { v: CARD_VERSION })}</div>
-          <a class="aboutlink" href="https://github.com/Matysh/houseplan-card" target="_blank" rel="noopener">
-            <ha-icon icon="mdi:github"></ha-icon>${this._t('gs.about_github')}</a>
-          <a class="aboutlink" href="https://t.me/ha_houseplan" target="_blank" rel="noopener">
-            <ha-icon icon="mdi:send"></ha-icon>${this._t('gs.about_telegram')}</a>
-        </div>
-        <div class="row" slot="footer">
-          <button class="btn ghost" @click=${() =>
-            (this._settingsDialog = { ...this._settingsDialog!, colors: JSON.parse(JSON.stringify(DEFAULT_FILL_COLORS)), glowRadius: this._imperial ? 9.8 : 3, bgColor: null, northDeg: null, bgMode: 'daynight', sunRays: false })}>
-            ${this._t('gs.reset')}
-          </button>
-          <span class="spacer"></span>
-          <button class="btn ghost" @click=${() => (this._settingsDialog = null)}>${this._t('btn.cancel')}</button>
-          <button class="btn on" @click=${this._saveSettingsDialog} ?disabled=${this._settingsDialog!.busy}>
-            <ha-icon icon="mdi:check"></ha-icon>${this._settingsDialog!.busy ? '…' : this._t('btn.save')}
-          </button>
-        </div>
-    </hp-dialog>`;
+    return this._editorRuntimeOrThrow()._renderSettingsDialog();
   }
 
   // ================= ICON RULES EDITOR =================
 
   private _openRulesDialog = (): void => {
-    if (!this._norm) return;
-    const custom = this._settings.icon_rules;
-    const rules = (custom && custom.length ? custom : DEFAULT_ICON_RULES).map((r) => ({ ...r }));
-    this._rulesDialog = { rules, test: '', busy: false };
-  };
+    return this._editorRuntimeOrThrow()._openRulesDialog();
+  }
 
   private _rulesSet(rules: IconRule[]): void {
-    this._rulesDialog = { ...this._rulesDialog!, rules };
+    return this._editorRuntimeOrThrow()._rulesSet(rules);
   }
 
   private async _saveRules(): Promise<void> {
-    const dlg = this._rulesDialog;
-    if (!dlg || dlg.busy) return;
-    const cleaned = dlg.rules.filter((r) => r.pattern.trim() && r.icon.trim());
-    this._rulesDialog = { ...dlg, busy: true };
-    try {
-      const cfg = this._serverCfg!;
-      const isDefault = JSON.stringify(cleaned) === JSON.stringify(DEFAULT_ICON_RULES);
-      const settings: any = { ...cfg.settings };
-      if (isDefault) delete settings.icon_rules;
-      else settings.icon_rules = cleaned;
-      this._serverCfg = { ...cfg, settings };
-      await this._saveConfigNow();
-      this._rulesDialog = null;
-      this._regSignature = '';
-      this._maybeRebuildDevices();
-      this._showToast(this._t('rules.saved'));
-    } catch (e: any) {
-      // audit L3: the dialog may have been closed (Esc) while the save was
-      // in flight — spreading null yields a truthy husk and the renderer
-      // then crashes, blanking the whole card. The toast below is the
-      // only remaining signal, so it must still fire.
-      if (this._rulesDialog) this._rulesDialog = { ...this._rulesDialog, busy: false };
-      this._showToast(this._t('toast.error', { err: this._errText(e) }));
-    }
+    return this._editorRuntimeOrThrow()._saveRules();
   }
 
   private _renderRulesDialog(): TemplateResult {
-    const d = this._rulesDialog!;
-    const compiled = compileIconRules(d.rules);
-    const testIcon = d.test.trim() ? iconFor(d.test, '', compiled) : null;
-    const move = (i: number, delta: number) => {
-      const r = [...d.rules];
-      const j = i + delta;
-      if (j < 0 || j >= r.length) return;
-      [r[i], r[j]] = [r[j], r[i]];
-      this._rulesSet(r);
-    };
-    return html`<hp-dialog .hass=${this.hass} .title=${this._t('rules.title')}
-      icon="mdi:shape-plus-outline" wide @hp-close=${() => (this._rulesDialog = null)}>
-        <div class="body">
-          <div class="rhint">${this._t('rules.hint')}</div>
-          <div class="rtest">
-            <input class="namein" type="text" placeholder=${this._t('rules.test_ph')}
-              .value=${d.test}
-              @input=${(e: Event) => (this._rulesDialog = { ...d, test: (e.target as HTMLInputElement).value })} />
-            ${testIcon ? html`<ha-icon icon=${testIcon}></ha-icon><span class="rtesticon">${testIcon}</span>` : nothing}
-          </div>
-          ${d.rules.map((r, i) => {
-            const bad = r.pattern.trim() !== '' && !isValidPattern(r.pattern);
-            return html`<div class="rrow">
-              <input class="namein rpat ${bad ? 'bad' : ''}" type="text"
-                placeholder=${this._t('rules.pattern_ph')}
-                title=${bad ? this._t('rules.invalid') : ''}
-                .value=${r.pattern}
-                @input=${(e: Event) => {
-                  const rules = [...d.rules];
-                  rules[i] = { ...r, pattern: (e.target as HTMLInputElement).value };
-                  this._rulesSet(rules);
-                }} />
-              <input class="namein ricon" type="text" placeholder=${this._t('rules.icon_ph')}
-                .value=${r.icon}
-                @input=${(e: Event) => {
-                  const rules = [...d.rules];
-                  rules[i] = { ...r, icon: (e.target as HTMLInputElement).value };
-                  this._rulesSet(rules);
-                }} />
-              <ha-icon class="rprev" icon=${r.icon || 'mdi:chip'}></ha-icon>
-              <ha-icon class="ract" icon="mdi:arrow-up" title=${this._t('btn.up')}
-                @click=${() => move(i, -1)}></ha-icon>
-              <ha-icon class="ract" icon="mdi:arrow-down" title=${this._t('btn.down')}
-                @click=${() => move(i, 1)}></ha-icon>
-              <ha-icon class="ract del" icon="mdi:close" title=${this._t('btn.delete')}
-                @click=${() => this._rulesSet(d.rules.filter((_, j) => j !== i))}></ha-icon>
-            </div>`;
-          })}
-          <button class="btn ghost" @click=${() => this._rulesSet([...d.rules, { pattern: '', icon: '' }])}>
-            <ha-icon icon="mdi:plus"></ha-icon>${this._t('rules.add')}
-          </button>
-        </div>
-        <div class="row" slot="footer">
-          <button class="btn ghost" @click=${() => this._rulesSet(DEFAULT_ICON_RULES.map((r) => ({ ...r })))}>
-            ${this._t('rules.reset')}
-          </button>
-          <span class="spacer"></span>
-          <button class="btn ghost" @click=${() => (this._rulesDialog = null)}>${this._t('btn.cancel')}</button>
-          <button class="btn on" @click=${this._saveRules} ?disabled=${d.busy}>
-            <ha-icon icon="mdi:check"></ha-icon>${d.busy ? '…' : this._t('btn.save')}
-          </button>
-        </div>
-    </hp-dialog>`;
+    return this._editorRuntimeOrThrow()._renderRulesDialog();
   }
 
   private _saveKioskScale(patch: Partial<{ icon: number; font: number }>): void {
-    this._kioskScale = { ...this._kioskScale, ...patch };
-    try {
-      localStorage.setItem(LS_KIOSK, JSON.stringify(this._kioskScale));
-    } catch {
-      /* ignore */
-    }
-    this.requestUpdate();
+    return this._editorRuntimeOrThrow()._saveKioskScale(patch);
   }
 
   /** Per-SCREEN size settings (wall tablets differ) — stored locally. */
   private _renderKioskDialog(): TemplateResult {
-    const k = this._kioskScale;
-    const row = (key: 'icon' | 'font', label: string) => html`<label>${label}</label>
-      <div class="colorrow">
-        ${this._rangeInput(50, 300, 5, Math.round(k[key] * 100), (n) => this._saveKioskScale({ [key]: n / 100 }))}
-        <span class="opv">${Math.round(k[key] * 100)}%</span>
-      </div>`;
-    return html`<hp-dialog .hass=${this.hass} .title=${this._t('kiosk.title')} icon="mdi:tablet"
-      dismiss-on-scrim @hp-close=${() => (this._kioskDialog = false)}>
-        <div class="body">
-          <div class="rhint">${this._t('kiosk.hint')}</div>
-          ${row('icon', this._t('kiosk.icon_scale'))}
-          ${row('font', this._t('kiosk.font_scale'))}
-        </div>
-        <div class="row" slot="footer">
-          <button class="btn ghost" @click=${() => this._saveKioskScale({ icon: 1, font: 1 })}>${this._t('gs.reset')}</button>
-          <span class="spacer"></span>
-          <button class="btn on" @click=${() => (this._kioskDialog = false)}>${this._t('btn.close')}</button>
-        </div>
-    </hp-dialog>`;
+    return this._editorRuntimeOrThrow()._renderKioskDialog();
   }
 
   // ================= render =================
@@ -17833,6 +10616,22 @@ class HouseplanCard extends LitElement {
   }
 
   protected render(): TemplateResult | typeof nothing {
+    const onboardingRuntimeRequested = !!this._importDialog
+      || !!(this._spaceDialog && this._spaceDialogUsesOnboardingRuntime(this._spaceDialog.mode));
+    const editorRuntimeRequested = this._mode !== 'view'
+      || !!(this._roomDialog || this._mergeDialog || this._openingDialog
+        || this._physicalDialog || this._partitionDeleteDialog || this._roomDeleteDialog
+        || this._decorTextDialog || this._decorShapeDialog || this._backdropDialog
+        || this._decorEraseConfirm
+        || (this._spaceDialog && !this._spaceDialogUsesOnboardingRuntime(this._spaceDialog.mode))
+        || this._deviceInbox
+        || this._markerDialog || this._rulesDialog || this._settingsDialog
+        || this._alignDialog || this._backupExportDialog || this._backupImportDialog
+        || this._kioskDialog || this._vacFit || this._vacCalConfirm);
+    if (onboardingRuntimeRequested && !this._onboardingRuntime) {
+      void this._ensureOnboardingRuntime();
+    }
+    if (editorRuntimeRequested && !this._editorRuntime) void this._ensureEditorRuntime();
     if (!this._config || !this.hass) return nothing;
     const model = this._model;
     const diagnostics = this.houseplanDiagnostics();
@@ -17885,8 +10684,10 @@ class HouseplanCard extends LitElement {
                 </button>`
             : html`<p class="muted">${this._t('empty.install')}</p>`}
         </div>
-        ${this._spaceDialog ? this._renderSpaceDialog() : nothing}
-        ${this._importDialog ? this._renderImportDialog() : nothing}
+        ${this._spaceDialog
+          ? (this._onboardingRuntime || this._editorRuntime) ? this._renderSpaceDialog() : nothing
+          : nothing}
+        ${this._importDialog ? this._onboardingRuntime ? this._renderImportDialog() : nothing : nothing}
         ${this._toast ? html`<div class="toast" role="alert" aria-live="assertive">${this._toast}</div>` : nothing}
       </ha-card>`;
     }
@@ -18050,11 +10851,13 @@ class HouseplanCard extends LitElement {
               ?inert=${!this._editing}>
               <div class="editorchrome-inner"
                 style=${modeVisual ? `opacity:${modeVisual.toolbarContentOpacity}` : nothing}>
-                ${editorChromeMode === 'plan'
-                  ? this._renderMarkupBar()
-                  : editorChromeMode === 'devices'
-                    ? this._renderDevicesBar()
-                    : this._renderDecorBar()}
+                ${this._editorRuntime
+                  ? editorChromeMode === 'plan'
+                    ? this._renderMarkupBar()
+                    : editorChromeMode === 'devices'
+                      ? this._renderDevicesBar()
+                      : this._renderDecorBar()
+                  : nothing}
               </div>
             </div>`
           : nothing}
@@ -18071,7 +10874,7 @@ class HouseplanCard extends LitElement {
           @pointerup=${(e: PointerEvent) => this._stagePointerUp(e)}
           @pointercancel=${(e: PointerEvent) => this._stagePointerCancel(e)}>
           ${renderDayCycleEnvironment(dayCycle, dayCycleWeight)}
-          ${this._renderEditorSecondary()}
+          ${this._editorRuntime ? this._renderEditorSecondary() : nothing}
           <div class="zoomwrap ${this._slide ? 'slide-' + this._slide : ''}"
             ?inert=${this._continuity.overlayBlocksInteraction || this._modeTransitionBusy}
             style="${transitionBrightness !== 1 ? `filter:brightness(${transitionBrightness.toFixed(3)})` : ''}">
@@ -18371,8 +11174,8 @@ class HouseplanCard extends LitElement {
           ${this._measureAnchor
             ? html`<div class="measurelayer">${this._renderMeasureLabel(view)}</div>`
             : nothing}
-          ${this._resize.liveLabels
-            ? html`<div class="measurelayer">${this._resize.liveLabels?.map((l) => html`<div
+          ${this._resize?.liveLabels
+            ? html`<div class="measurelayer">${this._resize?.liveLabels?.map((l) => html`<div
                 class="measurelabel ${l.kind === 'area' ? 'rszarea' : 'rszlength'}"
                 data-hp=${l.kind === 'area' ? 'resize-area-label' : 'resize-length-label'}
                 data-room=${l.kind === 'area' ? l.roomId : nothing}
@@ -18414,6 +11217,7 @@ class HouseplanCard extends LitElement {
             : nothing}
           ${this._renderFarHint()}
           ${this._renderHomeArrow()}
+          ${this._renderEditorRuntimeLoading()}
           ${this._renderRecoveryOverlay()}
           ${this._booting || this._bootFading
             ? html`<div class="bootveil ${this._booting ? '' : 'off'}" aria-hidden="true">
@@ -18422,20 +11226,22 @@ class HouseplanCard extends LitElement {
             : nothing}
         </div>
 
-        ${this._roomDialog ? this._renderRoomDialog() : nothing}
-        ${this._mergeDialog ? this._renderMergeDialog() : nothing}
-        ${this._openingDialog ? this._renderOpeningDialog() : nothing}
-        ${this._physicalDialog ? this._renderPhysicalDialog() : nothing}
-        ${this._partitionDeleteDialog ? this._renderPartitionDeleteDialog() : nothing}
-        ${this._roomDeleteDialog ? this._renderRoomDeleteDialog() : nothing}
+        ${this._roomDialog ? this._editorRuntime ? this._renderRoomDialog() : nothing : nothing}
+        ${this._mergeDialog ? this._editorRuntime ? this._renderMergeDialog() : nothing : nothing}
+        ${this._openingDialog ? this._editorRuntime ? this._renderOpeningDialog() : nothing : nothing}
+        ${this._physicalDialog ? this._editorRuntime ? this._renderPhysicalDialog() : nothing : nothing}
+        ${this._partitionDeleteDialog ? this._editorRuntime ? this._renderPartitionDeleteDialog() : nothing : nothing}
+        ${this._roomDeleteDialog ? this._editorRuntime ? this._renderRoomDeleteDialog() : nothing : nothing}
         ${this._openingInfo ? this._renderOpeningInfoCard() : nothing}
-        ${this._decorTextDialog ? this._renderDecorTextDialog() : nothing}
-        ${this._decorShapeDialog ? this._renderDecorShapeDialog() : nothing}
-        ${this._backdropDialog ? this._renderBackdropDialog() : nothing}
-        ${this._decorEraseConfirm ? this._renderDecorEraseConfirm() : nothing}
-        ${this._spaceDialog ? this._renderSpaceDialog() : nothing}
-        ${this._deviceInbox ? this._renderDeviceInbox() : nothing}
-        ${this._markerDialog ? this._renderMarkerDialog() : nothing}
+        ${this._decorTextDialog ? this._editorRuntime ? this._renderDecorTextDialog() : nothing : nothing}
+        ${this._decorShapeDialog ? this._editorRuntime ? this._renderDecorShapeDialog() : nothing : nothing}
+        ${this._backdropDialog ? this._editorRuntime ? this._renderBackdropDialog() : nothing : nothing}
+        ${this._decorEraseConfirm ? this._editorRuntime ? this._renderDecorEraseConfirm() : nothing : nothing}
+        ${this._spaceDialog
+          ? (this._onboardingRuntime || this._editorRuntime) ? this._renderSpaceDialog() : nothing
+          : nothing}
+        ${this._deviceInbox ? this._editorRuntime ? this._renderDeviceInbox() : nothing : nothing}
+        ${this._markerDialog ? this._editorRuntime ? this._renderMarkerDialog() : nothing : nothing}
         ${this._vacCalConfirm ? html`<hp-dialog .hass=${this.hass}
           .title=${this._t('vac.residual_title')} icon="mdi:map-marker-alert-outline"
           dismiss-on-scrim @hp-close=${() => (this._vacCalConfirm = null)}>
@@ -18452,12 +11258,12 @@ class HouseplanCard extends LitElement {
             </div>
         </hp-dialog>` : nothing}
         ${this._infoCard ? this._renderInfoCard() : nothing}
-        ${this._rulesDialog ? this._renderRulesDialog() : nothing}
-        ${this._settingsDialog ? this._renderSettingsDialog() : nothing}
-        ${this._alignDialog ? this._renderAlignDialog() : nothing}
-        ${this._backupExportDialog ? this._renderBackupExportDialog() : nothing}
-        ${this._backupImportDialog ? this._renderBackupImportDialog() : nothing}
-        ${this._importDialog ? this._renderImportDialog() : nothing}
+        ${this._rulesDialog ? this._editorRuntime ? this._renderRulesDialog() : nothing : nothing}
+        ${this._settingsDialog ? this._editorRuntime ? this._renderSettingsDialog() : nothing : nothing}
+        ${this._alignDialog ? this._editorRuntime ? this._renderAlignDialog() : nothing : nothing}
+        ${this._backupExportDialog ? this._editorRuntime ? this._renderBackupExportDialog() : nothing : nothing}
+        ${this._backupImportDialog ? this._editorRuntime ? this._renderBackupImportDialog() : nothing : nothing}
+        ${this._importDialog ? this._onboardingRuntime ? this._renderImportDialog() : nothing : nothing}
         ${this._tip
           ? html`<div class="tip" style="left:${this._tip.x + 12}px;top:${this._tip.y + 12}px">
               <b>${this._tip.title}</b>${this._tip.meta ? html`<span class="m">${this._tip.meta}</span>` : nothing}
@@ -18478,7 +11284,7 @@ class HouseplanCard extends LitElement {
               ${this._model.map((m) => html`<span class="kdot ${m.id === this._space ? 'on' : ''}"></span>`)}
             </div>`
           : nothing}
-        ${this._kioskDialog ? this._renderKioskDialog() : nothing}
+        ${this._kioskDialog ? this._editorRuntime ? this._renderKioskDialog() : nothing : nothing}
         ${this._vacFit ? html`<div class="vaccalbar">
           <span>${this._t('vac.fit_hint')}</span>
           <button class="btn ghostbtn" @click=${() => this._vacFitTurn({ rot: ((this._vacFit!.p.rot + 90) % 360) as any })}>${this._t('vac.fit_rotate')}</button>
@@ -18784,140 +11590,7 @@ class HouseplanCard extends LitElement {
 
   /** «Живая позиция» in the device dialog — vacuum markers only. */
   private _renderVacSection(dlg: any): TemplateResult | typeof nothing {
-    const dev = this._devices.find((x) => x.id === dlg.devId);
-    if (!dev || !this._isVacDev(dev)) return nothing;
-    const v = dev.marker?.vacuum || {};
-    const includeAllCameras = this._vacAllCamerasFor === dev.id;
-    const resolution = this._vacSourceResolution(dev, includeAllCameras);
-    const src = resolution.entityId;
-    const selected = resolution.candidates.find((candidate) => candidate.entityId === src) || null;
-    const tele = src ? readVacTelemetry(this.hass?.states[src]?.attributes) : null;
-    const canUseSource = v.live !== false
-      && (resolution.status === 'ok' || resolution.status === 'unsupported');
-    const planRooms = this._vacPlanRoomAnchors(dev.space);
-    const roomMatches = tele
-      ? vacRoomNameMatchCount(tele.rooms, planRooms.map((room) => room.name)) : 0;
-    const tierA = !!(canUseSource && tele && roomMatches >= 3);
-    const cals = Object.keys(v.calibration || {});
-    const setVac = (patch: Record<string, unknown>) => {
-      // HP-1540-01: materialise the marker first — find() alone silently
-      // dropped every edit for a vacuum that had never been saved
-      const m = this._vacEnsureMarker(dev);
-      if (!m) return;
-      m.vacuum = { ...(m.vacuum || {}), ...patch };
-      this._regSignature = '';
-      // First-use markers are materialised above, so the dialog must rebuild
-      // immediately instead of waiting for an unrelated HA state tick.
-      this._maybeRebuildDevices();
-      this._saveConfig();
-      this.requestUpdate();
-    };
-    const sameDevice = new Set(dev.entities || []);
-    const primaryCandidates = resolution.candidates.filter((candidate) =>
-      sameDevice.has(candidate.entityId) || candidate.entityId === v.source);
-    const globalCandidates = includeAllCameras
-      ? resolution.candidates.filter((candidate) => candidate.entityId.startsWith('camera.')
-        && !primaryCandidates.some((entry) => entry.entityId === candidate.entityId))
-      : [];
-    const capability = (candidate: VacSourceCandidate) => [
-      candidate.hasPosition ? this._t('vac.cap_position') : '',
-      candidate.hasRooms ? this._t('vac.cap_rooms_short') : '',
-      candidate.hasPath ? this._t('vac.cap_path') : '',
-      candidate.hasMapId ? this._t('vac.cap_map') : '',
-    ].filter(Boolean).join(' · ') || this._t('vac.cap_none');
-    const candidateButton = (candidate: VacSourceCandidate) => html`
-      <button type="button" class="vacsource ${candidate.entityId === src ? 'on' : ''}"
-        @click=${() => setVac({ source: candidate.entityId })}>
-        <span><b>${candidate.name}</b><small>${candidate.entityId}</small></span>
-        <span class="vacsource-meta">${candidate.platform || this._t('vac.platform_unknown')} · ${capability(candidate)}</span>
-      </button>`;
-    const knownSameDeviceXcme = resolution.candidates.some((candidate) =>
-      sameDevice.has(candidate.entityId) && candidate.category === 'known_xcme_incomplete');
-    const showXcmeHint = knownSameDeviceXcme
-      || (!!resolution.pinned && !!src?.startsWith('camera.') && !selected?.hasPosition);
-    const openPicker = () => {
-      const picker = [...this.renderRoot.querySelectorAll<HTMLDetailsElement>('details.vacpicker')]
-        .find((details) => details.dataset.devId === dev.id);
-      if (!picker) return;
-      picker.open = true;
-      picker.querySelector<HTMLElement>('summary')?.focus();
-    };
-    return html`
-      <label>${this._t('vac.section')}</label>
-      <div class="bindbox vacbox">
-        <div class="vacdiag" role="status">
-          <div><span>${this._t('vac.diag_source')}</span><b>${src || this._t('vac.source_none')}</b></div>
-          ${selected?.platform ? html`<div><span>${this._t('vac.diag_platform')}</span><b>${selected.platform}</b></div>` : nothing}
-          <div><span>${this._t('vac.diag_status')}</span><b>${this._t((`vac.source_status_${resolution.status}`) as any)}</b></div>
-          <div><span>${this._t('vac.diag_position')}</span><b>${tele?.pos ? this._t('common.yes') : this._t('common.no')}</b></div>
-          <div><span>${this._t('vac.diag_rooms')}</span><b>${subst(this._t('vac.diag_rooms_value'), {
-            total: String(tele?.rooms.length || 0), matched: String(roomMatches),
-            readiness: this._t(roomMatches >= 3 ? 'vac.autocal_ready' : 'vac.autocal_not_ready'),
-          })}</b></div>
-          <div><span>${this._t('vac.diag_path')}</span><b>${tele?.path.length ? this._t('common.yes') : this._t('common.no')}</b></div>
-          <div><span>${this._t('vac.diag_map')}</span><b>${tele?.mapId ?? 'default'}</b></div>
-        </div>
-        ${(resolution.status === 'missing' || resolution.status === 'disabled' || resolution.status === 'unverified')
-          ? html`<div class="warn vacsource-warning">
-              <span>${this._t((`vac.source_banner_${resolution.status}`) as any)}</span>
-              <button type="button" class="btn ghostbtn" @click=${openPicker}>${this._t('vac.choose_source')}</button>
-            </div>` : nothing}
-        ${showXcmeHint ? html`<div class="warn vacxcme">
-          <b>${this._t('vac.xcme_hint')}</b>
-          <pre>attributes:
-  - vacuum_position
-  - rooms
-  - path
-  - map_name</pre>
-        </div>` : nothing}
-        <details class="vacpicker" data-dev-id=${dev.id}>
-          <summary class="btn ghostbtn">${this._t('vac.choose_source')}</summary>
-          <div class="vacsource-list">
-            <button type="button" class="vacsource ${!resolution.pinned ? 'on' : ''}"
-              @click=${() => setVac({ source: null })}>
-              <span><b>${this._t('vac.source_auto')}</b><small>${this._t('vac.source_auto_hint')}</small></span>
-            </button>
-            ${primaryCandidates.map(candidateButton)}
-            <details ?open=${includeAllCameras}
-              @toggle=${(event: Event) => {
-                const open = (event.currentTarget as HTMLDetailsElement).open;
-                if (open) this._vacOpenAllCameras(dev);
-                else {
-                  this._vacAllCamerasFor = null;
-                  this._vacAllCameraCache = null;
-                }
-              }}>
-              <summary>${this._t('vac.all_cameras')}</summary>
-              <div class="rhint">${this._t('vac.all_cameras_warn')}</div>
-              ${includeAllCameras
-                ? (globalCandidates.length ? globalCandidates.map(candidateButton)
-                  : html`<div class="rhint">${this._t('vac.all_cameras_empty')}</div>`)
-                : nothing}
-            </details>
-          </div>
-        </details>
-        <div class="vacbtns">
-          ${tierA ? html`<button class="btn" @click=${() => this._vacAutoCalibrate(dev)}>${this._t('vac.autocal')}</button>` : nothing}
-          ${canUseSource
-            ? html`<button class="btn ghostbtn" @click=${() => this._vacStartFit(dev)}>${this._t('vac.fit')}</button>`
-            : nothing}
-          <a class="btn ghostbtn" href="https://github.com/Matysh/houseplan-card/blob/main/docs/VACUUM.md"
-            target="_blank" rel="noopener">${this._t('vac.documentation')}</a>
-        </div>
-        ${tele ? html`
-          <label class="srcrow">
-            ${this._boolInput(v.live !== false, (on) => setVac({ live: on ? null : false }))}
-            <span>${this._t('vac.live')}</span>
-          </label>
-          <label>${this._t('vac.trail')}</label>
-          <select class="areasel"
-            @change=${(e: Event) => setVac({ trail_mode: (e.target as HTMLSelectElement).value, trail: null })}>
-            ${(['never', 'cleaning', 'always'] as const).map((mv) => html`
-              <option value=${mv} ?selected=${vacTrailMode(v) === mv}>${this._t(('vac.trail_' + mv) as any)}</option>`)}
-          </select>
-          ${cals.length ? html`<div class="rhint">${subst(this._t('vac.cal_maps'), { maps: cals.join(', ') })}</div>` : nothing}
-        ` : nothing}
-      </div>`;
+    return this._editorRuntimeOrThrow()._renderVacSection(dlg);
   }
 
   /**
@@ -18926,255 +11599,63 @@ class HouseplanCard extends LitElement {
    * live X50 Master) — without this both floors would share one matrix.
    */
   private _vacMapId(d: DevItem, tele: { mapId: string }, planHass = this._planHass): string {
-    // HP-1541-01: nullish, not truthy — selected_map: 0 is a real map id and
-    // must equal what trails.py resolve_map_id stores server-side.
-    const ve = this._vacEntity(d);
-    const sel = ve ? planHass?.states?.[ve]?.attributes?.selected_map : null;
-    return vacMapIdWithFallback(tele.mapId, sel);
+    return this._editorRuntimeOrThrow()._vacMapId(d, tele, planHass);
   }
 
   /** Persist a solved matrix into marker.vacuum.calibration[mapId].
    *  Returns whether the write actually landed — callers must not toast
    *  success otherwise (HP-1540-01). */
   private _vacSaveMatrix(markerId: string, source: string, mapId: string, matrix: Affine): boolean {
-    // HP-1540-01: a first-use vacuum has no marker yet — materialise it
-    const dev = this._devices.find((x) => x.id === markerId);
-    const m = dev ? this._vacEnsureMarker(dev)
-      : this._serverCfg?.markers?.find((x: Marker) => x.id === markerId);
-    if (!m) return false;
-    const v = { ...(m.vacuum || {}) };
-    v.source = source;
-    v.calibration = { ...(v.calibration || {}), [mapId]: matrix.map((n) => Number(n.toFixed(6))) };
-    m.vacuum = v;
-    this._regSignature = '';
-    this._maybeRebuildDevices();
-    this._saveConfig();
-    this.requestUpdate();
-    return true;
+    return this._editorRuntimeOrThrow()._vacSaveMatrix(markerId, source, mapId, matrix);
   }
 
   /** The exact plan-room set accepted by auto-calibration and diagnostics. */
   private _vacPlanRoomAnchors(spaceId: string | null | undefined): Array<{
     name: string; cx: number; cy: number;
   }> {
-    return (this._spaceModelById(spaceId)?.rooms || [])
-      // HP-1540-04: legacy rectangle rooms (x/y/w/h) are still first-class;
-      // roomPoly() gives the same outline the renderer uses for them.
-      .map((room: any) => ({ room, poly: roomPoly(room) }))
-      .filter(({ room, poly }: any) => room.name && poly)
-      .map(({ room, poly }: any) => {
-        const centroid = areaCentroid(poly);
-        return centroid ? { name: String(room.name), cx: centroid[0], cy: centroid[1] } : null;
-      })
-      .filter(Boolean) as Array<{ name: string; cx: number; cy: number }>;
+    return this._editorRuntimeOrThrow()._vacPlanRoomAnchors(spaceId);
   }
 
   /** «Настроить автоматически»: robot rooms ↔ plan rooms by name. */
   private _vacAutoCalibrate(d: DevItem): void {
-    const src = this._vacSource(d);
-    const tele = src ? readVacTelemetry(this.hass?.states[src]?.attributes) : null;
-    if (!src || !tele || tele.rooms.length < 3) {
-      this._showToast(this._t('vac.autocal_no_rooms'));
-      return;
-    }
-    const planRooms = this._vacPlanRoomAnchors(d.space);
-    const res = autoCalibrate(tele.rooms, planRooms);
-    if (!res) {
-      this._showToast(this._t('vac.autocal_no_match'));
-      return;
-    }
-    const rawSpace = this._serverCfg?.spaces?.find((space: any) => space.id === d.space);
-    const rawCellCm = Number(rawSpace?.cell_cm);
-    const cellCm = Number.isFinite(rawCellCm) && rawCellCm > 0 ? rawCellCm : 5;
-    const residualCm = vacCalibrationResidualCm(res.residual, this._gridPitch, cellCm);
-    const mapId = this._vacMapId(d, tele);
-    if (residualCm > VAC_CALIBRATION_WARN_CM) {
-      this._vacCalConfirm = {
-        markerId: d.id, source: src, mapId, matrix: res.matrix,
-        rooms: res.matched.length,
-        error: formatLength(residualCm, this.hass?.config?.unit_system?.length === 'mi'),
-      };
-      return;
-    }
-    if (!this._vacSaveMatrix(d.id, src, mapId, res.matrix)) return;
-    this._showToast(subst(this._t('vac.autocal_done'), { rooms: String(res.matched.length) }));
+    return this._editorRuntimeOrThrow()._vacAutoCalibrate(d);
   }
 
   private _vacApplyCalibrationProposal(manual: boolean): void {
-    const proposal = this._vacCalConfirm;
-    if (!proposal) return;
-    this._vacCalConfirm = null;
-    if (manual) {
-      const dev = this._devices.find((candidate) => candidate.id === proposal.markerId);
-      const fit = fitFromMatrix(proposal.matrix);
-      if (!dev || !fit) return;
-      this._markerDialog = null;
-      if (dev.space !== this._space && !this._commitSpace(dev.space)) return;
-      this._vacFit = {
-        markerId: proposal.markerId, source: proposal.source,
-        mapId: proposal.mapId, p: fit, drag: null,
-      };
-      return;
-    }
-    if (this._vacSaveMatrix(
-      proposal.markerId, proposal.source, proposal.mapId, proposal.matrix,
-    )) this._showToast(subst(this._t('vac.autocal_done'), { rooms: String(proposal.rooms) }));
+    return this._editorRuntimeOrThrow()._vacApplyCalibrationProposal(manual);
   }
 
   /** «Подогнать вручную»: open the fit overlay and leave the dialog. */
   private _vacStartFit(d: DevItem): void {
-    const src = this._vacSource(d);
-    const tele = src ? readVacTelemetry(this.hass?.states[src]?.attributes) : null;
-    if (!src || !tele) {
-      this._showToast(this._t('vac.cal_need_pos'));
-      return;
-    }
-    const mapId = this._vacMapId(d, tele);
-    const existing = d.marker?.vacuum?.calibration?.[mapId] as Affine | undefined;
-    const sp = this._spaceModelById(d.space);
-    if (!sp) return;
-    const vb = sp.vb as [number, number, number, number];
-    const p = (existing && existing.length === 6 && fitFromMatrix(existing))
-      || initialFit(tele.rooms, vb);
-    this._markerDialog = null;
-    if (d.space !== this._space && !this._commitSpace(d.space)) return;
-    this._vacFit = { markerId: d.id, source: src, mapId, p, drag: null };
+    return this._editorRuntimeOrThrow()._vacStartFit(d);
   }
 
   private _vacFitSave(): void {
-    const f = this._vacFit;
-    if (!f) return;
-    // HP-1540-01: no success toast for a save that did not happen
-    const ok = this._vacSaveMatrix(f.markerId, f.source, f.mapId, fitMatrix(f.p));
-    this._vacFit = null;
-    if (ok) this._showToast(this._t('vac.cal_done'));
+    return this._editorRuntimeOrThrow()._vacFitSave();
   }
 
   /** Rotate/mirror around the ghost centre so the map does not fly away. */
   private _vacFitTurn(patch: Partial<FitParams>): void {
-    const f = this._vacFit;
-    if (!f) return;
-    const tele = readVacTelemetry(this.hass?.states[f.source]?.attributes);
-    const c = this._vacGhostCentre(tele?.rooms || []);
-    const next = { ...f.p, ...patch } as FitParams;
-    this._vacFit = { ...f, p: reanchorFit(next, f.p, c[0], c[1]) };
+    return this._editorRuntimeOrThrow()._vacFitTurn(patch);
   }
 
   private _vacGhostCentre(rooms: VacRoom[]): VacPt {
-    const xs: number[] = [], ys: number[] = [];
-    for (const r of rooms) {
-      xs.push(r.x0 ?? r.cx, r.x1 ?? r.cx);
-      ys.push(r.y0 ?? r.cy, r.y1 ?? r.cy);
-    }
-    if (!xs.length) return [0, 0];
-    return [(Math.min(...xs) + Math.max(...xs)) / 2, (Math.min(...ys) + Math.max(...ys)) / 2];
+    return this._editorRuntimeOrThrow()._vacGhostCentre(rooms);
   }
 
   /** px→canvas-units for a pointer delta, via the current stage size. */
   private _vacDelta(view: { w: number; h: number }, dxPx: number, dyPx: number): VacPt {
-    const st = this._stageEl;
-    const w = st?.clientWidth || 1, h = st?.clientHeight || 1;
-    return [(dxPx / w) * view.w, (dyPx / h) * view.h];
+    return this._editorRuntimeOrThrow()._vacDelta(view, dxPx, dyPx);
   }
 
   private _vacFitPointer(ev: PointerEvent, view: { x: number; y: number; w: number; h: number }): void {
-    const f = this._vacFit;
-    if (!f) return;
-    ev.stopPropagation();
-    if (ev.type === 'pointerdown') {
-      const t = ev.target as HTMLElement;
-      const corner = t.getAttribute?.('data-corner');
-      try {
-        (ev.currentTarget as HTMLElement).setPointerCapture?.(ev.pointerId);
-      } catch { /* synthetic pointers (tests) have no active id — capture is a nicety */ }
-      this._vacFit = { ...f, drag: corner
-        ? { kind: 'scale', sx: ev.clientX, sy: ev.clientY, p0: { ...f.p },
-            fx: Number(corner.split(',')[0]), fy: Number(corner.split(',')[1]) }
-        : { kind: 'move', sx: ev.clientX, sy: ev.clientY, p0: { ...f.p }, fx: 0, fy: 0 } };
-      return;
-    }
-    const d = f.drag;
-    if (!d) return;
-    if (ev.type === 'pointermove') {
-      const [dx, dy] = this._vacDelta(view, ev.clientX - d.sx, ev.clientY - d.sy);
-      if (d.kind === 'move') {
-        this._vacFit = { ...f, p: { ...d.p0, ox: d.p0.ox + dx, oy: d.p0.oy + dy } };
-      } else {
-        // corner-stretch: uniform scale about the OPPOSITE corner (fx, fy —
-        // the fixed corner in robot coords), like a graphics-editor frame
-        const tele = readVacTelemetry(this.hass?.states[f.source]?.attributes);
-        const c = this._vacGhostCentre(tele?.rooms || []);
-        const m0 = fitMatrix(d.p0);
-        const [gx, gy] = applyAffine(m0, c[0], c[1]);
-        const [px0, py0] = applyAffine(m0, d.fx, d.fy);
-        const span0 = Math.hypot(gx - px0, gy - py0) || 1;
-        // distance change of the dragged corner (opposite of fixed) from centre
-        const [cx0, cy0] = [2 * gx - px0, 2 * gy - py0];
-        const span1 = Math.hypot(cx0 + dx * 2 - px0, cy0 + dy * 2 - py0) / 2;
-        const k = Math.max(0.05, span1 / span0);
-        const next = { ...d.p0, s: d.p0.s * k } as FitParams;
-        this._vacFit = { ...f, p: reanchorFit(next, d.p0, d.fx, d.fy) };
-      }
-      return;
-    }
-    if (ev.type === 'pointerup' || ev.type === 'pointercancel') {
-      this._vacFit = { ...f, drag: null };
-    }
+    return this._editorRuntimeOrThrow()._vacFitPointer(ev, view);
   }
 
   /** The translucent robot map over the plan while fitting. */
   private _renderVacFit(view: { x: number; y: number; w: number; h: number }): TemplateResult | typeof nothing {
-    const f = this._vacFit;
-    if (!f) return nothing;
-    const tele = readVacTelemetry(this._renderPlanHass?.states?.[f.source]?.attributes);
-    if (!tele) return nothing;
-    const m = fitMatrix(f.p);
-    const rects: TemplateResult[] = [];
-    const xs: number[] = [], ys: number[] = [];
-    for (const r of tele.rooms) {
-      if (r.x0 == null) continue;
-      const cs = [[r.x0!, r.y0!], [r.x1!, r.y0!], [r.x1!, r.y1!], [r.x0!, r.y1!]]
-        .map(([x, y]) => applyAffine(m, x, y));
-      cs.forEach(([x, y]) => { xs.push(x); ys.push(y); });
-      const [lx, ly] = applyAffine(m, r.cx, r.cy);
-      rects.push(svg`<polygon points="${cs.map((q) => q[0].toFixed(1) + ',' + q[1].toFixed(1)).join(' ')}"></polygon>
-        <text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}">${r.name}</text>`);
-    }
-    let dot: TemplateResult | typeof nothing = nothing;
-    if (tele.pos) {
-      const [dx2, dy2] = applyAffine(m, tele.pos.x, tele.pos.y);
-      dot = svg`<circle class="vacfitdot" cx="${dx2.toFixed(1)}" cy="${dy2.toFixed(1)}" r="${(view.w * 0.012).toFixed(1)}"></circle>`;
-    }
-    // corner handles on the ghost bbox; data-corner carries the FIXED corner
-    // (the opposite one) in robot coordinates
-    const handles: TemplateResult[] = [];
-    if (xs.length) {
-      const inv = ((): ((x: number, y: number) => VacPt) => {
-        const det = m[0] * m[4] - m[1] * m[3];
-        return (x, y) => [
-          (m[4] * (x - m[2]) - m[1] * (y - m[5])) / det,
-          (-m[3] * (x - m[2]) + m[0] * (y - m[5])) / det,
-        ];
-      })();
-      const x0 = Math.min(...xs), x1 = Math.max(...xs);
-      const y0 = Math.min(...ys), y1 = Math.max(...ys);
-      // hit radius (finger-sized: these are grabbed on tablets) and the bead
-      // you actually see, a quarter of it — same split as .bdhandle/.bdknob
-      const r = view.w * 0.022;
-      const kr = r / 4;
-      for (const [hx, hy, ox2, oy2] of [[x0, y0, x1, y1], [x1, y0, x0, y1], [x1, y1, x0, y0], [x0, y1, x1, y0]] as number[][]) {
-        const fixed = inv(ox2, oy2);
-        handles.push(svg`<circle class="vacfithandle" data-corner="${fixed[0] + ',' + fixed[1]}"
-          cx="${hx.toFixed(1)}" cy="${hy.toFixed(1)}" r="${r.toFixed(1)}"></circle>
-          <circle class="vacfitknob" cx="${hx.toFixed(1)}" cy="${hy.toFixed(1)}" r="${kr.toFixed(2)}"></circle>`);
-      }
-    }
-    return html`<svg class="vacfit" viewBox="${view.x} ${view.y} ${view.w} ${view.h}"
-        preserveAspectRatio="none"
-        @pointerdown=${(e: PointerEvent) => this._vacFitPointer(e, view)}
-        @pointermove=${(e: PointerEvent) => this._vacFitPointer(e, view)}
-        @pointerup=${(e: PointerEvent) => this._vacFitPointer(e, view)}
-        @pointercancel=${(e: PointerEvent) => this._vacFitPointer(e, view)}>${rects}${dot}${handles}</svg>`;
+    if (!this._editorRuntime) return nothing;
+    return this._editorRuntimeOrThrow()._renderVacFit(view);
   }
 
   /** Every frame: glue the growing tip segment to the animated puck centre. */
@@ -19416,232 +11897,79 @@ class HouseplanCard extends LitElement {
   }
 
   private _resetRoomDialogFields(): void {
-    this._roomEditId = null;
-    this._roomFill = '';
-    this._roomCustomFill = null;
-    this._roomTempSrc = '';
-    this._roomHumSrc = '';
-    this._roomSrcOpen = null;
-    this._roomSrcFilter = '';
-    this._roomNameScale = 1;
-    this._roomLabelScale = 1;
+    return this._editorRuntimeOrThrow()._resetRoomDialogFields();
   }
 
   /** Open the room dialog for an EXISTING room (the gear on its card). */
   private _openRoomEdit(r: RoomCfg): void {
-    if (!r.id) return;
-    this._roomEditId = r.id;
-    this._nameSel = r.name || '';
-    this._areaSel = r.area || '';
-    this._roomFill = r.settings?.fill_mode === 'glow'
-      ? ''
-      : ((r.settings?.fill_mode as any) || '');
-    const rawCustom = r.settings?.custom_fill;
-    this._roomCustomFill = rawCustom && typeof rawCustom === 'object'
-      ? customFillOf(rawCustom, spaceDisplayOf(this._curSpaceCfg).customFill)
-      : null;
-    this._roomTempSrc = r.settings?.temp_source || '';
-    this._roomHumSrc = r.settings?.hum_source || '';
-    this._roomNameScale = clampScale(r.settings?.name_scale);
-    this._roomLabelScale = clampScale(r.settings?.label_scale);
-    this._roomSrcOpen = null;
-    this._roomSrcFilter = '';
-    this._roomDialog = true;
+    return this._editorRuntimeOrThrow()._openRoomEdit(r);
   }
 
   /** Collect the room settings object from the dialog state (null = all inherited). */
   private _roomSettingsFromDialog(): RoomCfg['settings'] {
-    const st: any = {};
-    if (this._roomFill) st.fill_mode = this._roomFill;
-    if (this._roomCustomFill) st.custom_fill = this._roomCustomFill;
-    if (this._roomTempSrc) st.temp_source = this._roomTempSrc;
-    if (this._roomHumSrc) st.hum_source = this._roomHumSrc;
-    if (this._roomNameScale !== 1) st.name_scale = this._roomNameScale;
-    if (this._roomLabelScale !== 1) st.label_scale = this._roomLabelScale;
-    return Object.keys(st).length ? st : null;
+    return this._editorRuntimeOrThrow()._roomSettingsFromDialog();
   }
 
   /** Save the room edited via the gear (name, area, tier-3 settings). */
   private _saveRoomEdit(): void {
-    const sp = this._curSpaceCfg;
-    const room = sp?.rooms.find((x: any) => x.id === this._roomEditId);
-    if (!room) {
-      this._roomDialog = false;
-      this._roomEditId = null;
-      return;
-    }
-    room.name = this._nameSel.trim() || room.name;
-    room.area = this._areaSel || null;
-    // Preserve unknown/future room settings. If this dialog replaces a legacy
-    // fill_mode:'glow', materialize its effective Glow in the same write so a
-    // seemingly unrelated room edit cannot switch the light overlay off.
-    const previous = room.settings || {};
-    const next: any = { ...previous };
-    if (this._roomFill) next.fill_mode = this._roomFill;
-    else delete next.fill_mode;
-    if (this._roomCustomFill) next.custom_fill = this._roomCustomFill;
-    else delete next.custom_fill;
-    if (previous.fill_mode === 'glow' && typeof previous.glow !== 'boolean') next.glow = true;
-    if (this._roomTempSrc) next.temp_source = this._roomTempSrc;
-    else delete next.temp_source;
-    if (this._roomHumSrc) next.hum_source = this._roomHumSrc;
-    else delete next.hum_source;
-    if (this._roomNameScale !== 1) next.name_scale = this._roomNameScale;
-    else delete next.name_scale;
-    if (this._roomLabelScale !== 1) next.label_scale = this._roomLabelScale;
-    else delete next.label_scale;
-    if (Object.keys(next).length) room.settings = next;
-    else delete room.settings;
-    this._saveConfig();
-    this._roomDialog = false;
-    this._roomEditId = null;
-    this._nameSel = '';
-    this._areaSel = '';
-    this._regSignature = '';
-    this._maybeRebuildDevices();
-    this.requestUpdate();
-    this._showToast(this._t('toast.room_updated'));
+    return this._editorRuntimeOrThrow()._saveRoomEdit();
   }
 
   /** Devices + sensor entities for the measurement-source picker. */
   private _roomSrcCandidates(): { value: string; label: string; sub: string }[] {
-    const h = this._planHass;
-    const removed = removedPlanBindings(this._markers);
-    const q = this._roomSrcFilter.trim().toLowerCase();
-    const list: { value: string; label: string; sub: string }[] = [];
-    for (const dev of Object.values<any>(h.devices)) {
-      if (dev.entry_type === 'service') continue;
-      if (removed.devices.has(dev.id)) continue;
-      const name = (dev.name_by_user || dev.name || dev.id).trim();
-      if (q && !name.toLowerCase().includes(q)) continue;
-      list.push({ value: 'device:' + dev.id, label: name, sub: dev.model || this._t('marker.sub_device') });
-    }
-    for (const [eid, reg] of Object.entries<any>(h.entities)) {
-      if (!eid.startsWith('sensor.') || reg.hidden) continue;
-      if (isRemovedPlanEntity(h, eid, removed)) continue;
-      const label = reg.name || h.states[eid]?.attributes?.friendly_name || eid;
-      if (q && !(label + ' ' + eid).toLowerCase().includes(q)) continue;
-      list.push({ value: 'entity:' + eid, label, sub: eid });
-    }
-    list.sort((a, b) => a.label.localeCompare(b.label));
-    return list.slice(0, 200);
+    return this._editorRuntimeOrThrow()._roomSrcCandidates();
   }
 
   /** Human label of a picked measurement source. */
   private _roomSrcLabel(src: string): string {
-    const i = src.indexOf(':');
-    const k = src.slice(0, i);
-    const ref = src.slice(i + 1);
-    if (k === 'device') {
-      return this._fullRegistryHass.devices[ref]?.name_by_user
-        || this._fullRegistryHass.devices[ref]?.name || ref;
-    }
-    return this._fullRegistryHass.entities[ref]?.name
-      || this.hass.states[ref]?.attributes?.friendly_name || ref;
+    return this._editorRuntimeOrThrow()._roomSrcLabel(src);
   }
 
   /** Saved label position (layout key rl_<roomId>) or the room center. */
   private _labelPos(r: RoomCfg, spaceId: string): { x: number; y: number } {
     const saved = this._layout['rl_' + (r.id || '')];
-    if (saved && saved.s === spaceId) {
-      return { x: saved.x * NORM_W, y: saved.y * NORM_W };
-    }
-    // a label nobody has dragged sits at the room's CENTROID, which is not a
-    // node for an odd-sized or polygonal room — put it on the nearest one
-    const c = this._snap(this._roomCenter(r));
-    return { x: c[0], y: c[1] };
+    if (saved && saved.s === spaceId) return { x: saved.x * NORM_W, y: saved.y * NORM_W };
+    const center = this._roomCenter(r);
+    const grid = this._gridPitch;
+    return {
+      x: clampCanvasR(snapToGrid(center[0], grid)),
+      y: clampCanvasR(snapToGrid(center[1], grid)),
+    };
   }
 
   /** Room-name labels are dragged exactly like device icons (same layout store). */
   private _labelDown(ev: PointerEvent, r: RoomCfg, spaceId: string): void {
-    if (this._mode !== 'plan') return;
-    ev.preventDefault();
-    ev.stopPropagation();
-    const p = this._labelPos(r, spaceId);
-    this._drag = { id: 'rl_' + (r.id || ''), sx: ev.clientX, sy: ev.clientY, ox: p.x, oy: p.y, moved: false };
-    capturePointer(ev);
-    this._tip = null;
+    if (!this._editorRuntime) return;
+    return this._editorRuntimeOrThrow()._labelDown(ev, r, spaceId);
   }
 
   private _labelMove(ev: PointerEvent, r: RoomCfg, spaceId: string): void {
-    const id = 'rl_' + (r.id || '');
-    if (!this._drag || this._drag.id !== id) return;
-    const stage = this._stageEl;
-    if (!stage) return;
-    const space = this._spaceModelById(spaceId);
-    if (!space) return;
-    const vb = space.vb;
-    const rect = stage.getBoundingClientRect();
-    const v = this._viewOr(vb);
-    const dx = ((ev.clientX - this._drag.sx) / rect.width) * v.w;
-    const dy = ((ev.clientY - this._drag.sy) / rect.height) * v.h;
-    if (Math.abs(ev.clientX - this._drag.sx) + Math.abs(ev.clientY - this._drag.sy) > 3) this._drag.moved = true;
-    // DEV-B58-01, and worse than the marker's: this clamped to the space's
-    // STORED view_box, which for every existing plan is the old unit square.
-    // A room drawn at 2.5 had a name that could not be dragged to its own room.
-    const nx = clampCanvasR(this._drag.ox + dx);
-    const ny = clampCanvasR(this._drag.oy + dy);
-    this._savePos({ id, space: spaceId } as DevItem, nx, ny);
+    if (!this._editorRuntime) return;
+    return this._editorRuntimeOrThrow()._labelMove(ev, r, spaceId);
   }
 
   private _labelUp(r: RoomCfg): void {
-    const id = 'rl_' + (r.id || '');
-    if (!this._drag || this._drag.id !== id) return;
-    const moved = this._drag.moved;
-    this._drag = moved ? this._drag : null;
-    if (moved) window.setTimeout(() => (this._drag = null), 0);
+    if (!this._editorRuntime) return;
+    return this._editorRuntimeOrThrow()._labelUp(r);
   }
 
   /** Saved room-card scale (layout key rl_<roomId>, field k), clamped 0.5..3. */
   private _labelScale(r: RoomCfg): number {
-    const k = (this._layout['rl_' + (r.id || '')] as any)?.k;
-    return typeof k === 'number' && Number.isFinite(k) ? Math.min(3, Math.max(0.5, k)) : 1;
+    const scale = (this._layout['rl_' + (r.id || '')] as any)?.k;
+    return typeof scale === 'number' && Number.isFinite(scale)
+      ? Math.min(3, Math.max(0.5, scale)) : 1;
   }
 
   private _rlResizeDown(ev: PointerEvent, r: RoomCfg, spaceId: string): void {
-    if (this._mode !== 'plan') return;
-    ev.preventDefault();
-    ev.stopPropagation();
-    const card = (ev.target as HTMLElement).closest('.roomlabel') as HTMLElement | null;
-    if (!card) return;
-    const b = card.getBoundingClientRect();
-    const cx = b.left + b.width / 2;
-    const cy = b.top + b.height / 2;
-    const d0 = Math.max(8, Math.hypot(ev.clientX - cx, ev.clientY - cy));
-    this._rlResize = { id: 'rl_' + (r.id || ''), space: spaceId, k0: this._labelScale(r), cx, cy, d0 };
-    capturePointer(ev);
+    return this._editorRuntimeOrThrow()._rlResizeDown(ev, r, spaceId);
   }
 
   private _rlResizeMove(ev: PointerEvent): void {
-    const rs = this._rlResize;
-    if (!rs) return;
-    ev.stopPropagation();
-    const dist = Math.max(8, Math.hypot(ev.clientX - rs.cx, ev.clientY - rs.cy));
-    const k = Math.min(3, Math.max(0.5, rs.k0 * (dist / rs.d0)));
-    const rec: any = this._layout[rs.id];
-    if (!rec) {
-      // the card was never dragged: pin its current default position first
-      const roomId = rs.id.slice(3);
-      const sp = this._spaceModelById(rs.space);
-      if (!sp) return;
-      const room = sp.rooms.find((x) => x.id === roomId);
-      if (!room) return;
-      const p = this._labelPos(room, rs.space);
-
-      this._layout = {
-        ...this._layout,
-        [rs.id]: { s: rs.space, x: p.x / NORM_W, y: p.y / NORM_W, k },
-      };
-    } else {
-      this._layout = { ...this._layout, [rs.id]: { ...rec, k } };
-    }
-    this._dirtyPos.add(rs.id);
+    return this._editorRuntimeOrThrow()._rlResizeMove(ev);
   }
 
   private _rlResizeUp(): void {
-    if (!this._rlResize) return;
-    this._rlResize = null;
-    this._persistLayout();
+    return this._editorRuntimeOrThrow()._rlResizeUp();
   }
 
   /** The room-settings button: detached from the (movable) label, always at
@@ -19652,28 +11980,7 @@ class HouseplanCard extends LitElement {
   private _renderRoomGear(
     r: RoomCfg, space: SpaceModel, view: { x: number; y: number; w: number; h: number },
   ): TemplateResult | typeof nothing {
-    if (!r.id) return nothing;
-    let c: number[] | null = null;
-    if (r.poly) {
-      // the VISUAL centre (largest inscribed circle) — interiorPoint only
-      // promises "inside", which sat visibly off-centre on an L-shaped room.
-      // The model is memoized, so the poly array is a stable cache key.
-      c = this._gearPtCache.get(r.poly) || null;
-      if (!c) { c = poleOfInaccessibility(r.poly); this._gearPtCache.set(r.poly, c); }
-    } else if (r.x != null && r.y != null) {
-      c = [r.x + (r.w || 0) / 2, r.y + (r.h || 0) / 2];
-    }
-    if (!c) return nothing;
-    const left = ((c[0] - view.x) / view.w) * 100;
-    const top = ((c[1] - view.y) / view.h) * 100;
-    return html`<button class="rlgearbtn" data-hp="room-settings" data-room=${r.id}
-      style="left:${left}%;top:${top}%"
-      title=${this._t('room.settings_title')}
-      @pointerdown=${(e: Event) => e.stopPropagation()}
-      @click=${(e: Event) => { e.stopPropagation(); this._openRoomEdit(r); }}>
-      <ha-icon icon="mdi:cog-outline"></ha-icon>
-      <span class="rlgeartext">${this._t('room.settings_short')}</span>
-    </button>`;
+    return this._editorRuntimeOrThrow()._renderRoomGear(r, space, view);
   }
 
   private _renderRoomLabel(
@@ -19857,102 +12164,24 @@ class HouseplanCard extends LitElement {
 
   /** Alignment candidates for the current context (owner's matrix). */
   private _alignCandidates(): number[][] {
-    const out: number[][] = [];
-    const spm = this._spaceModel();
-    if (this._markup) {
-      if (!spm) return out;
-      if (this._drag?.id.startsWith('rl_')) {
-        // room-card drag: centers of the OTHER room cards
-        const dragged = this._drag.id.slice(3);
-        for (const r of spm.rooms) {
-          if (!r.name || r.id === dragged) continue;
-          const p = this._labelPos(r, this._space);
-          out.push([p.x, p.y]);
-        }
-        return out;
-      }
-      // drawing: room vertices + current path/split points
-      for (const r of spm.rooms) {
-        const poly = roomPoly(r);
-        if (poly) for (const p of poly) out.push(p);
-      }
-      if (this._tool === 'draw') for (const p of this._path) out.push(p);
-      if (this._tool === 'split' && this._splitSel?.pts) for (const p of this._splitSel.pts) out.push(p);
-      return out;
-    }
-    if (this._mode === 'devices') {
-      // other icons of this space only (owner's decision)
-      for (const d of this._devices) {
-        if (d.space !== this._space || d.id === this._drag?.id
-            || d.bindingStatus?.kind === 'ha_disabled') continue;
-        const p = this._pos(d);
-        out.push([p.x, p.y]);
-      }
-      return out;
-    }
-    if (this._mode === 'decor') {
-      const movingId = this._decorMove?.id;
-      out.push(...this._decorSnapGeometry(movingId).points);
-      if (this._decorDraft) out.push(this._decorDraft.a);
-      return out;
-    }
-    return out;
+    return this._editorRuntimeOrThrow()._alignCandidates();
   }
 
   private _renderAlignGuides(): TemplateResult {
-    const pt = this._alignPoint;
-    if (!pt) return svg`` as unknown as TemplateResult;
-    // exact node match for grid-snapped things; half a cell for free-moving cards
-    const tol = this._drag?.id.startsWith('rl_') ? this._gridPitch * 0.5 : this._gridPitch * 0.05;
-    const guides = alignGuides(pt, this._alignCandidates(), tol);
-    if (!guides.length) return svg`` as unknown as TemplateResult;
-    const g = this._gridPitch;
-    const over = g * 1.5; // extend a little past the point
-    return svg`<g class="alignguides">
-      ${guides.map((gd: AlignGuide) => {
-        const [x1, y1, x2, y2] = gd.axis === 'x'
-          ? [gd.at, gd.from[1], gd.at, pt[1] + Math.sign(pt[1] - gd.from[1]) * over]
-          : [gd.from[0], gd.at, pt[0] + Math.sign(pt[0] - gd.from[0]) * over, gd.at];
-        return svg`<line class="alignline" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"></line>
-          <circle class="aligndot" cx="${gd.from[0]}" cy="${gd.from[1]}"
-            r="${gridVisualUnits(g * 0.18, this._cellCm)}"></circle>`;
-      })}
-    </g>` as unknown as TemplateResult;
+    return this._editorRuntimeOrThrow()._renderAlignGuides();
   }
 
   /** Perpendicular dashed tick through the wall's center while a dragged opening
    * sits exactly in the middle — same look as the alignment guides. Length is
    * about the wall stroke (2.5) × 6 to each side. */
   private _renderOpeningCenterTick(gd: { x: number; y: number; angle: number }): TemplateResult {
-    const rad = ((gd.angle + 90) * Math.PI) / 180;
-    const half = gridVisualUnits(2.5 * 6, this._cellCm);
-    return svg`<line class="alignline opcentertick"
-      x1="${gd.x - Math.cos(rad) * half}" y1="${gd.y - Math.sin(rad) * half}"
-      x2="${gd.x + Math.cos(rad) * half}" y2="${gd.y + Math.sin(rad) * half}"></line>` as unknown as TemplateResult;
+    return this._editorRuntimeOrThrow()._renderOpeningCenterTick(gd);
   }
 
   /** Physical dimension segments for a NEW-opening placement preview (#238).
    * Existing-opening drag labels carry no `dimension` and render nothing here. */
   private _renderOpeningDimensionGuides(measure: OpMeasure): TemplateResult {
-    const dimensions = measure.labels.flatMap((label) => label.dimension ? [label.dimension] : []);
-    if (!dimensions.length) return svg`` as unknown as TemplateResult;
-    const tickHalf = this._cssPxToRender(4);
-    return svg`<g class="opening-dimensions" aria-hidden="true" pointer-events="none">
-      ${dimensions.map((dimension) => {
-        const nx = -dimension.axis[1], ny = dimension.axis[0];
-        const tick = (point: [number, number], end: string) => svg`<line
-          class="opening-dimension-tick" data-end=${end}
-          x1=${point[0] - nx * tickHalf} y1=${point[1] - ny * tickHalf}
-          x2=${point[0] + nx * tickHalf} y2=${point[1] + ny * tickHalf}></line>`;
-        return svg`<g class="opening-dimension" data-source=${dimension.source}
-          data-room=${dimension.roomId || nothing}>
-          <line class="opening-dimension-line"
-            x1=${dimension.from[0]} y1=${dimension.from[1]}
-            x2=${dimension.to[0]} y2=${dimension.to[1]}></line>
-          ${tick(dimension.from, 'from')}${tick(dimension.to, 'to')}
-        </g>`;
-      })}
-    </g>` as unknown as TemplateResult;
+    return this._editorRuntimeOrThrow()._renderOpeningDimensionGuides(measure);
   }
 
   private _roomCenter(r: RoomCfg): number[] {
@@ -20001,42 +12230,7 @@ class HouseplanCard extends LitElement {
    * its editor hitbox is still supplied by the shared metrics below.
    */
   private _renderOpeningPlacementPreview(): TemplateResult {
-    const candidate = this._openingPreview;
-    if (!candidate) return svg``;
-    const visibleSpec: OpeningVisibleSpec = {
-      type: candidate.type,
-      length: candidate.renderedLength,
-      angle: candidate.angle,
-      amount: openingAmount(candidate.type, null),
-      flipH: candidate.flipH,
-      flipV: candidate.flipV,
-      base: 'var(--hp-open)',
-      tone: 'var(--hp-open)',
-      cellCm: this._cellCm,
-      gridPitch: this._gridPitch,
-      face: candidate.face,
-    };
-    const passageGeometry = candidate.type === 'passage'
-      ? passagePlacementPreviewGeometry(
-          candidate, gridVisualUnits(this._gridPitch, this._cellCm),
-        )
-      : null;
-    return svg`<g class="opening-preview" data-kind=${candidate.type}
-      aria-hidden="true" pointer-events="none"
-      transform="translate(${candidate.x} ${candidate.y}) rotate(${candidate.angle})">
-      ${passageGeometry ? svg`
-        <rect class="passage-preview-cut" pointer-events="none"
-          x=${passageGeometry.rect.x} y=${passageGeometry.rect.y}
-          width=${passageGeometry.rect.width} height=${passageGeometry.rect.height}></rect>
-        ${passageGeometry.boundaries.map((boundary) => svg`
-          <line class="passage-preview-boundary" pointer-events="none"
-            x1=${boundary.x1} y1=${boundary.y1}
-            x2=${boundary.x2} y2=${boundary.y2}></line>`)}
-      ` : renderOpeningVisibleGeometry(visibleSpec)}
-    </g>
-    <circle class="opening-preview-dot opghost-dot" aria-hidden="true" pointer-events="none"
-      cx=${candidate.x} cy=${candidate.y}
-      r=${gridVisualUnits(this._gridPitch * 0.18, this._cellCm)}></circle>` as unknown as TemplateResult;
+    return this._editorRuntimeOrThrow()._renderOpeningPlacementPreview();
   }
 
   private _renderOpenings(disp: SpaceDisplay): TemplateResult {
@@ -20229,463 +12423,45 @@ class HouseplanCard extends LitElement {
   }
 
   private _renderOpeningDialog(): TemplateResult {
-    const d = this._openingDialog!;
-    const partitions = this._spaceModel()?.partitions || [];
-    const previous = d.id
-      ? this._curSpaceCfg?.openings?.find((item: OpeningCfg) => item.id === d.id)
-      : null;
-    const dialogOpening: OpeningCfg = {
-      id: d.id || 'preview', type: d.type,
-      x: d.x / NORM_W, y: d.y / this._spaceH,
-      angle: d.angle,
-      length: previous && !d.lengthTouched
-        ? previous.length
-        : this._cmToUnits(Math.max(20, d.lengthCm)) / NORM_W,
-      ...(d.host ? { host: d.host } : {}),
-    };
-    const strict = partitionOpeningNeedsStrictValidation(previous, dialogOpening);
-    const hostResolution = d.host
-      ? strict
-        ? resolvePartitionOpeningStrict(
-            dialogOpening, partitions, NORM_W, this._cellCm, this._gridPitch,
-          )
-        : resolvePartitionOpeningCompat(
-            dialogOpening, partitions, NORM_W, this._cellCm, this._gridPitch,
-          )
-      : null;
-    const jambInvalid = hostResolution?.reason === 'does-not-fit-jamb';
-    const hostPartition = d.host
-      ? partitions.find((partition) => partition.id === d.host!.id)
-      : null;
-    const jambDistance = hostPartition
-      ? formatLength(hostPartition.cm / 2, this._imperial)
-      : '';
-    const orphan = !!d.host && !hostResolution?.resolved && !jambInvalid;
-    const icon = d.type === 'gate' ? 'mdi:gate'
-      : d.type === 'window' ? 'mdi:window-closed-variant'
-        : d.type === 'passage' ? 'mdi:arch' : 'mdi:door';
-    const picker = (kind: 'contact' | 'lock', list: { value: string; label: string }[]) => {
-      const cur = kind === 'contact' ? d.contact : d.lock;
-      const open = kind === 'contact' ? !!d.contactOpen : !!d.lockOpen;
-      const filter = kind === 'contact' ? d.contactFilter || '' : d.lockFilter || '';
-      const selected = list.find((candidate) => candidate.value === cur);
-      const selectedLabel = selected?.label
-        || this.hass.states[cur]?.attributes?.friendly_name
-        || this._fullRegistryHass.entities[cur]?.name
-        || cur;
-      const filtered = filterOpeningEntityCandidates(list, filter);
-      return html`
-        <button type="button" class="dropbtn opening-entity-drop ${open ? 'open' : ''}"
-          data-opening-picker=${kind} aria-expanded=${open ? 'true' : 'false'}
-          @click=${() => this._toggleOpeningEntityPicker(kind)}>
-          ${cur
-            ? html`<b>${selectedLabel}</b><span class="ref">${cur}</span>`
-            : html`<span class="muted">${this._t('opening.none')}</span>`}
-          <ha-icon icon=${open ? 'mdi:chevron-up' : 'mdi:chevron-down'}></ha-icon>
-        </button>
-        ${open
-          ? html`<div class="droppanel opening-entity-panel" data-opening-panel=${kind}>
-              <input class="namein opening-entity-search" type="text"
-                placeholder=${this._t('opening.search_ph')} .value=${filter}
-                @input=${(e: Event) => this._filterOpeningEntities(
-                  kind, (e.target as HTMLInputElement).value,
-                )} />
-              <div class="candlist">
-                <button type="button" class="cand opening-entity-candidate ${cur ? '' : 'sel'}"
-                  data-opening-entity="" @click=${() => this._selectOpeningEntity(kind, '')}>
-                  <span class="cl">${this._t('opening.none')}</span>
-                </button>
-                ${filtered.map((candidate) => html`
-                  <button type="button"
-                    class="cand opening-entity-candidate ${candidate.value === cur ? 'sel' : ''}"
-                    data-opening-entity=${candidate.value}
-                    @click=${() => this._selectOpeningEntity(kind, candidate.value)}>
-                    <span class="cl">${candidate.label}</span>
-                    <span class="cs">${candidate.value}</span>
-                  </button>`)}
-                ${!filtered.length
-                  ? html`<div class="cand muted opening-entity-empty">${this._t('marker.nothing_found')}</div>`
-                  : nothing}
-              </div>
-            </div>`
-          : nothing}`;
-    };
-    return html`<hp-dialog .hass=${this.hass} wide
-      .title=${d.id ? this._t('opening.edit') : this._t('opening.new')} icon=${icon}
-      @hp-close=${() => (this._openingDialog = null)}>
-        <div class="body">
-          ${d.host ? html`<label>${this._t('opening.host_partition')}</label>
-            <div class=${orphan || jambInvalid ? 'habindingbanner' : 'rhint'}
-              role=${orphan || jambInvalid ? 'status' : nothing}>
-              ${orphan || jambInvalid ? html`<ha-icon icon="mdi:alert-outline"></ha-icon>` : nothing}
-              <span>${orphan
-                ? this._t('opening.partition_orphan')
-                : jambInvalid
-                  ? this._t('opening.partition_jamb_margin', { distance: jambDistance })
-                  : this._t('opening.host_partition')}</span>
-            </div>` : nothing}
-          <label>${this._t('opening.type_label')}</label>
-          <label class="srcrow"><input type="radio" name="optype" .checked=${d.type === 'window'}
-            @change=${() => (this._openingDialog = {
-              ...d, type: 'window', lengthCm: d.id ? d.lengthCm : openingDefaultLengthCm('window'),
-              contactOpen: false, lockOpen: false,
-            })} />
-            <span>${this._t('opening.window')}</span></label>
-          <label class="srcrow"><input type="radio" name="optype" .checked=${d.type === 'door'}
-            @change=${() => (this._openingDialog = {
-              ...d, type: 'door', lengthCm: d.id ? d.lengthCm : openingDefaultLengthCm('door'),
-              contactOpen: false, lockOpen: false,
-            })} />
-            <span>${this._t('opening.door')}</span></label>
-          <label class="srcrow"><input type="radio" name="optype" .checked=${d.type === 'passage'}
-            @change=${() => (this._openingDialog = {
-              ...d, type: 'passage', lengthCm: d.id ? d.lengthCm : openingDefaultLengthCm('passage'),
-              contactOpen: false, lockOpen: false,
-            })} />
-            <span>${this._t('opening.passage')}</span></label>
-          <label class="srcrow"><input type="radio" name="optype" .checked=${d.type === 'gate'}
-            @change=${() => (this._openingDialog = {
-              ...d, type: 'gate',
-              lengthCm: d.id ? d.lengthCm : openingDefaultLengthCm('gate'), flipH: false,
-              contactOpen: false, lockOpen: false,
-            })} />
-            <span>${this._t('opening.gate')}</span></label>
-
-          <label>${this._t('opening.length_label')}</label>
-          <input class="namein tempin" type="number" min="20" max="600" step="5" .value=${String(d.lengthCm)}
-            @input=${(e: Event) => {
-              const n = strictNumber((e.target as HTMLInputElement).value);
-              if (n != null) this._openingDialog = { ...d, lengthCm: n, lengthTouched: true };
-            }} />
-
-          ${d.type === 'passage' && (d.contact || d.lock)
-            ? html`<div class="habindingbanner" role="status" aria-live="polite">
-                <ha-icon icon="mdi:alert-outline"></ha-icon>
-                <span>${this._t('opening.passage_binding_warning')}</span>
-              </div>`
-            : nothing}
-
-          ${d.type !== 'passage'
-            ? html`<label>${this._t('opening.contact_label')}</label>
-                ${picker('contact', this._contactCandidates())}
-                ${d.contact
-                  ? html`<label class="srcrow">${this._boolInput(d.invert, (v) => (this._openingDialog = { ...d, invert: v }))}
-                      <span>${this._t('opening.invert')}</span></label>`
-                  : nothing}`
-            : nothing}
-
-          ${d.type === 'door' || d.type === 'gate'
-            ? html`<label>${this._t('opening.lock_label')}</label>
-                ${picker('lock', this._lockCandidates())}`
-            : nothing}
-
-          ${d.type !== 'gate' && d.type !== 'passage'
-            ? html`<label class="srcrow">${this._boolInput(d.flipH, (v) => (this._openingDialog = { ...d, flipH: v }))}
-                <span>${this._t('opening.flip_h')}</span></label>`
-            : nothing}
-          ${d.type !== 'passage'
-            ? html`<label class="srcrow">${this._boolInput(d.flipV, (v) => (this._openingDialog = { ...d, flipV: v }))}
-                <span>${this._t('opening.flip_v')}</span></label>`
-            : nothing}
-        </div>
-        <div class="row dialog-action-footer" slot="footer">
-          ${d.id
-            ? html`<div class="dialog-action-group dialog-action-danger">
-                <button class="btn danger" @click=${this._deleteOpening}>
-                  <ha-icon icon="mdi:delete-outline"></ha-icon>${this._t('btn.delete')}
-                </button>
-              </div>`
-            : nothing}
-          ${orphan
-            ? html`<button class="btn ghost" @click=${this._rebindPartitionOpening}>
-                ${this._t('opening.rebind_partition')}
-              </button>`
-            : nothing}
-          <div class="dialog-action-group dialog-action-commit">
-            <button class="btn ghost" @click=${() => (this._openingDialog = null)}>${this._t('btn.cancel')}</button>
-            <button class="btn on" @click=${this._saveOpening}>
-              <ha-icon icon="mdi:check"></ha-icon>${this._t('btn.save')}
-            </button>
-          </div>
-        </div>
-    </hp-dialog>`;
+    return this._editorRuntimeOrThrow()._renderOpeningDialog();
   }
 
   /** Adaptive grid density for the current view (docs/CANVAS.md §7):
    *  which multiple of the drawing pitch is still legible on screen, and
    *  which coarser one carries the accent dots. */
   private _gridLevels(): { fine: number; coarse: number } | null {
-    const stage = this._stageEl;
-    const v = this._viewOr(this._baseVb());
-    const px = stage && stage.clientWidth && v.w ? stage.clientWidth / v.w : 1;
-    return gridLevels(this._gridPitch, px);
+    return this._editorRuntimeOrThrow()._gridLevels();
   }
 
   private _renderMarkupDefs(_vb: number[]): TemplateResult {
-    const lv = this._gridLevels();
-    if (!lv) return svg`<defs></defs>` as unknown as TemplateResult;
-    const g = this._gridPitch * lv.fine;
-    const G = this._gridPitch * lv.coarse;
-    const dotR = this._gridPitch * lv.fine * 0.14;
-    // Two patterns, CAD-style: the fine dots thin out as you zoom away
-    // (gridLevels drops whole decades of them) while every coarse node keeps
-    // a bigger, darker dot, so the eye never loses the scale reference.
-    return svg`<defs>
-        <pattern id="hp-grid" x="0" y="0" width="${g}" height="${g}" patternUnits="userSpaceOnUse">
-          <circle cx="0" cy="0" r="${dotR}" class="griddot"></circle>
-          <circle cx="${g}" cy="0" r="${dotR}" class="griddot"></circle>
-          <circle cx="0" cy="${g}" r="${dotR}" class="griddot"></circle>
-          <circle cx="${g}" cy="${g}" r="${dotR}" class="griddot"></circle>
-        </pattern>
-        <pattern id="hp-grid-major" x="0" y="0" width="${G}" height="${G}" patternUnits="userSpaceOnUse">
-          <rect width="${G}" height="${G}" fill="url(#hp-grid)"></rect>
-          <circle cx="0" cy="0" r="${dotR * 2.1}" class="griddot major"></circle>
-          <circle cx="${G}" cy="0" r="${dotR * 2.1}" class="griddot major"></circle>
-          <circle cx="0" cy="${G}" r="${dotR * 2.1}" class="griddot major"></circle>
-          <circle cx="${G}" cy="${G}" r="${dotR * 2.1}" class="griddot major"></circle>
-        </pattern>
-      </defs>`;
+    return this._editorRuntimeOrThrow()._renderMarkupDefs(_vb);
   }
 
   private _renderPhysicalEditorLayer(): TemplateResult {
-    const space = this._spaceModel();
-    if (!space) return svg`` as unknown as TemplateResult;
-    const g = this._gridPitch;
-    const view = this._viewOr(this._baseVb());
-    const stage = this._stageEl;
-    const unitsPerPx = stage?.clientWidth ? view.w / stage.clientWidth : g / 8;
-    const touchStroke = 24;
-    const handleR = Math.max(g * 0.22, unitsPerPx * 8);
-    const rotateHandleR = Math.max(handleR, unitsPerPx * 12);
-    const path = (poly: number[][]) => `M ${poly.map((p) => `${p[0]} ${p[1]}`).join(' L ')} Z`;
-    const selected = (kind: string, id: string) =>
-      (this._physicalSel?.kind === kind && this._physicalSel.id === id)
-      || (kind === 'column' && this._duplicateColumnId === id);
-    const draftSegs = (space.room_drafts || []).flatMap((d) => d.points.slice(0, -1).map((a, i) => {
-      const b = d.points[i + 1];
-      const storedCm = Number(d.segments[i]?.cm);
-      const depth = wallCmToUnits(
-        Number.isFinite(storedCm) ? storedCm : 15, this._cellCm, this._gridPitch,
-      );
-      return svg`<line class="physical-hit ${selected('draft', d.id) ? 'selected' : ''}"
-        data-hp="room-draft" data-kind="segment" data-id=${d.id} data-segment=${i}
-        x1=${a[0]} y1=${a[1]} x2=${b[0]} y2=${b[1]}
-        stroke-width=${Math.max(touchStroke, depth / Math.max(unitsPerPx, 1e-9))}
-        vector-effect="non-scaling-stroke"
-        @pointerdown=${(e: PointerEvent) => {
-          this._physicalSel = { kind: 'draft', id: d.id, segment: i };
-          this._registerPhysicalTap('draft', d.id, i);
-        }}></line>`;
-    }));
-    const partitions = (space.partitions || []).map((p) => {
-      const body = partitionBody(p.a, p.b, p.cm, this._cellCm, this._gridPitch);
-      return body
-        ? svg`<path class="physical-hit ${selected('partition', p.id) ? 'selected' : ''}"
-            data-hp="partition" data-kind="partition" data-id=${p.id} d=${path(body)}
-            stroke-width=${touchStroke} vector-effect="non-scaling-stroke"
-            @pointerdown=${(e: PointerEvent) => this._physicalDown(e, 'partition', p.id)}
-            @pointermove=${(e: PointerEvent) => this._physicalMove(e)}
-            @pointerup=${(e: PointerEvent) => this._physicalUp(e)}></path>`
-        : svg`<line class="physical-hit ${selected('partition', p.id) ? 'selected' : ''}"
-            data-hp="partition" data-kind="partition" data-id=${p.id}
-            x1=${p.a[0]} y1=${p.a[1]} x2=${p.b[0]} y2=${p.b[1]}
-            stroke-width=${touchStroke} vector-effect="non-scaling-stroke"
-            @pointerdown=${(e: PointerEvent) => this._physicalDown(e, 'partition', p.id)}
-            @pointermove=${(e: PointerEvent) => this._physicalMove(e)}
-            @pointerup=${(e: PointerEvent) => this._physicalUp(e)}></line>`;
-    });
-    const columns = (space.wall_columns || []).map((c) => {
-      const shown = this._physicalRotate?.id === c.id
-        ? { ...c, angle: this._physicalRotate.angle } as WallColumnCfg : c;
-      const body = columnBody(shown, this._cellCm, this._gridPitch);
-      return svg`<path class="physical-hit ${selected('column', c.id) ? 'selected' : ''}"
-        data-hp="wall-column" data-kind=${c.shape} data-id=${c.id} d=${path(body)}
-        stroke-width=${touchStroke} vector-effect="non-scaling-stroke"
-        @pointerdown=${(e: PointerEvent) => this._physicalDown(e, 'column', c.id)}
-        @pointermove=${(e: PointerEvent) => this._physicalMove(e)}
-        @pointerup=${(e: PointerEvent) => this._physicalUp(e)}></path>`;
-    });
-    const drag = this._physicalDrag;
-    const ghost = (() => {
-      if (!drag?.moved) return nothing;
-      if (drag.kind === 'partition' && Number((drag.base as PartitionCfg).cm) === 0) {
-        const partition = drag.base as PartitionCfg;
-        return svg`<line class="physical-drag zero"
-          x1=${partition.a[0]} y1=${partition.a[1]}
-          x2=${partition.b[0]} y2=${partition.b[1]}
-          transform="translate(${drag.delta[0]} ${drag.delta[1]})"></line>`;
-      }
-      const poly = drag.kind === 'partition'
-        ? partitionBody((drag.base as PartitionCfg).a, (drag.base as PartitionCfg).b,
-            (drag.base as PartitionCfg).cm, this._cellCm, this._gridPitch)
-        : columnBody(drag.base as WallColumnCfg, this._cellCm, this._gridPitch);
-      return poly ? svg`<path class="physical-drag" d=${path(poly)}
-        transform="translate(${drag.delta[0]} ${drag.delta[1]})"></path>` : nothing;
-    })();
-    const chrome = (() => {
-      const sel = this._physicalSel;
-      if (!sel) return nothing;
-      if (sel.kind === 'draft') {
-        const d = space.room_drafts.find((x) => x.id === sel.id);
-        if (!d) return nothing;
-        return svg`<g class="physical-chrome" data-kind="draft-selection">
-          <polyline class="frame" points=${d.points.map((p) => p.join(',')).join(' ')}></polyline>
-          ${d.points.map((p) => svg`<circle class="move-dot" cx=${p[0]} cy=${p[1]} r=${handleR * 0.55}></circle>`)}
-        </g>`;
-      }
-      if (sel.kind === 'partition') {
-        const p = space.partitions.find((x) => x.id === sel.id);
-        if (!p) return nothing;
-        const body = partitionBody(p.a, p.b, p.cm, this._cellCm, this._gridPitch);
-        const mx = (p.a[0] + p.b[0]) / 2, my = (p.a[1] + p.b[1]) / 2;
-        return svg`<g class="physical-chrome" data-kind="partition-selection">
-          ${body
-            ? svg`<path class="frame" d=${path(body)}></path>`
-            : svg`<line class="frame" x1=${p.a[0]} y1=${p.a[1]}
-                x2=${p.b[0]} y2=${p.b[1]}></line>`}
-          <circle class="move-dot" cx=${p.a[0]} cy=${p.a[1]} r=${handleR * 0.55}></circle>
-          <circle class="move-dot" cx=${p.b[0]} cy=${p.b[1]} r=${handleR * 0.55}></circle>
-          <circle class="move-dot" cx=${mx} cy=${my} r=${handleR}></circle>
-        </g>`;
-      }
-      const base = space.wall_columns.find((x) => x.id === sel.id);
-      if (!base) return nothing;
-      const c = this._physicalRotate?.id === base.id
-        ? { ...base, angle: this._physicalRotate.angle } as WallColumnCfg : base;
-      const body = columnBody(c, this._cellCm, this._gridPitch);
-      if (c.shape !== 'square') return svg`<g class="physical-chrome" data-kind="circle-selection">
-        <path class="frame" d=${path(body)}></path>
-        <circle class="move-dot" cx=${c.center[0]} cy=${c.center[1]} r=${handleR}></circle>
-      </g>`;
-      const size = wallCmToUnits(c.cm, this._cellCm, this._gridPitch);
-      const angle = canonicalColumnAngle(c.angle) * Math.PI / 180;
-      const ux = Math.sin(angle), uy = -Math.cos(angle);
-      const edge = [c.center[0] + ux * size / 2, c.center[1] + uy * size / 2];
-      const handle = [edge[0] + ux * Math.max(g, unitsPerPx * 24),
-        edge[1] + uy * Math.max(g, unitsPerPx * 24)];
-      return svg`<g class="physical-chrome" data-kind="square-selection">
-        <path class="frame" d=${path(body)}></path>
-        <circle class="move-dot" cx=${c.center[0]} cy=${c.center[1]} r=${handleR}></circle>
-        <line class="stem" x1=${edge[0]} y1=${edge[1]} x2=${handle[0]} y2=${handle[1]}></line>
-        <circle class="rotate-handle" cx=${handle[0]} cy=${handle[1]} r=${rotateHandleR}
-          data-kind="rotate" @pointerdown=${(e: PointerEvent) => this._physicalRotateDown(e, base)}
-          @pointermove=${(e: PointerEvent) => this._physicalRotateMove(e)}
-          @pointerup=${(e: PointerEvent) => this._physicalRotateUp(e)}></circle>
-      </g>`;
-    })();
-    return svg`<g class="physical-editor">${draftSegs}${partitions}${columns}${ghost}${chrome}</g>`;
+    return this._editorRuntimeOrThrow()._renderPhysicalEditorLayer();
   }
 
   private _renderHiddenWallDiagnosticOverlay(): TemplateResult {
-    if (!this._markup) return svg`` as unknown as TemplateResult;
-    const geometry = this._hiddenWallDiagnosticSnapshot().value;
-    if (!geometry.segments.length) return svg`` as unknown as TemplateResult;
-    const radius = wallCmToUnits(5, this._cellCm, this._gridPitch);
-    return svg`<g class="hidden-wall-diagnostic" data-hp="hidden-wall-diagnostic"
-      data-segment-count=${geometry.segments.length}
-      data-endpoint-count=${geometry.endpoints.length}
-      aria-hidden="true" pointer-events="none">
-      ${geometry.segments.map((segment) => svg`<line class="hidden-wall-line"
-        data-key=${segment.key} data-source-kind=${segment.sourceKind}
-        data-source-id=${segment.sourceId}
-        x1=${segment.a[0]} y1=${segment.a[1]} x2=${segment.b[0]} y2=${segment.b[1]}
-        vector-effect="non-scaling-stroke" pointer-events="none"></line>`)}
-      ${geometry.endpoints.map((endpoint) => svg`<circle class="hidden-wall-node"
-        data-key=${endpoint.key} data-source-kind=${endpoint.sourceKind}
-        data-source-id=${endpoint.sourceId}
-        cx=${endpoint.point[0]} cy=${endpoint.point[1]} r=${radius}
-        pointer-events="none"></circle>`)}
-    </g>` as unknown as TemplateResult;
+    return this._editorRuntimeOrThrow()._renderHiddenWallDiagnosticOverlay();
   }
 
   private _renderPlanSnapOverlay(): TemplateResult {
-    if (!this._markup) {
-      return svg`` as unknown as TemplateResult;
-    }
-    const geometry = this._planSnapGeometrySnapshot().value;
-    const active = this._activePlanSnapCandidate;
-    const conflictKeys = new Set(this._activePlanSnapConflicts.map((item) => item.key));
-    const staticRadius = wallCmToUnits(5, this._cellCm, this._gridPitch);
-    const activeRadius = wallCmToUnits(10, this._cellCm, this._gridPitch);
-    return svg`<g class="plan-snap-overlay" data-hp="plan-snap-overlay"
-      data-segment-count=${geometry.segments.length}
-      data-endpoint-count=${geometry.endpoints.length}
-      aria-hidden="true" pointer-events="none">
-      ${guard([geometry, staticRadius, [...conflictKeys].sort().join('|')], () => svg`
-        ${geometry.segments.map((segment) => svg`<line class="plan-snap-line"
-          data-key=${segment.key} data-source-kind=${segment.sourceKind}
-          x1=${segment.a[0]} y1=${segment.a[1]} x2=${segment.b[0]} y2=${segment.b[1]}
-          vector-effect="non-scaling-stroke" pointer-events="none"></line>`)}
-        ${geometry.endpoints.map((endpoint) => svg`<circle class="plan-snap-node ${conflictKeys.has(endpoint.key) ? 'conflict' : ''}"
-          data-kind="endpoint" data-key=${endpoint.key} data-active="false"
-          cx=${endpoint.point[0]} cy=${endpoint.point[1]} r=${staticRadius}
-          pointer-events="none"></circle>`)}
-      `)}
-      <circle class="plan-snap-node ${active ? 'active' : ''} ${active?.kind === 'line' ? 'dynamic' : ''}"
-        data-hp="plan-snap-active-marker"
-        data-kind=${active?.kind ?? nothing} data-key=${active?.key ?? nothing}
-        data-active=${active ? 'true' : 'false'}
-        cx=${active?.point[0] ?? 0} cy=${active?.point[1] ?? 0} r=${activeRadius}
-        visibility=${active ? 'visible' : 'hidden'} pointer-events="none"></circle>
-    </g>` as unknown as TemplateResult;
+    return this._editorRuntimeOrThrow()._renderPlanSnapOverlay();
   }
 
   /** Update the only pointer-dependent node without scheduling a full card render. */
   private _syncPlanSnapActiveMarker(candidate: PlanSnapCandidate | null): void {
-    const marker = this.renderRoot?.querySelector<SVGCircleElement>(
-      '[data-hp="plan-snap-active-marker"]',
-    );
-    if (!marker) return;
-    marker.setAttribute('class', `plan-snap-node${candidate ? ' active' : ''}${
-      candidate?.kind === 'line' ? ' dynamic' : ''
-    }`);
-    marker.setAttribute('data-active', candidate ? 'true' : 'false');
-    marker.setAttribute('visibility', candidate ? 'visible' : 'hidden');
-    if (!candidate) {
-      marker.removeAttribute('data-kind');
-      marker.removeAttribute('data-key');
-      return;
-    }
-    marker.setAttribute('data-kind', candidate.kind);
-    marker.setAttribute('data-key', candidate.key);
-    marker.setAttribute('cx', String(candidate.point[0]));
-    marker.setAttribute('cy', String(candidate.point[1]));
-    marker.setAttribute('r', String(wallCmToUnits(10, this._cellCm, this._gridPitch)));
+    return this._editorRuntimeOrThrow()._syncPlanSnapActiveMarker(candidate);
   }
 
   /** Pointer-only ambiguity styling without a full Lit render on large plans. */
   private _syncPlanSnapConflictMarkers(conflicts: readonly PlanSnapEndpoint[]): void {
-    const keys = new Set(conflicts.map((item) => item.key));
-    for (const marker of this.renderRoot?.querySelectorAll<SVGCircleElement>(
-      '.plan-snap-node[data-kind="endpoint"]',
-    ) || []) {
-      marker.setAttribute('class', `plan-snap-node${keys.has(marker.dataset.key || '') ? ' conflict' : ''}`);
-    }
+    return this._editorRuntimeOrThrow()._syncPlanSnapConflictMarkers(conflicts);
   }
 
   /** Physical depth for one immutable architectural snap segment. */
   private _planSnapPhysicalSegment(segment: PlanSnapSegment): LinearWallSegment | null {
-    let cm = 0;
-    const space = this._spaceModel();
-    if (!space) return null;
-    if (segment.sourceKind === 'partition') {
-      cm = Number(space.partitions.find((item) => item.id === segment.sourceId)?.cm) || 0;
-    } else if (segment.sourceKind === 'draft') {
-      const match = /^(.*):(\d+)$/.exec(segment.sourceId);
-      const draft = match ? space.room_drafts.find((item) => item.id === match[1]) : null;
-      cm = draft && match ? Number(draft.segments[Number(match[2])]?.cm) || 0 : 0;
-    } else {
-      cm = intervalCmAt(
-        space.rooms, this._spaceWalls, this._openCuts(),
-        [segment.a[0], segment.a[1], segment.b[0], segment.b[1]],
-        this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
-      );
-    }
-    if (!(cm > 0)) return null;
-    return {
-      a: [...segment.a], b: [...segment.b],
-      halfDepth: wallCmToUnits(cm, this._cellCm, this._gridPitch) / 2,
-    };
+    return this._editorRuntimeOrThrow()._planSnapPhysicalSegment(segment);
   }
 
   /**
@@ -20696,110 +12472,11 @@ class HouseplanCard extends LitElement {
   private _drawPreviewJoinPatchD(
     points: number[][], halfDepths: number[],
   ): string {
-    if (points.length < 2) return '';
-    const preview: LinearWallSegment[] = [];
-    for (let i = 0; i + 1 < points.length; i++) {
-      if (!(halfDepths[i] > 0)) continue;
-      preview.push({ a: points[i], b: points[i + 1], halfDepth: halfDepths[i] });
-    }
-    if (!preview.length) return '';
-    const eps = this._gridPitch * 0.0002;
-    const touching = this._planSnapGeometrySnapshot().value.segments
-      .filter((segment) => points.some((point) => distToSegment(point, [
-        segment.a[0], segment.a[1], segment.b[0], segment.b[1],
-      ]) <= eps))
-      .map((segment) => this._planSnapPhysicalSegment(segment))
-      .filter((segment): segment is LinearWallSegment => !!segment);
-    const patches = linearWallJoinPatches([...preview, ...touching], eps);
-    return patches.map((patch) =>
-      `M ${patch.map((point) => `${point[0]} ${point[1]}`).join(' L ')} Z`).join(' ');
+    return this._editorRuntimeOrThrow()._drawPreviewJoinPatchD(points, halfDepths);
   }
 
   private _renderMarkupLayer(vb: number[]): TemplateResult {
-    // Derived axes omit zero and positive-body stretches; their dedicated
-    // layers paint those segments with the correct style and z-order.
-    const openCuts = this._openCuts();
-    const thickCuts = this._thickWallCuts();
-    const allCuts = openCuts.concat(thickCuts);
-    const segs = allCuts.length
-      ? cutSegments(this._segments, allCuts, this._gridPitch * 0.02)
-      : this._segments;
-    const path = this._path;
-    const g = this._gridPitch;
-    const view = this._viewOr(this._baseVb());
-    const drawCm = this._tool === 'draw' ? this._drawWallCm : null;
-    const previewPts = (() => {
-      if (this._tool !== 'draw' || !path.length || drawCm == null) return null;
-      if (this._contourClosed) return path;
-      if (this._cursorPt) return [...path, this._cursorPt];
-      return path.length >= 2 ? path : null;
-    })();
-    // Превью берёт толщины из того же резолвера, что и запись (#234). Раньше
-    // здесь была вторая формула, и расходились они ровно на пропуске: на экране
-    // текущее поле, в конфиге — 15 см.
-    const previewHalfDepths = previewPts
-      ? chainSegmentCms(
-          previewPts.length - 1,
-          this._contourClosed
-            ? [...this._draftSegmentCms, this._closingWallCm ?? undefined]
-            : this._draftSegmentCms,
-          drawCm, DRAW_WALL_DEFAULT_CM,
-        ).map((cm) => wallCmToUnits(cm, this._cellCm, this._gridPitch) / 2)
-      : [];
-    const previewD = previewPts
-      ? drawWallPreviewD(
-          previewPts,
-          wallCmToUnits(drawCm!, this._cellCm, this._gridPitch) / 2,
-          this._contourClosed,
-          previewHalfDepths,
-        )
-      : '';
-    const previewJoinPatchD = previewPts
-      ? this._drawPreviewJoinPatchD(previewPts, previewHalfDepths)
-      : '';
-    const repairPreview = this._wallFaceBatch?.candidates[this._wallFaceBatch.index]?.repair
-      || this._wallRepairDiagnostic;
-    return svg`
-      ${this._gridLevels()
-        ? svg`<rect x="${view.x}" y="${view.y}" width="${view.w}" height="${view.h}" fill="url(#hp-grid-major)" pointer-events="none"></rect>`
-        : nothing}
-      ${segs.map((s) => svg`<line class="seg" x1="${s[0]}" y1="${s[1]}" x2="${s[2]}" y2="${s[3]}"></line>`)}
-      ${this._renderPhysicalEditorLayer()}
-      ${this._tool === 'column' && this._cursorPt && this._drawWallCm
-        ? svg`<path class="physical-drag" d=${(() => {
-            const c: WallColumnCfg = { id: 'preview', shape: 'square', center: this._cursorPt!, cm: this._drawWallCm! };
-            const body = columnBody(c, this._cellCm, this._gridPitch);
-            return `M ${body.map((p) => `${p[0]} ${p[1]}`).join(' L ')} Z`;
-          })()}></path>`
-        : nothing}
-      ${previewD
-        ? svg`<path class="drawwall-preview-fill" d="${previewD}"></path>
-             <path class="drawwall-preview" d="${previewD}"></path>`
-        : nothing}
-      ${previewPts && drawCm === 0
-        ? svg`<polyline class="drawwall-zero-preview ${zeroWallStyleOf(this._curSpaceCfg)}"
-            points=${previewPts.map((point) => point.join(',')).join(' ')}></polyline>`
-        : nothing}
-      ${previewJoinPatchD
-        ? svg`<path class="drawwall-preview-fill" d="${previewJoinPatchD}"></path>
-             <path class="drawwall-preview" style="stroke:none" d="${previewJoinPatchD}"></path>`
-        : nothing}
-      ${repairPreview ? svg`<line class="wall-repair-preview"
-        x1=${repairPreview.from[0]} y1=${repairPreview.from[1]}
-        x2=${repairPreview.to[0]} y2=${repairPreview.to[1]}
-        aria-hidden="true" pointer-events="none"></line>` : nothing}
-      ${this._tool === 'split' && this._splitSel?.pts?.length
-        ? svg`${this._splitSel.pts.length > 1
-              ? svg`<polyline class="pathline" points="${this._splitSel.pts.map((p) => p.join(',')).join(' ')}"></polyline>`
-              : nothing}
-            ${this._splitSel.pts.map((p, i) => svg`<circle class="vertex ${i === 0 ? 'first' : ''}"
-              cx="${p[0]}" cy="${p[1]}" r="${gridVisualUnits(g * 0.22, this._cellCm)}"></circle>`)}
-            ${this._cursorPt
-              ? svg`<line class="preview" x1="${this._splitSel.pts[this._splitSel.pts.length - 1][0]}" y1="${this._splitSel.pts[this._splitSel.pts.length - 1][1]}"
-                  x2="${this._cursorPt[0]}" y2="${this._cursorPt[1]}"></line>`
-              : nothing}`
-        : nothing}
-    `;
+    return this._editorRuntimeOrThrow()._renderMarkupLayer(vb);
   }
 
   /**
@@ -20812,378 +12489,31 @@ class HouseplanCard extends LitElement {
    * snap geometry keeps excluding the active draft (no self-snapping).
    */
   private _renderActiveChainInk(): TemplateResult {
-    const path = this._path;
-    const g = this._gridPitch;
-    return svg`
-      ${path.length > 1
-        ? svg`<polyline class="pathline" points="${path.map((p) => p.join(',')).join(' ')}"></polyline>`
-        : nothing}
-      ${path.length && this._cursorPt && this._tool === 'draw' && !this._contourClosed
-        ? svg`<line class="active-axis" x1="${path[path.length - 1][0]}" y1="${path[path.length - 1][1]}"
-            x2="${this._cursorPt[0]}" y2="${this._cursorPt[1]}" aria-hidden="true"></line>
-            ${!this._activePlanSnapCandidate && !this._activePlanSnapConflicts.length
-              ? svg`<circle class="active-vertex" cx="${this._cursorPt[0]}" cy="${this._cursorPt[1]}"
-                  r="${gridVisualUnits(g * 0.22, this._cellCm)}" aria-hidden="true"></circle>` : nothing}`
-        : nothing}
-      ${path.map((p, i) => svg`<circle class="vertex ${i === 0 ? 'first' : ''}"
-        cx="${p[0]}" cy="${p[1]}" r="${gridVisualUnits(g * 0.22, this._cellCm)}"></circle>`)}
-    ` as unknown as TemplateResult;
+    return this._editorRuntimeOrThrow()._renderActiveChainInk();
   }
 
   private _renderPartitionDeleteDialog(): TemplateResult {
-    const dialog = this._partitionDeleteDialog!;
-    const imperial = this.hass?.config?.unit_system?.length === 'mi';
-    return html`<hp-dialog .hass=${this.hass}
-      .title=${this._t('confirm.delete_partition_openings_title')}
-      icon="mdi:wall" dismiss-on-scrim
-      @hp-close=${() => (this._partitionDeleteDialog = null)}>
-      <div class="body">
-        <p>${this._t('confirm.delete_partition_openings_body', {
-          count: dialog.openings.length,
-        })}</p>
-        <ul aria-label=${this._t('confirm.delete_partition_openings_title')}>
-          ${dialog.openings.map((opening) => html`<li>${this._t(
-            'confirm.delete_partition_openings_item', {
-              type: this._t(`opening.${opening.type}` as I18nKey),
-              length: formatLength(
-                (opening.length * NORM_W / this._gridPitch) * this._cellCm,
-                imperial,
-              ),
-            },
-          )}</li>`)}
-        </ul>
-      </div>
-      <div class="row" slot="footer">
-        <button class="btn ghost" @click=${() => (this._partitionDeleteDialog = null)}>
-          ${this._t('btn.cancel')}
-        </button>
-        <span class="spacer"></span>
-        <button class="btn danger" @click=${this._confirmPartitionDelete}>
-          <ha-icon icon="mdi:delete-outline"></ha-icon>${this._t('btn.delete')}
-        </button>
-      </div>
-    </hp-dialog>`;
+    return this._editorRuntimeOrThrow()._renderPartitionDeleteDialog();
   }
 
   private _renderRoomDeleteDialog(): TemplateResult {
-    const dialog = this._roomDeleteDialog!;
-    return html`<hp-dialog .hass=${this.hass}
-      .title=${this._t('confirm.delete_room_title', { name: dialog.name })}
-      icon="mdi:floor-plan" dismiss-on-scrim
-      @hp-close=${() => (this._roomDeleteDialog = null)}>
-      <div class="body">
-        <p>${this._t('confirm.delete_room_body')}</p>
-      </div>
-      <div class="row" slot="footer">
-        <button class="btn ghost" @click=${() => (this._roomDeleteDialog = null)}>
-          ${this._t('btn.cancel')}
-        </button>
-        <span class="spacer"></span>
-        <button class="btn" @click=${() => this._confirmRoomDelete(true)}>
-          <ha-icon icon="mdi:wall"></ha-icon>${this._t('btn.delete_room_keep_walls')}
-        </button>
-        <button class="btn danger" @click=${() => this._confirmRoomDelete(false)}>
-          <ha-icon icon="mdi:delete-outline"></ha-icon>${this._t('btn.delete_room_with_walls')}
-        </button>
-      </div>
-    </hp-dialog>`;
+    return this._editorRuntimeOrThrow()._renderRoomDeleteDialog();
   }
 
   private _renderPhysicalDialog(): TemplateResult {
-    const d = this._physicalDialog!;
-    const column = d.kind === 'column';
-    return html`<hp-dialog .hass=${this.hass} wide
-      .title=${this._t(column ? 'physical.column_properties' : d.kind === 'partition'
-        ? 'physical.partition_properties' : 'physical.draft_properties')}
-      icon=${column ? 'mdi:vector-square' : 'mdi:wall'}
-      @hp-close=${() => (this._physicalDialog = null)}>
-        <div class="body">
-          ${column ? html`<label>${this._t('physical.shape')}</label>
-            <select class="areasel" @change=${(e: Event) => {
-              const shape = (e.target as HTMLSelectElement).value as 'square' | 'circle';
-              this._physicalDialog = { ...d, shape };
-            }}>
-              <option value="square" ?selected=${d.shape === 'square'}>${this._t('physical.square')}</option>
-              <option value="circle" ?selected=${d.shape === 'circle'}>${this._t('physical.circle')}</option>
-            </select>` : nothing}
-          <label>${this._t(column
-            ? d.shape === 'circle' ? 'physical.diameter' : 'physical.side'
-            : 'wallthick.field')}</label>
-          <div class="row"><input class="namein tempin" type="number"
-            min=${cmToField(column ? 1 : 0, this._imperial)}
-            max=${cmToField(column ? 150 : 100, this._imperial)} step="any" .value=${d.cm}
-            @input=${(e: Event) => (this._physicalDialog = {
-              ...d, cm: (e.target as HTMLInputElement).value,
-            })} />
-            <span class="opl">${this._t(this._imperial ? 'wallthick.unit_in' : 'wallthick.unit_cm')}</span></div>
-          ${column && d.shape === 'square' ? html`
-            <label>${this._t('physical.rotation')}</label>
-            <input class="namein tempin" type="number" min="0" max="89.999" step="5"
-              .value=${d.angle || '0'}
-              @input=${(e: Event) => (this._physicalDialog = {
-                ...d, angle: (e.target as HTMLInputElement).value,
-              })} />` : nothing}
-          ${d.length ? html`<div class="muted">${this._t('physical.length')}: ${d.length}</div>` : nothing}
-        </div>
-        <div class="row dialog-action-footer physicalfooter" slot="footer">
-          <div class="dialog-action-group dialog-action-danger">
-            ${d.kind === 'draft' ? html`
-              <button class="btn danger" @click=${this._deleteDraftSegment}>
-                <ha-icon icon="mdi:vector-line"></ha-icon>${this._t('physical.delete_segment')}
-              </button>
-              <button class="btn danger" @click=${this._deleteDraftWhole}>
-                <ha-icon icon="mdi:delete-outline"></ha-icon>${this._t('physical.delete_draft')}
-              </button>` : html`
-              <button class="btn danger" @click=${this._deletePhysicalSelection}>
-                <ha-icon icon="mdi:delete-outline"></ha-icon>${this._t('btn.delete')}
-              </button>`}
-          </div>
-          <div class="dialog-action-group dialog-action-commit">
-            <button class="btn ghost" @click=${() => (this._physicalDialog = null)}>${this._t('btn.cancel')}</button>
-            <button class="btn on" @click=${this._savePhysicalDialog}>
-              <ha-icon icon="mdi:check"></ha-icon>${this._t('btn.save')}
-            </button>
-          </div>
-        </div>
-    </hp-dialog>`;
+    return this._editorRuntimeOrThrow()._renderPhysicalDialog();
   }
 
   private _renderMarkupBar(): TemplateResult {
-    const undoName = this._geometryHistory.undoName;
-    const redoName = this._geometryHistory.redoName;
-    const undoTitle = undoName
-      ? this._t('history.undo_named', { name: undoName })
-      : this._t('history.undo_empty');
-    const redoTitle = redoName
-      ? this._t('history.redo_named', { name: redoName })
-      : this._t('history.redo_empty');
-    return html`<div class="editbar planbar">
-      <div class="editbar-tools" tabindex="-1" ?inert=${this._modeTransitionBusy}>
-        <ha-icon icon="mdi:vector-square-edit" class="warn"></ha-icon>
-        <span class="wallsgroup">
-        <button class="btn ${this._tool === 'select' ? 'on' : ''}"
-          @click=${() => this._activateMarkupTool('select')}
-          title=${this._t('title.markup_select')}>
-          <ha-icon icon="mdi:cursor-default-outline"></ha-icon>${this._t('markup.select')}
-        </button>
-        <button class="btn ${this._tool === 'draw' ? 'on' : ''}"
-          aria-pressed=${this._tool === 'draw' ? 'true' : 'false'}
-          @click=${() => this._activateMarkupTool('draw')}
-          title=${this._t('title.markup_add')}>
-          <ha-icon icon="mdi:vector-polyline-plus"></ha-icon>${this._t('markup.add')}
-        </button>
-        <button class="btn ${this._tool === 'column' ? 'on' : ''}"
-          @click=${() => this._activateMarkupTool('column')}
-          title=${this._t('title.markup_column')}>
-          <ha-icon icon="mdi:vector-square"></ha-icon>${this._t('markup.column')}
-        </button>
-      </span>
-      <button class="btn ${this._tool === 'merge' ? 'on' : ''}"
-        @click=${() => this._activateMarkupTool('merge')}
-        title=${this._t('title.markup_merge')}>
-        <ha-icon icon="mdi:vector-union"></ha-icon>${this._t('markup.merge')}
-      </button>
-      <button class="btn ${this._tool === 'split' ? 'on' : ''}"
-        @click=${() => this._activateMarkupTool('split')}
-        title=${this._t('title.markup_split')}>
-        <ha-icon icon="mdi:vector-polyline-remove"></ha-icon>${this._t('markup.split')}
-      </button>
-      <button class="btn ${this._tool === 'resize' ? 'on' : ''}"
-        @click=${() => this._activateMarkupTool('resize')}
-        title=${this._t('title.markup_resize')}>
-        <ha-icon icon="mdi:arrow-expand-all"></ha-icon>${this._t('markup.resize')}
-      </button>
-      ${this._editorToolbarGroups.map((group) => this._renderEditorGroupLauncher(group))}
-      <button class="btn ${this._tool === 'wallthick' ? 'on' : ''}"
-        @click=${() => this._activateMarkupTool('wallthick')}
-        title=${this._t('title.markup_wallthick')}>
-        <ha-icon icon="mdi:wall"></ha-icon>${this._t('markup.wallthick')}
-      </button>
-      <button class="btn ${this._tool === 'delroom' ? 'on' : ''}"
-        @click=${() => this._activateMarkupTool('delroom')}
-        title=${this._t('title.markup_delroom')}>
-        <ha-icon icon="mdi:delete-outline"></ha-icon>${this._t('markup.delete_room')}
-      </button>
-      <button class="btn ghost" @click=${this._undoGeometry}
-        ?disabled=${!undoName}
-        title=${undoTitle} aria-label=${undoTitle}>
-        <ha-icon icon="mdi:undo-variant" aria-hidden="true"></ha-icon>
-      </button>
-      <button class="btn ghost" @click=${this._redoGeometry}
-        ?disabled=${!redoName}
-        title=${redoTitle} aria-label=${redoTitle}>
-        <ha-icon icon="mdi:redo-variant" aria-hidden="true"></ha-icon>
-      </button>
-      </div>
-      <div class="editbar-end">
-        <button class="btn barclose" title=${this._t('title.close_editor')}
-          data-editor-navigation="view"
-          @click=${() => this._setMode('view')}>
-          <ha-icon icon="mdi:close"></ha-icon>
-        </button>
-      </div>
-    </div>`;
+    return this._editorRuntimeOrThrow()._renderMarkupBar();
   }
 
   private _renderDevicesBar(): TemplateResult {
-    return html`<div class="editbar devbar">
-      <div class="editbar-tools" tabindex="-1" ?inert=${this._modeTransitionBusy}>
-        <ha-icon icon="mdi:tune-variant" class="warn"></ha-icon>
-        <button class="btn ${this._showAll ? 'on' : ''}" @click=${this._openDeviceInbox}
-          title=${this._t('device_inbox.title' as any)}>
-          <ha-icon icon="mdi:devices"></ha-icon>${this._t('device_inbox.button' as any)}
-        </button>
-        <button class="btn" @click=${this._openRulesDialog} title=${this._t('title.icon_rules')}>
-          <ha-icon icon="mdi:shape-plus-outline"></ha-icon>${this._t('devbar.rules')}
-        </button>
-        ${this._editorToolbarGroups.map((group) => this._renderEditorGroupLauncher(group))}
-      </div>
-      <div class="editbar-end">
-        <button class="btn barclose" title=${this._t('title.close_editor')}
-          data-editor-navigation="view"
-          @click=${() => this._setMode('view')}>
-          <ha-icon icon="mdi:close"></ha-icon>
-        </button>
-      </div>
-    </div>`;
+    return this._editorRuntimeOrThrow()._renderDevicesBar();
   }
 
   private _renderDeviceInbox(): TemplateResult {
-    const dialog = this._deviceInbox!;
-    const rows = this._deviceInboxRows();
-    const counts = Object.fromEntries((['on_plan', 'available', 'hidden', 'readd'] as const)
-      .map((category) => [category, rows.filter((row) => row.category === category).length]));
-    const filtered = filterDeviceInbox(
-      rows, dialog.tab, dialog.search, dialog.tab === 'on_plan' && dialog.onlyNew,
-    );
-    const visible = filtered.slice(0, dialog.limit);
-    const tabLabel = (tab: DeviceInboxCategory) => this._t(`device_inbox.tab_${tab}` as any);
-    const emptyKey = `device_inbox.empty_${dialog.tab}` as any;
-    const openVirtual = () => {
-      this._deviceInboxReturn = { ...dialog };
-      this._deviceInbox = null;
-      this._openMarkerDialog();
-      if (!this._markerDialog) this._closeMarkerDialog();
-    };
-    return html`<hp-dialog class="device-inbox-dialog" .hass=${this.hass}
-      .title=${this._t('device_inbox.title' as any)} icon="mdi:devices" wide
-      @hp-close=${() => (this._deviceInbox = null)}>
-      <div class="device-inbox" ?inert=${!!dialog.busy}>
-        <div class="device-inbox-head">
-          <input class="device-inbox-search" type="search" autofocus
-            placeholder=${this._t('device_inbox.search' as any)} .value=${dialog.search}
-            @input=${(event: Event) => (this._deviceInbox = {
-              ...dialog, search: (event.target as HTMLInputElement).value, limit: 100,
-            })} />
-          <button type="button" class="btn" @click=${openVirtual}>
-            <ha-icon icon="mdi:map-marker-plus-outline"></ha-icon>
-            ${this._t('device_inbox.add_virtual' as any)}
-          </button>
-        </div>
-        <div class="device-inbox-tabs" role="tablist" @keydown=${this._deviceInboxTabKey}>
-          ${(['on_plan', 'available', 'hidden', 'readd'] as DeviceInboxCategory[]).map((tab) => html`
-            <button type="button" role="tab" aria-selected=${dialog.tab === tab ? 'true' : 'false'}
-              class=${dialog.tab === tab ? 'on' : ''}
-              @click=${() => (this._deviceInbox = { ...dialog, tab, limit: 100, onlyNew: false })}>
-              ${tabLabel(tab)} <span>${counts[tab]}</span>
-            </button>`)}
-        </div>
-        <div class="device-inbox-filters">
-          ${dialog.tab === 'on_plan' ? html`<label>
-            <input type="checkbox" .checked=${dialog.onlyNew}
-              @change=${(event: Event) => (this._deviceInbox = {
-                ...dialog, onlyNew: (event.target as HTMLInputElement).checked, limit: 100,
-              })} />${this._t('device_inbox.only_new' as any)}
-          </label>` : nothing}
-          ${dialog.tab === 'available' ? html`<label>
-            <input type="checkbox" .checked=${dialog.showEntities}
-              @change=${(event: Event) => {
-                this._deviceInboxMemo = null;
-                this._deviceInbox = {
-                  ...dialog, showEntities: (event.target as HTMLInputElement).checked, limit: 100,
-                };
-              }} />${this._t('device_inbox.show_entities' as any)}
-          </label>` : nothing}
-          <label>
-            <input type="checkbox" .checked=${this._showAll}
-              @change=${(event: Event) => {
-                this._showHidden = (event.target as HTMLInputElement).checked;
-                this._deviceInboxMemo = null;
-                this.requestUpdate();
-              }} />${this._t('device_inbox.show_hidden' as any)}
-          </label>
-        </div>
-        <div class="device-inbox-results" aria-live="polite">
-          ${visible.length ? visible.map((row) => {
-            const primary = row.category === 'on_plan'
-              ? row.canFind ? html`<button type="button" class="btn" @click=${() => this._findInboxDevice(row)}>
-                  <ha-icon icon="mdi:crosshairs-gps"></ha-icon>${this._t('device_inbox.find' as any)}</button>`
-                : html`<button type="button" class="btn" @click=${() => this._openInboxMarker(row)}
-                    ?disabled=${!row.canEdit}>${this._t('device_inbox.edit' as any)}</button>`
-              : row.category === 'hidden'
-                ? html`<button type="button" class="btn" @click=${() => this._setInboxHidden(row, false)}
-                    title=${row.canShow ? '' : this._t('device_inbox.show_disabled' as any)}
-                    ?disabled=${!row.canShow}>${this._t('device_inbox.show' as any)}</button>`
-                : html`<button type="button" class="btn" @click=${() => this._openInboxMarker(row, true)}
-                    ?disabled=${!row.canAdd}>${this._t(row.category === 'readd'
-                      ? 'device_inbox.readd' as any : 'device_inbox.add' as any)}</button>`;
-            const status = row.status.kind === 'active' ? ''
-              : this._t(`device_inbox.status_${row.status.kind}` as any);
-            return html`<article class="device-inbox-row" data-binding=${row.binding}
-              data-category=${row.category} data-status=${row.status.kind}>
-              <ha-icon class="device-inbox-icon" .icon=${row.icon}></ha-icon>
-              <div class="device-inbox-copy">
-                <div class="device-inbox-name"><b>${row.name}</b>
-                  ${row.isNew ? html`<span class="device-inbox-new">${this._t('device_inbox.new' as any)}</span>` : nothing}
-                </div>
-                <div class="device-inbox-meta">
-                  ${[row.model, row.integration, row.spaceName, row.areaName].filter(Boolean).join(' · ')}
-                </div>
-                <div class="device-inbox-reason">
-                  ${this._t(`device_inbox.reason_${row.reason}` as any)}
-                  ${status ? html`<span class="device-inbox-status">${status}</span>` : nothing}
-                </div>
-                <code>${row.binding}</code>
-              </div>
-              <div class="device-inbox-actions">
-                ${primary}
-                ${row.canEdit || row.canHide || row.category === 'available'
-                    || row.category === 'hidden' || this._bindingHasHaPage(row.binding) ? html`
-                  <details class="device-inbox-menu">
-                    <summary class="btn ghost" aria-label=${this._t('device_inbox.more_actions' as any)}
-                      title=${this._t('device_inbox.more_actions' as any)}>
-                      <ha-icon icon="mdi:dots-vertical"></ha-icon>
-                    </summary>
-                    <div class="device-inbox-menu-items">
-                      ${row.canEdit && !(row.category === 'on_plan' && !row.canFind)
-                        ? html`<button type="button" class="btn ghost" @click=${() => this._openInboxMarker(row)}>
-                            ${this._t('device_inbox.edit' as any)}</button>` : nothing}
-                      ${row.canHide ? html`<button type="button" class="btn ghost"
-                        @click=${() => this._setInboxHidden(row, true)}>${this._t('device_inbox.hide' as any)}</button>` : nothing}
-                      ${row.category === 'available' ? html`<button type="button" class="btn ghost"
-                        @click=${() => this._setInboxHidden(row, true)}>${this._t('device_inbox.hide_available' as any)}</button>` : nothing}
-                      ${row.category === 'hidden' ? html`<button type="button" class="btn ghost"
-                        title=${row.canFind ? '' : this._t('device_inbox.find_hidden_hint' as any)}
-                        ?disabled=${!row.canFind} @click=${() => this._findInboxDevice(row)}>
-                        <ha-icon icon="mdi:crosshairs-gps"></ha-icon>${this._t('device_inbox.find' as any)}</button>` : nothing}
-                      ${this._bindingHasHaPage(row.binding) ? html`<button type="button" class="btn ghost"
-                        @click=${() => this._openBindingInHa(row.binding)}>${this._t('btn.open_in_ha')}</button>` : nothing}
-                    </div>
-                  </details>` : nothing}
-              </div>
-            </article>`;
-          }) : html`<div class="device-inbox-empty">${this._t(emptyKey)}</div>`}
-        </div>
-        ${filtered.length > visible.length ? html`<button type="button" class="btn device-inbox-more"
-          @click=${() => (this._deviceInbox = { ...dialog, limit: dialog.limit + 100 })}>
-          ${this._t('device_inbox.show_more' as any)} (${filtered.length - visible.length})
-        </button>` : nothing}
-      </div>
-      <div slot="footer" class="row">
-        <button type="button" class="btn ghost" @click=${() => (this._deviceInbox = null)}>
-          ${this._t('btn.close')}</button>
-      </div>
-    </hp-dialog>`;
+    return this._editorRuntimeOrThrow()._renderDeviceInbox();
   }
 
   /** Entities of a device worth CONTROLLING or reading, in a sensible order. */
@@ -21309,1390 +12639,133 @@ class HouseplanCard extends LitElement {
   private _markerValueBadgeFields(
     d: NonNullable<HouseplanCard['_markerDialog']>,
   ): Pick<Marker, 'value_badge'> | Record<string, never> {
-    return valueBadgeWriteFields({
-      touched: d.valueBadgeTouched,
-      originalHas: d.originalHasValueBadge,
-      original: d.originalValueBadge,
-      enabled: d.valueBadgeEnabled,
-      source: d.valueBadgeSource,
-      position: d.valueBadgePosition,
-    });
+    return this._editorRuntimeOrThrow()._markerValueBadgeFields(d);
   }
 
   /** Convert the transactional dialog state into the marker that Save would write. */
   private _markerDraft(d: NonNullable<HouseplanCard['_markerDialog']>): Marker | null {
-    if (d.bindingMode === 'ha' && (!d.binding || d.binding === 'virtual')) return null;
-    const roomRef = parseRoomRef(d.room);
-    const id = markerIdForBinding(d.binding, d.devId, () => '__hp_device_preview__');
-    const previous = this._markers.find((marker) => marker.id === id || marker.id === d.devId);
-    const controls = persistedExternalControls(
-      d.binding, d.controls, this._bindingEntities(d.binding),
-    );
-    const effectiveTapAction = this._effectiveStoredTapAction(d);
-    const marker: Marker = {
-      id,
-      binding: d.binding,
-      name: d.name.trim() || null,
-      icon: d.icon || null,
-      display: d.display !== 'badge' ? d.display : null,
-      ripple_color: d.display === 'icon_ripple' && d.rippleColor ? d.rippleColor : null,
-      ripple_size: d.display === 'icon_ripple' && d.rippleSize !== 1.5 ? d.rippleSize : null,
-      size: d.size !== 1 ? d.size : null,
-      angle: d.angle || null,
-      ...this._markerTapActionFields(d),
-      ...this._markerToggleEntityFields(d),
-      tap_target: effectiveTapAction === 'run' ? d.tapTarget || null : null,
-      tap_confirm: d.tapConfirm ? true : null,
-      controls: controls.length ? controls : null,
-      ...this._markerLightFields(d),
-      ...this._markerValueBadgeFields(d),
-      use_climate_temp: d.useClimateTemp ? true : null,
-      glow_radius_cm: (() => {
-        const value = strictNumber(d.glowRadius);
-        if (value == null || value <= 0) return null;
-        return Math.round(this._imperial ? value * 30.48 : value * 100);
-      })(),
-      model: d.model.trim() || null,
-      link: d.link.trim() || null,
-      description: d.description.trim() || null,
-      pdfs: d.pdfs,
-      hidden: d.hideFromPlan,
-      vacuum: previous?.vacuum || null,
-    };
-    if (d.binding === 'virtual' || d.room) {
-      marker.space = roomRef?.space || (d.binding === 'virtual' ? this._space : null);
-      marker.area = roomRef?.area || null;
-      marker.room_id = roomRef?.roomId || null;
-    }
-    return marker;
+    return this._editorRuntimeOrThrow()._markerDraft(d);
   }
 
   /** Runtime device for the unsaved marker, built by the production pipeline. */
   private _markerPreviewDevice(d: NonNullable<HouseplanCard['_markerDialog']>): DevItem | null {
-    const marker = this._markerDraft(d);
-    if (!marker) return null;
-    const key = `${this._haRegistry.revision}\n${contentFingerprint(this._markers)}\n${JSON.stringify(marker)}`;
-    if (this._markerPreviewMemo?.key === key) return this._markerPreviewMemo.device;
-    const device = deviceFromMarkerDraft({
-      hass: this.hass,
-      registry: this._haRegistry,
-      areaToSpace: Object.fromEntries(
-        Object.entries(this._areaToSpace).map(([area, value]) => [area, value.space]),
-      ),
-      marker,
-      siblingMarkers: this._markers,
-      settings: this._settings,
-      excluded: this._excluded,
-      showAll: this._showAll,
-      firstSpaceId: this._model[0]?.id || this._space,
-      loc: (key) => this._t(key),
-      iconRules: this._iconRules,
-    });
-    this._markerPreviewMemo = { key, device };
-    return device;
+    return this._editorRuntimeOrThrow()._markerPreviewDevice(d);
   }
 
   /** Preserve array identity while the dialog draft and runtime roster stay
    * unchanged, allowing light/value resolvers to reuse their WeakMap caches. */
   private _markerPreviewDevices(preview: DevItem): readonly DevItem[] {
-    const memo = this._markerPreviewDevicesMemo;
-    if (memo?.base === this._devices && memo.preview === preview) return memo.devices;
-    const devices = [...this._devices.filter((item) => item.id !== preview.id), preview];
-    this._markerPreviewDevicesMemo = { base: this._devices, preview, devices };
-    return devices;
+    return this._editorRuntimeOrThrow()._markerPreviewDevices(preview);
   }
 
   private _toggleIntent(
     device: DevItem,
     devices: readonly DevItem[] = this._devices,
   ): ResolvedToggleIntent | null {
-    return resolveToggleIntent({
-      hass: this._planHass,
-      registryHass: this._fullRegistryHass,
-      devices,
-      device,
-      virtualLights: this._virtualLights,
-    });
+    return this._editorRuntimeOrThrow()._toggleIntent(device, devices);
   }
 
   private _toggleIntentForDialog(
     d: NonNullable<HouseplanCard['_markerDialog']>,
   ): ResolvedToggleIntent | null {
-    const preview = this._markerPreviewDevice(d);
-    if (!preview) return null;
-    const devices = this._markerPreviewDevices(preview);
-    return this._toggleIntent(preview, devices);
+    return this._editorRuntimeOrThrow()._toggleIntentForDialog(d);
   }
 
   private _toggleStateText(entityId: string, fallback: string): string {
-    const state = this._planHass?.states?.[entityId] || this.hass?.states?.[entityId];
-    try {
-      return state && typeof this.hass?.formatEntityState === 'function'
-        ? this.hass.formatEntityState(state) : fallback;
-    } catch {
-      return fallback;
-    }
+    return this._editorRuntimeOrThrow()._toggleStateText(entityId, fallback);
   }
 
   /** Current-state copy is localized without teaching the dialog command semantics. */
   private _toggleConfirmationStateText(target: ResolvedToggleTarget): string {
-    const raw = String(target.state || 'unknown');
-    const formatted = target.entityId ? this._toggleStateText(target.entityId, raw) : raw;
-    if (formatted.trim().toLocaleLowerCase() !== raw.trim().toLocaleLowerCase()) return formatted;
-    const known: Partial<Record<string, I18nKey>> = {
-      on: 'confirm.state_on',
-      off: 'confirm.state_off',
-      open: 'confirm.state_open',
-      closed: 'confirm.state_closed',
-      opening: 'confirm.state_opening',
-      closing: 'confirm.state_closing',
-      unknown: 'confirm.state_unknown',
-    };
-    const key = known[raw];
-    if (key) return this._t(key);
-    // A future integration-specific token stays honest and readable even in a
-    // harness without HA's formatter; underscores are never exposed as UI.
-    return raw.replaceAll('_', ' ').replaceAll('-', ' ');
+    return this._editorRuntimeOrThrow()._toggleConfirmationStateText(target);
   }
 
   /** Snapshot lines shown by Toggle confirmation; execution still re-resolves later. */
   private _toggleConfirmationLines(intent: ResolvedToggleIntent): string[] {
-    const effectKeys: Record<Exclude<ToggleNextEffect, 'toggle'>, I18nKey> = {
-      'turn-on': 'confirm.state_on',
-      'turn-off': 'confirm.state_off',
-      open: 'confirm.state_open',
-      close: 'confirm.state_closed',
-      stop: 'confirm.state_stopped',
-    };
-    return formatToggleConfirmation(intent, {
-      state: (target) => this._toggleConfirmationStateText(target),
-      current: (state) => this._t('confirm.current_state', { state }),
-      expected: (state) => this._t('confirm.expected_state', { state }),
-      groupCurrent: (on, total) => this._t('confirm.group_current', { on, total }),
-      groupAllOn: () => this._t('confirm.group_all_on'),
-      groupAllOff: () => this._t('confirm.group_all_off'),
-      unavailable: (count) => this._t('confirm.unavailable_targets', { count }),
-      effect: (effect) => this._t(effectKeys[effect]),
-      expectedByHa: () => this._t('confirm.expected_by_ha'),
-    });
+    return this._editorRuntimeOrThrow()._toggleConfirmationLines(intent);
   }
 
   private _toggleHintLines(intent: ResolvedToggleIntent | null): string[] {
-    if (!intent) return [];
-    const effect = (value: ToggleNextEffect): string =>
-      this._t((`marker.toggle_effect_${value.replace('-', '_')}`) as any);
-    const skipReason = (value: ToggleSkipReason): string =>
-      this._t((`marker.toggle_skip_${value.replace('-', '_')}`) as any);
-    return formatToggleIntent(intent, {
-      single: (target) => {
-        if ('via' in target && target.via === 'virtual-light') {
-          return this._t('marker.virtual_light_target', { name: target.name });
-        }
-        const entityId = target.entityId || ('ref' in target ? target.ref : '');
-        const name = target.name || entityId;
-        return this._t('marker.toggle_hint_single', { name, id: entityId });
-      },
-      group: (targets) => this._t('marker.toggle_hint_group', {
-        count: targets.length,
-        names: targets.map((target) => `${target.name} (${target.entityId})`).join(', '),
-      }),
-      currentNext: (target, next) => target.via === 'virtual-light'
-        ? this._t('marker.virtual_light_current', {
-          state: this._t(target.state === 'on'
-            ? 'marker.virtual_light_state_on' : 'marker.virtual_light_state_off'),
-          effect: effect(next),
-        })
-        : this._t('marker.toggle_hint_current', {
-          state: this._toggleStateText(target.entityId, target.state),
-          effect: effect(next),
-        }),
-      groupCurrentNext: (targets, next) => this._t('marker.toggle_hint_group_current', {
-        on: targets.filter((target) => target.state === 'on').length,
-        count: targets.length,
-        effect: effect(next),
-      }),
-      skipped: (targets) => this._t('marker.toggle_hint_skipped', {
-        count: targets.length,
-        targets: targets.map((target) => {
-          const id = target.entityId || target.ref;
-          return `${target.name || id} (${id}: ${skipReason(target.reason)})`;
-        }).join(', '),
-      }),
-      none: (reason: ToggleNoneReason) =>
-        this._t((`marker.toggle_none_${reason.replaceAll('-', '_')}`) as any),
-    });
+    return this._editorRuntimeOrThrow()._toggleHintLines(intent);
   }
 
   /** One projection for the untouched select, hints and draft transitions. */
   private _effectiveStoredTapAction(
     d: NonNullable<HouseplanCard['_markerDialog']>, primaryDomain?: string,
   ): string {
-    return d.tapActionTouched
-      ? d.tapAction
-      : projectedTapAction(
-          d.originalHasTapAction ? d.originalTapAction : null,
-          primaryDomain,
-        );
+    return this._editorRuntimeOrThrow()._effectiveStoredTapAction(d, primaryDomain);
   }
 
   private _effectiveMarkerTapAction(
     d: NonNullable<HouseplanCard['_markerDialog']>,
     preview = this._markerPreviewDevice(d),
   ): string {
-    return this._effectiveStoredTapAction(d, preview?.primary?.split('.')[0]);
+    return this._editorRuntimeOrThrow()._effectiveMarkerTapAction(d, preview);
   }
 
   /** Store one user-triggered announcement; live HA state ticks do not mutate it. */
   private _announceToggleDraft(
     d: NonNullable<HouseplanCard['_markerDialog']>,
   ): NonNullable<HouseplanCard['_markerDialog']> {
-    const preview = this._markerPreviewDevice(d);
-    const next = !d.tapActionTouched
-      ? { ...d, tapAction: this._effectiveMarkerTapAction(d, preview) }
-      : d;
-    const text = next.tapAction === 'toggle'
-      ? this._toggleHintLines(this._toggleIntentForDialog(next)).join(' ')
-      : '';
-    return { ...next, tapHintAnnouncement: text };
+    return this._editorRuntimeOrThrow()._announceToggleDraft(d);
   }
 
   private _valueBadgeForBinding(
     d: NonNullable<HouseplanCard['_markerDialog']>, binding: string,
   ): Pick<NonNullable<HouseplanCard['_markerDialog']>,
     'valueBadgeEnabled' | 'valueBadgeSource' | 'valueBadgeTouched'> {
-    const draft = {
-      ...d, binding,
-      valueBadgeEnabled: false, valueBadgeSource: null, valueBadgeTouched: true,
-    };
-    const device = this._markerPreviewDevice(draft);
-    if (!device) return { valueBadgeEnabled: false, valueBadgeSource: null, valueBadgeTouched: true };
-    const lightDevices = [...this._devices.filter((item) => item.id !== device.id), device];
-    const candidates = valueBadgeCandidates(this._planHass, device, lightDevices);
-    const source = recommendedValueBadgeSource(this._planHass, device, candidates);
-    return {
-      valueBadgeEnabled: d.valueBadgeEnabled && !!source,
-      valueBadgeSource: source,
-      valueBadgeTouched: true,
-    };
+    return this._editorRuntimeOrThrow()._valueBadgeForBinding(d, binding);
   }
 
   private _markerSpatialSource(d: NonNullable<HouseplanCard['_markerDialog']>) {
-    const device = this._markerPreviewDevice(d);
-    if (!device) return null;
-    const preview = { ...device, hidden: false };
-    return selectSpatialGlowSource(resolvedLightSources(this._planHass, [
-      ...this._devices.filter((item) => item.id !== preview.id), preview,
-    ], null, this._virtualLights).filter((source) => source.device.id === preview.id));
+    return this._editorRuntimeOrThrow()._markerSpatialSource(d);
   }
 
   private _markerAutoHasSpatialSource(d: NonNullable<HouseplanCard['_markerDialog']>): boolean {
-    const autoDraft = { ...d, lightRole: 'auto' as const, lightRoleTouched: true };
-    const device = this._markerPreviewDevice(autoDraft);
-    return !!device && hasOwnSpatialSource(this._planHass, { ...device, hidden: false });
+    return this._editorRuntimeOrThrow()._markerAutoHasSpatialSource(d);
   }
 
   private _setMarkerLightRole(role: 'auto' | 'always' | 'never'): void {
-    const d = this._markerDialog;
-    if (!d) return;
-    this._markerDialog = { ...d, lightRole: role, lightRoleTouched: true };
+    return this._editorRuntimeOrThrow()._setMarkerLightRole(role);
   }
 
   private _controlRefInfo(ref: string): { label: string; sub: string; icon: string; warning: boolean } {
-    if (!ref.startsWith('marker:')) {
-      return {
-        label: this.hass.states[ref]?.attributes?.friendly_name || ref,
-        sub: ref,
-        icon: ref.startsWith('light.') ? 'mdi:lightbulb' : 'mdi:toggle-switch',
-        warning: !this._planEntityAvailable(ref),
-      };
-    }
-    const id = ref.slice('marker:'.length);
-    const marker = this._markers.find((item) => item.id === id);
-    const device = this._devices.find((item) => item.id === id);
-    if (!marker || marker.removed || marker.is_light !== true) {
-      return {
-        label: this._t('marker.control_missing_label'),
-        sub: `${this._t('marker.control_broken')} (${ref})`,
-        icon: 'mdi:alert-outline', warning: true,
-      };
-    }
-    const space = this._serverCfg?.spaces.find((item: any) => item.id === (device?.space || marker.space));
-    const stateful = !!device && ownControllableEntities(device).length > 0;
-    return {
-      label: marker.name || device?.name || id,
-      sub: [space?.title || device?.space || marker.space, marker.room_id || device?.area,
-        stateful ? '' : this._t('marker.control_passive')].filter(Boolean).join(' · '),
-      icon: marker.icon || device?.icon || 'mdi:lightbulb-outline',
-      warning: marker.hidden === true || device?.hidden === true,
-    };
+    return this._editorRuntimeOrThrow()._controlRefInfo(ref);
   }
 
   private _valueBadgeCandidateLabel(candidate: ValueBadgeCandidate): string {
-    const source = candidate.source;
-    if (source.kind === 'derived_lqi') return this._t('marker.value_badge_lqi');
-    if (source.kind === 'derived_marker_state') {
-      return this._t('marker.value_badge_marker_state', { name: candidate.label });
-    }
-    if (source.kind === 'entity_state') {
-      return this._t('marker.value_badge_state', { name: candidate.label });
-    }
-    const entityName = this.hass.states[source.entity_id]?.attributes?.friendly_name
-      || this._fullRegistryHass.entities[source.entity_id]?.name || source.entity_id;
-    return this._t((`marker.value_badge_attr_${source.attribute}`) as any, { name: entityName });
+    return this._editorRuntimeOrThrow()._valueBadgeCandidateLabel(candidate);
   }
 
   private _controlCandidates(d: NonNullable<HouseplanCard['_markerDialog']>): {
     value: string; label: string; sub: string; icon: string;
   }[] {
-    const currentId = this._markerDraft(d)?.id || d.devId || '';
-    const plan: { value: string; label: string; sub: string; icon: string; search: string }[] = [];
-    const coveredEntities = new Set<string>();
-    for (const marker of this._markers) {
-      if (marker.id === currentId || marker.removed || marker.hidden || marker.is_light !== true) continue;
-      if (marker.binding !== 'virtual' && this._bindingStatus(marker.binding).kind !== 'active') continue;
-      const device = this._devices.find((item) => item.id === marker.id);
-      if (!device || device.hidden) continue;
-      const info = this._controlRefInfo(`marker:${marker.id}`);
-      for (const eid of ownControllableEntities(device)) coveredEntities.add(eid);
-      plan.push({
-        value: `marker:${marker.id}`, label: info.label, sub: info.sub, icon: info.icon,
-        search: `${info.label} ${info.sub} ${marker.id} ${ownControllableEntities(device).join(' ')}`.toLowerCase(),
-      });
-    }
-    const ha = Object.keys(this.hass.states || {})
-      .filter((eid) => isControllable(eid) && !coveredEntities.has(eid)
-        && effectiveMarkerControls(d.binding, [eid], this._bindingEntities(d.binding)).length > 0
-        && this._planEntityAvailable(eid))
-      .map((eid) => {
-        const info = this._controlRefInfo(eid);
-        return { value: eid, label: info.label, sub: eid, icon: info.icon,
-          search: `${info.label} ${eid}`.toLowerCase() };
-      });
-    const q = d.controlsFilter.trim().toLowerCase();
-    return [...plan, ...ha]
-      .filter((item) => !d.controls.includes(item.value) && (!q || item.search.includes(q)))
-      .slice(0, 12)
-      .map(({ search: _search, ...item }) => item);
+    return this._editorRuntimeOrThrow()._controlCandidates(d);
   }
 
   private _addControlRef(d: NonNullable<HouseplanCard['_markerDialog']>, ref: string): void {
-    if (ref.startsWith('marker:')) {
-      const controllerId = this._markerDraft(d)?.id || d.devId || '';
-      if (!controllerId) {
-        this._showToast(this._t('toast.marker_binding_required'));
-        return;
-      }
-      const targetId = ref.slice('marker:'.length);
-      const draft = this._markerDraft(d);
-      const graph = draft
-        ? [...this._markers.filter((marker) => marker.id !== controllerId), draft]
-        : this._markers;
-      if (markerControlWouldCycle(graph, controllerId, targetId)) {
-        this._showToast(this._t('toast.marker_control_cycle'));
-        return;
-      }
-    }
-    this._markerDialog = this._announceToggleDraft({
-      ...d, controls: [...d.controls, ref], controlsFilter: '',
-    });
+    return this._editorRuntimeOrThrow()._addControlRef(d, ref);
   }
 
   /** Switch modes without losing manual drafts; entering a manual mode snapshots live values once. */
   private _setMarkerGlowMode(mode: 'auto' | 'color' | 'fixed'): void {
-    const d = this._markerDialog;
-    if (!d) return;
-    if (mode === 'auto') {
-      this._markerDialog = { ...d, glowMode: mode, glowTouched: true };
-      return;
-    }
-    const source = this._markerSpatialSource(d);
-    const values = resolveGlowValues(
-      source ? this._planHass.states[source.eid] : undefined,
-      null,
-      this._fillColors.glow_light.c,
-    );
-    const needColor = !d.glowColorDrafted;
-    const needBrightness = mode === 'fixed' && !d.glowBrightnessDrafted;
-    this._markerDialog = {
-      ...d,
-      glowMode: mode,
-      glowColor: needColor ? values.c : d.glowColor,
-      glowBrightness: needBrightness ? Math.max(1, Math.round(values.bri * 100)) : d.glowBrightness,
-      glowColorDrafted: true,
-      glowBrightnessDrafted: d.glowBrightnessDrafted || mode === 'fixed',
-      glowTouched: true,
-    };
+    return this._editorRuntimeOrThrow()._setMarkerGlowMode(mode);
   }
 
   private _renderMarkerDialog(): TemplateResult {
-    const d = this._markerDialog!;
-    const isVirtual = d.bindingMode === 'virtual';
-    const cands = this._bindingCandidates();
-    const ownEntities = this._bindingEntities(d.binding);
-    const bindingStatus = isVirtual ? null : this._bindingStatus(d.binding);
-    const canOpenBindingInHa = !isVirtual && this._bindingHasHaPage(d.binding);
-    const previewDevice = this._markerPreviewDevice(d);
-    // Untouched defaults are projections, not stored values. Re-resolve the
-    // select from the current preview on every render: HA may reveal a more
-    // meaningful leading entity (most visibly `light.*`) after the dialog was
-    // opened. Runtime already uses that current primary, so keeping the stale
-    // draft value here made the select say "Device card" while a tap toggled
-    // the lamp. An explicit user choice remains authoritative and stable.
-    const effectiveTapAction = this._effectiveMarkerTapAction(d, previewDevice);
-    const previewSpaceDisplay = previewDevice
-      ? spaceDisplayOf(this._serverCfg?.spaces.find((space: any) => space.id === previewDevice.space))
-      : null;
-    const previewLightDevices = previewDevice
-      ? this._markerPreviewDevices(previewDevice)
-      : this._devices;
-    const toggleIntent = effectiveTapAction === 'toggle' && previewDevice
-      ? this._toggleIntent(previewDevice, previewLightDevices) : null;
-    const toggleHintLines = this._toggleHintLines(toggleIntent);
-    const previewPresentation = previewDevice
-      ? resolveDevicePresentation(this._planHass, previewDevice, {
-          liveStates: this._config?.live_states !== false,
-          showTemperature: this._config?.show_temperature !== false,
-          showSignal: previewSpaceDisplay?.showLqi ?? (this._config?.show_signal !== false),
-          designPreview: true,
-          activityRuntime: this._activityRt.get(previewDevice.id),
-          lightDevices: previewLightDevices,
-          registryHass: this._fullRegistryHass,
-          reducedMotion: this._reducedMotion,
-        })
-      : null;
-    const badgeCandidates = previewDevice
-      ? valueBadgeCandidates(this._planHass, previewDevice, previewLightDevices) : [];
-    const badgeRecommendation = previewDevice
-      ? recommendedValueBadgeSource(this._planHass, previewDevice, badgeCandidates) : null;
-    const effectiveBadgeEnabled = d.valueBadgeTouched
-      ? d.valueBadgeEnabled : !!previewPresentation?.valueBadge;
-    const effectiveBadgeSource = d.valueBadgeTouched
-      ? d.valueBadgeSource : previewPresentation?.valueBadge?.source || d.valueBadgeSource;
-    const effectiveBadgePosition = d.valueBadgeTouched
-      ? d.valueBadgePosition : previewPresentation?.valueBadge?.position || d.valueBadgePosition;
-    const badgeSourceKey = valueBadgeSourceKey(effectiveBadgeSource);
-    const badgeSourceMissing = !!effectiveBadgeSource
-      && !badgeCandidates.some((item) => item.key === badgeSourceKey);
-    const selectedBadgeCandidate = badgeCandidates.find((item) => item.key === badgeSourceKey);
-    const innerValueSourceKey = previewPresentation?.valueSource
-      ? previewPresentation.valueSource.attribute
-        ? `attr:${previewPresentation.valueSource.eid}:${previewPresentation.valueSource.attribute}`
-        : `state:${previewPresentation.valueSource.eid}`
-      : '';
-    const autoHasSpatialSource = this._markerAutoHasSpatialSource(d);
-    const statefulSource = !!previewDevice
-      && hasOwnStatefulLightSource(this._planHass, { ...previewDevice, hidden: false });
-    const lightSettings = resolveDeviceLightSettings(
-      d.lightRole, autoHasSpatialSource, statefulSource, d.glowMode,
-    );
-    const glowSourceDisabled = !lightSettings.sourceExists;
-    const liveGlowDisabled = !lightSettings.fromSourceEnabled;
-    const passiveSource = lightSettings.passive;
-    const displayedGlowMode = lightSettings.effectiveMode;
-    const glowDisabledHint = d.lightRole === 'never'
-      ? this._t('marker.glow_disabled_never')
-      : d.lightRole === 'auto' && !autoHasSpatialSource
-        ? this._t('marker.glow_disabled_auto')
-        : passiveSource ? this._t('marker.glow_passive_hint')
-          : this._t('marker.glow_disabled_no_entity');
-    const leadingEntities = previewDevice ? ownControllableEntities(previewDevice) : [];
-    // Keep the fallback text aligned with the production resolver. In
-    // particular, an entity binding or the resolved primary may precede the
-    // registry order used for the remaining candidates.
-    const effectiveLeading = previewDevice ? forcedLightEntityOf(previewDevice) || '' : '';
-    const staleLeading = !!d.lightEntity && !leadingEntities.includes(d.lightEntity);
-    const toggleEntities = previewDevice ? toggleEntityCandidates(previewDevice) : [];
-    const staleToggleEntity = !!d.toggleEntity && !toggleEntities.includes(d.toggleEntity);
-    const automaticToggleIntent = effectiveTapAction === 'toggle'
-      ? this._toggleIntentForDialog({ ...d, toggleEntity: '', toggleEntityTouched: true })
-      : null;
-    const automaticToggleTarget = automaticToggleIntent
-      ? [...automaticToggleIntent.targets, ...automaticToggleIntent.skippedTargets]
-        .map((target) => target.entityId || ('ref' in target ? target.ref : ''))
-        .filter(Boolean)
-        .join(', ')
-      : '';
-    const curLabel = (() => {
-      if (isVirtual) return null;
-      const found = cands.find((c) => c.value === d.binding);
-      if (found) return found.label;
-      const [k, ref] = d.binding.split(':');
-      if (k === 'device') return this._fullRegistryHass.devices[ref]?.name_by_user || this._fullRegistryHass.devices[ref]?.name || ref;
-      return this._fullRegistryHass.entities[ref]?.name || this.hass.states[ref]?.attributes?.friendly_name || ref;
-    })();
-    return html`<hp-dialog .hass=${this.hass}
-      .title=${d.devId ? this._t('info.device_header') : this._t('marker.new_device')}
-      icon="mdi:shape-plus" wide @hp-close=${this._closeMarkerDialog}>
-        <div class="body">
-          ${bindingStatus?.kind === 'ha_disabled'
-            ? html`<div class="habindingbanner" role="status">
-                <ha-icon icon="mdi:power-plug-off-outline"></ha-icon>
-                <span>${this._t((`marker.ha_disabled_${bindingStatus.reason}`) as any)}</span>
-                ${canOpenBindingInHa
-                  ? html`<button class="btn ghost" type="button" @click=${() => this._openBindingInHa(d.binding)}>
-                      <ha-icon icon="mdi:open-in-new"></ha-icon>${this._t('btn.open_in_ha')}
-                    </button>`
-                  : nothing}
-              </div>`
-            : bindingStatus?.kind === 'unverified' && !!d.binding
-              ? html`<div class="habindingbanner limited" role="status">
-                  <ha-icon icon="mdi:shield-alert-outline"></ha-icon>
-                  <span>${this._t('marker.ha_registry_limited')}</span>
-                </div>`
-              : nothing}
-          <label>${this._t('marker.name_label')}</label>
-          <input class="namein" type="text" placeholder=${this._t('marker.name_ph')}
-            .value=${d.name}
-            @input=${(e: Event) => (this._markerDialog = { ...d, name: (e.target as HTMLInputElement).value })} />
-
-          <label>${this._t('marker.binding_label')}</label>
-          <div class="bindsel">
-            <label class="srcrow">
-              <input type="radio" name="bmode" .checked=${d.bindingMode === 'virtual'}
-                @change=${() => {
-                  const next = {
-                    ...d, bindingMode: 'virtual' as const, binding: 'virtual', bindingOpen: false,
-                    controls: persistedExternalControls('virtual', d.controls),
-                    autoIcon: this._autoIconForBinding('virtual'),
-                  };
-                  this._markerDialog = this._announceToggleDraft({
-                    ...next, ...this._valueBadgeForBinding(next, 'virtual'),
-                  });
-                }} />
-              <span>${this._t('marker.virtual_option')}</span>
-            </label>
-            <div class="bindharow">
-              <label class="srcrow">
-                <input type="radio" name="bmode" .checked=${d.bindingMode === 'ha'}
-                  @change=${() => (this._markerDialog = this._announceToggleDraft({
-                    ...d, bindingMode: 'ha',
-                    binding: d.binding === 'virtual' ? '' : d.binding,
-                    bindingOpen: d.binding === 'virtual' || !d.binding,
-                  }))} />
-                <span>${this._t('marker.from_ha_option')}</span>
-              </label>
-              <label class="srcrow inline entcheck" title=${this._t('marker.show_entities_tip')}>
-                ${this._boolInput(d.showEntities, (v) => (this._markerDialog = { ...d, showEntities: v }),
-                  d.bindingMode !== 'ha')}
-                <span>${this._t('marker.show_entities')}</span>
-              </label>
-            </div>
-            ${d.bindingMode === 'ha'
-              ? html`<button class="dropbtn ${d.bindingOpen ? 'open' : ''}"
-                    @click=${() => (this._markerDialog = { ...d, bindingOpen: !d.bindingOpen })}>
-                    ${curLabel
-                      ? html`<b>${curLabel}</b><span class="ref">${d.binding}${bindingStatus?.kind === 'ha_disabled'
-                          ? ` · ${this._t('marker.binding_disabled')}` : ''}</span>`
-                      : html`<span class="muted">${this._t('marker.pick_ph')}</span>`}
-                    <ha-icon icon=${d.bindingOpen ? 'mdi:chevron-up' : 'mdi:chevron-down'}></ha-icon>
-                  </button>
-                  ${d.bindingOpen
-                    ? html`<div class="droppanel">
-                        <input class="namein" type="text" placeholder=${this._t('marker.search_ph')}
-                          .value=${d.bindingFilter}
-                          @input=${(e: Event) => (this._markerDialog = { ...d, bindingFilter: (e.target as HTMLInputElement).value })} />
-                        <div class="candlist">
-                          ${cands.map(
-                            (c) => html`<div class="cand ${c.value === d.binding ? 'sel' : ''}"
-                              @click=${() => {
-                                const next = {
-                                  ...d, binding: c.value, bindingOpen: false,
-                                  controls: persistedExternalControls(
-                                    c.value, d.controls, this._bindingEntities(c.value),
-                                  ),
-                                  autoIcon: this._autoIconForBinding(c.value),
-                                };
-                                this._markerDialog = this._announceToggleDraft({
-                                  ...next, ...this._valueBadgeForBinding(next, c.value),
-                                });
-                              }}>
-                              <span class="cl">${c.label}</span><span class="cs">${c.sub}</span>
-                            </div>`,
-                          )}
-                          ${!cands.length ? html`<div class="cand muted">${this._t('marker.nothing_found')}</div>` : nothing}
-                        </div>
-                      </div>`
-                    : nothing}`
-              : nothing}
-          </div>
-
-          <label for="marker-room">${this._t('marker.room_label')}${isVirtual ? '' : this._t('marker.room_override')}</label>
-          <select id="marker-room" class="areasel"
-            @change=${(e: Event) => (this._markerDialog = { ...d, room: (e.target as HTMLSelectElement).value })}>
-            <option value="" ?selected=${!d.room}>
-              ${isVirtual ? this._t('marker.room_choose') : this._t('marker.room_auto')}
-            </option>
-            ${this._allRoomsFlat().map(
-              (r) => html`<option value=${r.value} ?selected=${r.value === d.room}>${r.label}</option>`,
-            )}
-          </select>
-
-          ${this._renderVacSection(d)}
-
-          <label>${this._t('marker.tap_label')}</label>
-          <select id="marker-tap-action" class="areasel"
-            aria-describedby=${effectiveTapAction === 'toggle' ? 'marker-toggle-hint' : nothing}
-            @change=${(e: Event) => {
-              const next = {
-                ...d,
-                tapAction: (e.target as HTMLSelectElement).value,
-                tapActionTouched: true,
-              };
-              this._markerDialog = this._announceToggleDraft(next);
-            }}>
-            ${TAP_ACTIONS.map((v) => [v, 'tap.' + v.replace('-', '_')] as const).map(
-              ([v, k]) => html`<option value=${v} ?selected=${v === effectiveTapAction}>
-                ${this._t(k as any)}
-              </option>`,
-            )}
-          </select>
-          ${effectiveTapAction === 'toggle'
-            && (toggleEntities.length > 1 || staleToggleEntity)
-            ? html`<div class="markerhelpfield markertoggleentity">
-                <div class="markerhelplabel">
-                  <label for="marker-toggle-entity">${this._t('marker.toggle_entity_label')}</label>
-                  ${this._help('marker.toggle_entity.help')}
-                </div>
-                <select id="marker-toggle-entity" class="areasel"
-                  @change=${(e: Event) => {
-                    const next = {
-                      ...d,
-                      toggleEntity: (e.target as HTMLSelectElement).value,
-                      toggleEntityTouched: true,
-                    };
-                    this._markerDialog = this._announceToggleDraft(next);
-                  }}>
-                  <option value="" ?selected=${staleToggleEntity || !d.toggleEntity}>
-                    ${this._t('marker.toggle_entity_auto', {
-                      entity: automaticToggleTarget || this._t('marker.toggle_entity_none'),
-                    })}
-                  </option>
-                  ${toggleEntities.map((eid) => html`<option value=${eid}
-                    ?selected=${!staleToggleEntity && eid === d.toggleEntity}>
-                    ${this.hass.states[eid]?.attributes?.friendly_name
-                      || this._fullRegistryHass.entities[eid]?.name || eid} · ${eid}
-                  </option>`)}
-                </select>
-                ${staleToggleEntity ? html`<p class="muted markerlightwarning" role="status">
-                  <ha-icon icon="mdi:alert-outline"></ha-icon>
-                  ${this._t('marker.toggle_entity_missing', {
-                    entity: d.toggleEntity,
-                    fallback: automaticToggleTarget || this._t('marker.toggle_entity_none'),
-                  })}
-                </p>` : nothing}
-              </div>`
-            : nothing}
-          ${effectiveTapAction === 'toggle'
-            ? html`<div id="marker-toggle-hint" class="rhint togglehint">
-                ${toggleHintLines.map((line) => html`<div>${line}</div>`)}
-              </div>
-              <div class="sr-only" role="status" aria-live="polite">${d.tapHintAnnouncement}</div>`
-            : nothing}
-          ${effectiveTapAction === 'run'
-            ? (() => {
-                const q = d.runFilter.trim().toLowerCase();
-                const cands = this._runCandidates().filter(
-                  (c) => !q || c.label.toLowerCase().includes(q) || c.value.includes(q),
-                );
-                const cur = d.tapTarget ? this._runCandidates().find((c) => c.value === d.tapTarget) : null;
-                return html`
-                  <label>${this._t('marker.run_target_label')}</label>
-                  ${d.tapTarget && !cur
-                    ? html`<div class="rhint">${this._t('marker.run_target_gone', { id: d.tapTarget })}</div>`
-                    : nothing}
-                  <input class="namein" type="text" placeholder=${this._t('marker.run_search_ph')}
-                    .value=${cur ? cur.label : d.runFilter}
-                    @focus=${(e: Event) => { (e.target as HTMLInputElement).select(); }}
-                    @input=${(e: Event) => (this._markerDialog = { ...d, runFilter: (e.target as HTMLInputElement).value, tapTarget: '' })} />
-                  ${!cur
-                    ? html`<div class="candlist">
-                        ${cands.slice(0, 40).map(
-                          (c) => html`<div class="cand ${c.value === d.tapTarget ? 'sel' : ''}"
-                            @click=${() => (this._markerDialog = { ...d, tapTarget: c.value, runFilter: '' })}>
-                            <span class="cl">${c.label}</span><span class="cs">${c.sub}</span>
-                          </div>`,
-                        )}
-                        ${!cands.length ? html`<div class="cand muted">${this._t('marker.nothing_found')}</div>` : nothing}
-                      </div>`
-                    : nothing}`;
-              })()
-            : nothing}
-          ${effectiveTapAction === 'run' || effectiveTapAction === 'toggle'
-            ? html`<label class="srcrow" title=${this._t('marker.tap_confirm_tip')}>
-                ${this._boolInput(d.tapConfirm, (v) => (this._markerDialog = { ...d, tapConfirm: v }))}
-                <span>${this._t('marker.tap_confirm')}</span>
-              </label>`
-            : nothing}
-
-          <label>${this._t('marker.controls_label')}</label>
-          <div class="rhint">${this._t('marker.controls_hint')}</div>
-          ${d.controls.length
-            ? html`<div class="ctrlchips">
-                ${d.controls.map((eid) => {
-                  const info = this._controlRefInfo(eid);
-                  return html`<span class="ctrlchip ${info.warning ? 'warning' : ''}" title=${info.sub}>
-                  <ha-icon icon=${info.icon}></ha-icon>${info.label}
-                  <ha-icon icon="mdi:close" @click=${() =>
-                    (this._markerDialog = this._announceToggleDraft({
-                      ...d, controls: d.controls.filter((x) => x !== eid),
-                    }))}></ha-icon>
-                </span>`;
-                })}
-              </div>`
-            : nothing}
-          <input class="namein" type="text" placeholder=${this._t('marker.controls_filter')}
-            .value=${d.controlsFilter}
-            @input=${(e: Event) => (this._markerDialog = { ...d, controlsFilter: (e.target as HTMLInputElement).value })} />
-          ${d.controlsFilter.trim()
-            ? html`<div class="ctrllist">
-                ${this._controlCandidates(d).map((candidate) => html`<button class="ctrlopt"
-                    @click=${() => this._addControlRef(d, candidate.value)}>
-                    <ha-icon icon=${candidate.icon}></ha-icon>
-                    ${candidate.label}
-                    <span class="sub">${candidate.sub}</span>
-                  </button>`)}
-              </div>`
-            : nothing}
-
-          ${this._bindingHasClimate(d.binding)
-            ? html`<label class="srcrow climrow" title=${this._t('marker.use_climate_temp_tip')}>
-                ${this._boolInput(d.useClimateTemp, (v) => (this._markerDialog = { ...d, useClimateTemp: v }))}
-                <span>${this._t('marker.use_climate_temp')}</span>
-              </label>`
-            : nothing}
-          <fieldset class="markerlightgroup">
-            <legend><span>${this._t('marker.light_role_label')}</span>${this._help('marker.light_role.help')}</legend>
-            <div class="markerradios" role="radiogroup" aria-label=${this._t('marker.light_role_label')}>
-              <label class="srcrow"><input type="radio" name="marker-light-role" value="auto"
-                .checked=${d.lightRole === 'auto'} @change=${() => this._setMarkerLightRole('auto')} />
-                <span>${this._t(autoHasSpatialSource ? 'marker.light_role_auto_yes' : 'marker.light_role_auto_no')}</span></label>
-              <label class="srcrow"><input type="radio" name="marker-light-role" value="always"
-                .checked=${d.lightRole === 'always'} @change=${() => this._setMarkerLightRole('always')} />
-                <span>${this._t('marker.light_role_always')}</span></label>
-              <label class="srcrow"><input type="radio" name="marker-light-role" value="never"
-                .checked=${d.lightRole === 'never'} @change=${() => this._setMarkerLightRole('never')} />
-                <span>${this._t('marker.light_role_never')}</span></label>
-            </div>
-          </fieldset>
-
-          ${d.lightRole === 'always' && (leadingEntities.length > 1 || staleLeading)
-            ? html`<div class="markerhelpfield markerleadingentity">
-                <div class="markerhelplabel">
-                  <label for="marker-light-entity">${this._t('marker.light_entity_label')}</label>
-                  ${this._help('marker.light_entity.help')}
-                </div>
-                <select id="marker-light-entity" class="areasel"
-                  @change=${(e: Event) => (this._markerDialog = {
-                    ...d,
-                    lightEntity: (e.target as HTMLSelectElement).value,
-                    lightEntityTouched: true,
-                  })}>
-                  <option value="" ?selected=${staleLeading || !d.lightEntity}>
-                    ${this._t('marker.light_entity_auto', {
-                      entity: effectiveLeading || this._t('marker.light_entity_none'),
-                    })}
-                  </option>
-                  ${leadingEntities.map((eid) => html`<option value=${eid}
-                    ?selected=${!staleLeading && eid === d.lightEntity}>
-                    ${this.hass.states[eid]?.attributes?.friendly_name
-                      || this._fullRegistryHass.entities[eid]?.name || eid} · ${eid}
-                  </option>`)}
-                </select>
-                ${staleLeading ? html`<p class="muted markerlightwarning" role="status">
-                  <ha-icon icon="mdi:alert-outline"></ha-icon>
-                  ${this._t('marker.light_entity_missing', {
-                    entity: d.lightEntity, fallback: effectiveLeading || '—',
-                  })}
-                </p>` : nothing}
-              </div>`
-            : nothing}
-
-          <fieldset class="markerlightgroup" ?disabled=${glowSourceDisabled}>
-            <legend><span>${this._t('marker.glow_color_label')}</span>${this._help('marker.glow_mode.help')}</legend>
-            <div class="markerradios" role="radiogroup" aria-label=${this._t('marker.glow_color_label')}>
-              <label class="srcrow"><input type="radio" name="marker-glow-mode" value="auto"
-                .checked=${displayedGlowMode === 'auto'} ?disabled=${liveGlowDisabled}
-                aria-describedby=${liveGlowDisabled ? 'marker-glow-disabled-hint' : nothing}
-                @change=${() => this._setMarkerGlowMode('auto')} />
-                <span>${this._t('marker.glow_mode_auto')}</span></label>
-              <label class="srcrow"><input type="radio" name="marker-glow-mode" value="color"
-                .checked=${displayedGlowMode === 'color'} ?disabled=${glowSourceDisabled}
-                aria-describedby=${glowSourceDisabled ? 'marker-glow-disabled-hint' : nothing}
-                @change=${() => this._setMarkerGlowMode('color')} />
-                <span>${this._t('marker.glow_mode_color')}</span></label>
-              <label class="srcrow"><input type="radio" name="marker-glow-mode" value="fixed"
-                .checked=${displayedGlowMode === 'fixed'} ?disabled=${glowSourceDisabled}
-                aria-describedby=${glowSourceDisabled ? 'marker-glow-disabled-hint' : nothing}
-                @change=${() => this._setMarkerGlowMode('fixed')} />
-                <span>${this._t('marker.glow_mode_fixed')}</span></label>
-            </div>
-            ${displayedGlowMode !== 'auto' ? html`<div class="colorrow markerglowvalue">
-              <hp-color-opacity .label=${this._t('marker.glow_color')}
-                .color=${d.glowColor} .opacity=${1} .showOpacity=${false}
-                .pickerLabels=${this._colorPickerLabels}
-                .disabled=${glowSourceDisabled}
-                @hp-color-opacity-change=${(e: CustomEvent<{ color: string }>) => {
-                  this._markerDialog = {
-                    ...d, glowMode: displayedGlowMode,
-                    glowColor: e.detail.color, glowColorDrafted: true, glowTouched: true,
-                  };
-                }}></hp-color-opacity>
-              ${displayedGlowMode === 'fixed' ? html`
-                <span class="opl">${this._t('marker.glow_brightness')}</span>
-                ${this._rangeInput(1, 100, 1, d.glowBrightness, (n) => {
-                  this._markerDialog = {
-                    ...d, glowMode: displayedGlowMode,
-                    glowBrightness: n, glowBrightnessDrafted: true, glowTouched: true,
-                  };
-                }, glowSourceDisabled, this._t('marker.glow_brightness'))}
-                <span class="opv">${Math.round(d.glowBrightness)}%</span>` : nothing}
-            </div>` : nothing}
-          </fieldset>
-          <div class="markerhelpfield">
-            <div class="markerhelplabel">
-              <label for="marker-glow-radius">${this._t('marker.glow_radius_label')}</label>
-              ${this._help('marker.glow_radius.help')}
-            </div>
-            <div class="colorrow">
-              <input id="marker-glow-radius" class="tempin" type="number" min="0.5" step="0.5"
-                placeholder=${this._glowRadiusPlaceholder} ?disabled=${glowSourceDisabled}
-                aria-describedby=${glowSourceDisabled || passiveSource ? 'marker-glow-disabled-hint' : nothing}
-                .value=${d.glowRadius}
-                @input=${(e: Event) => (this._markerDialog = { ...d, glowRadius: (e.target as HTMLInputElement).value })} />
-              <span class="opl">${this._imperial ? this._t('gs.unit_ft') : this._t('gs.unit_m')}</span>
-            </div>
-          </div>
-          ${glowSourceDisabled || passiveSource
-            ? html`<p id="marker-glow-disabled-hint" class="muted markerlightdisabled" role="note">
-                <ha-icon icon="mdi:information-outline"></ha-icon>${glowDisabledHint}
-              </p>`
-            : nothing}
-
-          <label>${this._t('marker.icon_label')}</label>
-          ${customElements.get('ha-icon-picker')
-            // Feed the effective icon to HA's picker so its field renders both
-            // the glyph and the mdi:* label. autoIcon is presentation-only:
-            // untouched dialogs still save d.icon as an empty auto override.
-            ? html`<ha-icon-picker .hass=${this.hass} .value=${d.icon || d.autoIcon}
-                .placeholder=${d.autoIcon || undefined}
-                .fallbackPath=${undefined}
-                @value-changed=${(e: any) => {
-                  const icon = e.detail.value || '';
-                  // Some picker versions announce an assigned value. Do not
-                  // let that turn the display-only auto icon into an override.
-                  if (!d.icon && icon === d.autoIcon) return;
-                  this._markerDialog = { ...d, icon };
-                }}></ha-icon-picker>`
-            : html`<input class="namein" type="text"
-                placeholder=${d.autoIcon || this._t('marker.icon_ph')}
-                .value=${d.icon}
-                @input=${(e: Event) => (this._markerDialog = { ...d, icon: (e.target as HTMLInputElement).value })} />`}
-          ${!d.icon && d.autoIcon
-            ? html`<p class="muted iconauto"><ha-icon icon=${d.autoIcon}></ha-icon>
-                <span>${this._t('marker.icon_auto', { icon: d.autoIcon })}</span>
-                <button class="btn ghost" type="button"
-                  @click=${() => (this._markerDialog = { ...d, icon: d.autoIcon })}>
-                  ${this._t('marker.icon_pin_auto')}
-                </button></p>`
-            : nothing}
-
-          <label for="marker-display">${this._t('marker.display_label')}</label>
-          <select id="marker-display" class="areasel"
-            @change=${(e: Event) => (this._markerDialog = {
-              ...d,
-              display: normalizeDeviceDisplay((e.target as HTMLSelectElement).value),
-            })}>
-            ${DISPLAY_MODES.map((v) => html`<option value=${v} ?selected=${v === d.display}>
-              ${this._t(DISPLAY_LABEL_KEYS[v])}
-            </option>`)}
-          </select>
-          <p class="muted">${this._t(DISPLAY_HINT_KEYS[d.display])}</p>
-          ${d.display === 'static_icon' && this._bindingHasAlarm(d.binding)
-            ? html`<div class="habindingbanner" role="note">
-                <ha-icon icon="mdi:alert-outline"></ha-icon>
-                <span>${this._t('marker.static_alarm_warning')}</span>
-              </div>`
-            : nothing}
-          <fieldset class="markerlightgroup markerbadgegroup">
-            <legend><span>${this._t('marker.value_badge_title')}</span>${this._help('marker.value_badge.help')}</legend>
-            <label class="srcrow">
-              ${this._boolInput(effectiveBadgeEnabled, (enabled) => {
-                const source = effectiveBadgeSource || badgeRecommendation;
-                this._markerDialog = {
-                  ...d,
-                  valueBadgeEnabled: enabled && !!source,
-                  valueBadgeSource: source,
-                  valueBadgeTouched: true,
-                };
-              }, d.display === 'static_icon' || (!badgeCandidates.length && !d.valueBadgeSource))}
-              <span>${this._t('marker.value_badge_enabled')}</span>
-            </label>
-            ${d.display === 'static_icon'
-              ? html`<p class="muted markerlightdisabled" role="note">
-                  <ha-icon icon="mdi:information-outline"></ha-icon>${this._t('marker.value_badge_static')}
-                </p>`
-              : !badgeCandidates.length && !d.valueBadgeSource
-                ? html`<p class="muted markerlightdisabled" role="note">
-                    <ha-icon icon="mdi:information-outline"></ha-icon>${this._t('marker.value_badge_empty')}
-                  </p>`
-                : nothing}
-            ${effectiveBadgeEnabled ? html`
-              <div class="markerhelplabel">
-                <label for="marker-value-badge-source">${this._t('marker.value_badge_source')}</label>
-                ${this._help('marker.value_badge_source.help')}
-              </div>
-          <select id="marker-value-badge-source" class="areasel"
-                @change=${(e: Event) => (this._markerDialog = {
-                  ...d,
-                  valueBadgeSource: valueBadgeSourceFromKey((e.target as HTMLSelectElement).value),
-                  valueBadgeEnabled: true,
-                  valueBadgeTouched: true,
-                })}>
-                ${badgeSourceMissing ? html`<option value=${badgeSourceKey} selected>
-                  ${this._t('marker.value_badge_missing')}
-                </option>` : nothing}
-                ${badgeCandidates.map((candidate) => html`<option value=${candidate.key}
-                  ?selected=${candidate.key === badgeSourceKey}
-                  title=${candidate.technical}>
-                  ${this._valueBadgeCandidateLabel(candidate)} · ${candidate.value}
-                </option>`)}
-              </select>
-              ${selectedBadgeCandidate
-                ? html`<p class="muted markerbadgetechnical"><code>${selectedBadgeCandidate.technical}</code></p>`
-                : nothing}
-              ${badgeSourceMissing ? html`<p class="muted markerlightwarning" role="status">
-                <ha-icon icon="mdi:alert-outline"></ha-icon>${this._t('marker.value_badge_missing_hint')}
-              </p>` : nothing}
-              ${d.display === 'value' && badgeSourceKey === innerValueSourceKey
-                ? html`<p class="muted markerlightwarning" role="note">
-                    <ha-icon icon="mdi:information-outline"></ha-icon>${this._t('marker.value_badge_duplicate')}
-                  </p>` : nothing}
-              <div class="markerhelplabel">
-                <label for="marker-value-badge-position">${this._t('marker.value_badge_position')}</label>
-                ${this._help('marker.value_badge_position.help')}
-              </div>
-          <select id="marker-value-badge-position" class="areasel"
-                @change=${(e: Event) => (this._markerDialog = {
-                  ...d,
-                  valueBadgeEnabled: effectiveBadgeEnabled,
-                  valueBadgeSource: effectiveBadgeSource,
-                  valueBadgePosition: (e.target as HTMLSelectElement).value as ValueBadgePosition,
-                  valueBadgeTouched: true,
-                })}>
-                ${(['right', 'bottom', 'left', 'top'] as const).map((position) => html`
-                  <option value=${position} ?selected=${position === effectiveBadgePosition}>
-                    ${this._t((`marker.value_badge_${position}`) as any)}
-                  </option>`)}
-              </select>
-            ` : nothing}
-          </fieldset>
-          ${previewPresentation
-            ? html`<hp-device-preview
-                .hass=${this.hass}
-                .presentation=${previewPresentation}
-                .registry=${this._haRegistry}
-                .deviceName=${d.name.trim() || previewDevice?.name || curLabel || ''}>
-              </hp-device-preview>`
-            : html`<div class="devicepreview-empty">
-                <ha-icon icon="mdi:eye-outline"></ha-icon>
-                <span>${this._t('marker.preview.select_source')}</span>
-              </div>`}
-          ${d.display === 'icon_ripple'
-            ? html`<div class="colorrow ripple-colorrow">
-                <hp-color-opacity .label=${this._t('marker.activity_color')}
-                  .pickerLabels=${this._colorPickerLabels}
-                  .color=${d.rippleColor || '#3ea6ff'} .opacity=${1} .showOpacity=${false}
-                  @hp-color-opacity-change=${(e: CustomEvent<{ color: string }>) => {
-                    this._markerDialog = { ...d, rippleColor: e.detail.color };
-                  }}></hp-color-opacity>
-              </div>
-              <div class="colorrow ripple-sizerow">
-                <span class="opl">${this._t('marker.ripple_size')}</span>
-                ${this._rangeInput(1, 8, 0.5, d.rippleSize, (n) => (this._markerDialog = { ...d, rippleSize: n }))}
-                <span class="opv">×${d.rippleSize}</span>
-              </div>
-              <p class="muted" role="note">${this._t('marker.activity_alarm_note')}</p>`
-            : nothing}
-
-          <label>${this._t('marker.size_label')}</label>
-          <div class="colorrow">
-            ${this._rangeInput(0.5, 3, 0.1, d.size, (n) => (this._markerDialog = { ...d, size: n }))}
-            <span class="opv">×${d.size.toFixed(1)}</span>
-            <span class="opl">${this._t('marker.angle_label')}</span>
-            ${''/* 5 degrees, not 10 (owner 2026-08-03): a marker often has to
-                   line up with a wall that is not on a 10-degree grid. */}
-            ${this._rangeInput(0, 355, 5, d.angle, (n) => (this._markerDialog = { ...d, angle: n }))}
-            <span class="opv">${d.angle}°</span>
-          </div>
-
-          <label>${this._t('marker.model_label')}</label>
-          <input class="namein" type="text" placeholder=${this._t('marker.model_ph')}
-            .value=${d.model}
-            @input=${(e: Event) => (this._markerDialog = { ...d, model: (e.target as HTMLInputElement).value })} />
-
-          <label>${this._t('marker.link_label')}</label>
-          <input class="namein" type="url" placeholder="https://…"
-            .value=${d.link}
-            @input=${(e: Event) => (this._markerDialog = { ...d, link: (e.target as HTMLInputElement).value })} />
-
-          <label>${this._t('marker.desc_label')}</label>
-          <textarea class="descin" rows="4" placeholder=${this._t('marker.desc_ph')}
-            .value=${d.description}
-            @input=${(e: Event) => (this._markerDialog = { ...d, description: (e.target as HTMLTextAreaElement).value })}></textarea>
-
-          <label>${this._t('marker.manuals_label')}</label>
-          <div class="pdfedit">
-            ${d.pdfs.map(
-              (p) => html`<span class="pdftag"><ha-icon icon="mdi:file-pdf-box"></ha-icon>
-                <a href="${safeUrl(this._display(p.url)) || '#'}" target="_blank" rel="noreferrer noopener">${p.name}</a>
-                <ha-icon class="x" icon="mdi:close" @click=${() => this._removeMarkerPdf(p.url)}></ha-icon></span>`,
-            )}
-            <span class="fileupload">
-              <button class="btn filebtn" type="button" @click=${(e: Event) =>
-                ((e.currentTarget as HTMLElement).nextElementSibling as HTMLInputElement | null)?.click()}>
-                <ha-icon icon="mdi:paperclip"></ha-icon>${this._t('btn.attach')}
-              </button>
-              <input type="file" hidden multiple accept=".pdf,.png,.jpg,.jpeg,.webp,.txt,application/pdf"
-                @change=${(e: Event) => this._pickMarkerFiles(e)} />
-            </span>
-          </div>
-        </div>
-        <div class="row markerfooter" slot="footer">
-          <div class="markeractions">
-            ${d.devId
-              ? html`<button class="btn" type="button"
-                  ?disabled=${d.busy}
-                  aria-pressed=${d.hideFromPlan || bindingStatus?.kind === 'ha_disabled' ? 'true' : 'false'}
-                  title=${this._t(d.hideFromPlan || bindingStatus?.kind === 'ha_disabled' ? 'marker.show_tip' : 'marker.hide_tip')}
-                  @click=${this._toggleMarkerDialogVisibility}>
-                  <ha-icon icon=${d.hideFromPlan || bindingStatus?.kind === 'ha_disabled' ? 'mdi:eye-outline' : 'mdi:eye-off-outline'}></ha-icon>
-                  ${this._t(d.hideFromPlan || bindingStatus?.kind === 'ha_disabled' ? 'marker.show' : 'marker.hide')}
-                </button>`
-              : nothing}
-            ${d.devId
-              ? html`<button class="btn danger" type="button" ?disabled=${d.busy}
-                  title=${this._t('marker.delete_tip')} @click=${this._deleteMarker}>
-                  <ha-icon icon="mdi:delete-outline"></ha-icon>${this._t('btn.delete')}
-                </button>`
-              : nothing}
-          </div>
-          <div class="markersaveactions">
-            <button class="btn ghost" ?disabled=${d.busy}
-              @click=${this._closeMarkerDialog}>${this._t('btn.cancel')}</button>
-            <button class="btn on" @click=${this._saveMarker}
-              ?disabled=${d.busy || (d.bindingMode === 'ha' && (!d.binding || d.binding === 'virtual'
-                || (!d.devId && bindingStatus?.kind !== 'active')))}
-              title=${d.bindingMode === 'ha' && (!d.binding || d.binding === 'virtual') ? this._t('marker.pick_ph') : ''}>
-              <ha-icon icon="mdi:check"></ha-icon>${d.busy ? '…' : this._t('btn.save')}
-            </button>
-          </div>
-        </div>
-    </hp-dialog>`;
+    return this._editorRuntimeOrThrow()._renderMarkerDialog();
   }
 
   private _renderSpaceDialog(): TemplateResult {
-    const d = this._spaceDialog!;
-    const progress = this._importTotal > 0 && d.mode === 'create'
-      ? this._t('import.progress', {
-          i: this._importTotal - this._importQueue.length,
-          n: this._importTotal,
-        })
-      : '';
-    const close = () => {
-      this._spaceDialog = null;
-      this._importQueue = [];
-      this._importTotal = 0;
-    };
-    return html`<hp-dialog .hass=${this.hass}
-      .title=${`${d.mode === 'create' ? this._t('space.new') : this._t('space.header')}${progress ? ` · ${progress}` : ''}`}
-      icon="mdi:floor-plan" wide @hp-close=${close}>
-        <div class="body">
-          <label>${this._t('space.title_label')}</label>
-          <input class="namein" type="text" placeholder=${this._t('space.title_ph')}
-            .value=${d.title}
-            @input=${(e: Event) => (this._spaceDialog = { ...d, title: (e.target as HTMLInputElement).value })} />
-          <label>${this._t('space.plan_label')}</label>
-          <label class="srcrow">
-            <input type="radio" name="plansrc" .checked=${d.source === 'file'}
-              @change=${() => (this._spaceDialog = switchSpacePlanSource(d, 'file'))} />
-            <span>${this._t('space.source_file')}</span>
-          </label>
-          ${d.source === 'file'
-            ? html`<div class="planrow">
-                ${d.planFile
-                  ? html`<span class="planname">${d.planFile.name}</span>`
-                  : d.planUrl
-                    ? html`<img class="planprev" src=${this._display(d.planUrl)} alt=${this._t('space.plan_alt')} />`
-                    : html`<span class="planname muted">${this._t('space.no_plan')}</span>`}
-                <span class="fileupload">
-                  <button class="btn filebtn" type="button" @click=${(e: Event) =>
-                    ((e.currentTarget as HTMLElement).nextElementSibling as HTMLInputElement | null)?.click()}>
-                    <ha-icon icon="mdi:upload"></ha-icon>${d.planUrl || d.planFile ? this._t('btn.replace') : this._t('btn.upload')}
-                  </button>
-                  <input type="file" hidden accept=".svg,.png,.jpg,.jpeg,.webp,image/svg+xml,image/png,image/jpeg,image/webp"
-                    @change=${(e: Event) => this._pickPlanFile(e)} />
-                </span>
-                <button class="btn ghost" @click=${this._toggleServerPlans}
-                  title=${this._t('space.pick_saved_hint')}>
-                  <ha-icon icon="mdi:folder-image"></ha-icon>${this._t('space.pick_saved')}
-                </button>
-              </div>
-              ${d.pickSaved ? this._renderServerPlans(d) : nothing}`
-            : nothing}
-          <label class="srcrow">
-            <input type="radio" name="plansrc" .checked=${d.source === 'draw'}
-              @change=${() => (this._spaceDialog = switchSpacePlanSource(d, 'draw'))} />
-            <span>${this._t('space.source_draw')}</span>
-          </label>
-
-          <label>${this._t('space.scale_label')}</label>
-          <div class="colorrow">
-            <input class="namein tempin" type="number"
-              min=${gridCellFieldValue(CELL_CM_MIN, this._imperial)}
-              max=${gridCellFieldValue(CELL_CM_MAX, this._imperial)}
-              step="0.1" .value=${d.cellCmInput ?? gridCellFieldValue(d.cellCm, this._imperial)}
-              @input=${(e: Event) => {
-                const raw = (e.target as HTMLInputElement).value;
-                const n = strictNumber(raw);
-                const canonical = n == null ? null : gridCellFieldToCm(n, this._imperial);
-                this._spaceDialog = {
-                  ...d,
-                  cellCmInput: raw,
-                  cellCmTouched: true,
-                  cellCm: canonical != null && canonical > 0
-                    ? Math.max(CELL_CM_MIN, Math.min(CELL_CM_MAX, canonical)) : d.cellCm,
-                };
-              }} />
-            <span class="opl">${this._t(
-              this._imperial ? 'space.scale_unit_imperial' : 'space.scale_unit',
-            )}</span>
-          </div>
-
-          <label class="dispsection">${this._t('space.display_section')}</label>
-          <label class="srcrow">
-            ${this._boolInput(d.showBorders, (v) => (this._spaceDialog = touchSpaceDisplay(d, 'showBorders', v)))}
-            <span>${this._t('space.show_borders')}</span>
-          </label>
-          <label>${this._t('space.zero_wall_style')}</label>
-          <select class="areasel"
-            @change=${(e: Event) => {
-              const value = (e.target as HTMLSelectElement).value;
-              this._spaceDialog = {
-                ...d, zeroWallStyle: value === 'solid' ? 'solid' : 'dashed',
-              };
-            }}>
-            <option value="dashed" ?selected=${d.zeroWallStyle === 'dashed'}>
-              ${this._t('space.zero_wall_dashed')}
-            </option>
-            <option value="solid" ?selected=${d.zeroWallStyle === 'solid'}>
-              ${this._t('space.zero_wall_solid')}
-            </option>
-          </select>
-          <div class="rhint">${this._t('space.zero_wall_help')}</div>
-          <label class="srcrow">
-            ${this._boolInput(d.showNames, (v) => (this._spaceDialog = touchSpaceDisplay(d, 'showNames', v)))}
-            <span>${this._t('space.show_names')}</span>
-          </label>
-          <label class="srcrow">
-            ${this._boolInput(d.showLqi, (v) => (this._spaceDialog = { ...d, showLqi: v }))}
-            <span>${this._t('space.show_lqi')}</span>
-          </label>
-          ${''/* the two "draw less" switches (owner 2026-08-05). They only
-                 hide: the shapes and the openings stay in the config and
-                 stay visible in the editor that owns them, so nothing is
-                 lost and nothing becomes uneditable. */}
-          <label class="srcrow">
-            ${this._boolInput(d.hideDecor, (v) => (this._spaceDialog = { ...d, hideDecor: v }))}
-            <span>${this._t('space.hide_decor')}</span>
-          </label>
-          <div class="rhint">${this._t('space.hide_decor_tip')}</div>
-          <label class="srcrow">
-            ${this._boolInput(d.hideOpenings, (v) => (this._spaceDialog = { ...d, hideOpenings: v }))}
-            <span>${this._t('space.hide_openings')}</span>
-          </label>
-          <div class="rhint">${this._t('space.hide_openings_tip')}</div>
-          <label class="dispsection">${this._t('space.roomcard_section')}</label>
-          ${([['labelTemp', 'space.label_temp'], ['labelHum', 'space.label_hum'],
-              ['labelLqi', 'space.label_lqi'], ['labelLight', 'space.label_light']] as const).map(
-            ([f, k]) => html`<label class="srcrow">
-              ${this._boolInput(d[f], (v) => (this._spaceDialog = { ...d, [f]: v }))}
-              <span>${this._t(k)}</span>
-            </label>`,
-          )}
-          <label>${this._t('space.card_font')}</label>
-          <div class="colorrow gsrow">
-            ${this._rangeInput(50, 300, 5, Math.round(d.cardFontScale * 100), (n) => (this._spaceDialog = { ...d, cardFontScale: n / 100 }))}
-            <span class="opv">${Math.round(d.cardFontScale * 100)}%</span>
-          </div>
-          ${this._renderCardPreview(d.cardFontScale, 1, 1)}
-          <div class="colorrow">
-            <hp-color-opacity .label=${this._t('space.room_color')}
-              .opacityLabel=${this._t('space.opacity')}
-              .pickerLabels=${this._colorPickerLabels}
-              .color=${d.roomColor} .opacity=${d.roomOpacity} .showOpacity=${true}
-              @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) => {
-                this._spaceDialog = {
-                  ...d, roomColor: e.detail.color, roomOpacity: e.detail.opacity,
-                };
-              }}></hp-color-opacity>
-          </div>
-          <label>${this._t('space.bg_mode')}</label>
-          <select class="areasel"
-            @change=${(e: Event) => {
-              const v = (e.target as HTMLSelectElement).value;
-              this._spaceDialog = { ...d, bgMode: v === 'static' || v === 'daynight' ? (v as any) : null };
-            }}>
-            <option value="" ?selected=${d.bgMode === null}>${this._t('space.sun_inherit')}</option>
-            <option value="static" ?selected=${d.bgMode === 'static'}>${this._t('gs.bg_static')}</option>
-            <option value="daynight" ?selected=${d.bgMode === 'daynight'}>${this._t('gs.bg_daynight')}</option>
-          </select>
-          ${(d.bgMode ?? bgModeOf(this._settings, {})) === 'static'
-            ? html`<div class="colorrow">
-                <hp-color-opacity .label=${this._t('space.bg_color')}
-                  .pickerLabels=${this._colorPickerLabels}
-                  .color=${d.bgColor || stageBgOf(this._settings, { bgColor: null }) || this._stageBgHex()}
-                  .opacity=${1} .showOpacity=${false}
-                  @hp-color-opacity-change=${(e: CustomEvent<{ color: string }>) => {
-                    this._spaceDialog = { ...d, bgColor: e.detail.color };
-                  }}></hp-color-opacity>
-                ${d.bgColor
-                  ? html`<button class="btn ghost" @click=${() => (this._spaceDialog = { ...d, bgColor: null })}>
-                      ${this._t('space.bg_inherit')}</button>`
-                  : html`<span class="opl">${this._t('space.bg_inherited')}</span>`}
-              </div>`
-            : nothing}
-          <label>${this._t('space.north')}</label>
-          <div class="colorrow">
-            <input class="namein tempin" type="number" min="0" max="359" step="1"
-              placeholder=${this._t('space.sun_inherit')}
-              .value=${d.northDeg === null ? '' : String(d.northDeg)}
-              @input=${(e: Event) => {
-                const raw = (e.target as HTMLInputElement).value.trim();
-                const n = raw === '' ? null : Math.round(Number(raw));
-                this._spaceDialog = { ...d, northDeg: n !== null && Number.isFinite(n) ? Math.min(359, Math.max(0, n)) : null };
-              }} />
-            <span class="opl">${d.northDeg === null
-              ? this._t('space.north_inherited', {
-                  v: northDegOf(this._settings, {}) === null ? '—' : String(northDegOf(this._settings, {})) + '°',
-                })
-              : '°'}</span>
-          </div>
-          <label>${this._t('space.sun_rays')}</label>
-          <select class="areasel"
-            @change=${(e: Event) => {
-              const v = (e.target as HTMLSelectElement).value;
-              this._spaceDialog = { ...d, sunRays: v === '' ? null : v === '1' };
-            }}>
-            <option value="" ?selected=${d.sunRays === null}>${this._t('space.sun_inherit')}</option>
-            <option value="1" ?selected=${d.sunRays === true}>${this._t('space.sun_on')}</option>
-            <option value="0" ?selected=${d.sunRays === false}>${this._t('space.sun_off')}</option>
-          </select>
-          <label>${this._t('space.fill_label')}</label>
-          ${SPACE_FILL_UI_MODES.map((v) => [v, 'fill.' + v] as const).map(
-            ([v, k]) => html`<label class="srcrow">
-              <input type="radio" name="fillmode" .checked=${d.fillMode === v}
-                @change=${() => (this._spaceDialog = { ...d, fillMode: v as any })} />
-              <span>${this._t(k as any)}</span>
-              ${v === 'temp' && d.fillMode === 'temp'
-                ? html`<span class="temprange">
-                    <input class="namein tempin" type="number" step="0.5" .value=${String(d.tempMin)}
-                      @input=${(e: Event) => {
-                        const n = strictNumber((e.target as HTMLInputElement).value);
-                        if (n != null) this._spaceDialog = { ...d, tempMin: n };
-                      }} />
-                    –
-                    <input class="namein tempin" type="number" step="0.5" .value=${String(d.tempMax)}
-                      @input=${(e: Event) => {
-                        const n = strictNumber((e.target as HTMLInputElement).value);
-                        if (n != null) this._spaceDialog = { ...d, tempMax: n };
-                      }} />
-                    °C
-                  </span>`
-                : nothing}
-            </label>
-              ${v === 'custom' && d.fillMode === 'custom'
-                ? html`<div class="colorrow gsrow">
-                    <span class="gsl">${this._t('space.custom_fill')}</span>
-                    <hp-color-opacity
-                      .label=${this._t('space.custom_fill')}
-                      .opacityLabel=${this._t('space.opacity')}
-                      .pickerLabels=${this._colorPickerLabels}
-                      .color=${(d.customFill || DEFAULT_CUSTOM_FILL).c}
-                      .opacity=${(d.customFill || DEFAULT_CUSTOM_FILL).a}
-                      @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) => {
-                        this._spaceDialog = { ...d, customFill: { c: e.detail.color, a: e.detail.opacity } };
-                      }}></hp-color-opacity>
-                    ${d.customFill
-                      ? html`<button class="btn ghost" type="button"
-                          @click=${() => (this._spaceDialog = { ...d, customFill: null })}>
-                          ${this._t('btn.reset')}</button>`
-                      : nothing}
-                  </div>`
-                : nothing}`,
-          )}
-          <label class="srcrow">
-            ${this._boolInput(d.glowEnabled, (checked) => {
-              this._spaceDialog = { ...d, glowEnabled: checked };
-            })}
-            <span>${this._t('space.glow_enabled')}</span>
-          </label>
-          ${d.deleteBlockers
-            ? html`<div class="backuperror" role="alert">${this._t('space.delete_blocked', {
-                n: String(d.deleteBlockers),
-              })}</div>`
-            : nothing}
-        </div>
-        <div class="row dialog-action-footer" slot="footer">
-          ${d.mode === 'edit'
-            ? html`<div class="dialog-action-group dialog-action-danger">
-                <button class="btn danger" @click=${this._deleteSpace} ?disabled=${d.busy}>
-                  <ha-icon icon="mdi:delete-outline"></ha-icon>${this._t('btn.delete')}
-                </button>
-              </div>`
-            : nothing}
-          <div class="dialog-action-group dialog-action-commit">
-            ${this._importTotal > 0 && d.mode === 'create'
-              ? html`<button class="btn ghost" @click=${() => this._skipImport()}>${this._t('btn.skip')}</button>`
-              : nothing}
-            <button class="btn ghost" @click=${close}>${this._t('btn.cancel')}</button>
-            <button class="btn on" @click=${this._saveSpaceDialog}
-              ?disabled=${!d.title.trim() || (d.source === 'file' && !(d.planFile || d.planUrl)) || d.busy}
-              title=${d.source === 'file' && !(d.planFile || d.planUrl) ? this._t('title.need_plan') : ''}>
-              <ha-icon icon="mdi:check"></ha-icon>${d.busy ? '…' : this._t('btn.save')}
-            </button>
-          </div>
-        </div>
-    </hp-dialog>`;
+    if (this._onboardingRuntime && this._spaceDialog
+        && this._spaceDialogUsesOnboardingRuntime(this._spaceDialog.mode)) {
+      return this._onboardingRuntime._renderSpaceDialog();
+    }
+    return this._editorRuntimeOrThrow()._renderSpaceDialog();
   }
 
   private _renderMergeDialog(): TemplateResult {
-    const d = this._mergeDialog!;
-    const rooms = this._spaceModel()?.rooms || [];
-    const opt = (id: string, key: 'a' | 'b') => {
-      const r = rooms.find((x) => x.id === id);
-      const area = r?.area ? this.hass.areas[r.area]?.name : null;
-      return html`<label class="srcrow">
-        <input type="radio" name="mergekeep" .checked=${d.pick === key}
-          @change=${() => (this._mergeDialog = { ...d, pick: key })} />
-        <span>${r?.name || ''} <span class="muted">· ${area || this._t('merge.no_area')}</span></span>
-      </label>`;
-    };
-    return html`<hp-dialog .hass=${this.hass} .title=${this._t('merge.header')} icon="mdi:vector-union"
-      @hp-close=${() => (this._mergeDialog = null)}>
-        <div class="body">
-          <p class="muted">${this._t('merge.hint')}</p>
-          <label>${this._t('merge.keep')}</label>
-          ${opt(d.aId, 'a')}
-          ${opt(d.bId, 'b')}
-        </div>
-        <div class="row" slot="footer">
-          <span class="spacer"></span>
-          <button class="btn ghost" @click=${() => (this._mergeDialog = null)}>${this._t('btn.cancel')}</button>
-          <button class="btn on" @click=${this._commitMerge}>
-            <ha-icon icon="mdi:check"></ha-icon>${this._t('btn.save')}
-          </button>
-        </div>
-    </hp-dialog>`;
+    return this._editorRuntimeOrThrow()._renderMergeDialog();
   }
 
   /** Live sample of a room card at the given multipliers (dialog preview). */
@@ -22711,160 +12784,11 @@ class HouseplanCard extends LitElement {
 
   /** One measurement-source control (average vs an explicit device/entity). */
   private _renderRoomSource(kind: 'temp' | 'hum'): TemplateResult {
-    const val = kind === 'temp' ? this._roomTempSrc : this._roomHumSrc;
-    const setVal = (v: string) => {
-      if (kind === 'temp') this._roomTempSrc = v;
-      else this._roomHumSrc = v;
-      this.requestUpdate();
-    };
-    const open = this._roomSrcOpen === kind;
-    return html`
-      <label>${this._t(kind === 'temp' ? 'room.temp_src_label' : 'room.hum_src_label')}</label>
-      <label class="srcrow">
-        <input type="radio" name="rsrc-${kind}" .checked=${!val}
-          @change=${() => { setVal(''); this._roomSrcOpen = null; }} />
-        <span>${this._t('room.src_average')}</span>
-      </label>
-      <label class="srcrow">
-        <input type="radio" name="rsrc-${kind}" .checked=${!!val}
-          @change=${() => { this._roomSrcOpen = kind; this._roomSrcFilter = ''; this.requestUpdate(); }} />
-        <span>${this._t('room.src_pick')}</span>
-      </label>
-      ${val || open
-        ? html`<button class="dropbtn ${open ? 'open' : ''}"
-              @click=${() => { this._roomSrcOpen = open ? null : kind; this._roomSrcFilter = ''; }}>
-              ${val
-                ? html`<b>${this._roomSrcLabel(val)}</b><span class="ref">${val}</span>`
-                : html`<span class="muted">${this._t('room.src_ph')}</span>`}
-              <ha-icon icon=${open ? 'mdi:chevron-up' : 'mdi:chevron-down'}></ha-icon>
-            </button>
-            ${open
-              ? html`<div class="droppanel">
-                  <input class="namein" type="text" placeholder=${this._t('marker.search_ph')}
-                    .value=${this._roomSrcFilter}
-                    @input=${(e: Event) => { this._roomSrcFilter = (e.target as HTMLInputElement).value; this.requestUpdate(); }} />
-                  <div class="candlist">
-                    ${this._roomSrcCandidates().map(
-                      (c) => html`<div class="cand ${c.value === val ? 'sel' : ''}"
-                        @click=${() => { setVal(c.value); this._roomSrcOpen = null; }}>
-                        <span class="cl">${c.label}</span><span class="cs">${c.sub}</span>
-                      </div>`,
-                    )}
-                  </div>
-                </div>`
-              : nothing}`
-        : nothing}`;
+    return this._editorRuntimeOrThrow()._renderRoomSource(kind);
   }
 
   private _renderRoomDialog(): TemplateResult {
-    const edit = !!this._roomEditId;
-    const faceBatch = !edit ? this._wallFaceBatch : null;
-    const batchProgress = faceBatch && faceBatch.candidates.length > 1
-      ? this._t('room.queue_progress', {
-          current: faceBatch.index + 1, total: faceBatch.candidates.length,
-        })
-      : '';
-    const canSaveNew = !!this._areaSel || !!this._nameSel.trim();
-    const spaceDisplay = spaceDisplayOf(this._curSpaceCfg);
-    const effectiveFill = this._roomFill || spaceDisplay.fill;
-    const customFill = this._roomCustomFill || spaceDisplay.customFill;
-    // the free-areas list must include the edited room's CURRENT area
-    const areas = [...this._freeAreas];
-    if (edit && this._areaSel && !areas.some((a) => a.area_id === this._areaSel)) {
-      const cur = this.hass.areas[this._areaSel];
-      if (cur) areas.unshift(cur);
-    }
-    return html`<hp-dialog class="roomdialog" .hass=${this.hass} wide
-      .title=${edit ? this._t('room.settings_title')
-        : batchProgress || this._t('room.new')}
-      icon=${edit ? 'mdi:cog-outline' : 'mdi:floor-plan'} @hp-close=${this._roomDialogCancel}>
-        <div class="body">
-          ${batchProgress ? html`<p class="muted" role="status" aria-live="polite">
-            ${batchProgress}
-          </p>` : nothing}
-          <label>${this._t('room.name_label')}</label>
-          <input class="namein" type="text" placeholder=${this._t('room.name_ph')}
-            .value=${this._nameSel}
-            @input=${(e: Event) => (this._nameSel = (e.target as HTMLInputElement).value)} />
-          <label>${this._t('room.area_label')}</label>
-          <select class="areasel"
-            @change=${(e: Event) => {
-              this._areaSel = (e.target as HTMLSelectElement).value;
-              if (!this._nameSel && this._areaSel)
-                this._nameSel = this.hass.areas[this._areaSel]?.name || '';
-              this.requestUpdate();
-            }}>
-            <option value="">${this._t('room.no_area_option')}</option>
-            ${areas.map(
-              (a) => html`<option value=${a.area_id} ?selected=${a.area_id === this._areaSel}>${a.name}</option>`,
-            )}
-          </select>
-
-          <label class="dispsection">${this._t('room.settings_section')}</label>
-          <label>${this._t('room.fill_label')}</label>
-          ${([['', 'fill.inherit'], ...ROOM_FILL_MODES.map((v) => [v, 'fill.' + v])] as const).map(
-            ([v, k]) => html`<label class="srcrow inline">
-              <input type="radio" name="rfill" .checked=${this._roomFill === v}
-                @change=${() => { this._roomFill = v as any; this.requestUpdate(); }} />
-              <span>${this._t(k as any)}</span>
-            </label>`,
-          )}
-          ${effectiveFill === 'custom'
-            ? html`<div class="colorrow gsrow">
-                <span class="gsl">${this._roomCustomFill
-                  ? this._t('room.custom_fill_own') : this._t('room.custom_fill_space')}</span>
-                <hp-color-opacity
-                  .label=${this._roomCustomFill
-                    ? this._t('room.custom_fill_own') : this._t('room.custom_fill_space')}
-                  .opacityLabel=${this._t('space.opacity')}
-                  .pickerLabels=${this._colorPickerLabels}
-                  .color=${customFill.c}
-                  .opacity=${customFill.a}
-                  @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) => {
-                    this._roomCustomFill = { c: e.detail.color, a: e.detail.opacity };
-                  }}></hp-color-opacity>
-                ${this._roomCustomFill
-                  ? html`<button class="btn ghost" type="button" @click=${() => {
-                      this._roomCustomFill = null;
-                    }}>${this._t('btn.reset')}</button>`
-                  : nothing}
-              </div>`
-            : nothing}
-          ${this._renderRoomSource('temp')}
-          ${this._renderRoomSource('hum')}
-
-          <label class="dispsection">${this._t('room.sizes_section')}</label>
-          <label>${this._t('room.name_scale')}</label>
-          <div class="colorrow gsrow">
-            ${this._rangeInput(50, 300, 5, Math.round(this._roomNameScale * 100), (n) => { this._roomNameScale = n / 100; this.requestUpdate(); })}
-            <span class="opv">${Math.round(this._roomNameScale * 100)}%</span>
-          </div>
-          <label>${this._t('room.label_scale')}</label>
-          <div class="colorrow gsrow">
-            ${this._rangeInput(50, 300, 5, Math.round(this._roomLabelScale * 100), (n) => { this._roomLabelScale = n / 100; this.requestUpdate(); })}
-            <span class="opv">${Math.round(this._roomLabelScale * 100)}%</span>
-          </div>
-          ${this._renderCardPreview(
-            spaceDisplayOf(this._curSpaceCfg).cardFontScale,
-            this._roomNameScale,
-            this._roomLabelScale,
-          )}
-        </div>
-        <div class="row roomfooter" slot="footer">
-          <button class="btn ghost" @click=${this._roomDialogCancel}>${this._t('btn.cancel')}</button>
-          <span class="spacer"></span>
-          ${edit
-            ? html`<button class="btn on" @click=${() => this._saveRoomEdit()} ?disabled=${!this._nameSel.trim()}>
-                <ha-icon icon="mdi:check"></ha-icon>${this._t('btn.save')}
-              </button>`
-            : html`${!this._pendingSplit ? html`<button class="btn ghost" @click=${this._keepClosedAsPartitions}>
-                <ha-icon icon="mdi:wall"></ha-icon>${this._t('btn.keep_as_walls')}
-              </button>` : nothing}
-              <button class="btn on room-save" @click=${this._saveRoom} ?disabled=${!canSaveNew}>
-                <ha-icon icon="mdi:check"></ha-icon>${this._t('btn.save')}
-              </button>`}
-        </div>
-    </hp-dialog>`;
+    return this._editorRuntimeOrThrow()._renderRoomDialog();
   }
 
   static styles = [cardStyles, editorSecondaryStyles];

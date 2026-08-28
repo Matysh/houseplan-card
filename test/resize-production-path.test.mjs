@@ -2,10 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { readAllStylesSource } from './styles-source.mjs';
+import { readHouseplanProductionSource } from './houseplan-source.mjs';
 
-const card = fs.readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
+const card = readHouseplanProductionSource();
 const resize = fs.readFileSync(new URL('../src/resize.ts', import.meta.url), 'utf8');
 const controller = fs.readFileSync(new URL('../src/resize-controller.ts', import.meta.url), 'utf8');
+const editorRuntime = fs.readFileSync(new URL('../src/houseplan-editor-runtime.ts', import.meta.url), 'utf8');
 const wallInvariant = fs.readFileSync(new URL('../src/wall-record-preservation.ts', import.meta.url), 'utf8');
 const invariantCli = fs.readFileSync(new URL('../scripts/model-invariants.mjs', import.meta.url), 'utf8');
 const styles = readAllStylesSource();
@@ -99,7 +101,7 @@ test('#264 Resize controller is the sole mutable gesture owner', () => {
   for (const mirror of ['_rszSel', '_rszDrag', '_rszPreview', '_rszLive', '_rszEligibilityCache']) {
     assert.equal(card.includes(`private ${mirror}`), false, `${mirror} remains a root state mirror`);
   }
-  assert.match(card, /new ResizeController</);
+  assert.match(editorRuntime, /new ResizeController</);
   assert.match(controller, /class ResizeController/);
   assert.doesNotMatch(controller, /LitElement|PointerEvent|requestUpdate|_serverCfg|_writeConfig/);
 });

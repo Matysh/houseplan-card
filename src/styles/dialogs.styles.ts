@@ -114,9 +114,41 @@ export const dialogsStyles = css`
       --mdc-icon-size: 44px;
       color: var(--hp-accent);
     }
+    .editorloading {
+      position: absolute;
+      z-index: 74;
+      left: 50%;
+      top: 50%;
+      display: flex;
+      align-items: center;
+      gap: var(--sp-3);
+      padding: var(--sp-3) var(--sp-5);
+      border: 1px solid color-mix(in srgb, var(--hp-accent) 45%, transparent);
+      border-radius: 999px;
+      background: color-mix(in srgb,
+        var(--ha-card-background, var(--card-background-color, #111)) 92%, transparent);
+      color: var(--primary-text-color);
+      box-shadow: 0 6px 22px rgb(0 0 0 / 18%);
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      animation: editor-loading-in 0.15s ease both;
+    }
+    .editorloading ha-icon {
+      --mdc-icon-size: 22px;
+      color: var(--hp-accent);
+      animation: editor-loading-spin 0.9s linear infinite;
+    }
+    @keyframes editor-loading-in {
+      from { opacity: 0; transform: translate(-50%, calc(-50% + 4px)); }
+      to { opacity: 1; transform: translate(-50%, -50%); }
+    }
+    @keyframes editor-loading-spin { to { transform: rotate(360deg); } }
     @media (prefers-reduced-motion: reduce) {
-      .recoveryoverlay {
+      .recoveryoverlay,
+      .editorloading,
+      .editorloading ha-icon {
         transition: none;
+        animation: none;
       }
     }
     .oplock {

@@ -43,7 +43,7 @@ const UNIT_FORMATTING = new RegExp(
  */
 const FORMATTERS = [
   { file: 'src/logic.ts', anchor: 'export function formatLength(', lines: 12 },
-  { file: 'src/resize.ts', anchor: 'export function formatArea(', lines: 8 },
+  { file: 'src/area-format.ts', anchor: 'export function formatArea(', lines: 8 },
 ];
 
 const sourceFiles = (root) => {

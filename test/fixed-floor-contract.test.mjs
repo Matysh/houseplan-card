@@ -1,8 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { readHouseplanProductionSource } from './houseplan-source.mjs';
 
-const card = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
+const card = readHouseplanProductionSource();
 const editor = readFileSync(new URL('../src/editor.ts', import.meta.url), 'utf8');
 
 test('active-space writes go through the fixed-floor mutation boundary', () => {

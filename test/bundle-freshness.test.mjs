@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
@@ -39,6 +40,35 @@ test('bundle freshness rejects a missing or stale fingerprint', async () => {
       assertFreshDemoBundle({ evaluate: async () => 'stale' }, root),
       /stale.*Expected/is,
     );
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('bundle freshness verifies every manifest-listed demo asset', async () => {
+  const root = fixtureRoot();
+  try {
+    const expected = sourceFingerprint(root);
+    const assets = resolve(root, 'demo/srv/assets');
+    mkdirSync(resolve(assets, 'houseplan-assets'), { recursive: true });
+    const files = [
+      ['houseplan-card.js', 'entry'],
+      ['houseplan-assets/editor-HASH.js', 'editor'],
+    ];
+    for (const [name, contents] of files) writeFileSync(resolve(assets, name), contents, 'utf8');
+    writeFileSync(resolve(assets, 'houseplan-assets.json'), JSON.stringify({
+      schema: 1,
+      fingerprint: expected,
+      files: files.map(([path, contents]) => ({
+        path,
+        sha256: createHash('sha256').update(contents).digest('hex'),
+      })),
+    }), 'utf8');
+    const page = { evaluate: async () => expected };
+    assert.equal(await assertFreshDemoBundle(page, root), expected);
+
+    writeFileSync(resolve(assets, 'houseplan-assets/editor-HASH.js'), 'tampered', 'utf8');
+    await assert.rejects(assertFreshDemoBundle(page, root), /hash mismatch/);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

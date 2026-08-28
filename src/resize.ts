@@ -15,6 +15,7 @@ import {
   polygonArea, segmentsProperlyCross, polyContainsPoly, roomsOverlap,
 } from './logic';
 import { classifyNearAxisSegment } from './near-axis';
+export { areaM2, formatArea } from './area-format';
 
 /** Minimal room dimension in centimetres (owner: «мин. габарит ~30 см»). */
 export const MIN_ROOM_CM = 30;
@@ -1346,18 +1347,4 @@ export function clampRoomScale(
     else bad = mid;
   }
   return good;
-}
-
-// ---------------- live numbers ----------------
-
-/** Room area in m² from render units via the grid scale. */
-export function areaM2(poly: number[][], gridPitch: number, cellCm: number): number {
-  const cmPerUnit = cellCm / gridPitch;
-  return (polygonArea(poly) * cmPerUnit * cmPerUnit) / 1e4;
-}
-
-/** "12.4 m²" or "133 ft²" per the HA unit system. */
-export function formatArea(m2: number, imperial: boolean): string {
-  if (imperial) return `${Math.round(m2 * 10.7639)} ft²`;
-  return `${(Math.round(m2 * 10) / 10).toFixed(1)} m²`;
 }

@@ -10,6 +10,7 @@ import {
 import { spaceModels } from '../test-build/space-geometry.js';
 import { wallBodiesGeometry, wallBodiesUnionPath } from '../test-build/wall-thickness.js';
 import { checkPhysicalGeometry } from '../scripts/model-invariants.mjs';
+import { readHouseplanProductionSource } from './houseplan-source.mjs';
 
 const fixture = JSON.parse(readFileSync(
   new URL('./fixtures/278-wall-union-isolation.json', import.meta.url), 'utf8',
@@ -98,7 +99,7 @@ test('#278 physical fingerprint ignores decor but covers every strict writer fie
 });
 
 test('#278 production source routes physical writers through one barrier and decor around it', () => {
-  const source = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
+  const source = readHouseplanProductionSource();
   for (const historyKey of [
     'draft_segment', 'wall_chain_finish', 'column_add', 'physical_edit', 'physical_delete',
     'physical_move', 'resize_room', 'wall_thickness',
