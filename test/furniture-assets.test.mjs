@@ -46,7 +46,9 @@ test('front-view menu artwork is reachable only through the lazy editor graph', 
 test('release provenance is normalized to the repository MIT grant', () => {
   assert.equal(MANIFEST.author, 'Sergey Matyushin (Matysh)');
   assert.equal(MANIFEST.license, 'MIT');
-  assert.match(fs.readFileSync(
-    path.join(ROOT, 'assets', 'furniture', 'houseplan-0.3.0', 'README.md'), 'utf8'),
-  /issuecomment-5454085168/);
+  const readme = fs.readFileSync(
+    path.join(ROOT, 'assets', 'furniture', 'houseplan-0.3.0', 'README.md'), 'utf8');
+  assert.match(readme, /issuecomment-5454085168/);
+  assert.match(readme, /issuecomment-5449707137/);
+  assert.match(readme, /9E969016EE3B4B4E3DB776FEC53C8B387B91368B118EB5E39911483DEF1B0953/);
 });
