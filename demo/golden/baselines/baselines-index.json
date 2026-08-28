@@ -1,11 +1,11 @@
 {
   "schema": 1,
-  "matrixVersion": 49,
-  "acceptedAt": "2026-08-28T16:30:55.119Z",
-  "sourceFingerprint": "ff001fc4fdb7a72be9bf3afda60fc34ec1513092f8fe4127c2c6a6f1d11e43da",
+  "matrixVersion": 50,
+  "acceptedAt": "2026-08-28T20:34:15.997Z",
+  "sourceFingerprint": "817110bad40d29ee0aa8e4ef2dadfda9e310dfa6346ddb5d2725ecafb359f073",
   "chromium": "151.0.7922.34",
   "witnesses": {
-    "count": 121,
+    "count": 133,
     "floor": 10
   },
   "scenarios": {
@@ -28,6 +28,7 @@
     "isometric-large-warm-remount-dark": "299401bd4b499876d40678593308b42ac8aa4d3328113f27ad5940fc3621184a",
     "geometry-view-dark-fit": "2d96e776ea9fc8a136896b58df30abb13a8a53e6c40e5b4f4e12c6dba522380f",
     "geometry-view-light-fit": "60e8a908fc1c3be3ca5c9b82bf432120d808d913f743c04683b4a2c501d84659",
+    "vacuum-trail-smoothing-dark": "17d564fdee66630b99e8514c557c96d3428afbd753fa0f20d82efd51f11bbb76",
     "room-label-parity-view-dark": "b35675251b85144bca1bc15ed7bf27a4dd1eaa0bfc288e3e3b0d1cdefac79ae5",
     "room-label-parity-plan-dark": "34c1010481e2799b8598e3c6f659ca7ec8e695a064eecacf3562000639f44d6a",
     "room-label-parity-view-light": "789f8f3b6211d35e70021094f2063dc9c6ac57599d9d64743a33b7ae9dd868c2",
