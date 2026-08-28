@@ -82,6 +82,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#299](https://github.com/Matysh/houseplan-card/issues/299) Записи толщины не пересекают границу роли стены | [299-mixed-role-wall-records.md](299-mixed-role-wall-records.md) |
 | [#314](https://github.com/Matysh/houseplan-card/issues/314) Атомарная запись v8 drafts и независимой геометрии | [314-v8-draft-write-regression.md](314-v8-draft-write-regression.md) |
 | [#306](https://github.com/Matysh/houseplan-card/issues/306) Нулевые стены вместо виртуальных границ | [306-zero-thickness-walls.md](306-zero-thickness-walls.md) |
+| [#348](https://github.com/Matysh/houseplan-card/issues/348) Полная немецкая локализация | [348-german-localization.md](348-german-localization.md) |
 
 ## P2
 
