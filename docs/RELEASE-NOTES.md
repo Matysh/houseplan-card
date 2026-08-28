@@ -1,14 +1,18 @@
-<!-- release: v1.68.1 -->
+<!-- release: v1.69.0-beta.1 -->
 
 ## Основное
 
-- Исправлено создание и удаление пространств: новый план больше не получает ошибку `v8+ space requires wall_segments`, а неудачная запись не оставляет несохранённое пространство.
+- Добавлена полная немецкая локализация интерфейса с автоматическим выбором по языку Home Assistant ([#348](https://github.com/Matysh/houseplan-card/issues/348)).
+- В редакторе устройств появился единый каталог с поиском для добавления, скрытия и повторного размещения устройств ([#29](https://github.com/Matysh/houseplan-card/issues/29)).
+- Исправлены острые вершины и пограничные ошибки стыков стен; проверки больших планов стали значительно быстрее ([#329](https://github.com/Matysh/houseplan-card/issues/329), [#330](https://github.com/Matysh/houseplan-card/issues/330), [#331](https://github.com/Matysh/houseplan-card/issues/331)).
 - Мелкие исправления и улучшения.
 
 ## Highlights
 
-- Fixed space creation and deletion: a new plan no longer reports `v8+ space requires wall_segments`, and a rejected save no longer leaves an unsaved space behind.
+- Added a complete German interface with automatic selection from the Home Assistant language ([#348](https://github.com/Matysh/houseplan-card/issues/348)).
+- The Device editor now provides one searchable catalog for adding, hiding and restoring devices on the plan ([#29](https://github.com/Matysh/houseplan-card/issues/29)).
+- Fixed acute wall apexes and boundary errors in junction validation; checks on large plans are now significantly faster ([#329](https://github.com/Matysh/houseplan-card/issues/329), [#330](https://github.com/Matysh/houseplan-card/issues/330), [#331](https://github.com/Matysh/houseplan-card/issues/331)).
 - Small fixes and improvements.
 
-[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.68.1/docs/CHANGELOG.ru.md)
-· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.68.1/docs/CHANGELOG.md)
+[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.69.0-beta.1/docs/CHANGELOG.ru.md)
+· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.69.0-beta.1/docs/CHANGELOG.md)

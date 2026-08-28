@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.69.0-beta.1 — 2026-08-28
+
 - House Plan now has a complete German interface. `Deutsch` can be selected
   explicitly and is chosen automatically for German Home Assistant profiles;
   the locale loads on demand without making the ordinary View bundle larger

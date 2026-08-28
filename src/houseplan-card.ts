@@ -328,7 +328,7 @@ import {
 } from './space-order';
 import { applyOpeningMoves, mergeCollinearPartitions, spaceMergeGeometry } from './wall-merge';
 
-const CARD_VERSION = '1.68.1';
+const CARD_VERSION = '1.69.0-beta.1';
 const ENTRY_BUILD_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
 const EDITOR_RETRY_ASSET = '__HOUSEPLAN_EDITOR_RETRY_ASSET__';
 

@@ -1,1 +1,1 @@
-globalThis.__HOUSEPLAN_BUILD_FINGERPRINT__="b0932d9ea32229294c30d94b645a3699799d106ba4e7bcc204be2a152c72ece9";export{d6 as HouseplanCard}from"./houseplan-assets/houseplan-card-gKJ0hnDg.js";
+globalThis.__HOUSEPLAN_BUILD_FINGERPRINT__="b6d9eb672c772bca7fa08bf25b4525cc8bbf3084320f383f16ab86a535090444";export{d6 as HouseplanCard}from"./houseplan-assets/houseplan-card-BC4jkFdL.js";
