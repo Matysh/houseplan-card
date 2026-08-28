@@ -106,6 +106,13 @@ two points are discarded before limits are applied. The newest 64 drawable
 subpaths are kept, with at most 4000 total points; both endpoints of every kept
 subpath survive deterministic proportional thinning.
 
+Current and previous trails use the same bounded rounded-corner curve. The
+curve preserves every subpath endpoint and never leaves the recorded polyline
+by more than 17.5 cm in physical plan coordinates. Smoothing happens after
+vacuum calibration and before flat/isometric projection, so zoom, viewport,
+DPR and projection do not change that limit. The live target is still trimmed
+before rendering, and smoothing never bridges an integration data gap.
+
 | Display mode | While moving | After movement stops |
 |---|---|---|
 | `never` | Hidden | Hidden |

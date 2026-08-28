@@ -2442,6 +2442,18 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'vacuum-trail-smoothing-disabled',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="smoothVacPath rounds corners" test/vacuum.test.mjs',
+    because: 'the bounded curve is the user-visible point of #209; restoring a straight vertex '
+      + 'must be rejected by the focused geometry test rather than blessed by a matching empty golden',
+    patches: [{
+      file: 'src/vacuum.ts',
+      find: "      commands.push({ kind: 'quadratic', control: b, point: after });",
+      replace: "      commands.push({ kind: 'line', point: b });",
+    }],
+  },
+  {
     id: 'device-unavailable-hover-restored',
     guard: 'node demo/smoke_device_icon_design.mjs',
     because: 'unavailable keeps click/keyboard access but must never regain the blue visual hover '

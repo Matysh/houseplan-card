@@ -140,6 +140,7 @@ const out = await page.evaluate(async () => {
   c.hass = { ...c.hass, states: { ...c.hass.states } }; await c.updateComplete;
   const resumedD = sr().querySelector('.vactrail > path.case')?.getAttribute('d') || '';
   o.srvResumedCurrentKeepsEarlierPoints = (resumedD.match(/[ML]/g) || []).length === 4;
+  o.srvResumedCurrentSmooth = (resumedD.match(/Q /g) || []).length === 2;
 
   // ---- server-side runs: current + one previous (owner 2026-07-31) ----
   cfg.markers.find((m) => m.id === 'e_vacuum_robo').vacuum.trail_mode = 'always';
@@ -155,11 +156,17 @@ const out = await page.evaluate(async () => {
   await c.updateComplete;
   c.hass = { ...c.hass, states: { ...c.hass.states } }; await c.updateComplete;
   const prevG = sr().querySelector('.vactrail g.prev');
-  o.srvPrevRunShown = !!prevG && prevG.querySelectorAll('polyline').length === 2
-    && prevG.querySelector('.case').getAttribute('points').split(' ').length === 3;
+  const prevCase = prevG?.querySelector('path.case');
+  const prevCore = prevG?.querySelector('path.core');
+  const prevD = prevCase?.getAttribute('d') || '';
+  o.srvPrevRunShown = !!prevG && prevG.querySelectorAll('path').length === 2
+    && prevD === prevCore?.getAttribute('d')
+    && (prevD.match(/M /g) || []).length === 1
+    && (prevD.match(/Q /g) || []).length === 1;
   const cur = sr().querySelector('.vactrail > path.case');
   // 4 server points, the live tail trimmed while moving -> 3 rendered
-  o.srvCurTrimmed = !!cur && (cur.getAttribute('d').match(/[ML]/g) || []).length === 3;
+  o.srvCurTrimmed = !!cur && (cur.getAttribute('d').match(/[ML]/g) || []).length === 3
+    && (cur.getAttribute('d').match(/Q /g) || []).length === 1;
   o.srvPrevFaded = !!prevG && getComputedStyle(prevG).opacity === '0.4';
   // XCME integration path outranks the simultaneous server run. Its two
   // subpaths remain two SVG moveto sections: no synthetic bridge over a gap.
@@ -280,6 +287,7 @@ checkAll(out, {
   puckGoneWhenDocked: true, trailHiddenAfterDock: true, hiddenNoPuck: true,
   unknownMapNoPuck: true,
   srvEndedCurrentHiddenDefault: true, srvResumedCurrentKeepsEarlierPoints: true,
+  srvResumedCurrentSmooth: true,
   srvPrevRunShown: true, srvCurTrimmed: true, srvPrevFaded: true,
   multiSubpathNoBridge: true, integrationPathAlwaysAtRest: true,
   tipExists: true, tipGluedToPuck: true, neverHidesAll: true,

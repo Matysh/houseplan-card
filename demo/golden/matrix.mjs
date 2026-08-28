@@ -1,7 +1,7 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 49;
+export const GOLDEN_MATRIX_VERSION = 50;
 
 const stage = { capture: 'stage', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0005 } };
 const page = { capture: 'page', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0008 } };
@@ -222,6 +222,15 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'geometry-view-light-fit', fixture: 'visual', space: 'golden-geometry', mode: 'view',
     theme: 'light', viewport: { width: 1000, height: 900 }, ...stage },
+  { id: 'vacuum-trail-smoothing-dark', fixture: 'visual', space: 'golden-geometry', mode: 'view',
+    vacuumTrail: {
+      current: [
+        [[180, 220], [360, 220], [360, 420], [520, 420]],
+        [[650, 240], [780, 240], [780, 500], [650, 620], [850, 760]],
+      ],
+      previous: [[160, 760], [300, 650], [420, 740], [560, 600]],
+    },
+    theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'room-label-parity-view-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',
     roomLabelParity: true, theme: 'dark', viewport: { width: 1000, height: 900 }, ...page },
   { id: 'room-label-parity-plan-dark', fixture: 'visual', space: 'golden-lighting', mode: 'plan',

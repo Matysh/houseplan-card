@@ -68,7 +68,7 @@ const out = await page.evaluate(async () => {
         entity_id: 'camera.static_robot_map', state: 'idle',
         attributes: {
           map_name: 'm1', vacuum_position: { x: 650, y: 700, a: 0 },
-          path: [[200, 200], [420, 440], [650, 700]],
+          path: [[200, 200], [420, 200], [420, 440], [650, 700]],
         },
       },
       'sun.sun': {
@@ -110,6 +110,7 @@ const out = await page.evaluate(async () => {
   const before = layers();
   const beforeSpillParts = [...root(original).querySelectorAll('.glow-pool')]
     .map((node) => node.getAttribute('data-lit-parts'));
+  const isoVacuumTrailD = root(original).querySelector('.vactrail path.case')?.getAttribute('d') || '';
   const wallFingerprint = root(original).querySelector('[data-hp="iso-walls"]')?.dataset.fingerprint;
   const cachedGeometry = original._isoGeometryCache.get(wallFingerprint)?.geometry;
   const light = original.hass.states['light.ceiling'];
@@ -154,6 +155,7 @@ const out = await page.evaluate(async () => {
       && before.verticalOpenings === 5
       && before.devices > 0 && before.hover > 0 && before.vacuumPucks > 0
       && before.vacuumTrails >= 2,
+    vacuumTrailCurved: (isoVacuumTrailD.match(/Q /g) || []).length === 1,
     liveLayersStable: JSON.stringify(after) === JSON.stringify(before),
     spillBarrierStable: JSON.stringify(afterSpillParts) === JSON.stringify(beforeSpillParts)
       && beforeSpillParts.length >= 2 && beforeSpillParts.every((parts) => Number(parts) > 0),

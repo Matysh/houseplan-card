@@ -11,6 +11,13 @@ export type Affine = [number, number, number, number, number, number];
 export type Pt = [number, number];
 export type VacPath = Pt[][];
 
+export type VacPathCommand =
+  | { kind: 'move'; point: Pt }
+  | { kind: 'line'; point: Pt }
+  | { kind: 'quadratic'; control: Pt; point: Pt };
+
+export const VAC_TRAIL_SMOOTH_RADIUS_CM = 17.5;
+
 export const VAC_PATH_MAX_SEGMENTS = 64;
 export const VAC_PATH_MAX_POINTS = 4000;
 
@@ -225,6 +232,60 @@ export function trimVacPathTarget(path: VacPath): VacPath {
   if (!last) return [];
   if (last.length > 2) last.pop();
   else out.pop();
+  return out;
+}
+
+const finitePoint = (point: Pt): boolean => Number.isFinite(point[0]) && Number.isFinite(point[1]);
+const samePoint = (a: Pt, b: Pt): boolean => a[0] === b[0] && a[1] === b[1];
+
+/**
+ * Turn calibrated plan-space trail points into bounded rounded-corner commands.
+ *
+ * Each corner is trimmed by at most half of either adjacent segment and by the
+ * caller's physical radius. The quadratic lies in the P-B-Q convex hull, so it
+ * cannot be farther from the source polyline than that radius. This function
+ * deliberately knows nothing about SVG, Lit, scale conversion or flat/iso
+ * projection; the renderer serialises and projects the typed commands.
+ */
+export function smoothVacPath(path: VacPath, maxRadius: number): VacPathCommand[][] {
+  if (!Number.isFinite(maxRadius) || maxRadius <= 0) return [];
+  const out: VacPathCommand[][] = [];
+  for (const rawSegment of path) {
+    if (!rawSegment.every(finitePoint)) continue;
+    const segment = rawSegment.filter((point, index) => index === 0 || !samePoint(point, rawSegment[index - 1]));
+    if (segment.length < 2) continue;
+    const commands: VacPathCommand[] = [{ kind: 'move', point: segment[0] }];
+    if (segment.length === 2) {
+      commands.push({ kind: 'line', point: segment[1] });
+      out.push(commands);
+      continue;
+    }
+
+    for (let index = 1; index < segment.length - 1; index++) {
+      const a = segment[index - 1], b = segment[index], c = segment[index + 1];
+      const inX = b[0] - a[0], inY = b[1] - a[1];
+      const outX = c[0] - b[0], outY = c[1] - b[1];
+      const inLength = Math.hypot(inX, inY), outLength = Math.hypot(outX, outY);
+      const dot = (inX * outX + inY * outY) / (inLength * outLength);
+      // An almost exact reversal would fold a quadratic back onto itself. Keep
+      // that telemetry cusp literal instead of inventing a loop around it.
+      if (!Number.isFinite(dot) || dot <= -0.999) {
+        commands.push({ kind: 'line', point: b });
+        continue;
+      }
+      const radius = Math.min(maxRadius, inLength / 2, outLength / 2);
+      if (!Number.isFinite(radius) || radius <= 0) {
+        commands.push({ kind: 'line', point: b });
+        continue;
+      }
+      const before: Pt = [b[0] - inX * radius / inLength, b[1] - inY * radius / inLength];
+      const after: Pt = [b[0] + outX * radius / outLength, b[1] + outY * radius / outLength];
+      commands.push({ kind: 'line', point: before });
+      commands.push({ kind: 'quadratic', control: b, point: after });
+    }
+    commands.push({ kind: 'line', point: segment[segment.length - 1] });
+    out.push(commands);
+  }
   return out;
 }
 

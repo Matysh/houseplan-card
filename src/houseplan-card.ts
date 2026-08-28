@@ -104,7 +104,8 @@ import { mdiHomeCityOutline } from '@mdi/js';
 import {
   Affine, applyAffine, readVacTelemetry,
   autoCalibrate, pushTrailPoint, isVacMoving, vacTrailMode, vacMapIdWithFallback,
-  parseVacSourceCandidate, resolveVacSource, resolveCurrentVacPath, trimVacPathTarget, areaCentroid,
+  parseVacSourceCandidate, resolveVacSource, resolveCurrentVacPath, trimVacPathTarget, normalizeVacPath,
+  smoothVacPath, VAC_TRAIL_SMOOTH_RADIUS_CM, areaCentroid,
   vacCalibrationResidualCm, vacRoomNameMatchCount, VAC_CALIBRATION_WARN_CM,
   VAC_TELEPORT_GAP_MS, VAC_STALE_MS,
   FitParams, fitMatrix, fitFromMatrix, initialFit, reanchorFit, VacRoom,
@@ -11815,6 +11816,21 @@ export class HouseplanCard extends LitElement {
     });
   }
 
+  /** One bounded current/previous trail serializer for flat and Iso surfaces. */
+  private _vacTrailPathD(path: VacPath, matrix: Affine): string {
+    const calibrated = path.map((segment) => segment.map(([x, y]) => applyAffine(matrix, x, y)));
+    const commands = smoothVacPath(calibrated, this._cmToUnits(VAC_TRAIL_SMOOTH_RADIUS_CM));
+    const pointText = (point: readonly [number, number]): string => {
+      const scene = this._scenePoint(point);
+      return `${scene[0].toFixed(1)} ${scene[1].toFixed(1)}`;
+    };
+    return commands.map((segment) => segment.map((command) => {
+      if (command.kind === 'move') return `M ${pointText(command.point)}`;
+      if (command.kind === 'line') return `L ${pointText(command.point)}`;
+      return `Q ${pointText(command.control)} ${pointText(command.point)}`;
+    }).join(' ')).join(' ');
+  }
+
   /** Puck + trail for every live vacuum of the space. */
   private _renderVacuums(devs: DevItem[], view: { x: number; y: number; w: number; h: number }): TemplateResult | typeof nothing {
     if (this._markup || this._mode === 'decor') return nothing;
@@ -11846,13 +11862,12 @@ export class HouseplanCard extends LitElement {
       const srvPrev = srv?.previous?.map_id === mapNow && Array.isArray(srv.previous.points) ? srv.previous : null;
       // the PREVIOUS run stays visible even at rest: users compare where the
       // robot has been against where it has not (owner call 2026-07-31)
-      if (tmode === 'always' && srvPrev && srvPrev.points.length > 1) {
-        const pts = srvPrev.points.map(([x, y]: number[]) => {
-          const [cx2, cy2] = applyAffine(matrix, x, y);
-          const point = this._scenePoint([cx2, cy2]);
-          return point[0].toFixed(1) + ',' + point[1].toFixed(1);
-        }).join(' ');
-        trails.push(svg`<g class="prev"><polyline class="case" points="${pts}"></polyline><polyline class="core" points="${pts}"></polyline></g>`);
+      if (tmode === 'always' && srvPrev) {
+        const previous = normalizeVacPath(srvPrev.points);
+        const pathD = this._vacTrailPathD(previous, matrix);
+        if (pathD) {
+          trails.push(svg`<g class="prev"><path class="case" d="${pathD}"></path><path class="core" d="${pathD}"></path></g>`);
+        }
       }
       // One arbitration authority: integration multi-subpath → server run →
       // local runtime. Only drawable segments participate.
@@ -11863,13 +11878,9 @@ export class HouseplanCard extends LitElement {
         const raw: VacPath = moving && (current.source === 'integration' || current.source === 'server')
           ? trimVacPathTarget(current.path) : current.path;
         if (raw.length) {
-          const pathD = raw.map((segment) => segment.map(([x, y], index) => {
-            const [cx, cy] = applyAffine(matrix, x, y);
-            const point = this._scenePoint([cx, cy]);
-            return `${index ? 'L' : 'M'} ${point[0].toFixed(1)} ${point[1].toFixed(1)}`;
-          }).join(' ')).join(' ');
+          const pathD = this._vacTrailPathD(raw, matrix);
           // A single SVG path with several M commands keeps gaps literal.
-          trails.push(svg`<path class="case" d="${pathD}"></path><path class="core" d="${pathD}"></path>`);
+          if (pathD) trails.push(svg`<path class="case" d="${pathD}"></path><path class="core" d="${pathD}"></path>`);
           const last = raw[raw.length - 1];
           if (moving && last?.length >= 2) {
             const anchor = last[last.length - 1];

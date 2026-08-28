@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Robot-vacuum trails now follow the same recorded points with softly rounded
+  corners instead of a visibly segmented polyline. Current and previous runs
+  use the same bounded curve, preserve telemetry gaps and never deviate by more
+  than 17.5 cm from the recorded route
+  ([#209](https://github.com/Matysh/houseplan-card/issues/209)).
+
 - A robot vacuum that reports its live position no longer freezes the card
   on a freshly opened page: the map-id lookup ran inside the render cycle
   and required editor code that a cold tab has not loaded yet, so the very

@@ -242,6 +242,14 @@ priority decision. `resolveVacSource()` is sticky for saved sources and limits
 automatic selection to compatible entities on the same HA device; the card
 adds registry status through the shared `resolveHaBindingStatus()` authority.
 
+`smoothVacPath()` is the shared pure presentation step for current and previous
+runs. It consumes calibrated flat plan coordinates and returns typed
+`move|line|quadratic` commands with a caller-supplied physical radius; the card
+then applies flat/isometric scene projection and SVG serialization. Each corner
+uses a quadratic inside the adjacent-segment convex hull, bounded by half of
+both segment lengths, so the 17.5 cm product limit, exact endpoints and literal
+subpath gaps are structural rather than renderer-specific accidents.
+
 Room auto-calibration uses the same shoelace `areaCentroid()` for plan polygons
 and robot outlines. Residuals are converted through resolved grid pitch and
 cell centimetres; matrices above the 40 cm threshold remain proposals until an

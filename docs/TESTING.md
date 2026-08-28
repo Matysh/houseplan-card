@@ -37,6 +37,26 @@
 мутантам с браузерным гвардом; компиляция тестов в worktree стартует с
 тёплого `test-build/` основного дерева.
 
+## Vacuum trail smoothing (#209)
+
+- [ ] Pure `smoothVacPath` tests prove exact endpoints, separate subpaths,
+      degenerate/reversal fallbacks, the 17.5 cm sampled deviation bound and
+      the 64-subpath/4000-point `≤2N` command budget
+      [unit: `test/vacuum.test.mjs`].
+- [ ] The production bundle renders current and previous runs through paired
+      case/core `<path>` elements with quadratic commands, unchanged source
+      authority/modes, live-target trim and puck tip
+      [auto: `demo/smoke_vacuum.mjs`].
+- [ ] Flat and dormant-Iso projections retain the same curved live layer on
+      touch and across HA updates [auto: `demo/smoke_isometric_live_touch.mjs`].
+- [ ] `vacuum-trail-smoothing-dark` contains two current subpaths plus a stored
+      previous run; its semantic guard requires two `M` sections, quadratic
+      commands and byte-identical case/core geometry before PNG comparison.
+      The baseline is accepted only from reviewed Linux CI
+      [golden: `demo/golden/matrix.mjs`].
+- [ ] Replacing the quadratic corner with a straight vertex makes the focused
+      unit guard red [mutation: `vacuum-trail-smoothing-disabled`].
+
 ## Stable wall-segment identity (#282)
 
 - [ ] Wall junction limits (#329): drawing refuses an apex under 15°, a seventh

@@ -5,7 +5,8 @@ import {
   solveAffine, applyAffine, affineResidual, readVacTelemetry, autoCalibrate,
   thinPath, pushTrailPoint, isVacMoving, isVacSourceState, vacMapIdFromAttrs,
   vacMapIdWithFallback, areaCentroid, normalizeVacPath, resolveCurrentVacPath,
-  trimVacPathTarget, parseVacSourceCandidate, resolveVacSource,
+  trimVacPathTarget, smoothVacPath, VAC_TRAIL_SMOOTH_RADIUS_CM,
+  parseVacSourceCandidate, resolveVacSource,
   vacCalibrationResidualCm, vacRoomNameMatchCount, VAC_CALIBRATION_WARN_CM,
 } from '../test-build/vacuum.js';
 
@@ -179,6 +180,88 @@ test('resolveCurrentVacPath arbitrates only drawable sources and preserves gaps'
   assert.deepEqual(trimVacPathTarget([[[0, 0], [1, 1]], [[5, 5], [6, 6], [7, 7]]]), [
     [[0, 0], [1, 1]], [[5, 5], [6, 6]],
   ]);
+});
+
+test('smoothVacPath rounds corners within 17.5 cm and preserves exact endpoints', () => {
+  const gridPitch = 100;
+  const cellCm = 5;
+  const radius = (VAC_TRAIL_SMOOTH_RADIUS_CM / cellCm) * gridPitch;
+  const source = [[[0, 0], [900, 0], [900, 500], [1400, 650]]];
+  const [commands] = smoothVacPath(source, radius);
+  assert.deepEqual(commands[0], { kind: 'move', point: source[0][0] });
+  assert.deepEqual(commands.at(-1), { kind: 'line', point: source[0].at(-1) });
+  assert.equal(commands.filter((command) => command.kind === 'quadratic').length, 2);
+
+  const distanceToSegment = (point, a, b) => {
+    const dx = b[0] - a[0], dy = b[1] - a[1];
+    const denominator = dx * dx + dy * dy;
+    const t = denominator ? Math.max(0, Math.min(1,
+      ((point[0] - a[0]) * dx + (point[1] - a[1]) * dy) / denominator)) : 0;
+    return Math.hypot(point[0] - (a[0] + dx * t), point[1] - (a[1] + dy * t));
+  };
+  const distanceToSource = (point) => Math.min(...source[0].slice(1).map(
+    (end, index) => distanceToSegment(point, source[0][index], end),
+  ));
+  for (let index = 0; index < commands.length; index++) {
+    const command = commands[index];
+    if (command.kind !== 'quadratic') continue;
+    const start = commands[index - 1].point;
+    for (let sample = 0; sample <= 100; sample++) {
+      const t = sample / 100, u = 1 - t;
+      const point = [
+        u * u * start[0] + 2 * u * t * command.control[0] + t * t * command.point[0],
+        u * u * start[1] + 2 * u * t * command.control[1] + t * t * command.point[1],
+      ];
+      const deviationCm = (distanceToSource(point) / gridPitch) * cellCm;
+      assert.ok(deviationCm <= VAC_TRAIL_SMOOTH_RADIUS_CM + 1e-9,
+        `curve deviated by ${deviationCm} cm`);
+    }
+  }
+});
+
+test('smoothVacPath preserves subpath gaps and bounds short uneven corners', () => {
+  const path = [
+    [[0, 0], [2, 0], [2, 1000]],
+    [[5000, 5000], [5010, 5000], [5010, 5001], [6000, 5001]],
+  ];
+  const result = smoothVacPath(path, 100);
+  assert.equal(result.length, 2);
+  assert.deepEqual(result.map((segment) => segment[0]), [
+    { kind: 'move', point: [0, 0] },
+    { kind: 'move', point: [5000, 5000] },
+  ]);
+  assert.deepEqual(result.map((segment) => segment.at(-1).point), [[2, 1000], [6000, 5001]]);
+  const firstCurve = result[0].find((command) => command.kind === 'quadratic');
+  assert.deepEqual(firstCurve.point, [2, 1]);
+});
+
+test('smoothVacPath fails closed for degenerate, non-finite and reversal input', () => {
+  assert.deepEqual(smoothVacPath([], 10), []);
+  assert.deepEqual(smoothVacPath([[[0, 0]]], 10), []);
+  assert.deepEqual(smoothVacPath([[[0, 0], [1, 1]]], 0), []);
+  assert.deepEqual(smoothVacPath([[[0, 0], [NaN, 1], [2, 2]]], 10), []);
+  const duplicate = smoothVacPath([[[0, 0], [0, 0], [10, 0]]], 10);
+  assert.deepEqual(duplicate, [[
+    { kind: 'move', point: [0, 0] },
+    { kind: 'line', point: [10, 0] },
+  ]]);
+  const reversal = smoothVacPath([[[0, 0], [10, 0], [0, 0]]], 10)[0];
+  assert.equal(reversal.some((command) => command.kind === 'quadratic'), false);
+  assert.equal(JSON.stringify(reversal).includes('null'), false);
+});
+
+test('smoothVacPath stays linear and finite at the 64/4000 path budget', () => {
+  const path = Array.from({ length: 64 }, (_, segment) => {
+    const length = segment < 32 ? 63 : 62;
+    return Array.from({ length }, (_, point) => [segment * 1000 + point, point % 2]);
+  });
+  const pointCount = path.reduce((sum, segment) => sum + segment.length, 0);
+  assert.equal(pointCount, 4000);
+  const result = smoothVacPath(path, 17.5);
+  const commandCount = result.reduce((sum, segment) => sum + segment.length, 0);
+  assert.equal(result.length, 64);
+  assert.ok(commandCount <= pointCount * 2);
+  assert.equal(JSON.stringify(result).includes('null'), false);
 });
 
 test('parseVacSourceCandidate is deterministic and explains XCME/camera capability', () => {

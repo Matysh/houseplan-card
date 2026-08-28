@@ -372,7 +372,7 @@ test('sun-ray golden requires browser-painted light from a state-only sun entity
   assert.ok(scenario);
   const fixture = prepareGoldenFixture(scenario);
   const space = fixture.config.spaces.find((item) => item.id === scenario.space);
-  assert.equal(GOLDEN_MATRIX_VERSION, 49);
+  assert.equal(GOLDEN_MATRIX_VERSION, 50);
   assert.equal(space.settings.sun_rays, true);
   assert.equal(scenario.northDeg, 90,
     'the sign-sensitive golden must keep a non-zero north direction');
@@ -388,6 +388,18 @@ test('sun-ray golden requires browser-painted light from a state-only sun entity
   assert.equal(scenario.allLightsOff, true);
   assert.equal(scenario.sunRayPixels.minPixels >= 500, true);
   assert.equal(scenario.sunRayPixels.minChannelDelta >= 4, true);
+});
+
+test('vacuum smoothing golden covers current gaps and the previous run', () => {
+  const scenario = GOLDEN_SCENARIOS.find((item) => item.id === 'vacuum-trail-smoothing-dark');
+  assert.ok(scenario);
+  assert.equal(scenario.mode, 'view');
+  assert.equal(scenario.vacuumTrail?.current.length, 2);
+  assert.equal(scenario.vacuumTrail?.current.flat().length >= 8, true);
+  assert.equal(scenario.vacuumTrail?.previous.length >= 4, true);
+  const fixture = prepareGoldenFixture(scenario);
+  assert.equal(fixture.config.markers.some((marker) => marker.id === 'golden-vacuum-trail'), true);
+  assert.equal(fixture.states['vacuum.golden_vacuum_trail']?.state, 'cleaning');
 });
 
 test('issue #277 golden pairs safe/disabled handles and an opening clamp in both themes', () => {

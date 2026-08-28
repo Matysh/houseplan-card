@@ -677,6 +677,44 @@ export function prepareGoldenFixture(scenario) {
     if (missing.length) throw new Error(`golden layoutOverrides reference missing item(s): ${missing.join(', ')}`);
     fixture.layout = { ...(fixture.layout || {}), ...structuredClone(scenario.layoutOverrides) };
   }
+  if (scenario.vacuumTrail) {
+    const deviceId = 'golden-vacuum-trail';
+    const vacuumEntity = 'vacuum.golden_vacuum_trail';
+    const sourceEntity = 'camera.golden_vacuum_trail_map';
+    fixture.devices[deviceId] = {
+      id: deviceId, name: 'Golden vacuum trail', model: 'GOLDEN-VACUUM-TRAIL',
+      area_id: 'golden_geo_sw', identifiers: [['houseplan_golden', deviceId]],
+      config_entries: ['golden_entry'], entry_type: null, via_device_id: null, disabled_by: null,
+    };
+    fixture.entities[vacuumEntity] = {
+      entity_id: vacuumEntity, device_id: deviceId, platform: 'houseplan_golden',
+      config_entry_id: 'golden_entry', disabled_by: null,
+    };
+    fixture.entities[sourceEntity] = {
+      entity_id: sourceEntity, device_id: deviceId, platform: 'houseplan_golden',
+      config_entry_id: 'golden_entry', disabled_by: null,
+    };
+    fixture.states[vacuumEntity] = {
+      entity_id: vacuumEntity, state: 'cleaning',
+      attributes: { friendly_name: 'Golden vacuum trail' },
+    };
+    fixture.states[sourceEntity] = {
+      entity_id: sourceEntity, state: 'idle', attributes: {
+        friendly_name: 'Golden vacuum trail map', map_name: 'golden-trail',
+        vacuum_position: { x: 850, y: 760, a: 0 },
+        path: { path: structuredClone(scenario.vacuumTrail.current) },
+      },
+    };
+    fixture.layout[deviceId] = { s: scenario.space, x: 0.12, y: 0.84 };
+    fixture.config.markers = [...(fixture.config.markers || []), {
+      id: deviceId, binding: `device:${deviceId}`, space: scenario.space,
+      area: 'golden_geo_sw',
+      vacuum: {
+        source: sourceEntity, trail_mode: 'always',
+        calibration: { 'golden-trail': [1, 0, 0, 0, 1, 0] },
+      },
+    }];
+  }
 
   return fixture;
 }
@@ -740,6 +778,14 @@ export async function prepareGoldenScenario(page, scenario) {
           return { config: structuredClone(fixture.config), rev: 1, can_write: true };
         if (message.type === 'houseplan/layout/get')
           return { layout: structuredClone(fixture.layout || {}), rev: 1 };
+        if (message.type === 'houseplan/trail/get') return scenario.vacuumTrail ? {
+          trails: { 'golden-vacuum-trail': {
+            previous: {
+              map_id: 'golden-trail', started: 1, ended: 2,
+              points: structuredClone(scenario.vacuumTrail.previous),
+            },
+          } },
+        } : { trails: {} };
         if (message.type === 'config/device_registry/list') return Object.values(fixture.devices || {});
         if (message.type === 'config/entity_registry/list') return Object.values(fixture.entities || {});
         if (message.type === 'config_entries/get')
@@ -1572,6 +1618,22 @@ export async function prepareGoldenScenario(page, scenario) {
           || !active?.getAttribute('style')?.includes(scenario.dayCycle.top)
           || !paper) {
         throw new Error(`golden day-cycle contract did not render: ${scenario.id}`);
+      }
+    }
+    if (scenario.vacuumTrail) {
+      await until(() => !!card.renderRoot.querySelector('.vactrail > path.case'));
+      const currentCase = card.renderRoot.querySelector('.vactrail > path.case');
+      const currentCore = card.renderRoot.querySelector('.vactrail > path.core');
+      const previousCase = card.renderRoot.querySelector('.vactrail .prev path.case');
+      const previousCore = card.renderRoot.querySelector('.vactrail .prev path.core');
+      const currentD = currentCase?.getAttribute('d') || '';
+      const previousD = previousCase?.getAttribute('d') || '';
+      if ((currentD.match(/M /g) || []).length !== 2
+          || (currentD.match(/Q /g) || []).length < 4
+          || (previousD.match(/Q /g) || []).length < 2
+          || currentD !== currentCore?.getAttribute('d')
+          || previousD !== previousCore?.getAttribute('d')) {
+        throw new Error(`golden vacuum trail contract is incomplete: ${scenario.id}`);
       }
     }
     await document.fonts?.ready;
