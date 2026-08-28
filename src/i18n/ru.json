@@ -622,6 +622,7 @@
   "room.label_scale": "Размер подписей",
   "preview.room_name": "Гостиная",
   "toast.cfg_reload_failed": "Не удалось перечитать план с сервера: {err}",
+  "toast.locale_load_failed": "Не удалось загрузить языковой пакет. До перезагрузки страницы используется английский.",
   "room.settings_short": "Настройки комнаты",
   "room.unnamed": "Комната без имени",
   "marker.use_climate_temp": "Учитывать температуру устройства в комнате",

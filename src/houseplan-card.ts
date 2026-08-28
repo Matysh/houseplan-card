@@ -232,7 +232,7 @@ import {
 } from './coordinate-canonicalization';
 import { enqueueSerializedWrite } from './serialized-write-queue';
 import { hasTranslation, langOf, t, type I18nKey } from './i18n';
-import { LANGUAGE_RUNTIME } from './i18n/registry';
+import { LANGUAGE_RUNTIME, subscribeLanguageLoadFailures } from './i18n/registry';
 import { languageLoadingTemplate, languageRenderGate } from './i18n/language-runtime';
 import { CommandStack } from './command-stack';
 import { resolvedSvgScreenBlend, svgScreenBlendSupported } from './glow-blend';
@@ -2189,6 +2189,7 @@ export class HouseplanCard extends LitElement {
   private _continuity = this._newContinuityController();
   private _continuityHistory: import('./visual-continuity').ContinuityTraceEvent[] = [];
   private _continuityUnsub?: () => void;
+  private _languageFailureUnsub?: () => void;
   private _continuityEpoch = 0;
   private _continuityDataReady = true;
   private _continuityPaintToken = -1;
@@ -2474,6 +2475,13 @@ export class HouseplanCard extends LitElement {
     if (resolvedBlend !== undefined) this._glowScreenBlend = resolvedBlend;
     this._continuityUnsub?.();
     this._continuityUnsub = subscribePageVisibility(this.ownerDocument, this._pageVisibility);
+    // #354: only the View card owns toast infrastructure, so it alone turns a
+    // locale-load failure into a visible message; other runtime surfaces keep
+    // the console warning from the shared LanguageRuntime.
+    this._languageFailureUnsub?.();
+    this._languageFailureUnsub = subscribeLanguageLoadFailures(() => {
+      this._showToast(this._t('toast.locale_load_failed'));
+    });
     super.connectedCallback();
     this._pointerModality.connect(this.ownerDocument.defaultView);
     const PointerHoverObserver = this.ownerDocument.defaultView?.MutationObserver;
@@ -2549,6 +2557,8 @@ export class HouseplanCard extends LitElement {
     window.removeEventListener('popstate', this._onLocationChanged);
     this._continuityUnsub?.();
     this._continuityUnsub = undefined;
+    this._languageFailureUnsub?.();
+    this._languageFailureUnsub = undefined;
     this._motionMedia?.removeEventListener?.('change', this._onMotionChange);
     this._motionMedia = undefined;
     if (this._vacRaf) { cancelAnimationFrame(this._vacRaf); this._vacRaf = 0; }

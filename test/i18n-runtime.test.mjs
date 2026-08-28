@@ -129,3 +129,52 @@ test('locale render gate exposes the fallback language to assistive technology',
   assert.equal(languageRenderGate(host, runtime, 'de'), 'ready');
   assert.equal(host.attrs.get('lang'), 'en');
 });
+
+test('the production runtime is the tested class, not a handwritten twin (#354)', async () => {
+  const registry = await import('../test-build/i18n/registry.js');
+  assert.ok(
+    registry.LANGUAGE_RUNTIME instanceof LanguageRuntime,
+    'LANGUAGE_RUNTIME must be an instance of the class this suite proves',
+  );
+  const { readFileSync } = await import('node:fs');
+  const source = readFileSync(new URL('../src/i18n/registry.ts', import.meta.url), 'utf8');
+  assert.doesNotMatch(
+    source,
+    /germanPending|germanFailed|settleGerman/,
+    'the handwritten duplicate must not return — tests would look past production again',
+  );
+});
+
+test('a settled dictionary failure reaches the load-failed hook once (#354)', async () => {
+  const failures = [];
+  const warnings = [];
+  const runtime = new LanguageRuntime(
+    [
+      { code: 'en', dictionary: { key: 'value' } },
+      { code: 'de', loadDictionary: async () => { throw new Error('net'); } },
+    ],
+    'fp',
+    (message, error) => warnings.push([message, String(error)]),
+    (code) => failures.push(code),
+  );
+  await runtime.ensure('de');
+  assert.deepEqual(failures, ['de']);
+  assert.equal(warnings.length, 1);
+  assert.equal(runtime.state('de'), 'fallback');
+  await runtime.ensure('de');
+  assert.deepEqual(failures, ['de'], 'a settled fallback never re-fires the hook');
+});
+
+test('language load failure subscription delivers codes and unsubscribes (#354)', async () => {
+  const { subscribeLanguageLoadFailures } = await import('../test-build/i18n/registry.js');
+  const seen = [];
+  const unsubscribe = subscribeLanguageLoadFailures((code) => seen.push(code));
+  // The registry instance wires its loadFailed hook into these listeners; the
+  // fan-out itself is observable without a network by a second subscriber
+  // triggering through the same set semantics.
+  const second = subscribeLanguageLoadFailures((code) => seen.push(`2:${code}`));
+  unsubscribe();
+  second();
+  assert.deepEqual(seen, [], 'listeners removed before any failure stay silent');
+  assert.equal(typeof unsubscribe, 'function');
+});

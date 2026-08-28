@@ -37,6 +37,8 @@ export class LanguageRuntime {
     private readonly entries: readonly RuntimeLanguageEntry[],
     private readonly expectedFingerprint: string,
     private readonly warn: (message: string, error: unknown) => void = console.warn,
+    /** Optional #354 hook: a dictionary load settled into English fallback. */
+    private readonly loadFailed?: (code: string) => void,
   ) {
     for (const entry of entries) {
       if (entry.dictionary) this.dictionaries.set(entry.code, entry.dictionary);
@@ -84,6 +86,7 @@ export class LanguageRuntime {
     }
     this.failed.add(entry.code);
     this.warn(`[houseplan] unable to load ${entry.code} locale; using English`, lastError);
+    this.loadFailed?.(entry.code);
   }
 }
 

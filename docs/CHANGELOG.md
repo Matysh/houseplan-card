@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- If the optional language pack (currently German) cannot be downloaded, the
+  card now says so with a toast instead of silently switching to English; the
+  locale runtime the card ships is now the same code the i18n test suite
+  proves ([#354](https://github.com/Matysh/houseplan-card/issues/354)).
+
 - A stale or third-party client can no longer silently replace saved device
   positions by sending a whole layout without its revision. Revision-less
   bootstrap remains available only while the layout store is empty

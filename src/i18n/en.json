@@ -622,6 +622,7 @@
   "room.label_scale": "Metrics size",
   "preview.room_name": "Living room",
   "toast.cfg_reload_failed": "Could not reload the plan from the server: {err}",
+  "toast.locale_load_failed": "Could not load the language pack. English is used until the page reloads.",
   "room.settings_short": "Room settings",
   "room.unnamed": "Unnamed room",
   "marker.use_climate_temp": "Include the device temperature in the room",

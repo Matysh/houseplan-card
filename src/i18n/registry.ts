@@ -1,9 +1,10 @@
 import en from './en.json' with { type: 'json' };
 import ru from './ru.json' with { type: 'json' };
-import type {
-  LanguageRuntimeContract,
-  LazyLanguageModule,
-  LocaleDictionary,
+import {
+  LanguageRuntime,
+  type LanguageRuntimeContract,
+  type LazyLanguageModule,
+  type LocaleDictionary,
 } from './language-runtime';
 
 const BUILD_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
@@ -40,37 +41,35 @@ export type Lang = (typeof LANGUAGE_REGISTRY)[number]['code'];
 export const FALLBACK_LANGUAGE_CODE: Lang = 'en';
 export const FALLBACK_DICTIONARY = en;
 
-/** One page-scoped cache: multiple cards share the same locale request. */
-let germanDictionary: LocaleDictionary | undefined;
-let germanPending: Promise<void> | undefined;
-let germanFailed = false;
+/**
+ * #354: locale-load failures surface once through this page-scoped listener
+ * list. Only the View card subscribes and toasts; every other runtime surface
+ * (space card, both GUI editors) stays with the console warning below.
+ */
+const languageLoadFailureListeners = new Set<(code: string) => void>();
 
-async function settleGerman(): Promise<void> {
-  let lastError: unknown;
-  for (const attempt of [0, 1] as const) {
-    try {
-      const loaded = await loadGerman(attempt);
-      if (loaded.fingerprint !== BUILD_FINGERPRINT) throw new Error('locale fingerprint mismatch');
-      germanDictionary = loaded.dictionary;
-      return;
-    } catch (error) {
-      lastError = error;
-    }
-  }
-  germanFailed = true;
-  console.warn('[houseplan] unable to load de locale; using English', lastError);
+export function subscribeLanguageLoadFailures(
+  listener: (code: string) => void,
+): () => void {
+  languageLoadFailureListeners.add(listener);
+  return () => languageLoadFailureListeners.delete(listener);
 }
 
-export const LANGUAGE_RUNTIME: LanguageRuntimeContract = {
-  state: (code) => code !== 'de' || germanDictionary
-    ? 'ready' : germanFailed ? 'fallback' : 'pending',
-  dictionary: (code) => code === 'de'
-    ? germanDictionary : code === 'ru' ? ru : code === 'en' ? en : undefined,
-  ensure: (code) => {
-    if (code !== 'de' || germanDictionary || germanFailed) return Promise.resolve();
-    return germanPending ??= settleGerman().finally(() => { germanPending = undefined; });
+/**
+ * The production runtime IS the tested class (#354): the previous handwritten
+ * object duplicated its logic, so the whole i18n-runtime test suite proved
+ * properties of code the card never ran. One page-scoped instance is shared
+ * by every card and editor; the warn hook keeps the console line and fans the
+ * failure out to subscribers.
+ */
+export const LANGUAGE_RUNTIME: LanguageRuntimeContract = new LanguageRuntime(
+  LANGUAGE_REGISTRY,
+  BUILD_FINGERPRINT,
+  console.warn,
+  (code) => {
+    for (const listener of languageLoadFailureListeners) listener(code);
   },
-};
+);
 
 /** Return a loaded dictionary, falling back synchronously to English. */
 export function dictionaryFor(value: unknown): LocaleDictionary {

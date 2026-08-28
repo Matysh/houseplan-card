@@ -78,6 +78,11 @@ out.failureFallsBackAndUnblocks = await failed.page.evaluate(() =>
   !window.__card.inert && window.__card._t('btn.cancel') === 'Cancel'
     && window.__card.getAttribute('lang') === 'en');
 out.failureWarnsOnce = warnings === 1;
+// #354: the failed dictionary must be VISIBLE on the View card — a toast in
+// the (English-fallback) locale, not only a console line.
+out.failureShowsToast = await failed.page.evaluate(() =>
+  window.__card._toast === window.__card._t('toast.locale_load_failed')
+    && window.__card._t('toast.locale_load_failed').includes('language pack'));
 
 await failed.browser.close();
 checkAll(out);

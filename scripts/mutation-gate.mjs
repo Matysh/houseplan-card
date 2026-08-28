@@ -635,6 +635,45 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'language-runtime-handwritten-duplicate',
+    guard: 'node --test --test-name-pattern="#354" test/i18n-runtime.test.mjs',
+    because: 'a handwritten twin of LanguageRuntime looks equivalent today and rots tomorrow — '
+      + 'the i18n suite must prove the object production actually runs (#354 К1/К3)',
+    patches: [{
+      file: 'src/i18n/registry.ts',
+      find: 'export const LANGUAGE_RUNTIME: LanguageRuntimeContract = new LanguageRuntime(\n'
+        + '  LANGUAGE_REGISTRY,\n'
+        + '  BUILD_FINGERPRINT,\n'
+        + '  console.warn,\n'
+        + '  (code) => {\n'
+        + '    for (const listener of languageLoadFailureListeners) listener(code);\n'
+        + '  },\n'
+        + ');',
+      replace: 'const twin = new LanguageRuntime(LANGUAGE_REGISTRY, BUILD_FINGERPRINT, '
+        + 'console.warn, (code) => {\n'
+        + '  for (const listener of languageLoadFailureListeners) listener(code);\n'
+        + '});\n'
+        + 'export const LANGUAGE_RUNTIME: LanguageRuntimeContract = {\n'
+        + '  state: (code) => twin.state(code),\n'
+        + '  dictionary: (code) => twin.dictionary(code),\n'
+        + '  ensure: (code) => twin.ensure(code),\n'
+        + '};',
+    }],
+  },
+  {
+    id: 'locale-failure-toast-dropped',
+    guard: 'node demo/smoke_german_locale.mjs',
+    because: 'a failed dictionary must be visible on the View card, not only a console line — '
+      + 'a German user on a stale tab silently reading English is the N7 hole (#354 К2)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: "    this._languageFailureUnsub = subscribeLanguageLoadFailures(() => {\n"
+        + "      this._showToast(this._t('toast.locale_load_failed'));\n"
+        + '    });',
+      replace: '    this._languageFailureUnsub = undefined;',
+    }],
+  },
+  {
     id: 'lazy-loader-network-failure-terminal',
     guard: 'node --test --test-name-pattern="#353 AC1" test/editor-runtime-loader.test.mjs',
     because: 'a transient network failure must re-arm the loader for the next explicit press — '
