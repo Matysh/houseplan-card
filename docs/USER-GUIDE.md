@@ -401,6 +401,10 @@ filler segment that compensates a thickness step is legal as long as the whole
 wall is longer than 20 cm. A T-joint (a wall end landing on the middle of
 another wall) is not forbidden by the distance rule.
 
+If the check itself cannot run (an internal error), the change is not saved
+either — a "The junction check could not run" toast appears: the editor
+never waves a write through on faith.
+
 The check runs on writes only. An already saved plan is never re-judged:
 migration, import and backup restore are never blocked, and an edit that does
 not touch the offending element passes as usual. The refusal appears where you

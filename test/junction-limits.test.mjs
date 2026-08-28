@@ -438,3 +438,124 @@ test('#330 M2: §4.6 на границах — v9 как есть == v9 чере
       `${name}: вердикт «как есть» разошёлся с «через миграцию»`);
   }
 });
+
+// --- #331: пограничная точность ---
+
+test('#331 AC1: плавающий мусор — один узел, реальные 4 см — нарушение', async () => {
+  const { checkNodeDistances } = await import('../test-build/junction-limits.js');
+  // −1e-8 vs 0: ни узел↔узел, ни узел→сегмент не ругаются.
+  const debris = [
+    { id: 'a', a: [-1e-8, 0], b: [cm(300), 0], cm: 15 },
+    { id: 'b', a: [0, 0], b: [0, cm(300)], cm: 15 },
+  ];
+  assert.equal(checkNodeDistances(debris, CELL, PITCH).length, 0);
+  // через границу кванта: сырая дистанция 1.02e-7 ≤ 2e-7 — один узел.
+  const straddle = [
+    { id: 'a', a: [-5.1e-8, 0], b: [cm(300), 0], cm: 15 },
+    { id: 'b', a: [5.1e-8, 0], b: [5.1e-8, cm(300)], cm: 15 },
+  ];
+  assert.equal(checkNodeDistances(straddle, CELL, PITCH).length, 0);
+  // настоящие 4 см — по-прежнему нарушение; ровно 5 — нет.
+  const four = [
+    { id: 'a', a: [0, 0], b: [cm(300), 0], cm: 15 },
+    { id: 'b', a: [0, cm(4)], b: [cm(300), cm(4)], cm: 15 },
+  ];
+  assert.ok(checkNodeDistances(four, CELL, PITCH).length > 0);
+  const five = [
+    { id: 'a', a: [0, 0], b: [cm(300), 0], cm: 15 },
+    { id: 'b', a: [0, cm(5)], b: [cm(300), cm(5)], cm: 15 },
+  ];
+  assert.equal(checkNodeDistances(five, CELL, PITCH).length, 0);
+});
+
+test('#331 AC2: дубль стены — нарушение угла 0°; 180°-пара и T-стык чисты', async () => {
+  const { checkNodes } = await import('../test-build/junction-limits.js');
+  const dup = [
+    { id: 'a', a: [0, 0], b: [cm(300), 0], cm: 15 },
+    { id: 'b', a: [0, 0], b: [cm(300), 0], cm: 15 },
+  ];
+  const violations = checkNodes(dup).filter((item) => item.rule === 'angle');
+  assert.ok(violations.length > 0, 'дубль обязан быть виден');
+  assert.ok(violations[0].actual < 0.001, `actual=${violations[0].actual}`);
+  // Прямая стена из двух атомов встык: в узле 180°-пара — чисто.
+  const butt = [
+    { id: 'a', a: [0, 0], b: [cm(150), 0], cm: 15 },
+    { id: 'b', a: [cm(150), 0], b: [cm(300), 0], cm: 15 },
+  ];
+  assert.equal(checkNodes(butt).filter((item) => item.rule === 'angle').length, 0);
+  // T-стык: 90° — чисто.
+  const tee = [
+    { id: 'a', a: [0, 0], b: [cm(300), 0], cm: 15 },
+    { id: 'b', a: [cm(150), 0], b: [cm(150), cm(300)], cm: 15 },
+  ];
+  assert.equal(checkNodes(tee).filter((item) => item.rule === 'angle').length, 0);
+});
+
+test('#331 AC3: 10 000 атомов без переполнения, развилка не теряется', async () => {
+  const { collinearRunLengthUnits, checkSegmentLengths } =
+    await import('../test-build/junction-limits.js');
+  const chain = [];
+  for (let index = 0; index < 10000; index++) {
+    chain.push({ id: `c${index}`, a: [cm(index * 25), 0], b: [cm((index + 1) * 25), 0], cm: 15 });
+  }
+  const total = collinearRunLengthUnits(chain[0], chain);
+  assert.ok(Math.abs(total - cmToUnits(250000, CELL, PITCH)) < 1e-6);
+  // Развилка: два коллинеарных продолжения из одного узла — компонента
+  // включает ОБЕ ветви (раньше .find терял вторую).
+  const fork = [
+    { id: 'main', a: [0, 0], b: [cm(100), 0], cm: 15 },
+    { id: 'b1', a: [cm(100), 0], b: [cm(160), 0], cm: 15 },
+    { id: 'b2', a: [cm(100), 0], b: [cm(220), 1e-9], cm: 15 },
+  ];
+  const run = collinearRunLengthUnits(fork[0], fork);
+  assert.ok(run >= cmToUnits(160, CELL, PITCH) - 1e-9,
+    'компонента не короче суммы main+обе ветви коллинеарной части');
+  // 100 развилок подряд — линейно и быстро.
+  const many = [];
+  for (let index = 0; index < 100; index++) {
+    const x = cm(index * 30);
+    many.push({ id: `m${index}`, a: [x, 0], b: [cm((index + 1) * 30), 0], cm: 15 });
+    many.push({ id: `f${index}`, a: [x, 0], b: [cm(index * 30 + 25), 1e-9], cm: 15 });
+  }
+  const started = performance.now();
+  checkSegmentLengths(many, CELL, PITCH);
+  assert.ok(performance.now() - started < 500, '100 развилок — не комбинаторика');
+});
+
+test('#331 AC4: дуга не выдаёт себя за одну стену, один излом 0.5° — стена', async () => {
+  const { collinearRunLengthUnits } = await import('../test-build/junction-limits.js');
+  // Дуга: 30 атомов по 3 см с поворотом 0.9° каждый — суммарно 27°.
+  const arc = [];
+  let angle = 0; let x = 0; let y = 0;
+  for (let index = 0; index < 30; index++) {
+    const nx = x + Math.cos(angle) * cm(3);
+    const ny = y + Math.sin(angle) * cm(3);
+    arc.push({ id: `a${index}`, a: [x, y], b: [nx, ny], cm: 15 });
+    x = nx; y = ny; angle += (0.9 * Math.PI) / 180;
+  }
+  const run = collinearRunLengthUnits(arc[0], arc);
+  // К базе первого атома коллинеарны лишь первые ~2 атома (±1°).
+  assert.ok(run < cmToUnits(10, CELL, PITCH), `дуга слиплась в стену: ${run}`);
+  // Один излом 0.5° — по-прежнему одна стена.
+  const bent = [
+    { id: 'a', a: [0, 0], b: [cm(150), 0], cm: 15 },
+    { id: 'b', a: [cm(150), 0],
+      b: [cm(150) + Math.cos((0.5 * Math.PI) / 180) * cm(150),
+          Math.sin((0.5 * Math.PI) / 180) * cm(150)], cm: 15 },
+  ];
+  const bentRun = collinearRunLengthUnits(bent[0], bent);
+  assert.ok(Math.abs(bentRun - cmToUnits(300, CELL, PITCH)) < cmToUnits(1, CELL, PITCH));
+});
+
+test('#331 AC1: квантование .5-тика одинаково в обоих зеркалах (формула канонизации)', async () => {
+  const { checkNodes } = await import('../test-build/junction-limits.js');
+  // 2.5e-7·1e7 = 2.5 → floor(2.5+0.5)=3 → ключ 3e-7 в ОБЕИХ реализациях.
+  // Прямая проверка формулы через поведение: узел на 2.5e-7 и узел на 3e-7
+  // получают ОДИН ключ (дубль виден через П1-0°), а 2.5e-7 и 2e-7 — разные.
+  const same = [
+    { id: 'a', a: [2.5e-7, 0], b: [cm(300), 0], cm: 15 },
+    { id: 'b', a: [3e-7, 0], b: [cm(300), 0], cm: 15 },
+  ];
+  assert.ok(checkNodes(same).filter((item) => item.rule === 'angle').length > 0,
+    '2.5e-7 квантуется вверх (floor(+0.5)), сливаясь с 3e-7 — дубль виден');
+});

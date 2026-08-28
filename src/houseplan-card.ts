@@ -7553,7 +7553,13 @@ class HouseplanCard extends LitElement {
     }
     let next: JunctionLimitViolation[] = [];
     try { next = this._junctionLimitViolations(candidate, spaceId, candidateGeometry); }
-    catch { return []; }
+    catch {
+      // #331 §2.5: an exception while judging the CANDIDATE is a refusal,
+      // not a pass — the same fail-closed stance as the #278 geometry guard.
+      // The baseline branch above stays fail-open on purpose: an unprovable
+      // inheritance is no reason to block an unrelated write.
+      return [{ rule: 'check_failed', subject: spaceId, actual: 0, limit: 0 }];
+    }
     return increasedViolations(next, inherited);
   }
 

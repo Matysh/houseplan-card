@@ -18,7 +18,13 @@ from __future__ import annotations
 
 import math
 
-from .wall_segment_model import WALL_SEGMENT_MODEL_VERSION, commit_wall_segment_model
+import logging
+
+from .wall_segment_model import (
+    WALL_SEGMENT_MODEL_VERSION, WallSegmentMigrationError, commit_wall_segment_model,
+)
+
+_LOGGER = logging.getLogger(__name__)
 
 MIN_JUNCTION_ANGLE_DEG = 15.0
 MAX_JUNCTION_VALENCE = 6
@@ -28,8 +34,10 @@ MIN_NODE_DISTANCE_CM = 5.0
 GRID_STEP_N = 1 / 240
 
 _EPS = 1e-9
-# Below this a node is ON the wall (T-joint), not near it.
-_INCIDENT_EPS = 1e-9
+# #331 §2.1: below this two points are ONE node / a node is ON the wall —
+# floating debris of pre-canonicalisation arithmetic, not a near miss.
+_INCIDENT_EPS = 2e-7
+_KEY_FACTOR = 1e7
 
 
 class JunctionLimitError(ValueError):
@@ -58,8 +66,21 @@ def _finite_point(point: object) -> bool:
     )
 
 
+def _quantize_key_coord(value: float) -> float:
+    """#331 §2.1: the canonicalisation formula — sign*floor(|v|*f+0.5)/f.
+
+    Native round() is banker's rounding and parts ways with JS Math-style
+    rounding on .5 ticks; coordinate canonicalisation already encodes this
+    parity lesson, and node keys must follow it. -0 normalises to 0.
+    """
+    rounded = math.copysign(
+        math.floor(abs(value) * _KEY_FACTOR + 0.5), value,
+    ) / _KEY_FACTOR
+    return 0.0 if rounded == 0 else rounded
+
+
 def _key(point) -> str:
-    return f"{point[0]:.6f},{point[1]:.6f}"
+    return f"{_quantize_key_coord(point[0])},{_quantize_key_coord(point[1])}"
 
 
 def _length(a, b) -> float:
@@ -127,8 +148,9 @@ def check_nodes(segments: list[dict]) -> list[tuple[str, str, float, float]]:
             if index == len(ordered) - 1:
                 delta += math.pi * 2
             degrees = (delta * 180) / math.pi
-            # Collinear rays of one straight wall are a 180° pair, not a wedge.
-            if _EPS < degrees < smallest:
+            # #331 §2.2: a ~0° delta IS a violation — same-direction rays are
+            # a duplicated or overlaid wall (a butt joint yields 180°, not 0°).
+            if degrees < smallest:
                 smallest = degrees
         if smallest < MIN_JUNCTION_ANGLE_DEG - 1e-9:
             violations.append(("angle", node, smallest, MIN_JUNCTION_ANGLE_DEG))
@@ -161,37 +183,33 @@ def collinear_run_length_units(
 ) -> float:
     """Length of the WALL a segment belongs to, not of the atom.
 
-    Atomisation at a thickness step leaves pieces nobody drew — where a 30 cm
-    wall meets a 20 cm one, a (30−20)/2 = 5 cm piece continues the same wall.
-    They are collinear continuations at the same thickness, so П3 measures the
-    maximal collinear chain through the segment's nodes.
+    #331 §2.3/§2.4: an iterative edge walk over the collinear component — no
+    recursion (a 10 000-atom chain must answer, not overflow), no
+    combinatorial DFS (every atom joins at most once, O(E)), no silently
+    dropped fork. Collinearity is measured against the BASE segment's axis,
+    so an arc of small per-atom turns cannot pose as one straight wall.
 
-    #330 §4.3: building the index per SEGMENT made П3 quadratic (285 ms on
-    576 atoms); the per-check caller builds it once and passes it in.
+    #330 §4.3: the per-check caller builds the node index once.
     """
     by_node = by_node_index if by_node_index is not None else _build_node_index(segments)
-    visited = [segment]
+    visited = {id(segment)}
     total = _length(segment["a"], segment["b"])
-
-    def walk(current: dict, node: str) -> None:
-        nonlocal total
-        for candidate in by_node.get(node, []):
-            if any(candidate is seen for seen in visited):
+    frontier = [segment["a"], segment["b"]]
+    base_cm = float(segment.get("cm") or 0)
+    while frontier:
+        node = frontier.pop()
+        for candidate in by_node.get(_key(node), ()):
+            if id(candidate) in visited:
                 continue
-            if not _collinear(candidate, current):
+            if not _collinear(candidate, segment):
                 continue
-            if float(candidate.get("cm") or 0) != float(current.get("cm") or 0):
+            if float(candidate.get("cm") or 0) != base_cm:
                 continue
-            visited.append(candidate)
+            visited.add(id(candidate))
             total += _length(candidate["a"], candidate["b"])
-            walk(candidate, _key(candidate["b"])
-                 if _key(candidate["a"]) == node else _key(candidate["a"]))
-            return
-
-    walk(segment, _key(segment["a"]))
-    walk(segment, _key(segment["b"]))
+            frontier.append(candidate["a"])
+            frontier.append(candidate["b"])
     return total
-
 
 def check_segment_lengths(
     segments: list[dict], cell_cm: float, grid_pitch: float = GRID_STEP_N,
@@ -263,6 +281,10 @@ def check_node_distances(
                     if node_key >= other_key:
                         continue
                     distance = _length(point, other)
+                    # #331 §2.1: raw debris within the incidence quantum is ONE
+                    # node on two neighbouring keys — never a near miss.
+                    if distance <= _INCIDENT_EPS:
+                        continue
                     if distance < min_units - 1e-9:
                         violations.append((
                             "distance", f"{node_key} ↔ {other_key}",
@@ -297,7 +319,7 @@ def space_violations(space: dict) -> list[tuple[str, str, float, float]]:
     ]
 
 
-def _migrated_spaces(config: dict | None) -> dict[str, dict]:
+def _migrated_spaces(config: dict | None, *, side: str = "previous") -> dict[str, dict]:
     """Spaces of one document AFTER the wall-segment migration, by id.
 
     The limits read `wall_segments`, so a document that predates the catalogue
@@ -325,7 +347,20 @@ def _migrated_spaces(config: dict | None) -> dict[str, dict]:
     else:
         try:
             migrated, _ = commit_wall_segment_model(config)
-        except Exception:  # noqa: BLE001 — see the docstring: not our verdict
+        except (WallSegmentMigrationError, ValueError) as error:
+            # The wall-model barrier owns this verdict and reports it with its
+            # own code; here it merely means "no catalogue to read".
+            _LOGGER.debug("junction limits: %s migration fell back: %s", side, error)
+            migrated = config
+        except Exception:
+            # #331 §2.6 (AC6): a genuine migration bug on the CANDIDATE side
+            # must surface as an honest WS error, not a silent "no
+            # violations". The PREVIOUS side keeps the wide fallback — an
+            # unprovable inheritance is no reason to block an unrelated write
+            # (the exact P1 symptom this task fixes).
+            if side == "candidate":
+                raise
+            _LOGGER.debug("junction limits: previous-side migration bug swallowed by design")
             migrated = config
     return {
         str(space.get("id")): space
@@ -371,7 +406,7 @@ def validate_junction_limits(
         old_counts = baseline_counts
     else:
         old_counts = space_violation_counts(_migrated_spaces(previous))
-    new_spaces = _migrated_spaces(config)
+    new_spaces = _migrated_spaces(config, side="candidate")
     candidate_counts: dict[str, dict[str, int]] = {}
     for space_id, space in new_spaces.items():
         # A brand-new space has nothing to inherit from — but neither is a

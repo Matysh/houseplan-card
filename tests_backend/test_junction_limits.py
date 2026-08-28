@@ -236,6 +236,14 @@ def test_parity_with_the_frontend_checks():
                        ([cm(354), 0.0], [cm(554), 0.0], 20)],
         "distance-5-exact": [([0.0, 0.0], [cm(300), 0.0], 15),
                              ([0.0, cm(5)], [cm(300), cm(5)], 15)],
+        # #331: пограничные классы точности — вердикт зеркал обязан совпасть.
+        "debris-node": [([-1e-8, 0.0], [cm(300), 0.0], 15),
+                        ([0.0, 0.0], [0.0, cm(300)], 15)],
+        "duplicate-wall": [([0.0, 0.0], [cm(300), 0.0], 15),
+                           ([0.0, 0.0], [cm(300), 0.0], 15)],
+        "collinear-fork": [([0.0, 0.0], [cm(100), 0.0], 15),
+                           ([cm(100), 0.0], [cm(160), 0.0], 15),
+                           ([cm(100), 0.0], [cm(220), 1e-9], 15)],
     }
     payload = {name: space(segments, space_id=name)
                for name, segments in fixtures.items()}
@@ -334,9 +342,9 @@ def test_330_baseline_counts_replace_the_previous_document():
     # baseline_counts действительно замещает previous: считаем обращения.
     calls = []
     original = jl._migrated_spaces
-    def spy(config):
+    def spy(config, **kwargs):
         calls.append(config)
-        return original(config)
+        return original(config, **kwargs)
     jl._migrated_spaces = spy
     try:
         jl.validate_junction_limits(
@@ -439,3 +447,63 @@ def test_330_as_is_equals_migrated_on_boundary_fixtures():
         forced, _ = jl.commit_wall_segment_model(json.loads(json.dumps(migrated)))
         through = jl.space_violation_counts(jl._migrated_spaces(forced))
         assert as_is == through, f"{name}: as-is != migrated"
+
+
+def test_331_debris_is_one_node_and_duplicate_is_visible():
+    """AC1 + AC2 на python-зеркале."""
+    debris = space([(([-1e-8, 0.0]), [cm(300), 0.0], 15),
+                    ([0.0, 0.0], [0.0, cm(300)], 15)])
+    assert "distance" not in rules(debris)
+    dup = space([([0.0, 0.0], [cm(300), 0.0], 15),
+                 ([0.0, 0.0], [cm(300), 0.0], 15)])
+    segs = jl.limit_segments(dup)
+    angle = [v for v in jl.check_nodes(segs) if v[0] == "angle"]
+    assert angle and angle[0][2] < 0.001
+    butt = space([([0.0, 0.0], [cm(150), 0.0], 15),
+                  ([cm(150), 0.0], [cm(300), 0.0], 15)])
+    assert "angle" not in rules(butt)
+
+
+def test_331_iterative_run_and_forks():
+    """AC3: 10 000 атомов без переполнения, развилка не теряется."""
+    chain = space([
+        ([cm(i * 25), 0.0], [cm((i + 1) * 25), 0.0], 15) for i in range(10000)
+    ])
+    segs = jl.limit_segments(chain)
+    total = jl.collinear_run_length_units(segs[0], segs)
+    assert abs(total - jl.cm_to_units(250000, CELL)) < 1e-6
+    fork = space([([0.0, 0.0], [cm(100), 0.0], 15),
+                  ([cm(100), 0.0], [cm(160), 0.0], 15),
+                  ([cm(100), 0.0], [cm(220), 1e-9], 15)])
+    fsegs = jl.limit_segments(fork)
+    run = jl.collinear_run_length_units(fsegs[0], fsegs)
+    assert run >= jl.cm_to_units(160, CELL) - 1e-9
+
+
+def test_331_ac6_candidate_bug_raises_previous_bug_falls_back():
+    """AC6, два случая (spec r2 M-r2-1): стороны различимы."""
+    box = square()
+    good = {"spaces": [room_space(
+        [{"id": "r1", "name": "box", "area": None, "poly": box}],
+        walls_of(box, "b"),
+    )]}
+    class Boom(TypeError):
+        pass
+    original = jl.commit_wall_segment_model
+    def bomb(cfg):
+        raise Boom("migration bug")
+    jl.commit_wall_segment_model = bomb
+    try:
+        # (а) баг на стороне КАНДИДАТА — честная ошибка, не «нарушений нет».
+        with pytest.raises(Boom):
+            jl.validate_junction_limits(
+                json.loads(json.dumps(good)), None, baseline_counts={},
+            )
+        # (б) баг на стороне PREVIOUS — запись проходит фолбэком «нет базы»:
+        # кандидат уже v9 (мигрирован заранее настоящей функцией) и чист.
+        migrated, _ = original(json.loads(json.dumps(good)))
+        jl.validate_junction_limits(
+            json.loads(json.dumps(migrated)), json.loads(json.dumps(good)),
+        )
+    finally:
+        jl.commit_wall_segment_model = original

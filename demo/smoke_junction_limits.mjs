@@ -95,6 +95,31 @@ const out = await page.evaluate(async () => {
   result.thicknessRefusedByLimit = ![...catalogue, ...legacy].includes(100);
   result.thicknessToastShown = toasts.some((text) => text.includes('25'));
 
+  // #331 AC5: исключение при проверке КАНДИДАТА — отказ с тостом
+  // limit_check_failed (fail-closed, как гард #278), baseline остаётся
+  // fail-open. Ломаем только вызовы с кандидатом: baseline — это _serverCfg.
+  await reset();
+  // Ломаем ТОЛЬКО кандидата. Порядок вызовов в барьере детерминирован:
+  // №1 — baseline (кэш пуст после reset: _serverCfg — новый объект),
+  // №2 — кандидат. Падение baseline легально пропускает запись целиком
+  // (недоказуемое наследование не повод для отказа — иначе унаследованные
+  // нарушения читались бы «новыми»), поэтому асимметрию §2.5 доказывает
+  // именно падение второго вызова.
+  const originalViolations = card._junctionLimitViolations.bind(card);
+  let violationCalls = 0;
+  card._junctionLimitViolations = (...args) => {
+    violationCalls += 1;
+    if (violationCalls >= 2) throw new Error('synthetic check failure');
+    return originalViolations(...args);
+  };
+  toasts.length = 0;
+  result.checkFailureRefusesWrite = !(await drawRoom([
+    [400, 600], [400 + cm(300), 600], [400 + cm(300), 600 - cm(300)],
+    [400, 600 - cm(300)],
+  ], 'failClosed'));
+  result.checkFailureToastShown = toasts.some((text) => /не удалось|could not run/i.test(text));
+  card._junctionLimitViolations = originalViolations;
+
   // §3: унаследованное нарушение не блокирует несвязанную запись.
   card._serverCfg = { spaces: [{
     id: 'limits', title: 'Limits', cell_cm: CELL, view_box: [0, 0, 1, 1],

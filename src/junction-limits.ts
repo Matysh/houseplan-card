@@ -19,7 +19,9 @@ export const MIN_NODE_DISTANCE_CM = 5;
 export const MIN_ROOM_CLEARANCE_CM2 = 25;
 
 export type JunctionLimitRule =
-  | 'angle' | 'valence' | 'length' | 'distance' | 'clearance';
+  | 'angle' | 'valence' | 'length' | 'distance' | 'clearance'
+  /** #331 §2.5: the check itself failed — the write is refused, not waved through. */
+  | 'check_failed';
 
 export interface JunctionLimitViolation {
   rule: JunctionLimitRule;
@@ -40,9 +42,26 @@ export interface LimitSegment {
 }
 
 const EPS = 1e-9;
-/** Below this a node is ON the wall (T-joint), not near it. */
-const INCIDENT_EPS = 1e-9;
-const key = (point: number[]): string => `${point[0].toFixed(6)},${point[1].toFixed(6)}`;
+/**
+ * #331 §2.1: below this two points are ONE node / a node is ON the wall —
+ * floating debris of pre-canonicalisation arithmetic, not a near miss. Two
+ * orders above the storage grid (1e-9), orders below any meaningful plan
+ * gap (the smallest rule threshold is 5 cm ≈ 4e-4).
+ */
+const INCIDENT_EPS = 2e-7;
+const KEY_FACTOR = 1e7;
+/**
+ * #331 §2.1: quantised with the repository's canonicalisation formula —
+ * native Math.round and Python round() part ways on .5 ticks (banker's
+ * rounding), the exact parity lesson coordinate-canonicalization encodes.
+ * `-0` normalises to `0` so the string key cannot fork on the sign of zero.
+ */
+const quantizeKeyCoord = (value: number): number => {
+  const rounded = Math.sign(value) * Math.floor(Math.abs(value) * KEY_FACTOR + 0.5) / KEY_FACTOR;
+  return Object.is(rounded, -0) ? 0 : rounded;
+};
+const key = (point: number[]): string =>
+  `${quantizeKeyCoord(point[0])},${quantizeKeyCoord(point[1])}`;
 const length = (a: number[], b: number[]): number => Math.hypot(b[0] - a[0], b[1] - a[1]);
 
 /** Normalised units per centimetre for a space (`cell_cm` on a grid pitch). */
@@ -84,10 +103,11 @@ export function checkNodes(
       const next = sorted[(index + 1) % sorted.length];
       let delta = next - sorted[index];
       if (index === sorted.length - 1) delta += Math.PI * 2;
-      // Collinear rays of one straight wall passing through the node are a
-      // 180° pair, not a violation; only a genuine narrow wedge counts.
+      // #331 §2.2: a ~0° delta IS a violation — two rays leaving one node in
+      // the same direction are a duplicated or overlaid wall (a collinear
+      // butt joint of one straight wall yields a 180° pair, never 0°).
       const degrees = (delta * 180) / Math.PI;
-      if (degrees > EPS && degrees < smallest) smallest = degrees;
+      if (degrees < smallest) smallest = degrees;
     }
     if (smallest < minAngleDeg - 1e-9) {
       violations.push({ rule: 'angle', subject: node, actual: smallest, limit: minAngleDeg });
@@ -139,21 +159,27 @@ export function collinearRunLengthUnits(
   // (289 ms on 576 atoms). The caller that loops over every segment builds
   // it once and passes it in; a direct call still builds its own.
   const byNode = byNodeIndex ?? buildNodeIndex(usable);
+  // #331 §2.3/§2.4: an iterative edge walk over the collinear component —
+  // no recursion (a 10 000-atom chain must answer, not overflow the stack),
+  // no combinatorial DFS (every atom joins the run at most once, O(E)), and
+  // no silently dropped branch (the old `.find` lost every fork but the
+  // first). Collinearity is measured against the BASE segment's axis, not
+  // the previous atom's, so an arc of 0.9°-per-atom pieces cannot creep
+  // around a corner while posing as one straight wall.
   const visited = new Set<LimitSegment>([segment]);
   let total = length(segment.a, segment.b);
-  const walk = (from: LimitSegment, node: number[]): void => {
-    const next = (byNode.get(key(node)) || []).find((candidate) => (
-      !visited.has(candidate)
-      && collinear(candidate, from)
-      && Number(candidate.cm || 0) === Number(from.cm || 0)
-    ));
-    if (!next) return;
-    visited.add(next);
-    total += length(next.a, next.b);
-    walk(next, key(next.a) === key(node) ? next.b : next.a);
-  };
-  walk(segment, segment.a);
-  walk(segment, segment.b);
+  const frontier: number[][] = [segment.a, segment.b];
+  while (frontier.length) {
+    const node = frontier.pop() as number[];
+    for (const candidate of byNode.get(key(node)) || []) {
+      if (visited.has(candidate)) continue;
+      if (!collinear(candidate, segment)) continue;
+      if (Number(candidate.cm || 0) !== Number(segment.cm || 0)) continue;
+      visited.add(candidate);
+      total += length(candidate.a, candidate.b);
+      frontier.push(candidate.a, candidate.b);
+    }
+  }
   return total;
 }
 
@@ -248,6 +274,9 @@ export function checkNodeDistances(
           // i<j of the all-pairs loop, so the verdict set is identical.
           if (nodeKey >= otherKey) continue;
           const distance = length(point, other);
+          // #331 §2.1: raw-coordinate debris within the incidence quantum is
+          // ONE node that landed on two neighbouring keys — never a near miss.
+          if (distance <= INCIDENT_EPS) continue;
           if (distance < minUnits - 1e-9) {
             violations.push({
               rule: 'distance', subject: `${nodeKey} ↔ ${otherKey}`,

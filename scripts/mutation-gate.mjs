@@ -536,6 +536,60 @@ export const MUTANTS = [
     }],
   },
   {
+    id: 'junction-limit-zero-wedge-invisible',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#331 AC2" test/junction-limits.test.mjs',
+    because: 'restoring the degrees > EPS filter makes an exact duplicate wall invisible to '
+      + 'П1 again — the worst degenerate junction passes while a 0.5° wedge is refused (#331 §2.2)',
+    patches: [{
+      file: 'src/junction-limits.ts',
+      find: '      if (degrees < smallest) smallest = degrees;',
+      replace: '      if (degrees > EPS && degrees < smallest) smallest = degrees;',
+    }],
+  },
+  {
+    id: 'junction-limit-key-precision-lost',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#331 AC1" test/junction-limits.test.mjs',
+    because: 'toFixed(6) keys split one node into two on floating debris and forked on the '
+      + 'sign of zero — two false П4 refusals on a legitimate resize (#331 §2.1)',
+    patches: [{
+      file: 'src/junction-limits.ts',
+      find: 'const key = (point: number[]): string =>\n'
+        + '  `${quantizeKeyCoord(point[0])},${quantizeKeyCoord(point[1])}`;',
+      replace: 'const key = (point: number[]): string => '
+        + '`${point[0].toFixed(6)},${point[1].toFixed(6)}`;',
+    }],
+  },
+  {
+    id: 'junction-limit-branch-dropped',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#331 AC3" test/junction-limits.test.mjs',
+    because: 'taking only the first collinear continuation silently drops every fork and '
+      + 'understates the wall run — a legitimate thickness-step filler gets refused (#331 §2.3)',
+    patches: [{
+      file: 'src/junction-limits.ts',
+      find: '      visited.add(candidate);\n'
+        + '      total += length(candidate.a, candidate.b);\n'
+        + '      frontier.push(candidate.a, candidate.b);',
+      replace: '      visited.add(candidate);\n'
+        + '      total += length(candidate.a, candidate.b);\n'
+        + '      frontier.push(candidate.a, candidate.b);\n'
+        + '      break;',
+    }],
+  },
+  {
+    id: 'junction-limit-candidate-fail-open',
+    guard: 'node demo/smoke_junction_limits.mjs',
+    because: 'an exception while judging the candidate must refuse the write — a silent pass '
+      + 'reopens the fail-open hole the #278 guard closed for geometry (#331 §2.5)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: "      return [{ rule: 'check_failed', subject: spaceId, actual: 0, limit: 0 }];",
+      replace: '      return [];',
+    }],
+  },
+  {
     id: 'junction-limit-p3-quadratic-again',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node demo/benchmark_junction_limits.mjs',
