@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { createHash } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
 import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -16,6 +17,47 @@ const DEMO_BUNDLE = resolve(ROOT, 'demo/srv/assets/houseplan-card.js');
 const INTEGRATION_BUNDLE = resolve(ROOT, 'custom_components/houseplan/frontend/houseplan-card.js');
 const SCRIPT = fileURLToPath(import.meta.url);
 const sha256 = (value) => createHash('sha256').update(value).digest('hex');
+
+/**
+ * Перепаковка кадра без потерь (#345).
+ *
+ * Замер на этом наборе: 2096 КБ превращаются в 1689 КБ, минус 19.4%, и все
+ * десять кадров остаются ПИКСЕЛЬНО идентичными — декодированные RGBA совпадают
+ * по sha256. Это выбор фильтров строки и уровня сжатия, а не квантование:
+ * визуального решения здесь нет вовсе.
+ *
+ * Почему внутри съёмки, а не отдельным проходом по закоммиченным файлам.
+ * Манифест хранит `imageSha256` каждого кадра, поэтому оптимизировать файлы в
+ * репозитории руками нельзя — `check-docs` покраснеет; а если жать после
+ * подсчёта хешей, следующая же съёмка вернёт неоптимизированные байты.
+ *
+ * Отсутствие инструмента не ошибка: локальная съёмка и без него полезна для
+ * глаз, а приёмка всё равно идёт только из артефакта CI, где `oxipng` стоит
+ * пином (`.github/workflows/docs-screenshots.yml`). Но молчать об этом нельзя —
+ * байты кадра зависят от того, был ли инструмент, поэтому его версия попадает
+ * в манифест рядом с версией браузера, по той же причине.
+ */
+const oxipngVersion = (() => {
+  const probe = spawnSync('oxipng', ['--version'], { encoding: 'utf8' });
+  if (probe.status !== 0) {
+    console.log('oxipng не найден: кадры пишутся как есть, без перепаковки');
+    return null;
+  }
+  return String(probe.stdout || '').trim().split('\n')[0];
+})();
+
+/** Пожать файл на месте и вернуть его новые байты. */
+const shrinkPng = (path, before) => {
+  if (!oxipngVersion) return before;
+  const run = spawnSync('oxipng', ['-o', '4', '--strip', 'safe', '--quiet', path]);
+  if (run.status !== 0) {
+    throw new Error(`oxipng не смог обработать ${path}: код ${run.status}`
+      + `${run.stderr ? ` · ${run.stderr}` : ''}`);
+  }
+  const after = readFileSync(path);
+  console.log(`  ${(before.length / 1024).toFixed(0)} КБ -> ${(after.length / 1024).toFixed(0)} КБ`);
+  return after;
+};
 
 
 const roomCardClip = (page) => page.evaluate(() => {
@@ -129,14 +171,18 @@ try {
     const image = await page.screenshot({
       ...(clip ? { clip } : {}), animations: 'disabled', caret: 'hide', scale: 'css',
     });
-    writeFileSync(resolve(OUTPUT, scenario.file), image);
+    const path = resolve(OUTPUT, scenario.file);
+    writeFileSync(path, image);
+    // Хеш считается ПОСЛЕ перепаковки: манифест обязан описывать те байты,
+    // которые лежат на диске, иначе приёмка отвергнет свой же кандидат.
+    const stored = shrinkPng(path, image);
     scenarios[scenario.id] = {
       file: scenario.file,
       viewport: scenario.viewport,
       theme: scenario.theme,
       language: scenario.language,
       sourceSha256: fingerprint,
-      imageSha256: sha256(image),
+      imageSha256: sha256(stored),
     };
     console.log(`captured ${scenario.id} -> docs/images/${scenario.file}`);
   }
@@ -147,6 +193,8 @@ try {
     // Кто снимал. Смена браузера переписывает все картинки без содержательных
     // изменений (#246), поэтому окружение съёмки — часть доказательства.
     chromium: browser.version(),
+    // Чем жали — тоже часть доказательства: без инструмента байты другие.
+    oxipng: oxipngVersion,
     sourceFingerprint: fingerprint,
     captureScriptSha256: sha256(readFileSync(SCRIPT)),
     command: 'npm run build && node demo/docs/capture.mjs',
