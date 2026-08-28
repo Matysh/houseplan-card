@@ -1685,7 +1685,7 @@ async def ws_plan_optimize(hass: HomeAssistant, connection, msg: dict[str, Any])
             checked = CONFIG_SCHEMA(candidate_config)
             migrated_size = len(json.dumps(checked, separators=(",", ":")))
             if migrated_size > MAX_CONFIG_BYTES:
-                return migrated_size
+                return None, migrated_size
             msg["config"].clear()
             msg["config"].update(checked)
             validate_marker_controls(msg["config"], config_data.get("config"))
@@ -1696,9 +1696,20 @@ async def ws_plan_optimize(hass: HomeAssistant, connection, msg: dict[str, Any])
                 msg["config"], config_data.get("config"),
                 allow_optimize_rehost=True,
             )
-            return None
+            # #333: Optimize is a normal configuration write for the junction
+            # limits too — an honest client's optimization never ADDS a
+            # violation (#329 AC10), so this gate is a no-op for legitimate
+            # flows and refuses only a crafted payload that used this command
+            # as a side door around config/set. Inheritance is counted per
+            # rule exactly as in config/set: repairing a legacy plan that
+            # already carries violations still passes.
+            return validate_junction_limits(
+                msg["config"], config_data.get("config"),
+            ), None
         try:
-            oversize = await hass.async_add_executor_job(_validate_optimize_cpu)
+            optimize_counts, oversize = await hass.async_add_executor_job(
+                _validate_optimize_cpu,
+            )
             if oversize is not None:
                 connection.send_error(
                     msg["id"], "too_large",
@@ -1765,6 +1776,11 @@ async def ws_plan_optimize(hass: HomeAssistant, connection, msg: dict[str, Any])
             new_config_rev,
             previous_rev=config_rev,
         )
+        # The optimized candidate is now the stored document: its junction
+        # counts are the next write's baseline (#333 AC3, symmetric with
+        # config/set — otherwise the next save re-judges `previous` for
+        # nothing and the #330 cache loses its point).
+        rt.junction_baseline = (int(new_config_rev), optimize_counts or {})
         await async_save_layout_state(
             rt, layout_data, msg["layout"], new_layout_rev,
             metadata={_OPTIMIZE_BACKUP: backup},

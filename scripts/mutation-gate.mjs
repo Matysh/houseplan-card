@@ -702,6 +702,22 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'junction-limit-optimize-unguarded',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'test_333_optimize_refuses_a_crafted_violation '
+      + 'tests_backend/test_ha_websocket.py',
+    because: 'plan/optimize writes arbitrary client geometry; without the junction gate a '
+      + 'crafted payload persists violations that inheritance then legalises for every later '
+      + 'config/set (#333 AC1)',
+    patches: [{
+      file: 'custom_components/houseplan/websocket_api.py',
+      find: '            return validate_junction_limits(\n'
+        + '                msg["config"], config_data.get("config"),\n'
+        + '            ), None',
+      replace: '            return {}, None',
+    }],
+  },
+  {
     id: 'junction-limit-backend-raw-baseline',
     guard: 'node scripts/backend-test-guard.mjs '
       + 'test_legacy_baseline_is_judged_after_the_same_migration '

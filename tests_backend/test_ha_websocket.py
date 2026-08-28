@@ -2383,3 +2383,133 @@ async def test_330_config_set_validators_run_in_the_executor(
         assert refused["error"]["code"] == "junction_limit_angle"
     finally:
         hp_ws_module.validate_junction_limits = original_validate
+
+
+async def test_333_optimize_refuses_a_crafted_violation_and_keeps_the_plan(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator,
+) -> None:
+    """#333 AC1: optimize-payload с новым нарушением отклонён стабильным
+    кодом, хранимые config и layout байт-неизменны."""
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    config = {"spaces": [_space("f1", "r1")], "markers": [], "settings": {}}
+    await client.send_json_auto_id({
+        "type": "houseplan/config/set", "config": config, "expected_rev": 0,
+    })
+    assert (await client.receive_json())["success"]
+    await client.send_json_auto_id({"type": "houseplan/config/get"})
+    stored = (await client.receive_json())["result"]
+
+    crafted = copy.deepcopy(stored["config"])
+    crafted["spaces"][0]["rooms"].append({
+        "id": "spike", "name": "spike",
+        "poly": [[0.30, 0.70], [0.3167, 0.24], [0.36, 0.68]],
+    })
+    crafted["spaces"][0].setdefault("walls", []).extend([
+        {"key": "s0", "a": [0.30, 0.70], "b": [0.3167, 0.24], "cm": 15},
+        {"key": "s1", "a": [0.3167, 0.24], "b": [0.36, 0.68], "cm": 15},
+        {"key": "s2", "a": [0.36, 0.68], "b": [0.30, 0.70], "cm": 15},
+    ])
+    await client.send_json_auto_id({
+        "type": "houseplan/plan/optimize",
+        "config": crafted, "layout": {},
+        "expected_config_rev": stored["rev"], "expected_layout_rev": 0,
+    })
+    refused = await client.receive_json()
+    assert not refused["success"]
+    assert refused["error"]["code"] == "junction_limit_angle"
+    await client.send_json_auto_id({"type": "houseplan/config/get"})
+    after = (await client.receive_json())["result"]
+    assert after["config"] == stored["config"]
+    assert after["rev"] == stored["rev"]
+
+
+async def test_333_optimize_inherits_stored_violations(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator,
+) -> None:
+    """#333 AC2: эхо-оптимизация плана, уже несущего нарушение, проходит —
+    наследование по правилу работает и в optimize-пути."""
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    spike_space = {
+        "id": "s", "title": "s", "view_box": [0, 0, 1, 1],
+        "rooms": [{
+            "id": "spike", "name": "spike",
+            "poly": [[0.30, 0.70], [0.3167, 0.24], [0.36, 0.68]],
+        }],
+        "walls": [
+            {"key": "s0", "a": [0.30, 0.70], "b": [0.3167, 0.24], "cm": 15},
+            {"key": "s1", "a": [0.3167, 0.24], "b": [0.36, 0.68], "cm": 15},
+            {"key": "s2", "a": [0.36, 0.68], "b": [0.30, 0.70], "cm": 15},
+        ],
+        "plan_url": None,
+    }
+    from custom_components.houseplan.store import get_data
+
+    runtime = get_data(hass)
+    await runtime.config_store.async_save({
+        "config": {"spaces": [spike_space], "markers": [], "settings": {}},
+        "rev": 1,
+    })
+    await client.send_json_auto_id({"type": "houseplan/config/get"})
+    stored = (await client.receive_json())["result"]
+    echo = copy.deepcopy(stored["config"])
+    await client.send_json_auto_id({
+        "type": "houseplan/plan/optimize",
+        "config": echo, "layout": {},
+        "expected_config_rev": stored["rev"], "expected_layout_rev": 0,
+    })
+    result = await client.receive_json()
+    assert result["success"], result
+
+
+async def test_333_optimize_refreshes_the_junction_baseline_cache(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator,
+) -> None:
+    """#333 AC3: после успешного optimize следующий config/set берёт
+    baseline из кэша и не судит previous заново."""
+    from custom_components.houseplan import websocket_api as hp_ws_module
+
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    config = {"spaces": [_space("f1", "r1")], "markers": [], "settings": {}}
+    await client.send_json_auto_id({
+        "type": "houseplan/config/set", "config": config, "expected_rev": 0,
+    })
+    assert (await client.receive_json())["success"]
+    await client.send_json_auto_id({"type": "houseplan/config/get"})
+    stored = (await client.receive_json())["result"]
+
+    await client.send_json_auto_id({
+        "type": "houseplan/plan/optimize",
+        "config": copy.deepcopy(stored["config"]), "layout": {},
+        "expected_config_rev": stored["rev"], "expected_layout_rev": 0,
+    })
+    optimized = await client.receive_json()
+    assert optimized["success"], optimized
+
+    baseline_sides: list[str] = []
+    original = hp_ws_module.validate_junction_limits
+
+    def recording(config_arg, previous=None, **kwargs):
+        if kwargs.get("baseline_counts") is None:
+            baseline_sides.append("previous-re-judged")
+        else:
+            baseline_sides.append("cache")
+        return original(config_arg, previous, **kwargs)
+
+    hp_ws_module.validate_junction_limits = recording
+    try:
+        follow_up = copy.deepcopy(stored["config"])
+        follow_up["spaces"][0]["rooms"][0]["name"] = "renamed"
+        await client.send_json_auto_id({
+            "type": "houseplan/config/set", "config": follow_up,
+            "expected_rev": optimized["result"]["config_rev"],
+        })
+        assert (await client.receive_json())["success"]
+    finally:
+        hp_ws_module.validate_junction_limits = original
+    assert baseline_sides == ["cache"], (
+        "config/set после optimize обязан взять baseline из кэша, "
+        f"а вышло: {baseline_sides}"
+    )

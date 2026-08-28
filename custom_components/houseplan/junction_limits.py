@@ -1,8 +1,11 @@
 """Issue #329 — wall junction limits, Python mirror of src/junction-limits.ts.
 
 The card refuses a WRITE that would ADD a junction violation; this module is
-the backend half of that contract, so a stale or hostile client cannot post
-what the editor refuses. It mirrors П1–П4 exactly, including the two legal
+the backend half of that contract for `config/set` and `plan/optimize` (#333)
+— the two commands a client can use to write arbitrary geometry. Import and
+backup restore are DELIBERATELY outside the gate: #329 §3 promises that a
+restore is never blocked, so a crafted import can still persist violations —
+they are then inherited, never legalised as new ones. It mirrors П1–П4 exactly, including the two legal
 incidences of П4 (a shared node and a T-joint into the middle of a foreign
 wall) and the П3 rule that measures the collinear same-thickness WALL RUN
 rather than one catalogue atom.
