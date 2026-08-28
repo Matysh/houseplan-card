@@ -158,6 +158,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#198](https://github.com/Matysh/houseplan-card/issues/198) Optimize очищает изолированный микро-интервал толщины | [198-optimize-micro-interval.md](198-optimize-micro-interval.md) |
 | [#103](https://github.com/Matysh/houseplan-card/issues/103) Состояния в Toggle confirmation | [103-toggle-confirmation-state.md](103-toggle-confirmation-state.md) |
 | [#200](https://github.com/Matysh/houseplan-card/issues/200) Одинаковая геометрия подписи комнаты в View и Plan editor | [200-room-label-parity.md](200-room-label-parity.md) |
+| [#340](https://github.com/Matysh/houseplan-card/issues/340) Обязательная ревизия повторной записи config/set | [340-config-set-revision.md](340-config-set-revision.md) |
 
 ## P3
 
