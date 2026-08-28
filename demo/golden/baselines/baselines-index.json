@@ -1,8 +1,8 @@
 {
   "schema": 1,
-  "matrixVersion": 48,
-  "acceptedAt": "2026-08-28T08:22:58.326Z",
-  "sourceFingerprint": "cdf22aa703050643b94700bacb99387098603c0628cef0fda926c2e557b04303",
+  "matrixVersion": 49,
+  "acceptedAt": "2026-08-28T09:41:50.717Z",
+  "sourceFingerprint": "b6d9eb672c772bca7fa08bf25b4525cc8bbf3084320f383f16ab86a535090444",
   "chromium": "151.0.7922.34",
   "scenarios": {
     "hidden-wall-diagnostics-plan-light": "37ba151aa6b1ea7b1b270d461ccca348444c5eeb14a5592bf045a0e69b0fb83e",
@@ -122,6 +122,8 @@
     "large-house-warm-remount-dark": "1c14dba8cdbc4628984091d395c1ac14faead1d43338e44aa3cb57976e519df6",
     "device-dialog-desktop-en": "e142521eae1bd40861c1d92eadbcfd6d88aefa689cd5ee9b4c1b6378c8ce712c",
     "device-dialog-mobile-ru": "7921b7d5e2c082fc4dd5053607a8228c2e63e0e72a401d86153effd54c2c6ca0",
+    "device-dialog-desktop-de": "ac3f657e072006f5c1686d89da61df922991a04f69d2d7994a03d1ba93532681",
+    "german-view-mobile-light": "9496071b11f510f1c851a9c60583a96bfe768c1fd1e12a2b1b9183dee7e453a8",
     "toggle-entity-dialog-desktop-en": "f4924466de5e134c2d1f2456ff0c05f8aa8106f6b06398e87a263e3c536f16ea",
     "toggle-entity-dialog-mobile-ru": "77e8fc03817a784888993490cdfba675482b8c56483199c1efa512db8531516b",
     "device-help-popover-light-ru": "259a50065b7f09d07db656b6cfe79d1de34397665ff8dd8a8e361f6f29a7ea6a",
