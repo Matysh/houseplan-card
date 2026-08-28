@@ -72,7 +72,7 @@ const res = await page.evaluate(async () => {
   out.legacyCardStillRestoresNav = ordinary._space === ids[1]
     && ordinary._fixedFloorState().kind === 'absent';
 
-  const editor = document.createElement('houseplan-card-editor');
+  const editor = await customElements.get('houseplan-card').getConfigElement();
   editor.hass = base.hass;
   editor.setConfig({ type: 'custom:houseplan-card', floor: 1, title: 'Fixed' });
   document.body.appendChild(editor);

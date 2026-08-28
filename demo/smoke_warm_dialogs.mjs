@@ -35,6 +35,11 @@ const res = await page.evaluate(async () => {
     while (c._booting && performance.now() - t0 < 2500) await sleep(30);
     await sleep(350);
   };
+  const waitFor = async (predicate, timeout = 2500) => {
+    const started = performance.now();
+    while (!predicate() && performance.now() - started < timeout) await sleep(20);
+    return predicate();
+  };
   const rect = (c) => (c._view ? [c._view.x, c._view.y, c._view.w, c._view.h] : null);
   const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
   /** покадрово: ни один кадр после пересоздания не отличается от эталона */
@@ -61,6 +66,7 @@ const res = await page.evaluate(async () => {
   c.requestUpdate(); await c.updateComplete; await sleep(100);
   const zoomA = c._zoom, viewA = rect(c);
   out.aPanned = viewA[0] > 1 || viewA[1] > 1;      // sanity: вид действительно смещён
+  await c._ensureEditorRuntime();
   c._openSpaceDialog('edit', c._space); await c.updateComplete;
   c._spaceDialog = { ...c._spaceDialog, title: 'ЧЕРНОВИК-42' }; // недосохранённая правка
   await c.updateComplete;
@@ -80,7 +86,8 @@ const res = await page.evaluate(async () => {
   out.aNoZombieAfterClose = !c._spaceDialog;
 
   // ================= B. редактор устройств: зум редактора + карточка =======
-  c._setMode('devices'); await c.updateComplete; await sleep(120);
+  await c._requestMode('devices'); await c.updateComplete;
+  await waitFor(() => !c._modeTransitionBusy);
   c._applyView(3.4, 430, 380); c.requestUpdate(); await c.updateComplete; await sleep(100);
   const zoomB = c._zoom, viewB = rect(c);
   const dev = c._devices.find((d) => d.space === c._space);
@@ -91,6 +98,8 @@ const res = await page.evaluate(async () => {
 
   c.remove(); await sleep(20);
   c = mk();
+  await waitFor(() => c._mode === 'devices' && !!c._markerDialog);
+  await c.updateComplete;
   out.bModeRestored = c._mode === 'devices';
   out.bViewBitExact = await watchView(c, zoomB, viewB);
   out.bDialogSurvived = !!c._markerDialog;
@@ -116,7 +125,7 @@ const res = await page.evaluate(async () => {
   out.dAlignNotRevived = !c._alignDialog;
 
   // ================= E. реальный уход с маршрута завершает редактор =======
-  c._setMode('devices'); await c.updateComplete; await sleep(60);
+  await c._requestMode('devices'); await c.updateComplete; await sleep(60);
   const returnUrl = `${location.pathname}${location.search}${location.hash}`;
   const returnSpace = c._space;
   const routeDev = c._devices.find((d) => d.space === returnSpace);

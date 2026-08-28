@@ -3,6 +3,7 @@ const { page, browser } = await launch();
 const res = await page.evaluate(async () => {
   const out = {};
   const c = window.__card;
+  await c._ensureEditorRuntime();
   // Permission-delayed warm navigation must use the complete transition
   // authority instead of assigning the private mode field directly.
   c._setMode('view', false); await c.updateComplete;
@@ -38,7 +39,7 @@ const res = await page.evaluate(async () => {
   document.body.appendChild(legacy);
   await new Promise((r) => setTimeout(r, 300));
   out.legacySpaceOnly = legacy._space === 'garden' && legacy._mode === 'view';
-  legacy._setMode('devices'); await legacy.updateComplete;
+  await legacy._requestMode('devices'); await legacy.updateComplete;
   const migrated = JSON.parse(localStorage.getItem('houseplan_card_nav_v1'));
   out.legacyRewrittenOnNextNav = migrated.space === 'garden'
     && !Object.hasOwn(migrated, 'mode');
