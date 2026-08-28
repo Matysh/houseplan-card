@@ -119,6 +119,49 @@ def test_sample_seeds_a_run_already_in_progress():
     assert rec.book.data["m1"]["current"]["points"] == [[1000.0, -500.0]]
 
 
+def test_refresh_persists_and_announces_a_new_startup_sample_once():
+    scheduled = []
+    saved = []
+    old_call_later = trails.async_call_later
+    trails.async_call_later = lambda hass, delay, cb: (
+        scheduled.append((delay, cb)) or (lambda: None)
+    )
+    try:
+        class CS:
+            async def async_load(self):
+                return {"config": {"markers": [{
+                    "id": "m1",
+                    "binding": "entity:vacuum.x50",
+                    "vacuum": {"source": "camera.map"},
+                }]}}
+
+        class RT:
+            config_store = CS()
+
+        class TrailStore:
+            async def async_save(self, data):
+                saved.append(json.loads(json.dumps(data)))
+
+        rec, hass, _states = _rec()
+        rec.rt = RT()
+        rec.store = TrailStore()
+        rec.pairs = {}
+
+        _run_isolated(rec.async_refresh())
+        assert len(scheduled) == 1
+        assert scheduled[0][0] == trails.SAVE_DELAY_S
+        assert hass.bus.fired == [("houseplan_trail_updated", {})]
+        _run_isolated(scheduled[0][1](None))
+        assert saved[-1]["m1"]["current"]["points"] == [[1000.0, -500.0]]
+
+        # The same point is a true no-op: no second save or live-card event.
+        _run_isolated(rec.async_refresh())
+        assert len(scheduled) == 1
+        assert hass.bus.fired == [("houseplan_trail_updated", {})]
+    finally:
+        trails.async_call_later = old_call_later
+
+
 def test_junk_position_ignored():
     rec, _hass, states = _rec()
     states["camera.map"] = S("idle", {"vacuum_position": {"x": "nope", "y": 1}})
@@ -171,6 +214,84 @@ def test_trail_delete_prunes_pair_and_replaces_subscription():
         assert tracked == [["other.source", "vacuum.other"]]
     finally:
         trails.async_track_state_change_event = old_track
+
+
+def test_orphan_purge_treats_removed_as_absent_and_batches_one_store_write():
+    rec, hass, _states = _rec()
+    rec.book.data = {
+        "tombstone": {"current": {"points": [[1, 2]]}},
+        "hard_drop": {"current": {"points": [[3, 4]]}},
+        "live": {"current": {"points": [[5, 6]]}},
+        "hidden": {"current": {"points": [[7, 8]]}},
+    }
+    rec.pairs = {
+        "camera.map": [
+            ("tombstone", "vacuum.x50"),
+            ("hard_drop", "vacuum.x50"),
+            ("live", "vacuum.x50"),
+            ("hidden", "vacuum.x50"),
+        ]
+    }
+    saved = []
+
+    class TrailStore:
+        async def async_save(self, data):
+            saved.append(json.loads(json.dumps(data)))
+
+    rec.store = TrailStore()
+    removed = _run_isolated(rec.async_purge_orphans({"markers": [
+        {"id": "tombstone", "removed": True},
+        {"id": "live"},
+        {"id": "hidden", "hidden": True},
+    ]}))
+
+    assert removed == 2
+    assert set(rec.book.data) == {"live", "hidden"}
+    assert rec.pairs == {
+        "camera.map": [("live", "vacuum.x50"), ("hidden", "vacuum.x50")]
+    }
+    assert len(saved) == 1
+    assert set(saved[0]) == {"live", "hidden"}
+    assert hass.bus.fired == [("houseplan_trail_updated", {})]
+
+
+def test_failed_orphan_store_write_rolls_back_and_can_be_retried():
+    rec, hass, _states = _rec()
+    rec.book.data = {
+        "orphan": {"current": {"points": [[1, 2]]}},
+        "live": {"current": {"points": [[3, 4]]}},
+    }
+    rec.pairs = {
+        "camera.map": [
+            ("orphan", "vacuum.x50"),
+            ("live", "vacuum.x50"),
+        ]
+    }
+
+    class FailingStore:
+        async def async_save(self, _data):
+            raise OSError("disk full")
+
+    rec.store = FailingStore()
+    assert _run_isolated(rec.async_purge_orphans({"markers": [{"id": "live"}]})) == 0
+    assert set(rec.book.data) == {"orphan", "live"}
+    assert rec.pairs["camera.map"] == [
+        ("orphan", "vacuum.x50"),
+        ("live", "vacuum.x50"),
+    ]
+    assert hass.bus.fired == []
+
+    saved = []
+
+    class WorkingStore:
+        async def async_save(self, data):
+            saved.append(json.loads(json.dumps(data)))
+
+    rec.store = WorkingStore()
+    assert _run_isolated(rec.async_purge_orphans({"markers": [{"id": "live"}]})) == 1
+    assert set(rec.book.data) == {"live"}
+    assert set(saved[-1]) == {"live"}
+    assert hass.bus.fired == [("houseplan_trail_updated", {})]
 
 
 def test_object_style_position_is_read():

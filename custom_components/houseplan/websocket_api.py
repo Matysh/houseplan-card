@@ -493,24 +493,14 @@ async def ws_import_apply(hass: HomeAssistant, connection, msg: dict[str, Any]) 
 
     hass.bus.async_fire("houseplan_config_updated", {"rev": new_config_rev})
     hass.bus.async_fire("houseplan_layout_updated", {"rev": new_layout_rev})
-    _refresh_trail_recorder(hass)
     if kind == "full":
-        recorder = hass.data.get(DOMAIN, {}).get("trail_recorder")
-        live_marker_ids = {
-            str(marker.get("id")) for marker in target_config.get("markers") or []
-        }
-        if recorder is not None:
-            for marker_id in list(getattr(getattr(recorder, "book", None), "data", {})):
-                if marker_id not in live_marker_ids:
-                    try:
-                        await recorder.async_delete(marker_id)
-                    except Exception:  # noqa: BLE001
-                        _LOGGER.exception("House Plan: removing orphan import trail failed")
+        await _purge_trail_recorder(hass, target_config)
         entry = get_entry(hass)
         if entry is not None:
             from .repairs import async_check_plan_files
 
             hass.async_create_task(async_check_plan_files(hass, entry))
+    _refresh_trail_recorder(hass)
     connection.send_result(msg["id"], {
         "ok": True,
         "kind": kind,
@@ -1412,6 +1402,11 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             await hass.async_add_executor_job(_collect)
         except Exception:  # noqa: BLE001 — see above: the commit stands regardless
             _LOGGER.exception("House Plan: collecting superseded files failed")
+        # The config is already durable, so trail cleanup is best-effort and
+        # cannot turn this accepted write into a retryable client failure.
+        # Keep it under write_lock: a later config/set must not resurrect a
+        # marker between this commit and the ownership decision (#335).
+        await _purge_trail_recorder(hass, msg["config"])
     hass.bus.async_fire("houseplan_config_updated", {"rev": new_rev})
     _refresh_trail_recorder(hass)
     # refresh repair issues (broken plan references) without waiting for a restart
@@ -1867,24 +1862,14 @@ async def ws_plan_optimize_undo(hass: HomeAssistant, connection, msg: dict[str, 
 
     hass.bus.async_fire("houseplan_config_updated", {"rev": new_config_rev})
     hass.bus.async_fire("houseplan_layout_updated", {"rev": new_layout_rev})
-    _refresh_trail_recorder(hass)
     if restored_kind == "import":
-        recorder = hass.data.get(DOMAIN, {}).get("trail_recorder")
-        live_marker_ids = {
-            str(marker.get("id")) for marker in restored_config.get("markers") or []
-        }
-        if recorder is not None:
-            for marker_id in list(getattr(getattr(recorder, "book", None), "data", {})):
-                if marker_id not in live_marker_ids:
-                    try:
-                        await recorder.async_delete(marker_id)
-                    except Exception:  # noqa: BLE001
-                        _LOGGER.exception("House Plan: removing orphan undo trail failed")
+        await _purge_trail_recorder(hass, restored_config)
         entry = get_entry(hass)
         if entry is not None:
             from .repairs import async_check_plan_files
 
             hass.async_create_task(async_check_plan_files(hass, entry))
+    _refresh_trail_recorder(hass)
     connection.send_result(msg["id"], {
         "ok": True,
         "config_rev": new_config_rev,
@@ -1966,6 +1951,12 @@ def _refresh_trail_recorder(hass: HomeAssistant) -> None:
     rec = hass.data.get(DOMAIN, {}).get("trail_recorder")
     if rec:
         hass.async_create_task(rec.async_refresh())
+
+
+async def _purge_trail_recorder(hass: HomeAssistant, config: dict[str, Any]) -> int:
+    """Reconcile durable trails with the live marker set after a config commit."""
+    rec = hass.data.get(DOMAIN, {}).get("trail_recorder")
+    return await rec.async_purge_orphans(config) if rec else 0
 
 
 @websocket_api.websocket_command({vol.Required("type"): "houseplan/trail/get"})
