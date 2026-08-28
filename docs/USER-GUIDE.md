@@ -107,8 +107,12 @@ content-hashed modules. A lone `houseplan-card.js` is not a supported install.
 
 The ordinary View does not download editor code. The first opening of Plan,
 Device or Background may therefore take a brief moment. If that internal module
-cannot be loaded after one retry, the plan stays in View and asks you to refresh
-the page; no half-open editor is kept.
+cannot be loaded after one retry, the plan stays in View; no half-open editor is
+kept. After a network failure the card invites you to check the connection and
+press again — the next press starts a fresh download. Only when the tab holds
+code from another build does the advice ask for a page refresh instead. A fully
+stale proxy-cached `houseplan-card.js` no longer leaves an empty card after an
+update: it shows a panel asking to reload the page.
 
 ### Permissions
 

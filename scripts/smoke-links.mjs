@@ -54,12 +54,15 @@ export const SMOKE_LINKS = [
   {
     symbols: [
       'EditorRuntimeLoader', 'EditorRuntimeLoaderState', 'EditorRuntimeModule',
+      'EditorRuntimeLoaderFailure', 'lazyLoadFailureMessage',
       'EDITOR_RUNTIME_FINGERPRINT', 'createHouseplanEditorRuntime',
     ],
-    smokes: ['smoke_lazy_editor_chunk.mjs'],
-    because: 'the production-bundle scenario proves that the content-hashed editor chunk stays '
-      + 'off the View network path, is shared by all three editors, retries once, and refuses an '
-      + 'incompatible build before editor state is installed (#337)',
+    smokes: ['smoke_lazy_editor_chunk.mjs', 'smoke_entry_stale.mjs'],
+    because: 'the production-bundle scenarios prove that the content-hashed editor chunk stays '
+      + 'off the View network path, is shared by all three editors, retries once per cycle, '
+      + 're-arms after a network failure so the next press heals (#353), refuses an incompatible '
+      + 'build before editor state is installed (#337), and that a stale cached entry shows a '
+      + 'localized reload panel instead of dying silently (#353)',
   },
   {
     symbols: [

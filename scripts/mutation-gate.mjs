@@ -635,6 +635,64 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'lazy-loader-network-failure-terminal',
+    guard: 'node --test --test-name-pattern="#353 AC1" test/editor-runtime-loader.test.mjs',
+    because: 'a transient network failure must re-arm the loader for the next explicit press — '
+      + 'a terminal state blocks the editor until a page refresh (#353 К1)',
+    patches: [{
+      file: 'src/editor-runtime-loader.ts',
+      find: "    this._setState(sawMismatch ? 'failed' : 'idle');",
+      replace: "    this._setState('failed');",
+    }],
+  },
+  {
+    id: 'lazy-loader-terminality-hardcoded',
+    guard: 'node --test --test-name-pattern="#353" test/editor-runtime-loader.test.mjs',
+    because: 'a hardcoded terminal flag shows the wrong advice — the network toast must invite '
+      + 'another press, the mismatch toast must demand a refresh (#353 К2/AC5)',
+    patches: [{
+      file: 'src/editor-runtime-loader.ts',
+      find: '    this.options.failed?.(lastError, { terminal: sawMismatch });',
+      replace: '    this.options.failed?.(lastError, { terminal: true });',
+    }],
+  },
+  {
+    id: 'lazy-chunk-cache-control-reverted',
+    guard: 'node scripts/backend-test-guard.mjs hashed_chunks_are_immutably_cacheable '
+      + 'tests_backend/test_frontend_assets.py',
+    because: 'content-hashed chunk bodies never change under their URL — reverting to no-cache '
+      + 'reopens the stale-proxy window and refetches on every editor entry (#353 К4)',
+    patches: [{
+      file: 'custom_components/houseplan/frontend_asset_manifest.py',
+      find: 'ASSET_CACHE_CONTROL = "public, max-age=31536000, immutable"',
+      replace: 'ASSET_CACHE_CONTROL = "no-cache"',
+    }],
+  },
+  {
+    id: 'bundle-tree-orphans-ignored',
+    guard: 'node --test --test-name-pattern="#353 AC4" test/bundle-assets.test.mjs',
+    because: 'an unlisted chunk on disk rides into the release zip and masks sync bugs — '
+      + 'the tree check must fail loudly on orphans (#353 К5)',
+    patches: [{
+      file: 'scripts/bundle-tree.mjs',
+      find: "      if (name.endsWith('.js') && !listed.has(`houseplan-assets/${name}`)) {\n"
+        + '        throw new Error(`orphan bundle asset: houseplan-assets/${name}`);\n'
+        + '      }',
+      replace: "      void name; void listed;",
+    }],
+  },
+  {
+    id: 'entry-fallback-rewrite-skipped',
+    guard: 'node demo/smoke_entry_stale.mjs',
+    because: 'without the rewrite the entry keeps a STATIC re-export: after an update a cached '
+      + 'entry aborts before any code runs and the card dies silently (#353 К3)',
+    patches: [{
+      file: 'scripts/bundle-manifest.mjs',
+      find: '      entry.code = entry.code.replace(pattern, fallback);',
+      replace: '      void fallback;',
+    }],
+  },
+  {
     id: 'junction-limit-key-precision-lost',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="#331 AC1" test/junction-limits.test.mjs',

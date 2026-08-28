@@ -9,6 +9,7 @@
   "editor.loading_aria": "Редактор плана загружается",
   "editor.load_failed": "Не удалось загрузить редактор.",
   "editor.refresh_advice": "Обновите страницу и повторите попытку.",
+  "editor.retry_advice": "Проверьте сеть и нажмите ещё раз.",
   "color_picker.title": "Выбор цвета",
   "color_picker.hue": "Оттенок",
   "color_picker.saturation": "Насыщенность",

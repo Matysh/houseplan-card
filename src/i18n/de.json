@@ -9,6 +9,7 @@
   "editor.loading_aria": "Der Plan-Editor wird geladen",
   "editor.load_failed": "Der Editor konnte nicht geladen werden.",
   "editor.refresh_advice": "Seite aktualisieren und erneut versuchen.",
+  "editor.retry_advice": "Verbindung prüfen und erneut drücken.",
   "color_picker.title": "Farbwähler",
   "color_picker.hue": "Farbton",
   "color_picker.saturation": "Sättigung",

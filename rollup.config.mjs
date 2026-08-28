@@ -9,6 +9,7 @@ import {
   bundleManifestPlugin,
   cleanBundleOutputPlugin,
   editorRuntimeRetryUrlPlugin,
+  entryFallbackPlugin,
 } from './scripts/bundle-manifest.mjs';
 
 const SOURCE_FINGERPRINT = sourceFingerprint();
@@ -35,6 +36,7 @@ export default {
     typescript({ compilerOptions: { outDir: 'dist/.ts' } }),
     terser({ format: { comments: false } }),
     editorRuntimeRetryUrlPlugin(),
+    entryFallbackPlugin(),
     bundleManifestPlugin(SOURCE_FINGERPRINT),
   ],
 };

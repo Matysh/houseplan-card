@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { createHash } from 'node:crypto';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { dirname, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -47,6 +47,17 @@ export function verifyBundleTree(root) {
     const actual = sha256Bytes(readFileSync(path));
     if (actual !== file.sha256) {
       throw new Error(`manifest hash mismatch: ${file.path} (${actual} != ${file.sha256})`);
+    }
+  }
+  // #353 К5: a chunk on disk that the manifest does not name is dead weight —
+  // it would ride into the release zip and mask sync bugs. Fail loudly.
+  const assetDir = resolve(root, 'houseplan-assets');
+  if (existsSync(assetDir)) {
+    const listed = new Set(manifest.files.map((file) => file.path));
+    for (const name of readdirSync(assetDir)) {
+      if (name.endsWith('.js') && !listed.has(`houseplan-assets/${name}`)) {
+        throw new Error(`orphan bundle asset: houseplan-assets/${name}`);
+      }
     }
   }
   return manifest;

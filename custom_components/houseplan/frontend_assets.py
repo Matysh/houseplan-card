@@ -11,7 +11,7 @@ except ImportError:  # pragma: no cover - old HA compatibility
     KEY_HASS = "hass"  # type: ignore[assignment]
 
 from .const import FRONTEND_ASSETS_URL
-from .frontend_asset_manifest import resolve_frontend_asset
+from .frontend_asset_manifest import ASSET_CACHE_CONTROL, resolve_frontend_asset
 
 _FRONTEND_ROOT = Path(__file__).parent / "frontend"
 
@@ -30,7 +30,13 @@ class HouseplanFrontendAssetView(HomeAssistantView):
         )
         if path is None:
             raise web.HTTPNotFound()
+        # Chunk names are content-hashed, so a served body can never change
+        # under its URL — immutable caching is safe and keeps a stale proxy
+        # from re-serving an old graph after an update (#353 К4).
         return web.FileResponse(
             path,
-            headers={"Cache-Control": "no-cache", "X-Content-Type-Options": "nosniff"},
+            headers={
+                "Cache-Control": ASSET_CACHE_CONTROL,
+                "X-Content-Type-Options": "nosniff",
+            },
         )

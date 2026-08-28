@@ -137,3 +137,106 @@ test('documentation capture materializes the complete bundle tree', () => {
   assert.match(capture, /import ['"]\.\.\/\.\.\/scripts\/bundle-sync\.mjs['"]/);
   assert.doesNotMatch(capture, /copyFileSync\(BUNDLE,\s*DEMO_BUNDLE\)/);
 });
+
+test('network failure re-arms the loader for the next explicit intent (#353 AC1)', async () => {
+  const attempts = [];
+  const failures = [];
+  let cycles = 0;
+  const loader = new EditorRuntimeLoader({
+    expectedFingerprint: 'same',
+    load: async (attempt) => {
+      if (attempt === 0) cycles++;
+      attempts.push(attempt);
+      if (cycles < 3) throw new Error('net::ERR_INTERNET_DISCONNECTED');
+      return { fingerprint: 'same', create: () => 'runtime' };
+    },
+    install: () => {},
+    failed: (error, info) => failures.push({ error: String(error), terminal: info.terminal }),
+  });
+
+  assert.equal(await loader.ensure(), false);
+  assert.equal(loader.state, 'idle', 'a network failure must not be terminal');
+  assert.deepEqual(attempts, [0, 1]);
+
+  assert.equal(await loader.ensure(), false, 'second press runs a fresh cycle');
+  assert.deepEqual(attempts, [0, 1, 0, 1]);
+  assert.equal(failures.length, 2, 'every failed cycle is reported');
+  assert.ok(failures.every((failure) => failure.terminal === false));
+
+  assert.equal(await loader.ensure(), true, 'third press succeeds');
+  assert.equal(loader.state, 'ready');
+  assert.equal(failures.length, 2);
+});
+
+test('fingerprint mismatch on either attempt is terminal (#353 AC2)', async () => {
+  const attempts = [];
+  const failures = [];
+  const loader = new EditorRuntimeLoader({
+    expectedFingerprint: 'entry',
+    load: async (attempt) => {
+      attempts.push(attempt);
+      if (attempt === 0) return { fingerprint: 'other', create: () => 'foreign' };
+      throw new Error('net::ERR_FAILED');
+    },
+    install: () => {},
+    failed: (error, info) => failures.push(info.terminal),
+  });
+
+  assert.equal(await loader.ensure(), false);
+  assert.equal(loader.state, 'failed', 'a foreign build was observed — only a refresh helps');
+  assert.deepEqual(failures, [true]);
+  assert.equal(await loader.ensure(), false);
+  assert.deepEqual(attempts, [0, 1], 'terminal failure never imports again');
+});
+
+test('lazy failure toast wording follows terminality (#353 AC5)', async () => {
+  const { lazyLoadFailureMessage } = await import('../test-build/editor-runtime-loader.js');
+  const t = (key) => `<${key}>`;
+  assert.equal(
+    lazyLoadFailureMessage(t, { terminal: true }),
+    '<editor.load_failed> <editor.refresh_advice>',
+  );
+  assert.equal(
+    lazyLoadFailureMessage(t, { terminal: false }),
+    '<editor.load_failed> <editor.retry_advice>',
+  );
+});
+
+test('both card loaders route their toast through lazyLoadFailureMessage (#353 AC5)', async () => {
+  const ts = (await import('typescript')).default;
+  const source = readFileSync(join(repoRoot, 'src', 'houseplan-card.ts'), 'utf8');
+  const file = ts.createSourceFile(
+    'houseplan-card.ts', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS,
+  );
+  const callbacks = [];
+  const visit = (node) => {
+    if (ts.isPropertyAssignment(node)
+        && node.name.getText(file) === 'failed'
+        && ts.isArrowFunction(node.initializer)) {
+      callbacks.push(node.initializer);
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(file);
+  assert.equal(callbacks.length, 2, 'editor and onboarding loaders both declare failed callbacks');
+  for (const callback of callbacks) {
+    assert.equal(callback.parameters.length, 2, 'the failure info parameter must be declared');
+    const infoName = callback.parameters[1].name.getText(file);
+    let forwards = false;
+    const inspect = (node) => {
+      if (ts.isCallExpression(node)
+          && node.expression.getText(file) === 'lazyLoadFailureMessage'
+          && node.arguments.length === 2
+          && node.arguments[1].getText(file) === infoName) {
+        forwards = true;
+      }
+      ts.forEachChild(node, inspect);
+    };
+    inspect(callback.body);
+    assert.ok(
+      forwards,
+      'the failed callback must forward its info argument into lazyLoadFailureMessage — '
+        + 'a hardcoded terminality would show the wrong advice',
+    );
+  }
+});
