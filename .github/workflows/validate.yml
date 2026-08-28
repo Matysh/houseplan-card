@@ -165,10 +165,28 @@ jobs:
           zero=$(printf '%040d' 0)
           base="$BEFORE_SHA"
           if [ "$EVENT_NAME" = "pull_request" ]; then base="$BASE_SHA"; fi
+          # #347: непустой before, которого больше не существует, — это
+          # force-push (ребейз/аменд переписал историю ветки). Диапазон в
+          # этом случае НЕ угадывается: merge-base после переписанной истории
+          # уже выдавал «изменились только два doc-файла» при реальном диффе
+          # в custom_components/**, и тяжёлые job тихо скипались, а общий
+          # статус рана оставался success — ровно класс тихого пропуска
+          # #171/#207. Force-push редок, полный прогон дешевле ложного
+          # «зелёного».
+          if [ -n "$base" ] && [ "$base" != "$zero" ] \
+             && ! git cat-file -e "$base" 2>/dev/null; then
+            echo "force-push: before=$base переписан — полный прогон без классификации"
+            {
+              echo "### Классификация изменённых файлов"
+              echo "\`before\` (=$base) переписан force-push'ем: диапазон недоказуем,"
+              echo "все тяжёлые job запускаются без фильтра путей (#347)."
+            } >> "$GITHUB_STEP_SUMMARY"
+            printf 'frontend=true\nbackend=true\nintegration=true\n' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           # Новая ветка: before нулевой, диапазон считается от merge-base с dev,
           # иначе классифицировалась бы вся история.
-          if [ -z "$base" ] || [ "$base" = "$zero" ] \
-             || ! git cat-file -e "$base" 2>/dev/null; then
+          if [ -z "$base" ] || [ "$base" = "$zero" ]; then
             git fetch -q origin dev
             base=$(git merge-base origin/dev "$HEAD_SHA" || echo "$HEAD_SHA~1")
           fi

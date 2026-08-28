@@ -46,3 +46,26 @@ test('full performance is isolated to stable, scheduled and manual entry points'
   assert.ok(release.includes('if: ${{ !github.event.release.prerelease }}'));
   assert.ok(release.includes('--workflow=performance.yml --label="Полные бенчмарки производительности"'));
 });
+
+test('#347: a rewritten before forces the full run instead of guessing the range', () => {
+  // Force-push kills github.event.before; the merge-base fallback then
+  // guessed a range that hid a real custom_components/** diff behind two doc
+  // files, and the heavy jobs silently skipped while the run stayed green —
+  // the #171/#207 class of silent pass. The contract: a non-zero before that
+  // no longer exists switches classification to an unconditional full run
+  // with a loud step-summary note, and the merge-base fallback remains ONLY
+  // for the genuinely new branch (zero before).
+  const workflow = readWorkflow('validate.yml');
+  const classify = workflow.slice(
+    workflow.indexOf('Классификация изменённых файлов'),
+    workflow.indexOf('reuse:'),
+  );
+  assert.ok(
+    /force-push[\s\S]*?frontend=true[\s\S]*?backend=true[\s\S]*?integration=true/.test(classify),
+    'мёртвый before обязан включать полный прогон, не merge-base-угадывание');
+  assert.ok(classify.includes('GITHUB_STEP_SUMMARY'),
+    'пропуск классификации обязан быть громким в summary');
+  const fallback = classify.slice(classify.indexOf('Новая ветка'));
+  assert.ok(!fallback.includes('cat-file'),
+    'merge-base-фолбэк остаётся только для нулевого before — без повторной проверки существования');
+});
