@@ -63,8 +63,7 @@ import { dayCycleStageVars, renderDayCycleEnvironment } from './day-cycle-render
 import {
   FURNITURE_GROUPS, furnitureOfGroup, furnitureSymbol, furnitureDefaultCm,
   furnitureGraphic, furnitureCorners, snapFurnitureToWall,
-  cmToNorm, clampFurnSize, clampFurnCm, FURN_WALL_CELLS,
-  type FurnitureGroup, type FurniturePlacement,
+  cmToNorm, clampFurnSize, clampFurnCm, FURN_WALL_CELLS, type FurnitureGroup,
 } from './furniture';
 import {
   degradeWalls, rekeyWallsAfterMoveChecked, wallRecordCarrierViolations,
@@ -1038,15 +1037,6 @@ export class HouseplanCard extends LitElement {
   private _furnPalette: { symbol: string; w: number; h: number } | null = null;
   /** Category currently open in the two-level furniture palette. */
   private _furnCategory: string | null = null;
-  /** Last fine-pointer location while one furniture stamp is armed. The final
-   * geometry is deliberately resolved on render from the live palette so a
-   * Width/Depth edit updates the ghost without another mouse move (#359). */
-  private _furnPreviewInput: { raw: [number, number]; free: boolean } | null = null;
-  /** Touch/pen has no hover. Delay its one-shot stamp until a clean pointerup
-   * so pointercancel or a second contact cannot save accidental geometry. */
-  private _furnTouchPending: {
-    pid: number; sx: number; sy: number; pointerType: string; cancelled: boolean;
-  } | null = null;
   /** The selected shape's own unrotated frame (text is measured from SVG). */
   private _dtBox: { id: string; x: number; y: number; w: number; h: number } | null = null;
   /**
@@ -1447,7 +1437,6 @@ export class HouseplanCard extends LitElement {
     if (id !== this._space) {
       this._clearTransientHover(true);
       this._cancelDevicePressFeedback();
-      this._editorRuntime?._clearFurniturePreview();
     }
     this._space = id;
     return true;
@@ -2442,7 +2431,6 @@ export class HouseplanCard extends LitElement {
     _backdropDialog: { state: true },
     _furnPalette: { state: true },
     _furnCategory: { state: true },
-    _furnPreviewInput: { state: true },
     _bdDrag: { state: true },
     _dtBox: { state: true },
     _dtDrag: { state: true },
@@ -2688,7 +2676,6 @@ export class HouseplanCard extends LitElement {
     this._warmRelease();
     this._clearPlanSnapHover();
     this._clearOpeningPlacement(true);
-    this._editorRuntime?._clearFurniturePreview();
     this._touchContacts.clear();
     this._touchSequenceMultitouch = false;
     this._touchClickBlockUntil = 0;
@@ -2794,7 +2781,6 @@ export class HouseplanCard extends LitElement {
         // The palette is one explicit surface: Escape closes it and returns
         // to Select in one step, regardless of whether a symbol was armed.
         else if (this._decorTool === 'furniture') {
-          this._editorRuntime?._clearFurniturePreview();
           this._furnPalette = null;
           this._furnCategory = null;
           this._decorTool = 'select';
@@ -6170,10 +6156,6 @@ export class HouseplanCard extends LitElement {
       this._decorMoveUpdate(ev);
       return;
     }
-    if (this._mode === 'decor' && this._decorTool === 'furniture' && this._editorRuntime) {
-      this._notePointer(ev);
-      if (this._editorRuntime._furnPointerMove(ev, this._pointerModality.hoverEnabled)) return;
-    }
     if (!this._pointers.has(ev.pointerId)) {
       this._markupMove(ev);
       return;
@@ -6238,8 +6220,7 @@ export class HouseplanCard extends LitElement {
     }
   }
 
-  private _stagePointerLeave(ev: PointerEvent): void {
-    if (this._mode === 'decor') this._editorRuntime?._furnPointerLeave(ev);
+  private _stagePointerLeave(_ev: PointerEvent): void {
     if (!this._markup) return;
     if (this._tool === 'opening') {
       this._cursorPt = null;
@@ -6316,7 +6297,6 @@ export class HouseplanCard extends LitElement {
       this._decorMove = null;
       return;
     }
-    if (this._editorRuntime?._furnPointerUp(ev)) return;
     const viewportGestureEnded = !!this._pinchStart || !!this._panStart;
     this._pointers.delete(ev.pointerId);
     if (this._pointers.size < 2) this._pinchStart = null;
@@ -8038,36 +8018,6 @@ export class HouseplanCard extends LitElement {
     </g>` as unknown as TemplateResult;
   }
 
-  private get _furniturePreviewPlacement(): FurniturePlacement | null {
-    const input = this._furnPreviewInput;
-    if (!input || !this._editorRuntime || this._mode !== 'decor'
-        || this._decorTool !== 'furniture' || !this._furnPalette
-        || !this._pointerModality.hoverEnabled) return null;
-    return this._editorRuntime._resolveFurniturePlacement(input.raw, input.free, 'mouse');
-  }
-
-  /** One real furniture path, in the same decor composition group as saved
-   * shapes. It paints after them (so it is visible) and the whole decor layer
-   * still paints below physical walls (#359). */
-  private _renderFurniturePlacementPreview(): TemplateResult | typeof nothing {
-    const placement = this._furniturePreviewPlacement;
-    if (!placement) return nothing;
-    const art = furnitureGraphic(placement.symbol);
-    if (!art) return nothing;
-    const W = NORM_W, H = this._decorH;
-    const W2 = placement.w * W, H2 = placement.h * H;
-    const cx = placement.x * W + W2 / 2, cy = placement.y * H + H2 / 2;
-    const transform = `${placement.angle ? `rotate(${placement.angle} ${cx} ${cy}) ` : ''}`
-      + `translate(${placement.x * W} ${placement.y * H}) scale(${W2 / art.viewW} ${H2 / art.viewH})`;
-    const style = this._decorStyle;
-    return svg`<path class="furniture-placement-preview dfurn"
-      data-symbol=${placement.symbol} d=${art.d} transform=${transform}
-      stroke=${style.color} stroke-opacity=${style.opacity}
-      stroke-width=${decorCmToUnits(style.widthCm, this._cellCm, this._gridPitch)}
-      fill="none" stroke-linecap="round" stroke-linejoin="round"
-      vector-effect="non-scaling-stroke" aria-hidden="true" pointer-events="none"></path>`;
-  }
-
   private _renderDecorLayer(): TemplateResult {
     const W = NORM_W, H = this._decorH;
     const editing = this._mode === 'decor';
@@ -8187,7 +8137,7 @@ export class HouseplanCard extends LitElement {
               stroke="${st.color}" stroke-opacity="${st.opacity}" stroke-width="${sw}" fill="${st.fill ? st.fillColor : 'none'}" fill-opacity="${st.fill ? st.fillOpacity : 0}"></ellipse>`;
       }
     }
-    return svg`<g class="decorlayer">${shapes}${draft}${this._renderFurniturePlacementPreview()}</g>` as unknown as TemplateResult;
+    return svg`<g class="decorlayer">${shapes}${draft}</g>` as unknown as TemplateResult;
   }
 
   // ================= shared editor secondary surface =================

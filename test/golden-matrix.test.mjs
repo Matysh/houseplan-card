@@ -835,17 +835,6 @@ test('issue 159 goldens cover both palette levels and every plan-art compatibili
     new Set(['sofa', 'fridge', 'sofa_corner_right']));
 });
 
-test('issue 359 has one deterministic light-theme furniture placement preview golden', () => {
-  const scenario = GOLDEN_SCENARIOS.find((item) => item.id === 'furniture-placement-preview-light');
-  assert.ok(scenario);
-  assert.equal(scenario.mode, 'decor');
-  assert.equal(scenario.theme, 'light');
-  assert.equal(scenario.capture, 'stage');
-  assert.deepEqual(scenario.furniturePlacementPreview, {
-    symbol: 'sofa', widthCm: 180, depthCm: 90, pointer: [0.35, 0.90],
-  });
-});
-
 test('device dialog goldens expose the complete light-source controls at desktop and mobile widths', () => {
   const dialogs = GOLDEN_SCENARIOS.filter((scenario) => scenario.id.startsWith('device-dialog-'));
   assert.equal(dialogs.length, 3);

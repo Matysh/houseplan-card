@@ -65,9 +65,7 @@ import { dayCycleStageVars, renderDayCycleEnvironment } from './day-cycle-render
 import {
   FURNITURE_GROUPS, furnitureOfGroup, furnitureDefaultCm,
   furnitureGraphic, furnitureCorners, snapFurnitureToWall,
-  resolveFurniturePlacement,
-  clampFurnCm, FURN_WALL_CELLS,
-  type FurnitureGroup, type FurniturePlacement,
+  cmToNorm, clampFurnSize, clampFurnCm, FURN_WALL_CELLS, type FurnitureGroup,
 } from './furniture';
 import { GENERATED_FURNITURE_MENU } from './furniture-menu-art.generated';
 import {
@@ -919,10 +917,6 @@ export interface HouseplanEditorHostPort {
   _fullRegistryHass: any;
   _furnPalette: { symbol: string; w: number; h: number; } | null;
   _furnCategory: string | null;
-  _furnPreviewInput: { raw: [number, number]; free: boolean; } | null;
-  _furnTouchPending: {
-    pid: number; sx: number; sy: number; pointerType: string; cancelled: boolean;
-  } | null;
   _furnWallReach: number;
   _furnWalls: number[][];
   _gearPtCache: WeakMap<number[][], number[]>;
@@ -1175,7 +1169,6 @@ public _help(key: Extract<I18nKey, `${string}.help`>): TemplateResult | typeof n
 
 public _setMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate = true): void {
     this.host._endTabDrag();
-    this._clearFurniturePreview();
     // A mode command is newer than the editor remembered by a same-route warm
     // remount. Clear it before the same-mode early return: while can_write is
     // pending, Lit may still be presenting the previous editor DOM even though
@@ -2204,7 +2197,6 @@ public _commitPhysicalGeometry(
   }
 
 public _clearGeometryGesture(): void {
-    this._clearFurniturePreview();
     this.host._path = [];
     this._clearPlanSnapHover();
     this._clearOpeningPlacement(false);
@@ -2234,12 +2226,6 @@ public _clearGeometryGesture(): void {
 public _stagePointerCancel(ev: PointerEvent): void {
     clearTimeout(this.host._kioskHoldTimer);
     if (this.host._swipeStart?.id === ev.pointerId) this.host._swipeStart = null;
-    if (this.host._furnTouchPending?.pid === ev.pointerId) {
-      this._clearFurniturePreview();
-      this.host._pointers.delete(ev.pointerId);
-      this.host.requestUpdate();
-      return;
-    }
     if (this.host._physicalDrag?.pid === ev.pointerId || this.host._physicalRotate?.pid === ev.pointerId) {
       this._cancelPhysicalGesture();
       return;
@@ -4109,29 +4095,7 @@ public _decorPointerDown(ev: PointerEvent): boolean {
       // must not silently place whatever was chosen last week.
       if (!this.host._furnPalette) return false;
       ev.preventDefault();
-      // A mouse has already shown the exact result and keeps the traditional
-      // one-press stamp. Touch/pen has no hover, so commit only after a clean
-      // pointerup; pointercancel, movement and a second contact stay fail-dark.
-      const pointerType = ev.pointerType || 'mouse';
-      if (pointerType === 'mouse') {
-        this._furnPlace(this._svgPoint(ev), ev.shiftKey, pointerType);
-        return true;
-      }
-      const pending = this.host._furnTouchPending;
-      if (pending && pending.pid !== ev.pointerId) {
-        pending.cancelled = true;
-        this.host._furnPreviewInput = null;
-        return true;
-      }
-      this.host._furnTouchPending = {
-        pid: ev.pointerId,
-        sx: ev.clientX,
-        sy: ev.clientY,
-        pointerType,
-        cancelled: false,
-      };
-      this.host._furnPreviewInput = null;
-      capturePointer(ev);
+      this._furnPlace(this._svgPoint(ev), ev.shiftKey);
       return true;
     }
     // Empty-space selection belongs only to Select. Erase is an object
@@ -4675,102 +4639,39 @@ public _furnPick(symbol: string): void {
     this.host._furnPalette = { symbol, w: d.w, h: d.h };
   }
 
-public _resolveFurniturePlacement(
-    raw: number[], free = false, pointerType = 'mouse',
-  ): FurniturePlacement | null {
+public _furnPlace(raw: number[], free = false): void {
     const pal = this.host._furnPalette;
     const sp = this.host._curSpaceCfg;
-    if (!pal || !sp) return null;
+    if (!pal || !sp) return;
     const W = NORM_W, H = this.host._decorH;
-    const snapped = this._decorSnap(raw, pointerType);
-    return resolveFurniturePlacement({
-      symbol: pal.symbol,
-      widthCm: pal.w,
-      depthCm: pal.h,
-      point: [snapped[0], snapped[1]],
-      canvasW: W,
-      canvasH: H,
-      cellCm: this.host._cellCm,
-      gridPitch: this.host._gridPitch,
-      walls: this.host._furnWalls,
-      wallReach: this.host._furnWallReach,
-      free,
-    });
-  }
-
-public _furnPlace(raw: number[], free = false, pointerType = 'mouse'): void {
-    const placement = this._resolveFurniturePlacement(raw, free, pointerType);
-    if (!placement) return;
-    const sp = this.host._curSpaceCfg;
-    if (!sp) return;
+    const wN = clampFurnSize(cmToNorm(pal.w, this.host._cellCm, this.host._gridPitch, W));
+    const hN = clampFurnSize(cmToNorm(pal.h, this.host._cellCm, this.host._gridPitch, W));
     const before = this._geometrySnapshot();
+    const c = this._decorSnap(raw);
+    let cx = c[0], cy = c[1];
+    let angle = 0;
+    const snap = free ? null : snapFurnitureToWall(cx, cy, hN * H, this.host._furnWalls,
+      this.host._furnWallReach, this.host._gridPitch);
+    if (snap) { cx = snap.cx; cy = snap.cy; angle = snap.angle; }
     const id = 'df' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
     const shape: any = {
-      id, kind: 'furniture', symbol: placement.symbol,
-      x: placement.x, y: placement.y, w: placement.w, h: placement.h,
+      id, kind: 'furniture', symbol: pal.symbol,
+      x: clampCanvasN(cx / W - wN / 2), y: clampCanvasN(cy / H - hN / 2),
+      w: wN, h: hN,
       ...decorStylePatch(this.host._decorStyle, false),
     };
     // a straight piece stores no angle at all, exactly as a straight label
     // stores none (docs/LIVE-TEXT.md §3)
-    if (placement.angle) shape.angle = placement.angle;
+    if (angle) shape.angle = Number(angle.toFixed(2));
     sp.decor = [...this.host._decorList, shape];
     this.host._decorSel = id;
     // …and the editor goes back to the tool that can move what was just placed
     this.host._decorTool = 'select';
     this.host._furnPalette = null;
     this.host._furnCategory = null;
-    this._clearFurniturePreview();
     this._recordGeometry(this.host._t('history.decor_add'), before);
     this._saveConfig();
     this.host.requestUpdate();
-  }
-
-public _clearFurniturePreview(): void {
-    this.host._furnPreviewInput = null;
-    this.host._furnTouchPending = null;
-  }
-
-/** Track only real fine-pointer hover. Touch/pen own a delayed one-tap
- * transaction below and must never resurrect a compatibility mouse ghost. */
-public _furnPointerMove(ev: PointerEvent, hoverAllowed: boolean): boolean {
-    const pending = this.host._furnTouchPending;
-    if (pending?.pid === ev.pointerId) {
-      if (Math.abs(ev.clientX - pending.sx) + Math.abs(ev.clientY - pending.sy) > 8) {
-        pending.cancelled = true;
-      }
-      this.host._furnPreviewInput = null;
-      return true;
-    }
-    if (this.host._mode !== 'decor' || this.host._decorTool !== 'furniture'
-        || !this.host._furnPalette) {
-      this._clearFurniturePreview();
-      return false;
-    }
-    if (ev.pointerType !== 'mouse' || !hoverAllowed) {
-      this.host._furnPreviewInput = null;
-      return false;
-    }
-    const raw = this._svgPoint(ev);
-    this.host._furnPreviewInput = { raw: [raw[0], raw[1]], free: ev.shiftKey };
-    return true;
-  }
-
-public _furnPointerLeave(ev: PointerEvent): void {
-    if (this.host._furnTouchPending?.pid === ev.pointerId) {
-      this.host._furnTouchPending.cancelled = true;
-    }
-    this.host._furnPreviewInput = null;
-  }
-
-public _furnPointerUp(ev: PointerEvent): boolean {
-    const pending = this.host._furnTouchPending;
-    if (!pending || pending.pid !== ev.pointerId) return false;
-    this.host._furnTouchPending = null;
-    if (!pending.cancelled && this.host._mode === 'decor'
-        && this.host._decorTool === 'furniture' && this.host._furnPalette) {
-      this._furnPlace(this._svgPoint(ev), ev.shiftKey, pending.pointerType);
-    }
-    return true;
   }
 
 public _furnMoveUpdate(ev: PointerEvent): void {
@@ -4864,7 +4765,6 @@ public _renderFurnPalette(): TemplateResult {
         <span class="spacer"></span>
         <button class="btn furnclose" title=${this.host._t('btn.close')}
           @click=${() => {
-            this._clearFurniturePreview();
             this.host._furnPalette = null;
             this.host._furnCategory = null;
             this.host._decorTool = 'select';
@@ -4875,7 +4775,6 @@ public _renderFurnPalette(): TemplateResult {
       <div class="furnbody">
         ${category ? html`
           <button class="btn ghost furnback" @click=${() => {
-            this._clearFurniturePreview();
             this.host._furnPalette = null;
             this.host._furnCategory = null;
           }}>
@@ -4899,7 +4798,6 @@ public _renderFurnPalette(): TemplateResult {
               class="furnitem furncategory" data-category=${item.id}
               title=${this.host._t(`furn.cat_${item.id}` as I18nKey)}
               @click=${() => {
-                this._clearFurniturePreview();
                 this.host._furnPalette = null;
                 this.host._furnCategory = item.id;
               }}>
@@ -5219,7 +5117,6 @@ public _renderDecorSecondary(): EditorSecondaryModel | null {
         dismissPolicy: this.host._furnPalette ? 'stay-open-on-canvas' : 'outside',
         dismiss: () => {
           if (this.host._decorTool !== 'furniture') return;
-          this._clearFurniturePreview();
           this.host._furnPalette = null;
           this.host._furnCategory = null;
           this.host._decorTool = 'select';
@@ -5342,7 +5239,6 @@ public _renderDecorBar(): TemplateResult {
           data-editor-palette=${t === 'furniture' ? 'furniture' : nothing}
           @click=${() => {
             if (t === 'furniture' && this.host._decorTool === 'furniture') {
-              this._clearFurniturePreview();
               this.host._furnPalette = null;
               this.host._furnCategory = null;
               this.host._decorTool = 'select';
@@ -5354,11 +5250,9 @@ public _renderDecorBar(): TemplateResult {
             // the palette belongs to its tool and to nothing else: leaving the
             // tool disarms whatever was chosen, so no later click can stamp it
             if (t !== 'furniture') {
-              this._clearFurniturePreview();
               this.host._furnPalette = null;
               this.host._furnCategory = null;
             } else {
-              this._clearFurniturePreview();
               this.host._furnCategory = null;
             }
           }}

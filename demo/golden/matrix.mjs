@@ -418,9 +418,6 @@ export const GOLDEN_SCENARIOS = Object.freeze([
   { id: 'furniture-variants-light', fixture: 'visual', space: 'golden-geometry', mode: 'decor',
     furniturePalette: 'variants', furnitureCategory: 'coffee_table', language: 'ru', theme: 'light',
     viewport: { width: 900, height: 820 }, ...page },
-  { id: 'furniture-placement-preview-light', fixture: 'visual', space: 'golden-geometry', mode: 'decor',
-    furniturePlacementPreview: { symbol: 'sofa', widthCm: 180, depthCm: 90, pointer: [0.35, 0.90] },
-    language: 'ru', theme: 'light', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'furniture-plan-art-dark', fixture: 'visual', space: 'golden-geometry', mode: 'view',
     decorOverride: [
       ...decorLayerFixture.filter((shape) => shape.kind !== 'furniture'),

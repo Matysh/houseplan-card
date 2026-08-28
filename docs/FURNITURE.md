@@ -53,21 +53,9 @@ Furniture is a two-level non-modal palette in the editor context tray:
 3. The second level shows the real top-view drawings. Back returns to the
    category list and clears any armed symbol.
 4. Picking a variant arms one placement and reveals editable Width and Depth
-   in the Home Assistant length unit. With a mouse, moving over the plan shows
-   the real top-view symbol at its exact future size, wall magnet, rotation and
-   canvas clamp. Editing Width or Depth updates that ghost immediately without
-   requiring another pointer move.
-5. Clicking the plan places exactly the previewed object and returns to Select.
-   Shift keeps the established free-placement behaviour. The ghost is a
-   transient, 55%-opaque rendering aid: it is never saved and never enters
-   Undo history.
-6. Pointer leave, Escape, palette/tool/editor/space changes and remount clear
-   the ghost. Unknown or stale symbol ids show and save nothing.
-
-Touch and pen do not emulate hover or show a placement ghost. Their best-effort
-editor path saves one object only after a clean tap; movement, pointer cancel
-or a second contact cancels that pending stamp so pinch/cancel cannot create
-furniture accidentally. View and kiosk touch guarantees remain unchanged.
+   in the Home Assistant length unit.
+5. Clicking the plan places the object and returns to Select. Shift keeps the
+   established free-placement behaviour.
 
 The properties dialog remains a flat native select, grouped by category. Its
 optgroup label includes both the parent group and category because HTML selects

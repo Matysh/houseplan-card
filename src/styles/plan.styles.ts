@@ -737,10 +737,6 @@ export const planStyles = css`
         calc(5px * var(--hp-cell-visual-scale, 1));
       pointer-events: none;
     }
-    .decorlayer .furniture-placement-preview {
-      opacity: 0.55;
-      pointer-events: none;
-    }
     .decorlayer text {
       font-weight: 600;
       user-select: none;

@@ -2,12 +2,6 @@
 
 ## Unreleased
 
-- Furniture placement in the Background editor now shows a translucent mouse
-  preview with the exact future size, rotation and wall snap. It follows live
-  size edits and disappears without a config change on cancel; on touch,
-  movement, cancellation or a second contact cannot create an accidental item
-  ([#359](https://github.com/Matysh/houseplan-card/issues/359)).
-
 - Robot-vacuum trails now follow the same recorded points with softly rounded
   corners instead of a visibly segmented polyline. Current and previous runs
   use the same bounded curve, preserve telemetry gaps and never deviate by more

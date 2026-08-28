@@ -28,7 +28,7 @@
  *     colour, so a plan stays a drawing (owner: «символы рисуются линейно»).
  */
 
-import { NORM_W, GRID_PITCH, CANVAS_LIMIT, clampCanvasN } from './space-geometry';
+import { NORM_W, GRID_PITCH, CANVAS_LIMIT } from './space-geometry';
 import { GENERATED_FURNITURE_PLAN } from './furniture-plan-art.generated';
 
 /** Groups the palette shows, in the order it shows them. */
@@ -395,33 +395,6 @@ export interface FurnitureSnap {
 /** Wall segments (`[x1,y1,x2,y2]`) in whatever units the caller works in. */
 export type WallSeg = number[];
 
-/** Final normalised box shared by the placement ghost and the saved decor
- * record. Keeping this result pure prevents a preview/commit jump when wall
- * magnetism or the canvas guard participates (#359). */
-export interface FurniturePlacement {
-  symbol: string;
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-  angle: number;
-}
-
-export interface FurniturePlacementInput {
-  symbol: string;
-  widthCm: number;
-  depthCm: number;
-  /** Already resolved decor/grid snap point, in render units. */
-  point: readonly [number, number];
-  canvasW: number;
-  canvasH: number;
-  cellCm: number;
-  gridPitch: number;
-  walls: WallSeg[];
-  wallReach: number;
-  free?: boolean;
-}
-
 const norm180 = (a: number): number => {
   let x = ((a % 360) + 360) % 360;
   if (x > 180) x -= 360;
@@ -483,43 +456,6 @@ export function snapFurnitureToWall(
     best = { cx: qx + nx * (depth / 2), cy: qy + ny * (depth / 2), angle, dist: d };
   }
   return best;
-}
-
-/**
- * Resolve the exact geometry one furniture stamp will own.
- *
- * The caller owns the higher-level decor/room/grid snap because that geometry
- * is editor state. Everything after that point is pure and therefore shared
- * byte-for-byte by hover preview and commit. Unknown symbols fail dark: a
- * newer config or a stale palette cannot create invisible furniture.
- */
-export function resolveFurniturePlacement(input: FurniturePlacementInput): FurniturePlacement | null {
-  const {
-    symbol, widthCm, depthCm, point, canvasW, canvasH, cellCm, gridPitch,
-    walls, wallReach, free = false,
-  } = input;
-  if (!furnitureGraphic(symbol) || !(canvasW > 0) || !(canvasH > 0)
-      || !Number.isFinite(point[0]) || !Number.isFinite(point[1])) return null;
-  const w = clampFurnSize(cmToNorm(widthCm, cellCm, gridPitch, canvasW));
-  const h = clampFurnSize(cmToNorm(depthCm, cellCm, gridPitch, canvasW));
-  let cx = point[0], cy = point[1];
-  let angle = 0;
-  const snap = free ? null : snapFurnitureToWall(
-    cx, cy, h * canvasH, walls, wallReach, gridPitch,
-  );
-  if (snap) {
-    cx = snap.cx;
-    cy = snap.cy;
-    angle = snap.angle;
-  }
-  return {
-    symbol,
-    x: clampCanvasN(cx / canvasW - w / 2),
-    y: clampCanvasN(cy / canvasH - h / 2),
-    w,
-    h,
-    angle: Number(angle.toFixed(2)),
-  };
 }
 
 /**

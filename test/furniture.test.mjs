@@ -6,8 +6,7 @@ import assert from 'node:assert/strict';
 import {
   FURNITURE, FURNITURE_GROUPS, furnitureSymbol, furnitureOfGroup,
   furnitureDefaultCm, furniturePathD, furnitureGraphic, furnitureCorners, furnitureResize,
-  snapFurnitureToWall, resolveFurniturePlacement,
-  cmToNorm, normToCm, clampFurnSize, clampFurnCm,
+  snapFurnitureToWall, cmToNorm, normToCm, clampFurnSize, clampFurnCm,
   FURN_MIN_N, FURN_MIN_CM, FURN_MAX_CM, FURN_WALL_CELLS,
 } from '../test-build/furniture.js';
 import { roomEdges } from '../test-build/logic.js';
@@ -184,38 +183,6 @@ test('the offset ALONG the wall is quantised to the grid when a step is given', 
 test('the default reach is six cells — thirty centimetres on a default plan', () => {
   assert.equal(FURN_WALL_CELLS, 6);
   closeTo(GRID_PITCH * FURN_WALL_CELLS * (5 / GRID_PITCH), 30);  // cells x cell_cm
-});
-
-test('preview and commit share one deterministic furniture placement resolver', () => {
-  const input = {
-    symbol: 'sofa', widthCm: 180, depthCm: 90,
-    point: [300, 112], canvasW: 1000, canvasH: 1000,
-    cellCm: 5, gridPitch: GRID_PITCH, walls: EDGES,
-    wallReach: 30,
-  };
-  const preview = resolveFurniturePlacement(input);
-  const commit = resolveFurniturePlacement({ ...input });
-  assert.deepEqual(preview, commit);
-  assert.equal(preview.symbol, 'sofa');
-  closeTo((preview.x + preview.w / 2) * 1000, 300, GRID_PITCH);
-  closeTo((preview.y + preview.h / 2) * 1000, 100 + preview.h * 500);
-  assert.equal(preview.angle, 0);
-});
-
-test('the shared placement resolver supports Shift/free, canvas guards and unknown symbols', () => {
-  const base = {
-    symbol: 'sofa', widthCm: 180, depthCm: 90,
-    point: [300, 112], canvasW: 1000, canvasH: 1000,
-    cellCm: 5, gridPitch: GRID_PITCH, walls: EDGES,
-    wallReach: 30,
-  };
-  const free = resolveFurniturePlacement({ ...base, free: true });
-  closeTo((free.x + free.w / 2) * 1000, 300);
-  closeTo((free.y + free.h / 2) * 1000, 112);
-  const guarded = resolveFurniturePlacement({ ...base, point: [-1e9, -1e9], free: true });
-  assert.equal(guarded.x, -5000);
-  assert.equal(guarded.y, -5000);
-  assert.equal(resolveFurniturePlacement({ ...base, symbol: 'future_unknown_symbol' }), null);
 });
 
 // ------------------------------- the frame ----------------------------------
