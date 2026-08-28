@@ -4781,13 +4781,13 @@ public _renderFurnPalette(): TemplateResult {
           <div class="furnrow furnvariants">
             ${variants.map((symbol) => html`<button
               class="furnitem ${pal?.symbol === symbol.id ? 'on' : ''}" data-symbol=${symbol.id}
-              title=${this.host._t(`furn.sym_${symbol.id}` as any)}
+              title=${this.host._t(`furn.sym_${symbol.id}` as I18nKey)}
               @click=${() => this._furnPick(symbol.id)}>
-              ${preview(symbol.id)}<span>${this.host._t(`furn.sym_${symbol.id}` as any)}</span>
+              ${preview(symbol.id)}<span>${this.host._t(`furn.sym_${symbol.id}` as I18nKey)}</span>
             </button>`)}
           </div>
         ` : FURNITURE_GROUPS.map((g) => html`
-          <div class="furngroup" data-group=${g}>${this.host._t(`furn.group_${g}` as any)}</div>
+          <div class="furngroup" data-group=${g}>${this.host._t(`furn.group_${g}` as I18nKey)}</div>
           <div class="furnrow furncategories">
             ${categories.filter((item) => item.group === g).map((item) => html`<button
               class="furnitem furncategory" data-category=${item.id}
@@ -5389,7 +5389,7 @@ public _renderDecorShapeDialog(): TemplateResult {
                 <optgroup label=${`${this.host._t(`furn.group_${category.group}` as I18nKey)} · ${this.host._t(`furn.cat_${category.id}` as I18nKey)}`}>
                 ${symbols.map((symbol) => html`<option value=${symbol.id}
                   ?selected=${symbol.id === d.symbol}>
-                  ${this.host._t(`furn.sym_${symbol.id}` as any)}
+                  ${this.host._t(`furn.sym_${symbol.id}` as I18nKey)}
                 </option>`)}
               </optgroup>`)}
             </select>` : nothing}
