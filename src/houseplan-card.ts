@@ -890,10 +890,21 @@ export class HouseplanCard extends LitElement {
   public async _requestMode(
     mode: 'view' | 'plan' | 'devices' | 'decor',
     animate = true,
+    adopt = false,
   ): Promise<void> {
     const request = ++this._editorModeRequest;
     if (mode !== 'view' && !(await this._ensureEditorRuntime())) return;
     if (request !== this._editorModeRequest) return;
+    if (adopt) {
+      this._adoptMode(mode);
+      if (this._warmRevivePending) {
+        clearTimeout(this._warmReviveTimer);
+        this._warmReviveTimer = undefined;
+        this._warmReviveDialog();
+      }
+      this.requestUpdate();
+      return;
+    }
     this._setMode(mode, animate);
   }
   public hass?: any;
@@ -3176,8 +3187,13 @@ export class HouseplanCard extends LitElement {
     }
     this._commitSpace(vp.space, true);
     this._navApplied = true;
-    // the editor comes back only where an editor is allowed at all
-    this._adoptMode(vp.mode !== 'view' && this._canEdit && !config.kiosk ? vp.mode : 'view');
+    // A remounted card owns a fresh lazy-runtime instance. Keep View committed
+    // until that runtime has installed, then adopt the remembered editor
+    // atomically without rebuilding its camera through a View -> editor
+    // transition. A newer user command invalidates this request through the
+    // shared request counter.
+    const restoredMode = vp.mode !== 'view' && this._canEdit && !config.kiosk ? vp.mode : 'view';
+    this._adoptMode('view');
     // AUD-159B6-04: the memo is the NEWER and MORE SPECIFIC record than the
     // global LS nav — a neighbour card writing `mode=devices` into localStorage
     // must not be replayed over this owner's viewport once can_write answers
@@ -3203,6 +3219,7 @@ export class HouseplanCard extends LitElement {
     this._resize?.restoreSelection(vp.rszSel);
     this._decorSel = vp.decorSel;
     this._warmVpArmed = true; // _loadFromServer must not re-centre this
+    if (restoredMode !== 'view') void this._requestMode(restoredMode, false, true);
   }
 
   /** Merge a patch into this card's warm entry. `create` is false everywhere
@@ -3338,12 +3355,24 @@ export class HouseplanCard extends LitElement {
    * detached (`freed`) and the snapshot is ours to consume — exactly once.
    */
   private _warmReviveDialog(): void {
-    this._warmRevivePending = false;
     const e = this._warmSlot; // AUD-159B1-01: OUR slot, never a neighbour's
     this._warmReviveTimer = undefined;
-    if (!e || !e.dlg) return;
+    if (!e || !e.dlg) {
+      this._warmRevivePending = false;
+      return;
+    }
     const d = e.dlg;
     const freed = e.freed;
+    if (d.mode !== this._mode && d.mode !== 'view' && this._warmVp?.mode === d.mode
+        && !this._editorRuntime) {
+      // The dialog belongs to the editor viewport that is currently waiting
+      // for its lazy runtime. Do not consume it against the temporary View;
+      // `_requestMode(..., adopt=true)` revives it immediately after the mode
+      // can be committed safely.
+      this._warmRevivePending = true;
+      return;
+    }
+    this._warmRevivePending = false;
     e.dlg = null; e.freed = 0; // consume-once: no zombie on the third mount
     clearTimeout(e.evict); e.evict = 0;
     if (!freed || Date.now() - freed > WARM_REVIVE_MS) return; // owner alive, or gone long ago
@@ -9941,7 +9970,7 @@ export class HouseplanCard extends LitElement {
   }
 
   private _checkOptimizeGeometry(config: ServerConfig): OptimizeGeometryPreflightResult {
-    return this._editorRuntimeOrThrow()._checkOptimizeGeometry(config);
+    return this._editorRuntimeOrThrow()._checkOptimizeGeometryImpl(config);
   }
 
   /** One strict production source shared by editor commits and stale rechecks. */
@@ -9952,7 +9981,7 @@ export class HouseplanCard extends LitElement {
       geometry: ReturnType<typeof wallBodiesGeometry>,
     ) => void,
   ) {
-    return this._editorRuntimeOrThrow()._checkSpacePhysicalGeometry(config, spaceId, captureWallGeometry);
+    return this._editorRuntimeOrThrow()._checkSpacePhysicalGeometryImpl(config, spaceId, captureWallGeometry);
   }
 
   private _optimizeReferenceContext(
@@ -10597,12 +10626,44 @@ export class HouseplanCard extends LitElement {
   }
 
   private _saveKioskScale(patch: Partial<{ icon: number; font: number }>): void {
-    return this._editorRuntimeOrThrow()._saveKioskScale(patch);
+    this._kioskScale = { ...this._kioskScale, ...patch };
+    try {
+      localStorage.setItem(LS_KIOSK, JSON.stringify(this._kioskScale));
+    } catch {
+      /* ignore */
+    }
+    this.requestUpdate();
   }
 
   /** Per-SCREEN size settings (wall tablets differ) — stored locally. */
   private _renderKioskDialog(): TemplateResult {
-    return this._editorRuntimeOrThrow()._renderKioskDialog();
+    const k = this._kioskScale;
+    const row = (key: 'icon' | 'font', label: string) => {
+      const value = Math.round(k[key] * 100);
+      const input = (event: Event) => {
+        const next = Number((event.target as HTMLInputElement).value);
+        if (Number.isFinite(next)) this._saveKioskScale({ [key]: next / 100 });
+      };
+      return html`<label>${label}</label>
+        <div class="colorrow">
+          <input type="range" min="50" max="300" step="5" .value=${String(value)}
+            @input=${input} aria-label=${label} />
+          <span class="opv">${value}%</span>
+        </div>`;
+    };
+    return html`<hp-dialog .hass=${this.hass} .title=${this._t('kiosk.title')} icon="mdi:tablet"
+      dismiss-on-scrim @hp-close=${() => (this._kioskDialog = false)}>
+        <div class="body">
+          <div class="rhint">${this._t('kiosk.hint')}</div>
+          ${row('icon', this._t('kiosk.icon_scale'))}
+          ${row('font', this._t('kiosk.font_scale'))}
+        </div>
+        <div class="row" slot="footer">
+          <button class="btn ghost" @click=${() => this._saveKioskScale({ icon: 1, font: 1 })}>${this._t('gs.reset')}</button>
+          <span class="spacer"></span>
+          <button class="btn on" @click=${() => (this._kioskDialog = false)}>${this._t('btn.close')}</button>
+        </div>
+    </hp-dialog>`;
   }
 
   // ================= render =================
@@ -11286,7 +11347,7 @@ export class HouseplanCard extends LitElement {
               ${this._model.map((m) => html`<span class="kdot ${m.id === this._space ? 'on' : ''}"></span>`)}
             </div>`
           : nothing}
-        ${this._kioskDialog ? this._editorRuntime ? this._renderKioskDialog() : nothing : nothing}
+        ${this._kioskDialog ? this._renderKioskDialog() : nothing}
         ${this._vacFit ? html`<div class="vaccalbar">
           <span>${this._t('vac.fit_hint')}</span>
           <button class="btn ghostbtn" @click=${() => this._vacFitTurn({ rot: ((this._vacFit!.p.rot + 90) % 360) as any })}>${this._t('vac.fit_rotate')}</button>

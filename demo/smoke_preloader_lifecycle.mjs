@@ -51,6 +51,7 @@ const rec = await page.evaluate(async () => {
   // A detach during resume/mode motion kills the one RAF owner. The transient
   // state must die with it, otherwise the same element comes back inert or
   // permanently pinned to an intermediate camera.
+  await c._ensureEditorRuntime();
   c._resumeSettling = true;
   c._slide = 'left';
   const from = c._currentModeVisual('view');

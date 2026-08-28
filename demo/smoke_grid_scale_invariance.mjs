@@ -38,7 +38,9 @@ await page.evaluate(async () => {
     d_temp: { s: 'f1', x: 0.72, y: 0.24 },
   };
   const sharedLayout = card._layout;
-  const originalGridLevels = card._gridLevels.bind(card);
+  await card._ensureEditorRuntime();
+  const runtime = card._editorRuntime;
+  const originalGridLevels = runtime._gridLevels.bind(runtime);
   const scalePoint = (point, factor) => point.map((value) => value * factor);
   const scaledFixture = (cellCm) => {
     const factor = 5 / cellCm;
@@ -96,7 +98,8 @@ await page.evaluate(async () => {
     card._decorTool = mode === 'decor' ? 'backdrop' : 'select';
     // Grid density is the one allowed difference. Mask it in every editor
     // raster pair and prove the precision ratio separately below.
-    card._gridLevels = mode === 'view' ? originalGridLevels : () => null;
+    runtime._gridLevels = mode === 'view' ? originalGridLevels : () => null;
+    card._gridLevels = () => runtime._gridLevels();
     card._labs = { ...card._labs, active: projection === 'iso' ? ['iso'] : [] };
     card._viewPreference = { ...card._viewPreference, f1: projection };
     card._isoFallback.clear();

@@ -121,6 +121,17 @@ test('source type references stay portable across build hosts', () => {
   );
 });
 
+test('lazy runtime event handlers keep the runtime receiver', () => {
+  const runtime = readFileSync(join(repoRoot, 'src', 'houseplan-editor-runtime.ts'), 'utf8');
+  const bareHandlers = [...runtime.matchAll(/@[a-zA-Z-]+=\$\{this\.(_[A-Za-z0-9]+)\}/g)]
+    .map((match) => match[1]);
+  assert.deepEqual(
+    bareHandlers,
+    [],
+    `Lit binds bare listeners to the host element, not the lazy runtime: ${bareHandlers.join(', ')}`,
+  );
+});
+
 test('documentation capture materializes the complete bundle tree', () => {
   const capture = readFileSync(join(repoRoot, 'demo', 'docs', 'capture.mjs'), 'utf8');
   assert.match(capture, /import ['"]\.\.\/\.\.\/scripts\/bundle-sync\.mjs['"]/);

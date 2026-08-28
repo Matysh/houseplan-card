@@ -58,7 +58,12 @@ const res = await page.evaluate(async () => {
 // terser либо инлайнит строку (v1.56.0), либо оставляет переменную (v${xx}) —
 // во втором случае доразрешаем её по присваиванию xx="1.56.0".
 // Версия — SemVer, у пре-релиза есть суффикс (1.58.0-beta.1), он тоже часть строки.
-const bundle = readFileSync(new URL('./srv/assets/houseplan-card.js', import.meta.url), 'utf8');
+const assetsRoot = new URL('./srv/assets/', import.meta.url);
+const assetManifest = JSON.parse(readFileSync(new URL('houseplan-assets.json', assetsRoot), 'utf8'));
+const bundle = assetManifest.files
+  .filter((file) => file.path.endsWith('.js'))
+  .map((file) => readFileSync(new URL(file.path, assetsRoot), 'utf8'))
+  .join('\n');
 const SEMVER = '\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?';
 const m = bundle.match(new RegExp(`HOUSEPLAN-CARD %c v(?:(${SEMVER})|\\$\\{(\\w+)\\})`));
 const BUNDLE_VERSION = m?.[1] ?? (m?.[2] && bundle.match(new RegExp(`[^\\w$]${m[2]}="(${SEMVER})"`))?.[1]);

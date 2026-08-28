@@ -44,7 +44,7 @@ const out = await page.evaluate(async () => {
     card._planSnapGeometryCache = null;
     card.requestUpdate();
   };
-  card._setMode('plan');
+  await card._requestMode('plan');
   card._activateOpeningPlacement('door');
   await update();
 
@@ -71,16 +71,17 @@ const out = await page.evaluate(async () => {
     && Math.abs(endpointCandidate.host.t - (endpointX - 250) / 500) < 1e-9
     && !!endpointCandidate.measure.labels[0].text;
 
-  const originalSvgPoint = card._svgPoint;
+  const runtime = card._editorRuntime;
+  const originalSvgPoint = runtime._svgPoint;
   card._opDrag = {
     id: saved.id, moved: false, sx: 0, sy: 0, dirty: false,
     before: card._geometrySnapshot(),
   };
-  card._svgPoint = () => [250, 500];
+  runtime._svgPoint = () => [250, 500];
   card._opPointerMove(new PointerEvent('pointermove', {
     pointerId: 186, clientX: 20, clientY: 0, bubbles: true,
   }), saved);
-  card._svgPoint = originalSvgPoint;
+  runtime._svgPoint = originalSvgPoint;
   card._opPointerUp(new PointerEvent('pointerup', { pointerId: 186, bubbles: true }), saved);
   await update();
   result.directDragStopsAtSameJambBoundary = Math.abs(saved.host.t - (endpointX - 250) / 500) < 1e-9

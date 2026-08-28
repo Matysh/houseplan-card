@@ -83,8 +83,9 @@ const res = await page.evaluate(async () => {
   // The production registry adapter is covered by unit/backend tests. Stub
   // only the transactional projection here so the smoke owns no shared
   // registry singleton state and remains deterministic.
-  const realPreview = c._markerPreviewDevice.bind(c);
-  c._markerPreviewDevice = (draft) => draft.devId === multi.id ? {
+  const runtime = c._editorRuntime;
+  const realPreview = runtime._markerPreviewDevice.bind(runtime);
+  runtime._markerPreviewDevice = (draft) => draft.devId === multi.id ? {
     ...multi,
     entities: [multi.primary, extra],
     marker: {
@@ -99,7 +100,7 @@ const res = await page.evaluate(async () => {
   });
   await c.updateComplete;
   out.leadingDraftIsAlways = c._markerDialog.lightRole === 'always';
-  out.leadingPreviewHasExtra = c._markerPreviewDevice(c._markerDialog)?.entities?.includes(extra) === true;
+  out.leadingPreviewHasExtra = runtime._markerPreviewDevice(c._markerDialog)?.entities?.includes(extra) === true;
   const leading = sr().querySelector('hp-dialog #marker-light-entity');
   out.leadingSelectorForMultiple = !!leading && leading.options.length === 3;
   out.savedLeadingEntitySelected = leading?.value === extra
@@ -114,7 +115,7 @@ const res = await page.evaluate(async () => {
     out.leadingUpdatesPreview = false;
   }
   c._markerDialog = null; await c.updateComplete;
-  c._markerPreviewDevice = realPreview;
+  runtime._markerPreviewDevice = realPreview;
 
   const single = c._devices.find((device) => device.id === 'd_lamp');
   c._openMarkerDialog(single); await c.updateComplete;

@@ -188,7 +188,7 @@ const out = await page.evaluate(async () => {
   card._spaceDialog = null;
   await card.updateComplete;
 
-  const editor = document.createElement('houseplan-card-editor');
+  const editor = await customElements.get('houseplan-card').getConfigElement();
   editor.hass = {
     ...card.hass,
     callWS: async (message) => message.type === 'houseplan/config/get'

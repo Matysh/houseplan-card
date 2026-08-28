@@ -48,13 +48,14 @@ const res = await page.evaluate(async () => {
   A._applyView(2.15, 300, 420);
   A.requestUpdate(); await A.updateComplete; await sleep(60);
   const zoomA = A._zoom;
+  await A._ensureEditorRuntime();
   A._openSpaceDialog('edit', A._space); await A.updateComplete;
   A._spaceDialog = { ...A._spaceDialog, title: 'DRAFT-FROM-A' };
   await A.updateComplete; await sleep(30);
 
   const B = mk();                      // вторая карточка, тот же конфиг
   await settle(B);
-  B._setMode('devices'); await B.updateComplete; await settle(B);
+  await B._requestMode('devices'); await B.updateComplete; await settle(B);
   B._applyView(3.35, 200, 200);
   B.requestUpdate(); await B.updateComplete; await sleep(60);
   const zoomB = B._zoom;
@@ -77,6 +78,7 @@ const res = await page.evaluate(async () => {
   HP._warmBootReset(400);
   let c = mk();
   await settle(c);
+  await c._ensureEditorRuntime();
   c._openSpaceDialog('edit', c._space); await c.updateComplete;
   c._spaceDialog = { ...c._spaceDialog, title: 'DRAFT-RAPID' };
   await c.updateComplete; await sleep(30);
@@ -95,6 +97,7 @@ const res = await page.evaluate(async () => {
   HP._warmBootReset(400);
   c = mk();
   await settle(c);
+  await c._ensureEditorRuntime();
   c._openSpaceDialog('edit', c._space); await c.updateComplete;
   c._spaceDialog = { ...c._spaceDialog, title: 'DRAFT-TTL', planFile: 'x'.repeat(4096) };
   await c.updateComplete; await sleep(30);
