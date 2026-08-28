@@ -16,7 +16,11 @@ import {
   contentUrl, chunk, referencedContentUrls, MAX_SIGN_PATHS,
   interiorPoint,
   segmentCm, formatLength, roomEdges, roomPoly, paperRoomShapes, pointOnBoundary, pointStrictlyInside, roomsOverlap,
-  mergeRooms, splitRoom, polygonArea, closestPointOnBoundary, isActiveState, snapToWall, openingAmount, openingShoulders, openingEntityReferences, fillColorsOf, lerpColor, roomFillStyle, resolveEffectiveRoomFill, stateIcon, lightColorOf, isAlarmState, parseRoomRef, diffNewDevices, poleOfInaccessibility, runServiceFor, coverMoving,
+  mergeRooms, splitRoom, polygonArea, closestPointOnBoundary, isActiveState, snapToWall,
+  openingAmount, openingLightApertureLength, openingLightStateSignature,
+  openingShoulders, openingEntityReferences, fillColorsOf, lerpColor, roomFillStyle,
+  resolveEffectiveRoomFill, stateIcon, lightColorOf, isAlarmState, parseRoomRef,
+  diffNewDevices, poleOfInaccessibility, runServiceFor, coverMoving,
   normalizeDeviceDisplay, isAlarmCapable,
   liveText, liveTextValue, liveTextReference, liveTextToken,
   hassValue, valueWithUnit, decorTextScale, decorTextLines,
@@ -490,6 +494,44 @@ test('openingAmount: door-like openings default open, windows closed; outages fr
   for (const state of [null, 'on', 'off', 'unknown', 'unavailable']) {
     assert.equal(openingAmount('passage', state, true), 1, `passage is fixed open for ${state}`);
   }
+});
+
+test('openingAmount shares positioned cover progress with light apertures', () => {
+  assert.equal(openingAmount('gate', 'open', false, 0), 0);
+  assert.equal(openingAmount('gate', 'open', false, 1), 0.01);
+  assert.equal(openingAmount('gate', 'open', false, 50), 0.5);
+  assert.equal(openingAmount('gate', 'open', false, 100), 1);
+  assert.equal(openingAmount('gate', 'open', false, -20), 0);
+  assert.equal(openingAmount('gate', 'open', false, 140), 1);
+  assert.equal(openingAmount('gate', 'open', false, '40'), 0.4);
+  assert.equal(openingAmount('gate', 'open', false, ''), 1, 'empty position falls back to state');
+  assert.equal(openingAmount('gate', 'off', false, 'bad'), 0, 'invalid position falls back to state');
+  assert.equal(openingAmount('gate', 'open', true, 25), 0.75);
+  assert.equal(openingAmount('gate', 'unavailable', true, 25), 1,
+    'outage fallback ignores stale position and invert');
+  assert.equal(openingAmount('passage', 'off', true, 0), 1);
+
+  assert.equal(openingLightApertureLength(80, 0.5), 40);
+  assert.equal(openingLightApertureLength(80, -1), 0);
+  assert.equal(openingLightApertureLength(80, 2), 80);
+  assert.equal(openingLightApertureLength(NaN, 0.5), 0);
+});
+
+test('opening light state signature is ordered, bounded and contact-only', () => {
+  const a = [
+    { id: 'gate-b', type: 'gate', contact: 'cover.gate', amount: 0.5004 },
+    { id: 'door-a', type: 'door', contact: 'binary_sensor.door', amount: 1 },
+    { id: 'passage', type: 'passage', contact: null, amount: 1 },
+    { id: 'window', type: 'window', contact: 'binary_sensor.window', amount: 0 },
+    { id: 'unbound', type: 'door', contact: '', amount: 0 },
+  ];
+  const expected = 'door-a:1.000|gate-b:0.500';
+  assert.equal(openingLightStateSignature(a), expected);
+  assert.equal(openingLightStateSignature([...a].reverse()), expected);
+  assert.equal(openingLightStateSignature([
+    { id: 'low', type: 'door', contact: 'binary_sensor.low', amount: -2 },
+    { id: 'high', type: 'gate', contact: 'cover.high', amount: 2 },
+  ]), 'high:1.000|low:0.000');
 });
 
 test('stale passage bindings stay inert while ordinary opening bindings remain live', () => {

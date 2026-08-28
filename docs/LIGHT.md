@@ -20,7 +20,8 @@ all. None of those states is expressible now.
 ## What stops light, and what does not
 
 `_lightBarriers()` (`src/houseplan-card.ts`) builds the barrier set once per
-plan geometry and shares it between every lamp in the space.
+plan geometry and relevant opening-state signature, then shares it between
+every lamp in the space.
 
 **Opaque**
 
@@ -34,8 +35,11 @@ plan geometry and shares it between every lamp in the space.
 
 **Transparent**
 
-- doorways, gates and saved `passage` openings — cut through the masonry, so an opening is a real
-  gap between two jamb faces and a thick wall's returns narrow the beam;
+- doorways and gates to floor on both sides, but only by their resolved opening
+  amount. An unbound opening is fully transparent, a bound closed one is opaque,
+  and a positional cover cuts a centre-aligned fraction of the full aperture;
+- saved `passage` openings — always cut through the masonry, so an opening is a
+  real gap between two jamb faces and a thick wall's returns narrow the beam;
 - every zero-thickness wall when its space uses the **Dashed** style.
 
 The setting is intentionally one semantic switch, not just paint. Missing or
@@ -52,7 +56,12 @@ input is only a v8 read projection and migrates to ordinary `cm:0` atoms.
   sides are floor; otherwise a front door glows halfway — up to the centreline,
   where the room polygon ends — and the plan shows a lit doorway to nowhere.
 
-The classifier is an explicit `door | gate | passage` allowlist. Any unknown
+The classifier is an explicit `door | gate | passage` allowlist. Door and gate
+state is resolved by the same `openingAmount()` used for their visible symbol:
+binary contacts yield zero or full aperture, finite `current_position` yields
+`clamp(position / 100)`, and `invert` mirrors a known amount. Missing,
+disabled, `unknown` or `unavailable` contacts preserve the static-plan fallback
+of a fully open door/gate rather than manufacturing a closure. Any unknown
 future opening type remains opaque until its physical semantics are reviewed;
 it never inherits transparency merely by not being a window.
 
@@ -129,11 +138,13 @@ pass over the layer costs a fifth of one blurred mask per source.
 
 ## Caching
 
-Barriers are keyed by a fingerprint of their own geometry, never by
-`_cfgEpoch`: the epoch lags behind geometry edited in place, and a stale barrier
-set is invisible — the plan simply keeps lighting through a wall that now
-exists. The same fingerprint, plus position and radius, keys the per-source
-region cache (`_glowClipCache`).
+Barriers are keyed by their geometry fingerprint plus a compact, sorted
+signature of bound interior door/gate opening amounts, never by `_cfgEpoch`:
+the epoch lags behind geometry edited in place, and a stale barrier set is
+invisible — the plan simply keeps lighting through a wall or closed door that
+now exists. Unrelated HA updates preserve the signature and hit the bounded
+barrier cache. The combined fingerprint, plus source position and radius, keys
+the per-source region cache (`_glowClipCache`).
 
 The masonry boolean receives room walls after passage cuts plus the cached
 joined independent body set. Its outer/hole rings are the authoritative
@@ -216,6 +227,9 @@ The complete UI and runtime truth table lives in
   exterior opening masonry, wall bodies, partitions and columns are fail-dark,
   while a real interior passage remains a valid source position; the rendered
   Glow path is pinned to that shared guard.
+- `test/logic.test.mjs` and `test/physical-geometry.test.mjs` — the shared
+  opening amount, stable state signature and centre-preserving partial cut for
+  contour and independent walls.
 - `demo/smoke_glow.mjs` — pixels on a rendered plan: the aperture itself is lit,
   the floor behind a door is lit, the visible beam is no wider than twice the
   opening, there is no light behind a column while the floor beside it is lit,

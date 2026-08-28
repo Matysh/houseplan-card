@@ -508,9 +508,11 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   const wallStroke = disp.color || '#607d8b';
   const hostedOpeningSymbols = disp.hideOpenings ? [] : resolvedHosted.map((resolved) => {
     const opening = resolved.opening;
-    const state = opening.type === 'passage' || !opening.contact
-      ? null : planHass.states?.[opening.contact]?.state;
-    const amount = openingAmount(opening.type, state, !!opening.invert);
+    const entity = opening.type === 'passage' || !opening.contact
+      ? null : planHass.states?.[opening.contact];
+    const amount = openingAmount(
+      opening.type, entity?.state, !!opening.invert, entity?.attributes?.current_position,
+    );
     const active = amount > 0 && !!opening.contact;
     const faceFlipV = opening.type === 'gate' ? !opening.flip_v : !!opening.flip_v;
     const spec: OpeningVisibleSpec = {

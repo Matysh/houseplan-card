@@ -4,7 +4,7 @@ import {
   BOOLEAN_COORD_QUANTUM, canonicalColumnAngle, columnBody, floorMinusBodies, geometryArea,
   directionalOccluders, intersectionPaths, partitionBody, pointInPhysicalBody,
   physicalBodyParts, physicalBodySet, pointInOpaquePlanBody, pointInPhysicalGeometry,
-  normalizeBooleanBody, sameColumnPlacement, unionBodies,
+  normalizeBooleanBody, sameColumnPlacement, scalePartitionOpeningCut, unionBodies,
 } from '../test-build/physical-geometry.js';
 import {
   polygonSegments, splitAtIntersections, visibilityPolygon,
@@ -34,6 +34,37 @@ test('partition body keeps the centreline and requested physical width', () => {
   closeTo(body[0][1], 0.25);
   closeTo(body[2][1], -0.25);
   closeTo(geometryArea([[[...body, body[0]]]]), 0.5);
+});
+
+test('partition light aperture scales around the same centre and keeps host depth', () => {
+  const full = { hostId: 'wall', a: [2, 4], b: [10, 8], depth: 3 };
+  assert.deepEqual(scalePartitionOpeningCut(full, 0.5), {
+    hostId: 'wall', a: [4, 5], b: [8, 7], depth: 3,
+  });
+  assert.deepEqual(scalePartitionOpeningCut(full, 0), {
+    hostId: 'wall', a: [6, 6], b: [6, 6], depth: 3,
+  });
+  assert.deepEqual(scalePartitionOpeningCut(full, 2), full);
+  assert.deepEqual(full, { hostId: 'wall', a: [2, 4], b: [10, 8], depth: 3 },
+    'scaling does not mutate canonical geometry');
+});
+
+test('partition body uses the same full, partial and closed light aperture', () => {
+  const space = {
+    room_drafts: [], wall_columns: [],
+    partitions: [{ id: 'host', a: [0, 0], b: [10, 0], cm: 10 }],
+  };
+  const full = { hostId: 'host', a: [4, 0], b: [6, 0], depth: 2 };
+  const half = scalePartitionOpeningCut(full, 0.5);
+  const fullBodies = physicalBodyParts(space, 5, 1, 1e-6, [full]).all;
+  const halfBodies = physicalBodyParts(space, 5, 1, 1e-6, [half]).all;
+  const closedBodies = physicalBodyParts(space, 5, 1, 1e-6, []).all;
+
+  assert.equal(pointInOpaquePlanBody([5, 0], [], fullBodies), false, 'full slot centre');
+  assert.equal(pointInOpaquePlanBody([5.75, 0], [], fullBodies), false, 'full slot shoulder');
+  assert.equal(pointInOpaquePlanBody([5, 0], [], halfBodies), false, 'half slot centre');
+  assert.equal(pointInOpaquePlanBody([5.75, 0], [], halfBodies), true, 'half slot shoulder');
+  assert.equal(pointInOpaquePlanBody([5, 0], [], closedBodies), true, 'closed slot is masonry');
 });
 
 test('joined partitions fill straight and oblique endpoint teeth without changing flat free caps', () => {

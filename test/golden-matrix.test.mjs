@@ -354,7 +354,11 @@ test('doorway spill golden exposes the opaque-fill failure mode from issue 71', 
   assert.equal(scenario.glowEnabled, true);
   assert.equal(scenario.sunRays, false);
   assert.equal(scenario.allLightsOff, true);
-  assert.equal(scenario.extraOpenings?.filter((opening) => opening.type === 'door').length, 1);
+  assert.equal(scenario.extraOpenings?.filter((opening) => opening.type === 'door').length, 2);
+  assert.equal(scenario.extraOpenings?.find((opening) => opening.id === 'light-door-second')?.contact,
+    'cover.golden_door_closed');
+  assert.equal(scenario.extraOpenings?.find((opening) => opening.id === 'light-door-third')?.contact,
+    'cover.golden_door_half');
   assert.equal(scenario.stateOverrides?.['light.golden_light_one']?.state, 'on');
   assert.deepEqual(scenario.layoutOverrides?.['golden-light-one'], {
     s: 'golden-lighting', x: 0.40, y: 0.48,
@@ -710,7 +714,9 @@ test('golden harness applies doorway, state and layout overrides to a cloned fix
   const scenario = GOLDEN_SCENARIOS.find((item) => item.id === 'lighting-opaque-glow-two-doorways-dark');
   const fixture = prepareGoldenFixture(scenario);
   const space = fixture.config.spaces.find((item) => item.id === scenario.space);
-  assert.equal(space.openings.filter((opening) => opening.type === 'door').length, 2);
+  assert.equal(space.openings.filter((opening) => opening.type === 'door').length, 3);
+  assert.equal(fixture.states['cover.golden_door_closed'].attributes.current_position, 0);
+  assert.equal(fixture.states['cover.golden_door_half'].attributes.current_position, 50);
   assert.equal(fixture.states['light.golden_light_one'].state, 'on');
   assert.deepEqual(fixture.layout['golden-light-one'], {
     s: 'golden-lighting', x: 0.40, y: 0.48,
@@ -765,10 +771,10 @@ test('a light source paints exactly one region: the floor it can see', () => {
   // Barriers are keyed by their own content: `_cfgEpoch` lags behind geometry
   // edited in place, and a stale barrier set lights straight through a wall.
   assert.doesNotMatch(glow, /_cfgEpoch/);
-  assert.match(source, /const fingerprint = contentFingerprint\(\[/);
-  assert.match(source, /contentFingerprint\(\[raw, this\._cellCm, this\._gridPitch\]\)/);
+  assert.match(source, /const geometryFingerprint = contentFingerprint\(\[raw, this\._cellCm, this\._gridPitch\]\)/);
+  assert.match(source, /const fingerprint = contentFingerprint\(\[geometryFingerprint, openingStateSignature\]\)/);
   assert.match(source, /const cacheKey = `\$\{space\.id\}\|\$\{fingerprint\}`/);
-  assert.match(source, /sharedFingerprint === fingerprint/,
+  assert.match(source, /sharedFingerprint === geometryFingerprint/,
     'an in-place edit must never recut stale shared masonry');
 });
 

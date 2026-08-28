@@ -314,19 +314,55 @@ export function openingShoulders(
  * `unavailable`/`unknown` freeze the default too: an outage must not fake motion.
  */
 export function openingAmount(
-  type: 'door' | 'window' | 'gate' | 'passage', state: string | null | undefined, invert = false,
+  type: 'door' | 'window' | 'gate' | 'passage', state: string | null | undefined,
+  invert = false, currentPosition?: unknown,
 ): number {
   if (type === 'passage') return 1;
   if (state == null || state === 'unavailable' || state === 'unknown')
     return type === 'window' ? 0 : 1;
-  const open = isActiveState(state) !== !!invert;
-  return open ? 1 : 0;
+  const rawPosition = typeof currentPosition === 'string'
+    ? (currentPosition.trim() ? Number(currentPosition) : NaN)
+    : Number(currentPosition);
+  const base = currentPosition != null && Number.isFinite(rawPosition)
+    ? Math.max(0, Math.min(1, rawPosition / 100))
+    : (isActiveState(state) ? 1 : 0);
+  return invert ? 1 - base : base;
 }
 
 /** Explicit light allowlist. Unknown future opening types stay fail-dark until
  * their physical semantics are deliberately added and tested. */
 export function isInteriorLightOpeningType(type: string): type is 'door' | 'gate' | 'passage' {
   return type === 'door' || type === 'gate' || type === 'passage';
+}
+
+export interface OpeningLightStateEntry {
+  id: string;
+  type: string;
+  contact?: string | null;
+  amount: number;
+}
+
+/** State-only identity for interior light apertures. Structural geometry is
+ * fingerprinted separately, so unrelated HA updates cannot evict barriers. */
+export function openingLightStateSignature(
+  openings: readonly OpeningLightStateEntry[],
+): string {
+  return openings
+    .filter((opening) => !!opening.contact
+      && (opening.type === 'door' || opening.type === 'gate'))
+    .map((opening) => {
+      const amount = Math.max(0, Math.min(1, Number(opening.amount) || 0));
+      return `${opening.id}:${amount.toFixed(3)}`;
+    })
+    .sort()
+    .join('|');
+}
+
+/** Centre-preserving aperture length used by room-wall and partition cuts. */
+export function openingLightApertureLength(length: number, amount: number): number {
+  const safeLength = Number.isFinite(length) && length > 0 ? length : 0;
+  const safeAmount = Number.isFinite(amount) ? Math.max(0, Math.min(1, amount)) : 0;
+  return safeLength * safeAmount;
 }
 
 /** Entity bindings that may affect a rendered opening. A passage is purely

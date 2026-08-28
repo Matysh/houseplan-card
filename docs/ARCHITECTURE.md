@@ -1259,10 +1259,11 @@ its configured space.
   `_lightBarriers` collects everything opaque: the wall bodies exactly as the
   plan draws them (`wallBodiesGeometry`, real thickness, mitred junctions),
   every independent body (partition, column, draft), and the bare outline of
-  any edge that carries no thickness. It cuts out the exceptions: doorways
-  and gates — cut through the masonry, so an opening is a real gap
-  between two jamb faces and a beam is narrowed by the returns of a thick wall
-  — plus dashed zero-thickness walls. Solid zero-thickness walls instead add
+  any edge that carries no thickness. It cuts out the exceptions: interior
+  doorways and gates according to their resolved live opening amount — a
+  closed bound opening keeps the masonry, while a positional cover cuts a
+  centre-aligned fraction between the jambs — and saved passages, which remain
+  fully open, plus dashed zero-thickness walls. Solid zero-thickness walls instead add
   their exact axes as zero-area barriers. Windows stay
   solid, so an indoor lamp never washes the street; the light's masonry is cut
   by passages only and therefore differs on purpose from the drawn one. So does
@@ -1289,10 +1290,12 @@ its configured space.
   open-zone graph and no shadow mask left in the light path.
 
   Barriers are cached per space by a fingerprint of their complete geometry
-  (every body point, both wall endpoints and scale inputs), never by
-  `_cfgEpoch`: the epoch lags behind geometry edited in place, and a stale
-  barrier set is invisible — the plan simply keeps lighting through a wall that
-  now exists. The same fingerprint keys the per-source region cache. A cached per-
+  (every body point, both wall endpoints and scale inputs) plus a sorted
+  signature of bound interior door/gate opening amounts, never by `_cfgEpoch`:
+  the epoch lags behind geometry edited in place, and a stale barrier set is
+  invisible — the plan simply keeps lighting through a wall or closed door that
+  now exists. Unrelated HA updates retain the same signature and reuse the
+  barrier set. The combined fingerprint keys the per-source region cache. A cached per-
   `Document` raster probe verifies actual SVG screen pixels rather than trusting
   CSS syntax support; pending/unsupported/error/timeout states render with
   deterministic normal blending and a successful probe requests one update.

@@ -144,6 +144,18 @@ const runtime = (includeAppliance = false) => {
       entity_id: 'sun.sun', state: 'above_horizon',
       attributes: { azimuth: 180, elevation: 24 },
     },
+    // State-only YAML covers deliberately have no registry/device row. They
+    // keep the Glow opening-state golden independent from entity-registry
+    // discovery while exercising the same exact-reference projection as a
+    // user's template cover.
+    'cover.golden_door_closed': {
+      entity_id: 'cover.golden_door_closed', state: 'closed',
+      attributes: { friendly_name: 'Golden closed door', current_position: 0 },
+    },
+    'cover.golden_door_half': {
+      entity_id: 'cover.golden_door_half', state: 'open',
+      attributes: { friendly_name: 'Golden half-open door', current_position: 50 },
+    },
   };
   // Keep sun.sun state-only on purpose. Core/runtime entities and YAML
   // entities without unique_id may have a live state without a registry row.

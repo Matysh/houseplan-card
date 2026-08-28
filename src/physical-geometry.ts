@@ -149,6 +149,23 @@ export interface PartitionOpeningCut {
   depth: number;
 }
 
+/** Shorten an independent-wall cut around its existing centre. The host and
+ * depth stay authoritative; only the light aperture changes with door state. */
+export function scalePartitionOpeningCut(
+  cut: PartitionOpeningCut, amount: number,
+): PartitionOpeningCut {
+  const safeAmount = Number.isFinite(amount) ? Math.max(0, Math.min(1, amount)) : 0;
+  const cx = (cut.a[0] + cut.b[0]) / 2;
+  const cy = (cut.a[1] + cut.b[1]) / 2;
+  const hx = ((cut.b[0] - cut.a[0]) * safeAmount) / 2;
+  const hy = ((cut.b[1] - cut.a[1]) * safeAmount) / 2;
+  return {
+    ...cut,
+    a: [cx - hx, cy - hy],
+    b: [cx + hx, cy + hy],
+  };
+}
+
 /**
  * Cut only the explicitly hosted independent-wall body. Boolean failure keeps
  * the original body opaque (fail-dark) instead of manufacturing a light leak.

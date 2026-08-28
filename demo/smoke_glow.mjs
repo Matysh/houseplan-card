@@ -310,8 +310,12 @@ const rasterFixture = await page.evaluate(async () => {
   const walls = [...edges.values()].map(({ a, b }) => ({
     key: wallKey(a, b), a, b, cm: 15,
   }));
+  const dynamicContact = 'cover.glow_dynamic_door';
   const openings = [
-    { id: 'glow-raster-east', type: 'door', x: 0.55, y: 0.32, angle: 90, length: 0.09 },
+    {
+      id: 'glow-raster-east', type: 'door', x: 0.55, y: 0.32,
+      angle: 90, length: 0.09, contact: dynamicContact,
+    },
     { id: 'glow-raster-south', type: 'door', x: 0.32, y: 0.58, angle: 0, length: 0.09 },
   ];
   const wallSource = [...edges.values()]
@@ -349,6 +353,14 @@ const rasterFixture = await page.evaluate(async () => {
   states[sourceEid] = {
     ...states[sourceEid], state: 'on',
     attributes: { ...(states[sourceEid]?.attributes || {}), brightness: 255, rgb_color: [255, 196, 112] },
+  };
+  states[dynamicContact] = {
+    entity_id: dynamicContact,
+    state: 'open',
+    attributes: { current_position: 100, friendly_name: 'Glow dynamic door' },
+    last_changed: new Date().toISOString(),
+    last_updated: new Date().toISOString(),
+    context: { id: 'glow-dynamic-door', parent_id: null, user_id: null },
   };
   c.hass = { ...c.hass, states };
   c._cfgEpoch++;
@@ -473,7 +485,10 @@ const rasterFixture = await page.evaluate(async () => {
       edge: edgePlan.map(({ offset, point }) => ({ offset, point: toStage(point) })),
     };
   }
-  return { ready: true, litParts, sourceEid, sourceId: source.id, wallSource, doors, shadow };
+  return {
+    ready: true, litParts, sourceEid, sourceId: source.id, wallSource,
+    dynamicContact, doors, shadow,
+  };
 });
 
 if (rasterFixture.ready) {
@@ -580,6 +595,87 @@ if (rasterFixture.ready) {
   res.shadowEdgeIsCrisp = !!metrics.shadow
     && metrics.shadow.high - metrics.shadow.low >= 8
     && metrics.shadow.edgeWidth <= 4;
+  // The east opening is a positional cover. Exercise live 100 → 0 → 50
+  // transitions without clearing any Glow cache: the rendered pixels must
+  // prove both state invalidation and the centre-preserving partial aperture.
+  const setDoorPosition = async (position) => page.evaluate(async ({ contact, position: next }) => {
+    const c = window.__card;
+    const previous = c.hass.states[contact];
+    c.hass = {
+      ...c.hass,
+      states: {
+        ...c.hass.states,
+        [contact]: {
+          ...previous,
+          state: next > 0 ? 'open' : 'closed',
+          attributes: { ...(previous?.attributes || {}), current_position: next },
+        },
+      },
+    };
+    await c.updateComplete;
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  }, { contact: rasterFixture.dynamicContact, position });
+  await page.evaluate(async (sourceEid) => {
+    const c = window.__card;
+    const previous = c.hass.states[sourceEid];
+    c.hass = {
+      ...c.hass,
+      states: { ...c.hass.states, [sourceEid]: { ...previous, state: 'on' } },
+    };
+    await c.updateComplete;
+  }, rasterFixture.sourceEid);
+  await setDoorPosition(0);
+  const doorClosed = await stage.screenshot({ animations: 'disabled' });
+  await setDoorPosition(50);
+  const doorHalf = await stage.screenshot({ animations: 'disabled' });
+  const dynamicDoor = rasterFixture.doors.find((door) => door.id === 'glow-raster-east');
+  const dynamicMetrics = dynamicDoor ? await page.evaluate(async ({ images64, door }) => {
+    const decode = async (base64) => {
+      const bytes = Uint8Array.from(atob(base64), (char) => char.charCodeAt(0));
+      return createImageBitmap(new Blob([bytes], { type: 'image/png' }));
+    };
+    const images = await Promise.all(images64.map(decode));
+    const width = images[0].width;
+    const height = images[0].height;
+    const pixels = images.map((image) => {
+      const canvas = document.createElement('canvas');
+      canvas.width = width; canvas.height = height;
+      const context = canvas.getContext('2d', { willReadFrequently: true });
+      context.drawImage(image, 0, 0);
+      return context.getImageData(0, 0, width, height).data;
+    });
+    const luma = (data, point) => {
+      const x = Math.max(0, Math.min(width - 1, Math.round(point[0])));
+      const y = Math.max(0, Math.min(height - 1, Math.round(point[1])));
+      const offset = (y * width + x) * 4;
+      return data[offset] * 0.2126 + data[offset + 1] * 0.7152 + data[offset + 2] * 0.0722;
+    };
+    const [open, closed, half, off] = pixels;
+    const delta = (data, point) => luma(data, point) - luma(off, point);
+    const widthOf = (data) => {
+      const lit = door.scan.filter(({ point }) => delta(data, point) >= 3);
+      return lit.length ? lit[lit.length - 1].offset - lit[0].offset : 0;
+    };
+    return {
+      openDelta: delta(open, door.sample),
+      closedDelta: delta(closed, door.sample),
+      openWidth: widthOf(open),
+      halfWidth: widthOf(half),
+    };
+  }, {
+    images64: [
+      lightOn.toString('base64'), doorClosed.toString('base64'),
+      doorHalf.toString('base64'), lightOff.toString('base64'),
+    ],
+    door: dynamicDoor,
+  }) : null;
+  console.log('Dynamic door Glow metrics:', JSON.stringify(dynamicMetrics));
+  res.closedDoorBlocksGlow = !!dynamicMetrics
+    && dynamicMetrics.openDelta >= 8 && dynamicMetrics.closedDelta <= 3;
+  res.partialDoorNarrowsGlow = !!dynamicMetrics
+    && dynamicMetrics.halfWidth > 0
+    && dynamicMetrics.halfWidth < dynamicMetrics.openWidth;
+  await setDoorPosition(100);
   const sourceInsideWall = await page.evaluate(async ({ sourceEid, sourceId, wallSource }) => {
     if (!wallSource) return false;
     const c = window.__card;
@@ -621,6 +717,8 @@ if (rasterFixture.ready) {
   res.shadowSamplesAreValid = false;
   res.occluderCastsShadow = false;
   res.shadowEdgeIsCrisp = false;
+  res.closedDoorBlocksGlow = false;
+  res.partialDoorNarrowsGlow = false;
   res.sourceInsideWallSuppressed = false;
 }
 // значения зафиксированы прогоном на v1.43.1 и сверены с кодом (audit T1)

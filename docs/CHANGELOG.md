@@ -8,6 +8,12 @@
   first frame was also the last one
   ([#358](https://github.com/Matysh/houseplan-card/issues/358)).
 
+- Glow now follows the live state of bound interior doors and gates: a closed
+  opening blocks light, an open one passes it, and a positional cover exposes
+  the matching fraction of the aperture. Passages remain open, windows and
+  exterior openings remain opaque, and unrelated Home Assistant updates reuse
+  the existing light geometry ([#20](https://github.com/Matysh/houseplan-card/issues/20)).
+
 - Tapping a device on a freshly opened page works again without first
   visiting any editor screen. A wall switch controlling virtual light sources
   (and every other tap-to-toggle device) silently ignored the tap on a cold

@@ -21,7 +21,8 @@ import {
   segmentCm, formatLength, roomEdges, roomPoly, paperRoomShapes, pointStrictlyInside, roomsOverlap,
   pointOnBoundary, mergeRooms, splitRoomPath, polygonArea, closestPointOnBoundary, pointStrictlyInside as ptInside, islandsOf, sharedBoundary, distToSegment, outlineWithout, cutSegments, alignGuides, segmentAngle, is45, isExact45Vector, type AlignGuide, swipeTarget, clampScale, migratePdfUrls, roomFillModeOf, roomGlowOf, contentUrl,
   snapToWall, snapPointAlongPoly, openingAmount, openingShoulders, interiorPoint,
-  isInteriorLightOpeningType, openingEntityReferences, filterOpeningEntityCandidates,
+  isInteriorLightOpeningType, openingLightApertureLength, openingLightStateSignature,
+  openingEntityReferences, filterOpeningEntityCandidates,
   poleOfInaccessibility, subst,
   averageLqi, fitView, declump, safeUrl, floorsOf, type FloorInfo,
   stateIcon, lightColorOf, parseRoomRef, diffNewDevices, resolveGlowValues, resolveGlowAppearance,
@@ -156,13 +157,13 @@ import {
   directionalOccluders, floorMinusBodies, geometryArea, geometryOuterRings,
   geometryAllRings, intersectionPaths, partitionBody, polyclipPathD,
   pointInOpaquePlanBody, pointInPhysicalBody, sameColumnPlacement,
-  physicalBodyParts,
+  physicalBodyParts, scalePartitionOpeningCut,
   type PartitionOpeningCut,
 } from './physical-geometry';
 import {
   hostedOpeningIntervalsOverlap, materializePartitionOpening,
   partitionOpeningJambMargin, partitionOpeningNeedsStrictValidation,
-  partitionOpeningFace,
+  partitionOpeningCut, partitionOpeningFace,
   partitionPlacementIntervals, resolvePartitionOpeningCompat, resolvePartitionOpeningStrict,
   type PartitionOpeningOrphanReason, type ResolvedPartitionOpening,
 } from './partition-openings';
@@ -10260,7 +10261,8 @@ export class HouseplanCard extends LitElement {
    * indoor lamp must not wash the street, so the light's masonry is cut by
    * passages only and differs on purpose from the drawn one.
    *
-   * The result depends only on the plan, so it is shared by every lamp.
+   * The result depends on the plan plus the small signature of bound interior
+   * door/gate states, so it is shared by every lamp and unrelated HA updates.
    */
   private _lightBarriers(
     space: SpaceModel, polys: { r: RoomCfg; poly: number[][] }[],
@@ -10274,15 +10276,38 @@ export class HouseplanCard extends LitElement {
     // booleans and wall topology. `_cfgEpoch` alone is deliberately not used:
     // old editor paths and third-party harnesses can still mutate a structure
     // before advancing it.
-    const fingerprint = contentFingerprint([raw, this._cellCm, this._gridPitch]);
+    const geometryFingerprint = contentFingerprint([raw, this._cellCm, this._gridPitch]);
+    // Gates are door-like: their different symbol must not change how light
+    // crosses the clear opening.
+    // An opening is transparent only where it leads from floor to floor. A
+    // front door has nothing behind it to light, so for light it is masonry
+    // like a window — otherwise its tunnel glows halfway, up to the centreline
+    // where the room polygon ends, and the plan shows a lit doorway to nowhere.
+    const probe = Math.max(this._cmToUnits(10), this._gridPitch * 0.5);
+    const onFloor = (point: number[]): boolean =>
+      polys.some((x) => this._pointInRoom(point, x.r));
+    const passageStates = this._openingsR.flatMap((opening) => {
+      if (!isInteriorLightOpeningType(String(opening.type))) return [];
+      const o = opening;
+      const rad = (o.angle * Math.PI) / 180;
+      const nx = -Math.sin(rad);
+      const ny = Math.cos(rad);
+      const interior = onFloor([o.rx + nx * probe, o.ry + ny * probe])
+        && onFloor([o.rx - nx * probe, o.ry - ny * probe]);
+      return interior ? [{ opening: o, amount: this._openingAmt(o) }] : [];
+    });
+    const openingStateSignature = openingLightStateSignature(
+      passageStates.map(({ opening, amount }) => ({
+        id: opening.id, type: opening.type, contact: opening.contact, amount,
+      })),
+    );
+    const fingerprint = contentFingerprint([geometryFingerprint, openingStateSignature]);
     const cacheKey = `${space.id}|${fingerprint}`;
     const pooled = lruRead(this._lightBarrierPool, cacheKey);
     if (pooled.hit) {
       this._lightBarrierCache = pooled.value;
       return pooled.value.value;
     }
-    // Gates are door-like: their different symbol must not change how light
-    // crosses the clear opening.
     const zeroWalls = this._zeroWalls();
     // Physical masonry has no body at every zero wall, independent of style.
     // Light transport differs: solid zero walls are added back below as exact
@@ -10292,21 +10317,12 @@ export class HouseplanCard extends LitElement {
     // zero axes stay in the room outline and are also registered below as
     // exact standalone barriers for independent/outer-wall parity.
     const cuts: number[][] = [...zeroWalls.transmissive];
-    // An opening is transparent only where it leads from floor to floor. A
-    // front door has nothing behind it to light, so for light it is masonry
-    // like a window — otherwise its tunnel glows halfway, up to the centreline
-    // where the room polygon ends, and the plan shows a lit doorway to nowhere.
-    const probe = Math.max(this._cmToUnits(10), this._gridPitch * 0.5);
-    const onFloor = (point: number[]): boolean =>
-      polys.some((x) => this._pointInRoom(point, x.r));
-    const passages = this._openingsR.filter((o) => {
-      if (!isInteriorLightOpeningType(String(o.type))) return false;
-      const rad = (o.angle * Math.PI) / 180;
-      const nx = -Math.sin(rad);
-      const ny = Math.cos(rad);
-      return onFloor([o.rx + nx * probe, o.ry + ny * probe])
-        && onFloor([o.rx - nx * probe, o.ry - ny * probe]);
-    });
+    const passages = passageStates
+      .filter(({ amount }) => amount > 0)
+      .map(({ opening, amount }) => ({
+        ...opening,
+        rlen: openingLightApertureLength(opening.rlen, amount),
+      }));
     const roomPassages = this._roomWallOpeningInputs(passages, space);
     // Openings omitted from `passages` remain part of light's opaque masonry.
     // Consequently a source centred in an exterior door/gate or any window is
@@ -10317,19 +10333,17 @@ export class HouseplanCard extends LitElement {
       const dy = (Math.sin(rad) * opening.length) / 2;
       cuts.push([opening.x - dx, opening.y - dy, opening.x + dx, opening.y + dy]);
     }
-    const transparentHostedIds = new Set(
-      passages.filter((opening) => opening.partitionHost).map((opening) => opening.id),
-    );
-    const lightPhysicalKey = [
-      space.id, this._cfgEpoch, this._cellCm, this._gridPitch,
-      [...transparentHostedIds].sort().join(','),
-    ].join('|');
+    const lightPartitionCuts = passageStates.flatMap(({ opening, amount }) =>
+      amount > 0 && opening.partitionHost
+        ? [scalePartitionOpeningCut(partitionOpeningCut(opening.partitionHost), amount)]
+        : []);
+    const lightPhysicalKey = cacheKey;
     if (this._lightPhysicalBodiesCache?.key !== lightPhysicalKey) {
       this._lightPhysicalBodiesCache = {
         key: lightPhysicalKey,
         all: physicalBodyParts(
           space, this._cellCm, this._gridPitch, this._gridPitch * 0.0002,
-          this._partitionOpeningCuts(space, (opening) => transparentHostedIds.has(opening.id)),
+          lightPartitionCuts,
         ).all,
       };
     }
@@ -10345,7 +10359,7 @@ export class HouseplanCard extends LitElement {
     const sharedFingerprint = (sharedWallGeometry as unknown as {
       sourceFingerprint?: string;
     } | null)?.sourceFingerprint;
-    const recut = sharedWallGeometry && sharedFingerprint === fingerprint
+    const recut = sharedWallGeometry && sharedFingerprint === geometryFingerprint
       ? recutWallBodiesGeometry(sharedWallGeometry, roomPassages, lightPhysical)
       : null;
     const masonry = recut || (walls.length || lightPhysical.length
@@ -12316,10 +12330,12 @@ export class HouseplanCard extends LitElement {
 
   /** Live state of an opening's contact, 0..1 drawn amount. */
   private _openingAmt(o: OpeningCfg): number {
-    const st = o.contact && this._renderOpeningEntityAvailable(o.contact)
-      ? this._renderPlanHass.states[o.contact]?.state
+    const entity = o.contact && this._renderOpeningEntityAvailable(o.contact)
+      ? this._renderPlanHass.states[o.contact]
       : null;
-    return openingAmount(o.type, st, !!o.invert);
+    return openingAmount(
+      o.type, entity?.state, !!o.invert, entity?.attributes?.current_position,
+    );
   }
 
   /** Deleted bindings are unavailable to every plan-level consumer. */

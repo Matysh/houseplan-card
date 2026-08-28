@@ -580,11 +580,20 @@ export const GOLDEN_SCENARIOS = Object.freeze([
       'light.golden_light_one': { state: 'on', attributes: { rgb_color: [255, 196, 112], brightness: 255 } },
     },
     extraOpenings: [
-      { id: 'light-door-second', type: 'door', x: 0.50, y: 0.32, angle: 90, length: 0.13 },
+      {
+        id: 'light-door-second', type: 'door', x: 0.50, y: 0.30,
+        angle: 90, length: 0.13, contact: 'cover.golden_door_closed',
+      },
+      {
+        id: 'light-door-third', type: 'door', x: 0.50, y: 0.76,
+        angle: 90, length: 0.13, contact: 'cover.golden_door_half',
+      },
     ],
     layoutOverrides: { 'golden-light-one': { s: 'golden-lighting', x: 0.40, y: 0.48 } },
-    // The golden is protection only if the receiving half actually contains
-    // rendered light. A data-only check once let a visually empty baseline pass.
+    // One frame contains the complete #20 matrix: the original unbound door is
+    // fully open, the upper bound door is closed and the lower positional door
+    // exposes 50%. Protection is meaningful only if the receiving half also
+    // contains rendered light; a data-only check once let an empty baseline pass.
     warmPixelRegion: { x: 0.5, y: 0, w: 0.5, h: 1, minPixels: 2500, minRedBlueDelta: 25 },
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'lighting-custom-glow-light', fixture: 'visual', space: 'golden-lighting', mode: 'view',
