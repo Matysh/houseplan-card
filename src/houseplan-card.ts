@@ -61,7 +61,7 @@ import {
 import { dayCycleStageVars, renderDayCycleEnvironment } from './day-cycle-render';
 import {
   FURNITURE_GROUPS, furnitureOfGroup, furnitureSymbol, furnitureDefaultCm,
-  furniturePathD, furnitureCorners, snapFurnitureToWall,
+  furnitureGraphic, furnitureCorners, snapFurnitureToWall,
   cmToNorm, clampFurnSize, clampFurnCm, FURN_WALL_CELLS, type FurnitureGroup,
 } from './furniture';
 import {
@@ -1033,6 +1033,8 @@ export class HouseplanCard extends LitElement {
    * a unit system is a display setting, never a stored one.
    */
   private _furnPalette: { symbol: string; w: number; h: number } | null = null;
+  /** Category currently open in the two-level furniture palette. */
+  private _furnCategory: string | null = null;
   /** The selected shape's own unrotated frame (text is measured from SVG). */
   private _dtBox: { id: string; x: number; y: number; w: number; h: number } | null = null;
   /**
@@ -2426,6 +2428,7 @@ export class HouseplanCard extends LitElement {
     _decorShapeDialog: { state: true },
     _backdropDialog: { state: true },
     _furnPalette: { state: true },
+    _furnCategory: { state: true },
     _bdDrag: { state: true },
     _dtBox: { state: true },
     _dtDrag: { state: true },
@@ -2777,6 +2780,7 @@ export class HouseplanCard extends LitElement {
         // to Select in one step, regardless of whether a symbol was armed.
         else if (this._decorTool === 'furniture') {
           this._furnPalette = null;
+          this._furnCategory = null;
           this._decorTool = 'select';
         }
         else if (this._decorSel) this._decorSel = null;
@@ -7823,13 +7827,7 @@ export class HouseplanCard extends LitElement {
     ];
   }
 
-  /**
-   * The palette: every symbol of the library, grouped, each drawn with the
-   * very same `furniturePathD` the plan uses — so what the user picks is what
-   * the user gets, at any size, and there is no second set of preview assets
-   * to keep in step. Under it the two size fields, prefilled with the chosen
-   * symbol's real size and shown in metres or feet by the HA unit system.
-   */
+  /** The lazy editor runtime owns the generated two-level furniture palette. */
   private _renderFurnPalette(): TemplateResult {
     return this._editorRuntimeOrThrow()._renderFurnPalette();
   }
@@ -8068,24 +8066,25 @@ export class HouseplanCard extends LitElement {
             transform=${ang ? `rotate(${ang} ${cx} ${cy})` : nothing} @pointerdown=${down}></ellipse>` : nothing}`;
       }
       if (sh.kind === 'furniture') {
-        // One path per piece, generated at the shape's REAL size, so the
-        // stroke is an ordinary stroke-width in render units like every other
-        // decor shape — no non-uniform scale to fight (docs/FURNITURE.md §2).
+        // One path per piece. Designer art keeps its native viewBox and is
+        // scaled to the user's stored box; vector-effect keeps the configured
+        // decor stroke physical under non-uniform resizing.
         // An unknown symbol renders as nothing: a plan from a newer card must
         // open in an older one, not break it.
         const W2 = sh.w * W, H2 = sh.h * H;
-        const d = furniturePathD(sh.symbol, W2, H2);
-        if (!d) return nothing;
+        const art = furnitureGraphic(sh.symbol);
+        if (!art) return nothing;
         const ang = Number(sh.angle) || 0;
         const cx = sh.x * W + W2 / 2, cy = sh.y * H + H2 / 2;
-        const tr = `${ang ? `rotate(${ang} ${cx} ${cy}) ` : ''}translate(${sh.x * W} ${sh.y * H})`;
+        const tr = `${ang ? `rotate(${ang} ${cx} ${cy}) ` : ''}translate(${sh.x * W} ${sh.y * H}) scale(${W2 / art.viewW} ${H2 / art.viewH})`;
         return svg`<path class="${cls} dfurn" data-hp="decor" data-id="${sh.id}"
-          data-kind="${sh.kind}" data-symbol="${sh.symbol}" d="${d}" transform=${tr}
+          data-kind="${sh.kind}" data-symbol="${sh.symbol}" d="${art.d}" transform=${tr}
           stroke="${style.color}" stroke-opacity="${style.opacity}" stroke-width="${strokeWidth}" fill="none"
-          stroke-linecap="round" stroke-linejoin="round"
+          stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"
           @pointerdown=${down} @dblclick=${dbl}></path>
           ${erasing ? svg`<path class="dshape derasehit" data-hp="decor" data-id="${sh.id}"
-            data-kind="${sh.kind}" data-symbol="${sh.symbol}" d="${d}" transform=${tr}
+            data-kind="${sh.kind}" data-symbol="${sh.symbol}" d="${art.d}" transform=${tr}
+            vector-effect="non-scaling-stroke"
             @pointerdown=${down}></path>` : nothing}`;
       }
       if (sh.kind === 'text') {

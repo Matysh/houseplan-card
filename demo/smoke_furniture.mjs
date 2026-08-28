@@ -46,7 +46,7 @@ const res = await page.evaluate(async () => {
 
   sr().querySelectorAll('.modetab')[2].click(); await c.updateComplete;
   c._curSpaceCfg.decor = [];
-  c._decorTool = 'select'; c._decorSel = null; c._furnPalette = null;
+  c._decorTool = 'select'; c._decorSel = null; c._furnPalette = null; c._furnCategory = null;
   c._cfgEpoch++; c.requestUpdate(); await c.updateComplete;
   out.cellCmIsFive = c._cellCm === CELL;
 
@@ -65,11 +65,22 @@ const res = await page.evaluate(async () => {
   out.groupsArePresent = ['furniture', 'appliance', 'sanitary'].every((g) => groups.includes(g));
   out.everyGroupHasSymbols = groups.length > 0 && [...pal().querySelectorAll('.furnrow')]
     .every((r) => r.querySelectorAll('.furnitem').length > 0);
+  const category = (id) => pal()?.querySelector(`.furnitem[data-category="${id}"]`);
+  out.firstLevelHasNoPlanVariants = !pal()?.querySelector('.furnitem[data-symbol]');
+  out.requiredCategoriesArePresent = ['sofa', 'toilet', 'washer']
+    .every((id) => !!category(id));
+  out.menuOnlyCategoriesStayHidden = ['computer', 'oven', 'hood', 'exercise']
+    .every((id) => !category(id));
+  const categoryD = category('sofa')?.querySelector('svg.furncatprev path')?.getAttribute('d') || '';
+  out.categoryUsesFrontArtwork = categoryD.length > 10;
+  category('sofa')?.click(); await c.updateComplete;
+  out.categoryDrillsToVariants = c._furnCategory === 'sofa'
+    && !!pal()?.querySelector('.furnback');
   const item = (sym) => pal()?.querySelector(`.furnitem[data-symbol="${sym}"]`);
   const pick = (sym) => { const b = item(sym); if (b) b.click(); };
   out.sofaIsInThePalette = !!item('sofa');
-  out.toiletIsInThePalette = !!item('toilet');
-  out.washerIsInThePalette = !!item('washer');
+  out.sofaVariantsAreInThePalette = ['sofa', 'sofa_three_seat', 'sofa_corner_right']
+    .every((id) => !!item(id));
   const prevD = item('sofa')?.querySelector('svg.furnprev path')?.getAttribute('d') || '';
   out.previewIsDrawn = prevD.length > 10;
   const previewEl = item('sofa')?.querySelector('svg.furnprev');
@@ -103,15 +114,16 @@ const res = await page.evaluate(async () => {
     .find((b) => /мебел|furnitur/i.test(b.textContent || ''))?.click();
   await c.updateComplete;
   out.paletteReopensAfterDismiss = c._decorTool === 'furniture' && !!pal();
+  category('sofa')?.click(); await c.updateComplete;
 
   // ================= 2. размер по умолчанию и поля =========================
   pick('sofa'); await c.updateComplete;
   out.pickArmsTheSymbol = c._furnPalette?.symbol === 'sofa';
-  out.defaultSizeIsTheSymbols = c._furnPalette?.w === 220 && c._furnPalette?.h === 90;
+  out.defaultSizeIsTheSymbols = c._furnPalette?.w === 180 && c._furnPalette?.h === 90;
   const wIn = () => pal()?.querySelector('input.furnw');
   const hIn = () => pal()?.querySelector('input.furnh');
   out.sizeFieldsAppear = !!wIn() && !!hIn();
-  out.fieldsShowMetres = +(wIn()?.value ?? NaN) === 2.2 && +(hIn()?.value ?? NaN) === 0.9;
+  out.fieldsShowMetres = +(wIn()?.value ?? NaN) === 1.8 && +(hIn()?.value ?? NaN) === 0.9;
   out.selectedItemIsMarked = !!item('sofa')?.classList.contains('on');
 
   // ================= 3. размещение в реальном размере ======================
@@ -122,7 +134,7 @@ const res = await page.evaluate(async () => {
   const sofaId = sofa?.id ?? null;
   const sofaNow = () => c._decorList.find((s) => s.id === sofaId) || {};
   out.placedOnClick = sofa?.symbol === 'sofa';
-  out.realWidthThroughCellCm = near((sofa?.w ?? NaN) * 1000, cmToUnits(220), 1e-6);
+  out.realWidthThroughCellCm = near((sofa?.w ?? NaN) * 1000, cmToUnits(180), 1e-6);
   out.realDepthThroughCellCm = near((sofa?.h ?? NaN) * 1000, cmToUnits(90), 1e-6);
   out.centredOnTheClick = !!sofa
     && near((sofa.x + sofa.w / 2) * 1000, 300, 1e-6)
@@ -138,10 +150,13 @@ const res = await page.evaluate(async () => {
   out.hookSymbol = attr(sofaId, 'data-symbol') === 'sofa';
   out.strokedNotFilled = attr(sofaId, 'fill') === 'none'
     && attr(sofaId, 'stroke') === c._decorStyle.color;
-  out.pathIsAtRealSize = /^M0 0H183\.333V75H0Z/.test(attr(sofaId, 'd') || '');
+  out.pathIsAtRealSize = (attr(sofaId, 'd') || '').length > 20
+    && /scale\(/.test(attr(sofaId, 'transform') || '')
+    && attr(sofaId, 'vector-effect') === 'non-scaling-stroke';
 
   // ================= 4. свой размер до размещения ==========================
   c._decorTool = 'furniture'; await c.updateComplete;
+  category('toilet')?.click(); await c.updateComplete;
   pick('toilet'); await c.updateComplete;
   if (wIn()) {
     wIn().value = '0.5';
@@ -157,6 +172,7 @@ const res = await page.evaluate(async () => {
 
   // ================= 5. магнит к стене =====================================
   c._decorTool = 'furniture'; await c.updateComplete;
+  category('bed')?.click(); await c.updateComplete;
   pick('bed_double'); await c.updateComplete;
   ev('pointerdown', stageEl(), 300, 150);           // 10 единиц от стены y=140
   await c.updateComplete;
@@ -170,6 +186,7 @@ const res = await page.evaluate(async () => {
 
   // …Shift больше не отключает магнит
   c._decorTool = 'furniture'; await c.updateComplete;
+  category('bed')?.click(); await c.updateComplete;
   pick('bed_single'); await c.updateComplete;
   ev('pointerdown', stageEl(), 301.7, 151.3, { shiftKey: true });
   await c.updateComplete;

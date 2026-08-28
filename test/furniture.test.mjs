@@ -5,7 +5,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   FURNITURE, FURNITURE_GROUPS, furnitureSymbol, furnitureOfGroup,
-  furnitureDefaultCm, furniturePathD, furnitureCorners, furnitureResize,
+  furnitureDefaultCm, furniturePathD, furnitureGraphic, furnitureCorners, furnitureResize,
   snapFurnitureToWall, cmToNorm, normToCm, clampFurnSize, clampFurnCm,
   FURN_MIN_N, FURN_MIN_CM, FURN_MAX_CM, FURN_WALL_CELLS,
 } from '../test-build/furniture.js';
@@ -25,13 +25,21 @@ test('every symbol is well formed: unique id, a known group, positive default si
     seen.add(s.id);
     assert.ok(FURNITURE_GROUPS.includes(s.group), `${s.id}: unknown group ${s.group}`);
     assert.ok(s.w > 0 && s.h > 0, `${s.id}: default size must be positive`);
-    assert.ok(s.g.length > 0, `${s.id}: nothing to draw`);
-    // the unit box is the whole contract: nothing may stick out of 0..1
-    for (const p of s.g) {
-      const nums = p.slice(1);
-      for (const v of nums) assert.ok(v >= -0.001 && v <= 1.001, `${s.id}: ${v} outside the unit box`);
+    assert.match(s.category, /^[a-z0-9_]+$/, `${s.id}: invalid category`);
+    assert.ok(furnitureGraphic(s.id)?.d, `${s.id}: nothing to draw`);
+    if (s.g) {
+      // Retained primitive art stays in the legacy unit box.
+      for (const p of s.g) {
+        const nums = p.slice(1);
+        for (const v of nums) assert.ok(v >= -0.001 && v <= 1.001, `${s.id}: ${v} outside the unit box`);
+      }
+    } else {
+      assert.deepEqual([s.art.viewW, s.art.viewH], [s.w, s.h], `${s.id}: manifest and SVG viewBox differ`);
     }
   }
+  assert.equal(FURNITURE.length, 56);
+  assert.equal(FURNITURE.filter((s) => s.art).length, 44);
+  assert.equal(FURNITURE.filter((s) => s.g).length, 12);
 });
 
 test('the three groups the owner named are all populated, and every symbol is in exactly one', () => {
@@ -43,10 +51,10 @@ test('the three groups the owner named are all populated, and every symbol is in
 
 test('the owner’s default sizes are the ones stored', () => {
   // owner’s list, read as width ALONG the back edge x depth
-  assert.deepEqual(furnitureDefaultCm('sofa'), { w: 220, h: 90 });
+  assert.deepEqual(furnitureDefaultCm('sofa'), { w: 180, h: 90 });
   assert.deepEqual(furnitureDefaultCm('bed_double'), { w: 160, h: 200 });
   assert.deepEqual(furnitureDefaultCm('bed_single'), { w: 90, h: 200 });
-  assert.deepEqual(furnitureDefaultCm('table_dining'), { w: 140, h: 80 });
+  assert.deepEqual(furnitureDefaultCm('table_dining'), { w: 160, h: 90 });
   assert.deepEqual(furnitureDefaultCm('toilet'), { w: 40, h: 70 });
   assert.deepEqual(furnitureDefaultCm('bathtub'), { w: 170, h: 75 });
   assert.deepEqual(furnitureDefaultCm('shower'), { w: 90, h: 90 });
@@ -55,9 +63,11 @@ test('the owner’s default sizes are the ones stored', () => {
   assert.deepEqual(furnitureDefaultCm('fridge'), { w: 60, h: 65 });
   assert.deepEqual(furnitureDefaultCm('washer'), { w: 60, h: 60 });
   assert.deepEqual(furnitureDefaultCm('dishwasher'), { w: 60, h: 60 });
-  assert.deepEqual(furnitureDefaultCm('wardrobe'), { w: 100, h: 60 });
-  assert.deepEqual(furnitureDefaultCm('chair'), { w: 45, h: 45 });
-  assert.deepEqual(furnitureDefaultCm('desk'), { w: 120, h: 60 });
+  assert.deepEqual(furnitureDefaultCm('wardrobe'), { w: 180, h: 60 });
+  assert.deepEqual(furnitureDefaultCm('chair'), { w: 50, h: 50 });
+  assert.deepEqual(furnitureDefaultCm('desk'), { w: 140, h: 70 });
+  assert.deepEqual(furnitureDefaultCm('sofa_corner_right'), { w: 260, h: 170 });
+  assert.deepEqual(furnitureDefaultCm('kitchen_sink_double'), { w: 90, h: 50 });
 });
 
 test('an unknown symbol is data, not a crash', () => {
@@ -98,24 +108,23 @@ test('sizes are clamped, not trusted', () => {
 
 // ------------------------------- the drawing --------------------------------
 
-test('the path is generated at the real size and is a plain, fill-free outline', () => {
-  const d = furniturePathD('sofa', 440, 180);
-  assert.ok(d.startsWith('M0 0H440V180H0Z'), d.slice(0, 40));
-  // …and the same symbol at half the size is half the numbers
-  const half = furniturePathD('sofa', 220, 90);
-  assert.ok(half.startsWith('M0 0H220V90H0Z'));
+test('designer paths keep their native viewBox; retained paths still scale from the unit box', () => {
+  const sofa = furnitureGraphic('sofa');
+  assert.deepEqual([sofa.viewW, sofa.viewH], [180, 90]);
+  assert.ok(sofa.d.length > 10);
+  const fridge = furniturePathD('fridge', 60, 65);
+  assert.ok(fridge.startsWith('M0 0H60V65H0Z'), fridge.slice(0, 40));
   // a degenerate box draws nothing rather than NaNs
   assert.equal(furniturePathD('sofa', 0, 10), '');
   assert.ok(!/NaN/.test(furniturePathD('toilet', 40, 70)));
 });
 
-test('every symbol generates a finite path with no NaN at any aspect ratio', () => {
+test('every symbol exposes one finite path and a positive native coordinate box', () => {
   for (const s of FURNITURE) {
-    for (const [w, h] of [[100, 100], [400, 25], [25, 400]]) {
-      const d = furniturePathD(s.id, w, h);
-      assert.ok(d.length > 0, `${s.id}: empty path`);
-      assert.ok(!/NaN|Infinity|undefined/.test(d), `${s.id}: ${d.slice(0, 60)}`);
-    }
+    const art = furnitureGraphic(s.id);
+    assert.ok(art.viewW > 0 && art.viewH > 0, `${s.id}: invalid viewBox`);
+    assert.ok(art.d.length > 0, `${s.id}: empty path`);
+    assert.ok(!/NaN|Infinity|undefined/.test(art.d), `${s.id}: ${art.d.slice(0, 60)}`);
   }
 });
 

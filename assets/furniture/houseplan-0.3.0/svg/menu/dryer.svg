@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 110 110">
+  <g>
+    <path d="M31.5 25h47a2.5 2.5 0 0 1 2.5 2.5v55a2.5 2.5 0 0 1-2.5 2.5h-47a2.5 2.5 0 0 1-2.5-2.5v-55a2.5 2.5 0 0 1 2.5-2.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M31.5 37.5h47A2.5 2.5 0 0 1 81 40v42.5a2.5 2.5 0 0 1-2.5 2.5h-47a2.5 2.5 0 0 1-2.5-2.5V40a2.5 2.5 0 0 1 2.5-2.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M38 60.5a17 17 0 1 0 34 0 17 17 0 1 0-34 0" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M43.5 60.5a11.5 11.5 0 1 0 23 0 11.5 11.5 0 1 0-23 0m22-29.5a2 2 0 1 0 4 0 2 2 0 1 0-4 0m7.5 0a2 2 0 1 0 4 0 2 2 0 1 0-4 0m-37.25 0h9.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M55.994 55.5s-1.329 1.81-1.479 3.143c-.198 1.761 1.599 2.554 1.48 4.321-.1 1.479-1.48 3.536-1.48 3.536m5.979-11s-1.329 1.81-1.479 3.143c-.198 1.761 1.599 2.554 1.48 4.321-.1 1.479-1.48 3.536-1.48 3.536m-8.519-11s-.886 1.81-.986 3.143c-.132 1.761 1.066 2.554.986 4.321-.067 1.479-.986 3.536-.986 3.536" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>

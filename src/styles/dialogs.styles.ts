@@ -695,6 +695,11 @@ export const dialogsStyles = css`
       flex-wrap: wrap;
       gap: 4px;
     }
+    .furnback {
+      min-height: 34px;
+      gap: 5px;
+      margin: 2px 0 4px;
+    }
     .furnitem {
       display: flex;
       flex-direction: column;
@@ -722,6 +727,9 @@ export const dialogsStyles = css`
       height: 40px;
       color: var(--primary-text-color, currentColor);
     }
+    .furncategory { width: 92px; min-height: 76px; }
+    .furncatprev { width: 48px; height: 48px; }
+    .furnvariants .furnitem { min-height: 74px; }
     .furnsize {
       display: flex;
       align-items: center;

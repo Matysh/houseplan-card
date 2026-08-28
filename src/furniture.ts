@@ -10,14 +10,16 @@
  * to SCALE: a sofa is a 2.2 x 0.9 m rectangle with a back along one long
  * side. Putting a 24x24 pictogram into that rectangle stretches a drawing
  * that was never meant to be stretched, and the result reads as an icon lying
- * on the floor, not as a piece of furniture. So the symbols below are drawn
- * here, in a UNIT BOX, and generated at the shape's real size — which also
- * means the stroke is a plain `stroke-width` in render units, exactly like
- * every other decor shape, instead of a `vector-effect` hack fighting a
- * non-uniform scale.
+ * on the floor, not as a piece of furniture. The primary library is therefore
+ * generated from House Plan's own top-view SVG pack. A small compatibility
+ * set that is absent from the pack stays expressed as unit-box primitives.
+ * Both forms resolve to one path plus its native coordinate box; the renderer
+ * scales that box to the stored real-world size and keeps the configured decor
+ * stroke stable with `vector-effect="non-scaling-stroke"`.
  *
  * THE CONVENTION EVERY SYMBOL OBEYS:
- *   - the box is `0..1 x 0..1`, x to the right, y DOWN (SVG);
+ *   - x points right and y points DOWN (SVG); generated art keeps its native
+ *     viewBox while legacy primitives use `0..1 x 0..1`;
  *   - `y = 0` is the BACK of the object — the side that goes against a wall.
  *     That is what makes the wall magnet meaningful: a sofa's back, a bed's
  *     headboard, a wardrobe's rear panel and a worktop's edge all mean the
@@ -27,6 +29,7 @@
  */
 
 import { NORM_W, GRID_PITCH, CANVAS_LIMIT } from './space-geometry';
+import { GENERATED_FURNITURE_PLAN } from './furniture-plan-art.generated';
 
 /** Groups the palette shows, in the order it shows them. */
 export const FURNITURE_GROUPS = ['furniture', 'appliance', 'sanitary', 'other'] as const;
@@ -53,11 +56,21 @@ export interface FurnitureSymbol {
   /** Stable id — it is what the config stores and what `data-symbol` carries. */
   id: string;
   group: FurnitureGroup;
+  /** Category tile in the two-level editor palette. */
+  category: string;
   /** Default REAL size in centimetres: width ALONG the back edge x depth. */
   w: number;
   h: number;
-  /** The drawing, in the unit box described above. */
-  g: Prim[];
+  /** Legacy drawing retained for symbols absent from the designer pack. */
+  g?: Prim[];
+  /** Designer drawing with its native SVG viewBox. */
+  art?: FurnitureGraphic;
+}
+
+export interface FurnitureGraphic {
+  d: string;
+  viewW: number;
+  viewH: number;
 }
 
 // The outline every boxy symbol starts from, named once so the table reads.
@@ -68,136 +81,136 @@ const box = (): Prim => ['r', 0, 0, 1, 1];
  * DEFAULTS, not limits — the palette lets the user type over both numbers
  * before placing, and the corner handles change them afterwards.
  */
-export const FURNITURE: FurnitureSymbol[] = [
+const LEGACY_FURNITURE: FurnitureSymbol[] = [
   // ------------------------------- мебель --------------------------------
-  { id: 'sofa', group: 'furniture', w: 220, h: 90, g: [
+  { id: 'sofa', group: 'furniture', category: 'sofa', w: 220, h: 90, g: [
     box(),
     ['l', 0.09, 0.26, 0.91, 0.26],   // the back cushion
     ['l', 0.09, 0.26, 0.09, 1],      // armrests
     ['l', 0.91, 0.26, 0.91, 1],
     ['l', 0.5, 0.26, 0.5, 1],        // two seats
   ] },
-  { id: 'armchair', group: 'furniture', w: 90, h: 85, g: [
+  { id: 'armchair', group: 'furniture', category: 'armchair', w: 90, h: 85, g: [
     box(),
     ['l', 0.14, 0.28, 0.86, 0.28],
     ['l', 0.14, 0.28, 0.14, 1],
     ['l', 0.86, 0.28, 0.86, 1],
   ] },
-  { id: 'coffee_table', group: 'furniture', w: 110, h: 60, g: [
+  { id: 'coffee_table', group: 'furniture', category: 'coffee_table', w: 110, h: 60, g: [
     box(), ['r', 0.08, 0.14, 0.84, 0.72],
   ] },
-  { id: 'table_dining', group: 'furniture', w: 140, h: 80, g: [
+  { id: 'table_dining', group: 'furniture', category: 'dining_table', w: 140, h: 80, g: [
     box(), ['r', 0.06, 0.11, 0.88, 0.78],
   ] },
-  { id: 'table_round', group: 'furniture', w: 120, h: 120, g: [
+  { id: 'table_round', group: 'furniture', category: 'dining_table', w: 120, h: 120, g: [
     ['e', 0.5, 0.5, 0.5, 0.5], ['e', 0.5, 0.5, 0.41, 0.41],
   ] },
-  { id: 'chair', group: 'furniture', w: 45, h: 45, g: [
+  { id: 'chair', group: 'furniture', category: 'chair', w: 45, h: 45, g: [
     ['r', 0, 0, 1, 0.18],            // the back
     ['r', 0.06, 0.18, 0.88, 0.8],    // the seat
   ] },
-  { id: 'desk', group: 'furniture', w: 120, h: 60, g: [
+  { id: 'desk', group: 'furniture', category: 'work_table', w: 120, h: 60, g: [
     box(),
     ['r', 0.63, 0.07, 0.31, 0.86],   // the drawer pedestal
     ['l', 0.63, 0.5, 0.94, 0.5],
   ] },
-  { id: 'bed_double', group: 'furniture', w: 160, h: 200, g: [
+  { id: 'bed_double', group: 'furniture', category: 'bed', w: 160, h: 200, g: [
     box(),
     ['r', 0, 0, 1, 0.07],            // the headboard, i.e. the back
     ['r', 0.06, 0.1, 0.4, 0.15],     // two pillows
     ['r', 0.54, 0.1, 0.4, 0.15],
     ['l', 0, 0.33, 1, 0.33],         // the turned-down blanket
   ] },
-  { id: 'bed_single', group: 'furniture', w: 90, h: 200, g: [
+  { id: 'bed_single', group: 'furniture', category: 'bed', w: 90, h: 200, g: [
     box(),
     ['r', 0, 0, 1, 0.07],
     ['r', 0.15, 0.1, 0.7, 0.15],
     ['l', 0, 0.33, 1, 0.33],
   ] },
-  { id: 'nightstand', group: 'furniture', w: 45, h: 40, g: [
+  { id: 'nightstand', group: 'furniture', category: 'nightstand', w: 45, h: 40, g: [
     box(), ['r', 0.12, 0.14, 0.76, 0.33], ['r', 0.12, 0.53, 0.76, 0.33],
   ] },
-  { id: 'wardrobe', group: 'furniture', w: 100, h: 60, g: [
+  { id: 'wardrobe', group: 'furniture', category: 'wardrobe', w: 100, h: 60, g: [
     box(),
     ['l', 0, 0.72, 1, 0.72],         // the hanging rail
     ['l', 0.5, 0.72, 0.5, 1],        // the doors meet here
   ] },
-  { id: 'bookshelf', group: 'furniture', w: 80, h: 30, g: [
+  { id: 'bookshelf', group: 'furniture', category: 'wardrobe', w: 80, h: 30, g: [
     box(), ['l', 0.34, 0, 0.34, 1], ['l', 0.67, 0, 0.67, 1],
   ] },
 
   // ------------------------------- техника -------------------------------
-  { id: 'fridge', group: 'appliance', w: 60, h: 65, g: [
+  { id: 'fridge', group: 'appliance', category: 'fridge', w: 60, h: 65, g: [
     box(),
     ['l', 0, 0.36, 1, 0.36],         // freezer / fridge
     ['l', 0.83, 0.44, 0.83, 0.64],   // the handle
   ] },
-  { id: 'stove', group: 'appliance', w: 60, h: 60, g: [
+  { id: 'stove', group: 'appliance', category: 'cooktop', w: 60, h: 60, g: [
     box(),
     ['e', 0.29, 0.31, 0.15, 0.15], ['e', 0.71, 0.31, 0.15, 0.15],
     ['e', 0.29, 0.71, 0.15, 0.15], ['e', 0.71, 0.71, 0.15, 0.15],
   ] },
-  { id: 'dishwasher', group: 'appliance', w: 60, h: 60, g: [
+  { id: 'dishwasher', group: 'appliance', category: 'dishwasher', w: 60, h: 60, g: [
     box(),
     ['r', 0.1, 0.12, 0.8, 0.76],
     ['e', 0.5, 0.5, 0.27, 0.27], ['e', 0.5, 0.5, 0.13, 0.13],  // plates
   ] },
-  { id: 'washer', group: 'appliance', w: 60, h: 60, g: [
+  { id: 'washer', group: 'appliance', category: 'washer', w: 60, h: 60, g: [
     box(),
     ['l', 0.08, 0.17, 0.92, 0.17],   // the control panel
     ['e', 0.5, 0.57, 0.3, 0.3], ['e', 0.5, 0.57, 0.14, 0.14],  // the drum
   ] },
-  { id: 'dryer', group: 'appliance', w: 60, h: 60, g: [
+  { id: 'dryer', group: 'appliance', category: 'dryer', w: 60, h: 60, g: [
     box(),
     ['l', 0.08, 0.17, 0.92, 0.17],
     ['e', 0.5, 0.57, 0.3, 0.3],
     ['p', 0.36, 0.5, 0.5, 0.64, 0.64, 0.5],  // the chevron that is not a drum
   ] },
-  { id: 'tv', group: 'appliance', w: 120, h: 30, g: [
+  { id: 'tv', group: 'appliance', category: 'tv', w: 120, h: 30, g: [
     ['r', 0, 0, 1, 0.42],            // the screen, seen edge-on
     ['l', 0.5, 0.42, 0.5, 0.72],
     ['l', 0.3, 0.72, 0.7, 0.72],     // the stand
   ] },
-  { id: 'ac', group: 'appliance', w: 90, h: 25, g: [
+  { id: 'ac', group: 'appliance', category: 'air_conditioner', w: 90, h: 25, g: [
     box(), ['l', 0.05, 0.55, 0.95, 0.55], ['l', 0.05, 0.79, 0.95, 0.79],
   ] },
-  { id: 'water_heater', group: 'appliance', w: 45, h: 45, g: [
+  { id: 'water_heater', group: 'appliance', category: 'boiler', w: 45, h: 45, g: [
     ['e', 0.5, 0.5, 0.5, 0.5], ['e', 0.5, 0.5, 0.31, 0.31],
   ] },
 
   // ----------------------------- сантехника ------------------------------
-  { id: 'toilet', group: 'sanitary', w: 40, h: 70, g: [
+  { id: 'toilet', group: 'sanitary', category: 'toilet', w: 40, h: 70, g: [
     ['r', 0.06, 0, 0.88, 0.2],       // the cistern, against the wall
     ['e', 0.5, 0.58, 0.37, 0.35],    // the bowl
     ['e', 0.5, 0.58, 0.22, 0.2],
   ] },
-  { id: 'bathtub', group: 'sanitary', w: 170, h: 75, g: [
+  { id: 'bathtub', group: 'sanitary', category: 'bathtub', w: 170, h: 75, g: [
     box(),
     ['r', 0.05, 0.11, 0.77, 0.78],
     ['e', 0.89, 0.5, 0.045, 0.1],    // the drain end
   ] },
-  { id: 'shower', group: 'sanitary', w: 90, h: 90, g: [
+  { id: 'shower', group: 'sanitary', category: 'shower', w: 90, h: 90, g: [
     box(),
     ['l', 0, 0, 1, 1], ['l', 1, 0, 0, 1],   // the tray, as every plan draws it
     ['e', 0.5, 0.5, 0.08, 0.08],
   ] },
-  { id: 'sink', group: 'sanitary', w: 60, h: 45, g: [
+  { id: 'sink', group: 'sanitary', category: 'sink', w: 60, h: 45, g: [
     box(),
     ['e', 0.5, 0.6, 0.34, 0.3],
     ['e', 0.5, 0.15, 0.07, 0.07],    // the tap
   ] },
-  { id: 'kitchen_sink', group: 'sanitary', w: 80, h: 60, g: [
+  { id: 'kitchen_sink', group: 'sanitary', category: 'kitchen_sink', w: 80, h: 60, g: [
     box(),
     ['r', 0.06, 0.24, 0.44, 0.64],
     ['r', 0.54, 0.24, 0.4, 0.64],
     ['e', 0.5, 0.12, 0.06, 0.06],
   ] },
-  { id: 'bidet', group: 'sanitary', w: 40, h: 55, g: [
+  { id: 'bidet', group: 'sanitary', category: 'bidet', w: 40, h: 55, g: [
     ['e', 0.5, 0.5, 0.44, 0.5], ['e', 0.5, 0.5, 0.26, 0.3],
   ] },
 
   // ------------------------------- прочее --------------------------------
-  { id: 'stairs', group: 'other', w: 100, h: 280, g: [
+  { id: 'stairs', group: 'other', category: 'stairs', w: 100, h: 280, g: [
     box(),
     ['l', 0, 0.111, 1, 0.111], ['l', 0, 0.222, 1, 0.222], ['l', 0, 0.333, 1, 0.333],
     ['l', 0, 0.444, 1, 0.444], ['l', 0, 0.556, 1, 0.556], ['l', 0, 0.667, 1, 0.667],
@@ -205,19 +218,38 @@ export const FURNITURE: FurnitureSymbol[] = [
     ['l', 0.5, 0.93, 0.5, 0.06],               // the "up" arrow
     ['p', 0.38, 0.16, 0.5, 0.06, 0.62, 0.16],
   ] },
-  { id: 'fireplace', group: 'other', w: 120, h: 40, g: [
+  { id: 'fireplace', group: 'other', category: 'fireplace', w: 120, h: 40, g: [
     box(), ['p', 0.22, 1, 0.22, 0.42, 0.78, 0.42, 0.78, 1],
   ] },
-  { id: 'plant', group: 'other', w: 40, h: 40, g: [
+  { id: 'plant', group: 'other', category: 'plant', w: 40, h: 40, g: [
     ['e', 0.5, 0.5, 0.22, 0.22],
     ['l', 0.5, 0.28, 0.5, 0.02], ['l', 0.5, 0.72, 0.5, 0.98],
     ['l', 0.28, 0.5, 0.02, 0.5], ['l', 0.72, 0.5, 0.98, 0.5],
     ['l', 0.34, 0.34, 0.13, 0.13], ['l', 0.66, 0.66, 0.87, 0.87],
     ['l', 0.66, 0.34, 0.87, 0.13], ['l', 0.34, 0.66, 0.13, 0.87],
   ] },
-  { id: 'rug', group: 'other', w: 200, h: 140, g: [
+  { id: 'rug', group: 'other', category: 'rug', w: 200, h: 140, g: [
     box(), ['r', 0.06, 0.09, 0.88, 0.82],
   ] },
+];
+
+const RETAINED_IDS = new Set([
+  'fridge', 'dishwasher', 'washer', 'dryer', 'ac', 'water_heater',
+  'shower', 'sink', 'stairs', 'fireplace', 'plant', 'rug',
+]);
+
+/** Complete public library: 44 designer symbols plus the 12 useful existing
+ * symbols for which the pack intentionally has no top-view replacement. */
+export const FURNITURE: FurnitureSymbol[] = [
+  ...GENERATED_FURNITURE_PLAN.map((symbol) => ({
+    id: symbol.id,
+    group: symbol.group as FurnitureGroup,
+    category: symbol.category,
+    w: symbol.w,
+    h: symbol.h,
+    art: symbol.art,
+  })),
+  ...LEGACY_FURNITURE.filter((symbol) => RETAINED_IDS.has(symbol.id)),
 ];
 
 const BY_ID = new Map(FURNITURE.map((s) => [s.id, s]));
@@ -295,9 +327,8 @@ const num = (v: number): string => {
  * takes a single stroke, a single pointer target and a single `data-symbol`,
  * and the decor layer's DOM does not grow by ten nodes per sofa.
  */
-export function furniturePathD(id: string, w: number, h: number): string {
-  const s = furnitureSymbol(id);
-  if (!s || !(w > 0) || !(h > 0)) return '';
+function primitivePathD(s: FurnitureSymbol, w: number, h: number): string {
+  if (!s.g || !(w > 0) || !(h > 0)) return '';
   const X = (v: number) => num(v * w);
   const Y = (v: number) => num(v * h);
   const out: string[] = [];
@@ -323,6 +354,25 @@ export function furniturePathD(id: string, w: number, h: number): string {
     }
   }
   return out.join('');
+}
+
+/** Native one-path artwork and its coordinate box. The renderer scales this
+ * box non-uniformly to the user's stored dimensions and keeps the decor stroke
+ * physical with `vector-effect=non-scaling-stroke`. */
+export function furnitureGraphic(id: string): FurnitureGraphic | null {
+  const symbol = furnitureSymbol(id);
+  if (!symbol) return null;
+  if (symbol.art) return symbol.art;
+  const d = primitivePathD(symbol, 1, 1);
+  return d ? { d, viewW: 1, viewH: 1 } : null;
+}
+
+/** Compatibility helper for callers that only need a path string. Designer
+ * artwork remains in its native viewBox; use `furnitureGraphic` when sizing it. */
+export function furniturePathD(id: string, w: number, h: number): string {
+  const symbol = furnitureSymbol(id);
+  if (!symbol || !(w > 0) || !(h > 0)) return '';
+  return symbol.art?.d || primitivePathD(symbol, w, h);
 }
 
 // ------------------------------ the wall magnet -----------------------------

@@ -63,10 +63,11 @@ import {
 } from './sun';
 import { dayCycleStageVars, renderDayCycleEnvironment } from './day-cycle-render';
 import {
-  FURNITURE_GROUPS, furnitureOfGroup, furnitureSymbol, furnitureDefaultCm,
-  furniturePathD, furnitureCorners, snapFurnitureToWall,
+  FURNITURE_GROUPS, furnitureOfGroup, furnitureDefaultCm,
+  furnitureGraphic, furnitureCorners, snapFurnitureToWall,
   cmToNorm, clampFurnSize, clampFurnCm, FURN_WALL_CELLS, type FurnitureGroup,
 } from './furniture';
+import { GENERATED_FURNITURE_MENU } from './furniture-menu-art.generated';
 import {
   degradeWalls, rekeyWallsAfterMoveChecked, wallRecordCarrierViolations,
   setWallThickness, setWallThicknessForRoom, cmToField, wallCmToUnits,
@@ -915,6 +916,7 @@ export interface HouseplanEditorHostPort {
   _freeAreas: any[];
   _fullRegistryHass: any;
   _furnPalette: { symbol: string; w: number; h: number; } | null;
+  _furnCategory: string | null;
   _furnWallReach: number;
   _furnWalls: number[][];
   _gearPtCache: WeakMap<number[][], number[]>;
@@ -4661,6 +4663,7 @@ public _furnPlace(raw: number[], free = false): void {
     // …and the editor goes back to the tool that can move what was just placed
     this.host._decorTool = 'select';
     this.host._furnPalette = null;
+    this.host._furnCategory = null;
     this._recordGeometry(this.host._t('history.decor_add'), before);
     this._saveConfig();
     this.host.requestUpdate();
@@ -4726,38 +4729,74 @@ public _decorApplyBox(id: string, box: { x: number; y: number; w: number; h: num
 
 public _renderFurnPalette(): TemplateResult {
     const pal = this.host._furnPalette;
+    const categoryId = this.host._furnCategory;
+    const allSymbols = FURNITURE_GROUPS.flatMap((group) => furnitureOfGroup(group));
+    const categories = GENERATED_FURNITURE_MENU.filter((item) =>
+      allSymbols.some((symbol) => symbol.category === item.id));
+    const category = categories.find((item) => item.id === categoryId) || null;
+    const variants = category
+      ? allSymbols.filter((symbol) => symbol.category === category.id)
+      : [];
     // the unit the fields are read in — the same two words the glow radius
     // already uses, because a plan has one unit system, not one per control
     const unit = this.host._t(this.host._imperial ? 'gs.unit_ft' : 'gs.unit_m');
     const preview = (id: string): TemplateResult => {
-      const s = furnitureSymbol(id)!;
-      // fit the symbol into a 40×40 box keeping its real proportions, so a
-      // sofa reads as a sofa and a toilet does not become a square
-      const k = 36 / Math.max(s.w, s.h);
-      const w = s.w * k, h = s.h * k;
-      return svg`<svg class="furnprev" viewBox="0 0 40 40" aria-hidden="true"><g
-        transform="translate(${(40 - w) / 2} ${(40 - h) / 2})"><path
-        d=${furniturePathD(id, w, h)} fill="none" stroke="currentColor"
-        stroke-width="1.2" stroke-linejoin="round"></path></g></svg>` as unknown as TemplateResult;
+      const art = furnitureGraphic(id);
+      if (!art) return svg`<svg class="furnprev" aria-hidden="true"></svg>` as unknown as TemplateResult;
+      return svg`<svg class="furnprev" viewBox=${`0 0 ${art.viewW} ${art.viewH}`}
+        preserveAspectRatio="xMidYMid meet" aria-hidden="true"><path
+        d=${art.d} fill="none" stroke="currentColor" stroke-width="1.2"
+        vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round"></path></svg>` as unknown as TemplateResult;
+    };
+    const categoryPreview = (item: (typeof GENERATED_FURNITURE_MENU)[number]): TemplateResult => {
+      return svg`<svg class="furnprev furncatprev" viewBox=${`0 0 ${item.art.viewW} ${item.art.viewH}`}
+        preserveAspectRatio="xMidYMid meet" aria-hidden="true"><path
+        d=${item.art.d} fill="none" stroke="currentColor" stroke-width="1.5"
+        vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round"></path></svg>` as unknown as TemplateResult;
     };
     return html`<div class="furnpalette" @pointerdown=${(e: Event) => e.stopPropagation()}>
       <div class="furnhd">
         <ha-icon icon="mdi:sofa-outline"></ha-icon>${this.host._t('furn.title')}
         <span class="spacer"></span>
         <button class="btn furnclose" title=${this.host._t('btn.close')}
-          @click=${() => { this.host._furnPalette = null; this.host._decorTool = 'select'; }}>
+          @click=${() => {
+            this.host._furnPalette = null;
+            this.host._furnCategory = null;
+            this.host._decorTool = 'select';
+          }}>
           <ha-icon icon="mdi:close"></ha-icon>
         </button>
       </div>
       <div class="furnbody">
-        ${FURNITURE_GROUPS.map((g) => html`
+        ${category ? html`
+          <button class="btn ghost furnback" @click=${() => {
+            this.host._furnPalette = null;
+            this.host._furnCategory = null;
+          }}>
+            <ha-icon icon="mdi:arrow-left"></ha-icon>${this.host._t('furn.back_to_categories')}
+          </button>
+          <div class="furngroup" data-category=${category.id}>
+            ${this.host._t(`furn.cat_${category.id}` as I18nKey)}
+          </div>
+          <div class="furnrow furnvariants">
+            ${variants.map((symbol) => html`<button
+              class="furnitem ${pal?.symbol === symbol.id ? 'on' : ''}" data-symbol=${symbol.id}
+              title=${this.host._t(`furn.sym_${symbol.id}` as any)}
+              @click=${() => this._furnPick(symbol.id)}>
+              ${preview(symbol.id)}<span>${this.host._t(`furn.sym_${symbol.id}` as any)}</span>
+            </button>`)}
+          </div>
+        ` : FURNITURE_GROUPS.map((g) => html`
           <div class="furngroup" data-group=${g}>${this.host._t(`furn.group_${g}` as any)}</div>
-          <div class="furnrow">
-            ${furnitureOfGroup(g as FurnitureGroup).map((s) => html`<button
-              class="furnitem ${pal?.symbol === s.id ? 'on' : ''}" data-symbol=${s.id}
-              title=${this.host._t(`furn.sym_${s.id}` as any)}
-              @click=${() => this._furnPick(s.id)}>
-              ${preview(s.id)}<span>${this.host._t(`furn.sym_${s.id}` as any)}</span>
+          <div class="furnrow furncategories">
+            ${categories.filter((item) => item.group === g).map((item) => html`<button
+              class="furnitem furncategory" data-category=${item.id}
+              title=${this.host._t(`furn.cat_${item.id}` as I18nKey)}
+              @click=${() => {
+                this.host._furnPalette = null;
+                this.host._furnCategory = item.id;
+              }}>
+              ${categoryPreview(item)}<span>${this.host._t(`furn.cat_${item.id}` as I18nKey)}</span>
             </button>`)}
           </div>`)}
       </div>
@@ -5074,6 +5113,7 @@ public _renderDecorSecondary(): EditorSecondaryModel | null {
         dismiss: () => {
           if (this.host._decorTool !== 'furniture') return;
           this.host._furnPalette = null;
+          this.host._furnCategory = null;
           this.host._decorTool = 'select';
           this.host.requestUpdate();
         },
@@ -5195,6 +5235,7 @@ public _renderDecorBar(): TemplateResult {
           @click=${() => {
             if (t === 'furniture' && this.host._decorTool === 'furniture') {
               this.host._furnPalette = null;
+              this.host._furnCategory = null;
               this.host._decorTool = 'select';
               return;
             }
@@ -5203,7 +5244,12 @@ public _renderDecorBar(): TemplateResult {
             this.host._decorDraft = null;
             // the palette belongs to its tool and to nothing else: leaving the
             // tool disarms whatever was chosen, so no later click can stamp it
-            if (t !== 'furniture') this.host._furnPalette = null;
+            if (t !== 'furniture') {
+              this.host._furnPalette = null;
+              this.host._furnCategory = null;
+            } else {
+              this.host._furnCategory = null;
+            }
           }}
           title=${this.host._t(k)}>
           <ha-icon icon=${ic}></ha-icon><span class="ml">${this.host._t(k)}</span>
@@ -5335,8 +5381,13 @@ public _renderDecorShapeDialog(): TemplateResult {
               @change=${(e: Event) => (this.host._decorShapeDialog = {
                 ...d, symbol: (e.target as HTMLSelectElement).value,
               })}>
-              ${FURNITURE_GROUPS.map((group) => html`<optgroup label=${this.host._t(`furn.group_${group}` as any)}>
-                ${furnitureOfGroup(group).map((symbol) => html`<option value=${symbol.id}
+              ${GENERATED_FURNITURE_MENU.map((category) => ({
+                category,
+                symbols: furnitureOfGroup(category.group as FurnitureGroup)
+                  .filter((symbol) => symbol.category === category.id),
+              })).filter((entry) => entry.symbols.length).map(({ category, symbols }) => html`
+                <optgroup label=${`${this.host._t(`furn.group_${category.group}` as I18nKey)} · ${this.host._t(`furn.cat_${category.id}` as I18nKey)}`}>
+                ${symbols.map((symbol) => html`<option value=${symbol.id}
                   ?selected=${symbol.id === d.symbol}>
                   ${this.host._t(`furn.sym_${symbol.id}` as any)}
                 </option>`)}

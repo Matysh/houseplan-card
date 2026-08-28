@@ -688,12 +688,17 @@ The authoritative technical interaction contract is
 | Rectangle | Drag diagonal; Shift makes a square | Stroke plus independent fill, size and angle |
 | Oval | Drag bounds; Shift makes a circle | Stroke plus independent fill, radii and angle |
 | Text | Click to open dialog | Multiline text, HA tokens, colour, physical size and angle |
-| Furniture | Pick symbol, then click | Symbol, size, colour, outline and wall magnet |
+| Furniture | Pick a front-view category, pick a top-view variant, then click | Symbol, size, colour, outline and wall magnet |
 | Erase | Click an item | Confirmed deletion, undoable |
 
 Creation and transform snap to the grid plus nearby room/background anchors.
 The plan image is interactive only with Backdrop selected. Undo/Redo shares the
 50-command editor history.
+
+The Furniture palette always uses two levels: categories first, then the
+available plan variants. **All categories** returns to the first level and
+disarms the current symbol. Existing placed furniture keeps its saved size and
+position when the built-in artwork is updated.
 
 ![Selected line in the Background editor](images/07-background-editor.png)
 

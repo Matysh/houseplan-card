@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- The Background furniture library now has 56 top-view symbols and a compact
+  two-level picker: choose a front-view category, then the exact plan variant.
+  Existing furniture keeps its saved geometry while 18 drawings receive the
+  new original artwork ([#159](https://github.com/Matysh/houseplan-card/issues/159)).
+
 - If the optional language pack (currently German) cannot be downloaded, the
   card now says so with a toast instead of silently switching to English; the
   locale runtime the card ships is now the same code the i18n test suite

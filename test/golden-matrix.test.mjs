@@ -805,6 +805,17 @@ test('editor tray golden contract covers every adaptive width in English and Rus
   ]));
 });
 
+test('issue 159 goldens cover both palette levels and every plan-art compatibility class', () => {
+  const furniture = GOLDEN_SCENARIOS.filter((scenario) => scenario.furniturePalette);
+  assert.deepEqual(new Set(furniture.map((scenario) => scenario.theme)), new Set(['dark', 'light']));
+  assert.deepEqual(new Set(furniture.map((scenario) => scenario.furniturePalette)),
+    new Set(['categories', 'variants']));
+  const plan = GOLDEN_SCENARIOS.find((scenario) => scenario.id === 'furniture-plan-art-dark');
+  assert.deepEqual(new Set(plan.decorOverride.filter((shape) => shape.kind === 'furniture')
+    .map((shape) => shape.symbol)),
+    new Set(['sofa', 'fridge', 'sofa_corner_right']));
+});
+
 test('device dialog goldens expose the complete light-source controls at desktop and mobile widths', () => {
   const dialogs = GOLDEN_SCENARIOS.filter((scenario) => scenario.id.startsWith('device-dialog-'));
   assert.equal(dialogs.length, 3);

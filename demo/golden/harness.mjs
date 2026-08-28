@@ -1206,6 +1206,28 @@ export async function prepareGoldenScenario(page, scenario) {
       );
       if (!tray) throw new Error(`golden editor tray did not open: ${scenario.editorTray}`);
     }
+    if (scenario.furniturePalette) {
+      if (scenario.editorTray !== 'furniture-palette') {
+        card._decorSel = null;
+        card._furnPalette = null;
+        card._furnCategory = null;
+        card._editorSecondary.openPalette();
+        card._decorTool = 'furniture';
+      }
+      if (scenario.furniturePalette === 'variants') {
+        card._furnCategory = scenario.furnitureCategory || 'sofa';
+      }
+      card.requestUpdate();
+      await card.updateComplete;
+      await frame();
+      const palette = card.renderRoot.querySelector('.furnpalette');
+      if (!palette) throw new Error(`golden furniture palette did not open: ${scenario.id}`);
+      const selector = scenario.furniturePalette === 'variants'
+        ? '.furnitem[data-symbol]'
+        : '.furnitem[data-category]';
+      if (!palette.querySelector(selector))
+        throw new Error(`golden furniture palette level is empty: ${scenario.id}`);
+    }
     if (scenario.hoverRoom) {
       const room = card._spaceModel().rooms.find((item) => item.id === scenario.hoverRoom);
       if (!room) throw new Error(`golden hover room missing: ${scenario.hoverRoom}`);
