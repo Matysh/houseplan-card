@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   buildDevices, lightGroups, primaryEntity, lqiFor, tempFor, humFor, climateTempFor,
   areaLights, areaTemp, areaHum, areaLightStats, sourceValue, areaClimate, areaClimateMap,
+  roomClimateKey, roomClimateMap,
   litLightEntity, resolvedDeviceStateEntities, resolvedLightSources, resolvedLightState,
   resolvedLightStats, hasOwnSpatialSource, selectSpatialGlowSource, seedHiddenBindings,
   deletePlanMarkerRecords, effectiveMarkerControls, persistedExternalControls,
@@ -1298,6 +1299,133 @@ test('areaClimateMap: температура и влажность живут в
     },
   };
   assert.deepEqual(areaClimateMap(hass).get('hall'), { temp: 21.4, hum: 48 });
+});
+
+test('issue 317: explicit device placement moves one climate vote between HA areas', () => {
+  const hass = {
+    devices: {
+      moved: { id: 'moved', name: 'Moved thermometer', area_id: 'old' },
+      stayed: { id: 'stayed', name: 'Stayed thermometer', area_id: 'old' },
+    },
+    entities: {
+      'sensor.moved_temperature': { device_id: 'moved', platform: 'demo' },
+      'sensor.stayed_temperature': { device_id: 'stayed', platform: 'demo' },
+    },
+    states: {
+      'sensor.moved_temperature': { state: '20', attributes: { device_class: 'temperature' } },
+      'sensor.stayed_temperature': { state: '30', attributes: { device_class: 'temperature' } },
+    },
+  };
+  const moved = [{
+    id: 'moved', binding: 'device:moved', space: 'f1', area: 'new', hidden: true,
+  }];
+  const map = roomClimateMap(hass, undefined, moved);
+  assert.deepEqual(map.get('old'), { temp: 30, hum: null });
+  assert.deepEqual(map.get('new'), { temp: 20, hum: null });
+
+  // Explicit and registry placement agree: the physical device still votes once.
+  const same = [{ id: 'moved', binding: 'device:moved', space: 'f1', area: 'old' }];
+  assert.deepEqual(roomClimateMap(hass, undefined, same).get('old'), { temp: 25, hum: null });
+});
+
+test('issue 317: a hidden real sensor supplies an area-less House Plan room', () => {
+  const hass = {
+    devices: { q: { id: 'q', name: 'Qingping Air Monitor', area_id: 'registry-room' } },
+    entities: {
+      'sensor.q_temperature': { device_id: 'q', platform: 'xiaomi' },
+      'sensor.q_humidity': { device_id: 'q', platform: 'xiaomi' },
+    },
+    states: {
+      'sensor.q_temperature': { state: '21.4', attributes: { device_class: 'temperature' } },
+      'sensor.q_humidity': { state: '48', attributes: { device_class: 'humidity' } },
+    },
+  };
+  const marker = {
+    id: 'q', binding: 'device:q', space: 'garden', area: null, room_id: 'shed', hidden: true,
+  };
+  const key = roomClimateKey('garden', { id: 'shed', area: null });
+  assert.equal(key, '@room/garden/shed');
+  const map = roomClimateMap(hass, undefined, [marker]);
+  assert.deepEqual(map.get(key), { temp: 21.4, hum: 48 });
+  assert.equal(map.get('registry-room'), undefined, 'manual placement owns the readings');
+  assert.equal(roomClimateKey('other', { id: 'shed', area: null }), '@room/other/shed');
+  assert.equal(roomClimateKey('', { id: 'shed', area: null }), null);
+});
+
+test('issue 317: exact entity placement wins over its parent marker only for that entity', () => {
+  const hass = {
+    devices: { hub: { id: 'hub', name: 'Climate hub', area_id: 'registry-room' } },
+    entities: {
+      'sensor.hub_a_temperature': { device_id: 'hub', platform: 'demo' },
+      'sensor.hub_b_temperature': { device_id: 'hub', platform: 'demo' },
+    },
+    states: {
+      'sensor.hub_a_temperature': { state: '20', attributes: { device_class: 'temperature' } },
+      'sensor.hub_b_temperature': { state: '40', attributes: { device_class: 'temperature' } },
+    },
+  };
+  const markers = [
+    { id: 'hub', binding: 'device:hub', space: 'f1', area: 'parent-room' },
+    {
+      id: 'hub-a', binding: 'entity:sensor.hub_a_temperature',
+      space: 'f1', area: null, room_id: 'local-room',
+    },
+  ];
+  const map = roomClimateMap(hass, undefined, markers);
+  assert.deepEqual(map.get('parent-room'), { temp: 40, hum: null });
+  assert.deepEqual(map.get(roomClimateKey('f1', { id: 'local-room', area: null })), {
+    temp: 20, hum: null,
+  });
+  assert.equal(map.get('registry-room'), undefined);
+});
+
+test('issue 317: removed and HA-disabled bindings cannot feed a local room', () => {
+  const hass = {
+    devices: {
+      hub: { id: 'hub', name: 'Climate hub', area_id: 'old' },
+      disabled: { id: 'disabled', name: 'Disabled thermometer', area_id: 'old', disabled_by: 'user' },
+    },
+    entities: {
+      'sensor.kept_temperature': { device_id: 'hub', platform: 'demo' },
+      'sensor.removed_temperature': { device_id: 'hub', platform: 'demo' },
+      'sensor.disabled_temperature': { device_id: 'disabled', platform: 'demo' },
+    },
+    states: {
+      'sensor.kept_temperature': { state: '20', attributes: { device_class: 'temperature' } },
+      'sensor.removed_temperature': { state: '40', attributes: { device_class: 'temperature' } },
+      'sensor.disabled_temperature': { state: '90', attributes: { device_class: 'temperature' } },
+    },
+  };
+  const markers = [
+    { id: 'hub', binding: 'device:hub', removed: true },
+    {
+      id: 'kept', binding: 'entity:sensor.kept_temperature',
+      space: 'f1', area: null, room_id: 'local-room',
+    },
+    {
+      id: 'disabled', binding: 'device:disabled',
+      space: 'f1', area: null, room_id: 'local-room',
+    },
+  ];
+  assert.deepEqual(
+    roomClimateMap(hass, undefined, markers).get('@room/f1/local-room'),
+    { temp: 20, hum: null },
+  );
+});
+
+test('issue 317: opted climate current_temperature follows manual placement', () => {
+  const hass = {
+    devices: { ac: { id: 'ac', name: 'Air conditioner', area_id: 'old' } },
+    entities: { 'climate.ac': { device_id: 'ac', platform: 'demo' } },
+    states: { 'climate.ac': { state: 'cool', attributes: { current_temperature: 23.5 } } },
+  };
+  const marker = {
+    id: 'ac', binding: 'device:ac', space: 'f2', area: null, room_id: 'bed',
+    use_climate_temp: true,
+  };
+  const map = roomClimateMap(hass, undefined, [marker]);
+  assert.deepEqual(map.get('@room/f2/bed'), { temp: 23.5, hum: null });
+  assert.equal(map.get('old'), undefined);
 });
 
 

@@ -142,7 +142,10 @@ export interface Marker {
     calibration?: Record<string, number[]>;
     segment_map?: Record<string, string>;
   } | null;
-  room_id?: string | null; // manual placement into a room WITHOUT an HA area (sub-area rooms)
+  /** Manual placement into a House Plan room without an HA Area. Room-aware
+   * consumers resolve it together with `space`; visual placement is not its
+   * only use. */
+  room_id?: string | null;
   /** `ripple` is legacy read compatibility; UI maps it to icon_ripple. */
   display?: 'badge' | 'ripple' | 'icon_ripple' | 'value' | 'static_icon' | null; // how the device is drawn
   ripple_color?: string | null;

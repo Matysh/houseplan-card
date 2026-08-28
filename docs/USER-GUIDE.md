@@ -428,8 +428,12 @@ per gesture, names the rule the next step would break.
 ### HA area binding
 
 One HA area may be bound to one room. The binding drives automatic device
-placement, room LQI, light and aggregate climate. A room without an area may
-still contain manually assigned devices and explicit measurement sources.
+placement, room LQI, light and aggregate climate. A real temperature or
+humidity sensor manually assigned to another House Plan room follows that
+placement for the automatic room average instead of remaining in its registry
+HA area. This also works for a room without an area; its manually assigned real
+sensors provide the automatic average, while an explicit room measurement
+source still takes priority.
 
 ## 9. Doors, windows, gates and locks
 

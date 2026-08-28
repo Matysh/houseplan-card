@@ -2011,7 +2011,7 @@ export function isAlarmState(
  * Parse a marker's room reference. Two shapes:
  * - `space#area`   — a room bound to an HA area (historical form)
  * - `space#@roomId` — a room WITHOUT an area (sub-area rooms, issue #3):
- *   devices are placed into it manually, by room id.
+ *   devices and their room-aware data are assigned manually, by room id.
  */
 export function parseRoomRef(
   v: string | null | undefined,

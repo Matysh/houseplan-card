@@ -28,6 +28,13 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    symbols: ['roomClimateKey', 'roomClimateMap'],
+    smokes: ['smoke_room_climate_placement.mjs'],
+    because: 'the #317 production-bundle scenario proves one manually placed sensor through '
+      + 'room label, tooltip, temperature fill and hosted Static; those DOM surfaces cannot call '
+      + 'the pure room-target helpers directly',
+  },
+  {
     symbols: [
       'LanguageRuntime', 'LanguageRuntimeContract', 'languageRenderGate',
       'dictionaryFor', 'ensureLanguage',

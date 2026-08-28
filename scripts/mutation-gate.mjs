@@ -106,6 +106,19 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'room-climate-ignores-marker-placement',
+    guard: 'node demo/smoke_room_climate_placement.mjs',
+    because: 'a real sensor manually placed into a House Plan room must leave its registry HA '
+      + 'Area and feed the local room label, tooltip and temperature fill exactly once (#317)',
+    patches: [{
+      file: 'src/devices.ts',
+      find: '    const target = entityTargets.get(eid)\n'
+        + '      || (reg.device_id ? deviceTargets.get(reg.device_id) : null)\n'
+        + '      || reg.area_id || dev?.area_id || null;',
+      replace: '    const target = reg.area_id || dev?.area_id || null;',
+    }],
+  },
+  {
     id: 'editor-runtime-fingerprint-handshake',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test test/editor-runtime-loader.test.mjs',

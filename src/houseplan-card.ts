@@ -112,7 +112,7 @@ import {
 } from './vacuum';
 import {
   buildDevices, deviceFromMarkerDraft, seedHiddenBindings, lqiFor, tempFor, humFor, climateTempFor, isHumEntity,
-  areaTemp, areaHum, sourceValue, areaClimateMap,
+  areaTemp, areaHum, sourceValue, roomClimateKey, roomClimateMap,
   resolvedLightSources, resolvedLightState, resolvedLightStats,
   hasOwnSpatialSource, hasOwnStatefulLightSource, ownControllableEntities,
   forcedLightEntityOf,
@@ -11956,21 +11956,23 @@ export class HouseplanCard extends LitElement {
   private _roomTemp(r: RoomCfg): number | null {
     const src = r.settings?.temp_source;
     if (src) return sourceValue(this._renderPlanHass, src, 'temp', this._markers);
-    // every sensor of the area, placed on the plan or not (field report)
-    return r.area ? this._climate().get(r.area)?.temp ?? null : null;
+    const key = roomClimateKey(this._spaceModel()?.id, r);
+    return key ? this._climate().get(key)?.temp ?? null : null;
   }
 
   /** Room humidity honouring the tier-3 source override. */
   private _roomHum(r: RoomCfg): number | null {
     const src = r.settings?.hum_source;
     if (src) return sourceValue(this._renderPlanHass, src, 'hum', this._markers);
-    return r.area ? this._climate().get(r.area)?.hum ?? null : null;
+    const key = roomClimateKey(this._spaceModel()?.id, r);
+    return key ? this._climate().get(key)?.hum ?? null : null;
   }
 
   private _climateCache: { h: any; r: any; mk: any; m: Map<string, AreaClimate> } | null = null;
 
   /**
-   * Climate for every area, computed ONCE per hass snapshot (review R2-3).
+   * Climate for every HA Area and explicitly placed local room, computed ONCE
+   * per hass snapshot (review R2-3, issue #317).
    * Home Assistant hands out a new `hass` object on every state change, so
    * identity is exactly the right cache key: fresh states always recompute,
    * and the 60 rooms of one render share a single registry pass instead of
@@ -11983,7 +11985,7 @@ export class HouseplanCard extends LitElement {
     const planHass = this._renderPlanHass;
     const c = this._climateCache;
     if (c && c.h === planHass && c.r === this._iconRules && c.mk === mk) return c.m;
-    const m = areaClimateMap(planHass, this._iconRules, mk);
+    const m = roomClimateMap(planHass, this._iconRules, mk);
     this._climateCache = { h: planHass, r: this._iconRules, mk, m };
     return m;
   }
@@ -12087,10 +12089,10 @@ export class HouseplanCard extends LitElement {
     const top = ((point[1] - view.y) / view.h) * 100;
     const op = Math.min(1, disp.opacity + 0.25);
     const k = this._labelScale(r);
-    // Optional metrics row. Light sources may use an explicit room_id even
-    // when this room has no HA area; the other aggregate metrics still need it.
+    // Optional metrics row. Temperature/humidity and light sources may use an
+    // explicit room_id even when this room has no HA Area. LQI remains area-only.
     const rows: TemplateResult[] = [];
-    if (r.area || r.settings?.temp_source || r.settings?.hum_source || disp.labelLight) {
+    if (disp.labelTemp || disp.labelHum || (disp.labelLqi && r.area) || disp.labelLight) {
       if (disp.labelTemp) {
         const t = this._roomTemp(r);
         if (t != null) rows.push(html`<span class="rlm"><ha-icon icon="mdi:thermometer"></ha-icon>${t}°</span>`);

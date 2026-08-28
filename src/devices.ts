@@ -1384,6 +1384,32 @@ const NON_AIR_RE = new RegExp(
 export interface AreaClimate { temp: number | null; hum: number | null }
 
 /**
+ * Stable lookup key for one room's automatic climate aggregate.
+ *
+ * HA-area rooms deliberately keep their historical raw area id. A local room
+ * has no HA identity, so its key is namespaced by both space and room id; room
+ * ids alone are not globally unique across imported spaces.
+ */
+export function roomClimateKey(
+  spaceId: string | null | undefined,
+  room: { id?: string | null; area?: string | null },
+): string | null {
+  if (room.area) return room.area;
+  if (!spaceId || !room.id) return null;
+  return `@room/${encodeURIComponent(spaceId)}/${encodeURIComponent(room.id)}`;
+}
+
+function markerClimateTarget(marker: Marker): string | null {
+  // Persisted local-room placement uses an explicit null Area. Do not treat a
+  // stale room_id without its space as a valid target or let it collide with a
+  // room imported into another space.
+  if (marker.area === null && marker.space && marker.room_id) {
+    return roomClimateKey(marker.space, { id: marker.room_id, area: null });
+  }
+  return marker.area || null;
+}
+
+/**
  * Climate for EVERY area in one registry pass (review R2-3).
  *
  * The per-area version below rescanned the whole registry for each room and
@@ -1391,8 +1417,8 @@ export interface AreaClimate { temp: number | null; hum: number | null }
  * render — an entire frame spent re-reading metadata that did not change. The
  * caller computes this map once per `hass` snapshot and looks rooms up in O(1).
  */
-export function areaClimateMap(
-  hass: any, rules?: CompiledIconRule[], markers?: Marker[] | null,
+export function roomClimateMap(
+  hass: BuildCtx['hass'], rules?: CompiledIconRule[], markers?: Marker[] | null,
 ): Map<string, AreaClimate> {
   const out = new Map<string, AreaClimate>();
   if (!hass?.entities) return out;
@@ -1403,13 +1429,27 @@ export function areaClimateMap(
   // markers the pass below is byte-for-byte the old one.
   const removed = removedPlanBindings(markers);
   const climOpt = new Set<string>();
+  const entityTargets = new Map<string, string>();
+  const deviceTargets = new Map<string, string>();
   for (const m of markers || []) {
-    if (m?.removed || m?.use_climate_temp !== true) continue;
+    if (m?.removed) continue;
     const i = (m.binding || '').indexOf(':');
-    if (i > 0) climOpt.add(m.binding.slice(i + 1));
+    if (i <= 0) continue;
+    const kind = m.binding.slice(0, i);
+    const ref = m.binding.slice(i + 1);
+    if (!ref) continue;
+    if (m.use_climate_temp === true) climOpt.add(ref);
+    const target = markerClimateTarget(m);
+    if (!target) continue;
+    // Match buildDevices(): malformed duplicate live bindings resolve to the
+    // first saved marker, never to two rooms and never to two votes.
+    if (kind === 'entity' && !entityTargets.has(ref)) entityTargets.set(ref, target);
+    else if (kind === 'device' && !deviceTargets.has(ref)) deviceTargets.set(ref, target);
   }
-  // area -> device (or lone entity) -> the entities that belong to it
-  const byArea = new Map<string, Map<string, { name: string; model?: string; ents: string[] }>>();
+  // effective room target -> physical device (or lone entity) -> entities.
+  // Choosing the target before grouping guarantees that a manually moved
+  // reading cannot remain in its registry Area at the same time (#317).
+  const byTarget = new Map<string, Map<string, { name: string; model?: string; ents: string[] }>>();
   for (const [eid, reg] of Object.entries<any>(hass.entities)) {
     // A device tombstone suppresses all of its data. An entity tombstone only
     // suppresses a standalone entity; inside its live parent device it remains
@@ -1417,8 +1457,11 @@ export function areaClimateMap(
     if ((reg.device_id && removed.devices.has(reg.device_id) && !removed.liveEntities.has(eid))
         || (!reg.device_id && removed.entities.has(eid) && !removed.liveEntities.has(eid))) continue;
     const dev = reg.device_id ? hass.devices?.[reg.device_id] : null;
-    const area = reg.area_id || dev?.area_id || null;
-    if (!area) continue;
+    if (!isRegistryEntryEnabled(reg) || (dev && !isRegistryEntryEnabled(dev))) continue;
+    const target = entityTargets.get(eid)
+      || (reg.device_id ? deviceTargets.get(reg.device_id) : null)
+      || reg.area_id || dev?.area_id || null;
+    if (!target) continue;
     // Not every "temperature" is room air. Real finds on a live install: the
     // NAS processor temperature, the water in a smart kettle, a sauna heater at
     // 90 C and a virtual better_thermostat duplicating the real sensor (field
@@ -1433,8 +1476,8 @@ export function areaClimateMap(
       if (EXCLUDED_DOMAINS.has(reg.platform)) continue; // filtered-out integrations
       if (NON_AIR_RE.test(eid)) continue;             // water/chip/flow/target/...
     }
-    let groups = byArea.get(area);
-    if (!groups) { groups = new Map(); byArea.set(area, groups); }
+    let groups = byTarget.get(target);
+    if (!groups) { groups = new Map(); byTarget.set(target, groups); }
     const key = reg.device_id || eid;
     let g = groups.get(key);
     if (!g) {
@@ -1448,7 +1491,7 @@ export function areaClimateMap(
     }
     g.ents.push(eid);
   }
-  for (const [area, groups] of byArea) {
+  for (const [target, groups] of byTarget) {
     const temps: number[] = [];
     const hums: number[] = [];
     for (const [key, g] of groups) {
@@ -1469,12 +1512,23 @@ export function areaClimateMap(
       }
     }
     if (!temps.length && !hums.length) continue;
-    out.set(area, {
+    out.set(target, {
       temp: temps.length ? Math.round((temps.reduce((a, b) => a + b, 0) / temps.length) * 10) / 10 : null,
       hum: hums.length ? Math.round(hums.reduce((a, b) => a + b, 0) / hums.length) : null,
     });
   }
   return out;
+}
+
+/**
+ * Historical area-only name retained for callers and integrations. The map
+ * still uses raw HA area ids; when explicit local-room markers are supplied it
+ * may additionally contain namespaced room keys returned by roomClimateKey().
+ */
+export function areaClimateMap(
+  hass: BuildCtx['hass'], rules?: CompiledIconRule[], markers?: Marker[] | null,
+): Map<string, AreaClimate> {
+  return roomClimateMap(hass, rules, markers);
 }
 
 /** One area's reading. Convenience wrapper — prefer the map for many areas. */

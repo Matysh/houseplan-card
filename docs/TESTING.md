@@ -704,6 +704,14 @@ missing destructive confirmation or an editor exception that breaks View.
       placed on the plan (hidden by filtering or by the user) still feeds the
       room card, the tooltip and the temperature fill; fridges/TRVs still do
       not; an explicit per-room source still wins [auto: unit devices.test]
+- [ ] Room climate follows explicit House Plan placement (#317): a real
+      temperature/humidity sensor moved away from registry Area A votes exactly
+      once in its marker target, including an area-less `space + room_id` room;
+      hidden markers still vote, while removed/HA-disabled ones do not. Exact
+      entity placement wins over its parent device only for that entity, and
+      explicit room sources remain authoritative [auto:
+      smoke_room_climate_placement; units: test/devices.test.mjs; mutation:
+      room-climate-ignores-marker-placement]
 - [ ] Room hover + tooltip: in View, hovering any room visibly highlights it
       (filled, transparent and area-less alike) and shows its name plus clean-
       floor area; temperature/signal follow when available. Thick walls reduce
@@ -1441,7 +1449,9 @@ separately promised workflows:
 - [ ] Climate cost does not grow with rooms (v1.45.0, review R2-3): on a plan
       with dozens of rooms an unrelated HA state update triggers ONE registry
       pass, repeated renders on the same snapshot trigger none, and a changed
-      sensor value is still visible immediately [auto: smoke_climate_once]
+      sensor value is still visible immediately. Explicit marker targets and
+      area-less rooms are indexed before this same pass; they do not add a pass
+      per room [auto: smoke_climate_once + smoke_room_climate_placement]
 - [ ] Plan upload survives a concurrent config revision (v1.44.8): with a second
       tab open on the same plan, attach a background image in space settings —
       the plan shows immediately, `plan_url` is in `.storage/houseplan.config`,

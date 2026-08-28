@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Room temperature and humidity now follow where a real sensor is placed in
+  House Plan instead of remaining in its Home Assistant Area. This also gives
+  automatic climate values to rooms without an HA Area; labels, tooltips and
+  temperature fills stay in sync ([#317](https://github.com/Matysh/houseplan-card/issues/317)).
+
 - Active physical wall controllers that Home Assistant exposes without any own
   entities no longer look permanently unavailable: they now stay opaque and
   follow their controlled target as yellow when working or neutral otherwise

@@ -7,7 +7,10 @@
  * Geometry/model math lives in space-geometry.ts (pure, unit-tested).
  */
 import { html, svg, nothing, type TemplateResult } from 'lit';
-import { buildDevices, areaLqi, areaTemp, resolvedLightSources, resolvedLightState } from './devices';
+import {
+  buildDevices, areaLqi, roomClimateKey, roomClimateMap, sourceValue,
+  resolvedLightSources, resolvedLightState,
+} from './devices';
 import {
   spaceDisplayOf, fillColorsOf, roomFillModeOf, roomGlowOf,
   roomCustomFillOf, resolveEffectiveRoomFill, stageBgOf, paperRoomShapes,
@@ -197,6 +200,20 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   // two cards (HP-1511-01). Rendering still draws `devs` only.
   const defPos = defaultPositions(spaceDevs, space, iconPct);
 
+  // Hosted Static uses the same room-aware automatic aggregate as the full
+  // card. Build it once for the whole render: room labels/fills must never
+  // rescan the registry or fall back to visible markers only (#317).
+  const iconRules = compileIconRules(
+    o.cfg.settings?.icon_rules?.length ? o.cfg.settings.icon_rules : DEFAULT_ICON_RULES,
+  );
+  const roomClimate = roomClimateMap(planHass, iconRules, o.cfg.markers || []);
+  const roomTemperature = (room: typeof space.rooms[number]): number | null => {
+    const source = room.settings?.temp_source;
+    if (source) return sourceValue(planHass, source, 'temp', o.cfg.markers || []);
+    const key = roomClimateKey(space.id, room);
+    return key ? roomClimate.get(key)?.temp ?? null : null;
+  };
+
   // docs/CANVAS.md §4: the static card frames the CONTENT, exactly like the
   // full one — `space.vb` is only the stored hint now, and on a plan drawn
   // past the old unit square it framed empty canvas with the house off-screen.
@@ -268,7 +285,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
       fill === 'light'
         ? resolvedLightState(resolvedLightSources(planHass, spaceDevs, room, o.virtualLights))
         : 'none',
-      fill === 'temp' && room.area ? areaTemp(planHass, spaceDevs, room.area) : null,
+      fill === 'temp' ? roomTemperature(room) : null,
       disp.tempMin,
       disp.tempMax,
       colors,

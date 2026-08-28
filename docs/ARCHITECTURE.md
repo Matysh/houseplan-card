@@ -1145,12 +1145,22 @@ preserved instead of repeatedly snapping back to that hash. The legacy field
 initializer is never a cold-start choice by itself. A plan with no spaces keeps
 `null` authority and does not invent an id.
 
-**Room climate is one pass per hass snapshot** (review R2-3). `areaClimateMap()`
-classifies the whole registry once and returns `Map<area, {temp, hum}>`; the
-card memoizes it on `hass` identity, which Home Assistant replaces on every
-state change. Per-room lookups are O(1). `areaClimate()` survives as a
-single-area wrapper for tests — using it in a render reintroduces the
-O(rooms × entities) cost it was extracted from.
+**Room climate is one pass per hass snapshot** (review R2-3, issue #317).
+`roomClimateMap()` classifies the whole active registry once and returns one
+`{temp, hum}` aggregate per effective room target. HA-area rooms keep their
+area key. An explicitly placed marker overrides registry placement; an
+area-less room uses a collision-safe `space + room_id` key. Exact `entity:`
+placement wins over its parent `device:` placement for that entity, so a
+reading cannot remain in the old Area and vote twice. The card memoizes the map
+on `hass`, rules and markers; per-room lookups are O(1). `areaClimateMap()` and
+`areaClimate()` survive as compatibility wrappers — using the single-area
+wrapper in a render reintroduces the O(rooms × entities) cost the map removed.
+
+Explicit room `temp_source`/`hum_source` remains above the automatic aggregate.
+Hidden live markers still contribute; removed and HA-disabled bindings do not.
+Full View and hosted Static use the same resolver and bounded active render
+snapshot, so a state tick cannot update a temperature fill through a different
+membership rule.
 
 **File uploads go over HTTP** (not WS, which has a message-size limit): `POST /api/houseplan/upload`
 (multipart: marker_id + file), HomeAssistantView, requires_auth. Served from `/houseplan_files/files/`.
