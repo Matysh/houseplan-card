@@ -3330,9 +3330,9 @@ const MUTANT_DEFINITIONS = [
     because: 'Plan architecture ink is visual chrome; leaving the wall outline at raw SVG units '
       + 'makes it five times thinner on a 1 cm grid (#239)',
     patches: [{
-      file: 'src/houseplan-card.ts',
-      find: '        stroke="${stroke}" stroke-width="${gridVisualUnits(0.6, this._cellCm)}"',
-      replace: '        stroke="${stroke}" stroke-width="0.6"',
+      file: 'src/styles/plan.styles.ts',
+      find: '      stroke-width: calc(0.6px * var(--hp-cell-visual-scale, 1));',
+      replace: '      stroke-width: 0.6px;',
     }],
   },
   {

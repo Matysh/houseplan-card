@@ -192,6 +192,29 @@ await settle();
 await page.waitForTimeout(550);
 out.outsideReleaseEndedDrag = await page.evaluate(() => window.__card._tabDrag === null);
 out.outsideReleaseDidNotWrite = await writeCount() === writesBeforeOutside;
+
+// Exercise the window-level release fallback independently. Real mouse input
+// normally grants pointer capture, which would route pointerup back to the
+// source tab and let a missing window listener pass this regression.
+const fallbackIds = await ids();
+const writesBeforeFallback = await writeCount();
+await holdDrag(fallbackIds.at(-1), fallbackIds[0]);
+out.outsideFallbackReleasedCapture = await page.evaluate(() => {
+  const c = window.__card;
+  const drag = c._tabDrag;
+  const source = [...c.renderRoot.querySelectorAll('[data-hp="space-tab"]')]
+    .find((tab) => tab.dataset.id === drag?.id);
+  if (!source || !drag || !source.hasPointerCapture(drag.pointerId)) return false;
+  source.releasePointerCapture(drag.pointerId);
+  return !source.hasPointerCapture(drag.pointerId);
+});
+await page.mouse.move(stagePoint.x, stagePoint.y, { steps: 3 });
+await page.mouse.up();
+await settle();
+await page.waitForTimeout(550);
+out.outsideFallbackReleaseEndedDrag = await page.evaluate(() => window.__card._tabDrag === null);
+out.outsideFallbackReleaseDidNotWrite = await writeCount() === writesBeforeFallback;
+
 const activeBeforeRecovery = await page.evaluate(() => window.__card._space);
 const recoveryTarget = (await ids()).find((id) => id !== activeBeforeRecovery);
 const recoveryPoint = await tabPoint(recoveryTarget);
