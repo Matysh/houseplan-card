@@ -5,6 +5,7 @@ import {
   assertCardContract,
   GLOW_CARD_CONTRACT,
   LARGE_HOUSE_CARD_CONTRACT,
+  SPACE_GLOW_CARD_CONTRACT,
 } from '../demo/performance/card-contract.mjs';
 import { readHouseplanProductionSource } from './houseplan-source.mjs';
 
@@ -31,7 +32,10 @@ test('large-house benchmark declares every private card member it consumes', () 
 });
 
 test('Glow benchmark declares every private card member it consumes', () => {
-  const declared = declaredMembers(GLOW_CARD_CONTRACT);
+  const declared = new Set([
+    ...declaredMembers(GLOW_CARD_CONTRACT),
+    ...declaredMembers(SPACE_GLOW_CARD_CONTRACT),
+  ]);
   assert.deepEqual(
     directCardMembers('demo/benchmark_glow.mjs').filter((name) => !declared.has(name)),
     [],
@@ -45,6 +49,11 @@ test('performance contracts reference real production members', () => {
       assert.match(source, new RegExp(`\\b(?:private\\s+(?:declare\\s+|get\\s+)?|get\\s+)${name}\\b`),
         `${contract.label} declares missing production member ${name}`);
     }
+  }
+  const staticSource = readFileSync(new URL('../src/space-card.ts', import.meta.url), 'utf8');
+  for (const name of declaredMembers(SPACE_GLOW_CARD_CONTRACT)) {
+    assert.match(staticSource, new RegExp(`\\b(?:private\\s+(?:(?:declare|readonly|get)\\s+)*|get\\s+)${name}\\b`),
+      `${SPACE_GLOW_CARD_CONTRACT.label} declares missing production member ${name}`);
   }
 });
 
@@ -133,10 +142,13 @@ test('wall and light geometry reuse bounded caches before structural work', () =
   const light = source.slice(lightStart, lightEnd);
   assert.ok(
     light.indexOf('lruRead(this._lightBarrierPool, cacheKey)')
-      < light.indexOf('const zeroWalls = this._zeroWalls();'),
+      < light.indexOf('buildLightBarrierScene({'),
     'a cached light barrier must return before geometry classification',
   );
-  assert.match(light, /contentFingerprint\(\[/);
-  assert.match(light, /recutWallBodiesGeometry\(sharedWallGeometry, roomPassages, lightPhysical\)/);
+  assert.match(light, /resolveLightBarrierRevision\(\{/);
+  const shared = readFileSync(new URL('../src/glow-scene.ts', import.meta.url), 'utf8');
+  assert.match(shared, /contentFingerprint\(\[/);
+  assert.match(shared,
+    /recutWallBodiesGeometry\(input\.sharedWallGeometry, roomPassages, opaqueBodies\)/);
   assert.match(light, /lruWrite\(this\._lightBarrierPool, cacheKey, entry, 8\)/);
 });

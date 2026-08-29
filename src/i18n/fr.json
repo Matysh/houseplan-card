@@ -351,6 +351,7 @@
   "editor.icon_size": "Taille des icônes, % de la largeur du plan",
   "editor.show_temperature": "Afficher la température",
   "editor.live_states": "États en direct (on/off, ouvert…)",
+  "editor.light_pools": "Halos lumineux et ombres des murs",
   "editor.show_signal": "Afficher le signal Zigbee (LQI)",
   "editor.language": "Langue de l’interface",
   "editor.lang_auto": "Auto (profil HA)",

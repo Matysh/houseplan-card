@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- The read-only `houseplan-space-card` can now opt into the full plan's radial
+  Glow and wall shadows with `light_pools: true`. It uses the same source
+  colour, brightness, radius, openings and physical occluders while remaining
+  fully non-interactive; the option defaults to `false` to preserve the cheap
+  existing-card path ([#374](https://github.com/Matysh/houseplan-card/issues/374)).
+
 - `houseplan-space-card` with an explicit `title: ""` now removes the empty
   top framing strip together with the header, while preserving its side and
   bottom spacing ([#372](https://github.com/Matysh/houseplan-card/issues/372)).

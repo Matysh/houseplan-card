@@ -38,6 +38,11 @@ import {
   bgModeOf, resolveDayCycle, dayCycleFingerprint, type DayCycleState,
 } from './sun';
 import { PointerModalityController } from './pointer-modality';
+import { resolvedSvgScreenBlend, svgScreenBlendSupported } from './glow-blend';
+import {
+  createGlowRuntimeState, disposeGlowRuntime,
+  type GlowRuntimeHost, type GlowRuntimeState,
+} from './glow-scene';
 import './space-editor';
 
 const fireEvent = (node: EventTarget, type: string, detail?: unknown) => {
@@ -61,6 +66,7 @@ interface SpaceCardConfig {
   show_temperature?: boolean;
   live_states?: boolean;
   show_signal?: boolean;
+  light_pools?: boolean;
   language?: string;
 }
 
@@ -103,6 +109,15 @@ class HouseplanSpaceCard extends LitElement {
   private _capturedSnapshotActivity = '';
   private _capturedSnapshotVirtual = '';
   private _activityRuntime = new Map<string, FiniteActivityRuntime>();
+  private readonly _glowRuntimeState: GlowRuntimeState = createGlowRuntimeState();
+  private readonly _glowRuntimeHost: GlowRuntimeHost = {
+    window: () => this.ownerDocument.defaultView || window,
+    isConnected: () => this.isConnected,
+    requestUpdate: () => this.requestUpdate(),
+    reducedMotion: () => this._reducedMotion,
+  };
+  /** Pending/false is the exact historical normal-layer fallback. */
+  private _glowScreenBlend = false;
   private _reducedMotion = false;
   private readonly _pointerModality = new PointerModalityController(this);
   private _motionMedia?: MediaQueryList;
@@ -258,6 +273,7 @@ class HouseplanSpaceCard extends LitElement {
     return {
       type: 'custom:houseplan-space-card', space: first, show_button: true,
       live_states: true, show_temperature: true, show_signal: true,
+      light_pools: false,
     };
   }
 
@@ -268,8 +284,14 @@ class HouseplanSpaceCard extends LitElement {
     this._config = {
       show_button: true, button_target: '/plan-doma',
       live_states: true, show_temperature: true, show_signal: true,
+      light_pools: false,
       ...config,
     };
+    if (!this._config.light_pools) {
+      disposeGlowRuntime(this._glowRuntimeState, this._glowRuntimeHost);
+    } else if (this.isConnected) {
+      this._resolveGlowBlend();
+    }
     // instant paint from the full card's localStorage snapshot, refresh in the background
     this._snap = this._snap || cachedSnapshot();
   }
@@ -285,6 +307,7 @@ class HouseplanSpaceCard extends LitElement {
     this._motionMedia = window.matchMedia?.('(prefers-reduced-motion: reduce)');
     this._reducedMotion = !!this._motionMedia?.matches;
     this._motionMedia?.addEventListener?.('change', this._onMotionChange);
+    this._resolveGlowBlend();
     if (this.hass) this._ensureHaRegistryAuthority();
     this._continuityUnsub?.();
     this._continuityUnsub = subscribePageVisibility(this.ownerDocument, this._pageVisibility);
@@ -325,10 +348,22 @@ class HouseplanSpaceCard extends LitElement {
     this._connHooked = null;
     for (const runtime of this._activityRuntime.values()) window.clearTimeout(runtime.timer);
     this._activityRuntime.clear();
+    disposeGlowRuntime(this._glowRuntimeState, this._glowRuntimeHost);
     this._continuityHistory = [...this._continuityHistory, ...this._continuity.trace].slice(-80);
     this._continuity.dispose();
     this._continuityDisposed = true;
     super.disconnectedCallback();
+  }
+
+  private _resolveGlowBlend(): void {
+    if (!this._config?.light_pools) return;
+    const resolved = resolvedSvgScreenBlend(this.ownerDocument);
+    if (resolved !== undefined) this._glowScreenBlend = resolved;
+    void svgScreenBlendSupported(this.ownerDocument).then((supported) => {
+      if (supported === this._glowScreenBlend) return;
+      this._glowScreenBlend = supported;
+      if (this.isConnected) this.requestUpdate();
+    });
   }
 
   protected willUpdate(changed: PropertyValues): void {
@@ -525,6 +560,7 @@ class HouseplanSpaceCard extends LitElement {
       snap?.layoutFingerprint || contentFingerprint(snap?.layout),
       snap?.virtualLights ? `${snap.virtualLights.configRev}:${snap.virtualLights.rev}` : '',
       this._config?.space || '',
+      this._config?.light_pools === true,
       this._stageWidth,
       this.hass?.themes?.darkMode ?? this.hass?.themes?.default_theme ?? '',
     ]);
@@ -803,6 +839,12 @@ class HouseplanSpaceCard extends LitElement {
       activityRuntime: this._activityRuntime,
       reducedMotion: this._reducedMotion,
       virtualLights: this._snap?.virtualLights,
+      lightPools: this._config.light_pools === true,
+      glowRuntime: {
+        state: this._glowRuntimeState,
+        host: this._glowRuntimeHost,
+        screenBlend: this._glowScreenBlend,
+      },
       liveStates: this._config.live_states !== false,
       showTemperature: this._config.show_temperature !== false,
       showSignal: this._config.show_signal !== false,

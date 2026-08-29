@@ -242,6 +242,14 @@ import { languageLoadingTemplate, languageRenderGate } from './i18n/language-run
 import { CommandStack } from './command-stack';
 import { resolvedSvgScreenBlend, svgScreenBlendSupported } from './glow-blend';
 import {
+  buildGlowClipGeometry, buildLightBarrierScene, createGlowRuntimeState,
+  disposeGlowRuntime, forgetGlowSource, forgetGlowSpace, glowSourceInOpaqueBody,
+  pruneGlowSources, readGlowClip, renderGlowPools, resolveGlowCandidates, resolveGlowFeather,
+  resolveLightBarrierRevision, transitionGlowSource, warnGlowGeometryFallback,
+  writeGlowClip,
+  type GlowRuntimeHost, type GlowRuntimeState, type GlowSpot,
+} from './glow-scene';
+import {
   CONTINUITY_LONG_HIDDEN_MS,
   VisualContinuityController,
   contentFingerprint,
@@ -586,30 +594,6 @@ const POINTER_HOVER_TARGET_SELECTOR = 'hp-dialog, hp-help, hp-color-opacity, hp-
 const NORM_W = 1000; // side of the render space — the canvas is square (v1.48.0)
 /** Short semantic-event / direct-terminal-transition window. Event uses
     three sequential 1.1 s waves; motion cool-down itself never animates. */
-/**
- * How finely the lit region is traced where nothing blocks the light. 96 steps
- * put the chord error at 0.05% of the radius — under a tenth of a pixel on a
- * wall tablet, and cheap because only unobstructed directions use them.
- */
-const GLOW_ARC_STEPS = 96;
-/**
- * Width of the lit→unlit ramp along a shadow edge, in SCREEN pixels: the eye
- * reads a perfectly geometric edge as a cut-out, and a real penumbra is never
- * wider than a hair at this scale. Measured on screen on purpose, so zooming in
- * does not turn a hairline into a smear.
- */
-const GLOW_EDGE_FEATHER_PX = 2;
-/**
- * Radial profile of a pool, as [offset %, share of the calibrated alpha].
- * Monotonic all the way out: a lamp is brightest under itself and dies at its
- * radius. The centre keeps the full calibrated alpha, so nothing about the
- * brightness maths (docs/specs/067) changes — only where that alpha is spent.
- */
-const GLOW_FALLOFF: readonly (readonly [number, number])[] = [
-  [0, 1], [45, 0.88], [70, 0.62], [86, 0.32], [100, 0],
-];
-/** A source pool fades in/out without changing its final calibrated alpha. */
-const GLOW_FADE_MS = 500;
 
 /** Smallest rectangle holding both (docs/CANVAS.md §4). */
 const unionRect = (a: Rect, b: Rect): Rect => {
@@ -653,12 +637,6 @@ type WallFaceBatch = {
   activeCms: number[];
   activeDraftId: string | null;
 };
-/**
- * The floor a source can see, and nothing else. One region means one clip:
- * a beam through a doorway, the room it lands in and the shadow of a column
- * are all the same computation, so they can never disagree with each other.
- */
-type GlowClipGeometry = { lit: string[] };
 const MARKUP_TOOLS = new Set<MarkupTool>([
   'select', 'draw', 'column', 'merge', 'split', 'resize',
   'opening', 'wallthick', 'delroom',
@@ -1815,9 +1793,16 @@ export class HouseplanCard extends LitElement {
     floor: number[][]; geom: any; path: string; area: number;
   }>();
   private _innerContourCache = new Map<string, number[][] | null>();
-  private _glowClipCache = new Map<string, GlowClipGeometry | null>();
-  /** Redacted, bounded dedupe for numerical floor fallbacks (#218). */
-  private _glowGeometryWarnings = new Set<string>();
+  private readonly _glowRuntimeState: GlowRuntimeState = createGlowRuntimeState();
+  private readonly _glowRuntimeHost: GlowRuntimeHost = {
+    window: () => this.ownerDocument.defaultView || window,
+    isConnected: () => this.isConnected,
+    requestUpdate: () => this.requestUpdate(),
+    reducedMotion: () => this._reducedMotion,
+  };
+  /** Compatibility aliases keep the performance/smoke diagnostic contract. */
+  private get _glowClipCache() { return this._glowRuntimeState.clipCache; }
+  private get _glowGeometryWarnings() { return this._glowRuntimeState.geometryWarnings; }
   private _lightBarrierCache: {
     key: string;
     value: {
@@ -1830,16 +1815,20 @@ export class HouseplanCard extends LitElement {
   private _lightBarrierPool = new Map<string, NonNullable<typeof this._lightBarrierCache>>();
   /** Freeze the SVG blur while a pinch/pan emits animation frames, then adopt
    *  the final screen-space value after the gesture. */
-  private _glowFeatherUnits: number | null = null;
+  private get _glowFeatherUnits() { return this._glowRuntimeState.featherUnits; }
+  private set _glowFeatherUnits(value: number | null) { this._glowRuntimeState.featherUnits = value; }
   /** Active pools survive an off transition until their 500 ms fade completes. */
-  private _glowRenderedSources = new Map<string, number>();
-  private _glowLastAppearance = new Map<string, { c: string; alpha: number }>();
-  private _glowEnteringSources = new Set<string>();
-  private _glowEnterRafs = new Map<string, number>();
-  private _glowFadeTimers = new Map<string, number>();
-  private _glowFeatherSuspendUntil = 0;
-  private _glowFeatherResumeTimer = 0;
-  private _glowSourceSeq = 0;
+  private get _glowRenderedSources() { return this._glowRuntimeState.renderedSources; }
+  private get _glowLastAppearance() { return this._glowRuntimeState.lastAppearance; }
+  private get _glowEnteringSources() { return this._glowRuntimeState.enteringSources; }
+  private get _glowEnterRafs() { return this._glowRuntimeState.enterRafs; }
+  private get _glowFadeTimers() { return this._glowRuntimeState.fadeTimers; }
+  private get _glowFeatherSuspendUntil() { return this._glowRuntimeState.featherSuspendUntil; }
+  private set _glowFeatherSuspendUntil(value: number) { this._glowRuntimeState.featherSuspendUntil = value; }
+  private get _glowFeatherResumeTimer() { return this._glowRuntimeState.featherResumeTimer; }
+  private set _glowFeatherResumeTimer(value: number) { this._glowRuntimeState.featherResumeTimer = value; }
+  private get _glowSourceSeq() { return this._glowRuntimeState.sourceSeq; }
+  private set _glowSourceSeq(value: number) { this._glowRuntimeState.sourceSeq = value; }
   /** Pending/false uses the exact historical normal-layer fallback. */
   private _glowScreenBlend = false;
   private _duplicateColumnId: string | null = null;
@@ -2667,17 +2656,7 @@ export class HouseplanCard extends LitElement {
     this._liveSyncConnection = null;
     clearTimeout(this._layoutSyncTimer);
     clearTimeout(this._duplicateColumnTimer);
-    for (const timer of this._glowFadeTimers.values()) clearTimeout(timer);
-    for (const raf of this._glowEnterRafs.values()) cancelAnimationFrame(raf);
-    clearTimeout(this._glowFeatherResumeTimer);
-    this._glowFeatherResumeTimer = 0;
-    this._glowFeatherSuspendUntil = 0;
-    this._glowFadeTimers.clear();
-    this._glowEnterRafs.clear();
-    this._glowEnteringSources.clear();
-    this._glowRenderedSources.clear();
-    this._glowLastAppearance.clear();
-    this._glowSourceSeq = 0;
+    disposeGlowRuntime(this._glowRuntimeState, this._glowRuntimeHost);
     // DEV-B703-03: the last thing this instance was showing, then the
     // tombstone that lets exactly one successor adopt the open dialog.
     // AUD-159B1-02: the snapshot runs while `_warmRevivePending` is still
@@ -10233,105 +10212,24 @@ export class HouseplanCard extends LitElement {
     key: string,
     active: boolean,
   ): { domId: number; entering: boolean; leaving: boolean } | null {
-    let domId = this._glowRenderedSources.get(key);
-    if (active) {
-      const timer = this._glowFadeTimers.get(key);
-      if (timer != null) {
-        clearTimeout(timer);
-        this._glowFadeTimers.delete(key);
-      }
-      if (domId == null) {
-        this._suspendGlowFeatherForTransition();
-        domId = ++this._glowSourceSeq;
-        this._glowRenderedSources.set(key, domId);
-        this._glowEnteringSources.add(key);
-        const raf = requestAnimationFrame(() => {
-          if (this._glowEnterRafs.get(key) !== raf) return;
-          this._glowEnterRafs.delete(key);
-          this._glowEnteringSources.delete(key);
-          if (this.isConnected) this.requestUpdate();
-        });
-        this._glowEnterRafs.set(key, raf);
-      }
-      return { domId, entering: this._glowEnteringSources.has(key), leaving: false };
-    }
-    if (domId == null) return null;
-    const enterRaf = this._glowEnterRafs.get(key);
-    if (enterRaf != null) cancelAnimationFrame(enterRaf);
-    this._glowEnterRafs.delete(key);
-    this._glowEnteringSources.delete(key);
-    if (!this._glowFadeTimers.has(key)) {
-      this._suspendGlowFeatherForTransition();
-      const timer = window.setTimeout(() => {
-        if (this._glowFadeTimers.get(key) !== timer) return;
-        this._glowFadeTimers.delete(key);
-        this._glowRenderedSources.delete(key);
-        this._glowLastAppearance.delete(key);
-        if (this.isConnected) this.requestUpdate();
-      }, GLOW_FADE_MS + 34); // keep one frame of slack after the CSS transition
-      this._glowFadeTimers.set(key, timer);
-    }
-    return { domId, entering: false, leaving: true };
-  }
-
-  /** A whole-layer Gaussian blur is needlessly re-evaluated for every frame
-   * of a source opacity transition. The 1 px penumbra is imperceptible while
-   * the pool itself is moving between transparent and opaque, so bypass it
-   * for that bounded interval and restore it once at the settled frame. */
-  private _suspendGlowFeatherForTransition(): void {
-    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
-    this._glowFeatherSuspendUntil = Math.max(
-      this._glowFeatherSuspendUntil, Date.now() + GLOW_FADE_MS,
+    return transitionGlowSource(
+      this._glowRuntimeState, this._glowRuntimeHost, key, active,
     );
-    clearTimeout(this._glowFeatherResumeTimer);
-    const delay = Math.max(0, this._glowFeatherSuspendUntil - Date.now()) + 17;
-    const resume = () => {
-      this._glowFeatherResumeTimer = 0;
-      if (Date.now() < this._glowFeatherSuspendUntil) {
-        this._glowFeatherResumeTimer = window.setTimeout(
-          resume, this._glowFeatherSuspendUntil - Date.now() + 17,
-        );
-        return;
-      }
-      this._glowFeatherSuspendUntil = 0;
-      if (this.isConnected) this.requestUpdate();
-    };
-    this._glowFeatherResumeTimer = window.setTimeout(resume, delay);
   }
 
   private _forgetGlowSource(key: string): void {
-    const timer = this._glowFadeTimers.get(key);
-    if (timer != null) clearTimeout(timer);
-    const raf = this._glowEnterRafs.get(key);
-    if (raf != null) cancelAnimationFrame(raf);
-    this._glowFadeTimers.delete(key);
-    this._glowEnterRafs.delete(key);
-    this._glowEnteringSources.delete(key);
-    this._glowRenderedSources.delete(key);
-    this._glowLastAppearance.delete(key);
+    forgetGlowSource(this._glowRuntimeState, this._glowRuntimeHost, key);
   }
 
   private _forgetGlowSpace(spaceId: string): void {
-    const prefix = `${spaceId}|`;
-    for (const key of this._glowRenderedSources.keys()) {
-      if (key.startsWith(prefix)) this._forgetGlowSource(key);
-    }
+    forgetGlowSpace(this._glowRuntimeState, this._glowRuntimeHost, spaceId);
   }
 
   private _warnGlowGeometryFallback(
     spaceId: string, fingerprint: string, roomId: string, phase: string,
   ): void {
-    // One diagnostic per geometry revision and room, even if that room happens
-    // to fail in more than one boolean phase while the card is re-rendering.
-    const key = `${spaceId}|${fingerprint}|${roomId}`;
-    if (this._glowGeometryWarnings.has(key)) return;
-    if (this._glowGeometryWarnings.size >= 128) {
-      const oldest = this._glowGeometryWarnings.values().next().value;
-      if (oldest) this._glowGeometryWarnings.delete(oldest);
-    }
-    this._glowGeometryWarnings.add(key);
-    console.warn(
-      `HOUSEPLAN GLOW GEOMETRY FALLBACK: #218, space ${spaceId}, room ${roomId}, phase ${phase}`,
+    warnGlowGeometryFallback(
+      this._glowRuntimeState, spaceId, fingerprint, roomId, phase,
     );
   }
 
@@ -10357,140 +10255,44 @@ export class HouseplanCard extends LitElement {
     masonryGeometry: any; opaqueBodies: number[][][];
   } {
     const raw = this._curSpaceCfg;
-    // Exact content identity keeps the old in-place-mutation protection while
-    // moving the cache lookup ahead of passage classification, physical-body
-    // booleans and wall topology. `_cfgEpoch` alone is deliberately not used:
-    // old editor paths and third-party harnesses can still mutate a structure
-    // before advancing it.
-    const geometryFingerprint = contentFingerprint([raw, this._cellCm, this._gridPitch]);
-    // Gates are door-like: their different symbol must not change how light
-    // crosses the clear opening.
-    // An opening is transparent only where it leads from floor to floor. A
-    // front door has nothing behind it to light, so for light it is masonry
-    // like a window — otherwise its tunnel glows halfway, up to the centreline
-    // where the room polygon ends, and the plan shows a lit doorway to nowhere.
-    const probe = Math.max(this._cmToUnits(10), this._gridPitch * 0.5);
-    const onFloor = (point: number[]): boolean =>
-      polys.some((x) => this._pointInRoom(point, x.r));
-    const passageStates = this._openingsR.flatMap((opening) => {
-      if (!isInteriorLightOpeningType(String(opening.type))) return [];
-      const o = opening;
-      const rad = (o.angle * Math.PI) / 180;
-      const nx = -Math.sin(rad);
-      const ny = Math.cos(rad);
-      const interior = onFloor([o.rx + nx * probe, o.ry + ny * probe])
-        && onFloor([o.rx - nx * probe, o.ry - ny * probe]);
-      // #366: the light pipeline consumes the quantised amount — the door
-      // LEAF animation stays smooth (_openingAmt elsewhere), only light steps.
-      return interior ? [{ opening: o, amount: quantizeOpeningLightAmount(this._openingAmt(o)) }] : [];
+    const revision = resolveLightBarrierRevision({
+      rawSpaceConfig: raw,
+      space,
+      openings: this._openingsR,
+      cellCm: this._cellCm,
+      gridPitch: this._gridPitch,
+      openingAmount: (opening) => this._openingAmt(opening),
     });
-    const openingStateSignature = openingLightStateSignature(
-      passageStates.map(({ opening, amount }) => ({
-        id: opening.id, type: opening.type, contact: opening.contact, amount,
-      })),
-    );
-    const fingerprint = contentFingerprint([geometryFingerprint, openingStateSignature]);
-    const cacheKey = `${space.id}|${fingerprint}`;
+    const cacheKey = `${space.id}|${revision.fingerprint}`;
     const pooled = lruRead(this._lightBarrierPool, cacheKey);
     if (pooled.hit) {
       this._lightBarrierCache = pooled.value;
       return pooled.value.value;
     }
-    const zeroWalls = this._zeroWalls();
-    // Physical masonry has no body at every zero wall, independent of style.
-    // Light transport differs: solid zero walls are added back below as exact
-    // centre-line barriers rather than inflated fake masonry.
-    const openCuts = this._openCuts();
-    // Only dashed zero axes are openings in the visibility contour. Solid
-    // zero axes stay in the room outline and are also registered below as
-    // exact standalone barriers for independent/outer-wall parity.
-    const cuts: number[][] = [...zeroWalls.transmissive];
-    const passages = passageStates
-      .filter(({ amount }) => amount > 0)
-      .map(({ opening, amount }) => ({
-        ...opening,
-        rlen: openingLightApertureLength(opening.rlen, amount),
-      }));
-    const roomPassages = this._roomWallOpeningInputs(passages, space);
-    // Openings omitted from `passages` remain part of light's opaque masonry.
-    // Consequently a source centred in an exterior door/gate or any window is
-    // rejected below exactly like a source centred inside the wall itself.
-    for (const opening of roomPassages) {
-      const rad = (opening.angle * Math.PI) / 180;
-      const dx = (Math.cos(rad) * opening.length) / 2;
-      const dy = (Math.sin(rad) * opening.length) / 2;
-      cuts.push([opening.x - dx, opening.y - dy, opening.x + dx, opening.y + dy]);
-    }
-    const lightPartitionCuts = passageStates.flatMap(({ opening, amount }) =>
-      amount > 0 && opening.partitionHost
-        ? [scalePartitionOpeningCut(partitionOpeningCut(opening.partitionHost), amount)]
-        : []);
-    const lightPhysicalKey = cacheKey;
-    if (this._lightPhysicalBodiesCache?.key !== lightPhysicalKey) {
-      this._lightPhysicalBodiesCache = {
-        key: lightPhysicalKey,
-        all: physicalBodyParts(
-          space, this._cellCm, this._gridPitch, this._gridPitch * 0.0002,
-          lightPartitionCuts,
-        ).all,
-      };
-    }
-    const lightPhysical = this._lightPhysicalBodiesCache.all;
-    const walls = this._spaceWalls;
-    const eps = this._gridPitch * 0.02;
-    const occluders: LightSegment[] = [];
-    // The masonry the plan draws, cut by passages only — real thickness, real
-    // jamb faces. Treating a wall as its centreline let light bleed half a wall
-    // deep (a bright bar at every opening) and started every shadow half a wall
-    // away from the corner that casts it.
-    const sharedWallGeometry = this._wallUnionGeometry();
-    const sharedFingerprint = (sharedWallGeometry as unknown as {
-      sourceFingerprint?: string;
-    } | null)?.sourceFingerprint;
-    const recut = sharedWallGeometry && sharedFingerprint === geometryFingerprint
-      ? recutWallBodiesGeometry(sharedWallGeometry, roomPassages, lightPhysical)
-      : null;
-    const masonry = recut || (walls.length || lightPhysical.length
-      ? wallBodiesGeometry(
-          space.rooms, walls, openCuts,
-          roomPassages,
-          this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W, lightPhysical,
-        )
-      : null);
-    if (masonry && (masonry.status === 'ok' || masonry.status === 'degraded-extra')) {
-      for (const component of masonry.components) {
-        for (const ring of geometryAllRings(component.geom)) occluders.push(...polygonSegments(ring));
-      }
-    } else {
-      // Malformed legacy geometry must remain opaque even when the canonical
-      // boolean pass cannot produce a joined result.
-      for (const body of lightPhysical) occluders.push(...polygonSegments(body));
-    }
-    // Edges without any thickness are still walls; so is a room outline when
-    // the boolean pass above could not run at all.
-    for (const { poly } of polys) {
-      for (const seg of (cuts.length ? outlineWithout(poly, cuts, eps) : polygonSegments(poly))) {
-        occluders.push(seg as LightSegment);
-      }
-    }
-    // A solid zero wall has topology and opacity but deliberately no area.
-    // Add its axis directly to the visibility sweep; do not manufacture a
-    // narrow polygon, because that would alter floor area and doorway maths.
-    for (const barrier of zeroWalls.barriers) {
-      occluders.push(barrier as LightSegment);
-    }
-    const value = {
-      occluders: splitAtIntersections(occluders),
-      floor: polys.map((x) => x.poly),
-      fingerprint,
-      masonryGeometry: masonry && (masonry.status === 'ok' || masonry.status === 'degraded-extra')
-        ? masonry.components.flatMap((component) => component.geom) : [],
-      // The source guard must fail dark against the same type/floor-filtered
-      // bodies used to build the light masonry. The ordinary render bodies are
-      // cut by every hosted opening, including opaque windows and exterior
-      // doors, and therefore cannot be used when the boolean geometry is empty.
-      opaqueBodies: lightPhysical,
-    };
+    const value = buildLightBarrierScene({
+      rawSpaceConfig: raw,
+      space,
+      revision,
+      walls: this._spaceWalls,
+      zeroWalls: this._zeroWalls(),
+      wallKeyPitch: this._wallKeyPitch,
+      cellCm: this._cellCm,
+      gridPitch: this._gridPitch,
+      coordScale: NORM_W,
+      sharedWallGeometry: this._wallUnionGeometry(),
+      physicalBodies: (partitionCuts, lightPhysicalKey) => {
+        if (this._lightPhysicalBodiesCache?.key !== lightPhysicalKey) {
+          this._lightPhysicalBodiesCache = {
+            key: lightPhysicalKey,
+            all: physicalBodyParts(
+              space, this._cellCm, this._gridPitch, this._gridPitch * 0.0002,
+              partitionCuts,
+            ).all,
+          };
+        }
+        return this._lightPhysicalBodiesCache.all;
+      },
+    });
     const entry = { key: cacheKey, value };
     lruWrite(this._lightBarrierPool, cacheKey, entry, 8);
     this._lightBarrierCache = entry;
@@ -10509,84 +10311,48 @@ export class HouseplanCard extends LitElement {
       this._forgetGlowSpace(space.id);
       return svg`` as unknown as TemplateResult;
     }
-    const {
-      occluders, floor, fingerprint, masonryGeometry, opaqueBodies,
-    } = this._lightBarriers(space, polys);
-    // Resolve against the whole plan: a controller and its passive lamp may
-    // legitimately live in different spaces. Ownership is filtered afterwards.
-    const resolvedSources = resolvedLightSources(
-      this._renderPlanHass, this._renderDevices, null, this._virtualLights,
-    )
-      .filter((source) => source.device.space === space.id);
-    const sourcesByDevice = new Map<string, typeof resolvedSources>();
-    for (const source of resolvedSources) {
-      if (!source.device.id) continue;
-      const list = sourcesByDevice.get(source.device.id) || [];
-      list.push(source);
-      sourcesByDevice.set(source.device.id, list);
-    }
-    const spots: {
-      key: string;
-      sourceEid: string;
-      domId: number;
-      entering: boolean;
-      leaving: boolean;
-      pos: { x: number; y: number };
-      c: string;
-      alpha: number;
-      geometry: GlowClipGeometry | null;
-      r: number;
-    }[] = [];
+    const scene = this._lightBarriers(space, polys);
+    const candidates = resolveGlowCandidates({
+      hass: this._renderPlanHass,
+      devices: this._renderDevices,
+      virtualLights: this._virtualLights,
+      spaceId: space.id,
+      defaultColor: colors.glow_light.c,
+      paletteAlpha: colors.glow_light.a,
+      defaultRadiusUnits: defaultR,
+      cellCm: this._cellCm,
+      gridPitch: this._gridPitch,
+      position: (device) => this._pos(device),
+    });
+    const spots: GlowSpot[] = [];
     const seenSourceKeys = new Set<string>();
-    for (const d of this._renderDevices) {
-      if (d.space !== space.id) continue;
-      const source = selectSpatialGlowSource(sourcesByDevice.get(d.id) || []);
-      if (!source) continue;
-      // One marker owns one spatial pool even when its resolved HA source
-      // changes; keeping the key marker-stable avoids a false fade/recreate.
-      const key = `${space.id}|${d.id}`;
+    for (const candidate of candidates) {
+      const { key, pos } = candidate;
       seenSourceKeys.add(key);
-      const visibleGlow = resolveGlowAppearance(
-        source.passive
-          ? { state: source.on ? 'on' : 'off', attributes: {} }
-          : this._renderPlanHass.states[source.eid],
-        d.marker?.glow_color,
-        colors.glow_light.c,
-      );
-      // per-source radius (owner's decision v1.36.2): marker override, else global
-      const ownCm = Number(d.marker?.glow_radius_cm);
-      const R = Number.isFinite(ownCm) && ownCm > 0 ? (ownCm / this._cellCm) * this._gridPitch : defaultR;
-      const pos = this._pos(d);
       // Invalid placement inside any opaque body must remain dark. The
       // masonry geometry already contains the exact passage cuts, so a valid
       // interior doorway remains transparent while a source embedded in the
       // surrounding wall cannot light one side of its tunnel. The visibility
       // sweep separately rejects a source that lies exactly on an opaque edge.
-      const sourcePoint = [pos.x, pos.y];
       // Exterior opening tunnels deliberately remain in `masonryGeometry`,
       // so placing the source there suppresses the entire pool rather than
       // lighting only the indoor half of the tunnel.
-      if (pointInOpaquePlanBody(sourcePoint, masonryGeometry, opaqueBodies)) {
+      if (glowSourceInOpaqueBody(pos, scene)) {
         // This placement cannot produce a valid previous-frame fade: the old
         // clip belongs to a different position. Remove its transition state as
         // well, rather than leaving a timer for a DOM node no longer rendered.
         this._forgetGlowSource(key);
         continue;
       }
-      const transition = this._glowTransition(key, !!visibleGlow);
+      const transition = this._glowTransition(key, !!candidate.appearance);
       if (!transition) continue;
-      if (visibleGlow) {
-        this._glowLastAppearance.set(key, {
-          c: visibleGlow.c,
-          alpha: glowAlpha(visibleGlow.bri, colors.glow_light.a),
-        });
-      }
+      if (candidate.appearance) this._glowLastAppearance.set(key, candidate.appearance);
       const appearance = this._glowLastAppearance.get(key);
       if (!appearance) continue;
-      let geometry: GlowClipGeometry | null = null;
+      let geometry: GlowSpot['geometry'] = null;
       const clipKey =
-        `${space.id}|${fingerprint}|${pos.x.toFixed(4)},${pos.y.toFixed(4)}|${R.toFixed(4)}`;
-      const cachedClip = lruRead(this._glowClipCache, clipKey);
+        `${space.id}|${scene.fingerprint}|${pos.x.toFixed(4)},${pos.y.toFixed(4)}|${candidate.radius.toFixed(4)}`;
+      const cachedClip = readGlowClip(this._glowRuntimeState, clipKey);
       if (cachedClip.hit) {
         geometry = cachedClip.value;
       } else {
@@ -10596,24 +10362,21 @@ export class HouseplanCard extends LitElement {
         // notion of a "spill", a "sector", a "tunnel" or an "open zone" — and
         // a wall corner two rooms away casts its shadow for exactly the same
         // reason a column does.
-        const seen = visibilityPolygon([pos.x, pos.y], R, occluders, GLOW_ARC_STEPS);
-        geometry = {
-          lit: seen.length >= 3
-            ? intersectionPaths([seen], floor, {
-                onBoundsFailure: ({ boundIndex, phase }) => {
-                  const room = polys[boundIndex]?.r;
-                  this._warnGlowGeometryFallback(
-                    space.id, fingerprint, room?.id || `#${boundIndex}`, phase,
-                  );
-                },
-              })
-            : [],
-        };
-        lruWrite(this._glowClipCache, clipKey, geometry, 256);
+        geometry = buildGlowClipGeometry({
+          spaceId: space.id,
+          source: pos,
+          radius: candidate.radius,
+          scene,
+          polygons: polys.map(({ r, poly }) => ({ room: r, poly })),
+          onBoundsFailure: (roomId, phase) => this._warnGlowGeometryFallback(
+            space.id, scene.fingerprint, roomId, phase,
+          ),
+        });
+        writeGlowClip(this._glowRuntimeState, clipKey, geometry);
       }
       spots.push({
         key,
-        sourceEid: source.eid,
+        sourceEid: candidate.sourceEid,
         domId: transition.domId,
         entering: transition.entering,
         leaving: transition.leaving,
@@ -10621,13 +10384,12 @@ export class HouseplanCard extends LitElement {
         c: appearance.c,
         alpha: appearance.alpha,
         geometry,
-        r: R,
+        r: candidate.radius,
       });
     }
-    const sourcePrefix = `${space.id}|`;
-    for (const key of this._glowRenderedSources.keys()) {
-      if (key.startsWith(sourcePrefix) && !seenSourceKeys.has(key)) this._forgetGlowSource(key);
-    }
+    pruneGlowSources(
+      this._glowRuntimeState, this._glowRuntimeHost, space.id, seenSourceKeys,
+    );
     if (!spots.length) return svg`` as unknown as TemplateResult;
     // Per-room Glow overrides are visual clips only. The transport calculation
     // above still crosses a disabled room, but no base/pool pixels are painted
@@ -10654,89 +10416,16 @@ export class HouseplanCard extends LitElement {
     const perUnit = this._stageEl?.clientWidth && view.w
       ? this._stageEl.clientWidth / view.w
       : 1;
-    const nextFeather = GLOW_EDGE_FEATHER_PX / 2 / (perUnit > 0 ? perUnit : 1);
-    const featherEnabled = !this._pinchStart && !this._panStart
-      && Date.now() >= this._glowFeatherSuspendUntil;
-    if (this._glowFeatherUnits == null || featherEnabled)
-      this._glowFeatherUnits = nextFeather;
-    const feather = this._glowFeatherUnits ?? nextFeather;
-    const pad = feather * 4;
-    const featherBox = spots.reduce((box, sp) => ({
-      x: Math.min(box.x, sp.pos.x - sp.r - pad),
-      y: Math.min(box.y, sp.pos.y - sp.r - pad),
-      maxX: Math.max(box.maxX, sp.pos.x + sp.r + pad),
-      maxY: Math.max(box.maxY, sp.pos.y + sp.r + pad),
-      w: 0, h: 0,
-    }), { x: Infinity, y: Infinity, maxX: -Infinity, maxY: -Infinity, w: 0, h: 0 });
-    featherBox.w = featherBox.maxX - featherBox.x;
-    featherBox.h = featherBox.maxY - featherBox.y;
-    return svg`<defs>
-        ${repeat(spots, (sp) => sp.key, (sp) => {
-          const i = sp.domId;
-          const geom = sp.geometry;
-          return svg`
-            ${''/* One field per source, in plan coordinates. Attenuation is a
-                   property of DISTANCE FROM THE LAMP and nothing else, so the
-                   floor two rooms away is dimmer because it is far, not because
-                   a second gradient was pasted at a doorway. The profile decays
-                   over the whole radius: the old flat plateau out to 70% turned
-                   every clipped shape into a slab of solid colour with a rim. */}
-            <radialGradient id="hp-glow-${i}" gradientUnits="userSpaceOnUse"
-              cx="${sp.pos.x}" cy="${sp.pos.y}" r="${sp.r}">
-              ${GLOW_FALLOFF.map(([offset, scale]) => svg`
-                <stop offset="${offset}%" stop-color="${sp.c}"
-                  stop-opacity="${(sp.alpha * scale).toFixed(4)}"></stop>`)}
-            </radialGradient>
-            ${''/* The one and only shape of this light: the floor this lamp can
-                   actually see. A shadow is simply floor that is not in here.
-                   The single blur below is the penumbra of that shape — one
-                   pass over one path, never a second layer of light. */}
-            ${geom ? svg`
-              <clipPath id="hp-glowclip-${i}">
-                <path class="glow-lit" d="${geom.lit.join(' ')}"
-                  clip-rule="evenodd" fill-rule="evenodd"></path>
-              </clipPath>`
-              : nothing}`;
-        })}
-        ${enabledClip ? svg`<clipPath id="hp-glow-enabled">${enabledClip.map((d) => svg`<path d=${d} clip-rule="evenodd" fill-rule="evenodd"></path>`)}</clipPath>` : nothing}
-        ${''/* Penumbra, once for the whole layer. Every region is cut
-               geometrically; blurring the composited result by a hair is what
-               keeps a shadow edge from reading as a cut-out. One pass costs a
-               fraction of one blurred mask per source, and the difference is
-               invisible — neighbouring pools are already smooth where they
-               meet. CSS `filter: blur()` is not usable here: Chromium applies
-               it to an SVG group in name only. */}
-        <filter id="hp-glowfeather" filterUnits="userSpaceOnUse"
-          x="${featherBox.x}" y="${featherBox.y}"
-          width="${featherBox.w}" height="${featherBox.h}"
-          color-interpolation-filters="sRGB">
-          <feGaussianBlur stdDeviation="${feather.toFixed(4)}" edgeMode="none"></feGaussianBlur>
-        </filter>
-      </defs>
-      ${''/* Glow is presentation only. It is painted above room fills, but must
-             not become the pointer target: room hover and its tooltip still
-             belong to the room underneath the light pool. */}
-      <g class="glowlayer glow-pools-frame" pointer-events="none"
-        filter=${featherEnabled ? 'url(#hp-glowfeather)' : nothing}>
-        <g class="glow-pools ${this._glowScreenBlend ? 'blend-screen' : 'blend-normal'}"
-          data-blend=${this._glowScreenBlend ? 'screen' : 'normal'}
-          data-feather-px="${GLOW_EDGE_FEATHER_PX}"
-          clip-path=${enabledClip ? 'url(#hp-glow-enabled)' : nothing}>
-          ${repeat(spots, (sp) => sp.key, (sp) => {
-            const i = sp.domId;
-            return svg`
-              <g class="glow-spot ${sp.entering ? 'is-entering' : ''} ${sp.leaving ? 'is-leaving' : ''}"
-                data-glow-spot="${i}" data-glow-source="${sp.sourceEid}">
-                <circle class="glow-pool"
-                  cx="${sp.pos.x}" cy="${sp.pos.y}" r="${sp.r}"
-                  data-lit-parts="${sp.geometry?.lit.length || 0}"
-                  data-feather-px="${GLOW_EDGE_FEATHER_PX}"
-                  fill="url(#hp-glow-${i})"
-                  clip-path=${sp.geometry ? `url(#hp-glowclip-${i})` : nothing}></circle>
-              </g>`;
-          })}
-        </g>
-      </g>` as unknown as TemplateResult;
+    const feather = resolveGlowFeather(
+      this._glowRuntimeState, perUnit, !this._pinchStart && !this._panStart,
+    );
+    return renderGlowPools({
+      spots,
+      enabledClip,
+      feather: feather.feather,
+      featherEnabled: feather.enabled,
+      screenBlend: this._glowScreenBlend,
+    });
   }
 
   /**

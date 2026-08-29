@@ -89,6 +89,19 @@ export const GLOW_CARD_CONTRACT = Object.freeze({
   }),
 });
 
+export const SPACE_GLOW_CARD_CONTRACT = Object.freeze({
+  label: 'Static-card Glow performance profiles',
+  methods: Object.freeze([]),
+  fields: Object.freeze(['_devices', '_loading', '_snap']),
+  optionalFields: Object.freeze(['_glowRuntimeState', '_glowScreenBlend']),
+  fieldTypes: Object.freeze({
+    _devices: 'array',
+    _loading: 'boolean',
+    _glowRuntimeState: 'object',
+    _glowScreenBlend: 'boolean',
+  }),
+});
+
 /** Single fail-fast implementation injected into both browser runners. Keep
  * this function self-contained: runners serialize it with `toString()`. */
 export function assertCardContract(card, contract) {

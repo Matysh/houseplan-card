@@ -760,34 +760,41 @@ test('golden overrides fail closed on misspelled fixture references', () => {
 
 test('a light source paints exactly one region: the floor it can see', () => {
   const source = readHouseplanProductionSource();
+  const glow = readFileSync(new URL('../src/glow-scene.ts', import.meta.url), 'utf8');
   // One region per source, and it is the visibility polygon clipped to floor.
-  assert.match(source, /visibilityPolygon\(\[pos\.x, pos\.y\], R, occluders/);
-  assert.match(source,
-    /lit: seen\.length >= 3\s*\? intersectionPaths\(\[seen\], floor, \{/);
-  assert.match(source, /onBoundsFailure: \(\{ boundIndex, phase \}\) =>/,
+  assert.match(glow,
+    /visibilityPolygon\(\s*\[input\.source\.x, input\.source\.y\], input\.radius/);
+  assert.match(glow,
+    /lit: seen\.length >= 3\s*\? intersectionPaths\(\[seen\], input\.scene\.floor, \{/);
+  assert.match(glow, /onBoundsFailure: \(\{ boundIndex, phase \}\) =>/,
     'room-local boolean failures must be observable without restoring an unclipped fan');
-  assert.match(source, /<circle class="glow-pool"/);
+  assert.match(glow, /<circle class="glow-pool"/);
+  assert.match(source, /return renderGlowPools\(\{/,
+    'the full card must consume the shared pool renderer');
   // No second layer of LIGHT may come back: a spill path or a shadow mask of
   // its own is how the rendered result and the computed geometry got to
   // disagree (#71, #73). The single blur below is the penumbra of the one
   // region, measured in screen pixels and applied in one pass.
-  const layer = source.slice(source.indexOf('_renderGlowLayer'));
-  const glow = layer.slice(0, layer.indexOf('_renderAlignDialog'));
   assert.doesNotMatch(glow, /glow-spill|glow-shadow|glow-blocker/);
   // Exactly one blur, for the whole layer, sized in screen pixels.
   assert.equal((glow.match(/<feGaussianBlur/g) || []).length, 1);
   assert.doesNotMatch(glow, /<mask /);
-  assert.match(source, /const nextFeather = GLOW_EDGE_FEATHER_PX \/ 2 \/ \(perUnit > 0 \? perUnit : 1\)/);
-  assert.match(source, /const featherEnabled = !this\._pinchStart && !this\._panStart[\s\S]*_glowFeatherSuspendUntil/);
-  assert.match(source, /filter=\$\{featherEnabled \? 'url\(#hp-glowfeather\)' : nothing\}/,
+  assert.match(glow, /const next = GLOW_EDGE_FEATHER_PX \/ 2 \/ \(perUnit > 0 \? perUnit : 1\)/);
+  assert.match(source,
+    /resolveGlowFeather\(\s*this\._glowRuntimeState, perUnit, !this\._pinchStart && !this\._panStart/);
+  assert.match(glow,
+    /filter=\$\{input\.featherEnabled \? 'url\(#hp-glowfeather\)' : nothing\}/,
     'the expensive whole-layer filter must be bypassed during a viewport gesture/transition');
   // Barriers are keyed by their own content: `_cfgEpoch` lags behind geometry
   // edited in place, and a stale barrier set lights straight through a wall.
   assert.doesNotMatch(glow, /_cfgEpoch/);
-  assert.match(source, /const geometryFingerprint = contentFingerprint\(\[raw, this\._cellCm, this\._gridPitch\]\)/);
-  assert.match(source, /const fingerprint = contentFingerprint\(\[geometryFingerprint, openingStateSignature\]\)/);
-  assert.match(source, /const cacheKey = `\$\{space\.id\}\|\$\{fingerprint\}`/);
-  assert.match(source, /sharedFingerprint === geometryFingerprint/,
+  assert.match(glow,
+    /const geometryFingerprint = contentFingerprint\(\[\s*input\.rawSpaceConfig, input\.cellCm, input\.gridPitch/);
+  assert.match(glow,
+    /fingerprint: contentFingerprint\(\[geometryFingerprint, openingStateSignature\]\)/);
+  assert.match(glow,
+    /const cacheKey = `\$\{input\.space\.id\}\|\$\{revision\.fingerprint\}`/);
+  assert.match(glow, /sharedFingerprint === revision\.geometryFingerprint/,
     'an in-place edit must never recut stale shared masonry');
 });
 

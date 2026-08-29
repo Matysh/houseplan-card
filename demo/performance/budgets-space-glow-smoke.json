@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "profile": "large-space-card-glow-v1",
+  "minimumSamples": 3,
+  "timings": {
+    "stateUpdate60Ms": { "stat": "median", "hardMaxMs": 2200 },
+    "screenshotCaptureMs": { "stat": "median", "hardMaxMs": 3200 }
+  },
+  "longTasks": {
+    "maxSingleMs": 2700,
+    "maxCountP95": 12,
+    "maxTotalP95Ms": 5500
+  },
+  "heap": { "required": true, "hardMaxGrowthBytes": 67108864 },
+  "cacheEntries": { "glowClip": 128 },
+  "cacheGrowth": { "glowClip": 0 }
+}

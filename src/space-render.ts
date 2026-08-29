@@ -14,12 +14,12 @@ import {
 import {
   spaceDisplayOf, fillColorsOf, roomFillModeOf, roomGlowOf,
   roomCustomFillOf, resolveEffectiveRoomFill, stageBgOf, paperRoomShapes,
-  openingAmount, roomPoly, outlineWithout,
+  openingAmount, roomPoly, outlineWithout, islandsOf,
   type ResolvedRoomFill,
 } from './logic';
 import {
   openingTunnelGeometries, wallBodiesUnionPath, wallBodyNeedsSolid, wallHatchNeedsSolid,
-  wallHatchStepUnits, wallIntervals, HATCH_BASE_STEP_UNITS,
+  wallHatchStepUnits, wallIntervals, innerContourForRoom, HATCH_BASE_STEP_UNITS,
   type WallEntry,
 } from './wall-thickness';
 import { DEFAULT_ICON_RULES, compileIconRules, EXCLUDED_DOMAINS } from './rules';
@@ -27,7 +27,7 @@ import { t, type Lang } from './i18n';
 import { bgModeOf, resolveDayCycle } from './sun';
 import { dayCycleStageVars, renderDayCycleEnvironment } from './day-cycle-render';
 import type { DevItem, OpeningCfg, ServerConfig } from './types';
-import { physicalBodyParts } from './physical-geometry';
+import { floorMinusBodies, physicalBodyParts, polyclipPathD } from './physical-geometry';
 import {
   materializePartitionOpening, partitionOpeningCut,
   partitionOpeningFace, partitionOpeningHasCompositeRoomWall, resolvePartitionOpeningCompat,
@@ -54,6 +54,14 @@ import {
   type Layout, type ContentItem,
 } from './space-geometry';
 import { resolveZeroWalls } from './zero-walls';
+import { geometryOpenings } from './plan-geometry-preflight';
+import {
+  buildGlowClipGeometry, buildLightBarrierScene, forgetGlowSource, forgetGlowSpace,
+  glowSourceInOpaqueBody, pruneGlowSources, readGlowClip, renderGlowPools,
+  resolveGlowCandidates, resolveGlowFeather, resolveLightBarrierRevision,
+  transitionGlowSource, warnGlowGeometryFallback, writeGlowClip,
+  type GlowRuntimeHost, type GlowRuntimeState, type GlowSpot, type LightBarrierScene,
+} from './glow-scene';
 
 export { spaceModels } from './space-geometry';
 
@@ -62,6 +70,8 @@ type StaticWallGeometryEntry = { fingerprint: string; value: StaticWallGeometry 
 const staticWallGeometryCache = new WeakMap<object, Map<string, StaticWallGeometryEntry>>();
 type StaticPhysicalBodiesEntry = { fingerprint: string; value: number[][][] };
 const staticPhysicalBodiesCache = new WeakMap<object, Map<string, StaticPhysicalBodiesEntry>>();
+type StaticLightBarrierEntry = { fingerprint: string; value: LightBarrierScene };
+const staticLightBarrierCache = new WeakMap<object, Map<string, StaticLightBarrierEntry>>();
 
 /** Static cards receive the same immutable server-config object on HA ticks. */
 function cachedStaticWallGeometry(
@@ -100,6 +110,30 @@ function cachedStaticPhysicalBodies(
   return value;
 }
 
+function cachedStaticLightBarriers(
+  cfg: ServerConfig,
+  spaceId: string,
+  fingerprint: string,
+  build: () => LightBarrierScene,
+): LightBarrierScene {
+  let spaces = staticLightBarrierCache.get(cfg as object);
+  if (!spaces) {
+    spaces = new Map<string, StaticLightBarrierEntry>();
+    staticLightBarrierCache.set(cfg as object, spaces);
+  }
+  const cached = spaces.get(spaceId);
+  if (cached?.fingerprint === fingerprint) return cached.value;
+  const value = build();
+  spaces.set(spaceId, { fingerprint, value });
+  return value;
+}
+
+export interface StaticGlowRuntime {
+  state: GlowRuntimeState;
+  host: GlowRuntimeHost;
+  screenBlend: boolean;
+}
+
 export interface StaticRenderOpts {
   hass: any;
   registry?: HaRegistrySnapshot;
@@ -120,6 +154,9 @@ export interface StaticRenderOpts {
   showTemperature?: boolean;
   showSignal?: boolean;
   reducedMotion?: boolean;
+  /** Full radial Glow is opt-in; omitted/false preserves the cheap static path. */
+  lightPools?: boolean;
+  glowRuntime?: StaticGlowRuntime;
   /** Deterministic clock injection for unit/smoke fixtures; production omits it. */
   dayCycleNow?: Date | number;
   virtualLights?: VirtualLightSnapshot | null;
@@ -354,12 +391,13 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
       return shape;
     });
 
-  // The compact card intentionally has no live radial pools, but it shares the
-  // exact independent data/base projection with the full plan.
-  const glowBaseShapes = space.rooms
+  // Base projection is independent of radial pools: opt-in pools are painted
+  // above it through the same room-level Glow gates as the full plan.
+  const glowEnabledRooms = space.rooms.filter((room) => roomGlowOf(disp.glow, room));
+  const glowBaseShapes = glowEnabledRooms
     .filter((room) => {
       const fill = resolvedRoomFills.get(room);
-      return roomGlowOf(disp.glow, room) && (!fill || fill.opacity <= 0);
+      return !fill || fill.opacity <= 0;
     })
     .map((room) => room.poly
       ? svg`<polygon class="glow-base" aria-hidden="true" pointer-events="none"
@@ -510,6 +548,145 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   const solidWall = !!wallUnion && (wallBodyNeedsSolid(wallUnion.depthUnits, pxPerUnit)
     || wallHatchNeedsSolid(hatchStep, pxPerUnit));
   const wallStroke = disp.color || '#607d8b';
+  let glowPools: TemplateResult | typeof nothing = nothing;
+  const glowRuntime = o.glowRuntime;
+  if (!o.lightPools || !glowRuntime || !glowEnabledRooms.length) {
+    if (glowRuntime) forgetGlowSpace(glowRuntime.state, glowRuntime.host, space.id);
+  } else {
+    const lightOpenings = geometryOpenings(spCfg, space, cellCm, GRID_PITCH, NORM_W);
+    const revision = resolveLightBarrierRevision({
+      rawSpaceConfig: spCfg,
+      space,
+      openings: lightOpenings,
+      cellCm,
+      gridPitch: GRID_PITCH,
+      openingAmount: (opening) => {
+        const entity = opening.contact ? planHass.states?.[opening.contact] : null;
+        return openingAmount(
+          opening.type, entity?.state, !!opening.invert,
+          entity?.attributes?.current_position,
+        );
+      },
+    });
+    const scene = cachedStaticLightBarriers(
+      o.cfg,
+      space.id,
+      revision.fingerprint,
+      () => buildLightBarrierScene({
+        rawSpaceConfig: spCfg,
+        space,
+        revision,
+        walls,
+        zeroWalls,
+        wallKeyPitch: GRID_STEP_N,
+        cellCm,
+        gridPitch: GRID_PITCH,
+        coordScale: NORM_W,
+        sharedWallGeometry: canonicalWallGeometry,
+        physicalBodies: (partitionCuts) => physicalBodyParts(
+          space, cellCm, GRID_PITCH, GRID_PITCH * 0.0002, partitionCuts,
+        ).all,
+      }),
+    );
+    const configuredRadius = Number((o.cfg.settings as any)?.glow_radius_cm);
+    const defaultRadiusCm = Number.isFinite(configuredRadius) && configuredRadius > 0
+      ? configuredRadius : 300;
+    const candidates = resolveGlowCandidates({
+      hass: planHass,
+      devices: devs,
+      virtualLights: o.virtualLights,
+      spaceId: space.id,
+      defaultColor: colors.glow_light.c,
+      paletteAlpha: colors.glow_light.a,
+      defaultRadiusUnits: (defaultRadiusCm / cellCm) * GRID_PITCH,
+      cellCm,
+      gridPitch: GRID_PITCH,
+      position: (device) => markerPos(device, o.layout, o.cfg, defPos, space),
+    });
+    const seen = new Set<string>();
+    const spots: GlowSpot[] = [];
+    for (const candidate of candidates) {
+      seen.add(candidate.key);
+      if (glowSourceInOpaqueBody(candidate.pos, scene)) {
+        forgetGlowSource(glowRuntime.state, glowRuntime.host, candidate.key);
+        continue;
+      }
+      const transition = transitionGlowSource(
+        glowRuntime.state, glowRuntime.host,
+        candidate.key, !!candidate.appearance,
+      );
+      if (!transition) continue;
+      if (candidate.appearance) {
+        glowRuntime.state.lastAppearance.set(candidate.key, candidate.appearance);
+      }
+      const appearance = glowRuntime.state.lastAppearance.get(candidate.key);
+      if (!appearance) continue;
+      const clipKey = `${space.id}|${scene.fingerprint}|${candidate.pos.x.toFixed(4)},${candidate.pos.y.toFixed(4)}|${candidate.radius.toFixed(4)}`;
+      const cachedClip = readGlowClip(glowRuntime.state, clipKey);
+      const geometry = cachedClip.hit ? cachedClip.value : buildGlowClipGeometry({
+        spaceId: space.id,
+        source: candidate.pos,
+        radius: candidate.radius,
+        scene,
+        polygons: revision.polygons,
+        onBoundsFailure: (roomId, phase) => warnGlowGeometryFallback(
+          glowRuntime.state, space.id, scene.fingerprint, roomId, phase,
+        ),
+      });
+      if (!cachedClip.hit) writeGlowClip(glowRuntime.state, clipKey, geometry);
+      spots.push({
+        key: candidate.key,
+        sourceEid: candidate.sourceEid,
+        domId: transition.domId,
+        entering: transition.entering,
+        leaving: transition.leaving,
+        pos: candidate.pos,
+        c: appearance.c,
+        alpha: appearance.alpha,
+        geometry,
+        r: candidate.radius,
+      });
+    }
+    pruneGlowSources(glowRuntime.state, glowRuntime.host, space.id, seen);
+    if (spots.length) {
+      const allEnabled = glowEnabledRooms.length === revision.polygons.length;
+      const enabledClip = allEnabled ? null : glowEnabledRooms.flatMap((room) => {
+        const poly = roomPoly(room);
+        if (!poly) return [];
+        const floorPoly = walls.length && room.id
+          ? (innerContourForRoom(
+              space.rooms, room.id, walls, zeroWalls.contour,
+              GRID_STEP_N, cellCm, GRID_PITCH, NORM_W,
+              canonicalWallGeometry?.roomGeom,
+              canonicalWallGeometry?.multiWallNodes,
+            ) || poly)
+          : poly;
+        const cleanGeometry = extras.length ? floorMinusBodies(floorPoly, extras) : null;
+        const clean = cleanGeometry ? polyclipPathD(cleanGeometry) : '';
+        const holes = islandsOf(
+          floorPoly,
+          revision.polygons
+            .filter(({ room: other }) => other !== room)
+            .map(({ poly: other }) => other),
+        );
+        const path = (points: number[][]) =>
+          `M ${points.map((point) => `${point[0]} ${point[1]}`).join(' L ')} Z`;
+        return [[clean || path(floorPoly), ...holes.map(path)].join(' ')];
+      });
+      const feather = resolveGlowFeather(
+        glowRuntime.state,
+        o.stageWidth && vb[2] ? o.stageWidth / vb[2] : 1,
+        true,
+      );
+      glowPools = renderGlowPools({
+        spots,
+        enabledClip,
+        feather: feather.feather,
+        featherEnabled: feather.enabled,
+        screenBlend: glowRuntime.screenBlend,
+      });
+    }
+  }
   const hostedOpeningSymbols = disp.hideOpenings ? [] : resolvedHosted.map((resolved) => {
     const opening = resolved.opening;
     const entity = opening.type === 'passage' || !opening.contact
@@ -586,6 +763,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
           ? svg`<g class="glow-base-layer" aria-hidden="true" pointer-events="none">${glowBaseShapes}</g>`
           : nothing}
         ${passageGlowTunnels}
+        ${glowPools}
         ${wallUnion
           ? svg`<g class="wallbodies" style="--room-stroke:${wallStroke}">
               ${wallUnion.paths.map((component) => svg`

@@ -13,6 +13,7 @@ test('ordinary Validate keeps only the bounded candidate performance smoke', () 
     '--variants=60 --samples=3 --warmups=1',
     '--absolute-only',
     'budgets-glow-smoke.json',
+    'budgets-space-glow-smoke.json',
     'cancel-in-progress: true',
   ]) assert.ok(workflow.includes(contract), `missing fast-gate contract: ${contract}`);
   assert.ok(!workflow.includes('Capture base and candidate profiles'));
@@ -34,13 +35,15 @@ test('full performance is isolated to stable, scheduled and manual entry points'
     '- plan-snap',
     '- blend',
     '- overlay',
+    '- space-default',
+    '- space-glow',
     'PROFILE: ${{ matrix.profile }}',
     'name: full-performance-${{ matrix.profile }}',
     '--samples=7 --warmups=1',
   ]) assert.ok(workflow.includes(contract), `missing full-gate contract: ${contract}`);
 
   assert.ok(workflow.includes('if [ -f baseline/scripts/bundle-sync.mjs ]; then'));
-  assert.equal((workflow.match(/--samples=7 --warmups=1/g) || []).length, 10);
+  assert.equal((workflow.match(/--samples=7 --warmups=1/g) || []).length, 14);
 
   const release = readWorkflow('release.yml');
   assert.ok(release.includes('if: ${{ !github.event.release.prerelease }}'));

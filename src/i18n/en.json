@@ -351,6 +351,7 @@
   "editor.icon_size": "Icon size, % of plan width",
   "editor.show_temperature": "Show temperature",
   "editor.live_states": "Live states (on/off, open…)",
+  "editor.light_pools": "Light pools and wall shadows",
   "editor.show_signal": "Show zigbee signal (LQI)",
   "editor.language": "Interface language",
   "editor.lang_auto": "Auto (HA profile)",

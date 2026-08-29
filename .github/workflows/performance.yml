@@ -27,7 +27,7 @@ jobs:
     name: Бенчмарки рендера и геометрии
     # Every profile keeps base and candidate sequential on one hosted runner.
     # Independent profile pairs run in parallel: cross-profile timing is never
-    # compared, while serialising all five pairs cannot fit the job timeout.
+    # compared, while serialising all profile pairs cannot fit the job timeout.
     runs-on: ubuntu-latest
     timeout-minutes: 60
     strategy:
@@ -39,6 +39,8 @@ jobs:
           - plan-snap
           - blend
           - overlay
+          - space-default
+          - space-glow
     steps:
       - name: Check out candidate
         uses: actions/checkout@v7
@@ -200,6 +202,18 @@ jobs:
                 cp ../artifacts/performance/overlay-candidate.json ../artifacts/performance/overlay-baseline.json
               fi
               ;;
+            space-default)
+              npm run benchmark:glow -- --profile=large-space-card-default-v1 --target-root=../baseline --samples=7 --warmups=1 --output=../artifacts/performance/space-default-baseline.json
+              npm run benchmark:glow -- --profile=large-space-card-default-v1 --target-root=. --samples=7 --warmups=1 --output=../artifacts/performance/space-default-candidate.json
+              ;;
+            space-glow)
+              npm run benchmark:glow -- --profile=large-space-card-glow-v1 --target-root=../baseline --samples=7 --warmups=1 --output=../artifacts/performance/space-glow-baseline.json
+              npm run benchmark:glow -- --profile=large-space-card-glow-v1 --target-root=. --samples=7 --warmups=1 --output=../artifacts/performance/space-glow-candidate.json
+              if ! grep -q "light_pools" ../baseline/src/space-card.ts; then
+                echo "Base predates opt-in static Glow; bootstrap relative baseline, keep absolute gate"
+                cp ../artifacts/performance/space-glow-candidate.json ../artifacts/performance/space-glow-baseline.json
+              fi
+              ;;
             *)
               echo "::error::Unknown performance profile: $PROFILE"
               exit 1
@@ -226,6 +240,12 @@ jobs:
               ;;
             overlay)
               npm run benchmark:compare -- --budgets=demo/performance/budgets-large-house-glow-overlay.json --baseline=../artifacts/performance/overlay-baseline.json --candidate=../artifacts/performance/overlay-candidate.json --output=../artifacts/performance/overlay-comparison.json
+              ;;
+            space-default)
+              npm run benchmark:compare -- --budgets=demo/performance/budgets-large-space-card-default.json --baseline=../artifacts/performance/space-default-baseline.json --candidate=../artifacts/performance/space-default-candidate.json --output=../artifacts/performance/space-default-comparison.json
+              ;;
+            space-glow)
+              npm run benchmark:compare -- --budgets=demo/performance/budgets-large-space-card-glow.json --baseline=../artifacts/performance/space-glow-baseline.json --candidate=../artifacts/performance/space-glow-candidate.json --output=../artifacts/performance/space-glow-comparison.json
               ;;
           esac
 

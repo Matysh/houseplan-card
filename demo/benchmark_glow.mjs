@@ -7,12 +7,19 @@ import { launch } from './serve.mjs';
 import { assertFreshDemoBundle } from './bundle-freshness.mjs';
 import { summarizeLongTasks, summarizeTimings } from './performance/evaluate.mjs';
 import { makeLargeHouseFixture } from './fixtures/large-house.mjs';
-import { assertCardContract, GLOW_CARD_CONTRACT } from './performance/card-contract.mjs';
+import {
+  assertCardContract, GLOW_CARD_CONTRACT, SPACE_GLOW_CARD_CONTRACT,
+} from './performance/card-contract.mjs';
 
 const valueArg = (name) => process.argv.find((arg) => arg.startsWith(`--${name}=`))?.slice(name.length + 3);
 const profile = valueArg('profile') || 'large-light-blend-v1';
-if (!['large-light-blend-v1', 'large-house-glow-overlay-v1'].includes(profile))
+if (![
+  'large-light-blend-v1', 'large-house-glow-overlay-v1',
+  'large-space-card-default-v1', 'large-space-card-glow-v1',
+].includes(profile))
   throw new Error(`unknown Glow profile: ${profile}`);
+const staticCardProfile = profile.startsWith('large-space-card-');
+const staticGlowProfile = profile === 'large-space-card-glow-v1';
 const parsedSamples = Number(valueArg('samples'));
 const parsedWarmups = Number(valueArg('warmups'));
 const samples = Math.max(1, Math.min(20, Number.isFinite(parsedSamples) && parsedSamples > 0 ? parsedSamples : 7));
@@ -196,22 +203,34 @@ try {
         config: { unit_system: { length: 'km' } },
       });
       const cacheSnapshot = (card) => ({
-        cleanFloor: card._cleanFloorCache?.size ?? 0,
-        glowClip: card._glowClipCache?.size ?? 0,
-        wallUnion: card._wallUnionCache ? 1 : 0,
-        openingTunnel: card._openingTunnelCache ? 1 : 0,
-        openingWallIndex: card._openingWallIndexCache ? 1 : 0,
+        ...(card._glowRuntimeState ? {
+          glowClip: card._glowRuntimeState.clipCache?.size ?? 0,
+        } : {
+          cleanFloor: card._cleanFloorCache?.size ?? 0,
+          glowClip: card._glowClipCache?.size ?? 0,
+          wallUnion: card._wallUnionCache ? 1 : 0,
+          openingTunnel: card._openingTunnelCache ? 1 : 0,
+          openingWallIndex: card._openingWallIndexCache ? 1 : 0,
+        }),
       });
       window.__card?.remove?.();
       localStorage.clear();
       const host = document.getElementById('host');
       const result = { sample, longTasks: {}, renderCounts: {}, poolCounts: {} };
-      const card = document.createElement('houseplan-card');
-      card.setConfig({ type: 'custom:houseplan-card', title: `Glow ${profile}`, icon_size: 2.4 });
+      const staticCardProfile = profile.startsWith('large-space-card-');
+      const card = document.createElement(staticCardProfile ? 'houseplan-space-card' : 'houseplan-card');
+      card.setConfig(staticCardProfile ? {
+        type: 'custom:houseplan-space-card', space: fixture.config.spaces[0].id,
+        show_button: false, light_pools: profile === 'large-space-card-glow-v1',
+      } : {
+        type: 'custom:houseplan-card', title: `Glow ${profile}`, icon_size: 2.4,
+      });
       host.replaceChildren(card);
       card.hass = hassFor(statesFor(1));
+      await until(() => staticCardProfile
+        ? !!card._snap && card._devices?.length > 0
+        : card._loadOk && card._devices?.length === fixture.deviceCount);
       window.__hpAssertCardContract(card, cardContract);
-      await until(() => card._loadOk && card._devices?.length === fixture.deviceCount);
       if ('_glowScreenBlend' in card) {
         const probeDeadline = performance.now() + 2500;
         while (!card._glowScreenBlend && performance.now() < probeDeadline)
@@ -259,7 +278,10 @@ try {
       result.renderedDevices = card._devices?.length ?? 0;
       result.screenBlend = card._glowScreenBlend === true;
       return result;
-    }, { fixture, profile, sample, cardContract: GLOW_CARD_CONTRACT });
+    }, {
+      fixture, profile, sample,
+      cardContract: staticCardProfile ? SPACE_GLOW_CARD_CONTRACT : GLOW_CARD_CONTRACT,
+    });
     const captureStarted = performance.now();
     await page.screenshot({ type: 'png' });
     row.screenshotCaptureMs = Number((performance.now() - captureStarted).toFixed(2));

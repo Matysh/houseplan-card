@@ -351,6 +351,7 @@
   "editor.icon_size": "Размер иконок, % ширины плана",
   "editor.show_temperature": "Показывать температуру",
   "editor.live_states": "Живые состояния (вкл/выкл, открыто…)",
+  "editor.light_pools": "Световые пулы и тени от стен",
   "editor.show_signal": "Показывать сигнал zigbee (LQI)",
   "editor.language": "Язык интерфейса",
   "editor.lang_auto": "Авто (профиль HA)",

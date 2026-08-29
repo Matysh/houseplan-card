@@ -87,20 +87,53 @@ try {
       .filter((pool) => pool.hasAttribute('clip-path')).length;
 
     await customElements.whenDefined('houseplan-space-card');
+    const staticOffCard = document.createElement('houseplan-space-card');
+    staticOffCard.setConfig({
+      type: 'custom:houseplan-space-card', space: fixture.config.spaces[0].id,
+      show_button: false,
+    });
+    staticOffCard.hass = hass;
+    document.body.appendChild(staticOffCard);
+    await until(() => staticOffCard.renderRoot?.querySelector('.hp-static-stage'));
+    await staticOffCard.updateComplete;
+    const staticBase = staticOffCard.renderRoot.querySelector('.glow-base-layer .glow-base');
+    const staticOffPools = staticOffCard.renderRoot.querySelectorAll('.glow-pool, .glowlayer').length;
+    const baseParity = !!fullBase && !!staticBase
+      && fullBase.getAttribute('fill') === staticBase.getAttribute('fill')
+      && fullBase.getAttribute('fill-opacity') === staticBase.getAttribute('fill-opacity');
+
     const staticCard = document.createElement('houseplan-space-card');
     staticCard.setConfig({
       type: 'custom:houseplan-space-card', space: fixture.config.spaces[0].id,
-      show_button: false,
+      show_button: false, light_pools: true,
     });
     staticCard.hass = hass;
     document.body.appendChild(staticCard);
     await until(() => staticCard.renderRoot?.querySelector('.hp-static-stage'));
+    await until(() => staticCard._glowScreenBlend === true, 3000, 'static screen probe');
+    await until(() => staticCard.renderRoot.querySelectorAll('.glow-pool').length === 60,
+      10000, 'static Glow pools');
     await staticCard.updateComplete;
-    const staticBase = staticCard.renderRoot.querySelector('.glow-base-layer .glow-base');
-    const staticPools = staticCard.renderRoot.querySelectorAll('.glow-pool, .glowlayer').length;
-    const baseParity = !!fullBase && !!staticBase
-      && fullBase.getAttribute('fill') === staticBase.getAttribute('fill')
-      && fullBase.getAttribute('fill-opacity') === staticBase.getAttribute('fill-opacity');
+    await frame();
+    const staticPoolGroup = staticCard.renderRoot.querySelector('.glow-pools');
+    const staticPoolNodes = [...staticCard.renderRoot.querySelectorAll('.glow-pool')];
+    const staticClippedPools = staticPoolNodes.filter((pool) => pool.hasAttribute('clip-path')).length;
+    const poolSnapshot = (root, pool) => {
+      const clipId = pool?.getAttribute('clip-path')?.match(/^url\(#(.+)\)$/)?.[1] || '';
+      const clip = [...root.querySelectorAll('clipPath')].find((node) => node.id === clipId);
+      return {
+        source: pool?.parentElement?.getAttribute('data-glow-source') || '',
+        cx: pool?.getAttribute('cx') || '', cy: pool?.getAttribute('cy') || '',
+        r: pool?.getAttribute('r') || '', parts: pool?.getAttribute('data-lit-parts') || '',
+        lit: [...(clip?.querySelectorAll('.glow-lit') || [])].map((path) => path.getAttribute('d') || ''),
+      };
+    };
+    const fullFirst = poolSnapshot(card.renderRoot, card.renderRoot.querySelector('.glow-pool'));
+    const staticFirst = poolSnapshot(staticCard.renderRoot, staticPoolNodes[0]);
+    const staticPointerEvents = getComputedStyle(
+      staticCard.renderRoot.querySelector('.hp-static-stage'),
+    ).pointerEvents;
+    staticOffCard.remove();
     staticCard.remove();
 
     // The fixture deliberately has Temperature mode without temperature
@@ -129,7 +162,10 @@ try {
       baseLayerOrder: follows(dataTunnel, fullBase)
         && follows(fullBase, baseTunnel) && follows(baseTunnel, poolFrame),
       fullBase: !!fullBase, baseTunnel: !!baseTunnel,
-      staticBase: !!staticBase, staticPools, baseParity,
+      staticBase: !!staticBase, staticOffPools, baseParity,
+      staticPools: staticPoolNodes.length, staticClippedPools,
+      staticBlend: staticPoolGroup?.getAttribute('data-blend'),
+      staticPointerEvents, fullFirst, staticFirst,
       customFill: customRoom?.style.getPropertyValue('--room-fill'),
       customOpacity: customRoom?.style.getPropertyValue('--room-fill-op'),
       customBase: !!customBase, customBaseTunnel: !!customBaseTunnel,
@@ -170,13 +206,19 @@ try {
   if (!close(pixel(out.forward, 3), [106, 123, 140, 255])) throw new Error('non-pool sector/background changed');
   if (out.clippedPools !== out.pools) throw new Error(`lost per-source clips: ${out.clippedPools}/${out.pools}`);
   if (!out.baseLayerOrder) throw new Error('data/base/tunnel/pool layer order changed');
-  if (!out.fullBase || !out.baseTunnel || !out.staticBase || out.staticPools !== 0 || !out.baseParity)
-    throw new Error(`missing-data Glow fallback/parity failed: full=${out.fullBase}, tunnel=${out.baseTunnel}, static=${out.staticBase}, parity=${out.baseParity}`);
+  if (!out.fullBase || !out.baseTunnel || !out.staticBase || out.staticOffPools !== 0 || !out.baseParity)
+    throw new Error(`missing-data Glow fallback/parity failed: full=${out.fullBase}, tunnel=${out.baseTunnel}, static=${out.staticBase}, offPools=${out.staticOffPools}, parity=${out.baseParity}`);
+  if (out.staticPools !== out.pools || out.staticClippedPools !== out.staticPools)
+    throw new Error(`static pools/clips differ: pools=${out.staticPools}/${out.pools}, clips=${out.staticClippedPools}`);
+  if (out.staticBlend !== 'screen' || out.staticPointerEvents !== 'none')
+    throw new Error(`static Glow composition changed: blend=${out.staticBlend}, pointer=${out.staticPointerEvents}`);
+  if (JSON.stringify(out.staticFirst) !== JSON.stringify(out.fullFirst))
+    throw new Error(`full/static source geometry differs: ${JSON.stringify(out.fullFirst)} vs ${JSON.stringify(out.staticFirst)}`);
   if (out.customFill !== '#486a8f' || Number(out.customOpacity) !== 0.42)
     throw new Error(`custom data fill changed: ${out.customFill}/${out.customOpacity}`);
   if (out.customBase || out.customBaseTunnel || !out.customLayerOrder)
     throw new Error(`data fill was tinted/reordered by Glow base: full=${out.customBase}, tunnel=${out.customBaseTunnel}, order=${out.customLayerOrder}`);
-  console.log(JSON.stringify({ ok: true, blend: out.blend, pools: out.pools, staticParity: true }));
+  console.log(JSON.stringify({ ok: true, blend: out.blend, pools: out.pools, staticParity: true, staticPools: out.staticPools }));
 } finally {
   await browser.close();
 }

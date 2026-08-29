@@ -615,9 +615,11 @@ jobs:
       - name: Capture the heaviest Glow state
         run: |
           npm run benchmark:glow -- --profile=large-house-glow-overlay-v1 --variants=60 --samples=3 --warmups=1 --output=artifacts/performance-smoke/candidate.json
+          npm run benchmark:glow -- --profile=large-space-card-glow-v1 --variants=60 --samples=3 --warmups=1 --output=artifacts/performance-smoke/space-candidate.json
       - name: Enforce absolute smoke ceilings
         run: |
           npm run benchmark:compare -- --absolute-only --budgets=demo/performance/budgets-glow-smoke.json --candidate=artifacts/performance-smoke/candidate.json --output=artifacts/performance-smoke/comparison.json
+          npm run benchmark:compare -- --absolute-only --budgets=demo/performance/budgets-space-glow-smoke.json --candidate=artifacts/performance-smoke/space-candidate.json --output=artifacts/performance-smoke/space-comparison.json
       # #330 AC7: перф-контракт ограничений стыков — быстрый (без браузера),
       # ловит возврат квадратичных путей в оба зеркала прямо на пуше.
       - name: Бюджеты ограничений стыков (#330)

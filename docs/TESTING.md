@@ -2141,6 +2141,13 @@ require hands on real hardware — they remain for the human pass.
 - [ ] Unknown `space` → tidy error card [manual]
 - [ ] `show_button: false` hides the footer
 - [ ] Full card honours `#space=<id>` on load and on hashchange; invalid id ignored [manual]
+- [ ] Static Glow (#374): omitted/false `light_pools` creates no pool layer,
+      visibility geometry, cache entries or transition timers; `true` renders
+      the same source coordinates, radius, colour, brightness, per-source floor
+      clip, opening transmission and masonry shadows as the full card. The
+      stage remains `pointer-events:none`, and `live_states:false` does not
+      disable pools [unit: glow-scene; auto: smoke_glow_blending; performance:
+      large-space-card-default-v1 + large-space-card-glow-v1].
 
 ## Unified device status and pulse activity (#98)
 

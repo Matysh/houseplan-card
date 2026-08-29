@@ -1921,13 +1921,13 @@ const MUTANT_DEFINITIONS = [
     because: 'a residual per-room geometry fallback must leave one redacted, deduplicated '
       + 'space/room diagnostic instead of silently looking like a broken Glow setting',
     patches: [{
-      file: 'src/houseplan-card.ts',
-      find: '    console.warn(\n'
-        + '      `HOUSEPLAN GLOW GEOMETRY FALLBACK: #218, space ${spaceId}, room ${roomId}, phase ${phase}`,\n'
-        + '    );',
-      replace: '    if (false) console.warn(\n'
-        + '      `HOUSEPLAN GLOW GEOMETRY FALLBACK: #218, space ${spaceId}, room ${roomId}, phase ${phase}`,\n'
-        + '    );',
+      file: 'src/glow-scene.ts',
+      find: '  console.warn(\n'
+        + '    `HOUSEPLAN GLOW GEOMETRY FALLBACK: #218, space ${spaceId}, room ${roomId}, phase ${phase}`,\n'
+        + '  );',
+      replace: '  if (false) console.warn(\n'
+        + '    `HOUSEPLAN GLOW GEOMETRY FALLBACK: #218, space ${spaceId}, room ${roomId}, phase ${phase}`,\n'
+        + '  );',
     }],
   },
   {
@@ -1936,9 +1936,13 @@ const MUTANT_DEFINITIONS = [
     because: 'resilient floor clipping must not revive a source embedded in opaque masonry; '
       + 'the existing source guard remains a release-blocking fail-dark boundary',
     patches: [{
-      file: 'src/houseplan-card.ts',
-      find: '      if (pointInOpaquePlanBody(sourcePoint, masonryGeometry, opaqueBodies)) {',
-      replace: '      if (false && pointInOpaquePlanBody(sourcePoint, masonryGeometry, opaqueBodies)) {',
+      file: 'src/glow-scene.ts',
+      find: '  return pointInOpaquePlanBody(\n'
+        + '    [source.x, source.y], scene.masonryGeometry, scene.opaqueBodies,\n'
+        + '  );',
+      replace: '  return false && pointInOpaquePlanBody(\n'
+        + '    [source.x, source.y], scene.masonryGeometry, scene.opaqueBodies,\n'
+        + '  );',
     }],
   },
   {
@@ -2173,9 +2177,15 @@ const MUTANT_DEFINITIONS = [
     because: 'проём, выродившийся в точку, остаётся кладкой — свет перестаёт '
       + 'проходить через дверь; смок обязан это увидеть по освещённому полу за проёмом',
     patches: [{
-      file: 'src/houseplan-card.ts',
-      find: 'cuts.push([opening.x - dx, opening.y - dy, opening.x + dx, opening.y + dy]);',
-      replace: 'cuts.push([opening.x, opening.y, opening.x, opening.y]);',
+      file: 'src/glow-scene.ts',
+      find: '    outlineCuts.push([\n'
+        + '      opening.x - dx, opening.y - dy,\n'
+        + '      opening.x + dx, opening.y + dy,\n'
+        + '    ]);',
+      replace: '    outlineCuts.push([\n'
+        + '      opening.x, opening.y,\n'
+        + '      opening.x, opening.y,\n'
+        + '    ]);',
     }],
   },
   {
@@ -2196,11 +2206,11 @@ const MUTANT_DEFINITIONS = [
     because: 'физические тела выпали из окклюдеров — колонна перестаёт отбрасывать '
       + 'тень; исторически смок теней был зелёным, пока тени физически не рисовались',
     patches: [{
-      file: 'src/houseplan-card.ts',
-      // Physical bodies now enter the canonical masonry union. Mutating only
-      // its legacy fallback is a no-op on every valid thick-wall fixture.
-      find: 'this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W, lightPhysical,',
-      replace: 'this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W, [],',
+      file: 'src/glow-scene.ts',
+      // Physical bodies now enter the one canonical scene shared by both
+      // cards. Removing them here must drop column shadows in the smoke.
+      find: '  const opaqueBodies = input.physicalBodies(partitionCuts, cacheKey);',
+      replace: '  const opaqueBodies: number[][][] = [];',
     }],
   },
   {
@@ -2233,9 +2243,9 @@ const MUTANT_DEFINITIONS = [
     because: 'растушёвка 20 px вместо 2 размывает границу света на полкомнаты; '
       + 'смок читает data-feather-px и обязан отвергнуть значение больше 3',
     patches: [{
-      file: 'src/houseplan-card.ts',
-      find: 'const GLOW_EDGE_FEATHER_PX = 2;',
-      replace: 'const GLOW_EDGE_FEATHER_PX = 20;',
+      file: 'src/glow-scene.ts',
+      find: 'export const GLOW_EDGE_FEATHER_PX = 2;',
+      replace: 'export const GLOW_EDGE_FEATHER_PX = 20;',
     }],
   },
   {
@@ -2246,7 +2256,7 @@ const MUTANT_DEFINITIONS = [
       + 'стену в сплошную и обязан увидеть смену освещённости соседней комнаты',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: '    const cacheKey = `${space.id}|${fingerprint}`;',
+      find: '    const cacheKey = `${space.id}|${revision.fingerprint}`;',
       replace: '    const cacheKey = space.id; // mutant: ignore changed geometry',
     }],
   },
@@ -2565,13 +2575,14 @@ const MUTANT_DEFINITIONS = [
       replace: '  spaceModels, roomCenter, defaultPositions, markerPos, labelPos, spaceFrame, iconCqw, NORM_W,',
     }, {
       file: 'src/space-render.ts',
-      find: '        ${passageGlowTunnels}\n        ${wallUnion',
+      find: '        ${passageGlowTunnels}\n        ${glowPools}\n        ${wallUnion',
       replace: '        ${passageGlowTunnels}\n'
         + '        ${!space.bg && !disp.showNames ? svg`<g class="room-svg-labels" pointer-events="none">${space.rooms.map((room) => {\n'
         + '          const center = roomCenter(room);\n'
         + '          return svg`<text class="rlabel" data-hp="room-label" data-id=${room.id || nothing}\n'
         + '            data-area=${room.area || nothing} x=${center[0]} y=${center[1]}>${room.name}</text>`;\n'
         + '        })}</g>` : nothing}\n'
+        + '        ${glowPools}\n'
         + '        ${wallUnion',
     }],
   },

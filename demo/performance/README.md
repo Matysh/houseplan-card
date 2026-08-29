@@ -150,8 +150,8 @@ legitimate fixture extension without weakening the separate zero-growth gate.
 
 ## Glow profiles
 
-Both Glow profiles run deterministic 1/10/30/60-pool variants at DPR 1 and
-Chromium CPU throttling x4, but deliberately exercise different fixtures:
+The full-card Glow profiles run deterministic 1/10/30/60-pool variants at DPR
+1 and Chromium CPU throttling x4, but deliberately exercise different fixtures:
 
 - `large-light-blend-v1` compares the isolated screen group with the previous
   normal-layer implementation on the shared frontend/backend schema fixture
@@ -160,9 +160,18 @@ Chromium CPU throttling x4, but deliberately exercise different fixtures:
   independent Glow on the existing 60-room/200-device large-house fixture,
   without changing `large-house-v1`.
 
+The same runner also owns the two static-card profiles introduced with #374:
+
+- `large-space-card-default-v1` proves that the default-off card keeps the
+  historical no-visibility-work path and a zero-entry Glow cache;
+- `large-space-card-glow-v1` measures the explicit `light_pools:true` path on
+  one large static space, including HA ticks, heap/cache growth and capture.
+
 ```bash
 npm run benchmark:glow -- --profile=large-light-blend-v1 --output=artifacts/performance/glow.json
 npm run benchmark:glow -- --profile=large-house-glow-overlay-v1 --output=artifacts/performance/overlay.json
+npm run benchmark:glow -- --profile=large-space-card-default-v1 --output=artifacts/performance/space-default.json
+npm run benchmark:glow -- --profile=large-space-card-glow-v1 --output=artifacts/performance/space-glow.json
 npm run benchmark:glow -- --profile=large-house-glow-overlay-v1 --variants=60 --samples=3 --warmups=1 --output=artifacts/performance-smoke/candidate.json
 npm run benchmark:compare -- --absolute-only --budgets=demo/performance/budgets-glow-smoke.json --candidate=artifacts/performance-smoke/candidate.json --output=artifacts/performance-smoke/comparison.json
 ```

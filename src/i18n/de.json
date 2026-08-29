@@ -351,6 +351,7 @@
   "editor.icon_size": "Symbolgröße, % der Planbreite",
   "editor.show_temperature": "Temperatur anzeigen",
   "editor.live_states": "Live-Zustände (ein/aus, offen…)",
+  "editor.light_pools": "Lichtkegel und Wandschatten",
   "editor.show_signal": "Zigbee-Signal anzeigen (LQI)",
   "editor.language": "Schnittstellensprache",
   "editor.lang_auto": "Automatisch (HA-Profil)",

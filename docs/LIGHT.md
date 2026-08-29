@@ -248,20 +248,18 @@ The complete UI and runtime truth table lives in
 
 ## Which surfaces render pools
 
-Pools — and therefore wall shadows — exist on the **full plan only**:
-`houseplan-card` and the geometry editors. `visibilityPolygon()`
-(`src/light-visibility.ts`) is imported by those surfaces and by nothing else.
+The full `houseplan-card` always renders pools for rooms where Glow is enabled.
+`houseplan-space-card` uses the same canonical source projection, barrier scene,
+visibility clip and SVG pool renderer when its public `light_pools: true` option
+is enabled. It remains off by default: in that path the static card builds no
+barrier/visibility geometry, starts no Glow transition timers and paints only
+the shared room/data/base projection.
 
-`houseplan-space-card` takes the static path (`renderSpaceStatic()` in
-`src/space-render.ts`) and deliberately has no live radial pools; it shares the
-room fills and the independent data/base projection with the full plan, so a lit
-room is painted flat. Without a pool there is no shape to occlude, so the compact
-card shows no wall shadows. This is a cost decision, not an omission: the pool
-layer is the heaviest thing the product renders — it owns its own performance
-workflow, budgets and a per-run smoke (`large-house-glow-overlay-v1`).
-
-Reported from the field as a bug (#370), because the user guide promised that
-markers share everything with the full plan and said nothing about light.
+The opt-in remains fully static — `.hp-static-stage` and the Glow layer have
+`pointer-events:none`. It is independent from the card's `live_states` marker
+dressing. Separate `large-space-card-default-v1` and
+`large-space-card-glow-v1` profiles protect the cheap default and the bounded
+opt-in path alongside the full-plan profiles.
 
 ## Performance
 

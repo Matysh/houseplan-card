@@ -1198,6 +1198,11 @@ Shared, framework-light modules keep the two views from diverging:
   use the shared `ResolvedDevicePresentation` and `renderDeviceFace`; optional card settings
   can disable ordinary live dressing, temperature or signal without creating another
   semantic implementation.
+- `src/glow-scene.ts` — one canonical Glow transport/runtime/SVG implementation
+  shared by the full renderer and the opt-in static adapter. The static card's
+  public `light_pools` flag defaults to false and gates barrier/visibility work
+  before it starts; each mounted card owns and disposes its bounded clip cache,
+  source transitions and timers.
 - `src/config-store.ts` — module-level `{config, rev, configFingerprint, layout,
   layoutRev, layoutFingerprint}` cache shared by all embedded
   cards (dedupes `houseplan/config/get`), seeded synchronously from the full card's
@@ -1244,10 +1249,10 @@ its configured space.
   pools → sun/interactive layers. A resolved data/static fill (`lqi`, `light`,
   `temp`, `custom`) never receives the dark base, so its exact color and alpha
   remain visible; a dynamic mode without usable data or a custom fill with
-  zero opacity receives the base instead of exposing bright paper. Radial pools stay
-  independent and continue to render. The static
-  room card uses the same data/base projection, omits empty base groups, and
-  deliberately has no live pools.
+  zero opacity receives the base instead of exposing bright paper. Radial pools
+  stay independent and continue to render. The static room card uses the same
+  data/base projection, omits empty base groups, and renders the same live pools
+  only when its default-off `light_pools` option is enabled.
 - **Custom room fill** (#56): `space.settings.custom_fill` is the space color
   and `room.settings.custom_fill` is an optional explicit override. The pure
   projection is room → space → `{c:'#607d8b',a:.18}` and every read crosses
