@@ -335,16 +335,33 @@ const boxOf = (items: ContentItem[]): Rect | null => {
   return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
 };
 
+/** Per-edge fractions of the longer content side. */
+export interface FramePadding {
+  top: number;
+  right: number;
+  bottom: number;
+  left: number;
+}
+
+type FramePad = number | FramePadding;
+
 /** Pad by `pad` of the longer side and lift a degenerate axis off zero. */
-function padRect(b: Rect, pad: number): Rect {
+function padRect(b: Rect, pad: FramePad): Rect {
   let { x, y, w, h } = b;
   // A single marker (or a collinear row of them) has no area, and an SVG
   // viewBox with a zero axis draws nothing at all (HP-1500-03). Only the
   // DEGENERATE case is inflated — a real 100-unit corridor keeps its frame.
   if (w < DEGENERATE) { x = x + w / 2 - FLOOR / 2; w = FLOOR; }
   if (h < DEGENERATE) { y = y + h / 2 - FLOOR / 2; h = FLOOR; }
-  const m = Math.max(w, h) * pad;
-  return { x: x - m, y: y - m, w: w + m * 2, h: h + m * 2 };
+  const edges = typeof pad === 'number'
+    ? { top: pad, right: pad, bottom: pad, left: pad }
+    : pad;
+  const side = Math.max(w, h);
+  const top = side * edges.top;
+  const right = side * edges.right;
+  const bottom = side * edges.bottom;
+  const left = side * edges.left;
+  return { x: x - left, y: y - top, w: w + left + right, h: h + top + bottom };
 }
 
 export interface ContentFrame {
@@ -364,7 +381,7 @@ export interface ContentFrame {
  */
 export function contentFrame(
   items: ReadonlyArray<ContentItem>,
-  opts: { pad?: number; k?: number; minSpread?: number } = {},
+  opts: { pad?: FramePad; k?: number; minSpread?: number } = {},
 ): ContentFrame {
   const pad = opts.pad ?? 0.05;
   const k = opts.k ?? OUTLIER_K;
@@ -419,7 +436,7 @@ export function contentBounds(
 export function spaceFrame(
   space: SpaceModel,
   extra?: ReadonlyArray<ContentItem | readonly [number, number]>,
-  pad = 0.05,
+  pad: FramePad = 0.05,
 ): Rect {
   const f = contentFrame(contentItems(space, extra), { pad });
   if (f.core) return f.core;

@@ -107,6 +107,8 @@ export interface StaticRenderOpts {
   layout: Layout;
   spaceId: string;
   iconSize?: number;
+  /** Keep the normal side/bottom frame but let content meet the top edge. */
+  compactTopFrame?: boolean;
   /** Measured CSS width of the static stage, used for screen-depth policies. */
   stageWidth?: number;
   lang: Lang;
@@ -271,7 +273,9 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
     minX: Math.min(line[0], line[2]), minY: Math.min(line[1], line[3]),
     maxX: Math.max(line[0], line[2]), maxY: Math.max(line[1], line[3]),
   });
-  const fr = spaceFrame(space, placed);
+  const fr = spaceFrame(space, placed, o.compactTopFrame
+    ? { top: 0, right: 0.05, bottom: 0.05, left: 0.05 }
+    : 0.05);
   const vb = [fr.x, fr.y, fr.w, fr.h];
 
   // Resolve once per room and reuse the exact result for the visible fill and

@@ -30,6 +30,28 @@ test('typical small plan: the frame is exactly what is drawn (unchanged behaviou
   assert.deepEqual(contentBounds(withVb), { x: 390, y: 390, w: 220, h: 220 });
 });
 
+test('per-edge frame padding can remove only the top inset', () => {
+  const m = model({ id: 's', rooms: [{
+    id: 'r', poly: [[0.2, 0.3], [0.8, 0.3], [0.8, 0.7], [0.2, 0.7]],
+  }] });
+  const regular = spaceFrame(m);
+  const compact = spaceFrame(m, undefined, { top: 0, right: 0.05, bottom: 0.05, left: 0.05 });
+  assert.deepEqual(regular, { x: 170, y: 270, w: 660, h: 460 });
+  assert.deepEqual(compact, { x: 170, y: 300, w: 660, h: 430 });
+  assert.equal(compact.x, regular.x, 'left edge stays padded');
+  assert.equal(compact.x + compact.w, regular.x + regular.w, 'right edge stays padded');
+  assert.equal(compact.y + compact.h, regular.y + regular.h, 'bottom edge stays padded');
+});
+
+test('per-edge padding keeps frame fallback and degenerate protection', () => {
+  const pad = { top: 0, right: 0.05, bottom: 0.05, left: 0.05 };
+  const empty = model({ id: 's', view_box: [0.1, 0.2, 0.5, 0.4] });
+  assert.deepEqual(spaceFrame(empty, undefined, pad), { x: 100, y: 200, w: 500, h: 400 });
+  const lone = spaceFrame(model({ id: 's' }), [[2500, 2500]], pad);
+  assert.ok(Number.isFinite(lone.x) && Number.isFinite(lone.y));
+  assert.ok(lone.w > 0 && lone.h > 0, 'a point still produces a valid viewBox');
+});
+
 // --------------------------------------------- (b) the plan PAST the square
 test('a plan drawn far outside the old unit square is framed whole', () => {
   // rooms at normalised 1.5 .. 3.0 — the case that used to break: the old

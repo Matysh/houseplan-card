@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- `houseplan-space-card` with an explicit `title: ""` now removes the empty
+  top framing strip together with the header, while preserving its side and
+  bottom spacing ([#372](https://github.com/Matysh/houseplan-card/issues/372)).
+
 - Breaking for external writers (scripts, automations, custom integrations
   that write plans directly): `houseplan/config/set` and `houseplan/layout/set`
   over a non-empty store now require `expected_rev` and answer `conflict`

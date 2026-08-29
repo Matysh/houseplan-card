@@ -773,6 +773,8 @@ class HouseplanSpaceCard extends LitElement {
       return this._errorCard(t(this._lang, 'space_card.loading'));
     }
     const spaceId = this._config.space;
+    const sp = spaceModels(cfg).find((s) => s.id === spaceId);
+    const title = this._config.title !== undefined ? this._config.title : sp?.title || '';
     const deviceSnapshot = this._renderDeviceSnapshot;
     const stage = renderSpaceStatic({
       hass: deviceSnapshot?.hass || this.hass,
@@ -780,6 +782,7 @@ class HouseplanSpaceCard extends LitElement {
       layout: this._snap?.layout || {},
       spaceId,
       iconSize: this._config.icon_size,
+      compactTopFrame: this._config.title === '',
       stageWidth: this._stageWidth,
       lang: this._lang,
       // resolved at render time: a url baked in earlier would be the unsigned one
@@ -808,8 +811,6 @@ class HouseplanSpaceCard extends LitElement {
     if (!stage) {
       return this._errorCard(t(this._lang, 'space_card.not_found', { id: spaceId }));
     }
-    const sp = spaceModels(cfg).find((s) => s.id === spaceId);
-    const title = this._config.title !== undefined ? this._config.title : sp?.title || '';
     const showButton = this._config.show_button !== false;
     const label = this._config.button_label || t(this._lang, 'space_card.button');
     const recoveryReason = (this._continuity.overlayVisible || this._continuity.state === 'recovery-error')

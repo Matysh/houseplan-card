@@ -774,6 +774,12 @@ type: custom:houseplan-space-card
 space: ground
 ```
 
+By default the card uses the configured space name as its header. A non-empty
+`title` replaces that text. Set `title: ""` explicitly when the surrounding
+dashboard already provides the name: the header is omitted and the plan meets
+the top of the stage, while the normal left, right and bottom breathing room is
+kept. Omitting `title` is not the same as setting it to an empty string.
+
 ## 19. Plan maintenance
 
 Current plans give every stored wall segment a stable internal identity. This
