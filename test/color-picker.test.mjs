@@ -64,7 +64,8 @@ test('the shared component keeps its API and contains no nested native color pic
   const defaultPicker = card.slice(defaultPickerStart, defaultPickerEnd);
   assert.match(defaultPicker, /\.color=\$\{this\._decorStyle\.color\}/);
   assert.match(defaultPicker, /\.opacity=\$\{this\._decorStyle\.opacity\}/);
-  assert.match(defaultPicker, /this\._decorStyle = \{ \.\.\.this\._decorStyle, \.\.\.e\.detail \}/);
+  // #377: the default-style picker routes through the persisting updater
+  assert.match(defaultPicker, /this\._updateDecorStyle\(\{ \.\.\.this\._decorStyle, \.\.\.e\.detail \}\)/);
   assert.equal((card.match(/\.showOpacity=\$\{false\}/g) || []).length, 4,
     'Glow, ripple and both background pickers stay color-only');
   assert.equal((card.match(/\.showOpacity=\$\{true\}/g) || []).length, 2,
