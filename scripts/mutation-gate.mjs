@@ -1237,6 +1237,28 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'review-doc-guard-matches-by-substring',
+    guard: 'node --test --test-name-pattern="соседний каталог" test/review-doc-guard.test.mjs',
+    because: 'сравнение подстрокой пускает docs/reviews-old и docs/reviewsx: allowlist, который '
+      + 'ошибается в свою пользу, не защищает ни от чего (#365)',
+    patches: [{
+      file: 'scripts/review-doc-guard.mjs',
+      find: "  const prefixes = allowlist.map((item) => (item.endsWith('/') ? item : `${item}/`));",
+      replace: "  const prefixes = allowlist.map((item) => item.replace(/\\/$/, ''));",
+    }],
+  },
+  {
+    id: 'review-doc-guard-allows-empty-diff',
+    guard: 'node --test --test-name-pattern="пустой дифф" test/review-doc-guard.test.mjs',
+    because: 'пустой дифф означает, что документа нет: прежняя редакция шага выходила тут с '
+      + 'нулём, и вердикт ревью оставался без артефакта (#171, #365)',
+    patches: [{
+      file: 'scripts/review-doc-guard.mjs',
+      find: '  if (!cleaned.length) {',
+      replace: '  if (false) {',
+    }],
+  },
+  {
     id: 'no-new-any-judges-every-line',
     guard: 'node --test --test-name-pattern="нетронутой строке гейт не блокирует" '
       + 'test/no-new-any.test.mjs',
