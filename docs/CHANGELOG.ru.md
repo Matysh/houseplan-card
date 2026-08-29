@@ -8,6 +8,35 @@
 
 ## Не выпущено
 
+## v1.69.0 — 2026-08-30
+
+- House Plan заговорил по-немецки и по-французски, редакторы больше не входят в
+  начальную загрузку View, а режим **«Значение + состояние»** позволяет выбрать
+  точный источник показания. Внешние клиенты теперь обязаны передавать
+  `expected_rev` при записи в непустое хранилище конфигурации или раскладки
+  ([#348](https://github.com/Matysh/houseplan-card/issues/348),
+  [#371](https://github.com/Matysh/houseplan-card/issues/371),
+  [#337](https://github.com/Matysh/houseplan-card/issues/337),
+  [#378](https://github.com/Matysh/houseplan-card/issues/378),
+  [#340](https://github.com/Matysh/houseplan-card/issues/340)).
+- Редактор подложки получил 56 типов мебели, живое превью размещения,
+  безопасное уменьшение огромных изображений, пассивные ориентиры устройств и
+  единый сохраняемый стиль по умолчанию для новых элементов
+  ([#159](https://github.com/Matysh/houseplan-card/issues/159),
+  [#359](https://github.com/Matysh/houseplan-card/issues/359),
+  [#39](https://github.com/Matysh/houseplan-card/issues/39),
+  [#362](https://github.com/Matysh/houseplan-card/issues/362),
+  [#360](https://github.com/Matysh/houseplan-card/issues/360),
+  [#377](https://github.com/Matysh/houseplan-card/issues/377)).
+- Glow теперь следует за живой геометрией дверей и ворот и может быть включён в
+  `houseplan-space-card`, где также появились плотное кадрирование по дому и
+  кэшированный рендеринг света
+  ([#20](https://github.com/Matysh/houseplan-card/issues/20),
+  [#374](https://github.com/Matysh/houseplan-card/issues/374),
+  [#373](https://github.com/Matysh/houseplan-card/issues/373),
+  [#375](https://github.com/Matysh/houseplan-card/issues/375)).
+- Мелкие исправления и улучшения.
+
 ## v1.69.0-beta.5 — 2026-08-29
 
 - В режиме **«Значение + состояние»** теперь можно выбрать нужный показатель,

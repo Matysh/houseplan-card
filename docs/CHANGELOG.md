@@ -2,6 +2,35 @@
 
 ## Unreleased
 
+## v1.69.0 — 2026-08-30
+
+- House Plan now speaks German and French, keeps the editors outside the
+  initial View download, and lets **Value + state** select an exact reading
+  source. External writers must now send `expected_rev` when updating a
+  non-empty config or layout store
+  ([#348](https://github.com/Matysh/houseplan-card/issues/348),
+  [#371](https://github.com/Matysh/houseplan-card/issues/371),
+  [#337](https://github.com/Matysh/houseplan-card/issues/337),
+  [#378](https://github.com/Matysh/houseplan-card/issues/378),
+  [#340](https://github.com/Matysh/houseplan-card/issues/340)).
+- The Background editor gained 56 furniture types, a live placement preview,
+  safe reduction for huge images, passive device landmarks, and one persistent
+  default style for new objects
+  ([#159](https://github.com/Matysh/houseplan-card/issues/159),
+  [#359](https://github.com/Matysh/houseplan-card/issues/359),
+  [#39](https://github.com/Matysh/houseplan-card/issues/39),
+  [#362](https://github.com/Matysh/houseplan-card/issues/362),
+  [#360](https://github.com/Matysh/houseplan-card/issues/360),
+  [#377](https://github.com/Matysh/houseplan-card/issues/377)).
+- Glow now follows live door and gate geometry and can be enabled in
+  `houseplan-space-card`, which also offers tight whole-house framing and
+  cached light rendering
+  ([#20](https://github.com/Matysh/houseplan-card/issues/20),
+  [#374](https://github.com/Matysh/houseplan-card/issues/374),
+  [#373](https://github.com/Matysh/houseplan-card/issues/373),
+  [#375](https://github.com/Matysh/houseplan-card/issues/375)).
+- Small fixes and improvements.
+
 ## v1.69.0-beta.5 — 2026-08-29
 
 - **Value + state** can now show the exact reading the user needs instead of
