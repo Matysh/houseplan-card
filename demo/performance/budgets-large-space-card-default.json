@@ -22,5 +22,6 @@
   },
   "heap": { "required": true, "hardMaxGrowthBytes": 67108864, "maxRegressionRatio": 0.75, "noiseAllowanceBytes": 16777216 },
   "cacheEntries": { "glowClip": 0 },
-  "cacheGrowth": { "glowClip": 0 }
+  "cacheGrowth": { "glowClip": 0 },
+  "renderedDevices": 200
 }

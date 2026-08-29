@@ -203,7 +203,7 @@ try {
         config: { unit_system: { length: 'km' } },
       });
       const cacheSnapshot = (card) => ({
-        ...(card._glowRuntimeState ? {
+        ...(card.localName === 'houseplan-space-card' ? {
           glowClip: card._glowRuntimeState.clipCache?.size ?? 0,
         } : {
           cleanFloor: card._cleanFloorCache?.size ?? 0,

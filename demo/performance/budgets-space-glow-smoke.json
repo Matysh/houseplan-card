@@ -13,5 +13,6 @@
   },
   "heap": { "required": true, "hardMaxGrowthBytes": 67108864 },
   "cacheEntries": { "glowClip": 128 },
-  "cacheGrowth": { "glowClip": 0 }
+  "cacheGrowth": { "glowClip": 0 },
+  "renderedDevices": 200
 }
