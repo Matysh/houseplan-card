@@ -39,7 +39,11 @@ const res = await page.evaluate(async () => {
   out.instantStyle = c._decorStyle.color === '#8b0000';
   await new Promise((r) => setTimeout(r, 400));
   out.noEagerWrite = writes.length === 0; // дебаунс ещё держит
-  await new Promise((r) => setTimeout(r, 900));
+  // 750 мс > внутренний дебаунс _saveConfig (500 мс): если бы персист ушёл
+  // сразу (без своего дебаунса в 1 с), запись уже долетела бы до callWS
+  await new Promise((r) => setTimeout(r, 350));
+  out.stillNoWriteBeforeDebounce = writes.length === 0;
+  await new Promise((r) => setTimeout(r, 550));
   c._saveConfigDebounced?.flush?.();
   await new Promise((r) => setTimeout(r, 200));
   out.oneWrite = writes.length === 1;
@@ -81,6 +85,7 @@ const res = await page.evaluate(async () => {
   fresh.remove();
   return out;
 });
-checkAll(res, ['decorMode', 'hasRuntime', 'instantStyle', 'noEagerWrite', 'oneWrite',
+checkAll(res, ['decorMode', 'hasRuntime', 'instantStyle', 'noEagerWrite',
+  'stillNoWriteBeforeDebounce', 'oneWrite',
   'writeCarriesKey', 'defaultRemovesKey', 'seeded']);
 await finish(browser);
