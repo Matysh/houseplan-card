@@ -891,7 +891,12 @@ The wire schema permits omission only for the first empty-store bootstrap at
 revision zero, so the endpoint can return the stable `conflict` domain error
 instead of a generic format error. A revision-less write over `rev > 0` is
 rejected under the same `write_lock` before validation, no-op detection,
-backup cleanup, file collection or update events (#340).
+backup cleanup, file collection or update events (#340). The same rule holds
+for `layout/set` (#356). External writers (scripts, automations, custom
+integrations) must therefore follow the read-then-write cycle the card uses:
+call `houseplan/config/get` (or `layout/get`), keep the returned `rev`, and
+send it back as `expected_rev`; a `conflict` answer means the document moved —
+re-read and retry with the fresh revision (#368).
 
 The normal frontend reaches `houseplan/plan/optimize` only after the exact
 preview candidate passes `src/plan-geometry-preflight.ts`. That pure barrier
