@@ -761,6 +761,14 @@ text sizing. `cycle` enables automatic space changes; interaction pauses it for
 hover, drag, more-info or actions. A footer button opens the full plan. Use it
 for compact dashboard navigation, not for home control.
 
+**Light is deliberately different here.** The compact card paints the flat fill
+of a lit room and the data-mode fills, but it builds no radial light pools from
+the lamps. Consequently it draws no wall shadows either: a shadow exists only as
+the shape of a pool, and with no pools there is nothing to occlude. The full plan
+computes the pools and how walls, openings and columns block them
+(`docs/LIGHT.md`); that is the most expensive part of the render, and it is
+exactly what the compact card trades away for being cheap.
+
 ```yaml
 type: custom:houseplan-space-card
 space: ground

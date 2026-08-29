@@ -246,6 +246,23 @@ The complete UI and runtime truth table lives in
 - Golden: `lighting-opaque-glow-two-doorways-dark` and the other `lighting-*`
   scenes, re-shot and approved 2026-08-11.
 
+## Which surfaces render pools
+
+Pools — and therefore wall shadows — exist on the **full plan only**:
+`houseplan-card` and the geometry editors. `visibilityPolygon()`
+(`src/light-visibility.ts`) is imported by those surfaces and by nothing else.
+
+`houseplan-space-card` takes the static path (`renderSpaceStatic()` in
+`src/space-render.ts`) and deliberately has no live radial pools; it shares the
+room fills and the independent data/base projection with the full plan, so a lit
+room is painted flat. Without a pool there is no shape to occlude, so the compact
+card shows no wall shadows. This is a cost decision, not an omission: the pool
+layer is the heaviest thing the product renders — it owns its own performance
+workflow, budgets and a per-run smoke (`large-house-glow-overlay-v1`).
+
+Reported from the field as a bug (#370), because the user guide promised that
+markers share everything with the full plan and said nothing about light.
+
 ## Performance
 
 The large cold geometry recalculation (20 rooms, 20 partitions, 14 columns,
