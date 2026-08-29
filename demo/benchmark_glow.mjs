@@ -204,7 +204,10 @@ try {
       });
       const cacheSnapshot = (card) => ({
         ...(card.localName === 'houseplan-space-card' ? {
-          glowClip: card._glowRuntimeState.clipCache?.size ?? 0,
+          // #380: the previous stable predates the shared static-card Glow
+          // runtime. Its default profile still has a valid empty cache, and
+          // the opt-in Glow profile is explicitly bootstrap-compared below.
+          glowClip: card._glowRuntimeState?.clipCache?.size ?? 0,
         } : {
           cleanFloor: card._cleanFloorCache?.size ?? 0,
           glowClip: card._glowClipCache?.size ?? 0,

@@ -34,7 +34,6 @@ export const LARGE_HOUSE_CARD_CONTRACT = Object.freeze({
     '_loadOk',
     '_model',
     '_path',
-    '_resize',
     '_serverCfg',
     '_settingsDialog',
     '_tool',
@@ -45,6 +44,13 @@ export const LARGE_HOUSE_CARD_CONTRACT = Object.freeze({
     '_activeDraftId', '_draftSegmentCms', '_isoGeometryCache', '_offerWallFaces',
     '_onLabsSnapshot', '_planSnapGeometryCache', '_roomDialog', '_setProjection',
     '_wallFaceBatch', '_wallFaceGraphCache',
+  ]),
+  // #380: v1.68.1 owns the same resize session directly on the card; newer
+  // bundles moved it into ResizeController. A comparison target must expose
+  // one of the two explicit shapes; the current member retains its object
+  // type check and is also verified against current production source.
+  fieldAlternatives: Object.freeze([
+    Object.freeze({ current: '_resize', legacy: '_rszDrag' }),
   ]),
   fieldTypes: Object.freeze({
     _booting: 'boolean',
@@ -115,11 +121,19 @@ export function assertCardContract(card, contract) {
     .map((name) => `${name}()`);
   const missingFields = contract.fields
     .filter((name) => !(name in card) || card[name] === undefined);
-  const invalidFields = [...contract.fields, ...(contract.optionalFields || [])]
+  const missingAlternatives = (contract.fieldAlternatives || [])
+    .filter((choice) => !Object.values(choice)
+      .some((name) => name in card && card[name] !== undefined))
+    .map((choice) => Object.values(choice).join('|'));
+  const alternativeFields = (contract.fieldAlternatives || [])
+    .flatMap((choice) => Object.values(choice));
+  const invalidFields = [
+    ...contract.fields, ...(contract.optionalFields || []), ...alternativeFields,
+  ]
     .filter((name) => name in card && contract.fieldTypes?.[name]
       && !matches(card[name], contract.fieldTypes[name]))
     .map((name) => `${name}:${contract.fieldTypes[name]}`);
-  const missing = [...missingMethods, ...missingFields];
+  const missing = [...missingMethods, ...missingFields, ...missingAlternatives];
   if (missing.length || invalidFields.length) {
     const details = [
       missing.length ? `missing private API: ${missing.join(', ')}` : '',

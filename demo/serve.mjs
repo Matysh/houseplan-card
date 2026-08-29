@@ -2,6 +2,7 @@
 // via request interception (no HTTP server needed). Usage: const {page,browser}=await launch();
 import { chromium } from 'playwright';
 import { assertFreshDemoBundleUnlessAllowed } from './bundle-freshness.mjs';
+import { ensureHarnessEditorRuntime } from './editor-runtime-compat.mjs';
 import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname } from 'node:path';
@@ -88,8 +89,11 @@ async function launchInternal(
   // Existing product smokes exercise editor internals directly. They preload
   // the new #337 runtime without changing mode; the dedicated network smoke
   // uses launchColdView() and proves the real cold-View boundary separately.
+  // Comparative performance runs also launch the previous stable through this
+  // file. A pre-#337 monolithic card has no preload method and is already
+  // ready; a current card still has to return truthy (#380).
   if (preloadEditorRuntime) {
-    const ready = await page.evaluate(() => window.__card._ensureEditorRuntime());
+    const ready = await page.evaluate(ensureHarnessEditorRuntime);
     if (!ready) throw new Error('editor runtime did not preload for browser smoke');
   }
   return { page, browser };

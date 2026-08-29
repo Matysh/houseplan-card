@@ -21,6 +21,12 @@ const directCardMembers = (relativePath) => {
 
 const declaredMembers = (contract) => new Set([
   ...contract.methods, ...contract.fields, ...(contract.optionalFields || []),
+  ...(contract.fieldAlternatives || []).flatMap((choice) => Object.values(choice)),
+]);
+
+const currentProductionMembers = (contract) => new Set([
+  ...contract.methods, ...contract.fields, ...(contract.optionalFields || []),
+  ...(contract.fieldAlternatives || []).map((choice) => choice.current),
 ]);
 
 test('large-house benchmark declares every private card member it consumes', () => {
@@ -42,10 +48,18 @@ test('Glow benchmark declares every private card member it consumes', () => {
   );
 });
 
+test('static-card cache diagnostics accept a pre-Glow stable baseline (#380)', () => {
+  const source = readFileSync(
+    new URL('../demo/benchmark_glow.mjs', import.meta.url), 'utf8',
+  );
+  assert.match(source, /card\._glowRuntimeState\?\.clipCache\?\.size \?\? 0/);
+  assert.doesNotMatch(source, /card\._glowRuntimeState\.clipCache/);
+});
+
 test('performance contracts reference real production members', () => {
   const source = readHouseplanProductionSource();
   for (const contract of [LARGE_HOUSE_CARD_CONTRACT, GLOW_CARD_CONTRACT]) {
-    for (const name of declaredMembers(contract)) {
+    for (const name of currentProductionMembers(contract)) {
       assert.match(source, new RegExp(`\\b(?:private\\s+(?:declare\\s+|get\\s+)?|get\\s+)${name}\\b`),
         `${contract.label} declares missing production member ${name}`);
     }
@@ -55,6 +69,44 @@ test('performance contracts reference real production members', () => {
     assert.match(staticSource, new RegExp(`\\b(?:private\\s+(?:(?:declare|readonly|get)\\s+)*|get\\s+)${name}\\b`),
       `${SPACE_GLOW_CARD_CONTRACT.label} declares missing production member ${name}`);
   }
+});
+
+test('large-house contract accepts only an explicit current or stable resize owner', () => {
+  const methods = Object.fromEntries(
+    LARGE_HOUSE_CARD_CONTRACT.methods.map((name) => [name, () => undefined]),
+  );
+  const fields = Object.fromEntries(
+    LARGE_HOUSE_CARD_CONTRACT.fields.map((name) => [name, null]),
+  );
+  Object.assign(fields, {
+    _booting: false,
+    _cleanFloorCache: new Map(),
+    _devices: [],
+    _glowClipCache: new Map(),
+    _gridPitch: 1,
+    _loadOk: true,
+    _model: [],
+    _path: [],
+    _serverCfg: {},
+    _tool: 'view',
+  });
+
+  assert.doesNotThrow(() => assertCardContract(
+    { ...methods, ...fields, _resize: {} }, LARGE_HOUSE_CARD_CONTRACT,
+  ));
+  assert.doesNotThrow(() => assertCardContract(
+    { ...methods, ...fields, _rszDrag: null }, LARGE_HOUSE_CARD_CONTRACT,
+  ));
+  assert.throws(
+    () => assertCardContract(
+      { ...methods, ...fields, _resize: false }, LARGE_HOUSE_CARD_CONTRACT,
+    ),
+    /invalid private API types: _resize:object/,
+  );
+  assert.throws(
+    () => assertCardContract({ ...methods, ...fields }, LARGE_HOUSE_CARD_CONTRACT),
+    /missing private API: _resize\|_rszDrag/,
+  );
 });
 
 test('contract accepts recent optional fields only when their runtime type is valid', () => {

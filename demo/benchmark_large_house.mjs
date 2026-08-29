@@ -346,7 +346,10 @@ try {
           target: null,
         };
         card._rszEdgeDown(quietEvent, room.id, 1);
-        const plan = card._resize?.plan;
+        // #380: the previous stable owns the active session directly; current
+        // candidates own it through ResizeController. The explicit contract
+        // above requires one of these shapes before measurements begin.
+        const plan = card._resize?.plan || card._rszDrag?.plan;
         if (!plan) throw new Error('large-house resize plan was not created');
         const target = [
           plan.a[0] + plan.n[0] * card._gridPitch,
