@@ -458,3 +458,21 @@ test('readVacTelemetry keeps numeric zero map_index as map id (HP-1540-02)', () 
   const t = readVacTelemetry({ vacuum_position: { x: 1, y: 2 }, map_index: 0 });
   assert.equal(t.mapId, '0');
 });
+
+test('smoothVacPath предупреждает один раз о нефинитных сегментах (#369б)', () => {
+  const warnings = [];
+  const warn = (message) => warnings.push(message);
+  const bad = [
+    [[0, 0], [NaN, 10], [20, 20]],
+    [[0, 0], [10, Infinity]],
+    [[0, 0], [10, 10], [20, 0]],
+  ];
+  const out = smoothVacPath(bad, 17.5, warn);
+  assert.equal(out.length, 1, 'валидный сегмент выжил');
+  assert.equal(warnings.length, 1, 'один warn на вызов, не на сегмент');
+  assert.match(warnings[0], /2 segment/);
+  assert.match(warnings[0], /non-finite/);
+  const clean = smoothVacPath([[[0, 0], [10, 10]]], 17.5, warn);
+  assert.equal(clean.length, 1);
+  assert.equal(warnings.length, 1, 'чистый путь не шумит');
+});

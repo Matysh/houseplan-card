@@ -1403,7 +1403,9 @@ function markerClimateTarget(marker: Marker): string | null {
   // Persisted local-room placement uses an explicit null Area. Do not treat a
   // stale room_id without its space as a valid target or let it collide with a
   // room imported into another space.
-  if (marker.area === null && marker.space && marker.room_id) {
+  // #369(в): legacy/import configs carry an ABSENT area key, not an explicit
+  // null — both mean "no HA Area", so both must resolve to the room placement.
+  if (marker.area == null && marker.space && marker.room_id) {
     return roomClimateKey(marker.space, { id: marker.room_id, area: null });
   }
   return marker.area || null;

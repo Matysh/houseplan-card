@@ -169,3 +169,11 @@ debounced persistence and live-update path as a later state event.
 
 Commands, zones/no-go polygons, cleaning-history UI and Roomba string parsing
 are outside Stage 1.
+
+## Deleting and restoring a vacuum marker (#369)
+
+Deleting a vacuum marker erases its server-side trail immediately: the next
+`config/set` purges trails of removed markers (#335), so an undeleted (re-added
+or restored) vacuum starts its trail from scratch. This is deliberate — a
+tombstone that kept trails alive used to leak the store — but it means trail
+history does not survive marker deletion.

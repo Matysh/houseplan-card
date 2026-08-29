@@ -247,11 +247,17 @@ const samePoint = (a: Pt, b: Pt): boolean => a[0] === b[0] && a[1] === b[1];
  * deliberately knows nothing about SVG, Lit, scale conversion or flat/iso
  * projection; the renderer serialises and projects the typed commands.
  */
-export function smoothVacPath(path: VacPath, maxRadius: number): VacPathCommand[][] {
+export function smoothVacPath(
+  path: VacPath, maxRadius: number,
+  warn: (message: string) => void = console.warn,
+): VacPathCommand[][] {
   if (!Number.isFinite(maxRadius) || maxRadius <= 0) return [];
   const out: VacPathCommand[][] = [];
+  // #369(б): a NaN calibration matrix used to hide the whole trail silently —
+  // one warn per call (a file may carry hundreds of segments) names the count.
+  let droppedSegments = 0;
   for (const rawSegment of path) {
-    if (!rawSegment.every(finitePoint)) continue;
+    if (!rawSegment.every(finitePoint)) { droppedSegments++; continue; }
     const segment = rawSegment.filter((point, index) => index === 0 || !samePoint(point, rawSegment[index - 1]));
     if (segment.length < 2) continue;
     const commands: VacPathCommand[] = [{ kind: 'move', point: segment[0] }];
@@ -285,6 +291,9 @@ export function smoothVacPath(path: VacPath, maxRadius: number): VacPathCommand[
     }
     commands.push({ kind: 'line', point: segment[segment.length - 1] });
     out.push(commands);
+  }
+  if (droppedSegments > 0) {
+    warn(`[houseplan] vacuum trail: ${droppedSegments} segment(s) dropped — non-finite point (check map calibration)`);
   }
   return out;
 }

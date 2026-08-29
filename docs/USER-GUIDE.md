@@ -740,8 +740,10 @@ of silently rebinding.
 
 Multiple maps are represented as distinct sources/calibrations. A vacuum is
 shown only in the space whose saved mapping currently matches the active map;
-the dock remains in its configured space. See [VACUUM.md](VACUUM.md) for the
-source dialect and calibration contract.
+the dock remains in its configured space. Deleting a vacuum marker erases its
+server-side trail immediately; adding the marker again starts the trail from
+scratch. See [VACUUM.md](VACUUM.md) for the source dialect and calibration
+contract.
 
 ## 17. Kiosk
 

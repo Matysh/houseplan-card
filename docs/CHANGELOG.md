@@ -12,6 +12,13 @@
   on lines and shapes, while independent width/depth resizing still keeps
   horizontal, vertical and diagonal strokes equally thick
   ([#361](https://github.com/Matysh/houseplan-card/issues/361)).
+- A batch of small honesty fixes from the audit: room climate now reaches
+  legacy markers that never stored an explicit "no HA Area" value; a device
+  whose entities were all deliberately disabled no longer glows as alive; the
+  furniture preview follows Shift instantly; a right click with an armed tool
+  no longer stamps objects; a dropped vacuum-trail segment (broken
+  calibration) is reported in the console instead of vanishing silently
+  ([#369](https://github.com/Matysh/houseplan-card/issues/369)).
 
 - Device markers in the Background editor are now passive, translucent
   landmarks: their core, ring, value capsule and badges no longer hover, open,

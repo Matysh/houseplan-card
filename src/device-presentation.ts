@@ -212,7 +212,14 @@ export function controllerAvailability(hass: any, d: DevItem): DeviceAvailabilit
     return 'available';
   }
   const ownEntities = d.entities || [];
+  // #369(г): "no roster" and "roster fully disabled by the user" are different
+  // evidence. A truly entityless active device stays available (#318); a
+  // device whose registry entities were all deliberately disabled is the user
+  // opting out — it must not look alive.
+  const disabledRoster = d.bindingStatus?.kind === 'ha_disabled'
+    || (d.bindingStatus?.allEntityIds?.length ?? 0) > 0;
   const activeEntitylessDevice = ownEntities.length === 0
+    && !disabledRoster
     && (d.bindingKind === 'device' || d.marker?.binding?.startsWith('device:'))
     && d.bindingStatus?.kind === 'active';
   if (activeEntitylessDevice) return 'available';

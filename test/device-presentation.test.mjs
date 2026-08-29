@@ -1189,3 +1189,48 @@ test('an incidental cover does not hijack another whole-device role on info tap'
   assert.equal(result.sourceKind, 'device_role');
   assert.deepEqual(result.visualSources.map((source) => source.eid), ['media_player.screen']);
 });
+
+test('issue 369г: устройство с полностью отключёнными сущностями не выглядит живым', () => {
+  const h = hass({
+    'light.wall_group': state('light.wall_group', 'on', { friendly_name: 'Wall lights' }),
+  }, {
+    'light.wall_group': {
+      entity_id: 'light.wall_group', device_id: 'lights', platform: 'demo',
+    },
+  });
+  // (i) истинно безростерный active-контроллер — по-прежнему available (#318)
+  const bare = device({
+    id: 'bare', name: 'Bare controller', entities: [], primary: null,
+    bindingRef: 'bare',
+    bindingStatus: { kind: 'active', enabledEntityIds: [], allEntityIds: [] },
+    marker: { id: 'bare', binding: 'device:bare', tap_action: 'toggle', controls: ['light.wall_group'] },
+  });
+  assert.equal(resolveDevicePresentation(h, bare, options).visual.availability, 'available');
+  // (ii) реестр непуст, но всё отключено пользователем — НЕ available
+  const optedOut = device({
+    id: 'opted', name: 'Opted-out device', entities: [], primary: null,
+    bindingRef: 'opted',
+    bindingStatus: {
+      kind: 'active', enabledEntityIds: [], allEntityIds: ['switch.opted_main'],
+    },
+    marker: { id: 'opted', binding: 'device:opted', tap_action: 'toggle', controls: ['light.wall_group'] },
+  });
+  assert.notEqual(
+    resolveDevicePresentation(h, optedOut, options).visual.availability, 'available',
+    'ростер, сознательно выключенный пользователем, — не свидетельство жизни',
+  );
+  // (iii) ha_disabled — как и раньше, не available
+  const disabled = device({
+    id: 'disabled', name: 'Disabled device', entities: [], primary: null,
+    bindingRef: 'disabled',
+    bindingStatus: {
+      kind: 'ha_disabled', reason: 'device_disabled',
+      enabledEntityIds: [], allEntityIds: ['switch.d_main'],
+    },
+    marker: { id: 'disabled', binding: 'device:disabled', tap_action: 'toggle', controls: ['light.wall_group'] },
+  });
+  // ha_disabled гасится на уровне lifecycle: маркер скрыт и нейтрален целиком
+  const disabledResult = resolveDevicePresentation(h, disabled, options);
+  assert.equal(disabledResult.effectiveHidden, true);
+  assert.equal(disabledResult.visual.status, 'neutral');
+});

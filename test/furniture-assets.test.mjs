@@ -44,7 +44,7 @@ test('front-view menu artwork is reachable only through the lazy editor graph', 
 });
 
 test('release provenance is normalized to the repository MIT grant', () => {
-  assert.equal(MANIFEST.author, 'Sergey Matyushin (Matysh)');
+  assert.equal(MANIFEST.author, 'Sergey Matyunin (Matysh)');
   assert.equal(MANIFEST.license, 'MIT');
   const readme = fs.readFileSync(
     path.join(ROOT, 'assets', 'furniture', 'houseplan-0.3.0', 'README.md'), 'utf8');

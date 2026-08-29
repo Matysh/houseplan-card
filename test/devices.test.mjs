@@ -2120,3 +2120,26 @@ test('HA-disabled marker is built only as an inert service ghost', () => {
   assert.deepEqual(ghost.entities, [], 'stale state cannot feed any runtime consumer');
   assert.deepEqual(ghost.allEntities, ['switch.valve']);
 });
+
+test('issue 369в: легаси-маркер без ключа area размещается в комнате как с явным null', () => {
+  const hass = {
+    devices: { legacy: { id: 'legacy', name: 'Legacy thermometer', area_id: null } },
+    entities: { 'sensor.legacy_temperature': { device_id: 'legacy', platform: 'demo' } },
+    states: {
+      'sensor.legacy_temperature': { state: '19', attributes: { device_class: 'temperature' } },
+    },
+  };
+  // ключ area ОТСУТСТВУЕТ (экспорт/легаси), а не явный null
+  const absent = [{ id: 'legacy', binding: 'device:legacy', space: 'f1', room_id: 'shed' }];
+  const map = roomClimateMap(hass, undefined, absent);
+  assert.deepEqual(map.get('@room/f1/shed'), { temp: 19, hum: null },
+    'undefined area == null area: комната получает голос');
+  // явный null даёт тот же ключ (регресс #317)
+  const explicit = [{ id: 'legacy', binding: 'device:legacy', space: 'f1', room_id: 'shed', area: null }];
+  assert.deepEqual(roomClimateMap(hass, undefined, explicit).get('@room/f1/shed'),
+    { temp: 19, hum: null });
+  // строковая area по-прежнему побеждает (регресс-защита)
+  const areaMarker = [{ id: 'legacy', binding: 'device:legacy', space: 'f1', room_id: 'shed', area: 'kitchen' }];
+  assert.deepEqual(roomClimateMap(hass, undefined, areaMarker).get('kitchen'),
+    { temp: 19, hum: null });
+});

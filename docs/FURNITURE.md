@@ -38,7 +38,7 @@ The generator validates a deliberately small, inert SVG subset and produces:
 - `src/furniture-menu-art.generated.ts` for the lazy editor graph only.
 
 Generated files are never edited manually. The 77 drawings were created by
-Sergey Matyushin (`Matysh`) and granted to the project under its MIT License in
+Sergey Matyunin (`Matysh`) and granted to the project under its MIT License in
 [issue #159](https://github.com/Matysh/houseplan-card/issues/159#issuecomment-5454085168).
 No separate attribution is required in the interface.
 

@@ -693,6 +693,66 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'vac-trail-drop-warn-removed',
+    guard: 'node --test --test-name-pattern="#369" test/vacuum.test.mjs',
+    because: 'a NaN calibration must not hide the trail silently — the drop count belongs in the '
+      + 'console (#369b)',
+    patches: [{
+      file: 'src/vacuum.ts',
+      find: '  if (droppedSegments > 0) {\n'
+        + '    warn(`[houseplan] vacuum trail: ${droppedSegments} segment(s) dropped — non-finite point (check map calibration)`);\n'
+        + '  }',
+      replace: '  void droppedSegments; void warn;',
+    }],
+  },
+  {
+    id: 'climate-legacy-area-undefined-lost',
+    guard: 'node --test --test-name-pattern="369в" test/devices.test.mjs',
+    because: 'legacy/import markers carry an absent area key, not an explicit null — strict '
+      + 'equality quietly demotes their climate back to the registry fallback (#369v)',
+    patches: [{
+      file: 'src/devices.ts',
+      find: '  if (marker.area == null && marker.space && marker.room_id) {',
+      replace: '  if (marker.area === null && marker.space && marker.room_id) {',
+    }],
+  },
+  {
+    id: 'opted-out-roster-looks-alive',
+    guard: 'node --test --test-name-pattern="369г" test/device-presentation.test.mjs',
+    because: 'a roster the user deliberately disabled is evidence of opting out, not of life — '
+      + 'dropping the guard makes the marker glow forever (#369g)',
+    patches: [{
+      file: 'src/device-presentation.ts',
+      find: '  const activeEntitylessDevice = ownEntities.length === 0\n'
+        + '    && !disabledRoster\n',
+      replace: '  void disabledRoster;\n'
+        + '  const activeEntitylessDevice = ownEntities.length === 0\n',
+    }],
+  },
+  {
+    id: 'furniture-shift-listeners-not-attached',
+    guard: 'node demo/smoke_furniture_polish.mjs',
+    because: 'without the window listeners the preview ignores Shift until the mouse moves — the '
+      + 'exact drift the smoke pins (#369d)',
+    patches: [{
+      file: 'src/houseplan-editor-runtime.ts',
+      find: '    this.host._furnPalette = { symbol, w: d.w, h: d.h };\n'
+        + '    this._furnShiftAttach();',
+      replace: '    this.host._furnPalette = { symbol, w: d.w, h: d.h };',
+    }],
+  },
+  {
+    id: 'placement-accepts-any-mouse-button',
+    guard: 'node demo/smoke_furniture_polish.mjs',
+    because: 'a right click with an armed tool must not stamp furniture (#369e)',
+    patches: [{
+      file: 'src/houseplan-editor-runtime.ts',
+      find: "    if (ev.pointerType === 'mouse' && ev.button !== 0\n"
+        + "        && t !== 'select' && t !== 'erase') return false;",
+      replace: '    // mutant: any button places',
+    }],
+  },
+  {
     id: 'backdrop-probe-always-safe',
     guard: 'node demo/smoke_backdrop_guard.mjs',
     because: 'a probe that waves every raster through reopens the original hole — a 100 MP scan '

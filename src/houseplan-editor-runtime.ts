@@ -4075,6 +4075,11 @@ public _cancelDecorGesture(): void {
 
 public _decorPointerDown(ev: PointerEvent): boolean {
     const t = this.host._decorTool;
+    // #369(е): only the primary mouse button places objects — a right/middle
+    // click with an armed tool must not stamp furniture or start a shape.
+    // Touch/pen keep their own transactions (button is 0/-1 there).
+    if (ev.pointerType === 'mouse' && ev.button !== 0
+        && t !== 'select' && t !== 'erase') return false;
     // A DRAWING tool owns the whole canvas. Pressing on top of an existing
     // shape must start a NEW figure at that very point — otherwise a line can
     // never begin at the end of another line, because the old line grabs the
@@ -4672,9 +4677,37 @@ public _furnFieldToCm(v: number): number {
     return clampFurnCm(this.host._imperial ? v * 30.48 : v * 100);
   }
 
+/** #369(д): the preview must follow Shift even without mouse movement. */
+private _furnShiftListener = (ev: KeyboardEvent): void => {
+    if (ev.key !== 'Shift') return;
+    const input = this.host._furnPreviewInput;
+    if (!input) return;
+    const free = ev.type === 'keydown';
+    if (input.free === free) return;
+    this.host._furnPreviewInput = { ...input, free };
+    this.host.requestUpdate();
+  };
+
+private _furnShiftAttached = false;
+
+private _furnShiftAttach(): void {
+    if (this._furnShiftAttached) return;
+    this._furnShiftAttached = true;
+    window.addEventListener('keydown', this._furnShiftListener);
+    window.addEventListener('keyup', this._furnShiftListener);
+  }
+
+public _furnShiftDetach(): void {
+    if (!this._furnShiftAttached) return;
+    this._furnShiftAttached = false;
+    window.removeEventListener('keydown', this._furnShiftListener);
+    window.removeEventListener('keyup', this._furnShiftListener);
+  }
+
 public _furnPick(symbol: string): void {
     const d = furnitureDefaultCm(symbol);
     this.host._furnPalette = { symbol, w: d.w, h: d.h };
+    this._furnShiftAttach();
   }
 
 public _resolveFurniturePlacement(
@@ -4720,7 +4753,9 @@ public _furnPlace(raw: number[], free = false, pointerType = 'mouse'): void {
     // …and the editor goes back to the tool that can move what was just placed
     this.host._decorTool = 'select';
     this.host._furnPalette = null;
+    this._furnShiftDetach();
     this.host._furnCategory = null;
+    this._furnShiftDetach();
     this._clearFurniturePreview();
     this._recordGeometry(this.host._t('history.decor_add'), before);
     this._saveConfig();
@@ -4868,6 +4903,7 @@ public _renderFurnPalette(): TemplateResult {
           @click=${() => {
             this._clearFurniturePreview();
             this.host._furnPalette = null;
+            this._furnShiftDetach();
             this.host._furnCategory = null;
             this.host._decorTool = 'select';
           }}>
@@ -4879,6 +4915,7 @@ public _renderFurnPalette(): TemplateResult {
           <button class="btn ghost furnback" @click=${() => {
             this._clearFurniturePreview();
             this.host._furnPalette = null;
+            this._furnShiftDetach();
             this.host._furnCategory = null;
           }}>
             <ha-icon icon="mdi:arrow-left"></ha-icon>${this.host._t('furn.back_to_categories')}
@@ -4903,6 +4940,7 @@ public _renderFurnPalette(): TemplateResult {
               @click=${() => {
                 this._clearFurniturePreview();
                 this.host._furnPalette = null;
+                this._furnShiftDetach();
                 this.host._furnCategory = item.id;
               }}>
               ${categoryPreview(item)}<span>${this.host._t(`furn.cat_${item.id}` as I18nKey)}</span>
@@ -5223,6 +5261,7 @@ public _renderDecorSecondary(): EditorSecondaryModel | null {
           if (this.host._decorTool !== 'furniture') return;
           this._clearFurniturePreview();
           this.host._furnPalette = null;
+          this._furnShiftDetach();
           this.host._furnCategory = null;
           this.host._decorTool = 'select';
           this.host.requestUpdate();
@@ -5346,6 +5385,7 @@ public _renderDecorBar(): TemplateResult {
             if (t === 'furniture' && this.host._decorTool === 'furniture') {
               this._clearFurniturePreview();
               this.host._furnPalette = null;
+              this._furnShiftDetach();
               this.host._furnCategory = null;
               this.host._decorTool = 'select';
               return;
@@ -5358,6 +5398,7 @@ public _renderDecorBar(): TemplateResult {
             if (t !== 'furniture') {
               this._clearFurniturePreview();
               this.host._furnPalette = null;
+              this._furnShiftDetach();
               this.host._furnCategory = null;
             } else {
               this._clearFurniturePreview();
