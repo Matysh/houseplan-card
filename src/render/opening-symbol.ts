@@ -27,6 +27,13 @@ export interface OpeningVisibleMetrics {
   hitHalf: number;
 }
 
+export interface OpeningVisibleBounds {
+  minX: number;
+  minY: number;
+  maxX: number;
+  maxY: number;
+}
+
 export function openingVisibleMetrics(spec: OpeningVisibleSpec): OpeningVisibleMetrics {
   const half = spec.length / 2;
   const jambHalf = spec.face.cm > 0
@@ -48,6 +55,123 @@ export function openingVisibleMetrics(spec: OpeningVisibleSpec): OpeningVisibleM
       gateDepth + gridVisualUnits(12, spec.cellCm),
     ),
   };
+}
+
+type LocalBounds = OpeningVisibleBounds;
+
+function addPoint(bounds: LocalBounds, x: number, y: number): void {
+  bounds.minX = Math.min(bounds.minX, x);
+  bounds.minY = Math.min(bounds.minY, y);
+  bounds.maxX = Math.max(bounds.maxX, x);
+  bounds.maxY = Math.max(bounds.maxY, y);
+}
+
+function addSweptRect(
+  bounds: LocalBounds,
+  originX: number,
+  x0: number,
+  x1: number,
+  y0: number,
+  y1: number,
+  fromDeg: number,
+  toDeg: number,
+): void {
+  const lo = Math.min(fromDeg, toDeg) * Math.PI / 180;
+  const hi = Math.max(fromDeg, toDeg) * Math.PI / 180;
+  const candidates = (x: number, y: number): number[] => {
+    const phase = Math.atan2(y, x);
+    const angles = [lo, hi];
+    for (let k = -3; k <= 3; k++) {
+      const horizontal = k * Math.PI - phase;
+      const vertical = Math.PI / 2 + k * Math.PI - phase;
+      if (horizontal > lo && horizontal < hi) angles.push(horizontal);
+      if (vertical > lo && vertical < hi) angles.push(vertical);
+    }
+    return angles;
+  };
+  for (const x of [x0, x1]) for (const y of [y0, y1]) {
+    for (const angle of candidates(x, y)) {
+      const c = Math.cos(angle), s = Math.sin(angle);
+      addPoint(bounds, originX + x * c - y * s, x * s + y * c);
+    }
+  }
+}
+
+function bodyTranslation(spec: OpeningVisibleSpec): [number, number] {
+  const visualOffset = openingSymbolOffset(
+    spec.type, spec.flipV, spec.angle, spec.face,
+  );
+  if (!visualOffset.ox && !visualOffset.oy) return [0, 0];
+  const rad = (-spec.angle * Math.PI) / 180;
+  const c = Math.cos(rad), s = Math.sin(rad);
+  const sx = spec.flipH ? -1 : 1;
+  const sy = spec.flipV ? -1 : 1;
+  return [
+    (visualOffset.ox * c - visualOffset.oy * s) * sx,
+    (visualOffset.ox * s + visualOffset.oy * c) * sy,
+  ];
+}
+
+/**
+ * State-independent painted envelope of one saved architectural symbol.
+ * Leaf rectangles are swept analytically through their complete motion; no
+ * DOM measurement is involved, and changing the bound entity cannot resize
+ * a tight static card. `passage` has no standalone visible symbol.
+ */
+export function openingVisibleBounds(
+  spec: OpeningVisibleSpec,
+  center: readonly [number, number] = [0, 0],
+): OpeningVisibleBounds | null {
+  if (spec.type === 'passage' || !(spec.length > 0)
+      || ![spec.length, spec.angle, center[0], center[1]].every(Number.isFinite)) return null;
+  const { half, jambHalf } = openingVisibleMetrics(spec);
+  const visibleScale = gridVisualScale(spec.cellCm);
+  const leafHalf = 1.75 * visibleScale;
+  const jambStrokeHalf = 1.25 * visibleScale;
+  const arcStrokeHalf = 0.75 * visibleScale;
+  const jamb: LocalBounds = {
+    minX: -half - jambStrokeHalf,
+    minY: -jambHalf - jambStrokeHalf,
+    maxX: half + jambStrokeHalf,
+    maxY: jambHalf + jambStrokeHalf,
+  };
+  const body: LocalBounds = {
+    minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity,
+  };
+  if (spec.type === 'window') {
+    addSweptRect(body, -half, 0, half, -leafHalf, leafHalf, -90, 0);
+    addSweptRect(body, half, -half, 0, -leafHalf, leafHalf, 0, 90);
+    addPoint(body, -half - arcStrokeHalf, -half - arcStrokeHalf);
+    addPoint(body, half + arcStrokeHalf, arcStrokeHalf);
+  } else if (spec.type === 'gate') {
+    const turn = spec.face.side * 10;
+    addSweptRect(body, -half, 0, half, -leafHalf, leafHalf, 0, turn);
+    addSweptRect(body, half, -half, 0, -leafHalf, leafHalf, -turn, 0);
+  } else {
+    addSweptRect(body, -half, 0, spec.length, -leafHalf, leafHalf, -90, 0);
+    addPoint(body, -half - arcStrokeHalf, -spec.length - arcStrokeHalf);
+    addPoint(body, half + arcStrokeHalf, arcStrokeHalf);
+  }
+  const [tx, ty] = bodyTranslation(spec);
+  const combined: LocalBounds = { ...jamb };
+  addPoint(combined, body.minX + tx, body.minY + ty);
+  addPoint(combined, body.maxX + tx, body.maxY + ty);
+
+  const sx = spec.flipH ? -1 : 1;
+  // Gate vertical direction is carried by face.side, matching the renderer.
+  const sy = spec.type === 'gate' ? 1 : (spec.flipV ? -1 : 1);
+  const angle = spec.angle * Math.PI / 180;
+  const c = Math.cos(angle), s = Math.sin(angle);
+  const world: OpeningVisibleBounds = {
+    minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity,
+  };
+  for (const x of [combined.minX, combined.maxX]) {
+    for (const y of [combined.minY, combined.maxY]) {
+      const rx = x * sx, ry = y * sy;
+      addPoint(world, center[0] + rx * c - ry * s, center[1] + rx * s + ry * c);
+    }
+  }
+  return world;
 }
 
 /** Visible architectural paths shared by committed openings and placement
@@ -72,18 +196,7 @@ export function renderOpeningVisibleGeometry(spec: OpeningVisibleSpec): Template
 
   // Every symbol sits on the wall centreline. flip_v changes only leaf/swing
   // direction; gates use face.side for their 10 degree turn (#250).
-  const visualOffset = openingSymbolOffset(
-    spec.type, spec.flipV, spec.angle, spec.face,
-  );
-  let swingTx = 0, swingTy = 0;
-  if (visualOffset.ox || visualOffset.oy) {
-    const rad = (-spec.angle * Math.PI) / 180;
-    const c = Math.cos(rad), s = Math.sin(rad);
-    swingTx = visualOffset.ox * c - visualOffset.oy * s;
-    swingTy = visualOffset.ox * s + visualOffset.oy * c;
-    swingTx *= sx;
-    swingTy *= sy;
-  }
+  const [swingTx, swingTy] = bodyTranslation(spec);
 
   let body: TemplateResult;
   if (spec.type === 'window') {

@@ -153,6 +153,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#274](https://github.com/Matysh/houseplan-card/issues/274) Беспроводной контроллер одинаково выглядит на плане и в preview | [274-wireless-controller-presentation-parity.md](274-wireless-controller-presentation-parity.md) |
 | [#317](https://github.com/Matysh/houseplan-card/issues/317) Климат комнаты следует размещению датчика в House Plan | [317-room-climate-placement.md](317-room-climate-placement.md) |
 | [#318](https://github.com/Matysh/houseplan-card/issues/318) Активный контроллер без собственных сущностей следует `controls` | [318-empty-controller-roster.md](318-empty-controller-roster.md) |
+| [#373](https://github.com/Matysh/houseplan-card/issues/373) Плотное кадрирование static card по геометрии дома | [373-space-card-house-fit.md](373-space-card-house-fit.md) |
 | [#294](https://github.com/Matysh/houseplan-card/issues/294) Esc завершает текущую цепочку стен без удаления геометрии | [294-wall-esc-detach.md](294-wall-esc-detach.md) |
 
 ## P3

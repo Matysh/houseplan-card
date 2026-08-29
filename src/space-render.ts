@@ -33,7 +33,7 @@ import {
   partitionOpeningFace, partitionOpeningHasCompositeRoomWall, resolvePartitionOpeningCompat,
 } from './partition-openings';
 import {
-  renderOpeningVisibleGeometry, type OpeningVisibleSpec,
+  openingVisibleBounds, renderOpeningVisibleGeometry, type OpeningVisibleSpec,
 } from './render/opening-symbol';
 import { activeRegistryHass, fullRegistryHass, type HaRegistrySnapshot } from './ha-binding-status';
 import {
@@ -51,7 +51,8 @@ import { gridVisualScale, gridVisualUnits } from './grid-scale';
 import {
   spaceModels, defaultPositions, markerPos, labelPos, spaceFrame, iconCqw, NORM_W,
   GRID_STEP_N, GRID_PITCH, staticPassageOpenings,
-  type Layout, type ContentItem,
+  expandItem, itemOfGeometry, roomItem, structuralFrame, resolveSpaceCardFit,
+  type Layout, type ContentItem, type SpaceCardFit,
 } from './space-geometry';
 import { resolveZeroWalls } from './zero-walls';
 import { geometryOpenings } from './plan-geometry-preflight';
@@ -191,6 +192,8 @@ export interface StaticRenderOpts {
   layout: Layout;
   spaceId: string;
   iconSize?: number;
+  /** Static-card-only frame policy; unknown values fail closed to content. */
+  fit?: SpaceCardFit | string;
   /** Keep the normal side/bottom frame but let content meet the top edge. */
   compactTopFrame?: boolean;
   /** Measured CSS width of the static stage, used for screen-depth policies. */
@@ -360,9 +363,109 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
     minX: Math.min(line[0], line[2]), minY: Math.min(line[1], line[3]),
     maxX: Math.max(line[0], line[2]), maxY: Math.max(line[1], line[3]),
   });
-  const fr = spaceFrame(space, placed, o.compactTopFrame
-    ? { top: 0, right: 0.05, bottom: 0.05, left: 0.05 }
-    : 0.05);
+
+  // Resolve architectural opening hosts before framing: tight house mode must
+  // include their maximum painted envelope without consulting live state.
+  const resolvedRawOpenings = (spCfg.openings || []).flatMap((opening: OpeningCfg) => {
+    if (!opening.host || opening.host.kind === 'wall') return [opening];
+    const resolved = resolvedHosted.find((item) => item.opening.id === opening.id);
+    return resolved ? [materializePartitionOpening(opening, resolved, NORM_W)] : [];
+  });
+  const staticPassages = staticPassageOpenings(resolvedRawOpenings, NORM_W);
+  const roomIntervals = wallIntervals(
+    space.rooms, walls, zeroWalls.contour, GRID_STEP_N, cellCm, GRID_PITCH, NORM_W,
+  );
+  const hostedCompositeOpenings = resolvedHosted
+    .filter((resolved) => partitionOpeningHasCompositeRoomWall(
+      resolved, roomIntervals, GRID_PITCH * 0.0002,
+    ))
+    .map((resolved) => ({
+      x: resolved.center[0], y: resolved.center[1],
+      angle: resolved.angle, length: resolved.length,
+    }));
+  const fit = resolveSpaceCardFit(o.fit);
+  const needsCanonicalWallGeometry = !!(
+    walls.length || (extras.length && (disp.showBorders || fit === 'house'))
+  );
+  const wallGeometryFingerprint = needsCanonicalWallGeometry
+    ? contentFingerprint(staticPassages.length
+      ? { rooms: space.rooms, walls, extras, cellCm, zero: zeroWalls.contour,
+          passages: staticPassages.map((opening) => ({
+          x: opening.rx, y: opening.ry, angle: opening.angle, length: opening.rlen,
+        })), hostedCompositeOpenings }
+      : { rooms: space.rooms, walls, extras, cellCm, zero: zeroWalls.contour })
+    : '';
+  const canonicalWallGeometry = needsCanonicalWallGeometry
+    ? cachedStaticWallGeometry(o.cfg, space.id, wallGeometryFingerprint, () => {
+      const built = wallBodiesUnionPath(
+        space.rooms, walls, zeroWalls.contour, [
+          ...staticPassages.filter((opening) => opening.host?.kind !== 'partition').map((opening) => ({
+            x: opening.rx, y: opening.ry, angle: opening.angle, length: opening.rlen,
+          })),
+          ...hostedCompositeOpenings,
+        ], GRID_STEP_N, cellCm, GRID_PITCH, NORM_W, extras,
+      );
+      // #375: keep the full-card fingerprint on the geometry even though #373
+      // needs to build it before choosing the static card frame.
+      if (built) Object.defineProperty(built, 'sourceFingerprint', {
+        value: contentFingerprint([spCfg, cellCm, GRID_PITCH]),
+        enumerable: false,
+      });
+      return built;
+    })
+    : null;
+
+  const contentFrame = (): ReturnType<typeof spaceFrame> => spaceFrame(
+    space, placed, o.compactTopFrame
+      ? { top: 0, right: 0.05, bottom: 0.05, left: 0.05 }
+      : 0.05,
+  );
+  let fr = contentFrame();
+  if (fit === 'house') {
+    const structure: ContentItem[] = [];
+    const roomStrokeHalf = gridVisualUnits(2.5, cellCm) / 2;
+    const wallStrokeHalf = gridVisualUnits(0.6, cellCm) / 2;
+    for (const room of space.rooms) {
+      const item = roomItem(room);
+      if (item) structure.push(expandItem(item, roomStrokeHalf));
+    }
+    for (const component of canonicalWallGeometry?.components || []) {
+      const item = itemOfGeometry(component.geom);
+      if (item) structure.push(expandItem(item, wallStrokeHalf));
+    }
+    // Keep degraded/isolated bodies reachable even if a boolean union elected
+    // to render them as separate components or failed one merge.
+    for (const body of extras) {
+      const item = itemOfGeometry(body);
+      if (item) structure.push(expandItem(item, wallStrokeHalf));
+    }
+    for (const line of zeroWalls.lines) {
+      const item: ContentItem = {
+        minX: Math.min(line[0], line[2]), minY: Math.min(line[1], line[3]),
+        maxX: Math.max(line[0], line[2]), maxY: Math.max(line[1], line[3]),
+      };
+      structure.push(expandItem(item, roomStrokeHalf));
+    }
+    if (!disp.hideOpenings) for (const resolved of resolvedHosted) {
+      const opening = resolved.opening;
+      const faceFlipV = opening.type === 'gate' ? !opening.flip_v : !!opening.flip_v;
+      const bounds = openingVisibleBounds({
+        type: opening.type,
+        length: resolved.length,
+        angle: resolved.angle,
+        amount: 0,
+        flipH: !!opening.flip_h,
+        flipV: !!opening.flip_v,
+        base: '',
+        tone: '',
+        cellCm,
+        gridPitch: GRID_PITCH,
+        face: partitionOpeningFace(resolved, faceFlipV),
+      }, resolved.center);
+      if (bounds) structure.push(bounds);
+    }
+    fr = structuralFrame(structure) || fr;
+  }
   const vb = [fr.x, fr.y, fr.w, fr.h];
 
   // Resolve once per room and reuse the exact result for the visible fill and
@@ -387,26 +490,6 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   for (const room of space.rooms) if (room.id) {
     roomFillsById.set(room.id, resolvedRoomFills.get(room) || null);
   }
-  // Static intentionally keeps the historical door/window/gate wall output.
-  // Only the new negative-space type participates in its masonry fingerprint.
-  const resolvedRawOpenings = (spCfg.openings || []).flatMap((opening: OpeningCfg) => {
-    if (!opening.host || opening.host.kind === 'wall') return [opening];
-    const resolved = resolvedHosted.find((item) => item.opening.id === opening.id);
-    return resolved ? [materializePartitionOpening(opening, resolved, NORM_W)] : [];
-  });
-  const staticPassages = staticPassageOpenings(resolvedRawOpenings, NORM_W);
-  const roomIntervals = wallIntervals(
-    space.rooms, walls, zeroWalls.contour, GRID_STEP_N, cellCm, GRID_PITCH, NORM_W,
-  );
-  const hostedCompositeOpenings = resolvedHosted
-    .filter((resolved) => partitionOpeningHasCompositeRoomWall(
-      resolved, roomIntervals, GRID_PITCH * 0.0002,
-    ))
-    .map((resolved) => ({
-      x: resolved.center[0], y: resolved.center[1],
-      angle: resolved.angle, length: resolved.length,
-    }));
-
   const roomShapes = space.rooms
     .filter((r) => r.area || disp.showBorders || roomFillModeOf(disp.fill, r) !== 'none')
     .map((r) => {
@@ -539,37 +622,6 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   // gaps between detached buildings, and an empty space has no paper at all,
   // image or no image. The picture is drawn ON the paper, one layer above.
 
-  const needsCanonicalWallGeometry = !!(walls.length || (extras.length && disp.showBorders));
-  const wallGeometryFingerprint = needsCanonicalWallGeometry
-    ? contentFingerprint(staticPassages.length
-      ? { rooms: space.rooms, walls, extras, cellCm, zero: zeroWalls.contour,
-          passages: staticPassages.map((opening) => ({
-          x: opening.rx, y: opening.ry, angle: opening.angle, length: opening.rlen,
-        })), hostedCompositeOpenings }
-      : { rooms: space.rooms, walls, extras, cellCm, zero: zeroWalls.contour })
-    : '';
-  const canonicalWallGeometry = needsCanonicalWallGeometry
-    ? cachedStaticWallGeometry(o.cfg, space.id, wallGeometryFingerprint, () => {
-      const built = wallBodiesUnionPath(
-        space.rooms, walls, zeroWalls.contour, [
-          ...staticPassages.filter((opening) => opening.host?.kind !== 'partition').map((opening) => ({
-            x: opening.rx, y: opening.ry, angle: opening.angle, length: opening.rlen,
-          })),
-          ...hostedCompositeOpenings,
-        ], GRID_STEP_N, cellCm, GRID_PITCH, NORM_W, extras,
-      );
-      // #375: the same non-enumerable tag the full card attaches
-      // (houseplan-card.ts, _wallGeometryR): buildLightBarrierScene only takes
-      // the fast recutWallBodiesGeometry path when this fingerprint matches
-      // revision.geometryFingerprint — without the tag the static path always
-      // rebuilt the wall bodies from scratch on a door state change.
-      if (built) Object.defineProperty(built, 'sourceFingerprint', {
-        value: contentFingerprint([spCfg, cellCm, GRID_PITCH]),
-        enumerable: false,
-      });
-      return built;
-    })
-    : null;
   const passageTunnelGeometry = staticPassages.length && walls.length
     ? openingTunnelGeometries(
       space.rooms,

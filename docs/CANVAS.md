@@ -223,6 +223,26 @@ the `-25 % .. 125 %` envelope that used to reject far content is gone,
 replaced by §4.1 (the envelope WAS the bug: content past the old square
 was silently excluded from the frame).
 
+### §4.4 Static-card house frame
+
+The full `houseplan-card` and the default `houseplan-space-card` continue to
+use the canonical content frame above. A static card may explicitly select
+`fit: house`. That second frame is structural and static-card-only:
+
+* every sane room, positive/zero wall, independent wall or saved draft,
+  column and complete door/window/gate symbol envelope participates;
+* every structural item is kept — the outlier vote cannot discard a detached
+  but valid wing;
+* there is no intentional outer padding, but analytic bounds include the
+  painted half-strokes and the complete state-independent opening motion;
+* backdrop, decor, room labels, devices, badges, Glow and sunlight do not vote.
+
+Excluded auxiliary objects are not hidden; they stay in the same coordinate
+system and may be clipped outside the structural frame. With no sane structural
+item, the operation falls back atomically to the ordinary content frame. The
+shared degenerate-axis floor still applies, so a line-only structure cannot
+produce a zero-sized SVG `viewBox`.
+
 ## §5 Zoom and pan
 
 * **Zoom in** — unchanged, `ZOOM_MAX = 8`.

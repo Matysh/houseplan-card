@@ -5,6 +5,7 @@ import {
   NORM_W, CANVAS_LIMIT, SANE_LIMIT, MIN_ZOOM, OUTLIER_K, MIN_VOTERS,
   spaceModels, contentItems, contentFrame, contentBounds, spaceFrame, spaceCenter,
   iconUnit, iconCqw, gridLevels, itemOf, roomItem, defaultPositions,
+  expandItem, itemOfGeometry, resolveSpaceCardFit, structuralFrame,
 } from '../test-build/space-geometry.js';
 
 const model = (space) => spaceModels({ spaces: [{ view_box: [0, 0, 1, 1], rooms: [], ...space }], markers: [] })[0];
@@ -41,6 +42,32 @@ test('per-edge frame padding can remove only the top inset', () => {
   assert.equal(compact.x, regular.x, 'left edge stays padded');
   assert.equal(compact.x + compact.w, regular.x + regular.w, 'right edge stays padded');
   assert.equal(compact.y + compact.h, regular.y + regular.h, 'bottom edge stays padded');
+});
+
+test('static-card fit literals fail closed and content keeps its exact frame', () => {
+  const m = model({ id: 's', rooms: [{
+    id: 'r', poly: [[0.2, 0.3], [0.8, 0.3], [0.8, 0.7], [0.2, 0.7]],
+  }] });
+  for (const value of [undefined, null, '', 'content', 'cover', 1]) {
+    assert.equal(resolveSpaceCardFit(value), 'content');
+  }
+  assert.equal(resolveSpaceCardFit('house'), 'house');
+  assert.deepEqual(spaceFrame(m), { x: 170, y: 270, w: 660, h: 460 });
+});
+
+test('tight structural frame keeps every sane component with zero padding', () => {
+  const room = expandItem(box(100, 200, 500, 600), 2);
+  const wall = itemOfGeometry([[[[80, 180], [520, 180], [520, 620], [80, 620], [80, 180]]]]);
+  const detachedWing = box(5000, 300, 5300, 700);
+  const frame = structuralFrame([room, wall, detachedWing]);
+  assert.deepEqual(frame, { x: 80, y: 180, w: 5220, h: 520 });
+  assert.equal(structuralFrame([box(Infinity, 0, Infinity, 1)]), null);
+});
+
+test('tight structural frame protects a collinear house axis from a zero viewBox', () => {
+  const frame = structuralFrame([box(100, 250, 900, 250)]);
+  assert.ok(frame && frame.w === 800 && frame.h > 0);
+  assert.ok(Number.isFinite(frame.x) && Number.isFinite(frame.y));
 });
 
 test('per-edge padding keeps frame fallback and degenerate protection', () => {

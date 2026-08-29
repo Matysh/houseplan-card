@@ -1213,6 +1213,16 @@ Shared, framework-light modules keep the two views from diverging:
 **Static contract:** the schematic layer (`.hp-static-stage`) is `pointer-events:none`; the
 footer button lives outside it and stays clickable.
 
+**Static frame contract:** `fit` is normalised to `content | house`, with every
+missing, empty or unknown value resolving to `content`. The default calls the
+unchanged content/outlier frame. Opt-in `house` derives one zero-intentional-
+padding `viewBox` from all sane architectural geometry and its painted stroke/
+opening envelope; backdrop, decor, labels, devices and environmental effects
+do not vote. It uses `contentFrame(...).all` semantics so a detached structural
+wing cannot be rejected as an outlier, and falls back to the default frame when
+there is no structure. The resulting single `viewBox` still drives the SVG,
+HTML marker/label layers and continuity overlay together.
+
 **Deep-link contract:** the footer button calls `navigate(button_target + "#space=<id>")`
 (default target `/plan-doma`). An unpinned full card reads `#space=<id>` on load (a valid id wins
 over `default_floor`) and on `hashchange`, without blocking manual space switching; an

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+  openingVisibleBounds,
   openingVisibleMetrics,
   renderOpeningVisibleGeometry,
 } from '../test-build/render/opening-symbol.js';
@@ -65,6 +66,35 @@ test('an open passage emits no visible symbol at all', () => {
     face: { ox: 0, oy: 20, cm: 20, side: 1 },
   })));
   assert.equal(passageText, '');
+});
+
+test('visible bounds cover complete state-independent opening motion and rotation', () => {
+  const closed = openingVisibleBounds(spec({ amount: 0 }), [200, 300]);
+  const open = openingVisibleBounds(spec({ amount: 1 }), [200, 300]);
+  assert.deepEqual(open, closed, 'live state cannot resize a tight card');
+  assert.ok(closed.minX < 150 && closed.maxX > 250);
+  assert.ok(closed.minY < 200 && closed.maxY > 300);
+
+  const diagonal = openingVisibleBounds(spec({ type: 'window', angle: 45 }), [0, 0]);
+  assert.ok(diagonal.minX < 0 && diagonal.maxX > 0);
+  assert.ok(diagonal.minY < 0 && diagonal.maxY > 0);
+  for (const value of Object.values(diagonal)) assert.ok(Number.isFinite(value));
+});
+
+test('visible bounds include thick jambs, both gate directions and omit passages', () => {
+  const thin = openingVisibleBounds(spec({ type: 'gate' }));
+  const thick = openingVisibleBounds(spec({
+    type: 'gate', face: { ox: 0, oy: 20, cm: 20, side: 1 },
+  }));
+  const reversed = openingVisibleBounds(spec({
+    type: 'gate', face: { ox: 0, oy: -20, cm: 20, side: -1 },
+  }));
+  assert.ok(thick.minY < thin.minY && thick.maxY > thin.maxY);
+  assert.deepEqual(
+    [reversed.minX, reversed.maxX, reversed.minY, reversed.maxY],
+    [thick.minX, thick.maxX, thick.minY, thick.maxY],
+  );
+  assert.equal(openingVisibleBounds(spec({ type: 'passage' })), null);
 });
 
 test('shared renderer centres every flip while preserving opening direction', () => {

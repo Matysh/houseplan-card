@@ -9,6 +9,11 @@
   recut path, and a cached room clip). This also fixes a light-graph cache
   regression the full card picked up in beta.4
   ([#375](https://github.com/Matysh/houseplan-card/issues/375)).
+- `houseplan-space-card` can now opt into `fit: house`: the complete house
+  structure fills a compact card without the ordinary 5% breathing room, while
+  backdrop, decor, labels and device markers no longer make it smaller. The
+  existing all-content frame remains the default and the house itself is never
+  cropped ([#373](https://github.com/Matysh/houseplan-card/issues/373)).
 
 ## v1.69.0-beta.4 — 2026-08-29
 

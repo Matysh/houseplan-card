@@ -260,6 +260,13 @@ export type Rect = { x: number; y: number; w: number; h: number };
 /** One drawn/placed object, as its own bounding box (render units). */
 export type ContentItem = { minX: number; minY: number; maxX: number; maxY: number };
 
+export type SpaceCardFit = 'content' | 'house';
+
+/** Public static-card framing literals are deliberately fail-closed. */
+export function resolveSpaceCardFit(value: unknown): SpaceCardFit {
+  return value === 'house' ? 'house' : 'content';
+}
+
 /** Bounding box of a point cloud, as a ContentItem. */
 export function itemOf(pts: ReadonlyArray<readonly [number, number] | number[]>): ContentItem | null {
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
@@ -272,6 +279,31 @@ export function itemOf(pts: ReadonlyArray<readonly [number, number] | number[]>)
     if (y > maxY) maxY = y;
   }
   return minX > maxX ? null : { minX, minY, maxX, maxY };
+}
+
+/** Bounding box of a polyclip-style, arbitrarily nested coordinate tree. */
+export function itemOfGeometry(value: unknown): ContentItem | null {
+  const points: number[][] = [];
+  const visit = (node: unknown): void => {
+    if (!Array.isArray(node)) return;
+    if (node.length >= 2 && Number.isFinite(Number(node[0]))
+        && Number.isFinite(Number(node[1]))) {
+      points.push([Number(node[0]), Number(node[1])]);
+      return;
+    }
+    for (const child of node) visit(child);
+  };
+  visit(value);
+  return itemOf(points);
+}
+
+/** Grow an item's actual painted envelope by a physical stroke half-width. */
+export function expandItem(item: ContentItem, amount: number): ContentItem {
+  const pad = Number.isFinite(amount) && amount > 0 ? amount : 0;
+  return {
+    minX: item.minX - pad, minY: item.minY - pad,
+    maxX: item.maxX + pad, maxY: item.maxY + pad,
+  };
 }
 
 /** The room's own bounding box as a content item (polygon or legacy rect). */
@@ -415,6 +447,16 @@ export function contentFrame(
     all: padRect(all, pad),
     outliers: keep === sane ? 0 : n,
   };
+}
+
+/**
+ * Tight static-card frame: every sane structural item is retained and no
+ * intentional breathing room is added. `all` is essential here — a detached
+ * wing is architecture, never a content outlier. Degenerate-axis protection
+ * remains shared with the canonical frame so SVG can never receive 0×N.
+ */
+export function structuralFrame(items: ReadonlyArray<ContentItem>): Rect | null {
+  return contentFrame(items, { pad: 0 }).all;
 }
 
 /**

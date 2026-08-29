@@ -8,6 +8,7 @@
 import { LitElement, html, nothing, noChange, css, type TemplateResult, type PropertyValues } from 'lit';
 import { cardStyles } from './styles';
 import { buildSpaceDevices, renderSpaceStatic, spaceModels } from './space-render';
+import { resolveSpaceCardFit, type SpaceCardFit } from './space-geometry';
 import { getConfig, onConfigChange, cachedSnapshot, type HpConfigSnapshot } from './config-store';
 import { t, langOf, type Lang } from './i18n';
 import { LANGUAGE_RUNTIME } from './i18n/registry';
@@ -58,6 +59,7 @@ const navigate = (path: string) => {
 interface SpaceCardConfig {
   type: string;
   space: string;
+  fit?: SpaceCardFit;
   title?: string;
   show_button?: boolean;
   button_label?: string;
@@ -272,6 +274,7 @@ class HouseplanSpaceCard extends LitElement {
     const first = spaceModels(snap?.config || null)[0]?.id || '';
     return {
       type: 'custom:houseplan-space-card', space: first, show_button: true,
+      fit: 'content',
       live_states: true, show_temperature: true, show_signal: true,
       light_pools: false,
     };
@@ -286,6 +289,7 @@ class HouseplanSpaceCard extends LitElement {
       live_states: true, show_temperature: true, show_signal: true,
       light_pools: false,
       ...config,
+      fit: resolveSpaceCardFit(config.fit),
     };
     if (!this._config.light_pools) {
       disposeGlowRuntime(this._glowRuntimeState, this._glowRuntimeHost);
@@ -818,6 +822,7 @@ class HouseplanSpaceCard extends LitElement {
       layout: this._snap?.layout || {},
       spaceId,
       iconSize: this._config.icon_size,
+      fit: this._config.fit,
       compactTopFrame: this._config.title === '',
       stageWidth: this._stageWidth,
       lang: this._lang,

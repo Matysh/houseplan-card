@@ -3,6 +3,7 @@ import { LitElement, html, nothing, noChange } from 'lit';
 import { langOf, t, type Lang } from './i18n';
 import { LANGUAGE_RUNTIME } from './i18n/registry';
 import { languageLoadingTemplate, languageRenderGate } from './i18n/language-runtime';
+import { resolveSpaceCardFit } from './space-geometry';
 
 class HouseplanSpaceCardEditor extends LitElement {
   public hass?: any;
@@ -44,6 +45,13 @@ class HouseplanSpaceCardEditor extends LitElement {
         ? { name: 'space', selector: { select: { mode: 'dropdown', options: spaces } } }
         : { name: 'space', selector: { text: {} } },
       { name: 'title', selector: { text: {} } },
+      {
+        name: 'fit',
+        selector: { select: { mode: 'dropdown', options: [
+          { value: 'content', label: t(this._lang, 'editor.fit_content') },
+          { value: 'house', label: t(this._lang, 'editor.fit_house') },
+        ] } },
+      },
       { name: 'show_button', selector: { boolean: {} } },
       { name: 'button_label', selector: { text: {} } },
       { name: 'button_target', selector: { text: {} } },
@@ -67,6 +75,7 @@ class HouseplanSpaceCardEditor extends LitElement {
     const labels: Record<string, string> = {
       space: t(L, 'editor.space'),
       title: t(L, 'editor.title'),
+      fit: t(L, 'editor.framing'),
       show_button: t(L, 'editor.show_button'),
       button_label: t(L, 'editor.button_label'),
       button_target: t(L, 'editor.button_target'),
@@ -78,7 +87,7 @@ class HouseplanSpaceCardEditor extends LitElement {
     };
     return html`<ha-form
       .hass=${this.hass}
-      .data=${this._config}
+      .data=${{ ...this._config, fit: resolveSpaceCardFit(this._config.fit) }}
       .schema=${this._schema}
       .computeLabel=${(s: any) => labels[s.name] || s.name}
       @value-changed=${this._valueChanged}

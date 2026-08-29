@@ -774,14 +774,29 @@ default because every visible source needs clipped floor visibility geometry.
 ```yaml
 type: custom:houseplan-space-card
 space: ground
+fit: house
 light_pools: true
 ```
+
+`fit` controls only this compact card's frame:
+
+- `content` (default) keeps the existing frame around all visible content and
+  its 5% breathing room;
+- `house` removes that intentional padding and fits every room, wall,
+  partition, column and opening symbol. A detached but valid wing stays in the
+  frame. Backdrop, decor, room labels and device markers do not widen it.
+
+Choose `house` when the building should occupy as much of the card as possible.
+Auxiliary objects remain rendered, but an object outside the structural bounds
+may be clipped. An image-only or empty space safely falls back to `content`.
 
 By default the card uses the configured space name as its header. A non-empty
 `title` replaces that text. Set `title: ""` explicitly when the surrounding
 dashboard already provides the name: the header is omitted and the plan meets
 the top of the stage, while the normal left, right and bottom breathing room is
 kept. Omitting `title` is not the same as setting it to an empty string.
+With `fit: house` all four intentional paddings are already zero, so
+`title: ""` removes only the header and leaves the same structural frame.
 
 ## 19. Plan maintenance
 
