@@ -233,10 +233,11 @@ Persisted schema не меняется:
    assertion.
 6. Оставить palette thumbnail control: его толщина между zoom плана не
    меняется.
-7. В цикле реализации запускать только `npm run typecheck`, `npm test`,
-   `npm run build` по принятому процессу. Browser smoke, golden и полный gate
-   запускаются в предрелизном прогоне; тестовые сценарии и assertions входят в
-   продуктовый коммит заранее.
+7. В цикле реализации запускать `npm run typecheck`, `npm test`,
+   `npm run build`; перед переводом в `S7-code-review` дополнительно запустить
+   названный в AC целевой `node demo/smoke_furniture.mjs`. Golden, полный набор
+   browser smoke, performance и полный gate запускаются в предрелизном
+   прогоне; тестовые сценарии и assertions входят в продуктовый коммит заранее.
 
 ## Риски
 
