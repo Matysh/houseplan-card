@@ -687,8 +687,8 @@ const MUTANT_DEFINITIONS = [
       + 'only the bundle smoke proves the fr entry loads the fr chunk (#371)',
     patches: [{
       file: 'src/i18n/registry.ts',
-      find: "  { code: 'fr', nativeLabel: 'Français', loadDictionary: loadFrench },",
-      replace: "  { code: 'fr', nativeLabel: 'Français', loadDictionary: loadGerman },",
+      find: "    : await import(/* @vite-ignore */ new URL(`${FRENCH_RETRY_ASSET}?retry`, import.meta.url).href);\n  return { dictionary: module.dictionary, fingerprint: module.fingerprint };",
+      replace: "    : await import(/* @vite-ignore */ new URL(`${FRENCH_RETRY_ASSET}?retry`, import.meta.url).href);\n  void module.dictionary;\n  return { dictionary: en, fingerprint: module.fingerprint };",
     }],
   },
   {
