@@ -1,4 +1,5 @@
-// #29: one lifecycle catalog replaces the separate Add / hidden-device paths.
+// #29: one lifecycle catalog replaces the separate hidden-device paths.
+// #363 restores a direct Add shortcut without creating a second catalog.
 // This smoke exercises the real Lit dialog and verifies that browsing it is
 // read-only while nested marker flows return to the same catalog state.
 import { launch, checkAll, finish } from './serve.mjs';
@@ -21,8 +22,9 @@ const out = await page.evaluate(async () => {
   const toolbar = [...root().querySelectorAll('.editbar .btn')];
   const labels = toolbar.map((node) => node.textContent.trim());
   const result = {
-    oneCatalogEntryPoint: labels.some((label) => /Devices/i.test(label))
-      && !labels.some((label) => /Hidden and disabled|^Add$/i.test(label)),
+    catalogAndDirectAddEntryPoints: labels.some((label) => /Devices/i.test(label))
+      && labels.some((label) => /^Add$/i.test(label))
+      && !labels.some((label) => /Hidden and disabled/i.test(label)),
   };
 
   const before = JSON.stringify({
