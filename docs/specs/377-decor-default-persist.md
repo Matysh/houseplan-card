@@ -4,7 +4,7 @@
 - Приоритет: P3, polish; полный трек (компатибилити-поле `settings.decor_default_style`,
   кросс-модульный путь записи — критерий §5 «без новых персистентных полей» не проходит;
   выделено из #376в по SPEC-REVIEW-376-r1 H1)
-- Ревизия: 1 (2026-08-29)
+- Ревизия: 2 (2026-08-29) — по SPEC-REVIEW-377-r1 (M1)
 - Продуктовое решение владельца (29.08): цвет декора по умолчанию персистится
   в серверный конфиг.
 
@@ -60,9 +60,14 @@
    дефолт хранится отсутствием ключа).
 6. Запись возможна только из editor-runtime; холодный View ключ читает, но
    никогда не пишет (класс #357 не задевается).
-7. Формат ключа — snake_case, поля фронтового `DecorStyle`
-   (`src/editors/decor/types.ts:78`): `color`, `opacity`, `width_cm`, `fill`,
-   `fill_color`, `fill_opacity`. Все опциональны.
+7. Формат ключа настроек — snake_case; фронтовый `DecorStyle`
+   (`src/editors/decor/types.ts:78`) — camelCase. Явный маппинг
+   (принято предположительно, по паттерну ручной конвертации
+   `widthCm → width_cm` в `src/editors/decor/geometry.ts:144`):
+   `color↔color`, `opacity↔opacity`, `width_cm↔widthCm`, `fill↔fill`,
+   `fill_color↔fillColor`, `fill_opacity↔fillOpacity`. Все поля ключа
+   опциональны; конвертация — единственная точка (одна пара функций
+   toSettings/fromSettings), чтобы AC2 доказывал мердж всех шести полей.
 
 ## UX
 
