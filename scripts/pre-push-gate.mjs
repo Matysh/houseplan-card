@@ -31,6 +31,7 @@ import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { rebaseAdvice } from './branch-state.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const argv = process.argv.slice(2);
@@ -62,6 +63,26 @@ const capture = (command, args) => spawnSync(command, args, { cwd: ROOT, encodin
 
 const steps = [];
 const skipped = [];
+
+// ---- приведена ли ветка к dev ---------------------------------------------
+// Конвейер ребейзит сам (#257), но после ребейза разбор становится полным, а не
+// по дельте (§7.2), и конфликт всплывает в комментарии через сорок минут вместо
+// машины автора. Поэтому предупреждение, а не гейт: гейтом остаётся конвейер.
+if (!flag('no-rebase-check')) {
+  const fetched = capture('git', ['fetch', '-q', 'origin', base.replace(/^origin\//, '')]);
+  if (fetched.status !== 0) {
+    skipped.push(`проверка отставания от ${base} — git fetch не удался`);
+  } else {
+    const ancestor = capture('git', ['merge-base', '--is-ancestor', base, head]);
+    if (ancestor.status === 0) {
+      console.log(`\n── Ветка\n   содержит весь ${base}, ребейз не нужен`);
+    } else {
+      const counted = capture('git', ['rev-list', '--count', `${head}..${base}`]);
+      const advice = rebaseAdvice({ behind: Number(counted.stdout.trim()), base });
+      if (advice) skipped.push(advice);
+    }
+  }
+}
 
 // ---- что тронуто ----------------------------------------------------------
 const diff = capture('git', ['diff', '--name-only', `${base}..${head}`]);
