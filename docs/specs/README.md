@@ -1,6 +1,6 @@
 # Спецификации задач
 
-Актуально на 2026-08-25.
+Актуально на 2026-08-29.
 
 GitHub Issues и GitHub Projects (v2) остаются единственным каноническим backlog проекта. Этот каталог содержит развёрнутые ТЗ: каждое ТЗ ссылается на issue, а issue — на соответствующий файл. Статус, приоритет и факт завершения меняются только в GitHub.
 
@@ -113,6 +113,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#75](https://github.com/Matysh/houseplan-card/issues/75) + [#76](https://github.com/Matysh/houseplan-card/issues/76) Единый поток размещения проёмов | [075-076-opening-placement-flow.md](075-076-opening-placement-flow.md) |
 | [#84](https://github.com/Matysh/houseplan-card/issues/84) Источник «Всегда» без сущности HA + [#88](https://github.com/Matysh/houseplan-card/issues/88) ведущая сущность | [084-passive-forced-light-sources.md](084-passive-forced-light-sources.md) |
 | [#90](https://github.com/Matysh/houseplan-card/issues/90) Управляемый бейдж со значением | [090-device-value-badge.md](090-device-value-badge.md) |
+| [#378](https://github.com/Matysh/houseplan-card/issues/378) Выбираемый источник для режима «Значение + состояние» | [378-value-face-source.md](378-value-face-source.md) |
 | [#94](https://github.com/Matysh/houseplan-card/issues/94) Универсальное действие «Переключить состояние» | [094-universal-state-toggle.md](094-universal-state-toggle.md) |
 | [#101](https://github.com/Matysh/houseplan-card/issues/101) Плавный переход View ↔ редакторы | [101-view-editor-transition.md](101-view-editor-transition.md) |
 | [#107](https://github.com/Matysh/houseplan-card/issues/107) Переключение виртуального источника света «Всегда» | [107-virtual-light-toggle.md](107-virtual-light-toggle.md) |
