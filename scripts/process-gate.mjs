@@ -106,7 +106,10 @@ export const FS = '\x1f';
 export const RS = '\x1e';
 export const LOG_FORMAT = `%H${FS}%s${FS}%aI${FS}%b${RS}`;
 
-export function makeCommit({ sha = '', subject = '', body = '', files = [], authorDate = '' }) {
+export function makeCommit({
+  sha = '', subject = '', body = '', files = [], authorDate = '',
+  releaseSourceViolations = null,
+}) {
   const text = `${subject}\n${body}`;
   const all = (name) =>
     [...text.matchAll(new RegExp(`^${name}:\\s*(.+)$`, 'gmi'))].map((m) => m[1].trim());
@@ -123,6 +126,9 @@ export function makeCommit({ sha = '', subject = '', body = '', files = [], auth
     release: one('Release'),
     baselineReviewed: one('Baseline-Reviewed'),
     gates: one('Gates'),
+    // null = вызывающий не доказал содержимое diff. Для stable release это
+    // намеренно fail-closed: одного имени разрешённого version source мало.
+    releaseSourceViolations,
     // Кандидат беты несёт работу и живёт по общим правилам — решение 1.
     isRelease:
       (/^Release v\d/.test(subject) && !/-(beta|rc|alpha)\.|candidate/i.test(subject))
@@ -130,7 +136,9 @@ export function makeCommit({ sha = '', subject = '', body = '', files = [], auth
   };
 }
 
-export function parseRecords(raw, filesOf = () => []) {
+export function parseRecords(
+  raw, filesOf = () => [], releaseSourceViolationsOf = () => null,
+) {
   if (!raw.trim()) return [];
   return raw
     .split(RS)
@@ -138,8 +146,40 @@ export function parseRecords(raw, filesOf = () => []) {
     .filter((r) => r.trim())
     .map((rec) => {
       const [sha, subject, authorDate = '', body = ''] = rec.split(FS);
-      return makeCommit({ sha, subject, body, files: filesOf(sha), authorDate });
+      const files = filesOf(sha);
+      return makeCommit({
+        sha, subject, body, files, authorDate,
+        releaseSourceViolations: releaseSourceViolationsOf(sha, files),
+      });
     });
+}
+
+const RELEASE_VERSION_DECLARATIONS = new Map([
+  ['src/houseplan-card.ts', /^const CARD_VERSION = '[^'\r\n]+';$/gm],
+  ['src/houseplan-editor-runtime.ts', /^const CARD_VERSION = '[^'\r\n]+';$/gm],
+  ['custom_components/houseplan/const.py', /^VERSION = "[^"\r\n]+"$/gm],
+]);
+
+// Stable promotion действительно обязан менять эти три строки: они входят в
+// шесть канонических version sources (§9.3). Сравнение целого blob до/после с
+// нормализованной декларацией доказывает, что под видом bump не проехало ни
+// одного другого изменения продукта. Ровно одно совпадение с обеих сторон —
+// часть доказательства; неоднозначный или недоступный diff остаётся fail-closed.
+export function isReleaseVersionOnlyChange(path, before, after) {
+  const pattern = RELEASE_VERSION_DECLARATIONS.get(path);
+  if (!pattern || typeof before !== 'string' || typeof after !== 'string') return false;
+  const normalize = (source) => {
+    let count = 0;
+    pattern.lastIndex = 0;
+    const normalized = source.replace(pattern, () => {
+      count += 1;
+      return '__HOUSEPLAN_RELEASE_VERSION__';
+    });
+    return { count, normalized };
+  };
+  const left = normalize(before);
+  const right = normalize(after);
+  return left.count === 1 && right.count === 1 && left.normalized === right.normalized;
 }
 
 // --- проверки по одному коммиту: 1, 4, 5, 6, 9 ---
@@ -159,8 +199,11 @@ export function evaluateCommit(c) {
     if (!c.release) {
       fail(5, `релизный коммит «${c.subject.slice(0, 50)}» без трейлера «Release: vX.Y.Z»`);
     }
-    if (sources.length) {
-      fail(6, `релизный коммит содержит продуктовый исходник: ${sources.slice(0, 3).join(', ')}`);
+    const violations = Array.isArray(c.releaseSourceViolations)
+      ? c.releaseSourceViolations
+      : sources;
+    if (violations.length) {
+      fail(6, `релизный коммит содержит не-версионное изменение продукта: ${violations.slice(0, 3).join(', ')}`);
     }
     if ((c.gates ?? '').toLowerCase() === 'light') {
       fail(9, '«Gates: light» на релизном коммите запрещён');
@@ -610,8 +653,21 @@ function main(argv) {
   const filesOf = (sha) =>
     git(['show', '--name-only', '--pretty=format:', sha], repo)
       .split('\n').map((s) => s.trim()).filter(Boolean);
+  const blobOf = (revision, path) => {
+    const r = spawnSync('git', ['-C', repo, 'show', `${revision}:${path}`], {
+      encoding: 'utf8', maxBuffer: 64 * 1024 * 1024,
+    });
+    return r.status === 0 ? r.stdout : null;
+  };
+  const releaseSourceViolationsOf = (sha, files) => files
+    .filter((file) => /^src\//.test(file) || /^custom_components\/houseplan\/.*\.py$/.test(file))
+    .filter((file) => !isReleaseVersionOnlyChange(
+      file, blobOf(`${sha}^`, file), blobOf(sha, file),
+    ));
   const commits = parseRecords(
-    git(['log', '--reverse', `--pretty=format:${LOG_FORMAT}`, range], repo), filesOf,
+    git(['log', '--reverse', `--pretty=format:${LOG_FORMAT}`, range], repo),
+    filesOf,
+    releaseSourceViolationsOf,
   );
   const branch = git(['rev-parse', '--abbrev-ref', 'HEAD'], repo).trim();
 
@@ -649,6 +705,7 @@ function main(argv) {
       const own = parseRecords(
         git(['log', '--reverse', `--pretty=format:${LOG_FORMAT}`, 'origin/dev..HEAD'], repo),
         filesOf,
+        releaseSourceViolationsOf,
       );
       return commitsNeedingTargetValidation(own, { targetRef, isCommitOnMain });
     })()

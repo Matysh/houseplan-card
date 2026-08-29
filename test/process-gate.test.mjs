@@ -24,6 +24,7 @@ import {
   commitsUnderRuleOne,
   evaluateCommit,
   isInfrastructureRange,
+  isReleaseVersionOnlyChange,
   makeCommit,
   parseRecords,
   FS,
@@ -111,6 +112,35 @@ test('beta candidates are ordinary commits, stable releases are not', () => {
 test('a release commit carrying product source fails rule 6', () => {
   const bad = commit('Release v1.62.0', 'Release: v1.62.0', ['src/a.ts', 'dist/houseplan-card.js']);
   assert.deepEqual(rules(evaluateCommit(bad)), [6]);
+});
+
+test('a release commit allows only proven canonical version declarations', () => {
+  const path = 'src/houseplan-card.ts';
+  const before = "const CARD_VERSION = '1.69.0-beta.5';\nexport const value = 1;\n";
+  const after = "const CARD_VERSION = '1.69.0';\nexport const value = 1;\n";
+  assert.equal(isReleaseVersionOnlyChange(path, before, after), true);
+  assert.equal(isReleaseVersionOnlyChange(
+    path, before, "const CARD_VERSION = '1.69.0';\nexport const value = 2;\n",
+  ), false);
+  assert.equal(isReleaseVersionOnlyChange('src/another.ts', before, after), false);
+
+  const stable = makeCommit({
+    sha: 'deadbeefcafe',
+    subject: 'Release v1.69.0',
+    body: 'Release: v1.69.0',
+    files: [path, 'src/houseplan-editor-runtime.ts', 'custom_components/houseplan/const.py'],
+    releaseSourceViolations: [],
+  });
+  assert.deepEqual(rules(evaluateCommit(stable)), []);
+
+  const mixed = makeCommit({
+    sha: 'deadbeefcafe',
+    subject: 'Release v1.69.0',
+    body: 'Release: v1.69.0',
+    files: [path, 'src/houseplan-editor-runtime.ts', 'custom_components/houseplan/const.py'],
+    releaseSourceViolations: ['src/houseplan-card.ts'],
+  });
+  assert.deepEqual(rules(evaluateCommit(mixed)), [6]);
 });
 
 test('Gates: light is refused on release and generated commits', () => {
@@ -390,6 +420,28 @@ test('the CLI exits 0 on a clean range and 1 on a broken one', (t) => {
     assert.equal(broken.status, 1, broken.stdout + broken.stderr);
     assert.match(broken.stdout, /FAIL п\.1/);
 
+    // Stable promotion меняет канонические строки версии внутри исходников,
+    // но не несёт никакого другого продуктового diff.
+    git('checkout', '-q', 'dev');
+    git('reset', '-q', '--hard', base);
+    write('src/houseplan-card.ts', "const CARD_VERSION = '1.69.0-beta.5';\nexport const a = 1;\n");
+    write('src/houseplan-editor-runtime.ts', "const CARD_VERSION = '1.69.0-beta.5';\nexport const b = 1;\n");
+    write('custom_components/houseplan/const.py', 'VERSION = "1.69.0-beta.5"\nVALUE = 1\n');
+    commitAll('Prerelease tree\n\nIssue: #1\nUser-Visible: no');
+    const prerelease = git('rev-parse', 'HEAD').trim();
+    write('src/houseplan-card.ts', "const CARD_VERSION = '1.69.0';\nexport const a = 1;\n");
+    write('src/houseplan-editor-runtime.ts', "const CARD_VERSION = '1.69.0';\nexport const b = 1;\n");
+    write('custom_components/houseplan/const.py', 'VERSION = "1.69.0"\nVALUE = 1\n');
+    commitAll('Release v1.69.0\n\nRelease: v1.69.0\nUser-Visible: yes');
+    const stable = runGate(`${prerelease}..HEAD`);
+    assert.equal(stable.status, 0, stable.stdout + stable.stderr);
+
+    write('src/houseplan-card.ts', "const CARD_VERSION = '1.69.1';\nexport const a = 2;\n");
+    commitAll('Release v1.69.1\n\nRelease: v1.69.1\nUser-Visible: yes');
+    const polluted = runGate('HEAD^..HEAD');
+    assert.equal(polluted.status, 1, polluted.stdout + polluted.stderr);
+    assert.match(polluted.stdout, /FAIL п\.6/);
+
     // --report печатает то же, но не краснеет.
     const report = spawnSync(process.execPath,
       [gate, '--repo', dir, '--range', `${base}..HEAD`, '--report'], { encoding: 'utf8' });
@@ -399,7 +451,7 @@ test('the CLI exits 0 on a clean range and 1 on a broken one', (t) => {
       [gate, '--repo', dir, '--range', `${base}..HEAD`, '--json'], { encoding: 'utf8' });
     const parsed = JSON.parse(asJson.stdout);
     assert.equal(parsed.ok, false);
-    assert.equal(parsed.commits, 2);
+    assert.equal(parsed.commits, 3);
 
     // Проверка 2 судит только коммиты самой ветки. Диапазон из события CI шире:
     // после ребейза merge-base уезжает назад и втягивает коммиты dev с чужими
