@@ -37,6 +37,33 @@ test('issue 213 gives the visual shell a shared-centre frame that owns capsule i
   assert.match(styles, /\.device-shell\s*\{[\s\S]*padding:\s*0/);
 });
 
+test('issue 362 makes the whole device package inert only in Background', () => {
+  const styles = source('styles.ts');
+  const card = source('houseplan-card.ts');
+
+  assert.match(
+    styles,
+    /\.stage\.mode-decor \.devlayer,\s*\.stage\.mode-decor \.devlayer \*,\s*\.stage\.mode-decor \.dev::before\s*\{\s*pointer-events:\s*none/,
+    'the scoped boundary must beat the core, pseudo hit area and capsule auto rules',
+  );
+
+  const click = card.slice(card.indexOf('private _clickDevice('), card.indexOf('private _showUnavailableToggleTargets('));
+  assert.match(
+    click,
+    /if \(this\._mode !== 'view' && this\._mode !== 'devices'\) return;\s*ev\.stopPropagation\(\)/,
+    'the fail-closed guard must run before propagation is stopped',
+  );
+  const down = card.slice(card.indexOf('private _pointerDown('), card.indexOf('private _showToast('));
+  assert.match(down, /private _pointerDown[\s\S]*this\._mode !== 'view' && this\._mode !== 'devices'/);
+  assert.match(down, /private _pointerMove[\s\S]*this\._mode !== 'devices'/);
+  assert.match(down, /private _pointerUp[\s\S]*clearTimeout\(this\._holdTimer\);\s*if \(this\._mode !== 'devices'\) return/,
+    'View pointerup must still cancel its long-press timer before rejecting drag');
+
+  const render = card.slice(card.indexOf('private _renderDevice('), card.indexOf('private _roomArea('));
+  assert.match(render, /@pointerover=\$\{[\s\S]*this\._mode !== 'view' && this\._mode !== 'devices'/);
+  assert.match(render, /@pointermove=\$\{[\s\S]*this\._mode !== 'view' && this\._mode !== 'devices'/);
+});
+
 test('issue 213 projects opening locks through the compact package layers', () => {
   const styles = source('styles.ts');
   const card = source('houseplan-card.ts');

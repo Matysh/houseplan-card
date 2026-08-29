@@ -20,7 +20,7 @@ device state or Home Assistant actions.
 | Scale | Corner drag preserves aspect ratio. Hold `Shift` for independent axes. |
 | Rotation | 5° steps by default; `Shift` gives free rotation. Lines use endpoint handles instead of a rotation handle. |
 | Magnet targets | Only other decor objects and room contours: corners, edge centres, centres and edges. The image, devices and openings are excluded. |
-| Context emphasis | Decor and its editing chrome stay fully opaque. Rooms, labels, devices, openings, positive-thickness walls and solid/dashed zero-thickness walls are contextual only and render at 35% opacity. |
+| Context emphasis | Decor and its editing chrome stay fully opaque. Rooms, labels, devices, openings, positive-thickness walls and solid/dashed zero-thickness walls are contextual only and render at 35% opacity. The whole device presentation (core, ring, capsule, values and badges) is pointer-inert: it never hovers, opens, acts or drags, and the active Background tool receives a press through it. |
 | View composition | All decor kinds form one layer above room/data fills, room hover fill, opening-tunnel fills and Glow base. Live Glow, sun, physical walls, opening symbols, devices and room labels remain above decor. The plan image remains below it. |
 | Compatibility | Legacy `width`, text `size/scale` and `plan_scale` remain readable. New writes use `width_cm`, `size_cm` and `plan_scale_x/y`. |
 

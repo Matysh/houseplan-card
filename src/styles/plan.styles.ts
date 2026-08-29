@@ -853,8 +853,18 @@ export const planStyles = css`
     .stage.mode-decor.dtool-erase .decorlayer .dshape {
       cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cg transform='rotate(-45 12 12)'%3E%3Crect x='7' y='2' width='10' height='18' rx='2' fill='%23fff' stroke='%23111' stroke-width='1.5'/%3E%3Cpath d='M7 13h10v5a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2z' fill='%23ff9f43' stroke='%23111' stroke-width='1.5'/%3E%3C/g%3E%3C/svg%3E") 5 22, pointer;
     }
-    .stage.mode-decor .room, .stage.mode-decor .devlayer { pointer-events: none; }
-    .stage.mode-decor .oplock { pointer-events: none; }
+    .stage.mode-decor .room { pointer-events: none; }
+    /* Devices are landmarks in Background, never editing targets. The marker
+       package deliberately re-enables pointer events on the core, its 44 px
+       pseudo hit area and the visible capsule for View/Devices. A none on
+       devlayer alone therefore does not make its HTML descendants inert.
+       Scope the boundary to the whole subtree (including the pseudo element)
+       so a Background tool receives the exact point below every visible part. */
+    .stage.mode-decor .devlayer,
+    .stage.mode-decor .devlayer *,
+    .stage.mode-decor .dev::before {
+      pointer-events: none;
+    }
     /* Backdrop-editor de-emphasis is a shared mode-transition coordinate.
        It multiplies whole presentation groups and never changes Glow source
        alpha, additive blending, or the underlying resolved state. */

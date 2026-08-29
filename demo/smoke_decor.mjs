@@ -17,6 +17,115 @@ const res = await page.evaluate(async () => {
   tabs[2].click(); await settleMode();
   out.decorMode = c._mode === 'decor';
   out.decorBar = !!sr().querySelector('.editbar.decorbar');
+  // #362: devices in Background are one translucent landmark layer, never
+  // pointer targets. Exercise both the round core and the part of a value
+  // capsule that extends outside the marker's nominal box.
+  const stage = sr().querySelector('.stage');
+  const devlayer = sr().querySelector('.devlayer');
+  const visibleDevices = [...sr().querySelectorAll('.dev')].filter((node) => {
+    const r = node.getBoundingClientRect();
+    const s = stage?.getBoundingClientRect();
+    return r.width > 0 && r.height > 0 && s
+      && r.left > s.left && r.right < s.right && r.top > s.top && r.bottom < s.bottom;
+  });
+  const inertDevice = visibleDevices.find((node) =>
+    node.classList.contains('valonly') || node.querySelector('.device-shell.with-values'))
+    || visibleDevices[0];
+  const deviceFrame = inertDevice?.querySelector('.device-shell-frame');
+  const deviceRect = inertDevice?.getBoundingClientRect();
+  const frameRect = deviceFrame?.getBoundingClientRect();
+  const corePoint = deviceRect
+    ? { x: deviceRect.left + deviceRect.width / 2, y: deviceRect.top + deviceRect.height / 2 }
+    : null;
+  const capsulePoint = frameRect
+    ? { x: frameRect.right - 1, y: frameRect.top + frameRect.height / 2 }
+    : corePoint;
+  const pointTarget = (point) => point ? sr().elementFromPoint(point.x, point.y) : null;
+  const belowDevice = (point) => {
+    const target = pointTarget(point);
+    return !!target && !target.closest?.('.devlayer');
+  };
+  out.decorDeviceLayerIsTranslucent = !!devlayer
+    && Math.abs(Number(getComputedStyle(devlayer).opacity) - 0.35) < 0.001;
+  out.decorDeviceCoreFallsThrough = belowDevice(corePoint);
+  out.decorDeviceCapsuleFallsThrough = belowDevice(capsulePoint);
+  out.decorDeviceSubtreeIsPointerInert = !!inertDevice && !!deviceFrame
+    && getComputedStyle(inertDevice).pointerEvents === 'none'
+    && getComputedStyle(inertDevice, '::before').pointerEvents === 'none'
+    && getComputedStyle(deviceFrame).pointerEvents === 'none';
+
+  // The CSS boundary is primary; direct dispatch pins the independent handler
+  // guard. A future cascade regression may make the node targetable again, but
+  // Background still cannot hover, actuate or create a device-layout drag.
+  let serviceCalls = 0, wsCalls = 0;
+  const oldCallService = c.hass.callService;
+  const oldCallWS = c.hass.callWS;
+  c.hass.callService = () => { serviceCalls += 1; };
+  c.hass.callWS = async () => { wsCalls += 1; return { ok: true }; };
+  c._tip = null; c._infoCard = null; c._drag = null;
+  inertDevice?.dispatchEvent(new PointerEvent('pointerover', {
+    bubbles: true, composed: true, cancelable: true, pointerId: 360, pointerType: 'mouse', isPrimary: true,
+  }));
+  inertDevice?.dispatchEvent(new PointerEvent('pointerdown', {
+    bubbles: true, composed: true, cancelable: true, pointerId: 361, pointerType: 'mouse',
+    clientX: corePoint?.x || 0, clientY: corePoint?.y || 0, button: 0, isPrimary: true,
+  }));
+  inertDevice?.dispatchEvent(new MouseEvent('click', {
+    bubbles: true, composed: true, cancelable: true, clientX: corePoint?.x || 0,
+    clientY: corePoint?.y || 0, button: 0,
+  }));
+  out.decorDeviceHandlersFailClosed = serviceCalls === 0 && wsCalls === 0
+    && c._tip === null && c._infoCard === null && c._drag === null;
+  c.hass.callService = oldCallService;
+  c.hass.callWS = oldCallWS;
+  c._pointers.clear(); c._panStart = null; c._panLock = null;
+
+  const dispatchToolPress = (point, pid, shiftKey = false) => {
+    const target = pointTarget(point);
+    target?.dispatchEvent(new PointerEvent('pointerdown', {
+      bubbles: true, composed: true, cancelable: true, pointerId: pid,
+      pointerType: 'mouse', clientX: point?.x || 0, clientY: point?.y || 0,
+      button: 0, isPrimary: true, shiftKey,
+    }));
+    return target;
+  };
+  c._decorTool = 'line'; c._decorDraft = null; await c.updateComplete;
+  dispatchToolPress(capsulePoint, 362);
+  await c.updateComplete;
+  out.lineStartsThroughDeviceCapsule = c._decorDraft?.kind === 'line';
+  c._decorDraft = null;
+  c._decorTool = 'rect'; await c.updateComplete;
+  dispatchToolPress(corePoint, 363);
+  await c.updateComplete;
+  out.rectStartsThroughDeviceCore = c._decorDraft?.kind === 'rect';
+  c._decorDraft = null;
+  c._decorTool = 'text'; c._decorTextDialog = null; await c.updateComplete;
+  dispatchToolPress(corePoint, 364);
+  await c.updateComplete;
+  out.textStartsThroughDeviceCore = !!c._decorTextDialog && !c._decorTextDialog.id;
+  c._decorTextDialog = null;
+  const decorBeforeDeviceProbe = JSON.parse(JSON.stringify(c._decorList));
+  c._editorSecondary.openPalette();
+  c._decorTool = 'furniture'; c._furnPalette = { symbol: 'chair', w: 45, h: 45 };
+  await c.updateComplete;
+  const furniturePoint = visibleDevices.map((node) => {
+    const r = node.getBoundingClientRect();
+    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+  }).find((point) => pointTarget(point)?.closest?.('.stage')) || corePoint;
+  out.furnitureToolArmedThroughDeviceCore = c._decorTool === 'furniture' && c._furnPalette?.symbol === 'chair';
+  out.furnitureTargetFallsThroughDeviceCore = belowDevice(furniturePoint);
+  stage?.dispatchEvent(new PointerEvent('pointerdown', {
+    bubbles: true, composed: true, cancelable: true, pointerId: 365,
+    pointerType: 'mouse', clientX: furniturePoint?.x || 0, clientY: furniturePoint?.y || 0,
+    button: 0, isPrimary: true, shiftKey: true,
+  }));
+  await c.updateComplete;
+  out.furniturePlacesThroughDeviceCore = c._decorList.length === decorBeforeDeviceProbe.length + 1
+    && c._decorList.some((shape) => shape.kind === 'furniture' && shape.symbol === 'chair');
+  c._curSpaceCfg.decor = decorBeforeDeviceProbe;
+  c._decorSel = null; c._decorTool = 'select'; c._furnPalette = null;
+  c._cfgEpoch = (c._cfgEpoch || 0) + 1;
+  c.requestUpdate(); await c.updateComplete;
   // The compact colour/opacity control must escape the clipped editor/dialog
   // surface through the browser top layer and remain inside the viewport.
   c._decorTool = 'line'; c.requestUpdate(); await c.updateComplete;

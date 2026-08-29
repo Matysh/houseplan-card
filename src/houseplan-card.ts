@@ -5177,9 +5177,12 @@ export class HouseplanCard extends LitElement {
   }
 
   private _clickDevice(ev: Event, d: DevItem): void {
+    // Devices are passive landmarks in Plan/Background. Guard before stopping
+    // propagation so a Background tool still owns the same canvas point even
+    // if a future CSS change accidentally makes a marker a hit target again.
+    if (this._mode !== 'view' && this._mode !== 'devices') return;
     ev.stopPropagation();
     if (this._drag?.moved || this._suppressClick || this._holdFired) return;
-    if (this._mode === 'plan') return;
     if (this._mode === 'devices') {
       this._openMarkerDialog(d);
       return;
@@ -6335,7 +6338,10 @@ export class HouseplanCard extends LitElement {
   }
 
   private _pointerDown(ev: PointerEvent, d: DevItem): void {
-    if (this._mode === 'plan') return; // icons are hidden in plan mode anyway
+    // Only View and the Devices editor own device input. In Background the
+    // event must keep bubbling to the active decor tool; do not prevent it,
+    // capture it or create a layout drag.
+    if (this._mode !== 'view' && this._mode !== 'devices') return;
     if (this._mode === 'view') {
       // view: no drag, no capture — panning may start on an icon; only the
       // long-press timer runs (cancelled by stage movement)
@@ -6361,6 +6367,7 @@ export class HouseplanCard extends LitElement {
   }
 
   private _pointerMove(ev: PointerEvent, d: DevItem): void {
+    if (this._mode !== 'devices') return;
     if (!this._drag || this._drag.id !== d.id) return;
     const stage = this.renderRoot.querySelector('.stage') as HTMLElement;
     if (!stage) return;
@@ -6387,6 +6394,7 @@ export class HouseplanCard extends LitElement {
 
   private _pointerUp(_ev: PointerEvent, d: DevItem): void {
     clearTimeout(this._holdTimer);
+    if (this._mode !== 'devices') return;
     if (!this._drag || this._drag.id !== d.id) return;
     const moved = this._drag.moved;
     this._drag = moved ? this._drag : null;
@@ -12017,11 +12025,14 @@ export class HouseplanCard extends LitElement {
       @click=${(e: MouseEvent) => this._clickDevice(e, d)}
       @keydown=${(e: KeyboardEvent) => this._keyDevice(e, d)}
       @contextmenu=${(e: MouseEvent) => this._ctxDevice(e, d)}
-      @pointerover=${(e: PointerEvent) =>
-        this._showTip(e, d.name, presentation.haDisabled ? ghostLabel : metrics)}
+      @pointerover=${(e: PointerEvent) => {
+        if (this._mode !== 'view' && this._mode !== 'devices') return;
+        this._showTip(e, d.name, presentation.haDisabled ? ghostLabel : metrics);
+      }}
       @pointerleave=${() => this._clearTransientHover()}
       @pointerdown=${(e: PointerEvent) => this._pointerDown(e, d)}
       @pointermove=${(e: PointerEvent) => {
+        if (this._mode !== 'view' && this._mode !== 'devices') return;
         this._pointerMove(e, d);
         this._showTip(e, d.name, presentation.haDisabled ? ghostLabel : metrics);
       }}
@@ -12527,7 +12538,11 @@ export class HouseplanCard extends LitElement {
       const top = ((point[1] - view.y) / view.h) * 100;
       return html`<div class="oplock ${deviceThemeClass(this._renderPlanHass)} ${locked ? 'locked' : known ? 'unlocked' : 'unknown'}"
         style="left:${left}%;top:${top}%"
-        @click=${(e: MouseEvent) => { e.stopPropagation(); if (this._mode === 'view') this._openingInfo = o; }}>
+        @click=${(e: MouseEvent) => {
+          if (this._mode !== 'view') return;
+          e.stopPropagation();
+          this._openingInfo = o;
+        }}>
         <span class="oplock-shell" aria-hidden="true">
           <span class="oplock-core">
             <ha-icon icon="${locked ? 'mdi:lock' : known ? 'mdi:lock-open-variant' : 'mdi:lock-question'}"></ha-icon>
