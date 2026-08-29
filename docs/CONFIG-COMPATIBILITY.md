@@ -419,6 +419,17 @@ space transfer remaps an internal target and disables/counts a link whose
 target is outside the transfer. Older clients ignore the field and may erase
 it if they reconstruct the same marker after a downgrade.
 
+`marker.value_source` is an optional explicit source for the inner face of a
+`display: value` marker. Absence or `null` preserves the historical automatic
+entity-state choice; an object uses exactly the same discriminated source
+contract and formatter as `marker.value_badge.source`. A missing explicit
+source stays selected and renders `—` rather than silently falling back. The
+top-level schema remains lossless: unchanged future literals round-trip, while
+new or changed values receive strict delta validation. Marker-id rewrites and
+full/space transfer preserve, remap or report/drop `derived_marker_state.ref`
+through the same reference seam as controls and value badges. Older clients
+ignore the field and may erase it if they reconstruct the marker.
+
 ## Persistent manual virtual-light state
 
 The exact `virtual` + `is_light:true` + `tap_action:toggle` combination has a

@@ -176,6 +176,9 @@ export interface Marker {
   /** Optional, user-controlled value satellite around the device face.
    * Missing keeps the legacy temperature/humidity compatibility heuristic. */
   value_badge?: MarkerValueBadge | null;
+  /** Explicit source for the `value` display face. Missing/null keeps the
+   * historical automatic entity-state resolver. */
+  value_source?: ValueBadgeSource | null;
   /**
    * Climate devices (AC, thermostat) know the room temperature
    * (attributes.current_temperature). Opt-in per marker: show it as a badge

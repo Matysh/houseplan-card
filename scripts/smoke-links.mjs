@@ -28,6 +28,17 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    symbols: [
+      'resolveValueSource', 'valueSourceWriteFields', 'valueBadgeCandidates',
+      'valueBadgeSourceKey', 'resolveDevicePresentation',
+    ],
+    smokes: ['smoke_value_face_source.mjs'],
+    because: 'the #378 production-bundle scenario observes the shared source resolver through '
+      + 'the real Device dialog, draft preview, persistence, both plan renderers, unavailable '
+      + 'recovery, action dispatch and binding reset; those DOM effects do not call the pure '
+      + 'source helpers by name',
+  },
+  {
     symbols: ['roomClimateKey', 'roomClimateMap'],
     smokes: ['smoke_room_climate_placement.mjs'],
     because: 'the #317 production-bundle scenario proves one manually placed sensor through '

@@ -805,7 +805,7 @@ def _matching_previous_marker(
 def validate_marker_value_badges(
     config: dict, previous: dict | None = None, *, validate_all: bool = False
 ) -> None:
-    """Validate only new/changed badge data; dormant future/legacy data round-trips."""
+    """Validate changed badge/face sources; dormant future data round-trips."""
     markers = config.get("markers") or []
     by_id = {str(marker.get("id")): marker for marker in markers}
     old_markers = (previous or {}).get("markers") or []
@@ -814,30 +814,14 @@ def validate_marker_value_badges(
     consumed_old_ids: set[str] = set()
     known_source_fields = {"kind", "entity_id", "attribute", "ref"}
 
-    for marker_id, marker in by_id.items():
-        old_marker = _matching_previous_marker(
-            marker, marker_id, old_by_id, old_markers, new_ids,
-            consumed_old_ids, validate_all,
-        )
-        badge = marker.get("value_badge")
-        old_badge = None if validate_all else (old_marker or {}).get("value_badge")
-        if not validate_all and badge == old_badge:
-            continue
-        if badge is None:
-            continue
-        if not isinstance(badge, dict):
-            raise MarkerControlError("invalid_value_badge", "Value badge must be an object")
-        if not isinstance(badge.get("enabled"), bool):
-            raise MarkerControlError("invalid_value_badge", "Value badge enabled must be boolean")
-        if badge.get("position") not in VALUE_BADGE_POSITIONS:
-            raise MarkerControlError("invalid_value_badge_position", "Invalid value badge position")
-        source = badge.get("source")
-        if badge["enabled"] and not isinstance(source, dict):
-            raise MarkerControlError("value_badge_source_required", "Enabled value badge needs a source")
-        if source is None:
-            continue
+    def validate_source(source: object, field: str) -> None:
+        prefix = "value_badge" if field == "value_badge" else "value_source"
+        source_error = "invalid_value_badge_source" if field == "value_badge" \
+            else "invalid_value_source"
+        attribute_error = "invalid_value_badge_attribute" if field == "value_badge" \
+            else "invalid_value_source_attribute"
         if not isinstance(source, dict) or source.get("kind") not in VALUE_BADGE_SOURCE_KINDS:
-            raise MarkerControlError("invalid_value_badge_source", "Invalid value badge source")
+            raise MarkerControlError(source_error, f"Invalid {field} source")
         kind = source["kind"]
         allowed_fields = {
             "entity_state": {"kind", "entity_id"},
@@ -846,23 +830,51 @@ def validate_marker_value_badges(
             "derived_marker_state": {"kind", "ref"},
         }[kind]
         if (known_source_fields & set(source)) - allowed_fields:
-            raise MarkerControlError("invalid_value_badge_source", "Inconsistent value badge source")
+            raise MarkerControlError(source_error, f"Inconsistent {field} source")
         if kind in {"entity_state", "entity_attribute"}:
             entity_id = source.get("entity_id")
             if not isinstance(entity_id, str) or not _CONTROL_ENTITY_ID_RE.fullmatch(entity_id):
-                raise MarkerControlError("invalid_value_badge_source", "Invalid value badge entity id")
-        if kind == "entity_attribute":
-            if source.get("attribute") not in VALUE_BADGE_ATTRIBUTES:
-                raise MarkerControlError("invalid_value_badge_attribute", "Invalid value badge attribute")
+                raise MarkerControlError(source_error, f"Invalid {field} entity id")
+        if kind == "entity_attribute" and source.get("attribute") not in VALUE_BADGE_ATTRIBUTES:
+            raise MarkerControlError(attribute_error, f"Invalid {field} attribute")
         if kind == "derived_marker_state":
             ref = source.get("ref")
-            if not isinstance(ref, str) or not ref.startswith(MARKER_CONTROL_PREFIX) or not ref[len(MARKER_CONTROL_PREFIX):]:
-                raise MarkerControlError("invalid_value_badge_source", "Invalid marker value badge target")
+            if not isinstance(ref, str) or not ref.startswith(MARKER_CONTROL_PREFIX) \
+                    or not ref[len(MARKER_CONTROL_PREFIX):]:
+                raise MarkerControlError(source_error, f"Invalid {field} target")
             target = by_id.get(ref[len(MARKER_CONTROL_PREFIX):])
             if target is None or target.get("removed") is True:
-                raise MarkerControlError("value_badge_marker_missing", "Marker value badge target does not exist")
+                raise MarkerControlError(f"{prefix}_marker_missing", f"{field} target does not exist")
             if target.get("is_light") is not True:
-                raise MarkerControlError("value_badge_marker_not_light", "Marker value badge target is not a forced light")
+                raise MarkerControlError(f"{prefix}_marker_not_light", f"{field} target is not a forced light")
+
+    for marker_id, marker in by_id.items():
+        old_marker = _matching_previous_marker(
+            marker, marker_id, old_by_id, old_markers, new_ids,
+            consumed_old_ids, validate_all,
+        )
+        badge = marker.get("value_badge")
+        old_badge = None if validate_all else (old_marker or {}).get("value_badge")
+        if validate_all or badge != old_badge:
+            if badge is not None:
+                if not isinstance(badge, dict):
+                    raise MarkerControlError("invalid_value_badge", "Value badge must be an object")
+                if not isinstance(badge.get("enabled"), bool):
+                    raise MarkerControlError("invalid_value_badge", "Value badge enabled must be boolean")
+                if badge.get("position") not in VALUE_BADGE_POSITIONS:
+                    raise MarkerControlError("invalid_value_badge_position", "Invalid value badge position")
+                source = badge.get("source")
+                if badge["enabled"] and not isinstance(source, dict):
+                    raise MarkerControlError(
+                        "value_badge_source_required", "Enabled value badge needs a source"
+                    )
+                if source is not None:
+                    validate_source(source, "value_badge")
+
+        source = marker.get("value_source")
+        old_source = None if validate_all else (old_marker or {}).get("value_source")
+        if (validate_all or source != old_source) and source is not None:
+            validate_source(source, "value_source")
 
 
 def validate_marker_light_entities(
@@ -1742,6 +1754,12 @@ MARKER_SCHEMA = vol.Schema(
                 },
                 extra=vol.ALLOW_EXTRA,
             ),
+        ),
+        # Explicit source for display:value. Semantic delta validation shares
+        # the badge source contract while keeping untouched future literals.
+        vol.Optional("value_source"): vol.Any(
+            None,
+            vol.Schema({}, extra=vol.ALLOW_EXTRA),
         ),
         # climate current_temperature: badge + room-average vote (off unless True)
         vol.Optional("use_climate_temp"): vol.Any(bool, None),

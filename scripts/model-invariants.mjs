@@ -178,6 +178,17 @@ export function checkReferences({ config, layout = {} } = {}, { notes = [] } = {
             : 'активного маркера-источника не существует');
       }
     }
+    const valueSource = marker?.value_source;
+    if (valueSource?.kind === 'derived_marker_state') {
+      const ref = String(valueSource.ref ?? '');
+      const target = ref.startsWith('marker:') ? ref.slice('marker:'.length) : '';
+      if (!target || !activeLightMarkerIds.has(target)) {
+        add('marker_value_source', markerId, ref || '?',
+          target && activeMarkerIds.has(target)
+            ? 'маркер-цель не является источником света'
+            : 'активного маркера-цели не существует');
+      }
+    }
   }
 
   for (const [key, position] of Object.entries(layout || {})) {

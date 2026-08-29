@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- **Value + state** can now show the exact reading the user needs instead of
+  relying only on the automatically chosen entity state. The Device editor
+  offers the same states, useful attributes, LQI and linked-light values as
+  the adjacent value badge; for example, a cover can show `42 %` position
+  instead of `Open`. Existing markers keep their previous automatic behaviour,
+  and tapping the value still runs the same action
+  ([#378](https://github.com/Matysh/houseplan-card/issues/378)).
 - Glow in `houseplan-space-card` no longer rebuilds its light graph and wall
   scene from scratch on every Home Assistant tick: the static path now shares
   the caching machinery of the full card (light-graph cache, an LRU pool of

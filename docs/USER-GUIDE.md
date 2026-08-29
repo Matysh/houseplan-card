@@ -652,6 +652,12 @@ alarm remains clear.
 The four display choices are icon + state; icon + state + activity; value +
 state; and always-static icon. A separate value badge can show an entity state,
 useful attribute, average LQI or linked light state on any side of the marker.
+For **value + state**, the Device editor also offers **Value source**. Keep
+**Automatic (as before)** for the legacy choice, or select one of those same
+readings—for example, cover position—to replace the icon with `42 %` rather
+than `Open`. A temporarily unavailable saved source stays selected and shows
+`—` until it recovers; it is not silently replaced. Changing this source never
+changes what a click or tap does.
 Text and adjacent values are sections of the same shell. They shrink to a
 readable floor and then expand the shell; they are never ellipsized.
 The complete visible value capsule is one hover and action target: clicking or

@@ -31,6 +31,8 @@ export interface ResolvedValueBadge {
   availability: 'available' | 'unavailable' | 'missing';
   isLqi: boolean;
   tone: 'temperature' | 'humidity' | 'lqi' | 'default';
+  /** Why the configured source could not produce a scalar value. */
+  failure: 'missing' | 'non_scalar' | null;
 }
 
 export interface ValueBadgeCandidate {
@@ -90,7 +92,8 @@ export function valueBadgeSourceKey(source: ValueBadgeSource | null | undefined)
   if (source.kind === 'entity_state') return `state:${source.entity_id}`;
   if (source.kind === 'entity_attribute') return `attr:${source.entity_id}:${source.attribute}`;
   if (source.kind === 'derived_marker_state') return `marker:${source.ref}`;
-  return 'derived:lqi';
+  if (source.kind === 'derived_lqi') return 'derived:lqi';
+  return '';
 }
 
 export function valueBadgeSourceFromKey(key: string): ValueBadgeSource | null {
@@ -153,42 +156,81 @@ function sourceTone(source: ValueBadgeSource): ResolvedValueBadge['tone'] {
   return 'default';
 }
 
-function resolveSource(
+export function resolveValueSource(
   hass: any, d: DevItem, source: ValueBadgeSource,
   markerStates: readonly { ref: string; on: boolean; name: string }[] = [],
 ): Omit<ResolvedValueBadge, 'configured' | 'enabled' | 'position'> {
   let text: string | null = null;
   let label = '';
   let availability: ResolvedValueBadge['availability'] = 'available';
+  let failure: ResolvedValueBadge['failure'] = null;
   if (source.kind === 'entity_state') {
     label = entityName(hass, source.entity_id);
     const st = hass?.states?.[source.entity_id];
-    if (!st) availability = 'missing';
-    else if (!sourceRegistryEnabled(hass, source.entity_id)) availability = 'unavailable';
-    else if (['unknown', 'unavailable'].includes(String(st.state).toLowerCase())) availability = 'unavailable';
+    if (!st) {
+      availability = 'missing';
+      failure = 'missing';
+    } else if (!sourceRegistryEnabled(hass, source.entity_id)) {
+      availability = 'unavailable';
+      failure = 'missing';
+    } else if (!['string', 'number', 'boolean'].includes(typeof st.state)) {
+      availability = 'unavailable';
+      failure = 'non_scalar';
+    } else if (['unknown', 'unavailable'].includes(String(st.state).toLowerCase())) {
+      availability = 'unavailable';
+      failure = 'missing';
+    }
     else {
       const value = hassValue(hass, source.entity_id);
       text = value ? valueWithUnit(value, String(st.attributes?.unit_of_measurement || '')) : null;
-      if (!text) availability = 'unavailable';
+      if (!text) {
+        availability = 'unavailable';
+        failure = 'missing';
+      }
     }
   } else if (source.kind === 'entity_attribute') {
     label = `${attrLabel(source.attribute)} · ${entityName(hass, source.entity_id)}`;
     const st = hass?.states?.[source.entity_id];
-    if (!st) availability = 'missing';
-    else if (!sourceRegistryEnabled(hass, source.entity_id)) availability = 'unavailable';
+    const hasAttribute = !!st && source.attribute in (st.attributes || {});
+    const raw = hasAttribute ? st.attributes?.[source.attribute] : undefined;
+    if (!st) {
+      availability = 'missing';
+      failure = 'missing';
+    } else if (!sourceRegistryEnabled(hass, source.entity_id)) {
+      availability = 'unavailable';
+      failure = 'missing';
+    } else if (['unknown', 'unavailable'].includes(String(st.state).toLowerCase())) {
+      availability = 'unavailable';
+      failure = 'missing';
+    } else if (!hasAttribute) {
+      availability = 'unavailable';
+      failure = 'missing';
+    } else if (!['string', 'number', 'boolean'].includes(typeof raw)) {
+      availability = 'unavailable';
+      failure = 'non_scalar';
+    }
     else {
       text = formatAttribute(hass, source.entity_id, source.attribute);
-      if (text == null) availability = 'unavailable';
+      if (text == null) {
+        availability = 'unavailable';
+        failure = 'missing';
+      }
     }
   } else if (source.kind === 'derived_lqi') {
     label = 'LQI';
     const lqi = lqiFor(hass, d.entities);
-    if (lqi == null) availability = 'unavailable';
+    if (lqi == null) {
+      availability = 'unavailable';
+      failure = 'missing';
+    }
     else text = String(lqi);
   } else {
     label = 'Light state';
     const match = markerStates.find((item) => item.ref === source.ref);
-    if (!match) availability = 'missing';
+    if (!match) {
+      availability = 'missing';
+      failure = 'missing';
+    }
     else {
       const state = match.on ? 'on' : 'off';
       const loc = hass?.localize?.(`state.default.${state}`);
@@ -205,6 +247,7 @@ function resolveSource(
     availability,
     isLqi: source.kind === 'derived_lqi',
     tone: sourceTone(source),
+    failure,
   };
 }
 
@@ -252,10 +295,11 @@ export function resolveDeviceValueBadge(
       availability: 'missing',
       isLqi: false,
       tone: 'default',
+      failure: 'missing',
     };
     return {
       configured: true, enabled: true, position: stored.position || 'right',
-      ...resolveSource(hass, d, stored.source, options.markerStates),
+      ...resolveValueSource(hass, d, stored.source, options.markerStates),
     };
   }
   if (!options.showTemperature || options.display === 'value') return null;
@@ -283,6 +327,7 @@ export function resolveDeviceValueBadge(
       ? `${attrLabel(source.attribute)} · ${entityName(hass, source.entity_id)}`
       : source.kind === 'entity_state' ? entityName(hass, source.entity_id) : '',
     text: legacyText, fullText: legacyText, availability: 'available', isLqi: false, tone,
+    failure: null,
   };
 }
 
@@ -317,7 +362,7 @@ export function valueBadgeCandidates(
   const add = (source: ValueBadgeSource): void => {
     const key = valueBadgeSourceKey(source);
     if (candidates.some((item) => item.key === key)) return;
-    const resolved = resolveSource(hass, d, source, markerStates);
+    const resolved = resolveValueSource(hass, d, source, markerStates);
     const technical = source.kind === 'entity_attribute'
       ? `${source.entity_id} · ${source.attribute}`
       : source.kind === 'entity_state' ? source.entity_id
@@ -394,4 +439,17 @@ export function valueBadgeWriteFields(options: {
       position: options.position,
     },
   };
+}
+
+/** Pure persistence gate for the value face; auto is represented by absence. */
+export function valueSourceWriteFields(options: {
+  touched: boolean;
+  originalHas: boolean;
+  original: ValueBadgeSource | null | undefined;
+  source: ValueBadgeSource | null;
+}): { value_source?: ValueBadgeSource | null } {
+  if (!options.touched) {
+    return options.originalHas ? { value_source: options.original } : {};
+  }
+  return options.source ? { value_source: options.source } : {};
 }

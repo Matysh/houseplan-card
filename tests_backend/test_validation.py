@@ -2400,3 +2400,75 @@ def test_issue_90_marker_value_badge_reference_uses_canonical_ref():
     with pytest.raises(v.MarkerControlError) as invalid:
         v.validate_marker_value_badges(config, {"markers": []})
     assert invalid.value.code == "invalid_value_badge_source"
+
+
+def test_issue_378_value_face_source_is_lossless_and_strict_only_when_changed():
+    source = {
+        "kind": "entity_attribute", "entity_id": "cover.awning",
+        "attribute": "current_position", "future_source": {"kept": True},
+    }
+    config = {"markers": [{
+        "id": "awning", "binding": "entity:cover.awning", "display": "value",
+        "value_source": source,
+    }]}
+    v.validate_marker_value_badges(config, {"markers": []})
+    stored = v.MARKER_SCHEMA(config["markers"][0])
+    assert stored["value_source"]["future_source"] == {"kept": True}
+
+    future = {"markers": [{
+        "id": "future", "binding": "entity:sensor.future", "display": "value",
+        "value_source": {"kind": "future_source", "payload": {"kept": True}},
+    }]}
+    v.validate_marker_value_badges(future, future)
+    with pytest.raises(v.MarkerControlError) as changed:
+        v.validate_marker_value_badges(future, {"markers": []})
+    assert changed.value.code == "invalid_value_source"
+    with pytest.raises(v.MarkerControlError) as imported:
+        v.validate_marker_value_badges(future, validate_all=True)
+    assert imported.value.code == "invalid_value_source"
+
+    invalid_attr = {"markers": [{
+        "id": "bad", "binding": "entity:sensor.x", "display": "value",
+        "value_source": {
+            "kind": "entity_attribute", "entity_id": "sensor.x",
+            "attribute": "entity_picture",
+        },
+    }]}
+    with pytest.raises(v.MarkerControlError) as attribute:
+        v.validate_marker_value_badges(invalid_attr, {"markers": []})
+    assert attribute.value.code == "invalid_value_source_attribute"
+
+
+def test_issue_378_value_face_marker_reference_and_id_rename_are_delta_safe():
+    config = {"markers": [
+        {"id": "lamp", "binding": "virtual", "is_light": True},
+        {"id": "controller", "binding": "device:controller", "display": "value",
+         "value_source": {"kind": "derived_marker_state", "ref": "marker:lamp"}},
+    ]}
+    v.validate_marker_value_badges(config, {"markers": []})
+
+    missing = {"markers": [
+        config["markers"][0],
+        {**config["markers"][1], "value_source": {
+            "kind": "derived_marker_state", "ref": "marker:gone",
+        }},
+    ]}
+    with pytest.raises(v.MarkerControlError) as absent:
+        v.validate_marker_value_badges(missing, config)
+    assert absent.value.code == "value_source_marker_missing"
+
+    not_light = {"markers": [
+        {**config["markers"][0], "is_light": False}, config["markers"][1],
+    ]}
+    with pytest.raises(v.MarkerControlError) as target:
+        v.validate_marker_value_badges(not_light, {"markers": []})
+    assert target.value.code == "value_source_marker_not_light"
+
+    # Stable binding identifies a renamed marker, so dormant unchanged source data
+    # remains old data instead of becoming a newly-invalid write.
+    future_old = {"markers": [{
+        "id": "old", "binding": "device:controller", "display": "value",
+        "value_source": {"kind": "future_source", "payload": 1},
+    }]}
+    future_renamed = {"markers": [{**future_old["markers"][0], "id": "new"}]}
+    v.validate_marker_value_badges(future_renamed, future_old)

@@ -15,7 +15,9 @@ import {
   resolveBindingProviders,
   resolveEntityProvider,
 } from '../test-build/integration-provider.js';
-import { valueBadgeTitle, valueBadgeWriteFields } from '../test-build/device-value-badge.js';
+import {
+  valueBadgeCandidates, valueBadgeTitle, valueBadgeWriteFields, valueSourceWriteFields,
+} from '../test-build/device-value-badge.js';
 import {
   buildDevices, deviceFromMarkerDraft, resolvedLightSources,
 } from '../test-build/devices.js';
@@ -831,6 +833,137 @@ test('value mode refuses to choose the first of multiple equal control sources',
   assert.equal(result.valueText, null);
   assert.equal(result.fallbackReason, 'value_ambiguous_sources');
   assert.equal(result.visualSources.length, 2);
+});
+
+test('issue 378 explicit cover position uses the exact value-badge formatter', () => {
+  const h = hass({
+    'cover.awning': state('cover.awning', 'open', { current_position: 42, supported_features: 15 }),
+  }, {
+    'cover.awning': { entity_id: 'cover.awning', device_id: 'd1', platform: 'demo' },
+  });
+  const source = { kind: 'entity_attribute', entity_id: 'cover.awning', attribute: 'current_position' };
+  const awning = device({
+    name: 'Awning', icon: 'mdi:awning', entities: ['cover.awning'], primary: 'cover.awning',
+    marker: {
+      id: 'd1', binding: 'device:d1', display: 'value', value_source: source,
+      value_badge: { enabled: true, source, position: 'right' },
+    },
+  });
+  const result = resolveDevicePresentation(h, awning, options);
+  assert.equal(result.valueText, '42 %');
+  assert.equal(result.valueFullText, '42 %');
+  assert.equal(result.valueBadge?.text, result.valueText);
+  assert.equal(result.valueSource?.sourceKey, 'attr:cover.awning:current_position');
+  assert.equal(result.sourceKind, 'cover');
+  assert.deepEqual(
+    valueBadgeCandidates(h, awning).find((candidate) => candidate.key === result.valueSource?.sourceKey)?.source,
+    source,
+  );
+});
+
+test('issue 378 explicit unavailable source shows a dash and restores without auto fallback', () => {
+  const h = hass({}, {
+    'cover.awning': { entity_id: 'cover.awning', device_id: 'd1', platform: 'demo' },
+  });
+  const awning = device({
+    name: 'Awning', icon: 'mdi:awning', entities: ['cover.awning'], primary: 'cover.awning',
+    marker: {
+      id: 'd1', binding: 'device:d1', display: 'value',
+      value_source: { kind: 'entity_attribute', entity_id: 'cover.awning', attribute: 'current_position' },
+    },
+  });
+  const missing = resolveDevicePresentation(h, awning, options);
+  assert.equal(missing.valueText, '—');
+  assert.equal(missing.valueFullText, 'Unavailable');
+  assert.equal(missing.fallbackReason, 'value_no_state');
+  assert.equal(missing.valueSource?.sourceKey, 'attr:cover.awning:current_position');
+  assert.ok(missing.decisionIds.includes('content.value'));
+
+  h.states['cover.awning'] = state('cover.awning', 'open', {
+    current_position: 55, supported_features: 15,
+  });
+  const restored = resolveDevicePresentation(h, awning, options);
+  assert.equal(restored.valueText, '55 %');
+  assert.equal(restored.fallbackReason, null);
+
+  h.states['cover.awning'] = state('cover.awning', 'unavailable', {
+    current_position: 55, supported_features: 15,
+  });
+  const staleAttribute = resolveDevicePresentation(h, awning, options);
+  assert.equal(staleAttribute.valueText, '—');
+  assert.equal(staleAttribute.fallbackReason, 'value_no_state');
+
+  const legacy = resolveDevicePresentation(hass({}, h.entities), {
+    ...awning, marker: { id: 'd1', binding: 'device:d1', display: 'value' },
+  }, options);
+  assert.equal(legacy.valueText, null);
+  assert.equal(legacy.fallbackReason, 'value_no_state');
+});
+
+test('issue 378 explicit non-scalar value stays selected and reports the stable reason', () => {
+  const h = hass({
+    'cover.awning': state('cover.awning', 'open', { current_position: { invalid: true } }),
+  }, {
+    'cover.awning': { entity_id: 'cover.awning', device_id: 'd1', platform: 'demo' },
+  });
+  const result = resolveDevicePresentation(h, device({
+    entities: ['cover.awning'], primary: 'cover.awning',
+    marker: {
+      id: 'd1', binding: 'device:d1', display: 'value',
+      value_source: { kind: 'entity_attribute', entity_id: 'cover.awning', attribute: 'current_position' },
+    },
+  }), options);
+  assert.equal(result.valueText, '—');
+  assert.equal(result.fallbackReason, 'value_non_scalar');
+});
+
+test('issue 378 derived sources share the plan graph and suppress duplicate LQI', () => {
+  const h = hass({
+    'switch.driver': state('switch.driver', 'on'),
+    'sensor.linkquality': state('sensor.linkquality', '150', { unit_of_measurement: 'lqi' }),
+  }, {
+    'switch.driver': { entity_id: 'switch.driver', device_id: 'lamp', platform: 'demo' },
+    'sensor.linkquality': { entity_id: 'sensor.linkquality', device_id: 'd1', platform: 'demo' },
+  });
+  const lamp = device({
+    id: 'lamp', name: 'Lamp', entities: ['switch.driver'], primary: 'switch.driver',
+    bindingRef: 'lamp', marker: { id: 'lamp', binding: 'device:lamp', is_light: true },
+  });
+  const controller = device({
+    controls: ['marker:lamp'],
+    marker: {
+      id: 'd1', binding: 'device:d1', display: 'value', controls: ['marker:lamp'],
+      value_source: { kind: 'derived_marker_state', ref: 'marker:lamp' },
+    },
+  });
+  const stateResult = resolveDevicePresentation(h, controller, { ...options, lightDevices: [controller, lamp] });
+  assert.equal(stateResult.valueText, 'On');
+  assert.equal(stateResult.valueSource?.kind, 'derived_marker_state');
+
+  const lqiResult = resolveDevicePresentation(h, device({
+    entities: ['sensor.linkquality'], primary: 'sensor.linkquality',
+    marker: { id: 'd1', binding: 'device:d1', display: 'value', value_source: { kind: 'derived_lqi' } },
+  }), options);
+  assert.equal(lqiResult.valueText, '150');
+  assert.equal(lqiResult.lqiText, null);
+});
+
+test('issue 378 persistence keeps untouched data and represents auto by absence', () => {
+  assert.deepEqual(valueSourceWriteFields({
+    touched: false, originalHas: false, original: undefined,
+    source: { kind: 'entity_state', entity_id: 'sensor.projected' },
+  }), {});
+  const future = { kind: 'future_source', payload: { preserved: true } };
+  assert.equal(valueSourceWriteFields({
+    touched: false, originalHas: true, original: future, source: null,
+  }).value_source, future);
+  assert.deepEqual(valueSourceWriteFields({
+    touched: true, originalHas: true, original: future, source: null,
+  }), {});
+  assert.deepEqual(valueSourceWriteFields({
+    touched: true, originalHas: false, original: undefined,
+    source: { kind: 'entity_state', entity_id: 'sensor.selected' },
+  }), { value_source: { kind: 'entity_state', entity_id: 'sensor.selected' } });
 });
 
 test('hidden design preview is visible without mutating the hidden contract', () => {

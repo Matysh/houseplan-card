@@ -1910,6 +1910,13 @@ test('issue 84 lifecycle: delete/rebind updates marker links and cycles are reje
     rewriteMarkerControlReferences(withBadge, 'b', 'renamed')[0].value_badge.source.ref,
     'marker:renamed',
   );
+  const withValueSource = [{
+    id: 'a', value_source: { kind: 'derived_marker_state', ref: 'marker:b' },
+  }];
+  assert.equal(
+    rewriteMarkerControlReferences(withValueSource, 'b', 'renamed')[0].value_source.ref,
+    'marker:renamed',
+  );
   assert.equal(markerControlWouldCycle(markers, 'c', 'a'), true);
   assert.equal(markerControlWouldCycle(markers, 'a', 'c'), false);
   assert.equal(markerControlWouldCycle(markers, 'a', 'a'), true);

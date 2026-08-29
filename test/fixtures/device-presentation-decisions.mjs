@@ -43,6 +43,7 @@ const ROWS = [
   ['F15', 'diagnostics.metrics_enabled', 'device-presentation-policy-diagnostics'],
   ['F16', 'diagnostics.lqi_low', 'device-marker-lqi-low-boundary-shifted'],
   ['F17', 'diagnostics.vacuum_live', 'device-presentation-policy-diagnostics'],
+  ['F18', 'content.value', 'device-presentation-policy-value'],
   ['A01', 'pulse.alarm_alarm', 'device-presentation-policy-alarm'],
   ['A02', 'activity.pulse_suppressed', 'device-presentation-policy-pulse-gate'],
   ['A03', 'pulse.short_event', 'device-presentation-policy-pulse-gate'],

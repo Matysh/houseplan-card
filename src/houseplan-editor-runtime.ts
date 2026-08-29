@@ -267,7 +267,8 @@ import {
 } from './activity-runtime';
 import {
   recommendedValueBadgeSource, valueBadgeCandidates, valueBadgeSourceFromKey,
-  valueBadgeSourceKey, valueBadgeTitle, valueBadgeWriteFields, type ValueBadgeCandidate,
+  valueBadgeSourceKey, valueBadgeTitle, valueBadgeWriteFields, valueSourceWriteFields,
+  type ValueBadgeCandidate,
 } from './device-value-badge';
 import {
   createRenderDeviceSnapshot, presentationSnapshotKey, renderDeviceSnapshotPositions,
@@ -958,7 +959,7 @@ export interface HouseplanEditorHostPort {
   _layout: Record<string, { x: number; y: number; s?: string; k?: number; }>;
   _layoutRev: number;
   _logicalViewCenter: (projection: "flat" | "iso") => { x: number; y: number; } | null;
-  _markerDialog: { devId?: string; uploadId?: string; name: string; binding: string; bindingMode: "virtual" | "ha"; bindingOpen: boolean; showEntities: boolean; bindingFilter: string; icon: string; autoIcon: string; display: DeviceDisplayMode; rippleColor: string; rippleSize: number; size: number; angle: number; tapAction: string; tapActionTouched: boolean; originalHasTapAction: boolean; originalTapAction: string | null | undefined; tapHintAnnouncement: string; toggleEntity: string; toggleEntityTouched: boolean; originalHasToggleEntity: boolean; originalToggleEntity: string | null | undefined; tapTarget: string; tapConfirm: boolean; runFilter: string; controls: string[]; controlsFilter: string; glowRadius: string; lightRole: "auto" | "always" | "never"; lightRoleTouched: boolean; originalHasIsLight: boolean; originalIsLight: boolean | null | undefined; lightEntity: string; lightEntityTouched: boolean; originalHasLightEntity: boolean; originalLightEntity: string | null | undefined; glowMode: "auto" | "color" | "fixed"; glowColor: string; glowBrightness: number; glowColorDrafted: boolean; glowBrightnessDrafted: boolean; glowTouched: boolean; originalHasGlowColor: boolean; originalGlowColor: { c: string; bri?: number | null; } | null | undefined; valueBadgeEnabled: boolean; valueBadgeSource: ValueBadgeSource | null; valueBadgePosition: ValueBadgePosition; valueBadgeTouched: boolean; originalHasValueBadge: boolean; originalValueBadge: MarkerValueBadge | null | undefined; useClimateTemp: boolean; model: string; link: string; description: string; pdfs: PdfRef[]; room: string; hideFromPlan: boolean; busy: boolean; } | null;
+  _markerDialog: { devId?: string; uploadId?: string; name: string; binding: string; bindingMode: "virtual" | "ha"; bindingOpen: boolean; showEntities: boolean; bindingFilter: string; icon: string; autoIcon: string; display: DeviceDisplayMode; rippleColor: string; rippleSize: number; size: number; angle: number; tapAction: string; tapActionTouched: boolean; originalHasTapAction: boolean; originalTapAction: string | null | undefined; tapHintAnnouncement: string; toggleEntity: string; toggleEntityTouched: boolean; originalHasToggleEntity: boolean; originalToggleEntity: string | null | undefined; tapTarget: string; tapConfirm: boolean; runFilter: string; controls: string[]; controlsFilter: string; glowRadius: string; lightRole: "auto" | "always" | "never"; lightRoleTouched: boolean; originalHasIsLight: boolean; originalIsLight: boolean | null | undefined; lightEntity: string; lightEntityTouched: boolean; originalHasLightEntity: boolean; originalLightEntity: string | null | undefined; glowMode: "auto" | "color" | "fixed"; glowColor: string; glowBrightness: number; glowColorDrafted: boolean; glowBrightnessDrafted: boolean; glowTouched: boolean; originalHasGlowColor: boolean; originalGlowColor: { c: string; bri?: number | null; } | null | undefined; valueBadgeEnabled: boolean; valueBadgeSource: ValueBadgeSource | null; valueBadgePosition: ValueBadgePosition; valueBadgeTouched: boolean; originalHasValueBadge: boolean; originalValueBadge: MarkerValueBadge | null | undefined; valueSource: ValueBadgeSource | null; valueSourceTouched: boolean; originalHasValueSource: boolean; originalValueSource: ValueBadgeSource | null | undefined; useClimateTemp: boolean; model: string; link: string; description: string; pdfs: PdfRef[]; room: string; hideFromPlan: boolean; busy: boolean; } | null;
   _markerPreviewDevicesMemo: { base: readonly DevItem[]; preview: DevItem; devices: readonly DevItem[]; } | null;
   _markerPreviewMemo: { key: string; device: DevItem | null; } | null;
   _markers: Marker[];
@@ -7642,6 +7643,7 @@ public _openMarkerDialog(d?: DevItem): void {
       const hasLightEntity = Object.prototype.hasOwnProperty.call(marker || {}, 'light_entity');
       const hasGlowColor = Object.prototype.hasOwnProperty.call(marker || {}, 'glow_color');
       const hasValueBadge = Object.prototype.hasOwnProperty.call(marker || {}, 'value_badge');
+      const hasValueSource = Object.prototype.hasOwnProperty.call(marker || {}, 'value_source');
       const hasTapAction = Object.prototype.hasOwnProperty.call(marker || {}, 'tap_action');
       const hasToggleEntity = Object.prototype.hasOwnProperty.call(marker || {}, 'toggle_entity');
       const glowOverride = normalizeGlowColorOverride(marker?.glow_color);
@@ -7703,6 +7705,10 @@ public _openMarkerDialog(d?: DevItem): void {
         valueBadgeTouched: false,
         originalHasValueBadge: hasValueBadge,
         originalValueBadge: marker?.value_badge,
+        valueSource: marker?.value_source || null,
+        valueSourceTouched: false,
+        originalHasValueSource: hasValueSource,
+        originalValueSource: marker?.value_source,
         useClimateTemp: d.marker?.use_climate_temp === true,
         glowRadius: Number(d.marker?.glow_radius_cm) > 0
           ? String(this.host._imperial
@@ -7739,6 +7745,8 @@ public _openMarkerDialog(d?: DevItem): void {
         originalHasGlowColor: false, originalGlowColor: undefined,
         valueBadgeEnabled: false, valueBadgeSource: null, valueBadgePosition: 'right',
         valueBadgeTouched: false, originalHasValueBadge: false, originalValueBadge: undefined,
+        valueSource: null, valueSourceTouched: false,
+        originalHasValueSource: false, originalValueSource: undefined,
         useClimateTemp: false, glowRadius: '', model: '',
         link: '', description: '', pdfs: [], room: '', hideFromPlan: false, busy: false,
         uploadId: 'up_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
@@ -8029,6 +8037,7 @@ public async _saveMarker(): Promise<void> {
         // pdfs may be rewritten below when rebinding changes the marker id
         ...this._markerLightFields(dlg),
         ...this._markerValueBadgeFields(dlg),
+        ...this._markerValueSourceFields(dlg),
         use_climate_temp: dlg.useClimateTemp ? true : null,
         glow_radius_cm: (() => {
           const v = strictNumber(dlg.glowRadius);
@@ -8082,6 +8091,10 @@ public async _saveMarker(): Promise<void> {
       if (oldId && oldId !== id && marker.value_badge?.source?.kind === 'derived_marker_state'
           && marker.value_badge.source.ref === `marker:${oldId}`) {
         marker.value_badge.source = { kind: 'derived_marker_state', ref: `marker:${id}` };
+      }
+      if (oldId && oldId !== id && marker.value_source?.kind === 'derived_marker_state'
+          && marker.value_source.ref === `marker:${oldId}`) {
+        marker.value_source = { kind: 'derived_marker_state', ref: `marker:${id}` };
       }
       // remove the previous marker (by the old id and by the new id)
       cfg.markers = cfg.markers.filter(
@@ -11747,6 +11760,17 @@ public _markerValueBadgeFields(
     });
   }
 
+public _markerValueSourceFields(
+    d: NonNullable<HouseplanEditorHostPort['_markerDialog']>,
+  ): Pick<Marker, 'value_source'> | Record<string, never> {
+    return valueSourceWriteFields({
+      touched: d.valueSourceTouched,
+      originalHas: d.originalHasValueSource,
+      original: d.originalValueSource,
+      source: d.valueSource,
+    });
+  }
+
 public _markerDraft(d: NonNullable<HouseplanEditorHostPort['_markerDialog']>): Marker | null {
     if (d.bindingMode === 'ha' && (!d.binding || d.binding === 'virtual')) return null;
     const roomRef = parseRoomRef(d.room);
@@ -11773,6 +11797,7 @@ public _markerDraft(d: NonNullable<HouseplanEditorHostPort['_markerDialog']>): M
       controls: controls.length ? controls : null,
       ...this._markerLightFields(d),
       ...this._markerValueBadgeFields(d),
+      ...this._markerValueSourceFields(d),
       use_climate_temp: d.useClimateTemp ? true : null,
       glow_radius_cm: (() => {
         const value = strictNumber(d.glowRadius);
@@ -12150,11 +12175,11 @@ public _renderMarkerDialog(): TemplateResult {
     const badgeSourceMissing = !!effectiveBadgeSource
       && !badgeCandidates.some((item) => item.key === badgeSourceKey);
     const selectedBadgeCandidate = badgeCandidates.find((item) => item.key === badgeSourceKey);
-    const innerValueSourceKey = previewPresentation?.valueSource
-      ? previewPresentation.valueSource.attribute
-        ? `attr:${previewPresentation.valueSource.eid}:${previewPresentation.valueSource.attribute}`
-        : `state:${previewPresentation.valueSource.eid}`
-      : '';
+    const valueSourceKey = valueBadgeSourceKey(d.valueSource);
+    const valueSourceMissing = !!d.valueSource && (!valueSourceKey
+      || !badgeCandidates.some((item) => item.key === valueSourceKey));
+    const selectedValueSourceCandidate = badgeCandidates.find((item) => item.key === valueSourceKey);
+    const innerValueSourceKey = previewPresentation?.valueSource?.sourceKey || '';
     const autoHasSpatialSource = this._markerAutoHasSpatialSource(d);
     const statefulSource = !!previewDevice
       && hasOwnStatefulLightSource(this.host._planHass, { ...previewDevice, hidden: false });
@@ -12233,6 +12258,7 @@ public _renderMarkerDialog(): TemplateResult {
                   };
                   this.host._markerDialog = this._announceToggleDraft({
                     ...next, ...this._valueBadgeForBinding(next, 'virtual'),
+                    valueSource: null, valueSourceTouched: true,
                   });
                 }} />
               <span>${this.host._t('marker.virtual_option')}</span>
@@ -12280,6 +12306,7 @@ public _renderMarkerDialog(): TemplateResult {
                                 };
                                 this.host._markerDialog = this._announceToggleDraft({
                                   ...next, ...this._valueBadgeForBinding(next, c.value),
+                                  valueSource: null, valueSourceTouched: true,
                                 });
                               }}>
                               <span class="cl">${c.label}</span><span class="cs">${c.sub}</span>
@@ -12583,6 +12610,39 @@ public _renderMarkerDialog(): TemplateResult {
             </option>`)}
           </select>
           <p class="muted">${this.host._t(DISPLAY_HINT_KEYS[d.display])}</p>
+          ${d.display === 'value' ? html`<div class="markerhelpfield markervaluesource">
+            <div class="markerhelplabel">
+              <label for="marker-value-source">${this.host._t('marker.value_source')}</label>
+              ${this._help('marker.value_source.help')}
+            </div>
+            <select id="marker-value-source" class="areasel" ?disabled=${isVirtual}
+              @change=${(e: Event) => (this.host._markerDialog = {
+                ...d,
+                valueSource: valueBadgeSourceFromKey((e.target as HTMLSelectElement).value),
+                valueSourceTouched: true,
+              })}>
+              <option value="" ?selected=${!d.valueSource}>
+                ${this.host._t('marker.value_source_auto')}
+              </option>
+              ${valueSourceMissing ? html`<option value=${valueSourceKey || '__missing__'} selected>
+                ${this.host._t('marker.value_badge_missing')}
+              </option>` : nothing}
+              ${badgeCandidates.map((candidate) => html`<option value=${candidate.key}
+                ?selected=${candidate.key === valueSourceKey}
+                title=${candidate.technical}>
+                ${this._valueBadgeCandidateLabel(candidate)} · ${candidate.value}
+              </option>`)}
+            </select>
+            ${selectedValueSourceCandidate
+              ? html`<p class="muted markerbadgetechnical"><code>${selectedValueSourceCandidate.technical}</code></p>`
+              : nothing}
+            ${isVirtual ? html`<p class="muted markerlightdisabled" role="note">
+              <ha-icon icon="mdi:information-outline"></ha-icon>
+              ${this.host._t('marker.preview.reason.value_virtual')}
+            </p>` : valueSourceMissing ? html`<p class="muted markerlightwarning" role="status">
+              <ha-icon icon="mdi:alert-outline"></ha-icon>${this.host._t('marker.value_source_missing_hint')}
+            </p>` : nothing}
+          </div>` : nothing}
           ${d.display === 'static_icon' && this.host._bindingHasAlarm(d.binding)
             ? html`<div class="habindingbanner" role="note">
                 <ha-icon icon="mdi:alert-outline"></ha-icon>

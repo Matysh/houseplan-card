@@ -214,11 +214,13 @@ Built from the registries (`_buildDevices`), rules carried over 1-to-1 from the 
 
 ## Live data
 
-- Value satellite: `src/device-value-badge.ts` resolves one explicit
-  `marker.value_badge` source/position, or projects the legacy automatic
-  temperature/humidity label when that field is absent. The resolver owns HA
-  formatting, units, unavailable state, candidate discovery and deterministic
-  recommendation; renderers consume only `ResolvedDevicePresentation.valueBadge`.
+- Value sources: `src/device-value-badge.ts` owns candidate discovery, source
+  keys, HA formatting, units and unavailable handling for both an explicit
+  `marker.value_source` inside the **Value + state** face and an explicit
+  `marker.value_badge` satellite. Absence of `value_source` keeps the legacy
+  automatic face resolver; absence of `value_badge` projects the legacy
+  automatic temperature/humidity satellite. Renderers consume only the
+  corresponding fields of `ResolvedDevicePresentation`.
 - LQI (zigbee): the average over `*_linkquality` entities → label under the icon; color via
   `lqiColor()`: ≤40 red → ≥180 green (hsl gradient). The room average is shown in the room tooltip.
   The same tooltip includes the formatted clean-floor area (inner contour for
@@ -303,6 +305,11 @@ Explicit settings override the global legacy temperature gate; explicit off
 suppresses legacy output. Bottom badges stack above system LQI, and a derived
 LQI badge de-duplicates that system row. `hp-device-preview` fits and centres
 the complete face bounding box rather than allowing satellites to clip.
+An optional `marker.value_source` selects the same source kinds for the inner
+face when `display: value`. Missing explicit data renders a dash without
+falling back to another source or the icon; absence/`null` preserves the old
+automatic face selection. Derived marker references share the same rewrite and
+space-transfer seam as controls and value badges.
 `normalizeDeviceDisplay()` is the mandatory compatibility gate for every consumer and maps
 legacy `ripple` to `icon_ripple`. `markerLqiBand()` remains marker-only semantic
 metadata for accessibility, while `markerLqiColor()` delegates to the shared

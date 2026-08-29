@@ -22,7 +22,10 @@ import {
 import { resolveToggleIntent, toggleCoverEntity } from './device-toggle';
 import type { DevItem } from './types';
 import { safeStoredColor } from './color';
-import { resolveDeviceValueBadge, type ResolvedValueBadge } from './device-value-badge';
+import {
+  resolveDeviceValueBadge, resolveValueSource, valueBadgeSourceKey,
+  type ResolvedValueBadge,
+} from './device-value-badge';
 import {
   DEVICE_PULSE_DEFAULT_SCALE, resolveDevicePulse, type ResolvedDevicePulse,
 } from './device-pulse';
@@ -80,10 +83,11 @@ export interface ResolvedPresentationSource {
 }
 
 export interface ResolvedValueSource {
-  kind: 'temperature' | 'humidity' | 'entity';
+  kind: 'temperature' | 'humidity' | 'entity' | 'derived_lqi' | 'derived_marker_state';
   eid: string;
   attribute?: string;
   text: string;
+  sourceKey: string;
 }
 
 export interface PresentationExplanation {
@@ -470,24 +474,72 @@ function resolveValue(
   d: DevItem,
   sources: ResolvedPresentationSources,
   showTemperature: boolean,
-): { source: ResolvedValueSource | null; text: string | null; fallback: ValueFallbackReason | null } {
-  if (d.virtual) return { source: null, text: null, fallback: 'value_virtual' };
+  markerStates: readonly { ref: string; on: boolean; name: string }[] = [],
+): {
+  source: ResolvedValueSource | null;
+  text: string | null;
+  fullText: string | null;
+  fallback: ValueFallbackReason | null;
+  explicit: boolean;
+} {
+  if (d.virtual) {
+    return { source: null, text: null, fullText: null, fallback: 'value_virtual', explicit: false };
+  }
+  const explicitSource = d.marker?.value_source;
+  if (explicitSource) {
+    const resolved = resolveValueSource(hass, d, explicitSource, markerStates);
+    const kind: ResolvedValueSource['kind'] = explicitSource.kind === 'derived_lqi'
+      ? 'derived_lqi'
+      : explicitSource.kind === 'derived_marker_state'
+        ? 'derived_marker_state'
+        : explicitSource.kind === 'entity_attribute' && explicitSource.attribute.includes('temperature')
+          ? 'temperature'
+          : explicitSource.kind === 'entity_attribute' && explicitSource.attribute.includes('humidity')
+            ? 'humidity' : 'entity';
+    const eid = explicitSource.kind === 'entity_state' || explicitSource.kind === 'entity_attribute'
+      ? explicitSource.entity_id
+      : explicitSource.kind === 'derived_marker_state' ? explicitSource.ref : 'derived:lqi';
+    const attribute = explicitSource.kind === 'entity_attribute'
+      ? explicitSource.attribute : undefined;
+    return {
+      source: {
+        kind, eid, attribute, text: resolved.text,
+        sourceKey: valueBadgeSourceKey(explicitSource),
+      },
+      text: resolved.text,
+      fullText: resolved.fullText,
+      fallback: resolved.failure === 'non_scalar' ? 'value_non_scalar'
+        : resolved.failure === 'missing' ? 'value_no_state' : null,
+      explicit: true,
+    };
+  }
   if (showTemperature) {
     const climate = firstClimateTemperature(hass, d);
     if (climate) {
       return {
-        source: { kind: 'temperature', eid: climate.eid, attribute: 'current_temperature', text: climate.text },
+        source: {
+          kind: 'temperature', eid: climate.eid, attribute: 'current_temperature', text: climate.text,
+          sourceKey: `attr:${climate.eid}:current_temperature`,
+        },
         text: climate.text,
+        fullText: climate.text,
         fallback: null,
+        explicit: false,
       };
     }
     const temp = firstTemperature(hass, d);
     if (temp) {
-      return { source: { kind: 'temperature', eid: temp.eid, text: temp.text }, text: temp.text, fallback: null };
+      return {
+        source: { kind: 'temperature', eid: temp.eid, text: temp.text, sourceKey: `state:${temp.eid}` },
+        text: temp.text, fullText: temp.text, fallback: null, explicit: false,
+      };
     }
     const hum = firstHumidity(hass, d);
     if (hum) {
-      return { source: { kind: 'humidity', eid: hum.eid, text: hum.text }, text: hum.text, fallback: null };
+      return {
+        source: { kind: 'humidity', eid: hum.eid, text: hum.text, sourceKey: `state:${hum.eid}` },
+        text: hum.text, fullText: hum.text, fallback: null, explicit: false,
+      };
     }
   }
   // Passive marker sources deliberately use a `marker:*` identity. They are
@@ -510,13 +562,20 @@ function resolveValue(
     return {
       source: null,
       text: null,
+      fullText: null,
       fallback: valueEids.length ? 'value_ambiguous_sources' : 'value_no_state',
+      explicit: false,
     };
   }
   const eid = valueEids[0];
   const value = validStateValue(hass, eid);
-  if (value.fallback) return { source: null, text: null, fallback: value.fallback };
-  return { source: { kind: 'entity', eid, text: value.text }, text: value.text, fallback: null };
+  if (value.fallback) {
+    return { source: null, text: null, fullText: null, fallback: value.fallback, explicit: false };
+  }
+  return {
+    source: { kind: 'entity', eid, text: value.text, sourceKey: `state:${eid}` },
+    text: value.text, fullText: value.text, fallback: null, explicit: false,
+  };
 }
 
 function signatureOf(
@@ -530,7 +589,8 @@ function signatureOf(
     ...sources.visualSources.map((source) => `${source.role}:${source.eid}`),
     ...sources.criticalSources.map((source) => `critical:${source.eid}`),
   ].sort();
-  const value = valueSource ? `${valueSource.kind}:${valueSource.eid}:${valueSource.attribute || ''}` : 'none';
+  const value = valueSource
+    ? `${valueSource.kind}:${valueSource.sourceKey}:${valueSource.eid}:${valueSource.attribute || ''}` : 'none';
   return [binding, sources.sourceKind, ...rows, `value:${value}`].join('\n');
 }
 
@@ -595,6 +655,13 @@ export function resolveDevicePresentation(
         hass, d, options.lightDevices || [d], options.lightSources,
         options.registryHass || hass,
       );
+  const needsMarkerState = d.marker?.value_source?.kind === 'derived_marker_state'
+    || d.marker?.value_badge?.source?.kind === 'derived_marker_state';
+  const markerStateGraph = options.lightSources
+    || (needsMarkerState ? resolvedLightSources(hass, options.lightDevices || [d]) : []);
+  const markerStates = markerStateGraph
+    .filter((source) => source.key.startsWith('marker:'))
+    .map((source) => ({ ref: source.key, on: source.on, name: source.device.name }));
   const status = d.bindingStatus;
   const haDisabled = status?.kind === 'ha_disabled';
   const orphaned = status?.kind === 'orphaned';
@@ -623,8 +690,8 @@ export function resolveDevicePresentation(
   const controllerFace = sources.sourceKind === 'controls'
     || (configuredController && sources.sourceKind !== 'light' && sources.sourceKind !== 'cover');
   const value = staticIcon && options.sourceDetails === false
-    ? { source: null, text: null, fallback: null }
-    : resolveValue(hass, d, sources, options.showTemperature);
+    ? { source: null, text: null, fullText: null, fallback: null, explicit: false }
+    : resolveValue(hass, d, sources, options.showTemperature, markerStates);
   const sourceSignature = signatureOf(d, sources, value.source);
   const activitySignature = activitySourceSignature(hass, d, sources);
   const rt = options.activityRuntime;
@@ -664,17 +731,12 @@ export function resolveDevicePresentation(
     && !!d.primary && isHumEntity(hass, d.primary)
     ? humFor(hass, d.entities) : null;
   const lqi = policy.metrics && options.showSignal && !d.virtual ? lqiFor(hass, d.entities) : null;
-  const markerStateGraph = options.lightSources || (d.marker?.value_badge?.source?.kind === 'derived_marker_state'
-    ? resolvedLightSources(hass, options.lightDevices || [d])
-    : []);
   const valueBadge = resolveDeviceValueBadge(hass, d, {
     showTemperature: options.showTemperature,
     showSignal: options.showSignal,
     display,
     effectiveHidden,
-    markerStates: markerStateGraph
-      .filter((source) => source.key.startsWith('marker:'))
-      .map((source) => ({ ref: source.key, on: source.on, name: source.device.name })),
+    markerStates,
   });
   const realVisualSource = sources.visualSources.find((source) => !source.eid.startsWith('marker:'));
   const actEid = sources.sourceKind === 'cover'
@@ -757,8 +819,8 @@ export function resolveDevicePresentation(
     display,
     icon,
     valueText,
-    valueFullText: valueText,
-    fallbackReason: display === 'value' && !valueText ? value.fallback : null,
+    valueFullText: policy.face === 'value' ? value.fullText : null,
+    fallbackReason: display === 'value' ? value.fallback : null,
     activity,
     activityGeneration: rt?.gen || 1,
     pulse,
@@ -766,7 +828,8 @@ export function resolveDevicePresentation(
     tempText: temp == null ? null : String(temp),
     humText: hum == null ? null : String(hum),
     valueBadge,
-    lqiText: lqi == null || valueBadge?.isLqi ? null : String(lqi),
+    lqiText: lqi == null || valueBadge?.isLqi || value.source?.kind === 'derived_lqi'
+      ? null : String(lqi),
     lqiColor: lqi == null ? null : markerLqiColor(lqi),
     lqiBand: lqi == null ? null : markerLqiBand(lqi),
     lightColor,

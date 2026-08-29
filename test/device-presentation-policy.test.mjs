@@ -305,6 +305,16 @@ const rowRunners = {
     id: 'vacuum', icon: 'mdi:robot-vacuum', entities: ['vacuum.robot'], primary: 'vacuum.robot',
     marker: { id: 'vacuum', binding: 'device:vacuum', vacuum: { live: true } },
   }, {}, (r) => assert.equal(r.vacuumLive, true)),
+  F18: presentationRow({
+    entities: ['switch.offline'], primary: 'switch.offline',
+    marker: {
+      id: 'd1', binding: 'device:d1', display: 'value',
+      value_source: { kind: 'entity_state', entity_id: 'switch.offline' },
+    },
+  }, {}, (r) => {
+    assert.equal(r.valueText, '—');
+    assert.equal(r.fallbackReason, 'value_no_state');
+  }),
   A01: presentationRow({
     icon: 'mdi:smoke-detector', entities: ['binary_sensor.smoke'], primary: 'binary_sensor.smoke',
   }, { liveStates: false }, (r) => assert.deepEqual([r.pulse.kind, r.pulse.reason], ['alarm', 'alarm'])),

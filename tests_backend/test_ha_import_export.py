@@ -1511,6 +1511,27 @@ def test_issue_90_space_merge_remaps_internal_badge_marker_link(tmp_path: Path) 
     assert details["dropped_marker_links"] == 0
 
 
+def test_issue_378_space_merge_remaps_internal_value_face_marker_link(tmp_path: Path) -> None:
+    document = _document(tmp_path, "space")
+    markers = document["payload"]["config"]["markers"]
+    markers[0]["name"] = "Controller"
+    markers[0]["value_source"] = {
+        "kind": "derived_marker_state", "ref": "marker:dumb",
+    }
+    markers.append({
+        "id": "dumb", "binding": "virtual", "space": "ground",
+        "room_id": "living", "name": "Dumb lamp", "is_light": True,
+    })
+    merged, _layout, details = build_space_merge(
+        document, {"spaces": [], "markers": [], "settings": {}}, {}, "skip",
+    )
+    imported = [m for m in merged["markers"] if m.get("space") == details["space_id"]]
+    by_name = {m.get("name"): m for m in imported}
+    assert by_name["Controller"]["value_source"]["ref"] == \
+        "marker:" + by_name["Dumb lamp"]["id"]
+    assert details["dropped_marker_links"] == 0
+
+
 def test_space_export_drops_marker_links_outside_selection(tmp_path: Path) -> None:
     config = _config()
     config["markers"][0]["controls"] = ["marker:outside", "light.keep"]
@@ -1547,6 +1568,47 @@ def test_issue_90_space_export_disables_badge_link_outside_selection(tmp_path: P
     badge = document["payload"]["config"]["markers"][0]["value_badge"]
     assert badge == {"enabled": False, "source": None, "position": "left"}
     assert document["transfer"]["dropped_marker_links"] == 1
+
+
+def test_issue_378_space_export_drops_value_face_link_outside_selection(tmp_path: Path) -> None:
+    config = _config()
+    config["markers"][0]["value_source"] = {
+        "kind": "derived_marker_state", "ref": "marker:outside",
+    }
+    config["markers"].append({
+        "id": "outside", "binding": "virtual", "space": "other",
+        "name": "Other lamp", "is_light": True,
+    })
+    document, _ = create_export(
+        SimpleNamespace(instance_id="instance-a"), {"config": config},
+        {"layout": {"lamp": {"s": "ground", "x": 0.5, "y": 0.5}}},
+        kind="space", space_id="ground", card_version="1.61.0", config_root=tmp_path,
+    )
+    marker = document["payload"]["config"]["markers"][0]
+    assert "value_source" not in marker
+    assert document["transfer"]["dropped_marker_links"] == 1
+
+
+def test_issue_378_virtualized_duplicate_drops_value_face_link(tmp_path: Path) -> None:
+    document = _document(tmp_path, "space")
+    controller = document["payload"]["config"]["markers"][0]
+    controller["name"] = "Controller"
+    controller["value_source"] = {
+        "kind": "derived_marker_state", "ref": "marker:dumb",
+    }
+    document["payload"]["config"]["markers"].append({
+        "id": "dumb", "binding": "virtual", "space": "ground", "is_light": True,
+    })
+    current = {
+        "spaces": [], "markers": [{"id": "existing", "binding": controller["binding"]}],
+    }
+    merged, _layout, details = build_space_merge(document, current, {}, "virtual")
+    imported_controller = next(
+        marker for marker in merged["markers"]
+        if marker.get("name") == controller.get("name") and marker.get("binding") == "virtual"
+    )
+    assert "value_source" not in imported_controller
+    assert details["dropped_marker_links"] == 1
 
 
 def test_space_merge_drops_link_when_target_is_virtualized_duplicate(tmp_path: Path) -> None:

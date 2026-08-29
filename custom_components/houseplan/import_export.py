@@ -510,6 +510,13 @@ def create_export(
                     badge["enabled"] = False
                     badge["source"] = None
                     dropped_marker_links += 1
+                value_source = marker.get("value_source")
+                ref = value_source.get("ref") if isinstance(value_source, dict) \
+                    and value_source.get("kind") == "derived_marker_state" else None
+                if isinstance(ref, str) and ref.startswith("marker:") \
+                        and ref[len("marker:"):] not in selected_ids:
+                    marker.pop("value_source", None)
+                    dropped_marker_links += 1
             config = {
                 "spaces": [_json_copy(space)],
                 "markers": _json_copy(selected_markers),
@@ -699,7 +706,7 @@ def _transfer_dropped_marker_links(document: dict[str, Any]) -> int:
     if not isinstance(transfer, dict):
         raise ImportFailure("invalid_format", "Transfer metadata must be an object")
     value = transfer.get("dropped_marker_links", 0)
-    maximum = MAX_MARKERS * (MAX_CONTROLS + 1)
+    maximum = MAX_MARKERS * (MAX_CONTROLS + 2)
     if isinstance(value, bool) or not isinstance(value, int) or not 0 <= value <= maximum:
         raise ImportFailure("invalid_format", "Invalid dropped marker link count")
     return value
@@ -802,6 +809,16 @@ def _drop_invalid_import_marker_links(
                     or target.get("is_light") is not True:
                 badge["enabled"] = False
                 badge["source"] = None
+                dropped += 1
+        source = marker.get("value_source")
+        if isinstance(source, dict) and source.get("kind") == "derived_marker_state":
+            ref = source.get("ref")
+            target_id = ref[len("marker:"):] \
+                if isinstance(ref, str) and ref.startswith("marker:") else ""
+            target = by_id.get(target_id)
+            if not target_id or target is None or target.get("removed") is True \
+                    or target.get("is_light") is not True:
+                marker.pop("value_source", None)
                 dropped += 1
     return dropped
 
@@ -1110,6 +1127,20 @@ def _repair_target_space_refs(
                 preserve_related(
                     marker_id, "marker.value_badge", old_target, resolve_marker,
                 )
+        source = marker.get("value_source")
+        if isinstance(source, dict) and source.get("kind") == "derived_marker_state":
+            ref = source.get("ref")
+            old_target = ref[len("marker:"):] \
+                if isinstance(ref, str) and ref.startswith("marker:") else None
+            mapped = replace(
+                marker_id, "marker.value_source", old_target, resolve_marker_link,
+            )
+            if mapped is not None:
+                source["ref"] = "marker:" + mapped
+            else:
+                preserve_related(
+                    marker_id, "marker.value_source", old_target, resolve_marker,
+                )
 
     # Destination wins collisions. Rekey only proven dead plan-owned keys;
     # opaque HA owners remain literal.
@@ -1345,13 +1376,17 @@ def build_space_merge(
             source = badge.get("source") if isinstance(badge, dict) else None
             if isinstance(source, dict) and source.get("kind") == "derived_marker_state":
                 dropped_marker_links += 1
+            value_source = marker.get("value_source")
+            if isinstance(value_source, dict) \
+                    and value_source.get("kind") == "derived_marker_state":
+                dropped_marker_links += 1
             marker["binding"] = "virtual"
             marker["display"] = "static_icon"
             for field in (
                 "area", "controls", "tap_action", "tap_target", "tap_confirm",
                 "vacuum", "is_light", "use_climate_temp", "glow_color",
                 "glow_radius_cm", "light_entity", "toggle_entity", "hidden", "removed",
-                "value_badge",
+                "value_badge", "value_source",
             ):
                 marker.pop(field, None)
         output_markers.append(marker)
@@ -1394,6 +1429,21 @@ def build_space_merge(
             else:
                 badge["enabled"] = False
                 badge["source"] = None
+                dropped_marker_links += 1
+        source = marker.get("value_source")
+        if isinstance(source, dict) and source.get("kind") == "derived_marker_state":
+            ref = source.get("ref")
+            old_target = ref[len("marker:"):] \
+                if isinstance(ref, str) and ref.startswith("marker:") else ""
+            target = None if old_target in virtualized_targets else marker_map.get(old_target)
+            if target:
+                source["ref"] = "marker:" + target
+                _report_remap(
+                    reference_report, "incoming", "marker.value_source",
+                    str(marker.get("id", "?")), old_target,
+                )
+            else:
+                marker.pop("value_source", None)
                 dropped_marker_links += 1
 
     output_markers_by_id = {

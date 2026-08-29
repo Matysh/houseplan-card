@@ -64,7 +64,7 @@ mutation evidence в одном pull request.
 | F07 | `live_states:false`, не alarm | `face.live_states_disabled` | neutral/base icon; ordinary activity off | normal | `device-presentation-policy-live-gate`; `presentation-row-contract` |
 | F08 | `static_icon` | `face.static` | neutral/base icon; state/RGB/value/metrics/pulse/vacuum off | normal | `device-presentation-policy-static`; `presentation-row-contract` |
 | F09 | value + один scalar source | `content.value` | HA-formatted full Text face | normal | `device-presentation-policy-value`; `device-long-value-ellipsis-restored` |
-| F10 | value + missing/unavailable/non-scalar | `content.value_fallback_icon` + `content.value_no_state/non_scalar` | icon fallback и точная причина | normal | `device-presentation-policy-value`; `presentation-row-contract` |
+| F10 | value auto + missing/unavailable/non-scalar | `content.value_fallback_icon` + `content.value_no_state/non_scalar` | icon fallback и точная причина | normal | `device-presentation-policy-value`; `presentation-row-contract` |
 | F11 | value + несколько равноправных sources | `content.value_ambiguous_sources` | icon fallback `value_ambiguous_sources` | normal | `device-presentation-policy-value`; `presentation-row-contract` |
 | F12 | value + virtual marker | `content.value_virtual` | icon fallback `value_virtual` | normal | `device-presentation-policy-value`; `presentation-row-contract` |
 | F13 | dynamic icon + известный morph | `diagnostics.dynamic_icon` | state icon; действующее cover override сохранено | normal | `device-presentation-policy-diagnostics`; `presentation-row-contract` |
@@ -72,6 +72,7 @@ mutation evidence в одном pull request.
 | F15 | legacy automatic metric | `diagnostics.metrics_enabled` | прежняя temperature/humidity эвристика без записи config | normal | `device-presentation-policy-diagnostics`; `presentation-row-contract` |
 | F16 | LQI 0/40, 41/179, 180+ | `diagnostics.lqi_low/mid/high` | low/mid/high и continuous canonical colour | normal | `device-marker-lqi-low-boundary-shifted`; `presentation-row-contract` |
 | F17 | vacuum dynamic/static | `diagnostics.vacuum_live/vacuum_static` | live overlay только у видимого dynamic face | normal | `device-presentation-policy-diagnostics`; `presentation-row-contract` |
+| F18 | value explicit + missing/unavailable/non-scalar | `content.value` + `content.value_no_state/non_scalar` | выбранный source сохраняется, Text face показывает `—` без auto/icon fallback | normal | `device-presentation-policy-value`; `presentation-row-contract` |
 
 ## Activity и pulse
 

@@ -883,8 +883,13 @@ export function rewriteMarkerControlReferences(
           source: { ...marker.value_badge.source, ref: to as `marker:${string}` },
         }
       : marker.value_badge;
+    const valueSource = marker.value_source?.kind === 'derived_marker_state'
+      && marker.value_source.ref === from
+      ? { ...marker.value_source, ref: to as `marker:${string}` }
+      : marker.value_source;
     return controls === marker.controls && valueBadge === marker.value_badge
-      ? marker : { ...marker, controls, value_badge: valueBadge };
+        && valueSource === marker.value_source
+      ? marker : { ...marker, controls, value_badge: valueBadge, value_source: valueSource };
   });
 }
 

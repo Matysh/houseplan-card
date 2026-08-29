@@ -2107,6 +2107,10 @@ export class HouseplanCard extends LitElement {
     valueBadgeTouched: boolean;
     originalHasValueBadge: boolean;
     originalValueBadge: MarkerValueBadge | null | undefined;
+    valueSource: ValueBadgeSource | null;
+    valueSourceTouched: boolean;
+    originalHasValueSource: boolean;
+    originalValueSource: ValueBadgeSource | null | undefined;
     useClimateTemp: boolean; // badge + room-average vote from climate current_temperature
     model: string;
     link: string;
