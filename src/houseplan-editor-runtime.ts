@@ -4753,7 +4753,6 @@ public _furnPlace(raw: number[], free = false, pointerType = 'mouse'): void {
     // …and the editor goes back to the tool that can move what was just placed
     this.host._decorTool = 'select';
     this.host._furnPalette = null;
-    this._furnShiftDetach();
     this.host._furnCategory = null;
     this._furnShiftDetach();
     this._clearFurniturePreview();

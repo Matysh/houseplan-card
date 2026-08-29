@@ -90,6 +90,23 @@ const out = await page.evaluate(async () => {
   out.shiftAfterDetachIsInert = !c._furnPreviewInput;
   window.dispatchEvent(new KeyboardEvent('keyup', { key: 'Shift', bubbles: true }));
 
+  // r2-H1: Escape с armed-символом тоже снимает слушатели (путь мимо place)
+  c._editorSecondary.openPalette?.();
+  c._decorTool = 'furniture';
+  c._furnPalette = null; c._furnCategory = null;
+  c.requestUpdate(); await c.updateComplete;
+  pal()?.querySelector('.furnitem[data-category="sofa"]')?.click();
+  await c.updateComplete;
+  pal()?.querySelector('.furnitem[data-symbol="sofa"]')?.click();
+  await c.updateComplete;
+  const addsBeforeEscape = shiftAdds;
+  out.rearmAttachesAgain = shiftAdds === shiftRemoves + 2;
+  window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+  c._onKey?.(new KeyboardEvent('keydown', { key: 'Escape' }));
+  await c.updateComplete;
+  out.escapeClosesPalette = !c._furnPalette && c._decorTool === 'select';
+  out.escapeDetachesListeners = shiftRemoves === addsBeforeEscape;
+
   window.addEventListener = addReal;
   window.removeEventListener = removeReal;
   // прибрать поставленный диван

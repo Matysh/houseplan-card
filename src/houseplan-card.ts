@@ -2695,6 +2695,9 @@ export class HouseplanCard extends LitElement {
     this._clearPlanSnapHover();
     this._clearOpeningPlacement(true);
     this._editorRuntime?._clearFurniturePreview();
+    // #369(д) r2-H1: the Shift listeners hold the runtime (and the card) in
+    // their closure — a disconnected card must not stay pinned to window.
+    this._editorRuntime?._furnShiftDetach();
     this._touchContacts.clear();
     this._touchSequenceMultitouch = false;
     this._touchClickBlockUntil = 0;
@@ -2801,6 +2804,7 @@ export class HouseplanCard extends LitElement {
         // to Select in one step, regardless of whether a symbol was armed.
         else if (this._decorTool === 'furniture') {
           this._editorRuntime?._clearFurniturePreview();
+          this._editorRuntime?._furnShiftDetach(); // #369(д) r2-H1
           this._furnPalette = null;
           this._furnCategory = null;
           this._decorTool = 'select';
