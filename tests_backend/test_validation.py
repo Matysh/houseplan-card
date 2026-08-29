@@ -390,6 +390,39 @@ def test_hide_layer_settings():
             v.SPACE_SCHEMA(dict(base, settings={"hide_openings": bad}))
 
 
+def test_decor_default_style_setting():
+    """#377: the Background editor's persisted default style (global settings)."""
+    full = {
+        "color": "#8b0000", "opacity": 0.9, "width_cm": 5.0,
+        "fill": True, "fill_color": "#112233", "fill_opacity": 0.5,
+    }
+    validated = v.CONFIG_SCHEMA(
+        {"spaces": [], "settings": {"decor_default_style": dict(full)}}
+    )
+    # AC6: the accepted key survives validation byte-identical — the full
+    # backup export copies the config as-is, so this is the round-trip gate.
+    assert validated["settings"]["decor_default_style"] == full
+    # partial keys are valid: absent fields fall back on the frontend
+    v.CONFIG_SCHEMA({"spaces": [], "settings": {"decor_default_style": {"color": "#8b0000"}}})
+    v.CONFIG_SCHEMA({"spaces": [], "settings": {"decor_default_style": {}}})
+    for bad in (
+        {"color": "red"},
+        {"color": "url(javascript:x)"},
+        {"opacity": 2},
+        {"opacity": "loud"},
+        {"width_cm": 0},
+        {"width_cm": -3},
+        {"width_cm": 101},
+        {"fill": "yes"},
+        {"fill_color": "#12345"},
+        {"fill_opacity": 7},
+    ):
+        with pytest.raises(vol.Invalid):
+            v.CONFIG_SCHEMA({"spaces": [], "settings": {"decor_default_style": bad}})
+    with pytest.raises(vol.Invalid):
+        v.CONFIG_SCHEMA({"spaces": [], "settings": {"decor_default_style": "solid"}})
+
+
 def test_bg_color_setting():
     """Background-around-the-plan color: strict #rrggbb, globally and per space."""
     ok_space = {

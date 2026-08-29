@@ -21,6 +21,11 @@
   всему содержимому остаётся default, сам дом никогда не обрезается
   ([#373](https://github.com/Matysh/houseplan-card/issues/373)).
 
+- Цвет и стиль по умолчанию для новых элементов редактора подложки теперь
+  переживают перезагрузку страницы: выбор сохраняется вместе с планом
+  (`settings.decor_default_style`) и общий для всех редакторов этого плана
+  ([#377](https://github.com/Matysh/houseplan-card/issues/377)).
+
 ## v1.69.0-beta.4 — 2026-08-29
 
 - В read-only `houseplan-space-card` теперь можно включить радиальный Glow и

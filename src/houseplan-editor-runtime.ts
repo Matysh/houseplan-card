@@ -310,6 +310,7 @@ import {
   resizedBoxTopLeft, snapDecorPoint, validDecorDraft,
   type DecorBox, type SnapGeometry,
 } from './editors/decor/geometry';
+import { decorStyleToSettings } from './editors/decor/geometry';
 import { renderOpeningTunnelFills } from './render/opening-tunnels';
 import {
   openingVisibleMetrics, renderOpeningVisibleGeometry,
@@ -4478,11 +4479,11 @@ public _decorSaveShape(): void {
       }
       return shape;
     });
-    this.host._decorStyle = { ...style,
+    this._updateDecorStyle({ ...style,
       fill: d.kind === 'rect' || d.kind === 'ellipse' ? style.fill : this.host._decorStyle.fill,
       fillColor: d.kind === 'rect' || d.kind === 'ellipse' ? style.fillColor : this.host._decorStyle.fillColor,
       fillOpacity: d.kind === 'rect' || d.kind === 'ellipse' ? style.fillOpacity : this.host._decorStyle.fillOpacity,
-    };
+    });
     this.host._decorShapeDialog = null;
     this._recordGeometry(this.host._t('history.decor_edit'), before);
     this._saveConfig();
@@ -5303,24 +5304,24 @@ public _renderDecorSecondary(): EditorSecondaryModel | null {
             .opacity=${this.host._decorStyle.opacity} .opacityLabel=${this.host._t('space.opacity')}
             .pickerLabels=${this.host._colorPickerLabels}
             @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) =>
-              (this.host._decorStyle = { ...this.host._decorStyle, ...e.detail })}></hp-color-opacity>
+              this._updateDecorStyle({ ...this.host._decorStyle, ...e.detail })}></hp-color-opacity>
           <label class="drawwall">${this.host._t('decor.width')}
             <input type="number" min=${this.host._decorSmallField(0.1)}
               max=${this.host._decorSmallField(100)} step="0.1"
               .value=${String(this.host._decorSmallField(this.host._decorStyle.widthCm))}
-              @input=${(e: Event) => (this.host._decorStyle = { ...this.host._decorStyle,
+              @input=${(e: Event) => this._updateDecorStyle({ ...this.host._decorStyle,
                 widthCm: this.host._decorSmallCm(Number((e.target as HTMLInputElement).value)) })} />
             <span class="opl">${this.host._t(this.host._imperial ? 'wallthick.unit_in' : 'wallthick.unit_cm')}</span>
           </label>
           ${canFill ? html`<label class="dfill"><input type="checkbox" .checked=${this.host._decorStyle.fill}
-              @change=${(e: Event) => (this.host._decorStyle = { ...this.host._decorStyle,
+              @change=${(e: Event) => this._updateDecorStyle({ ...this.host._decorStyle,
                 fill: (e.target as HTMLInputElement).checked })} />${this.host._t('decor.fill')}</label>
             <hp-color-opacity .label=${this.host._t('decor.fill_color')} .color=${this.host._decorStyle.fillColor}
               .opacity=${this.host._decorStyle.fillOpacity} .opacityLabel=${this.host._t('space.opacity')}
               .pickerLabels=${this.host._colorPickerLabels}
               .disabled=${!this.host._decorStyle.fill}
               @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) =>
-                (this.host._decorStyle = { ...this.host._decorStyle,
+                this._updateDecorStyle({ ...this.host._decorStyle,
                   fillColor: e.detail.color, fillOpacity: e.detail.opacity })}></hp-color-opacity>` : nothing}
         ` : nothing}
         ${backdrop ? html`<span class="bdhint">${this.host._t('decor.backdrop_hint')}</span>` : nothing}`,
@@ -5416,7 +5417,7 @@ public _renderDecorBar(): TemplateResult {
         .opacityLabel=${this.host._t('space.opacity')}
         .pickerLabels=${this.host._colorPickerLabels}
         @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) =>
-          (this.host._decorStyle = { ...this.host._decorStyle, ...e.detail })}>
+          this._updateDecorStyle({ ...this.host._decorStyle, ...e.detail })}>
       </hp-color-opacity>
       <button class="btn ghost" @click=${() => this._undoGeometry()} ?disabled=${!undoName}
         title=${undoName ? this.host._t('history.undo_named', { name: undoName }) : this.host._t('history.undo_empty')}>
@@ -9400,7 +9401,37 @@ public _setFillColor(key: keyof FillColors, patch: Partial<{ c: string; a: numbe
     this.host._settingsDialog = { ...d, colors: { ...d.colors, [key]: { ...d.colors[key], ...patch } } };
   }
 
-public async _saveSettingsDialog(): Promise<void> {
+/** #377: every UI change of the session default style flows through here —
+ * the style updates instantly, the persist is debounced so a palette drag
+ * produces one config write. */
+public _updateDecorStyle(next: DecorStyle): void {
+    this.host._decorStyle = next;
+    if (this._decorStylePersistTimer !== null) window.clearTimeout(this._decorStylePersistTimer);
+    this._decorStylePersistTimer = window.setTimeout(() => {
+      this._decorStylePersistTimer = null;
+      this._persistDecorStyle();
+    }, 1000);
+  }
+
+  private _decorStylePersistTimer: number | null = null;
+
+  /** #377: mirror the current default style into settings.decor_default_style.
+   * The default itself is stored as the ABSENCE of the key; a no-op diff does
+   * not touch the store. Uses the ordinary serialized write path (expected_rev). */
+  private _persistDecorStyle(): void {
+    const cfg = this.host._serverCfg;
+    if (!cfg) return;
+    const patch = decorStyleToSettings(this.host._decorStyle);
+    const settings: Record<string, unknown> = { ...(cfg.settings as object) };
+    const before = JSON.stringify(settings.decor_default_style ?? null);
+    if (patch) settings.decor_default_style = patch;
+    else delete settings.decor_default_style;
+    if (JSON.stringify(settings.decor_default_style ?? null) === before) return;
+    this.host._serverCfg = { ...cfg, settings } as typeof cfg;
+    this._saveConfig();
+  }
+
+  public async _saveSettingsDialog(): Promise<void> {
     const d = this.host._settingsDialog;
     if (!d || d.busy) return;
     this.host._settingsDialog = { ...d, busy: true };

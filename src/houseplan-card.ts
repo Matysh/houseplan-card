@@ -317,7 +317,7 @@ import {
 import type { DecorShape, DecorStyle } from './editors/decor/types';
 import {
   DEFAULT_DECOR_STYLE, boxAnchors, boxCorners, clamp01, decorCmToUnits,
-  decorStrokeUnits, decorStyleOf, decorStylePatch,
+  decorStrokeUnits, decorStyleFromSettings, decorStyleOf, decorStylePatch,
   decorUnitsToCm, mergeSnapGeometry, normalizeAngle, resizeDecorBox,
   resizedBoxTopLeft, snapDecorPoint, validDecorDraft,
   type DecorBox, type SnapGeometry,
@@ -982,6 +982,19 @@ export class HouseplanCard extends LitElement {
   // ---- decor (background) editor ----
   private _decorTool: DecorTool = 'select';
   private _decorStyle: DecorStyle = { ...DEFAULT_DECOR_STYLE };
+
+  /** #377: the persisted default style seeds _decorStyle once, from the first
+   * config that arrives (cache or server); later refreshes never overwrite a
+   * live editing session. */
+  private _decorStyleSeeded = false;
+
+  private _seedDecorStyle(cfg: ServerConfig | null): void {
+    if (this._decorStyleSeeded || !cfg) return;
+    this._decorStyleSeeded = true;
+    const raw = (cfg.settings as { decor_default_style?: unknown } | undefined)
+      ?.decor_default_style;
+    if (raw) this._decorStyle = decorStyleFromSettings(raw, DEFAULT_DECOR_STYLE);
+  }
   private _decorDraft: { kind: 'line' | 'rect' | 'ellipse'; a: number[]; b: number[]; pid: number } | null = null;
   private _decorMove: {
     id: string; start: number[]; orig: DecorShape; pid: number; moved: boolean;
@@ -3049,6 +3062,7 @@ export class HouseplanCard extends LitElement {
       const c = JSON.parse(localStorage.getItem(LS_CFG) || 'null');
       if (c && c.config && Array.isArray(c.config.spaces)) {
         this._serverCfg = c.config;
+        this._seedDecorStyle(this._serverCfg);
         this._cfgEpoch++;
         this._cfgRev = c.rev || 0;
         this._cfgContentFingerprint = c.config_fingerprint || contentFingerprint(c.config);
@@ -4029,6 +4043,7 @@ export class HouseplanCard extends LitElement {
       this._pendingPhysicalWrites.clear();
       if (this._serverCfg) this._clearGeometryGesture();
       this._serverCfg = nextConfig;
+      this._seedDecorStyle(this._serverCfg);
       this._cfgContentFingerprint = nextCfgFingerprint;
     }
     this._cfgRev = cfgResp?.rev ?? this._cfgRev;

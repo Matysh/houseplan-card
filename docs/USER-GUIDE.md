@@ -691,6 +691,10 @@ saved setting.
 The authoritative technical interaction contract is
 [DECOR-EDITOR.md](DECOR-EDITOR.md).
 
+The main-toolbar default colour and style for new objects is saved with the
+plan (#377): it survives a page reload and is shared by everyone who edits
+this plan.
+
 | Tool | Create | Edit |
 |---|---|---|
 | Select | Select an item | Move, scale, rotate; double click properties; Delete/Backspace removes |

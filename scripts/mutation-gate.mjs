@@ -714,6 +714,28 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'decor-default-style-seed-cut',
+    guard: 'node demo/smoke_decor_default_persist.mjs',
+    because: 'without the seed the persisted key is dead weight: every reload silently falls '
+      + 'back to the factory style while the write path keeps pretending to save (#377)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: "    if (raw) this._decorStyle = decorStyleFromSettings(raw, DEFAULT_DECOR_STYLE);",
+      replace: "    void raw;",
+    }],
+  },
+  {
+    id: 'decor-default-style-debounce-cut',
+    guard: 'node demo/smoke_decor_default_persist.mjs',
+    because: 'without the debounce a palette drag streams a config write per input event — '
+      + 'store spam and needless expected_rev races between tabs (#377)',
+    patches: [{
+      file: 'src/houseplan-editor-runtime.ts',
+      find: "      this._persistDecorStyle();\n    }, 1000);",
+      replace: "      this._persistDecorStyle();\n    }, 0);",
+    }],
+  },
+  {
     id: 'opening-light-quantum-identity',
     guard: 'node --test --test-name-pattern="#366" test/logic.test.mjs',
     because: 'an identity quantum brings back ~100 barrier recomputes per moving-gate cycle — '

@@ -1885,6 +1885,18 @@ CONFIG_SCHEMA = vol.All(
                     vol.Optional("glow_radius_cm"): vol.All(vol.Coerce(float), vol.Range(min=10, max=10000)),
                     # background around the plan, all spaces (a space may override)
                     vol.Optional("bg_color"): _COLOR,
+                    # #377: the Background editor's default style for new decor
+                    # objects; absence of the key means the built-in default
+                    vol.Optional("decor_default_style"): vol.Schema(
+                        {
+                            vol.Optional("color"): _COLOR,
+                            vol.Optional("opacity"): vol.All(vol.Coerce(float), vol.Range(min=0, max=1)),
+                            vol.Optional("width_cm"): vol.All(vol.Coerce(float), vol.Range(min=0.1, max=100)),
+                            vol.Optional("fill"): bool,
+                            vol.Optional("fill_color"): _COLOR,
+                            vol.Optional("fill_opacity"): vol.All(vol.Coerce(float), vol.Range(min=0, max=1)),
+                        }
+                    ),
                     # sun on the plan (docs/SUN.md): global defaults
                     vol.Optional("north_deg"): _north_deg,
                     vol.Optional("bg_mode"): _BG_MODE,

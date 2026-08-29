@@ -15,6 +15,11 @@
   existing all-content frame remains the default and the house itself is never
   cropped ([#373](https://github.com/Matysh/houseplan-card/issues/373)).
 
+- The Background editor's default colour and style for new objects now
+  survives a page reload: the choice is saved with the plan
+  (`settings.decor_default_style`) and shared by every editor of that plan
+  ([#377](https://github.com/Matysh/houseplan-card/issues/377)).
+
 ## v1.69.0-beta.4 — 2026-08-29
 
 - The read-only `houseplan-space-card` can now opt into the full plan's radial

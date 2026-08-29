@@ -137,6 +137,50 @@ export function decorStyleOf(
 }
 
 /** Canonical persisted style. Legacy `width` is intentionally removed. */
+/**
+ * #377: the single conversion point between the persisted settings key
+ * `settings.decor_default_style` (snake_case) and the in-memory `DecorStyle`
+ * (camelCase). Unknown fields are ignored; garbage falls back per-field to
+ * the base so a partial or hand-edited key still yields a whole style.
+ */
+export function decorStyleFromSettings(raw: unknown, base: DecorStyle): DecorStyle {
+  if (!raw || typeof raw !== 'object') return { ...base };
+  const source = raw as Record<string, unknown>;
+  const color = typeof source.color === 'string' && source.color ? source.color : base.color;
+  const fillColor = typeof source.fill_color === 'string' && source.fill_color
+    ? source.fill_color : base.fillColor;
+  const widthRaw = Number(source.width_cm);
+  return {
+    color,
+    opacity: clamp01(source.opacity, base.opacity),
+    widthCm: Number.isFinite(widthRaw) && widthRaw > 0
+      ? Math.max(0.1, Math.min(100, widthRaw)) : base.widthCm,
+    fill: typeof source.fill === 'boolean' ? source.fill : base.fill,
+    fillColor,
+    fillOpacity: clamp01(source.fill_opacity, base.fillOpacity),
+  };
+}
+
+/**
+ * #377: the inverse conversion. Returns null when the style equals
+ * DEFAULT_DECOR_STYLE — the default is stored as the ABSENCE of the key
+ * (the bg_color / fill_colors settings pattern).
+ */
+export function decorStyleToSettings(style: DecorStyle): Record<string, unknown> | null {
+  const def = DEFAULT_DECOR_STYLE;
+  if (style.color === def.color && style.opacity === def.opacity
+      && style.widthCm === def.widthCm && style.fill === def.fill
+      && style.fillColor === def.fillColor && style.fillOpacity === def.fillOpacity) return null;
+  return {
+    color: style.color,
+    opacity: clamp01(style.opacity),
+    width_cm: Math.max(0.1, Math.min(100, Number(style.widthCm) || 0.1)),
+    fill: !!style.fill,
+    fill_color: style.fillColor,
+    fill_opacity: clamp01(style.fillOpacity, 0.25),
+  };
+}
+
 export function decorStylePatch(style: DecorStyle, fillable: boolean): Record<string, unknown> {
   return {
     color: style.color,
