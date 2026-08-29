@@ -7,7 +7,7 @@
 import { html, type TemplateResult } from 'lit';
 import {
   DOWNSCALE_JPEG_QUALITY, DOWNSCALE_TARGET_PX, DOWNSCALE_TIMEOUT_MS,
-  downscaleDimensions, probeBackdrop, type BackdropProbe,
+  HARD_DIMENSION, downscaleDimensions, probeBackdrop, type BackdropProbe,
 } from './backdrop-probe';
 import type { I18nKey } from './i18n';
 
@@ -166,7 +166,7 @@ export function renderBackdropGuard(
   const hard = probe.kind === 'hard';
   const body = hard
     ? host._t('backdrop.too_large_body', {
-      w: probe.width ?? 0, h: probe.height ?? 0, limit: 16384,
+      w: probe.width ?? 0, h: probe.height ?? 0, limit: HARD_DIMENSION,
     })
     : probe.kind === 'unknown'
       ? host._t('backdrop.unknown_body')
@@ -176,9 +176,18 @@ export function renderBackdropGuard(
         fileMb: megabytes(guard.file.size),
         decodedMb: megabytes(probe.decodedBytes ?? 0),
       });
+  // r1-M1: while a decision is executing, dismissal must not race it — the
+  // dialog stays up (buttons are disabled), and even if the guard somehow
+  // vanished mid-flight, a stale flow must not apply its result silently.
+  const dismiss = (): void => {
+    if (host._backdropGuard?.busy) return;
+    close();
+  };
+  const stillCurrent = (): boolean => host._backdropGuard?.file === guard.file;
   const original = async (): Promise<void> => {
     if (host._backdropGuard?.busy) return;
     const payload = await encodePlanFile(guard.file, guard.ext, guard.file.name);
+    if (!stillCurrent()) return;
     apply(payload);
     close();
   };
@@ -189,21 +198,23 @@ export function renderBackdropGuard(
     try {
       const out = await downscaleBackdrop(guard);
       const payload = await encodePlanFile(out.blob, out.ext, out.name);
+      if (!stillCurrent()) return;
       apply(payload);
       close();
     } catch {
       // Honest phase 2 (spec §UX): no silent fallback to the original the
       // user just declined — staging stays clean, the toast says what happened.
+      if (!stillCurrent()) return;
       close();
       host._showToast(host._t('backdrop.downscale_failed'));
     }
   };
   return html`<hp-dialog .hass=${hass}
       .title=${host._t(hard ? 'backdrop.too_large_title' : 'backdrop.large_title')}
-      icon="mdi:image-size-select-large" dismiss-on-scrim @hp-close=${() => close()}>
+      icon="mdi:image-size-select-large" dismiss-on-scrim @hp-close=${() => dismiss()}>
     <div class="body"><p>${body}</p></div>
     <div class="row" slot="footer">
-      <button class="btn ghost" ?disabled=${guard.busy} @click=${() => close()}>
+      <button class="btn ghost" ?disabled=${guard.busy} @click=${() => dismiss()}>
         ${host._t('btn.cancel')}</button>
       <span class="spacer"></span>
       ${hard ? null : html`

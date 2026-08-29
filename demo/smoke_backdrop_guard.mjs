@@ -157,6 +157,83 @@ const out = await page.evaluate(async () => {
   delete window.__HP_BACKDROP_TIMEOUT_MS;
   decodeMode = 'real';
 
+  // ── r1-M1: dismissal во время busy не гоняет гонку с исполняющимся выбором ─
+  decodeMode = 'hang';
+  window.__HP_BACKDROP_TIMEOUT_MS = 400;
+  card._toast = '';
+  await pick(bigFile);
+  await waitFor(() => !!card._backdropGuard); await card.updateComplete;
+  guardButtons().find((b) => b.textContent.includes(card._t('backdrop.use_downscaled')))?.click();
+  await waitFor(() => card._backdropGuard?.busy); await card.updateComplete;
+  // Escape/скрим во время busy: hp-close игнорируется, диалог остаётся
+  guardDialog()?.dispatchEvent(new CustomEvent('hp-close', { bubbles: true, composed: true }));
+  await card.updateComplete;
+  out.busyDismissIgnored = !!card._backdropGuard && card._backdropGuard.busy;
+  // а даже если гард снести силой — устаревший поток не подставит planFile
+  card._backdropGuard = null; card.requestUpdate(); await card.updateComplete;
+  await new Promise((resolve) => setTimeout(resolve, 700)); // таймаут отработал
+  out.staleFlowNeverApplies = !card._spaceDialog.planFile
+    && card._toast !== card._t('backdrop.downscale_failed');
+  delete window.__HP_BACKDROP_TIMEOUT_MS;
+  decodeMode = 'real';
+
+  // ── AC8: EXIF-ориентация — настоящий повёрнутый JPEG (APP1 orientation 6) ─
+  const exifSrc = new OffscreenCanvas(8200, 4100);
+  const exifCtx = exifSrc.getContext('2d');
+  exifCtx.fillStyle = '#3a7d2c'; exifCtx.fillRect(0, 0, 8200, 4100);
+  const plainJpeg = new Uint8Array(await (await exifSrc.convertToBlob({
+    type: 'image/jpeg', quality: 0.9,
+  })).arrayBuffer());
+  // APP1/Exif с единственным тегом 0x0112 (Orientation) = 6 (поворот 90° CW)
+  const app1 = Uint8Array.from([
+    0xff, 0xe1, 0x00, 0x22, // APP1: длина 34 = 2 (сама длина) + 32 содержимого
+    0x45, 0x78, 0x69, 0x66, 0x00, 0x00, // "Exif  "
+    0x4d, 0x4d, 0x00, 0x2a, 0x00, 0x00, 0x00, 0x08, // TIFF BE, IFD0 @8
+    0x00, 0x01, // 1 тег
+    0x01, 0x12, 0x00, 0x03, 0x00, 0x00, 0x00, 0x01, 0x00, 0x06, 0x00, 0x00, // Orientation=6
+    0x00, 0x00, 0x00, 0x00, // next IFD = none
+  ]);
+  const rotated = new Uint8Array(2 + app1.length + (plainJpeg.length - 2));
+  rotated.set(plainJpeg.subarray(0, 2), 0);          // SOI
+  rotated.set(app1, 2);                               // EXIF
+  rotated.set(plainJpeg.subarray(2), 2 + app1.length);
+  const rotatedDecoded = await realCIB(new Blob([rotated], { type: 'image/jpeg' }),
+    { imageOrientation: 'from-image' });
+  out.exifFixtureRotates = rotatedDecoded.width === 4100 && rotatedDecoded.height === 8200;
+  rotatedDecoded.close();
+  let seenOrientationOption = null;
+  let exifHookCalls = 0;
+  window.createImageBitmap = (source, options) => {
+    decodeCalls++;
+    exifHookCalls++;
+    seenOrientationOption = options?.imageOrientation ?? null;
+    return realCIB(source, options);
+  };
+  await pick(new File([rotated], 'rotated.jpg', { type: 'image/jpeg' }));
+  await waitFor(() => !!card._backdropGuard); await card.updateComplete;
+  // probe читает НЕповёрнутые размеры из SOF
+  out.exifProbeReadsSof = card._backdropGuard?.probe?.width === 8200
+    && card._backdropGuard?.probe?.height === 4100;
+  guardButtons().find((b) => b.textContent.includes(card._t('backdrop.use_downscaled')))?.click();
+  out.exifReduceApplied = await waitFor(() =>
+    !!card._spaceDialog?.planFile && !card._backdropGuard, 15000);
+  out.exifOptionPassed = seenOrientationOption === 'from-image';
+  const exifDims = await new Promise((resolve) => {
+    const image = new Image();
+    image.onload = () => resolve([image.naturalWidth, image.naturalHeight]);
+    image.onerror = () => resolve([0, 0]);
+    image.src = `data:image/jpeg;base64,${card._spaceDialog?.planFile?.b64}`;
+  });
+  // уменьшенная копия ПОВЁРНУТА: портрет 2048×4096, а не пейзаж
+  out.exifReducedRotated = exifDims[0] === 2048 && exifDims[1] === 4096;
+  card._spaceDialog = { ...card._spaceDialog, planFile: null };
+  window.createImageBitmap = (...args) => {
+    decodeCalls++;
+    if (decodeMode === 'reject') return Promise.reject(new Error('mock decode fail'));
+    if (decodeMode === 'hang') return new Promise(() => {});
+    return realCIB(...args);
+  };
+
   // ── повторный выбор после отказа работает (инпут сбрасывается всегда) ────
   await pick(fileOf(pngHeader(10000, 10000), 'huge.png', 'image/png'));
   out.repickReopensGuard = await waitFor(() => !!card._backdropGuard);

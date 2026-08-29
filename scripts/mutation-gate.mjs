@@ -726,6 +726,7 @@ const MUTANT_DEFINITIONS = [
       find: '    } catch {\n'
         + '      // Honest phase 2 (spec §UX): no silent fallback to the original the\n'
         + '      // user just declined — staging stays clean, the toast says what happened.\n'
+        + '      if (!stillCurrent()) return;\n'
         + '      close();\n'
         + "      host._showToast(host._t('backdrop.downscale_failed'));\n"
         + '    }',
@@ -734,6 +735,22 @@ const MUTANT_DEFINITIONS = [
         + '      apply(payload);\n'
         + '      close();\n'
         + '    }',
+    }],
+  },
+  {
+    id: 'backdrop-busy-dismiss-races-decision',
+    guard: 'node demo/smoke_backdrop_guard.mjs',
+    because: 'Escape/scrim during the running reduce must not race the decision — the dialog '
+      + 'stays up while busy, and a force-cleared guard never applies a stale result (#39 r1-M1)',
+    patches: [{
+      file: 'src/backdrop-pick.ts',
+      find: '  const dismiss = (): void => {\n'
+        + '    if (host._backdropGuard?.busy) return;\n'
+        + '    close();\n'
+        + '  };',
+      replace: '  const dismiss = (): void => {\n'
+        + '    close();\n'
+        + '  };',
     }],
   },
   {

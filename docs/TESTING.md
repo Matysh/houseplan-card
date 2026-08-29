@@ -3375,6 +3375,11 @@ require hands on real hardware — they remain for the human pass.
 - [ ] Corrupt/truncated headers warn without numbers; SVG bypasses the probe
       and is never rasterised [auto: `backdrop-probe.test`,
       `smoke_backdrop_guard`].
+- [ ] An EXIF-rotated JPEG (orientation 6) reduces with the rotation applied:
+      the header probe reads the unrotated SOF, the decode honours
+      `imageOrientation: 'from-image'`, and the reduced copy comes out
+      portrait; dismissal during a running reduce is ignored and a stale flow
+      never applies its result [auto: `smoke_backdrop_guard`].
 
 ## Lazy editor runtime and frontend asset tree (#337)
 
