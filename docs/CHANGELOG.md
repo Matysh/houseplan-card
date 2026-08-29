@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Device markers in the Background editor are now passive, translucent
+  landmarks: their core, ring, value capsule and badges no longer hover, open,
+  actuate or drag, and a drawing or furniture tool receives a press through
+  the whole visible marker instead of losing that point
+  ([#362](https://github.com/Matysh/houseplan-card/issues/362)).
+
 ## v1.69.0-beta.3 — 2026-08-29
 
 - Furniture placement in the Background editor now shows a translucent mouse
