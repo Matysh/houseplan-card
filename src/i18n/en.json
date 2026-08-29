@@ -442,6 +442,8 @@
   "opening.lock_action": "Lock",
   "opening.lock_pending": "Working…",
   "title.close_editor": "Close editor (back to view)",
+  "title.add_device": "Add a device to the plan",
+  "devbar.add": "Add",
   "devbar.rules": "Icon rules",
   "device_inbox.button": "Devices",
   "device_inbox.title": "Devices on the plan",

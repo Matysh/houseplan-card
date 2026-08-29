@@ -156,7 +156,15 @@ const res = await page.evaluate(async () => {
   tabs()[1].click(); await c.updateComplete;
   out.directSwitch = c._mode === 'devices';
   out.devBar = !!sr().querySelector('.editbar.devbar');
-  out.devBarBtns = sr().querySelectorAll('.editbar.devbar .btn:not(.barclose)').length === 2; // devices catalog + icon rules (#29)
+  const deviceToolbarButtons = [...sr().querySelectorAll('.editbar.devbar .btn:not(.barclose)')];
+  const addDeviceButton = deviceToolbarButtons[0];
+  out.devBarBtns = deviceToolbarButtons.length === 3;
+  out.addDeviceShortcutUsesNativeKeyboardSemantics = addDeviceButton?.tagName === 'BUTTON'
+    && addDeviceButton.disabled === false;
+  out.addDeviceShortcut = addDeviceButton?.textContent.trim() === c._t('devbar.add')
+    && addDeviceButton.title === c._t('title.add_device')
+    && addDeviceButton.querySelector('ha-icon')?.getAttribute('icon') === 'mdi:plus-box-outline'
+    && deviceToolbarButtons[1]?.textContent.trim() === c._t('device_inbox.button');
   const swapChrome = sr().querySelector('.editorchrome');
   const swapInner = swapChrome.querySelector('.editorchrome-inner');
   out.editorSwapAnimatesHeight = c._modeTransitionBusy
@@ -164,6 +172,12 @@ const res = await page.evaluate(async () => {
   out.editorSwapAnimatesContent = c._modeTransitionBusy && !!swapInner
     && (c._modeTransitionVisual?.toolbarContentOpacity ?? 1) < 1;
   await settleMode();
+  addDeviceButton.click(); await c.updateComplete;
+  out.addDeviceShortcutOpensNewDialog = !!c._markerDialog
+    && c._markerDialog.name === ''
+    && c._markerDialog.bindingMode === 'virtual'
+    && !Object.prototype.hasOwnProperty.call(c._markerDialog, 'devId');
+  c._markerDialog = null; await c.updateComplete;
   // 5) инструменты устройств из шапки исчезли (в .bar их больше нет)
   out.headerCleanInDev = !sr().querySelector('.bar > .btn[title*="' + (c._t('title.add_device')) + '"]');
   // 6) крестик на панели → Просмотр

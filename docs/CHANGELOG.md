@@ -12,6 +12,10 @@
   [#356](https://github.com/Matysh/houseplan-card/issues/356),
   [#368](https://github.com/Matysh/houseplan-card/issues/368)).
 
+- The Device editor once again has a direct **Add** button immediately before
+  **Devices**, so a new marker can be created without opening the catalog
+  first ([#363](https://github.com/Matysh/houseplan-card/issues/363)).
+
 - A gate or door bound to a position-reporting cover no longer stutters the
   whole card while it moves: the light cut through the opening now steps on a
   5% grid, cutting the heavy geometry recomputes from about a hundred per

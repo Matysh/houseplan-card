@@ -442,6 +442,8 @@
   "opening.lock_action": "Sperren",
   "opening.lock_pending": "Wird ausgeführt…",
   "title.close_editor": "Editor schließen (zur Ansicht zurück)",
+  "title.add_device": "Gerät zum Plan hinzufügen",
+  "devbar.add": "Hinzufügen",
   "devbar.rules": "Symbolregeln",
   "device_inbox.button": "Geräte",
   "device_inbox.title": "Geräte auf dem Plan",

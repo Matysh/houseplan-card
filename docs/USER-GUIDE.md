@@ -520,6 +520,8 @@ and its other entities remain deleted. The complete device stays available in
 
 - drag a marker to save its server-side position;
 - click it to edit name, binding, room, tap action and presentation;
+- **Add** opens the new-device dialog directly, without going through the
+  device catalog;
 - **Devices** opens one searchable lifecycle catalog. Its **On plan**,
   **Available**, **Hidden** and **Available again** tabs explain where every
   exact HA binding is and offer the next valid action;

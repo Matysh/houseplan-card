@@ -11542,6 +11542,10 @@ public _renderDevicesBar(): TemplateResult {
     return html`<div class="editbar devbar">
       <div class="editbar-tools" tabindex="-1" ?inert=${this.host._modeTransitionBusy}>
         <ha-icon icon="mdi:tune-variant" class="warn"></ha-icon>
+        <button class="btn" @click=${() => this._openMarkerDialog()}
+          title=${this.host._t('title.add_device')}>
+          <ha-icon icon="mdi:plus-box-outline"></ha-icon>${this.host._t('devbar.add')}
+        </button>
         <button class="btn ${this.host._showAll ? 'on' : ''}" @click=${() => this._openDeviceInbox()}
           title=${this.host._t('device_inbox.title' as any)}>
           <ha-icon icon="mdi:devices"></ha-icon>${this.host._t('device_inbox.button' as any)}
