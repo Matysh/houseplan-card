@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.69.0-beta.4 — 2026-08-29
+
 - The read-only `houseplan-space-card` can now opt into the full plan's radial
   Glow and wall shadows with `light_pools: true`. It uses the same source
   colour, brightness, radius, openings and physical occluders while remaining
