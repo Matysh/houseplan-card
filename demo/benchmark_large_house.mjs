@@ -5,6 +5,7 @@ import { dirname, resolve } from 'node:path';
 import { launch } from './serve.mjs';
 import { LARGE_HOUSE_COUNTS, makeLargeHouseFixture } from './fixtures/large-house.mjs';
 import { assertFreshDemoBundle } from './bundle-freshness.mjs';
+import { ensureHarnessEditorRuntime } from './editor-runtime-compat.mjs';
 import { summarizeLongTasks, summarizeTimings } from './performance/evaluate.mjs';
 import { assertCardContract, LARGE_HOUSE_CARD_CONTRACT } from './performance/card-contract.mjs';
 
@@ -51,6 +52,9 @@ await page.addStyleTag({
 });
 await page.addScriptTag({
   content: `window.__hpAssertCardContract = ${assertCardContract.toString()};`,
+});
+await page.addScriptTag({
+  content: `window.__hpEnsureHarnessEditorRuntime = ${ensureHarnessEditorRuntime.toString()};`,
 });
 const chromium = await browser.version();
 let buildFingerprint;
@@ -187,6 +191,11 @@ try {
         card._onLabsSnapshot({ active: Object.freeze(['iso']), space: '' });
       }
       card.hass = hassFor(fixture.states);
+      // launch() warms its own bootstrap card, but each measured sample creates
+      // a fresh card. Current lazy bundles therefore need their own controller
+      // construction; monolithic stable bundles remain immediate (#380).
+      if (!await window.__hpEnsureHarnessEditorRuntime(card))
+        throw new Error('large-house editor runtime did not preload');
       window.__hpAssertCardContract(card, cardContract);
       if (requiresIsometric && (typeof card._setProjection !== 'function'
           || !(card._isoGeometryCache instanceof Map))) {

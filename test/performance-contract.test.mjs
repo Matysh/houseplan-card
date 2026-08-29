@@ -37,6 +37,16 @@ test('large-house benchmark declares every private card member it consumes', () 
   );
 });
 
+test('every measured large-house card preloads its own lazy editor runtime (#380)', () => {
+  const source = readFileSync(
+    new URL('../demo/benchmark_large_house.mjs', import.meta.url), 'utf8',
+  );
+  const create = source.indexOf("document.createElement('houseplan-card')");
+  const preload = source.indexOf('await window.__hpEnsureHarnessEditorRuntime(card)', create);
+  const contract = source.indexOf('window.__hpAssertCardContract(card, cardContract)', create);
+  assert.ok(create >= 0 && preload > create && contract > preload);
+});
+
 test('Glow benchmark declares every private card member it consumes', () => {
   const declared = new Set([
     ...declaredMembers(GLOW_CARD_CONTRACT),
