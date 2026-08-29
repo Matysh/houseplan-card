@@ -45,6 +45,17 @@ export const SMOKE_LINKS = [
       + 'reuse and the bounded retry-to-English path cannot be proven from pure registry tests (#348)',
   },
   {
+    symbols: [
+      'probeBackdrop', 'classifyPlanFile', 'downscaleBackdrop', 'renderBackdropGuard',
+      'WARN_DECODED_BYTES', 'HARD_DIMENSION', 'DOWNSCALE_TARGET_PX',
+    ],
+    smokes: ['smoke_backdrop_guard.mjs'],
+    because: 'the production-bundle scenario proves the guard end to end: header-only warning '
+      + 'with zero decode calls, byte-identical keep-original path, a real 6200px reduce to 4096 '
+      + 'with alpha preserved, the cancel-only hard dialog, the honest phase-2 failure (toast, '
+      + 'clean staging, no silent original upload) and the SVG bypass (#39)',
+  },
+  {
     symbols: ['vacMapIdWithFallback', 'vacMapIdFromAttrs', 'readVacTelemetry'],
     smokes: ['smoke_cold_view_vacuum.mjs'],
     because: 'the telemetry-bearing cold scenario proves the vacuum render path (willUpdate '

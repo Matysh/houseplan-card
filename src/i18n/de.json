@@ -1115,5 +1115,14 @@
   "backup.space_done": "Bereich importiert: {rooms} Räume, {markers} Geräte, {refs} bestehende Referenzen wiederhergestellt",
   "backup.full_done": "Backup wiederhergestellt: {spaces} Bereiche, {rooms} Räume, {markers} Geräte",
   "backup.undo_import": "Letzten vollständigen Import rückgängig machen",
-  "backup.import_undone": "Vollständiger Import rückgängig gemacht"
+  "backup.import_undone": "Vollständiger Import rückgängig gemacht",
+  "backdrop.large_title": "Großes Bild",
+  "backdrop.large_body": "Dieses Bild ist {w}×{h} ({fileMb} MB Datei) und benötigt etwa {decodedMb} MB Speicher zur Anzeige. Auf Tablets kann das die Seite zum Absturz bringen.",
+  "backdrop.unknown_body": "Die Bildabmessungen konnten nicht gelesen werden — die Datei ist möglicherweise beschädigt. Fortfahren kann die Seite auf Tablets zum Absturz bringen.",
+  "backdrop.use_downscaled": "Verkleinerte Kopie hochladen",
+  "backdrop.reducing": "Wird verkleinert…",
+  "backdrop.keep_original": "Original behalten",
+  "backdrop.too_large_title": "Bild ist zu groß",
+  "backdrop.too_large_body": "Dieses Bild überschreitet die Anzeigegrenzen des Browsers ({w}×{h}, Limit {limit} px pro Seite). Bitte verkleinern Sie es in einem Desktop-Editor und laden Sie es erneut hoch.",
+  "backdrop.downscale_failed": "Die verkleinerte Kopie konnte nicht erstellt werden. Der aktuelle Plan wurde nicht geändert."
 }

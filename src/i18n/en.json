@@ -1115,5 +1115,14 @@
   "backup.space_done": "Space imported: {rooms} rooms, {markers} devices, {refs} existing references restored",
   "backup.full_done": "Backup restored: {spaces} spaces, {rooms} rooms, {markers} devices",
   "backup.undo_import": "Undo last full import",
-  "backup.import_undone": "Full import undone"
+  "backup.import_undone": "Full import undone",
+  "backdrop.large_title": "Large image",
+  "backdrop.large_body": "This image is {w}×{h} ({fileMb} MB file) and needs about {decodedMb} MB of memory to display. On tablets this can crash the page.",
+  "backdrop.unknown_body": "The image dimensions could not be read — the file may be damaged. Continuing may crash the page on tablets.",
+  "backdrop.use_downscaled": "Upload a reduced copy",
+  "backdrop.reducing": "Reducing…",
+  "backdrop.keep_original": "Keep the original",
+  "backdrop.too_large_title": "Image is too large",
+  "backdrop.too_large_body": "This image exceeds what browsers can display ({w}×{h}, limit {limit} px per side). Please reduce it in a desktop editor and upload again.",
+  "backdrop.downscale_failed": "Could not create the reduced copy. The original plan was not changed."
 }

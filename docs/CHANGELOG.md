@@ -7,6 +7,12 @@
   actuate or drag, and a drawing or furniture tool receives a press through
   the whole visible marker instead of losing that point
   ([#362](https://github.com/Matysh/houseplan-card/issues/362)).
+- Very large backdrop images no longer freeze tablets: the card reads the
+  resolution from the file header before anything heavy happens, shows the
+  real numbers and offers a safe reduced copy (aspect and transparency
+  preserved). Your original file is never modified, and the current plan
+  survives every failure
+  ([#39](https://github.com/Matysh/houseplan-card/issues/39)).
 
 ## v1.69.0-beta.3 — 2026-08-29
 

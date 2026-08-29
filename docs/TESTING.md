@@ -3358,6 +3358,24 @@ require hands on real hardware — they remain for the human pass.
       Popover and forced portal fallback have the same no-layout-shift contract
       [auto: `smoke_help_affordance`].
 
+## Large backdrops (#39, docs/specs/039-large-backdrops.md)
+
+- [ ] A raster whose header claims ≳32 MP opens the warning dialog with real
+      resolution/file/memory numbers BEFORE any decode — zero
+      `createImageBitmap` calls until a choice is made
+      [auto: `smoke_backdrop_guard`, `backdrop-probe.test`].
+- [ ] «Reduced copy» honours aspect and alpha: longest side 4096, PNG with
+      alpha stays PNG, opaque becomes JPEG; the result flows through the
+      ordinary planFile → upload path [auto: `smoke_backdrop_guard`].
+- [ ] «Keep the original» is byte-identical to the legacy path (base64
+      parity) [auto: `smoke_backdrop_guard`].
+- [ ] Beyond 16384 px per side the dialog offers only Cancel; a failed or
+      timed-out reduce shows the toast, leaves staging clean and never
+      uploads the declined original [auto: `smoke_backdrop_guard`].
+- [ ] Corrupt/truncated headers warn without numbers; SVG bypasses the probe
+      and is never rasterised [auto: `backdrop-probe.test`,
+      `smoke_backdrop_guard`].
+
 ## Lazy editor runtime and frontend asset tree (#337)
 
 - [ ] A cold configured View reaches a complete interactive frame without any

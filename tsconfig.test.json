@@ -20,6 +20,7 @@
     "src/rules.ts",
     "src/devices.ts", "src/device-inbox.ts",
     "src/virtual-light-state.ts",
+    "src/backdrop-probe.ts",
     "src/types.ts",
     "src/space-geometry.ts", "src/junction-limits.ts",
     "src/space-order.ts", "src/card-editor-validation.ts",

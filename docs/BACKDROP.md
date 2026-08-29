@@ -64,6 +64,23 @@ scene background
 The paper remains room-shaped; an image without rooms does not create opaque
 paper behind itself.
 
+## Large images (#39)
+
+Before any decode the picked raster is classified from its header bytes only
+(`src/backdrop-probe.ts`): PNG IHDR (+colour type/tRNS for alpha), JPEG SOF,
+WebP VP8/VP8L/VP8X. Thresholds live in that module as the single calibration
+point: a decoded size above `WARN_DECODED_BYTES` (128 MiB ≈ 32 MP) opens a
+warning dialog with the real numbers and offers an aspect-preserving reduced
+copy (longest side `DOWNSCALE_TARGET_PX` = 4096; PNG with alpha stays PNG,
+opaque images become JPEG q0.9, EXIF orientation honoured); a side beyond
+`HARD_DIMENSION` (16384, the browser canvas cap) offers only Cancel. A failed
+or timed-out decode of the reduced copy shows a toast and leaves staging clean
+— the original the user declined is never uploaded silently. Unreadable
+headers behave like a warning without numbers. SVG is never rasterised and
+skips the probe entirely. Calibration matrix and rationale:
+`docs/specs/039-large-backdrops.md`, rerun via
+`demo/benchmark_backdrop_decode.mjs`.
+
 ## Ownership
 
 | Concern | File |

@@ -1,4 +1,5 @@
 import { html, nothing, type TemplateResult } from 'lit';
+import { classifyPlanFile, encodePlanFile, renderBackdropGuard } from './backdrop-pick';
 
 import {
   DEFAULT_CUSTOM_FILL,
@@ -117,30 +118,33 @@ export class HouseplanOnboardingRuntime {
     const input = ev.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file || !this.host._spaceDialog) return;
-    const extMap: Record<string, string> = {
-      'image/svg+xml': 'svg', 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp',
-    };
-    const ext = extMap[file.type] || (file.name.toLowerCase().endsWith('.svg') ? 'svg' : '');
-    if (!ext) {
+    // #39: re-selecting the same file after a guard decision must fire again.
+    input.value = '';
+    const classified = await classifyPlanFile(file);
+    if (classified.kind === 'reject') {
       this.host._showToast(this.host._t('toast.plan_formats'));
       return;
     }
-    const buf = new Uint8Array(await file.arrayBuffer());
-    let bin = '';
-    for (let i = 0; i < buf.length; i += 32768) bin += String.fromCharCode(...buf.subarray(i, i + 32768));
-    const b64 = btoa(bin);
-    const url = URL.createObjectURL(file);
-    const aspect = await new Promise<number>((resolve) => {
-      const image = new Image();
-      image.onload = () => resolve(image.naturalWidth && image.naturalHeight
-        ? image.naturalWidth / image.naturalHeight : 1.414);
-      image.onerror = () => resolve(1.414);
-      image.src = url;
-    });
-    URL.revokeObjectURL(url);
-    this.host._spaceDialog = {
-      ...this.host._spaceDialog, planFile: { ext, b64, aspect, name: file.name },
-    };
+    if (classified.kind === 'guard') {
+      this.host._backdropGuard = classified.state;
+      return;
+    }
+    const payload = await encodePlanFile(file, classified.ext, file.name);
+    if (!this.host._spaceDialog) return;
+    this.host._spaceDialog = { ...this.host._spaceDialog, planFile: payload };
+  }
+
+  public _renderBackdropGuard(): TemplateResult | typeof nothing {
+    return renderBackdropGuard(
+      this.host,
+      (payload) => {
+        if (this.host._spaceDialog) {
+          this.host._spaceDialog = { ...this.host._spaceDialog, planFile: payload };
+        }
+      },
+      () => { this.host._backdropGuard = null; },
+      this.host.hass,
+    ) ?? nothing;
   }
 
   public _toggleServerPlans = async (): Promise<void> => {

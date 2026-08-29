@@ -275,6 +275,7 @@ import {
   type HouseplanMode, type ModeTransitionState, type ModeVisualState, type ModeViewBox,
 } from './mode-transition';
 import { EditorRuntimeLoader, lazyLoadFailureMessage, type EditorRuntimeLoaderState } from './editor-runtime-loader';
+import type { BackdropGuardState } from './backdrop-pick';
 
 // Chromium records a FAILED module in the page module map permanently — a
 // retry of the same URL resolves from that map without touching the network.
@@ -811,6 +812,8 @@ export class HouseplanCard extends LitElement {
   public _editorRuntime: import('./houseplan-editor-runtime').HouseplanEditorRuntime | null = null;
   public _onboardingRuntime: import('./houseplan-onboarding-runtime').HouseplanOnboardingRuntime | null = null;
   private _editorRuntimeLoadingVisible = false;
+  /** #39: pending large-backdrop decision; set only by the lazy pick flow. */
+  public _backdropGuard: BackdropGuardState | null = null;
   private _editorRuntimeLoadingTimer?: number;
   private _editorModeRequest = 0;
   private _warmModeRequest = 0;
@@ -2400,6 +2403,7 @@ export class HouseplanCard extends LitElement {
     _bootSoft: { state: true },
     _continuityEpoch: { state: true },
     _editorRuntimeLoadingVisible: { state: true },
+    _backdropGuard: { state: true },
     _tapConfirm: { state: true },
     hass: { attribute: false },
     _config: { state: true },
@@ -11425,6 +11429,11 @@ export class HouseplanCard extends LitElement {
           : nothing}
         ${this._deviceInbox ? this._editorRuntime ? this._renderDeviceInbox() : nothing : nothing}
         ${this._markerDialog ? this._editorRuntime ? this._renderMarkerDialog() : nothing : nothing}
+        ${this._backdropGuard
+          ? (this._editorRuntime
+            ? this._editorRuntime._renderBackdropGuard()
+            : this._onboardingRuntime?._renderBackdropGuard() ?? nothing)
+          : nothing}
         ${this._vacCalConfirm ? this._editorRuntime ? html`<hp-dialog .hass=${this.hass}
           .title=${this._t('vac.residual_title')} icon="mdi:map-marker-alert-outline"
           dismiss-on-scrim @hp-close=${() => (this._vacCalConfirm = null)}>

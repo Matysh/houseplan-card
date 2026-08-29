@@ -681,6 +681,62 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'backdrop-probe-always-safe',
+    guard: 'node demo/smoke_backdrop_guard.mjs',
+    because: 'a probe that waves every raster through reopens the original hole — a 100 MP scan '
+      + 'decodes unwarned and kills the tablet tab (#39 AC1)',
+    patches: [{
+      file: 'src/backdrop-pick.ts',
+      find: "  if (probe.kind === 'safe') return { kind: 'pass', ext };",
+      replace: "  return { kind: 'pass', ext };",
+    }],
+  },
+  {
+    id: 'backdrop-downscale-drops-alpha',
+    guard: 'node demo/smoke_backdrop_guard.mjs',
+    because: 'a transparent PNG reduced into JPEG silently paints the plan background black — '
+      + 'alpha must survive the reduced copy (#39 AC2)',
+    patches: [{
+      file: 'src/backdrop-pick.ts',
+      find: "    const alpha = state.probe.alpha;",
+      replace: '    const alpha = false;',
+    }],
+  },
+  {
+    id: 'backdrop-hard-demoted-to-warn',
+    guard: 'node demo/smoke_backdrop_guard.mjs',
+    because: 'beyond the 16384 px canvas cap the reduced copy CANNOT be built — offering it is a '
+      + 'lie that ends in a decode failure (#39 AC4 phase 1)',
+    patches: [{
+      file: 'src/backdrop-probe.ts',
+      find: "  const kind: BackdropVerdict = Math.max(width, height) > HARD_DIMENSION\n"
+        + "    ? 'hard'\n"
+        + "    : decodedBytes > WARN_DECODED_BYTES ? 'warn' : 'safe';",
+      replace: "  const kind: BackdropVerdict = "
+        + "decodedBytes > WARN_DECODED_BYTES ? 'warn' : 'safe';",
+    }],
+  },
+  {
+    id: 'backdrop-phase2-falls-back-to-original',
+    guard: 'node demo/smoke_backdrop_guard.mjs',
+    because: 'silently uploading the original the user just declined is the exact dishonesty the '
+      + 'phase-2 contract forbids — staging must stay clean after a failed reduce (#39 AC4b)',
+    patches: [{
+      file: 'src/backdrop-pick.ts',
+      find: '    } catch {\n'
+        + '      // Honest phase 2 (spec §UX): no silent fallback to the original the\n'
+        + '      // user just declined — staging stays clean, the toast says what happened.\n'
+        + '      close();\n'
+        + "      host._showToast(host._t('backdrop.downscale_failed'));\n"
+        + '    }',
+      replace: '    } catch {\n'
+        + '      const payload = await encodePlanFile(guard.file, guard.ext, guard.file.name);\n'
+        + '      apply(payload);\n'
+        + '      close();\n'
+        + '    }',
+    }],
+  },
+  {
     id: 'cold-view-vacuum-mapid-delegated',
     guard: 'node demo/smoke_cold_view_vacuum.mjs',
     because: 'map-id resolution runs inside willUpdate for every vacuum with telemetry — the '

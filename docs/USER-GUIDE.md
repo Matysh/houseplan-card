@@ -248,6 +248,13 @@ its image, grid scale, geometry, Background layer and display overrides.
 ### Plan source
 
 - upload SVG, PNG, JPG or WebP;
+  Very large rasters (roughly 32 megapixels and up) are recognised from the
+  file header before anything heavy happens: a dialog shows the exact
+  resolution and memory numbers and offers a safe reduced copy. Your original
+  file is never modified and the current plan stays untouched in every
+  outcome. Images wider than 16384 px per side cannot be displayed by
+  browsers at all — reduce those on a desktop first. SVG uploads as-is and is
+  never rasterised.
 - select a previously uploaded plan;
 - choose no image and draw the geometry by hand.
 
