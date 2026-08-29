@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.69.0-beta.5 — 2026-08-29
+
 - **Value + state** can now show the exact reading the user needs instead of
   relying only on the automatically chosen entity state. The Device editor
   offers the same states, useful attributes, LQI and linked-light values as

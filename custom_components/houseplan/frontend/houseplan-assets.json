@@ -1,125 +1,125 @@
 {
   "schema": 1,
-  "fingerprint": "1c0a2661ccd125f4f23faab4730974a20d7b63ace15c3be781c5bbe602843d61",
+  "fingerprint": "c49aea67344ecbd52d1b1cd83dee9c815333cc3d295db2ed3fca6d9cf54a832d",
   "entry": "houseplan-card.js",
   "initialViewFiles": [
-    "houseplan-assets/houseplan-card-ClbNPLBK.js",
+    "houseplan-assets/houseplan-card-CyuodvSp.js",
     "houseplan-card.js"
   ],
-  "initialViewGzipBytes": 277941,
+  "initialViewGzipBytes": 277938,
   "lazyFiles": [
-    "houseplan-assets/backdrop-pick-Ara0Hw0d.js",
-    "houseplan-assets/de-BZOAaEAt.js",
-    "houseplan-assets/editor-DGRuvanB.js",
-    "houseplan-assets/fr-wF02nOhD.js",
-    "houseplan-assets/houseplan-editor-runtime-CtEBnmPW.js",
-    "houseplan-assets/houseplan-onboarding-runtime-BChyRw3O.js"
+    "houseplan-assets/backdrop-pick-V8akNul_.js",
+    "houseplan-assets/de-BnfsQCZJ.js",
+    "houseplan-assets/editor-BkkWS-ED.js",
+    "houseplan-assets/fr-Wmhg31Dj.js",
+    "houseplan-assets/houseplan-editor-runtime-DPoPwoYP.js",
+    "houseplan-assets/houseplan-onboarding-runtime-CATDliha.js"
   ],
-  "lazyGzipBytes": 192271,
+  "lazyGzipBytes": 192247,
   "lazyEditorFiles": [
-    "houseplan-assets/backdrop-pick-Ara0Hw0d.js",
-    "houseplan-assets/editor-DGRuvanB.js",
-    "houseplan-assets/houseplan-editor-runtime-CtEBnmPW.js"
+    "houseplan-assets/backdrop-pick-V8akNul_.js",
+    "houseplan-assets/editor-BkkWS-ED.js",
+    "houseplan-assets/houseplan-editor-runtime-DPoPwoYP.js"
   ],
-  "lazyEditorGzipBytes": 140225,
+  "lazyEditorGzipBytes": 140216,
   "lazyOnboardingFiles": [
-    "houseplan-assets/backdrop-pick-Ara0Hw0d.js",
-    "houseplan-assets/houseplan-onboarding-runtime-BChyRw3O.js"
+    "houseplan-assets/backdrop-pick-V8akNul_.js",
+    "houseplan-assets/houseplan-onboarding-runtime-CATDliha.js"
   ],
-  "lazyOnboardingGzipBytes": 9450,
+  "lazyOnboardingGzipBytes": 9444,
   "lazyLocaleFiles": [
-    "houseplan-assets/de-BZOAaEAt.js",
-    "houseplan-assets/fr-wF02nOhD.js"
+    "houseplan-assets/de-BnfsQCZJ.js",
+    "houseplan-assets/fr-Wmhg31Dj.js"
   ],
-  "lazyLocaleGzipBytes": 45552,
+  "lazyLocaleGzipBytes": 45538,
   "files": [
     {
-      "path": "houseplan-assets/backdrop-pick-Ara0Hw0d.js",
-      "sha256": "fff25614b61ef0b0c99b6e7e859bc180e6c6c9c07e8c6f629a0aecc398d30c16",
+      "path": "houseplan-assets/backdrop-pick-V8akNul_.js",
+      "sha256": "4cc3fcf1bc098a01d9ef870badcf36dedee9ba4be1118b08ad83eef54e79779b",
       "rawBytes": 6967,
-      "gzipBytes": 2956,
+      "gzipBytes": 2951,
       "isEntry": false,
       "imports": [
-        "houseplan-assets/houseplan-card-ClbNPLBK.js"
+        "houseplan-assets/houseplan-card-CyuodvSp.js"
       ],
       "dynamicImports": []
     },
     {
-      "path": "houseplan-assets/de-BZOAaEAt.js",
-      "sha256": "f96555802b1dd563266cb91a2d60b6d929a78124c9b39de21ec57ecdf737b929",
+      "path": "houseplan-assets/de-BnfsQCZJ.js",
+      "sha256": "31b20098ba0421c0b816ee7ea0c48d0949f98b7f77314b923c3753c031cdc6b9",
       "rawBytes": 75572,
-      "gzipBytes": 22996,
+      "gzipBytes": 22989,
       "isEntry": false,
       "imports": [],
       "dynamicImports": []
     },
     {
-      "path": "houseplan-assets/editor-DGRuvanB.js",
-      "sha256": "b349264ac92b1202d1062529bb932905746fc4b452e936c843fa7530d0c42e3d",
+      "path": "houseplan-assets/editor-BkkWS-ED.js",
+      "sha256": "10047f3867c70e9043669906de59ad84fc758de5bd6bffdddc62a9946281997e",
       "rawBytes": 3831,
-      "gzipBytes": 1584,
+      "gzipBytes": 1580,
       "isEntry": false,
       "imports": [
-        "houseplan-assets/houseplan-card-ClbNPLBK.js"
+        "houseplan-assets/houseplan-card-CyuodvSp.js"
       ],
       "dynamicImports": []
     },
     {
-      "path": "houseplan-assets/fr-wF02nOhD.js",
-      "sha256": "a47ac2c6d4080c852e132aebe529af28e482b9a737abbb9a3494b98c4098df92",
+      "path": "houseplan-assets/fr-Wmhg31Dj.js",
+      "sha256": "23be1755bf6205ff1eaa82166a51d3dcdcb761b6ea5183f1c928fe3f5de2a4db",
       "rawBytes": 77710,
-      "gzipBytes": 22556,
+      "gzipBytes": 22549,
       "isEntry": false,
       "imports": [],
       "dynamicImports": []
     },
     {
-      "path": "houseplan-assets/houseplan-card-ClbNPLBK.js",
-      "sha256": "05b33313a780bc78aacc62028f9008d441632d5cc43b783ac500a4c1f15dce5e",
+      "path": "houseplan-assets/houseplan-card-CyuodvSp.js",
+      "sha256": "f47157cc4a17f79be4bba79cc23112cf19c761f844a526dfd8c7e4d5309103d4",
       "rawBytes": 979430,
-      "gzipBytes": 277145,
+      "gzipBytes": 277146,
       "isEntry": false,
       "imports": [],
       "dynamicImports": [
-        "houseplan-assets/de-BZOAaEAt.js",
-        "houseplan-assets/editor-DGRuvanB.js",
-        "houseplan-assets/fr-wF02nOhD.js",
-        "houseplan-assets/houseplan-editor-runtime-CtEBnmPW.js",
-        "houseplan-assets/houseplan-onboarding-runtime-BChyRw3O.js"
+        "houseplan-assets/de-BnfsQCZJ.js",
+        "houseplan-assets/editor-BkkWS-ED.js",
+        "houseplan-assets/fr-Wmhg31Dj.js",
+        "houseplan-assets/houseplan-editor-runtime-DPoPwoYP.js",
+        "houseplan-assets/houseplan-onboarding-runtime-CATDliha.js"
       ]
     },
     {
-      "path": "houseplan-assets/houseplan-editor-runtime-CtEBnmPW.js",
-      "sha256": "319278c617ae813077026c60a961c3e91163a8e64f0c0142a131d8b8a5205c6c",
+      "path": "houseplan-assets/houseplan-editor-runtime-DPoPwoYP.js",
+      "sha256": "28e5ddd4005a621135d9fa4ac6ed74c4c3c82b11ac80a879802a0c9cbee2c773",
       "rawBytes": 526486,
       "gzipBytes": 135685,
       "isEntry": false,
       "imports": [
-        "houseplan-assets/backdrop-pick-Ara0Hw0d.js",
-        "houseplan-assets/houseplan-card-ClbNPLBK.js"
+        "houseplan-assets/backdrop-pick-V8akNul_.js",
+        "houseplan-assets/houseplan-card-CyuodvSp.js"
       ],
       "dynamicImports": []
     },
     {
-      "path": "houseplan-assets/houseplan-onboarding-runtime-BChyRw3O.js",
-      "sha256": "4c76cf33d28962cef45156c6cd94a1f2818cc2010aa7d931c30978b31f4557b7",
+      "path": "houseplan-assets/houseplan-onboarding-runtime-CATDliha.js",
+      "sha256": "193da3d08a6eee74f1daaf1bb5f9d232228f8251c3b783606f833ba3eb35b778",
       "rawBytes": 26195,
-      "gzipBytes": 6494,
+      "gzipBytes": 6493,
       "isEntry": false,
       "imports": [
-        "houseplan-assets/backdrop-pick-Ara0Hw0d.js",
-        "houseplan-assets/houseplan-card-ClbNPLBK.js"
+        "houseplan-assets/backdrop-pick-V8akNul_.js",
+        "houseplan-assets/houseplan-card-CyuodvSp.js"
       ],
       "dynamicImports": []
     },
     {
       "path": "houseplan-card.js",
-      "sha256": "47008127109b6f4b67935548e4513dccda7f7bff6a3c458e7b3fe310b0c89e49",
+      "sha256": "9fc2044a142b4c2017b947a504aa805dbbde4bab2fd7c8e0b257500ca2c935ef",
       "rawBytes": 1183,
-      "gzipBytes": 796,
+      "gzipBytes": 792,
       "isEntry": true,
       "imports": [
-        "houseplan-assets/houseplan-card-ClbNPLBK.js"
+        "houseplan-assets/houseplan-card-CyuodvSp.js"
       ],
       "dynamicImports": []
     }
