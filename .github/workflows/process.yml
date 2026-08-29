@@ -266,9 +266,18 @@ jobs:
           before=$(git rev-parse "origin/$BRANCH")
           echo "dev впереди на $behind коммит(ов) — привожу ветку"
           if ! git rebase origin/dev; then
+            # Список снимается ДО abort: он же снимает состояние конфликта, и
+            # тогда автору достаётся «не ребейзится» без единого имени файла (#364).
+            files=$(git diff --name-only --diff-filter=U | sort -u | paste -sd'\n' -)
             git rebase --abort || true
-            echo "conflict=true" >> "$GITHUB_OUTPUT"
+            {
+              echo 'conflict=true'
+              echo 'conflicts<<EOF_FILES'
+              printf '%s\n' "${files:-(git не назвал файлы)}"
+              echo 'EOF_FILES'
+            } >> "$GITHUB_OUTPUT"
             echo "::warning::ветка $BRANCH не ребейзится на dev без конфликта — ревью не запускается"
+            printf 'конфликтуют:\n%s\n' "${files:-(git не назвал файлы)}"
             exit 0
           fi
           # --force-with-lease с явным ожидаемым значением обязателен: между
@@ -308,9 +317,16 @@ jobs:
           GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
           NUM: ${{ github.event.issue.number }}
           BRANCH: ${{ steps.branch.outputs.name }}
+          CONFLICTS: ${{ steps.rebase.outputs.conflicts }}
         run: |
           cat > /tmp/stale.md <<EOF
           **Ревью не запускалось:** ветка \`$BRANCH\` не ребейзится на \`dev\` без конфликта. Код никто не читал, вердикта нет, цикл ревью не израсходован.
+
+          Конфликтуют:
+
+          \`\`\`
+          $CONFLICTS
+          \`\`\`
 
           Проверка стоит до ревью намеренно: конфликт всё равно вернул бы задачу, но уже после сорока минут работы ревьюера и потраченных лимитов.
 
@@ -733,6 +749,30 @@ jobs:
           echo "green=$green" >> "$GITHUB_OUTPUT"
           echo "from=$from"   >> "$GITHUB_OUTPUT"
           echo "to=$to"       >> "$GITHUB_OUTPUT"
+
+      # Ревью идёт десятки минут, а dev за это время двигается (28 августа —
+      # четыре раза за день). Вердикт при этом вынесен по дереву, которое уже не
+      # совпадает с вершиной линии, и слияние приведёт ветку к dev — то есть в
+      # dev уедет код, отличный от прочитанного (§7.2). Молчать об этом нельзя,
+      # но и шуметь на каждом прогоне ни к чему: строка появляется только когда
+      # dev действительно ушёл и вердикт зелёный, то есть слияние вот-вот
+      # случится (#364).
+      - name: dev ушёл вперёд, пока шло ревью
+        if: steps.rebase.outputs.conflict != 'true' && needs.guard.outputs.stage == 'code'
+        env:
+          GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
+          NUM: ${{ github.event.issue.number }}
+          MATERIAL: ${{ steps.material.outputs.sha }}
+          GREEN: ${{ steps.decide.outputs.green }}
+        run: |
+          git fetch -q origin dev
+          moved=$(git rev-list --count "$MATERIAL..origin/dev")
+          echo "dev продвинулся на $moved коммит(ов) с момента фиксации материала"
+          echo "- dev продвинулся на **$moved** коммит(ов) во время ревью" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$moved" -eq 0 ] || [ "$GREEN" != "true" ]; then exit 0; fi
+          short=$(git rev-parse --short "$MATERIAL")
+          gh issue comment "$NUM" --repo "${{ github.repository }}" --body \
+            "Пока шло ревью, \`dev\` продвинулся на $moved коммит(ов). Материал ревью — \`$short\`. Вердикт вынесен по дереву, которое уже не совпадает с вершиной линии: слияние приведёт ветку к dev, и это другой код (§7.2)."
 
       # S8-merged утверждает, что код в dev. Значит слияние обязано произойти
       # ДО метки, иначе она врёт в промежутке.
