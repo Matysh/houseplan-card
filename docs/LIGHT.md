@@ -139,7 +139,10 @@ pass over the layer costs a fifth of one blurred mask per source.
 ## Caching
 
 Barriers are keyed by their geometry fingerprint plus a compact, sorted
-signature of bound interior door/gate opening amounts, never by `_cfgEpoch`:
+signature of bound interior door/gate opening amounts (quantised to the
+0.05 grid of `OPENING_LIGHT_AMOUNT_QUANTUM`, #366 — a moving cover steps the
+light in 5% increments instead of forcing a recompute per percent), never by
+`_cfgEpoch`:
 the epoch lags behind geometry edited in place, and a stale barrier set is
 invisible — the plan simply keeps lighting through a wall or closed door that
 now exists. Unrelated HA updates preserve the signature and hit the bounded

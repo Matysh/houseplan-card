@@ -24,7 +24,9 @@ import {
   normalizeDeviceDisplay, isAlarmCapable,
   liveText, liveTextValue, liveTextReference, liveTextToken,
   hassValue, valueWithUnit, decorTextScale, decorTextLines,
-  LIVE_TEXT_DASH, LIVE_TEXT_VALUE_MAX, DECOR_TEXT_SCALE_MIN, DECOR_TEXT_SCALE_MAX } from '../test-build/logic.js';
+  LIVE_TEXT_DASH, LIVE_TEXT_VALUE_MAX, DECOR_TEXT_SCALE_MIN, DECOR_TEXT_SCALE_MAX,
+  quantizeOpeningLightAmount,
+} from '../test-build/logic.js';
 import {
   iconFor, compileIconRules, isValidPattern, iconFromDeviceClasses,
 } from '../test-build/rules.js';
@@ -1529,4 +1531,38 @@ test('liveTextValue: a formatter that omits the unit still gets one (the demo st
   const h = { states: hassLive.states, formatEntityState: (st) => st.state };
   assert.equal(liveTextValue(h, { entity: 'sensor.tank' }), '68 %',
     'formatEntityState returning a bare state must not cost the label its unit');
+});
+
+test('квант amount света: границы, узлы и ≤21 сигнатура за полный ход (#366)', () => {
+  // AC1: точные узлы и зажимы
+  assert.equal(quantizeOpeningLightAmount(0), 0);
+  assert.equal(quantizeOpeningLightAmount(1), 1);
+  assert.equal(quantizeOpeningLightAmount(NaN), 0);
+  assert.equal(quantizeOpeningLightAmount(-1), 0);
+  assert.equal(quantizeOpeningLightAmount(2), 1);
+  assert.equal(quantizeOpeningLightAmount(0.30), quantizeOpeningLightAmount(0.31), 'один узел');
+  assert.notEqual(quantizeOpeningLightAmount(0.30), quantizeOpeningLightAmount(0.33), 'разные узлы');
+
+  // AC2: свип 0..1 шагом 0.001 через сигнатуру — не больше 21 различной
+  const signatures = new Set();
+  for (let step = 0; step <= 1000; step++) {
+    const amount = quantizeOpeningLightAmount(step / 1000);
+    signatures.add(openingLightStateSignature([
+      { id: 'gate', type: 'gate', contact: 'cover.gate', amount },
+    ]));
+  }
+  assert.ok(signatures.size <= 21, `сигнатур ${signatures.size}, ожидалось ≤21`);
+
+  // конечные положения совпадают с неквантованными (binary-регресс, AC3)
+  const closed = openingLightStateSignature([
+    { id: 'door', type: 'door', contact: 'binary_sensor.d', amount: 0 },
+  ]);
+  const open = openingLightStateSignature([
+    { id: 'door', type: 'door', contact: 'binary_sensor.d', amount: 1 },
+  ]);
+  assert.equal(closed, 'door:0.000');
+  assert.equal(open, 'door:1.000');
+  assert.equal(openingLightStateSignature([
+    { id: 'door', type: 'door', contact: 'binary_sensor.d', amount: quantizeOpeningLightAmount(1) },
+  ]), open, 'квант единицы байт-в-байт');
 });

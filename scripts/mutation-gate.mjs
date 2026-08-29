@@ -681,6 +681,18 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'opening-light-quantum-identity',
+    guard: 'node --test --test-name-pattern="#366" test/logic.test.mjs',
+    because: 'an identity quantum brings back ~100 barrier recomputes per moving-gate cycle — '
+      + 'the sweep unit must bound distinct signatures to the 0.05 grid (#366)',
+    patches: [{
+      file: 'src/logic.ts',
+      find: '  return Math.min(1, Math.max(0,\n'
+        + '    Math.round(safe / OPENING_LIGHT_AMOUNT_QUANTUM) * OPENING_LIGHT_AMOUNT_QUANTUM));',
+      replace: '  return safe;',
+    }],
+  },
+  {
     id: 'backdrop-probe-always-safe',
     guard: 'node demo/smoke_backdrop_guard.mjs',
     because: 'a probe that waves every raster through reopens the original hole — a 100 MP scan '
