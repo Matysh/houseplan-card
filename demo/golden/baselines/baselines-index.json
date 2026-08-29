@@ -1,11 +1,11 @@
 {
   "schema": 1,
-  "matrixVersion": 50,
-  "acceptedAt": "2026-08-29T09:39:46.951Z",
-  "sourceFingerprint": "f3809810087222d403b380d942a5162a92cae6e75be9ec5093b83c97472e5df6",
+  "matrixVersion": 51,
+  "acceptedAt": "2026-08-29T20:06:16.499Z",
+  "sourceFingerprint": "1c0a2661ccd125f4f23faab4730974a20d7b63ace15c3be781c5bbe602843d61",
   "chromium": "151.0.7922.34",
   "witnesses": {
-    "count": 128,
+    "count": 130,
     "floor": 10
   },
   "scenarios": {
@@ -89,6 +89,7 @@
     "openings-hidden-view-dark": "19ab4fd2ffce0fea0fe609b007a3e60f7abd84b40935cbf3c5fa9dc1fda21046",
     "lighting-glow-sun-dark": "08e2964df6fd03abad4b9a81f1dbd0fe3812fb6b5f7908aeb027ad2953b2f88c",
     "device-value-badge-positions-dark": "75ab0210d697f952b8a8977649e84308de3ce3b59c84ec93071179a1d6cb015d",
+    "device-value-face-cover-source-dark": "c48fa33e0a85164ee64bfce6dbc4127c96b4a1c065e4604310f1b16be144639d",
     "device-icon-state-table-light": "85c785824ccafc2d5f50e834ad2d746319d64ecb292d1b9cf7fab8661d5d410d",
     "device-icon-state-table-dark": "03a90523132c3dbe6c78d44d01fe89df93e2d0474f91ef84e7107e6e4bc7d337",
     "device-text-shell-long-light": "97a113b5164f373b4af2922c8e71bc1f063d8c2761b72c3182697fcb1aac3cab",
