@@ -14,8 +14,9 @@
  * generated from House Plan's own top-view SVG pack. A small compatibility
  * set that is absent from the pack stays expressed as unit-box primitives.
  * Both forms resolve to one path plus its native coordinate box; the renderer
- * scales that box to the stored real-world size and keeps the configured decor
- * stroke stable with `vector-effect="non-scaling-stroke"`.
+ * scales that box to the stored real-world size. The renderer keeps the
+ * configured decor stroke stable through that local non-uniform transform,
+ * while `furniturePlanScreenScale` restores the outer physical plan zoom.
  *
  * THE CONVENTION EVERY SYMBOL OBEYS:
  *   - x points right and y points DOWN (SVG); generated art keeps its native
@@ -357,8 +358,8 @@ function primitivePathD(s: FurnitureSymbol, w: number, h: number): string {
 }
 
 /** Native one-path artwork and its coordinate box. The renderer scales this
- * box non-uniformly to the user's stored dimensions and keeps the decor stroke
- * physical with `vector-effect=non-scaling-stroke`. */
+ * box non-uniformly to the user's stored dimensions; the furniture stroke
+ * helpers below separate that local scale from the outer plan camera. */
 export function furnitureGraphic(id: string): FurnitureGraphic | null {
   const symbol = furnitureSymbol(id);
   if (!symbol) return null;
@@ -373,6 +374,52 @@ export function furniturePathD(id: string, w: number, h: number): string {
   const symbol = furnitureSymbol(id);
   if (!symbol || !(w > 0) || !(h > 0)) return '';
   return symbol.art?.d || primitivePathD(symbol, w, h);
+}
+
+/**
+ * Uniform plan-user-unit -> CSS-pixel scale of the SVG viewport.
+ *
+ * Furniture artwork uses a local non-uniform transform for independent width
+ * and depth. `vector-effect=non-scaling-stroke` correctly rejects that local
+ * transform, but it also rejects the outer SVG viewBox camera. Supplying this
+ * one outer scale as the path's stroke width restores the physical zoom while
+ * keeping horizontal, vertical and diagonal artwork strokes equally thick.
+ *
+ * Invalid/zero layout is transient during first mount. Returning 1 is the
+ * finite old-behaviour fallback; ResizeObserver requests the measured render
+ * before the boot veil reveals the plan.
+ */
+export function furniturePlanScreenScale(
+  viewportWidth: unknown,
+  viewportHeight: unknown,
+  viewBoxWidth: unknown,
+  viewBoxHeight: unknown,
+): number {
+  const viewportW = Number(viewportWidth);
+  const viewportH = Number(viewportHeight);
+  const viewW = Number(viewBoxWidth);
+  const viewH = Number(viewBoxHeight);
+  if (![viewportW, viewportH, viewW, viewH].every((value) => Number.isFinite(value) && value > 0))
+    return 1;
+  const scale = Math.min(viewportW / viewW, viewportH / viewH);
+  return Number.isFinite(scale) && scale > 0 ? scale : 1;
+}
+
+/** Physical furniture stroke expressed in CSS pixels for a non-scaling path. */
+export function furnitureStrokePx(
+  strokeUnits: unknown,
+  planScreenScale: unknown,
+  fallbackStrokeUnits = 1,
+): number {
+  const rawStroke = Number(strokeUnits);
+  const fallback = Number(fallbackStrokeUnits);
+  const stroke = Number.isFinite(rawStroke) && rawStroke > 0
+    ? rawStroke
+    : Number.isFinite(fallback) && fallback > 0 ? fallback : 1;
+  const rawScale = Number(planScreenScale);
+  const scale = Number.isFinite(rawScale) && rawScale > 0 ? rawScale : 1;
+  const result = stroke * scale;
+  return Number.isFinite(result) && result > 0 ? result : stroke;
 }
 
 // ------------------------------ the wall magnet -----------------------------

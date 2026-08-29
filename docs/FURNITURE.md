@@ -77,10 +77,14 @@ cannot nest optgroups.
 
 Each object is still one `<path>` and one erase hit path. Designer artwork
 keeps its native SVG `viewBox`; the renderer applies the user's stored width
-and depth with a non-uniform transform and uses
-`vector-effect="non-scaling-stroke"`. Consequently:
+and depth with a non-uniform transform. `vector-effect="non-scaling-stroke"`
+rejects only that local width/depth distortion in the visible result; the
+renderer separately applies the outer plan viewBox scale to the stroke width.
+Consequently:
 
 - resizing changes the physical object box without distorting line weight;
+- camera zoom changes the visible line weight exactly like other physical
+  decor with the same `width_cm`;
 - the user's decor colour, opacity and physical line width remain authoritative;
 - `data-hp="decor"`, `data-kind="furniture"`, `data-id` and `data-symbol`
   remain stable for card-mod;
