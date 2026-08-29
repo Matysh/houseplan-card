@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- Breaking for external writers (scripts, automations, custom integrations
+  that write plans directly): `houseplan/config/set` and `houseplan/layout/set`
+  over a non-empty store now require `expected_rev` and answer `conflict`
+  without it. Read the current `rev` from `houseplan/config/get` /
+  `houseplan/layout/get` first; the card itself has sent the revision since
+  v1.60 and is unaffected
+  ([#340](https://github.com/Matysh/houseplan-card/issues/340),
+  [#356](https://github.com/Matysh/houseplan-card/issues/356),
+  [#368](https://github.com/Matysh/houseplan-card/issues/368)).
+
 - A gate or door bound to a position-reporting cover no longer stutters the
   whole card while it moves: the light cut through the opening now steps on a
   5% grid, cutting the heavy geometry recomputes from about a hundred per

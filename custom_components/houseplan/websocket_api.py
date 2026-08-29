@@ -594,8 +594,9 @@ async def ws_layout_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             )
             connection.send_error(
                 msg["id"], "conflict",
-                f"Layout revision is required; reload the layout "
-                f"(current rev {current_rev})",
+                f"Layout revision is required; reload the layout, or — for "
+                f"external clients — include expected_rev from "
+                f"houseplan/layout/get (current rev {current_rev})",
             )
             return
         if "expected_rev" in msg and msg["expected_rev"] != current_rev:
@@ -1322,8 +1323,9 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             )
             connection.send_error(
                 msg["id"], "conflict",
-                f"Configuration revision is required; reload the configuration "
-                f"(current rev {current_rev})",
+                f"Configuration revision is required; reload the configuration, "
+                f"or — for external clients — include expected_rev from "
+                f"houseplan/config/get (current rev {current_rev})",
             )
             return
         if "expected_rev" in msg and msg["expected_rev"] != current_rev:
