@@ -180,7 +180,7 @@ const res = await page.evaluate(async () => {
   }
   c._decorTool = 'text'; c._decorTextDialog = null;
   c._decorPointerDown({
-    target: sr().querySelector('.stage'), preventDefault() {}, pointerType: 'mouse', pointerId: 371,
+    target: sr().querySelector('.stage'), preventDefault() {}, pointerType: 'mouse', button: 0, pointerId: 371,
     clientX: sr().querySelector('.stage').getBoundingClientRect().left + 12,
     clientY: sr().querySelector('.stage').getBoundingClientRect().top + 12,
   });
