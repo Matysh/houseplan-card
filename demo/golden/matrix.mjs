@@ -1,7 +1,7 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 50;
+export const GOLDEN_MATRIX_VERSION = 51;
 
 const stage = { capture: 'stage', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0005 } };
 const page = { capture: 'page', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0008 } };
@@ -492,6 +492,25 @@ export const GOLDEN_SCENARIOS = Object.freeze([
       'golden-presence': { s: 'golden-lighting', x: 0.80, y: 0.68 },
       'golden-climate': { s: 'golden-lighting', x: 0.80, y: 0.28 },
     },
+    theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
+  { id: 'device-value-face-cover-source-dark', fixture: 'visual',
+    space: 'golden-lighting', mode: 'view', glowEnabled: false, sunRays: false,
+    showNames: false,
+    markerOverrides: [{
+      id: 'golden-left-linkquality', binding: 'entity:cover.golden_door_half',
+      display: 'value', size: 3,
+      value_source: {
+        kind: 'entity_attribute', entity_id: 'cover.golden_door_half',
+        attribute: 'current_position',
+      },
+    }],
+    stateOverrides: {
+      'cover.golden_door_half': { attributes: { current_position: 42 } },
+    },
+    layoutOverrides: {
+      'golden-left-linkquality': { s: 'golden-lighting', x: 0.50, y: 0.50 },
+    },
+    deviceOnly: 'golden-left-linkquality',
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   ...['light', 'dark'].map((theme) => ({
     id: `device-icon-state-table-${theme}`, fixture: 'visual', space: 'golden-lighting', mode: 'view',

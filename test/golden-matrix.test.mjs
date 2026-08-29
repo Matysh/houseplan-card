@@ -140,7 +140,8 @@ test('golden matrix covers required geometry, rendering and adaptive surfaces', 
     'fill-light', 'fill-temp', 'fill-lqi', 'lighting', 'hover', 'zoom-040', 'zoom-250',
     'warm-remount', 'dialog-mobile', 'color-popover', 'tray-wide', 'tray-medium', 'sun-window',
     'tray-narrow', 'opaque-glow-two-doorways', 'filled-tunnel', 'opening-placement',
-    'backup-full', 'backup-space', 'backup-plan-only', 'value-badge-positions', 'isometric-geometry',
+    'backup-full', 'backup-space', 'backup-plan-only', 'value-badge-positions',
+    'value-face-cover-source', 'isometric-geometry',
     'isometric-live-layers', 'isometric-no-borders', 'isometric-touch-kiosk',
     'isometric-large-warm-remount', 'split-corner-wall', 'plan-snap-endpoint',
     'plan-snap-line-gaps', 'wall-junctions', 'isometric-wall-junctions',
@@ -372,7 +373,7 @@ test('sun-ray golden requires browser-painted light from a state-only sun entity
   assert.ok(scenario);
   const fixture = prepareGoldenFixture(scenario);
   const space = fixture.config.spaces.find((item) => item.id === scenario.space);
-  assert.equal(GOLDEN_MATRIX_VERSION, 50);
+  assert.equal(GOLDEN_MATRIX_VERSION, 51);
   assert.equal(space.settings.sun_rays, true);
   assert.equal(scenario.northDeg, 90,
     'the sign-sensitive golden must keep a non-zero north direction');
@@ -585,6 +586,24 @@ test('value badge golden covers four positions and bottom badge with separate LQ
     fixture.config.markers.find((marker) => marker.id === 'golden-climate').value_badge.position,
     'bottom',
   );
+});
+
+test('explicit cover value-source golden pins the 42 percent value face', () => {
+  const scenario = GOLDEN_SCENARIOS.find(
+    (item) => item.id === 'device-value-face-cover-source-dark',
+  );
+  assert.ok(scenario);
+  assert.equal(scenario.deviceOnly, 'golden-left-linkquality');
+  const fixture = prepareGoldenFixture(scenario);
+  const marker = fixture.config.markers.find((item) => item.id === scenario.deviceOnly);
+  assert.equal(marker.binding, 'entity:cover.golden_door_half');
+  assert.equal(marker.display, 'value');
+  assert.deepEqual(marker.value_source, {
+    kind: 'entity_attribute',
+    entity_id: 'cover.golden_door_half',
+    attribute: 'current_position',
+  });
+  assert.equal(fixture.states['cover.golden_door_half'].attributes.current_position, 42);
 });
 
 test('device icon state-table goldens cover both themes and design facets', () => {
