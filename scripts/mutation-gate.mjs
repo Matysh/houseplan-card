@@ -681,14 +681,14 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
-    id: 'french-locale-entry-removed',
+    id: 'french-locale-wrong-dictionary',
     guard: 'node demo/smoke_french_locale.mjs',
-    because: 'dropping the fr registry entry silently reverts French profiles to English — the '
-      + 'community contribution must stay wired (#371)',
+    because: 'a French profile silently reading another dictionary is invisible to parity units — '
+      + 'only the bundle smoke proves the fr entry loads the fr chunk (#371)',
     patches: [{
       file: 'src/i18n/registry.ts',
-      find: "  { code: 'fr', nativeLabel: 'Français', loadDictionary: loadFrench },\n",
-      replace: '',
+      find: "  { code: 'fr', nativeLabel: 'Français', loadDictionary: loadFrench },",
+      replace: "  { code: 'fr', nativeLabel: 'Français', loadDictionary: loadGerman },",
     }],
   },
   {
