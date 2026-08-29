@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "matrixVersion": 50,
-  "acceptedAt": "2026-08-29T08:39:24.783Z",
-  "sourceFingerprint": "e45ac741d448e089239176cab2ff317351e9b80db7d2f7434e7b7fd34c0c8e22",
+  "acceptedAt": "2026-08-29T09:39:46.951Z",
+  "sourceFingerprint": "f3809810087222d403b380d942a5162a92cae6e75be9ec5093b83c97472e5df6",
   "chromium": "151.0.7922.34",
   "witnesses": {
-    "count": 123,
+    "count": 128,
     "floor": 10
   },
   "scenarios": {
@@ -65,10 +65,10 @@
     "opening-symbol-diagonal-partition-dark": "620102c00e77613cb341c906829bfcc7e9a5430075aa576f563adafa8bdd8f08",
     "opening-symbol-flip-pairs-light": "6d780d1d06909e6e5a7ebb35987b9681d6902d78408e974dfe2fe587521990ce",
     "isometric-opening-symbol-parity-dark": "1e254ed43da00a16d3048e9a2d29db0a43c7790991b1006ecb7205d002bd1f63",
-    "geometry-devices-editor-dark": "acc779a2a21d5c2a26f40d1a23495cafaffc460c57c1100660fb3cde554303f1",
+    "geometry-devices-editor-dark": "a9a9d22b37e03fde37120889a4d9aa50b9d318a31e416504f74e2905b5d947ff",
     "device-inbox-desktop-en-light": "c04254626f613b11e1b9165abf6bfad4b04a2670acab2887e38062d7d16b4533",
     "device-inbox-desktop-ru-dark": "2e7e7175ed770fea657828beda68b62d6eb657a4b72222b1977df3d7d692b0d6",
-    "device-inbox-narrow-ru-dark": "5263f518d4a415caedbb7917c79f9acbb03de234feec11e3128c235d2bd5b39f",
+    "device-inbox-narrow-ru-dark": "d279390eb2ee323ccc1e4fe712cb3b0788f258c5e50502393051debcee265700",
     "geometry-decor-editor-dark": "4a4d40844f4f92b0e1baf169a25f8a15a507682cea677c631dc57f68e31e373f",
     "tray-wide-selection-en": "056f3b54d60bba83ef313f9c12fe697ea6a0b3d48db0470735394ee0d3f72c39",
     "tray-wide-tool-ru": "f8e050c96cb3e78f1ab8d0b8b276b3d154950e795c5b620148b9e395330cffe9",
