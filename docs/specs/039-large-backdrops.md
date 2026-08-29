@@ -1,58 +1,137 @@
 # ТЗ #39 — Безопасная работа с большими подложками
 
 - Issue: https://github.com/Matysh/houseplan-card/issues/39
-- Приоритет: P2
-- Статус ТЗ: research-first, thresholds утверждаются по benchmark
+- Приоритет: P3 (триаж владельца 2026-08-15), полный трек
+- Ревизия: 2 (2026-08-29) — research-фаза проведена, константы предложены по бенчмарку
 
 ## Цель
 
-До upload предупреждать о raster, способном исчерпать память tablet/WebView,
-и предлагать уменьшенную копию без потери текущего плана при ошибке.
+До каких-либо тяжёлых аллокаций предупреждать о растре, способном исчерпать
+память планшета/WebView, и предлагать уменьшенную копию — не трогая текущий
+план и оригинал файла при любой ошибке.
 
-## Локальная диагностика
+## Текущее состояние (анкеры кода)
 
-Для PNG/JPEG/WebP до сетевого запроса:
+`_pickPlanFile` (`houseplan-editor-runtime.ts:8243`) принимает PNG/JPEG/WebP/SVG
+по MIME/расширению и БЕЗ какой-либо диагностики: (1) весь файл конвертируется в
+base64 ручным循 циклом `String.fromCharCode` — пик памяти ≈3.7× размера файла
+ещё до всякого предупреждения; (2) разрешение не проверяется вовсе; (3) aspect
+берётся через `<img>` — то есть полный decode УЖЕ происходит на этом шаге.
+Сервер режет только байты: `MAX_FILE_BYTES` 50 МБ (`http_api.py:252`) и квота
+(`plans.py:216`). Транзакция уже честная: staging не трогает конфиг до
+успешного save (комментарий `runtime:8365-8380`), Undo и явное удаление живут
+отдельно — эта часть issue выполняется существующим кодом и закрепляется тестом.
 
-- MIME/signature и file bytes;
-- decoded width×height через `createImageBitmap`, fallback isolated `<img>`;
-- megapixels и minimum decoded RGBA memory `w*h*4`;
-- estimated working peak: bitmap + canvas + encoded output (conservative 2.5×);
-- рекомендуемый target dimensions.
+## Research: бенчмарк-матрица (проведено 2026-08-29)
 
-Object URLs всегда revoke; decode timeout/error не заменяет текущий backdrop.
-SVG получает file-size/security validation, но не raster memory/downscale.
+Desktop headless Chromium 139 (песочница CI), генерация PNG в OffscreenCanvas,
+decode `createImageBitmap`, даунскейл до 4096px + JPEG q0.9:
 
-## Threshold protocol
+| MP | px | файл PNG | RGBA | decode | downscale |
+|---|---|---|---|---|---|
+| 4 | 2000² | 3.6 МБ | 15 МБ | 39 мс | 21 мс |
+| 16 | 4000² | 12.7 МБ | 61 МБ | 118 мс | 74 мс |
+| 32 | 5657² | 22.9 МБ | 122 МБ | 235 мс | 102 мс |
+| 32+alpha | 5657² | 25.9 МБ | 122 МБ | 247 мс | 101 мс |
+| 64 | 8000² | 40.3 МБ | 244 МБ | 395 мс | 108 мс |
+| 100 | 10000² | 58.1 МБ | 381 МБ | 589 мс | 144 мс |
+| 165 | 12845² | 87.3 МБ | 629 МБ | 956 мс | 130 мс |
 
-Перед code default провести matrix на reference low-end wall tablet WebView и
-desktop Chromium: 4/8/16/32/64 MP, transparency, JPEG/WebP. Ship constants
-документируются как `WARN_DECODED_BYTES` и `MAX_SAFE_DIMENSION`. Рекомендуемый
-начальный guard для исследования: warning при >32 MP либо estimated peak
->128 MiB; это не становится product constant без результатов.
+Decode линеен (~6 мс/МП), даунскейл дешёв (<150 мс из любого размера) — окно
+«предупредить и уменьшить» практично. Скрипт кладётся в
+`demo/benchmark_backdrop_decode.mjs` для повторной калибровки.
+
+**Честная оговорка протокола**: reference low-end wall tablet в среде
+недоступен; десктоп decode не показывает OOM вовсе (165 МП ок). Константы
+берутся консервативно от известных лимитов WebView/WebKit (Android WebView
+renderer OOM в сотнях МБ decoded; лимит стороны canvas Chromium/WebKit
+16384px), собраны В ОДНОМ модуле и печатаются в предупреждении — полевая
+рекалибровка после жалоб = правка одного файла. Пороги смягчены в сторону
+«предупреждаем раньше»: цена ложного срабатывания — один необязательный диалог.
+
+## Константы (`src/backdrop-probe.ts`, единственный источник)
+
+- `WARN_DECODED_BYTES = 128 МиБ` (≈32 МП RGBA) — порог предупреждения;
+- `HARD_DIMENSION = 16384` px по стороне — потолок канваса браузеров, дальше
+  только Cancel;
+- `DOWNSCALE_TARGET_PX = 4096` px длинная сторона (хватает 4K-дисплею плана);
+- `DOWNSCALE_JPEG_QUALITY = 0.9`.
+
+## Диагностика: заголовки, не decode
+
+Ключевое отличие от ревизии 1: разрешение читается **парсером заголовков**
+(PNG IHDR + colour type/tRNS → alpha; JPEG SOF0/2; WebP VP8/VP8L/VP8X + флаг
+alpha) — чистый модуль `backdrop-probe.ts`, без ImageBitmap, canvas и сетевых
+запросов. Никакая аллокация размером с изображение не происходит до решения
+пользователя. `probeBackdrop(bytes, mime)` → `{kind: 'safe'|'warn'|'hard'|
+'unknown', width, height, alpha, decodedBytes}`; `unknown` (битый/усечённый
+заголовок при растровом MIME) ведёт себя как `warn` без чисел разрешения —
+fail-closed к диалогу, не к тихому продолжению. SVG в probe не заходит:
+прежняя валидация типа/размера, растеризации нет (как сейчас).
 
 ## UX
 
-- Safe: обычный upload.
-- Warning: dialog показывает resolution, file size, estimated memory и действия
-  «Загрузить уменьшенную копию», «Оставить оригинал», Cancel.
-- Hard browser limit/decode failure: только Cancel и инструкция уменьшить файл
-  desktop tool; нельзя продолжать blind.
-- Downscale сохраняет aspect; longest side до benchmark target. PNG с alpha
-  остаётся PNG, opaque photo — JPEG/WebP с documented quality; metadata не
-  требуется.
+- `safe` — прежний путь (плюс замена ручного base64-цикла на
+  `FileReader.readAsDataURL`: минус ~2× пикового JS-heap на любом файле).
+- `warn` — диалог (`hp-dialog`, паттерн существующих подтверждений): разрешение,
+  размер файла, оценка decoded-памяти; действия «Загрузить уменьшенную копию»
+  (основное), «Оставить оригинал», «Отмена». Числа — из probe, до decode.
+- `hard` (сторона > 16384, decode-ошибка или таймаут 10 с на этапе
+  уменьшения) — только «Отмена» + совет уменьшить файл на десктопе; текущая
+  подложка и staging не меняются.
+- Уменьшение: `createImageBitmap(file, {imageOrientation: 'from-image'})` (EXIF
+  учтён) → OffscreenCanvas (fallback `<canvas>`), aspect сохраняется; alpha из
+  probe: PNG/WebP c alpha → PNG, opaque → JPEG q0.9 (WebP-энкод не берём —
+  Safari не пишет). Уменьшенный Blob идёт тем же путём planFile → upload →
+  квота/copy-on-write, что и оригинал.
+- Тексты en/ru/de; диалог на мобильной ширине без горизонтального скролла.
 
-## Transaction
+## Транзакция (без изменений, закрепляется тестом)
 
-Existing backdrop/config остаются до успешного upload+validation+config save.
-Downscaled Blob проходит тот же quota/copy-on-write backend path. При upload,
-save или decode failure staging очищается, старый ref не удаляется. Undo и
-explicit plan deletion работают как сейчас.
+Existing backdrop/config живы до успешного upload+validation+save (текущий
+контракт `runtime:8365+`); отказ на любом шаге чистит staging и не трогает
+старый ref; Undo и явное удаление — как сейчас. «Оригинал до подтверждения» из
+issue = оригинальный ФАЙЛ пользователя никогда не модифицируется (это upload),
+а уменьшенная копия — отдельный Blob.
 
-## Проверки и приёмка
+## AC
 
-- header fixtures без выделения гигантского canvas до warning;
-- alpha/aspect/orientation (EXIF), corrupt/truncated, decode timeout;
-- failed upload/save preserves previous plan and files;
-- memory benchmark report + documented thresholds;
-- mobile dialog без horizontal scroll;
-- SVG никогда автоматически не растеризуется.
+1. PNG 100 МП (фикстура-заголовок + маленькое тело для юнитов; настоящий файл
+   для смока): предупреждение с razрешением/размером/оценкой памяти показано
+   ДО какой-либо аллокации размером с изображение (в юните probe не создаёт
+   canvas/bitmap вовсе; в смоке — до клика по действию нет createImageBitmap).
+2. «Уменьшенная копия»: длинная сторона 4096, aspect сохранён; PNG с alpha →
+   PNG (alpha жива), opaque → JPEG; результат уходит существующим upload-путём.
+3. «Оставить оригинал» — прежнее поведение байт-в-байт.
+4. `hard`: сторона >16384 либо decode-fail/таймаут — только Отмена; текущая
+   подложка, staging и конфиг не изменились.
+5. SVG: только прежняя валидация, растеризации нет.
+6. Битые/усечённые заголовки (PNG без IHDR, JPEG без SOF, WebP-огрызок) →
+   `unknown` → warn-диалог без чисел; продолжение возможно только явным выбором.
+7. Существующий транзакционный контракт закреплён: failed upload/save
+   сохраняет прежний план и файлы (тест на текущее поведение).
+8. EXIF-ориентация: повёрнутый JPEG уменьшается с учётом ориентации (w/h из
+   SOF против imageOrientation — фикстура).
+9. safe-путь через FileReader даёт тот же b64, что старый цикл (паритет-юнит).
+
+## Тесты и мутанты
+
+Юниты: `test/backdrop-probe.test.mjs` — таблица заголовков (валидные PNG/JPEG/
+WebP всех подвидов, alpha-варианты, битые/усечённые, границы порогов ±1);
+паритет FileReader-b64. Смок `demo/smoke_backdrop_guard.mjs`: warn-диалог на
+100 МП PNG, уменьшение (проверка итоговых размеров загруженного), «оригинал»,
+hard-путь, SVG-байпас, отсутствие createImageBitmap до выбора (хук на
+window.createImageBitmap). Мутанты реестра: (1) probe всегда `safe` — смок
+красный; (2) выброшена ветка alpha→PNG (всё в JPEG) — юнит/смок красный; (3)
+`hard` понижен до warn — смок красный; (4) staging не чистится при отказе —
+тест транзакции красный.
+
+## Вне скоупа
+
+Автопревращение SVG в растр; серверная перекодировка; изменение
+MAX_FILE_BYTES/квот; #51 (свои изображения в декоре — там свой пайплайн).
+
+## Откат
+
+Один revert; конфиг/схема/эндпоинты не меняются (только клиентская логика,
+i18n и тесты).
