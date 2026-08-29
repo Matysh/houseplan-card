@@ -28,7 +28,8 @@ import {
   type LightSegment, polygonSegments, splitAtIntersections, visibilityPolygon,
 } from './light-visibility';
 import {
-  recutWallBodiesGeometry, wallBodiesGeometry, type WallEntry,
+  recutWallBodiesGeometry, wallBodiesGeometry,
+  type WallBodiesGeometryResult, type WallEntry,
 } from './wall-thickness';
 import type { DevItem, RoomCfg, SpaceModel } from './types';
 import type { VirtualLightSnapshot } from './virtual-light-state';
@@ -83,7 +84,7 @@ export interface LightBarrierScene {
   occluders: LightSegment[];
   floor: number[][][];
   fingerprint: string;
-  masonryGeometry: any;
+  masonryGeometry: unknown;
   opaqueBodies: number[][][];
 }
 
@@ -113,6 +114,12 @@ export interface GlowRuntimeState {
   featherResumeTimer: number;
   sourceSeq: number;
 }
+
+type GlowHass = Record<string, unknown> & { states: Record<string, unknown> };
+
+type SharedWallGeometry = Pick<WallBodiesGeometryResult,
+  'status' | 'roomGeom' | 'roomComponents' | 'openingIndex' | 'depthUnits'
+    | 'openingPadUnits'> & { sourceFingerprint?: string };
 
 export function createGlowRuntimeState(): GlowRuntimeState {
   return {
@@ -155,7 +162,7 @@ export function writeGlowClip(
 
 /** The exact spatial-source decision shared by both public cards. */
 export function resolveGlowCandidates(input: {
-  hass: any;
+  hass: GlowHass;
   devices: readonly DevItem[];
   virtualLights?: VirtualLightSnapshot | null;
   spaceId: string;
@@ -210,7 +217,7 @@ export function resolveGlowCandidates(input: {
  * opening. The fingerprint is intentionally available before structural work.
  */
 export function resolveLightBarrierRevision(input: {
-  rawSpaceConfig: any;
+  rawSpaceConfig: unknown;
   space: SpaceModel;
   openings: readonly GeometryOpeningProjection[];
   cellCm: number;
@@ -264,7 +271,6 @@ export function resolveLightBarrierRevision(input: {
  * different barrier algorithm.
  */
 export function buildLightBarrierScene(input: {
-  rawSpaceConfig: any;
   space: SpaceModel;
   revision: LightBarrierRevision;
   walls: readonly WallEntry[];
@@ -273,7 +279,7 @@ export function buildLightBarrierScene(input: {
   cellCm: number;
   gridPitch: number;
   coordScale: number;
-  sharedWallGeometry?: any;
+  sharedWallGeometry?: SharedWallGeometry | null;
   physicalBodies: (partitionCuts: PartitionOpeningCut[], cacheKey: string) => number[][][];
 }): LightBarrierScene {
   const { revision } = input;
@@ -310,9 +316,7 @@ export function buildLightBarrierScene(input: {
       : []);
   const opaqueBodies = input.physicalBodies(partitionCuts, cacheKey);
   const occluders: LightSegment[] = [];
-  const sharedFingerprint = (input.sharedWallGeometry as {
-    sourceFingerprint?: string;
-  } | null | undefined)?.sourceFingerprint;
+  const sharedFingerprint = input.sharedWallGeometry?.sourceFingerprint;
   const recut = input.sharedWallGeometry
     && sharedFingerprint === revision.geometryFingerprint
     ? recutWallBodiesGeometry(input.sharedWallGeometry, roomPassages, opaqueBodies)

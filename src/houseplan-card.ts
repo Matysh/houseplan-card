@@ -10270,7 +10270,6 @@ export class HouseplanCard extends LitElement {
       return pooled.value.value;
     }
     const value = buildLightBarrierScene({
-      rawSpaceConfig: raw,
       space,
       revision,
       walls: this._spaceWalls,

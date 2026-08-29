@@ -573,7 +573,6 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
       space.id,
       revision.fingerprint,
       () => buildLightBarrierScene({
-        rawSpaceConfig: spCfg,
         space,
         revision,
         walls,
@@ -588,7 +587,9 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
         ).all,
       }),
     );
-    const configuredRadius = Number((o.cfg.settings as any)?.glow_radius_cm);
+    const configuredRadius = Number(
+      (o.cfg.settings as { glow_radius_cm?: unknown }).glow_radius_cm,
+    );
     const defaultRadiusCm = Number.isFinite(configuredRadius) && configuredRadius > 0
       ? configuredRadius : 300;
     const candidates = resolveGlowCandidates({
