@@ -50,6 +50,11 @@ test('#375 AC2: static wall geometry carries the recut fingerprint tag', () => {
   assert.match(render,
     /Object\.defineProperty\(built, 'sourceFingerprint', \{\s*\n\s*value: contentFingerprint\(\[spCfg, cellCm, GRID_PITCH\]\),/,
     'the tag must be the exact revision triple (rawSpaceConfig=spCfg, cellCm, gridPitch=GRID_PITCH)');
+  assert.ok(
+    render.indexOf("Object.defineProperty(built, 'sourceFingerprint'")
+      < render.indexOf('const contentFrame ='),
+    '#373 may move canonical geometry before framing, but must carry the #375 tag with it',
+  );
   const scene = readFileSync(new URL('../src/glow-scene.ts', import.meta.url), 'utf8');
   assert.match(scene, /sharedFingerprint === revision\.geometryFingerprint/,
     'glow-scene honours the tag by comparing it with the revision fingerprint');
