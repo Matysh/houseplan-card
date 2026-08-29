@@ -77,13 +77,16 @@ rectangle or sofa does not make its outline thicker. A legacy object with render
 pixel-identical until edited or explicitly optimised; conversion is
 `width_cm = width / GRID_PITCH × cell_cm`.
 
-The active drawing tool's values are session defaults for newly drawn objects.
-They live in the shared context tray over the stage rather than changing the
-height of the permanent editor toolbar. Colour is a compact swatch; its popover
-owns both the native colour field and opacity. Double-click properties edit an
-existing object without creating a second style model. Select actions and the
-furniture palette use variants of the same overlay host, so opening them never
-refits the plan.
+The primary toolbar always exposes the shared session-default colour and
+opacity for new lines, shape outlines, text and furniture. The same picker also
+remains in the applicable drawing context tray; both surfaces read and write one
+style state. Width, fill and other active-tool values stay in the context tray
+over the stage rather than changing the height of the permanent editor toolbar.
+Double-click properties edit an existing object without creating a second style
+model: saving colour/opacity for an existing line, shape or furniture item also
+becomes the visible default for the next object, as before. Shape fill remains
+independent. Select actions and the furniture palette use variants of the same
+overlay host, so opening them never refits the plan.
 
 Line style is intentionally absent from the drawing toolbar. Every new and
 legacy line is Solid by default. Double-click a line with **Select** to switch

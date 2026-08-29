@@ -5409,6 +5409,15 @@ public _renderDecorBar(): TemplateResult {
         </button>`,
       )}
       ${this.host._editorToolbarGroups.map((group) => this._renderEditorGroupLauncher(group))}
+      <hp-color-opacity class="decor-default-color"
+        .label=${this.host._t('decor.color')}
+        .color=${this.host._decorStyle.color}
+        .opacity=${this.host._decorStyle.opacity}
+        .opacityLabel=${this.host._t('space.opacity')}
+        .pickerLabels=${this.host._colorPickerLabels}
+        @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) =>
+          (this.host._decorStyle = { ...this.host._decorStyle, ...e.detail })}>
+      </hp-color-opacity>
       <button class="btn ghost" @click=${() => this._undoGeometry()} ?disabled=${!undoName}
         title=${undoName ? this.host._t('history.undo_named', { name: undoName }) : this.host._t('history.undo_empty')}>
         <ha-icon icon="mdi:undo-variant"></ha-icon>${this.host._t('history.undo')}

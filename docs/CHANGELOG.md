@@ -8,6 +8,11 @@
   cycle to at most twenty
   ([#366](https://github.com/Matysh/houseplan-card/issues/366)).
 
+- The Background editor now keeps its default colour and opacity on the main
+  toolbar for every tool. One choice applies to new lines, shape outlines, text
+  and furniture without changing existing objects or independent shape fills
+  ([#360](https://github.com/Matysh/houseplan-card/issues/360)).
+
 - Furniture outline width now follows plan zoom like the same physical width
   on lines and shapes, while independent width/depth resizing still keeps
   horizontal, vertical and diagonal strokes equally thick

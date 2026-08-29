@@ -54,8 +54,17 @@ test('the shared component keeps its API and contains no nested native color pic
     'public color', 'public opacity', 'public disabled', 'public showOpacity',
     'hp-color-opacity-change', 'detail: { color: normalized, opacity: clamped }',
   ]) assert.match(component, new RegExp(token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
-  assert.equal((card.match(/<hp-color-opacity/g) || []).length, 13);
-  assert.equal((card.match(/\.pickerLabels=\$\{this\._colorPickerLabels\}/g) || []).length, 13);
+  const pickerCount = (card.match(/<hp-color-opacity/g) || []).length;
+  assert.ok(pickerCount > 0);
+  assert.equal((card.match(/\.pickerLabels=\$\{this\._colorPickerLabels\}/g) || []).length, pickerCount,
+    'every production picker uses the shared localized labels without a brittle call-site count');
+  const defaultPickerStart = card.indexOf('<hp-color-opacity class="decor-default-color"');
+  const defaultPickerEnd = card.indexOf('</hp-color-opacity>', defaultPickerStart);
+  assert.ok(defaultPickerStart >= 0 && defaultPickerEnd > defaultPickerStart);
+  const defaultPicker = card.slice(defaultPickerStart, defaultPickerEnd);
+  assert.match(defaultPicker, /\.color=\$\{this\._decorStyle\.color\}/);
+  assert.match(defaultPicker, /\.opacity=\$\{this\._decorStyle\.opacity\}/);
+  assert.match(defaultPicker, /this\._decorStyle = \{ \.\.\.this\._decorStyle, \.\.\.e\.detail \}/);
   assert.equal((card.match(/\.showOpacity=\$\{false\}/g) || []).length, 4,
     'Glow, ripple and both background pickers stay color-only');
   assert.equal((card.match(/\.showOpacity=\$\{true\}/g) || []).length, 2,

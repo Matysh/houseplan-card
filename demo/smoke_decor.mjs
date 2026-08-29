@@ -126,24 +126,102 @@ const res = await page.evaluate(async () => {
   c._decorSel = null; c._decorTool = 'select'; c._furnPalette = null;
   c._cfgEpoch = (c._cfgEpoch || 0) + 1;
   c.requestUpdate(); await c.updateComplete;
-  // The compact colour/opacity control must escape the clipped editor/dialog
-  // surface through the browser top layer and remain inside the viewport.
+  // #360: the shared session default is permanently available in the primary
+  // toolbar, while the drawing context keeps its existing synchronized picker.
   c._decorTool = 'line'; c.requestUpdate(); await c.updateComplete;
   const picker = sr().querySelector('.editor-secondary hp-color-opacity');
-  out.transientStyleLivesInContextTray = !!picker
-    && !sr().querySelector('.decorbar hp-color-opacity');
-  const trigger = picker?.shadowRoot?.querySelector('.trigger');
+  const mainPicker = () => sr().querySelector('.decorbar hp-color-opacity.decor-default-color');
+  out.defaultStyleLivesInMainBarAndContextTray = !!picker && !!mainPicker();
+  const toolsWithDefault = [];
+  for (const tool of ['select', 'backdrop', 'line', 'rect', 'ellipse', 'text', 'furniture', 'erase']) {
+    c._decorTool = tool; c.requestUpdate(); await c.updateComplete;
+    toolsWithDefault.push(!!mainPicker());
+  }
+  out.defaultStyleVisibleForEveryDecorTool = toolsWithDefault.every(Boolean);
+  c._decorTool = 'line'; c.requestUpdate(); await c.updateComplete;
+  const originalDecorStyle = { ...c._decorStyle };
+  const originalDecorForDefaultProbe = JSON.parse(JSON.stringify(c._decorList));
+  const existingDefaultProbe = {
+    id: 'dc-default-existing', kind: 'line', x1: 0.05, y1: 0.05, x2: 0.1, y2: 0.05,
+    color: '#112233', opacity: 0.8, width_cm: 3,
+  };
+  c._curSpaceCfg.decor = [existingDefaultProbe];
+  c._decorStyle = {
+    ...c._decorStyle, fill: true, fillColor: '#fedcba', fillOpacity: 0.23,
+  };
+  c._cfgEpoch = (c._cfgEpoch || 0) + 1;
+  c.requestUpdate(); await c.updateComplete;
+  mainPicker().dispatchEvent(new CustomEvent('hp-color-opacity-change', {
+    detail: { color: '#2468ac', opacity: 0.37 }, bubbles: true, composed: true,
+  }));
+  await c.updateComplete;
+  const contextAfterMain = sr().querySelector('.editor-secondary hp-color-opacity');
+  out.mainPickerUpdatesOneSessionDefault = c._decorStyle.color === '#2468ac'
+    && c._decorStyle.opacity === 0.37
+    && contextAfterMain?.color === '#2468ac' && contextAfterMain?.opacity === 0.37;
+  out.mainPickerLeavesExistingObjectsUntouched =
+    JSON.stringify(c._decorList[0]) === JSON.stringify(existingDefaultProbe);
+  contextAfterMain.dispatchEvent(new CustomEvent('hp-color-opacity-change', {
+    detail: { color: '#3579bd', opacity: 0.46 }, bubbles: true, composed: true,
+  }));
+  await c.updateComplete;
+  out.contextPickerUpdatesMainPicker = c._decorStyle.color === '#3579bd'
+    && c._decorStyle.opacity === 0.46
+    && mainPicker()?.color === '#3579bd' && mainPicker()?.opacity === 0.46;
+
+  const gDefault = c._gridPitch;
+  for (const [kind, a, b] of [
+    ['line', [gDefault * 2, gDefault * 2], [gDefault * 6, gDefault * 2]],
+    ['rect', [gDefault * 8, gDefault * 2], [gDefault * 12, gDefault * 6]],
+    ['ellipse', [gDefault * 14, gDefault * 2], [gDefault * 18, gDefault * 6]],
+  ]) {
+    c._decorDraft = { kind, a, b, pid: 370 };
+    c._decorCommitDraft();
+  }
+  c._decorTool = 'text'; c._decorTextDialog = null;
+  c._decorPointerDown({
+    target: sr().querySelector('.stage'), preventDefault() {}, pointerType: 'mouse', pointerId: 371,
+    clientX: sr().querySelector('.stage').getBoundingClientRect().left + 12,
+    clientY: sr().querySelector('.stage').getBoundingClientRect().top + 12,
+  });
+  const textInheritsDefault = c._decorTextDialog?.color === '#3579bd'
+    && c._decorTextDialog?.opacity === 0.46;
+  c._decorTextDialog = { ...c._decorTextDialog, text: 'Default probe' };
+  c._decorSaveText();
+  c._furnPalette = { symbol: 'chair', w: 45, h: 45 };
+  c._furnPlace([gDefault * 24, gDefault * 12], true);
+  await c.updateComplete;
+  const createdByDefault = c._decorList.filter((shape) => shape.id !== existingDefaultProbe.id);
+  out.everyNewDecorKindUsesMainDefault = textInheritsDefault
+    && ['line', 'rect', 'ellipse', 'text', 'furniture'].every((kind) =>
+      createdByDefault.some((shape) => shape.kind === kind
+        && shape.color === '#3579bd' && shape.opacity === 0.46));
+  out.mainDefaultDoesNotOverwriteShapeFill = ['rect', 'ellipse'].every((kind) => {
+    const shape = createdByDefault.find((entry) => entry.kind === kind);
+    return shape?.fill === true && shape?.fill_color === '#fedcba'
+      && shape?.fill_opacity === 0.23;
+  });
+  c._curSpaceCfg.decor = originalDecorForDefaultProbe;
+  c._decorStyle = originalDecorStyle;
+  c._decorSel = null; c._decorTool = 'line'; c._furnPalette = null;
+  c._cfgEpoch = (c._cfgEpoch || 0) + 1;
+  c.requestUpdate(); await c.updateComplete;
+
+  // The compact colour/opacity control must escape the clipped editor/dialog
+  // surface through the browser top layer and remain inside the viewport.
+  const popoverPicker = sr().querySelector('.editor-secondary hp-color-opacity');
+  const trigger = popoverPicker?.shadowRoot?.querySelector('.trigger');
   trigger?.click();
-  await picker?.updateComplete;
+  await popoverPicker?.updateComplete;
   await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-  const popup = picker?.shadowRoot?.querySelector('.picker');
+  const popup = popoverPicker?.shadowRoot?.querySelector('.picker');
   const popupRect = popup?.getBoundingClientRect();
   out.colorPickerUsesTopLayer = !!popup?.matches(':popover-open');
   out.colorPickerInsideViewport = !!popupRect
     && popupRect.left >= 0 && popupRect.top >= 0
     && popupRect.right <= innerWidth && popupRect.bottom <= innerHeight;
   trigger?.click();
-  await picker?.updateComplete;
+  await popoverPicker?.updateComplete;
   // seven tools (the six drawing ones + «Мебель», docs/FURNITURE.md) plus
   // «Картинка-подложка», which f1 offers because it HAS a picture
   // (docs/BACKDROP.md §2); a hand-drawn space still shows seven
@@ -362,6 +440,8 @@ const res = await page.evaluate(async () => {
     && editedProbe?.width_cm === 6.5 && editedProbe?.width === undefined
     && editedProbe?.line_style === 'dashed'
     && c._decorShapeDialog === null;
+  out.objectDialogRefreshesMainDefault = c._decorStyle.color === '#123456'
+    && sr().querySelector('.decorbar hp-color-opacity.decor-default-color')?.color === '#123456';
   out.dashedLineRendered = !!probe()?.getAttribute('stroke-dasharray');
   c._undoGeometry(); await c.updateComplete;
   const undoSolid = !c._decorList.find((x) => x.id === 'dcprobe')?.line_style;
@@ -452,6 +532,43 @@ const res = await page.evaluate(async () => {
   out.deleteKey = c._decorList.length === n1 - 1;
   return out;
 });
+await page.setViewportSize({ width: 560, height: 820 });
+Object.assign(res, await page.evaluate(async () => {
+  const c = window.__card;
+  const sr = () => c.shadowRoot || c.renderRoot;
+  c._setMode('decor');
+  await c.updateComplete;
+  const tools = sr().querySelector('.decorbar .editbar-tools');
+  const end = sr().querySelector('.decorbar .editbar-end');
+  const picker = sr().querySelector('.decorbar hp-color-opacity.decor-default-color');
+  const trigger = picker?.shadowRoot?.querySelector('.trigger');
+  const toolsRect = tools?.getBoundingClientRect();
+  const endRect = end?.getBoundingClientRect();
+  const themeStates = [];
+  for (const darkMode of [false, true]) {
+    c.hass = { ...c.hass, themes: { ...(c.hass.themes || {}), darkMode } };
+    await c.updateComplete;
+    const rect = trigger?.getBoundingClientRect();
+    themeStates.push(!!rect && rect.width === 40 && rect.height === 40
+      && getComputedStyle(trigger).visibility === 'visible');
+  }
+  trigger?.click();
+  await picker?.updateComplete;
+  await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  const popupRect = picker?.shadowRoot?.querySelector('.picker')?.getBoundingClientRect();
+  const popupInside = !!popupRect && popupRect.left >= 0 && popupRect.top >= 0
+    && popupRect.right <= innerWidth && popupRect.bottom <= innerHeight;
+  trigger?.click();
+  await picker?.updateComplete;
+  return {
+    narrowToolbarKeepsToolsAndCloseApart: !!toolsRect && !!endRect
+      && toolsRect.right <= endRect.left + 0.5
+      && sr().querySelectorAll('.decorbar .btn.dtool').length === 8
+      && !!sr().querySelector('.decorbar .barclose'),
+    narrowToolbarKeepsDefaultPickerUsable: !!picker && popupInside,
+    defaultPickerReadableInLightAndDark: themeStates.every(Boolean),
+  };
+}));
 // значение плашки зафиксировано числом: 12 клеток × cell_cm 5 = 0.60 m, 0°
 checkAll(res, { lineBadgeText: '0.60 m · 0°' });
 await finish(browser, res);
