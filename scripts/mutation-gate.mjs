@@ -681,6 +681,17 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'french-locale-entry-removed',
+    guard: 'node demo/smoke_french_locale.mjs',
+    because: 'dropping the fr registry entry silently reverts French profiles to English — the '
+      + 'community contribution must stay wired (#371)',
+    patches: [{
+      file: 'src/i18n/registry.ts',
+      find: "  { code: 'fr', nativeLabel: 'Français', loadDictionary: loadFrench },\n",
+      replace: '',
+    }],
+  },
+  {
     id: 'opening-light-quantum-identity',
     guard: 'node --test --test-name-pattern="#366" test/logic.test.mjs',
     because: 'an identity quantum brings back ~100 barrier recomputes per moving-gate cycle — '

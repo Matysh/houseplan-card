@@ -9,6 +9,7 @@ import {
 
 const BUILD_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
 const GERMAN_RETRY_ASSET = '__HOUSEPLAN_DE_RETRY_ASSET__';
+const FRENCH_RETRY_ASSET = '__HOUSEPLAN_FR_RETRY_ASSET__';
 
 export interface LanguageEntry {
   code: string;
@@ -24,6 +25,13 @@ async function loadGerman(attempt: 0 | 1): Promise<LazyLanguageModule> {
   return { dictionary: module.dictionary, fingerprint: module.fingerprint };
 }
 
+async function loadFrench(attempt: 0 | 1): Promise<LazyLanguageModule> {
+  const module = attempt === 0
+    ? await import('./fr')
+    : await import(/* @vite-ignore */ new URL(`${FRENCH_RETRY_ASSET}?retry`, import.meta.url).href);
+  return { dictionary: module.dictionary, fingerprint: module.fingerprint };
+}
+
 /**
  * The single runtime registry of shipped UI languages.
  *
@@ -34,6 +42,7 @@ export const LANGUAGE_REGISTRY = [
   { code: 'en', nativeLabel: 'English', dictionary: en },
   { code: 'ru', nativeLabel: 'Русский', dictionary: ru },
   { code: 'de', nativeLabel: 'Deutsch', loadDictionary: loadGerman },
+  { code: 'fr', nativeLabel: 'Français', loadDictionary: loadFrench },
 ] as const satisfies readonly LanguageEntry[];
 
 export type Lang = (typeof LANGUAGE_REGISTRY)[number]['code'];

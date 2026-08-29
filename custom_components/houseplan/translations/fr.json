@@ -1,0 +1,30 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "House Plan",
+        "data": {
+          "admin_only": "Seuls les administrateurs peuvent modifier le plan"
+        }
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "Déjà configuré — une seule entrée est autorisée."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "admin_only": "Seuls les administrateurs peuvent modifier le plan"
+        }
+      }
+    }
+  },
+  "issues": {
+    "broken_plan": {
+      "title": "L’image du plan est introuvable",
+      "description": "Le fichier de plan `{file}` pour l’espace `{space}` est introuvable dans `config/houseplan/plans/`. Ouvrez les paramètres de l’espace dans la carte House Plan et téléversez de nouveau le plan."
+    }
+  }
+}

@@ -7,6 +7,7 @@ const BUILD_FINGERPRINT_TOKEN = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
 const EDITOR_RETRY_ASSET_TOKEN = '__HOUSEPLAN_EDITOR_RETRY_ASSET__';
 const ONBOARDING_RETRY_ASSET_TOKEN = '__HOUSEPLAN_ONBOARDING_RETRY_ASSET__';
 const DE_RETRY_ASSET_TOKEN = '__HOUSEPLAN_DE_RETRY_ASSET__';
+const FR_RETRY_ASSET_TOKEN = '__HOUSEPLAN_FR_RETRY_ASSET__';
 
 const sha256 = (value) => createHash('sha256').update(value).digest('hex');
 
@@ -29,7 +30,7 @@ export function buildBundleManifest(bundle, fingerprint) {
     .map((chunk) => {
       const contents = Buffer.from(chunk.code, 'utf8');
       const modules = Object.keys(chunk.modules || {}).map((id) => id.replaceAll('\\', '/'));
-      const role = modules.some((id) => id.endsWith('/src/i18n/de.ts'))
+      const role = modules.some((id) => id.endsWith('/src/i18n/de.ts') || id.endsWith('/src/i18n/fr.ts'))
         ? 'locale'
         : modules.some((id) => id.endsWith('/src/houseplan-onboarding-runtime.ts'))
           ? 'onboarding'
@@ -59,7 +60,7 @@ export function buildBundleManifest(bundle, fingerprint) {
     for (const path of reachable(root, byPath, 'imports')) if (!initial.has(path)) lazy.add(path);
   }
   const localeRoots = dynamicRoots.filter((path) => byPath.get(path)?._role === 'locale'
-    || /(?:^|\/)de-[^/]+\.js$/.test(path));
+    || /(?:^|\/)(?:de|fr)-[^/]+\.js$/.test(path));
   const onboardingRoots = dynamicRoots.filter((path) => byPath.get(path)?._role === 'onboarding'
     || path.includes('houseplan-onboarding-runtime-'));
   const editorRoots = dynamicRoots.filter((path) => (byPath.get(path)?._role === 'editor'
@@ -140,12 +141,16 @@ export function editorRuntimeRetryUrlPlugin() {
         .some((id) => id.replaceAll('\\', '/').endsWith('/src/houseplan-onboarding-runtime.ts')));
       const german = chunks.find((chunk) => Object.keys(chunk.modules)
         .some((id) => id.replaceAll('\\', '/').endsWith('/src/i18n/de.ts')));
+      const french = chunks.find((chunk) => Object.keys(chunk.modules)
+        .some((id) => id.replaceAll('\\', '/').endsWith('/src/i18n/fr.ts')));
       if (!editor) throw new Error('editor runtime chunk was not emitted');
       if (!onboarding) throw new Error('onboarding runtime chunk was not emitted');
       if (!german) throw new Error('German locale chunk was not emitted');
+      if (!french) throw new Error('French locale chunk was not emitted');
       let editorReplacements = 0;
       let onboardingReplacements = 0;
       let germanReplacements = 0;
+      let frenchReplacements = 0;
       for (const chunk of chunks) {
         if (chunk.code.includes(EDITOR_RETRY_ASSET_TOKEN)) {
           let asset = posix.relative(posix.dirname(chunk.fileName), editor.fileName);
@@ -165,10 +170,17 @@ export function editorRuntimeRetryUrlPlugin() {
           germanReplacements += chunk.code.split(DE_RETRY_ASSET_TOKEN).length - 1;
           chunk.code = chunk.code.replaceAll(DE_RETRY_ASSET_TOKEN, asset);
         }
+        if (chunk.code.includes(FR_RETRY_ASSET_TOKEN)) {
+          let asset = posix.relative(posix.dirname(chunk.fileName), french.fileName);
+          if (!asset.startsWith('.')) asset = `./${asset}`;
+          frenchReplacements += chunk.code.split(FR_RETRY_ASSET_TOKEN).length - 1;
+          chunk.code = chunk.code.replaceAll(FR_RETRY_ASSET_TOKEN, asset);
+        }
       }
-      if (editorReplacements !== 1 || onboardingReplacements !== 1 || germanReplacements !== 1) {
+      if (editorReplacements !== 1 || onboardingReplacements !== 1
+          || germanReplacements !== 1 || frenchReplacements !== 1) {
         throw new Error('lazy retry URL placeholder counts are '
-          + `${editorReplacements}/${onboardingReplacements}/${germanReplacements}, expected 1/1/1`);
+          + `${editorReplacements}/${onboardingReplacements}/${germanReplacements}/${frenchReplacements}, expected 1/1/1/1`);
       }
     },
   };
@@ -209,6 +221,8 @@ export function entryFallbackPlugin() {
         + '?"House Plan обновился — перезагрузите страницу (Ctrl+F5)."'
         + ':l.startsWith("de")'
         + '?"House Plan wurde aktualisiert — bitte laden Sie die Seite neu (Strg+F5)."'
+        + ':l.startsWith("fr")'
+        + '?"House Plan a été mis à jour — veuillez recharger la page (Ctrl+F5)."'
         + ':"House Plan was updated — please reload the page (Ctrl+F5).";'
         + 'customElements.define("houseplan-card",class extends HTMLElement{'
         + 'setConfig(){}getCardSize(){return 1}connectedCallback(){'

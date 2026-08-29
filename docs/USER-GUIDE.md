@@ -146,7 +146,9 @@ title: House plan
 The legacy card-level `tap_action` is ignored. Each marker owns its action.
 
 `auto` recognizes the primary Home Assistant locale: `de`, `de-DE`, `de-AT`
-and `de-CH` use German. German is downloaded once on first use and shared by
+and `de-CH` use German, while `fr`, `fr-FR`, `fr-CA`, `fr-BE` and `fr-CH` use
+French (a community translation — thank you, @OUARZA). Lazy dictionaries
+(German, French) are downloaded once on first use and shared by
 all House Plan cards on the page. Until it is ready, a neutral busy surface is
 shown instead of briefly flashing English; if both bounded download attempts
 fail, the card becomes usable in English and says so with a "Could not load

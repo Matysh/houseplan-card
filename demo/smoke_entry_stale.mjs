@@ -41,12 +41,15 @@ const run = async (locale, expected) => {
 
 const en = await run('en-US');
 const ru = await run('ru-RU');
+const fr = await run('fr-FR');
 const out = {
-  entrySurvivesMissingChunk: en.pageErrors === 0 && ru.pageErrors === 0,
+  entrySurvivesMissingChunk: en.pageErrors === 0 && ru.pageErrors === 0 && fr.pageErrors === 0,
   englishMessageVisible: en.text.includes('House Plan was updated')
     && en.text.includes('reload the page'),
   russianMessageVisible: ru.text.includes('House Plan обновился')
     && ru.text.includes('перезагрузите страницу'),
+  frenchMessageVisible: fr.text.includes('House Plan a été mis à jour')
+    && fr.text.includes('recharger la page'),
 };
 checkAll(out);
 check('smoke_entry_stale', Object.values(out).every(Boolean));

@@ -6,6 +6,12 @@
   top framing strip together with the header, while preserving its side and
   bottom spacing ([#372](https://github.com/Matysh/houseplan-card/issues/372)).
 
+- House Plan now speaks French: a complete community translation contributed
+  by @OUARZA, loaded lazily like German so the ordinary View bundle stays the
+  same size. `Français` can be selected explicitly and is chosen
+  automatically for French Home Assistant profiles
+  ([#371](https://github.com/Matysh/houseplan-card/issues/371)).
+
 - Breaking for external writers (scripts, automations, custom integrations
   that write plans directly): `houseplan/config/set` and `houseplan/layout/set`
   over a non-empty store now require `expected_rev` and answer `conflict`

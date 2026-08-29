@@ -21,6 +21,7 @@ const dictionaries = new Map(LANGUAGE_REGISTRY.map(({ code }) => [code, dictiona
 const en = dictionaries.get('en');
 const ru = dictionaries.get('ru');
 const de = dictionaries.get('de');
+const fr = dictionaries.get('fr');
 const cardSource = readHouseplanProductionSource();
 
 test('i18n: registry codes and English fallback are valid', () => {
@@ -133,7 +134,7 @@ test('i18n: placeholders match between languages', () => {
 });
 
 test('i18n: resolver supports exact, primary, explicit and fallback paths', () => {
-  const supported = ['en', 'ru', 'de', 'pt-BR'];
+  const supported = ['en', 'ru', 'de', 'fr', 'pt-BR'];
   const cases = [
     { explicit: 'RU', ha: 'en-US', expected: 'ru' },
     { explicit: 'pt_BR', ha: 'ru-RU', expected: 'pt-BR' },
@@ -145,6 +146,10 @@ test('i18n: resolver supports exact, primary, explicit and fallback paths', () =
     { explicit: undefined, ha: 'de-DE', expected: 'de' },
     { explicit: undefined, ha: 'de-AT', expected: 'de' },
     { explicit: undefined, ha: 'de-CH', expected: 'de' },
+    { explicit: undefined, ha: 'fr-FR', expected: 'fr' },
+    { explicit: undefined, ha: 'fr-CA', expected: 'fr' },
+    { explicit: undefined, ha: 'fr_BE', expected: 'fr' },
+    { explicit: undefined, ha: 'fr-CH', expected: 'fr' },
   ];
   for (const { explicit, ha, expected } of cases) {
     assert.equal(resolveLanguageCode(explicit, ha, supported, 'en'), expected);
@@ -156,6 +161,7 @@ test('i18n: langOf wires card config and both HA locale shapes to the registry',
   assert.equal(langOf({ locale: { language: 'en-GB' }, language: 'ru' }, 'RU'), 'ru');
   assert.equal(langOf({ language: 'ru-RU' }, 'unknown'), 'ru');
   assert.equal(langOf({ locale: { language: 'de-DE' } }, 'unknown'), 'de');
+  assert.equal(langOf({ locale: { language: 'fr-CA' } }, 'unknown'), 'fr');
 });
 
 test('i18n: editor options follow registry order and preserve unknown raw values', () => {
@@ -366,5 +372,49 @@ test('i18n: German values equal to English are explicitly reviewed', () => {
     'vac.diag_position',
   ]);
   const equalKeys = Object.keys(en).filter((key) => en[key] === de[key]);
+  assert.deepEqual(new Set(equalKeys), allowed);
+});
+
+
+test('i18n: French catalog keeps the product glossary and has no translation sentinels (#371)', () => {
+  assert.equal(fr['btn.save'], 'Enregistrer');
+  assert.equal(fr['btn.cancel'], 'Annuler');
+  assert.equal(fr['btn.delete'], 'Supprimer');
+  assert.equal(fr['space.header'], 'Espace');
+  assert.equal(fr['opening.passage'], 'Passage ouvert');
+  for (const [key, value] of Object.entries(fr)) {
+    assert.doesNotMatch(value, /ZXQPH|QXZ|⟦HP/u, `fr:${key} contains a translator sentinel`);
+    assert.doesNotMatch(value, /[А-Яа-яЁё]/u, `fr:${key} contains Cyrillic text`);
+  }
+});
+
+test('i18n: French values equal to English are explicitly reviewed (#371)', () => {
+  // Every entry here is a legitimate French/English homograph or a unit,
+  // template or brand token — reviewed with the contributed dictionary.
+  const allowed = new Set([
+    'color_picker.saturation',
+    'confirm.delete_partition_openings_item',
+    'decor.rect',
+    'err.code',
+    'furn.cat_bidet',
+    'gs.about_version',
+    'gs.north_letter',
+    'gs.unit_m',
+    'marker.desc_label',
+    'marker.preview.multiple_sources',
+    'marker.value_badge_attr_current_position',
+    'marker.value_badge_attr_volume_level',
+    'marker.value_badge_position',
+    'opening.type_label',
+    'rules.icon_ph',
+    'run.script',
+    'space.plan_alt',
+    'vac.cap_position',
+    'vac.diag_position',
+    'vac.diag_source',
+    'vac.documentation',
+    'wallthick.unit_cm',
+  ]);
+  const equalKeys = Object.keys(en).filter((key) => en[key] === fr[key]);
   assert.deepEqual(new Set(equalKeys), allowed);
 });
