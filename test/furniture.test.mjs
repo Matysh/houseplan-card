@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import {
   FURNITURE, FURNITURE_GROUPS, furnitureSymbol, furnitureOfGroup,
   furnitureDefaultCm, furniturePathD, furnitureGraphic, furnitureCorners, furnitureResize,
-  snapFurnitureToWall, resolveFurniturePlacement,
+  snapFurnitureToWall, resolveFurniturePlacement, furniturePlanScreenScale, furnitureStrokePx,
   cmToNorm, normToCm, clampFurnSize, clampFurnCm,
   FURN_MIN_N, FURN_MIN_CM, FURN_MAX_CM, FURN_WALL_CELLS,
 } from '../test-build/furniture.js';
@@ -127,6 +127,42 @@ test('every symbol exposes one finite path and a positive native coordinate box'
     assert.ok(art.d.length > 0, `${s.id}: empty path`);
     assert.ok(!/NaN|Infinity|undefined/.test(art.d), `${s.id}: ${art.d.slice(0, 60)}`);
   }
+});
+
+test('furniture stroke follows the outer plan viewBox camera like physical decor', () => {
+  // 1000 plan units fitted into 500 CSS px: the same 3-unit physical line is
+  // 1.5 px on screen. Halving the viewBox is a 2x camera zoom and doubles it.
+  const fit = furniturePlanScreenScale(500, 300, 1000, 600);
+  const zoom2 = furniturePlanScreenScale(500, 300, 500, 300);
+  closeTo(fit, 0.5);
+  closeTo(zoom2, 1);
+  closeTo(furnitureStrokePx(3, fit), 1.5);
+  closeTo(furnitureStrokePx(3, zoom2), 3);
+  closeTo(furnitureStrokePx(3, zoom2) / furnitureStrokePx(3, fit), 2);
+});
+
+test('furniture stroke uses the meet scale and stays independent of the local artwork box', () => {
+  // Width alone would say 0.8; xMidYMid meet is constrained by height at 0.5.
+  const letterboxed = furniturePlanScreenScale(800, 300, 1000, 600);
+  closeTo(letterboxed, 0.5);
+  const stroke = furnitureStrokePx(4, letterboxed);
+  for (const symbol of ['sofa', 'fridge']) {
+    assert.ok(furnitureGraphic(symbol), `${symbol}: fixture must render`);
+    // Designer native viewBox and retained unit-box art receive the same
+    // physical stroke even if their independent width/depth scales differ.
+    closeTo(furnitureStrokePx(4, letterboxed), stroke);
+  }
+});
+
+test('furniture stroke layout fallbacks are finite and recover on measured layout', () => {
+  for (const metrics of [
+    [0, 300, 1000, 600], [500, NaN, 1000, 600], [500, 300, 0, 600],
+    [undefined, undefined, undefined, undefined],
+  ]) assert.equal(furniturePlanScreenScale(...metrics), 1);
+  assert.equal(furnitureStrokePx(NaN, NaN, 2.5), 2.5);
+  assert.equal(furnitureStrokePx(3, 0), 3);
+  assert.ok(Number.isFinite(furnitureStrokePx(Infinity, Infinity)));
+  closeTo(furnitureStrokePx(3, furniturePlanScreenScale(500, 300, 500, 300)), 3);
 });
 
 // ------------------------------ the wall magnet -----------------------------

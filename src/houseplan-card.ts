@@ -63,6 +63,7 @@ import { dayCycleStageVars, renderDayCycleEnvironment } from './day-cycle-render
 import {
   FURNITURE_GROUPS, furnitureOfGroup, furnitureSymbol, furnitureDefaultCm,
   furnitureGraphic, furnitureCorners, snapFurnitureToWall,
+  furniturePlanScreenScale, furnitureStrokePx,
   cmToNorm, clampFurnSize, clampFurnCm, FURN_WALL_CELLS,
   type FurnitureGroup, type FurniturePlacement,
 } from './furniture';
@@ -8061,7 +8062,9 @@ export class HouseplanCard extends LitElement {
   /** One real furniture path, in the same decor composition group as saved
    * shapes. It paints after them (so it is visible) and the whole decor layer
    * still paints below physical walls (#359). */
-  private _renderFurniturePlacementPreview(): TemplateResult | typeof nothing {
+  private _renderFurniturePlacementPreview(
+    furnitureScreenScale: number,
+  ): TemplateResult | typeof nothing {
     const placement = this._furniturePreviewPlacement;
     if (!placement) return nothing;
     const art = furnitureGraphic(placement.symbol);
@@ -8072,10 +8075,14 @@ export class HouseplanCard extends LitElement {
     const transform = `${placement.angle ? `rotate(${placement.angle} ${cx} ${cy}) ` : ''}`
       + `translate(${placement.x * W} ${placement.y * H}) scale(${W2 / art.viewW} ${H2 / art.viewH})`;
     const style = this._decorStyle;
+    const strokeWidth = furnitureStrokePx(
+      decorCmToUnits(style.widthCm, this._cellCm, this._gridPitch),
+      furnitureScreenScale,
+    );
     return svg`<path class="furniture-placement-preview dfurn"
       data-symbol=${placement.symbol} d=${art.d} transform=${transform}
       stroke=${style.color} stroke-opacity=${style.opacity}
-      stroke-width=${decorCmToUnits(style.widthCm, this._cellCm, this._gridPitch)}
+      stroke-width=${strokeWidth}
       fill="none" stroke-linecap="round" stroke-linejoin="round"
       vector-effect="non-scaling-stroke" aria-hidden="true" pointer-events="none"></path>`;
   }
@@ -8084,6 +8091,15 @@ export class HouseplanCard extends LitElement {
     const W = NORM_W, H = this._decorH;
     const editing = this._mode === 'decor';
     const erasing = editing && this._decorTool === 'erase';
+    // One measured outer viewBox scale for the whole layer. Furniture paths
+    // keep `non-scaling-stroke` only to reject their own independent width /
+    // depth transform; multiplying by this factor restores the same physical
+    // camera zoom ordinary decor gets from the plan SVG (#361).
+    const stage = this._stageEl;
+    const planView = this._viewOr(this._baseVb());
+    const furnitureScreenScale = furniturePlanScreenScale(
+      stage?.clientWidth, stage?.clientHeight, planView.w, planView.h,
+    );
     const shapes = this._decorList.map((sh) => {
       const cls = 'dshape' + (editing && this._decorSel === sh.id ? ' dsel' : '');
       const style = this._decorResolvedStyle(sh);
@@ -8135,8 +8151,9 @@ export class HouseplanCard extends LitElement {
       }
       if (sh.kind === 'furniture') {
         // One path per piece. Designer art keeps its native viewBox and is
-        // scaled to the user's stored box; vector-effect keeps the configured
-        // decor stroke physical under non-uniform resizing.
+        // scaled to the user's stored box; vector-effect rejects that local
+        // non-uniform transform while furnitureScreenScale restores the outer
+        // physical plan zoom.
         // An unknown symbol renders as nothing: a plan from a newer card must
         // open in an older one, not break it.
         const W2 = sh.w * W, H2 = sh.h * H;
@@ -8147,7 +8164,8 @@ export class HouseplanCard extends LitElement {
         const tr = `${ang ? `rotate(${ang} ${cx} ${cy}) ` : ''}translate(${sh.x * W} ${sh.y * H}) scale(${W2 / art.viewW} ${H2 / art.viewH})`;
         return svg`<path class="${cls} dfurn" data-hp="decor" data-id="${sh.id}"
           data-kind="${sh.kind}" data-symbol="${sh.symbol}" d="${art.d}" transform=${tr}
-          stroke="${style.color}" stroke-opacity="${style.opacity}" stroke-width="${strokeWidth}" fill="none"
+          stroke="${style.color}" stroke-opacity="${style.opacity}"
+          stroke-width="${furnitureStrokePx(strokeWidth, furnitureScreenScale)}" fill="none"
           stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"
           @pointerdown=${down} @dblclick=${dbl}></path>
           ${erasing ? svg`<path class="dshape derasehit" data-hp="decor" data-id="${sh.id}"
@@ -8199,7 +8217,7 @@ export class HouseplanCard extends LitElement {
               stroke="${st.color}" stroke-opacity="${st.opacity}" stroke-width="${sw}" fill="${st.fill ? st.fillColor : 'none'}" fill-opacity="${st.fill ? st.fillOpacity : 0}"></ellipse>`;
       }
     }
-    return svg`<g class="decorlayer">${shapes}${draft}${this._renderFurniturePlacementPreview()}</g>` as unknown as TemplateResult;
+    return svg`<g class="decorlayer">${shapes}${draft}${this._renderFurniturePlacementPreview(furnitureScreenScale)}</g>` as unknown as TemplateResult;
   }
 
   // ================= shared editor secondary surface =================

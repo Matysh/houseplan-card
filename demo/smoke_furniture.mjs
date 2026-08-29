@@ -198,6 +198,7 @@ const res = await page.evaluate(async () => {
   await c.updateComplete;
   const committedPreview = c._furniturePreviewPlacement
     ? JSON.parse(JSON.stringify(c._furniturePreviewPlacement)) : null;
+  const committedPreviewStroke = Number(ghost()?.getAttribute('stroke-width'));
   ev('pointerdown', stageEl(), 300, 300, { pointerType: 'mouse' });
   await c.updateComplete;
   const sofa = c._decorList.find((s) => s.kind === 'furniture');
@@ -213,6 +214,8 @@ const res = await page.evaluate(async () => {
   out.previewAndCommitAreIdentical = !!sofa && !!committedPreview
     && ['x', 'y', 'w', 'h'].every((k) => near(sofa[k], committedPreview[k], 1e-12))
     && (sofa.angle || 0) === committedPreview.angle;
+  out.previewAndCommitShareThePhysicalStroke = Number.isFinite(committedPreviewStroke)
+    && near(Number(attr(sofaId, 'stroke-width')), committedPreviewStroke, 1e-9);
   out.previewClearsAfterCommit = !ghost() && c._furnPreviewInput === null;
   out.selectedRightAway = !!sofaId && c._decorSel === sofaId;
   out.toolWentBackToSelect = c._decorTool === 'select';
@@ -426,5 +429,138 @@ const res = await page.evaluate(async () => {
   out.inertInView = !!left && pe(left.id) === 'none';
   return out;
 });
+
+// #361: this is deliberately a pixel assertion, not another DOM-attribute
+// comparison. `vector-effect=non-scaling-stroke` can make the attributes look
+// perfectly consistent while Chromium paints furniture at the wrong camera
+// zoom. Bright magenta isolates the fixture from the normal plan artwork.
+const renderStrokeFixture = async (zoom, angle = 0, viewport = null) => {
+  if (viewport) await page.setViewportSize(viewport);
+  await page.evaluate(async ({ zoom, angle }) => {
+    const c = window.__card;
+    c._setMode('view');
+    await c.updateComplete;
+    for (let i = 0; i < 80 && c._modeTransitionBusy; i++)
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    c._curSpaceCfg.decor = [
+      { id: 'stroke-control', kind: 'line', x1: 0.18, y1: 0.18, x2: 0.50, y2: 0.18,
+        color: '#ff00ff', opacity: 1, width_cm: 8 },
+      // Designer artwork: deliberately very wide and shallow so a leaked local
+      // x/y scale produces obviously different horizontal/vertical strokes.
+      { id: 'stroke-designer', kind: 'furniture', symbol: 'coffee_table',
+        x: 0.18, y: 0.30, w: 0.38, h: 0.09, angle,
+        color: '#ff00ff', opacity: 1, width_cm: 8 },
+      // Compatibility artwork: unit-box primitive, exercising the other path
+      // source retained by the furniture catalogue.
+      { id: 'stroke-primitive', kind: 'furniture', symbol: 'fridge',
+        x: 0.62, y: 0.27, w: 0.11, h: 0.20, angle,
+        color: '#ff00ff', opacity: 1, width_cm: 8 },
+    ];
+    c._cfgEpoch++;
+    c._zoom = 1;
+    c._view = null;
+    c.requestUpdate();
+    await c.updateComplete;
+    c._applyView(zoom, 450, 350);
+    c.requestUpdate();
+    await c.updateComplete;
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  }, { zoom, angle });
+
+  const samples = await page.evaluate(() => {
+    const root = window.__card.shadowRoot || window.__card.renderRoot;
+    const sample = (id, a, b) => {
+      const node = root.querySelector(`.decorlayer [data-id="${id}"]`);
+      const matrix = node?.getScreenCTM?.();
+      if (!node || !matrix) return null;
+      const map = ([x, y]) => {
+        const point = new DOMPoint(x, y).matrixTransform(matrix);
+        return { x: point.x, y: point.y };
+      };
+      return { a: map(a), b: map(b) };
+    };
+    const line = root.querySelector('.decorlayer [data-id="stroke-control"]');
+    const x1 = Number(line?.getAttribute('x1'));
+    const x2 = Number(line?.getAttribute('x2'));
+    const y = Number(line?.getAttribute('y1'));
+    return {
+      control: sample('stroke-control', [x1 + (x2 - x1) * 0.35, y], [x1 + (x2 - x1) * 0.65, y]),
+      // coffee_table generated art: long top and right-side straight runs.
+      designerH: sample('stroke-designer', [30, 3.692], [90, 3.692]),
+      designerV: sample('stroke-designer', [116.16, 18], [116.16, 45]),
+      // fridge compatibility art is the canonical unit rectangle.
+      primitive: sample('stroke-primitive', [0.2, 0], [0.8, 0]),
+    };
+  });
+  const png = (await page.screenshot({ type: 'png' })).toString('base64');
+  return page.evaluate(async ({ png, samples }) => {
+    const image = new Image();
+    image.src = `data:image/png;base64,${png}`;
+    await image.decode();
+    const canvas = document.createElement('canvas');
+    canvas.width = image.naturalWidth;
+    canvas.height = image.naturalHeight;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    ctx.drawImage(image, 0, 0);
+    const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+    const magenta = (x, y) => {
+      x = Math.round(x); y = Math.round(y);
+      if (x < 0 || y < 0 || x >= canvas.width || y >= canvas.height) return false;
+      const i = (y * canvas.width + x) * 4;
+      return pixels[i] > 150 && pixels[i + 1] < 130 && pixels[i + 2] > 150 && pixels[i + 3] > 80;
+    };
+    const thickness = (segment) => {
+      if (!segment) return NaN;
+      const dx = segment.b.x - segment.a.x;
+      const dy = segment.b.y - segment.a.y;
+      const length = Math.hypot(dx, dy);
+      if (!(length > 8)) return NaN;
+      const tx = dx / length, ty = dy / length;
+      const nx = -ty, ny = tx;
+      const cx = (segment.a.x + segment.b.x) / 2;
+      const cy = (segment.a.y + segment.b.y) / 2;
+      const widths = [];
+      for (const along of [-8, -4, 0, 4, 8]) {
+        const hits = [];
+        for (let normal = -24; normal <= 24; normal++) {
+          if (magenta(cx + tx * along + nx * normal, cy + ty * along + ny * normal))
+            hits.push(normal);
+        }
+        if (hits.length) widths.push(hits.at(-1) - hits[0] + 1);
+      }
+      widths.sort((a, b) => a - b);
+      return widths.length ? widths[Math.floor(widths.length / 2)] : NaN;
+    };
+    return Object.fromEntries(Object.entries(samples).map(([key, value]) => [key, thickness(value)]));
+  }, { png, samples });
+};
+
+const z1 = await renderStrokeFixture(1);
+const z2 = await renderStrokeFixture(2);
+const rotated = await renderStrokeFixture(1, 30);
+const rotatedZ2 = await renderStrokeFixture(2, 30);
+const compact = await renderStrokeFixture(1, 0, { width: 620, height: 760 });
+const finite = (...values) => values.every((value) => Number.isFinite(value) && value > 0);
+const closePx = (a, b, tolerance = 2) => finite(a, b) && Math.abs(a - b) <= tolerance;
+const doubles = (a, b) => finite(a, b) && b / a >= 1.6 && b / a <= 2.4;
+res.rasterFixturePainted = finite(
+  z1.control, z1.designerH, z1.designerV, z1.primitive,
+  z2.control, z2.designerH, z2.primitive, rotated.designerH,
+  rotatedZ2.designerH, compact.control, compact.designerH, compact.primitive,
+);
+res.furnitureFollowsPhysicalCameraZoom = doubles(z1.control, z2.control)
+  && doubles(z1.designerH, z2.designerH)
+  && doubles(z1.primitive, z2.primitive)
+  && doubles(rotated.designerH, rotatedZ2.designerH);
+res.designerAndPrimitiveMatchOrdinaryDecor = closePx(z1.designerH, z1.control)
+  && closePx(z1.primitive, z1.control)
+  && closePx(z2.designerH, z2.control)
+  && closePx(z2.primitive, z2.control);
+res.anisotropicResizeKeepsBothAxesEqual = closePx(z1.designerH, z1.designerV);
+res.rotatedArtworkKeepsTheSameThickness = closePx(rotated.designerH, z1.designerH);
+res.viewportResizeRecalculatesTheSharedPhysicalStroke = closePx(compact.designerH, compact.control)
+  && closePx(compact.primitive, compact.control)
+  && Math.abs(compact.control - z1.control) >= 1;
 checkAll(res);
 await finish(browser, res);

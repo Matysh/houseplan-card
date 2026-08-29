@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Furniture outline width now follows plan zoom like the same physical width
+  on lines and shapes, while independent width/depth resizing still keeps
+  horizontal, vertical and diagonal strokes equally thick
+  ([#361](https://github.com/Matysh/houseplan-card/issues/361)).
+
 - Device markers in the Background editor are now passive, translucent
   landmarks: their core, ring, value capsule and badges no longer hover, open,
   actuate or drag, and a drawing or furniture tool receives a press through
