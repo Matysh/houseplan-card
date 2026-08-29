@@ -1309,6 +1309,18 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'budget-warning-never-fires',
+    guard: 'node --test --test-name-pattern="срабатывает до стены" test/bundle-assets.test.mjs',
+    because: 'прежняя редакция полагалась на то, что человек заметит тренд в выводе: за сутки '
+      + 'запас ушёл с 26 КБ до 8.3 КБ, и не заметил никто — каждая отдельная строка выглядела '
+      + 'нормально (#367)',
+    patches: [{
+      file: 'scripts/bundle-budget.mjs',
+      find: '  if (!Number.isFinite(headroom) || headroom >= threshold) return null;',
+      replace: '  if (true) return null;',
+    }],
+  },
+  {
     id: 'review-doc-guard-matches-by-substring',
     guard: 'node --test --test-name-pattern="соседний каталог" test/review-doc-guard.test.mjs',
     because: 'сравнение подстрокой пускает docs/reviews-old и docs/reviewsx: allowlist, который '

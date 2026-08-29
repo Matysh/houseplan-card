@@ -11,8 +11,48 @@ import { pathToFileURL } from 'node:url';
 // the bundle (5740324b was exactly that). The ceiling therefore keeps a
 // deliberate ~10% allowance over the measured fact; the fact and headroom
 // are printed on every run so the trend is visible long before the wall.
-// Measured fact at calibration (v1.69.0-beta.1): 255 993 B gzip.
-export const INITIAL_VIEW_GZIP_BUDGET = 282_000;
+//
+// #367, рекалибровка 29.08. Запас съеден с 26 КБ до 8.3 КБ, и это не диффузное
+// расползание, а один шаг плюс обычная работа. Факт по документам код-ревью:
+//
+//   #317 256 127 · #318 256 091 · #341 256 046 · #354 257 212 · #159 256 828
+//   #357 271 143  ← +14 КБ за один заход
+//   #20  271 455 · #361 272 848 · #359 272 469 · #360 273 697  ← текущий факт
+//
+// Шаг на #357 — plan-art мебели: 44 top-view символа в eager-графе, которые
+// платит КАЖДЫЙ план, включая планы без единого предмета мебели. Остальные
+// приросты по килобайту и относятся к обычным фичам.
+//
+// Поэтому запись честная: рекалибровка НИЧЕГО не ускоряет и ничего не чинит.
+// Она фиксирует, что 273 697 Б — новая норма, и возвращает рабочий запас, чтобы
+// гейт снова красил того, кто вырастил бандл, а не того, кто пушнул последним.
+// Настоящий рычаг остаётся прежним и описан в #367: вынести plan-art мебели в
+// ленивый чанк (−13.6 КБ, вариант 1) либо русский словарь (вариант 2).
+//
+// Measured fact at recalibration (dev @ 360, 29.08.2026): 273 697 B gzip.
+// 273 697 × 1.10 = 301 067 — потолок 300 000 держится внутри правила ~10%.
+export const INITIAL_VIEW_GZIP_BUDGET = 300_000;
+
+/**
+ * Порог, ниже которого запас перестаёт быть запасом (#367).
+ *
+ * Прежняя редакция полагалась на то, что человек заметит тренд в выводе. За
+ * сутки запас ушёл с 26 КБ до 8.3 КБ, и не заметил никто — потому что каждая
+ * отдельная строка выглядела нормально. Предупреждение срабатывает за две
+ * средние фичи до стены, а не после неё.
+ */
+export const LOW_HEADROOM_WARNING_BYTES = 15_000;
+
+/** Тревога о запасе: `null`, пока его хватает. */
+export function lowHeadroomWarning(headroom, threshold = LOW_HEADROOM_WARNING_BYTES) {
+  if (!Number.isFinite(headroom) || headroom >= threshold) return null;
+  if (headroom < 0) {
+    return `бюджет превышен на ${-headroom} Б — гейт уже красный`;
+  }
+  return `запас бюджета ${headroom} Б, меньше порога ${threshold} Б:`
+    + ' следующая средняя фича упрётся в стену. Рекалибровка это не лечит —'
+    + ' смотрите ленивые графы (#367)';
+}
 
 export function assertBundleBudget(manifest, budget = INITIAL_VIEW_GZIP_BUDGET) {
   if (manifest?.schema !== 1 || !Array.isArray(manifest.files)) {
@@ -58,6 +98,8 @@ if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
       `lazy locale: ${result.lazyLocaleGzipBytes} B gzip`,
     ];
     for (const line of lines) console.log(line);
+    const warning = lowHeadroomWarning(headroom);
+    if (warning) console.log(`::warning::${warning}`);
     // #352: the trend belongs where humans look — the run summary.
     if (process.env.GITHUB_STEP_SUMMARY) {
       const { appendFileSync } = await import('node:fs');
@@ -66,6 +108,7 @@ if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
         `| граф | gzip | бюджет | запас |`,
         `|---|---|---|---|`,
         `| initial View | ${result.initialViewGzipBytes} B | ${INITIAL_VIEW_GZIP_BUDGET} B | ${headroom} B |`,
+        ...(warning ? ['', `> ${warning}`] : []),
         '',
       ].join('\n'));
     }

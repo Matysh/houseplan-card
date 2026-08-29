@@ -3403,8 +3403,12 @@ require hands on real hardware — they remain for the human pass.
       `getConfigElement()` still returns `houseplan-card-editor`
       [auto: `smoke_lazy_editor_chunk`].
 - [ ] `bundle:budget` follows transitive static imports and keeps initial View
-      at or below 282000 B gzip (#352: ~10% headroom over the calibrated fact,
-      printed with the trend on every run). Bundle sync, demo freshness, CI artifacts and
+      at or below 300000 B gzip (#352: ~10% headroom over the calibrated fact,
+      printed with the trend on every run; recalibrated in #367 from 282000 after
+      the fact moved 255 993 → 273 697 B, of which +14 KB came in a single step —
+      furniture plan-art in the eager graph. Recalibration records the growth, it
+      does not fix it: the lever is a lazy graph. A warning fires while headroom
+      is still 15000 B, two average features before the wall). Bundle sync, demo freshness, CI artifacts and
       release zip validation fail when any manifest-listed asset is missing or
       its SHA-256 differs [auto: `bundle-assets.test`, `bundle-freshness.test`,
       release-contract tests].

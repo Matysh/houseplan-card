@@ -7,7 +7,9 @@ import test from 'node:test';
 import {
   buildBundleManifest, buildFingerprintPlugin, editorRuntimeRetryUrlPlugin,
 } from '../scripts/bundle-manifest.mjs';
-import { assertBundleBudget } from '../scripts/bundle-budget.mjs';
+import {
+  INITIAL_VIEW_GZIP_BUDGET, LOW_HEADROOM_WARNING_BYTES, assertBundleBudget, lowHeadroomWarning,
+} from '../scripts/bundle-budget.mjs';
 import { compareBundleTrees, sha256Bytes, verifyBundleTree } from '../scripts/bundle-tree.mjs';
 import {
   minifyCssText, minifyStaticCssTemplates,
@@ -195,4 +197,42 @@ test('bundle tree verification rejects orphan chunks (#353 AC4)', async () => {
     () => verifyBundleTree(root),
     /orphan bundle asset: houseplan-assets\/junk-old\.js/,
   );
+});
+
+// #367. Рекалибровка после того, как запас ушёл с 26 КБ до 8.3 КБ за сутки.
+// Она ничего не ускоряет — она фиксирует новую норму и возвращает рабочий
+// запас, чтобы гейт красил того, кто вырастил бандл, а не того, кто пушнул
+// последним. Настоящий рычаг — ленивые графы, и о нём напоминает сам текст
+// предупреждения.
+
+test('потолок держится внутри правила ~10% над измеренным фактом (#352, #367)', () => {
+  // Факт на момент рекалибровки — 273 697 Б gzip (dev @ 360).
+  const fact = 273_697;
+  assert.ok(INITIAL_VIEW_GZIP_BUDGET > fact, 'потолок ниже факта сделал бы гейт вечно красным');
+  const allowance = (INITIAL_VIEW_GZIP_BUDGET - fact) / fact;
+  assert.ok(allowance <= 0.10 + 1e-9, `надбавка ${(allowance * 100).toFixed(1)}% больше правила 10%`);
+  assert.ok(allowance > 0.05, 'надбавка меньше 5% возвращает лотерею «красит последний коммит»');
+});
+
+test('тревога о запасе срабатывает до стены, а не после (#367)', () => {
+  // Порог выбран так, чтобы предупреждение приходило примерно за две средние
+  // фичи до потолка: обычный прирост — около килобайта за задачу.
+  assert.equal(lowHeadroomWarning(LOW_HEADROOM_WARNING_BYTES), null);
+  assert.equal(lowHeadroomWarning(LOW_HEADROOM_WARNING_BYTES + 1), null);
+  const warning = lowHeadroomWarning(LOW_HEADROOM_WARNING_BYTES - 1);
+  assert.match(warning, /меньше порога/);
+  // Предупреждение обязано называть лечение: без этого следующий читатель
+  // поднимет потолок ещё раз и назовёт это решением.
+  assert.match(warning, /Рекалибровка это не лечит/);
+  assert.match(warning, /#367/);
+});
+
+test('превышенный бюджет описывается как превышение, а не как малый запас (#367)', () => {
+  assert.match(lowHeadroomWarning(-42), /превышен на 42 Б/);
+  assert.equal(lowHeadroomWarning(Number.NaN), null);
+});
+
+test('запас на момент рекалибровки выше порога тревоги (#367)', () => {
+  // Иначе рекалибровка была бы бессмысленной: гейт сразу же начал бы кричать.
+  assert.ok(INITIAL_VIEW_GZIP_BUDGET - 273_697 > LOW_HEADROOM_WARNING_BYTES);
 });
