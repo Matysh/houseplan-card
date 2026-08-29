@@ -13,6 +13,16 @@ const res = await page.evaluate(async () => {
   const named = mk({ type: 'custom:houseplan-space-card', space: spaceId, title: 'Named floor' });
   const compact = mk({ type: 'custom:houseplan-space-card', space: spaceId, title: '' });
   const compactNoButton = mk({ type: 'custom:houseplan-space-card', space: spaceId, title: '', show_button: false });
+  const narrowHost = document.createElement('div');
+  narrowHost.style.width = '320px';
+  compact.before(narrowHost);
+  narrowHost.appendChild(compact);
+  compact.hass = { ...hass, themes: { ...(hass.themes || {}), darkMode: false } };
+  const wideHost = document.createElement('div');
+  wideHost.style.width = '640px';
+  compactNoButton.before(wideHost);
+  wideHost.appendChild(compactNoButton);
+  compactNoButton.hass = { ...hass, themes: { ...(hass.themes || {}), darkMode: true } };
   const waitForStage = async (el) => {
     const t0 = Date.now();
     while (!el.renderRoot?.querySelector('.hp-static-stage') && Date.now() - t0 < 6000) {
@@ -32,6 +42,7 @@ const res = await page.evaluate(async () => {
   const compactNoButtonFrame = frameOf(compactNoButton);
   const compactCardBox = compact.renderRoot.querySelector('ha-card')?.getBoundingClientRect();
   const compactStageBox = compact.renderRoot.querySelector('.hp-static-stage')?.getBoundingClientRect();
+  const wideStageBox = compactNoButton.renderRoot.querySelector('.hp-static-stage')?.getBoundingClientRect();
   const compactTopGap = compactCardBox && compactStageBox
     ? Math.abs(compactStageBox.top - compactCardBox.top) : null;
 
@@ -62,6 +73,12 @@ const res = await page.evaluate(async () => {
     namedTitle: named.renderRoot.querySelector('.hp-static-title')?.textContent?.trim() || null,
     compactHasTitle: !!compact.renderRoot.querySelector('.hp-static-title'),
     compactTopGap,
+    compactWidths: [compactStageBox?.width || 0, wideStageBox?.width || 0],
+    compactOverflow: [compact, compactNoButton].some((el) => {
+      const body = el.renderRoot.querySelector('.hp-static-body');
+      return body ? body.scrollWidth > body.clientWidth + 1 : true;
+    }),
+    compactThemes: [compact.hass.themes.darkMode, compactNoButton.hass.themes.darkMode],
     frame,
     namedFrame,
     compactFrame,
@@ -82,6 +99,10 @@ const ok =
   res.namedTitle === 'Named floor' &&
   !res.compactHasTitle &&
   res.compactTopGap !== null && res.compactTopGap < 0.51 &&
+  res.compactWidths[0] > 300 && res.compactWidths[0] <= 320 &&
+  res.compactWidths[1] > 600 && res.compactWidths[1] <= 640 &&
+  !res.compactOverflow &&
+  JSON.stringify(res.compactThemes) === JSON.stringify([false, true]) &&
   res.frame && res.namedFrame && res.compactFrame && res.compactNoButtonFrame &&
   JSON.stringify(res.frame) === JSON.stringify(res.namedFrame) &&
   res.compactFrame.x === res.frame.x &&
