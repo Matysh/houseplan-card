@@ -15,7 +15,7 @@
     "src/ha-binding-status.ts",
     "src/integration-provider.ts", "src/vacuum.ts",
     "src/sun.ts",
-    "src/light-visibility.ts", "src/glow-scene.ts",
+    "src/light-visibility.ts", "src/glow-scene.ts", "src/space-render.ts",
     "src/resize.ts", "src/resize-labels.ts", "src/resize-controller.ts", "src/wall-record-preservation.ts",
     "src/rules.ts",
     "src/devices.ts", "src/device-inbox.ts",

@@ -70,8 +70,28 @@ type StaticWallGeometryEntry = { fingerprint: string; value: StaticWallGeometry 
 const staticWallGeometryCache = new WeakMap<object, Map<string, StaticWallGeometryEntry>>();
 type StaticPhysicalBodiesEntry = { fingerprint: string; value: number[][][] };
 const staticPhysicalBodiesCache = new WeakMap<object, Map<string, StaticPhysicalBodiesEntry>>();
-type StaticLightBarrierEntry = { fingerprint: string; value: LightBarrierScene };
-const staticLightBarrierCache = new WeakMap<object, Map<string, StaticLightBarrierEntry>>();
+// #375: the scene cache is an LRU of 8 per space — parity with the full
+// card's _lightBarrierPool. A single-entry cache made a door flipping
+// open<->close rebuild the scene on every state change (fingerprint ping-pong).
+const STATIC_LIGHT_BARRIER_LRU = 8;
+const staticLightBarrierCache = new WeakMap<object, Map<string, Map<string, LightBarrierScene>>>();
+// #375: enabledClip is rebuilt only when the geometry or the set of
+// glow-disabled rooms changes; the full card keeps the analogous clean-floor
+// LRU (600) — static cards need far fewer entries.
+const STATIC_ENABLED_CLIP_LRU = 8;
+const staticEnabledClipCache = new WeakMap<object, Map<string, Map<string, string[]>>>();
+
+function lruGet<V>(cache: Map<string, V>, key: string): V | undefined {
+  const value = cache.get(key);
+  if (value !== undefined) { cache.delete(key); cache.set(key, value); }
+  return value;
+}
+
+function lruSet<V>(cache: Map<string, V>, key: string, value: V, limit: number): void {
+  cache.delete(key);
+  cache.set(key, value);
+  while (cache.size > limit) cache.delete(cache.keys().next().value as string);
+}
 
 /** Static cards receive the same immutable server-config object on HA ticks. */
 function cachedStaticWallGeometry(
@@ -110,7 +130,8 @@ function cachedStaticPhysicalBodies(
   return value;
 }
 
-function cachedStaticLightBarriers(
+/** Exported for tests only (#375): the LRU behaviour is the contract. */
+export function cachedStaticLightBarriers(
   cfg: ServerConfig,
   spaceId: string,
   fingerprint: string,
@@ -118,13 +139,42 @@ function cachedStaticLightBarriers(
 ): LightBarrierScene {
   let spaces = staticLightBarrierCache.get(cfg as object);
   if (!spaces) {
-    spaces = new Map<string, StaticLightBarrierEntry>();
+    spaces = new Map<string, Map<string, LightBarrierScene>>();
     staticLightBarrierCache.set(cfg as object, spaces);
   }
-  const cached = spaces.get(spaceId);
-  if (cached?.fingerprint === fingerprint) return cached.value;
+  let scenes = spaces.get(spaceId);
+  if (!scenes) {
+    scenes = new Map<string, LightBarrierScene>();
+    spaces.set(spaceId, scenes);
+  }
+  const cached = lruGet(scenes, fingerprint);
+  if (cached) return cached;
   const value = build();
-  spaces.set(spaceId, { fingerprint, value });
+  lruSet(scenes, fingerprint, value, STATIC_LIGHT_BARRIER_LRU);
+  return value;
+}
+
+/** Exported for tests only (#375): reuse-by-identity is the contract. */
+export function cachedStaticEnabledClip(
+  cfg: ServerConfig,
+  spaceId: string,
+  key: string,
+  build: () => string[],
+): string[] {
+  let spaces = staticEnabledClipCache.get(cfg as object);
+  if (!spaces) {
+    spaces = new Map<string, Map<string, string[]>>();
+    staticEnabledClipCache.set(cfg as object, spaces);
+  }
+  let clips = spaces.get(spaceId);
+  if (!clips) {
+    clips = new Map<string, string[]>();
+    spaces.set(spaceId, clips);
+  }
+  const cached = lruGet(clips, key);
+  if (cached) return cached;
+  const value = build();
+  lruSet(clips, key, value, STATIC_ENABLED_CLIP_LRU);
   return value;
 }
 
@@ -499,14 +549,26 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
       : { rooms: space.rooms, walls, extras, cellCm, zero: zeroWalls.contour })
     : '';
   const canonicalWallGeometry = needsCanonicalWallGeometry
-    ? cachedStaticWallGeometry(o.cfg, space.id, wallGeometryFingerprint, () => wallBodiesUnionPath(
-      space.rooms, walls, zeroWalls.contour, [
-        ...staticPassages.filter((opening) => opening.host?.kind !== 'partition').map((opening) => ({
-          x: opening.rx, y: opening.ry, angle: opening.angle, length: opening.rlen,
-        })),
-        ...hostedCompositeOpenings,
-      ], GRID_STEP_N, cellCm, GRID_PITCH, NORM_W, extras,
-    ))
+    ? cachedStaticWallGeometry(o.cfg, space.id, wallGeometryFingerprint, () => {
+      const built = wallBodiesUnionPath(
+        space.rooms, walls, zeroWalls.contour, [
+          ...staticPassages.filter((opening) => opening.host?.kind !== 'partition').map((opening) => ({
+            x: opening.rx, y: opening.ry, angle: opening.angle, length: opening.rlen,
+          })),
+          ...hostedCompositeOpenings,
+        ], GRID_STEP_N, cellCm, GRID_PITCH, NORM_W, extras,
+      );
+      // #375: the same non-enumerable tag the full card attaches
+      // (houseplan-card.ts, _wallGeometryR): buildLightBarrierScene only takes
+      // the fast recutWallBodiesGeometry path when this fingerprint matches
+      // revision.geometryFingerprint — without the tag the static path always
+      // rebuilt the wall bodies from scratch on a door state change.
+      if (built) Object.defineProperty(built, 'sourceFingerprint', {
+        value: contentFingerprint([spCfg, cellCm, GRID_PITCH]),
+        enumerable: false,
+      });
+      return built;
+    })
     : null;
   const passageTunnelGeometry = staticPassages.length && walls.length
     ? openingTunnelGeometries(
@@ -651,29 +713,48 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
     pruneGlowSources(glowRuntime.state, glowRuntime.host, space.id, seen);
     if (spots.length) {
       const allEnabled = glowEnabledRooms.length === revision.polygons.length;
-      const enabledClip = allEnabled ? null : glowEnabledRooms.flatMap((room) => {
-        const poly = roomPoly(room);
-        if (!poly) return [];
-        const floorPoly = walls.length && room.id
-          ? (innerContourForRoom(
-              space.rooms, room.id, walls, zeroWalls.contour,
-              GRID_STEP_N, cellCm, GRID_PITCH, NORM_W,
-              canonicalWallGeometry?.roomGeom,
-              canonicalWallGeometry?.multiWallNodes,
-            ) || poly)
-          : poly;
-        const cleanGeometry = extras.length ? floorMinusBodies(floorPoly, extras) : null;
-        const clean = cleanGeometry ? polyclipPathD(cleanGeometry) : '';
-        const holes = islandsOf(
-          floorPoly,
-          revision.polygons
-            .filter(({ room: other }) => other !== room)
-            .map(({ poly: other }) => other),
-        );
-        const path = (points: number[][]) =>
-          `M ${points.map((point) => `${point[0]} ${point[1]}`).join(' L ')} Z`;
-        return [[clean || path(floorPoly), ...holes.map(path)].join(' ')];
-      });
+      // #375: the clip depends only on the geometry (revision.geometryFingerprint
+      // covers spCfg) and on WHICH rooms have glow disabled — not on entity
+      // states. Cache it instead of recomputing boolean geometry every hass tick.
+      const enabledClipKey = `${revision.geometryFingerprint}|${
+        space.rooms.filter((room) => !glowEnabledRooms.includes(room))
+          .map((room) => room.id || `#${space.rooms.indexOf(room)}`).sort().join(',')}`;
+      const enabledClip = allEnabled ? null : cachedStaticEnabledClip(
+        o.cfg, space.id, enabledClipKey, () => glowEnabledRooms.flatMap((room) => {
+          const poly = roomPoly(room);
+          if (!poly) return [];
+          const floorPoly = walls.length && room.id
+            ? (innerContourForRoom(
+                space.rooms, room.id, walls, zeroWalls.contour,
+                GRID_STEP_N, cellCm, GRID_PITCH, NORM_W,
+                canonicalWallGeometry?.roomGeom,
+                canonicalWallGeometry?.multiWallNodes,
+              ) || poly)
+            : poly;
+          // #375: bbox prefilter, same as the full card's clean-floor cache —
+          // bodies entirely outside the room's bounding box cannot cut it.
+          const xs = floorPoly.map((point: number[]) => point[0]);
+          const ys = floorPoly.map((point: number[]) => point[1]);
+          const box = [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
+          const bodies = extras.filter((body) => {
+            const bx = body.map((point: number[]) => point[0]);
+            const by = body.map((point: number[]) => point[1]);
+            return Math.max(...bx) >= box[0] && Math.min(...bx) <= box[2]
+              && Math.max(...by) >= box[1] && Math.min(...by) <= box[3];
+          });
+          const cleanGeometry = bodies.length ? floorMinusBodies(floorPoly, bodies) : null;
+          const clean = cleanGeometry ? polyclipPathD(cleanGeometry) : '';
+          const holes = islandsOf(
+            floorPoly,
+            revision.polygons
+              .filter(({ room: other }) => other !== room)
+              .map(({ poly: other }) => other),
+          );
+          const path = (points: number[][]) =>
+            `M ${points.map((point) => `${point[0]} ${point[1]}`).join(' L ')} Z`;
+          return [[clean || path(floorPoly), ...holes.map(path)].join(' ')];
+        }),
+      );
       const feather = resolveGlowFeather(
         glowRuntime.state,
         o.stageWidth && vb[2] ? o.stageWidth / vb[2] : 1,

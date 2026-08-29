@@ -173,8 +173,10 @@ export function resolveGlowCandidates(input: {
   gridPitch: number;
   position: (device: DevItem) => { x: number; y: number };
 }): GlowCandidate[] {
+  // #375: pass the array as-is — RESOLVED_LIGHT_CACHE is keyed by the array's
+  // identity, so a fresh spread would guarantee a miss on every render.
   const sources = resolvedLightSources(
-    input.hass, [...input.devices], null, input.virtualLights,
+    input.hass, input.devices, null, input.virtualLights,
   ).filter((source) => source.device.space === input.spaceId);
   const byDevice = new Map<string, typeof sources>();
   for (const source of sources) {
