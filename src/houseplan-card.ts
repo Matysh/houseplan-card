@@ -22,6 +22,7 @@ import {
   pointOnBoundary, mergeRooms, splitRoomPath, polygonArea, closestPointOnBoundary, pointStrictlyInside as ptInside, islandsOf, sharedBoundary, distToSegment, outlineWithout, cutSegments, alignGuides, segmentAngle, is45, isExact45Vector, type AlignGuide, swipeTarget, clampScale, migratePdfUrls, roomFillModeOf, roomGlowOf, contentUrl,
   snapToWall, snapPointAlongPoly, openingAmount, openingShoulders, interiorPoint,
   isInteriorLightOpeningType, openingLightApertureLength, openingLightStateSignature,
+  quantizeOpeningLightAmount,
   openingEntityReferences, filterOpeningEntityCandidates,
   poleOfInaccessibility, subst,
   averageLqi, fitView, declump, safeUrl, floorsOf, type FloorInfo,
@@ -10375,7 +10376,9 @@ export class HouseplanCard extends LitElement {
       const ny = Math.cos(rad);
       const interior = onFloor([o.rx + nx * probe, o.ry + ny * probe])
         && onFloor([o.rx - nx * probe, o.ry - ny * probe]);
-      return interior ? [{ opening: o, amount: this._openingAmt(o) }] : [];
+      // #366: the light pipeline consumes the quantised amount — the door
+      // LEAF animation stays smooth (_openingAmt elsewhere), only light steps.
+      return interior ? [{ opening: o, amount: quantizeOpeningLightAmount(this._openingAmt(o)) }] : [];
     });
     const openingStateSignature = openingLightStateSignature(
       passageStates.map(({ opening, amount }) => ({

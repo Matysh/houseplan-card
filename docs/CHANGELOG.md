@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- A gate or door bound to a position-reporting cover no longer stutters the
+  whole card while it moves: the light cut through the opening now steps on a
+  5% grid, cutting the heavy geometry recomputes from about a hundred per
+  cycle to at most twenty
+  ([#366](https://github.com/Matysh/houseplan-card/issues/366)).
+
 - Furniture outline width now follows plan zoom like the same physical width
   on lines and shapes, while independent width/depth resizing still keeps
   horizontal, vertical and diagonal strokes equally thick

@@ -342,6 +342,22 @@ export interface OpeningLightStateEntry {
   amount: number;
 }
 
+/**
+ * #366: one grid for the light pipeline's aperture amount. A moving cover
+ * publishes current_position by the percent; unquantised it forces a full
+ * barrier recompute per tick (~100 per gate cycle). Both the signature AND
+ * the cut geometry consume the same quantised value, so the cache key and
+ * the drawn aperture agree by construction. 0 and 1 are exact grid nodes —
+ * binary contact doors are byte-identical to the pre-#366 behaviour.
+ */
+export const OPENING_LIGHT_AMOUNT_QUANTUM = 0.05;
+
+export function quantizeOpeningLightAmount(amount: number): number {
+  const safe = Number.isFinite(amount) ? Math.max(0, Math.min(1, amount)) : 0;
+  return Math.min(1, Math.max(0,
+    Math.round(safe / OPENING_LIGHT_AMOUNT_QUANTUM) * OPENING_LIGHT_AMOUNT_QUANTUM));
+}
+
 /** State-only identity for interior light apertures. Structural geometry is
  * fingerprinted separately, so unrelated HA updates cannot evict barriers. */
 export function openingLightStateSignature(
