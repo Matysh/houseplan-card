@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Glow in `houseplan-space-card` no longer rebuilds its light graph and wall
+  scene from scratch on every Home Assistant tick: the static path now shares
+  the caching machinery of the full card (light-graph cache, an LRU pool of
+  barrier scenes so a moving door reuses both of its states, the fast masonry
+  recut path, and a cached room clip). This also fixes a light-graph cache
+  regression the full card picked up in beta.4
+  ([#375](https://github.com/Matysh/houseplan-card/issues/375)).
+
 ## v1.69.0-beta.4 — 2026-08-29
 
 - The read-only `houseplan-space-card` can now opt into the full plan's radial

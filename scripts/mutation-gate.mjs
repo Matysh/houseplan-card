@@ -692,6 +692,28 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'static-glow-light-cache-spread',
+    guard: 'node --test test/space-render-caches.test.mjs',
+    because: 'a fresh spread on the devices array silently defeats RESOLVED_LIGHT_CACHE '
+      + '(WeakMap by array identity) in BOTH cards — invisible to CI perf profiles (#375 V6a)',
+    patches: [{
+      file: 'src/glow-scene.ts',
+      find: "    input.hass, input.devices, null, input.virtualLights,",
+      replace: "    input.hass, [...input.devices], null, input.virtualLights,",
+    }],
+  },
+  {
+    id: 'static-glow-scene-lru-single',
+    guard: 'node --test test/space-render-caches.test.mjs',
+    because: 'a single-entry scene cache makes a door ping-pong rebuild the barrier scene '
+      + 'on every flip — the LRU capacity is the contract, parity with the full card (#375 V6c)',
+    patches: [{
+      file: 'src/space-render.ts',
+      find: "const STATIC_LIGHT_BARRIER_LRU = 8;",
+      replace: "const STATIC_LIGHT_BARRIER_LRU = 1;",
+    }],
+  },
+  {
     id: 'opening-light-quantum-identity',
     guard: 'node --test --test-name-pattern="#366" test/logic.test.mjs',
     because: 'an identity quantum brings back ~100 barrier recomputes per moving-gate cycle — '
