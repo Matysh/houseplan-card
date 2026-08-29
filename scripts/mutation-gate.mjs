@@ -736,6 +736,28 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'space-card-null-title-compact-narrowed',
+    guard: 'node --test test/space-card-audit-lows.test.mjs',
+    because: 'YAML `title:` with no value is null — narrowing the compact condition back to '
+      + "'' alone silently reopens the #372 header strip for those configs (#376а)",
+    patches: [{
+      file: 'src/space-card.ts',
+      find: "      compactTopFrame: this._config.title === '' || this._config.title === null,",
+      replace: "      compactTopFrame: this._config.title === '',",
+    }],
+  },
+  {
+    id: 'furniture-stroke-iso-camera-mismatch',
+    guard: 'node --test test/furniture-stroke-contract.test.mjs',
+    because: 'the stroke compensation models the flat camera; applying it in the labs iso '
+      + 'projection diverges furniture from ordinary decor by a wrong-camera factor (#376г)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: "    const furnitureScreenScale = this._renderProjection === 'iso' ? 1 : furniturePlanScreenScale(",
+      replace: "    const furnitureScreenScale = furniturePlanScreenScale(",
+    }],
+  },
+  {
     id: 'opening-light-quantum-identity',
     guard: 'node --test --test-name-pattern="#366" test/logic.test.mjs',
     because: 'an identity quantum brings back ~100 barrier recomputes per moving-gate cycle — '

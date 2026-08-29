@@ -22,11 +22,14 @@ test('#361 saved furniture and placement preview share the physical screen resol
     'preview must not bypass the camera-aware furniture resolver',
   );
 
-  assert.match(layer, /const furnitureScreenScale = furniturePlanScreenScale\(/);
+  // #376(г): the compensation models the flat camera; the labs iso projection
+  // must fall back to 1 so furniture strokes track ordinary decor there.
+  assert.match(layer,
+    /const furnitureScreenScale = this\._renderProjection === 'iso' \? 1 : furniturePlanScreenScale\(/);
   assert.match(layer, /stroke-width="\$\{furnitureStrokePx\(strokeWidth, furnitureScreenScale\)\}"/);
   assert.match(layer, /_renderFurniturePlacementPreview\(furnitureScreenScale\)/);
   assert.equal(
-    (layer.match(/const furnitureScreenScale = furniturePlanScreenScale\(/g) || []).length,
+    (layer.match(/furniturePlanScreenScale\(/g) || []).length,
     1,
     'the viewport scale is resolved once for the whole decor layer',
   );

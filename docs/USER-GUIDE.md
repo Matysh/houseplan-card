@@ -691,6 +691,9 @@ saved setting.
 The authoritative technical interaction contract is
 [DECOR-EDITOR.md](DECOR-EDITOR.md).
 
+While this mode is active, device markers and room labels do not intercept the
+pointer (#362, #376): drawing works right through them.
+
 The main-toolbar default colour and style for new objects is saved with the
 plan (#377): it survives a page reload and is shared by everyone who edits
 this plan.

@@ -291,7 +291,10 @@ class HouseplanSpaceCard extends LitElement {
       ...config,
       fit: resolveSpaceCardFit(config.fit),
     };
-    if (!this._config.light_pools) {
+    // #376(е): the render gate is strict `=== true`; keep the dispose gate the
+    // exact mirror so `light_pools: 1` neither draws pools nor keeps a runtime
+    // and a blend probe alive.
+    if (this._config.light_pools !== true) {
       disposeGlowRuntime(this._glowRuntimeState, this._glowRuntimeHost);
     } else if (this.isConnected) {
       this._resolveGlowBlend();
@@ -823,7 +826,9 @@ class HouseplanSpaceCard extends LitElement {
       spaceId,
       iconSize: this._config.icon_size,
       fit: this._config.fit,
-      compactTopFrame: this._config.title === '',
+      // #376(а): YAML `title:` with no value parses as null — the owner decided
+      // null means the same "no header, compact frame" as the explicit ''.
+      compactTopFrame: this._config.title === '' || this._config.title === null,
       stageWidth: this._stageWidth,
       lang: this._lang,
       // resolved at render time: a url baked in earlier would be the unsigned one

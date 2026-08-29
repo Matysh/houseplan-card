@@ -37,6 +37,8 @@ const res = await page.evaluate(async () => {
   const named = mk({ type: 'custom:houseplan-space-card', space: spaceId, title: 'Named floor' });
   const compact = mk({ type: 'custom:houseplan-space-card', space: spaceId, title: '' });
   const compactNoButton = mk({ type: 'custom:houseplan-space-card', space: spaceId, title: '', show_button: false });
+  // #376(а): YAML `title:` with no value is null — same compact contract as ''
+  const nullTitle = mk({ type: 'custom:houseplan-space-card', space: spaceId, title: null });
   const narrowHost = document.createElement('div');
   narrowHost.style.width = '320px';
   compact.before(narrowHost);
@@ -71,6 +73,8 @@ const res = await page.evaluate(async () => {
   const namedFrame = frameOf(named);
   const compactFrame = frameOf(compact);
   const compactNoButtonFrame = frameOf(compactNoButton);
+  const nullTitleFrame = frameOf(nullTitle);
+  const nullTitleHasTitle = !!nullTitle.renderRoot.querySelector('.hp-static-title');
   const compactCardBox = compact.renderRoot.querySelector('ha-card')?.getBoundingClientRect();
   const compactStageBox = compact.renderRoot.querySelector('.hp-static-stage')?.getBoundingClientRect();
   const wideStageBox = compactNoButton.renderRoot.querySelector('.hp-static-stage')?.getBoundingClientRect();
@@ -148,6 +152,8 @@ const res = await page.evaluate(async () => {
         }),
       };
     })(),
+    nullTitleFrame,
+    nullTitleHasTitle,
     namedFrame,
     compactFrame,
     compactNoButtonFrame,
@@ -187,6 +193,8 @@ const ok =
   res.compactFrame.y > res.frame.y &&
   Math.abs((res.compactFrame.y + res.compactFrame.h) - (res.frame.y + res.frame.h)) < 1e-6 &&
   JSON.stringify(res.compactFrame) === JSON.stringify(res.compactNoButtonFrame) &&
+  !res.nullTitleHasTitle &&
+  JSON.stringify(res.nullTitleFrame) === JSON.stringify(res.compactFrame) &&
   res.hasButton &&
   typeof res.deepLink === 'string' && res.deepLink.includes('#space=') &&
   res.errorShown;

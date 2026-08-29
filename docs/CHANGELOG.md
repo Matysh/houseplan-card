@@ -20,6 +20,14 @@
   (`settings.decor_default_style`) and shared by every editor of that plan
   ([#377](https://github.com/Matysh/houseplan-card/issues/377)).
 
+- `houseplan-space-card` with `title: null` (a YAML `title:` line with no
+  value) now gets the same compact frame as the explicit `title: ""`; small
+  polish from the beta.4 audit rides along: furniture strokes in the labs
+  isometric view follow the decor camera again, a non-boolean `light_pools`
+  value no longer keeps an idle glow runtime alive, and the guides now state
+  that room labels stay inert while the Background editor is active
+  ([#376](https://github.com/Matysh/houseplan-card/issues/376)).
+
 ## v1.69.0-beta.4 — 2026-08-29
 
 - The read-only `houseplan-space-card` can now opt into the full plan's radial

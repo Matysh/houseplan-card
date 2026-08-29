@@ -1702,6 +1702,7 @@ separately promised workflows:
       Glow-off everywhere creates no base/tunnel/pool SVG layer; a dynamic mode
       without usable HA data falls back to base darkness instead of bright
       paper; static room cards show the same data/base projection but no live pools
+      unless `light_pools: true` opts them in (#374)
       [unit: logic, plan-optimizer, backend validation; auto: golden matrix].
 - [ ] Additive Glow (#19/#67): 1/10/30/60-source fixture renders one flat isolated
       pool group with no outer opacity; the shared 0.7 ceiling, perceptual

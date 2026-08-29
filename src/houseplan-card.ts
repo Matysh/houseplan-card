@@ -8096,7 +8096,12 @@ export class HouseplanCard extends LitElement {
     // camera zoom ordinary decor gets from the plan SVG (#361).
     const stage = this._stageEl;
     const planView = this._viewOr(this._baseVb());
-    const furnitureScreenScale = furniturePlanScreenScale(
+    // #376(г): the compensation formula models the 2D camera (uniform
+    // min(stage/planView)). The labs iso projection scales the floor through
+    // its own non-uniform transform, where ordinary decor is anisotropic as
+    // well — there furniture strokes keep the pre-#361 behaviour (scale 1)
+    // instead of diverging from their neighbours by a wrong-camera factor.
+    const furnitureScreenScale = this._renderProjection === 'iso' ? 1 : furniturePlanScreenScale(
       stage?.clientWidth, stage?.clientHeight, planView.w, planView.h,
     );
     const shapes = this._decorList.map((sh) => {

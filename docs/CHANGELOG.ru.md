@@ -26,6 +26,14 @@
   (`settings.decor_default_style`) и общий для всех редакторов этого плана
   ([#377](https://github.com/Matysh/houseplan-card/issues/377)).
 
+- `houseplan-space-card` с `title: null` (строка `title:` без значения в YAML)
+  теперь получает тот же компактный кадр, что и явный `title: ""`; попутно —
+  мелкий полиш из аудита beta.4: штрихи мебели в labs-изометрии снова следуют
+  за камерой декора, небулево значение `light_pools` больше не держит
+  простаивающий glow-рантайм, а руководства фиксируют, что подписи комнат
+  не перехватывают указатель в редакторе подложки
+  ([#376](https://github.com/Matysh/houseplan-card/issues/376)).
+
 ## v1.69.0-beta.4 — 2026-08-29
 
 - В read-only `houseplan-space-card` теперь можно включить радиальный Glow и
