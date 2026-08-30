@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.70.0-beta.1 — 2026-08-30
+
 - Wheel, zoom buttons, **Fit all**, the home arrow and kiosk double-tap now
   move the plan through a short smooth camera transition. Pinch and pan remain
   direct, and reduced-motion systems still update instantly
