@@ -87,12 +87,12 @@ const result = await page.evaluate(async () => {
   card._pointers.set(113, { x: 10, y: 10 });
   card._drag = { id: 'stale-device', sx: 0, sy: 0, ox: 0, oy: 0, moved: true };
   card._saveConfigDebounced();
-  const confirmBefore = window.confirm;
-  window.confirm = () => true;
+  const confirmBefore = card._confirmDanger;
+  card._confirmDanger = async () => true;
   try {
     await card._deleteSpace();
   } finally {
-    window.confirm = confirmBefore;
+    card._confirmDanger = confirmBefore;
   }
   await settle();
 

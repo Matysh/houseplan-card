@@ -86,8 +86,10 @@ const out = await page.evaluate(async () => {
     && root().querySelectorAll('.oprow').length === 2
     && root().querySelectorAll('.lockact').length === 1;
 
-  window.confirm = () => true;
-  card._lockAction(lockId, 'unlock');
+  const confirmDanger = card._confirmDanger;
+  card._confirmDanger = async () => true;
+  await card._lockAction(lockId, 'unlock');
+  card._confirmDanger = confirmDanger;
   result.explicitInfoActionStillWorks = serviceCalls.at(-1)?.domain === 'lock'
     && serviceCalls.at(-1)?.service === 'unlock'
     && serviceCalls.at(-1)?.entityId === lockId;

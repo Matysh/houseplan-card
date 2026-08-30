@@ -79,10 +79,10 @@ Object.assign(out, await page.evaluate(async () => {
   const virtualB = c._devices.find((x) => x.virtual && x.name === 'delete-one-b');
   c._openMarkerDialog(virtualA); await c.updateComplete;
   o.deleteForVirtual = !!sr().querySelector('hp-dialog .btn.danger');
-  const savedConfirm = window.confirm;
-  window.confirm = () => true;
+  const savedConfirmDanger = c._confirmDanger;
+  c._confirmDanger = async () => true;
   await c._deleteMarker(); await c.updateComplete;
-  window.confirm = savedConfirm;
+  c._confirmDanger = savedConfirmDanger;
   o.deleteOnlySelectedVirtual = !!virtualA && !!virtualB
     && !(c._serverCfg.markers || []).some((m) => m.id === virtualA.id)
     && (c._serverCfg.markers || []).some((m) => m.id === virtualB.id);
@@ -93,9 +93,9 @@ Object.assign(out, await page.evaluate(async () => {
   const oldPos = { s: readd.space, x: 0.913, y: 0.917 };
   c._layout = { ...c._layout, [readd.id]: oldPos };
   c._openMarkerDialog(readd); await c.updateComplete;
-  window.confirm = () => true;
+  c._confirmDanger = async () => true;
   await c._deleteMarker(); await c.updateComplete;
-  window.confirm = savedConfirm;
+  c._confirmDanger = savedConfirmDanger;
   c._openMarkerDialog(); await c.updateComplete;
   c._markerDialog = {
     ...c._markerDialog,

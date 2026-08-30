@@ -172,19 +172,19 @@ const out = await page.evaluate(async () => {
     && card._layout['removed-marker'].s === 'gone'
     && !card.renderRoot.querySelector('.dev[data-id="orphan"]');
 
-  let nativeConfirmCalls = 0;
-  const oldConfirm = window.confirm;
-  window.confirm = () => { nativeConfirmCalls++; return true; };
+  let dangerConfirmCalls = 0;
+  const oldConfirmDanger = card._confirmDanger;
+  card._confirmDanger = async () => { dangerConfirmCalls++; return true; };
   card._openSpaceDialog('edit', 'home');
   await card.updateComplete;
   await card._deleteSpace();
   await card.updateComplete;
   const blocker = card.renderRoot.querySelector('hp-dialog [role="alert"]')?.textContent || '';
-  result.deleteExplainsBlockerWithoutConfirmOrWrite = nativeConfirmCalls === 0
+  result.deleteExplainsBlockerWithoutConfirmOrWrite = dangerConfirmCalls === 0
     && blocker.includes('still used by 1 device')
     && !calls.includes('houseplan/space/delete')
     && card._spaceDialog?.spaceId === 'home';
-  window.confirm = oldConfirm;
+  card._confirmDanger = oldConfirmDanger;
   card._spaceDialog = null;
   await card.updateComplete;
 

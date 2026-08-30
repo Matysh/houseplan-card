@@ -12,7 +12,7 @@ const out = {};
 Object.assign(out, await page.evaluate(async () => {
   const o = {};
   const c = window.__card;
-  const nativeConfirm = window.confirm;
+  const confirmDanger = c._confirmDanger;
 
   // Пикер читает `showEntities` и `bindingFilter` из открытого диалога, поэтому
   // спрашивать его при закрытом бессмысленно: отдельные сущности устройств не
@@ -30,10 +30,10 @@ Object.assign(out, await page.evaluate(async () => {
   const remove = async (device) => {
     c._openMarkerDialog(device);
     await c.updateComplete;
-    window.confirm = () => true;
+    c._confirmDanger = async () => true;
     await c._deleteMarker();
     await c.updateComplete;
-    window.confirm = nativeConfirm;
+    c._confirmDanger = confirmDanger;
   };
   const markers = () => c._serverCfg.markers || [];
   const tombstones = () => markers().filter((m) => m.removed === true);
