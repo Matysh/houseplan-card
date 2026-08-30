@@ -80,9 +80,12 @@ if (isMain) {
       // #33: exit-code contract — 0 = clean, 3 = migration available
       // (any finding whose status names a pending mechanism), 2 = invalid
       // input (unchanged). 3 is chosen to avoid colliding with 2.
+      // Exactly the statuses that NAME a pending migration (#33 spec rev3):
+      // decision-required fields (group_lights, exclude_integrations) are
+      // live supported behaviour awaiting a #44 decision, not legacy, and
+      // drop-on-validation is handled by the backend itself.
       const MIGRATION_STATUSES = new Set([
         'migrate-on-write', 'migrate-on-settings-save', 'deprecated-read',
-        'drop-on-validation', 'decision-required',
       ]);
       const migrationFindings = reports.some((report) => report.findings
         .some((finding) => MIGRATION_STATUSES.has(finding.status)));

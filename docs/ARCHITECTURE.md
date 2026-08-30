@@ -1523,27 +1523,3 @@ other world honest against it:
   `enforcedBy`. The lifecycle fixtures in `test/fixtures/config-lifecycle/`
   pin the load contract: oldest-supported and future-field configs pass the
   schema losslessly.
-
-## Schema as the source of truth (#33, 2026-08-30)
-
-The Voluptuous schema in `custom_components/houseplan/validation.py` is the
-single owner of the persisted config/layout shape. Three artefacts keep every
-other world honest against it:
-
-- `scripts/dump-config-schema.py` walks the schema into the deterministic
-  `scripts/config-schema.json` (265 leaf paths at introduction);
-  a pytest regenerates it and fails on any uncommitted drift.
-- `test/config-schema-parity.test.mjs` compares manifest enums with the
-  exported frontend const lists (`DISPLAY_MODES`, `TAP_ACTIONS`,
-  `SPACE_FILL_MODES`/`ROOM_FILL_MODES`, `OPENING_TYPES`,
-  `VACUUM_TRAIL_MODES`, `ZERO_WALL_STYLES`, `BG_MODES`). Every divergence
-  must be blessed in `scripts/schema-compat-allowlist.mjs` with a reason and
-  an owning issue — and an allow-list entry that stops matching a real
-  divergence fails the test too, so the list cannot rot.
-- `scripts/config-field-registry.mjs` stays the DECISION layer on top of the
-  manifest: only fields with a non-trivial fate live there, each resolving to
-  a manifest path or carrying an explicit `schema: 'allow-extra'` /
-  `'lovelace-card'` passport; implemented mechanisms cite their code point in
-  `enforcedBy`. The lifecycle fixtures in `test/fixtures/config-lifecycle/`
-  pin the load contract: oldest-supported and future-field configs pass the
-  schema losslessly.

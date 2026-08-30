@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { SCHEMA_COMPAT_ALLOWLIST } from '../scripts/schema-compat-allowlist.mjs';
 import { CONFIG_FIELD_REGISTRY } from '../scripts/config-field-registry.mjs';
 import {
@@ -90,10 +90,17 @@ test('#33 AC4: every registry entry resolves to a manifest path or an explicit p
   }
 });
 
-/** #33 AC7: the manifest is a build/test artefact — the bundle must not grow. */
-test('#33 AC7: no production source imports the schema manifest', () => {
-  const source = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8')
-    + readFileSync(new URL('../src/houseplan-editor-runtime.ts', import.meta.url), 'utf8');
-  assert.ok(!source.includes('config-schema-manifest'),
-    'the manifest is test infrastructure, not runtime data');
+/** #33 AC7: the manifest is a build/test artefact — the bundle must not grow.
+ * r1-M1: scan the WHOLE src tree and look for the CURRENT file name (the
+ * original assertion kept checking the pre-rename string and could not fail). */
+test('#33 AC7: no production source references the schema dump', () => {
+  const walk = (dir) => readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const target = new URL(entry.name + (entry.isDirectory() ? '/' : ''), dir);
+    return entry.isDirectory() ? walk(target)
+      : /\.(ts|js|mjs|json)$/.test(entry.name) ? [target] : [];
+  });
+  for (const file of walk(new URL('../src/', import.meta.url))) {
+    assert.ok(!readFileSync(file, 'utf8').includes('config-schema.json'),
+      `${file.pathname} references the schema dump — it is test infrastructure, not runtime data`);
+  }
 });

@@ -9,13 +9,6 @@
   config from the oldest supported era — or one from the future — loads
   without silent loss ([#33](https://github.com/Matysh/houseplan-card/issues/33)).
 
-- Old and future plan configs are now guarded by machinery instead of habit:
-  the backend schema is dumped into a committed manifest, frontend and
-  backend value lists are compared in CI with an explicit allow-list for the
-  few legitimate compatibility divergences, and lifecycle fixtures prove a
-  config from the oldest supported era — or one from the future — loads
-  without silent loss ([#33](https://github.com/Matysh/houseplan-card/issues/33)).
-
 - Clicking the already-selected binding in the marker dialog no longer silently
   resets the configured value source and badge to automatic — the reset now
   happens only on an actual change of binding
