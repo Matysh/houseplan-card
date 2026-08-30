@@ -778,7 +778,12 @@ jobs:
         with: { node-version: 22 }
       - uses: actions/setup-python@v7
         with: { python-version: "3.13" }
-      - run: pip install pytest voluptuous pytest-homeassistant-custom-component home-assistant-frontend
+      - run: |
+          # Точные версии — в tests_backend/requirements.txt (#392): без них
+          # резолвер выбирает набор сам, и «зелёный backend» значит разное
+          # в разные дни.
+          pip install -r tests_backend/requirements.txt
+          pip list --format=columns | grep -Ei 'homeassistant|voluptuous|^pytest '
       - name: Backend unit tests (pure + HA harness)
         run: python -m pytest tests_backend/ -q
       # Маркер пишется последним шагом: он существует только если всё выше

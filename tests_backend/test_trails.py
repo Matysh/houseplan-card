@@ -1,13 +1,11 @@
 """TrailBook: the pure part of the server-side vacuum trails."""
 import math
-import sys, pathlib
-sys.path.insert(0, str(pathlib.Path(__file__).parent.parent / "custom_components" / "houseplan"))
-import importlib.util
-spec = importlib.util.spec_from_file_location(
-    "trailbook_pure",
-    pathlib.Path(__file__).parent.parent / "custom_components" / "houseplan" / "trails.py",
-)
-# import only TrailBook without HA deps: read the source and exec the class
+import pathlib
+# TrailBook берётся без импорта: из trails.py читается текст и исполняется срез
+# до класса TrailRecorder — только он тянет Home Assistant. Ни sys.path, ни
+# sys.modules при этом не трогаются намеренно (#393): правка импорт-машины
+# переживает свой тест и достаётся всей сессии, а чем это кончается, показал
+# #389 — 85 тестов харнесса падали с голым `assert False`.
 src = (pathlib.Path(__file__).parent.parent / "custom_components" / "houseplan" / "trails.py").read_text(encoding="utf-8")
 ns = {"Any": object, "annotations": None, "math": math}
 exec(src[src.index("TRAIL_CAP"):src.index("class TrailRecorder")], ns)

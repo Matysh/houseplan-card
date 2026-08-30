@@ -206,3 +206,17 @@ test('гейты диапазона судят от доказанного пр�
   assert.match(frontend, /\[ "\$REF" = "refs\/heads\/dev" \]/);
   assert.match(frontend, /git merge-base origin\/dev "\$HEAD_SHA"/);
 });
+
+test('HA-харнесс ставится по точным версиям, а не по воле резолвера (#392)', () => {
+  // Плавающие версии означают, что «зелёный backend» значит разное в разные
+  // дни: по SHA коммита нельзя сказать, чем его проверяли. Ровно так харнесс
+  // полгода тихо проверял интеграцию против февральского Home Assistant.
+  for (const file of ['validate.yml', 'mutation-gate.yml']) {
+    const workflow = read(file);
+    if (!/pytest-homeassistant-custom-component|tests_backend\/requirements\.txt/.test(workflow)) continue;
+    assert.match(workflow, /pip install -r tests_backend\/requirements\.txt/,
+      `${file}: зависимости харнесса ставятся мимо файла пинов`);
+    assert.equal(/pip install pytest /.test(workflow), false,
+      `${file}: остался установ без версий`);
+  }
+});

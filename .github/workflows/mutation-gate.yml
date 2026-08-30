@@ -64,7 +64,12 @@ jobs:
           python-version: '3.13'
 
       - name: Установить backend test dependencies
-        run: pip install pytest voluptuous pytest-homeassistant-custom-component home-assistant-frontend
+        run: |
+          # Точные версии — в tests_backend/requirements.txt (#392): без них
+          # резолвер выбирает набор сам, и «зелёный backend» значит разное
+          # в разные дни.
+          pip install -r tests_backend/requirements.txt
+          pip list --format=columns | grep -Ei 'homeassistant|voluptuous|^pytest '
 
       - name: Кэш браузеров Playwright
         id: pw
