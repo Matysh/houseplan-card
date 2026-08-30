@@ -1549,8 +1549,10 @@ their passports; `scripts/config-audit.mjs` treats both as `current`.
 
 ## Backend quality gates (#42, 2026-08-30)
 
-- `requirements_test.txt` is the single source of backend CI dependencies
-  (validate.yml and mutation-gate.yml install from it).
+- `tests_backend/requirements.txt` is the single source of backend CI
+  dependencies (validate.yml and mutation-gate.yml install from it; the file
+  itself was introduced by #392, which also moved the harness to python 3.14
+  and the current Home Assistant — #42 adds ruff to it for the lint step).
 - `pyproject.toml` configures ruff (E/F/B/I, E501 excluded by decision) and
   mypy strict for a grow-only allowlist of pure modules; the completeness
   guard lives in `tests_backend/test_backend_quality.py`.
