@@ -1,12 +1,12 @@
 # Issue #381 — действие по нажатию «Ничего не делать»
 
 - **Issue:** https://github.com/Matysh/houseplan-card/issues/381
-- **Статус документа:** первая редакция, готова к ревью
+- **Статус документа:** вторая редакция, замечание r1 устранено, готова к ревью
 - **Приоритет / тип:** P2 · feature / polish
 - **Область:** marker config, Редактор устройств, View/киоск, frontend action
   projection, backend validation, i18n, документация и QA
 - **Связи:** #94 (универсальный Toggle), #178 (точная Toggle-сущность)
-- **Ревизия:** 1 (2026-08-30)
+- **Ревизия:** 2 (2026-08-30)
 
 ## Сценарий
 
@@ -177,7 +177,7 @@ test обязан доказать, что backend принимает кажды
 - **AC3 — независимые жесты (smoke).** Long press всё ещё открывает карточку
   House Plan, right click — HA more-info, а клик по тому же marker в Редакторе
   устройств — настройки marker.
-- **AC4 — presentation parity (unit + visual assertion).** До и после выбора
+- **AC4 — presentation parity (unit, DOM assertion).** До и после выбора
   совпадают DOM/classes/face/state/pulse/badge/LQI/Glow/tooltip/hit area и
   hover/focus; новый disabled-стиль не появляется.
 - **AC5 — defaults и legacy (unit).** Absent/`null`/`""` оставляют Toggle для
@@ -218,6 +218,52 @@ test обязан доказать, что backend принимает кажды
 AC1/AC2; поставить no-op после fallback-карточки → AC2; сделать ранний return до
 `stopPropagation` → AC2; связать `none` с unavailable Toggle → AC2/AC5; скрыть
 marker или изменить face → AC4.
+
+## Риски
+
+- **Смешение `none` с отсутствием значения.** Truthy/falsy-проверка либо
+  нестрогий fallback может вернуть light-маркеру Toggle или открыть Info вместо
+  no-op. Снимается явной веткой `none`, расширенным возвращаемым union и
+  таблицей absent/`null`/пустого/unknown/legacy/`none` в AC2 и AC5.
+- **Неполный охват потребителей `tap_action`.** Помимо selector и click path
+  поле участвует в `devices` fingerprint, virtual-light и cover presentation.
+  Перед реализацией выполняется полный поиск consumers; код меняется только в
+  action projection/dispatch, а AC4/AC6 фиксируют неизменность presentation и
+  специальных Toggle-потребителей.
+- **Ранний return в неверной точке.** Если выйти до `stopPropagation`, нажатие
+  протечёт в комнату/план; если выйти после fallback, откроется карточка.
+  Dispatcher-тест и соответствующие мутанты фиксируют точное окно между
+  разрешением актуального marker и capability/info ветками.
+- **Mixed-version/downgrade.** Новый frontend с прежним backend не сможет
+  сохранить `none`; полный откат backend после уже записанных значений сделает
+  последующую запись такого конфига невалидной. Интеграция поставляет frontend
+  и backend одним релизом, а безопасный порядок аварийного отката описан ниже и
+  сохраняет backend read/write allowlist до очистки данных.
+- **Пассивное нажатие могут принять за поломку.** Выбор называется буквально
+  «Ничего не делать», отдельного disabled-вида нет, а long press/right click
+  остаются документированными. Smoke проверяет, что исчезло только выбранное
+  короткое действие, а не сам marker или информационные жесты.
+
+## Откат
+
+Feature flag и миграция отсутствуют. Безопасный аварийный откат выполняется в
+два этапа:
+
+1. revert-нуть selector/runtime/i18n/docs-часть пользовательского изменения,
+   но временно **оставить** `"none"` в backend `MARKER_SCHEMA`; reverted
+   frontend уже проецирует этот неизвестный literal в безопасный `info`, а
+   существующие конфиги продолжают загружаться и сохраняться;
+2. если требуется убрать literal полностью, отдельной проверяемой data-fix
+   заменить сохранённые `tap_action: "none"` на `"info"`, и только после этого
+   удалить его из backend allowlist.
+
+Полный слепой `git revert` frontend и backend одним шагом запрещён после выхода
+релиза: уже записанный `none` останется в store, старый frontend покажет Info,
+но старый backend отклонит следующую запись всего конфига. Потеря данных при
+безопасном откате ограничена осознанным пользовательским намерением no-op,
+которое становится `info`; геометрия, marker binding, presentation и остальные
+поля не меняются. После любого отката повторяются backend validation, config
+Open → Save и click smoke на конфиге, содержащем `none`.
 
 ## Производительность и безопасность
 
