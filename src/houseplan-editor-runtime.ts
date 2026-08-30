@@ -7746,7 +7746,7 @@ public async _setInboxHidden(row: DeviceInboxRow, hidden: boolean): Promise<void
       this.host._deviceInboxMemo = null;
       this.host._maybeRebuildDevices();
       if (this.host._deviceInbox) this.host._deviceInbox = { ...this.host._deviceInbox, busy: undefined };
-      this.host._showToast(this.host._t('device_inbox.saved' as any));
+      this.host._showToast(this.host._t('device_inbox.saved'));
     } catch (error: any) {
       if (this.host._serverCfg === cfg) cfg.markers = previous;
       if (this.host._deviceInbox) this.host._deviceInbox = { ...this.host._deviceInbox, busy: undefined };
@@ -9766,7 +9766,7 @@ public _renderAlignDialog(): TemplateResult {
             ? html`
               <p class="alignmsg">${this.host._t('gs.align_preflight_failed', { spaces, more })}</p>
               ${failures.slice(0, 10).map((failure) => html`<p class="alignmsg">
-                ${failure.displayName}: ${this.host._t(`gs.preflight_reason_${failure.reason}` as any)}
+                ${failure.displayName}: ${this.host._t(`gs.preflight_reason_${failure.reason}` as I18nKey)}
               </p>`)}
               ${failures.length > 10 ? html`<p class="alignmsg">
                 ${this.host._t('gs.align_preflight_more', { n: String(failures.length - 10) })}
@@ -11772,8 +11772,8 @@ public _renderDevicesBar(): TemplateResult {
           <ha-icon icon="mdi:plus-box-outline"></ha-icon>${this.host._t('devbar.add')}
         </button>
         <button class="btn ${this.host._showAll ? 'on' : ''}" @click=${() => this._openDeviceInbox()}
-          title=${this.host._t('device_inbox.title' as any)}>
-          <ha-icon icon="mdi:devices"></ha-icon>${this.host._t('device_inbox.button' as any)}
+          title=${this.host._t('device_inbox.title')}>
+          <ha-icon icon="mdi:devices"></ha-icon>${this.host._t('device_inbox.button')}
         </button>
         <button class="btn" @click=${() => this._openRulesDialog()} title=${this.host._t('title.icon_rules')}>
           <ha-icon icon="mdi:shape-plus-outline"></ha-icon>${this.host._t('devbar.rules')}
@@ -11979,8 +11979,8 @@ public _renderDeviceInbox(): TemplateResult {
       rows, dialog.tab, dialog.search, dialog.tab === 'on_plan' && dialog.onlyNew,
     );
     const visible = filtered.slice(0, dialog.limit);
-    const tabLabel = (tab: DeviceInboxCategory) => this.host._t(`device_inbox.tab_${tab}` as any);
-    const emptyKey = `device_inbox.empty_${dialog.tab}` as any;
+    const tabLabel = (tab: DeviceInboxCategory) => this.host._t(`device_inbox.tab_${tab}` as I18nKey);
+    const emptyKey = `device_inbox.empty_${dialog.tab}` as I18nKey;
     const openVirtual = () => {
       this.host._deviceInboxReturn = { ...dialog };
       this.host._deviceInbox = null;
@@ -11988,18 +11988,18 @@ public _renderDeviceInbox(): TemplateResult {
       if (!this.host._markerDialog) this._closeMarkerDialog();
     };
     return html`<hp-dialog class="device-inbox-dialog" .hass=${this.host.hass}
-      .title=${this.host._t('device_inbox.title' as any)} icon="mdi:devices" wide
+      .title=${this.host._t('device_inbox.title')} icon="mdi:devices" wide
       @hp-close=${() => (this.host._deviceInbox = null)}>
       <div class="device-inbox" ?inert=${!!dialog.busy}>
         <div class="device-inbox-head">
           <input class="device-inbox-search" type="search" autofocus
-            placeholder=${this.host._t('device_inbox.search' as any)} .value=${dialog.search}
+            placeholder=${this.host._t('device_inbox.search')} .value=${dialog.search}
             @input=${(event: Event) => (this.host._deviceInbox = {
               ...dialog, search: (event.target as HTMLInputElement).value, limit: 100,
             })} />
           <button type="button" class="btn" @click=${openVirtual}>
             <ha-icon icon="mdi:map-marker-plus-outline"></ha-icon>
-            ${this.host._t('device_inbox.add_virtual' as any)}
+            ${this.host._t('device_inbox.add_virtual')}
           </button>
         </div>
         <div class="device-inbox-tabs" role="tablist" @keydown=${(event: KeyboardEvent) => this._deviceInboxTabKey(event)}>
@@ -12015,7 +12015,7 @@ public _renderDeviceInbox(): TemplateResult {
             <input type="checkbox" .checked=${dialog.onlyNew}
               @change=${(event: Event) => (this.host._deviceInbox = {
                 ...dialog, onlyNew: (event.target as HTMLInputElement).checked, limit: 100,
-              })} />${this.host._t('device_inbox.only_new' as any)}
+              })} />${this.host._t('device_inbox.only_new')}
           </label>` : nothing}
           ${dialog.tab === 'available' ? html`<label>
             <input type="checkbox" .checked=${dialog.showEntities}
@@ -12024,7 +12024,7 @@ public _renderDeviceInbox(): TemplateResult {
                 this.host._deviceInbox = {
                   ...dialog, showEntities: (event.target as HTMLInputElement).checked, limit: 100,
                 };
-              }} />${this.host._t('device_inbox.show_entities' as any)}
+              }} />${this.host._t('device_inbox.show_entities')}
           </label>` : nothing}
           <span class="device-inbox-filter-help">
             <label>
@@ -12043,24 +12043,24 @@ public _renderDeviceInbox(): TemplateResult {
           ${visible.length ? visible.map((row) => {
             const primary = row.category === 'on_plan'
               ? row.canFind ? html`<button type="button" class="btn" @click=${() => this._findInboxDevice(row)}>
-                  <ha-icon icon="mdi:crosshairs-gps"></ha-icon>${this.host._t('device_inbox.find' as any)}</button>`
+                  <ha-icon icon="mdi:crosshairs-gps"></ha-icon>${this.host._t('device_inbox.find')}</button>`
                 : html`<button type="button" class="btn" @click=${() => this._openInboxMarker(row)}
-                    ?disabled=${!row.canEdit}>${this.host._t('device_inbox.edit' as any)}</button>`
+                    ?disabled=${!row.canEdit}>${this.host._t('device_inbox.edit')}</button>`
               : row.category === 'hidden'
                 ? html`<button type="button" class="btn" @click=${() => this._setInboxHidden(row, false)}
-                    title=${row.canShow ? '' : this.host._t('device_inbox.show_disabled' as any)}
-                    ?disabled=${!row.canShow}>${this.host._t('device_inbox.show' as any)}</button>`
+                    title=${row.canShow ? '' : this.host._t('device_inbox.show_disabled')}
+                    ?disabled=${!row.canShow}>${this.host._t('device_inbox.show')}</button>`
                 : html`<button type="button" class="btn" @click=${() => this._openInboxMarker(row, true)}
                     ?disabled=${!row.canAdd}>${this.host._t(row.category === 'readd'
-                      ? 'device_inbox.readd' as any : 'device_inbox.add' as any)}</button>`;
+                      ? 'device_inbox.readd' : 'device_inbox.add')}</button>`;
             const status = row.status.kind === 'active' ? ''
-              : this.host._t(`device_inbox.status_${row.status.kind}` as any);
+              : this.host._t(`device_inbox.status_${row.status.kind}` as I18nKey);
             return html`<article class="device-inbox-row" data-binding=${row.binding}
               data-category=${row.category} data-status=${row.status.kind}>
               <ha-icon class="device-inbox-icon" .icon=${row.icon}></ha-icon>
               <div class="device-inbox-copy">
                 <div class="device-inbox-name"><b>${row.name}</b>
-                  ${row.isNew ? html`<span class="device-inbox-new">${this.host._t('device_inbox.new' as any)}</span>` : nothing}
+                  ${row.isNew ? html`<span class="device-inbox-new">${this.host._t('device_inbox.new')}</span>` : nothing}
                 </div>
                 <div class="device-inbox-meta">
                   ${[row.model, row.integration, row.spaceName, row.areaName].filter(Boolean).join(' · ')}
@@ -12079,22 +12079,22 @@ public _renderDeviceInbox(): TemplateResult {
                 ${row.canEdit || row.canHide || row.category === 'available'
                     || row.category === 'hidden' || this.host._bindingHasHaPage(row.binding) ? html`
                   <details class="device-inbox-menu">
-                    <summary class="btn ghost" aria-label=${this.host._t('device_inbox.more_actions' as any)}
-                      title=${this.host._t('device_inbox.more_actions' as any)}>
+                    <summary class="btn ghost" aria-label=${this.host._t('device_inbox.more_actions')}
+                      title=${this.host._t('device_inbox.more_actions')}>
                       <ha-icon icon="mdi:dots-vertical"></ha-icon>
                     </summary>
                     <div class="device-inbox-menu-items">
                       ${row.canEdit && !(row.category === 'on_plan' && !row.canFind)
                         ? html`<button type="button" class="btn ghost" @click=${() => this._openInboxMarker(row)}>
-                            ${this.host._t('device_inbox.edit' as any)}</button>` : nothing}
+                            ${this.host._t('device_inbox.edit')}</button>` : nothing}
                       ${row.canHide ? html`<button type="button" class="btn ghost"
-                        @click=${() => this._setInboxHidden(row, true)}>${this.host._t('device_inbox.hide' as any)}</button>` : nothing}
+                        @click=${() => this._setInboxHidden(row, true)}>${this.host._t('device_inbox.hide')}</button>` : nothing}
                       ${row.category === 'available' ? html`<button type="button" class="btn ghost"
-                        @click=${() => this._setInboxHidden(row, true)}>${this.host._t('device_inbox.hide_available' as any)}</button>` : nothing}
+                        @click=${() => this._setInboxHidden(row, true)}>${this.host._t('device_inbox.hide_available')}</button>` : nothing}
                       ${row.category === 'hidden' ? html`<button type="button" class="btn ghost"
-                        title=${row.canFind ? '' : this.host._t('device_inbox.find_hidden_hint' as any)}
+                        title=${row.canFind ? '' : this.host._t('device_inbox.find_hidden_hint')}
                         ?disabled=${!row.canFind} @click=${() => this._findInboxDevice(row)}>
-                        <ha-icon icon="mdi:crosshairs-gps"></ha-icon>${this.host._t('device_inbox.find' as any)}</button>` : nothing}
+                        <ha-icon icon="mdi:crosshairs-gps"></ha-icon>${this.host._t('device_inbox.find')}</button>` : nothing}
                       ${this.host._bindingHasHaPage(row.binding) ? html`<button type="button" class="btn ghost"
                         @click=${() => this.host._openBindingInHa(row.binding)}>${this.host._t('btn.open_in_ha')}</button>` : nothing}
                     </div>
@@ -12105,7 +12105,7 @@ public _renderDeviceInbox(): TemplateResult {
         </div>
         ${filtered.length > visible.length ? html`<button type="button" class="btn device-inbox-more"
           @click=${() => (this.host._deviceInbox = { ...dialog, limit: dialog.limit + 100 })}>
-          ${this.host._t('device_inbox.show_more' as any)} (${filtered.length - visible.length})
+          ${this.host._t('device_inbox.show_more')} (${filtered.length - visible.length})
         </button>` : nothing}
       </div>
       <div slot="footer" class="row">
@@ -12252,9 +12252,9 @@ public _toggleConfirmationLines(intent: ResolvedToggleIntent): string[] {
 public _toggleHintLines(intent: ResolvedToggleIntent | null): string[] {
     if (!intent) return [];
     const effect = (value: ToggleNextEffect): string =>
-      this.host._t((`marker.toggle_effect_${value.replace('-', '_')}`) as any);
+      this.host._t(`marker.toggle_effect_${value.replace('-', '_')}` as I18nKey);
     const skipReason = (value: ToggleSkipReason): string =>
-      this.host._t((`marker.toggle_skip_${value.replace('-', '_')}`) as any);
+      this.host._t(`marker.toggle_skip_${value.replace('-', '_')}` as I18nKey);
     return formatToggleIntent(intent, {
       single: (target) => {
         if ('via' in target && target.via === 'virtual-light') {
@@ -12291,7 +12291,7 @@ public _toggleHintLines(intent: ResolvedToggleIntent | null): string[] {
         }).join(', '),
       }),
       none: (reason: ToggleNoneReason) =>
-        this.host._t((`marker.toggle_none_${reason.replaceAll('-', '_')}`) as any),
+        this.host._t(`marker.toggle_none_${reason.replaceAll('-', '_')}` as I18nKey),
     });
   }
 
@@ -12408,7 +12408,7 @@ public _valueBadgeCandidateLabel(candidate: ValueBadgeCandidate): string {
     }
     const entityName = this.host.hass.states[source.entity_id]?.attributes?.friendly_name
       || this.host._fullRegistryHass.entities[source.entity_id]?.name || source.entity_id;
-    return this.host._t((`marker.value_badge_attr_${source.attribute}`) as any, { name: entityName });
+    return this.host._t(`marker.value_badge_attr_${source.attribute}` as I18nKey, { name: entityName });
   }
 
 public _controlCandidates(d: NonNullable<HouseplanEditorHostPort['_markerDialog']>): {
@@ -12596,7 +12596,7 @@ public _renderMarkerDialog(): TemplateResult {
           ${bindingStatus?.kind === 'ha_disabled'
             ? html`<div class="habindingbanner" role="status">
                 <ha-icon icon="mdi:power-plug-off-outline"></ha-icon>
-                <span>${this.host._t((`marker.ha_disabled_${bindingStatus.reason}`) as any)}</span>
+                <span>${this.host._t(`marker.ha_disabled_${bindingStatus.reason}` as I18nKey)}</span>
                 ${canOpenBindingInHa
                   ? html`<button class="btn ghost" type="button" @click=${() => this.host._openBindingInHa(d.binding)}>
                       <ha-icon icon="mdi:open-in-new"></ha-icon>${this.host._t('btn.open_in_ha')}
@@ -13098,7 +13098,7 @@ public _renderMarkerDialog(): TemplateResult {
                 })}>
                 ${(['right', 'bottom', 'left', 'top'] as const).map((position) => html`
                   <option value=${position} ?selected=${position === effectiveBadgePosition}>
-                    ${this.host._t((`marker.value_badge_${position}`) as any)}
+                    ${this.host._t(`marker.value_badge_${position}` as I18nKey)}
                   </option>`)}
               </select>
             ` : nothing}
