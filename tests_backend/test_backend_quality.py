@@ -4,27 +4,25 @@ Pure tests: no homeassistant import, runnable in any environment.
 """
 from __future__ import annotations
 
+import importlib.util
 import json
 import re
-import sys
-import types
-import importlib.util
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
 BACKEND = REPO / "custom_components" / "houseplan"
 
 
+# Loading const.py by file path with a standalone module name deliberately
+# avoids stubbing "custom_components"/"custom_components.houseplan" in
+# sys.modules: leftover ModuleType stand-ins poison the Home Assistant harness
+# running later in the same pytest process — HA's loader then sees a package
+# without async_setup and every harness test fails with "No setup or config
+# entry setup function defined" (the exact #389 incident, caused by the schema
+# dump script). const.py imports nothing, so no package context is needed.
 def _const():
-    for name, path in (
-        ("custom_components", REPO / "custom_components"),
-        ("custom_components.houseplan", BACKEND),
-    ):
-        module = types.ModuleType(name)
-        module.__path__ = [str(path)]
-        sys.modules[name] = module
     spec = importlib.util.spec_from_file_location(
-        "custom_components.houseplan.const", BACKEND / "const.py")
+        "houseplan_quality_const", BACKEND / "const.py")
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
