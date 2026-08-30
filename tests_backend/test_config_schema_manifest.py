@@ -25,8 +25,9 @@ def _load_dump_module():
 
 
 def _validation():
-    _load_dump_module()  # its importer registers the stubbed packages
-    return sys.modules["custom_components.houseplan.validation"]
+    # Модуль берётся возвращённым значением, а не из sys.modules: подмена
+    # пакетов теперь обратима и после загрузки ключей там не остаётся (#389).
+    return _load_dump_module()._load_validation()
 
 
 def test_issue_33_manifest_is_fresh_and_deterministic():
@@ -80,3 +81,29 @@ def test_issue_33_future_fields_round_trip_exactly():
     assert validated["spaces"][0]["future_space_field"] == "kept"
     assert validated["spaces"][0]["settings"]["future_display"] is True
     assert validated["markers"][0]["future_marker_field"] == {"nested": "kept"}
+
+
+def test_issue_389_the_dump_leaves_sys_modules_as_it_found_it():
+    """Подмена пакетов обязана быть обратимой.
+
+    Скрипт дампа подменяет `custom_components` и `custom_components.houseplan`
+    пустышками, чтобы прочитать схему без Home Assistant. Пока подмена
+    оставалась в `sys.modules`, HA получал пакет без `async_setup` и отказывался
+    поднимать интеграцию — 85 тестов харнесса падали с «assert False», и ни
+    один не указывал на причину. Тест держит именно обратимость, а не факт
+    подмены: без неё скрипт свою работу не сделает.
+    """
+    keys = (
+        "custom_components",
+        "custom_components.houseplan",
+        "custom_components.houseplan.validation",
+        "custom_components.houseplan.coordinate_canonicalization",
+    )
+    missing = object()
+    before = {name: sys.modules.get(name, missing) for name in keys}
+
+    _validation()
+
+    for name in keys:
+        after = sys.modules.get(name, missing)
+        assert after is before[name], f"{name}: подмена не возвращена на место"

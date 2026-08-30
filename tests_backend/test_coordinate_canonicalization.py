@@ -117,7 +117,15 @@ def test_furniture_flip_flags_survive_coordinate_canonicalization_unchanged() ->
     furniture = result["spaces"][0]["decor"][0]
     assert furniture["flip_h"] is True
     assert furniture["flip_v"] is False
-    assert CONFIG_SCHEMA(result) == result
+    # Схема не тождественна на минимальном конфиге: она достраивает `markers`
+    # и `settings` и приводит целые к float. Поэтому проверяется не равенство
+    # с входом, а неподвижная точка — канонический вид схемы не «плывёт» от
+    # повторной валидации, и флаги её переживают (#389).
+    validated = CONFIG_SCHEMA(result)
+    assert CONFIG_SCHEMA(validated) == validated
+    mirrored = validated["spaces"][0]["decor"][0]
+    assert mirrored["flip_h"] is True
+    assert mirrored["flip_v"] is False
 
 
 def test_optimize_roundtrip_fixture_has_one_backend_canonical_target() -> None:

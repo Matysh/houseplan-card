@@ -28,6 +28,9 @@ REPO = Path(__file__).resolve().parent.parent
 OUT = REPO / "scripts" / "config-schema.json"
 
 
+_MISSING = object()
+
+
 def _safe_repr(value) -> str:
     """repr() without memory addresses — the manifest must be deterministic."""
     if callable(value) and hasattr(value, "__qualname__"):
@@ -35,30 +38,66 @@ def _safe_repr(value) -> str:
     return re.sub(r" at 0x[0-9a-fA-F]+", "", repr(value))
 
 
+# Ключи, которые подмена трогает. Всё, что здесь перечислено, обязано быть
+# возвращено на место: см. _load_validation.
+_STUBBED = (
+    "custom_components",
+    "custom_components.houseplan",
+    "custom_components.houseplan.coordinate_canonicalization",
+    "custom_components.houseplan.validation",
+)
+
+
 def _load_validation():
-    for name, path in (
-        ("custom_components", REPO / "custom_components"),
-        ("custom_components.houseplan", REPO / "custom_components" / "houseplan"),
-    ):
-        module = types.ModuleType(name)
-        module.__path__ = [str(path)]
-        sys.modules[name] = module
+    """Загрузить `validation.py` без Home Assistant — и не сломать всё остальное.
 
-    def load(name: str, file: Path):
-        spec = importlib.util.spec_from_file_location(name, file)
-        module = importlib.util.module_from_spec(spec)
-        sys.modules[name] = module
-        spec.loader.exec_module(module)
-        return module
+    Подмена родительских пакетов пустышками нужна затем, что обычный импорт
+    выполнил бы `custom_components/houseplan/__init__.py`, а тот тянет весь HA.
+    Скрипт обязан работать и там, где HA нет вовсе.
 
-    load(
-        "custom_components.houseplan.coordinate_canonicalization",
-        REPO / "custom_components" / "houseplan" / "coordinate_canonicalization.py",
-    )
-    return load(
-        "custom_components.houseplan.validation",
-        REPO / "custom_components" / "houseplan" / "validation.py",
-    )
+    Но у подмены есть цена, и она однажды была заплачена (#389). Пустышка
+    оставалась в `sys.modules` навсегда, а вызывает этот код в том числе
+    pytest — `tests_backend/test_config_schema_manifest.py` идёт первым по
+    алфавиту. Дальше HA просил у загрузчика `custom_components.houseplan`,
+    получал пустышку без `async_setup` и отказывался поднимать интеграцию:
+    «No setup or config entry setup function defined». Восемьдесят пять тестов
+    HA-харнесса падали на ровном месте, и ни один не намекал на причину.
+
+    Подмена не убирается совсем — без неё скрипт не выполнит свою задачу. Она
+    становится обратимой: прежнее содержимое `sys.modules` снимается до и
+    возвращается после, включая отсутствие ключа.
+    """
+    saved = {name: sys.modules.get(name, _MISSING) for name in _STUBBED}
+    try:
+        for name, path in (
+            ("custom_components", REPO / "custom_components"),
+            ("custom_components.houseplan", REPO / "custom_components" / "houseplan"),
+        ):
+            module = types.ModuleType(name)
+            module.__path__ = [str(path)]
+            sys.modules[name] = module
+
+        def load(name: str, file: Path):
+            spec = importlib.util.spec_from_file_location(name, file)
+            module = importlib.util.module_from_spec(spec)
+            sys.modules[name] = module
+            spec.loader.exec_module(module)
+            return module
+
+        load(
+            "custom_components.houseplan.coordinate_canonicalization",
+            REPO / "custom_components" / "houseplan" / "coordinate_canonicalization.py",
+        )
+        return load(
+            "custom_components.houseplan.validation",
+            REPO / "custom_components" / "houseplan" / "validation.py",
+        )
+    finally:
+        for name, previous in saved.items():
+            if previous is _MISSING:
+                sys.modules.pop(name, None)
+            else:
+                sys.modules[name] = previous
 
 
 def _render_default(value):
