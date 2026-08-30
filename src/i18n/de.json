@@ -518,6 +518,8 @@
   "decor.fill_color": "Füllfarbe",
   "decor.length": "Länge",
   "decor.size": "Größe",
+  "decor.flip_h": "Horizontal spiegeln",
+  "decor.flip_v": "Vertikal spiegeln",
   "decor.angle": "Rotationswinkel, °",
   "decor.text_size": "Textgröße",
   "decor.backdrop_properties": "Eigenschaften des Planhintergrunds",

@@ -207,6 +207,20 @@ fallback may show or rewrite it as a door. Before a permanent rollback, convert
 saved passages deliberately in a current version; automatic conversion is not
 performed because it would invent a leaf and binding semantics.
 
+## Furniture mirror flags (#383)
+
+`space.decor[]` furniture records may contain optional boolean `flip_h` and
+`flip_v`. Their `w` and `h` remain strictly positive; absent flags mean the
+historical unmirrored orientation, so no migration is required. Full, space
+and plan-only transfers preserve both flags, while coordinate canonicalization
+and Optimize leave them untouched.
+
+The same field names already exist on door/window/gate opening records, where
+they describe leaf direction. This is not a shared semantic field: openings
+and furniture are validated, canonicalized and exported through separate
+object schemas and allowlists. Older renderers ignore furniture flags and show
+the original orientation; older plan-only exporters may omit them.
+
 ## Independent-wall opening host (#132)
 
 `space.openings[].host` is an optional discriminated object

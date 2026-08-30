@@ -96,7 +96,7 @@ _DECOR_KIND_FIELDS = {
     "rect": ("x", "y", "w", "h", "angle", "fill", "fill_color", "fill_opacity"),
     "ellipse": ("x", "y", "w", "h", "angle", "fill", "fill_color", "fill_opacity"),
     "text": ("x", "y", "text", "size", "size_cm", "scale", "angle"),
-    "furniture": ("symbol", "x", "y", "w", "h", "angle"),
+    "furniture": ("symbol", "x", "y", "w", "h", "angle", "flip_h", "flip_v"),
 }
 
 

@@ -26,7 +26,8 @@ test('#361 saved furniture and placement preview share the physical screen resol
   // must fall back to 1 so furniture strokes track ordinary decor there.
   assert.match(layer,
     /const furnitureScreenScale = this\._renderProjection === 'iso' \? 1 : furniturePlanScreenScale\(/);
-  assert.match(layer, /stroke-width="\$\{furnitureStrokePx\(strokeWidth, furnitureScreenScale\)\}"/);
+  assert.match(layer, /const visibleStrokePx = furnitureStrokePx\(strokeWidth, furnitureScreenScale\)/);
+  assert.match(layer, /stroke-width="\$\{visibleStrokePx\}"/);
   assert.match(layer, /_renderFurniturePlacementPreview\(furnitureScreenScale\)/);
   assert.equal(
     (layer.match(/furniturePlanScreenScale\(/g) || []).length,

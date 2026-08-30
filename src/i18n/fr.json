@@ -518,6 +518,8 @@
   "decor.fill_color": "Couleur de remplissage",
   "decor.length": "Longueur",
   "decor.size": "Taille",
+  "decor.flip_h": "Retourner horizontalement",
+  "decor.flip_v": "Retourner verticalement",
   "decor.angle": "Angle de rotation, °",
   "decor.text_size": "Taille du texte",
   "decor.backdrop_properties": "Propriétés de l’arrière-plan du plan",

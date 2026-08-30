@@ -65,6 +65,7 @@ import {
   FURNITURE_GROUPS, furnitureOfGroup, furnitureSymbol, furnitureDefaultCm,
   furnitureGraphic, furnitureCorners, snapFurnitureToWall,
   furniturePlanScreenScale, furnitureStrokePx,
+  furnitureRenderTransform,
   cmToNorm, clampFurnSize, clampFurnCm, FURN_WALL_CELLS,
   type FurnitureGroup, type FurniturePlacement,
 } from './furniture';
@@ -1021,6 +1022,7 @@ export class HouseplanCard extends LitElement {
     fill?: boolean; fillColor?: string; fillOpacity?: number;
     lengthCm?: number; sizeWCm?: number; sizeHCm?: number; angle: string;
     symbol?: string;
+    sizeWField?: string; sizeHField?: string; flipH?: boolean; flipV?: boolean;
   } | null = null;
   private _backdropDialog: { widthCm: number; heightCm: number; angle: string } | null = null;
   /** Last textarea selection survives moving focus to the HA pickers. */
@@ -1056,7 +1058,7 @@ export class HouseplanCard extends LitElement {
     ax: number; ay: number;
     /** distance / bearing of the pointer at the start, and the stored values */
     r0: number; a0: number; textSizeCm0: number; angle0: number;
-    /** box shapes: the dragged corner signs and the oriented box at drag start */
+    /** box shapes: the dragged local edge signs and the oriented box at drag start */
     sgx?: number; sgy?: number;
     orig?: DecorBox;
     origShape: DecorShape;
@@ -8044,7 +8046,11 @@ export class HouseplanCard extends LitElement {
       [-1, -1, 'nwse'], [1, -1, 'nesw'], [1, 1, 'nwse'], [-1, 1, 'nesw'],
     ];
     const arm = hr * 2.2;
-    return svg`<g class="dtframe" transform=${ang ? `rotate(${ang} ${ax} ${ay})` : nothing}>
+    const furniture = sh.kind === 'furniture';
+    const sides: [number, number, string][] = furniture ? [
+      [0, -1, 'ns'], [1, 0, 'ew'], [0, 1, 'ns'], [-1, 0, 'ew'],
+    ] : [];
+    return svg`<g class="dtframe${furniture ? ' dtfurnitureframe' : ''}" transform=${ang ? `rotate(${ang} ${ax} ${ay})` : nothing}>
       <rect class="dtbox" x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}"></rect>
       <line class="dtstem" x1="${b.x + b.w / 2}" y1="${b.y}" x2="${b.x + b.w / 2}" y2="${b.y - arm}"></line>
       <circle class="dthandle dtrot" cx="${b.x + b.w / 2}" cy="${b.y - arm}" r="${hr.toFixed(1)}"
@@ -8054,6 +8060,14 @@ export class HouseplanCard extends LitElement {
         cx="${sx < 0 ? b.x : b.x + b.w}" cy="${sy < 0 ? b.y : b.y + b.h}" r="${hr.toFixed(1)}"
         @pointerdown=${(e: PointerEvent) => this._dtStart(e, 'scale', [sx, sy])}></circle><circle class="dtknob"
         cx="${sx < 0 ? b.x : b.x + b.w}" cy="${sy < 0 ? b.y : b.y + b.h}" r="${kr.toFixed(2)}"></circle>`)}
+      ${sides.map(([sx, sy, cur]) => {
+        const x = sx < 0 ? b.x : sx > 0 ? b.x + b.w : b.x + b.w / 2;
+        const y = sy < 0 ? b.y : sy > 0 ? b.y + b.h : b.y + b.h / 2;
+        return svg`<circle class="dthandle dtedge dt-${cur}" cx="${x}" cy="${y}"
+          r="${hr.toFixed(1)}" @pointerdown=${(e: PointerEvent) =>
+            this._dtStart(e, 'scale', [sx, sy])}></circle>
+          <circle class="dtknob dtedgeknob" cx="${x}" cy="${y}" r="${kr.toFixed(2)}"></circle>`;
+      })}
     </g>` as unknown as TemplateResult;
   }
 
@@ -8076,10 +8090,7 @@ export class HouseplanCard extends LitElement {
     const art = furnitureGraphic(placement.symbol);
     if (!art) return nothing;
     const W = NORM_W, H = this._decorH;
-    const W2 = placement.w * W, H2 = placement.h * H;
-    const cx = placement.x * W + W2 / 2, cy = placement.y * H + H2 / 2;
-    const transform = `${placement.angle ? `rotate(${placement.angle} ${cx} ${cy}) ` : ''}`
-      + `translate(${placement.x * W} ${placement.y * H}) scale(${W2 / art.viewW} ${H2 / art.viewH})`;
+    const transform = furnitureRenderTransform(placement, W, H, art.viewW, art.viewH);
     const style = this._decorStyle;
     const strokeWidth = furnitureStrokePx(
       decorCmToUnits(style.widthCm, this._cellCm, this._gridPitch),
@@ -8167,18 +8178,26 @@ export class HouseplanCard extends LitElement {
         // physical plan zoom.
         // An unknown symbol renders as nothing: a plan from a newer card must
         // open in an older one, not break it.
-        const W2 = sh.w * W, H2 = sh.h * H;
         const art = furnitureGraphic(sh.symbol);
         if (!art) return nothing;
-        const ang = Number(sh.angle) || 0;
-        const cx = sh.x * W + W2 / 2, cy = sh.y * H + H2 / 2;
-        const tr = `${ang ? `rotate(${ang} ${cx} ${cy}) ` : ''}translate(${sh.x * W} ${sh.y * H}) scale(${W2 / art.viewW} ${H2 / art.viewH})`;
+        const tr = furnitureRenderTransform(sh, W, H, art.viewW, art.viewH);
+        const visibleStrokePx = furnitureStrokePx(strokeWidth, furnitureScreenScale);
+        const selectStrokePx = furnitureStrokePx(
+          strokeWidth + decorCmToUnits(20, this._cellCm, this._gridPitch),
+          furnitureScreenScale,
+        );
         return svg`<path class="${cls} dfurn" data-hp="decor" data-id="${sh.id}"
           data-kind="${sh.kind}" data-symbol="${sh.symbol}" d="${art.d}" transform=${tr}
           stroke="${style.color}" stroke-opacity="${style.opacity}"
-          stroke-width="${furnitureStrokePx(strokeWidth, furnitureScreenScale)}" fill="none"
+          stroke-width="${visibleStrokePx}" fill="none"
           stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"
           @pointerdown=${down} @dblclick=${dbl}></path>
+          ${editing && this._decorTool === 'select' ? svg`<path
+            class="dshape dfurniturehit" data-hp="decor" data-id="${sh.id}"
+            data-kind="${sh.kind}" data-symbol="${sh.symbol}" d="${art.d}" transform=${tr}
+            stroke-width="${selectStrokePx}" fill="none" stroke-linecap="round"
+            stroke-linejoin="round" vector-effect="non-scaling-stroke"
+            @pointerdown=${down} @dblclick=${dbl}></path>` : nothing}
           ${erasing ? svg`<path class="dshape derasehit" data-hp="decor" data-id="${sh.id}"
             data-kind="${sh.kind}" data-symbol="${sh.symbol}" d="${art.d}" transform=${tr}
             vector-effect="non-scaling-stroke"

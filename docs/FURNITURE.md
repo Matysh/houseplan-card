@@ -1,15 +1,16 @@
 # Furniture library
 
-Status: **implemented and expanded by issue #159**. The Background editor
+Status: **implemented and expanded by issues #159 and #383**. The Background editor
 stores furniture as ordinary decor:
 
 ```text
-{ kind: "furniture", symbol, x, y, w, h, color, opacity, width_cm, angle? }
+{ kind: "furniture", symbol, x, y, w, h, color, opacity, width_cm, angle?, flip_h?, flip_v? }
 ```
 
-The schema and saved coordinates did not change. Existing furniture therefore
-keeps its position, size, rotation and styling; only 18 built-in drawings gain
-the new artwork after an update.
+`w` and `h` are always positive physical extents. Optional boolean `flip_h`
+and `flip_v` mirror the drawing inside that unchanged box; absent flags are
+the original orientation. Existing furniture therefore keeps its position,
+size, rotation, orientation and styling after an update.
 
 ## Library and source
 
@@ -73,9 +74,30 @@ The properties dialog remains a flat native select, grouped by category. Its
 optgroup label includes both the parent group and category because HTML selects
 cannot nest optgroups.
 
+## Transform interaction
+
+Selected furniture has four corner and four middle-edge resize handles. Corner
+resize is continuous and preserves the original aspect ratio; `Shift` lets
+width and depth change independently. A middle handle changes only its local
+axis, including on a rotated object. Dragging any handle across the fixed
+opposite edge keeps the gesture alive and mirrors the corresponding axis.
+
+Rotation is continuous normally and snaps to the nearest multiple of 45° while
+`Shift` is held. The rotation handle uses a circular-arrow cursor. These rules
+are furniture-only: other decor and the backdrop keep their existing grid and
+modifier contracts.
+
+Properties show signed width/depth. A negative width is horizontal mirror and
+a negative depth is vertical mirror; the two adjacent checkboxes are the same
+state expressed explicitly. Save stores the absolute extents plus optional
+flags. Zero is not a valid saved dimension.
+
 ## Rendering contract
 
-Each object is still one `<path>` and one erase hit path. Designer artwork
+Each object is still one visible `<path>` and one erase hit path. In Select,
+an additional invisible path follows the same artwork and extends the target
+10 physical centimetres beyond each visible stroke edge; empty areas of the
+bounding box remain non-interactive. Designer artwork
 keeps its native SVG `viewBox`; the renderer applies the user's stored width
 and depth with a non-uniform transform. `vector-effect="non-scaling-stroke"`
 rejects only that local width/depth distortion in the visible result; the
@@ -98,10 +120,11 @@ room aggregation, collision model or automatic binding to later wall edits.
 
 ## Compatibility and performance
 
-No backend schema, configuration version or migration was added. The 18
-replacement ids preserve their identity; the remaining old ids remain
-available. Default dimensions change only for a newly picked replacement—an
-already saved object's `w` and `h` are never rewritten.
+The backend schema additively accepts optional boolean furniture `flip_h` and
+`flip_v`; no configuration version or migration is needed. The 18 replacement
+ids preserve their identity; the remaining old ids remain available. Default
+dimensions change only for a newly picked replacement—an already saved
+object's `w` and `h` are never rewritten.
 
 Plan artwork is available in View and kiosk. Front-view menu art is imported
 only after the editor runtime is requested. Touch View/kiosk support is

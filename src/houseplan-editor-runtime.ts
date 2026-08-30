@@ -66,8 +66,10 @@ import {
   FURNITURE_GROUPS, furnitureOfGroup, furnitureDefaultCm,
   furnitureGraphic, furnitureCorners, snapFurnitureToWall,
   resolveFurniturePlacement,
+  resizeFurnitureTransform, furnitureRotationAngle,
+  furnitureSignedFieldCm, furnitureSignedFieldValue,
   clampFurnCm, FURN_WALL_CELLS,
-  type FurnitureGroup, type FurniturePlacement,
+  type FurnitureGroup, type FurniturePlacement, type FurnitureResizeResult,
 } from './furniture';
 import { GENERATED_FURNITURE_MENU } from './furniture-menu-art.generated';
 import {
@@ -876,7 +878,7 @@ export interface HouseplanEditorHostPort {
   _decorMove: { id: string; start: number[]; orig: DecorShape; pid: number; moved: boolean; before: SpaceGeometryState | null; } | null;
   _decorResolvedStyle: (shape?: DecorShape | null) => DecorStyle;
   _decorSel: string | null;
-  _decorShapeDialog: { id: string; kind: "line" | "rect" | "ellipse" | "furniture"; color: string; opacity: number; widthCm: number; lineStyle?: "solid" | "dashed"; fill?: boolean; fillColor?: string; fillOpacity?: number; lengthCm?: number; sizeWCm?: number; sizeHCm?: number; angle: string; symbol?: string; } | null;
+  _decorShapeDialog: { id: string; kind: "line" | "rect" | "ellipse" | "furniture"; color: string; opacity: number; widthCm: number; lineStyle?: "solid" | "dashed"; fill?: boolean; fillColor?: string; fillOpacity?: number; lengthCm?: number; sizeWCm?: number; sizeHCm?: number; angle: string; symbol?: string; sizeWField?: string; sizeHField?: string; flipH?: boolean; flipV?: boolean; } | null;
   _decorSmallCm: (value: number) => number;
   _decorSmallField: (cm: number) => number;
   _decorSnapCache: { epoch: number; space: string; height: number; exclude: string; geometry: SnapGeometry; } | null;
@@ -4314,7 +4316,19 @@ public _openDecorProperties(shape: DecorShape): void {
         sizeWCm: decorUnitsToCm(box.w, this.host._cellCm, this.host._gridPitch),
         sizeHCm: decorUnitsToCm(box.h, this.host._cellCm, this.host._gridPitch),
       } : {}),
-      ...(shape.kind === 'furniture' ? { symbol: shape.symbol } : {}),
+      ...(shape.kind === 'furniture' ? {
+        symbol: shape.symbol,
+        flipH: !!shape.flip_h,
+        flipV: !!shape.flip_v,
+        sizeWField: furnitureSignedFieldValue(
+          decorUnitsToCm(box!.w, this.host._cellCm, this.host._gridPitch),
+          !!shape.flip_h, this.host._imperial,
+        ),
+        sizeHField: furnitureSignedFieldValue(
+          decorUnitsToCm(box!.h, this.host._cellCm, this.host._gridPitch),
+          !!shape.flip_v, this.host._imperial,
+        ),
+      } : {}),
       ...(shape.kind === 'rect' || shape.kind === 'ellipse' ? {
         fill: style.fill, fillColor: style.fillColor, fillOpacity: style.fillOpacity,
       } : {}),
@@ -4437,6 +4451,15 @@ public _decorSaveShape(): void {
       fillOpacity: clamp01(d.fillOpacity, 0.25),
     };
     const sp = this.host._curSpaceCfg;
+    const furnitureWcm = d.kind === 'furniture'
+      ? furnitureSignedFieldCm(
+          d.sizeWField, this.host._imperial, CANVAS_LIMIT * this.host._cellCm,
+        ) : null;
+    const furnitureHcm = d.kind === 'furniture'
+      ? furnitureSignedFieldCm(
+          d.sizeHField, this.host._imperial, CANVAS_LIMIT * this.host._cellCm,
+        ) : null;
+    if (d.kind === 'furniture' && (furnitureWcm === null || furnitureHcm === null)) return;
     sp.decor = this.host._decorList.map((shape) => {
       if (shape.id !== d.id) return shape;
       const fillable = d.kind === 'rect' || d.kind === 'ellipse';
@@ -4456,7 +4479,25 @@ public _decorSaveShape(): void {
           ...(d.lineStyle === 'dashed' ? { line_style: 'dashed' as const } : {}),
         } as DecorShape;
       }
-      if (shape.kind === 'rect' || shape.kind === 'ellipse' || shape.kind === 'furniture') {
+      if (shape.kind === 'furniture') {
+        const oldW = shape.w * NORM_W, oldH = shape.h * this.host._decorH;
+        const w = decorCmToUnits(Math.abs(furnitureWcm!), this.host._cellCm, this.host._gridPitch);
+        const h = decorCmToUnits(Math.abs(furnitureHcm!), this.host._cellCm, this.host._gridPitch);
+        const cx = shape.x * NORM_W + oldW / 2, cy = shape.y * this.host._decorH + oldH / 2;
+        const angle = normalizeAngle(d.angle);
+        const { width: _legacyWidth, angle: _oldAngle, flip_h: _oldFlipH,
+          flip_v: _oldFlipV, ...rest } = shape;
+        return { ...rest, ...visual,
+          x: clampCanvasN((cx - w / 2) / NORM_W),
+          y: clampCanvasN((cy - h / 2) / this.host._decorH),
+          w: w / NORM_W, h: h / this.host._decorH,
+          ...(d.symbol ? { symbol: d.symbol } : {}),
+          ...(furnitureWcm! < 0 ? { flip_h: true } : {}),
+          ...(furnitureHcm! < 0 ? { flip_v: true } : {}),
+          ...(angle ? { angle } : {}),
+        } as DecorShape;
+      }
+      if (shape.kind === 'rect' || shape.kind === 'ellipse') {
         const oldW = shape.w * NORM_W, oldH = shape.h * this.host._decorH;
         const w = Math.max(this.host._gridPitch, snapToGrid(
           decorCmToUnits(Number(d.sizeWCm), this.host._cellCm, this.host._gridPitch), this.host._gridPitch,
@@ -4474,7 +4515,6 @@ public _decorSaveShape(): void {
         return { ...rest, ...visual,
           x: clampCanvasN(topLeft[0] / NORM_W), y: clampCanvasN(topLeft[1] / this.host._decorH),
           w: w / NORM_W, h: h / this.host._decorH,
-          ...(shape.kind === 'furniture' && d.symbol ? { symbol: d.symbol } : {}),
           ...(angle ? { angle } : {}),
         } as DecorShape;
       }
@@ -4568,6 +4608,20 @@ public _dtMove(ev: PointerEvent): void {
       return;
     }
     if (d.kind === 'scale' && d.orig) {
+      if (d.origShape.kind === 'furniture') {
+        const box = resizeFurnitureTransform(
+          { ...d.orig, flip_h: d.origShape.flip_h, flip_v: d.origShape.flip_v },
+          d.sgx ?? 1, d.sgy ?? 1, p[0], p[1],
+          !ev.shiftKey, decorCmToUnits(0.1, this.host._cellCm, this.host._gridPitch),
+        );
+        const changed = Math.abs(box.x - d.orig.x) > 1e-9 || Math.abs(box.y - d.orig.y) > 1e-9
+          || Math.abs(box.w - d.orig.w) > 1e-9 || Math.abs(box.h - d.orig.h) > 1e-9
+          || !!box.flip_h !== !!d.origShape.flip_h || !!box.flip_v !== !!d.origShape.flip_v;
+        if (!changed && !d.moved) return;
+        d.moved ||= changed;
+        this._decorApplyFurnitureBox(d.id, box);
+        return;
+      }
       // Box geometry preserves ratio by default and separates axes with Shift.
       // Each dimension lands on a whole cell.
       const box = resizeDecorBox(
@@ -4594,11 +4648,16 @@ public _dtMove(ev: PointerEvent): void {
       return;
     }
     const a = (Math.atan2(p[1] - d.ay, p[0] - d.ax) * 180) / Math.PI;
-    let ang = d.angle0 + (a - d.a0);
-    // 5° rotation steps; Shift remains an angle-only precision modifier.
-    if (!ev.shiftKey) ang = Math.round(ang / DT_ANGLE_STEP) * DT_ANGLE_STEP;
-    ang = ((ang % 360) + 360) % 360;
-    if (ang > 180) ang -= 360;
+    let ang: number;
+    if (d.origShape.kind === 'furniture') {
+      ang = furnitureRotationAngle(d.angle0, d.a0, a, ev.shiftKey);
+    } else {
+      ang = d.angle0 + (a - d.a0);
+      // Existing non-furniture contract: 5° normally, Shift = free.
+      if (!ev.shiftKey) ang = Math.round(ang / DT_ANGLE_STEP) * DT_ANGLE_STEP;
+      ang = ((ang % 360) + 360) % 360;
+      if (ang > 180) ang -= 360;
+    }
     const changed = Math.abs(ang - d.angle0) > 1e-6;
     if (!changed && !d.moved) return;
     d.moved ||= changed;
@@ -4863,6 +4922,27 @@ public _decorApplyBox(id: string, box: { x: number; y: number; w: number; h: num
         x: clampCanvasN(topLeft[0] / W), y: clampCanvasN(topLeft[1] / H),
         w: Math.max(this.host._gridPitch / W, Math.min(CANVAS_LIMIT * 2, box.w / W)),
         h: Math.max(this.host._gridPitch / H, Math.min(CANVAS_LIMIT * 2, box.h / H)),
+      } as DecorShape;
+    });
+    this.host._cfgEpoch++;
+    this.host.requestUpdate();
+  }
+
+public _decorApplyFurnitureBox(id: string, box: FurnitureResizeResult): void {
+    const sp = this.host._curSpaceCfg;
+    if (!sp) return;
+    const W = NORM_W, H = this.host._decorH;
+    const minUnits = decorCmToUnits(0.1, this.host._cellCm, this.host._gridPitch);
+    sp.decor = this.host._decorList.map((shape) => {
+      if (shape.id !== id || shape.kind !== 'furniture') return shape;
+      const { flip_h: _oldFlipH, flip_v: _oldFlipV, ...rest } = shape;
+      return {
+        ...rest,
+        x: clampCanvasN(box.x / W), y: clampCanvasN(box.y / H),
+        w: Math.max(minUnits / W, Math.min(CANVAS_LIMIT * 2, box.w / W)),
+        h: Math.max(minUnits / H, Math.min(CANVAS_LIMIT * 2, box.h / H)),
+        ...(box.flip_h ? { flip_h: true } : {}),
+        ...(box.flip_v ? { flip_v: true } : {}),
       } as DecorShape;
     });
     this.host._cfgEpoch++;
@@ -5530,11 +5610,53 @@ public _renderDecorTextDialog(): TemplateResult {
     </hp-dialog>`;
   }
 
+private _decorFurnitureSizeInput(axis: 'w' | 'h', raw: string): void {
+    const d = this.host._decorShapeDialog;
+    if (!d || d.kind !== 'furniture') return;
+    const cm = furnitureSignedFieldCm(
+      raw, this.host._imperial, CANVAS_LIMIT * this.host._cellCm,
+    );
+    const field = axis === 'w' ? 'sizeWField' : 'sizeHField';
+    const size = axis === 'w' ? 'sizeWCm' : 'sizeHCm';
+    const flip = axis === 'w' ? 'flipH' : 'flipV';
+    this.host._decorShapeDialog = {
+      ...d,
+      [field]: raw,
+      ...(cm === null ? {} : { [size]: Math.abs(cm), [flip]: cm < 0 }),
+    };
+  }
+
+private _decorFurnitureFlip(axis: 'w' | 'h', checked: boolean): void {
+    const d = this.host._decorShapeDialog;
+    if (!d || d.kind !== 'furniture') return;
+    const raw = axis === 'w' ? d.sizeWField : d.sizeHField;
+    const parsed = furnitureSignedFieldCm(
+      raw, this.host._imperial, CANVAS_LIMIT * this.host._cellCm,
+    );
+    const fallback = axis === 'w' ? d.sizeWCm : d.sizeHCm;
+    const cm = Math.abs(parsed ?? fallback ?? 0.1);
+    const field = axis === 'w' ? 'sizeWField' : 'sizeHField';
+    const flip = axis === 'w' ? 'flipH' : 'flipV';
+    this.host._decorShapeDialog = {
+      ...d,
+      [field]: furnitureSignedFieldValue(cm, checked, this.host._imperial),
+      [flip]: checked,
+    };
+  }
+
 public _renderDecorShapeDialog(): TemplateResult {
     const d = this.host._decorShapeDialog!;
     const canFill = d.kind === 'rect' || d.kind === 'ellipse';
     const kindLabel = this.host._t(('decor.' + d.kind) as any);
     const unit = this.host._t(this.host._imperial ? 'gs.unit_ft' : 'gs.unit_m');
+    const furnitureWcm = d.kind === 'furniture' ? furnitureSignedFieldCm(
+      d.sizeWField, this.host._imperial, CANVAS_LIMIT * this.host._cellCm,
+    ) : null;
+    const furnitureHcm = d.kind === 'furniture' ? furnitureSignedFieldCm(
+      d.sizeHField, this.host._imperial, CANVAS_LIMIT * this.host._cellCm,
+    ) : null;
+    const invalidFurnitureSize = d.kind === 'furniture'
+      && (furnitureWcm === null || furnitureHcm === null);
     return html`<hp-dialog .hass=${this.host.hass}
       .title=${this.host._t('decor.object_title', { kind: kindLabel })} icon="mdi:pencil-outline"
       dismiss-on-scrim @hp-close=${() => (this.host._decorShapeDialog = null)}>
@@ -5585,7 +5707,29 @@ public _renderDecorShapeDialog(): TemplateResult {
               .value=${String(this.host._decorLargeField(d.lengthCm || 0))}
               @input=${(e: Event) => (this.host._decorShapeDialog = { ...d,
                 lengthCm: this.host._decorLargeCm(Number((e.target as HTMLInputElement).value)) })} />
-              <span class="opl">${unit}</span></div>` : html`
+              <span class="opl">${unit}</span></div>` : d.kind === 'furniture' ? html`
+            <label>${this.host._t('decor.size')}</label>
+            <div class="colorrow"><input class="namein" type="number" step="any"
+              aria-invalid=${furnitureWcm === null ? 'true' : 'false'}
+              .value=${d.sizeWField || ''}
+              @input=${(e: Event) => this._decorFurnitureSizeInput(
+                'w', (e.target as HTMLInputElement).value,
+              )} />
+              <span>×</span><input class="namein" type="number" step="any"
+              aria-invalid=${furnitureHcm === null ? 'true' : 'false'}
+              .value=${d.sizeHField || ''}
+              @input=${(e: Event) => this._decorFurnitureSizeInput(
+                'h', (e.target as HTMLInputElement).value,
+              )} />
+              <span class="opl">${unit}</span></div>
+            <label class="dfill"><input type="checkbox" .checked=${!!d.flipH}
+              @change=${(e: Event) => this._decorFurnitureFlip(
+                'w', (e.target as HTMLInputElement).checked,
+              )} />${this.host._t('decor.flip_h')}</label>
+            <label class="dfill"><input type="checkbox" .checked=${!!d.flipV}
+              @change=${(e: Event) => this._decorFurnitureFlip(
+                'h', (e.target as HTMLInputElement).checked,
+              )} />${this.host._t('decor.flip_v')}</label>` : html`
             <label>${this.host._t('decor.size')}</label>
             <div class="colorrow"><input class="namein" type="number" min="0.01" step="0.01"
               .value=${String(this.host._decorLargeField(d.sizeWCm || 0))}
@@ -5615,7 +5759,8 @@ public _renderDecorShapeDialog(): TemplateResult {
         <div class="row" slot="footer">
           <span class="spacer"></span>
           <button class="btn ghost" @click=${() => (this.host._decorShapeDialog = null)}>${this.host._t('btn.cancel')}</button>
-          <button class="btn primary" @click=${() => this._decorSaveShape()}>${this.host._t('btn.save')}</button>
+          <button class="btn primary" ?disabled=${invalidFurnitureSize}
+            @click=${() => this._decorSaveShape()}>${this.host._t('btn.save')}</button>
         </div>
     </hp-dialog>`;
   }

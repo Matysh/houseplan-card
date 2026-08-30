@@ -104,6 +104,22 @@ def test_backend_schemas_apply_the_same_allowlist() -> None:
     assert POS_SCHEMA(fixture["layoutInput"]["virtual"]) == fixture["layoutExpected"]["virtual"]
 
 
+def test_furniture_flip_flags_survive_coordinate_canonicalization_unchanged() -> None:
+    config = {"spaces": [{
+        "id": "s", "title": "S", "view_box": [0, 0, 1, 1], "rooms": [],
+        "decor": [{
+            "id": "f", "kind": "furniture", "symbol": "sofa",
+            "x": 0.2000000001, "y": 0.3, "w": 0.18, "h": 0.075,
+            "flip_h": True, "flip_v": False,
+        }],
+    }]}
+    result = canonicalize_config_geometry(config)
+    furniture = result["spaces"][0]["decor"][0]
+    assert furniture["flip_h"] is True
+    assert furniture["flip_v"] is False
+    assert CONFIG_SCHEMA(result) == result
+
+
 def test_optimize_roundtrip_fixture_has_one_backend_canonical_target() -> None:
     """#248: Python consumes the same cross-runtime target as the Node test."""
     fixture = json.loads(OPTIMIZE_ROUNDTRIP_FIXTURE.read_text(encoding="utf-8"))

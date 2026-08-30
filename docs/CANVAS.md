@@ -489,9 +489,12 @@ An incompatible ordinary snap is ignored; only then does the nearest grid node
 on the ray become the fallback. The green angle badge uses the actual vector
 (horizontal, vertical or `|dx| = |dy|`), so 89.9°/90.1° are not advertised as
 exact. For other tools Shift modifies only the current gesture: square/circle creation,
-independent resize axes, free decor/backdrop rotation, the compass step, or
-bypassing the furniture wall magnet while the ordinary decor/room/grid magnet
-remains active. It cannot create an off-grid object.
+independent ordinary-decor resize axes, free ordinary-decor/backdrop rotation,
+the compass step, or bypassing the furniture wall magnet while the ordinary
+decor/room/grid magnet remains active. Furniture resize is the explicit
+exception to positional quantisation: it is continuous in both modes, with
+Shift selecting independent axes, while Shift on its rotation handle snaps to
+45°. Furniture placement and movement remain grid-bound.
 
 ### 9.5 «Оптимизировать планы» — explicit whole-plan maintenance
 

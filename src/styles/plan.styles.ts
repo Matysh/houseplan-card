@@ -728,6 +728,17 @@ export const planStyles = css`
       pointer-events: stroke;
       cursor: move;
     }
+    /* #383: furniture keeps a path-shaped target. Its per-object physical
+       width is supplied by the renderer; no empty bounding-box area is hit. */
+    .stage.mode-decor .decorlayer .dshape.dfurniturehit {
+      fill: none;
+      stroke: transparent;
+      pointer-events: none;
+    }
+    .stage.mode-decor.dtool-select .decorlayer .dshape.dfurniturehit {
+      pointer-events: stroke;
+      cursor: move;
+    }
     .decorlayer .dsel {
       filter: drop-shadow(0 0 3px var(--hp-accent));
     }
@@ -837,6 +848,12 @@ export const planStyles = css`
     .dtframe .dt-nwse { cursor: nwse-resize; }
     .dtframe .dt-nesw { cursor: nesw-resize; }
     .dtframe .dtrot { cursor: grab; }
+    .dtframe .dt-ew { cursor: ew-resize; }
+    .dtframe .dt-ns { cursor: ns-resize; }
+    .dtfurnitureframe .dtrot {
+      cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M18.4 7.2A8 8 0 1 0 20 12' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='m15.5 3.8 3.2 3.5-4.6.8' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") 12 12, grab;
+    }
+    .dtfurnitureframe .dtrot:active { cursor: grabbing; }
     .dtframe .dtendpoint { cursor: crosshair; }
     .bdframe .dtrot { cursor: grab; }
     .dtarea {

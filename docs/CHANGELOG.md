@@ -7,6 +7,12 @@
   happens only on an actual change of binding
   ([#385](https://github.com/Matysh/houseplan-card/issues/385)).
 
+- Furniture can now be resized smoothly with corner or one-axis handles,
+  mirrored horizontally/vertically by dragging through an edge or from its
+  properties, and rotated freely with `Shift` snapping to 45°. Selection also
+  gets a physical 10 cm path-shaped tolerance without making the empty box
+  clickable ([#383](https://github.com/Matysh/houseplan-card/issues/383)).
+
 - Device markers can now use **Do nothing** as their tap action. Short click,
   tap, Enter and Space are then quiet no-ops, while marker appearance,
   long-press House Plan details and right-click HA more-info remain available

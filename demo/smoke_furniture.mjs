@@ -8,8 +8,9 @@
 //      конфиг; touch/pen не рисуют hover и сохраняют только чистый tap;
 //   5) магнит к стене: предмет прижимается к ближайшей стене и доворачивается
 //      по ней; Shift временно обходит магнит, сохраняя grid snap;
-//   6) у выделенного предмета та же рамка, что у текстового блока, — угловые
-//      ручки (НЕзависимые ширина и глубина) и ручка поворота с шагом 5°;
+//   6) у выделенного предмета расширенная рамка: угловые и четыре одноосевые
+//      ручки; угол сохраняет пропорции без Shift, с Shift оси независимы;
+//      поворот свободный, а Shift привязывает его к 45°;
 //   7) во время растягивания угла показываются живые плашки размеров;
 //   8) фигура пишется в конфиг и переживает пересборку, хуки card-mod на месте.
 // ПАДАЕТ на сборке до этой задачи: инструмента «Мебель» нет, палитры нет,
@@ -314,14 +315,28 @@ const res = await page.evaluate(async () => {
   await c.updateComplete;
 
   // ================= 7. рамка, углы, плашки, поворот =======================
+  // Previous movement deliberately exercised the wall magnet and may have
+  // rotated the piece. Isolate the transform fixture at 0° and without flips.
+  c._curSpaceCfg.decor = c._decorList.map((shape) => {
+    if (shape.id !== sofaId) return shape;
+    const clean = { ...shape };
+    delete clean.angle; delete clean.flip_h; delete clean.flip_v;
+    return clean;
+  });
+  c._cfgEpoch++;
   c._decorSel = sofaId; c.requestUpdate();
   await c.updateComplete; await sleep(60); await c.updateComplete;
   const frame = () => sr().querySelector('.dtframe');
   out.frameOnSelection = !!frame();
-  out.sameFrameAsTheTextBlock = !!frame()
-    && frame().querySelectorAll('.dthandle').length === 5
-    && frame().querySelectorAll('.dtknob').length === 5
+  out.furnitureFrameHasFourSideHandles = !!frame()
+    && frame().classList.contains('dtfurnitureframe')
+    && frame().querySelectorAll('.dthandle').length === 9
+    && frame().querySelectorAll('.dtknob').length === 9
+    && frame().querySelectorAll('.dthandle.dtedge').length === 4
     && !!frame().querySelector('.dtrot');
+  out.sideHandlesExposeAxisCursors = [...frame().querySelectorAll('.dthandle.dtedge')]
+    .every((handle) => ['ew-resize', 'ns-resize'].includes(getComputedStyle(handle).cursor));
+  out.rotationHandleUsesCircularCursor = getComputedStyle(frame().querySelector('.dtrot')).cursor.includes('url(');
   const rOf = (sel) => { const e = frame()?.querySelector(sel); return e ? +e.getAttribute('r') : NaN; };
   out.handleSizeIsTheTaskOneSize = Math.abs(rOf('.dtknob') * 4 - rOf('.dthandle.dtrot'))
     / Math.max(rOf('.dthandle.dtrot'), 1e-9) < 0.05;
@@ -329,7 +344,16 @@ const res = await page.evaluate(async () => {
     && near(c._dtBox.w, sofaNow().w * 1000, 1e-6)
     && near(c._dtBox.h, sofaNow().h * 1000, 1e-6);
 
-  // угол: НЕзависимые ширина и глубина + живые плашки
+  const visiblePath = el(sofaId);
+  const hitPath = sr().querySelector(`.dfurniturehit[data-id="${sofaId}"]`);
+  out.selectionHaloUsesTheRealArtworkPath = !!visiblePath && !!hitPath
+    && hitPath.getAttribute('d') === visiblePath.getAttribute('d')
+    && hitPath.getAttribute('transform') === visiblePath.getAttribute('transform')
+    && Number(hitPath.getAttribute('stroke-width')) > Number(visiblePath.getAttribute('stroke-width'))
+    && getComputedStyle(hitPath).pointerEvents === 'stroke'
+    && /transparent|rgba\(0, 0, 0, 0\)/.test(getComputedStyle(hitPath).stroke);
+
+  // Shift: independent, continuous width/depth + live plates.
   const before = { w: sofaNow().w, h: sofaNow().h };
   const b = c._dtBox || { x: 0, y: 0, w: 0, h: 0 };
   const handles = [...(frame()?.querySelectorAll('.dthandle') || [])];
@@ -341,29 +365,59 @@ const res = await page.evaluate(async () => {
   const grown = sofaNow();
   out.cornerGrowsTheWidth = grown.w > before.w && near(grown.w * 1000, b.w + 100, 1e-6);
   out.cornerGrowsTheDepthINDEPENDENTLY = grown.h > before.h
-    && near(((grown.h * 1000) / PITCH) % 1, 0, 1e-6);
+    && near(grown.h * 1000, b.h + 20, 1e-6);
+  out.shiftResizeIsSubGrid = !near((grown.h * 1000) / PITCH,
+    Math.round((grown.h * 1000) / PITCH), 1e-4);
   out.oppositeCornerStaysPut = near(grown.x * 1000, b.x, 1e-6) && near(grown.y * 1000, b.y, 1e-6);
   const plates = [...sr().querySelectorAll('.measurelabel.furnmeasure')];
   out.twoLivePlates = plates.length === 2;
   out.platesShowRealLengths = plates.length === 2
     && plates.every((p) => /\d/.test(p.textContent))
     && plates.some((p) => /m|м|′/.test(p.textContent));
-  // …и без Shift размер прилипает к сетке
+  // Without Shift the original ratio is preserved, still without grid snap.
   ev('pointermove', stageEl(), b.x + b.w + 101.7, b.y + b.h + 21.3);
   await c.updateComplete;
-  const snapped = sofaNow();
-  const wCells = (snapped.w * 1000) / PITCH;
-  const hCells = (snapped.h * 1000) / PITCH;
-  // Normalised config is rounded to six decimals, so a mathematical cell 27
-  // may read back as 26.9999999. Compare with the nearest integer, not `% 1`.
-  out.sizeSnapsToTheGrid = near(wCells, Math.round(wCells), 1e-4)
-    && near(hCells, Math.round(hCells), 1e-4);
+  const proportional = sofaNow();
+  const wCells = (proportional.w * 1000) / PITCH;
+  out.defaultResizePreservesRatio = near(proportional.w / proportional.h, before.w / before.h, 1e-5);
+  out.defaultResizeIsSubGrid = !near(wCells, Math.round(wCells), 1e-4);
   ev('pointerup', stageEl(), b.x + b.w + 101.7, b.y + b.h + 21.3);
   await c.updateComplete;
   out.cornerDragEnded = !c._dtDrag;
   out.noPlatesAfterTheDrag = !sr().querySelector('.measurelabel.furnmeasure');
 
-  // поворот: шаг 5°, Shift мимо шага — та же механика, что у текста
+  // A middle handle changes only one axis and keeps the opposite edge fixed.
+  const edgeBefore = { ...sofaNow() };
+  const eb = c._dtBox;
+  const rightEdge = [...frame().querySelectorAll('.dthandle.dtedge')].find((handle) =>
+    near(+handle.getAttribute('cx'), eb.x + eb.w, 1e-6));
+  ev('pointerdown', rightEdge, eb.x + eb.w, eb.y + eb.h / 2);
+  ev('pointermove', stageEl(), eb.x + eb.w + 13.7, eb.y + eb.h / 2);
+  await c.updateComplete;
+  const edgeAfter = sofaNow();
+  out.edgeHandleChangesOneAxisContinuously = near(edgeAfter.h, edgeBefore.h, 1e-9)
+    && near(edgeAfter.w * 1000, edgeBefore.w * 1000 + 13.7, 1e-6)
+    && near(edgeAfter.x, edgeBefore.x, 1e-9) && near(edgeAfter.y, edgeBefore.y, 1e-9);
+  ev('pointerup', stageEl(), eb.x + eb.w + 13.7, eb.y + eb.h / 2);
+  await c.updateComplete;
+
+  // Crossing the fixed corner toggles only the crossed axis. pointercancel
+  // must restore the exact pre-gesture object and create no persisted flip.
+  const crossBefore = JSON.parse(JSON.stringify(sofaNow()));
+  const cb = c._dtBox;
+  const crossHandles = [...frame().querySelectorAll('.dthandle')];
+  const crossSe = crossHandles[3];
+  ev('pointerdown', crossSe, cb.x + cb.w, cb.y + cb.h);
+  ev('pointermove', stageEl(), cb.x - 25, cb.y + cb.h + 10, { shiftKey: true });
+  await c.updateComplete;
+  const crossed = sofaNow();
+  out.crossingTogglesOnlyHorizontalFlip = crossed.flip_h === true && !crossed.flip_v
+    && crossed.w > 0 && crossed.h > 0 && near(crossed.x * 1000 + crossed.w * 1000, cb.x, 1e-6);
+  ev('pointercancel', stageEl(), cb.x - 25, cb.y + cb.h + 10, { shiftKey: true });
+  await c.updateComplete;
+  out.crossingCancelRestoresTheObject = JSON.stringify(sofaNow()) === JSON.stringify(crossBefore);
+
+  // Furniture rotation is free; Shift snaps to the nearest 45°.
   await sleep(40); await c.updateComplete;
   const cx = (sofaNow().x + sofaNow().w / 2) * 1000;
   const cy = (sofaNow().y + sofaNow().h / 2) * 1000;
@@ -376,12 +430,14 @@ const res = await page.evaluate(async () => {
   out.rotates45 = near(sofaNow().angle || 0, 45, 1e-6);
   ev('pointermove', stageEl(), cx + 100, cy + 2);          // ~1.1° → липнет к 0
   await c.updateComplete;
-  out.snapsTo5 = (sofaNow().angle || 0) === 0;
+  const fine = sofaNow().angle;
+  out.rotationIsFreeWithoutShift = fine > 0.5 && fine < 5;
   ev('pointermove', stageEl(), cx + 100, cy + 2, { shiftKey: true });
   await c.updateComplete;
-  const fine = sofaNow().angle;
-  out.shiftGoesPastTheStep = fine > 0.5 && fine < 5;
-  ev('pointerup', stageEl(), cx + 100, cy + 2, { shiftKey: true });
+  out.shiftSnapsRotationTo45 = (sofaNow().angle || 0) === 0;
+  ev('pointermove', stageEl(), cx + 100, cy + 100);
+  await c.updateComplete;
+  ev('pointerup', stageEl(), cx + 100, cy + 100);
   await c.updateComplete;
   out.rotationIsRendered = /rotate\(/.test(attr(sofaId, 'transform') || '');
 
@@ -403,7 +459,41 @@ const res = await page.evaluate(async () => {
   out.objectDialogSelectsStoredSymbol = sr().querySelector(
     '.body select.namein option:checked',
   )?.value === stored.symbol;
-  c._decorShapeDialog = null;
+  const sizeInputs = [...sr().querySelectorAll('hp-dialog input[type="number"][step="any"]')];
+  const flipInputs = [...sr().querySelectorAll('hp-dialog .dfill input[type="checkbox"]')];
+  out.furniturePropertiesExposeSignedSizesAndTwoFlips = sizeInputs.length === 2 && flipInputs.length === 2;
+  if (sizeInputs[0]) {
+    sizeInputs[0].value = String(-Math.abs(Number(sizeInputs[0].value)));
+    sizeInputs[0].dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+    await c.updateComplete;
+  }
+  out.negativeWidthSynchronisesHorizontalCheckbox = !!c._decorShapeDialog?.flipH
+    && !!sr().querySelectorAll('hp-dialog .dfill input[type="checkbox"]')[0]?.checked;
+  const currentFlipInputs = [...sr().querySelectorAll('hp-dialog .dfill input[type="checkbox"]')];
+  if (currentFlipInputs[1]) {
+    currentFlipInputs[1].checked = true;
+    currentFlipInputs[1].dispatchEvent(new Event('change', { bubbles: true, composed: true }));
+    await c.updateComplete;
+  }
+  const currentSizes = [...sr().querySelectorAll('hp-dialog input[type="number"][step="any"]')];
+  out.verticalCheckboxSynchronisesNegativeDepth = !!c._decorShapeDialog?.flipV
+    && Number(currentSizes[1]?.value) < 0;
+  if (currentSizes[0]) {
+    currentSizes[0].value = '0';
+    currentSizes[0].dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+    await c.updateComplete;
+  }
+  out.zeroSizeBlocksSave = sr().querySelector('hp-dialog button.btn.primary')?.disabled === true
+    && sr().querySelector('hp-dialog input[type="number"][step="any"]')?.getAttribute('aria-invalid') === 'true';
+  c._decorShapeDialog = {
+    ...c._decorShapeDialog,
+    sizeWField: String(-Math.abs(Number(stored.w) * 1000 * CELL / PITCH / 100)),
+  };
+  c._decorSaveShape(); await c.updateComplete;
+  const propertySaved = sofaNow();
+  out.propertySavePersistsPositiveExtentsAndFlags = propertySaved.w > 0 && propertySaved.h > 0
+    && propertySaved.flip_h === true && propertySaved.flip_v === true
+    && c._decorShapeDialog === null;
 
   // ================= 9. инертность и удаление ==============================
   c._decorTool = 'furniture'; c._furnPalette = null; await c.updateComplete;

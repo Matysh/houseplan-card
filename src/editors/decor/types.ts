@@ -70,6 +70,9 @@ export interface DecorText extends DecorBase {
 export interface DecorFurniture extends DecorBoxBase {
   kind: 'furniture';
   symbol: string;
+  /** Mirroring is presentation state; persisted extents always stay positive. */
+  flip_h?: boolean;
+  flip_v?: boolean;
 }
 
 export type DecorShape = DecorLine | DecorRect | DecorEllipse | DecorText | DecorFurniture;

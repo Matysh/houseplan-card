@@ -1374,6 +1374,7 @@ DECOR_SCHEMA = vol.Any(
                 vol.Required("symbol"): _FURN_SYMBOL,
                 vol.Required("x"): _NORM, vol.Required("y"): _NORM,
                 vol.Required("w"): _FURN_SIZE, vol.Required("h"): _FURN_SIZE,
+                vol.Optional("flip_h"): bool, vol.Optional("flip_v"): bool,
                 vol.Optional("angle"): vol.All(_finite, vol.Range(min=-360.0, max=360.0))},
                extra=vol.ALLOW_EXTRA),
 )

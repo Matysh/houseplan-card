@@ -1588,6 +1588,8 @@ def test_decor_furniture():
     out = cfg({"angle": 90, "color": "#607d8b", "width": 3})["spaces"][0]["decor"][0]
     assert out["angle"] == 90 and out["color"] == "#607d8b" and out["width"] == 3.0
     assert cfg({"angle": -360}) and cfg({"angle": 360}) and cfg({"angle": 12.5})
+    mirrored = cfg({"flip_h": True, "flip_v": False})["spaces"][0]["decor"][0]
+    assert mirrored["flip_h"] is True and mirrored["flip_v"] is False
     # a symbol this backend has never heard of is still SAVED: the card may
     # learn a new one before the integration does, and a plan must not be
     # refused for being newer than the server reading it
@@ -1607,6 +1609,10 @@ def test_decor_furniture():
     for bad in (361, -361, float("nan")):
         with pytest.raises(vol.Invalid):
             cfg({"angle": bad})
+    for field in ("flip_h", "flip_v"):
+        for bad in (0, 1, "true", None, [], {}):
+            with pytest.raises(vol.Invalid):
+                cfg({field: bad})
     for bad in (float("nan"), v.CANVAS_LIMIT + 1, -v.CANVAS_LIMIT - 1):
         with pytest.raises(vol.Invalid):
             cfg({"x": bad})

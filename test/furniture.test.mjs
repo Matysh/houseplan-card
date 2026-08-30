@@ -7,6 +7,8 @@ import {
   FURNITURE, FURNITURE_GROUPS, furnitureSymbol, furnitureOfGroup,
   furnitureDefaultCm, furniturePathD, furnitureGraphic, furnitureCorners, furnitureResize,
   snapFurnitureToWall, resolveFurniturePlacement, furniturePlanScreenScale, furnitureStrokePx,
+  resizeFurnitureTransform, furnitureRotationAngle, furnitureRenderTransform,
+  furnitureSignedFieldCm, furnitureSignedFieldValue,
   cmToNorm, normToCm, clampFurnSize, clampFurnCm,
   FURN_MIN_N, FURN_MIN_CM, FURN_MAX_CM, FURN_WALL_CELLS,
 } from '../test-build/furniture.js';
@@ -310,4 +312,83 @@ test('resizing a ROTATED piece works along its own axes and keeps its own fixed 
   closeTo(after[1], fixed[1], 1e-6);
   // rotated 90 degrees, pulling DOWN in world space grows the piece's WIDTH
   closeTo(r.w, 200, 1e-6);
+});
+
+test('#383 furniture resize is sub-grid, proportional by default and independent with Shift', () => {
+  const orig = { x: 10, y: 20, w: 40, h: 20 };
+  const proportional = resizeFurnitureTransform(orig, 1, 1, 50.37, 40.02, true, 0.1);
+  closeTo(proportional.w / proportional.h, 2);
+  assert.ok(Math.abs(proportional.w / GRID_PITCH - Math.round(proportional.w / GRID_PITCH)) > 1e-3,
+    'continuous resize must not land on the cell lattice by construction');
+  const independent = resizeFurnitureTransform(orig, 1, 1, 50.37, 40.02, false, 0.1);
+  closeTo(independent.w, 40.37);
+  closeTo(independent.h, 20.02);
+});
+
+test('#383 edge handles change one local axis and keep the opposite world edge fixed', () => {
+  const orig = { x: 10, y: 20, w: 40, h: 20, angle: 90 };
+  const before = furnitureCorners(orig.x, orig.y, orig.w, orig.h, orig.angle);
+  const right = resizeFurnitureTransform(orig, 1, 0, 30, 90, false, 0.1);
+  closeTo(right.h, orig.h);
+  const after = furnitureCorners(right.x, right.y, right.w, right.h, orig.angle);
+  closeTo((after[0][0] + after[3][0]) / 2, (before[0][0] + before[3][0]) / 2);
+  closeTo((after[0][1] + after[3][1]) / 2, (before[0][1] + before[3][1]) / 2);
+
+  const bottom = resizeFurnitureTransform(orig, 0, 1, -20, 40, false, 0.1);
+  closeTo(bottom.w, orig.w);
+});
+
+test('#383 crossing keeps positive extents, toggles only crossed flips and preserves fixed corner', () => {
+  const orig = { x: 0, y: 0, w: 40, h: 20, angle: 30, flip_h: true };
+  const fixed = furnitureCorners(orig.x, orig.y, orig.w, orig.h, orig.angle)[0];
+  const crossed = resizeFurnitureTransform(orig, 1, 1, fixed[0] - 20, fixed[1] + 5, false, 0.1);
+  assert.ok(crossed.w > 0 && crossed.h > 0);
+  assert.equal(crossed.flip_h, undefined, 'crossing horizontal axis toggles existing H flip off');
+  assert.equal(crossed.flip_v, undefined);
+  const after = furnitureCorners(crossed.x, crossed.y, crossed.w, crossed.h, orig.angle);
+  // A crossed active corner becomes the adjacent geometric corner; the fixed
+  // world point is nevertheless still one of the box corners.
+  assert.ok(after.some((point) => Math.hypot(point[0] - fixed[0], point[1] - fixed[1]) < 1e-8));
+
+  const both = resizeFurnitureTransform({ x: 0, y: 0, w: 40, h: 20 }, 1, 1, -5, -8, false, 0.1);
+  assert.equal(both.flip_h, true);
+  assert.equal(both.flip_v, true);
+  assert.deepEqual([both.w, both.h], [5, 8]);
+});
+
+test('#383 furniture rotation is free normally and Shift snaps to 45 degrees', () => {
+  closeTo(furnitureRotationAngle(10, 20, 33.4, false), 23.4);
+  assert.equal(furnitureRotationAngle(10, 20, 33.4, true), 45);
+  assert.equal(furnitureRotationAngle(170, 0, 30, true), 180);
+  assert.equal(furnitureRotationAngle(0, 0, 22.5, true), 45);
+  assert.equal(furnitureRotationAngle(0, 0, -22.5, true), -45);
+});
+
+test('#383 render transform mirrors inside the same positive box before rotation', () => {
+  const base = { x: 0.1, y: 0.2, w: 0.3, h: 0.4, angle: 30 };
+  assert.equal(
+    furnitureRenderTransform(base, 1000, 500, 100, 50),
+    'rotate(30 250 200) translate(100 100) scale(3 4)',
+  );
+  assert.equal(
+    furnitureRenderTransform({ ...base, flip_h: true, flip_v: true }, 1000, 500, 100, 50),
+    'rotate(30 250 200) translate(400 300) scale(-3 -4)',
+  );
+});
+
+test('#383 signed property fields project flags without persisting negative extents', () => {
+  assert.equal(furnitureSignedFieldValue(180, false, false), '1.8');
+  assert.equal(furnitureSignedFieldValue(180, true, false), '-1.8');
+  assert.equal(furnitureSignedFieldValue(30.48, true, true), '-1');
+  assert.equal(furnitureSignedFieldValue(0.1, false, false), '0.001');
+  assert.equal(furnitureSignedFieldCm(furnitureSignedFieldValue(0.1, false, false), false, 10000), 0.1);
+  closeTo(
+    furnitureSignedFieldCm(furnitureSignedFieldValue(0.1, false, true), true, 10000),
+    0.1,
+    0.0001,
+  );
+  assert.equal(furnitureSignedFieldCm('-1.8', false, 10000), -180);
+  assert.equal(furnitureSignedFieldCm('1', true, 10000), 30.48);
+  for (const invalid of ['', '0', 0, 'wat', Infinity])
+    assert.equal(furnitureSignedFieldCm(invalid, false, 10000), null);
 });

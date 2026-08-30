@@ -518,6 +518,8 @@
   "decor.fill_color": "Fill color",
   "decor.length": "Length",
   "decor.size": "Size",
+  "decor.flip_h": "Flip horizontally",
+  "decor.flip_v": "Flip vertically",
   "decor.angle": "Rotation angle, °",
   "decor.text_size": "Text size",
   "decor.backdrop_properties": "Plan backdrop properties",

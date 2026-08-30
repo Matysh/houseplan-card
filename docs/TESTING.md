@@ -3278,23 +3278,34 @@ require hands on real hardware — they remain for the human pass.
 - [ ] **One stamp per pick**: after placing, the editor is back in **Select**
       with the new piece selected, and the palette is disarmed — clicking the
       plan again does not place a second one [auto: smoke_furniture]
-- [ ] **The frame is the text block's frame**: four corner beads and a rotate
-      handle, the beads a quarter of their hit area. Grab one with a finger on
-      a tablet, aiming roughly: it is caught [auto: smoke_furniture]
+- [ ] **The furniture frame**: four corner beads, four one-axis middle beads
+      and a rotate handle; every bead is a quarter of its unchanged hit area.
+      Ordinary decor keeps its previous five-handle frame. Grab a furniture
+      bead with a finger on a tablet, aiming roughly: it is caught
+      [auto: smoke_furniture]
 - [ ] **Proportional by default**: drag a corner sideways or down — the current
       ratio is preserved about the opposite corner. Hold Shift to change width
       and depth independently. Two live badges show both in metres (or feet)
-      while you drag, and they match a later measurement against the grid;
-      neither mode creates sizes off the grid
+      while you drag, and they match a later physical measurement. Both modes
+      are continuous and can create a sub-grid size; the four middle handles
+      change only width or only depth
       [auto: smoke_furniture]
-- [ ] **Rotation**: the handle above the box turns the piece in 5° steps about
-      its CENTRE (not a corner); Shift goes past the step; turning back to
-      straight removes the angle entirely [auto: smoke_furniture]
+- [ ] **Crossing and mirroring**: drag a corner or middle handle through its
+      fixed opposite edge — the gesture continues with positive stored size
+      and the corresponding H/V mirror toggled. `Esc`/pointer cancel restores
+      the complete pre-drag object [auto: smoke_furniture + furniture.test]
+- [ ] **Rotation**: the handle above the box turns the piece freely about its
+      CENTRE (not a corner); Shift snaps to the nearest 45° and can be pressed
+      or released during the same gesture [auto: smoke_furniture]
 - [ ] **Complete properties**: double click a piece and change its symbol,
-      width/depth in m/ft, angle, contour colour/opacity and line width in
-      cm/in. Save keeps its centre/transform and reloads exactly; Cancel changes
-      nothing; reopening a non-first symbol selects that exact option
+      signed width/depth in m/ft, H/V mirror checkboxes, angle, contour
+      colour/opacity and line width in cm/in. Signs and checkboxes stay in sync;
+      zero/invalid size disables Save. Save keeps its centre and reloads exactly;
+      Cancel changes nothing; reopening a non-first symbol selects that option
       [auto: smoke_furniture; manual]
+- [ ] **Selection tolerance**: in Select, a press up to 10 physical centimetres
+      from a drawn furniture stroke selects it at any zoom/scale; an empty area
+      of its bounding box does not [auto: smoke_furniture + source contract]
 - [ ] **It is only decor**: a piece takes no tap in view mode, has no entity
       and no state, and does not appear in any room aggregation. Erase removes
       it; Delete removes the selected one [auto: smoke_furniture]

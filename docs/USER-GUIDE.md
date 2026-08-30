@@ -715,10 +715,17 @@ this plan.
 | Rectangle | Drag diagonal; Shift makes a square | Stroke plus independent fill, size and angle |
 | Oval | Drag bounds; Shift makes a circle | Stroke plus independent fill, radii and angle |
 | Text | Click to open dialog | Multiline text, HA tokens, colour, physical size and angle |
-| Furniture | Pick a front-view category, pick a top-view variant, then click | Symbol, size, colour, outline and wall magnet |
+| Furniture | Pick a front-view category, pick a top-view variant, then click | Symbol, smooth size, horizontal/vertical mirror, colour, outline and wall magnet |
 | Erase | Click an item | Confirmed deletion, undoable |
 
-Creation and transform snap to the grid plus nearby room/background anchors.
+Creation and ordinary decor transforms snap to the grid plus nearby
+room/background anchors. Furniture resize is the exception: corners move
+smoothly and preserve proportion (`Shift` changes axes independently), while
+four middle handles change one axis. Crossing the opposite edge mirrors the
+item. Rotation is smooth and `Shift` snaps it to 45°; signed size fields and
+the two mirror checkboxes provide the same result numerically. Furniture is
+selected within 10 physical centimetres of its drawn strokes, not throughout
+its empty bounding box.
 The plan image is interactive only with Backdrop selected. Undo/Redo shares the
 50-command editor history.
 

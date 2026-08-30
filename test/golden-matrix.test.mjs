@@ -373,7 +373,7 @@ test('sun-ray golden requires browser-painted light from a state-only sun entity
   assert.ok(scenario);
   const fixture = prepareGoldenFixture(scenario);
   const space = fixture.config.spaces.find((item) => item.id === scenario.space);
-  assert.equal(GOLDEN_MATRIX_VERSION, 51);
+  assert.equal(GOLDEN_MATRIX_VERSION, 52);
   assert.equal(space.settings.sun_rays, true);
   assert.equal(scenario.northDeg, 90,
     'the sign-sensitive golden must keep a non-zero north direction');
@@ -870,6 +870,23 @@ test('issue 359 has one deterministic light-theme furniture placement preview go
   assert.deepEqual(scenario.furniturePlacementPreview, {
     symbol: 'sofa', widthCm: 180, depthCm: 90, pointer: [0.35, 0.90],
   });
+});
+
+test('issue 383 goldens cover every furniture mirror orientation in light and dark themes', () => {
+  const scenarios = GOLDEN_SCENARIOS.filter((item) => item.id.startsWith('furniture-transform-'));
+  assert.equal(scenarios.length, 2);
+  assert.deepEqual(new Set(scenarios.map((item) => item.theme)), new Set(['light', 'dark']));
+  for (const scenario of scenarios) {
+    const furniture = scenario.decorOverride.filter((shape) => shape.kind === 'furniture');
+    const orientations = furniture.map((shape) =>
+      `${shape.flip_h ? 'h' : ''}${shape.flip_v ? 'v' : ''}` || 'normal');
+    assert.deepEqual(new Set(orientations), new Set(['normal', 'h', 'v', 'hv']), scenario.id);
+    assert.ok(furniture.every((shape) => shape.symbol === 'sofa_corner_right'));
+  }
+  const selected = scenarios.find((scenario) => scenario.decorSelection);
+  assert.equal(selected?.theme, 'light');
+  assert.equal(selected?.mode, 'decor');
+  assert.equal(selected?.decorSelection, 'furn-flip-hv');
 });
 
 test('device dialog goldens expose the complete light-source controls at desktop and mobile widths', () => {

@@ -630,6 +630,7 @@ def _plan_only_source() -> tuple[dict[str, Any], dict[str, Any]]:
             {
                 "id": "furniture", "kind": "furniture", "symbol": "sofa",
                 "x": 0.5, "y": 0.5, "w": 0.2, "h": 0.1, "angle": 10,
+                "flip_h": True, "flip_v": False,
             },
         ],
     })
@@ -701,6 +702,8 @@ def test_plan_only_export_projects_geometry_and_round_trips_room_labels(tmp_path
     assert not {"entity", "attr", "unit"} & set(by_id["legacy"])
     assert by_id["static"]["text"] == "Literal {not a reference} and sensor.user_text"
     assert by_id["furniture"]["symbol"] == "sofa"
+    assert by_id["furniture"]["flip_h"] is True
+    assert by_id["furniture"]["flip_v"] is False
 
     parsed = parse_document(json.dumps(document).encode())
     preview = create_preview(

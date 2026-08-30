@@ -518,6 +518,8 @@
   "decor.fill_color": "Цвет заливки",
   "decor.length": "Длина",
   "decor.size": "Размер",
+  "decor.flip_h": "Отзеркалить по горизонтали",
+  "decor.flip_v": "Отзеркалить по вертикали",
   "decor.angle": "Угол поворота, °",
   "decor.text_size": "Размер текста",
   "decor.backdrop_properties": "Свойства картинки-подложки",

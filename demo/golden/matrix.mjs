@@ -1,7 +1,7 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 51;
+export const GOLDEN_MATRIX_VERSION = 52;
 
 const stage = { capture: 'stage', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0005 } };
 const page = { capture: 'page', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0008 } };
@@ -430,6 +430,37 @@ export const GOLDEN_SCENARIOS = Object.freeze([
         w: 0.06, h: 0.065, color: '#141832', opacity: 1, width_cm: 1.2 },
       { id: 'furn-new', kind: 'furniture', symbol: 'sofa_corner_right', x: 0.58, y: 0.18,
         w: 0.26, h: 0.17, color: '#141832', opacity: 1, width_cm: 1.2 },
+    ],
+    language: 'en', theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
+  { id: 'furniture-transform-light', fixture: 'visual', space: 'golden-geometry', mode: 'decor',
+    decorOverride: [
+      ...decorLayerFixture.filter((shape) => shape.kind !== 'furniture'),
+      { id: 'furn-normal', kind: 'furniture', symbol: 'sofa_corner_right', x: 0.08, y: 0.16,
+        w: 0.18, h: 0.12, color: '#141832', opacity: 1, width_cm: 1.2 },
+      { id: 'furn-flip-h', kind: 'furniture', symbol: 'sofa_corner_right', x: 0.30, y: 0.16,
+        w: 0.18, h: 0.12, flip_h: true, color: '#141832', opacity: 1, width_cm: 1.2 },
+      { id: 'furn-flip-v', kind: 'furniture', symbol: 'sofa_corner_right', x: 0.52, y: 0.16,
+        w: 0.18, h: 0.12, flip_v: true, color: '#141832', opacity: 1, width_cm: 1.2 },
+      { id: 'furn-flip-hv', kind: 'furniture', symbol: 'sofa_corner_right', x: 0.74, y: 0.16,
+        w: 0.18, h: 0.12, flip_h: true, flip_v: true,
+        color: '#141832', opacity: 1, width_cm: 1.2 },
+    ],
+    decorSelection: 'furn-flip-hv', language: 'ru', theme: 'light',
+    viewport: { width: 1000, height: 900 }, ...stage },
+  { id: 'furniture-transform-dark', fixture: 'visual', space: 'golden-geometry', mode: 'view',
+    decorOverride: [
+      ...decorLayerFixture.filter((shape) => shape.kind !== 'furniture'),
+      { id: 'furn-normal', kind: 'furniture', symbol: 'sofa_corner_right', x: 0.08, y: 0.16,
+        w: 0.18, h: 0.12, angle: 30, color: '#d8def0', opacity: 1, width_cm: 1.2 },
+      { id: 'furn-flip-h', kind: 'furniture', symbol: 'sofa_corner_right', x: 0.30, y: 0.16,
+        w: 0.18, h: 0.12, angle: 30, flip_h: true,
+        color: '#d8def0', opacity: 1, width_cm: 1.2 },
+      { id: 'furn-flip-v', kind: 'furniture', symbol: 'sofa_corner_right', x: 0.52, y: 0.16,
+        w: 0.18, h: 0.12, angle: 30, flip_v: true,
+        color: '#d8def0', opacity: 1, width_cm: 1.2 },
+      { id: 'furn-flip-hv', kind: 'furniture', symbol: 'sofa_corner_right', x: 0.74, y: 0.16,
+        w: 0.18, h: 0.12, angle: 30, flip_h: true, flip_v: true,
+        color: '#d8def0', opacity: 1, width_cm: 1.2 },
     ],
     language: 'en', theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'tray-narrow-tool-ru', fixture: 'visual', space: 'golden-geometry', mode: 'decor',

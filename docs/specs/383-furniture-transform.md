@@ -1,12 +1,12 @@
 # Issue #383 — плавные трансформации и зеркалирование мебели
 
 - **Issue:** https://github.com/Matysh/houseplan-card/issues/383
-- **Статус документа:** готово к ревью ТЗ
+- **Статус документа:** реализовано, готово к code review
 - **Приоритет / тип:** P2 · feature / polish
 - **Область:** Редактор подложки, furniture geometry/render, свойства мебели,
   selection hit-area, backend schema, import/export, i18n, документация и QA
 - **Связи:** заменяет #382; продолжает контракт мебели из #177/#179/#359/#361
-- **Ревизия:** 1 (2026-08-30)
+- **Ревизия:** 3 (2026-08-30; реализация и целевой browser-smoke завершены)
 
 ## Сценарий
 
@@ -213,8 +213,8 @@ flip_v: true  # optional; false канонически отсутствует
 
 | Ключ | RU | EN | DE | FR |
 |---|---|---|---|---|
-| `furn.flip_h` | Отзеркалить по горизонтали | Flip horizontally | Horizontal spiegeln | Retourner horizontalement |
-| `furn.flip_v` | Отзеркалить по вертикали | Flip vertically | Vertikal spiegeln | Retourner verticalement |
+| `decor.flip_h` | Отзеркалить по горизонтали | Flip horizontally | Horizontal spiegeln | Retourner horizontalement |
+| `decor.flip_v` | Отзеркалить по вертикали | Flip vertically | Vertikal spiegeln | Retourner verticalement |
 
 - Checkboxes имеют native label и keyboard activation; порядок tab следует
   DOM после размеров. Числовые inputs сохраняют локализованную подпись единиц.
@@ -225,7 +225,8 @@ flip_v: true  # optional; false канонически отсутствует
 
 ## Затронутые файлы и модули
 
-- `src/editors/decor/types.ts`, `src/editors/decor/geometry.ts`.
+- `src/editors/decor/types.ts`, `src/furniture.ts`; общий decor geometry не
+  меняется, потому что новый controller строго furniture-only.
 - `src/houseplan-card.ts`, `src/houseplan-editor-runtime.ts`, стили transform
   frame и furniture hit-area.
 - `src/i18n/{en,ru,de,fr}.json`.

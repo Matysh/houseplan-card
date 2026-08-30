@@ -99,6 +99,18 @@ test('Optimize can apply the same barrier in-place without a second clone (#291)
   assert.deepEqual(input, fixture.configExpected);
 });
 
+test('#383 furniture flip flags survive frontend canonicalization unchanged', () => {
+  const config = { spaces: [{
+    id: 's', decor: [{
+      id: 'f', kind: 'furniture', symbol: 'sofa', x: 0.2000000001, y: 0.3,
+      w: 0.18, h: 0.075, flip_h: true, flip_v: false,
+    }],
+  }] };
+  const furniture = canonicalizeConfigGeometry(config).spaces[0].decor[0];
+  assert.equal(furniture.flip_h, true);
+  assert.equal(furniture.flip_v, false);
+});
+
 test('one position changes only x/y and preserves future metadata (#224)', () => {
   const input = {
     s: 'floor', x: 0.1000000006, y: -0.0000000004,

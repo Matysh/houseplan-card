@@ -633,3 +633,158 @@ export function furnitureResize(
   const ncy = fy + (sgx > 0 ? w / 2 : -w / 2) * uy + (sgy > 0 ? h / 2 : -h / 2) * vy;
   return { x: ncx - w / 2, y: ncy - h / 2, w, h };
 }
+
+export interface FurnitureTransformBox {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  angle?: number;
+  flip_h?: boolean;
+  flip_v?: boolean;
+}
+
+export interface FurnitureResizeResult extends FurnitureTransformBox {
+  flip_h?: boolean;
+  flip_v?: boolean;
+}
+
+/**
+ * #383 — continuous furniture-only resize.
+ *
+ * `sgx`/`sgy` name the dragged local edge (-1, 0 or +1). Zero keeps that
+ * axis byte-for-byte, which is how the four new middle handles work. Unlike
+ * the legacy shared decor helper this function never snaps to the grid and a
+ * signed pointer distance may cross the fixed opposite edge. The sign is
+ * projected into flip flags; the returned extents remain strictly positive.
+ */
+export function resizeFurnitureTransform(
+  orig: FurnitureTransformBox,
+  sgx: number,
+  sgy: number,
+  px: number,
+  py: number,
+  keepAspect: boolean,
+  minSize: number,
+): FurnitureResizeResult {
+  const minimum = Number.isFinite(minSize) && minSize > 0 ? minSize : 1e-6;
+  const a = ((Number(orig.angle) || 0) * Math.PI) / 180;
+  const ux = Math.cos(a), uy = Math.sin(a);
+  const vx = -Math.sin(a), vy = Math.cos(a);
+  const cx = orig.x + orig.w / 2, cy = orig.y + orig.h / 2;
+  const flx = sgx > 0 ? -orig.w / 2 : sgx < 0 ? orig.w / 2 : 0;
+  const fly = sgy > 0 ? -orig.h / 2 : sgy < 0 ? orig.h / 2 : 0;
+  const fx = cx + flx * ux + fly * vx;
+  const fy = cy + flx * uy + fly * vy;
+  const rx = px - fx, ry = py - fy;
+  const rawW = sgx
+    ? (rx * ux + ry * uy) * (sgx > 0 ? 1 : -1)
+    : orig.w;
+  const rawH = sgy
+    ? (rx * vx + ry * vy) * (sgy > 0 ? 1 : -1)
+    : orig.h;
+  let w = sgx ? Math.abs(rawW) : orig.w;
+  let h = sgy ? Math.abs(rawH) : orig.h;
+
+  if (keepAspect && sgx && sgy) {
+    const kx = w / Math.max(orig.w, minimum);
+    const ky = h / Math.max(orig.h, minimum);
+    // Follow whichever local pointer axis has moved farther from the original
+    // scale. Equal deltas deliberately prefer width for deterministic ties.
+    const scale = Math.abs(kx - 1) >= Math.abs(ky - 1) ? kx : ky;
+    const floor = Math.max(minimum / orig.w, minimum / orig.h);
+    const safeScale = Math.max(floor, Number.isFinite(scale) ? scale : floor);
+    w = orig.w * safeScale;
+    h = orig.h * safeScale;
+  }
+  w = Math.max(minimum, Number.isFinite(w) ? w : minimum);
+  h = Math.max(minimum, Number.isFinite(h) ? h : minimum);
+
+  const crossX = !!sgx && rawW < 0;
+  const crossY = !!sgy && rawH < 0;
+  const dirX = sgx ? (sgx > 0 ? 1 : -1) * (crossX ? -1 : 1) : 0;
+  const dirY = sgy ? (sgy > 0 ? 1 : -1) * (crossY ? -1 : 1) : 0;
+  const ncx = fx + dirX * (w / 2) * ux + dirY * (h / 2) * vx;
+  const ncy = fy + dirX * (w / 2) * uy + dirY * (h / 2) * vy;
+  const flipH = !!orig.flip_h !== crossX;
+  const flipV = !!orig.flip_v !== crossY;
+  return {
+    x: ncx - w / 2,
+    y: ncy - h / 2,
+    w,
+    h,
+    ...(Number(orig.angle) ? { angle: Number(orig.angle) } : {}),
+    ...(flipH ? { flip_h: true } : {}),
+    ...(flipV ? { flip_v: true } : {}),
+  };
+}
+
+/** Furniture is free by default; Shift snaps to world-space 45° bearings. */
+export function furnitureRotationAngle(
+  angle0: number,
+  pointerStartDeg: number,
+  pointerDeg: number,
+  snap45: boolean,
+): number {
+  let angle = Number(angle0) + (Number(pointerDeg) - Number(pointerStartDeg));
+  if (![angle, pointerStartDeg, pointerDeg].every(Number.isFinite)) angle = 0;
+  if (snap45) {
+    const steps = angle / 45;
+    // Keep the exact half-step deterministic on both sides of zero. Native
+    // Math.round(-0.5) returns -0, which would make symmetric drags snap in
+    // different directions.
+    angle = (steps < 0 ? -Math.round(Math.abs(steps)) : Math.round(steps)) * 45;
+  }
+  angle = ((angle % 360) + 360) % 360;
+  return angle > 180 ? angle - 360 : angle;
+}
+
+/** One canonical transform for visible art, selection halo and future consumers. */
+export function furnitureRenderTransform(
+  shape: FurnitureTransformBox,
+  canvasW: number,
+  canvasH: number,
+  artW: number,
+  artH: number,
+): string {
+  const x = shape.x * canvasW, y = shape.y * canvasH;
+  const w = shape.w * canvasW, h = shape.h * canvasH;
+  const cx = x + w / 2, cy = y + h / 2;
+  const tx = x + (shape.flip_h ? w : 0);
+  const ty = y + (shape.flip_v ? h : 0);
+  const sx = (shape.flip_h ? -1 : 1) * w / artW;
+  const sy = (shape.flip_v ? -1 : 1) * h / artH;
+  const angle = Number(shape.angle) || 0;
+  return `${angle ? `rotate(${angle} ${cx} ${cy}) ` : ''}`
+    + `translate(${tx} ${ty}) scale(${sx} ${sy})`;
+}
+
+/** Signed m/ft property field -> centimetres; null keeps invalid drafts visible. */
+export function furnitureSignedFieldCm(
+  value: unknown,
+  imperial: boolean,
+  maxCm: number,
+  minCm = 0.1,
+): number | null {
+  if (typeof value === 'string' && !value.trim()) return null;
+  const shown = Number(value);
+  if (!Number.isFinite(shown) || shown === 0) return null;
+  const cm = shown * (imperial ? 30.48 : 100);
+  const magnitude = Math.abs(cm);
+  if (magnitude < minCm || magnitude > maxCm) return null;
+  return cm;
+}
+
+/** Positive stored centimetres + one flag -> a lossless-enough signed m/ft field. */
+export function furnitureSignedFieldValue(
+  cm: number,
+  flipped: boolean,
+  imperial: boolean,
+): string {
+  const shown = Math.abs(Number(cm)) / (imperial ? 30.48 : 100);
+  // Six decimals keep the physical 0.1 cm minimum representable in both
+  // metres (0.001) and feet (~0.003281) without filling ordinary values with
+  // trailing zeroes.
+  const rounded = Number(shown.toFixed(6));
+  return String(flipped ? -rounded : rounded);
+}

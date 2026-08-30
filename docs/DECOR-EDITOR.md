@@ -12,13 +12,13 @@ device state or Home Assistant actions.
 
 | Invariant | Contract |
 |---|---|
-| Coordinates | Axis-aligned positions and every box dimension are quantised to the space grid. A rotated resize keeps its opposite world-space corner fixed and quantises dimensions; its derived unrotated storage origin is not post-snapped, because that would translate the entire object. `Shift` never disables dimension snapping. |
+| Coordinates | Axis-aligned positions and ordinary shape dimensions are quantised to the space grid. A rotated ordinary-shape resize keeps its opposite world-space corner fixed and quantises dimensions; its derived unrotated storage origin is not post-snapped. Furniture is the explicit exception: resize is continuous, stores positive extents and projects crossing into `flip_h`/`flip_v`. |
 | Physical values | Stroke and text sizes are stored in centimetres; the UI shows cm/in for small values and m/ft for object dimensions. |
 | Undo | Decor and backdrop use the same named 50-command stack as plan geometry. |
 | Cancel | `Esc` restores the state at the start of an active drag/draw/resize/rotate gesture. A completed gesture is reverted with Undo. |
 | Selection | One click selects; drag moves; the selected object has one common transform frame; double click opens all editable properties. |
-| Scale | Corner drag preserves aspect ratio. Hold `Shift` for independent axes. |
-| Rotation | 5° steps by default; `Shift` gives free rotation. Lines use endpoint handles instead of a rotation handle. |
+| Scale | Corner drag preserves aspect ratio. Hold `Shift` for independent axes. Furniture also has four one-axis middle handles and may cross the fixed edge to mirror. |
+| Rotation | Ordinary decor uses 5° steps by default and `Shift` for free rotation. Furniture is free by default and `Shift` snaps to 45°. Lines use endpoint handles instead of a rotation handle. |
 | Magnet targets | Only other decor objects and room contours: corners, edge centres, centres and edges. The image, devices and openings are excluded. |
 | Context emphasis | Decor and its editing chrome stay fully opaque. Rooms, labels, devices, openings, positive-thickness walls and solid/dashed zero-thickness walls are contextual only and render at 35% opacity. The whole device presentation (core, ring, capsule, values and badges) is pointer-inert: it never hovers, opens, acts or drags, and the active Background tool receives a press through it. |
 | View composition | All decor kinds form one layer above room/data fills, room hover fill, opening-tunnel fills and Glow base. Live Glow, sun, physical walls, opening symbols, devices and room labels remain above decor. The plan image remains below it. |
@@ -34,7 +34,7 @@ device state or Home Assistant actions.
 | Rectangle | Drag a diagonal; `Shift` makes a square | width × height and area | size, angle, contour, optional independent fill colour/opacity |
 | Oval | Drag its bounding box; `Shift` makes a circle | `R` for a circle, `Rx × Ry` for an oval | bounding size, angle, contour and optional fill |
 | Text | Click to open the text form | the saved label is selected immediately | content, HA variables, colour/opacity, physical size and angle |
-| Furniture | Pick a symbol, then click its centre | wall magnet unless `Shift` is held | size, angle and contour style; the common frame preserves ratio unless `Shift` is held |
+| Furniture | Pick a symbol, then click its centre | wall magnet unless `Shift` is held | signed size, H/V mirror, angle and contour style; corners resize smoothly, four middle handles change one axis, rotation is free/`Shift` 45° |
 | Erase | Click a decor object; text uses its whole logical bounding box, including spaces between glyphs | confirmation dialog, then atomic removal of the whole object | A miss changes nothing; Undo restores a removed object |
 
 The editor always opens on **Select**. If the space has an image, the Plan
@@ -118,6 +118,7 @@ history wins while focus is inside an input.
 |---|---|
 | persisted decor types and future custom-image transform contract | `src/editors/decor/types.ts` |
 | physical style conversion, oriented boxes, resize and snapping | `src/editors/decor/geometry.ts` |
+| furniture-only continuous resize, flip projection and SVG transform | `src/furniture.ts` |
 | shared colour/opacity field | `src/hp-color-opacity.ts` |
 | orchestration, dialogs and SVG transform frames | `src/houseplan-card.ts` |
 | static/full-card backdrop rendering and content bounds | `src/space-render.ts`, `src/space-geometry.ts` |
@@ -141,6 +142,10 @@ implicitly.
 
 - Degenerate drafts below half a cell are discarded and do not enter history.
 - Unknown furniture symbols remain stored but render nothing in an older card.
+- Furniture `w/h` never become negative: signed property values and handle
+  crossing are stored as positive extents plus optional boolean mirror flags.
+- Select uses a path-shaped furniture target extending 10 physical centimetres
+  beyond painted strokes; empty bounding-box space remains a miss.
 - A rotated box contributes all four rotated corners to content bounds.
 - A rotated backdrop is hit-tested in its own local coordinate system.
 - Changing `cell_cm` changes the rendered width/font size of canonical physical

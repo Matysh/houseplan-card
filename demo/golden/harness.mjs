@@ -1203,6 +1203,20 @@ export async function prepareGoldenScenario(page, scenario) {
           + `cursor=${JSON.stringify(card._cursorPt)} nearest=${JSON.stringify(nearest)}`);
       }
     }
+    if (scenario.decorSelection) {
+      card._decorTool = 'select';
+      card._decorSel = scenario.decorSelection;
+      card.requestUpdate();
+      await card.updateComplete;
+      await frame();
+      const selected = card._decorList.find((shape) => shape.id === scenario.decorSelection);
+      const transformFrame = card.renderRoot.querySelector('.dtframe.dtfurnitureframe');
+      if (selected?.kind !== 'furniture' || !transformFrame
+          || transformFrame.querySelectorAll('.dthandle.dtedge').length !== 4
+          || transformFrame.querySelectorAll('.dthandle').length !== 9) {
+        throw new Error(`golden furniture transform frame is incomplete: ${scenario.id}`);
+      }
+    }
     if (scenario.editorTray) {
       let expectedKind = '';
       if (scenario.editorTray === 'plan-selection') {

@@ -1249,6 +1249,10 @@ its configured space.
   `width_cm`, text `size_cm`, opacity/fill fields, optional per-line
   `line_style` (`solid` / `dashed`; the frontend omits the legacy solid
   default), and legacy width/text-size representations for read compatibility.
+  Furniture keeps positive `w/h`; optional `flip_h/flip_v` mirror only its SVG
+  art. Its continuous local-axis resize/45° rotation path is deliberately
+  separate from the shared grid-snapped box controller, while Undo/Redo,
+  canonicalization and persistence remain common.
 - **Plan image transform**: `planRect()` resolves the fitted image plus
   `plan_x/y`, independent `plan_scale_x/y` and `plan_angle`; legacy
   `plan_scale` feeds both axes. The image is interactive only in its own
