@@ -35,7 +35,9 @@ test('every mutant patch anchors exactly once in the current source', () => {
 
 test('every guard command points at a file that exists', () => {
   for (const mutant of MUTANTS) {
-    const script = mutant.guard.split(' ').find((part) => part.endsWith('.mjs'));
+    // #42: python guards are legal now — the first pytest-scanner mutants
+    const script = mutant.guard.split(' ')
+      .find((part) => part.endsWith('.mjs') || part.endsWith('.py'));
     assert.ok(script, `${mutant.id}: guard не называет исполняемый файл`);
     assert.ok(existsSync(join(repoRoot, script)),
       `${mutant.id}: guard-файла ${script} не существует`);
