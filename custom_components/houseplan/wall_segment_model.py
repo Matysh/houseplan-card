@@ -15,7 +15,6 @@ from typing import Any
 
 from .coordinate_canonicalization import canonicalize_config_geometry
 
-
 WALL_SEGMENT_MODEL_VERSION = 9
 GRID_STEP_N = 1 / 240
 EPS = 1e-9
@@ -192,10 +191,11 @@ def _atomize(
                 float(span["b"][0]), float(span["b"][1]),
             ])
     if not legacy_segments:
-        linked = lambda first, second: (
-            str(second.get("id", "")) in (first.get("open_to") or [])
-            or str(first.get("id", "")) in (second.get("open_to") or [])
-        )
+        def linked(first: dict, second: dict) -> bool:  # #42 E731
+            return (
+                str(second.get("id", "")) in (first.get("open_to") or [])
+                or str(first.get("id", "")) in (second.get("open_to") or [])
+            )
         for first_index, first in enumerate(rooms):
             for second in rooms[first_index + 1:]:
                 if not linked(first, second):
@@ -223,7 +223,6 @@ def _atomize(
             ])
     for segment in canonical_zero_segments:
         global_breaks.extend((segment[:2], segment[2:]))
-    zero_segments = canonical_zero_segments + legacy_segments
 
     # #316 §3.1: a legacy open_spans/open_to cut never zeroes the atom that
     # carries an existing contour opening; its edges become atom boundaries so
@@ -348,10 +347,15 @@ def _atomize(
             parent_index = parents[index]
             atom["parent_keys"].add(_wall_key(original[parent_index], original[(parent_index + 1) % len(original)]))
             midpoint = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]
-            covered_by = lambda cuts: any(
-                _distance_to_segment(midpoint, cut[:2], cut[2:]) <= GRID_STEP_N * 0.04
-                for cut in cuts
-            )
+
+            # #42 B023/E731: the loop variable is bound as a default — the
+            # closure is only called inside this iteration, but the binding
+            # makes that safety structural instead of incidental.
+            def covered_by(cuts: list[list[float]], *, midpoint: list[float] = midpoint) -> bool:
+                return any(
+                    _distance_to_segment(midpoint, cut[:2], cut[2:]) <= GRID_STEP_N * 0.04
+                    for cut in cuts
+                )
             # Canonical cm:0 atoms stay zero; a LEGACY cut spares the atom
             # that carries an opening (#316 §3.1).
             atom["zero_wall"] = atom["zero_wall"] or covered_by(canonical_zero_segments) or (
@@ -547,7 +551,11 @@ def _host_openings(
                 continue
             raise WallSegmentMigrationError("opening-host", str(opening.get("id", ""))) from None
 
-        def eligible(segment: dict[str, Any]) -> bool:
+        # #42 B023: loop variables are bound as defaults (see covered_by).
+        def eligible(
+            segment: dict[str, Any], *,
+            centre: list[float] = centre, angle: float = angle, half: float = half,
+        ) -> bool:
             if float(segment.get("cm", 0)) <= 0:
                 return False
             t = _project_t(centre, segment["a"], segment["b"])
@@ -559,7 +567,10 @@ def _host_openings(
                     and half >= 0 and t * span - half >= -EPS
                     and t * span + half <= span + EPS)
 
-        def materialize(carrier: dict[str, Any]) -> None:
+        def materialize(
+            carrier: dict[str, Any], *,
+            opening: dict[str, Any] = opening, centre: list[float] = centre,
+        ) -> None:
             opening["host"] = {
                 "kind": "wall", "id": carrier["id"],
                 "t": max(0.0, min(1.0, _project_t(centre, carrier["a"], carrier["b"]))),
@@ -581,15 +592,18 @@ def _host_openings(
         if not initial_migration:
             raise WallSegmentMigrationError("opening-host", str(opening.get("id", "")))
 
-        def pick(pool: list[dict[str, Any]]) -> dict[str, Any] | None:
+        def pick(
+            pool: list[dict[str, Any]], *,
+            current: dict[str, Any] | None = current, centre: list[float] = centre,
+        ) -> dict[str, Any] | None:
             if not pool:
                 return None
             if current is not None and any(item is current for item in pool):
                 return current
-            return sorted(pool, key=lambda segment: (
-                _distance_to_segment(centre, segment["a"], segment["b"]),
-                -float(segment.get("cm", 0)),
-                str(segment.get("id", "")),
+            return sorted(pool, key=lambda candidate: (
+                _distance_to_segment(centre, candidate["a"], candidate["b"]),
+                -float(candidate.get("cm", 0)),
+                str(candidate.get("id", "")),
             ))[0]
 
         # #316 §3.2 tie-break. No distant fallback pool (CODE-REVIEW-316-r1

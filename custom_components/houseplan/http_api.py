@@ -12,7 +12,6 @@ from functools import partial
 from pathlib import Path
 
 from aiohttp import web
-
 from homeassistant.components.http import HomeAssistantView
 
 try:  # KEY_HASS — the modern way to access hass from the aiohttp application
@@ -21,11 +20,15 @@ except ImportError:  # older HA versions
     KEY_HASS = "hass"  # type: ignore[assignment]
 from homeassistant.core import HomeAssistant
 
-from .const import (
-    CONF_ADMIN_ONLY, CONTENT_URL, FILES_DIR, FILES_URL, MAX_FILES_BYTES,
-    MAX_FILES_COUNT, MAX_EXPORT_BYTES, PLANS_DIR,
-)
 from .auth import may_write
+from .const import (
+    CONTENT_URL,
+    FILES_DIR,
+    MAX_EXPORT_BYTES,
+    MAX_FILES_BYTES,
+    MAX_FILES_COUNT,
+    PLANS_DIR,
+)
 from .import_export import ImportFailure, create_preview
 from .plans import TMP_PREFIX, QuotaError, check_quota, reserve_filename
 from .registry_snapshot import import_registry_snapshot
@@ -113,7 +116,7 @@ class HouseplanImportPreviewView(HomeAssistantView):
         except ImportFailure as err:
             status = 413 if err.code == "too_large" else 400
             return web.json_response({"error": err.code, "message": err.message}, status=status)
-        except Exception:  # noqa: BLE001
+        except Exception:  # noqa: BLE001 - the HTTP boundary must answer 400, never leak a traceback
             _LOGGER.exception("House Plan import preview failed")
             return web.json_response({"error": "invalid_format"}, status=400)
         return web.json_response(result)
@@ -264,7 +267,7 @@ class HouseplanUploadView(HomeAssistantView):
                             break
                         if pending:
                             await hass.async_add_executor_job(_flush, tmp, pending)
-            except Exception as err:  # noqa: BLE001
+            except Exception as err:  # noqa: BLE001 - a broken multipart stream must answer 400, not crash the view
                 _LOGGER.warning("House Plan upload: multipart read error: %s", err)
                 error = ({"error": "bad_request"}, 400)
 

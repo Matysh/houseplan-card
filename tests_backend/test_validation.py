@@ -731,7 +731,11 @@ def test_passage_broken_read_is_change_aware_and_sorted():
         v.validate_opening_passages(changed, previous)
     assert caught.value.fields == ("contact", "flip_h")
     assert "binary_sensor" not in str(caught.value)
-    assert str(caught.value) == "space=ground; opening=p1; fields=contact,flip_h"
+    # #42: the message is structured JSON now (frontend parses it; the legacy
+    # "space=..;.." format stays read-compat there for one beta)
+    assert json.loads(str(caught.value)) == {
+        "space": "ground", "opening": "p1", "fields": ["contact", "flip_h"],
+    }
 
 
 def test_changing_a_door_with_stale_fields_to_passage_requires_canonicalisation():

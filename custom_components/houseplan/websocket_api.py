@@ -1,11 +1,10 @@
 """House Plan WS commands: layout, space configuration, plan uploads."""
 from __future__ import annotations
 
-import logging
-
 import base64
 import binascii
 import json
+import logging
 import secrets
 import time
 from datetime import UTC, datetime
@@ -14,23 +13,27 @@ from pathlib import Path
 from typing import Any
 
 import voluptuous as vol
-
 from homeassistant.components import websocket_api
 from homeassistant.core import HomeAssistant, callback
 
+from .auth import may_write
 from .const import (
+    CONTENT_URL,
+    DEFAULT_CONFIG,
     DOMAIN,
-    CONF_ADMIN_ONLY, DEFAULT_CONFIG,
-    CONTENT_URL, FILES_DIR, MAX_PLANS_BYTES, MAX_PLANS_FILES, MAX_PLANS_LISTED,
+    FILES_DIR,
+    MAX_PLANS_BYTES,
+    MAX_PLANS_FILES,
+    MAX_PLANS_LISTED,
     MAX_SIGN_PATHS,
-    PLANS_DIR, PLANS_URL,
+    PLANS_DIR,
+    PLANS_URL,
     VERSION,
 )
 from .coordinate_canonicalization import (
     canonicalize_config_geometry,
     canonicalize_layout_geometry,
 )
-from .auth import may_write
 from .import_export import (
     ImportFailure,
     content_manifest,
@@ -40,43 +43,64 @@ from .import_export import (
     prepare_apply,
     revalidate_candidate,
 )
+from .junction_limits import JunctionLimitError, validate_junction_limits
 from .plans import (
-    QuotaError, check_quota, collect_attachments, collect_plans, is_plan_file,
-    plan_basename, plan_refs, reserve_filename,
+    QuotaError,
+    check_quota,
+    collect_attachments,
+    collect_plans,
+    is_plan_file,
+    plan_basename,
+    plan_refs,
+    reserve_filename,
 )
+from .projection import project_config, project_layout
+from .registry_snapshot import import_registry_snapshot
 from .store import (
     LAYOUT_STORE_CORE_KEYS,
-    OPTIMIZE_BACKUP as _OPTIMIZE_BACKUP,
-    OPTIMIZE_PENDING as _OPTIMIZE_PENDING,
     HouseplanData,
     async_save_config_state,
     async_save_layout_state,
     get_data,
     get_entry,
 )
+from .store import (
+    OPTIMIZE_BACKUP as _OPTIMIZE_BACKUP,
+)
+from .store import (
+    OPTIMIZE_PENDING as _OPTIMIZE_PENDING,
+)
+from .validation import (
+    CONFIG_SCHEMA,
+    LAYOUT_SCHEMA,
+    MAX_CONFIG_BYTES,
+    MAX_PLAN_BYTES,
+    PLAN_EXTENSIONS,
+    POS_SCHEMA,
+    MarkerControlError,
+    OpeningPassageError,
+    PartitionOpeningHostError,
+    PartitionOpeningJambMarginError,
+    WallModelClientOutdatedError,
+    sanitize_filename,
+    valid_space_id,
+    validate_marker_controls,
+    validate_marker_light_entities,
+    validate_marker_value_badges,
+    validate_opening_passages,
+    validate_partition_opening_hosts,
+    validate_wall_model_transition,
+)
 from .virtual_lights import (
     EVENT_VIRTUAL_LIGHT_UPDATED,
     async_toggle_virtual_light,
     async_virtual_light_snapshot,
 )
-from .registry_snapshot import import_registry_snapshot
-from .projection import project_config, project_layout
 from .wall_segment_model import (
     WALL_SEGMENT_MODEL_VERSION,
     WallSegmentMigrationError,
     commit_wall_segment_model,
 )
-from .junction_limits import JunctionLimitError, validate_junction_limits
-from .validation import (
-    CONFIG_SCHEMA, LAYOUT_SCHEMA, MAX_CONFIG_BYTES, MAX_PLAN_BYTES,
-    PLAN_EXTENSIONS, POS_SCHEMA, MarkerControlError, OpeningPassageError,
-    PartitionOpeningHostError, PartitionOpeningJambMarginError,
-    WallModelClientOutdatedError, sanitize_filename,
-    validate_opening_passages, validate_partition_opening_hosts,
-    validate_marker_controls, validate_marker_light_entities,
-    validate_marker_value_badges, validate_wall_model_transition, valid_space_id,
-)
-
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -261,7 +285,7 @@ async def _commit_import_pair(
     try:
         await _persist_pair_intent(rt, rollback)
         await _converge_pair(rt, rollback)
-    except Exception as rollback_error:  # noqa: BLE001
+    except Exception as rollback_error:  # noqa: BLE001 - a failed rollback must not mask the original commit error
         _LOGGER.exception(
             "House Plan import rollback could not finish; rollback intent remains for setup"
         )
@@ -312,7 +336,7 @@ async def ws_export_create(hass: HomeAssistant, connection, msg: dict[str, Any])
     except ImportFailure as err:
         _send_import_error(connection, msg["id"], err)
         return
-    except Exception:  # noqa: BLE001
+    except Exception:  # noqa: BLE001 - defensive: a listener must never break the write path
         _LOGGER.exception("House Plan export failed")
         connection.send_error(msg["id"], "invalid_config", "Could not create export")
         return
@@ -486,7 +510,7 @@ async def ws_import_apply(hass: HomeAssistant, connection, msg: dict[str, Any]) 
     except ImportFailure as err:
         _send_import_error(connection, msg["id"], err)
         return
-    except Exception:  # noqa: BLE001
+    except Exception:  # noqa: BLE001 - defensive: a listener must never break the write path
         _LOGGER.exception("House Plan import commit failed")
         connection.send_error(msg["id"], "commit_failed", "Import commit failed")
         return
@@ -1618,7 +1642,7 @@ async def ws_space_delete(hass: HomeAssistant, connection, msg: dict[str, Any]) 
     except vol.Invalid as err:
         connection.send_error(msg["id"], "invalid_config", str(err))
         return
-    except Exception:  # noqa: BLE001
+    except Exception:  # noqa: BLE001 - best-effort backup pruning never fails the request
         _LOGGER.exception("House Plan space delete failed")
         connection.send_error(msg["id"], "commit_failed", "Space delete failed")
         return

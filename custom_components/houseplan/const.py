@@ -63,8 +63,43 @@ MAX_IMPORT_PREVIEWS_PER_USER = 3
 # accounts.
 MAX_IMPORT_PREVIEWS_TOTAL = 3
 
-DEFAULT_CONFIG: dict = {
+DEFAULT_CONFIG: dict[str, object] = {
     "spaces": [],
     "markers": [],
     "settings": {"bg_mode": "daynight"},
 }
+
+# #42: THE stable public error-code contract. Every code a user-facing
+# failure can carry — send_error literals, exception-class codes and the
+# literal MarkerControlError codes — lives here; the scanner in
+# tests_backend/test_backend_quality.py fails when a source emits a code
+# outside this set (fail-closed), and every fixed code has a localized
+# `backup.error.<code>` message on the frontend.
+ERROR_CODES: frozenset[str] = frozenset({
+    "capacity_exceeded", "commit_failed", "conflict",
+    "content_confirmation_required", "duplicate_marker_control",
+    "future_model", "in_use", "invalid_config", "invalid_content",
+    "invalid_data", "invalid_format", "invalid_json", "invalid_layout",
+    "invalid_light_entity", "invalid_marker_control", "invalid_name",
+    "invalid_partition_opening_host",
+    "invalid_partition_opening_jamb_margin", "invalid_passage_fields",
+    "invalid_space_id", "invalid_toggle_entity", "invalid_value_badge",
+    "invalid_value_badge_attribute", "invalid_value_badge_position",
+    "invalid_value_badge_source", "invalid_value_source",
+    "invalid_value_source_attribute", "io_error", "marker_control_cycle",
+    "marker_control_missing", "marker_control_not_light",
+    "marker_control_self", "missing_content", "missing_plan", "no_backup",
+    "not_ready", "not_toggleable", "nothing_to_repair", "preview_expired",
+    "preview_owner_mismatch", "space_in_use", "space_not_found",
+    "too_large", "unauthorized", "unsupported_export_version",
+    "value_badge_source_required", "wall_model_client_outdated",
+    "wall_model_migration_blocked",
+})
+
+# Template-code families: f-string codes carry one of these prefixes and are
+# served by the generic per-code fallback on the frontend.
+ERROR_CODE_FAMILIES: tuple[str, ...] = (
+    "junction_limit_",
+    "value_badge_",
+    "value_source_",
+)

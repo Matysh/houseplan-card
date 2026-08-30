@@ -1546,3 +1546,22 @@ materialisation seed and room climate alike, and the preview in the dialog
 diffs the real `seedHiddenBindings`/`buildDevices` outputs — there is no
 second copy of the filter logic to drift. The field registry (#33) carries
 their passports; `scripts/config-audit.mjs` treats both as `current`.
+
+## Backend quality gates (#42, 2026-08-30)
+
+- `requirements_test.txt` is the single source of backend CI dependencies
+  (validate.yml and mutation-gate.yml install from it).
+- `pyproject.toml` configures ruff (E/F/B/I, E501 excluded by decision) and
+  mypy strict for a grow-only allowlist of pure modules; the completeness
+  guard lives in `tests_backend/test_backend_quality.py`.
+- The backend CI job measures branch coverage (pure + HA harness combined),
+  fails below `scripts/backend-coverage-baseline.txt` and refuses to run when
+  the HA harness would silently skip.
+- `const.ERROR_CODES` / `ERROR_CODE_FAMILIES` are THE stable error contract:
+  the scanner test proves every emitted code (send_error literals, exception
+  class attrs, literal and variable-passed MarkerControlError codes, f-string
+  families) is registered and localized; `invalid_passage_fields` and
+  `invalid_partition_opening_jamb_margin` ship structured JSON details, and
+  the frontend renders unknown codes localized (code-first, raw messages go
+  to the console).
+

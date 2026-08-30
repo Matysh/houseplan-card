@@ -9856,34 +9856,59 @@ export class HouseplanCard extends LitElement {
     if (!e) return this._t('err.unknown');
     if (typeof e === 'string') return e;
     if (e.code === 'invalid_passage_fields') {
-      const match = String(e.message || e.error || '').match(
-        /space=([^;]*);\s*opening=([^;]*);\s*fields=([^;]*)/,
-      );
-      if (match) {
-        const space = this._serverCfg?.spaces?.find((item: any) => String(item.id) === match[1]);
+      // #42: structured JSON details first; the legacy "space=..;.." format
+      // stays accepted for one beta (deprecated 2026-08-30, remove with the
+      // next stable) while old backends are still around.
+      const raw = String(e.message || e.error || '');
+      let spaceId = '', fieldList: string[] = [];
+      try {
+        const details = JSON.parse(raw);
+        spaceId = String(details.space ?? '');
+        fieldList = Array.isArray(details.fields) ? details.fields.map(String) : [];
+      } catch {
+        const match = raw.match(/space=([^;]*);\s*opening=([^;]*);\s*fields=([^;]*)/);
+        if (match) { spaceId = match[1]; fieldList = match[3].split(',').filter(Boolean); }
+      }
+      if (spaceId || fieldList.length) {
+        const space = this._serverCfg?.spaces?.find((item: any) => String(item.id) === spaceId);
         const labels: Record<string, I18nKey> = {
           contact: 'opening.contact_label', lock: 'opening.lock_label', invert: 'opening.invert',
           flip_h: 'opening.flip_h', flip_v: 'opening.flip_v',
         };
-        const fields = match[3].split(',').filter(Boolean)
+        const fields = fieldList
           .map((field) => labels[field] ? this._t(labels[field]) : field).join(', ');
         return this._t('opening.invalid_passage_fields', {
-          room: space?.title || match[1], fields,
+          room: space?.title || spaceId, fields,
         });
       }
     }
     if (e.code === 'invalid_partition_opening_jamb_margin') {
-      const match = String(e.message || e.error || '').match(/margin_cm=([^;]*)/);
-      const marginCm = match ? Number(match[1]) : NaN;
+      const raw = String(e.message || e.error || '');
+      let marginCm = NaN;
+      try {
+        marginCm = Number(JSON.parse(raw).margin_cm);
+      } catch {
+        const match = raw.match(/margin_cm=([^;}"]*)/); // legacy format, one beta
+        marginCm = match ? Number(match[1]) : NaN;
+      }
       if (Number.isFinite(marginCm)) {
         return this._t('opening.partition_jamb_margin', {
           distance: formatLength(marginCm, this._imperial),
         });
       }
     }
+    // #42 code-first: a backend code always renders a localized message —
+    // the raw English e.message goes to the console for debugging, never
+    // into the DOM. Errors WITHOUT a code (plain JS failures) keep showing
+    // their message: there is nothing better to show.
+    if (e.code != null) {
+      const key = `backup.error.${e.code}` as I18nKey;
+      const localized = this._t(key);
+      if (e.message) console.warn('[houseplan] backend error', e.code, e.message);
+      return localized !== key ? localized : this._t('err.code', { code: e.code });
+    }
     if (e.message) return e.message;
     if (e.error) return e.error;
-    if (e.code != null) return this._t('err.code', { code: e.code });
     try {
       return JSON.stringify(e);
     } catch {

@@ -85,7 +85,11 @@ rules:
     comment: No authentication against an external service.
   test-coverage:
     status: todo
-    comment: Backend covered by pure tests + HA-harness tests in CI; measuring >95% is planned.
+    comment: >-
+      #42 stage 1 shipped the machinery: pytest-cov in CI with a committed
+      baseline gate, coverage.xml artifact and a hard fail on a silently
+      skipped HA harness. The 90%/95% thresholds are raised by follow-up
+      baseline bumps; the rule flips to done at >=95%.
   # ---- Gold (selected; entity/device rules are exempt — no entities) ----
   diagnostics:
     status: done
@@ -97,13 +101,23 @@ rules:
     status: done
     comment: Missing plan files raise repair issues (translation_key broken_plan).
   docs-troubleshooting:
-    status: todo
+    status: done
+    comment: >-
+      USER-GUIDE.md #22 Troubleshooting and USER-GUIDE.ru.md #22 «Диагностика»
+      cover load failures, missing devices, geometry, vacuum and reporting.
   docs-examples:
-    status: todo
+    status: done
+    comment: >-
+      USER-GUIDE carries executable YAML examples for both cards (view,
+      space card with fit/light_pools, filters) and the setup walkthrough.
   # ---- Platinum ----
   strict-typing:
     status: todo
-    comment: Python is annotated; mypy strict pass is planned.
+    comment: >-
+      #42 stage 1: mypy strict gates six pure modules (const, projection,
+      coordinate_canonicalization, frontend_asset_manifest, junction_limits,
+      plans) via a grow-only allowlist; the HA-boundary modules are the next
+      stage.
   async-dependency:
     status: exempt
     comment: No dependencies.

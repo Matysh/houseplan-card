@@ -19,12 +19,14 @@ ugly, not corrupt — see docs/specs/329-junction-limits.md §5.
 
 from __future__ import annotations
 
-import math
-
 import logging
+import math
+from typing import Any
 
 from .wall_segment_model import (
-    WALL_SEGMENT_MODEL_VERSION, WallSegmentMigrationError, commit_wall_segment_model,
+    WALL_SEGMENT_MODEL_VERSION,
+    WallSegmentMigrationError,
+    commit_wall_segment_model,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -82,11 +84,11 @@ def _quantize_key_coord(value: float) -> float:
     return 0.0 if rounded == 0 else rounded
 
 
-def _key(point) -> str:
+def _key(point: list[float]) -> str:
     return f"{_quantize_key_coord(point[0])},{_quantize_key_coord(point[1])}"
 
 
-def _length(a, b) -> float:
+def _length(a: list[float], b: list[float]) -> float:
     return math.hypot(b[0] - a[0], b[1] - a[1])
 
 
@@ -94,9 +96,9 @@ def cm_to_units(cm: float, cell_cm: float, grid_pitch: float = GRID_STEP_N) -> f
     return (cm / (cell_cm or 1)) * grid_pitch
 
 
-def limit_segments(space: dict) -> list[dict]:
+def limit_segments(space: dict[str, Any]) -> list[dict[str, Any]]:
     """Every wall the limits judge: contour atoms, partitions, draft segments."""
-    segments: list[dict] = []
+    segments: list[dict[str, Any]] = []
     for segment in space.get("wall_segments") or []:
         if _finite_point(segment.get("a")) and _finite_point(segment.get("b")):
             segments.append({
@@ -128,7 +130,7 @@ def limit_segments(space: dict) -> list[dict]:
             if _length(segment["a"], segment["b"]) > _EPS]
 
 
-def check_nodes(segments: list[dict]) -> list[tuple[str, str, float, float]]:
+def check_nodes(segments: list[dict[str, Any]]) -> list[tuple[str, str, float, float]]:
     """П1 + П2: valence of a node and the narrowest wedge in it."""
     rays: dict[str, list[float]] = {}
     for segment in segments:
@@ -163,20 +165,20 @@ def check_nodes(segments: list[dict]) -> list[tuple[str, str, float, float]]:
     return violations
 
 
-def _axis_degrees(segment: dict) -> float:
+def _axis_degrees(segment: dict[str, Any]) -> float:
     degrees = math.degrees(math.atan2(
         segment["b"][1] - segment["a"][1], segment["b"][0] - segment["a"][0]
     ))
     return (degrees % 180 + 180) % 180
 
 
-def _collinear(left: dict, right: dict, tolerance_deg: float = 1.0) -> bool:
+def _collinear(left: dict[str, Any], right: dict[str, Any], tolerance_deg: float = 1.0) -> bool:
     delta = abs(_axis_degrees(left) - _axis_degrees(right))
     return min(delta, 180 - delta) <= tolerance_deg
 
 
-def _build_node_index(segments: list[dict]) -> dict[str, list[dict]]:
-    by_node: dict[str, list[dict]] = {}
+def _build_node_index(segments: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
+    by_node: dict[str, list[dict[str, Any]]] = {}
     for item in segments:
         for point in (item["a"], item["b"]):
             by_node.setdefault(_key(point), []).append(item)
@@ -184,8 +186,8 @@ def _build_node_index(segments: list[dict]) -> dict[str, list[dict]]:
 
 
 def collinear_run_length_units(
-    segment: dict, segments: list[dict],
-    by_node_index: dict[str, list[dict]] | None = None,
+    segment: dict[str, Any], segments: list[dict[str, Any]],
+    by_node_index: dict[str, list[dict[str, Any]]] | None = None,
 ) -> float:
     """Length of the WALL a segment belongs to, not of the atom.
 
@@ -218,7 +220,7 @@ def collinear_run_length_units(
     return total
 
 def check_segment_lengths(
-    segments: list[dict], cell_cm: float, grid_pitch: float = GRID_STEP_N,
+    segments: list[dict[str, Any]], cell_cm: float, grid_pitch: float = GRID_STEP_N,
 ) -> list[tuple[str, str, float, float]]:
     """П3: a wall is at least 20 cm and never shorter than its own thickness."""
     violations: list[tuple[str, str, float, float]] = []
@@ -235,7 +237,7 @@ def check_segment_lengths(
     return violations
 
 
-def _distance_to_segment(point, a, b) -> float:
+def _distance_to_segment(point: list[float], a: list[float], b: list[float]) -> float:
     dx, dy = b[0] - a[0], b[1] - a[1]
     length_sq = dx * dx + dy * dy
     t = 0.0 if length_sq <= _EPS else max(0.0, min(1.0, (
@@ -245,7 +247,7 @@ def _distance_to_segment(point, a, b) -> float:
 
 
 def check_node_distances(
-    segments: list[dict], cell_cm: float, grid_pitch: float = GRID_STEP_N,
+    segments: list[dict[str, Any]], cell_cm: float, grid_pitch: float = GRID_STEP_N,
 ) -> list[tuple[str, str, float, float]]:
     """П4: non-incident nodes and node-to-foreign-wall clearance.
 
@@ -256,19 +258,19 @@ def check_node_distances(
     suite. Pair order inside the subject follows the lexicographic key order,
     which replaces the i<j of the all-pairs loop.
     """
-    nodes: dict[str, list] = {}
+    nodes: dict[str, list[Any]] = {}
     for segment in segments:
         nodes[_key(segment["a"])] = segment["a"]
         nodes[_key(segment["b"])] = segment["b"]
     min_units = cm_to_units(MIN_NODE_DISTANCE_CM, cell_cm, grid_pitch)
     size = min_units if min_units > _EPS else 1.0
 
-    node_grid: dict[tuple[int, int], list] = {}
+    node_grid: dict[tuple[int, int], list[Any]] = {}
     for node_key, point in nodes.items():
         node_grid.setdefault(
             (int(point[0] // size), int(point[1] // size)), []
         ).append((node_key, point))
-    segment_grid: dict[tuple[int, int], list] = {}
+    segment_grid: dict[tuple[int, int], list[Any]] = {}
     for segment in segments:
         x0 = min(segment["a"][0], segment["b"][0]) - min_units
         x1 = max(segment["a"][0], segment["b"][0]) + min_units
@@ -314,7 +316,7 @@ def check_node_distances(
                 ))
     return violations
 
-def space_violations(space: dict) -> list[tuple[str, str, float, float]]:
+def space_violations(space: dict[str, Any]) -> list[tuple[str, str, float, float]]:
     """П1–П4 over one space, in the frontend's order."""
     segments = limit_segments(space)
     cell_cm = float(space.get("cell_cm") or 1)
@@ -325,7 +327,7 @@ def space_violations(space: dict) -> list[tuple[str, str, float, float]]:
     ]
 
 
-def _migrated_spaces(config: dict | None, *, side: str = "previous") -> dict[str, dict]:
+def _migrated_spaces(config: dict[str, Any] | None, *, side: str = "previous") -> dict[str, dict[str, Any]]:
     """Spaces of one document AFTER the wall-segment migration, by id.
 
     The limits read `wall_segments`, so a document that predates the catalogue
@@ -375,7 +377,7 @@ def _migrated_spaces(config: dict | None, *, side: str = "previous") -> dict[str
     }
 
 
-def space_violation_counts(spaces: dict[str, dict]) -> dict[str, dict[str, int]]:
+def space_violation_counts(spaces: dict[str, dict[str, Any]]) -> dict[str, dict[str, int]]:
     """Violation counts per space per rule — the shape the barrier consumes
     and the rev cache (#330 §4.2) stores. Documents are NOT retained."""
     result: dict[str, dict[str, int]] = {}
@@ -388,7 +390,7 @@ def space_violation_counts(spaces: dict[str, dict]) -> dict[str, dict[str, int]]
 
 
 def validate_junction_limits(
-    config: dict, previous: dict | None = None, *,
+    config: dict[str, Any], previous: dict[str, Any] | None = None, *,
     baseline_counts: dict[str, dict[str, int]] | None = None,
 ) -> dict[str, dict[str, int]]:
     """Refuse a write that ADDS a junction violation; inherit the rest.

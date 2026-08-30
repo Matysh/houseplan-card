@@ -25,7 +25,6 @@ from .coordinate_canonicalization import (
     canonicalize_layout_geometry,
 )
 
-
 _LOGGER = logging.getLogger(__name__)
 _BG_MODES = frozenset({"static", "daynight"})
 

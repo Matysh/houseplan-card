@@ -5,6 +5,7 @@ from pathlib import Path
 
 from aiohttp import web
 from homeassistant.components.http import HomeAssistantView
+
 try:
     from homeassistant.components.http import KEY_HASS
 except ImportError:  # pragma: no cover - old HA compatibility

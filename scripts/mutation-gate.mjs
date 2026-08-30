@@ -747,6 +747,50 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'error-code-dropped-from-contract',
+    guard: 'python3 -m pytest tests_backend/test_backend_quality.py -q -p no:cacheprovider',
+    because: 'a code emitted by the backend but missing from ERROR_CODES is exactly the '
+      + 'unregistered-error hole #42 closes (AC5 m1)',
+    patches: [{
+      file: 'custom_components/houseplan/const.py',
+      find: '    "invalid_space_id", "invalid_toggle_entity", "invalid_value_badge",',
+      replace: '    "invalid_toggle_entity", "invalid_value_badge",',
+    }],
+  },
+  {
+    id: 'error-scanner-loses-a-class-source',
+    guard: 'python3 -m pytest tests_backend/test_backend_quality.py -q -p no:cacheprovider',
+    because: 'silencing one err.code class source must redden the scanner, or the branch '
+      + '(b) proof is decorative (#42 AC5 m1b)',
+    patches: [{
+      file: 'tests_backend/test_backend_quality.py',
+      find: "    fixed |= set(re.findall(r'^\\s+code = \"([a-z0-9_]+)\"', validation, re.M))",
+      replace: "    pass  # m1b: the class-attr source silenced",
+    }],
+  },
+  {
+    id: 'error-code-via-variable-dropped',
+    guard: 'python3 -m pytest tests_backend/test_backend_quality.py -q -p no:cacheprovider',
+    because: 'the variable-passed MarkerControlError subfamily must stay proven — dropping '
+      + 'invalid_light_entity from ERROR_CODES has to redden AC5 (#42 m1c, spec rev6)',
+    patches: [{
+      file: 'custom_components/houseplan/const.py',
+      find: '    "invalid_light_entity", "invalid_marker_control", "invalid_name",',
+      replace: '    "invalid_marker_control", "invalid_name",',
+    }],
+  },
+  {
+    id: 'error-details-json-branch-cut',
+    guard: 'node --test test/open-passage-contract.test.mjs',
+    because: 'structured JSON details replacing the English-sentence regex is the visible '
+      + 'half of the #42 error contract (AC6 m2)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: "      let spaceId = '', fieldList: string[] = [];\n      try {\n        const details = JSON.parse(raw);",
+      replace: "      let spaceId = '', fieldList: string[] = [];\n      try {\n        const details = { space: null, fields: null }; void raw;",
+    }],
+  },
+  {
     id: 'discovery-preview-copies-the-filter',
     guard: 'node --test test/devices.test.mjs',
     because: 'the preview must diff the REAL seedHiddenBindings/buildDevices outputs — a '

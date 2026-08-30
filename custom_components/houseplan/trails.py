@@ -10,6 +10,7 @@ want to see where the cleanup has already been).
 from __future__ import annotations
 
 import asyncio
+import logging
 import math
 import time
 from typing import Any
@@ -21,7 +22,6 @@ from homeassistant.helpers.storage import Store
 
 from .const import DOMAIN
 
-import logging
 _LOGGER = logging.getLogger(__name__)
 
 TRAIL_CAP = 2000          # raw points per run before decimation

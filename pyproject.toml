@@ -1,0 +1,33 @@
+# #42: tool configuration only — the integration itself ships via HACS, not pip.
+
+[tool.ruff]
+target-version = "py313"
+include = ["custom_components/houseplan/**/*.py", "scripts/*.py", "tests_backend/**/*.py"]
+
+[tool.ruff.lint]
+# Narrow on purpose (#42: no mass rewrite): errors, pyflakes, bugbear, imports.
+select = ["E", "F", "B", "I"]
+# E501: 291 legacy long lines are NOT rewritten wholesale; length is not a gate.
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.13"
+explicit_package_bases = true
+mypy_path = "."
+# Strict is opt-in per module (#42): the allowlist below only ever GROWS —
+# test/config-schema-parity guards live elsewhere; the backend guard is
+# tests_backend/test_backend_quality.py which fails when a module leaves.
+ignore_missing_imports = true
+follow_imports = "silent"
+no_site_packages = false
+
+[[tool.mypy.overrides]]
+module = [
+    "custom_components.houseplan.const",
+    "custom_components.houseplan.projection",
+    "custom_components.houseplan.coordinate_canonicalization",
+    "custom_components.houseplan.frontend_asset_manifest",
+    "custom_components.houseplan.junction_limits",
+    "custom_components.houseplan.plans",
+]
+strict = true

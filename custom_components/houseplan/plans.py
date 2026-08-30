@@ -297,7 +297,6 @@ def collect_plans(
     a file-system problem must not turn a durable commit into a failed call.
     """
     new_refs = plan_refs(new_cfg)
-    old_refs = plan_refs(old_cfg)
     # A commit knows what it superseded. The timer only knows what nothing
     # points at *right now*, and for a plan that is a reversible state: the
     # editor detaches the image when a space switches to "draw" and says the

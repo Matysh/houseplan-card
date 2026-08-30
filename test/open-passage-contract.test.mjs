@@ -93,3 +93,24 @@ test('passage UI copy is bilingual and carries matching placeholders', () => {
     ru['opening.invalid_passage_fields'].match(/\{\w+\}/g)?.sort(),
   );
 });
+
+// #42 AC6: the error-text parser is JSON-first with the legacy regex format
+// as one-beta read-compat, and an unknown backend code never leaks the raw
+// English message into the DOM. The parsing contract lives in
+// houseplan-card.ts _errText; this pins its source shape (the behavioural
+// halves are driven by the smoke and the code-first branch below).
+test('#42 _errText parses JSON details first and falls back code-first', () => {
+  const card = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
+  const errText = card.slice(card.indexOf('private _errText('), card.indexOf('private _backupErrorText('));
+  assert.match(errText, /JSON\.parse\(raw\)/, 'structured details are parsed as JSON');
+  assert.match(errText, /space=\(\[\^;\]\*\)/, 'the legacy regex stays as one-beta read-compat');
+  assert.ok(errText.indexOf('if (e.code != null)') < errText.indexOf('if (e.message) return e.message'),
+    'code-first: a coded backend error localizes before any raw message');
+  assert.match(errText, /console\.warn\('\[houseplan\] backend error'/,
+    'the raw message goes to the console, not the DOM');
+  // both formats decode to the same numbers
+  const legacy = 'space=g; opening=p1; margin=1; margin_cm=7.5';
+  const json = JSON.stringify({ space: 'g', opening: 'p1', margin: 1, margin_cm: 7.5 });
+  const legacyMatch = legacy.match(/margin_cm=([^;}"]*)/);
+  assert.equal(Number(legacyMatch[1]), Number(JSON.parse(json).margin_cm));
+});

@@ -15,10 +15,8 @@ from . import websocket_api as hp_ws
 from .const import (
     DOMAIN,
     FILES_DIR,
-    FILES_URL,
     FRONTEND_URL,
     PLANS_DIR,
-    PLANS_URL,
     VERSION,
 )
 from .geometry_migration import migrate_config, migrate_layout, pending_from_config
@@ -38,8 +36,12 @@ async def async_setup(hass: HomeAssistant, config) -> bool:
     """Register global handlers (survive config-entry reloads): WS commands, HTTP view."""
     hass.data.setdefault(DOMAIN, {})
     hp_ws.async_register(hass)
-    from .http_api import HouseplanContentView, HouseplanImportPreviewView, HouseplanUploadView
     from .frontend_assets import HouseplanFrontendAssetView
+    from .http_api import (
+        HouseplanContentView,
+        HouseplanImportPreviewView,
+        HouseplanUploadView,
+    )
 
     hass.http.register_view(HouseplanUploadView())
     hass.http.register_view(HouseplanContentView())

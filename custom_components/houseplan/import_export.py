@@ -6,7 +6,6 @@ only the exact candidate that produced that preview.
 """
 from __future__ import annotations
 
-import copy
 import hashlib
 import json
 import math
@@ -24,8 +23,8 @@ import voluptuous as vol
 from .const import (
     CONTENT_URL,
     EXPORT_VERSION,
-    FILES_URL,
     FILES_DIR,
+    FILES_URL,
     IMPORT_PREVIEW_TTL_S,
     MAX_EXPORT_BYTES,
     MAX_IMPORT_PREVIEWS_PER_USER,
@@ -36,10 +35,6 @@ from .const import (
     VERSION,
 )
 from .store import HouseplanData
-from .wall_segment_model import (
-    WallSegmentMigrationError,
-    commit_wall_segment_model,
-)
 from .validation import (
     CONFIG_SCHEMA,
     LAYOUT_SCHEMA,
@@ -48,16 +43,21 @@ from .validation import (
     MAX_LAYOUT,
     MAX_MARKERS,
     MAX_SPACES,
+    MarkerControlError,
+    OpeningPassageError,
+    PartitionOpeningHostError,
+    PartitionOpeningJambMarginError,
     sanitize_filename,
     sanitize_marker_id,
     validate_marker_controls,
     validate_marker_light_entities,
     validate_marker_value_badges,
-    validate_opening_passages, validate_partition_opening_hosts,
-    MarkerControlError,
-    OpeningPassageError,
-    PartitionOpeningHostError,
-    PartitionOpeningJambMarginError,
+    validate_opening_passages,
+    validate_partition_opening_hosts,
+)
+from .wall_segment_model import (
+    WallSegmentMigrationError,
+    commit_wall_segment_model,
 )
 
 FORMAT = "houseplan-export"

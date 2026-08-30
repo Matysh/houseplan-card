@@ -781,11 +781,35 @@ jobs:
       - run: |
           # Точные версии — в tests_backend/requirements.txt (#392): без них
           # резолвер выбирает набор сам, и «зелёный backend» значит разное
-          # в разные дни.
+          # в разные дни. #42 ставит из того же файла ruff для шага линта.
           pip install -r tests_backend/requirements.txt
           pip list --format=columns | grep -Ei 'homeassistant|voluptuous|^pytest '
-      - name: Backend unit tests (pure + HA harness)
-        run: python -m pytest tests_backend/ -q
+      - name: Линт бэкенда (ruff, узкий набор)
+        run: python -m ruff check custom_components/houseplan
+      # #42: защита от тихого скипа HA-harness — импорт и порог collect
+      - name: HA-harness присутствует
+        run: |
+          python -c "import homeassistant"
+          collected=$(python -m pytest tests_backend/ -q --collect-only 2>/dev/null | grep -c "test_ha_" || true)
+          echo "collected HA-harness tests: $collected"
+          test "$collected" -ge 50
+      - name: Backend unit tests (pure + HA harness, coverage)
+        run: >
+          python -m pytest tests_backend/ -q
+          --cov=custom_components/houseplan --cov-branch
+          --cov-report=xml --cov-report=term
+      # #42: гейт «не ниже baseline» — пороги 90/95 поднимаются trivial-правкой числа
+      - name: Порог покрытия не ниже baseline
+        run: |
+          baseline=$(head -1 scripts/backend-coverage-baseline.txt)
+          actual=$(python -c "import xml.etree.ElementTree as ET; print(round(float(ET.parse('coverage.xml').getroot().get('line-rate'))*100, 1))")
+          echo "coverage: $actual% (baseline $baseline%)"
+          python -c "import sys; sys.exit(0 if float('$actual') >= float('$baseline') - 0.1 else 1)"
+      - name: Артефакт coverage.xml
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: coverage.xml
       # Маркер пишется последним шагом: он существует только если всё выше
       # прошло. Кэш сохраняется post-шагом, то есть тоже лишь при успехе job.
       - name: Записать маркер успеха

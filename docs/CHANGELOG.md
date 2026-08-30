@@ -7,6 +7,13 @@
   direct, and reduced-motion systems still update instantly
   ([#82](https://github.com/Matysh/houseplan-card/issues/82)).
 
+- Backend errors now always reach you localized: every stable error code has
+  a translated message in all four languages, unknown codes fall back to a
+  localized text with the code instead of a raw English sentence, and the
+  open-passage/jamb-margin details travel as structured data. Under the
+  hood the backend gained coverage, lint and typing gates in CI
+  ([#42](https://github.com/Matysh/houseplan-card/issues/42)).
+
 - The Device editor now has its own Undo/Redo history for marker positions.
   One completed drag is one step; cancelled or failed moves add nothing, and
   the 50-step session history is available from persistent toolbar buttons or

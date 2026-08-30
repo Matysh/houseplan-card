@@ -10,7 +10,6 @@ import copy
 import math
 from typing import Any
 
-
 COORDINATE_DECIMALS = 9
 COORDINATE_FACTOR = 10**COORDINATE_DECIMALS
 LATTICE_GRID_N = 240

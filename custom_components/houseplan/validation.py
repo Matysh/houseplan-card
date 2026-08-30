@@ -4,10 +4,11 @@ Kept separate so it can be covered by unit tests (only voluptuous is needed).
 """
 from __future__ import annotations
 
-from collections import Counter
 import copy
+import json
 import math
 import re
+from collections import Counter
 
 import voluptuous as vol
 
@@ -49,9 +50,12 @@ class OpeningPassageError(ValueError):
         self.space_id = space_id
         self.opening_id = opening_id
         self.fields = tuple(sorted(fields))
-        super().__init__(
-            f"space={space_id}; opening={opening_id}; fields={','.join(self.fields)}"
-        )
+        # #42: structured details as JSON — the frontend parses this instead
+        # of regexing an English sentence; the legacy "space=..;.." format is
+        # still accepted there for one beta.
+        super().__init__(json.dumps({
+            "space": space_id, "opening": opening_id, "fields": list(self.fields),
+        }, ensure_ascii=False))
 
 
 class PartitionOpeningHostError(ValueError):
@@ -72,10 +76,11 @@ class PartitionOpeningJambMarginError(ValueError):
         self.opening_id = opening_id
         self.margin = margin
         self.margin_cm = margin_cm
-        super().__init__(
-            f"space={space_id}; opening={opening_id}; "
-            f"margin={margin:.12g}; margin_cm={margin_cm:.12g}"
-        )
+        # #42: structured details as JSON (see OpeningPassageError).
+        super().__init__(json.dumps({
+            "space": space_id, "opening": opening_id,
+            "margin": round(margin, 12), "margin_cm": round(margin_cm, 12),
+        }, ensure_ascii=False))
 
 
 class WallModelClientOutdatedError(ValueError):
@@ -410,7 +415,7 @@ def _safe_optimize_partition_delta(space: dict, old_partition: dict) -> bool:
     points = sorted(set(round(point, 12) for point in breakpoints
                         if -_OPTIMIZE_REHOST_EPSILON <= point
                         <= length + _OPTIMIZE_REHOST_EPSILON))
-    for lo, hi in zip(points, points[1:]):
+    for lo, hi in zip(points, points[1:], strict=False):  # #42 B905: adjacent pairs, unequal length is the point
         if hi - lo <= _OPTIMIZE_REHOST_EPSILON:
             continue
         if any(start <= lo + _OPTIMIZE_REHOST_EPSILON
@@ -1428,7 +1433,7 @@ def _room_draft_segments(value: dict) -> dict:
     """An open draft has exactly one thickness per consecutive edge."""
     if len(value.get("segments", [])) != max(0, len(value.get("points", [])) - 1):
         raise vol.Invalid("room draft segments must match consecutive point pairs")
-    if any(a == b for a, b in zip(value.get("points", []), value.get("points", [])[1:])):
+    if any(a == b for a, b in zip(value.get("points", []), value.get("points", [])[1:], strict=False)):  # #42 B905: adjacent pairs
         raise vol.Invalid("room draft consecutive points must differ")
     return value
 
