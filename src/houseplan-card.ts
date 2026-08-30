@@ -11849,7 +11849,9 @@ export class HouseplanCard extends LitElement {
     return key ? this._climate().get(key)?.hum ?? null : null;
   }
 
-  private _climateCache: { h: any; r: any; mk: any; m: Map<string, AreaClimate> } | null = null;
+  private _climateCache: {
+    h: any; r: any; mk: any; ex: string[] | undefined; m: Map<string, AreaClimate>;
+  } | null = null;
 
   /**
    * Climate for every HA Area and explicitly placed local room, computed ONCE
@@ -11865,9 +11867,15 @@ export class HouseplanCard extends LitElement {
     const mk = this._serverCfg?.markers;
     const planHass = this._renderPlanHass;
     const c = this._climateCache;
-    if (c && c.h === planHass && c.r === this._iconRules && c.mk === mk) return c.m;
+    // #44 r1-M1: the exclusion list is part of the key — saving new Discovery
+    // filters replaces the settings object, and room climate must follow the
+    // new exclusions immediately, not on the next unrelated hass tick. The
+    // STORED array reference is the key (stable across renders); _excluded
+    // itself builds a fresh Set per call when a list is present.
+    const ex = this._settings.exclude_integrations;
+    if (c && c.h === planHass && c.r === this._iconRules && c.mk === mk && c.ex === ex) return c.m;
     const m = roomClimateMap(planHass, this._iconRules, mk, this._excluded);
-    this._climateCache = { h: planHass, r: this._iconRules, mk, m };
+    this._climateCache = { h: planHass, r: this._iconRules, mk, ex, m };
     return m;
   }
 

@@ -7637,6 +7637,12 @@ public _deviceInboxRows(): DeviceInboxRow[] {
       const platforms = devicePlatforms.get(deviceId) || new Set<string>();
       const identifierDomain = Array.isArray(device?.identifiers?.[0])
         ? String(device.identifiers[0][0] || '') : '';
+      // #44 r1-M2: a device without a single platform-bearing entity still has
+      // an integration name — its identifier domain. Without this fallback the
+      // reason text would render the raw {integration} placeholder.
+      if (identifierDomain && !integrationByBinding[binding]) {
+        integrationByBinding[binding] = identifierDomain;
+      }
       const excluded = [identifierDomain, ...platforms].some((domain) => this.host._excluded.has(domain));
       if (device?.entry_type === 'service') reasonByBinding[binding] = 'service_entry';
       else if (excluded) reasonByBinding[binding] = 'excluded_integration';
