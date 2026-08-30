@@ -3,8 +3,8 @@
 - Issue: https://github.com/Matysh/houseplan-card/issues/42
 - Приоритет: P2, tests/tech-debt; полный трек (backend class A + видимое
   поведение ошибок — решение аналитики 2026-08-15)
-- Ревизия: 2 (2026-08-30) — актуализация замерами исполнением; issue
-  реализуется механизмом + ступенью baseline, пороги — последующие trivial
+- Ревизия: 3 (2026-08-30) — по SPEC-REVIEW-42-r1 (M1, M2); механизм +
+  ступень baseline, пороги — последующие trivial
 - Тип: infra/tests + один видимый пользователю блок (тексты ошибок)
 
 ## Замеры ревизии (HEAD, песочница)
@@ -80,20 +80,34 @@ stubs HA, CI-итерации) — следующая ступень, зафик
 
 ### 5. WS error contract + доки
 
-- `const.py`: `ERROR_CODES` — frozenset всех стабильных кодов (собранных
-  фактически по websocket_api + коды исключений). Контракт-тест (pure,
-  скан исходника): каждый литерал `send_error(...)`-кода ∈ ERROR_CODES;
-  каждый код имеет i18n-ключ `backup.error.<code>` в en (полнота словарей —
-  существующий паритет-гейт).
+- `const.py`: `ERROR_CODES` (frozenset фиксированных кодов) +
+  `ERROR_CODE_FAMILIES` (префиксы шаблонных). Контракт-тест (pure, скан
+  исходников) обязан покрыть ОБА пути эмиссии (M1 r1):
+  (а) литералы `send_error(..., "<code>", ...)` в websocket_api;
+  (б) коды, читаемые из `err.code` в обработчиках — их источники
+  перечисляются явно и сканируются по месту объявления:
+  `OpeningPassageError`, `PartitionOpeningHostError`,
+  `PartitionOpeningJambMarginError`, `WallModelClientOutdatedError`
+  (validation.py, литеральный class-attr `code = "..."` — извлекается
+  regex'ом), `JunctionLimitError` (junction_limits.py,
+  `f"junction_limit_{rule}"` — семейство `junction_limit_` по списку
+  rules), `MarkerControlError` (префиксные коды `value_badge_*` /
+  `value_source_*` — семейства). Каждый фиксированный код ∈ ERROR_CODES и
+  имеет en-ключ `backup.error.<code>`; каждое семейство ∈
+  ERROR_CODE_FAMILIES и обслуживается либо своим family-ключом, либо
+  задокументированным общим fallback по коду — тест требует одно из двух.
+  Появление в источниках кода/класса вне обоих списков → красный.
 - Structured details: `invalid_passage_fields` и
   `invalid_partition_opening_jamb_margin` шлют message
   JSON-строкой (`{"space":…,"opening":…,"fields":…}`); фронт парсит
   JSON.parse с fallback на прежний regex (совместимость со старым бэкендом
   одной беты). Regex-ветка помечена deprecated-комментарием с датой
   удаления.
-- Fallback `_errText`: известный код → i18n; неизвестный → общий
-  локализованный текст + код; сырой английский `e.message` в UI не
-  показывается (уходит в console.warn для отладки).
+- Fallback `_errText` (M2 r1: реальная причина дефекта — ПОРЯДОК проверок,
+  `e.message` раньше кода): порядок меняется на code-first; неизвестный код
+  использует СУЩЕСТВУЮЩИЙ ключ `err.unknown`/`err.code` (уже переведён
+  en/ru/de/fr) — новых i18n-ключей этот блок не вводит; сырой английский
+  `e.message` в UI не показывается (уходит в console.warn).
 - Доки: USER-GUIDE.ru получает паритетный §Troubleshooting (перевод §22);
   quality_scale.yaml: `docs-troubleshooting` → done,
   `docs-examples` → done ТОЛЬКО если текст HA-правила фактически
@@ -105,6 +119,14 @@ stubs HA, CI-итерации) — следующая ступень, зафик
 
 Strict typing HA-boundary модулей; пороги coverage 90/95; формат-проверка
 всего репо; массовая нормализация E501; перевод остальных секций гайдов.
+
+## i18n
+
+Новых ключей НЕТ: неизвестные коды переиспользуют существующие
+`err.unknown`/`err.code` (переведены во всех 4 словарях); известные коды —
+существующее пространство `backup.error.<code>`. Если реализация family-ключей
+(блок 5) потребует 1–2 новых ключа — они добавляются во все 4 словаря и
+называются в handoff (паритет-гейт словарей ловит пропуск).
 
 ## Контракт поведения
 
