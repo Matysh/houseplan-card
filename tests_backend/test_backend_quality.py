@@ -48,7 +48,19 @@ def _emitted_codes() -> tuple[set[str], set[str]]:
             r'(?:source_error|attribute_error)\s*=\s*"([a-z0-9_]+)"\s*if[^\n]*\\\s*\n\s*else\s*"([a-z0-9_]+)"',
             validation):
         fixed |= set(pair)
-    fixed |= set(re.findall(r'"(invalid_(?:light|toggle)_entity)"', validation))
+    # The literal-tuple path (field, code, message) is parsed STRUCTURALLY,
+    # not by naming the two known codes: a third tuple entry with a brand-new
+    # code must land in `fixed` (and so fail the registry test if the code is
+    # unregistered). Fail-closed: a tuple block whose string count is not a
+    # multiple of three means the shape changed — refuse instead of guessing.
+    for block in re.findall(
+            r'for field, code, message in \(\n(.*?)\n\s*\):', validation, re.S):
+        strings = re.findall(r'"([^"]*)"', block)
+        if not strings or len(strings) % 3:
+            raise AssertionError(
+                "unrecognized (field, code, message) tuple shape in validation.py: "
+                f"{len(strings)} string literals — update the AC5 scanner")
+        fixed |= set(strings[1::3])
 
     families: set[str] = set()
     families |= {match + "_" if not match.endswith("_") else match

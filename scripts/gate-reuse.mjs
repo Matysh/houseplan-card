@@ -49,7 +49,13 @@ export const HARNESS = {
       || /^demo\/benchmark_(glow|large_house)\.mjs$/.test(rel),
   },
   backend: {
-    roots: ['tests_backend', 'custom_components', 'pytest.ini'],
+    // #42: порог покрытия и пины зависимостей — прямые входы job
+    // (`head -1 baseline` в шаге сравнения; `pip install -r`): их изменение
+    // без правок тестов обязано сбрасывать реюз, иначе baseline-bump молча
+    // пройдёт по старому зелёному маркеру.
+    roots: ['tests_backend', 'custom_components', 'pytest.ini',
+      'scripts/backend-coverage-baseline.txt', 'requirements_test.txt',
+      'pyproject.toml'],
     // Внутри custom_components/** значим только Python: собранный фронтенд
     // лежит там же и меняется от любой сборки, а backend его не исполняет.
     keep: (rel) => !rel.startsWith('custom_components/') || rel.endsWith('.py'),
