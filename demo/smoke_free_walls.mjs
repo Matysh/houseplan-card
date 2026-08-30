@@ -10,7 +10,10 @@ const out = await page.evaluate(async () => {
   const o = {};
   const c = window.__card;
   const PITCH = 1000 / 240;
-  window.confirm = () => true;
+  // The product owns dangerous confirmations through hp-confirm now.  This
+  // smoke covers geometry transactions, while smoke_danger_confirmation
+  // exercises the real dialog; keep the decision deterministic here.
+  c._confirmDanger = async () => true;
   // Exercise hp-dialog's HA branch without depending on the Home Assistant
   // frontend in the standalone demo.  The fixed one-line fallback below
   // reproduces ha-dialog-header's public custom-property contract: Houseplan
@@ -188,12 +191,12 @@ const out = await page.evaluate(async () => {
   await c.updateComplete;
 
   c._physicalSel = { kind: 'partition', id: sp.partitions[0].id };
-  c._deletePhysicalSelection();
+  await c._deletePhysicalSelection();
   o.deleteRemovesPartition = !c._serverCfg.spaces[0].partitions;
 
   const draftId = c._serverCfg.spaces[0].room_drafts[0].id;
   c._physicalSel = { kind: 'draft', id: draftId, segment: 0 };
-  c._deletePhysicalSelection();
+  await c._deletePhysicalSelection();
   o.deleteOnDraftRemovesWholeOutline = !c._serverCfg.spaces[0].room_drafts;
 
   drawAndFinish([400, 100], [500, 100], 120);
