@@ -12,6 +12,18 @@ const SHOTS = process.env.HP_SHOTS || '';
 const { page, browser } = await launch({ width: 900, height: 820 }, 1);
 const out = {};
 const raf = () => page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+await page.evaluate(() => {
+  window.__waitForCamera = async (card = window.__card) => {
+    const started = performance.now();
+    while (card?._cameraTransition?.active) {
+      if (performance.now() - started > 1000) throw new Error('camera transition did not settle');
+      await new Promise((r) => requestAnimationFrame(r));
+    }
+    await card?.updateComplete;
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    await card?.updateComplete;
+  };
+});
 
 // A hand-drawn plan whose rooms live at 1.5..3.0 — entirely outside the old
 // canvas. Before the infinite canvas the -25%..125% envelope threw every one
@@ -61,7 +73,7 @@ const loadFar = (cfg, layout) => page.evaluate(async ([c2, l2]) => {
   c.requestUpdate();
   await c.updateComplete;
   c._resetZoom();
-  await c.updateComplete;
+  await window.__waitForCamera(c);
 }, [cfg, layout]);
 
 await loadFar(FAR_CFG, FAR_LAYOUT);
@@ -181,7 +193,7 @@ Object.assign(out, await page.evaluate(async () => {
   const c = window.__card;
   const sr = c.shadowRoot || c.renderRoot;
   sr.querySelector('.farhint button').click();
-  await c.updateComplete;
+  await window.__waitForCamera(c);
   const o = {};
   const v = c._viewOr(c._baseVb());
   o.fitAllReachesTheStray = v.x + v.w > 90000 && v.y + v.h > 90000;
@@ -194,10 +206,11 @@ Object.assign(out, await page.evaluate(async () => {
 // ---- zoom-out stops at 3x, zoom-in unchanged -----------------------------
 await loadFar(FAR_CFG, FAR_LAYOUT);
 await raf();
-Object.assign(out, await page.evaluate(() => {
+Object.assign(out, await page.evaluate(async () => {
   const c = window.__card;
   const o = {};
   c._resetZoom();
+  await window.__waitForCamera(c);
   const fit = { ...c._viewOr(c._baseVb()) };
   c._applyView(0.001);
   o.zoomOutStopsAtThree = Math.abs(c._zoom - 1 / 3) < 1e-9
@@ -205,6 +218,7 @@ Object.assign(out, await page.evaluate(() => {
   c._applyView(50);
   o.zoomInUnchanged = c._zoom === 8;
   c._resetZoom();
+  await window.__waitForCamera(c);
   return o;
 }));
 
@@ -213,7 +227,7 @@ Object.assign(out, await page.evaluate(async () => {
   const c = window.__card;
   const sr = c.shadowRoot || c.renderRoot;
   const o = {};
-  c._resetZoom(); await c.updateComplete;
+  c._resetZoom(); await window.__waitForCamera(c);
   const fit = { ...c._view };
   // pan most of a screen to the right: nothing pins the content over the scene
   c._view = c._clampView({ ...fit, x: fit.x + fit.w * 0.9 }, fit);
@@ -225,13 +239,13 @@ Object.assign(out, await page.evaluate(async () => {
   o.homeArrowAppears = !!arrow;
   if (arrow) {
     arrow.click();
-    await c.updateComplete;
+    await window.__waitForCamera(c);
     o.homeArrowFitsBack = Math.abs(c._view.x - fit.x) < 2 && Math.abs(c._view.w - fit.w) < 2;
     await c.updateComplete;
     o.homeArrowGone = !sr.querySelector('.homearrow');
   }
   // and it is NOT there while the plan is on screen
-  c._resetZoom(); c.requestUpdate(); await c.updateComplete;
+  c._resetZoom(); await window.__waitForCamera(c);
   o.noHomeArrowWhenVisible = !sr.querySelector('.homearrow');
   return o;
 }));
@@ -255,13 +269,13 @@ const farIcon = await page.evaluate(async () => {
     return Math.round(el.getBoundingClientRect().width * 100) / 100;
   };
   const o = {};
-  c._resetZoom(); await c.updateComplete;
+  c._resetZoom(); await window.__waitForCamera(c);
   const at1 = size();
   c._applyView(4); await c.updateComplete;
   const at4 = size();
   c._applyView(1 / 3); await c.updateComplete;
   const atOut = size();
-  c._resetZoom(); await c.updateComplete;
+  c._resetZoom(); await window.__waitForCamera(c);
   o.iconGrowsWithZoomIn = at1 > 4 && Math.abs(at4 / at1 - 4) < 0.05;
   o.iconShrinksWithZoomOut = Math.abs(atOut / at1 - 1 / 3) < 0.02;
   if (!o.iconGrowsWithZoomIn || !o.iconShrinksWithZoomOut) console.log('icon px', at1, at4, atOut);
@@ -286,7 +300,7 @@ Object.assign(out, await page.evaluate(async () => {
   c._maybeRebuildDevices?.();
   c._defPos = c._defaultPositions(); // the auto grid follows the new rooms
   c.requestUpdate(); await c.updateComplete;
-  c._resetZoom(); await c.updateComplete;
+  c._resetZoom(); await window.__waitForCamera(c);
   const b = c._baseVb();
   // identical to what contentBounds produced before: the content bbox
   // (40..960 x 140..580) plus 5% of the longer side (920 -> 46)
@@ -327,7 +341,7 @@ out.farIconNotDegenerate = await page.evaluate(async (farPx) => {
   c._maybeRebuildDevices?.();
   c._defPos = c._defaultPositions();
   c.requestUpdate(); await c.updateComplete;
-  c._resetZoom(); await c.updateComplete;
+  c._resetZoom(); await window.__waitForCamera(c);
   const el = sr.querySelector('.devlayer .dev');
   const px = el.getBoundingClientRect().width - 2;
   if (!(px > 4 && Math.abs(px / farPx - 1) < 0.3)) console.log('icon px near/far', px, farPx);
@@ -347,7 +361,7 @@ if (SHOTS) {
   await page.evaluate(async () => {
     const c = window.__card;
     (c.shadowRoot || c.renderRoot).querySelector('.farhint button').click();
-    await c.updateComplete;
+    await window.__waitForCamera(c);
   });
   await raf();
   await page.screenshot({ path: `${SHOTS}/canvas_fit_all.png` });
@@ -356,13 +370,15 @@ if (SHOTS) {
   await page.evaluate(async () => {
     const c = window.__card;
     c._setMode('plan'); await c.updateComplete;
-    c._resetZoom(); c._applyView(1 / 3); await c.updateComplete;
+    c._resetZoom(); await window.__waitForCamera(c);
+    c._applyView(1 / 3); await c.updateComplete;
   });
   await raf();
   await page.screenshot({ path: `${SHOTS}/canvas_grid_far.png` });
   await page.evaluate(async () => {
     const c = window.__card;
-    c._resetZoom(); c._applyView(4); await c.updateComplete;
+    c._resetZoom(); await window.__waitForCamera(c);
+    c._applyView(4); await c.updateComplete;
   });
   await raf();
   await page.screenshot({ path: `${SHOTS}/canvas_grid_near.png` });

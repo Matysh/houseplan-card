@@ -37,6 +37,11 @@ const res = await page.evaluate(async () => {
   c._lastTap = Date.now() - 100;
   stage.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, composed: true, pointerId: 3, clientX: 500, clientY: 300 }));
   stage.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, composed: true, pointerId: 3, clientX: 501, clientY: 300 }));
+  const resetStarted = performance.now();
+  while (c._cameraTransition?.active) {
+    if (performance.now() - resetStarted > 1000) throw new Error('double-tap camera transition did not settle');
+    await new Promise((r) => requestAnimationFrame(r));
+  }
   await c.updateComplete;
   out.dblTapResets = c._zoom === 1;
   // 6) локальный множитель иконок применяется
