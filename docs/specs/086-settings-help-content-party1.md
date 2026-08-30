@@ -202,6 +202,9 @@ save paths всех настроек остаются прежними. Мигр
 - отдельный cold-install запуск lazy onboarding runtime: все пять `space.*`
   placement присутствуют, editor runtime остаётся незагруженным, открытие
   подсказки не меняет draft;
+- отдельный Chromium layout-pass при 200% zoom: renderer-контракт 780 физических
+  px представлен как 390 CSS px при DPR 2; trigger и tooltip остаются внутри
+  viewport, у диалога нет горизонтального overflow, геометрия stage не меняется;
 - mouse hover, keyboard focus/Enter/Escape и touch toggle/outside close;
 - open help does not change setting/show-hidden action;
 - disabled group, native Popover and forced fallback;

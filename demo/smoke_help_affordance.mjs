@@ -381,6 +381,71 @@ res.party1ColdOnboardingHelpIsReadOnly = onboardingHelp.readOnly;
 res.party1ColdOnboardingKeepsEditorLazy = onboardingHelp.editorStillLazy;
 await onboarding.browser.close();
 
+// Browser zoom at 200% on a 780 px-wide display exposes a 390 CSS px viewport
+// at DPR 2. Playwright cannot change Chromium's toolbar preference, so create
+// that exact renderer contract directly; unlike CSS `zoom`, this preserves the
+// coordinate space used by fixed/popover surfaces and catches real clipping.
+const zoomed = await launch({ width: 390, height: 900 }, 2);
+const zoomedLayout = await zoomed.page.evaluate(async () => {
+  const card = window.__card;
+  const root = card.renderRoot;
+  const frame = () => new Promise((resolve) => requestAnimationFrame(resolve));
+  card._openSettingsDialog();
+  await card.updateComplete;
+  await frame();
+
+  const help = root.querySelector('hp-help[data-help-key="gs.bg_mode.help"]');
+  const trigger = help?.shadowRoot?.querySelector('.trigger');
+  const stage = root.querySelector('.stage');
+  const dialogBody = root.querySelector('hp-dialog .body');
+  const stageRect = () => {
+    const box = stage?.getBoundingClientRect();
+    return box ? [box.left, box.top, box.width, box.height].map((value) => Math.round(value)) : null;
+  };
+  const settleStage = async () => {
+    let previous = null;
+    for (let attempt = 0; attempt < 8; attempt++) {
+      await frame();
+      const current = stageRect();
+      if (JSON.stringify(current) === JSON.stringify(previous)) return current;
+      previous = current;
+    }
+    return previous;
+  };
+  trigger?.scrollIntoView({ block: 'center', inline: 'nearest' });
+  await frame();
+  const before = await settleStage();
+  trigger?.click();
+  await help?.updateComplete;
+  await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  const triggerBox = trigger?.getBoundingClientRect();
+  const surface = help?.shadowRoot?.querySelector('.tooltip')
+    || root.querySelector('hp-dialog')?.shadowRoot
+      ?.querySelector('[data-hp-overlay="help"]')?.shadowRoot?.querySelector('.tooltip');
+  const surfaceBox = surface?.getBoundingClientRect();
+  const viewport = window.visualViewport;
+  const left = viewport?.offsetLeft || 0;
+  const top = viewport?.offsetTop || 0;
+  const right = left + (viewport?.width || innerWidth);
+  const bottom = top + (viewport?.height || innerHeight);
+  const inside = (box) => !!box && box.width > 0 && box.height > 0
+    && box.left >= left && box.top >= top && box.right <= right && box.bottom <= bottom;
+  return {
+    zoomApplied: devicePixelRatio === 2 && innerWidth === 390,
+    triggerInside: inside(triggerBox),
+    tooltipInside: inside(surfaceBox),
+    noHorizontalDialogOverflow: !!dialogBody
+      && dialogBody.scrollWidth <= dialogBody.clientWidth + 1,
+    stageStable: JSON.stringify(await settleStage()) === JSON.stringify(before),
+  };
+});
+res.party1BrowserZoom200Applied = zoomedLayout.zoomApplied;
+res.party1BrowserZoom200TriggerInside = zoomedLayout.triggerInside;
+res.party1BrowserZoom200TooltipInside = zoomedLayout.tooltipInside;
+res.party1BrowserZoom200NoHorizontalOverflow = zoomedLayout.noHorizontalDialogOverflow;
+res.party1BrowserZoom200StageStable = zoomedLayout.stageStable;
+await zoomed.browser.close();
+
 res.keyboardFocus = keyboardFocus;
 
 checkAll(res);
