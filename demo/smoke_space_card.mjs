@@ -74,6 +74,45 @@ const res = await page.evaluate(async () => {
   const compactFrame = frameOf(compact);
   const compactNoButtonFrame = frameOf(compactNoButton);
   const nullTitleFrame = frameOf(nullTitle);
+  // #384: hidden architecture must not vote in fit: house. Twin cards over a
+  // config clone with a far-away wall column; only show_borders differs.
+  const hiddenTwinFrames = await (async () => {
+    // Twin cards share the page config store; patch each twin's reactive
+    // snapshot directly — a deep clone with a far-away wall column, differing
+    // only in show_borders.
+    const twin = (borders) => {
+      const el = document.createElement('houseplan-space-card');
+      el.setConfig({ type: 'custom:houseplan-space-card', space: spaceId, fit: 'house' });
+      el.hass = card.hass;
+      host.appendChild(el);
+      return el;
+    };
+    const hidden = twin(false);
+    const shown = twin(true);
+    await waitForStage(hidden); await waitForStage(shown);
+    const patchSnap = async (el, borders) => {
+      // clone ONLY the config: virtualLights carries a Set that JSON kills
+      const snap = { ...el._snap, config: JSON.parse(JSON.stringify(el._snap.config)) };
+      const sp = snap.config.spaces.find((x) => x.id === spaceId);
+      const pts = (sp.rooms || []).flatMap((room) => (room.poly || [])
+        .map((pt) => Array.isArray(pt) ? pt : [pt.x, pt.y]));
+      const maxX = Math.max(...pts.map((pt) => pt[0]));
+      const midY = pts.reduce((acc, pt) => acc + pt[1], 0) / pts.length;
+      sp.wall_columns = [...(sp.wall_columns || []), {
+        id: 'far-column-384', shape: 'rect', center: [maxX + 300, midY], cm: 40, angle: 0,
+      }];
+      sp.settings = { ...(sp.settings || {}), show_borders: borders };
+      el._snap = snap;
+      await el.updateComplete;
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+      await el.updateComplete;
+    };
+    await patchSnap(hidden, false);
+    await patchSnap(shown, true);
+    const frames = { hidden: frameOf(hidden), shown: frameOf(shown) };
+    hidden.remove(); shown.remove();
+    return frames;
+  })();
   const nullTitleHasTitle = !!nullTitle.renderRoot.querySelector('.hp-static-title');
   const compactCardBox = compact.renderRoot.querySelector('ha-card')?.getBoundingClientRect();
   const compactStageBox = compact.renderRoot.querySelector('.hp-static-stage')?.getBoundingClientRect();
@@ -154,6 +193,7 @@ const res = await page.evaluate(async () => {
     })(),
     nullTitleFrame,
     nullTitleHasTitle,
+    hiddenTwinFrames,
     namedFrame,
     compactFrame,
     compactNoButtonFrame,
@@ -194,6 +234,10 @@ const ok =
   Math.abs((res.compactFrame.y + res.compactFrame.h) - (res.frame.y + res.frame.h)) < 1e-6 &&
   JSON.stringify(res.compactFrame) === JSON.stringify(res.compactNoButtonFrame) &&
   !res.nullTitleHasTitle &&
+  res.hiddenTwinFrames && res.hiddenTwinFrames.hidden && res.hiddenTwinFrames.shown &&
+  // #384 AC1: скрытая архитектура не голосует — кадр без колонны строго уже
+  (res.hiddenTwinFrames.hidden.x + res.hiddenTwinFrames.hidden.w)
+    < (res.hiddenTwinFrames.shown.x + res.hiddenTwinFrames.shown.w) - 100 &&
   JSON.stringify(res.nullTitleFrame) === JSON.stringify(res.compactFrame) &&
   res.hasButton &&
   typeof res.deepLink === 'string' && res.deepLink.includes('#space=') &&

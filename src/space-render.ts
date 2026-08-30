@@ -385,7 +385,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
     }));
   const fit = resolveSpaceCardFit(o.fit);
   const needsCanonicalWallGeometry = !!(
-    walls.length || (extras.length && (disp.showBorders || fit === 'house'))
+    walls.length || (extras.length && disp.showBorders)
   );
   const wallGeometryFingerprint = needsCanonicalWallGeometry
     ? contentFingerprint(staticPassages.length
@@ -429,17 +429,21 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
       const item = roomItem(room);
       if (item) structure.push(expandItem(item, roomStrokeHalf));
     }
-    for (const component of canonicalWallGeometry?.components || []) {
+    // #384: hidden architecture must not vote in the tight frame. Wall
+    // bodies, extras and zero walls all render only under show_borders
+    // (see the wallUnion/zero-wall gates below) — the frame follows the
+    // same visibility, mirroring the hideOpenings guard for symbols.
+    if (disp.showBorders) for (const component of canonicalWallGeometry?.components || []) {
       const item = itemOfGeometry(component.geom);
       if (item) structure.push(expandItem(item, wallStrokeHalf));
     }
     // Keep degraded/isolated bodies reachable even if a boolean union elected
     // to render them as separate components or failed one merge.
-    for (const body of extras) {
+    if (disp.showBorders) for (const body of extras) {
       const item = itemOfGeometry(body);
       if (item) structure.push(expandItem(item, wallStrokeHalf));
     }
-    for (const line of zeroWalls.lines) {
+    if (disp.showBorders) for (const line of zeroWalls.lines) {
       const item: ContentItem = {
         minX: Math.min(line[0], line[2]), minY: Math.min(line[1], line[3]),
         maxX: Math.max(line[0], line[2]), maxY: Math.max(line[1], line[3]),

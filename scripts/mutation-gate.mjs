@@ -736,6 +736,17 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'fit-house-hidden-walls-vote',
+    guard: 'node demo/smoke_space_card.mjs',
+    because: 'hidden architecture silently widening the tight frame is exactly the #384 bug: '
+      + 'only the twin-frames smoke sees the rendered viewBox difference',
+    patches: [{
+      file: 'src/space-render.ts',
+      find: "    if (disp.showBorders) for (const body of extras) {",
+      replace: "    for (const body of extras) {",
+    }],
+  },
+  {
     id: 'space-card-null-title-compact-narrowed',
     guard: 'node --test test/space-card-audit-lows.test.mjs',
     because: 'YAML `title:` with no value is null — narrowing the compact condition back to '

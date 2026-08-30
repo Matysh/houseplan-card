@@ -798,9 +798,11 @@ light_pools: true
 
 - `content` (default) keeps the existing frame around all visible content and
   its 5% breathing room;
-- `house` removes that intentional padding and fits every room, wall,
-  partition, column and opening symbol. A detached but valid wing stays in the
-  frame. Backdrop, decor, room labels and device markers do not widen it.
+- `house` removes that intentional padding and fits every room, every visible
+  opening symbol, and — when `show_borders` keeps them visible — every wall,
+  partition and column (#384: hidden architecture does not widen the frame).
+  A detached but valid wing stays in the frame. Backdrop, decor, room labels
+  and device markers do not widen it.
 
 Choose `house` when the building should occupy as much of the card as possible.
 Auxiliary objects remain rendered, but an object outside the structural bounds

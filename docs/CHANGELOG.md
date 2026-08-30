@@ -7,6 +7,11 @@
   long-press House Plan details and right-click HA more-info remain available
   ([#381](https://github.com/Matysh/houseplan-card/issues/381)).
 
+- `fit: house` in `houseplan-space-card` no longer lets hidden architecture
+  widen the tight frame: with `show_borders` off, walls, partitions and
+  columns stay out of the vote, matching the existing rule for hidden opening
+  symbols ([#384](https://github.com/Matysh/houseplan-card/issues/384)).
+
 ## v1.69.0 — 2026-08-30
 
 - House Plan now speaks German and French, keeps the editors outside the

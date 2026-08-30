@@ -229,8 +229,11 @@ The full `houseplan-card` and the default `houseplan-space-card` continue to
 use the canonical content frame above. A static card may explicitly select
 `fit: house`. That second frame is structural and static-card-only:
 
-* every sane room, positive/zero wall, independent wall or saved draft,
-  column and complete door/window/gate symbol envelope participates;
+* every sane room and (when visible) complete door/window/gate symbol
+  envelope participates; positive/zero walls, independent walls, drafts and
+  columns participate only while `show_borders` renders them (#384 — hidden
+  architecture must not widen the tight frame, mirroring the `hide_openings`
+  guard for symbols);
 * every structural item is kept — the outlier vote cannot discard a detached
   but valid wing;
 * there is no intentional outer padding, but analytic bounds include the
