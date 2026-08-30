@@ -6,38 +6,29 @@ fixtures to the TypeScript checks and to this module and demands the same
 verdict, because two implementations of one rule are worth nothing if they can
 disagree.
 """
-import importlib.util
 import json
 import os
 import subprocess
-import sys
-import types
 
 import pytest
+
+from pathlib import Path
+
+from pure_imports import load_pure
 
 _ROOT = os.path.dirname(os.path.dirname(__file__))
 _PACKAGE_ROOT = os.path.join(_ROOT, "custom_components")
 _HOUSEPLAN_ROOT = os.path.join(_PACKAGE_ROOT, "houseplan")
 
-if "custom_components" not in sys.modules:
-    package = types.ModuleType("custom_components")
-    package.__path__ = [_PACKAGE_ROOT]
-    sys.modules["custom_components"] = package
-if "custom_components.houseplan" not in sys.modules:
-    package = types.ModuleType("custom_components.houseplan")
-    package.__path__ = [_HOUSEPLAN_ROOT]
-    sys.modules["custom_components.houseplan"] = package
-
-# Loaded under its canonical package name: the module imports the migration
-# mirror relatively (`from .wall_segment_model import ...`), which only resolves
-# when the module knows the package it belongs to.
-_PATH = os.path.join(_HOUSEPLAN_ROOT, "junction_limits.py")
-_spec = importlib.util.spec_from_file_location(
-    "custom_components.houseplan.junction_limits", _PATH,
+# Каноническое имя обязательно: модуль импортирует зеркало миграции
+# относительным путём (`from .wall_segment_model import ...`), а это резолвится
+# только когда модуль знает свой пакет. Подмена родительских пакетов живёт
+# ровно на время загрузки — почему именно так, см. tests_backend/pure_imports.py
+# и #394.
+jl = load_pure(
+    "custom_components.houseplan.junction_limits",
+    Path(_HOUSEPLAN_ROOT) / "junction_limits.py",
 )
-jl = importlib.util.module_from_spec(_spec)
-sys.modules[_spec.name] = jl
-_spec.loader.exec_module(jl)
 
 CELL = 5.0
 

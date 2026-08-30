@@ -26,3 +26,26 @@ test('backend-тесты не правят sys.path (#393)', () => {
     + ' Читать модуль без Home Assistant можно и без этого — см. test_trails.py:'
     + ' текст файла и exec нужного среза.');
 });
+
+test('пакет интеграции подменяет только conftest и только без HA (#394)', () => {
+  // Пустышка вместо `custom_components.houseplan` — единственный способ читать
+  // подмодули без Home Assistant, и запретить её нельзя. Но место у неё одно:
+  // conftest, где решение принимается по честному признаку «есть ли HA».
+  //
+  // Когда её ставили сами тесты под условием «если ещё не импортирован», в CI
+  // она не срабатывала лишь потому, что настоящий пакет успевал импортироваться
+  // из файла, который идёт раньше по алфавиту. Корректность харнесса держалась
+  // на именах файлов; чем это кончается, показал #389.
+  const assigns = /sys\.modules\[\s*(['"])custom_components/;
+  const offenders = files().filter((name) => name !== 'conftest.py' && assigns.test(read(name)));
+  assert.deepEqual(offenders, [],
+    'подмена пакета интеграции живёт в tests_backend/conftest.py и только там:'
+    + ' там она условная (нет Home Assistant — нечего ломать), а в тесте она'
+    + ' переживает свой тест и достаётся всей сессии (#389, #394).');
+
+  const conftest = read('conftest.py');
+  assert.match(conftest, /if not HAS_HA:/,
+    'подмена в conftest обязана быть под условием отсутствия Home Assistant');
+  const stub = conftest.slice(conftest.indexOf('if not HAS_HA:'));
+  assert.match(stub, /sys\.modules\[_name\] = _module/);
+});

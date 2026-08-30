@@ -10,28 +10,20 @@ import types
 import pytest
 import voluptuous as vol
 
+from pathlib import Path
+
+from pure_imports import load_pure
+
 _ROOT = os.path.dirname(os.path.dirname(__file__))
 _PACKAGE_ROOT = os.path.join(_ROOT, "custom_components")
 _HOUSEPLAN_ROOT = os.path.join(_PACKAGE_ROOT, "houseplan")
 
-# Keep this pure test independent of Home Assistant even though Python normally
-# executes package __init__.py before resolving the validation submodule.
-if "custom_components" not in sys.modules:
-    package = types.ModuleType("custom_components")
-    package.__path__ = [_PACKAGE_ROOT]
-    sys.modules["custom_components"] = package
-if "custom_components.houseplan" not in sys.modules:
-    package = types.ModuleType("custom_components.houseplan")
-    package.__path__ = [_HOUSEPLAN_ROOT]
-    sys.modules["custom_components.houseplan"] = package
-
-_PATH = os.path.join(
-    _ROOT,
-    "custom_components", "houseplan", "validation.py",
-)
-_spec = importlib.util.spec_from_file_location("hp_validation", _PATH)
-v = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(v)
+# Тест обходится без Home Assistant, хотя Python выполнил бы __init__.py пакета
+# прежде, чем добрался до validation. Подмена родительских пакетов живёт ровно
+# на время загрузки: прежняя редакция ставила пустышки насовсем и не падала
+# только потому, что настоящий пакет успевал импортироваться из файла, который
+# идёт раньше по алфавиту (#394). См. tests_backend/pure_imports.py.
+v = load_pure("hp_validation", Path(_HOUSEPLAN_ROOT) / "validation.py")
 
 
 def test_backend_model_version_matches_frontend_constant():
