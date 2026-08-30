@@ -111,3 +111,33 @@ test('гейт «новый код не добавляет any» вызывае�
   // merge-base не считается и диапазон выродится в «всё».
   assert.match(frontend, /fetch-depth: 0, filter: 'blob:none'/);
 });
+
+test('упавшая golden называет первопричину, а не свидетеля (#386)', () => {
+  const workflow = read('validate.yml');
+  const golden = workflow.slice(
+    workflow.indexOf('\n  golden:\n'), workflow.indexOf('\n  performance_smoke:\n'),
+  );
+  const KEY = 'fail-golden-${{ needs.reuse.outputs.golden_key }}';
+  // Ключ маркера падения обязан совпадать с ключом переиспользования: только
+  // это доказывает, что входы у двух падений действительно одни и те же.
+  assert.equal(golden.split(KEY).length - 1, 2, 'ключ маркера падения нужен и на restore, и на save');
+  assert.equal(golden.includes('reuse-golden-${{ needs.reuse.outputs.golden_key }}'), true,
+    'маркер успеха остаётся на своём ключе');
+
+  // Восстановление обязано стоять ДО прогона: после падения различить виновника
+  // и свидетеля уже нечем.
+  const restore = golden.indexOf('cache/restore@v6');
+  const verify = golden.indexOf('npm run golden:verify');
+  assert.ok(restore > 0 && verify > restore, 'маркер падения восстанавливается до прогона');
+
+  // Объяснение печатается только при падении и не подменяет вердикт.
+  const note = golden.slice(golden.indexOf('id: fail_note'));
+  assert.match(note, /^\s+if: failure\(\)$/m, 'шаг объяснения только при падении');
+  assert.match(note, /gate-reuse\.mjs --job=golden --note/);
+  assert.equal(note.includes('continue-on-error: true\n        run: node scripts/gate-reuse'), false,
+    'объяснение не имеет права молча проглатывать свою ошибку до вердикта');
+
+  // Запись первопричины — только на первом падении: иначе SHA съедет на
+  // свидетеля и смысл сообщения перевернётся.
+  assert.match(golden, /if: failure\(\) && steps\.fail_note\.outputs\.first == 'true'/);
+});

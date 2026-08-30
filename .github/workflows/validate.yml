@@ -537,6 +537,14 @@ jobs:
           path: dist
       - name: Разложить бандл по копиям
         run: node scripts/bundle-sync.mjs
+      # Маркер предыдущего падения с ТЕМ ЖЕ ключом (#386). Восстанавливается до
+      # прогона, потому что после падения шаги кэша уже не помогут отличить
+      # виновника от свидетеля.
+      - name: Прежнее падение на тех же входах
+        uses: actions/cache/restore@v6
+        with:
+          path: .fail-marker
+          key: fail-golden-${{ needs.reuse.outputs.golden_key }}
       - name: Capture or verify golden matrix
         id: golden
         run: |
@@ -553,6 +561,25 @@ jobs:
         with:
           name: golden-images
           path: artifacts/golden
+      # Красная golden обязана сказать, ЧЕЙ это долг (#386). Без этого письмо
+      # «Run failed» называет коммит, который пушнули следующим: 29 августа так
+      # был назван документ ревью `0f7b6f5`, а сцену без эталона добавил
+      # `dbbe94ae`. Вердикт job не меняется — меняется только формулировка.
+      - name: Кто уронил golden
+        id: fail_note
+        if: failure()
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: node scripts/gate-reuse.mjs --job=golden --note --marker=.fail-marker
+      - name: Запомнить первопричину
+        if: failure() && steps.fail_note.outputs.first == 'true'
+        # Гонка двух прогонов даёт «Cache already exists»; для маркера падения
+        # это тем более не отказ гейта — job и так красная по существу.
+        continue-on-error: true
+        uses: actions/cache/save@v6
+        with:
+          path: .fail-marker
+          key: fail-golden-${{ needs.reuse.outputs.golden_key }}
       # Маркер пишется последним шагом: он существует только если всё выше
       # прошло. Кэш сохраняется post-шагом, то есть тоже лишь при успехе job.
       - name: Записать маркер успеха

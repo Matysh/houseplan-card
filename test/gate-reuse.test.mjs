@@ -6,7 +6,9 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { HARNESS, JOBS, harnessFiles, reuseKey } from '../scripts/gate-reuse.mjs';
+import {
+  HARNESS, JOBS, harnessFiles, inheritedFailureNote, parseFailureMarker, reuseKey,
+} from '../scripts/gate-reuse.mjs';
 
 /**
  * Дерево, минимально достаточное для sourceFingerprint плюс оснастка каждой
@@ -188,6 +190,83 @@ test('HARNESS keeps scripts/** out of the keys on purpose', () => {
         `${job}: scripts попал в оснастку`,
       );
     }
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+// --- маркер падения (#386) -------------------------------------------------
+
+const GATE_REUSE = fileURLToPath(new URL('../scripts/gate-reuse.mjs', import.meta.url));
+
+test('первое падение на этих входах называет виновником текущий коммит (#386)', () => {
+  const note = inheritedFailureNote({ job: 'golden', sha: 'dbbe94aeff00', runUrl: 'https://run/1', prior: null });
+  assert.equal(note.first, true);
+  assert.match(note.notice, /впервые/);
+  assert.match(note.notice, /dbbe94ae/);
+  assert.match(note.summary.join('\n'), /этого коммита/);
+});
+
+test('унаследованное падение снимает вину с текущего коммита (#386)', () => {
+  const note = inheritedFailureNote({
+    job: 'golden',
+    sha: '0f7b6f5aaaaa',
+    runUrl: 'https://run/2',
+    prior: { sha: 'dbbe94aeff00', runUrl: 'https://run/1' },
+  });
+  assert.equal(note.first, false);
+  // Оба SHA обязаны быть различимы: письмо называет второй, а причина в первом.
+  assert.match(note.notice, /dbbe94ae/);
+  assert.equal(note.notice.includes('0f7b6f5'), false,
+    'свидетель не должен фигурировать как причина');
+  assert.match(note.summary.join('\n'), /не ронял/);
+  assert.match(note.summary.join('\n'), /https:\/\/run\/1/);
+});
+
+test('маркер без SHA не выдумывает коммит (#386)', () => {
+  const note = inheritedFailureNote({ job: 'smoke', sha: 'abc1234567', runUrl: '', prior: { sha: '', runUrl: '' } });
+  assert.equal(note.first, false);
+  assert.match(note.summary.join('\n'), /не записан/);
+  assert.equal(/`[0-9a-f]{8}`/.test(note.summary.join('\n')), false);
+});
+
+test('разбор маркера переживает пустой и мусорный вход (#386)', () => {
+  assert.equal(parseFailureMarker(''), null);
+  assert.equal(parseFailureMarker(undefined), null);
+  assert.deepEqual(parseFailureMarker('golden упала\nSHA: abc1234\nпрогон: https://run/9\n'),
+    { sha: 'abc1234', runUrl: 'https://run/9' });
+  assert.deepEqual(parseFailureMarker('мусор\n'), { sha: '', runUrl: '' });
+});
+
+test('CLI пишет маркер на первом падении и не трогает его на втором (#386)', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'hp-failnote-'));
+  const marker = join(dir, '.fail-marker');
+  const summary = join(dir, 'summary.md');
+  const run = (sha) => spawnSync(process.execPath, [
+    GATE_REUSE, '--job=golden', '--note', `--marker=${marker}`,
+  ], {
+    encoding: 'utf8',
+    env: {
+      ...process.env,
+      GITHUB_SHA: sha,
+      RUN_URL: `https://run/${sha}`,
+      GITHUB_STEP_SUMMARY: summary,
+      GITHUB_OUTPUT: join(dir, 'out.txt'),
+    },
+  });
+  try {
+    const first = run('dbbe94aeff00');
+    assert.equal(first.status, 0, first.stderr);
+    assert.match(first.stdout, /::notice::/);
+    assert.match(readFileSync(marker, 'utf8'), /SHA: dbbe94aeff00/);
+
+    const second = run('0f7b6f5aaaaa');
+    assert.equal(second.status, 0, second.stderr);
+    // Главное свойство: свидетель не переписывает первопричину.
+    assert.match(readFileSync(marker, 'utf8'), /SHA: dbbe94aeff00/);
+    assert.match(second.stdout, /не ронял/);
+    assert.match(readFileSync(join(dir, 'out.txt'), 'utf8'), /first=false/);
+    assert.match(readFileSync(summary, 'utf8'), /унаследованное падение/);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
