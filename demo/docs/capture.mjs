@@ -86,6 +86,15 @@ const applyDocumentationState = (page, scenario) => page.evaluate(async (current
   const frame = () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
   const card = window.__goldenCard;
   if (!card) throw new Error(`documentation card is missing: ${current.id}`);
+  const settleCamera = async () => {
+    const started = performance.now();
+    do { await frame(); }
+    while (card._cameraTransition?.active && performance.now() - started < 1200);
+    if (card._cameraTransition?.active)
+      throw new Error(`documentation camera did not settle: ${current.id}`);
+    // One quiet pair proves that the settled reactive frame reached layout.
+    await frame();
+  };
 
   if (current.title) {
     card.setConfig({ ...card._config, title: current.title });
@@ -142,6 +151,7 @@ const applyDocumentationState = (page, scenario) => page.evaluate(async (current
       throw new Error('documentation viewport does not show the device presentation preview');
   }
 
+  await settleCamera();
   return { dialog: !!card.renderRoot.querySelector('hp-dialog') };
 }, scenario);
 
