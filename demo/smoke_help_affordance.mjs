@@ -1,6 +1,6 @@
 // Issue #68: contextual help trigger parity, dialog overlay ownership and the
 // real non-Popover fallback. Run by the prerelease smoke suite, not on edits.
-import { launch, checkAll, finish } from './serve.mjs';
+import { launch, launchColdView, checkAll, finish } from './serve.mjs';
 
 const { page, browser } = await launch({ width: 390, height: 780 }, 1);
 await page.keyboard.press('Tab');
@@ -322,6 +322,64 @@ const res = await page.evaluate(async () => {
 
   return out;
 });
+
+// Empty-install onboarding owns a separate lazy runtime and a second copy of
+// the space dialog. Exercise that production chunk, not merely the regular
+// editor template or its source inventory (#86 review r1 M1).
+const onboarding = await launchColdView({ width: 390, height: 780 });
+await onboarding.page.evaluate(async () => {
+  const card = window.__card;
+  card._onboardingShown = false;
+  card._serverCfg = { ...card._serverCfg, spaces: [] };
+  card._model = [];
+  card.hass = { ...card.hass, floors: {}, areas: {} };
+  card.requestUpdate();
+  await card.updateComplete;
+});
+await onboarding.page.waitForFunction(() => {
+  const card = window.__card;
+  return card._onboardingRuntime && !card._editorRuntime
+    && card.renderRoot.querySelector('hp-dialog');
+});
+const onboardingHelp = await onboarding.page.evaluate(async () => {
+  const card = window.__card;
+  const root = card.renderRoot;
+  const keys = [
+    'space.cell_cm.help', 'space.zero_wall_style.help', 'space.bg_mode.help',
+    'space.north.help', 'space.fill_mode.help',
+  ];
+  const help = (key) => root.querySelector(`hp-help[data-help-key="${key}"]`);
+  const before = JSON.stringify({
+    cellCm: card._spaceDialog?.cellCm,
+    zeroWallStyle: card._spaceDialog?.zeroWallStyle,
+    bgMode: card._spaceDialog?.bgMode,
+    northDeg: card._spaceDialog?.northDeg,
+    fillMode: card._spaceDialog?.fillMode,
+  });
+  const zeroWallHelp = help('space.zero_wall_style.help');
+  zeroWallHelp?.shadowRoot?.querySelector('.trigger')?.click();
+  await zeroWallHelp?.updateComplete;
+  await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  const after = JSON.stringify({
+    cellCm: card._spaceDialog?.cellCm,
+    zeroWallStyle: card._spaceDialog?.zeroWallStyle,
+    bgMode: card._spaceDialog?.bgMode,
+    northDeg: card._spaceDialog?.northDeg,
+    fillMode: card._spaceDialog?.fillMode,
+  });
+  return {
+    inventory: keys.every((key) => !!help(key)?.shadowRoot?.querySelector('.trigger')),
+    selectedHelpOpened: zeroWallHelp?.shadowRoot
+      ?.querySelector('.trigger')?.getAttribute('aria-expanded') === 'true',
+    readOnly: before === after,
+    editorStillLazy: !!card._onboardingRuntime && !card._editorRuntime,
+  };
+});
+res.party1ColdOnboardingInventory = onboardingHelp.inventory;
+res.party1ColdOnboardingHelpOpens = onboardingHelp.selectedHelpOpened;
+res.party1ColdOnboardingHelpIsReadOnly = onboardingHelp.readOnly;
+res.party1ColdOnboardingKeepsEditorLazy = onboardingHelp.editorStillLazy;
+await onboarding.browser.close();
 
 res.keyboardFocus = keyboardFocus;
 

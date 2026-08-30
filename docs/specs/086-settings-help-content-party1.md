@@ -198,7 +198,10 @@ save paths всех настроек остаются прежними. Мигр
 
 ### Browser smoke
 
-- по одному placement на general, space, marker и Device catalog;
+- по одному placement на general, regular-editor space, marker и Device catalog;
+- отдельный cold-install запуск lazy onboarding runtime: все пять `space.*`
+  placement присутствуют, editor runtime остаётся незагруженным, открытие
+  подсказки не меняет draft;
 - mouse hover, keyboard focus/Enter/Escape и touch toggle/outside close;
 - open help does not change setting/show-hidden action;
 - disabled group, native Popover and forced fallback;
