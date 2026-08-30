@@ -1245,9 +1245,22 @@ export class HouseplanCard extends LitElement {
     this.requestUpdate();
   }
 
-  private _cancelCameraTransition(commitTarget = false): void {
+  /** Cancel a running camera transition.
+   *
+   *  #396: two cancellations look alike and mean opposite things. A STRUCTURAL
+   *  one (space/mode change, adopt, resize, restore, disconnect) replaces the
+   *  view wholesale — its stale target must not be written anywhere. A USER
+   *  one (touching the plan on top of one's own zoom) freezes the presented
+   *  frame and leaves it on screen: that frame IS the current intent, and
+   *  before #82 the zoom commands persisted it synchronously. Keeping both on
+   *  one branch is what lost the interrupted zoom. */
+  private _cancelCameraTransition(commitTarget = false, keepPresented = false): void {
+    const presentedZoom = keepPresented && this._cameraTransition.active
+      ? this._cameraTransition.presented?.zoom
+      : undefined;
     this._cameraTransition.cancel(commitTarget);
     this._cameraTransitionFit = null;
+    if (presentedZoom !== undefined) this._saveZoom();
   }
 
   /** A discrete camera command may follow a rapid mode click. Finish that
@@ -6286,14 +6299,21 @@ export class HouseplanCard extends LitElement {
     sx: number,
     sy: number,
     newZoom: number,
+    animated = false,
   ): { target: CameraState; fit: ModeViewBox } | null {
     const stage = this._stageEl;
     if (!stage || stage.clientWidth <= 0 || stage.clientHeight <= 0) return null;
     const vb = this._baseVb();
     const fit = fitView(vb, this._stageAspect());
     const z = Math.min(HouseplanCard.ZOOM_MAX, Math.max(HouseplanCard.ZOOM_MIN, newZoom));
+    // #396 AC3: the world point under the pointer is read from the SAME state
+    // the zoom is accumulated from — the running target. Reading it from the
+    // lagging presented frame made a fast trackpad series walk the anchor
+    // 14-16 CSS px away, while spec #82 §10 promises it stays put.
+    const anchorFrom = (animated && this._cameraTransition.target)
+      || this._cameraState();
     const target = cameraTargetAtAnchor(
-      this._cameraState(), z, fit,
+      anchorFrom, z, fit,
       stage.clientWidth, stage.clientHeight, sx, sy,
     );
     if (!target) return null;
@@ -6323,7 +6343,7 @@ export class HouseplanCard extends LitElement {
     const factor = ev.deltaY < 0 ? 1.15 : 1 / 1.15;
     const baseZoom = this._cameraTransition.target?.zoom ?? this._zoom;
     const result = this._cameraTargetAt(
-      ev.clientX - r.left, ev.clientY - r.top, baseZoom * factor,
+      ev.clientX - r.left, ev.clientY - r.top, baseZoom * factor, true,
     );
     if (result) this._startCameraTransition(
       result.target, result.fit, 'wheel', CAMERA_WHEEL_MS,
@@ -6339,6 +6359,7 @@ export class HouseplanCard extends LitElement {
       stage.clientWidth / 2,
       stage.clientHeight / 2,
       baseZoom * (delta > 0 ? 1.4 : 1 / 1.4),
+      true,
     );
     if (result) this._startCameraTransition(
       result.target, result.fit, 'button', CAMERA_BUTTON_MS,
@@ -6407,7 +6428,9 @@ export class HouseplanCard extends LitElement {
   }
 
   private _stagePointerDown(ev: PointerEvent): void {
-    this._cancelCameraTransition(false);
+    // The gesture that starts here freezes the animated frame and keeps it on
+    // screen — so the shown zoom becomes the saved one (#396 AC1).
+    this._cancelCameraTransition(false, true);
     if (this._vacFit) return; // no pan/swipe while fitting the robot map
     // The shared secondary controller owns palette dismissal in window
     // capture, including the matching synthetic click. Do not duplicate that
@@ -10868,8 +10891,13 @@ export class HouseplanCard extends LitElement {
     const perUnit = this._stageEl?.clientWidth && view.w
       ? this._stageEl.clientWidth / view.w
       : 1;
+    // #396: the freeze must key on "the camera is moving", not on the two
+    // gesture flags. An animated transition sets neither, so every tween frame
+    // rebuilt the blur region — the very cost this gate was added to avoid.
+    const cameraStill = !this._pinchStart && !this._panStart
+      && !this._cameraTransition.active;
     const feather = resolveGlowFeather(
-      this._glowRuntimeState, perUnit, !this._pinchStart && !this._panStart,
+      this._glowRuntimeState, perUnit, cameraStill,
     );
     return renderGlowPools({
       spots,

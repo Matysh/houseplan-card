@@ -799,8 +799,15 @@ test('a light source paints exactly one region: the floor it can see', () => {
   assert.equal((glow.match(/<feGaussianBlur/g) || []).length, 1);
   assert.doesNotMatch(glow, /<mask /);
   assert.match(glow, /const next = GLOW_EDGE_FEATHER_PX \/ 2 \/ \(perUnit > 0 \? perUnit : 1\)/);
+  // #396: the freeze keys on "the camera is still", not on the two gesture
+  // flags. An animated transition sets neither, so every tween frame rebuilt
+  // the blur region — the cost this gate exists to avoid. Both the predicate
+  // and its use are pinned: a predicate that stops reading the transition is
+  // the regression, and so is a call that stops reading the predicate.
   assert.match(source,
-    /resolveGlowFeather\(\s*this\._glowRuntimeState, perUnit, !this\._pinchStart && !this\._panStart/);
+    /const cameraStill = !this\._pinchStart && !this\._panStart\s*\n\s*&& !this\._cameraTransition\.active;/);
+  assert.match(source,
+    /resolveGlowFeather\(\s*this\._glowRuntimeState, perUnit, cameraStill,/);
   assert.match(glow,
     /filter=\$\{input\.featherEnabled \? 'url\(#hp-glowfeather\)' : nothing\}/,
     'the expensive whole-layer filter must be bypassed during a viewport gesture/transition');

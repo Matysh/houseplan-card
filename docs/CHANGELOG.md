@@ -6,6 +6,10 @@
   instead of the browser prompt. Device, draft, plan and space deletion plus
   lock opening share clear consequences, safe Cancel/X/Escape behaviour and
   stale-target protection ([#32](https://github.com/Matysh/houseplan-card/issues/32)).
+- Zooming feels honest again: the zoom you see when you tap the plan
+  mid-animation is the zoom that gets remembered, and a fast trackpad series
+  keeps the point under the cursor exactly where it was
+  ([#396](https://github.com/Matysh/houseplan-card/issues/396)).
 
 ## v1.70.0-beta.1 — 2026-08-30
 

@@ -136,3 +136,96 @@ test('invalid input and missing RAF settle safely without a loop', () => {
   assert.equal(controller.active, false);
   assert.equal(sameCameraState(to, { zoom: 2, viewBox: { ...to.viewBox } }), true);
 });
+
+// --- #396 ---------------------------------------------------------------
+// Три находки аудита v1.70.0-beta.1 на одном пути камеры. Проверяется то же,
+// что и в бою: серия колеса поверх незакончившегося перехода и обрыв этого
+// перехода касанием плана.
+
+const WHEEL = 1.15;
+const FIT = { x: 0, y: 0, w: 1000, h: 1000 };
+const STAGE = { w: 800, h: 800 };
+const ANCHOR = { x: 600, y: 400 };
+
+/** Мировая точка под указателем для данного viewport. */
+const worldUnderPointer = (viewBox) => ({
+  x: viewBox.x + (ANCHOR.x / STAGE.w) * viewBox.w,
+  y: viewBox.y + (ANCHOR.y / STAGE.h) * viewBox.h,
+});
+
+/** Одна серия из `count` нотчей с интервалом `gapMs`, как её ведёт карта:
+ *  масштаб копится от цели, а якорь берётся из состояния `anchorFrom`. */
+function wheelSeries({ count, gapMs, anchorFromTarget }) {
+  const harness = fakeClock();
+  let presented = camera(1, ...Object.values(FIT));
+  let target = null;
+  const controller = new CameraTransitionController(
+    { frame: (state) => { presented = state.presented; }, settled: () => {} },
+    harness.clock,
+  );
+  for (let i = 0; i < count; i++) {
+    const base = target ?? presented;
+    const from = anchorFromTarget ? (target ?? presented) : presented;
+    const next = cameraTargetAtAnchor(
+      from, base.zoom * WHEEL, FIT, STAGE.w, STAGE.h, ANCHOR.x, ANCHOR.y,
+    );
+    controller.start(presented, next, 'wheel', 220);
+    target = next;
+    harness.step((i + 1) * gapMs);
+  }
+  return { target, presented };
+}
+
+test('#396 AC3: a fast wheel series keeps the world point under the pointer', () => {
+  const start = worldUnderPointer(FIT);
+  for (const gapMs of [8, 16, 33]) {
+    const { target } = wheelSeries({ count: 6, gapMs, anchorFromTarget: true });
+    const moved = worldUnderPointer(target.viewBox);
+    const drift = Math.hypot(moved.x - start.x, moved.y - start.y);
+    assert.ok(drift < 1e-9,
+      `anchor must not walk at ${gapMs} ms between notches, drifted ${drift}`);
+  }
+  // Контроль: якорь от отстающего кадра — это и есть дефект B2, он обязан
+  // давать заметный увод, иначе тест выше ничего не доказывает.
+  const { target } = wheelSeries({ count: 6, gapMs: 16, anchorFromTarget: false });
+  const moved = worldUnderPointer(target.viewBox);
+  const lagging = Math.hypot(moved.x - start.x, moved.y - start.y);
+  assert.ok(lagging > 1, `the lagging-frame anchor should drift, got ${lagging}`);
+});
+
+test('#396 AC4: fixing the anchor does not change zoom accumulation', () => {
+  for (const anchorFromTarget of [true, false]) {
+    const { target } = wheelSeries({ count: 6, gapMs: 8, anchorFromTarget });
+    assert.ok(Math.abs(target.zoom - WHEEL ** 6) < 1e-12,
+      `six notches must accumulate to 1.15^6, got ${target.zoom}`);
+  }
+});
+
+test('#396 AC1/AC2: only a user cancellation may persist the shown frame', () => {
+  // Контроллер сам ничего не сохраняет — решение принимает вызывающий по
+  // `presented`. Здесь фиксируется то, на что он опирается: после обрыва
+  // показанный кадр известен и лежит между началом и целью.
+  const harness = fakeClock();
+  let presented = null;
+  let settledCalls = 0;
+  const controller = new CameraTransitionController(
+    { frame: (state) => { presented = state.presented; },
+      settled: () => { settledCalls++; } },
+    harness.clock,
+  );
+  controller.start(camera(1, 0, 0, 1000, 1000), camera(1.15, 0, 0, 870, 870),
+    'wheel', 220);
+  harness.step(120);
+  const shown = presented.zoom;
+  assert.ok(shown > 1 && shown < 1.15, 'the frame is mid-flight');
+  assert.equal(controller.active, true);
+  controller.cancel(false);
+  assert.equal(settledCalls, 0, 'a frozen cancellation does not settle');
+  assert.equal(controller.active, false);
+  assert.equal(controller.presented, null, 'state is dropped, the frame is the caller\'s');
+  // И обратный случай: коммит цели проходит через settled, как и раньше.
+  controller.start(camera(1, 0, 0, 1000, 1000), camera(1.15, 0, 0, 870, 870),
+    'wheel', 220);
+  harness.step(400);
+  assert.equal(settledCalls, 1, 'a completed transition settles exactly once');
+});

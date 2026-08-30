@@ -747,6 +747,39 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'camera-cancel-loses-zoom',
+    guard: 'node demo/smoke_smooth_zoom.mjs',
+    because: 'the frame frozen by touching the plan is what the user sees; not '
+      + 'persisting it is the v1.69.0 regression #396 B1 closes',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '    this._cancelCameraTransition(false, true);',
+      replace: '    this._cancelCameraTransition(false);',
+    }],
+  },
+  {
+    id: 'camera-anchor-from-presented',
+    guard: 'node demo/smoke_smooth_zoom.mjs',
+    because: 'reading the anchor from the lagging frame walks the point under '
+      + 'the pointer 17 px away in a fast wheel series (#396 B2)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '    const anchorFrom = (animated && this._cameraTransition.target)',
+      replace: '    const anchorFrom = (false && this._cameraTransition.target)',
+    }],
+  },
+  {
+    id: 'glow-feather-thaws-during-camera',
+    guard: 'node --test test/golden-matrix.test.mjs',
+    because: 'the feather freeze must know about the animated transition, not '
+      + 'only about pinch and pan (#396 M2)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '      && !this._cameraTransition.active;',
+      replace: '      && true;',
+    }],
+  },
+  {
     id: 'error-code-dropped-from-contract',
     guard: 'python3 -m pytest tests_backend/test_backend_quality.py -q -p no:cacheprovider',
     because: 'a code emitted by the backend but missing from ERROR_CODES is exactly the '

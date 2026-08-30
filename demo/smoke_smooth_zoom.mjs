@@ -200,6 +200,77 @@ const out = await page.evaluate(async () => {
 
   const resources = performance.getEntriesByType('resource')
     .map((entry) => new URL(entry.name).pathname);
+  // #396 идёт последним намеренно: проверки выше считают saveCount
+  // абсолютным значением, а пользовательская отмена теперь тоже пишет.
+  // #396: interrupted zoom, structural cancellation, fast wheel anchor.
+  const spaceOf = () => card._space;
+  const storedZoom = () => {
+    try {
+      return (JSON.parse(localStorage.getItem('houseplan_card_zoom_v1') || '{}') || {})[spaceOf()];
+    } catch { return undefined; }
+  };
+  const wheelAt = (x, y, deltaY) => stage().dispatchEvent(new WheelEvent('wheel', {
+    clientX: x, clientY: y, deltaY, bubbles: true, cancelable: true, composed: true,
+  }));
+  const pointerDownAt = (x, y) => stage().dispatchEvent(new PointerEvent('pointerdown', {
+    clientX: x, clientY: y, pointerId: 1, isPrimary: true, button: 0,
+    bubbles: true, cancelable: true, composed: true,
+  }));
+
+  directBaseline(1);
+  await settle();
+  const stageRect = () => stage().getBoundingClientRect();
+  // (1) wheel, then touch the plan mid-flight: the shown zoom must be stored.
+  wheelAt(stageRect().left + 600, stageRect().top + 400, -100);
+  await frame();
+  await frame();
+  const interruptedShown0 = card._zoom;
+  pointerDownAt(stageRect().left + 200, stageRect().top + 200);
+  await card.updateComplete;
+  const interruptedShown = card._zoom;
+  const interruptedStored = storedZoom();
+  const interruptedFroze = !card._cameraTransition.active
+    && close(interruptedShown, interruptedShown0, 1e-9);
+
+  // (2) structural cancellation writes nothing.
+  directBaseline(1);
+  await settle();
+  const structuralStoredBefore = storedZoom();
+  wheelAt(stageRect().left + 600, stageRect().top + 400, -100);
+  await frame();
+  await frame();
+  const structuralSavesBefore = saveCount;
+  card._cancelCameraTransition(false);
+  await card.updateComplete;
+  const structuralSaves = saveCount - structuralSavesBefore;
+  const structuralStored = storedZoom();
+
+  // (3) six notches, one animation frame apart: the anchor must stay put.
+  directBaseline(1);
+  await settle();
+  const anchorScreen = { x: stageRect().left + 600, y: stageRect().top + 400 };
+  const worldUnder = () => {
+    const box = card._view;
+    const box2 = { x: box.x, y: box.y, w: box.w, h: box.h };
+    const r = stageRect();
+    return {
+      x: box2.x + ((anchorScreen.x - r.left) / r.width) * box2.w,
+      y: box2.y + ((anchorScreen.y - r.top) / r.height) * box2.h,
+    };
+  };
+  const anchorBefore = worldUnder();
+  for (let i = 0; i < 6; i++) {
+    wheelAt(anchorScreen.x, anchorScreen.y, -100);
+    await frame();
+  }
+  await settle();
+  const anchorAfter = worldUnder();
+  const anchorDriftUnits = Math.hypot(anchorAfter.x - anchorBefore.x,
+    anchorAfter.y - anchorBefore.y);
+  const anchorDriftPx = anchorDriftUnits * (stageRect().width / card._view.w);
+  directBaseline(1);
+  await settle();
+
   return {
     buttonHasIntermediateFrame: buttonSamples.some((sample) =>
       sample.zoom > 1.001 && sample.zoom < buttonExpected.zoom - 0.001),
@@ -241,7 +312,18 @@ const out = await page.evaluate(async () => {
     glowAndStructuralFrameStayStable: JSON.stringify(glowAfter) === JSON.stringify(glowBefore),
     coldViewDoesNotLoadEditorRuntime: resources.every((path) =>
       !/houseplan-editor-runtime-/.test(path)),
-    diagnostics: { projectionCancelled, isoExpected, isoFinal, glowBefore, glowAfter },
+    // #396 AC1: touching the plan freezes the animated frame — and the frozen
+    // frame is what the user sees, so it must be what gets persisted.
+    userCancelPersistsTheShownZoom: interruptedShown > 1.001
+      && close(interruptedStored, interruptedShown, 1e-6),
+    // #396 AC2: a structural cancellation writes nothing.
+    structuralCancelPersistsNothing: structuralSaves === 0
+      && close(structuralStored, structuralStoredBefore, 1e-9),
+    // #396 AC3: the anchor under the pointer survives a fast wheel series.
+    fastWheelKeepsTheAnchor: anchorDriftPx < 0.5,
+    diagnostics: { projectionCancelled, isoExpected, isoFinal, glowBefore, glowAfter,
+      interruptedShown, interruptedStored, interruptedFroze, structuralSaves,
+      structuralStored, structuralStoredBefore, anchorDriftPx },
   };
 });
 
