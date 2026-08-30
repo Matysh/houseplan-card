@@ -282,9 +282,9 @@ pointer events Device editor и fake WS:
 ### Регрессия и gates
 
 - `npm run typecheck`, `npm test`, production build и bundle sync;
-- `python scripts/check_docs.py`;
-- `node scripts/no_new_any.mjs`;
-- `node scripts/smoke_select.mjs` и выбранный targeted smoke;
+- `node scripts/check-docs.mjs`;
+- `node scripts/no-new-any.mjs`;
+- `node scripts/smoke-select.mjs` и выбранный targeted smoke;
 - минимум `smoke_editor_tabs`, `smoke_layout_sync`, `smoke_grid_snap`,
   `smoke_pan_any_zoom` и истории Plan/Backdrop;
 - целевой Device editor golden обязателен, потому что toolbar видимо меняется;
@@ -335,3 +335,19 @@ Security/performance report и HA config migration не требуются. Perf
 Rollback удаляет position stack, toolbar controls и preview transaction и
 возвращает прежний direct drag. Формат данных не меняется, data rollback и
 миграция не нужны.
+
+## 18. Технические предположения, которые можно менять свободно
+
+Без дополнительного продуктового согласования реализация может изменить:
+
+- имя и внутренний API pure-модуля `src/device-position-history.ts`;
+- форму внутренних TypeScript interfaces, если сохраняется position-only
+  контракт и все AC;
+- способ композиции отдельного `CommandStack` с runtime host port;
+- способ представления update/delete tombstone в pending-authority карте;
+- момент внутреннего `requestUpdate()`, если preview и persist остаются
+  визуально и транзакционно эквивалентны ТЗ.
+
+Новый pure-модуль, две toolbar-кнопки и восемь коротких i18n-строк должны
+оставаться внутри действующего `bundle:budget` (256000 B gzip). Отдельный
+performance artifact не требуется, но общий budget gate обязателен.
