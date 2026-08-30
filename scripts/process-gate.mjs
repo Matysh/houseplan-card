@@ -351,20 +351,32 @@ export function checkReviewDocLimit(files) {
   if (!files.length) {
     return [{ level: 'warn', rule: 7, sha: '-', msg: 'документов ревью не найдено — проверка 7 пропущена' }];
   }
-  const byIssue = new Map();
+  // Счётчик ведётся ОТДЕЛЬНО по виду ревью (#395). Порог описывает бюджет
+  // заходов одного этапа: «четыре цикла плюс два ребейза» — а ревью ТЗ и
+  // ревью кода это два разных этапа со своими бюджетами (§4). Общая корзина
+  // наказывала задачу за то, что она честно прошла оба: у #42 набралось
+  // 4 spec + 3 code = 7 документов при 4 и 3 заходах по видам, и зелёный
+  // вердикт r5 три прогона подряд не мог опубликовать свой артефакт.
+  const byKindAndIssue = new Map();
   for (const f of files) {
-    const m = f.match(/-(\d+)-r(\d+)\.md$/) || f.match(/(\d+).*-r(\d+)\.md$/);
+    const m = f.match(/(CODE|SPEC)-REVIEW-(\d+)-r(\d+)\.md$/)
+      || f.match(/-(\d+)-r(\d+)\.md$/)
+      || f.match(/(\d+).*-r(\d+)\.md$/);
     if (!m) continue;
-    const arr = byIssue.get(m[1]) ?? [];
-    arr.push(Number(m[2]));
-    byIssue.set(m[1], arr);
+    const [kind, nn, round] = m.length === 4 ? [m[1], m[2], m[3]] : ['?', m[1], m[2]];
+    const key = `${kind}\u0000${nn}`;
+    const arr = byKindAndIssue.get(key) ?? [];
+    arr.push(Number(round));
+    byKindAndIssue.set(key, arr);
   }
   const out = [];
-  for (const [nn, rounds] of byIssue) {
+  for (const [key, rounds] of byKindAndIssue) {
     if (Math.max(...rounds) > REVIEW_DOC_LIMIT || rounds.length > REVIEW_DOC_LIMIT) {
+      const [kind, nn] = key.split('\u0000');
+      const label = kind === '?' ? 'ревью' : `${kind}-REVIEW`;
       out.push({
         level: 'fail', rule: 7, sha: '-',
-        msg: `issue #${nn}: документов ревью ${rounds.length}, максимум r${Math.max(...rounds)} — больше ${REVIEW_DOC_LIMIT} заходов на один issue`,
+        msg: `issue #${nn}: документов ${label} ${rounds.length}, максимум r${Math.max(...rounds)} — больше ${REVIEW_DOC_LIMIT} заходов одного вида на один issue`,
       });
     }
   }

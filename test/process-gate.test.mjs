@@ -215,6 +215,29 @@ test('the review document count is per issue and per stage', () => {
   assert.deepEqual(rules(checkReviewDocLimit(['CODE-REVIEW-issue-068-2026-08-12.md'])), []);
 });
 
+test('spec and code reviews are counted apart (#395)', () => {
+  // Порог описывает бюджет заходов ОДНОГО этапа («четыре цикла плюс два
+  // ребейза»), а ревью ТЗ и ревью кода — два разных этапа со своими
+  // бюджетами (§4). Общая корзина наказывала задачу за то, что она честно
+  // прошла оба: ровно эта раскладка у #42 — 4 spec + 3 code — блокировала
+  // публикацию УЖЕ вынесенного зелёного вердикта три прогона подряд.
+  const real = [
+    'SPEC-REVIEW-42-r1.md', 'SPEC-REVIEW-42-r2.md',
+    'SPEC-REVIEW-42-r3.md', 'SPEC-REVIEW-42-r4.md',
+    'CODE-REVIEW-42-r1.md', 'CODE-REVIEW-42-r2.md', 'CODE-REVIEW-42-r5.md',
+  ];
+  assert.deepEqual(rules(checkReviewDocLimit(real)), []);
+  // Ослабления нет: внутри вида порог прежний, и вид назван в сообщении.
+  const sevenCode = Array.from({ length: 7 }, (_, i) => `CODE-REVIEW-42-r${i + 1}.md`);
+  const failed = checkReviewDocLimit([...sevenCode, 'SPEC-REVIEW-42-r1.md']);
+  assert.deepEqual(rules(failed), [7]);
+  assert.match(failed[0].msg, /CODE-REVIEW/);
+  assert.ok(!failed[0].msg.includes('SPEC'), 'жалоба адресна: spec-документы не в счёте');
+  // И симметрично для ревью ТЗ.
+  const sevenSpec = Array.from({ length: 7 }, (_, i) => `SPEC-REVIEW-42-r${i + 1}.md`);
+  assert.match(checkReviewDocLimit(sevenSpec)[0].msg, /SPEC-REVIEW/);
+});
+
 test('only class A/B commits are held to the issue status', () => {
   // Документ ревью ложится в ветку, пока задача в S4-spec-review или
   // S7-code-review: рабочего статуса в этот момент нет, и спрашивать его нельзя.
