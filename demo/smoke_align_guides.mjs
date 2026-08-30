@@ -34,10 +34,16 @@ const res = await page.evaluate(async () => {
   const pa = c._pos(a);
   // поставим b на тот же Y, начнём drag
   c._layout = { ...c._layout, [b.id]: { s: c._space, x: (pa.x + g * 12) / 1000, y: pa.y / 1000 } };
-  c._drag = { id: b.id, sx: 0, sy: 0, ox: 0, oy: 0, moved: true };
+  const pb = c._pos(b);
+  c._deviceDrag = {
+    id: b.id, spaceId: b.space, displayName: b.name, pointerId: 74,
+    source: null, sx: 0, sy: 0, ox: pb.x, oy: pb.y, moved: true,
+    before: { s: b.space, x: pb.x / 1000, y: pb.y / 1000 },
+    start: c._devicePlacementForCanvas(b, pb.x, pb.y),
+  };
   c.requestUpdate(); await c.updateComplete;
   out.devGuide = guides() >= 1;
-  c._drag = null; c.requestUpdate(); await c.updateComplete;
+  c._deviceDrag = null; c.requestUpdate(); await c.updateComplete;
   out.devGuideGone = guides() === 0;
   // 4) подложка: рисование прямоугольника с углом на одном X с углом другой фигуры
   c._setMode('decor'); await c.updateComplete;
