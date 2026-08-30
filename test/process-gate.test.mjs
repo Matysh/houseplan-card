@@ -338,6 +338,27 @@ test('issue status check accepts the working statuses and refuses the rest', () 
   );
 });
 
+test('#385(в) the diff proof runs only for release-classified commits, by the shared predicate', () => {
+  const raw = [
+    // обычный рабочий коммит — вычислитель не зовётся
+    `aaaaaaaaaaaa${FS}fix: ordinary work${FS}2026-08-30T10:00:00+03:00${FS}Issue: #1\nUser-Visible: no\n${RS}`,
+    // бета-приёмка с Release:-трейлером — ВТОРОЙ дизъюнкт предиката: релизный
+    `bbbbbbbbbbbb${FS}test: accept golden${FS}2026-08-30T10:05:00+03:00${FS}Issue: #2\nUser-Visible: no\nRelease: v1.69.0-beta.5\n${RS}`,
+    // стабильный релиз по subject — ПЕРВЫЙ дизъюнкт
+    `cccccccccccc${FS}Release v1.69.0${FS}2026-08-30T10:10:00+03:00${FS}Baseline-Reviewed: yes\n${RS}`,
+  ].join('');
+  const calls = [];
+  const spy = (sha) => { calls.push(sha); return []; };
+  const list = parseRecords(raw, () => ['src/a.ts'], spy);
+  assert.deepEqual(list.map((c) => c.isRelease), [false, true, true]);
+  assert.deepEqual(calls, ['bbbbbbbbbbbb', 'cccccccccccc'],
+    'exactly the release-classified commits pay for the diff proof — same predicate, no drift');
+  assert.equal(list[0].releaseSourceViolations, null,
+    'non-release commits keep the null "unproven" marker, as before');
+  assert.deepEqual(list[1].releaseSourceViolations, [],
+    'release-classified commits carry the computed proof');
+});
+
 test('the log record parser survives multi-line commit bodies', () => {
   // Разбор по строкам ломался здесь: тело содержит пустые строки и абзацы.
   // Формат несёт четыре поля (#311 добавил authorDate третьим).

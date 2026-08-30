@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Clicking the already-selected binding in the marker dialog no longer silently
+  resets the configured value source and badge to automatic — the reset now
+  happens only on an actual change of binding
+  ([#385](https://github.com/Matysh/houseplan-card/issues/385)).
+
 - Device markers can now use **Do nothing** as their tap action. Short click,
   tap, Enter and Space are then quiet no-ops, while marker appearance,
   long-press House Plan details and right-click HA more-info remain available

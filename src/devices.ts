@@ -889,7 +889,15 @@ export function rewriteMarkerControlReferences(
       : marker.value_source;
     return controls === marker.controls && valueBadge === marker.value_badge
         && valueSource === marker.value_source
-      ? marker : { ...marker, controls, value_badge: valueBadge, value_source: valueSource };
+      ? marker
+      // #385(б): conditional spreads — a marker that never had the key must
+      // not gain `value_badge: undefined` / `value_source: undefined` (JSON
+      // drops them, but hasOwnProperty semantics of the draft would differ).
+      : {
+          ...marker, controls,
+          ...(valueBadge !== undefined ? { value_badge: valueBadge } : {}),
+          ...(valueSource !== undefined ? { value_source: valueSource } : {}),
+        };
   });
 }
 

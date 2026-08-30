@@ -1589,6 +1589,39 @@ def test_issue_378_space_export_drops_value_face_link_outside_selection(tmp_path
     assert document["transfer"]["dropped_marker_links"] == 1
 
 
+def test_issue_385_space_export_drops_badge_and_value_face_links_together(tmp_path: Path) -> None:
+    """#385(г) AC5: the PAIRED neutralisation formats, both at once.
+
+    An external value_badge ref is disarmed by fields (enabled=False,
+    source=None — enabled is part of the badge model) while an external
+    value_source ref is disarmed by dropping the key (absence IS auto).
+    Both count in dropped_marker_links; the asymmetry is intentional and
+    round-trip-safe for existing exports.
+    """
+    config = _config()
+    config["markers"][0]["value_badge"] = {
+        "enabled": True, "position": "right",
+        "source": {"kind": "derived_marker_state", "ref": "marker:outside"},
+    }
+    config["markers"][0]["value_source"] = {
+        "kind": "derived_marker_state", "ref": "marker:outside",
+    }
+    config["markers"].append({
+        "id": "outside", "binding": "virtual", "space": "other",
+        "name": "Other lamp", "is_light": True,
+    })
+    document, _ = create_export(
+        SimpleNamespace(instance_id="instance-a"), {"config": config},
+        {"layout": {"lamp": {"s": "ground", "x": 0.5, "y": 0.5}}},
+        kind="space", space_id="ground", card_version="1.61.0", config_root=tmp_path,
+    )
+    marker = document["payload"]["config"]["markers"][0]
+    assert marker["value_badge"]["enabled"] is False
+    assert marker["value_badge"]["source"] is None
+    assert "value_source" not in marker
+    assert document["transfer"]["dropped_marker_links"] == 2
+
+
 def test_issue_378_virtualized_duplicate_drops_value_face_link(tmp_path: Path) -> None:
     document = _document(tmp_path, "space")
     controller = document["payload"]["config"]["markers"][0]

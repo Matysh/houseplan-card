@@ -142,6 +142,26 @@ const res = await page.evaluate(async () => {
   await c.updateComplete;
   const recovered55 = faceValue(sr(), `.dev[data-id="${item().id}"]`) === '55 %';
 
+  // #385(а) AC1: a SAME-binding click is a no-op — the configured source and
+  // badge survive; only an actual change resets them (spec #378 §1.6).
+  c._setMode('devices');
+  c._openMarkerDialog(item());
+  await c.updateComplete;
+  c._markerDialog = { ...c._markerDialog, valueSource: source, valueSourceTouched: true, bindingOpen: true };
+  await c.updateComplete;
+  const badgeBefore = JSON.stringify({
+    e: c._markerDialog?.valueBadgeEnabled, s: c._markerDialog?.valueBadgeSource,
+  });
+  sr().querySelector('.cand.sel')?.click();
+  await c.updateComplete;
+  const sameBindingKeepsSource =
+    JSON.stringify(c._markerDialog?.valueSource) === JSON.stringify(source)
+    && !c._markerDialog?.bindingOpen
+    && JSON.stringify({
+      e: c._markerDialog?.valueBadgeEnabled, s: c._markerDialog?.valueBadgeSource,
+    }) === badgeBefore;
+  c._closeMarkerDialog();
+
   // A real binding choice resets the old source to automatic before Save.
   c._setMode('devices');
   c._openMarkerDialog(item());
@@ -153,6 +173,14 @@ const res = await page.evaluate(async () => {
   const bindingResetToAuto = !!virtualBinding && c._markerDialog?.binding === 'virtual'
     && c._markerDialog?.valueSource === null
     && c._markerDialog?.valueSourceTouched === true;
+  // #385(а) AC2: re-clicking the ALREADY active virtual binding is a no-op too
+  c._markerDialog = { ...c._markerDialog, valueSource: { kind: 'sentinel-385' } };
+  await c.updateComplete;
+  virtualBinding?.click();
+  await c.updateComplete;
+  const sameVirtualKeepsSource =
+    c._markerDialog?.valueSource?.kind === 'sentinel-385'
+    && c._markerDialog?.binding === 'virtual';
   c._closeMarkerDialog();
 
   return {
@@ -160,6 +188,7 @@ const res = await page.evaluate(async () => {
     preview42, draftSourceExact, savedExact, actionSaved, reopenedExact,
     cancelKeptSource, plan42, static42, actionUnchanged,
     unavailableDash, unavailableStillValue, recovered55, bindingResetToAuto,
+    sameBindingKeepsSource, sameVirtualKeepsSource,
   };
 });
 

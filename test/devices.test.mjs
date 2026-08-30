@@ -1890,6 +1890,22 @@ test('issue 88: explicit leading entity wins; stale selection falls back without
   assert.equal(source.on, false);
 });
 
+test('#385(б) rewrite never plants value_badge/value_source keys as undefined', () => {
+  const bare = [{ id: 'a', controls: ['marker:b'] }];
+  const rewritten = rewriteMarkerControlReferences(bare, 'b', 'renamed')[0];
+  assert.equal(rewritten.controls[0], 'marker:renamed');
+  assert.ok(!('value_badge' in rewritten),
+    'a marker that never had value_badge must not gain the key');
+  assert.ok(!('value_source' in rewritten),
+    'a marker that never had value_source must not gain the key');
+  const withSource = [{
+    id: 'a', controls: ['marker:b'],
+    value_source: { kind: 'derived_marker_state', ref: 'marker:b' },
+  }];
+  const kept = rewriteMarkerControlReferences(withSource, 'b', 'renamed')[0];
+  assert.equal(kept.value_source.ref, 'marker:renamed', 'existing keys still rewrite');
+});
+
 test('issue 84 lifecycle: delete/rebind updates marker links and cycles are rejected', () => {
   const markers = [
     { id: 'a', controls: ['marker:b', 'light.one'] },

@@ -106,6 +106,20 @@ export const FS = '\x1f';
 export const RS = '\x1e';
 export const LOG_FORMAT = `%H${FS}%s${FS}%aI${FS}%b${RS}`;
 
+/**
+ * #385(в): THE release predicate — the whole expression, both disjuncts.
+ * The second one (a `Release:` trailer) makes ordinary beta acceptance
+ * commits release-classified too; a narrowed copy would hand them
+ * `releaseSourceViolations: null` while `isRelease` stays true, and the
+ * evaluator would then treat every touched src file as a violation.
+ * Exported so parseRecords gates the expensive diff proof on the exact same
+ * classification makeCommit uses.
+ */
+export function isReleaseCommit(subject, one) {
+  return (/^Release v\d/.test(subject) && !/-(beta|rc|alpha)\.|candidate/i.test(subject))
+    || Boolean(one('Release'));
+}
+
 export function makeCommit({
   sha = '', subject = '', body = '', files = [], authorDate = '',
   releaseSourceViolations = null,
@@ -130,9 +144,7 @@ export function makeCommit({
     // намеренно fail-closed: одного имени разрешённого version source мало.
     releaseSourceViolations,
     // Кандидат беты несёт работу и живёт по общим правилам — решение 1.
-    isRelease:
-      (/^Release v\d/.test(subject) && !/-(beta|rc|alpha)\.|candidate/i.test(subject))
-      || Boolean(one('Release')),
+    isRelease: isReleaseCommit(subject, one),
   };
 }
 
@@ -147,9 +159,15 @@ export function parseRecords(
     .map((rec) => {
       const [sha, subject, authorDate = '', body = ''] = rec.split(FS);
       const files = filesOf(sha);
+      // #385(в): the diff proof costs 2 git-show per src file — compute it
+      // only for commits the SAME predicate classifies as release, so
+      // isRelease and the proof can never disagree.
+      const text = `${subject}\n${body}`;
+      const one = (name) => text.match(new RegExp(`^${name}:\\s*(.+)$`, 'mi'))?.[1].trim() ?? null;
       return makeCommit({
         sha, subject, body, files, authorDate,
-        releaseSourceViolations: releaseSourceViolationsOf(sha, files),
+        releaseSourceViolations: isReleaseCommit(subject, one)
+          ? releaseSourceViolationsOf(sha, files) : null,
       });
     });
 }

@@ -12251,6 +12251,13 @@ public _renderMarkerDialog(): TemplateResult {
             <label class="srcrow">
               <input type="radio" name="bmode" .checked=${d.bindingMode === 'virtual'}
                 @change=${() => {
+                  // #385(а): re-selecting the current binding must not reset
+                  // the configured value source or badge — spec #378 §1.6
+                  // demands the reset only on an actual CHANGE of binding.
+                  if (d.binding === 'virtual') {
+                    this.host._markerDialog = { ...d, bindingMode: 'virtual', bindingOpen: false };
+                    return;
+                  }
                   const next = {
                     ...d, bindingMode: 'virtual' as const, binding: 'virtual', bindingOpen: false,
                     controls: persistedExternalControls('virtual', d.controls),
@@ -12297,6 +12304,13 @@ public _renderMarkerDialog(): TemplateResult {
                           ${cands.map(
                             (c) => html`<div class="cand ${c.value === d.binding ? 'sel' : ''}"
                               @click=${() => {
+                                // #385(а): same-binding click is a no-op —
+                                // only an actual change resets value source
+                                // and badge (spec #378 §1.6).
+                                if (c.value === d.binding) {
+                                  this.host._markerDialog = { ...d, bindingOpen: false };
+                                  return;
+                                }
                                 const next = {
                                   ...d, binding: c.value, bindingOpen: false,
                                   controls: persistedExternalControls(

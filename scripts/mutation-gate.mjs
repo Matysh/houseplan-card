@@ -736,6 +736,29 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'same-binding-click-resets-source',
+    guard: 'node demo/smoke_value_face_source.mjs',
+    because: 'a same-binding click silently wiping the configured value source is exactly '
+      + 'the #385(a) bug — only the dialog smoke drives the real handler',
+    patches: [{
+      file: 'src/houseplan-editor-runtime.ts',
+      find: "                                if (c.value === d.binding) {\n                                  this.host._markerDialog = { ...d, bindingOpen: false };\n                                  return;\n                                }",
+      replace: "                                if (false) { return; }",
+    }],
+  },
+  {
+    id: 'release-proof-computed-for-every-commit',
+    guard: 'node --test test/process-gate.test.mjs',
+    because: 'gating the expensive diff proof on the SAME release predicate is the #385(v) '
+      + 'contract — a narrowed or removed gate either wastes git-show spawns per commit '
+      + 'or hands release commits a null proof (false violations)',
+    patches: [{
+      file: 'scripts/process-gate.mjs',
+      find: "        releaseSourceViolations: isReleaseCommit(subject, one)\n          ? releaseSourceViolationsOf(sha, files) : null,",
+      replace: "        releaseSourceViolations: releaseSourceViolationsOf(sha, files),",
+    }],
+  },
+  {
     id: 'fit-house-hidden-walls-vote',
     guard: 'node demo/smoke_space_card.mjs',
     because: 'hidden architecture silently widening the tight frame is exactly the #384 bug: '

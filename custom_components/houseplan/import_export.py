@@ -501,6 +501,14 @@ def create_export(
                             continue
                         kept.append(ref)
                     marker["controls"] = kept or None
+                # #385(г): the two neutralisation formats below differ on
+                # purpose and are a PAIR — each disarms an external ref the
+                # way its own model represents "no source": the badge keeps
+                # its object with enabled=False/source=None (enabled is part
+                # of the badge model), while value_source's absence IS auto,
+                # so the key is dropped. Both count in dropped_marker_links;
+                # changing either format would break round-trips of existing
+                # exports.
                 badge = marker.get("value_badge")
                 source = badge.get("source") if isinstance(badge, dict) else None
                 ref = source.get("ref") if isinstance(source, dict) \
