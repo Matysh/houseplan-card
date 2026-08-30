@@ -3,8 +3,9 @@
 - Issue: https://github.com/Matysh/houseplan-card/issues/42
 - Приоритет: P2, tests/tech-debt; полный трек (backend class A + видимое
   поведение ошибок — решение аналитики 2026-08-15)
-- Ревизия: 5 (2026-08-30) — по SPEC-REVIEW-42-r3 (MarkerControlError-коды);
-  механизм + ступень baseline, пороги — последующие trivial
+- Ревизия: 6 (2026-08-30) — финальная правка r4 по АРБИТРАЖУ владельца
+  (§4: бюджет циклов исчерпан, решение зафиксировано в issue); механизм +
+  ступень baseline, пороги — последующие trivial
 - Тип: infra/tests + один видимый пользователю блок (тексты ошибок)
 
 ## Замеры ревизии (HEAD, песочница)
@@ -96,11 +97,18 @@ stubs HA, CI-итерации) — следующая ступень, зафик
   `marker_control_*`, `invalid_value_badge*`, `invalid_value_source*`,
   `invalid_light_entity`, `invalid_toggle_entity`,
   `value_badge_source_required` — validation.py:790-999) — сканер извлекает
-  их regex'ом по вызовам `MarkerControlError("<код>"` и требует каждый ∈
-  ERROR_CODES; (2) f-string-коды с префиксами `value_badge_` /
+  их так (r4, арбитраж): литералы на месте вызова — regex'ом по
+  `MarkerControlError("<код>"`; 6 кодов, передаваемых ЧЕРЕЗ ЛОКАЛЬНЫЕ
+  ПЕРЕМЕННЫЕ (`source_error`/`attribute_error` — условные присваивания
+  validation.py:819-844 → invalid_value_badge_source, invalid_value_source,
+  invalid_value_badge_attribute, invalid_value_source_attribute; `code` из
+  литерального кортежа :900-919 → invalid_light_entity,
+  invalid_toggle_entity) — сканер дополнительно извлекает по regex'у
+  присваиваний этих переменных литералами в том же модуле; каждый из 15 ∈
+  ERROR_CODES поимённо. (2) f-string-коды с префиксами `value_badge_` /
   `value_source_` — семейства ∈ ERROR_CODE_FAMILIES. Вызов
-  MarkerControlError с нелитеральным кодом вне известных f-string-паттернов
-  → красный сканер (fail-closed). Каждый фиксированный код ∈ ERROR_CODES и
+  MarkerControlError с кодом, не извлекаемым ни одним из путей, → красный
+  сканер (fail-closed). Каждый фиксированный код ∈ ERROR_CODES и
   имеет en-ключ `backup.error.<code>`; каждое семейство ∈
   ERROR_CODE_FAMILIES и обслуживается либо своим family-ключом, либо
   задокументированным общим fallback по коду — тест требует одно из двух.
@@ -176,6 +184,8 @@ Tooling не меняет stored data и успешные пользовател
 - Мутанты: м1 — удалить код из ERROR_CODES → красный AC5;
   м1b — убрать один err.code-источник из перечня сканера (например
   `PartitionOpeningJambMarginError`) → красный AC5 (ветка (б) доказана);
+  м1c (r4) — удалить `invalid_light_entity` (код-через-переменную) из
+  ERROR_CODES → красный AC5 (переменная-подветвь доказана);
   м2 — вернуть regex-first парсинг (сломать JSON-ветку) → красный AC6.
 - CI-доказательства AC1/AC2 — прогоном ветки, фиксируются в handoff.
 
