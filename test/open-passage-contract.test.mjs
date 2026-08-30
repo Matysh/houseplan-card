@@ -102,7 +102,8 @@ test('passage UI copy is bilingual and carries matching placeholders', () => {
 test('#42 _errText parses JSON details first and falls back code-first', () => {
   const card = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
   const errText = card.slice(card.indexOf('private _errText('), card.indexOf('private _backupErrorText('));
-  assert.match(errText, /JSON\.parse\(raw\)/, 'structured details are parsed as JSON');
+  assert.equal((errText.match(/JSON\.parse\(raw\)/g) || []).length, 2,
+    'BOTH structured-details branches (passage fields and jamb margin) parse JSON first');
   assert.match(errText, /space=\(\[\^;\]\*\)/, 'the legacy regex stays as one-beta read-compat');
   assert.ok(errText.indexOf('if (e.code != null)') < errText.indexOf('if (e.message) return e.message'),
     'code-first: a coded backend error localizes before any raw message');
