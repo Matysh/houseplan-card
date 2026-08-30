@@ -1048,9 +1048,13 @@ async def test_config_writers_reject_partition_opening_without_jamb_atomically(
     response = await client.receive_json()
     assert not response["success"]
     assert response["error"]["code"] == "invalid_partition_opening_jamb_margin"
-    assert "space=ground" in response["error"]["message"]
-    assert "opening=door" in response["error"]["message"]
-    assert "margin_cm=7.5" in response["error"]["message"]
+    # #42: the message is structured JSON details now (the legacy
+    # "space=... opening=... margin_cm=..." string is gone); the client
+    # localizes from the code and reads the fields from the JSON payload.
+    details = json.loads(response["error"]["message"])
+    assert details["space"] == "ground"
+    assert details["opening"] == "door"
+    assert details["margin_cm"] == 7.5
 
     await client.send_json_auto_id({"type": "houseplan/config/get"})
     stored = (await client.receive_json())["result"]
