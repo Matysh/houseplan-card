@@ -1,83 +1,127 @@
-# Issue #82 — плавное масштабирование zoom/fit/reset
+# Issue #82 — плавное масштабирование плана
 
 - **Issue:** https://github.com/Matysh/houseplan-card/issues/82
-- **Статус документа:** готово к будущей реализации; issue остаётся на `S3-spec`
+- **Актуализировано:** 2026-08-30 для `dev` / v1.69.0
 - **Приоритет:** P2
-- **Тип:** feature/polish, обычный трек
+- **Тип:** feature / polish, полный трек
 - **Пользовательское изменение:** да
 
-## 1. Проблема
+## 1. Сценарий и персона
 
-`_zoomAt()` и `_resetZoom()` сейчас атомарно заменяют `_zoom` и SVG `viewBox`.
-Конечная камера корректна, но при частых действиях — кнопка, wheel, Fit, home и
-double tap — глаз теряет связь между старым и новым фрагментом плана.
+Житель или гость рассматривает дом в View либо kiosk и приближает нужный
+фрагмент колесом, кнопками или двойным tap. Администратор делает то же в одном
+из desktop-first редакторов, чтобы точнее разместить объект. В обоих случаях
+дискретное изменение масштаба сейчас происходит мгновенно, и глаз на короткое
+время теряет объект и направление движения камеры.
 
-#82 вводит короткую анимацию единой камеры. Она не может быть CSS scale одного
-слоя: SVG, HTML markers, room labels, hit targets, Glow и editor overlays должны
-видеть один viewport на каждом кадре.
+View и kiosk остаются полностью поддерживаемыми на touch. Редакторы остаются
+desktop-first по `docs/TOUCH-SUPPORT.md`; задача не расширяет обещание полного
+touch-редактирования.
 
-## 2. Цели
+## 2. Что человек увидит до и после
 
-1. Анимировать дискретные user zoom/fit/reset без изменения конечной математики.
-2. Объединять rapid wheel в один retargetable transition.
-3. Оставить pinch и pan прямыми 1:1.
-4. Сохранить reduced-motion, interruptions, persistence и lifecycle contracts.
-5. Не перезапускать live layers и не создавать structural rebuild на каждом RAF.
+**До:** колесо, кнопки, «Вписать всё», стрелка возврата к потерянному плану и
+двойной tap скачком заменяют показанный фрагмент.
 
-## 3. Не входит в задачу
+**После:** те же действия за 160–220 мс плавно ведут к тому же конечному
+фрагменту, а pan и pinch по-прежнему без задержки следуют за рукой.
 
-- inertia, kinetic pan, bounce/overscroll;
-- animation space/mode change или initial mount;
-- изменение zoom limits, pan slack и content frame;
-- пользовательская настройка duration/easing;
-- изменение relative icon size;
-- новый storage format;
-- ухудшение Glow/plan pixels во время tween;
-- замена mode transition controller #101.
+## 3. Актуальность и проблема
 
-## 4. Матрица поведения
+Задача полностью актуальна на текущем `dev`:
 
-| Источник | Результат | Anchor | Duration |
+- `_zoomAt()` немедленно заменяет `_zoom` и `_view`;
+- `_onWheel()` и `_stepZoom()` сразу вызывают `_zoomAt()`;
+- `_resetZoom()` сразу ставит zoom `1` и текущий content fit;
+- `_fitAll()`, `_fitFar()`, home-arrow и kiosk double-tap проходят через
+  `_resetZoom()`;
+- `ModeTransitionController` из #101 плавно меняет режимы, но намеренно не
+  обслуживает zoom внутри одного режима;
+- интерактивная камера находится в основном `houseplan-card`, а lazy
+  `houseplan-editor-runtime` лишь вызывает её контракты. Для View не требуется
+  загружать editor chunk;
+- flat и isometric уже используют одну текущую `_view`; новый переход обязан
+  работать в координатах активной проекции и не менять их преобразование.
+
+Проблема относится к частой навигации J1/J2 из `docs/SCOPE.md`. Это не
+критическая ошибка, но заметный polish: короткое движение сохраняет
+пространственный контекст и делает дорогой визуально продукт спокойнее.
+
+## 4. Цели
+
+1. Плавно анимировать только дискретные пользовательские zoom/fit/reset.
+2. Объединять rapid wheel в один retargetable переход без очереди.
+3. Сохранить точную текущую математику zoom, anchor, fit, clamp и projection.
+4. Оставить pinch и pan прямыми 1:1.
+5. Согласовать camera transition с #73, #101, warm remount, lazy editor и
+   visual continuity.
+6. Не перезапускать Glow, device resolution или тяжёлую геометрию на кадрах
+   камеры.
+
+## 5. Не входит в задачу
+
+- inertia, kinetic pan, bounce и overscroll;
+- плавный pan как самостоятельная функция;
+- focus-on-room и другие новые команды камеры;
+- анимация пространства, flat ↔ isometric, View ↔ editor, initial mount,
+  resume или reconnect;
+- изменение `MIN_ZOOM`, `ZOOM_MAX`, `PAN_SLACK`, content frame либо outlier
+  policy;
+- изменение относительных размеров marker, furniture strokes или подписей;
+- настройка duration/easing пользователем;
+- новый storage/config/backend формат;
+- изменение визуальной семантики Glow или degradation изображения на время
+  zoom;
+- интерактивный zoom в `houseplan-space-card`: у static card его нет.
+
+## 6. Матрица поведения
+
+| Источник | Результат | Якорь | Длительность |
 | --- | --- | --- | --- |
-| `−` / `+` | один плавный zoom step | центр stage | 180 ms |
-| discrete wheel | retargetable zoom | pointer | до 160 ms после последнего input |
-| trackpad wheel stream | один tween без queue | актуальный pointer | retarget |
-| Fit / средняя кнопка | к fit viewport | target content center | 220 ms |
-| home arrow | к fit viewport | target content center | 220 ms |
-| double tap reset | к zoom 1 / fit | target center | 220 ms |
-| pinch | без tween | finger midpoint | direct |
-| pan | без tween/inertia | pointer | direct |
+| Кнопки `−` / `+` | один плавный zoom step | центр stage | 180 мс |
+| Mouse wheel | retargetable zoom | текущая позиция курсора | до 160 мс после последнего input |
+| Trackpad wheel stream | один непрерывно retargetable tween | текущая позиция курсора | без очереди |
+| «Вписать всё» / средняя кнопка | к актуальному core frame | центр target frame | 220 мс |
+| Far hint «Показать» | к frame со всеми outliers | центр target frame | 220 мс |
+| Home-arrow | к актуальному frame | центр target frame | 220 мс |
+| Kiosk double-tap | к zoom `1` / fit | центр target frame | 220 мс |
+| Pinch | без tween | midpoint пальцев | direct |
+| Pan / swipe | без tween и inertia | pointer | direct |
 
-Duration — compile-time UI constants. После замеров допустима унификация в
-диапазоне 160–220 ms без изменения продукта.
+Duration — compile-time UI constants. После инструментального измерения их
+можно унифицировать внутри 160–220 мс без нового продуктового решения, если
+сохраняется ощущение короткого перехода.
 
-## 5. Сценарии без анимации
+## 7. Сценарии без анимации
 
 Viewport применяется атомарно при:
 
-- initial mount и чтении сохранённого zoom;
-- warm remount, visibility resume и reconnect;
+- initial mount, чтении сохранённого zoom и cold/warm restore;
+- visibility resume, reconnect и continuity recovery;
 - смене пространства;
-- View ↔ editor и editor ↔ editor;
-- ResizeObserver/window resize и изменении toolbar height;
-- adoption config/layout revision и изменении content frame;
-- continuity recovery;
-- нулевом/нестабильном stage;
+- flat ↔ isometric;
+- View ↔ editor и editor ↔ editor: ими владеет #101;
+- `ResizeObserver`, изменении toolbar/context-tray height и resize окна;
+- принятии config/layout revision и изменении content frame;
+- нулевом или нестабильном stage;
 - `prefers-reduced-motion: reduce`.
 
-Эти пути не должны получить промежуточный fit flash, veil или старый target.
+Эти пути не получают промежуточный fit flash, veil или отложенное проигрывание
+старого camera target.
 
-## 6. Camera state
+## 8. Единый camera-only controller
 
-Pure модуль, условно `src/viewport-animation.ts`, оперирует:
+Добавляется pure camera transition controller, отдельный от
+`ModeTransitionController`, но использующий ту же perceptual easing и тот же
+принцип одного RAF/token owner.
 
 ```ts
 interface CameraState {
   zoom: number;
-  view: { x: number; y: number; w: number; h: number };
+  viewBox: { x: number; y: number; w: number; h: number };
 }
 
-interface ViewportTransition {
+interface CameraTransition {
   from: CameraState;
   to: CameraState;
   startedAt: number;
@@ -86,197 +130,273 @@ interface ViewportTransition {
 }
 ```
 
-Компонент остаётся единственным владельцем reactive `_zoom`/`_view`; animator
-вычисляет next state и lifecycle. В один момент существует максимум один RAF.
+Компонент остаётся единственным владельцем reactive `_zoom` и `_view`.
+Controller вычисляет представленный кадр и lifecycle, но не знает о Lit,
+localStorage, режимах или Home Assistant.
 
-Target строится существующими `fitView`, `ZOOM_MIN/MAX`, `_clampView` и текущей
-anchor-математикой. #82 не имеет альтернативных формул clamp.
+Одновременно действует не более одного владельца камеры:
 
-## 7. Интерполяция
+- camera transition не запускается во время подготовки/running перехода
+  режима;
+- начало mode/space/projection/structural transition отменяет camera
+  transition согласно §11;
+- camera transition не меняет `_modeTransitionVisual`, размеры chrome,
+  background или opacity слоёв;
+- core View не импортирует lazy editor runtime ради анимации.
 
-- easing — короткий ease-out, эквивалент `cubic-bezier(0.2, 0.7, 0.2, 1)`;
+## 9. Target и интерполяция
+
+Target строится до запуска перехода существующими `fitView`, `_baseVb()`,
+`MIN_ZOOM`, `ZOOM_MAX`, `_clampView()` и anchor-математикой `_zoomAt()`.
+Альтернативной формулы fit/clamp у #82 нет.
+
+- easing соответствует `cubic-bezier(0.2, 0.7, 0.2, 1)` из #101;
 - zoom интерполируется в log-space;
 - camera center интерполируется линейно с тем же eased progress;
-- width/height выводятся из интерполированного zoom и stage aspect;
-- каждый frame проходит clamp;
-- финальный frame присваивает exact target, исключая accumulated error;
-- invalid numbers немедленно завершаются safe target/fallback без NaN DOM.
+- width/height выводятся из интерполированного zoom и текущего aspect;
+- промежуточный кадр проходит текущий clamp;
+- последний кадр присваивает exact target, исключая накопленную ошибку;
+- NaN, infinity, вырожденный stage или отсутствие RAF ведут к безопасному
+  immediate target, а не к сломанному DOM;
+- pure helpers принимают управляемый clock/progress для детерминированных
+  unit-тестов.
 
-Pure helpers принимают управляемый progress/clock, чтобы unit и smoke не
-зависели от случайной wall-clock миллисекунды.
+Независимый CSS `transform: scale()` запрещён как конечный или временный
+источник истины: он иначе масштабирует SVG strokes, blur, HTML markers и hit
+targets и создаёт финальный commit jump.
 
-## 8. Wheel retargeting
+## 10. Wheel retargeting и anchor
 
-Новый wheel event:
+Каждое новое wheel-событие:
 
-1. берёт текущее представленное состояние running tween;
-2. накапливает zoom от предыдущего target, а не от запаздывающего start;
-3. пересчитывает target вокруг актуального pointer anchor;
-4. заменяет transition без queue и без лишнего RAF;
-5. позволяет мгновенно развернуть направление.
+1. берёт реально представленный camera state running tween;
+2. накапливает zoom от предыдущего target, а не от запаздывающего кадра;
+3. вычисляет world-point под актуальным pointer в представленном viewport;
+4. строит новый target так, чтобы этот point остался под pointer;
+5. заменяет transition без queue и второго RAF;
+6. допускает немедленный разворот направления.
 
-При отсутствии clamp точка под курсором остаётся под курсором с ошибкой не более
-0.5 CSS px. При clamp смещение допустимо только по ограниченной оси.
+Без clamp anchor остаётся на месте с ошибкой не более 0.5 CSS px. При clamp
+смещение допускается только на ограниченной оси. `deltaMode` нормализуется так,
+чтобы line/page wheel не создавал многосекундную очередь; текущий один event =
+один factor остаётся совместимым.
 
-## 9. Прерывания
+## 11. Прерывания и конкуренция
 
-- новый discrete zoom retarget-ит running tween;
-- pointerdown для pan/pinch/draw/drag фиксирует текущий visual frame, отменяет
-  tween и начинает жест без jump;
-- mode/space change, resize, config/layout adoption и continuity recovery
-  отменяют tween и передают управление соответствующему atomic flow;
-- `visibilitychange → hidden` коммитит user target немедленно, чтобы при возврате
-  animation не продолжалась;
-- `disconnectedCallback()` отменяет RAF и очищает state;
-- min/max no-op не создаёт RAF и не пишет storage;
-- Escape не отменяет zoom сам по себе, кроме закрытия owning interaction.
+- Новый discrete zoom retarget-ит running camera transition.
+- Pointerdown, который начинает pan, pinch, draw, drag или selection, сначала
+  фиксирует представленный кадр и отменяет tween без скачка.
+- Pinch всегда использует immediate `_zoomAt()` и не получает post-animation.
+- Mode/space/projection change, resize, config/layout adoption, continuity
+  recovery и viewport restore отменяют camera transition и выполняют свой
+  существующий атомарный контракт.
+- Если документ становится hidden, user target коммитится сразу; при возврате
+  старый tween не продолжается.
+- `disconnectedCallback()` отменяет RAF и очищает transition state.
+- Изменение media query на reduced motion во время tween коммитит target сразу.
+- Повторное действие на точном min/max или exact fit — no-op: RAF и запись
+  storage не создаются.
+- Escape не отменяет самостоятельный wheel/button zoom, если не запускает
+  действие, которое само владеет viewport.
 
-## 10. Интерактивность и слои
+## 12. Интерактивность и слои
 
-Во время tween нет overlay и `inert`:
+Во время camera tween stage не получает overlay или `inert`:
 
-- SVG и HTML consumers читают один `_zoom`/`_view` frame;
-- pointer hit-test использует реально показанную камеру;
-- pointerdown сначала завершает/cancel-ит animation boundary, затем выполняет
-  действие;
+- SVG, HTML markers, room labels, hit targets, Glow и editor overlays читают
+  один представленный `_zoom` / `_view`;
+- zoom badge показывает текущий нарисованный процент и exact target после
+  settle;
 - hover, tooltip и selection не отстают от пикселей;
-- editor snap после pointerdown получает тот же viewport;
+- pointerdown продолжает действие из реально показанной камеры;
+- opening/furniture/draw previews очищаются один раз при zoom-команде либо
+  прямом жесте, а не на каждом RAF;
 - click-through по прежнему положению объекта невозможен.
 
-Glow source resolution, opacity, blending и 500-ms live fade не меняются.
-Camera frames не меняют structural fingerprint, `_cfgEpoch`, registry/device
-graph или iso geometry cache. Нельзя временно скрывать backdrop, walls, decor,
-devices или effects ради скорости.
+Glow source resolution, opacity, blending, shadows и live fade не меняются.
+Camera frames не меняют structural fingerprint, config/layout epoch, device
+graph, wall model, projection cache или Glow source set. Нельзя временно
+скрывать backdrop, стены, decor, устройства либо эффекты ради скорости.
 
-## 11. Persistence
+## 13. Persistence
 
-- View сохраняет один итоговый target после settle;
-- direct gesture сохраняет фактический viewport по нынешнему gesture-end path;
-- editor zoom не попадает в View intent;
-- `LS_ZOOM` не меняет schema;
-- cancelled structural transition не сохраняет stale target;
-- no-op не переписывает localStorage.
+- View записывает итоговый target после settle, один раз на transition.
+- Retargetable wheel stream также даёт одну финальную запись.
+- Editor zoom не записывается в View intent.
+- Формат `LS_ZOOM` и warm viewport memo не меняется.
+- Structural cancellation не сохраняет stale camera target.
+- Immediate pinch/pan используют существующий gesture persistence contract;
+  его отдельная оптимизация не входит в #82.
+- No-op не переписывает localStorage.
 
-Zoom badge во время tween показывает текущий нарисованный процент, после settle
-— exact target. Accessible names кнопок не меняются.
+## 14. Модель данных, миграция и compatibility
 
-## 12. Touch и accessibility
+Server config, layout, backend API, normalized model и файлы плана не меняются.
+Новых сохраняемых полей нет, миграция отсутствует. Старые и новые карточки
+читают один и тот же `LS_ZOOM`; отличие только presentation-time.
 
-- pinch остаётся без lag и post-animation;
-- double tap reset анимируется только после подтверждённого single-pointer
-  gesture и не конкурирует с pinch;
-- reduced motion всегда идёт immediate path;
-- animation не переносит DOM focus;
-- keyboard-operated zoom buttons используют ту же transition систему;
-- View/kiosk touch smoke является release-blocking.
+## 15. Touch и accessibility
 
-## 13. Edge cases
+- Pinch остаётся без lag и строго следует midpoint.
+- Kiosk double-tap анимируется только после подтверждённого single-pointer
+  gesture и не конкурирует с pinch/swipe lock.
+- `prefers-reduced-motion: reduce`, включая его изменение во время перехода,
+  всегда ведёт к immediate exact target.
+- Keyboard activation кнопок использует тот же transition path.
+- Анимация не переносит DOM focus и не меняет accessible names.
+- View/kiosk touch smoke release-blocking; touch editors — safety regression
+  check по `docs/TOUCH-SUPPORT.md`.
 
-- точные `ZOOM_MIN` и `ZOOM_MAX`;
-- zoom 1 со смещённым center;
-- потерянный план и home arrow;
-- wide/tall/diagonal/degenerate content frame;
-- пустое пространство и fallback `view_box`;
+## 16. Edge cases
+
+- точные `MIN_ZOOM = 1/3` и `ZOOM_MAX = 8`;
+- zoom `1` со смещённым center;
+- content полностью вне viewport и home-arrow;
+- core frame против all/outlier frame;
+- wide, tall, diagonal, line-only и degenerate content;
+- пустое пространство с fallback `view_box`;
 - rapid wheel в обе стороны и меняющийся anchor;
 - wheel + pointerdown в одном frame;
 - pinch во время tween;
-- resize toolbar/stage и mode/space switch;
+- resize toolbar/stage, mode/space switch и projection switch;
 - visibility hidden сразу после старта;
-- Flat/Iso, light/dark, kiosk и три editor mode;
-- отсутствие RAF в test/non-browser environment → immediate fallback.
+- flat/isometric, light/dark, kiosk, View и три editor mode;
+- отсутствующий RAF/performance clock в тестовом окружении.
 
-## 14. Acceptance criteria
+## 17. Acceptance criteria и доказательства
 
-1. Buttons, wheel, Fit, home и double tap имеют промежуточный viewport.
-2. Pinch и pan остаются direct и не получают post-animation.
-3. Все visible layers и hit targets используют один camera state на кадр.
-4. Wheel сохраняет anchor и объединяется в один retargetable tween.
-5. Reversal не создаёт queue или jump.
-6. Финальная камера совпадает с прежней zoom/fit/clamp математикой.
-7. Min/max no-op не запускает loop.
-8. Pointer, navigation, resize и structural reload прерывают безопасно.
-9. Mount/resume/reconnect остаются atomic.
-10. Reduced motion не имеет промежуточного кадра.
-11. View persistence выполняет одну запись; editor не пишет View intent.
-12. Glow/hover/backdrop/device state не мигают и не пересчитываются структурно.
-13. Disconnect не оставляет RAF/listener/timer.
-14. Heavy fixture заканчивает transition без blank/black/stale frame.
+| AC | Критерий | Обязательное доказательство |
+| --- | --- | --- |
+| AC1 | `−/+`, wheel, fit, far-fit, home и kiosk double-tap имеют хотя бы один промежуточный camera frame и прежний exact target | Unit + browser smoke |
+| AC2 | Pinch и pan остаются direct, без lag и post-animation | Browser smoke |
+| AC3 | Все SVG/HTML/effect/hit слои используют один camera state; видимый объект кликается во время tween | Browser smoke + code review |
+| AC4 | Rapid wheel использует один RAF, retarget без queue, сохраняет pointer anchor и допускает reversal | Unit + browser smoke |
+| AC5 | Exact min/max/fit no-op не запускает RAF и не пишет storage | Unit |
+| AC6 | Pointer, mode, space, projection, resize, adoption, hidden и disconnect завершают/отменяют transition по матрице §11 без jump | Unit + browser smoke |
+| AC7 | Mount/resume/reconnect/warm restore остаются атомарными и не проигрывают старый target | Browser smoke continuity regression |
+| AC8 | Reduced motion до и во время tween даёт immediate exact target | Unit + browser smoke |
+| AC9 | View пишет один итоговый zoom; editor и cancelled structural target не пишут View intent | Unit + browser smoke |
+| AC10 | Flat и isometric приходят к тем же конечным viewBox/zoom, что до #82 | Unit + browser smoke |
+| AC11 | Glow source count, opacity/blend, hover, backdrop и device state не меняются из-за camera frame | Browser smoke + performance counters |
+| AC12 | Disconnect не оставляет RAF, timer или listener | Unit |
+| AC13 | Heavy flat/isometric/Glow fixtures завершают transition без blank, black, stale frame и без structural rebuild на RAF | Performance profile + screencast smoke |
+| AC14 | Основной View не запрашивает lazy editor chunk только из-за zoom | Browser network assertion |
 
-## 15. План тестирования
+## 18. План автотестов
 
 ### Unit
 
-- interpolation start/mid/end, monotonic log zoom, exact target;
-- anchor preservation и clamp exception;
-- retarget from presented state, reversal и no queue;
-- min/max no-op и reduced-motion immediate path;
-- cancellation matrix;
-- persistence count и editor no-write;
+Новый `test/viewport-transition.test.mjs` проверяет:
+
+- easing/interpolation start, mid, end и exact target;
+- monotonic log zoom и linear center;
+- anchor preservation, clamp exception и aspect;
+- retarget from presented state, accumulated target и reversal;
+- единственный RAF/no queue;
+- min/max/fit no-op;
+- reduced-motion/immediate fallback;
+- cancel, commit-target, hidden и dispose;
 - invalid/degenerate inputs.
+
+Существующие `mode-transition.test.mjs` остаются зелёными; общая easing helper
+не может изменить их согласованные кадры.
 
 ### Browser smoke
 
-- zoom button с промежуточным и final frame;
-- edge wheel anchor и rapid stream;
-- Fit/home/double tap;
-- pinch/pan во время tween;
-- click device/room в движущемся viewport;
-- View/Plan/Devices/Backdrop parity;
-- reduced motion;
-- visibility/mode/space/resize/disconnect;
-- #73/#101 continuity regression;
-- Glow source/opacity/blend parity до/во время/после.
+Новый `demo/smoke_smooth_zoom.mjs` на production component проверяет AC1–AC12
+и AC14. Clock управляется через controller/harness, поэтому assertions не
+зависят от попадания в случайную wall-clock миллисекунду.
 
-### Performance
+Регрессии выбираются через `npm run smokes:select`; обязательный минимум:
 
-На canonical heavy Glow fixture:
+- zoom-out / kiosk pan-lock;
+- #73 visual continuity / warm remount;
+- #101 View/editor mode transition;
+- flat/isometric projection switch;
+- heavy Glow camera path;
+- opening/furniture preview interruption.
 
-- один RAF loop;
-- ноль registry/device/geometry rebuild на camera frame;
-- duration не превышается более чем на два реально доступных кадра после
-  main-thread stall;
-- нет long blank/black frame;
-- обычный `large-house-v1` и isometric profile остаются в текущих budgets.
+### Golden и performance
 
-Golden baseline не переакцептуется: final pixels должны совпасть. Для доказательства
-движения используется deterministic frame/screencast smoke, а не новый final PNG.
+Final pixels не меняются, поэтому новые golden baselines не принимаются.
+Плавность доказывается deterministic DOM/screencast smoke с промежуточным
+кадром. На canonical heavy Glow и large-house flat/isometric profiles:
 
-## 16. План реализации
+- один camera RAF;
+- ноль device/registry/wall/projection/Glow-source rebuild на frame;
+- settle не позже duration + двух реально доступных кадров после main-thread
+  stall;
+- нет blank/black frame и continuity overlay;
+- действующие bundle и runtime budgets не ухудшаются сверх их допуска.
 
-1. Вынести pure camera interpolation/retarget helpers.
-2. Добавить один animator lifecycle в card.
-3. Перевести button/wheel/fit/home/double tap на target API.
-4. Подключить cancellation к direct gestures и structural flows.
-5. Отложить persistence до settle.
-6. Добавить reduced-motion и lifecycle cleanup.
-7. Прогнать unit, browser smoke, build и pre-beta performance.
+## 19. Затронутые модули
 
-## 17. Документация и release-артефакты
+Планируемые точки изменения:
 
-- оба changelog получают user-visible пункт;
-- `docs/USER-GUIDE.ru.md` обновляет zoom/gesture table и reduced-motion;
-- `docs/CANVAS.md` описывает единого camera animator и interruption contract;
-- `docs/TESTING.md` получает deterministic transition checks;
-- новые i18n keys не требуются, если button text не меняется;
-- final golden не меняется; mid-transition evidence проверяется smoke;
-- Full Performance обязателен перед beta по обычному release process.
+- `src/viewport-transition.ts` — pure camera controller/helpers;
+- `src/mode-transition.ts` — только общий экспорт easing primitive, если это
+  позволит избежать расхождения двух одинаковых curves;
+- `src/houseplan-card.ts` — target calculation, lifecycle, handlers и
+  interruption boundary;
+- `src/houseplan-editor-runtime.ts` — только host-port/cancellation call, если
+  этого потребует mode switch; бизнес-логика zoom остаётся в core;
+- unit и browser smoke из §18;
+- документация и changelog из §21.
 
-## 18. Риски и откат
+## 20. i18n
+
+Новых подписей, кнопок и сообщений нет. Новые i18n keys не требуются. Текущие
+RU/EN/DE/FR accessible names и tooltips остаются неизменными.
+
+## 21. Release-артефакты
+
+- `docs/CHANGELOG.md` и `docs/CHANGELOG.ru.md`: короткий user-visible пункт со
+  ссылкой на #82;
+- `docs/USER-GUIDE.md` и `docs/USER-GUIDE.ru.md`: таблица zoom/gesture и
+  reduced-motion;
+- `docs/CANVAS.md`: camera-only animator, ownership и interruption contract;
+- `docs/TESTING.md`: deterministic transition и continuity regressions;
+- `docs/ARCHITECTURE.md`: один абзац о разделении mode и camera controllers;
+- `docs/STATUS.md`: обновить feature surface, если текущая политика релизной
+  ветки требует;
+- docs screenshot fingerprint обновляется штатным CI/accept flow; новые
+  пользовательские screenshots не нужны, поскольку финальный кадр тот же;
+- перед beta выполняются штатные Full Performance, browser/golden и touch
+  release gates. Golden baseline не переакцептуется.
+
+## 22. Риски и меры
 
 | Риск | Мера |
 | --- | --- |
-| SVG/HTML расходятся | один reactive CameraState |
-| Wheel ощущается медленным | retarget, не queue |
-| Pointer выбирает старую позицию | cancel at presented frame before hit-test |
-| Glow rebuild на каждом RAF | cache/rebuild counters в smoke/perf |
-| Resume проигрывает старый tween | explicit structural cancellation matrix |
+| Два controller одновременно пишут `_view` | строгая взаимная отмена mode/camera ownership |
+| SVG и HTML расходятся | только reactive `_zoom`/`_view`, без CSS scale |
+| Wheel ощущается медленным | retarget от presented state и target accumulation |
+| Pointer выбирает старую позицию | cancel/freeze at presented frame на pointerdown |
+| Glow/geometry rebuild на каждом RAF | counters в smoke/performance и стабильные fingerprints |
+| Resume проигрывает старый tween | explicit hidden/disconnect/continuity cancellation |
+| Lazy editor попадает в View bundle | controller живёт в core, network assertion AC14 |
+| Isometric camera drift | exact old target и projection regression AC10 |
 
-Откат возвращает discrete handlers к `_zoomAt()`/`_resetZoom()`. Storage и model
-не мигрируют.
+## 23. Откат
 
-## 19. Принятые технические предположения
+Откат возвращает handlers к immediate `_zoomAt()` / `_resetZoom()` и удаляет
+camera controller. Config, layout, localStorage schema и backend не требуют
+обратной миграции. Если performance gate выявляет недопустимую стоимость,
+feature можно целиком откатить одним frontend commit без потери данных.
 
-- pure helper может жить отдельно от mode transition #101;
-- 160–220 ms допустимо настраивать после измерения без product review;
-- current stage aspect остаётся authoritative на каждом frame;
-- #152 при более поздней реализации переиспользует этот animator.
+## 24. Принятые технические предположения
+
+Эти решения не являются отдельным продуктовым контрактом и могут быть изменены
+по ревью:
+
+- camera controller отделён от `ModeTransitionController`, но curve helper
+  общий;
+- `_zoom` отражает представленный кадр, отдельное поле controller хранит target
+  для wheel accumulation;
+- структурная навигация имеет приоритет над camera tween;
+- current stage aspect authoritative на каждом frame;
+- финальный target вычисляется существующей камерой до запуска tween;
+- #152 либо будущий focus-on-room сможет переиспользовать target API, но не
+  входит в реализацию #82.
+
+Продуктовых вопросов к владельцу нет.
