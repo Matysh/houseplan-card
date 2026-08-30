@@ -4176,16 +4176,16 @@ export class HouseplanCard extends LitElement {
     const configChanged = nextCfgFingerprint !== (this._cfgContentFingerprint
       || contentFingerprint(this._serverCfg));
     if (configChanged) {
-      // #82: a new structural baseline owns the viewport. Freeze the last
-      // painted camera frame before replacing geometry so an obsolete target
-      // cannot settle against the new content frame.
-      this._cancelCameraTransition(false);
       // A genuinely different baseline invalidates local geometry undo. A
       // reconnect echo with identical content deliberately does not.
       this._geometryHistory.clear();
       this._devicePositionHistory.clear();
       this._cancelDeviceDrag();
       this._pendingPhysicalWrites.clear();
+      // #82: a new structural baseline owns the viewport. Freeze the last
+      // painted camera frame before replacing geometry so an obsolete target
+      // cannot settle against the new content frame.
+      this._cancelCameraTransition(false);
       if (this._serverCfg) this._clearGeometryGesture();
       this._serverCfg = nextConfig;
       this._seedDecorStyle(this._serverCfg);
