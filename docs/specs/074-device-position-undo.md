@@ -1,69 +1,104 @@
 # Issue #74 — position-only Undo/Redo в редакторе устройств
 
 - **Issue:** https://github.com/Matysh/houseplan-card/issues/74
-- **Статус документа:** готово к будущей реализации; issue остаётся на `S3-spec`
+- **Статус документа:** готово к ревью ТЗ (`S4-spec-review` после публикации)
 - **Приоритет:** P2
-- **Тип:** feature/polish, обычный трек
+- **Тип:** feature/polish, полный трек
 - **Пользовательское изменение:** да
 
-## 1. Проблема
+## 1. Пользовательский результат
 
-Device editor позволяет перетаскивать маркеры, но завершённый drag сразу
-попадает в layout store и не оформляется как отменяемая команда. Plan и
-Backdrop уже используют именованную историю, поэтому одинаковая ошибка
-пользователя имеет разную цену в соседних редакторах.
+### До
 
-Текущий путь `_savePos()` меняет `_layout` во время движения. #74 добавляет
-локальную историю только ручных позиций устройств и одновременно делает drag
-транзакционным с точки зрения истории и финального persist.
+В редакторе устройств любое ошибочное перетаскивание сразу меняет серверный
+layout. Кнопок Undo/Redo нет, а `Ctrl/Cmd+Z` в этом редакторе ничего не делает.
+Во время одного drag текущая реализация вызывает `_savePos()` на каждом
+`pointermove`, поэтому жест не имеет явной транзакционной границы.
 
-## 2. Цели
+### После
 
-1. Один завершённый drag одного маркера становится одной командой.
-2. Undo/Redo доступны кнопками и стандартными shortcuts только в Device editor.
-3. Первый ручной drag auto-positioned устройства полностью обратим.
-4. История не откатывает настройки, lifecycle или объекты других редакторов.
-5. Remote layout revision безопасно инвалидирует session-local команды.
+Одно завершённое перемещение одного устройства становится одной локальной
+командой. Пользователь может отменить и повторить до 50 перемещений кнопками в
+панели редактора или стандартными shortcuts. Undo меняет только положение
+маркера: настройки, привязки, жизненный цикл устройства и объекты других
+редакторов не затрагиваются.
 
-## 3. Не входит в задачу
+### Основной пользователь
 
-- общий Undo всех настроек устройства;
-- отмена add/delete/hide/show или virtual devices;
-- keyboard nudging стрелками (#41);
-- server-side история между перезагрузками;
-- cross-client collaborative Undo;
-- объединение с geometry history;
-- изменение backend API, если текущая atomic layout write достаточна.
+Функция предназначена для администратора Home Assistant, который раскладывает
+устройства по плану в desktop-first редакторе. Гарантированный touch-контракт
+View не расширяется, но отменённый системой touch-жест не должен сохранять
+случайную позицию.
 
-## 4. Пользовательский контракт
+## 2. Актуальность на 2026-08-30
 
-В основной панели Device editor перед Close постоянно присутствуют icon-only
-кнопки Undo и Redo. Они не появляются динамически и не меняют геометрию панели.
+Задача полностью актуальна на текущем `dev`:
 
-- пустая история: disabled, tooltip/`aria-label` сообщают об отсутствии шага;
-- непустая: подпись включает операцию и имя, например «Отменить: перемещение
-  Датчик движения»;
-- успешное применение использует существующие именованные toast;
-- View, Plan и Backdrop не показывают эти кнопки и не меняют shortcuts.
+- `CommandStack` используется для геометрии и декора, но отдельной истории
+  позиций устройств нет;
+- Device toolbar не содержит Undo/Redo;
+- keyboard handler выходит до обработки history в режиме `devices`;
+- `_pointerMove()` вызывает `_savePos()` и планирует persist на каждом кадре;
+- `pointercancel` сейчас направлен в обычный `pointerup`, поэтому отменённый
+  браузером жест фактически коммитится;
+- backend уже предоставляет точечные `houseplan/layout/update` и
+  `houseplan/layout/delete`, менять API или схему не требуется.
 
-Shortcuts:
+## 3. Цели
 
-- `Ctrl/Cmd+Z` — Undo;
-- `Ctrl/Cmd+Shift+Z` и `Ctrl+Y` — Redo;
-- `input`, `textarea`, `select`, `[contenteditable]` сохраняют native history;
-- shortcut действует только когда текущий mode равен `devices`.
+1. Один успешно завершённый drag — одна команда и одна финальная запись.
+2. Undo/Redo доступны только в Device editor кнопками и стандартными shortcuts.
+3. Первый drag auto-positioned устройства полностью обратим до отсутствующей
+   explicit layout-записи.
+4. Preview, commit, abort и persist failure имеют однозначный контракт.
+5. Position-only merge сохраняет `k`, включая `k: 0`, и неизвестные future поля.
+6. Собственный server echo сохраняет историю, несовместимое внешнее изменение
+   безопасно её инвалидирует.
 
-## 5. Модель команды
+## 4. Не входит в задачу
 
-Вводится отдельный `CommandStack<DevicePositionCommand>(50)`. Переиспользуется
-общий `src/command-stack.ts`, но state и apply-функции не смешиваются с
+- общий Undo настроек устройства;
+- отмена add/delete/hide/show/rebind и создания virtual device;
+- keyboard nudging стрелками — отдельный scope #41;
+- server-side история между reload/remount;
+- collaborative Undo между клиентами;
+- объединение с geometry/decor history;
+- изменение backend schema/API или миграция layout;
+- расширение гарантированного touch-редактирования за пределы safety contract.
+
+## 5. UX панели и shortcuts
+
+В основной панели Device editor перед постоянной кнопкой закрытия появляются
+постоянные icon-only кнопки Undo и Redo. Они не относятся к динамической
+context tray, не меняют высоту панели и не сдвигают рабочую область.
+
+- Undo: `mdi:undo-variant`; Redo: `mdi:redo-variant`.
+- Пустая история или выполняющаяся запись: кнопка disabled.
+- Доступное имя и tooltip используют существующие `history.undo_named`,
+  `history.redo_named`, `history.undo_empty`, `history.redo_empty`.
+- Имя команды локализуется новым ключом `history.device_move` и включает имя
+  устройства, например «Перемещение: Датчик движения».
+- После успеха используются `history.undone` / `history.redone`.
+- `Ctrl/Cmd+Z` — Undo.
+- `Ctrl/Cmd+Shift+Z` и `Ctrl+Y` — Redo.
+- В `input`, `textarea`, `select` и `[contenteditable]` сохраняется нативная
+  история поля.
+- Shortcuts активны только при `_mode === "devices"`; View, Plan и Backdrop не
+  меняют своё поведение.
+
+Если Undo вызван во время активного drag, первый вызов только abort-ит preview.
+Следующий Undo применяет последнюю завершённую команду.
+
+## 6. Модель команды
+
+Вводится отдельный `CommandStack<DevicePositionCommand>(50)`. Общий
+`src/command-stack.ts` переиспользуется без смешивания со
 `_geometryHistory`.
 
 ```ts
-interface DevicePlacementSnapshot {
-  hasPlacement: boolean;
-  x?: number;
-  y?: number;
+interface DevicePlacement {
+  x: number;
+  y: number;
   s?: string;
 }
 
@@ -71,203 +106,232 @@ interface DevicePositionCommand {
   deviceId: string;
   spaceId: string;
   displayName: string;
-  before: DevicePlacementSnapshot;
-  after: DevicePlacementSnapshot;
+  before: DevicePlacement | null;
+  after: DevicePlacement;
 }
 ```
 
-Snapshot содержит только placement-поля `x`, `y`, `s`. Признак
-`hasPlacement=false` отличает auto-position от явной записи. Отображаемое имя
-служит только для UI и не используется для поиска объекта.
+`null` означает, что до ручного перемещения ключ устройства отсутствовал в
+layout и маркер использовал auto-position. Команда хранит только placement;
+текущие sibling-поля записи берутся в момент применения и сохраняются.
 
-## 6. Транзакция drag
+Координаты `after` — уже каноническая snapped wire-position для текущего
+normalized/legacy режима. Undo/Redo не пропускает сохранённые точки через snap
+повторно и не накапливает drift.
 
-### 6.1 Начало
+## 7. Чистые position helpers
 
-`pointerdown` после существующих permission/disabled guards фиксирует:
+Добавляется отдельный pure-модуль (рекомендуемо
+`src/device-position-history.ts`) со следующими обязанностями:
 
-- stable device id и space id;
-- raw layout entry до preview;
-- фактическую auto-position, если placement отсутствует;
-- pointer id/capture и текущий snapped node.
+- снять `DevicePlacement | null` с layout по stable id;
+- сравнить две placement-позиции;
+- применить placement к копии layout;
+- при update сохранить все текущие неизвестные поля и `k`, включая `k: 0`;
+- при `null` удалить весь ключ устройства, поскольку валидная persisted
+  position-запись обязательно содержит `x/y`;
+- не мутировать входной объект.
 
-Начало drag не меняет history и не очищает redo branch.
+Room-label ids (`rl_*`) продолжают использовать свой текущий путь сохранения и
+никогда не попадают в device position history.
 
-### 6.2 Preview
+## 8. Транзакция drag
 
-`pointermove` обновляет только локальный preview. Оно может вызывать render, но
-не создаёт команду и не инициирует пользовательскую persist-транзакцию на каждом
-кадре. Если текущая архитектура требует `_layout` как preview source, изменения
-помечаются как uncommitted и полностью восстанавливаются при abort.
+### 8.1 Begin
 
-### 6.3 Commit
+После существующих permission/disabled guards `pointerdown` фиксирует stable
+device id, `spaceId`, имя, pointer id и placement `before`. Пока выполняется
+предыдущий финальный update/delete, новый drag не начинается: это короткая
+serialisation boundary, исключающая гонку rollback с более новой командой.
 
-`pointerup` применяет существующие snap, normalized/legacy conversion, bounds и
-clamp. Если конечный node отличается от исходного placement:
+### 8.2 Preview
 
-1. создаётся ровно одна named command;
-2. очищается redo branch через `CommandStack.push()`;
-3. выполняется одна финальная layout persist;
-4. собственный server echo связывается с этой транзакцией.
+`pointermove` применяет snap/clamp/conversion и меняет только локальный preview.
+Он может запросить render, но:
 
-Клик, движение ниже threshold и возврат на исходный snapped node — no-op: нет
-команды, записи и очистки Redo.
+- не добавляет id в `_dirtyPos`;
+- не запускает debounce/persist;
+- не создаёт history entry;
+- полностью обратим до `before`.
 
-### 6.4 Abort
+### 8.3 Commit
 
-`pointercancel`, `lostpointercapture`, Escape, смена mode во время drag и потеря
-устройства восстанавливают raw before-state. Команда и финальная запись не
-создаются.
+На `pointerup` конечная placement сравнивается с `before`.
 
-Undo во время активного drag сначала abort-ит этот drag. Только следующий Undo
-берёт завершённую команду из stack.
+- Нет реального snapped-изменения: оставить/восстановить исходное состояние,
+  не писать серверу, не добавлять command и не очищать Redo.
+- Есть изменение: выполнить одну optimistic final mutation и одну точечную
+  `houseplan/layout/update`. После подтверждённого успеха добавить одну named
+  command. До завершения persist Undo/Redo и новые drag disabled.
+- Ошибка update: вернуть `before`, не добавлять command и показать
+  `toast.pos_save_failed`.
 
-## 7. Применение Undo/Redo
+### 8.4 Abort
 
-- Undo применяет `before`, Redo — `after`.
-- Existing/future non-placement поля layout entry сохраняются.
-- Если `before.hasPlacement=false`, Undo удаляет `x/y/s`; пустой после этого
-  объект удаляется, непустой сохраняет остальные поля.
-- Redo восстанавливает точную конечную snapped position.
-- Команда другого пространства сначала переключает карточку на `spaceId`, затем
-  показывает применённый результат.
-- Применение выполняет одну optimistic mutation и одну persist-транзакцию.
-- Ошибка persist откатывает optimistic state либо запускает текущий
-  conflict/reload flow; неприменимая команда не остаётся в history.
+`pointercancel`, `lostpointercapture`, Escape, смена editor mode, disconnect,
+второй pointer, а также исчезновение/HA-disable устройства во время жеста:
 
-Нельзя пропускать координаты через snap второй раз так, чтобы round-trip менял
-их. Conversion обязан быть идемпотентным для уже сохранённого значения.
+1. восстанавливают локальный `before`;
+2. освобождают capture/drag state;
+3. не создают command;
+4. не отправляют финальный update/delete.
 
-## 8. Строгая граница истории
+## 9. Undo/Redo и persist
+
+Undo извлекает команду и применяет `before`, Redo — `after`.
+
+- `before === null`: optimistic delete ключа и один
+  `houseplan/layout/delete`.
+- Placement: position-only merge и один `houseplan/layout/update`.
+- Во время запроса history controls disabled, следующий жест не начинается.
+- При успехе направление stack остаётся изменённым и показывается named toast.
+- При ошибке optimistic state и направление stack восстанавливаются: failed
+  Undo снова доступен как Undo, failed Redo — как Redo.
+- `_sentPos` либо эквивалентная pending-authority карта должна представлять как
+  update, так и delete tombstone. Layout reload не может воскресить manual
+  запись, удаляемую Undo, пока delete ещё in-flight.
+
+Команда другого пространства сначала переключает карточку на `spaceId`, чтобы
+результат был виден, затем применяет изменение. Проверка выполняется по stable
+device id и ожидаемому space, а не по сохранённому display name.
+
+## 10. Невалидные команды и revisions
+
+History session-local и сохраняется при View ↔ Devices и обычном переключении
+пространств. Reload/remount её теряет.
+
+- Own echo с тем же фактическим layout content не очищает stack.
+- Reconnect с тем же content не очищает stack.
+- Любой принятый authoritative layout, отличающийся от текущего optimistic
+  content, conflict/reload или whole-layout replacement очищает оба направления.
+- Authoritative config change, из-за которого command device удалён, сменил id,
+  space или стал HA-disabled, делает команды неприменимыми.
+- Перед каждым Undo/Redo устройство повторно валидируется. Stale command не
+  воскрешает объект: весь position stack очищается и показывается новый
+  локализованный toast `history.device_stale`.
+- Новый успешный drag после Undo очищает Redo стандартным `CommandStack.push()`.
+
+Нельзя определять own echo только по timeout/wall-clock. Используются текущие
+revision/content contracts и сравнение канонического content.
+
+## 11. Строгая граница истории
 
 Position stack не получает команды при:
 
-- save device dialog и изменении binding/entity/room/HA Area;
+- сохранении dialog и смене entity/binding/room/HA Area;
 - icon, size, rotation, display, tap action, Glow и controls;
 - hide/show/delete/re-add;
-- add virtual device и icon rules;
-- Show hidden;
+- add virtual device, icon rules и Show hidden;
 - auto placement, registry rebuild, optimizer/migration;
 - room-label, decor, wall, opening и другой geometry drag;
-- remote layout adoption.
+- принятии remote layout.
 
-HA-disabled устройство не начинает drag. Hidden ghost, если текущий UI уже
-разрешает его перемещение, использует обычную position-команду.
+Удаление/rebind/HA-disable устройства очищает неприменимую историю, но не
+создаёт обратную команду.
 
-## 9. Revision и lifecycle
+## 12. Touch, accessibility и performance
 
-- stack session-local и живёт в экземпляре карточки;
-- View ↔ Devices и space switch не очищают его сами по себе;
-- собственный echo после успешной persist не очищает stack;
-- более новая внешняя layout revision, conflict/reload или полная замена layout
-  очищает Undo и Redo;
-- новый manual drag после Undo очищает redo branch;
-- удалённое, HA-disabled или сменившее stable id устройство не воскрешается;
-  команда признаётся stale, stack очищается, показывается локализованный toast;
-- disconnect/remount не сериализует history.
+- Кнопки используют существующий размер toolbar target и `focus-visible`.
+- Tooltip и `aria-label` совпадают по смыслу и локализованы на EN/RU/DE/FR.
+- `pointercancel`, lost capture и multitouch выполняют безопасный abort.
+- Редактор остаётся desktop-first согласно `docs/TOUCH-SUPPORT.md`.
+- Snapshot и apply имеют O(1) стоимость; stack ограничен 50 командами.
+- Удаление persist/debounce из `pointermove` снижает объём работы во время drag.
 
-Различение own echo и external revision переиспользует существующий revision
-contract, а не timeout или сравнение wall-clock.
+## 13. Acceptance criteria и доказательства
 
-## 10. Touch и accessibility
+| AC | Критерий | Обязательное доказательство |
+| --- | --- | --- |
+| AC1 | Один drag даёт одну команду и одну финальную запись; десять `pointermove` не пишут серверу | Browser smoke с fake WS/write counter |
+| AC2 | Undo/Redo возвращают exact before/after для двух устройств и нескольких drag одного устройства в LIFO-порядке | Browser smoke |
+| AC3 | Auto → manual → Undo удаляет ключ через delete, Redo делает update | Unit + browser smoke |
+| AC4 | No-op не создаёт команду и не очищает Redo | Unit + browser smoke |
+| AC5 | Cancel/lost capture/Escape/mode switch/disconnect/second pointer восстанавливают preview и дают ноль final writes | Browser smoke + source guard |
+| AC6 | Undo во время drag только abort-ит его | Browser smoke |
+| AC7 | Persist failure откатывает position и корректно восстанавливает направление stack | Browser smoke update/delete failure |
+| AC8 | `k: 0` и неизвестные sibling-поля сохраняются; room-label не входит в history | Unit |
+| AC9 | Кнопки и три shortcut работают только в Device editor; native field history не перехватывается | Browser smoke |
+| AC10 | Own echo/reconnect same-content сохраняют stack, отличный remote content очищает | Browser smoke sync fixture |
+| AC11 | Команда другого пространства переключает пространство и видимо применяется | Browser smoke |
+| AC12 | Deleted/rebound/HA-disabled device не воскрешается, stack fail-closed очищается | Browser smoke |
+| AC13 | Device toolbar сохраняет высоту и доступные имена на поддерживаемых ширинах | Golden + DOM/a11y assertions |
+| AC14 | Geometry/decor Undo/Redo, pan/zoom и layout sync не регрессируют | Targeted regression smoke |
 
-View/touch contract не меняется. В desktop-first Device editor:
-
-- кнопки имеют стабильный размер touch target и видимый `focus-visible`;
-- их доступное имя совпадает с tooltip;
-- pointercancel/multitouch не коммитят случайную позицию;
-- второй pointer отменяет single-device drag либо следует текущему safety guard;
-- toolbar не перекрывает stage при узкой ширине.
-
-## 11. Acceptance criteria
-
-1. Один drag даёт одну команду; Undo/Redo возвращают exact before/after.
-2. Десять `pointermove` не дают десять history entries или persist writes.
-3. Два устройства отменяются в обратном порядке.
-4. Несколько drag одного устройства являются отдельными командами.
-5. Первый drag auto-positioned marker: Undo возвращает auto-position без explicit
-   placement, Redo восстанавливает manual placement.
-6. No-op drag не включает Undo и не очищает Redo.
-7. Cancel/Escape/mode switch восстанавливают before-state без записи.
-8. Undo во время drag только abort-ит текущую транзакцию.
-9. Shortcuts не перехватывают native field history.
-10. Кнопки постоянны, доступны с клавиатуры и имеют именованные labels/toasts.
-11. Unknown layout fields и device settings не меняются.
-12. Own echo сохраняет stack; external revision очищает.
-13. Команда другого этажа делает результат видимым.
-14. Удалённый/disabled/rebound объект не воскрешается.
-15. Geometry/decor history и View shortcuts сохраняют прежний контракт.
-
-## 12. План тестирования
+## 14. Тестовый план
 
 ### Unit
 
-- apply before/after к raw entry с future fields;
-- absent-entry round-trip;
-- no-op и redo invalidation;
-- 50-command cap;
-- own/external revision policy;
-- stale device invalidation;
-- normalization round-trip.
+Добавить `test/device-position-history.test.mjs`:
+
+- normalized и legacy snapshot/apply round-trip;
+- absent entry;
+- preservation `k`, `k: 0` и future fields;
+- immutable input, equality/no-op;
+- stack branch/cap покрывается существующими command-stack tests.
 
 ### Browser smoke
 
-- два устройства и несколько drag;
-- кнопки и все три shortcut;
-- auto-position → manual → Undo → Redo;
-- cancel/Escape/lost capture;
-- другое пространство;
-- native input history;
-- own echo, remote revision и удалённый device;
-- narrow toolbar и touch pointercancel.
+Добавить `demo/smoke_device_position_history.mjs`, который использует реальные
+pointer events Device editor и fake WS:
 
-### Регрессия
+- AC1–AC12, включая update/delete failures;
+- кнопки, `Ctrl/Cmd+Z`, `Ctrl/Cmd+Shift+Z`, `Ctrl+Y` и editable target;
+- проверка, что `pointercancel` больше не routed в commit-handler;
+- проверка двух пространств и внешней revision.
 
-- `smoke_editor_tabs`, `smoke_layout_sync`, `smoke_grid_snap`,
-  `smoke_pan_any_zoom`;
-- geometry/decor Undo/Redo;
-- typecheck, unit и production build.
+### Регрессия и gates
 
-Golden не требуется, если toolbar укладывается без изменения принятой
-геометрии. Если кнопки меняют видимый baseline, обновляется только точечная
-editor-сцена с review diff.
+- `npm run typecheck`, `npm test`, production build и bundle sync;
+- `python scripts/check_docs.py`;
+- `node scripts/no_new_any.mjs`;
+- `node scripts/smoke_select.mjs` и выбранный targeted smoke;
+- минимум `smoke_editor_tabs`, `smoke_layout_sync`, `smoke_grid_snap`,
+  `smoke_pan_any_zoom` и истории Plan/Backdrop;
+- целевой Device editor golden обязателен, потому что toolbar видимо меняется;
+- обновление golden/docs screenshots выполняется только каноническим Linux
+  workflow с review diff и принятием через `docs:accept`.
 
-## 13. План реализации
+## 15. План изменений
 
-1. Ввести pure placement snapshot/apply helpers и unit tests.
-2. Добавить отдельный stack и revision invalidation.
-3. Разделить device drag на begin/preview/commit/abort.
-4. Подключить Undo/Redo apply с persist rollback.
-5. Добавить toolbar buttons, shortcuts, i18n и toasts.
-6. Прогнать targeted smoke и общий implementation gate.
+- `src/device-position-history.ts` — pure snapshot/apply/equality contract;
+- `src/houseplan-card.ts` — stack, drag transaction, shortcuts, sync/persist;
+- `src/houseplan-editor-runtime.ts` — toolbar и mode-switch abort;
+- runtime host interface — типизированный history contract;
+- `src/i18n/{en,ru,de,fr}.json` — имя операции и stale-state сообщение;
+- unit/smoke/golden fixtures;
+- пользовательская документация и changelog;
+- сгенерированный `custom_components/houseplan/www/houseplan-card.js` синхронен
+  с production build.
 
-## 14. Документация и release-артефакты
+Backend и config/layout schema не изменяются.
 
-- оба changelog получают user-visible пункт в том же implementation commit;
-- `docs/USER-GUIDE.ru.md` описывает кнопки, shortcuts, глубину 50 и session-local
-  границу;
-- `docs/TESTING.md` получает position-history smoke contract;
-- новые RU/EN keys обязательны;
-- screenshot/golden нужен только при реальном изменении toolbar baseline;
-- backend, schema migration, security artifact и full HA harness не требуются.
+## 16. Документация и release-артефакты
 
-## 15. Риски и откат
+В одном user-visible implementation commit обязательны:
+
+- `docs/CHANGELOG.md` и `docs/CHANGELOG.ru.md`;
+- `docs/USER-GUIDE.md` и `docs/USER-GUIDE.ru.md` — кнопки, shortcuts, глубина 50
+  и session-local граница;
+- `docs/UX-MODES.md` — position-only history Device editor;
+- `docs/TESTING.md` — новый smoke/golden contract;
+- EN/RU/DE/FR i18n;
+- reviewed Device editor golden.
+
+Security/performance report и HA config migration не требуются. Performance
+инвариант доказывается write counter: во время preview нет persist.
+
+## 17. Риски и rollback
 
 | Риск | Мера |
 | --- | --- |
-| Preview пишет store на каждом кадре | явная transaction boundary + write spy |
-| Undo стирает future fields | placement-only merge tests |
-| Own echo очищает историю | revision origin contract |
-| Remote command воскрешает device | stable-id validation before apply |
-| Shortcuts ломают поля/Plan | mode + editable-target matrix |
+| Rollback гоняется с более новой записью | Сериализация final position writes |
+| Undo стирает future fields или `k: 0` | Pure position-only merge + unit tests |
+| Delete resurrected layout reload | Pending update/delete tombstone |
+| Own echo очищает stack | Revision + canonical content comparison |
+| Cancel коммитит случайный touch drag | Отдельный abort-handler и smoke |
+| Stale command воскрешает device | Валидация stable id/space/lifecycle, fail-closed clear |
+| Toolbar дёргает stage | Постоянные icon-only controls + golden |
 
-Откат удаляет position stack и toolbar и возвращает прежний direct drag. Формат
-layout не меняется, поэтому data rollback не нужен.
-
-## 16. Принятые технические предположения
-
-- текущая atomic layout write достаточна;
-- displayName в старой команде не обновляется при rename;
-- external HA Area move не является Undo-командой;
-- переключение пространства для применения повторяет существующую geometry
-  history semantics.
+Rollback удаляет position stack, toolbar controls и preview transaction и
+возвращает прежний direct drag. Формат данных не меняется, data rollback и
+миграция не нужны.
