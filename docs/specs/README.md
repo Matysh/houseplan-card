@@ -115,6 +115,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#90](https://github.com/Matysh/houseplan-card/issues/90) Управляемый бейдж со значением | [090-device-value-badge.md](090-device-value-badge.md) |
 | [#378](https://github.com/Matysh/houseplan-card/issues/378) Выбираемый источник для режима «Значение + состояние» | [378-value-face-source.md](378-value-face-source.md) |
 | [#381](https://github.com/Matysh/houseplan-card/issues/381) Действие по нажатию «Ничего не делать» | [381-no-op-tap-action.md](381-no-op-tap-action.md) |
+| [#383](https://github.com/Matysh/houseplan-card/issues/383) Плавные трансформации и зеркалирование мебели | [383-furniture-transform.md](383-furniture-transform.md) |
 | [#94](https://github.com/Matysh/houseplan-card/issues/94) Универсальное действие «Переключить состояние» | [094-universal-state-toggle.md](094-universal-state-toggle.md) |
 | [#101](https://github.com/Matysh/houseplan-card/issues/101) Плавный переход View ↔ редакторы | [101-view-editor-transition.md](101-view-editor-transition.md) |
 | [#107](https://github.com/Matysh/houseplan-card/issues/107) Переключение виртуального источника света «Всегда» | [107-virtual-light-toggle.md](107-virtual-light-toggle.md) |
