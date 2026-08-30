@@ -786,6 +786,22 @@ jobs:
           pip list --format=columns | grep -Ei 'homeassistant|voluptuous|^pytest '
       - name: Линт бэкенда (ruff, узкий набор)
         run: python -m ruff check custom_components/houseplan
+      # #42: типизация была измеримой только локально — CI её не исполнял, и
+      # регрессия в любом из allowlist-модулей проходила молча. Список модулей
+      # берётся ИЗ pyproject.toml, а не дублируется здесь: разошедшийся дубль
+      # означал бы зелёный шаг, проверяющий не то. Пустой список — отказ.
+      - name: Типы бэкенда (mypy strict по allowlist)
+        run: |
+          modules=$(python -c "
+          import tomllib
+          cfg = tomllib.load(open('pyproject.toml', 'rb'))
+          for o in cfg['tool']['mypy'].get('overrides', []):
+              if o.get('strict'):
+                  print(' '.join('-p ' + m for m in o['module']))
+          ")
+          test -n "$modules" || { echo '::error::strict-allowlist в pyproject.toml пуст — проверять нечего'; exit 1; }
+          echo "mypy strict: $modules"
+          python -m mypy $modules
       # #42: защита от тихого скипа HA-harness — импорт и порог collect
       - name: HA-harness присутствует
         run: |

@@ -758,6 +758,17 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'typing-gate-stops-running',
+    guard: 'python3 -m pytest tests_backend/test_backend_quality.py -q -p no:cacheprovider',
+    because: 'a strict-typing allowlist that CI never executes is a measurement '
+      + 'that measures nothing — the step must be load-bearing (#42 r6 AC4)',
+    patches: [{
+      file: '.github/workflows/validate.yml',
+      find: '          python -m mypy $modules',
+      replace: '          echo "skip: $modules"',
+    }],
+  },
+  {
     id: 'error-scanner-loses-a-class-source',
     guard: 'python3 -m pytest tests_backend/test_backend_quality.py -q -p no:cacheprovider',
     because: 'silencing one err.code class source must redden the scanner, or the branch '

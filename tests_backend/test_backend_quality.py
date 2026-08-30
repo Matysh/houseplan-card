@@ -120,6 +120,33 @@ def test_issue_42_mypy_strict_allowlist_only_grows():
         "the list only ever grows (#42)")
 
 
+def test_issue_42_mypy_strict_is_actually_executed_by_ci():
+    """The typing gate must RUN, not merely be configured (#42 r6 Medium).
+
+    The allowlist test above compares text; without a workflow step that
+    invokes mypy, a regression in any of the six modules reaches dev
+    unnoticed — measurable quality that nothing measures. Three facts are
+    pinned: mypy is pinned in the dependency file the backend job installs
+    from, a step actually invokes it, and that step derives the module list
+    from pyproject.toml instead of duplicating it (a drifted duplicate is a
+    green step checking the wrong thing).
+    """
+    requirements = (REPO / "tests_backend" / "requirements.txt").read_text(encoding="utf-8")
+    assert re.search(r"^mypy==\d+\.\d+", requirements, re.M), (
+        "mypy is not pinned in tests_backend/requirements.txt — the typing gate "
+        "would not be reproducible from the SHA (#42)")
+
+    workflow = (REPO / ".github" / "workflows" / "validate.yml").read_text(encoding="utf-8")
+    steps = [block for block in workflow.split("      - name: ") if "mypy" in block]
+    assert steps, "no validate.yml step runs mypy — AC4 has no execution in CI (#42)"
+    step = steps[0]
+    assert re.search(r"python -m mypy\s", step), (
+        "the mypy step must invoke the checker itself, not only mention it")
+    assert "tool" in step and "mypy" in step and "pyproject.toml" in step, (
+        "the step must read the strict allowlist from pyproject.toml, not repeat it")
+    assert "exit 1" in step, "an empty allowlist must fail the step, not pass it silently"
+
+
 def test_issue_42_every_noqa_carries_a_reason():
     for path in sorted(BACKEND.glob("*.py")):
         for index, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):

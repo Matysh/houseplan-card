@@ -1552,10 +1552,15 @@ their passports; `scripts/config-audit.mjs` treats both as `current`.
 - `tests_backend/requirements.txt` is the single source of backend CI
   dependencies (validate.yml and mutation-gate.yml install from it; the file
   itself was introduced by #392, which also moved the harness to python 3.14
-  and the current Home Assistant — #42 adds ruff to it for the lint step).
+  and the current Home Assistant — #42 adds ruff and mypy to it for the lint
+  and typing steps).
 - `pyproject.toml` configures ruff (E/F/B/I, E501 excluded by decision) and
   mypy strict for a grow-only allowlist of pure modules; the completeness
   guard lives in `tests_backend/test_backend_quality.py`.
+- Both linters RUN in the backend CI job: the typing step derives its module
+  list from the `pyproject.toml` allowlist rather than repeating it, refuses an
+  empty list, and is itself guarded by a test plus the `typing-gate-stops-
+  running` mutant — a configured-but-unexecuted gate measures nothing.
 - The backend CI job measures branch coverage (pure + HA harness combined),
   fails below `scripts/backend-coverage-baseline.txt` and refuses to run when
   the HA harness would silently skip.
