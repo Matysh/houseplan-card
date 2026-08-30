@@ -35,21 +35,35 @@ const out = await page.evaluate(async () => {
       bubbles: true, ...extra,
     });
   };
+  const beginDeviceDrag = (device, position, pointerId) => {
+    const saved = c._layout[device.id];
+    c._deviceDrag = {
+      id: device.id, spaceId: device.space, displayName: device.name,
+      pointerId, source: null, sx: 400, sy: 400,
+      ox: position.x, oy: position.y, moved: false,
+      before: saved ? { x: saved.x, y: saved.y, ...(saved.s ? { s: saved.s } : {}) } : null,
+      start: c._devicePlacementForCanvas(device, position.x, position.y),
+    };
+  };
+  const awaitDeviceWrite = async () => {
+    while (c._devicePositionBusy) await new Promise((resolve) => setTimeout(resolve, 5));
+    await c.updateComplete;
+  };
 
   // ---- (a) a DEVICE MARKER goes to 2.5 / 2.2 ---------------------------
   c._setMode('devices'); await c.updateComplete;
   const dev = c._devices.find((d) => !d.virtual);
   const p0 = c._pos(dev);
-  c._drag = { id: dev.id, sx: 400, sy: 400, ox: p0.x, oy: p0.y, moved: false };
-  c._pointerMove(mk(2.5 * NORM_W - p0.x, 2.2 * NORM_W - p0.y), dev);
-  c._pointerUp(new PointerEvent('pointerup'), dev);
-  await c.updateComplete;
+  beginDeviceDrag(dev, p0, 11);
+  c._pointerMove(mk(2.5 * NORM_W - p0.x, 2.2 * NORM_W - p0.y, 400, 400,
+    { pointerId: 11 }), dev);
+  c._pointerUp(new PointerEvent('pointerup', { pointerId: 11 }), dev);
+  await awaitDeviceWrite();
   const saved = c._layout[dev.id];
   o.markerLeftTheOldCanvas = near(saved.x, 2.5) && near(saved.y, 2.2);
   o.markerIsOnTheGrid = onGrid(saved.x) && onGrid(saved.y);
 
   // ---- (b) it SURVIVES a rebuild ---------------------------------------
-  c._drag = null;
   c._modelCache = null; c._frame = null; c._defPos = c._defaultPositions();
   c.requestUpdate(); await c.updateComplete;
   const back = c._pos(c._devices.find((d) => d.id === dev.id));
@@ -104,20 +118,21 @@ const out = await page.evaluate(async () => {
   c._setMode('devices'); await c.updateComplete;
   const dev2 = c._devices.find((d) => d.id !== dev.id && !d.virtual);
   const q0 = c._pos(dev2);
-  c._drag = { id: dev2.id, sx: 400, sy: 400, ox: q0.x, oy: q0.y, moved: false };
-  c._pointerMove(mk(9e9, 9e9), dev2);
-  c._pointerUp(new PointerEvent('pointerup'), dev2);
-  c._drag = null;
+  beginDeviceDrag(dev2, q0, 12);
+  c._pointerMove(mk(9e9, 9e9, 400, 400, { pointerId: 12 }), dev2);
+  c._pointerUp(new PointerEvent('pointerup', { pointerId: 12 }), dev2);
+  await awaitDeviceWrite();
   o.garbageStillClamped = c._layout[dev2.id].x === 5000 && c._layout[dev2.id].y === 5000;
 
   // ---- (f) Shift cannot land between the nodes ---------------------------
   const dev3 = c._devices.find((d) => d.id !== dev.id && d.id !== dev2.id && !d.virtual);
   const r0 = c._pos(dev3);
   const halfStep = NORM_W / 240 / 2;
-  c._drag = { id: dev3.id, sx: 400, sy: 400, ox: r0.x, oy: r0.y, moved: false };
-  c._pointerMove(mk(2.5 * NORM_W + halfStep - r0.x, 2.5 * NORM_W - r0.y, 400, 400, { shiftKey: true }), dev3);
-  c._drag = null;
+  beginDeviceDrag(dev3, r0, 13);
+  c._pointerMove(mk(2.5 * NORM_W + halfStep - r0.x, 2.5 * NORM_W - r0.y,
+    400, 400, { shiftKey: true, pointerId: 13 }), dev3);
   o.shiftStillSnapsToTheNodes = onGrid(c._layout[dev3.id].x);
+  c._cancelDeviceDrag();
 
   c._setMode('view');
   return o;

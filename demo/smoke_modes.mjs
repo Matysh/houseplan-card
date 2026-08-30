@@ -59,16 +59,18 @@ out.devDragWorks = await page.evaluate(async () => {
   const c = window.__card;
   const d = c._devices.find((x) => x.space === 'f1');
   const before = { ...c._pos(d) };
-  c._pointerDown({ preventDefault(){}, clientX: 10, clientY: 10, target: { setPointerCapture(){} }, pointerId: 3 }, d);
-  c._pointerMove({ clientX: 100, clientY: 70 }, d);
-  c._pointerUp({}, d);
+  c._pointerDown({ preventDefault(){}, clientX: 10, clientY: 10,
+    target: { setPointerCapture(){} }, pointerId: 3 }, d);
+  c._pointerMove({ clientX: 100, clientY: 70, pointerId: 3 }, d);
+  c._pointerUp({ pointerId: 3 }, d);
+  while (c._devicePositionBusy) await new Promise((resolve) => setTimeout(resolve, 5));
   await c.updateComplete;
   const after = { ...c._pos(d) };
   return Math.abs(after.x - before.x) + Math.abs(after.y - before.y) > 0.5;
 });
 out.devClickOpensEditor = await page.evaluate(async () => {
   const c = window.__card;
-  c._drag = null;
+  c._deviceDrag = null;
   const d = c._devices.find((x) => x.space === 'f1');
   c._clickDevice({ stopPropagation(){} }, d);
   await c.updateComplete;
