@@ -777,7 +777,7 @@ jobs:
       - uses: actions/setup-node@v7
         with: { node-version: 22 }
       - uses: actions/setup-python@v7
-        with: { python-version: "3.13" }
+        with: { python-version: "3.14" }
       - run: |
           # Точные версии — в tests_backend/requirements.txt (#392): без них
           # резолвер выбирает набор сам, и «зелёный backend» значит разное
