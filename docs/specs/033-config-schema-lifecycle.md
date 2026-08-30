@@ -3,9 +3,9 @@
 - Issue: https://github.com/Matysh/houseplan-card/issues/33
 - Приоритет: P2, tech-debt; полный трек (класс A schema-потребители — решение
   аналитики 2026-08-15, не оспаривается)
-- Ревизия: 2 (2026-08-30) — актуализация после стабильной v1.69.0; замеры
+- Ревизия: 3 (2026-08-30) — по SPEC-REVIEW-33-r1 (M1–M3, Low); замеры
   ревизии: CONFIG_SCHEMA = 212 листовых путей, LAYOUT_SCHEMA = 2,
-  registry = 24 записи, parity/CI/фикстур нет
+  registry = 27 записей, parity/CI/фикстур нет
 
 ## Сценарий
 
@@ -19,12 +19,12 @@ frontend SPACE_FILL_MODES — нет: либо допиши, либо внеси
 ## Что человек увидит до и после
 
 Ничего: чисто инженерная страховка. Единственный видимый след — CI-джоба,
-падающая при дрейфе схемы, и `npm run config:audit`, который стал полнее.
+падающая при дрейфе схемы, и `npm run audit:config`, который стал полнее.
 
 ## Проблема
 
 Схема расползлась по четырём мирам (Voluptuous, TS-типы, const-списки
-runtime, UI) и синхронизируется руками. Registry (24 записи) покрывает только
+runtime, UI) и синхронизируется руками. Registry (27 записей) покрывает только
 слой «компат-решений» и отстал даже в нём: 4 решения уже реализованы кодом
 (show_all, weather_entity, ripple-канонизация, aspect/segments через
 vol.Remove), а новые поля v1.68–v1.69 (decor_default_style, furniture-decor,
@@ -57,10 +57,16 @@ Voluptuous-схемы**: бэкенд — единственный владел�
 ### Блок 2 — parity и полнота
 
 - `test/config-schema-parity.test.mjs` читает манифест и сверяет enum-пары с
-  const-декларациями фронта: fill_mode ↔ `SPACE_FILL_MODES`/`ROOM_FILL_MODES`,
-  display ↔ `DISPLAY_MODES`, opening.type, tap_action ↔ `TAP_ACTIONS`,
-  vacuum.trail_mode, zero_wall_style, bg_mode. Расхождение падает, если его
-  нет в **машиночитаемом allow-list** `scripts/schema-compat-allowlist.mjs`
+  const-декларациями фронта. Готовые экспортируемые массивы существуют для
+  3 из 7 пар: fill_mode ↔ `SPACE_FILL_MODES`/`ROOM_FILL_MODES`, display ↔
+  `DISPLAY_MODES`, tap_action ↔ `TAP_ACTIONS` (все — logic.ts). Для
+  остальных четырёх (M2 r1: сегодня это только TS-union'ы или фолбэки, не
+  runtime-значения) декларации ЗАВОДЯТСЯ этим issue: `OPENING_TYPES`
+  (types.ts-соседство), `VACUUM_TRAIL_MODES`, `ZERO_WALL_STYLES`,
+  `BG_MODES` — экспортируемые `as const`-массивы, из которых выводятся
+  существующие union-типы (`typeof X[number]`), чтобы список и тип не могли
+  разойтись; рантайм-поведение не меняется. Расхождение с манифестом падает,
+  если его нет в **машиночитаемом allow-list** `scripts/schema-compat-allowlist.mjs`
   (каждая запись: сторона-владелец, значение, причина, ссылка на issue).
   Стартовый allow-list: fill_mode 'glow' (backend-only, read-compat #20-эры),
   display 'ripple' (backend-only, канонизация в icon_ripple), tap_action
@@ -71,13 +77,17 @@ Voluptuous-схемы**: бэкенд — единственный владел�
   живущие через ALLOW_EXTRA; список — в registry новым полем
   `schema: 'allow-extra'`). Registry-запись, не находящая цель, ломает тест
   (мёртвые решения не накапливаются).
-- Актуализация registry как данных: 4 реализованных решения переводятся в
-  статус `implemented` (show_all, weather_entity, ripple, aspect/segments);
-  новые паспорта — `settings.decor_default_style` (v1.69, supported),
-  `decor kind:'furniture'` (v1.69, supported), `openings[].host=partition`
-  (v1.68 model v9, supported). Registry по-прежнему НЕ зеркалит все 212
-  путей — только поля с нетривиальной судьбой; полноту обычных полей несёт
-  манифест.
+- Актуализация registry как данных (M1 r1: статусная модель НЕ меняется —
+  существующие статусы описывают механизм и не устаревают с появлением
+  кода): 4 реализованных решения получают новое ОПЦИОНАЛЬНОЕ поле
+  `enforcedBy` — ссылку на кодовую точку/тест, доказывающую механизм
+  (show_all → houseplan-card.ts материализация; weather_entity →
+  editor-runtime сохранение настроек; ripple → _dropLegacySegments +
+  normalizeDeviceDisplay; aspect/segments → vol.Remove в схеме). Новые
+  паспорта со статусом `current` — `settings.decor_default_style` (v1.69),
+  `decor kind:'furniture'` (v1.69), `openings[].host=partition` (v1.68,
+  model v9). Registry по-прежнему НЕ зеркалит все 212 путей — только поля с
+  нетривиальной судьбой; полноту обычных полей несёт манифест.
 
 ### Блок 3 — фикстуры lifecycle
 
@@ -88,9 +98,13 @@ Voluptuous-схемы**: бэкенд — единственный владел�
 - pytest: каждая проходит CONFIG_SCHEMA; future-поля переживают валидацию
   losslessly (ALLOW_EXTRA-контракт), legacy не отбрасывается кроме
   задокументированных vol.Remove.
-- Юнит фронта: `config-audit.mjs` на этих фикстурах даёт ожидаемые counts
-  (clean / migration available), exit-codes различимы — расширение
-  существующего test/config-audit.test.mjs.
+- `config-audit.mjs` получает НОВУЮ CLI-логику итогового кода (M3 r1:
+  сегодня exitCode зависит только от ошибок разбора). Контракт: `0` —
+  clean (легаси/миграций не найдено), `3` — migration available (найдены
+  поля со статусом migrate-*/deprecated-read), `2` — invalid input
+  (существующее значение, не меняется). Код `3` выбран, чтобы не
+  конфликтовать с текущим `2`. Юнит на фикстурах Блока 3 проверяет и
+  counts, и все три кода — расширение test/config-audit.test.mjs.
 
 ## Не-скоуп
 
@@ -130,7 +144,8 @@ Persisted-данные не меняются. Манифест — build-арт�
   красный (мутант м2: сломать selector одной записи).
 - **AC5**: все три фикстуры проходят схему; future-поля возвращаются из
   валидации без потерь (pytest, сравнение по путям).
-- **AC6**: `config-audit.mjs` различает exit-codes на фикстурах (юнит).
+- **AC6**: `config-audit.mjs` возвращает 0/3/2 по контракту Блока 3 на
+  clean/legacy/битой фикстурах соответственно (юнит).
 - **AC7**: полный гейт зелёный; бюджет initial без изменений (манифест не
   импортируется бандлом — контракт-проверка отсутствия импорта).
 
