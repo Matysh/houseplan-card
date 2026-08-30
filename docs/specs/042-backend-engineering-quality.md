@@ -3,8 +3,8 @@
 - Issue: https://github.com/Matysh/houseplan-card/issues/42
 - Приоритет: P2, tests/tech-debt; полный трек (backend class A + видимое
   поведение ошибок — решение аналитики 2026-08-15)
-- Ревизия: 4 (2026-08-30) — по SPEC-REVIEW-42-r2 (M1-хвост в AC5); механизм +
-  ступень baseline, пороги — последующие trivial
+- Ревизия: 5 (2026-08-30) — по SPEC-REVIEW-42-r3 (MarkerControlError-коды);
+  механизм + ступень baseline, пороги — последующие trivial
 - Тип: infra/tests + один видимый пользователю блок (тексты ошибок)
 
 ## Замеры ревизии (HEAD, песочница)
@@ -91,8 +91,16 @@ stubs HA, CI-итерации) — следующая ступень, зафик
   (validation.py, литеральный class-attr `code = "..."` — извлекается
   regex'ом), `JunctionLimitError` (junction_limits.py,
   `f"junction_limit_{rule}"` — семейство `junction_limit_` по списку
-  rules), `MarkerControlError` (префиксные коды `value_badge_*` /
-  `value_source_*` — семейства). Каждый фиксированный код ∈ ERROR_CODES и
+  rules), `MarkerControlError` — два пути (r3): (1) ~15 ЛИТЕРАЛЬНЫХ кодов аргументом
+  конструктора (`duplicate_marker_control`, `invalid_marker_control`,
+  `marker_control_*`, `invalid_value_badge*`, `invalid_value_source*`,
+  `invalid_light_entity`, `invalid_toggle_entity`,
+  `value_badge_source_required` — validation.py:790-999) — сканер извлекает
+  их regex'ом по вызовам `MarkerControlError("<код>"` и требует каждый ∈
+  ERROR_CODES; (2) f-string-коды с префиксами `value_badge_` /
+  `value_source_` — семейства ∈ ERROR_CODE_FAMILIES. Вызов
+  MarkerControlError с нелитеральным кодом вне известных f-string-паттернов
+  → красный сканер (fail-closed). Каждый фиксированный код ∈ ERROR_CODES и
   имеет en-ключ `backup.error.<code>`; каждое семейство ∈
   ERROR_CODE_FAMILIES и обслуживается либо своим family-ключом, либо
   задокументированным общим fallback по коду — тест требует одно из двух.
