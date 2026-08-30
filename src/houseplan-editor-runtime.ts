@@ -11,6 +11,7 @@ import { guard } from 'lit/directives/guard.js';
 import { repeat } from 'lit/directives/repeat.js';
 import './hp-dialog';
 import type { HpDialog } from './hp-dialog';
+import type { HpConfirmRequest } from './danger-confirm';
 import './hp-color-opacity';
 import type { ColorPickerLabels } from './hp-color-opacity';
 import './hp-help';
@@ -870,6 +871,8 @@ export interface HouseplanEditorHostPort {
   _colorPickerLabels: ColorPickerLabels;
   _commitSpace: (id: string, authority?: boolean) => boolean;
   _commitViewModeAtomic: (from: ModeVisualState | null, targetZoom: number, targetCenterX?: number, targetCenterY?: number) => void;
+  _confirmDanger: (request: HpConfirmRequest) => Promise<boolean>;
+  _cancelDangerConfirm: () => void;
   _config: CardConfig | undefined;
   _contourClosed: boolean;
   _curSpaceCfg: any;
@@ -1191,6 +1194,7 @@ public _help(key: Extract<I18nKey, `${string}.help`>): TemplateResult | typeof n
   }
 
 public _setMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate = true): void {
+    if (mode !== this.host._mode) this.host._cancelDangerConfirm();
     this.host._endTabDrag();
     this._clearFurniturePreview();
     // A mode command is newer than the editor remembered by a same-route warm
@@ -3107,12 +3111,23 @@ public _confirmPartitionDelete = (): void => {
     this._commitPhysicalGeometry(this.host._t('history.physical_delete'), before);
   };
 
-public _deleteDraftWhole = (): void => {
+public _deleteDraftWhole = async (): Promise<void> => {
     const id = this.host._physicalDialog?.kind === 'draft'
       ? this.host._physicalDialog.id
       : this.host._physicalSel?.kind === 'draft' ? this.host._physicalSel.id : null;
+    const spaceId = this.host._space;
+    if (!id || !this.host._curSpaceCfg) return;
+    const accepted = await this.host._confirmDanger({
+      key: 'delete-draft',
+      kind: 'destructive',
+      title: this.host._t('confirm.delete_draft_title'),
+      message: this.host._t('confirm.delete_draft_body'),
+      confirmLabel: this.host._t('btn.delete'),
+      cancelLabel: this.host._t('btn.cancel'),
+    });
+    if (!accepted || this.host._space !== spaceId) return;
     const sp = this.host._curSpaceCfg as any;
-    if (!id || !sp || !confirm(this.host._t('confirm.delete_draft'))) return;
+    if (!sp || !(sp.room_drafts || []).some((draft: { id?: string }) => draft.id === id)) return;
     const before = this._geometrySnapshot();
     sp.room_drafts = (sp.room_drafts || []).filter((x: any) => x.id !== id);
     if (!sp.room_drafts.length) delete sp.room_drafts;
@@ -3122,15 +3137,32 @@ public _deleteDraftWhole = (): void => {
     this._commitPhysicalGeometry(this.host._t('history.physical_delete'), before);
   };
 
-public _deleteDraftSegment = (): void => {
+public _deleteDraftSegment = async (): Promise<void> => {
     const dlg = this.host._physicalDialog;
+    const spaceId = this.host._space;
+    if (!dlg || dlg.kind !== 'draft' || !this.host._curSpaceCfg) return;
+    const draftId = dlg.id;
+    const segment = dlg.segment || 0;
+    const accepted = await this.host._confirmDanger({
+      key: 'delete-draft-segment',
+      kind: 'destructive',
+      title: this.host._t('confirm.delete_draft_segment_title'),
+      message: this.host._t('confirm.delete_draft_segment_body'),
+      confirmLabel: this.host._t('btn.delete'),
+      cancelLabel: this.host._t('btn.cancel'),
+    });
+    const currentDialog = this.host._physicalDialog;
+    if (!accepted || this.host._space !== spaceId
+      || currentDialog?.kind !== 'draft' || currentDialog.id !== draftId
+      || (currentDialog.segment || 0) !== segment) return;
     const sp = this.host._curSpaceCfg as any;
-    if (!dlg || dlg.kind !== 'draft' || !sp) return;
-    if (!confirm(this.host._t('confirm.delete_draft_segment'))) return;
-    const index = (sp.room_drafts || []).findIndex((x: any) => x.id === dlg.id);
+    if (!sp) return;
+    const index = (sp.room_drafts || []).findIndex((item: { id?: string }) => item.id === draftId);
     if (index < 0) return;
     const draft = sp.room_drafts[index];
-    const cut = Math.max(0, Math.min(draft.segments.length - 1, dlg.segment || 0));
+    if (!Array.isArray(draft.segments) || !Number.isInteger(segment)
+      || segment < 0 || segment >= draft.segments.length) return;
+    const cut = segment;
     const pieces: any[] = [];
     const leftPoints = draft.points.slice(0, cut + 1);
     const rightPoints = draft.points.slice(cut + 1);
@@ -8343,23 +8375,43 @@ public async _deleteMarker(): Promise<void> {
     const d = dlg.devId ? this.host._devices.find((x) => x.id === dlg.devId) : null;
     const persisted = this.host._markers.find((marker) => marker.id === dlg.devId);
     if (!d && !persisted) return;
-    const label = dlg.name || this.host._t('device.fallback');
-    if (!confirm(this.host._t('confirm.remove_marker', { name: label }))) return;
-    const cfg = this.host._serverCfg!;
-    cfg.markers = cfg.markers || [];
-    const previousMarkers = cfg.markers;
-    const targetId = d?.id || persisted!.id;
-    const binding = d
+    const expectedBinding = d
       ? d.bindingKind === 'virtual' ? 'virtual'
         : d.bindingKind && d.bindingRef ? `${d.bindingKind}:${d.bindingRef}` : ''
       : persisted!.binding;
-    if (!binding) return;
+    if (!expectedBinding) return;
+    const label = dlg.name || this.host._t('device.fallback');
+    const targetId = dlg.devId;
+    const accepted = await this.host._confirmDanger({
+      key: 'remove-marker',
+      kind: 'destructive',
+      title: this.host._t('confirm.remove_marker_title'),
+      message: this.host._t('confirm.remove_marker_body'),
+      objectName: label,
+      confirmLabel: this.host._t('btn.delete'),
+      cancelLabel: this.host._t('btn.cancel'),
+    });
+    const currentDialog = this.host._markerDialog;
+    if (!accepted || !currentDialog || currentDialog.busy || currentDialog.devId !== targetId) return;
+    const currentDevice = this.host._devices.find((item) => item.id === targetId);
+    const currentPersisted = this.host._markers.find((marker) => marker.id === targetId);
+    if (!currentDevice && !currentPersisted) return;
+    const cfg = this.host._serverCfg;
+    if (!cfg) return;
+    cfg.markers = cfg.markers || [];
+    const previousMarkers = cfg.markers;
+    const binding = currentDevice
+      ? currentDevice.bindingKind === 'virtual' ? 'virtual'
+        : currentDevice.bindingKind && currentDevice.bindingRef
+          ? `${currentDevice.bindingKind}:${currentDevice.bindingRef}` : ''
+      : currentPersisted!.binding;
+    if (!binding || binding !== expectedBinding) return;
     const deletion = deletePlanMarkerRecords(
       cfg.markers, targetId, binding, binding === 'virtual',
     );
     cfg.markers = removeMarkerControlReferences(deletion.markers, deletion.cleanupIds);
     const cleanupIds = deletion.cleanupIds;
-    this.host._markerDialog = { ...dlg, busy: true };
+    this.host._markerDialog = { ...currentDialog, busy: true };
     try {
       await this._saveConfigNow();
       // Housekeeping follows the durable config write. Every call is
@@ -8559,7 +8611,23 @@ public async _readPlanAspect(url: string): Promise<number> {
   }
 
 public async _deleteServerPlan(name: string): Promise<void> {
-    if (!confirm(this.host._t('confirm.delete_plan', { name }))) return;
+    const dialog = this.host._spaceDialog;
+    const plan = dialog?.saved?.find((candidate) => candidate.name === name);
+    if (!dialog || !plan || plan.used_by.length || plan.url === dialog.planUrl) return;
+    const accepted = await this.host._confirmDanger({
+      key: 'delete-plan',
+      kind: 'destructive',
+      title: this.host._t('confirm.delete_plan_title'),
+      message: this.host._t('confirm.delete_plan_body'),
+      objectName: name,
+      confirmLabel: this.host._t('btn.delete'),
+      cancelLabel: this.host._t('btn.cancel'),
+    });
+    const currentDialog = this.host._spaceDialog;
+    const currentPlan = currentDialog?.saved?.find((candidate) => candidate.name === name);
+    if (!accepted || !currentDialog || !currentPlan
+      || currentPlan.url !== plan.url || currentPlan.modified !== plan.modified
+      || currentPlan.used_by.length || currentPlan.url === currentDialog.planUrl) return;
     try {
       await this.host.hass.callWS({ type: 'houseplan/plans/delete', name });
       const d = this.host._spaceDialog;
@@ -8770,15 +8838,42 @@ public async _deleteSpace(): Promise<void> {
       this.host._spaceDialog = { ...d, deleteBlockers: dependencies.count };
       return;
     }
-    if (!confirm(this.host._t('confirm.delete_space', { title: sp.title }))) return;
-    this.host._spaceDialog = { ...d, deleteBlockers: 0, busy: true };
+    if (!sp) return;
+    const spaceId = d.spaceId!;
+    const accepted = await this.host._confirmDanger({
+      key: 'delete-space',
+      kind: 'destructive',
+      title: this.host._t('confirm.delete_space_title'),
+      message: this.host._t('confirm.delete_space_body'),
+      objectName: sp.title,
+      confirmLabel: this.host._t('btn.delete'),
+      cancelLabel: this.host._t('btn.cancel'),
+    });
+    const currentDialog = this.host._spaceDialog;
+    const currentConfig = this.host._serverCfg;
+    if (!accepted || !currentDialog || currentDialog.mode !== 'edit'
+      || currentDialog.busy || currentDialog.spaceId !== spaceId || !currentConfig) return;
+    const currentSpace = currentConfig.spaces.find((candidate) => candidate.id === spaceId);
+    if (!currentSpace) return;
+    const currentDependencies = collectSpaceMarkerDependencies(
+      currentConfig, this.host._layout || {}, spaceId,
+    );
+    const currentlyDeletingLastSpace = currentConfig.spaces.length === 1
+      && currentConfig.spaces[0]?.id === spaceId;
+    if (currentDependencies.count && !currentlyDeletingLastSpace) {
+      this.host._spaceDialog = {
+        ...currentDialog, deleteBlockers: currentDependencies.count,
+      };
+      return;
+    }
+    this.host._spaceDialog = { ...currentDialog, deleteBlockers: 0, busy: true };
     try {
       if (this.host._saveConfigDebounced.pending()) this.host._saveConfigDebounced.flush();
       if (this.host._persistLayout.pending()) this.host._persistLayout.flush();
       await this.host._writeChain;
       const response: any = await this.host.hass.callWS({
         type: 'houseplan/space/delete',
-        space_id: d.spaceId,
+        space_id: spaceId,
         expected_config_rev: this.host._cfgRev,
         expected_layout_rev: this.host._layoutRev,
       });
@@ -8790,7 +8885,7 @@ public async _deleteSpace(): Promise<void> {
       this.host._cfgRev = response?.config_rev ?? this.host._cfgRev;
       this.host._layoutRev = response?.layout_rev ?? this.host._layoutRev;
       this.host._spaceDialog = null;
-      if (this.host._space === d.spaceId) this.host._commitSpace(this.host._serverCfg!.spaces[0]?.id || '');
+      if (this.host._space === spaceId) this.host._commitSpace(this.host._serverCfg!.spaces[0]?.id || '');
       this.host._regSignature = '';
       this.host._maybeRebuildDevices();
       this.host._showToast(this.host._t('toast.space_deleted'));
@@ -8801,10 +8896,10 @@ public async _deleteSpace(): Promise<void> {
       const refreshedConfig = this.host._serverCfg;
       if (this.host._spaceDialog && refreshedConfig) {
         const refreshed = collectSpaceMarkerDependencies(
-          refreshedConfig, this.host._layout || {}, d.spaceId || '',
+          refreshedConfig, this.host._layout || {}, spaceId,
         );
         const stillLastSpace = refreshedConfig.spaces.length === 1
-          && refreshedConfig.spaces[0]?.id === d.spaceId;
+          && refreshedConfig.spaces[0]?.id === spaceId;
         this.host._spaceDialog = {
           ...this.host._spaceDialog,
           busy: false,

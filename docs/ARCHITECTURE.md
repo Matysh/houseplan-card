@@ -27,6 +27,8 @@ houseplan-card/
 │  ├─ houseplan-editor-runtime.ts # Plan/Devices/Background composition root
 │  ├─ houseplan-onboarding-runtime.ts # first-space/import dialogs, independent of editor
 │  ├─ hp-dialog.ts               # shared HA/native modal shell, focus and transient-overlay lifecycle
+│  ├─ hp-confirm.ts              # presentation for shared dangerous-action confirmation
+│  ├─ danger-confirm.ts          # root-owned promise/token confirmation controller
 │  ├─ hp-help.ts                 # presentation-only, localized contextual-help surface
 │  ├─ floating-surface.ts        # pure visual-viewport flip/shift geometry for dialog surfaces
 │  ├─ floating-surface-controller.ts # shared Popover/fallback portal DOM lifecycle
@@ -117,6 +119,14 @@ the same profiler available between stable promotions.
    commit actions use two explicit wrapping groups: destructive actions stay
    left, while Cancel/Save move together to a right-aligned second line when
    translated labels do not fit.
+   Dangerous actions additionally use one eager `HpConfirmController` owned by
+   `HouseplanCard` and the stateless `hp-confirm` presentation. View, onboarding
+   and lazy editor callers await the same replace-not-queue promise contract;
+   X, scrim, Escape, route/mode/space change and disconnect all resolve as
+   cancellation. An internal token rejects stale or duplicate decisions, and
+   every caller re-resolves its target after `await` before changing config,
+   layout or HA state. Native browser `confirm()` is not a supported runtime
+   surface.
 6. **Open passages are negative architecture.** `OpeningCfg.type=passage`
    shares placement, wall-cut and tunnel geometry with other openings but has
    no visible leaf, state binding or isometric panel. Backend semantic
@@ -1571,4 +1581,3 @@ their passports; `scripts/config-audit.mjs` treats both as `current`.
   `invalid_partition_opening_jamb_margin` ship structured JSON details, and
   the frontend renders unknown codes localized (code-first, raw messages go
   to the console).
-

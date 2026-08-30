@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Dangerous actions now use one accessible House Plan confirmation dialog
+  instead of the browser prompt. Device, draft, plan and space deletion plus
+  lock opening share clear consequences, safe Cancel/X/Escape behaviour and
+  stale-target protection ([#32](https://github.com/Matysh/houseplan-card/issues/32)).
+
 ## v1.70.0-beta.1 — 2026-08-30
 
 - Wheel, zoom buttons, **Fit all**, the home arrow and kiosk double-tap now

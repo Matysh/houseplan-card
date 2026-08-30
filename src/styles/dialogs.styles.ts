@@ -581,6 +581,23 @@ export const dialogsStyles = css`
       max-height: 66vh;
       overflow-y: auto;
     }
+    hp-confirm {
+      display: contents;
+    }
+    hp-dialog .danger-confirm-body {
+      display: flex;
+      flex-direction: column;
+      gap: var(--sp-4);
+    }
+    hp-dialog .danger-confirm-body p {
+      margin: 0;
+      line-height: 1.45;
+    }
+    hp-dialog .danger-confirm-object {
+      overflow-wrap: anywhere;
+      font-size: var(--fs-l);
+      line-height: 1.3;
+    }
     .descin {
       width: 100%;
       box-sizing: border-box;

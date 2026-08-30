@@ -11,6 +11,13 @@ import { guard } from 'lit/directives/guard.js';
 import { repeat } from 'lit/directives/repeat.js';
 import './hp-dialog';
 import type { HpDialog } from './hp-dialog';
+import './hp-confirm';
+import {
+  HpConfirmController,
+  type HpConfirmDecision,
+  type HpConfirmRequest,
+  type HpConfirmState,
+} from './danger-confirm';
 import type { ColorPickerLabels } from './hp-color-opacity';
 import {
   EXCLUDED_DOMAINS, DEFAULT_ICON_RULES, compileIconRules, isValidPattern, iconFor,
@@ -1548,6 +1555,7 @@ export class HouseplanCard extends LitElement {
   private _commitSpace(id: string, authority = false): boolean {
     if (!this._canCommitSpace(id, authority)) return false;
     if (id !== this._space) {
+      this._cancelDangerConfirm();
       this._cancelCameraTransition(false);
       this._clearTransientHover(true);
       this._cancelDevicePressFeedback();
@@ -2101,6 +2109,19 @@ export class HouseplanCard extends LitElement {
     kind: 'toggle'; text: string; lines: string[];
     initialIntent: ResolvedToggleIntent; deviceId: string; exec: () => void;
   } | { kind: 'run'; text: string; exec: () => void } | null = null;
+  /** One eager confirmation owner shared by View, onboarding and lazy editors. */
+  private _dangerConfirm: HpConfirmState | null = null;
+  private readonly _dangerConfirmController = new HpConfirmController((state) => {
+    this._dangerConfirm = state;
+  });
+  private _confirmDanger = (request: HpConfirmRequest): Promise<boolean> =>
+    this._dangerConfirmController.confirm(request);
+  private _cancelDangerConfirm = (): void => {
+    this._dangerConfirmController.cancel();
+  };
+  private _onDangerConfirmDecision = (event: CustomEvent<HpConfirmDecision>): void => {
+    this._dangerConfirmController.resolve(event.detail.token, event.detail.accepted);
+  };
   private _onboardingShown = false; // the auto space dialog is shown once per session
 
   private _rulesDialog: { rules: IconRule[]; test: string; busy: boolean } | null = null;
@@ -2526,6 +2547,7 @@ export class HouseplanCard extends LitElement {
     _editorRuntimeLoadingVisible: { state: true },
     _backdropGuard: { state: true },
     _tapConfirm: { state: true },
+    _dangerConfirm: { state: true },
     hass: { attribute: false },
     _config: { state: true },
     _space: { state: true },
@@ -2689,6 +2711,7 @@ export class HouseplanCard extends LitElement {
   }
 
   public disconnectedCallback(): void {
+    this._cancelDangerConfirm();
     // HA normally changes the route before removing the old Lovelace tree.
     // The explicit event covers routers that keep that tree connected for a
     // beat; this fallback covers a direct remove after history navigation.
@@ -5476,7 +5499,7 @@ export class HouseplanCard extends LitElement {
     if (action === 'none') return;
     // the accidental-tap guard (owner's spec 2026-07-29): any state-changing
     // action — toggle or run — may ask first. The dialog is ours, not the
-    // browser confirm(), so it works and looks right on a wall tablet.
+    // native browser prompts, so it works and looks right on a wall tablet.
     const guarded = (text: string, exec: () => void): void => {
       if (actionDevice.marker?.tap_confirm) this._tapConfirm = { kind: 'run', text, exec };
       else exec();
@@ -7022,6 +7045,7 @@ export class HouseplanCard extends LitElement {
   private _leaveCardRoute(): void {
     if (this._routeDepartureHandled) return;
     this._routeDepartureHandled = true;
+    this._cancelDangerConfirm();
     // The destination page cannot display this decorative transition and may
     // disconnect us before its first measured frame. Commit View atomically so
     // the warm tombstone never records an editor camera under `mode: view`.
@@ -7078,6 +7102,7 @@ export class HouseplanCard extends LitElement {
   }
 
   private _setMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate = true): void {
+    if (mode !== this._mode) this._cancelDangerConfirm();
     this._warmModeRequest = 0;
     if (!this._editorRuntime) {
       if (mode === 'view') {
@@ -7636,11 +7661,11 @@ export class HouseplanCard extends LitElement {
     return this._editorRuntimeOrThrow()._confirmPartitionDelete();
   }
 
-  private _deleteDraftWhole = (): void => {
+  private _deleteDraftWhole = (): Promise<void> => {
     return this._editorRuntimeOrThrow()._deleteDraftWhole();
   }
 
-  private _deleteDraftSegment = (): void => {
+  private _deleteDraftSegment = (): Promise<void> => {
     return this._editorRuntimeOrThrow()._deleteDraftSegment();
   }
 
@@ -8687,7 +8712,8 @@ export class HouseplanCard extends LitElement {
   }
 
   private get _editorSecondaryDialogBlocked(): boolean {
-    return !!(this._tapConfirm || this._vacCalConfirm || this._roomDialog || this._mergeDialog
+    return !!(this._dangerConfirm || this._tapConfirm || this._vacCalConfirm
+      || this._roomDialog || this._mergeDialog
       || this._openingDialog || this._physicalDialog || this._openingInfo
       || this._decorTextDialog || this._decorShapeDialog || this._backdropDialog
       || this._decorEraseConfirm || this._spaceDialog || this._markerDialog || this._deviceInbox
@@ -11644,6 +11670,13 @@ export class HouseplanCard extends LitElement {
                 </div>
             </hp-dialog>`
           : nothing}
+        ${this._dangerConfirm
+          ? html`<hp-confirm .hass=${this.hass}
+              .request=${this._dangerConfirm.request}
+              .token=${this._dangerConfirm.token}
+              @hp-confirm-decision=${this._onDangerConfirmDecision}>
+            </hp-confirm>`
+          : nothing}
         ${this._toast ? html`<div class="toast" role="alert" aria-live="assertive">${this._toast}</div>` : nothing}
       </ha-card>
     `;
@@ -12724,7 +12757,7 @@ export class HouseplanCard extends LitElement {
    * taps on plan icons; here the user has opened the info card and pressed a
    * clearly labeled action button — same interaction contract as HA's more-info.
    */
-  private _lockAction(entityId: string, action: 'lock' | 'unlock'): void {
+  private async _lockAction(entityId: string, action: 'lock' | 'unlock'): Promise<void> {
     // THE ONLY sanctioned lock actuation surface (review CR-1, 2026-07-27).
     // The invariant is "no lock or alarm panel is ever actuated by a TAP on the
     // plan" — icons, badges, controls[] and the device card all refuse. This
@@ -12734,7 +12767,19 @@ export class HouseplanCard extends LitElement {
     if (!this._openingEntityAvailable(entityId)) return;
     if (action === 'unlock') {
       const name = this.hass?.states?.[entityId]?.attributes?.friendly_name || entityId;
-      if (!confirm(this._t('confirm.unlock', { name }))) return;
+      const accepted = await this._confirmDanger({
+        key: 'unlock',
+        kind: 'warning',
+        title: this._t('confirm.unlock_title'),
+        message: this._t('confirm.unlock_body'),
+        objectName: name,
+        confirmLabel: this._t('opening.unlock_action'),
+        cancelLabel: this._t('btn.cancel'),
+      });
+      const opening = this._openingInfo;
+      if (!accepted || !this._openingEntityAvailable(entityId)
+        || !opening || (opening.type !== 'door' && opening.type !== 'gate')
+        || opening.lock !== entityId || this.hass?.states?.[entityId]?.state !== 'locked') return;
     }
     this.hass?.callService?.('lock', action, { entity_id: entityId });
   }

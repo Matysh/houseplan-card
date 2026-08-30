@@ -216,7 +216,23 @@ export class HouseplanOnboardingRuntime {
   }
 
   public async _deleteServerPlan(name: string): Promise<void> {
-    if (!confirm(this.host._t('confirm.delete_plan', { name }))) return;
+    const dialog = this.host._spaceDialog;
+    const plan = dialog?.saved?.find((candidate) => candidate.name === name);
+    if (!dialog || !plan || plan.used_by.length || plan.url === dialog.planUrl) return;
+    const accepted = await this.host._confirmDanger({
+      key: 'delete-plan',
+      kind: 'destructive',
+      title: this.host._t('confirm.delete_plan_title'),
+      message: this.host._t('confirm.delete_plan_body'),
+      objectName: name,
+      confirmLabel: this.host._t('btn.delete'),
+      cancelLabel: this.host._t('btn.cancel'),
+    });
+    const currentDialog = this.host._spaceDialog;
+    const currentPlan = currentDialog?.saved?.find((candidate) => candidate.name === name);
+    if (!accepted || !currentDialog || !currentPlan
+      || currentPlan.url !== plan.url || currentPlan.modified !== plan.modified
+      || currentPlan.used_by.length || currentPlan.url === currentDialog.planUrl) return;
     try {
       await this.host.hass.callWS({ type: 'houseplan/plans/delete', name });
       const dialog = this.host._spaceDialog;
@@ -415,15 +431,41 @@ export class HouseplanOnboardingRuntime {
       this.host._spaceDialog = { ...dialog, deleteBlockers: dependencies.count };
       return;
     }
-    if (!confirm(this.host._t('confirm.delete_space', { title: space.title }))) return;
-    this.host._spaceDialog = { ...dialog, deleteBlockers: 0, busy: true };
+    const spaceId = dialog.spaceId!;
+    const accepted = await this.host._confirmDanger({
+      key: 'delete-space',
+      kind: 'destructive',
+      title: this.host._t('confirm.delete_space_title'),
+      message: this.host._t('confirm.delete_space_body'),
+      objectName: space.title,
+      confirmLabel: this.host._t('btn.delete'),
+      cancelLabel: this.host._t('btn.cancel'),
+    });
+    const currentDialog = this.host._spaceDialog;
+    const currentConfig = this.host._serverCfg;
+    if (!accepted || !currentDialog || currentDialog.mode !== 'edit'
+      || currentDialog.busy || currentDialog.spaceId !== spaceId || !currentConfig) return;
+    const currentSpace = currentConfig.spaces.find((candidate) => candidate.id === spaceId);
+    if (!currentSpace) return;
+    const currentDependencies = collectSpaceMarkerDependencies(
+      currentConfig, this.host._layout || {}, spaceId,
+    );
+    const currentlyDeletingLastSpace = currentConfig.spaces.length === 1
+      && currentConfig.spaces[0]?.id === spaceId;
+    if (currentDependencies.count && !currentlyDeletingLastSpace) {
+      this.host._spaceDialog = {
+        ...currentDialog, deleteBlockers: currentDependencies.count,
+      };
+      return;
+    }
+    this.host._spaceDialog = { ...currentDialog, deleteBlockers: 0, busy: true };
     try {
       if (this.host._saveConfigDebounced.pending()) this.host._saveConfigDebounced.flush();
       if (this.host._persistLayout.pending()) this.host._persistLayout.flush();
       await this.host._writeChain;
       const response: { config_rev?: number; layout_rev?: number } = await this.host.hass.callWS({
         type: 'houseplan/space/delete',
-        space_id: dialog.spaceId,
+        space_id: spaceId,
         expected_config_rev: this.host._cfgRev,
         expected_layout_rev: this.host._layoutRev,
       });
@@ -435,7 +477,7 @@ export class HouseplanOnboardingRuntime {
       this.host._cfgRev = response?.config_rev ?? this.host._cfgRev;
       this.host._layoutRev = response?.layout_rev ?? this.host._layoutRev;
       this.host._spaceDialog = null;
-      if (this.host._space === dialog.spaceId) {
+      if (this.host._space === spaceId) {
         this.host._commitSpace(this.host._serverCfg!.spaces[0]?.id || '');
       }
       this.host._regSignature = '';
@@ -451,10 +493,10 @@ export class HouseplanOnboardingRuntime {
       const refreshedConfig = this.host._serverCfg;
       if (this.host._spaceDialog && refreshedConfig) {
         const refreshed = collectSpaceMarkerDependencies(
-          refreshedConfig, this.host._layout || {}, dialog.spaceId || '',
+          refreshedConfig, this.host._layout || {}, spaceId,
         );
         const stillLastSpace = refreshedConfig.spaces.length === 1
-          && refreshedConfig.spaces[0]?.id === dialog.spaceId;
+          && refreshedConfig.spaces[0]?.id === spaceId;
         this.host._spaceDialog = {
           ...this.host._spaceDialog,
           busy: false,

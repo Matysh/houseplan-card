@@ -129,9 +129,14 @@ test('lock actuation remains guarded inside the one sanctioned opening-card meth
   const source = readHouseplanProductionSource();
   const action = methodBody(source, '_lockAction');
   const guardAt = action.indexOf('_openingEntityAvailable(entityId)');
-  const confirmAt = action.indexOf('confirm(');
+  const confirmAt = action.indexOf('await this._confirmDanger');
+  const recheckAt = action.indexOf('_openingEntityAvailable(entityId)', guardAt + 1);
   const serviceAt = action.indexOf("callService?.('lock'");
-  assert.ok(guardAt >= 0 && guardAt < confirmAt && confirmAt < serviceAt);
+  assert.ok(
+    guardAt >= 0 && guardAt < confirmAt && confirmAt < recheckAt && recheckAt < serviceAt,
+    'unlock revalidates the opening binding and entity after confirmation',
+  );
+  assert.match(action, /state !== 'locked'/);
   assert.equal(source.match(/callService\?\.\('lock'/g)?.length, 1);
   assert.equal(source.match(/this\._lockAction\(/g)?.length, 1, 'only the opening card button calls it');
 });
