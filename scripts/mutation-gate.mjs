@@ -747,6 +747,18 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'device-echo-keeps-local-noncanonical',
+    guard: 'node demo/smoke_device_position_history.mjs',
+    because: 'a card that keeps the raw position while sending the canonical '
+      + 'one mistakes its own echo for a remote edit and wipes the undo stack '
+      + '(#397 B3)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '            this._layout = { ...this._layout, [deviceId]: pos };',
+      replace: '            void pos;',
+    }],
+  },
+  {
     id: 'camera-cancel-loses-zoom',
     guard: 'node demo/smoke_smooth_zoom.mjs',
     because: 'the frame frozen by touching the plan is what the user sees; not '

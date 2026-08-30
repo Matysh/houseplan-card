@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Undo/Redo of marker positions no longer goes dark on its own: the card now
+  keeps exactly what it sent to the server, so a reconnect or a second tab
+  stops looking like someone else's edit
+  ([#397](https://github.com/Matysh/houseplan-card/issues/397)).
+
 - Dangerous actions now use one accessible House Plan confirmation dialog
   instead of the browser prompt. Device, draft, plan and space deletion plus
   lock opening share clear consequences, safe Cancel/X/Escape behaviour and

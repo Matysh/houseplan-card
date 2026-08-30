@@ -5241,7 +5241,12 @@ export class HouseplanCard extends LitElement {
             type: 'houseplan/layout/delete', device_id: deviceId,
           });
         } else {
+          // #397: keep locally exactly what goes on the wire, or the card's
+          // own echo reads as a remote edit and wipes the undo stack.
           const pos = canonicalizePosition(this._layout[deviceId]);
+          if (contentFingerprint(pos) !== contentFingerprint(this._layout[deviceId])) {
+            this._layout = { ...this._layout, [deviceId]: pos };
+          }
           pending = pos;
           this._sentPos.set(deviceId, pending);
           registered = true;

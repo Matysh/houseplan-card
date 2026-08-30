@@ -97,12 +97,24 @@ const res = await page.evaluate(async () => {
   out.futureFieldsSurviveDrag = c._layout[deviceId].k === 0
     && c._layout[deviceId].future === 'kept';
   out.undoEnabled = !sr().querySelector('[data-device-position-history="undo"]').disabled;
+  // #397 AC1: after a write the local copy IS what went over the wire.
+  out.localCopyEqualsTheWire = writes.length > 0
+    && JSON.stringify(c._layout[deviceId]) === JSON.stringify({
+      ...c._layout[deviceId], ...writes[writes.length - 1].pos,
+    })
+    && JSON.stringify(serverLayout[deviceId]) === JSON.stringify(writes[writes.length - 1].pos);
 
   const afterDrag = structuredClone(c._layout[deviceId]);
   sr().querySelector('[data-device-position-history="undo"]').click();
   await idle();
-  out.undoRestoresExactStart = c._layout[deviceId].x === explicit.x
-    && c._layout[deviceId].y === explicit.y
+  // #397: the card now keeps what it sent — the canonical position — so a
+  // restored placement may differ from the raw `explicit` by the lattice snap
+  // (< 1e-9 of the plan, invisible). The equality is therefore stated to that
+  // precision, and the snap itself is pinned separately below: a real logical
+  // drift would exceed it by orders of magnitude.
+  const near = (a, b) => Math.abs(a - b) < 1e-9;
+  out.undoRestoresExactStart = near(c._layout[deviceId].x, explicit.x)
+    && near(c._layout[deviceId].y, explicit.y)
     && c._layout[deviceId].k === 0
     && c._devicePositionHistory.canRedo;
   sr().querySelector('[data-device-position-history="redo"]').click();
@@ -113,7 +125,7 @@ const res = await page.evaluate(async () => {
   }));
   await idle();
   out.keyboardUndoWorks = c._devicePositionHistory.canRedo
-    && c._layout[deviceId].x === explicit.x && c._layout[deviceId].y === explicit.y;
+    && near(c._layout[deviceId].x, explicit.x) && near(c._layout[deviceId].y, explicit.y);
   window.dispatchEvent(new KeyboardEvent('keydown', {
     key: 'z', code: 'KeyZ', ctrlKey: true, shiftKey: true,
     bubbles: true, composed: true, cancelable: true,
@@ -231,10 +243,22 @@ const res = await page.evaluate(async () => {
   out.nativeInputHistoryNotIntercepted = c._devicePositionHistory.size === sizeBeforeInput;
   input.remove();
 
-  // Same-content reload is an own/reconnect echo; different content is remote authority.
-  serverLayout = structuredClone(c._layout);
+  // Same-content reload is an own/reconnect echo; different content is remote
+  // authority. #397: the server snapshot is NOT copied from the card here — it
+  // already holds what actually went over the wire (the fake WS above stores
+  // `message.pos`). The former `serverLayout = structuredClone(c._layout)`
+  // erased by hand the very divergence this check exists to catch: the wire
+  // carries the canonical position while `_layout` kept the raw one, so the
+  // card mistook its own echo for a remote edit and cleared the stack. With
+  // the assignment gone the check reddens on the unfixed code.
+  const ownEchoServerPos = structuredClone(serverLayout[deviceId]);
+  const ownEchoLocalPos = structuredClone(c._layout[deviceId]);
   await c._reloadLayoutOnly();
   out.sameContentReloadKeepsHistory = c._devicePositionHistory.canUndo;
+  // The point of the check is only meaningful if the two sides were equal to
+  // begin with: pin that explicitly instead of assuming it.
+  out.ownEchoMatchesWhatWentOverTheWire =
+    JSON.stringify(ownEchoServerPos) === JSON.stringify(ownEchoLocalPos);
   serverLayout = {
     ...serverLayout,
     [deviceId]: { ...serverLayout[deviceId], x: serverLayout[deviceId].x + 0.01 },
@@ -242,6 +266,40 @@ const res = await page.evaluate(async () => {
   await c._reloadLayoutOnly();
   out.remoteContentClearsHistory = !c._devicePositionHistory.canUndo
     && !c._devicePositionHistory.canRedo;
+
+  // #397 AC5b: the echo of a DELETE must not clear the stack either — the
+  // delete branch removes a key instead of replacing a value, so proving the
+  // update branch says nothing about it.
+  const echoProbe = c._devices.find((candidate) => candidate.id !== deviceId
+    && candidate.bindingStatus?.kind !== 'ha_disabled');
+  if (echoProbe) {
+    c._layout = { ...c._layout, [echoProbe.id]: { s: echoProbe.space, x: 0.42, y: 0.42 } };
+    await c._persistDevicePlacement(echoProbe.id, { s: echoProbe.space, x: 0.42, y: 0.42 });
+    c._devicePositionHistory.push({
+      name: 'echo probe move',
+      before: { deviceId: echoProbe.id, spaceId: echoProbe.space, placement: null },
+      after: { deviceId: echoProbe.id, spaceId: echoProbe.space,
+        placement: { s: echoProbe.space, x: 0.42, y: 0.42 } },
+    });
+    await c._persistDevicePlacement(echoProbe.id, null);
+    await c._reloadLayoutOnly();
+    out.deleteEchoKeepsHistory = c._devicePositionHistory.canUndo
+      && c._layout[echoProbe.id] === undefined;
+
+    // #397 AC7: while a write is in flight the card is the authority — a
+    // server answer holding the OLD position must not win the merge.
+    const inFlightPos = { s: echoProbe.space, x: 0.63, y: 0.21 };
+    serverLayout = { ...serverLayout, [echoProbe.id]: { s: echoProbe.space, x: 0.1, y: 0.1 } };
+    c._sentPos.set(echoProbe.id, structuredClone(inFlightPos));
+    c._layout = { ...c._layout, [echoProbe.id]: structuredClone(inFlightPos) };
+    await c._reloadLayoutOnly();
+    out.inFlightPositionWinsTheMerge =
+      JSON.stringify(c._layout[echoProbe.id]) === JSON.stringify(inFlightPos);
+    c._sentPos.delete(echoProbe.id);
+  } else {
+    out.deleteEchoKeepsHistory = null;
+    out.inFlightPositionWinsTheMerge = null;
+  }
 
   // A valid command owns its original space and makes the result visible there.
   const otherDevice = c._devices.find((candidate) => candidate.space !== device.space
