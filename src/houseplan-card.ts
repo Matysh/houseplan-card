@@ -293,6 +293,10 @@ import {
   ModeTransitionController, viewportFromViewBox,
   type HouseplanMode, type ModeTransitionState, type ModeVisualState, type ModeViewBox,
 } from './mode-transition';
+import {
+  CameraTransitionController, cameraTargetAtAnchor, sameCameraState,
+  type CameraState, type CameraTransitionReason, type CameraTransitionState,
+} from './viewport-transition';
 import { EditorRuntimeLoader, lazyLoadFailureMessage, type EditorRuntimeLoaderState } from './editor-runtime-loader';
 import type { BackdropGuardState } from './backdrop-pick';
 
@@ -406,6 +410,9 @@ const BOOT_MAX_MS = 1200;
 /** AUD-1552-02: post-reveal grace during which late chrome shifts glide
  *  (CSS height transition on the stage) instead of snapping. */
 const BOOT_SOFT_MS = 1500;
+const CAMERA_BUTTON_MS = 180;
+const CAMERA_WHEEL_MS = 160;
+const CAMERA_FIT_MS = 220;
 /** Numeric editor fields must consume the whole value: `50abc` is invalid,
  * not a surprisingly accepted 50. Decimal comma remains supported. */
 const strictNumber = (value: string): number | null => {
@@ -1149,6 +1156,7 @@ export class HouseplanCard extends LitElement {
   private _onMotionChange = (event: MediaQueryListEvent): void => {
     this._reducedMotion = event.matches;
     this._cancelDevicePressFeedback();
+    if (event.matches) this._cancelCameraTransition(true);
     // A preference change to reduced motion is authoritative immediately: do
     // not leave a 220 ms camera/chrome tween running until its old deadline.
     if (event.matches && this._modeTransitionPreparing) {
@@ -1179,6 +1187,13 @@ export class HouseplanCard extends LitElement {
     frame: (state) => this._applyModeTransitionFrame(state),
     settled: (state) => this._settleModeTransition(state),
   });
+  /** #82: one camera-only transition inside a settled mode. It never owns
+   * chrome/background coordinates — those remain exclusive to #101. */
+  private _cameraTransitionFit: ModeViewBox | null = null;
+  private readonly _cameraTransition = new CameraTransitionController({
+    frame: (state) => this._applyCameraTransitionFrame(state),
+    settled: (state) => this._settleCameraTransition(state),
+  });
   /** Explicit second-level toolbar group. No current tools are grouped yet;
    *  the shared host/API prevents future editors from inventing dropdowns. */
   private declare _editorSecondary: import('./editor-secondary').EditorSecondaryController;
@@ -1190,6 +1205,72 @@ export class HouseplanCard extends LitElement {
 
   private get _modeTransitionBusy(): boolean {
     return this._modeTransitionPreparing || this._modeTransition.active;
+  }
+
+  private _cameraState(): CameraState {
+    const view = this._viewOr(this._baseVb());
+    return { zoom: this._zoom, viewBox: { ...view } };
+  }
+
+  private _normalizeCameraState(state: CameraState): CameraState {
+    const fit = this._cameraTransitionFit || fitView(this._baseVb(), this._stageAspect());
+    const zoom = Math.min(HouseplanCard.ZOOM_MAX,
+      Math.max(HouseplanCard.ZOOM_MIN, state.zoom));
+    return { zoom, viewBox: this._clampView({ ...state.viewBox }, fit) };
+  }
+
+  private _applyCameraTransitionFrame(state: CameraTransitionState): void {
+    const presented = this._normalizeCameraState(state.presented);
+    // Retargeting must start from the camera that was actually painted, not
+    // from an unclamped interpolation hidden inside the controller.
+    state.presented = presented;
+    this._zoom = presented.zoom;
+    this._view = { ...presented.viewBox };
+    this.requestUpdate();
+  }
+
+  private _settleCameraTransition(state: CameraTransitionState): void {
+    const target = this._normalizeCameraState(state.to);
+    this._zoom = target.zoom;
+    this._view = { ...target.viewBox };
+    this._cameraTransitionFit = null;
+    this._saveZoom();
+    this.requestUpdate();
+  }
+
+  private _cancelCameraTransition(commitTarget = false): void {
+    this._cameraTransition.cancel(commitTarget);
+    this._cameraTransitionFit = null;
+  }
+
+  /** A discrete camera command may follow a rapid mode click. Finish that
+   *  short structural transition first so two controllers never write `_view`
+   *  in the same frame. */
+  private _prepareCameraCommand(): void {
+    if (this._modeTransitionBusy) this._cancelModeTransition(true);
+    if (this._tool === 'opening') {
+      this._cursorPt = null;
+      this._clearOpeningPlacement(false);
+    }
+  }
+
+  private _startCameraTransition(
+    target: CameraState,
+    fit: ModeViewBox,
+    reason: CameraTransitionReason,
+    duration: number,
+  ): boolean {
+    const current = this._cameraState();
+    const runningTarget = this._cameraTransition.target;
+    if (runningTarget && sameCameraState(runningTarget, target)) return false;
+    if (sameCameraState(current, target)) {
+      this._cancelCameraTransition(false);
+      return false;
+    }
+    this._cameraTransitionFit = { ...fit };
+    this._cameraTransition.start(current, target, reason,
+      this._reducedMotion ? 0 : duration);
+    return true;
   }
 
   private _cssColor(value: string | null | undefined, fallback: string): string {
@@ -1317,6 +1398,7 @@ export class HouseplanCard extends LitElement {
   }
 
   private _cancelModeTransition(commitTarget = true): void {
+    this._cancelCameraTransition(false);
     const hadControllerState = !!this._modeTransition.state;
     this._modeTransitionRequest++;
     this._modeTransitionPreparing = false;
@@ -1466,6 +1548,7 @@ export class HouseplanCard extends LitElement {
   private _commitSpace(id: string, authority = false): boolean {
     if (!this._canCommitSpace(id, authority)) return false;
     if (id !== this._space) {
+      this._cancelCameraTransition(false);
       this._clearTransientHover(true);
       this._cancelDevicePressFeedback();
       this._editorRuntime?._clearFurniturePreview();
@@ -2277,6 +2360,7 @@ export class HouseplanCard extends LitElement {
     if (signal.kind === 'hidden') {
       this._clearTransientHover(true);
       this._cancelDevicePressFeedback();
+      this._cancelCameraTransition(true);
       if (this._modeTransitionPreparing) {
         // There is no measured controller endpoint to commit yet. Keep the
         // already queued measurement but force its synchronous atomic path;
@@ -2658,6 +2742,8 @@ export class HouseplanCard extends LitElement {
     this._editorRuntimeLoadingTimer = undefined;
     this._editorRuntimeLoadingVisible = false;
     this._modeTransition.dispose();
+    this._cameraTransition.dispose();
+    this._cameraTransitionFit = null;
     this._modeTransitionVisual = null;
     this._modeTransitionPreparing = false;
     this._modeTransitionForceAtomic = false;
@@ -4090,6 +4176,10 @@ export class HouseplanCard extends LitElement {
     const configChanged = nextCfgFingerprint !== (this._cfgContentFingerprint
       || contentFingerprint(this._serverCfg));
     if (configChanged) {
+      // #82: a new structural baseline owns the viewport. Freeze the last
+      // painted camera frame before replacing geometry so an obsolete target
+      // cannot settle against the new content frame.
+      this._cancelCameraTransition(false);
       // A genuinely different baseline invalidates local geometry undo. A
       // reconnect echo with identical content deliberately does not.
       this._geometryHistory.clear();
@@ -4123,6 +4213,7 @@ export class HouseplanCard extends LitElement {
       layoutChanged = nextLayoutFingerprint !== (this._layoutContentFingerprint
         || contentFingerprint(this._layout));
       if (layoutChanged) {
+        this._cancelCameraTransition(false);
         this._devicePositionHistory.clear();
         this._cancelDeviceDrag();
         this._layout = nextLayout;
@@ -5885,10 +5976,10 @@ export class HouseplanCard extends LitElement {
   /** «Вписать всё» (docs/CANVAS.md §8) — the toolbar button and the "home is
    *  that way" arrow share it. It fits whatever the frame currently means:
    *  the main mass, or everything once the far-objects hint has been used. */
-  private _fitAll(): void {
+  private _fitAll(reason: 'fit' | 'home' = 'fit'): void {
     this._showFar = true;
     this._frame = null;
-    this._resetZoom();
+    this._resetZoom(reason);
   }
 
   /** Unobtrusive inline hint: some objects stand an order of magnitude away
@@ -5919,7 +6010,7 @@ export class HouseplanCard extends LitElement {
     const top = 50 + Math.sin(ang) * 38;
     return html`<button class="homearrow" title=${this._t('canvas.home_tip')}
       style="left:${left.toFixed(1)}%;top:${top.toFixed(1)}%"
-      @click=${(e: Event) => { e.stopPropagation(); this._fitAll(); }}>
+      @click=${(e: Event) => { e.stopPropagation(); this._fitAll('home'); }}>
       <ha-icon icon="mdi:arrow-right-thick" style="transform:rotate(${((ang * 180) / Math.PI).toFixed(1)}deg)"></ha-icon>
     </button>`;
   }
@@ -5991,6 +6082,7 @@ export class HouseplanCard extends LitElement {
 
   /** Set the zoom (centered on vb point cx,cy, or on the center of the current view). */
   private _applyView(zoom: number, cx?: number, cy?: number): boolean {
+    this._cancelCameraTransition(false);
     const vb = this._baseVb();
     const fit = fitView(vb, this._stageAspect());
     const z = Math.min(HouseplanCard.ZOOM_MAX, Math.max(HouseplanCard.ZOOM_MIN, zoom));
@@ -6105,6 +6197,9 @@ export class HouseplanCard extends LitElement {
   /** Recompute the view for a new scene size, preserving zoom and center. */
   private _refitView(): void {
     if (this._modeTransitionBusy || this._warmModeRequest) return;
+    // Resize is structural: keep the currently painted camera, cancel its old
+    // target, then let the existing refit path own the new stage geometry.
+    this._cancelCameraTransition(false);
     const stage = this._stageEl;
     // ResizeObserver may deliver a zero/transitional box while a browser tab
     // is frozen or while Lovelace replaces the card. Mutating `_view` from
@@ -6160,53 +6255,82 @@ export class HouseplanCard extends LitElement {
     });
   }
 
-  /** Change the zoom while keeping the point (sx,sy relative to the scene) in place. */
-  private _zoomAt(sx: number, sy: number, newZoom: number): void {
+  private _cameraTargetAt(
+    sx: number,
+    sy: number,
+    newZoom: number,
+  ): { target: CameraState; fit: ModeViewBox } | null {
     const stage = this._stageEl;
-    if (!stage) return;
+    if (!stage || stage.clientWidth <= 0 || stage.clientHeight <= 0) return null;
     const vb = this._baseVb();
     const fit = fitView(vb, this._stageAspect());
     const z = Math.min(HouseplanCard.ZOOM_MAX, Math.max(HouseplanCard.ZOOM_MIN, newZoom));
+    const target = cameraTargetAtAnchor(
+      this._cameraState(), z, fit,
+      stage.clientWidth, stage.clientHeight, sx, sy,
+    );
+    if (!target) return null;
+    target.viewBox = this._clampView(target.viewBox, fit);
+    return { target, fit };
+  }
+
+  /** Immediate path for direct pinch: keep the point under the fingers. */
+  private _zoomAt(sx: number, sy: number, newZoom: number): void {
+    this._cancelCameraTransition(false);
+    const result = this._cameraTargetAt(sx, sy, newZoom);
+    if (!result) return;
     if (this._tool === 'opening') {
       this._cursorPt = null;
       this._clearOpeningPlacement(false);
     }
-    const w = stage.clientWidth, h = stage.clientHeight;
-    const pt = this._screenToVb(sx, sy);
-    const nw = fit.w / z, nh = fit.h / z;
-    this._zoom = z;
-    this._view = this._clampView({ x: pt[0] - (sx / w) * nw, y: pt[1] - (sy / h) * nh, w: nw, h: nh }, fit);
+    this._zoom = result.target.zoom;
+    this._view = { ...result.target.viewBox };
   }
 
   private _onWheel(ev: WheelEvent): void {
+    this._prepareCameraCommand();
     const stage = this._stageEl;
     if (!stage) return;
     ev.preventDefault();
     const r = stage.getBoundingClientRect();
     const factor = ev.deltaY < 0 ? 1.15 : 1 / 1.15;
-    this._zoomAt(ev.clientX - r.left, ev.clientY - r.top, this._zoom * factor);
-    this._saveZoom();
+    const baseZoom = this._cameraTransition.target?.zoom ?? this._zoom;
+    const result = this._cameraTargetAt(
+      ev.clientX - r.left, ev.clientY - r.top, baseZoom * factor,
+    );
+    if (result) this._startCameraTransition(
+      result.target, result.fit, 'wheel', CAMERA_WHEEL_MS,
+    );
   }
 
   private _stepZoom(delta: number): void {
+    this._prepareCameraCommand();
     const stage = this._stageEl;
     if (!stage) return;
-    this._zoomAt(stage.clientWidth / 2, stage.clientHeight / 2, this._zoom * (delta > 0 ? 1.4 : 1 / 1.4));
-    this._saveZoom();
+    const baseZoom = this._cameraTransition.target?.zoom ?? this._zoom;
+    const result = this._cameraTargetAt(
+      stage.clientWidth / 2,
+      stage.clientHeight / 2,
+      baseZoom * (delta > 0 ? 1.4 : 1 / 1.4),
+    );
+    if (result) this._startCameraTransition(
+      result.target, result.fit, 'button', CAMERA_BUTTON_MS,
+    );
   }
 
   /** «Вписать всё» (docs/CANVAS.md §8) — the toolbar's middle button and the
    *  old "reset zoom" in one: frame the content at zoom 1, centred. With
    *  `all` it also takes in the far strays the opening view leaves out. */
-  private _resetZoom(): void {
+  private _resetZoom(reason: 'fit' | 'home' | 'double-tap' = 'fit'): void {
+    this._prepareCameraCommand();
     const vb = this._baseVb();
-    if (this._tool === 'opening') {
-      this._cursorPt = null;
-      this._clearOpeningPlacement(false);
-    }
-    this._zoom = 1;
-    this._view = fitView(vb, this._stageAspect());
-    this._saveZoom();
+    const fit = fitView(vb, this._stageAspect());
+    this._startCameraTransition(
+      { zoom: 1, viewBox: { ...fit } },
+      fit,
+      reason,
+      CAMERA_FIT_MS,
+    );
   }
 
   /** Save the current space zoom to localStorage (view mode only). */
@@ -6229,6 +6353,7 @@ export class HouseplanCard extends LitElement {
 
   /** Restore the saved space zoom and center the plan. */
   private _restoreZoom(): void {
+    this._cancelCameraTransition(false);
     const z = this._zoomBySpace[this._space] || 1;
     this._zoom = z;
     const stage = this._stageEl;
@@ -6255,6 +6380,7 @@ export class HouseplanCard extends LitElement {
   }
 
   private _stagePointerDown(ev: PointerEvent): void {
+    this._cancelCameraTransition(false);
     if (this._vacFit) return; // no pan/swipe while fitting the robot map
     // The shared secondary controller owns palette dismissal in window
     // capture, including the matching synthetic click. Do not duplicate that
@@ -6450,7 +6576,7 @@ export class HouseplanCard extends LitElement {
         // double tap (no movement) resets the zoom to 1:1
         if (Math.abs(dx) + Math.abs(dy) < 8) {
           const now = Date.now();
-          if (now - this._lastTap < 350) this._resetZoom();
+          if (now - this._lastTap < 350) this._resetZoom('double-tap');
           this._lastTap = now;
         }
         // The lock is FINAL (audit DEV-1DA1-02). `_stagePointerMove` decided

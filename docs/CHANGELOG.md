@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Wheel, zoom buttons, **Fit all**, the home arrow and kiosk double-tap now
+  move the plan through a short smooth camera transition. Pinch and pan remain
+  direct, and reduced-motion systems still update instantly
+  ([#82](https://github.com/Matysh/houseplan-card/issues/82)).
+
 - The Device editor now has its own Undo/Redo history for marker positions.
   One completed drag is one step; cancelled or failed moves add nothing, and
   the 50-step session history is available from persistent toolbar buttons or
