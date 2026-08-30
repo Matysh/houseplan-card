@@ -1,7 +1,7 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 52;
+export const GOLDEN_MATRIX_VERSION = 53;
 
 const stage = { capture: 'stage', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0005 } };
 const page = { capture: 'page', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0008 } };
@@ -789,6 +789,17 @@ export const GOLDEN_SCENARIOS = Object.freeze([
   { id: 'general-color-popover-desktop-en', fixture: 'visual', space: 'golden-geometry',
     dialog: 'general-color', language: 'en', theme: 'light',
     viewport: { width: 900, height: 900 }, ...page },
+  // #86 AC7: renderer-level 200% browser zoom is 390 CSS px at DPR 2
+  // (780 physical px). Keep both themes reviewed because help placement and
+  // contrast are part of the visual contract, not just a DOM assertion.
+  { id: 'settings-help-zoom-200-en-light', fixture: 'visual', space: 'golden-geometry',
+    dialog: 'general-help', openHelp: 'gs.bg_mode.help', deviceScaleFactor: 2,
+    helpTextRegion: { key: 'gs.bg_mode.help', minPixels: 30 },
+    language: 'en', theme: 'light', viewport: { width: 390, height: 900 }, ...page },
+  { id: 'settings-help-zoom-200-ru-dark', fixture: 'visual', space: 'golden-geometry',
+    dialog: 'general-help', openHelp: 'gs.bg_mode.help', deviceScaleFactor: 2,
+    helpTextRegion: { key: 'gs.bg_mode.help', minPixels: 30 },
+    language: 'ru', theme: 'dark', viewport: { width: 390, height: 900 }, ...page },
   { id: 'device-ripple-color-popover-mobile-ru', fixture: 'visual', space: 'golden-lighting',
     dialog: 'device-ripple-color', deviceId: 'golden-light-two',
     language: 'ru', theme: 'dark', viewport: { width: 390, height: 1000 }, ...page },

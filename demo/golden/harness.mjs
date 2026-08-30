@@ -1556,6 +1556,31 @@ export async function prepareGoldenScenario(page, scenario) {
       await frame();
       trigger.click();
       await picker.updateComplete;
+    } else if (scenario.dialog === 'general-help') {
+      card._openSettingsDialog();
+      await card.updateComplete;
+      const dialog = card.renderRoot.querySelector('hp-dialog');
+      const help = dialog?.querySelector(`hp-help[data-help-key="${scenario.openHelp}"]`);
+      await help?.updateComplete;
+      const trigger = help?.renderRoot?.querySelector('.trigger');
+      if (!dialog || !trigger)
+        throw new Error(`golden general-settings help trigger missing: ${scenario.openHelp}`);
+      trigger.scrollIntoView({ block: 'center', inline: 'nearest' });
+      await frame();
+      trigger.click();
+      await help.updateComplete;
+      await frame();
+      const surface = help.renderRoot?.querySelector('.tooltip:popover-open')
+        || dialog.renderRoot?.querySelector('[data-hp-overlay="help"]')
+          ?.shadowRoot?.querySelector('.tooltip');
+      const viewport = { width: innerWidth, height: innerHeight };
+      const triggerRect = trigger.getBoundingClientRect();
+      const surfaceRect = surface?.getBoundingClientRect();
+      const inside = (rect) => !!rect && rect.left >= -1 && rect.top >= -1
+        && rect.right <= viewport.width + 1 && rect.bottom <= viewport.height + 1;
+      if (trigger.getAttribute('aria-expanded') !== 'true' || !inside(triggerRect)
+          || !inside(surfaceRect) || dialog.scrollWidth > dialog.clientWidth + 1)
+        throw new Error(`golden general-settings help is clipped: ${scenario.openHelp}`);
     } else if (scenario.dialog === 'device-ripple-color') {
       card._setMode('devices');
       await card.updateComplete;

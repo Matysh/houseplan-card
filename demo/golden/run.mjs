@@ -605,7 +605,7 @@ if (existsSync(baselineManifestPath)) {
 
 const browserArgs = ['--force-color-profile=srgb', '--font-render-hinting=none', '--disable-lcd-text'];
 const browserContext = { locale: 'en-US', timezoneId: 'UTC', colorScheme: 'dark', reducedMotion: 'reduce' };
-const { page, browser } = await launch(
+const { page: primaryPage, browser } = await launch(
   { width: 1000, height: 900 },
   1,
   browserArgs,
@@ -613,12 +613,30 @@ const { page, browser } = await launch(
 );
 const chromium = await browser.version();
 const results = [];
-const pageErrors = [];
-page.on('pageerror', (error) => pageErrors.push(error.message));
+const pagesByScale = new Map([[1, primaryPage]]);
+const extraBrowsers = [];
+for (const scale of new Set(scenarios.map((scenario) => scenario.deviceScaleFactor || 1))) {
+  if (scale === 1) continue;
+  const scaled = await launch(
+    { width: 1000, height: 900 }, scale, browserArgs, browserContext,
+  );
+  pagesByScale.set(scale, scaled.page);
+  extraBrowsers.push(scaled.browser);
+}
+const pageErrors = new Map();
+for (const page of pagesByScale.values()) {
+  const errors = [];
+  pageErrors.set(page, errors);
+  page.on('pageerror', (error) => errors.push(error.message));
+}
 let buildFingerprint = null;
 try {
-  buildFingerprint = await assertFreshDemoBundle(page, ROOT);
+  buildFingerprint = await assertFreshDemoBundle(primaryPage, ROOT);
   for (const scenario of scenarios) {
+    const expectedScale = scenario.deviceScaleFactor || 1;
+    const page = pagesByScale.get(expectedScale);
+    if (!page) throw new Error(`golden renderer scale is unavailable: ${expectedScale}`);
+    const activePageErrors = pageErrors.get(page);
     const result = {
       id: scenario.id,
       threshold: scenario.threshold,
@@ -626,9 +644,14 @@ try {
       actualSha256: null,
     };
     try {
-      pageErrors.length = 0;
+      activePageErrors.length = 0;
       result.runtime = await prepareGoldenScenario(page, scenario);
-      if (pageErrors.length) throw new Error(`browser exception: ${pageErrors.join(' | ')}`);
+      const actualScale = await page.evaluate(() => devicePixelRatio);
+      result.deviceScaleFactor = actualScale;
+      if (Math.abs(actualScale - expectedScale) > 0.001)
+        throw new Error(`golden renderer scale mismatch: ${actualScale} != ${expectedScale}`);
+      if (activePageErrors.length)
+        throw new Error(`browser exception: ${activePageErrors.join(' | ')}`);
       if (scenario.openingSymbolContract) {
         result.openingSymbolContract = await assertOpeningSymbolContract(
           page, scenario.openingSymbolContract,
@@ -851,7 +874,7 @@ try {
     console.log(`${result.status.padEnd(17)} ${scenario.id}`);
   }
 } finally {
-  await browser.close();
+  await Promise.all([...extraBrowsers.map((item) => item.close()), browser.close()]);
 }
 
 const expectedScenarioIds = GOLDEN_SCENARIOS.map((scenario) => scenario.id);

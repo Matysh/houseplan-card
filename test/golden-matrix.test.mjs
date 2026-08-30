@@ -373,7 +373,7 @@ test('sun-ray golden requires browser-painted light from a state-only sun entity
   assert.ok(scenario);
   const fixture = prepareGoldenFixture(scenario);
   const space = fixture.config.spaces.find((item) => item.id === scenario.space);
-  assert.equal(GOLDEN_MATRIX_VERSION, 52);
+  assert.equal(GOLDEN_MATRIX_VERSION, 53);
   assert.equal(space.settings.sun_rays, true);
   assert.equal(scenario.northDeg, 90,
     'the sign-sensitive golden must keep a non-zero north direction');
@@ -943,5 +943,20 @@ test('help affordance golden covers an open text-bearing surface in both themes'
   for (const scenario of help) {
     assert.equal(scenario.helpTextRegion?.key, scenario.openHelp, scenario.id);
     assert.equal(scenario.helpTextRegion?.minPixels >= 30, true, scenario.id);
+  }
+});
+
+test('issue 86 help goldens render browser zoom 200% in both themes', () => {
+  const zoom = GOLDEN_SCENARIOS.filter((scenario) =>
+    scenario.id.startsWith('settings-help-zoom-200-'));
+  assert.equal(zoom.length, 2);
+  assert.deepEqual(new Set(zoom.map((scenario) => scenario.theme)), new Set(['light', 'dark']));
+  assert.deepEqual(new Set(zoom.map((scenario) => scenario.language)), new Set(['en', 'ru']));
+  for (const scenario of zoom) {
+    assert.equal(scenario.deviceScaleFactor, 2);
+    assert.deepEqual(scenario.viewport, { width: 390, height: 900 });
+    assert.equal(scenario.dialog, 'general-help');
+    assert.equal(scenario.openHelp, 'gs.bg_mode.help');
+    assert.equal(scenario.capture, 'page');
   }
 });

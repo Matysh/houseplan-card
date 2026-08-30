@@ -215,7 +215,11 @@ save paths всех настроек остаются прежними. Мигр
 
 - general settings and space dialog with help open;
 - space zero-wall style and Device show-hidden at desktop/narrow widths;
-- light/dark and 200% zoom; full Linux artifact review required.
+- light/dark and 200% zoom; full Linux artifact review required. The dedicated
+  `settings-help-zoom-200-en-light` and `settings-help-zoom-200-ru-dark`
+  scenarios use a 390 CSS px viewport with `deviceScaleFactor: 2`, assert that
+  the trigger and open surface remain inside the viewport, and capture the
+  page at CSS scale so both reviewed baselines stay 390 px wide.
 
 ### Mutant
 
