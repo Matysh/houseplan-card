@@ -11991,7 +11991,7 @@ public _renderDeviceInbox(): TemplateResult {
                   this.host._showHidden = (event.target as HTMLInputElement).checked;
                   this.host._deviceInboxMemo = null;
                   this.host.requestUpdate();
-                }} />${this.host._t('device_inbox.show_hidden' as any)}
+                }} />${this.host._t('device_inbox.show_hidden')}
             </label>
             ${this._help('device_inbox.show_hidden.help')}
           </span>
