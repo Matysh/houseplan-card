@@ -51,7 +51,10 @@ export interface WallSegmentEntry {
   [key: string]: unknown;
 }
 
-export type ZeroWallStyle = 'dashed' | 'solid';
+// #33: exported list drives the schema parity test; the type derives from it
+// so the two can never diverge.
+export const ZERO_WALL_STYLES = ['dashed', 'solid'] as const;
+export type ZeroWallStyle = (typeof ZERO_WALL_STYLES)[number];
 
 /** Persisted open room contour. Coordinates are normalised in config and
  * render units in SpaceModel, exactly like rooms. */
@@ -110,6 +113,9 @@ export interface MarkerValueBadge {
 }
 
 /** Config marker: edits/augments an auto-discovered device OR describes a manual/virtual icon. */
+export const VACUUM_TRAIL_MODES = ['never', 'cleaning', 'always'] as const; // #33 parity
+export type VacuumTrailMode = (typeof VACUUM_TRAIL_MODES)[number];
+
 export interface Marker {
   id: string;
   binding: string; // 'device:<id>' | 'entity:<eid>' | 'virtual'
@@ -136,7 +142,7 @@ export interface Marker {
   vacuum?: {
     live?: boolean | null;
     trail?: boolean | null; // legacy bool; trail_mode wins
-    trail_mode?: 'never' | 'cleaning' | 'always' | null;
+    trail_mode?: VacuumTrailMode | null;
     room_highlight?: boolean | null;
     source?: string | null;
     calibration?: Record<string, number[]>;
@@ -207,9 +213,12 @@ export interface WallOpeningHost {
 
 export type OpeningHost = PartitionOpeningHost | WallOpeningHost;
 
+export const OPENING_TYPES = ['door', 'window', 'gate', 'passage'] as const; // #33 parity
+export type OpeningType = (typeof OPENING_TYPES)[number];
+
 export interface OpeningCfg {
   id: string;
-  type: 'door' | 'window' | 'gate' | 'passage';
+  type: OpeningType;
   x: number;       // center, normalized by plan width
   y: number;       // center, normalized by plan height
   angle: number;   // wall angle, degrees

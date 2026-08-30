@@ -736,6 +736,29 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'schema-manifest-enum-drift',
+    guard: 'node --test test/config-schema-parity.test.mjs',
+    because: 'a backend enum value the frontend does not know (and the allow-list does not '
+      + 'bless) is exactly the schema drift #33 exists to catch — the manifest mutation '
+      + 'simulates the backend change without the frontend pair',
+    patches: [{
+      file: 'scripts/config-schema-manifest.json',
+      find: "    \"config.spaces[].settings.fill_mode\": {\n      \"enum\": [\n        \"custom\",",
+      replace: "    \"config.spaces[].settings.fill_mode\": {\n      \"enum\": [\n        \"phantom-33\",\n        \"custom\",",
+    }],
+  },
+  {
+    id: 'registry-selector-dead-decision',
+    guard: 'node --test test/config-schema-parity.test.mjs',
+    because: 'a registry decision whose selector no longer matches the schema is a dead '
+      + 'decision — the completeness test must refuse to let them accumulate (#33 AC4)',
+    patches: [{
+      file: 'scripts/config-field-registry.mjs',
+      find: "    selector: { path: ['spaces', '*', 'zero_wall_style'] },",
+      replace: "    selector: { path: ['spaces', '*', 'zero_wall_stylo'] },",
+    }],
+  },
+  {
     id: 'same-binding-click-resets-source',
     guard: 'node demo/smoke_value_face_source.mjs',
     because: 'a same-binding click silently wiping the configured value source is exactly '

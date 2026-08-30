@@ -9,6 +9,7 @@
 export const CONFIG_FIELD_REGISTRY = Object.freeze([
   {
     id: 'card.tap_action',
+    schema: 'lovelace-card', // #33: Lovelace card option — not in the backend manifest by design
     selector: { path: ['tap_action'] },
     storage: 'Lovelace card config',
     type: "'info' | 'more-info' | 'toggle'",
@@ -23,6 +24,8 @@ export const CONFIG_FIELD_REGISTRY = Object.freeze([
   },
   {
     id: 'settings.show_all',
+    schema: 'allow-extra', // #33: lives only through extra=ALLOW_EXTRA, absent from CONFIG_SCHEMA
+    enforcedBy: 'houseplan-card.ts materialisation: seeds hidden markers, then `delete st.show_all`',
     selector: { path: ['settings', 'show_all'] },
     storage: 'House Plan server config',
     type: 'boolean',
@@ -37,6 +40,7 @@ export const CONFIG_FIELD_REGISTRY = Object.freeze([
   },
   {
     id: 'settings.group_lights',
+    schema: 'allow-extra', // #33: lives only through extra=ALLOW_EXTRA, absent from CONFIG_SCHEMA
     selector: { path: ['settings', 'group_lights'] },
     storage: 'House Plan server config',
     type: 'boolean',
@@ -51,6 +55,7 @@ export const CONFIG_FIELD_REGISTRY = Object.freeze([
   },
   {
     id: 'settings.exclude_integrations',
+    schema: 'allow-extra', // #33: lives only through extra=ALLOW_EXTRA, absent from CONFIG_SCHEMA
     selector: { path: ['settings', 'exclude_integrations'] },
     storage: 'House Plan server config',
     type: 'string[]',
@@ -65,6 +70,7 @@ export const CONFIG_FIELD_REGISTRY = Object.freeze([
   },
   {
     id: 'settings.weather_entity',
+    enforcedBy: 'houseplan-editor-runtime.ts _saveSettingsDialog: `delete settings.weather_entity` on every save',
     selector: { path: ['settings', 'weather_entity'] },
     storage: 'House Plan server config',
     type: 'string | null',
@@ -79,6 +85,7 @@ export const CONFIG_FIELD_REGISTRY = Object.freeze([
   },
   {
     id: 'markers[].display=ripple',
+    enforcedBy: 'logic.ts normalizeDeviceDisplay (read) + editor-runtime _dropLegacySegments rewrites on every write',
     selector: { path: ['markers', '*', 'display'], equals: 'ripple' },
     storage: 'House Plan server config',
     type: "legacy enum value 'ripple'",
@@ -135,6 +142,7 @@ export const CONFIG_FIELD_REGISTRY = Object.freeze([
   },
   {
     id: 'spaces[].aspect',
+    enforcedBy: 'validation.py vol.Remove — the backend drops the field during validation',
     selector: { path: ['spaces', '*', 'aspect'] },
     storage: 'House Plan server config',
     type: 'number',
@@ -149,6 +157,7 @@ export const CONFIG_FIELD_REGISTRY = Object.freeze([
   },
   {
     id: 'spaces[].segments',
+    enforcedBy: 'validation.py vol.Remove — the backend drops the field during validation',
     selector: { path: ['spaces', '*', 'segments'] },
     storage: 'House Plan server config',
     type: 'unknown[]',
@@ -357,6 +366,48 @@ export const CONFIG_FIELD_REGISTRY = Object.freeze([
     migration: 'embed the reference into text on text edit or explicit plan optimization',
     compatibility: 'backend accepts bounded values while old labels remain supported',
   })),
+  {
+    id: 'settings.decor_default_style',
+    selector: { path: ['settings', 'decor_default_style'] },
+    storage: 'House Plan server config',
+    type: '{ color?, opacity?, width_cm?, fill?, fill_color?, fill_opacity? }',
+    default: 'unset (absence IS the factory default)',
+    level: 'global',
+    ui: 'Background editor main-toolbar picker',
+    runtime: 'seeds the editor default decor style once per page (#377)',
+    introduced: 'v1.69.0',
+    status: 'current',
+    migration: 'none — reset to default removes the key',
+    compatibility: 'optional; partial keys inherit the factory default per field',
+  },
+  {
+    id: "spaces[].decor[]<kind='furniture'>",
+    selector: { path: ['spaces', '*', 'decor', '*', 'kind'], equals: 'furniture' },
+    storage: 'House Plan server config',
+    type: "decor item variant: symbol + box (x, y, w, h, angle)",
+    default: 'n/a',
+    level: 'space',
+    ui: 'Background editor furniture tool (#159/#359)',
+    runtime: 'plan-art rendering, placement preview, stroke zoom (#361)',
+    introduced: 'v1.69.0',
+    status: 'current',
+    migration: 'none',
+    compatibility: 'unknown symbols render as generic box; assets ship with the bundle',
+  },
+  {
+    id: "spaces[].openings[].host=partition",
+    selector: { path: ['spaces', '*', 'openings', '*', 'host', 'kind'], equals: 'partition' },
+    storage: 'House Plan server config',
+    type: "{ kind: 'partition', id, t }",
+    default: 'n/a',
+    level: 'space',
+    ui: 'Plan editor: openings hosted on partitions (model v9, v1.68)',
+    runtime: 'opening geometry, junction limits, glow cuts',
+    introduced: 'v1.68.0',
+    status: 'current',
+    migration: 'v9 migration resolves opening-vs-zero-wall conflicts (#316)',
+    compatibility: 'v8 configs without partition hosts stay valid',
+  },
 ]);
 
 export const CONFIG_FIELD_STATUSES = Object.freeze([

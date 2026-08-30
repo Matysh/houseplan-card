@@ -670,7 +670,8 @@ export function northDegOf(settings: any, spaceSettings: any): number | null {
   return intDeg(settings?.north_deg);
 }
 
-export type BgMode = 'static' | 'daynight';
+export const BG_MODES = ['static', 'daynight'] as const; // #33 parity
+export type BgMode = (typeof BG_MODES)[number];
 
 /** Effective background mode; anything unknown falls back to 'static'. */
 export function bgModeOf(settings: any, spaceSettings: any): BgMode {

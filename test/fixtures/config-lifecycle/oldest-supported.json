@@ -1,0 +1,57 @@
+{
+  "spaces": [
+    {
+      "id": "ground",
+      "title": "Ground",
+      "view_box": [
+        0,
+        0,
+        1000,
+        750
+      ],
+      "rooms": [
+        {
+          "id": "hall",
+          "name": "Hall",
+          "poly": [
+            [
+              100,
+              100
+            ],
+            [
+              400,
+              100
+            ],
+            [
+              400,
+              400
+            ],
+            [
+              100,
+              400
+            ]
+          ]
+        }
+      ],
+      "aspect": 1.33,
+      "settings": {
+        "fill_mode": "glow"
+      }
+    }
+  ],
+  "markers": [
+    {
+      "id": "lamp",
+      "binding": "entity:light.hall",
+      "space": "ground",
+      "display": "ripple",
+      "tap_action": "cover",
+      "is_light": true
+    }
+  ],
+  "settings": {
+    "show_all": true,
+    "weather_entity": "weather.home",
+    "bg_mode": "static"
+  }
+}

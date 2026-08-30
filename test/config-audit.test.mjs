@@ -63,3 +63,25 @@ test('config audit reports malformed JSON without a raw stack trace', () => {
     rmSync(directory, { recursive: true, force: true });
   }
 });
+
+// #33 AC6: the CLI exit-code contract — 0 clean, 3 migration available,
+// 2 invalid input — proven on the lifecycle fixtures.
+test('#33 config audit exit codes distinguish clean, migration and invalid', () => {
+  const run = (file) => spawnSync(process.execPath, ['scripts/config-audit.mjs', file], {
+    cwd: resolve('.'), encoding: 'utf8',
+  });
+  const clean = run('test/fixtures/config-lifecycle/current.json');
+  assert.equal(clean.status, 0,
+    `the current fixture must be clean, got ${clean.status}: ${clean.stdout}`);
+  const legacy = run('test/fixtures/config-lifecycle/oldest-supported.json');
+  assert.equal(legacy.status, 3,
+    'show_all/weather_entity/ripple in the oldest fixture must report "migration available"');
+  const directory = mkdtempSync(resolve(tmpdir(), 'houseplan-audit-codes-'));
+  const broken = resolve(directory, 'broken.json');
+  try {
+    writeFileSync(broken, '{nope', 'utf8');
+    assert.equal(run(broken).status, 2, 'invalid input keeps the existing code 2');
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});

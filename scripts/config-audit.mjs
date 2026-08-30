@@ -77,6 +77,16 @@ if (isMain) {
         const parsed = JSON.parse(readFileSync(absolute, 'utf8'));
         return { file: absolute, findings: auditConfig(parsed) };
       });
+      // #33: exit-code contract — 0 = clean, 3 = migration available
+      // (any finding whose status names a pending mechanism), 2 = invalid
+      // input (unchanged). 3 is chosen to avoid colliding with 2.
+      const MIGRATION_STATUSES = new Set([
+        'migrate-on-write', 'migrate-on-settings-save', 'deprecated-read',
+        'drop-on-validation', 'decision-required',
+      ]);
+      const migrationFindings = reports.some((report) => report.findings
+        .some((finding) => MIGRATION_STATUSES.has(finding.status)));
+      if (migrationFindings) process.exitCode = 3;
       if (jsonOutput) {
         console.log(JSON.stringify(reports, null, 2));
       } else {
