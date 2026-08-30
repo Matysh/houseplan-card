@@ -173,14 +173,10 @@ const res = await page.evaluate(async () => {
   const bindingResetToAuto = !!virtualBinding && c._markerDialog?.binding === 'virtual'
     && c._markerDialog?.valueSource === null
     && c._markerDialog?.valueSourceTouched === true;
-  // #385(а) AC2: re-clicking the ALREADY active virtual binding is a no-op too
-  c._markerDialog = { ...c._markerDialog, valueSource: { kind: 'sentinel-385' } };
-  await c.updateComplete;
-  virtualBinding?.click();
-  await c.updateComplete;
-  const sameVirtualKeepsSource =
-    c._markerDialog?.valueSource?.kind === 'sentinel-385'
-    && c._markerDialog?.binding === 'virtual';
+  // #385(а) r2-M1: no AC for the virtual radio — an already-checked radio
+  // input fires no change event, so the reset branch is unreachable by a
+  // real click (verified by review r2); the guard and its vacuous assert
+  // were removed rather than kept as false evidence.
   c._closeMarkerDialog();
 
   return {
@@ -188,7 +184,7 @@ const res = await page.evaluate(async () => {
     preview42, draftSourceExact, savedExact, actionSaved, reopenedExact,
     cancelKeptSource, plan42, static42, actionUnchanged,
     unavailableDash, unavailableStillValue, recovered55, bindingResetToAuto,
-    sameBindingKeepsSource, sameVirtualKeepsSource,
+    sameBindingKeepsSource,
   };
 });
 
