@@ -141,17 +141,17 @@ Object.assign(out, await page.evaluate(async () => {
     const v0 = { ...c._viewOr(c._baseVb()) };
     const r = dev.getBoundingClientRect();
     fire(dev, 'pointerdown', 22, r.left + r.width / 2, r.top + r.height / 2);
-    o.deviceTakesThePointer = !!c._drag && c._panStart === null;
+    o.deviceTakesThePointer = !!c._deviceDrag && c._panStart === null;
     fire(dev, 'pointermove', 22, r.left + r.width / 2 + 40, r.top + r.height / 2 + 30);
     c._stagePointerMove({ pointerId: 22, clientX: r.left + 60, clientY: r.top + 50 });
     const v1 = { ...c._viewOr(c._baseVb()) };
     o.deviceDragDoesNotPan = Math.abs(v1.x - v0.x) < 0.5 && Math.abs(v1.y - v0.y) < 0.5;
-    o.deviceActuallyMoved = !!c._drag && c._drag.moved === true;
+    o.deviceActuallyMoved = !!c._deviceDrag && c._deviceDrag.moved === true;
     fire(dev, 'pointerup', 22, r.left + r.width / 2 + 40, r.top + r.height / 2 + 30);
-    // _pointerUp releases _drag on the next macrotask, and _stagePointerDown
+    // _pointerUp releases the device drag before its serial final write, and _stagePointerDown
     // refuses to start a gesture while a device drag is live
     await new Promise((r2) => setTimeout(r2, 20));
-    o.deviceDragReleased = c._drag === null;
+    o.deviceDragReleased = c._deviceDrag === null;
     await c.updateComplete;
   }
 

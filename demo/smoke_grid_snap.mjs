@@ -71,9 +71,22 @@ const out = await page.evaluate(async () => {
       bubbles: true, ...extra,
     });
   };
-  c._drag = { id: dev.id, sx: 400, sy: 400, ox: p0.x, oy: p0.y, moved: false };
-  c._pointerMove(mkDelta(137.7 - p0.x + OFF, 251.3 - p0.y + OFF), dev);
-  c._drag = null;
+  const devNode = sr().querySelector(`.dev[data-id="${dev.id}"]`);
+  const devRect = devNode.getBoundingClientRect();
+  const stageRect = sr().querySelector('.stage').getBoundingClientRect();
+  const deviceView = c._viewOr(c._baseVb());
+  const startX = devRect.left + devRect.width / 2;
+  const startY = devRect.top + devRect.height / 2;
+  const dxPx = ((137.7 - p0.x + OFF) / deviceView.w) * stageRect.width;
+  const dyPx = ((251.3 - p0.y + OFF) / deviceView.h) * stageRect.height;
+  const devicePointer = (type, x, y, buttons) => devNode.dispatchEvent(new PointerEvent(type, {
+    pointerId: 174, pointerType: 'mouse', button: 0, buttons,
+    clientX: x, clientY: y, bubbles: true, composed: true, cancelable: true,
+  }));
+  devicePointer('pointerdown', startX, startY, 1);
+  devicePointer('pointermove', startX + dxPx, startY + dyPx, 1);
+  devicePointer('pointerup', startX + dxPx, startY + dyPx, 0);
+  while (c._devicePositionBusy) await new Promise((resolve) => setTimeout(resolve, 5));
   o.deviceLandsOnANode = onGridN(c._layout[dev.id].x) && onGridN(c._layout[dev.id].y);
 
   // ---- 1c) a ROOM LABEL too ---------------------------------------------

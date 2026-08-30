@@ -520,7 +520,13 @@ and its other entities remain deleted. The complete device stays available in
 
 ### Device editor
 
-- drag a marker to save its server-side position;
+- drag a marker to save its server-side position. One completed drag creates
+  one position-history step; a cancelled, unchanged or failed drag creates
+  none;
+- persistent Undo/Redo buttons affect marker positions only. The same
+  session-local history is available through `Ctrl/Cmd+Z`,
+  `Ctrl/Cmd+Shift+Z` and `Ctrl+Y`, keeps up to 50 completed moves, and is not
+  restored after reopening the card;
 - click it to edit name, binding, room, tap action and presentation;
 - **Add** opens the new-device dialog directly, without going through the
   device catalog;

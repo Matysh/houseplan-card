@@ -245,6 +245,7 @@ import { enqueueSerializedWrite } from './serialized-write-queue';
 import { hasTranslation, langOf, t, type I18nKey } from './i18n';
 import { classifyPlanFile, encodePlanFile, renderBackdropGuard } from './backdrop-pick';
 import { CommandStack } from './command-stack';
+import type { DeviceLayout, DevicePositionState } from './device-position-history';
 import { resolvedSvgScreenBlend, svgScreenBlendSupported } from './glow-blend';
 import {
   CONTINUITY_LONG_HIDDEN_MS,
@@ -854,6 +855,7 @@ export interface HouseplanEditorHostPort {
   _canEdit: boolean;
   _canOptimizeUndo: boolean;
   _cancelDevicePressFeedback: () => void;
+  _cancelDeviceDrag: () => boolean;
   _cancelModeTransition: (commitTarget?: boolean) => void;
   _candidateDeviceSnapshot: RenderDeviceSnapshot | null;
   _capturedSnapshotConfigEpoch: number;
@@ -898,6 +900,8 @@ export interface HouseplanEditorHostPort {
   _deviceInboxMemo: { key: string; rows: DeviceInboxRow[]; } | null;
   _deviceInboxReturn: DeviceInboxDialogState | null;
   _devicePresentation: (d: DevItem, showLqi?: boolean, designPreview?: boolean) => ResolvedDevicePresentation;
+  _devicePositionBusy: boolean;
+  _devicePositionHistory: CommandStack<DevicePositionState>;
   _devices: DevItem[];
   _dirtyPos: Set<string>;
   _display: (url: string | null | undefined) => string;
@@ -963,7 +967,7 @@ export interface HouseplanEditorHostPort {
   _kioskScale: { icon: number; font: number; };
   _labsIso: boolean;
   _lastValidStageSize: [number, number] | null;
-  _layout: Record<string, { x: number; y: number; s?: string; k?: number; }>;
+  _layout: DeviceLayout;
   _layoutRev: number;
   _logicalViewCenter: (projection: "flat" | "iso") => { x: number; y: number; } | null;
   _markerDialog: { devId?: string; uploadId?: string; name: string; binding: string; bindingMode: "virtual" | "ha"; bindingOpen: boolean; showEntities: boolean; bindingFilter: string; icon: string; autoIcon: string; display: DeviceDisplayMode; rippleColor: string; rippleSize: number; size: number; angle: number; tapAction: string; tapActionTouched: boolean; originalHasTapAction: boolean; originalTapAction: string | null | undefined; tapHintAnnouncement: string; toggleEntity: string; toggleEntityTouched: boolean; originalHasToggleEntity: boolean; originalToggleEntity: string | null | undefined; tapTarget: string; tapConfirm: boolean; runFilter: string; controls: string[]; controlsFilter: string; glowRadius: string; lightRole: "auto" | "always" | "never"; lightRoleTouched: boolean; originalHasIsLight: boolean; originalIsLight: boolean | null | undefined; lightEntity: string; lightEntityTouched: boolean; originalHasLightEntity: boolean; originalLightEntity: string | null | undefined; glowMode: "auto" | "color" | "fixed"; glowColor: string; glowBrightness: number; glowColorDrafted: boolean; glowBrightnessDrafted: boolean; glowTouched: boolean; originalHasGlowColor: boolean; originalGlowColor: { c: string; bri?: number | null; } | null | undefined; valueBadgeEnabled: boolean; valueBadgeSource: ValueBadgeSource | null; valueBadgePosition: ValueBadgePosition; valueBadgeTouched: boolean; originalHasValueBadge: boolean; originalValueBadge: MarkerValueBadge | null | undefined; valueSource: ValueBadgeSource | null; valueSourceTouched: boolean; originalHasValueSource: boolean; originalValueSource: ValueBadgeSource | null | undefined; useClimateTemp: boolean; model: string; link: string; description: string; pdfs: PdfRef[]; room: string; hideFromPlan: boolean; busy: boolean; } | null;
@@ -1052,6 +1056,7 @@ export interface HouseplanEditorHostPort {
     ResizePreview, ResizeLiveLabel[], SpaceGeometryState, ResizeWallUnion, ResizeWallArtifact
   >;
   _restoreZoom: () => void;
+  _redoDevicePosition: () => void;
   _resumeDraftBySpace: Record<string, string>;
   _rlResize: { id: string; space: string; k0: number; cx: number; cy: number; d0: number; } | null;
   _roomCenter: (r: RoomCfg) => number[];
@@ -1075,7 +1080,7 @@ export interface HouseplanEditorHostPort {
   _screenToVb: (sx: number, sy: number) => number[];
   _segments: number[][];
   _selId: string | null;
-  _sentPos: Map<string, { s?: string; x: number; y: number; }>;
+  _sentPos: Map<string, DeviceLayout[string] | null>;
   _serverCfg: ServerConfig | null;
   _serverStorage: boolean;
   _settings: { exclude_integrations?: string[]; group_lights?: boolean; show_all?: boolean; filter_seeded?: boolean; icon_rules?: { pattern: string; icon: string; }[]; };
@@ -1097,6 +1102,7 @@ export interface HouseplanEditorHostPort {
   _suppressClick: boolean;
   _swipeStart: { x: number; y: number; id: number; } | null;
   _t: (key: I18nKey, vars?: Record<string, string | number>) => string;
+  _undoDevicePosition: () => void;
   _thickWallCuts: () => number[][];
   _tip: { x: number; y: number; title: string; meta: string; lqi?: number | null; temp?: number | null; hum?: number | null; } | null;
   _toggleConfirmationLines: (intent: ResolvedToggleIntent) => string[];
@@ -1212,6 +1218,7 @@ public _setMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate = true): vo
       }
       return;
     }
+    if (this.host._mode === 'devices') this.host._cancelDeviceDrag();
     this.host._bootSoftCancel(); // navigation owns its own short, bounded transition
     if ((mode === 'plan' || mode === 'decor') && !this.host._norm) {
       this.host._showToast(this.host._t('toast.markup_needs_server'));
@@ -8315,6 +8322,8 @@ public async _saveMarker(): Promise<void> {
           .catch(() => undefined); // leftovers are harmless; broken links are not
       }
       this._closeMarkerDialog();
+      this.host._cancelDeviceDrag();
+      this.host._devicePositionHistory.clear();
       this.host._regSignature = '';
       this.host._maybeRebuildDevices();
       this.host._showToast(this.host._t('toast.marker_saved'));
@@ -8377,6 +8386,8 @@ public async _deleteMarker(): Promise<void> {
         this.host._deviceInboxReturn = { ...this.host._deviceInboxReturn, tab: 'readd', anchor: binding };
       }
       this._closeMarkerDialog();
+      this.host._cancelDeviceDrag();
+      this.host._devicePositionHistory.clear();
       if (this.host._infoCard?.id === targetId) this.host._closeInfoCard();
       if (this.host._selId === targetId) this.host._selId = null;
       if (this.host._drag?.id === targetId) this.host._drag = null;
@@ -9127,6 +9138,8 @@ public async _runAlignToGrid(): Promise<void> {
       this.host._serverCfg = d.config;
       this.host._layout = d.layout;
       this.host._geometryHistory.clear();
+      this.host._cancelDeviceDrag();
+      this.host._devicePositionHistory.clear();
       this.host._cfgRev = resp?.config_rev ?? this.host._cfgRev + 1;
       this.host._layoutRev = resp?.layout_rev ?? this.host._layoutRev + 1;
       this.host._canOptimizeUndo = !!resp?.can_undo;
@@ -9187,6 +9200,8 @@ public async _undoPlanOptimization(): Promise<void> {
       this.host._cfgRev = cfgResp?.rev ?? this.host._cfgRev;
       this.host._layout = layResp?.layout || this.host._layout;
       this.host._geometryHistory.clear();
+      this.host._cancelDeviceDrag();
+      this.host._devicePositionHistory.clear();
       this.host._layoutRev = layResp?.rev ?? this.host._layoutRev;
       this.host._canOptimizeUndo = false;
       this.host._undoKind = null;
@@ -11741,6 +11756,14 @@ public _renderMarkupBar(): TemplateResult {
   }
 
 public _renderDevicesBar(): TemplateResult {
+    const undoName = this.host._devicePositionHistory.undoName;
+    const redoName = this.host._devicePositionHistory.redoName;
+    const undoTitle = undoName
+      ? this.host._t('history.undo_named', { name: undoName })
+      : this.host._t('history.undo_empty');
+    const redoTitle = redoName
+      ? this.host._t('history.redo_named', { name: redoName })
+      : this.host._t('history.redo_empty');
     return html`<div class="editbar devbar">
       <div class="editbar-tools" tabindex="-1" ?inert=${this.host._modeTransitionBusy}>
         <ha-icon icon="mdi:tune-variant" class="warn"></ha-icon>
@@ -11758,6 +11781,18 @@ public _renderDevicesBar(): TemplateResult {
         ${this.host._editorToolbarGroups.map((group) => this._renderEditorGroupLauncher(group))}
       </div>
       <div class="editbar-end">
+        <button class="btn ghost" data-device-position-history="undo"
+          @click=${() => this.host._undoDevicePosition()}
+          ?disabled=${this.host._devicePositionBusy || !undoName}
+          title=${undoTitle} aria-label=${undoTitle}>
+          <ha-icon icon="mdi:undo-variant" aria-hidden="true"></ha-icon>
+        </button>
+        <button class="btn ghost" data-device-position-history="redo"
+          @click=${() => this.host._redoDevicePosition()}
+          ?disabled=${this.host._devicePositionBusy || !redoName}
+          title=${redoTitle} aria-label=${redoTitle}>
+          <ha-icon icon="mdi:redo-variant" aria-hidden="true"></ha-icon>
+        </button>
         <button class="btn barclose" title=${this.host._t('title.close_editor')}
           data-editor-navigation="view"
           @click=${() => this._setMode('view')}>

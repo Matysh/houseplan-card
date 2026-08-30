@@ -126,6 +126,8 @@
   "history.decor_transform": "Transform decor object",
   "history.decor_delete": "Delete decor object",
   "history.backdrop_transform": "Transform plan backdrop",
+  "history.device_move": "Move {name}",
+  "history.device_stale": "Device position history is no longer applicable and was cleared",
   "opening.new": "New opening",
   "opening.edit": "Opening",
   "opening.door": "Door",

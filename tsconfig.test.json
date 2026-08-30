@@ -27,7 +27,7 @@
     "src/signing.ts", "src/initial-load.ts", "src/space-model-selection.ts", "src/space-dialog.ts",
     "src/visual-continuity.ts", "src/mode-transition.ts", "src/editor-runtime-loader.ts", "src/pointer-modality.ts",
     "src/render-device-snapshot.ts",
-    "src/command-stack.ts",
+    "src/command-stack.ts", "src/device-position-history.ts",
     "src/coordinate-canonicalization.ts",
     "src/serialized-write-queue.ts",
     "src/align-grid.ts",

@@ -126,6 +126,8 @@
   "history.decor_transform": "Трансформация объекта декора",
   "history.decor_delete": "Удаление объекта декора",
   "history.backdrop_transform": "Трансформация подложки плана",
+  "history.device_move": "Перемещение: {name}",
+  "history.device_stale": "История позиций больше неприменима и была очищена",
   "opening.new": "Новый проём",
   "opening.edit": "Проём",
   "opening.door": "Дверь",

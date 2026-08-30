@@ -126,6 +126,8 @@
   "history.decor_transform": "Dekorobjekt transformieren",
   "history.decor_delete": "Dekorobjekt löschen",
   "history.backdrop_transform": "Plan-Hintergrund transformieren",
+  "history.device_move": "{name} verschieben",
+  "history.device_stale": "Der Positionsverlauf ist nicht mehr anwendbar und wurde gelöscht",
   "opening.new": "Neue Öffnung",
   "opening.edit": "Öffnung",
   "opening.door": "Tür",

@@ -241,6 +241,14 @@ import { hasTranslation, langOf, t, type I18nKey } from './i18n';
 import { LANGUAGE_RUNTIME, subscribeLanguageLoadFailures } from './i18n/registry';
 import { languageLoadingTemplate, languageRenderGate } from './i18n/language-runtime';
 import { CommandStack } from './command-stack';
+import {
+  applyDevicePlacement,
+  devicePlacement,
+  sameDevicePlacement,
+  type DeviceLayout,
+  type DevicePlacement,
+  type DevicePositionState,
+} from './device-position-history';
 import { resolvedSvgScreenBlend, svgScreenBlendSupported } from './glow-blend';
 import {
   buildGlowClipGeometry, buildLightBarrierScene, createGlowRuntimeState,
@@ -789,6 +797,21 @@ interface DeviceInboxDialogState {
 
 type FixedFloorState = FixedFloorSelection | { kind: 'pending'; value: unknown };
 
+interface DeviceDragState {
+  id: string;
+  spaceId: string;
+  displayName: string;
+  pointerId: number;
+  source: Element | null;
+  sx: number;
+  sy: number;
+  ox: number;
+  oy: number;
+  moved: boolean;
+  before: DevicePlacement | null;
+  start: DevicePlacement;
+}
+
 export class HouseplanCard extends LitElement {
   public _editorRuntime: import('./houseplan-editor-runtime').HouseplanEditorRuntime | null = null;
   public _onboardingRuntime: import('./houseplan-onboarding-runtime').HouseplanOnboardingRuntime | null = null;
@@ -925,7 +948,7 @@ export class HouseplanCard extends LitElement {
   private _config?: CardConfig;
 
   private _space = 'f1';
-  private _layout: Record<string, { x: number; y: number; s?: string; k?: number }> = {};
+  private _layout: DeviceLayout = {};
   private _serverStorage = false;
   private _loadOk = false;
   /** null until config/get answers; then mirrors auth.may_write for this user. */
@@ -1702,6 +1725,9 @@ export class HouseplanCard extends LitElement {
   private _tool: MarkupTool = 'draw';
   /** UX-04: one named, 50-step command history for every plan-geometry tool. */
   private _geometryHistory = new CommandStack<SpaceGeometryState>(50);
+  /** #74: independent session-local history for manual device placements. */
+  private _devicePositionHistory = new CommandStack<DevicePositionState>(50);
+  private _devicePositionBusy = false;
   /** Wall-thickness tool dialog (docs/WALL-THICKNESS.md). */
   private _wallDialog: {
     a: number[]; b: number[];
@@ -2401,6 +2427,7 @@ export class HouseplanCard extends LitElement {
   };
 
   private _drag: { id: string; sx: number; sy: number; ox: number; oy: number; moved: boolean } | null = null;
+  private _deviceDrag: DeviceDragState | null = null;
   private _rlResize: { id: string; space: string; k0: number; cx: number; cy: number; d0: number } | null = null;
   private _holdTimer?: number;
   private _holdFired = false;
@@ -2642,6 +2669,7 @@ export class HouseplanCard extends LitElement {
     this._bootTimer = undefined; // AUD-1552-01: a cleared id must not block the reconnect watcher
     clearTimeout(this._bootSoftTimer);
     this._saveConfigDebounced.flush(); // never leave an edit unsent on teardown
+    this._cancelDeviceDrag();
     window.removeEventListener('hashchange', this._onHashChange);
     this._labsUnsub?.();
     this._labsUnsub = undefined;
@@ -2810,6 +2838,24 @@ export class HouseplanCard extends LitElement {
         else if (this._decorSel) this._decorSel = null;
         else if (this._decorTool !== 'select') this._decorTool = 'select';
         else this._setMode('view');
+      }
+      return;
+    }
+    if (this._mode === 'devices') {
+      if ((undo || redo) && inField) return;
+      if (redo) {
+        e.preventDefault();
+        this._redoDevicePosition();
+        return;
+      }
+      if (undo) {
+        e.preventDefault();
+        this._undoDevicePosition();
+        return;
+      }
+      if (e.key === 'Escape' && this._deviceDrag) {
+        e.preventDefault();
+        this._cancelDeviceDrag();
       }
       return;
     }
@@ -3810,6 +3856,7 @@ export class HouseplanCard extends LitElement {
     this._pinchStart = null;
     this._swipeStart = null;
     this._drag = null;
+    this._deviceDrag = null;
     this._rlResize = null;
     this._vacFit = null;
     this._compassDrag = false;
@@ -3817,6 +3864,7 @@ export class HouseplanCard extends LitElement {
     this._mode = 'view';
     this._clearGeometryGesture();
     this._geometryHistory.clear();
+    this._devicePositionHistory.clear();
     this._resumeDraftBySpace = {};
     this._tip = null;
     this._hoverRoom = null;
@@ -4045,6 +4093,8 @@ export class HouseplanCard extends LitElement {
       // A genuinely different baseline invalidates local geometry undo. A
       // reconnect echo with identical content deliberately does not.
       this._geometryHistory.clear();
+      this._devicePositionHistory.clear();
+      this._cancelDeviceDrag();
       this._pendingPhysicalWrites.clear();
       if (this._serverCfg) this._clearGeometryGesture();
       this._serverCfg = nextConfig;
@@ -4073,6 +4123,8 @@ export class HouseplanCard extends LitElement {
       layoutChanged = nextLayoutFingerprint !== (this._layoutContentFingerprint
         || contentFingerprint(this._layout));
       if (layoutChanged) {
+        this._devicePositionHistory.clear();
+        this._cancelDeviceDrag();
         this._layout = nextLayout;
         this._layoutContentFingerprint = nextLayoutFingerprint;
       }
@@ -4741,12 +4793,18 @@ export class HouseplanCard extends LitElement {
       const resp = await this.hass.callWS({ type: 'houseplan/layout/get' });
       const remote = resp?.layout || {};
       const merged: Record<string, any> = { ...remote };
-      for (const [id, pos] of mine) merged[id] = pos;
-      const fingerprint = contentFingerprint(merged);
-      if (fingerprint !== (this._layoutContentFingerprint || contentFingerprint(this._layout))) {
-        this._layout = merged;
-        this._layoutContentFingerprint = fingerprint;
+      for (const [id, pos] of mine) {
+        if (pos === null) delete merged[id];
+        else merged[id] = pos;
       }
+      const fingerprint = contentFingerprint(merged);
+      const differsFromCurrent = fingerprint !== contentFingerprint(this._layout);
+      if (differsFromCurrent) {
+        this._cancelDeviceDrag();
+        this._devicePositionHistory.clear();
+        this._layout = merged;
+      }
+      this._layoutContentFingerprint = fingerprint;
       this._layoutRev = resp?.rev ?? this._layoutRev;
       this._canOptimizeUndo = !!resp?.can_optimize_undo;
       this._haIntegrationVersion = typeof resp?.integration_version === 'string'
@@ -4764,7 +4822,12 @@ export class HouseplanCard extends LitElement {
 
   private _dirtyPos = new Set<string>();
   /** Positions sent to the server and not acknowledged yet (HP-1461-02). */
-  private _sentPos = new Map<string, { s?: string; x: number; y: number }>();
+  private _sentPos = new Map<string, DeviceLayout[string] | null>();
+
+  private _persistLocalLayout(): void {
+    this._layout = canonicalizeLayoutGeometry(this._layout);
+    localStorage.setItem(LS_KEY, JSON.stringify(this._layout));
+  }
 
   private _persistLayout = debounce(() => {
     if (this._serverStorage) {
@@ -4786,8 +4849,7 @@ export class HouseplanCard extends LitElement {
       }
       this._cacheSnapshot();
     } else {
-      this._layout = canonicalizeLayoutGeometry(this._layout);
-      localStorage.setItem(LS_KEY, JSON.stringify(this._layout));
+      this._persistLocalLayout();
     }
   }, 600);
 
@@ -4850,8 +4912,10 @@ export class HouseplanCard extends LitElement {
           || this._devices.find((d) => d.id === this._infoCard?.id)?.bindingStatus?.kind === 'ha_disabled') {
         this._closeInfoCard();
       }
-      if (this._drag && this._devices.find((d) => d.id === this._drag!.id)?.bindingStatus?.kind === 'ha_disabled') {
-        this._drag = null;
+      if (this._deviceDrag
+          && this._devices.find((d) => d.id === this._deviceDrag!.id)?.bindingStatus?.kind === 'ha_disabled') {
+        this._cancelDeviceDrag();
+        this._devicePositionHistory.clear();
       }
       clearTimeout(this._holdTimer);
       this._holdFired = false;
@@ -4998,24 +5062,135 @@ export class HouseplanCard extends LitElement {
     return snapPt(spaceCenter(s));
   }
 
+  private _devicePlacementForCanvas(d: DevItem, x: number, y: number): DevicePlacement {
+    if (!this._norm) return { x: Math.round(x), y: Math.round(y) };
+    const g = this._gridPitch;
+    const gx = Math.round(x / g) * g;
+    const gy = Math.round(y / g) * g;
+    return {
+      s: d.space,
+      x: clampCanvasN(gx / NORM_W),
+      y: clampCanvasN(gy / NORM_W),
+    };
+  }
+
+  private _previewDevicePlacement(deviceId: string, placement: DevicePlacement | null): void {
+    this._layout = applyDevicePlacement(this._layout, deviceId, placement);
+    this.requestUpdate();
+  }
+
+  /** Abort an uncommitted device preview. Returns true when a drag existed. */
+  private _cancelDeviceDrag(): boolean {
+    const drag = this._deviceDrag;
+    if (!drag) return false;
+    this._deviceDrag = null;
+    try {
+      if (drag.source?.hasPointerCapture?.(drag.pointerId)) {
+        drag.source.releasePointerCapture(drag.pointerId);
+      }
+    } catch {
+      // Pointer capture may already have ended before the cancellation signal.
+    }
+    this._previewDevicePlacement(drag.id, drag.before);
+    return true;
+  }
+
+  /** One serial, point-wise position write used by drag commit and history. */
+  private async _persistDevicePlacement(
+    deviceId: string,
+    placement: DevicePlacement | null,
+  ): Promise<void> {
+    this._layout = applyDevicePlacement(this._layout, deviceId, placement);
+    if (this._serverStorage) {
+      let pending: DeviceLayout[string] | null = null;
+      let registered = false;
+      try {
+        let response: unknown;
+        if (placement === null) {
+          pending = null;
+          this._sentPos.set(deviceId, pending);
+          registered = true;
+          response = await this.hass.callWS({
+            type: 'houseplan/layout/delete', device_id: deviceId,
+          });
+        } else {
+          const pos = canonicalizePosition(this._layout[deviceId]);
+          pending = pos;
+          this._sentPos.set(deviceId, pending);
+          registered = true;
+          response = await this.hass.callWS({
+            type: 'houseplan/layout/update', device_id: deviceId, pos,
+          });
+        }
+        this._noteLayoutRev(response);
+        this._layoutContentFingerprint = contentFingerprint(this._layout);
+        this._cacheSnapshot();
+      } finally {
+        if (registered && this._sentPos.get(deviceId) === pending) this._sentPos.delete(deviceId);
+      }
+      return;
+    }
+    this._persistLocalLayout();
+  }
+
+  private _devicePositionStateValid(state: DevicePositionState): boolean {
+    const device = this._devices.find((candidate) => candidate.id === state.deviceId);
+    return !!device
+      && device.space === state.spaceId
+      && device.bindingStatus?.kind !== 'ha_disabled'
+      && !!this._spaceModelById(state.spaceId);
+  }
+
+  private async _runDevicePositionHistory(direction: 'undo' | 'redo'): Promise<void> {
+    if (this._cancelDeviceDrag() || this._devicePositionBusy) return;
+    const command = direction === 'undo'
+      ? this._devicePositionHistory.undo()
+      : this._devicePositionHistory.redo();
+    if (!command) return;
+    const target = direction === 'undo' ? command.before : command.after;
+    if (!this._devicePositionStateValid(target)) {
+      this._devicePositionHistory.clear();
+      this._showToast(this._t('history.device_stale'));
+      this.requestUpdate();
+      return;
+    }
+
+    const rollback = devicePlacement(this._layout, target.deviceId);
+    if (target.spaceId !== this._space) {
+      this._commitSpace(target.spaceId);
+      this._restoreZoom();
+    }
+    this._devicePositionBusy = true;
+    this._previewDevicePlacement(target.deviceId, target.placement);
+    try {
+      await this._persistDevicePlacement(target.deviceId, target.placement);
+      this._showToast(this._t(direction === 'undo' ? 'history.undone' : 'history.redone', {
+        name: command.name,
+      }));
+    } catch (error: unknown) {
+      this._previewDevicePlacement(target.deviceId, rollback);
+      if (direction === 'undo') this._devicePositionHistory.redo();
+      else this._devicePositionHistory.undo();
+      this._showToast(this._t('toast.pos_save_failed', { err: this._errText(error) }));
+    } finally {
+      this._devicePositionBusy = false;
+      this.requestUpdate();
+    }
+  }
+
+  private _undoDevicePosition(): void {
+    void this._runDevicePositionHistory('undo');
+  }
+
+  private _redoDevicePosition(): void {
+    void this._runDevicePositionHistory('redo');
+  }
+
   private _savePos(d: DevItem, x: number, y: number): void {
     if (!this._spaceModelById(d.space)) return;
-    if (this._norm) {
-      // The icon center snaps to the nodes of the same grid as the room markup
-      // (docs/CANVAS.md §9). UX-05 has no free-position escape hatch.
-      const g = this._gridPitch;
-      const gx = Math.round(x / g) * g;
-      const gy = Math.round(y / g) * g;
-
-      const prevK = (this._layout[d.id] as any)?.k;
-      this._layout = {
-        ...this._layout,
-        [d.id]: { s: d.space, x: clampCanvasN(gx / NORM_W), y: clampCanvasN(gy / NORM_W),
-          ...(prevK ? { k: prevK } : {}) },
-      };
-    } else {
-      this._layout = { ...this._layout, [d.id]: { x: Math.round(x), y: Math.round(y) } };
-    }
+    this._layout = applyDevicePlacement(
+      this._layout, d.id, this._devicePlacementForCanvas(d, x, y),
+    );
     this._dirtyPos.add(d.id);
     this._persistLayout();
   }
@@ -5191,7 +5366,7 @@ export class HouseplanCard extends LitElement {
     // if a future CSS change accidentally makes a marker a hit target again.
     if (this._mode !== 'view' && this._mode !== 'devices') return;
     ev.stopPropagation();
-    if (this._drag?.moved || this._suppressClick || this._holdFired) return;
+    if (this._deviceDrag?.moved || this._suppressClick || this._holdFired) return;
     if (this._mode === 'devices') {
       this._openMarkerDialog(d);
       return;
@@ -6103,7 +6278,7 @@ export class HouseplanCard extends LitElement {
       }
     }
     // do not interfere with icon and label dragging
-    if (this._drag) return;
+    if (this._drag || this._deviceDrag) return;
     if (this._markup) {
       // Drawing is CLICK-based, so gestures coexist with it: a finger that
       // MOVES pans, two fingers pinch, and _suppressClick keeps the release
@@ -6370,26 +6545,44 @@ export class HouseplanCard extends LitElement {
     }
     // A disabled ghost is a service entry point, not a movable plan object.
     // Leave the click intact so the settings dialog still opens.
-    if (d.bindingStatus?.kind === 'ha_disabled') return;
+    if (d.bindingStatus?.kind === 'ha_disabled' || this._devicePositionBusy) return;
+    if (this._deviceDrag) {
+      if (this._deviceDrag.pointerId !== ev.pointerId) this._cancelDeviceDrag();
+      return;
+    }
     ev.preventDefault();
     const p = this._pos(d);
-    this._drag = { id: d.id, sx: ev.clientX, sy: ev.clientY, ox: p.x, oy: p.y, moved: false };
+    this._deviceDrag = {
+      id: d.id,
+      spaceId: d.space,
+      displayName: d.name,
+      pointerId: ev.pointerId,
+      source: ev.currentTarget as Element | null,
+      sx: ev.clientX,
+      sy: ev.clientY,
+      ox: p.x,
+      oy: p.y,
+      moved: false,
+      before: devicePlacement(this._layout, d.id),
+      start: this._devicePlacementForCanvas(d, p.x, p.y),
+    };
     capturePointer(ev);
     this._tip = null;
   }
 
   private _pointerMove(ev: PointerEvent, d: DevItem): void {
     if (this._mode !== 'devices') return;
-    if (!this._drag || this._drag.id !== d.id) return;
+    const drag = this._deviceDrag;
+    if (!drag || drag.id !== d.id || drag.pointerId !== ev.pointerId) return;
     const stage = this.renderRoot.querySelector('.stage') as HTMLElement;
     if (!stage) return;
     const vb = this._baseVb();
     const rect = stage.getBoundingClientRect();
     const v = this._viewOr(vb);
-    const dx = ((ev.clientX - this._drag.sx) / rect.width) * v.w;
-    const dy = ((ev.clientY - this._drag.sy) / rect.height) * v.h;
-    if (Math.abs(ev.clientX - this._drag.sx) + Math.abs(ev.clientY - this._drag.sy) > 3) {
-      this._drag.moved = true;
+    const dx = ((ev.clientX - drag.sx) / rect.width) * v.w;
+    const dy = ((ev.clientY - drag.sy) / rect.height) * v.h;
+    if (Math.abs(ev.clientX - drag.sx) + Math.abs(ev.clientY - drag.sy) > 3) {
+      drag.moved = true;
       clearTimeout(this._holdTimer);
     }
     // DEV-B58-01. This used to be clamped into `vb` — the CONTENT FRAME — with
@@ -6399,21 +6592,54 @@ export class HouseplanCard extends LitElement {
     // where the new room was going to be. The plan has no edges any more
     // (docs/CANVAS.md §9); the only bound is the garbage limit the backend
     // enforces, and it is the SAME ±5000 on both sides of the wire.
-    const nx = clampCanvasR(this._drag.ox + dx);
-    const ny = clampCanvasR(this._drag.oy + dy);
-    this._savePos(d, nx, ny);
+    const nx = clampCanvasR(drag.ox + dx);
+    const ny = clampCanvasR(drag.oy + dy);
+    this._previewDevicePlacement(d.id, this._devicePlacementForCanvas(d, nx, ny));
   }
 
-  private _pointerUp(_ev: PointerEvent, d: DevItem): void {
+  private _pointerUp(ev: PointerEvent, d: DevItem): void {
     clearTimeout(this._holdTimer);
     if (this._mode !== 'devices') return;
-    if (!this._drag || this._drag.id !== d.id) return;
-    const moved = this._drag.moved;
-    this._drag = moved ? this._drag : null;
-    if (moved) {
-      this._selId = d.id;
-      window.setTimeout(() => (this._drag = null), 0);
+    const drag = this._deviceDrag;
+    if (!drag || drag.id !== d.id || drag.pointerId !== ev.pointerId) return;
+    this._deviceDrag = null;
+    const after = devicePlacement(this._layout, d.id);
+    if (!drag.moved || after === null || sameDevicePlacement(after, drag.start)) {
+      this._previewDevicePlacement(d.id, drag.before);
+      return;
     }
+
+    this._selId = d.id;
+    this._suppressClick = true;
+    window.setTimeout(() => { this._suppressClick = false; }, 0);
+    this._devicePositionBusy = true;
+    this.requestUpdate();
+    void this._persistDevicePlacement(d.id, after)
+      .then(() => {
+        const name = this._t('history.device_move', { name: drag.displayName });
+        this._devicePositionHistory.push({
+          name,
+          before: {
+            deviceId: drag.id, spaceId: drag.spaceId, placement: drag.before,
+          },
+          after: {
+            deviceId: drag.id, spaceId: drag.spaceId, placement: after,
+          },
+        });
+      })
+      .catch((error: unknown) => {
+        this._previewDevicePlacement(d.id, drag.before);
+        this._showToast(this._t('toast.pos_save_failed', { err: this._errText(error) }));
+      })
+      .finally(() => {
+        this._devicePositionBusy = false;
+        this.requestUpdate();
+      });
+  }
+
+  private _pointerCancel(ev: PointerEvent, d: DevItem): void {
+    if (this._deviceDrag?.id !== d.id || this._deviceDrag.pointerId !== ev.pointerId) return;
+    this._cancelDeviceDrag();
   }
 
   private _showToast(msg: string): void {
@@ -6576,7 +6802,7 @@ export class HouseplanCard extends LitElement {
   ): void {
     this._notePointer(ev);
     if (!this._pointerModality.hoverEnabled) return;
-    if (this._drag) return;
+    if (this._drag || this._deviceDrag) return;
     this._tip = { x: ev.clientX, y: ev.clientY, title, meta, lqi, temp, hum };
   }
 
@@ -11804,7 +12030,8 @@ export class HouseplanCard extends LitElement {
         this._showTip(e, d.name, presentation.haDisabled ? ghostLabel : metrics);
       }}
       @pointerup=${(e: PointerEvent) => this._pointerUp(e, d)}
-      @pointercancel=${(e: PointerEvent) => this._pointerUp(e, d)}
+      @pointercancel=${(e: PointerEvent) => this._pointerCancel(e, d)}
+      @lostpointercapture=${(e: PointerEvent) => this._pointerCancel(e, d)}
     >
       ${renderDeviceFace(presentation, {
         surface: 'interactive-plan',
@@ -12127,8 +12354,8 @@ export class HouseplanCard extends LitElement {
       }
       return null;
     }
-    if (this._mode === 'devices' && this._drag?.moved) {
-      const d = this._devices.find((x) => x.id === this._drag!.id);
+    if (this._mode === 'devices' && this._deviceDrag?.moved) {
+      const d = this._devices.find((x) => x.id === this._deviceDrag!.id);
       return d ? (() => { const p = this._pos(d); return [p.x, p.y]; })() : null;
     }
     if (this._mode === 'decor') {

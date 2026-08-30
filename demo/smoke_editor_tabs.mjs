@@ -158,7 +158,11 @@ const res = await page.evaluate(async () => {
   out.devBar = !!sr().querySelector('.editbar.devbar');
   const deviceToolbarButtons = [...sr().querySelectorAll('.editbar.devbar .btn:not(.barclose)')];
   const addDeviceButton = deviceToolbarButtons[0];
-  out.devBarBtns = deviceToolbarButtons.length === 3;
+  out.devBarBtns = deviceToolbarButtons.length === 5;
+  out.deviceHistoryControlsArePersistent = !!sr().querySelector('[data-device-position-history="undo"]')
+    && !!sr().querySelector('[data-device-position-history="redo"]')
+    && sr().querySelector('[data-device-position-history="undo"]').disabled
+    && sr().querySelector('[data-device-position-history="redo"]').disabled;
   out.addDeviceShortcutUsesNativeKeyboardSemantics = addDeviceButton?.tagName === 'BUTTON'
     && addDeviceButton.disabled === false;
   out.addDeviceShortcut = addDeviceButton?.textContent.trim() === c._t('devbar.add')

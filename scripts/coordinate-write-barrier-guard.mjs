@@ -44,7 +44,7 @@ export function checkCoordinateWriteBarriers(root = defaultRoot) {
   }
 
   const positionWrites = occurrences(frontend, "type: 'houseplan/layout/update'");
-  if (positionWrites.length !== 2) errors.push(`frontend position writer inventory: ${positionWrites.length}`);
+  if (positionWrites.length !== 3) errors.push(`frontend position writer inventory: ${positionWrites.length}`);
   for (const [ordinal, index] of positionWrites.entries()) requireWindow(
     errors, frontend, index,
     /const pos = canonicalizePosition\([^)]+\);[\s\S]*pos(?:[,\s}])/,

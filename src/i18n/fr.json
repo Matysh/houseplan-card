@@ -126,6 +126,8 @@
   "history.decor_transform": "Transformer l’objet décoratif",
   "history.decor_delete": "Supprimer l’objet décoratif",
   "history.backdrop_transform": "Transformer l’arrière-plan du plan",
+  "history.device_move": "Déplacer {name}",
+  "history.device_stale": "L’historique des positions n’est plus applicable et a été effacé",
   "opening.new": "Nouvelle ouverture",
   "opening.edit": "Ouverture",
   "opening.door": "Porte",

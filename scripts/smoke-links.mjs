@@ -29,6 +29,17 @@
 export const SMOKE_LINKS = [
   {
     symbols: [
+      'applyDevicePlacement', 'devicePlacement', 'sameDevicePlacement',
+      'DevicePlacement', 'DevicePositionState',
+    ],
+    smokes: ['smoke_device_position_history.mjs'],
+    because: 'the #74 production-bundle scenario drives real Device editor pointer events and '
+      + 'observes transaction boundaries, point-wise update/delete, toolbar history, native field '
+      + 'shortcuts, cancellation and revision invalidation; none of those browser effects can be '
+      + 'proved by the pure placement helpers alone',
+  },
+  {
+    symbols: [
       'resolveValueSource', 'valueSourceWriteFields', 'valueBadgeCandidates',
       'valueBadgeSourceKey', 'resolveDevicePresentation',
     ],

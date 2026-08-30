@@ -2283,6 +2283,17 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'device-position-cancel-routed-to-commit',
+    guard: 'node demo/smoke_device_position_history.mjs',
+    because: 'pointer cancellation and lost capture must restore the uncommitted device preview '
+      + 'without creating a position command or writing layout (#74)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '@pointercancel=${(e: PointerEvent) => this._pointerCancel(e, d)}',
+      replace: '@pointercancel=${(e: PointerEvent) => this._pointerUp(e, d)}',
+    }],
+  },
+  {
     id: 'stale-space-position-guard-removed',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="stable space ids" test/optional-space-model-contract.test.mjs',
@@ -2290,8 +2301,8 @@ const MUTANT_DEFINITIONS = [
       + 'and websocket side effects when that space has been deleted or renamed',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: '    if (!this._spaceModelById(d.space)) return;\n    if (this._norm) {',
-      replace: '    if (this._norm) {',
+      find: '    if (!this._spaceModelById(d.space)) return;\n    this._layout = applyDevicePlacement(',
+      replace: '    this._layout = applyDevicePlacement(',
     }],
   },
   {

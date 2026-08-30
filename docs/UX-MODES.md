@@ -161,8 +161,13 @@ layer you cannot see is a layer you cannot edit.
   (binding, name, icon, size/angle, display as icon / icon + activity / value,
   activity color and size, tap override,
   model/link/description/PDFs, room).
+- The toolbar always keeps position-only Undo/Redo beside Close. One released
+  drag is one command; cancellation, no movement and a failed write create no
+  command. The independent 50-step session stack also uses `Ctrl/Cmd+Z`,
+  `Ctrl/Cmd+Shift+Z` and `Ctrl+Y` and never absorbs marker configuration,
+  lifecycle or Plan/Background edits.
 - + add device/entity/virtual, the bottom-left "Hide" / "Show" action in an
-  existing device dialog (the one hiding mechanism, docs/FILTERING.md), ↺ reset layout,
+  existing device dialog (the one hiding mechanism, docs/FILTERING.md),
   👁 "Show hidden" (local editor tool; replaced the shared show-all toggle),
   ⬡ icon rules.
 

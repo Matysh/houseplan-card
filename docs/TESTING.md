@@ -1735,8 +1735,20 @@ separately promised workflows:
       icon preview; opening/saving untouched must keep the explicit override
       empty, and the hint disappears once an explicit icon is picked
       [auto: smoke_icon_placeholder]
-- [ ] No Reset button (v1.33.2): the Device editor toolbar has three tools —
-      add, show all, icon rules; the layout-wiping Reset is gone [auto: smoke_editor_tabs]
+- [ ] Device-position history (#74): the Device editor always shows Undo/Redo
+      before Close. One pointerup after a real snapped move creates exactly one
+      point-wise server write and one command; Undo/Redo use update or delete
+      as appropriate and preserve `s`, `k: 0` and unknown sibling fields.
+      Pointercancel, lost capture, a second pointer, Escape, no movement and a
+      failed write restore the preview and create no command. A failed history
+      write restores the previous stack direction; own storage echoes preserve
+      history while a different remote baseline, rebinding, deletion or
+      optimization clears it. The independent stack is limited to 50 moves;
+      `Ctrl/Cmd+Z`, `Ctrl/Cmd+Shift+Z` and `Ctrl+Y` work outside native fields
+      [unit: device-position-history; auto: smoke_device_position_history].
+- [ ] No Reset button (v1.33.2): the Device editor toolbar has three entry
+      tools — add, show all, icon rules — plus position Undo/Redo and Close;
+      the layout-wiping Reset is gone [auto: smoke_editor_tabs]
 - [ ] Grid in all editors + decor fade (v1.33.1): the dot grid shows in the
       Device and Background editors too (instant "I'm editing" cue), not in
       View; in the Background editor rooms/devices/openings/labels plus solid,

@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- The Device editor now has its own Undo/Redo history for marker positions.
+  One completed drag is one step; cancelled or failed moves add nothing, and
+  the 50-step session history is available from persistent toolbar buttons or
+  `Ctrl/Cmd+Z`, `Ctrl/Cmd+Shift+Z` and `Ctrl+Y`
+  ([#74](https://github.com/Matysh/houseplan-card/issues/74)).
+
 - Device discovery lost its last hidden knobs: light grouping and the
   excluded-integrations list are now visible **Discovery filters** on the
   catalog's Available tab, with appear/disappear counters before saving and
