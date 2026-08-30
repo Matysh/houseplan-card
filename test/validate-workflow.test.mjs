@@ -141,3 +141,29 @@ test('упавшая golden называет первопричину, а не �
   // свидетеля и смысл сообщения перевернётся.
   assert.match(golden, /if: failure\(\) && steps\.fail_note\.outputs\.first == 'true'/);
 });
+
+test('классификация опирается на завершённый прогон, а не на предыдущий пуш (#387)', () => {
+  const workflow = read('validate.yml');
+  const changes = workflow.slice(
+    workflow.indexOf('\n  changes:\n'), workflow.indexOf('\n  reuse:\n'),
+  );
+  // `github.event.before` — источник ложного «уже проверено»: прогон
+  // предыдущего пуша штатно отменяется следующим. Классификация читать его
+  // больше не имеет права. В процессном гейте он законен: там проверяются
+  // трейлеры именно отправленных коммитов, а не объём проверок.
+  // `before` остаётся ровно одной проверкой — жив он или переписан (#347).
+  // Базой диапазона он больше не служит: его прогон штатно отменяется.
+  assert.equal(/base="\$BEFORE_SHA"/.test(changes), false,
+    'диапазон не имеет права опираться на голову предыдущего пуша (#387)');
+  assert.match(changes, /git cat-file -e "\$BEFORE_SHA"/,
+    'защита от force-push остаётся на месте (#347)');
+  assert.match(changes, /node scripts\/classify-base\.mjs --head=/);
+  assert.match(changes, /actions: read/, 'чтение прогонов требует прав');
+  // База считается только для push вне dev: у PR диапазон задан событием.
+  assert.match(changes, /if: github\.event_name != 'pull_request' && github\.ref != 'refs\/heads\/dev'/);
+  // Пустая база означает «доказательства нет» и обязана вести к полному
+  // прогону, а не к пустому диффу, который выглядел бы как «ничего не менялось».
+  const empty = changes.slice(changes.indexOf('if [ -z "$base" ]'));
+  assert.match(empty, /frontend=true\\nbackend=true\\nintegration=true/,
+    'без базы классификация обязана раскрываться в полный прогон');
+});
