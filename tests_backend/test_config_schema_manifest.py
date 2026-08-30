@@ -35,9 +35,9 @@ def test_issue_33_manifest_is_fresh_and_deterministic():
     second = dump.build_manifest()
     assert first == second, "the walker must be deterministic"
     rendered = json.dumps(first, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
-    committed = (REPO / "scripts" / "config-schema-manifest.json").read_text(encoding="utf-8")
+    committed = (REPO / "scripts" / "config-schema.json").read_text(encoding="utf-8")
     assert rendered == committed, (
-        "scripts/config-schema-manifest.json is stale — the schema changed; "
+        "scripts/config-schema.json is stale — the schema changed; "
         "run python3 scripts/dump-config-schema.py and commit the diff"
     )
     # AC1: the manifest is not a stub — it must cover the whole persisted shape.

@@ -47,8 +47,9 @@ Voluptuous-схемы**: бэкенд — единственный владел�
 - `scripts/dump-config-schema.py`: обходит `CONFIG_SCHEMA`/`LAYOUT_SCHEMA`
   (Optional/Required, default, vol.In → enum, vol.Range → min/max,
   vol.Any → варианты, vol.Remove → отметка dropped, ALLOW_EXTRA → флаг узла)
-  и пишет детерминированный `scripts/config-schema-manifest.json`
-  (сортировка путей, стабильная сериализация). Импорт validation.py без
+  и пишет детерминированный `scripts/config-schema.json`
+  (сортировка путей, стабильная сериализация; имя БЕЗ суффикса
+  `*manifest.json` — HACS глобит его по всему клону, tест repo-hygiene). Импорт validation.py без
   homeassistant — заглушки родительских пакетов (приём проверен
   инвентаризацией этой ревизии).
 - Манифест коммитится; pytest-тест регенерирует его в tmp и сравнивает
@@ -131,7 +132,7 @@ Persisted-данные не меняются. Манифест — build-арт�
 
 ## Критерии приёмки
 
-- **AC1**: `scripts/config-schema-manifest.json` детерминирован (два прогона
+- **AC1**: `scripts/config-schema.json` детерминирован (два прогона
   дампа байт-идентичны) и покрывает 100% листовых путей CONFIG/LAYOUT-схем;
   pytest падает при рассинхроне схемы и закоммиченного манифеста, diff
   показывает пути.

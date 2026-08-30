@@ -1507,7 +1507,7 @@ single owner of the persisted config/layout shape. Three artefacts keep every
 other world honest against it:
 
 - `scripts/dump-config-schema.py` walks the schema into the deterministic
-  `scripts/config-schema-manifest.json` (265 leaf paths at introduction);
+  `scripts/config-schema.json` (265 leaf paths at introduction);
   a pytest regenerates it and fails on any uncommitted drift.
 - `test/config-schema-parity.test.mjs` compares manifest enums with the
   exported frontend const lists (`DISPLAY_MODES`, `TAP_ACTIONS`,
@@ -1531,7 +1531,7 @@ single owner of the persisted config/layout shape. Three artefacts keep every
 other world honest against it:
 
 - `scripts/dump-config-schema.py` walks the schema into the deterministic
-  `scripts/config-schema-manifest.json` (265 leaf paths at introduction);
+  `scripts/config-schema.json` (265 leaf paths at introduction);
   a pytest regenerates it and fails on any uncommitted drift.
 - `test/config-schema-parity.test.mjs` compares manifest enums with the
   exported frontend const lists (`DISPLAY_MODES`, `TAP_ACTIONS`,

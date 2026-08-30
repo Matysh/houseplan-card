@@ -12,12 +12,12 @@ import {
 import { BG_MODES } from '../test-build/sun.js';
 
 const manifest = JSON.parse(readFileSync(
-  new URL('../scripts/config-schema-manifest.json', import.meta.url), 'utf8')).fields;
+  new URL('../scripts/config-schema.json', import.meta.url), 'utf8')).fields;
 
 /** Enum values of a manifest entry: `enum` list or const-variants (null skipped). */
 const backendValues = (path) => {
   const entry = manifest[path];
-  assert.ok(entry, `manifest is missing ${path} — regenerate scripts/config-schema-manifest.json`);
+  assert.ok(entry, `manifest is missing ${path} — regenerate scripts/config-schema.json`);
   if (entry.enum) return [...entry.enum];
   if (entry.variants) {
     return entry.variants

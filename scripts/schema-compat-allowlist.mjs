@@ -1,6 +1,6 @@
 /**
  * #33: the machine-readable list of LEGITIMISED enum divergences between the
- * backend schema manifest (scripts/config-schema-manifest.json) and the
+ * backend schema manifest (scripts/config-schema.json) and the
  * frontend const declarations.
  *
  * The parity test fails on any divergence that is not listed here — and on

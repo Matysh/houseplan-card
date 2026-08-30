@@ -742,7 +742,7 @@ const MUTANT_DEFINITIONS = [
       + 'bless) is exactly the schema drift #33 exists to catch — the manifest mutation '
       + 'simulates the backend change without the frontend pair',
     patches: [{
-      file: 'scripts/config-schema-manifest.json',
+      file: 'scripts/config-schema.json',
       find: "    \"config.spaces[].settings.fill_mode\": {\n      \"enum\": [\n        \"custom\",",
       replace: "    \"config.spaces[].settings.fill_mode\": {\n      \"enum\": [\n        \"phantom-33\",\n        \"custom\",",
     }],

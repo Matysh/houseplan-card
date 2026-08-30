@@ -3,7 +3,7 @@
 
 The Voluptuous schema in custom_components/houseplan/validation.py is the
 single owner of the persisted config/layout shape. This walker turns it into
-scripts/config-schema-manifest.json — the machine-readable manifest the
+scripts/config-schema.json — the machine-readable manifest the
 frontend parity test and the field registry completeness test consume.
 
 Determinism contract: two runs on the same tree produce byte-identical
@@ -25,7 +25,7 @@ import types
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
-OUT = REPO / "scripts" / "config-schema-manifest.json"
+OUT = REPO / "scripts" / "config-schema.json"
 
 
 def _safe_repr(value) -> str:
@@ -271,7 +271,7 @@ def main() -> int:
         current = OUT.read_text(encoding="utf-8") if OUT.exists() else ""
         if current != rendered:
             sys.stderr.write(
-                "config-schema-manifest.json is stale: run python3 scripts/dump-config-schema.py\n")
+                "config-schema.json is stale: run python3 scripts/dump-config-schema.py\n")
             return 1
         print(f"manifest fresh: {len(manifest['fields'])} paths")
         return 0
