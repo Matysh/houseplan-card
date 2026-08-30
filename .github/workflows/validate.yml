@@ -94,8 +94,11 @@ jobs:
           REPO: ${{ github.repository }}
           FALLBACK: ${{ github.event.before }}
         run: |
+          # `status=completed`, а не `success`: гейтам диапазона нужен факт
+          # «коммит судили», а не «вердикт был оправдательный». Упавший прогон
+          # коммит судил; отменённый — нет, его отсеивает judgedShas (#388).
           gh api -X GET "repos/$REPO/actions/workflows/validate.yml/runs" \
-            -f branch=dev -f status=success -F per_page=100 \
+            -f branch=dev -f status=completed -F per_page=100 \
             > /tmp/validate-runs.json || echo '{}' > /tmp/validate-runs.json
           node scripts/classify-base.mjs --head="$HEAD_SHA" --mode=range \
             --fallback="$FALLBACK" --runs=/tmp/validate-runs.json
@@ -208,8 +211,10 @@ jobs:
           git fetch -q origin dev
           # Недоступность API — не отказ гейта: пустой ответ уводит базу в
           # сторону БОЛЬШЕГО объёма проверок, а не меньшего.
+          # Один запрос на оба режима: `completed` — надмножество `success`,
+          # а нужный предикат применяет скрипт (#387 — успех, #388 — судимость).
           gh api -X GET "repos/$REPO/actions/workflows/validate.yml/runs" \
-            -f branch="$BRANCH" -f status=success -F per_page=100 \
+            -f branch="$BRANCH" -f status=completed -F per_page=100 \
             > /tmp/validate-runs.json || echo '{}' > /tmp/validate-runs.json
           if [ "$REF" = "refs/heads/dev" ]; then
             # На dev классифицировать нечего (всё true), но база диапазона

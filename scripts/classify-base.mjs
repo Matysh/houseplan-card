@@ -40,6 +40,29 @@ import { appendFileSync, readFileSync } from 'node:fs';
 export const MAX_CANDIDATES = 300;
 
 /**
+ * SHA прогонов, которые ДОШЛИ ДО КОНЦА — успешно или нет, но не отменённые.
+ *
+ * Разница с `greenShas` — суть issue #388, и я её сначала перепутал, чем уронил
+ * dev. Классификация (#387) спрашивает «доказано ли, что тяжёлые гейты на этом
+ * дереве прошли» — там нужен именно `success`. Гейты диапазона спрашивают
+ * другое: «судил ли этот коммит хоть кто-нибудь». Упавший прогон коммит СУДИЛ,
+ * просто вынес обвинительный вердикт, и переоткрывать его диапазоном не надо.
+ *
+ * Цена ошибки была наглядной: backend на dev красный несколько дней по своей
+ * причине, поэтому «зелёных» прогонов не было вовсе, база уезжала на десятки
+ * коммитов назад, и `no-new-any` начал предъявлять текущему пушу чужой долг.
+ */
+export function judgedShas(payload) {
+  const runs = payload && Array.isArray(payload.workflow_runs) ? payload.workflow_runs : [];
+  return new Set(
+    runs
+      .filter((run) => run && run.status === 'completed' && run.conclusion !== 'cancelled'
+        && typeof run.head_sha === 'string')
+      .map((run) => run.head_sha),
+  );
+}
+
+/**
  * SHA прогонов, завершившихся успешно. Вход — тело ответа
  * `/actions/workflows/validate.yml/runs`; всё, что не массив прогонов,
  * считается пустым списком: недоступность API обязана вести к более широкому
@@ -136,7 +159,7 @@ export function baseSummary(choice, { head, mergeBase }) {
   if (choice.reason === 'fallback') {
     return [
       '### База диапазона (#388)',
-      `Ни у одного из ${choice.skipped} предков нет завершённого зелёного Validate.`
+      `Ни один из ${choice.skipped} предков не был судим завершённым Validate.`
         + ` Диапазон взят от \`${short(choice.base)}\` — головы предыдущего пуша,`
         + ' и это НЕ доказательство проверенности: прогон того пуша мог быть отменён.'
         + ' Коммиты в этом окне могли не пройти ни одного гейта.',
@@ -184,10 +207,9 @@ function main(argv) {
     'rev-list', `--max-count=${MAX_CANDIDATES}`, '--skip=1', span,
   ], { encoding: 'utf8' }).split('\n').map((line) => line.trim()).filter(Boolean);
 
-  const green = greenShas(payload);
   const choice = mode === 'range'
-    ? pickRangeBase({ candidates, green, fallback: arg(argv, 'fallback') })
-    : pickBase({ candidates, green, mergeBase });
+    ? pickRangeBase({ candidates, green: judgedShas(payload), fallback: arg(argv, 'fallback') })
+    : pickBase({ candidates, green: greenShas(payload), mergeBase });
   const summary = baseSummary(choice, { head, mergeBase });
   process.stdout.write(`${summary.join('\n')}\n`);
   // Имя выхода задаётся явно: одна и та же job считает базу для двух разных

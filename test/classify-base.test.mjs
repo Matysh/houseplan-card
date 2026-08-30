@@ -7,7 +7,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
-  MAX_CANDIDATES, baseSummary, greenShas, pickBase, pickRangeBase,
+  MAX_CANDIDATES, baseSummary, greenShas, judgedShas, pickBase, pickRangeBase,
 } from '../scripts/classify-base.mjs';
 
 const SCRIPT = fileURLToPath(new URL('../scripts/classify-base.mjs', import.meta.url));
@@ -170,8 +170,8 @@ test('CLI режима range считает базу по истории и пи
     const out = join(dir, 'out.txt');
     writeFileSync(runsFile, JSON.stringify({
       workflow_runs: [
-        { head_sha: green, conclusion: 'success' },
-        { head_sha: cancelled, conclusion: 'cancelled' },
+        { head_sha: green, status: 'completed', conclusion: 'success' },
+        { head_sha: cancelled, status: 'completed', conclusion: 'cancelled' },
       ],
     }));
     writeFileSync(out, '');
@@ -188,4 +188,37 @@ test('CLI режима range считает базу по истории и пи
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
+});
+
+test('судимость и успех — разные предикаты, и путать их дорого (#388)', () => {
+  const payload = {
+    workflow_runs: [
+      { head_sha: 'зелёный', status: 'completed', conclusion: 'success' },
+      // Прогон упал по своей причине — backend на dev был красным несколько
+      // дней. Коммит при этом СУДИЛИ: вердикт вынесен, автор его видел.
+      { head_sha: 'красный', status: 'completed', conclusion: 'failure' },
+      // Отменён следующим пушем — вот этот коммит не судил никто.
+      { head_sha: 'отменён', status: 'completed', conclusion: 'cancelled' },
+      { head_sha: 'идёт', status: 'in_progress', conclusion: null },
+    ],
+  };
+  assert.deepEqual([...greenShas(payload)], ['зелёный'],
+    'классификации нужен доказанный успех тяжёлых гейтов (#387)');
+  assert.deepEqual([...judgedShas(payload)].sort(), ['зелёный', 'красный'],
+    'гейтам диапазона нужен факт суда, а не оправдательный вердикт (#388)');
+});
+
+test('красный прогон не переоткрывает уже осуждённые коммиты (#388)', () => {
+  // Если бы база уезжала за каждый упавший прогон, гейт предъявлял бы текущему
+  // пушу чужой долг — ровно это и уронило dev 30 августа.
+  const judged = judgedShas({
+    workflow_runs: [{ head_sha: 'предыдущий', status: 'completed', conclusion: 'failure' }],
+  });
+  const choice = pickRangeBase({
+    candidates: ['предыдущий', 'давний'],
+    green: judged,
+    fallback: 'before',
+  });
+  assert.equal(choice.base, 'предыдущий');
+  assert.equal(choice.skipped, 0);
 });

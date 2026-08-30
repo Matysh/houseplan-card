@@ -183,6 +183,11 @@ test('гейты диапазона судят от доказанного пр�
     preflight.match(/BEFORE_SHA: \$\{\{ steps\.range\.outputs\.base \|\| github\.event\.before \}\}/g)?.length,
     2, 'провенанс и процессный гейт читают доказанную базу');
   assert.match(preflight, /--mode=range/);
+  // `completed`, а не `success`: нужен факт суда над коммитом, а не
+  // оправдательный вердикт. Запрос за success уводил базу на десятки коммитов
+  // назад, пока backend на dev был красным по своей причине (#388).
+  assert.match(preflight, /-f status=completed/);
+  assert.equal(/-f status=success/.test(preflight), false);
   assert.match(preflight, /actions: read/, 'чтение прогонов требует прав');
   assert.match(preflight, /issues: read/, 'проверка 8 читает issue');
   // Считать базу имеет смысл только на пуше в dev: на ветках диапазон и так
