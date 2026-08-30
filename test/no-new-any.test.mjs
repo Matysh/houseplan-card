@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
-  addedLinesByFile, anyKeywordLines, findNewAnyViolations, parseAnyOk,
+  addedLinesByFile, anyKeywordLines, blameLine, findNewAnyViolations, formatViolation, parseAnyOk,
 } from '../scripts/no-new-any.mjs';
 
 // #342. Цель гейта — не перетипизировать монолит, а не давать долгу расти. В
@@ -105,4 +105,29 @@ test('удалённый файл не даёт нарушений: судить
     '-const a: any = 1;',
   ].join('\n');
   assert.equal(addedLinesByFile(diff).size, 0);
+});
+
+// --- источник находки (#388) -----------------------------------------------
+
+test('находка называет коммит, который добавил строку (#388)', () => {
+  // Диапазон теперь считается от последнего зелёного предка, поэтому находка
+  // может относиться к чужому коммиту с отменённым прогоном. Без имени
+  // источника сообщение обвиняло бы того, кто пушнул следующим — ровно то, что
+  // пришлось чинить в #386 для golden.
+  const porcelain = '3fa1c0de9b8a7654 12 12 1\nauthor Кто-то\nsummary правка\n';
+  assert.equal(blameLine('src/a.ts', 12, () => porcelain), '3fa1c0de');
+  assert.equal(
+    formatViolation({ path: 'src/a.ts', line: 12, reason: 'нет обоснования' }, '3fa1c0de'),
+    '  src/a.ts:12 (добавил 3fa1c0de) — нет обоснования',
+  );
+});
+
+test('недоступный blame не выдумывает источник и не роняет отчёт (#388)', () => {
+  for (const answer of ['', 'мусор без sha\n', null, undefined]) {
+    assert.equal(blameLine('src/a.ts', 1, () => answer), '');
+  }
+  assert.equal(
+    formatViolation({ path: 'src/a.ts', line: 1, reason: 'нет обоснования' }, ''),
+    '  src/a.ts:1 — нет обоснования',
+  );
 });

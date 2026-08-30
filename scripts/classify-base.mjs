@@ -1,4 +1,5 @@
-// База для классификации изменённых файлов (issue #387).
+// База диапазона: до какого коммита назад считать, что «уже проверено»
+// (issue #387 — классификация файлов, issue #388 — гейты диапазона).
 //
 // Job `changes` решает, запускать ли тяжёлые гейты, по списку файлов в
 // диапазоне. Раньше диапазон брался от `github.event.before` — головы ветки на
@@ -24,10 +25,10 @@
 // проверки. Одно незавершённое звено рвёт цепочку — и именно оно теперь
 // заставляет расширить диапазон, а не сузить.
 //
-// `github.event.before` больше не читается вовсе. Отдельная ветка про
-// force-push (#347) поэтому не нужна: кандидаты берутся из `rev-list
-// <merge-base>..HEAD`, то есть предки HEAD по построению, а переписанная
-// история просто не даёт зелёных совпадений и опускает базу до merge-base.
+// Два режима, и разница между ними только в фолбэке — см. `pickBase` и
+// `pickRangeBase`. Классификация (#387) может опуститься до merge-base с dev;
+// гейтам диапазона (#388) на пуше прямо в dev опускаться некуда, и там фолбэк
+// остаётся прежним `before`, но с явной пометкой «недоказуемо».
 
 import { execFileSync } from 'node:child_process';
 import { appendFileSync, readFileSync } from 'node:fs';
@@ -62,14 +63,60 @@ export function greenShas(payload) {
  * @param mergeBase  merge-base с dev: пол, ниже которого опускаться незачем.
  */
 export function pickBase({ candidates, green, mergeBase }) {
-  const list = Array.isArray(candidates) ? candidates.slice(0, MAX_CANDIDATES) : [];
+  const found = firstGreen(candidates, green);
+  if (found) return { ...found, reason: 'green-ancestor', proven: true };
+  return {
+    base: mergeBase,
+    reason: 'merge-base',
+    proven: false,
+    skipped: capped(candidates).length,
+  };
+}
+
+/** Кандидаты в пределах обхода. */
+const capped = (candidates) =>
+  (Array.isArray(candidates) ? candidates : []).slice(0, MAX_CANDIDATES);
+
+/** Самый новый зелёный предок либо null. */
+function firstGreen(candidates, green) {
+  const list = capped(candidates);
   const proven = green instanceof Set ? green : new Set();
   for (let i = 0; i < list.length; i += 1) {
-    if (proven.has(list[i])) {
-      return { base: list[i], reason: 'green-ancestor', proven: true, skipped: i };
-    }
+    if (proven.has(list[i])) return { base: list[i], skipped: i };
   }
-  return { base: mergeBase, reason: 'merge-base', proven: false, skipped: list.length };
+  return null;
+}
+
+/**
+ * База для гейтов, судящих САМ диапазон коммитов, — провенанс, процессный гейт,
+ * `no-new-any` (issue #388). Отличие от классификации принципиальное, и оно в
+ * фолбэке.
+ *
+ * У классификации есть естественный пол — merge-base с dev. У пуша прямо в dev
+ * пола нет: merge-base совпадает с HEAD, и такой фолбэк дал бы ПУСТОЙ диапазон,
+ * то есть молча проходящий гейт. Поэтому здесь фолбэк — `before` события, как
+ * было до #388, но с явной пометкой «диапазон недоказуем».
+ *
+ * Почему не расширять диапазон, когда зелёного предка не нашлось. Расширение
+ * кажется строже, но у него два своих провала: процессный гейт начал бы судить
+ * старые коммиты по сегодняшним правилам, а главное — гейт, который сам красит
+ * прогон, лишает следующий пуш зелёного предка и запирает dev в красноте
+ * навсегда. Фолбэк обязан не зависеть от собственного успеха этого гейта.
+ *
+ * Дыра при этом не остаётся прежней: она сужается с «всегда, когда прогон
+ * предыдущего пуша отменён» до «когда во всём окне обхода нет ни одного
+ * успешного прогона». Первое случается ежедневно, второе — при сломанном CI,
+ * где красный Validate и так уместен.
+ */
+export function pickRangeBase({ candidates, green, fallback }) {
+  const found = firstGreen(candidates, green);
+  if (found) return { ...found, reason: 'green-ancestor', proven: true };
+  return {
+    base: fallback || '',
+    reason: 'fallback',
+    proven: false,
+    skipped: capped(candidates).length,
+  };
 }
 
 const short = (sha) => (typeof sha === 'string' ? sha.slice(0, 8) : '?');
@@ -86,6 +133,15 @@ export function baseSummary(choice, { head, mergeBase }) {
         + ` для которого Validate завершился успешно.${skipped}`,
     ];
   }
+  if (choice.reason === 'fallback') {
+    return [
+      '### База диапазона (#388)',
+      `Ни у одного из ${choice.skipped} предков нет завершённого зелёного Validate.`
+        + ` Диапазон взят от \`${short(choice.base)}\` — головы предыдущего пуша,`
+        + ' и это НЕ доказательство проверенности: прогон того пуша мог быть отменён.'
+        + ' Коммиты в этом окне могли не пройти ни одного гейта.',
+    ];
+  }
   return [
     '### База классификации (#387)',
     'Ни у одного предка до merge-base с dev нет завершённого зелёного Validate,'
@@ -100,10 +156,13 @@ const arg = (argv, name, fallback = '') =>
 
 function main(argv) {
   const head = arg(argv, 'head');
-  const mergeBase = arg(argv, 'merge-base');
+  const mode = arg(argv, 'mode', 'classify');
+  const mergeBase = arg(argv, 'merge-base', mode === 'range' ? head : '');
   const runsFile = arg(argv, 'runs');
   if (!head || !mergeBase) {
-    process.stderr.write('usage: classify-base.mjs --head=<sha> --merge-base=<sha> [--runs=<file>]\n');
+    process.stderr.write('usage: classify-base.mjs --head=<sha>'
+      + ' [--mode=classify|range] [--merge-base=<sha>] [--fallback=<sha>]'
+      + ' [--name=<output>] [--runs=<file>]\n');
     process.exit(2);
   }
   let payload = null;
@@ -117,15 +176,27 @@ function main(argv) {
   }
   // `--skip=1` убирает сам HEAD: его прогон — это текущий, зелёным он быть не
   // может по определению.
+  //
+  // В режиме `range` (пуш прямо в dev) пола нет: обход идёт по истории до
+  // предела MAX_CANDIDATES, потому что merge-base с dev здесь совпал бы с HEAD.
+  const span = mode === 'range' ? head : `${mergeBase}..${head}`;
   const candidates = execFileSync('git', [
-    'rev-list', `--max-count=${MAX_CANDIDATES}`, '--skip=1', `${mergeBase}..${head}`,
+    'rev-list', `--max-count=${MAX_CANDIDATES}`, '--skip=1', span,
   ], { encoding: 'utf8' }).split('\n').map((line) => line.trim()).filter(Boolean);
 
-  const choice = pickBase({ candidates, green: greenShas(payload), mergeBase });
+  const green = greenShas(payload);
+  const choice = mode === 'range'
+    ? pickRangeBase({ candidates, green, fallback: arg(argv, 'fallback') })
+    : pickBase({ candidates, green, mergeBase });
   const summary = baseSummary(choice, { head, mergeBase });
   process.stdout.write(`${summary.join('\n')}\n`);
+  // Имя выхода задаётся явно: одна и та же job считает базу для двух разных
+  // потребителей, и общее имя `base` для обоих было бы ловушкой — потребитель
+  // молча взял бы чужую базу, а разницу между режимами видно только здесь.
+  const name = arg(argv, 'name', 'base');
   if (process.env.GITHUB_OUTPUT) {
-    appendFileSync(process.env.GITHUB_OUTPUT, `base=${choice.base}\nproven=${choice.proven}\n`);
+    appendFileSync(process.env.GITHUB_OUTPUT,
+      `${name}=${choice.base}\n${name}_proven=${choice.proven}\n`);
   }
   if (process.env.GITHUB_STEP_SUMMARY) {
     appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${summary.join('\n\n')}\n`);

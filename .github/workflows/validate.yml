@@ -32,6 +32,13 @@ jobs:
   preflight:
     name: "Предполётные проверки: документация, провенанс, процесс"
     runs-on: ubuntu-latest
+    # `actions: read` — чтение списка прогонов Validate (#388), `issues: read` —
+    # проверка 8 процессного гейта. Права перечислены явно, потому что job
+    # обращается к API сверх содержимого репозитория.
+    permissions:
+      contents: read
+      actions: read
+      issues: read
     steps:
       # `blob:none` при полной истории (#345): этой job нужны сообщения
       # коммитов, трейлеры и ИМЕНА изменённых файлов, а не содержимое старых
@@ -69,12 +76,35 @@ jobs:
             exit 1
           fi
 
+      # Оба гейта ниже судят САМ диапазон коммитов, а не объём проверок, и до
+      # #388 брали его от головы предыдущего пуша. Прогон предыдущего пуша
+      # штатно отменяется следующим (concurrency), и тогда его коммиты не судит
+      # никто: свой прогон отменён, а следующий пуш сравнивает уже с ними.
+      #
+      # База — последний предок с УСПЕШНО завершённым Validate. Фолбэк остаётся
+      # прежним `before`: расширять диапазон здесь нельзя, иначе гейт, который
+      # сам красит прогон, лишает следующий пуш зелёного предка и запирает dev
+      # в красноте навсегда.
+      - name: "База диапазона: последний доказанно зелёный предок"
+        id: range
+        if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ github.sha }}
+          REPO: ${{ github.repository }}
+          FALLBACK: ${{ github.event.before }}
+        run: |
+          gh api -X GET "repos/$REPO/actions/workflows/validate.yml/runs" \
+            -f branch=dev -f status=success -F per_page=100 \
+            > /tmp/validate-runs.json || echo '{}' > /tmp/validate-runs.json
+          node scripts/classify-base.mjs --head="$HEAD_SHA" --mode=range \
+            --fallback="$FALLBACK" --runs=/tmp/validate-runs.json
       - name: "Провенанс коммитов: трейлеры и эталоны"
         id: provenance
         continue-on-error: true
         env:
           EVENT_NAME: ${{ github.event_name }}
-          BEFORE_SHA: ${{ github.event.before }}
+          BEFORE_SHA: ${{ steps.range.outputs.base || github.event.before }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.sha }}
           DEVELOPMENT_BRANCH: dev
@@ -92,7 +122,7 @@ jobs:
         continue-on-error: true
         env:
           EVENT_NAME: ${{ github.event_name }}
-          BEFORE_SHA: ${{ github.event.before }}
+          BEFORE_SHA: ${{ steps.range.outputs.base || github.event.before }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.sha }}
           DEVELOPMENT_BRANCH: dev
@@ -150,6 +180,11 @@ jobs:
       backend: ${{ steps.classify.outputs.backend }}
       integration: ${{ steps.classify.outputs.integration }}
       base: ${{ steps.base.outputs.base }}
+      # Разные вещи под разными именами намеренно: `base` — до какого коммита
+      # классифицировать файлы ветки (#387), `range_base` — от какого коммита
+      # судить сам диапазон на dev (#388). Общее имя означало бы, что
+      # потребитель однажды молча возьмёт чужую базу.
+      range_base: ${{ steps.base.outputs.range_base }}
     steps:
       # `git diff --name-only` содержимого файлов не читает вовсе, поэтому
       # блобы истории этой job не нужны ни на одном шаге (#345).
@@ -161,20 +196,29 @@ jobs:
       # предыдущего пуша штатно, и на #86 (r5) это дало зелёный статус ветки
       # без единого исполненного тяжёлого гейта.
       - id: base
-        if: github.event_name != 'pull_request' && github.ref != 'refs/heads/dev'
+        if: github.event_name != 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
           HEAD_SHA: ${{ github.sha }}
           BRANCH: ${{ github.ref_name }}
           REPO: ${{ github.repository }}
+          REF: ${{ github.ref }}
+          FALLBACK: ${{ github.event.before }}
         run: |
           git fetch -q origin dev
-          merge_base=$(git merge-base origin/dev "$HEAD_SHA" || git rev-parse "$HEAD_SHA~1")
-          # Недоступность API — не отказ гейта: пустой ответ опускает базу до
-          # merge-base, то есть в сторону БОЛЬШЕГО объёма проверок.
+          # Недоступность API — не отказ гейта: пустой ответ уводит базу в
+          # сторону БОЛЬШЕГО объёма проверок, а не меньшего.
           gh api -X GET "repos/$REPO/actions/workflows/validate.yml/runs" \
             -f branch="$BRANCH" -f status=success -F per_page=100 \
             > /tmp/validate-runs.json || echo '{}' > /tmp/validate-runs.json
+          if [ "$REF" = "refs/heads/dev" ]; then
+            # На dev классифицировать нечего (всё true), но база диапазона
+            # нужна гейту «новый код не добавляет any» в job frontend (#388).
+            node scripts/classify-base.mjs --head="$HEAD_SHA" --mode=range \
+              --name=range_base --fallback="$FALLBACK" --runs=/tmp/validate-runs.json
+            exit 0
+          fi
+          merge_base=$(git merge-base origin/dev "$HEAD_SHA" || git rev-parse "$HEAD_SHA~1")
           node scripts/classify-base.mjs --head="$HEAD_SHA" \
             --merge-base="$merge_base" --runs=/tmp/validate-runs.json
       - id: classify
@@ -374,17 +418,24 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           BEFORE_SHA: ${{ github.event.before }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PROVEN_BASE: ${{ needs.changes.outputs.range_base }}
           HEAD_SHA: ${{ github.sha }}
           REF: ${{ github.ref }}
         run: |
           set -euo pipefail
           git fetch -q origin dev
           zero=$(printf '%040d' 0)
-          base="$BEFORE_SHA"
-          if [ "$EVENT_NAME" = "pull_request" ]; then base="$BASE_SHA"; fi
-          # Пуш прямо в dev: диапазон — то, что этот пуш добавил. Новая ветка или
-          # перезаписанная история: точки отсчёта нет, берём merge-base с dev.
-          if [ "$REF" != "refs/heads/dev" ] || [ -z "$base" ] || [ "$base" = "$zero" ] \
+          base=""
+          # Пуш прямо в dev: диапазон — то, что добавлено с последнего
+          # ДОКАЗАННО зелёного предка (#388), а не с головы предыдущего пуша:
+          # его прогон штатно отменяется следующим, и добавленные им строки не
+          # судил бы никто. Фолбэк — прежний `before`.
+          if [ "$EVENT_NAME" != "pull_request" ] && [ "$REF" = "refs/heads/dev" ]; then
+            base="${PROVEN_BASE:-$BEFORE_SHA}"
+          fi
+          # Ветка, PR, новая история: точки отсчёта нет, берём merge-base с dev.
+          # Там диапазон и так шире, поэтому #388 этих случаев не касается.
+          if [ -z "$base" ] || [ "$base" = "$zero" ] \
              || ! git cat-file -e "$base" 2>/dev/null; then
             base=$(git merge-base origin/dev "$HEAD_SHA" || echo "")
           fi

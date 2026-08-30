@@ -159,11 +159,45 @@ test('классификация опирается на завершённый 
     'защита от force-push остаётся на месте (#347)');
   assert.match(changes, /node scripts\/classify-base\.mjs --head=/);
   assert.match(changes, /actions: read/, 'чтение прогонов требует прав');
-  // База считается только для push вне dev: у PR диапазон задан событием.
-  assert.match(changes, /if: github\.event_name != 'pull_request' && github\.ref != 'refs\/heads\/dev'/);
+  // У PR диапазон задан событием, считать его нечем и незачем.
+  assert.match(changes, /if: github\.event_name != 'pull_request'/);
+  // На dev классификации нет вовсе — там всё true; шаг там считает базу
+  // диапазона для другого потребителя (#388), и это разные выходы.
+  assert.match(changes, /dev: без фильтров, всё true/);
+  assert.match(changes, /--name=range_base/);
   // Пустая база означает «доказательства нет» и обязана вести к полному
   // прогону, а не к пустому диффу, который выглядел бы как «ничего не менялось».
   const empty = changes.slice(changes.indexOf('if [ -z "$base" ]'));
   assert.match(empty, /frontend=true\\nbackend=true\\nintegration=true/,
     'без базы классификация обязана раскрываться в полный прогон');
+});
+
+test('гейты диапазона судят от доказанного предка, а не от предыдущего пуша (#388)', () => {
+  const workflow = read('validate.yml');
+  const preflight = workflow.slice(
+    workflow.indexOf('\n  preflight:\n'), workflow.indexOf('\n  changes:\n'),
+  );
+  // Оба гейта, судящие сам диапазон коммитов, обязаны читать доказанную базу.
+  // Раздельные env у них исторические — важно, что обновлены ОБА.
+  assert.equal(
+    preflight.match(/BEFORE_SHA: \$\{\{ steps\.range\.outputs\.base \|\| github\.event\.before \}\}/g)?.length,
+    2, 'провенанс и процессный гейт читают доказанную базу');
+  assert.match(preflight, /--mode=range/);
+  assert.match(preflight, /actions: read/, 'чтение прогонов требует прав');
+  assert.match(preflight, /issues: read/, 'проверка 8 читает issue');
+  // Считать базу имеет смысл только на пуше в dev: на ветках диапазон и так
+  // шире, а у PR он задан событием.
+  assert.match(preflight, /if: github\.event_name == 'push' && github\.ref == 'refs\/heads\/dev'/);
+
+  // Гейт «новый any» берёт ту же базу, но через выход job changes: свой запрос
+  // к API из frontend потребовал бы отдельных прав.
+  const frontend = workflow.slice(
+    workflow.indexOf('\n  frontend:\n'), workflow.indexOf('\n  smoke:\n'),
+  );
+  assert.match(frontend, /PROVEN_BASE: \$\{\{ needs\.changes\.outputs\.range_base \}\}/);
+  assert.match(frontend, /base="\$\{PROVEN_BASE:-\$BEFORE_SHA\}"/);
+  // Ветки и PR не трогаем: там merge-base с dev даёт диапазон ШИРЕ, и подмена
+  // его зелёным предком ослабила бы гейт.
+  assert.match(frontend, /\[ "\$REF" = "refs\/heads\/dev" \]/);
+  assert.match(frontend, /git merge-base origin\/dev "\$HEAD_SHA"/);
 });

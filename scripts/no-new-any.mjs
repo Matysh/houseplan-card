@@ -128,6 +128,34 @@ export function addedLinesByFile(diff) {
 
 const isProductTypeScript = (path) => /^src\/.*\.ts$/.test(path);
 
+/**
+ * Коммит, добавивший строку (issue #388).
+ *
+ * Диапазон гейта теперь считается от последнего ДОКАЗАННО зелёного предка, а не
+ * от головы предыдущего пуша, — и это значит, что находка может относиться к
+ * чужому коммиту, чей прогон был отменён. Без имени источника такое сообщение
+ * обвиняет того, кто пушнул следующим: ровно то, что пришлось чинить в #386 для
+ * golden.
+ */
+export function blameLine(path, line, runner = defaultBlame) {
+  const out = runner(path, line);
+  const match = typeof out === 'string' ? out.match(/^([0-9a-f]{7,40})\s/) : null;
+  return match ? match[1].slice(0, 8) : '';
+}
+
+const defaultBlame = (path, line) => {
+  const run = spawnSync('git', [
+    '-C', ROOT, 'blame', '-L', `${line},${line}`, '--porcelain', 'HEAD', '--', path,
+  ], { encoding: 'utf8' });
+  return run.status === 0 ? run.stdout : '';
+};
+
+/** Строка отчёта о находке. Источник печатается, только если он известен. */
+export function formatViolation(violation, source) {
+  const where = source ? ` (добавил ${source})` : '';
+  return `  ${violation.path}:${violation.line}${where} — ${violation.reason}`;
+}
+
 function main(argv) {
   const value = (name, fallback) => {
     const found = argv.find((item) => item.startsWith(`--${name}=`));
@@ -173,7 +201,7 @@ function main(argv) {
   }
   console.error(`\nНовый явный any: ${violations.length}\n`);
   for (const violation of violations) {
-    console.error(`  ${violation.path}:${violation.line} — ${violation.reason}`);
+    console.error(formatViolation(violation, blameLine(violation.path, violation.line)));
     console.error(`    ${violation.text}`);
   }
   console.error('\nЛибо типизируйте, либо обоснуйте на той же строке:');

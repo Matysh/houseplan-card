@@ -6,7 +6,9 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { MAX_CANDIDATES, baseSummary, greenShas, pickBase } from '../scripts/classify-base.mjs';
+import {
+  MAX_CANDIDATES, baseSummary, greenShas, pickBase, pickRangeBase,
+} from '../scripts/classify-base.mjs';
 
 const SCRIPT = fileURLToPath(new URL('../scripts/classify-base.mjs', import.meta.url));
 
@@ -110,6 +112,79 @@ test('CLI считает базу по настоящей истории git (#3
     const noGreen = run({ workflow_runs: [{ head_sha: cancelled, conclusion: 'cancelled' }] });
     assert.match(noGreen.output, new RegExp(`base=${root}\\n`));
     assert.match(noGreen.output, /proven=false/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+// --- база гейтов диапазона (#388) ------------------------------------------
+
+test('гейты диапазона берут тот же зелёный предок (#388)', () => {
+  const choice = pickRangeBase({
+    candidates: ['отменён2', 'отменён1', 'зелёный'],
+    green: new Set(['зелёный']),
+    fallback: 'before',
+  });
+  assert.equal(choice.base, 'зелёный');
+  assert.equal(choice.proven, true);
+  // Ровно те два коммита, которые до #388 не судил никто.
+  assert.equal(choice.skipped, 2);
+});
+
+test('без зелёного предка база остаётся прежней, но помечается недоказанной (#388)', () => {
+  // Расширять диапазон здесь нельзя: гейт, который сам красит прогон, лишил бы
+  // следующий пуш зелёного предка и запер dev в красноте навсегда. Фолбэк
+  // обязан не зависеть от собственного успеха гейта.
+  const choice = pickRangeBase({ candidates: ['a', 'b'], green: new Set(), fallback: 'before' });
+  assert.equal(choice.base, 'before');
+  assert.equal(choice.proven, false);
+  const summary = baseSummary(choice, { head: 'head1234', mergeBase: '' }).join('\n');
+  assert.match(summary, /НЕ доказательство/);
+  assert.match(summary, /могли не пройти ни одного гейта/);
+});
+
+test('пустой фолбэк не выдаёт мусор за базу (#388)', () => {
+  const choice = pickRangeBase({ candidates: [], green: new Set(), fallback: undefined });
+  assert.equal(choice.base, '');
+  assert.equal(choice.proven, false);
+});
+
+test('CLI режима range считает базу по истории и пишет своё имя выхода (#388)', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'hp-range-'));
+  const git = (...args) => execFileSync('git', args, { cwd: dir, encoding: 'utf8' }).trim();
+  try {
+    git('init', '-q', '-b', 'dev');
+    git('config', 'user.email', 'test@example.com');
+    git('config', 'user.name', 'test');
+    const commit = (text) => {
+      writeFileSync(join(dir, 'file.txt'), text);
+      git('add', '-A');
+      git('commit', '-qm', text);
+      return git('rev-parse', 'HEAD');
+    };
+    commit('корень');
+    const green = commit('прогон зелёный');
+    const cancelled = commit('прогон отменён');
+    const head = commit('текущий пуш');
+    const runsFile = join(dir, 'runs.json');
+    const out = join(dir, 'out.txt');
+    writeFileSync(runsFile, JSON.stringify({
+      workflow_runs: [
+        { head_sha: green, conclusion: 'success' },
+        { head_sha: cancelled, conclusion: 'cancelled' },
+      ],
+    }));
+    writeFileSync(out, '');
+    const result = spawnSync(process.execPath, [
+      SCRIPT, `--head=${head}`, '--mode=range', '--name=range_base',
+      `--fallback=${cancelled}`, `--runs=${runsFile}`,
+    ], { cwd: dir, encoding: 'utf8', env: { ...process.env, GITHUB_OUTPUT: out } });
+    assert.equal(result.status, 0, result.stderr);
+    const output = readFileSync(out, 'utf8');
+    // Имя выхода своё: общее `base` однажды подсунуло бы потребителю чужую базу.
+    assert.match(output, new RegExp(`range_base=${green}\\n`));
+    assert.match(output, /range_base_proven=true/);
+    assert.equal(output.includes('\nbase='), false);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
