@@ -742,6 +742,11 @@ export async function prepareGoldenScenario(page, scenario) {
       await card.updateComplete;
       await frame();
     };
+    const settleCamera = async (card) => {
+      await until(() => !card._cameraTransition?.active, 1500);
+      await card.updateComplete;
+      await frame();
+    };
     window.__goldenCard?.remove?.();
     window.__goldenEditor?.remove?.();
     window.__card?.remove?.();
@@ -1711,7 +1716,9 @@ export async function prepareGoldenScenario(page, scenario) {
       }
     }
     await document.fonts?.ready;
-    await frame();
+    // Camera motion is intentionally visible in production, but reviewed
+    // goldens own the settled UI. Never capture a timing-dependent RAF frame.
+    await settleCamera(card);
     return {
       space: card._space,
       mode: card._mode,

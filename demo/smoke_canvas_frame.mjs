@@ -44,6 +44,12 @@ const load = (cfg, layout, space) => page.evaluate(async ([c2, l2, sp]) => {
   await c.updateComplete;
   c._resetZoom();
   await c.updateComplete;
+  const started = performance.now();
+  while (c._cameraTransition?.active) {
+    if (performance.now() - started > 1000) throw new Error('camera transition did not settle');
+    await new Promise((r) => requestAnimationFrame(r));
+  }
+  await c.updateComplete;
 }, [cfg, layout, space]);
 
 // ---------------------------------------------------------------- 01: hidden

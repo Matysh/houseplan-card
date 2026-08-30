@@ -5970,6 +5970,9 @@ export class HouseplanCard extends LitElement {
   private _fitFar(): void {
     this._showFar = true;
     this._frame = null;
+    // The camera command may be a no-op at the fitted target. The hint still
+    // changed state and must disappear without waiting for another render.
+    this.requestUpdate();
     this._resetZoom();
   }
 
@@ -5979,6 +5982,7 @@ export class HouseplanCard extends LitElement {
   private _fitAll(reason: 'fit' | 'home' = 'fit'): void {
     this._showFar = true;
     this._frame = null;
+    this.requestUpdate();
     this._resetZoom(reason);
   }
 
