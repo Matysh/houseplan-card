@@ -3363,9 +3363,9 @@ require hands on real hardware — they remain for the human pass.
       config/space/source changes [auto: editor/preloader smokes; performance
       profile for a dense plan].
 
-## Contextual help (issue #68, v1.62)
+## Contextual help (issues #68 and #86)
 
-- [ ] A setting with complete RU/EN help body and ARIA copy shows one 32 px
+- [ ] A setting with complete EN/RU/DE/FR help body and ARIA copy shows one 32 px
       desktop / 40 px coarse-pointer button with the outlined circled-question
       icon. Mouse hover, keyboard focus and tap open the same text surface
       [auto: `smoke_help_affordance`].
@@ -3379,6 +3379,17 @@ require hands on real hardware — they remain for the human pass.
       `scrollHeight` nor `scrollTop` of the owning dialog body. The native
       Popover and forced portal fallback have the same no-layout-shift contract
       [auto: `smoke_help_affordance`].
+- [ ] Party 1 contains exactly the 11 agreed logical settings: space scale,
+      general and device Glow radius, room fill, source role and controlled
+      sources, general/space north, general/space background, zero-thickness
+      wall style and the show-hidden catalog filter. The regular and onboarding
+      space dialogs expose the same five space-help controls; opening help does
+      not change a draft setting or the session-only filter
+      [unit: `i18n.test`; auto: `smoke_help_affordance`;
+      mutation: `settings-help-party1-placement-removed`].
+- [ ] `marker.controls_hint`, `gs.bg_daynight_hint`, `gs.north_hint` and
+      `space.zero_wall_help` are absent from all four dictionaries and production
+      templates; state-specific sun/Glow notes remain visible [unit: `i18n.test`].
 
 ## Large backdrops (#39, docs/specs/039-large-backdrops.md)
 

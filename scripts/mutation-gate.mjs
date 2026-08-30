@@ -106,6 +106,17 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'settings-help-party1-placement-removed',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="issue 86 Party 1" test/i18n.test.mjs',
+    because: 'the critical-settings help inventory must fail when one agreed trigger disappears (#86)',
+    patches: [{
+      file: 'src/houseplan-editor-runtime.ts',
+      find: "this._help('device_inbox.show_hidden.help')",
+      replace: 'nothing',
+    }],
+  },
+  {
     id: 'room-climate-ignores-marker-placement',
     guard: 'node demo/smoke_room_climate_placement.mjs',
     because: 'a real sensor manually placed into a House Plan room must leave its registry HA '

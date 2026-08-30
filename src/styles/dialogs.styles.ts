@@ -453,6 +453,33 @@ export const dialogsStyles = css`
       margin-bottom: var(--sp-1);
     }
     .markerhelplabel > label { min-width: 0; overflow-wrap: anywhere; }
+    .helpfieldlabel {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: var(--sp-1);
+      min-width: 0;
+      margin-top: var(--sp-3);
+      color: var(--hp-muted);
+      font-size: var(--fs-s);
+    }
+    .helpfieldlabel.compact { margin-top: 0; }
+    hp-dialog .body .helpfieldlabel > label {
+      min-width: 0;
+      margin-top: 0;
+      overflow-wrap: anywhere;
+    }
+    .help-inline-label {
+      display: inline-flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: var(--sp-1);
+    }
+    hp-dialog .body .help-inline-label > label {
+      min-width: 0;
+      margin-top: 0;
+      overflow-wrap: anywhere;
+    }
     .markerradios { display: grid; gap: var(--sp-1); min-width: 0; }
     .markerlightgroup .srcrow > span:first-of-type {
       min-width: 0;
@@ -1323,6 +1350,12 @@ export const dialogsStyles = css`
       align-items: center;
       gap: var(--sp-2);
       cursor: pointer;
+    }
+    .device-inbox-filter-help {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--sp-1);
+      min-width: 0;
     }
     .device-inbox-results { display: grid; gap: var(--sp-3); min-width: 0; }
     .device-inbox-row {

@@ -252,6 +252,74 @@ const res = await page.evaluate(async () => {
   await card.updateComplete;
   out.secondEscapeClosesDialog = !card._markerDialog;
 
+  // #86 Party 1: all general-settings placements are real help controls and
+  // opening one of them cannot mutate its associated setting.
+  card._openSettingsDialog();
+  await card.updateComplete;
+  const generalKeys = ['gs.glow_radius.help', 'gs.bg_mode.help', 'gs.north.help'];
+  out.party1GeneralInventory = generalKeys.every((key) => !!helpButton(key));
+  const generalBefore = JSON.stringify({
+    glowRadius: card._settingsDialog?.glowRadius,
+    bgMode: card._settingsDialog?.bgMode,
+    northDeg: card._settingsDialog?.northDeg,
+  });
+  helpButton('gs.bg_mode.help')?.click();
+  await frame();
+  out.party1GeneralHelpIsReadOnly = generalBefore === JSON.stringify({
+    glowRadius: card._settingsDialog?.glowRadius,
+    bgMode: card._settingsDialog?.bgMode,
+    northDeg: card._settingsDialog?.northDeg,
+  });
+  card._settingsDialog = null;
+  card.requestUpdate();
+  await card.updateComplete;
+
+  // The regular editor and cold-install onboarding render separate space
+  // dialog templates; this smoke covers the editor copy while the source/i18n
+  // contract covers both implementations.
+  card._openSpaceDialog('edit', card._space);
+  await card.updateComplete;
+  const spaceKeys = [
+    'space.cell_cm.help', 'space.zero_wall_style.help', 'space.bg_mode.help',
+    'space.north.help', 'space.fill_mode.help',
+  ];
+  out.party1SpaceInventory = spaceKeys.every((key) => !!helpButton(key));
+  const spaceBefore = JSON.stringify({
+    cellCm: card._spaceDialog?.cellCm,
+    zeroWallStyle: card._spaceDialog?.zeroWallStyle,
+    bgMode: card._spaceDialog?.bgMode,
+    northDeg: card._spaceDialog?.northDeg,
+    fillMode: card._spaceDialog?.fillMode,
+  });
+  helpButton('space.zero_wall_style.help')?.click();
+  await frame();
+  out.party1SpaceHelpIsReadOnly = spaceBefore === JSON.stringify({
+    cellCm: card._spaceDialog?.cellCm,
+    zeroWallStyle: card._spaceDialog?.zeroWallStyle,
+    bgMode: card._spaceDialog?.bgMode,
+    northDeg: card._spaceDialog?.northDeg,
+    fillMode: card._spaceDialog?.fillMode,
+  });
+  card._spaceDialog = null;
+  card.requestUpdate();
+  await card.updateComplete;
+
+  card._openDeviceInbox();
+  await card.updateComplete;
+  const hiddenBefore = card._showHidden;
+  const hiddenHelpButton = helpButton('device_inbox.show_hidden.help');
+  hiddenHelpButton?.click();
+  await frame();
+  const hiddenSurface = helpSurface('device_inbox.show_hidden.help');
+  const hiddenBox = hiddenSurface?.getBoundingClientRect();
+  out.party1ShowHiddenHelpIsReadOnly = !!hiddenHelpButton
+    && card._showHidden === hiddenBefore;
+  out.party1ShowHiddenHelpInsideNarrowViewport = !!hiddenBox
+    && hiddenBox.left >= (visualViewport?.offsetLeft || 0)
+    && hiddenBox.top >= (visualViewport?.offsetTop || 0)
+    && hiddenBox.right <= (visualViewport?.offsetLeft || 0) + (visualViewport?.width || innerWidth)
+    && hiddenBox.bottom <= (visualViewport?.offsetTop || 0) + (visualViewport?.height || innerHeight);
+
   return out;
 });
 

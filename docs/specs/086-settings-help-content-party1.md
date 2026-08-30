@@ -103,6 +103,9 @@ issue после проверки механики и текстов перво�
   не вложен в `<label>` и не переключает checkbox при открытии подсказки.
 - General/space north and background получают отдельные keys, потому что
   inheritance/override semantics различаются.
+- Пять space-подсказок присутствуют и в обычном editor runtime, и в отдельном
+  onboarding runtime создания первого пространства; их текст и поведение
+  идентичны.
 
 Help-trigger не должен менять ширину canvas, stage zoom или доступность основного
 action. При 200% zoom label и trigger могут переноситься вместе.
@@ -215,7 +218,8 @@ must fail; без этого source contract не доказан.
 
 ## 15. Затронутые поверхности
 
-- relevant templates in `src/houseplan-editor-runtime.ts`;
+- relevant templates in `src/houseplan-editor-runtime.ts` and
+  `src/houseplan-onboarding-runtime.ts`;
 - `src/i18n/en.json`, `src/i18n/ru.json`, `src/i18n/de.json`, `src/i18n/fr.json`;
 - existing #68 i18n/source tests and targeted browser/golden fixtures;
 - `docs/USER-GUIDE.ru.md`, `docs/TESTING.md`.

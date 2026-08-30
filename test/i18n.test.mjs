@@ -23,6 +23,11 @@ const ru = dictionaries.get('ru');
 const de = dictionaries.get('de');
 const fr = dictionaries.get('fr');
 const cardSource = readHouseplanProductionSource();
+const onboardingSource = readFileSync(
+  new URL('../src/houseplan-onboarding-runtime.ts', import.meta.url),
+  'utf8',
+);
+const helpSource = `${cardSource}\n${onboardingSource}`;
 
 test('i18n: registry codes and English fallback are valid', () => {
   const codes = LANGUAGE_REGISTRY.map(({ code }) => code);
@@ -283,9 +288,9 @@ test('issue 252 Optimize keeps internal ids out of the main orphan report', () =
   }
 });
 
-test('i18n: every literal help call has body and full aria keys in both languages', () => {
-  const allCalls = cardSource.match(/this\._help\(/g) || [];
-  const helpKeys = [...cardSource.matchAll(/this\._help\('([^']+\.help)'\)/g)].map((match) => match[1]);
+test('i18n: every literal help call has body and full aria keys in every language', () => {
+  const allCalls = helpSource.match(/this\._help\(/g) || [];
+  const helpKeys = [...helpSource.matchAll(/this\._help\('([^']+\.help)'\)/g)].map((match) => match[1]);
   assert.equal(helpKeys.length, allCalls.length, 'every _help call must use one string literal ending in .help');
   assert.ok(helpKeys.length > 0, 'the help affordance pilot disappeared');
   for (const key of helpKeys) {
@@ -294,6 +299,74 @@ test('i18n: every literal help call has body and full aria keys in both language
       assert.ok(dictionary[key]?.trim(), `${code}:${key} is missing or empty`);
       assert.ok(dictionary[`${key}.aria`]?.trim(), `${code}:${key}.aria is missing or empty`);
     }
+  }
+});
+
+test('issue 86 Party 1 has the exact help inventory and canonical RU/EN copy', () => {
+  const copy = {
+    'space.cell_cm.help': [
+      'Links the grid to real dimensions: lengths, areas, wall thickness, opening sizes and glow radius depend on it. Changing it after drawing changes the calculated dimensions of the whole space without moving its points on the plan.',
+      'Связывает сетку с реальными размерами: от значения зависят длины и площади, толщина стен, размеры проёмов и радиус свечения. Изменение после разметки меняет расчётные размеры всего пространства, но не двигает его точки на плане.',
+    ],
+    'gs.glow_radius.help': [
+      'Sets the default glow radius in metres or feet; a device-specific radius overrides it.',
+      'Задаёт общий радиус светового пятна в метрах или футах; персональный радиус устройства заменяет это значение.',
+    ],
+    'space.fill_mode.help': [
+      '“Custom colour” is styling, while “Light”, “Temperature” and “LQI” use current Home Assistant data; Glow is enabled separately.',
+      '«Свой цвет» задаёт оформление, а «Свет», «Температура» и «LQI» используют текущие данные Home Assistant; Glow включается отдельно.',
+    ],
+    'marker.light_role.help': [
+      '“Auto” uses the bound device\'s resolved role, “Always” forces its own source and “Never” excludes it; linked lights above remain independent.',
+      '«Авто» использует фактическую роль привязанного устройства, «Всегда» принудительно создаёт собственный источник, а «Никогда» исключает его; связанные лампы выше остаются независимыми.',
+    ],
+    'marker.controls.help': [
+      'With the “Toggle state” action, the listed sources toggle together with this marker. Their glow stays at their own markers, and the link alone does not turn the controlling marker into a light source.',
+      'При действии «Переключить состояние» перечисленные источники переключаются вместе с этим маркером. Их световые пятна остаются у собственных маркеров, а эта связь сама по себе не делает управляющий маркер источником света.',
+    ],
+    'gs.north.help': [
+      'The angle is measured clockwise from the plan\'s upward vertical; north is required for window rays, not for the “Follows the Sun” background.',
+      'Угол отсчитывается по часовой стрелке от верхней вертикали плана; север нужен для оконных лучей, а не для фона «Следует за Солнцем».',
+    ],
+    'space.north.help': [
+      'Overrides general north for this space; the angle is measured clockwise from the plan\'s upward vertical and is used by window rays.',
+      'Переопределяет общий север для этого пространства; угол отсчитывается по часовой стрелке от верхней вертикали плана и используется оконными лучами.',
+    ],
+    'gs.bg_mode.help': [
+      '“Follows the Sun” uses sun.sun, falling back to the browser\'s local clock; Static always shows the selected colour.',
+      '«Следует за Солнцем» использует sun.sun, а при недоступности — локальные часы браузера; статичный режим всегда показывает выбранный цвет.',
+    ],
+    'space.bg_mode.help': [
+      'Inherit the general background or override this space with a static colour or “Follows the Sun”.',
+      'Выберите наследование общего фона либо переопределите это пространство статичным цветом или режимом «Следует за Солнцем».',
+    ],
+    'space.zero_wall_style.help': [
+      'Dashed zero-thickness walls pass Glow and sun rays, while solid ones block them as zero-area barriers. The choice affects every such wall in the space even when its line is hidden in View.',
+      'Пунктирные стены нулевой толщины пропускают Glow и солнечные лучи, сплошные блокируют их как барьер нулевой площади. Выбор меняет все такие стены пространства, даже когда их линии скрыты в просмотре.',
+    ],
+    'device_inbox.show_hidden.help': [
+      'Temporarily shows hidden and disabled markers as editor-only ghosts on the plan. Saved device visibility does not change.',
+      'Временно показывает на плане скрытые и деактивированные маркеры служебными призраками только в редакторе устройств. Сохранённая видимость устройств не меняется.',
+    ],
+  };
+  const calls = [...helpSource.matchAll(/this\._help\('([^']+\.help)'\)/g)]
+    .map((match) => match[1]);
+  for (const [key, [english, russian]] of Object.entries(copy)) {
+    assert.ok(calls.includes(key), `${key} has no help trigger`);
+    assert.equal(en[key], english, `canonical English copy changed for ${key}`);
+    assert.equal(ru[key], russian, `canonical Russian copy changed for ${key}`);
+  }
+  assert.equal(Object.keys(copy).length, 11);
+});
+
+test('issue 86 removes explanatory hints replaced by contextual help', () => {
+  for (const key of [
+    'marker.controls_hint', 'gs.bg_daynight_hint', 'gs.north_hint', 'space.zero_wall_help',
+  ]) {
+    for (const { code } of LANGUAGE_REGISTRY) {
+      assert.equal(dictionaries.get(code)[key], undefined, `${code}:${key} should be removed`);
+    }
+    assert.ok(!helpSource.includes(`'${key}'`), `${key} is still rendered`);
   }
 });
 
@@ -309,10 +382,10 @@ test('light pilot has no duplicate legacy hint copy', () => {
 });
 
 test('help hosts do not duplicate their explanation in a title attribute', () => {
-  const calls = [...cardSource.matchAll(/this\._help\('([^']+\.help)'\)/g)];
+  const calls = [...helpSource.matchAll(/this\._help\('([^']+\.help)'\)/g)];
   assert.ok(calls.length > 0, 'the help affordance pilot disappeared');
   for (const call of calls) {
-    const prefix = cardSource.slice(Math.max(0, call.index - 700), call.index);
+    const prefix = helpSource.slice(Math.max(0, call.index - 700), call.index);
     const hosts = [...prefix.matchAll(/<(legend|label|div)\b([^>]*)>/g)];
     const host = hosts.at(-1);
     assert.ok(host, `no host element found for ${call[1]}`);

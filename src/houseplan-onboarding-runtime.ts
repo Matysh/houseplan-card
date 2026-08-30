@@ -1,5 +1,7 @@
 import { html, nothing, type TemplateResult } from 'lit';
 import { classifyPlanFile, encodePlanFile, renderBackdropGuard } from './backdrop-pick';
+import { hasTranslation, langOf, t, type I18nKey } from './i18n';
+import './hp-help';
 
 import {
   DEFAULT_CUSTOM_FILL,
@@ -48,6 +50,14 @@ export const ONBOARDING_RUNTIME_FINGERPRINT = BUILD_FINGERPRINT;
 
 export class HouseplanOnboardingRuntime {
   public constructor(public readonly host: HouseplanEditorHostPort) {}
+
+  private _help(key: Extract<I18nKey, `${string}.help`>): TemplateResult | typeof nothing {
+    const ariaKey = `${key}.aria` as I18nKey;
+    const lang = langOf(this.host.hass, this.host._config?.language);
+    if (!hasTranslation(lang, key) || !hasTranslation(lang, ariaKey)) return nothing;
+    return html`<hp-help data-help-key=${key}
+      .text=${t(lang, key)} .ariaLabel=${t(lang, ariaKey)}></hp-help>`;
+  }
 
   public _openSpaceDialog(mode: 'edit' | 'create', spaceId?: string): void {
     if (!this.host._serverStorage || !this.host._serverCfg) {
@@ -615,9 +625,12 @@ export class HouseplanOnboardingRuntime {
             <span>${this.host._t('space.source_draw')}</span>
           </label>
 
-          <label>${this.host._t('space.scale_label')}</label>
+          <div class="helpfieldlabel">
+            <label for="onboarding-space-cell-cm">${this.host._t('space.scale_label')}</label>
+            ${this._help('space.cell_cm.help')}
+          </div>
           <div class="colorrow">
-            <input class="namein tempin" type="number"
+            <input id="onboarding-space-cell-cm" class="namein tempin" type="number"
               min=${gridCellFieldValue(CELL_CM_MIN, this.host._imperial)}
               max=${gridCellFieldValue(CELL_CM_MAX, this.host._imperial)}
               step="0.1"
@@ -646,8 +659,11 @@ export class HouseplanOnboardingRuntime {
             })}
             <span>${this.host._t('space.show_borders')}</span>
           </label>
-          <label>${this.host._t('space.zero_wall_style')}</label>
-          <select class="areasel" @change=${(event: Event) => {
+          <div class="helpfieldlabel">
+            <label for="onboarding-space-zero-wall-style">${this.host._t('space.zero_wall_style')}</label>
+            ${this._help('space.zero_wall_style.help')}
+          </div>
+          <select id="onboarding-space-zero-wall-style" class="areasel" @change=${(event: Event) => {
             const value = (event.target as HTMLSelectElement).value;
             this.host._spaceDialog = {
               ...dialog, zeroWallStyle: value === 'solid' ? 'solid' : 'dashed',
@@ -660,7 +676,6 @@ export class HouseplanOnboardingRuntime {
               ${this.host._t('space.zero_wall_solid')}
             </option>
           </select>
-          <div class="rhint">${this.host._t('space.zero_wall_help')}</div>
           <label class="srcrow">
             ${this._boolInput(dialog.showNames, (value) => {
               this.host._spaceDialog = touchSpaceDisplay(dialog, 'showNames', value);
@@ -716,8 +731,11 @@ export class HouseplanOnboardingRuntime {
                 };
               }}></hp-color-opacity>
           </div>
-          <label>${this.host._t('space.bg_mode')}</label>
-          <select class="areasel" @change=${(event: Event) => {
+          <div class="helpfieldlabel">
+            <label for="onboarding-space-bg-mode">${this.host._t('space.bg_mode')}</label>
+            ${this._help('space.bg_mode.help')}
+          </div>
+          <select id="onboarding-space-bg-mode" class="areasel" @change=${(event: Event) => {
             const value = (event.target as HTMLSelectElement).value;
             this.host._spaceDialog = {
               ...dialog,
@@ -743,9 +761,12 @@ export class HouseplanOnboardingRuntime {
               }}>${this.host._t('space.bg_inherit')}</button>`
                 : html`<span class="opl">${this.host._t('space.bg_inherited')}</span>`}
             </div>` : nothing}
-          <label>${this.host._t('space.north')}</label>
+          <div class="helpfieldlabel">
+            <label for="onboarding-space-north">${this.host._t('space.north')}</label>
+            ${this._help('space.north.help')}
+          </div>
           <div class="colorrow">
-            <input class="namein tempin" type="number" min="0" max="359" step="1"
+            <input id="onboarding-space-north" class="namein tempin" type="number" min="0" max="359" step="1"
               placeholder=${this.host._t('space.sun_inherit')}
               .value=${dialog.northDeg === null ? '' : String(dialog.northDeg)}
               @input=${(event: Event) => {
@@ -774,7 +795,10 @@ export class HouseplanOnboardingRuntime {
             <option value="1" ?selected=${dialog.sunRays === true}>${this.host._t('space.sun_on')}</option>
             <option value="0" ?selected=${dialog.sunRays === false}>${this.host._t('space.sun_off')}</option>
           </select>
-          <label>${this.host._t('space.fill_label')}</label>
+          <div class="helpfieldlabel">
+            <span>${this.host._t('space.fill_label')}</span>
+            ${this._help('space.fill_mode.help')}
+          </div>
           ${SPACE_FILL_UI_MODES.map((value) => [value, `fill.${value}`] as const).map(
             ([value, key]) => html`<label class="srcrow">
               <input type="radio" name="fillmode" .checked=${dialog.fillMode === value}

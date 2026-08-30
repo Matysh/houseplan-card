@@ -9940,8 +9940,9 @@ public _renderSettingsDialog(): TemplateResult {
           ${this._renderColorRow('glow_base', 'gs.glow_base')}
           ${this._renderColorRow('glow_light', 'gs.glow_light')}
           <div class="colorrow gsrow">
-            <span class="gsl">${this.host._t('gs.glow_radius')}</span>
-            <input type="number" class="tempin" min="0.5" step="0.5"
+            <span class="gsl help-inline-label"><label for="gs-glow-radius">${this.host._t('gs.glow_radius')}</label>
+              ${this._help('gs.glow_radius.help')}</span>
+            <input id="gs-glow-radius" type="number" class="tempin" min="0.5" step="0.5"
               .value=${String(this.host._settingsDialog!.glowRadius)}
               @input=${(e: Event) => {
                 const v = strictNumber((e.target as HTMLInputElement).value);
@@ -9954,8 +9955,9 @@ public _renderSettingsDialog(): TemplateResult {
           ${this._renderColorRow('wall_fill', 'gs.wall_fill')}
           <label class="dispsection">${this.host._t('gs.bg_group')}</label>
           <div class="colorrow gsrow">
-            <span class="gsl">${this.host._t('gs.bg_mode')}</span>
-            <select class="areasel"
+            <span class="gsl help-inline-label"><label for="gs-bg-mode">${this.host._t('gs.bg_mode')}</label>
+              ${this._help('gs.bg_mode.help')}</span>
+            <select id="gs-bg-mode" class="areasel"
               @change=${(e: Event) =>
                 (this.host._settingsDialog = { ...this.host._settingsDialog!, bgMode: (e.target as HTMLSelectElement).value === 'daynight' ? 'daynight' : 'static' })}>
               <option value="static" ?selected=${this.host._settingsDialog!.bgMode === 'static'}>${this.host._t('gs.bg_static')}</option>
@@ -9976,7 +9978,7 @@ public _renderSettingsDialog(): TemplateResult {
                       (this.host._settingsDialog = { ...this.host._settingsDialog!, bgColor: null })}>${this.host._t('gs.bg_default')}</button>`
                   : html`<span class="opl">${this.host._t('gs.bg_theme')}</span>`}
               </div>`
-            : html`<div class="rhint">${this.host._t('gs.bg_daynight_hint')}</div>`}
+            : nothing}
           <label class="dispsection">${this.host._t('gs.sun_group')}</label>
           ${!sunStateOf(this.host.hass)
             ? html`<div class="rhint">${this.host._t('gs.sun_missing')}</div>`
@@ -9984,9 +9986,12 @@ public _renderSettingsDialog(): TemplateResult {
           <div class="sunrow">
             ${this.host._renderCompass()}
             <div class="suncol">
-              <span class="gsl">${this.host._t('gs.north')}</span>
+              <div class="helpfieldlabel compact">
+                <label for="gs-north">${this.host._t('gs.north')}</label>
+                ${this._help('gs.north.help')}
+              </div>
               <div class="colorrow">
-                <input class="namein tempin" type="number" min="0" max="359" step="1"
+                <input id="gs-north" class="namein tempin" type="number" min="0" max="359" step="1"
                   placeholder=${this.host._t('gs.north_ph')}
                   .value=${this.host._settingsDialog!.northDeg === null ? '' : String(this.host._settingsDialog!.northDeg)}
                   @input=${(e: Event) => {
@@ -10002,9 +10007,6 @@ public _renderSettingsDialog(): TemplateResult {
                       (this.host._settingsDialog = { ...this.host._settingsDialog!, northDeg: null })}>${this.host._t('gs.north_clear')}</button>`
                   : nothing}
               </div>
-              ${this.host._settingsDialog!.northDeg === null
-                ? html`<div class="rhint">${this.host._t('gs.north_hint')}</div>`
-                : nothing}
             </div>
           </div>
           <label class="srcrow">
@@ -11982,14 +11984,17 @@ public _renderDeviceInbox(): TemplateResult {
                 };
               }} />${this.host._t('device_inbox.show_entities' as any)}
           </label>` : nothing}
-          <label>
-            <input type="checkbox" .checked=${this.host._showAll}
-              @change=${(event: Event) => {
-                this.host._showHidden = (event.target as HTMLInputElement).checked;
-                this.host._deviceInboxMemo = null;
-                this.host.requestUpdate();
-              }} />${this.host._t('device_inbox.show_hidden' as any)}
-          </label>
+          <span class="device-inbox-filter-help">
+            <label>
+              <input type="checkbox" .checked=${this.host._showAll}
+                @change=${(event: Event) => {
+                  this.host._showHidden = (event.target as HTMLInputElement).checked;
+                  this.host._deviceInboxMemo = null;
+                  this.host.requestUpdate();
+                }} />${this.host._t('device_inbox.show_hidden' as any)}
+            </label>
+            ${this._help('device_inbox.show_hidden.help')}
+          </span>
         </div>
         ${dialog.tab === 'available' ? this._renderDiscoveryFilters(dialog) : nothing}
         <div class="device-inbox-results" aria-live="polite">
@@ -12759,8 +12764,10 @@ public _renderMarkerDialog(): TemplateResult {
               </label>`
             : nothing}
 
-          <label>${this.host._t('marker.controls_label')}</label>
-          <div class="rhint">${this.host._t('marker.controls_hint')}</div>
+          <div class="helpfieldlabel">
+            <label for="marker-controls-filter">${this.host._t('marker.controls_label')}</label>
+            ${this._help('marker.controls.help')}
+          </div>
           ${d.controls.length
             ? html`<div class="ctrlchips">
                 ${d.controls.map((eid) => {
@@ -12775,7 +12782,7 @@ public _renderMarkerDialog(): TemplateResult {
                 })}
               </div>`
             : nothing}
-          <input class="namein" type="text" placeholder=${this.host._t('marker.controls_filter')}
+          <input id="marker-controls-filter" class="namein" type="text" placeholder=${this.host._t('marker.controls_filter')}
             .value=${d.controlsFilter}
             @input=${(e: Event) => (this.host._markerDialog = { ...d, controlsFilter: (e.target as HTMLInputElement).value })} />
           ${d.controlsFilter.trim()
@@ -13213,9 +13220,12 @@ public _renderSpaceDialog(): TemplateResult {
             <span>${this.host._t('space.source_draw')}</span>
           </label>
 
-          <label>${this.host._t('space.scale_label')}</label>
+          <div class="helpfieldlabel">
+            <label for="space-cell-cm">${this.host._t('space.scale_label')}</label>
+            ${this._help('space.cell_cm.help')}
+          </div>
           <div class="colorrow">
-            <input class="namein tempin" type="number"
+            <input id="space-cell-cm" class="namein tempin" type="number"
               min=${gridCellFieldValue(CELL_CM_MIN, this.host._imperial)}
               max=${gridCellFieldValue(CELL_CM_MAX, this.host._imperial)}
               step="0.1" .value=${d.cellCmInput ?? gridCellFieldValue(d.cellCm, this.host._imperial)}
@@ -13241,8 +13251,11 @@ public _renderSpaceDialog(): TemplateResult {
             ${this._boolInput(d.showBorders, (v) => (this.host._spaceDialog = touchSpaceDisplay(d, 'showBorders', v)))}
             <span>${this.host._t('space.show_borders')}</span>
           </label>
-          <label>${this.host._t('space.zero_wall_style')}</label>
-          <select class="areasel"
+          <div class="helpfieldlabel">
+            <label for="space-zero-wall-style">${this.host._t('space.zero_wall_style')}</label>
+            ${this._help('space.zero_wall_style.help')}
+          </div>
+          <select id="space-zero-wall-style" class="areasel"
             @change=${(e: Event) => {
               const value = (e.target as HTMLSelectElement).value;
               this.host._spaceDialog = {
@@ -13256,7 +13269,6 @@ public _renderSpaceDialog(): TemplateResult {
               ${this.host._t('space.zero_wall_solid')}
             </option>
           </select>
-          <div class="rhint">${this.host._t('space.zero_wall_help')}</div>
           <label class="srcrow">
             ${this._boolInput(d.showNames, (v) => (this.host._spaceDialog = touchSpaceDisplay(d, 'showNames', v)))}
             <span>${this.host._t('space.show_names')}</span>
@@ -13304,8 +13316,11 @@ public _renderSpaceDialog(): TemplateResult {
                 };
               }}></hp-color-opacity>
           </div>
-          <label>${this.host._t('space.bg_mode')}</label>
-          <select class="areasel"
+          <div class="helpfieldlabel">
+            <label for="space-bg-mode">${this.host._t('space.bg_mode')}</label>
+            ${this._help('space.bg_mode.help')}
+          </div>
+          <select id="space-bg-mode" class="areasel"
             @change=${(e: Event) => {
               const v = (e.target as HTMLSelectElement).value;
               this.host._spaceDialog = { ...d, bgMode: v === 'static' || v === 'daynight' ? (v as any) : null };
@@ -13329,9 +13344,12 @@ public _renderSpaceDialog(): TemplateResult {
                   : html`<span class="opl">${this.host._t('space.bg_inherited')}</span>`}
               </div>`
             : nothing}
-          <label>${this.host._t('space.north')}</label>
+          <div class="helpfieldlabel">
+            <label for="space-north">${this.host._t('space.north')}</label>
+            ${this._help('space.north.help')}
+          </div>
           <div class="colorrow">
-            <input class="namein tempin" type="number" min="0" max="359" step="1"
+            <input id="space-north" class="namein tempin" type="number" min="0" max="359" step="1"
               placeholder=${this.host._t('space.sun_inherit')}
               .value=${d.northDeg === null ? '' : String(d.northDeg)}
               @input=${(e: Event) => {
@@ -13355,7 +13373,10 @@ public _renderSpaceDialog(): TemplateResult {
             <option value="1" ?selected=${d.sunRays === true}>${this.host._t('space.sun_on')}</option>
             <option value="0" ?selected=${d.sunRays === false}>${this.host._t('space.sun_off')}</option>
           </select>
-          <label>${this.host._t('space.fill_label')}</label>
+          <div class="helpfieldlabel">
+            <span>${this.host._t('space.fill_label')}</span>
+            ${this._help('space.fill_mode.help')}
+          </div>
           ${SPACE_FILL_UI_MODES.map((v) => [v, 'fill.' + v] as const).map(
             ([v, k]) => html`<label class="srcrow">
               <input type="radio" name="fillmode" .checked=${d.fillMode === v}
