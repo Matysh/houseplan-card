@@ -29,8 +29,6 @@ const res = await page.evaluate(async () => {
     }
     return base(m);
   } };
-  window.confirm = () => true;
-
   // пространство без плана — как после отцепления
   c._openSpaceDialog('edit', 'f1'); await c.updateComplete;
   c._spaceDialog = { ...c._spaceDialog, source: 'file', planUrl: null, planFile: null };
@@ -68,7 +66,10 @@ const res = await page.evaluate(async () => {
   await c.updateComplete;
   await c._deleteServerPlan('f2.bbb.png').catch(() => {});
   out.usedNotDeleted = !deleted.includes('f2.bbb.png');
-  await c._deleteServerPlan('f1.aaa.png');
+  const deleting = c._deleteServerPlan('f1.aaa.png');
+  await c.updateComplete;
+  sr().querySelector('hp-confirm .danger-confirm-footer .btn.danger')?.click();
+  await deleting;
   await c.updateComplete;
   out.freeDeleted = deleted.includes('f1.aaa.png');
   out.rowGone = !(c._spaceDialog.saved || []).some((p) => p.name === 'f1.aaa.png');

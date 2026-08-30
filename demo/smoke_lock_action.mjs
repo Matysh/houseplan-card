@@ -5,7 +5,6 @@ const res = await page.evaluate(async () => {
   const c = window.__card;
   const sr = () => c.shadowRoot || c.renderRoot;
   const calls = [];
-  window.confirm = () => true; // review CR-1: unlocking now confirms
   c.hass = { ...c.hass, callService: (d, s, data) => calls.push([d, s, data.entity_id]) };
   await c.updateComplete;
   // добавить дверь с замком на f1
@@ -21,7 +20,9 @@ const res = await page.evaluate(async () => {
   let btn = sr().querySelector('.btn.lockact');
   out.unlockBtnShown = !!btn && !btn.disabled;
   out.unlockBtnDanger = btn?.classList.contains('warn');
-  btn.click();
+  btn.click(); await c.updateComplete;
+  sr().querySelector('hp-confirm .danger-confirm-footer .btn.warn, hp-confirm .danger-confirm-footer .btn.on')?.click();
+  await c.updateComplete;
   out.unlockCalled = JSON.stringify(calls.at(-1)) === JSON.stringify(['lock', 'unlock', lockId]);
   // 2) замок открыт → кнопка "Lock"
   c.hass = { ...c.hass, states: { ...c.hass.states, [lockId]: { state: 'unlocked', attributes: {} } } };

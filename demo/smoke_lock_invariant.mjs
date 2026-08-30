@@ -30,18 +30,24 @@ const res = await page.evaluate(async () => {
   c._cardToggle('alarm_control_panel.home');
   out.cardToggleRefuses = lockCalls().length === 0;
   // 4) кнопка в карточке двери — единственная разрешённая поверхность, и спрашивает подтверждение
-  let asked = null;
-  window.confirm = (msg) => { asked = msg; return false; };
-  c._lockAction('lock.front_door', 'unlock');
-  out.unlockAsksConfirm = asked !== null && lockCalls().length === 0;
-  window.confirm = () => true;
-  c._lockAction('lock.front_door', 'unlock');
+  c._openingEntityAvailable = () => true;
+  c._openingInfo = {
+    id: 'front', type: 'door', rx: 0.5, ry: 0.5, len_cm: 90, lock: 'lock.front_door',
+  };
+  let pending = c._lockAction('lock.front_door', 'unlock');
+  await c.updateComplete;
+  out.unlockAsksConfirm = c._dangerConfirm?.request?.key === 'unlock' && lockCalls().length === 0;
+  c._cancelDangerConfirm();
+  await pending;
+  pending = c._lockAction('lock.front_door', 'unlock');
+  await c.updateComplete;
+  (c.shadowRoot || c.renderRoot)
+    .querySelector('hp-confirm .danger-confirm-footer .btn.warn, hp-confirm .danger-confirm-footer .btn.on')?.click();
+  await pending;
   out.unlockAfterConfirm = calls.at(-1) === 'lock.unlock:lock.front_door';
   // запирание не спрашивает
-  asked = null;
-  window.confirm = (m) => { asked = m; return true; };
-  c._lockAction('lock.front_door', 'lock');
-  out.lockNoConfirm = asked === null && calls.at(-1) === 'lock.lock:lock.front_door';
+  await c._lockAction('lock.front_door', 'lock');
+  out.lockNoConfirm = c._dangerConfirm === null && calls.at(-1) === 'lock.lock:lock.front_door';
   return out;
 });
 checkAll(res);
