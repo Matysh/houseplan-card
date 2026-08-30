@@ -145,20 +145,27 @@ export function pickRangeBase({ candidates, green, fallback }) {
 const short = (sha) => (typeof sha === 'string' ? sha.slice(0, 8) : '?');
 
 /** Строки для summary: почему диапазон именно такой. */
-export function baseSummary(choice, { head, mergeBase }) {
+export function baseSummary(choice, { head, mergeBase, mode = 'classify' }) {
+  // Заголовок называет ЗАДАЧУ, а не режим кода: два потребителя задают разные
+  // вопросы, и общий заголовок отправил бы читателя не в тот issue. На живом
+  // прогоне #2157 это уже случилось — база диапазона представилась
+  // классификацией.
+  const heading = mode === 'range'
+    ? '### База диапазона (#388)'
+    : '### База классификации (#387)';
   if (choice.reason === 'green-ancestor') {
     const skipped = choice.skipped
       ? ` Пропущено коммитов без завершённого прогона: ${choice.skipped}.`
       : '';
     return [
-      '### База классификации (#387)',
+      heading,
       `Диапазон \`${short(choice.base)}..${short(head)}\`: это самый новый предок,`
         + ` для которого Validate завершился успешно.${skipped}`,
     ];
   }
   if (choice.reason === 'fallback') {
     return [
-      '### База диапазона (#388)',
+      heading,
       `Ни один из ${choice.skipped} предков не был судим завершённым Validate.`
         + ` Диапазон взят от \`${short(choice.base)}\` — головы предыдущего пуша,`
         + ' и это НЕ доказательство проверенности: прогон того пуша мог быть отменён.'
@@ -166,7 +173,7 @@ export function baseSummary(choice, { head, mergeBase }) {
     ];
   }
   return [
-    '### База классификации (#387)',
+    heading,
     'Ни у одного предка до merge-base с dev нет завершённого зелёного Validate,'
       + ` поэтому диапазон расширен до \`${short(mergeBase)}..${short(head)}\` —`
       + ' весь вклад ветки. Узкий диапазон здесь означал бы «проверено» про то,'
@@ -210,7 +217,7 @@ function main(argv) {
   const choice = mode === 'range'
     ? pickRangeBase({ candidates, green: judgedShas(payload), fallback: arg(argv, 'fallback') })
     : pickBase({ candidates, green: greenShas(payload), mergeBase });
-  const summary = baseSummary(choice, { head, mergeBase });
+  const summary = baseSummary(choice, { head, mergeBase, mode });
   process.stdout.write(`${summary.join('\n')}\n`);
   // Имя выхода задаётся явно: одна и та же job считает базу для двух разных
   // потребителей, и общее имя `base` для обоих было бы ловушкой — потребитель

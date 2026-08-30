@@ -222,3 +222,18 @@ test('красный прогон не переоткрывает уже осу�
   assert.equal(choice.base, 'предыдущий');
   assert.equal(choice.skipped, 0);
 });
+
+test('заголовок summary называет задачу потребителя, а не режим кода (#388)', () => {
+  // На живом прогоне #2157 база диапазона представилась «классификацией» и
+  // отправила читателя не в тот issue. Заголовок обязан следовать режиму.
+  const green = { base: 'aaaaaaaa', reason: 'green-ancestor', proven: true, skipped: 1 };
+  const fallback = { base: 'bbbbbbbb', reason: 'fallback', proven: false, skipped: 2 };
+  const head = { head: 'cccccccc', mergeBase: 'dddddddd' };
+  assert.match(baseSummary(green, { ...head, mode: 'range' })[0], /#388/);
+  assert.match(baseSummary(fallback, { ...head, mode: 'range' })[0], /#388/);
+  assert.match(baseSummary(green, head)[0], /#387/, 'по умолчанию — классификация');
+  assert.match(
+    baseSummary({ base: 'e', reason: 'merge-base', proven: false, skipped: 0 }, head)[0],
+    /#387/,
+  );
+});
