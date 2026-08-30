@@ -3259,8 +3259,8 @@ const MUTANT_DEFINITIONS = [
       + '&& node demo/smoke_preflight_diagnostics.mjs',
     because: 'отказ preflight без причины недиагностируем — ровно исходный дефект #295',
     patches: [{
-      file: 'src/houseplan-card.ts',
-      find: "                ${failure.displayName}: ${this._t(`gs.preflight_reason_${failure.reason}` as any)}",
+      file: 'src/houseplan-editor-runtime.ts',
+      find: "                ${failure.displayName}: ${this.host._t(`gs.preflight_reason_${failure.reason}` as I18nKey)}",
       replace: "                ${failure.displayName}",
     }],
   },
