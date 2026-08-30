@@ -133,6 +133,10 @@ close, scrim, Escape, replacement и lifecycle cancellation возвращают
 - На disconnect или уходе с карточки все pending promises завершаются `false`.
 - Controller находится в eager root, поэтому onboarding не тянет editor chunk,
   а View unlock не загружает его.
+- Это осознанный прирост initial View graph: Lit и `hp-dialog` уже находятся в
+  eager-графе, поэтому новый presentation/controller должен добавить не более
+  **3 KiB gzip** к baseline 284055 B и оставить весь initial View ниже
+  действующего бюджета **300000 B gzip** (headroom до задачи: 15945 B).
 
 ## 6. UX-контракт
 
@@ -231,6 +235,7 @@ Double click по исходной кнопке создаёт максимум 
 | AC-10 | Открытие first-space/onboarding не загружает editor chunk только ради confirm | lazy chunk smoke/manifest assertion |
 | AC-11 | Все четыре словаря имеют одинаковый набор новых ключей | `test/i18n.test.mjs` |
 | AC-12 | Специализированные room/partition/decor/Tap dialogs сохраняют прежнее поведение | существующие targeted smokes/unit |
+| AC-13 | Initial View остаётся ≤300000 B gzip, а прирост к baseline 284055 B — ≤3 KiB gzip | `npm run bundle:budget` + сравнение manifest initial graph |
 
 ## 10. Тестовый план
 
@@ -265,6 +270,7 @@ npm run typecheck
 npm test
 npm run build
 npm run bundle:sync
+npm run bundle:budget
 node demo/smoke_danger_confirmation.mjs
 node demo/smoke_esc_dialogs.mjs
 node demo/smoke_dialog_footer_width.mjs
