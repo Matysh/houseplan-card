@@ -1285,6 +1285,33 @@ export const dialogsStyles = css`
       background: color-mix(in srgb, var(--hp-accent) 18%, transparent);
     }
     .device-inbox-tabs button span { color: var(--hp-muted); margin-inline-start: 4px; }
+    /* #44: discovery-filters section on the Available tab */
+    .device-inbox-discovery {
+      margin: 8px 0; padding: 8px 10px;
+      border: 1px solid var(--divider-color, #e0e0e0);
+      border-radius: 8px;
+    }
+    .device-inbox-discovery summary { cursor: pointer; font-weight: 600; }
+    .device-inbox-discovery .srcrow { display: flex; gap: 6px; align-items: center; margin: 8px 0; }
+    .device-inbox-excluded { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+    .device-inbox-excluded > span { font-weight: 500; }
+    .device-inbox-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+    .device-inbox-chips .chip {
+      display: inline-flex; align-items: center; gap: 2px;
+      padding: 1px 6px; border-radius: 10px;
+      background: var(--secondary-background-color, #f0f0f0); font-size: 12px;
+    }
+    .device-inbox-chips .chip button {
+      border: none; background: none; cursor: pointer; padding: 0 2px;
+      color: var(--secondary-text-color, #666);
+    }
+    .device-inbox-excluded input[type="text"] {
+      flex: 1 1 140px; min-width: 120px; padding: 4px 6px;
+      border: 1px solid var(--divider-color, #e0e0e0); border-radius: 6px;
+      background: var(--card-background-color, #fff);
+      color: var(--primary-text-color, #212121);
+    }
+    .device-inbox-preview { margin: 8px 0 4px; font-size: 13px; opacity: 0.85; }
     .device-inbox-filters {
       display: flex;
       flex-wrap: wrap;

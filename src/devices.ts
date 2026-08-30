@@ -28,7 +28,7 @@ export interface BuildCtx {
   areaToSpace: Record<string, string>;
   markers: Marker[];
   settings: ServerConfig['settings'];
-  excluded: Set<string>;
+  excluded: ReadonlySet<string>;
   /** LEGACY only: honoured while the config has no settings.filter_seeded.
    *  Seeded configs hide by explicit marker flags (docs/FILTERING.md). */
   showAll: boolean;
@@ -1432,8 +1432,22 @@ function markerClimateTarget(marker: Marker): string | null {
  * render — an entire frame spent re-reading metadata that did not change. The
  * caller computes this map once per `hass` snapshot and looks rooms up in O(1).
  */
+/** #44: THE resolver of the effective excluded-integration set. Absence of
+ * the key means the product list; a present list REPLACES it wholesale
+ * (including the valid empty list = "exclude nothing"). Every consumer —
+ * discovery, static render, room climate — must read through here. */
+export function effectiveExcludedIntegrations(
+  settings: { exclude_integrations?: string[] } | null | undefined,
+): ReadonlySet<string> {
+  const list = settings?.exclude_integrations;
+  return list ? new Set(list) : EXCLUDED_DOMAINS;
+}
+
 export function roomClimateMap(
   hass: BuildCtx['hass'], rules?: CompiledIconRule[], markers?: Marker[] | null,
+  // #44 H2: room climate follows the SAME user-configurable exclusion set as
+  // discovery; the default keeps today's behaviour byte-for-byte.
+  excluded: ReadonlySet<string> = EXCLUDED_DOMAINS,
 ): Map<string, AreaClimate> {
   const out = new Map<string, AreaClimate>();
   if (!hass?.entities) return out;
@@ -1488,7 +1502,7 @@ export function roomClimateMap(
     const optClimate = climOpt.size > 0 && eid.startsWith('climate.')
       && (climOpt.has(eid) || (reg.device_id && climOpt.has(reg.device_id)));
     if (!optClimate) {
-      if (EXCLUDED_DOMAINS.has(reg.platform)) continue; // filtered-out integrations
+      if (excluded.has(reg.platform)) continue; // filtered-out integrations (#44: user-configurable)
       if (NON_AIR_RE.test(eid)) continue;             // water/chip/flow/target/...
     }
     let groups = byTarget.get(target);

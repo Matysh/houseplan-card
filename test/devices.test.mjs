@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   buildDevices, lightGroups, primaryEntity, lqiFor, tempFor, humFor, climateTempFor,
   areaLights, areaTemp, areaHum, areaLightStats, sourceValue, areaClimate, areaClimateMap,
-  roomClimateKey, roomClimateMap,
+  roomClimateKey, roomClimateMap, effectiveExcludedIntegrations,
   litLightEntity, resolvedDeviceStateEntities, resolvedLightSources, resolvedLightState,
   resolvedLightStats, hasOwnSpatialSource, selectSpatialGlowSource, seedHiddenBindings,
   deletePlanMarkerRecords, effectiveMarkerControls, persistedExternalControls,
@@ -14,6 +14,7 @@ import {
   removedPlanBindings, isRemovedPlanEntity, isRemovedPlanSource,
 } from '../test-build/devices.js';
 import { compileIconRules, iconFor } from '../test-build/rules.js';
+import { readFileSync } from 'node:fs';
 
 /** Minimal fake hass around the pieces buildDevices reads. */
 function mkHass({ devices = {}, entities = {}, states = {}, areas = {} } = {}) {
@@ -2165,4 +2166,63 @@ test('issue 369в: легаси-маркер без ключа area размещ
   const areaMarker = [{ id: 'legacy', binding: 'device:legacy', space: 'f1', room_id: 'shed', area: 'kitchen' }];
   assert.deepEqual(roomClimateMap(hass, undefined, areaMarker).get('kitchen'),
     { temp: 19, hum: null });
+});
+
+
+// #44 AC5: THE resolver of the effective exclusion set and the grouping flag.
+test('#44 AC5: effectiveExcludedIntegrations resolves unset/list/empty honestly', () => {
+  const product = effectiveExcludedIntegrations(undefined);
+  assert.ok(product.has('hacs') && product.has('sun'),
+    'no settings -> the product EXCLUDED_DOMAINS list');
+  assert.equal(effectiveExcludedIntegrations({}), product,
+    'settings without the key -> the SAME product set (identity, no copies)');
+  const custom = effectiveExcludedIntegrations({ exclude_integrations: ['demo_x'] });
+  assert.ok(custom.has('demo_x') && !custom.has('hacs'),
+    'a present list REPLACES the product list wholesale');
+  const nothing = effectiveExcludedIntegrations({ exclude_integrations: [] });
+  assert.equal(nothing.size, 0, 'the empty list is a valid "exclude nothing"');
+});
+
+// #44 AC4b (H2): room climate follows the SAME user-configurable exclusion.
+test('#44 AC4b: roomClimateMap filters by the configured exclusion set', () => {
+  const hass = {
+    areas: { old: { temperature_entity_id: null, humidity_entity_id: null } },
+    devices: { thermo: { area_id: 'old' } },
+    entities: {
+      'sensor.thermo_temperature': { device_id: 'thermo', platform: 'demo_x' },
+    },
+    states: {
+      'sensor.thermo_temperature': { state: '21', attributes: { device_class: 'temperature' } },
+    },
+  };
+  // default (no user key): demo_x is not in the product list -> climate counts
+  assert.deepEqual(roomClimateMap(hass, undefined, []).get('old'), { temp: 21, hum: null });
+  // the user excludes demo_x -> the SAME reading disappears from room climate
+  const excluded = effectiveExcludedIntegrations({ exclude_integrations: ['demo_x'] });
+  assert.equal(roomClimateMap(hass, undefined, [], excluded).get('old'), undefined,
+    'a user-excluded integration must not feed room climate (the hidden third variant of #44)');
+  // regression: explicit climate opt-in beats the exclusion (existing optClimate branch)
+  const opted = [{
+    id: 'thermo', binding: 'device:thermo', space: 'f1', area: 'old', use_climate_temp: true,
+  }];
+  const hassClimate = {
+    ...hass,
+    entities: { 'climate.thermo': { device_id: 'thermo', platform: 'demo_x' } },
+    states: { 'climate.thermo': { state: 'heat', attributes: { current_temperature: 23 } } },
+  };
+  assert.deepEqual(roomClimateMap(hassClimate, undefined, opted, excluded).get('old'),
+    { temp: 23, hum: null }, 'explicit opt-in stays stronger than the exclusion');
+});
+
+// #44 AC6: the preview must run the real discovery, not a copy of the filter.
+test('#44 AC6: the filters preview calls the shared buildDevices', () => {
+  const source = readFileSync(new URL('../src/houseplan-editor-runtime.ts', import.meta.url), 'utf8');
+  const preview = source.slice(
+    source.indexOf('public _discoveryFilterPreview('),
+    source.indexOf('public async _saveDiscoveryFilters('),
+  );
+  assert.match(preview, /buildDevices\(\{ \.\.\.ctx, settings, excluded \}/,
+    'both sides of the diff must come from the one production builder');
+  assert.doesNotMatch(preview, /EXCLUDED_DOMAINS\.has|\.platform/,
+    'no re-implementation of the filter inside the preview');
 });

@@ -527,6 +527,13 @@ and its other entities remain deleted. The complete device stays available in
 - **Devices** opens one searchable lifecycle catalog. Its **On plan**,
   **Available**, **Hidden** and **Available again** tabs explain where every
   exact HA binding is and offer the next valid action;
+- **Discovery filters** (#44) live on the **Available** tab: a switch that
+  groups room lights into one marker (on by default) and the list of excluded
+  integrations with search and a "Restore recommended" reset. Changes show
+  appear/disappear counters before anything is written; Save stores the
+  settings once. Filters only affect automatic candidates — a device you
+  placed explicitly never disappears because of them, and an excluded
+  candidate names its integration in the catalog;
 - **Add virtual device** lives at the top of that catalog. Enable **Show
   entities** in **Available** to place an individual entity;
 - **Show hidden on plan** is a local catalog switch. It reveals user-hidden

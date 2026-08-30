@@ -121,7 +121,7 @@ import {
   type VacSourceResolution, type VacSourceStatus,
 } from './vacuum';
 import {
-  buildDevices, deviceFromMarkerDraft, seedHiddenBindings, lqiFor, tempFor, humFor, climateTempFor, isHumEntity,
+  buildDevices, deviceFromMarkerDraft, effectiveExcludedIntegrations, seedHiddenBindings, lqiFor, tempFor, humFor, climateTempFor, isHumEntity,
   areaTemp, areaHum, sourceValue, areaClimateMap,
   resolvedLightSources, resolvedLightState, resolvedLightStats,
   hasOwnSpatialSource, hasOwnStatefulLightSource, ownControllableEntities,
@@ -801,6 +801,11 @@ interface DeviceInboxDialogState {
   showEntities: boolean;
   onlyNew: boolean;
   limit: number;
+  /** #44: Discovery-filters drafts. `undefined` = untouched (mirror the
+   * stored settings); draftExcluded `null` = "recommended" (no stored key). */
+  filtersOpen?: boolean;
+  draftGroupLights?: boolean;
+  draftExcluded?: string[] | null;
   /** Logical row restored after a nested marker dialog closes. */
   anchor?: string;
   busy?: string;
@@ -11754,6 +11759,167 @@ public _renderDevicesBar(): TemplateResult {
     </div>`;
   }
 
+/** #44: drafts merged over the stored settings — the single truth the
+ * preview, the chips and Save all read. */
+public _discoveryFilterState(dialog: DeviceInboxDialogState): {
+  groupLights: boolean; excluded: string[]; usesProductList: boolean; dirty: boolean;
+} {
+    const settings = this.host._settings as { group_lights?: boolean; exclude_integrations?: string[] };
+    const groupLights = dialog.draftGroupLights !== undefined
+      ? dialog.draftGroupLights : settings.group_lights !== false;
+    const stored = settings.exclude_integrations;
+    const excluded = dialog.draftExcluded !== undefined
+      ? (dialog.draftExcluded === null ? [...EXCLUDED_DOMAINS] : dialog.draftExcluded)
+      : (stored ? [...stored] : [...EXCLUDED_DOMAINS]);
+    const usesProductList = dialog.draftExcluded !== undefined
+      ? dialog.draftExcluded === null : !stored;
+    const dirty = dialog.draftGroupLights !== undefined || dialog.draftExcluded !== undefined;
+    return { groupLights, excluded: excluded.sort(), usesProductList, dirty };
+  }
+
+  /** Integrations really present in the HA registry (platforms + device
+   * identifier domains), for the exclusion search. */
+  private _registryIntegrations(): string[] {
+    const found = new Set<string>();
+    const full = this.host._fullRegistryHass;
+    for (const reg of Object.values<any>(full?.entities || {})) {
+      if (reg?.platform) found.add(String(reg.platform));
+    }
+    for (const device of Object.values<any>(full?.devices || {})) {
+      const domain = Array.isArray(device?.identifiers?.[0]) ? device.identifiers[0][0] : null;
+      if (domain) found.add(String(domain));
+    }
+    return [...found].sort();
+  }
+
+  private _discoveryPreviewMemo: { key: string; value: { appear: number; hide: number; lights: number } } | null = null;
+
+  /** #44 AC6: the preview runs the SAME buildDevices the plan runs — draft
+   * settings in, binding sets compared. Memoised so hass ticks while the
+   * section is open do not redo discovery. */
+public _discoveryFilterPreview(dialog: DeviceInboxDialogState): { appear: number; hide: number; lights: number } {
+    const draft = this._discoveryFilterState(dialog);
+    const key = [
+      draft.groupLights ? 1 : 0, draft.usesProductList ? 'p' : draft.excluded.join(','),
+      this.host._cfgEpoch, this.host._regSignature,
+    ].join('|');
+    if (this._discoveryPreviewMemo?.key === key) return this._discoveryPreviewMemo.value;
+    const ctx = {
+      hass: this.host.hass,
+      registry: this.host._haRegistry,
+      areaToSpace: Object.fromEntries(
+        Object.entries(this.host._areaToSpace).map(([a, v]) => [a, v.space]),
+      ),
+      markers: this.host._markers,
+      showAll: this.host._showAll,
+      firstSpaceId: this.host._model[0]?.id || '',
+      loc: (k: string) => this.host._t(k as never),
+      iconRules: this.host._iconRules,
+    };
+    // Two shared builders, zero copies of the filter logic: the exclusion
+    // materialises through seedHiddenBindings (hidden markers), the grouping
+    // changes the buildDevices candidate set — the preview diffs BOTH.
+    const seededOf = (settings: object, excluded: ReadonlySet<string>) => new Set(
+      seedHiddenBindings({ ...ctx, settings, excluded } as never));
+    const candidatesOf = (settings: object, excluded: ReadonlySet<string>) => new Set(
+      buildDevices({ ...ctx, settings, excluded } as never)
+        .map((device) => device.bindingRef || device.id));
+    const currentExcluded = effectiveExcludedIntegrations(this.host._settings);
+    const draftSettings = { ...this.host._settings, group_lights: draft.groupLights };
+    const draftExcluded = new Set(draft.excluded);
+    const seededNow = seededOf(this.host._settings, currentExcluded);
+    const seededNext = seededOf(draftSettings, draftExcluded);
+    const candidatesNow = candidatesOf(this.host._settings, currentExcluded);
+    const candidatesNext = candidatesOf(draftSettings, draftExcluded);
+    let appear = 0, hide = 0, lights = 0;
+    const isLight = (binding: string) => binding.includes('light.');
+    for (const binding of seededNow) if (!seededNext.has(binding)) { appear++; if (isLight(binding)) lights++; }
+    for (const binding of seededNext) if (!seededNow.has(binding)) { hide++; if (isLight(binding)) lights++; }
+    for (const binding of candidatesNext) if (!candidatesNow.has(binding)) { appear++; if (isLight(binding)) lights++; }
+    for (const binding of candidatesNow) if (!candidatesNext.has(binding)) { hide++; if (isLight(binding)) lights++; }
+    const value = { appear, hide, lights };
+    this._discoveryPreviewMemo = { key, value };
+    return value;
+  }
+
+  /** #44: one settings write per Save; defaults are stored as ABSENCE. */
+public async _saveDiscoveryFilters(dialog: DeviceInboxDialogState): Promise<void> {
+    const cfg = this.host._serverCfg;
+    if (!cfg) return;
+    const draft = this._discoveryFilterState(dialog);
+    const settings: Record<string, unknown> = { ...(cfg.settings as object) };
+    if (draft.groupLights) delete settings.group_lights;
+    else settings.group_lights = false;
+    if (draft.usesProductList) delete settings.exclude_integrations;
+    else settings.exclude_integrations = draft.excluded;
+    this.host._serverCfg = { ...cfg, settings } as typeof cfg;
+    this.host._deviceInboxMemo = null;
+    this._discoveryPreviewMemo = null;
+    this.host._regSignature = ''; // force the device rebuild to see new filters
+    if (this.host._deviceInbox) {
+      this.host._deviceInbox = {
+        ...dialog, draftGroupLights: undefined, draftExcluded: undefined,
+      };
+    }
+    this._saveConfig();
+    this.host._maybeRebuildDevices();
+    this.host.requestUpdate();
+  }
+
+  private _renderDiscoveryFilters(dialog: DeviceInboxDialogState): TemplateResult {
+    const draft = this._discoveryFilterState(dialog);
+    const patch = (delta: Partial<DeviceInboxDialogState>) =>
+      (this.host._deviceInbox = { ...dialog, ...delta });
+    const preview = dialog.filtersOpen && draft.dirty ? this._discoveryFilterPreview(dialog) : null;
+    const known = this._registryIntegrations().filter((name) => !draft.excluded.includes(name));
+    return html`<details class="device-inbox-discovery" ?open=${dialog.filtersOpen}
+        @toggle=${(event: Event) => patch({ filtersOpen: (event.target as HTMLDetailsElement).open })}>
+      <summary>${this.host._t('device_inbox.filters_title' as never)}</summary>
+      <label class="srcrow">
+        <input type="checkbox" .checked=${draft.groupLights}
+          @change=${(event: Event) => patch({
+            draftGroupLights: (event.target as HTMLInputElement).checked,
+          })} />
+        ${this.host._t('device_inbox.filters_group_lights' as never)}
+      </label>
+      <div class="device-inbox-excluded">
+        <span>${this.host._t('device_inbox.filters_excluded' as never)}</span>
+        <div class="device-inbox-chips">
+          ${draft.excluded.map((name) => html`<span class="chip">${name}
+            <button type="button" aria-label="×"
+              @click=${() => patch({ draftExcluded: draft.excluded.filter((x) => x !== name) })}>×</button>
+          </span>`)}
+        </div>
+        <input type="text" list="hp-discovery-integrations"
+          placeholder=${this.host._t('device_inbox.filters_search_ph' as never)}
+          @change=${(event: Event) => {
+            const input = event.target as HTMLInputElement;
+            const name = input.value.trim();
+            if (name && !draft.excluded.includes(name)) {
+              patch({ draftExcluded: [...draft.excluded, name] });
+            }
+            input.value = '';
+          }} />
+        <datalist id="hp-discovery-integrations">
+          ${known.map((name) => html`<option value=${name}></option>`)}
+        </datalist>
+        <button type="button" class="btn ghost" ?disabled=${draft.usesProductList}
+          @click=${() => patch({ draftExcluded: null })}>
+          ${this.host._t('device_inbox.filters_reset' as never)}
+        </button>
+      </div>
+      ${preview ? html`<div class="device-inbox-preview">
+        ${this.host._t('device_inbox.filters_preview_appear' as never, { count: String(preview.appear) })}
+        · ${this.host._t('device_inbox.filters_preview_hide' as never, { count: String(preview.hide) })}
+        · ${this.host._t('device_inbox.filters_preview_lights' as never, { count: String(preview.lights) })}
+      </div>` : nothing}
+      <button type="button" class="btn on" ?disabled=${!draft.dirty}
+        @click=${() => this._saveDiscoveryFilters(dialog)}>
+        ${this.host._t('device_inbox.filters_save' as never)}
+      </button>
+    </details>`;
+  }
+
 public _renderDeviceInbox(): TemplateResult {
     const dialog = this.host._deviceInbox!;
     const rows = this._deviceInboxRows();
@@ -11819,6 +11985,7 @@ public _renderDeviceInbox(): TemplateResult {
               }} />${this.host._t('device_inbox.show_hidden' as any)}
           </label>
         </div>
+        ${dialog.tab === 'available' ? this._renderDiscoveryFilters(dialog) : nothing}
         <div class="device-inbox-results" aria-live="polite">
           ${visible.length ? visible.map((row) => {
             const primary = row.category === 'on_plan'
@@ -11846,7 +12013,10 @@ public _renderDeviceInbox(): TemplateResult {
                   ${[row.model, row.integration, row.spaceName, row.areaName].filter(Boolean).join(' · ')}
                 </div>
                 <div class="device-inbox-reason">
-                  ${this.host._t(`device_inbox.reason_${row.reason}` as any)}
+                  ${row.reason === 'excluded_integration' && row.integration
+                    ? this.host._t('device_inbox.reason_excluded_integration' as any,
+                        { integration: row.integration })
+                    : this.host._t(`device_inbox.reason_${row.reason}` as any)}
                   ${status ? html`<span class="device-inbox-status">${status}</span>` : nothing}
                 </div>
                 <code>${row.binding}</code>

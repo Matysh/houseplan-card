@@ -736,6 +736,28 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'discovery-preview-copies-the-filter',
+    guard: 'node --test test/devices.test.mjs',
+    because: 'the preview must diff the REAL seedHiddenBindings/buildDevices outputs — a '
+      + 'hand-rolled platform check would drift from the production filter (#44 AC6)',
+    patches: [{
+      file: 'src/houseplan-editor-runtime.ts',
+      find: "    const seededOf = (settings: object, excluded: ReadonlySet<string>) => new Set(\n      seedHiddenBindings({ ...ctx, settings, excluded } as never));",
+      replace: "    const seededOf = (settings: object, excluded: ReadonlySet<string>) => new Set(\n      [...excluded].filter((platform) => platform && EXCLUDED_DOMAINS.has(platform)));",
+    }],
+  },
+  {
+    id: 'discovery-reset-writes-a-copy',
+    guard: 'node demo/smoke_discovery_filters.mjs',
+    because: 'Restore recommended must store the default as ABSENCE of the key — a written '
+      + 'copy of the product list would freeze it against future product updates (#44 AC2)',
+    patches: [{
+      file: 'src/houseplan-editor-runtime.ts',
+      find: "    if (draft.usesProductList) delete settings.exclude_integrations;\n    else settings.exclude_integrations = draft.excluded;",
+      replace: "    settings.exclude_integrations = draft.excluded;",
+    }],
+  },
+  {
     id: 'schema-manifest-enum-drift',
     guard: 'node --test test/config-schema-parity.test.mjs',
     because: 'a backend enum value the frontend does not know (and the allow-list does not '

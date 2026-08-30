@@ -1523,3 +1523,14 @@ other world honest against it:
   `enforcedBy`. The lifecycle fixtures in `test/fixtures/config-lifecycle/`
   pin the load contract: oldest-supported and future-field configs pass the
   schema losslessly.
+
+## No hidden discovery knobs (#44, 2026-08-30)
+
+Every stored key that shapes device discovery is a visible, supported setting
+or does not exist. `settings.group_lights` and `settings.exclude_integrations`
+are edited in the device catalog's Discovery-filters section; the ONE resolver
+`effectiveExcludedIntegrations()` (devices.ts) feeds discovery, the
+materialisation seed and room climate alike, and the preview in the dialog
+diffs the real `seedHiddenBindings`/`buildDevices` outputs — there is no
+second copy of the filter logic to drift. The field registry (#33) carries
+their passports; `scripts/config-audit.mjs` treats both as `current`.

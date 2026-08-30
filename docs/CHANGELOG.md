@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Device discovery lost its last hidden knobs: light grouping and the
+  excluded-integrations list are now visible **Discovery filters** on the
+  catalog's Available tab, with appear/disappear counters before saving and
+  the integration named on every excluded candidate. Room climate now follows
+  the same user-configured exclusions as discovery
+  ([#44](https://github.com/Matysh/houseplan-card/issues/44)).
+
 - Old and future plan configs are now guarded by machinery instead of habit:
   the backend schema is dumped into a committed manifest, frontend and
   backend value lists are compared in CI with an explicit allow-list for the

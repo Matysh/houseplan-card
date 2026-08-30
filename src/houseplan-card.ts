@@ -118,7 +118,7 @@ import {
 } from './vacuum';
 import {
   buildDevices, deviceFromMarkerDraft, seedHiddenBindings, lqiFor, tempFor, humFor, climateTempFor, isHumEntity,
-  areaTemp, areaHum, sourceValue, roomClimateKey, roomClimateMap,
+  areaTemp, areaHum, effectiveExcludedIntegrations, sourceValue, roomClimateKey, roomClimateMap,
   resolvedLightSources, resolvedLightState, resolvedLightStats,
   hasOwnSpatialSource, hasOwnStatefulLightSource, ownControllableEntities,
   forcedLightEntityOf,
@@ -3920,9 +3920,8 @@ export class HouseplanCard extends LitElement {
     return fillColorsOf(this._settings);
   }
 
-  private get _excluded(): Set<string> {
-    const list = this._settings.exclude_integrations;
-    return list ? new Set(list) : EXCLUDED_DOMAINS;
+  private get _excluded(): ReadonlySet<string> {
+    return effectiveExcludedIntegrations(this._settings); // #44: single resolver
   }
 
   protected willUpdate(changed: PropertyValues): void {
@@ -11867,7 +11866,7 @@ export class HouseplanCard extends LitElement {
     const planHass = this._renderPlanHass;
     const c = this._climateCache;
     if (c && c.h === planHass && c.r === this._iconRules && c.mk === mk) return c.m;
-    const m = roomClimateMap(planHass, this._iconRules, mk);
+    const m = roomClimateMap(planHass, this._iconRules, mk, this._excluded);
     this._climateCache = { h: planHass, r: this._iconRules, mk, m };
     return m;
   }
