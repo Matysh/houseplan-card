@@ -3,7 +3,7 @@
 - Issue: https://github.com/Matysh/houseplan-card/issues/42
 - Приоритет: P2, tests/tech-debt; полный трек (backend class A + видимое
   поведение ошибок — решение аналитики 2026-08-15)
-- Ревизия: 3 (2026-08-30) — по SPEC-REVIEW-42-r1 (M1, M2); механизм +
+- Ревизия: 4 (2026-08-30) — по SPEC-REVIEW-42-r2 (M1-хвост в AC5); механизм +
   ступень baseline, пороги — последующие trivial
 - Тип: infra/tests + один видимый пользователю блок (тексты ошибок)
 
@@ -145,8 +145,14 @@ Tooling не меняет stored data и успешные пользовател
   `noqa: B023` несёт объяснение (контракт-тест: noqa без текста запрещён).
 - **AC4** (локально): mypy strict зелёный на стартовом allowlist;
   контракт-тест падает при СУЖЕНИИ списка.
-- **AC5** (юнит): ERROR_CODES ⊇ все коды send_error (скан исходника);
-  каждый код имеет en-ключ `backup.error.<code>`.
+- **AC5** (юнит): контракт-тест реализует норматив блока 5 ЦЕЛИКОМ — оба
+  пути эмиссии: (а) литералы `send_error` и (б) перечисленные
+  err.code-источники (четыре validation-класса, `JunctionLimitError`,
+  `MarkerControlError`); каждый фиксированный код ∈ ERROR_CODES с en-ключом
+  `backup.error.<code>`, каждое семейство ∈ ERROR_CODE_FAMILIES с
+  family-ключом либо задокументированным fallback; источник вне перечня →
+  красный. В частности `invalid_passage_fields` и
+  `invalid_partition_opening_jamb_margin` обязаны быть доказаны тестом.
 - **AC6** (юнит фронта): JSON-message двух кодов парсится в structured
   details; старый regex-формат по-прежнему принимается; неизвестный код →
   локализованный fallback, английский message не попадает в DOM.
@@ -160,6 +166,8 @@ Tooling не меняет stored data и успешные пользовател
 - Pure-pytest: AC5-скан; существующие 240 не слабеют.
 - Контракт-тесты: AC3-noqa, AC4-allowlist (читают pyproject/исходники).
 - Мутанты: м1 — удалить код из ERROR_CODES → красный AC5;
+  м1b — убрать один err.code-источник из перечня сканера (например
+  `PartitionOpeningJambMarginError`) → красный AC5 (ветка (б) доказана);
   м2 — вернуть regex-first парсинг (сломать JSON-ветку) → красный AC6.
 - CI-доказательства AC1/AC2 — прогоном ветки, фиксируются в handoff.
 
