@@ -569,6 +569,7 @@ aggregates until the same ID becomes active again.
 | HA more-info | Native dialog for the exact primary entity | No state change |
 | Toggle state | Toggles the exact binding, supported device function or configured light-source group | Locks, alarm panels and protective garage/door/gate targets are no-op; confirmation is optional |
 | Run | Runs an automation, script or scene | Explicit target; confirmation is optional |
+| Do nothing | Short click/tap, Enter and Space are ignored | No dialog, command, confirmation, toast or press feedback |
 
 When confirmation is enabled for **Toggle state**, the dialog shows the current
 state and the exact expected result (`On`, `Off`, `Open`, `Closed` or `Stopped`).
@@ -580,7 +581,9 @@ asks you to try again.
 
 A light defaults to Toggle; other devices default to the House Plan card. An
 unsupported Toggle remains a visible no-op and is never changed into another
-action behind the user's back.
+action behind the user's back. **Do nothing** is an explicit saved choice, not
+the default: it keeps the marker's normal appearance, hover, long-press House
+Plan card and right-click HA more-info while disabling only short activation.
 
 If every explicitly configured `controls` target is unavailable, missing or
 disabled in HA, a short tap sends no service call and the standard local House

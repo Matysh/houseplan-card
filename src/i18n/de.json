@@ -729,6 +729,7 @@
   "marker.ha_registry_limited": "Das vollständige Home Assistant-Register ist für diesen Benutzer nicht verfügbar. Das nicht verifizierte Objekt kann vorerst nicht angezeigt oder verwendet werden.",
   "marker.delete_tip": "Löschen Sie das Gerät vollständig aus dem Plan und allen Aggregaten. Sie können es später wieder hinzufügen.",
   "tap.run": "Führen Sie Automation/Skript/Szene aus",
+  "tap.none": "Nichts tun",
   "marker.run_target_label": "Was ausführen",
   "marker.run_search_ph": "Suchen: Automation, Skript oder Szene…",
   "marker.run_target_gone": "Ziel {id} nicht gefunden — erneut auswählen",

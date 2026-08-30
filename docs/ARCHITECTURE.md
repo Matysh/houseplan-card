@@ -1389,6 +1389,12 @@ its configured space.
   action `cover` remains accepted and losslessly round-tripped as a legacy
   origin until the user deliberately changes the selector. An absent action on
   a primary `light.*` likewise stays absent on an untouched Open → Save.
+  The canonical explicit `tap_action=none` (#381) is resolved separately from
+  that absent default. `_clickDevice()` first consumes propagation and
+  re-resolves the current marker by stable id, then returns on `none` before
+  capability lookup, confirmation, cards/toasts, press feedback or HA
+  dispatch. Keyboard Enter/Space shares the same path; hold and context-menu
+  handlers remain independent.
   `POWER_ADAPTERS` is the explicit domain allow-list and carries per-entity HA
   feature masks where a domain-wide service is not capability proof. The
   service catalog is a second fail-closed guard. A click resolves the current

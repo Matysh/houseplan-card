@@ -1,7 +1,7 @@
 # Issue #381 — действие по нажатию «Ничего не делать»
 
 - **Issue:** https://github.com/Matysh/houseplan-card/issues/381
-- **Статус документа:** вторая редакция, замечание r1 устранено, готова к ревью
+- **Статус документа:** утверждено, реализовано, готово к code review
 - **Приоритет / тип:** P2 · feature / polish
 - **Область:** marker config, Редактор устройств, View/киоск, frontend action
   projection, backend validation, i18n, документация и QA

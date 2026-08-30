@@ -21,7 +21,7 @@ import {
   openingShoulders, openingEntityReferences, fillColorsOf, lerpColor, roomFillStyle,
   resolveEffectiveRoomFill, stateIcon, lightColorOf, isAlarmState, parseRoomRef,
   diffNewDevices, poleOfInaccessibility, runServiceFor, coverMoving,
-  normalizeDeviceDisplay, isAlarmCapable,
+  normalizeDeviceDisplay, isAlarmCapable, TAP_ACTIONS,
   liveText, liveTextValue, liveTextReference, liveTextToken,
   hassValue, valueWithUnit, decorTextScale, decorTextLines,
   LIVE_TEXT_DASH, LIVE_TEXT_VALUE_MAX, DECOR_TEXT_SCALE_MIN, DECOR_TEXT_SCALE_MAX,
@@ -30,6 +30,10 @@ import {
 import {
   iconFor, compileIconRules, isValidPattern, iconFromDeviceClasses,
 } from '../test-build/rules.js';
+
+test('tap action editor choices keep the canonical order', () => {
+  assert.deepEqual([...TAP_ACTIONS], ['info', 'more-info', 'toggle', 'run', 'none']);
+});
 
 test('display normalization and alarm-capable metadata share one contract', () => {
   assert.equal(normalizeDeviceDisplay(undefined), 'badge');
