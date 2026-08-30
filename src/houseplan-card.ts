@@ -12076,8 +12076,16 @@ export class HouseplanCard extends LitElement {
     return key ? this._climate().get(key)?.hum ?? null : null;
   }
 
+  // Ключи сравниваются только по ссылке (`===`), значение не читается ни разу.
+  // Поэтому `unknown` для hass точнее любого структурного типа: он и запрещает
+  // случайно воспользоваться содержимым, и не врёт про форму объекта, которую
+  // HA нам не обещает. Правила и маркеры при этом типизированы по-настоящему.
   private _climateCache: {
-    h: any; r: any; mk: any; ex: string[] | undefined; m: Map<string, AreaClimate>;
+    h: unknown;
+    r: CompiledIconRule[] | undefined;
+    mk: Marker[] | undefined;
+    ex: string[] | undefined;
+    m: Map<string, AreaClimate>;
   } | null = null;
 
   /**

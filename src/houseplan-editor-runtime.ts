@@ -11824,12 +11824,19 @@ public _discoveryFilterState(dialog: DeviceInboxDialogState): {
    * identifier domains), for the exclusion search. */
   private _registryIntegrations(): string[] {
     const found = new Set<string>();
-    const full = this.host._fullRegistryHass;
-    for (const reg of Object.values<any>(full?.entities || {})) {
+    // Реестр HA нетипизирован на своей стороне, но здесь читаются ровно два
+    // поля и оба защищённо, поэтому хватает минимальной структурной формы —
+    // она честнее `any`: описывает то, на что код действительно опирается.
+    const full = this.host._fullRegistryHass as {
+      entities?: Record<string, { platform?: unknown } | undefined>;
+      devices?: Record<string, { identifiers?: unknown[] } | undefined>;
+    } | null | undefined;
+    for (const reg of Object.values(full?.entities || {})) {
       if (reg?.platform) found.add(String(reg.platform));
     }
-    for (const device of Object.values<any>(full?.devices || {})) {
-      const domain = Array.isArray(device?.identifiers?.[0]) ? device.identifiers[0][0] : null;
+    for (const device of Object.values(full?.devices || {})) {
+      const first = device?.identifiers?.[0];
+      const domain = Array.isArray(first) ? first[0] : null;
       if (domain) found.add(String(domain));
     }
     return [...found].sort();
@@ -12060,9 +12067,9 @@ public _renderDeviceInbox(): TemplateResult {
                 </div>
                 <div class="device-inbox-reason">
                   ${row.reason === 'excluded_integration' && row.integration
-                    ? this.host._t('device_inbox.reason_excluded_integration' as any,
+                    ? this.host._t('device_inbox.reason_excluded_integration',
                         { integration: row.integration })
-                    : this.host._t(`device_inbox.reason_${row.reason}` as any)}
+                    : this.host._t(`device_inbox.reason_${row.reason}` as I18nKey)}
                   ${status ? html`<span class="device-inbox-status">${status}</span>` : nothing}
                 </div>
                 <code>${row.binding}</code>
