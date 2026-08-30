@@ -1,11 +1,11 @@
 {
   "schema": 1,
-  "matrixVersion": 52,
-  "acceptedAt": "2026-08-30T09:58:43.446Z",
-  "sourceFingerprint": "ec740e0418a69f6393e593eea8ad700a6a4edc9d635464751f5929f030437299",
+  "matrixVersion": 53,
+  "acceptedAt": "2026-08-30T11:29:48.257Z",
+  "sourceFingerprint": "c63e55839e4e87dfffefae928d34c030e38064a799953b0ffd7b14052ef53d85",
   "chromium": "151.0.7922.34",
   "witnesses": {
-    "count": 127,
+    "count": 133,
     "floor": 10
   },
   "scenarios": {
@@ -143,6 +143,8 @@
     "decor-color-popover-mobile-ru": "606c41d53f9a996b24990032505180159ce032e2b4f14dfb214c79a8c4b85702",
     "decor-color-popover-desktop-en": "f626f246c8e29d1b1e5e067e0923438eb1222606388a33c3071e86307b4ca130",
     "general-color-popover-desktop-en": "008865918113e05847a7ad8ae0fdc068b5326acf1c591d855806b333084978a3",
+    "settings-help-zoom-200-en-light": "bb1192a52bab5ebc6984a5d799a32d05f9ce374ce6b493f5f618b639eedce8d5",
+    "settings-help-zoom-200-ru-dark": "13e7fdd19017c38a5659394e622ff54ac8a426f9cb6e85b3248864767aa9f42b",
     "device-ripple-color-popover-mobile-ru": "4f2365818f46fe1e2b401e5835f5d29ea9c41b288d894025d7512db92f579762",
     "space-room-color-popover-desktop-ru": "ff0e633c7fbedfa04883792682d8e407aa0633bbd46ed12e0ab8bc2207be9ccb",
     "backup-full-preview-desktop-en": "6b68188269fdbaddaf4f2ce8fc0d10ea41e050f0c08cdbd9507548871a3786ef",
