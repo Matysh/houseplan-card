@@ -111,6 +111,9 @@ const out = await page.evaluate(async () => {
   k._lastTap = Date.now() - 100;
   fire('pointerdown', 58, 500, 300);
   fire('pointerup', 58, 501, 300);
+  const resetStarted = performance.now();
+  do { await new Promise((resolve) => requestAnimationFrame(resolve)); }
+  while (k._cameraTransition.active && performance.now() - resetStarted < 1000);
   await k.updateComplete;
   o.doubleTapStillResetsZoom = k._zoom === 1;
   o.doubleTapLeavesNoLock = k._panLock === null;

@@ -1471,6 +1471,18 @@ retarget. Reduced motion commits the exact target atomically. Visibility loss,
 space change, recovery and disconnect cancel or settle this same owner rather
 than leaving CSS timers or WAAPI animations behind.
 
+## Camera-only transition ownership (#82)
+
+`src/viewport-transition.ts` owns a separate one-token/one-RAF controller for
+discrete zoom commands inside an already settled mode. It shares #101's easing
+primitive but only interpolates reactive `{zoom, viewBox}`: no chrome,
+background, layer opacity or CSS transform. Wheel retargets from the camera
+actually presented while accumulating from the pending target; pointer/pinch,
+mode, space, projection, resize, structural adoption, visibility and teardown
+are explicit ownership boundaries. The component remains the sole writer of
+camera state and persists one exact target only after settle. The controller
+lives in the core View bundle and does not import the lazy editor runtime.
+
 
 ## Settings tiers (owner's principle, 2026-07-26)
 

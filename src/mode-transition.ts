@@ -64,7 +64,7 @@ const cubicCoordinate = (t: number, p1: number, p2: number): number => {
   return 3 * u * u * t * p1 + 3 * u * t * t * p2 + t * t * t;
 };
 
-const ease = (p: number): number => {
+export const easeTransitionProgress = (p: number): number => {
   // Exact CSS cubic-bezier(0.2, 0.7, 0.2, 1): animation progress is the
   // curve's x coordinate, so solve x(t) and then evaluate y(t). A bounded
   // bisection is deterministic, monotonic and negligible beside one render.
@@ -126,7 +126,7 @@ export function interpolateModeVisualState(
   to: ModeVisualState,
   progress: number,
 ): ModeVisualState {
-  const p = ease(progress);
+  const p = easeTransitionProgress(progress);
   const stageWidth = lerp(from.stageWidth, to.stageWidth, p);
   const stageHeight = lerp(from.stageHeight, to.stageHeight, p);
   // Screen scale interpolates logarithmically, so zoom speed is perceptually

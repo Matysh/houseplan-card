@@ -1940,6 +1940,11 @@ separately promised workflows:
 ## Zoom / pan / labels
 
 - [ ] Wheel zoom at cursor; +/− buttons; fit button resets; badge shows %
+- [ ] Discrete zoom has an intermediate frame and exact legacy target; rapid
+      wheel retarget/reversal keeps its live pointer anchor and one final
+      persistence write; pointerdown/pinch, mode/space/projection/resize,
+      hidden and reduced motion leave no stale camera animation
+      [auto: smoke_smooth_zoom]
 - [ ] Pinch zoom + two-finger pan on touch; one-finger pan when zoomed
 - [ ] Zoom level persists per space (localStorage), restored on reload
 - [ ] Window resize / sidebar collapse refits without distortion

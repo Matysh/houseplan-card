@@ -45,7 +45,9 @@ metadata). Only an explicit owner-approved emergency hotfix may skip this gate.
   while reload/return from another HA route always starts in View (#93).
   **Kiosk mode** (v1.41.0): `kiosk: true` — no
   header/editors, swipe between spaces, double-tap zoom reset, `cycle: N`
-  carousel, per-screen size multipliers in localStorage.
+  carousel, per-screen size multipliers in localStorage. Discrete wheel,
+  button, fit/home and kiosk-reset camera commands use one short retargetable
+  transition; direct pan/pinch and reduced motion remain immediate (#82).
 - **Independent Glow overlay** (#55/#19, refined locally by #61/#65–#67): dark-room
   base is used only when the effective fill resolver returns `null`, including
   dynamic modes without usable data; resolved LQI/light/temp/custom colors keep

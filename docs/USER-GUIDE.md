@@ -231,6 +231,12 @@ objects; each space keeps its local View viewport.
 At zoom above 1:1 a horizontal kiosk gesture pans instead of changing space.
 Any manual kiosk operation pauses auto-cycle for 60 seconds.
 
+Wheel, `−`/`+`, **Fit all**, the return arrow and kiosk double-tap use a short
+smooth camera transition. Rapid wheel input changes the current destination
+instead of building a queue. Pinch and pan stay directly under the fingers.
+With the operating system's reduced-motion preference enabled, every zoom
+command is immediate.
+
 ### Cancel and undo
 
 - `Esc` finishes an active Walls chain without deleting its accepted segments.

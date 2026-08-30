@@ -251,6 +251,18 @@ produce a zero-sized SVG `viewBox`.
 * **Zoom in** — unchanged, `ZOOM_MAX = 8`.
 * **Zoom out** — `MIN_ZOOM = 1/3`: you can see three times the content
   frame and no further. Empty space beyond that is not information.
+* **Discrete camera motion** (#82) — wheel, `−`/`+`, Fit all, the home arrow
+  and kiosk double-tap interpolate the existing exact camera target for
+  160–220 ms with `cubic-bezier(0.2, 0.7, 0.2, 1)`. Zoom is logarithmic and
+  the world centre is linear; the final frame is the same clamped `viewBox`
+  the immediate path used before #82. Rapid wheel input retargets one RAF from
+  the camera actually on screen, accumulates from its pending target and keeps
+  the current pointer anchor. It never queues transitions or uses a CSS scale.
+  Pinch and pan remain direct 1:1 gestures. Pointerdown freezes the presented
+  camera; mode, space, projection, resize, structural adoption, hidden state
+  and disconnect cancel or settle it before taking ownership. Reduced motion
+  always commits the exact target immediately. View persists only the settled
+  target once; editor camera remains session-only.
 * **Pan** — available at **every zoom**, in view mode and in every
   editor, and bounded by the content frame inflated by
   `PAN_SLACK = 1.0` of `max(view, frame)` on each side. You can walk
