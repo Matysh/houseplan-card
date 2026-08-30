@@ -887,6 +887,7 @@ def test_run_target_is_bounded_to_runnable_domains():
 
 
 def test_every_tap_action_the_editor_offers_is_accepted():
+    assert "none" in _ts_list("TAP_ACTIONS")
     for action in _ts_list("TAP_ACTIONS"):
         v.MARKER_SCHEMA(_marker(tap_action=action))
     with pytest.raises(vol.Invalid):

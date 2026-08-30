@@ -729,6 +729,7 @@
   "marker.ha_registry_limited": "Le registre Home Assistant complet n’est pas accessible à cet utilisateur. L’objet non vérifié ne peut pas être affiché ni utilisé pour le moment.",
   "marker.delete_tip": "Supprimer complètement l’appareil du plan et de tous les agrégats. Vous pourrez l’ajouter de nouveau plus tard.",
   "tap.run": "Exécuter une automatisation/un script/une scène",
+  "tap.none": "Ne rien faire",
   "marker.run_target_label": "Élément à exécuter",
   "marker.run_search_ph": "Rechercher : automatisation, script ou scène…",
   "marker.run_target_gone": "Cible {id} introuvable — choisissez-en une autre",

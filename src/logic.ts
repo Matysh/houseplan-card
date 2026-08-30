@@ -907,7 +907,8 @@ export function normalizeDeviceDisplay(value: unknown): DeviceDisplayMode {
     ? value as DeviceDisplayMode : 'badge';
 }
 /** Current editor choices. `cover` remains a read/backend compatibility token. */
-export const TAP_ACTIONS = ['info', 'more-info', 'toggle', 'run'] as const;
+export const TAP_ACTIONS = ['info', 'more-info', 'toggle', 'run', 'none'] as const;
+export type DeviceTapAction = typeof TAP_ACTIONS[number];
 /** Persisted space-level data fills. `none` remains a read-compatibility token;
  * the space editor projects it to `custom` because every room has a visible
  * base colour and the user can now choose that colour directly. */

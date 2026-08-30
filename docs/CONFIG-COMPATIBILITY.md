@@ -283,6 +283,18 @@ migration: the new field exists only in the portable envelope.
 
 ## Legacy device tap action
 
+The canonical marker token `tap_action: none` is an explicit saved no-op. It is
+different from an absent, `null` or empty action: those values retain the
+domain default (Toggle for a primary `light.*`, Device card otherwise). The
+current frontend consumes short click/tap and keyboard activation before any
+capability, UI or HA dispatch, while hold and context-menu paths are unchanged;
+the current backend accepts the literal. Generic full/space transfer preserves
+it without migration, while virtual duplication continues to omit tap action
+with the other device-specific behaviour. On downgrade, an older frontend
+safely projects the unknown token to Device card, but an older backend rejects
+a subsequent config write containing it. Therefore rollback must keep backend
+read/write acceptance until stored `none` values have been migrated to `info`.
+
 The historical marker token `tap_action: cover` remains accepted indefinitely.
 It is projected in the current UI as the universal **Toggle state** action and
 keeps cover-first target priority at runtime. Merely opening and saving an

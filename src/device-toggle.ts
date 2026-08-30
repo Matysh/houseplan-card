@@ -15,7 +15,7 @@ import {
   type ResolvedLightSource,
   type IncomingLightControl,
 } from './devices';
-import { COVER_GUARDED_CLASSES, isControllable } from './logic';
+import { COVER_GUARDED_CLASSES, isControllable, type DeviceTapAction } from './logic';
 import type { DevItem } from './types';
 import {
   isManualVirtualLightMarker,
@@ -463,9 +463,10 @@ function emptyIntent(origin: ToggleOrigin, reason: ToggleNoneReason): ResolvedTo
 export function projectedTapAction(
   persisted: string | null | undefined,
   defaultDomain: string | null | undefined,
-): 'info' | 'more-info' | 'toggle' | 'run' {
+): DeviceTapAction {
   if (persisted === 'cover' || persisted === 'toggle') return 'toggle';
-  if (persisted === 'more-info' || persisted === 'run' || persisted === 'info') return persisted;
+  if (persisted === 'more-info' || persisted === 'run'
+    || persisted === 'info' || persisted === 'none') return persisted;
   // Only actual absence activates the light default. An unknown persisted
   // token is invalid data, not an absent choice: fail closed to the local card
   // so the UI projection and `toggleOriginOf()` cannot disagree.

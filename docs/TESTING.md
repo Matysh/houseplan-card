@@ -1548,15 +1548,18 @@ separately promised workflows:
       `can_write` warm restore, one press on the visible editor close button
       cancels the deferred editor and a late response cannot reopen it (#95)
       [auto: smoke_nav_persist]
-- [ ] Tap action cleanup + right click (v1.38.1, #94): the per-device action
-      list has four options (Device card / HA more-info / Toggle state / Run),
+- [ ] Tap action cleanup + right click (v1.38.1, #94; #381): the per-device
+      action list has five options (Device card / HA more-info / Toggle state /
+      Run / Do nothing),
       no separate cover or "card default" option — the card editor's global
       tap option is gone and ignored;
       Device card opens locally for compound curtains/covers even during a
       transient registry revalidation and calls no HA service (#96)
       [auto: smoke_cover_not_primary];
       right click on an icon in VIEW opens HA more-info (native menu kept in
-      editors; virtual w/o entity → device card) [auto: smoke_tap_ctx]
+      editors; virtual w/o entity → device card); explicit Do nothing consumes
+      short click, Enter and Space without card, confirmation, feedback, toast
+      or HA call [auto: smoke_tap_ctx]
 - [ ] Binding section redesign (v1.38.0): two radios — Virtual / Pick from
       the HA list — with a "Show entities" checkbox (tooltip) next to the
       second; the dropdown (search inside) appears only in HA mode, opens

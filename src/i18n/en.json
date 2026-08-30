@@ -729,6 +729,7 @@
   "marker.ha_registry_limited": "The full Home Assistant registry is unavailable to this user. The unverified object cannot be shown or used for now.",
   "marker.delete_tip": "Completely delete the device from the plan and every aggregate. You can add it again later.",
   "tap.run": "Run automation/script/scene",
+  "tap.none": "Do nothing",
   "marker.run_target_label": "What to run",
   "marker.run_search_ph": "Search: automation, script or scene…",
   "marker.run_target_gone": "Target {id} not found — pick again",

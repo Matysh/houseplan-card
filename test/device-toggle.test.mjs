@@ -83,6 +83,8 @@ test('action projection is universal while persisted legacy/default origins stay
   assert.equal(projectedTapAction('', 'light'), 'toggle');
   assert.equal(projectedTapAction(undefined, 'switch'), 'info');
   assert.equal(projectedTapAction('future-action', 'light'), 'info');
+  assert.equal(projectedTapAction('none', 'light'), 'none');
+  assert.equal(projectedTapAction('none', 'switch'), 'none');
   assert.equal(toggleOriginOf(device({ tapAction: 'toggle' })), 'explicit-toggle');
   assert.equal(toggleOriginOf(device({ tapAction: 'cover' })), 'legacy-cover');
   assert.equal(toggleOriginOf(device({ tapAction: null, primary: 'light.lamp' })), 'default-light');

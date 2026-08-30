@@ -64,6 +64,23 @@ test('issue 362 makes the whole device package inert only in Background', () => 
   assert.match(render, /@pointermove=\$\{[\s\S]*this\._mode !== 'view' && this\._mode !== 'devices'/);
 });
 
+test('issue 381 consumes an explicit no-op before any action side effect', () => {
+  const card = source('houseplan-card.ts');
+  const click = card.slice(
+    card.indexOf('private _clickDevice('),
+    card.indexOf('private _showUnavailableToggleTargets('),
+  );
+  const stop = click.indexOf('ev.stopPropagation();');
+  const live = click.indexOf('const actionDevice = this._devices.find');
+  const projection = click.indexOf('const action = projectedTapAction(');
+  const noOp = click.indexOf("if (action === 'none') return;");
+  const guard = click.indexOf('const guarded =');
+  const toggle = click.indexOf("if (action === 'toggle')");
+  assert.ok(stop >= 0 && live > stop && projection > live);
+  assert.ok(noOp > projection && guard > noOp && toggle > guard);
+  assert.doesNotMatch(click.slice(projection, noOp), /callService|callWS|_showToast|_infoCard|_startDevicePressFeedback/);
+});
+
 test('issue 213 projects opening locks through the compact package layers', () => {
   const styles = source('styles.ts');
   const card = source('houseplan-card.ts');

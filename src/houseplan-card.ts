@@ -5204,6 +5204,9 @@ export class HouseplanCard extends LitElement {
     const action = projectedTapAction(
       actionDevice.tapAction, actionDevice.primary?.split('.')[0],
     );
+    // An explicit no-op still owns the click: propagation was stopped and the
+    // current marker was resolved, but no capability, feedback or UI path runs.
+    if (action === 'none') return;
     // the accidental-tap guard (owner's spec 2026-07-29): any state-changing
     // action — toggle or run — may ask first. The dialog is ours, not the
     // browser confirm(), so it works and looks right on a wall tablet.
