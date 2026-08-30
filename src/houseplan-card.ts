@@ -9870,7 +9870,8 @@ export class HouseplanCard extends LitElement {
         if (match) { spaceId = match[1]; fieldList = match[3].split(',').filter(Boolean); }
       }
       if (spaceId || fieldList.length) {
-        const space = this._serverCfg?.spaces?.find((item: any) => String(item.id) === spaceId);
+        const space = this._serverCfg?.spaces
+          ?.find((item: { id?: unknown }) => String(item.id) === spaceId);
         const labels: Record<string, I18nKey> = {
           contact: 'opening.contact_label', lock: 'opening.lock_label', invert: 'opening.invert',
           flip_h: 'opening.flip_h', flip_v: 'opening.flip_v',
