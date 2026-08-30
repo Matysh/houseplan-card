@@ -11,7 +11,11 @@ select = ["E", "F", "B", "I"]
 ignore = ["E501"]
 
 [tool.mypy]
-python_version = "3.13"
+# 3.14, как и раннер после #392: mypy разбирает исходники установленного
+# homeassistant, а тот уже написан на синтаксисе 3.14 (`except` без скобок) —
+# на более низком python_version проверка падает синтаксической ошибкой в
+# чужом файле, не дойдя до наших модулей.
+python_version = "3.14"
 explicit_package_bases = true
 mypy_path = "."
 # Strict is opt-in per module (#42): the allowlist below only ever GROWS —
