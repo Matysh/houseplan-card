@@ -75,6 +75,13 @@ export const SMOKE_LINKS = [
       + 'smoke skips this branch (#358)',
   },
   {
+    symbols: ['TAP_ACTIONS', 'DeviceTapAction'],
+    smokes: ['smoke_tap_ctx.mjs'],
+    because: 'the Device editor exposes the canonical ordered action list and the same scenario '
+      + 'proves explicit none consumes pointer and keyboard activation without UI, feedback or '
+      + 'HA side effects (#381)',
+  },
+  {
     symbols: [
       'resolveToggleIntent', 'toggleOperation', 'projectedTapAction',
       'toggleOriginOf', 'resolvedLightSources',
