@@ -27,7 +27,7 @@ Undo/Redo молча гаснут — история очищена, хотя м
 
 `_persistDevicePlacement` (`src/houseplan-card.ts:5226-5258`) отправляет на
 сервер `canonicalizePosition(this._layout[deviceId])`, но сам `_layout`
-оставляет как есть, а следом (`:5217`) фиксирует
+оставляет как есть, а следом (`:5253`) фиксирует
 `_layoutContentFingerprint = contentFingerprint(this._layout)` — по
 неканоническому слепку. Прежний `_persistLayout` этой дыры не имел:
 `v1.69.0:src/houseplan-card.ts:4776` писал `this._layout = { ...this._layout,
