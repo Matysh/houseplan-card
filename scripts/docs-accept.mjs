@@ -1,16 +1,24 @@
 #!/usr/bin/env node
 /**
- * Приёмка скриншотов документации, снятых в CI (#246).
+ * Приёмка скриншотов документации (#246, правило среды переписано в #401).
  *
  *   npm run docs:accept -- --reviewed --from=artifacts/docs
+ *   npm run docs:accept -- --reviewed --from=… --expect-change=device-editor
  *
- * Зачем приёмка вообще. Съёмка на машине исполнителя даёт байтово разный PNG
- * при одинаковом содержимом кадра: сглаживание и хинтинг зависят от окружения.
- * Измерено на истории — пересъёмка в #231 изменила два файла из девяти на 7–8
- * байт, а набор, приехавший с бетой, все девять целиком. Поэтому картинки
- * рождаются в одном месте (`.github/workflows/docs-screenshots.yml`), а сюда
- * приезжают артефактом. Та же конструкция, что у golden-эталонов, и по той же
- * причине.
+ * Съёмка в другом окружении даёт байтово разный PNG при том же содержимом
+ * кадра: сглаживание и хинтинг зависят от шрифтового стека, а не только от
+ * браузера. Измерено — пересъёмка в #231 изменила два файла из девяти на 7–8
+ * байт, а набор, приехавший с бетой, все девять целиком.
+ *
+ * Раньше отсюда следовало правило про МЕСТО: снимать только в CI. Оно держалось
+ * на этом комментарии, а не на механизме, и стоило прогона workflow даже там,
+ * где пиксель измениться не мог (#390).
+ *
+ * Теперь правило про ДОКАЗАТЕЛЬСТВО, и оно то же, что у golden с #334: среда
+ * доказана, если каждый кадр, который менять не собирались, совпал с
+ * закоммиченным байт-в-байт. Разбор правила и его границ — в
+ * scripts/docs-acceptance.mjs. Снимать можно где угодно; принять получится
+ * только оттуда, где кадры воспроизводятся.
  *
  * Что здесь НЕ делается: коммит. Файлы заменяются, коммит делает человек —
  * приёмка не должна быть способом протащить картинки мимо чужих глаз.
@@ -21,6 +29,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { DOC_SCREENSHOT_VERSION, DOC_SCREENSHOTS } from '../demo/docs/screenshots.mjs';
+import { docsAcceptancePlan } from './docs-acceptance.mjs';
 import { visualFingerprint } from './source-fingerprint.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -82,6 +91,11 @@ export function verifyDocsCandidate({
   return { manifest, files };
 }
 
+const list = (argv, name) => argv
+  .filter((arg) => arg.startsWith(`--${name}=`))
+  .map((arg) => arg.slice(name.length + 3))
+  .filter(Boolean);
+
 function main(argv) {
   if (!argv.includes('--reviewed')) {
     console.error('отказ: замена скриншотов без явного --reviewed');
@@ -96,13 +110,62 @@ function main(argv) {
   }
   const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
   const plan = verifyDocsCandidate({ root: ROOT, from, manifest });
-  for (const file of plan.files) copyFileSync(file.from, file.to);
+
+  // Хеши закоммиченного считаются по файлам на диске, а не по закоммиченному
+  // манифесту: манифест — утверждение о файлах, а сравнивать надо сами файлы.
+  const ids = DOC_SCREENSHOTS.map((scenario) => scenario.id);
+  const committed = {};
+  const candidate = {};
+  for (const scenario of DOC_SCREENSHOTS) {
+    const entry = manifest.scenarios[scenario.id];
+    candidate[scenario.id] = entry.imageSha256;
+    const onDisk = resolve(ROOT, 'docs/images', entry.file);
+    if (existsSync(onDisk)) committed[scenario.id] = sha256(readFileSync(onDisk));
+  }
+
+  const declared = list(argv, 'expect-change');
+  const skipWitnesses = argv.includes('--no-witnesses');
+  const skipReason = (list(argv, 'reason')[0] || '').trim();
+  const decision = docsAcceptancePlan({
+    ids, committed, candidate, declared, skipWitnesses, skipReason,
+  });
+  if (decision.refusal) {
+    console.error(`отказ: ${decision.refusal}`);
+    return 1;
+  }
+
+  const byId = new Map(plan.files.map((file, index) => [ids[index], file]));
+  for (const id of decision.replace) {
+    const file = byId.get(id);
+    copyFileSync(file.from, file.to);
+  }
+  const accepted = {
+    ...manifest,
+    acceptance: {
+      declared: [...decision.replace],
+      witnesses: decision.witnesses.length,
+      floor: decision.floor,
+      ...(skipWitnesses ? { witnessesSkippedBecause: skipReason } : {}),
+    },
+  };
   writeFileSync(
     resolve(ROOT, 'docs/images/screenshots.json'),
-    `${JSON.stringify(plan.manifest, null, 2)}\n`,
+    `${JSON.stringify(accepted, null, 2)}\n`,
     'utf8',
   );
-  console.log(`Принято ${plan.files.length} скриншотов, снятых ${plan.manifest.chromium}.`);
+  if (!decision.replace.length) {
+    console.log('Кадры не менялись: принят только манифест'
+      + ` (отпечаток исходников ${manifest.sourceFingerprint.slice(0, 8)}).`);
+  } else {
+    console.log(`Принято кадров: ${decision.replace.length}`
+      + ` (${decision.replace.join(', ')}), снято ${manifest.chromium}.`);
+  }
+  console.log(`Сохранено без изменений: ${decision.keep.length}.`);
+  if (skipWitnesses) {
+    console.log(`Свидетели пропущены осознанно: ${skipReason}`);
+  } else {
+    console.log(`Кадров-свидетелей среды: ${decision.witnesses.length} (порог ${decision.floor}).`);
+  }
   console.log('Коммит — за вами: приёмка ничего не коммитит.');
   return 0;
 }
