@@ -910,6 +910,10 @@ export interface HouseplanEditorHostPort {
   _display: (url: string | null | undefined) => string;
   _draftSegmentCms: number[];
   _drag: { id: string; sx: number; sy: number; ox: number; oy: number; moved: boolean; } | null;
+  /** #400: device dragging has its own state since #74; `_drag` is null in
+   *  the devices mode, so anything excluding "the thing being dragged" there
+   *  must read this instead. Only the id is needed by the editor runtime. */
+  _deviceDrag: { id: string } | null;
   _drawWallCm: number | null;
   _drawWallField: string | null;
   _drawWallFieldValue: string;
@@ -10966,8 +10970,16 @@ public _alignCandidates(): number[][] {
     }
     if (this.host._mode === 'devices') {
       // other icons of this space only (owner's decision)
+      //
+      // #400: the dragged marker is excluded by `_deviceDrag`, not `_drag`.
+      // Device dragging moved into its own state with #74, and `_drag` is
+      // null in this mode — so the marker being moved was listed among its
+      // own alignment candidates. Nothing looked wrong because a point always
+      // matches itself within tolerance: the guide was drawn from the marker
+      // to itself and is indistinguishable from an honest one.
+      const draggedId = this.host._deviceDrag?.id ?? this.host._drag?.id;
       for (const d of this.host._devices) {
-        if (d.space !== this.host._space || d.id === this.host._drag?.id
+        if (d.space !== this.host._space || d.id === draggedId
             || d.bindingStatus?.kind === 'ha_disabled') continue;
         const p = this.host._pos(d);
         out.push([p.x, p.y]);

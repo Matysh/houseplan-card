@@ -747,6 +747,30 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'furniture-edge-handles-steal-the-corner',
+    guard: 'node demo/smoke_furniture_polish.mjs',
+    because: 'both handles share one hit radius, so on furniture narrower than '
+      + '4·hr whichever is painted last takes the corner — and the corner is '
+      + 'the one that cannot be reached any other way (#400 AC1)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '      ${/* #400: corners LAST.',
+      replace: '      ${/* mutant: corners no longer last.',
+    }],
+  },
+  {
+    id: 'align-guides-exclude-dead-source',
+    guard: 'node demo/smoke_align_guides.mjs',
+    because: 'device dragging lives in _deviceDrag since #74; excluding by '
+      + '_drag excludes nothing, and a guide drawn from a marker to itself '
+      + 'looks exactly like an honest one (#400 AC4/AC5)',
+    patches: [{
+      file: 'src/houseplan-editor-runtime.ts',
+      find: '      const draggedId = this.host._deviceDrag?.id ?? this.host._drag?.id;',
+      replace: '      const draggedId = this.host._drag?.id;',
+    }],
+  },
+  {
     id: 'workflow-scan-hardcodes-the-list',
     guard: 'node --test test/validate-workflow.test.mjs',
     because: 'scanning a fixed pair of names is how a third workflow installs '

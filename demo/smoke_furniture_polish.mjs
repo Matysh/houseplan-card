@@ -7,6 +7,7 @@ const out = await page.evaluate(async () => {
   const out = {};
   const c = window.__card;
   const sr = () => c.shadowRoot || c.renderRoot;
+  const frame = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
   const stageEl = () => sr().querySelector('.stage');
   const toScreen = (x, y) => {
@@ -107,6 +108,67 @@ const out = await page.evaluate(async () => {
   out.escapeClosesPalette = !c._furnPalette && c._decorTool === 'select';
   out.escapeDetachesListeners = shiftRemoves === addsBeforeEscape;
 
+  // #400 AC1/AC2: на мелкой мебели угловая и осевая ручки перекрываются —
+  // радиус хита один и тот же (1.8 % вида), и на объекте уже, чем 4·hr, круги
+  // пересекаются. Побеждает нарисованный последним. Угол обязан быть сверху:
+  // боком масштабируется одна ось, углом — обе, и мелкая мебель — как раз тот
+  // случай, где пропорциональное изменение нужнее всего.
+  //
+  // Проверяется настоящим pointerdown в геометрический угол рамки:
+  // elementFromPoint через shadow root тут бесполезен (возвращает саму
+  // карточку), а какой обработчик сработал — видно только по вызову.
+  const handleProbe = async (size) => {
+    c._setMode('decor'); await c.updateComplete;
+    c._decorTool = 'select';
+    c._curSpaceCfg.decor = [{ id: 'probe', kind: 'furniture', symbol: 'fridge',
+      x: 0.3, y: 0.3, w: size, h: size, angle: 0, color: '#ff00ff', opacity: 1, width_cm: 8 }];
+    c._cfgEpoch++; c._decorSel = 'probe';
+    c._editorRuntime?._syncDecorFrame?.();
+    c.requestUpdate(); await c.updateComplete; await frame();
+    const box = sr().querySelector('.dtframe');
+    if (!box) return { frame: false };
+    const handles = [...box.querySelectorAll('.dthandle')];
+    const corner = handles.find((el) => !el.classList.contains('dtrot')
+      && !el.classList.contains('dtedge'));
+    if (!corner) return { frame: true, corner: false };
+    const r = corner.getBoundingClientRect();
+    const cx = r.left + r.width / 2;
+    const cy = r.top + r.height / 2;
+    // Кто получит событие в этой точке: считаем нажатия на каждой ручке.
+    let hitEdge = 0; let hitCorner = 0;
+    const mark = (el) => {
+      const isEdge = el.classList.contains('dtedge');
+      const listener = () => { if (isEdge) hitEdge++; else hitCorner++; };
+      el.addEventListener('pointerdown', listener, true);
+      return () => el.removeEventListener('pointerdown', listener, true);
+    };
+    const off = handles.filter((el) => !el.classList.contains('dtrot')).map(mark);
+    const top = sr().elementsFromPoint
+      ? sr().elementsFromPoint(cx, cy)
+      : document.elementsFromPoint(cx, cy);
+    const target = top.find((el) => el.classList && el.classList.contains('dthandle'));
+    if (target) {
+      target.dispatchEvent(new PointerEvent('pointerdown', {
+        clientX: cx, clientY: cy, pointerId: 91, isPrimary: true, button: 0,
+        bubbles: true, composed: true, cancelable: true,
+      }));
+    }
+    off.forEach((fn) => fn());
+    c._dtDrag = null;
+    return { frame: true, corner: true, hitCorner, hitEdge,
+      targetIsCorner: !!target && !target.classList.contains('dtedge') };
+  };
+  const small = await handleProbe(0.04);   // 40 см на 10-метровом плане
+  const big = await handleProbe(0.16);     // 160 см
+  out.smallFurnitureCornerWinsTheHit = small.targetIsCorner === true && small.hitCorner === 1
+    && small.hitEdge === 0;
+  out.largeFurnitureKeepsBothHandles = big.targetIsCorner === true && big.hitCorner === 1
+    && big.hitEdge === 0;
+  out.handleProbeDiagnostics = { small, big };
+  c._curSpaceCfg.decor = [];
+  c._decorSel = null;
+  c._setMode('background'); await c.updateComplete;
+
   window.addEventListener = addReal;
   window.removeEventListener = removeReal;
   // прибрать поставленный диван
@@ -116,5 +178,6 @@ const out = await page.evaluate(async () => {
   c.requestUpdate(); await c.updateComplete;
   return out;
 });
-checkAll(out);
+const { handleProbeDiagnostics, ...checks } = out;
+checkAll(checks);
 await finish(browser, out);

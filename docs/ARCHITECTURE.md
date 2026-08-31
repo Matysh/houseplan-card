@@ -1557,6 +1557,26 @@ diffs the real `seedHiddenBindings`/`buildDevices` outputs — there is no
 second copy of the filter logic to drift. The field registry (#33) carries
 their passports; `scripts/config-audit.mjs` treats both as `current`.
 
+## The initial bundle carries English and Russian whole (#400, 2026-08-31)
+
+`en` and `ru` are synchronous dictionaries in the initial chunk; `de` and `fr`
+load lazily (`src/i18n/registry.ts`). That includes strings only ever shown in
+the editor — the 38 settings-help entries of #86 among them — and the question
+of splitting them out was raised by the v1.70.0-beta.1 audit.
+
+Measured before deciding: those 38 entries are 11 818 B of raw text but
+**2 654 B gzip** inside a bundle of 47 754 B of dictionaries — 0.9 % of the
+300 000 B ceiling. Splitting them would mean cutting a synchronous dictionary
+in two, merging the halves at runtime, a second network request the first time
+a hint is opened, and a second source of truth for the key type derived from
+`en.json` (#391). That is a lot of new machinery, in the area that #352–#355
+had to stabilise, for 2.6 KB.
+
+So the decision is deliberate, not an oversight: **English and Russian ship
+whole**. Budget planning assumes it. If the editor's text ever grows by tens of
+kilobytes, revisit this — the number above is what makes it worth revisiting,
+not the feeling that "editor text should be lazy".
+
 ## Backend quality gates (#42, 2026-08-30)
 
 - `tests_backend/requirements.txt` is the single source of backend CI

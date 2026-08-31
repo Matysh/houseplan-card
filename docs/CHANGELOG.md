@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Small furniture is easier to resize proportionally: the corner handle now
+  wins the tap over the side handle when the two overlap, which they do on
+  anything narrower than about 80 cm
+  ([#400](https://github.com/Matysh/houseplan-card/issues/400)).
+
 - Undo/Redo of marker positions no longer goes dark on its own: the card now
   keeps exactly what it sent to the server, so a reconnect or a second tab
   stops looking like someone else's edit

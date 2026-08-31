@@ -41,8 +41,27 @@ const res = await page.evaluate(async () => {
     before: { s: b.space, x: pb.x / 1000, y: pb.y / 1000 },
     start: c._devicePlacementForCanvas(b, pb.x, pb.y),
   };
+  const keptDrag = c._deviceDrag;
   c.requestUpdate(); await c.updateComplete;
   out.devGuide = guides() >= 1;
+  // #400: направляющая обязана идти ОТ ДРУГОГО значка, а не от самого себя.
+  // Прежняя проверка `guides() >= 1` этого не различала: точка всегда
+  // совпадает сама с собой в пределах допуска, поэтому исключение
+  // перетаскиваемого маркера могло не работать вовсе — и не работало,
+  // потому что читало `_drag`, который в этом режиме всегда null.
+  out.devGuideComesFromAnotherMarker = (() => {
+    const key = (list) => list.map((point) => point.join(','));
+    const withDrag = key(c._editorRuntime._alignCandidates());
+    c._deviceDrag = null;
+    const withoutDrag = key(c._editorRuntime._alignCandidates());
+    c._deviceDrag = keptDrag;
+    // Исключение снимает РОВНО один кандидат — перетаскиваемый маркер.
+    // Сравнение по разнице списков, а не по заранее посчитанной точке:
+    // позиция значка живёт вместе с перетаскиванием и к моменту проверки
+    // уже другая.
+    const removed = withoutDrag.filter((point) => !withDrag.includes(point));
+    return withDrag.length === withoutDrag.length - 1 && removed.length === 1;
+  })();
   c._deviceDrag = null; c.requestUpdate(); await c.updateComplete;
   out.devGuideGone = guides() === 0;
   // 4) подложка: рисование прямоугольника с углом на одном X с углом другой фигуры
