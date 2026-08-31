@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync } from 'node:fs';
+import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 // #336. Воркфлоу — не текст, а контракт, и ломается он молча: висячая
@@ -216,47 +218,65 @@ test('гейты диапазона судят от доказанного пр�
  *  установка python-пакетов — файл обязан ставить их из файла пинов. */
 const installsPythonDeps = (workflow) => /(?:^|\s)(?:python -m )?pip\s+install\s/.test(workflow);
 
+/** Нарушения пин-контракта в КАТАЛОГЕ workflow-файлов (#399).
+ *
+ *  Каталог — параметр, а не константа: только так тест может исполнить ту же
+ *  функцию на подставном каталоге и доказать, что она ловит третий файл.
+ *  Проверка предиката на строковых литералах этого не доказывает — сам обход
+ *  при этом не исполняется и может остаться списком имён (замечание r1).
+ */
+export function pinViolations(directory) {
+  const files = readdirSync(directory).filter((name) => name.endsWith('.yml'));
+  const problems = [];
+  let installers = 0;
+  for (const file of files) {
+    const workflow = readFileSync(new URL(file, `file://${directory}`), 'utf8');
+    if (!installsPythonDeps(workflow)) continue;
+    installers += 1;
+    if (!/pip install -r tests_backend\/requirements\.txt/.test(workflow)) {
+      problems.push(`${file}: ставит python-зависимости мимо файла пинов`);
+    }
+    if (/pip install pytest /.test(workflow)) {
+      problems.push(`${file}: остался установ без версий`);
+    }
+  }
+  return { problems, installers, scanned: files.length };
+}
+
 test('HA-харнесс ставится по точным версиям, а не по воле резолвера (#392, #399)', () => {
   // Плавающие версии означают, что «зелёный backend» значит разное в разные
   // дни: по SHA коммита нельзя сказать, чем его проверяли. Ровно так харнесс
   // полгода тихо проверял интеграцию против февральского Home Assistant.
-  //
-  // Перебирается ВЕСЬ каталог, а не список имён: новый workflow с
-  // неверсионированной установкой обязан краснеть сам, без правки теста.
-  const workflows = readdirSync(WORKFLOWS).filter((name) => name.endsWith('.yml'));
-  assert.ok(workflows.length >= 2, 'каталог workflows обязан читаться');
-  const installers = [];
-  for (const file of workflows) {
-    const workflow = read(file);
-    if (!installsPythonDeps(workflow)) continue;
-    installers.push(file);
-    assert.match(workflow, /pip install -r tests_backend\/requirements\.txt/,
-      `${file}: ставит python-зависимости мимо файла пинов`);
-    assert.equal(/pip install pytest /.test(workflow), false,
-      `${file}: остался установ без версий`);
-  }
-  // Факт выводится проверкой, а не задаётся ей: список нужен для сообщения об
-  // ошибке, а не для решения, кого проверять.
-  assert.ok(installers.length > 0,
+  const { problems, installers, scanned } = pinViolations(WORKFLOWS);
+  assert.deepEqual(problems, []);
+  assert.ok(scanned >= 2, 'каталог workflows обязан читаться');
+  // Факт выводится проверкой, а не задаётся ей.
+  assert.ok(installers > 0,
     'ни один workflow не ставит python-зависимости — либо каталог прочитан'
     + ' неверно, либо бэкенд-гейт исчез; и то и другое стоит увидеть');
 });
 
-test('#399 AC5: проверка ловит новый workflow, которого нет ни в каком списке', () => {
-  // Синтетический третий файл: при переборе по именам он бы не попал в
-  // проверку вовсе — именно так гейт и обходили бы, ничего не нарушая.
-  const rogue = [
-    'name: rogue',
-    'jobs:',
-    '  backend:',
-    '    steps:',
-    '      - run: pip install pytest voluptuous homeassistant',
-  ].join('\n');
-  assert.equal(installsPythonDeps(rogue), true,
-    'установка python-зависимостей обязана распознаваться по содержимому');
-  assert.equal(/pip install -r tests_backend\/requirements\.txt/.test(rogue), false,
-    'и такой файл обязан провалить проверку пинов');
-  // Обратный случай: файл без установки не должен требовать пинов.
-  const innocent = 'name: docs\njobs:\n  build:\n    steps:\n      - run: npm ci\n';
-  assert.equal(installsPythonDeps(innocent), false);
+test('#399 AC5: тот же код ловит третий workflow в подставном каталоге', () => {
+  // Доказательство исполнением, а не рассуждением: строится настоящий
+  // каталог из трёх файлов, и вызывается ТА ЖЕ функция. Если обход вернётся
+  // к списку имён, третий файл в него не попадёт и тест покраснеет — что и
+  // отличает эту проверку от прежней, гонявшей предикат на литералах.
+  const directory = mkdtempSync(join(tmpdir(), 'hp-workflows-'));
+  try {
+    writeFileSync(join(directory, 'validate.yml'),
+      'jobs:\n  backend:\n    steps:\n      - run: pip install -r tests_backend/requirements.txt\n');
+    writeFileSync(join(directory, 'docs.yml'),
+      'jobs:\n  build:\n    steps:\n      - run: npm ci\n');
+    writeFileSync(join(directory, 'zz-rogue.yml'),
+      'jobs:\n  backend:\n    steps:\n      - run: pip install pytest voluptuous homeassistant\n');
+    const { problems, installers, scanned } = pinViolations(`${directory}/`);
+    assert.equal(scanned, 3, 'просмотрены все файлы каталога, а не два имени');
+    assert.equal(installers, 2, 'файл без установки python-пакетов не в счёте');
+    assert.deepEqual(problems, [
+      'zz-rogue.yml: ставит python-зависимости мимо файла пинов',
+      'zz-rogue.yml: остался установ без версий',
+    ]);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
 });

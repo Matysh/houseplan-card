@@ -753,8 +753,11 @@ const MUTANT_DEFINITIONS = [
       + 'unpinned dependencies unnoticed — the shape #399 removed',
     patches: [{
       file: 'test/validate-workflow.test.mjs',
-      find: "  const workflows = readdirSync(WORKFLOWS).filter((name) => name.endsWith('.yml'));",
-      replace: "  const workflows = ['validate.yml'];",
+      // Список из ДВУХ настоящих имён — самая правдоподобная форма регрессии:
+      // на сегодняшнем дереве она неотличима от корректного кода, и мутант с
+      // одним именем ловился бы по посторонней причине (замечание r1).
+      find: "  const files = readdirSync(directory).filter((name) => name.endsWith('.yml'));",
+      replace: "  const files = ['validate.yml', 'mutation-gate.yml'];",
     }],
   },
   {
