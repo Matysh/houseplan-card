@@ -173,6 +173,12 @@ Direct entity Area = `entity.area_id || parentDevice.area_id`. Direct device
 Area = `device.area_id`. Friendly name, icon, model, current coordinates и id
 prefix не являются доказательством принадлежности.
 
+`bindingKind: 'entity'` сам по себе недостаточен: такой же kind сейчас имеют
+автоматические light groups. Direct entity marker подтверждается наличием
+сохранённого `marker` с exact `binding === entity:${bindingRef}`. Markerless
+`lg_*`/composite item исключается независимо от Area участника; prefix служит
+только defensive check, не основным discriminator.
+
 Area должна разрешаться **ровно в одну** room текущего model. Дубликат Area у
 нескольких комнат считается ambiguous: решение `defer`, position и provenance
 не меняются.
@@ -195,8 +201,9 @@ marker. Exact binding хранится обязательно. Без него r
 Контракт поля:
 
 - это bounded lifecycle metadata, не пользовательская настройка;
-- максимум совпадает с действующим budget `known_devices` и общим config-size
-  limit;
+- вводится самостоятельный backend limit
+  `MAX_MARKER_AREA_SNAPSHOT = MAX_KNOWN_DEVICES = 20_000` entries; дополнительно
+  действует общий `MAX_CONFIG_BYTES = 2 MiB`;
 - entries имеют только bounded strings `binding` и `area`;
 - запись с другим binding считается новым baseline/backfill, не relocation;
 - explicit/ineligible marker очищает собственную старую entry;
@@ -423,6 +430,10 @@ toast. Если реализация добавляет «Устройство �
 Golden baseline не меняется: новый визуальный язык не вводится. Полный golden и
 performance остаются pre-beta gates.
 
+Performance budget: resolver запускается только на authoritative registry/model
+rebuild, имеет линейную сложность по markers + rooms, не вызывается из render и
+при unchanged input не создаёт layout/config writes.
+
 ## 20. Затронутые поверхности
 
 - новый pure resolver `src/device-area-relocation.ts`;
@@ -465,7 +476,11 @@ Implementation commit имеет `User-Visible: yes` и одновременно
 ## 23. Принятые технические предположения
 
 - provenance — bounded structured map в global settings, не layout metadata;
+- самостоятельный предел snapshot — 20 000 entries плюс общий wire/config limit
+  2 MiB;
 - exact binding входит в entry и защищает rebind;
+- direct entity отличается от composite group по exact persisted marker binding,
+  а не только по `bindingKind` или префиксу id;
 - pending relocation является derived runtime projection, а не вторым store;
 - writer batches decisions одного authoritative rebuild;
 - layout delete предшествует provenance commit;
