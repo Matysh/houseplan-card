@@ -747,6 +747,18 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'danger-confirm-back-into-the-branch',
+    guard: 'node demo/smoke_danger_confirm_branches.mjs',
+    because: 'a confirmation that lives inside one branch of render() does not '
+      + 'exist in onboarding — the trash button was dead and the promise hung '
+      + 'forever (#402)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '    return html`${body}${this._renderDangerConfirm()}`;',
+      replace: '    return html`${body}`;',
+    }],
+  },
+  {
     id: 'furniture-edge-handles-steal-the-corner',
     guard: 'node demo/smoke_furniture_polish.mjs',
     because: 'both handles share one hit radius, so on furniture narrower than '

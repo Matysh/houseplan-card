@@ -2150,8 +2150,15 @@ export class HouseplanCard extends LitElement {
   private readonly _dangerConfirmController = new HpConfirmController((state) => {
     this._dangerConfirm = state;
   });
-  private _confirmDanger = (request: HpConfirmRequest): Promise<boolean> =>
-    this._dangerConfirmController.confirm(request);
+  private _confirmDanger = (request: HpConfirmRequest): Promise<boolean> => {
+    // #402: a card that draws nothing cannot ask. Refusing outright is the
+    // honest answer — the alternative is a promise nobody will ever resolve,
+    // which is exactly the defect this issue closes. The caller already treats
+    // `false` as «the user declined», and at this point the user has pressed
+    // nothing: the card is not on screen yet.
+    if (!this._config || !this.hass) return Promise.resolve(false);
+    return this._dangerConfirmController.confirm(request);
+  };
   private _cancelDangerConfirm = (): void => {
     this._dangerConfirmController.cancel();
   };
@@ -11162,7 +11169,39 @@ export class HouseplanCard extends LitElement {
     }
   }
 
+  /** The dangerous-action confirmation, rendered outside the body's branches.
+   *
+   *  #402: it used to sit at the end of `_renderBody`, i.e. inside the last
+   *  branch of a chain of early returns — so in onboarding («no spaces yet»),
+   *  in the fixed-floor states and without a space it did not exist at all.
+   *  The controller was fine; the decision simply had no source, because the
+   *  element that dispatches it was not in the DOM: the promise hung forever
+   *  and the trash button next to a saved plan was dead. An open dialog also
+   *  vanished when the card slipped into any of those branches.
+   *
+   *  Placing it beside the body rather than inside it fixes the class, not the
+   *  instance: a branch added later cannot lose the confirmation again. */
+  private _renderDangerConfirm(): TemplateResult | typeof nothing {
+    if (!this._dangerConfirm) return nothing;
+    return html`<hp-confirm .hass=${this.hass}
+        .request=${this._dangerConfirm.request}
+        .token=${this._dangerConfirm.token}
+        @hp-confirm-decision=${this._onDangerConfirmDecision}>
+      </hp-confirm>`;
+  }
+
   protected render(): TemplateResult | typeof nothing | typeof noChange {
+    const body = this._renderBody();
+    // `noChange` is Lit's «do not touch the DOM» signal and `nothing` means the
+    // card is not initialised yet — neither may be wrapped in a template. In
+    // both, the card draws nothing at all, so a confirmation cannot be shown:
+    // `_confirmDanger` refuses such a request outright instead of leaving it
+    // pending (ТЗ §Граница). The user has pressed nothing at that point.
+    if (body === noChange || body === nothing) return body;
+    return html`${body}${this._renderDangerConfirm()}`;
+  }
+
+  private _renderBody(): TemplateResult | typeof nothing | typeof noChange {
     if (!this._config || !this.hass) return nothing;
     const localeGate = languageRenderGate(
       this, LANGUAGE_RUNTIME, langOf(this.hass, this._config.language),
@@ -11868,13 +11907,6 @@ export class HouseplanCard extends LitElement {
                   </button>
                 </div>
             </hp-dialog>`
-          : nothing}
-        ${this._dangerConfirm
-          ? html`<hp-confirm .hass=${this.hass}
-              .request=${this._dangerConfirm.request}
-              .token=${this._dangerConfirm.token}
-              @hp-confirm-decision=${this._onDangerConfirmDecision}>
-            </hp-confirm>`
           : nothing}
         ${this._toast ? html`<div class="toast" role="alert" aria-live="assertive">${this._toast}</div>` : nothing}
       </ha-card>

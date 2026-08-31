@@ -64,10 +64,22 @@ test('stable space ids use exact lookup and abort before side effects', () => {
 });
 
 test('empty render keeps create/import affordances without spatial layers', () => {
-  const render = methodBody('render');
+  // #402: цепочка веток переехала из `render` в `_renderBody`, а `render`
+  // стал обёрткой — подтверждение опасного действия обязано жить снаружи
+  // веток, иначе в онбординге его не существует вовсе.
+  const render = methodBody('_renderBody');
   const emptyAt = render.indexOf('if (!model.length)');
   const addAt = render.indexOf("_openSpaceDialog('create')");
   const spatialAt = render.indexOf('const space = this._spaceModel()');
   assert.ok(emptyAt >= 0 && emptyAt < addAt && addAt < spatialAt);
   assert.match(render, /if \(!space\) return nothing;/);
+
+  // Обёртка: тело + подтверждение, причём «ничего не рисуем» пробрасывается
+  // как есть — `noChange` нельзя оборачивать в шаблон.
+  const wrapper = methodBody('render');
+  assert.match(wrapper, /const body = this\._renderBody\(\);/);
+  assert.match(wrapper, /if \(body === noChange \|\| body === nothing\) return body;/);
+  assert.match(wrapper, /return html`\$\{body\}\$\{this\._renderDangerConfirm\(\)\}`;/);
+  assert.equal(render.includes('_renderDangerConfirm'), false,
+    'подтверждение не должно возвращаться внутрь ветки — это и есть дефект #402');
 });

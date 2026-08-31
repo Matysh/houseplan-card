@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Confirmations now work before the first space exists: deleting a stored plan
+  during onboarding asks, and answers, instead of doing nothing
+  ([#402](https://github.com/Matysh/houseplan-card/issues/402)).
+
 ## v1.70.0-beta.2 — 2026-08-31
 
 - Moving a device or a directly placed entity to another Home Assistant Area
