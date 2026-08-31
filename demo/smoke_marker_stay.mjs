@@ -13,12 +13,18 @@ const res = await page.evaluate(async () => {
   const otherRoom = c._spaceModel(dev.space).rooms.find((r) => r.id && r.area && r.area !== dev.area);
   out.hasOtherRoom = !!otherRoom;
   c._openMarkerDialog(dev);
-  c._markerDialog = { ...c._markerDialog, room: dev.space + '#' + otherRoom.area };
+  c._markerDialog = {
+    ...c._markerDialog, room: dev.space + '#' + otherRoom.area, roomTouched: true,
+  };
   await c._saveMarker(); await c.updateComplete;
+  out.roomChangePersisted = c._serverCfg.markers
+    .find((marker) => marker.id === dev.id)?.area === otherRoom.area;
   out.stayAfterRoomChange = near(c._layout[dev.id], pos0);
   // вернуть комнату назад
   c._openMarkerDialog(c._devices.find((d) => d.id === dev.id));
-  c._markerDialog = { ...c._markerDialog, room: dev.space + '#' + dev.area };
+  c._markerDialog = {
+    ...c._markerDialog, room: dev.space + '#' + dev.area, roomTouched: true,
+  };
   await c._saveMarker(); await c.updateComplete;
   // 2) смена привязки device -> entity (id меняется) → позиция мигрирует
   const freeEnt = Object.keys(c.hass.states).find((e) => e.startsWith('sensor.') &&

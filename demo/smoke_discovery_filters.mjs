@@ -6,6 +6,9 @@ const { page, browser } = await launch({ width: 980, height: 820 });
 const out = await page.evaluate(async () => {
   const c = window.__card;
   const root = () => c.renderRoot || c.shadowRoot;
+  // #126 seeds registry-Area provenance on the first authoritative build.
+  // Start this write-count contract only after that unrelated bootstrap write.
+  await c._areaRelocationWrite;
   const writes = [];
   const base = c.hass.callWS;
   let rev = 70;
@@ -21,6 +24,11 @@ const out = await page.evaluate(async () => {
     return base(m);
   } };
   c._cfgRev = rev;
+  await new Promise((resolve) => setTimeout(resolve, 650));
+  c._saveConfigDebounced?.flush?.();
+  await c._writeChain;
+  await c._areaRelocationWrite;
+  writes.length = 0;
   const result = {};
 
   c._setMode('devices');
@@ -51,6 +59,13 @@ const out = await page.evaluate(async () => {
   c._serverCfg = { ...c._serverCfg, markers: [...(c._serverCfg.markers || []), {
     id: 'explicit-44', binding: 'device:d_lamp', space: c._serverCfg.spaces[0].id,
   }] };
+  c._regSignature = '';
+  c._maybeRebuildDevices();
+  await c._areaRelocationWrite;
+  await new Promise((resolve) => setTimeout(resolve, 650));
+  c._saveConfigDebounced?.flush?.();
+  await c._writeChain;
+  writes.length = 0;
   const beforeExcluded = runtime._discoveryFilterState(dialog()).excluded.length;
   c._deviceInbox = { ...dialog(), draftExcluded: [
     ...runtime._discoveryFilterState(dialog()).excluded, anyIntegration,

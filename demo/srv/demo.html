@@ -214,5 +214,10 @@ window.__setRegistryArea=(kind,id,areaId)=>{
     for(const cb of REGISTRY_LISTENERS[event])cb({action:'update',id});
   }
 };
+window.__addRegistryEntity=(id,areaId,state='on',platform='demo')=>{
+  ENTITIES[id]={entity_id:id,device_id:null,area_id:areaId,platform,disabled_by:null};
+  STATES[id]={entity_id:id,state,attributes:{friendly_name:id}};
+  for(const cb of REGISTRY_LISTENERS.entity_registry_updated)cb({action:'create',id});
+};
 </script>
 </body></html>

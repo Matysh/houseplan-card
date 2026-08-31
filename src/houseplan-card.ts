@@ -5207,6 +5207,11 @@ export class HouseplanCard extends LitElement {
           // Await this internal lifecycle write. A debounced fire-and-forget
           // save would leave the local snapshot advanced after a rejection,
           // suppressing the retry required by the delete-first contract.
+          // If the registry rebuild was itself triggered by a debounced user
+          // mutation, the candidate below already contains that mutation.
+          // Cancel its redundant timer so one UI Save remains one transport
+          // write (#44) while still sharing the serialized write chain.
+          if (this._saveConfigDebounced.pending()) this._saveConfigDebounced.cancel();
           await this._writeConfig();
         } catch (error: unknown) {
           const current = this._settings;

@@ -39,7 +39,11 @@ const res = await page.evaluate(async () => {
   // Area другого пространства. Registry metadata не должна вернуть его в f1.
   const source = c._devices.find((d) => d.id === 'd_light1');
   c._openMarkerDialog(source); await c.updateComplete;
-  c._markerDialog = { ...c._markerDialog, room: 'garden#@garden-shed-a' };
+  const roomSelect = c.renderRoot.querySelector('#marker-room');
+  roomSelect.value = 'garden#@garden-shed-a';
+  roomSelect.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
+  await c.updateComplete;
+  out.realRoomChangeMarkedTouched = c._markerDialog?.roomTouched === true;
   await c._saveMarker(); await c.updateComplete;
   const haMarker = c._serverCfg.markers.find((x) => x.binding === 'device:d_light1');
   const moved = c._devices.find((d) => d.id === haMarker?.id);
@@ -69,7 +73,10 @@ const res = await page.evaluate(async () => {
   // Смена комнаты внутри того же пространства сохраняет уже закреплённую
   // позицию, хотя room_id меняется.
   c._openMarkerDialog(moved); await c.updateComplete;
-  c._markerDialog = { ...c._markerDialog, room: 'garden#@garden-shed-b' };
+  const secondRoomSelect = c.renderRoot.querySelector('#marker-room');
+  secondRoomSelect.value = 'garden#@garden-shed-b';
+  secondRoomSelect.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
+  await c.updateComplete;
   await c._saveMarker(); await c.updateComplete;
   const sameSpaceMarker = c._serverCfg.markers.find((x) => x.binding === 'device:d_light1');
   const sameSpacePos = c._layout[sameSpaceMarker?.id];

@@ -10,11 +10,16 @@ const out = await page.evaluate(async () => {
   const c = window.__card;
   const o = {};
   const sr = () => c.shadowRoot || c.renderRoot;
-  const cfg = c._serverCfg;
+  // Hold a config reference only after #126's one-time provenance baseline is
+  // committed; otherwise this legacy smoke deliberately mutates a stale root.
+  await new Promise((resolve) => setTimeout(resolve, 650));
+  c._saveConfigDebounced?.flush?.();
+  await c._writeChain;
+  await c._areaRelocationWrite;
 
   // legacy rectangle rooms (x/y/w/h, HP-1540-04) in the garden space where
   // the auto-discovered vacuum.mower already lives
-  const g = cfg.spaces.find((s) => s.id === 'garden');
+  const g = c._serverCfg.spaces.find((s) => s.id === 'garden');
   g.rooms = [
     { id: 'ga', name: 'Кухня', area: 'garden', x: 0.05, y: 0.10, w: 0.25, h: 0.30 },
     { id: 'gb', name: 'Зал', x: 0.40, y: 0.10, w: 0.25, h: 0.30 },
@@ -55,12 +60,12 @@ const out = await page.evaluate(async () => {
 
   const dev = c._devices.find((x) => x.id === 'd_mower');
   o.devFound = !!dev;
-  o.freshNoMarker = (cfg.markers || []).length === 0 && !dev.marker;
+  o.freshNoMarker = (c._serverCfg.markers || []).length === 0 && !dev.marker;
 
   // ---- auto-calibration from scratch (HP-1540-01 + HP-1540-04) ----
   c._vacAutoCalibrate(dev);
   await c.updateComplete;
-  const m1 = (cfg.markers || []).find((x) => x.id === 'd_mower');
+  const m1 = (c._serverCfg.markers || []).find((x) => x.id === 'd_mower');
   o.markerMaterialised = !!m1 && m1.binding === 'device:d_mower';
   const cal0 = m1?.vacuum?.calibration?.['0'];
   o.rectRoomsCalibrated = Array.isArray(cal0) && cal0.length === 6 && cal0.every(Number.isFinite);
@@ -98,19 +103,19 @@ const out = await page.evaluate(async () => {
   robotRooms[4].x1 = 2500;
 
   // ---- manual fit from scratch (HP-1540-01) ----
-  cfg.markers = [];
+  c._serverCfg.markers = [];
   c._regSignature = ''; c._maybeRebuildDevices(); c.requestUpdate(); await c.updateComplete;
   const dev2 = c._devices.find((x) => x.id === 'd_mower');
   o.fitFreshNoMarker = !dev2.marker;
   c._vacStartFit(dev2); await c.updateComplete;
   c._vacFitSave(); await c.updateComplete;
-  const m2 = (cfg.markers || []).find((x) => x.id === 'd_mower');
+  const m2 = (c._serverCfg.markers || []).find((x) => x.id === 'd_mower');
   const calFit = m2?.vacuum?.calibration?.['0'];
   o.fitMaterialises = !!m2 && Array.isArray(calFit) && calFit.length === 6;
   o.fitToastAfterSave = c._toast === c._t('vac.cal_done');
 
   // ---- live checkbox + trail select from scratch (HP-1540-01) ----
-  cfg.markers = [];
+  c._serverCfg.markers = [];
   c._regSignature = ''; c._maybeRebuildDevices(); c.requestUpdate(); await c.updateComplete;
   c._setMode('devices'); await c.updateComplete;
   c._openMarkerDialog(c._devices.find((x) => x.id === 'd_mower')); await c.updateComplete;
@@ -139,7 +144,7 @@ const out = await page.evaluate(async () => {
   const liveBox = sr().querySelector('.vacbox input[type=checkbox]');
   o.vacSectionShown = !!liveBox;
   if (liveBox) { liveBox.click(); await c.updateComplete; }
-  const m3 = (cfg.markers || []).find((x) => x.id === 'd_mower');
+  const m3 = (c._serverCfg.markers || []).find((x) => x.id === 'd_mower');
   o.liveToggleMaterialises = !!m3 && m3.vacuum?.live === false;
   const sel = sr().querySelector('.vacbox select');
   if (sel) { sel.value = 'always'; sel.dispatchEvent(new Event('change')); await c.updateComplete; }

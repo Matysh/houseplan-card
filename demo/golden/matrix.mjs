@@ -566,6 +566,30 @@ export const GOLDEN_SCENARIOS = Object.freeze([
         position: 'bottom',
       } },
     ],
+    // This scenario deliberately places two devices outside their HA rooms to
+    // exercise icon states at fixed coordinates. Seed the Area-following
+    // provenance so #126 does not reinterpret that test-only layout as stale
+    // legacy placement and turn an unrelated visual matrix into a relocation
+    // scenario.
+    markerAreaSnapshot: {
+      'golden-light-one': { binding: 'device:golden-light-one', area: 'golden_light_left' },
+      'golden-light-two': { binding: 'device:golden-light-two', area: 'golden_light_left' },
+      'golden-light-three': { binding: 'device:golden-light-three', area: 'golden_light_right' },
+      'golden-presence': { binding: 'device:golden-presence', area: 'golden_light_right' },
+      'golden-climate': { binding: 'device:golden-climate', area: 'golden_light_right' },
+      'golden-left-temperature': {
+        binding: 'device:golden-left-temperature', area: 'golden_light_left',
+      },
+      'golden-right-temperature': {
+        binding: 'device:golden-right-temperature', area: 'golden_light_right',
+      },
+      'golden-left-linkquality': {
+        binding: 'device:golden-left-linkquality', area: 'golden_light_left',
+      },
+      'golden-right-linkquality': {
+        binding: 'device:golden-right-linkquality', area: 'golden_light_right',
+      },
+    },
     stateOverrides: {
       'light.golden_light_one': { attributes: { lqi: 40 } },
       'light.golden_light_two': { attributes: { lqi: 41 } },
@@ -832,6 +856,15 @@ export const GOLDEN_SCENARIOS = Object.freeze([
       id: 'golden-presence', binding: 'virtual', removed: true,
       space: 'removed-floor', name: 'Retired marker',
     }],
+    // The orphan-reference fixture intentionally reuses ids of live registry
+    // devices. Pin their pre-#126 provenance so the lifecycle synchronizer
+    // cannot consume the deliberately orphaned positions before Optimize
+    // inspects them.
+    markerAreaSnapshot: {
+      'golden-light-one': { binding: 'device:golden-light-one', area: 'golden_light_left' },
+      'golden-light-two': { binding: 'device:golden-light-two', area: 'golden_light_left' },
+      'golden-presence': { binding: 'device:golden-presence', area: 'golden_light_right' },
+    },
     layoutOverrides: {
       'golden-light-two': { s: 'removed-floor', x: 0.35, y: 0.72 },
       'golden-light-one': { s: 'unresolved-floor', x: 0.20, y: 0.34 },
@@ -849,6 +882,11 @@ export const GOLDEN_SCENARIOS = Object.freeze([
       id: 'golden-presence', binding: 'virtual', removed: true,
       space: 'removed-floor', name: 'Старый маркер',
     }],
+    markerAreaSnapshot: {
+      'golden-light-one': { binding: 'device:golden-light-one', area: 'golden_light_left' },
+      'golden-light-two': { binding: 'device:golden-light-two', area: 'golden_light_left' },
+      'golden-presence': { binding: 'device:golden-presence', area: 'golden_light_right' },
+    },
     layoutOverrides: {
       'golden-light-two': { s: 'removed-floor', x: 0.35, y: 0.72 },
       'golden-light-one': { s: 'unresolved-floor', x: 0.20, y: 0.34 },

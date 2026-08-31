@@ -672,6 +672,12 @@ export function prepareGoldenFixture(scenario) {
       ...structuredClone(scenario.markerOverrides),
     ];
   }
+  if (scenario.markerAreaSnapshot) {
+    fixture.config.settings = {
+      ...(fixture.config.settings || {}),
+      marker_area_snapshot: structuredClone(scenario.markerAreaSnapshot),
+    };
+  }
   if (scenario.layoutOverrides) {
     const missing = Object.keys(scenario.layoutOverrides).filter((id) => !(id in (fixture.layout || {})));
     if (missing.length) throw new Error(`golden layoutOverrides reference missing item(s): ${missing.join(', ')}`);
@@ -1361,7 +1367,14 @@ export async function prepareGoldenScenario(page, scenario) {
             total: '1', rooms: '0', devices: '1', groups: '0',
           }))
           || !body.textContent.includes('unresolved-floor')) {
-        throw new Error('golden orphan-reference Optimize dialog is incomplete');
+        throw new Error('golden orphan-reference Optimize dialog is incomplete: '
+          + JSON.stringify({
+            markersDetached: report?.markersDetached,
+            orphanRoomLabelsRemoved: report?.orphanRoomLabelsRemoved,
+            orphanDevicePositionsRemoved: report?.orphanDevicePositionsRemoved,
+            liveMissingPositions: report?.liveMissingPositions,
+            body: body?.textContent,
+          }));
       }
     } else if (scenario.dialog === 'optimize-preflight') {
       const names = [
