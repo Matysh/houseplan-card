@@ -157,3 +157,42 @@ def test_issue_42_every_noqa_carries_a_reason():
             explanation = comment.split(" ", 1)[1] if " " in comment.strip() else ""
             assert len(explanation.strip()) >= 10, (
                 f"{path.name}:{index}: a bare noqa hides a decision — add the reason")
+
+
+def test_issue_398_pure_imports_leaves_sys_modules_as_it_found_it():
+    """`load_pure` не оставляет следов в `sys.modules` (#398 AC4).
+
+    Статический гвард (`test/backend-test-hygiene.test.mjs`) разрешает этому
+    файлу писать в `sys.modules`, потому что не видит очистки. Значит очистку
+    обязан доказывать исполняемый тест — иначе разрешение стало бы дырой
+    ровно того размера, что #389: пустышка переживала свой тест, Home
+    Assistant не мог поднять интеграцию, и 85 тестов харнесса падали с голым
+    `assert False`.
+
+    Проверяется именно РАЗНИЦА, а не пустота: пустышки родительских пакетов
+    ставит conftest, они принадлежат ему и остаются.
+    """
+    import sys
+
+    from tests_backend.pure_imports import HOUSEPLAN_ROOT, load_pure
+
+    before = sorted(k for k in sys.modules if k.startswith("custom_components"))
+    module = load_pure(
+        "custom_components.houseplan.junction_limits",
+        HOUSEPLAN_ROOT / "junction_limits.py",
+    )
+    assert dir(module), "модуль обязан быть рабочим после очистки"
+    after = sorted(k for k in sys.modules if k.startswith("custom_components"))
+    assert after == before, (
+        f"load_pure оставил в sys.modules: {sorted(set(after) - set(before))} — "
+        "относительные импорты подтягивают соседей, снимать нужно всю разницу"
+    )
+
+    # Повторный вызов обязан работать так же: очистка не должна ломать
+    # следующий заход (тесты вызывают load_pure по нескольку раз за сессию).
+    again = load_pure(
+        "custom_components.houseplan.junction_limits",
+        HOUSEPLAN_ROOT / "junction_limits.py",
+    )
+    assert dir(again)
+    assert sorted(k for k in sys.modules if k.startswith("custom_components")) == before

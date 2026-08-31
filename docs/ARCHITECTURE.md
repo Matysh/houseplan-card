@@ -1567,6 +1567,13 @@ their passports; `scripts/config-audit.mjs` treats both as `current`.
 - `pyproject.toml` configures ruff (E/F/B/I, E501 excluded by decision) and
   mypy strict for a grow-only allowlist of pure modules; the completeness
   guard lives in `tests_backend/test_backend_quality.py`.
+- Writing into `sys.modules` from a backend test is refused by
+  `test/backend-test-hygiene.test.mjs` — by the fact of the write, not by its
+  spelling (#398). Two files are named exemptions: `conftest.py`, whose stub is
+  conditional on Home Assistant being absent, and `pure_imports.py`, which
+  registers a module only for the duration of `exec_module` and removes the
+  whole `custom_components` difference afterwards — the removal itself is
+  proven by an executable test, because the static guard cannot see it.
 - Both linters RUN in the backend CI job: the typing step derives its module
   list from the `pyproject.toml` allowlist rather than repeating it, refuses an
   empty list, and is itself guarded by a test plus the `typing-gate-stops-

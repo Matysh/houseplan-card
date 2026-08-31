@@ -747,6 +747,28 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'sysmodules-guard-blind-to-variable',
+    guard: 'node --test test/backend-test-hygiene.test.mjs',
+    because: 'a guard that only sees string literals let the third instance of '
+      + 'the #389 class walk past it (#398 AC1)',
+    patches: [{
+      file: 'test/backend-test-hygiene.test.mjs',
+      find: '    if (start === null) { if (namesThePackage) hits.push(match[0]); continue; }',
+      replace: '    if (start === null) { continue; }',
+    }],
+  },
+  {
+    id: 'pure-imports-stops-cleaning',
+    guard: 'python3 -m pytest tests_backend/test_backend_quality.py -q -p no:cacheprovider',
+    because: 'pure_imports is allowed to write into sys.modules only because it '
+      + 'removes the entries again; without that the exemption is a hole (#398 AC8)',
+    patches: [{
+      file: 'tests_backend/pure_imports.py',
+      find: '            del sys.modules[key]',
+      replace: '            pass',
+    }],
+  },
+  {
     id: 'device-echo-keeps-local-noncanonical',
     guard: 'node demo/smoke_device_position_history.mjs',
     because: 'a card that keeps the raw position while sending the canonical '

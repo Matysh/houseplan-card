@@ -21,13 +21,33 @@ HOUSEPLAN_ROOT = PACKAGE_ROOT / "houseplan"
 
 
 def load_pure(name: str, file: Path):
-    """Загрузить модуль по пути под указанным именем.
+    """Загрузить модуль по пути под указанным именем и убрать за собой.
 
     Имя значимо: относительные импорты внутри модуля резолвятся только тогда,
     когда модуль знает, какому пакету принадлежит.
+
+    Регистрация в `sys.modules` обязательна на время `exec_module` и вредна
+    после (#398). Она переживала вызов и доставалась всей сессии — тот же
+    класс, что #389: загрузчик Home Assistant получал бы модуль, собранный
+    мимо него, а объекты классов одного файла оказывались бы разными. Снимать
+    только собственное имя мало: относительные импорты подтягивают соседей
+    (`junction_limits` тянет `wall_segment_model` и
+    `coordinate_canonicalization`), поэтому снимается вся разница под
+    префиксом `custom_components`, появившаяся за время загрузки.
+
+    `conftest.py` ставит пустышки родительских пакетов, когда Home Assistant
+    недоступен, — они принадлежат ему и здесь не трогаются.
     """
+    before = frozenset(sys.modules)
     spec = importlib.util.spec_from_file_location(name, file)
     module = importlib.util.module_from_spec(spec)
     sys.modules[name] = module
-    spec.loader.exec_module(module)
+    try:
+        spec.loader.exec_module(module)
+    finally:
+        for key in [
+            key for key in sys.modules
+            if key not in before and key.startswith(PACKAGE_ROOT.name)
+        ]:
+            del sys.modules[key]
     return module
