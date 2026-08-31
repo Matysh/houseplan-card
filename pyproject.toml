@@ -2,7 +2,16 @@
 
 [tool.ruff]
 target-version = "py313"
-include = ["custom_components/houseplan/**/*.py", "scripts/*.py", "tests_backend/**/*.py"]
+# Скоуп ОБЪЯВЛЕННЫЙ равен проверяемому (#399). Раньше здесь стояли три
+# дерева, а CI линтил одно — читающий конфиг делал неверный вывод, и в
+# tests_backend уже проехали F401/F811, которых на v1.69.0 не было.
+#
+# Сужение, а не расширение: разбор долга в scripts/ и tests_backend/ (56
+# находок, в основном E402 и I001 в тестах, плюс 7 B023 и 5 B017) — работа
+# со своей ценой и своими решениями, её место в отдельной задаче, а не в
+# правке видимости. Расширять этот список можно только вместе со шагом
+# «Линт бэкенда» в validate.yml — за этим следит test/lint-scope.test.mjs.
+include = ["custom_components/houseplan/**/*.py"]
 
 [tool.ruff.lint]
 # Narrow on purpose (#42: no mass rewrite): errors, pyflakes, bugbear, imports.

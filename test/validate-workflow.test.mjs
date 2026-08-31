@@ -207,16 +207,56 @@ test('гейты диапазона судят от доказанного пр�
   assert.match(frontend, /git merge-base origin\/dev "\$HEAD_SHA"/);
 });
 
-test('HA-харнесс ставится по точным версиям, а не по воле резолвера (#392)', () => {
+/** Ставит ли workflow python-зависимости — по собственному содержимому.
+ *
+ *  #399: раньше проверка перебирала два имени и молча пропускала файл, где
+ *  не нашлось ни имени пакета, ни пути к пинам. Обе зацепки исчезают разом
+ *  при возврате к `pip install pytest …`, то есть гейт выключался ровно тем
+ *  изменением, ради которого заведён. Признак теперь положительный: есть
+ *  установка python-пакетов — файл обязан ставить их из файла пинов. */
+const installsPythonDeps = (workflow) => /(?:^|\s)(?:python -m )?pip\s+install\s/.test(workflow);
+
+test('HA-харнесс ставится по точным версиям, а не по воле резолвера (#392, #399)', () => {
   // Плавающие версии означают, что «зелёный backend» значит разное в разные
   // дни: по SHA коммита нельзя сказать, чем его проверяли. Ровно так харнесс
   // полгода тихо проверял интеграцию против февральского Home Assistant.
-  for (const file of ['validate.yml', 'mutation-gate.yml']) {
+  //
+  // Перебирается ВЕСЬ каталог, а не список имён: новый workflow с
+  // неверсионированной установкой обязан краснеть сам, без правки теста.
+  const workflows = readdirSync(WORKFLOWS).filter((name) => name.endsWith('.yml'));
+  assert.ok(workflows.length >= 2, 'каталог workflows обязан читаться');
+  const installers = [];
+  for (const file of workflows) {
     const workflow = read(file);
-    if (!/pytest-homeassistant-custom-component|tests_backend\/requirements\.txt/.test(workflow)) continue;
+    if (!installsPythonDeps(workflow)) continue;
+    installers.push(file);
     assert.match(workflow, /pip install -r tests_backend\/requirements\.txt/,
-      `${file}: зависимости харнесса ставятся мимо файла пинов`);
+      `${file}: ставит python-зависимости мимо файла пинов`);
     assert.equal(/pip install pytest /.test(workflow), false,
       `${file}: остался установ без версий`);
   }
+  // Факт выводится проверкой, а не задаётся ей: список нужен для сообщения об
+  // ошибке, а не для решения, кого проверять.
+  assert.ok(installers.length > 0,
+    'ни один workflow не ставит python-зависимости — либо каталог прочитан'
+    + ' неверно, либо бэкенд-гейт исчез; и то и другое стоит увидеть');
+});
+
+test('#399 AC5: проверка ловит новый workflow, которого нет ни в каком списке', () => {
+  // Синтетический третий файл: при переборе по именам он бы не попал в
+  // проверку вовсе — именно так гейт и обходили бы, ничего не нарушая.
+  const rogue = [
+    'name: rogue',
+    'jobs:',
+    '  backend:',
+    '    steps:',
+    '      - run: pip install pytest voluptuous homeassistant',
+  ].join('\n');
+  assert.equal(installsPythonDeps(rogue), true,
+    'установка python-зависимостей обязана распознаваться по содержимому');
+  assert.equal(/pip install -r tests_backend\/requirements\.txt/.test(rogue), false,
+    'и такой файл обязан провалить проверку пинов');
+  // Обратный случай: файл без установки не должен требовать пинов.
+  const innocent = 'name: docs\njobs:\n  build:\n    steps:\n      - run: npm ci\n';
+  assert.equal(installsPythonDeps(innocent), false);
 });

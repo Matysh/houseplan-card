@@ -747,6 +747,39 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'workflow-scan-hardcodes-the-list',
+    guard: 'node --test test/validate-workflow.test.mjs',
+    because: 'scanning a fixed pair of names is how a third workflow installs '
+      + 'unpinned dependencies unnoticed — the shape #399 removed',
+    patches: [{
+      file: 'test/validate-workflow.test.mjs',
+      find: "  const workflows = readdirSync(WORKFLOWS).filter((name) => name.endsWith('.yml'));",
+      replace: "  const workflows = ['validate.yml'];",
+    }],
+  },
+  {
+    id: 'lint-scope-drifts',
+    guard: 'node --test test/lint-scope.test.mjs',
+    because: 'a declared lint scope wider than the checked one is what let '
+      + 'F401/F811 into tests_backend unnoticed (#399)',
+    patches: [{
+      file: 'pyproject.toml',
+      find: 'include = ["custom_components/houseplan/**/*.py"]',
+      replace: 'include = ["custom_components/houseplan/**/*.py", "tests_backend/**/*.py"]',
+    }],
+  },
+  {
+    id: 'frontend-pin-drifts-from-ha',
+    guard: 'node --test test/backend-pins.test.mjs',
+    because: 'a frontend pin nobody derives from the pinned HA is how the '
+      + 'harness ends up testing a combination that does not exist (#399)',
+    patches: [{
+      file: 'tests_backend/requirements.txt',
+      find: 'home-assistant-frontend==20260729.7',
+      replace: 'home-assistant-frontend==20260826.1',
+    }],
+  },
+  {
     id: 'sysmodules-guard-blind-to-variable',
     guard: 'node --test test/backend-test-hygiene.test.mjs',
     because: 'a guard that only sees string literals let the third instance of '
