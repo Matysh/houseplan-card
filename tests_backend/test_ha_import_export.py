@@ -1028,6 +1028,9 @@ def test_space_import_remaps_owned_ids_and_duplicate_policy(tmp_path: Path) -> N
 
 def test_preview_is_owner_bound_and_foreign_full_drops_discovery_lists(tmp_path: Path) -> None:
     document = _document(tmp_path)
+    document["payload"]["config"]["settings"]["marker_area_snapshot"] = {
+        "lamp": {"binding": "entity:light.living", "area": "living"},
+    }
     document["source_fingerprint"] = "sha256:foreign"
     raw = json.dumps(document).encode()
     runtime = SimpleNamespace(instance_id="instance-a", import_previews={})
@@ -1045,6 +1048,24 @@ def test_preview_is_owner_bound_and_foreign_full_drops_discovery_lists(tmp_path:
     )
     assert "known_devices" not in config["settings"]
     assert "new_device_ids" not in config["settings"]
+    assert "marker_area_snapshot" not in config["settings"]
+
+
+def test_same_source_full_import_preserves_marker_area_snapshot(tmp_path: Path) -> None:
+    document = _document(tmp_path)
+    snapshot = {"lamp": {"binding": "entity:light.living", "area": "living"}}
+    document["payload"]["config"]["settings"]["marker_area_snapshot"] = snapshot
+    runtime = SimpleNamespace(instance_id="instance-a", import_previews={})
+    response = create_preview(
+        runtime, json.dumps(document).encode(), owner_id="alice", duplicate_policy="skip",
+        current_config_data={"config": _config(), "rev": 4},
+        current_layout_data={"layout": {}, "rev": 5}, config_root=tmp_path,
+    )
+    candidate = get_candidate(runtime, response["token"], "alice")
+    config, _layout, _details = prepare_apply(
+        candidate, _config(), {}, confirm_missing_content=True,
+    )
+    assert config["settings"]["marker_area_snapshot"] == snapshot
 
 
 def test_preview_candidate_digest_and_global_memory_cap_are_enforced(tmp_path: Path) -> None:

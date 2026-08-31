@@ -479,6 +479,33 @@ def test_sun_settings_global():
         v.CONFIG_SCHEMA({"spaces": [], "settings": {"weather_entity": {"e": 1}}})
 
 
+def test_marker_area_snapshot_is_strict_and_bounded():
+    """#126: Area provenance accepts only exact direct bindings and non-empty Areas."""
+    snapshot = {
+        "marker-one": {"binding": "device:abc", "area": "kitchen"},
+        "marker-two": {"binding": "entity:light.table", "area": "living"},
+    }
+    out = v.CONFIG_SCHEMA({"spaces": [], "settings": {"marker_area_snapshot": snapshot}})
+    assert out["settings"]["marker_area_snapshot"] == snapshot
+
+    for bad in (
+        {"marker": {"binding": "virtual", "area": "kitchen"}},
+        {"marker": {"binding": "device:", "area": "kitchen"}},
+        {"marker": {"binding": "device:abc", "area": ""}},
+        {"": {"binding": "device:abc", "area": "kitchen"}},
+        {"marker": {"binding": "device:abc", "area": "kitchen", "extra": True}},
+    ):
+        with pytest.raises(vol.Invalid):
+            v.CONFIG_SCHEMA({"spaces": [], "settings": {"marker_area_snapshot": bad}})
+
+    too_many = {
+        f"m{i}": {"binding": f"device:d{i}", "area": "a"}
+        for i in range(v.MAX_MARKER_AREA_SNAPSHOT + 1)
+    }
+    with pytest.raises(vol.Invalid):
+        v.CONFIG_SCHEMA({"spaces": [], "settings": {"marker_area_snapshot": too_many}})
+
+
 def test_sun_settings_per_space():
     """The same three at the space level; None/absent = inherit; no weather here."""
     ok = {"id": "f1", "title": "F", "view_box": [0, 0, 1, 1], "rooms": []}

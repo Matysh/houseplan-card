@@ -1090,6 +1090,7 @@ MAX_OPEN_TO = 50
 MAX_CONTROLS = 200
 MAX_PDFS = 50
 MAX_KNOWN_DEVICES = 20000
+MAX_MARKER_AREA_SNAPSHOT = MAX_KNOWN_DEVICES
 MAX_TEXT = 500          # names, models, ids
 MAX_DESCRIPTION = 4000
 MAX_URL = 2000
@@ -1103,6 +1104,7 @@ CELL_CM_MIN = 0.1
 CELL_CM_MAX = 1000.0
 
 _TEXT = vol.All(str, vol.Length(max=MAX_TEXT))
+_NONEMPTY_TEXT = vol.All(str, vol.Length(min=1, max=MAX_TEXT))
 _TEXT_OR_NONE = vol.Any(None, _TEXT)
 _URL = vol.All(str, vol.Length(max=MAX_URL))
 
@@ -1931,6 +1933,18 @@ CONFIG_SCHEMA = vol.All(
                     vol.Optional("weather_entity"): vol.Any(None, _TEXT),
                     vol.Optional("known_devices"): vol.All([_TEXT], vol.Length(max=MAX_KNOWN_DEVICES)),
                     vol.Optional("new_device_ids"): vol.All([_TEXT], vol.Length(max=MAX_KNOWN_DEVICES)),
+                    vol.Optional("marker_area_snapshot"): vol.All(
+                        vol.Schema({
+                            _NONEMPTY_TEXT: vol.Schema({
+                                vol.Required("binding"): vol.All(
+                                    _NONEMPTY_TEXT,
+                                    vol.Match(r"^(?:device|entity):.+$"),
+                                ),
+                                vol.Required("area"): _NONEMPTY_TEXT,
+                            }),
+                        }),
+                        vol.Length(max=MAX_MARKER_AREA_SNAPSHOT),
+                    ),
                     vol.Optional("fill_colors"): vol.Schema(
                         {
                             str: vol.Schema(

@@ -498,6 +498,13 @@ a bound HA area receives an automatic marker. Service-only records, bridges and
 other non-spatial records are filtered; a light group may replace its members.
 Newly discovered devices get a red dot until first opened in Device.
 
+When the Area of a direct HA device or a separately placed entity changes,
+House Plan moves its automatic marker to the room bound to the new Area. A
+previous manual drag is layout, not a room override: it is discarded, the
+ordinary room grid chooses the new position and the red attention dot appears.
+Selecting a room explicitly in the marker settings overrides HA Area placement.
+Ambiguous or unbound Areas never make House Plan guess a destination.
+
 ### Bindings
 
 | Binding | Use |

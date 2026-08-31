@@ -206,5 +206,13 @@ window.__setRegistryDisabled=(kind,id,disabledBy='user')=>{
     for(const cb of REGISTRY_LISTENERS[event])cb({action:'update',id});
   }
 };
+window.__setRegistryArea=(kind,id,areaId)=>{
+  const row=(kind==='device'?DEVICES:ENTITIES)[id];
+  if(row){
+    row.area_id=areaId;
+    const event=kind==='device'?'device_registry_updated':'entity_registry_updated';
+    for(const cb of REGISTRY_LISTENERS[event])cb({action:'update',id});
+  }
+};
 </script>
 </body></html>

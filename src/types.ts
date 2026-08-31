@@ -240,11 +240,24 @@ export interface ServerConfig {
     exclude_integrations?: string[];
     group_lights?: boolean;
     show_all?: boolean; // legacy: removed when the config is materialised
-  /** The filter flags are materialised into markers (docs/FILTERING.md). */
-  filter_seeded?: boolean;
+    /** The filter flags are materialised into markers (docs/FILTERING.md). */
+    filter_seeded?: boolean;
+    known_devices?: string[];
+    new_device_ids?: string[];
+    /** Internal registry-Area provenance; not a user-facing setting. */
+    marker_area_snapshot?: MarkerAreaSnapshot;
     icon_rules?: { pattern: string; icon: string }[];
   };
 }
+
+export type MarkerAreaBinding = `device:${string}` | `entity:${string}`;
+
+export interface MarkerAreaSnapshotEntry {
+  binding: MarkerAreaBinding;
+  area: string;
+}
+
+export type MarkerAreaSnapshot = Record<string, MarkerAreaSnapshotEntry>;
 
 export interface DevItem {
   id: string;

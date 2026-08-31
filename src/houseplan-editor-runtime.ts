@@ -147,6 +147,7 @@ import {
   type ToggleSkipReason,
 } from './device-toggle';
 import { toggleEntityWriteFields } from './marker-toggle-entity';
+import { removeMarkerAreaSnapshots } from './device-area-relocation';
 import {
   adoptVirtualLightServerSnapshot,
   applyVirtualLightEvent,
@@ -977,7 +978,7 @@ export interface HouseplanEditorHostPort {
   _layout: DeviceLayout;
   _layoutRev: number;
   _logicalViewCenter: (projection: "flat" | "iso") => { x: number; y: number; } | null;
-  _markerDialog: { devId?: string; uploadId?: string; name: string; binding: string; bindingMode: "virtual" | "ha"; bindingOpen: boolean; showEntities: boolean; bindingFilter: string; icon: string; autoIcon: string; display: DeviceDisplayMode; rippleColor: string; rippleSize: number; size: number; angle: number; tapAction: string; tapActionTouched: boolean; originalHasTapAction: boolean; originalTapAction: string | null | undefined; tapHintAnnouncement: string; toggleEntity: string; toggleEntityTouched: boolean; originalHasToggleEntity: boolean; originalToggleEntity: string | null | undefined; tapTarget: string; tapConfirm: boolean; runFilter: string; controls: string[]; controlsFilter: string; glowRadius: string; lightRole: "auto" | "always" | "never"; lightRoleTouched: boolean; originalHasIsLight: boolean; originalIsLight: boolean | null | undefined; lightEntity: string; lightEntityTouched: boolean; originalHasLightEntity: boolean; originalLightEntity: string | null | undefined; glowMode: "auto" | "color" | "fixed"; glowColor: string; glowBrightness: number; glowColorDrafted: boolean; glowBrightnessDrafted: boolean; glowTouched: boolean; originalHasGlowColor: boolean; originalGlowColor: { c: string; bri?: number | null; } | null | undefined; valueBadgeEnabled: boolean; valueBadgeSource: ValueBadgeSource | null; valueBadgePosition: ValueBadgePosition; valueBadgeTouched: boolean; originalHasValueBadge: boolean; originalValueBadge: MarkerValueBadge | null | undefined; valueSource: ValueBadgeSource | null; valueSourceTouched: boolean; originalHasValueSource: boolean; originalValueSource: ValueBadgeSource | null | undefined; useClimateTemp: boolean; model: string; link: string; description: string; pdfs: PdfRef[]; room: string; hideFromPlan: boolean; busy: boolean; } | null;
+  _markerDialog: { devId?: string; uploadId?: string; name: string; binding: string; bindingMode: "virtual" | "ha"; bindingOpen: boolean; showEntities: boolean; bindingFilter: string; icon: string; autoIcon: string; display: DeviceDisplayMode; rippleColor: string; rippleSize: number; size: number; angle: number; tapAction: string; tapActionTouched: boolean; originalHasTapAction: boolean; originalTapAction: string | null | undefined; tapHintAnnouncement: string; toggleEntity: string; toggleEntityTouched: boolean; originalHasToggleEntity: boolean; originalToggleEntity: string | null | undefined; tapTarget: string; tapConfirm: boolean; runFilter: string; controls: string[]; controlsFilter: string; glowRadius: string; lightRole: "auto" | "always" | "never"; lightRoleTouched: boolean; originalHasIsLight: boolean; originalIsLight: boolean | null | undefined; lightEntity: string; lightEntityTouched: boolean; originalHasLightEntity: boolean; originalLightEntity: string | null | undefined; glowMode: "auto" | "color" | "fixed"; glowColor: string; glowBrightness: number; glowColorDrafted: boolean; glowBrightnessDrafted: boolean; glowTouched: boolean; originalHasGlowColor: boolean; originalGlowColor: { c: string; bri?: number | null; } | null | undefined; valueBadgeEnabled: boolean; valueBadgeSource: ValueBadgeSource | null; valueBadgePosition: ValueBadgePosition; valueBadgeTouched: boolean; originalHasValueBadge: boolean; originalValueBadge: MarkerValueBadge | null | undefined; valueSource: ValueBadgeSource | null; valueSourceTouched: boolean; originalHasValueSource: boolean; originalValueSource: ValueBadgeSource | null | undefined; useClimateTemp: boolean; model: string; link: string; description: string; pdfs: PdfRef[]; room: string; roomTouched: boolean; hideFromPlan: boolean; busy: boolean; } | null;
   _markerPreviewDevicesMemo: { base: readonly DevItem[]; preview: DevItem; devices: readonly DevItem[]; } | null;
   _markerPreviewMemo: { key: string; device: DevItem | null; } | null;
   _markers: Marker[];
@@ -7921,6 +7922,7 @@ public _openMarkerDialog(d?: DevItem): void {
         room: d.marker?.room_id
           ? d.space + '#@' + d.marker.room_id
           : d.space && d.area ? d.space + '#' + d.area : '',
+        roomTouched: false,
         hideFromPlan: d.marker?.hidden === true,
         busy: false,
       };
@@ -7947,7 +7949,8 @@ public _openMarkerDialog(d?: DevItem): void {
         valueSource: null, valueSourceTouched: false,
         originalHasValueSource: false, originalValueSource: undefined,
         useClimateTemp: false, glowRadius: '', model: '',
-        link: '', description: '', pdfs: [], room: '', hideFromPlan: false, busy: false,
+        link: '', description: '', pdfs: [], room: '', roomTouched: false,
+        hideFromPlan: false, busy: false,
         uploadId: 'up_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
       };
     }
@@ -8189,14 +8192,27 @@ public async _saveMarker(): Promise<void> {
     const cfg = this.host._serverCfg;
     if (!cfg) return;
     const markers = cfg.markers || [];
-    const roomRef = parseRoomRef(dlg.room);
-    let space: string | null = roomRef?.space || null;
-    const area: string | null = roomRef?.area || null;
-    const roomId: string | null = roomRef?.roomId || null;
     const id = markerIdForBinding(dlg.binding, dlg.devId, () => 'v_' + Date.now().toString(36));
     const oldId = dlg.devId;
     const prevDev = oldId ? this.host._devices.find((x) => x.id === oldId) : null;
-    const explicitSpaceId = roomRef?.space || prevDev?.space || null;
+    const previousMarker = oldId ? markers.find((candidate) => candidate.id === oldId) : null;
+    const previousExplicit = !!previousMarker && (
+      (typeof previousMarker.area === 'string' && previousMarker.area.length > 0)
+      || (previousMarker.area === null && !!previousMarker.space && !!previousMarker.room_id)
+    );
+    // Opening a registry-following marker shows its effective HA room in the
+    // select, but that display value is not an explicit override. Preserve
+    // absence until the user actually changes the selector; this also prevents
+    // a dialog opened during an HA Area transition from saving its stale draft.
+    const writePlacement = dlg.binding === 'virtual' || dlg.roomTouched || previousExplicit;
+    const roomRef = dlg.binding === 'virtual' || dlg.roomTouched ? parseRoomRef(dlg.room) : null;
+    let space: string | null = previousExplicit && !dlg.roomTouched
+      ? previousMarker?.space || null : roomRef?.space || null;
+    const area: string | null = previousExplicit && !dlg.roomTouched
+      ? previousMarker?.area || null : roomRef?.area || null;
+    const roomId: string | null = previousExplicit && !dlg.roomTouched
+      ? previousMarker?.room_id || null : roomRef?.roomId || null;
+    const explicitSpaceId = space || prevDev?.space || null;
     const targetSpaceModel = explicitSpaceId
       ? this.host._spaceModelById(explicitSpaceId)
       : this.host._spaceModel();
@@ -8253,14 +8269,14 @@ public async _saveMarker(): Promise<void> {
         hidden: dlg.hideFromPlan ? true : false,
       };
       // save the room choice (always for virtual ones; for bound ones — if chosen)
-      if (dlg.binding === 'virtual' || dlg.room) {
+      if (writePlacement) {
         marker.space = space;
         marker.area = area;
         marker.room_id = roomId;
       }
       // the room changed → move the icon to its center
       const prevRoomId = prevDev?.marker?.room_id ?? null;
-      const roomChanged = !!dlg.room && prevDev != null
+      const roomChanged = dlg.roomTouched && prevDev != null
         && (prevDev.space !== space || prevDev.area !== area || prevRoomId !== roomId);
       // Rebinding changes the marker id, so the uploaded files must follow.
       // Order matters (review CR-2): COPY first, save the config, and only then
@@ -8301,6 +8317,17 @@ public async _saveMarker(): Promise<void> {
           && (marker.binding === 'virtual' || m.binding !== marker.binding),
       );
       cfg.markers.push(marker);
+      const obsoleteAreaSnapshotIds = new Set(replacedRemovedIds);
+      if (oldId && oldId !== id) obsoleteAreaSnapshotIds.add(oldId);
+      obsoleteAreaSnapshotIds.delete(id);
+      if (obsoleteAreaSnapshotIds.size && cfg.settings?.marker_area_snapshot) {
+        cfg.settings = {
+          ...cfg.settings,
+          marker_area_snapshot: removeMarkerAreaSnapshots(
+            cfg.settings.marker_area_snapshot, obsoleteAreaSnapshotIds,
+          ),
+        };
+      }
       // Position rule (owner's decision, v1.33.4): editing an existing icon —
       // rebinding it to another HA device/entity or to another room — must NOT
       // move it. Its current position (saved or the ephemeral auto one) is
@@ -8413,8 +8440,16 @@ public async _deleteMarker(): Promise<void> {
     const deletion = deletePlanMarkerRecords(
       cfg.markers, targetId, binding, binding === 'virtual',
     );
-    cfg.markers = removeMarkerControlReferences(deletion.markers, deletion.cleanupIds);
-    const cleanupIds = deletion.cleanupIds;
+      cfg.markers = removeMarkerControlReferences(deletion.markers, deletion.cleanupIds);
+      const cleanupIds = deletion.cleanupIds;
+      if (cleanupIds.size && cfg.settings?.marker_area_snapshot) {
+        cfg.settings = {
+          ...cfg.settings,
+          marker_area_snapshot: removeMarkerAreaSnapshots(
+            cfg.settings.marker_area_snapshot, cleanupIds,
+          ),
+        };
+      }
     this.host._markerDialog = { ...currentDialog, busy: true };
     try {
       await this._saveConfigNow();
@@ -12286,10 +12321,18 @@ public _markerDraft(d: NonNullable<HouseplanEditorHostPort['_markerDialog']>): M
       hidden: d.hideFromPlan,
       vacuum: previous?.vacuum || null,
     };
-    if (d.binding === 'virtual' || d.room) {
+    const previousExplicit = !!previous && (
+      (typeof previous.area === 'string' && previous.area.length > 0)
+      || (previous.area === null && !!previous.space && !!previous.room_id)
+    );
+    if (d.binding === 'virtual' || d.roomTouched) {
       marker.space = roomRef?.space || (d.binding === 'virtual' ? this.host._space : null);
       marker.area = roomRef?.area || null;
       marker.room_id = roomRef?.roomId || null;
+    } else if (previousExplicit) {
+      marker.space = previous!.space;
+      marker.area = previous!.area;
+      marker.room_id = previous!.room_id;
     }
     return marker;
   }
@@ -12807,7 +12850,9 @@ public _renderMarkerDialog(): TemplateResult {
 
           <label for="marker-room">${this.host._t('marker.room_label')}${isVirtual ? '' : this.host._t('marker.room_override')}</label>
           <select id="marker-room" class="areasel"
-            @change=${(e: Event) => (this.host._markerDialog = { ...d, room: (e.target as HTMLSelectElement).value })}>
+            @change=${(e: Event) => (this.host._markerDialog = {
+              ...d, room: (e.target as HTMLSelectElement).value, roomTouched: true,
+            })}>
             <option value="" ?selected=${!d.room}>
               ${isVirtual ? this.host._t('marker.room_choose') : this.host._t('marker.room_auto')}
             </option>

@@ -56,6 +56,7 @@ import {
 } from './space-geometry';
 import { resolveZeroWalls } from './zero-walls';
 import { geometryOpenings } from './plan-geometry-preflight';
+import { resolveDeviceAreaRelocations } from './device-area-relocation';
 import {
   buildGlowClipGeometry, buildLightBarrierScene, forgetGlowSource, forgetGlowSpace,
   glowSourceInOpaqueBody, pruneGlowSources, readGlowClip, renderGlowPools,
@@ -201,6 +202,8 @@ export interface StaticRenderOpts {
   lang: Lang;
   /** Optional roster prepared by the card so its activity runtime sees the same instances. */
   devices?: DevItem[];
+  /** Registry relocations resolved by the card outside its render path. */
+  areaRelocationIds?: ReadonlySet<string>;
   activityRuntime?: ReadonlyMap<string, PresentationActivityRuntime>;
   presentations?: ReadonlyMap<string, ResolvedDevicePresentation>;
   liveStates?: boolean;
@@ -277,6 +280,11 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   const planHass = o.registry ? activeRegistryHass(o.hass, o.registry) : o.hass;
   const registryHass = o.registry ? fullRegistryHass(o.hass, o.registry) : o.hass;
   const all = o.devices || buildSpaceDevices(o);
+  const areaRelocationIds = o.areaRelocationIds || resolveDeviceAreaRelocations({
+    devices: all, model: models, layout: o.layout,
+    snapshot: o.cfg.settings?.marker_area_snapshot,
+    authoritative: o.registry?.authoritative === true, coordinateScale: NORM_W,
+  }).relocateIds;
   // Two lists, two jobs (HP-1510-01): AGGREGATION sees every device of the
   // space — hidden ones still count toward room LQI, same as the full card —
   // while RENDERING sees only the visible ones (there is no editor here, so
@@ -556,7 +564,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   }
   const planLightSources = resolvedLightSources(planHass, devs, null, o.virtualLights);
   const markers = devs.map((d) => {
-    const p = markerPos(d, o.layout, o.cfg, defPos, space);
+    const p = markerPos(d, o.layout, o.cfg, defPos, space, areaRelocationIds);
     const left = ((p.x - vb[0]) / vb[2]) * 100;
     const top = ((p.y - vb[1]) / vb[3]) * 100;
     const showLqi = disp.showLqi ?? (o.showSignal !== false);
@@ -594,7 +602,12 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
       data-binding-status=${d.bindingStatus?.kind === 'ha_disabled' ? 'ha-disabled' : d.bindingStatus?.kind || 'active'}
       data-disabled-reason=${presentation.disabledReason ? presentation.disabledReason.replace('_', '-') : nothing}
       style="${st.join(';')}">
-      ${renderDeviceFace(presentation, { surface: 'static-card' })}
+      ${renderDeviceFace(presentation, {
+        surface: 'static-card',
+        newDevice: areaRelocationIds.has(d.id)
+          || !!o.cfg.settings?.new_device_ids?.includes(d.id),
+        newDeviceTitle: t(o.lang, 'device.new'),
+      })}
     </div>`;
   });
 
@@ -721,7 +734,9 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
       defaultRadiusUnits: (defaultRadiusCm / cellCm) * GRID_PITCH,
       cellCm,
       gridPitch: GRID_PITCH,
-      position: (device) => markerPos(device, o.layout, o.cfg, defPos, space),
+      position: (device) => markerPos(
+        device, o.layout, o.cfg, defPos, space, areaRelocationIds,
+      ),
     });
     const seen = new Set<string>();
     const spots: GlowSpot[] = [];

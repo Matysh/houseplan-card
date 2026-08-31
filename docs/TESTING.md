@@ -556,6 +556,21 @@ the active-only state projection. The standalone demo exposes complete
 - [ ] `houseplanDiagnostics()` reports only redacted registry access/age/error
       and binding-status counts; it contains no names, states or marker data.
 
+## HA Area marker relocation (#126)
+
+- [ ] `test/device-area-relocation.test.mjs` covers direct-binding authority,
+      same/cross-space transitions, conservative legacy backfill, explicit and
+      composite exclusions, rebind, malformed metadata and delete-first
+      provenance.
+- [ ] `test/space-geometry.test.mjs` proves both marker-position paths can
+      suppress one stale saved point without changing the stored layout input.
+- [ ] `demo/smoke_area_relocation.mjs` changes an authoritative registry Area
+      against the production bundle, checks one serialized layout delete plus
+      config/attention persistence, and proves the read-only hosted card moves
+      immediately without writes.
+- [ ] Backend validation and import/export tests cover the 20,000-entry bound,
+      exact entry schema, same-source preservation and cross-source removal.
+
 ## Device display preview and face parity
 
 The behaviour matrix is defined in

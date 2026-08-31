@@ -106,6 +106,11 @@ the same profiler available between stable promotions.
    event subscription is unavailable.
 4. **Reactivity.** Every state change in HA leads to set hass → re-render.
    Temperatures/LQI/on-off are live by definition (verified by substituting state).
+   Authoritative device/entity registry rebuilds also run the pure
+   `device-area-relocation` resolver. Its pending ids override stale layout in
+   both interactive and hosted-static projections immediately; a writer then
+   deletes those layout entries before advancing bounded Area provenance in
+   config. Limited registry snapshots are read-only and never infer movement.
 5. **One modal contract.** Card modals render through `hp-dialog`. In Home
    Assistant it delegates surface semantics and trapping to `ha-dialog`; the
    standalone demo falls back to native `<dialog>`. The wrapper owns the title,

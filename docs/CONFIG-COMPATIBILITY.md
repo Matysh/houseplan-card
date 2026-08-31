@@ -482,6 +482,22 @@ pair — all off bits are cleared rather than resurrected against unknown marker
 lifecycle history. Older integrations safely ignore the separate Store on
 downgrade.
 
+## Marker Area provenance (#126)
+
+`settings.marker_area_snapshot` is optional internal lifecycle metadata. Each
+entry records one exact `device:*` or `entity:*` binding and its last accepted
+non-empty HA Area. The map is capped at 20,000 entries and remains subject to
+the 2 MiB config limit. Absence triggers a conservative one-time backfill:
+positions move only when another Area-bound room or another space proves that
+the saved point is stale; boundary, outside and ambiguous points are preserved.
+
+Same-source full backups preserve the map. Full imports from another source
+drop it together with discovery lifecycle lists, and space-only imports never
+carry this global metadata. Old frontends ignore the field; defensive reads in
+new frontends skip malformed entries independently. Rebinding and marker
+deletion remove the obsolete entry, and provenance advances only after the
+corresponding stale layout position has been deleted successfully.
+
 ## Wall junction limits (#329)
 
 Junction limits (minimum 15° between neighbouring walls of one node, at most

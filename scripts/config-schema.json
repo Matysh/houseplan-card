@@ -380,6 +380,22 @@
       "maxLength": 500,
       "type": "str"
     },
+    "config.settings.marker_area_snapshot": {
+      "required": false
+    },
+    "config.settings.marker_area_snapshot.<All(<class 'str'>, Length(min=1, max=500), msg=None)>.area": {
+      "maxLength": 500,
+      "minLength": 1,
+      "required": true,
+      "type": "str"
+    },
+    "config.settings.marker_area_snapshot.<All(<class 'str'>, Length(min=1, max=500), msg=None)>.binding": {
+      "maxLength": 500,
+      "minLength": 1,
+      "opaque": "Match('^(?:device|entity):.+$', msg=None)",
+      "required": true,
+      "type": "str"
+    },
     "config.settings.new_device_ids": {
       "required": false
     },

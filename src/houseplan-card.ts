@@ -256,6 +256,12 @@ import {
   type DevicePlacement,
   type DevicePositionState,
 } from './device-position-history';
+import {
+  applyAreaRelocationResolution,
+  markerAreaSnapshotOf,
+  resolveDeviceAreaRelocations,
+  type AreaRelocationResolution,
+} from './device-area-relocation';
 import { resolvedSvgScreenBlend, svgScreenBlendSupported } from './glow-blend';
 import {
   buildGlowClipGeometry, buildLightBarrierScene, createGlowRuntimeState,
@@ -1001,6 +1007,10 @@ export class HouseplanCard extends LitElement {
   private _regSignature = '';
   private _defPos: Record<string, { x: number; y: number }> = {};
   private _newSyncKey = '';
+  /** Saved positions temporarily superseded by authoritative HA Area truth. */
+  private _areaRelocationIds = new Set<string>();
+  private _areaRelocationSyncKey = '';
+  private _areaRelocationWrite: Promise<void> = Promise.resolve();
   private _tip: {
     x: number;
     y: number;
@@ -2275,6 +2285,7 @@ export class HouseplanCard extends LitElement {
     description: string;
     pdfs: PdfRef[];
     room: string;
+    roomTouched: boolean;
     hideFromPlan: boolean;        // 'space#area' for a virtual one
     busy: boolean;
   } | null = null;
@@ -5031,9 +5042,36 @@ export class HouseplanCard extends LitElement {
       cacheHaBindingStatuses(statuses);
       this._haBindingCacheKey = bindingCacheKey;
     }
+    let areaRelocations: AreaRelocationResolution | null = null;
+    if (registry.authoritative) {
+      areaRelocations = resolveDeviceAreaRelocations({
+        devices: this._devices,
+        model: this._model,
+        layout: this._layout,
+        snapshot: this._settings.marker_area_snapshot,
+        authoritative: true,
+        coordinateScale: NORM_W,
+      });
+      this._areaRelocationIds = new Set(areaRelocations.relocateIds);
+      if (this._areaRelocationIds.size) {
+        this._cancelDeviceDrag();
+        this._devicePositionHistory.clear();
+        const dialog = this._markerDialog;
+        if (dialog?.devId && !dialog.roomTouched && this._areaRelocationIds.has(dialog.devId)) {
+          const current = this._devices.find((device) => device.id === dialog.devId);
+          if (current) this._markerDialog = {
+            ...dialog,
+            room: current.marker?.room_id
+              ? `${current.space}#@${current.marker.room_id}`
+              : current.space && current.area ? `${current.space}#${current.area}` : '',
+          };
+        }
+      }
+    }
     this._defPos = this._defaultPositions();
     this._syncNewDevices();
     this._seedHiddenDevices();
+    if (areaRelocations) this._syncAreaRelocations(areaRelocations);
     // Rebuilds also happen without a hass update (marker save/rebind). Establish
     // new baselines and clear old flashes synchronously, before the next paint.
     this._syncActivityRuntime();
@@ -5094,10 +5132,119 @@ export class HouseplanCard extends LitElement {
     }
   }
 
+  /**
+   * Persist authoritative registry-Area transitions without ever letting a
+   * stale saved point win between registry paint and server acknowledgement.
+   * Layout deletion is deliberately completed before provenance advances.
+   */
+  private _syncAreaRelocations(resolution: AreaRelocationResolution): void {
+    if (!this._serverCfg || !this._norm || !this._canEdit || !this._haRegistry.authoritative) return;
+    const actionable = resolution.decisions.filter(
+      (decision) => decision.updateSnapshot || decision.removeSnapshot,
+    );
+    if (!actionable.length) return;
+    const key = contentFingerprint({
+      snapshot: markerAreaSnapshotOf(this._settings.marker_area_snapshot),
+      decisions: actionable,
+    });
+    if (key === this._areaRelocationSyncKey) return;
+    this._areaRelocationSyncKey = key;
+
+    this._areaRelocationWrite = this._areaRelocationWrite.catch(() => undefined).then(async () => {
+      if (!this._serverCfg || !this._haRegistry.authoritative) return;
+      // The queue may have waited behind another registry/config mutation.
+      // Re-resolve at execution time so an explicit room choice or rebind wins.
+      const current = resolveDeviceAreaRelocations({
+        devices: this._devices,
+        model: this._model,
+        layout: this._layout,
+        snapshot: this._settings.marker_area_snapshot,
+        authoritative: true,
+        coordinateScale: NORM_W,
+      });
+      this._areaRelocationIds = new Set(current.relocateIds);
+      const committed = new Set<string>();
+      let deleteFailed = false;
+      for (const decision of current.decisions) {
+        if (!decision.relocate) continue;
+        const before = devicePlacement(this._layout, decision.id);
+        try {
+          await this._persistDevicePlacement(decision.id, null);
+          committed.add(decision.id);
+          this._areaRelocationIds.delete(decision.id);
+        } catch (error: unknown) {
+          deleteFailed = true;
+          this._layout = applyDevicePlacement(this._layout, decision.id, before);
+          this._showToast(this._t('toast.pos_save_failed', { err: this._errText(error) }));
+        }
+      }
+
+      const st = this._settings;
+      const nextSnapshot = applyAreaRelocationResolution(
+        st.marker_area_snapshot, current, committed,
+      );
+      const nextAttention = [...new Set([
+        ...(Array.isArray(st.new_device_ids) ? st.new_device_ids : []),
+        ...committed,
+      ])];
+      const snapshotChanged = contentFingerprint(nextSnapshot)
+        !== contentFingerprint(markerAreaSnapshotOf(st.marker_area_snapshot));
+      const attentionChanged = contentFingerprint(nextAttention)
+        !== contentFingerprint(Array.isArray(st.new_device_ids) ? st.new_device_ids : []);
+      if (snapshotChanged || attentionChanged) {
+        const previousSnapshot = st.marker_area_snapshot;
+        const previousAttention = st.new_device_ids;
+        this._serverCfg = {
+          ...this._serverCfg,
+          settings: {
+            ...st,
+            marker_area_snapshot: nextSnapshot,
+            ...(attentionChanged ? { new_device_ids: nextAttention } : {}),
+          },
+        };
+        this._cfgEpoch++;
+        try {
+          // Await this internal lifecycle write. A debounced fire-and-forget
+          // save would leave the local snapshot advanced after a rejection,
+          // suppressing the retry required by the delete-first contract.
+          await this._writeConfig();
+        } catch (error: unknown) {
+          const current = this._settings;
+          // Restore only if no newer mutation replaced our exact attempt while
+          // the serialized write was in flight.
+          if (contentFingerprint(current.marker_area_snapshot)
+              === contentFingerprint(nextSnapshot)
+              && contentFingerprint(current.new_device_ids)
+                === contentFingerprint(attentionChanged ? nextAttention : previousAttention)) {
+            const restored = { ...current };
+            if (previousSnapshot === undefined) delete restored.marker_area_snapshot;
+            else restored.marker_area_snapshot = previousSnapshot;
+            if (previousAttention === undefined) delete restored.new_device_ids;
+            else restored.new_device_ids = previousAttention;
+            this._serverCfg = { ...this._serverCfg!, settings: restored };
+            this._cfgContentFingerprint = contentFingerprint(this._serverCfg);
+          }
+          this._areaRelocationSyncKey = '';
+          this._regSignature = '';
+          const code = error && typeof error === 'object' && 'code' in error
+            ? (error as { code?: unknown }).code : undefined;
+          if (code === 'conflict') {
+            this._showToast(this._t('toast.conflict'));
+            void this._reloadConfigOnly(true);
+          } else {
+            this._showToast(this._t('toast.cfg_save_failed', { err: this._errText(error) }));
+          }
+        }
+      }
+      if (deleteFailed) this._areaRelocationSyncKey = '';
+      this.requestUpdate();
+    });
+  }
+
   /** Ids currently flagged as new (drawn with the red dot). */
   private get _newIds(): Set<string> {
-    const list = (this._settings as any).new_device_ids;
-    return new Set(Array.isArray(list) ? list : []);
+    const list = this._settings.new_device_ids;
+    return new Set([...(Array.isArray(list) ? list : []), ...this._areaRelocationIds]);
   }
 
   /** First visit to the device's editor acknowledges its "new" flag. */
@@ -5186,7 +5333,7 @@ export class HouseplanCard extends LitElement {
 
   private _livePos(d: DevItem): { x: number; y: number } {
     const s = this._spaceModelById(d.space);
-    const saved = this._layout[d.id];
+    const saved = this._areaRelocationIds.has(d.id) ? undefined : this._layout[d.id];
     if (saved) {
       if (this._norm) {
         if (saved.s === d.space) {

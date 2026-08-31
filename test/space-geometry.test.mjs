@@ -77,6 +77,18 @@ test('markerPos: saved layout → default grid → space centre', () => {
   assert.deepEqual(markerPos(dev, {}, cfg, {}, model), { x: 500, y: 425 });
 });
 
+test('markerPos: authoritative Area relocation suppresses the stale saved point', () => {
+  const model = spaceModels(cfg)[0];
+  const dev = { id: 'd1', space: 'f1', area: 'a1', entities: [] };
+  const defPos = { d1: { x: 420, y: 430 } };
+  assert.deepEqual(
+    markerPos(
+      dev, { d1: { s: 'f1', x: 0.2, y: 0.3 } }, cfg, defPos, model, new Set(['d1']),
+    ),
+    defPos.d1,
+  );
+});
+
 test('labelPos: saved rl_<id> → render units; else room centre', () => {
   const model = spaceModels(cfg)[0];
   const r = model.rooms[0];

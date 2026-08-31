@@ -8,6 +8,7 @@
 import { LitElement, html, nothing, noChange, css, type TemplateResult, type PropertyValues } from 'lit';
 import { cardStyles } from './styles';
 import { buildSpaceDevices, renderSpaceStatic, spaceModels } from './space-render';
+import { resolveDeviceAreaRelocations } from './device-area-relocation';
 import { resolveSpaceCardFit, type SpaceCardFit } from './space-geometry';
 import { getConfig, onConfigChange, cachedSnapshot, type HpConfigSnapshot } from './config-store';
 import { t, langOf, type Lang } from './i18n';
@@ -92,6 +93,7 @@ class HouseplanSpaceCard extends LitElement {
   private _haRegistryConnection: any = null;
   private _haRegistryRevision = -1;
   private _devices: DevItem[] = [];
+  private _areaRelocationIds = new Set<string>();
   private _continuity = this._newContinuityController();
   private _continuityHistory: import('./visual-continuity').ContinuityTraceEvent[] = [];
   private _continuityUnsub?: () => void;
@@ -449,6 +451,15 @@ class HouseplanSpaceCard extends LitElement {
       cfg: this._snap.config,
       lang: this._lang,
     });
+    if (registry.authoritative) {
+      this._areaRelocationIds = resolveDeviceAreaRelocations({
+        devices,
+        model: spaceModels(this._snap.config),
+        layout: this._snap.layout || {},
+        snapshot: this._snap.config.settings?.marker_area_snapshot,
+        authoritative: true,
+      }).relocateIds;
+    }
     this._syncActivity(devices, activeRegistryHass(this.hass, registry), this.hass);
     this._devices = devices;
   }
@@ -845,6 +856,7 @@ class HouseplanSpaceCard extends LitElement {
         }
         : haRegistrySnapshot(this.hass),
       devices: [...(deviceSnapshot?.devices || this._devices)],
+      areaRelocationIds: this._areaRelocationIds,
       presentations: deviceSnapshot?.presentations,
       activityRuntime: this._activityRuntime,
       reducedMotion: this._reducedMotion,

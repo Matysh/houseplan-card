@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Moving a device or a directly placed entity to another Home Assistant Area
+  now moves its marker to that Area's House Plan room too, even after the marker
+  was dragged manually. The new position uses the normal room grid and is
+  marked for attention; an explicit House Plan room still wins
+  ([#126](https://github.com/Matysh/houseplan-card/issues/126)).
+
 - Small furniture is easier to resize proportionally: the corner handle now
   wins the tap over the side handle when the two overlap, which they do on
   anything narrower than about 80 cm

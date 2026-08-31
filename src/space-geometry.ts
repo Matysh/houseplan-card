@@ -626,9 +626,12 @@ export function defaultPositions(devs: DevItem[], model: SpaceModel, iconPct: nu
 }
 
 /** Marker position in render units: saved layout → default grid → space centre. */
-export function markerPos(d: DevItem, layout: Layout, cfg: ServerConfig, defPos: Record<string, Pt>, model: SpaceModel): Pt {
+export function markerPos(
+  d: DevItem, layout: Layout, cfg: ServerConfig, defPos: Record<string, Pt>, model: SpaceModel,
+  ignoreSaved: ReadonlySet<string> = new Set(),
+): Pt {
   const saved = layout[d.id];
-  if (saved && saved.s === d.space) {
+  if (!ignoreSaved.has(d.id) && saved && saved.s === d.space) {
     return { x: saved.x * NORM_W, y: saved.y * NORM_W };
   }
   if (defPos[d.id]) return defPos[d.id];

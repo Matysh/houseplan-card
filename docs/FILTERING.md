@@ -95,6 +95,12 @@ the old behaviour until an editing client materialises it.
   dialog still permits metadata edits, Open in HA and Delete. Opening,
   searching, filtering and Find are read-only.
 - Room LQI counts hidden devices (owner's decision).
+- A direct device/entity marker without an explicit House Plan room follows an
+  authoritative HA Area change. A saved drag position is discarded only after
+  the target Area resolves to exactly one room; explicit placement, virtual
+  markers and automatic composite light groups never enter this lifecycle.
+  The move reuses `new_device_ids`, while limited registry access makes no
+  placement or metadata decision.
 - Hidden devices are NOT content for the CONTENT FRAME (docs/CANVAS.md §4,
   audit DEV-2C947-01). The frame is presentation: an object the plan does not
   draw may not decide what the plan opens on. Hiding a marker that had once

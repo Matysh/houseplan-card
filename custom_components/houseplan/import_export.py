@@ -1725,6 +1725,7 @@ def _materialize_import_candidate(
             settings = config.get("settings") or {}
             settings.pop("known_devices", None)
             settings.pop("new_device_ids", None)
+            settings.pop("marker_area_snapshot", None)
         details = {
             "dropped_marker_links": _transfer_dropped_marker_links(prepared),
         }
