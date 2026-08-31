@@ -34,6 +34,13 @@ const res = await page.evaluate(async () => {
   let failNextUpdate = false;
   let failNextDelete = false;
   c.hass = { ...c.hass, callWS: async (message) => {
+    if (message.type === 'houseplan/config/get') {
+      // #397 AC3: the reconnect path reads BOTH answers, and a config that
+      // differs clears the history for its own reason (`configChanged` in
+      // `_adoptStructuralResponses`). To isolate the layout question the
+      // fake server echoes the config the card already holds.
+      return { config: structuredClone(c._serverCfg), rev: c._cfgRev };
+    }
     if (message.type === 'houseplan/layout/get') {
       return { layout: structuredClone(serverLayout), rev: revision };
     }
@@ -273,14 +280,29 @@ const res = await page.evaluate(async () => {
   const echoProbe = c._devices.find((candidate) => candidate.id !== deviceId
     && candidate.bindingStatus?.kind !== 'ha_disabled');
   if (echoProbe) {
-    c._layout = { ...c._layout, [echoProbe.id]: { s: echoProbe.space, x: 0.42, y: 0.42 } };
-    await c._persistDevicePlacement(echoProbe.id, { s: echoProbe.space, x: 0.42, y: 0.42 });
+    // The probe position is deliberately NON-canonical (0.024999999999999942
+    // snaps to 0.025): a round number would travel unchanged and the checks
+    // below would pass for the wrong reason — there would be no divergence to
+    // detect in the first place.
+    const rawProbe = { s: echoProbe.space, x: 0.024999999999999942, y: 0.7 / 7 };
+    c._layout = { ...c._layout, [echoProbe.id]: structuredClone(rawProbe) };
+    await c._persistDevicePlacement(echoProbe.id, structuredClone(rawProbe));
     c._devicePositionHistory.push({
       name: 'echo probe move',
       before: { deviceId: echoProbe.id, spaceId: echoProbe.space, placement: null },
       after: { deviceId: echoProbe.id, spaceId: echoProbe.space,
-        placement: { s: echoProbe.space, x: 0.42, y: 0.42 } },
+        placement: structuredClone(rawProbe) },
     });
+    // #397 AC3: the reconnect path (`_loadFromServer` →
+    // `_adoptStructuralResponses`) is the OTHER reader of the same value: it
+    // compares the stored `_layoutContentFingerprint` with the server answer
+    // instead of recomputing it. It must be exercised right after a write,
+    // before any reload has had a chance to align the two sides — otherwise
+    // the check passes for the wrong reason.
+    const reconnectBefore = c._devicePositionHistory.canUndo;
+    await c._loadFromServer();
+    out.reconnectKeepsHistory = reconnectBefore && c._devicePositionHistory.canUndo;
+
     await c._persistDevicePlacement(echoProbe.id, null);
     await c._reloadLayoutOnly();
     out.deleteEchoKeepsHistory = c._devicePositionHistory.canUndo
@@ -298,6 +320,7 @@ const res = await page.evaluate(async () => {
     c._sentPos.delete(echoProbe.id);
   } else {
     out.deleteEchoKeepsHistory = null;
+    out.reconnectKeepsHistory = null;
     out.inFlightPositionWinsTheMerge = null;
   }
 
