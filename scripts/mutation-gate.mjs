@@ -754,8 +754,11 @@ const MUTANT_DEFINITIONS = [
       + 'the one that cannot be reached any other way (#400 AC1)',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: '      ${/* #400: corners LAST.',
-      replace: '      ${/* mutant: corners no longer last.',
+      // Порядок — именованное решение, поэтому мутант меняет ЕГО, а не текст
+      // рядом с ним: прежний патч правил комментарий и регрессию не
+      // воспроизводил (находка CODE-REVIEW-400-r1).
+      find: "const HANDLE_PAINT_ORDER = ['edges', 'corners'] as const;",
+      replace: "const HANDLE_PAINT_ORDER = ['corners', 'edges'] as const;",
     }],
   },
   {

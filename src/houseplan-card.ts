@@ -811,6 +811,19 @@ interface DeviceInboxDialogState {
 
 type FixedFloorState = FixedFloorSelection | { kind: 'pending'; value: unknown };
 
+/**
+ * #400: the paint order of the selection handles IS the hit priority, so it is
+ * a named decision rather than a consequence of where the blocks happen to sit
+ * in the template.
+ *
+ * Corner and edge handles carry the same hit radius (1.8 % of the view). On
+ * furniture narrower than 4·hr — a 40 cm cabinet — their circles overlap, and
+ * whichever is painted last takes the tap. The corner must be last: an edge
+ * handle scales one axis, a corner scales both, and the object is small
+ * exactly when proportional resize matters most.
+ */
+const HANDLE_PAINT_ORDER = ['edges', 'corners'] as const;
+
 interface DeviceDragState {
   id: string;
   spaceId: string;
@@ -8464,25 +8477,19 @@ export class HouseplanCard extends LitElement {
       <circle class="dthandle dtrot" cx="${b.x + b.w / 2}" cy="${b.y - arm}" r="${hr.toFixed(1)}"
         @pointerdown=${(e: PointerEvent) => this._dtStart(e, 'rotate')}></circle>
       <circle class="dtknob" cx="${b.x + b.w / 2}" cy="${b.y - arm}" r="${kr.toFixed(2)}"></circle>
-      ${sides.map(([sx, sy, cur]) => {
-        const x = sx < 0 ? b.x : sx > 0 ? b.x + b.w : b.x + b.w / 2;
-        const y = sy < 0 ? b.y : sy > 0 ? b.y + b.h : b.y + b.h / 2;
-        return svg`<circle class="dthandle dtedge dt-${cur}" cx="${x}" cy="${y}"
-          r="${hr.toFixed(1)}" @pointerdown=${(e: PointerEvent) =>
-            this._dtStart(e, 'scale', [sx, sy])}></circle>
-          <circle class="dtknob dtedgeknob" cx="${x}" cy="${y}" r="${kr.toFixed(2)}"></circle>`;
-      })}
-      ${/* #400: corners LAST. Both handles carry the same hit radius (1.8 % of
-          the view), so on furniture narrower than 4·hr — a 40 cm cabinet — the
-          two circles overlap and whichever is painted later takes the hit.
-          The corner is the one that cannot be reached any other way: an edge
-          handle scales one axis, a corner scales both, and the object is small
-          precisely when proportional resize matters most. The bead order is
-          unchanged visually — the knobs are drawn with their own handles. */
-        corners.map(([sx, sy, cur]) => svg`<circle class="dthandle dt-${cur}"
-        cx="${sx < 0 ? b.x : b.x + b.w}" cy="${sy < 0 ? b.y : b.y + b.h}" r="${hr.toFixed(1)}"
-        @pointerdown=${(e: PointerEvent) => this._dtStart(e, 'scale', [sx, sy])}></circle><circle class="dtknob"
-        cx="${sx < 0 ? b.x : b.x + b.w}" cy="${sy < 0 ? b.y : b.y + b.h}" r="${kr.toFixed(2)}"></circle>`)}
+      ${HANDLE_PAINT_ORDER.map((role) => (role === 'edges'
+        ? sides.map(([sx, sy, cur]) => {
+          const x = sx < 0 ? b.x : sx > 0 ? b.x + b.w : b.x + b.w / 2;
+          const y = sy < 0 ? b.y : sy > 0 ? b.y + b.h : b.y + b.h / 2;
+          return svg`<circle class="dthandle dtedge dt-${cur}" cx="${x}" cy="${y}"
+            r="${hr.toFixed(1)}" @pointerdown=${(e: PointerEvent) =>
+              this._dtStart(e, 'scale', [sx, sy])}></circle>
+            <circle class="dtknob dtedgeknob" cx="${x}" cy="${y}" r="${kr.toFixed(2)}"></circle>`;
+        })
+        : corners.map(([sx, sy, cur]) => svg`<circle class="dthandle dt-${cur}"
+          cx="${sx < 0 ? b.x : b.x + b.w}" cy="${sy < 0 ? b.y : b.y + b.h}" r="${hr.toFixed(1)}"
+          @pointerdown=${(e: PointerEvent) => this._dtStart(e, 'scale', [sx, sy])}></circle><circle class="dtknob"
+          cx="${sx < 0 ? b.x : b.x + b.w}" cy="${sy < 0 ? b.y : b.y + b.h}" r="${kr.toFixed(2)}"></circle>`)))}
     </g>` as unknown as TemplateResult;
   }
 

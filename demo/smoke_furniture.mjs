@@ -357,7 +357,13 @@ const res = await page.evaluate(async () => {
   const before = { w: sofaNow().w, h: sofaNow().h };
   const b = c._dtBox || { x: 0, y: 0, w: 0, h: 0 };
   const handles = [...(frame()?.querySelectorAll('.dthandle') || [])];
-  const se = handles[3] || stageEl();                       // SE — четвёртый угол
+  // #400: угловая ручка ищется по РОЛИ, а не по индексу в DOM. Индекс держался
+  // на порядке отрисовки, а порядок — это решение о приоритете хита (углы
+  // рисуются последними, чтобы выигрывать нажатие у осевых на мелкой мебели),
+  // и оно имеет право меняться. Юго-восточный угол — второй `nwse`.
+  const cornerHandles = handles.filter((el) => !el.classList.contains('dtrot')
+    && !el.classList.contains('dtedge'));
+  const se = cornerHandles[2] || stageEl();                 // SE — [1, 1, 'nwse']
   ev('pointerdown', se, b.x + b.w, b.y + b.h);
   out.cornerDragStarted = c._dtDrag?.kind === 'scale' && !!c._dtDrag?.orig;
   ev('pointermove', stageEl(), b.x + b.w + 100, b.y + b.h + 20, { shiftKey: true });
@@ -405,8 +411,9 @@ const res = await page.evaluate(async () => {
   // must restore the exact pre-gesture object and create no persisted flip.
   const crossBefore = JSON.parse(JSON.stringify(sofaNow()));
   const cb = c._dtBox;
-  const crossHandles = [...frame().querySelectorAll('.dthandle')];
-  const crossSe = crossHandles[3];
+  const crossHandles = [...frame().querySelectorAll('.dthandle')]
+    .filter((el) => !el.classList.contains('dtrot') && !el.classList.contains('dtedge'));
+  const crossSe = crossHandles[2];   // #400: по роли, не по позиции в DOM
   ev('pointerdown', crossSe, cb.x + cb.w, cb.y + cb.h);
   ev('pointermove', stageEl(), cb.x - 25, cb.y + cb.h + 10, { shiftKey: true });
   await c.updateComplete;
