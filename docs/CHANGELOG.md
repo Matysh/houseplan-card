@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.70.0-beta.2 — 2026-08-31
+
 - Moving a device or a directly placed entity to another Home Assistant Area
   now moves its marker to that Area's House Plan room too, even after the marker
   was dragged manually. The new position uses the normal room grid and is
