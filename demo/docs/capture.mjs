@@ -186,6 +186,7 @@ const DETERMINISTIC_ARGS = [
  *
  * Ничего не пишет на диск и манифест не трогает: это измерение, а не съёмка.
  */
+const unstable = [];
 const stabilityArg = process.argv.find((arg) => arg.startsWith('--stability'));
 const STABILITY_SHOTS = stabilityArg
   ? Math.max(2, Number(stabilityArg.split('=')[1] || 3))
@@ -314,6 +315,7 @@ try {
           + (result.box ? `, bbox ${result.box.x0},${result.box.y0}`
             + `..${result.box.x1},${result.box.y1}` : '')
           + `, кадр ${result.size ? result.size.join('x') : '?'}`);
+        if (result.pixels || result.sizeMismatch) unstable.push(`${scenario.id} ${result.pair}`);
       }
       continue;
     }
@@ -336,6 +338,12 @@ try {
   if (browserErrors.length) throw new Error(`browser errors: ${browserErrors.join(' | ')}`);
   if (STABILITY_SHOTS) {
     console.log(`\nзамер стабильности: ${STABILITY_SHOTS} снимка на сценарий, манифест не тронут`);
+    if (unstable.length) {
+      // Режим — не только диагностика, но и гейт: если кадр снова начнёт зависеть
+      // от времени, это должно останавливать съёмку, а не печататься в лог.
+      throw new Error(`кадр плавает внутри одного состояния страницы: ${unstable.join(', ')}`);
+    }
+    console.log('кадр не плавает ни в одном сценарии');
   } else {
     const manifest = {
       version: DOC_SCREENSHOT_VERSION,
