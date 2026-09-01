@@ -377,6 +377,24 @@ class HttpSurfaceTestCase(unittest.TestCase):
         self.assertNotIn("127.0.0.1", written)          # адрес соединения
         self.assertNotIn("198.51.100.5", written)       # адрес из заголовка
 
+    def test_client_cannot_pick_its_own_rate_bucket(self):
+        """Подделанный X-Forwarded-For не создаёт новый ключ источника.
+
+        Каждый запрос приходит с чужим адресом в заголовке; ключей частоты после
+        этого должно остаться столько же, сколько при одном источнике, иначе
+        лимит обходится сменой одной строки в запросе.
+        """
+        blob = package_bytes()
+        for index, forged in enumerate(("203.0.113.1", "198.51.100.2", "192.0.2.3")):
+            content_type, body = build_body(request_json(blob, key=f"forged-key-{index:04d}"), blob)
+            status, _ = self.call("POST", "/v1/reports", body, content_type,
+                                  headers={"X-Forwarded-For": f"{forged}, 127.0.0.1"})
+            self.assertEqual(status, 200)
+        spool = self.service.cfg.spool
+        buckets = [path.name for path in (spool / "rate").glob("*.json")
+                   if path.name != "_global.json"]
+        self.assertEqual(len(buckets), 1, buckets)
+
     def test_forwarded_for_is_used_as_the_source(self):
         blob = package_bytes()
         content_type, body = build_body(request_json(blob), blob)

@@ -8,12 +8,18 @@ support.houseplan.tech {
 	request_body {
 		max_size 8.7MB
 	}
-	reverse_proxy 127.0.0.1:8130
+	reverse_proxy 127.0.0.1:8130 {
+		# Заголовок ПЕРЕЗАПИСЫВАЕТСЯ, а не дополняется: иначе клиент задаёт
+		# первый элемент сам и выбирает себе корзину частотного лимита.
+		header_up X-Forwarded-For {remote_host}
+	}
 }
 
 support-staging.houseplan.tech {
 	request_body {
 		max_size 8.7MB
 	}
-	reverse_proxy 127.0.0.1:8131
+	reverse_proxy 127.0.0.1:8131 {
+		header_up X-Forwarded-For {remote_host}
+	}
 }

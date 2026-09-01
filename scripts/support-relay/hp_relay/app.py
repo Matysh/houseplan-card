@@ -145,7 +145,13 @@ def make_handler(service: Service):
             if service.cfg.trusted_proxy:
                 forwarded = self.headers.get("X-Forwarded-For", "")
                 if forwarded:
-                    return forwarded.split(",")[0].strip()
+                    # ПОСЛЕДНИЙ элемент, а не первый. Первый — тот, что прислал
+                    # клиент, и подделать его может кто угодно; последний
+                    # проставлен ближайшим звеном, то есть нашим же Caddy.
+                    # Caddy настроен перезаписывать заголовок целиком, но код не
+                    # обязан полагаться на чужой конфиг: цена ошибки здесь —
+                    # обход частотного лимита сменой одной строки в запросе.
+                    return forwarded.split(",")[-1].strip()
             return self.client_address[0]
 
         def do_GET(self) -> None:  # noqa: N802 - имя задано базовым классом
