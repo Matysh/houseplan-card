@@ -157,7 +157,27 @@ const applyDocumentationState = (page, scenario) => page.evaluate(async (current
 
 mkdirSync(OUTPUT, { recursive: true });
 
-const { page, browser } = await launch();
+// Растеризация закрепляется теми же тремя флагами, что у golden
+// (`demo/golden/run.mjs`), и по той же причине — только golden их имел с самого
+// начала, а съёмка документации запускалась без единого (#410).
+//
+// Измерено на dev SHA 184e0098: два прогона канонического workflow на одном и
+// том же коммите, одном Chromium 151.0.7922.34 и одном oxipng 10.2.0 дали три
+// разошедшихся кадра из десяти (06-device-editor, 08-room-card,
+// 09-device-info). Дельта — единицы уровней в RGB на сглаженных границах, alpha
+// не менялась: подпись субпиксельного сглаживания, а не изменения продукта.
+//
+// `--disable-lcd-text` убирает субпиксельное сглаживание (оно и плавало),
+// `--font-render-hinting=none` снимает зависимость от хинтинга,
+// `--force-color-profile=srgb` фиксирует профиль. `reducedMotion: 'reduce'`
+// добавлен к `animations: 'disabled'` у самого скриншота: первое гасит анимации
+// в CSS, второе — уже начатые переходы на момент съёмки.
+const DETERMINISTIC_ARGS = [
+  '--force-color-profile=srgb', '--font-render-hinting=none', '--disable-lcd-text',
+];
+const { page, browser } = await launch(
+  undefined, undefined, DETERMINISTIC_ARGS, { reducedMotion: 'reduce' },
+);
 const browserErrors = [];
 page.on('pageerror', (error) => browserErrors.push(error.message));
 
@@ -177,6 +197,12 @@ try {
     const clip = scenario.capture === 'room-card'
       ? await roomCardClip(page)
       : await goldenClip(page, scenario.capture);
+    // Два кадра ожидания перед съёмкой — как в golden. `animations: 'disabled'`
+    // гасит анимации, но не гарантирует, что уже запланированный ре-рендер
+    // успел лечь в композитор до захвата.
+    await page.evaluate(() => new Promise((done) => {
+      requestAnimationFrame(() => requestAnimationFrame(done));
+    }));
     const image = await page.screenshot({
       ...(clip ? { clip } : {}), animations: 'disabled', caret: 'hide', scale: 'css',
     });
