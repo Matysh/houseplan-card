@@ -443,6 +443,13 @@ if they are unavailable, #43 receives `blocked` without weakening the contract.
 - attachment parsed and checked for format/version and top-level allowlist;
 - message/contact rendered as escaped plain text only;
 - 5 attempts/hour and 20/day per source address plus a global circuit breaker;
+- **the source address is the one supplied by the trusted proxy, never one the
+  client can choose.** The relay reads the *last* element of `X-Forwarded-For`,
+  because the first element is whatever the caller sent, and the reverse proxy in
+  front of it is configured to overwrite the header outright rather than append
+  to it. Both halves are required: without them a caller picks its own rate-limit
+  bucket by changing one line of the request, and every other limit in this
+  section becomes decorative;
 - source IP is used only through a daily-keyed rate-limit hash with ≤24 h TTL;
   raw address is not written to app logs/storage/mail;
 - idempotency key retained 24 h and returns the original report id;
@@ -529,6 +536,7 @@ parse them; user message/contact remain verbatim plain text.
 | AC10 | Expired/replaced/discarded tokens fail; config changes after preview do not change cached bytes. | Fake-clock backend tests. |
 | AC11 | Submit is HTTPS/fixed-host/no-redirect, bounded and idempotent; logs contain no message/contact/body. | Stub aiohttp server + caplog + SSRF/redirect tests. |
 | AC12 | Relay enforces schema, size, hash, idempotency and rate limits; HTML remains inert plain text. | Receiver unit/integration suite with a recording fake provider. |
+| AC12a | A caller cannot select its own rate-limit bucket: requests carrying different forged `X-Forwarded-For` values land in one source key, and the proxy configuration overwrites the header. | Receiver test plus the deployed proxy fragment under `scripts/support-relay/deploy/`. |
 | AC13 | Success shows stable report id; timeout/error preserves form and exposes retry/manual recovery without claiming success. | Browser smoke across success/429/timeout/unknown command. |
 | AC14 | Phone/tablet dialog, keyboard/focus and 44 px target satisfy View touch/accessibility contract. | Reviewed desktop + phone + tablet goldens and touch smoke. |
 | AC15 | No existing backup/diagnostics/preflight behavior or payload changes. | Existing targeted frontend/backend suites unchanged. |
@@ -581,6 +589,8 @@ Mutation gate must prove at least:
 - authorization guard removed → backend test red;
 - redirect enabled/arbitrary URL accepted → SSRF test red;
 - relay skips hash/rate/idempotency check → receiver tests red;
+- relay trusts the client-supplied end of `X-Forwarded-For` (first element
+  instead of last) → `test_client_cannot_pick_its_own_rate_bucket` red;
 - success shown on timeout → browser smoke red.
 
 ## 15. Performance and reliability budgets
