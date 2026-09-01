@@ -3,7 +3,7 @@
   "fixture": "synthetic-only",
   "chromium": "151.0.7922.34",
   "oxipng": "oxipng 10.2.0",
-  "sourceFingerprint": "b705858a61f4b8e16b45922074b0e55402d044e318afb931e4d08c8b107f2aea",
+  "sourceFingerprint": "7faa6c2eb29239ed511cc4b351d1f0f38b3fff92cf2039b77b823ef090528a4d",
   "captureScriptSha256": "9229c467130e1f3d3abd042e2dcabaca9d4d5a918d0d77eadc814848df597ba6",
   "command": "npm run build && node demo/docs/capture.mjs",
   "scenarios": {
@@ -15,7 +15,7 @@
       },
       "theme": "dark",
       "language": "en",
-      "sourceSha256": "b705858a61f4b8e16b45922074b0e55402d044e318afb931e4d08c8b107f2aea",
+      "sourceSha256": "7faa6c2eb29239ed511cc4b351d1f0f38b3fff92cf2039b77b823ef090528a4d",
       "imageSha256": "9119ab87502038f787529f621c39e1e0d01f3bc3b0289051c3791a1886e97a6b"
     },
     "view-touch": {
@@ -26,7 +26,7 @@
       },
       "theme": "dark",
       "language": "en",
-      "sourceSha256": "b705858a61f4b8e16b45922074b0e55402d044e318afb931e4d08c8b107f2aea",
+      "sourceSha256": "7faa6c2eb29239ed511cc4b351d1f0f38b3fff92cf2039b77b823ef090528a4d",
       "imageSha256": "21c6fe7d79ff5c878ade8e98a64cc90dfd7bcc66338c864fb5a0bd411471313d"
     },
     "space-create": {
@@ -37,7 +37,7 @@
       },
       "theme": "dark",
       "language": "en",
-      "sourceSha256": "b705858a61f4b8e16b45922074b0e55402d044e318afb931e4d08c8b107f2aea",
+      "sourceSha256": "7faa6c2eb29239ed511cc4b351d1f0f38b3fff92cf2039b77b823ef090528a4d",
       "imageSha256": "fb32ea4a785fedb0e99b0bca6dbcf19022b32ced763ed875a57eb453be550bf5"
     },
     "room-contour-close": {
@@ -48,7 +48,7 @@
       },
       "theme": "dark",
       "language": "en",
-      "sourceSha256": "b705858a61f4b8e16b45922074b0e55402d044e318afb931e4d08c8b107f2aea",
+      "sourceSha256": "7faa6c2eb29239ed511cc4b351d1f0f38b3fff92cf2039b77b823ef090528a4d",
       "imageSha256": "75e0bc3dedff68e29be46531df0cc205f69988e86229580cc021017932049b34"
     },
     "plan-context-tray": {
@@ -59,7 +59,7 @@
       },
       "theme": "dark",
       "language": "en",
-      "sourceSha256": "b705858a61f4b8e16b45922074b0e55402d044e318afb931e4d08c8b107f2aea",
+      "sourceSha256": "7faa6c2eb29239ed511cc4b351d1f0f38b3fff92cf2039b77b823ef090528a4d",
       "imageSha256": "5fc29f4a71572ed43221131cd6e5f9a3da19fcc9bf63c879b12664bee98e292a"
     },
     "device-editor": {
@@ -70,8 +70,8 @@
       },
       "theme": "dark",
       "language": "en",
-      "sourceSha256": "b705858a61f4b8e16b45922074b0e55402d044e318afb931e4d08c8b107f2aea",
-      "imageSha256": "f9a8c003ed0fbd6ba7d26cd5642207beabb78a3b62b972e35505ac95830a9a95"
+      "sourceSha256": "7faa6c2eb29239ed511cc4b351d1f0f38b3fff92cf2039b77b823ef090528a4d",
+      "imageSha256": "49e14ee30284b44bc914a67c368abef6d8ac26ef320079e985f1edd36c7985d7"
     },
     "device-display-preview": {
       "file": "06-device-display-preview.png",
@@ -81,7 +81,7 @@
       },
       "theme": "dark",
       "language": "en",
-      "sourceSha256": "b705858a61f4b8e16b45922074b0e55402d044e318afb931e4d08c8b107f2aea",
+      "sourceSha256": "7faa6c2eb29239ed511cc4b351d1f0f38b3fff92cf2039b77b823ef090528a4d",
       "imageSha256": "7185c75cf0e3629c7bc880381d1eab1d1f67a2484ca3d17e86ad53e0ed6387c8"
     },
     "background-editor": {
@@ -92,7 +92,7 @@
       },
       "theme": "dark",
       "language": "en",
-      "sourceSha256": "b705858a61f4b8e16b45922074b0e55402d044e318afb931e4d08c8b107f2aea",
+      "sourceSha256": "7faa6c2eb29239ed511cc4b351d1f0f38b3fff92cf2039b77b823ef090528a4d",
       "imageSha256": "3d0d088f89da53a73efd13ef5bb5403f407011ab918e88671974459b5967ca25"
     },
     "room-card": {
@@ -103,7 +103,7 @@
       },
       "theme": "dark",
       "language": "en",
-      "sourceSha256": "b705858a61f4b8e16b45922074b0e55402d044e318afb931e4d08c8b107f2aea",
+      "sourceSha256": "7faa6c2eb29239ed511cc4b351d1f0f38b3fff92cf2039b77b823ef090528a4d",
       "imageSha256": "93d88ed84e2e3f9071e94e4b74cc3f3a86c7f898a76d1fb26bcc499e7dc4f538"
     },
     "device-info": {
@@ -114,26 +114,15 @@
       },
       "theme": "dark",
       "language": "en",
-      "sourceSha256": "b705858a61f4b8e16b45922074b0e55402d044e318afb931e4d08c8b107f2aea",
+      "sourceSha256": "7faa6c2eb29239ed511cc4b351d1f0f38b3fff92cf2039b77b823ef090528a4d",
       "imageSha256": "4d2257e49b28d3be517ed382269569b0e3bc18cec9d84d56b5f407c505a9b398"
     }
   },
   "acceptance": {
     "declared": [
-      "view-desktop",
-      "view-touch",
-      "space-create",
-      "room-contour-close",
-      "plan-context-tray",
-      "device-editor",
-      "device-display-preview",
-      "background-editor",
-      "room-card",
-      "device-info"
+      "device-editor"
     ],
-    "witnesses": 0,
-    "floor": 1,
-    "witnessesSkippedBecause": "Полная смена растеризации канонического Linux runner: прежний baseline не воспроизводится ни CI, ни локальной контрольной съемкой; все 10 пар визуально проверены, продуктовых изменений нет",
-    "lastWriteWasFingerprintOnly": true
+    "witnesses": 9,
+    "floor": 1
   }
 }
