@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- The new **Help & feedback** dialog keeps version, documentation and project
+  links together and can send a private report without exposing it publicly.
+  A diagnostic attachment is always opt-in: House Plan shows the exact
+  anonymized JSON first, removes names and Home Assistant IDs, warns that exact
+  home geometry remains, and keeps failed drafts available for retry or manual
+  recovery ([#43](https://github.com/Matysh/houseplan-card/issues/43)).
+
 - Delete and unlock confirmations now use House Plan's native dialog shell and
   expose an alert dialog together with its consequence text to screen readers;
   ordinary dialogs continue to use Home Assistant's dialog chrome

@@ -16,7 +16,7 @@ from homeassistant.core import HomeAssistant
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 from pytest_homeassistant_custom_component.typing import WebSocketGenerator
 
-from custom_components.houseplan.const import CONF_ADMIN_ONLY, DOMAIN
+from custom_components.houseplan.const import CONF_ADMIN_ONLY, DOMAIN, VERSION
 from custom_components.houseplan.websocket_api import (
     _space_delete_candidate, _space_marker_dependencies,
 )
@@ -1261,6 +1261,173 @@ async def test_config_get_reports_can_write(hass: HomeAssistant, hass_ws_client:
     assert resp["success"]
     assert resp["result"]["can_write"] is True  # hass_ws_client is an admin
     assert "config" in resp["result"] and "rev" in resp["result"]
+
+
+def _support_preview_request(draft_id: str = "draft-browser-one") -> dict:
+    return {
+        "type": "houseplan/support/preview",
+        "card_version": "1.70.0-beta.2",
+        "browser_family": "chromium",
+        "browser_major": 140,
+        "language": "en",
+        "coarse_pointer": False,
+        "hover_capable": True,
+        "registry_access": "full",
+        "registry_age_bucket": "fresh",
+        "draft_id": draft_id,
+    }
+
+
+async def test_support_preview_is_authorized_exact_and_consumed_only_after_success(
+    hass: HomeAssistant,
+    hass_ws_client: WebSocketGenerator,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    await client.send_json_auto_id(_support_preview_request())
+    built = await client.receive_json()
+    assert built["success"]
+    preview = built["result"]
+    assert preview["text"].endswith("\n")
+    assert preview["size"] == len(preview["text"].encode("utf-8"))
+    assert "houseplan-support-package" in preview["text"]
+
+    captured: dict = {}
+
+    async def _submit(_hass, **kwargs):
+        captured.update(kwargs)
+        return "hpr-test-0001"
+
+    monkeypatch.setattr(
+        "custom_components.houseplan.websocket_api.async_submit_report", _submit,
+    )
+    await client.send_json_auto_id({
+        "type": "houseplan/support/submit",
+        "message": "A private support message",
+        "contact": "contact example",
+        "preview_token": preview["token"],
+        "idempotency_key": "report-browser-one",
+    })
+    sent = await client.receive_json()
+    assert sent["success"] and sent["result"]["report_id"] == "hpr-test-0001"
+    assert captured["attachment"] == preview["text"].encode("utf-8")
+    assert captured["message"] == "A private support message"
+
+    await client.send_json_auto_id({
+        "type": "houseplan/support/submit",
+        "message": "retry",
+        "preview_token": preview["token"],
+        "idempotency_key": "report-browser-one",
+    })
+    consumed = await client.receive_json()
+    assert not consumed["success"]
+    assert consumed["error"]["code"] == "support_preview_expired"
+
+
+async def test_support_preview_replacement_and_discard_are_draft_local(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator,
+) -> None:
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    await client.send_json_auto_id(_support_preview_request("draft-same-card"))
+    first = (await client.receive_json())["result"]
+    await client.send_json_auto_id(_support_preview_request("draft-other-card"))
+    other = (await client.receive_json())["result"]
+    await client.send_json_auto_id(_support_preview_request("draft-same-card"))
+    replacement = (await client.receive_json())["result"]
+    assert len({first["token"], other["token"], replacement["token"]}) == 3
+
+    # Replaced/discarded tokens cannot be submitted; another card's token stays.
+    await client.send_json_auto_id({
+        "type": "houseplan/support/preview/discard", "token": first["token"],
+    })
+    assert (await client.receive_json())["success"]
+    await client.send_json_auto_id({
+        "type": "houseplan/support/preview/discard", "token": replacement["token"],
+    })
+    assert (await client.receive_json())["success"]
+    await client.send_json_auto_id({
+        "type": "houseplan/support/preview/discard", "token": other["token"],
+    })
+    assert (await client.receive_json())["success"]
+
+
+async def test_support_text_only_submit_carries_safe_versions_without_plan_data(
+    hass: HomeAssistant,
+    hass_ws_client: WebSocketGenerator,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    await _setup(hass)
+    captured: dict = {}
+
+    async def _submit(_hass, **kwargs):
+        captured.update(kwargs)
+        return "hpr-text-0001"
+
+    monkeypatch.setattr(
+        "custom_components.houseplan.websocket_api.async_submit_report", _submit,
+    )
+    client = await hass_ws_client(hass)
+    await client.send_json_auto_id({
+        "type": "houseplan/support/submit",
+        "message": "text only",
+        "idempotency_key": "report-text-only",
+    })
+    response = await client.receive_json()
+    assert response["success"]
+    assert captured["attachment"] is None
+    assert captured["attachment_sha256"] is None
+    assert captured["versions"]["card"] == VERSION
+    assert captured["versions"]["integration"] == VERSION
+    assert set(captured["versions"]) == {
+        "card", "integration", "home_assistant", "model", "export_schema",
+    }
+
+
+async def test_support_commands_reject_read_only_user_before_build_or_transport(
+    hass: HomeAssistant,
+    hass_ws_client: WebSocketGenerator,
+    hass_read_only_access_token: str,
+) -> None:
+    await _setup(hass)
+    client = await hass_ws_client(hass, access_token=hass_read_only_access_token)
+    await client.send_json_auto_id(_support_preview_request())
+    response = await client.receive_json()
+    assert not response["success"] and response["error"]["code"] == "unauthorized"
+
+    await client.send_json_auto_id({
+        "type": "houseplan/support/submit",
+        "message": "not allowed",
+        "idempotency_key": "report-read-only",
+    })
+    response = await client.receive_json()
+    assert not response["success"] and response["error"]["code"] == "unauthorized"
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("browser_major", True),
+        ("browser_major", "140"),
+        ("coarse_pointer", "false"),
+        ("draft_id", 12345678),
+    ],
+)
+async def test_support_preview_schema_does_not_coerce_client_facts(
+    hass: HomeAssistant,
+    hass_ws_client: WebSocketGenerator,
+    field: str,
+    value,
+) -> None:
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    request = _support_preview_request()
+    request[field] = value
+    await client.send_json_auto_id(request)
+    response = await client.receive_json()
+    assert not response["success"]
+    assert response["error"]["code"] == "invalid_format"
 
 
 async def test_files_migrate_copies_and_reports_mapping(

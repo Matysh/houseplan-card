@@ -3516,3 +3516,32 @@ require hands on real hardware — they remain for the human pass.
       the space's config carries no `hide_decor` / `hide_openings` at all, and
       a plan saved by an older card still opens here unchanged
       [auto: smoke_hide_layers, tests_backend test_hide_layer_settings]
+
+## Help & private feedback (#43)
+
+- [ ] Header order is Fit/zoom → General settings → Help; Help has a 44×44
+      target, remains available in View and all editors, and is absent in kiosk.
+      About appears once in Help, Russian routes to the Russian User Guide and
+      every other locale routes to English [unit: `support-feedback.test.mjs`;
+      pre-beta: support dialog smoke/golden matrix].
+- [ ] A fresh dialog has empty message/contact and attachment off. Empty or
+      over-limit Unicode input cannot submit; Ctrl/Cmd+Enter uses the same
+      guard [unit: `support-feedback.test.mjs`; pre-beta: phone validation
+      smoke].
+- [ ] Preview builds no external request and exposes exact JSON bytes, size and
+      hash. Download equals preview; refresh changes the package namespace;
+      expiry/discard/replacement and successful submit invalidate only the
+      intended owner/draft token [backend: `test_support_package.py`,
+      `test_ha_websocket.py`; pre-beta: browser network capture].
+- [ ] Forbidden sentinels (raw and escaped/base64), unknown fields, names, HA
+      ids, URLs/paths and live states never reach package bytes. Geometry and
+      referential pseudonyms survive [backend: `test_support_package.py`].
+- [ ] Relay transport uses only the compiled HTTPS host, follows no redirect,
+      bounds timeouts/response and never reflects provider text. Relay request,
+      rate/idempotency, spool-before-delivery and purge tests run in CI
+      [backend: `test_ha_support_transport.py`; relay: `python -m unittest
+      discover -s scripts/support-relay/tests -q`].
+- [ ] Success keeps a copyable report id; failure keeps the draft and exact
+      attachment with Retry, Copy message, Download and manual links. Old or
+      mismatched backend leaves About/Guide usable but exposes no fake submit
+      [pre-beta: success/429/timeout/unknown-command smokes in light/dark].

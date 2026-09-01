@@ -18,6 +18,7 @@ import {
   type HpConfirmRequest,
   type HpConfirmState,
 } from './danger-confirm';
+import type { SupportDialogState } from './support-feedback';
 import type { ColorPickerLabels } from './hp-color-opacity';
 import {
   EXCLUDED_DOMAINS, DEFAULT_ICON_RULES, compileIconRules, isValidPattern, iconFor,
@@ -2192,6 +2193,7 @@ export class HouseplanCard extends LitElement {
     northDeg: number | null; bgMode: 'static' | 'daynight'; sunRays: boolean;
     busy: boolean;
   } | null = null;
+  private _supportDialog: SupportDialogState | null = null;
   private _backupExportDialog: {
     kind: 'full' | 'space'; planOnly: boolean; busy: boolean; error: string;
   } | null = null;
@@ -2659,6 +2661,7 @@ export class HouseplanCard extends LitElement {
     _deviceInbox: { state: true },
     _rulesDialog: { state: true },
     _settingsDialog: { state: true },
+    _supportDialog: { state: true },
     _alignDialog: { state: true },
     _preflightClipboardFallback: { state: true },
     _backupExportDialog: { state: true },
@@ -2914,6 +2917,7 @@ export class HouseplanCard extends LitElement {
       if (this._alignDialog) { this._alignDialog = null; this._preflightClipboardFallback = null; return; }
       if (this._backupImportDialog) { this._backupImportDialog = null; return; }
       if (this._backupExportDialog) { this._backupExportDialog = null; return; }
+      if (this._supportDialog) { void this._editorRuntime?._closeSupportDialog(); return; }
       if (this._settingsDialog) { this._settingsDialog = null; return; }
       if (this._markerDialog) { this._closeMarkerDialog(); return; }
       if (this._deviceInbox) { this._deviceInbox = null; return; }
@@ -7311,6 +7315,10 @@ export class HouseplanCard extends LitElement {
     this._preflightClipboardFallback = null;
     this._backupImportDialog = null;
     this._backupExportDialog = null;
+    if (this._supportDialog?.preview?.token) {
+      void this._editorRuntime?._discardSupportPreview(this._supportDialog.preview.token);
+    }
+    this._supportDialog = null;
     this._settingsDialog = null;
     this._deviceInbox = null;
     this._deviceInboxReturn = null;
@@ -8959,7 +8967,7 @@ export class HouseplanCard extends LitElement {
       || this._openingDialog || this._physicalDialog || this._openingInfo
       || this._decorTextDialog || this._decorShapeDialog || this._backdropDialog
       || this._decorEraseConfirm || this._spaceDialog || this._markerDialog || this._deviceInbox
-      || this._infoCard || this._rulesDialog || this._settingsDialog
+      || this._infoCard || this._rulesDialog || this._settingsDialog || this._supportDialog
       || this._alignDialog || this._importDialog || this._kioskDialog
       || this._backupExportDialog || this._backupImportDialog
       || this._wallDialog);
@@ -10731,6 +10739,16 @@ export class HouseplanCard extends LitElement {
     return this._editorRuntime._openSettingsDialog();
   }
 
+  private _openSupportDialog = (): void => {
+    if (!this._editorRuntime) {
+      void this._ensureEditorRuntime().then((ready) => {
+        if (ready) this._openSupportDialog();
+      });
+      return;
+    }
+    this._editorRuntime._openSupportDialog();
+  };
+
   /**
    * Preview whole-plan maintenance. Nothing is written here: the pure run
    * produces both the report and the exact config/layout pair to commit.
@@ -11139,6 +11157,10 @@ export class HouseplanCard extends LitElement {
     return this._editorRuntimeOrThrow()._renderSettingsDialog();
   }
 
+  private _renderSupportDialog(): TemplateResult {
+    return this._editorRuntimeOrThrow()._renderSupportDialog();
+  }
+
   // ================= ICON RULES EDITOR =================
 
   private _openRulesDialog = (): void => {
@@ -11258,7 +11280,7 @@ export class HouseplanCard extends LitElement {
         || this._decorEraseConfirm
         || (this._spaceDialog && !this._spaceDialogUsesOnboardingRuntime(this._spaceDialog.mode))
         || this._deviceInbox
-        || this._markerDialog || this._rulesDialog || this._settingsDialog
+        || this._markerDialog || this._rulesDialog || this._settingsDialog || this._supportDialog
         || this._alignDialog || this._backupExportDialog || this._backupImportDialog
         || this._kioskDialog || this._vacFit || this._vacCalConfirm);
     if (onboardingRuntimeRequested && !this._onboardingRuntime) {
@@ -11473,6 +11495,10 @@ export class HouseplanCard extends LitElement {
           ${this._norm && this._canEdit
             ? html`<button class="btn" @click=${this._openSettingsDialog} title=${this._t('title.general_settings')}>
                 <ha-icon icon="mdi:cog-outline"></ha-icon>
+              </button>
+              <button class="btn support-button" @click=${this._openSupportDialog}
+                title=${this._t('support.title')} aria-label=${this._t('support.title')}>
+                <ha-icon icon="mdi:help-circle-outline"></ha-icon>
               </button>`
             : nothing}
         </div>
@@ -11897,6 +11923,7 @@ export class HouseplanCard extends LitElement {
         ${this._infoCard ? this._renderInfoCard() : nothing}
         ${this._rulesDialog ? this._editorRuntime ? this._renderRulesDialog() : nothing : nothing}
         ${this._settingsDialog ? this._editorRuntime ? this._renderSettingsDialog() : nothing : nothing}
+        ${this._supportDialog ? this._editorRuntime ? this._renderSupportDialog() : nothing : nothing}
         ${this._alignDialog ? this._editorRuntime ? this._renderAlignDialog() : nothing : nothing}
         ${this._backupExportDialog ? this._editorRuntime ? this._renderBackupExportDialog() : nothing : nothing}
         ${this._backupImportDialog ? this._editorRuntime ? this._renderBackupImportDialog() : nothing : nothing}

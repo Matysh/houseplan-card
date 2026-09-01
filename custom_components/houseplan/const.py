@@ -49,6 +49,18 @@ FILES_DIR = "houseplan/files"
 CONF_ADMIN_ONLY = "admin_only"
 VERSION = "1.70.0-beta.2"
 
+# #43: the support transport is deliberately not configurable.  A user supplied
+# URL would turn the integration into an SSRF proxy and make the privacy notice
+# false.  The relay is deployed and operated by the project; changing it is a
+# reviewed release change, not a Home Assistant option.
+SUPPORT_RELAY_URL = "https://support.houseplan.tech/v1/reports"
+SUPPORT_PREVIEW_TTL_S = 10 * 60
+MAX_SUPPORT_PREVIEWS_PER_USER = 3
+MAX_SUPPORT_PREVIEWS_TOTAL = 3
+MAX_SUPPORT_ATTACHMENT_BYTES = 8 * 1024 * 1024
+MAX_SUPPORT_MESSAGE_CODEPOINTS = 10_000
+MAX_SUPPORT_CONTACT_CODEPOINTS = 320
+
 # Portable backup format.  This is deliberately independent from the Home
 # Assistant Store version above: storage migrations and files exported by a
 # user have different compatibility lifecycles.
@@ -91,6 +103,9 @@ ERROR_CODES: frozenset[str] = frozenset({
     "marker_control_self", "missing_content", "missing_plan", "no_backup",
     "not_ready", "not_toggleable", "nothing_to_repair", "preview_expired",
     "preview_owner_mismatch", "space_in_use", "space_not_found",
+    "support_invalid_message", "support_package_too_large",
+    "support_preview_expired", "support_rate_limited", "support_rejected",
+    "support_unavailable",
     "too_large", "unauthorized", "unsupported_export_version",
     "value_badge_source_required", "wall_model_client_outdated",
     "wall_model_migration_blocked",

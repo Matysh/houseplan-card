@@ -245,6 +245,16 @@ import {
 } from './coordinate-canonicalization';
 import { enqueueSerializedWrite } from './serialized-write-queue';
 import { hasTranslation, langOf, t, type I18nKey } from './i18n';
+import {
+  newSupportDialogState,
+  supportCanSubmit,
+  supportDraftError,
+  supportErrorCode,
+  supportRuntimeFacts,
+  supportSizeKiB,
+  type SupportDialogState,
+  type SupportPreview,
+} from './support-feedback';
 import { classifyPlanFile, encodePlanFile, renderBackdropGuard } from './backdrop-pick';
 import { CommandStack } from './command-stack';
 import type { DeviceLayout, DevicePositionState } from './device-position-history';
@@ -1093,6 +1103,7 @@ export interface HouseplanEditorHostPort {
   _serverStorage: boolean;
   _settings: { exclude_integrations?: string[]; group_lights?: boolean; show_all?: boolean; filter_seeded?: boolean; icon_rules?: { pattern: string; icon: string; }[]; };
   _settingsDialog: { colors: FillColors; glowRadius: number; bgColor: string | null; northDeg: number | null; bgMode: "static" | "daynight"; sunRays: boolean; busy: boolean; } | null;
+  _supportDialog: SupportDialogState | null;
   _showAll: boolean;
   _showHidden: boolean;
   _showToast: (msg: string) => void;
@@ -1177,6 +1188,7 @@ export class HouseplanEditorRuntime {
   private _junctionBaselineCache = new WeakMap<object, {
     spaceId: string; fingerprint: string; violations: JunctionLimitViolation[];
   }>();
+  private _supportExpiryTimer?: number;
 
   public constructor(public readonly host: HouseplanEditorHostPort) {
     host._editorSecondary = new EditorSecondaryController({
@@ -9062,6 +9074,442 @@ public _openSettingsDialog = (): void => {
     };
   };
 
+public _openSupportDialog = (): void => {
+    if (!this.host._norm || !this.host._canEdit) return;
+    clearTimeout(this._supportExpiryTimer);
+    this._supportExpiryTimer = undefined;
+    this.host._supportDialog = newSupportDialogState();
+  };
+
+private _supportPatch(
+    draftId: string,
+    patch: Partial<SupportDialogState>,
+  ): SupportDialogState | null {
+    const current = this.host._supportDialog;
+    if (!current || current.draftId !== draftId) return null;
+    const next = { ...current, ...patch };
+    this.host._supportDialog = next;
+    return next;
+  }
+
+private async _focusSupport(selector: string): Promise<void> {
+    await this.host.updateComplete;
+    this.host.renderRoot.querySelector<HTMLElement>(selector)?.focus({ preventScroll: true });
+  }
+
+private _updateSupportDraft(field: 'contact' | 'message', value: string): void {
+    const current = this.host._supportDialog;
+    if (!current || current.status === 'building' || current.status === 'sending'
+        || current.status === 'success') return;
+    const candidate: SupportDialogState = { ...current, [field]: value };
+    // Validate text independently from the optional preview. Editing must clear
+    // stale transport errors, while an expired prepared package remains explicit.
+    const textError = supportDraftError({ ...candidate, attach: false, preview: null });
+    const showRequired = textError === 'message_required'
+      && current.errorCode === 'validation.message_required';
+    const immediateError = textError === 'message_too_long' || textError === 'contact_too_long';
+    if (showRequired || immediateError) {
+      this._supportPatch(current.draftId, {
+        [field]: value,
+        status: 'error',
+        errorCode: `validation.${textError}`,
+      });
+      return;
+    }
+    if (candidate.attach && candidate.preview && candidate.preview.expiresAt <= Date.now()) {
+      this._supportPatch(current.draftId, {
+        [field]: value,
+        status: 'error',
+        errorCode: 'support_preview_expired',
+      });
+      return;
+    }
+    this._supportPatch(current.draftId, {
+      [field]: value,
+      status: candidate.attach && candidate.preview ? 'ready' : 'idle',
+      errorCode: '',
+    });
+  }
+
+public async _discardSupportPreview(token: string): Promise<void> {
+    if (!token) return;
+    try {
+      await this.host.hass.callWS({ type: 'houseplan/support/preview/discard', token });
+    } catch {
+      // Cleanup is best-effort; backend TTL is the final privacy guard.
+    }
+  }
+
+public async _closeSupportDialog(): Promise<void> {
+    const dialog = this.host._supportDialog;
+    if (!dialog) return;
+    if (dialog.status === 'building' || dialog.status === 'sending') {
+      const accepted = await this.host._confirmDanger({
+        key: 'close-support-busy',
+        kind: 'warning',
+        title: this.host._t('support.close_busy_title'),
+        message: this.host._t('support.close_busy_body'),
+        confirmLabel: this.host._t('btn.close'),
+        cancelLabel: this.host._t('btn.cancel'),
+      });
+      if (!accepted) {
+        await this.host.updateComplete;
+        this.host.renderRoot.querySelector<HpDialog>('#support-dialog')?.rejectClose();
+        return;
+      }
+    }
+    clearTimeout(this._supportExpiryTimer);
+    this._supportExpiryTimer = undefined;
+    this.host._supportDialog = null;
+    if (dialog.preview?.token && dialog.status !== 'success') {
+      void this._discardSupportPreview(dialog.preview.token);
+    }
+  }
+
+private _scheduleSupportExpiry(draftId: string, preview: SupportPreview): void {
+    clearTimeout(this._supportExpiryTimer);
+    const delay = Math.max(0, preview.expiresAt - Date.now());
+    this._supportExpiryTimer = window.setTimeout(() => {
+      const current = this.host._supportDialog;
+      if (!current || current.draftId !== draftId || current.preview?.token !== preview.token
+          || !current.attach || current.status === 'success' || current.status === 'sending') return;
+      this._supportPatch(draftId, {
+        status: 'error',
+        errorCode: 'support_preview_expired',
+      });
+    }, Math.min(delay + 20, 2_147_483_647));
+  }
+
+private _supportFacts(): ReturnType<typeof supportRuntimeFacts> {
+    const registry = this.host._haRegistry;
+    return supportRuntimeFacts({
+      userAgent: globalThis.navigator?.userAgent || '',
+      language: langOf(this.host.hass, this.host._config?.language),
+      registryAccess: registry.access,
+      registryLastSuccess: registry.lastSuccess,
+    });
+  }
+
+private async _buildSupportPreview(draftId: string): Promise<void> {
+    const current = this.host._supportDialog;
+    if (!current || current.draftId !== draftId || !current.attach
+        || this.host._haIntegrationVersion !== CARD_VERSION) return;
+    this._supportPatch(draftId, { status: 'building', errorCode: '' });
+    try {
+      const response: any = await this.host.hass.callWS({
+        type: 'houseplan/support/preview',
+        card_version: CARD_VERSION,
+        ...this._supportFacts(),
+        draft_id: draftId,
+      });
+      const now = Date.now();
+      const text = typeof response?.text === 'string' ? response.text : '';
+      const size = Number(response?.size);
+      const expiresIn = Number(response?.expires_in);
+      const spaces = Number(response?.spaces);
+      const token = String(response?.token || '');
+      const sha256 = String(response?.sha256 || '');
+      const version = Number(response?.version);
+      const format = String(response?.format || '');
+      const byteSize = new TextEncoder().encode(text).byteLength;
+      if (!/^[0-9a-f]{48}$/.test(token) || !/^[0-9a-f]{64}$/.test(sha256)
+          || format !== 'houseplan-support-package' || version !== 1
+          || !Number.isInteger(size) || size !== byteSize || !Number.isInteger(spaces) || spaces < 0
+          || !Number.isFinite(expiresIn) || expiresIn <= 0 || expiresIn > 600 || !text.endsWith('\n')) {
+        throw { code: 'support_rejected' };
+      }
+      const preview: SupportPreview = {
+        token,
+        expiresAt: now + expiresIn * 1000,
+        size,
+        sha256,
+        spaces,
+        format,
+        version,
+        text,
+        preparedAt: now,
+      };
+      if (!this._supportPatch(draftId, {
+        status: 'ready',
+        preview,
+        errorCode: '',
+        rawOpen: false,
+      })) {
+        void this._discardSupportPreview(token);
+        return;
+      }
+      this._scheduleSupportExpiry(draftId, preview);
+    } catch (error: unknown) {
+      if (!this._supportPatch(draftId, {
+        status: 'error',
+        errorCode: supportErrorCode(error),
+      })) return;
+      void this._focusSupport('#support-error');
+    }
+  }
+
+public async _setSupportAttachment(attach: boolean): Promise<void> {
+    const current = this.host._supportDialog;
+    if (!current || current.status === 'sending' || current.status === 'success') return;
+    const token = current.preview?.token || '';
+    if (!attach) {
+      clearTimeout(this._supportExpiryTimer);
+      this._supportExpiryTimer = undefined;
+      this._supportPatch(current.draftId, {
+        attach: false,
+        status: 'idle',
+        preview: null,
+        rawOpen: false,
+        errorCode: '',
+      });
+      if (token) void this._discardSupportPreview(token);
+      return;
+    }
+    this._supportPatch(current.draftId, { attach: true, errorCode: '' });
+    await this._buildSupportPreview(current.draftId);
+  }
+
+public async _refreshSupportPreview(): Promise<void> {
+    const current = this.host._supportDialog;
+    if (!current || !current.attach || current.status === 'building' || current.status === 'sending') return;
+    await this._buildSupportPreview(current.draftId);
+  }
+
+public _downloadSupportPreview(): void {
+    const preview = this.host._supportDialog?.preview;
+    if (!preview) return;
+    const blob = new Blob([preview.text], { type: 'application/json;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `houseplan-support-${preview.token.slice(0, 12)}.json`;
+    anchor.style.display = 'none';
+    document.body.append(anchor);
+    anchor.click();
+    anchor.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 0);
+  }
+
+private async _copySupportText(text: string, successKey: I18nKey): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(text);
+      this.host._showToast(this.host._t(successKey));
+    } catch {
+      this.host._showToast(this.host._t('support.copy_failed'));
+    }
+  }
+
+public async _submitSupport(): Promise<void> {
+    const current = this.host._supportDialog;
+    if (!current || this.host._haIntegrationVersion !== CARD_VERSION) return;
+    const validation = supportDraftError(current);
+    if (validation) {
+      this._supportPatch(current.draftId, {
+        status: 'error',
+        errorCode: `validation.${validation}`,
+      });
+      void this._focusSupport('#support-message');
+      return;
+    }
+    if (!supportCanSubmit(current)) return;
+    this._supportPatch(current.draftId, { status: 'sending', errorCode: '' });
+    try {
+      const response: any = await this.host.hass.callWS({
+        type: 'houseplan/support/submit',
+        message: current.message.trim(),
+        contact: current.contact.trim(),
+        ...(current.attach && current.preview ? { preview_token: current.preview.token } : {}),
+        idempotency_key: current.idempotencyKey,
+      });
+      const reportId = String(response?.report_id || '');
+      if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(reportId)) {
+        throw { code: 'support_unavailable' };
+      }
+      clearTimeout(this._supportExpiryTimer);
+      this._supportExpiryTimer = undefined;
+      if (!this._supportPatch(current.draftId, {
+        status: 'success',
+        reportId,
+        errorCode: '',
+      })) return;
+      void this._focusSupport('#support-receipt');
+    } catch (error: unknown) {
+      if (!this._supportPatch(current.draftId, {
+        status: 'error',
+        errorCode: supportErrorCode(error),
+      })) return;
+      void this._focusSupport('#support-error');
+    }
+  }
+
+private _supportErrorText(state: SupportDialogState): string {
+    if (state.errorCode.startsWith('validation.')) {
+      const suffix = state.errorCode.slice('validation.'.length);
+      return this.host._t(`support.validation.${suffix}` as I18nKey);
+    }
+    return this.host._t(`support.error.${state.errorCode || 'support_unavailable'}` as I18nKey);
+  }
+
+private _supportMessageKeydown(event: KeyboardEvent): void {
+    if (event.key !== 'Enter' || (!event.ctrlKey && !event.metaKey)) return;
+    event.preventDefault();
+    void this._submitSupport();
+  }
+
+public _renderSupportDialog(): TemplateResult {
+    const state = this.host._supportDialog!;
+    const lang = langOf(this.host.hass, this.host._config?.language);
+    const guideUrl = lang === 'ru'
+      ? 'https://github.com/Matysh/houseplan-card/blob/main/docs/USER-GUIDE.ru.md'
+      : 'https://github.com/Matysh/houseplan-card/blob/main/docs/USER-GUIDE.md';
+    const compatible = this.host._haIntegrationVersion === CARD_VERSION;
+    const busy = state.status === 'building' || state.status === 'sending';
+    const validation = supportDraftError(state);
+    const preparedMinutes = state.preview
+      ? Math.max(0, Math.floor((Date.now() - state.preview.preparedAt) / 60_000)) : 0;
+    const manualRecovery = state.status === 'error'
+      && !state.errorCode.startsWith('validation.');
+    const contactInvalid = state.errorCode === 'validation.contact_too_long';
+    const messageInvalid = state.errorCode === 'validation.message_required'
+      || state.errorCode === 'validation.message_too_long';
+    return html`<hp-dialog id="support-dialog" .hass=${this.host.hass}
+      .title=${this.host._t('support.title')} icon="mdi:help-circle-outline" wide dismiss-on-scrim
+      @hp-close=${() => void this._closeSupportDialog()}>
+        <div class="body supportbody">
+          <section class="supportsection" aria-labelledby="support-about-heading">
+            <h3 id="support-about-heading">${this.host._t('support.about_group')}</h3>
+            <div class="aboutver">${this.host._t('gs.about_version', { v: CARD_VERSION })}</div>
+            <div class="supportlinks">
+              <a class="aboutlink" href="https://github.com/Matysh/houseplan-card" target="_blank" rel="noopener noreferrer">
+                <ha-icon icon="mdi:github"></ha-icon>${this.host._t('gs.about_github')}</a>
+              <a class="aboutlink" href="https://t.me/ha_houseplan" target="_blank" rel="noopener noreferrer">
+                <ha-icon icon="mdi:send"></ha-icon>${this.host._t('gs.about_telegram')}</a>
+            </div>
+          </section>
+          <section class="supportsection" aria-labelledby="support-docs-heading">
+            <h3 id="support-docs-heading">${this.host._t('support.guide_group')}</h3>
+            <a class="aboutlink" href=${guideUrl} target="_blank" rel="noopener noreferrer">
+              <ha-icon icon="mdi:book-open-page-variant-outline"></ha-icon>${this.host._t('support.guide')}</a>
+          </section>
+          ${compatible ? html`
+            <section class="supportsection supportform" aria-labelledby="support-form-heading">
+              <h3 id="support-form-heading">${this.host._t('support.form_group')}</h3>
+              <label for="support-contact">${this.host._t('support.contact')}</label>
+              <input id="support-contact" class="namein" type="text" autocomplete="off"
+                aria-invalid=${contactInvalid ? 'true' : 'false'}
+                aria-describedby=${contactInvalid ? 'support-error' : nothing}
+                .value=${state.contact} ?disabled=${busy || state.status === 'success'}
+                @input=${(event: Event) => this._updateSupportDraft(
+                  'contact', (event.target as HTMLInputElement).value,
+                )} />
+              <label for="support-message">${this.host._t('support.message')}</label>
+              <textarea id="support-message" class="supportmessage" required
+                aria-invalid=${messageInvalid ? 'true' : 'false'}
+                aria-describedby=${messageInvalid ? 'support-error' : nothing}
+                .value=${state.message} ?disabled=${busy || state.status === 'success'}
+                @keydown=${(event: KeyboardEvent) => this._supportMessageKeydown(event)}
+                @input=${(event: Event) => this._updateSupportDraft(
+                  'message', (event.target as HTMLTextAreaElement).value,
+                )}></textarea>
+              <label class="srcrow supportattach">
+                <input type="checkbox" .checked=${state.attach} aria-describedby="support-attach-hint"
+                  ?disabled=${busy || state.status === 'success'}
+                  @change=${(event: Event) => void this._setSupportAttachment(
+                    (event.target as HTMLInputElement).checked,
+                  )} />
+                <span>${this.host._t('support.attach')}</span>
+              </label>
+              <p id="support-attach-hint" class="rhint">${this.host._t('support.attach_hint')}</p>
+              ${state.attach ? html`<p class="supportwarning" role="note">
+                <ha-icon icon="mdi:shield-alert-outline"></ha-icon>
+                <span>${this.host._t('support.geometry_warning')}</span>
+              </p>` : nothing}
+              ${state.status === 'building' ? html`<div class="supportstatus" role="status" aria-live="polite">
+                <ha-icon icon="mdi:progress-clock"></ha-icon>${this.host._t('support.building')}
+              </div>` : nothing}
+              ${state.preview ? html`
+                <div class="supportpreview">
+                  <div class="supportsummary">${this.host._t('support.preview_summary', {
+                    version: state.preview.version,
+                    spaces: state.preview.spaces,
+                    size: supportSizeKiB(state.preview.size),
+                  })}</div>
+                  <div class="supporthash"><span>SHA-256</span><code>${state.preview.sha256}</code></div>
+                  <div class="rhint">${this.host._t('support.prepared', { n: preparedMinutes })}</div>
+                  <details ?open=${state.rawOpen}
+                    @toggle=${(event: Event) => this._supportPatch(state.draftId, {
+                      rawOpen: (event.currentTarget as HTMLDetailsElement).open,
+                    })}>
+                    <summary>${this.host._t('support.show_data')}</summary>
+                    ${state.rawOpen ? html`<textarea class="supportraw" readonly
+                      .value=${state.preview.text}></textarea>` : nothing}
+                  </details>
+                  <div class="supportactions">
+                    <button type="button" class="btn ghost" @click=${() => this._downloadSupportPreview()}>
+                      <ha-icon icon="mdi:download"></ha-icon>${this.host._t('support.download')}
+                    </button>
+                    <button type="button" class="btn ghost" @click=${() => void this._refreshSupportPreview()}
+                      ?disabled=${busy || state.status === 'success'}>
+                      <ha-icon icon="mdi:refresh"></ha-icon>${this.host._t('support.refresh')}
+                    </button>
+                  </div>
+                </div>` : nothing}
+              <p class="rhint supportprivacy">${this.host._t('support.privacy')}</p>
+              ${state.status === 'error' ? html`
+                <div id="support-error" class="supporterror" role="alert" tabindex="-1">
+                  <strong>${this.host._t('support.error_title')}</strong>
+                  <span>${this._supportErrorText(state)}</span>
+                </div>` : nothing}
+              ${state.status === 'error' && state.attach && !state.preview ? html`
+                <div class="supportactions">
+                  <button type="button" class="btn ghost"
+                    @click=${() => void this._refreshSupportPreview()}>
+                    <ha-icon icon="mdi:refresh"></ha-icon>${this.host._t('support.refresh')}
+                  </button>
+                </div>` : nothing}
+              ${manualRecovery ? html`
+                <div class="supportmanual">
+                  <strong>${this.host._t('support.manual_recovery')}</strong>
+                  <div class="supportactions">
+                    <button type="button" class="btn ghost" @click=${() => void this._copySupportText(
+                      state.message, 'support.message_copied',
+                    )}>${this.host._t('support.copy_message')}</button>
+                    ${state.preview ? html`<button type="button" class="btn ghost"
+                      @click=${() => this._downloadSupportPreview()}>${this.host._t('support.download')}</button>` : nothing}
+                    <a class="aboutlink" href="https://t.me/ha_houseplan" target="_blank" rel="noopener noreferrer">Telegram</a>
+                    <a class="aboutlink" href="https://github.com/Matysh/houseplan-card/issues" target="_blank" rel="noopener noreferrer">GitHub</a>
+                  </div>
+                </div>` : nothing}
+              ${state.status === 'success' ? html`
+                <div id="support-receipt" class="supportsuccess" role="status" aria-live="polite" tabindex="-1">
+                  <strong>${this.host._t('support.success', { id: state.reportId })}</strong>
+                  <button type="button" class="btn ghost" @click=${() => void this._copySupportText(
+                    state.reportId, 'support.id_copied',
+                  )}>${this.host._t('support.copy_id')}</button>
+                </div>` : nothing}
+            </section>` : html`
+            <div class="supportupdate" role="status">
+              <ha-icon icon="mdi:update"></ha-icon>
+              <span>${this.host._t('support.update_required')}</span>
+            </div>`}
+        </div>
+        <div class="row supportfooter" slot="footer">
+          <button type="button" class="btn ghost" @click=${() => void this._closeSupportDialog()}>
+            ${this.host._t('btn.close')}
+          </button>
+          <span class="spacer"></span>
+          ${compatible && state.status !== 'success' ? html`
+            <button type="button" class="btn on" @click=${() => void this._submitSupport()}
+              ?disabled=${!supportCanSubmit(state)}>
+              <ha-icon icon="mdi:send"></ha-icon>${state.status === 'sending'
+                ? this.host._t('support.sending')
+                : state.status === 'error' && !validation
+                  ? this.host._t('support.retry') : this.host._t('support.send')}
+            </button>` : nothing}
+        </div>
+    </hp-dialog>`;
+  }
+
 public _preflightDiagnostics(
     preflight: OptimizeGeometryPreflightResult,
     candidate: ServerConfig | null,
@@ -10198,12 +10646,6 @@ public _renderSettingsDialog(): TemplateResult {
               <ha-icon icon="mdi:undo-variant"></ha-icon>${this.host._t('gs.optimize_undo')}
             </button>
           </div>` : nothing}
-          <label class="dispsection">${this.host._t('gs.about_group')}</label>
-          <div class="aboutver">${this.host._t('gs.about_version', { v: CARD_VERSION })}</div>
-          <a class="aboutlink" href="https://github.com/Matysh/houseplan-card" target="_blank" rel="noopener">
-            <ha-icon icon="mdi:github"></ha-icon>${this.host._t('gs.about_github')}</a>
-          <a class="aboutlink" href="https://t.me/ha_houseplan" target="_blank" rel="noopener">
-            <ha-icon icon="mdi:send"></ha-icon>${this.host._t('gs.about_telegram')}</a>
         </div>
         <div class="row" slot="footer">
           <button class="btn ghost" @click=${() =>

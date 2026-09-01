@@ -1,6 +1,6 @@
 # House Plan architecture
 
-Updated: 2026-08-19 (#113 optional space-model lifecycle). The repository = a HACS integration (category **Integration**)
+Updated: 2026-09-02 (#43 private support reports). The repository = a HACS integration (category **Integration**)
 that contains both the backend (`custom_components/houseplan`) and the Lovelace card (`src/` → `dist/`).
 
 ## Styles (#266)
@@ -1617,3 +1617,40 @@ not the feeling that "editor text should be lazy".
   `invalid_partition_opening_jamb_margin` ship structured JSON details, and
   the frontend renders unknown codes localized (code-first, raw messages go
   to the console).
+
+## Private support boundary (#43)
+
+The Help & feedback surface is rendered by the lazy editor runtime even when
+the card remains in View. Its form state is component memory only. About and
+language-routed User Guide links need no backend; report controls are exposed
+only when `houseplan/config/get.integration_version` exactly matches the card.
+
+`houseplan/support/preview` takes bounded frontend capability enums and a
+dialog-scoped random id. Under the shared write lock it loads one coherent
+config/layout pair, validates disposable copies and passes them to
+`support_package.py`. That module is a strict projection boundary: it creates a
+new allowlisted object with package-local pseudonyms, canonical sorted JSON and
+a trailing newline. It never serializes raw storage and then redacts it.
+
+The resulting bytes, SHA-256 and expiry are held in `HouseplanData` memory,
+bound to the HA user and draft for ten minutes. The browser preview, JSON
+download and submit all use those exact bytes. Refresh replaces only the same
+draft; discard and confirmed submit consume the token. Authorization uses the
+same `may_write` policy as every House Plan write.
+
+`houseplan/support/submit` validates text again, resolves only an owned live
+token and calls `support_transport.py`. That transport has one compile-time
+HTTPS URL, disables redirects, bounds timeouts/response bytes and maps every
+remote failure to a stable local code without reflecting response content.
+The relay under `scripts/support-relay/` is independently deployable and is
+excluded from the HACS artifact. It spools before private delivery, enforces
+rate/idempotency limits and is purged on the schedule documented in
+`docs/SUPPORT-PRIVACY.md`.
+
+The three WebSocket commands are:
+
+| Command | Input authority | Result |
+|---|---|---|
+| `houseplan/support/preview` | `may_write`, strict facts + draft id | opaque token, TTL, byte count, SHA-256 and exact JSON text |
+| `houseplan/support/preview/discard` | `may_write`, token owner | idempotent cleanup |
+| `houseplan/support/submit` | `may_write`, text + optional owned token | bounded private report id |
