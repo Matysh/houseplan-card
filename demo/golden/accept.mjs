@@ -63,6 +63,9 @@ const previous = existsSync(manifestPath)
 // байт-в-байт, доказывают, что среда съёмки та же, что у принятого эталона.
 const witnessCheck = goldenWitnessRefusal({
   results: report.results,
+  // #408: от размера матрицы, а не от числа уцелевших эталонов — иначе порог
+  // обходится удалением каталога эталонов.
+  sceneCount: GOLDEN_SCENARIOS.length,
   declared,
   declaredNew,
   previousHashes: previous,

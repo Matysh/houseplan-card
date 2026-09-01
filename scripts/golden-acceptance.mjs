@@ -155,21 +155,36 @@ export const goldenAcceptancePlan = ({
  *
  * Свидетель — необъявленная сцена, чей кандидат совпал с принятым эталоном
  * БАЙТ-В-БАЙТ: `passed` означает лишь «в пределах порога» (#351), а среду
- * доказывает только точное совпадение. Floor — 10 свидетелей или 10% сцен с
- * эталонами, что меньше; матрица без эталонов (первичная съёмка) свидетелей
- * требовать не может — там каждый кадр и так объявляется в `--expect-new`.
+ * доказывает только точное совпадение. Floor — 10 свидетелей или 10% сцен
+ * МАТРИЦЫ, что меньше.
  *
- * Осознанный обход для действительно тотальных перерисовок — `--no-witnesses`
- * с обязательной причиной: она уезжает в манифест эталонов, то есть в артефакт
- * и его git-историю, а не только в историю shell.
+ * Именно матрицы, а не уцелевших на диске эталонов (#408). Прежняя редакция
+ * считала floor от числа сцен со статусом не `missing-baseline`, и у неё был
+ * обход в одну команду: `git rm demo/golden/baselines/*.png` — все сцены
+ * становятся `missing-baseline`, floor обращается в ноль, свидетелей никто не
+ * требует, и чужая съёмка всей матрицы принимается без единого следа причины.
+ * Отказ `goldenAcceptanceRefusal` этого не ловит: он требует, чтобы каждая
+ * новая сцена была объявлена в `--expect-new`, а объявить их все ничто не
+ * мешает. Прежняя редакция объясняла ноль тем, что первичная съёмка свидетелей
+ * иметь не может — верно по факту и неверно по выводу: невозможность
+ * доказательства не отменяет требования, она требует признать это вслух.
+ *
+ * Осознанный обход для действительно тотальных перерисовок и для первичной
+ * съёмки — `--no-witnesses` с обязательной причиной: она уезжает в манифест
+ * эталонов, то есть в артефакт и его git-историю, а не только в историю shell.
  */
-export const goldenWitnessFloor = (baselineCount) => (baselineCount > 0
-  ? Math.min(10, Math.ceil(baselineCount * 0.1))
+/**
+ * Порог по размеру МАТРИЦЫ сцен. Формула та же, что у `docsWitnessFloor`
+ * (комментарий `docs-acceptance.mjs` требует, чтобы они совпадали); менялся
+ * в #408 только источник счётчика.
+ */
+export const goldenWitnessFloor = (sceneCount) => (sceneCount > 0
+  ? Math.min(10, Math.ceil(sceneCount * 0.1))
   : 0);
 
 export const goldenWitnessRefusal = ({
   results, declared = [], declaredNew = [], previousHashes = {},
-  skipWitnesses = false, skipReason = '',
+  skipWitnesses = false, skipReason = '', sceneCount,
 }) => {
   if (skipWitnesses) {
     if (typeof skipReason !== 'string' || !skipReason.trim()) {
@@ -178,9 +193,24 @@ export const goldenWitnessRefusal = ({
     }
     return { refusal: null, witnesses: [], floor: 0 };
   }
+  // Размер матрицы обязателен и не выводится из отчёта: `results.length` у
+  // частичного прогона (`run.mjs --only=…`) меньше матрицы, и floor молча
+  // просел бы — тот же дефект #408 в другой одежде. Отсутствие параметра —
+  // отказ, а не догадка.
+  if (!Number.isInteger(sceneCount) || sceneCount < 0) {
+    return {
+      refusal: 'приёмка не знает размера матрицы сцен: floor свидетелей считать не от чего.'
+        + ' Передайте sceneCount (GOLDEN_SCENARIOS.length) — от числа уцелевших на диске'
+        + ' эталонов его считать нельзя, это обходится удалением эталонов (#408)',
+      witnesses: [],
+      floor: 0,
+    };
+  }
   const accepted = new Set([...declared, ...declaredNew].filter(Boolean));
+  // Свидетелем может быть только сцена с эталоном: сравнивать не с чем. Но
+  // ПОРОГ от этого не зависит — иначе удаление эталонов снижало бы планку.
   const withBaseline = results.filter((result) => result.status !== 'missing-baseline');
-  const floor = goldenWitnessFloor(withBaseline.length);
+  const floor = goldenWitnessFloor(sceneCount);
   const witnesses = withBaseline
     .filter((result) => !accepted.has(result.id)
       && result.status === 'passed'
@@ -192,7 +222,8 @@ export const goldenWitnessRefusal = ({
     return {
       refusal: 'сцен-свидетелей среды недостаточно:'
         + ` ${witnesses.length} из необходимых ${floor}`
-        + ` (эталонных сцен ${withBaseline.length}, объявлено ${accepted.size}).`
+        + ` (сцен в матрице ${sceneCount}, с эталонами ${withBaseline.length},`
+        + ` объявлено ${accepted.size}).`
         + ' Свидетель — необъявленная сцена, совпавшая с эталоном байт-в-байт;'
         + ' именно они доказывают, что среда съёмки та же, что у принятого'
         + ' эталона. Если перерисовка действительно тотальная и осознанная —'
