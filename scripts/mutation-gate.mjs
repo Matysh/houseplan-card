@@ -4306,6 +4306,30 @@ const MUTANT_DEFINITIONS = [
       replace: '        const rolledBack = false;',
     }],
   },
+  {
+    id: 'area-relocation-loses-position-on-refusal',
+    guard: 'npm run bundle:sync && node demo/smoke_area_relocation_safety.mjs',
+    because: 'a rejected provenance write must restore every manual layout point deleted '
+      + 'before config/set, or leave explicit attention when restoration also fails (#403)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '              await this._persistDevicePlacement(id, placement);',
+      replace: '              void id;\n              void placement;',
+    }],
+  },
+  {
+    id: 'area-relocation-clears-whole-history',
+    guard: 'npm run bundle:sync && node demo/smoke_area_relocation_safety.mjs',
+    because: 'moving one marker to a new HA Area must invalidate only that marker\'s commands '
+      + 'instead of silently erasing Undo and Redo for every other marker (#403)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '        const relocating = this._areaRelocationIds;\n'
+        + '        this._devicePositionHistory.removeWhere(({ before, after }) =>\n'
+        + '          relocating.has(before.deviceId) || relocating.has(after.deviceId));',
+      replace: '        this._devicePositionHistory.clear();',
+    }],
+  },
 ];
 
 const mutationCardSource = readFileSync(join(repoRoot, 'src/houseplan-card.ts'), 'utf8');

@@ -5062,7 +5062,9 @@ export class HouseplanCard extends LitElement {
       this._areaRelocationIds = new Set(areaRelocations.relocateIds);
       if (this._areaRelocationIds.size) {
         this._cancelDeviceDrag();
-        this._devicePositionHistory.clear();
+        const relocating = this._areaRelocationIds;
+        this._devicePositionHistory.removeWhere(({ before, after }) =>
+          relocating.has(before.deviceId) || relocating.has(after.deviceId));
         const dialog = this._markerDialog;
         if (dialog?.devId && !dialog.roomTouched && this._areaRelocationIds.has(dialog.devId)) {
           const current = this._devices.find((device) => device.id === dialog.devId);
@@ -5171,6 +5173,7 @@ export class HouseplanCard extends LitElement {
       });
       this._areaRelocationIds = new Set(current.relocateIds);
       const committed = new Set<string>();
+      const deletedPlacements = new Map<string, DevicePlacement>();
       let deleteFailed = false;
       for (const decision of current.decisions) {
         if (!decision.relocate) continue;
@@ -5178,6 +5181,7 @@ export class HouseplanCard extends LitElement {
         try {
           await this._persistDevicePlacement(decision.id, null);
           committed.add(decision.id);
+          if (before) deletedPlacements.set(decision.id, before);
           this._areaRelocationIds.delete(decision.id);
         } catch (error: unknown) {
           deleteFailed = true;
@@ -5236,15 +5240,52 @@ export class HouseplanCard extends LitElement {
             this._serverCfg = { ...this._serverCfg!, settings: restored };
             this._cfgContentFingerprint = contentFingerprint(this._serverCfg);
           }
+          // Config and layout are separate stores, but this lifecycle change is
+          // one user transaction. A rejected provenance write must put every
+          // successfully deleted manual point back before the relocation may
+          // retry. Keep the ids pending while restoring so the stale point
+          // cannot win the render against the authoritative registry Area.
+          for (const id of committed) this._areaRelocationIds.add(id);
+          const restoreFailed = new Set<string>();
+          for (const [id, placement] of deletedPlacements) {
+            try {
+              await this._persistDevicePlacement(id, placement);
+            } catch (restoreError: unknown) {
+              restoreFailed.add(id);
+              this._showToast(this._t('toast.pos_save_failed', {
+                err: this._errText(restoreError),
+              }));
+            }
+          }
           this._areaRelocationSyncKey = '';
           this._regSignature = '';
           const code = error && typeof error === 'object' && 'code' in error
             ? (error as { code?: unknown }).code : undefined;
           if (code === 'conflict') {
             this._showToast(this._t('toast.conflict'));
-            void this._reloadConfigOnly(true);
+            await this._reloadConfigOnly(true);
           } else {
             this._showToast(this._t('toast.cfg_save_failed', { err: this._errText(error) }));
+          }
+          if (restoreFailed.size && this._serverCfg) {
+            const attentionSettings = this._settings;
+            const attention = [...new Set([
+              ...(Array.isArray(attentionSettings.new_device_ids)
+                ? attentionSettings.new_device_ids : []),
+              ...restoreFailed,
+            ])];
+            this._serverCfg = {
+              ...this._serverCfg,
+              settings: { ...attentionSettings, new_device_ids: attention },
+            };
+            this._cfgEpoch++;
+            try {
+              await this._writeConfig();
+            } catch (attentionError: unknown) {
+              this._showToast(this._t('toast.cfg_save_failed', {
+                err: this._errText(attentionError),
+              }));
+            }
           }
         }
       }

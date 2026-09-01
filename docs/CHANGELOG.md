@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- A failed config write while following a device to another Home Assistant
+  Area no longer silently discards its manually placed position: House Plan
+  restores the point before retrying, or marks the marker for attention if the
+  restore also fails. The move now removes Undo/Redo entries only for that
+  marker instead of clearing position history for every device
+  ([#403](https://github.com/Matysh/houseplan-card/issues/403)).
+
 - Confirmations now work before the first space exists: deleting a stored plan
   during onboarding asks, and answers, instead of doing nothing
   ([#402](https://github.com/Matysh/houseplan-card/issues/402)).

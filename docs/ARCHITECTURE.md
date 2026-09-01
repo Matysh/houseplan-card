@@ -110,7 +110,11 @@ the same profiler available between stable promotions.
    `device-area-relocation` resolver. Its pending ids override stale layout in
    both interactive and hosted-static projections immediately; a writer then
    deletes those layout entries before advancing bounded Area provenance in
-   config. Limited registry snapshots are read-only and never infer movement.
+   config. If that config write is rejected, every successfully deleted manual
+   point is restored through the layout store before a retry; a failed restore
+   falls back to the existing attention marker. Relocation invalidates only
+   Undo/Redo commands owned by the moved device. Limited registry snapshots
+   are read-only and never infer movement.
 5. **One modal contract.** Card modals render through `hp-dialog`. In Home
    Assistant it delegates surface semantics and trapping to `ha-dialog`; the
    standalone demo falls back to native `<dialog>`. The wrapper owns the title,

@@ -105,15 +105,20 @@ const res = await page.evaluate(async () => {
       },
     },
   };
-  c._layout = { ...c._layout, d_kettle: { s: 'f1', x: 0.72, y: 0.15 } };
+  const kettlePoint = { s: 'f1', x: 0.72, y: 0.15 };
+  c._layout = { ...c._layout, d_kettle: kettlePoint };
   c._regSignature = '';
   c._maybeRebuildDevices();
   rejectKettleRelocation = true;
   window.__setRegistryArea('device', 'd_kettle', 'living_room');
   await wait(500);
-  const failedConfigRetryable = !c._layout.d_kettle
+  const failedConfigRestoredAndRetryable = c._layout.d_kettle?.s === kettlePoint.s
+    && c._layout.d_kettle?.x === kettlePoint.x
+    && c._layout.d_kettle?.y === kettlePoint.y
     && c._serverCfg.settings.marker_area_snapshot?.d_kettle?.area === 'kitchen'
-    && c._areaRelocationSyncKey === '';
+    && c._areaRelocationSyncKey === ''
+    && calls.some((message) => message.type === 'houseplan/layout/update'
+      && message.device_id === 'd_kettle');
   window.__setRegistryArea('device', 'd_kettle', 'living_room');
   await wait(500);
   await paint();
@@ -326,7 +331,7 @@ const res = await page.evaluate(async () => {
     roomDraftRefreshed,
     noStaleExplicitOverride: !!savedLamp
       && savedLamp.area === undefined && savedLamp.room_id === undefined,
-    failedConfigRetryable,
+    failedConfigRestoredAndRetryable,
     configRetrySucceeded,
     crossSpaceRelocated: crossSpaceDevice?.space === 'f1'
       && crossSpaceDevice?.area === 'living_room'

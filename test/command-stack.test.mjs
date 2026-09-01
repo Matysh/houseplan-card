@@ -29,3 +29,24 @@ test('the configured history cannot be weakened below thirty commands', () => {
   for (let i = 0; i < 35; i++) stack.push({ name: String(i), before: i, after: i + 1 });
   assert.equal(stack.size, 30);
 });
+
+test('selective invalidation removes matching undo and redo without clearing neighbours', () => {
+  const stack = new CommandStack(50);
+  stack.push({ name: 'lamp', before: { deviceId: 'lamp' }, after: { deviceId: 'lamp' } });
+  stack.push({ name: 'sensor', before: { deviceId: 'sensor' }, after: { deviceId: 'sensor' } });
+  stack.push({ name: 'lock', before: { deviceId: 'lock' }, after: { deviceId: 'lock' } });
+  assert.equal(stack.undo()?.name, 'lock');
+
+  assert.equal(
+    stack.removeWhere(({ before }) => before.deviceId === 'sensor'),
+    1,
+  );
+  assert.equal(stack.undoName, 'lamp');
+  assert.equal(stack.redoName, 'lock');
+  assert.equal(stack.canUndo, true);
+  assert.equal(stack.canRedo, true);
+
+  assert.equal(stack.removeWhere(({ after }) => after.deviceId === 'lock'), 1);
+  assert.equal(stack.canRedo, false);
+  assert.equal(stack.undo()?.name, 'lamp');
+});

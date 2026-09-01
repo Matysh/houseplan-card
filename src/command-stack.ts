@@ -48,6 +48,15 @@ export class CommandStack<T> {
     return command;
   }
 
+  /** Remove commands invalidated by an external change while preserving unrelated history. */
+  public removeWhere(predicate: (command: NamedCommand<T>) => boolean): number {
+    const undoSize = this._undo.length;
+    const redoSize = this._redo.length;
+    this._undo = this._undo.filter((command) => !predicate(command));
+    this._redo = this._redo.filter((command) => !predicate(command));
+    return undoSize + redoSize - this._undo.length - this._redo.length;
+  }
+
   public clear(): void {
     this._undo = [];
     this._redo = [];
