@@ -1,0 +1,35 @@
+# Инстанс приёмщика: %i — имя окружения (prod | staging).
+# Конфиг: /etc/hp-support-relay/%i.env, спул: /var/lib/hp-support-relay/%i
+[Unit]
+Description=House Plan support relay (%i)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=hprelay
+Group=hprelay
+EnvironmentFile=/etc/hp-support-relay/%i.env
+ExecStart=/usr/bin/python3 /opt/hp-support-relay/relay.py
+Restart=on-failure
+RestartSec=5
+
+# Сервис слушает только петлю, наружу ходит лишь к API доставки.
+NoNewPrivileges=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_INET AF_INET6
+RestrictNamespaces=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+MemoryMax=256M
+TasksMax=64
+ReadWritePaths=/var/lib/hp-support-relay/%i
+
+[Install]
+WantedBy=multi-user.target

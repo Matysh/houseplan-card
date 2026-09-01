@@ -1,0 +1,14 @@
+# Ретеншн: удаляет отчёты старше HP_RELAY_RETENTION_DAYS и метаданные старше суток.
+[Unit]
+Description=House Plan support relay retention (%i)
+
+[Service]
+Type=oneshot
+User=hprelay
+Group=hprelay
+EnvironmentFile=/etc/hp-support-relay/%i.env
+ExecStart=/usr/bin/python3 /opt/hp-support-relay/relay.py purge
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/var/lib/hp-support-relay/%i
