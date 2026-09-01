@@ -4400,6 +4400,24 @@ const MUTANT_DEFINITIONS = [
       replace: '        this._devicePositionHistory.clear();',
     }],
   },
+  {
+    id: 'support-timeout-claims-success',
+    guard: 'node demo/smoke_support_feedback.mjs',
+    because: 'a relay timeout, rate limit or unknown command must preserve the draft and expose '
+      + 'manual recovery; claiming success loses the report while telling the user it was sent (#43)',
+    patches: [{
+      file: 'src/houseplan-editor-runtime.ts',
+      find: "    } catch (error: unknown) {\n"
+        + "      if (!this._supportPatch(current.draftId, {\n"
+        + "        status: 'error',\n"
+        + '        errorCode: supportErrorCode(error),',
+      replace: "    } catch (error: unknown) {\n"
+        + "      if (!this._supportPatch(current.draftId, {\n"
+        + "        status: 'success',\n"
+        + "        reportId: 'HP-FALSE-SUCCESS',\n"
+        + "        errorCode: '',",
+    }],
+  },
 ];
 
 const mutationCardSource = readFileSync(join(repoRoot, 'src/houseplan-card.ts'), 'utf8');
