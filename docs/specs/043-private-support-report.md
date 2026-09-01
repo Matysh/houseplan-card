@@ -419,6 +419,18 @@ report is written to the relay spool **before** delivery is attempted, so a fail
 delivery costs a promise, not the user's request. No public issue is created and no
 e-mail provider participates.
 
+**Two delivery channels, chosen by deployment.** `telegram` posts to the Bot API
+directly. `ha_webhook` posts the summary to a private webhook of the maintainer's
+own Home Assistant, which performs the last mile. The second channel exists
+because the project node runs at a Russian hosting provider where every
+`api.telegram.org` address is unreachable — direct delivery failed with «Network
+is unreachable», not with a provider error. On this channel the package stays in
+the relay spool and the summary names its path: the webhook carries text only,
+so the address (which is its own access key) stays cheap to rotate, and the
+geometry of a stranger's home does not travel through a messenger. Either
+channel keeps the same contract: nothing is promised to the user until delivery
+is confirmed.
+
 Production URL is an immutable backend constant supplied after relay deployment.
 No placeholder, localhost URL or configurable arbitrary endpoint may pass release
 gates. A staging relay and exact production URL are dependencies of S5/implementation;
@@ -445,7 +457,8 @@ and reviewed as a security trade-off; a hard-coded shared key is explicitly forb
 
 - Relay stores the accepted report (message, contact, safe metadata and the
   attachment) in a spool readable only by its own system user, and a daily timer
-  deletes everything older than **30 days**; maintainers may delete earlier.
+  deletes everything older than **30 days**; maintainers may delete earlier. On
+  the `ha_webhook` channel the attachment never leaves that spool.
   Storage is the price of the chosen channel: Telegram delivery leaves no archive
   the project controls, so the deletion rule has to live where the project can
   enforce and prove it.
@@ -609,7 +622,8 @@ available and recorded in #43:
 
 1. project-controlled relay deployment target and production HTTPS hostname;
 2. private maintainer channel and its delivery credentials stored only in the
-   relay environment, as a path to a secret file rather than a value;
+   relay environment, as a path to a secret file rather than a value — for the
+   `ha_webhook` channel the webhook address is that credential;
 3. configured and running 30-day deletion of the relay spool;
 4. staging endpoint usable by CI without production delivery;
 5. named maintainer responsible for relay alerts/disable switch.

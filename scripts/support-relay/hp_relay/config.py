@@ -32,15 +32,21 @@ class Config:
     port: int
     spool: Path
     mode: str               # 'deliver' | 'discard'
+    channel: str            # 'telegram' | 'ha_webhook'
     enabled: bool
     retention_days: int
     telegram_token: str     # пусто = доставка выключена
     telegram_chat_id: str
+    webhook_url: str        # адрес вебхука Home Assistant (секрет: он же ключ доступа)
     trusted_proxy: bool     # брать источник из X-Forwarded-For
 
     @property
     def delivers(self) -> bool:
-        return self.mode == "deliver" and bool(self.telegram_token and self.telegram_chat_id)
+        if self.mode != "deliver":
+            return False
+        if self.channel == "ha_webhook":
+            return bool(self.webhook_url)
+        return bool(self.telegram_token and self.telegram_chat_id)
 
 
 def _read_secret(path_value: str) -> str:
@@ -57,16 +63,21 @@ def load(env: dict[str, str] | None = None) -> Config:
     mode = env.get("HP_RELAY_MODE", "discard").strip().lower()
     if mode not in {"deliver", "discard"}:
         raise ValueError("HP_RELAY_MODE must be 'deliver' or 'discard'")
+    channel = env.get("HP_RELAY_CHANNEL", "telegram").strip().lower()
+    if channel not in {"telegram", "ha_webhook"}:
+        raise ValueError("HP_RELAY_CHANNEL must be 'telegram' or 'ha_webhook'")
     spool = Path(env.get("HP_RELAY_SPOOL", "/var/lib/hp-support-relay"))
     return Config(
         port=int(env.get("HP_RELAY_PORT", "8130")),
         spool=spool,
         mode=mode,
+        channel=channel,
         # Рубильник §19 ТЗ: выключенный relay обязан отвечать единообразным 503,
         # а не принимать отчёты и терять их.
         enabled=env.get("HP_RELAY_ENABLED", "1").strip() not in {"0", "false", "no"},
         retention_days=int(env.get("HP_RELAY_RETENTION_DAYS", "30")),
         telegram_token=_read_secret(env.get("HP_RELAY_TELEGRAM_TOKEN_FILE", "")),
         telegram_chat_id=env.get("HP_RELAY_TELEGRAM_CHAT_ID", "").strip(),
+        webhook_url=_read_secret(env.get("HP_RELAY_WEBHOOK_URL_FILE", "")),
         trusted_proxy=env.get("HP_RELAY_TRUSTED_PROXY", "1").strip() not in {"0", "false", "no"},
     )

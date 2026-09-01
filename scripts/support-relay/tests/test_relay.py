@@ -309,6 +309,79 @@ class RelayTestCase(unittest.TestCase):
         self.assertEqual(config.RATE_TTL_SECONDS, 24 * 3600)
 
 
+class WebhookChannelTestCase(unittest.TestCase):
+    """Канал «через Home Assistant»: что уходит и что остаётся."""
+
+    def setUp(self) -> None:
+        self._tmp = TemporaryDirectory()
+        secret = Path(self._tmp.name) / "webhook.url"
+        secret.write_text("https://ha.example/api/webhook/xyz\n", encoding="utf-8")
+        self.cfg = config.load({
+            "HP_RELAY_SPOOL": str(Path(self._tmp.name) / "spool"),
+            "HP_RELAY_MODE": "deliver",
+            "HP_RELAY_CHANNEL": "ha_webhook",
+            "HP_RELAY_WEBHOOK_URL_FILE": str(secret),
+        })
+
+    def tearDown(self) -> None:
+        self._tmp.cleanup()
+
+    def test_channel_is_live_with_only_the_webhook_url(self):
+        self.assertTrue(self.cfg.delivers)
+        self.assertIsInstance(delivery.build(self.cfg), delivery.HaWebhookDelivery)
+
+    def test_webhook_sends_text_and_keeps_the_package_on_the_node(self):
+        posted: list[tuple[str, bytes, str]] = []
+        real = delivery._post
+        delivery._post = lambda url, body, ctype: (posted.append((url, body, ctype)), (200, b"ok"))[1]
+        try:
+            channel = delivery.HaWebhookDelivery(self.cfg.webhook_url)
+            result = channel.send("hpr-42", {"message": "сломалось", "attachment_size": 12,
+                                             "spool_path": "/var/lib/x/hpr-42"}, b"{}")
+        finally:
+            delivery._post = real
+        self.assertTrue(result.ok)
+        url, body, ctype = posted[0]
+        self.assertEqual(url, "https://ha.example/api/webhook/xyz")
+        self.assertEqual(ctype, "application/json")
+        payload = json.loads(body)
+        self.assertEqual(payload["source"], "houseplan-support-relay")   # условие автоматизации
+        self.assertIn("сломалось", payload["text"])
+        self.assertIn("/var/lib/x/hpr-42", payload["text"])              # где искать пакет
+        self.assertNotIn("attachment_bytes", payload)                    # сам пакет не уходит
+        self.assertEqual(sorted(payload), ["report_id", "source", "text"])
+
+    def test_webhook_failure_is_not_reported_as_success(self):
+        real = delivery._post
+        delivery._post = lambda url, body, ctype: (502, b"bad gateway")
+        try:
+            result = delivery.HaWebhookDelivery(self.cfg.webhook_url).send("hpr-1", {"message": "x"}, None)
+        finally:
+            delivery._post = real
+        self.assertFalse(result.ok)
+        self.assertIn("502", result.detail)
+
+
+class DeliveryTransportTestCase(unittest.TestCase):
+    """Транспорт доставки: узел без IPv6 не должен молча висеть."""
+
+    def test_connect_asks_for_ipv4_addresses_only(self):
+        seen: list[int] = []
+        real = delivery.socket.getaddrinfo
+
+        def fake(host, port, family=0, *args, **kwargs):
+            seen.append(family)
+            return real("127.0.0.1", port, family, *args, **kwargs)
+
+        delivery.socket.getaddrinfo = fake
+        try:
+            with self.assertRaises(OSError):
+                delivery._connect_ipv4(("example.invalid", 9), 0.2)
+        finally:
+            delivery.socket.getaddrinfo = real
+        self.assertEqual(seen, [delivery.socket.AF_INET])
+
+
 class HttpSurfaceTestCase(unittest.TestCase):
     """Проверки, которые живут только на транспортном уровне."""
 
