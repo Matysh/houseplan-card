@@ -4,7 +4,7 @@
   "chromium": "151.0.7922.34",
   "oxipng": "oxipng 10.2.0",
   "sourceFingerprint": "7faa6c2eb29239ed511cc4b351d1f0f38b3fff92cf2039b77b823ef090528a4d",
-  "captureScriptSha256": "9229c467130e1f3d3abd042e2dcabaca9d4d5a918d0d77eadc814848df597ba6",
+  "captureScriptSha256": "135dd9a566653b05cae3010d7861fca6453daef0ecdcdf1ba10059e65f0d4de8",
   "command": "npm run build && node demo/docs/capture.mjs",
   "scenarios": {
     "view-desktop": {
@@ -16,7 +16,7 @@
       "theme": "dark",
       "language": "en",
       "sourceSha256": "7faa6c2eb29239ed511cc4b351d1f0f38b3fff92cf2039b77b823ef090528a4d",
-      "imageSha256": "9119ab87502038f787529f621c39e1e0d01f3bc3b0289051c3791a1886e97a6b"
+      "imageSha256": "f4ecb7fd1f107ccda6c8a1e90be1bce0f2690f93e5e42776ca783297f4143135"
     },
     "view-touch": {
       "file": "02-view-touch.png",
@@ -27,7 +27,7 @@
       "theme": "dark",
       "language": "en",
       "sourceSha256": "7faa6c2eb29239ed511cc4b351d1f0f38b3fff92cf2039b77b823ef090528a4d",
-      "imageSha256": "21c6fe7d79ff5c878ade8e98a64cc90dfd7bcc66338c864fb5a0bd411471313d"
+      "imageSha256": "946801f6475a40c0e31a70e4b67eaa34c6f70df5329a63915f445e6e4811ca6a"
     },
     "space-create": {
       "file": "03-space-create.png",
@@ -38,7 +38,7 @@
       "theme": "dark",
       "language": "en",
       "sourceSha256": "7faa6c2eb29239ed511cc4b351d1f0f38b3fff92cf2039b77b823ef090528a4d",
-      "imageSha256": "fb32ea4a785fedb0e99b0bca6dbcf19022b32ced763ed875a57eb453be550bf5"
+      "imageSha256": "617b51b3648498787b5039980c9f3eceb75ba56ed63a1a20e616bc05bc304362"
     },
     "room-contour-close": {
       "file": "04-room-contour-close.png",
@@ -49,7 +49,7 @@
       "theme": "dark",
       "language": "en",
       "sourceSha256": "7faa6c2eb29239ed511cc4b351d1f0f38b3fff92cf2039b77b823ef090528a4d",
-      "imageSha256": "75e0bc3dedff68e29be46531df0cc205f69988e86229580cc021017932049b34"
+      "imageSha256": "9a79b7e517741e74701d1172ec3c66a340aaa9049a7f7a7b2fe86f4c3a2eccf0"
     },
     "plan-context-tray": {
       "file": "05-plan-context-tray.png",
@@ -60,7 +60,7 @@
       "theme": "dark",
       "language": "en",
       "sourceSha256": "7faa6c2eb29239ed511cc4b351d1f0f38b3fff92cf2039b77b823ef090528a4d",
-      "imageSha256": "5fc29f4a71572ed43221131cd6e5f9a3da19fcc9bf63c879b12664bee98e292a"
+      "imageSha256": "8fb569f326627700e08156c1ca35a4042bcb529a955663b54228d04357c881d0"
     },
     "device-editor": {
       "file": "06-device-editor.png",
@@ -71,7 +71,7 @@
       "theme": "dark",
       "language": "en",
       "sourceSha256": "7faa6c2eb29239ed511cc4b351d1f0f38b3fff92cf2039b77b823ef090528a4d",
-      "imageSha256": "49e14ee30284b44bc914a67c368abef6d8ac26ef320079e985f1edd36c7985d7"
+      "imageSha256": "720fc3aa2070d1fcf6907091941751c623f30cc6a001ff95e22de9be998136df"
     },
     "device-display-preview": {
       "file": "06-device-display-preview.png",
@@ -82,7 +82,7 @@
       "theme": "dark",
       "language": "en",
       "sourceSha256": "7faa6c2eb29239ed511cc4b351d1f0f38b3fff92cf2039b77b823ef090528a4d",
-      "imageSha256": "7185c75cf0e3629c7bc880381d1eab1d1f67a2484ca3d17e86ad53e0ed6387c8"
+      "imageSha256": "b2294c6de0b18ef386b5a2d18422a866b84d095f133d31e56e307664e31e5bc0"
     },
     "background-editor": {
       "file": "07-background-editor.png",
@@ -93,7 +93,7 @@
       "theme": "dark",
       "language": "en",
       "sourceSha256": "7faa6c2eb29239ed511cc4b351d1f0f38b3fff92cf2039b77b823ef090528a4d",
-      "imageSha256": "3d0d088f89da53a73efd13ef5bb5403f407011ab918e88671974459b5967ca25"
+      "imageSha256": "8dbc5864124c4bddbe076722a1503e666c40f432cfe7fff86e6d196c428365f3"
     },
     "room-card": {
       "file": "08-room-card.png",
@@ -104,7 +104,7 @@
       "theme": "dark",
       "language": "en",
       "sourceSha256": "7faa6c2eb29239ed511cc4b351d1f0f38b3fff92cf2039b77b823ef090528a4d",
-      "imageSha256": "93d88ed84e2e3f9071e94e4b74cc3f3a86c7f898a76d1fb26bcc499e7dc4f538"
+      "imageSha256": "d09709ae1479cfaa1902068cb2a6015dfee3b58f1bbd349bafaa2c0592812463"
     },
     "device-info": {
       "file": "09-device-info.png",
@@ -115,14 +115,24 @@
       "theme": "dark",
       "language": "en",
       "sourceSha256": "7faa6c2eb29239ed511cc4b351d1f0f38b3fff92cf2039b77b823ef090528a4d",
-      "imageSha256": "4d2257e49b28d3be517ed382269569b0e3bc18cec9d84d56b5f407c505a9b398"
+      "imageSha256": "c0b20a31c2987c8737e7b746c7d358e6c97231ea7e06d73050a2d3aebb216558"
     }
   },
   "acceptance": {
     "declared": [
-      "device-editor"
+      "view-desktop",
+      "view-touch",
+      "space-create",
+      "room-contour-close",
+      "plan-context-tray",
+      "device-editor",
+      "device-display-preview",
+      "background-editor",
+      "room-card",
+      "device-info"
     ],
-    "witnesses": 9,
-    "floor": 1
+    "witnesses": 0,
+    "floor": 1,
+    "witnessesSkippedBecause": "сменились флаги растеризации и обрезка стала целой (#410)"
   }
 }
