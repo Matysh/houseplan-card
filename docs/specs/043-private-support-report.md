@@ -100,7 +100,8 @@ Telegram share и `mailto:` не умеют без ручного шага пр�
 - preview-token, гарантирующий «просмотренные байты = отправленные байты»;
 - backend submit в фиксированный project-controlled relay;
 - минимальный deployable relay, который валидирует payload, ограничивает abuse и
-  пересылает обращение в закрытый support-mailbox;
+  доставляет обращение мейнтейнеру в закрытый канал и хранит его на узле
+  проекта;
 - privacy notice, rate limit, retention и документированный ручной recovery;
 - RU/EN/DE/FR i18n, unit/backend/receiver/smoke/golden/touch/security tests;
 - обновление пользовательской и архитектурной документации.
@@ -409,10 +410,14 @@ service (runtime, manifest, tests and deployment README) in this subtree makes
 every relay-only commit class B under `AGENTS.md` / `PROCESS.md`; a product commit
 that also changes `src/**` remains A+B and follows the stricter class-A flow. The
 service exposes only `POST /v1/reports` and `GET /health`. Secrets exist only in
-its deployment environment. The minimal production sink is a **private support
-mailbox** through a transactional-mail API: subject contains the generated report
-id; body contains escaped plain-text message/contact and safe metadata; support
-JSON is an attachment. No public issue is created.
+its deployment environment. The production sink is a **private maintainer channel
+in Telegram** (owner's decision, 2026-09-01): the summary message carries the
+generated report id, safe versions and the escaped plain-text message/contact, and
+the support JSON is attached as a document. Markup mode is never enabled, so the
+user's text is displayed literally and cannot forge the surrounding message. The
+report is written to the relay spool **before** delivery is attempted, so a failed
+delivery costs a promise, not the user's request. No public issue is created and no
+e-mail provider participates.
 
 Production URL is an immutable backend constant supplied after relay deployment.
 No placeholder, localhost URL or configurable arbitrary endpoint may pass release
@@ -438,13 +443,16 @@ and reviewed as a security trade-off; a hard-coded shared key is explicitly forb
 
 ### 9.3 Retention and disclosure
 
-- Relay does not persist request bodies after the mail provider accepts them.
-- Private support mailbox automatically deletes message, contact and attachment
-  after **30 days**; maintainers may delete earlier.
+- Relay stores the accepted report (message, contact, safe metadata and the
+  attachment) in a spool readable only by its own system user, and a daily timer
+  deletes everything older than **30 days**; maintainers may delete earlier.
+  Storage is the price of the chosen channel: Telegram delivery leaves no archive
+  the project controls, so the deletion rule has to live where the project can
+  enforce and prove it.
 - Idempotency record contains report id/status/hash only and expires after 24 h.
 - UI privacy notice says: exact geometry and optional contact leave the user's HA,
-  transit the project relay/mail provider, are visible to maintainers and are kept
-  up to 30 days; network infrastructure necessarily sees the HA server address,
+  transit the project relay and the maintainer messenger, are visible to
+  maintainers and are kept on the project node up to 30 days; network infrastructure necessarily sees the HA server address,
   but House Plan does not retain it raw.
 - Sending remains explicit opt-in; opening the dialog or building preview never
   contacts the external relay.
@@ -489,7 +497,7 @@ is exact per §4; semantic translations use the same examples. User Guide routin
 depends only on effective language: RU gets RU, every other locale gets EN.
 
 Do not localize schema keys, error codes, format/version, hashes or report ids.
-Relay mailbox subject/body uses English stable field labels so support tooling can
+Relay summary message uses English stable field labels so support tooling can
 parse them; user message/contact remain verbatim plain text.
 
 ## 13. Acceptance criteria and evidence
@@ -507,7 +515,7 @@ parse them; user message/contact remain verbatim plain text.
 | AC9 | Only `may_write` can preview/submit; token cannot be read, discarded or sent by another user/entry. | HA websocket authorization tests. |
 | AC10 | Expired/replaced/discarded tokens fail; config changes after preview do not change cached bytes. | Fake-clock backend tests. |
 | AC11 | Submit is HTTPS/fixed-host/no-redirect, bounded and idempotent; logs contain no message/contact/body. | Stub aiohttp server + caplog + SSRF/redirect tests. |
-| AC12 | Relay enforces schema, size, hash, idempotency and rate limits; HTML remains inert plain text. | Receiver unit/integration suite with fake mail provider. |
+| AC12 | Relay enforces schema, size, hash, idempotency and rate limits; HTML remains inert plain text. | Receiver unit/integration suite with a recording fake provider. |
 | AC13 | Success shows stable report id; timeout/error preserves form and exposes retry/manual recovery without claiming success. | Browser smoke across success/429/timeout/unknown command. |
 | AC14 | Phone/tablet dialog, keyboard/focus and 44 px target satisfy View touch/accessibility contract. | Reviewed desktop + phone + tablet goldens and touch smoke. |
 | AC15 | No existing backup/diagnostics/preflight behavior or payload changes. | Existing targeted frontend/backend suites unchanged. |
@@ -546,7 +554,7 @@ parse them; user message/contact remain verbatim plain text.
 - HTML/header injection and Unicode controls remain plain text;
 - raw IP and provider secrets absent from logs;
 - fake provider verifies exact attachment bytes and escaped body;
-- deployment config test enforces 30-day mailbox retention and 24-hour
+- deployment config test enforces 30-day spool retention and 24-hour
   idempotency/rate-key expiry.
 
 ### 14.4 Mutation requirements
@@ -584,7 +592,7 @@ Mutation gate must prove at least:
    idempotency; no fake embedded secret.
 4. **Endpoint becomes an SSRF proxy.** Immutable HTTPS URL, redirects off, bounded
    response, no user-configured host.
-5. **Email/provider leak.** Private mailbox, plain text, documented provider,
+5. **Channel/provider leak.** Private channel, plain text, documented provider,
    limited retention, secret/log scans.
 6. **Preview differs from sent data.** Backend caches sanitized bytes by owned TTL
    token; submit never rebuilds.
@@ -600,9 +608,9 @@ Before product implementation begins, the following external facts must be
 available and recorded in #43:
 
 1. project-controlled relay deployment target and production HTTPS hostname;
-2. private support mailbox and transactional-mail provider credentials stored only
-   in the relay environment;
-3. configured 30-day deletion rule;
+2. private maintainer channel and its delivery credentials stored only in the
+   relay environment, as a path to a secret file rather than a value;
+3. configured and running 30-day deletion of the relay spool;
 4. staging endpoint usable by CI without production delivery;
 5. named maintainer responsible for relay alerts/disable switch.
 
@@ -615,8 +623,8 @@ code must not invent a public fallback or embed credentials.
 - `docs/USER-GUIDE.md` and `.ru.md`: button, fields, geometry warning, preview,
   receipt/manual fallback;
 - `docs/ARCHITECTURE.md`: package boundary, preview-token, outbound relay;
-- new `docs/SUPPORT-PRIVACY.md`: exact allowlist/exclusions, provider, retention,
-  rate-limit network metadata and deletion/contact path;
+- new `docs/SUPPORT-PRIVACY.md`: exact allowlist/exclusions, delivery channel,
+  spool retention, rate-limit network metadata and deletion/contact path;
 - `docs/TESTING.md`: support package/relay/golden commands;
 - `scripts/support-relay/README.md`: deployment/runbook, health/disable/secret
   rotation; relay runtime, manifest and tests remain inside this class-B subtree;
@@ -632,7 +640,7 @@ code must not invent a public fallback or embed credentials.
   migration remains.
 - Disable relay endpoint first; clients receive retryable `support_unavailable`
   and retain manual download path.
-- Existing emails follow the already disclosed 30-day deletion rule; rollback
+- Reports already delivered follow the disclosed 30-day deletion rule; rollback
   never silently extends retention.
 - Relay can stay deployed but disabled while old card versions disappear. It must
   return uniform 503, not accept and drop reports.
@@ -644,7 +652,8 @@ code must not invent a public fallback or embed credentials.
 Эти решения не меняют согласованный пользовательский контракт и могут быть
 скорректированы ревьюером без нового вопроса владельцу:
 
-- transport sink — private email inbox через serverless relay, а не private issue;
+- transport sink — приватный канал мейнтейнера в Telegram через relay проекта,
+  а не private issue и не почтовый ящик (решение владельца 2026-09-01);
 - support runtime остаётся в существующем lazy editor chunk;
 - preview bytes кешируются только в памяти backend;
 - attachment — canonical uncompressed JSON, чтобы preview/download/send были
