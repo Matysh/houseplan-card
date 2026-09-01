@@ -103,7 +103,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#40](https://github.com/Matysh/houseplan-card/issues/40) Floors/Areas onboarding | [040-floor-area-onboarding.md](040-floor-area-onboarding.md) |
 | [#41](https://github.com/Matysh/houseplan-card/issues/41) Keyboard object editing | [041-keyboard-object-editing.md](041-keyboard-object-editing.md) |
 | [#42](https://github.com/Matysh/houseplan-card/issues/42) Backend engineering quality | [042-backend-engineering-quality.md](042-backend-engineering-quality.md) |
-| [#43](https://github.com/Matysh/houseplan-card/issues/43) Private support report | [043-private-support-report.md](043-private-support-report.md) |
+| [#43](https://github.com/Matysh/houseplan-card/issues/43) Help/feedback and private support package | [043-private-support-report.md](043-private-support-report.md) |
 | [#44](https://github.com/Matysh/houseplan-card/issues/44) Filtering/grouping policy | [044-filter-grouping-policy.md](044-filter-grouping-policy.md) |
 | [#51](https://github.com/Matysh/houseplan-card/issues/51) Custom decor images | [051-custom-decor-images.md](051-custom-decor-images.md) |
 | [#52](https://github.com/Matysh/houseplan-card/issues/52) Dimensions in View | [052-view-dimensions.md](052-view-dimensions.md) |
