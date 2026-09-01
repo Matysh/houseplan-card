@@ -1,5 +1,5 @@
 // Smoke: houseplan-space-card renders a live, non-interactive schematic + deep-link button.
-import { launch } from './serve.mjs';
+import { launch, reportPageErrors } from './serve.mjs';
 const { page, browser } = await launch({ width: 900, height: 900 }, 1);
 const res = await page.evaluate(async () => {
   await customElements.whenDefined('houseplan-space-card');
@@ -243,5 +243,8 @@ const ok =
   typeof res.deepLink === 'string' && res.deepLink.includes('#space=') &&
   res.errorShown;
 console.log(JSON.stringify(res));
+// #407: своя развязка про исключения в карточке не спрашивает. Вердикт обязан
+// именно остановить: иначе строка успеха печатается после «FAILED».
+if (reportPageErrors()) process.exit(1);
 if (!ok) { console.error('FAIL space-card smoke'); process.exit(1); }
 console.log('OK space-card: live shared marker face, pointer-events:none, deep-link button, error card');

@@ -1,5 +1,5 @@
 /** Regression smoke for #59: a modal must terminate the held view gesture. */
-import { launch } from './serve.mjs';
+import { launch, reportPageErrors } from './serve.mjs';
 
 const { page, browser } = await launch({ width: 1000, height: 820 }, 1);
 try {
@@ -63,6 +63,10 @@ try {
   });
   if (!Object.values(result).every(Boolean))
     throw new Error(`long-press gesture regression: ${JSON.stringify(result)}`);
+  // #407: проверки выше бросают на своей регрессии, но про исключения внутри
+  // карточки не спрашивает ни одна. Бросаем и здесь — тогда `finally` закроет
+  // браузер, а строка успеха не напечатается после «FAILED».
+  if (reportPageErrors()) throw new Error('uncaught exception inside the card — see EXC above');
   console.log(JSON.stringify({ ok: true, ...result }));
 } finally {
   await browser.close();

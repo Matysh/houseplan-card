@@ -1,5 +1,5 @@
 // Smoke: the full houseplan-card honours the #space=<id> deep-link (hashchange).
-import { launch } from './serve.mjs';
+import { launch, reportPageErrors } from './serve.mjs';
 const { page, browser } = await launch({ width: 820, height: 760 }, 1);
 const res = await page.evaluate(async () => {
   const card = window.__card;
@@ -22,5 +22,8 @@ const res = await page.evaluate(async () => {
 await browser.close();
 const ok = res.after === res.target && res.afterBad === res.target;
 console.log(JSON.stringify(res));
+// #407: своя развязка про исключения в карточке не спрашивает. Вердикт обязан
+// именно остановить: иначе строка успеха печатается после «FAILED».
+if (reportPageErrors()) process.exit(1);
 if (!ok) { console.error('FAIL deeplink smoke'); process.exit(1); }
 console.log('OK deep-link: full card switches to #space=<id>, ignores invalid ids');

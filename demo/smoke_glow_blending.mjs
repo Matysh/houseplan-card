@@ -1,6 +1,6 @@
 /** Browser pixel smoke for the isolated additive group (#19). */
 import { readFileSync } from 'node:fs';
-import { launch } from './serve.mjs';
+import { launch, reportPageErrors } from './serve.mjs';
 
 const fixture = JSON.parse(readFileSync(
   new URL('../test/fixtures/glow/additive-pools.json', import.meta.url), 'utf8',
@@ -218,6 +218,10 @@ try {
     throw new Error(`custom data fill changed: ${out.customFill}/${out.customOpacity}`);
   if (out.customBase || out.customBaseTunnel || !out.customLayerOrder)
     throw new Error(`data fill was tinted/reordered by Glow base: full=${out.customBase}, tunnel=${out.customBaseTunnel}, order=${out.customLayerOrder}`);
+  // #407: проверки выше бросают на своей регрессии, но про исключения внутри
+  // карточки не спрашивает ни одна. Бросаем и здесь — тогда `finally` закроет
+  // браузер, а строка успеха не напечатается после «FAILED».
+  if (reportPageErrors()) throw new Error('uncaught exception inside the card — see EXC above');
   console.log(JSON.stringify({ ok: true, blend: out.blend, pools: out.pools, staticParity: true, staticPools: out.staticPools }));
 } finally {
   await browser.close();

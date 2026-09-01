@@ -5,7 +5,7 @@
 // and `await import(entry)` + `createElement(...).setConfig(...)` stays valid.
 import { readFileSync } from 'node:fs';
 import { chromium } from 'playwright';
-import { check, checkAll } from './serve.mjs';
+import { check, checkAll, finish } from './serve.mjs';
 
 const entry = readFileSync('dist/houseplan-card.js');
 const page404 = `<!doctype html><meta charset="utf-8"><body><script type="module">
@@ -52,5 +52,9 @@ const out = {
     && fr.text.includes('recharger la page'),
 };
 checkAll(out);
-check('smoke_entry_stale', Object.values(out).every(Boolean));
-if (Object.values(out).every(Boolean)) console.log('OK');
+// #407: до этого смок не мог провалиться в принципе. `check`/`checkAll`
+// складывали неудачи в `_failures`, но их никто не печатал и код возврата не
+// выставлял — ровно тот паттерн «печатали булевы значения и всегда выходили
+// нулём», который описан в шапке serve.mjs как исправленный в 2026-07-27.
+// Браузеры закрыты внутри run(), поэтому finish() получает undefined.
+await finish(undefined, out);

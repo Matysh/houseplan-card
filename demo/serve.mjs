@@ -31,6 +31,32 @@ export function checkAll(out, expected = {}) {
   return out;
 }
 
+/**
+ * Тот же вердикт по исключениям в карточке, что у `finish()`, для смоков со
+ * своей логикой выхода (#407).
+ *
+ * Счётчик `_pageErrors` живёт здесь, а читал его только `finish()`. Шесть
+ * смоков `finish()` не вызывали вовсе — у каждого была своя ручная развязка
+ * (`if (!ok) process.exit(1)`) либо `throw` из try/finally, и ни одна не
+ * спрашивала про исключения. То есть необработанное исключение внутри карточки
+ * во время этих шести проходило незамеченным всегда: в лог печаталось `EXC`, а
+ * прогон оставался зелёным.
+ *
+ * Функция ничего не бросает намеренно. Смок с ручной развязкой продолжает
+ * решать сам, что печатать и когда выходить; здесь только выставляется код
+ * возврата, который дальше уже не отнять — `process.exitCode` переживёт любой
+ * последующий `console.log`.
+ *
+ * @returns true, если карточка бросала — чтобы вызывающий мог добавить своё
+ *          сообщение, не считая исключения заново.
+ */
+export function reportPageErrors() {
+  if (!_pageErrors) return false;
+  console.error(`FAILED: ${_pageErrors} uncaught exception(s) inside the card`);
+  process.exitCode = 1;
+  return true;
+}
+
 /** Print the result, report failures, close the browser, set the exit code. */
 export async function finish(browser, out) {
   if (out !== undefined) console.log(JSON.stringify(out, null, 1));
