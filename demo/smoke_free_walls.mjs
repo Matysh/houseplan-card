@@ -13,7 +13,10 @@ const out = await page.evaluate(async () => {
   // The product owns dangerous confirmations through hp-confirm now.  This
   // smoke covers geometry transactions, while smoke_danger_confirmation
   // exercises the real dialog; keep the decision deterministic here.
-  c._confirmDanger = async () => true;
+  let confirmDecision = true;
+  c._confirmDanger = () => new Promise((resolve) => {
+    setTimeout(() => resolve(confirmDecision), 0);
+  });
   // Exercise hp-dialog's HA branch without depending on the Home Assistant
   // frontend in the standalone demo.  The fixed one-line fallback below
   // reproduces ha-dialog-header's public custom-property contract: Houseplan
@@ -190,14 +193,54 @@ const out = await page.evaluate(async () => {
   c._physicalDialog = null;
   await c.updateComplete;
 
-  c._physicalSel = { kind: 'partition', id: sp.partitions[0].id };
-  await c._deletePhysicalSelection();
+  const partitionId = sp.partitions[0].id;
+  sp.openings = [{
+    id: 'hosted-opening', type: 'door', width_cm: 90,
+    host: { kind: 'partition', id: partitionId, t: 0.5 },
+  }];
+  c._physicalSel = { kind: 'partition', id: partitionId };
+  const hostedDelete = c._deletePhysicalSelection();
+  o.hostedPartitionDeleteReturnsPromise = typeof hostedDelete?.then === 'function';
+  await hostedDelete;
+  o.hostedPartitionWaitsForDecision = !!c._partitionDeleteDialog
+    && c._serverCfg.spaces[0].partitions?.some((partition) => partition.id === partitionId);
+  c._partitionDeleteDialog = null;
+  delete sp.openings;
+
+  c._physicalSel = { kind: 'partition', id: partitionId };
+  const partitionDelete = c._deletePhysicalSelection();
+  o.partitionDeleteReturnsPromise = typeof partitionDelete?.then === 'function';
+  await partitionDelete;
   o.deleteRemovesPartition = !c._serverCfg.spaces[0].partitions;
 
   const draftId = c._serverCfg.spaces[0].room_drafts[0].id;
+  const historyBeforeCancel = c._geometryHistory.size;
+  confirmDecision = false;
   c._physicalSel = { kind: 'draft', id: draftId, segment: 0 };
-  await c._deletePhysicalSelection();
+  const cancelledDelete = c._deletePhysicalSelection();
+  o.cancelledDraftDeleteReturnsPromise = typeof cancelledDelete?.then === 'function';
+  await cancelledDelete;
+  o.cancelledDraftDeleteKeepsOutlineAndHistory = c._serverCfg.spaces[0].room_drafts?.[0]?.id === draftId
+    && c._geometryHistory.size === historyBeforeCancel;
+
+  confirmDecision = true;
+  c._physicalSel = { kind: 'draft', id: draftId, segment: 0 };
+  const draftDelete = c._deletePhysicalSelection();
+  o.draftDeleteReturnsPromise = typeof draftDelete?.then === 'function';
+  await draftDelete;
   o.deleteOnDraftRemovesWholeOutline = !c._serverCfg.spaces[0].room_drafts;
+
+  const columnId = c._serverCfg.spaces[0].wall_columns[0].id;
+  c._physicalSel = { kind: 'column', id: columnId };
+  const columnDelete = c._deletePhysicalSelection();
+  o.columnDeleteReturnsPromise = typeof columnDelete?.then === 'function';
+  await columnDelete;
+  o.deleteRemovesColumn = !c._serverCfg.spaces[0].wall_columns;
+
+  c._physicalSel = null;
+  const emptyDelete = c._deletePhysicalSelection();
+  o.emptyDeleteReturnsPromise = typeof emptyDelete?.then === 'function';
+  await emptyDelete;
 
   drawAndFinish([400, 100], [500, 100], 120);
   o.invalidThicknessCreatesNothing = !c._serverCfg.spaces[0].partitions;

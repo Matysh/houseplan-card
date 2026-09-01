@@ -106,6 +106,17 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'draft-delete-drops-the-promise',
+    guard: 'node demo/smoke_free_walls.mjs',
+    because: 'a delayed confirmation must keep the draft deletion pending all the way to the '
+      + 'card facade; dropping the runtime promise makes the smoke inspect stale geometry (#405)',
+    patches: [{
+      file: 'src/houseplan-editor-runtime.ts',
+      find: "    if (sel.kind === 'draft') { await this._deleteDraftWhole(); return; }",
+      replace: "    if (sel.kind === 'draft') { void this._deleteDraftWhole(); return; }",
+    }],
+  },
+  {
     id: 'smoke-guard-blind-to-tail',
     guard: 'node demo/guard/verify-guard.mjs',
     because: 'the uncaught-exception guard must read its counter AFTER the page delivered '

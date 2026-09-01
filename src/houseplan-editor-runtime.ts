@@ -3070,11 +3070,11 @@ public _savePhysicalDialog = (): void => {
     if (!committed) this.host.requestUpdate();
   };
 
-public _deletePhysicalSelection = (): void => {
+public _deletePhysicalSelection = async (): Promise<void> => {
     const sel = this.host._physicalSel;
     const sp = this.host._curSpaceCfg as any;
     if (!sel || !sp) return;
-    if (sel.kind === 'draft') { this._deleteDraftWhole(); return; }
+    if (sel.kind === 'draft') { await this._deleteDraftWhole(); return; }
     const before = this._geometrySnapshot();
     if (sel.kind === 'partition') {
       const hosted = (sp.openings || [])
@@ -5287,8 +5287,10 @@ public _renderEditorGroupLauncher(group: EditorToolbarGroup): TemplateResult {
     );
   }
 
-public _runEditorContext(contextId: string, action: () => void): void {
-    this.host._editorSecondary.runContext(contextId, this.host._editorSecondaryContextId, action);
+public _runEditorContext<T>(contextId: string, action: () => T): T | undefined {
+    return this.host._editorSecondary.runContext(
+      contextId, this.host._editorSecondaryContextId, action,
+    );
   }
 
 public _renderEditorGroupModel(group: EditorToolbarGroup): EditorSecondaryModel {

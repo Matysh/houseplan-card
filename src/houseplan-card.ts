@@ -7894,7 +7894,7 @@ export class HouseplanCard extends LitElement {
     return this._editorRuntimeOrThrow()._savePhysicalDialog();
   }
 
-  private _deletePhysicalSelection = (): void => {
+  private _deletePhysicalSelection = (): Promise<void> => {
     return this._editorRuntimeOrThrow()._deletePhysicalSelection();
   }
 
@@ -8926,7 +8926,7 @@ export class HouseplanCard extends LitElement {
     return `${base}:none`;
   }
 
-  private _runEditorContext(contextId: string, action: () => void): void {
+  private _runEditorContext<T>(contextId: string, action: () => T): T | undefined {
     return this._editorRuntimeOrThrow()._runEditorContext(contextId, action);
   }
 

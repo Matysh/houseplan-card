@@ -218,8 +218,9 @@ export class EditorSecondaryController {
     };
   }
 
-  runContext(capturedContext: string, currentContext: string, action: () => void): void {
-    if (capturedContext === currentContext) action();
+  runContext<T>(capturedContext: string, currentContext: string, action: () => T): T | undefined {
+    if (capturedContext === currentContext) return action();
+    return undefined;
   }
 
   render(model: EditorSecondaryModel | null, blocked: boolean): TemplateResult {
