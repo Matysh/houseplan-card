@@ -23,6 +23,56 @@ const out = await page.evaluate(async () => {
     await card.updateComplete;
     await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
   };
+  const settleElement = async (element) => {
+    await element.updateComplete;
+    const shell = element.querySelector('hp-dialog');
+    if (shell) await shell.updateComplete;
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  };
+  const deepActiveElement = () => {
+    let active = document.activeElement;
+    while (active?.shadowRoot?.activeElement) active = active.shadowRoot.activeElement;
+    return active;
+  };
+  const directConfirm = async (kind, action, key) => {
+    const element = document.createElement('hp-confirm');
+    element.token = Math.floor(Math.random() * 1_000_000) + 1;
+    element.request = {
+      key,
+      kind,
+      title: kind === 'destructive' ? 'Delete?' : 'Unlock?',
+      message: kind === 'destructive'
+        ? 'The plan and all its rooms will be deleted.'
+        : 'House Plan will send an unlock command.',
+      confirmLabel: kind === 'destructive' ? 'Delete' : 'Unlock',
+      cancelLabel: 'Cancel',
+    };
+    const decision = new Promise((resolve) => element.addEventListener(
+      'hp-confirm-decision', (event) => resolve(event.detail.accepted), { once: true },
+    ));
+    document.body.append(element);
+    await settleElement(element);
+    const shell = element.querySelector('hp-dialog');
+    const native = shell?.shadowRoot?.querySelector('dialog');
+    const body = element.querySelector('.danger-confirm-body');
+    const cancel = element.querySelector('button[autofocus]');
+    const semantics = native?.getAttribute('role') === 'alertdialog'
+      && native.getAttribute('aria-describedby') === body?.id
+      && !!body?.textContent?.trim();
+    const focused = deepActiveElement() === cancel;
+    const stayedNative = !!native && !shell?.shadowRoot?.querySelector('ha-dialog');
+    if (action === 'escape') {
+      cancel?.dispatchEvent(new KeyboardEvent('keydown', {
+        key: 'Escape', bubbles: true, composed: true, cancelable: true,
+      }));
+    } else {
+      cancel?.click();
+    }
+    const accepted = await decision;
+    element.remove();
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    return { semantics, focused, stayedNative, cancelled: accepted === false };
+  };
   const dialogs = () => root().querySelectorAll('hp-confirm').length;
   const request = (key) => ({
     key,
@@ -43,6 +93,16 @@ const out = await page.evaluate(async () => {
   };
 
   await settle();
+
+  result.standaloneStartsWithoutHaDialog = !customElements.get('ha-dialog');
+  const noHaDestructive = await directConfirm('destructive', 'click', 'no-ha-delete');
+  result.noHaDestructiveIsDescribedAlert = noHaDestructive.semantics;
+  result.noHaDestructiveFocusesCancel = noHaDestructive.focused;
+  result.noHaDestructiveCancelResolvesFalse = noHaDestructive.cancelled;
+  const noHaWarning = await directConfirm('warning', 'escape', 'no-ha-unlock');
+  result.noHaWarningIsDescribedAlert = noHaWarning.semantics;
+  result.noHaWarningFocusesCancel = noHaWarning.focused;
+  result.noHaWarningEscapeResolvesFalse = noHaWarning.cancelled;
 
   // Основная ветка: ровно один диалог, а не два (риск двойного рендера при
   // выносе — если бы блок остался и в ветке, и в обёртке).
@@ -133,8 +193,68 @@ const out = await page.evaluate(async () => {
   await settle();
   result.notReadyCardRefusesInsteadOfHanging = (await refused) === false;
 
+  // Match the public surface of HA's pinned ha-dialog closely enough to prove
+  // branch selection and ARIA forwarding without depending on private shadow
+  // DOM. Alert confirmations must still avoid it: the pinned component does
+  // not forward its reflected `type` to the actual dialog role.
+  class HaDialogStub extends HTMLElement {
+    constructor() {
+      super();
+      this.attachShadow({ mode: 'open' }).innerHTML = '<slot name="headerTitle"></slot>'
+        + '<slot></slot><slot name="footer"></slot>';
+    }
+    connectedCallback() {
+      queueMicrotask(() => this.dispatchEvent(new Event('opened')));
+    }
+  }
+  customElements.define('ha-dialog', HaDialogStub);
+
+  const ordinary = document.createElement('hp-dialog');
+  ordinary.title = 'Ordinary device editor';
+  ordinary.describedBy = 'ordinary-description';
+  ordinary.innerHTML = '<p id="ordinary-description">Ordinary dialog description</p>';
+  document.body.append(ordinary);
+  await ordinary.updateComplete;
+  await new Promise((resolve) => requestAnimationFrame(resolve));
+  const haShell = ordinary.shadowRoot.querySelector('ha-dialog');
+  result.ordinaryDialogUsesHaBranch = !!haShell
+    && !ordinary.shadowRoot.querySelector('dialog');
+  result.ordinaryDialogForwardsHaAria = haShell?.ariaLabelledBy?.startsWith('hp-dialog-title-')
+    && haShell?.ariaDescribedBy === 'ordinary-description';
+  ordinary.remove();
+
+  const haDestructive = await directConfirm('destructive', 'click', 'ha-delete');
+  result.haDestructiveStaysNativeAlert = haDestructive.semantics
+    && haDestructive.stayedNative;
+  result.haDestructiveFocusesCancel = haDestructive.focused;
+  result.haDestructiveCancelResolvesFalse = haDestructive.cancelled;
+  const haWarning = await directConfirm('warning', 'escape', 'ha-unlock');
+  result.haWarningStaysNativeAlert = haWarning.semantics && haWarning.stayedNative;
+  result.haWarningFocusesCancel = haWarning.focused;
+  result.haWarningEscapeResolvesFalse = haWarning.cancelled;
+
   return result;
 });
+
+await page.evaluate(async () => {
+  const element = document.createElement('hp-confirm');
+  element.token = 4_060_000;
+  element.request = {
+    key: 'accessibility-probe', kind: 'destructive', title: 'Accessibility probe',
+    message: 'All rooms in this plan will be permanently deleted.',
+    confirmLabel: 'Delete', cancelLabel: 'Cancel',
+  };
+  document.body.append(element);
+  await element.updateComplete;
+  await element.querySelector('hp-dialog')?.updateComplete;
+  await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+});
+const accessibilitySnapshot = await page.getByRole('alertdialog', {
+  name: 'Accessibility probe',
+}).ariaSnapshot();
+out.realAccessibilityTreeIncludesConsequence = accessibilitySnapshot
+  .includes('All rooms in this plan will be permanently deleted.');
+await page.evaluate(() => document.querySelector('hp-confirm')?.remove());
 
 checkAll(out);
 await finish(browser, out);

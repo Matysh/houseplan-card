@@ -33,14 +33,17 @@ export class HpConfirm extends LitElement {
     const request = this.request;
     if (!request) return null;
     const destructive = request.kind === 'destructive';
+    const descriptionId = `hp-confirm-description-${this.token}`;
     return html`<hp-dialog class="danger-confirm-dialog"
       .hass=${this.hass}
       .title=${request.title}
+      .alert=${true}
+      .describedBy=${descriptionId}
       .icon=${request.icon || (destructive
         ? 'mdi:alert-outline' : 'mdi:lock-open-alert-outline')}
       dismiss-on-scrim
       @hp-close=${() => this._decide(false)}>
-        <div class="body danger-confirm-body" data-confirm-key=${request.key}>
+        <div id=${descriptionId} class="body danger-confirm-body" data-confirm-key=${request.key}>
           ${request.objectName
             ? html`<strong class="danger-confirm-object">${request.objectName}</strong>`
             : null}

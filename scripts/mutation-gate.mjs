@@ -129,6 +129,42 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'i18n-dead-key-returns',
+    guard: 'node --test test/i18n-dead-keys.test.mjs',
+    because: 'a translation key without any literal, dynamic-family or derived consumer must '
+      + 'not silently return to all shipped dictionaries (#406)',
+    patches: [{
+      file: 'src/i18n/en.json',
+      find: '  "confirm.unlock_title": "Unlock?",',
+      replace: '  "confirm.unlock": "Unlock {name}?",\n'
+        + '  "confirm.unlock_title": "Unlock?",',
+    }],
+  },
+  {
+    id: 'confirm-dialog-loses-alertdialog',
+    guard: 'node demo/smoke_danger_confirm_branches.mjs',
+    because: 'delete and unlock confirmations must expose the real dialog as an alertdialog '
+      + 'with its consequence text in both standalone and HA environments (#406)',
+    patches: [{
+      file: 'src/hp-dialog.ts',
+      find: "      role=${this.alert ? 'alertdialog' : 'dialog'}",
+      replace: '      role="dialog"',
+    }],
+  },
+  {
+    id: 'area-snapshot-cleanup-ignores-authority',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="non-authoritative registry preserves orphan snapshots" '
+      + 'test/device-area-relocation.test.mjs',
+    because: 'temporary registry absence must not erase device Area provenance before the '
+      + 'registry is authoritative (#406)',
+    patches: [{
+      file: 'src/device-area-relocation.ts',
+      find: '  if (!options.authoritative) return { decisions, relocateIds };',
+      replace: '  if (false && !options.authoritative) return { decisions, relocateIds };',
+    }],
+  },
+  {
     id: 'settings-help-party1-placement-removed',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="issue 86 Party 1" test/i18n.test.mjs',

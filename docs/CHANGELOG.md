@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Delete and unlock confirmations now use House Plan's native dialog shell and
+  expose an alert dialog together with its consequence text to screen readers;
+  ordinary dialogs continue to use Home Assistant's dialog chrome
+  ([#406](https://github.com/Matysh/houseplan-card/issues/406)).
+
 - A failed config write while following a device to another Home Assistant
   Area no longer silently discards its manually placed position: House Plan
   restores the point before retrying, or marks the marker for attention if the

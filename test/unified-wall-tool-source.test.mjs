@@ -29,7 +29,6 @@ test('only old tool copy is removed while persisted partition copy remains', () 
     for (const key of [
       'markup.partition',
       'physical.partition_properties',
-      'history.partition_add',
     ]) assert.equal(typeof locale[key], 'string', key);
   }
 });
