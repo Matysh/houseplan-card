@@ -560,6 +560,12 @@ jobs:
               echo "ok   $name"
             else
               echo "FAIL $name"
+              # Диагностические строки смока печатаются раньше вердикта, и
+              # `tail -20` их срезал: на #411 сам смок сообщал, НАСКОЛЬКО
+              # разошлись кадры (введено в #302), а в логе прогона осталось
+              # только «expected true, got false». Числа теперь достаются
+              # адресно — они и есть разница между «чинить» и «гадать».
+              grep -aE 'pixel-diffs|^EXC |diagnostic' "/tmp/smoke-logs/$name.log" | tail -5 || true
               tail -20 "/tmp/smoke-logs/$name.log"
               fail=1
             fi
