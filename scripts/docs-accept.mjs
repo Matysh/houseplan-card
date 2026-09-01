@@ -139,14 +139,22 @@ function main(argv) {
     const file = byId.get(id);
     copyFileSync(file.from, file.to);
   }
+  // След приёмки отвечает на вопрос «когда эти пиксели приняли и что тогда
+  // объявляли». Обновление отпечатка пикселей не меняет — значит и стирать
+  // ответ не должно (#409, Low из #405): прежняя редакция затирала `declared`
+  // пустым списком, и история терялась при первом же refresh.
+  const previous = JSON.parse(readFileSync(resolve(ROOT, 'docs/images/screenshots.json'), 'utf8'))
+    .acceptance;
   const accepted = {
     ...manifest,
-    acceptance: {
-      declared: [...decision.replace],
-      witnesses: decision.witnesses.length,
-      floor: decision.floor,
-      ...(skipWitnesses ? { witnessesSkippedBecause: skipReason } : {}),
-    },
+    acceptance: decision.replace.length
+      ? {
+        declared: [...decision.replace],
+        witnesses: decision.witnesses.length,
+        floor: decision.floor,
+        ...(skipWitnesses ? { witnessesSkippedBecause: skipReason } : {}),
+      }
+      : { ...(previous || {}), lastWriteWasFingerprintOnly: true },
   };
   writeFileSync(
     resolve(ROOT, 'docs/images/screenshots.json'),

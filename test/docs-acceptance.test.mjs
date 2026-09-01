@@ -106,3 +106,62 @@ test('кадр без закоммиченной пары не может быт
   assert.deepEqual(plan.witnesses, ['alpha']);
   assert.equal(plan.floor, 1);
 });
+
+// --- порог считается от набора, а не от уцелевших кадров (#409) -------------
+
+test('удаление всех кадров не снижает порог (#409)', () => {
+  // Воспроизведение обхода целиком: rm docs/images/*.png, объявить все десять.
+  // Первая редакция (#401) считала порог от уцелевших — ноль уцелевших давал
+  // ноль порога, и чужая съёмка проходила без единого слова о причине.
+  const ids = Array.from({ length: 10 }, (_, index) => `scene-${index}`);
+  const candidate = Object.fromEntries(ids.map((id) => [id, `foreign-${id}`]));
+  const plan = docsAcceptancePlan({ ids, committed: {}, candidate, declared: ids });
+  assert.equal(plan.floor, 1, 'порог от набора сценариев, а не от нуля уцелевших');
+  assert.equal(plan.witnesses.length, 0);
+  assert.match(plan.refusal, /0 из необходимых 1/);
+  assert.match(plan.refusal, /сцен в наборе 10, с закоммиченным кадром 0/);
+
+  const named = docsAcceptancePlan({
+    ids, committed: {}, candidate, declared: ids,
+    skipWitnesses: true, skipReason: 'первичная съёмка набора',
+  });
+  assert.equal(named.refusal, null, 'законный путь — назвать причину');
+});
+
+test('порог держится и при частичной потере кадров (#409)', () => {
+  // Случай, где старая и новая формулы расходятся: 20 сцен в наборе, три кадра
+  // на диске. Было бы 1, стало 2 — и три свидетеля этого уже не хватает.
+  const ids = Array.from({ length: 20 }, (_, index) => `scene-${index}`);
+  const committed = Object.fromEntries(ids.slice(0, 3).map((id) => [id, `same-${id}`]));
+  const candidate = Object.fromEntries(ids.map((id) => [id,
+    committed[id] || `new-${id}`]));
+  const plan = docsAcceptancePlan({
+    ids, committed, candidate, declared: ids.slice(3),
+  });
+  assert.equal(plan.floor, 2);
+  assert.equal(plan.witnesses.length, 3, 'свидетелем может быть только кадр с парой');
+  assert.equal(plan.refusal, null, 'три свидетеля при пороге два — достаточно');
+
+  const stricter = docsAcceptancePlan({
+    ids, committed: { [ids[0]]: 'same-scene-0' },
+    candidate: Object.fromEntries(ids.map((id) => [id,
+      id === ids[0] ? 'same-scene-0' : `new-${id}`])),
+    declared: ids.slice(1),
+  });
+  assert.match(stricter.refusal, /1 из необходимых 2/,
+    'один уцелевший кадр планку не опускает');
+});
+
+test('пустой набор сценариев — отказ, а не ноль (#409)', () => {
+  const plan = docsAcceptancePlan({ ids: [], committed: {}, candidate: {} });
+  assert.match(plan.refusal, /набор сценариев пуст/);
+});
+
+test('порог совпадает с golden при равном размере набора (#409)', async () => {
+  const { goldenWitnessFloor } = await import('../scripts/golden-acceptance.mjs');
+  // Формулы обязаны совпадать: два набора картинок в одном репозитории не
+  // должны требовать помнить два разных правила.
+  for (const size of [0, 1, 10, 20, 143, 1000]) {
+    assert.equal(docsWitnessFloor(size), goldenWitnessFloor(size), `размер ${size}`);
+  }
+});
