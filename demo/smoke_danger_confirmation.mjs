@@ -164,13 +164,22 @@ const out = await page.evaluate(async () => {
     markers: [{ id: 'danger-marker', binding: 'entity:switch.danger', space: 'danger-space' }],
   };
   card._devices = [];
-  // #404 AC5: объявленный тип требует binding и bindingMode, и без них
-  // _bindingHasHaPage падал на undefined.split(':') — два необработанных
-  // исключения, которых гард не видел. Дефекта поведения тут нет: все 15 мест
-  // в src/, создающих диалог, binding пишут; врала фикстура.
+  // #404 AC5: диалог собирает сам продукт, а не фикстура.
+  //
+  // Ручная фикстура врала: у объявленного типа больше сорока обязательных
+  // полей, и рендер падал на первом же недостающем — сначала
+  // `_bindingHasHaPage(undefined).split(':')`, а после добавления binding и
+  // bindingMode на следующем. Дописывать поля по одному значит гоняться за
+  // типом; штатный путь «новый маркер» отдаёт полный объект с дефолтами
+  // продукта, и переопределить остаётся ровно то, что нужно этой проверке.
+  //
+  // Дефекта поведения здесь нет и не было: все 15 мест в src/, создающих
+  // диалог, идут этим же путём. Врал только смок — и гард этого не видел.
+  editor._openMarkerDialog();
   card._markerDialog = {
-    devId: 'danger-marker', name: 'Danger marker', busy: false,
-    binding: 'entity:switch.danger', bindingMode: 'ha', bindingOpen: false,
+    ...card._markerDialog,
+    devId: 'danger-marker', name: 'Danger marker',
+    binding: 'entity:switch.danger', bindingMode: 'ha', busy: false,
   };
   decision = false;
   await editor._deleteMarker();
