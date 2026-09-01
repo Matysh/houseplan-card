@@ -10,7 +10,8 @@ House Plan installs two Lovelace cards together:
   to the full plan.
 
 Configuration, uploaded files and shared positions stay inside Home Assistant.
-House Plan does not use a House Plan cloud service.
+Only the explicit Help & feedback action can contact the House Plan support
+relay, and exact plan geometry is attached only after you opt in and preview it.
 
 > **Input support.** View and kiosk are supported on phones, tablets and wall
 > touch panels. Create and maintain a plan on a desktop browser with a mouse
@@ -42,6 +43,7 @@ House Plan does not use a House Plan cloud service.
 20. [Storage, multiple cards and backups](#20-storage-multiple-cards-and-backups)
 21. [Current limitations](#21-current-limitations)
 22. [Troubleshooting](#22-troubleshooting)
+23. [Help and private feedback](#23-help-and-private-feedback)
 
 <!-- docs-section: model -->
 
@@ -1089,3 +1091,31 @@ per space. The configuration package is limited to 2 MB.
 When reporting a problem, include House Plan version, HA version, browser,
 console/server errors and reproducible steps. Replace private entity IDs and
 plans with synthetic equivalents.
+
+<!-- docs-section: support -->
+
+## 23. Help and private feedback
+
+The **Help & feedback** button follows **General settings** in the card header.
+It is available to users allowed to edit House Plan in View and all editors,
+but is hidden in kiosk. The dialog contains the current card version, the
+GitHub and Telegram links, and this guide. Russian UI opens the Russian guide;
+all other languages open this English guide.
+
+Enter a required message and, optionally, a contact such as an email, Telegram
+username or WhatsApp number. The form is kept only in the open card instance:
+it is not written to House Plan settings, local storage or Home Assistant.
+
+The diagnostic attachment is **off by default**. When enabled, House Plan
+builds an allowlisted package in the integration and shows its exact size,
+SHA-256 and JSON before sending. The package excludes names, Home Assistant
+entity/device/area IDs, live states, URLs, paths, files, message and contact.
+It does include exact room/wall/opening geometry and home dimensions. Use
+**Show data** to inspect the exact bytes and **Download JSON** to keep them.
+The preview expires after ten minutes; refresh it before sending if required.
+
+On success, keep the report ID shown by the dialog. A network or relay failure
+does not close or clear the draft and never claims delivery: retry with the
+same preview, or copy the message/download the JSON and continue through the
+provided Telegram or GitHub links. Card and integration versions must match.
+Retention and deletion details are in [SUPPORT-PRIVACY.md](SUPPORT-PRIVACY.md).

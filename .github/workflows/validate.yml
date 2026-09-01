@@ -279,7 +279,7 @@ jobs:
           has() { printf '%s\n' "$files" | grep -qE "$1" && echo true || echo false; }
           {
             echo "frontend=$(has '^(src/|demo/|test/|dist/|custom_components/houseplan/frontend/|package(-lock)?\.json$|rollup\.config\.mjs$|tsconfig)')"
-            echo "backend=$(has '^(custom_components/.*\.py$|tests_backend/|pytest\.ini$)')"
+            echo "backend=$(has '^(custom_components/.*\.py$|tests_backend/|scripts/support-relay/|pytest\.ini$)')"
             echo "integration=$(has '^(custom_components/houseplan/manifest\.json$|hacs\.json$|custom_components/.*\.py$|custom_components/.*/translations/)')"
           } >> "$GITHUB_OUTPUT"
 
@@ -822,6 +822,8 @@ jobs:
           python -m pytest tests_backend/ -q
           --cov=custom_components/houseplan --cov-branch
           --cov-report=xml --cov-report=term
+      - name: Support relay unit tests
+        run: python -m unittest discover -s scripts/support-relay/tests -q
       # #42: гейт «не ниже baseline» — пороги 90/95 поднимаются trivial-правкой числа
       - name: Порог покрытия не ниже baseline
         run: |

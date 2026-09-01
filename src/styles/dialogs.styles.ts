@@ -1143,6 +1143,121 @@ export const dialogsStyles = css`
     }
     :host([data-pointer-hover]) .aboutlink:hover { text-decoration: underline; }
     .aboutlink ha-icon { --mdc-icon-size: 18px; line-height: 1; }
+    hp-dialog .supportbody {
+      min-width: 0;
+      overflow-x: hidden;
+      gap: var(--sp-5);
+    }
+    .supportsection {
+      display: grid;
+      min-width: 0;
+      gap: var(--sp-2);
+    }
+    .supportsection + .supportsection {
+      padding-top: var(--sp-4);
+      border-top: 1px solid var(--hp-line);
+    }
+    .supportsection h3 {
+      margin: 0;
+      color: var(--hp-txt);
+      font-size: var(--fs-m);
+    }
+    .supportlinks, .supportactions {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: var(--sp-2) var(--sp-4);
+      min-width: 0;
+    }
+    .supportform > label:not(.srcrow) {
+      margin-top: var(--sp-2);
+      color: var(--hp-muted);
+      font-size: var(--fs-s);
+    }
+    .supportmessage, .supportraw {
+      width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+      resize: vertical;
+      border: 1px solid var(--hp-line);
+      border-radius: var(--rad-s);
+      padding: var(--sp-3);
+      color: var(--hp-txt);
+      background: color-mix(in srgb, var(--card-background-color, var(--hp-bg)) 92%, var(--hp-txt));
+      font: inherit;
+    }
+    .supportmessage { min-height: 120px; }
+    .supportraw {
+      min-height: 220px;
+      margin-top: var(--sp-2);
+      resize: none;
+      white-space: pre;
+      overflow: auto;
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: 12px;
+    }
+    .supportattach {
+      min-width: 0;
+      align-items: flex-start;
+      margin: var(--sp-2) 0 0 !important;
+    }
+    .supportattach > span:first-of-type {
+      min-width: 0;
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+    .supportwarning, .supportstatus, .supportupdate {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--sp-2);
+      min-width: 0;
+      margin: 0;
+      padding: var(--sp-3);
+      border-radius: var(--rad-s);
+      background: color-mix(in srgb, var(--hp-accent) 14%, transparent);
+      overflow-wrap: anywhere;
+      font-size: var(--fs-s);
+      line-height: 1.45;
+    }
+    .supportwarning ha-icon, .supportstatus ha-icon, .supportupdate ha-icon {
+      flex: none;
+      color: var(--hp-accent);
+      --mdc-icon-size: 20px;
+    }
+    .supportpreview, .supportmanual, .supporterror, .supportsuccess {
+      display: grid;
+      min-width: 0;
+      gap: var(--sp-2);
+      padding: var(--sp-3);
+      border: 1px solid var(--hp-line);
+      border-radius: var(--rad-s);
+    }
+    .supportsummary { font-weight: 600; overflow-wrap: anywhere; }
+    .supporthash {
+      display: grid;
+      min-width: 0;
+      gap: var(--sp-1);
+      color: var(--hp-muted);
+      font-size: var(--fs-s);
+    }
+    .supporthash code { overflow-wrap: anywhere; color: var(--hp-txt); }
+    .supportpreview details { min-width: 0; }
+    .supportpreview summary { cursor: pointer; color: var(--hp-accent); }
+    .supportprivacy { margin: 0 !important; line-height: 1.45; }
+    .supporterror {
+      background: color-mix(in srgb, var(--error-color, #db4437) 12%, transparent);
+      border-color: color-mix(in srgb, var(--error-color, #db4437) 45%, var(--hp-line));
+    }
+    .supportsuccess {
+      background: color-mix(in srgb, var(--success-color, #43a047) 12%, transparent);
+      border-color: color-mix(in srgb, var(--success-color, #43a047) 45%, var(--hp-line));
+    }
+    .supportfooter { flex-wrap: wrap; }
+    @media (max-width: 520px) {
+      hp-dialog .supportbody { padding-inline: var(--sp-4); }
+      hp-dialog .supportfooter { padding-inline: var(--sp-4); }
+      .supportactions .btn, .supportactions .aboutlink { max-width: 100%; }
+    }
     hp-dialog .body {
       padding: var(--sp-5) var(--sp-6);
       display: flex;

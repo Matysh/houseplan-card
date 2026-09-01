@@ -3,10 +3,12 @@ from __future__ import annotations
 
 import base64
 import binascii
+import copy
 import json
 import logging
 import secrets
 import time
+from collections import Counter
 from datetime import UTC, datetime
 from functools import partial
 from pathlib import Path
@@ -14,20 +16,29 @@ from typing import Any
 
 import voluptuous as vol
 from homeassistant.components import websocket_api
+from homeassistant.const import __version__ as HA_VERSION
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers import issue_registry as ir
 
 from .auth import may_write
 from .const import (
     CONTENT_URL,
     DEFAULT_CONFIG,
     DOMAIN,
+    EXPORT_VERSION,
     FILES_DIR,
     MAX_PLANS_BYTES,
     MAX_PLANS_FILES,
     MAX_PLANS_LISTED,
     MAX_SIGN_PATHS,
+    MAX_SUPPORT_CONTACT_CODEPOINTS,
+    MAX_SUPPORT_MESSAGE_CODEPOINTS,
+    MAX_SUPPORT_PREVIEWS_PER_USER,
+    MAX_SUPPORT_PREVIEWS_TOTAL,
+    PLAN_MODEL_VERSION,
     PLANS_DIR,
     PLANS_URL,
+    SUPPORT_PREVIEW_TTL_S,
     VERSION,
 )
 from .coordinate_canonicalization import (
@@ -70,6 +81,8 @@ from .store import (
 from .store import (
     OPTIMIZE_PENDING as _OPTIMIZE_PENDING,
 )
+from .support_package import SupportPackageError, build_support_package
+from .support_transport import SupportTransportError, async_submit_report
 from .validation import (
     CONFIG_SCHEMA,
     LAYOUT_SCHEMA,
@@ -185,6 +198,9 @@ def async_register(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, ws_export_create)
     websocket_api.async_register_command(hass, ws_import_revalidate)
     websocket_api.async_register_command(hass, ws_import_apply)
+    websocket_api.async_register_command(hass, ws_support_preview)
+    websocket_api.async_register_command(hass, ws_support_preview_discard)
+    websocket_api.async_register_command(hass, ws_support_submit)
 
 
 def _runtime(hass: HomeAssistant, connection, msg_id: int) -> HouseplanData | None:
@@ -211,6 +227,30 @@ def _connection_user_id(connection) -> str:
 
 def _send_import_error(connection, msg_id: int, err: ImportFailure) -> None:
     connection.send_error(msg_id, err.code, err.message)
+
+
+def _send_support_error(connection, msg_id: int, code: str) -> None:
+    """Return only a stable code; support data never enters an error string."""
+    connection.send_error(msg_id, code, code)
+
+
+def _prune_support_previews(rt: HouseplanData, now: float | None = None) -> None:
+    current = time.monotonic() if now is None else now
+    for token, preview in list(rt.support_previews.items()):
+        if float(preview.get("expires", 0)) <= current:
+            rt.support_previews.pop(token, None)
+
+
+def _support_repairs(hass: HomeAssistant) -> list[dict[str, Any]]:
+    """Expose stable House Plan repair families, never raw issue ids/placeholders."""
+    counts: Counter[str] = Counter()
+    registry = ir.async_get(hass)
+    for domain, issue_id in list(registry.issues):
+        if domain != DOMAIN:
+            continue
+        if str(issue_id).startswith("broken_plan_"):
+            counts["broken_plan"] += 1
+    return [{"code": code, "count": count} for code, count in sorted(counts.items())]
 
 
 def _layout_metadata(stored: dict[str, Any]) -> dict[str, Any]:
@@ -2034,3 +2074,239 @@ async def ws_trail_delete(hass: HomeAssistant, connection: websocket_api.ActiveC
     rec = hass.data.get(DOMAIN, {}).get("trail_recorder")
     removed = await rec.async_delete(msg["marker_id"]) if rec else False
     connection.send_result(msg["id"], {"ok": True, "removed": removed})
+
+
+# ---------------- private support package / feedback (#43) ----------------
+
+
+def _support_string(value: object) -> str:
+    if not isinstance(value, str):
+        raise vol.Invalid("support field must be a string")
+    return value
+
+
+def _support_bool(value: object) -> bool:
+    if not isinstance(value, bool):
+        raise vol.Invalid("support field must be a boolean")
+    return value
+
+
+def _support_browser_major(value: object) -> int:
+    if isinstance(value, bool) or not isinstance(value, int) or not 0 <= value <= 999:
+        raise vol.Invalid("browser_major must be an integer in 0..999")
+    return value
+
+
+_SUPPORT_TOKEN = vol.All(
+    _support_string, vol.Length(min=16, max=128), vol.Match(r"^[0-9a-f]+$")
+)
+_SUPPORT_ID = vol.All(
+    _support_string, vol.Length(min=8, max=128), vol.Match(r"^[A-Za-z0-9_.:-]+$")
+)
+_SUPPORT_VERSION = vol.All(
+    _support_string, vol.Length(min=1, max=32), vol.Match(r"^[0-9A-Za-z._+-]+$")
+)
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): "houseplan/support/preview",
+        vol.Required("card_version"): _SUPPORT_VERSION,
+        vol.Required("browser_family"): vol.In(["chromium", "firefox", "webkit", "unknown"]),
+        vol.Required("browser_major"): _support_browser_major,
+        vol.Required("language"): vol.In(["en", "ru", "de", "fr"]),
+        vol.Required("coarse_pointer"): _support_bool,
+        vol.Required("hover_capable"): _support_bool,
+        vol.Required("registry_access"): vol.In(["full", "partial", "unavailable"]),
+        vol.Required("registry_age_bucket"): vol.In(["fresh", "stale", "unknown"]),
+        vol.Required("draft_id"): _SUPPORT_ID,
+    }
+)
+@websocket_api.async_response
+async def ws_support_preview(
+    hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
+) -> None:
+    """Build and retain one exact, already-sanitized support-package snapshot."""
+    if not _check_write(hass, connection):
+        _send_support_error(connection, msg["id"], "unauthorized")
+        return
+    rt = _runtime(hass, connection, msg["id"])
+    if rt is None:
+        return
+
+    # The write lock guarantees that config/layout and both revisions describe
+    # one accepted pair. Projection happens after the deep copy, so the lock is
+    # not held while JSON is built and a large plan cannot stall an editor save.
+    async with rt.write_lock:
+        config_data = await rt.config_store.async_load() or {}
+        layout_data = await rt.store.async_load() or {}
+        config = copy.deepcopy({**DEFAULT_CONFIG, **(config_data.get("config") or {})})
+        layout = copy.deepcopy(layout_data.get("layout") or {})
+        config_rev = int(config_data.get("rev", 0))
+        layout_rev = int(layout_data.get("rev", 0))
+
+    # A package must not turn malformed stored data into an apparently valid
+    # diagnostic artifact. Validation runs on disposable copies because the
+    # schemas canonicalize coordinates.
+    repairs = _support_repairs(hass)
+
+    def _build_snapshot() -> tuple[bytes, dict[str, Any]]:
+        CONFIG_SCHEMA(copy.deepcopy(config))
+        LAYOUT_SCHEMA(copy.deepcopy(layout))
+        return build_support_package(
+            config,
+            layout,
+            config_rev=config_rev,
+            layout_rev=layout_rev,
+            card_version=msg["card_version"],
+            integration_version=VERSION,
+            home_assistant_version=HA_VERSION,
+            runtime={
+                "browser_family": msg["browser_family"],
+                "browser_major": msg["browser_major"],
+                "language": msg["language"],
+                "coarse_pointer": msg["coarse_pointer"],
+                "hover_capable": msg["hover_capable"],
+                "registry_access": msg["registry_access"],
+                "registry_age_bucket": msg["registry_age_bucket"],
+            },
+            repairs=repairs,
+        )
+
+    try:
+        # The maximum valid package is deliberately large. Keep validation,
+        # pseudonymisation and canonical JSON away from Home Assistant's event
+        # loop while retaining the coherent copies captured under write_lock.
+        raw, preview = await hass.async_add_executor_job(_build_snapshot)
+    except (vol.Invalid, ValueError, TypeError, OverflowError) as error:
+        code = error.code if isinstance(error, SupportPackageError) else "support_rejected"
+        _send_support_error(connection, msg["id"], code)
+        return
+
+    now = time.monotonic()
+    owner = _connection_user_id(connection)
+    _prune_support_previews(rt, now)
+    # A refresh replaces only this card instance's draft. Other cards keep
+    # their token and exact bytes.
+    for old_token, record in list(rt.support_previews.items()):
+        if record.get("owner") == owner and record.get("draft_id") == msg["draft_id"]:
+            rt.support_previews.pop(old_token, None)
+    owned = sum(1 for item in rt.support_previews.values() if item.get("owner") == owner)
+    if owned >= MAX_SUPPORT_PREVIEWS_PER_USER or len(rt.support_previews) >= MAX_SUPPORT_PREVIEWS_TOTAL:
+        _send_support_error(connection, msg["id"], "support_rate_limited")
+        return
+    token = secrets.token_hex(24)
+    expires = now + SUPPORT_PREVIEW_TTL_S
+    rt.support_previews[token] = {
+        "owner": owner,
+        "draft_id": msg["draft_id"],
+        "created": now,
+        "expires": expires,
+        "bytes": raw,
+        "sha256": preview["sha256"],
+        "versions": preview["versions"],
+    }
+    connection.send_result(
+        msg["id"],
+        {
+            "token": token,
+            "expires_in": SUPPORT_PREVIEW_TTL_S,
+            "size": preview["size"],
+            "sha256": preview["sha256"],
+            "spaces": preview["spaces"],
+            "format": preview["format"],
+            "version": preview["version"],
+            "text": raw.decode("utf-8"),
+        },
+    )
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): "houseplan/support/preview/discard",
+        vol.Required("token"): _SUPPORT_TOKEN,
+    }
+)
+@websocket_api.async_response
+async def ws_support_preview_discard(
+    hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
+) -> None:
+    """Idempotently discard only a preview owned by this HA user."""
+    if not _check_write(hass, connection):
+        _send_support_error(connection, msg["id"], "unauthorized")
+        return
+    rt = _runtime(hass, connection, msg["id"])
+    if rt is None:
+        return
+    _prune_support_previews(rt)
+    preview = rt.support_previews.get(msg["token"])
+    if preview is not None and preview.get("owner") != _connection_user_id(connection):
+        _send_support_error(connection, msg["id"], "support_preview_expired")
+        return
+    rt.support_previews.pop(msg["token"], None)
+    connection.send_result(msg["id"], {"ok": True})
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): "houseplan/support/submit",
+        vol.Required("message"): _support_string,
+        vol.Optional("contact", default=""): _support_string,
+        vol.Optional("preview_token"): _SUPPORT_TOKEN,
+        vol.Required("idempotency_key"): _SUPPORT_ID,
+    }
+)
+@websocket_api.async_response
+async def ws_support_submit(
+    hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
+) -> None:
+    """Submit text and, when selected, the exact previewed package bytes."""
+    if not _check_write(hass, connection):
+        _send_support_error(connection, msg["id"], "unauthorized")
+        return
+    rt = _runtime(hass, connection, msg["id"])
+    if rt is None:
+        return
+    message = msg["message"].strip()
+    contact = msg.get("contact", "").strip()
+    if not message or len(message) > MAX_SUPPORT_MESSAGE_CODEPOINTS:
+        _send_support_error(connection, msg["id"], "support_invalid_message")
+        return
+    if len(contact) > MAX_SUPPORT_CONTACT_CODEPOINTS:
+        _send_support_error(connection, msg["id"], "support_rejected")
+        return
+
+    _prune_support_previews(rt)
+    token = msg.get("preview_token")
+    preview = rt.support_previews.get(token) if token else None
+    if token and (preview is None or preview.get("owner") != _connection_user_id(connection)):
+        _send_support_error(connection, msg["id"], "support_preview_expired")
+        return
+    attachment = preview.get("bytes") if preview else None
+    versions = preview.get("versions") if preview else {
+        "card": VERSION,
+        "integration": VERSION,
+        "home_assistant": HA_VERSION,
+        "model": PLAN_MODEL_VERSION,
+        "export_schema": EXPORT_VERSION,
+    }
+    try:
+        report_id = await async_submit_report(
+            hass,
+            message=message,
+            contact=contact,
+            versions=versions,
+            idempotency_key=msg["idempotency_key"],
+            attachment=attachment,
+            attachment_sha256=preview.get("sha256") if preview else None,
+            filename_token=token or msg["idempotency_key"].lower().replace("_", "-"),
+        )
+    except SupportTransportError as error:
+        _send_support_error(connection, msg["id"], error.code)
+        return
+    if token:
+        # Retry after a timeout keeps the token; only a confirmed delivery
+        # consumes it. The relay's idempotency record handles uncertain first
+        # attempts with the same frontend key.
+        rt.support_previews.pop(token, None)
+    connection.send_result(msg["id"], {"report_id": report_id})

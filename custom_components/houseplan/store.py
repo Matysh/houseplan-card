@@ -100,6 +100,10 @@ class HouseplanData:
     # Parsed import candidates are short-lived, user-bound and memory-only.
     # dict keeps insertion order, which lets the preview service evict oldest.
     import_previews: dict[str, dict[str, Any]] = field(default_factory=dict)
+    # #43: already-sanitized support-package bytes only.  Raw config/layout is
+    # never retained here; the write lock below is used to take one coherent
+    # deep copy and the privacy projection immediately replaces it.
+    support_previews: dict[str, dict[str, Any]] = field(default_factory=dict)
     # #330 §4.2: junction-limit violation counts of the STORED document,
     # keyed by its rev — (rev, {space_id: {rule: count}}). One slot,
     # memory-only, invalidated by a rev mismatch; the previous document is

@@ -361,6 +361,15 @@ export class HpDialog extends LitElement {
     this.dispatchEvent(new CustomEvent('hp-close', { bubbles: true, composed: true }));
   };
 
+  /**
+   * Let an owner reject an asynchronous close request (for example while a
+   * save/send is in flight) and keep the same modal usable afterwards.
+   */
+  public rejectClose(): void {
+    this._closing = false;
+    this.requestUpdate();
+  }
+
   private _pruneOverlays(): void {
     this._overlays = this._overlays.filter((entry) => entry.owner.isConnected);
   }

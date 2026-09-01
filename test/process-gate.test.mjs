@@ -42,6 +42,7 @@ test('paths classify into A/B/C/D with the generated tree winning over source', 
   assert.equal(classify('demo/golden/baselines/view.png'), 'D');
   assert.equal(classify('dist/houseplan-card.js'), 'D');
   assert.equal(classify('test/canvas.test.mjs'), 'B');
+  assert.equal(classify('scripts/support-relay/relay.py'), 'B');
   assert.equal(classify('.github/workflows/validate.yml'), 'B');
   assert.equal(classify('package-lock.json'), 'B');
   assert.equal(classify('docs/SCOPE.md'), 'C');
@@ -710,6 +711,16 @@ test('an infrastructure range is recognised by the absence of class A files (#20
   assert.equal(isInfrastructureRange([product]), false);
   // Пустой диапазон исключением не пользуется — нечему быть инфраструктурным.
   assert.equal(isInfrastructureRange([]), false);
+});
+
+test('a support-relay-only change stays on the reviewed class-B track (#43)', () => {
+  const relay = makeCommit({
+    sha: 'd'.repeat(40), subject: 'Harden private support relay',
+    body: 'Issue: #43\nUser-Visible: no',
+    files: ['scripts/support-relay/hp_relay/app.py', 'scripts/support-relay/tests/test_relay.py'],
+  });
+  assert.deepEqual([...relay.classes], ['B']);
+  assert.equal(isInfrastructureRange([relay]), true);
 });
 
 test('statusOptional waives the status label but keeps every other rule-8 refusal (#207)', () => {
