@@ -32,6 +32,9 @@ const spanOverDoorFixture = JSON.parse(readFileSync(
 const wallUnionIsolationFixture = JSON.parse(readFileSync(
   new URL('../../test/fixtures/278-wall-union-isolation.json', import.meta.url), 'utf8',
 ));
+const cardVersion = JSON.parse(readFileSync(
+  new URL('../../package.json', import.meta.url), 'utf8',
+)).version;
 
 const fixtureFor = (scenario) => scenario.fixture === 'large'
   ? makeLargeHouseFixture()
@@ -733,7 +736,7 @@ export async function prepareGoldenScenario(page, scenario) {
   await page.mouse.move(0, 0);
   const fixture = prepareGoldenFixture(scenario);
 
-  const result = await page.evaluate(async ({ fixture, scenario }) => {
+  const result = await page.evaluate(async ({ fixture, scenario, cardVersion }) => {
     const wait = (ms) => new Promise((done) => setTimeout(done, ms));
     const frame = () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
     const until = async (predicate, timeout = 10000) => {
@@ -1599,6 +1602,58 @@ export async function prepareGoldenScenario(page, scenario) {
       if (trigger.getAttribute('aria-expanded') !== 'true' || !inside(triggerRect)
           || !inside(surfaceRect) || dialog.scrollWidth > dialog.clientWidth + 1)
         throw new Error(`golden general-settings help is clipped: ${scenario.openHelp}`);
+    } else if (scenario.dialog === 'support') {
+      card._haIntegrationVersion = cardVersion;
+      card._openSupportDialog();
+      await card.updateComplete;
+      const opened = card._supportDialog;
+      const text = '{"format":"houseplan-support-package","version":1}\n';
+      const preview = {
+        token: 'a'.repeat(48),
+        expiresAt: Date.now() + 300_000,
+        size: new TextEncoder().encode(text).byteLength,
+        sha256: 'b'.repeat(64),
+        spaces: 2,
+        format: 'houseplan-support-package',
+        version: 1,
+        text,
+        preparedAt: Date.now() - 60_000,
+      };
+      const patch = scenario.supportState === 'empty' ? {}
+        : scenario.supportState === 'preview' ? {
+          contact: 'user@example.test', message: 'The room light is not rendered.',
+          attach: true, status: 'ready', preview,
+        } : scenario.supportState === 'validation' ? {
+          status: 'error', errorCode: 'validation.message_required',
+        } : scenario.supportState === 'success' ? {
+          contact: 'user@example.test', message: 'The room light is not rendered.',
+          status: 'success', reportId: 'HP-43-GOLDEN',
+        } : scenario.supportState === 'relay-error' ? {
+          contact: '@houseplan-user', message: 'The report relay timed out.',
+          attach: true, status: 'error', preview, errorCode: 'support_rate_limited',
+        } : null;
+      if (!opened || !patch) {
+        throw new Error(`invalid golden support state: ${scenario.id}`);
+      }
+      card._supportDialog = { ...opened, ...patch };
+      card.requestUpdate();
+      await card.updateComplete;
+      await frame();
+      const dialog = card.renderRoot.querySelector('#support-dialog');
+      const body = dialog?.querySelector('.supportbody');
+      const expected = scenario.supportState === 'preview' ? '.supportpreview'
+        : scenario.supportState === 'validation' || scenario.supportState === 'relay-error'
+          ? '#support-error'
+          : scenario.supportState === 'success' ? '#support-receipt' : '.supportform';
+      const focus = dialog?.querySelector(expected);
+      focus?.scrollIntoView({ block: 'center', inline: 'nearest' });
+      await frame();
+      if (!dialog || !body || !focus || body.scrollWidth > body.clientWidth + 1
+          || dialog.scrollWidth > dialog.clientWidth + 1
+          || !dialog.querySelector('.aboutver')
+          || dialog.querySelectorAll('a.aboutlink').length < 3) {
+        throw new Error(`golden support dialog is incomplete or clipped: ${scenario.id}`);
+      }
     } else if (scenario.dialog === 'device-ripple-color') {
       card._setMode('devices');
       await card.updateComplete;
@@ -1753,7 +1808,7 @@ export async function prepareGoldenScenario(page, scenario) {
         cachedRays: card._sunRaysCache?.rays?.length || 0,
       } } : {}),
     };
-  }, { fixture, scenario });
+  }, { fixture, scenario, cardVersion });
   if (scenario.tabDrag) {
     const drag = await page.evaluate((placement) => {
       const card = window.__goldenCard;

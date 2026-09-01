@@ -373,7 +373,7 @@ test('sun-ray golden requires browser-painted light from a state-only sun entity
   assert.ok(scenario);
   const fixture = prepareGoldenFixture(scenario);
   const space = fixture.config.spaces.find((item) => item.id === scenario.space);
-  assert.equal(GOLDEN_MATRIX_VERSION, 53);
+  assert.equal(GOLDEN_MATRIX_VERSION, 54);
   assert.equal(space.settings.sun_rays, true);
   assert.equal(scenario.northDeg, 90,
     'the sign-sensitive golden must keep a non-zero north direction');
@@ -966,4 +966,18 @@ test('issue 86 help goldens render browser zoom 200% in both themes', () => {
     assert.equal(scenario.openHelp, 'gs.bg_mode.help');
     assert.equal(scenario.capture, 'page');
   }
+});
+
+test('issue 43 support dialog has the six reviewed responsive states', () => {
+  const support = GOLDEN_SCENARIOS.filter((scenario) => scenario.dialog === 'support');
+  assert.equal(support.length, 6);
+  assert.deepEqual(new Set(support.map((scenario) => scenario.supportState)), new Set([
+    'empty', 'preview', 'validation', 'success', 'relay-error',
+  ]));
+  assert.deepEqual(new Set(support.map((scenario) => scenario.theme)), new Set(['light', 'dark']));
+  assert.equal(support.some((scenario) => scenario.viewport.width === 320), true);
+  assert.equal(support.some((scenario) => scenario.viewport.width === 390), true);
+  assert.equal(support.some((scenario) => scenario.viewport.width === 768), true);
+  assert.equal(support.filter((scenario) => scenario.viewport.width >= 900).length, 3);
+  for (const scenario of support) assert.equal(scenario.capture, 'page', scenario.id);
 });

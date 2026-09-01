@@ -1,7 +1,7 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 53;
+export const GOLDEN_MATRIX_VERSION = 54;
 
 const stage = { capture: 'stage', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0005 } };
 const page = { capture: 'page', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0008 } };
@@ -824,6 +824,27 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     dialog: 'general-help', openHelp: 'gs.bg_mode.help', deviceScaleFactor: 2,
     helpTextRegion: { key: 'gs.bg_mode.help', minPixels: 30 },
     language: 'ru', theme: 'dark', viewport: { width: 390, height: 900 }, ...page },
+  // #43 AC14: the support dialog owns reviewed desktop, phone and tablet
+  // states.  The six scenes deliberately cover both themes while keeping the
+  // individual states named in the specification independently reviewable.
+  { id: 'support-desktop-empty-light-en', fixture: 'visual', space: 'golden-geometry',
+    dialog: 'support', supportState: 'empty', language: 'en', theme: 'light',
+    viewport: { width: 1000, height: 980 }, ...page },
+  { id: 'support-desktop-preview-dark-en', fixture: 'visual', space: 'golden-geometry',
+    dialog: 'support', supportState: 'preview', language: 'en', theme: 'dark',
+    viewport: { width: 1000, height: 980 }, ...page },
+  { id: 'support-phone-validation-light-ru', fixture: 'visual', space: 'golden-geometry',
+    dialog: 'support', supportState: 'validation', language: 'ru', theme: 'light',
+    viewport: { width: 320, height: 760 }, ...page },
+  { id: 'support-phone-success-dark-en', fixture: 'visual', space: 'golden-geometry',
+    dialog: 'support', supportState: 'success', language: 'en', theme: 'dark',
+    viewport: { width: 390, height: 820 }, ...page },
+  { id: 'support-relay-error-light-en', fixture: 'visual', space: 'golden-geometry',
+    dialog: 'support', supportState: 'relay-error', language: 'en', theme: 'light',
+    viewport: { width: 900, height: 900 }, ...page },
+  { id: 'support-tablet-preview-dark-ru', fixture: 'visual', space: 'golden-geometry',
+    dialog: 'support', supportState: 'preview', language: 'ru', theme: 'dark',
+    viewport: { width: 768, height: 900 }, ...page },
   { id: 'device-ripple-color-popover-mobile-ru', fixture: 'visual', space: 'golden-lighting',
     dialog: 'device-ripple-color', deviceId: 'golden-light-two',
     language: 'ru', theme: 'dark', viewport: { width: 390, height: 1000 }, ...page },
