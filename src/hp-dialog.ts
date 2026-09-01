@@ -24,9 +24,10 @@ let dialogSequence = 0;
 /**
  * Shared modal shell for Houseplan.
  *
- * Home Assistant provides the visual surface and focus trap through ha-dialog.
- * The native dialog branch keeps the standalone demo usable without mocking HA
- * frontend internals. Both branches expose the same `hp-close` contract and
+ * Home Assistant provides the visual surface and focus trap through ha-dialog
+ * for ordinary dialogs. Alert confirmations deliberately use the native branch:
+ * the pinned HA component exposes an alert type but does not forward its role
+ * to the actual dialog. Both branches expose the same `hp-close` contract and
  * restore focus to the control that opened the dialog.
  */
 export class HpDialog extends LitElement {
@@ -34,6 +35,8 @@ export class HpDialog extends LitElement {
     title: { type: String },
     icon: { type: String },
     wide: { type: Boolean, reflect: true },
+    alert: { type: Boolean, reflect: true },
+    describedBy: { type: String, attribute: 'described-by' },
     dismissOnScrim: { type: Boolean, attribute: 'dismiss-on-scrim' },
     hass: { attribute: false },
   };
@@ -218,6 +221,8 @@ export class HpDialog extends LitElement {
   title = '';
   icon = '';
   wide = false;
+  alert = false;
+  describedBy = '';
   dismissOnScrim = false;
   hass: any = null;
 
@@ -227,6 +232,10 @@ export class HpDialog extends LitElement {
   private _closing = false;
   private _overlays: OverlayEntry[] = [];
   private readonly _titleId = `hp-dialog-title-${++dialogSequence}`;
+
+  private _usesHaDialog(): boolean {
+    return this._useHaDialog && !this.alert;
+  }
 
   connectedCallback(): void {
     super.connectedCallback();
@@ -274,7 +283,7 @@ export class HpDialog extends LitElement {
 
   protected firstUpdated(changed: PropertyValues): void {
     super.firstUpdated(changed);
-    if (!this._useHaDialog) {
+    if (!this._usesHaDialog()) {
       const dialog = this.renderRoot.querySelector('dialog');
       if (dialog && !dialog.open) dialog.showModal();
     }
@@ -340,7 +349,7 @@ export class HpDialog extends LitElement {
     const focusable = this._focusableElements();
     const autofocus = focusable.find((el) => el.hasAttribute('autofocus'));
     const target = autofocus || focusable[0]
-      || (!this._useHaDialog ? this.renderRoot.querySelector<HTMLElement>('.close') : null)
+      || (!this._usesHaDialog() ? this.renderRoot.querySelector<HTMLElement>('.close') : null)
       || this.renderRoot.querySelector<HTMLElement>('.surface')
       || this.renderRoot.querySelector<HTMLElement>('ha-dialog');
     target?.focus({ preventScroll: true });
@@ -405,7 +414,7 @@ export class HpDialog extends LitElement {
       this._requestClose();
       return;
     }
-    if (event.key !== 'Tab' || this._useHaDialog) return;
+    if (event.key !== 'Tab' || this._usesHaDialog()) return;
     const close = this.renderRoot.querySelector<HTMLElement>('.close');
     const focusable = close ? [close, ...this._focusableElements()] : this._focusableElements();
     if (!focusable.length) {
@@ -440,13 +449,14 @@ export class HpDialog extends LitElement {
       <span class="title-text">${this.title}</span>
     </span>`;
 
-    if (this._useHaDialog) {
+    if (this._usesHaDialog()) {
       return html`<ha-dialog
         .hass=${this.hass}
         .open=${true}
         width=${this.wide ? 'medium' : 'small'}
         .preventScrimClose=${!this.dismissOnScrim}
         .ariaLabelledBy=${this._titleId}
+        .ariaDescribedBy=${this.describedBy || undefined}
         @opened=${this._focusInitial}
         @closed=${this._requestClose}
       >
@@ -457,9 +467,10 @@ export class HpDialog extends LitElement {
     }
 
     return html`<dialog
-      role="dialog"
+      role=${this.alert ? 'alertdialog' : 'dialog'}
       aria-modal="true"
       aria-labelledby=${this._titleId}
+      aria-describedby=${this.describedBy || nothing}
       @cancel=${this._onFallbackCancel}
       @click=${this._onFallbackClick}
     >

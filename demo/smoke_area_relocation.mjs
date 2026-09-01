@@ -320,6 +320,53 @@ const res = await page.evaluate(async () => {
   const staticEl = staticCard.renderRoot.querySelector('.dev[data-id="d_leak"]');
   const staticLeft = Number.parseFloat(staticEl?.style.left || '0');
 
+  // Lifecycle metadata is bounded by the authoritative registry, not by
+  // explicit editor cleanup alone. A disappeared device with no saved marker
+  // must lose its snapshot on the next full pass.
+  const orphanId = 'device-that-disappeared';
+  c._serverCfg = {
+    ...c._serverCfg,
+    settings: {
+      ...c._serverCfg.settings,
+      marker_area_snapshot: {
+        ...c._serverCfg.settings.marker_area_snapshot,
+        [orphanId]: { binding: `device:${orphanId}`, area: 'living_room' },
+      },
+    },
+  };
+  c._regSignature = '';
+  c._maybeRebuildDevices();
+  await wait(450);
+  const authoritativeOrphanRemoved = !c._serverCfg.settings.marker_area_snapshot?.[orphanId];
+
+  // A separate connection whose full registry calls fail models startup or a
+  // limited account. The exact same orphan evidence is not authoritative and
+  // therefore must not be destructive.
+  const limitedConfig = structuredClone(c._serverCfg);
+  limitedConfig.settings.marker_area_snapshot[orphanId] = {
+    binding: `device:${orphanId}`, area: 'living_room',
+  };
+  const limitedHass = window.__mkHass();
+  const limitedCallWS = limitedHass.callWS;
+  limitedHass.connection = {};
+  limitedHass.callWS = async (message) => {
+    if (message.type === 'config/device_registry/list'
+        || message.type === 'config/entity_registry/list') throw new Error('synthetic limited registry');
+    if (message.type === 'houseplan/config/get') {
+      return { config: limitedConfig, rev: 30, can_write: true };
+    }
+    return limitedCallWS(message);
+  };
+  const limitedCard = document.createElement('houseplan-card');
+  limitedCard.setConfig({ type: 'custom:houseplan-card', title: 'Limited registry' });
+  limitedCard.hass = limitedHass;
+  document.body.append(limitedCard);
+  await wait(500);
+  await paint(limitedCard);
+  const nonAuthoritativeOrphanPreserved = !!limitedCard._serverCfg?.settings
+    ?.marker_area_snapshot?.[orphanId];
+  limitedCard.remove();
+
   return {
     movedToRegistryArea: moved?.area === 'kitchen' && moved?.space === 'f1',
     staleLayoutDeleted: !c._layout.d_light1,
@@ -362,6 +409,8 @@ const res = await page.evaluate(async () => {
       message.type === 'houseplan/config/set'
         || ['houseplan/layout/set', 'houseplan/layout/update', 'houseplan/layout/delete']
           .includes(message.type)),
+    authoritativeOrphanRemoved,
+    nonAuthoritativeOrphanPreserved,
   };
 });
 

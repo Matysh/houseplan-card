@@ -65,7 +65,7 @@ export function markerAreaSnapshotOf(value: unknown): MarkerAreaSnapshot {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
   const result: MarkerAreaSnapshot = {};
   for (const [id, raw] of Object.entries(value as Record<string, unknown>)
-    .slice(0, MARKER_AREA_SNAPSHOT_LIMIT)) {
+    .slice(-MARKER_AREA_SNAPSHOT_LIMIT)) {
     if (!validText(id) || !raw || typeof raw !== 'object' || Array.isArray(raw)) continue;
     const binding = (raw as { binding?: unknown }).binding;
     const area = (raw as { area?: unknown }).area;
@@ -142,6 +142,22 @@ export function resolveDeviceAreaRelocations(
   if (!options.authoritative) return { decisions, relocateIds };
 
   const snapshot = markerAreaSnapshotOf(options.snapshot);
+  const liveIds = new Set<string>();
+  const liveBindings = new Set<MarkerAreaBinding>();
+  for (const device of options.devices) {
+    if (validText(device.id)) liveIds.add(device.id);
+    if (validText(device.marker?.id)) liveIds.add(device.marker.id);
+    if ((device.bindingKind === 'device' || device.bindingKind === 'entity')
+        && validText(device.bindingRef)) {
+      liveBindings.add(`${device.bindingKind}:${device.bindingRef}`);
+    }
+    if (validBinding(device.marker?.binding)) liveBindings.add(device.marker.binding);
+  }
+  for (const [id, entry] of Object.entries(snapshot)) {
+    if (!liveIds.has(id) && !liveBindings.has(entry.binding)) decisions.push({
+      ...unresolved(id, 'registry-unverified'), removeSnapshot: true,
+    });
+  }
   const scale = Number.isFinite(options.coordinateScale) && Number(options.coordinateScale) > 0
     ? Number(options.coordinateScale) : 1000;
   const targets = new Map<string, Array<{ space: SpaceModel; room: RoomCfg }>>();

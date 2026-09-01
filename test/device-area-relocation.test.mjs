@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   applyAreaRelocationResolution,
+  MARKER_AREA_SNAPSHOT_LIMIT,
   markerAreaSnapshotOf,
   removeMarkerAreaSnapshots,
   registryFollowingBinding,
@@ -166,6 +167,37 @@ test('unresolved duplicate Area and non-authoritative registry are no-ops', () =
   assert.deepEqual(resolve({ authoritative: false }), { decisions: [], relocateIds: new Set() });
 });
 
+test('authoritative registry removes orphan snapshots but preserves live marker ids', () => {
+  const snapshot = {
+    orphan: { binding: 'device:orphan', area: 'area-a' },
+    'marker-id': { binding: 'device:marker-id', area: 'area-a' },
+    'canonical-device-id': { binding: 'device:device-row', area: 'area-a' },
+  };
+  const result = resolve({
+    devices: [device({
+      id: 'device-row',
+      bindingRef: 'device-row',
+      marker: { id: 'marker-id', binding: 'device:marker-id', removed: true },
+    })],
+    snapshot,
+  });
+  const orphan = result.decisions.find((decision) => decision.id === 'orphan');
+  assert.equal(orphan?.reason, 'registry-unverified');
+  assert.equal(orphan?.removeSnapshot, true);
+  assert.equal(result.decisions.some((decision) => decision.id === 'marker-id'), false);
+  assert.deepEqual(applyAreaRelocationResolution(snapshot, result), {
+    'marker-id': snapshot['marker-id'],
+    'canonical-device-id': snapshot['canonical-device-id'],
+  });
+});
+
+test('non-authoritative registry preserves orphan snapshots', () => {
+  const snapshot = { orphan: { binding: 'device:orphan', area: 'area-a' } };
+  const result = resolve({ devices: [], snapshot, authoritative: false });
+  assert.deepEqual(result, { decisions: [], relocateIds: new Set() });
+  assert.deepEqual(applyAreaRelocationResolution(snapshot, result), snapshot);
+});
+
 test('failed delete does not advance relocation provenance', () => {
   const previous = { 'device-1': { binding: 'device:device-1', area: 'area-a' } };
   const result = resolve({ snapshot: previous });
@@ -178,6 +210,21 @@ test('defensive snapshot reader drops malformed entries without poisoning valid 
     bad: { binding: 'virtual', area: 'kitchen' },
     empty: { binding: 'device:x', area: '' },
   }), { good: { binding: 'entity:sensor.good', area: 'kitchen' } });
+});
+
+test('defensive snapshot reader keeps the newest entries when over its limit', () => {
+  const source = Object.fromEntries(Array.from(
+    { length: MARKER_AREA_SNAPSHOT_LIMIT + 2 },
+    (_, index) => [`entry-${index}`, { binding: `device:${index}`, area: 'area-a' }],
+  ));
+  const snapshot = markerAreaSnapshotOf(source);
+  assert.equal(Object.keys(snapshot).length, MARKER_AREA_SNAPSHOT_LIMIT);
+  assert.equal(Object.hasOwn(snapshot, 'entry-0'), false);
+  assert.equal(Object.hasOwn(snapshot, 'entry-1'), false);
+  assert.deepEqual(snapshot['entry-2'], { binding: 'device:2', area: 'area-a' });
+  assert.deepEqual(snapshot[`entry-${MARKER_AREA_SNAPSHOT_LIMIT + 1}`], {
+    binding: `device:${MARKER_AREA_SNAPSHOT_LIMIT + 1}`, area: 'area-a',
+  });
 });
 
 test('marker deletion and rebind cleanup remove only their own lifecycle entries', () => {
