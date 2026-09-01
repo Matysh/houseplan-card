@@ -450,13 +450,28 @@ export class HpDialog extends LitElement {
     </span>`;
 
     if (this._usesHaDialog()) {
+      if (this.describedBy) {
+        return html`<ha-dialog
+          .hass=${this.hass}
+          .open=${true}
+          width=${this.wide ? 'medium' : 'small'}
+          .preventScrimClose=${!this.dismissOnScrim}
+          .ariaLabelledBy=${this._titleId}
+          .ariaDescribedBy=${this.describedBy}
+          @opened=${this._focusInitial}
+          @closed=${this._requestClose}
+        >
+          <span class="header-title-slot" slot="headerTitle">${title}</span>
+          <slot></slot>
+          <span class="footer" slot="footer"><slot name="footer"></slot></span>
+        </ha-dialog><div class="overlay-portal"></div>`;
+      }
       return html`<ha-dialog
         .hass=${this.hass}
         .open=${true}
         width=${this.wide ? 'medium' : 'small'}
         .preventScrimClose=${!this.dismissOnScrim}
         .ariaLabelledBy=${this._titleId}
-        .ariaDescribedBy=${this.describedBy || undefined}
         @opened=${this._focusInitial}
         @closed=${this._requestClose}
       >
