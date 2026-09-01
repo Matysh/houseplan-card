@@ -221,7 +221,7 @@ try {
   // #407: проверки выше бросают на своей регрессии, но про исключения внутри
   // карточки не спрашивает ни одна. Бросаем и здесь — тогда `finally` закроет
   // браузер, а строка успеха не напечатается после «FAILED».
-  if (reportPageErrors()) throw new Error('uncaught exception inside the card — see EXC above');
+  if (await reportPageErrors()) throw new Error('uncaught exception inside the card — see EXC above');
   console.log(JSON.stringify({ ok: true, blend: out.blend, pools: out.pools, staticParity: true, staticPools: out.staticPools }));
 } finally {
   await browser.close();

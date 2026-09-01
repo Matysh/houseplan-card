@@ -24,6 +24,6 @@ const ok = res.after === res.target && res.afterBad === res.target;
 console.log(JSON.stringify(res));
 // #407: своя развязка про исключения в карточке не спрашивает. Вердикт обязан
 // именно остановить: иначе строка успеха печатается после «FAILED».
-if (reportPageErrors()) process.exit(1);
+if (await reportPageErrors()) process.exit(1);
 if (!ok) { console.error('FAIL deeplink smoke'); process.exit(1); }
 console.log('OK deep-link: full card switches to #space=<id>, ignores invalid ids');

@@ -17,6 +17,51 @@ const CT = { '.html': 'text/html', '.js': 'text/javascript', '.svg': 'image/svg+
 // prints them and sets the exit code.
 const _failures = [];
 let _pageErrors = 0;
+/**
+ * Открытые страницы — для round-trip'а перед чтением счётчика (#404).
+ *
+ * Ссылок на страницы у `finish(browser, out)` нет, а менять её сигнатуру
+ * нельзя: так её зовут 205 смоков. Поэтому страницы регистрируются там, где
+ * создаются.
+ */
+const _livePages = new Set();
+
+/**
+ * События `pageerror` Playwright доставляет асинхронно по CDP, а гард читал
+ * счётчик синхронно (#404). Если исключение возникло после последнего обращения
+ * смока к странице, счётчик к моменту проверки ещё нулевой, а `browser.close()`
+ * уносит недоставленное событие. В логе это видно дословно: `EXC` печатается
+ * ПОСЛЕ результата и ДО `OK`.
+ *
+ * Круговой запрос к странице вытесняет ранее поставленные макрозадачи, поэтому
+ * всё, что страница успела произвести до этого момента, к нам уже дошло.
+ *
+ * Честная граница: исключение, возникшее ПОСЛЕ этого round-trip'а — например, в
+ * обработчике `beforeunload` при закрытии браузера, — не учитывается. Ловить его
+ * значит ждать неизвестно чего неизвестно сколько; контракт формулируется как
+ * «всё, что произошло до вызова вердикта».
+ */
+async function roundTripLivePages() {
+  for (const page of _livePages) {
+    try { await page.evaluate(() => 0); } catch { /* закрыта, упала или в навигации */ }
+  }
+}
+
+/**
+ * Подписать страницу, созданную ВНЕ `launch()` (#404, Medium-1 ревью ТЗ).
+ *
+ * Таких мест два — `smoke_zoom_flash` открывает вторую страницу на своём
+ * контексте, `smoke_svg_sandbox` создаёт три. Их исключения не считал никто:
+ * первая печатала своё `EXC2` мимо счётчика, остальные три не имели слушателя
+ * вовсе. Регистрация в `launchInternal` их не покрывает по построению, поэтому
+ * гард отдаёт наружу ровно одну функцию — и её вызов виден в диффе смока.
+ */
+export function watchPage(page) {
+  page.on('pageerror', (e) => { _pageErrors++; console.log('EXC', e.stack || e.message); });
+  _livePages.add(page);
+  page.on('close', () => _livePages.delete(page));
+  return page;
+}
 
 /** Assert one named fact. `expected` defaults to true. */
 export function check(name, actual, expected = true) {
@@ -50,7 +95,8 @@ export function checkAll(out, expected = {}) {
  * @returns true, если карточка бросала — чтобы вызывающий мог добавить своё
  *          сообщение, не считая исключения заново.
  */
-export function reportPageErrors() {
+export async function reportPageErrors() {
+  await roundTripLivePages();
   if (!_pageErrors) return false;
   console.error(`FAILED: ${_pageErrors} uncaught exception(s) inside the card`);
   process.exitCode = 1;
@@ -60,6 +106,9 @@ export function reportPageErrors() {
 /** Print the result, report failures, close the browser, set the exit code. */
 export async function finish(browser, out) {
   if (out !== undefined) console.log(JSON.stringify(out, null, 1));
+  // Порядок обязателен: сначала дать странице доставить события, потом читать
+  // счётчик (#404). Обратный порядок и был дефектом.
+  await roundTripLivePages();
   if (_pageErrors) _failures.push(`${_pageErrors} uncaught exception(s) inside the card`);
   await browser?.close?.();
   if (_failures.length) {
@@ -84,8 +133,10 @@ async function launchInternal(
   const page = await (await browser.newContext({
     viewport, deviceScaleFactor: scale, ...contextOptions,
   })).newPage();
-  // audit T1: an exception inside the card used to be logged and ignored
-  page.on('pageerror', (e) => { _pageErrors++; console.log('EXC', e.stack || e.message); });
+  // audit T1: an exception inside the card used to be logged and ignored.
+  // Подписка и регистрация — одной функцией: разъехавшись, они дали бы
+  // страницу, чьи исключения считаются, но доставки которых никто не ждёт (#404).
+  watchPage(page);
   await page.route('**/*', (r) => {
     const u = new URL(r.request().url());
     let p = decodeURIComponent(u.pathname);

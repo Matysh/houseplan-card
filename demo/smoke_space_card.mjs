@@ -245,6 +245,6 @@ const ok =
 console.log(JSON.stringify(res));
 // #407: своя развязка про исключения в карточке не спрашивает. Вердикт обязан
 // именно остановить: иначе строка успеха печатается после «FAILED».
-if (reportPageErrors()) process.exit(1);
+if (await reportPageErrors()) process.exit(1);
 if (!ok) { console.error('FAIL space-card smoke'); process.exit(1); }
 console.log('OK space-card: live shared marker face, pointer-events:none, deep-link button, error card');

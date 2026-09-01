@@ -106,6 +106,29 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'smoke-guard-blind-to-tail',
+    guard: 'node demo/guard/verify-guard.mjs',
+    because: 'the uncaught-exception guard must read its counter AFTER the page delivered '
+      + 'its events; reading it first is the defect of #404 and looks identical to a '
+      + 'working guard in everything but the outcome',
+    patches: [{
+      file: 'demo/serve.mjs',
+      find: '  await roundTripLivePages();\n  if (_pageErrors) _failures.push(',
+      replace: '  if (_pageErrors) _failures.push(',
+    }],
+  },
+  {
+    id: 'smoke-guard-forgets-to-register-pages',
+    guard: 'node demo/guard/verify-guard.mjs',
+    because: 'the round-trip and the page registry are two halves of one fix (#404): a '
+      + 'mutant on either half alone leaves the other unproven',
+    patches: [{
+      file: 'demo/serve.mjs',
+      find: '  _livePages.add(page);',
+      replace: '',
+    }],
+  },
+  {
     id: 'settings-help-party1-placement-removed',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="issue 86 Party 1" test/i18n.test.mjs',

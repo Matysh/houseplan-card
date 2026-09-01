@@ -532,6 +532,14 @@ jobs:
           path: test-build
       - name: Разложить бандл по копиям
         run: node scripts/bundle-sync.mjs
+      # Гард исключений внутри карточки объявлен в demo/serve.mjs с 2026-07-27 и
+      # до #404 не срабатывал ни разу: счётчик читался раньше, чем Playwright
+      # доставлял pageerror. Такое ловится только запуском, поэтому пробы живут
+      # здесь — в единственной job с настоящим браузером. Один шард из трёх:
+      # проверка не зависит от разбиения, а платить за неё трижды незачем.
+      - name: "Гард исключений умеет падать (#404)"
+        if: matrix.shard == 1
+        run: node demo/guard/verify-guard.mjs
       - name: Smoke suite (шард ${{ matrix.shard }} из 3)
         env:
           SHARD: ${{ matrix.shard }}

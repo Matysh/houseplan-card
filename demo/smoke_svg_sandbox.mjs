@@ -5,7 +5,7 @@
 // localStorage сессии и к API. Проверяем, что заголовок sandbox это снимает,
 // и что обычный SVG при этом продолжает отображаться.
 import { chromium } from 'playwright';
-import { check, finish } from './serve.mjs';
+import { check, finish, watchPage } from './serve.mjs';
 
 const EVIL = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">
   <rect width="100" height="100" fill="#eee"/>
@@ -34,8 +34,11 @@ async function serve(page, { csp }) {
   });
 }
 
+// #404: три страницы этого смока не имели слушателя pageerror вовсе — они
+// оставались слепой зоной и после починки гарда. Общий гард подписывает их и
+// ждёт доставки перед вердиктом.
 // 1) как было до фикса: скрипт исполняется в origin Home Assistant
-const before = await ctx.newPage();
+const before = watchPage(await ctx.newPage());
 await serve(before, { csp: false });
 await before.goto('https://ha.example/api/houseplan/content/plans/_/evil.svg');
 await before.waitForTimeout(200);
@@ -45,7 +48,7 @@ const noCsp = await before.evaluate(() => ({
 }));
 
 // 2) с заголовком: opaque origin, скрипт не выполняется, storage недоступен
-const after = await ctx.newPage();
+const after = watchPage(await ctx.newPage());
 await serve(after, { csp: true });
 await after.goto('https://ha.example/api/houseplan/content/plans/_/evil.svg');
 await after.waitForTimeout(200);
@@ -55,7 +58,7 @@ const withCsp = await after.evaluate(() => ({
 }));
 
 // 3) тот же файл как <image> внутри страницы — рисуется и без скрипта
-const card = await ctx.newPage();
+const card = watchPage(await ctx.newPage());
 await serve(card, { csp: true });
 await card.goto('https://ha.example/');
 const drawn = await card.evaluate(async () => {

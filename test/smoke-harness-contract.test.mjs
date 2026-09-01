@@ -52,7 +52,7 @@ test('вердикт не только выставляет код, но и ос
   for (const name of smokes()) {
     const text = read(name);
     if (!/\breportPageErrors\s*\(/.test(text)) continue;
-    assert.match(text, /if \(reportPageErrors\(\)\)\s*(process\.exit\(1\)|throw )/,
+    assert.match(text, /if \(await reportPageErrors\(\)\)\s*(process\.exit\(1\)|throw )/,
       `${name}: вердикт по исключениям обязан останавливать смок, а не только`
       + ' помечать его — иначе после «FAILED» печатается строка успеха');
   }
@@ -64,9 +64,10 @@ test('serve.mjs остаётся единственным владельцем �
   // существует законно (он и есть предмет проверки), но вердикт всё равно
   // выносит finish().
   const serve = readFileSync(new URL('../demo/serve.mjs', import.meta.url), 'utf8');
-  assert.match(serve, /export function reportPageErrors\(\)/);
+  assert.match(serve, /export async function reportPageErrors\(\)/,
+    'вердикт стал асинхронным в #404: он ждёт доставки событий страницей');
   assert.equal((serve.match(/_pageErrors\+\+/g) || []).length, 1,
-    'счётчик инкрементируется в одном месте');
+    'счётчик инкрементируется в одном месте — внутри watchPage (#404)');
   const entryStale = read('smoke_entry_stale.mjs');
   assert.match(entryStale, /await finish\(/, 'smoke_entry_stale обязан выносить вердикт');
 });

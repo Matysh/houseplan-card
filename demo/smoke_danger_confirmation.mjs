@@ -164,7 +164,14 @@ const out = await page.evaluate(async () => {
     markers: [{ id: 'danger-marker', binding: 'entity:switch.danger', space: 'danger-space' }],
   };
   card._devices = [];
-  card._markerDialog = { devId: 'danger-marker', name: 'Danger marker', busy: false };
+  // #404 AC5: объявленный тип требует binding и bindingMode, и без них
+  // _bindingHasHaPage падал на undefined.split(':') — два необработанных
+  // исключения, которых гард не видел. Дефекта поведения тут нет: все 15 мест
+  // в src/, создающих диалог, binding пишут; врала фикстура.
+  card._markerDialog = {
+    devId: 'danger-marker', name: 'Danger marker', busy: false,
+    binding: 'entity:switch.danger', bindingMode: 'ha', bindingOpen: false,
+  };
   decision = false;
   await editor._deleteMarker();
   const markerCancel = card._serverCfg.markers.length === 1 && configSaves === 0;

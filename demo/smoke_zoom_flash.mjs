@@ -5,7 +5,7 @@
 // websocket round-trip. Every rAF frame from the first possible moment is
 // sampled: a frame where the stage is visible AND the viewBox is at the
 // default scale is the flash.
-import { launch, check, finish } from './serve.mjs';
+import { launch, watchPage, check, finish } from './serve.mjs';
 import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname } from 'node:path';
@@ -87,8 +87,9 @@ await ctx.addInitScript(([cache, zoom]) => {
   };
 }, [cfgCache, ZOOM]);
 
-const p2 = await ctx.newPage();
-p2.on('pageerror', (e) => console.log('EXC2', e.message));
+// #404: своя подписка печатала EXC2 мимо счётчика — страница считалась
+// проверенной, а её исключения не видел никто. Теперь через общий гард.
+const p2 = watchPage(await ctx.newPage());
 await p2.goto('http://demo.local/demo.html', { waitUntil: 'domcontentloaded' });
 await p2.waitForFunction(() => window.__framesDone === true, { timeout: 15000 });
 

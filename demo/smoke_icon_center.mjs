@@ -26,6 +26,6 @@ const bad = await page.evaluate(() => {
 await browser.close();
 // #407: своя развязка про исключения в карточке не спрашивает. Вердикт обязан
 // именно остановить: иначе строка успеха печатается после «FAILED».
-if (reportPageErrors()) process.exit(1);
+if (await reportPageErrors()) process.exit(1);
 if (bad.length) { console.error('FAIL icon-center: badges off anchor', JSON.stringify(bad.slice(0, 5))); process.exit(1); }
 console.log('OK icon-center: all device badges centred on their anchor');
