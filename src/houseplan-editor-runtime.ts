@@ -9196,21 +9196,26 @@ private async _buildSupportPreview(draftId: string): Promise<void> {
         || this.host._haIntegrationVersion !== CARD_VERSION) return;
     this._supportPatch(draftId, { status: 'building', errorCode: '' });
     try {
-      const response: any = await this.host.hass.callWS({
+      const response: unknown = await this.host.hass.callWS({
         type: 'houseplan/support/preview',
         card_version: CARD_VERSION,
         ...this._supportFacts(),
         draft_id: draftId,
       });
+      const payload = response && typeof response === 'object'
+        ? response as Partial<Record<
+          'text' | 'size' | 'expires_in' | 'spaces' | 'token' | 'sha256' | 'version' | 'format',
+          unknown
+        >> : {};
       const now = Date.now();
-      const text = typeof response?.text === 'string' ? response.text : '';
-      const size = Number(response?.size);
-      const expiresIn = Number(response?.expires_in);
-      const spaces = Number(response?.spaces);
-      const token = String(response?.token || '');
-      const sha256 = String(response?.sha256 || '');
-      const version = Number(response?.version);
-      const format = String(response?.format || '');
+      const text = typeof payload.text === 'string' ? payload.text : '';
+      const size = Number(payload.size);
+      const expiresIn = Number(payload.expires_in);
+      const spaces = Number(payload.spaces);
+      const token = String(payload.token || '');
+      const sha256 = String(payload.sha256 || '');
+      const version = Number(payload.version);
+      const format = String(payload.format || '');
       const byteSize = new TextEncoder().encode(text).byteLength;
       if (!/^[0-9a-f]{48}$/.test(token) || !/^[0-9a-f]{64}$/.test(sha256)
           || format !== 'houseplan-support-package' || version !== 1
@@ -9314,14 +9319,15 @@ public async _submitSupport(): Promise<void> {
     if (!supportCanSubmit(current)) return;
     this._supportPatch(current.draftId, { status: 'sending', errorCode: '' });
     try {
-      const response: any = await this.host.hass.callWS({
+      const response: unknown = await this.host.hass.callWS({
         type: 'houseplan/support/submit',
         message: current.message.trim(),
         contact: current.contact.trim(),
         ...(current.attach && current.preview ? { preview_token: current.preview.token } : {}),
         idempotency_key: current.idempotencyKey,
       });
-      const reportId = String(response?.report_id || '');
+      const reportId = response && typeof response === 'object' && 'report_id' in response
+        ? String((response as { report_id?: unknown }).report_id || '') : '';
       if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(reportId)) {
         throw { code: 'support_unavailable' };
       }

@@ -7,6 +7,7 @@ from hashlib import sha256
 
 import pytest
 
+from custom_components.houseplan import support_package
 from custom_components.houseplan.support_package import (
     SupportPackageError,
     build_support_package,
@@ -176,3 +177,161 @@ def test_frontend_facts_fail_closed(key, value):
     facts[key] = value
     with pytest.raises(SupportPackageError, match="support_rejected"):
         validate_frontend_facts(facts)
+
+
+def test_frontend_facts_reject_non_mapping_and_invalid_hover():
+    with pytest.raises(SupportPackageError, match="support_rejected"):
+        validate_frontend_facts(None)
+    facts = _facts()
+    facts["hover_capable"] = 1
+    with pytest.raises(SupportPackageError, match="support_rejected"):
+        validate_frontend_facts(facts)
+
+
+def test_rich_plan_projection_preserves_safe_structure_and_drops_unknown_values():
+    config = {
+        "model_version": 9,
+        "settings": {
+            "north_deg": 30,
+            "fill_colors": {"warm": {"c": "#ffaa00", "a": 0.5, "secret": "drop"}},
+            "decor_default_style": {
+                "color": "#123456", "width_cm": 2, "secret": "drop",
+            },
+        },
+        "spaces": [{
+            "id": "floor",
+            "settings": {"show_names": True, "custom_fill": {"c": "#ffffff", "a": 0.4}},
+            "rooms": [{
+                "id": "kitchen", "x": 1, "y": 2, "w": 3, "h": 4,
+                "poly": [[0, 0], [2, 0], [False, 1], "bad"],
+                "wall_ids": ["wall-a"], "open_to": ["hall"],
+                "settings": {
+                    "fill_mode": "custom", "custom_fill": {"c": "#000000", "a": 0.2},
+                    "temp_source": "entity:sensor.temperature",
+                    "hum_source": "invalid-source",
+                },
+            }],
+            "walls": [
+                {"key": "wall-a", "cm": 10, "a": [0, 0], "b": [2, 0]},
+                {"key": "wall-b", "cm": 12},
+                "bad",
+            ],
+            "room_drafts": [
+                "bad",
+                {
+                    "id": "draft-a", "points": [[0, 0], [1, 0], [True, 2]],
+                    "segments": [{"id": "wall-a", "cm": 10}, {"cm": 12}, "bad"],
+                },
+            ],
+            "partitions": [{"id": "partition-a", "a": [0, 1], "b": [2, 1], "cm": 8}],
+            "wall_columns": [{
+                "id": "column-a", "shape": "rect", "center": [1, 1], "cm": 20, "angle": 0,
+            }],
+            "openings": [
+                "bad",
+                {
+                    "id": "door-a", "type": "door", "x": 1, "y": 1, "length": 0.9,
+                    "contact": "binary_sensor.door", "lock": "lock.door",
+                    "host": {"kind": "partition", "id": "partition-a", "t": 0.5},
+                },
+                {"id": "window-a", "type": "window", "host": {"kind": "column", "id": "x"}},
+            ],
+            "decor": [
+                {"id": "line-a", "kind": "line", "x1": 0, "y1": 0, "x2": 1, "y2": 1},
+                {"id": "text-a", "kind": "text", "text": "private"},
+            ],
+            "open_spans": [{"a": [0, 0], "b": [0, 1]}, "bad"],
+        }],
+        "markers": [
+            {
+                "id": "virtual-a", "binding": "virtual", "icon": "mdi:lightbulb",
+                "space": "floor", "room_id": "kitchen", "hidden": True,
+                "light_entity": "light.ceiling", "toggle_entity": "switch.ceiling",
+                "tap_target": "button.scene", "controls": ["sensor.temperature"],
+                "vacuum": {"live": True, "trail": True, "trail_mode": "line", "secret": "drop"},
+                "value_source": {"kind": "entity_state", "entity_id": "sensor.temperature"},
+                "value_badge": {
+                    "enabled": True, "position": "bottom",
+                    "source": {"kind": "derived_lqi"},
+                },
+            },
+            {
+                "id": "entity-a", "binding": "entity:sensor.temperature", "removed": True,
+                "value_source": {"kind": "derived_marker_state", "ref": "marker:virtual-a"},
+            },
+            {
+                "id": "unknown-a", "binding": "secret", "icon": "custom:private",
+                "value_source": {"kind": "private", "entity_id": "sensor.private"},
+            },
+        ],
+    }
+    layout = {
+        "virtual-a": {"s": "floor", "x": 0.25, "y": 0.75},
+        "rl_kitchen": {"s": "floor", "x": 0.5, "y": 0.5, "k": 1.1},
+        7: {"x": 0},
+        "unknown-device": "bad",
+    }
+
+    raw, _ = build_support_package(
+        config, layout, config_rev=1, layout_rev=2,
+        card_version="invalid version!", integration_version="1.0.0",
+        home_assistant_version="2026.8.0", runtime=_facts(), namespace="rich",
+    )
+    package = json.loads(raw)
+    plan = package["plan_backup"]["config"]
+    space = plan["spaces"][0]
+
+    assert package["versions"]["card"] == "unknown"
+    assert plan["settings"]["fill_colors"] == {"warm": {"a": 0.5, "c": "#ffaa00"}}
+    assert plan["settings"]["decor_default_style"] == {"color": "#123456", "width_cm": 2}
+    assert space["rooms"][0]["poly"] == [[0, 0], [2, 0]]
+    assert space["rooms"][0]["settings"]["temp_source_kind"] == "entity"
+    assert space["rooms"][0]["settings"]["hum_source_kind"] == "unknown"
+    assert len(space["walls"]) == 2
+    assert space["walls"][1] == {"cm": 12, "key": "wall-rich-2"}
+    assert space["room_drafts"][0]["segments"][1] == {"cm": 12}
+    assert space["openings"][0]["host"]["kind"] == "partition"
+    assert "host" not in space["openings"][1]
+    assert space["decor"][1]["text"] == "[redacted text]"
+
+    virtual, entity, unknown = plan["markers"]
+    assert virtual["binding_kind"] == "virtual"
+    assert virtual["icon"] == "mdi:lightbulb"
+    assert virtual["vacuum"] == {"live": True, "trail": True, "trail_mode": "line"}
+    assert virtual["value_source"] == {
+        "entity_id": "entity-rich-1", "kind": "entity_state",
+    }
+    assert virtual["value_badge"]["source"] == {"kind": "derived_lqi"}
+    assert entity["value_source"] == {
+        "kind": "derived_marker_state", "ref": "marker:marker-rich-1",
+    }
+    assert unknown["binding_kind"] == "unknown"
+    assert "icon" not in unknown and "value_source" not in unknown
+    assert set(package["plan_backup"]["layout"]) == {"marker-rich-1", "rl_room-rich-1"}
+    assert package["summary"]["markers"] == {
+        "total": 3,
+        "lifecycle": {"active": 1, "hidden": 1, "removed": 1},
+        "binding": {"entity": 1, "unknown": 1, "virtual": 1},
+    }
+
+
+def test_projection_helpers_fail_closed_on_malformed_shapes():
+    ids = support_package._Pseudonyms("edge")
+    assert ids.get("room", None) is None
+    assert ids.get("room", "") is None
+    assert ids.get("room", "same") == ids.get("room", "same")
+    assert support_package._point(None) is None
+    assert support_package._point([True, 1]) is None
+    assert support_package._points(None) == []
+    assert support_package._custom_fill(None) is None
+    assert support_package._global_settings(None) == {}
+    assert support_package._room_settings(ids, None) == {}
+    assert support_package._project_layout(ids, None) == {}
+    assert support_package._summary(None, None)["spaces"] == 0
+    assert support_package._binding_kind(None) == "unknown"
+
+
+def test_package_size_limit_is_enforced_after_projection(monkeypatch):
+    monkeypatch.setattr(support_package, "MAX_SUPPORT_ATTACHMENT_BYTES", 1)
+    with pytest.raises(SupportPackageError, match="support_package_too_large"):
+        _build()
