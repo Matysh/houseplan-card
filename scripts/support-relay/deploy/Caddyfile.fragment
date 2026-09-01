@@ -1,0 +1,19 @@
+# Фрагмент для /etc/caddy/Caddyfile. Требует A-записей support и
+# support-staging на адрес стенда — иначе Caddy не получит сертификат.
+#
+# Access-лог намеренно не настраивается: он пишет remote_ip, а сырой адрес
+# источника не должен оседать на диске (§9.2 ТЗ 043).
+
+support.houseplan.tech {
+	request_body {
+		max_size 8.7MB
+	}
+	reverse_proxy 127.0.0.1:8130
+}
+
+support-staging.houseplan.tech {
+	request_body {
+		max_size 8.7MB
+	}
+	reverse_proxy 127.0.0.1:8131
+}
