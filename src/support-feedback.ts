@@ -121,7 +121,8 @@ export function supportRuntimeFacts(
   const now = options.now ?? Date.now();
   const last = Number(options.registryLastSuccess || 0);
   const age = last <= 0 ? 'unknown' : now - last <= 10 * 60_000 ? 'fresh' : 'stale';
-  const language = (['en', 'ru', 'de', 'fr'] as const).includes(options.language as any)
+  const languages: readonly string[] = ['en', 'ru', 'de', 'fr'];
+  const language = languages.includes(options.language)
     ? options.language as SupportRuntimeFacts['language'] : 'en';
   const media = globalThis.matchMedia?.bind(globalThis);
   return {
@@ -137,8 +138,8 @@ export function supportRuntimeFacts(
 }
 
 export function supportErrorCode(value: unknown): string {
-  const code = value && typeof value === 'object'
-    ? String((value as any).code || '') : '';
+  const code = value && typeof value === 'object' && 'code' in value
+    ? String((value as { code?: unknown }).code || '') : '';
   return new Set([
     'support_invalid_message', 'support_preview_expired', 'support_package_too_large',
     'support_rate_limited', 'support_unavailable', 'support_rejected', 'unauthorized',
