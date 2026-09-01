@@ -403,12 +403,16 @@ Old backend without these commands leaves About/Guide usable and shows localized
 
 ### 9.1 Minimal architecture
 
-The repository gains a separately deployable `support-relay/` service, excluded
-from the HACS artifact. It exposes only `POST /v1/reports` and `GET /health`.
-Secrets exist only in its deployment environment. The minimal production sink is
-a **private support mailbox** through a transactional-mail API: subject contains
-the generated report id; body contains escaped plain-text message/contact and safe
-metadata; support JSON is an attachment. No public issue is created.
+The repository gains a separately deployable service under
+`scripts/support-relay/**`, excluded from the HACS artifact. Keeping the complete
+service (runtime, manifest, tests and deployment README) in this subtree makes
+every relay-only commit class B under `AGENTS.md` / `PROCESS.md`; a product commit
+that also changes `src/**` remains A+B and follows the stricter class-A flow. The
+service exposes only `POST /v1/reports` and `GET /health`. Secrets exist only in
+its deployment environment. The minimal production sink is a **private support
+mailbox** through a transactional-mail API: subject contains the generated report
+id; body contains escaped plain-text message/contact and safe metadata; support
+JSON is an attachment. No public issue is created.
 
 Production URL is an immutable backend constant supplied after relay deployment.
 No placeholder, localhost URL or configurable arbitrary endpoint may pass release
@@ -459,6 +463,9 @@ and reviewed as a security trade-off; a hard-coded shared key is explicitly forb
   HA user/entry and cannot expose one instance's token to another user.
 
 ## 11. Accessibility, touch and responsive layout
+
+**Touch editor: supported.** The Help/Feedback dialog opened from View or any of
+the three editors has the same complete touch contract; kiosk still hides it.
 
 - Header button has 44×44 CSS px minimum touch target without changing adjacent
   visual icon size.
@@ -611,7 +618,10 @@ code must not invent a public fallback or embed credentials.
 - new `docs/SUPPORT-PRIVACY.md`: exact allowlist/exclusions, provider, retention,
   rate-limit network metadata and deletion/contact path;
 - `docs/TESTING.md`: support package/relay/golden commands;
-- relay deployment README/runbook, health/disable/secret rotation;
+- `scripts/support-relay/README.md`: deployment/runbook, health/disable/secret
+  rotation; relay runtime, manifest and tests remain inside this class-B subtree;
+- process-gate regression fixture proves a relay-only implementation commit is
+  classified as B and therefore requires the issue/trailer checks;
 - both changelogs in implementation commit (`User-Visible: yes`);
 - reviewed desktop/phone/tablet light/dark golden artifacts and receiver security
   report before beta.
