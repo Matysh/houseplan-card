@@ -175,6 +175,74 @@ mkdirSync(OUTPUT, { recursive: true });
 const DETERMINISTIC_ARGS = [
   '--force-color-profile=srgb', '--font-render-hinting=none', '--disable-lcd-text',
 ];
+/**
+ * Режим замера стабильности (#410): `node demo/docs/capture.mjs --stability=3`.
+ *
+ * Отвечает на вопрос, который иначе решается гаданием: плавает ли кадр ВНУТРИ
+ * одного состояния страницы или разница копится между подготовками сценария.
+ * Для каждого сценария делается N снимков подряд без единой правки состояния, и
+ * они сравниваются попиксельно прямо в странице — тем же приёмом, что у golden
+ * (`createImageBitmap` + canvas), чтобы не тащить декодер PNG в зависимости.
+ *
+ * Ничего не пишет на диск и манифест не трогает: это измерение, а не съёмка.
+ */
+const stabilityArg = process.argv.find((arg) => arg.startsWith('--stability'));
+const STABILITY_SHOTS = stabilityArg
+  ? Math.max(2, Number(stabilityArg.split('=')[1] || 3))
+  : 0;
+
+const comparePairs = (target, shots) => target.evaluate(async (base64Shots) => {
+  const decode = async (base64) => {
+    const bytes = Uint8Array.from(atob(base64), (char) => char.charCodeAt(0));
+    return createImageBitmap(new Blob([bytes], { type: 'image/png' }));
+  };
+  const read = (bitmap) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = bitmap.width;
+    canvas.height = bitmap.height;
+    const context = canvas.getContext('2d', { willReadFrequently: true });
+    context.drawImage(bitmap, 0, 0);
+    return context.getImageData(0, 0, bitmap.width, bitmap.height).data;
+  };
+  const frames = await Promise.all(base64Shots.map(async (shot) => {
+    const bitmap = await decode(shot);
+    return { data: read(bitmap), width: bitmap.width, height: bitmap.height };
+  }));
+  const first = frames[0];
+  return frames.slice(1).map((frame, index) => {
+    if (frame.width !== first.width || frame.height !== first.height) {
+      return { pair: `1↔${index + 2}`, sizeMismatch: true };
+    }
+    let pixels = 0;
+    let maxDelta = 0;
+    let alphaTouched = 0;
+    const box = { x0: Infinity, y0: Infinity, x1: -1, y1: -1 };
+    for (let at = 0; at < first.data.length; at += 4) {
+      const dr = Math.abs(first.data[at] - frame.data[at]);
+      const dg = Math.abs(first.data[at + 1] - frame.data[at + 1]);
+      const db = Math.abs(first.data[at + 2] - frame.data[at + 2]);
+      const da = Math.abs(first.data[at + 3] - frame.data[at + 3]);
+      if (!dr && !dg && !db && !da) continue;
+      pixels += 1;
+      maxDelta = Math.max(maxDelta, dr, dg, db);
+      if (da) alphaTouched += 1;
+      const pixel = at / 4;
+      const x = pixel % first.width;
+      const y = Math.floor(pixel / first.width);
+      box.x0 = Math.min(box.x0, x); box.y0 = Math.min(box.y0, y);
+      box.x1 = Math.max(box.x1, x); box.y1 = Math.max(box.y1, y);
+    }
+    return {
+      pair: `1↔${index + 2}`,
+      size: [first.width, first.height],
+      pixels,
+      maxDelta,
+      alphaTouched,
+      box: pixels ? box : null,
+    };
+  });
+}, shots.map((shot) => shot.toString('base64')));
+
 const { page, browser } = await launch(
   undefined, undefined, DETERMINISTIC_ARGS, { reducedMotion: 'reduce' },
 );
@@ -203,9 +271,27 @@ try {
     await page.evaluate(() => new Promise((done) => {
       requestAnimationFrame(() => requestAnimationFrame(done));
     }));
-    const image = await page.screenshot({
+    const shotOptions = {
       ...(clip ? { clip } : {}), animations: 'disabled', caret: 'hide', scale: 'css',
-    });
+    };
+    if (STABILITY_SHOTS) {
+      const shots = [];
+      for (let attempt = 0; attempt < STABILITY_SHOTS; attempt += 1) {
+        await page.evaluate(() => new Promise((done) => {
+          requestAnimationFrame(() => requestAnimationFrame(done));
+        }));
+        shots.push(await page.screenshot(shotOptions));
+      }
+      for (const result of await comparePairs(page, shots)) {
+        console.log(`${scenario.id} ${result.pair}: пикселей ${result.pixels}`
+          + `, максимум ${result.maxDelta}, alpha ${result.alphaTouched}`
+          + (result.box ? `, bbox ${result.box.x0},${result.box.y0}`
+            + `..${result.box.x1},${result.box.y1}` : '')
+          + `, кадр ${result.size ? result.size.join('x') : '?'}`);
+      }
+      continue;
+    }
+    const image = await page.screenshot(shotOptions);
     const imagePath = resolve(OUTPUT, scenario.file);
     writeFileSync(imagePath, image);
     // Хеш считается ПОСЛЕ перепаковки: манифест обязан описывать те байты,
@@ -222,20 +308,24 @@ try {
     console.log(`captured ${scenario.id} -> docs/images/${scenario.file}`);
   }
   if (browserErrors.length) throw new Error(`browser errors: ${browserErrors.join(' | ')}`);
-  const manifest = {
-    version: DOC_SCREENSHOT_VERSION,
-    fixture: 'synthetic-only',
-    // Кто снимал. Смена браузера переписывает все картинки без содержательных
-    // изменений (#246), поэтому окружение съёмки — часть доказательства.
-    chromium: browser.version(),
-    // Чем жали — тоже часть доказательства: без инструмента байты другие.
-    oxipng: oxipngVersion,
-    sourceFingerprint: fingerprint,
-    captureScriptSha256: sha256(readFileSync(SCRIPT)),
-    command: 'npm run build && node demo/docs/capture.mjs',
-    scenarios,
-  };
-  writeFileSync(resolve(OUTPUT, 'screenshots.json'), `${JSON.stringify(manifest, null, 2)}\n`);
+  if (STABILITY_SHOTS) {
+    console.log(`\nзамер стабильности: ${STABILITY_SHOTS} снимка на сценарий, манифест не тронут`);
+  } else {
+    const manifest = {
+      version: DOC_SCREENSHOT_VERSION,
+      fixture: 'synthetic-only',
+      // Кто снимал. Смена браузера переписывает все картинки без содержательных
+      // изменений (#246), поэтому окружение съёмки — часть доказательства.
+      chromium: browser.version(),
+      // Чем жали — тоже часть доказательства: без инструмента байты другие.
+      oxipng: oxipngVersion,
+      sourceFingerprint: fingerprint,
+      captureScriptSha256: sha256(readFileSync(SCRIPT)),
+      command: 'npm run build && node demo/docs/capture.mjs',
+      scenarios,
+    };
+    writeFileSync(resolve(OUTPUT, 'screenshots.json'), `${JSON.stringify(manifest, null, 2)}\n`);
+  }
 } finally {
   await browser.close();
 }
