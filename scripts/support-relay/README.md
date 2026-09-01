@@ -151,6 +151,33 @@ sudo systemctl restart hp-support-relay@prod
 Ротация вебхука — это ещё и правка `webhook_id` в автоматизации Home Assistant
 «House Plan: приёмщик обратной связи → личка»: адрес и есть ключ.
 
+**Минимальная конфигурация той автоматизации** — на случай, если её придётся
+пересоздать (она живёт в чужом Home Assistant, не в этом репозитории):
+
+```yaml
+alias: "House Plan: приёмщик обратной связи → личка"
+mode: queued
+max: 10
+triggers:
+  - trigger: webhook
+    webhook_id: "<тот же идентификатор, что в webhook.url>"
+    allowed_methods: [POST]
+    local_only: false          # relay вызывает её снаружи
+conditions:
+  - condition: template
+    value_template: "{{ trigger.json.source == 'houseplan-support-relay' }}"
+actions:
+  - action: telegram_bot.send_message
+    data:
+      entity_id: notify.<получатель>
+      parse_mode: plain_text   # текст пишет посторонний человек
+      disable_web_page_preview: true
+      message: "{{ trigger.json.text }}"
+```
+
+`parse_mode: plain_text` здесь не косметика: без него сообщение пользователя
+разбирается как разметка и может подделать вид всего уведомления.
+
 **Прочитать обращение**
 
 ```bash
