@@ -105,7 +105,10 @@ class Service:
             "attachment_sha256": request.attachment_sha256,
         }
         stored = self.store.save(report_id, meta, attachment.body if attachment else None)
-        result = self.delivery.send(report_id, meta, attachment.body if attachment else None)
+        # Путь добавляется только для доставки: в самом отчёте он избыточен, а в
+        # сводке — единственный способ найти пакет, если канал его не несёт.
+        delivered_meta = {**meta, "spool_path": str(stored.directory)}
+        result = self.delivery.send(report_id, delivered_meta, attachment.body if attachment else None)
         self.store.mark_delivery(stored, "sent" if result.ok else "failed", result.detail)
         if not result.ok:
             LOG.warning("delivery failed for %s: %s", report_id, result.detail)
