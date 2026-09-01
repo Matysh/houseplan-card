@@ -1,5 +1,6 @@
 // Issue #239: a finer coordinate grid changes precision, never the visible plan.
 import { launch, checkAll, finish } from './serve.mjs';
+import { coherentGridScaleStaticPatch } from './grid-scale-static-fixture.mjs';
 
 const { page, browser } = await launch({ width: 1000, height: 860 }, 1, [], {
   reducedMotion: 'reduce',
@@ -168,8 +169,16 @@ await page.evaluate(async () => {
     while (!compact.renderRoot?.querySelector('.hp-static-stage') && Date.now() < deadline) {
       await new Promise((resolve) => setTimeout(resolve, 30));
     }
+    while ((compact._loading || !compact._snap) && Date.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, 30));
+    }
     await compact.updateComplete;
     await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    return {
+      config: card._serverCfg,
+      layout: sharedLayout,
+      revision: card._cfgEpoch,
+    };
   };
 });
 
@@ -240,7 +249,21 @@ const capture = async (cellCm, mode, {
   const pixels = await stableScreenshot(stage);
   let staticPixels = null;
   if (staticCard) {
-    await page.evaluate(() => window.__makeStaticGridCard());
+    const source = await page.evaluate(() => window.__makeStaticGridCard());
+    const patch = coherentGridScaleStaticPatch(source);
+    await page.evaluate(async (nextPatch) => {
+      const compact = document.querySelector('#grid-static-host houseplan-space-card');
+      if (!compact) throw new Error('grid-scale static fixture card disappeared');
+      if (!compact._snap) throw new Error('grid-scale static fixture did not load its base snapshot');
+      // Preserve runtime-only Set/Map values from the in-page snapshot. Only
+      // config+layout cross the Playwright boundary; both come from one scale.
+      compact._snap = { ...compact._snap, ...nextPatch };
+      compact._loadedOnce = true;
+      compact._refreshDevices();
+      compact.requestUpdate();
+      await compact.updateComplete;
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    }, patch);
     staticPixels = await stableScreenshot(staticStage());
   }
   return { metrics, pixels, staticPixels };
@@ -262,7 +285,14 @@ const pixelDiff = async (left, right) => page.evaluate(async ([a, b]) => {
   const decode = async (base64) => createImageBitmap(await (await fetch(`data:image/png;base64,${base64}`)).blob());
   const [first, second] = await Promise.all([decode(a), decode(b)]);
   if (first.width !== second.width || first.height !== second.height) {
-    return { sameSize: false, changed: Infinity, maxDelta: Infinity, meanDelta: Infinity };
+    return {
+      sameSize: false,
+      firstSize: [first.width, first.height],
+      secondSize: [second.width, second.height],
+      changed: Infinity,
+      maxDelta: Infinity,
+      meanDelta: Infinity,
+    };
   }
   const canvas = document.createElement('canvas');
   canvas.width = first.width; canvas.height = first.height;
