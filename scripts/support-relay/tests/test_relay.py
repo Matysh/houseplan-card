@@ -309,6 +309,57 @@ class RelayTestCase(unittest.TestCase):
         self.assertEqual(config.RATE_TTL_SECONDS, 24 * 3600)
 
 
+class DirectNodeTestCase(unittest.TestCase):
+    """Узел без прокси: заголовку верить нельзя, потому что подставить его некому."""
+
+    def setUp(self) -> None:
+        self._tmp = TemporaryDirectory()
+        cfg = config.load({
+            "HP_RELAY_SPOOL": str(Path(self._tmp.name) / "s"),
+            "HP_RELAY_TRUSTED_PROXY": "0",
+        })
+        self.service = app.Service(cfg)
+        self.service.delivery = RecordingDelivery()
+        self.server = ThreadingHTTPServer(("127.0.0.1", 0), app.make_handler(self.service))
+        self.port = self.server.server_address[1]
+        self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
+        self.thread.start()
+
+    def tearDown(self) -> None:
+        self.server.shutdown()
+        self.server.server_close()
+        self._tmp.cleanup()
+
+    def _post(self, key: str, forwarded: str | None) -> int:
+        blob = package_bytes()
+        content_type, body = build_body(request_json(blob, key=key), blob)
+        request = urllib.request.Request(
+            f"http://127.0.0.1:{self.port}/v1/reports", data=body, method="POST",
+        )
+        request.add_header("Content-Type", content_type)
+        if forwarded:
+            request.add_header("X-Forwarded-For", forwarded)
+        try:
+            with urllib.request.urlopen(request, timeout=10) as response:
+                return response.status
+        except urllib.error.HTTPError as error:
+            return error.code
+
+    def test_direct_node_ignores_the_forwarded_header(self):
+        """Со снятым переключателем заголовок не участвует вовсе.
+
+        Иначе узел, стоящий в интернете напрямую, доверял бы строке, которую
+        полностью пишет вызывающий, — то есть каждый выбирал бы себе корзину сам.
+        """
+        self.assertEqual(self._post("direct-key-0001", "203.0.113.10"), 200)
+        self.assertEqual(self._post("direct-key-0002", "198.51.100.20"), 200)
+        self.assertEqual(self._post("direct-key-0003", None), 200)
+        spool = self.service.cfg.spool
+        buckets = [path.name for path in (spool / "rate").glob("*.json")
+                   if path.name != "_global.json"]
+        self.assertEqual(len(buckets), 1, buckets)
+
+
 class WebhookChannelTestCase(unittest.TestCase):
     """Канал «через Home Assistant»: что уходит и что остаётся."""
 
