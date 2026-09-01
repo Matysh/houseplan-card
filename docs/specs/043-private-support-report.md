@@ -444,12 +444,17 @@ if they are unavailable, #43 receives `blocked` without weakening the contract.
 - message/contact rendered as escaped plain text only;
 - 5 attempts/hour and 20/day per source address plus a global circuit breaker;
 - **the source address is the one supplied by the trusted proxy, never one the
-  client can choose.** The relay reads the *last* element of `X-Forwarded-For`,
-  because the first element is whatever the caller sent, and the reverse proxy in
-  front of it is configured to overwrite the header outright rather than append
-  to it. Both halves are required: without them a caller picks its own rate-limit
-  bucket by changing one line of the request, and every other limit in this
-  section becomes decorative;
+  client can choose.** Behind a reverse proxy the relay runs with its
+  trusted-proxy switch on (`HP_RELAY_TRUSTED_PROXY`, on by default) and reads the
+  *last* element of `X-Forwarded-For`, because the first element is whatever the
+  caller sent; the proxy is configured to overwrite the header outright rather
+  than append to it. Both halves are required: without them a caller picks its own
+  rate-limit bucket by changing one line of the request, and every other limit in
+  this section becomes decorative. With the switch off the relay ignores the
+  header entirely and uses the connection address — correct only for a node
+  exposed directly, and **forbidden on any deployment behind a proxy**, where every
+  connection arrives from the proxy and all callers would share one bucket. Both
+  production hosts run behind Caddy, so both keep the switch on;
 - source IP is used only through a daily-keyed rate-limit hash with ≤24 h TTL;
   raw address is not written to app logs/storage/mail;
 - idempotency key retained 24 h and returns the original report id;
@@ -536,7 +541,7 @@ parse them; user message/contact remain verbatim plain text.
 | AC10 | Expired/replaced/discarded tokens fail; config changes after preview do not change cached bytes. | Fake-clock backend tests. |
 | AC11 | Submit is HTTPS/fixed-host/no-redirect, bounded and idempotent; logs contain no message/contact/body. | Stub aiohttp server + caplog + SSRF/redirect tests. |
 | AC12 | Relay enforces schema, size, hash, idempotency and rate limits; HTML remains inert plain text. | Receiver unit/integration suite with a recording fake provider. |
-| AC12a | A caller cannot select its own rate-limit bucket: requests carrying different forged `X-Forwarded-For` values land in one source key, and the proxy configuration overwrites the header. | Receiver test plus the deployed proxy fragment under `scripts/support-relay/deploy/`. |
+| AC12a | A caller cannot select its own rate-limit bucket. With the trusted-proxy switch on, requests carrying different forged `X-Forwarded-For` values land in one source key, and the proxy configuration overwrites the header; with it off, the header is ignored altogether and the connection address is used. | Two receiver tests (one per switch position) plus the deployed proxy fragment under `scripts/support-relay/deploy/`. |
 | AC13 | Success shows stable report id; timeout/error preserves form and exposes retry/manual recovery without claiming success. | Browser smoke across success/429/timeout/unknown command. |
 | AC14 | Phone/tablet dialog, keyboard/focus and 44 px target satisfy View touch/accessibility contract. | Reviewed desktop + phone + tablet goldens and touch smoke. |
 | AC15 | No existing backup/diagnostics/preflight behavior or payload changes. | Existing targeted frontend/backend suites unchanged. |
@@ -591,6 +596,8 @@ Mutation gate must prove at least:
 - relay skips hash/rate/idempotency check → receiver tests red;
 - relay trusts the client-supplied end of `X-Forwarded-For` (first element
   instead of last) → `test_client_cannot_pick_its_own_rate_bucket` red;
+- relay reads `X-Forwarded-For` regardless of the trusted-proxy switch (the
+  switch check is dropped) → `test_direct_node_ignores_the_forwarded_header` red;
 - success shown on timeout → browser smoke red.
 
 ## 15. Performance and reliability budgets
