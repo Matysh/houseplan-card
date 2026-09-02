@@ -47,7 +47,7 @@ PLAN_ORPHAN_TTL_S = 3600
 SCHEDULED_GRACE_S = 30 * 24 * 3600
 FILES_DIR = "houseplan/files"
 CONF_ADMIN_ONLY = "admin_only"
-VERSION = "1.70.0"
+VERSION = "1.70.0-beta.5"
 
 # #43: the support transport is deliberately not configurable.  A user supplied
 # URL would turn the integration into an SSRF proxy and make the privacy notice
