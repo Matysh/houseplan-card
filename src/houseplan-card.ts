@@ -343,7 +343,7 @@ import {
 } from './ha-binding-status';
 import type { DecorShape, DecorStyle } from './editors/decor/types';
 import {
-  DECOR_ASSETS_API_VERSION, decorAssetIds,
+  DECOR_ASSETS_API_VERSION, decorAssetIds, projectDecorImage,
   resolveDecorAssets, type DecorAsset,
 } from './decor-assets';
 import {
@@ -8760,10 +8760,10 @@ export class HouseplanCard extends LitElement {
             transform=${ang ? `rotate(${ang} ${cx} ${cy})` : nothing} @pointerdown=${down}></ellipse>` : nothing}`;
       }
       if (sh.kind === 'image') {
+        const projection = projectDecorImage(sh, W, H);
+        if (!projection) return nothing;
+        const [x, y, w, h, opacity, transform] = projection;
         const asset = this._decorAssets.get(sh.asset_id);
-        const x = sh.x * W, y = sh.y * H, w = sh.w * W, h = sh.h * H;
-        const cx = x + w / 2, cy = y + h / 2;
-        const transform = `translate(${cx} ${cy}) rotate(${normalizeAngle(sh.angle)}) scale(${sh.flip_h ? -1 : 1} ${sh.flip_v ? -1 : 1}) translate(${-cx} ${-cy})`;
         if (!asset) return editing && this._editorRuntime
           ? this._editorRuntime._renderMissingDecorImage(sh, cls, transform, x, y, w, h, down, dbl)
           : nothing;
@@ -8771,7 +8771,7 @@ export class HouseplanCard extends LitElement {
         if (!href) return nothing;
         return svg`<image class="${cls} dimage" data-hp="decor" data-id=${sh.id}
           data-kind="image" href=${href} x=${x} y=${y} width=${w} height=${h}
-          opacity=${clamp01(sh.opacity, 1)} preserveAspectRatio="none" transform=${transform}
+          opacity=${opacity} preserveAspectRatio="none" transform=${transform}
           @load=${() => this._signer.markLoaded(this._renderPlanHass, asset.url, href)}
           @pointerdown=${down} @dblclick=${dbl}></image>
           ${erasing ? svg`<rect class="dshape derasehit" data-hp="decor" data-id=${sh.id}

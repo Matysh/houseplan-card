@@ -730,7 +730,7 @@ class HouseplanSpaceCard extends LitElement {
       if (configChanged) this._continuity.note('config-candidate', { configRev: snap.rev });
       try {
         this._decorAssets = await resolveDecorAssets(this.hass, decorAssetIds(snap.config));
-      } catch { /* retain the last complete frame across a transient resolve failure */ }
+      } catch { /* retain the last complete frame; failed sets are not cached and retry next load */ }
       if (layoutChanged) this._continuity.note('layout-candidate', { layoutRev: snap.layoutRev });
       if (virtualLightsChanged) this._capturedSnapshotSequence = -1;
       this._loadedOnce = true;

@@ -53,6 +53,20 @@ def test_svg_rejects_the_whole_unsafe_document(payload: bytes) -> None:
         validate_asset(payload, "unsafe.svg")
 
 
+def test_svg_utf16_doctype_is_rejected_before_entity_expansion() -> None:
+    payload = '''<?xml version="1.0" encoding="UTF-16"?>
+      <!DOCTYPE svg [
+        <!ENTITY a "0123456789">
+        <!ENTITY b "&a;&a;&a;&a;&a;&a;&a;&a;&a;&a;">
+        <!ENTITY c "&b;&b;&b;&b;&b;&b;&b;&b;&b;&b;">
+      ]>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1">
+        <path d="&c;"/>
+      </svg>'''.encode("utf-16")
+    with pytest.raises(DecorAssetError, match="DTD, entities"):
+        validate_asset(payload, "encoded.svg")
+
+
 def test_svg_canonicalizes_safe_geometry_and_requires_aspect_ratio() -> None:
     asset = validate_asset(
         b'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20"><path d="M0 0L1 1"/></svg>',
@@ -90,6 +104,28 @@ def test_svg_resource_limits_fail_closed() -> None:
     for payload in (too_deep, too_many):
         with pytest.raises(DecorAssetError, match="safety limit"):
             validate_asset(payload, "bounded.svg")
+
+
+@pytest.mark.parametrize("attribute", [
+    'opacity="NaN"', 'opacity="1.1"', 'stop-opacity="101%"', 'offset="-0.1"',
+])
+def test_svg_rejects_non_finite_or_out_of_range_unit_values(attribute: str) -> None:
+    tag = "stop" if attribute.startswith(("stop", "offset")) else "path"
+    payload = (
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1">'
+        f'<{tag} {attribute}/></svg>'
+    ).encode()
+    with pytest.raises(DecorAssetError, match="invalid|range"):
+        validate_asset(payload, "bounded.svg")
+
+
+def test_svg_rejects_one_oversized_attribute_before_tree_use() -> None:
+    payload = (
+        b'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1"><path d="'
+        + b"M" * 65_537 + b'"/></svg>'
+    )
+    with pytest.raises(DecorAssetError, match="safety limit"):
+        validate_asset(payload, "bounded.svg")
 
 
 def test_valid_looking_but_truncated_raster_is_rejected_by_full_decode() -> None:

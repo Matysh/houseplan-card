@@ -57,6 +57,7 @@ import {
 import { resolveZeroWalls } from './zero-walls';
 import { geometryOpenings } from './plan-geometry-preflight';
 import { resolveDeviceAreaRelocations } from './device-area-relocation';
+import { projectDecorImage } from './decor-assets';
 import {
   buildGlowClipGeometry, buildLightBarrierScene, forgetGlowSource, forgetGlowSpace,
   glowSourceInOpaqueBody, pruneGlowSources, readGlowClip, renderGlowPools,
@@ -638,16 +639,12 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
     const raw = o.decorAssetUrl?.(String(shape.asset_id || '')) || '';
     const href = raw && o.displayUrl ? o.displayUrl(raw) : raw;
     if (!href) return [];
-    const x = Number(shape.x) * NORM_W, y = Number(shape.y) * NORM_W;
-    const w = Number(shape.w) * NORM_W, h = Number(shape.h) * NORM_W;
-    if (![x, y, w, h].every(Number.isFinite) || w <= 0 || h <= 0) return [];
-    const cx = x + w / 2, cy = y + h / 2;
-    const angle = Number(shape.angle) || 0;
-    const transform = `translate(${cx} ${cy}) rotate(${angle}) scale(${shape.flip_h ? -1 : 1} ${shape.flip_v ? -1 : 1}) translate(${-cx} ${-cy})`;
+    const projection = projectDecorImage(shape, NORM_W, NORM_W);
+    if (!projection) return [];
+    const [x, y, w, h, opacity, transform] = projection;
     return [svg`<image class="dimage" data-hp="decor"
       href=${href} x=${x} y=${y} width=${w} height=${h}
-      opacity=${Number.isFinite(Number(shape.opacity))
-        ? Math.max(0, Math.min(1, Number(shape.opacity))) : 1}
+      opacity=${opacity}
       @load=${() => o.assetLoaded?.(raw, href)}
       preserveAspectRatio="none" transform=${transform} pointer-events="none"></image>`];
   });

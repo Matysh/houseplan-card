@@ -12,6 +12,7 @@ import math
 import re
 import struct
 import xml.etree.ElementTree as ET
+from xml.parsers import expat
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -33,6 +34,7 @@ MAX_RASTER_PIXELS = (128 * 1024 * 1024) // 4
 MAX_SVG_ELEMENTS = 5_000
 MAX_SVG_DEPTH = 64
 MAX_SVG_ATTR_CHARS = 512_000
+MAX_SVG_ATTR_VALUE_CHARS = 65_536
 _SVG_TAGS = frozenset({
     "svg", "g", "defs", "title", "desc", "path", "rect", "circle", "ellipse",
     "line", "polyline", "polygon", "clipPath", "mask", "linearGradient",
@@ -49,6 +51,9 @@ _SVG_ATTRS = frozenset({
 _LOCAL_REF = re.compile(r"^url\(#[A-Za-z_][A-Za-z0-9_.:-]*\)$")
 _LENGTH = re.compile(r"^\s*([0-9]+(?:\.[0-9]+)?)\s*(?:px)?\s*$", re.I)
 _SVG_NAMESPACE = "http://www.w3.org/2000/svg"
+_SVG_UNIT_INTERVAL_ATTRS = frozenset({
+    "opacity", "fill-opacity", "stroke-opacity", "stop-opacity", "offset",
+})
 
 
 class DecorAssetError(ValueError):
@@ -157,15 +162,45 @@ def _svg_number(value: str | None) -> float | None:
     return float(match.group(1)) if match else None
 
 
-def _validate_svg(data: bytes) -> ValidatedAsset:
-    lowered = data.lower()
-    if any(token in lowered for token in (b"<!doctype", b"<!entity", b"<?xml-stylesheet")):
+def _validate_svg_unit_interval(name: str, value: str) -> None:
+    """Reject non-finite and out-of-range opacity/gradient values."""
+    raw = value.strip()
+    percent = raw.endswith("%")
+    try:
+        number = float(raw[:-1] if percent else raw)
+    except ValueError as err:
+        raise DecorAssetError("invalid_image", f"The SVG {name} value is invalid") from err
+    limit = 100 if percent else 1
+    if not math.isfinite(number) or number < 0 or number > limit:
+        raise DecorAssetError("invalid_image", f"The SVG {name} value is out of range")
+
+
+def _reject_svg_declarations(data: bytes) -> None:
+    """Parse with encoding-aware expat guards before building an XML tree."""
+    parser = expat.ParserCreate()
+
+    def reject(*_args: Any) -> None:
         raise DecorAssetError(
             "invalid_image", "DTD, entities and processing instructions are forbidden",
         )
-    without_declaration = re.sub(br"^\s*<\?xml\b[^?]*\?>", b"", data, count=1, flags=re.I)
-    if b"<?" in without_declaration:
-        raise DecorAssetError("invalid_image", "XML processing instructions are forbidden")
+
+    parser.StartDoctypeDeclHandler = reject
+    parser.EntityDeclHandler = reject
+    parser.ExternalEntityRefHandler = reject
+    parser.ProcessingInstructionHandler = reject
+    try:
+        parser.Parse(data, True)
+    except DecorAssetError:
+        raise
+    except (expat.ExpatError, UnicodeError) as err:
+        raise DecorAssetError("invalid_image", "The SVG is not valid XML") from err
+
+
+def _validate_svg(data: bytes) -> ValidatedAsset:
+    # Byte-substring checks are bypassable with UTF-16/UTF-32. Expat detects
+    # the declared/input encoding first and our handlers reject declarations
+    # before entity expansion can allocate an ElementTree.
+    _reject_svg_declarations(data)
     try:
         root = ET.fromstring(data)
     except (ET.ParseError, UnicodeError) as err:
@@ -196,6 +231,8 @@ def _validate_svg(data: bytes) -> ValidatedAsset:
             if tag not in {"title", "desc"} or len(node.text) > 4096:
                 raise DecorAssetError("unsupported_image", "Unsupported or oversized SVG text")
         for raw_name, value in node.attrib.items():
+            if len(value) > MAX_SVG_ATTR_VALUE_CHARS:
+                raise DecorAssetError("too_large", "An SVG attribute exceeds the safety limit")
             if raw_name.startswith("{"):
                 raise DecorAssetError("unsupported_image", "Namespaced SVG attributes are unsupported")
             name = raw_name
@@ -204,6 +241,8 @@ def _validate_svg(data: bytes) -> ValidatedAsset:
                 raise DecorAssetError("too_large", "The SVG attributes exceed the safety limit")
             if name.lower().startswith("on") or name not in _SVG_ATTRS:
                 raise DecorAssetError("unsupported_image", f"Unsupported SVG attribute: {name}")
+            if name in _SVG_UNIT_INTERVAL_ATTRS:
+                _validate_svg_unit_interval(name, value)
             low = value.strip().lower()
             if any(token in low for token in ("javascript:", "data:", "http:", "https:", "//")):
                 raise DecorAssetError("invalid_image", "External SVG resources are forbidden")

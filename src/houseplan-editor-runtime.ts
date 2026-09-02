@@ -4200,7 +4200,7 @@ public _decorPointerDown(ev: PointerEvent): boolean {
       const pointerType = ev.pointerType || 'mouse';
       if (pointerType === 'mouse') {
         if (t === 'furniture') this._furnPlace(this._svgPoint(ev), ev.shiftKey, pointerType);
-        else this._decorImagePlace(this._svgPoint(ev));
+        else this._decorImagePlace(this._svgPoint(ev), pointerType);
         return true;
       }
       const pending = this.host._furnTouchPending;
@@ -5042,7 +5042,7 @@ public _furnPointerUp(ev: PointerEvent): boolean {
           || (this.host._decorTool === 'image' && this.host._decorImagePalette))) {
       if (this.host._decorTool === 'furniture')
         this._furnPlace(this._svgPoint(ev), ev.shiftKey, pending.pointerType);
-      else this._decorImagePlace(this._svgPoint(ev));
+      else this._decorImagePlace(this._svgPoint(ev), pending.pointerType);
     }
     return true;
   }
@@ -5127,11 +5127,11 @@ public _decorApplyBox(id: string, box: { x: number; y: number; w: number; h: num
     this.host.requestUpdate();
   }
 
-public _decorImagePlace(raw: number[]): void {
+public _decorImagePlace(raw: number[], pointerType = 'mouse'): void {
     const asset = this.host._decorImagePalette;
     const sp = this.host._curSpaceCfg;
     if (!asset || !sp) return;
-    const at = this._decorSnap(raw);
+    const at = this._decorSnap(raw, pointerType);
     const size = initialDecorImageCm(asset.width, asset.height);
     const w = decorCmToUnits(size.w, this.host._cellCm, this.host._gridPitch) / NORM_W;
     const h = decorCmToUnits(size.h, this.host._cellCm, this.host._gridPitch) / this.host._decorH;
