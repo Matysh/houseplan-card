@@ -3,11 +3,12 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 const card = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
+const editor = readFileSync(new URL('../src/houseplan-editor-runtime.ts', import.meta.url), 'utf8');
 
 test('#361 saved furniture and placement preview share the physical screen resolver', () => {
-  const preview = card.slice(
-    card.indexOf('private _renderFurniturePlacementPreview('),
-    card.indexOf('private _renderDecorLayer('),
+  const preview = editor.slice(
+    editor.indexOf('public _renderFurniturePlacementPreview('),
+    editor.indexOf('public _furnLive('),
   );
   const layer = card.slice(
     card.indexOf('private _renderDecorLayer('),

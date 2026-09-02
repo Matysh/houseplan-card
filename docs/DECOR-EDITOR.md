@@ -7,8 +7,8 @@ truth for the decorative layer. `BACKDROP.md`, `LIVE-TEXT.md` and
 ## Purpose and invariants
 
 The Background editor is a visual annotation layer. Its shapes, furniture,
-text and plan image never participate in rooms, wall geometry, light routing,
-device state or Home Assistant actions.
+custom images, text and plan image never participate in rooms, wall geometry,
+light routing, device state or Home Assistant actions.
 
 | Invariant | Contract |
 |---|---|
@@ -17,8 +17,8 @@ device state or Home Assistant actions.
 | Undo | Decor and backdrop use the same named 50-command stack as plan geometry. |
 | Cancel | `Esc` restores the state at the start of an active drag/draw/resize/rotate gesture. A completed gesture is reverted with Undo. |
 | Selection | One click selects; drag moves; the selected object has one common transform frame; double click opens all editable properties. |
-| Scale | Corner drag preserves aspect ratio. Hold `Shift` for independent axes. Furniture also has four one-axis middle handles and may cross the fixed edge to mirror. |
-| Rotation | Ordinary decor uses 5° steps by default and `Shift` for free rotation. Furniture is free by default and `Shift` snaps to 45°. Lines use endpoint handles instead of a rotation handle. |
+| Scale | Corner drag preserves aspect ratio. Hold `Shift` for independent axes. Furniture and custom images also have four one-axis middle handles and may cross the fixed edge to mirror. |
+| Rotation | Ordinary decor uses 5° steps by default and `Shift` for free rotation. Furniture and custom images are free by default and `Shift` snaps to 45°. Lines use endpoint handles instead of a rotation handle. |
 | Magnet targets | Only other decor objects and room contours: corners, edge centres, centres and edges. The image, devices and openings are excluded. |
 | Context emphasis | Decor and its editing chrome stay fully opaque. Rooms, labels, devices, openings, positive-thickness walls and solid/dashed zero-thickness walls are contextual only and render at 35% opacity. The whole device presentation (core, ring, capsule, values and badges) is pointer-inert: it never hovers, opens, acts or drags, and the active Background tool receives a press through it. |
 | View composition | All decor kinds form one layer above room/data fills, room hover fill, opening-tunnel fills and Glow base. Live Glow, sun, physical walls, opening symbols, devices and room labels remain above decor. The plan image remains below it. |
@@ -35,6 +35,7 @@ device state or Home Assistant actions.
 | Oval | Drag its bounding box; `Shift` makes a circle | `R` for a circle, `Rx × Ry` for an oval | bounding size, angle, contour and optional fill |
 | Text | Click to open the text form | the saved label is selected immediately | content, HA variables, colour/opacity, physical size and angle |
 | Furniture | Pick a symbol, then click its centre | wall magnet unless `Shift` is held | signed size, H/V mirror, angle and contour style; corners resize smoothly, four middle handles change one axis, rotation is free/`Shift` 45° |
+| Image | Upload PNG/JPEG/WebP/SVG or pick a stored file, then click its centre | exact one-shot preview; no wall magnet | opacity, file replacement, signed size, H/V mirror and angle; the whole rotated rectangle is selectable |
 | Erase | Click a decor object; text uses its whole logical bounding box, including spaces between glyphs | confirmation dialog, then atomic removal of the whole object | A miss changes nothing; Undo restores a removed object |
 
 The editor always opens on **Select**. If the space has an image, the Plan
@@ -78,7 +79,8 @@ pixel-identical until edited or explicitly optimised; conversion is
 `width_cm = width / GRID_PITCH × cell_cm`.
 
 The primary toolbar always exposes the shared session-default colour and
-opacity for new lines, shape outlines, text and furniture. The same picker also
+opacity for new lines, shape outlines, text and furniture. Custom images keep
+their own pixels and opacity and do not consume that colour. The same picker also
 remains in the applicable drawing context tray; both surfaces read and write one
 style state. Width, fill and other active-tool values stay in the context tray
 over the stage rather than changing the height of the permanent editor toolbar.
@@ -116,27 +118,42 @@ history wins while focus is inside an input.
 
 | Concern | File |
 |---|---|
-| persisted decor types and future custom-image transform contract | `src/editors/decor/types.ts` |
+| persisted decor types and custom-image transform contract | `src/editors/decor/types.ts` |
 | physical style conversion, oriented boxes, resize and snapping | `src/editors/decor/geometry.ts` |
 | furniture-only continuous resize, flip projection and SVG transform | `src/furniture.ts` |
 | shared colour/opacity field | `src/hp-color-opacity.ts` |
 | orchestration, dialogs and SVG transform frames | `src/houseplan-card.ts` |
 | static/full-card backdrop rendering and content bounds | `src/space-render.ts`, `src/space-geometry.ts` |
 | accepted persisted ranges | `custom_components/houseplan/validation.py` |
+| image validation, content identity and catalog | `custom_components/houseplan/decor_assets.py` |
+| authenticated upload/list/resolve/delete | `custom_components/houseplan/http_api.py`, `custom_components/houseplan/websocket_api.py` |
 | explicit legacy conversion | `src/plan-optimizer.ts` |
 
 The current root card still owns orchestration. Future extraction should move
 it into `src/editors/decor/decor-editor.ts` without changing the typed model or
 geometry helpers.
 
-## Deferred custom images
+## Custom image lifecycle
 
-User-provided decorative images are not exposed yet. The typed
-`DecorImageTransform` contract already matches the common selection controller
-(`x/y/w/h/angle/opacity`). A future image kind must additionally define safe
-upload/reference lifecycle, quotas, copy-on-write and deletion semantics before
-it is added to `DecorShape`; it must not reuse the plan backdrop file lifecycle
-implicitly.
+The **Image** tool opens one shared catalog. Upload accepts decoded PNG, JPEG
+and WebP or a strict, canonical SVG; each canonical file is limited to 2 MiB.
+The dedicated store is capped at 200 files / 256 MiB and lives at
+`config/houseplan/assets`. An asset id is the SHA-256 of canonical bytes, so an
+identical upload reuses one file. Config records contain only `asset_id` and
+the normal decor transform.
+
+Placement is one-shot: select a file, inspect the pointer preview, click once,
+then the editor returns to Select. The initial width is 100 cm; height preserves
+the file ratio and is capped at 200 cm. Unlike furniture, images never magnetise
+to walls. Removing or replacing an object does not remove the shared file. The
+catalog can explicitly delete a file only when the backend finds no references
+in any space.
+
+Missing or hash-mismatched content fails dark in View and the static card. In
+Background it becomes a bounded selectable crossed placeholder so the user can
+replace it without losing position, size, rotation, mirror or layer order.
+Export v2 records hashes and availability but never embeds image bytes; an
+import with missing bytes requires confirmation and preserves that placeholder.
 
 ## Edge cases
 
@@ -147,6 +164,8 @@ implicitly.
 - Select uses a path-shaped furniture target extending 10 physical centimetres
   beyond painted strokes; empty bounding-box space remains a miss.
 - A rotated box contributes all four rotated corners to content bounds.
+- A transparent custom image is selected by its complete rotated rectangle,
+  not only opaque pixels.
 - A rotated backdrop is hit-tested in its own local coordinate system.
 - Changing `cell_cm` changes the rendered width/font size of canonical physical
   styles, as expected: it changes the scale of the whole space. Legacy

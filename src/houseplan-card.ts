@@ -70,12 +70,9 @@ import {
 } from './sun';
 import { dayCycleStageVars, renderDayCycleEnvironment } from './day-cycle-render';
 import {
-  FURNITURE_GROUPS, furnitureOfGroup, furnitureSymbol, furnitureDefaultCm,
-  furnitureGraphic, furnitureCorners, snapFurnitureToWall,
+  furnitureGraphic,
   furniturePlanScreenScale, furnitureStrokePx,
   furnitureRenderTransform,
-  cmToNorm, clampFurnSize, clampFurnCm, FURN_WALL_CELLS,
-  type FurnitureGroup, type FurniturePlacement,
 } from './furniture';
 import {
   degradeWalls, rekeyWallsAfterMoveChecked, wallRecordCarrierViolations,
@@ -125,7 +122,7 @@ import {
   type VacSourceResolution, type VacSourceStatus,
 } from './vacuum';
 import {
-  buildDevices, deviceFromMarkerDraft, seedHiddenBindings, lqiFor, tempFor, humFor, climateTempFor, isHumEntity,
+  buildDevices, deviceFromMarkerDraft, seedHiddenBindings, lqiFor, tempFor, climateTempFor,
   areaTemp, areaHum, effectiveExcludedIntegrations, sourceValue, roomClimateKey, roomClimateMap,
   resolvedLightSources, resolvedLightState, resolvedLightStats,
   hasOwnSpatialSource, hasOwnStatefulLightSource, ownControllableEntities,
@@ -221,7 +218,7 @@ import {
   resolveRoomOpeningHost, wallModelOffGridValueCount, WallSegmentModelError,
 } from './wall-segment-model';
 import {
-  legacyZeroContourLines, resolveZeroWalls, zeroContourLines,
+  resolveZeroWalls,
   zeroWallHasOpening, zeroWallStyleOf,
 } from './zero-walls';
 import { snapNearAxisEndpoint } from './near-axis';
@@ -345,6 +342,10 @@ import {
   type HaBindingStatus, type HaRegistrySnapshot,
 } from './ha-binding-status';
 import type { DecorShape, DecorStyle } from './editors/decor/types';
+import {
+  DECOR_ASSETS_API_VERSION, decorAssetIds,
+  resolveDecorAssets, type DecorAsset,
+} from './decor-assets';
 import {
   DEFAULT_DECOR_STYLE, boxAnchors, boxCorners, clamp01, decorCmToUnits,
   decorStrokeUnits, decorStyleFromSettings, decorStyleOf, decorStylePatch,
@@ -711,7 +712,7 @@ interface SpaceGeometryState {
 }
 /** Tools of the decor (background) editor. `furniture` is the library
  *  (docs/FURNITURE.md): it opens a palette and places a symbol at real size. */
-type DecorTool = 'select' | 'backdrop' | 'line' | 'rect' | 'ellipse' | 'text' | 'furniture' | 'erase';
+type DecorTool = 'select' | 'backdrop' | 'line' | 'rect' | 'ellipse' | 'text' | 'furniture' | 'image' | 'erase';
 
 const fireEvent = (node: EventTarget, type: string, detail?: unknown) => {
   const ev = new Event(type, { bubbles: true, composed: true }) as any;
@@ -1082,12 +1083,13 @@ export class HouseplanCard extends LitElement {
   } | null = null;
   /** Style editor opened by double-clicking a non-text decor object. */
   private _decorShapeDialog: {
-    id: string; kind: 'line' | 'rect' | 'ellipse' | 'furniture';
+    id: string; kind: 'line' | 'rect' | 'ellipse' | 'furniture' | 'image';
     color: string; opacity: number; widthCm: number;
     lineStyle?: 'solid' | 'dashed';
     fill?: boolean; fillColor?: string; fillOpacity?: number;
     lengthCm?: number; sizeWCm?: number; sizeHCm?: number; angle: string;
     symbol?: string;
+    assetId?: string;
     sizeWField?: string; sizeHField?: string; flipH?: boolean; flipV?: boolean;
   } | null = null;
   private _backdropDialog: { widthCm: number; heightCm: number; angle: string } | null = null;
@@ -1100,6 +1102,10 @@ export class HouseplanCard extends LitElement {
    * a unit system is a display setting, never a stored one.
    */
   private _furnPalette: { symbol: string; w: number; h: number } | null = null;
+  private _decorImagePalette: DecorAsset | null = null;
+  private _decorAssetCatalog: DecorAsset[] = [];
+  private _decorAssets = new Map<string, DecorAsset>();
+  private _decorAssetBusy = false;
   /** Category currently open in the two-level furniture palette. */
   private _furnCategory: string | null = null;
   /** Last fine-pointer location while one furniture stamp is armed. The final
@@ -1994,9 +2000,6 @@ export class HouseplanCard extends LitElement {
   /** Active pools survive an off transition until their 500 ms fade completes. */
   private get _glowRenderedSources() { return this._glowRuntimeState.renderedSources; }
   private get _glowLastAppearance() { return this._glowRuntimeState.lastAppearance; }
-  private get _glowEnteringSources() { return this._glowRuntimeState.enteringSources; }
-  private get _glowEnterRafs() { return this._glowRuntimeState.enterRafs; }
-  private get _glowFadeTimers() { return this._glowRuntimeState.fadeTimers; }
   private get _glowFeatherSuspendUntil() { return this._glowRuntimeState.featherSuspendUntil; }
   private set _glowFeatherSuspendUntil(value: number) { this._glowRuntimeState.featherSuspendUntil = value; }
   private get _glowFeatherResumeTimer() { return this._glowRuntimeState.featherResumeTimer; }
@@ -2196,6 +2199,9 @@ export class HouseplanCard extends LitElement {
   private _haIntegrationVersion: string | null = null;
   /** #423: support protocol capability from config/get; never persisted. */
   private _haSupportApi: number | null = null;
+  /** #51: custom-image protocol capability from config/get; fail closed. */
+  private _haDecorAssetsApi: number | null = null;
+  private _decorAssetSyncToken = 0;
   private _alignDialog: {
     report: OptimizeReport; config: any; layout: Record<string, any>;
     preflight: OptimizeGeometryPreflightResult | null;
@@ -2656,6 +2662,9 @@ export class HouseplanCard extends LitElement {
     _decorShapeDialog: { state: true },
     _backdropDialog: { state: true },
     _furnPalette: { state: true },
+    _decorImagePalette: { state: true },
+    _decorAssetCatalog: { state: true },
+    _decorAssetBusy: { state: true },
     _furnCategory: { state: true },
     _furnPreviewInput: { state: true },
     _bdDrag: { state: true },
@@ -2737,7 +2746,7 @@ export class HouseplanCard extends LitElement {
     if (this.hass) this._ensureHaRegistryAuthority();
     window.addEventListener('keydown', this._keyHandler);
     // signatures expire (24 h); refresh well before that on long-lived screens
-    this._signer.start(() => this.hass, () => referencedContentUrls(this._serverCfg));
+    this._signer.start(() => this.hass, () => this._referencedContentUrls());
     this._syncCycleTimer();
     window.addEventListener('hashchange', this._onHashChange);
     this._labsUnsub?.();
@@ -4278,7 +4287,9 @@ export class HouseplanCard extends LitElement {
    */
   private _adoptConfigCapabilities(response: unknown): void {
     const capabilities = response && typeof response === 'object'
-      ? response as Partial<Record<'integration_version' | 'support_api', unknown>> : {};
+      ? response as Partial<Record<
+          'integration_version' | 'support_api' | 'decor_assets_api', unknown
+        >> : {};
     this._haIntegrationVersion = typeof capabilities.integration_version === 'string'
       ? capabilities.integration_version : this._haIntegrationVersion;
     const supportApi = capabilities.support_api;
@@ -4286,6 +4297,21 @@ export class HouseplanCard extends LitElement {
     // after a backend downgrade must revoke a capability learned earlier.
     this._haSupportApi = typeof supportApi === 'number' && Number.isSafeInteger(supportApi)
       ? supportApi : null;
+    this._haDecorAssetsApi = capabilities.decor_assets_api === DECOR_ASSETS_API_VERSION
+      ? DECOR_ASSETS_API_VERSION : null;
+  }
+
+  private async _syncDecorAssets(cfg: ServerConfig | null): Promise<void> {
+    const token = ++this._decorAssetSyncToken;
+    if (this._haDecorAssetsApi !== DECOR_ASSETS_API_VERSION || !this.hass) {
+      this._decorAssets = new Map();
+      return;
+    }
+    const resolved = await resolveDecorAssets(this.hass, decorAssetIds(cfg));
+    if (token !== this._decorAssetSyncToken) return;
+    this._decorAssets = resolved;
+    this._resign();
+    this.requestUpdate();
   }
 
   private _adoptStructuralResponses(
@@ -4377,7 +4403,6 @@ export class HouseplanCard extends LitElement {
         this.hass.callWS({ type: 'houseplan/config/get' }),
         this.hass.callWS({ type: 'houseplan/layout/get' }),
       ]);
-      this._adoptConfigCapabilities(cfgResp);
       const candidateConfig = cfgResp?.config && Array.isArray(cfgResp.config.spaces)
         ? cfgResp.config : null;
       const structuralChanged = contentFingerprint(candidateConfig)
@@ -4404,6 +4429,7 @@ export class HouseplanCard extends LitElement {
       if (typeof cfgResp?.can_write === 'boolean') this._serverCanWrite = cfgResp.can_write;
       this._canOptimizeUndo = !!(cfgResp?.can_optimize_undo || layResp?.can_optimize_undo);
       this._adoptStructuralResponses(cfgResp, layResp);
+      void this._syncDecorAssets(candidateConfig).catch(() => undefined);
       this._adoptInitialSpace(this._model, true);
       this._resumePendingNavMode();
       this._cacheSnapshot();
@@ -4567,7 +4593,6 @@ export class HouseplanCard extends LitElement {
     this._beginContinuityCandidate('config-reload', false);
     try {
       const resp = await this.hass.callWS({ type: 'houseplan/config/get' });
-      this._adoptConfigCapabilities(resp);
       const candidateConfig = resp?.config && Array.isArray(resp.config.spaces)
         ? resp.config as ServerConfig : null;
       const configChanged = contentFingerprint(candidateConfig)
@@ -4581,6 +4606,7 @@ export class HouseplanCard extends LitElement {
       }
       const visibleSpace = this._space;
       this._adoptStructuralResponses(resp);
+      void this._syncDecorAssets(candidateConfig).catch(() => undefined);
       this._adoptInitialSpace(this._model, true);
       this._resumePendingNavMode();
       this._cacheSnapshot();
@@ -4948,9 +4974,15 @@ export class HouseplanCard extends LitElement {
     return this._signer.display(this.hass, url);
   }
 
+  private _referencedContentUrls(): Set<string> {
+    const urls = referencedContentUrls(this._serverCfg);
+    for (const asset of this._decorAssets.values()) urls.add(asset.url);
+    return urls;
+  }
+
   /** Re-sign what the live config still references (wall tablets outlive one). */
   private _resign(): void {
-    this._signer.resign(this.hass, referencedContentUrls(this._serverCfg));
+    this._signer.resign(this.hass, this._referencedContentUrls());
   }
 
   private _layoutSyncTimer?: number;
@@ -5615,19 +5647,6 @@ export class HouseplanCard extends LitElement {
 
   // ================= live states =================
 
-  /**
-   * Entities that jointly describe the marker. Explicit cover intent wins;
-   * otherwise the same resolved light set used by Glow/fill/controls wins;
-   * a non-light marker uses its resolved device-state role. Critical secondary
-   * entities are appended so an alarm cannot hide behind a less important
-   * functional source.
-   */
-  private _visualSamples(d: DevItem): EntityVisualSample[] {
-    return resolvePresentationSources(
-      this._renderPlanHass, d, this._renderDevices, undefined, this._fullRegistryHass,
-    ).samples;
-  }
-
   /** One semantic projection consumed by the plan, preview and static card. */
   private _devicePresentation(
     d: DevItem, showLqi = this._config?.show_signal !== false, designPreview = false,
@@ -5701,12 +5720,6 @@ export class HouseplanCard extends LitElement {
           || registry?.original_device_class,
       );
     });
-  }
-
-  private _liveHum(d: DevItem): number | null {
-    if (!this._config?.show_temperature) return null; // same "sensor values" toggle as temperature
-    if (!d.primary || !isHumEntity(this.hass, d.primary)) return null;
-    return humFor(this.hass, d.entities);
   }
 
   // ================= interaction =================
@@ -6042,6 +6055,11 @@ export class HouseplanCard extends LitElement {
       }
       const H = this._decorH;
       for (const x of this._decorList) {
+        // Missing image assets are intentionally invisible in View. Their
+        // geometry still participates while Background is open, where the
+        // bounded repair placeholder is actually painted and selectable.
+        if (x.kind === 'image' && !this._decorAssets.has(x.asset_id)
+            && this._mode !== 'decor') continue;
         const pts = x.kind === 'line'
           ? [[x.x1 * NORM_W, x.y1 * H], [x.x2 * NORM_W, x.y2 * H]]
           : x.kind === 'text'
@@ -6827,7 +6845,9 @@ export class HouseplanCard extends LitElement {
       this._decorMoveUpdate(ev);
       return;
     }
-    if (this._mode === 'decor' && this._decorTool === 'furniture' && this._editorRuntime) {
+    if (this._mode === 'decor'
+        && (this._decorTool === 'furniture' || this._decorTool === 'image')
+        && this._editorRuntime) {
       this._notePointer(ev);
       if (this._editorRuntime._furnPointerMove(ev, this._pointerModality.hoverEnabled)) return;
     }
@@ -8331,7 +8351,8 @@ export class HouseplanCard extends LitElement {
   }
 
   private _decorBoxOf(shape: DecorShape): DecorBox | null {
-    if (shape.kind !== 'rect' && shape.kind !== 'ellipse' && shape.kind !== 'furniture') return null;
+    if (shape.kind !== 'rect' && shape.kind !== 'ellipse'
+        && shape.kind !== 'furniture' && shape.kind !== 'image') return null;
     return {
       x: shape.x * NORM_W, y: shape.y * this._decorH,
       w: shape.w * NORM_W, h: shape.h * this._decorH,
@@ -8476,105 +8497,6 @@ export class HouseplanCard extends LitElement {
 
   private _confirmDecorErase(): void {
     return this._editorRuntimeOrThrow()._confirmDecorErase();
-  }
-
-  // ================= the furniture library (docs/FURNITURE.md) =================
-
-  /** Furniture sees room centrelines plus the physical faces of independent
-   * partitions/drafts/columns. Openings intentionally still use room walls
-   * only; furniture is allowed to lean against every real obstacle. */
-  private get _furnWalls(): number[][] {
-    const faces = this._rawPhysicalBodiesR().flatMap((body) =>
-      body.map((a, i) => {
-        const b = body[(i + 1) % body.length];
-        return [a[0], a[1], b[0], b[1]];
-      }));
-    return [...this._segments, ...faces];
-  }
-
-  /** How far the wall magnet reaches, render units. */
-  private get _furnWallReach(): number {
-    return this._gridPitch * FURN_WALL_CELLS;
-  }
-
-  /** cm → the number the size fields SHOW (metres, or decimal feet). The
-   *  `_imperial` it asks is the card's one answer to "feet or metres?", the
-   *  same the glow radius reads. */
-  private _furnFieldValue(cm: number): number {
-    return this._editorRuntimeOrThrow()._furnFieldValue(cm);
-  }
-
-  /** …and back. The config never stores feet: a unit system is how a user
-   *  reads a plan, not what the plan is (docs/STYLING-HOOKS.md §6). */
-  private _furnFieldToCm(v: number): number {
-    return this._editorRuntimeOrThrow()._furnFieldToCm(v);
-  }
-
-  /** Arm a symbol: the palette remembers it with ITS default real size, which
-   *  the two fields then let the user overrule before the click. */
-  private _furnPick(symbol: string): void {
-    return this._editorRuntimeOrThrow()._furnPick(symbol);
-  }
-
-  /**
-   * Put the armed symbol down.
-   *
-   * The press is the CENTRE of the piece, not its corner: a user points at the
-   * place the sofa goes. The size comes from the palette in CENTIMETRES and is
-   * turned into the canvas's normalised units through the space's `cell_cm` —
-   * the one scale this card has — so a 2.2 m sofa is 2.2 m of THIS plan, and a
-   * plan drawn at 10 cm per cell gets a sofa half the cells of one drawn at 5.
-   *
-   * A wall within reach claims it immediately, with its angle, so the common
-   * case (put the bed against that wall) is one click and no dragging.
-   */
-  private _furnPlace(raw: number[], free = false): void {
-    return this._editorRuntimeOrThrow()._furnPlace(raw, free);
-  }
-
-  /**
-   * Drag a placed piece. The magnet wins over the grid while a wall is within
-   * reach — it decides the position AND the rotation, which is the whole point
-   * of it: a sofa pushed at a wall is parallel to that wall or it is wrong.
-   * Out of reach it is the ordinary grid snap on the piece's own anchor, and
-   * the angle it already had is kept.
-   */
-  private _furnMoveUpdate(ev: PointerEvent): void {
-    return this._editorRuntimeOrThrow()._furnMoveUpdate(ev);
-  }
-
-  /** Write a resized box into the shape — live, without saving. */
-  private _decorApplyBox(id: string, box: { x: number; y: number; w: number; h: number }): void {
-    return this._editorRuntimeOrThrow()._decorApplyBox(id, box);
-  }
-
-  /**
-   * The two live badges of a corner drag: the piece's real WIDTH along its own
-   * top edge and its real DEPTH along its left one — in the HA unit system,
-   * through the same `_fmtLen` (`segmentCm` over `cell_cm`) and the same
-   * `.measurelabel` the wall ruler, the room resize and the backdrop use.
-   * There is one way this card ever states a length.
-   */
-  private get _furnLive(): { x: number; y: number; text: string }[] | null {
-    const d = this._dtDrag;
-    if (!d || d.kind !== 'scale' || !d.orig) return null;
-    const sh = this._decorList.find((s) => s.id === d.id);
-    if (!sh || sh.kind !== 'furniture') return null;
-    const W = NORM_W, H = this._decorH;
-    const w = sh.w * W, h = sh.h * H;
-    const c = furnitureCorners(sh.x * W, sh.y * H, w, h, Number(sh.angle) || 0);
-    const mid = (a: number[], b: number[]) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
-    const top = mid(c[0], c[1]);
-    const left = mid(c[0], c[3]);
-    return [
-      { x: top[0], y: top[1], text: this._fmtLen([0, 0], [w, 0]) },
-      { x: left[0], y: left[1], text: this._fmtLen([0, 0], [0, h]) },
-    ];
-  }
-
-  /** The lazy editor runtime owns the generated two-level furniture palette. */
-  private _renderFurnPalette(): TemplateResult {
-    return this._editorRuntimeOrThrow()._renderFurnPalette();
   }
 
   // ============ backdrop transform frame (docs/BACKDROP.md) ============
@@ -8744,7 +8666,7 @@ export class HouseplanCard extends LitElement {
       [-1, -1, 'nwse'], [1, -1, 'nesw'], [1, 1, 'nwse'], [-1, 1, 'nesw'],
     ];
     const arm = hr * 2.2;
-    const furniture = sh.kind === 'furniture';
+    const furniture = sh.kind === 'furniture' || sh.kind === 'image';
     const sides: [number, number, string][] = furniture ? [
       [0, -1, 'ns'], [1, 0, 'ew'], [0, 1, 'ns'], [-1, 0, 'ew'],
     ] : [];
@@ -8768,39 +8690,6 @@ export class HouseplanCard extends LitElement {
           @pointerdown=${(e: PointerEvent) => this._dtStart(e, 'scale', [sx, sy])}></circle><circle class="dtknob"
           cx="${sx < 0 ? b.x : b.x + b.w}" cy="${sy < 0 ? b.y : b.y + b.h}" r="${kr.toFixed(2)}"></circle>`)))}
     </g>` as unknown as TemplateResult;
-  }
-
-  private get _furniturePreviewPlacement(): FurniturePlacement | null {
-    const input = this._furnPreviewInput;
-    if (!input || !this._editorRuntime || this._mode !== 'decor'
-        || this._decorTool !== 'furniture' || !this._furnPalette
-        || !this._pointerModality.hoverEnabled) return null;
-    return this._editorRuntime._resolveFurniturePlacement(input.raw, input.free, 'mouse');
-  }
-
-  /** One real furniture path, in the same decor composition group as saved
-   * shapes. It paints after them (so it is visible) and the whole decor layer
-   * still paints below physical walls (#359). */
-  private _renderFurniturePlacementPreview(
-    furnitureScreenScale: number,
-  ): TemplateResult | typeof nothing {
-    const placement = this._furniturePreviewPlacement;
-    if (!placement) return nothing;
-    const art = furnitureGraphic(placement.symbol);
-    if (!art) return nothing;
-    const W = NORM_W, H = this._decorH;
-    const transform = furnitureRenderTransform(placement, W, H, art.viewW, art.viewH);
-    const style = this._decorStyle;
-    const strokeWidth = furnitureStrokePx(
-      decorCmToUnits(style.widthCm, this._cellCm, this._gridPitch),
-      furnitureScreenScale,
-    );
-    return svg`<path class="furniture-placement-preview dfurn"
-      data-symbol=${placement.symbol} d=${art.d} transform=${transform}
-      stroke=${style.color} stroke-opacity=${style.opacity}
-      stroke-width=${strokeWidth}
-      fill="none" stroke-linecap="round" stroke-linejoin="round"
-      vector-effect="non-scaling-stroke" aria-hidden="true" pointer-events="none"></path>`;
   }
 
   private _renderDecorLayer(): TemplateResult {
@@ -8869,6 +8758,25 @@ export class HouseplanCard extends LitElement {
           ${erasing ? svg`<ellipse class="dshape derasehit" data-hp="decor" data-id="${sh.id}" data-kind="${sh.kind}"
             cx="${cx}" cy="${cy}" rx="${(sh.w / 2) * W}" ry="${(sh.h / 2) * H}"
             transform=${ang ? `rotate(${ang} ${cx} ${cy})` : nothing} @pointerdown=${down}></ellipse>` : nothing}`;
+      }
+      if (sh.kind === 'image') {
+        const asset = this._decorAssets.get(sh.asset_id);
+        const x = sh.x * W, y = sh.y * H, w = sh.w * W, h = sh.h * H;
+        const cx = x + w / 2, cy = y + h / 2;
+        const transform = `translate(${cx} ${cy}) rotate(${normalizeAngle(sh.angle)}) scale(${sh.flip_h ? -1 : 1} ${sh.flip_v ? -1 : 1}) translate(${-cx} ${-cy})`;
+        if (!asset) return editing && this._editorRuntime
+          ? this._editorRuntime._renderMissingDecorImage(sh, cls, transform, x, y, w, h, down, dbl)
+          : nothing;
+        const href = this._display(asset.url);
+        if (!href) return nothing;
+        return svg`<image class="${cls} dimage" data-hp="decor" data-id=${sh.id}
+          data-kind="image" href=${href} x=${x} y=${y} width=${w} height=${h}
+          opacity=${clamp01(sh.opacity, 1)} preserveAspectRatio="none" transform=${transform}
+          @load=${() => this._signer.markLoaded(this._renderPlanHass, asset.url, href)}
+          @pointerdown=${down} @dblclick=${dbl}></image>
+          ${erasing ? svg`<rect class="dshape derasehit" data-hp="decor" data-id=${sh.id}
+            data-kind="image" x=${x} y=${y} width=${w} height=${h} transform=${transform}
+            @pointerdown=${down}></rect>` : nothing}`;
       }
       if (sh.kind === 'furniture') {
         // One path per piece. Designer art keeps its native viewBox and is
@@ -8946,7 +8854,7 @@ export class HouseplanCard extends LitElement {
               stroke="${st.color}" stroke-opacity="${st.opacity}" stroke-width="${sw}" fill="${st.fill ? st.fillColor : 'none'}" fill-opacity="${st.fill ? st.fillOpacity : 0}"></ellipse>`;
       }
     }
-    return svg`<g class="decorlayer">${shapes}${draft}${this._renderFurniturePlacementPreview(furnitureScreenScale)}</g>` as unknown as TemplateResult;
+    return svg`<g class="decorlayer">${shapes}${draft}${this._editorRuntime?._renderFurniturePlacementPreview(furnitureScreenScale) ?? nothing}${this._editorRuntime?._renderDecorImagePlacementPreview() ?? nothing}</g>` as unknown as TemplateResult;
   }
 
   // ================= shared editor secondary surface =================
@@ -8996,6 +8904,8 @@ export class HouseplanCard extends LitElement {
     if (this._mode === 'decor') {
       if (this._decorTool === 'furniture')
         return `${base}:palette:furniture:${this._furnPalette?.symbol || 'none'}`;
+      if (this._decorTool === 'image')
+        return `${base}:palette:image:${this._decorImagePalette?.asset_id || 'none'}`;
       if (this._decorTool === 'select' && this._decorSel)
         return `${base}:selection:decor:${this._decorSel}`;
       return `${base}:tool:${this._decorTool}:${this._bdMoved ? 1 : 0}:${this._bdDrag ? 1 : 0}`;
@@ -9118,32 +9028,6 @@ export class HouseplanCard extends LitElement {
   private get _spaceWalls(): WallEntry[] {
     const w = this._curSpaceCfg?.walls;
     return Array.isArray(w) ? (w as WallEntry[]) : [];
-  }
-
-  /**
-   * Open cuts in CONFIG space (normalised), for key work that runs on
-   * `sp.rooms` rather than on the render model. The canvas is square, so both
-   * axes divide by NORM_W and a stored span IS a config-space segment.
-   * `degradeWalls` needs them: a wall split by an open span keeps its solid
-   * remainder under an atomic key that is only "live" when the cut is known.
-   */
-  private _cfgOpenCuts(): number[][] {
-    const sp = this._curSpaceCfg;
-    const model = this._spaceModel();
-    if (!sp || !model) return [];
-    const canonical = zeroContourLines(sp, 1);
-    const legacy = legacyZeroContourLines(sp, model.rooms, NORM_W, this._gridPitch * 0.02)
-      .map((line) => line.map((value) => value / NORM_W));
-    const seen = new Set<string>();
-    return [...canonical, ...legacy].filter((line) => {
-      const forward = line.map((value) => Number(value).toFixed(9)).join(',');
-      const reverse = [line[2], line[3], line[0], line[1]]
-        .map((value) => Number(value).toFixed(9)).join(',');
-      const key = forward < reverse ? forward : reverse;
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
   }
 
   /** Thickness of the atomic stretch under a segment (docs/WALL-THICKNESS.md). */
@@ -11449,7 +11333,7 @@ export class HouseplanCard extends LitElement {
     const opMeasure = this._opMeasureView;
     const decorMeasure = this._decorMeasure;
     const bdLive = this._bdLive;
-    const furnLive = this._furnLive;
+    const furnLive = this._editorRuntime?._furnLive() ?? null;
     const editorChromeMode = this._mode === 'view' ? this._editorChromeMode : this._mode;
     const roomHover = this._roomHoverPaths(space);
     const backdropHref = space.bg ? this._display(space.bg.href) : '';

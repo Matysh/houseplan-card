@@ -2052,6 +2052,144 @@ async def test_content_signed_path_opens_without_a_bearer_header(
     assert resp2["success"] and resp2["result"]["urls"] == {}
 
 
+async def test_decor_asset_upload_deduplicates_and_rejects_mime_spoofing(
+    hass: HomeAssistant,
+) -> None:
+    """#51: the authenticated HTTP writer owns validation and identity."""
+    import base64
+
+    from custom_components.houseplan import http_api as hp_http
+    from custom_components.houseplan.http_api import HouseplanDecorAssetUploadView
+
+    await _setup(hass)
+    png = base64.b64decode(
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII="
+    )
+
+    class _User:
+        is_admin = True
+
+    class _Part:
+        name = "file"
+        filename = "pixel.png"
+
+        def __init__(self, mime: str) -> None:
+            self.headers = {"Content-Type": mime}
+            self._sent = False
+
+        async def read_chunk(self, _size):
+            if self._sent:
+                return b""
+            self._sent = True
+            return png
+
+    class _Reader:
+        def __init__(self, mime: str) -> None:
+            self._part = _Part(mime)
+
+        def __aiter__(self):
+            return self
+
+        async def __anext__(self):
+            if self._part is None:
+                raise StopAsyncIteration
+            part, self._part = self._part, None
+            return part
+
+    class _Request:
+        app = {hp_http.KEY_HASS: hass}
+        content_length = len(png) + 256
+
+        def __init__(self, mime: str) -> None:
+            self._mime = mime
+
+        def get(self, _key, default=None):
+            return _User()
+
+        async def multipart(self):
+            return _Reader(self._mime)
+
+    view = HouseplanDecorAssetUploadView()
+    first, duplicate = await asyncio.gather(
+        view.post(_Request("image/png")), view.post(_Request("image/png")),
+    )
+    rows = [json.loads(first.text), json.loads(duplicate.text)]
+    assert {row["reused"] for row in rows} == {False, True}
+    assert rows[0]["asset"]["asset_id"] == rows[1]["asset"]["asset_id"]
+
+    spoofed = await view.post(_Request("image/jpeg"))
+    assert spoofed.status == 400
+    assert json.loads(spoofed.text)["error"] == "invalid_format"
+
+
+async def test_decor_asset_list_resolve_delete_and_signed_content(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator, hass_client_no_auth,
+) -> None:
+    """#51: references are authoritative and corrupt content always fails dark."""
+    import base64
+    import hashlib
+
+    from custom_components.houseplan.const import ASSETS_DIR, CONTENT_URL
+
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    png = base64.b64decode(
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII="
+    )
+    aid = hashlib.sha256(png).hexdigest()
+    root = Path(hass.config.path(ASSETS_DIR))
+    root.mkdir(parents=True, exist_ok=True)
+    (root / f"{aid}.png").write_bytes(png)
+    (root / f"{aid}.json").write_text(json.dumps({
+        "asset_id": aid, "name": "pixel.png", "mime": "image/png", "ext": ".png",
+        "width": 1, "height": 1, "bytes": len(png), "created_at": "2026-01-01T00:00:00Z",
+    }), encoding="utf-8")
+
+    cfg = await _cfg([{"id": "one", "plan_url": None}])
+    cfg["spaces"][0]["decor"] = [{
+        "id": "picture", "kind": "image", "asset_id": aid,
+        "x": 0.1, "y": 0.2, "w": 0.3, "h": 0.4,
+    }]
+    saved = await _save(client, cfg, 0)
+    assert saved["success"]
+
+    await client.send_json_auto_id({"type": "houseplan/assets/list"})
+    listed = await client.receive_json()
+    assert listed["result"]["assets"][0]["used_by"] == [
+        {"space_id": "one", "decor_id": "picture"},
+    ]
+    await client.send_json_auto_id({"type": "houseplan/assets/resolve", "asset_ids": [aid, aid]})
+    resolved = await client.receive_json()
+    assert resolved["success"] and len(resolved["result"]["assets"]) == 1
+
+    await client.send_json_auto_id({"type": "houseplan/assets/delete", "asset_id": aid})
+    blocked = await client.receive_json()
+    assert not blocked["success"] and blocked["error"]["code"] == "in_use"
+
+    path = f"{CONTENT_URL}/assets/_/{aid}.png"
+    await client.send_json_auto_id({"type": "houseplan/content/sign", "paths": [path]})
+    signed = (await client.receive_json())["result"]["urls"][path]
+    http = await hass_client_no_auth()
+    response = await http.get(signed)
+    assert response.status == 200 and await response.read() == png
+    assert response.headers["Content-Type"].startswith("image/png")
+    assert response.headers["X-Content-Type-Options"] == "nosniff"
+
+    (root / f"{aid}.png").write_bytes(b"tampered")
+    assert (await http.get(signed)).status == 404
+
+    (root / f"{aid}.png").write_bytes(png)
+    cfg["spaces"][0]["decor"] = []
+    saved = await _save(client, cfg, saved["result"]["rev"])
+    assert saved["success"]
+    await client.send_json_auto_id({"type": "houseplan/assets/delete", "asset_id": aid})
+    removed = await client.receive_json()
+    assert removed["success"] and removed["result"]["removed"] is True
+    await client.send_json_auto_id({"type": "houseplan/assets/delete", "asset_id": aid})
+    repeated = await client.receive_json()
+    assert repeated["success"] and repeated["result"]["removed"] is False
+
+
 async def test_signing_one_path_may_fail_without_failing_the_request(
     hass: HomeAssistant, hass_ws_client: WebSocketGenerator, monkeypatch
 ) -> None:

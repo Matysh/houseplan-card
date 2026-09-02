@@ -495,6 +495,7 @@ test('i18n: French values equal to English are explicitly reviewed (#371)', () =
     'color_picker.saturation',
     'confirm.delete_partition_openings_item',
     'decor.rect',
+    'decor.image',
     'err.code',
     'furn.cat_bidet',
     'gs.about_version',

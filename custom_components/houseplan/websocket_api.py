@@ -23,7 +23,9 @@ from homeassistant.helpers import issue_registry as ir
 
 from .auth import may_write
 from .const import (
+    ASSETS_DIR,
     CONTENT_URL,
+    DECOR_ASSETS_API_VERSION,
     DEFAULT_CONFIG,
     DOMAIN,
     EXPORT_VERSION,
@@ -43,6 +45,7 @@ from .const import (
     SUPPORT_PREVIEW_TTL_S,
     VERSION,
 )
+from .decor_assets import ASSET_ID_RE, asset_meta_path, asset_refs, public_asset, read_catalog
 from .coordinate_canonicalization import (
     canonicalize_config_geometry,
     canonicalize_layout_geometry,
@@ -196,6 +199,9 @@ def async_register(hass: HomeAssistant) -> None:
     websocket_api.async_register_command(hass, ws_plans_delete)
     websocket_api.async_register_command(hass, ws_files_migrate)
     websocket_api.async_register_command(hass, ws_files_cleanup)
+    websocket_api.async_register_command(hass, ws_assets_list)
+    websocket_api.async_register_command(hass, ws_assets_resolve)
+    websocket_api.async_register_command(hass, ws_assets_delete)
     websocket_api.async_register_command(hass, ws_content_sign)
     websocket_api.async_register_command(hass, ws_export_create)
     websocket_api.async_register_command(hass, ws_import_revalidate)
@@ -1092,6 +1098,105 @@ async def ws_content_sign(hass: HomeAssistant, connection, msg: dict[str, Any]) 
     connection.send_result(msg["id"], {"urls": out})
 
 
+@websocket_api.websocket_command({vol.Required("type"): "houseplan/assets/list"})
+@websocket_api.async_response
+async def ws_assets_list(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
+    """List reusable custom images with authoritative reference counts."""
+    if not _check_write(hass, connection):
+        connection.send_error(msg["id"], "unauthorized", "Only writers may list image assets")
+        return
+    rt = _runtime(hass, connection, msg["id"])
+    if rt is None:
+        return
+    async with rt.write_lock, rt.upload_lock:
+        stored = await rt.config_store.async_load() or {}
+        refs = asset_refs(stored.get("config") or {})
+        root = Path(hass.config.path(ASSETS_DIR))
+        rows = await hass.async_add_executor_job(read_catalog, root)
+    connection.send_result(
+        msg["id"], {"assets": [public_asset(row, refs.get(row["asset_id"])) for row in rows]},
+    )
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): "houseplan/assets/resolve",
+        vol.Required("asset_ids"): vol.All(
+            [vol.All(str, vol.Match(r"^[0-9a-f]{64}$"))], vol.Length(max=200),
+        ),
+    }
+)
+@websocket_api.async_response
+async def ws_assets_resolve(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
+    """Resolve each unique id once; absent/corrupt content is reported missing."""
+    root = Path(hass.config.path(ASSETS_DIR))
+    requested = set(msg["asset_ids"])
+
+    def _resolve() -> tuple[list[dict], list[str]]:
+        rows: list[dict] = []
+        found: set[str] = set()
+        for row in read_catalog(root):
+            aid = row["asset_id"]
+            if aid not in requested:
+                continue
+            path = root / f"{aid}{row['ext']}"
+            try:
+                import hashlib
+                if hashlib.sha256(path.read_bytes()).hexdigest() != aid:
+                    continue
+            except OSError:
+                continue
+            rows.append(public_asset(row))
+            found.add(aid)
+        return rows, sorted(requested - found)
+
+    assets, missing = await hass.async_add_executor_job(_resolve)
+    connection.send_result(msg["id"], {"assets": assets, "missing": missing})
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): "houseplan/assets/delete",
+        vol.Required("asset_id"): vol.All(str, vol.Match(r"^[0-9a-f]{64}$")),
+    }
+)
+@websocket_api.async_response
+async def ws_assets_delete(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
+    """Delete only an explicitly requested, currently unreferenced asset."""
+    if not _check_write(hass, connection):
+        connection.send_error(msg["id"], "unauthorized", "Only writers may delete images")
+        return
+    rt = _runtime(hass, connection, msg["id"])
+    if rt is None:
+        return
+    aid = msg["asset_id"]
+    if not ASSET_ID_RE.fullmatch(aid):
+        connection.send_error(msg["id"], "invalid_format", "Invalid asset id")
+        return
+    root = Path(hass.config.path(ASSETS_DIR))
+    async with rt.write_lock, rt.upload_lock:
+        stored = await rt.config_store.async_load() or {}
+        refs = asset_refs(stored.get("config") or {}).get(aid, [])
+        if refs:
+            connection.send_error(msg["id"], "in_use", "A decor object still uses this image")
+            return
+
+        def _delete() -> bool:
+            row = next((item for item in read_catalog(root) if item["asset_id"] == aid), None)
+            removed = False
+            if row:
+                try:
+                    (root / f"{aid}{row['ext']}").unlink()
+                    removed = True
+                except FileNotFoundError:
+                    pass
+            asset_meta_path(root, aid).unlink(missing_ok=True)
+            return removed
+
+        removed = await hass.async_add_executor_job(_delete)
+    connection.send_result(msg["id"], {"ok": True, "removed": removed})
+
+
 @websocket_api.websocket_command(
     {
         vol.Required("type"): "houseplan/files/cleanup",
@@ -1263,6 +1368,7 @@ async def ws_config_get(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             "integration_version": VERSION,
             # #423: protocol capability is independent from release skew.
             "support_api": SUPPORT_API_VERSION,
+            "decor_assets_api": DECOR_ASSETS_API_VERSION,
         },
     )
 

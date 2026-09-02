@@ -7,7 +7,11 @@ from __future__ import annotations
 
 import logging
 import os
+import json
+import hashlib
+import shutil
 import tempfile
+from datetime import datetime, timezone
 from functools import partial
 from pathlib import Path
 
@@ -22,12 +26,26 @@ from homeassistant.core import HomeAssistant
 
 from .auth import may_write
 from .const import (
+    ASSETS_DIR,
     CONTENT_URL,
     FILES_DIR,
     MAX_EXPORT_BYTES,
     MAX_FILES_BYTES,
     MAX_FILES_COUNT,
+    MAX_DECOR_ASSET_BYTES,
+    MAX_DECOR_ASSETS_BYTES,
+    MAX_DECOR_ASSETS_COUNT,
+    MIN_FREE_BYTES,
     PLANS_DIR,
+)
+from .decor_assets import (
+    ASSET_EXTENSIONS,
+    ASSET_ID_RE,
+    DecorAssetError,
+    asset_meta_path,
+    public_asset,
+    read_catalog,
+    validate_asset,
 )
 from .import_export import ImportFailure, create_preview
 from .plans import TMP_PREFIX, QuotaError, check_quota, reserve_filename
@@ -138,15 +156,22 @@ class HouseplanContentView(HomeAssistantView):
 
     async def get(self, request: web.Request, kind: str, sub: str, name: str) -> web.StreamResponse:
         hass: HomeAssistant = request.app[KEY_HASS]
-        if kind not in ("plans", "files"):
+        if kind not in ("plans", "files", "assets"):
             return web.Response(status=404)
         safe_sub = sanitize_marker_id(sub)
         safe_name = sanitize_filename(name)
         if not safe_sub or not safe_name:
             return web.Response(status=404)
-        base = Path(hass.config.path(PLANS_DIR if kind == "plans" else FILES_DIR)).resolve()
+        root_dir = PLANS_DIR if kind == "plans" else ASSETS_DIR if kind == "assets" else FILES_DIR
+        base = Path(hass.config.path(root_dir)).resolve()
         # plans live flat in one directory: the sub segment is a placeholder ("_")
-        path = (base / safe_name if kind == "plans" else base / safe_sub / safe_name).resolve()
+        if kind == "assets":
+            stem, suffix = Path(safe_name).stem, Path(safe_name).suffix.lower()
+            if safe_sub != "_" or not ASSET_ID_RE.fullmatch(stem) or suffix not in ASSET_EXTENSIONS:
+                return web.Response(status=404)
+            path = (base / safe_name).resolve()
+        else:
+            path = (base / safe_name if kind == "plans" else base / safe_sub / safe_name).resolve()
         # defence in depth: the sanitizers already strip separators
         if not str(path).startswith(str(base)):
             return web.Response(status=404)
@@ -154,9 +179,20 @@ class HouseplanContentView(HomeAssistantView):
         if not await hass.async_add_executor_job(path.is_file):
             return web.Response(status=404)
         suffix = path.suffix.lower()
+        if kind == "assets":
+            try:
+                digest = await hass.async_add_executor_job(
+                    lambda: hashlib.sha256(path.read_bytes()).hexdigest(),
+                )
+            except OSError:
+                return web.Response(status=404)
+            if digest != path.stem:
+                return web.Response(status=404)
         headers = {
-            "Cache-Control": "private, max-age=3600",
+            "Cache-Control": "private, max-age=31536000, immutable"
+                if kind == "assets" else "private, max-age=3600",
             "Content-Type": _MIME.get(suffix, "application/octet-stream"),
+            "X-Content-Type-Options": "nosniff",
         }
         if suffix == ".svg":
             # An uploaded SVG is user content served from Home Assistant's own
@@ -180,6 +216,132 @@ class HouseplanContentView(HomeAssistantView):
         # into memory and copied into the response body, so a couple of parallel
         # downloads could push a small Home Assistant host into swap (HP-1454-06).
         return web.FileResponse(path, chunk_size=_CHUNK, headers=headers)
+
+
+class HouseplanDecorAssetUploadView(HomeAssistantView):
+    """POST one bounded custom decor image and return its catalog row."""
+
+    url = "/api/houseplan/assets/upload"
+    name = "api:houseplan:decor-asset-upload"
+    requires_auth = True
+
+    async def post(self, request: web.Request) -> web.Response:
+        hass: HomeAssistant = request.app[KEY_HASS]
+        if not may_write(hass, request.get("hass_user")):
+            return web.json_response({"error": "unauthorized"}, status=403)
+        runtime = get_data(hass)
+        if runtime is None:
+            return web.json_response({"error": "not_ready"}, status=503)
+        if request.content_length is not None and request.content_length > MAX_DECOR_ASSET_BYTES + _FLUSH_AT:
+            return web.json_response({"error": "too_large"}, status=413)
+        filename: str | None = None
+        declared_mime: str | None = None
+        blocks: list[bytes] = []
+        size = 0
+        try:
+            reader = await request.multipart()
+            async for part in reader:
+                if part.name != "file":
+                    continue
+                if filename is not None:
+                    return web.json_response({"error": "invalid_format"}, status=400)
+                filename = part.filename or "image"
+                declared_mime = part.headers.get("Content-Type")
+                while chunk := await part.read_chunk(_CHUNK):
+                    size += len(chunk)
+                    if size > MAX_DECOR_ASSET_BYTES:
+                        return web.json_response({"error": "too_large"}, status=413)
+                    blocks.append(chunk)
+        except Exception as err:  # noqa: BLE001 - malformed multipart boundary
+            _LOGGER.warning("House Plan decor asset upload: multipart read error: %s", err)
+            return web.json_response({"error": "invalid_format"}, status=400)
+        if not filename:
+            return web.json_response({"error": "invalid_format"}, status=400)
+
+        try:
+            validated = await hass.async_add_executor_job(
+                validate_asset, b"".join(blocks), filename, declared_mime,
+            )
+        except DecorAssetError as err:
+            return web.json_response({"error": err.code, "message": str(err)}, status=413 if err.code == "too_large" else 400)
+
+        root = Path(hass.config.path(ASSETS_DIR))
+
+        def _store() -> tuple[dict, bool]:
+            root.mkdir(parents=True, exist_ok=True)
+            existing = next(
+                (row for row in read_catalog(root) if row["asset_id"] == validated.asset_id),
+                None,
+            )
+            if existing is not None:
+                existing_blob = root / f"{validated.asset_id}{existing['ext']}"
+                if hashlib.sha256(existing_blob.read_bytes()).hexdigest() != validated.asset_id:
+                    raise DecorAssetError("invalid_image", "The stored image failed its integrity check")
+                return existing, True
+            rows = read_catalog(root)
+            used = sum(int(row.get("bytes") or 0) for row in rows)
+            if len(rows) >= MAX_DECOR_ASSETS_COUNT or used + len(validated.data) > MAX_DECOR_ASSETS_BYTES:
+                raise DecorAssetError("capacity_exceeded", "The decor image store is full")
+            try:
+                if shutil.disk_usage(root).free - len(validated.data) < MIN_FREE_BYTES:
+                    raise DecorAssetError("capacity_exceeded", "Not enough free disk space")
+            except OSError:
+                pass
+            aid = validated.asset_id
+            blob = root / f"{aid}{validated.ext}"
+            meta = asset_meta_path(root, aid)
+            safe_display = sanitize_filename(Path(filename).name) or "image"
+            row = {
+                "asset_id": aid, "name": safe_display, "mime": validated.mime,
+                "ext": validated.ext, "width": validated.width, "height": validated.height,
+                "bytes": len(validated.data), "created_at": datetime.now(timezone.utc).isoformat(),
+            }
+            fd, temp_name = tempfile.mkstemp(prefix=".asset-", dir=str(root))
+            os.close(fd)
+            temp = Path(temp_name)
+            meta_temp = temp.with_suffix(".json")
+            promoted_blob = False
+            try:
+                with temp.open("wb") as stream:
+                    stream.write(validated.data)
+                    stream.flush()
+                    os.fsync(stream.fileno())
+                with meta_temp.open("w", encoding="utf-8") as stream:
+                    stream.write(json.dumps(row, ensure_ascii=False, separators=(",", ":")))
+                    stream.flush()
+                    os.fsync(stream.fileno())
+                if blob.exists():
+                    # A previous hard stop may have promoted the blob but not
+                    # its sidecar. The content hash proves those bytes; finish
+                    # the catalog transaction rather than leaving a ghost.
+                    if hashlib.sha256(blob.read_bytes()).hexdigest() != aid:
+                        raise DecorAssetError("invalid_image", "The stored image failed its integrity check")
+                    os.replace(meta_temp, meta)
+                    return row, True
+                os.replace(temp, blob)
+                promoted_blob = True
+                os.replace(meta_temp, meta)
+                return row, False
+            except Exception:
+                # A normal I/O failure is fully transactional. A process hard
+                # stop between the two renames is healed by the orphan branch
+                # above on the next identical upload.
+                if promoted_blob:
+                    blob.unlink(missing_ok=True)
+                raise
+            finally:
+                temp.unlink(missing_ok=True)
+                meta_temp.unlink(missing_ok=True)
+
+        try:
+            async with runtime.upload_lock:
+                row, reused = await hass.async_add_executor_job(_store)
+        except DecorAssetError as err:
+            return web.json_response({"error": err.code, "message": str(err)}, status=507)
+        except OSError as err:
+            _LOGGER.warning("House Plan decor asset upload: store failed: %s", err)
+            return web.json_response({"error": "io_error"}, status=500)
+        return web.json_response({"ok": True, "reused": reused, "asset": public_asset(row)})
 
 
 class HouseplanUploadView(HomeAssistantView):

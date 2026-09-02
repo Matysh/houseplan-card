@@ -84,7 +84,7 @@ export async function encodePlanFile(blob: Blob, ext: string, name: string): Pro
  * big or unreadable raster returns the guard state for the dialog. The probe
  * reads header bytes only — no decode happens on this path (spec §Диагностика).
  */
-export async function classifyPlanFile(file: File): Promise<
+export async function classifyPlanFile(file: File, guardAboveBytes = Infinity): Promise<
   | { kind: 'reject' }
   | { kind: 'pass'; ext: string }
   | { kind: 'guard'; state: BackdropGuardState }
@@ -94,7 +94,7 @@ export async function classifyPlanFile(file: File): Promise<
   if (ext === 'svg') return { kind: 'pass', ext };
   const bytes = new Uint8Array(await file.arrayBuffer());
   const probe = probeBackdrop(bytes, ext);
-  if (probe.kind === 'safe') return { kind: 'pass', ext };
+  if (probe.kind === 'safe' && file.size <= guardAboveBytes) return { kind: 'pass', ext };
   return { kind: 'guard', state: { file, ext, probe, busy: false } };
 }
 
@@ -159,11 +159,16 @@ export function renderBackdropGuard(
   apply: (payload: PlanFilePayload) => void,
   close: () => void,
   hass: unknown,
+  blobApply?: (blob: Blob, name: string) => Promise<void>,
+  allowOriginal = true,
 ): TemplateResult | null {
   const guard = host._backdropGuard;
   if (!guard) return null;
   const { probe } = guard;
   const hard = probe.kind === 'hard';
+  const reducedDimensions = probe.width && probe.height
+    ? downscaleDimensions(probe.width, probe.height, DOWNSCALE_TARGET_PX)
+    : null;
   const body = hard
     ? host._t('backdrop.too_large_body', {
       w: probe.width ?? 0, h: probe.height ?? 0, limit: HARD_DIMENSION,
@@ -186,6 +191,13 @@ export function renderBackdropGuard(
   const stillCurrent = (): boolean => host._backdropGuard?.file === guard.file;
   const original = async (): Promise<void> => {
     if (host._backdropGuard?.busy) return;
+    if (blobApply) {
+      host._backdropGuard = { ...guard, busy: true };
+      host.requestUpdate?.();
+      await blobApply(guard.file, guard.file.name);
+      if (stillCurrent()) close();
+      return;
+    }
     const payload = await encodePlanFile(guard.file, guard.ext, guard.file.name);
     if (!stillCurrent()) return;
     apply(payload);
@@ -197,6 +209,11 @@ export function renderBackdropGuard(
     host.requestUpdate?.();
     try {
       const out = await downscaleBackdrop(guard);
+      if (blobApply) {
+        await blobApply(out.blob, out.name);
+        if (stillCurrent()) close();
+        return;
+      }
       const payload = await encodePlanFile(out.blob, out.ext, out.name);
       if (!stillCurrent()) return;
       apply(payload);
@@ -212,12 +229,16 @@ export function renderBackdropGuard(
   return html`<hp-dialog .hass=${hass}
       .title=${host._t(hard ? 'backdrop.too_large_title' : 'backdrop.large_title')}
       icon="mdi:image-size-select-large" dismiss-on-scrim @hp-close=${() => dismiss()}>
-    <div class="body"><p>${body}</p></div>
+    <div class="body"><p>${body}</p>
+      ${reducedDimensions ? html`<p>${host._t('backdrop.reduced_dimensions', {
+        w: reducedDimensions.width, h: reducedDimensions.height,
+      })}</p>` : null}
+    </div>
     <div class="row" slot="footer">
       <button class="btn ghost" ?disabled=${guard.busy} @click=${() => dismiss()}>
         ${host._t('btn.cancel')}</button>
       <span class="spacer"></span>
-      ${hard ? null : html`
+      ${hard || !allowOriginal ? null : html`
         <button class="btn ghost" ?disabled=${guard.busy} @click=${() => original()}>
           ${host._t('backdrop.keep_original')}</button>
         <button class="btn on" ?disabled=${guard.busy} @click=${() => reduced()}>

@@ -21,6 +21,7 @@ from urllib.parse import urlsplit
 import voluptuous as vol
 
 from .const import (
+    ASSETS_DIR,
     CONTENT_URL,
     EXPORT_VERSION,
     FILES_DIR,
@@ -389,6 +390,12 @@ def _internal_path(root: Path, url: str) -> tuple[str, Path] | None:
         if name != raw_name:
             return None
         return "plan", root / PLANS_DIR / name
+    asset_prefix = CONTENT_URL + "/assets/_/"
+    if url.startswith(asset_prefix):
+        raw_name = url[len(asset_prefix):]
+        if not re.fullmatch(r"[0-9a-f]{64}\.(?:png|jpg|webp|svg)", raw_name):
+            return None
+        return "decor_asset", root / ASSETS_DIR / raw_name
     for prefix in (CONTENT_URL + "/files/", FILES_URL + "/"):
         if url.startswith(prefix):
             tail = url[len(prefix):].split("/")
@@ -433,6 +440,42 @@ def content_manifest(config: dict[str, Any], config_root: Path) -> list[dict[str
                 "attachment", "marker", str(marker.get("id")),
                 f"pdfs[{index}].url", pdf.get("url") if isinstance(pdf, dict) else None,
             )
+    # Asset bytes are deliberately not embedded. The manifest records identity
+    # and availability so a cross-instance import can preserve the image box as
+    # a repairable editor placeholder instead of silently deleting geometry.
+    assets_root = config_root / ASSETS_DIR
+    for space in config.get("spaces") or []:
+        for shape in space.get("decor") or []:
+            if not isinstance(shape, dict) or shape.get("kind") != "image":
+                continue
+            aid = shape.get("asset_id")
+            if not isinstance(aid, str) or not re.fullmatch(r"[0-9a-f]{64}", aid):
+                continue
+            matches = sorted(assets_root.glob(f"{aid}.*")) if assets_root.is_dir() else []
+            blob = next((path for path in matches if path.suffix in {".png", ".jpg", ".webp", ".svg"}), None)
+            metadata: dict[str, Any] = {}
+            try:
+                metadata = json.loads((assets_root / f"{aid}.json").read_text(encoding="utf-8"))
+            except (OSError, ValueError, TypeError):
+                pass
+            exists = False
+            if blob and blob.is_file():
+                try:
+                    exists = hashlib.sha256(blob.read_bytes()).hexdigest() == aid
+                except OSError:
+                    pass
+            out.append({
+                "kind": "decor_asset", "owner": "decor",
+                "owner_id": f"{space.get('id', '')}:{shape.get('id', '')}", "field": "asset_id",
+                # Identity is extension-neutral: a missing target must compute
+                # exactly the same expected manifest as the source.
+                "url": aid, "asset_id": aid, "storage": "internal",
+                "mime": metadata.get("mime") or {
+                    ".png": "image/png", ".jpg": "image/jpeg", ".webp": "image/webp",
+                    ".svg": "image/svg+xml",
+                }.get(blob.suffix if blob else ""),
+                "hash": aid, "exists_at_export": exists,
+            })
     return out
 
 
@@ -593,7 +636,7 @@ def parse_document(raw: bytes) -> dict[str, Any]:
         raise ImportFailure("invalid_json", str(err)) from err
     if not isinstance(document, dict) or document.get("format") != FORMAT:
         raise ImportFailure("invalid_format", "Not a House Plan export")
-    if document.get("export_version") != EXPORT_VERSION:
+    if document.get("export_version") not in (1, EXPORT_VERSION):
         raise ImportFailure("unsupported_export_version", "Unsupported export version")
     if document.get("kind") not in ("full", "space"):
         raise ImportFailure("invalid_format", "Export kind must be full or space")
@@ -1597,6 +1640,26 @@ def _content_state(document: dict[str, Any], same_source: bool, config_root: Pat
         row = dict(item)
         declared = supplied_by_id[identity(item)]
         row["exists_at_export"] = declared.get("exists_at_export")
+        if item.get("kind") == "decor_asset":
+            aid = str(item.get("asset_id") or item.get("url") or "")
+            if (declared.get("asset_id") != aid or declared.get("hash") != aid
+                    or declared.get("mime") not in {
+                        "image/png", "image/jpeg", "image/webp", "image/svg+xml",
+                    }):
+                raise ImportFailure("invalid_content", "Invalid decor asset manifest row")
+            candidates = sorted((config_root / ASSETS_DIR).glob(f"{aid}.*"))
+            blob = next((path for path in candidates if path.suffix in {".png", ".jpg", ".webp", ".svg"}), None)
+            exists = False
+            if blob:
+                try:
+                    exists = hashlib.sha256(blob.read_bytes()).hexdigest() == aid
+                except OSError:
+                    pass
+            row["exists_on_target"] = exists
+            row["state"] = "available" if exists else "missing_preserved"
+            confirmation = confirmation or not exists
+            rows.append(row)
+            continue
         internal = _internal_path(config_root, item["url"])
         if _looks_internal(item["url"]) and internal is None:
             raise ImportFailure("invalid_content", "Non-canonical internal content URL")

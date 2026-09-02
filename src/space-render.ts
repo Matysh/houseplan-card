@@ -51,7 +51,7 @@ import { gridVisualScale, gridVisualUnits } from './grid-scale';
 import {
   spaceModels, defaultPositions, markerPos, labelPos, spaceFrame, iconCqw, NORM_W,
   GRID_STEP_N, GRID_PITCH, staticPassageOpenings,
-  expandItem, itemOfGeometry, roomItem, structuralFrame, resolveSpaceCardFit,
+  decorBoxItem, expandItem, itemOfGeometry, roomItem, structuralFrame, resolveSpaceCardFit,
   type Layout, type ContentItem, type SpaceCardFit,
 } from './space-geometry';
 import { resolveZeroWalls } from './zero-walls';
@@ -223,6 +223,8 @@ export interface StaticRenderOpts {
    * rather than an unsigned one, which would 401 (review R3-2).
    */
   displayUrl?: (raw: string) => string;
+  /** Resolve a persisted decor image id to its authenticated content path. */
+  decorAssetUrl?: (assetId: string) => string;
   /** Marks a protected backdrop as loaded/paintable for continuity barriers. */
   assetLoaded?: (raw: string, paintedUrl: string) => void;
   /** Recovery overlay owns input while an atomic candidate is being painted. */
@@ -331,6 +333,11 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
     }
   }
   const spCfg: any = o.cfg.spaces.find((s: any) => s.id === o.spaceId) || {};
+  if (!disp.hideDecor) for (const shape of spCfg.decor || []) {
+    if (shape?.kind !== 'image' || !o.decorAssetUrl?.(String(shape.asset_id || ''))) continue;
+    const item = decorBoxItem(shape);
+    if (item) placed.push(item);
+  }
   const walls: WallEntry[] = Array.isArray(spCfg.walls) ? spCfg.walls : [];
   const cellCm = Number(spCfg.cell_cm) > 0 ? Number(spCfg.cell_cm) : 5;
   const zeroWalls = resolveZeroWalls(spCfg, space, NORM_W, GRID_PITCH * 0.02);
@@ -626,6 +633,24 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
     : [];
 
   const bgHref = space.bg ? (o.displayUrl ? o.displayUrl(space.bg.href) : space.bg.href) : '';
+  const decorImages = (spCfg.decor || []).flatMap((shape: any) => {
+    if (shape?.kind !== 'image' || disp.hideDecor) return [];
+    const raw = o.decorAssetUrl?.(String(shape.asset_id || '')) || '';
+    const href = raw && o.displayUrl ? o.displayUrl(raw) : raw;
+    if (!href) return [];
+    const x = Number(shape.x) * NORM_W, y = Number(shape.y) * NORM_W;
+    const w = Number(shape.w) * NORM_W, h = Number(shape.h) * NORM_W;
+    if (![x, y, w, h].every(Number.isFinite) || w <= 0 || h <= 0) return [];
+    const cx = x + w / 2, cy = y + h / 2;
+    const angle = Number(shape.angle) || 0;
+    const transform = `translate(${cx} ${cy}) rotate(${angle}) scale(${shape.flip_h ? -1 : 1} ${shape.flip_v ? -1 : 1}) translate(${-cx} ${-cy})`;
+    return [svg`<image class="dimage" data-hp="decor"
+      href=${href} x=${x} y=${y} width=${w} height=${h}
+      opacity=${Number.isFinite(Number(shape.opacity))
+        ? Math.max(0, Math.min(1, Number(shape.opacity))) : 1}
+      @load=${() => o.assetLoaded?.(raw, href)}
+      preserveAspectRatio="none" transform=${transform} pointer-events="none"></image>`];
+  });
   // The static card paints the same four-phase environment as full View.
   // Wedges stay full-card-only; the decorative background is independent.
   const spaceSettings = (o.cfg.spaces.find((sp: any) => sp.id === o.spaceId) as any)?.settings || {};
@@ -917,6 +942,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
           ? svg`<g class="glow-base-layer" aria-hidden="true" pointer-events="none">${glowBaseShapes}</g>`
           : nothing}
         ${passageGlowTunnels}
+        <g class="decorlayer" pointer-events="none">${decorImages}</g>
         ${glowPools}
         ${wallUnion
           ? svg`<g class="wallbodies" style="--room-stroke:${wallStroke}">

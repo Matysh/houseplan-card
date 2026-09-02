@@ -794,6 +794,55 @@ export const dialogsStyles = css`
       padding: 3px 5px;
     }
     .furnhint { opacity: 0.6; }
+    .imageupload {
+      display: inline-flex;
+      gap: 6px;
+      margin: 4px 0 8px;
+      cursor: pointer;
+    }
+    .imageupload.disabled { opacity: 0.55; pointer-events: none; }
+    .imageupload input { display: none; }
+    .imageassets { align-items: stretch; }
+    .imageempty { padding: 12px 6px; }
+    .imageasset { position: relative; }
+    .imageasset .furnitem { width: 104px; min-height: 92px; }
+    .imageasset img {
+      width: 64px;
+      height: 54px;
+      object-fit: contain;
+      border-radius: 4px;
+      background: repeating-conic-gradient(#ddd 0 25%, #fff 0 50%) 50% / 12px 12px;
+    }
+    .imageasset .furnitem span {
+      max-width: 96px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .imageasset .furnitem small { opacity: 0.65; font-size: 0.72em; }
+    .imageassetdelete {
+      position: absolute;
+      top: 0;
+      right: 0;
+      min-width: 30px;
+      width: 30px;
+      min-height: 30px;
+      padding: 3px;
+    }
+    .imagepropertypreview {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+    .imagepropertypreview img {
+      width: 72px;
+      height: 54px;
+      object-fit: contain;
+      border-radius: 4px;
+      background: repeating-conic-gradient(#ddd 0 25%, #fff 0 50%) 50% / 12px 12px;
+    }
+    .imagepropertypreview span { overflow-wrap: anywhere; }
     .vacfitdot { fill: var(--hp-accent); pointer-events: none; }
     /* hit target: invisible and finger-sized; .vacfitknob is the visible bead */
     .vacfithandle {

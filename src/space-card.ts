@@ -46,6 +46,7 @@ import {
   type GlowRuntimeHost, type GlowRuntimeState,
 } from './glow-scene';
 import './space-editor';
+import { decorAssetIds, resolveDecorAssets, type DecorAsset } from './decor-assets';
 
 const fireEvent = (node: EventTarget, type: string, detail?: unknown) => {
   const ev = new Event(type, { bubbles: true, composed: true }) as any;
@@ -94,6 +95,7 @@ class HouseplanSpaceCard extends LitElement {
   private _haRegistryRevision = -1;
   private _devices: DevItem[] = [];
   private _areaRelocationIds = new Set<string>();
+  private _decorAssets = new Map<string, DecorAsset>();
   private _continuity = this._newContinuityController();
   private _continuityHistory: import('./visual-continuity').ContinuityTraceEvent[] = [];
   private _continuityUnsub?: () => void;
@@ -726,6 +728,9 @@ class HouseplanSpaceCard extends LitElement {
         this._snap.layoutRev = snap.layoutRev;
       }
       if (configChanged) this._continuity.note('config-candidate', { configRev: snap.rev });
+      try {
+        this._decorAssets = await resolveDecorAssets(this.hass, decorAssetIds(snap.config));
+      } catch { /* retain the last complete frame across a transient resolve failure */ }
       if (layoutChanged) this._continuity.note('layout-candidate', { layoutRev: snap.layoutRev });
       if (virtualLightsChanged) this._capturedSnapshotSequence = -1;
       this._loadedOnce = true;
@@ -784,7 +789,9 @@ class HouseplanSpaceCard extends LitElement {
   private _signer = new ContentSigner(() => this.requestUpdate());
 
   private _referenced(): Set<string> {
-    return referencedContentUrls(this._snap?.config);
+    const urls = referencedContentUrls(this._snap?.config);
+    for (const asset of this._decorAssets.values()) urls.add(asset.url);
+    return urls;
   }
 
   private _retryContinuity = (): void => {
@@ -844,6 +851,7 @@ class HouseplanSpaceCard extends LitElement {
       lang: this._lang,
       // resolved at render time: a url baked in earlier would be the unsigned one
       displayUrl: (raw) => this._signer.display(this.hass, raw),
+      decorAssetUrl: (assetId) => this._decorAssets.get(assetId)?.url || '',
       assetLoaded: this._onAssetLoaded,
       registry: deviceSnapshot
         ? {

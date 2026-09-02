@@ -66,7 +66,7 @@ import { dayCycleStageVars, renderDayCycleEnvironment } from './day-cycle-render
 import {
   FURNITURE_GROUPS, furnitureOfGroup, furnitureDefaultCm,
   furnitureGraphic, furnitureCorners, snapFurnitureToWall,
-  resolveFurniturePlacement,
+  resolveFurniturePlacement, furnitureRenderTransform, furnitureStrokePx,
   resizeFurnitureTransform, furnitureRotationAngle,
   furnitureSignedFieldCm, furnitureSignedFieldValue,
   clampFurnCm, FURN_WALL_CELLS,
@@ -322,6 +322,9 @@ import {
   type HaBindingStatus, type HaRegistrySnapshot,
 } from './ha-binding-status';
 import type { DecorShape, DecorStyle } from './editors/decor/types';
+import {
+  DECOR_ASSETS_API_VERSION, adoptDecorAssets, initialDecorImageCm, type DecorAsset,
+} from './decor-assets';
 import {
   DEFAULT_DECOR_STYLE, boxAnchors, boxCorners, clamp01, decorCmToUnits,
   decorStrokeUnits, decorStyleOf, decorStylePatch,
@@ -714,7 +717,7 @@ interface SpaceGeometryState {
 }
 /** Tools of the decor (background) editor. `furniture` is the library
  *  (docs/FURNITURE.md): it opens a palette and places a symbol at real size. */
-type DecorTool = 'select' | 'backdrop' | 'line' | 'rect' | 'ellipse' | 'text' | 'furniture' | 'erase';
+type DecorTool = 'select' | 'backdrop' | 'line' | 'rect' | 'ellipse' | 'text' | 'furniture' | 'image' | 'erase';
 
 const fireEvent = (node: EventTarget, type: string, detail?: unknown) => {
   const ev = new Event(type, { bubbles: true, composed: true }) as any;
@@ -895,6 +898,10 @@ export interface HouseplanEditorHostPort {
   _decorBoxOf: (shape: DecorShape) => DecorBox | null;
   _decorDraft: { kind: "line" | "rect" | "ellipse"; a: number[]; b: number[]; pid: number; } | null;
   _decorEraseConfirm: { id: string; kind: DecorShape["kind"]; } | null;
+  _decorImagePalette: DecorAsset | null;
+  _decorAssetCatalog: DecorAsset[];
+  _decorAssets: Map<string, DecorAsset>;
+  _decorAssetBusy: boolean;
   _decorH: number;
   _decorLargeCm: (value: number) => number;
   _decorLargeField: (cm: number) => number;
@@ -902,7 +909,7 @@ export interface HouseplanEditorHostPort {
   _decorMove: { id: string; start: number[]; orig: DecorShape; pid: number; moved: boolean; before: SpaceGeometryState | null; } | null;
   _decorResolvedStyle: (shape?: DecorShape | null) => DecorStyle;
   _decorSel: string | null;
-  _decorShapeDialog: { id: string; kind: "line" | "rect" | "ellipse" | "furniture"; color: string; opacity: number; widthCm: number; lineStyle?: "solid" | "dashed"; fill?: boolean; fillColor?: string; fillOpacity?: number; lengthCm?: number; sizeWCm?: number; sizeHCm?: number; angle: string; symbol?: string; sizeWField?: string; sizeHField?: string; flipH?: boolean; flipV?: boolean; } | null;
+  _decorShapeDialog: { id: string; kind: "line" | "rect" | "ellipse" | "furniture" | "image"; color: string; opacity: number; widthCm: number; lineStyle?: "solid" | "dashed"; fill?: boolean; fillColor?: string; fillOpacity?: number; lengthCm?: number; sizeWCm?: number; sizeHCm?: number; angle: string; symbol?: string; assetId?: string; sizeWField?: string; sizeHField?: string; flipH?: boolean; flipV?: boolean; } | null;
   _decorSmallCm: (value: number) => number;
   _decorSmallField: (cm: number) => number;
   _decorSnapCache: { epoch: number; space: string; height: number; exclude: string; geometry: SnapGeometry; } | null;
@@ -959,8 +966,6 @@ export interface HouseplanEditorHostPort {
   _furnTouchPending: {
     pid: number; sx: number; sy: number; pointerType: string; cancelled: boolean;
   } | null;
-  _furnWallReach: number;
-  _furnWalls: number[][];
   _gearPtCache: WeakMap<number[][], number[]>;
   _geometryHistory: CommandStack<SpaceGeometryState>;
   _glowRadiusCm: number;
@@ -968,6 +973,7 @@ export interface HouseplanEditorHostPort {
   _gridPitch: number;
   _haIntegrationVersion: string | null;
   _haSupportApi: number | null;
+  _haDecorAssetsApi: number | null;
   _haRegistry: HaRegistrySnapshot;
   _hasFixedFloor: boolean;
   _hiddenWallDiagnosticCache: { key: string; value: HiddenWallDiagnosticGeometry; } | null;
@@ -1066,6 +1072,7 @@ export interface HouseplanEditorHostPort {
   _preflightClipboardFallback: string | null;
   _prepareModeTransition: (request: number, from: ModeVisualState, targetMode: HouseplanMode, targetZoom: number, targetCenterX?: number, targetCenterY?: number) => void;
   _reducedMotion: boolean;
+  _rawPhysicalBodiesR: () => number[][][];
   _regSignature: string;
   _reloadConfigOnly: (force?: boolean, observedRev?: number) => Promise<void>;
   _reloadLayoutOnly: () => Promise<void>;
@@ -1194,6 +1201,7 @@ export class HouseplanEditorRuntime {
   }>();
   private _supportExpiryTimer?: number;
   private _supportPreviewGeneration = 0;
+  private _decorAssetGuardReplace: boolean | null = null;
 
   public constructor(public readonly host: HouseplanEditorHostPort) {
     host._editorSecondary = new EditorSecondaryController({
@@ -4178,20 +4186,21 @@ public _decorPointerDown(ev: PointerEvent): boolean {
       this.host._decorTextSelection = { start: 0, end: 0 };
       return true;
     }
-    if (t === 'furniture') {
+    if (t === 'furniture' || t === 'image') {
       // The furniture tool is a STAMP: the palette arms a symbol, the press
       // puts it down at its real size and the editor goes back to `select`
       // with the new piece selected (owner: «сразу выделен»). Without an armed
       // symbol the press does nothing but keep the pan — pressing the canvas
       // must not silently place whatever was chosen last week.
-      if (!this.host._furnPalette) return false;
+      if (t === 'furniture' ? !this.host._furnPalette : !this.host._decorImagePalette) return false;
       ev.preventDefault();
       // A mouse has already shown the exact result and keeps the traditional
       // one-press stamp. Touch/pen has no hover, so commit only after a clean
       // pointerup; pointercancel, movement and a second contact stay fail-dark.
       const pointerType = ev.pointerType || 'mouse';
       if (pointerType === 'mouse') {
-        this._furnPlace(this._svgPoint(ev), ev.shiftKey, pointerType);
+        if (t === 'furniture') this._furnPlace(this._svgPoint(ev), ev.shiftKey, pointerType);
+        else this._decorImagePlace(this._svgPoint(ev));
         return true;
       }
       const pending = this.host._furnTouchPending;
@@ -4357,13 +4366,14 @@ public _openDecorProperties(shape: DecorShape): void {
       this._decorOpenText(shape);
       return;
     }
-    if (!['line', 'rect', 'ellipse', 'furniture'].includes(shape.kind)) return;
+    if (!['line', 'rect', 'ellipse', 'furniture', 'image'].includes(shape.kind)) return;
+    if (shape.kind === 'image') void this._decorImageCatalogLoad();
     const style = this.host._decorResolvedStyle(shape);
     const line = shape.kind === 'line' ? shape : null;
     const box = this.host._decorBoxOf(shape);
     this.host._decorShapeDialog = {
       id: shape.id,
-      kind: shape.kind as 'line' | 'rect' | 'ellipse' | 'furniture',
+      kind: shape.kind as 'line' | 'rect' | 'ellipse' | 'furniture' | 'image',
       color: style.color, opacity: style.opacity, widthCm: style.widthCm,
       angle: this.host._angleField(line
         ? normalizeAngle(segmentAngle(
@@ -4384,6 +4394,19 @@ public _openDecorProperties(shape: DecorShape): void {
       } : {}),
       ...(shape.kind === 'furniture' ? {
         symbol: shape.symbol,
+        flipH: !!shape.flip_h,
+        flipV: !!shape.flip_v,
+        sizeWField: furnitureSignedFieldValue(
+          decorUnitsToCm(box!.w, this.host._cellCm, this.host._gridPitch),
+          !!shape.flip_h, this.host._imperial,
+        ),
+        sizeHField: furnitureSignedFieldValue(
+          decorUnitsToCm(box!.h, this.host._cellCm, this.host._gridPitch),
+          !!shape.flip_v, this.host._imperial,
+        ),
+      } : {}),
+      ...(shape.kind === 'image' ? {
+        assetId: shape.asset_id,
         flipH: !!shape.flip_h,
         flipV: !!shape.flip_v,
         sizeWField: furnitureSignedFieldValue(
@@ -4517,15 +4540,16 @@ public _decorSaveShape(): void {
       fillOpacity: clamp01(d.fillOpacity, 0.25),
     };
     const sp = this.host._curSpaceCfg;
-    const furnitureWcm = d.kind === 'furniture'
+    const furnitureWcm = d.kind === 'furniture' || d.kind === 'image'
       ? furnitureSignedFieldCm(
           d.sizeWField, this.host._imperial, CANVAS_LIMIT * this.host._cellCm,
         ) : null;
-    const furnitureHcm = d.kind === 'furniture'
+    const furnitureHcm = d.kind === 'furniture' || d.kind === 'image'
       ? furnitureSignedFieldCm(
           d.sizeHField, this.host._imperial, CANVAS_LIMIT * this.host._cellCm,
         ) : null;
-    if (d.kind === 'furniture' && (furnitureWcm === null || furnitureHcm === null)) return;
+    if ((d.kind === 'furniture' || d.kind === 'image')
+        && (furnitureWcm === null || furnitureHcm === null)) return;
     sp.decor = this.host._decorList.map((shape) => {
       if (shape.id !== d.id) return shape;
       const fillable = d.kind === 'rect' || d.kind === 'ellipse';
@@ -4563,6 +4587,24 @@ public _decorSaveShape(): void {
           ...(angle ? { angle } : {}),
         } as DecorShape;
       }
+      if (shape.kind === 'image') {
+        const oldW = shape.w * NORM_W, oldH = shape.h * this.host._decorH;
+        const w = decorCmToUnits(Math.abs(furnitureWcm!), this.host._cellCm, this.host._gridPitch);
+        const h = decorCmToUnits(Math.abs(furnitureHcm!), this.host._cellCm, this.host._gridPitch);
+        const cx = shape.x * NORM_W + oldW / 2, cy = shape.y * this.host._decorH + oldH / 2;
+        const angle = normalizeAngle(d.angle);
+        return {
+          id: shape.id, kind: 'image' as const,
+          asset_id: d.assetId || shape.asset_id,
+          x: clampCanvasN((cx - w / 2) / NORM_W),
+          y: clampCanvasN((cy - h / 2) / this.host._decorH),
+          w: w / NORM_W, h: h / this.host._decorH,
+          opacity: clamp01(d.opacity, 1),
+          ...(furnitureWcm! < 0 ? { flip_h: true } : {}),
+          ...(furnitureHcm! < 0 ? { flip_v: true } : {}),
+          ...(angle ? { angle } : {}),
+        } as DecorShape;
+      }
       if (shape.kind === 'rect' || shape.kind === 'ellipse') {
         const oldW = shape.w * NORM_W, oldH = shape.h * this.host._decorH;
         const w = Math.max(this.host._gridPitch, snapToGrid(
@@ -4586,7 +4628,7 @@ public _decorSaveShape(): void {
       }
       return shape;
     });
-    this._updateDecorStyle({ ...style,
+    if (d.kind !== 'image') this._updateDecorStyle({ ...style,
       fill: d.kind === 'rect' || d.kind === 'ellipse' ? style.fill : this.host._decorStyle.fill,
       fillColor: d.kind === 'rect' || d.kind === 'ellipse' ? style.fillColor : this.host._decorStyle.fillColor,
       fillOpacity: d.kind === 'rect' || d.kind === 'ellipse' ? style.fillOpacity : this.host._decorStyle.fillOpacity,
@@ -4602,7 +4644,8 @@ public _dtPivot(sh: DecorShape): number[] {
       ((sh.x1 + sh.x2) / 2) * NORM_W,
       ((sh.y1 + sh.y2) / 2) * this.host._decorH,
     ];
-    if (sh.kind === 'furniture' || sh.kind === 'rect' || sh.kind === 'ellipse')
+    if (sh.kind === 'furniture' || sh.kind === 'image'
+        || sh.kind === 'rect' || sh.kind === 'ellipse')
       return [(sh.x + sh.w / 2) * NORM_W, (sh.y + sh.h / 2) * this.host._decorH];
     return [sh.x * NORM_W, sh.y * this.host._decorH];
   }
@@ -4674,7 +4717,7 @@ public _dtMove(ev: PointerEvent): void {
       return;
     }
     if (d.kind === 'scale' && d.orig) {
-      if (d.origShape.kind === 'furniture') {
+      if (d.origShape.kind === 'furniture' || d.origShape.kind === 'image') {
         const box = resizeFurnitureTransform(
           { ...d.orig, flip_h: d.origShape.flip_h, flip_v: d.origShape.flip_v },
           d.sgx ?? 1, d.sgy ?? 1, p[0], p[1],
@@ -4715,7 +4758,7 @@ public _dtMove(ev: PointerEvent): void {
     }
     const a = (Math.atan2(p[1] - d.ay, p[0] - d.ax) * 180) / Math.PI;
     let ang: number;
-    if (d.origShape.kind === 'furniture') {
+    if (d.origShape.kind === 'furniture' || d.origShape.kind === 'image') {
       ang = furnitureRotationAngle(d.angle0, d.a0, a, ev.shiftKey);
     } else {
       ang = d.angle0 + (a - d.a0);
@@ -4752,7 +4795,8 @@ public _dtMeasure(): void {
       const x2 = sh.x2 * NORM_W, y2 = sh.y2 * this.host._decorH;
       box = { id: sh.id, x: Math.min(x1, x2), y: Math.min(y1, y2),
         w: Math.abs(x2 - x1), h: Math.abs(y2 - y1) };
-    } else if (sh.kind === 'furniture' || sh.kind === 'rect' || sh.kind === 'ellipse') {
+    } else if (sh.kind === 'furniture' || sh.kind === 'image'
+        || sh.kind === 'rect' || sh.kind === 'ellipse') {
       // …and furniture needs no measuring at all: its box IS the config. The
       // frame therefore appears in the SAME frame as the selection, not one
       // after it, and a resize can never be a render behind the shape.
@@ -4835,7 +4879,17 @@ public _furnPick(symbol: string): void {
     const d = furnitureDefaultCm(symbol);
     this.host._furnPalette = { symbol, w: d.w, h: d.h };
     this._furnShiftAttach();
-  }
+}
+
+/** Room centrelines plus the faces of independent physical obstacles. */
+private get _furnWalls(): number[][] {
+  const faces = this.host._rawPhysicalBodiesR().flatMap((body) =>
+    body.map((a, index) => {
+      const b = body[(index + 1) % body.length];
+      return [a[0], a[1], b[0], b[1]];
+    }));
+  return [...this.host._segments, ...faces];
+}
 
 public _resolveFurniturePlacement(
     raw: number[], free = false, pointerType = 'mouse',
@@ -4854,11 +4908,63 @@ public _resolveFurniturePlacement(
       canvasH: H,
       cellCm: this.host._cellCm,
       gridPitch: this.host._gridPitch,
-      walls: this.host._furnWalls,
-      wallReach: this.host._furnWallReach,
+      walls: this._furnWalls,
+      wallReach: this.host._gridPitch * FURN_WALL_CELLS,
       free,
-    });
-  }
+  });
+}
+
+public _furniturePreviewPlacement(): FurniturePlacement | null {
+  const input = this.host._furnPreviewInput;
+  if (!input || this.host._mode !== 'decor' || this.host._decorTool !== 'furniture'
+      || !this.host._furnPalette || !this.host._pointerModality.hoverEnabled) return null;
+  return this._resolveFurniturePlacement(input.raw, input.free, 'mouse');
+}
+
+/** One real furniture path, in the same decor composition group as saved
+ * shapes. It paints after them and the whole decor layer remains below walls. */
+public _renderFurniturePlacementPreview(
+  furnitureScreenScale: number,
+): TemplateResult | typeof nothing {
+  const placement = this._furniturePreviewPlacement();
+  if (!placement) return nothing;
+  const art = furnitureGraphic(placement.symbol);
+  if (!art) return nothing;
+  const transform = furnitureRenderTransform(
+    placement, NORM_W, this.host._decorH, art.viewW, art.viewH,
+  );
+  const style = this.host._decorStyle;
+  const strokeWidth = furnitureStrokePx(
+    decorCmToUnits(style.widthCm, this.host._cellCm, this.host._gridPitch),
+    furnitureScreenScale,
+  );
+  return svg`<path class="furniture-placement-preview dfurn"
+    data-symbol=${placement.symbol} d=${art.d} transform=${transform}
+    stroke=${style.color} stroke-opacity=${style.opacity}
+    stroke-width=${strokeWidth}
+    fill="none" stroke-linecap="round" stroke-linejoin="round"
+    vector-effect="non-scaling-stroke" aria-hidden="true" pointer-events="none"></path>`;
+}
+
+/** Live width/depth labels for a furniture corner resize. */
+public _furnLive(): { x: number; y: number; text: string }[] | null {
+  const drag = this.host._dtDrag;
+  if (!drag || drag.kind !== 'scale' || !drag.orig) return null;
+  const shape = this.host._decorList.find((item) => item.id === drag.id);
+  if (!shape || shape.kind !== 'furniture') return null;
+  const w = shape.w * NORM_W;
+  const h = shape.h * this.host._decorH;
+  const corners = furnitureCorners(
+    shape.x * NORM_W, shape.y * this.host._decorH, w, h, Number(shape.angle) || 0,
+  );
+  const mid = (a: number[], b: number[]) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+  const top = mid(corners[0], corners[1]);
+  const left = mid(corners[0], corners[3]);
+  return [
+    { x: top[0], y: top[1], text: this.host._fmtLen([0, 0], [w, 0]) },
+    { x: left[0], y: left[1], text: this.host._fmtLen([0, 0], [0, h]) },
+  ];
+}
 
 public _furnPlace(raw: number[], free = false, pointerType = 'mouse'): void {
     const placement = this._resolveFurniturePlacement(raw, free, pointerType);
@@ -4904,8 +5010,10 @@ public _furnPointerMove(ev: PointerEvent, hoverAllowed: boolean): boolean {
       this.host._furnPreviewInput = null;
       return true;
     }
-    if (this.host._mode !== 'decor' || this.host._decorTool !== 'furniture'
-        || !this.host._furnPalette) {
+    const armed = this.host._decorTool === 'furniture'
+      ? !!this.host._furnPalette
+      : this.host._decorTool === 'image' && !!this.host._decorImagePalette;
+    if (this.host._mode !== 'decor' || !armed) {
       this._clearFurniturePreview();
       return false;
     }
@@ -4930,8 +5038,11 @@ public _furnPointerUp(ev: PointerEvent): boolean {
     if (!pending || pending.pid !== ev.pointerId) return false;
     this.host._furnTouchPending = null;
     if (!pending.cancelled && this.host._mode === 'decor'
-        && this.host._decorTool === 'furniture' && this.host._furnPalette) {
-      this._furnPlace(this._svgPoint(ev), ev.shiftKey, pending.pointerType);
+        && ((this.host._decorTool === 'furniture' && this.host._furnPalette)
+          || (this.host._decorTool === 'image' && this.host._decorImagePalette))) {
+      if (this.host._decorTool === 'furniture')
+        this._furnPlace(this._svgPoint(ev), ev.shiftKey, pending.pointerType);
+      else this._decorImagePlace(this._svgPoint(ev));
     }
     return true;
   }
@@ -4949,7 +5060,8 @@ public _furnMoveUpdate(ev: PointerEvent): void {
     let x: number, y: number;
     let angle = Number(o.angle) || 0;
     const snap = ev.shiftKey ? null : snapFurnitureToWall(
-      rawCx, rawCy, o.h * H, this.host._furnWalls, this.host._furnWallReach, this.host._gridPitch);
+      rawCx, rawCy, o.h * H, this._furnWalls,
+      this.host._gridPitch * FURN_WALL_CELLS, this.host._gridPitch);
     if (snap) {
       x = snap.cx / W - o.w / 2;
       y = snap.cy / H - o.h / 2;
@@ -4994,13 +5106,13 @@ public _decorApplyBox(id: string, box: { x: number; y: number; w: number; h: num
     this.host.requestUpdate();
   }
 
-public _decorApplyFurnitureBox(id: string, box: FurnitureResizeResult): void {
+  public _decorApplyFurnitureBox(id: string, box: FurnitureResizeResult): void {
     const sp = this.host._curSpaceCfg;
     if (!sp) return;
     const W = NORM_W, H = this.host._decorH;
     const minUnits = decorCmToUnits(0.1, this.host._cellCm, this.host._gridPitch);
     sp.decor = this.host._decorList.map((shape) => {
-      if (shape.id !== id || shape.kind !== 'furniture') return shape;
+      if (shape.id !== id || (shape.kind !== 'furniture' && shape.kind !== 'image')) return shape;
       const { flip_h: _oldFlipH, flip_v: _oldFlipV, ...rest } = shape;
       return {
         ...rest,
@@ -5013,6 +5125,226 @@ public _decorApplyFurnitureBox(id: string, box: FurnitureResizeResult): void {
     });
     this.host._cfgEpoch++;
     this.host.requestUpdate();
+  }
+
+public _decorImagePlace(raw: number[]): void {
+    const asset = this.host._decorImagePalette;
+    const sp = this.host._curSpaceCfg;
+    if (!asset || !sp) return;
+    const at = this._decorSnap(raw);
+    const size = initialDecorImageCm(asset.width, asset.height);
+    const w = decorCmToUnits(size.w, this.host._cellCm, this.host._gridPitch) / NORM_W;
+    const h = decorCmToUnits(size.h, this.host._cellCm, this.host._gridPitch) / this.host._decorH;
+    const id = 'di' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+    const before = this._geometrySnapshot();
+    sp.decor = [...this.host._decorList, {
+      id, kind: 'image', asset_id: asset.asset_id,
+      x: clampCanvasN(at[0] / NORM_W - w / 2),
+      y: clampCanvasN(at[1] / this.host._decorH - h / 2),
+      w, h, opacity: 1,
+    } as DecorShape];
+    this.host._decorSel = id;
+    this.host._decorTool = 'select';
+    this.host._decorImagePalette = null;
+    this._clearFurniturePreview();
+    this._recordGeometry(this.host._t('history.decor_add'), before);
+    this._saveConfig();
+  this.host.requestUpdate();
+}
+
+public _renderDecorImagePlacementPreview(): TemplateResult | typeof nothing {
+  const input = this.host._furnPreviewInput;
+  const asset = this.host._decorImagePalette;
+  if (!input || !asset || this.host._mode !== 'decor'
+      || this.host._decorTool !== 'image' || !this.host._pointerModality.hoverEnabled) return nothing;
+  const at = this._decorSnap(input.raw, 'mouse');
+  const cm = initialDecorImageCm(asset.width, asset.height);
+  const w = decorCmToUnits(cm.w, this.host._cellCm, this.host._gridPitch) / NORM_W;
+  const h = decorCmToUnits(cm.h, this.host._cellCm, this.host._gridPitch) / this.host._decorH;
+  const href = this.host._display(asset.url);
+  if (!href) return nothing;
+  return svg`<image class="decor-image-placement-preview" href=${href}
+    x=${at[0] - w * NORM_W / 2} y=${at[1] - h * this.host._decorH / 2}
+    width=${w * NORM_W} height=${h * this.host._decorH}
+    opacity="0.65" preserveAspectRatio="none" pointer-events="none"></image>`;
+}
+
+public _renderMissingDecorImage(
+    shape: Extract<DecorShape, { kind: 'image' }>, cls: string, transform: string,
+    x: number, y: number, w: number, h: number,
+    down: (event: PointerEvent) => void, dbl: (event: MouseEvent) => void,
+): TemplateResult {
+  const cx = x + w / 2, cy = y + h / 2;
+  return svg`<g class="${cls} dimage-missing"
+    data-hp="decor" data-id=${shape.id} data-kind="image" transform=${transform}
+    @pointerdown=${down} @dblclick=${dbl}>
+    <title>${this.host._t('decor.image_unavailable')}</title>
+    <rect x=${x} y=${y} width=${w} height=${h}></rect>
+    <path d=${`M${x} ${y}L${x + w} ${y + h}M${x + w} ${y}L${x} ${y + h}`}></path>
+    <text class="dimage-missing-label" x=${cx} y=${cy}
+      fill="var(--primary-text-color, #333)" stroke="var(--card-background-color, #fff)"
+      stroke-width="2" paint-order="stroke" pointer-events="none"
+      font-size=${Math.min(18, h * 0.25)} text-anchor="middle" dominant-baseline="middle"
+      textLength=${Math.max(1, Math.min(w * 0.8, 160))}
+      lengthAdjust="spacingAndGlyphs">${this.host._t('decor.image_unavailable')}</text>
+  </g>`;
+}
+
+public async _decorImageUpload(ev: Event, replaceSelection = false): Promise<void> {
+    const input = ev.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file || this.host._decorAssetBusy) return;
+    let classified: Awaited<ReturnType<typeof classifyPlanFile>>;
+    try {
+      classified = await classifyPlanFile(file, 2 * 1024 * 1024);
+    } catch {
+      this.host._showToast(this.host._t('backup.error.invalid_image'));
+      return;
+    }
+    if (classified.kind === 'reject') {
+      this.host._showToast(this.host._t('toast.plan_formats'));
+      return;
+    }
+    if (classified.kind === 'guard') {
+      this._decorAssetGuardReplace = replaceSelection;
+      this.host._backdropGuard = classified.state;
+      return;
+    }
+    await this._uploadDecorImage(file, file.name, replaceSelection);
+  }
+
+private async _uploadDecorImage(
+    file: Blob, name: string, replaceSelection: boolean,
+): Promise<void> {
+    if (this.host._decorAssetBusy) return;
+    this.host._decorAssetBusy = true;
+    try {
+      const body = new FormData();
+      body.append('file', file, name);
+      const response: Response = this.host.hass?.fetchWithAuth
+        ? await this.host.hass.fetchWithAuth('/api/houseplan/assets/upload', { method: 'POST', body })
+        : await fetch('/api/houseplan/assets/upload', {
+            method: 'POST', body,
+            headers: this.host.hass?.auth?.data?.access_token
+              ? { authorization: `Bearer ${this.host.hass.auth.data.access_token}` } : {},
+          });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || data.error || !data.asset) {
+        const messages: Record<string, I18nKey> = {
+          invalid_format: 'backup.error.invalid_image',
+          invalid_image: 'backup.error.invalid_image',
+          unsupported_image: 'backup.error.unsupported_image',
+          too_large: 'backdrop.too_large_title',
+          capacity_exceeded: 'decor.image_error_capacity',
+        };
+        throw new Error(this.host._t(messages[String(data.error)] || 'backup.error.io_error'));
+      }
+      const asset = adoptDecorAssets({ assets: [data.asset] }).values().next().value as DecorAsset | undefined;
+      if (!asset) throw new Error(this.host._t('backup.error.io_error'));
+      this.host._decorAssets = new Map(this.host._decorAssets).set(asset.asset_id, asset);
+      this.host._decorAssetCatalog = [
+        asset, ...this.host._decorAssetCatalog.filter((item) => item.asset_id !== asset.asset_id),
+      ];
+      if (replaceSelection && this.host._decorShapeDialog?.kind === 'image') {
+        this.host._decorShapeDialog = { ...this.host._decorShapeDialog, assetId: asset.asset_id };
+      } else {
+        this.host._decorImagePalette = asset;
+      }
+      this.host.requestUpdate();
+    } catch (error) {
+      this.host._showToast(this.host._t('decor.image_upload_failed', { err: this.host._errText(error) }));
+    } finally {
+      this.host._decorAssetBusy = false;
+    }
+  }
+
+public async _decorImageDelete(asset: DecorAsset): Promise<void> {
+    if (asset.used_by?.length) {
+      this.host._showToast(this.host._t('decor.image_in_use'));
+      return;
+    }
+    const accepted = await this.host._confirmDanger({
+      key: `delete-decor-asset:${asset.asset_id}`,
+      kind: 'destructive',
+      title: this.host._t('decor.image_delete_title'),
+      message: this.host._t('decor.image_delete_message', { name: asset.name }),
+      confirmLabel: this.host._t('btn.delete'),
+      cancelLabel: this.host._t('btn.cancel'),
+    });
+    if (!accepted) return;
+    try {
+      await this.host.hass.callWS({ type: 'houseplan/assets/delete', asset_id: asset.asset_id });
+      this.host._decorAssetCatalog = this.host._decorAssetCatalog.filter(
+        (item) => item.asset_id !== asset.asset_id,
+      );
+      this.host._decorAssets.delete(asset.asset_id);
+      if (this.host._decorImagePalette?.asset_id === asset.asset_id)
+        this.host._decorImagePalette = null;
+      this.host.requestUpdate();
+    } catch (error) {
+      this.host._showToast((error as { code?: string })?.code === 'in_use'
+        ? this.host._t('decor.image_in_use') : this.host._t('backup.error.io_error'));
+  }
+}
+
+private async _decorImageCatalogLoad(): Promise<void> {
+  try {
+    const response = await this.host.hass.callWS({ type: 'houseplan/assets/list' });
+    const catalog = adoptDecorAssets(response);
+    this.host._decorAssetCatalog = [...catalog.values()];
+    this.host._decorAssets = new Map([...this.host._decorAssets, ...catalog]);
+    this.host.requestUpdate();
+  } catch (error) {
+    this.host._showToast(this.host._t('backup.error.io_error'));
+  }
+}
+
+public _renderDecorImagePalette(): TemplateResult {
+    const armed = this.host._decorImagePalette;
+    return html`<div class="furnpalette imagepalette" role="dialog"
+      aria-label=${this.host._t('decor.image_title')}
+      @pointerdown=${(e: Event) => e.stopPropagation()}>
+      <div class="furnhd"><ha-icon icon="mdi:image-plus-outline"></ha-icon>${this.host._t('decor.image_title')}
+        <span class="spacer"></span>
+        <button class="btn furnclose" title=${this.host._t('btn.close')} @click=${() => {
+          this.host._decorImagePalette = null;
+          this._clearFurniturePreview();
+          this.host._decorTool = 'select';
+        }}><ha-icon icon="mdi:close"></ha-icon></button>
+      </div>
+      <div class="furnbody">
+        <label class="btn primary imageupload ${this.host._decorAssetBusy ? 'disabled' : ''}">
+          <ha-icon icon="mdi:upload"></ha-icon>${this.host._t(
+            this.host._decorAssetBusy ? 'decor.image_uploading' : 'decor.image_upload',
+          )}
+          <input type="file" accept=".png,.jpg,.jpeg,.webp,.svg,image/png,image/jpeg,image/webp,image/svg+xml"
+            ?disabled=${this.host._decorAssetBusy} @change=${(e: Event) => this._decorImageUpload(e)} />
+        </label>
+        <div class="furnrow imageassets">
+          ${this.host._decorAssetCatalog.length ? nothing
+            : html`<span class="furnhint imageempty">${this.host._t('decor.image_none')}</span>`}
+          ${this.host._decorAssetCatalog.map((asset) => html`<div class="imageasset">
+            <button class="furnitem ${armed?.asset_id === asset.asset_id ? 'on' : ''}"
+              title=${asset.name} @click=${() => {
+                this.host._decorImagePalette = asset;
+                this.host.requestUpdate();
+              }}>
+              <img src=${this.host._display(asset.url)} alt="" /><span>${asset.name}</span>
+              ${asset.used_by?.length ? html`<small>${this.host._t(
+                'decor.image_used', { n: asset.used_by.length },
+              )}</small>` : nothing}
+            </button>
+            <button class="btn ghost imageassetdelete" title=${this.host._t('btn.delete')}
+              ?disabled=${!!asset.used_by?.length}
+              @click=${() => this._decorImageDelete(asset)}><ha-icon icon="mdi:delete-outline"></ha-icon></button>
+          </div>`)}
+        </div>
+      </div>
+      <div class="furnsize"><span class="furnhint">${this.host._t(
+        armed ? 'decor.image_place_hint' : 'decor.image_pick_hint',
+      )}</span></div>
+    </div>`;
   }
 
 public _renderFurnPalette(): TemplateResult {
@@ -5418,6 +5750,23 @@ public _renderDecorSecondary(): EditorSecondaryModel | null {
         content: this._renderFurnPalette(),
       };
     }
+    if (this.host._decorTool === 'image') {
+      return {
+        contextId,
+        kind: 'palette',
+        ariaLabel: this.host._t('editor.palette', { tool: this.host._t('decor.image') }),
+        launcherId: 'image',
+        dismissPolicy: this.host._decorImagePalette ? 'stay-open-on-canvas' : 'outside',
+        dismiss: () => {
+          if (this.host._decorTool !== 'image') return;
+          this._clearFurniturePreview();
+          this.host._decorImagePalette = null;
+          this.host._decorTool = 'select';
+          this.host.requestUpdate();
+        },
+        content: this._renderDecorImagePalette(),
+      };
+    }
     const selected = this.host._dtSel;
     if (selected) {
       const label = this.host._t((`decor.${selected.kind}`) as any);
@@ -5521,6 +5870,8 @@ public _renderDecorBar(): TemplateResult {
       ['text', 'mdi:format-text', 'decor.text'],
       // the library sits next to the shapes it belongs with (docs/FURNITURE.md)
       ['furniture', 'mdi:sofa-outline', 'decor.furniture'],
+      ...(this.host._haDecorAssetsApi === DECOR_ASSETS_API_VERSION
+        ? [['image', 'mdi:image-plus-outline', 'decor.image'] as const] : []),
       ['erase', 'mdi:eraser', 'decor.erase'],
     ] as const;
     const undoName = this.host._geometryHistory.undoName;
@@ -5529,17 +5880,19 @@ public _renderDecorBar(): TemplateResult {
       <div class="editbar-tools" tabindex="-1" ?inert=${this.host._modeTransitionBusy}>
       ${tools.map(
         ([t, ic, k]) => html`<button class="btn dtool ${this.host._decorTool === t ? 'on' : ''}"
-          data-editor-palette=${t === 'furniture' ? 'furniture' : nothing}
+          data-editor-palette=${t === 'furniture' || t === 'image' ? t : nothing}
           @click=${() => {
-            if (t === 'furniture' && this.host._decorTool === 'furniture') {
+            if ((t === 'furniture' || t === 'image') && this.host._decorTool === t) {
               this._clearFurniturePreview();
               this.host._furnPalette = null;
+              this.host._decorImagePalette = null;
               this._furnShiftDetach();
               this.host._furnCategory = null;
               this.host._decorTool = 'select';
               return;
             }
-            if (t === 'furniture') this.host._editorSecondary.openPalette();
+            if (t === 'furniture' || t === 'image') this.host._editorSecondary.openPalette();
+            if (t === 'image') void this._decorImageCatalogLoad();
             this.host._decorTool = t as typeof this.host._decorTool;
             this.host._decorDraft = null;
             // the palette belongs to its tool and to nothing else: leaving the
@@ -5553,6 +5906,7 @@ public _renderDecorBar(): TemplateResult {
               this._clearFurniturePreview();
               this.host._furnCategory = null;
             }
+            if (t !== 'image') this.host._decorImagePalette = null;
           }}
           title=${this.host._t(k)}>
           <ha-icon icon=${ic}></ha-icon><span class="ml">${this.host._t(k)}</span>
@@ -5680,7 +6034,7 @@ public _renderDecorTextDialog(): TemplateResult {
 
 private _decorFurnitureSizeInput(axis: 'w' | 'h', raw: string): void {
     const d = this.host._decorShapeDialog;
-    if (!d || d.kind !== 'furniture') return;
+    if (!d || (d.kind !== 'furniture' && d.kind !== 'image')) return;
     const cm = furnitureSignedFieldCm(
       raw, this.host._imperial, CANVAS_LIMIT * this.host._cellCm,
     );
@@ -5696,7 +6050,7 @@ private _decorFurnitureSizeInput(axis: 'w' | 'h', raw: string): void {
 
 private _decorFurnitureFlip(axis: 'w' | 'h', checked: boolean): void {
     const d = this.host._decorShapeDialog;
-    if (!d || d.kind !== 'furniture') return;
+    if (!d || (d.kind !== 'furniture' && d.kind !== 'image')) return;
     const raw = axis === 'w' ? d.sizeWField : d.sizeHField;
     const parsed = furnitureSignedFieldCm(
       raw, this.host._imperial, CANVAS_LIMIT * this.host._cellCm,
@@ -5717,14 +6071,18 @@ public _renderDecorShapeDialog(): TemplateResult {
     const canFill = d.kind === 'rect' || d.kind === 'ellipse';
     const kindLabel = this.host._t(('decor.' + d.kind) as any);
     const unit = this.host._t(this.host._imperial ? 'gs.unit_ft' : 'gs.unit_m');
-    const furnitureWcm = d.kind === 'furniture' ? furnitureSignedFieldCm(
+    const furnitureWcm = d.kind === 'furniture' || d.kind === 'image' ? furnitureSignedFieldCm(
       d.sizeWField, this.host._imperial, CANVAS_LIMIT * this.host._cellCm,
     ) : null;
-    const furnitureHcm = d.kind === 'furniture' ? furnitureSignedFieldCm(
+    const furnitureHcm = d.kind === 'furniture' || d.kind === 'image' ? furnitureSignedFieldCm(
       d.sizeHField, this.host._imperial, CANVAS_LIMIT * this.host._cellCm,
     ) : null;
-    const invalidFurnitureSize = d.kind === 'furniture'
+    const invalidFurnitureSize = (d.kind === 'furniture' || d.kind === 'image')
       && (furnitureWcm === null || furnitureHcm === null);
+    const selectedImage = d.kind === 'image'
+      ? this.host._decorAssetCatalog.find((asset) => asset.asset_id === d.assetId)
+        || this.host._decorAssets.get(d.assetId || '')
+      : null;
     return html`<hp-dialog .hass=${this.host.hass}
       .title=${this.host._t('decor.object_title', { kind: kindLabel })} icon="mdi:pencil-outline"
       dismiss-on-scrim @hp-close=${() => (this.host._decorShapeDialog = null)}>
@@ -5746,18 +6104,44 @@ public _renderDecorShapeDialog(): TemplateResult {
                   ${this.host._t(`furn.sym_${symbol.id}` as I18nKey)}
                 </option>`)}
               </optgroup>`)}
-            </select>` : nothing}
-          <hp-color-opacity .label=${this.host._t('decor.color')} .color=${d.color} .opacity=${d.opacity}
+            </select>` : d.kind === 'image' ? html`
+            <label>${this.host._t('decor.image_asset')}</label>
+            <select class="namein" .value=${d.assetId || ''}
+              @change=${(e: Event) => (this.host._decorShapeDialog = {
+                ...d, assetId: (e.target as HTMLSelectElement).value,
+              })}>
+              ${this.host._decorAssetCatalog.map((asset) => html`<option value=${asset.asset_id}
+                ?selected=${asset.asset_id === d.assetId}>
+                ${asset.name}
+              </option>`)}
+            </select>
+            ${selectedImage ? html`<div class="imagepropertypreview">
+              <img src=${this.host._display(selectedImage.url)} alt=${selectedImage.name} />
+              <span>${selectedImage.name}</span>
+            </div>` : nothing}
+            <label class="btn ghost imageupload">
+              <ha-icon icon="mdi:image-refresh-outline"></ha-icon>${this.host._t('decor.image_replace')}
+              <input type="file" accept=".png,.jpg,.jpeg,.webp,.svg,image/png,image/jpeg,image/webp,image/svg+xml"
+                ?disabled=${this.host._decorAssetBusy}
+                @change=${(e: Event) => this._decorImageUpload(e, true)} />
+            </label>` : nothing}
+          ${d.kind === 'image' ? html`
+            <label>${this.host._t('space.opacity')}</label>
+            <input class="namein" type="range" min="0" max="1" step="0.01"
+              .value=${String(d.opacity)}
+              @input=${(e: Event) => (this.host._decorShapeDialog = {
+                ...d, opacity: Number((e.target as HTMLInputElement).value),
+              })} />` : html`<hp-color-opacity .label=${this.host._t('decor.color')} .color=${d.color} .opacity=${d.opacity}
             .opacityLabel=${this.host._t('space.opacity')} .pickerLabels=${this.host._colorPickerLabels}
             @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) =>
-              (this.host._decorShapeDialog = { ...d, ...e.detail })}></hp-color-opacity>
-          <label>${this.host._t('decor.width')}</label>
+              (this.host._decorShapeDialog = { ...d, ...e.detail })}></hp-color-opacity>`}
+          ${d.kind !== 'image' ? html`<label>${this.host._t('decor.width')}</label>
           <div class="colorrow"><input class="namein" type="number"
             min=${this.host._decorSmallField(0.1)} max=${this.host._decorSmallField(100)} step="0.1"
             .value=${String(this.host._decorSmallField(d.widthCm))}
             @input=${(e: Event) => (this.host._decorShapeDialog = {
               ...d, widthCm: this.host._decorSmallCm(Number((e.target as HTMLInputElement).value)),
-            })} /><span class="opl">${this.host._t(this.host._imperial ? 'wallthick.unit_in' : 'wallthick.unit_cm')}</span></div>
+            })} /><span class="opl">${this.host._t(this.host._imperial ? 'wallthick.unit_in' : 'wallthick.unit_cm')}</span></div>` : nothing}
           ${d.kind === 'line' ? html`
             <label>${this.host._t('decor.line_style')}</label>
             <div role="radiogroup" aria-label=${this.host._t('decor.line_style')}>
@@ -5775,7 +6159,7 @@ public _renderDecorShapeDialog(): TemplateResult {
               .value=${String(this.host._decorLargeField(d.lengthCm || 0))}
               @input=${(e: Event) => (this.host._decorShapeDialog = { ...d,
                 lengthCm: this.host._decorLargeCm(Number((e.target as HTMLInputElement).value)) })} />
-              <span class="opl">${unit}</span></div>` : d.kind === 'furniture' ? html`
+              <span class="opl">${unit}</span></div>` : d.kind === 'furniture' || d.kind === 'image' ? html`
             <label>${this.host._t('decor.size')}</label>
             <div class="colorrow"><input class="namein" type="number" step="any"
               aria-invalid=${furnitureWcm === null ? 'true' : 'false'}
@@ -8588,6 +8972,7 @@ public async _pickPlanFile(ev: Event): Promise<void> {
     if (!file || !this.host._spaceDialog) return;
     // #39: re-selecting the same file after a guard decision must fire again.
     input.value = '';
+    this._decorAssetGuardReplace = null;
     const classified = await classifyPlanFile(file);
     if (classified.kind === 'reject') {
       this.host._showToast(this.host._t('toast.plan_formats'));
@@ -8603,6 +8988,20 @@ public async _pickPlanFile(ev: Event): Promise<void> {
   }
 
 public _renderBackdropGuard(): TemplateResult | typeof nothing {
+    const decorReplace = this._decorAssetGuardReplace;
+    if (decorReplace !== null) {
+      return renderBackdropGuard(
+        this.host,
+        () => undefined,
+        () => {
+          this.host._backdropGuard = null;
+          this._decorAssetGuardReplace = null;
+        },
+        this.host.hass,
+        (blob, name) => this._uploadDecorImage(blob, name, decorReplace),
+        (this.host._backdropGuard?.file.size || 0) <= 2 * 1024 * 1024,
+      ) ?? nothing;
+    }
     return renderBackdropGuard(
       this.host,
       (payload) => {
@@ -10084,6 +10483,10 @@ public _renderBackupExportDialog(): TemplateResult {
 public _renderBackupImportDialog(): TemplateResult {
     const d = this.host._backupImportDialog!;
     const p = d.preview;
+    const decorContent = (p?.content || []).filter((item: any) => item.kind === 'decor_asset');
+    const decorAssetCount = new Set(decorContent.map((item: any) => item.url)).size;
+    const missingDecor = decorContent.filter((item: any) => item.state === 'missing_preserved');
+    const missingDecorAssetCount = new Set(missingDecor.map((item: any) => item.url)).size;
     const counts = p?.counts || {};
     const report = p?.reference_report || {};
     const sum = (values: any): number => Object.values(values || {}).reduce(
@@ -10180,7 +10583,11 @@ public _renderBackupImportDialog(): TemplateResult {
             </fieldset>` : nothing}`}
           ${p.content?.length ? html`<div class="backupcontent">
             <b>${this.host._t('backup.content')}</b>
-            ${p.content.map((item) => html`<span>${item.url} · ${this.host._t(
+            ${decorContent.length ? html`<span>${this.host._t('backup.decor_images_summary', {
+              assets: decorAssetCount, objects: decorContent.length,
+              missing: missingDecorAssetCount,
+            })}</span>` : nothing}
+            ${p.content.filter((item: any) => item.kind !== 'decor_asset').map((item: any) => html`<span>${item.url} · ${this.host._t(
               item.state === 'available' ? 'backup.content_available'
                 : item.state === 'external' ? 'backup.content_external'
                   : 'backup.content_detach_required',
@@ -10189,7 +10596,8 @@ public _renderBackupImportDialog(): TemplateResult {
           ${p.confirmation_required ? html`<label class="srcrow backupconfirm">
             <input type="checkbox" .checked=${d.confirmMissing}
               @change=${(e: Event) => (this.host._backupImportDialog = { ...d, confirmMissing: (e.target as HTMLInputElement).checked })} />
-            <span>${this.host._t('backup.confirm_detach')}</span>
+            <span>${this.host._t(missingDecor.length
+              ? 'backup.confirm_missing_images' : 'backup.confirm_detach')}</span>
           </label>` : nothing}
         ` : nothing}
       </div>

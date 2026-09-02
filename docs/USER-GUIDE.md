@@ -744,6 +744,7 @@ this plan.
 | Oval | Drag bounds; Shift makes a circle | Stroke plus independent fill, radii and angle |
 | Text | Click to open dialog | Multiline text, HA tokens, colour, physical size and angle |
 | Furniture | Pick a front-view category, pick a top-view variant, then click | Symbol, smooth size, horizontal/vertical mirror, colour, outline and wall magnet |
+| Image | Upload PNG/JPEG/WebP/SVG or choose a previous upload, then click | Smooth size, horizontal/vertical mirror, opacity, angle and file replacement; no wall magnet |
 | Erase | Click an item | Confirmed deletion, undoable |
 
 Creation and ordinary decor transforms snap to the grid plus nearby
@@ -761,6 +762,19 @@ The Furniture palette always uses two levels: categories first, then the
 available plan variants. **All categories** returns to the first level and
 disarms the current symbol. Existing placed furniture keeps its saved size and
 position when the built-in artwork is updated.
+
+The Image palette stores reusable files privately in House Plan. A file is at
+most 2 MiB; PNG, JPEG, WebP and safe SVG are supported. Picking a file arms one
+placement: the pointer preview shows the result, one click adds it at 100 cm
+wide (aspect-preserving, height capped at 200 cm), and the tool returns to
+Select. Images use the same smooth handles, mirroring and `Shift`-45° rotation
+as furniture, but never snap to a wall. Their complete rectangle is selectable,
+including transparent pixels.
+
+Deleting or replacing a placed image leaves the reusable file in the palette.
+The palette deletes a file only after all placed copies in all spaces are gone.
+If a file is missing or fails its integrity check, View hides it; Background
+shows a crossed placeholder that can be selected and repaired with Replace.
 
 ![Selected line in the Background editor](images/07-background-editor.png)
 
@@ -979,6 +993,7 @@ another Home Assistant instance.
 | Marker and room-card positions | HA storage `houseplan.layout` |
 | Plan files | `config/houseplan/plans` |
 | Marker attachments | `config/houseplan/files` |
+| Reusable custom decor images | `config/houseplan/assets` |
 | Vacuum path | Separate House Plan HA storage |
 | Cache, viewport and kiosk scale | That browser's `localStorage` |
 

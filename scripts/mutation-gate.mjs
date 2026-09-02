@@ -1415,7 +1415,7 @@ const MUTANT_DEFINITIONS = [
       + 'decodes unwarned and kills the tablet tab (#39 AC1)',
     patches: [{
       file: 'src/backdrop-pick.ts',
-      find: "  if (probe.kind === 'safe') return { kind: 'pass', ext };",
+      find: "  if (probe.kind === 'safe' && file.size <= guardAboveBytes) return { kind: 'pass', ext };",
       replace: "  return { kind: 'pass', ext };",
     }],
   },
@@ -3231,13 +3231,16 @@ const MUTANT_DEFINITIONS = [
       replace: '  spaceModels, roomCenter, defaultPositions, markerPos, labelPos, spaceFrame, iconCqw, NORM_W,',
     }, {
       file: 'src/space-render.ts',
-      find: '        ${passageGlowTunnels}\n        ${glowPools}\n        ${wallUnion',
+      find: '        ${passageGlowTunnels}\n'
+        + '        <g class="decorlayer" pointer-events="none">${decorImages}</g>\n'
+        + '        ${glowPools}\n        ${wallUnion',
       replace: '        ${passageGlowTunnels}\n'
         + '        ${!space.bg && !disp.showNames ? svg`<g class="room-svg-labels" pointer-events="none">${space.rooms.map((room) => {\n'
         + '          const center = roomCenter(room);\n'
         + '          return svg`<text class="rlabel" data-hp="room-label" data-id=${room.id || nothing}\n'
         + '            data-area=${room.area || nothing} x=${center[0]} y=${center[1]}>${room.name}</text>`;\n'
         + '        })}</g>` : nothing}\n'
+        + '        <g class="decorlayer" pointer-events="none">${decorImages}</g>\n'
         + '        ${glowPools}\n'
         + '        ${wallUnion',
     }],

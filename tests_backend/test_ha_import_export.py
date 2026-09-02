@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import copy
+import hashlib
 import json
 from pathlib import Path
 from types import SimpleNamespace
@@ -49,6 +50,34 @@ from custom_components.houseplan.store import (
 )
 from custom_components.houseplan.validation import MAX_LAYOUT, MAX_MARKERS
 from custom_components.houseplan.wall_segment_model import commit_wall_segment_model
+
+
+def test_issue_51_missing_decor_asset_stays_as_repairable_geometry(tmp_path: Path) -> None:
+    data = b"one custom image"
+    aid = hashlib.sha256(data).hexdigest()
+    source = tmp_path / "source"
+    target = tmp_path / "target"
+    assets = source / "houseplan" / "assets"
+    assets.mkdir(parents=True)
+    (assets / f"{aid}.png").write_bytes(data)
+    (assets / f"{aid}.json").write_text(json.dumps({
+        "asset_id": aid, "name": "picture.png", "mime": "image/png",
+        "ext": ".png", "width": 10, "height": 20, "bytes": len(data),
+    }), encoding="utf-8")
+    shape = {
+        "id": "picture", "kind": "image", "asset_id": aid,
+        "x": 0.1, "y": 0.2, "w": 0.3, "h": 0.4,
+    }
+    config = {"spaces": [{"id": "one", "decor": [shape]}]}
+    manifest = import_export_api.content_manifest(config, source)
+    assert manifest[0]["exists_at_export"] is True
+    assert "bytes" not in manifest[0]
+    document = {"payload": {"config": config}, "content_manifest": manifest}
+    rows, confirmation = import_export_api._content_state(document, False, target)
+    assert confirmation is True
+    assert rows[0]["state"] == "missing_preserved"
+    import_export_api._detach_missing(config, rows)
+    assert config["spaces"][0]["decor"][0] == shape
 
 
 @pytest.fixture(autouse=True)
@@ -568,7 +597,7 @@ def test_full_export_has_versioned_envelope_and_live_layout(tmp_path: Path) -> N
         kind="full", space_id=None, card_version="1.61.0", config_root=tmp_path,
     )
     assert document["format"] == "houseplan-export"
-    assert document["export_version"] == 1
+    assert document["export_version"] == 2
     assert document["model_version"] == PLAN_MODEL_VERSION
     assert "model_version" not in document["payload"]["config"]
     assert document["source_fingerprint"].startswith("sha256:")
