@@ -3,7 +3,7 @@ import test from 'node:test';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 
-import { verifyDocsCandidate } from '../scripts/docs-accept.mjs';
+import { acceptedDocsManifest, verifyDocsCandidate } from '../scripts/docs-accept.mjs';
 import { DOC_SCREENSHOT_VERSION, DOC_SCREENSHOTS } from '../demo/docs/screenshots.mjs';
 
 // Приёмка — единственное место, где картинки попадают в репозиторий, поэтому
@@ -145,4 +145,50 @@ test('правило среды в шапках совпадает с реали
   assert.match(script, /--expect-change/, 'декларация намерения обязана быть в описании');
   assert.equal(/снимать только в CI|только из артефакта CI/.test(workflow), false,
     'старое правило про место съёмки осталось в тексте');
+});
+
+test('#421 acceptance trace records a new pixel review exactly', () => {
+  const manifest = candidate();
+  const decision = {
+    replace: ['view-desktop'], witnesses: ['view-touch', 'editor'], floor: 2,
+  };
+  const accepted = acceptedDocsManifest({
+    manifest,
+    previousAcceptance: { declared: ['old'], future: 'preserve only on refresh' },
+    decision,
+    skipWitnesses: true,
+    skipReason: 'reviewed renderer transition',
+  });
+  assert.deepEqual(accepted.acceptance, {
+    declared: ['view-desktop'],
+    witnesses: 2,
+    floor: 2,
+    witnessesSkippedBecause: 'reviewed renderer transition',
+  });
+  assert.equal('acceptance' in manifest, false, 'candidate manifest is not mutated');
+  assert.notEqual(accepted, manifest);
+});
+
+test('#421 fingerprint-only refresh preserves the complete previous acceptance trace', () => {
+  const manifest = candidate();
+  const previousAcceptance = {
+    declared: ['view-desktop'], witnesses: 7, floor: 1, future: { kept: true },
+  };
+  const previousSnapshot = structuredClone(previousAcceptance);
+  const accepted = acceptedDocsManifest({
+    manifest,
+    previousAcceptance,
+    decision: { replace: [], witnesses: ['unchanged'], floor: 1 },
+  });
+  assert.deepEqual(accepted.acceptance, {
+    ...previousSnapshot, lastWriteWasFingerprintOnly: true,
+  });
+  assert.deepEqual(previousAcceptance, previousSnapshot, 'previous trace is not mutated');
+  assert.equal('acceptance' in manifest, false, 'candidate manifest is not mutated');
+
+  const firstRefresh = acceptedDocsManifest({
+    manifest, previousAcceptance: undefined,
+    decision: { replace: [], witnesses: [], floor: 0 },
+  });
+  assert.deepEqual(firstRefresh.acceptance, { lastWriteWasFingerprintOnly: true });
 });

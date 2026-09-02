@@ -91,6 +91,23 @@ export function verifyDocsCandidate({
   return { manifest, files };
 }
 
+/** Build the manifest written by the CLI without erasing an earlier review trace. */
+export function acceptedDocsManifest({
+  manifest, previousAcceptance, decision, skipWitnesses = false, skipReason = '',
+}) {
+  return {
+    ...manifest,
+    acceptance: decision.replace.length
+      ? {
+        declared: [...decision.replace],
+        witnesses: decision.witnesses.length,
+        floor: decision.floor,
+        ...(skipWitnesses ? { witnessesSkippedBecause: skipReason } : {}),
+      }
+      : { ...(previousAcceptance || {}), lastWriteWasFingerprintOnly: true },
+  };
+}
+
 const list = (argv, name) => argv
   .filter((arg) => arg.startsWith(`--${name}=`))
   .map((arg) => arg.slice(name.length + 3))
@@ -145,17 +162,13 @@ function main(argv) {
   // пустым списком, и история терялась при первом же refresh.
   const previous = JSON.parse(readFileSync(resolve(ROOT, 'docs/images/screenshots.json'), 'utf8'))
     .acceptance;
-  const accepted = {
-    ...manifest,
-    acceptance: decision.replace.length
-      ? {
-        declared: [...decision.replace],
-        witnesses: decision.witnesses.length,
-        floor: decision.floor,
-        ...(skipWitnesses ? { witnessesSkippedBecause: skipReason } : {}),
-      }
-      : { ...(previous || {}), lastWriteWasFingerprintOnly: true },
-  };
+  const accepted = acceptedDocsManifest({
+    manifest,
+    previousAcceptance: previous,
+    decision,
+    skipWitnesses,
+    skipReason,
+  });
   writeFileSync(
     resolve(ROOT, 'docs/images/screenshots.json'),
     `${JSON.stringify(accepted, null, 2)}\n`,

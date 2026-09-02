@@ -16,7 +16,12 @@ from homeassistant.core import HomeAssistant
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 from pytest_homeassistant_custom_component.typing import WebSocketGenerator
 
-from custom_components.houseplan.const import CONF_ADMIN_ONLY, DOMAIN, VERSION
+from custom_components.houseplan.const import (
+    CONF_ADMIN_ONLY,
+    DOMAIN,
+    SUPPORT_PREVIEW_TTL_S,
+    VERSION,
+)
 from custom_components.houseplan.websocket_api import (
     _space_delete_candidate, _space_marker_dependencies,
 )
@@ -1278,6 +1283,16 @@ def _support_preview_request(draft_id: str = "draft-browser-one") -> dict:
     }
 
 
+async def _support_submit_request(client, token: str, idempotency_key: str) -> dict:
+    await client.send_json_auto_id({
+        "type": "houseplan/support/submit",
+        "message": "Support preview lifecycle proof",
+        "preview_token": token,
+        "idempotency_key": idempotency_key,
+    })
+    return await client.receive_json()
+
+
 async def test_support_preview_is_authorized_exact_and_consumed_only_after_success(
     hass: HomeAssistant,
     hass_ws_client: WebSocketGenerator,
@@ -1327,8 +1342,18 @@ async def test_support_preview_is_authorized_exact_and_consumed_only_after_succe
 
 async def test_support_preview_replacement_and_discard_are_draft_local(
     hass: HomeAssistant, hass_ws_client: WebSocketGenerator,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     await _setup(hass)
+    submitted: list[dict] = []
+
+    async def _submit(_hass, **kwargs):
+        submitted.append(kwargs)
+        return "hpr-preview-lifecycle"
+
+    monkeypatch.setattr(
+        "custom_components.houseplan.websocket_api.async_submit_report", _submit,
+    )
     client = await hass_ws_client(hass)
     await client.send_json_auto_id(_support_preview_request("draft-same-card"))
     first = (await client.receive_json())["result"]
@@ -1338,7 +1363,18 @@ async def test_support_preview_replacement_and_discard_are_draft_local(
     replacement = (await client.receive_json())["result"]
     assert len({first["token"], other["token"], replacement["token"]}) == 3
 
-    # Replaced/discarded tokens cannot be submitted; another card's token stays.
+    # Replacement invalidates only the older token from the same card draft.
+    replaced = await _support_submit_request(client, first["token"], "replaced-token-proof")
+    assert not replaced["success"]
+    assert replaced["error"]["code"] == "support_preview_expired"
+
+    other_sent = await _support_submit_request(client, other["token"], "other-draft-proof")
+    assert other_sent["success"]
+    assert other_sent["result"]["report_id"] == "hpr-preview-lifecycle"
+    assert len(submitted) == 1
+    assert submitted[0]["attachment"] == other["text"].encode("utf-8")
+
+    # Discard stays idempotent, but its effect is proved by a subsequent submit.
     await client.send_json_auto_id({
         "type": "houseplan/support/preview/discard", "token": first["token"],
     })
@@ -1347,10 +1383,48 @@ async def test_support_preview_replacement_and_discard_are_draft_local(
         "type": "houseplan/support/preview/discard", "token": replacement["token"],
     })
     assert (await client.receive_json())["success"]
-    await client.send_json_auto_id({
-        "type": "houseplan/support/preview/discard", "token": other["token"],
-    })
-    assert (await client.receive_json())["success"]
+    discarded = await _support_submit_request(client, replacement["token"], "discarded-token-proof")
+    assert not discarded["success"]
+    assert discarded["error"]["code"] == "support_preview_expired"
+    assert len(submitted) == 1
+
+
+async def test_support_preview_token_expires_at_ttl_without_transport(
+    hass: HomeAssistant,
+    hass_ws_client: WebSocketGenerator,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    await _setup(hass)
+    clock = {"now": 1_000.0}
+    monkeypatch.setattr(
+        "custom_components.houseplan.websocket_api._support_monotonic",
+        lambda: clock["now"],
+    )
+    submitted: list[dict] = []
+
+    async def _submit(_hass, **kwargs):
+        submitted.append(kwargs)
+        return "hpr-preview-ttl"
+
+    monkeypatch.setattr(
+        "custom_components.houseplan.websocket_api.async_submit_report", _submit,
+    )
+    client = await hass_ws_client(hass)
+
+    await client.send_json_auto_id(_support_preview_request("draft-before-ttl"))
+    fresh = (await client.receive_json())["result"]
+    clock["now"] += SUPPORT_PREVIEW_TTL_S - 1
+    before_ttl = await _support_submit_request(client, fresh["token"], "before-ttl-proof")
+    assert before_ttl["success"]
+    assert submitted[0]["attachment"] == fresh["text"].encode("utf-8")
+
+    await client.send_json_auto_id(_support_preview_request("draft-at-ttl"))
+    expiring = (await client.receive_json())["result"]
+    clock["now"] += SUPPORT_PREVIEW_TTL_S
+    at_ttl = await _support_submit_request(client, expiring["token"], "at-ttl-proof")
+    assert not at_ttl["success"]
+    assert at_ttl["error"]["code"] == "support_preview_expired"
+    assert len(submitted) == 1
 
 
 async def test_support_text_only_submit_carries_safe_versions_without_plan_data(

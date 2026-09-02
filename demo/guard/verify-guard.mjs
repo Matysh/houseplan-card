@@ -38,6 +38,12 @@ const PROBES = [
     expectOutput: /OK/,
     because: 'round-trip к закрытой странице не имеет права ронять вердикт',
   },
+  {
+    file: 'guard_report_page_errors.mjs',
+    expectExit: 1,
+    expectOutput: /uncaught exception\(s\) inside the card/,
+    because: 'reportPageErrors() обязан сам дождаться хвостового pageerror, не полагаясь на finish()',
+  },
 ];
 
 let failed = 0;

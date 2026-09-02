@@ -140,6 +140,75 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'support-preview-replacement-keeps-old-token',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'support_preview_replacement_and_discard_are_draft_local '
+      + 'tests_backend/test_ha_websocket.py',
+    because: 'refreshing one support draft must invalidate its previous token while leaving '
+      + 'another draft usable; discard success alone cannot prove either fact (#421 AC1)',
+    patches: [{
+      file: 'custom_components/houseplan/websocket_api.py',
+      find: '    for old_token, record in list(rt.support_previews.items()):\n'
+        + '        if record.get("owner") == owner and record.get("draft_id") == msg["draft_id"]:\n'
+        + '            rt.support_previews.pop(old_token, None)\n',
+      replace: '',
+    }],
+  },
+  {
+    id: 'support-preview-discard-keeps-token',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'support_preview_replacement_and_discard_are_draft_local '
+      + 'tests_backend/test_ha_websocket.py',
+    because: 'an idempotent discard response is not proof of invalidation; a later submit must '
+      + 'fail because the owned token was actually removed (#421 AC2)',
+    patches: [{
+      file: 'custom_components/houseplan/websocket_api.py',
+      find: '    rt.support_previews.pop(msg["token"], None)\n'
+        + '    connection.send_result(msg["id"], {"ok": True})',
+      replace: '    connection.send_result(msg["id"], {"ok": True})',
+    }],
+  },
+  {
+    id: 'support-preview-submit-skips-ttl-prune',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'support_preview_token_expires_at_ttl_without_transport '
+      + 'tests_backend/test_ha_websocket.py',
+    because: 'the exact TTL boundary must reject an expired attachment before relay transport; '
+      + 'without submit-time pruning the stale bytes remain usable (#421 AC3)',
+    patches: [{
+      file: 'custom_components/houseplan/websocket_api.py',
+      find: '    _prune_support_previews(rt)\n'
+        + '    token = msg.get("preview_token")',
+      replace: '    token = msg.get("preview_token")',
+    }],
+  },
+  {
+    id: 'report-page-errors-skips-round-trip',
+    guard: 'node demo/guard/verify-guard.mjs',
+    because: 'reportPageErrors() is a verdict path separate from finish(); removing only its '
+      + 'delivery round-trip must leave the dedicated tail-error probe visibly red (#421 AC4/AC5)',
+    patches: [{
+      file: 'demo/serve.mjs',
+      find: 'export async function reportPageErrors() {\n'
+        + '  await roundTripLivePages();\n'
+        + '  if (!_pageErrors) return false;',
+      replace: 'export async function reportPageErrors() {\n'
+        + '  if (!_pageErrors) return false;',
+    }],
+  },
+  {
+    id: 'docs-fingerprint-refresh-erases-acceptance-trace',
+    guard: 'node --test --test-name-pattern="fingerprint-only refresh" '
+      + 'test/docs-accept.test.mjs',
+    because: 'a source-fingerprint refresh changes no pixels and must preserve the earlier '
+      + 'human acceptance trace instead of manufacturing an empty one (#421 AC6/AC7)',
+    patches: [{
+      file: 'scripts/docs-accept.mjs',
+      find: '      : { ...(previousAcceptance || {}), lastWriteWasFingerprintOnly: true },',
+      replace: '      : { declared: [], witnesses: 0, floor: 0 },',
+    }],
+  },
+  {
     id: 'i18n-dead-key-returns',
     guard: 'node --test test/i18n-dead-keys.test.mjs',
     because: 'a translation key without any literal, dynamic-family or derived consumer must '

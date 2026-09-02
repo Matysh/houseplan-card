@@ -39,7 +39,12 @@ test('пробы гарда лежат вне маски смоков и вне 
   const guard = readdirSync(new URL('demo/guard/', `file://${ROOT}`));
   assert.ok(guard.includes('verify-guard.mjs'));
   const probes = guard.filter((name) => name.startsWith('guard_'));
-  assert.equal(probes.length, 3, 'три пробы: хвостовое исключение, отклонение, закрытая страница');
+  assert.deepEqual(probes.sort(), [
+    'guard_closed_page.mjs',
+    'guard_report_page_errors.mjs',
+    'guard_tail_exception.mjs',
+    'guard_tail_rejection.mjs',
+  ], 'четыре адресные пробы гарда обязаны оставаться обнаружимыми');
 
   // Маска demo/smoke_*.mjs — то, что гоняют шарды CI. Проба, попавшая туда,
   // покрасит шард по построению: она обязана падать.
@@ -65,12 +70,16 @@ test('пробы вызываются в job с браузером и служа
   assert.match(smoke, /if: matrix\.shard == 1/, 'один раз, а не в каждом шарде');
 
   const mutants = read('scripts/mutation-gate.mjs');
-  for (const id of ['smoke-guard-blind-to-tail', 'smoke-guard-forgets-to-register-pages']) {
+  for (const id of [
+    'smoke-guard-blind-to-tail',
+    'smoke-guard-forgets-to-register-pages',
+    'report-page-errors-skips-round-trip',
+  ]) {
     assert.match(mutants, new RegExp(`id: '${id}'`), `мутант ${id} не зарегистрирован`);
   }
   // Правка состоит из двух половин, и мутант на одну оставил бы другую
   // недоказанной.
-  assert.equal((mutants.match(/node demo\/guard\/verify-guard\.mjs/g) || []).length, 2);
+  assert.equal((mutants.match(/node demo\/guard\/verify-guard\.mjs/g) || []).length, 3);
 });
 
 test('страницы, созданные вне launch(), подписаны общим гардом (#404, Medium-1)', () => {

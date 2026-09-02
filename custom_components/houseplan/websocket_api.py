@@ -234,8 +234,13 @@ def _send_support_error(connection, msg_id: int, code: str) -> None:
     connection.send_error(msg_id, code, code)
 
 
+def _support_monotonic() -> float:
+    """Clock seam for deterministic support-preview lifecycle tests."""
+    return time.monotonic()
+
+
 def _prune_support_previews(rt: HouseplanData, now: float | None = None) -> None:
-    current = time.monotonic() if now is None else now
+    current = _support_monotonic() if now is None else now
     for token, preview in list(rt.support_previews.items()):
         if float(preview.get("expires", 0)) <= current:
             rt.support_previews.pop(token, None)
@@ -2183,7 +2188,7 @@ async def ws_support_preview(
         _send_support_error(connection, msg["id"], code)
         return
 
-    now = time.monotonic()
+    now = _support_monotonic()
     owner = _connection_user_id(connection)
     _prune_support_previews(rt, now)
     # A refresh replaces only this card instance's draft. Other cards keep

@@ -71,3 +71,13 @@ test('serve.mjs остаётся единственным владельцем �
   const entryStale = read('smoke_entry_stale.mjs');
   assert.match(entryStale, /await finish\(/, 'smoke_entry_stale обязан выносить вердикт');
 });
+
+test('#421 dedicated guard probe reaches reportPageErrors without finish', () => {
+  const probe = readFileSync(
+    new URL('../demo/guard/guard_report_page_errors.mjs', import.meta.url), 'utf8',
+  );
+  assert.match(probe, /await reportPageErrors\(\)/,
+    'отрицательная проба обязана пройти через отдельный verdict path');
+  assert.doesNotMatch(probe, /\bawait\s+finish\s*\(/,
+    'finish() замаскирует сломанный round-trip внутри reportPageErrors()');
+});
