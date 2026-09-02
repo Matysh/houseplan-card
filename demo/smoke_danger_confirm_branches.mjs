@@ -238,11 +238,15 @@ const out = await page.evaluate(async () => {
   result.lostSpaceBranchIsActuallyEntered = root().childElementCount === 0;
   result.openConfirmCancelsWhenSpaceIsLost = spaceLossDecision === false
     && card._dangerConfirm === null && card._dangerConfirmController.state === null;
+  const refusedWithoutSpacePromise = card._confirmDanger(request('space-already-lost'));
+  const refusedWithoutSpaceWasNeverRegistered = card._dangerConfirm === null
+    && card._dangerConfirmController.state === null;
   const refusedWithoutSpace = await Promise.race([
-    card._confirmDanger(request('space-already-lost')),
+    refusedWithoutSpacePromise,
     new Promise((resolve) => setTimeout(() => resolve('timeout'), 100)),
   ]);
-  result.lostSpaceRequestRefusesImmediately = refusedWithoutSpace === false
+  result.lostSpaceRequestRefusesImmediately = refusedWithoutSpaceWasNeverRegistered
+    && refusedWithoutSpace === false
     && card._dangerConfirm === null && card._dangerConfirmController.state === null
     && dialogs() === 0;
   card._spaceModel = originalSpaceModel;
