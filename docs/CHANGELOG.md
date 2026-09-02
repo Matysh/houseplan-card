@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.70.0-beta.3 — 2026-09-02
+
 - The new **Help & feedback** dialog keeps version, documentation and project
   links together and can send a private report without exposing it publicly.
   A diagnostic attachment is always opt-in: House Plan shows the exact

@@ -1,16 +1,18 @@
-<!-- release: v1.70.0-beta.2 -->
+<!-- release: v1.70.0-beta.3 -->
 
 ## Основное
 
-- Перенос устройства в другую HA-зону теперь переносит его маркер в связанную комнату House Plan, даже если маркер ранее двигали вручную ([#126](https://github.com/Matysh/houseplan-card/issues/126)).
-- Опасные действия получили единый доступный диалог подтверждения, а плавный зум и Undo/Redo позиций устройств стали надёжнее ([#32](https://github.com/Matysh/houseplan-card/issues/32), [#396](https://github.com/Matysh/houseplan-card/issues/396), [#397](https://github.com/Matysh/houseplan-card/issues/397)).
+- Новый диалог «Помощь и обратная связь» объединяет документацию и ссылки проекта и позволяет отправить закрытый обезличенный репорт с предварительным просмотром данных ([#43](https://github.com/Matysh/houseplan-card/issues/43)).
+- Подтверждения удаления и разблокировки получили доступную оболочку House Plan и теперь работают в онбординге до создания первого пространства ([#402](https://github.com/Matysh/houseplan-card/issues/402), [#406](https://github.com/Matysh/houseplan-card/issues/406)).
+- Неудачный перенос устройства в другую HA-зону больше не стирает ручную позицию и не очищает всю историю Undo/Redo ([#403](https://github.com/Matysh/houseplan-card/issues/403)).
 - Мелкие исправления и улучшения.
 
 ## Highlights
 
-- Moving a device to another HA Area now moves its marker to the linked House Plan room, even after the marker was moved manually ([#126](https://github.com/Matysh/houseplan-card/issues/126)).
-- Dangerous actions gained one accessible confirmation dialog, while smooth zoom and device-position Undo/Redo became more reliable ([#32](https://github.com/Matysh/houseplan-card/issues/32), [#396](https://github.com/Matysh/houseplan-card/issues/396), [#397](https://github.com/Matysh/houseplan-card/issues/397)).
+- The new Help & feedback dialog keeps project docs and links together and can send a private anonymized report after showing the exact data first ([#43](https://github.com/Matysh/houseplan-card/issues/43)).
+- Delete and unlock confirmations gained House Plan's accessible shell and now work during onboarding before the first space exists ([#402](https://github.com/Matysh/houseplan-card/issues/402), [#406](https://github.com/Matysh/houseplan-card/issues/406)).
+- A failed move to another HA Area no longer loses the manual marker position or clears the complete Undo/Redo history ([#403](https://github.com/Matysh/houseplan-card/issues/403)).
 - Small fixes and improvements.
 
-[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.70.0-beta.2/docs/CHANGELOG.ru.md)
-· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.70.0-beta.2/docs/CHANGELOG.md)
+[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.70.0-beta.3/docs/CHANGELOG.ru.md)
+· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.70.0-beta.3/docs/CHANGELOG.md)
