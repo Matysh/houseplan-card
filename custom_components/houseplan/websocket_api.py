@@ -45,10 +45,16 @@ from .const import (
     SUPPORT_PREVIEW_TTL_S,
     VERSION,
 )
-from .decor_assets import ASSET_ID_RE, asset_meta_path, asset_refs, public_asset, read_catalog
 from .coordinate_canonicalization import (
     canonicalize_config_geometry,
     canonicalize_layout_geometry,
+)
+from .decor_assets import (
+    ASSET_ID_RE,
+    asset_meta_path,
+    asset_refs,
+    public_asset,
+    read_catalog,
 )
 from .import_export import (
     ImportFailure,
