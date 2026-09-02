@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.71.0-beta.1 — 2026-09-03
+
 - The Background editor can now upload and reuse private PNG, JPEG, WebP and
   safe SVG images, then place, resize, mirror, rotate, replace and layer them
   like furniture without wall magnetism. Missing files keep a repairable

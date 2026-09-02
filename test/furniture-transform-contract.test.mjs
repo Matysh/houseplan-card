@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 
 const card = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
 const runtime = readFileSync(new URL('../src/houseplan-editor-runtime.ts', import.meta.url), 'utf8');
+const decorImageEditor = readFileSync(new URL('../src/decor-image-editor.ts', import.meta.url), 'utf8');
 const styles = readFileSync(new URL('../src/styles/plan.styles.ts', import.meta.url), 'utf8');
 
 test('#383 furniture uses its continuous signed path without changing shared decor transforms', () => {
@@ -34,7 +35,10 @@ test('#383 furniture selection halo follows the symbol path and adds 20 physical
 });
 
 test('#383 properties keep signed fields and checkboxes as one state', () => {
-  const dialog = runtime.slice(runtime.indexOf('private _decorFurnitureSizeInput('), runtime.indexOf('public _renderBackdropDialog('));
+  const dialog = decorImageEditor.slice(
+    decorImageEditor.indexOf('private furnitureSizeInput('),
+    decorImageEditor.indexOf('public renderShapeDialog('),
+  ) + decorImageEditor.slice(decorImageEditor.indexOf('public renderShapeDialog('));
   assert.match(dialog, /furnitureSignedFieldCm\(/);
   assert.match(dialog, /furnitureSignedFieldValue\(/);
   assert.match(dialog, /decor\.flip_h/);

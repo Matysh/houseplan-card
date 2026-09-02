@@ -25,6 +25,7 @@ houseplan-card/
 │  ├─ houseplan-card.ts          # eager View shell, HA lifecycle and projection
 │  ├─ editor-runtime-loader.ts   # lazy loader: dedupe, retry and build handshake
 │  ├─ houseplan-editor-runtime.ts # Plan/Devices/Background composition root
+│  ├─ decor-image-editor.ts      # lazy Background/Furniture image palette, upload and properties controller
 │  ├─ houseplan-onboarding-runtime.ts # first-space/import dialogs, independent of editor
 │  ├─ hp-dialog.ts               # shared HA/native modal shell, focus and transient-overlay lifecycle
 │  ├─ hp-confirm.ts              # presentation for shared dangerous-action confirmation

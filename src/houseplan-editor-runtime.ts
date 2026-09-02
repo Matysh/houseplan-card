@@ -64,15 +64,14 @@ import {
 } from './sun';
 import { dayCycleStageVars, renderDayCycleEnvironment } from './day-cycle-render';
 import {
-  FURNITURE_GROUPS, furnitureOfGroup, furnitureDefaultCm,
+  furnitureDefaultCm,
   furnitureGraphic, furnitureCorners, snapFurnitureToWall,
   resolveFurniturePlacement, furnitureRenderTransform, furnitureStrokePx,
   resizeFurnitureTransform, furnitureRotationAngle,
   furnitureSignedFieldCm, furnitureSignedFieldValue,
   clampFurnCm, FURN_WALL_CELLS,
-  type FurnitureGroup, type FurniturePlacement, type FurnitureResizeResult,
+  type FurniturePlacement, type FurnitureResizeResult,
 } from './furniture';
-import { GENERATED_FURNITURE_MENU } from './furniture-menu-art.generated';
 import {
   degradeWalls, rekeyWallsAfterMoveChecked, wallRecordCarrierViolations,
   setWallThickness, setWallThicknessForRoom, cmToField, wallCmToUnits,
@@ -323,8 +322,9 @@ import {
 } from './ha-binding-status';
 import type { DecorShape, DecorStyle } from './editors/decor/types';
 import {
-  DECOR_ASSETS_API_VERSION, adoptDecorAssets, initialDecorImageCm, type DecorAsset,
+  DECOR_ASSETS_API_VERSION, type DecorAsset,
 } from './decor-assets';
+import { DecorImageEditor } from './decor-image-editor';
 import {
   DEFAULT_DECOR_STYLE, boxAnchors, boxCorners, clamp01, decorCmToUnits,
   decorStrokeUnits, decorStyleOf, decorStylePatch,
@@ -358,7 +358,7 @@ import {
 } from './space-order';
 import { applyOpeningMoves, mergeCollinearPartitions, spaceMergeGeometry } from './wall-merge';
 
-const CARD_VERSION = '1.70.0';
+const CARD_VERSION = '1.71.0-beta.1';
 
 type ResizeLiveLabel = {
   kind: 'length';
@@ -1202,8 +1202,22 @@ export class HouseplanEditorRuntime {
   private _supportExpiryTimer?: number;
   private _supportPreviewGeneration = 0;
   private _decorAssetGuardReplace: boolean | null = null;
+  private readonly _decorImages: DecorImageEditor<SpaceGeometryState | null>;
 
   public constructor(public readonly host: HouseplanEditorHostPort) {
+    this._decorImages = new DecorImageEditor(host, {
+      decorSnap: (raw, pointerType) => this._decorSnap(raw, pointerType),
+      geometrySnapshot: () => this._geometrySnapshot(),
+      clearFurniturePreview: () => this._clearFurniturePreview(),
+      recordGeometry: (name, before) => this._recordGeometry(name, before),
+      saveConfig: () => this._saveConfig(),
+      saveShape: () => this._decorSaveShape(),
+      setGuardReplace: (replace) => { this._decorAssetGuardReplace = replace; },
+      furnShiftDetach: () => this._furnShiftDetach(),
+      furnPick: (symbol) => this._furnPick(symbol),
+      furnFieldValue: (cm) => this._furnFieldValue(cm),
+      furnFieldToCm: (value) => this._furnFieldToCm(value),
+    });
     host._editorSecondary = new EditorSecondaryController({
       root: () => host.renderRoot as ShadowRoot,
       requestUpdate: () => host.requestUpdate(),
@@ -5128,318 +5142,45 @@ public _decorApplyBox(id: string, box: { x: number; y: number; w: number; h: num
   }
 
 public _decorImagePlace(raw: number[], pointerType = 'mouse'): void {
-    const asset = this.host._decorImagePalette;
-    const sp = this.host._curSpaceCfg;
-    if (!asset || !sp) return;
-    const at = this._decorSnap(raw, pointerType);
-    const size = initialDecorImageCm(asset.width, asset.height);
-    const w = decorCmToUnits(size.w, this.host._cellCm, this.host._gridPitch) / NORM_W;
-    const h = decorCmToUnits(size.h, this.host._cellCm, this.host._gridPitch) / this.host._decorH;
-    const id = 'di' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
-    const before = this._geometrySnapshot();
-    sp.decor = [...this.host._decorList, {
-      id, kind: 'image', asset_id: asset.asset_id,
-      x: clampCanvasN(at[0] / NORM_W - w / 2),
-      y: clampCanvasN(at[1] / this.host._decorH - h / 2),
-      w, h, opacity: 1,
-    } as DecorShape];
-    this.host._decorSel = id;
-    this.host._decorTool = 'select';
-    this.host._decorImagePalette = null;
-    this._clearFurniturePreview();
-    this._recordGeometry(this.host._t('history.decor_add'), before);
-    this._saveConfig();
-  this.host.requestUpdate();
+  this._decorImages.place(raw, pointerType);
 }
 
 public _renderDecorImagePlacementPreview(): TemplateResult | typeof nothing {
-  const input = this.host._furnPreviewInput;
-  const asset = this.host._decorImagePalette;
-  if (!input || !asset || this.host._mode !== 'decor'
-      || this.host._decorTool !== 'image' || !this.host._pointerModality.hoverEnabled) return nothing;
-  const at = this._decorSnap(input.raw, 'mouse');
-  const cm = initialDecorImageCm(asset.width, asset.height);
-  const w = decorCmToUnits(cm.w, this.host._cellCm, this.host._gridPitch) / NORM_W;
-  const h = decorCmToUnits(cm.h, this.host._cellCm, this.host._gridPitch) / this.host._decorH;
-  const href = this.host._display(asset.url);
-  if (!href) return nothing;
-  return svg`<image class="decor-image-placement-preview" href=${href}
-    x=${at[0] - w * NORM_W / 2} y=${at[1] - h * this.host._decorH / 2}
-    width=${w * NORM_W} height=${h * this.host._decorH}
-    opacity="0.65" preserveAspectRatio="none" pointer-events="none"></image>`;
+  return this._decorImages.renderPlacementPreview();
 }
 
 public _renderMissingDecorImage(
-    shape: Extract<DecorShape, { kind: 'image' }>, cls: string, transform: string,
-    x: number, y: number, w: number, h: number,
-    down: (event: PointerEvent) => void, dbl: (event: MouseEvent) => void,
+  shape: Extract<DecorShape, { kind: 'image' }>, cls: string, transform: string,
+  x: number, y: number, w: number, h: number,
+  down: (event: PointerEvent) => void, dbl: (event: MouseEvent) => void,
 ): TemplateResult {
-  const cx = x + w / 2, cy = y + h / 2;
-  return svg`<g class="${cls} dimage-missing"
-    data-hp="decor" data-id=${shape.id} data-kind="image" transform=${transform}
-    @pointerdown=${down} @dblclick=${dbl}>
-    <title>${this.host._t('decor.image_unavailable')}</title>
-    <rect x=${x} y=${y} width=${w} height=${h}></rect>
-    <path d=${`M${x} ${y}L${x + w} ${y + h}M${x + w} ${y}L${x} ${y + h}`}></path>
-    <text class="dimage-missing-label" x=${cx} y=${cy}
-      fill="var(--primary-text-color, #333)" stroke="var(--card-background-color, #fff)"
-      stroke-width="2" paint-order="stroke" pointer-events="none"
-      font-size=${Math.min(18, h * 0.25)} text-anchor="middle" dominant-baseline="middle"
-      textLength=${Math.max(1, Math.min(w * 0.8, 160))}
-      lengthAdjust="spacingAndGlyphs">${this.host._t('decor.image_unavailable')}</text>
-  </g>`;
+  return this._decorImages.renderMissing(shape, cls, transform, x, y, w, h, down, dbl);
 }
 
 public async _decorImageUpload(ev: Event, replaceSelection = false): Promise<void> {
-    const input = ev.target as HTMLInputElement;
-    const file = input.files?.[0];
-    input.value = '';
-    if (!file || this.host._decorAssetBusy) return;
-    let classified: Awaited<ReturnType<typeof classifyPlanFile>>;
-    try {
-      classified = await classifyPlanFile(file, 2 * 1024 * 1024);
-    } catch {
-      this.host._showToast(this.host._t('backup.error.invalid_image'));
-      return;
-    }
-    if (classified.kind === 'reject') {
-      this.host._showToast(this.host._t('toast.plan_formats'));
-      return;
-    }
-    if (classified.kind === 'guard') {
-      this._decorAssetGuardReplace = replaceSelection;
-      this.host._backdropGuard = classified.state;
-      return;
-    }
-    await this._uploadDecorImage(file, file.name, replaceSelection);
+  await this._decorImages.uploadFromInput(ev, replaceSelection);
   }
 
 private async _uploadDecorImage(
     file: Blob, name: string, replaceSelection: boolean,
 ): Promise<void> {
-    if (this.host._decorAssetBusy) return;
-    this.host._decorAssetBusy = true;
-    try {
-      const body = new FormData();
-      body.append('file', file, name);
-      const response: Response = this.host.hass?.fetchWithAuth
-        ? await this.host.hass.fetchWithAuth('/api/houseplan/assets/upload', { method: 'POST', body })
-        : await fetch('/api/houseplan/assets/upload', {
-            method: 'POST', body,
-            headers: this.host.hass?.auth?.data?.access_token
-              ? { authorization: `Bearer ${this.host.hass.auth.data.access_token}` } : {},
-          });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok || data.error || !data.asset) {
-        const messages: Record<string, I18nKey> = {
-          invalid_format: 'backup.error.invalid_image',
-          invalid_image: 'backup.error.invalid_image',
-          unsupported_image: 'backup.error.unsupported_image',
-          too_large: 'backdrop.too_large_title',
-          capacity_exceeded: 'decor.image_error_capacity',
-        };
-        throw new Error(this.host._t(messages[String(data.error)] || 'backup.error.io_error'));
-      }
-      const asset = adoptDecorAssets({ assets: [data.asset] }).values().next().value as DecorAsset | undefined;
-      if (!asset) throw new Error(this.host._t('backup.error.io_error'));
-      this.host._decorAssets = new Map(this.host._decorAssets).set(asset.asset_id, asset);
-      this.host._decorAssetCatalog = [
-        asset, ...this.host._decorAssetCatalog.filter((item) => item.asset_id !== asset.asset_id),
-      ];
-      if (replaceSelection && this.host._decorShapeDialog?.kind === 'image') {
-        this.host._decorShapeDialog = { ...this.host._decorShapeDialog, assetId: asset.asset_id };
-      } else {
-        this.host._decorImagePalette = asset;
-      }
-      this.host.requestUpdate();
-    } catch (error) {
-      this.host._showToast(this.host._t('decor.image_upload_failed', { err: this.host._errText(error) }));
-    } finally {
-      this.host._decorAssetBusy = false;
-    }
+  await this._decorImages.upload(file, name, replaceSelection);
   }
 
 public async _decorImageDelete(asset: DecorAsset): Promise<void> {
-    if (asset.used_by?.length) {
-      this.host._showToast(this.host._t('decor.image_in_use'));
-      return;
-    }
-    const accepted = await this.host._confirmDanger({
-      key: `delete-decor-asset:${asset.asset_id}`,
-      kind: 'destructive',
-      title: this.host._t('decor.image_delete_title'),
-      message: this.host._t('decor.image_delete_message', { name: asset.name }),
-      confirmLabel: this.host._t('btn.delete'),
-      cancelLabel: this.host._t('btn.cancel'),
-    });
-    if (!accepted) return;
-    try {
-      await this.host.hass.callWS({ type: 'houseplan/assets/delete', asset_id: asset.asset_id });
-      this.host._decorAssetCatalog = this.host._decorAssetCatalog.filter(
-        (item) => item.asset_id !== asset.asset_id,
-      );
-      this.host._decorAssets.delete(asset.asset_id);
-      if (this.host._decorImagePalette?.asset_id === asset.asset_id)
-        this.host._decorImagePalette = null;
-      this.host.requestUpdate();
-    } catch (error) {
-      this.host._showToast((error as { code?: string })?.code === 'in_use'
-        ? this.host._t('decor.image_in_use') : this.host._t('backup.error.io_error'));
-  }
+  await this._decorImages.delete(asset);
 }
 
 private async _decorImageCatalogLoad(): Promise<void> {
-  try {
-    const response = await this.host.hass.callWS({ type: 'houseplan/assets/list' });
-    const catalog = adoptDecorAssets(response);
-    this.host._decorAssetCatalog = [...catalog.values()];
-    this.host._decorAssets = new Map([...this.host._decorAssets, ...catalog]);
-    this.host.requestUpdate();
-  } catch (error) {
-    this.host._showToast(this.host._t('backup.error.io_error'));
-  }
+  await this._decorImages.loadCatalog();
 }
 
 public _renderDecorImagePalette(): TemplateResult {
-    const armed = this.host._decorImagePalette;
-    return html`<div class="furnpalette imagepalette" role="dialog"
-      aria-label=${this.host._t('decor.image_title')}
-      @pointerdown=${(e: Event) => e.stopPropagation()}>
-      <div class="furnhd"><ha-icon icon="mdi:image-plus-outline"></ha-icon>${this.host._t('decor.image_title')}
-        <span class="spacer"></span>
-        <button class="btn furnclose" title=${this.host._t('btn.close')} @click=${() => {
-          this.host._decorImagePalette = null;
-          this._clearFurniturePreview();
-          this.host._decorTool = 'select';
-        }}><ha-icon icon="mdi:close"></ha-icon></button>
-      </div>
-      <div class="furnbody">
-        <label class="btn primary imageupload ${this.host._decorAssetBusy ? 'disabled' : ''}">
-          <ha-icon icon="mdi:upload"></ha-icon>${this.host._t(
-            this.host._decorAssetBusy ? 'decor.image_uploading' : 'decor.image_upload',
-          )}
-          <input type="file" accept=".png,.jpg,.jpeg,.webp,.svg,image/png,image/jpeg,image/webp,image/svg+xml"
-            ?disabled=${this.host._decorAssetBusy} @change=${(e: Event) => this._decorImageUpload(e)} />
-        </label>
-        <div class="furnrow imageassets">
-          ${this.host._decorAssetCatalog.length ? nothing
-            : html`<span class="furnhint imageempty">${this.host._t('decor.image_none')}</span>`}
-          ${this.host._decorAssetCatalog.map((asset) => html`<div class="imageasset">
-            <button class="furnitem ${armed?.asset_id === asset.asset_id ? 'on' : ''}"
-              title=${asset.name} @click=${() => {
-                this.host._decorImagePalette = asset;
-                this.host.requestUpdate();
-              }}>
-              <img src=${this.host._display(asset.url)} alt="" /><span>${asset.name}</span>
-              ${asset.used_by?.length ? html`<small>${this.host._t(
-                'decor.image_used', { n: asset.used_by.length },
-              )}</small>` : nothing}
-            </button>
-            <button class="btn ghost imageassetdelete" title=${this.host._t('btn.delete')}
-              ?disabled=${!!asset.used_by?.length}
-              @click=${() => this._decorImageDelete(asset)}><ha-icon icon="mdi:delete-outline"></ha-icon></button>
-          </div>`)}
-        </div>
-      </div>
-      <div class="furnsize"><span class="furnhint">${this.host._t(
-        armed ? 'decor.image_place_hint' : 'decor.image_pick_hint',
-      )}</span></div>
-    </div>`;
+  return this._decorImages.renderImagePalette();
   }
 
 public _renderFurnPalette(): TemplateResult {
-    const pal = this.host._furnPalette;
-    const categoryId = this.host._furnCategory;
-    const allSymbols = FURNITURE_GROUPS.flatMap((group) => furnitureOfGroup(group));
-    const categories = GENERATED_FURNITURE_MENU.filter((item) =>
-      allSymbols.some((symbol) => symbol.category === item.id));
-    const category = categories.find((item) => item.id === categoryId) || null;
-    const variants = category
-      ? allSymbols.filter((symbol) => symbol.category === category.id)
-      : [];
-    // the unit the fields are read in — the same two words the glow radius
-    // already uses, because a plan has one unit system, not one per control
-    const unit = this.host._t(this.host._imperial ? 'gs.unit_ft' : 'gs.unit_m');
-    const preview = (id: string): TemplateResult => {
-      const art = furnitureGraphic(id);
-      if (!art) return svg`<svg class="furnprev" aria-hidden="true"></svg>` as unknown as TemplateResult;
-      return svg`<svg class="furnprev" viewBox=${`0 0 ${art.viewW} ${art.viewH}`}
-        preserveAspectRatio="xMidYMid meet" aria-hidden="true"><path
-        d=${art.d} fill="none" stroke="currentColor" stroke-width="1.2"
-        vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round"></path></svg>` as unknown as TemplateResult;
-    };
-    const categoryPreview = (item: (typeof GENERATED_FURNITURE_MENU)[number]): TemplateResult => {
-      return svg`<svg class="furnprev furncatprev" viewBox=${`0 0 ${item.art.viewW} ${item.art.viewH}`}
-        preserveAspectRatio="xMidYMid meet" aria-hidden="true"><path
-        d=${item.art.d} fill="none" stroke="currentColor" stroke-width="1.5"
-        vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round"></path></svg>` as unknown as TemplateResult;
-    };
-    return html`<div class="furnpalette" @pointerdown=${(e: Event) => e.stopPropagation()}>
-      <div class="furnhd">
-        <ha-icon icon="mdi:sofa-outline"></ha-icon>${this.host._t('furn.title')}
-        <span class="spacer"></span>
-        <button class="btn furnclose" title=${this.host._t('btn.close')}
-          @click=${() => {
-            this._clearFurniturePreview();
-            this.host._furnPalette = null;
-            this._furnShiftDetach();
-            this.host._furnCategory = null;
-            this.host._decorTool = 'select';
-          }}>
-          <ha-icon icon="mdi:close"></ha-icon>
-        </button>
-      </div>
-      <div class="furnbody">
-        ${category ? html`
-          <button class="btn ghost furnback" @click=${() => {
-            this._clearFurniturePreview();
-            this.host._furnPalette = null;
-            this._furnShiftDetach();
-            this.host._furnCategory = null;
-          }}>
-            <ha-icon icon="mdi:arrow-left"></ha-icon>${this.host._t('furn.back_to_categories')}
-          </button>
-          <div class="furngroup" data-category=${category.id}>
-            ${this.host._t(`furn.cat_${category.id}` as I18nKey)}
-          </div>
-          <div class="furnrow furnvariants">
-            ${variants.map((symbol) => html`<button
-              class="furnitem ${pal?.symbol === symbol.id ? 'on' : ''}" data-symbol=${symbol.id}
-              title=${this.host._t(`furn.sym_${symbol.id}` as I18nKey)}
-              @click=${() => this._furnPick(symbol.id)}>
-              ${preview(symbol.id)}<span>${this.host._t(`furn.sym_${symbol.id}` as I18nKey)}</span>
-            </button>`)}
-          </div>
-        ` : FURNITURE_GROUPS.map((g) => html`
-          <div class="furngroup" data-group=${g}>${this.host._t(`furn.group_${g}` as I18nKey)}</div>
-          <div class="furnrow furncategories">
-            ${categories.filter((item) => item.group === g).map((item) => html`<button
-              class="furnitem furncategory" data-category=${item.id}
-              title=${this.host._t(`furn.cat_${item.id}` as I18nKey)}
-              @click=${() => {
-                this._clearFurniturePreview();
-                this.host._furnPalette = null;
-                this._furnShiftDetach();
-                this.host._furnCategory = item.id;
-              }}>
-              ${categoryPreview(item)}<span>${this.host._t(`furn.cat_${item.id}` as I18nKey)}</span>
-            </button>`)}
-          </div>`)}
-      </div>
-      ${pal ? html`<div class="furnsize">
-        <label>${this.host._t('furn.width')}<span class="furnunit">${unit}</span></label>
-        <input class="namein furnw" type="number" min="0.01" step="0.05"
-          .value=${String(this._furnFieldValue(pal.w))}
-          @input=${(e: Event) => (this.host._furnPalette = {
-            ...pal, w: this._furnFieldToCm(Number((e.target as HTMLInputElement).value)) })} />
-        <label>${this.host._t('furn.depth')}<span class="furnunit">${unit}</span></label>
-        <input class="namein furnh" type="number" min="0.01" step="0.05"
-          .value=${String(this._furnFieldValue(pal.h))}
-          @input=${(e: Event) => (this.host._furnPalette = {
-            ...pal, h: this._furnFieldToCm(Number((e.target as HTMLInputElement).value)) })} />
-        <span class="furnhint">${this.host._t('furn.place_hint')}</span>
-      </div>` : html`<div class="furnsize"><span class="furnhint">${this.host._t('furn.pick_hint')}</span></div>`}
-    </div>`;
+  return this._decorImages.renderFurniturePalette();
   }
 
 public _openBackdropDialog(ev?: Event): void {
@@ -6032,189 +5773,8 @@ public _renderDecorTextDialog(): TemplateResult {
     </hp-dialog>`;
   }
 
-private _decorFurnitureSizeInput(axis: 'w' | 'h', raw: string): void {
-    const d = this.host._decorShapeDialog;
-    if (!d || (d.kind !== 'furniture' && d.kind !== 'image')) return;
-    const cm = furnitureSignedFieldCm(
-      raw, this.host._imperial, CANVAS_LIMIT * this.host._cellCm,
-    );
-    const field = axis === 'w' ? 'sizeWField' : 'sizeHField';
-    const size = axis === 'w' ? 'sizeWCm' : 'sizeHCm';
-    const flip = axis === 'w' ? 'flipH' : 'flipV';
-    this.host._decorShapeDialog = {
-      ...d,
-      [field]: raw,
-      ...(cm === null ? {} : { [size]: Math.abs(cm), [flip]: cm < 0 }),
-    };
-  }
-
-private _decorFurnitureFlip(axis: 'w' | 'h', checked: boolean): void {
-    const d = this.host._decorShapeDialog;
-    if (!d || (d.kind !== 'furniture' && d.kind !== 'image')) return;
-    const raw = axis === 'w' ? d.sizeWField : d.sizeHField;
-    const parsed = furnitureSignedFieldCm(
-      raw, this.host._imperial, CANVAS_LIMIT * this.host._cellCm,
-    );
-    const fallback = axis === 'w' ? d.sizeWCm : d.sizeHCm;
-    const cm = Math.abs(parsed ?? fallback ?? 0.1);
-    const field = axis === 'w' ? 'sizeWField' : 'sizeHField';
-    const flip = axis === 'w' ? 'flipH' : 'flipV';
-    this.host._decorShapeDialog = {
-      ...d,
-      [field]: furnitureSignedFieldValue(cm, checked, this.host._imperial),
-      [flip]: checked,
-    };
-  }
-
 public _renderDecorShapeDialog(): TemplateResult {
-    const d = this.host._decorShapeDialog!;
-    const canFill = d.kind === 'rect' || d.kind === 'ellipse';
-    const kindLabel = this.host._t(('decor.' + d.kind) as any);
-    const unit = this.host._t(this.host._imperial ? 'gs.unit_ft' : 'gs.unit_m');
-    const furnitureWcm = d.kind === 'furniture' || d.kind === 'image' ? furnitureSignedFieldCm(
-      d.sizeWField, this.host._imperial, CANVAS_LIMIT * this.host._cellCm,
-    ) : null;
-    const furnitureHcm = d.kind === 'furniture' || d.kind === 'image' ? furnitureSignedFieldCm(
-      d.sizeHField, this.host._imperial, CANVAS_LIMIT * this.host._cellCm,
-    ) : null;
-    const invalidFurnitureSize = (d.kind === 'furniture' || d.kind === 'image')
-      && (furnitureWcm === null || furnitureHcm === null);
-    const selectedImage = d.kind === 'image'
-      ? this.host._decorAssetCatalog.find((asset) => asset.asset_id === d.assetId)
-        || this.host._decorAssets.get(d.assetId || '')
-      : null;
-    return html`<hp-dialog .hass=${this.host.hass}
-      .title=${this.host._t('decor.object_title', { kind: kindLabel })} icon="mdi:pencil-outline"
-      dismiss-on-scrim @hp-close=${() => (this.host._decorShapeDialog = null)}>
-        <div class="body">
-          ${d.kind === 'furniture' ? html`
-            <label>${this.host._t('furn.symbol')}</label>
-            <select class="namein"
-              @change=${(e: Event) => (this.host._decorShapeDialog = {
-                ...d, symbol: (e.target as HTMLSelectElement).value,
-              })}>
-              ${GENERATED_FURNITURE_MENU.map((category) => ({
-                category,
-                symbols: furnitureOfGroup(category.group as FurnitureGroup)
-                  .filter((symbol) => symbol.category === category.id),
-              })).filter((entry) => entry.symbols.length).map(({ category, symbols }) => html`
-                <optgroup label=${`${this.host._t(`furn.group_${category.group}` as I18nKey)} · ${this.host._t(`furn.cat_${category.id}` as I18nKey)}`}>
-                ${symbols.map((symbol) => html`<option value=${symbol.id}
-                  ?selected=${symbol.id === d.symbol}>
-                  ${this.host._t(`furn.sym_${symbol.id}` as I18nKey)}
-                </option>`)}
-              </optgroup>`)}
-            </select>` : d.kind === 'image' ? html`
-            <label>${this.host._t('decor.image_asset')}</label>
-            <select class="namein" .value=${d.assetId || ''}
-              @change=${(e: Event) => (this.host._decorShapeDialog = {
-                ...d, assetId: (e.target as HTMLSelectElement).value,
-              })}>
-              ${this.host._decorAssetCatalog.map((asset) => html`<option value=${asset.asset_id}
-                ?selected=${asset.asset_id === d.assetId}>
-                ${asset.name}
-              </option>`)}
-            </select>
-            ${selectedImage ? html`<div class="imagepropertypreview">
-              <img src=${this.host._display(selectedImage.url)} alt=${selectedImage.name} />
-              <span>${selectedImage.name}</span>
-            </div>` : nothing}
-            <label class="btn ghost imageupload">
-              <ha-icon icon="mdi:image-refresh-outline"></ha-icon>${this.host._t('decor.image_replace')}
-              <input type="file" accept=".png,.jpg,.jpeg,.webp,.svg,image/png,image/jpeg,image/webp,image/svg+xml"
-                ?disabled=${this.host._decorAssetBusy}
-                @change=${(e: Event) => this._decorImageUpload(e, true)} />
-            </label>` : nothing}
-          ${d.kind === 'image' ? html`
-            <label>${this.host._t('space.opacity')}</label>
-            <input class="namein" type="range" min="0" max="1" step="0.01"
-              .value=${String(d.opacity)}
-              @input=${(e: Event) => (this.host._decorShapeDialog = {
-                ...d, opacity: Number((e.target as HTMLInputElement).value),
-              })} />` : html`<hp-color-opacity .label=${this.host._t('decor.color')} .color=${d.color} .opacity=${d.opacity}
-            .opacityLabel=${this.host._t('space.opacity')} .pickerLabels=${this.host._colorPickerLabels}
-            @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) =>
-              (this.host._decorShapeDialog = { ...d, ...e.detail })}></hp-color-opacity>`}
-          ${d.kind !== 'image' ? html`<label>${this.host._t('decor.width')}</label>
-          <div class="colorrow"><input class="namein" type="number"
-            min=${this.host._decorSmallField(0.1)} max=${this.host._decorSmallField(100)} step="0.1"
-            .value=${String(this.host._decorSmallField(d.widthCm))}
-            @input=${(e: Event) => (this.host._decorShapeDialog = {
-              ...d, widthCm: this.host._decorSmallCm(Number((e.target as HTMLInputElement).value)),
-            })} /><span class="opl">${this.host._t(this.host._imperial ? 'wallthick.unit_in' : 'wallthick.unit_cm')}</span></div>` : nothing}
-          ${d.kind === 'line' ? html`
-            <label>${this.host._t('decor.line_style')}</label>
-            <div role="radiogroup" aria-label=${this.host._t('decor.line_style')}>
-              <label class="srcrow"><input type="radio" name="decor-line-style"
-                .checked=${d.lineStyle !== 'dashed'}
-                @change=${() => (this.host._decorShapeDialog = { ...d, lineStyle: 'solid' })} />
-                <span>${this.host._t('decor.line_style_solid')}</span></label>
-              <label class="srcrow"><input type="radio" name="decor-line-style"
-                .checked=${d.lineStyle === 'dashed'}
-                @change=${() => (this.host._decorShapeDialog = { ...d, lineStyle: 'dashed' })} />
-                <span>${this.host._t('decor.line_style_dashed')}</span></label>
-            </div>
-            <label>${this.host._t('decor.length')}</label>
-            <div class="colorrow"><input class="namein" type="number" min="0.01" step="0.01"
-              .value=${String(this.host._decorLargeField(d.lengthCm || 0))}
-              @input=${(e: Event) => (this.host._decorShapeDialog = { ...d,
-                lengthCm: this.host._decorLargeCm(Number((e.target as HTMLInputElement).value)) })} />
-              <span class="opl">${unit}</span></div>` : d.kind === 'furniture' || d.kind === 'image' ? html`
-            <label>${this.host._t('decor.size')}</label>
-            <div class="colorrow"><input class="namein" type="number" step="any"
-              aria-invalid=${furnitureWcm === null ? 'true' : 'false'}
-              .value=${d.sizeWField || ''}
-              @input=${(e: Event) => this._decorFurnitureSizeInput(
-                'w', (e.target as HTMLInputElement).value,
-              )} />
-              <span>×</span><input class="namein" type="number" step="any"
-              aria-invalid=${furnitureHcm === null ? 'true' : 'false'}
-              .value=${d.sizeHField || ''}
-              @input=${(e: Event) => this._decorFurnitureSizeInput(
-                'h', (e.target as HTMLInputElement).value,
-              )} />
-              <span class="opl">${unit}</span></div>
-            <label class="dfill"><input type="checkbox" .checked=${!!d.flipH}
-              @change=${(e: Event) => this._decorFurnitureFlip(
-                'w', (e.target as HTMLInputElement).checked,
-              )} />${this.host._t('decor.flip_h')}</label>
-            <label class="dfill"><input type="checkbox" .checked=${!!d.flipV}
-              @change=${(e: Event) => this._decorFurnitureFlip(
-                'h', (e.target as HTMLInputElement).checked,
-              )} />${this.host._t('decor.flip_v')}</label>` : html`
-            <label>${this.host._t('decor.size')}</label>
-            <div class="colorrow"><input class="namein" type="number" min="0.01" step="0.01"
-              .value=${String(this.host._decorLargeField(d.sizeWCm || 0))}
-              @input=${(e: Event) => (this.host._decorShapeDialog = { ...d,
-                sizeWCm: this.host._decorLargeCm(Number((e.target as HTMLInputElement).value)) })} />
-              <span>×</span><input class="namein" type="number" min="0.01" step="0.01"
-              .value=${String(this.host._decorLargeField(d.sizeHCm || 0))}
-              @input=${(e: Event) => (this.host._decorShapeDialog = { ...d,
-                sizeHCm: this.host._decorLargeCm(Number((e.target as HTMLInputElement).value)) })} />
-              <span class="opl">${unit}</span></div>`}
-          <label>${this.host._t('decor.angle')}</label>
-          <input class="namein" type="number" min="-180" max="180" step="1" .value=${d.angle}
-            @input=${(e: Event) => (this.host._decorShapeDialog = { ...d,
-              angle: (e.target as HTMLInputElement).value })} />
-          ${canFill ? html`<label class="dfill"><input type="checkbox" .checked=${!!d.fill}
-            @change=${(e: Event) => (this.host._decorShapeDialog = {
-              ...d, fill: (e.target as HTMLInputElement).checked,
-            })} />${this.host._t('decor.fill')}</label>
-            <hp-color-opacity .label=${this.host._t('decor.fill_color')}
-              .color=${d.fillColor || d.color} .opacity=${d.fillOpacity ?? 0.25}
-              .opacityLabel=${this.host._t('space.opacity')} .pickerLabels=${this.host._colorPickerLabels}
-              .disabled=${!d.fill}
-              @hp-color-opacity-change=${(e: CustomEvent<{ color: string; opacity: number }>) =>
-                (this.host._decorShapeDialog = { ...d,
-                  fillColor: e.detail.color, fillOpacity: e.detail.opacity })}></hp-color-opacity>` : nothing}
-        </div>
-        <div class="row" slot="footer">
-          <span class="spacer"></span>
-          <button class="btn ghost" @click=${() => (this.host._decorShapeDialog = null)}>${this.host._t('btn.cancel')}</button>
-          <button class="btn primary" ?disabled=${invalidFurnitureSize}
-            @click=${() => this._decorSaveShape()}>${this.host._t('btn.save')}</button>
-        </div>
-    </hp-dialog>`;
+  return this._decorImages.renderShapeDialog();
   }
 
 public _renderBackdropDialog(): TemplateResult {

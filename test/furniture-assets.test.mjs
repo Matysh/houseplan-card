@@ -38,9 +38,11 @@ test('front-view menu artwork is reachable only through the lazy editor graph', 
   const card = fs.readFileSync(path.join(ROOT, 'src', 'houseplan-card.ts'), 'utf8');
   const furniture = fs.readFileSync(path.join(ROOT, 'src', 'furniture.ts'), 'utf8');
   const runtime = fs.readFileSync(path.join(ROOT, 'src', 'houseplan-editor-runtime.ts'), 'utf8');
+  const decorImageEditor = fs.readFileSync(path.join(ROOT, 'src', 'decor-image-editor.ts'), 'utf8');
   assert.doesNotMatch(card, /furniture-menu-art\.generated/);
   assert.doesNotMatch(furniture, /furniture-menu-art\.generated/);
-  assert.match(runtime, /from '\.\/furniture-menu-art\.generated'/);
+  assert.match(runtime, /from '\.\/decor-image-editor'/);
+  assert.match(decorImageEditor, /from '\.\/furniture-menu-art\.generated'/);
 });
 
 test('release provenance is normalized to the repository MIT grant', () => {

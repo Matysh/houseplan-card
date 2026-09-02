@@ -55,6 +55,7 @@ test('all dangerous-action call sites use the shared confirmation contract', () 
   const files = [
     '../src/houseplan-card.ts',
     '../src/houseplan-editor-runtime.ts',
+    '../src/decor-image-editor.ts',
     '../src/houseplan-onboarding-runtime.ts',
   ];
   const source = files.map((relative) => readFileSync(new URL(relative, import.meta.url), 'utf8')).join('\n');

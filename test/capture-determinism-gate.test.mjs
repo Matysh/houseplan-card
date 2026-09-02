@@ -10,7 +10,7 @@ import { driftBetweenRuns, frameHashes } from '../scripts/capture-determinism.mj
 
 const files = { 'a.png': 'AAA', 'b.png': 'BBB', 'notes.txt': 'ignore me' };
 const fakeList = () => Object.keys(files);
-const fakeRead = (path) => Buffer.from(files[path.split('/').pop()]);
+const fakeRead = (path) => Buffer.from(files[path.split(/[\\/]/).pop()]);
 
 test('хешируются только кадры, посторонние файлы не участвуют', () => {
   const hashes = frameHashes('/nowhere', fakeRead, fakeList);
