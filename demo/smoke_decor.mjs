@@ -189,7 +189,7 @@ const res = await page.evaluate(async () => {
   c._decorTextDialog = { ...c._decorTextDialog, text: 'Default probe' };
   c._decorSaveText();
   c._furnPalette = { symbol: 'chair', w: 45, h: 45 };
-  c._furnPlace([gDefault * 24, gDefault * 12], true);
+  c._editorRuntime._furnPlace([gDefault * 24, gDefault * 12], true);
   await c.updateComplete;
   const createdByDefault = c._decorList.filter((shape) => shape.id !== existingDefaultProbe.id);
   out.everyNewDecorKindUsesMainDefault = textInheritsDefault

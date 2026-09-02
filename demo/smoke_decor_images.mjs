@@ -145,6 +145,17 @@ const result = await page.evaluate(async () => {
   out.cancelledTouchDoesNotPlace = sp.decor.length === countBeforeTouch
     && c._furnTouchPending === null;
 
+  let committedPointerType = '';
+  const originalImagePlace = c._editorRuntime._decorImagePlace;
+  c._editorRuntime._decorImagePlace = (_raw, pointerType) => { committedPointerType = pointerType; };
+  c._decorTool = 'image';
+  c._decorImagePalette = asset;
+  pointer('pointerdown', 360, 360, { pointerType: 'touch', pointerId: 512 });
+  pointer('pointerup', 360, 360, { pointerType: 'touch', pointerId: 512 });
+  await settle();
+  c._editorRuntime._decorImagePlace = originalImagePlace;
+  out.touchCommitUsesTouchSnapTolerance = committedPointerType === 'touch';
+
   c._decorTool = 'select';
   const imageBeforeReplace = { ...sp.decor.find((shape) => shape.id === image.id) };
   c._editorRuntime._openDecorProperties(imageBeforeReplace);
@@ -190,12 +201,16 @@ const result = await page.evaluate(async () => {
   await settle();
   await customElements.whenDefined('houseplan-space-card');
   const config = JSON.parse(JSON.stringify(c._serverCfg));
+  let staticResolveCalls = 0;
   const staticHass = { ...c.hass, callWS: async (message) => {
     if (message.type === 'houseplan/config/get') return {
       config, rev: 1, decor_assets_api: 1, virtual_lights: { rev: 0, config_rev: 1, off: [] },
     };
     if (message.type === 'houseplan/layout/get') return { layout: {}, rev: 1 };
-    if (message.type === 'houseplan/assets/resolve') return { assets: [asset, asset2], missing: [] };
+    if (message.type === 'houseplan/assets/resolve') {
+      staticResolveCalls++;
+      return { assets: [asset, asset2], missing: [] };
+    }
     if (message.type === 'houseplan/content/sign') return { urls: Object.fromEntries(
       message.paths.map((path) => [path, path === rawUrl ? url : path === rawUrl2 ? url2 : path]),
     ) };
@@ -227,6 +242,10 @@ const result = await page.evaluate(async () => {
     && viewBox.y + viewBox.height >= y + h;
   out.staticImageIsInert = !!staticImage
     && getComputedStyle(staticImage).pointerEvents === 'none';
+  const resolveCallsAfterFirstLoad = staticResolveCalls;
+  await staticCard._load(true);
+  out.staticResolveCachesCompleteAssetSet = resolveCallsAfterFirstLoad === 1
+    && staticResolveCalls === resolveCallsAfterFirstLoad;
   host.remove();
 
   sp.decor = saved.decor;

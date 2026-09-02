@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
-  adoptDecorAssets, decorAssetIds, initialDecorImageCm, resolveDecorAssets,
+  adoptDecorAssets, decorAssetIds, initialDecorImageCm,
+  projectDecorImage, resolveDecorAssets,
 } from '../test-build/decor-assets.js';
 import { decorBoxItem } from '../test-build/space-geometry.js';
 
@@ -18,6 +19,19 @@ test('#51 asset ids are unique across spaces and malformed ids fail closed', () 
     { decor: [{ kind: 'image', asset_id: id('b') }, { kind: 'image', asset_id: 'bad' }] },
     { decor: [{ kind: 'image', asset_id: id('b') }, { kind: 'image', asset_id: id('a') }] },
   ] }), [id('b'), id('a')]);
+});
+
+test('#51 full and static renderers share one fail-closed image projection', () => {
+  const shape = {
+    id: 'image', kind: 'image', asset_id: id('d'),
+    x: 0.1, y: 0.2, w: 0.3, h: 0.4, angle: 405, opacity: 2,
+    flip_h: true,
+  };
+  assert.deepEqual(projectDecorImage(shape, 1000, 500), [
+    100, 100, 300, 200, 1,
+    'translate(250 200) rotate(45) scale(-1 1) translate(-250 -200)',
+  ]);
+  assert.equal(projectDecorImage({ ...shape, w: 0 }, 1000, 500), null);
 });
 
 test('#51 resolve projection rejects malformed catalog rows', () => {
@@ -54,4 +68,20 @@ test('#51 resolve batches and deduplicates ids at the backend cap', async () => 
   const resolved = await resolveDecorAssets(hass, [ids[0], ...ids]);
   assert.equal(resolved.size, 201);
   assert.deepEqual(calls.map((batch) => batch.length), [200, 1]);
+  assert.equal(await resolveDecorAssets(hass, [...ids].reverse()), resolved);
+  assert.deepEqual(calls.map((batch) => batch.length), [200, 1]);
+});
+
+test('#51 missing asset ids are negative-cached with their complete set', async () => {
+  let calls = 0;
+  const connection = {};
+  const hass = {
+    connection,
+    callWS: async () => { calls++; return { assets: [], missing: [id('f')] }; },
+  };
+  const first = await resolveDecorAssets(hass, [id('f')]);
+  const second = await resolveDecorAssets({ ...hass }, [id('f')]);
+  assert.equal(first.size, 0);
+  assert.equal(second, first);
+  assert.equal(calls, 1);
 });
