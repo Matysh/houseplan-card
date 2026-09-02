@@ -125,7 +125,12 @@ const result = await page.evaluate(async ({ version, previewText, previewSha }) 
   const supportCallsBeforeOpen = calls.length;
   await open();
   const dialog = root().querySelector('#support-dialog');
-  const touchRect = root().querySelector('.support-button').getBoundingClientRect();
+  const supportButton = root().querySelector('.support-button');
+  const settingsButton = supportButton?.previousElementSibling;
+  const touchRect = supportButton.getBoundingClientRect();
+  const settingsRect = settingsButton?.getBoundingClientRect();
+  const message = dialog?.querySelector('#support-message');
+  const contact = dialog?.querySelector('#support-contact');
   const guide = dialog?.querySelector('#support-docs-heading + a');
   out.openIsLocal = calls.length === supportCallsBeforeOpen;
   out.aboutAndEnglishGuide = !!dialog?.querySelector('.aboutver')
@@ -135,6 +140,11 @@ const result = await page.evaluate(async ({ version, previewText, previewSha }) 
     && dialog?.querySelector('#support-message')?.value === ''
     && dialog?.querySelector('.supportattach input')?.checked === false;
   out.touchTarget = touchRect.width >= 44 && touchRect.height >= 44;
+  out.headerActionsMatch = !!settingsRect
+    && Math.abs(touchRect.width - settingsRect.width) < 0.01
+    && Math.abs(touchRect.height - settingsRect.height) < 0.01;
+  out.messageSurfaceMatchesContact = !!message && !!contact
+    && getComputedStyle(message).backgroundColor === getComputedStyle(contact).backgroundColor;
   out.noHorizontalOverflow = dialog.scrollWidth <= dialog.clientWidth + 1
     && dialog.querySelector('.supportbody').scrollWidth
       <= dialog.querySelector('.supportbody').clientWidth + 1;

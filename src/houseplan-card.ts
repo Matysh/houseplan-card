@@ -11493,10 +11493,10 @@ export class HouseplanCard extends LitElement {
             <button class="btn zb" @click=${() => this._stepZoom(1)} title=${this._t('title.zoom_in')}><ha-icon icon="mdi:plus"></ha-icon></button>
           </div>
           ${this._norm && this._canEdit
-            ? html`<button class="btn" @click=${this._openSettingsDialog} title=${this._t('title.general_settings')}>
+            ? html`<button class="btn header-action" @click=${this._openSettingsDialog} title=${this._t('title.general_settings')}>
                 <ha-icon icon="mdi:cog-outline"></ha-icon>
               </button>
-              <button class="btn support-button" @click=${this._openSupportDialog}
+              <button class="btn header-action support-button" @click=${this._openSupportDialog}
                 title=${this._t('support.title')} aria-label=${this._t('support.title')}>
                 <ha-icon icon="mdi:help-circle-outline"></ha-icon>
               </button>`
