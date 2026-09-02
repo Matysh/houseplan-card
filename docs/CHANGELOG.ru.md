@@ -8,6 +8,33 @@
 
 ## Не выпущено
 
+## v1.70.0 — 2026-09-02
+
+- В House Plan появился закрытый канал **«Помощь и обратная связь»**, ошибки
+  бэкенда и контекстные подсказки локализованы, а опасные действия используют
+  единый доступный диалог подтверждения
+  ([#43](https://github.com/Matysh/houseplan-card/issues/43),
+  [#42](https://github.com/Matysh/houseplan-card/issues/42),
+  [#86](https://github.com/Matysh/houseplan-card/issues/86),
+  [#32](https://github.com/Matysh/houseplan-card/issues/32)).
+- Работа с устройствами получила видимые фильтры обнаружения, Undo/Redo
+  позиций, автоматический перенос в связанную HA-зону, действие **«Ничего не
+  делать»** и более безопасное редактирование привязок
+  ([#44](https://github.com/Matysh/houseplan-card/issues/44),
+  [#74](https://github.com/Matysh/houseplan-card/issues/74),
+  [#126](https://github.com/Matysh/houseplan-card/issues/126),
+  [#381](https://github.com/Matysh/houseplan-card/issues/381),
+  [#385](https://github.com/Matysh/houseplan-card/issues/385)).
+- Камера теперь движется плавно, мебель можно точно менять в размере,
+  зеркалить и вращать, а плотное кадрирование дома игнорирует скрытую
+  архитектуру; старые и будущие конфиги защищены проверками совместимости
+  ([#82](https://github.com/Matysh/houseplan-card/issues/82),
+  [#396](https://github.com/Matysh/houseplan-card/issues/396),
+  [#383](https://github.com/Matysh/houseplan-card/issues/383),
+  [#384](https://github.com/Matysh/houseplan-card/issues/384),
+  [#33](https://github.com/Matysh/houseplan-card/issues/33)).
+- Мелкие исправления и улучшения.
+
 ## v1.70.0-beta.4 — 2026-09-02
 
 - Кнопка **«Помощь и обратная связь»** теперь совпадает по размеру 44 px с
