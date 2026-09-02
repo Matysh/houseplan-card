@@ -31,6 +31,7 @@ _LANGUAGES = frozenset({"en", "ru", "de", "fr"})
 _BROWSERS = frozenset({"chromium", "firefox", "webkit", "unknown"})
 _REGISTRY_ACCESS = frozenset({"full", "partial", "unavailable"})
 _REGISTRY_AGE = frozenset({"fresh", "stale", "unknown"})
+_VALUE_BADGE_POSITIONS = frozenset({"right", "bottom", "left", "top"})
 
 
 class SupportPackageError(ValueError):
@@ -232,6 +233,23 @@ def _project_value_source(ids: _Pseudonyms, value: object) -> dict[str, Any] | N
     return None
 
 
+def _project_value_badge(ids: _Pseudonyms, value: object) -> dict[str, Any] | None:
+    """Project the compatibility-tolerant badge config into safe scalar fields."""
+    if not isinstance(value, dict):
+        return None
+    out: dict[str, Any] = {}
+    enabled = value.get("enabled")
+    if isinstance(enabled, bool):
+        out["enabled"] = enabled
+    position = value.get("position")
+    if isinstance(position, str) and position in _VALUE_BADGE_POSITIONS:
+        out["position"] = position
+    source = _project_value_source(ids, value.get("source"))
+    if source is not None:
+        out["source"] = source
+    return out or None
+
+
 def _project_marker(ids: _Pseudonyms, marker: dict[str, Any]) -> dict[str, Any]:
     binding_kind, binding = _binding(ids, marker.get("binding"))
     out: dict[str, Any] = {
@@ -264,12 +282,8 @@ def _project_marker(ids: _Pseudonyms, marker: dict[str, Any]) -> dict[str, Any]:
         projected = _project_value_source(ids, marker.get(key))
         if projected:
             out[key] = projected
-    badge = marker.get("value_badge")
-    if isinstance(badge, dict):
-        safe_badge = _copy_keys(badge, ("enabled", "position"))
-        source = _project_value_source(ids, badge.get("source"))
-        if source:
-            safe_badge["source"] = source
+    safe_badge = _project_value_badge(ids, marker.get("value_badge"))
+    if safe_badge is not None:
         out["value_badge"] = safe_badge
     return out
 

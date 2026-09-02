@@ -33,6 +33,7 @@ def _source() -> tuple[dict, dict, list[str]]:
         "area.private", "device-secret", "sensor.secret_temperature",
         "https://private.example/plan.png", "C:\\Users\\Private\\floor.png",
         "person@example.test", "<b>private note</b>", "unknown-private-value",
+        "value-badge-private-sentinel",
     ]
     config = {
         "model_version": 9,
@@ -80,6 +81,12 @@ def _source() -> tuple[dict, dict, list[str]]:
             "link": "https://private.example/device", "description": "private note",
             "pdfs": [{"name": "manual", "url": "C:\\Users\\Private\\floor.png"}],
             "controls": ["sensor.secret_temperature"],
+            "value_badge": {
+                "enabled": {"private": "value-badge-private-sentinel"},
+                "position": ["value-badge-private-sentinel"],
+                "source": {"kind": "private", "payload": "value-badge-private-sentinel"},
+                "future": {"private": "value-badge-private-sentinel"},
+            },
             "unknown": "unknown-private-value",
         }],
     }
@@ -301,7 +308,9 @@ def test_rich_plan_projection_preserves_safe_structure_and_drops_unknown_values(
     assert virtual["value_source"] == {
         "entity_id": "entity-rich-1", "kind": "entity_state",
     }
-    assert virtual["value_badge"]["source"] == {"kind": "derived_lqi"}
+    assert virtual["value_badge"] == {
+        "enabled": True, "position": "bottom", "source": {"kind": "derived_lqi"},
+    }
     assert entity["value_source"] == {
         "kind": "derived_marker_state", "ref": "marker:marker-rich-1",
     }
@@ -329,6 +338,44 @@ def test_projection_helpers_fail_closed_on_malformed_shapes():
     assert support_package._project_layout(ids, None) == {}
     assert support_package._summary(None, None)["spaces"] == 0
     assert support_package._binding_kind(None) == "unknown"
+
+
+@pytest.mark.parametrize(
+    ("enabled", "position", "expected"),
+    [
+        ({"private": "sentinel"}, "right", {"position": "right"}),
+        (True, {"private": "sentinel"}, {"enabled": True}),
+        ([], "sideways", None),
+        ("true", ["bottom"], None),
+    ],
+)
+def test_value_badge_projection_drops_malformed_scalar_fields(
+    enabled, position, expected,
+):
+    projected = support_package._project_marker(
+        support_package._Pseudonyms("badge"),
+        {
+            "id": "marker",
+            "binding": "virtual",
+            "value_badge": {"enabled": enabled, "position": position},
+        },
+    )
+    assert projected.get("value_badge") == expected
+    assert "sentinel" not in json.dumps(projected)
+
+
+def test_value_badge_projection_omits_empty_result():
+    projected = support_package._project_marker(
+        support_package._Pseudonyms("badge"),
+        {
+            "id": "marker",
+            "binding": "virtual",
+            "value_badge": {
+                "enabled": [], "position": {}, "source": {"kind": "private"},
+            },
+        },
+    )
+    assert "value_badge" not in projected
 
 
 def test_package_size_limit_is_enforced_after_projection(monkeypatch):

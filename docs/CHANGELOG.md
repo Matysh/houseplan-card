@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Support packages now type-check value-badge flags and positions while building
+  their privacy projection, so malformed nested configuration cannot be copied
+  verbatim into a report
+  ([#420](https://github.com/Matysh/houseplan-card/issues/420)).
 - Area relocation provenance now survives a temporarily empty or shortened
   Home Assistant registry: cleanup uses the full binding roster and requires
   two non-empty authoritative observations before forgetting a missing device
