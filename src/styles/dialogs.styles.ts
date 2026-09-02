@@ -1186,7 +1186,10 @@ export const dialogsStyles = css`
       background: color-mix(in srgb, var(--card-background-color, var(--hp-bg)) 92%, var(--hp-txt));
       font: inherit;
     }
-    .supportmessage { min-height: 120px; }
+    .supportmessage {
+      min-height: 120px;
+      background: var(--hp-bg);
+    }
     .supportraw {
       min-height: 220px;
       margin-top: var(--sp-2);

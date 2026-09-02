@@ -185,7 +185,7 @@ export const planStyles = css`
       justify-content: center;
       padding: var(--sp-3);
     }
-    .support-button {
+    .header-action {
       min-width: 44px;
       min-height: 44px;
       justify-content: center;

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- **Help & feedback** now uses the same 44 px header button as General settings,
+  and its message field uses the ordinary input surface instead of a grey tint
+  ([#415](https://github.com/Matysh/houseplan-card/issues/415)).
+
 ## v1.70.0-beta.3 — 2026-09-02
 
 - The new **Help & feedback** dialog keeps version, documentation and project
