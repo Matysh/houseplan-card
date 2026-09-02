@@ -39,8 +39,8 @@ from .const import (
     PLAN_MODEL_VERSION,
     PLANS_DIR,
     PLANS_URL,
-    SUPPORT_PREVIEW_TTL_S,
     SUPPORT_API_VERSION,
+    SUPPORT_PREVIEW_TTL_S,
     VERSION,
 )
 from .coordinate_canonicalization import (

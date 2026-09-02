@@ -4276,10 +4276,12 @@ export class HouseplanCard extends LitElement {
    * Equal payloads keep their authoritative object references and geometry
    * epoch; equal revisions never hide changed content (#73 §9.4).
    */
-  private _adoptConfigCapabilities(response: any): void {
-    this._haIntegrationVersion = typeof response?.integration_version === 'string'
-      ? response.integration_version : this._haIntegrationVersion;
-    const supportApi = response?.support_api;
+  private _adoptConfigCapabilities(response: unknown): void {
+    const capabilities = response && typeof response === 'object'
+      ? response as Partial<Record<'integration_version' | 'support_api', unknown>> : {};
+    this._haIntegrationVersion = typeof capabilities.integration_version === 'string'
+      ? capabilities.integration_version : this._haIntegrationVersion;
+    const supportApi = capabilities.support_api;
     // Every successful config/get is authoritative. Missing or malformed data
     // after a backend downgrade must revoke a capability learned earlier.
     this._haSupportApi = typeof supportApi === 'number' && Number.isSafeInteger(supportApi)

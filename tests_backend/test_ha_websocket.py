@@ -1347,6 +1347,7 @@ async def test_support_preview_quota_rejects_before_store_load_or_executor(
     from custom_components.houseplan.store import get_data
 
     await _setup(hass)
+    client = await hass_ws_client(hass)
     runtime = get_data(hass)
     assert runtime is not None
     runtime.support_previews = {
@@ -1369,7 +1370,6 @@ async def test_support_preview_quota_rejects_before_store_load_or_executor(
     monkeypatch.setattr(runtime.config_store, "async_load", _unexpected_load)
     monkeypatch.setattr(runtime.store, "async_load", _unexpected_load)
     monkeypatch.setattr(hass, "async_add_executor_job", _unexpected_executor)
-    client = await hass_ws_client(hass)
     await client.send_json_auto_id(_support_preview_request("draft-over-quota"))
     response = await client.receive_json()
     assert not response["success"]
@@ -1412,8 +1412,8 @@ async def test_support_preview_final_quota_check_closes_executor_race(
 ) -> None:
     import threading
 
-    from custom_components.houseplan.store import get_data
     from custom_components.houseplan import websocket_api as support_ws
+    from custom_components.houseplan.store import get_data
 
     await _setup(hass)
     runtime = get_data(hass)
