@@ -4,7 +4,7 @@
   "chromium": "151.0.7922.34",
   "oxipng": "oxipng 10.2.0",
   "sourceFingerprint": "ef7121c59dae6f43fc043fbfd148f4a2e53ee785807e2640cbd0bab08574fdc3",
-  "captureScriptSha256": "12eb99bc095f1a8434bc85f129b078ede6d7d87ae9a6113fb6a9d54a27052b8d",
+  "captureScriptSha256": "cadb8e1bcab9f1dcdd7d75b3b90ddcbaaeb2b8c2a098f575a21f39ff70f5c59c",
   "command": "npm run build && node demo/docs/capture.mjs",
   "scenarios": {
     "view-desktop": {
@@ -129,6 +129,7 @@
       "device-display-preview"
     ],
     "witnesses": 3,
-    "floor": 1
+    "floor": 1,
+    "lastWriteWasFingerprintOnly": true
   }
 }
