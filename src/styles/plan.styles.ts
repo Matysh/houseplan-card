@@ -683,10 +683,30 @@ export const planStyles = css`
     .stage.mode-decor.dtool-ellipse .decorlayer .dshape,
     .stage.mode-decor.dtool-text .decorlayer .dshape,
     .stage.mode-decor.dtool-furniture .decorlayer .dshape,
+    .stage.mode-decor.dtool-image .decorlayer .dshape,
     .stage.mode-decor.dtool-backdrop .decorlayer .dshape { pointer-events: none; }
     /* the furniture tool is a stamp: the press must reach the stage even when
        it lands on a sofa that is already there (docs/FURNITURE.md §4) */
-    .stage.mode-decor.dtool-furniture { cursor: copy; }
+    .stage.mode-decor.dtool-furniture,
+    .stage.mode-decor.dtool-image { cursor: copy; }
+    .stage.mode-decor.dtool-select .decorlayer .dimage,
+    .stage.mode-decor.dtool-erase .decorlayer .dimage,
+    .stage.mode-decor.dtool-select .decorlayer .dimage-missing,
+    .stage.mode-decor.dtool-erase .decorlayer .dimage-missing {
+      pointer-events: bounding-box;
+    }
+    .decorlayer .dimage-missing rect {
+      fill: rgba(127, 127, 127, 0.12);
+      stroke: var(--hp-accent);
+      stroke-dasharray: 8 5;
+      vector-effect: non-scaling-stroke;
+    }
+    .decorlayer .dimage-missing path {
+      fill: none;
+      stroke: var(--hp-accent);
+      vector-effect: non-scaling-stroke;
+    }
+    .decorlayer .decor-image-placement-preview { opacity: 0.65; }
     /* ONE exception (owner, 2026-08-04): under the TEXT tool an existing LABEL
        is a target again — pressing it opens its editor instead of starting a
        new label on top of the old one. Only labels: a line or a rectangle

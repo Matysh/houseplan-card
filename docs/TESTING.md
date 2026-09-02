@@ -162,7 +162,7 @@
 
 ## Decor composition order (#231)
 
-- [ ] All five decor kinds render in one `.decorlayer` after opaque room/data
+- [ ] All six decor kinds render in one `.decorlayer` after opaque room/data
       fill, active room-hover fill, opening tunnels and Glow-base rooms/tunnels,
       but before live Glow, sun, physical walls, opening symbols and the HTML
       device/room-label layer [auto: `smoke_decor_layer_order.mjs`,
@@ -182,6 +182,34 @@
       `large-house-zoom-250-dark`, `large-house-warm-remount-dark`].
 - [ ] `hide_decor`, the Background editor override and stored config remain
       unchanged; no per-object under-plan compatibility flag is introduced.
+
+## Custom decor images (#51)
+
+- [ ] Background has one **Image** button. PNG/JPEG/WebP/safe SVG upload opens
+      the reusable palette; picking a file shows an exact one-shot preview and
+      one click creates a 100 cm wide aspect-preserving object (height capped at
+      200 cm), then returns to Select [unit: `decor-assets.test.mjs`; auto:
+      `smoke_decor_images.mjs`].
+- [ ] Image move/continuous resize/four side handles/crossing mirrors/free
+      rotation/`Shift` 45° match furniture, while placement and movement have
+      no wall magnet. The complete rotated rectangle remains selectable through
+      transparent pixels [auto: `smoke_decor_images.mjs`].
+- [ ] Full View and `houseplan-space-card` paint the same signed raster/SVG
+      under live Glow/walls/devices and obey `hide_decor`. A missing or
+      hash-mismatched file paints nothing in View and a selectable crossed
+      repair placeholder only in Background [unit: `decor-assets.test.mjs`,
+      `test_decor_assets.py`; auto: `smoke_decor_images.mjs`].
+- [ ] Upload rejects wrong magic, corrupt decode, oversized dimensions/files,
+      forbidden namespaces/elements/attributes/URLs, DTD/entities, processing
+      instructions and local-reference cycles. Responses have exact MIME,
+      `nosniff` and SVG sandbox CSP [pure backend: `test_decor_assets.py`; HA
+      harness: `test_ha_import_export.py` and endpoint tests].
+- [ ] Identical canonical bytes reuse one SHA-256 id. Resolve is deduplicated
+      and batched at 200; deletion rechecks all spaces and refuses an in-use
+      file. Export v2 has hashes but no bytes/signed URLs; v1 remains readable,
+      and confirmed missing imports preserve image geometry [unit/pure/HA:
+      `decor-assets.test.mjs`, `test_decor_assets.py`,
+      `test_ha_import_export.py`].
 
 ## Opening symbol centreline (#242, #250)
 

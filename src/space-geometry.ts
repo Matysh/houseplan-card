@@ -313,6 +313,18 @@ export function roomItem(r: RoomCfg): ContentItem | null {
   return itemOf([[r.x, r.y], [r.x + (r.w || 0), r.y + (r.h || 0)]]);
 }
 
+/** Bounds of one persisted rectangular decor object, including rotation. */
+export function decorBoxItem(
+  shape: { x?: unknown; y?: unknown; w?: unknown; h?: unknown; angle?: unknown },
+  width = NORM_W,
+  height = NORM_W,
+): ContentItem | null {
+  const x = Number(shape.x) * width, y = Number(shape.y) * height;
+  const w = Number(shape.w) * width, h = Number(shape.h) * height;
+  if (![x, y, w, h].every(Number.isFinite) || w <= 0 || h <= 0) return null;
+  return itemOf(boxCorners({ x, y, w, h, angle: normalizeAngle(shape.angle) || undefined }));
+}
+
 /**
  * Every object of a space that counts as content (docs/CANVAS.md §4):
  * the rooms, the backdrop image rectangle, plus whatever the caller adds

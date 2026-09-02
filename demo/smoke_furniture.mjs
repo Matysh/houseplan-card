@@ -149,8 +149,8 @@ const res = await page.evaluate(async () => {
   };
   ev('pointermove', stageEl(), 300, 300, { pointerType: 'mouse' });
   await c.updateComplete;
-  const firstPreview = c._furniturePreviewPlacement
-    ? JSON.parse(JSON.stringify(c._furniturePreviewPlacement)) : null;
+  const firstPreview = c._editorRuntime?._furniturePreviewPlacement()
+    ? JSON.parse(JSON.stringify(c._editorRuntime._furniturePreviewPlacement())) : null;
   const firstTransform = ghost()?.getAttribute('transform');
   out.mouseHoverShowsRealSymbol = ghost()?.getAttribute('data-symbol') === 'sofa'
     && (ghost()?.getAttribute('d') || '').length > 20;
@@ -166,7 +166,7 @@ const res = await page.evaluate(async () => {
     wIn().dispatchEvent(new Event('input', { bubbles: true }));
   }
   await c.updateComplete;
-  out.sizeUpdatesPreviewWithoutPointerMove = c._furniturePreviewPlacement?.w > firstPreview?.w
+  out.sizeUpdatesPreviewWithoutPointerMove = c._editorRuntime?._furniturePreviewPlacement()?.w > firstPreview?.w
     && ghost()?.getAttribute('transform') !== firstTransform;
   if (wIn()) {
     wIn().value = '1.8';
@@ -197,8 +197,8 @@ const res = await page.evaluate(async () => {
   // середина комнаты r1 (40..550 × 140..580) — до стен дальше порога магнита
   ev('pointermove', stageEl(), 300, 300, { pointerType: 'mouse' });
   await c.updateComplete;
-  const committedPreview = c._furniturePreviewPlacement
-    ? JSON.parse(JSON.stringify(c._furniturePreviewPlacement)) : null;
+  const committedPreview = c._editorRuntime?._furniturePreviewPlacement()
+    ? JSON.parse(JSON.stringify(c._editorRuntime._furniturePreviewPlacement())) : null;
   const committedPreviewStroke = Number(ghost()?.getAttribute('stroke-width'));
   ev('pointerdown', stageEl(), 300, 300, { pointerType: 'mouse' });
   await c.updateComplete;

@@ -34,6 +34,13 @@ const fixture = await page.evaluate(async () => {
     await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
   };
   const roomPoly = [[0.1, 0.15], [0.9, 0.15], [0.9, 0.85], [0.1, 0.85]];
+  const imageAssetId = '7'.repeat(64);
+  c._decorAssets = new Map([[imageAssetId, {
+    asset_id: imageAssetId, name: 'layer-order.svg', mime: 'image/svg+xml',
+    width: 2, height: 1, bytes: 100,
+    url: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2 1"%3E%3Cpath fill="%23ff0033" d="M0 0h2v1H0z"/%3E%3C/svg%3E',
+    used_by: [],
+  }]]);
   sp.plan_url = null;
   sp.view_box = [0, 0, 1, 1];
   sp.cell_cm = 5;
@@ -58,6 +65,8 @@ const fixture = await page.evaluate(async () => {
       color: '#ff0033', opacity: 1, size_cm: 14 },
     { id: 'decor-order-furniture', kind: 'furniture', symbol: 'sofa',
       x: 0.64, y: 0.61, w: 0.18, h: 0.13, color: '#ff0033', opacity: 1, width_cm: 2 },
+    { id: 'decor-order-image', kind: 'image', asset_id: imageAssetId,
+      x: 0.76, y: 0.72, w: 0.08, h: 0.04, opacity: 1 },
   ];
   sp.settings = {
     ...(sp.settings || {}), fill_mode: 'custom', custom_fill: { c: '#2255cc', a: 1 },
@@ -86,7 +95,7 @@ const fixture = await page.evaluate(async () => {
     .map((node) => node.dataset.kind));
   return {
     before: {
-      allDecorKindsRender: ['line', 'rect', 'ellipse', 'text', 'furniture']
+      allDecorKindsRender: ['line', 'rect', 'ellipse', 'text', 'furniture', 'image']
         .every((kind) => kinds.has(kind)),
       oneDecorLayer: root().querySelectorAll('.decorlayer').length === 1,
       dataFloorBeforeDecor: follows(room, decor) && follows(dataTunnel, decor),
@@ -230,7 +239,7 @@ const parity = await page.evaluate(async (stored) => {
   out.hideDecorStillHidesView = !root.querySelector('.decorlayer');
   c._setMode('decor'); await update();
   out.ownEditorOverridesHide = !!root.querySelector('.decorlayer')
-    && root.querySelectorAll('.decorlayer [data-hp="decor"]').length >= 5;
+    && root.querySelectorAll('.decorlayer [data-hp="decor"]').length >= 6;
   return out;
 }, fixture.stored);
 

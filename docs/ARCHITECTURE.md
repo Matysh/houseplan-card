@@ -375,6 +375,15 @@ state. Manual files: transactional HTTP upload into `<config>/houseplan/files/<i
 (staging `up_*` folders promoted on save), served via signed
 `/api/houseplan/content/files/…` urls.
 
+Custom Background images use a separate content-addressed store at
+`<config>/houseplan/assets/`. Raster input is fully decoded and SVG is parsed
+through a strict allowlist before promotion; the SHA-256 of canonical bytes is
+the persisted `asset_id`. Config never carries file bytes or a signed URL.
+`houseplan/assets/resolve` maps unique ids to authenticated content paths,
+while the shared `ContentSigner` batches signatures for `<image>` elements.
+Catalog deletion rechecks references across every space under the config write
+lock. Missing or corrupt assets are never painted in View.
+
 `removed:true` is a binding tombstone, not a renderable marker. It claims an
 HA binding against automatic discovery while intentionally exposing that same
 binding to the catalog's re-add flow. A device tombstone excludes all data of that device;
@@ -907,6 +916,9 @@ transmit light is the separate `zero_wall_style` policy.
 | `houseplan/geometry/repair` | `space_id`, `aspect`, `dry_run?`, `undo?` | preview / `{ok, rev, moved}` / `{restored}`; errs `nothing_to_repair`, `no_backup` |
 | `houseplan/files/migrate` | `from_id`, `to_id` | `{mapping}` — COPY, never move |
 | `houseplan/files/cleanup` | `marker_id`, `keep?` | replacement-only collection |
+| `houseplan/assets/list` | — | reusable image metadata plus authoritative `used_by` references |
+| `houseplan/assets/resolve` | `asset_ids[]` (max 200) | verified metadata/content paths plus missing ids |
+| `houseplan/assets/delete` | `asset_id` | explicit deletion only when no decor record refers to it |
 | `houseplan/content/sign` | `paths[]` | `{urls}` — authSig for `<image>`/`<a>` fetches |
 | `houseplan/export/create` | `kind`, `space_id?`, `plan_only?`, `card_version` | consistent versioned JSON document + safe filename; plan-only is valid only for one space |
 | `houseplan/import/revalidate` | preview `token`, `duplicate_policy?` | refreshed bounded preview and current expected revisions |
@@ -1259,7 +1271,7 @@ its configured space.
 ## Additions v1.28–v1.41 (2026-07-24)
 
 - **Decor layer** (`space.decor[]`, v1.33; unified editor 2026-08-07): purely
-  visual line/rect/ellipse/text/furniture shapes, normalised geometry and
+  visual line/rect/ellipse/text/furniture/image shapes, normalised geometry and
   physical per-shape style. `src/editors/decor/types.ts` is the typed persisted
   union; `geometry.ts` owns cm↔render conversion, oriented boxes and the
   decor+room magnet; `hp-color-opacity` is the shared colour/alpha control.
@@ -1272,6 +1284,9 @@ its configured space.
   art. Its continuous local-axis resize/45° rotation path is deliberately
   separate from the shared grid-snapped box controller, while Undo/Redo,
   canonicalization and persistence remain common.
+  Custom images reuse that continuous box controller without the furniture
+  wall magnet. Their records contain `asset_id`, positive `w/h`, optional
+  `flip_h/flip_v`, `angle` and opacity; bytes live only in the dedicated store.
 - **Plan image transform**: `planRect()` resolves the fitted image plus
   `plan_x/y`, independent `plan_scale_x/y` and `plan_angle`; legacy
   `plan_scale` feeds both axes. The image is interactive only in its own
@@ -1432,7 +1447,7 @@ its configured space.
   one state per device. `resolvedDeviceStateEntities` therefore starts from
   uncategorised registry entities, resolves one functional role (whole-device
   domains, then semantic binary signals, then one representative switch), and aggregates
-  passive readings as the final fallback. `_visualSamples` consumes the full
+  passive readings as the final fallback. `_devicePresentation` consumes the full
   result; `primaryEntity` only selects its first member where a single action
   target is required. Integration option switches can no longer make an
   otherwise healthy device working or unavailable merely by list order. For

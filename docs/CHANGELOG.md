@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- The Background editor can now upload and reuse private PNG, JPEG, WebP and
+  safe SVG images, then place, resize, mirror, rotate, replace and layer them
+  like furniture without wall magnetism. Missing files keep a repairable
+  editor placeholder, and portable exports record hashes without embedding
+  image bytes ([#51](https://github.com/Matysh/houseplan-card/issues/51)).
 - **Help & feedback** now works across compatible mixed card/integration
   releases, creates safer SHA-based attachment filenames, reports every House
   Plan Repair family, and rejects exhausted preview quotas before building the

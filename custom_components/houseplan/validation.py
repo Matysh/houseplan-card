@@ -1319,6 +1319,7 @@ _FURN_SYMBOL = vol.All(str, vol.Length(min=1, max=MAX_FURN_SYMBOL),
 # …and its size: strictly positive, capped by the same canvas insurance limit
 # an opening's length is. A piece of furniture is a SIZE, not a coordinate.
 _FURN_SIZE = vol.All(_finite, vol.Range(min=0.0000001, max=CANVAS_LIMIT))
+_DECOR_ASSET_ID = vol.All(str, vol.Match(r"^[0-9a-f]{64}$"))
 
 _DECOR_COMMON = {
     vol.Required("id"): str,
@@ -1379,6 +1380,13 @@ DECOR_SCHEMA = vol.Any(
     # every older config byte-for-byte as before.
     vol.Schema({**_DECOR_COMMON, vol.Required("kind"): "furniture",
                 vol.Required("symbol"): _FURN_SYMBOL,
+                vol.Required("x"): _NORM, vol.Required("y"): _NORM,
+                vol.Required("w"): _FURN_SIZE, vol.Required("h"): _FURN_SIZE,
+                vol.Optional("flip_h"): bool, vol.Optional("flip_v"): bool,
+                vol.Optional("angle"): vol.All(_finite, vol.Range(min=-360.0, max=360.0))},
+               extra=vol.ALLOW_EXTRA),
+    vol.Schema({**_DECOR_COMMON, vol.Required("kind"): "image",
+                vol.Required("asset_id"): _DECOR_ASSET_ID,
                 vol.Required("x"): _NORM, vol.Required("y"): _NORM,
                 vol.Required("w"): _FURN_SIZE, vol.Required("h"): _FURN_SIZE,
                 vol.Optional("flip_h"): bool, vol.Optional("flip_v"): bool,

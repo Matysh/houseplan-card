@@ -29,6 +29,9 @@ MAX_PLANS_FILES = 200
 MAX_PLANS_LISTED = 60
 MAX_FILES_BYTES = 1024 * 1024 * 1024
 MAX_FILES_COUNT = 1000
+MAX_DECOR_ASSET_BYTES = 2 * 1024 * 1024
+MAX_DECOR_ASSETS_BYTES = 256 * 1024 * 1024
+MAX_DECOR_ASSETS_COUNT = 200
 # Refuse to write when the disk is nearly full: filling the config partition
 # breaks .storage, the recorder and backups, not just this card.
 MIN_FREE_BYTES = 512 * 1024 * 1024
@@ -46,8 +49,10 @@ PLAN_ORPHAN_TTL_S = 3600
 # action says so, plus staging folders after PLAN_ORPHAN_TTL_S.
 SCHEDULED_GRACE_S = 30 * 24 * 3600
 FILES_DIR = "houseplan/files"
+ASSETS_DIR = "houseplan/assets"
 CONF_ADMIN_ONLY = "admin_only"
 VERSION = "1.70.0"
+DECOR_ASSETS_API_VERSION = 1
 
 # #43: the support transport is deliberately not configurable.  A user supplied
 # URL would turn the integration into an SSRF proxy and make the privacy notice
@@ -66,7 +71,7 @@ MAX_SUPPORT_CONTACT_CODEPOINTS = 320
 # Assistant Store version above: storage migrations and files exported by a
 # user have different compatibility lifecycles.
 PLAN_MODEL_VERSION = 9
-EXPORT_VERSION = 1
+EXPORT_VERSION = 2
 MAX_EXPORT_BYTES = 8 * 1024 * 1024
 IMPORT_PREVIEW_TTL_S = 10 * 60
 MAX_IMPORT_PREVIEWS_PER_USER = 3
@@ -92,7 +97,7 @@ ERROR_CODES: frozenset[str] = frozenset({
     "capacity_exceeded", "commit_failed", "conflict",
     "content_confirmation_required", "duplicate_marker_control",
     "future_model", "in_use", "invalid_config", "invalid_content",
-    "invalid_data", "invalid_format", "invalid_json", "invalid_layout",
+    "invalid_data", "invalid_format", "invalid_image", "invalid_json", "invalid_layout",
     "invalid_light_entity", "invalid_marker_control", "invalid_name",
     "invalid_partition_opening_host",
     "invalid_partition_opening_jamb_margin", "invalid_passage_fields",
@@ -107,7 +112,7 @@ ERROR_CODES: frozenset[str] = frozenset({
     "support_invalid_message", "support_package_too_large",
     "support_preview_expired", "support_rate_limited", "support_rejected",
     "support_unavailable",
-    "too_large", "unauthorized", "unsupported_export_version",
+    "too_large", "unauthorized", "unsupported_export_version", "unsupported_image",
     "value_badge_source_required", "wall_model_client_outdated",
     "wall_model_migration_blocked",
 })

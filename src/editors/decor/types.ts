@@ -5,7 +5,7 @@
  * presentation (`width_cm`) is deliberately separate from geometry: resizing
  * an object must never make its outline thicker.
  */
-export type DecorKind = 'line' | 'rect' | 'ellipse' | 'text' | 'furniture';
+export type DecorKind = 'line' | 'rect' | 'ellipse' | 'text' | 'furniture' | 'image';
 
 export interface DecorBase {
   id: string;
@@ -75,7 +75,15 @@ export interface DecorFurniture extends DecorBoxBase {
   flip_v?: boolean;
 }
 
-export type DecorShape = DecorLine | DecorRect | DecorEllipse | DecorText | DecorFurniture;
+export interface DecorImage extends DecorBoxBase {
+  kind: 'image';
+  /** SHA-256 of the canonical bytes stored by the integration. */
+  asset_id: string;
+  flip_h?: boolean;
+  flip_v?: boolean;
+}
+
+export type DecorShape = DecorLine | DecorRect | DecorEllipse | DecorText | DecorFurniture | DecorImage;
 
 /** Session default / resolved per-object visual style. */
 export interface DecorStyle {
@@ -87,11 +95,6 @@ export interface DecorStyle {
   fillOpacity: number;
 }
 
-/**
- * Future custom pictures implement this contract without changing selection,
- * snapping or transform chrome. File upload/lifecycle is intentionally not a
- * part of the current release.
- */
 export interface DecorImageTransform {
   x: number;
   y: number;

@@ -13,6 +13,7 @@ from homeassistant.helpers.event import async_track_time_interval
 
 from . import websocket_api as hp_ws
 from .const import (
+    ASSETS_DIR,
     DOMAIN,
     FILES_DIR,
     FRONTEND_URL,
@@ -39,11 +40,13 @@ async def async_setup(hass: HomeAssistant, config) -> bool:
     from .frontend_assets import HouseplanFrontendAssetView
     from .http_api import (
         HouseplanContentView,
+        HouseplanDecorAssetUploadView,
         HouseplanImportPreviewView,
         HouseplanUploadView,
     )
 
     hass.http.register_view(HouseplanUploadView())
+    hass.http.register_view(HouseplanDecorAssetUploadView())
     hass.http.register_view(HouseplanContentView())
     hass.http.register_view(HouseplanImportPreviewView())
     hass.http.register_view(HouseplanFrontendAssetView())
@@ -87,8 +90,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: HouseplanConfigEntry) ->
     card_path = Path(__file__).parent / "frontend" / "houseplan-card.js"
     plans_path = Path(hass.config.path(PLANS_DIR))
     files_path = Path(hass.config.path(FILES_DIR))
+    assets_path = Path(hass.config.path(ASSETS_DIR))
     await hass.async_add_executor_job(
-        lambda: (plans_path.mkdir(parents=True, exist_ok=True), files_path.mkdir(parents=True, exist_ok=True))
+        lambda: (
+            plans_path.mkdir(parents=True, exist_ok=True),
+            files_path.mkdir(parents=True, exist_ok=True),
+            assets_path.mkdir(parents=True, exist_ok=True),
+        )
     )
 
     # Static paths cannot be unregistered — register once per HA run.

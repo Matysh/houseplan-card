@@ -373,6 +373,8 @@ Resolve ограничен 200 уникальными корректными ids
 
 ## UX, accessibility, touch и kiosk
 
+**Touch editor: best effort / intentionally degraded.**
+
 - Toolbar button, upload control, asset rows, delete/replace actions и dialog
   используют native button semantics, видимый focus, localized `aria-label` и
   минимум 44×44 CSS px для touch targets.

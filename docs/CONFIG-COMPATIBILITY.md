@@ -221,6 +221,23 @@ and furniture are validated, canonicalized and exported through separate
 object schemas and allowlists. Older renderers ignore furniture flags and show
 the original orientation; older plan-only exporters may omit them.
 
+## Custom decor images and export v2 (#51)
+
+`space.decor[]` accepts an additive `kind:'image'` variant with a lowercase
+64-character SHA-256 `asset_id`, positive `x/y/w/h`, optional `angle`,
+`flip_h`, `flip_v` and `opacity`. File bytes are not config fields and live in
+`config/houseplan/assets`. New backend + old frontend is read-only for configs
+that already contain this unknown kind: a current frontend exposes the tool
+only after `houseplan/config/get` advertises `decor_assets_api:1`.
+
+Portable export format v2 adds extension-neutral `decor_asset` manifest rows.
+It records content hash and source availability but never embeds file bytes or
+signed URLs. The importer continues to accept v1. A matching verified local
+hash is reused; otherwise import requires confirmation and preserves the image
+record as an editor repair placeholder instead of removing its geometry.
+Before a permanent downgrade, remove all image objects with a current card and
+then explicitly delete their now-unused files from the palette.
+
 ## Independent-wall opening host (#132)
 
 `space.openings[].host` is an optional discriminated object
