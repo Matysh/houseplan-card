@@ -100,7 +100,11 @@ the old behaviour until an editing client materialises it.
   the target Area resolves to exactly one room; explicit placement, virtual
   markers and automatic composite light groups never enter this lifecycle.
   The move reuses `new_device_ids`, while limited registry access makes no
-  placement or metadata decision.
+  placement or metadata decision. Lifecycle cleanup is also independent of
+  this display roster: filtered or unmapped devices remain alive when their
+  exact binding exists in the full registry, a relevant empty namespace is
+  never destructive, and a missing binding needs two distinct non-empty
+  authoritative revisions before its Area provenance is removed.
 - Hidden devices are NOT content for the CONTENT FRAME (docs/CANVAS.md §4,
   audit DEV-2C947-01). The frame is presentation: an object the plan does not
   draw may not decide what the plan opens on. Hiding a marker that had once

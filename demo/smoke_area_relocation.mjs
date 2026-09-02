@@ -367,6 +367,129 @@ const res = await page.evaluate(async () => {
     ?.marker_area_snapshot?.[orphanId];
   limitedCard.remove();
 
+  // #419: destructive snapshot cleanup uses the raw registry roster and two
+  // distinct non-empty revisions. Presentation filtering is never absence.
+  const registryRow = (id) => ({
+    id, name: id, area_id: 'area-without-houseplan-room', disabled_by: null,
+  });
+  const entityRow = {
+    entity_id: 'sensor.registry_witness', device_id: null,
+    platform: 'demo', disabled_by: null,
+  };
+  const runCleanupProbe = async ({
+    snapshot, deviceFrames, liveDevices = {}, rejectFirstCleanup = false,
+  }) => {
+    const config = structuredClone(c._serverCfg);
+    config.markers = [];
+    config.settings = {
+      ...config.settings,
+      filter_seeded: true,
+      known_devices: [],
+      new_device_ids: [],
+      marker_area_snapshot: structuredClone(snapshot),
+    };
+    const probeCalls = [];
+    let deviceRegistryCalls = 0;
+    let entityRegistryCalls = 0;
+    let cleanupWrites = 0;
+    let rejected = false;
+    let rev = 100;
+    const base = window.__mkHass();
+    const probeHass = {
+      ...base,
+      connection: {
+        subscribeEvents: async () => () => {},
+        subscribeMessage: async () => () => {},
+      },
+      devices: liveDevices,
+      entities: { [entityRow.entity_id]: entityRow },
+      states: {},
+    };
+    probeHass.callWS = async (message) => {
+      probeCalls.push(structuredClone(message));
+      if (message.type === 'config/device_registry/list') {
+        const frame = deviceFrames[Math.min(deviceRegistryCalls, deviceFrames.length - 1)];
+        deviceRegistryCalls += 1;
+        return structuredClone(frame);
+      }
+      if (message.type === 'config/entity_registry/list') {
+        entityRegistryCalls += 1;
+        return [structuredClone(entityRow)];
+      }
+      if (message.type === 'houseplan/config/get') {
+        return { config, rev, can_write: true };
+      }
+      if (message.type === 'houseplan/layout/get') return { layout: {}, rev };
+      if (message.type === 'houseplan/config/set') {
+        const beforeCount = Object.keys(snapshot).length;
+        const afterCount = Object.keys(
+          message.config?.settings?.marker_area_snapshot || {},
+        ).length;
+        if (afterCount < beforeCount) {
+          cleanupWrites += 1;
+          if (rejectFirstCleanup && !rejected) {
+            rejected = true;
+            throw new Error('synthetic cleanup config failure');
+          }
+        }
+        Object.assign(config, structuredClone(message.config));
+        return { ok: true, rev: ++rev };
+      }
+      return { ok: true };
+    };
+    const card = document.createElement('houseplan-card');
+    card.setConfig({ type: 'custom:houseplan-card', title: 'Area cleanup probe' });
+    document.body.append(card);
+    card.hass = probeHass;
+    for (let attempt = 0; attempt < 20 && !card._loadedOnce; attempt += 1) await wait(100);
+    await wait(550);
+    if (rejectFirstCleanup) {
+      card._regSignature = '';
+      card._maybeRebuildDevices();
+      await wait(450);
+    }
+    const result = {
+      snapshot: structuredClone(card._serverCfg?.settings?.marker_area_snapshot || {}),
+      deviceIds: card._devices.map((item) => item.id),
+      deviceRegistryCalls,
+      entityRegistryCalls,
+      cleanupWrites,
+      configWrites: probeCalls.filter((message) => message.type === 'houseplan/config/set').length,
+    };
+    card.remove();
+    return result;
+  };
+
+  const filteredRow = registryRow('filtered-but-live');
+  const transientRow = registryRow('transient-device');
+  const recoveredProbe = await runCleanupProbe({
+    snapshot: {
+      filtered: { binding: 'device:filtered-but-live', area: 'living_room' },
+      transient: { binding: 'device:transient-device', area: 'living_room' },
+    },
+    deviceFrames: [[filteredRow], [filteredRow, transientRow]],
+    liveDevices: { [filteredRow.id]: filteredRow },
+  });
+
+  const keepRow = registryRow('still-live');
+  const confirmedProbe = await runCleanupProbe({
+    snapshot: {
+      orphan: { binding: 'device:confirmed-orphan', area: 'living_room' },
+      keep: { binding: 'device:still-live', area: 'living_room' },
+    },
+    deviceFrames: [[keepRow], [keepRow]],
+    liveDevices: { [keepRow.id]: keepRow },
+    rejectFirstCleanup: true,
+  });
+
+  const emptyProbe = await runCleanupProbe({
+    snapshot: {
+      orphan: { binding: 'device:empty-frame-orphan', area: 'living_room' },
+    },
+    deviceFrames: [[]],
+    liveDevices: {},
+  });
+
   return {
     movedToRegistryArea: moved?.area === 'kitchen' && moved?.space === 'f1',
     staleLayoutDeleted: !c._layout.d_light1,
@@ -411,6 +534,19 @@ const res = await page.evaluate(async () => {
           .includes(message.type)),
     authoritativeOrphanRemoved,
     nonAuthoritativeOrphanPreserved,
+    filteredRosterIsNotAbsence: !recoveredProbe.deviceIds.includes('filtered-but-live')
+      && !!recoveredProbe.snapshot.filtered,
+    transientRosterPreserved: !!recoveredProbe.snapshot.transient,
+    confirmationRefreshRunsOnce: recoveredProbe.deviceRegistryCalls === 2
+      && recoveredProbe.entityRegistryCalls === 2
+      && recoveredProbe.cleanupWrites === 0,
+    confirmedOrphanRemovedAlone: !confirmedProbe.snapshot.orphan
+      && !!confirmedProbe.snapshot.keep,
+    confirmedCleanupRetriesAfterWriteFailure: confirmedProbe.cleanupWrites >= 2,
+    emptyRegistryPreservesSnapshot: !!emptyProbe.snapshot.orphan
+      && emptyProbe.cleanupWrites === 0,
+    emptyRegistryDoesNotReloadLoop: emptyProbe.deviceRegistryCalls === 1
+      && emptyProbe.entityRegistryCalls === 1,
   };
 });
 

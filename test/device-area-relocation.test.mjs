@@ -6,6 +6,7 @@ import {
   markerAreaSnapshotOf,
   removeMarkerAreaSnapshots,
   registryFollowingBinding,
+  resolveAreaSnapshotCleanup,
   resolveDeviceAreaRelocations,
 } from '../test-build/device-area-relocation.js';
 
@@ -26,6 +27,12 @@ const device = (overrides = {}) => ({
 });
 const resolve = (overrides = {}) => resolveDeviceAreaRelocations({
   devices: [device()], model, layout: {}, snapshot: {}, authoritative: true,
+  ...overrides,
+});
+const cleanup = (overrides = {}) => resolveAreaSnapshotCleanup({
+  snapshot: {}, authoritative: true, revision: 1,
+  registryDevices: { live: {} }, registryEntities: { 'sensor.live': {} },
+  liveStates: {}, markers: [], previousCandidates: new Map(),
   ...overrides,
 });
 
@@ -167,28 +174,141 @@ test('unresolved duplicate Area and non-authoritative registry are no-ops', () =
   assert.deepEqual(resolve({ authoritative: false }), { decisions: [], relocateIds: new Set() });
 });
 
-test('authoritative registry removes orphan snapshots but preserves live marker ids', () => {
+test('orphan cleanup uses full registry evidence instead of the presentation roster', () => {
   const snapshot = {
     orphan: { binding: 'device:orphan', area: 'area-a' },
-    'marker-id': { binding: 'device:marker-id', area: 'area-a' },
     'canonical-device-id': { binding: 'device:device-row', area: 'area-a' },
   };
-  const result = resolve({
-    devices: [device({
-      id: 'device-row',
-      bindingRef: 'device-row',
-      marker: { id: 'marker-id', binding: 'device:marker-id', removed: true },
-    })],
+  const live = cleanup({
     snapshot,
+    registryDevices: { orphan: {}, 'device-row': {} },
   });
-  const orphan = result.decisions.find((decision) => decision.id === 'orphan');
-  assert.equal(orphan?.reason, 'registry-unverified');
-  assert.equal(orphan?.removeSnapshot, true);
-  assert.equal(result.decisions.some((decision) => decision.id === 'marker-id'), false);
+  assert.deepEqual(live.removeIds, new Set());
+  assert.deepEqual(live.candidates, new Map());
+  assert.equal(live.needsConfirmationRefresh, false);
+  const result = resolve({ devices: [], snapshot, cleanupSnapshotIds: live.removeIds });
   assert.deepEqual(applyAreaRelocationResolution(snapshot, result), {
-    'marker-id': snapshot['marker-id'],
+    orphan: snapshot.orphan,
     'canonical-device-id': snapshot['canonical-device-id'],
   });
+});
+
+test('empty registry namespaces never confirm destructive snapshot cleanup', () => {
+  const snapshot = {
+    dev: { binding: 'device:gone', area: 'area-a' },
+    ent: { binding: 'entity:sensor.gone', area: 'area-a' },
+  };
+  const previousCandidates = new Map([
+    ['device:gone', 1], ['entity:sensor.gone', 1],
+  ]);
+  const result = cleanup({
+    snapshot, revision: 2, registryDevices: {}, registryEntities: {},
+    previousCandidates,
+  });
+  assert.deepEqual(result.removeIds, new Set());
+  assert.deepEqual(result.candidates, previousCandidates);
+  assert.equal(result.needsConfirmationRefresh, false);
+});
+
+test('exact live entity state preserves registry-less snapshot provenance', () => {
+  for (const state of ['on', 'unavailable', 'unknown']) {
+    const snapshot = { ent: { binding: 'entity:sensor.yaml', area: 'area-a' } };
+    const result = cleanup({
+      snapshot,
+      registryEntities: { 'sensor.other': {} },
+      liveStates: { 'sensor.yaml': { state } },
+      previousCandidates: new Map([['entity:sensor.yaml', 0]]),
+    });
+    assert.deepEqual(result.removeIds, new Set(), state);
+    assert.deepEqual(result.candidates, new Map(), state);
+  }
+});
+
+test('a live saved marker preserves matching id or binding but a tombstone does not', () => {
+  const snapshot = {
+    byId: { binding: 'device:old-binding', area: 'area-a' },
+    byBinding: { binding: 'device:marker-binding', area: 'area-a' },
+    removed: { binding: 'device:removed', area: 'area-a' },
+  };
+  const first = cleanup({
+    snapshot,
+    markers: [
+      { id: 'byId', binding: 'device:new-binding' },
+      { id: 'another-id', binding: 'device:marker-binding' },
+      { id: 'removed', binding: 'device:removed', removed: true },
+    ],
+  });
+  assert.deepEqual(first.candidates, new Map([['device:removed', 1]]));
+  const second = cleanup({
+    snapshot, revision: 2, previousCandidates: first.candidates,
+    markers: [
+      { id: 'byId', binding: 'device:new-binding' },
+      { id: 'another-id', binding: 'device:marker-binding' },
+      { id: 'removed', binding: 'device:removed', removed: true },
+    ],
+  });
+  assert.deepEqual(second.removeIds, new Set(['removed']));
+});
+
+test('snapshot cleanup requires two distinct non-empty authoritative revisions', () => {
+  const snapshot = {
+    orphan: { binding: 'device:orphan', area: 'area-a' },
+    keep: { binding: 'device:keep', area: 'area-a' },
+  };
+  const first = cleanup({ snapshot, registryDevices: { keep: {} }, revision: 7 });
+  assert.deepEqual(first.removeIds, new Set());
+  assert.deepEqual(first.candidates, new Map([['device:orphan', 7]]));
+  assert.equal(first.needsConfirmationRefresh, true);
+
+  const repeated = cleanup({
+    snapshot, registryDevices: { keep: {} }, revision: 7,
+    previousCandidates: first.candidates,
+  });
+  assert.deepEqual(repeated.removeIds, new Set());
+  assert.equal(repeated.needsConfirmationRefresh, false);
+
+  const confirmed = cleanup({
+    snapshot, registryDevices: { keep: {} }, revision: 8,
+    previousCandidates: repeated.candidates,
+  });
+  assert.deepEqual(confirmed.removeIds, new Set(['orphan']));
+  const resolution = resolve({
+    devices: [], snapshot, cleanupSnapshotIds: confirmed.removeIds,
+  });
+  assert.deepEqual(applyAreaRelocationResolution(snapshot, resolution), {
+    keep: snapshot.keep,
+  });
+});
+
+test('binding recovery clears absence evidence and a later loss starts over', () => {
+  const snapshot = { orphan: { binding: 'device:orphan', area: 'area-a' } };
+  const first = cleanup({ snapshot, revision: 10 });
+  const recovered = cleanup({
+    snapshot, revision: 11, registryDevices: { live: {}, orphan: {} },
+    previousCandidates: first.candidates,
+  });
+  assert.deepEqual(recovered.candidates, new Map());
+  assert.deepEqual(recovered.removeIds, new Set());
+  const lostAgain = cleanup({
+    snapshot, revision: 12, previousCandidates: recovered.candidates,
+  });
+  assert.deepEqual(lostAgain.candidates, new Map([['device:orphan', 12]]));
+  assert.deepEqual(lostAgain.removeIds, new Set());
+  assert.equal(lostAgain.needsConfirmationRefresh, true);
+});
+
+test('limited frames and runtime reset do not confirm an earlier absence', () => {
+  const snapshot = { orphan: { binding: 'device:orphan', area: 'area-a' } };
+  const first = cleanup({ snapshot, revision: 20 });
+  const limited = cleanup({
+    snapshot, revision: 21, authoritative: false,
+    previousCandidates: first.candidates,
+  });
+  assert.deepEqual(limited.removeIds, new Set());
+  assert.deepEqual(limited.candidates, first.candidates);
+  const remounted = cleanup({ snapshot, revision: 22, previousCandidates: new Map() });
+  assert.deepEqual(remounted.removeIds, new Set());
+  assert.deepEqual(remounted.candidates, new Map([['device:orphan', 22]]));
 });
 
 test('non-authoritative registry preserves orphan snapshots', () => {

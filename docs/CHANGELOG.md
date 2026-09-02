@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Area relocation provenance now survives a temporarily empty or shortened
+  Home Assistant registry: cleanup uses the full binding roster and requires
+  two non-empty authoritative observations before forgetting a missing device
+  ([#419](https://github.com/Matysh/houseplan-card/issues/419)).
 - **Help & feedback** now keeps attachment consent authoritative when preview
   responses arrive late, and edited retries receive a fresh idempotency key so
   the updated report reaches support

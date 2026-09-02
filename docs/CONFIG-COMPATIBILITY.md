@@ -498,6 +498,16 @@ new frontends skip malformed entries independently. Rebinding and marker
 deletion remove the obsolete entry, and provenance advances only after the
 corresponding stale layout position has been deleted successfully.
 
+Automatic orphan cleanup is fail-safe. It uses the full Device/Entity Registry,
+exact live entity states and saved live markers rather than the filtered list
+of icons that can currently be drawn. A completely empty relevant registry
+namespace never deletes provenance. A binding missing from a non-empty full
+registry is removed only after the same absence is observed in two distinct
+authoritative revisions; the first observation requests one shared registry
+refresh. This confirmation is runtime-only and restarts after a card remount.
+Explicit marker deletion, rebinding and leaving registry-following placement
+keep their immediate lifecycle cleanup.
+
 ## Wall junction limits (#329)
 
 Junction limits (minimum 15° between neighbouring walls of one node, at most

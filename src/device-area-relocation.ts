@@ -42,12 +42,34 @@ export interface AreaRelocationResolution {
   relocateIds: Set<string>;
 }
 
+export interface AreaSnapshotCleanupOptions {
+  snapshot: unknown;
+  authoritative: boolean;
+  revision: number;
+  registryDevices: Readonly<Record<string, unknown>>;
+  registryEntities: Readonly<Record<string, unknown>>;
+  liveStates?: Readonly<Record<string, unknown>>;
+  markers?: readonly Marker[];
+  previousCandidates?: ReadonlyMap<MarkerAreaBinding, number>;
+}
+
+export interface AreaSnapshotCleanupResolution {
+  /** Snapshot ids whose exact binding was absent in two qualifying revisions. */
+  removeIds: Set<string>;
+  /** Runtime-only first-absence evidence, keyed by exact binding. */
+  candidates: Map<MarkerAreaBinding, number>;
+  /** The caller should request one confirmation registry refresh. */
+  needsConfirmationRefresh: boolean;
+}
+
 export interface ResolveAreaRelocationsOptions {
   devices: readonly DevItem[];
   model: readonly SpaceModel[];
   layout: AreaRelocationLayout;
   snapshot: unknown;
   authoritative: boolean;
+  /** Orphan cleanup is resolved from registry evidence, never from devices[]. */
+  cleanupSnapshotIds?: ReadonlySet<string>;
   /** Stored layout coordinates are normalised; model room coordinates are render units. */
   coordinateScale?: number;
 }
@@ -129,6 +151,76 @@ function unresolved(id: string, reason: AreaRelocationReason): AreaRelocationDec
   };
 }
 
+function bindingParts(binding: MarkerAreaBinding): ['device' | 'entity', string] {
+  const split = binding.indexOf(':');
+  return [binding.slice(0, split) as 'device' | 'entity', binding.slice(split + 1)];
+}
+
+/**
+ * Resolve destructive cleanup independently from the filtered presentation
+ * roster. One missing full-registry frame is evidence to re-check, not
+ * evidence to forget Area provenance.
+ */
+export function resolveAreaSnapshotCleanup(
+  options: AreaSnapshotCleanupOptions,
+): AreaSnapshotCleanupResolution {
+  const snapshot = markerAreaSnapshotOf(options.snapshot);
+  const snapshotBindings = new Set(Object.values(snapshot).map((entry) => entry.binding));
+  const candidates = new Map<MarkerAreaBinding, number>();
+  for (const [binding, revision] of options.previousCandidates || []) {
+    if (validBinding(binding) && Number.isFinite(revision) && snapshotBindings.has(binding)) {
+      candidates.set(binding, revision);
+    }
+  }
+
+  const markerIds = new Set<string>();
+  const markerBindings = new Set<MarkerAreaBinding>();
+  for (const marker of options.markers || []) {
+    if (marker.removed) continue;
+    if (validText(marker.id)) markerIds.add(marker.id);
+    if (validBinding(marker.binding)) markerBindings.add(marker.binding);
+  }
+
+  const deviceIds = new Set(Object.keys(options.registryDevices || {}));
+  const entityIds = new Set(Object.keys(options.registryEntities || {}));
+  const liveEntityIds = new Set(Object.keys(options.liveStates || {}));
+  const idsByBinding = new Map<MarkerAreaBinding, string[]>();
+  for (const [id, entry] of Object.entries(snapshot)) {
+    const ids = idsByBinding.get(entry.binding) || [];
+    ids.push(id);
+    idsByBinding.set(entry.binding, ids);
+  }
+
+  const removeIds = new Set<string>();
+  let needsConfirmationRefresh = false;
+  for (const [binding, ids] of idsByBinding) {
+    const [kind, ref] = bindingParts(binding);
+    const exists = markerBindings.has(binding)
+      || ids.some((id) => markerIds.has(id))
+      || (kind === 'device' ? deviceIds.has(ref) : entityIds.has(ref) || liveEntityIds.has(ref));
+    if (exists) {
+      candidates.delete(binding);
+      continue;
+    }
+
+    // A technically successful empty response is not destructive evidence.
+    // Keep an earlier candidate but do not advance it or create a refresh loop.
+    const namespaceNonEmpty = kind === 'device' ? deviceIds.size > 0 : entityIds.size > 0;
+    if (!options.authoritative || !namespaceNonEmpty) continue;
+
+    const firstRevision = candidates.get(binding);
+    if (firstRevision === undefined) {
+      candidates.set(binding, options.revision);
+      needsConfirmationRefresh = true;
+      continue;
+    }
+    if (firstRevision === options.revision) continue;
+    for (const id of ids) removeIds.add(id);
+  }
+
+  return { removeIds, candidates, needsConfirmationRefresh };
+}
+
 /**
  * Resolve registry Area transitions once per authoritative device/model rebuild.
  * The function has no stores, DOM, HA calls or writes and is shared by both
@@ -142,19 +234,8 @@ export function resolveDeviceAreaRelocations(
   if (!options.authoritative) return { decisions, relocateIds };
 
   const snapshot = markerAreaSnapshotOf(options.snapshot);
-  const liveIds = new Set<string>();
-  const liveBindings = new Set<MarkerAreaBinding>();
-  for (const device of options.devices) {
-    if (validText(device.id)) liveIds.add(device.id);
-    if (validText(device.marker?.id)) liveIds.add(device.marker.id);
-    if ((device.bindingKind === 'device' || device.bindingKind === 'entity')
-        && validText(device.bindingRef)) {
-      liveBindings.add(`${device.bindingKind}:${device.bindingRef}`);
-    }
-    if (validBinding(device.marker?.binding)) liveBindings.add(device.marker.binding);
-  }
-  for (const [id, entry] of Object.entries(snapshot)) {
-    if (!liveIds.has(id) && !liveBindings.has(entry.binding)) decisions.push({
+  for (const id of options.cleanupSnapshotIds || []) {
+    if (snapshot[id]) decisions.push({
       ...unresolved(id, 'registry-unverified'), removeSnapshot: true,
     });
   }

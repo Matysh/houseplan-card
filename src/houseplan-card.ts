@@ -262,8 +262,9 @@ import {
 import {
   applyAreaRelocationResolution,
   markerAreaSnapshotOf,
+  resolveAreaSnapshotCleanup,
   resolveDeviceAreaRelocations,
-  type AreaRelocationResolution,
+  type AreaRelocationResolution, type MarkerAreaBinding,
 } from './device-area-relocation';
 import { resolvedSvgScreenBlend, svgScreenBlendSupported } from './glow-blend';
 import {
@@ -1012,6 +1013,8 @@ export class HouseplanCard extends LitElement {
   private _newSyncKey = '';
   /** Saved positions temporarily superseded by authoritative HA Area truth. */
   private _areaRelocationIds = new Set<string>();
+  /** First authoritative absence is runtime evidence to re-check, never to delete. */
+  private _areaSnapshotCleanupCandidates = new Map<MarkerAreaBinding, number>();
   private _areaRelocationSyncKey = '';
   private _areaRelocationWrite: Promise<void> = Promise.resolve();
   private _tip: {
@@ -4630,6 +4633,7 @@ export class HouseplanCard extends LitElement {
     this._haRegistryConnection = connection;
     this._haRegistryRev = -1;
     this._haBindingCacheKey = '';
+    this._areaSnapshotCleanupCandidates.clear();
     this._planHassMemo = null;
     this._haRegistryRelease = acquireHaRegistries(this.hass, this._onHaRegistryUpdate);
     this._onHaRegistryUpdate();
@@ -5091,14 +5095,7 @@ export class HouseplanCard extends LitElement {
     }
     let areaRelocations: AreaRelocationResolution | null = null;
     if (registry.authoritative) {
-      areaRelocations = resolveDeviceAreaRelocations({
-        devices: this._devices,
-        model: this._model,
-        layout: this._layout,
-        snapshot: this._settings.marker_area_snapshot,
-        authoritative: true,
-        coordinateScale: NORM_W,
-      });
+      areaRelocations = this._resolveAreaRelocations(registry);
       this._areaRelocationIds = new Set(areaRelocations.relocateIds);
       if (this._areaRelocationIds.size) {
         this._cancelDeviceDrag();
@@ -5156,6 +5153,35 @@ export class HouseplanCard extends LitElement {
   }
 
   /**
+   * Join filtered placement decisions with fail-safe registry lifecycle
+   * evidence. The two inputs deliberately stay separate: a device that cannot
+   * be painted is not thereby absent from Home Assistant.
+   */
+  private _resolveAreaRelocations(registry = this._haRegistry): AreaRelocationResolution {
+    const cleanup = resolveAreaSnapshotCleanup({
+      snapshot: this._settings.marker_area_snapshot,
+      authoritative: registry.authoritative,
+      revision: registry.revision,
+      registryDevices: registry.devices,
+      registryEntities: registry.entities,
+      liveStates: this.hass?.states,
+      markers: this._markers,
+      previousCandidates: this._areaSnapshotCleanupCandidates,
+    });
+    this._areaSnapshotCleanupCandidates = cleanup.candidates;
+    if (cleanup.needsConfirmationRefresh && this._canEdit) refreshHaRegistries(this.hass);
+    return resolveDeviceAreaRelocations({
+      devices: this._devices,
+      model: this._model,
+      layout: this._layout,
+      snapshot: this._settings.marker_area_snapshot,
+      authoritative: registry.authoritative,
+      cleanupSnapshotIds: cleanup.removeIds,
+      coordinateScale: NORM_W,
+    });
+  }
+
+  /**
    * "New device" flag (server-side, shared by every client): an auto device
    * that appears after the known baseline was recorded gets a red dot until
    * someone opens its editor. The baseline is seeded silently on first run,
@@ -5203,14 +5229,7 @@ export class HouseplanCard extends LitElement {
       if (!this._serverCfg || !this._haRegistry.authoritative) return;
       // The queue may have waited behind another registry/config mutation.
       // Re-resolve at execution time so an explicit room choice or rebind wins.
-      const current = resolveDeviceAreaRelocations({
-        devices: this._devices,
-        model: this._model,
-        layout: this._layout,
-        snapshot: this._settings.marker_area_snapshot,
-        authoritative: true,
-        coordinateScale: NORM_W,
-      });
+      const current = this._resolveAreaRelocations();
       this._areaRelocationIds = new Set(current.relocateIds);
       const committed = new Set<string>();
       const deletedPlacements = new Map<string, DevicePlacement>();

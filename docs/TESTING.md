@@ -568,6 +568,13 @@ the active-only state projection. The standalone demo exposes complete
       against the production bundle, checks one serialized layout delete plus
       config/attention persistence, and proves the read-only hosted card moves
       immediately without writes.
+- [ ] Area-provenance cleanup ignores the filtered display roster, preserves
+      empty Device/Entity Registry namespaces, accepts exact live entity states
+      as existence evidence, requests only one confirmation refresh and removes
+      an orphan only after two distinct non-empty authoritative revisions.
+- [ ] A rejected confirmed-cleanup config write remains retryable on the next
+      rebuild; the same revision, state ticks and repeated empty frames never
+      become extra confirmation or a registry reload loop.
 - [ ] Backend validation and import/export tests cover the 20,000-entry bound,
       exact entry schema, same-source preservation and cross-source removal.
 

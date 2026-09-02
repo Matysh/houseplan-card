@@ -165,14 +165,62 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'area-snapshot-cleanup-ignores-authority',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
-      + '&& node --test --test-name-pattern="non-authoritative registry preserves orphan snapshots" '
+      + '&& node --test --test-name-pattern="limited frames and runtime reset" '
       + 'test/device-area-relocation.test.mjs',
     because: 'temporary registry absence must not erase device Area provenance before the '
-      + 'registry is authoritative (#406)',
+      + 'registry is authoritative (#406/#419)',
     patches: [{
       file: 'src/device-area-relocation.ts',
-      find: '  if (!options.authoritative) return { decisions, relocateIds };',
-      replace: '  if (false && !options.authoritative) return { decisions, relocateIds };',
+      find: '    if (!options.authoritative || !namespaceNonEmpty) continue;',
+      replace: '    if (!namespaceNonEmpty) continue;',
+    }],
+  },
+  {
+    id: 'area-snapshot-cleanup-forgets-registry-evidence',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="orphan cleanup uses full registry evidence" '
+      + 'test/device-area-relocation.test.mjs',
+    because: 'a filtered presentation roster is not proof that a live HA binding disappeared '
+      + 'and must not erase its Area provenance (#419 AC1/AC12)',
+    patches: [{
+      file: 'src/device-area-relocation.ts',
+      find: '    const exists = markerBindings.has(binding)\n'
+        + '      || ids.some((id) => markerIds.has(id))\n'
+        + "      || (kind === 'device' ? deviceIds.has(ref) : entityIds.has(ref) || liveEntityIds.has(ref));",
+      replace: '    const exists = false;',
+    }],
+  },
+  {
+    id: 'area-snapshot-cleanup-trusts-first-absence',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="requires two distinct" '
+      + 'test/device-area-relocation.test.mjs',
+    because: 'one shortened authoritative frame is only a reason to re-check, never enough '
+      + 'evidence for destructive cleanup (#419 AC5/AC12)',
+    patches: [{
+      file: 'src/device-area-relocation.ts',
+      find: '    if (firstRevision === undefined) {\n'
+        + '      candidates.set(binding, options.revision);\n'
+        + '      needsConfirmationRefresh = true;\n'
+        + '      continue;\n'
+        + '    }',
+      replace: '    if (firstRevision === undefined) {\n'
+        + '      for (const id of ids) removeIds.add(id);\n'
+        + '      continue;\n'
+        + '    }',
+    }],
+  },
+  {
+    id: 'area-snapshot-cleanup-trusts-empty-namespace',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="empty registry namespaces" '
+      + 'test/device-area-relocation.test.mjs',
+    because: 'even repeated empty registry namespaces are an unsafe basis for deleting every '
+      + 'saved Area provenance entry (#419 AC2/AC12)',
+    patches: [{
+      file: 'src/device-area-relocation.ts',
+      find: '    if (!options.authoritative || !namespaceNonEmpty) continue;',
+      replace: '    if (!options.authoritative) continue;',
     }],
   },
   {
