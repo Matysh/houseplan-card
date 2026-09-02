@@ -353,4 +353,3 @@ Feature flag не нужен: UI и schema не меняются. Откат —
   debounce; отдельная подписка и новый таймер не создаются.
 - Положительное evidence снимает candidate до построения write batch; решение
   об intentional cleanup собственного marker id остаётся выше orphan-sweep.
-
