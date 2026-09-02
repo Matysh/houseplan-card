@@ -12,10 +12,10 @@ import math
 import re
 import struct
 import xml.etree.ElementTree as ET
-from xml.parsers import expat
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+from xml.parsers import expat
 
 from .const import CONTENT_URL, MAX_DECOR_ASSET_BYTES
 
@@ -328,6 +328,7 @@ def validate_asset(
     # but truncated/corrupt payloads before they enter the authenticated store.
     try:
         from io import BytesIO
+
         from PIL import Image
 
         with Image.open(BytesIO(data)) as image:
