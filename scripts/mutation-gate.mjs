@@ -4434,6 +4434,33 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'support-stale-preview-response-revives-consent',
+    guard: 'node demo/smoke_support_feedback.mjs',
+    because: 'a late preview response must not restore exact plan geometry after attachment '
+      + 'consent was revoked or a newer preview generation won (#418)',
+    patches: [{
+      file: 'src/houseplan-editor-runtime.ts',
+      find: "    return generation === this._supportPreviewGeneration\n"
+        + '      && current?.draftId === draftId\n'
+        + '      && current.attach;',
+      replace: '    return true;',
+    }],
+  },
+  {
+    id: 'support-edited-retry-reuses-old-idempotency-key',
+    guard: 'node demo/smoke_support_feedback.mjs',
+    because: 'a retry with changed outbound message, contact or preview must receive a new '
+      + 'idempotency key instead of resolving to the first payload at the relay (#418)',
+    patches: [{
+      file: 'src/support-feedback.ts',
+      find: '    idempotencyKey: state.submissionFingerprint\n'
+        + '      && state.submissionFingerprint !== fingerprint\n'
+        + "      ? randomId('report')\n"
+        + '      : state.idempotencyKey,',
+      replace: '    idempotencyKey: state.idempotencyKey,',
+    }],
+  },
+  {
     id: 'support-timeout-claims-success',
     guard: 'node demo/smoke_support_feedback.mjs',
     because: 'a relay timeout, rate limit or unknown command must preserve the draft and expose '

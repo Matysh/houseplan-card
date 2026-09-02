@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- **Help & feedback** now keeps attachment consent authoritative when preview
+  responses arrive late, and edited retries receive a fresh idempotency key so
+  the updated report reaches support
+  ([#418](https://github.com/Matysh/houseplan-card/issues/418)).
 - Dangerous-action confirmation no longer hangs if the active space disappears
   or a request arrives while a lazy language is switching; House Plan now
   refuses safely when no confirmation dialog can be rendered

@@ -46,6 +46,19 @@ const result = await page.evaluate(async ({ version, previewText, previewSha }) 
   const originalCallWS = card.hass.callWS.bind(card.hass);
   const calls = [];
   let submitMode = 'success';
+  let previewToken = 'a';
+  let deferPreviews = false;
+  const pendingPreviews = [];
+  const previewPayload = (tokenChar = previewToken) => ({
+    text: previewText,
+    size: new TextEncoder().encode(previewText).byteLength,
+    expires_in: 300,
+    spaces: 2,
+    token: tokenChar.repeat(48),
+    sha256: previewSha,
+    version: 1,
+    format: 'houseplan-support-package',
+  });
   card.hass = {
     ...card.hass,
     callWS: async (message) => {
@@ -54,16 +67,10 @@ const result = await page.evaluate(async ({ version, previewText, previewSha }) 
       }
       calls.push(structuredClone(message));
       if (message.type === 'houseplan/support/preview') {
-        return {
-          text: previewText,
-          size: new TextEncoder().encode(previewText).byteLength,
-          expires_in: 300,
-          spaces: 2,
-          token: 'a'.repeat(48),
-          sha256: previewSha,
-          version: 1,
-          format: 'houseplan-support-package',
-        };
+        if (deferPreviews) {
+          return new Promise((resolve, reject) => pendingPreviews.push({ resolve, reject }));
+        }
+        return previewPayload();
       }
       if (message.type === 'houseplan/support/submit') {
         if (submitMode === 'rate') throw { code: 'support_rate_limited' };
@@ -243,6 +250,113 @@ const result = await page.evaluate(async ({ version, previewText, previewSha }) 
   out.retryAndManualRecovery = ratePreserved && retryRequests.length === 4
     && retryRequests.every((call) => call.idempotency_key === retryKey)
     && root().querySelector('#support-receipt')?.textContent.includes('HP-43-SMOKE') === true;
+
+  await close();
+  await open();
+  deferPreviews = true;
+  const canceledBuild = card._editorRuntime._setSupportAttachment(true);
+  await until(() => pendingPreviews.length === 1
+    && card._supportDialog?.status === 'building', 'deferred preview building');
+  await update();
+  const disabledWhileBuilding = root().querySelector('.supportattach input')?.disabled === true;
+  const canceledRequest = pendingPreviews.shift();
+  await card._editorRuntime._setSupportAttachment(false);
+  await update();
+  const hiddenImmediately = card._supportDialog?.attach === false
+    && card._supportDialog?.status === 'idle'
+    && card._supportDialog?.preview === null
+    && !root().querySelector('.supportpreview');
+  canceledRequest.resolve(previewPayload('b'));
+  await canceledBuild;
+  await update();
+  const discardedB = calls.filter((call) => call.type === 'houseplan/support/preview/discard'
+    && call.token === 'b'.repeat(48)).length;
+  out.latePreviewConsentStaysRevoked = disabledWhileBuilding && hiddenImmediately
+    && card._supportDialog?.attach === false
+    && card._supportDialog?.status === 'idle'
+    && card._supportDialog?.preview === null
+    && !root().querySelector('.supportpreview')
+    && discardedB === 1;
+
+  const oldBuild = card._editorRuntime._setSupportAttachment(true);
+  await until(() => pendingPreviews.length === 1, 'old preview queued');
+  const oldRequest = pendingPreviews.shift();
+  await card._editorRuntime._setSupportAttachment(false);
+  const latestBuild = card._editorRuntime._setSupportAttachment(true);
+  await until(() => pendingPreviews.length === 1, 'latest preview queued');
+  const latestRequest = pendingPreviews.shift();
+  latestRequest.resolve(previewPayload('c'));
+  await latestBuild;
+  oldRequest.resolve(previewPayload('d'));
+  await oldBuild;
+  await update();
+  out.latestPreviewGenerationWins = card._supportDialog?.attach === true
+    && card._supportDialog?.status === 'ready'
+    && card._supportDialog?.preview?.token === 'c'.repeat(48)
+    && calls.filter((call) => call.type === 'houseplan/support/preview/discard'
+      && call.token === 'd'.repeat(48)).length === 1;
+
+  const rejectedBuild = card._editorRuntime._refreshSupportPreview();
+  await until(() => pendingPreviews.length === 1
+    && card._supportDialog?.status === 'building', 'rejected stale preview queued');
+  const rejectedRequest = pendingPreviews.shift();
+  await card._editorRuntime._setSupportAttachment(false);
+  rejectedRequest.reject({ code: 'support_rejected' });
+  await rejectedBuild;
+  await update();
+  out.stalePreviewErrorIsIgnored = card._supportDialog?.attach === false
+    && card._supportDialog?.status === 'idle'
+    && card._supportDialog?.errorCode === ''
+    && card._supportDialog?.preview === null
+    && !root().querySelector('.supportpreview');
+  deferPreviews = false;
+
+  await close();
+  await open();
+  const validationKey = card._supportDialog.idempotencyKey;
+  const submitsBeforeEmptyValidation = calls.filter(
+    (call) => call.type === 'houseplan/support/submit',
+  ).length;
+  await card._editorRuntime._submitSupport();
+  await update();
+  out.validationDoesNotRotateKey = card._supportDialog?.idempotencyKey === validationKey
+    && card._supportDialog?.submissionFingerprint === ''
+    && calls.filter((call) => call.type === 'houseplan/support/submit').length
+      === submitsBeforeEmptyValidation;
+
+  const failSubmit = async () => {
+    await card._editorRuntime._submitSupport();
+    await until(() => card._supportDialog?.status === 'error', 'payload submit failure');
+    await update();
+    return calls.findLast((call) => call.type === 'houseplan/support/submit');
+  };
+  submitMode = 'rate';
+  await setInput('#support-message', '  First payload  ');
+  const firstPayloadRequest = await failSubmit();
+  await setInput('#support-message', 'First payload   ');
+  const trimOnlyRequest = await failSubmit();
+  await setInput('#support-message', 'Second payload');
+  const changedMessageRequest = await failSubmit();
+  await setInput('#support-contact', 'owner@example.test');
+  const changedContactRequest = await failSubmit();
+  previewToken = 'e';
+  await card._editorRuntime._setSupportAttachment(true);
+  const attachedRequest = await failSubmit();
+  await card._editorRuntime._setSupportAttachment(false);
+  previewToken = 'f';
+  await card._editorRuntime._setSupportAttachment(true);
+  const changedPreviewRequest = await failSubmit();
+  out.idempotencyKeyFollowsEffectivePayload = firstPayloadRequest?.idempotency_key === validationKey
+    && trimOnlyRequest?.idempotency_key === firstPayloadRequest?.idempotency_key
+    && changedMessageRequest?.idempotency_key !== trimOnlyRequest?.idempotency_key
+    && changedContactRequest?.idempotency_key !== changedMessageRequest?.idempotency_key
+    && attachedRequest?.idempotency_key !== changedContactRequest?.idempotency_key
+    && attachedRequest?.preview_token === 'e'.repeat(48)
+    && changedPreviewRequest?.idempotency_key !== attachedRequest?.idempotency_key
+    && changedPreviewRequest?.preview_token === 'f'.repeat(48)
+    && firstPayloadRequest?.message === 'First payload'
+    && firstPayloadRequest?.contact === '';
+  await close();
 
   return out;
 }, { version: VERSION, previewText: PREVIEW_TEXT, previewSha: PREVIEW_SHA });

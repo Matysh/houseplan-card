@@ -26,6 +26,7 @@ export type SupportDialogStatus =
 export interface SupportDialogState {
   draftId: string;
   idempotencyKey: string;
+  submissionFingerprint: string;
   contact: string;
   message: string;
   attach: boolean;
@@ -52,10 +53,32 @@ function randomId(prefix: string): string {
   return `${prefix}-${id}`;
 }
 
+export function supportSubmissionFingerprint(state: SupportDialogState): string {
+  return JSON.stringify({
+    message: state.message.trim(),
+    contact: state.contact.trim(),
+    previewToken: state.attach && state.preview ? state.preview.token : '',
+  });
+}
+
+export function supportSubmissionIdentity(
+  state: SupportDialogState,
+): { idempotencyKey: string; fingerprint: string } {
+  const fingerprint = supportSubmissionFingerprint(state);
+  return {
+    idempotencyKey: state.submissionFingerprint
+      && state.submissionFingerprint !== fingerprint
+      ? randomId('report')
+      : state.idempotencyKey,
+    fingerprint,
+  };
+}
+
 export function newSupportDialogState(): SupportDialogState {
   return {
     draftId: randomId('draft'),
     idempotencyKey: randomId('report'),
+    submissionFingerprint: '',
     contact: '',
     message: '',
     attach: false,

@@ -252,6 +252,7 @@ import {
   supportErrorCode,
   supportRuntimeFacts,
   supportSizeKiB,
+  supportSubmissionIdentity,
   type SupportDialogState,
   type SupportPreview,
 } from './support-feedback';
@@ -1189,6 +1190,7 @@ export class HouseplanEditorRuntime {
     spaceId: string; fingerprint: string; violations: JunctionLimitViolation[];
   }>();
   private _supportExpiryTimer?: number;
+  private _supportPreviewGeneration = 0;
 
   public constructor(public readonly host: HouseplanEditorHostPort) {
     host._editorSecondary = new EditorSecondaryController({
@@ -9078,6 +9080,7 @@ public _openSupportDialog = (): void => {
     if (!this.host._norm || !this.host._canEdit) return;
     clearTimeout(this._supportExpiryTimer);
     this._supportExpiryTimer = undefined;
+    this._supportPreviewGeneration += 1;
     this.host._supportDialog = newSupportDialogState();
   };
 
@@ -9190,10 +9193,18 @@ private _supportFacts(): ReturnType<typeof supportRuntimeFacts> {
     });
   }
 
+private _supportPreviewRequestIsCurrent(draftId: string, generation: number): boolean {
+    const current = this.host._supportDialog;
+    return generation === this._supportPreviewGeneration
+      && current?.draftId === draftId
+      && current.attach;
+  }
+
 private async _buildSupportPreview(draftId: string): Promise<void> {
     const current = this.host._supportDialog;
     if (!current || current.draftId !== draftId || !current.attach
         || this.host._haIntegrationVersion !== CARD_VERSION) return;
+    const generation = ++this._supportPreviewGeneration;
     this._supportPatch(draftId, { status: 'building', errorCode: '' });
     try {
       const response: unknown = await this.host.hass.callWS({
@@ -9234,6 +9245,10 @@ private async _buildSupportPreview(draftId: string): Promise<void> {
         text,
         preparedAt: now,
       };
+      if (!this._supportPreviewRequestIsCurrent(draftId, generation)) {
+        void this._discardSupportPreview(token);
+        return;
+      }
       if (!this._supportPatch(draftId, {
         status: 'ready',
         preview,
@@ -9245,6 +9260,7 @@ private async _buildSupportPreview(draftId: string): Promise<void> {
       }
       this._scheduleSupportExpiry(draftId, preview);
     } catch (error: unknown) {
+      if (!this._supportPreviewRequestIsCurrent(draftId, generation)) return;
       if (!this._supportPatch(draftId, {
         status: 'error',
         errorCode: supportErrorCode(error),
@@ -9258,6 +9274,7 @@ public async _setSupportAttachment(attach: boolean): Promise<void> {
     if (!current || current.status === 'sending' || current.status === 'success') return;
     const token = current.preview?.token || '';
     if (!attach) {
+      this._supportPreviewGeneration += 1;
       clearTimeout(this._supportExpiryTimer);
       this._supportExpiryTimer = undefined;
       this._supportPatch(current.draftId, {
@@ -9317,14 +9334,21 @@ public async _submitSupport(): Promise<void> {
       return;
     }
     if (!supportCanSubmit(current)) return;
-    this._supportPatch(current.draftId, { status: 'sending', errorCode: '' });
+    const submission = supportSubmissionIdentity(current);
+    const sending = this._supportPatch(current.draftId, {
+      status: 'sending',
+      errorCode: '',
+      idempotencyKey: submission.idempotencyKey,
+      submissionFingerprint: submission.fingerprint,
+    });
+    if (!sending) return;
     try {
       const response: unknown = await this.host.hass.callWS({
         type: 'houseplan/support/submit',
-        message: current.message.trim(),
-        contact: current.contact.trim(),
-        ...(current.attach && current.preview ? { preview_token: current.preview.token } : {}),
-        idempotency_key: current.idempotencyKey,
+        message: sending.message.trim(),
+        contact: sending.contact.trim(),
+        ...(sending.attach && sending.preview ? { preview_token: sending.preview.token } : {}),
+        idempotency_key: sending.idempotencyKey,
       });
       const reportId = response && typeof response === 'object' && 'report_id' in response
         ? String((response as { report_id?: unknown }).report_id || '') : '';
@@ -9433,7 +9457,7 @@ public _renderSupportDialog(): TemplateResult {
               ${state.status === 'building' ? html`<div class="supportstatus" role="status" aria-live="polite">
                 <ha-icon icon="mdi:progress-clock"></ha-icon>${this.host._t('support.building')}
               </div>` : nothing}
-              ${state.preview ? html`
+              ${state.attach && state.preview ? html`
                 <div class="supportpreview">
                   <div class="supportsummary">${this.host._t('support.preview_summary', {
                     version: state.preview.version,

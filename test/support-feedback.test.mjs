@@ -8,6 +8,8 @@ import {
   supportDraftError,
   supportErrorCode,
   supportRuntimeFacts,
+  supportSubmissionFingerprint,
+  supportSubmissionIdentity,
 } from '../test-build/support-feedback.js';
 
 test('a fresh dialog never opts into exact plan geometry', () => {
@@ -37,6 +39,47 @@ test('attachment submit requires the exact non-expired preview', () => {
   };
   assert.equal(supportCanSubmit({ ...base, preview, status: 'ready' }, now), true);
   assert.equal(supportDraftError({ ...base, preview }, now + 1), 'preview_expired');
+});
+
+test('submission identity follows the effective trimmed payload', () => {
+  const initial = {
+    ...newSupportDialogState(),
+    message: '  first message  ',
+    contact: '  user@example.test  ',
+  };
+  const first = supportSubmissionIdentity(initial);
+  assert.equal(first.idempotencyKey, initial.idempotencyKey);
+  assert.equal(
+    first.fingerprint,
+    supportSubmissionFingerprint({ ...initial, message: 'first message', contact: 'user@example.test' }),
+  );
+
+  const attempted = { ...initial, submissionFingerprint: first.fingerprint };
+  assert.equal(
+    supportSubmissionIdentity({ ...attempted, message: 'first message   ' }).idempotencyKey,
+    initial.idempotencyKey,
+  );
+  assert.notEqual(
+    supportSubmissionIdentity({ ...attempted, message: 'different message' }).idempotencyKey,
+    initial.idempotencyKey,
+  );
+  assert.notEqual(
+    supportSubmissionIdentity({ ...attempted, contact: 'other@example.test' }).idempotencyKey,
+    initial.idempotencyKey,
+  );
+
+  const preview = {
+    token: 'a'.repeat(48), expiresAt: Date.now() + 1_000, size: 2, sha256: 'b'.repeat(64),
+    spaces: 1, format: 'houseplan-support-package', version: 1, text: '{}\n', preparedAt: Date.now(),
+  };
+  assert.notEqual(
+    supportSubmissionIdentity({ ...attempted, attach: true, preview }).idempotencyKey,
+    initial.idempotencyKey,
+  );
+  assert.equal(
+    supportSubmissionFingerprint({ ...attempted, attach: false, preview }),
+    first.fingerprint,
+  );
 });
 
 test('runtime facts are bounded enums without a raw user agent', () => {
