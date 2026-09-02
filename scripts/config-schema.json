@@ -593,6 +593,82 @@
       "opaque": "<function _finite>",
       "required": true
     },
+    "config.spaces[].decor[]<image>": {
+      "allowExtra": true
+    },
+    "config.spaces[].decor[]<image>.angle": {
+      "max": 360.0,
+      "min": -360.0,
+      "opaque": "<function _finite>",
+      "required": false
+    },
+    "config.spaces[].decor[]<image>.asset_id": {
+      "opaque": "Match('^[0-9a-f]{64}$', msg=None)",
+      "required": true,
+      "type": "str"
+    },
+    "config.spaces[].decor[]<image>.color": {
+      "opaque": "Match('\\\\A#[0-9a-fA-F]{6}\\\\Z', msg=None)",
+      "required": false
+    },
+    "config.spaces[].decor[]<image>.flip_h": {
+      "required": false,
+      "type": "bool"
+    },
+    "config.spaces[].decor[]<image>.flip_v": {
+      "required": false,
+      "type": "bool"
+    },
+    "config.spaces[].decor[]<image>.h": {
+      "max": 5000.0,
+      "min": 1e-07,
+      "opaque": "<function _finite>",
+      "required": true
+    },
+    "config.spaces[].decor[]<image>.id": {
+      "required": true,
+      "type": "str"
+    },
+    "config.spaces[].decor[]<image>.kind": {
+      "const": "image",
+      "required": true
+    },
+    "config.spaces[].decor[]<image>.opacity": {
+      "max": 1.0,
+      "min": 0.0,
+      "opaque": "<function _finite>",
+      "required": false
+    },
+    "config.spaces[].decor[]<image>.w": {
+      "max": 5000.0,
+      "min": 1e-07,
+      "opaque": "<function _finite>",
+      "required": true
+    },
+    "config.spaces[].decor[]<image>.width": {
+      "max": 30,
+      "min": 0.1,
+      "required": false,
+      "type": "float"
+    },
+    "config.spaces[].decor[]<image>.width_cm": {
+      "max": 100,
+      "min": 0.1,
+      "opaque": "<function _finite>",
+      "required": false
+    },
+    "config.spaces[].decor[]<image>.x": {
+      "max": 5000.0,
+      "min": -5000.0,
+      "opaque": "<function _finite>",
+      "required": true
+    },
+    "config.spaces[].decor[]<image>.y": {
+      "max": 5000.0,
+      "min": -5000.0,
+      "opaque": "<function _finite>",
+      "required": true
+    },
     "config.spaces[].decor[]<line>": {
       "allowExtra": true
     },
