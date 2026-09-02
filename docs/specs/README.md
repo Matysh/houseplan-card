@@ -175,6 +175,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#200](https://github.com/Matysh/houseplan-card/issues/200) Одинаковая геометрия подписи комнаты в View и Plan editor | [200-room-label-parity.md](200-room-label-parity.md) |
 | [#340](https://github.com/Matysh/houseplan-card/issues/340) Обязательная ревизия повторной записи config/set | [340-config-set-revision.md](340-config-set-revision.md) |
 | [#372](https://github.com/Matysh/houseplan-card/issues/372) Компактное верхнее кадрирование static card без заголовка | [372-space-card-empty-title.md](372-space-card-empty-title.md) |
+| [#423](https://github.com/Matysh/houseplan-card/issues/423) Полиш support pipeline и защитных инструментов v1.70.0 | [423-v170-polish.md](423-v170-polish.md) |
 
 ## P3
 
