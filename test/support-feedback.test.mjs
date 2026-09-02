@@ -5,12 +5,20 @@ import {
   codePointLength,
   newSupportDialogState,
   supportCanSubmit,
+  supportApiCompatible,
   supportDraftError,
   supportErrorCode,
   supportRuntimeFacts,
   supportSubmissionFingerprint,
   supportSubmissionIdentity,
 } from '../test-build/support-feedback.js';
+
+test('support capability is exact and independent from release versions', () => {
+  assert.equal(supportApiCompatible(1), true);
+  for (const value of [undefined, null, 0, 2, '1', 1.0.toString(), true, {}, NaN]) {
+    assert.equal(supportApiCompatible(value), false, `unexpected compatibility for ${String(value)}`);
+  }
+});
 
 test('a fresh dialog never opts into exact plan geometry', () => {
   const state = newSupportDialogState();
@@ -119,8 +127,8 @@ test('Help is lazy, ordered after settings, and owns the single About/Guide surf
 });
 
 test('the consent copy names exact geometry, project relay, retention and network address', () => {
-  const en = JSON.parse(readFileSync(new URL('../src/i18n/en.json', import.meta.url), 'utf8'));
-  const ru = JSON.parse(readFileSync(new URL('../src/i18n/ru.json', import.meta.url), 'utf8'));
+  const en = JSON.parse(readFileSync(new URL('../src/i18n/support/en.json', import.meta.url), 'utf8'));
+  const ru = JSON.parse(readFileSync(new URL('../src/i18n/support/ru.json', import.meta.url), 'utf8'));
   assert.match(en['support.privacy'], /exact geometry/);
   assert.match(en['support.privacy'], /project relay/);
   assert.match(en['support.privacy'], /30 days/);

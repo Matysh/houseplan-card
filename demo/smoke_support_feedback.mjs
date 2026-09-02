@@ -43,6 +43,7 @@ const result = await page.evaluate(async ({ version, previewText, previewSha }) 
   };
 
   card._haIntegrationVersion = version;
+  card._haSupportApi = 1;
   const originalCallWS = card.hass.callWS.bind(card.hass);
   const calls = [];
   let submitMode = 'success';
@@ -84,6 +85,11 @@ const result = await page.evaluate(async ({ version, previewText, previewSha }) 
   await update();
 
   const out = {};
+  card._adoptConfigCapabilities({ integration_version: 'mixed-release', support_api: 1 });
+  const learnedCapability = card._haSupportApi === 1;
+  card._adoptConfigCapabilities({ integration_version: version });
+  out.capabilityAdoption = learnedCapability && card._haSupportApi === null;
+  card._adoptConfigCapabilities({ integration_version: version, support_api: 1 });
   const modeResults = [];
   for (const mode of ['view', 'plan', 'devices', 'decor']) {
     card._setMode(mode);
@@ -166,12 +172,18 @@ const result = await page.evaluate(async ({ version, previewText, previewSha }) 
 
   card._haIntegrationVersion = '0.0.0';
   await open();
+  out.mixedReleaseCompatible = !!root().querySelector('#support-dialog .supportform')
+    && !root().querySelector('#support-dialog .supportupdate');
+  await close();
+  card._haSupportApi = null;
+  await open();
   out.oldBackendDegrades = !!root().querySelector('#support-dialog .supportupdate')
     && !root().querySelector('#support-dialog .supportform')
     && !!root().querySelector('#support-dialog .aboutver')
     && root().querySelectorAll('#support-dialog a.aboutlink').length >= 3;
   await close();
   card._haIntegrationVersion = version;
+  card._haSupportApi = 1;
 
   await open();
   const submitCallsBeforeValidation = calls.filter((call) => call.type === 'houseplan/support/submit').length;
@@ -209,7 +221,7 @@ const result = await page.evaluate(async ({ version, previewText, previewSha }) 
   URL.revokeObjectURL = originalRevokeObjectURL;
   HTMLAnchorElement.prototype.click = originalAnchorClick;
   out.downloadExact = downloadedText === previewText
-    && downloadedName === `houseplan-support-${'a'.repeat(12)}.json`;
+    && downloadedName === `houseplan-support-${previewSha.slice(0, 12)}.json`;
 
   submitMode = 'success';
   root().querySelector('#support-dialog .supportfooter .btn.on').click();

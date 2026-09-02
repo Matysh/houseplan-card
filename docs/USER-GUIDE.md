@@ -1117,5 +1117,8 @@ The preview expires after ten minutes; refresh it before sending if required.
 On success, keep the report ID shown by the dialog. A network or relay failure
 does not close or clear the draft and never claims delivery: retry with the
 same preview, or copy the message/download the JSON and continue through the
-provided Telegram or GitHub links. Card and integration versions must match.
-Retention and deletion details are in [SUPPORT-PRIVACY.md](SUPPORT-PRIVACY.md).
+provided Telegram or GitHub links. The form is available when the card and
+integration support the same feedback API; their release numbers may
+temporarily differ during a normal HACS update. Update an old or incompatible
+side. Retention and deletion details are in
+[SUPPORT-PRIVACY.md](SUPPORT-PRIVACY.md).

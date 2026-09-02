@@ -61,8 +61,7 @@ async def _send(monkeypatch: pytest.MonkeyPatch, session: _Session) -> str:
         versions={"card": "1.70.0-beta.2"},
         idempotency_key="report-test-one",
         attachment=b"{}\n",
-        attachment_sha256="a" * 64,
-        filename_token="a" * 48,
+        attachment_sha256="0123456789abcdef" * 4,
     )
 
 
@@ -78,6 +77,13 @@ async def test_transport_uses_only_fixed_https_host_without_redirects(
     assert kwargs["timeout"].total == 20
     assert kwargs["timeout"].sock_connect == 5
     assert session.response.content.read_limit == 4097
+    form = kwargs["data"]
+    attachment_options = next(
+        options for options, _headers, _value in form._fields
+        if options.get("name") == "attachment"
+    )
+    assert attachment_options["filename"] == "houseplan-support-0123456789ab.json"
+    assert "report-test-one" not in attachment_options["filename"]
 
 
 @pytest.mark.parametrize(

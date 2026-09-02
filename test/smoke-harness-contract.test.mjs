@@ -18,6 +18,10 @@ const DEMO = fileURLToPath(new URL('../demo/', import.meta.url));
 const smokes = () => readdirSync(DEMO)
   .filter((name) => name.startsWith('smoke_') && name.endsWith('.mjs'));
 const read = (name) => readFileSync(new URL(name, `file://${DEMO}`), 'utf8');
+const pageBenchmarkIsGuarded = (text) => (
+  /watchPage\(await [\s\S]*?\.newPage\(\)\)/.test(text)
+  && /if \(await reportPageErrors\(\)\)\s*\{?[\s\S]*?process\.exit\(1\)/.test(text)
+);
 
 test('каждый смок спрашивает вердикт по исключениям в карточке (#407)', () => {
   const silent = smokes().filter((name) => {
@@ -80,4 +84,28 @@ test('#421 dedicated guard probe reaches reportPageErrors without finish', () =>
     'отрицательная проба обязана пройти через отдельный verdict path');
   assert.doesNotMatch(probe, /\bawait\s+finish\s*\(/,
     'finish() замаскирует сломанный round-trip внутри reportPageErrors()');
+});
+
+test('#423 every Playwright page benchmark has an enforceable pageerror verdict', () => {
+  const benchmarks = readdirSync(DEMO)
+    .filter((name) => name.startsWith('benchmark_') && name.endsWith('.mjs'))
+    .filter((name) => /\.newPage\(/.test(read(name)));
+  assert.deepEqual(benchmarks, ['benchmark_backdrop_decode.mjs']);
+  for (const name of benchmarks) {
+    const source = read(name);
+    assert.equal(pageBenchmarkIsGuarded(source), true, `${name}: missing pageerror guard`);
+    assert.equal(
+      pageBenchmarkIsGuarded(source.replace('watchPage(', '(')),
+      false,
+      `${name}: removing watchPage must make the contract red`,
+    );
+    assert.equal(
+      pageBenchmarkIsGuarded(source.replace('reportPageErrors()', 'false')),
+      false,
+      `${name}: removing the final verdict must make the contract red`,
+    );
+  }
+  const backdrop = read('benchmark_backdrop_decode.mjs');
+  assert.match(backdrop, /process\.argv\.includes\('--guard-probe'\)/);
+  assert.match(backdrop, /houseplan backdrop guard probe/);
 });

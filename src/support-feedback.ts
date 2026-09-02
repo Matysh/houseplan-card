@@ -2,6 +2,12 @@
 
 export const SUPPORT_MESSAGE_LIMIT = 10_000;
 export const SUPPORT_CONTACT_LIMIT = 320;
+export const SUPPORT_API_VERSION = 1;
+
+/** Exact protocol capability gate; product release versions are diagnostic only. */
+export function supportApiCompatible(value: unknown): boolean {
+  return value === SUPPORT_API_VERSION;
+}
 
 export interface SupportPreview {
   token: string;

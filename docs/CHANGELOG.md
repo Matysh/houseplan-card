@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- **Help & feedback** now works across compatible mixed card/integration
+  releases, creates safer SHA-based attachment filenames, reports every House
+  Plan Repair family, and rejects exhausted preview quotas before building the
+  diagnostic package ([#423](https://github.com/Matysh/houseplan-card/issues/423)).
 - Support packages now type-check value-badge flags and positions while building
   their privacy projection, so malformed nested configuration cannot be copied
   verbatim into a report

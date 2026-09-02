@@ -1,4 +1,5 @@
 """WebSocket API tests (CI): layout ops, config rev conflict, not_ready gate."""
+import asyncio
 import copy
 import json
 import logging
@@ -19,11 +20,12 @@ from pytest_homeassistant_custom_component.typing import WebSocketGenerator
 from custom_components.houseplan.const import (
     CONF_ADMIN_ONLY,
     DOMAIN,
+    SUPPORT_API_VERSION,
     SUPPORT_PREVIEW_TTL_S,
     VERSION,
 )
 from custom_components.houseplan.websocket_api import (
-    _space_delete_candidate, _space_marker_dependencies,
+    _space_delete_candidate, _space_marker_dependencies, _support_repairs,
 )
 
 
@@ -1266,6 +1268,16 @@ async def test_config_get_reports_can_write(hass: HomeAssistant, hass_ws_client:
     assert resp["success"]
     assert resp["result"]["can_write"] is True  # hass_ws_client is an admin
     assert "config" in resp["result"] and "rev" in resp["result"]
+    assert resp["result"]["support_api"] == SUPPORT_API_VERSION
+    assert "support_api" not in resp["result"]["config"]
+
+    await client.send_json_auto_id({
+        "type": "houseplan/config/get", "fields": ["settings"],
+    })
+    projected = await client.receive_json()
+    assert projected["success"]
+    assert projected["result"]["support_api"] == SUPPORT_API_VERSION
+    assert "support_api" not in projected["result"]["config"]
 
 
 def _support_preview_request(draft_id: str = "draft-browser-one") -> dict:
@@ -1281,6 +1293,158 @@ def _support_preview_request(draft_id: str = "draft-browser-one") -> dict:
         "registry_age_bucket": "fresh",
         "draft_id": draft_id,
     }
+
+
+def test_support_repairs_aggregate_safe_translation_key_families(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from types import SimpleNamespace
+
+    registry = SimpleNamespace(issues={
+        (DOMAIN, "private-space-alpha"): SimpleNamespace(
+            translation_key="broken_plan",
+            translation_placeholders={"space": "private room"},
+        ),
+        (DOMAIN, "private-space-beta"): SimpleNamespace(
+            translation_key="broken_plan",
+            translation_placeholders={"space": "another private room"},
+        ),
+        (DOMAIN, "future-secret-id"): SimpleNamespace(
+            translation_key="future_repair", translation_placeholders={"secret": "value"},
+        ),
+        (DOMAIN, "unsafe-secret-id"): SimpleNamespace(
+            translation_key="Unsafe-family", translation_placeholders={},
+        ),
+        (DOMAIN, "missing-key-secret-id"): SimpleNamespace(
+            translation_key=None, translation_placeholders={},
+        ),
+        ("foreign_domain", "foreign-secret-id"): SimpleNamespace(
+            translation_key="foreign_repair", translation_placeholders={},
+        ),
+    })
+    monkeypatch.setattr(
+        "custom_components.houseplan.websocket_api.ir.async_get",
+        lambda _hass: registry,
+    )
+
+    repairs = _support_repairs(object())
+    assert repairs == [
+        {"code": "broken_plan", "count": 2},
+        {"code": "future_repair", "count": 1},
+    ]
+    serialized = json.dumps(repairs)
+    assert "private-space" not in serialized
+    assert "private room" not in serialized
+    assert "Unsafe-family" not in serialized
+    assert "foreign" not in serialized
+
+
+async def test_support_preview_quota_rejects_before_store_load_or_executor(
+    hass: HomeAssistant,
+    hass_ws_client: WebSocketGenerator,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from custom_components.houseplan.store import get_data
+
+    await _setup(hass)
+    runtime = get_data(hass)
+    assert runtime is not None
+    runtime.support_previews = {
+        f"token-{index}": {
+            "owner": f"owner-{index}", "draft_id": f"draft-{index}",
+            "expires": float("inf"),
+        }
+        for index in range(3)
+    }
+    calls = {"loads": 0, "executor": 0}
+
+    async def _unexpected_load():
+        calls["loads"] += 1
+        raise AssertionError("quota rejection must precede store loads")
+
+    async def _unexpected_executor(*_args):
+        calls["executor"] += 1
+        raise AssertionError("quota rejection must precede snapshot build")
+
+    monkeypatch.setattr(runtime.config_store, "async_load", _unexpected_load)
+    monkeypatch.setattr(runtime.store, "async_load", _unexpected_load)
+    monkeypatch.setattr(hass, "async_add_executor_job", _unexpected_executor)
+    client = await hass_ws_client(hass)
+    await client.send_json_auto_id(_support_preview_request("draft-over-quota"))
+    response = await client.receive_json()
+    assert not response["success"]
+    assert response["error"]["code"] == "support_rate_limited"
+    assert calls == {"loads": 0, "executor": 0}
+
+
+async def test_support_preview_failed_refresh_keeps_previous_token(
+    hass: HomeAssistant,
+    hass_ws_client: WebSocketGenerator,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from custom_components.houseplan.store import get_data
+
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    request = _support_preview_request("draft-refresh-failure")
+    await client.send_json_auto_id(request)
+    first = (await client.receive_json())["result"]
+    runtime = get_data(hass)
+    assert runtime is not None and first["token"] in runtime.support_previews
+
+    def _failed_build(*_args, **_kwargs):
+        raise ValueError("controlled build failure")
+
+    monkeypatch.setattr(
+        "custom_components.houseplan.websocket_api.build_support_package", _failed_build,
+    )
+    await client.send_json_auto_id(request)
+    failed = await client.receive_json()
+    assert not failed["success"]
+    assert failed["error"]["code"] == "support_rejected"
+    assert list(runtime.support_previews) == [first["token"]]
+
+
+async def test_support_preview_final_quota_check_closes_executor_race(
+    hass: HomeAssistant,
+    hass_ws_client: WebSocketGenerator,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import threading
+
+    from custom_components.houseplan.store import get_data
+    from custom_components.houseplan import websocket_api as support_ws
+
+    await _setup(hass)
+    runtime = get_data(hass)
+    assert runtime is not None
+    runtime.support_previews = {
+        f"existing-{index}": {
+            "owner": f"owner-{index}", "draft_id": f"existing-draft-{index}",
+            "expires": float("inf"),
+        }
+        for index in range(2)
+    }
+    barrier = threading.Barrier(2, timeout=10)
+    real_build = support_ws.build_support_package
+
+    def _racing_build(*args, **kwargs):
+        barrier.wait()
+        return real_build(*args, **kwargs)
+
+    monkeypatch.setattr(support_ws, "build_support_package", _racing_build)
+    first_client = await hass_ws_client(hass)
+    second_client = await hass_ws_client(hass)
+    await first_client.send_json_auto_id(_support_preview_request("draft-race-one"))
+    await second_client.send_json_auto_id(_support_preview_request("draft-race-two"))
+    first, second = await asyncio.gather(
+        first_client.receive_json(), second_client.receive_json(),
+    )
+    responses = [first, second]
+    assert sum(1 for response in responses if response["success"]) == 1
+    rejected = next(response for response in responses if not response["success"])
+    assert rejected["error"]["code"] == "support_rate_limited"
+    assert len(runtime.support_previews) == 3
 
 
 async def _support_submit_request(client, token: str, idempotency_key: str) -> dict:

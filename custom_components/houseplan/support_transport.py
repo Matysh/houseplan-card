@@ -30,7 +30,6 @@ async def async_submit_report(
     idempotency_key: str,
     attachment: bytes | None,
     attachment_sha256: str | None,
-    filename_token: str,
 ) -> str:
     """Send once, without redirects, proxies, arbitrary hosts or reflected text."""
     target = urlsplit(SUPPORT_RELAY_URL)
@@ -56,9 +55,10 @@ async def async_submit_report(
         content_type="application/json",
     )
     if attachment is not None:
+        filename_sha256 = str(attachment_sha256 or "")
         form.add_field(
             "attachment", attachment,
-            filename=f"houseplan-support-{filename_token[:32]}.json",
+            filename=f"houseplan-support-{filename_sha256[:12]}.json",
             content_type="application/json",
         )
 

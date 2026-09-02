@@ -42,6 +42,38 @@ export const INITIAL_VIEW_GZIP_BUDGET = 300_000;
  * средние фичи до стены, а не после неё.
  */
 export const LOW_HEADROOM_WARNING_BYTES = 15_000;
+export const SUPPORT_LAZY_INITIAL_BASELINE_BYTES = 291_046;
+export const SUPPORT_LAZY_MARKERS = [
+  'Contact details (email/tg/WhatsApp), optional.',
+  'Контакт для связи (email/tg/WhatsApp), необязательно.',
+];
+
+/** Keep form-only support copy in the lazy editor graph (#423). */
+export function assertSupportBundleOwnership(
+  manifest,
+  root = 'dist',
+  markers = SUPPORT_LAZY_MARKERS,
+) {
+  const graphText = (paths) => paths
+    .map((path) => readFileSync(resolve(root, path), 'utf8'))
+    .join('\n');
+  const initial = graphText(manifest.initialViewFiles || []);
+  const editor = graphText(manifest.lazyEditorFiles || []);
+  for (const marker of markers) {
+    if (initial.includes(marker)) {
+      throw new Error(`support form copy leaked into initial View graph: ${marker}`);
+    }
+    if (!editor.includes(marker)) {
+      throw new Error(`support form copy missing from lazy editor graph: ${marker}`);
+    }
+  }
+  if (manifest.initialViewGzipBytes >= SUPPORT_LAZY_INITIAL_BASELINE_BYTES) {
+    throw new Error(
+      `initial View graph ${manifest.initialViewGzipBytes} B gzip did not improve on #423 baseline `
+      + `${SUPPORT_LAZY_INITIAL_BASELINE_BYTES} B`,
+    );
+  }
+}
 
 /** Тревога о запасе: `null`, пока его хватает. */
 export function lowHeadroomWarning(headroom, threshold = LOW_HEADROOM_WARNING_BYTES) {
@@ -90,6 +122,7 @@ if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
   try {
     const manifest = JSON.parse(readFileSync(resolve('dist/houseplan-assets.json'), 'utf8'));
     const result = assertBundleBudget(manifest);
+    assertSupportBundleOwnership(manifest);
     const headroom = INITIAL_VIEW_GZIP_BUDGET - result.initialViewGzipBytes;
     const lines = [
       `initial View: ${result.initialViewGzipBytes} B gzip`

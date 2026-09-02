@@ -28,6 +28,13 @@ const onboardingSource = readFileSync(
   'utf8',
 );
 const helpSource = `${cardSource}\n${onboardingSource}`;
+const supportDictionaries = new Map(LANGUAGE_REGISTRY.map(({ code }) => [
+  code,
+  JSON.parse(readFileSync(
+    new URL(`../src/i18n/support/${code}.json`, import.meta.url),
+    'utf8',
+  )),
+]));
 
 test('i18n: registry codes and English fallback are valid', () => {
   const codes = LANGUAGE_REGISTRY.map(({ code }) => code);
@@ -116,6 +123,26 @@ test('i18n: every registered dictionary carries the English key set', () => {
   for (const { code } of LANGUAGE_REGISTRY) {
     const dictionary = dictionaries.get(code);
     assert.deepEqual(Object.keys(dictionary).sort(), enKeys, `${code} key set differs`);
+  }
+});
+
+test('i18n: lazy support dictionaries carry matching keys and placeholders', () => {
+  const supportEn = supportDictionaries.get('en');
+  const keys = Object.keys(supportEn).sort();
+  const placeholders = (value) => (String(value).match(/\{\w+\}/gu) || []).sort();
+  assert.equal(keys.length, 42);
+  assert.equal(Object.keys(en).filter((key) => key.startsWith('support.')).join(','), 'support.title');
+  for (const { code } of LANGUAGE_REGISTRY) {
+    const dictionary = supportDictionaries.get(code);
+    assert.deepEqual(Object.keys(dictionary).sort(), keys, `${code} support key set differs`);
+    for (const key of keys) {
+      assert.ok(dictionary[key], `${code}:${key} is empty`);
+      assert.deepEqual(
+        placeholders(dictionary[key]),
+        placeholders(supportEn[key]),
+        `${code} support placeholder mismatch at ${key}`,
+      );
+    }
   }
 });
 

@@ -245,8 +245,10 @@ import {
 } from './coordinate-canonicalization';
 import { enqueueSerializedWrite } from './serialized-write-queue';
 import { hasTranslation, langOf, t, type I18nKey } from './i18n';
+import { supportT, type SupportI18nKey } from './i18n/support';
 import {
   newSupportDialogState,
+  supportApiCompatible,
   supportCanSubmit,
   supportDraftError,
   supportErrorCode,
@@ -965,6 +967,7 @@ export interface HouseplanEditorHostPort {
   _glowRadiusPlaceholder: string;
   _gridPitch: number;
   _haIntegrationVersion: string | null;
+  _haSupportApi: number | null;
   _haRegistry: HaRegistrySnapshot;
   _hasFixedFloor: boolean;
   _hiddenWallDiagnosticCache: { key: string; value: HiddenWallDiagnosticGeometry; } | null;
@@ -9147,11 +9150,12 @@ public async _closeSupportDialog(): Promise<void> {
     const dialog = this.host._supportDialog;
     if (!dialog) return;
     if (dialog.status === 'building' || dialog.status === 'sending') {
+      const lang = langOf(this.host.hass, this.host._config?.language);
       const accepted = await this.host._confirmDanger({
         key: 'close-support-busy',
         kind: 'warning',
-        title: this.host._t('support.close_busy_title'),
-        message: this.host._t('support.close_busy_body'),
+        title: supportT(lang, 'support.close_busy_title'),
+        message: supportT(lang, 'support.close_busy_body'),
         confirmLabel: this.host._t('btn.close'),
         cancelLabel: this.host._t('btn.cancel'),
       });
@@ -9203,7 +9207,7 @@ private _supportPreviewRequestIsCurrent(draftId: string, generation: number): bo
 private async _buildSupportPreview(draftId: string): Promise<void> {
     const current = this.host._supportDialog;
     if (!current || current.draftId !== draftId || !current.attach
-        || this.host._haIntegrationVersion !== CARD_VERSION) return;
+        || !supportApiCompatible(this.host._haSupportApi)) return;
     const generation = ++this._supportPreviewGeneration;
     this._supportPatch(draftId, { status: 'building', errorCode: '' });
     try {
@@ -9304,7 +9308,7 @@ public _downloadSupportPreview(): void {
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = url;
-    anchor.download = `houseplan-support-${preview.token.slice(0, 12)}.json`;
+    anchor.download = `houseplan-support-${preview.sha256.slice(0, 12)}.json`;
     anchor.style.display = 'none';
     document.body.append(anchor);
     anchor.click();
@@ -9312,18 +9316,19 @@ public _downloadSupportPreview(): void {
     window.setTimeout(() => URL.revokeObjectURL(url), 0);
   }
 
-private async _copySupportText(text: string, successKey: I18nKey): Promise<void> {
+private async _copySupportText(text: string, successKey: SupportI18nKey): Promise<void> {
+    const lang = langOf(this.host.hass, this.host._config?.language);
     try {
       await navigator.clipboard.writeText(text);
-      this.host._showToast(this.host._t(successKey));
+      this.host._showToast(supportT(lang, successKey));
     } catch {
-      this.host._showToast(this.host._t('support.copy_failed'));
+      this.host._showToast(supportT(lang, 'support.copy_failed'));
     }
   }
 
 public async _submitSupport(): Promise<void> {
     const current = this.host._supportDialog;
-    if (!current || this.host._haIntegrationVersion !== CARD_VERSION) return;
+    if (!current || !supportApiCompatible(this.host._haSupportApi)) return;
     const validation = supportDraftError(current);
     if (validation) {
       this._supportPatch(current.draftId, {
@@ -9373,11 +9378,15 @@ public async _submitSupport(): Promise<void> {
   }
 
 private _supportErrorText(state: SupportDialogState): string {
+    const lang = langOf(this.host.hass, this.host._config?.language);
     if (state.errorCode.startsWith('validation.')) {
       const suffix = state.errorCode.slice('validation.'.length);
-      return this.host._t(`support.validation.${suffix}` as I18nKey);
+      return supportT(lang, `support.validation.${suffix}` as SupportI18nKey);
     }
-    return this.host._t(`support.error.${state.errorCode || 'support_unavailable'}` as I18nKey);
+    return supportT(
+      lang,
+      `support.error.${state.errorCode || 'support_unavailable'}` as SupportI18nKey,
+    );
   }
 
 private _supportMessageKeydown(event: KeyboardEvent): void {
@@ -9392,7 +9401,9 @@ public _renderSupportDialog(): TemplateResult {
     const guideUrl = lang === 'ru'
       ? 'https://github.com/Matysh/houseplan-card/blob/main/docs/USER-GUIDE.ru.md'
       : 'https://github.com/Matysh/houseplan-card/blob/main/docs/USER-GUIDE.md';
-    const compatible = this.host._haIntegrationVersion === CARD_VERSION;
+    const compatible = supportApiCompatible(this.host._haSupportApi);
+    const st = (key: SupportI18nKey, vars?: Record<string, string | number>): string =>
+      supportT(lang, key, vars);
     const busy = state.status === 'building' || state.status === 'sending';
     const validation = supportDraftError(state);
     const preparedMinutes = state.preview
@@ -9407,7 +9418,7 @@ public _renderSupportDialog(): TemplateResult {
       @hp-close=${() => void this._closeSupportDialog()}>
         <div class="body supportbody">
           <section class="supportsection" aria-labelledby="support-about-heading">
-            <h3 id="support-about-heading">${this.host._t('support.about_group')}</h3>
+            <h3 id="support-about-heading">${st('support.about_group')}</h3>
             <div class="aboutver">${this.host._t('gs.about_version', { v: CARD_VERSION })}</div>
             <div class="supportlinks">
               <a class="aboutlink" href="https://github.com/Matysh/houseplan-card" target="_blank" rel="noopener noreferrer">
@@ -9417,14 +9428,14 @@ public _renderSupportDialog(): TemplateResult {
             </div>
           </section>
           <section class="supportsection" aria-labelledby="support-docs-heading">
-            <h3 id="support-docs-heading">${this.host._t('support.guide_group')}</h3>
+            <h3 id="support-docs-heading">${st('support.guide_group')}</h3>
             <a class="aboutlink" href=${guideUrl} target="_blank" rel="noopener noreferrer">
-              <ha-icon icon="mdi:book-open-page-variant-outline"></ha-icon>${this.host._t('support.guide')}</a>
+              <ha-icon icon="mdi:book-open-page-variant-outline"></ha-icon>${st('support.guide')}</a>
           </section>
           ${compatible ? html`
             <section class="supportsection supportform" aria-labelledby="support-form-heading">
-              <h3 id="support-form-heading">${this.host._t('support.form_group')}</h3>
-              <label for="support-contact">${this.host._t('support.contact')}</label>
+              <h3 id="support-form-heading">${st('support.form_group')}</h3>
+              <label for="support-contact">${st('support.contact')}</label>
               <input id="support-contact" class="namein" type="text" autocomplete="off"
                 aria-invalid=${contactInvalid ? 'true' : 'false'}
                 aria-describedby=${contactInvalid ? 'support-error' : nothing}
@@ -9432,7 +9443,7 @@ public _renderSupportDialog(): TemplateResult {
                 @input=${(event: Event) => this._updateSupportDraft(
                   'contact', (event.target as HTMLInputElement).value,
                 )} />
-              <label for="support-message">${this.host._t('support.message')}</label>
+              <label for="support-message">${st('support.message')}</label>
               <textarea id="support-message" class="supportmessage" required
                 aria-invalid=${messageInvalid ? 'true' : 'false'}
                 aria-describedby=${messageInvalid ? 'support-error' : nothing}
@@ -9447,80 +9458,80 @@ public _renderSupportDialog(): TemplateResult {
                   @change=${(event: Event) => void this._setSupportAttachment(
                     (event.target as HTMLInputElement).checked,
                   )} />
-                <span>${this.host._t('support.attach')}</span>
+                <span>${st('support.attach')}</span>
               </label>
-              <p id="support-attach-hint" class="rhint">${this.host._t('support.attach_hint')}</p>
+              <p id="support-attach-hint" class="rhint">${st('support.attach_hint')}</p>
               ${state.attach ? html`<p class="supportwarning" role="note">
                 <ha-icon icon="mdi:shield-alert-outline"></ha-icon>
-                <span>${this.host._t('support.geometry_warning')}</span>
+                <span>${st('support.geometry_warning')}</span>
               </p>` : nothing}
               ${state.status === 'building' ? html`<div class="supportstatus" role="status" aria-live="polite">
-                <ha-icon icon="mdi:progress-clock"></ha-icon>${this.host._t('support.building')}
+                <ha-icon icon="mdi:progress-clock"></ha-icon>${st('support.building')}
               </div>` : nothing}
               ${state.attach && state.preview ? html`
                 <div class="supportpreview">
-                  <div class="supportsummary">${this.host._t('support.preview_summary', {
+                  <div class="supportsummary">${st('support.preview_summary', {
                     version: state.preview.version,
                     spaces: state.preview.spaces,
                     size: supportSizeKiB(state.preview.size),
                   })}</div>
                   <div class="supporthash"><span>SHA-256</span><code>${state.preview.sha256}</code></div>
-                  <div class="rhint">${this.host._t('support.prepared', { n: preparedMinutes })}</div>
+                  <div class="rhint">${st('support.prepared', { n: preparedMinutes })}</div>
                   <details ?open=${state.rawOpen}
                     @toggle=${(event: Event) => this._supportPatch(state.draftId, {
                       rawOpen: (event.currentTarget as HTMLDetailsElement).open,
                     })}>
-                    <summary>${this.host._t('support.show_data')}</summary>
+                    <summary>${st('support.show_data')}</summary>
                     ${state.rawOpen ? html`<textarea class="supportraw" readonly
                       .value=${state.preview.text}></textarea>` : nothing}
                   </details>
                   <div class="supportactions">
                     <button type="button" class="btn ghost" @click=${() => this._downloadSupportPreview()}>
-                      <ha-icon icon="mdi:download"></ha-icon>${this.host._t('support.download')}
+                      <ha-icon icon="mdi:download"></ha-icon>${st('support.download')}
                     </button>
                     <button type="button" class="btn ghost" @click=${() => void this._refreshSupportPreview()}
                       ?disabled=${busy || state.status === 'success'}>
-                      <ha-icon icon="mdi:refresh"></ha-icon>${this.host._t('support.refresh')}
+                      <ha-icon icon="mdi:refresh"></ha-icon>${st('support.refresh')}
                     </button>
                   </div>
                 </div>` : nothing}
-              <p class="rhint supportprivacy">${this.host._t('support.privacy')}</p>
+              <p class="rhint supportprivacy">${st('support.privacy')}</p>
               ${state.status === 'error' ? html`
                 <div id="support-error" class="supporterror" role="alert" tabindex="-1">
-                  <strong>${this.host._t('support.error_title')}</strong>
+                  <strong>${st('support.error_title')}</strong>
                   <span>${this._supportErrorText(state)}</span>
                 </div>` : nothing}
               ${state.status === 'error' && state.attach && !state.preview ? html`
                 <div class="supportactions">
                   <button type="button" class="btn ghost"
                     @click=${() => void this._refreshSupportPreview()}>
-                    <ha-icon icon="mdi:refresh"></ha-icon>${this.host._t('support.refresh')}
+                    <ha-icon icon="mdi:refresh"></ha-icon>${st('support.refresh')}
                   </button>
                 </div>` : nothing}
               ${manualRecovery ? html`
                 <div class="supportmanual">
-                  <strong>${this.host._t('support.manual_recovery')}</strong>
+                  <strong>${st('support.manual_recovery')}</strong>
                   <div class="supportactions">
                     <button type="button" class="btn ghost" @click=${() => void this._copySupportText(
                       state.message, 'support.message_copied',
-                    )}>${this.host._t('support.copy_message')}</button>
+                    )}>${st('support.copy_message')}</button>
                     ${state.preview ? html`<button type="button" class="btn ghost"
-                      @click=${() => this._downloadSupportPreview()}>${this.host._t('support.download')}</button>` : nothing}
+                      @click=${() => this._downloadSupportPreview()}>${st('support.download')}</button>` : nothing}
                     <a class="aboutlink" href="https://t.me/ha_houseplan" target="_blank" rel="noopener noreferrer">Telegram</a>
                     <a class="aboutlink" href="https://github.com/Matysh/houseplan-card/issues" target="_blank" rel="noopener noreferrer">GitHub</a>
                   </div>
                 </div>` : nothing}
               ${state.status === 'success' ? html`
                 <div id="support-receipt" class="supportsuccess" role="status" aria-live="polite" tabindex="-1">
-                  <strong>${this.host._t('support.success', { id: state.reportId })}</strong>
+                  <strong>${st('support.success', { id: state.reportId })}</strong>
                   <button type="button" class="btn ghost" @click=${() => void this._copySupportText(
                     state.reportId, 'support.id_copied',
-                  )}>${this.host._t('support.copy_id')}</button>
+                  )}>${st('support.copy_id')}</button>
                 </div>` : nothing}
             </section>` : html`
             <div class="supportupdate" role="status">
               <ha-icon icon="mdi:update"></ha-icon>
-              <span>${this.host._t('support.update_required')}</span>
+              <span>${st('support.update_required')}</span>
             </div>`}
         </div>
         <div class="row supportfooter" slot="footer">
@@ -9532,9 +9543,9 @@ public _renderSupportDialog(): TemplateResult {
             <button type="button" class="btn on" @click=${() => void this._submitSupport()}
               ?disabled=${!supportCanSubmit(state)}>
               <ha-icon icon="mdi:send"></ha-icon>${state.status === 'sending'
-                ? this.host._t('support.sending')
+                ? st('support.sending')
                 : state.status === 'error' && !validation
-                  ? this.host._t('support.retry') : this.host._t('support.send')}
+                  ? st('support.retry') : st('support.send')}
             </button>` : nothing}
         </div>
     </hp-dialog>`;

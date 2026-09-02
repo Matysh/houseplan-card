@@ -6,6 +6,7 @@ import binascii
 import copy
 import json
 import logging
+import re
 import secrets
 import time
 from collections import Counter
@@ -39,6 +40,7 @@ from .const import (
     PLANS_DIR,
     PLANS_URL,
     SUPPORT_PREVIEW_TTL_S,
+    SUPPORT_API_VERSION,
     VERSION,
 )
 from .coordinate_canonicalization import (
@@ -246,16 +248,37 @@ def _prune_support_previews(rt: HouseplanData, now: float | None = None) -> None
             rt.support_previews.pop(token, None)
 
 
+_SUPPORT_REPAIR_FAMILY = re.compile(r"^[a-z][a-z0-9_]{0,63}$")
+
+
 def _support_repairs(hass: HomeAssistant) -> list[dict[str, Any]]:
     """Expose stable House Plan repair families, never raw issue ids/placeholders."""
     counts: Counter[str] = Counter()
     registry = ir.async_get(hass)
-    for domain, issue_id in list(registry.issues):
+    for (domain, _issue_id), issue in list(registry.issues.items()):
         if domain != DOMAIN:
             continue
-        if str(issue_id).startswith("broken_plan_"):
-            counts["broken_plan"] += 1
+        family = getattr(issue, "translation_key", None)
+        if isinstance(family, str) and _SUPPORT_REPAIR_FAMILY.fullmatch(family):
+            counts[family] += 1
     return [{"code": code, "count": count} for code, count in sorted(counts.items())]
+
+
+def _support_preview_has_capacity(
+    rt: HouseplanData,
+    owner: str,
+    draft_id: str,
+) -> bool:
+    """Check quota while treating this owner's current draft as replaceable."""
+    retained = [
+        item for item in rt.support_previews.values()
+        if not (item.get("owner") == owner and item.get("draft_id") == draft_id)
+    ]
+    owned = sum(1 for item in retained if item.get("owner") == owner)
+    return (
+        owned < MAX_SUPPORT_PREVIEWS_PER_USER
+        and len(retained) < MAX_SUPPORT_PREVIEWS_TOTAL
+    )
 
 
 def _layout_metadata(stored: dict[str, Any]) -> dict[str, Any]:
@@ -1238,6 +1261,8 @@ async def ws_config_get(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             # #295: the card compares this against its own version to decide
             # whether the «update House Plan» preflight hint can actually help.
             "integration_version": VERSION,
+            # #423: protocol capability is independent from release skew.
+            "support_api": SUPPORT_API_VERSION,
         },
     )
 
@@ -2139,6 +2164,12 @@ async def ws_support_preview(
     if rt is None:
         return
 
+    owner = _connection_user_id(connection)
+    _prune_support_previews(rt)
+    if not _support_preview_has_capacity(rt, owner, msg["draft_id"]):
+        _send_support_error(connection, msg["id"], "support_rate_limited")
+        return
+
     # The write lock guarantees that config/layout and both revisions describe
     # one accepted pair. Projection happens after the deep copy, so the lock is
     # not held while JSON is built and a large plan cannot stall an editor save.
@@ -2189,17 +2220,18 @@ async def ws_support_preview(
         return
 
     now = _support_monotonic()
-    owner = _connection_user_id(connection)
     _prune_support_previews(rt, now)
+    # The executor yields to other requests. Re-check after it returns so two
+    # concurrent builds cannot both consume the final slot. The old preview is
+    # retained until the replacement is ready and this second check succeeds.
+    if not _support_preview_has_capacity(rt, owner, msg["draft_id"]):
+        _send_support_error(connection, msg["id"], "support_rate_limited")
+        return
     # A refresh replaces only this card instance's draft. Other cards keep
     # their token and exact bytes.
     for old_token, record in list(rt.support_previews.items()):
         if record.get("owner") == owner and record.get("draft_id") == msg["draft_id"]:
             rt.support_previews.pop(old_token, None)
-    owned = sum(1 for item in rt.support_previews.values() if item.get("owner") == owner)
-    if owned >= MAX_SUPPORT_PREVIEWS_PER_USER or len(rt.support_previews) >= MAX_SUPPORT_PREVIEWS_TOTAL:
-        _send_support_error(connection, msg["id"], "support_rate_limited")
-        return
     token = secrets.token_hex(24)
     expires = now + SUPPORT_PREVIEW_TTL_S
     rt.support_previews[token] = {
@@ -2304,7 +2336,6 @@ async def ws_support_submit(
             idempotency_key=msg["idempotency_key"],
             attachment=attachment,
             attachment_sha256=preview.get("sha256") if preview else None,
-            filename_token=token or msg["idempotency_key"].lower().replace("_", "-"),
         )
     except SupportTransportError as error:
         _send_support_error(connection, msg["id"], error.code)

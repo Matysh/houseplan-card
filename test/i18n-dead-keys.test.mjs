@@ -6,7 +6,10 @@ import test from 'node:test';
 import ts from 'typescript';
 
 const repoRoot = dirname(dirname(fileURLToPath(import.meta.url)));
-const dictionary = JSON.parse(readFileSync(join(repoRoot, 'src/i18n/en.json'), 'utf8'));
+const dictionary = {
+  ...JSON.parse(readFileSync(join(repoRoot, 'src/i18n/en.json'), 'utf8')),
+  ...JSON.parse(readFileSync(join(repoRoot, 'src/i18n/support/en.json'), 'utf8')),
+};
 const dictionaryKeys = Object.keys(dictionary);
 
 const sourceFiles = [];

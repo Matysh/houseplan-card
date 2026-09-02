@@ -1604,6 +1604,7 @@ export async function prepareGoldenScenario(page, scenario) {
         throw new Error(`golden general-settings help is clipped: ${scenario.openHelp}`);
     } else if (scenario.dialog === 'support') {
       card._haIntegrationVersion = cardVersion;
+      card._haSupportApi = 1;
       card._openSupportDialog();
       await card.updateComplete;
       const opened = card._supportDialog;

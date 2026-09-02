@@ -8,7 +8,9 @@ import {
   buildBundleManifest, buildFingerprintPlugin, editorRuntimeRetryUrlPlugin,
 } from '../scripts/bundle-manifest.mjs';
 import {
-  INITIAL_VIEW_GZIP_BUDGET, LOW_HEADROOM_WARNING_BYTES, assertBundleBudget, lowHeadroomWarning,
+  INITIAL_VIEW_GZIP_BUDGET, LOW_HEADROOM_WARNING_BYTES,
+  SUPPORT_LAZY_INITIAL_BASELINE_BYTES,
+  assertBundleBudget, assertSupportBundleOwnership, lowHeadroomWarning,
 } from '../scripts/bundle-budget.mjs';
 import { compareBundleTrees, sha256Bytes, verifyBundleTree } from '../scripts/bundle-tree.mjs';
 import {
@@ -81,6 +83,37 @@ test('bundle manifest separates static initial graph from dynamic editor graph',
   ]);
   assert.doesNotThrow(() => assertBundleBudget(manifest, 1_000_000));
   assert.throws(() => assertBundleBudget(manifest, 1), /exceeds/);
+});
+
+test('#423 support form copy belongs only to the lazy editor graph', () => {
+  const temp = mkdtempSync(join(tmpdir(), 'houseplan-support-graph-'));
+  try {
+    writeFileSync(join(temp, 'initial.js'), 'header only');
+    writeFileSync(join(temp, 'editor.js'), 'lazy English marker · lazy Russian marker');
+    const manifest = {
+      initialViewFiles: ['initial.js'],
+      lazyEditorFiles: ['editor.js'],
+      initialViewGzipBytes: SUPPORT_LAZY_INITIAL_BASELINE_BYTES - 1,
+    };
+    const markers = ['lazy English marker', 'lazy Russian marker'];
+    assert.doesNotThrow(() => assertSupportBundleOwnership(manifest, temp, markers));
+    writeFileSync(join(temp, 'initial.js'), 'lazy English marker');
+    assert.throws(
+      () => assertSupportBundleOwnership(manifest, temp, markers),
+      /leaked into initial View graph/,
+    );
+    writeFileSync(join(temp, 'initial.js'), 'header only');
+    assert.throws(
+      () => assertSupportBundleOwnership(
+        { ...manifest, initialViewGzipBytes: SUPPORT_LAZY_INITIAL_BASELINE_BYTES },
+        temp,
+        markers,
+      ),
+      /did not improve/,
+    );
+  } finally {
+    rmSync(temp, { recursive: true, force: true });
+  }
 });
 
 test('build fingerprint is embedded for Windows and POSIX source ids', () => {

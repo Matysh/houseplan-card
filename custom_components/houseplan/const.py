@@ -55,6 +55,7 @@ VERSION = "1.70.0"
 # reviewed release change, not a Home Assistant option.
 SUPPORT_RELAY_URL = "https://support.houseplan.tech/v1/reports"
 SUPPORT_PREVIEW_TTL_S = 10 * 60
+SUPPORT_API_VERSION = 1
 MAX_SUPPORT_PREVIEWS_PER_USER = 3
 MAX_SUPPORT_PREVIEWS_TOTAL = 3
 MAX_SUPPORT_ATTACHMENT_BYTES = 8 * 1024 * 1024

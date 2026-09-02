@@ -3,8 +3,11 @@
 // rerun by hand when recalibrating WARN_DECODED_BYTES / HARD_DIMENSION.
 //   PLAYWRIGHT_BROWSERS_PATH=... node demo/benchmark_backdrop_decode.mjs
 import { chromium } from 'playwright';
+import { reportPageErrors, watchPage } from './serve.mjs';
+
+const guardProbe = process.argv.includes('--guard-probe');
 const browser = await chromium.launch({ args: ['--no-sandbox'] });
-const page = await (await browser.newContext()).newPage();
+const page = watchPage(await (await browser.newContext()).newPage());
 const session = await page.context().newCDPSession(page);
 await page.goto('about:blank');
 const metrics = async () => {
@@ -17,7 +20,7 @@ const cases = [
   { mp: 32, alpha: false }, { mp: 32, alpha: true }, { mp: 64, alpha: false },
   { mp: 100, alpha: false }, { mp: 165, alpha: false },
 ];
-for (const c of cases) {
+for (const c of guardProbe ? [] : cases) {
   try {
     const r = await page.evaluate(async ({ mp, alpha }) => {
       const side = Math.round(Math.sqrt(mp * 1e6));
@@ -52,5 +55,14 @@ for (const c of cases) {
   } catch (e) {
     console.log(JSON.stringify({ mp: c.mp, alpha: c.alpha, FAIL: String(e).slice(0, 120) }));
   }
+}
+if (guardProbe) {
+  await page.evaluate(() => {
+    setTimeout(() => { throw new Error('houseplan backdrop guard probe'); }, 0);
+  });
+}
+if (await reportPageErrors()) {
+  await browser.close();
+  process.exit(1);
 }
 await browser.close();

@@ -2194,6 +2194,8 @@ export class HouseplanCard extends LitElement {
   private _preflightClipboardFallback: string | null = null;
   /** #295: integration version from houseplan/config/get; null on old backends. */
   private _haIntegrationVersion: string | null = null;
+  /** #423: support protocol capability from config/get; never persisted. */
+  private _haSupportApi: number | null = null;
   private _alignDialog: {
     report: OptimizeReport; config: any; layout: Record<string, any>;
     preflight: OptimizeGeometryPreflightResult | null;
@@ -4274,6 +4276,16 @@ export class HouseplanCard extends LitElement {
    * Equal payloads keep their authoritative object references and geometry
    * epoch; equal revisions never hide changed content (#73 §9.4).
    */
+  private _adoptConfigCapabilities(response: any): void {
+    this._haIntegrationVersion = typeof response?.integration_version === 'string'
+      ? response.integration_version : this._haIntegrationVersion;
+    const supportApi = response?.support_api;
+    // Every successful config/get is authoritative. Missing or malformed data
+    // after a backend downgrade must revoke a capability learned earlier.
+    this._haSupportApi = typeof supportApi === 'number' && Number.isSafeInteger(supportApi)
+      ? supportApi : null;
+  }
+
   private _adoptStructuralResponses(
     cfgResp: any,
     layResp?: any,
@@ -4333,8 +4345,7 @@ export class HouseplanCard extends LitElement {
     }
 
     this._canOptimizeUndo = !!(cfgResp?.can_optimize_undo || layResp?.can_optimize_undo);
-      this._haIntegrationVersion = typeof cfgResp?.integration_version === 'string'
-        ? cfgResp.integration_version : this._haIntegrationVersion;
+    this._adoptConfigCapabilities(cfgResp);
     this._undoKind = (cfgResp?.undo_kind || layResp?.undo_kind || null) as any;
     if (typeof cfgResp?.can_write === 'boolean') this._serverCanWrite = cfgResp.can_write;
     if (configChanged) this._continuity.note('config-candidate', { configRev: this._cfgRev });
@@ -4364,6 +4375,7 @@ export class HouseplanCard extends LitElement {
         this.hass.callWS({ type: 'houseplan/config/get' }),
         this.hass.callWS({ type: 'houseplan/layout/get' }),
       ]);
+      this._adoptConfigCapabilities(cfgResp);
       const candidateConfig = cfgResp?.config && Array.isArray(cfgResp.config.spaces)
         ? cfgResp.config : null;
       const structuralChanged = contentFingerprint(candidateConfig)
@@ -4389,8 +4401,6 @@ export class HouseplanCard extends LitElement {
       // absent can_write = older backend / demo stub → keep null (legacy admin fallback)
       if (typeof cfgResp?.can_write === 'boolean') this._serverCanWrite = cfgResp.can_write;
       this._canOptimizeUndo = !!(cfgResp?.can_optimize_undo || layResp?.can_optimize_undo);
-      this._haIntegrationVersion = typeof cfgResp?.integration_version === 'string'
-        ? cfgResp.integration_version : this._haIntegrationVersion;
       this._adoptStructuralResponses(cfgResp, layResp);
       this._adoptInitialSpace(this._model, true);
       this._resumePendingNavMode();
@@ -4555,6 +4565,7 @@ export class HouseplanCard extends LitElement {
     this._beginContinuityCandidate('config-reload', false);
     try {
       const resp = await this.hass.callWS({ type: 'houseplan/config/get' });
+      this._adoptConfigCapabilities(resp);
       const candidateConfig = resp?.config && Array.isArray(resp.config.spaces)
         ? resp.config as ServerConfig : null;
       const configChanged = contentFingerprint(candidateConfig)
