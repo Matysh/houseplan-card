@@ -58,6 +58,7 @@ import { resolveZeroWalls } from './zero-walls';
 import { geometryOpenings } from './plan-geometry-preflight';
 import { resolveDeviceAreaRelocations } from './device-area-relocation';
 import { projectDecorImage } from './decor-assets';
+import type { DecorShape } from './editors/decor/types';
 import {
   buildGlowClipGeometry, buildLightBarrierScene, forgetGlowSource, forgetGlowSpace,
   glowSourceInOpaqueBody, pruneGlowSources, readGlowClip, renderGlowPools,
@@ -333,7 +334,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
       placed.push({ minX: x, minY: y, maxX: x, maxY: y });
     }
   }
-  const spCfg: any = o.cfg.spaces.find((s: any) => s.id === o.spaceId) || {};
+  const spCfg = o.cfg.spaces.find((space) => space.id === o.spaceId) || {};
   if (!disp.hideDecor) for (const shape of spCfg.decor || []) {
     if (shape?.kind !== 'image' || !o.decorAssetUrl?.(String(shape.asset_id || ''))) continue;
     const item = decorBoxItem(shape);
@@ -634,7 +635,7 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
     : [];
 
   const bgHref = space.bg ? (o.displayUrl ? o.displayUrl(space.bg.href) : space.bg.href) : '';
-  const decorImages = (spCfg.decor || []).flatMap((shape: any) => {
+  const decorImages = (spCfg.decor || []).flatMap((shape: DecorShape) => {
     if (shape?.kind !== 'image' || disp.hideDecor) return [];
     const raw = o.decorAssetUrl?.(String(shape.asset_id || '')) || '';
     const href = raw && o.displayUrl ? o.displayUrl(raw) : raw;
