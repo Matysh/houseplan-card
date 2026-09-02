@@ -954,6 +954,9 @@ const MUTANT_DEFINITIONS = [
       file: 'demo/docs/browser-args.mjs',
       find: "  '--run-all-compositor-stages-before-draw',\n",
       replace: '',
+    }],
+  },
+  {
     id: 'capture-drifts-between-runs',
     guard: 'node --test test/capture-clip.test.mjs',
     because: 'a crop that rounds to the nearest pixel shaves half a pixel off the '
