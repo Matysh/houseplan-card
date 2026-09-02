@@ -10481,12 +10481,14 @@ public _renderBackupExportDialog(): TemplateResult {
   }
 
 public _renderBackupImportDialog(): TemplateResult {
+    type ContentItem = { kind?: string; url: string; state?: string };
     const d = this.host._backupImportDialog!;
     const p = d.preview;
-    const decorContent = (p?.content || []).filter((item: any) => item.kind === 'decor_asset');
-    const decorAssetCount = new Set(decorContent.map((item: any) => item.url)).size;
-    const missingDecor = decorContent.filter((item: any) => item.state === 'missing_preserved');
-    const missingDecorAssetCount = new Set(missingDecor.map((item: any) => item.url)).size;
+    const decorContent = ((p?.content || []) as ContentItem[])
+      .filter((item) => item.kind === 'decor_asset');
+    const decorAssetCount = new Set(decorContent.map((item) => item.url)).size;
+    const missingDecor = decorContent.filter((item) => item.state === 'missing_preserved');
+    const missingDecorAssetCount = new Set(missingDecor.map((item) => item.url)).size;
     const counts = p?.counts || {};
     const report = p?.reference_report || {};
     const sum = (values: any): number => Object.values(values || {}).reduce(
@@ -10587,7 +10589,7 @@ public _renderBackupImportDialog(): TemplateResult {
               assets: decorAssetCount, objects: decorContent.length,
               missing: missingDecorAssetCount,
             })}</span>` : nothing}
-            ${p.content.filter((item: any) => item.kind !== 'decor_asset').map((item: any) => html`<span>${item.url} · ${this.host._t(
+            ${(p.content as ContentItem[]).filter((item) => item.kind !== 'decor_asset').map((item) => html`<span>${item.url} · ${this.host._t(
               item.state === 'available' ? 'backup.content_available'
                 : item.state === 'external' ? 'backup.content_external'
                   : 'backup.content_detach_required',

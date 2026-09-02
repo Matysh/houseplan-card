@@ -22,11 +22,15 @@ export type DecorImageProjection = readonly [
 
 const resolveCache = new WeakMap<object, [string, Map<string, DecorAsset>]>();
 
-export function decorAssetIds(config: any): string[] {
+type DecorAssetConfig = {
+  spaces?: readonly { decor?: readonly { kind?: unknown; asset_id?: string }[] }[];
+};
+
+export function decorAssetIds(config: DecorAssetConfig | null | undefined): string[] {
   const ids = new Set<string>();
   for (const space of config?.spaces || []) {
     for (const shape of space?.decor || []) {
-      if (shape?.kind === 'image' && DECOR_ASSET_ID_RE.test(shape.asset_id)) ids.add(shape.asset_id);
+      if (shape?.kind === 'image' && DECOR_ASSET_ID_RE.test(shape.asset_id!)) ids.add(shape.asset_id!);
     }
   }
   return [...ids];
