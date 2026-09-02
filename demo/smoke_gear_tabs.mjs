@@ -57,18 +57,26 @@ checkAll(res, {
 // киоск — витрина: редактирование недоступно, кнопки «+» нет ВООБЩЕ
 // (display:none у .hdr не считается: скрытый в DOM узел всё ещё кликабелен
 // программно и всё ещё ловится автотестами как «есть»)
-const kio = await page.evaluate(async () => {
-  const out = {};
+await page.evaluate(() => {
   const c = document.createElement('houseplan-card');
   c.setConfig({ type: 'custom:houseplan-card', kiosk: true, cycle: 0 });
   c.hass = window.__mkHass();
   c.style.cssText = 'position:fixed;left:0;top:0;width:900px;height:700px;z-index:99';
   document.body.appendChild(c);
-  await new Promise((r) => setTimeout(r, 350));
-  c.hass = { ...c.hass }; await c.updateComplete;
+  window.__smokeKioskCard = c;
+});
+await page.waitForFunction(() => {
+  const c = window.__smokeKioskCard;
+  const sr = c && (c.shadowRoot || c.renderRoot);
+  return !!sr?.querySelector('ha-card');
+});
+const kio = await page.evaluate(() => {
+  const out = {};
+  const c = window.__smokeKioskCard;
   const sr = c.shadowRoot || c.renderRoot;
   out.kioskNoAddButton = !sr.querySelector('.tab.tabadd');
   c.remove();
+  delete window.__smokeKioskCard;
   return out;
 });
 for (const [k, v] of Object.entries(kio)) check(k, v);
