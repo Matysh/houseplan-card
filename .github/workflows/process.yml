@@ -226,6 +226,20 @@ jobs:
             git checkout -q "origin/$branch"
             echo "материал ревью: ветка $branch, $(git rev-parse --short HEAD)"
             echo "name=$branch" >> "$GITHUB_OUTPUT"
+            # Якоря материала, устойчивые к ребейзу (#413, #414). SHA коммита
+            # ребейз меняет — содержимое нет: git адресует деревья и блобы их
+            # хешем. Снимаются здесь, где рабочая копия ЕЩЁ равна тому, что
+            # ревьюер прочтёт; в шаге публикации дерево уже сброшено на целевую
+            # ветку, и спрашивать его поздно.
+            echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+            echo "tree=$(git rev-parse 'HEAD^{tree}')" >> "$GITHUB_OUTPUT"
+            # ТЗ задачи: блоб переживает и ребейз, и удаление ветки, пока текст
+            # где-нибудь достижим. Файлов может не быть (инфраструктурная
+            # задача) или быть несколько (разбитое ТЗ) — тогда список пуст либо
+            # длиннее одного.
+            specs=$(git ls-files -s -- "docs/specs/${NUM}-*.md" \
+              | awk '{print $2" "$4}' | tr '\n' ';')
+            echo "specs=$specs" >> "$GITHUB_OUTPUT"
           else
             echo "::warning::ветка issue/${NUM}-* не найдена на origin — ревью пойдёт по dev"
             echo "МАТЕРИАЛ НЕ ЗАПУШЕН" >> "$GITHUB_STEP_SUMMARY"
@@ -629,6 +643,9 @@ jobs:
           STAGE: ${{ needs.guard.outputs.stage }}
           CYCLE: ${{ needs.guard.outputs.cycle }}
           SOURCE: ${{ runner.temp }}/review-document.md
+          MATERIAL_SHA: ${{ steps.branch.outputs.sha }}
+          MATERIAL_TREE: ${{ steps.branch.outputs.tree }}
+          MATERIAL_SPECS: ${{ steps.branch.outputs.specs }}
         run: |
           # Ветки задачи может не быть: у задач, размеченных до появления
           # конвейера, ТЗ лежит прямо в dev. Раньше шаг в этом случае молча
@@ -677,6 +694,14 @@ jobs:
             mkdir -p docs/reviews
             cp "$SOURCE" "$doc"
             echo "документ взят из $SOURCE ($(wc -c < "$doc") байт)"
+            # Якоря дописывает конвейер, а не ревьюер (#414). Дисциплина здесь
+            # уже подводила: на #403 SHA сняли до ребейза и не сверили перед
+            # выводом — через раунд команда из §2.10 не работала. Машина же
+            # снимает якоря в момент чтения материала и ошибиться в них не
+            # может; блок помечен как машинный, чтобы никто не правил его руками.
+            node scripts/review-doc-guard.mjs --anchor="$doc" \
+              --sha="$MATERIAL_SHA" --tree="$MATERIAL_TREE" \
+              --branch="${BRANCH:-dev}" --specs="$MATERIAL_SPECS"
           else
             echo "::warning::$SOURCE не найден — документа для публикации нет"
           fi

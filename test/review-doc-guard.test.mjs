@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import {
-  REVIEW_DOC_ALLOWLIST, citedMaterialShas, danglingMaterialRefusal, pathsOutsideAllowlist, reviewDocPushRefusal,
+  ANCHOR_MARKER, REVIEW_DOC_ALLOWLIST, REVIEW_HEADER_LINES, citedMaterialShas, danglingMaterialRefusal, materialAnchorBlock, materialAnchorsFrom, parseSpecList, pathsOutsideAllowlist, reviewDocPushRefusal, withMaterialAnchors,
 } from '../scripts/review-doc-guard.mjs';
 
 // #365. 28.08 шаг публикации ревью-дока запушил в dev коммит bb2919f с тридцатью
@@ -136,4 +136,69 @@ test('шапка без объявления материала не судит�
   // Требовать объявление — отдельное решение о каноне, а не дело гейта.
   assert.equal(danglingMaterialRefusal('# CODE-REVIEW-1-r1\n\nтекст\n', () => new Map()), null);
   assert.deepEqual(citedMaterialShas('# CODE-REVIEW-1-r1\n\nтекст\n'), []);
+});
+
+// --- якоря, переживающие ребейз (#414) -------------------------------------
+
+test('блок якорей содержит исполнимые команды, а не описание (#414)', () => {
+  const block = materialAnchorBlock({
+    sha: '94502d3d67cacf85bdb9f69cd511b342989891fd',
+    tree: '3fc651fcb868eefa28755d01ec2b9377598dcb27',
+    branch: 'issue/403-area-relocation-safety',
+    specs: [{
+      blob: '56a92e12dedc8fa541537ae5908dc6f1dfab43e8',
+      path: 'docs/specs/403-area-relocation-safety.md',
+    }],
+  });
+  // Отчёт обязан быть исполняемым: на #403 канонная команда не работала, и
+  // следующий раунд восстанавливал коммит по содержимому диффа руками.
+  assert.match(block, /git log --all --find-object=56a92e12dedc8fa541537ae5908dc6f1dfab43e8/);
+  assert.match(block, /git log --all --format='%H %T' \| grep 3fc651fcb868/);
+  assert.match(block, /ребейз его осиротит/, 'блок обязан объяснять, зачем он нужен');
+  assert.match(block, /material-anchors: сгенерировано конвейером/);
+});
+
+test('без ветки задачи блок честно говорит, что якорей нет (#414)', () => {
+  const block = materialAnchorBlock({ branch: '', sha: '', tree: '', specs: [] });
+  assert.match(block, /Якоря снять не удалось/);
+});
+
+test('повторная приписка заменяет блок, а не копит его (#414)', () => {
+  const anchors = { sha: 'a'.repeat(40), tree: 'b'.repeat(40), branch: 'dev', specs: [] };
+  const once = withMaterialAnchors('# отчёт\n\nтекст\n', anchors);
+  const twice = withMaterialAnchors(once, anchors);
+  assert.equal(twice.split(ANCHOR_MARKER).length - 1, 1, 'маркер обязан быть один');
+  assert.match(twice, /# отчёт/);
+});
+
+test('список ТЗ разбирается и отсекает мусор (#414)', () => {
+  const parsed = parseSpecList(
+    `${'a'.repeat(40)} docs/specs/403-x.md;короткий docs/specs/y.md;${'b'.repeat(40)} ;`,
+  );
+  assert.deepEqual(parsed, [{ blob: 'a'.repeat(40), path: 'docs/specs/403-x.md' }]);
+});
+
+test('осиротевший SHA при живых якорях — предупреждение, не отказ (#414)', () => {
+  const doc = withMaterialAnchors(
+    '- Материал: спец-файл на `HEAD = 83005c3c`\n',
+    { sha: 'c'.repeat(40), tree: 'd'.repeat(40), branch: 'issue/403-x', specs: [] },
+  );
+  const verdict = danglingMaterialRefusal(
+    doc, () => new Map([['83005c3c', null]]), REVIEW_HEADER_LINES, () => true,
+  );
+  assert.ok(verdict.warning, 'раунд воспроизводим — ронять его нечего');
+  assert.match(verdict.warning, /83005c3c/);
+  assert.match(verdict.warning, /по якорям/);
+});
+
+test('осиротевший SHA и мёртвые якоря — по-прежнему отказ (#414)', () => {
+  const doc = withMaterialAnchors(
+    '- Материал: спец-файл на `HEAD = 83005c3c`\n',
+    { sha: 'c'.repeat(40), tree: 'd'.repeat(40), branch: 'issue/403-x', specs: [] },
+  );
+  const verdict = danglingMaterialRefusal(
+    doc, () => new Map([['83005c3c', null]]), REVIEW_HEADER_LINES, () => false,
+  );
+  assert.equal(typeof verdict, 'string');
+  assert.match(verdict, /не достижим ни из одной ссылки origin/);
 });

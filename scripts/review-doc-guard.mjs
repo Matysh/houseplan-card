@@ -24,7 +24,7 @@
  * нечего, значит что-то пошло не так раньше.
  */
 import { spawnSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 
 export const REVIEW_DOC_ALLOWLIST = ['docs/reviews/'];
 
@@ -106,6 +106,20 @@ export function citedMaterialShas(text, headerLines = REVIEW_HEADER_LINES) {
 }
 
 /**
+ * Якоря из машинного блока: то, чем раунд воспроизводится после ребейза.
+ *
+ * Разбор нарочно грубый — ищутся сорокасимвольные хеши в блоке, а не структура.
+ * Блок машинный, его форма меняется вместе с этим файлом, и жёсткий парсер
+ * ломался бы на каждой правке формулировки.
+ */
+export function materialAnchorsFrom(text) {
+  const body = String(text ?? '');
+  const at = body.indexOf(ANCHOR_MARKER);
+  if (at < 0) return [];
+  return [...new Set(body.slice(at).match(/\b[0-9a-f]{40}\b/g) || [])];
+}
+
+/**
  * Вердикт: `null` — все объявленные SHA существуют коммитами.
  *
  * Зачем этот рубеж (#413). `SPEC-REVIEW-403-r2.md` объявил материал раунда на
@@ -135,12 +149,29 @@ export function citedMaterialShas(text, headerLines = REVIEW_HEADER_LINES) {
  *
  * @param resolveReachable функция `(shas) => Map<sha, ref|null>`
  */
-export function danglingMaterialRefusal(text, resolveReachable, headerLines = REVIEW_HEADER_LINES) {
+export function danglingMaterialRefusal(
+  text, resolveReachable, headerLines = REVIEW_HEADER_LINES, resolveObjects = null,
+) {
   const cited = citedMaterialShas(text, headerLines);
   if (!cited.length) return null;
   const refs = resolveReachable([...new Set(cited.map((item) => item.sha))]);
   const bad = cited.filter((item) => !refs.get(item.sha));
   if (!bad.length) return null;
+  // Осиротевший SHA — ещё не потеря раунда, если якоря на месте (#414). Дерево
+  // и блобы адресуются содержимым: ребейз их не меняет, и материал находится
+  // командами из машинного блока. Отказ остаётся там, где не работает НИ ОДИН
+  // из объявленных способов найти материал.
+  const anchors = materialAnchorsFrom(text);
+  if (anchors.length && resolveObjects) {
+    const alive = anchors.filter((object) => resolveObjects(object));
+    if (alive.length) {
+      return { warning: 'SHA раунда осиротел, но материал воспроизводим по якорям:'
+        + ` ${bad.map((item) => item.sha).join(', ')} недостижимы,`
+        + ` якорей живых ${alive.length} из ${anchors.length}.`
+        + ' Ребейз ветки после ревью — обычное дело; именно для этого якоря и'
+        + ' дописываются (#414).' };
+    }
+  }
   const lines = bad
     .map((item) => `  строка ${item.line}: ${item.sha} → не достижим ни из одной ссылки origin`)
     .join('\n');
@@ -153,10 +184,106 @@ export function danglingMaterialRefusal(text, resolveReachable, headerLines = RE
     + ' а не значения, записанного до amend или rebase.';
 }
 
+/** Маркер машинного блока: по нему блок находится и заменяется целиком. */
+export const ANCHOR_MARKER = '<!-- material-anchors: сгенерировано конвейером (#414) -->';
+
+/**
+ * Блок якорей материала — то, что переживает ребейз (#414).
+ *
+ * Зачем он, если SHA уже назван. SHA ветки — не свойство материала, а свойство
+ * истории, и история переписывается. На #403 спец-коммит переехал из
+ * `83005c3c` в `94502d3d` за пятнадцать минут до публикации отчёта: сообщение
+ * то же, содержимое то же, блоб ТЗ тот же (`56a92e12`), а команда из §2.10
+ * `git diff 83005c3c..HEAD` через раунд не работала. Следующий ревьюер
+ * восстанавливал коммит по содержимому диффа руками.
+ *
+ * Дерево и блоб адресуются содержимым, поэтому ребейз их не меняет: пока текст
+ * где-нибудь достижим, найти его можно одной командой. Именно эти команды и
+ * пишутся в блок — отчёт обязан быть исполняемым, а не описательным.
+ *
+ * Блок машинный и помечен как машинный. Ревьюер его не заполняет: дисциплина
+ * ручного переписывания SHA здесь уже подвела, и заменять её другой ручной
+ * дисциплиной смысла нет.
+ */
+export function materialAnchorBlock({ sha, tree, branch, specs = [] } = {}) {
+  const short = (value) => (typeof value === 'string' ? value.slice(0, 12) : '');
+  const lines = [
+    ANCHOR_MARKER,
+    '',
+    '## Материал раунда',
+    '',
+    `- Ветка: \`${branch || 'dev'}\`, коммит \`${short(sha)}\` — ребейз его осиротит,`
+      + ' и это нормально: ниже якоря, которые ребейз не меняет.',
+  ];
+  if (tree) {
+    lines.push(`- Дерево материала: \`${tree}\``);
+    lines.push('  ```');
+    lines.push(`  git log --all --format='%H %T' | grep ${short(tree)}`);
+    lines.push('  ```');
+  }
+  for (const spec of specs) {
+    lines.push(`- ТЗ \`${spec.path}\`, блоб \`${spec.blob}\``);
+    lines.push('  ```');
+    lines.push(`  git log --all --find-object=${spec.blob} -- ${spec.path}`);
+    lines.push('  ```');
+  }
+  if (!tree && !specs.length) {
+    lines.push('- Якоря снять не удалось: ветки задачи нет, материал читался по `dev`.');
+  }
+  return `${lines.join('\n')}\n`;
+}
+
+/**
+ * Разбор строки `--specs`: `blob путь;blob путь;`.
+ *
+ * Формат сырой намеренно: он рождается в `git ls-files -s` внутри workflow, и
+ * любая промежуточная сериализация здесь была бы лишним местом для ошибки.
+ */
+export function parseSpecList(raw) {
+  return String(raw ?? '')
+    .split(';')
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .map((item) => {
+      const [blob, ...rest] = item.split(/\s+/);
+      return { blob, path: rest.join(' ') };
+    })
+    .filter((item) => /^[0-9a-f]{40}$/.test(item.blob) && item.path);
+}
+
+/** Дописать или заменить блок якорей в тексте документа. */
+export function withMaterialAnchors(text, anchors) {
+  const body = String(text ?? '');
+  const at = body.indexOf(ANCHOR_MARKER);
+  const head = at >= 0 ? body.slice(0, at).replace(/\s+$/, '') : body.replace(/\s+$/, '');
+  return `${head}\n\n---\n\n${materialAnchorBlock(anchors)}`;
+}
+
 const invokedDirectly = process.argv[1]
   && import.meta.url === new URL(`file://${process.argv[1]}`).href;
 if (invokedDirectly) {
   const argv = process.argv.slice(2);
+  // Режим дописывания якорей (#414): конвейер снял их при чтении материала.
+  const anchorArg = argv.find((item) => item.startsWith('--anchor='));
+  if (anchorArg) {
+    const path = anchorArg.slice('--anchor='.length);
+    const value = (name) => {
+      const found = argv.find((item) => item.startsWith(`--${name}=`));
+      return found ? found.slice(name.length + 3) : '';
+    };
+    const anchors = {
+      sha: value('sha'),
+      tree: value('tree'),
+      branch: value('branch'),
+      specs: parseSpecList(value('specs')),
+    };
+    const text = readFileSync(path, 'utf8');
+    writeFileSync(path, withMaterialAnchors(text, anchors), 'utf8');
+    console.log(`якоря материала дописаны: дерево ${anchors.tree.slice(0, 12) || '—'},`
+      + ` ТЗ ${anchors.specs.length}`);
+    process.exit(0);
+  }
+
   // Режим проверки объявленного материала (#413): на входе сам документ.
   const docArg = argv.find((item) => item.startsWith('--doc='));
   if (docArg) {
@@ -180,16 +307,25 @@ if (invokedDirectly) {
       }
       return map;
     };
-    const refusal = danglingMaterialRefusal(text, resolveReachable);
-    if (refusal) {
-      console.error(`::error::${refusal.split('\n')[0]}`);
-      console.error(refusal);
+    const resolveObjects = (object) => spawnSync('git', ['cat-file', '-e', object], {
+      encoding: 'utf8',
+    }).status === 0;
+    const verdict = danglingMaterialRefusal(
+      text, resolveReachable, REVIEW_HEADER_LINES, resolveObjects,
+    );
+    if (verdict && verdict.warning) {
+      console.log(`::warning::${verdict.warning}`);
+    } else if (verdict) {
+      console.error(`::error::${verdict.split('\n')[0]}`);
+      console.error(verdict);
       process.exit(1);
     }
     const cited = citedMaterialShas(text);
-    console.log(cited.length
-      ? `материал раунда объявлен и достижим с origin: ${cited.map((item) => item.sha).join(', ')}`
-      : 'материал раунда в шапке не объявлен — проверять нечего');
+    if (!(verdict && verdict.warning)) {
+      console.log(cited.length
+        ? `материал раунда объявлен и достижим с origin: ${cited.map((item) => item.sha).join(', ')}`
+        : 'материал раунда в шапке не объявлен — проверять нечего');
+    }
     process.exit(0);
   }
   const allowArg = argv.find((item) => item.startsWith('--allow='));
