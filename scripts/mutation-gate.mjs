@@ -934,6 +934,19 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'core-budget-ignores-growth',
+    guard: 'node --test test/core-file-budget.test.mjs',
+    because: 'the two cores put on 500-1000 lines per release while everything new '
+      + 'goes into new modules — a budget that does not notice growth of its own '
+      + 'files is decoration, and the decomposition issue it replaces sat still for '
+      + '25 days precisely because nobody was counting (#425, replaces #34)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: 'export class HouseplanCard',
+      replace: `${'\n'.repeat(400)}export class HouseplanCard`,
+    }],
+  },
+  {
     id: 'capture-allows-partial-raster',
     guard: 'node --test test/capture-determinism-args.test.mjs',
     because: 'partial raster reuses whatever the compositor drew before, so the frame '
