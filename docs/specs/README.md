@@ -162,6 +162,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#318](https://github.com/Matysh/houseplan-card/issues/318) Активный контроллер без собственных сущностей следует `controls` | [318-empty-controller-roster.md](318-empty-controller-roster.md) |
 | [#373](https://github.com/Matysh/houseplan-card/issues/373) Плотное кадрирование static card по геометрии дома | [373-space-card-house-fit.md](373-space-card-house-fit.md) |
 | [#294](https://github.com/Matysh/houseplan-card/issues/294) Esc завершает текущую цепочку стен без удаления геометрии | [294-wall-esc-detach.md](294-wall-esc-detach.md) |
+| [#419](https://github.com/Matysh/houseplan-card/issues/419) Безопасная уборка Area-снапшота при пустом или усечённом HA-реестре | [419-area-snapshot-roster-guard.md](419-area-snapshot-roster-guard.md) |
 
 ## P3
 
