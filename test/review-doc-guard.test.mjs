@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import {
-  ANCHOR_MARKER, REVIEW_DOC_ALLOWLIST, REVIEW_HEADER_LINES, citedMaterialShas, danglingMaterialRefusal, materialAnchorBlock, materialAnchorsFrom, parseSpecList, pathsOutsideAllowlist, reviewDocPushRefusal, withMaterialAnchors,
+  ANCHOR_MARKER, REVIEW_DOC_ALLOWLIST, anchorLiveness, REVIEW_HEADER_LINES, citedMaterialShas, danglingMaterialRefusal, materialAnchorBlock, materialAnchorsFrom, parseSpecList, pathsOutsideAllowlist, reviewDocPushRefusal, withMaterialAnchors,
 } from '../scripts/review-doc-guard.mjs';
 
 // #365. 28.08 шаг публикации ревью-дока запушил в dev коммит bb2919f с тридцатью
@@ -201,4 +201,76 @@ test('осиротевший SHA и мёртвые якоря — по-преж�
   );
   assert.equal(typeof verdict, 'string');
   assert.match(verdict, /не достижим ни из одной ссылки origin/);
+});
+
+// --- #422: живость якоря — достижимость, а не наличие объекта -------------
+
+/** Подставная проба git: описывает мир, а не запускает его. */
+const gitProbe = ({ type, reachableTrees = [], blobFound = false, refFound = false }) => (args) => {
+  if (args[0] === 'cat-file') return { status: type ? 0 : 1, stdout: type || '' };
+  if (args[0] === 'log' && args.includes('--format=%T')) {
+    return { status: 0, stdout: `${reachableTrees.join('\n')}\n` };
+  }
+  if (args[0] === 'log') return { status: 0, stdout: blobFound ? 'c0ffee\n' : '' };
+  if (args[0] === 'for-each-ref') return { status: 0, stdout: refFound ? 'refs/remotes/origin/dev\n' : '' };
+  return { status: 1, stdout: '' };
+};
+
+test('якорь-дерево, существующий локально, но недостижимый, живым не считается', () => {
+  const object = 'a'.repeat(40);
+  assert.equal(anchorLiveness(object, gitProbe({ type: 'tree', reachableTrees: ['b'.repeat(40)] })), false);
+});
+
+test('якорь-дерево, достижимый из origin, считается живым', () => {
+  const object = 'a'.repeat(40);
+  assert.equal(anchorLiveness(object, gitProbe({ type: 'tree', reachableTrees: [object] })), true);
+});
+
+test('якорь-блоб проверяется поиском по достижимым коммитам', () => {
+  const object = 'c'.repeat(40);
+  assert.equal(anchorLiveness(object, gitProbe({ type: 'blob', blobFound: false })), false);
+  assert.equal(anchorLiveness(object, gitProbe({ type: 'blob', blobFound: true })), true);
+});
+
+test('якорь-коммит проверяется тем же способом, что и SHA раунда', () => {
+  const object = 'd'.repeat(40);
+  assert.equal(anchorLiveness(object, gitProbe({ type: 'commit', refFound: false })), false);
+  assert.equal(anchorLiveness(object, gitProbe({ type: 'commit', refFound: true })), true);
+});
+
+test('неизвестный тип объекта и отсутствующий объект живыми не считаются', () => {
+  const object = 'e'.repeat(40);
+  assert.equal(anchorLiveness(object, gitProbe({ type: 'tag' })), false);
+  assert.equal(anchorLiveness(object, gitProbe({ type: '' })), false);
+});
+
+test('областью поиска служат origin и теги, а не --all', () => {
+  const seen = [];
+  const probe = (args) => {
+    seen.push(args.join(' '));
+    return args[0] === 'cat-file' ? { status: 0, stdout: 'blob' } : { status: 0, stdout: '' };
+  };
+  anchorLiveness('f'.repeat(40), probe);
+  const search = seen.find((line) => line.startsWith('log'));
+  assert.ok(search.includes('--remotes=origin'), search);
+  assert.ok(search.includes('--tags'), search);
+  assert.ok(!search.includes('--all'), 'локальные ветки автора не считаются доказательством');
+});
+
+test('недостижимый якорь не смягчает отказ на осиротевшем SHA раунда (#422)', () => {
+  const anchor = 'd'.repeat(40);
+  const document = withMaterialAnchors(
+    '- Материал: спец-файл на `HEAD = 83005c3c`\n',
+    { sha: 'c'.repeat(40), tree: anchor, branch: 'issue/422-x', specs: [] },
+  );
+  const orphaned = () => new Map([['83005c3c', null]]);
+  const dead = (object) => anchorLiveness(object, gitProbe({ type: 'tree', reachableTrees: [] }));
+  const alive = (object) => anchorLiveness(object, gitProbe({ type: 'tree', reachableTrees: [anchor] }));
+
+  const refusal = danglingMaterialRefusal(document, orphaned, REVIEW_HEADER_LINES, dead);
+  assert.equal(typeof refusal, 'string', 'мёртвый якорь обязан оставить жёсткий отказ');
+  assert.match(refusal, /не достижим ни из одной ссылки origin/);
+
+  const softened = danglingMaterialRefusal(document, orphaned, REVIEW_HEADER_LINES, alive);
+  assert.ok(softened && softened.warning, 'живой якорь по-прежнему смягчает отказ (#414)');
 });

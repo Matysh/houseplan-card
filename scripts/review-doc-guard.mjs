@@ -205,6 +205,53 @@ export const ANCHOR_MARKER = '<!-- material-anchors: сгенерировано 
  * ручного переписывания SHA здесь уже подвела, и заменять её другой ручной
  * дисциплиной смысла нет.
  */
+/**
+ * Живость якоря материала — это ДОСТИЖИМОСТЬ, а не наличие объекта (#422).
+ *
+ * Первая версия спрашивала `git cat-file -e`, то есть «лежит ли объект в
+ * локальной базе». Объект, созданный на машине автора и никуда не привязанный,
+ * этой проверке удовлетворяет — и смягчает жёсткий отказ #413 именно там, где
+ * ошибку и совершили. Проверено исполнением: `git hash-object -w` даёт объект,
+ * который `cat-file -e` признаёт, а `git log --all --find-object` не находит.
+ *
+ * Здесь спрашивается то же, что документ печатает читателю в машинном блоке
+ * (`materialAnchorBlock`), но в области `refs/remotes/origin` и тегов: у
+ * ревьюера локальных веток автора нет, и якорь, живой только благодаря им, —
+ * это обещание, которое не выполнится.
+ *
+ * `run` вынесен параметром ради тестов: подставная проба позволяет проверить и
+ * выбор команды по типу объекта, и поведение на неизвестном типе, не заводя
+ * настоящий репозиторий.
+ */
+export function anchorLiveness(object, run) {
+  const type = run(['cat-file', '-t', object]);
+  if (type.status !== 0) return false;
+  const kind = String(type.stdout || '').trim();
+  if (kind === 'tree') {
+    // Дерево адресуется содержимым и не находится через --find-object:
+    // его ищут перебором %T по достижимым коммитам.
+    const probe = run(['log', '--remotes=origin', '--tags', '--format=%T']);
+    if (probe.status !== 0) return false;
+    return String(probe.stdout || '').split('\n').some((line) => line.trim() === object);
+  }
+  if (kind === 'blob') {
+    const probe = run([
+      'log', '--remotes=origin', '--tags', `--find-object=${object}`, '--max-count=1', '--format=%H',
+    ]);
+    return probe.status === 0 && String(probe.stdout || '').trim() !== '';
+  }
+  if (kind === 'commit') {
+    const probe = run([
+      'for-each-ref', '--contains', object, '--count=1', '--format=%(refname)',
+      'refs/remotes/origin', 'refs/tags',
+    ]);
+    return probe.status === 0 && String(probe.stdout || '').trim() !== '';
+  }
+  // Тег-объект и всё неизвестное живым не считается: якорь должен быть тем, что
+  // печатает конвейер, а не чем угодно похожим на хеш.
+  return false;
+}
+
 export function materialAnchorBlock({ sha, tree, branch, specs = [] } = {}) {
   const short = (value) => (typeof value === 'string' ? value.slice(0, 12) : '');
   const lines = [
@@ -307,9 +354,9 @@ if (invokedDirectly) {
       }
       return map;
     };
-    const resolveObjects = (object) => spawnSync('git', ['cat-file', '-e', object], {
-      encoding: 'utf8',
-    }).status === 0;
+    const resolveObjects = (object) => anchorLiveness(object, (args) => spawnSync('git', args, {
+      encoding: 'utf8', maxBuffer: 64 * 1024 * 1024,
+    }));
     const verdict = danglingMaterialRefusal(
       text, resolveReachable, REVIEW_HEADER_LINES, resolveObjects,
     );

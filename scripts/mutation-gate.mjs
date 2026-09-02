@@ -954,6 +954,28 @@ const MUTANT_DEFINITIONS = [
       file: 'demo/docs/browser-args.mjs',
       find: "  '--run-all-compositor-stages-before-draw',\n",
       replace: '',
+    id: 'capture-drifts-between-runs',
+    guard: 'node --test test/capture-clip.test.mjs',
+    because: 'a crop that rounds to the nearest pixel shaves half a pixel off the '
+      + 'target, and the frame then depends on sub-pixel layout — the very drift '
+      + 'that made #410 undiagnosable; the in-process stability probe stays green '
+      + 'on it, so the whole-pixel rule needs a check of its own (#422)',
+    patches: [{
+      file: 'demo/docs/clip.mjs',
+      find: '  const x = Math.floor(rect.x);',
+      replace: '  const x = Math.round(rect.x);',
+    }],
+  },
+  {
+    id: 'anchor-liveness-ignores-reachability',
+    guard: 'node --test test/review-doc-guard.test.mjs',
+    because: 'asking whether the object merely exists locally lets an anchor born on '
+      + 'the author machine soften the #413 refusal exactly where the mistake was '
+      + 'made — liveness has to mean reachable from origin (#422)',
+    patches: [{
+      file: 'scripts/review-doc-guard.mjs',
+      find: "    const probe = run(['log', '--remotes=origin', '--tags', '--format=%T']);",
+      replace: "    const probe = { status: 0, stdout: object };",
     }],
   },
   {

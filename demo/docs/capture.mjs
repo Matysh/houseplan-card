@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 // manifest-owned tree before launching Chromium; copying only the stable entry
 // leaves every content-hashed import at 404.
 import '../../scripts/bundle-sync.mjs';
+import { wholePixelClip } from './clip.mjs';
 import { visualFingerprint } from '../../scripts/source-fingerprint.mjs';
 import { assertFreshDemoBundle } from '../bundle-freshness.mjs';
 import { goldenClip, prepareGoldenScenario } from '../golden/harness.mjs';
@@ -264,27 +265,12 @@ try {
     const rawClip = scenario.capture === 'room-card'
       ? await roomCardClip(page)
       : await goldenClip(page, scenario.capture);
-    // Обрезка выравнивается по целым пикселям (#410).
-    //
-    // Прямоугольник считается из живого DOM через getBoundingClientRect, то есть
-    // приходит дробным. Дробная обрезка заставляет Chromium ресемплить кадр, и
-    // тогда сдвиг раскладки на десятую пикселя — от метрики шрифта, от
-    // появившегося скроллбара — переписывает границы всех элементов на единицы
-    // уровней. Ровно эта подпись и была в #410: 76 пикселей, максимум 2 уровня,
-    // alpha не тронута, всё на сглаженных границах полей.
-    //
-    // Замер показал, где искать: три снимка подряд в одном состоянии страницы
-    // совпадают побайтово у всех десяти сценариев, а между прогонами плавают
-    // два. Значит дело не в рендере, а в том, что приходит на вход съёмке.
-    //
-    // Внешняя рамка расширяется, а не округляется к ближайшему: обрезка обязана
-    // содержать цель целиком, потерять полпикселя по краю нельзя.
-    const clip = rawClip && {
-      x: Math.floor(rawClip.x),
-      y: Math.floor(rawClip.y),
-      width: Math.ceil(rawClip.x + rawClip.width) - Math.floor(rawClip.x),
-      height: Math.ceil(rawClip.y + rawClip.height) - Math.floor(rawClip.y),
-    };
+    // Обрезка выравнивается по целым пикселям (#410); почему именно так —
+    // в `wholePixelClip`. Замер тогда показал, где искать: три снимка подряд в
+    // одном состоянии совпадают побайтово у всех десяти сценариев, а между
+    // прогонами плавают два. Значит дело не в рендере, а в том, что приходит на
+    // вход съёмке — и проверяется это между прогонами (#422).
+    const clip = wholePixelClip(rawClip);
     if (STABILITY_SHOTS && rawClip) {
       console.log(`${scenario.id} обрезка: сырая`
         + ` ${rawClip.x},${rawClip.y} ${rawClip.width}x${rawClip.height}`
