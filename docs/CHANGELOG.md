@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Dangerous-action confirmation no longer hangs if the active space disappears
+  or a request arrives while a lazy language is switching; House Plan now
+  refuses safely when no confirmation dialog can be rendered
+  ([#417](https://github.com/Matysh/houseplan-card/issues/417)).
+
 ## v1.70.0 — 2026-09-02
 
 - House Plan adds a private **Help & feedback** flow, localized backend errors

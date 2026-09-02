@@ -829,6 +829,39 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'danger-confirm-lost-space-request-guard-removed',
+    guard: 'node demo/smoke_danger_confirm_branches.mjs',
+    because: 'accepting a new confirmation while the active space resolves to nothing '
+      + 'registers a promise whose hp-confirm owner cannot exist (#417 AC1)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: "    if (this._dangerConfirmMissingSpace()) return Promise.resolve(false);",
+      replace: "    void this._dangerConfirmMissingSpace();",
+    }],
+  },
+  {
+    id: 'danger-confirm-lost-space-transition-cancel-removed',
+    guard: 'node demo/smoke_danger_confirm_branches.mjs',
+    because: 'an open confirmation must resolve false before a lost-space render clears '
+      + 'its only decision source (#417 AC1)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: "    if (this._dangerConfirm && this._dangerConfirmMissingSpace()) {\n      this._cancelDangerConfirm();\n    }",
+      replace: "    void this._dangerConfirm;\n    void this._dangerConfirmMissingSpace;",
+    }],
+  },
+  {
+    id: 'danger-confirm-warm-language-guard-removed',
+    guard: 'node demo/smoke_danger_confirm_branches.mjs',
+    because: 'the warm language branch returns Lit noChange, so a newly registered '
+      + 'confirmation has no rendered decision source and hangs (#417 AC2)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: "    if (this._dangerConfirmLocaleGate === 'warm') return Promise.resolve(false);",
+      replace: "    void this._dangerConfirmLocaleGate;",
+    }],
+  },
+  {
     id: 'furniture-edge-handles-steal-the-corner',
     guard: 'node demo/smoke_furniture_polish.mjs',
     because: 'both handles share one hit radius, so on furniture narrower than '

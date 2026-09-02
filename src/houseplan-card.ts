@@ -247,7 +247,9 @@ import {
 import { enqueueSerializedWrite } from './serialized-write-queue';
 import { hasTranslation, langOf, t, type I18nKey } from './i18n';
 import { LANGUAGE_RUNTIME, subscribeLanguageLoadFailures } from './i18n/registry';
-import { languageLoadingTemplate, languageRenderGate } from './i18n/language-runtime';
+import {
+  languageLoadingTemplate, languageRenderGate, type LanguageRenderGate,
+} from './i18n/language-runtime';
 import { CommandStack } from './command-stack';
 import {
   applyDevicePlacement,
@@ -2148,16 +2150,31 @@ export class HouseplanCard extends LitElement {
   } | { kind: 'run'; text: string; exec: () => void } | null = null;
   /** One eager confirmation owner shared by View, onboarding and lazy editors. */
   private _dangerConfirm: HpConfirmState | null = null;
+  /** Last language branch painted by `_renderBody`; `warm` cannot accept new dialogs. */
+  private _dangerConfirmLocaleGate: LanguageRenderGate = 'ready';
   private readonly _dangerConfirmController = new HpConfirmController((state) => {
     this._dangerConfirm = state;
   });
+  /**
+   * The only post-initialisation branch whose body is literally `nothing`.
+   * Onboarding and fixed-floor errors paint a card and can host hp-confirm;
+   * a lost active space cannot.
+   */
+  private _dangerConfirmMissingSpace(): boolean {
+    const model = this._model;
+    if (!model.length) return false;
+    const fixed = this._fixedFloorState(model);
+    if (fixed.kind === 'pending' || fixed.kind === 'invalid') return false;
+    return !this._spaceModel();
+  }
   private _confirmDanger = (request: HpConfirmRequest): Promise<boolean> => {
-    // #402: a card that draws nothing cannot ask. Refusing outright is the
-    // honest answer — the alternative is a promise nobody will ever resolve,
-    // which is exactly the defect this issue closes. The caller already treats
-    // `false` as «the user declined», and at this point the user has pressed
-    // nothing: the card is not on screen yet.
+    // #402/#417: a card that draws nothing cannot ask. Refusing outright is
+    // the honest answer — the alternative is a promise nobody will ever
+    // resolve. Keep the guards aligned with `_renderBody`'s two unrenderable
+    // branches instead of registering a controller request with no DOM owner.
     if (!this._config || !this.hass) return Promise.resolve(false);
+    if (this._dangerConfirmLocaleGate === 'warm') return Promise.resolve(false);
+    if (this._dangerConfirmMissingSpace()) return Promise.resolve(false);
     return this._dangerConfirmController.confirm(request);
   };
   private _cancelDangerConfirm = (): void => {
@@ -4149,6 +4166,11 @@ export class HouseplanCard extends LitElement {
       if (!preserveGeometry) this._cfgEpoch++;
     }
     this._syncEmptySpaceState();
+    // #417: losing the only renderable space while a decision is pending must
+    // settle it before render() clears hp-confirm with `nothing`.
+    if (this._dangerConfirm && this._dangerConfirmMissingSpace()) {
+      this._cancelDangerConfirm();
+    }
     if (changed.has('hass') && this.hass) {
       this._hassSequence++;
       this._renderSnapshotAt = Date.now();
@@ -11284,6 +11306,7 @@ export class HouseplanCard extends LitElement {
     const localeGate = languageRenderGate(
       this, LANGUAGE_RUNTIME, langOf(this.hass, this._config.language),
     );
+    this._dangerConfirmLocaleGate = localeGate;
     if (localeGate === 'cold') return languageLoadingTemplate();
     if (localeGate === 'warm') return noChange;
     const onboardingRuntimeRequested = !!this._importDialog

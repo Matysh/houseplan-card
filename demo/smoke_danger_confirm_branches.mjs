@@ -15,6 +15,75 @@ const { page, browser } = await launch(
   { width: 390, height: 760 }, 1, [], { hasTouch: true, isMobile: true },
 );
 
+// Hold the first German chunk request so the card remains in the real `warm`
+// language gate long enough to exercise it. Aborting would immediately select
+// the English fallback and could turn this into a test that never enters the
+// branch it claims to cover.
+const germanAsset = /\/houseplan-assets\/de-[^/?]+\.js(?:\?.*)?$/;
+let releaseGerman;
+let markGermanStarted;
+let markGermanCompleted;
+const germanStarted = new Promise((resolve) => { markGermanStarted = resolve; });
+const germanCompleted = new Promise((resolve) => { markGermanCompleted = resolve; });
+const holdGerman = async (route) => {
+  markGermanStarted();
+  await new Promise((resolve) => { releaseGerman = resolve; });
+  await route.continue();
+  markGermanCompleted();
+};
+await page.route(germanAsset, holdGerman);
+
+const warmGate = await page.evaluate(async () => {
+  const card = window.__card;
+  const root = () => card.shadowRoot || card.renderRoot;
+  const settle = async () => {
+    await card.updateComplete;
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  };
+  const originalLanguage = card._config?.language;
+  card._config = { ...card._config, language: 'de' };
+  card.requestUpdate();
+  for (let attempt = 0; attempt < 50 && card._dangerConfirmLocaleGate !== 'warm'; attempt++) {
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    await settle();
+  }
+
+  const entered = card._dangerConfirmLocaleGate === 'warm' && card.inert;
+  const before = root().innerHTML;
+  const decision = await Promise.race([
+    card._confirmDanger({
+      key: 'warm-language-gate',
+      kind: 'destructive',
+      title: 'Delete?',
+      message: 'The plan and all its rooms will be deleted.',
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+    }),
+    new Promise((resolve) => setTimeout(() => resolve('timeout'), 100)),
+  ]);
+  const result = {
+    warmLanguageGateActuallyEntered: entered,
+    warmLanguageGateRefusesImmediately: decision === false,
+    warmLanguageGateKeepsControllerEmpty: card._dangerConfirm === null
+      && card._dangerConfirmController.state === null,
+    warmLanguageGateKeepsNoChangeDom: root().innerHTML === before
+      && !root().querySelector('hp-confirm'),
+  };
+
+  card._config = { ...card._config, language: originalLanguage };
+  card.requestUpdate();
+  await settle();
+  return result;
+});
+
+await Promise.race([
+  germanStarted,
+  new Promise((_, reject) => setTimeout(() => reject(new Error('German locale request not seen')), 1000)),
+]);
+releaseGerman();
+await germanCompleted;
+await page.unroute(germanAsset, holdGerman);
+
 const out = await page.evaluate(async () => {
   const result = {};
   const card = window.__card;
@@ -152,6 +221,58 @@ const out = await page.evaluate(async () => {
     && (await survivor) === true;
   await leaveBranch();
 
+  // The exact missed branch from #417: a non-empty model whose active space
+  // cannot be resolved returns `nothing`, unlike onboarding and fixed-floor
+  // status cards. An already open request must be cancelled during the same
+  // update, and a new request must never enter the controller.
+  const originalSpaceModel = card._spaceModel;
+  const pendingAtSpaceLoss = card._confirmDanger(request('space-lost-after-open'));
+  await settle();
+  card._spaceModel = () => undefined;
+  card.requestUpdate();
+  await settle();
+  const spaceLossDecision = await Promise.race([
+    pendingAtSpaceLoss,
+    new Promise((resolve) => setTimeout(() => resolve('timeout'), 100)),
+  ]);
+  result.lostSpaceBranchIsActuallyEntered = root().childElementCount === 0;
+  result.openConfirmCancelsWhenSpaceIsLost = spaceLossDecision === false
+    && card._dangerConfirm === null && card._dangerConfirmController.state === null;
+  const refusedWithoutSpace = await Promise.race([
+    card._confirmDanger(request('space-already-lost')),
+    new Promise((resolve) => setTimeout(() => resolve('timeout'), 100)),
+  ]);
+  result.lostSpaceRequestRefusesImmediately = refusedWithoutSpace === false
+    && card._dangerConfirm === null && card._dangerConfirmController.state === null
+    && dialogs() === 0;
+  card._spaceModel = originalSpaceModel;
+  card.requestUpdate();
+  await settle();
+
+  // The two status branches called out by #402 still paint a card, so they
+  // must keep hosting the confirmation instead of being caught by the new
+  // lost-space guard.
+  const originalConfig = card._config;
+  const originalLoadOk = card._loadOk;
+  const confirmInFixedBranch = async (loadOk, state) => {
+    card._loadOk = loadOk;
+    card._config = { ...originalConfig, floor: 'missing-floor-for-confirm-smoke' };
+    card.requestUpdate();
+    await settle();
+    const branchEntered = !!root().querySelector(`[data-fixed-floor-state="${state}"]`);
+    const pending = card._confirmDanger(request(`fixed-${state}`));
+    await settle();
+    const shown = dialogs() === 1;
+    await decide(false);
+    return branchEntered && shown && (await pending) === false;
+  };
+  result.fixedFloorPendingStillShowsConfirm = await confirmInFixedBranch(false, 'pending');
+  result.fixedFloorInvalidStillShowsConfirm = await confirmInFixedBranch(true, 'invalid');
+  card._loadOk = originalLoadOk;
+  card._config = originalConfig;
+  card.requestUpdate();
+  await settle();
+
   // Тап по «Отмена» — тот же путь, что и клик: на touch подтверждение обязано
   // спрашиваться, а не деградировать (TOUCH-SUPPORT § Safety floor).
   await enterBranch([]);
@@ -235,6 +356,8 @@ const out = await page.evaluate(async () => {
 
   return result;
 });
+
+Object.assign(out, warmGate);
 
 await page.evaluate(async () => {
   const element = document.createElement('hp-confirm');
