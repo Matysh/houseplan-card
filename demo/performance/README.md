@@ -144,9 +144,10 @@ rationale in the change. Do not loosen a threshold merely to make a single red
 run pass. A new fixture profile gets a new profile id instead of silently
 changing the meaning of `large-house-v1`.
 
-The `cleanFloor` entry ceiling is 160: the reviewed fixture currently warms
-120 deterministic room/physical-body entries, and the extra 40 slots allow a
-legitimate fixture extension without weakening the separate zero-growth gate.
+The `cleanFloor` entry ceiling is 100: the reviewed fixture warms exactly 100
+deterministic room/physical-body entries. An extra 20 means that one complete
+floor was invalidated and rebuilt, so fixture extensions must recalibrate this
+ceiling explicitly instead of receiving silent cache headroom.
 
 ## Glow profiles
 

@@ -3909,8 +3909,10 @@ export class HouseplanCard extends LitElement {
   }
 
   /** Spaces in render units (NORM_W × NORM_W — the canvas is square). */
-  /** Bumped by every config mutation — the model/geometry cache key (audit L1). */
+  /** Bumped by every structural config mutation — the model/geometry cache key (audit L1). */
   private _cfgEpoch = 0;
+  /** Exact settings-only Area lifecycle replacement which may reuse geometry. */
+  private _cfgEpochPreservedConfig: ServerConfig | null = null;
   private _modelCache: { key: string; model: SpaceModel[] } | null = null;
   private _emptySpaceStateActive = false;
   private _decorSnapCache: {
@@ -4129,11 +4131,23 @@ export class HouseplanCard extends LitElement {
     return effectiveExcludedIntegrations(this._settings); // #44: single resolver
   }
 
+  /** Replace only Area lifecycle settings without invalidating room geometry. */
+  private _setAreaLifecycleConfig(next: ServerConfig): void {
+    this._cfgEpochPreservedConfig = next;
+    this._serverCfg = next;
+  }
+
   protected willUpdate(changed: PropertyValues): void {
     // `_serverCfg` is the root of every geometry cache. Keep the epoch
     // invariant local to that reactive assignment so imports, reconnects and
     // demo harnesses cannot accidentally reuse an older config object's data.
-    if (changed.has('_serverCfg')) this._cfgEpoch++;
+    // #126's provenance/new-device write is the one exact exception: it changes
+    // no space input, and rebuilding a 20-room floor here doubled cold work.
+    if (changed.has('_serverCfg')) {
+      const preserveGeometry = this._cfgEpochPreservedConfig === this._serverCfg;
+      this._cfgEpochPreservedConfig = null;
+      if (!preserveGeometry) this._cfgEpoch++;
+    }
     this._syncEmptySpaceState();
     if (changed.has('hass') && this.hass) {
       this._hassSequence++;
@@ -5209,7 +5223,7 @@ export class HouseplanCard extends LitElement {
       if (snapshotChanged || attentionChanged) {
         const previousSnapshot = st.marker_area_snapshot;
         const previousAttention = st.new_device_ids;
-        this._serverCfg = {
+        const nextConfig: ServerConfig = {
           ...this._serverCfg,
           settings: {
             ...st,
@@ -5217,7 +5231,7 @@ export class HouseplanCard extends LitElement {
             ...(attentionChanged ? { new_device_ids: nextAttention } : {}),
           },
         };
-        this._cfgEpoch++;
+        this._setAreaLifecycleConfig(nextConfig);
         try {
           // Await this internal lifecycle write. A debounced fire-and-forget
           // save would leave the local snapshot advanced after a rejection,
@@ -5241,7 +5255,8 @@ export class HouseplanCard extends LitElement {
             else restored.marker_area_snapshot = previousSnapshot;
             if (previousAttention === undefined) delete restored.new_device_ids;
             else restored.new_device_ids = previousAttention;
-            this._serverCfg = { ...this._serverCfg!, settings: restored };
+            const restoredConfig: ServerConfig = { ...this._serverCfg!, settings: restored };
+            this._setAreaLifecycleConfig(restoredConfig);
             this._cfgContentFingerprint = contentFingerprint(this._serverCfg);
           }
           // Config and layout are separate stores, but this lifecycle change is
@@ -5278,11 +5293,11 @@ export class HouseplanCard extends LitElement {
                 ? attentionSettings.new_device_ids : []),
               ...restoreFailed,
             ])];
-            this._serverCfg = {
+            const attentionConfig: ServerConfig = {
               ...this._serverCfg,
               settings: { ...attentionSettings, new_device_ids: attention },
             };
-            this._cfgEpoch++;
+            this._setAreaLifecycleConfig(attentionConfig);
             try {
               await this._writeConfig();
             } catch (attentionError: unknown) {

@@ -27,6 +27,13 @@
   [#33](https://github.com/Matysh/houseplan-card/issues/33)).
 - Small fixes and improvements.
 
+## v1.70.0-beta.5 — 2026-09-02
+
+- The first load after upgrading no longer calculates a large floor twice while
+  House Plan establishes Home Assistant Area tracking. Startup of the 20-room
+  benchmark floor is back to the previous stable line's time
+  ([#126](https://github.com/Matysh/houseplan-card/issues/126)).
+
 ## v1.70.0-beta.4 — 2026-09-02
 
 - **Help & feedback** now uses the same 44 px header button as General settings,

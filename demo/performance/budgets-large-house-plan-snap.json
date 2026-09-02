@@ -76,7 +76,7 @@
     "noiseAllowanceBytes": 16777216
   },
   "cacheEntries": {
-    "cleanFloor": 160,
+    "cleanFloor": 100,
     "glowClip": 200,
     "wallUnion": 1,
     "openingTunnel": 1,
