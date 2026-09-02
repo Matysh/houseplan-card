@@ -957,6 +957,30 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'capture-gate-forgives-a-missing-frame',
+    guard: 'node --test test/capture-determinism-gate.test.mjs',
+    because: 'comparing only the frames both runs happen to have lets a run that '
+      + 'produced nine frames pass against a run that produced ten — «совпало» then '
+      + 'means nothing, which is the opposite of what the gate is for (#422)',
+    patches: [{
+      file: 'scripts/capture-determinism.mjs',
+      find: '  const names = [...new Set([...Object.keys(first), ...Object.keys(second)])].sort();',
+      replace: '  const names = Object.keys(first).filter((name) => name in second).sort();',
+    }],
+  },
+  {
+    id: 'capture-gate-hashes-everything-in-the-folder',
+    guard: 'node --test test/capture-determinism-gate.test.mjs',
+    because: 'hashing every file in docs/images drags the manifest into the comparison, '
+      + 'and the manifest legitimately changes between runs — the gate would then cry '
+      + 'wolf on every capture and be switched off within a week (#422)',
+    patches: [{
+      file: 'scripts/capture-determinism.mjs',
+      find: "    if (!name.endsWith('.png')) continue;\n",
+      replace: '',
+    }],
+  },
+  {
     id: 'capture-drifts-between-runs',
     guard: 'node --test test/capture-clip.test.mjs',
     because: 'a crop that rounds to the nearest pixel shaves half a pixel off the '
