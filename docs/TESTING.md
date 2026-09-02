@@ -3552,3 +3552,17 @@ require hands on real hardware — they remain for the human pass.
       attachment with Retry, Copy message, Download and manual links. Old or
       mismatched backend leaves About/Guide usable but exposes no fake submit
       [pre-beta: success/429/timeout/unknown-command smokes in light/dark].
+
+## Съёмка документации запускается с флагами детерминизма (#424)
+
+- [ ] `demo/docs/browser-args.mjs` содержит `--disable-partial-raster` и
+      `--run-all-compositor-stages-before-draw` — оба, а не один. По отдельности
+      ни один дрейф не убирает: проверено перебором, восемь прогонов на
+      конфигурацию.
+
+Первый запрещает переиспользовать ранее нарисованные куски тайла (иначе кадр
+зависит от того, что композитор рисовал до него), второй заставляет пройти все
+стадии композитора до отрисовки (иначе снимок берётся на полпути). Подпись
+дефекта, если он вернётся: один-два случайных кадра из десяти расходятся между
+прогонами на единицы пикселей и два уровня, а `--stability=3` при этом зелёный —
+внутри одного процесса всё стабильно.

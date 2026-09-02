@@ -13,6 +13,7 @@ import { assertFreshDemoBundle } from '../bundle-freshness.mjs';
 import { goldenClip, prepareGoldenScenario } from '../golden/harness.mjs';
 import { launch } from '../serve.mjs';
 import { DOC_SCREENSHOT_VERSION, DOC_SCREENSHOTS } from './screenshots.mjs';
+import { DETERMINISTIC_ARGS } from './browser-args.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const OUTPUT = resolve(ROOT, 'docs/images');
@@ -167,14 +168,11 @@ mkdirSync(OUTPUT, { recursive: true });
 // 09-device-info). Дельта — единицы уровней в RGB на сглаженных границах, alpha
 // не менялась: подпись субпиксельного сглаживания, а не изменения продукта.
 //
-// `--disable-lcd-text` убирает субпиксельное сглаживание (оно и плавало),
-// `--font-render-hinting=none` снимает зависимость от хинтинга,
-// `--force-color-profile=srgb` фиксирует профиль. `reducedMotion: 'reduce'`
-// добавлен к `animations: 'disabled'` у самого скриншота: первое гасит анимации
-// в CSS, второе — уже начатые переходы на момент съёмки.
-const DETERMINISTIC_ARGS = [
-  '--force-color-profile=srgb', '--font-render-hinting=none', '--disable-lcd-text',
-];
+// Аргументы запуска и объяснение каждого — в `browser-args.mjs`: константы
+// живут отдельно, чтобы тест мог их прочитать, не поднимая браузер (#424).
+// `reducedMotion: 'reduce'` добавлен к `animations: 'disabled'` у самого
+// скриншота: первое гасит анимации в CSS, второе — уже начатые переходы на
+// момент съёмки.
 /**
  * Режим замера стабильности (#410): `node demo/docs/capture.mjs --stability=3`.
  *

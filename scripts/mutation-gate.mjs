@@ -934,6 +934,29 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'capture-allows-partial-raster',
+    guard: 'node --test test/capture-determinism-args.test.mjs',
+    because: 'partial raster reuses whatever the compositor drew before, so the frame '
+      + 'depends on the history of the run — one or two of ten frames drifted between '
+      + 'runs while three shots inside one process matched byte for byte (#424)',
+    patches: [{
+      file: 'demo/docs/browser-args.mjs',
+      find: "  '--disable-partial-raster',\n",
+      replace: '',
+    }],
+  },
+  {
+    id: 'capture-draws-before-compositor-settles',
+    guard: 'node --test test/capture-determinism-args.test.mjs',
+    because: 'without running every compositor stage first the screenshot is taken '
+      + 'mid-flight, and the remaining work lands differently on every run (#424)',
+    patches: [{
+      file: 'demo/docs/browser-args.mjs',
+      find: "  '--run-all-compositor-stages-before-draw',\n",
+      replace: '',
+    }],
+  },
+  {
     id: 'danger-confirm-back-into-the-branch',
     guard: 'node demo/smoke_danger_confirm_branches.mjs',
     because: 'a confirmation that lives inside one branch of render() does not '
