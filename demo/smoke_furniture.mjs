@@ -532,7 +532,13 @@ const res = await page.evaluate(async () => {
 // perfectly consistent while Chromium paints furniture at the wrong camera
 // zoom. Bright magenta isolates the fixture from the normal plan artwork.
 const renderStrokeFixture = async (zoom, angle = 0, viewport = null) => {
-  if (viewport) await page.setViewportSize(viewport);
+  if (viewport) {
+    await page.setViewportSize(viewport);
+    await page.evaluate((width) => {
+      const host = document.querySelector('#host');
+      if (host instanceof HTMLElement) host.style.width = `${width}px`;
+    }, Math.max(320, viewport.width - 40));
+  }
   await page.evaluate(async ({ zoom, angle }) => {
     const c = window.__card;
     c._setMode('view');
