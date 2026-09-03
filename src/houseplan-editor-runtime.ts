@@ -242,7 +242,7 @@ import {
   canonicalizePosition,
   formatLatticeShiftCm,
 } from './coordinate-canonicalization';
-import { enqueueSerializedWrite } from './serialized-write-queue';
+import { enqueueSerializedWrite, optimisticAttempt, rollbackOptimistic, type OptimisticAttempt } from './serialized-write-queue';
 import { hasTranslation, langOf, t, type I18nKey } from './i18n';
 import { supportT, type SupportI18nKey } from './i18n/support';
 import {
@@ -10228,6 +10228,7 @@ public _updateDecorStyle(next: DecorStyle): void {
     const d = this.host._settingsDialog;
     if (!d || d.busy) return;
     this.host._settingsDialog = { ...d, busy: true };
+    let attempt: OptimisticAttempt<ServerConfig> | null = null;
     try {
       const cfg = this.host._serverCfg!;
       const isDefault = JSON.stringify(d.colors) === JSON.stringify(DEFAULT_FILL_COLORS);
@@ -10239,8 +10240,7 @@ public _updateDecorStyle(next: DecorStyle): void {
       else delete settings.glow_radius_cm;
       if (d.bgColor) settings.bg_color = d.bgColor;
       else delete settings.bg_color;
-      // Sun background compatibility is explicit: legacy absence means static,
-      // while new installations and spaces materialise daynight.
+      // Legacy absence means static; new installations/spaces materialise daynight.
       if (d.northDeg !== null && Number.isInteger(d.northDeg) && d.northDeg >= 0 && d.northDeg <= 359)
         settings.north_deg = d.northDeg;
       else delete settings.north_deg;
@@ -10249,21 +10249,22 @@ public _updateDecorStyle(next: DecorStyle): void {
       else delete settings.sun_rays;
       if (d.showRoomTooltip) delete settings.show_room_tooltip;
       else settings.show_room_tooltip = false;
-      // Legacy compatibility: old configs may still contain this accepted
-      // field, but weather no longer affects sunlight and the UI no longer
-      // exposes it. Saving general settings cleans the obsolete value up.
+      // Old configs may still contain this accepted field, but weather no
+      // longer affects sunlight; saving general settings cleans it up.
       delete settings.weather_entity;
-      this.host._serverCfg = { ...cfg, settings };
+      const nextConfig = { ...cfg, settings };
+      attempt = optimisticAttempt(cfg, nextConfig, this.host._cfgContentFingerprint,
+        this.host._cfgRev, contentFingerprint);
+      this.host._serverCfg = nextConfig;
       await this._saveConfigNow();
       if (!d.showRoomTooltip && this.host._tip?.room) this.host._tip = null;
       this.host._settingsDialog = null;
       this.host.requestUpdate();
       this.host._showToast(this.host._t('gs.saved'));
     } catch (e: any) {
-      // audit L3: the dialog may have been closed (Esc) while the save was
-      // in flight — spreading null yields a truthy husk and the renderer
-      // then crashes, blanking the whole card. The toast below is the
-      // only remaining signal, so it must still fire.
+      // Esc may close the dialog in flight; the toast must still fire (audit L3).
+      // Never overwrite an authoritative conflict reload or newer edit (#439).
+      if (attempt) rollbackOptimistic(this.host, attempt, contentFingerprint);
       if (this.host._settingsDialog) this.host._settingsDialog = { ...this.host._settingsDialog, busy: false };
       this.host._showToast(this.host._t('toast.error', { err: this.host._errText(e) }));
     }
