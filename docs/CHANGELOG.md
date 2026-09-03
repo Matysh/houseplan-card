@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Custom decor images now pass through the same stable coordinate-write barrier
+  as furniture and shapes, so repeated saves and **Optimize Plans** no longer
+  retain image-only floating-point noise
+  ([#431](https://github.com/Matysh/houseplan-card/issues/431)).
 - Exports made while a reusable decor-image file is missing can now be imported
   with the existing confirmation instead of rejecting the whole plan; full,
   single-space and plan-only exports preserve the repairable image object

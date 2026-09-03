@@ -14,6 +14,7 @@ COORDINATE_DECIMALS = 9
 COORDINATE_FACTOR = 10**COORDINATE_DECIMALS
 LATTICE_GRID_N = 240
 LATTICE_NOISE_STEPS = 1e-4
+DECOR_BOX_KINDS = ("rect", "ellipse", "furniture", "image")
 
 
 def canonicalize_number(value: Any) -> Any:
@@ -150,7 +151,7 @@ def canonicalize_config_geometry(config: Any) -> Any:
             kind = decor.get("kind")
             if kind == "line":
                 _lattice_fields(decor, ("x1", "y1", "x2", "y2"))
-            elif kind in ("rect", "ellipse", "furniture"):
+            elif kind in DECOR_BOX_KINDS:
                 _lattice_fields(decor, ("x", "y", "w", "h"))
                 _scalar_fields(decor, ("angle",))
             elif kind == "text":

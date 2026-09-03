@@ -1,5 +1,6 @@
 {
   "decimals": 9,
+  "boxKinds": ["rect", "ellipse", "furniture", "image"],
   "configInput": {
     "spaces": [
       {
@@ -117,6 +118,20 @@
             "w": 0.1000000004,
             "h": 0.1000000006,
             "angle": 90.1234567896
+          },
+          {
+            "id": "image",
+            "kind": "image",
+            "asset_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "x": 0.5000000004,
+            "y": 0.5000000006,
+            "w": 0.2000000004,
+            "h": 0.3000000006,
+            "angle": 45.1234567896,
+            "opacity": 0.5000000004,
+            "flip_h": true,
+            "flip_v": false,
+            "future": {"numeric": 0.1234567896}
           }
         ],
         "room_drafts": [
@@ -318,6 +333,20 @@
             "w": 0.1,
             "h": 0.1,
             "angle": 90.12345679
+          },
+          {
+            "id": "image",
+            "kind": "image",
+            "asset_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "x": 0.5,
+            "y": 0.5,
+            "w": 0.2,
+            "h": 0.3,
+            "angle": 45.12345679,
+            "opacity": 0.5000000004,
+            "flip_h": true,
+            "flip_v": false,
+            "future": {"numeric": 0.1234567896}
           }
         ],
         "room_drafts": [

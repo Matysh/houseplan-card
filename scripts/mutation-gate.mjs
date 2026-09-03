@@ -2336,6 +2336,32 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'image-box-frontend-canonicalization-omitted',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="decor box catalog" '
+      + 'test/coordinate-canonicalization.test.mjs',
+    because: 'the decor type can know about an image while a handwritten traversal silently '
+      + 'leaves its x/y/w/h outside the canonical write barrier (#431 AC4)',
+    patches: [{
+      file: 'src/coordinate-canonicalization.ts',
+      find: '    && (DECOR_BOX_KINDS as readonly string[]).includes(value);',
+      replace: "    && value !== 'image'\n"
+        + '    && (DECOR_BOX_KINDS as readonly string[]).includes(value);',
+    }],
+  },
+  {
+    id: 'image-box-python-canonicalization-omitted',
+    guard: 'node scripts/backend-test-guard.mjs decor_box_catalog_matches_shared_contract '
+      + 'tests_backend/test_coordinate_canonicalization.py',
+    because: 'the Python schema and storage boundary must mirror the complete frontend box '
+      + 'catalog instead of accepting image floating-point tails from older clients (#431 AC4)',
+    patches: [{
+      file: 'custom_components/houseplan/coordinate_canonicalization.py',
+      find: 'DECOR_BOX_KINDS = ("rect", "ellipse", "furniture", "image")',
+      replace: 'DECOR_BOX_KINDS = ("rect", "ellipse", "furniture")',
+    }],
+  },
+  {
     id: 'quantization-hits-allowlist',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="scalar\\+lattice fixture contract" '

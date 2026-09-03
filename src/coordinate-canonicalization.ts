@@ -5,6 +5,13 @@
  * Keep the precision, lattice formula and field allow-list in lockstep.
  */
 
+import {
+  DECOR_BOX_KINDS,
+  type DecorBoxKind,
+} from './editors/decor/types';
+
+export { DECOR_BOX_KINDS };
+
 export const COORDINATE_DECIMALS = 9;
 export const COORDINATE_FACTOR = 10 ** COORDINATE_DECIMALS;
 export const LATTICE_GRID_N = 240;
@@ -84,6 +91,11 @@ function records(value: unknown): JsonRecord[] {
     : [];
 }
 
+function isDecorBoxKind(value: unknown): value is DecorBoxKind {
+  return typeof value === 'string'
+    && (DECOR_BOX_KINDS as readonly string[]).includes(value);
+}
+
 function scalarFields(item: JsonRecord, names: readonly string[]): void {
   for (const name of names) {
     if (Object.prototype.hasOwnProperty.call(item, name)) {
@@ -155,7 +167,7 @@ function visitLatticeCoordinates(
       for (const opening of records(space.openings)) fieldValues(opening, ['x', 'y']);
       for (const decor of records(space.decor)) {
         if (decor.kind === 'line') fieldValues(decor, ['x1', 'y1', 'x2', 'y2']);
-        else if (decor.kind === 'rect' || decor.kind === 'ellipse' || decor.kind === 'furniture') {
+        else if (isDecorBoxKind(decor.kind)) {
           fieldValues(decor, ['x', 'y', 'w', 'h']);
         } else if (decor.kind === 'text') fieldValues(decor, ['x', 'y']);
       }
@@ -335,7 +347,7 @@ export function canonicalizeConfigGeometryInPlace<T>(config: T): T {
 
     for (const decor of records(space.decor)) {
       if (decor.kind === 'line') latticeFields(decor, ['x1', 'y1', 'x2', 'y2']);
-      else if (decor.kind === 'rect' || decor.kind === 'ellipse' || decor.kind === 'furniture') {
+      else if (isDecorBoxKind(decor.kind)) {
         latticeFields(decor, ['x', 'y', 'w', 'h']);
         scalarFields(decor, ['angle']);
       } else if (decor.kind === 'text') {

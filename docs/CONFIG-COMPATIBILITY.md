@@ -149,6 +149,12 @@ while the frontend adopts the exact candidate it sends. This removes ULP noise
 without changing the schema, JSON number type, model/store version or visible
 placement.
 
+Decor uses an explicit box-geometry catalog shared by the frontend contract and
+mirrored by the integration: `rect`, `ellipse`, `furniture` and `image`.
+Their `x/y/w/h` fields follow the lattice rule above and `angle` follows the
+scalar rule; image asset, opacity, mirror flags and unknown fields are not
+geometry and remain unchanged.
+
 The operation is lossless at the product scale and intentionally narrow.
 `view_box`, `cell_cm`, `plan_aspect`, physical centimetre values,
 presentation settings, colours, opacity/brightness/temperature, vacuum

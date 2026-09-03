@@ -32,6 +32,7 @@ pytest.importorskip("homeassistant", reason="модуль тянет HA чере
 from custom_components.houseplan import virtual_lights
 from custom_components.houseplan.coordinate_canonicalization import (
     COORDINATE_DECIMALS,
+    DECOR_BOX_KINDS,
     LATTICE_GRID_N,
     LATTICE_NOISE_STEPS,
     canonicalize_config_geometry,
@@ -49,7 +50,6 @@ from custom_components.houseplan.validation import (
     POS_SCHEMA,
 )
 from custom_components.houseplan.wall_segment_model import commit_wall_segment_model
-
 
 FIXTURE = (
     Path(__file__).parents[1]
@@ -87,6 +87,32 @@ def test_python_and_frontend_share_the_scalar_lattice_fixture_contract() -> None
     assert canonicalize_config_geometry(config) == config
     assert canonicalize_layout_geometry(layout) == layout
     assert math.copysign(1.0, layout["rl:poly"]["x"]) == 1.0
+
+
+def test_decor_box_catalog_matches_shared_contract() -> None:
+    fixture = _fixture()
+    assert list(DECOR_BOX_KINDS) == fixture["boxKinds"]
+
+    input_decor = fixture["configInput"]["spaces"][0]["decor"]
+    input_boxes = [item for item in input_decor if item["kind"] in DECOR_BOX_KINDS]
+    assert sorted(item["kind"] for item in input_boxes) == sorted(fixture["boxKinds"])
+
+    result = canonicalize_config_geometry(fixture["configInput"])
+    output_by_id = {item["id"]: item for item in result["spaces"][0]["decor"]}
+    expected_by_id = {
+        item["id"]: item for item in fixture["configExpected"]["spaces"][0]["decor"]
+    }
+    for source in input_boxes:
+        actual = output_by_id[source["id"]]
+        expected = expected_by_id[source["id"]]
+        for field in ("x", "y", "w", "h", "angle"):
+            assert actual[field] == expected[field]
+            assert actual[field] != source[field]
+
+    source_image = next(item for item in input_boxes if item["kind"] == "image")
+    image = output_by_id["image"]
+    for field in ("asset_id", "opacity", "flip_h", "flip_v", "future"):
+        assert image[field] == source_image[field]
 
 
 def test_scalar_contract_is_symmetric_and_keeps_off_grid_geometry() -> None:

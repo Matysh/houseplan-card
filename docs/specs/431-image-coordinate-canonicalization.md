@@ -2,7 +2,7 @@
 
 Issue: [#431](https://github.com/Matysh/houseplan-card/issues/431)
 
-Статус документа: ТЗ на ревью.
+Статус документа: реализовано.
 
 Источники контракта: [ТЗ #51](051-custom-decor-images.md),
 [ТЗ #224](224-config-coordinate-canonicalization.md) и
