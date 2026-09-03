@@ -63,9 +63,52 @@ evidence even when a full entity-registry response has no row. A disabled row
 still wins. A selected camera without position data gets the XCME attribute
 hint; arbitrary unselected cameras do not.
 
+## Maps and floors (#162)
+
+One robot can hold several maps, and each map belongs to one space. The dock
+marker never moves: it stays in `marker.space`, while the live puck, the
+current trail and the room highlight belong to the space of the map that is
+active right now.
+
+A **route** is one saved answer to "this exact map of this exact source lives
+here": `{ id, source, map_id, space, calibration }`. The exact source is part
+of the identity, because two cameras can both report `default` and a map id
+alone cannot tell two floors apart.
+
+Route resolution has exactly one answer per frame:
+
+| Result | What is drawn | When |
+|---|---|---|
+| `ready` | puck and trails in `route.space` | one route matches, its space exists, matrix is six finite numbers |
+| `needs_calibration` | nothing | the matching route has no matrix yet |
+| `unmapped` | nothing | the observed map is not assigned to any floor |
+| `ambiguous` | nothing | two routes match at once — list order never picks a floor |
+| `missing_space` | nothing | the route points at a space that was deleted |
+| `none` | nothing | no source reports telemetry |
+
+Every negative result is fail-closed on purpose: a robot drawn on a guessed
+floor makes the plan a false statement about the house. While the robot is
+moving, the dock shows an amber `mdi:alert-outline` badge whose accessible name
+carries the exact reason.
+
+Rules that follow from the identity being exact:
+
+- source and `map_id` of a saved route are immutable; a wrong identity is
+  deleted and added again, never silently re-pointed;
+- changing the target space is a NEW route identity: the matrix was solved
+  against the old space's geometry and the recorded runs were filed under the
+  old id, so both are dropped after an explicit confirmation;
+- deleting a space removes the routes that pointed at it — the confirmation
+  states how many — and leaves the dock and the other routes alone;
+- `default` stays a valid single-map id, but it is not proof of a stable
+  multi-floor identity; the editor says so next to such a route.
+
 ## Calibration
 
-The stored transform is a six-number affine matrix per map:
+Calibration belongs to the route: the matrix is solved against the rooms of
+`route.space`, and the manual fit opens on that space rather than the dock's.
+
+The legacy transform is a six-number affine matrix per map:
 `marker.vacuum.calibration[map_id]`. Existing matrices are not migrated.
 
 - **Automatic:** at least three room names must match. Robot anchors use
@@ -142,12 +185,27 @@ registry subscription is installed.
 ```text
 marker.vacuum = {
   live?, trail?, trail_mode?, source?,
-  calibration?: { [map_id]: [a,b,c,d,e,f] },
+  calibration?: { [map_id]: [a,b,c,d,e,f] },   // legacy-read after #162
+  map_routes?: [{ id, source, map_id, space, calibration? }],
   room_highlight?, segment_map?
 }
 ```
 
-All fields are optional and old plans remain readable. Hiding retains the
+All fields are optional and old plans remain readable. Without `map_routes`
+every valid `calibration[map_id]` is read as an effective route into the dock's
+space, so a plan made before #162 renders byte for byte as before. The first
+explicit routing edit converts the whole dictionary at once — all matrices or
+none — and needs an exact source to do it; `calibration` is dropped only after
+the config write succeeds. Where both exist, `map_routes` is the only
+authority and the legacy dictionary takes no part in rendering.
+
+A stored run carries the route that wrote it:
+`{ route_id, source, map_id, started, ended, points }`. A run recorded before
+#162 has neither `route_id` nor `source`; it is adopted at read time by the
+routes of the same marker whose `map_id` matches, narrowed by the marker's root
+`vacuum.source` when that still exists. Exactly one candidate means the run is
+drawn in that route's space; zero or more than one means it is drawn nowhere
+and left untouched on disk. Hiding retains the
 configuration. Deleting a vacuum marker removes its layout and server trails,
 creates the normal removal tombstone and makes the HA device available for a
 fresh add without resurrecting old runs. The backend reconciles both a removal

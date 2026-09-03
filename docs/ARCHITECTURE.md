@@ -254,6 +254,29 @@ Built from the registries (`_buildDevices`), rules carried over 1-to-1 from the 
   source-glow fill mode: a light pool is spatial information, not a replacement
   for the universal working-state plate.
 
+### Vacuum map-to-space routing authority
+
+`src/vacuum-routes.ts` owns the answer to "which map is on which floor" and is
+the only place that answers it. `effectiveRoutes()` reads explicit
+`marker.vacuum.map_routes` or, for a plan that predates #162, the legacy
+`calibration` dictionary as routes into the dock's space. `resolveRoute()`
+turns the observed map id per exact source into one of six results, never into
+a guess: two candidates are `ambiguous`, not "the first one". The result is
+computed once per frame into `render-device-snapshot.ts`
+(`facts.get('vacuum:<id>')`), so `render()` cannot derive a second answer, and
+`planVacuumOverlay()` decides what the space currently on screen draws — the
+dock stays in `marker.space` while the live overlay follows the active route.
+
+The editing half lives apart, in the lazy editor graph: `vacuum-route-edit.ts`
+(add, re-target, delete, legacy conversion, matrix write, fit target) and
+`editors/vacuum-maps-section.ts` (the "Maps and floors" block). The View card
+must not pay for code it can never run. `custom_components/houseplan/
+vacuum_routes.py` is a byte-for-byte mirror of the resolver and the legacy-run
+adoption rule, driven by the shared fixtures in
+`test/fixtures/vacuum-routes/`: the recorder files each point under the route
+that produced it, and a divergence between the two sides shows up as a robot on
+the wrong floor.
+
 ### Vacuum telemetry authority
 
 `src/vacuum.ts` owns pure normalization and arbitration. Telemetry paths are

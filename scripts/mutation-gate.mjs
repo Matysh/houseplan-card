@@ -382,6 +382,18 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'vacuum-overlay-back-to-the-dock-space-filter',
+    guard: 'npm run bundle:sync && node demo/smoke_vacuum_multifloor.mjs',
+    because: 'the overlay layer must see every robot of the plan, not only those whose DOCK '
+      + 'is in the space on screen: the old filter is exactly why a multi-floor robot could '
+      + 'never appear on its second floor (#162, AC2)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '            ${this._renderVacuums(this._renderDevices, view, space.id)}',
+      replace: '            ${this._renderVacuums(devs, view, space.id)}',
+    }],
+  },
+  {
     id: 'area-snapshot-cleanup-ignores-authority',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="limited frames and runtime reset" '

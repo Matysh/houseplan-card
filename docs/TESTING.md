@@ -45,6 +45,43 @@
 доказывается unit/smoke-счётчиками и состоянием runtime, а не regex по исходнику
 (#440).
 
+## Многоэтажный робот: карты и пространства (#162)
+
+- [ ] Чистый резолвер разбирает все шесть исходов на общей фикстуре и не
+      зависит от порядка списка маршрутов; усыновление легаси-прогона даёт
+      ровно три исхода, оба отрицательных — fail-closed
+      [unit: `test/vacuum-routes.test.mjs`, `tests_backend/test_vacuum_routes.py`,
+      фикстуры `test/fixtures/vacuum-routes/*.json`].
+- [ ] Живой оверлей рисуется в пространстве активного маршрута, док остаётся в
+      своём; прошлый прогон виден в пространстве СВОЕГО маршрута, а легаси-конфиг
+      сохраняет прежнее правило [unit: `test/vacuum-routes.test.mjs`].
+- [ ] Рекордер подписывается на источники всех маршрутов и пишет прогон под
+      маршрутом, который его породил; смена маршрута начинает новый прогон даже
+      при том же `map_id`
+      [backend: `tests_backend/test_trail_recorder.py`, `test_trails.py`].
+- [ ] Правка маршрутов проверяется семантически на `config/set`, optimize и обоих
+      импортах, нетронутые легаси/будущие данные не блокируют чужое сохранение
+      [backend: `tests_backend/test_vacuum_route_validation.py`].
+- [ ] Удаление пространства называет число чужих карт и уносит только их
+      маршруты; экспорт одного пространства отбрасывает кросс-пространственные
+      маршруты и считает их в `dropped_marker_links`
+      [unit: `test/space-deletion.test.mjs`, backend: `tests_backend/test_ha_import_export.py`].
+- [ ] Восемь мутантов краснеют: `vacuum-route-ambiguity-takes-the-first`,
+      `vacuum-route-missing-space-falls-back-to-dock`,
+      `vacuum-route-unmapped-draws-anyway`,
+      `vacuum-route-identity-duplicates-allowed`,
+      `vacuum-legacy-run-adopts-the-first-candidate`,
+      `vacuum-overlay-ignores-the-rendered-space`,
+      `vacuum-previous-run-follows-the-robot`,
+      `vacuum-route-warning-stays-silent`, плюс серверные
+      `vacuum-run-forgets-its-route`, `vacuum-retargeted-route-keeps-its-old-trails`,
+      `vacuum-route-validation-accepts-a-dead-space` и
+      `space-delete-keeps-foreign-vacuum-routes`
+      [mutation: `scripts/mutation-gate.mjs`].
+- [ ] Продакшен-бандл показывает робота на этаже активной карты, а на этаже дока
+      не показывает; предупреждение у дока появляется на движущемся роботе с
+      несопоставленной картой [auto: `demo/smoke_vacuum_multifloor.mjs`].
+
 ## Vacuum trail smoothing (#209)
 
 - [ ] Pure `smoothVacPath` tests prove exact endpoints, separate subpaths,

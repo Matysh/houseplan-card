@@ -77,6 +77,36 @@ new frontend restores the disabled behavior after upgrade. Full backup/import
 preserves the setting and the privacy-safe support projection includes only a
 validated boolean.
 
+## Vacuum map routes (#162)
+
+`marker.vacuum.map_routes` is an optional array of
+`{ id, source, map_id, space, calibration? }`, at most 32 per marker, with `id`
+and the pair `(source, map_id)` unique inside the marker. It requires no model
+or store version bump: absence reads as the historical behaviour.
+
+Reading is lossless in both directions. Without `map_routes` every valid
+`calibration[map_id]` is an effective route into the dock's space, so nothing
+is migrated on load and an ordinary save of other marker fields leaves the
+vacuum block untouched. The first explicit routing edit converts the whole
+legacy dictionary at once and needs an exact source to do it; partial
+conversion is refused, and `calibration` is removed only after the config write
+succeeds.
+
+Semantic validation is change-aware: an untouched legacy or future-shaped block
+never blocks an unrelated save, while an edited one must be valid or the write
+is refused atomically with `invalid_vacuum_map_route`. A full export/import
+round-trips routes verbatim. A single-space export drops routes that point at
+other spaces and counts them in `dropped_marker_links`, because their target
+would not exist in the imported document.
+
+Downgrade: an older frontend ignores `map_routes` and falls back to the legacy
+`calibration` dictionary, which the conversion removed — such a plan shows the
+robot only where a matrix still exists, and re-upgrading restores routing
+without data loss because the routes themselves are preserved by the
+unknown-fields policy. Server trails written by a newer backend carry
+`route_id`/`source`; an older frontend ignores both and matches runs by
+`map_id` exactly as before.
+
 ## Stable wall identity — model v8 (#282)
 
 Model v8 adds `space.wall_segments[]`, ordered `rooms[].wall_ids[]`, IDs on
