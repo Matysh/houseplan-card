@@ -297,6 +297,21 @@ test('binding recovery clears absence evidence and a later loss starts over', ()
   assert.equal(lostAgain.needsConfirmationRefresh, true);
 });
 
+test('#434 cleanup drops a previous candidate absent from the current snapshot', () => {
+  const snapshot = { keep: { binding: 'device:keep', area: 'area-a' } };
+  const result = cleanup({
+    snapshot,
+    revision: 31,
+    previousCandidates: new Map([
+      ['device:removed-from-snapshot', 30],
+      ['device:keep', 30],
+    ]),
+  });
+  assert.equal(result.candidates.has('device:removed-from-snapshot'), false,
+    'valid finite evidence cannot outlive the snapshot binding it belongs to');
+  assert.equal(result.candidates.has('device:keep'), true);
+});
+
 test('limited frames and runtime reset do not confirm an earlier absence', () => {
   const snapshot = { orphan: { binding: 'device:orphan', area: 'area-a' } };
   const first = cleanup({ snapshot, revision: 20 });

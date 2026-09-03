@@ -24,6 +24,7 @@ try:  # KEY_HASS — the modern way to access hass from the aiohttp application
 except ImportError:  # older HA versions
     KEY_HASS = "hass"  # type: ignore[assignment]
 
+from .asset_integrity import get_asset_integrity_verifier
 from .auth import may_write
 from .const import (
     ASSETS_DIR,
@@ -43,8 +44,9 @@ from .decor_assets import (
     ASSET_ID_RE,
     DecorAssetError,
     asset_meta_path,
+    physical_asset_usage,
     public_asset,
-    read_catalog,
+    read_asset,
     validate_asset,
 )
 from .import_export import ImportFailure, create_preview
@@ -176,18 +178,13 @@ class HouseplanContentView(HomeAssistantView):
         if not str(path).startswith(str(base)):
             return web.Response(status=404)
 
-        if not await hass.async_add_executor_job(path.is_file):
-            return web.Response(status=404)
         suffix = path.suffix.lower()
         if kind == "assets":
-            try:
-                digest = await hass.async_add_executor_job(
-                    lambda: hashlib.sha256(path.read_bytes()).hexdigest(),
-                )
-            except OSError:
+            verifier = get_asset_integrity_verifier(hass)
+            if not await hass.async_add_executor_job(verifier.verify, path, path.stem):
                 return web.Response(status=404)
-            if digest != path.stem:
-                return web.Response(status=404)
+        elif not await hass.async_add_executor_job(path.is_file):
+            return web.Response(status=404)
         headers = {
             "Cache-Control": "private, max-age=31536000, immutable"
                 if kind == "assets" else "private, max-age=3600",
@@ -269,24 +266,12 @@ class HouseplanDecorAssetUploadView(HomeAssistantView):
 
         def _store() -> tuple[dict, bool]:
             root.mkdir(parents=True, exist_ok=True)
-            existing = next(
-                (row for row in read_catalog(root) if row["asset_id"] == validated.asset_id),
-                None,
-            )
+            existing = read_asset(root, validated.asset_id)
             if existing is not None:
                 existing_blob = root / f"{validated.asset_id}{existing['ext']}"
                 if hashlib.sha256(existing_blob.read_bytes()).hexdigest() != validated.asset_id:
                     raise DecorAssetError("invalid_image", "The stored image failed its integrity check")
                 return existing, True
-            rows = read_catalog(root)
-            used = sum(int(row.get("bytes") or 0) for row in rows)
-            if len(rows) >= MAX_DECOR_ASSETS_COUNT or used + len(validated.data) > MAX_DECOR_ASSETS_BYTES:
-                raise DecorAssetError("capacity_exceeded", "The decor image store is full")
-            try:
-                if shutil.disk_usage(root).free - len(validated.data) < MIN_FREE_BYTES:
-                    raise DecorAssetError("capacity_exceeded", "Not enough free disk space")
-            except OSError:
-                pass
             aid = validated.asset_id
             blob = root / f"{aid}{validated.ext}"
             meta = asset_meta_path(root, aid)
@@ -296,6 +281,33 @@ class HouseplanDecorAssetUploadView(HomeAssistantView):
                 "ext": validated.ext, "width": validated.width, "height": validated.height,
                 "bytes": len(validated.data), "created_at": datetime.now(timezone.utc).isoformat(),
             }
+            # A hard stop may have promoted the content-addressed blob before
+            # its sidecar. Its exact path and digest prove that no new physical
+            # bytes are needed, so repair remains possible even at full quota.
+            if blob.exists():
+                if not blob.is_file() or hashlib.sha256(blob.read_bytes()).hexdigest() != aid:
+                    raise DecorAssetError("invalid_image", "The stored image failed its integrity check")
+                fd, meta_temp_name = tempfile.mkstemp(prefix=".asset-meta-", dir=str(root))
+                os.close(fd)
+                meta_temp = Path(meta_temp_name)
+                try:
+                    with meta_temp.open("w", encoding="utf-8") as stream:
+                        stream.write(json.dumps(row, ensure_ascii=False, separators=(",", ":")))
+                        stream.flush()
+                        os.fsync(stream.fileno())
+                    os.replace(meta_temp, meta)
+                    return row, False
+                finally:
+                    meta_temp.unlink(missing_ok=True)
+
+            count, used = physical_asset_usage(root)
+            if count >= MAX_DECOR_ASSETS_COUNT or used + len(validated.data) > MAX_DECOR_ASSETS_BYTES:
+                raise DecorAssetError("capacity_exceeded", "The decor image store is full")
+            try:
+                if shutil.disk_usage(root).free - len(validated.data) < MIN_FREE_BYTES:
+                    raise DecorAssetError("capacity_exceeded", "Not enough free disk space")
+            except OSError:
+                pass
             fd, temp_name = tempfile.mkstemp(prefix=".asset-", dir=str(root))
             os.close(fd)
             temp = Path(temp_name)
@@ -310,14 +322,6 @@ class HouseplanDecorAssetUploadView(HomeAssistantView):
                     stream.write(json.dumps(row, ensure_ascii=False, separators=(",", ":")))
                     stream.flush()
                     os.fsync(stream.fileno())
-                if blob.exists():
-                    # A previous hard stop may have promoted the blob but not
-                    # its sidecar. The content hash proves those bytes; finish
-                    # the catalog transaction rather than leaving a ghost.
-                    if hashlib.sha256(blob.read_bytes()).hexdigest() != aid:
-                        raise DecorAssetError("invalid_image", "The stored image failed its integrity check")
-                    os.replace(meta_temp, meta)
-                    return row, True
                 os.replace(temp, blob)
                 promoted_blob = True
                 os.replace(meta_temp, meta)

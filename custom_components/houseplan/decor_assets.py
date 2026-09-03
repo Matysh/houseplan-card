@@ -10,6 +10,7 @@ import hashlib
 import json
 import math
 import re
+import stat
 import struct
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
@@ -372,20 +373,63 @@ def asset_meta_path(root: Path, asset_id: str) -> Path:
     return root / f"{asset_id}.json"
 
 
+def physical_asset_blobs(root: Path) -> list[Path]:
+    """Return exact promoted blob files, independently from their sidecars."""
+    if not root.is_dir():
+        return []
+    blobs: list[Path] = []
+    for path in root.iterdir():
+        if (
+            path.suffix in ASSET_EXTENSIONS
+            and ASSET_ID_RE.fullmatch(path.stem)
+            and stat.S_ISREG(path.stat(follow_symlinks=False).st_mode)
+        ):
+            blobs.append(path)
+    return sorted(blobs, key=lambda path: path.name)
+
+
+def physical_asset_usage(root: Path) -> tuple[int, int]:
+    """Return promoted blob count and actual bytes used for quota checks."""
+    blobs = physical_asset_blobs(root)
+    return len(blobs), sum(path.stat().st_size for path in blobs)
+
+
+def _read_catalog_row(root: Path, path: Path) -> dict[str, Any] | None:
+    """Read one sidecar through the validation shared by list and resolve."""
+    try:
+        row = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(row, dict):
+            return None
+        aid = str(row.get("asset_id") or "")
+        ext = row.get("ext")
+        blob = root / f"{aid}{ext}"
+        if (
+            path.stem != aid
+            or not ASSET_ID_RE.fullmatch(aid)
+            or ext not in ASSET_EXTENSIONS
+            or not blob.is_file()
+        ):
+            return None
+        return row
+    except (OSError, ValueError, TypeError):
+        return None
+
+
+def read_asset(root: Path, asset_id: str) -> dict[str, Any] | None:
+    """Read one exact catalog row without scanning unrelated sidecars."""
+    if not ASSET_ID_RE.fullmatch(asset_id):
+        return None
+    return _read_catalog_row(root, asset_meta_path(root, asset_id))
+
+
 def read_catalog(root: Path) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     if not root.is_dir():
         return rows
     for path in root.glob("*.json"):
-        try:
-            row = json.loads(path.read_text(encoding="utf-8"))
-            aid = str(row.get("asset_id") or "")
-            ext = row.get("ext")
-            blob = root / f"{aid}{ext}"
-            if ASSET_ID_RE.fullmatch(aid) and ext in ASSET_EXTENSIONS and blob.is_file():
-                rows.append(row)
-        except (OSError, ValueError, TypeError):
-            continue
+        row = _read_catalog_row(root, path)
+        if row is not None:
+            rows.append(row)
     return sorted(
         rows,
         key=lambda row: (str(row.get("created_at", "")), str(row["asset_id"])),

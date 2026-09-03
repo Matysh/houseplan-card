@@ -34,6 +34,13 @@ the attachment or a successful submit removes the token; process exit also
 removes it. Download uses the same preview text. The backend never rebuilds an
 attachment during submit.
 
+A valid 48-character token in a response that the card cannot adopt is also
+discarded best-effort exactly once—even if the rest of the response is invalid,
+the dialog changed meanwhile, or the local state update was refused. Cleanup
+does not depend on whether that request is still current and never replaces the
+original UI error. Malformed token strings are not sent back; backend TTL
+remains the final guard if a discard transport itself fails.
+
 ## Transport and retention
 
 The integration can contact only `https://support.houseplan.tech/v1/reports`.

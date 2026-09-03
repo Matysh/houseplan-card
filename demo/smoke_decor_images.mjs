@@ -3,6 +3,13 @@
  * Backend upload/parser/storage security is covered by tests_backend; this
  * smoke uses deterministic in-memory raster data so it never depends on a
  * writable demo server or leaves user files behind.
+ *
+ * С #433 сюда входит и путь загрузки: последний блок проходит настоящие
+ * `uploadFromInput` → `upload` → `delete`, подменяя только транспорт
+ * (`fetchWithAuth` и одну ветку `callWS`). До этого смок подменял `callWS`
+ * целиком и до этих методов не доходил — именно поэтому #427 (гасли обе
+ * кнопки диалога для файла тяжелее 2 МиБ) прожил четыре круга ревью.
+ * Детерминированная часть того же контракта — `test/decor-image-upload.test.mjs`.
  */
 import { launch, checkAll, finish } from './serve.mjs';
 
@@ -199,6 +206,82 @@ const result = await page.evaluate(async () => {
   out.hideDecorHidesImages = !root().querySelector('.decorlayer image[data-kind="image"]');
   sp.settings = { ...(sp.settings || {}), hide_decor: false };
   await settle();
+
+  // ── #433: настоящий uploadFromInput, а не подмена callWS ──────────────────
+  // Шапка этого файла честно признавалась, что путь загрузки не проверяется
+  // ничем: смок подменял `callWS` и до `uploadFromInput`/`upload`/`delete` не
+  // доходил. Цена — #427, четыре круга ревью. Здесь подменяется только
+  // транспорт (`fetchWithAuth`), а весь путь от change-события до каталога
+  // проходит продуктовый код собранного бандла.
+  const id3 = '7'.repeat(64);
+  const rawUrl3 = `/api/houseplan/content/assets/_/${id3}.png`;
+  const asset3 = {
+    asset_id: id3, name: 'small.png', mime: 'image/png',
+    width: 100, height: 100, bytes: 33, url: rawUrl3, used_by: [],
+  };
+  // PNG до конца IHDR: на проходном пути ничего не декодирует ни карточка, ни
+  // браузер — заголовок читает probeBackdrop, байты уходят как есть.
+  const pngHead = new Uint8Array(33);
+  pngHead.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a], 0);
+  pngHead.set([0, 0, 0, 13, 0x49, 0x48, 0x44, 0x52], 8);
+  new DataView(pngHead.buffer).setUint32(16, 100);
+  new DataView(pngHead.buffer).setUint32(20, 100);
+  pngHead[24] = 8; pngHead[25] = 2;
+  const uploads = [];
+  const toasts = [];
+  const realToast = c._showToast.bind(c);
+  const realConfirm = c._confirmDanger.bind(c);
+  c._showToast = (text) => { toasts.push(text); };
+  c.hass = { ...c.hass, fetchWithAuth: async (url, init) => {
+    uploads.push({ url, method: init?.method, name: init?.body?.get('file')?.name });
+    return { ok: true, json: async () => ({ asset: asset3 }) };
+  } };
+  c._decorAssetCatalog = [asset];
+  c._decorImagePalette = null;
+  await c._editorRuntime._decorImageUpload({
+    target: { files: [new File([pngHead], 'small.png', { type: 'image/png' })], value: 'x' },
+  });
+  await settle();
+  out.uploadPassesThroughRealInputHandler = uploads.length === 1
+    && uploads[0].url === '/api/houseplan/assets/upload'
+    && uploads[0].method === 'POST'
+    && uploads[0].name === 'small.png'
+    && !c._backdropGuard;
+  out.uploadedAssetArmsPaletteAndCatalog = c._decorAssetCatalog[0]?.asset_id === id3
+    && c._decorAssets.get(id3)?.url === rawUrl3
+    && c._decorImagePalette?.asset_id === id3
+    && c._decorAssetBusy === false;
+
+  // Неподдерживаемый формат: тост и ни одного запроса.
+  toasts.length = 0;
+  await c._editorRuntime._decorImageUpload({
+    target: { files: [new File([pngHead], 'plan.gif', { type: 'image/gif' })], value: 'x' },
+  });
+  out.rejectedFormatNeverReachesTransport = uploads.length === 1
+    && toasts.length === 1 && toasts[0] === c._t('toast.plan_formats');
+
+  // Удаление: подтверждение спрашивается, WS уходит, каталог редеет.
+  const deletes = [];
+  const beforeDelete = c.hass.callWS;
+  c.hass = { ...c.hass, callWS: async (message) => {
+    if (message.type === 'houseplan/assets/delete') { deletes.push(message.asset_id); return {}; }
+    return beforeDelete(message);
+  } };
+  let confirmAsked = 0;
+  c._confirmDanger = async () => { confirmAsked++; return true; };
+  await c._editorRuntime._decorImageDelete(asset3);
+  await settle();
+  out.deleteAsksConfirmationAndPrunesCatalog = confirmAsked === 1
+    && deletes.length === 1 && deletes[0] === id3
+    && !c._decorAssetCatalog.some((row) => row.asset_id === id3)
+    && !c._decorAssets.has(id3)
+    && c._decorImagePalette === null;
+  c._showToast = realToast;
+  c._confirmDanger = realConfirm;
+  c._decorAssets = new Map([[id, asset], [id2, asset2]]);
+  c._decorAssetCatalog = [asset, asset2];
+  await settle();
+
   await customElements.whenDefined('houseplan-space-card');
   const config = JSON.parse(JSON.stringify(c._serverCfg));
   let staticResolveCalls = 0;

@@ -422,7 +422,6 @@
   "marker.sub_entity": "entity",
   "title.general_settings": "General settings",
   "gs.title": "General settings",
-  "gs.hint": "Fill colors apply to every space; each color has its own opacity. Which fill mode a space uses is set in that space's dialog.",
   "gs.light_group": "Fill: lights",
   "gs.light_on": "Lights on",
   "gs.light_off": "All lights off",

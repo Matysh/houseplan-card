@@ -82,10 +82,11 @@ export async function resolveDecorAssets(
     connection?: object;
   },
   assetIds: readonly string[],
+  configEpoch: number | string,
 ): Promise<Map<string, DecorAsset>> {
   const unique = [...new Set(assetIds.filter((id) => DECOR_ASSET_ID_RE.test(id)))].sort();
   const owner = hass.connection || hass;
-  const key = unique.join(',');
+  const key = JSON.stringify([configEpoch, unique]);
   const cached = resolveCache.get(owner);
   if (cached?.[0] === key) return cached[1];
   const out = new Map<string, DecorAsset>();

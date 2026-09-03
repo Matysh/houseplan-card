@@ -1,4 +1,6 @@
 {
+  "gs.hint": "Fill colors apply to every space; each color has its own opacity. Which fill mode a space uses is set in that space's dialog.",
+  "gs.show_room_tooltip": "Show the room information window on hover",
   "support.about_group": "About the card",
   "support.guide_group": "Documentation",
   "support.guide": "User guide",

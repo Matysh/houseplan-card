@@ -39,7 +39,7 @@ import {
   spaceDisplayOf, resolveEffectiveRoomFill, fillColorsOf, DEFAULT_FILL_COLORS,
   customFillOf, roomCustomFillOf, DEFAULT_CUSTOM_FILL,
   type FillColors, type FillColorEntry, type ResolvedRoomFill, runServiceFor, RUN_TARGET_DOMAINS,
-  DEFAULT_ROOM_COLOR, DEFAULT_ROOM_OPACITY, stageBgOf,
+  DEFAULT_ROOM_COLOR, DEFAULT_ROOM_OPACITY, stageBgOf, showRoomTooltipOf,
   DEFAULT_TEMP_MIN, DEFAULT_TEMP_MAX, type SpaceDisplay,
   referencedContentUrls,
   DISPLAY_MODES, TAP_ACTIONS, SPACE_FILL_UI_MODES, ROOM_FILL_MODES,
@@ -378,7 +378,7 @@ import {
 } from './space-order';
 import { applyOpeningMoves, mergeCollinearPartitions, spaceMergeGeometry } from './wall-merge';
 
-const CARD_VERSION = '1.71.0-beta.1';
+const CARD_VERSION = '1.71.0-beta.2';
 const ENTRY_BUILD_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
 const EDITOR_RETRY_ASSET = '__HOUSEPLAN_EDITOR_RETRY_ASSET__';
 
@@ -1026,6 +1026,7 @@ export class HouseplanCard extends LitElement {
     lqi?: number | null;
     temp?: number | null;
     hum?: number | null;
+    room?: boolean;
   } | null = null;
   /** Room whose physical perimeter is highlighted in View. The explicit
    *  overlay is needed because thick wall bodies paint above room shapes. */
@@ -2156,8 +2157,13 @@ export class HouseplanCard extends LitElement {
   } | { kind: 'run'; text: string; exec: () => void } | null = null;
   /** One eager confirmation owner shared by View, onboarding and lazy editors. */
   private _dangerConfirm: HpConfirmState | null = null;
-  /** Last language branch painted by `_renderBody`; `warm` cannot accept new dialogs. */
-  private _dangerConfirmLocaleGate: LanguageRenderGate = 'ready';
+  /** Current language branch; never cached from a previous render. */
+  private get _dangerConfirmLocaleGate(): LanguageRenderGate {
+    if (!this._config || !this.hass) return 'ready';
+    return languageRenderGate(
+      this, LANGUAGE_RUNTIME, langOf(this.hass, this._config.language),
+    );
+  }
   private readonly _dangerConfirmController = new HpConfirmController((state) => {
     this._dangerConfirm = state;
   });
@@ -2219,6 +2225,7 @@ export class HouseplanCard extends LitElement {
     colors: FillColors; glowRadius: number; bgColor: string | null;
     /** sun on the plan (docs/SUN.md) */
     northDeg: number | null; bgMode: 'static' | 'daynight'; sunRays: boolean;
+    showRoomTooltip: boolean;
     busy: boolean;
   } | null = null;
   private _supportDialog: SupportDialogState | null = null;
@@ -4182,7 +4189,9 @@ export class HouseplanCard extends LitElement {
     this._syncEmptySpaceState();
     // #417: losing the only renderable space while a decision is pending must
     // settle it before render() clears hp-confirm with `nothing`.
-    if (this._dangerConfirm && this._dangerConfirmMissingSpace()) {
+    if (this._dangerConfirm && (
+      this._dangerConfirmMissingSpace() || this._dangerConfirmLocaleGate === 'warm'
+    )) {
       this._cancelDangerConfirm();
     }
     if (changed.has('hass') && this.hass) {
@@ -4307,7 +4316,7 @@ export class HouseplanCard extends LitElement {
       this._decorAssets = new Map();
       return;
     }
-    const resolved = await resolveDecorAssets(this.hass, decorAssetIds(cfg));
+    const resolved = await resolveDecorAssets(this.hass, decorAssetIds(cfg), this._cfgRev);
     if (token !== this._decorAssetSyncToken) return;
     this._decorAssets = resolved;
     this._resign();
@@ -7286,11 +7295,12 @@ export class HouseplanCard extends LitElement {
     lqi?: number | null,
     temp?: number | null,
     hum?: number | null,
+    room = false,
   ): void {
     this._notePointer(ev);
     if (!this._pointerModality.hoverEnabled) return;
     if (this._drag || this._deviceDrag) return;
-    this._tip = { x: ev.clientX, y: ev.clientY, title, meta, lqi, temp, hum };
+    this._tip = { x: ev.clientX, y: ev.clientY, title, meta, lqi, temp, hum, room };
   }
 
   // ================= ROOM MARKUP EDITOR =================
@@ -11206,23 +11216,24 @@ export class HouseplanCard extends LitElement {
       </hp-confirm>`;
   }
 
+  /** One stable Lit template site lets a nested `noChange` retain the body
+   * while the independent confirmation child is removed during a warm gate. */
+  private _renderRoot(body: TemplateResult | typeof noChange): TemplateResult {
+    return html`${body}${this._renderDangerConfirm()}`;
+  }
+
   protected render(): TemplateResult | typeof nothing | typeof noChange {
     const body = this._renderBody();
-    // `noChange` is Lit's «do not touch the DOM» signal and `nothing` means the
-    // card is not initialised yet — neither may be wrapped in a template. In
-    // both, the card draws nothing at all, so a confirmation cannot be shown:
-    // `_confirmDanger` refuses such a request outright instead of leaving it
-    // pending (ТЗ §Граница). The user has pressed nothing at that point.
-    if (body === noChange || body === nothing) return body;
-    return html`${body}${this._renderDangerConfirm()}`;
+    // `nothing` is the only root that has no decision surface. `noChange` is
+    // deliberately nested: it preserves the committed body while allowing the
+    // sibling hp-confirm to settle/cancel on a ready -> warm transition.
+    if (body === nothing) return body;
+    return this._renderRoot(body);
   }
 
   private _renderBody(): TemplateResult | typeof nothing | typeof noChange {
     if (!this._config || !this.hass) return nothing;
-    const localeGate = languageRenderGate(
-      this, LANGUAGE_RUNTIME, langOf(this.hass, this._config.language),
-    );
-    this._dangerConfirmLocaleGate = localeGate;
+    const localeGate = this._dangerConfirmLocaleGate;
     if (localeGate === 'cold') return languageLoadingTemplate();
     if (localeGate === 'warm') return noChange;
     const onboardingRuntimeRequested = !!this._importDialog
@@ -11577,6 +11588,10 @@ export class HouseplanCard extends LitElement {
               let areaText: string | null | undefined;
               const tip = (e: PointerEvent) => {
                 if (this._mode !== 'view') return;
+                if (!showRoomTooltipOf(this._settings)) {
+                  if (this._tip?.room) this._tip = null;
+                  return;
+                }
                 if (areaText === undefined) areaText = this._roomArea(r);
                 this._showTip(
                   e,
@@ -11585,7 +11600,14 @@ export class HouseplanCard extends LitElement {
                   showLqi ? this._roomLqi(r.area) : null,
                   this._roomTemp(r),
                   this._roomHum(r),
+                  true,
                 );
+              };
+              const enterRoom = (event: PointerEvent) => {
+                this._notePointer(event);
+                if (this._pointerModality.hoverEnabled) {
+                  this._hoverRoom = { space: space.id, room: r };
+                }
               };
               const myPoly = polyOf(r);
               // A room's ordinary solid stroke must not run beneath its zero
@@ -11623,57 +11645,32 @@ export class HouseplanCard extends LitElement {
                 ? svg`<path class="${cls}" style="${style}" fill-rule="evenodd"
                     data-hp="room" data-id=${hpId} data-area=${hpArea}
                     d="${[obstaclePath, ...holes.map(pathD)].join(' ')}"
-                    @pointerenter=${(event: PointerEvent) => {
-                      this._notePointer(event);
-                      if (this._pointerModality.hoverEnabled) {
-                        this._hoverRoom = { space: space.id, room: r };
-                      }
-                    }}
+                    @pointerenter=${enterRoom}
                     @pointermove=${tip}
                     @pointerleave=${() => this._clearTransientHover()}></path>`
                 : holes.length && fillPoly
                 ? svg`<path class="${cls}" style="${style}" fill-rule="evenodd"
                     data-hp="room" data-id=${hpId} data-area=${hpArea}
                     d="${[fillPoly, ...holes].map(pathD).join(' ')}"
-                    @pointerenter=${(event: PointerEvent) => {
-                      this._notePointer(event);
-                      if (this._pointerModality.hoverEnabled) {
-                        this._hoverRoom = { space: space.id, room: r };
-                      }
-                    }}
+                    @pointerenter=${enterRoom}
                     @pointermove=${tip}
                     @pointerleave=${() => this._clearTransientHover()}></path>`
                  : fillPoly && fillPoly !== myPoly
                  ? svg`<polygon class="${cls}" style="${style}" points="${fillPoly.map((p) => p.join(',')).join(' ')}"
                      data-hp="room" data-id=${hpId} data-area=${hpArea}
-                    @pointerenter=${(event: PointerEvent) => {
-                      this._notePointer(event);
-                      if (this._pointerModality.hoverEnabled) {
-                        this._hoverRoom = { space: space.id, room: r };
-                      }
-                    }}
+                    @pointerenter=${enterRoom}
                     @pointermove=${tip}
                     @pointerleave=${() => this._clearTransientHover()}></polygon>`
                  : r.poly
                  ? svg`<polygon class="${cls}" style="${style}" points="${r.poly.map((p) => p.join(',')).join(' ')}"
                      data-hp="room" data-id=${hpId} data-area=${hpArea}
-                    @pointerenter=${(event: PointerEvent) => {
-                      this._notePointer(event);
-                      if (this._pointerModality.hoverEnabled) {
-                        this._hoverRoom = { space: space.id, room: r };
-                      }
-                    }}
+                    @pointerenter=${enterRoom}
                     @pointermove=${tip}
                     @pointerleave=${() => this._clearTransientHover()}></polygon>`
                  : svg`<rect class="${cls}" style="${style}"
                      data-hp="room" data-id=${hpId} data-area=${hpArea}
                      x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" rx="${Math.min(r.w!, r.h!) * 0.03}"
-                    @pointerenter=${(event: PointerEvent) => {
-                      this._notePointer(event);
-                      if (this._pointerModality.hoverEnabled) {
-                        this._hoverRoom = { space: space.id, room: r };
-                      }
-                    }}
+                    @pointerenter=${enterRoom}
                     @pointermove=${tip}
                     @pointerleave=${() => this._clearTransientHover()}></rect>`;
               const trimmed = edgeCuts.length && myPoly

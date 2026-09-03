@@ -79,6 +79,10 @@ device state do not depend on that gate. A device action that actually dispatche
 briefly scales its painted shell to 95% and back over 200 ms; informational,
 editor and no-op paths do not imitate a successful action.
 
+The global `settings.show_room_tooltip` preference controls only the floating
+room information window. Missing or invalid values mean enabled; exact `false`
+hides the window while room highlight and every device tooltip remain active.
+
 Removed from this mode (they move, not die):
 - icon dragging ("drag anywhere", v1.9 — consciously reversed),
 - room-label dragging,

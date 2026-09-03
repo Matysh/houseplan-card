@@ -63,6 +63,20 @@ writer produce the same request; accepting either would reopen last-writer-wins
 data loss. This changes only the WebSocket write contract. Stored config,
 model/store versions, exports and read compatibility are unchanged.
 
+## Room hover information preference (#426)
+
+`settings.show_room_tooltip` is an optional global boolean. Absence and any
+invalid legacy/future value read as the historical enabled default; only exact
+`false` hides the floating room information window. Saving the enabled value
+removes the key. The field does not change room highlighting or device
+tooltips, and does not require a model/store version migration.
+
+An older frontend ignores the field and temporarily shows the room window. An
+older backend preserves it through the existing unknown-settings policy, so a
+new frontend restores the disabled behavior after upgrade. Full backup/import
+preserves the setting and the privacy-safe support projection includes only a
+validated boolean.
+
 ## Stable wall identity — model v8 (#282)
 
 Model v8 adds `space.wall_segments[]`, ordered `rooms[].wall_ids[]`, IDs on
@@ -134,6 +148,12 @@ storage helpers repeat the same idempotent operation for internal writers,
 while the frontend adopts the exact candidate it sends. This removes ULP noise
 without changing the schema, JSON number type, model/store version or visible
 placement.
+
+Decor uses an explicit box-geometry catalog shared by the frontend contract and
+mirrored by the integration: `rect`, `ellipse`, `furniture` and `image`.
+Their `x/y/w/h` fields follow the lattice rule above and `angle` follows the
+scalar rule; image asset, opacity, mirror flags and unknown fields are not
+geometry and remain unchanged.
 
 The operation is lossless at the product scale and intentionally narrow.
 `view_box`, `cell_cm`, `plan_aspect`, physical centimetre values,
@@ -235,8 +255,37 @@ It records content hash and source availability but never embeds file bytes or
 signed URLs. The importer continues to accept v1. A matching verified local
 hash is reused; otherwise import requires confirmation and preserves the image
 record as an editor repair placeholder instead of removing its geometry.
+When the source blob and metadata are already absent, the canonical row has
+`exists_at_export:false` and may have `mime:null`; that exact missing state is
+importable in full, single-space and plan-only documents. Missing MIME is not a
+general validation bypass: the availability flag must be a literal boolean,
+identity/hash remain exact, and every supplied non-null MIME must be supported.
 Before a permanent downgrade, remove all image objects with a current card and
 then explicitly delete their now-unused files from the palette.
+
+The #432 backend hardening does not change that schema, URL shape, export format
+or `decor_assets_api:1` capability. A read-only user still resolves images used
+by the saved config; only arbitrary unreferenced ids are now returned as
+`missing`. Writers keep the full catalog contract. Authenticated and signed
+exact content URLs remain valid, while integrity results are shared in a bounded
+memory-only cache. Old and new cards therefore remain rolling-compatible with
+the hardened integration; the cache is discarded on restart and needs no data
+migration or downgrade step.
+
+#434 keeps the same capability version and wire formats while tightening the
+rolling boundary. Embedded `houseplan-space-card` instances call
+`houseplan/assets/resolve` only after a fresh `config/get` returns exact
+`decor_assets_api:1`; cached config from localStorage starts unverified, and a
+later missing or malformed capability revokes a previously learned value even
+when config content is identical. Positive and missing resolve results are
+cached only for the same connection, config revision and id set. No persisted
+field, schema migration, export-version change or downgrade action is added.
+
+Decor quota now follows physical allow-listed hash blobs rather than trusted
+catalog metadata. An exact re-upload may restore a missing or broken sidecar at
+full quota because it adds no blob; the response uses `reused:false` to state
+that the catalog entry was created by this request. Older cards can continue to
+list and resolve valid rows and ignore this response distinction.
 
 ## Independent-wall opening host (#132)
 

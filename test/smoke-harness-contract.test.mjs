@@ -86,26 +86,39 @@ test('#421 dedicated guard probe reaches reportPageErrors without finish', () =>
     'finish() замаскирует сломанный round-trip внутри reportPageErrors()');
 });
 
-test('#423 every Playwright page benchmark has an enforceable pageerror verdict', () => {
+test('#423 каждый page-benchmark обязан иметь вердикт и динамическую пробу (#430)', () => {
+  // Что здесь проверяется, а что — нет.
+  //
+  // Этот тест — ОБНАРУЖЕНИЕ: он находит benchmark, открывающий страницу
+  // Playwright, и требует от него формы гарда и наличия отрицательной пробы.
+  // Поведение гарда в рантайме он не доказывает и не может: браузера в job
+  // «Фронтенд» нет. Доказывает запуск — `demo/guard/verify-guard.mjs`.
+  //
+  // До #430 здесь стояли две «отрицательные проверки»: результат
+  // `pageBenchmarkIsGuarded(source.replace('watchPage(', '('))` обязан быть
+  // false. Но сама функция буквально ищет подстроку `watchPage(` — вырезав её,
+  // мы спрашивали регулярку, находит ли она то, что мы только что удалили.
+  // Доказано было, что регулярка не пуста. Ровно тот вид проверки, против
+  // которого заведён мутационный гейт, и он же — единственная находка аудита
+  // v1.71.0-beta.1, где тест был циклическим, а не просто слабым.
   const benchmarks = readdirSync(DEMO)
     .filter((name) => name.startsWith('benchmark_') && name.endsWith('.mjs'))
     .filter((name) => /\.newPage\(/.test(read(name)));
   assert.deepEqual(benchmarks, ['benchmark_backdrop_decode.mjs']);
+  const verifier = readFileSync(
+    new URL('../demo/guard/verify-guard.mjs', import.meta.url), 'utf8',
+  );
   for (const name of benchmarks) {
     const source = read(name);
     assert.equal(pageBenchmarkIsGuarded(source), true, `${name}: missing pageerror guard`);
-    assert.equal(
-      pageBenchmarkIsGuarded(source.replace('watchPage(', '(')),
-      false,
-      `${name}: removing watchPage must make the contract red`,
-    );
-    assert.equal(
-      pageBenchmarkIsGuarded(source.replace('reportPageErrors()', 'false')),
-      false,
-      `${name}: removing the final verdict must make the contract red`,
+    assert.match(source, /process\.argv\.includes\('--guard-probe'\)/,
+      `${name}: нужен режим отрицательной пробы — без него гард не проверить запуском`);
+    assert.match(source, /setTimeout\(\(\) => \{ throw new Error\(/,
+      `${name}: проба обязана бросать исключение ВНУТРИ страницы, в хвосте замера`);
+    assert.ok(
+      new RegExp(`file: '\\.\\./${name}',\\s*\n\\s*args: \\['--guard-probe'\\]`).test(verifier),
+      `${name}: нет записи в demo/guard/verify-guard.mjs — проба существует и не вызывается,`
+      + ' а это ровно то состояние, в котором #423 прожил до #430',
     );
   }
-  const backdrop = read('benchmark_backdrop_decode.mjs');
-  assert.match(backdrop, /process\.argv\.includes\('--guard-probe'\)/);
-  assert.match(backdrop, /houseplan backdrop guard probe/);
 });

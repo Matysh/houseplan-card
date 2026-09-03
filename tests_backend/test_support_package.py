@@ -200,6 +200,7 @@ def test_rich_plan_projection_preserves_safe_structure_and_drops_unknown_values(
         "model_version": 9,
         "settings": {
             "north_deg": 30,
+            "show_room_tooltip": False,
             "fill_colors": {"warm": {"c": "#ffaa00", "a": 0.5, "secret": "drop"}},
             "decor_default_style": {
                 "color": "#123456", "width_cm": 2, "secret": "drop",
@@ -290,6 +291,7 @@ def test_rich_plan_projection_preserves_safe_structure_and_drops_unknown_values(
 
     assert package["versions"]["card"] == "unknown"
     assert plan["settings"]["fill_colors"] == {"warm": {"a": 0.5, "c": "#ffaa00"}}
+    assert plan["settings"]["show_room_tooltip"] is False
     assert plan["settings"]["decor_default_style"] == {"color": "#123456", "width_cm": 2}
     assert space["rooms"][0]["poly"] == [[0, 0], [2, 0]]
     assert space["rooms"][0]["settings"]["temp_source_kind"] == "entity"
@@ -334,6 +336,7 @@ def test_projection_helpers_fail_closed_on_malformed_shapes():
     assert support_package._points(None) == []
     assert support_package._custom_fill(None) is None
     assert support_package._global_settings(None) == {}
+    assert support_package._global_settings({"show_room_tooltip": "false"}) == {}
     assert support_package._room_settings(ids, None) == {}
     assert support_package._project_layout(ids, None) == {}
     assert support_package._summary(None, None)["spaces"] == 0

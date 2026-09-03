@@ -55,7 +55,7 @@ override them; a room may override its space; a marker may override its room.
 | Level | Meaning | Stored data |
 |---|---|---|
 | Card | One dashboard instance | Initial space, language, icon size, value/LQI display, live state, kiosk and cycle |
-| Global settings | Defaults for all spaces | Fill palette, background, Glow radius, north, sun, weather and icon rules |
+| Global settings | Defaults for all spaces | Fill palette, background, Glow radius, north, sun, room-hover information and icon rules |
 | Space | Floor, yard, garage or building | Plan image, scale, rooms, walls, openings, decor and display settings |
 | Room | A closed outline | Name, optional HA area, temperature/humidity source and local fill |
 | Wall | A room-contour or independent segment | Stable identity and thickness from 0 to 100 cm; zero-thickness appearance is selected per space |
@@ -195,6 +195,11 @@ View is the state with no editor open. Close the active editor to return to it.
 | Background | Dimmed and inert | Dimmed | Background objects editable |
 | Kiosk | Actionable as in View | Read-only | Read-only; no editors |
 | Static card | Not live or interactive | Render only | Render only |
+
+The room highlight remains available in View and kiosk. To keep that highlight
+but hide the floating room summary, turn off **General settings → Show the room
+information window on hover**. The option is on by default and does not affect
+device tooltips.
 
 Each editor has a stable primary toolbar. Tool parameters and selected-object
 actions appear in a context tray over the top of the canvas. On a narrow screen
@@ -763,18 +768,23 @@ available plan variants. **All categories** returns to the first level and
 disarms the current symbol. Existing placed furniture keeps its saved size and
 position when the built-in artwork is updated.
 
-The Image palette stores reusable files privately in House Plan. A file is at
-most 2 MiB; PNG, JPEG, WebP and safe SVG are supported. Picking a file arms one
-placement: the pointer preview shows the result, one click adds it at 100 cm
-wide (aspect-preserving, height capped at 200 cm), and the tool returns to
-Select. Images use the same smooth handles, mirroring and `Shift`-45° rotation
-as furniture, but never snap to a wall. Their complete rectangle is selectable,
-including transparent pixels.
+The Image palette stores reusable files privately in House Plan. Each saved
+canonical file is at most 2 MiB; PNG, JPEG, WebP and safe SVG are supported.
+When a raster source exceeds that limit, the warning dialog offers to upload a
+reduced copy while keeping the oversized original unavailable. Picking a file
+arms one placement: the pointer preview shows the result, one click adds it at
+100 cm wide (aspect-preserving, height capped at 200 cm), and the tool returns
+to Select. Images use the same smooth handles, mirroring and `Shift`-45°
+rotation as furniture, but never snap to a wall. Their complete rectangle is
+selectable, including transparent pixels.
 
 Deleting or replacing a placed image leaves the reusable file in the palette.
 The palette deletes a file only after all placed copies in all spaces are gone.
 If a file is missing or fails its integrity check, View hides it; Background
 shows a crossed placeholder that can be selected and repaired with Replace.
+Exports still keep that image object without embedding the absent file. A later
+import shows the existing missing-content confirmation and, once confirmed,
+keeps the same repairable placeholder instead of rejecting the whole plan.
 
 ![Selected line in the Background editor](images/07-background-editor.png)
 

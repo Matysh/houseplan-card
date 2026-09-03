@@ -1173,6 +1173,26 @@ async def test_not_ready_without_entry(hass: HomeAssistant, hass_ws_client: WebS
     assert not resp["success"] and resp["error"]["code"] == "not_ready"
 
 
+async def test_decor_asset_resolve_requires_runtime_before_io(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator, monkeypatch,
+) -> None:
+    """#432 AC3: lifecycle refusal precedes even construction of a store path."""
+    from custom_components.houseplan import websocket_api as hp_ws
+
+    hp_ws.async_register(hass)
+
+    def forbidden_path(*_args, **_kwargs):
+        raise AssertionError("asset filesystem touched before the runtime gate")
+
+    monkeypatch.setattr(hp_ws, "Path", forbidden_path)
+    client = await hass_ws_client(hass)
+    await client.send_json_auto_id({
+        "type": "houseplan/assets/resolve", "asset_ids": ["a" * 64],
+    })
+    resp = await client.receive_json()
+    assert not resp["success"] and resp["error"]["code"] == "not_ready"
+
+
 async def test_plan_set_validates(hass: HomeAssistant, hass_ws_client: WebSocketGenerator) -> None:
     await _setup(hass)
     client = await hass_ws_client(hass)
@@ -2054,6 +2074,7 @@ async def test_content_signed_path_opens_without_a_bearer_header(
 
 async def test_decor_asset_upload_deduplicates_and_rejects_mime_spoofing(
     hass: HomeAssistant,
+    monkeypatch,
 ) -> None:
     """#51: the authenticated HTTP writer owns validation and identity."""
     import base64
@@ -2117,9 +2138,132 @@ async def test_decor_asset_upload_deduplicates_and_rejects_mime_spoofing(
     assert {row["reused"] for row in rows} == {False, True}
     assert rows[0]["asset"]["asset_id"] == rows[1]["asset"]["asset_id"]
 
+    # A promoted blob whose sidecar was lost still consumes physical quota,
+    # but re-uploading the exact content repairs metadata without adding bytes.
+    from custom_components.houseplan.const import ASSETS_DIR
+
+    aid = rows[0]["asset"]["asset_id"]
+    root = Path(hass.config.path(ASSETS_DIR))
+    (root / f"{aid}.json").unlink()
+    monkeypatch.setattr(hp_http, "MAX_DECOR_ASSETS_COUNT", 1)
+    repaired = await view.post(_Request("image/png"))
+    repaired_body = json.loads(repaired.text)
+    assert repaired.status == 200
+    assert repaired_body["reused"] is False
+    assert json.loads((root / f"{aid}.json").read_text(encoding="utf-8"))["asset_id"] == aid
+
+    # A matching filename never licenses overwriting bytes whose digest does
+    # not match the content-addressed id.
+    (root / f"{aid}.json").unlink()
+    blob = root / f"{aid}.png"
+    blob.write_bytes(b"corrupt")
+    rejected = await view.post(_Request("image/png"))
+    assert rejected.status == 507
+    assert json.loads(rejected.text)["error"] == "invalid_image"
+    assert blob.read_bytes() == b"corrupt"
+    assert not (root / f"{aid}.json").exists()
+
     spoofed = await view.post(_Request("image/jpeg"))
     assert spoofed.status == 400
     assert json.loads(spoofed.text)["error"] == "invalid_format"
+
+
+async def test_decor_asset_resolve_readonly_is_limited_to_referenced_ids(
+    hass: HomeAssistant,
+    hass_ws_client: WebSocketGenerator,
+    hass_read_only_access_token: str,
+    monkeypatch,
+) -> None:
+    """#432 AC1/AC2: View keeps its images without exposing the catalog."""
+    import hashlib
+
+    from custom_components.houseplan import websocket_api as wsapi
+    from custom_components.houseplan.const import ASSETS_DIR
+
+    await _setup(hass)
+    admin = await hass_ws_client(hass)
+    root = Path(hass.config.path(ASSETS_DIR))
+    root.mkdir(parents=True, exist_ok=True)
+    payloads = (b"referenced", b"not-referenced")
+    asset_ids = []
+    for index, payload in enumerate(payloads):
+        aid = hashlib.sha256(payload).hexdigest()
+        asset_ids.append(aid)
+        (root / f"{aid}.png").write_bytes(payload)
+        (root / f"{aid}.json").write_text(json.dumps({
+            "asset_id": aid, "name": f"{index}.png", "mime": "image/png",
+            "ext": ".png", "width": 1, "height": 1, "bytes": len(payload),
+            "created_at": f"2026-01-0{index + 1}T00:00:00Z",
+        }), encoding="utf-8")
+
+    cfg = await _cfg([{"id": "one", "plan_url": None}])
+    cfg["spaces"][0]["decor"] = [{
+        "id": "picture", "kind": "image", "asset_id": asset_ids[0],
+        "x": 0.1, "y": 0.2, "w": 0.3, "h": 0.4,
+    }]
+    assert (await _save(admin, cfg, 0))["success"]
+
+    looked_up = []
+    real_read_asset = wsapi.read_asset
+
+    def observed_read_asset(asset_root: Path, asset_id: str):
+        looked_up.append(asset_id)
+        return real_read_asset(asset_root, asset_id)
+
+    monkeypatch.setattr(wsapi, "read_asset", observed_read_asset)
+    readonly = await hass_ws_client(hass, access_token=hass_read_only_access_token)
+    await readonly.send_json_auto_id({
+        "type": "houseplan/assets/resolve", "asset_ids": asset_ids,
+    })
+    response = await readonly.receive_json()
+    assert response["success"]
+    assert [row["asset_id"] for row in response["result"]["assets"]] == [asset_ids[0]]
+    assert response["result"]["missing"] == [asset_ids[1]]
+    assert looked_up == [asset_ids[0]], "forbidden metadata/blob must not be touched"
+
+    looked_up.clear()
+    await admin.send_json_auto_id({
+        "type": "houseplan/assets/resolve", "asset_ids": asset_ids,
+    })
+    response = await admin.receive_json()
+    assert response["success"] and len(response["result"]["assets"]) == 2
+    assert set(looked_up) == set(asset_ids)
+
+
+async def test_decor_asset_resolve_non_admin_is_writer_when_admin_only_is_off(
+    hass: HomeAssistant,
+    hass_ws_client: WebSocketGenerator,
+    hass_read_only_access_token: str,
+) -> None:
+    """#432 AC2: resolve follows may_write instead of hard-coding admin."""
+    import hashlib
+
+    from custom_components.houseplan.const import ASSETS_DIR
+
+    entry = MockConfigEntry(
+        domain=DOMAIN, title="House Plan", data={}, options={CONF_ADMIN_ONLY: False},
+    )
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    payload = b"writer-by-option"
+    aid = hashlib.sha256(payload).hexdigest()
+    root = Path(hass.config.path(ASSETS_DIR))
+    root.mkdir(parents=True, exist_ok=True)
+    (root / f"{aid}.png").write_bytes(payload)
+    (root / f"{aid}.json").write_text(json.dumps({
+        "asset_id": aid, "name": "writer.png", "mime": "image/png", "ext": ".png",
+        "width": 1, "height": 1, "bytes": len(payload),
+        "created_at": "2026-01-01T00:00:00Z",
+    }), encoding="utf-8")
+
+    client = await hass_ws_client(hass, access_token=hass_read_only_access_token)
+    await client.send_json_auto_id({
+        "type": "houseplan/assets/resolve", "asset_ids": [aid],
+    })
+    response = await client.receive_json()
+    assert response["success"]
+    assert response["result"]["assets"][0]["asset_id"] == aid
 
 
 async def test_decor_asset_list_resolve_delete_and_signed_content(
@@ -2130,6 +2274,7 @@ async def test_decor_asset_list_resolve_delete_and_signed_content(
     import hashlib
 
     from custom_components.houseplan.const import ASSETS_DIR, CONTENT_URL
+    from custom_components.houseplan.asset_integrity import AssetIntegrityVerifier
 
     await _setup(hass)
     client = await hass_ws_client(hass)
@@ -2144,6 +2289,16 @@ async def test_decor_asset_list_resolve_delete_and_signed_content(
         "asset_id": aid, "name": "pixel.png", "mime": "image/png", "ext": ".png",
         "width": 1, "height": 1, "bytes": len(png), "created_at": "2026-01-01T00:00:00Z",
     }), encoding="utf-8")
+    hash_calls = 0
+
+    def counted_hash(path: Path) -> str:
+        nonlocal hash_calls
+        hash_calls += 1
+        return hashlib.sha256(path.read_bytes()).hexdigest()
+
+    hass.data[DOMAIN]["asset_integrity_verifier"] = AssetIntegrityVerifier(
+        hasher=counted_hash,
+    )
 
     cfg = await _cfg([{"id": "one", "plan_url": None}])
     cfg["spaces"][0]["decor"] = [{
@@ -2174,17 +2329,63 @@ async def test_decor_asset_list_resolve_delete_and_signed_content(
     assert response.status == 200 and await response.read() == png
     assert response.headers["Content-Type"].startswith("image/png")
     assert response.headers["X-Content-Type-Options"] == "nosniff"
+    assert hash_calls == 1, "WS and HTTP must share one unchanged-file digest"
 
     (root / f"{aid}.png").write_bytes(b"tampered")
     assert (await http.get(signed)).status == 404
+    assert hash_calls == 2
 
     (root / f"{aid}.png").write_bytes(png)
+    assert (await http.get(signed)).status == 200
+    assert hash_calls == 3
+    await client.send_json_auto_id({
+        "type": "houseplan/assets/resolve", "asset_ids": [aid],
+    })
+    resolved_after_http = await client.receive_json()
+    assert resolved_after_http["success"]
+    assert hash_calls == 3, "HTTP and WS must share one unchanged-file digest"
     cfg["spaces"][0]["decor"] = []
     saved = await _save(client, cfg, saved["result"]["rev"])
     assert saved["success"]
     await client.send_json_auto_id({"type": "houseplan/assets/delete", "asset_id": aid})
     removed = await client.receive_json()
     assert removed["success"] and removed["result"]["removed"] is True
+    await client.send_json_auto_id({"type": "houseplan/assets/delete", "asset_id": aid})
+    repeated = await client.receive_json()
+    assert repeated["success"] and repeated["result"]["removed"] is False
+
+
+async def test_decor_asset_delete_removes_exact_orphans_only(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator,
+) -> None:
+    """#434: explicit delete is a bounded cleanup path, not a catalog lookup."""
+    from custom_components.houseplan.const import ASSETS_DIR
+
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    aid = "a" * 64
+    root = Path(hass.config.path(ASSETS_DIR))
+    root.mkdir(parents=True, exist_ok=True)
+    exact = [root / f"{aid}.png", root / f"{aid}.svg"]
+    for path in exact:
+        path.write_bytes(b"orphan")
+    meta = root / f"{aid}.json"
+    meta.write_text("{", encoding="utf-8")
+    unknown = root / f"{aid}.gif"
+    unknown.write_bytes(b"keep")
+    prefix = root / f"{aid}0.png"
+    prefix.write_bytes(b"keep")
+    directory = root / f"{aid}.webp"
+    directory.mkdir()
+
+    await client.send_json_auto_id({"type": "houseplan/assets/delete", "asset_id": aid})
+    response = await client.receive_json()
+    assert response["success"] and response["result"]["removed"] is True
+    assert all(not path.exists() for path in [*exact, meta])
+    assert unknown.read_bytes() == b"keep"
+    assert prefix.read_bytes() == b"keep"
+    assert directory.is_dir()
+
     await client.send_json_auto_id({"type": "houseplan/assets/delete", "asset_id": aid})
     repeated = await client.receive_json()
     assert repeated["success"] and repeated["result"]["removed"] is False

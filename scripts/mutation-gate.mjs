@@ -1048,8 +1048,14 @@ const MUTANT_DEFINITIONS = [
       + 'its only decision source (#417 AC1)',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: "    if (this._dangerConfirm && this._dangerConfirmMissingSpace()) {\n      this._cancelDangerConfirm();\n    }",
-      replace: "    void this._dangerConfirm;\n    void this._dangerConfirmMissingSpace;",
+      find: '    if (this._dangerConfirm && (\n'
+        + '      this._dangerConfirmMissingSpace() || this._dangerConfirmLocaleGate === \'warm\'\n'
+        + '    )) {\n'
+        + '      this._cancelDangerConfirm();\n'
+        + '    }',
+      replace: '    if (this._dangerConfirm && this._dangerConfirmLocaleGate === \'warm\') {\n'
+        + '      this._cancelDangerConfirm();\n'
+        + '    }',
     }],
   },
   {
@@ -1061,6 +1067,49 @@ const MUTANT_DEFINITIONS = [
       file: 'src/houseplan-card.ts',
       find: "    if (this._dangerConfirmLocaleGate === 'warm') return Promise.resolve(false);",
       replace: "    void this._dangerConfirmLocaleGate;",
+    }],
+  },
+  {
+    id: 'danger-confirm-uses-last-rendered-language-gate',
+    guard: 'node demo/smoke_danger_confirm_branches.mjs',
+    because: 'ready -> warm and warm -> ready both have a window before render; consulting the '
+      + 'last painted branch can admit an unrenderable request or reject a renderable one (#434 AC7)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: "  /** Current language branch; never cached from a previous render. */\n"
+        + '  private get _dangerConfirmLocaleGate(): LanguageRenderGate {\n'
+        + "    if (!this._config || !this.hass) return 'ready';\n"
+        + '    return languageRenderGate(\n'
+        + '      this, LANGUAGE_RUNTIME, langOf(this.hass, this._config.language),\n'
+        + '    );\n'
+        + '  }',
+      replace: "  private _dangerConfirmLocaleGate: LanguageRenderGate = 'ready';",
+    }, {
+      file: 'src/houseplan-card.ts',
+      find: '    const localeGate = this._dangerConfirmLocaleGate;\n'
+        + "    if (localeGate === 'cold') return languageLoadingTemplate();",
+      replace: '    const localeGate = languageRenderGate(\n'
+        + '      this, LANGUAGE_RUNTIME, langOf(this.hass, this._config.language),\n'
+        + '    );\n'
+        + '    this._dangerConfirmLocaleGate = localeGate;\n'
+        + "    if (localeGate === 'cold') return languageLoadingTemplate();",
+    }],
+  },
+  {
+    id: 'danger-confirm-warm-transition-cancel-removed',
+    guard: 'node demo/smoke_danger_confirm_branches.mjs',
+    because: 'a dialog opened while ready must settle false and lose its actionable DOM owner '
+      + 'when a new language moves the committed card into the warm noChange branch (#434 AC7)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '    if (this._dangerConfirm && (\n'
+        + '      this._dangerConfirmMissingSpace() || this._dangerConfirmLocaleGate === \'warm\'\n'
+        + '    )) {\n'
+        + '      this._cancelDangerConfirm();\n'
+        + '    }',
+      replace: '    if (this._dangerConfirm && this._dangerConfirmMissingSpace()) {\n'
+        + '      this._cancelDangerConfirm();\n'
+        + '    }',
     }],
   },
   {
@@ -2333,6 +2382,32 @@ const MUTANT_DEFINITIONS = [
       file: 'src/houseplan-card.ts',
       find: '      const candidate = canonicalizeConfigGeometry(this._serverCfg);',
       replace: '      const candidate = this._serverCfg;',
+    }],
+  },
+  {
+    id: 'image-box-frontend-canonicalization-omitted',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="decor box catalog" '
+      + 'test/coordinate-canonicalization.test.mjs',
+    because: 'the decor type can know about an image while a handwritten traversal silently '
+      + 'leaves its x/y/w/h outside the canonical write barrier (#431 AC4)',
+    patches: [{
+      file: 'src/coordinate-canonicalization.ts',
+      find: '    && (DECOR_BOX_KINDS as readonly string[]).includes(value);',
+      replace: "    && value !== 'image'\n"
+        + '    && (DECOR_BOX_KINDS as readonly string[]).includes(value);',
+    }],
+  },
+  {
+    id: 'image-box-python-canonicalization-omitted',
+    guard: 'node scripts/backend-test-guard.mjs decor_box_catalog_matches_shared_contract '
+      + 'tests_backend/test_coordinate_canonicalization.py',
+    because: 'the Python schema and storage boundary must mirror the complete frontend box '
+      + 'catalog instead of accepting image floating-point tails from older clients (#431 AC4)',
+    patches: [{
+      file: 'custom_components/houseplan/coordinate_canonicalization.py',
+      find: 'DECOR_BOX_KINDS = ("rect", "ellipse", "furniture", "image")',
+      replace: 'DECOR_BOX_KINDS = ("rect", "ellipse", "furniture")',
     }],
   },
   {
@@ -4639,6 +4714,19 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'area-cleanup-keeps-candidate-outside-current-snapshot',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="absent from the current snapshot" '
+      + 'test/device-area-relocation.test.mjs',
+    because: 'finite two-frame evidence belongs to one current snapshot binding; retaining a '
+      + 'candidate after that binding was removed can later delete unrelated provenance (#434 AC8)',
+    patches: [{
+      file: 'src/device-area-relocation.ts',
+      find: '    if (validBinding(binding) && Number.isFinite(revision) && snapshotBindings.has(binding)) {',
+      replace: '    if (validBinding(binding) && Number.isFinite(revision)) {',
+    }],
+  },
+  {
     id: 'support-stale-preview-response-revives-consent',
     guard: 'node demo/smoke_support_feedback.mjs',
     because: 'a late preview response must not restore exact plan geometry after attachment '
@@ -4649,6 +4737,22 @@ const MUTANT_DEFINITIONS = [
         + '      && current?.draftId === draftId\n'
         + '      && current.attach;',
       replace: '    return true;',
+    }],
+  },
+  {
+    id: 'support-invalid-response-leaks-issued-token',
+    guard: 'node demo/smoke_support_feedback.mjs',
+    because: 'a syntactically valid token is already an allocated backend slot even when the '
+      + 'rest of the preview response is invalid; it must be discarded independently of UI '
+      + 'currentness instead of lingering until TTL (#434 AC10)',
+    patches: [{
+      file: 'src/houseplan-editor-runtime.ts',
+      find: '      if (issuedToken) {\n'
+        + '        const token = issuedToken;\n'
+        + "        issuedToken = '';\n"
+        + '        void this._discardSupportPreview(token);\n'
+        + '      }',
+      replace: '      void issuedToken;',
     }],
   },
   {
@@ -4681,6 +4785,277 @@ const MUTANT_DEFINITIONS = [
         + "        status: 'success',\n"
         + "        reportId: 'HP-FALSE-SUCCESS',\n"
         + "        errorCode: '',",
+    }],
+  },
+  {
+    id: 'decor-raster-full-decode-skipped',
+    guard: 'python3 -m pytest tests_backend/test_decor_assets.py -q -p no:cacheprovider',
+    because: 'a valid-looking PNG whose IDAT is not a zlib stream must be refused before it '
+      + 'enters the authenticated store; header parsing answers w/h/mime and cannot answer '
+      + 'whether the raster decodes at all (#51 AC, аудит #430 п.1)',
+    patches: [{
+      file: 'custom_components/houseplan/decor_assets.py',
+      find: '        with Image.open(BytesIO(data)) as image:\n'
+        + '            image.load()\n'
+        + '            if image.size != (width, height):\n'
+        + '                raise DecorAssetError("invalid_image", "Image dimensions are inconsistent")\n'
+        + '            if getattr(image, "is_animated", False):\n'
+        + '                raise DecorAssetError("unsupported_image", "Animated images are unsupported")',
+      replace: '        _ = (Image, BytesIO)',
+    }],
+  },
+  {
+    id: 'decor-physical-inventory-follows-sidecars',
+    guard: 'python3 -m pytest tests_backend/test_decor_assets.py -q -p no:cacheprovider '
+      + '-k physical_inventory',
+    because: 'quota is a physical-storage boundary: malformed/missing sidecars cannot make '
+      + 'promoted blobs invisible, while sidecars without blobs consume no blob quota (#434 AC1)',
+    patches: [{
+      file: 'custom_components/houseplan/decor_assets.py',
+      find: '    for path in root.iterdir():\n'
+        + '        if (\n'
+        + '            path.suffix in ASSET_EXTENSIONS',
+      replace: '    for path in root.glob("*.json"):\n'
+        + '        if (\n'
+        + '            path.suffix in ASSET_EXTENSIONS',
+    }],
+  },
+  {
+    id: 'decor-catalog-accepts-sidecar-without-blob',
+    guard: 'python3 -m pytest tests_backend/test_decor_assets.py -q -p no:cacheprovider '
+      + '-k valid_shaped_sidecar_without_blob',
+    because: 'catalog/list/resolve remain strict projections; a valid-looking sidecar must not '
+      + 'materialise an image whose matching blob is absent (#434 AC4)',
+    patches: [{
+      file: 'custom_components/houseplan/decor_assets.py',
+      find: '            or not blob.is_file()\n',
+      replace: '',
+    }],
+  },
+  {
+    id: 'decor-orphan-repair-runs-after-quota',
+    guard: 'python3 -m pytest tests_backend/test_ha_websocket.py -q -p no:cacheprovider '
+      + '-k decor_asset_upload_deduplicates',
+    because: 'an exact digest-proven orphan adds no physical bytes and must repair its sidecar '
+      + 'even when physical count quota is already full (#434 AC2)',
+    patches: [{
+      file: 'custom_components/houseplan/http_api.py',
+      find: '            if blob.exists():\n'
+        + '                if not blob.is_file() or hashlib.sha256(blob.read_bytes()).hexdigest() != aid:',
+      replace: '            if False and blob.exists():\n'
+        + '                if not blob.is_file() or hashlib.sha256(blob.read_bytes()).hexdigest() != aid:',
+    }],
+  },
+  {
+    id: 'decor-orphan-repair-claims-reuse',
+    guard: 'python3 -m pytest tests_backend/test_ha_websocket.py -q -p no:cacheprovider '
+      + '-k decor_asset_upload_deduplicates',
+    because: 'reused:true means a valid catalog entry predated the request; rebuilding a lost or '
+      + 'broken sidecar creates that entry and must report false (#434 AC2)',
+    patches: [{
+      file: 'custom_components/houseplan/http_api.py',
+      find: '                    os.replace(meta_temp, meta)\n'
+        + '                    return row, False\n'
+        + '                finally:',
+      replace: '                    os.replace(meta_temp, meta)\n'
+        + '                    return row, True\n'
+        + '                finally:',
+    }],
+  },
+  {
+    id: 'decor-delete-skips-orphan-blobs',
+    guard: 'python3 -m pytest tests_backend/test_ha_websocket.py -q -p no:cacheprovider '
+      + '-k decor_asset_delete_removes_exact_orphans_only',
+    because: 'explicit delete is the only bounded recovery path for invisible orphan blobs; '
+      + 'depending on catalog metadata leaves quota permanently occupied (#434 AC3)',
+    patches: [{
+      file: 'custom_components/houseplan/websocket_api.py',
+      find: '            for extension in ASSET_EXTENSIONS:\n',
+      replace: '            for extension in ():\n',
+    }],
+  },
+  {
+    id: 'decor-svg-canonical-bytes-discarded',
+    guard: 'python3 -m pytest tests_backend/test_decor_assets.py -q -p no:cacheprovider',
+    because: 'the stored SVG must be the re-serialised canonical form, not the upload: keeping '
+      + 'the original bytes silently reinstates whatever the parser dropped — prologue, '
+      + 'comments, exotic spelling of the same tree (#51 ТЗ §3, аудит #430 п.2)',
+    patches: [{
+      file: 'custom_components/houseplan/decor_assets.py',
+      find: 'return ValidatedAsset(canonical, "image/svg+xml"',
+      replace: 'return ValidatedAsset(data, "image/svg+xml"',
+    }],
+  },
+  {
+    id: 'decor-svg-canonical-size-unchecked',
+    guard: 'python3 -m pytest tests_backend/test_decor_assets.py -q -p no:cacheprovider',
+    because: 'canonicalisation can grow the document fourfold by escaping text, so the 2 MiB '
+      + 'limit must be re-applied to the canonical bytes: a 1.84 MiB upload otherwise lands '
+      + 'as 7.35 MiB in the store (аудит #430 п.2)',
+    patches: [{
+      file: 'custom_components/houseplan/decor_assets.py',
+      find: '    _check_size(canonical)\n',
+      replace: '',
+    }],
+  },
+  {
+    id: 'decor-svg-external-url-guard-off',
+    guard: 'python3 -m pytest tests_backend/test_decor_assets.py -q -p no:cacheprovider',
+    because: 'javascript:, data:, http:, https: and // inside an allowed attribute of an allowed '
+      + 'tag are caught by this rule alone; every "external" case of the original corpus was '
+      + 'caught by tag or attribute allowlists instead (аудит #430 п.3)',
+    patches: [{
+      file: 'custom_components/houseplan/decor_assets.py',
+      find: 'if any(token in low for token in ("javascript:", "data:", "http:", "https:", "//")):',
+      replace: 'if False:',
+    }],
+  },
+  {
+    id: 'decor-image-flip-v-ignored',
+    guard: 'node --test test/decor-assets.test.mjs',
+    because: 'vertical flip is half of the image projection contract and had no witness of its '
+      + 'own: the single #51 case set flip_h only, so dropping flip_v stayed green (#51 AC3, '
+      + 'аудит #430 п.4)',
+    patches: [{
+      file: 'src/decor-assets.ts',
+      find: '${shape.flip_v ? -1 : 1}',
+      replace: '1',
+    }],
+  },
+  {
+    id: 'decor-image-opacity-ignored',
+    guard: 'node --test test/decor-assets.test.mjs',
+    because: 'the projection must carry the shape opacity; the only case asserted opacity 2 → 1, '
+      + 'an expectation indistinguishable from hardcoding 1 (#51 AC4, аудит #430 п.4)',
+    patches: [{
+      file: 'src/decor-assets.ts',
+      find: 'const opacity = clamp01(shape.opacity, 1);',
+      replace: 'const opacity = 1;',
+    }],
+  },
+  {
+    id: 'decor-asset-id-shape-unchecked',
+    guard: 'node --test test/decor-assets.test.mjs',
+    because: 'the catalog row must prove its own asset_id shape: the malformed row of #51 kept '
+      + 'the url of a real asset, so the url comparison caught it and the id regex could be '
+      + 'deleted unnoticed (аудит #430 п.4)',
+    patches: [{
+      file: 'src/decor-assets.ts',
+      find: "    if (!DECOR_ASSET_ID_RE.test(String(row.asset_id || '')) || row.url !== expectedUrl",
+      replace: '    if (row.url !== expectedUrl',
+    }],
+  },
+  {
+    id: 'asset-resolve-readonly-membership-removed',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'decor_asset_resolve_readonly_is_limited_to_referenced_ids '
+      + 'tests_backend/test_ha_websocket.py',
+    because: 'a read-only household member needs referenced images for View but must not use '
+      + 'assets/resolve to probe or hash arbitrary catalog ids (#432 AC2)',
+    patches: [{
+      file: 'custom_components/houseplan/websocket_api.py',
+      find: '        allowed = requested & referenced\n',
+      replace: '        allowed = requested\n',
+    }],
+  },
+  {
+    id: 'asset-integrity-cache-hit-disabled',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'integrity_cache_reuses_digest_and_caches_corrupt_signature '
+      + 'tests_backend/test_decor_assets.py',
+    because: 'unchanged valid and corrupt files must reuse the actual digest instead of '
+      + 're-reading the blob for every WS resolve or HTTP GET (#432 AC5)',
+    patches: [{
+      file: 'custom_components/houseplan/asset_integrity.py',
+      find: '            if cached is not None and cached.signature == before:\n',
+      replace: '            if False and cached is not None and cached.signature == before:\n',
+    }],
+  },
+  {
+    id: 'asset-integrity-single-flight-disabled',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'integrity_cache_single_flights_same_path_and_releases_after_error '
+      + 'tests_backend/test_decor_assets.py',
+    because: 'parallel requests for one file version must share one streaming hash and wake '
+      + 'all waiters after success or failure (#432 AC6)',
+    patches: [{
+      file: 'custom_components/houseplan/asset_integrity.py',
+      find: '            flight = self._inflight.get(key)\n',
+      replace: '            flight = None\n',
+    }],
+  },
+  {
+    id: 'asset-integrity-post-read-signature-ignored',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'integrity_cache_invalidates_changed_signature_and_rejects_mid_read_change '
+      + 'tests_backend/test_decor_assets.py',
+    because: 'a digest computed while the blob changes must fail dark and never become a '
+      + 'trusted cache entry for either transport (#432 AC7)',
+    patches: [{
+      file: 'custom_components/houseplan/asset_integrity.py',
+      find: '            stable = _signature(path) == before\n',
+      replace: '            stable = True\n',
+    }],
+  },
+  {
+    id: 'decor-oversize-hides-the-downscale-action',
+    guard: 'node --test test/decor-image-upload.test.mjs',
+    because: 'a decor source above the 2 MiB asset limit must still be offered as a reduced '
+      + 'copy: the flag forbids keeping the ORIGINAL, and gating the whole action block on it '
+      + 'is #427 — a bug that survived four review rounds because this path had no test at all',
+    patches: [{
+      file: 'src/backdrop-pick.ts',
+      find: '      ${hard ? null : html`',
+      replace: '      ${hard || !allowOriginal ? null : html`',
+    }],
+  },
+  {
+    id: 'decor-upload-loses-the-replace-flag',
+    guard: 'node --test test/decor-image-upload.test.mjs',
+    because: 'the guard dialog must upload into whichever slot the caller asked for: losing the '
+      + 'replaceSelection flag silently turns "replace this image" into "arm the palette" and '
+      + 'leaves the selected shape pointing at the old asset (#51 AC1, #433)',
+    patches: [{
+      file: 'src/decor-image-editor.ts',
+      find: '      this.hooks.setGuardReplace(replaceSelection);',
+      replace: '      this.hooks.setGuardReplace(false);',
+    }],
+  },
+  {
+    id: 'decor-upload-error-codes-collapse',
+    guard: 'node --test test/decor-image-upload.test.mjs',
+    because: 'each backend refusal code carries its own message: collapsing too_large into the '
+      + 'generic io_error tells the user "something went wrong" where the product knows exactly '
+      + 'what went wrong and how to fix it (#433)',
+    patches: [{
+      file: 'src/decor-image-editor.ts',
+      find: "          too_large: 'backdrop.too_large_title',\n",
+      replace: '',
+    }],
+  },
+  {
+    id: 'pure-backend-test-pulls-home-assistant',
+    guard: 'python3 -m pytest tests_backend/test_backend_quality.py -q -p no:cacheprovider',
+    because: 'a pure test module that imports an HA-dependent backend module must be caught '
+      + 'statically: pytest aborts on collection, so ALL pure tests stop running and the '
+      + 'output looks nothing like a normal failure (#436, the #389 pattern)',
+    patches: [{
+      file: 'tests_backend/test_projection.py',
+      find: 'import copy\nimport importlib.util\nimport os',
+      replace: 'import copy\nimport importlib.util\nimport os\n'
+        + 'from custom_components.houseplan.store import async_save_config_state',
+    }],
+  },
+  {
+    id: 'benchmark-page-verdict-unwatched',
+    guard: 'node demo/guard/verify-guard.mjs',
+    because: 'the page benchmark of #423 must register its page with watchPage, and that must be '
+      + 'proven by running it: the previous proof asked a regexp whether it still finds the '
+      + 'substring the same test had just deleted (аудит #430 п.5)',
+    patches: [{
+      file: 'demo/benchmark_backdrop_decode.mjs',
+      find: 'const page = watchPage(await (await browser.newContext()).newPage());',
+      replace: 'const page = await (await browser.newContext()).newPage();',
     }],
   },
 ];

@@ -2,6 +2,32 @@
 
 ## Unreleased
 
+## v1.71.0-beta.2 — 2026-09-03
+
+- Custom background images now recover cleanly after interrupted uploads,
+  consume quota consistently, retry after configuration changes and remain
+  compatible with older integrations; language switching and failed support
+  previews also settle safely instead of leaving stuck actions or occupied
+  preview slots ([#434](https://github.com/Matysh/houseplan-card/issues/434)).
+- Saved custom images remain visible to read-only household members while
+  arbitrary asset lookup is blocked, and repeated card/HTTP loads now reuse one
+  bounded streaming integrity check instead of re-reading every image
+  ([#432](https://github.com/Matysh/houseplan-card/issues/432)).
+- Custom decor images now pass through the same stable coordinate-write barrier
+  as furniture and shapes, so repeated saves and **Optimize Plans** no longer
+  retain image-only floating-point noise
+  ([#431](https://github.com/Matysh/houseplan-card/issues/431)).
+- Exports made while a reusable decor-image file is missing can now be imported
+  with the existing confirmation instead of rejecting the whole plan; full,
+  single-space and plan-only exports preserve the repairable image object
+  ([#428](https://github.com/Matysh/houseplan-card/issues/428)).
+- Oversized decor-image sources can now be added through the safe reduced-copy
+  action; House Plan hides only the forbidden original instead of hiding both
+  choices ([#427](https://github.com/Matysh/houseplan-card/issues/427)).
+- General settings can now hide the room information window on mouse hover
+  without disabling the room highlight or device tooltips; existing plans keep
+  the window enabled by default ([#426](https://github.com/Matysh/houseplan-card/issues/426)).
+
 ## v1.71.0-beta.1 — 2026-09-03
 
 - The Background editor can now upload and reuse private PNG, JPEG, WebP and

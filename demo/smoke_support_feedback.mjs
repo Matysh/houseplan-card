@@ -321,6 +321,46 @@ const result = await page.evaluate(async ({ version, previewText, previewSha }) 
     && card._supportDialog?.errorCode === ''
     && card._supportDialog?.preview === null
     && !root().querySelector('.supportpreview');
+
+  const invalidBuild = card._editorRuntime._setSupportAttachment(true);
+  await until(() => pendingPreviews.length === 1, 'invalid preview queued');
+  pendingPreviews.shift().resolve({ ...previewPayload('0'), sha256: 'invalid' });
+  await invalidBuild;
+  await update();
+  const validInvalidDiscarded = calls.filter(
+    (call) => call.type === 'houseplan/support/preview/discard'
+      && call.token === '0'.repeat(48),
+  ).length === 1;
+
+  const malformedBuild = card._editorRuntime._refreshSupportPreview();
+  await until(() => pendingPreviews.length === 1, 'malformed-token preview queued');
+  pendingPreviews.shift().resolve({ ...previewPayload('h'), token: 'not-a-token', sha256: 'invalid' });
+  await malformedBuild;
+  await update();
+  const malformedNotDiscarded = calls.every(
+    (call) => call.type !== 'houseplan/support/preview/discard' || call.token !== 'not-a-token',
+  );
+
+  const runtime = card._editorRuntime;
+  const realSupportPatch = runtime._supportPatch.bind(runtime);
+  runtime._supportPatch = (candidateDraftId, patch) => patch?.status === 'ready'
+    ? false : realSupportPatch(candidateDraftId, patch);
+  const unadoptedBuild = runtime._refreshSupportPreview();
+  await until(() => pendingPreviews.length === 1, 'unadoptable preview queued');
+  pendingPreviews.shift().resolve(previewPayload('1'));
+  await unadoptedBuild;
+  runtime._supportPatch = realSupportPatch;
+  realSupportPatch(card._supportDialog.draftId, {
+    status: 'error', errorCode: 'support_rejected',
+  });
+  await update();
+  const unadoptedDiscarded = calls.filter(
+    (call) => call.type === 'houseplan/support/preview/discard'
+      && call.token === '1'.repeat(48),
+  ).length === 1;
+  out.invalidPreviewTokenIsDiscardedExactlyOnce = validInvalidDiscarded;
+  out.malformedPreviewTokenIsNotEchoed = malformedNotDiscarded;
+  out.locallyUnadoptedPreviewTokenIsDiscardedExactlyOnce = unadoptedDiscarded;
   deferPreviews = false;
 
   await close();

@@ -42,13 +42,39 @@ export const INITIAL_VIEW_GZIP_BUDGET = 300_000;
  * средние фичи до стены, а не после неё.
  */
 export const LOW_HEADROOM_WARNING_BYTES = 15_000;
-export const SUPPORT_LAZY_INITIAL_BASELINE_BYTES = 291_046;
+
+/**
+ * Числового храповика здесь больше нет, и это решение, а не упущение (#429).
+ *
+ * До #429 функция бросала при `initialViewGzipBytes >= 291 046` — «граф не стал
+ * больше, чем был на момент закрытия #423». На бете 1.71.0 запас до этого
+ * порога составлял пятнадцать байт, на момент правки — сто четыре. Пятнадцать
+ * байт gzip меньше одной строки локали: первый же посторонний коммит получил бы
+ * красный CI с сообщением про копирайт формы поддержки, к которому не имеет
+ * отношения.
+ *
+ * Гейт, обвиняющий не ту задачу, — худший вид гейта: его выключают, не
+ * разбираясь, и вместе с ним выключают проверку владения графом, которая как
+ * раз долговечна. Поэтому число снято, а проверка владения осталась.
+ *
+ * Что именно было снято по существу: «граф не вырос» — это критерий приёмки на
+ * момент задачи, а не свойство продукта. Свойство продукта охраняет общий
+ * бюджет (`INITIAL_VIEW_GZIP_BUDGET`) и предупреждение о запасе; они судят
+ * размер целиком и не привязаны к чужому issue.
+ */
 export const SUPPORT_LAZY_MARKERS = [
   'Contact details (email/tg/WhatsApp), optional.',
   'Контакт для связи (email/tg/WhatsApp), необязательно.',
 ];
 
-/** Keep form-only support copy in the lazy editor graph (#423). */
+/**
+ * Форма поддержки живёт только в ленивом графе редактора (#423).
+ *
+ * Функция судит ВЛАДЕНИЕ, а не размер: маркеры формы обязаны отсутствовать в
+ * `initialViewFiles` и присутствовать в `lazyEditorFiles`. Размер охраняют
+ * `assertBundleBudget` и `lowHeadroomWarning` — им для этого не нужен чужой
+ * номер issue (#429).
+ */
 export function assertSupportBundleOwnership(
   manifest,
   root = 'dist',
@@ -66,12 +92,6 @@ export function assertSupportBundleOwnership(
     if (!editor.includes(marker)) {
       throw new Error(`support form copy missing from lazy editor graph: ${marker}`);
     }
-  }
-  if (manifest.initialViewGzipBytes >= SUPPORT_LAZY_INITIAL_BASELINE_BYTES) {
-    throw new Error(
-      `initial View graph ${manifest.initialViewGzipBytes} B gzip did not improve on #423 baseline `
-      + `${SUPPORT_LAZY_INITIAL_BASELINE_BYTES} B`,
-    );
   }
 }
 

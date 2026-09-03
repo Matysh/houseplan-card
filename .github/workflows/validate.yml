@@ -489,6 +489,7 @@ jobs:
     needs: [frontend, reuse]
     if: needs.reuse.outputs.smoke != 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     # Смоки шардируются: последовательный прогон занимал ~7.5 минут и был
     # критическим путём всего Validate. Три шарда режут его примерно вдвое;
     # цена — трижды `npm ci` и сборка, около двух оплаченных минут раннера.
@@ -556,10 +557,14 @@ jobs:
             if [ $(( (index - 1) % SHARDS + 1 )) -ne "$SHARD" ]; then continue; fi
             ran=$((ran + 1))
             name=$(basename "$f" .mjs)
-            if node "$f" > "/tmp/smoke-logs/$name.log" 2>&1; then
+            if timeout --kill-after=10s 180s node "$f" > "/tmp/smoke-logs/$name.log" 2>&1; then
               echo "ok   $name"
             else
+              status=$?
               echo "FAIL $name"
+              if [ "$status" -eq 124 ]; then
+                echo "diagnostic smoke-timeout: $name exceeded 180s"
+              fi
               # Диагностические строки смока печатаются раньше вердикта, и
               # `tail -20` их срезал: на #411 сам смок сообщал, НАСКОЛЬКО
               # разошлись кадры (введено в #302), а в логе прогона осталось

@@ -9,7 +9,6 @@ import {
 } from '../scripts/bundle-manifest.mjs';
 import {
   INITIAL_VIEW_GZIP_BUDGET, LOW_HEADROOM_WARNING_BYTES,
-  SUPPORT_LAZY_INITIAL_BASELINE_BYTES,
   assertBundleBudget, assertSupportBundleOwnership, lowHeadroomWarning,
 } from '../scripts/bundle-budget.mjs';
 import { compareBundleTrees, sha256Bytes, verifyBundleTree } from '../scripts/bundle-tree.mjs';
@@ -93,7 +92,6 @@ test('#423 support form copy belongs only to the lazy editor graph', () => {
     const manifest = {
       initialViewFiles: ['initial.js'],
       lazyEditorFiles: ['editor.js'],
-      initialViewGzipBytes: SUPPORT_LAZY_INITIAL_BASELINE_BYTES - 1,
     };
     const markers = ['lazy English marker', 'lazy Russian marker'];
     assert.doesNotThrow(() => assertSupportBundleOwnership(manifest, temp, markers));
@@ -105,11 +103,9 @@ test('#423 support form copy belongs only to the lazy editor graph', () => {
     writeFileSync(join(temp, 'initial.js'), 'header only');
     assert.throws(
       () => assertSupportBundleOwnership(
-        { ...manifest, initialViewGzipBytes: SUPPORT_LAZY_INITIAL_BASELINE_BYTES },
-        temp,
-        markers,
+        { initialViewFiles: ['initial.js'], lazyEditorFiles: [] }, temp, markers,
       ),
-      /did not improve/,
+      /missing from lazy editor graph/,
     );
   } finally {
     rmSync(temp, { recursive: true, force: true });
@@ -274,4 +270,33 @@ test('превышенный бюджет описывается как прев
 test('запас на момент рекалибровки выше порога тревоги (#367)', () => {
   // Иначе рекалибровка была бы бессмысленной: гейт сразу же начал бы кричать.
   assert.ok(INITIAL_VIEW_GZIP_BUDGET - 273_697 > LOW_HEADROOM_WARNING_BYTES);
+});
+
+test('#429 проверка владения не судит размер графа', () => {
+  // Числовой храповик #423 оставлял пятнадцать байт запаса и покрасил бы
+  // первый же посторонний коммит сообщением про копирайт формы поддержки.
+  // Гейт, обвиняющий не ту задачу, выключают не разбираясь — вместе с
+  // долговечной проверкой владения. Здесь закреплено, что размер вернуться в
+  // эту функцию не может: любое значение проходит, пока владение соблюдено.
+  const temp = mkdtempSync(join(tmpdir(), 'houseplan-support-size-'));
+  try {
+    writeFileSync(join(temp, 'initial.js'), 'header only');
+    writeFileSync(join(temp, 'editor.js'), 'lazy English marker · lazy Russian marker');
+    const markers = ['lazy English marker', 'lazy Russian marker'];
+    const base = { initialViewFiles: ['initial.js'], lazyEditorFiles: ['editor.js'] };
+    for (const initialViewGzipBytes of [0, 291_046, 10_000_000, undefined]) {
+      assert.doesNotThrow(
+        () => assertSupportBundleOwnership({ ...base, initialViewGzipBytes }, temp, markers),
+        `размер ${initialViewGzipBytes} не должен влиять на проверку владения`,
+      );
+    }
+    // Размер по-прежнему охраняется — но общим бюджетом, а не чужим номером.
+    assert.match(
+      lowHeadroomWarning(9058) || '',
+      /запас бюджета 9058 Б/,
+      'предупреждение о запасе остаётся единственным честным сигналом о размере',
+    );
+  } finally {
+    rmSync(temp, { recursive: true, force: true });
+  }
 });

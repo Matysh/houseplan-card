@@ -5,7 +5,9 @@
  * presentation (`width_cm`) is deliberately separate from geometry: resizing
  * an object must never make its outline thicker.
  */
-export type DecorKind = 'line' | 'rect' | 'ellipse' | 'text' | 'furniture' | 'image';
+export const DECOR_BOX_KINDS = ['rect', 'ellipse', 'furniture', 'image'] as const;
+export type DecorBoxKind = (typeof DECOR_BOX_KINDS)[number];
+export type DecorKind = 'line' | 'text' | DecorBoxKind;
 
 export interface DecorBase {
   id: string;

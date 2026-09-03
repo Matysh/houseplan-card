@@ -1,18 +1,18 @@
-<!-- release: v1.71.0-beta.1 -->
+<!-- release: v1.71.0-beta.2 -->
 
 ## Основное
 
-- В редакторе подложки теперь можно загружать и повторно использовать закрытые PNG, JPEG, WebP и безопасные SVG, а затем размещать и редактировать их как мебель ([#51](https://github.com/Matysh/houseplan-card/issues/51)).
-- «Помощь и обратная связь» и диалоги опасных действий стали надёжнее при смене языка, пространства или версии, повторной отправке и некорректном конфиге ([#417](https://github.com/Matysh/houseplan-card/issues/417), [#418](https://github.com/Matysh/houseplan-card/issues/418), [#420](https://github.com/Matysh/houseplan-card/issues/420), [#423](https://github.com/Matysh/houseplan-card/issues/423)).
-- Автоматическая привязка к зонам Home Assistant больше не забывает устройства из-за временно пустого или неполного реестра ([#419](https://github.com/Matysh/houseplan-card/issues/419)).
+- Пользовательские картинки подложки теперь безопасно уменьшаются, восстанавливаются после прерванной загрузки и отсутствующего файла, а их координаты остаются стабильными после сохранения и оптимизации плана ([#427](https://github.com/Matysh/houseplan-card/issues/427), [#428](https://github.com/Matysh/houseplan-card/issues/428), [#431](https://github.com/Matysh/houseplan-card/issues/431), [#434](https://github.com/Matysh/houseplan-card/issues/434)).
+- Доступ к сохранённым картинкам подложки стал безопаснее и быстрее: произвольный поиск файлов закрыт, а повторные загрузки используют ограниченную кэшированную проверку целостности ([#432](https://github.com/Matysh/houseplan-card/issues/432), [#434](https://github.com/Matysh/houseplan-card/issues/434)).
+- В общих настройках теперь можно отключить информационное окно комнаты при наведении, сохранив подсветку комнаты и подсказки устройств ([#426](https://github.com/Matysh/houseplan-card/issues/426)).
 - Мелкие исправления и улучшения.
 
 ## Highlights
 
-- The Background editor can now upload and reuse private PNG, JPEG, WebP and safe SVG images, then place and edit them like furniture ([#51](https://github.com/Matysh/houseplan-card/issues/51)).
-- Help & feedback and dangerous-action dialogs are now more reliable across language, space and version changes, edited retries, and malformed configuration ([#417](https://github.com/Matysh/houseplan-card/issues/417), [#418](https://github.com/Matysh/houseplan-card/issues/418), [#420](https://github.com/Matysh/houseplan-card/issues/420), [#423](https://github.com/Matysh/houseplan-card/issues/423)).
-- Home Assistant Area relocation tracking no longer forgets devices because the registry is temporarily empty or incomplete ([#419](https://github.com/Matysh/houseplan-card/issues/419)).
+- Custom background images can now be safely reduced, recovered after interrupted uploads or missing files, and keep stable coordinates across saves and plan optimization ([#427](https://github.com/Matysh/houseplan-card/issues/427), [#428](https://github.com/Matysh/houseplan-card/issues/428), [#431](https://github.com/Matysh/houseplan-card/issues/431), [#434](https://github.com/Matysh/houseplan-card/issues/434)).
+- Access to saved background images is safer and faster: arbitrary file lookup is blocked, while repeated loads reuse a bounded cached integrity check ([#432](https://github.com/Matysh/houseplan-card/issues/432), [#434](https://github.com/Matysh/houseplan-card/issues/434)).
+- General settings can now hide the room information window on hover while keeping room highlighting and device tooltips ([#426](https://github.com/Matysh/houseplan-card/issues/426)).
 - Small fixes and improvements.
 
-[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.71.0-beta.1/docs/CHANGELOG.ru.md)
-· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.71.0-beta.1/docs/CHANGELOG.md)
+[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.71.0-beta.2/docs/CHANGELOG.ru.md)
+· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.71.0-beta.2/docs/CHANGELOG.md)

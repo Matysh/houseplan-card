@@ -9,9 +9,30 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 import pytest
+
+# Этот файл требует Home Assistant, но называется не `test_ha_*` (#436).
+#
+# Отсекать HA-тесты по имени файла — конструкция, которая уже стоила #389:
+# корректность харнесса держалась на именах в каталоге. Здесь она стоила
+# меньшего, но обиднее: `collect_ignore_glob` в conftest этот файл не ловил,
+# импорт `store` тянул `homeassistant`, и `python3 -m pytest tests_backend/`
+# без HA падал НА СБОРКЕ. То есть чистое подмножество не выполнялось вовсе —
+# ни один из 310 тестов, — а документация обещала обратное.
+#
+# `importorskip` на уровне модуля превращает это в честный скип: pytest
+# сообщает «1 skipped» вместо «Interrupted», остальные файлы прогоняются. В
+# CI Home Assistant установлен, поэтому там не скипается ничего.
+#
+# Импорты ниже стоят после этой строки намеренно: они и есть то, что без HA
+# не выполнится. Порядок закреплён тестом
+# `test_issue_436_ha_dependent_test_modules_declare_it` — он краснеет, если
+# такой файл появится без объявления.
+pytest.importorskip("homeassistant", reason="модуль тянет HA через store (#436)")
+
 from custom_components.houseplan import virtual_lights
 from custom_components.houseplan.coordinate_canonicalization import (
     COORDINATE_DECIMALS,
+    DECOR_BOX_KINDS,
     LATTICE_GRID_N,
     LATTICE_NOISE_STEPS,
     canonicalize_config_geometry,
@@ -29,7 +50,6 @@ from custom_components.houseplan.validation import (
     POS_SCHEMA,
 )
 from custom_components.houseplan.wall_segment_model import commit_wall_segment_model
-
 
 FIXTURE = (
     Path(__file__).parents[1]
@@ -67,6 +87,32 @@ def test_python_and_frontend_share_the_scalar_lattice_fixture_contract() -> None
     assert canonicalize_config_geometry(config) == config
     assert canonicalize_layout_geometry(layout) == layout
     assert math.copysign(1.0, layout["rl:poly"]["x"]) == 1.0
+
+
+def test_decor_box_catalog_matches_shared_contract() -> None:
+    fixture = _fixture()
+    assert list(DECOR_BOX_KINDS) == fixture["boxKinds"]
+
+    input_decor = fixture["configInput"]["spaces"][0]["decor"]
+    input_boxes = [item for item in input_decor if item["kind"] in DECOR_BOX_KINDS]
+    assert sorted(item["kind"] for item in input_boxes) == sorted(fixture["boxKinds"])
+
+    result = canonicalize_config_geometry(fixture["configInput"])
+    output_by_id = {item["id"]: item for item in result["spaces"][0]["decor"]}
+    expected_by_id = {
+        item["id"]: item for item in fixture["configExpected"]["spaces"][0]["decor"]
+    }
+    for source in input_boxes:
+        actual = output_by_id[source["id"]]
+        expected = expected_by_id[source["id"]]
+        for field in ("x", "y", "w", "h", "angle"):
+            assert actual[field] == expected[field]
+            assert actual[field] != source[field]
+
+    source_image = next(item for item in input_boxes if item["kind"] == "image")
+    image = output_by_id["image"]
+    for field in ("asset_id", "opacity", "flip_h", "flip_v", "future"):
+        assert image[field] == source_image[field]
 
 
 def test_scalar_contract_is_symmetric_and_keeps_off_grid_geometry() -> None:

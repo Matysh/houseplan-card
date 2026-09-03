@@ -51,6 +51,6 @@ if HAS_HA:
         """Do not let warm HA harness runs exhaust the shared file quota."""
         if "hass" in request.fixturenames:
             hass = request.getfixturevalue("hass")
-            for relative in ("houseplan/plans", "houseplan/files"):
+            for relative in ("houseplan/plans", "houseplan/files", "houseplan/assets"):
                 shutil.rmtree(Path(hass.config.path(relative)), ignore_errors=True)
         yield

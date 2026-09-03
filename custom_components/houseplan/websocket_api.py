@@ -21,6 +21,7 @@ from homeassistant.const import __version__ as HA_VERSION
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import issue_registry as ir
 
+from .asset_integrity import get_asset_integrity_verifier
 from .auth import may_write
 from .const import (
     ASSETS_DIR,
@@ -50,10 +51,12 @@ from .coordinate_canonicalization import (
     canonicalize_layout_geometry,
 )
 from .decor_assets import (
+    ASSET_EXTENSIONS,
     ASSET_ID_RE,
     asset_meta_path,
     asset_refs,
     public_asset,
+    read_asset,
     read_catalog,
 )
 from .import_export import (
@@ -1135,22 +1138,29 @@ async def ws_assets_list(hass: HomeAssistant, connection, msg: dict[str, Any]) -
 @websocket_api.async_response
 async def ws_assets_resolve(hass: HomeAssistant, connection, msg: dict[str, Any]) -> None:
     """Resolve each unique id once; absent/corrupt content is reported missing."""
-    root = Path(hass.config.path(ASSETS_DIR))
+    rt = _runtime(hass, connection, msg["id"])
+    if rt is None:
+        return
     requested = set(msg["asset_ids"])
+    allowed = requested
+    if not _check_write(hass, connection):
+        async with rt.write_lock:
+            stored = await rt.config_store.async_load() or {}
+            referenced = set(asset_refs(stored.get("config") or {}))
+        allowed = requested & referenced
+
+    root = Path(hass.config.path(ASSETS_DIR))
+    verifier = get_asset_integrity_verifier(hass)
 
     def _resolve() -> tuple[list[dict], list[str]]:
         rows: list[dict] = []
         found: set[str] = set()
-        for row in read_catalog(root):
-            aid = row["asset_id"]
-            if aid not in requested:
+        for aid in sorted(allowed):
+            row = read_asset(root, aid)
+            if row is None:
                 continue
             path = root / f"{aid}{row['ext']}"
-            try:
-                import hashlib
-                if hashlib.sha256(path.read_bytes()).hexdigest() != aid:
-                    continue
-            except OSError:
+            if not verifier.verify(path, aid):
                 continue
             rows.append(public_asset(row))
             found.add(aid)
@@ -1188,15 +1198,23 @@ async def ws_assets_delete(hass: HomeAssistant, connection, msg: dict[str, Any])
             return
 
         def _delete() -> bool:
-            row = next((item for item in read_catalog(root) if item["asset_id"] == aid), None)
             removed = False
-            if row:
+            for extension in ASSET_EXTENSIONS:
+                path = root / f"{aid}{extension}"
+                if not path.is_file():
+                    continue
                 try:
-                    (root / f"{aid}{row['ext']}").unlink()
+                    path.unlink()
                     removed = True
                 except FileNotFoundError:
                     pass
-            asset_meta_path(root, aid).unlink(missing_ok=True)
+            meta = asset_meta_path(root, aid)
+            if meta.is_file():
+                try:
+                    meta.unlink()
+                    removed = True
+                except FileNotFoundError:
+                    pass
             return removed
 
         removed = await hass.async_add_executor_job(_delete)

@@ -84,6 +84,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#314](https://github.com/Matysh/houseplan-card/issues/314) Атомарная запись v8 drafts и независимой геометрии | [314-v8-draft-write-regression.md](314-v8-draft-write-regression.md) |
 | [#306](https://github.com/Matysh/houseplan-card/issues/306) Нулевые стены вместо виртуальных границ | [306-zero-thickness-walls.md](306-zero-thickness-walls.md) |
 | [#348](https://github.com/Matysh/houseplan-card/issues/348) Полная немецкая локализация | [348-german-localization.md](348-german-localization.md) |
+| [#428](https://github.com/Matysh/houseplan-card/issues/428) Round-trip экспорта с отсутствующей картинкой декора | [428-missing-decor-asset-roundtrip.md](428-missing-decor-asset-roundtrip.md) |
 
 ## P2
 
@@ -164,6 +165,9 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#294](https://github.com/Matysh/houseplan-card/issues/294) Esc завершает текущую цепочку стен без удаления геометрии | [294-wall-esc-detach.md](294-wall-esc-detach.md) |
 | [#419](https://github.com/Matysh/houseplan-card/issues/419) Безопасная уборка Area-снапшота при пустом или усечённом HA-реестре | [419-area-snapshot-roster-guard.md](419-area-snapshot-roster-guard.md) |
 | [#421](https://github.com/Matysh/houseplan-card/issues/421) Отрицательные доказательства для трёх защитных проверок | [421-negative-test-proofs.md](421-negative-test-proofs.md) |
+| [#426](https://github.com/Matysh/houseplan-card/issues/426) Отключение информационного окна комнаты при наведении | [426-room-hover-tooltip-toggle.md](426-room-hover-tooltip-toggle.md) |
+| [#431](https://github.com/Matysh/houseplan-card/issues/431) Канонизация координат пользовательских изображений | [431-image-coordinate-canonicalization.md](431-image-coordinate-canonicalization.md) |
+| [#432](https://github.com/Matysh/houseplan-card/issues/432) Ограниченный resolve и единая проверка целостности изображений | [432-asset-resolve-authorization-cache.md](432-asset-resolve-authorization-cache.md) |
 
 ## P3
 
@@ -176,6 +180,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#340](https://github.com/Matysh/houseplan-card/issues/340) Обязательная ревизия повторной записи config/set | [340-config-set-revision.md](340-config-set-revision.md) |
 | [#372](https://github.com/Matysh/houseplan-card/issues/372) Компактное верхнее кадрирование static card без заголовка | [372-space-card-empty-title.md](372-space-card-empty-title.md) |
 | [#423](https://github.com/Matysh/houseplan-card/issues/423) Полиш support pipeline и защитных инструментов v1.70.0 | [423-v170-polish.md](423-v170-polish.md) |
+| [#434](https://github.com/Matysh/houseplan-card/issues/434) Полиш аудита v1.71.0-beta.1 | [434-v171-polish-audit.md](434-v171-polish-audit.md) |
 
 ## P3
 

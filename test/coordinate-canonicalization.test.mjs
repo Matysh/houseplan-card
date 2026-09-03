@@ -5,6 +5,7 @@ import { readHouseplanProductionSource } from './houseplan-source.mjs';
 
 import {
   COORDINATE_DECIMALS,
+  DECOR_BOX_KINDS,
   LATTICE_GRID_N,
   LATTICE_NOISE_STEPS,
   canonicalizeConfigGeometry,
@@ -37,6 +38,57 @@ test('frontend and backend share the scalar+lattice fixture contract (#291)', ()
   assert.deepEqual(canonicalizeConfigGeometry(config), config, 'config is idempotent');
   assert.deepEqual(canonicalizeLayoutGeometry(layout), layout, 'layout is idempotent');
   assert.equal(Object.is(layout['rl:poly'].x, -0), false, 'negative zero becomes positive');
+});
+
+test('decor box catalog canonicalizes every box kind and preserves image metadata (#431)', () => {
+  assert.deepEqual(DECOR_BOX_KINDS, fixture.boxKinds);
+
+  const inputBoxes = fixture.configInput.spaces[0].decor
+    .filter((item) => fixture.boxKinds.includes(item.kind));
+  assert.deepEqual(
+    inputBoxes.map((item) => item.kind).sort(),
+    [...fixture.boxKinds].sort(),
+    'the shared fixture covers the exact runtime box catalog',
+  );
+
+  const output = canonicalizeConfigGeometry(fixture.configInput);
+  const outputById = new Map(output.spaces[0].decor.map((item) => [item.id, item]));
+  const expectedById = new Map(fixture.configExpected.spaces[0].decor.map((item) => [item.id, item]));
+  for (const input of inputBoxes) {
+    const actual = outputById.get(input.id);
+    const expected = expectedById.get(input.id);
+    for (const field of ['x', 'y', 'w', 'h', 'angle']) {
+      assert.equal(actual[field], expected[field], `${input.kind}.${field} is canonical`);
+      assert.notEqual(actual[field], input[field], `${input.kind}.${field} exercises the barrier`);
+    }
+  }
+
+  const inputImage = inputBoxes.find((item) => item.kind === 'image');
+  const actualImage = outputById.get('image');
+  for (const field of ['asset_id', 'opacity', 'flip_h', 'flip_v', 'future']) {
+    assert.deepEqual(actualImage[field], inputImage[field], `image.${field} is preserved`);
+  }
+
+  const futureBox = {
+    id: 'future', kind: 'future-box', x: 0.1000000004, y: 0.2000000006,
+    w: 0.3000000004, h: 0.4000000006, angle: 12.1234567896,
+  };
+  const unknownResult = canonicalizeConfigGeometry({ spaces: [{ decor: [futureBox] }] });
+  assert.deepEqual(unknownResult.spaces[0].decor[0], futureBox);
+});
+
+test('lattice report includes image box coordinates (#431)', () => {
+  const node = 83 / 240;
+  const noise = Number(node.toFixed(9));
+  const report = latticeCanonicalizationReport({ spaces: [{
+    id: 'floor', title: 'Floor', cell_cm: 5,
+    decor: [{ id: 'image', kind: 'image', x: noise, y: node, w: noise, h: 0.06 }],
+  }] });
+  assert.equal(report.canonicalized, 2);
+  assert.equal(report.far, 1);
+  assert.equal(report.spaces.length, 1);
+  assert.equal(report.spaces[0].canonicalized, 2);
+  assert.equal(report.spaces[0].far, 1);
 });
 
 test('scalar canonicalization is symmetric and never snaps off-grid geometry (#224)', () => {

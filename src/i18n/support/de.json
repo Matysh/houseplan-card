@@ -1,4 +1,6 @@
 {
+  "gs.hint": "Füllfarben gelten für jeden Bereich; jede Farbe hat ihre eigene Deckkraft. Der Füllmodus wird in den Einstellungen des jeweiligen Bereichs festgelegt.",
+  "gs.show_room_tooltip": "Rauminformationen beim Darüberfahren anzeigen",
   "support.about_group": "Über die Karte",
   "support.guide_group": "Dokumentation",
   "support.guide": "Benutzerhandbuch",

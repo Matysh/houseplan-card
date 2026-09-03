@@ -33,7 +33,7 @@ import {
   spaceDisplayOf, resolveEffectiveRoomFill, fillColorsOf, DEFAULT_FILL_COLORS,
   customFillOf, roomCustomFillOf, DEFAULT_CUSTOM_FILL,
   type FillColors, type FillColorEntry, type ResolvedRoomFill, runServiceFor, RUN_TARGET_DOMAINS,
-  DEFAULT_ROOM_COLOR, DEFAULT_ROOM_OPACITY, stageBgOf,
+  DEFAULT_ROOM_COLOR, DEFAULT_ROOM_OPACITY, stageBgOf, showRoomTooltipOf,
   DEFAULT_TEMP_MIN, DEFAULT_TEMP_MAX, type SpaceDisplay,
   referencedContentUrls,
   DISPLAY_MODES, TAP_ACTIONS, SPACE_FILL_UI_MODES, ROOM_FILL_MODES,
@@ -358,7 +358,7 @@ import {
 } from './space-order';
 import { applyOpeningMoves, mergeCollinearPartitions, spaceMergeGeometry } from './wall-merge';
 
-const CARD_VERSION = '1.71.0-beta.1';
+const CARD_VERSION = '1.71.0-beta.2';
 
 type ResizeLiveLabel = {
   kind: 'length';
@@ -1112,8 +1112,8 @@ export interface HouseplanEditorHostPort {
   _sentPos: Map<string, DeviceLayout[string] | null>;
   _serverCfg: ServerConfig | null;
   _serverStorage: boolean;
-  _settings: { exclude_integrations?: string[]; group_lights?: boolean; show_all?: boolean; filter_seeded?: boolean; icon_rules?: { pattern: string; icon: string; }[]; };
-  _settingsDialog: { colors: FillColors; glowRadius: number; bgColor: string | null; northDeg: number | null; bgMode: "static" | "daynight"; sunRays: boolean; busy: boolean; } | null;
+  _settings: { exclude_integrations?: string[]; group_lights?: boolean; show_all?: boolean; filter_seeded?: boolean; icon_rules?: { pattern: string; icon: string; }[]; show_room_tooltip?: boolean; };
+  _settingsDialog: { colors: FillColors; glowRadius: number; bgColor: string | null; northDeg: number | null; bgMode: "static" | "daynight"; sunRays: boolean; showRoomTooltip: boolean; busy: boolean; } | null;
   _supportDialog: SupportDialogState | null;
   _showAll: boolean;
   _showHidden: boolean;
@@ -1134,7 +1134,7 @@ export interface HouseplanEditorHostPort {
   _t: (key: I18nKey, vars?: Record<string, string | number>) => string;
   _undoDevicePosition: () => void;
   _thickWallCuts: () => number[][];
-  _tip: { x: number; y: number; title: string; meta: string; lqi?: number | null; temp?: number | null; hum?: number | null; } | null;
+  _tip: { x: number; y: number; title: string; meta: string; lqi?: number | null; temp?: number | null; hum?: number | null; room?: boolean; } | null;
   _toggleConfirmationLines: (intent: ResolvedToggleIntent) => string[];
   _toggleConfirmationStateText: (target: ResolvedToggleTarget) => string;
   _toggleIntent: (device: DevItem, devices?: readonly DevItem[]) => ResolvedToggleIntent | null;
@@ -9034,6 +9034,7 @@ public _openSettingsDialog = (): void => {
       northDeg: northDegOf(this.host._settings, {}),
       bgMode: bgModeOf(this.host._settings, {}),
       sunRays: sunRaysOn(this.host._settings, {}),
+      showRoomTooltip: showRoomTooltipOf(this.host._settings),
       busy: false,
     };
   };
@@ -9169,6 +9170,7 @@ private async _buildSupportPreview(draftId: string): Promise<void> {
         || !supportApiCompatible(this.host._haSupportApi)) return;
     const generation = ++this._supportPreviewGeneration;
     this._supportPatch(draftId, { status: 'building', errorCode: '' });
+    let issuedToken = '';
     try {
       const response: unknown = await this.host.hass.callWS({
         type: 'houseplan/support/preview',
@@ -9187,6 +9189,7 @@ private async _buildSupportPreview(draftId: string): Promise<void> {
       const expiresIn = Number(payload.expires_in);
       const spaces = Number(payload.spaces);
       const token = String(payload.token || '');
+      if (/^[0-9a-f]{48}$/.test(token)) issuedToken = token;
       const sha256 = String(payload.sha256 || '');
       const version = Number(payload.version);
       const format = String(payload.format || '');
@@ -9209,6 +9212,7 @@ private async _buildSupportPreview(draftId: string): Promise<void> {
         preparedAt: now,
       };
       if (!this._supportPreviewRequestIsCurrent(draftId, generation)) {
+        issuedToken = '';
         void this._discardSupportPreview(token);
         return;
       }
@@ -9218,11 +9222,21 @@ private async _buildSupportPreview(draftId: string): Promise<void> {
         errorCode: '',
         rawOpen: false,
       })) {
+        issuedToken = '';
         void this._discardSupportPreview(token);
         return;
       }
+      issuedToken = '';
       this._scheduleSupportExpiry(draftId, preview);
     } catch (error: unknown) {
+      // The backend has allocated every syntactically valid token it returns.
+      // Cleanup is independent from UI currentness: invalid, stale or locally
+      // unadoptable responses must not occupy a slot until TTL.
+      if (issuedToken) {
+        const token = issuedToken;
+        issuedToken = '';
+        void this._discardSupportPreview(token);
+      }
       if (!this._supportPreviewRequestIsCurrent(draftId, generation)) return;
       if (!this._supportPatch(draftId, {
         status: 'error',
@@ -10233,12 +10247,15 @@ public _updateDecorStyle(next: DecorStyle): void {
       settings.bg_mode = d.bgMode;
       if (d.sunRays) settings.sun_rays = true;
       else delete settings.sun_rays;
+      if (d.showRoomTooltip) delete settings.show_room_tooltip;
+      else settings.show_room_tooltip = false;
       // Legacy compatibility: old configs may still contain this accepted
       // field, but weather no longer affects sunlight and the UI no longer
       // exposes it. Saving general settings cleans the obsolete value up.
       delete settings.weather_entity;
       this.host._serverCfg = { ...cfg, settings };
       await this._saveConfigNow();
+      if (!d.showRoomTooltip && this.host._tip?.room) this.host._tip = null;
       this.host._settingsDialog = null;
       this.host.requestUpdate();
       this.host._showToast(this.host._t('gs.saved'));
@@ -10534,7 +10551,16 @@ public _renderSettingsDialog(): TemplateResult {
     return html`<hp-dialog .hass=${this.host.hass} .title=${this.host._t('gs.title')} icon="mdi:cog-outline" wide
       @hp-close=${() => (this.host._settingsDialog = null)}>
         <div class="body">
-          <div class="rhint">${this.host._t('gs.hint')}</div>
+          <div class="rhint">${supportT(
+            langOf(this.host.hass, this.host._config?.language), 'gs.hint',
+          )}</div>
+          <label class="srcrow">
+            ${this._boolInput(this.host._settingsDialog!.showRoomTooltip, (v) =>
+              (this.host._settingsDialog = { ...this.host._settingsDialog!, showRoomTooltip: v }))}
+            <span>${supportT(
+              langOf(this.host.hass, this.host._config?.language), 'gs.show_room_tooltip',
+            )}</span>
+          </label>
           <label class="dispsection">${this.host._t('gs.light_group')}</label>
           ${this._renderColorRow('light_on', 'gs.light_on')}
           ${this._renderColorRow('light_off', 'gs.light_off')}
@@ -10660,7 +10686,7 @@ public _renderSettingsDialog(): TemplateResult {
         </div>
         <div class="row" slot="footer">
           <button class="btn ghost" @click=${() =>
-            (this.host._settingsDialog = { ...this.host._settingsDialog!, colors: JSON.parse(JSON.stringify(DEFAULT_FILL_COLORS)), glowRadius: this.host._imperial ? 9.8 : 3, bgColor: null, northDeg: null, bgMode: 'daynight', sunRays: false })}>
+            (this.host._settingsDialog = { ...this.host._settingsDialog!, colors: JSON.parse(JSON.stringify(DEFAULT_FILL_COLORS)), glowRadius: this.host._imperial ? 9.8 : 3, bgColor: null, northDeg: null, bgMode: 'daynight', sunRays: false, showRoomTooltip: true })}>
             ${this.host._t('gs.reset')}
           </button>
           <span class="spacer"></span>

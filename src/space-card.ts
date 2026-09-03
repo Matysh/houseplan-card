@@ -46,7 +46,9 @@ import {
   type GlowRuntimeHost, type GlowRuntimeState,
 } from './glow-scene';
 import './space-editor';
-import { decorAssetIds, resolveDecorAssets, type DecorAsset } from './decor-assets';
+import {
+  DECOR_ASSETS_API_VERSION, decorAssetIds, resolveDecorAssets, type DecorAsset,
+} from './decor-assets';
 
 const fireEvent = (node: EventTarget, type: string, detail?: unknown) => {
   const ev = new Event(type, { bubbles: true, composed: true }) as any;
@@ -706,6 +708,13 @@ class HouseplanSpaceCard extends LitElement {
         || this._snap.layoutFingerprint !== snap.layoutFingerprint;
       const virtualLightsChanged = !this._snap
         || this._snap.virtualLights !== snap.virtualLights;
+      const decorAssetsCapabilityChanged = !this._snap
+        || this._snap.decorAssetsApi !== snap.decorAssetsApi;
+      if (snap.decorAssetsApi !== DECOR_ASSETS_API_VERSION) {
+        // Runtime capability is authoritative even when another asset needed
+        // by the incoming visual candidate cannot yet be prepared.
+        this._decorAssets = new Map();
+      }
       if (configChanged && !await this._signer.prepareImage(
         this.hass, this._candidateBackdrop(snap.config),
       )) {
@@ -720,7 +729,7 @@ class HouseplanSpaceCard extends LitElement {
           && this._continuity.state === 'steady') {
         this._beginContinuityCandidate('structural-response', true);
       }
-      if (configChanged || layoutChanged || virtualLightsChanged) {
+      if (configChanged || layoutChanged || virtualLightsChanged || decorAssetsCapabilityChanged) {
         this._snap = snap;
       } else if (this._snap) {
         // Revision-only echoes are metadata, not a new visual candidate.
@@ -728,9 +737,13 @@ class HouseplanSpaceCard extends LitElement {
         this._snap.layoutRev = snap.layoutRev;
       }
       if (configChanged) this._continuity.note('config-candidate', { configRev: snap.rev });
-      try {
-        this._decorAssets = await resolveDecorAssets(this.hass, decorAssetIds(snap.config));
-      } catch { /* retain the last complete frame; failed sets are not cached and retry next load */ }
+      if (snap.decorAssetsApi === DECOR_ASSETS_API_VERSION) {
+        try {
+          this._decorAssets = await resolveDecorAssets(
+            this.hass, decorAssetIds(snap.config), snap.rev,
+          );
+        } catch { /* retain the last complete frame; failed sets are not cached and retry next load */ }
+      }
       if (layoutChanged) this._continuity.note('layout-candidate', { layoutRev: snap.layoutRev });
       if (virtualLightsChanged) this._capturedSnapshotSequence = -1;
       this._loadedOnce = true;

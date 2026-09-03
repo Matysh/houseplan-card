@@ -41,6 +41,17 @@ const warmGate = await page.evaluate(async () => {
     await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
   };
   const originalLanguage = card._config?.language;
+  const committedBody = root().querySelector('ha-card')?.outerHTML;
+  const openDecision = card._confirmDanger({
+    key: 'ready-before-warm',
+    kind: 'destructive',
+    title: 'Delete?',
+    message: 'The plan and all its rooms will be deleted.',
+    confirmLabel: 'Delete',
+    cancelLabel: 'Cancel',
+  });
+  await settle();
+  const openedWhileReady = !!root().querySelector('hp-confirm');
   card._config = { ...card._config, language: 'de' };
   card.requestUpdate();
   for (let attempt = 0; attempt < 50 && card._dangerConfirmLocaleGate !== 'warm'; attempt++) {
@@ -49,7 +60,11 @@ const warmGate = await page.evaluate(async () => {
   }
 
   const entered = card._dangerConfirmLocaleGate === 'warm' && card.inert;
-  const before = root().innerHTML;
+  const cancelledOnTransition = await Promise.race([
+    openDecision,
+    new Promise((resolve) => setTimeout(() => resolve('timeout'), 100)),
+  ]);
+  await settle();
   const decision = await Promise.race([
     card._confirmDanger({
       key: 'warm-language-gate',
@@ -63,15 +78,31 @@ const warmGate = await page.evaluate(async () => {
   ]);
   const result = {
     warmLanguageGateActuallyEntered: entered,
+    readyConfirmationOpenedBeforeWarm: openedWhileReady,
+    readyToWarmCancelsOpenConfirmation: cancelledOnTransition === false,
+    readyToWarmKeepsCommittedBody: root().querySelector('ha-card')?.outerHTML === committedBody,
     warmLanguageGateRefusesImmediately: decision === false,
     warmLanguageGateKeepsControllerEmpty: card._dangerConfirm === null
       && card._dangerConfirmController.state === null,
-    warmLanguageGateKeepsNoChangeDom: root().innerHTML === before
-      && !root().querySelector('hp-confirm'),
+    warmLanguageGateRemovesDecisionSurface: !root().querySelector('hp-confirm'),
   };
 
+  // Change the requested language back without waiting for render. A decision
+  // made in this warm -> ready window must use current config/runtime state,
+  // not the warm branch painted by the previous update.
   card._config = { ...card._config, language: originalLanguage };
-  card.requestUpdate();
+  const readyAgain = card._confirmDanger({
+    key: 'ready-before-render',
+    kind: 'warning',
+    title: 'Continue?',
+    message: 'The language is ready again.',
+    confirmLabel: 'Continue',
+    cancelLabel: 'Cancel',
+  });
+  result.warmToReadyAllowsBeforeRender = card._dangerConfirmController.state?.request.key
+    === 'ready-before-render' && !card.inert;
+  card._cancelDangerConfirm();
+  result.warmToReadyDecisionSettles = await readyAgain === false;
   await settle();
   return result;
 });
@@ -81,7 +112,10 @@ await Promise.race([
   new Promise((_, reject) => setTimeout(() => reject(new Error('German locale request not seen')), 1000)),
 ]);
 releaseGerman();
-await germanCompleted;
+await Promise.race([
+  germanCompleted,
+  new Promise((_, reject) => setTimeout(() => reject(new Error('German locale request did not complete')), 1000)),
+]);
 await page.unroute(germanAsset, holdGerman);
 
 const out = await page.evaluate(async () => {

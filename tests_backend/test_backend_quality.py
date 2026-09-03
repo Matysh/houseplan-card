@@ -196,3 +196,144 @@ def test_issue_398_pure_imports_leaves_sys_modules_as_it_found_it():
     )
     assert dir(again)
     assert sorted(k for k in sys.modules if k.startswith("custom_components")) == before
+
+# --- #436: файл, которому нужен Home Assistant, обязан это объявить ---------
+
+
+def _toplevel_imports(path: Path) -> set[str]:
+    """Модули, импортируемые на уровне модуля — то есть при сборке pytest.
+
+    Тела функций и классов не считаются: их импорты исполняются при вызове и
+    сборку не ломают. `if TYPE_CHECKING:` тоже не считается — этот блок не
+    исполняется никогда (`virtual_lights` так тянет `store` и остаётся чистым).
+    """
+    import ast
+
+    names: set[str] = set()
+
+    def visit(body: list) -> None:
+        for node in body:
+            if isinstance(node, ast.Import):
+                names.update(alias.name for alias in node.names)
+            elif isinstance(node, ast.ImportFrom):
+                base = node.module or ""
+                if node.level:  # from . import store / from .store import x
+                    base = f".{base}" if base else "."
+                names.add(base)
+                names.update(f"{base}.{alias.name}".replace("..", ".", 1)
+                             if base == "." else f"{base}.{alias.name}"
+                             for alias in node.names)
+            elif isinstance(node, ast.If):
+                if "TYPE_CHECKING" in ast.unparse(node.test):
+                    continue
+                visit(node.body)
+                visit(node.orelse)
+            elif isinstance(node, ast.Try):
+                visit(node.body)
+                for handler in node.handlers:
+                    visit(handler.body)
+                visit(node.orelse)
+                visit(node.finalbody)
+
+    visit(ast.parse(path.read_text(encoding="utf-8")).body)
+    return names
+
+
+def _ha_dependent_backend_modules(root: Path | None = None) -> set[str]:
+    """Модули интеграции, которые при импорте тянут Home Assistant.
+
+    Прямые импортёры плюс замыкание по относительным импортам: `store` тянет HA
+    сам, а всё, что импортирует `store` на уровне модуля, тянет его через него.
+    """
+    deps: dict[str, set[str]] = {}
+    for path in sorted((root or BACKEND).glob("*.py")):
+        imports = _toplevel_imports(path)
+        deps[path.stem] = {
+            name.lstrip(".").split(".")[0] for name in imports if name.startswith(".")
+        }
+        if any(name.split(".")[0] == "homeassistant" for name in imports):
+            deps[path.stem].add("homeassistant")
+    needs = {name for name, own in deps.items() if "homeassistant" in own}
+    changed = True
+    while changed:  # обычно один проход; цикл — на случай цепочек длиннее одной
+        changed = False
+        for name, own in deps.items():
+            if name not in needs and own & needs:
+                needs.add(name)
+                changed = True
+    return needs
+
+
+def _needs_home_assistant(path: Path, ha_modules: set[str]) -> bool:
+    """Оборвётся ли импорт этого файла без Home Assistant."""
+    imports = _toplevel_imports(path)
+    if {name.split(".")[0] for name in imports} & {
+        "homeassistant", "pytest_homeassistant_custom_component",
+    }:
+        return True
+    touched = set()
+    for name in imports:
+        parts = name.split(".")
+        if parts[:2] == ["custom_components", "houseplan"] and len(parts) > 2:
+            touched.add(parts[2])
+    return bool(touched & ha_modules)
+
+
+def test_issue_436_ha_dependent_test_modules_declare_it():
+    """Сборка pytest не имеет права падать из-за отсутствия Home Assistant.
+
+    До #436 `conftest.py` отсекал HA-тесты по шаблону имени `test_ha_*.py`, а
+    `test_coordinate_canonicalization.py` тянул HA через `store` и под шаблон
+    не попадал: `python3 -m pytest tests_backend/` без HA обрывался на сборке,
+    и НИ ОДИН из трёх сотен чистых тестов не выполнялся. Признак «нужен ли
+    файлу HA» был подменён признаком «как файл назван» — та же конструкция,
+    которая в #389 уронила 85 тестов с голым `assert False`.
+
+    Проверка статическая и работает в любом окружении: она читает импорты, а
+    не исполняет их.
+    """
+    tests_dir = Path(__file__).resolve().parent
+    ha_modules = _ha_dependent_backend_modules()
+    # Свидетели самого сканера: без них «ничего не нашёл» выглядело бы как
+    # «всё в порядке» — ровно тот вид зелёного, против которого заведён #430.
+    assert "store" in ha_modules, "сканер не видит прямого импортёра HA"
+    assert "coordinate_canonicalization" not in ha_modules, "чистый модуль помечен как HA"
+    ha_named = sorted(path for path in tests_dir.glob("test_ha_*.py"))
+    assert ha_named, "HA-тесты исчезли — у сканера не осталось положительных примеров"
+    for path in ha_named:
+        assert _needs_home_assistant(path, ha_modules), (
+            f"{path.name}: сканер не распознаёт HA-зависимость там, где она заведомо есть"
+        )
+
+    undeclared = [
+        path.name for path in sorted(tests_dir.glob("test_*.py"))
+        if _needs_home_assistant(path, ha_modules)
+        and not path.name.startswith("test_ha_")
+        and 'importorskip("homeassistant"' not in path.read_text(encoding="utf-8")
+    ]
+    assert undeclared == [], (
+        "файлам нужен Home Assistant, но они этого не объявляют: "
+        f"{undeclared}. Либо имя test_ha_*.py — тогда их отсечёт conftest, — либо "
+        'pytest.importorskip("homeassistant") ДО импортов, тянущих HA (#436). '
+        "Иначе прогон tests_backend/ без HA оборвётся на сборке, и не выполнится "
+        "ни один тест, включая чистые."
+    )
+
+
+def test_issue_436_scanner_follows_transitive_ha_dependencies(tmp_path):
+    """Замыкание — не украшение: в интеграции есть модуль, зависящий от HA
+    только через соседа (`import_export` тянет его через `store`). Без
+    замыкания такой модуль считался бы чистым, и тест, импортирующий его,
+    снова обрывал бы сборку. Проверяется на синтетическом дереве, чтобы
+    свидетель не зависел от того, как перетасуют импорты в самой интеграции.
+    """
+    (tmp_path / "direct.py").write_text("from homeassistant.core import HomeAssistant\n")
+    (tmp_path / "middle.py").write_text("from .direct import HomeAssistant\n")
+    (tmp_path / "far.py").write_text("from . import middle\n")
+    (tmp_path / "clean.py").write_text("import json\n")
+    (tmp_path / "lazy.py").write_text(
+        "from typing import TYPE_CHECKING\n"
+        "if TYPE_CHECKING:\n    from .direct import HomeAssistant\n"
+        "def f():\n    from .direct import HomeAssistant\n    return HomeAssistant\n",
+    )
+    assert _ha_dependent_backend_modules(tmp_path) == {"direct", "middle", "far"}
