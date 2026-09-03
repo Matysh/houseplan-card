@@ -21,6 +21,7 @@ from homeassistant.helpers.event import async_call_later, async_track_state_chan
 from homeassistant.helpers.storage import Store
 
 from .const import DOMAIN
+from .vacuum_routes import effective_routes
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -31,14 +32,31 @@ FIRE_THROTTLE_S = 2.0     # event-bus updates for live cards
 MOVING_STATES = {"cleaning", "returning", "on"}
 
 
-def can_resume_trail_run(run: Any, map_id: str, now: float) -> bool:
+def same_run_identity(run: Any, route_id: str, map_id: str) -> bool:
+    """Whether a stored run and a fresh point belong to the same cleanup.
+
+    Route identity wins when both sides have one: two maps of one robot may
+    share a map id only across different sources, and a route change (new
+    source, map or target space) is a new run by definition (#162). A run
+    written before #162 carries no route id, so it is still matched by map id
+    and keeps resuming exactly as it used to.
+    """
+    if not isinstance(run, dict):
+        return False
+    stored_route = run.get("route_id")
+    if route_id and isinstance(stored_route, str) and stored_route:
+        return stored_route == route_id
+    return run.get("map_id") == map_id
+
+
+def can_resume_trail_run(run: Any, map_id: str, now: float, route_id: str = "") -> bool:
     """Whether an ended current run may be reopened for this point.
 
     Store timestamps are untrusted persisted data. Only finite JSON-number
     timestamps and a non-negative inclusive grace interval are accepted;
     malformed values and wall-clock rollback fail closed into a new run.
     """
-    if not isinstance(run, dict) or run.get("map_id") != map_id:
+    if not same_run_identity(run, route_id, map_id):
         return False
     ended = run.get("ended")
     if (
@@ -84,18 +102,27 @@ class TrailBook:
     def __init__(self, data: dict[str, Any] | None = None) -> None:
         self.data: dict[str, Any] = data if isinstance(data, dict) else {}
 
-    def on_point(self, marker: str, map_id: str, x: float, y: float, now: float) -> bool:
+    def on_point(
+        self, marker: str, map_id: str, x: float, y: float, now: float,
+        route_id: str = "", source: str = "",
+    ) -> bool:
         rec = self.data.setdefault(marker, {})
         cur = rec.get("current")
-        resumed = bool(cur and can_resume_trail_run(cur, map_id, now))
+        resumed = bool(cur and can_resume_trail_run(cur, map_id, now, route_id))
         if resumed:
             cur["ended"] = None
-        if not cur or cur.get("ended") is not None or cur.get("map_id") != map_id:
+        if not cur or cur.get("ended") is not None or not same_run_identity(cur, route_id, map_id):
             # a new run begins: the old one becomes "previous" (and the one
             # before it is forgotten — we keep exactly two, per the owner)
             if cur:
                 rec["previous"] = cur
             cur = {"map_id": map_id, "started": now, "ended": None, "points": []}
+            # #162: the run remembers WHICH route wrote it, so the card can put
+            # it on the right floor without re-deriving the routing itself.
+            if route_id:
+                cur["route_id"] = route_id
+            if source:
+                cur["source"] = source
             rec["current"] = cur
         pts: list[list[float]] = cur["points"]
         if pts and pts[-1][0] == x and pts[-1][1] == y:
@@ -122,11 +149,33 @@ class TrailBook:
         """Forget every stored run of one plan marker."""
         return self.data.pop(marker, None) is not None
 
+    def drop_unknown_routes(self, marker: str, route_ids: set[str]) -> bool:
+        """Forget runs whose route no longer exists (deleted or re-targeted).
+
+        Only runs that name a route are touched. A pre-#162 run names none and
+        is adopted by the card instead — deleting it here would destroy history
+        the user can still legitimately see.
+        """
+        rec = self.data.get(marker)
+        if not isinstance(rec, dict):
+            return False
+        changed = False
+        for slot in ("current", "previous"):
+            run = rec.get(slot)
+            if not isinstance(run, dict):
+                continue
+            stored = run.get("route_id")
+            if isinstance(stored, str) and stored and stored not in route_ids:
+                rec.pop(slot)
+                changed = True
+        return changed
+
 
 class TrailRecorder:
     """HA wiring: watch the tracked entities, feed the book, persist, notify."""
 
     def __init__(self, hass: HomeAssistant, rt: Any) -> None:
+        self.routes_by_marker: dict[str, list[dict[str, Any]]] = {}
         self.hass = hass
         self.rt = rt
         self.store = Store(hass, 1, f"{DOMAIN}.trails")
@@ -166,22 +215,35 @@ class TrailRecorder:
             cfg = stored.get("config") or {}
             pairs: dict[str, list[tuple[str, str]]] = {}
             health_pairs: set[tuple[str, str]] = set()
+            routes_by_marker: dict[str, list[dict[str, Any]]] = {}
             for m in cfg.get("markers") or []:
                 if m.get("removed") is True:
                     continue
                 v = m.get("vacuum") or {}
                 src = v.get("source")
-                if not src or v.get("live") is False:
+                if v.get("live") is False:
                     continue
                 marker_id = str(m.get("id"))
-                health_pairs.add((marker_id, str(src)))
+                # #162: a multi-floor robot may publish each map through its own
+                # camera, so every route source is watched — not only the root
+                # discovery source, which is now just one of them.
+                routes = effective_routes(marker_id, v, str(m.get("space") or ""), src)
+                routes_by_marker[marker_id] = routes
+                sources = {str(route["source"]) for route in routes if route.get("source")}
+                if src:
+                    sources.add(str(src))
+                if not sources:
+                    continue
                 vac = self._vacuum_entity(m)
-                if vac:
-                    # HP-1540-03: append, never overwrite — every floor's
-                    # marker records its own copy of the run
-                    pairs.setdefault(src, []).append((marker_id, vac))
+                for source in sorted(sources):
+                    health_pairs.add((marker_id, source))
+                    if vac:
+                        # HP-1540-03: append, never overwrite — every floor's
+                        # marker records its own copy of the run
+                        pairs.setdefault(source, []).append((marker_id, vac))
             self._refresh_source_health(health_pairs)
             self.pairs = pairs
+            self.routes_by_marker = routes_by_marker
             self._resubscribe()
             # A run already in progress (HA restarted mid-cleanup, or the user
             # just finished calibrating) must start recording NOW, not at the
@@ -261,6 +323,17 @@ class TrailRecorder:
             for marker in config.get("markers") or []
             if marker.get("id") is not None and marker.get("removed") is not True
         }
+        # #162: a route that vanished (deleted, or re-targeted to another
+        # space, which is a new identity) takes its own runs with it, while the
+        # marker and its other routes stay untouched.
+        for marker in config.get("markers") or []:
+            marker_id = str(marker.get("id"))
+            if marker.get("removed") is True or marker_id not in self.book.data:
+                continue
+            vacuum = marker.get("vacuum") or {}
+            routes = effective_routes(
+                marker_id, vacuum, str(marker.get("space") or ""), vacuum.get("source"))
+            self.book.drop_unknown_routes(marker_id, {str(r.get("id")) for r in routes})
         orphan_ids = set(self.book.data) - live_marker_ids
         if not orphan_ids:
             return 0
@@ -381,8 +454,25 @@ class TrailRecorder:
             except (TypeError, ValueError):
                 continue
             map_id = resolve_map_id(attrs, st_vac.attributes)
-            changed |= self.book.on_point(marker, map_id, x, y, now)
+            route_id = self._route_id(marker, src, map_id)
+            changed |= self.book.on_point(
+                marker, map_id, x, y, now, route_id=route_id,
+                source=src if route_id else "",
+            )
         return changed
+
+    def _route_id(self, marker: str, source: str, map_id: str) -> str:
+        """The route this point belongs to, or "" when routing cannot say.
+
+        Validation keeps (source, map_id) unique inside one marker, so at most
+        one route can match. No match means the map is unmapped: the point is
+        still recorded — raw history is valuable — but it is not filed under a
+        route that does not own it.
+        """
+        for route in getattr(self, "routes_by_marker", {}).get(marker) or ():
+            if route.get("source") == source and route.get("map_id") == map_id:
+                return str(route.get("id") or "")
+        return ""
 
     @callback
     def _on_state(self, event: Any) -> None:

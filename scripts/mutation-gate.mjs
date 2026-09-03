@@ -316,6 +316,33 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'vacuum-run-forgets-its-route',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'route_change_starts_a_new_run_even_on_the_same_map_id '
+      + 'tests_backend/test_trails.py',
+    because: 'a stored run must remember which route wrote it, or two maps that share a map '
+      + 'id across different cameras collapse into one run on the wrong floor (#162, M-F)',
+    patches: [{
+      file: 'custom_components/houseplan/trails.py',
+      find: '            if route_id:\n                cur["route_id"] = route_id',
+      replace: '            if False:\n                cur["route_id"] = route_id',
+    }],
+  },
+  {
+    id: 'vacuum-retargeted-route-keeps-its-old-trails',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'drop_unknown_routes_touches_only_runs_that_name_a_route '
+      + 'tests_backend/test_trails.py',
+    because: 'a route that was deleted or re-targeted to another space must take its runs '
+      + 'with it; keeping them replays an old cleanup on a floor it never happened on '
+      + '(#162, M-E server half)',
+    patches: [{
+      file: 'custom_components/houseplan/trails.py',
+      find: '            if isinstance(stored, str) and stored and stored not in route_ids:',
+      replace: '            if False:',
+    }],
+  },
+  {
     id: 'area-snapshot-cleanup-ignores-authority',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="limited frames and runtime reset" '

@@ -729,3 +729,80 @@ def test_overlapping_refreshes_leave_one_subscription_teardown_zero():
         _run_isolated(scenario())
     finally:
         trails.async_track_state_change_event = old_track
+
+
+def test_refresh_watches_every_route_source_not_only_the_root(monkeypatch):
+    """#162: карты одного робота могут идти через разные камеры."""
+    import asyncio
+
+    tracked = []
+    old_track = trails.async_track_state_change_event
+    trails.async_track_state_change_event = lambda hass, ents, cb: (
+        tracked.append(sorted(ents)) or (lambda: None))
+    try:
+        markers = [{
+            "id": "m1", "binding": "entity:vacuum.x50", "space": "floor1",
+            "vacuum": {
+                "source": "camera.floor1",
+                "map_routes": [
+                    {"id": "vr1", "source": "camera.floor1", "map_id": "a", "space": "floor1"},
+                    {"id": "vr2", "source": "camera.floor2", "map_id": "b", "space": "floor2"},
+                ],
+            },
+        }]
+
+        class CS:
+            async def async_load(self):
+                return {"config": {"markers": markers}}
+
+        class RT:
+            config_store = CS()
+
+        hass = Hass({
+            "vacuum.x50": S("docked", {}),
+            "camera.floor1": S("idle", {}),
+            "camera.floor2": S("idle", {}),
+        })
+        rec = trails.TrailRecorder(hass, RT())
+        _run_isolated(rec.async_refresh())
+        assert sorted(rec.pairs) == ["camera.floor1", "camera.floor2"]
+        assert rec.pairs["camera.floor2"] == [("m1", "vacuum.x50")]
+        assert tracked == [["camera.floor1", "camera.floor2", "vacuum.x50"]]
+        assert [r["id"] for r in rec.routes_by_marker["m1"]] == ["vr1", "vr2"]
+    finally:
+        trails.async_track_state_change_event = old_track
+
+
+def test_sample_files_the_point_under_its_route():
+    states = {
+        "vacuum.x50": S("cleaning", {}),
+        "camera.floor2": S("idle", {"vacuum_position": {"x": 5, "y": 6}, "map_name": "b"}),
+    }
+    rec = trails.TrailRecorder(Hass(states), None)
+    rec.pairs = {"camera.floor2": [("m1", "vacuum.x50")]}
+    rec.routes_by_marker = {"m1": [
+        {"id": "vr1", "source": "camera.floor1", "map_id": "b", "space": "floor1"},
+        {"id": "vr2", "source": "camera.floor2", "map_id": "b", "space": "floor2"},
+    ]}
+    rec._on_state(E("camera.floor2"))
+    run = rec.book.data["m1"]["current"]
+    assert run["route_id"] == "vr2", "источник, а не только id карты, выбирает маршрут"
+    assert run["source"] == "camera.floor2"
+    assert run["points"] == [[5.0, 6.0]]
+
+
+def test_sample_without_a_matching_route_records_legacy_shaped_run():
+    states = {
+        "vacuum.x50": S("cleaning", {}),
+        "camera.map": S("idle", {"vacuum_position": {"x": 1, "y": 2}, "map_name": "неизвестная"}),
+    }
+    rec = trails.TrailRecorder(Hass(states), None)
+    rec.pairs = {"camera.map": [("m1", "vacuum.x50")]}
+    rec.routes_by_marker = {"m1": [
+        {"id": "vr1", "source": "camera.map", "map_id": "b", "space": "floor1"},
+    ]}
+    rec._on_state(E("camera.map"))
+    run = rec.book.data["m1"]["current"]
+    assert "route_id" not in run, "чужой маршрут прогону не приписывается"
+    assert run["map_id"] == "неизвестная"
+    assert run["points"] == [[1.0, 2.0]]

@@ -143,3 +143,74 @@ def test_junk_store_data_tolerated():
     assert b.data == {}
     b.on_point("m", "0", 1, 1, 1.0)
     assert b.data["m"]["current"]["points"] == [[1, 1]]
+
+
+# --- #162: маршруты карт и пространств ---------------------------------------
+
+def test_route_change_starts_a_new_run_even_on_the_same_map_id():
+    b = TrailBook()
+    b.on_point("m", "default", 1.0, 1.0, 100.0, route_id="vr_a", source="camera.a")
+    b.on_point("m", "default", 2.0, 2.0, 101.0, route_id="vr_b", source="camera.b")
+    rec = b.data["m"]
+    assert rec["previous"]["route_id"] == "vr_a"
+    assert rec["current"]["route_id"] == "vr_b"
+    assert rec["current"]["source"] == "camera.b"
+    assert rec["current"]["points"] == [[2.0, 2.0]]
+
+
+def test_same_route_keeps_one_run():
+    b = TrailBook()
+    b.on_point("m", "default", 1.0, 1.0, 100.0, route_id="vr_a", source="camera.a")
+    b.on_point("m", "default", 2.0, 2.0, 101.0, route_id="vr_a", source="camera.a")
+    assert "previous" not in b.data["m"]
+    assert b.data["m"]["current"]["points"] == [[1.0, 1.0], [2.0, 2.0]]
+
+
+def test_run_without_route_stays_legacy_shaped():
+    b = TrailBook()
+    b.on_point("m", "0", 1.0, 2.0, 100.0)
+    run = b.data["m"]["current"]
+    assert "route_id" not in run and "source" not in run
+    assert set(run) == {"map_id", "started", "ended", "points"}
+
+
+def test_legacy_run_resumes_by_map_id_as_before():
+    b = TrailBook()
+    b.on_point("m", "0", 1.0, 2.0, 100.0)
+    b.end_run("m", 200.0)
+    assert b.on_point("m", "0", 3.0, 4.0, 300.0)
+    assert "previous" not in b.data["m"]
+    assert b.data["m"]["current"]["points"] == [[1.0, 2.0], [3.0, 4.0]]
+
+
+def test_route_run_does_not_resume_into_another_route():
+    b = TrailBook()
+    b.on_point("m", "default", 1.0, 2.0, 100.0, route_id="vr_a")
+    b.end_run("m", 200.0)
+    b.on_point("m", "default", 3.0, 4.0, 300.0, route_id="vr_b")
+    assert b.data["m"]["previous"]["route_id"] == "vr_a"
+    assert b.data["m"]["current"]["route_id"] == "vr_b"
+
+
+def test_drop_unknown_routes_touches_only_runs_that_name_a_route():
+    b = TrailBook()
+    b.on_point("m", "m1", 1.0, 1.0, 100.0, route_id="vr_gone")
+    b.on_point("m", "m2", 2.0, 2.0, 101.0, route_id="vr_live")
+    assert b.drop_unknown_routes("m", {"vr_live"}) is True
+    assert "previous" not in b.data["m"]
+    assert b.data["m"]["current"]["route_id"] == "vr_live"
+    assert b.drop_unknown_routes("m", {"vr_live"}) is False
+    legacy = TrailBook()
+    legacy.on_point("m", "m1", 1.0, 1.0, 100.0)
+    assert legacy.drop_unknown_routes("m", set()) is False, "легаси-прогон не трогаем"
+    assert legacy.data["m"]["current"]["points"] == [[1.0, 1.0]]
+    assert TrailBook().drop_unknown_routes("нет такого", {"vr"}) is False
+
+
+def test_same_run_identity_contract():
+    same = ns["same_run_identity"]
+    assert same({"route_id": "vr_a", "map_id": "x"}, "vr_a", "y") is True
+    assert same({"route_id": "vr_a", "map_id": "x"}, "vr_b", "x") is False
+    assert same({"map_id": "x"}, "vr_a", "x") is True, "легаси-прогон опознаётся картой"
+    assert same({"map_id": "x"}, "", "y") is False
+    assert same(None, "vr", "x") is False
