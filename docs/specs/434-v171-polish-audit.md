@@ -73,8 +73,10 @@ token отзывается. Видимые контролы, тексты и о�
    имеет кейса, в котором все соседние проверки истинны, а binding отсутствует
    только в текущем snapshot.
 8. `germanStarted` ограничен одной секундой, соседний `germanCompleted` ожидается
-   без границы; CI запускает каждый `demo/smoke_*.mjs` простым `node`, поэтому
-   отдельный файл ограничивает лишь 20-минутный timeout всей job.
+   без границы; CI запускает каждый `demo/smoke_*.mjs` простым `node`, а сама job
+   `smoke` не имеет `timeout-minutes` и потому наследует 360-минутный default
+   GitHub Actions. Единственные 20 минут в workflow относятся к другой job —
+   `performance_smoke`.
 9. `_buildSupportPreview()` извлекает token, но при невалидности другого поля
    бросает `support_rejected` до `_discardSupportPreview()`.
 
@@ -91,7 +93,8 @@ token отзывается. Видимые контролы, тексты и о�
 - актуальная проверка locale readiness при каждом danger request и отмена
   открытого request при переходе в неотрисовываемый `warm`;
 - недостающие unit/backend/smoke cases и постоянные mutation witnesses;
-- bounded ожидание German route и per-file timeout smoke-шарда в Validate;
+- bounded ожидание German route, per-file timeout и самостоятельный job timeout
+  smoke-шарда в Validate;
 - best-effort discard каждого корректного support token, ответ которого не был
   принят в состояние диалога;
 - техническая документация и оба changelog.
@@ -241,8 +244,10 @@ Cache key равен `owner connection + epoch + sorted unique valid ids`:
   `timeout --kill-after=10s 180s`. Exit 124 считается обычным падением файла,
   его лог печатается и остальные назначенные shard-файлы продолжают выполняться;
   итог shard остаётся красным.
-- Глобальный `timeout-minutes: 20`, детерминированное разбиение, browser install,
-  exception guard и log artifacts не меняются.
+- Job `smoke` получает собственный `timeout-minutes: 20`: это отдельная граница,
+  которой сейчас нет, а значение соседней `performance_smoke` не считается её
+  защитой. Детерминированное разбиение, browser install, exception guard и log
+  artifacts не меняются.
 
 ### 8. Support preview token cleanup
 
@@ -302,8 +307,9 @@ close/uncheck paths не получают лишнего discard.
 - Повторный resolve в рамках одного config epoch остаётся O(1) cache hit; новый
   epoch делает не более одного batched WS-прохода на exact id-set.
 - Capability guard убирает заведомо отклоняемый WS-вызов на старом backend.
-- Per-file timeout ограничивает один smoke 180 секундами и не уменьшает
-  20-минутный общий бюджет job.
+- Per-file timeout ограничивает один smoke 180 секундами; самостоятельный
+  `timeout-minutes: 20` ограничивает весь shard при системном зависании либо
+  серии отдельных отказов. Это не меняет timeout соседней `performance_smoke`.
 - Quota не доверяет sidecar bytes/count, delete не использует glob и всегда
   повторно проверяет refs/permission. Digest-mismatch никогда не перезаписывается
   автоматически.
@@ -378,8 +384,9 @@ close/uncheck paths не получают лишнего discard.
 - **AC9 (unit/CI contract, liveness).** `germanCompleted` падает с собственной
   диагностикой не позднее 1000 мс; каждый CI smoke имеет 180-секундный TERM и
   10-секундный KILL guard, timeout помечает shard красным, сохраняет лог и не
-  пропускает последующие файлы. **Доказательство:** completion-timeout probe +
-  workflow unit с мутированным отсутствующим wrapper.
+  пропускает последующие файлы; сама job `smoke` имеет независимый
+  `timeout-minutes: 20`. **Доказательство:** completion-timeout probe + workflow
+  unit с поочерёдно удалёнными per-file wrapper и job-level timeout.
 - **AC10 (browser smoke, privacy/lifecycle).** Valid token из invalid, stale или
   неприменённого preview response отзывается ровно один раз; malformed token не
   отзывается; current valid preview и success не получают преждевременный
@@ -410,7 +417,7 @@ close/uncheck paths не получают лишнего discard.
 | AC6 | resolve cache call-count unit | mutation удаляет epoch из key; второй epoch не делает WS и прежний missing остаётся |
 | AC7 | danger branch smoke | mutations возвращают cached render gate либо удаляют warm-transition cancel; promise зависает/ложно отклоняется или controller/DOM остаётся действующим |
 | AC8 | Area cleanup targeted unit | mutation удаляет `snapshotBindings.has(binding)`; отсутствующий binding переносится |
-| AC9 | timeout probe + workflow contract | mutation делает plain `await germanCompleted` либо plain `node "$f"`; probe превышает границу или contract assertion не находит timeout wrapper |
+| AC9 | timeout probe + workflow contract | mutation делает plain `await germanCompleted`, plain `node "$f"` либо удаляет `smoke.timeout-minutes`; probe превышает границу или contract assertion не находит одну из двух независимых границ |
 | AC10 | support smoke с exact discard counters | mutation переставляет validation throw до cleanup/удаляет cleanup; token не отзывается либо отзывается дважды |
 
 Для AC1–AC4/AC7/AC8/AC10, где полный backend/browser прогон дорог для ручного
@@ -439,7 +446,8 @@ AC6 и workflow contract допустим адресный unit red-run, есл�
    condition.
 8. Добавить German completion timeout probe и статический workflow contract;
    timeout fixture обязан оставить следующий synthetic command выполненным, но
-   итоговый status — failure.
+   итоговый status — failure; отдельная проверка отличает 20-минутный timeout
+   `smoke` от одноимённого поля соседней `performance_smoke`.
 9. В support smoke вернуть ответы с valid token и отдельно испорченными hash,
    format, size и current generation; посчитать discard по каждому token.
 10. Запустить штатное дерево и каждый mutation witness: падение должно происходить
@@ -460,8 +468,9 @@ AC6 и workflow contract допустим адресный unit red-run, есл�
 - **Danger fix нарушит `noChange` и мигнёт stable body.** Смягчение: smoke
   сравнивает body identity/содержимое отдельно от удаляемого confirm outlet.
 - **Per-file timeout окажется слишком коротким на cold runner.** Смягчение:
-  180 секунд значительно выше обычного отдельного smoke и сохраняет глобальные
-  20 минут; timeout печатает точное имя и лог для пересмотра числа.
+  180 секунд значительно выше обычного отдельного smoke, job получает отдельные
+  20 минут на установку и весь shard; timeout печатает точное имя и лог для
+  пересмотра числа.
 - **Best-effort discard сам упадёт.** Смягчение: исходная ошибка остаётся
   основной, TTL backend сохраняется как финальная защита.
 
@@ -505,7 +514,8 @@ changelog; пользовательские blobs при откате автом
   расширение из sidecar;
 - config cache epoch передаётся явно в `resolveDecorAssets`, а capability в
   localStorage не сохраняется; свежий server response — единственный authority;
-- 1000 мс для route-completion и 180 секунд + 10 секунд kill grace для файла —
-  технические liveness budgets, не пользовательские таймауты;
+- 1000 мс для route-completion, 180 секунд + 10 секунд kill grace для файла и
+  20 минут для job `smoke` — технические liveness budgets, не пользовательские
+  таймауты;
 - ссылки на строки из аудита ориентировочны: реализация привязывается к символам
   и проверяемому поведению на актуальном `dev`.
