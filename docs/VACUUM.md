@@ -191,13 +191,16 @@ marker.vacuum = {
 }
 ```
 
-All fields are optional and old plans remain readable. Without `map_routes`
-every valid `calibration[map_id]` is read as an effective route into the dock's
-space, so a plan made before #162 renders byte for byte as before. The first
-explicit routing edit converts the whole dictionary at once — all matrices or
-none — and needs an exact source to do it; `calibration` is dropped only after
-the config write succeeds. Where both exist, `map_routes` is the only
-authority and the legacy dictionary takes no part in rendering.
+All fields are optional and old plans remain readable. When `map_routes` is
+absent or `null`, every valid `calibration[map_id]` is read as an effective
+route into the dock's space, so a plan made before #162 renders byte for byte
+as before. Any array is explicit authority: `map_routes: []` means that no map
+is assigned and must not revive a retained legacy matrix. The first explicit
+routing edit converts the whole dictionary at once — all matrices or none —
+and needs an exact source to do it; `calibration` is dropped only after the
+config write succeeds. Where both exist, `map_routes` is the only authority
+and the legacy dictionary takes no part in rendering. A single-space export
+also preserves an explicit empty array when all foreign routes are filtered.
 
 A stored run carries the route that wrote it:
 `{ route_id, source, map_id, started, ended, points }`. A run recorded before

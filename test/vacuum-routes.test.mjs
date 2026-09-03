@@ -96,6 +96,21 @@ test('явные маршруты вытесняют легаси-калибро
   assert.equal(routes[0].space, 'floor2');
 });
 
+test('explicit empty routes remain authoritative over legacy calibration', () => {
+  const legacy = { source: 'camera.robot', calibration: { m1: IDENTITY } };
+  assert.equal(effectiveRoutes('mk', legacy, 'floor1').length, 1, 'absent keeps legacy');
+  assert.equal(
+    effectiveRoutes('mk', { ...legacy, map_routes: null }, 'floor1').length,
+    1,
+    'null keeps legacy compatibility',
+  );
+  assert.deepEqual(
+    effectiveRoutes('mk', { ...legacy, map_routes: [] }, 'floor1'),
+    [],
+    'an explicit empty array disables every legacy route',
+  );
+});
+
 test('без источника легаси-маршрутов не возникает, но discovery его подставляет', () => {
   const marker = { calibration: { m1: IDENTITY } };
   assert.deepEqual(effectiveRoutes('mk', marker, 'floor1'), []);

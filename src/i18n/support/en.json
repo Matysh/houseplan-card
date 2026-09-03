@@ -62,6 +62,7 @@
   "vac.route_status_needs_calibration": "needs calibration",
   "vac.route_status_ambiguous": "ambiguous",
   "vac.route_status_missing_space": "space deleted",
+  "vac.route_missing_space_group": "Deleted space",
   "vac.route_add_current": "Add current map",
   "vac.route_delete": "Remove map",
   "vac.route_delete_title": "Remove the map from its floor?",

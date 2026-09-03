@@ -657,6 +657,18 @@ export const dialogsStyles = css`
     .vacdiag > div { display: flex; justify-content: space-between; gap: var(--sp-5); }
     .vacdiag > div > span { color: var(--secondary-text-color); }
     .vacdiag > div > b { text-align: right; overflow-wrap: anywhere; }
+    .vacroute-missing-group {
+      margin-top: var(--sp-4);
+      padding-top: var(--sp-4);
+      border-top: 1px solid var(--hp-line);
+    }
+    .vacroute-group-title {
+      margin: 0 0 var(--sp-3);
+      color: var(--secondary-text-color);
+      font-size: var(--fs-m);
+      font-weight: 600;
+    }
+    .vacroute-missing-group .vacroute-list { margin-top: 0; }
     .vacpicker { margin: var(--sp-3) 0; }
     .vacsource-warning { display: grid; gap: 8px; }
     .vacsource-warning .btn { justify-self: start; }

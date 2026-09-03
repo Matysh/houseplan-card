@@ -70,7 +70,7 @@ export function renderVacuumMapsSection(
   const t = (key: string, vars?: Record<string, string>) => supportT(
     lang, key as SupportI18nKey, vars);
   const vacuum = dev.marker?.vacuum || {};
-  const explicit = Array.isArray(vacuum.map_routes) && vacuum.map_routes.length > 0;
+  const explicit = Array.isArray(vacuum.map_routes);
   const rootSource: string = host._vacSource(dev) || '';
   const routes: VacuumMapRoute[] = effectiveRoutes(dev.id, vacuum, dev.space, rootSource);
   const spaces: Array<{ id: string; name: string }> = (host._serverCfg?.spaces || [])
@@ -192,11 +192,19 @@ export function renderVacuumMapsSection(
     await writeRoutes((current) => removeRoute(current, route.id));
   };
 
-  // Space order, then map id, then source: a stable reading order that never
-  // depends on the order the routes happen to be stored in.
+  // Valid spaces keep their configured order. Missing-space routes form one
+  // explicit group with a fully deterministic identity order (#443).
   const order = new Map(spaces.map((space, index) => [space.id, index]));
-  const rows = [...routes].sort((a, b) => (order.get(a.space) ?? 1e6) - (order.get(b.space) ?? 1e6)
-    || a.map_id.localeCompare(b.map_id) || a.source.localeCompare(b.source));
+  const compareIdentity = (a: VacuumMapRoute, b: VacuumMapRoute): number =>
+    a.map_id.localeCompare(b.map_id)
+      || a.source.localeCompare(b.source)
+      || a.id.localeCompare(b.id);
+  const validRows = routes.filter((route) => spaceIds.has(route.space))
+    .sort((a, b) => (order.get(a.space) ?? 0) - (order.get(b.space) ?? 0)
+      || compareIdentity(a, b));
+  const missingRows = routes.filter((route) => !spaceIds.has(route.space))
+    .sort(compareIdentity);
+  const rows = [...validRows, ...missingRows];
 
   const statusOf = (route: VacuumMapRoute): string => {
     if (!spaceIds.has(route.space)) return t('vac.route_status_missing_space');
@@ -254,6 +262,37 @@ export function renderVacuumMapsSection(
     host.requestUpdate();
   };
 
+  const renderRoute = (route: VacuumMapRoute): TemplateResult => html`
+    <li class="vacroute ${route.id === activeId ? 'on' : ''}" data-route-id=${route.id}>
+      <div class="vacroute-head">
+        <b>${route.map_id || t('vac.route_map_default')}</b>
+        ${route.id === activeId
+          ? html`<span class="vacroute-active">${t('vac.route_active')}</span>` : nothing}
+      </div>
+      <small>${route.source}</small>
+      <div class="vacroute-status">${statusOf(route)}</div>
+      <label class="srcrow">
+        <span>${t('vac.route_space')}</span>
+        <select class="areasel" @change=${(event: Event) => {
+          const select = event.target as HTMLSelectElement;
+          const next = select.value;
+          select.value = route.space;
+          void retarget(route, next);
+        }}>
+          <option value="" ?selected=${!route.space}>${t('vac.route_space_none')}</option>
+          ${spaces.map((space) => html`
+            <option value=${space.id} ?selected=${space.id === route.space}>${space.name}</option>`)}
+        </select>
+      </label>
+      <div class="vacbtns">
+        <button type="button" class="btn ghostbtn"
+          @click=${() => runtime._vacStartFit(dev, route.id)}>${host._t('vac.fit')}</button>
+        <button type="button" class="btn ghostbtn danger"
+          @click=${() => void drop(route)}>${t('vac.route_delete')}</button>
+      </div>
+    </li>`;
+  const missingGroupTitleId = `vacroute-missing-${dev.id.replace(/[^a-zA-Z0-9_-]/g, '-')}`;
+
   return html`
     <label>${t('vac.routes_section')}</label>
     <div class="bindbox vacroutes">
@@ -262,7 +301,7 @@ export function renderVacuumMapsSection(
           ? t('vac.routes_no_map') : (currentMapId || t('vac.route_map_default'))}</b></div>
         <div><span>${t('vac.routes_status')}</span><b>${t(`vac.routes_state_${resolution.kind}`)}</b></div>
       </div>
-      ${rows.length || draft ? html`<ul class="vacroute-list">
+      ${validRows.length || draft ? html`<ul class="vacroute-list">
         ${draft ? html`
           <li class="vacroute pending">
             <div class="vacroute-head"><b>${draft.mapId || t('vac.route_map_default')}</b></div>
@@ -284,36 +323,17 @@ export function renderVacuumMapsSection(
                 @click=${() => void confirmDraft()}>${host._t('btn.save')}</button>
             </div>
           </li>` : nothing}
-        ${rows.map((route) => html`
-          <li class="vacroute ${route.id === activeId ? 'on' : ''}">
-            <div class="vacroute-head">
-              <b>${route.map_id || t('vac.route_map_default')}</b>
-              ${route.id === activeId
-                ? html`<span class="vacroute-active">${t('vac.route_active')}</span>` : nothing}
-            </div>
-            <small>${route.source}</small>
-            <div class="vacroute-status">${statusOf(route)}</div>
-            <label class="srcrow">
-              <span>${t('vac.route_space')}</span>
-              <select class="areasel" @change=${(event: Event) => {
-                const select = event.target as HTMLSelectElement;
-                const next = select.value;
-                select.value = route.space;
-                void retarget(route, next);
-              }}>
-                <option value="" ?selected=${!route.space}>${t('vac.route_space_none')}</option>
-                ${spaces.map((space) => html`
-                  <option value=${space.id} ?selected=${space.id === route.space}>${space.name}</option>`)}
-              </select>
-            </label>
-            <div class="vacbtns">
-              <button type="button" class="btn ghostbtn"
-                @click=${() => runtime._vacStartFit(dev, route.id)}>${host._t('vac.fit')}</button>
-              <button type="button" class="btn ghostbtn danger"
-                @click=${() => void drop(route)}>${t('vac.route_delete')}</button>
-            </div>
-          </li>`)}
-      </ul>` : html`<div class="rhint">${t('vac.routes_empty')}</div>`}
+        ${validRows.map(renderRoute)}
+      </ul>` : nothing}
+      ${missingRows.length ? html`
+        <section class="vacroute-missing-group" data-hp="vacuum-route-missing-group"
+          aria-labelledby=${missingGroupTitleId}>
+          <h4 class="vacroute-group-title" id=${missingGroupTitleId}>
+            ${t('vac.route_missing_space_group')}
+          </h4>
+          <ul class="vacroute-list">${missingRows.map(renderRoute)}</ul>
+        </section>` : nothing}
+      ${!rows.length && !draft ? html`<div class="rhint">${t('vac.routes_empty')}</div>` : nothing}
       <div class="vacbtns">
         <button type="button" class="btn vacroute-add-current" ?disabled=${!canAddCurrent || !!draft}
           @click=${addCurrent}>${t('vac.route_add_current')}</button>

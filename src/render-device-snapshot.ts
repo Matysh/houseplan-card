@@ -15,6 +15,8 @@ export interface RenderDeviceSnapshot {
     themes?: any;
   }>;
   readonly devices: readonly DevItem[];
+  /** Devices with captured vacuum facts, sharing the same cloned roster rows. */
+  readonly vacuumDevices: readonly DevItem[];
   readonly positions: ReadonlyMap<string, Readonly<{ x: number; y: number }>>;
   /** Two variants per device: `${id}:1` with LQI and `${id}:0` without it. */
   readonly presentations: ReadonlyMap<string, ResolvedDevicePresentation>;
@@ -131,11 +133,15 @@ export function createRenderDeviceSnapshot(options: {
     locale: cloneFact(options.hass?.locale),
     themes: cloneFact(options.hass?.themes),
   });
+  const devices = cloneFact([...options.devices]);
+  const vacuumDevices = Object.freeze(devices.filter((device) =>
+    options.facts?.has(`vacuum:${device.id}`)));
   return Object.freeze({
     sourceSequence: options.sourceSequence,
     capturedAt: options.capturedAt ?? Date.now(),
     hass,
-    devices: cloneFact([...options.devices]),
+    devices,
+    vacuumDevices,
     positions: readonlyMap([...(options.positions || [])].map(([id, point]) =>
       [id, Object.freeze({ x: point.x, y: point.y })] as const)),
     presentations: readonlyMap([...options.presentations].map(([key, presentation]) =>

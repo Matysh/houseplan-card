@@ -63,6 +63,28 @@ test('RenderDeviceSnapshot keeps immutable facts and excludes live HA capabiliti
   assert.equal('set' in snapshot.facts, false);
 });
 
+test('RenderDeviceSnapshot exposes one immutable vacuum-only roster subset', () => {
+  const devices = [
+    { id: 'lamp', entities: ['light.lamp'] },
+    { id: 'robot', entities: ['vacuum.robot'] },
+    { id: 'sensor', entities: ['sensor.temp'] },
+  ];
+  const snapshot = createRenderDeviceSnapshot({
+    sourceSequence: 8,
+    hass: { states: {}, entities: {}, devices: {} },
+    devices,
+    presentations: new Map(),
+    facts: new Map([['vacuum:robot', { moving: false }]]),
+  });
+
+  devices[1].entities.push('camera.late');
+  assert.deepEqual(snapshot.vacuumDevices.map((device) => device.id), ['robot']);
+  assert.equal(snapshot.vacuumDevices[0], snapshot.devices[1], 'subset reuses the same cloned row');
+  assert.deepEqual(snapshot.vacuumDevices[0].entities, ['vacuum.robot']);
+  assert.ok(Object.isFrozen(snapshot.vacuumDevices));
+  assert.throws(() => snapshot.vacuumDevices.push({ id: 'late' }), TypeError);
+});
+
 const methodBody = (source, name) => {
   const start = source.search(new RegExp(`private\\s+(?:async\\s+)?${name}\\(`));
   assert.notEqual(start, -1, `${name} exists`);

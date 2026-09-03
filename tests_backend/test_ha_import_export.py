@@ -50,6 +50,7 @@ from custom_components.houseplan.store import (
 )
 from custom_components.houseplan.validation import MAX_LAYOUT, MAX_MARKERS
 from custom_components.houseplan.wall_segment_model import commit_wall_segment_model
+from custom_components.houseplan.vacuum_routes import effective_routes
 
 
 def test_issue_51_missing_decor_asset_stays_as_repairable_geometry(tmp_path: Path) -> None:
@@ -2510,6 +2511,29 @@ def test_issue_162_space_export_drops_map_routes_of_other_spaces(tmp_path: Path)
     vacuum = document["payload"]["config"]["markers"][0]["vacuum"]
     assert [route["id"] for route in vacuum["map_routes"]] == ["vr1"]
     assert vacuum["source"] == "camera.robot", "корневой источник остаётся"
+    assert document["transfer"]["dropped_marker_links"] == 1
+
+
+def test_issue_443_space_export_preserves_explicit_empty_routes(tmp_path: Path) -> None:
+    """Filtering the last route must not revive a retained legacy matrix."""
+    config = _config()
+    config["markers"][0]["vacuum"] = {
+        "source": "camera.robot",
+        "calibration": {"legacy": [1, 0, 0, 0, 1, 0]},
+        "map_routes": [
+            {"id": "vr-other", "source": "camera.robot", "map_id": "m2",
+             "space": "other", "calibration": [2, 0, 0, 0, 2, 0]},
+        ],
+    }
+    document, _ = create_export(
+        SimpleNamespace(instance_id="instance-a"), {"config": config},
+        {"layout": {}}, kind="space", space_id="ground", card_version="1.71.0",
+        config_root=tmp_path,
+    )
+    vacuum = document["payload"]["config"]["markers"][0]["vacuum"]
+    assert vacuum["map_routes"] == []
+    assert vacuum["calibration"] == {"legacy": [1, 0, 0, 0, 1, 0]}
+    assert effective_routes("marker", vacuum, "ground") == []
     assert document["transfer"]["dropped_marker_links"] == 1
 
 

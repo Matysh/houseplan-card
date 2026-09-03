@@ -62,6 +62,7 @@
   "vac.route_status_needs_calibration": "Kalibrierung nötig",
   "vac.route_status_ambiguous": "mehrdeutig",
   "vac.route_status_missing_space": "Raum gelöscht",
+  "vac.route_missing_space_group": "Gelöschter Bereich",
   "vac.route_add_current": "Aktuelle Karte hinzufügen",
   "vac.route_delete": "Karte entfernen",
   "vac.route_delete_title": "Karte von der Etage entfernen?",

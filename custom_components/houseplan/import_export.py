@@ -589,7 +589,10 @@ def create_export(
                         if isinstance(route, dict) and str(route.get("space")) == str(space_id)
                     ]
                     dropped_marker_links += len(routes) - len(kept_routes)
-                    vacuum["map_routes"] = kept_routes or None
+                    # An explicit list is route authority even when filtering
+                    # leaves it empty. Turning [] into None would revive any
+                    # legacy calibration dictionary after import (#443).
+                    vacuum["map_routes"] = kept_routes
             config = {
                 "spaces": [_json_copy(space)],
                 "markers": _json_copy(selected_markers),

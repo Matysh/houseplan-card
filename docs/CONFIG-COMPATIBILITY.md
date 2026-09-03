@@ -84,10 +84,12 @@ validated boolean.
 and the pair `(source, map_id)` unique inside the marker. It requires no model
 or store version bump: absence reads as the historical behaviour.
 
-Reading is lossless in both directions. Without `map_routes` every valid
-`calibration[map_id]` is an effective route into the dock's space, so nothing
-is migrated on load and an ordinary save of other marker fields leaves the
-vacuum block untouched. The first explicit routing edit converts the whole
+Reading is lossless in both directions. When `map_routes` is absent or `null`,
+every valid `calibration[map_id]` is an effective route into the dock's space,
+so nothing is migrated on load and an ordinary save of other marker fields
+leaves the vacuum block untouched. Any array is explicit authority: an empty
+`map_routes: []` means that no route is configured and suppresses every
+retained legacy matrix. The first explicit routing edit converts the whole
 legacy dictionary at once and needs an exact source to do it; partial
 conversion is refused, and `calibration` is removed only after the config write
 succeeds.
@@ -97,7 +99,9 @@ never blocks an unrelated save, while an edited one must be valid or the write
 is refused atomically with `invalid_vacuum_map_route`. A full export/import
 round-trips routes verbatim. A single-space export drops routes that point at
 other spaces and counts them in `dropped_marker_links`, because their target
-would not exist in the imported document.
+would not exist in the imported document. If that removes the last explicit
+route, the export keeps `map_routes: []` rather than writing `null`, so a later
+import cannot make legacy calibration authoritative again.
 
 Downgrade: an older frontend ignores `map_routes` and falls back to the legacy
 `calibration` dictionary, which the conversion removed — such a plan shows the

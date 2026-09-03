@@ -147,6 +147,49 @@ const out = await page.evaluate(async () => {
     .find((marker) => marker.id === 'd_mower').vacuum.map_routes
     .every((route) => !!route.space));
 
+  // #443: valid routes keep the space order, while every dead-space route is
+  // collected under one explicit, operable and deterministic group.
+  c._config = { ...c._config, language: 'en' };
+  c._serverCfg.markers[0].vacuum.map_routes = [
+    { id: 'missing-z', source: 'camera.z', map_id: 'zeta', space: 'gone-z', calibration: null },
+    { id: 'valid-f1', source: 'camera.valid', map_id: 'valid', space: 'f1', calibration: null },
+    { id: 'missing-b', source: 'camera.b', map_id: 'alpha', space: 'gone-b', calibration: null },
+    { id: 'missing-a', source: 'camera.a', map_id: 'alpha', space: 'gone-a', calibration: null },
+  ];
+  c._regSignature = '';
+  c._maybeRebuildDevices();
+  c._openMarkerDialog(c._devices.find((device) => device.id === 'd_mower'));
+  c.requestUpdate();
+  await c.updateComplete;
+  const missingGroups = [...sr().querySelectorAll('[data-hp="vacuum-route-missing-group"]')];
+  const missingGroup = missingGroups[0];
+  const missingIds = [...(missingGroup?.querySelectorAll('.vacroute') || [])]
+    .map((row) => row.dataset.routeId);
+  const validIds = [...sr().querySelectorAll('.vacroute')]
+    .filter((row) => !row.closest('.vacroute-missing-group'))
+    .map((row) => row.dataset.routeId);
+  o.oneExplicitMissingSpaceGroup = missingGroups.length === 1;
+  o.missingSpaceGroupIsLabelled = missingGroup?.querySelector('.vacroute-group-title')
+    ?.textContent.trim() === 'Deleted space';
+  o.validRowsStayBeforeMissingGroup = validIds.join(',') === 'valid-f1';
+  o.missingRowsHaveStableIdentityOrder = missingIds.join(',')
+    === 'missing-a,missing-b,missing-z';
+  o.missingRowsRemainOperable = [...(missingGroup?.querySelectorAll('.vacroute') || [])]
+    .every((row) => row.querySelector('select') && row.querySelectorAll('button').length === 2);
+  o.missingSpaceWarningRemains = !!sr().querySelector('.warn');
+  const groupThemeStates = [];
+  for (const darkMode of [false, true]) {
+    c.hass = { ...c.hass, themes: { ...(c.hass.themes || {}), darkMode } };
+    await c.updateComplete;
+    const themedGroup = sr().querySelector('[data-hp="vacuum-route-missing-group"]');
+    const themedTitle = themedGroup?.querySelector('.vacroute-group-title');
+    groupThemeStates.push(!!themedGroup && !!themedTitle
+      && getComputedStyle(themedGroup).display !== 'none'
+      && getComputedStyle(themedTitle).visibility === 'visible'
+      && themedTitle.textContent.trim() === 'Deleted space');
+  }
+  o.missingSpaceGroupReadableInLightAndDark = groupThemeStates.every(Boolean);
+
   c.hass = { ...c.hass, callWS: originalCallWS };
   return o;
 });

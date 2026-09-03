@@ -133,7 +133,7 @@ export function effectiveRoutes(
   discoveredSource?: string | null,
 ): VacuumMapRoute[] {
   const explicit = marker?.map_routes;
-  if (Array.isArray(explicit) && explicit.length) {
+  if (Array.isArray(explicit)) {
     return explicit
       .filter((route) => route && typeof route.id === 'string' && route.id)
       .map((route) => ({

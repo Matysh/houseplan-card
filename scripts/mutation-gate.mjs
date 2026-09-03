@@ -382,6 +382,44 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'vacuum-empty-routes-revive-legacy-frontend',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="explicit empty routes remain authoritative" '
+      + 'test/vacuum-routes.test.mjs',
+    because: 'an explicit empty route array means the user removed every map assignment; '
+      + 'treating it as false revives stale legacy calibration in the frontend (#443, AC1)',
+    patches: [{
+      file: 'src/vacuum-routes.ts',
+      find: '  if (Array.isArray(explicit)) {',
+      replace: '  if (Array.isArray(explicit) && explicit.length) {',
+    }],
+  },
+  {
+    id: 'vacuum-empty-routes-revive-legacy-backend',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'explicit_empty_routes_remain_authoritative tests_backend/test_vacuum_routes.py',
+    because: 'backend trail reconciliation must share the frontend empty-array authority; '
+      + 'the old truthiness check otherwise assigns a deleted map again (#443, AC2)',
+    patches: [{
+      file: 'custom_components/houseplan/vacuum_routes.py',
+      find: '    if isinstance(explicit, list):',
+      replace: '    if isinstance(explicit, list) and explicit:',
+    }],
+  },
+  {
+    id: 'vacuum-space-export-drops-empty-authority',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'issue_443_space_export_preserves_explicit_empty_routes '
+      + 'tests_backend/test_ha_import_export.py',
+    because: 'single-space export must preserve an explicit empty list after filtering; '
+      + 'writing null would make retained legacy calibration authoritative on import (#443, AC3)',
+    patches: [{
+      file: 'custom_components/houseplan/import_export.py',
+      find: '                    vacuum["map_routes"] = kept_routes',
+      replace: '                    vacuum["map_routes"] = kept_routes or None',
+    }],
+  },
+  {
     id: 'vacuum-overlay-back-to-the-dock-space-filter',
     guard: 'npm run bundle:sync && node demo/smoke_vacuum_multifloor.mjs',
     because: 'the overlay layer must see every robot of the plan, not only those whose DOCK '
@@ -389,7 +427,7 @@ const MUTANT_DEFINITIONS = [
       + 'never appear on its second floor (#162, AC2)',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: '            ${this._renderVacuums(this._renderDevices, view, space.id)}',
+      find: '            ${this._renderVacuums(this._renderVacuumDevices, view, space.id)}',
       replace: '            ${this._renderVacuums(devs, view, space.id)}',
     }],
   },

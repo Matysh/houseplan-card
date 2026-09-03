@@ -62,6 +62,7 @@
   "vac.route_status_needs_calibration": "нужна калибровка",
   "vac.route_status_ambiguous": "неоднозначна",
   "vac.route_status_missing_space": "пространство удалено",
+  "vac.route_missing_space_group": "Пространство удалено",
   "vac.route_add_current": "Добавить текущую карту",
   "vac.route_delete": "Удалить карту",
   "vac.route_delete_title": "Удалить карту с этажа?",

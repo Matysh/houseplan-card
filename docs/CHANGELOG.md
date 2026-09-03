@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Removing a robot vacuum's last map route now keeps the route list explicitly
+  empty instead of reviving legacy calibration; routes to deleted spaces are
+  grouped clearly in the editor, and the live layer avoids rescanning every
+  non-vacuum device ([#443](https://github.com/Matysh/houseplan-card/issues/443)).
 - A robot vacuum's second and later maps can now be added: the editor asks for
   the target floor before saving the route, and a Home Assistant rejection no
   longer leaves a phantom local route

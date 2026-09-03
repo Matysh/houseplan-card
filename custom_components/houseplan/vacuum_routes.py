@@ -110,7 +110,7 @@ def effective_routes(
     if not isinstance(vacuum, dict):
         return []
     explicit = vacuum.get("map_routes")
-    if isinstance(explicit, list) and explicit:
+    if isinstance(explicit, list):
         out = []
         for route in explicit:
             if not isinstance(route, dict) or not isinstance(route.get("id"), str):

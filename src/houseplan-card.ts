@@ -4861,6 +4861,11 @@ export class HouseplanCard extends LitElement {
     return this._renderDeviceSnapshot?.devices || this._devices;
   }
 
+  /** Normal frames reuse the vacuum-only subset captured with their facts. */
+  private get _renderVacuumDevices(): readonly DevItem[] {
+    return this._renderDeviceSnapshot?.vacuumDevices || this._devices;
+  }
+
   /**
    * Full registry metadata for diagnostics and action safety checks. Entity
    * states/services for actions always come from the active `_planHass`;
@@ -11791,7 +11796,7 @@ export class HouseplanCard extends LitElement {
                  kiosk multipliers still feed --dev-size. */}
           <div class="devlayer" style="--icon-size:${iconCqw(iconPct, space, view.w, this._kiosk ? this._kioskScale.icon : 1).toFixed(3)}cqw;--device-base-size:${iconCqw(deviceBasePct, space, view.w, this._kiosk ? this._kioskScale.icon : 1).toFixed(3)}cqw;--rl-icon-size:${iconCqw(iconPct, space, this._roomLabelReferenceViewWidth(view), this._kiosk ? this._kioskScale.icon : 1).toFixed(3)}cqw;--rl-font:${this._kiosk ? this._kioskScale.font : 1}">
             ${devs.map((d) => this._renderDevice(d, view, showLqi))}
-            ${this._renderVacuums(this._renderDevices, view, space.id)}
+            ${this._renderVacuums(this._renderVacuumDevices, view, space.id)}
             ${this._renderVacFit(view)}
             ${this._renderOpeningLocks(view)}
             ${disp.showNames || this._markup
@@ -12383,8 +12388,7 @@ export class HouseplanCard extends LitElement {
         rootSource: d.marker?.vacuum?.source ?? null,
         serverCurrent: srv0?.current ?? null,
         serverPrevious: srv0?.previous ?? null,
-        explicitRoutes: Array.isArray(d.marker?.vacuum?.map_routes)
-          && (d.marker?.vacuum?.map_routes?.length ?? 0) > 0,
+        explicitRoutes: Array.isArray(d.marker?.vacuum?.map_routes),
       });
       if (!plan.live && !plan.previous) continue;
       const matrix = plan.live;

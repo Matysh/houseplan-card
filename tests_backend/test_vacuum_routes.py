@@ -66,6 +66,15 @@ def test_legacy_calibration_reads_as_routes_into_dock_space():
     assert [r["id"] for r in vr.effective_routes("mk", explicit, "floor1")] == ["r9"]
 
 
+def test_explicit_empty_routes_remain_authoritative():
+    legacy = {"source": "camera.robot", "calibration": {"m1": IDENTITY}}
+    assert len(vr.effective_routes("mk", legacy, "floor1")) == 1
+    assert len(vr.effective_routes(
+        "mk", {**legacy, "map_routes": None}, "floor1")) == 1
+    assert vr.effective_routes(
+        "mk", {**legacy, "map_routes": []}, "floor1") == []
+
+
 def test_resolve_shared_fixture():
     for row in _fixture("resolve"):
         got = vr.resolve_route(row["routes"], row["observed"], set(row["spaces"]))
