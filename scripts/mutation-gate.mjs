@@ -394,6 +394,18 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'vacuum-calibration-solves-against-the-dock',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/vacuum-routes.test.mjs',
+    because: 'a matrix solved against the DOCK space and applied on another floor is wrong '
+      + 'wherever the two plans differ — calibration belongs to the route (#162, AC8)',
+    patches: [{
+      file: 'src/vacuum-route-edit.ts',
+      find: '  return { space: route?.space || dockSpace, routeId: route?.id || \'\' };',
+      replace: '  return { space: dockSpace, routeId: route?.id || \'\' };',
+    }],
+  },
+  {
     id: 'area-snapshot-cleanup-ignores-authority',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="limited frames and runtime reset" '

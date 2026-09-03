@@ -8,7 +8,7 @@ import {
 } from '../test-build/vacuum-routes.js';
 import {
   newRouteId, addRoute, removeRoute, changeRouteSpace, saveRouteCalibration, convertLegacyRoutes,
-  writeVacuumMatrix, planVacuumFit,
+  writeVacuumMatrix, planVacuumFit, calibrationTarget,
 } from '../test-build/vacuum-route-edit.js';
 
 const fixture = (name) => JSON.parse(readFileSync(
@@ -301,4 +301,62 @@ test('док предупреждает только о движущемся р�
   assert.equal(routeWarningKey({ kind: 'ready', route: twoFloors[0] }, true), null);
   assert.equal(routeWarningKey({ kind: 'none' }, true), null);
   assert.equal(routeWarningKey(null, true), null);
+});
+
+test('калибровка решается против пространства маршрута, а не дока (AC8)', () => {
+  const vacuum = { map_routes: twoFloors };
+  assert.deepEqual(calibrationTarget('mk', vacuum, 'floor1', 'camera.robot', 'm2'),
+    { space: 'floor2', routeId: 'r2' });
+  assert.deepEqual(calibrationTarget('mk', vacuum, 'floor1', 'camera.robot', 'm1'),
+    { space: 'floor1', routeId: 'r1' });
+  // несопоставленная карта калибруется в пространстве дока, как и раньше
+  assert.deepEqual(calibrationTarget('mk', vacuum, 'floor1', 'camera.robot', 'm9'),
+    { space: 'floor1', routeId: '' });
+  assert.deepEqual(calibrationTarget('mk', null, 'floor1', 'camera.robot', 'm1'),
+    { space: 'floor1', routeId: '' });
+});
+
+test('ручная подгонка открывается на этаже маршрута и берёт его матрицу', () => {
+  const vb = { floor1: [0, 0, 1000, 1000], floor2: [0, 0, 2000, 2000] };
+  const plan = planVacuumFit('mk', { map_routes: twoFloors }, {
+    source: 'camera.robot', mapId: 'm2', dockSpace: 'floor1', rooms: [],
+    viewBoxOf: (id) => vb[id] || null,
+  });
+  assert.equal(plan.space, 'floor2');
+  assert.equal(plan.routeId, 'r2');
+  const legacy = planVacuumFit('mk', { source: 'camera.robot', calibration: { m1: M1 } }, {
+    source: 'camera.robot', mapId: 'm1', dockSpace: 'floor1', rooms: [],
+    viewBoxOf: (id) => vb[id] || null,
+  });
+  assert.equal(legacy.space, 'floor1', 'легаси-калибровка живёт в пространстве дока');
+  assert.equal(planVacuumFit('mk', null, {
+    source: 'camera.robot', mapId: 'm1', dockSpace: 'нет', rooms: [], viewBoxOf: () => null,
+  }), null, 'без геометрии пространства подгонка не открывается');
+});
+
+test('матрица пишется в маршрут, а без маршрутов — в легаси-словарь', () => {
+  const routed = writeVacuumMatrix({ map_routes: twoFloors },
+    { source: 'camera.robot', mapId: 'm2', matrix: [3, 0, 0, 0, 3, 0] });
+  assert.deepEqual(routed.map_routes[1].calibration, [3, 0, 0, 0, 3, 0]);
+  assert.deepEqual(routed.map_routes[0].calibration, M1, 'соседний маршрут не тронут');
+  const legacy = writeVacuumMatrix({ source: 'camera.robot' },
+    { source: 'camera.robot', mapId: 'm1', matrix: [1 / 3, 0, 0, 0, 1 / 3, 0] });
+  assert.deepEqual(legacy.calibration.m1, [0.333333, 0, 0, 0, 0.333333, 0]);
+  // карта без маршрута не теряет только что решённую калибровку
+  const unmapped = writeVacuumMatrix({ map_routes: twoFloors },
+    { source: 'camera.robot', mapId: 'm9', matrix: [4, 0, 0, 0, 4, 0] });
+  assert.deepEqual(unmapped.calibration.m9, [4, 0, 0, 0, 4, 0]);
+  assert.equal(unmapped.map_routes.length, 2);
+});
+
+test('два робота не смешивают маршруты, прогоны и предупреждения (AC12)', () => {
+  const first = [{ id: 'a1', source: 'camera.one', map_id: 'm1', space: 'floor1', calibration: M1 }];
+  const second = [{ id: 'b1', source: 'camera.two', map_id: 'm1', space: 'floor2', calibration: M2 }];
+  const observed = { 'camera.one': 'm1', 'camera.two': 'm1' };
+  const spaceIds = spaces('floor1', 'floor2');
+  assert.equal(resolveRoute({ routes: first, observed, spaceIds }).route.id, 'a1');
+  assert.equal(resolveRoute({ routes: second, observed, spaceIds }).route.id, 'b1');
+  assert.deepEqual(adoptLegacyRun({ map_id: 'm1' }, first, 'camera.one'),
+    { kind: 'adopted', route: first[0] });
+  assert.equal(adoptLegacyRun({ map_id: 'm1' }, first, 'camera.two').kind, 'orphan_run');
 });

@@ -138,3 +138,22 @@ export function planVacuumFit(
   const params = (stored && fitFromMatrix(stored)) || initialFit(opts.rooms, viewBox);
   return { space, routeId: route?.id || '', params };
 }
+
+/**
+ * Which space a calibration is solved against, and which route stores it.
+ *
+ * Auto-calibration used to match the robot's rooms against the DOCK's rooms,
+ * whatever map was on screen — for a multi-floor robot that is the wrong floor
+ * half the time (#162, AC8).
+ */
+export function calibrationTarget(
+  markerId: string,
+  vacuum: VacuumRouteMarkerCfg | null | undefined,
+  dockSpace: string,
+  source: string,
+  mapId: string,
+): { space: string; routeId: string } {
+  const route = effectiveRoutes(markerId, vacuum, dockSpace, source)
+    .find((item) => item.source === source && item.map_id === mapId);
+  return { space: route?.space || dockSpace, routeId: route?.id || '' };
+}

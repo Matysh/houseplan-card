@@ -9,7 +9,7 @@
 import { LitElement, html, svg, nothing, TemplateResult, PropertyValues } from 'lit';
 import { guard } from 'lit/directives/guard.js';
 import { renderVacuumMapsSection } from './editors/vacuum-maps-section';
-import { planVacuumFit, writeVacuumMatrix } from './vacuum-route-edit';
+import { calibrationTarget, planVacuumFit, writeVacuumMatrix } from './vacuum-route-edit';
 import { repeat } from 'lit/directives/repeat.js';
 import './hp-dialog';
 import type { HpDialog } from './hp-dialog';
@@ -1147,7 +1147,7 @@ export interface HouseplanEditorHostPort {
   _undoPoint: () => void;
   _vacAllCameraCache: { devId: string; candidates: VacSourceCandidate[]; } | null;
   _vacAllCamerasFor: string | null;
-  _vacCalConfirm: { markerId: string; source: string; mapId: string; matrix: Affine; rooms: number; error: string; } | null;
+  _vacCalConfirm: { markerId: string; source: string; mapId: string; routeId?: string; matrix: Affine; rooms: number; error: string; } | null;
   _vacEnsureMarker: (d: DevItem) => Marker | null;
   _vacEntity: (d: DevItem) => string | null;
   _vacMapId: (d: DevItem, tele: { mapId: string }, planHass?: any) => string;
@@ -11020,26 +11020,26 @@ public _vacAutoCalibrate(d: DevItem): void {
       this.host._showToast(this.host._t('vac.autocal_no_rooms'));
       return;
     }
-    const planRooms = this._vacPlanRoomAnchors(d.space);
-    const res = autoCalibrate(tele.rooms, planRooms);
+    const mapId = this._vacMapId(d, tele);
+    const target = calibrationTarget(d.id, d.marker?.vacuum ?? null, d.space, src, mapId);
+    const res = autoCalibrate(tele.rooms, this._vacPlanRoomAnchors(target.space));
     if (!res) {
       this.host._showToast(this.host._t('vac.autocal_no_match'));
       return;
     }
-    const rawSpace = this.host._serverCfg?.spaces?.find((space) => space.id === d.space);
+    const rawSpace = this.host._serverCfg?.spaces?.find((space) => space.id === target.space);
     const rawCellCm = Number(rawSpace?.cell_cm);
     const cellCm = Number.isFinite(rawCellCm) && rawCellCm > 0 ? rawCellCm : 5;
     const residualCm = vacCalibrationResidualCm(res.residual, this.host._gridPitch, cellCm);
-    const mapId = this._vacMapId(d, tele);
     if (residualCm > VAC_CALIBRATION_WARN_CM) {
       this.host._vacCalConfirm = {
-        markerId: d.id, source: src, mapId, matrix: res.matrix,
+        markerId: d.id, source: src, mapId, routeId: target.routeId, matrix: res.matrix,
         rooms: res.matched.length,
         error: formatLength(residualCm, this.host.hass?.config?.unit_system?.length === 'mi'),
       };
       return;
     }
-    if (!this._vacSaveMatrix(d.id, src, mapId, res.matrix)) return;
+    if (!this._vacSaveMatrix(d.id, src, mapId, res.matrix, target.routeId)) return;
     this.host._showToast(subst(this.host._t('vac.autocal_done'), { rooms: String(res.matched.length) }));
   }
 
@@ -11054,13 +11054,13 @@ public _vacApplyCalibrationProposal(manual: boolean): void {
       this.host._markerDialog = null;
       if (dev.space !== this.host._space && !this.host._commitSpace(dev.space)) return;
       this.host._vacFit = {
-        markerId: proposal.markerId, source: proposal.source,
+        markerId: proposal.markerId, source: proposal.source, routeId: proposal.routeId,
         mapId: proposal.mapId, p: fit, drag: null,
       };
       return;
     }
     if (this._vacSaveMatrix(
-      proposal.markerId, proposal.source, proposal.mapId, proposal.matrix,
+      proposal.markerId, proposal.source, proposal.mapId, proposal.matrix, proposal.routeId,
     )) this.host._showToast(subst(this.host._t('vac.autocal_done'), { rooms: String(proposal.rooms) }));
   }
 
