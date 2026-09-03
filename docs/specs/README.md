@@ -92,6 +92,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | Issue | ТЗ |
 |---|---|
 | [#10](https://github.com/Matysh/houseplan-card/issues/10) Roomba live position | [010-vacuum-roomba-live-position.md](010-vacuum-roomba-live-position.md) |
+| [#442](https://github.com/Matysh/houseplan-card/issues/442) Атомарный откат отклонённых записей маркера | [442-marker-write-rollback.md](442-marker-write-rollback.md) |
 | [#11](https://github.com/Matysh/houseplan-card/issues/11) Vacuum source health | [011-vacuum-source-health.md](011-vacuum-source-health.md) |
 | [#12](https://github.com/Matysh/houseplan-card/issues/12) Room cleaning highlight | [012-vacuum-room-cleaning-highlight.md](012-vacuum-room-cleaning-highlight.md) |
 | [#13](https://github.com/Matysh/houseplan-card/issues/13) Golden open context tray | [013-golden-open-context-tray.md](013-golden-open-context-tray.md) |
