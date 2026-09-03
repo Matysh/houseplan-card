@@ -53,6 +53,7 @@ const out = await page.evaluate(async () => {
   await card._load(true);
   await settleLoad();
   const exactCapabilityResolves = resolveCalls === 1 && card._decorAssets.has(assetId);
+  const capabilityOnlyUpgradeAdopted = card._snap.decorAssetsApi === 1;
   await card._load(true);
   await settleLoad();
   const sameEpochUsesCache = resolveCalls === 1;
@@ -67,6 +68,7 @@ const out = await page.evaluate(async () => {
   return {
     oldBackendSkippedResolve,
     exactCapabilityResolves,
+    capabilityOnlyUpgradeAdopted,
     sameEpochUsesCache,
     downgradeRevokesWithoutResolve,
   };

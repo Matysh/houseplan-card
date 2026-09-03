@@ -391,17 +391,19 @@ keeps its authenticated/signed exact-URL contract.
 Resolve and HTTP GET share one HA-instance memory-only integrity verifier. It
 streams SHA-256 in bounded chunks and caches at most 256 actual digests by
 canonical path plus size/mtime/ctime signature. Per-file-version single-flight
-deduplicates concurrent reads without serialising different files; a second
-`stat` prevents a digest for bytes changed mid-read from entering the cache.
-Missing, changed and corrupt files fail dark. The shared `ContentSigner` batches
-signatures for `<image>` elements. Catalog deletion rechecks references across
-every space under the config write lock. Missing or corrupt assets are never
-painted in View.
+deduplicates concurrent reads without serialising different files; followers
+have a bounded wait. Both signatures require a regular file, and the second
+`stat` prevents a digest for bytes changed or replaced mid-read from entering
+the cache. Missing, changed, non-regular and corrupt files fail dark. The shared
+`ContentSigner` batches signatures for `<image>` elements. Catalog deletion
+rechecks references across every space under the config write lock. Missing or
+corrupt assets are never painted in View.
 
 Physical inventory is separate from the strict catalog projection. Quota
 counts every regular `<sha256><allowed-extension>` blob by actual file size,
 including blobs with absent or malformed sidecars; a sidecar without a blob
-does not count. Re-uploading exact bytes repairs a digest-proven orphan before
+does not count. Entries which disappear or change type during the scan are
+skipped without aborting the remaining inventory. Re-uploading exact bytes repairs a digest-proven orphan before
 new-file quota checks and reports `reused:false`, while an already valid row
 reports `reused:true`. Explicit delete removes only the exact hash sidecar and
 exact allow-listed blob names under the reference/upload locks—never a prefix,

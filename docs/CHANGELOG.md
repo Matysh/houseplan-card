@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Custom background assets now reject special filesystem entries without
+  blocking Home Assistant, tolerate files disappearing during quota scans and
+  report corrupt images separately from exhausted storage; pen/touch movement
+  also clears stale room hover when the room tooltip is disabled
+  ([#440](https://github.com/Matysh/houseplan-card/issues/440)).
 - If Home Assistant rejects a General settings save, the plan now returns to
   the last server-confirmed state instead of displaying an unsaved local draft;
   the entered values remain in the open dialog for another attempt

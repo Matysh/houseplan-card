@@ -5,9 +5,10 @@ const result = await page.evaluate(async () => {
   const card = window.__card;
   const root = () => card.shadowRoot || card.renderRoot;
   const room = () => root().querySelector('.room');
-  const mouse = (type, x, y) => new PointerEvent(type, {
-    pointerType: 'mouse', bubbles: true, composed: true, clientX: x, clientY: y,
+  const pointer = (type, pointerType, x, y) => new PointerEvent(type, {
+    pointerType, bubbles: true, composed: true, clientX: x, clientY: y,
   });
+  const mouse = (type, x, y) => pointer(type, 'mouse', x, y);
   const out = {};
 
   card._openSettingsDialog();
@@ -109,6 +110,18 @@ const result = await page.evaluate(async () => {
   out.roomHighlightSurvives = card._hoverRoom !== null
     && !!root().querySelector('.room-hover-fill-layer,.room-hover-outline-layer');
 
+  room().dispatchEvent(pointer('pointermove', 'pen', 190, 190));
+  await card.updateComplete;
+  out.disabledPenMoveUpdatesModality = card._pointerModality.modality === 'pen';
+  out.disabledPenMoveClearsMouseHover = card._hoverRoom === null && card._tip === null;
+  room().dispatchEvent(mouse('pointerenter', 195, 195));
+  room().dispatchEvent(mouse('pointermove', 195, 195));
+  room().dispatchEvent(pointer('pointermove', 'touch', 195, 195));
+  await card.updateComplete;
+  out.disabledTouchMoveUpdatesModality = card._pointerModality.modality === 'touch';
+  out.disabledTouchMoveClearsMouseHover = card._hoverRoom === null && card._tip === null;
+  out.disabledNonMouseMovesStillSkipArea = roomAreaCalls === 0;
+
   root().querySelector('.dev').dispatchEvent(mouse('pointermove', 200, 200));
   await card.updateComplete;
   out.deviceTipSurvives = card._tip?.room === false && !!root().querySelector('.tip');
@@ -144,6 +157,11 @@ checkAll(result, {
   disabledRoomTip: true,
   disabledSkipsArea: true,
   roomHighlightSurvives: true,
+  disabledPenMoveUpdatesModality: true,
+  disabledPenMoveClearsMouseHover: true,
+  disabledTouchMoveUpdatesModality: true,
+  disabledTouchMoveClearsMouseHover: true,
+  disabledNonMouseMovesStillSkipArea: true,
   deviceTipSurvives: true,
   reopenShowsOff: true,
   trueStoredAsAbsent: true,

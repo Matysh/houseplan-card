@@ -5,6 +5,7 @@ import base64
 import hashlib
 import importlib
 import json
+import os
 import struct
 import threading
 import zlib
@@ -15,6 +16,7 @@ import pytest
 
 from custom_components.houseplan.asset_integrity import (
     ASSET_INTEGRITY_CACHE_ENTRIES,
+    ASSET_INTEGRITY_FOLLOWER_TIMEOUT_SECONDS,
     AssetIntegrityVerifier,
 )
 from custom_components.houseplan.const import MAX_DECOR_ASSET_BYTES
@@ -358,6 +360,40 @@ def test_physical_inventory_counts_exact_promoted_blobs_not_sidecars(tmp_path) -
     assert physical_asset_usage(tmp_path) == (2, 9)
 
 
+def test_physical_inventory_skips_entries_lost_during_stat(
+    tmp_path, monkeypatch,
+) -> None:
+    lost = tmp_path / f"{'4' * 64}.png"
+    survivor = tmp_path / f"{'5' * 64}.webp"
+    lost.write_bytes(b"gone")
+    survivor.write_bytes(b"survives")
+    original_stat = Path.stat
+
+    def racing_stat(path: Path, *, follow_symlinks=True):
+        if path == lost and not follow_symlinks:
+            raise FileNotFoundError("removed after iterdir")
+        return original_stat(path, follow_symlinks=follow_symlinks)
+
+    monkeypatch.setattr(Path, "stat", racing_stat)
+    assert physical_asset_blobs(tmp_path) == [survivor]
+    assert physical_asset_usage(tmp_path) == (1, len(b"survives"))
+
+
+def test_physical_inventory_treats_disappearing_root_as_empty(
+    tmp_path, monkeypatch,
+) -> None:
+    original_iterdir = Path.iterdir
+
+    def racing_iterdir(path: Path):
+        if path == tmp_path:
+            raise FileNotFoundError("root removed before scan")
+        return original_iterdir(path)
+
+    monkeypatch.setattr(Path, "iterdir", racing_iterdir)
+    assert physical_asset_blobs(tmp_path) == []
+    assert physical_asset_usage(tmp_path) == (0, 0)
+
+
 def test_catalog_empty_directory_and_metadata_path(tmp_path) -> None:
     missing = tmp_path / "missing"
     aid = "c" * 64
@@ -444,6 +480,34 @@ def test_integrity_cache_invalidates_changed_signature_and_rejects_mid_read_chan
     assert not unstable._cache, "an unstable digest must not become a cache hit"
 
 
+def test_integrity_verifier_rejects_non_regular_files_before_hashing(tmp_path) -> None:
+    calls = 0
+
+    def forbidden(_candidate: Path) -> str:
+        nonlocal calls
+        calls += 1
+        raise AssertionError("non-regular files must never reach the hasher")
+
+    verifier = AssetIntegrityVerifier(hasher=forbidden)
+    assert not verifier.verify(tmp_path, "0" * 64)
+    assert calls == 0
+
+
+@pytest.mark.skipif(not hasattr(os, "mkfifo"), reason="FIFO is POSIX-only")
+def test_integrity_verifier_rejects_fifo_without_opening_it(tmp_path) -> None:
+    fifo = tmp_path / "asset.png"
+    os.mkfifo(fifo)
+    called = False
+
+    def forbidden(_candidate: Path) -> str:
+        nonlocal called
+        called = True
+        raise AssertionError("opening a FIFO could block the HA executor forever")
+
+    assert not AssetIntegrityVerifier(hasher=forbidden).verify(fifo, "0" * 64)
+    assert not called
+
+
 def test_integrity_cache_single_flights_same_path_and_releases_after_error(tmp_path) -> None:
     path = tmp_path / "asset.bin"
     payload = b"concurrent"
@@ -491,6 +555,42 @@ def test_integrity_cache_single_flights_same_path_and_releases_after_error(tmp_p
     assert not recovered.verify(path, expected)
     assert recovered.verify(path, expected)
     assert attempts == 2 and not recovered._inflight
+
+
+def test_integrity_follower_has_a_bounded_wait(tmp_path) -> None:
+    path = tmp_path / "asset.bin"
+    payload = b"slow-owner"
+    path.write_bytes(payload)
+    expected = hashlib.sha256(payload).hexdigest()
+    owner_started = threading.Event()
+    release_owner = threading.Event()
+    events = []
+
+    class TimedEvent:
+        def __init__(self) -> None:
+            self.timeout = None
+            events.append(self)
+
+        def set(self) -> None:
+            pass
+
+        def wait(self, timeout=None) -> bool:
+            self.timeout = timeout
+            return False
+
+    def slow(candidate: Path) -> str:
+        owner_started.set()
+        assert release_owner.wait(2)
+        return hashlib.sha256(candidate.read_bytes()).hexdigest()
+
+    verifier = AssetIntegrityVerifier(hasher=slow, event_factory=TimedEvent)
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        owner = pool.submit(verifier.verify, path, expected)
+        assert owner_started.wait(1)
+        assert not verifier.verify(path, expected)
+        assert events[0].timeout == ASSET_INTEGRITY_FOLLOWER_TIMEOUT_SECONDS
+        release_owner.set()
+        assert owner.result(timeout=2)
 
 
 def test_integrity_checks_for_different_paths_do_not_share_a_hash_lock(tmp_path) -> None:

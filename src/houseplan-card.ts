@@ -2157,8 +2157,8 @@ export class HouseplanCard extends LitElement {
   } | { kind: 'run'; text: string; exec: () => void } | null = null;
   /** One eager confirmation owner shared by View, onboarding and lazy editors. */
   private _dangerConfirm: HpConfirmState | null = null;
-  /** Current language branch; never cached from a previous render. */
-  private get _dangerConfirmLocaleGate(): LanguageRenderGate {
+  /** Synchronize host/runtime language state and return the current branch. */
+  private _syncDangerConfirmLocaleGate(): LanguageRenderGate {
     if (!this._config || !this.hass) return 'ready';
     return languageRenderGate(
       this, LANGUAGE_RUNTIME, langOf(this.hass, this._config.language),
@@ -2185,7 +2185,7 @@ export class HouseplanCard extends LitElement {
     // resolve. Keep the guards aligned with `_renderBody`'s two unrenderable
     // branches instead of registering a controller request with no DOM owner.
     if (!this._config || !this.hass) return Promise.resolve(false);
-    if (this._dangerConfirmLocaleGate === 'warm') return Promise.resolve(false);
+    if (this._syncDangerConfirmLocaleGate() === 'warm') return Promise.resolve(false);
     if (this._dangerConfirmMissingSpace()) return Promise.resolve(false);
     return this._dangerConfirmController.confirm(request);
   };
@@ -4190,7 +4190,7 @@ export class HouseplanCard extends LitElement {
     // #417: losing the only renderable space while a decision is pending must
     // settle it before render() clears hp-confirm with `nothing`.
     if (this._dangerConfirm && (
-      this._dangerConfirmMissingSpace() || this._dangerConfirmLocaleGate === 'warm'
+      this._dangerConfirmMissingSpace() || this._syncDangerConfirmLocaleGate() === 'warm'
     )) {
       this._cancelDangerConfirm();
     }
@@ -11233,7 +11233,7 @@ export class HouseplanCard extends LitElement {
 
   private _renderBody(): TemplateResult | typeof nothing | typeof noChange {
     if (!this._config || !this.hass) return nothing;
-    const localeGate = this._dangerConfirmLocaleGate;
+    const localeGate = this._syncDangerConfirmLocaleGate();
     if (localeGate === 'cold') return languageLoadingTemplate();
     if (localeGate === 'warm') return noChange;
     const onboardingRuntimeRequested = !!this._importDialog
@@ -11588,6 +11588,7 @@ export class HouseplanCard extends LitElement {
               let areaText: string | null | undefined;
               const tip = (e: PointerEvent) => {
                 if (this._mode !== 'view') return;
+                this._notePointer(e);
                 if (!showRoomTooltipOf(this._settings)) {
                   if (this._tip?.room) this._tip = null;
                   return;

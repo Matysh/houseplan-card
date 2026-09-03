@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import logging
+import stat
 import threading
 from collections import OrderedDict
 from dataclasses import dataclass
@@ -15,6 +16,7 @@ _LOGGER = logging.getLogger(__name__)
 
 ASSET_INTEGRITY_CACHE_ENTRIES = 256
 ASSET_HASH_CHUNK_BYTES = 64 * 1024
+ASSET_INTEGRITY_FOLLOWER_TIMEOUT_SECONDS = 30.0
 _HASS_DATA_KEY = "asset_integrity_verifier"
 
 
@@ -40,11 +42,13 @@ class _Flight:
 
 
 def _signature(path: Path) -> FileSignature:
-    stat = path.stat()
+    current = path.stat()
+    if not stat.S_ISREG(current.st_mode):
+        raise OSError("asset is not a regular file")
     return FileSignature(
-        size=stat.st_size,
-        mtime_ns=stat.st_mtime_ns,
-        ctime_ns=stat.st_ctime_ns,
+        size=current.st_size,
+        mtime_ns=current.st_mtime_ns,
+        ctime_ns=current.st_ctime_ns,
     )
 
 
@@ -105,7 +109,8 @@ class AssetIntegrityVerifier:
 
         assert flight is not None
         if not owner:
-            flight.event.wait()
+            if not flight.event.wait(ASSET_INTEGRITY_FOLLOWER_TIMEOUT_SECONDS):
+                return False
             return flight.digest == expected_digest
 
         digest: str | None = None

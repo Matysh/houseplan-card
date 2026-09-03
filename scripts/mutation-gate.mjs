@@ -1049,11 +1049,11 @@ const MUTANT_DEFINITIONS = [
     patches: [{
       file: 'src/houseplan-card.ts',
       find: '    if (this._dangerConfirm && (\n'
-        + '      this._dangerConfirmMissingSpace() || this._dangerConfirmLocaleGate === \'warm\'\n'
+        + '      this._dangerConfirmMissingSpace() || this._syncDangerConfirmLocaleGate() === \'warm\'\n'
         + '    )) {\n'
         + '      this._cancelDangerConfirm();\n'
         + '    }',
-      replace: '    if (this._dangerConfirm && this._dangerConfirmLocaleGate === \'warm\') {\n'
+      replace: '    if (this._dangerConfirm && this._syncDangerConfirmLocaleGate() === \'warm\') {\n'
         + '      this._cancelDangerConfirm();\n'
         + '    }',
     }],
@@ -1065,8 +1065,8 @@ const MUTANT_DEFINITIONS = [
       + 'confirmation has no rendered decision source and hangs (#417 AC2)',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: "    if (this._dangerConfirmLocaleGate === 'warm') return Promise.resolve(false);",
-      replace: "    void this._dangerConfirmLocaleGate;",
+      find: "    if (this._syncDangerConfirmLocaleGate() === 'warm') return Promise.resolve(false);",
+      replace: "    void this._syncDangerConfirmLocaleGate();",
     }],
   },
   {
@@ -1076,17 +1076,20 @@ const MUTANT_DEFINITIONS = [
       + 'last painted branch can admit an unrenderable request or reject a renderable one (#434 AC7)',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: "  /** Current language branch; never cached from a previous render. */\n"
-        + '  private get _dangerConfirmLocaleGate(): LanguageRenderGate {\n'
+      find: "  /** Synchronize host/runtime language state and return the current branch. */\n"
+        + '  private _syncDangerConfirmLocaleGate(): LanguageRenderGate {\n'
         + "    if (!this._config || !this.hass) return 'ready';\n"
         + '    return languageRenderGate(\n'
         + '      this, LANGUAGE_RUNTIME, langOf(this.hass, this._config.language),\n'
         + '    );\n'
         + '  }',
-      replace: "  private _dangerConfirmLocaleGate: LanguageRenderGate = 'ready';",
+      replace: "  private _dangerConfirmLocaleGate: LanguageRenderGate = 'ready';\n"
+        + '  private _syncDangerConfirmLocaleGate(): LanguageRenderGate {\n'
+        + '    return this._dangerConfirmLocaleGate;\n'
+        + '  }',
     }, {
       file: 'src/houseplan-card.ts',
-      find: '    const localeGate = this._dangerConfirmLocaleGate;\n'
+      find: '    const localeGate = this._syncDangerConfirmLocaleGate();\n'
         + "    if (localeGate === 'cold') return languageLoadingTemplate();",
       replace: '    const localeGate = languageRenderGate(\n'
         + '      this, LANGUAGE_RUNTIME, langOf(this.hass, this._config.language),\n'
@@ -1103,13 +1106,35 @@ const MUTANT_DEFINITIONS = [
     patches: [{
       file: 'src/houseplan-card.ts',
       find: '    if (this._dangerConfirm && (\n'
-        + '      this._dangerConfirmMissingSpace() || this._dangerConfirmLocaleGate === \'warm\'\n'
+        + '      this._dangerConfirmMissingSpace() || this._syncDangerConfirmLocaleGate() === \'warm\'\n'
         + '    )) {\n'
         + '      this._cancelDangerConfirm();\n'
         + '    }',
       replace: '    if (this._dangerConfirm && this._dangerConfirmMissingSpace()) {\n'
         + '      this._cancelDangerConfirm();\n'
         + '    }',
+    }],
+  },
+  {
+    id: 'space-card-decor-capability-downgrade-does-not-clear-assets',
+    guard: 'node demo/smoke_space_card_decor_capability.mjs',
+    because: 'the static card must fail closed after a capability-only backend downgrade; '
+      + 'source-shape assertions cannot prove that the stale image map is actually cleared (#440)',
+    patches: [{
+      file: 'src/space-card.ts',
+      find: '      if (snap.decorAssetsApi !== DECOR_ASSETS_API_VERSION) {',
+      replace: '      if (false) {',
+    }],
+  },
+  {
+    id: 'space-card-decor-capability-change-not-adopted',
+    guard: 'node demo/smoke_space_card_decor_capability.mjs',
+    because: 'an exact capability-only upgrade must become authoritative even when config, '
+      + 'layout and virtual-light content are unchanged (#440)',
+    patches: [{
+      file: 'src/space-card.ts',
+      find: '      if (configChanged || layoutChanged || virtualLightsChanged || decorAssetsCapabilityChanged) {',
+      replace: '      if (configChanged || layoutChanged || virtualLightsChanged) {',
     }],
   },
   {
@@ -2401,7 +2426,7 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'image-box-python-canonicalization-omitted',
     guard: 'node scripts/backend-test-guard.mjs decor_box_catalog_matches_shared_contract '
-      + 'tests_backend/test_coordinate_canonicalization.py',
+      + 'tests_backend/test_coordinate_canonicalization_pure.py',
     because: 'the Python schema and storage boundary must mirror the complete frontend box '
       + 'catalog instead of accepting image floating-point tails from older clients (#431 AC4)',
     patches: [{
@@ -2443,7 +2468,7 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'python-lattice-round-truncates',
     guard: 'node scripts/backend-test-guard.mjs all_4801_lattice_nodes '
-      + 'tests_backend/test_coordinate_canonicalization.py',
+      + 'tests_backend/test_coordinate_canonicalization_pure.py',
     because: 'the backend must use the JavaScript Math.round tie direction and nearest-node '
       + 'semantics; truncation would make old-client writes diverge from the card (#291)',
     patches: [{
@@ -4812,12 +4837,8 @@ const MUTANT_DEFINITIONS = [
       + 'promoted blobs invisible, while sidecars without blobs consume no blob quota (#434 AC1)',
     patches: [{
       file: 'custom_components/houseplan/decor_assets.py',
-      find: '    for path in root.iterdir():\n'
-        + '        if (\n'
-        + '            path.suffix in ASSET_EXTENSIONS',
-      replace: '    for path in root.glob("*.json"):\n'
-        + '        if (\n'
-        + '            path.suffix in ASSET_EXTENSIONS',
+      find: '        entries = list(root.iterdir())\n',
+      replace: '        entries = list(root.glob("*.json"))\n',
     }],
   },
   {
@@ -4995,6 +5016,57 @@ const MUTANT_DEFINITIONS = [
       file: 'custom_components/houseplan/asset_integrity.py',
       find: '            stable = _signature(path) == before\n',
       replace: '            stable = True\n',
+    }],
+  },
+  {
+    id: 'asset-integrity-non-regular-file-admitted',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'integrity_verifier_rejects_non_regular_files_before_hashing '
+      + 'tests_backend/test_decor_assets.py',
+    because: 'a FIFO or device with a valid asset filename can block an HA executor forever; '
+      + 'only regular files may reach the streaming hasher (#440 AC1)',
+    patches: [{
+      file: 'custom_components/houseplan/asset_integrity.py',
+      find: '    if not stat.S_ISREG(current.st_mode):\n'
+        + '        raise OSError("asset is not a regular file")\n',
+      replace: '',
+    }],
+  },
+  {
+    id: 'asset-integrity-follower-waits-forever',
+    guard: 'node scripts/backend-test-guard.mjs integrity_follower_has_a_bounded_wait '
+      + 'tests_backend/test_decor_assets.py',
+    because: 'a follower must fail dark after a bounded wait even if an injected or wedged '
+      + 'owner never signals its single-flight event (#440 AC1)',
+    patches: [{
+      file: 'custom_components/houseplan/asset_integrity.py',
+      find: '            if not flight.event.wait(ASSET_INTEGRITY_FOLLOWER_TIMEOUT_SECONDS):\n',
+      replace: '            if not flight.event.wait():\n',
+    }],
+  },
+  {
+    id: 'room-tooltip-off-skips-pointer-modality',
+    guard: 'node demo/smoke_room_tooltip_toggle.mjs',
+    because: 'pen/touch pointermove inside an already hovered room must clear mouse-only hover '
+      + 'even when the room information tooltip is disabled (#440 AC2)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '                this._notePointer(e);\n'
+        + '                if (!showRoomTooltipOf(this._settings)) {',
+      replace: '                if (!showRoomTooltipOf(this._settings)) {',
+    }],
+  },
+  {
+    id: 'decor-upload-invalid-image-reported-as-capacity',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'decor_asset_upload_deduplicates_and_rejects_mime_spoofing '
+      + 'tests_backend/test_ha_websocket.py',
+    because: 'a corrupt orphan is a client/integrity rejection, not exhausted storage; only '
+      + 'capacity_exceeded may produce HTTP 507 (#440 AC4)',
+    patches: [{
+      file: 'custom_components/houseplan/http_api.py',
+      find: '            status = 507 if err.code == "capacity_exceeded" else 400\n',
+      replace: '            status = 507\n',
     }],
   },
   {

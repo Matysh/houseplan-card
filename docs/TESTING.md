@@ -37,6 +37,14 @@
 мутантам с браузерным гвардом; компиляция тестов в worktree стартует с
 тёплого `test-build/` основного дерева.
 
+Чистые Python-контракты канонизации, которым не нужен Home Assistant, находятся
+в `tests_backend/test_coordinate_canonicalization_pure.py`. Они обязаны реально
+исполняться в локальном `pytest tests_backend`, а не исчезать за module-level
+`importorskip`; schema/store/virtual-light проверки остаются в HA-зависимом
+`test_coordinate_canonicalization.py`. Поведение static-card capability
+доказывается unit/smoke-счётчиками и состоянием runtime, а не regex по исходнику
+(#440).
+
 ## Vacuum trail smoothing (#209)
 
 - [ ] Pure `smoothVacPath` tests prove exact endpoints, separate subpaths,

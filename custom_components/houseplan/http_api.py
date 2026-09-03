@@ -341,7 +341,8 @@ class HouseplanDecorAssetUploadView(HomeAssistantView):
             async with runtime.upload_lock:
                 row, reused = await hass.async_add_executor_job(_store)
         except DecorAssetError as err:
-            return web.json_response({"error": err.code, "message": str(err)}, status=507)
+            status = 507 if err.code == "capacity_exceeded" else 400
+            return web.json_response({"error": err.code, "message": str(err)}, status=status)
         except OSError as err:
             _LOGGER.warning("House Plan decor asset upload: store failed: %s", err)
             return web.json_response({"error": "io_error"}, status=500)

@@ -373,25 +373,37 @@ def asset_meta_path(root: Path, asset_id: str) -> Path:
     return root / f"{asset_id}.json"
 
 
+def _physical_asset_inventory(root: Path) -> list[tuple[Path, int]]:
+    """Observe regular promoted blobs once, tolerating concurrent removals."""
+    try:
+        if not root.is_dir():
+            return []
+        entries = list(root.iterdir())
+    except OSError:
+        return []
+
+    inventory: list[tuple[Path, int]] = []
+    for path in entries:
+        if path.suffix not in ASSET_EXTENSIONS or not ASSET_ID_RE.fullmatch(path.stem):
+            continue
+        try:
+            current = path.stat(follow_symlinks=False)
+        except OSError:
+            continue
+        if stat.S_ISREG(current.st_mode):
+            inventory.append((path, current.st_size))
+    return sorted(inventory, key=lambda item: item[0].name)
+
+
 def physical_asset_blobs(root: Path) -> list[Path]:
     """Return exact promoted blob files, independently from their sidecars."""
-    if not root.is_dir():
-        return []
-    blobs: list[Path] = []
-    for path in root.iterdir():
-        if (
-            path.suffix in ASSET_EXTENSIONS
-            and ASSET_ID_RE.fullmatch(path.stem)
-            and stat.S_ISREG(path.stat(follow_symlinks=False).st_mode)
-        ):
-            blobs.append(path)
-    return sorted(blobs, key=lambda path: path.name)
+    return [path for path, _size in _physical_asset_inventory(root)]
 
 
 def physical_asset_usage(root: Path) -> tuple[int, int]:
     """Return promoted blob count and actual bytes used for quota checks."""
-    blobs = physical_asset_blobs(root)
-    return len(blobs), sum(path.stat().st_size for path in blobs)
+    inventory = _physical_asset_inventory(root)
+    return len(inventory), sum(size for _path, size in inventory)
 
 
 def _read_catalog_row(root: Path, path: Path) -> dict[str, Any] | None:

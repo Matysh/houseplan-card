@@ -54,12 +54,12 @@ const warmGate = await page.evaluate(async () => {
   const openedWhileReady = !!root().querySelector('hp-confirm');
   card._config = { ...card._config, language: 'de' };
   card.requestUpdate();
-  for (let attempt = 0; attempt < 50 && card._dangerConfirmLocaleGate !== 'warm'; attempt++) {
+  for (let attempt = 0; attempt < 50 && !card.inert; attempt++) {
     await new Promise((resolve) => setTimeout(resolve, 10));
     await settle();
   }
 
-  const entered = card._dangerConfirmLocaleGate === 'warm' && card.inert;
+  const entered = card.inert && card.getAttribute('aria-busy') === 'true';
   const cancelledOnTransition = await Promise.race([
     openDecision,
     new Promise((resolve) => setTimeout(() => resolve('timeout'), 100)),

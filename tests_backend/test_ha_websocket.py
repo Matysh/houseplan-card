@@ -2152,16 +2152,32 @@ async def test_decor_asset_upload_deduplicates_and_rejects_mime_spoofing(
     assert repaired_body["reused"] is False
     assert json.loads((root / f"{aid}.json").read_text(encoding="utf-8"))["asset_id"] == aid
 
+    # Only quota exhaustion is a storage-capacity response.
+    (root / f"{aid}.json").unlink()
+    (root / f"{aid}.png").unlink()
+    monkeypatch.setattr(hp_http, "MAX_DECOR_ASSETS_COUNT", 0)
+    full = await view.post(_Request("image/png"))
+    assert full.status == 507
+    assert json.loads(full.text)["error"] == "capacity_exceeded"
+
     # A matching filename never licenses overwriting bytes whose digest does
     # not match the content-addressed id.
-    (root / f"{aid}.json").unlink()
     blob = root / f"{aid}.png"
     blob.write_bytes(b"corrupt")
     rejected = await view.post(_Request("image/png"))
-    assert rejected.status == 507
+    assert rejected.status == 400
     assert json.loads(rejected.text)["error"] == "invalid_image"
     assert blob.read_bytes() == b"corrupt"
     assert not (root / f"{aid}.json").exists()
+
+    blob.unlink()
+    monkeypatch.setattr(
+        hp_http, "physical_asset_usage",
+        lambda _root: (_ for _ in ()).throw(OSError("inventory failed")),
+    )
+    failed = await view.post(_Request("image/png"))
+    assert failed.status == 500
+    assert json.loads(failed.text)["error"] == "io_error"
 
     spoofed = await view.post(_Request("image/jpeg"))
     assert spoofed.status == 400
