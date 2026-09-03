@@ -26,6 +26,68 @@ const result = await page.evaluate(async () => {
   await card.updateComplete;
   out.defaultRoomTip = card._tip?.room === true && !!root().querySelector('.tip');
 
+  const originalCallWS = card.hass.callWS;
+  const beforeRejectedSave = structuredClone(card._serverCfg);
+  const beforeRejectedFingerprint = card._cfgContentFingerprint;
+  card._openSettingsDialog();
+  card._settingsDialog = {
+    ...card._settingsDialog,
+    colors: {
+      ...card._settingsDialog.colors,
+      light_on: { c: '#123456', a: 0.4 },
+    },
+    glowRadius: 4,
+    bgColor: '#234567',
+    northDeg: 45,
+    bgMode: 'static',
+    sunRays: true,
+    showRoomTooltip: false,
+  };
+  card.hass = { ...card.hass, callWS: async (message) => {
+    if (message.type === 'houseplan/config/set') throw new Error('offline');
+    return originalCallWS(message);
+  } };
+  await card._saveSettingsDialog();
+  await card.updateComplete;
+  out.rejectedSettingsRolledBack = JSON.stringify(card._serverCfg)
+    === JSON.stringify(beforeRejectedSave);
+  out.rejectedFingerprintRolledBack = card._cfgContentFingerprint
+    === beforeRejectedFingerprint;
+  out.rejectedDraftKept = card._settingsDialog?.showRoomTooltip === false
+    && card._settingsDialog?.bgColor === '#234567'
+    && card._settingsDialog?.colors.light_on.c === '#123456';
+  out.rejectedBusyCleared = card._settingsDialog?.busy === false;
+  card._tip = null;
+  room().dispatchEvent(mouse('pointermove', 185, 185));
+  await card.updateComplete;
+  out.rejectedRuntimeUsesServerSettings = card._tip?.room === true;
+
+  const authoritative = structuredClone(beforeRejectedSave);
+  authoritative.settings = { ...authoritative.settings, bg_color: '#345678' };
+  const authoritativeRev = card._cfgRev + 5;
+  card._openSettingsDialog();
+  card._settingsDialog = {
+    ...card._settingsDialog, bgColor: '#abcdef', showRoomTooltip: false,
+  };
+  card.hass = { ...card.hass, callWS: async (message) => {
+    if (message.type === 'houseplan/config/set') {
+      throw Object.assign(new Error('conflict'), { code: 'conflict' });
+    }
+    if (message.type === 'houseplan/config/get') {
+      return { config: structuredClone(authoritative), rev: authoritativeRev, can_write: true };
+    }
+    return originalCallWS(message);
+  } };
+  await card._saveSettingsDialog();
+  await card.updateComplete;
+  out.conflictKeepsAuthoritative = card._serverCfg.settings.bg_color === '#345678'
+    && !Object.hasOwn(card._serverCfg.settings, 'show_room_tooltip')
+    && card._cfgRev === authoritativeRev;
+  out.conflictDraftKept = card._settingsDialog?.bgColor === '#abcdef'
+    && card._settingsDialog?.showRoomTooltip === false
+    && card._settingsDialog?.busy === false;
+  card.hass = { ...card.hass, callWS: originalCallWS };
+
   card._openSettingsDialog();
   card._settingsDialog = { ...card._settingsDialog, showRoomTooltip: false };
   await card._saveSettingsDialog();
@@ -70,6 +132,13 @@ checkAll(result, {
   defaultOn: true,
   cancelKeepsAbsentDefault: true,
   defaultRoomTip: true,
+  rejectedSettingsRolledBack: true,
+  rejectedFingerprintRolledBack: true,
+  rejectedDraftKept: true,
+  rejectedBusyCleared: true,
+  rejectedRuntimeUsesServerSettings: true,
+  conflictKeepsAuthoritative: true,
+  conflictDraftKept: true,
   falsePersists: true,
   visibleRoomTipCleared: true,
   disabledRoomTip: true,

@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- If Home Assistant rejects a General settings save, the plan now returns to
+  the last server-confirmed state instead of displaying an unsaved local draft;
+  the entered values remain in the open dialog for another attempt
+  ([#439](https://github.com/Matysh/houseplan-card/issues/439)).
+
 ## v1.71.0-beta.2 — 2026-09-03
 
 - Custom background images now recover cleanly after interrupted uploads,
