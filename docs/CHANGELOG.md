@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- General settings can now hide the room information window on mouse hover
+  without disabling the room highlight or device tooltips; existing plans keep
+  the window enabled by default ([#426](https://github.com/Matysh/houseplan-card/issues/426)).
+
 ## v1.71.0-beta.1 — 2026-09-03
 
 - The Background editor can now upload and reuse private PNG, JPEG, WebP and

@@ -1024,6 +1024,10 @@ separately promised workflows:
 - [ ] Room hover adds a subtle accent wash and double contour without changing
       the underlying room fill or Glow brightness
 - [ ] Room tooltip shows average room temperature and humidity after the area line and before LQI; missing values are omitted [auto: smoke_ux_fixes]
+- [ ] General settings can hide only the room tooltip: default/Cancel/save/reopen
+      semantics, skipped area work, persistent room highlight, unaffected
+      device tooltip and restoration on the next mouse move
+      [auto: smoke_room_tooltip_toggle]
 - [ ] Average room temperature counts ONLY thermometer/air-monitor devices — fridges, TRV heads,
       smart-plug chip temperatures (`*_device_temperature`) and diagnostic-category temps are excluded [manual]
 - [ ] Space dialog is 500 px wide; the comfort-bounds inputs are compact (56 px)

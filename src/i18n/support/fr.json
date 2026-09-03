@@ -1,4 +1,6 @@
 {
+  "gs.hint": "Les couleurs de remplissage s’appliquent à tous les espaces ; chaque couleur possède sa propre opacité. Le mode de remplissage utilisé par un espace se règle dans la boîte de dialogue de cet espace.",
+  "gs.show_room_tooltip": "Afficher les informations de la pièce au survol",
   "support.about_group": "À propos de la carte",
   "support.guide_group": "Documentation d’aide",
   "support.guide": "Guide utilisateur",

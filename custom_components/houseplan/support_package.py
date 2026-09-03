@@ -140,6 +140,9 @@ def _global_settings(value: object) -> dict[str, Any]:
     out = _copy_keys(value, ("glow_radius_cm", "bg_color", "north_deg", "bg_mode", "sun_rays"))
     if not isinstance(value, dict):
         return out
+    show_room_tooltip = value.get("show_room_tooltip")
+    if isinstance(show_room_tooltip, bool):
+        out["show_room_tooltip"] = show_room_tooltip
     fill_colors = value.get("fill_colors")
     if isinstance(fill_colors, dict):
         out["fill_colors"] = {

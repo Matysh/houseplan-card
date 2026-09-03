@@ -28,6 +28,13 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    symbols: ['showRoomTooltipOf'],
+    smokes: ['smoke_room_tooltip_toggle.mjs'],
+    because: 'the production-bundle scenario proves the global-settings draft and persistence, '
+      + 'room-only suppression before area work, immediate stale-room-tip cleanup, preserved room '
+      + 'highlight/device tooltip and default-on restoration (#426)',
+  },
+  {
     symbols: [
       'applyDevicePlacement', 'devicePlacement', 'sameDevicePlacement',
       'DevicePlacement', 'DevicePositionState',

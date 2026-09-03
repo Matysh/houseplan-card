@@ -55,7 +55,7 @@ override them; a room may override its space; a marker may override its room.
 | Level | Meaning | Stored data |
 |---|---|---|
 | Card | One dashboard instance | Initial space, language, icon size, value/LQI display, live state, kiosk and cycle |
-| Global settings | Defaults for all spaces | Fill palette, background, Glow radius, north, sun, weather and icon rules |
+| Global settings | Defaults for all spaces | Fill palette, background, Glow radius, north, sun, room-hover information and icon rules |
 | Space | Floor, yard, garage or building | Plan image, scale, rooms, walls, openings, decor and display settings |
 | Room | A closed outline | Name, optional HA area, temperature/humidity source and local fill |
 | Wall | A room-contour or independent segment | Stable identity and thickness from 0 to 100 cm; zero-thickness appearance is selected per space |
@@ -195,6 +195,11 @@ View is the state with no editor open. Close the active editor to return to it.
 | Background | Dimmed and inert | Dimmed | Background objects editable |
 | Kiosk | Actionable as in View | Read-only | Read-only; no editors |
 | Static card | Not live or interactive | Render only | Render only |
+
+The room highlight remains available in View and kiosk. To keep that highlight
+but hide the floating room summary, turn off **General settings → Show the room
+information window on hover**. The option is on by default and does not affect
+device tooltips.
 
 Each editor has a stable primary toolbar. Tool parameters and selected-object
 actions appear in a context tray over the top of the canvas. On a narrow screen

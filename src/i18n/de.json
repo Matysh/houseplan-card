@@ -422,7 +422,6 @@
   "marker.sub_entity": "Entität",
   "title.general_settings": "Allgemeine Einstellungen",
   "gs.title": "Allgemeine Einstellungen",
-  "gs.hint": "Füllfarben gelten für jeden Bereich; jede Farbe hat ihre eigene Deckkraft. Der Füllmodus wird in den Einstellungen des jeweiligen Bereichs festgelegt.",
   "gs.light_group": "Füllung: Licht",
   "gs.light_on": "Lichter an",
   "gs.light_off": "Alle Lichter aus",

@@ -51,6 +51,11 @@ desktop hover without a reload. Space/mode changes, page hiding and remounts
 also discard transient hover. Keyboard focus and explicit click/tap surfaces
 remain independent of this visual hover gate.
 
+The default-on **Show the room information window on hover** preference applies
+only after this pointer-modality gate has enabled real mouse hover. Turning it
+off leaves the room highlight and device tooltips unchanged; it does not add a
+touch or pen replacement for the room window.
+
 ## What “best-effort editors” means
 
 On a coarse-pointer or no-hover device, an editor operation may:

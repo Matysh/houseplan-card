@@ -247,6 +247,8 @@ export interface ServerConfig {
     /** Internal registry-Area provenance; not a user-facing setting. */
     marker_area_snapshot?: MarkerAreaSnapshot;
     icon_rules?: { pattern: string; icon: string }[];
+    /** Only an explicit false hides the room hover information window. */
+    show_room_tooltip?: boolean;
   };
 }
 

@@ -63,6 +63,20 @@ writer produce the same request; accepting either would reopen last-writer-wins
 data loss. This changes only the WebSocket write contract. Stored config,
 model/store versions, exports and read compatibility are unchanged.
 
+## Room hover information preference (#426)
+
+`settings.show_room_tooltip` is an optional global boolean. Absence and any
+invalid legacy/future value read as the historical enabled default; only exact
+`false` hides the floating room information window. Saving the enabled value
+removes the key. The field does not change room highlighting or device
+tooltips, and does not require a model/store version migration.
+
+An older frontend ignores the field and temporarily shows the room window. An
+older backend preserves it through the existing unknown-settings policy, so a
+new frontend restores the disabled behavior after upgrade. Full backup/import
+preserves the setting and the privacy-safe support projection includes only a
+validated boolean.
+
 ## Stable wall identity — model v8 (#282)
 
 Model v8 adds `space.wall_segments[]`, ordered `rooms[].wall_ids[]`, IDs on

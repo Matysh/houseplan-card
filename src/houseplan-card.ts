@@ -39,7 +39,7 @@ import {
   spaceDisplayOf, resolveEffectiveRoomFill, fillColorsOf, DEFAULT_FILL_COLORS,
   customFillOf, roomCustomFillOf, DEFAULT_CUSTOM_FILL,
   type FillColors, type FillColorEntry, type ResolvedRoomFill, runServiceFor, RUN_TARGET_DOMAINS,
-  DEFAULT_ROOM_COLOR, DEFAULT_ROOM_OPACITY, stageBgOf,
+  DEFAULT_ROOM_COLOR, DEFAULT_ROOM_OPACITY, stageBgOf, showRoomTooltipOf,
   DEFAULT_TEMP_MIN, DEFAULT_TEMP_MAX, type SpaceDisplay,
   referencedContentUrls,
   DISPLAY_MODES, TAP_ACTIONS, SPACE_FILL_UI_MODES, ROOM_FILL_MODES,
@@ -1026,6 +1026,7 @@ export class HouseplanCard extends LitElement {
     lqi?: number | null;
     temp?: number | null;
     hum?: number | null;
+    room?: boolean;
   } | null = null;
   /** Room whose physical perimeter is highlighted in View. The explicit
    *  overlay is needed because thick wall bodies paint above room shapes. */
@@ -2219,6 +2220,7 @@ export class HouseplanCard extends LitElement {
     colors: FillColors; glowRadius: number; bgColor: string | null;
     /** sun on the plan (docs/SUN.md) */
     northDeg: number | null; bgMode: 'static' | 'daynight'; sunRays: boolean;
+    showRoomTooltip: boolean;
     busy: boolean;
   } | null = null;
   private _supportDialog: SupportDialogState | null = null;
@@ -7286,11 +7288,12 @@ export class HouseplanCard extends LitElement {
     lqi?: number | null,
     temp?: number | null,
     hum?: number | null,
+    room = false,
   ): void {
     this._notePointer(ev);
     if (!this._pointerModality.hoverEnabled) return;
     if (this._drag || this._deviceDrag) return;
-    this._tip = { x: ev.clientX, y: ev.clientY, title, meta, lqi, temp, hum };
+    this._tip = { x: ev.clientX, y: ev.clientY, title, meta, lqi, temp, hum, room };
   }
 
   // ================= ROOM MARKUP EDITOR =================
@@ -11577,6 +11580,10 @@ export class HouseplanCard extends LitElement {
               let areaText: string | null | undefined;
               const tip = (e: PointerEvent) => {
                 if (this._mode !== 'view') return;
+                if (!showRoomTooltipOf(this._settings)) {
+                  if (this._tip?.room) this._tip = null;
+                  return;
+                }
                 if (areaText === undefined) areaText = this._roomArea(r);
                 this._showTip(
                   e,
@@ -11585,7 +11592,14 @@ export class HouseplanCard extends LitElement {
                   showLqi ? this._roomLqi(r.area) : null,
                   this._roomTemp(r),
                   this._roomHum(r),
+                  true,
                 );
+              };
+              const enterRoom = (event: PointerEvent) => {
+                this._notePointer(event);
+                if (this._pointerModality.hoverEnabled) {
+                  this._hoverRoom = { space: space.id, room: r };
+                }
               };
               const myPoly = polyOf(r);
               // A room's ordinary solid stroke must not run beneath its zero
@@ -11623,57 +11637,32 @@ export class HouseplanCard extends LitElement {
                 ? svg`<path class="${cls}" style="${style}" fill-rule="evenodd"
                     data-hp="room" data-id=${hpId} data-area=${hpArea}
                     d="${[obstaclePath, ...holes.map(pathD)].join(' ')}"
-                    @pointerenter=${(event: PointerEvent) => {
-                      this._notePointer(event);
-                      if (this._pointerModality.hoverEnabled) {
-                        this._hoverRoom = { space: space.id, room: r };
-                      }
-                    }}
+                    @pointerenter=${enterRoom}
                     @pointermove=${tip}
                     @pointerleave=${() => this._clearTransientHover()}></path>`
                 : holes.length && fillPoly
                 ? svg`<path class="${cls}" style="${style}" fill-rule="evenodd"
                     data-hp="room" data-id=${hpId} data-area=${hpArea}
                     d="${[fillPoly, ...holes].map(pathD).join(' ')}"
-                    @pointerenter=${(event: PointerEvent) => {
-                      this._notePointer(event);
-                      if (this._pointerModality.hoverEnabled) {
-                        this._hoverRoom = { space: space.id, room: r };
-                      }
-                    }}
+                    @pointerenter=${enterRoom}
                     @pointermove=${tip}
                     @pointerleave=${() => this._clearTransientHover()}></path>`
                  : fillPoly && fillPoly !== myPoly
                  ? svg`<polygon class="${cls}" style="${style}" points="${fillPoly.map((p) => p.join(',')).join(' ')}"
                      data-hp="room" data-id=${hpId} data-area=${hpArea}
-                    @pointerenter=${(event: PointerEvent) => {
-                      this._notePointer(event);
-                      if (this._pointerModality.hoverEnabled) {
-                        this._hoverRoom = { space: space.id, room: r };
-                      }
-                    }}
+                    @pointerenter=${enterRoom}
                     @pointermove=${tip}
                     @pointerleave=${() => this._clearTransientHover()}></polygon>`
                  : r.poly
                  ? svg`<polygon class="${cls}" style="${style}" points="${r.poly.map((p) => p.join(',')).join(' ')}"
                      data-hp="room" data-id=${hpId} data-area=${hpArea}
-                    @pointerenter=${(event: PointerEvent) => {
-                      this._notePointer(event);
-                      if (this._pointerModality.hoverEnabled) {
-                        this._hoverRoom = { space: space.id, room: r };
-                      }
-                    }}
+                    @pointerenter=${enterRoom}
                     @pointermove=${tip}
                     @pointerleave=${() => this._clearTransientHover()}></polygon>`
                  : svg`<rect class="${cls}" style="${style}"
                      data-hp="room" data-id=${hpId} data-area=${hpArea}
                      x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" rx="${Math.min(r.w!, r.h!) * 0.03}"
-                    @pointerenter=${(event: PointerEvent) => {
-                      this._notePointer(event);
-                      if (this._pointerModality.hoverEnabled) {
-                        this._hoverRoom = { space: space.id, room: r };
-                      }
-                    }}
+                    @pointerenter=${enterRoom}
                     @pointermove=${tip}
                     @pointerleave=${() => this._clearTransientHover()}></rect>`;
               const trimmed = edgeCuts.length && myPoly

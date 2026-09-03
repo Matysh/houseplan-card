@@ -479,6 +479,19 @@ def test_sun_settings_global():
         v.CONFIG_SCHEMA({"spaces": [], "settings": {"weather_entity": {"e": 1}}})
 
 
+def test_room_tooltip_global_setting_is_strict_boolean_and_round_trips():
+    for value in (True, False):
+        out = v.CONFIG_SCHEMA(
+            {"spaces": [], "settings": {"show_room_tooltip": value}}
+        )
+        assert out["settings"]["show_room_tooltip"] is value
+    for bad in (None, 0, 1, "false", [], {}):
+        with pytest.raises(vol.Invalid):
+            v.CONFIG_SCHEMA(
+                {"spaces": [], "settings": {"show_room_tooltip": bad}}
+            )
+
+
 def test_marker_area_snapshot_is_strict_and_bounded():
     """#126: Area provenance accepts only exact direct bindings and non-empty Areas."""
     snapshot = {

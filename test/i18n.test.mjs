@@ -126,11 +126,11 @@ test('i18n: every registered dictionary carries the English key set', () => {
   }
 });
 
-test('i18n: lazy support dictionaries carry matching keys and placeholders', () => {
+test('i18n: lazy editor dictionaries carry matching keys and placeholders', () => {
   const supportEn = supportDictionaries.get('en');
   const keys = Object.keys(supportEn).sort();
   const placeholders = (value) => (String(value).match(/\{\w+\}/gu) || []).sort();
-  assert.equal(keys.length, 42);
+  assert.equal(keys.length, 44);
   assert.equal(Object.keys(en).filter((key) => key.startsWith('support.')).join(','), 'support.title');
   for (const { code } of LANGUAGE_REGISTRY) {
     const dictionary = supportDictionaries.get(code);

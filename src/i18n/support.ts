@@ -1,4 +1,4 @@
-/** Lazy Help & feedback dictionaries owned by the editor runtime (#423). */
+/** Lazy editor-only dictionaries owned by the editor runtime (#423). */
 import { subst } from '../logic';
 import type { Lang } from './registry';
 import de from './support/de.json' with { type: 'json' };
@@ -15,7 +15,7 @@ const SUPPORT_DICTIONARIES: Record<Lang, Record<SupportI18nKey, string>> = {
   fr,
 };
 
-/** Translate form-only support copy with the same synchronous English fallback. */
+/** Translate editor-only copy with the same synchronous English fallback. */
 export function supportT(
   lang: Lang,
   key: SupportI18nKey,

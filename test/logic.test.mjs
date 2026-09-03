@@ -26,6 +26,7 @@ import {
   hassValue, valueWithUnit, decorTextScale, decorTextLines,
   LIVE_TEXT_DASH, LIVE_TEXT_VALUE_MAX, DECOR_TEXT_SCALE_MIN, DECOR_TEXT_SCALE_MAX,
   quantizeOpeningLightAmount,
+  showRoomTooltipOf,
 } from '../test-build/logic.js';
 import {
   iconFor, compileIconRules, isValidPattern, iconFromDeviceClasses,
@@ -33,6 +34,17 @@ import {
 
 test('tap action editor choices keep the canonical order', () => {
   assert.deepEqual([...TAP_ACTIONS], ['info', 'more-info', 'toggle', 'run', 'none']);
+});
+
+test('room tooltip preference is default-on and only exact false disables it', () => {
+  for (const value of [undefined, null, true, 0, 1, 'false', [], {}]) {
+    assert.equal(showRoomTooltipOf(value), true);
+  }
+  assert.equal(showRoomTooltipOf({ show_room_tooltip: undefined }), true);
+  assert.equal(showRoomTooltipOf({ show_room_tooltip: null }), true);
+  assert.equal(showRoomTooltipOf({ show_room_tooltip: true }), true);
+  assert.equal(showRoomTooltipOf({ show_room_tooltip: 'false' }), true);
+  assert.equal(showRoomTooltipOf({ show_room_tooltip: false }), false);
 });
 
 test('display normalization and alarm-capable metadata share one contract', () => {

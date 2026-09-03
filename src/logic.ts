@@ -1351,6 +1351,13 @@ export function stageBgOf(settings: any, disp: { bgColor: string | null }): stri
   return safeStoredColor(g, '');
 }
 
+/** Global room-hover information preference. Legacy and malformed values keep
+ * the historical default; only an explicit boolean false disables the window. */
+export function showRoomTooltipOf(settings: unknown): boolean {
+  return (settings as { show_room_tooltip?: unknown } | null | undefined)
+    ?.show_room_tooltip !== false;
+}
+
 // ---------------- global fill colors ----------------
 
 export interface FillColorEntry {

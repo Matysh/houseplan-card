@@ -422,7 +422,6 @@
   "marker.sub_entity": "entité",
   "title.general_settings": "Paramètres généraux",
   "gs.title": "Paramètres généraux",
-  "gs.hint": "Les couleurs de remplissage s’appliquent à tous les espaces ; chaque couleur possède sa propre opacité. Le mode de remplissage utilisé par un espace se règle dans la boîte de dialogue de cet espace.",
   "gs.light_group": "Remplissage : lumières",
   "gs.light_on": "Lumières allumées",
   "gs.light_off": "Toutes les lumières éteintes",

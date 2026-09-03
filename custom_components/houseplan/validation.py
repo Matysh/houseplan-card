@@ -1935,6 +1935,7 @@ CONFIG_SCHEMA = vol.All(
                     vol.Optional("north_deg"): _north_deg,
                     vol.Optional("bg_mode"): _BG_MODE,
                     vol.Optional("sun_rays"): bool,
+                    vol.Optional("show_room_tooltip"): bool,
                     # Removed from the UI/runtime in 2026-08-08. Keep accepting the
                     # legacy field so an existing stored config can still load; the
                     # frontend ignores it and removes it on the next settings save.

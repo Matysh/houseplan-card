@@ -6,7 +6,8 @@
   backend validation/privacy projection, i18n, документация и QA
 - **Связи:** #79 (room hover), #154 (pointer modality), #196 (содержимое
   тултипа)
-- **Ревизия:** 1 (2026-09-03)
+- **Ревизия:** 2 (2026-09-03; размещение editor-only строк уточнено по
+  результату bundle-budget без изменения поведения)
 
 ## Сценарий
 
@@ -126,7 +127,10 @@ Hover-подсветка уже имеет независимое состоян
 
 ## UX и i18n
 
-Добавить ключ `gs.show_room_tooltip` во все четыре синхронных словаря:
+Добавить ключ `gs.show_room_tooltip` во все четыре синхронизированных lazy
+editor-словаря `src/i18n/support/{en,ru,de,fr}.json`. Существующую editor-only
+строку `gs.hint` перенести туда же, чтобы новый control не увеличивал initial
+View graph:
 
 - RU: `Показывать окно с информацией при наведении на комнату`;
 - EN: `Show the room information window on hover`;
@@ -176,7 +180,7 @@ Hover-подсветка уже имеет независимое состоян
 
 - `src/types.ts`, `src/logic.ts`, `src/houseplan-card.ts`,
   `src/houseplan-editor-runtime.ts`.
-- `src/i18n/{en,ru,de,fr}.json`.
+- `src/i18n/support/{en,ru,de,fr}.json`, `src/i18n/support.ts`.
 - `custom_components/houseplan/validation.py`,
   `custom_components/houseplan/support_package.py`.
 - `test/logic.test.mjs`, settings/source contract tests,
@@ -307,4 +311,3 @@ guard, но backend acceptance/type и support projection временно со�
 - Канонический ключ — `settings.show_room_tooltip`; default хранится отсутствием,
   а явное значение требуется только для `false`.
 - `houseplan-space-card` не меняется, потому что уже не имеет интерактивности.
-
