@@ -1,0 +1,66 @@
+{
+  "levels": [
+    {
+      "id": "main",
+      "title": "Main",
+      "spaceId": "sh3d-1-main",
+      "cellCm": 2,
+      "rooms": 1,
+      "walls": 3,
+      "openings": 1,
+      "notes": [
+        {
+          "code": "room_without_polygon",
+          "id": "thin"
+        },
+        {
+          "code": "curved_wall_straightened",
+          "count": 1
+        },
+        {
+          "code": "thickness_clamped",
+          "count": 1,
+          "limit": 100
+        },
+        {
+          "code": "vertices_snapped",
+          "count": 4
+        },
+        {
+          "code": "edge_without_wall",
+          "count": 1
+        },
+        {
+          "code": "opening_unhosted",
+          "id": "lost-door",
+          "kind": "door"
+        },
+        {
+          "code": "opening_shortened",
+          "id": "wide-door"
+        }
+      ]
+    },
+    {
+      "id": "empty",
+      "title": "Walls only",
+      "rooms": 0,
+      "walls": 0,
+      "openings": 0,
+      "skipped": "no_rooms",
+      "notes": []
+    }
+  ],
+  "items": [
+    {
+      "code": "level_without_rooms",
+      "id": "empty",
+      "title": "Walls only"
+    },
+    {
+      "code": "furniture_dropped"
+    }
+  ],
+  "toolVersion": "sh3d-convert 0.1",
+  "minHouseplan": "1.71"
+}

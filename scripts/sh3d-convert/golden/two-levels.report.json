@@ -1,0 +1,41 @@
+{
+  "levels": [
+    {
+      "id": "ground",
+      "title": "Ground",
+      "spaceId": "sh3d-1-ground",
+      "cellCm": 2.5,
+      "rooms": 1,
+      "walls": 4,
+      "openings": 0,
+      "notes": [
+        {
+          "code": "vertices_snapped",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "id": "first",
+      "title": "First",
+      "spaceId": "sh3d-2-first",
+      "cellCm": 2.5,
+      "rooms": 1,
+      "walls": 4,
+      "openings": 0,
+      "notes": [
+        {
+          "code": "vertices_snapped",
+          "count": 4
+        }
+      ]
+    }
+  ],
+  "items": [
+    {
+      "code": "furniture_dropped"
+    }
+  ],
+  "toolVersion": "sh3d-convert 0.1",
+  "minHouseplan": "1.71"
+}

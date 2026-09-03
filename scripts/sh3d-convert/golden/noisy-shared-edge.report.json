@@ -1,0 +1,30 @@
+{
+  "levels": [
+    {
+      "id": "flat",
+      "title": "Flat",
+      "spaceId": "sh3d-1-flat",
+      "cellCm": 5,
+      "rooms": 2,
+      "walls": 6,
+      "openings": 0,
+      "notes": [
+        {
+          "code": "vertices_snapped",
+          "count": 8
+        },
+        {
+          "code": "edge_without_wall",
+          "count": 1
+        }
+      ]
+    }
+  ],
+  "items": [
+    {
+      "code": "furniture_dropped"
+    }
+  ],
+  "toolVersion": "sh3d-convert 0.1",
+  "minHouseplan": "1.71"
+}

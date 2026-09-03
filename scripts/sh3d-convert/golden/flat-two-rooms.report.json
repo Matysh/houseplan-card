@@ -1,0 +1,26 @@
+{
+  "levels": [
+    {
+      "id": "level0",
+      "title": "Первый этаж",
+      "spaceId": "sh3d-1-level-1",
+      "cellCm": 5,
+      "rooms": 2,
+      "walls": 7,
+      "openings": 2,
+      "notes": [
+        {
+          "code": "vertices_snapped",
+          "count": 8
+        }
+      ]
+    }
+  ],
+  "items": [
+    {
+      "code": "furniture_dropped"
+    }
+  ],
+  "toolVersion": "sh3d-convert 0.1",
+  "minHouseplan": "1.71"
+}
