@@ -47,7 +47,6 @@ from .decor_assets import (
     physical_asset_usage,
     public_asset,
     read_asset,
-    read_catalog,
     validate_asset,
 )
 from .import_export import ImportFailure, create_preview
