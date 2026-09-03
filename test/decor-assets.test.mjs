@@ -34,6 +34,33 @@ test('#51 full and static renderers share one fail-closed image projection', () 
   assert.equal(projectDecorImage({ ...shape, w: 0 }, 1000, 500), null);
 });
 
+test('#430 проекция читает flip_v, а не только flip_h', () => {
+  // Единственный кейс #51 задавал flip_h: true и ничего не говорил про flip_v,
+  // поэтому `${shape.flip_v ? -1 : 1}` → `1` оставляло 7 pass. Вертикальное
+  // отражение — половина контракта AC3, и своего свидетеля у неё не было.
+  const shape = { id: 'image', kind: 'image', asset_id: id('d'), x: 0, y: 0, w: 1, h: 1 };
+  const scaleOf = (extra) => projectDecorImage({ ...shape, ...extra }, 100, 100)[5]
+    .match(/scale\([^)]*\)/)[0];
+  assert.equal(scaleOf({}), 'scale(1 1)');
+  assert.equal(scaleOf({ flip_h: true }), 'scale(-1 1)');
+  assert.equal(scaleOf({ flip_v: true }), 'scale(1 -1)');
+  assert.equal(scaleOf({ flip_h: true, flip_v: true }), 'scale(-1 -1)');
+});
+
+test('#430 проекция переносит opacity, а не подставляет единицу', () => {
+  // Кейс #51 задавал opacity: 2 и ждал 1 — ожидание, неотличимое от «opacity
+  // игнорируется»: мутант `const opacity = 1` проходил. Промежуточное значение
+  // отличает перенос от заглушки, крайности закрепляют clamp и fallback.
+  const shape = { id: 'image', kind: 'image', asset_id: id('d'), x: 0, y: 0, w: 1, h: 1 };
+  const opacityOf = (opacity) => projectDecorImage({ ...shape, opacity }, 100, 100)[4];
+  assert.equal(opacityOf(0.4), 0.4);
+  assert.equal(opacityOf(0), 0, 'полностью прозрачная картинка — законное состояние');
+  assert.equal(opacityOf(-1), 0);
+  assert.equal(opacityOf(2), 1);
+  assert.equal(opacityOf(undefined), 1, 'нет значения — непрозрачная');
+  assert.equal(opacityOf('nonsense'), 1);
+});
+
 test('#51 resolve projection rejects malformed catalog rows', () => {
   const good = {
     asset_id: id('c'), name: 'safe.svg', mime: 'image/svg+xml',
@@ -44,6 +71,21 @@ test('#51 resolve projection rejects malformed catalog rows', () => {
   assert.deepEqual(adopted.get(id('c')), good);
   assert.equal(adoptDecorAssets({ assets: [{ ...good, url: 'https://example.com/tracker.svg' }] }).size, 0);
   assert.equal(adoptDecorAssets({ assets: [{ ...good, mime: 'image/png' }] }).size, 0);
+});
+
+test('#430 форма asset_id проверяется сама, а не через совпадение с url', () => {
+  // Строка `{ ...good, asset_id: 'bad' }` выше не свидетель формы id: у неё
+  // остаётся url настоящего ассета, и её отбивает сравнение url. Поэтому
+  // мутант `!DECOR_ASSET_ID_RE.test(...)` → `false` выживал. Здесь url
+  // согласован с плохим id — сработать может только сама проверка формы.
+  const row = (asset_id) => ({
+    asset_id, name: 'safe.svg', mime: 'image/svg+xml', width: 20, height: 10, bytes: 100,
+    url: `/api/houseplan/content/assets/_/${asset_id}.svg`,
+  });
+  assert.equal(adoptDecorAssets({ assets: [row('bad')] }).size, 0);
+  assert.equal(adoptDecorAssets({ assets: [row(`${id('a')}a`)] }).size, 0, 'длиннее 64');
+  assert.equal(adoptDecorAssets({ assets: [row(id('a').replace('a', 'A'))] }).size, 0, 'не hex');
+  assert.equal(adoptDecorAssets({ assets: [row(id('a'))] }).size, 1, 'корректный id проходит');
 });
 
 test('#51 a rotated image contributes its complete visible bounds to framing', () => {

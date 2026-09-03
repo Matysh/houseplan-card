@@ -70,16 +70,24 @@ test('пробы вызываются в job с браузером и служа
   assert.match(smoke, /if: matrix\.shard == 1/, 'один раз, а не в каждом шарде');
 
   const mutants = read('scripts/mutation-gate.mjs');
-  for (const id of [
+  // Правка #404 состоит из двух половин, и мутант на одну оставил бы другую
+  // недоказанной. Список ведётся руками, и это осознанно: счётчик обязан
+  // совпадать с ним, поэтому новый мутант на этих пробах нельзя добавить, не
+  // назвав его здесь (в #430 так добавился четвёртый — гард page-benchmark).
+  const guarded = [
     'smoke-guard-blind-to-tail',
     'smoke-guard-forgets-to-register-pages',
     'report-page-errors-skips-round-trip',
-  ]) {
+    'benchmark-page-verdict-unwatched',
+  ];
+  for (const id of guarded) {
     assert.match(mutants, new RegExp(`id: '${id}'`), `мутант ${id} не зарегистрирован`);
   }
-  // Правка состоит из двух половин, и мутант на одну оставил бы другую
-  // недоказанной.
-  assert.equal((mutants.match(/node demo\/guard\/verify-guard\.mjs/g) || []).length, 3);
+  assert.equal(
+    (mutants.match(/node demo\/guard\/verify-guard\.mjs/g) || []).length,
+    guarded.length,
+    'мутант на пробах гарда есть, а в списке выше его нет — список отстал от реестра',
+  );
 });
 
 test('страницы, созданные вне launch(), подписаны общим гардом (#404, Medium-1)', () => {

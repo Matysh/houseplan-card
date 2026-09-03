@@ -4683,6 +4683,106 @@ const MUTANT_DEFINITIONS = [
         + "        errorCode: '',",
     }],
   },
+  {
+    id: 'decor-raster-full-decode-skipped',
+    guard: 'python3 -m pytest tests_backend/test_decor_assets.py -q -p no:cacheprovider',
+    because: 'a valid-looking PNG whose IDAT is not a zlib stream must be refused before it '
+      + 'enters the authenticated store; header parsing answers w/h/mime and cannot answer '
+      + 'whether the raster decodes at all (#51 AC, аудит #430 п.1)',
+    patches: [{
+      file: 'custom_components/houseplan/decor_assets.py',
+      find: '        with Image.open(BytesIO(data)) as image:\n'
+        + '            image.load()\n'
+        + '            if image.size != (width, height):\n'
+        + '                raise DecorAssetError("invalid_image", "Image dimensions are inconsistent")\n'
+        + '            if getattr(image, "is_animated", False):\n'
+        + '                raise DecorAssetError("unsupported_image", "Animated images are unsupported")',
+      replace: '        _ = (Image, BytesIO)',
+    }],
+  },
+  {
+    id: 'decor-svg-canonical-bytes-discarded',
+    guard: 'python3 -m pytest tests_backend/test_decor_assets.py -q -p no:cacheprovider',
+    because: 'the stored SVG must be the re-serialised canonical form, not the upload: keeping '
+      + 'the original bytes silently reinstates whatever the parser dropped — prologue, '
+      + 'comments, exotic spelling of the same tree (#51 ТЗ §3, аудит #430 п.2)',
+    patches: [{
+      file: 'custom_components/houseplan/decor_assets.py',
+      find: 'return ValidatedAsset(canonical, "image/svg+xml"',
+      replace: 'return ValidatedAsset(data, "image/svg+xml"',
+    }],
+  },
+  {
+    id: 'decor-svg-canonical-size-unchecked',
+    guard: 'python3 -m pytest tests_backend/test_decor_assets.py -q -p no:cacheprovider',
+    because: 'canonicalisation can grow the document fourfold by escaping text, so the 2 MiB '
+      + 'limit must be re-applied to the canonical bytes: a 1.84 MiB upload otherwise lands '
+      + 'as 7.35 MiB in the store (аудит #430 п.2)',
+    patches: [{
+      file: 'custom_components/houseplan/decor_assets.py',
+      find: '    _check_size(canonical)\n',
+      replace: '',
+    }],
+  },
+  {
+    id: 'decor-svg-external-url-guard-off',
+    guard: 'python3 -m pytest tests_backend/test_decor_assets.py -q -p no:cacheprovider',
+    because: 'javascript:, data:, http:, https: and // inside an allowed attribute of an allowed '
+      + 'tag are caught by this rule alone; every "external" case of the original corpus was '
+      + 'caught by tag or attribute allowlists instead (аудит #430 п.3)',
+    patches: [{
+      file: 'custom_components/houseplan/decor_assets.py',
+      find: 'if any(token in low for token in ("javascript:", "data:", "http:", "https:", "//")):',
+      replace: 'if False:',
+    }],
+  },
+  {
+    id: 'decor-image-flip-v-ignored',
+    guard: 'node --test test/decor-assets.test.mjs',
+    because: 'vertical flip is half of the image projection contract and had no witness of its '
+      + 'own: the single #51 case set flip_h only, so dropping flip_v stayed green (#51 AC3, '
+      + 'аудит #430 п.4)',
+    patches: [{
+      file: 'src/decor-assets.ts',
+      find: '${shape.flip_v ? -1 : 1}',
+      replace: '1',
+    }],
+  },
+  {
+    id: 'decor-image-opacity-ignored',
+    guard: 'node --test test/decor-assets.test.mjs',
+    because: 'the projection must carry the shape opacity; the only case asserted opacity 2 → 1, '
+      + 'an expectation indistinguishable from hardcoding 1 (#51 AC4, аудит #430 п.4)',
+    patches: [{
+      file: 'src/decor-assets.ts',
+      find: 'const opacity = clamp01(shape.opacity, 1);',
+      replace: 'const opacity = 1;',
+    }],
+  },
+  {
+    id: 'decor-asset-id-shape-unchecked',
+    guard: 'node --test test/decor-assets.test.mjs',
+    because: 'the catalog row must prove its own asset_id shape: the malformed row of #51 kept '
+      + 'the url of a real asset, so the url comparison caught it and the id regex could be '
+      + 'deleted unnoticed (аудит #430 п.4)',
+    patches: [{
+      file: 'src/decor-assets.ts',
+      find: "    if (!DECOR_ASSET_ID_RE.test(String(row.asset_id || '')) || row.url !== expectedUrl",
+      replace: '    if (row.url !== expectedUrl',
+    }],
+  },
+  {
+    id: 'benchmark-page-verdict-unwatched',
+    guard: 'node demo/guard/verify-guard.mjs',
+    because: 'the page benchmark of #423 must register its page with watchPage, and that must be '
+      + 'proven by running it: the previous proof asked a regexp whether it still finds the '
+      + 'substring the same test had just deleted (аудит #430 п.5)',
+    patches: [{
+      file: 'demo/benchmark_backdrop_decode.mjs',
+      find: 'const page = watchPage(await (await browser.newContext()).newPage());',
+      replace: 'const page = await (await browser.newContext()).newPage();',
+    }],
+  },
 ];
 
 const mutationCardSource = readFileSync(join(repoRoot, 'src/houseplan-card.ts'), 'utf8');

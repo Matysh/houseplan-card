@@ -2,10 +2,14 @@
 from __future__ import annotations
 
 import base64
+import importlib
 import json
+import struct
+import zlib
 
 import pytest
 
+from custom_components.houseplan.const import MAX_DECOR_ASSET_BYTES
 from custom_components.houseplan.decor_assets import (
     DecorAssetError,
     asset_meta_path,
@@ -51,9 +55,11 @@ def test_declared_mime_must_agree_with_extension_and_bytes() -> None:
     (WEBP_VP8L_3X2, "lossless.webp", "image/webp"),
     (WEBP_VP8X_3X2, "alpha.webp", "image/webp"),
 ])
-def test_supported_raster_headers_and_full_decode(
+def test_supported_raster_headers_and_dimensions(
     payload: bytes, filename: str, mime: str,
 ) -> None:
+    """Имя до #430 обещало «and_full_decode», а проверялись w/h/mime — их даёт
+    header-парсер, и мутация полного декодирования оставалась зелёной."""
     asset = validate_asset(payload, filename, "application/octet-stream")
     assert (asset.width, asset.height, asset.mime) == (3, 2, mime)
 
@@ -185,9 +191,119 @@ def test_svg_rejects_one_oversized_attribute_before_tree_use() -> None:
         validate_asset(payload, "bounded.svg")
 
 
-def test_valid_looking_but_truncated_raster_is_rejected_by_full_decode() -> None:
-    with pytest.raises(DecorAssetError, match="corrupt|decode"):
+def test_truncated_raster_is_rejected_by_the_header_parser() -> None:
+    """Обрезка на 33 байтах убирает `IEND`, поэтому файл отбивает парсер
+    заголовка. До #430 этот тест назывался «by_full_decode» и записывался в
+    доказательство декодирования — при no-op блока Pillow он оставался
+    зелёным. Настоящий свидетель декодирования — тест ниже."""
+    with pytest.raises(DecorAssetError, match="corrupt or has the wrong type"):
         validate_asset(PNG_1X1[:33], "truncated.png", "image/png")
+
+
+def _png_with_corrupt_idat() -> bytes:
+    """PNG, безупречный для парсера заголовка и мёртвый для декодера.
+
+    Сигнатура, IHDR с честными 1x1, IEND на месте, длины и CRC всех чанков
+    верны — придраться нечему, пока кто-нибудь не попробует распаковать IDAT,
+    в котором лежит не zlib-поток, а текст.
+    """
+    def chunk(kind: bytes, payload: bytes) -> bytes:
+        return (struct.pack(">I", len(payload)) + kind + payload
+                + struct.pack(">I", zlib.crc32(kind + payload) & 0xFFFFFFFF))
+
+    return (b"\x89PNG\r\n\x1a\n"
+            + chunk(b"IHDR", struct.pack(">IIBBBBB", 1, 1, 8, 0, 0, 0, 0))
+            + chunk(b"IDAT", b"not a zlib stream at all")
+            + chunk(b"IEND", b""))
+
+
+def test_valid_looking_png_is_rejected_by_the_full_pillow_decode() -> None:
+    """Свидетель полного декодирования (#430, п.1 аудита v1.71.0-beta.1).
+
+    Раньше блок `with Image.open(...) as image: image.load()` можно было
+    заменить на no-op, и все 35 тестов файла оставались зелёными: заголовок
+    отвечал на все вопросы, которые они задавали. Здесь спрашивается то, на
+    что заголовок ответить не может, — распаковывается ли растр вообще.
+    """
+    pytest.importorskip("PIL", reason="полное декодирование делает Pillow")
+    with pytest.raises(DecorAssetError, match="cannot be decoded"):
+        validate_asset(_png_with_corrupt_idat(), "corrupt.png", "image/png")
+
+
+def test_pillow_is_present_wherever_home_assistant_is() -> None:
+    """Свидетель выше не имеет права молча пропускаться в каноне.
+
+    `validate_asset` глотает `ImportError` осознанно: чистое подмножество
+    тестов должно работать без всего HA. Цена — пропуск теста там, где Pillow
+    нет, а пропущенный тест выглядит как пройденный. Поэтому в окружении с
+    Home Assistant (Linux CI, WSL) отсутствие Pillow — красное само по себе.
+    """
+    pytest.importorskip("homeassistant", reason="чистая песочница без HA")
+    importlib.import_module("PIL.Image")
+
+
+def test_svg_asset_carries_canonical_bytes_not_the_upload() -> None:
+    """Свидетель канонизации (#430, п.2). ТЗ §3 требует ре-сериализацию, а
+    `ValidatedAsset(canonical, …)` → `ValidatedAsset(data, …)` не краснило ни
+    один тест: все проверяли w/h/mime и ни один — сами байты.
+    """
+    raw = (b'<?xml version="1.0" encoding="utf-8"?>\n'
+           b'<!-- pipeline comment -->\n'
+           b'<svg  xmlns="http://www.w3.org/2000/svg"   viewBox="0 0 30 20" >'
+           b'<rect x="0" y="0" width="1" height="1"></rect>'
+           b'<title>a&gt;b</title>'
+           b'</svg>')
+    asset = validate_asset(raw, "canonical.svg")
+    assert asset.data != raw
+    assert not asset.data.startswith(b"<?xml"), "XML-пролог не переживает канонизацию"
+    assert b"<!--" not in asset.data, "комментарий не переживает канонизацию"
+    assert b"<rect " in asset.data and b"</rect>" not in asset.data, "пустой элемент сжимается"
+    assert asset.data == (
+        b'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20">'
+        b'<rect x="0" y="0" width="1" height="1" />'
+        b'<title>a&gt;b</title>'
+        b'</svg>'
+    )
+
+
+def test_svg_size_limit_applies_to_canonical_bytes() -> None:
+    """Свидетель второй половины п.2: `_check_size(canonical)`.
+
+    Экранирование `>` в тексте раздувает документ вчетверо, поэтому загрузка
+    размером 1.84 МиБ канонизуется в 7.35 МиБ. Проверка размера на входе это
+    пропускает; снятие `_check_size(canonical)` до #430 не краснило ничего, и
+    в хранилище уезжал файл вчетверо больше объявленного предела.
+    """
+    payload = (b'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20">'
+               + (b"<desc>" + b">" * 4096 + b"</desc>") * 470
+               + b"</svg>")
+    assert len(payload) < MAX_DECOR_ASSET_BYTES, "загрузка обязана проходить входной контроль"
+    with pytest.raises(DecorAssetError, match="2 MiB"):
+        validate_asset(payload, "canonical-bomb.svg")
+
+
+@pytest.mark.parametrize("value", [
+    "javascript:alert(1)",
+    "data:image/png;base64,AAAA",
+    "http://example.com/x",
+    "https://example.com/x",
+    "//example.com/x",
+])
+def test_svg_external_resource_guard_catches_what_no_other_rule_does(value: str) -> None:
+    """Свидетель гарда внешних URL (#430, п.3).
+
+    Все три «внешних» кейса корпуса ловились другими правилами: тегом не из
+    словаря, атрибутом не из словаря, ветвью `name == "href"`. Замена условия
+    на `if False:` не краснила ничего. Здесь тег и атрибут разрешённые, `url(`
+    нет, `href` нет — сработать может только сам токен-гард, и сообщение это
+    подтверждает.
+    """
+    payload = (
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20">'
+        f'<path fill="{value}" d="M0 0L1 1"/></svg>'
+    ).encode()
+    with pytest.raises(DecorAssetError, match="External SVG resources are forbidden"):
+        validate_asset(payload, "external.svg")
 
 
 def test_catalog_ignores_missing_or_malformed_sidecars(tmp_path) -> None:
