@@ -168,6 +168,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#426](https://github.com/Matysh/houseplan-card/issues/426) Отключение информационного окна комнаты при наведении | [426-room-hover-tooltip-toggle.md](426-room-hover-tooltip-toggle.md) |
 | [#431](https://github.com/Matysh/houseplan-card/issues/431) Канонизация координат пользовательских изображений | [431-image-coordinate-canonicalization.md](431-image-coordinate-canonicalization.md) |
 | [#432](https://github.com/Matysh/houseplan-card/issues/432) Ограниченный resolve и единая проверка целостности изображений | [432-asset-resolve-authorization-cache.md](432-asset-resolve-authorization-cache.md) |
+| [#440](https://github.com/Matysh/houseplan-card/issues/440) Полиш аудита v1.71.0-beta.2 | [440-v171-beta2-polish.md](440-v171-beta2-polish.md) |
 
 ## P3
 
