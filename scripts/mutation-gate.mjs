@@ -355,6 +355,33 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'vacuum-route-validation-accepts-a-dead-space',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'invalid_routes_are_rejected '
+      + 'tests_backend/test_vacuum_route_validation.py',
+    because: 'a route saved against a space that does not exist can never resolve, so the '
+      + 'write has to be refused at the boundary rather than discovered as a missing robot '
+      + '(#162, M-D backend half)',
+    patches: [{
+      file: 'custom_components/houseplan/vacuum_routes.py',
+      find: '        elif space_ids is not None and space not in space_ids:\n            problems.append(issue(route_id, "unknown_space"))',
+      replace: '        elif False:\n            problems.append(issue(route_id, "unknown_space"))',
+    }],
+  },
+  {
+    id: 'space-delete-keeps-foreign-vacuum-routes',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="уносит только свои маршруты" '
+      + 'test/space-deletion.test.mjs',
+    because: 'a deleted space must take the robot map assignments that pointed at it; leaving '
+      + 'them behind keeps a route nothing can resolve and a robot that never appears (#162, AC16)',
+    patches: [{
+      file: 'src/space-deletion.ts',
+      find: '    const kept = routes.filter((route: any) => route?.space !== spaceId);',
+      replace: '    const kept = routes;',
+    }],
+  },
+  {
     id: 'area-snapshot-cleanup-ignores-authority',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="limited frames and runtime reset" '
@@ -1397,8 +1424,8 @@ const MUTANT_DEFINITIONS = [
       + 'unregistered-error hole #42 closes (AC5 m1)',
     patches: [{
       file: 'custom_components/houseplan/const.py',
-      find: '    "invalid_space_id", "invalid_toggle_entity", "invalid_value_badge",',
-      replace: '    "invalid_toggle_entity", "invalid_value_badge",',
+      find: '    "invalid_space_id", "invalid_toggle_entity", "invalid_vacuum_map_route",',
+      replace: '    "invalid_toggle_entity", "invalid_vacuum_map_route",',
     }],
   },
   {

@@ -52,6 +52,7 @@ from .validation import (
     sanitize_marker_id,
     validate_marker_controls,
     validate_marker_light_entities,
+    validate_marker_vacuum_routes,
     validate_marker_value_badges,
     validate_opening_passages,
     validate_partition_opening_hosts,
@@ -1580,6 +1581,7 @@ def build_space_merge(
         validate_marker_controls(merged_config, current_config)
         validate_marker_light_entities(merged_config, current_config)
         validate_marker_value_badges(merged_config, current_config)
+        validate_marker_vacuum_routes(merged_config, current_config)
         validate_opening_passages(merged_config, current_config)
         validate_partition_opening_hosts(merged_config, current_config)
     except (
@@ -1875,6 +1877,7 @@ def create_preview(
             validate_marker_controls(incoming_config, validate_all=True)
             validate_marker_light_entities(incoming_config, validate_all=True)
             validate_marker_value_badges(incoming_config, validate_all=True)
+            validate_marker_vacuum_routes(incoming_config, validate_all=True)
         except MarkerControlError as err:
             raise ImportFailure(err.code, str(err)) from err
     content, confirmation = _content_state(document, same_source, config_root)

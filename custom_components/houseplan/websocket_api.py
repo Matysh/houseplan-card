@@ -113,6 +113,7 @@ from .validation import (
     valid_space_id,
     validate_marker_controls,
     validate_marker_light_entities,
+    validate_marker_vacuum_routes,
     validate_marker_value_badges,
     validate_opening_passages,
     validate_partition_opening_hosts,
@@ -1578,6 +1579,7 @@ async def ws_config_set(hass: HomeAssistant, connection, msg: dict[str, Any]) ->
             validate_marker_controls(msg["config"], data.get("config"))
             validate_marker_light_entities(msg["config"], data.get("config"))
             validate_marker_value_badges(msg["config"], data.get("config"))
+            validate_marker_vacuum_routes(msg["config"], data.get("config"))
             validate_opening_passages(msg["config"], data.get("config"))
             validate_partition_opening_hosts(msg["config"], data.get("config"))
             return validate_junction_limits(
@@ -1936,6 +1938,7 @@ async def ws_plan_optimize(hass: HomeAssistant, connection, msg: dict[str, Any])
             validate_marker_controls(msg["config"], config_data.get("config"))
             validate_marker_light_entities(msg["config"], config_data.get("config"))
             validate_marker_value_badges(msg["config"], config_data.get("config"))
+            validate_marker_vacuum_routes(msg["config"], config_data.get("config"))
             validate_opening_passages(msg["config"], config_data.get("config"))
             validate_partition_opening_hosts(
                 msg["config"], config_data.get("config"),

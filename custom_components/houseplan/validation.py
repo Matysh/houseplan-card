@@ -17,6 +17,7 @@ from custom_components.houseplan.coordinate_canonicalization import (
     canonicalize_layout_geometry,
     canonicalize_position,
 )
+from custom_components.houseplan.vacuum_routes import validate_marker_routes
 
 # ---------- limits and extension sets ----------
 PLAN_EXTENSIONS = {"svg": "image/svg+xml", "png": "image/png", "jpg": "image/jpeg", "webp": "image/webp"}
@@ -880,6 +881,50 @@ def validate_marker_value_badges(
         old_source = None if validate_all else (old_marker or {}).get("value_source")
         if (validate_all or source != old_source) and source is not None:
             validate_source(source, "value_source")
+
+
+def validate_marker_vacuum_routes(
+    config: dict, previous: dict | None = None, *, validate_all: bool = False
+) -> None:
+    """Validate changed vacuum map routes; dormant future data round-trips.
+
+    Change-aware like the badge validator above (#162): an untouched legacy or
+    future-shaped block must not block an unrelated save, but any edit to
+    routing has to leave the marker in a state the resolver can answer for —
+    unique identities, six-number matrices and target spaces that exist.
+    """
+    markers = config.get("markers") or []
+    spaces = config.get("spaces")
+    space_ids = None
+    if isinstance(spaces, list):
+        space_ids = {
+            str(space.get("id")) for space in spaces
+            if isinstance(space, dict) and isinstance(space.get("id"), str)
+        }
+    old_markers = (previous or {}).get("markers") or []
+    old_by_id = {str(marker.get("id")): marker for marker in old_markers}
+    by_id = {str(marker.get("id")): marker for marker in markers}
+    new_ids = set(by_id)
+    consumed_old_ids: set[str] = set()
+    for marker_id, marker in by_id.items():
+        old_marker = _matching_previous_marker(
+            marker, marker_id, old_by_id, old_markers, new_ids,
+            consumed_old_ids, validate_all,
+        )
+        routes = (marker.get("vacuum") or {}).get("map_routes")
+        old_routes = None if validate_all else ((old_marker or {}).get("vacuum") or {}).get("map_routes")
+        if not validate_all and routes == old_routes:
+            continue
+        problems = validate_marker_routes(marker_id, routes, space_ids)
+        if problems:
+            reasons = ", ".join(sorted({problem["reason"] for problem in problems}))
+            # Literal, not the constant: the #42 scanner proves the emitted
+            # code against ERROR_CODES by reading the source, and it cannot
+            # follow a name. The pair is pinned by a test below.
+            raise MarkerControlError(
+                "invalid_vacuum_map_route",
+                f"Invalid vacuum map routes on {marker_id}: {reasons}",
+            )
 
 
 def validate_marker_light_entities(

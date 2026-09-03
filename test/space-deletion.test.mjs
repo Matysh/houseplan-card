@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
-  collectSpaceMarkerDependencies, createSpaceDeletionCandidate,
+  collectSpaceMarkerDependencies, createSpaceDeletionCandidate, spaceDeletionMessage,
 } from '../test-build/space-deletion.js';
 
 test('issue 244 space dependency count deduplicates all three reference paths', () => {
@@ -20,7 +20,7 @@ test('issue 244 space dependency count deduplicates all three reference paths', 
     all: { s: 'f1' }, room: { s: 'f2' }, position: { s: 'f1' }, removed: { s: 'f1' },
   };
   assert.deepEqual(collectSpaceMarkerDependencies(config, layout, 'f1'), {
-    markerIds: ['all', 'position', 'room'], count: 3,
+    markerIds: ['all', 'position', 'room'], count: 3, routeMarkerIds: [], routeCount: 0,
   });
   const blocked = createSpaceDeletionCandidate(config, layout, 'f1');
   assert.deepEqual(blocked.config, config);
@@ -108,4 +108,58 @@ test('issue 244 deleting the last occupied space detaches placement but preserve
   assert.deepEqual(result.config.markers[0].actions, [{ tap: 'more-info' }]);
   assert.equal(config.markers[0].space, 'only', 'input config is immutable');
   assert.equal(layout.direct.s, 'only', 'input layout is immutable');
+});
+
+// --- #162: карты робота, назначенные удаляемому пространству -----------------
+
+const routeCfg = () => ({
+  spaces: [{ id: 'floor1', rooms: [] }, { id: 'floor2', rooms: [] }],
+  markers: [{
+    id: 'robot', space: 'floor1',
+    vacuum: {
+      source: 'camera.robot',
+      map_routes: [
+        { id: 'r1', source: 'camera.robot', map_id: 'm1', space: 'floor1', calibration: [1, 0, 0, 0, 1, 0] },
+        { id: 'r2', source: 'camera.robot', map_id: 'm2', space: 'floor2', calibration: [2, 0, 0, 0, 2, 0] },
+      ],
+    },
+  }],
+});
+
+test('#162 удаление пространства считает чужие карты роботов отдельно', () => {
+  const report = collectSpaceMarkerDependencies(routeCfg(), {}, 'floor2');
+  assert.deepEqual(report.markerIds, [], 'док робота живёт на другом этаже и удалению не мешает');
+  assert.deepEqual(report.routeMarkerIds, ['robot']);
+  assert.equal(report.routeCount, 1);
+});
+
+test('#162 маркер В удаляемом пространстве не считается дважды', () => {
+  const report = collectSpaceMarkerDependencies(routeCfg(), {}, 'floor1');
+  assert.deepEqual(report.markerIds, ['robot']);
+  assert.deepEqual(report.routeMarkerIds, [], 'он уже в блокирующем списке');
+});
+
+test('#162 удаление уносит только свои маршруты, док и соседние карты целы', () => {
+  const { config } = createSpaceDeletionCandidate(routeCfg(), {}, 'floor2');
+  const marker = config.markers[0];
+  assert.equal(marker.space, 'floor1', 'док остался на своём этаже');
+  assert.deepEqual(marker.vacuum.map_routes.map((r) => r.id), ['r1']);
+  assert.equal(marker.vacuum.source, 'camera.robot', 'корневой источник не тронут');
+});
+
+test('#162 легаси-калибровка удалением пространства не трогается', () => {
+  const cfg = {
+    spaces: [{ id: 'floor1', rooms: [] }, { id: 'floor2', rooms: [] }],
+    markers: [{ id: 'robot', space: 'floor1', vacuum: { source: 'camera.robot', calibration: { m1: [1, 0, 0, 0, 1, 0] } } }],
+  };
+  const { config } = createSpaceDeletionCandidate(cfg, {}, 'floor2');
+  assert.deepEqual(config.markers[0].vacuum.calibration, { m1: [1, 0, 0, 0, 1, 0] });
+});
+
+test('#162 текст подтверждения называет число карт, а без них не меняется', () => {
+  const base = 'Пространство будет удалено.';
+  const template = 'Также будет снято сопоставление карт роботов: {count}.';
+  assert.equal(spaceDeletionMessage(base, template, 0), base);
+  assert.equal(spaceDeletionMessage(base, template, 2),
+    'Пространство будет удалено. Также будет снято сопоставление карт роботов: 2.');
 });

@@ -226,7 +226,7 @@ import {
 } from './zero-walls';
 import { snapNearAxisEndpoint } from './near-axis';
 import type { SpaceReferenceRepairContext } from './space-reference-repair';
-import { collectSpaceMarkerDependencies } from './space-deletion';
+import { collectSpaceMarkerDependencies, spaceDeletionMessage } from './space-deletion';
 import {
   checkSpacePhysicalGeometry,
   checkOptimizeGeometry,
@@ -8863,7 +8863,8 @@ public async _deleteSpace(): Promise<void> {
       key: 'delete-space',
       kind: 'destructive',
       title: this.host._t('confirm.delete_space_title'),
-      message: this.host._t('confirm.delete_space_body'),
+      message: spaceDeletionMessage(this.host._t('confirm.delete_space_body'),
+        this.host._t('confirm.delete_space_vac_routes'), dependencies.routeCount),
       objectName: sp.title,
       confirmLabel: this.host._t('btn.delete'),
       cancelLabel: this.host._t('btn.cancel'),
