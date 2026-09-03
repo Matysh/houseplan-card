@@ -84,6 +84,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#314](https://github.com/Matysh/houseplan-card/issues/314) Атомарная запись v8 drafts и независимой геометрии | [314-v8-draft-write-regression.md](314-v8-draft-write-regression.md) |
 | [#306](https://github.com/Matysh/houseplan-card/issues/306) Нулевые стены вместо виртуальных границ | [306-zero-thickness-walls.md](306-zero-thickness-walls.md) |
 | [#348](https://github.com/Matysh/houseplan-card/issues/348) Полная немецкая локализация | [348-german-localization.md](348-german-localization.md) |
+| [#428](https://github.com/Matysh/houseplan-card/issues/428) Round-trip экспорта с отсутствующей картинкой декора | [428-missing-decor-asset-roundtrip.md](428-missing-decor-asset-roundtrip.md) |
 
 ## P2
 
