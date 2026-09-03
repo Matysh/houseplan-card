@@ -4850,6 +4850,42 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'decor-oversize-hides-the-downscale-action',
+    guard: 'node --test test/decor-image-upload.test.mjs',
+    because: 'a decor source above the 2 MiB asset limit must still be offered as a reduced '
+      + 'copy: the flag forbids keeping the ORIGINAL, and gating the whole action block on it '
+      + 'is #427 — a bug that survived four review rounds because this path had no test at all',
+    patches: [{
+      file: 'src/backdrop-pick.ts',
+      find: '      ${hard ? null : html`',
+      replace: '      ${hard || !allowOriginal ? null : html`',
+    }],
+  },
+  {
+    id: 'decor-upload-loses-the-replace-flag',
+    guard: 'node --test test/decor-image-upload.test.mjs',
+    because: 'the guard dialog must upload into whichever slot the caller asked for: losing the '
+      + 'replaceSelection flag silently turns "replace this image" into "arm the palette" and '
+      + 'leaves the selected shape pointing at the old asset (#51 AC1, #433)',
+    patches: [{
+      file: 'src/decor-image-editor.ts',
+      find: '      this.hooks.setGuardReplace(replaceSelection);',
+      replace: '      this.hooks.setGuardReplace(false);',
+    }],
+  },
+  {
+    id: 'decor-upload-error-codes-collapse',
+    guard: 'node --test test/decor-image-upload.test.mjs',
+    because: 'each backend refusal code carries its own message: collapsing too_large into the '
+      + 'generic io_error tells the user "something went wrong" where the product knows exactly '
+      + 'what went wrong and how to fix it (#433)',
+    patches: [{
+      file: 'src/decor-image-editor.ts',
+      find: "          too_large: 'backdrop.too_large_title',\n",
+      replace: '',
+    }],
+  },
+  {
     id: 'pure-backend-test-pulls-home-assistant',
     guard: 'python3 -m pytest tests_backend/test_backend_quality.py -q -p no:cacheprovider',
     because: 'a pure test module that imports an HA-dependent backend module must be caught '
