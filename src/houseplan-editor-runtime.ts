@@ -1838,10 +1838,10 @@ public _writeConfig(attempt: OptimisticAttempt<ServerConfig> | null = null): Pro
     this.host._writesPending++;
     this.host._writeChain = enqueueSerializedWrite(this.host._writeChain, async () => {
       if (!this.host._serverCfg) return;
+      const liveFingerprint = contentFingerprint(this.host._serverCfg);
       const candidate = this._prepareConfigCandidate(this.host._serverCfg);
       const candidateFingerprint = contentFingerprint(candidate);
-      // Bind a queued optimistic save to the revision its request will actually use.
-      if (attempt && candidateFingerprint === attempt.attemptedFingerprint) attempt.revision = this.host._cfgRev;
+      if (attempt && liveFingerprint === attempt.attemptedFingerprint) Object.assign(attempt, { revision: this.host._cfgRev, attempted: candidate, attemptedFingerprint: candidateFingerprint });
       const strictEntries = [...this.host._pendingPhysicalWrites.entries()];
       for (const [spaceId, accepted] of strictEntries) {
         const candidateSpace = candidate.spaces.find((space) => space.id === spaceId);
@@ -10289,7 +10289,7 @@ public _updateDecorStyle(next: DecorStyle): void {
       attempt = optimisticAttempt(cfg, nextConfig, this.host._cfgContentFingerprint,
         this.host._cfgRev, contentFingerprint);
       this.host._serverCfg = nextConfig;
-      await this._saveConfigNow();
+      await this._saveConfigNow(attempt);
       if (!d.showRoomTooltip && this.host._tip?.room) this.host._tip = null;
       this.host._settingsDialog = null;
       this.host.requestUpdate();

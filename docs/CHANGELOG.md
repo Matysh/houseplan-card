@@ -8,8 +8,9 @@
   than the centreline, respecting local thickness and the intended side of a
   shared wall so the object no longer ends up inside the masonry
   ([#445](https://github.com/Matysh/houseplan-card/issues/445)).
-- Rejected device-marker and robot-calibration saves now restore the last
-  server-confirmed plan without losing the open editor, automatic proposal or
+- Rejected General settings, device-marker and robot-calibration saves now
+  restore the last server-confirmed plan even when the writer canonicalizes the
+  outgoing config, without losing the open editor, automatic proposal or
   manual-fit draft; success is shown only after Home Assistant accepts the
   write, and Retry no longer requires recalibration
   ([#442](https://github.com/Matysh/houseplan-card/issues/442)).

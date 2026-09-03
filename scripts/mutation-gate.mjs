@@ -5447,7 +5447,7 @@ const MUTANT_DEFINITIONS = [
       + 'its own request used, while still yielding to genuinely newer content (#442 AC2)',
     patches: [{
       file: 'src/houseplan-editor-runtime.ts',
-      find: '      if (attempt && candidateFingerprint === attempt.attemptedFingerprint) attempt.revision = this.host._cfgRev;',
+      find: '      if (attempt && liveFingerprint === attempt.attemptedFingerprint) Object.assign(attempt, { revision: this.host._cfgRev, attempted: candidate, attemptedFingerprint: candidateFingerprint });',
       replace: '',
     }],
   },
