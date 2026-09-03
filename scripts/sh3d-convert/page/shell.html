@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sweet Home 3D → House Plan converter</title>
+<meta name="description" content="Convert a Sweet Home 3D .sh3d floor plan into a House Plan import document. Runs entirely in your browser: the file is never uploaded.">
+<meta name="robots" content="index,follow">
+<meta name="theme-color" content="#0b1420">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏠</text></svg>">
+<style>
+  /* Палитра лендинга. Шрифты — системные: страница не делает ни одного
+     сетевого запроса, включая шрифтовые, и работает без сети. */
+  :root{
+    --bg:#0b1420; --bg-2:#0e1a2b; --panel:rgba(18,32,52,.62); --panel-solid:#101d30;
+    --line:rgba(148,180,220,.14); --line-strong:rgba(148,180,220,.28);
+    --text:#e9f1fb; --muted:#93a7bf; --accent:#3ea6ff; --accent-soft:rgba(62,166,255,.14);
+    --amber:#ffb454; --ok:#3ecf9a; --danger:#ff5d5d; --radius:18px;
+    --font:"Manrope",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:1.55;
+    padding:32px 20px 64px;display:flex;justify-content:center}
+  main{width:100%;max-width:860px}
+  header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:28px}
+  .brand{display:flex;align-items:center;gap:10px;color:var(--text);text-decoration:none;font-weight:700}
+  .langs{display:flex;gap:6px}
+  .langs button{background:transparent;border:1px solid var(--line);color:var(--muted);
+    border-radius:999px;padding:4px 12px;font:inherit;font-size:14px;cursor:pointer}
+  .langs button.on{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+  h1{font-size:clamp(24px,4vw,34px);line-height:1.2;margin-bottom:12px}
+  h2{font-size:20px;margin:28px 0 12px}
+  h3{font-size:17px;margin-bottom:6px}
+  h4{font-size:14px;color:var(--muted);font-weight:600;margin:12px 0 4px}
+  p{color:var(--muted)}
+  p.lead{color:var(--text);font-size:17px;margin-bottom:16px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    padding:18px 20px;margin:14px 0}
+  .privacy{border-color:rgba(62,207,154,.35);background:rgba(62,207,154,.08)}
+  .requires{border-color:rgba(255,180,84,.35);background:rgba(255,180,84,.08)}
+  #drop{border:1.5px dashed var(--line-strong);border-radius:var(--radius);padding:36px 20px;
+    text-align:center;background:var(--bg-2);transition:border-color .15s,background .15s}
+  #drop.over{border-color:var(--accent);background:var(--accent-soft)}
+  #drop p{margin:6px 0}
+  .btn{font:inherit;font-weight:600;border-radius:12px;padding:10px 18px;cursor:pointer;
+    border:1px solid var(--line-strong);background:var(--panel-solid);color:var(--text)}
+  .btn.primary{background:var(--accent);border-color:transparent;color:#04121f}
+  .btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .level{background:var(--panel-solid);border:1px solid var(--line);border-radius:14px;
+    padding:16px 18px;margin:12px 0}
+  .stats{color:var(--text);font-size:15px;margin-bottom:12px}
+  .notes{margin:6px 0 0 18px;color:var(--muted);font-size:14px}
+  .notes li{margin:4px 0}
+  .muted{color:var(--muted)}
+  ol{margin-left:20px;color:var(--muted)}
+  ol li{margin:6px 0}
+  #error{border-color:rgba(255,93,93,.4);background:rgba(255,93,93,.08)}
+  #error-detail{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;
+    color:var(--muted);margin-top:8px;word-break:break-word}
+  footer{margin-top:36px;color:var(--muted);font-size:14px}
+  footer a{color:var(--accent)}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <a class="brand" href="/">🏠 House Plan</a>
+    <div class="langs">
+      <button type="button" data-lang="ru">RU</button>
+      <button type="button" data-lang="en">EN</button>
+    </div>
+  </header>
+
+  <h1 data-i18n="page.title">Sweet Home 3D → House Plan converter</h1>
+  <p class="lead" data-i18n="page.lead"></p>
+  <div class="card privacy"><p data-i18n="page.privacy"></p></div>
+  <div class="card requires"><p data-i18n="page.requires"></p></div>
+
+  <div id="drop">
+    <h3 data-i18n="drop.title"></h3>
+    <p data-i18n="drop.or"></p>
+    <button class="btn primary" id="pick" type="button" data-i18n="drop.button"></button>
+    <p class="muted" data-i18n="drop.hint"></p>
+    <input id="file" type="file" accept=".sh3d,application/zip" hidden>
+  </div>
+
+  <div class="card" id="busy" hidden><p data-i18n="busy"></p></div>
+
+  <div class="card" id="error" hidden>
+    <h3 data-i18n="error.title"></h3>
+    <p id="error-text"></p>
+    <p id="error-detail" hidden></p>
+    <p><button class="btn" id="retry" type="button" data-i18n="error.retry"></button></p>
+  </div>
+
+  <section id="result" hidden>
+    <h2 data-i18n="result.title"></h2>
+    <div id="levels"></div>
+    <div id="shared-notes"></div>
+    <h2 data-i18n="howto.title"></h2>
+    <ol>
+      <li data-i18n="howto.1"></li>
+      <li data-i18n="howto.2"></li>
+      <li data-i18n="howto.3"></li>
+    </ol>
+  </section>
+
+  <footer>
+    <a href="/" data-i18n="back">Back to the site</a> ·
+    <a href="https://github.com/Matysh/houseplan-card">GitHub</a>
+  </footer>
+</main>
+<script type="module">
+/* <!--BUNDLE--> */
+</script>
+</body>
+</html>

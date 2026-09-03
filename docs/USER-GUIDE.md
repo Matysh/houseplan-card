@@ -995,6 +995,27 @@ names, exact coordinates and external URLs remain in the JSON. Internal plan
 files are still referenced rather than embedded and may need to be detached on
 another Home Assistant instance.
 
+### Importing a plan from Sweet Home 3D
+
+If the home is already drawn in [Sweet Home 3D](https://www.sweethome3d.com/),
+there is no need to draw it again: the converter at
+[houseplan.tech/convert](https://houseplan.tech/convert) turns a `.sh3d` file
+into import documents — one per level. From there it is the ordinary space
+import under **Global settings → Backup and transfer**.
+
+This is an **optional shortcut**, not a setup step: the normal paths — a
+background image or drawing from scratch — stay unchanged. The conversion runs
+in your browser; the file is never uploaded.
+
+Carried over: levels, rooms with their names, walls with thickness, doors and
+windows. Not carried over: furniture, materials, textures, lights, cameras —
+and the binding of rooms to Home Assistant areas together with device
+placement, because the file has neither; both are done in the editor. Curved
+walls are straightened, walls thicker than 100 cm are clamped to the limit, and
+a level with no drawn rooms cannot be converted at all — House Plan builds
+geometry from rooms. The page lists every such case before you download
+anything.
+
 ### Storage locations
 
 | Data | Location |

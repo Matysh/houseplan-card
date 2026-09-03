@@ -1,0 +1,1258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sweet Home 3D → House Plan converter</title>
+<meta name="description" content="Convert a Sweet Home 3D .sh3d floor plan into a House Plan import document. Runs entirely in your browser: the file is never uploaded.">
+<meta name="robots" content="index,follow">
+<meta name="theme-color" content="#0b1420">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏠</text></svg>">
+<style>
+  /* Палитра лендинга. Шрифты — системные: страница не делает ни одного
+     сетевого запроса, включая шрифтовые, и работает без сети. */
+  :root{
+    --bg:#0b1420; --bg-2:#0e1a2b; --panel:rgba(18,32,52,.62); --panel-solid:#101d30;
+    --line:rgba(148,180,220,.14); --line-strong:rgba(148,180,220,.28);
+    --text:#e9f1fb; --muted:#93a7bf; --accent:#3ea6ff; --accent-soft:rgba(62,166,255,.14);
+    --amber:#ffb454; --ok:#3ecf9a; --danger:#ff5d5d; --radius:18px;
+    --font:"Manrope",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:1.55;
+    padding:32px 20px 64px;display:flex;justify-content:center}
+  main{width:100%;max-width:860px}
+  header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:28px}
+  .brand{display:flex;align-items:center;gap:10px;color:var(--text);text-decoration:none;font-weight:700}
+  .langs{display:flex;gap:6px}
+  .langs button{background:transparent;border:1px solid var(--line);color:var(--muted);
+    border-radius:999px;padding:4px 12px;font:inherit;font-size:14px;cursor:pointer}
+  .langs button.on{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+  h1{font-size:clamp(24px,4vw,34px);line-height:1.2;margin-bottom:12px}
+  h2{font-size:20px;margin:28px 0 12px}
+  h3{font-size:17px;margin-bottom:6px}
+  h4{font-size:14px;color:var(--muted);font-weight:600;margin:12px 0 4px}
+  p{color:var(--muted)}
+  p.lead{color:var(--text);font-size:17px;margin-bottom:16px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    padding:18px 20px;margin:14px 0}
+  .privacy{border-color:rgba(62,207,154,.35);background:rgba(62,207,154,.08)}
+  .requires{border-color:rgba(255,180,84,.35);background:rgba(255,180,84,.08)}
+  #drop{border:1.5px dashed var(--line-strong);border-radius:var(--radius);padding:36px 20px;
+    text-align:center;background:var(--bg-2);transition:border-color .15s,background .15s}
+  #drop.over{border-color:var(--accent);background:var(--accent-soft)}
+  #drop p{margin:6px 0}
+  .btn{font:inherit;font-weight:600;border-radius:12px;padding:10px 18px;cursor:pointer;
+    border:1px solid var(--line-strong);background:var(--panel-solid);color:var(--text)}
+  .btn.primary{background:var(--accent);border-color:transparent;color:#04121f}
+  .btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .level{background:var(--panel-solid);border:1px solid var(--line);border-radius:14px;
+    padding:16px 18px;margin:12px 0}
+  .stats{color:var(--text);font-size:15px;margin-bottom:12px}
+  .notes{margin:6px 0 0 18px;color:var(--muted);font-size:14px}
+  .notes li{margin:4px 0}
+  .muted{color:var(--muted)}
+  ol{margin-left:20px;color:var(--muted)}
+  ol li{margin:6px 0}
+  #error{border-color:rgba(255,93,93,.4);background:rgba(255,93,93,.08)}
+  #error-detail{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;
+    color:var(--muted);margin-top:8px;word-break:break-word}
+  footer{margin-top:36px;color:var(--muted);font-size:14px}
+  footer a{color:var(--accent)}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <a class="brand" href="/">🏠 House Plan</a>
+    <div class="langs">
+      <button type="button" data-lang="ru">RU</button>
+      <button type="button" data-lang="en">EN</button>
+    </div>
+  </header>
+
+  <h1 data-i18n="page.title">Sweet Home 3D → House Plan converter</h1>
+  <p class="lead" data-i18n="page.lead"></p>
+  <div class="card privacy"><p data-i18n="page.privacy"></p></div>
+  <div class="card requires"><p data-i18n="page.requires"></p></div>
+
+  <div id="drop">
+    <h3 data-i18n="drop.title"></h3>
+    <p data-i18n="drop.or"></p>
+    <button class="btn primary" id="pick" type="button" data-i18n="drop.button"></button>
+    <p class="muted" data-i18n="drop.hint"></p>
+    <input id="file" type="file" accept=".sh3d,application/zip" hidden>
+  </div>
+
+  <div class="card" id="busy" hidden><p data-i18n="busy"></p></div>
+
+  <div class="card" id="error" hidden>
+    <h3 data-i18n="error.title"></h3>
+    <p id="error-text"></p>
+    <p id="error-detail" hidden></p>
+    <p><button class="btn" id="retry" type="button" data-i18n="error.retry"></button></p>
+  </div>
+
+  <section id="result" hidden>
+    <h2 data-i18n="result.title"></h2>
+    <div id="levels"></div>
+    <div id="shared-notes"></div>
+    <h2 data-i18n="howto.title"></h2>
+    <ol>
+      <li data-i18n="howto.1"></li>
+      <li data-i18n="howto.2"></li>
+      <li data-i18n="howto.3"></li>
+    </ol>
+  </section>
+
+  <footer>
+    <a href="/" data-i18n="back">Back to the site</a> ·
+    <a href="https://github.com/Matysh/houseplan-card">GitHub</a>
+  </footer>
+</main>
+<script type="module">
+// --- xml.mjs ---
+/**
+ * Минимальный читатель XML для `Home.xml` из `.sh3d` (#446).
+ *
+ * Почему свой, а не библиотека. Инструмент собирается без зависимостей: в
+ * браузере он должен грузиться как обычный модуль, а в Node — исполняться в
+ * CI без установки чего-либо. `Home.xml` машинно сгенерирован и предсказуем:
+ * элементы, атрибуты, текст, без namespace'ов.
+ *
+ * Безопасность важнее полноты. Файл приходит от постороннего, поэтому:
+ * `<!DOCTYPE>` пропускается и НЕ разрешается (Sweet Home 3D ссылается на свою
+ * DTD, и попытка её загрузить — это XXE), объявления сущностей отвергаются,
+ * из ссылок понимаются только пять предопределённых и числовые. Глубина и
+ * число узлов ограничены: zip-бомба и «миллион смешков» не должны вешать
+ * вкладку.
+ */
+
+const PREDEFINED = { lt: '<', gt: '>', amp: '&', quot: '"', apos: "'" };
+
+class XmlError extends Error {
+  constructor(code, message) {
+    super(message || code);
+    this.code = code;
+  }
+}
+
+/** Раскрытие ссылок: только предопределённые и числовые, всё прочее — отказ. */
+function decodeText(raw) {
+  return String(raw).replace(/&(#x?[0-9a-fA-F]+|[a-zA-Z][a-zA-Z0-9]*);/g, (whole, body) => {
+    if (body[0] === '#') {
+      const code = body[1] === 'x' || body[1] === 'X'
+        ? Number.parseInt(body.slice(2), 16)
+        : Number.parseInt(body.slice(1), 10);
+      if (!Number.isFinite(code) || code < 0 || code > 0x10ffff) {
+        throw new XmlError('bad_reference', `Недопустимая ссылка: ${whole}`);
+      }
+      return String.fromCodePoint(code);
+    }
+    if (body in PREDEFINED) return PREDEFINED[body];
+    // Своя сущность — это либо DTD, либо расширение: то и другое мы не берём.
+    throw new XmlError('entity_reference', `Сущность ${whole} не поддерживается`);
+  });
+}
+
+const LIMITS = { maxNodes: 400_000, maxDepth: 64, maxAttrChars: 65_536 };
+
+/**
+ * Разобрать документ в дерево `{ tag, attrs, children }`.
+ *
+ * Текст элементов не нужен ни одному полю `.sh3d`, которое мы читаем, поэтому
+ * он не собирается — это осознанное сужение, а не забывчивость.
+ */
+function parseXml(source, limits = LIMITS) {
+  const text = String(source);
+  if (text.includes('<!ENTITY')) {
+    throw new XmlError('entity_declaration', 'Объявления сущностей запрещены');
+  }
+  const root = { tag: '#document', attrs: {}, children: [] };
+  const stack = [root];
+  let nodes = 0;
+  let at = 0;
+  while (at < text.length) {
+    const open = text.indexOf('<', at);
+    if (open < 0) break;
+    at = open;
+    if (text.startsWith('<!--', at)) {
+      const end = text.indexOf('-->', at + 4);
+      if (end < 0) throw new XmlError('unterminated', 'Незакрытый комментарий');
+      at = end + 3;
+      continue;
+    }
+    if (text.startsWith('<?', at)) {
+      const end = text.indexOf('?>', at + 2);
+      if (end < 0) throw new XmlError('unterminated', 'Незакрытая инструкция');
+      at = end + 2;
+      continue;
+    }
+    if (text.startsWith('<![CDATA[', at)) {
+      const end = text.indexOf(']]>', at + 9);
+      if (end < 0) throw new XmlError('unterminated', 'Незакрытый CDATA');
+      at = end + 3;
+      continue;
+    }
+    if (text.startsWith('<!DOCTYPE', at)) {
+      // Пропускаем, ничего не загружая. Внутренний блок [...] допустим только
+      // без объявлений сущностей — это проверено выше по всему тексту.
+      let depth = 0;
+      let cursor = at + 9;
+      for (; cursor < text.length; cursor++) {
+        const ch = text[cursor];
+        if (ch === '[') depth++;
+        else if (ch === ']') depth--;
+        else if (ch === '>' && depth <= 0) break;
+      }
+      if (cursor >= text.length) throw new XmlError('unterminated', 'Незакрытый DOCTYPE');
+      at = cursor + 1;
+      continue;
+    }
+    if (text.startsWith('</', at)) {
+      const end = text.indexOf('>', at + 2);
+      if (end < 0) throw new XmlError('unterminated', 'Незакрытый закрывающий тег');
+      const name = text.slice(at + 2, end).trim();
+      const top = stack[stack.length - 1];
+      if (stack.length < 2 || top.tag !== name) {
+        throw new XmlError('mismatched_tag', `Тег ${name} закрыт не там, где открыт`);
+      }
+      stack.pop();
+      at = end + 1;
+      continue;
+    }
+    // Открывающий тег: имя, атрибуты, возможный самозакрывающий слэш.
+    const end = findTagEnd(text, at);
+    const body = text.slice(at + 1, end);
+    const selfClosing = body.endsWith('/');
+    const inner = selfClosing ? body.slice(0, -1) : body;
+    const match = /^([^\s/>]+)([\s\S]*)$/.exec(inner);
+    if (!match) throw new XmlError('bad_tag', 'Не разобран открывающий тег');
+    if (++nodes > limits.maxNodes) throw new XmlError('too_many_nodes', 'Слишком много узлов');
+    const node = { tag: match[1], attrs: parseAttrs(match[2], limits), children: [] };
+    stack[stack.length - 1].children.push(node);
+    if (!selfClosing) {
+      stack.push(node);
+      if (stack.length > limits.maxDepth) throw new XmlError('too_deep', 'Слишком глубоко');
+    }
+    at = end + 1;
+  }
+  if (stack.length !== 1) throw new XmlError('unterminated', 'Документ закончился внутри элемента');
+  const element = root.children.find((child) => child.tag[0] !== '#');
+  if (!element) throw new XmlError('empty', 'В документе нет корневого элемента');
+  return element;
+}
+
+/** Конец тега с учётом `>` внутри значений атрибутов. */
+function findTagEnd(text, from) {
+  let quote = '';
+  for (let at = from + 1; at < text.length; at++) {
+    const ch = text[at];
+    if (quote) {
+      if (ch === quote) quote = '';
+      continue;
+    }
+    if (ch === '"' || ch === "'") quote = ch;
+    else if (ch === '>') return at;
+  }
+  throw new XmlError('unterminated', 'Незакрытый тег');
+}
+
+function parseAttrs(source, limits) {
+  const attrs = {};
+  if (source.length > limits.maxAttrChars) {
+    throw new XmlError('attrs_too_large', 'Атрибуты элемента превышают предел');
+  }
+  const re = /([^\s=]+)\s*=\s*("([^"]*)"|'([^']*)')/g;
+  let match = re.exec(source);
+  while (match) {
+    attrs[match[1]] = decodeText(match[3] !== undefined ? match[3] : match[4]);
+    match = re.exec(source);
+  }
+  return attrs;
+}
+
+/** Все дочерние элементы с указанным тегом (на один уровень). */
+const childrenOf = (node, tag) =>
+  (node?.children || []).filter((child) => child.tag === tag);
+
+// --- zip.mjs ---
+/**
+ * Минимальный читатель zip для `.sh3d` (#446).
+ *
+ * `.sh3d` — это zip, внутри которого нужен ровно один вход: `Home.xml`.
+ * Библиотеки не берём (см. `xml.mjs`), поэтому здесь читается центральный
+ * каталог и распаковывается одна запись: метод 0 (без сжатия) и метод 8
+ * (deflate). Распаковка берётся из окружения: в браузере
+ * `DecompressionStream('deflate-raw')`, в Node — `node:zlib`.
+ *
+ * Границы недоверенного ввода жёсткие и все на входе: шифрованные записи,
+ * zip64, слишком большая распакованная запись и подозрительные имена
+ * отвергаются кодом ошибки, а не исключением из недр.
+ */
+
+class ZipError extends Error {
+  constructor(code, message) {
+    super(message || code);
+    this.code = code;
+  }
+}
+
+const EOCD = 0x06054b50;
+const CENTRAL = 0x02014b50;
+const LOCAL = 0x04034b50;
+const MAX_ENTRY_BYTES = 64 * 1024 * 1024;
+
+const u16 = (view, at) => view.getUint16(at, true);
+const u32 = (view, at) => view.getUint32(at, true);
+
+async function inflateRaw(bytes) {
+  if (typeof DecompressionStream === 'function') {
+    const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+    return new Uint8Array(await new Response(stream).arrayBuffer());
+  }
+  const zlib = await import('node:zlib');
+  return new Uint8Array(zlib.inflateRawSync(bytes));
+}
+
+/** Смещение EOCD: ищем подпись с конца, учитывая возможный комментарий. */
+function findEndOfCentralDirectory(view) {
+  const limit = Math.min(view.byteLength, 0xffff + 22);
+  for (let back = 22; back <= limit; back++) {
+    const at = view.byteLength - back;
+    if (at < 0) break;
+    if (u32(view, at) === EOCD) return at;
+  }
+  throw new ZipError('not_zip', 'Это не zip-архив: не найден конец центрального каталога');
+}
+
+/**
+ * Список записей архива: имя, метод, смещение, размеры.
+ * Данные не читаются — только каталог, чтобы решение «брать или отказать»
+ * принималось до распаковки.
+ */
+function listZipEntries(source) {
+  const bytes = source instanceof Uint8Array ? source : new Uint8Array(source);
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const eocd = findEndOfCentralDirectory(view);
+  const count = u16(view, eocd + 10);
+  let at = u32(view, eocd + 16);
+  if (at === 0xffffffff || count === 0xffff) {
+    throw new ZipError('zip64', 'zip64 не поддерживается');
+  }
+  const entries = [];
+  for (let index = 0; index < count; index++) {
+    if (at + 46 > bytes.byteLength || u32(view, at) !== CENTRAL) {
+      throw new ZipError('bad_central', 'Повреждён центральный каталог');
+    }
+    const flags = u16(view, at + 8);
+    const nameLength = u16(view, at + 28);
+    const extraLength = u16(view, at + 30);
+    const commentLength = u16(view, at + 32);
+    const name = new TextDecoder(flags & 0x800 ? 'utf-8' : 'utf-8')
+      .decode(bytes.subarray(at + 46, at + 46 + nameLength));
+    entries.push({
+      name,
+      encrypted: (flags & 0x1) !== 0,
+      method: u16(view, at + 10),
+      compressedSize: u32(view, at + 20),
+      uncompressedSize: u32(view, at + 24),
+      localOffset: u32(view, at + 42),
+    });
+    at += 46 + nameLength + extraLength + commentLength;
+  }
+  return entries;
+}
+
+/** Распаковать одну запись по имени. */
+async function readZipEntry(source, name, maxBytes = MAX_ENTRY_BYTES) {
+  const bytes = source instanceof Uint8Array ? source : new Uint8Array(source);
+  const entry = listZipEntries(bytes).find((item) => item.name === name);
+  if (!entry) throw new ZipError('entry_missing', `В архиве нет ${name}`);
+  if (entry.encrypted) throw new ZipError('encrypted', 'Архив защищён паролем');
+  if (entry.uncompressedSize > maxBytes) {
+    throw new ZipError('entry_too_large',
+      `${name}: ${entry.uncompressedSize} Б распакованных — больше предела ${maxBytes} Б`);
+  }
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const local = entry.localOffset;
+  if (local + 30 > bytes.byteLength || u32(view, local) !== LOCAL) {
+    throw new ZipError('bad_local', 'Повреждён локальный заголовок записи');
+  }
+  const start = local + 30 + u16(view, local + 26) + u16(view, local + 28);
+  const raw = bytes.subarray(start, start + entry.compressedSize);
+  if (entry.method === 0) {
+    if (raw.byteLength > maxBytes) throw new ZipError('entry_too_large', 'Запись больше предела');
+    return raw.slice();
+  }
+  if (entry.method !== 8) {
+    throw new ZipError('unsupported_method', `Метод сжатия ${entry.method} не поддерживается`);
+  }
+  const out = await inflateRaw(raw);
+  // Объявленный размер не авторитетен: бомба объявляет мало, отдаёт много.
+  if (out.byteLength > maxBytes) {
+    throw new ZipError('entry_too_large', `${name}: распаковано больше предела ${maxBytes} Б`);
+  }
+  return out;
+}
+
+// --- convert.mjs ---
+/**
+ * Маппинг модели Sweet Home 3D в документ импорта House Plan (#446).
+ *
+ * Форма выхода — «v7»: комнаты с полигонами, стены с толщиной, проёмы по
+ * координатам. Ни сегментов, ни `wall_ids`, ни хостов проёмов конвертер не
+ * строит: их собирает серверный писатель импорта (`commit_wall_segment_model`),
+ * тот же, которым едут старые бэкапы. Проверено прогоном: v7 → валидный v9,
+ * общая граница двух комнат склеивается в один сегмент, дверь получает хозяина
+ * сама. Строить каталог сегментов на стороне сайта означало бы повторить этот
+ * алгоритм и разойтись с ним на первом же изменении модели.
+ *
+ * Главное геометрическое решение: **план строится по комнатам.** Стена в нашей
+ * модели существует как ребро контура комнаты (валидатор требует у сегмента
+ * одного-двух владельцев-комнат), поэтому стены Sweet Home 3D дают рёбрам
+ * только толщину. Уровень, где комнат нет, конвертировать нечем — и это отказ
+ * с объяснением, а не пустой план.
+ */
+
+const FORMAT = 'houseplan-export';
+const EXPORT_VERSION = 2;
+/** Форма документа: структуру из неё собирает сервер (см. шапку). */
+const MODEL_VERSION = 7;
+/** Версия House Plan, на которой проверен путь импорта. */
+const MIN_HOUSEPLAN = '1.71';
+
+/** Сантиметров в клетке. Выбирается из лестницы — «красивый» масштаб читаем. */
+const CELL_LADDER = [1, 2, 2.5, 5, 10, 20, 25, 50, 100, 200, 500];
+/** Доля единичного квадрата под план: остаток — поля. */
+const TARGET_EXTENT = 0.86;
+/** Решётка нашего редактора: 240 клеток на ширину плана. */
+const GRID_N = 240;
+/** Сварка вершин: две точки ближе этого считаются одной (см).  */
+const WELD_CM = 1;
+/** Допуск привязки вершины к осевой линии стены сверх её полутолщины (см). */
+const SNAP_TOL_CM = 3;
+/** Допуск поиска хозяина проёма сверх полутолщины стены (см). */
+const OPENING_TOL_CM = 8;
+const MAX_POLY_POINTS = 500;
+const MIN_THICKNESS_CM = 1;
+const MAX_THICKNESS_CM = 100;
+
+class ConvertError extends Error {
+  constructor(code, message) {
+    super(message || code);
+    this.code = code;
+  }
+}
+
+// --- геометрия в сантиметрах -------------------------------------------------
+
+const hypot = (dx, dy) => Math.sqrt(dx * dx + dy * dy);
+
+const projectT = (point, a, b) => {
+  const dx = b[0] - a[0];
+  const dy = b[1] - a[1];
+  const denominator = dx * dx + dy * dy;
+  if (denominator <= 1e-18) return 0;
+  return ((point[0] - a[0]) * dx + (point[1] - a[1]) * dy) / denominator;
+};
+
+const pointAt = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+
+const distanceToLine = (point, a, b) => {
+  const t = projectT(point, a, b);
+  const foot = pointAt(a, b, t);
+  return hypot(point[0] - foot[0], point[1] - foot[1]);
+};
+
+const distanceToSegment = (point, a, b) => {
+  const t = Math.max(0, Math.min(1, projectT(point, a, b)));
+  const foot = pointAt(a, b, t);
+  return hypot(point[0] - foot[0], point[1] - foot[1]);
+};
+
+const direction = (a, b) => {
+  const dx = b[0] - a[0];
+  const dy = b[1] - a[1];
+  const length = hypot(dx, dy);
+  return length < 1e-12 ? [1, 0] : [dx / length, dy / length];
+};
+
+const lineIntersection = (a1, a2, b1, b2) => {
+  const [dx1, dy1] = [a2[0] - a1[0], a2[1] - a1[1]];
+  const [dx2, dy2] = [b2[0] - b1[0], b2[1] - b1[1]];
+  const denominator = dx1 * dy2 - dy1 * dx2;
+  if (Math.abs(denominator) < 1e-9) return null;
+  const t = ((b1[0] - a1[0]) * dy2 - (b1[1] - a1[1]) * dx2) / denominator;
+  return [a1[0] + dx1 * t, a1[1] + dy1 * t];
+};
+
+/** Угол между направлениями без учёта знака, 0…90°. */
+const angleBetween = (first, second) => {
+  const dot = Math.abs(first[0] * second[0] + first[1] * second[1]);
+  return Math.acos(Math.min(1, dot)) * (180 / Math.PI);
+};
+
+// --- порты серверных формул (совпадать обязаны побайтово) --------------------
+
+const jsRound = (value) => Math.floor(value + 0.5);
+
+/** `canonicalize_number`: одна стабильная запись с девятью знаками. */
+function canonicalizeNumber(value) {
+  if (!Number.isFinite(value)) return value;
+  const sign = Object.is(value, -0) || value < 0 ? -1 : 1;
+  const result = sign * (Math.floor(Math.abs(value) * 1e9 + 0.5) / 1e9);
+  return result === 0 ? 0 : result;
+}
+
+/** `canonicalize_lattice_coordinate`: шум у узла решётки сваливается в узел. */
+function canonicalizeLattice(value) {
+  if (!Number.isFinite(value)) return value;
+  const scaled = value * GRID_N;
+  const nearest = Math.floor(scaled + 0.5);
+  if (Math.abs(scaled - nearest) < 1e-4) {
+    const result = nearest / GRID_N;
+    return result === 0 ? 0 : result;
+  }
+  return canonicalizeNumber(value);
+}
+
+/** `_wall_key`: квантованная середина и угол — так сервер ищет толщину. */
+function wallKey(a, b) {
+  const quantize = (value) => (jsRound(value * GRID_N) / GRID_N);
+  const midX = quantize((a[0] + b[0]) / 2);
+  const midY = quantize((a[1] + b[1]) / 2);
+  const dx = b[0] - a[0];
+  const dy = b[1] - a[1];
+  const length = hypot(dx, dy);
+  let [ux, uy] = length < 1e-12 ? [1, 0] : [dx / length, dy / length];
+  if (ux < -1e-12 || (Math.abs(ux) <= 1e-12 && uy < 0)) {
+    ux = -ux;
+    uy = -uy;
+  }
+  let angle = Math.atan2(uy, ux);
+  if (angle < 0) angle += Math.PI;
+  angle = jsRound(angle * 1800) / 1800;
+  return `${midX.toFixed(6)},${midY.toFixed(6)}@${angle.toFixed(4)}`;
+}
+
+// --- подготовка одного уровня ------------------------------------------------
+
+const weld = (value) => Math.round(value / WELD_CM) * WELD_CM;
+const vertexKey = (point) => `${weld(point[0])},${weld(point[1])}`;
+
+/** Привязать вершины комнат к осевым линиям стен и сварить совпадающие. */
+function alignRooms(rooms, walls, report) {
+  const usable = walls.filter((wall) => hypot(wall.b[0] - wall.a[0], wall.b[1] - wall.a[1]) > 1e-6);
+  let snapped = 0;
+  const aligned = rooms.map((room) => ({
+    ...room,
+    points: room.points.map((point) => {
+      const near = usable
+        .map((wall) => ({
+          wall,
+          distance: distanceToSegment(point, wall.a, wall.b),
+          reach: (Number.isFinite(wall.thickness) ? wall.thickness : 0) / 2 + SNAP_TOL_CM,
+        }))
+        .filter((item) => item.distance <= item.reach)
+        .sort((first, second) => first.distance - second.distance);
+      if (!near.length) return point;
+      const first = near[0];
+      const crossing = near.find((item) =>
+        angleBetween(direction(item.wall.a, item.wall.b), direction(first.wall.a, first.wall.b)) > 20);
+      const target = crossing
+        ? lineIntersection(first.wall.a, first.wall.b, crossing.wall.a, crossing.wall.b)
+          || pointAt(first.wall.a, first.wall.b, projectT(point, first.wall.a, first.wall.b))
+        : pointAt(first.wall.a, first.wall.b, projectT(point, first.wall.a, first.wall.b));
+      if (hypot(target[0] - point[0], target[1] - point[1]) > 1e-9) snapped += 1;
+      return target;
+    }),
+  }));
+  if (snapped) report.push({ code: 'vertices_snapped', count: snapped });
+  // Сварка: рёбра двух комнат обязаны совпасть точка-в-точку, иначе общая
+  // граница станет двумя параллельными стенами.
+  const welded = new Map();
+  for (const room of aligned) {
+    for (const point of room.points) {
+      const key = vertexKey(point);
+      if (!welded.has(key)) welded.set(key, [weld(point[0]), weld(point[1])]);
+    }
+  }
+  return aligned.map((room) => ({
+    ...room,
+    points: room.points.map((point) => welded.get(vertexKey(point))),
+  }));
+}
+
+/** Убрать нулевые рёбра и дубли; вернуть null, если полигон рассыпался. */
+function cleanPolygon(points) {
+  const out = [];
+  for (const point of points) {
+    const previous = out[out.length - 1];
+    if (previous && previous[0] === point[0] && previous[1] === point[1]) continue;
+    out.push(point);
+  }
+  while (out.length > 1) {
+    const first = out[0];
+    const last = out[out.length - 1];
+    if (first[0] === last[0] && first[1] === last[1]) out.pop();
+    else break;
+  }
+  return out.length >= 3 ? out : null;
+}
+
+const edgesOf = (points) =>
+  points.map((point, index) => [point, points[(index + 1) % points.length]]);
+
+const spanKey = (a, b) => {
+  const first = `${a[0]},${a[1]}`;
+  const second = `${b[0]},${b[1]}`;
+  return first <= second ? `${first}|${second}` : `${second}|${first}`;
+};
+
+/** Толщина ребра: стена, чья осевая линия его накрывает; шире — та, что ближе. */
+function thicknessFor(edge, walls) {
+  const [a, b] = edge;
+  const length = hypot(b[0] - a[0], b[1] - a[1]);
+  let best = null;
+  for (const wall of walls) {
+    if (!Number.isFinite(wall.thickness) || wall.thickness <= 0) continue;
+    const reach = wall.thickness / 2 + SNAP_TOL_CM;
+    if (distanceToLine(a, wall.a, wall.b) > reach) continue;
+    if (distanceToLine(b, wall.a, wall.b) > reach) continue;
+    const ta = projectT(a, wall.a, wall.b);
+    const tb = projectT(b, wall.a, wall.b);
+    const low = Math.max(0, Math.min(ta, tb));
+    const high = Math.min(1, Math.max(ta, tb));
+    const wallLength = hypot(wall.b[0] - wall.a[0], wall.b[1] - wall.a[1]);
+    const overlap = Math.max(0, high - low) * wallLength;
+    if (overlap < length - 1e-6) continue;
+    const score = overlap - distanceToSegment(pointAt(a, b, 0.5), wall.a, wall.b);
+    if (!best || score > best.score) best = { score, thickness: wall.thickness };
+  }
+  return best ? best.thickness : 0;
+}
+
+const clampThickness = (cm) =>
+  Math.min(MAX_THICKNESS_CM, Math.max(MIN_THICKNESS_CM, canonicalizeNumber(cm)));
+
+/** Масштаб: наименьшая «красивая» клетка, при которой план влезает с полями. */
+function pickCellCm(extentCm) {
+  const needed = extentCm / (GRID_N * TARGET_EXTENT);
+  return CELL_LADDER.find((cell) => cell >= needed) ?? CELL_LADDER[CELL_LADDER.length - 1];
+}
+
+/**
+ * Идентификатор: только ASCII. Схема разрешает любой текст, но id уезжает в
+ * ключи layout, в DOM и в URL предпросмотра, а кириллица там читается плохо.
+ * Имя человека при этом не теряется — оно живёт в `name`/`title`.
+ */
+const slug = (raw, fallback) => {
+  const cleaned = String(raw || '').toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 24);
+  return cleaned || fallback;
+};
+
+// --- собственно конверсия ----------------------------------------------------
+
+/**
+ * Собрать документы импорта: по одному на уровень.
+ * Возвращает `{ documents, report }`; отказы — исключение `ConvertError`.
+ */
+function convertHome(home, options = {}) {
+  const toolVersion = options.toolVersion || 'sh3d-convert';
+  const createdAt = options.now || new Date().toISOString().replace(/\.\d+Z$/, 'Z');
+  if (home.unit && !['centimeter', 'millimeter', 'meter'].includes(home.unit)) {
+    throw new ConvertError('unit_not_metric',
+      `Единицы плана «${home.unit}» не метрические: пересохраните план в сантиметрах`);
+  }
+  const levels = home.levels.length
+    ? [...home.levels].sort((first, second) => first.elevationIndex - second.elevationIndex)
+    : [{ id: null, name: home.name, elevation: 0, elevationIndex: 0 }];
+  const documents = [];
+  const report = { levels: [], items: [], toolVersion, minHouseplan: MIN_HOUSEPLAN };
+  const onLevel = (item, level) =>
+    item.level === null || item.level === undefined || item.level === level.id
+    || (level.id === null && true);
+
+  for (const [index, level] of levels.entries()) {
+    const notes = [];
+    const rawRooms = home.rooms
+      .filter((room) => onLevel(room, level))
+      .filter((room) => {
+        if (room.points.length >= 3) return true;
+        notes.push({ code: 'room_without_polygon', id: room.id });
+        return false;
+      });
+    const walls = home.walls.filter((wall) => onLevel(wall, level));
+    const curved = walls.filter((wall) => Math.abs(wall.arcExtent) > 1e-6);
+    if (curved.length) notes.push({ code: 'curved_wall_straightened', count: curved.length });
+    const thick = walls.filter((wall) => wall.thickness > MAX_THICKNESS_CM);
+    if (thick.length) {
+      notes.push({ code: 'thickness_clamped', count: thick.length, limit: MAX_THICKNESS_CM });
+    }
+    if (!rawRooms.length) {
+      report.levels.push({
+        id: level.id, title: level.name, rooms: 0, walls: 0, openings: 0,
+        skipped: 'no_rooms', notes,
+      });
+      report.items.push({ code: 'level_without_rooms', id: level.id, title: level.name });
+      continue;
+    }
+
+    const aligned = alignRooms(rawRooms, walls, notes);
+    const polygons = [];
+    for (const room of aligned) {
+      const polygon = cleanPolygon(room.points);
+      if (!polygon) {
+        notes.push({ code: 'room_collapsed', id: room.id });
+        continue;
+      }
+      if (polygon.length > MAX_POLY_POINTS) {
+        throw new ConvertError('room_too_complex',
+          `Комната «${room.name || room.id}»: ${polygon.length} вершин, предел ${MAX_POLY_POINTS}`);
+      }
+      polygons.push({ ...room, points: polygon });
+    }
+    if (!polygons.length) {
+      report.levels.push({
+        id: level.id, title: level.name, rooms: 0, walls: 0, openings: 0,
+        skipped: 'no_rooms', notes,
+      });
+      report.items.push({ code: 'level_without_rooms', id: level.id, title: level.name });
+      continue;
+    }
+
+    // Масштаб и сдвиг: план центрируется в единичном квадрате.
+    const xs = polygons.flatMap((room) => room.points.map((point) => point[0]));
+    const ys = polygons.flatMap((room) => room.points.map((point) => point[1]));
+    const minX = Math.min(...xs);
+    const minY = Math.min(...ys);
+    const width = Math.max(...xs) - minX;
+    const height = Math.max(...ys) - minY;
+    if (!(width > 0 && height > 0)) {
+      throw new ConvertError('degenerate_level',
+        `Уровень «${level.name || level.id}»: у плана нет площади`);
+    }
+    const cellCm = pickCellCm(Math.max(width, height));
+    const unitCm = cellCm * GRID_N;
+    const offsetX = (1 - width / unitCm) / 2;
+    const offsetY = (1 - height / unitCm) / 2;
+    const toNorm = (point) => [
+      canonicalizeLattice((point[0] - minX) / unitCm + offsetX),
+      canonicalizeLattice((point[1] - minY) / unitCm + offsetY),
+    ];
+
+    const rooms = polygons.map((room, roomIndex) => ({
+      id: `${slug(room.id, `room-${roomIndex + 1}`)}`,
+      name: room.name || `Room ${roomIndex + 1}`,
+      poly: room.points.map(toNorm),
+    }));
+
+    // Стены: одна запись на уникальное ребро контура. Толщина берётся у стены
+    // Sweet Home 3D, накрывающей это ребро; ребро без стены остаётся открытой
+    // границей (сервер даст сегменту нулевую толщину).
+    const wallByKey = new Map();
+    const spanByKey = new Map();
+    for (const room of polygons) {
+      for (const [a, b] of edgesOf(room.points)) {
+        const key = spanKey(a, b);
+        if (wallByKey.has(key)) continue;
+        const cm = thicknessFor([a, b], walls);
+        spanByKey.set(key, { a, b, cm });
+        if (cm <= 0) continue;
+        const [na, nb] = [toNorm(a), toNorm(b)];
+        wallByKey.set(key, { key: wallKey(na, nb), cm: clampThickness(cm), a: na, b: nb });
+      }
+    }
+    const openBoundaries = [...spanByKey.values()].filter((span) => span.cm <= 0).length;
+    if (openBoundaries) notes.push({ code: 'edge_without_wall', count: openBoundaries });
+
+    // Проёмы: центр проецируется на ребро, угол берётся у ребра. Полагаться на
+    // угол из файла нельзя — в нём иначе заданы единицы, и проверка хоста на
+    // сервере допускает расхождение всего 8°.
+    const openings = [];
+    for (const piece of home.openings.filter((item) => onLevel(item, level))) {
+      const width_cm = Number.isFinite(piece.width) && piece.width > 0 ? piece.width : 0;
+      if (!width_cm) {
+        notes.push({ code: 'opening_without_width', id: piece.id });
+        continue;
+      }
+      let best = null;
+      for (const span of spanByKey.values()) {
+        if (span.cm <= 0) continue;
+        const distance = distanceToSegment([piece.x, piece.y], span.a, span.b);
+        if (distance > span.cm / 2 + OPENING_TOL_CM) continue;
+        if (!best || distance < best.distance) best = { span, distance };
+      }
+      if (!best) {
+        notes.push({ code: 'opening_unhosted', id: piece.id, kind: piece.kind });
+        continue;
+      }
+      const { a, b } = best.span;
+      const spanLength = hypot(b[0] - a[0], b[1] - a[1]);
+      const length_cm = Math.min(width_cm, spanLength);
+      if (length_cm < width_cm - 1e-6) {
+        notes.push({ code: 'opening_shortened', id: piece.id });
+      }
+      const half = length_cm / 2;
+      const raw = projectT([piece.x, piece.y], a, b) * spanLength;
+      const centreAlong = Math.min(spanLength - half, Math.max(half, raw));
+      const centre = pointAt(a, b, spanLength > 0 ? centreAlong / spanLength : 0.5);
+      const [na, nb] = [toNorm(a), toNorm(b)];
+      const [nc] = [toNorm(centre)];
+      const angle = canonicalizeNumber(
+        Math.atan2(nb[1] - na[1], nb[0] - na[0]) * (180 / Math.PI));
+      openings.push({
+        id: `${slug(piece.id, `opening-${openings.length + 1}`)}`,
+        type: piece.kind,
+        x: nc[0],
+        y: nc[1],
+        angle,
+        length: canonicalizeNumber(length_cm / unitCm),
+      });
+    }
+
+    const polyPoints = rooms.flatMap((room) => room.poly);
+    const boxMinX = Math.min(...polyPoints.map((point) => point[0]));
+    const boxMinY = Math.min(...polyPoints.map((point) => point[1]));
+    const boxMaxX = Math.max(...polyPoints.map((point) => point[0]));
+    const boxMaxY = Math.max(...polyPoints.map((point) => point[1]));
+    const margin = 0.02;
+    const space = {
+      id: `sh3d-${index + 1}-${slug(level.name || home.name, `level-${index + 1}`)}`,
+      title: level.name || home.name || `Level ${index + 1}`,
+      cell_cm: cellCm,
+      view_box: [
+        canonicalizeNumber(boxMinX - margin),
+        canonicalizeNumber(boxMinY - margin),
+        canonicalizeNumber(boxMaxX - boxMinX + margin * 2),
+        canonicalizeNumber(boxMaxY - boxMinY + margin * 2),
+      ],
+      rooms,
+      ...(wallByKey.size ? { walls: [...wallByKey.values()] } : {}),
+      ...(openings.length ? { openings } : {}),
+    };
+    documents.push({
+      format: FORMAT,
+      export_version: EXPORT_VERSION,
+      kind: 'space',
+      created_at: createdAt,
+      card_version: toolVersion,
+      integration_version: toolVersion,
+      model_version: MODEL_VERSION,
+      payload: { config: { spaces: [space], markers: [] }, layout: {} },
+      placement_manifest: [],
+      content_manifest: [],
+      transfer: { plan_only: true },
+    });
+    report.levels.push({
+      id: level.id,
+      title: space.title,
+      spaceId: space.id,
+      cellCm: cellCm,
+      rooms: rooms.length,
+      walls: wallByKey.size,
+      openings: openings.length,
+      notes,
+    });
+  }
+
+  if (!documents.length) {
+    throw new ConvertError('nothing_to_convert',
+      'В плане нет ни одной комнаты: House Plan строит геометрию по комнатам, '
+      + 'нарисуйте их в Sweet Home 3D и сохраните файл заново');
+  }
+  // Мебель и прочее не читается вовсе — но человек должен знать, что её нет.
+  report.items.push({ code: 'furniture_dropped' });
+  return { documents, report };
+}
+
+// --- sh3d.mjs ---
+/**
+ * Чтение `.sh3d` (Sweet Home 3D) в плоскую модель в сантиметрах (#446).
+ *
+ * Формат: zip, внутри `Home.xml` — тот, что описан их публичной DTD. Читаются
+ * ровно четыре сущности: уровни, комнаты (полигоны), стены (осевая линия +
+ * толщина), двери и окна. Всё остальное — мебель, материалы, текстуры, свет,
+ * камеры, размерные линии, фон уровня — сознательно не читается: см. SCOPE,
+ * «мы живая пространственная карта, а не редактор интерьера».
+ *
+ * Единицы Sweet Home 3D — сантиметры, ось Y вниз, как у нас.
+ */
+
+class Sh3dError extends Error {
+  constructor(code, message) {
+    super(message || code);
+    this.code = code;
+  }
+}
+
+const num = (raw, fallback = NaN) => {
+  if (raw === undefined || raw === null || raw === '') return fallback;
+  const value = Number(String(raw).trim());
+  return Number.isFinite(value) ? value : fallback;
+};
+
+/** Дверь или окно: формат их не различает, различаем по каталогу и имени. */
+const WINDOW_HINTS = [
+  'window', 'fenetre', 'fenêtre', 'fenster', 'ventana', 'finestra', 'raam',
+  'окно', 'окн',
+];
+function openingKind(piece) {
+  const haystack = `${piece.catalogId || ''} ${piece.name || ''}`.toLowerCase();
+  return WINDOW_HINTS.some((hint) => haystack.includes(hint)) ? 'window' : 'door';
+}
+
+/** Разобрать уже распакованный `Home.xml`. */
+function parseHomeXml(xml) {
+  const home = parseXml(xml);
+  if (home.tag !== 'home') {
+    throw new Sh3dError('not_home', 'Home.xml не начинается с элемента <home>');
+  }
+  const levels = childrenOf(home, 'level').map((node, index) => ({
+    id: String(node.attrs.id ?? `level${index}`),
+    name: String(node.attrs.name ?? '').trim(),
+    elevation: num(node.attrs.elevation, 0),
+    elevationIndex: num(node.attrs.elevationIndex, index),
+  }));
+  const rooms = childrenOf(home, 'room').map((node, index) => ({
+    id: String(node.attrs.id ?? `room${index}`),
+    level: node.attrs.level === undefined ? null : String(node.attrs.level),
+    name: String(node.attrs.name ?? '').trim(),
+    points: childrenOf(node, 'point')
+      .map((point) => [num(point.attrs.x), num(point.attrs.y)])
+      .filter((point) => Number.isFinite(point[0]) && Number.isFinite(point[1])),
+  }));
+  const walls = childrenOf(home, 'wall').map((node, index) => ({
+    id: String(node.attrs.id ?? `wall${index}`),
+    level: node.attrs.level === undefined ? null : String(node.attrs.level),
+    a: [num(node.attrs.xStart), num(node.attrs.yStart)],
+    b: [num(node.attrs.xEnd), num(node.attrs.yEnd)],
+    thickness: num(node.attrs.thickness, NaN),
+    arcExtent: num(node.attrs.arcExtent, 0),
+  })).filter((wall) => wall.a.every(Number.isFinite) && wall.b.every(Number.isFinite));
+  const openings = childrenOf(home, 'doorOrWindow').map((node, index) => {
+    const piece = {
+      id: String(node.attrs.id ?? `piece${index}`),
+      level: node.attrs.level === undefined ? null : String(node.attrs.level),
+      name: String(node.attrs.name ?? '').trim(),
+      catalogId: String(node.attrs.catalogId ?? ''),
+      x: num(node.attrs.x),
+      y: num(node.attrs.y),
+      width: num(node.attrs.width, NaN),
+      angle: num(node.attrs.angle, 0),
+    };
+    return { ...piece, kind: openingKind(piece) };
+  }).filter((piece) => Number.isFinite(piece.x) && Number.isFinite(piece.y));
+  const unit = String(home.attrs.unit ?? '').trim().toLowerCase();
+  return {
+    name: String(home.attrs.name ?? '').trim(),
+    version: String(home.attrs.version ?? ''),
+    unit,
+    levels,
+    rooms,
+    walls,
+    openings,
+  };
+}
+
+/** Прочитать байты `.sh3d` целиком. */
+async function readSh3d(bytes) {
+  const xml = await readZipEntry(bytes, 'Home.xml');
+  return parseHomeXml(new TextDecoder('utf-8').decode(xml));
+}
+
+// --- page/app.mjs ---
+/**
+ * Страница /convert: интерфейс конвертера (#446).
+ *
+ * Вся конверсия идёт здесь, в браузере. Ни одного сетевого вызова на этой
+ * странице нет и быть не должно: план дома — приватные данные, а сама страница
+ * живёт на хосте, который по нашему описанию расходный и потенциально
+ * враждебный. Отсутствие `fetch`/`XMLHttpRequest`/`WebSocket`/`sendBeacon`
+ * проверяется тестом по собранному артефакту, а не обещанием в тексте.
+ *
+ * Отчёт показывается ДО скачивания — это требование задачи, а не украшение:
+ * человек должен узнать про спрямлённую дугу и непривязанную дверь заранее, а
+ * не искать их потом в плане из сотен объектов.
+ */
+
+const TOOL_VERSION = 'sh3d-convert 0.1';
+const MAX_FILE_BYTES = 64 * 1024 * 1024;
+
+/** Словари вынесены в экспорт: полноту ключей проверяет тест страницы. */
+const TEXT = {
+  ru: {
+    'page.title': 'Конвертер Sweet Home 3D → House Plan',
+    'page.lead': 'Файл плана из Sweet Home 3D превращается в документ импорта House Plan — по одному на этаж.',
+    'page.privacy': 'Конверсия идёт в вашем браузере. Файл никуда не загружается: страница не делает ни одного сетевого запроса.',
+    'page.requires': `Требуется House Plan ${MIN_HOUSEPLAN} или новее.`,
+    'drop.title': 'Перетащите сюда файл .sh3d',
+    'drop.or': 'или',
+    'drop.button': 'Выбрать файл',
+    'drop.hint': 'Ничего не уходит с вашего компьютера',
+    'busy': 'Читаю файл…',
+    'result.title': 'Что получилось',
+    'result.download': 'Скачать этаж',
+    'result.rooms': 'комнат',
+    'result.walls': 'стен',
+    'result.openings': 'проёмов',
+    'result.cell': 'клетка сетки',
+    'result.skipped': 'этаж пропущен: комнат нет',
+    'result.notes': 'На что посмотреть после импорта',
+    'howto.title': 'Как импортировать',
+    'howto.1': 'Откройте карточку House Plan → Общие настройки → Резервная копия и перенос.',
+    'howto.2': 'Выберите импорт и укажите скачанный файл: House Plan покажет предпросмотр и ничего не запишет до подтверждения.',
+    'howto.3': 'Этаж добавится рядом с существующими пространствами. Привязку комнат к областям Home Assistant и расстановку устройств сделайте в редакторе — в файле их нет.',
+    'error.title': 'Не получилось',
+    'error.retry': 'Выбрать другой файл',
+    'back': 'На главную',
+    'note.vertices_snapped': 'Вершины комнат выровнены по осевым линиям стен: {count}. Sweet Home 3D обводит комнаты по внутренним граням, иначе общая стена превратилась бы в две.',
+    'note.curved_wall_straightened': 'Круглых стен спрямлено: {count}. Дуг в House Plan нет.',
+    'note.thickness_clamped': 'Стен толще {limit} см обрезано до предела: {count}.',
+    'note.edge_without_wall': 'Границ без стены: {count}. Такая граница останется открытой — стены в файле там не было.',
+    'note.opening_unhosted': 'Проём не привязался ни к одной стене и не перенесён: {id}.',
+    'note.opening_shortened': 'Проём шире стены и обрезан до неё: {id}.',
+    'note.opening_without_width': 'Проём без ширины пропущен: {id}.',
+    'note.room_without_polygon': 'Комната без контура пропущена: {id}.',
+    'note.room_collapsed': 'Контур комнаты рассыпался после выравнивания и пропущен: {id}.',
+    'note.level_without_rooms': 'Этаж «{title}» пропущен: в нём нет ни одной комнаты. House Plan строит геометрию по комнатам — нарисуйте их в Sweet Home 3D.',
+    'note.furniture_dropped': 'Мебель, материалы, свет и камеры не переносятся: House Plan — живая карта дома, а не редактор интерьера.',
+    'code.not_zip': 'Это не файл Sweet Home 3D: архив не читается.',
+    'code.entry_missing': 'В архиве нет Home.xml. Пересохраните план в Sweet Home 3D 5.3 или новее.',
+    'code.encrypted': 'Архив защищён паролем.',
+    'code.zip64': 'Такой архив (zip64) не поддерживается.',
+    'code.entry_too_large': 'Файл слишком большой.',
+    'code.entity_declaration': 'В файле объявлены XML-сущности — такой файл не читается.',
+    'code.entity_reference': 'В файле есть неизвестная XML-сущность.',
+    'code.nothing_to_convert': 'В плане нет ни одной комнаты. House Plan строит геометрию по комнатам: нарисуйте их в Sweet Home 3D и сохраните файл заново.',
+    'code.room_too_complex': 'Слишком сложный контур комнаты.',
+    'code.unit_not_metric': 'План сохранён не в метрических единицах.',
+    'code.file_too_large': 'Файл больше 64 МБ.',
+    'code.unknown': 'Неизвестная ошибка чтения файла.',
+  },
+  en: {
+    'page.title': 'Sweet Home 3D → House Plan converter',
+    'page.lead': 'Turns a Sweet Home 3D file into House Plan import documents — one per level.',
+    'page.privacy': 'The conversion runs in your browser. The file is never uploaded: this page makes no network requests at all.',
+    'page.requires': `Requires House Plan ${MIN_HOUSEPLAN} or newer.`,
+    'drop.title': 'Drop a .sh3d file here',
+    'drop.or': 'or',
+    'drop.button': 'Choose a file',
+    'drop.hint': 'Nothing leaves your computer',
+    'busy': 'Reading the file…',
+    'result.title': 'What came out',
+    'result.download': 'Download level',
+    'result.rooms': 'rooms',
+    'result.walls': 'walls',
+    'result.openings': 'openings',
+    'result.cell': 'grid cell',
+    'result.skipped': 'level skipped: no rooms',
+    'result.notes': 'What to check after the import',
+    'howto.title': 'How to import',
+    'howto.1': 'Open the House Plan card → General settings → Backup & transfer.',
+    'howto.2': 'Pick import and choose the downloaded file: House Plan shows a preview and writes nothing until you confirm.',
+    'howto.3': 'The level is added next to your existing spaces. Bind rooms to Home Assistant areas and place devices in the editor — the file carries neither.',
+    'error.title': 'That did not work',
+    'error.retry': 'Choose another file',
+    'back': 'Back to the site',
+    'note.vertices_snapped': 'Room vertices aligned to wall centrelines: {count}. Sweet Home 3D traces rooms along inner faces, so without this a shared wall would become two.',
+    'note.curved_wall_straightened': 'Curved walls straightened: {count}. House Plan has no arcs.',
+    'note.thickness_clamped': 'Walls thicker than {limit} cm clamped to the limit: {count}.',
+    'note.edge_without_wall': 'Boundaries without a wall: {count}. They stay open — there was no wall in the file.',
+    'note.opening_unhosted': 'This opening matched no wall and was skipped: {id}.',
+    'note.opening_shortened': 'Opening wider than its wall, shortened to fit: {id}.',
+    'note.opening_without_width': 'Opening without a width, skipped: {id}.',
+    'note.room_without_polygon': 'Room without an outline, skipped: {id}.',
+    'note.room_collapsed': 'Room outline collapsed after alignment and was skipped: {id}.',
+    'note.level_without_rooms': 'Level “{title}” skipped: it has no rooms. House Plan builds geometry from rooms — draw them in Sweet Home 3D.',
+    'note.furniture_dropped': 'Furniture, materials, lights and cameras are not carried over: House Plan is a live map of the home, not an interior editor.',
+    'code.not_zip': 'This is not a Sweet Home 3D file: the archive cannot be read.',
+    'code.entry_missing': 'The archive has no Home.xml. Re-save the plan in Sweet Home 3D 5.3 or newer.',
+    'code.encrypted': 'The archive is password protected.',
+    'code.zip64': 'This archive (zip64) is not supported.',
+    'code.entry_too_large': 'The file is too large.',
+    'code.entity_declaration': 'The file declares XML entities and cannot be read.',
+    'code.entity_reference': 'The file contains an unknown XML entity.',
+    'code.nothing_to_convert': 'The plan has no rooms. House Plan builds geometry from rooms: draw them in Sweet Home 3D and save the file again.',
+    'code.room_too_complex': 'A room outline is too complex.',
+    'code.unit_not_metric': 'The plan is not saved in metric units.',
+    'code.file_too_large': 'The file is larger than 64 MB.',
+    'code.unknown': 'Unknown error while reading the file.',
+  },
+};
+
+let lang = 'en';
+
+const fill = (template, values) =>
+  String(template).replace(/\{(\w+)\}/g, (whole, key) =>
+    (values && values[key] !== undefined ? String(values[key]) : whole));
+
+const t = (key, values) => fill(TEXT[lang][key] ?? TEXT.en[key] ?? key, values);
+
+function applyLanguage(next) {
+  lang = TEXT[next] ? next : 'en';
+  document.documentElement.lang = lang;
+  try {
+    localStorage.setItem('hp-convert-lang', lang);
+  } catch {
+    // Приватный режим: язык просто не запомнится, это не ошибка.
+  }
+  for (const node of document.querySelectorAll('[data-i18n]')) {
+    node.textContent = t(node.dataset.i18n);
+  }
+  for (const node of document.querySelectorAll('[data-lang]')) {
+    node.classList.toggle('on', node.dataset.lang === lang);
+  }
+  if (lastResult) renderResult(lastResult);
+}
+
+let lastResult = null;
+
+const element = (tag, className, text) => {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text !== undefined) node.textContent = text;
+  return node;
+};
+
+const show = (id, visible) => {
+  document.getElementById(id).hidden = !visible;
+};
+
+function noteText(note) {
+  const key = `note.${note.code}`;
+  const known = TEXT[lang][key] || TEXT.en[key];
+  return known ? fill(known, note) : `${note.code}: ${JSON.stringify(note)}`;
+}
+
+function download(name, document_) {
+  const blob = new Blob([`${JSON.stringify(document_, null, 2)}\n`], {
+    type: 'application/json',
+  });
+  const url = URL.createObjectURL(blob);
+  const link = element('a');
+  link.href = url;
+  link.download = name;
+  link.click();
+  // Ссылка живёт ровно до клика: держать её незачем, а память жалко.
+  setTimeout(() => URL.revokeObjectURL(url), 0);
+}
+
+function renderResult(result) {
+  lastResult = result;
+  const { documents, report, stem } = result;
+  const host = document.getElementById('levels');
+  host.textContent = '';
+  let downloadIndex = 0;
+  for (const level of report.levels) {
+    const card = element('div', 'level');
+    card.append(element('h3', null, level.title || level.id || '—'));
+    if (level.skipped) {
+      card.append(element('p', 'muted', t('result.skipped')));
+    } else {
+      const stats = element('p', 'stats');
+      stats.textContent = [
+        `${level.rooms} ${t('result.rooms')}`,
+        `${level.walls} ${t('result.walls')}`,
+        `${level.openings} ${t('result.openings')}`,
+        `${t('result.cell')}: ${level.cellCm} cm`,
+      ].join(' · ');
+      card.append(stats);
+      const index = downloadIndex++;
+      const button = element('button', 'btn primary', t('result.download'));
+      button.addEventListener('click', () =>
+        download(`${stem}.${level.spaceId}.json`, documents[index]));
+      card.append(button);
+    }
+    const notes = [...(level.notes || [])];
+    if (notes.length) {
+      card.append(element('h4', 'notes-title', t('result.notes')));
+      const list = element('ul', 'notes');
+      for (const note of notes) list.append(element('li', null, noteText(note)));
+      card.append(list);
+    }
+    host.append(card);
+  }
+  const shared = element('ul', 'notes');
+  for (const item of report.items) shared.append(element('li', null, noteText(item)));
+  document.getElementById('shared-notes').replaceChildren(shared);
+  show('result', true);
+  show('error', false);
+  show('busy', false);
+}
+
+function renderError(code, detail) {
+  const key = `code.${code}`;
+  const known = TEXT[lang][key] || TEXT.en[key];
+  document.getElementById('error-text').textContent = known || t('code.unknown');
+  const details = document.getElementById('error-detail');
+  details.textContent = detail && !known ? detail : '';
+  details.hidden = !details.textContent;
+  show('error', true);
+  show('result', false);
+  show('busy', false);
+}
+
+async function handleFile(file) {
+  if (!file) return;
+  lastResult = null;
+  show('busy', true);
+  show('error', false);
+  show('result', false);
+  try {
+    if (file.size > MAX_FILE_BYTES) {
+      renderError('file_too_large');
+      return;
+    }
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    const home = await readSh3d(bytes);
+    const { documents, report } = convertHome(home, { toolVersion: TOOL_VERSION });
+    renderResult({
+      documents,
+      report,
+      stem: file.name.replace(/\.sh3d$/i, '') || 'plan',
+    });
+  } catch (error) {
+    const code = error && error.code ? error.code : 'unknown';
+    renderError(code, error instanceof ConvertError ? error.message : String(error?.message || ''));
+  }
+}
+
+function mount() {
+  const input = document.getElementById('file');
+  const zone = document.getElementById('drop');
+  input.addEventListener('change', () => handleFile(input.files[0]));
+  document.getElementById('pick').addEventListener('click', () => input.click());
+  document.getElementById('retry').addEventListener('click', () => input.click());
+  for (const event of ['dragenter', 'dragover']) {
+    zone.addEventListener(event, (raw) => {
+      raw.preventDefault();
+      zone.classList.add('over');
+    });
+  }
+  for (const event of ['dragleave', 'drop']) {
+    zone.addEventListener(event, () => zone.classList.remove('over'));
+  }
+  zone.addEventListener('drop', (raw) => {
+    raw.preventDefault();
+    handleFile(raw.dataTransfer?.files?.[0]);
+  });
+  for (const node of document.querySelectorAll('[data-lang]')) {
+    node.addEventListener('click', () => applyLanguage(node.dataset.lang));
+  }
+  let saved = null;
+  try {
+    saved = localStorage.getItem('hp-convert-lang');
+  } catch {
+    saved = null;
+  }
+  applyLanguage(saved || (String(navigator.language || '').toLowerCase().startsWith('ru') ? 'ru' : 'en'));
+}
+
+mount();
+</script>
+</body>
+</html>
