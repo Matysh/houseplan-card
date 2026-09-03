@@ -407,6 +407,10 @@
       "opaque": "<function _north_deg>",
       "required": false
     },
+    "config.settings.show_room_tooltip": {
+      "required": false,
+      "type": "bool"
+    },
     "config.settings.sun_rays": {
       "required": false,
       "type": "bool"
