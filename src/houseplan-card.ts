@@ -246,6 +246,7 @@ import {
   formatLatticeShiftCm,
 } from './coordinate-canonicalization';
 import { enqueueSerializedWrite } from './serialized-write-queue';
+import type { CalibrationProposal, VacuumFit } from './vacuum-calibration-write';
 import { hasTranslation, langOf, t, type I18nKey } from './i18n';
 import { LANGUAGE_RUNTIME, subscribeLanguageLoadFailures } from './i18n/registry';
 import {
@@ -2503,18 +2504,13 @@ export class HouseplanCard extends LitElement {
   };
   private _resumeSettling = false;
   private _viewportInvalidAt = 0;
-  private _vacFit: { markerId: string; source: string; mapId: string; routeId?: string; p: FitParams;
-    drag: null | { kind: 'move' | 'scale'; sx: number; sy: number; p0: FitParams;
-      fx: number; fy: number } } | null = null;
+  private _vacFit: VacuumFit | null = null;
   /** Marker whose lazy «All cameras» candidate section is expanded. */
   private _vacAllCamerasFor: string | null = null;
   /** One snapshot per currently open global-camera section; rebuilt on reopen. */
   private _vacAllCameraCache: { devId: string; candidates: VacSourceCandidate[] } | null = null;
   /** Proposed high-residual auto-calibration. Config remains untouched until Apply. */
-  private _vacCalConfirm: {
-    markerId: string; source: string; mapId: string; routeId?: string; space?: string; matrix: Affine;
-    rooms: number; error: string;
-  } | null = null;
+  private _vacCalConfirm: CalibrationProposal | null = null;
   private _kioskDots = false;
   private _kioskDotsTimer?: number;
   private _kioskHoldTimer?: number;
@@ -2943,6 +2939,7 @@ export class HouseplanCard extends LitElement {
 
   private _onKey(e: KeyboardEvent): void {
     if (e.key === 'Escape' && this._vacFit) {
+      if (this._vacFit.busy) return;
       this._vacFit = null;
       this._showToast(this._t('vac.cal_cancelled'));
       e.stopPropagation();
@@ -2951,7 +2948,10 @@ export class HouseplanCard extends LitElement {
     if (e.key === 'Escape') {
       // close the topmost open dialog; info popups first, then editors
       if (this._tapConfirm) { this._tapConfirm = null; return; }
-      if (this._vacCalConfirm) { this._vacCalConfirm = null; return; }
+      if (this._vacCalConfirm) {
+        if (!this._vacCalConfirm.busy) this._vacCalConfirm = null;
+        return;
+      }
       if (this._decorEraseConfirm) { this._decorEraseConfirm = null; return; }
       if (this._openingInfo) { this._openingInfo = null; return; }
       if (this._infoCard) { this._closeInfoCard(); return; }
@@ -11882,15 +11882,19 @@ export class HouseplanCard extends LitElement {
           : nothing}
         ${this._vacCalConfirm ? this._editorRuntime ? html`<hp-dialog .hass=${this.hass}
           .title=${this._t('vac.residual_title')} icon="mdi:map-marker-alert-outline"
-          dismiss-on-scrim @hp-close=${() => (this._vacCalConfirm = null)}>
+          dismiss-on-scrim aria-busy=${String(!!this._vacCalConfirm.busy)}
+          @hp-close=${() => { if (!this._vacCalConfirm?.busy) this._vacCalConfirm = null; }}>
             <div class="body">
               <p>${this._t('vac.residual_message', { error: this._vacCalConfirm.error })}</p>
             </div>
             <div class="row" slot="footer">
-              <button class="btn ghost" @click=${() => (this._vacCalConfirm = null)}>${this._t('btn.cancel')}</button>
+              <button class="btn ghost" ?disabled=${this._vacCalConfirm.busy}
+                @click=${() => (this._vacCalConfirm = null)}>${this._t('btn.cancel')}</button>
               <span class="spacer"></span>
-              <button class="btn ghost" @click=${() => this._vacApplyCalibrationProposal(true)}>${this._t('vac.fit')}</button>
-              <button class="btn on" @click=${() => this._vacApplyCalibrationProposal(false)}>
+              <button class="btn ghost" ?disabled=${this._vacCalConfirm.busy}
+                @click=${() => this._vacApplyCalibrationProposal(true)}>${this._t('vac.fit')}</button>
+              <button class="btn on" ?disabled=${this._vacCalConfirm.busy}
+                @click=${() => this._vacApplyCalibrationProposal(false)}>
                 <ha-icon icon="mdi:check"></ha-icon>${this._t('vac.apply_proposal')}
               </button>
             </div>
@@ -11924,12 +11928,16 @@ export class HouseplanCard extends LitElement {
             </div>`
           : nothing}
         ${this._kioskDialog ? this._renderKioskDialog() : nothing}
-        ${this._vacFit ? html`<div class="vaccalbar">
+        ${this._vacFit ? html`<div class="vaccalbar" aria-busy=${String(!!this._vacFit.busy)}>
           <span>${this._t('vac.fit_hint')}</span>
-          <button class="btn ghostbtn" @click=${() => this._vacFitTurn({ rot: ((this._vacFit!.p.rot + 90) % 360) as any })}>${this._t('vac.fit_rotate')}</button>
-          <button class="btn ghostbtn" @click=${() => this._vacFitTurn({ mir: !this._vacFit!.p.mir })}>${this._t('vac.fit_mirror')}</button>
-          <button class="btn" @click=${() => this._vacFitSave()}>${this._t('btn.save')}</button>
-          <button class="btn ghostbtn" @click=${() => { this._vacFit = null; }}>${this._t('btn.cancel')}</button>
+          <button class="btn ghostbtn" ?disabled=${this._vacFit.busy}
+            @click=${() => this._vacFitTurn({ rot: ((this._vacFit!.p.rot + 90) % 360) as any })}>${this._t('vac.fit_rotate')}</button>
+          <button class="btn ghostbtn" ?disabled=${this._vacFit.busy}
+            @click=${() => this._vacFitTurn({ mir: !this._vacFit!.p.mir })}>${this._t('vac.fit_mirror')}</button>
+          <button class="btn" ?disabled=${this._vacFit.busy}
+            @click=${() => this._vacFitSave()}>${this._t('btn.save')}</button>
+          <button class="btn ghostbtn" ?disabled=${this._vacFit.busy}
+            @click=${() => { this._vacFit = null; }}>${this._t('btn.cancel')}</button>
         </div>` : nothing}
         ${this._tapConfirm
           ? html`<hp-dialog .hass=${this.hass}
@@ -12260,8 +12268,10 @@ export class HouseplanCard extends LitElement {
   /** Persist a solved matrix into marker.vacuum.calibration[mapId].
    *  Returns whether the write actually landed — callers must not toast
    *  success otherwise (HP-1540-01). */
-  private _vacSaveMatrix(markerId: string, source: string, mapId: string, matrix: Affine): boolean {
-    return this._editorRuntimeOrThrow()._vacSaveMatrix(markerId, source, mapId, matrix);
+  private _vacSaveMatrix(
+    markerId: string, source: string, mapId: string, matrix: Affine, routeId = '',
+  ): Promise<boolean> {
+    return this._editorRuntimeOrThrow()._vacSaveMatrix(markerId, source, mapId, matrix, routeId);
   }
 
   /** The exact plan-room set accepted by auto-calibration and diagnostics. */
@@ -12272,11 +12282,11 @@ export class HouseplanCard extends LitElement {
   }
 
   /** «Настроить автоматически»: robot rooms ↔ plan rooms by name. */
-  private _vacAutoCalibrate(d: DevItem): void {
+  private _vacAutoCalibrate(d: DevItem): Promise<void> {
     return this._editorRuntimeOrThrow()._vacAutoCalibrate(d);
   }
 
-  private _vacApplyCalibrationProposal(manual: boolean): void {
+  private _vacApplyCalibrationProposal(manual: boolean): Promise<void> {
     return this._editorRuntimeOrThrow()._vacApplyCalibrationProposal(manual);
   }
 
@@ -12285,7 +12295,7 @@ export class HouseplanCard extends LitElement {
     return this._editorRuntimeOrThrow()._vacStartFit(d);
   }
 
-  private _vacFitSave(): void {
+  private _vacFitSave(): Promise<void> {
     return this._editorRuntimeOrThrow()._vacFitSave();
   }
 

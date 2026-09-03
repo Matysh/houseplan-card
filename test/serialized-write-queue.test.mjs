@@ -100,3 +100,20 @@ test('a conflict reload or newer mutation wins over a rejected candidate (#439)'
   assert.equal(host._serverCfg.settings.value, 'newer-local-edit');
   assert.equal(updates, 0);
 });
+
+test('newer in-place content on the attempted root also wins (#442)', () => {
+  const fingerprint = (value) => JSON.stringify(value);
+  const previous = { settings: { value: 'server-before' } };
+  const attempted = { settings: { value: 'draft' } };
+  const attempt = optimisticAttempt(previous, attempted, 'before', 3, fingerprint);
+  const host = {
+    _serverCfg: attempted,
+    _cfgRev: 3,
+    _cfgContentFingerprint: fingerprint(attempted),
+    requestUpdate: () => assert.fail('newer content must not be rolled back'),
+  };
+
+  attempted.settings.newer = true;
+  assert.equal(rollbackOptimistic(host, attempt, fingerprint), false);
+  assert.equal(host._serverCfg, attempted);
+});

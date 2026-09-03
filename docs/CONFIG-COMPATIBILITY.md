@@ -556,6 +556,22 @@ full/space transfer preserve, remap or report/drop `derived_marker_state.ref`
 through the same reference seam as controls and value badges. Older clients
 ignore the field and may erase it if they reconstruct the marker.
 
+## Atomic marker writes (#442)
+
+The Device editor builds a separate complete config candidate and treats a
+successful `houseplan/config/set` response as the durable boundary. If semantic
+validation, transport or schema validation rejects that request, the card
+restores the preceding server-confirmed config and content fingerprint, rebuilds
+the visible marker set, and keeps the independent dialog draft available for
+Retry. A revision loaded after a conflict or newer local content always wins;
+an older rejection cannot overwrite either one.
+
+Layout placement, obsolete-layout cleanup and copied-file cleanup happen only
+after config acceptance. Their failure can report an error and keep the dialog
+open, but cannot roll back a marker already accepted by the server. This is a
+frontend transaction contract only: marker schema, validators, revision wire
+format and downgrade behaviour are unchanged.
+
 ## Persistent manual virtual-light state
 
 The exact `virtual` + `is_light:true` + `tap_action:toggle` combination has a

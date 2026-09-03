@@ -126,6 +126,15 @@ At `> 40 cm` nothing is saved until the user explicitly chooses **Apply**.
 **Fit manually** opens the proposal in the fit overlay; **Cancel** leaves the
 saved configuration byte-for-byte unchanged.
 
+Calibration Save is complete only after Home Assistant accepts the config
+write. While it is pending, automatic-calibration controls, a high-residual
+proposal or the manual-fit overlay stay busy and cannot submit, close or move a
+second draft. On rejection the last accepted matrix is restored immediately:
+the Device editor remains open, a high-residual proposal keeps its exact matrix,
+and manual fit keeps its exact transform for Retry. A rejected first-use
+calibration also removes the unaccepted synthetic marker. Success closes the
+relevant proposal/overlay and appears only after server acceptance.
+
 Map ID uses one nullish chain and deliberately ignores volatile values such as
 `vacuum_json_id`:
 

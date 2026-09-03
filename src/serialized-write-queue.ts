@@ -51,8 +51,7 @@ export function rollbackOptimistic<T>(
 ): boolean {
   const current = host._serverCfg;
   if (!current || host._cfgRev !== attempt.revision
-      || (current !== attempt.attempted
-        && fingerprint(current) !== attempt.attemptedFingerprint)) return false;
+      || fingerprint(current) !== attempt.attemptedFingerprint) return false;
   host._serverCfg = attempt.previous;
   host._cfgContentFingerprint = attempt.previousFingerprint;
   host.requestUpdate();

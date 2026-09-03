@@ -262,7 +262,7 @@ const out = await page.evaluate(async () => {
   await c.updateComplete;
   o.fitCornerScales = Math.abs(c._vacFit.p.s - s0) > 1e-6;
   // save -> matrix stored for m2, panel closed, puck appears while cleaning
-  c._vacFitSave(); await c.updateComplete;
+  await c._vacFitSave(); await c.updateComplete;
   const savedM = c._serverCfg.markers.find((m) => m.id === 'e_vacuum_robo').vacuum.calibration.m2;
   o.fitSavedMatrix = Array.isArray(savedM) && savedM.length === 6 && savedM.every(Number.isFinite);
   o.fitClosed = !c._vacFit && !sr().querySelector('.vacfit');

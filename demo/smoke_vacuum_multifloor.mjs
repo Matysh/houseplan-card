@@ -94,7 +94,7 @@ const out = await page.evaluate(async () => {
     routeId: 'vr2', space: 'garden', matrix: M2, rooms: 3, error: '80 см',
   };
   await c.updateComplete;
-  c._vacApplyCalibrationProposal(true);
+  await c._vacApplyCalibrationProposal(true);
   await c.updateComplete; await new Promise((r) => setTimeout(r, 80));
   o.manualFitSwitchedToRouteSpace = c._space === 'garden';
   o.manualFitKeepsRoute = c._vacFit?.routeId === 'vr2';
