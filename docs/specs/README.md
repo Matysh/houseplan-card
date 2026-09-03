@@ -180,6 +180,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#340](https://github.com/Matysh/houseplan-card/issues/340) Обязательная ревизия повторной записи config/set | [340-config-set-revision.md](340-config-set-revision.md) |
 | [#372](https://github.com/Matysh/houseplan-card/issues/372) Компактное верхнее кадрирование static card без заголовка | [372-space-card-empty-title.md](372-space-card-empty-title.md) |
 | [#423](https://github.com/Matysh/houseplan-card/issues/423) Полиш support pipeline и защитных инструментов v1.70.0 | [423-v170-polish.md](423-v170-polish.md) |
+| [#434](https://github.com/Matysh/houseplan-card/issues/434) Полиш аудита v1.71.0-beta.1 | [434-v171-polish-audit.md](434-v171-polish-audit.md) |
 
 ## P3
 
