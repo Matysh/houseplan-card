@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Saved custom images remain visible to read-only household members while
+  arbitrary asset lookup is blocked, and repeated card/HTTP loads now reuse one
+  bounded streaming integrity check instead of re-reading every image
+  ([#432](https://github.com/Matysh/houseplan-card/issues/432)).
 - Custom decor images now pass through the same stable coordinate-write barrier
   as furniture and shapes, so repeated saves and **Optimize Plans** no longer
   retain image-only floating-point noise

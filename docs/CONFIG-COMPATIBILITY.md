@@ -263,6 +263,15 @@ identity/hash remain exact, and every supplied non-null MIME must be supported.
 Before a permanent downgrade, remove all image objects with a current card and
 then explicitly delete their now-unused files from the palette.
 
+The #432 backend hardening does not change that schema, URL shape, export format
+or `decor_assets_api:1` capability. A read-only user still resolves images used
+by the saved config; only arbitrary unreferenced ids are now returned as
+`missing`. Writers keep the full catalog contract. Authenticated and signed
+exact content URLs remain valid, while integrity results are shared in a bounded
+memory-only cache. Old and new cards therefore remain rolling-compatible with
+the hardened integration; the cache is discarded on restart and needs no data
+migration or downgrade step.
+
 ## Independent-wall opening host (#132)
 
 `space.openings[].host` is an optional discriminated object

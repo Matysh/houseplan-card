@@ -380,10 +380,23 @@ Custom Background images use a separate content-addressed store at
 `<config>/houseplan/assets/`. Raster input is fully decoded and SVG is parsed
 through a strict allowlist before promotion; the SHA-256 of canonical bytes is
 the persisted `asset_id`. Config never carries file bytes or a signed URL.
-`houseplan/assets/resolve` maps unique ids to authenticated content paths,
-while the shared `ContentSigner` batches signatures for `<image>` elements.
-Catalog deletion rechecks references across every space under the config write
-lock. Missing or corrupt assets are never painted in View.
+`houseplan/assets/resolve` maps unique ids to authenticated content paths.
+Writers may resolve any catalog id; a read-only household member may resolve
+only ids referenced by the current saved config, with forbidden ids reported as
+ordinary `missing` entries. The reference snapshot is taken under the config
+write lock, but file I/O happens after releasing it. The resolve path reads only
+the requested sidecars rather than scanning the catalog. The HTTP content view
+keeps its authenticated/signed exact-URL contract.
+
+Resolve and HTTP GET share one HA-instance memory-only integrity verifier. It
+streams SHA-256 in bounded chunks and caches at most 256 actual digests by
+canonical path plus size/mtime/ctime signature. Per-file-version single-flight
+deduplicates concurrent reads without serialising different files; a second
+`stat` prevents a digest for bytes changed mid-read from entering the cache.
+Missing, changed and corrupt files fail dark. The shared `ContentSigner` batches
+signatures for `<image>` elements. Catalog deletion rechecks references across
+every space under the config write lock. Missing or corrupt assets are never
+painted in View.
 
 `removed:true` is a binding tombstone, not a renderable marker. It claims an
 HA binding against automatic discovery while intentionally exposing that same
@@ -918,7 +931,7 @@ transmit light is the separate `zero_wall_style` policy.
 | `houseplan/files/migrate` | `from_id`, `to_id` | `{mapping}` — COPY, never move |
 | `houseplan/files/cleanup` | `marker_id`, `keep?` | replacement-only collection |
 | `houseplan/assets/list` | — | reusable image metadata plus authoritative `used_by` references |
-| `houseplan/assets/resolve` | `asset_ids[]` (max 200) | verified metadata/content paths plus missing ids |
+| `houseplan/assets/resolve` | `asset_ids[]` (max 200) | verified metadata/content paths plus missing ids; writer: catalog, read-only: saved references only |
 | `houseplan/assets/delete` | `asset_id` | explicit deletion only when no decor record refers to it |
 | `houseplan/content/sign` | `paths[]` | `{urls}` — authSig for `<image>`/`<a>` fetches |
 | `houseplan/export/create` | `kind`, `space_id?`, `plan_only?`, `card_version` | consistent versioned JSON document + safe filename; plan-only is valid only for one space |

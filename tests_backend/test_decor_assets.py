@@ -2,19 +2,28 @@
 from __future__ import annotations
 
 import base64
+import hashlib
 import importlib
 import json
 import struct
+import threading
 import zlib
+from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
 
 import pytest
 
+from custom_components.houseplan.asset_integrity import (
+    ASSET_INTEGRITY_CACHE_ENTRIES,
+    AssetIntegrityVerifier,
+)
 from custom_components.houseplan.const import MAX_DECOR_ASSET_BYTES
 from custom_components.houseplan.decor_assets import (
     DecorAssetError,
     asset_meta_path,
     asset_refs,
     public_asset,
+    read_asset,
     read_catalog,
     validate_asset,
 )
@@ -321,6 +330,192 @@ def test_catalog_empty_directory_and_metadata_path(tmp_path) -> None:
     aid = "c" * 64
     assert read_catalog(missing) == []
     assert asset_meta_path(tmp_path, aid) == tmp_path / f"{aid}.json"
+
+
+def test_direct_asset_lookup_never_scans_or_accepts_mismatched_sidecars(
+    tmp_path, monkeypatch,
+) -> None:
+    payload = b"one"
+    aid = hashlib.sha256(payload).hexdigest()
+    other = "d" * 64
+    (tmp_path / f"{aid}.png").write_bytes(payload)
+    (tmp_path / f"{aid}.json").write_text(json.dumps({
+        "asset_id": aid, "ext": ".png", "mime": "image/png",
+    }), encoding="utf-8")
+    (tmp_path / f"{other}.json").write_text(json.dumps({
+        "asset_id": aid, "ext": ".png", "mime": "image/png",
+    }), encoding="utf-8")
+    assert [row["asset_id"] for row in read_catalog(tmp_path)] == [aid]
+
+    def no_scan(_self, _pattern):
+        raise AssertionError("direct lookup must not scan the catalog")
+
+    monkeypatch.setattr(Path, "glob", no_scan)
+    assert read_asset(tmp_path, aid)["asset_id"] == aid
+    assert read_asset(tmp_path, other) is None
+
+
+def test_integrity_cache_reuses_digest_and_caches_corrupt_signature(tmp_path) -> None:
+    payload = b"stable-content"
+    path = tmp_path / "asset.bin"
+    path.write_bytes(payload)
+    expected = hashlib.sha256(payload).hexdigest()
+    calls = 0
+
+    def counted(candidate: Path) -> str:
+        nonlocal calls
+        calls += 1
+        return hashlib.sha256(candidate.read_bytes()).hexdigest()
+
+    verifier = AssetIntegrityVerifier(hasher=counted)
+    assert verifier.verify(path, expected)
+    assert verifier.verify(path, expected)
+    assert calls == 1
+
+    wrong = "0" * 64
+    assert not verifier.verify(path, wrong)
+    assert not verifier.verify(path, wrong)
+    assert calls == 1, "the actual digest also caches a negative comparison"
+
+
+def test_integrity_cache_invalidates_changed_signature_and_rejects_mid_read_change(
+    tmp_path,
+) -> None:
+    path = tmp_path / "asset.bin"
+    first = b"first"
+    second = b"second-version"
+    path.write_bytes(first)
+    calls = 0
+
+    def counted(candidate: Path) -> str:
+        nonlocal calls
+        calls += 1
+        return hashlib.sha256(candidate.read_bytes()).hexdigest()
+
+    verifier = AssetIntegrityVerifier(hasher=counted)
+    assert verifier.verify(path, hashlib.sha256(first).hexdigest())
+    path.write_bytes(second)
+    assert verifier.verify(path, hashlib.sha256(second).hexdigest())
+    assert calls == 2
+
+    replacement = b"changed-during-read"
+
+    def mutating(candidate: Path) -> str:
+        original = candidate.read_bytes()
+        candidate.write_bytes(replacement)
+        return hashlib.sha256(original).hexdigest()
+
+    unstable = AssetIntegrityVerifier(hasher=mutating)
+    path.write_bytes(first)
+    assert not unstable.verify(path, hashlib.sha256(first).hexdigest())
+    assert not unstable._cache, "an unstable digest must not become a cache hit"
+
+
+def test_integrity_cache_single_flights_same_path_and_releases_after_error(tmp_path) -> None:
+    path = tmp_path / "asset.bin"
+    payload = b"concurrent"
+    path.write_bytes(payload)
+    expected = hashlib.sha256(payload).hexdigest()
+    waiter_joined = threading.Event()
+    real_event = threading.Event
+
+    class ObservedEvent:
+        def __init__(self) -> None:
+            self._event = real_event()
+
+        def set(self) -> None:
+            self._event.set()
+
+        def wait(self, timeout=None) -> bool:
+            waiter_joined.set()
+            return self._event.wait(timeout)
+
+    calls = 0
+
+    def coordinated(candidate: Path) -> str:
+        nonlocal calls
+        calls += 1
+        assert waiter_joined.wait(2), "the concurrent caller never joined the flight"
+        return hashlib.sha256(candidate.read_bytes()).hexdigest()
+
+    verifier = AssetIntegrityVerifier(hasher=coordinated, event_factory=ObservedEvent)
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        first = pool.submit(verifier.verify, path, expected)
+        second = pool.submit(verifier.verify, path, expected)
+        assert first.result(timeout=3) and second.result(timeout=3)
+    assert calls == 1
+
+    attempts = 0
+
+    def once_broken(candidate: Path) -> str:
+        nonlocal attempts
+        attempts += 1
+        if attempts == 1:
+            raise OSError("injected read failure")
+        return hashlib.sha256(candidate.read_bytes()).hexdigest()
+
+    recovered = AssetIntegrityVerifier(hasher=once_broken)
+    assert not recovered.verify(path, expected)
+    assert recovered.verify(path, expected)
+    assert attempts == 2 and not recovered._inflight
+
+
+def test_integrity_checks_for_different_paths_do_not_share_a_hash_lock(tmp_path) -> None:
+    first_path = tmp_path / "first.bin"
+    second_path = tmp_path / "second.bin"
+    first_path.write_bytes(b"first")
+    second_path.write_bytes(b"second")
+    first_started = threading.Event()
+    release_first = threading.Event()
+
+    def coordinated(candidate: Path) -> str:
+        if candidate == first_path:
+            first_started.set()
+            assert release_first.wait(2)
+        return hashlib.sha256(candidate.read_bytes()).hexdigest()
+
+    verifier = AssetIntegrityVerifier(hasher=coordinated)
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        first = pool.submit(
+            verifier.verify, first_path, hashlib.sha256(b"first").hexdigest(),
+        )
+        assert first_started.wait(1)
+        independent = pool.submit(
+            verifier.verify, second_path, hashlib.sha256(b"second").hexdigest(),
+        )
+        assert independent.result(timeout=1)
+        release_first.set()
+        assert first.result(timeout=2)
+
+
+def test_integrity_cache_is_bounded_lru_and_stream_reader_avoids_read_bytes(
+    tmp_path, monkeypatch,
+) -> None:
+    assert ASSET_INTEGRITY_CACHE_ENTRIES == 256
+    paths = []
+    for index in range(ASSET_INTEGRITY_CACHE_ENTRIES + 1):
+        path = tmp_path / f"{index}.bin"
+        path.write_bytes(str(index).encode())
+        paths.append(path)
+
+    verifier = AssetIntegrityVerifier()
+
+    def forbidden_read_bytes(_self):
+        raise AssertionError("integrity verification must stream chunks")
+
+    monkeypatch.setattr(Path, "read_bytes", forbidden_read_bytes)
+    for index in range(ASSET_INTEGRITY_CACHE_ENTRIES):
+        assert verifier.verify(
+            paths[index], hashlib.sha256(str(index).encode()).hexdigest(),
+        )
+    # Refresh zero, then the 257th insert must evict one rather than zero.
+    assert verifier.verify(paths[0], hashlib.sha256(b"0").hexdigest())
+    last = ASSET_INTEGRITY_CACHE_ENTRIES
+    assert verifier.verify(paths[last], hashlib.sha256(str(last).encode()).hexdigest())
+    assert len(verifier._cache) == ASSET_INTEGRITY_CACHE_ENTRIES
+    assert str(paths[0].resolve()) in verifier._cache
+    assert str(paths[1].resolve()) not in verifier._cache
+    assert str(paths[last].resolve()) in verifier._cache
 
 
 def test_reference_scan_is_cross_space_and_image_only() -> None:

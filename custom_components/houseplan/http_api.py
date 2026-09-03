@@ -24,6 +24,7 @@ try:  # KEY_HASS — the modern way to access hass from the aiohttp application
 except ImportError:  # older HA versions
     KEY_HASS = "hass"  # type: ignore[assignment]
 
+from .asset_integrity import get_asset_integrity_verifier
 from .auth import may_write
 from .const import (
     ASSETS_DIR,
@@ -176,18 +177,13 @@ class HouseplanContentView(HomeAssistantView):
         if not str(path).startswith(str(base)):
             return web.Response(status=404)
 
-        if not await hass.async_add_executor_job(path.is_file):
-            return web.Response(status=404)
         suffix = path.suffix.lower()
         if kind == "assets":
-            try:
-                digest = await hass.async_add_executor_job(
-                    lambda: hashlib.sha256(path.read_bytes()).hexdigest(),
-                )
-            except OSError:
+            verifier = get_asset_integrity_verifier(hass)
+            if not await hass.async_add_executor_job(verifier.verify, path, path.stem):
                 return web.Response(status=404)
-            if digest != path.stem:
-                return web.Response(status=404)
+        elif not await hass.async_add_executor_job(path.is_file):
+            return web.Response(status=404)
         headers = {
             "Cache-Control": "private, max-age=31536000, immutable"
                 if kind == "assets" else "private, max-age=3600",

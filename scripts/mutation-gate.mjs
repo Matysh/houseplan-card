@@ -4798,6 +4798,58 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'asset-resolve-readonly-membership-removed',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'decor_asset_resolve_readonly_is_limited_to_referenced_ids '
+      + 'tests_backend/test_ha_websocket.py',
+    because: 'a read-only household member needs referenced images for View but must not use '
+      + 'assets/resolve to probe or hash arbitrary catalog ids (#432 AC2)',
+    patches: [{
+      file: 'custom_components/houseplan/websocket_api.py',
+      find: '        allowed = requested & referenced\n',
+      replace: '        allowed = requested\n',
+    }],
+  },
+  {
+    id: 'asset-integrity-cache-hit-disabled',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'integrity_cache_reuses_digest_and_caches_corrupt_signature '
+      + 'tests_backend/test_decor_assets.py',
+    because: 'unchanged valid and corrupt files must reuse the actual digest instead of '
+      + 're-reading the blob for every WS resolve or HTTP GET (#432 AC5)',
+    patches: [{
+      file: 'custom_components/houseplan/asset_integrity.py',
+      find: '            if cached is not None and cached.signature == before:\n',
+      replace: '            if False and cached is not None and cached.signature == before:\n',
+    }],
+  },
+  {
+    id: 'asset-integrity-single-flight-disabled',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'integrity_cache_single_flights_same_path_and_releases_after_error '
+      + 'tests_backend/test_decor_assets.py',
+    because: 'parallel requests for one file version must share one streaming hash and wake '
+      + 'all waiters after success or failure (#432 AC6)',
+    patches: [{
+      file: 'custom_components/houseplan/asset_integrity.py',
+      find: '            flight = self._inflight.get(key)\n',
+      replace: '            flight = None\n',
+    }],
+  },
+  {
+    id: 'asset-integrity-post-read-signature-ignored',
+    guard: 'node scripts/backend-test-guard.mjs '
+      + 'integrity_cache_invalidates_changed_signature_and_rejects_mid_read_change '
+      + 'tests_backend/test_decor_assets.py',
+    because: 'a digest computed while the blob changes must fail dark and never become a '
+      + 'trusted cache entry for either transport (#432 AC7)',
+    patches: [{
+      file: 'custom_components/houseplan/asset_integrity.py',
+      find: '            stable = _signature(path) == before\n',
+      replace: '            stable = True\n',
+    }],
+  },
+  {
     id: 'pure-backend-test-pulls-home-assistant',
     guard: 'python3 -m pytest tests_backend/test_backend_quality.py -q -p no:cacheprovider',
     because: 'a pure test module that imports an HA-dependent backend module must be caught '
