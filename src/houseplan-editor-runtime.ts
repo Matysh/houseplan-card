@@ -10970,7 +10970,7 @@ public _renderVacSection(dlg: any): TemplateResult | typeof nothing {
             ${(['never', 'cleaning', 'always'] as const).map((mv) => html`
               <option value=${mv} ?selected=${vacTrailMode(v) === mv}>${this.host._t(('vac.trail_' + mv) as any)}</option>`)}
           </select>
-          ${renderVacuumMapsSection(this, dev, setVac, resolution)}
+          ${renderVacuumMapsSection(this, dev, resolution)}
         ` : nothing}
       </div>`;
   }

@@ -14,6 +14,47 @@ import {
   Affine, VacuumMapRoute, VacuumRouteMarkerCfg, effectiveRoutes, normalizeRouteMatrix,
 } from './vacuum-routes';
 
+/** A route which exists only in the editor until a real space is confirmed. */
+export interface VacuumRouteDraft {
+  markerId: string;
+  source: string;
+  mapId: string;
+  space: string;
+}
+
+/**
+ * Begin the add-route transaction without creating an invalid persisted row.
+ * Only the very first route may inherit the dock floor; every later map must
+ * be assigned explicitly by the user (#162 §9.2, #441).
+ */
+export function beginVacuumRouteDraft(
+  markerId: string, routes: readonly VacuumMapRoute[], dockSpace: string,
+  source: string, mapId: string,
+): VacuumRouteDraft {
+  return { markerId, source, mapId, space: routes.length ? '' : dockSpace };
+}
+
+/** Unknown/deleted spaces are represented as no selection, never persisted. */
+export function chooseVacuumRouteSpace(
+  draft: VacuumRouteDraft, space: string, spaceIds: ReadonlySet<string>,
+): VacuumRouteDraft {
+  return { ...draft, space: spaceIds.has(space) ? space : '' };
+}
+
+/** Materialise exactly one valid route, or refuse to produce a candidate. */
+export function commitVacuumRouteDraft(
+  routes: VacuumMapRoute[], draft: VacuumRouteDraft,
+  spaceIds: ReadonlySet<string>, id: string,
+): VacuumMapRoute[] | null {
+  if (!draft.source || !spaceIds.has(draft.space)
+      || routes.some((route) => route.source === draft.source && route.map_id === draft.mapId)) {
+    return null;
+  }
+  return addRoute(routes, {
+    source: draft.source, map_id: draft.mapId, space: draft.space,
+  }, id);
+}
+
 /** A marker-local id that no existing route uses. */
 export function newRouteId(existing: Iterable<string>, seed: () => number = Math.random): string {
   const taken = new Set(existing);

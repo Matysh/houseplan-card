@@ -8,14 +8,18 @@
  */
 import { TemplateResult, html, nothing } from 'lit';
 import type { HpConfirmRequest } from '../danger-confirm';
-import type { DevItem } from '../types';
+import type { DevItem, Marker, ServerConfig } from '../types';
 import type { VacSourceCandidate, VacSourceResolution } from '../vacuum';
 import { langOf, type I18nKey } from '../i18n';
 import { supportT, type SupportI18nKey } from '../i18n/support';
 import { VacuumMapRoute, effectiveRoutes, observedMapIds, resolveRoute } from '../vacuum-routes';
 import {
-  addRoute, changeRouteSpace, convertLegacyRoutes, newRouteId, removeRoute,
+  beginVacuumRouteDraft, changeRouteSpace, chooseVacuumRouteSpace,
+  commitVacuumRouteDraft, convertLegacyRoutes, newRouteId, removeRoute,
+  type VacuumRouteDraft,
 } from '../vacuum-route-edit';
+import { optimisticAttempt, rollbackOptimistic } from '../serialized-write-queue';
+import { contentFingerprint } from '../visual-continuity';
 
 interface SpaceRow { id?: unknown; name?: unknown }
 
@@ -23,19 +27,29 @@ interface SpaceRow { id?: unknown; name?: unknown }
 export interface VacuumMapsCardHost {
   hass?: { states?: Record<string, unknown> } | null;
   _config?: { language?: string | null } | null;
-  _serverCfg?: { spaces?: SpaceRow[] } | null;
+  _serverCfg: (ServerConfig & { spaces: SpaceRow[] }) | null;
+  _cfgContentFingerprint: string;
+  _cfgRev: number;
+  _saveConfigDebounced: { pending: () => boolean; cancel: () => void };
+  _regSignature: string;
   _t: (key: I18nKey, vars?: Record<string, string | number>) => string;
+  _errText: (error: unknown) => string;
+  _maybeRebuildDevices: () => void;
+  _showToast: (message: string) => void;
   _vacSource: (dev: DevItem) => string | null;
   _vacObservedMapId: (dev: DevItem, source: string) => string | undefined;
   _confirmDanger: (request: HpConfirmRequest) => Promise<boolean>;
+  requestUpdate: () => void;
 }
 
 export interface VacuumMapsHost {
   host: VacuumMapsCardHost;
-  _saveConfig: () => void;
+  _saveConfigNow: () => Promise<void>;
   _vacAutoCalibrate: (dev: DevItem) => void;
   _vacStartFit: (dev: DevItem, routeId?: string) => void;
 }
+
+const pendingRoute = new WeakMap<VacuumMapsHost, VacuumRouteDraft & { saving?: boolean }>();
 
 const spaceName = (host: VacuumMapsCardHost, spaceId: string): string => {
   const space = (host._serverCfg?.spaces || []).find((item) => item?.id === spaceId);
@@ -45,12 +59,11 @@ const spaceName = (host: VacuumMapsCardHost, spaceId: string): string => {
 /**
  * Render the block, and own every routing edit it offers.
  *
- * `setVac` is the same patch writer the rest of the vacuum section uses, so a
- * routing change goes through one save path with everything else.
+ * Additions stay in module-owned UI state until the floor is valid; accepted
+ * edits use the card's serialized config writer and roll back on rejection.
  */
 export function renderVacuumMapsSection(
-  runtime: VacuumMapsHost, dev: DevItem, setVac: (patch: Record<string, unknown>) => void,
-  sources: VacSourceResolution,
+  runtime: VacuumMapsHost, dev: DevItem, sources: VacSourceResolution,
 ): TemplateResult | typeof nothing {
   const host = runtime.host;
   const lang = langOf(host.hass, host._config?.language);
@@ -72,30 +85,63 @@ export function renderVacuumMapsSection(
     || resolution.kind === 'missing_space') ? resolution.route.id : '';
   const currentMapId = rootSource ? observed[rootSource] : undefined;
 
+  /** Persist route changes atomically, restoring the last accepted config on rejection. */
+  const persistRoutes = async (nextRoutes: VacuumMapRoute[]): Promise<boolean> => {
+    const previous = host._serverCfg;
+    if (!previous) return false;
+    const nextConfig = JSON.parse(JSON.stringify(previous)) as ServerConfig;
+    nextConfig.markers = nextConfig.markers || [];
+    let marker = nextConfig.markers.find((item) => item.id === dev.id);
+    if (!marker) {
+      if ((dev.bindingKind !== 'device' && dev.bindingKind !== 'entity') || !dev.bindingRef) return false;
+      marker = {
+        id: dev.id, binding: `${dev.bindingKind}:${dev.bindingRef}`,
+        space: dev.space || null, area: dev.area || null, hidden: dev.hidden ? true : false,
+      } as Marker;
+      nextConfig.markers.push(marker);
+    }
+    marker.vacuum = { ...(marker.vacuum || {}), map_routes: nextRoutes };
+    delete marker.vacuum.calibration;
+    const attempt = optimisticAttempt(previous, nextConfig, host._cfgContentFingerprint,
+      host._cfgRev, contentFingerprint);
+    host._serverCfg = nextConfig;
+    host._regSignature = '';
+    host._maybeRebuildDevices();
+    host.requestUpdate();
+    if (host._saveConfigDebounced.pending()) host._saveConfigDebounced.cancel();
+    try {
+      await runtime._saveConfigNow();
+      return true;
+    } catch (error) {
+      rollbackOptimistic(host, attempt, contentFingerprint);
+      host._regSignature = '';
+      host._maybeRebuildDevices();
+      host.requestUpdate();
+      host._showToast(host._t('toast.cfg_save_failed', { err: host._errText(error) }));
+      return false;
+    }
+  };
+
   /** Every routing edit converts legacy data first — all of it, or none. */
-  const writeRoutes = (next: (current: VacuumMapRoute[]) => VacuumMapRoute[]): boolean => {
+  const writeRoutes = async (
+    next: (current: VacuumMapRoute[]) => VacuumMapRoute[] | null,
+  ): Promise<boolean> => {
     let base: VacuumMapRoute[] | null = explicit ? (vacuum.map_routes ?? null) : null;
     if (!base) {
       base = convertLegacyRoutes(vacuum, dev.space, rootSource,
         (taken) => newRouteId(taken)) ?? [];
       if (!rootSource && Object.keys(vacuum.calibration || {}).length) return false;
     }
-    setVac({ map_routes: next(base), calibration: undefined });
-    return true;
+    const candidate = next(base);
+    return candidate ? persistRoutes(candidate) : false;
   };
   const takenIds = () => new Set(routes.map((route) => route.id));
 
   const addCurrent = () => {
     if (!rootSource || currentMapId === undefined) return;
-    writeRoutes((current) => addRoute(
-      current,
-      {
-        source: rootSource,
-        map_id: currentMapId,
-        space: current.length ? '' : dev.space,
-      },
-      newRouteId(takenIds()),
-    ));
+    pendingRoute.set(runtime,
+      beginVacuumRouteDraft(dev.id, routes, dev.space, rootSource, currentMapId));
+    host.requestUpdate();
   };
 
   /**
@@ -109,11 +155,9 @@ export function renderVacuumMapsSection(
   const addSource = (candidate: VacSourceCandidate) => {
     const mapId = host._vacObservedMapId(dev, candidate.entityId);
     if (mapId === undefined) return;
-    writeRoutes((current) => addRoute(
-      current,
-      { source: candidate.entityId, map_id: mapId, space: current.length ? '' : dev.space },
-      newRouteId(takenIds()),
-    ));
+    pendingRoute.set(runtime,
+      beginVacuumRouteDraft(dev.id, routes, dev.space, candidate.entityId, mapId));
+    host.requestUpdate();
   };
 
   const spare = sources.candidates.filter((candidate) => candidate.entityId !== rootSource
@@ -131,7 +175,7 @@ export function renderVacuumMapsSection(
       cancelLabel: host._t('btn.cancel'),
     });
     if (!accepted) return;
-    writeRoutes((current) => changeRouteSpace(current, route.id, space, newRouteId(takenIds())));
+    await writeRoutes((current) => changeRouteSpace(current, route.id, space, newRouteId(takenIds())));
   };
 
   const drop = async (route: VacuumMapRoute) => {
@@ -145,7 +189,7 @@ export function renderVacuumMapsSection(
       cancelLabel: host._t('btn.cancel'),
     });
     if (!accepted) return;
-    writeRoutes((current) => removeRoute(current, route.id));
+    await writeRoutes((current) => removeRoute(current, route.id));
   };
 
   // Space order, then map id, then source: a stable reading order that never
@@ -166,6 +210,50 @@ export function renderVacuumMapsSection(
   const canAddCurrent = !!rootSource && currentMapId !== undefined
     && !routes.some((route) => route.source === rootSource && route.map_id === currentMapId);
 
+  let draft = pendingRoute.get(runtime);
+  const draftSource = draft?.source || '';
+  const draftMapId = draft?.mapId || '';
+  const draftIdentityExists = draft
+    ? routes.some((route) => route.source === draftSource && route.map_id === draftMapId)
+    : false;
+  if (draft && (draft.markerId !== dev.id
+      || host._vacObservedMapId(dev, draft.source) !== draft.mapId
+      || (draftIdentityExists && !draft.saving))) {
+    pendingRoute.delete(runtime);
+    draft = undefined;
+  }
+  if (draft?.space && !spaceIds.has(draft.space)) {
+    draft = chooseVacuumRouteSpace(draft, '', spaceIds);
+    pendingRoute.set(runtime, draft);
+  }
+  const selectDraftSpace = (space: string) => {
+    const current = pendingRoute.get(runtime);
+    if (!current || current.saving) return;
+    pendingRoute.set(runtime, chooseVacuumRouteSpace(current, space, spaceIds));
+    host.requestUpdate();
+  };
+  const cancelDraft = () => {
+    if (pendingRoute.get(runtime)?.saving) return;
+    pendingRoute.delete(runtime);
+    host.requestUpdate();
+  };
+  const confirmDraft = async () => {
+    const current = pendingRoute.get(runtime);
+    if (!current || current.saving || !spaceIds.has(current.space)) return;
+    pendingRoute.set(runtime, { ...current, saving: true });
+    host.requestUpdate();
+    const saved = await writeRoutes((base) => commitVacuumRouteDraft(
+      base, current, spaceIds, newRouteId(new Set(base.map((route) => route.id))),
+    ));
+    const live = pendingRoute.get(runtime);
+    if (live?.markerId === current.markerId && live.source === current.source
+        && live.mapId === current.mapId) {
+      if (saved) pendingRoute.delete(runtime);
+      else pendingRoute.set(runtime, current);
+    }
+    host.requestUpdate();
+  };
+
   return html`
     <label>${t('vac.routes_section')}</label>
     <div class="bindbox vacroutes">
@@ -174,7 +262,28 @@ export function renderVacuumMapsSection(
           ? t('vac.routes_no_map') : (currentMapId || t('vac.route_map_default'))}</b></div>
         <div><span>${t('vac.routes_status')}</span><b>${t(`vac.routes_state_${resolution.kind}`)}</b></div>
       </div>
-      ${rows.length ? html`<ul class="vacroute-list">
+      ${rows.length || draft ? html`<ul class="vacroute-list">
+        ${draft ? html`
+          <li class="vacroute pending">
+            <div class="vacroute-head"><b>${draft.mapId || t('vac.route_map_default')}</b></div>
+            <small>${draft.source}</small>
+            <label class="srcrow">
+              <span>${t('vac.route_space')}</span>
+              <select class="areasel vacroute-draft-space" ?disabled=${!!draft.saving}
+                @change=${(event: Event) => selectDraftSpace((event.target as HTMLSelectElement).value)}>
+                <option value="" ?selected=${!draft.space}>${t('vac.route_space_none')}</option>
+                ${spaces.map((space) => html`
+                  <option value=${space.id} ?selected=${space.id === draft!.space}>${space.name}</option>`)}
+              </select>
+            </label>
+            <div class="vacbtns">
+              <button type="button" class="btn ghostbtn" ?disabled=${!!draft.saving}
+                @click=${cancelDraft}>${host._t('btn.cancel')}</button>
+              <button type="button" class="btn vacroute-draft-save"
+                ?disabled=${!!draft.saving || !spaceIds.has(draft.space)}
+                @click=${() => void confirmDraft()}>${host._t('btn.save')}</button>
+            </div>
+          </li>` : nothing}
         ${rows.map((route) => html`
           <li class="vacroute ${route.id === activeId ? 'on' : ''}">
             <div class="vacroute-head">
@@ -206,7 +315,7 @@ export function renderVacuumMapsSection(
           </li>`)}
       </ul>` : html`<div class="rhint">${t('vac.routes_empty')}</div>`}
       <div class="vacbtns">
-        <button type="button" class="btn" ?disabled=${!canAddCurrent}
+        <button type="button" class="btn vacroute-add-current" ?disabled=${!canAddCurrent || !!draft}
           @click=${addCurrent}>${t('vac.route_add_current')}</button>
       </div>
       ${spare.length ? html`<details class="vacroute-sources">
@@ -215,7 +324,8 @@ export function renderVacuumMapsSection(
         <div class="vacsource-list">
           ${spare.map((candidate) => {
             const mapId = host._vacObservedMapId(dev, candidate.entityId);
-            return html`<button type="button" class="vacsource" ?disabled=${mapId === undefined}
+            return html`<button type="button" class="vacsource"
+              ?disabled=${mapId === undefined || !!draft}
               @click=${() => addSource(candidate)}>
               <span><b>${candidate.name}</b><small>${candidate.entityId}</small></span>
               <span class="vacsource-meta">${mapId === undefined

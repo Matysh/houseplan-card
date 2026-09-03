@@ -8,7 +8,8 @@ import {
 } from '../test-build/vacuum-routes.js';
 import {
   newRouteId, addRoute, removeRoute, changeRouteSpace, saveRouteCalibration, convertLegacyRoutes,
-  writeVacuumMatrix, planVacuumFit, calibrationTarget,
+  writeVacuumMatrix, planVacuumFit, calibrationTarget, beginVacuumRouteDraft,
+  chooseVacuumRouteSpace, commitVacuumRouteDraft,
 } from '../test-build/vacuum-route-edit.js';
 
 const fixture = (name) => JSON.parse(readFileSync(
@@ -273,6 +274,30 @@ test('добавление, удаление и запись матрицы ма
   assert.deepEqual(added[0].calibration, null, 'вход не мутирован');
   assert.deepEqual(removeRoute(calibrated, 'r1'), []);
   assert.deepEqual(removeRoute(calibrated, 'нет такого'), calibrated);
+});
+
+test('новый маршрут живёт в черновике до выбора этажа (#441 AC1)', () => {
+  const existing = [route()];
+  const first = beginVacuumRouteDraft('mk', [], 'floor1', 'camera.robot', 'm1');
+  const second = beginVacuumRouteDraft('mk', existing, 'floor1', 'camera.robot', 'm2');
+  assert.equal(first.space, 'floor1', 'первый маршрут наследует этаж дока');
+  assert.equal(second.space, '', 'второй маршрут не угадывает этаж');
+  assert.equal(commitVacuumRouteDraft(existing, second, spaces('floor1', 'floor2'), 'r2'), null);
+  assert.equal(existing.length, 1, 'черновик не меняет маршруты');
+});
+
+test('черновик материализует ровно один валидный маршрут (#441 AC2)', () => {
+  const existing = [route()];
+  const draft = beginVacuumRouteDraft('mk', existing, 'floor1', 'camera.robot', 'm2');
+  const unknown = chooseVacuumRouteSpace(draft, 'gone', spaces('floor1', 'floor2'));
+  assert.equal(unknown.space, '');
+  const chosen = chooseVacuumRouteSpace(draft, 'floor2', spaces('floor1', 'floor2'));
+  const committed = commitVacuumRouteDraft(existing, chosen, spaces('floor1', 'floor2'), 'r2');
+  assert.deepEqual(committed, [existing[0], {
+    id: 'r2', source: 'camera.robot', map_id: 'm2', space: 'floor2', calibration: null,
+  }]);
+  assert.equal(commitVacuumRouteDraft(committed, chosen, spaces('floor1', 'floor2'), 'r3'), null,
+    'одну карту нельзя добавить дважды');
 });
 
 test('конверсия легаси переносит ВСЕ матрицы или ничего (AC13)', () => {

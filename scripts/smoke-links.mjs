@@ -28,6 +28,16 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    symbols: [
+      'beginVacuumRouteDraft', 'chooseVacuumRouteSpace', 'commitVacuumRouteDraft',
+      'VacuumRouteDraft', 'VacuumMapsHost', 'VacuumMapsCardHost',
+    ],
+    smokes: ['smoke_vacuum_route_draft.mjs'],
+    because: 'the #441 production-bundle scenario drives both add-map controls, first-route '
+      + 'defaulting, required floor selection, cancel, a rejected config write with rollback and '
+      + 'a successful retry; those UI and transport effects are outside the pure draft helpers',
+  },
+  {
     symbols: ['showRoomTooltipOf'],
     smokes: ['smoke_room_tooltip_toggle.mjs'],
     because: 'the production-bundle scenario proves the global-settings draft and persistence, '

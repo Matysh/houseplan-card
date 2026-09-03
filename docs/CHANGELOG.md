@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- A robot vacuum's second and later maps can now be added: the editor asks for
+  the target floor before saving the route, and a Home Assistant rejection no
+  longer leaves a phantom local route
+  ([#441](https://github.com/Matysh/houseplan-card/issues/441)).
+
 ## v1.71.0-beta.3 — 2026-09-03
 
 - When a robot vacuum is cleaning but its current map has no floor assigned, is
