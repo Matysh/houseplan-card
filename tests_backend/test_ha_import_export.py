@@ -190,7 +190,16 @@ def test_issue_428_missing_decor_asset_round_trips_in_every_export_mode(
         for item in space.get("decor") or []
         if item.get("kind") == "image"
     ]
-    assert imported_images == [shape]
+    assert len(imported_images) == 1
+    # A one-space import intentionally allocates local object ids. The portable
+    # asset identity and every visual field must survive that namespace remap.
+    imported_without_local_id = {
+        key: value for key, value in imported_images[0].items() if key != "id"
+    }
+    source_without_local_id = {
+        key: value for key, value in shape.items() if key != "id"
+    }
+    assert imported_without_local_id == source_without_local_id
 
 
 @pytest.mark.parametrize(
