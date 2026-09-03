@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Oversized decor-image sources can now be added through the safe reduced-copy
+  action; House Plan hides only the forbidden original instead of hiding both
+  choices ([#427](https://github.com/Matysh/houseplan-card/issues/427)).
 - General settings can now hide the room information window on mouse hover
   without disabling the room highlight or device tooltips; existing plans keep
   the window enabled by default ([#426](https://github.com/Matysh/houseplan-card/issues/426)).

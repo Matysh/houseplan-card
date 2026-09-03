@@ -110,6 +110,51 @@ const out = await page.evaluate(async () => {
   out.reducedTo4096 = reducedDims[0] === 4096 && reducedDims[1] === 4096;
   card._spaceDialog = { ...card._spaceDialog, planFile: null };
 
+  // ── #427: decor source >2 MiB can still choose a reduced copy ───────────
+  // The canonical asset limit forbids only the original. Trailing bytes make
+  // this valid JPEG exceed the source limit without another huge allocation;
+  // Chromium deliberately ignores data after JPEG EOI while decoding.
+  const decorBigFile = new File([
+    bigBlob, new Uint8Array(2 * 1024 * 1024 + 1),
+  ], 'decor-large.jpg', { type: 'image/jpeg' });
+  const realUploadDecorImage = card._editorRuntime._uploadDecorImage;
+  let decorUpload = null;
+  card._editorRuntime._uploadDecorImage = async (blob, name, replace) => {
+    decorUpload = { blob, name, replace };
+  };
+  await card._editorRuntime._decorImageUpload({
+    target: { files: [decorBigFile], value: 'x' },
+  });
+  await waitFor(() => !!card._backdropGuard); await card.updateComplete;
+  const decorButtons = guardButtons();
+  out.decorOversizeOffersReducedWithoutOriginal = decorButtons.length === 2
+    && decorButtons.some((button) => button.textContent.includes(card._t('btn.cancel')))
+    && decorButtons.some((button) => button.textContent.includes(card._t('backdrop.use_downscaled')))
+    && !decorButtons.some((button) => button.textContent.includes(card._t('backdrop.keep_original')));
+  decorButtons.find((button) => button.textContent.includes(
+    card._t('backdrop.use_downscaled'),
+  ))?.click();
+  out.decorOversizeUploadsReducedCopy = await waitFor(() => !!decorUpload
+    && !card._backdropGuard, 15000)
+    && decorUpload.blob !== decorBigFile
+    && decorUpload.blob.size < decorBigFile.size
+    && /-reduced\.jpg$/.test(decorUpload.name)
+    && decorUpload.replace === false;
+  card._editorRuntime._uploadDecorImage = realUploadDecorImage;
+
+  await card._editorRuntime._decorImageUpload({
+    target: {
+      files: [fileOf(pngHeader(20000, 20000), 'decor-hard.png', 'image/png')],
+      value: 'x',
+    },
+  });
+  await waitFor(() => !!card._backdropGuard); await card.updateComplete;
+  const decorHardButtons = guardButtons();
+  out.decorHardStillHasOnlyCancel = decorHardButtons.length === 1
+    && decorHardButtons[0].textContent.includes(card._t('btn.cancel'));
+  decorHardButtons[0]?.click();
+  await waitFor(() => !card._backdropGuard);
+
   // ── alpha-ветка: PNG с alpha остаётся PNG ────────────────────────────────
   const alphaSrc = new OffscreenCanvas(6200, 6200);
   const alphaCtx = alphaSrc.getContext('2d');

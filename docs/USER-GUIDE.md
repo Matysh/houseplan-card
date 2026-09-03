@@ -768,13 +768,15 @@ available plan variants. **All categories** returns to the first level and
 disarms the current symbol. Existing placed furniture keeps its saved size and
 position when the built-in artwork is updated.
 
-The Image palette stores reusable files privately in House Plan. A file is at
-most 2 MiB; PNG, JPEG, WebP and safe SVG are supported. Picking a file arms one
-placement: the pointer preview shows the result, one click adds it at 100 cm
-wide (aspect-preserving, height capped at 200 cm), and the tool returns to
-Select. Images use the same smooth handles, mirroring and `Shift`-45° rotation
-as furniture, but never snap to a wall. Their complete rectangle is selectable,
-including transparent pixels.
+The Image palette stores reusable files privately in House Plan. Each saved
+canonical file is at most 2 MiB; PNG, JPEG, WebP and safe SVG are supported.
+When a raster source exceeds that limit, the warning dialog offers to upload a
+reduced copy while keeping the oversized original unavailable. Picking a file
+arms one placement: the pointer preview shows the result, one click adds it at
+100 cm wide (aspect-preserving, height capped at 200 cm), and the tool returns
+to Select. Images use the same smooth handles, mirroring and `Shift`-45°
+rotation as furniture, but never snap to a wall. Their complete rectangle is
+selectable, including transparent pixels.
 
 Deleting or replacing a placed image leaves the reusable file in the palette.
 The palette deletes a file only after all placed copies in all spaces are gone.

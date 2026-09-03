@@ -238,9 +238,10 @@ export function renderBackdropGuard(
       <button class="btn ghost" ?disabled=${guard.busy} @click=${() => dismiss()}>
         ${host._t('btn.cancel')}</button>
       <span class="spacer"></span>
-      ${hard || !allowOriginal ? null : html`
-        <button class="btn ghost" ?disabled=${guard.busy} @click=${() => original()}>
-          ${host._t('backdrop.keep_original')}</button>
+      ${hard ? null : html`
+        ${allowOriginal ? html`
+          <button class="btn ghost" ?disabled=${guard.busy} @click=${() => original()}>
+            ${host._t('backdrop.keep_original')}</button>` : null}
         <button class="btn on" ?disabled=${guard.busy} @click=${() => reduced()}>
           ${guard.busy ? host._t('backdrop.reducing') : host._t('backdrop.use_downscaled')}
         </button>`}
