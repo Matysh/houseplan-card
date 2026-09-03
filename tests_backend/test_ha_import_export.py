@@ -2488,3 +2488,58 @@ def test_apply_schema_accepts_only_an_opaque_preview_token() -> None:
             "expected_config_rev": 1,
             "expected_layout_rev": 1,
         })
+
+
+def test_issue_162_space_export_drops_map_routes_of_other_spaces(tmp_path: Path) -> None:
+    """Маршрут в чужое пространство нельзя увезти: его цели в экспорте нет."""
+    config = _config()
+    config["markers"][0]["vacuum"] = {
+        "source": "camera.robot",
+        "map_routes": [
+            {"id": "vr1", "source": "camera.robot", "map_id": "m1",
+             "space": "ground", "calibration": [1, 0, 0, 0, 1, 0]},
+            {"id": "vr2", "source": "camera.robot", "map_id": "m2",
+             "space": "other", "calibration": [2, 0, 0, 0, 2, 0]},
+        ],
+    }
+    document, _ = create_export(
+        SimpleNamespace(instance_id="instance-a"), {"config": config},
+        {"layout": {"lamp": {"s": "ground", "x": 0.5, "y": 0.5}}},
+        kind="space", space_id="ground", card_version="1.61.0", config_root=tmp_path,
+    )
+    vacuum = document["payload"]["config"]["markers"][0]["vacuum"]
+    assert [route["id"] for route in vacuum["map_routes"]] == ["vr1"]
+    assert vacuum["source"] == "camera.robot", "корневой источник остаётся"
+    assert document["transfer"]["dropped_marker_links"] == 1
+
+
+def test_issue_162_full_export_round_trips_every_map_route(tmp_path: Path) -> None:
+    config = _config()
+    routes = [
+        {"id": "vr1", "source": "camera.robot", "map_id": "m1",
+         "space": "ground", "calibration": [1, 0, 0, 0, 1, 0]},
+        {"id": "vr2", "source": "camera.other", "map_id": "m2",
+         "space": "other", "calibration": [2, 0, 0, 0, 2, 0]},
+    ]
+    config["markers"][0]["vacuum"] = {"source": "camera.robot", "map_routes": routes}
+    document, _ = create_export(
+        SimpleNamespace(instance_id="instance-a"), {"config": config},
+        {"layout": {}}, kind="full", card_version="1.61.0", config_root=tmp_path,
+    )
+    assert document["payload"]["config"]["markers"][0]["vacuum"]["map_routes"] == routes
+    assert document["transfer"]["dropped_marker_links"] == 0
+
+
+def test_issue_162_space_export_keeps_legacy_calibration_untouched(tmp_path: Path) -> None:
+    config = _config()
+    config["markers"][0]["vacuum"] = {
+        "source": "camera.robot", "calibration": {"m1": [1, 0, 0, 0, 1, 0]},
+    }
+    document, _ = create_export(
+        SimpleNamespace(instance_id="instance-a"), {"config": config},
+        {"layout": {"lamp": {"s": "ground", "x": 0.5, "y": 0.5}}},
+        kind="space", space_id="ground", card_version="1.61.0", config_root=tmp_path,
+    )
+    vacuum = document["payload"]["config"]["markers"][0]["vacuum"]
+    assert vacuum == {"source": "camera.robot", "calibration": {"m1": [1, 0, 0, 0, 1, 0]}}
+    assert document["transfer"]["dropped_marker_links"] == 0

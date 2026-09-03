@@ -576,6 +576,20 @@ def create_export(
                         and ref[len("marker:"):] not in selected_ids:
                     marker.pop("value_source", None)
                     dropped_marker_links += 1
+                # #162: a robot map routed into ANOTHER space cannot travel
+                # with a single-space export — its target would not exist on
+                # import, and a route with a dead space resolves to nothing.
+                # Same neutralisation contract as the marker refs above: drop
+                # it and count it, so the preview states the loss up front.
+                vacuum = marker.get("vacuum")
+                routes = vacuum.get("map_routes") if isinstance(vacuum, dict) else None
+                if isinstance(routes, list):
+                    kept_routes = [
+                        route for route in routes
+                        if isinstance(route, dict) and str(route.get("space")) == str(space_id)
+                    ]
+                    dropped_marker_links += len(routes) - len(kept_routes)
+                    vacuum["map_routes"] = kept_routes or None
             config = {
                 "spaces": [_json_copy(space)],
                 "markers": _json_copy(selected_markers),
