@@ -272,12 +272,13 @@ performance по канону процесса; Linux CI является кан
 - `custom_components/houseplan/vacuum_routes.py` — backend parity;
 - `custom_components/houseplan/import_export.py` — сохранение explicit empty;
 - `src/editors/vacuum-maps-section.ts` — partitions/groups и stable tie-breaker;
-- `src/locales/{en,ru,de,fr}.ts` — заголовок missing-space group;
+- `src/i18n/support/{en,ru,de,fr}.json` — заголовок missing-space group;
 - `src/render-device-snapshot.ts` и `src/houseplan-card.ts` — immutable
   vacuum-only subset и renderer call site;
 - `test/`, `tests_backend/`, `demo/`, `scripts/mutation-gate.mjs` — witnesses;
-- `docs/VACUUM.md`, `docs/CHANGELOG.md`, `docs/CHANGELOG.ru.md` — release
-  artifacts.
+- `docs/VACUUM.md`, `docs/CONFIG-COMPATIBILITY.md`,
+  `docs/USER-GUIDE.ru.md`, `docs/CHANGELOG.md`, `docs/CHANGELOG.ru.md` —
+  release artifacts.
 
 ## Риски и rollback
 
@@ -297,6 +298,11 @@ performance по канону процесса; Linux CI является кан
 - Обязательны записи в `docs/CHANGELOG.md` и `docs/CHANGELOG.ru.md` в том же
   user-visible коммите.
 - Обновляется `docs/VACUUM.md` для явного empty-array/export контракта.
+- Обновляется `docs/CONFIG-COMPATIBILITY.md`: раздел vacuum map routes явно
+  различает absent, `null`, explicit empty и non-empty `map_routes`, включая
+  сохранение `[]` при single-space export.
+- Обновляется `docs/USER-GUIDE.ru.md`: раздел «Карты и этажи» описывает новую
+  видимую группу маршрутов «Пространство удалено» в Device editor.
 - Изменение Device editor требует browser screenshot/smoke evidence в
   light/dark темах; новый постоянный golden добавляется только если этот экран
   уже входит в canonical golden surface, иначе review artifact прикладывается
