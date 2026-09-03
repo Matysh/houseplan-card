@@ -1,0 +1,113 @@
+[
+  {
+    "name": "один динамический источник: активна вторая карта",
+    "routes": [
+      { "id": "r1", "source": "camera.robot", "map_id": "m1", "space": "floor1", "calibration": [1, 0, 0, 0, 1, 0] },
+      { "id": "r2", "source": "camera.robot", "map_id": "m2", "space": "floor2", "calibration": [2, 0, 0, 0, 2, 0] }
+    ],
+    "observed": { "camera.robot": "m2" },
+    "spaces": ["floor1", "floor2"],
+    "expected": { "kind": "ready", "route_id": "r2", "space": "floor2" }
+  },
+  {
+    "name": "порядок списка не выбирает этаж",
+    "routes": [
+      { "id": "r2", "source": "camera.robot", "map_id": "m2", "space": "floor2", "calibration": [2, 0, 0, 0, 2, 0] },
+      { "id": "r1", "source": "camera.robot", "map_id": "m1", "space": "floor1", "calibration": [1, 0, 0, 0, 1, 0] }
+    ],
+    "observed": { "camera.robot": "m1" },
+    "spaces": ["floor1", "floor2"],
+    "expected": { "kind": "ready", "route_id": "r1", "space": "floor1" }
+  },
+  {
+    "name": "две камеры с неразличимым default одновременно активны",
+    "routes": [
+      { "id": "r1", "source": "camera.floor1", "map_id": "default", "space": "floor1", "calibration": [1, 0, 0, 0, 1, 0] },
+      { "id": "r2", "source": "camera.floor2", "map_id": "default", "space": "floor2", "calibration": [1, 0, 0, 0, 1, 0] }
+    ],
+    "observed": { "camera.floor1": "default", "camera.floor2": "default" },
+    "spaces": ["floor1", "floor2"],
+    "expected": { "kind": "ambiguous", "route_ids": ["r1", "r2"] }
+  },
+  {
+    "name": "две камеры, различимые map id — неоднозначности нет",
+    "routes": [
+      { "id": "r1", "source": "camera.floor1", "map_id": "a", "space": "floor1", "calibration": [1, 0, 0, 0, 1, 0] },
+      { "id": "r2", "source": "camera.floor2", "map_id": "b", "space": "floor2", "calibration": [1, 0, 0, 0, 1, 0] }
+    ],
+    "observed": { "camera.floor1": "x", "camera.floor2": "b" },
+    "spaces": ["floor1", "floor2"],
+    "expected": { "kind": "ready", "route_id": "r2", "space": "floor2" }
+  },
+  {
+    "name": "активная карта не размечена",
+    "routes": [
+      { "id": "r1", "source": "camera.robot", "map_id": "m1", "space": "floor1", "calibration": [1, 0, 0, 0, 1, 0] }
+    ],
+    "observed": { "camera.robot": "m3" },
+    "spaces": ["floor1"],
+    "expected": { "kind": "unmapped", "source": "camera.robot", "map_id": "m3" }
+  },
+  {
+    "name": "маршрут без калибровки",
+    "routes": [
+      { "id": "r1", "source": "camera.robot", "map_id": "m1", "space": "floor1", "calibration": null }
+    ],
+    "observed": { "camera.robot": "m1" },
+    "spaces": ["floor1"],
+    "expected": { "kind": "needs_calibration", "route_id": "r1" }
+  },
+  {
+    "name": "матрица из пяти чисел калибровкой не считается",
+    "routes": [
+      { "id": "r1", "source": "camera.robot", "map_id": "m1", "space": "floor1", "calibration": [1, 0, 0, 0, 1] }
+    ],
+    "observed": { "camera.robot": "m1" },
+    "spaces": ["floor1"],
+    "expected": { "kind": "needs_calibration", "route_id": "r1" }
+  },
+  {
+    "name": "целевое пространство удалено",
+    "routes": [
+      { "id": "r1", "source": "camera.robot", "map_id": "m1", "space": "gone", "calibration": [1, 0, 0, 0, 1, 0] }
+    ],
+    "observed": { "camera.robot": "m1" },
+    "spaces": ["floor1"],
+    "expected": { "kind": "missing_space", "route_id": "r1" }
+  },
+  {
+    "name": "нулевой map id значим и не путается с default",
+    "routes": [
+      { "id": "r0", "source": "camera.robot", "map_id": "0", "space": "floor1", "calibration": [1, 0, 0, 0, 1, 0] },
+      { "id": "rd", "source": "camera.robot", "map_id": "default", "space": "floor2", "calibration": [1, 0, 0, 0, 1, 0] }
+    ],
+    "observed": { "camera.robot": "0" },
+    "spaces": ["floor1", "floor2"],
+    "expected": { "kind": "ready", "route_id": "r0", "space": "floor1" }
+  },
+  {
+    "name": "пустая строка тоже идентификатор карты",
+    "routes": [
+      { "id": "re", "source": "camera.robot", "map_id": "", "space": "floor2", "calibration": [1, 0, 0, 0, 1, 0] }
+    ],
+    "observed": { "camera.robot": "" },
+    "spaces": ["floor1", "floor2"],
+    "expected": { "kind": "ready", "route_id": "re", "space": "floor2" }
+  },
+  {
+    "name": "телеметрии нет ни у одного источника",
+    "routes": [
+      { "id": "r1", "source": "camera.robot", "map_id": "m1", "space": "floor1", "calibration": [1, 0, 0, 0, 1, 0] }
+    ],
+    "observed": {},
+    "spaces": ["floor1"],
+    "expected": { "kind": "none" }
+  },
+  {
+    "name": "маршрутов нет вовсе, но карта наблюдается",
+    "routes": [],
+    "observed": { "camera.robot": "m9" },
+    "spaces": ["floor1"],
+    "expected": { "kind": "unmapped", "source": "camera.robot", "map_id": "m9" }
+  }
+]

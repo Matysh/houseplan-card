@@ -232,6 +232,66 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'vacuum-route-ambiguity-takes-the-first',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/vacuum-routes.test.mjs',
+    because: 'two plausible routes must give ambiguous, never "the first one": a guessed '
+      + 'floor turns the plan into a false statement about where the robot is (#162, M-A)',
+    patches: [{
+      file: 'src/vacuum-routes.ts',
+      find: '  if (matched.length > 1) {\n    return { kind: \'ambiguous\', routeIds: matched.map((route) => route.id).sort() };\n  }',
+      replace: '  if (matched.length > 1) {\n    return { kind: \'ready\', route: matched[0] };\n  }',
+    }],
+  },
+  {
+    id: 'vacuum-route-missing-space-falls-back-to-dock',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/vacuum-routes.test.mjs',
+    because: 'a route pointing at a deleted space must fail visibly, not quietly render the '
+      + 'robot in the dock space it no longer belongs to (#162, M-B)',
+    patches: [{
+      file: 'src/vacuum-routes.ts',
+      find: "    if (input.spaceIds && !input.spaceIds.has(route.space)) return { kind: 'missing_space', route };",
+      replace: '    // mutant: missing space ignored',
+    }],
+  },
+  {
+    id: 'vacuum-route-unmapped-draws-anyway',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/vacuum-routes.test.mjs',
+    because: 'an unmapped active map must draw nothing: reusing the last matrix puts the '
+      + 'robot on a floor nobody mapped it to (#162, M-C)',
+    patches: [{
+      file: 'src/vacuum-routes.ts',
+      find: '    if (observed === route.map_id) matched.push(route);',
+      replace: '    matched.push(route);',
+    }],
+  },
+  {
+    id: 'vacuum-route-identity-duplicates-allowed',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/vacuum-routes.test.mjs',
+    because: 'two routes with the same (source, map_id) make the resolver permanently '
+      + 'ambiguous and silently share one calibration (#162, M-D)',
+    patches: [{
+      file: 'src/vacuum-routes.ts',
+      find: "      if (seenIdentity.has(identity)) problems.push(issue(markerId, id, 'duplicate_identity'));",
+      replace: '      // mutant: duplicate identity accepted',
+    }],
+  },
+  {
+    id: 'vacuum-legacy-run-adopts-the-first-candidate',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/vacuum-routes.test.mjs',
+    because: 'a legacy run carries no source, so two candidates must be ambiguous_run and '
+      + 'draw nowhere; picking the first one invents a floor for old data (#162, M-H)',
+    patches: [{
+      file: 'src/vacuum-routes.ts',
+      find: "  if (candidates.length === 1) return { kind: 'adopted', route: candidates[0] };",
+      replace: "  if (candidates.length >= 1) return { kind: 'adopted', route: candidates[0] };",
+    }],
+  },
+  {
     id: 'area-snapshot-cleanup-ignores-authority',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="limited frames and runtime reset" '

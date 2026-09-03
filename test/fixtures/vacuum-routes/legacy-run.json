@@ -1,0 +1,67 @@
+[
+  {
+    "name": "единственный кандидат по map id",
+    "run": { "map_id": "m1" },
+    "routes": [
+      { "id": "r1", "source": "camera.robot", "map_id": "m1", "space": "floor1" },
+      { "id": "r2", "source": "camera.robot", "map_id": "m2", "space": "floor2" }
+    ],
+    "root_source": "camera.robot",
+    "expected": { "kind": "adopted", "route_id": "r1" }
+  },
+  {
+    "name": "корневой источник отсеивает чужую камеру",
+    "run": { "map_id": "default" },
+    "routes": [
+      { "id": "r1", "source": "camera.old", "map_id": "default", "space": "floor1" },
+      { "id": "r2", "source": "camera.new", "map_id": "default", "space": "floor2" }
+    ],
+    "root_source": "camera.old",
+    "expected": { "kind": "adopted", "route_id": "r1" }
+  },
+  {
+    "name": "без корневого источника два одинаковых map id неразрешимы",
+    "run": { "map_id": "default" },
+    "routes": [
+      { "id": "r1", "source": "camera.old", "map_id": "default", "space": "floor1" },
+      { "id": "r2", "source": "camera.new", "map_id": "default", "space": "floor2" }
+    ],
+    "root_source": "",
+    "expected": { "kind": "ambiguous_run", "route_ids": ["r1", "r2"] }
+  },
+  {
+    "name": "корневой источник не совпал ни с одним маршрутом",
+    "run": { "map_id": "m1" },
+    "routes": [
+      { "id": "r1", "source": "camera.new", "map_id": "m1", "space": "floor1" }
+    ],
+    "root_source": "camera.old",
+    "expected": { "kind": "orphan_run" }
+  },
+  {
+    "name": "карты такой нет ни в одном маршруте",
+    "run": { "map_id": "m7" },
+    "routes": [
+      { "id": "r1", "source": "camera.robot", "map_id": "m1", "space": "floor1" }
+    ],
+    "root_source": "camera.robot",
+    "expected": { "kind": "orphan_run" }
+  },
+  {
+    "name": "нулевой map id сопоставляется строго",
+    "run": { "map_id": "0" },
+    "routes": [
+      { "id": "r0", "source": "camera.robot", "map_id": "0", "space": "floor1" },
+      { "id": "rd", "source": "camera.robot", "map_id": "default", "space": "floor2" }
+    ],
+    "root_source": "camera.robot",
+    "expected": { "kind": "adopted", "route_id": "r0" }
+  },
+  {
+    "name": "маршрутов нет — run осиротел",
+    "run": { "map_id": "m1" },
+    "routes": [],
+    "root_source": "camera.robot",
+    "expected": { "kind": "orphan_run" }
+  }
+]
