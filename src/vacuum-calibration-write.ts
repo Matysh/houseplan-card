@@ -44,7 +44,7 @@ export interface VacuumCalibrationWriteHost {
   _cfgRev: number;
   _saveConfigDebounced: { pending: () => boolean; cancel: () => void };
   _regSignature: string;
-  _markerDialog: any;
+  _markerDialog: { busy: boolean } | null;
   _vacCalConfirm: CalibrationProposal | null;
   _vacFit: VacuumFit | null;
   _space: string;

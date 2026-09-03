@@ -11931,7 +11931,7 @@ export class HouseplanCard extends LitElement {
         ${this._vacFit ? html`<div class="vaccalbar" aria-busy=${String(!!this._vacFit.busy)}>
           <span>${this._t('vac.fit_hint')}</span>
           <button class="btn ghostbtn" ?disabled=${this._vacFit.busy}
-            @click=${() => this._vacFitTurn({ rot: ((this._vacFit!.p.rot + 90) % 360) as any })}>${this._t('vac.fit_rotate')}</button>
+            @click=${() => this._vacFitTurn({ rot: ((this._vacFit!.p.rot + 90) % 360) as FitParams['rot'] })}>${this._t('vac.fit_rotate')}</button>
           <button class="btn ghostbtn" ?disabled=${this._vacFit.busy}
             @click=${() => this._vacFitTurn({ mir: !this._vacFit!.p.mir })}>${this._t('vac.fit_mirror')}</button>
           <button class="btn" ?disabled=${this._vacFit.busy}

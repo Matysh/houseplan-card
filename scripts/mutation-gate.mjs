@@ -5397,8 +5397,10 @@ const MUTANT_DEFINITIONS = [
       + 'restore the marker that the server already accepted (#442 AC3)',
     patches: [{
       file: 'src/houseplan-editor-runtime.ts',
-      find: '      configAccepted = true;\n      if (newPos) {',
-      replace: '      if (newPos) {',
+      find: '      if (!configAccepted && attempt) {\n'
+        + '        rollbackOptimistic(this.host, attempt, contentFingerprint);',
+      replace: '      if (attempt) {\n'
+        + '        this.host._serverCfg = attempt.previous;',
     }],
   },
   {
