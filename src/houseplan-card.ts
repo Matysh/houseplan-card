@@ -2512,7 +2512,7 @@ export class HouseplanCard extends LitElement {
   private _vacAllCameraCache: { devId: string; candidates: VacSourceCandidate[] } | null = null;
   /** Proposed high-residual auto-calibration. Config remains untouched until Apply. */
   private _vacCalConfirm: {
-    markerId: string; source: string; mapId: string; routeId?: string; matrix: Affine;
+    markerId: string; source: string; mapId: string; routeId?: string; space?: string; matrix: Affine;
     rooms: number; error: string;
   } | null = null;
   private _kioskDots = false;

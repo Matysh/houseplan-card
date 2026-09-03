@@ -130,7 +130,7 @@ test('i18n: lazy editor dictionaries carry matching keys and placeholders', () =
   const supportEn = supportDictionaries.get('en');
   const keys = Object.keys(supportEn).sort();
   const placeholders = (value) => (String(value).match(/\{\w+\}/gu) || []).sort();
-  assert.equal(keys.length, 74);
+  assert.equal(keys.length, 77);
   assert.equal(Object.keys(en).filter((key) => key.startsWith('support.')).join(','), 'support.title');
   for (const { code } of LANGUAGE_REGISTRY) {
     const dictionary = supportDictionaries.get(code);

@@ -84,6 +84,25 @@ const out = await page.evaluate(async () => {
   await c.updateComplete; await new Promise((r) => setTimeout(r, 60));
   o.unmappedNoGhostOnOtherFloor = !puck();
 
+  // Донастройка матрицы с высоким residual обязана открыться на этаже
+  // МАРШРУТА: она решалась против его геометрии, а не геометрии дока.
+  c._space = 'f1';
+  c._setMode('devices');
+  await c.updateComplete; await new Promise((r) => setTimeout(r, 120));
+  c._vacCalConfirm = {
+    markerId: 'e_vacuum_robo', source: 'camera.robo_map', mapId: 'm2',
+    routeId: 'vr2', space: 'garden', matrix: M2, rooms: 3, error: '80 см',
+  };
+  await c.updateComplete;
+  c._vacApplyCalibrationProposal(true);
+  await c.updateComplete; await new Promise((r) => setTimeout(r, 80));
+  o.manualFitSwitchedToRouteSpace = c._space === 'garden';
+  o.manualFitKeepsRoute = c._vacFit?.routeId === 'vr2';
+  c._vacFit = null;
+  c._setMode('view');
+  c._space = 'f1';
+  await c.updateComplete; await new Promise((r) => setTimeout(r, 80));
+
   // Робот встал — предупреждение снимается: тревожить нечем.
   c._space = 'f1';
   c.hass = { ...c.hass, states: { ...c.hass.states,
@@ -101,6 +120,7 @@ checkAll(out, {
   floor2PuckGoneAfterReturn: true, floor1PuckBack: true, routesUntouched: true,
   unmappedNoPuck: true, unmappedWarns: true, unmappedWarnLabelled: true,
   unmappedNoGhostOnOtherFloor: true,
+  manualFitSwitchedToRouteSpace: true, manualFitKeepsRoute: true,
   dockedNoWarning: true,
 });
 await finish(browser);

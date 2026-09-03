@@ -72,5 +72,8 @@
   "vac.route_space_confirm": "Verschieben",
   "vac.route_missing_space_hint": "Eine Karte verweist auf einen gelöschten Raum: neuen wählen oder Karte entfernen. Bis dahin wird der Roboter für diese Karte nicht gezeichnet.",
   "vac.route_default_hint": "Die Quelle meldet keine stabile Karten-ID. Mehrere Etagen lassen sich ohne andere Quelle oder die vom Roboter gewählte Karte nicht unterscheiden.",
-  "vac.route_target_hint": "Die Station bleibt unabhängig von der aktuellen Karte im Raum „{space}“."
+  "vac.route_target_hint": "Die Station bleibt unabhängig von der aktuellen Karte im Raum „{space}“.",
+  "vac.route_add_source": "Kartenquelle hinzufügen",
+  "vac.route_add_source_hint": "Für Integrationen, die jeder Karte eine eigene Kamera geben. Der Abschnitt „Alle Kameras“ oben erweitert diese Liste.",
+  "vac.route_source_no_map": "keine Karte gemeldet"
 }

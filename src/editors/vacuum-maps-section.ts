@@ -9,6 +9,7 @@
 import { TemplateResult, html, nothing } from 'lit';
 import type { HpConfirmRequest } from '../danger-confirm';
 import type { DevItem } from '../types';
+import type { VacSourceCandidate, VacSourceResolution } from '../vacuum';
 import { langOf, type I18nKey } from '../i18n';
 import { supportT, type SupportI18nKey } from '../i18n/support';
 import { VacuumMapRoute, effectiveRoutes, observedMapIds, resolveRoute } from '../vacuum-routes';
@@ -49,6 +50,7 @@ const spaceName = (host: VacuumMapsCardHost, spaceId: string): string => {
  */
 export function renderVacuumMapsSection(
   runtime: VacuumMapsHost, dev: DevItem, setVac: (patch: Record<string, unknown>) => void,
+  sources: VacSourceResolution,
 ): TemplateResult | typeof nothing {
   const host = runtime.host;
   const lang = langOf(host.hass, host._config?.language);
@@ -95,6 +97,27 @@ export function renderVacuumMapsSection(
       newRouteId(takenIds()),
     ));
   };
+
+  /**
+   * Second supported integration shape: one camera per map (spec 9.3).
+   *
+   * The map id is read from the picked source with the same fallback the rest
+   * of the card uses. A source that names no map cannot be told apart from
+   * another later, so no route is created and the reason is shown instead of
+   * a route that could never resolve.
+   */
+  const addSource = (candidate: VacSourceCandidate) => {
+    const mapId = host._vacObservedMapId(dev, candidate.entityId);
+    if (mapId === undefined) return;
+    writeRoutes((current) => addRoute(
+      current,
+      { source: candidate.entityId, map_id: mapId, space: current.length ? '' : dev.space },
+      newRouteId(takenIds()),
+    ));
+  };
+
+  const spare = sources.candidates.filter((candidate) => candidate.entityId !== rootSource
+    && !routes.some((route) => route.source === candidate.entityId));
 
   const retarget = async (route: VacuumMapRoute, space: string) => {
     if (!space || space === route.space) return;
@@ -186,6 +209,22 @@ export function renderVacuumMapsSection(
         <button type="button" class="btn" ?disabled=${!canAddCurrent}
           @click=${addCurrent}>${t('vac.route_add_current')}</button>
       </div>
+      ${spare.length ? html`<details class="vacroute-sources">
+        <summary class="btn ghostbtn">${t('vac.route_add_source')}</summary>
+        <div class="rhint">${t('vac.route_add_source_hint')}</div>
+        <div class="vacsource-list">
+          ${spare.map((candidate) => {
+            const mapId = host._vacObservedMapId(dev, candidate.entityId);
+            return html`<button type="button" class="vacsource" ?disabled=${mapId === undefined}
+              @click=${() => addSource(candidate)}>
+              <span><b>${candidate.name}</b><small>${candidate.entityId}</small></span>
+              <span class="vacsource-meta">${mapId === undefined
+                ? t('vac.route_source_no_map')
+                : (mapId || t('vac.route_map_default'))}</span>
+            </button>`;
+          })}
+        </div>
+      </details>` : nothing}
       ${rows.some((route) => !spaceIds.has(route.space)) ? html`
         <div class="warn">${t('vac.route_missing_space_hint')}</div>` : nothing}
       ${routes.some((route) => route.map_id === 'default') ? html`

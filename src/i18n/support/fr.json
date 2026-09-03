@@ -72,5 +72,8 @@
   "vac.route_space_confirm": "Déplacer",
   "vac.route_missing_space_hint": "Une carte pointe vers un espace supprimé : choisissez-en un autre ou supprimez la carte. D'ici là, le robot n'est pas dessiné pour cette carte.",
   "vac.route_default_hint": "La source ne fournit pas d'identifiant de carte stable. Plusieurs étages ne peuvent pas être distingués sans une autre source ou la carte sélectionnée du robot.",
-  "vac.route_target_hint": "La station reste dans l'espace « {space} » quelle que soit la carte actuelle."
+  "vac.route_target_hint": "La station reste dans l'espace « {space} » quelle que soit la carte actuelle.",
+  "vac.route_add_source": "Ajouter une source de carte",
+  "vac.route_add_source_hint": "Pour les intégrations qui donnent à chaque carte sa propre caméra. La section « Toutes les caméras » ci-dessus élargit cette liste.",
+  "vac.route_source_no_map": "aucune carte signalée"
 }

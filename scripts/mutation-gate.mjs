@@ -406,6 +406,18 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'vacuum-manual-fit-after-proposal-uses-the-dock',
+    guard: 'npm run bundle:sync && node demo/smoke_vacuum_multifloor.mjs',
+    because: 'the high-residual proposal is refined against the geometry the matrix was solved '
+      + 'against — opening it on the dock floor fits the robot to the wrong plan (#162, AC8, '
+      + 'the stateful half the pure calibrationTarget mutant cannot reach)',
+    patches: [{
+      file: 'src/houseplan-editor-runtime.ts',
+      find: '      const space = proposal.space || dev.space;',
+      replace: '      const space = dev.space;',
+    }],
+  },
+  {
     id: 'area-snapshot-cleanup-ignores-authority',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="limited frames and runtime reset" '

@@ -72,5 +72,8 @@
   "vac.route_space_confirm": "Move",
   "vac.route_missing_space_hint": "One of the maps points at a deleted space: pick a new one or remove the map. Until then the robot is not drawn for that map.",
   "vac.route_default_hint": "The source reports no stable map id. Several floors cannot be told apart without another source or the robot's own selected map.",
-  "vac.route_target_hint": "The dock stays in the “{space}” space regardless of the current map."
+  "vac.route_target_hint": "The dock stays in the “{space}” space regardless of the current map.",
+  "vac.route_add_source": "Add a map source",
+  "vac.route_add_source_hint": "For integrations that give each map its own camera. The “All cameras” section above widens this list.",
+  "vac.route_source_no_map": "no map reported"
 }

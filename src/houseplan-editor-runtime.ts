@@ -1147,7 +1147,7 @@ export interface HouseplanEditorHostPort {
   _undoPoint: () => void;
   _vacAllCameraCache: { devId: string; candidates: VacSourceCandidate[]; } | null;
   _vacAllCamerasFor: string | null;
-  _vacCalConfirm: { markerId: string; source: string; mapId: string; routeId?: string; matrix: Affine; rooms: number; error: string; } | null;
+  _vacCalConfirm: { markerId: string; source: string; mapId: string; routeId?: string; space?: string; matrix: Affine; rooms: number; error: string; } | null;
   _vacEnsureMarker: (d: DevItem) => Marker | null;
   _vacEntity: (d: DevItem) => string | null;
   _vacMapId: (d: DevItem, tele: { mapId: string }, planHass?: any) => string;
@@ -10970,7 +10970,7 @@ public _renderVacSection(dlg: any): TemplateResult | typeof nothing {
             ${(['never', 'cleaning', 'always'] as const).map((mv) => html`
               <option value=${mv} ?selected=${vacTrailMode(v) === mv}>${this.host._t(('vac.trail_' + mv) as any)}</option>`)}
           </select>
-          ${renderVacuumMapsSection(this, dev, setVac)}
+          ${renderVacuumMapsSection(this, dev, setVac, resolution)}
         ` : nothing}
       </div>`;
   }
@@ -10981,9 +10981,7 @@ public _vacMapId(d: DevItem, tele: { mapId: string }, planHass = this.host._plan
     return this.host._vacMapId(d, tele, planHass);
   }
 
-public _vacSaveMatrix(
-    markerId: string, source: string, mapId: string, matrix: Affine, routeId = '',
-  ): boolean {
+public _vacSaveMatrix(markerId: string, source: string, mapId: string, matrix: Affine, routeId = ''): boolean {
     // HP-1540-01: a first-use vacuum has no marker yet — materialise it
     const dev = this.host._devices.find((x) => x.id === markerId);
     const m = dev ? this.host._vacEnsureMarker(dev)
@@ -11034,7 +11032,7 @@ public _vacAutoCalibrate(d: DevItem): void {
     const residualCm = vacCalibrationResidualCm(res.residual, this.host._gridPitch, cellCm);
     if (residualCm > VAC_CALIBRATION_WARN_CM) {
       this.host._vacCalConfirm = {
-        markerId: d.id, source: src, mapId, routeId: target.routeId, matrix: res.matrix,
+        markerId: d.id, source: src, mapId, routeId: target.routeId, space: target.space, matrix: res.matrix,
         rooms: res.matched.length,
         error: formatLength(residualCm, this.host.hass?.config?.unit_system?.length === 'mi'),
       };
@@ -11053,11 +11051,11 @@ public _vacApplyCalibrationProposal(manual: boolean): void {
       const fit = fitFromMatrix(proposal.matrix);
       if (!dev || !fit) return;
       this.host._markerDialog = null;
-      if (dev.space !== this.host._space && !this.host._commitSpace(dev.space)) return;
-      this.host._vacFit = {
-        markerId: proposal.markerId, source: proposal.source, routeId: proposal.routeId,
-        mapId: proposal.mapId, p: fit, drag: null,
-      };
+      // #162: матрица решена против пространства МАРШРУТА, а не дока.
+      const space = proposal.space || dev.space;
+      if (space !== this.host._space && !this.host._commitSpace(space)) return;
+      this.host._vacFit = { markerId: proposal.markerId, source: proposal.source,
+        routeId: proposal.routeId, mapId: proposal.mapId, p: fit, drag: null };
       return;
     }
     if (this._vacSaveMatrix(
