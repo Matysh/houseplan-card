@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.71.0-beta.3 — 2026-09-03
+
 - When a robot vacuum is cleaning but its current map has no floor assigned, is
   not calibrated, is ambiguous or points at a deleted space, the dock now shows
   an amber warning with the exact reason instead of the plan silently showing no
