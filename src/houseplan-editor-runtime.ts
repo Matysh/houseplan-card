@@ -8,6 +8,8 @@
  */
 import { LitElement, html, svg, nothing, TemplateResult, PropertyValues } from 'lit';
 import { guard } from 'lit/directives/guard.js';
+import { renderVacuumMapsSection } from './editors/vacuum-maps-section';
+import { planVacuumFit, writeVacuumMatrix } from './vacuum-route-edit';
 import { repeat } from 'lit/directives/repeat.js';
 import './hp-dialog';
 import type { HpDialog } from './hp-dialog';
@@ -1149,7 +1151,7 @@ export interface HouseplanEditorHostPort {
   _vacEnsureMarker: (d: DevItem) => Marker | null;
   _vacEntity: (d: DevItem) => string | null;
   _vacMapId: (d: DevItem, tele: { mapId: string }, planHass?: any) => string;
-  _vacFit: { markerId: string; source: string; mapId: string; p: FitParams; drag: null | { kind: "move" | "scale"; sx: number; sy: number; p0: FitParams; fx: number; fy: number; }; } | null;
+  _vacFit: { markerId: string; source: string; mapId: string; routeId?: string; p: FitParams; drag: null | { kind: "move" | "scale"; sx: number; sy: number; p0: FitParams; fx: number; fy: number; }; } | null;
   _vacOpenAllCameras: (d: DevItem) => void;
   _vacRt: Map<string, { trail: VacPt[]; lastKey: string; lastTs: number; moving: boolean; jump: boolean; endedTs: number; lastPos: VacPt | null; }>;
   _vacSource: (d: DevItem, planHass?: any) => string | null;
@@ -10850,7 +10852,6 @@ public _renderVacSection(dlg: any): TemplateResult | typeof nothing {
     const roomMatches = tele
       ? vacRoomNameMatchCount(tele.rooms, planRooms.map((room) => room.name)) : 0;
     const tierA = !!(canUseSource && tele && roomMatches >= 3);
-    const cals = Object.keys(v.calibration || {});
     const setVac = (patch: Record<string, unknown>) => {
       // HP-1540-01: materialise the marker first — find() alone silently
       // dropped every edit for a vacuum that had never been saved
@@ -10967,7 +10968,7 @@ public _renderVacSection(dlg: any): TemplateResult | typeof nothing {
             ${(['never', 'cleaning', 'always'] as const).map((mv) => html`
               <option value=${mv} ?selected=${vacTrailMode(v) === mv}>${this.host._t(('vac.trail_' + mv) as any)}</option>`)}
           </select>
-          ${cals.length ? html`<div class="rhint">${subst(this.host._t('vac.cal_maps'), { maps: cals.join(', ') })}</div>` : nothing}
+          ${renderVacuumMapsSection(this, dev, setVac)}
         ` : nothing}
       </div>`;
   }
@@ -10978,16 +10979,17 @@ public _vacMapId(d: DevItem, tele: { mapId: string }, planHass = this.host._plan
     return this.host._vacMapId(d, tele, planHass);
   }
 
-public _vacSaveMatrix(markerId: string, source: string, mapId: string, matrix: Affine): boolean {
+public _vacSaveMatrix(
+    markerId: string, source: string, mapId: string, matrix: Affine, routeId = '',
+  ): boolean {
     // HP-1540-01: a first-use vacuum has no marker yet — materialise it
     const dev = this.host._devices.find((x) => x.id === markerId);
     const m = dev ? this.host._vacEnsureMarker(dev)
       : this.host._serverCfg?.markers?.find((x: Marker) => x.id === markerId);
     if (!m) return false;
-    const v = { ...(m.vacuum || {}) };
-    v.source = source;
-    v.calibration = { ...(v.calibration || {}), [mapId]: matrix.map((n) => Number(n.toFixed(6))) };
-    m.vacuum = v;
+    // #162: with explicit routes the matrix belongs to the route, not to a
+    // marker-wide dictionary that cannot tell two floors apart.
+    m.vacuum = writeVacuumMatrix(m.vacuum || {}, { source, mapId, routeId, matrix }) as any;
     this.host._regSignature = '';
     this.host._maybeRebuildDevices();
     this._saveConfig();
@@ -11061,7 +11063,7 @@ public _vacApplyCalibrationProposal(manual: boolean): void {
     )) this.host._showToast(subst(this.host._t('vac.autocal_done'), { rooms: String(proposal.rooms) }));
   }
 
-public _vacStartFit(d: DevItem): void {
+public _vacStartFit(d: DevItem, routeId = ''): void {
     const src = this.host._vacSource(d);
     const tele = src ? readVacTelemetry(this.host.hass?.states[src]?.attributes) : null;
     if (!src || !tele) {
@@ -11069,22 +11071,21 @@ public _vacStartFit(d: DevItem): void {
       return;
     }
     const mapId = this._vacMapId(d, tele);
-    const existing = d.marker?.vacuum?.calibration?.[mapId] as Affine | undefined;
-    const sp = this.host._spaceModelById(d.space);
-    if (!sp) return;
-    const vb = sp.vb as [number, number, number, number];
-    const p = (existing && existing.length === 6 && fitFromMatrix(existing))
-      || initialFit(tele.rooms, vb);
+    const plan = planVacuumFit(d.id, d.marker?.vacuum ?? null, {
+      routeId, source: src, mapId, dockSpace: d.space, rooms: tele.rooms,
+      viewBoxOf: (id) => (this.host._spaceModelById(id)?.vb as [number, number, number, number]) ?? null,
+    });
+    if (!plan) return;
     this.host._markerDialog = null;
-    if (d.space !== this.host._space && !this.host._commitSpace(d.space)) return;
-    this.host._vacFit = { markerId: d.id, source: src, mapId, p, drag: null };
+    if (plan.space !== this.host._space && !this.host._commitSpace(plan.space)) return;
+    this.host._vacFit = { markerId: d.id, source: src, mapId, routeId: plan.routeId, p: plan.params, drag: null };
   }
 
 public _vacFitSave(): void {
     const f = this.host._vacFit;
     if (!f) return;
     // HP-1540-01: no success toast for a save that did not happen
-    const ok = this._vacSaveMatrix(f.markerId, f.source, f.mapId, fitMatrix(f.p));
+    const ok = this._vacSaveMatrix(f.markerId, f.source, f.mapId, fitMatrix(f.p), f.routeId);
     this.host._vacFit = null;
     if (ok) this.host._showToast(this.host._t('vac.cal_done'));
   }

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- The device editor now has a “Maps and floors” block: each map a robot vacuum
+  reports can be assigned to a space, calibrated against that space and moved or
+  removed later, with the dock left where it is
+  ([#162](https://github.com/Matysh/houseplan-card/issues/162)).
 - A robot vacuum with several maps can now show each map on its own floor: the
   dock stays in its own space while the live position and the trail appear in
   the space the active map is assigned to, and a map that is unassigned,

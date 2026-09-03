@@ -6,6 +6,10 @@ import {
   normalizeRouteMatrix, isEntityIdLike, VAC_ROUTE_LIMIT, VAC_ROUTE_ERROR,
   observedMapIds, runRoute, planVacuumOverlay,
 } from '../test-build/vacuum-routes.js';
+import {
+  newRouteId, addRoute, removeRoute, changeRouteSpace, saveRouteCalibration, convertLegacyRoutes,
+  writeVacuumMatrix, planVacuumFit,
+} from '../test-build/vacuum-route-edit.js';
 
 const fixture = (name) => JSON.parse(readFileSync(
   new URL(`./fixtures/vacuum-routes/${name}.json`, import.meta.url), 'utf8',
@@ -237,4 +241,48 @@ test('легаси-конфиг сохраняет прежнее правило
     rootSource: 'camera.robot', serverPrevious: { map_id: 'm2' },
   });
   assert.deepEqual(same.previous, M2, 'прогон активной карты виден, как и раньше');
+});
+
+test('новый id маршрута не сталкивается с существующими', () => {
+  const values = [0.5, 0.5, 0.9];
+  let i = 0;
+  const first = newRouteId([], () => values[i++]);
+  const second = newRouteId([first], () => values[i++]);
+  assert.match(first, /^vr_/);
+  assert.notEqual(second, first, 'занятый id пропускается');
+});
+
+test('смена пространства — это новая идентичность без калибровки', () => {
+  const before = [
+    { id: 'r1', source: 'camera.robot', map_id: 'm1', space: 'floor1', calibration: M1 },
+    { id: 'r2', source: 'camera.robot', map_id: 'm2', space: 'floor2', calibration: M2 },
+  ];
+  const after = changeRouteSpace(before, 'r1', 'floor3', 'vr_new');
+  assert.deepEqual(after[0], {
+    id: 'vr_new', source: 'camera.robot', map_id: 'm1', space: 'floor3', calibration: null,
+  });
+  assert.deepEqual(after[1], before[1], 'соседний маршрут не тронут');
+  assert.deepEqual(before[0].calibration, M1, 'вход не мутирован');
+});
+
+test('добавление, удаление и запись матрицы маршрута', () => {
+  const added = addRoute([], { source: 'camera.robot', map_id: 'm1', space: 'floor1' }, 'r1');
+  assert.deepEqual(added, [{ id: 'r1', source: 'camera.robot', map_id: 'm1', space: 'floor1', calibration: null }]);
+  const calibrated = saveRouteCalibration(added, 'r1', M2);
+  assert.deepEqual(calibrated[0].calibration, M2);
+  assert.deepEqual(added[0].calibration, null, 'вход не мутирован');
+  assert.deepEqual(removeRoute(calibrated, 'r1'), []);
+  assert.deepEqual(removeRoute(calibrated, 'нет такого'), calibrated);
+});
+
+test('конверсия легаси переносит ВСЕ матрицы или ничего (AC13)', () => {
+  const marker = { source: 'camera.robot', calibration: { m1: M1, m2: M2, bad: [1, 2] } };
+  let n = 0;
+  const routes = convertLegacyRoutes(marker, 'floor1', 'camera.robot', () => `vr_${n++}`);
+  assert.equal(routes.length, 2, 'обе валидные карты');
+  assert.deepEqual(routes.map((r) => r.map_id), ['m1', 'm2']);
+  assert.ok(routes.every((r) => r.space === 'floor1' && r.source === 'camera.robot'));
+  assert.deepEqual(routes.map((r) => r.calibration), [M1, M2]);
+  assert.equal(convertLegacyRoutes(marker, 'floor1', '', () => 'vr'), null, 'без источника конверсии нет');
+  assert.equal(convertLegacyRoutes({ calibration: {} }, 'floor1', 'camera.robot', () => 'vr'), null);
 });

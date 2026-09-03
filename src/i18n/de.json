@@ -814,7 +814,6 @@
   "vac.autocal": "Automatisch einrichten",
   "vac.live": "Aktuelle Position im Plan",
   "vac.trail": "Roboterpfad anzeigen",
-  "vac.cal_maps": "Kalibrierte Karten: {maps}",
   "vac.autocal_no_rooms": "Die Integration meldet keine Raumliste — öffnen Sie \"Manuell anpassen\"",
   "vac.autocal_no_match": "Raumnamen stimmten nicht überein (mindestens 3 müssen übereinstimmen) — öffnen Sie \"Manuell anpassen\"",
   "vac.autocal_done": "Fertig: über {rooms} Räume zugeordnet. Eine Reinigung starten und das Ergebnis prüfen.",

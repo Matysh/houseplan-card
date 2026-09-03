@@ -814,7 +814,6 @@
   "vac.autocal": "Set up automatically",
   "vac.live": "Live position on the plan",
   "vac.trail": "Show the robot's path",
-  "vac.cal_maps": "Calibrated maps: {maps}",
   "vac.autocal_no_rooms": "The integration reports no room list — open “Fit manually”",
   "vac.autocal_no_match": "Room names did not match (need ≥3 in common) — open “Fit manually”",
   "vac.autocal_done": "Done: bound via {rooms} rooms. Start a cleanup and check",

@@ -3521,7 +3521,7 @@ const MUTANT_DEFINITIONS = [
       + 'of rotating into previous; focused pure and recorder sequences must reject the old unconditional split',
     patches: [{
       file: 'custom_components/houseplan/trails.py',
-      find: '        resumed = bool(cur and can_resume_trail_run(cur, map_id, now))',
+      find: '        resumed = bool(cur and can_resume_trail_run(cur, map_id, now, route_id))',
       replace: '        resumed = False',
     }],
   },

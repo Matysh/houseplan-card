@@ -2503,7 +2503,7 @@ export class HouseplanCard extends LitElement {
   };
   private _resumeSettling = false;
   private _viewportInvalidAt = 0;
-  private _vacFit: { markerId: string; source: string; mapId: string; p: FitParams;
+  private _vacFit: { markerId: string; source: string; mapId: string; routeId?: string; p: FitParams;
     drag: null | { kind: 'move' | 'scale'; sx: number; sy: number; p0: FitParams;
       fx: number; fy: number } } | null = null;
   /** Marker whose lazy «All cameras» candidate section is expanded. */

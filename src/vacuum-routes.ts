@@ -11,6 +11,8 @@
  * each guessing a floor. Nothing here touches the DOM, `hass` or storage.
  */
 
+import { FitParams, fitFromMatrix, initialFit, VacRoom } from './vacuum';
+
 export type Affine = [number, number, number, number, number, number];
 
 /** One saved answer to "this exact map of this exact source lives here". */
