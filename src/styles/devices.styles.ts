@@ -463,6 +463,29 @@ export const devicesStyles = css`
       color: var(--hp-muted);
       font-size: var(--fs-s);
     }
+    /* #162: the dock says the moving robot is drawn nowhere. Amber is not the
+       only signal — the alert glyph carries the same meaning without colour,
+       and the accessible name carries the exact reason. */
+    .vacwarn {
+      position: absolute;
+      top: -12%;
+      right: -12%;
+      width: calc(var(--device-base-size, 2.25cqw) * 0.42);
+      height: calc(var(--device-base-size, 2.25cqw) * 0.42);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: light-dark(#fff, #252525);
+      border: 1px solid #E5A100;
+      color: #E5A100;
+      z-index: 7;
+      pointer-events: none;
+    }
+    .vacwarn ha-icon {
+      --mdc-icon-size: calc(var(--device-base-size, 2.25cqw) * 0.32);
+      color: inherit;
+    }
     /* live vacuum: a round puck, no badge plate, soft pulse (docs/VACUUM.md) */
     .vacpuck {
       position: absolute;

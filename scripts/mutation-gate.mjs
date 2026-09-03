@@ -343,6 +343,18 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'vacuum-route-warning-stays-silent',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/vacuum-routes.test.mjs',
+    because: 'a moving robot that is drawn nowhere must say so on the dock: silence reads as '
+      + '"not cleaning", and the user cannot discover an unassigned map (#162)',
+    patches: [{
+      file: 'src/vacuum-routes.ts',
+      find: "    case 'unmapped': case 'needs_calibration': case 'ambiguous': case 'missing_space':\n      return resolution.kind;",
+      replace: "    case 'нет такого':\n      return resolution.kind as any;",
+    }],
+  },
+  {
     id: 'area-snapshot-cleanup-ignores-authority',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="limited frames and runtime reset" '

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- When a robot vacuum is cleaning but its current map has no floor assigned, is
+  not calibrated, is ambiguous or points at a deleted space, the dock now shows
+  an amber warning with the exact reason instead of the plan silently showing no
+  robot ([#162](https://github.com/Matysh/houseplan-card/issues/162)).
 - The device editor now has a “Maps and floors” block: each map a robot vacuum
   reports can be assigned to a space, calibrated against that space and moved or
   removed later, with the dock left where it is

@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import {
   validateMarkerRoutes, effectiveRoutes, legacyRouteId, resolveRoute, adoptLegacyRun,
   normalizeRouteMatrix, isEntityIdLike, VAC_ROUTE_LIMIT, VAC_ROUTE_ERROR,
-  observedMapIds, runRoute, planVacuumOverlay,
+  observedMapIds, runRoute, planVacuumOverlay, routeWarningKey,
 } from '../test-build/vacuum-routes.js';
 import {
   newRouteId, addRoute, removeRoute, changeRouteSpace, saveRouteCalibration, convertLegacyRoutes,
@@ -285,4 +285,20 @@ test('конверсия легаси переносит ВСЕ матрицы �
   assert.deepEqual(routes.map((r) => r.calibration), [M1, M2]);
   assert.equal(convertLegacyRoutes(marker, 'floor1', '', () => 'vr'), null, 'без источника конверсии нет');
   assert.equal(convertLegacyRoutes({ calibration: {} }, 'floor1', 'camera.robot', () => 'vr'), null);
+});
+
+test('док предупреждает только о движущемся роботе, которому некуда рисоваться', () => {
+  const cases = {
+    unmapped: { kind: 'unmapped', source: 'camera.robot', mapId: 'm9' },
+    needs_calibration: { kind: 'needs_calibration', route: twoFloors[0] },
+    ambiguous: { kind: 'ambiguous', routeIds: ['r1', 'r2'] },
+    missing_space: { kind: 'missing_space', route: twoFloors[0] },
+  };
+  for (const [expected, resolution] of Object.entries(cases)) {
+    assert.equal(routeWarningKey(resolution, true), expected);
+    assert.equal(routeWarningKey(resolution, false), null, 'док молчит, пока робот стоит');
+  }
+  assert.equal(routeWarningKey({ kind: 'ready', route: twoFloors[0] }, true), null);
+  assert.equal(routeWarningKey({ kind: 'none' }, true), null);
+  assert.equal(routeWarningKey(null, true), null);
 });

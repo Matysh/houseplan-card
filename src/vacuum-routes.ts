@@ -331,3 +331,23 @@ export function planVacuumOverlay(input: VacuumOverlayInput): VacuumOverlayPlan 
   const previous = previousAllowed ? normalizeRouteMatrix(previousRoute!.calibration) : null;
   return { live, currentRunMatches, previous };
 }
+
+export type VacuumRouteWarning = 'unmapped' | 'needs_calibration' | 'ambiguous' | 'missing_space';
+
+/**
+ * Why a moving robot is drawn nowhere — the reason the dock badge announces.
+ *
+ * Only while the robot actually moves: a docked robot with an unmapped map is
+ * not a problem the user has to see right now, and a badge that is always on
+ * is a badge nobody reads.
+ */
+export function routeWarningKey(
+  resolution: VacuumRouteResolution | null | undefined, moving: boolean,
+): VacuumRouteWarning | null {
+  if (!moving || !resolution) return null;
+  switch (resolution.kind) {
+    case 'unmapped': case 'needs_calibration': case 'ambiguous': case 'missing_space':
+      return resolution.kind;
+    default: return null;
+  }
+}

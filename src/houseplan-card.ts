@@ -122,7 +122,7 @@ import {
   type VacSourceResolution, type VacSourceStatus,
 } from './vacuum';
 import {
-  effectiveRoutes, observedMapIds, resolveRoute, planVacuumOverlay,
+  effectiveRoutes, observedMapIds, resolveRoute, planVacuumOverlay, routeWarningKey,
   type VacuumMapRoute, type VacuumRouteResolution,
 } from './vacuum-routes';
 import {
@@ -12525,7 +12525,26 @@ export class HouseplanCard extends LitElement {
         newDeviceTitle: this._t('device.new'),
         disabledTitle: presentation.haDisabled ? ghostLabel : '',
       })}
+      ${this._vacRouteBadge(d)}
     </div>`;
+  }
+
+  /**
+   * The dock says out loud that the moving robot is drawn nowhere (#162).
+   *
+   * Silence would be the worse failure: a plan with no robot on it reads as
+   * "the robot is not cleaning", and the user has no way to learn that a map
+   * simply has no floor assigned.
+   */
+  private _vacRouteBadge(d: DevItem): TemplateResult | typeof nothing {
+    if (!this._isVacDev(d) || d.hidden) return nothing;
+    if (normalizeDeviceDisplay(d.marker?.display) === 'static_icon') return nothing;
+    const fact = this._renderDeviceSnapshot?.facts.get(`vacuum:${d.id}`) as any;
+    const reason = routeWarningKey(fact?.resolution, this._vacRt.get(d.id)?.moving ?? false);
+    if (!reason) return nothing;
+    const text = this._t((`vac.route_warn_${reason}`) as any);
+    return html`<span class="vacwarn" role="img" aria-label=${text} title=${text}>
+      <ha-icon icon="mdi:alert-outline"></ha-icon></span>`;
   }
 
   /** Clean-floor area shown in the room tooltip (same rule as resize labels). */
