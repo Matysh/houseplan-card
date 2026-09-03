@@ -169,6 +169,6 @@ test('marker delete/re-add and opening save remain separate config transactions'
   const saveMarker = methodBody(source, '_saveMarker');
   assert.match(saveOpening, /sp\.openings/);
   assert.doesNotMatch(saveOpening, /cfg\.markers|this\._markers/);
-  assert.match(saveMarker, /cfg\.markers/);
+  assert.match(saveMarker, /candidate\.markers/);
   assert.doesNotMatch(saveMarker, /\.openings/);
 });

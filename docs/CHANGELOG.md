@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Rejected device-marker and robot-calibration saves now restore the last
+  server-confirmed plan without losing the open editor, automatic proposal or
+  manual-fit draft; success is shown only after Home Assistant accepts the
+  write, and Retry no longer requires recalibration
+  ([#442](https://github.com/Matysh/houseplan-card/issues/442)).
 - Removing a robot vacuum's last map route now keeps the route list explicitly
   empty instead of reviving legacy calibration; routes to deleted spaces are
   grouped clearly in the editor, and the live layer avoids rescanning every

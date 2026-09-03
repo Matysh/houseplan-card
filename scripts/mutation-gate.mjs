@@ -450,9 +450,9 @@ const MUTANT_DEFINITIONS = [
       + 'against — opening it on the dock floor fits the robot to the wrong plan (#162, AC8, '
       + 'the stateful half the pure calibrationTarget mutant cannot reach)',
     patches: [{
-      file: 'src/houseplan-editor-runtime.ts',
-      find: '      const space = proposal.space || dev.space;',
-      replace: '      const space = dev.space;',
+      file: 'src/vacuum-calibration-write.ts',
+      find: '    const space = proposal.space || device.space;',
+      replace: '    const space = device.space;',
     }],
   },
   {
@@ -715,12 +715,12 @@ const MUTANT_DEFINITIONS = [
     because: 'saving one child must preserve the device tombstone; dropping all tombstones '
       + 'resurrects the automatic parent and the siblings the person deliberately removed (#262)',
     patches: [{
-      file: 'src/houseplan-card.ts',
-      find: `      cfg.markers = cfg.markers.filter(
+      file: 'src/houseplan-editor-runtime.ts',
+      find: `      candidate.markers = candidate.markers.filter(
         (m) => m.id !== id && m.id !== oldId
           && (marker.binding === 'virtual' || m.binding !== marker.binding),
       );`,
-      replace: `      cfg.markers = cfg.markers.filter(
+      replace: `      candidate.markers = candidate.markers.filter(
         (m) => m.id !== id && m.id !== oldId
           && (marker.binding === 'virtual' || m.binding !== marker.binding)
           && (!marker.binding.startsWith('entity:') || m.removed !== true),
@@ -5365,6 +5365,81 @@ const MUTANT_DEFINITIONS = [
       file: 'demo/benchmark_backdrop_decode.mjs',
       find: 'const page = watchPage(await (await browser.newContext()).newPage());',
       replace: 'const page = await (await browser.newContext()).newPage();',
+    }],
+  },
+  {
+    id: 'marker-reject-keeps-optimistic-candidate',
+    guard: 'node demo/smoke_marker_write_rollback.mjs',
+    because: 'a rejected semantic marker write must restore accepted config and View while '
+      + 'leaving the independent Device editor draft available for Retry (#442 AC1)',
+    patches: [{
+      file: 'src/houseplan-editor-runtime.ts',
+      find: '        rollbackOptimistic(this.host, attempt, contentFingerprint);\n'
+        + "        this.host._regSignature = '';",
+      replace: "        this.host._regSignature = '';",
+    }],
+  },
+  {
+    id: 'marker-rollback-keeps-enqueue-time-revision',
+    guard: 'node demo/smoke_marker_write_rollback.mjs',
+    because: 'a marker save queued behind an accepted write must guard rollback with the revision '
+      + 'its own request used, while still yielding to genuinely newer content (#442 AC2)',
+    patches: [{
+      file: 'src/houseplan-editor-runtime.ts',
+      find: '      if (attempt && candidateFingerprint === attempt.attemptedFingerprint) attempt.revision = this.host._cfgRev;',
+      replace: '',
+    }],
+  },
+  {
+    id: 'accepted-marker-rolled-back-by-layout-failure',
+    guard: 'node demo/smoke_marker_write_rollback.mjs',
+    because: 'config acceptance is the durable marker boundary: a later layout failure must not '
+      + 'restore the marker that the server already accepted (#442 AC3)',
+    patches: [{
+      file: 'src/houseplan-editor-runtime.ts',
+      find: '      configAccepted = true;\n      if (newPos) {',
+      replace: '      if (newPos) {',
+    }],
+  },
+  {
+    id: 'vacuum-reject-keeps-optimistic-matrix',
+    guard: 'node --test test/vacuum-calibration-write.test.mjs',
+    because: 'a rejected calibration, including first use, must not leave its matrix or synthetic '
+      + 'marker in the local accepted config (#442 AC5–AC7)',
+    patches: [{
+      file: 'src/vacuum-calibration-write.ts',
+      find: '    rollbackOptimistic(host, attempt, contentFingerprint);\n    rebuild(host);',
+      replace: '    rebuild(host);',
+    }],
+  },
+  {
+    id: 'vacuum-auto-reports-success-before-acceptance',
+    guard: 'node --test test/vacuum-calibration-write.test.mjs',
+    because: 'automatic calibration must stay busy and suppress both duplicate writes and success '
+      + 'until config/set has actually resolved (#442 AC4)',
+    patches: [{
+      file: 'src/vacuum-calibration-write.ts',
+      find: '    const saved = await saveVacuumMatrix(\n'
+        + '      runtime, request.markerId, request.source, request.mapId, request.matrix, request.routeId,\n'
+        + '    );',
+      replace: '    const saved = true;\n'
+        + '    void saveVacuumMatrix(\n'
+        + '      runtime, request.markerId, request.source, request.mapId, request.matrix, request.routeId,\n'
+        + '    );',
+    }],
+  },
+  {
+    id: 'optimistic-rollback-skips-same-root-fingerprint',
+    guard: 'node --test test/serialized-write-queue.test.mjs',
+    because: 'newer in-place content can retain the attempted object identity; rollback must still '
+      + 'compare content and must never erase that newer owner (#442 AC2)',
+    patches: [{
+      file: 'src/serialized-write-queue.ts',
+      find: '  if (!current || host._cfgRev !== attempt.revision\n'
+        + '      || fingerprint(current) !== attempt.attemptedFingerprint) return false;',
+      replace: '  if (!current || host._cfgRev !== attempt.revision\n'
+        + '      || (current !== attempt.attempted\n'
+        + '        && fingerprint(current) !== attempt.attemptedFingerprint)) return false;',
     }],
   },
 ];

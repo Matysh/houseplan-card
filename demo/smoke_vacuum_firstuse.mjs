@@ -56,14 +56,23 @@ const out = await page.evaluate(async () => {
   // spy on config writes: a success toast is only honest after one of these
   const writes = [];
   const realWS = c.hass.callWS;
-  c.hass.callWS = async (m) => { if (m.type === 'houseplan/config/set') writes.push(m); return realWS(m); };
+  let configGate = null;
+  let rejectConfig = false;
+  c.hass.callWS = async (m) => {
+    if (m.type === 'houseplan/config/set') {
+      writes.push(m);
+      if (configGate) await configGate.promise;
+      if (rejectConfig) throw new Error('calibration rejected');
+    }
+    return realWS(m);
+  };
 
   const dev = c._devices.find((x) => x.id === 'd_mower');
   o.devFound = !!dev;
   o.freshNoMarker = (c._serverCfg.markers || []).length === 0 && !dev.marker;
 
   // ---- auto-calibration from scratch (HP-1540-01 + HP-1540-04) ----
-  c._vacAutoCalibrate(dev);
+  await c._vacAutoCalibrate(dev);
   await c.updateComplete;
   const m1 = (c._serverCfg.markers || []).find((x) => x.id === 'd_mower');
   o.markerMaterialised = !!m1 && m1.binding === 'device:d_mower';
@@ -79,25 +88,91 @@ const out = await page.evaluate(async () => {
   o.configWritePersisted = writes.length >= 1
     && !!writes[writes.length - 1].config.markers.find((x) => x.id === 'd_mower')?.vacuum?.calibration?.['0'];
 
+  // #442: a low-residual write stays busy until config/set answers. Rejecting
+  // it restores the accepted matrix and leaves the Device editor usable.
+  const acceptedBeforeReject = [...cal0];
+  for (const room of Object.values(robotRooms)) { room.x0 += 200; room.x1 += 200; }
+  c._setMode('devices'); await c.updateComplete;
+  c._openMarkerDialog(c._devices.find((x) => x.id === 'd_mower')); await c.updateComplete;
+  let releaseGate;
+  configGate = { promise: new Promise((resolve) => { releaseGate = resolve; }) };
+  rejectConfig = true;
+  c._toast = null;
+  const beforeDeferredWrites = writes.length;
+  const rejectedAuto = c._vacAutoCalibrate(c._devices.find((x) => x.id === 'd_mower'));
+  while (writes.length === beforeDeferredWrites) await new Promise((resolve) => setTimeout(resolve, 0));
+  await c.updateComplete;
+  const autoButton = [...sr().querySelectorAll('.vacbtns button')]
+    .find((button) => button.textContent.includes(c._t('vac.autocal')));
+  o.autoWaitsBusyDisabled = c._markerDialog?.busy === true && autoButton?.disabled === true;
+  o.autoNoEarlySuccess = c._toast === null;
+  await c._vacAutoCalibrate(c._devices.find((x) => x.id === 'd_mower'));
+  o.autoDoubleClickSuppressed = writes.length === beforeDeferredWrites + 1;
+  releaseGate();
+  await rejectedAuto; await c.updateComplete;
+  o.autoRejectRestoresAccepted = JSON.stringify(
+    c._serverCfg.markers.find((x) => x.id === 'd_mower')?.vacuum?.calibration?.['0'],
+  ) === JSON.stringify(acceptedBeforeReject);
+  o.autoRejectKeepsDialog = c._markerDialog?.busy === false;
+  o.autoRejectHasNoSuccess = !String(c._toast || '').startsWith('Done: bound via');
+  configGate = null;
+  rejectConfig = false;
+  await c._vacAutoCalibrate(c._devices.find((x) => x.id === 'd_mower'));
+  await c.updateComplete;
+  o.autoRetryAccepted = JSON.stringify(
+    c._serverCfg.markers.find((x) => x.id === 'd_mower')?.vacuum?.calibration?.['0'],
+  ) !== JSON.stringify(acceptedBeforeReject)
+    && String(c._toast || '').startsWith('Done: bound via');
+
   // High residual is a proposal, never an implicit write. Cover Cancel,
   // explicit Apply and manual-fit Apply from the same deterministic fixture.
-  const lowMatrix = [...cal0];
+  const lowMatrix = [
+    ...c._serverCfg.markers.find((x) => x.id === 'd_mower').vacuum.calibration['0'],
+  ];
   robotRooms[4].x0 = 20600;
   robotRooms[4].x1 = 21400;
-  c._vacAutoCalibrate(dev); await c.updateComplete;
+  await c._vacAutoCalibrate(dev); await c.updateComplete;
   o.highResidualDialog = !!c._vacCalConfirm;
-  o.highResidualNoImplicitSave = JSON.stringify(m1.vacuum.calibration['0']) === JSON.stringify(lowMatrix);
+  o.highResidualNoImplicitSave = JSON.stringify(
+    c._serverCfg.markers.find((x) => x.id === 'd_mower')?.vacuum?.calibration?.['0'],
+  ) === JSON.stringify(lowMatrix);
   c._vacCalConfirm = null; await c.updateComplete;
-  o.highResidualCancelUntouched = JSON.stringify(m1.vacuum.calibration['0']) === JSON.stringify(lowMatrix);
-  c._vacAutoCalibrate(dev); await c.updateComplete;
-  c._vacApplyCalibrationProposal(false); await c.updateComplete;
-  const appliedProposal = [...m1.vacuum.calibration['0']];
+  o.highResidualCancelUntouched = JSON.stringify(
+    c._serverCfg.markers.find((x) => x.id === 'd_mower')?.vacuum?.calibration?.['0'],
+  ) === JSON.stringify(lowMatrix);
+  await c._vacAutoCalibrate(dev); await c.updateComplete;
+  const rejectedProposalDraft = JSON.stringify(c._vacCalConfirm);
+  rejectConfig = true;
+  await c._vacApplyCalibrationProposal(false); await c.updateComplete;
+  o.highResidualRejectKeepsProposal = !!c._vacCalConfirm
+    && c._vacCalConfirm.busy === false
+    && JSON.stringify({ ...c._vacCalConfirm, busy: undefined })
+      === JSON.stringify({ ...JSON.parse(rejectedProposalDraft), busy: undefined });
+  o.highResidualRejectRestoresMatrix = JSON.stringify(
+    c._serverCfg.markers.find((x) => x.id === 'd_mower')?.vacuum?.calibration?.['0'],
+  ) === JSON.stringify(lowMatrix);
+  rejectConfig = false;
+  await c._vacApplyCalibrationProposal(false); await c.updateComplete;
+  const appliedProposal = [
+    ...c._serverCfg.markers.find((x) => x.id === 'd_mower').vacuum.calibration['0'],
+  ];
   o.highResidualApplySaved = JSON.stringify(appliedProposal) !== JSON.stringify(lowMatrix);
-  c._vacAutoCalibrate(dev); await c.updateComplete;
-  c._vacApplyCalibrationProposal(true); await c.updateComplete;
+  await c._vacAutoCalibrate(dev); await c.updateComplete;
+  await c._vacApplyCalibrationProposal(true); await c.updateComplete;
   o.highResidualManualOpened = !!c._vacFit && c._vacFit.markerId === 'd_mower';
-  c._vacFitSave(); await c.updateComplete;
-  o.highResidualManualApplied = !c._vacFit && Array.isArray(m1.vacuum.calibration['0'])
+  const manualDraft = JSON.stringify(c._vacFit);
+  rejectConfig = true;
+  await c._vacFitSave(); await c.updateComplete;
+  o.manualRejectKeepsExactDraft = JSON.stringify({ ...c._vacFit, busy: undefined })
+    === JSON.stringify({ ...JSON.parse(manualDraft), busy: undefined });
+  o.manualRejectRestoresMatrix = JSON.stringify(
+    c._serverCfg.markers.find((x) => x.id === 'd_mower')?.vacuum?.calibration?.['0'],
+  ) === JSON.stringify(appliedProposal);
+  rejectConfig = false;
+  await c._vacFitSave(); await c.updateComplete;
+  o.highResidualManualApplied = !c._vacFit && Array.isArray(
+    c._serverCfg.markers.find((x) => x.id === 'd_mower')?.vacuum?.calibration?.['0'],
+  )
     && c._toast === c._t('vac.cal_done');
   robotRooms[4].x0 = 1700;
   robotRooms[4].x1 = 2500;
@@ -108,7 +183,7 @@ const out = await page.evaluate(async () => {
   const dev2 = c._devices.find((x) => x.id === 'd_mower');
   o.fitFreshNoMarker = !dev2.marker;
   c._vacStartFit(dev2); await c.updateComplete;
-  c._vacFitSave(); await c.updateComplete;
+  await c._vacFitSave(); await c.updateComplete;
   const m2 = (c._serverCfg.markers || []).find((x) => x.id === 'd_mower');
   const calFit = m2?.vacuum?.calibration?.['0'];
   o.fitMaterialises = !!m2 && Array.isArray(calFit) && calFit.length === 6;
@@ -167,7 +242,7 @@ const out = await page.evaluate(async () => {
   c.hass = { ...c.hass, states: { ...c.hass.states,
     'camera.mower_map': { state: 'idle', attributes: { vacuum_position: { x: 1, y: 2, a: 0 }, map_index: 0 } } } };
   await c.updateComplete;
-  c._vacAutoCalibrate(c._devices.find((x) => x.id === 'd_mower'));
+  await c._vacAutoCalibrate(c._devices.find((x) => x.id === 'd_mower'));
   o.noRoomsToastReworded = c._toast === c._t('vac.autocal_no_rooms') && !/point|точк/i.test(c._toast);
 
   c.hass.callWS = realWS;

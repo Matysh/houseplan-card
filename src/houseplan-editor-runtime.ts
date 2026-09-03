@@ -9,7 +9,7 @@
 import { LitElement, html, svg, nothing, TemplateResult, PropertyValues } from 'lit';
 import { guard } from 'lit/directives/guard.js';
 import { renderVacuumMapsSection } from './editors/vacuum-maps-section';
-import { calibrationTarget, planVacuumFit, writeVacuumMatrix } from './vacuum-route-edit';
+import { calibrationTarget, planVacuumFit } from './vacuum-route-edit';
 import { repeat } from 'lit/directives/repeat.js';
 import './hp-dialog';
 import type { HpDialog } from './hp-dialog';
@@ -118,7 +118,7 @@ import {
   parseVacSourceCandidate, resolveVacSource, resolveCurrentVacPath, trimVacPathTarget, areaCentroid,
   vacCalibrationResidualCm, vacRoomNameMatchCount, VAC_CALIBRATION_WARN_CM,
   VAC_TELEPORT_GAP_MS, VAC_STALE_MS,
-  FitParams, fitMatrix, fitFromMatrix, initialFit, reanchorFit, VacRoom,
+  FitParams, fitMatrix, initialFit, reanchorFit, VacRoom,
   Pt as VacPt, type VacPath, type VacSourceCandidate,
   type VacSourceResolution, type VacSourceStatus,
 } from './vacuum';
@@ -245,6 +245,8 @@ import {
   formatLatticeShiftCm,
 } from './coordinate-canonicalization';
 import { enqueueSerializedWrite, optimisticAttempt, rollbackOptimistic, type OptimisticAttempt } from './serialized-write-queue';
+import { applyCalibrationProposal, saveAutomaticCalibration, saveManualCalibration, saveVacuumMatrix,
+  type CalibrationProposal, type VacuumFit } from './vacuum-calibration-write';
 import { hasTranslation, langOf, t, type I18nKey } from './i18n';
 import { supportT, type SupportI18nKey } from './i18n/support';
 import {
@@ -1147,11 +1149,11 @@ export interface HouseplanEditorHostPort {
   _undoPoint: () => void;
   _vacAllCameraCache: { devId: string; candidates: VacSourceCandidate[]; } | null;
   _vacAllCamerasFor: string | null;
-  _vacCalConfirm: { markerId: string; source: string; mapId: string; routeId?: string; space?: string; matrix: Affine; rooms: number; error: string; } | null;
+  _vacCalConfirm: CalibrationProposal | null;
   _vacEnsureMarker: (d: DevItem) => Marker | null;
   _vacEntity: (d: DevItem) => string | null;
   _vacMapId: (d: DevItem, tele: { mapId: string }, planHass?: any) => string;
-  _vacFit: { markerId: string; source: string; mapId: string; routeId?: string; p: FitParams; drag: null | { kind: "move" | "scale"; sx: number; sy: number; p0: FitParams; fx: number; fy: number; }; } | null;
+  _vacFit: VacuumFit | null;
   _vacOpenAllCameras: (d: DevItem) => void;
   _vacRt: Map<string, { trail: VacPt[]; lastKey: string; lastTs: number; moving: boolean; jump: boolean; endedTs: number; lastPos: VacPt | null; }>;
   _vacSource: (d: DevItem, planHass?: any) => string | null;
@@ -1736,13 +1738,13 @@ public _samePt(a: readonly number[], b: readonly number[]): boolean {
     return samePoint(a, b);
   }
 
-public _dropLegacySegments(): void {
+public _dropLegacySegments(config = this.host._serverCfg): void {
     // «Ripple only» was removed from the UI: keep old configs readable, then
     // materialise the recognisable icon+activity presentation on any write.
-    for (const marker of this.host._serverCfg?.markers || []) {
+    for (const marker of config?.markers || []) {
       if (marker.display === 'ripple') marker.display = 'icon_ripple';
     }
-    for (const sp of this.host._serverCfg?.spaces || []) {
+    for (const sp of config?.spaces || []) {
       delete (sp as any).segments;
       const physicalIds = new Set<string>();
       const validId = (id: any): id is string => typeof id === 'string'
@@ -1828,13 +1830,16 @@ public async _reloadRejectedPhysicalWrite(): Promise<void> {
     await this.host._reloadConfigOnly(true);
   }
 
-public _writeConfig(): Promise<void> {
+public _prepareConfigCandidate(config: ServerConfig): ServerConfig { this._dropLegacySegments(config); return canonicalizeConfigGeometry(config); }
+
+public _writeConfig(attempt: OptimisticAttempt<ServerConfig> | null = null): Promise<void> {
     this.host._writesPending++;
     this.host._writeChain = enqueueSerializedWrite(this.host._writeChain, async () => {
       if (!this.host._serverCfg) return;
-      this._dropLegacySegments();
-      const candidate = canonicalizeConfigGeometry(this.host._serverCfg);
+      const candidate = this._prepareConfigCandidate(this.host._serverCfg);
       const candidateFingerprint = contentFingerprint(candidate);
+      // Bind a queued optimistic save to the revision its request will actually use.
+      if (attempt && candidateFingerprint === attempt.attemptedFingerprint) attempt.revision = this.host._cfgRev;
       const strictEntries = [...this.host._pendingPhysicalWrites.entries()];
       for (const [spaceId, accepted] of strictEntries) {
         const candidateSpace = candidate.spaces.find((space) => space.id === spaceId);
@@ -8157,7 +8162,10 @@ public async _saveMarker(): Promise<void> {
     }
     const cfg = this.host._serverCfg;
     if (!cfg) return;
-    const markers = cfg.markers || [];
+    const baseRevision = this.host._cfgRev;
+    const baseContent = contentFingerprint(cfg);
+    let candidate = JSON.parse(JSON.stringify(cfg)) as ServerConfig;
+    const markers = candidate.markers || [];
     const id = markerIdForBinding(dlg.binding, dlg.devId, () => 'v_' + Date.now().toString(36));
     const oldId = dlg.devId;
     const prevDev = oldId ? this.host._devices.find((x) => x.id === oldId) : null;
@@ -8186,6 +8194,8 @@ public async _saveMarker(): Promise<void> {
     const targetSpaceId = targetSpaceModel.id;
     if (dlg.binding === 'virtual' && !space) space = targetSpaceId;
     this.host._markerDialog = { ...dlg, busy: true };
+    let attempt: OptimisticAttempt<ServerConfig> | null = null;
+    let configAccepted = false;
     try {
       const replacedRemovedIds = dlg.binding === 'virtual'
         ? []
@@ -8267,8 +8277,9 @@ public async _saveMarker(): Promise<void> {
       }
       // Rebinding changes source identity. Rewrite every marker:* edge in the
       // same config transaction before replacing the marker itself.
-      cfg.markers = markers;
-      if (oldId && oldId !== id) cfg.markers = rewriteMarkerControlReferences(cfg.markers, oldId, id);
+      candidate.markers = markers;
+      if (oldId && oldId !== id)
+        candidate.markers = rewriteMarkerControlReferences(candidate.markers, oldId, id);
       if (oldId && oldId !== id && marker.value_badge?.source?.kind === 'derived_marker_state'
           && marker.value_badge.source.ref === `marker:${oldId}`) {
         marker.value_badge.source = { kind: 'derived_marker_state', ref: `marker:${id}` };
@@ -8278,19 +8289,19 @@ public async _saveMarker(): Promise<void> {
         marker.value_source = { kind: 'derived_marker_state', ref: `marker:${id}` };
       }
       // remove the previous marker (by the old id and by the new id)
-      cfg.markers = cfg.markers.filter(
+      candidate.markers = candidate.markers.filter(
         (m) => m.id !== id && m.id !== oldId
           && (marker.binding === 'virtual' || m.binding !== marker.binding),
       );
-      cfg.markers.push(marker);
+      candidate.markers.push(marker);
       const obsoleteAreaSnapshotIds = new Set(replacedRemovedIds);
       if (oldId && oldId !== id) obsoleteAreaSnapshotIds.add(oldId);
       obsoleteAreaSnapshotIds.delete(id);
-      if (obsoleteAreaSnapshotIds.size && cfg.settings?.marker_area_snapshot) {
-        cfg.settings = {
-          ...cfg.settings,
+      if (obsoleteAreaSnapshotIds.size && candidate.settings?.marker_area_snapshot) {
+        candidate.settings = {
+          ...candidate.settings,
           marker_area_snapshot: removeMarkerAreaSnapshots(
-            cfg.settings.marker_area_snapshot, obsoleteAreaSnapshotIds,
+            candidate.settings.marker_area_snapshot, obsoleteAreaSnapshotIds,
           ),
         };
       }
@@ -8313,7 +8324,6 @@ public async _saveMarker(): Promise<void> {
         // stays in place; pin it under the (possibly new) id
         if (id !== oldId || !this.host._layout[id] || roomChanged) {
           newPos = { s: prevPos.s, x: prevPos.x, y: prevPos.y };
-          this.host._layout = { ...this.host._layout, [id]: newPos };
         }
       } else if (replacingRemoved || !this.host._layout[id] || roomChanged) {
         let cx = targetSpaceModel.vb[0] + targetSpaceModel.vb[2] / 2;
@@ -8325,9 +8335,22 @@ public async _saveMarker(): Promise<void> {
             : undefined;
         if (room) [cx, cy] = this.host._roomCenter(room);
         newPos = this.host._normPos(targetSpaceId, cx, cy);
-        this.host._layout = { ...this.host._layout, [id]: newPos };
       }
-      await this._saveConfigNow();
+      // File copy is async: never install a candidate built from a replaced root.
+      if (this.host._serverCfg !== cfg || this.host._cfgRev !== baseRevision || contentFingerprint(cfg) !== baseContent) {
+        if (this.host._markerDialog) this.host._markerDialog = { ...this.host._markerDialog, busy: false };
+        this.host._showToast(this.host._t('toast.conflict'));
+        return;
+      }
+      candidate = this._prepareConfigCandidate(candidate);
+      attempt = optimisticAttempt(cfg, candidate, this.host._cfgContentFingerprint, this.host._cfgRev, contentFingerprint);
+      this.host._serverCfg = candidate;
+      this.host._regSignature = '';
+      this.host._maybeRebuildDevices();
+      this.host.requestUpdate();
+      if (this.host._saveConfigDebounced.pending()) this.host._saveConfigDebounced.cancel();
+      await this._saveConfigNow(attempt);
+      configAccepted = true;
       if (newPos) {
         const pos = canonicalizePosition(newPos);
         this.host._layout = { ...this.host._layout, [id]: pos };
@@ -8361,6 +8384,12 @@ public async _saveMarker(): Promise<void> {
       // in flight — spreading null yields a truthy husk and the renderer
       // then crashes, blanking the whole card. The toast below is the
       // only remaining signal, so it must still fire.
+      if (!configAccepted && attempt) {
+        rollbackOptimistic(this.host, attempt, contentFingerprint);
+        this.host._regSignature = '';
+        this.host._maybeRebuildDevices();
+        this.host.requestUpdate();
+      }
       if (this.host._markerDialog) this.host._markerDialog = { ...this.host._markerDialog, busy: false };
       this.host._showToast(this.host._t('toast.error', { err: this.host._errText(e) }));
     }
@@ -8931,12 +8960,12 @@ public async _deleteSpace(): Promise<void> {
     }
   }
 
-public async _saveConfigNow(): Promise<void> {
+public async _saveConfigNow(attempt: OptimisticAttempt<ServerConfig> | null = null): Promise<void> {
     this.host._cfgEpoch++;
     try {
       // same queue as the debounced writer: a dialog saving while a background
       // write is still out must not race it into a self-inflicted conflict
-      await this._writeConfig();
+      await this._writeConfig(attempt);
     } catch (e: any) {
       if (e?.physicalGeometryRolledBack) await this._reloadRejectedPhysicalWrite();
       else if (e?.code === 'conflict') await this.host._reloadConfigOnly();
@@ -10952,9 +10981,9 @@ public _renderVacSection(dlg: any): TemplateResult | typeof nothing {
           </div>
         </details>
         <div class="vacbtns">
-          ${tierA ? html`<button class="btn" @click=${() => this._vacAutoCalibrate(dev)}>${this.host._t('vac.autocal')}</button>` : nothing}
+          ${tierA ? html`<button class="btn" ?disabled=${this.host._markerDialog?.busy} @click=${() => this._vacAutoCalibrate(dev)}>${this.host._t('vac.autocal')}</button>` : nothing}
           ${canUseSource
-            ? html`<button class="btn ghostbtn" @click=${() => this._vacStartFit(dev)}>${this.host._t('vac.fit')}</button>`
+            ? html`<button class="btn ghostbtn" ?disabled=${this.host._markerDialog?.busy} @click=${() => this._vacStartFit(dev)}>${this.host._t('vac.fit')}</button>`
             : nothing}
           <a class="btn ghostbtn" href="https://github.com/Matysh/houseplan-card/blob/main/docs/VACUUM.md"
             target="_blank" rel="noopener">${this.host._t('vac.documentation')}</a>
@@ -10981,20 +11010,10 @@ public _vacMapId(d: DevItem, tele: { mapId: string }, planHass = this.host._plan
     return this.host._vacMapId(d, tele, planHass);
   }
 
-public _vacSaveMatrix(markerId: string, source: string, mapId: string, matrix: Affine, routeId = ''): boolean {
-    // HP-1540-01: a first-use vacuum has no marker yet — materialise it
-    const dev = this.host._devices.find((x) => x.id === markerId);
-    const m = dev ? this.host._vacEnsureMarker(dev)
-      : this.host._serverCfg?.markers?.find((x: Marker) => x.id === markerId);
-    if (!m) return false;
-    // #162: with explicit routes the matrix belongs to the route, not to a
-    // marker-wide dictionary that cannot tell two floors apart.
-    m.vacuum = writeVacuumMatrix(m.vacuum || {}, { source, mapId, routeId, matrix });
-    this.host._regSignature = '';
-    this.host._maybeRebuildDevices();
-    this._saveConfig();
-    this.host.requestUpdate();
-    return true;
+public _vacSaveMatrix(
+    markerId: string, source: string, mapId: string, matrix: Affine, routeId = '',
+  ): Promise<boolean> {
+    return saveVacuumMatrix(this, markerId, source, mapId, matrix, routeId);
   }
 
 public _vacPlanRoomAnchors(spaceId: string | null | undefined): Array<{
@@ -11012,7 +11031,8 @@ public _vacPlanRoomAnchors(spaceId: string | null | undefined): Array<{
       .filter(Boolean) as Array<{ name: string; cx: number; cy: number }>;
   }
 
-public _vacAutoCalibrate(d: DevItem): void {
+public async _vacAutoCalibrate(d: DevItem): Promise<void> {
+    if (this.host._markerDialog?.busy) return;
     const src = this.host._vacSource(d);
     const tele = src ? readVacTelemetry(this.host.hass?.states[src]?.attributes) : null;
     if (!src || !tele || tele.rooms.length < 3) {
@@ -11038,32 +11058,18 @@ public _vacAutoCalibrate(d: DevItem): void {
       };
       return;
     }
-    if (!this._vacSaveMatrix(d.id, src, mapId, res.matrix, target.routeId)) return;
-    this.host._showToast(subst(this.host._t('vac.autocal_done'), { rooms: String(res.matched.length) }));
+    await saveAutomaticCalibration(this, {
+      markerId: d.id, source: src, mapId, routeId: target.routeId, space: target.space,
+      matrix: res.matrix, rooms: res.matched.length,
+    });
   }
 
-public _vacApplyCalibrationProposal(manual: boolean): void {
-    const proposal = this.host._vacCalConfirm;
-    if (!proposal) return;
-    this.host._vacCalConfirm = null;
-    if (manual) {
-      const dev = this.host._devices.find((candidate) => candidate.id === proposal.markerId);
-      const fit = fitFromMatrix(proposal.matrix);
-      if (!dev || !fit) return;
-      this.host._markerDialog = null;
-      // #162: матрица решена против пространства МАРШРУТА, а не дока.
-      const space = proposal.space || dev.space;
-      if (space !== this.host._space && !this.host._commitSpace(space)) return;
-      this.host._vacFit = { markerId: proposal.markerId, source: proposal.source,
-        routeId: proposal.routeId, mapId: proposal.mapId, p: fit, drag: null };
-      return;
-    }
-    if (this._vacSaveMatrix(
-      proposal.markerId, proposal.source, proposal.mapId, proposal.matrix, proposal.routeId,
-    )) this.host._showToast(subst(this.host._t('vac.autocal_done'), { rooms: String(proposal.rooms) }));
+public _vacApplyCalibrationProposal(manual: boolean): Promise<void> {
+    return applyCalibrationProposal(this, manual);
   }
 
 public _vacStartFit(d: DevItem, routeId = ''): void {
+    if (this.host._markerDialog?.busy) return;
     const src = this.host._vacSource(d);
     const tele = src ? readVacTelemetry(this.host.hass?.states[src]?.attributes) : null;
     if (!src || !tele) {
@@ -11081,18 +11087,13 @@ public _vacStartFit(d: DevItem, routeId = ''): void {
     this.host._vacFit = { markerId: d.id, source: src, mapId, routeId: plan.routeId, p: plan.params, drag: null };
   }
 
-public _vacFitSave(): void {
-    const f = this.host._vacFit;
-    if (!f) return;
-    // HP-1540-01: no success toast for a save that did not happen
-    const ok = this._vacSaveMatrix(f.markerId, f.source, f.mapId, fitMatrix(f.p), f.routeId);
-    this.host._vacFit = null;
-    if (ok) this.host._showToast(this.host._t('vac.cal_done'));
+public _vacFitSave(): Promise<void> {
+    return saveManualCalibration(this, fitMatrix);
   }
 
 public _vacFitTurn(patch: Partial<FitParams>): void {
     const f = this.host._vacFit;
-    if (!f) return;
+    if (!f || f.busy) return;
     const tele = readVacTelemetry(this.host.hass?.states[f.source]?.attributes);
     const c = this._vacGhostCentre(tele?.rooms || []);
     const next = { ...f.p, ...patch } as FitParams;
@@ -11119,6 +11120,7 @@ public _vacFitPointer(ev: PointerEvent, view: { x: number; y: number; w: number;
     const f = this.host._vacFit;
     if (!f) return;
     ev.stopPropagation();
+    if (f.busy) return;
     if (ev.type === 'pointerdown') {
       const t = ev.target as HTMLElement;
       const corner = t.getAttribute?.('data-corner');

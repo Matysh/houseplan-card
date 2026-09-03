@@ -183,7 +183,7 @@ test('frontend write paths adopt canonical candidates before persistence (#224)'
   assert.match(source, /enqueueSerializedWrite\(this\._writeChain, async \(\) =>/);
   assert.match(
     source,
-    /const candidate = canonicalizeConfigGeometry\(this\._serverCfg\);/,
+    /const candidate = this\._prepareConfigCandidate\(this\._serverCfg\);/,
   );
   assert.match(
     eagerCardSource,
