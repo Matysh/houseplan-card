@@ -1155,6 +1155,7 @@ export interface HouseplanEditorHostPort {
   _vacOpenAllCameras: (d: DevItem) => void;
   _vacRt: Map<string, { trail: VacPt[]; lastKey: string; lastTs: number; moving: boolean; jump: boolean; endedTs: number; lastPos: VacPt | null; }>;
   _vacSource: (d: DevItem, planHass?: any) => string | null;
+  _vacObservedMapId: (d: DevItem, source: string, planHass?: any) => string | undefined;
   _vacSourceResolution: (d: DevItem, includeAllCameras?: boolean, planHass?: any) => VacSourceResolution;
   _vacSrvTrails: Record<string, any>;
   _view: { x: number; y: number; w: number; h: number; } | null;
@@ -10990,7 +10991,7 @@ public _vacSaveMatrix(
     if (!m) return false;
     // #162: with explicit routes the matrix belongs to the route, not to a
     // marker-wide dictionary that cannot tell two floors apart.
-    m.vacuum = writeVacuumMatrix(m.vacuum || {}, { source, mapId, routeId, matrix }) as any;
+    m.vacuum = writeVacuumMatrix(m.vacuum || {}, { source, mapId, routeId, matrix });
     this.host._regSignature = '';
     this.host._maybeRebuildDevices();
     this._saveConfig();

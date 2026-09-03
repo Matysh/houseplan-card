@@ -244,6 +244,15 @@
       "required": false,
       "type": "bool"
     },
+    "config.markers[].vacuum.map_routes": {
+      "list": {
+        "allowExtra": true,
+        "object": true
+      },
+      "maxLength": 32,
+      "nullable": true,
+      "required": false
+    },
     "config.markers[].vacuum.room_highlight": {
       "nullable": true,
       "required": false,

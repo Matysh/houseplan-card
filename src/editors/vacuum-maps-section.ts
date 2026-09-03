@@ -7,22 +7,37 @@
  * than in a core file.
  */
 import { TemplateResult, html, nothing } from 'lit';
-import { langOf } from '../i18n';
+import type { HpConfirmRequest } from '../danger-confirm';
+import type { DevItem } from '../types';
+import { langOf, type I18nKey } from '../i18n';
 import { supportT, type SupportI18nKey } from '../i18n/support';
 import { VacuumMapRoute, effectiveRoutes, observedMapIds, resolveRoute } from '../vacuum-routes';
 import {
   addRoute, changeRouteSpace, convertLegacyRoutes, newRouteId, removeRoute,
 } from '../vacuum-route-edit';
 
-export interface VacuumMapsHost {
-  host: any;
-  _saveConfig: () => void;
-  _vacAutoCalibrate: (dev: any) => void;
-  _vacStartFit: (dev: any, routeId?: string) => void;
+interface SpaceRow { id?: unknown; name?: unknown }
+
+/** The narrow slice of the card this block reads and writes through. */
+export interface VacuumMapsCardHost {
+  hass?: { states?: Record<string, unknown> } | null;
+  _config?: { language?: string | null } | null;
+  _serverCfg?: { spaces?: SpaceRow[] } | null;
+  _t: (key: I18nKey, vars?: Record<string, string | number>) => string;
+  _vacSource: (dev: DevItem) => string | null;
+  _vacObservedMapId: (dev: DevItem, source: string) => string | undefined;
+  _confirmDanger: (request: HpConfirmRequest) => Promise<boolean>;
 }
 
-const spaceName = (host: any, spaceId: string): string => {
-  const space = (host._serverCfg?.spaces || []).find((item: any) => item?.id === spaceId);
+export interface VacuumMapsHost {
+  host: VacuumMapsCardHost;
+  _saveConfig: () => void;
+  _vacAutoCalibrate: (dev: DevItem) => void;
+  _vacStartFit: (dev: DevItem, routeId?: string) => void;
+}
+
+const spaceName = (host: VacuumMapsCardHost, spaceId: string): string => {
+  const space = (host._serverCfg?.spaces || []).find((item) => item?.id === spaceId);
   return String(space?.name || space?.id || spaceId);
 };
 
@@ -33,7 +48,7 @@ const spaceName = (host: any, spaceId: string): string => {
  * routing change goes through one save path with everything else.
  */
 export function renderVacuumMapsSection(
-  runtime: VacuumMapsHost, dev: any, setVac: (patch: Record<string, unknown>) => void,
+  runtime: VacuumMapsHost, dev: DevItem, setVac: (patch: Record<string, unknown>) => void,
 ): TemplateResult | typeof nothing {
   const host = runtime.host;
   const lang = langOf(host.hass, host._config?.language);
@@ -44,8 +59,9 @@ export function renderVacuumMapsSection(
   const rootSource: string = host._vacSource(dev) || '';
   const routes: VacuumMapRoute[] = effectiveRoutes(dev.id, vacuum, dev.space, rootSource);
   const spaces: Array<{ id: string; name: string }> = (host._serverCfg?.spaces || [])
-    .filter((space: any) => typeof space?.id === 'string' && space.id)
-    .map((space: any) => ({ id: space.id, name: String(space.name || space.id) }));
+    .filter((space): space is { id: string; name?: unknown } =>
+      typeof space?.id === 'string' && !!space.id)
+    .map((space) => ({ id: space.id, name: String(space.name || space.id) }));
   const spaceIds = new Set(spaces.map((space) => space.id));
   const observed = observedMapIds(routes, [rootSource],
     (source) => host._vacObservedMapId(dev, source));
@@ -56,7 +72,7 @@ export function renderVacuumMapsSection(
 
   /** Every routing edit converts legacy data first — all of it, or none. */
   const writeRoutes = (next: (current: VacuumMapRoute[]) => VacuumMapRoute[]): boolean => {
-    let base: VacuumMapRoute[] | null = explicit ? vacuum.map_routes : null;
+    let base: VacuumMapRoute[] | null = explicit ? (vacuum.map_routes ?? null) : null;
     if (!base) {
       base = convertLegacyRoutes(vacuum, dev.space, rootSource,
         (taken) => newRouteId(taken)) ?? [];
@@ -98,7 +114,7 @@ export function renderVacuumMapsSection(
   const drop = async (route: VacuumMapRoute) => {
     const accepted = await host._confirmDanger({
       key: 'vacuum_route_delete',
-      kind: 'danger',
+      kind: 'destructive',
       title: t('vac.route_delete_title'),
       message: t('vac.route_delete_body'),
       objectName: route.map_id || t('vac.route_map_default'),

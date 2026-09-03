@@ -12247,7 +12247,7 @@ export class HouseplanCard extends LitElement {
   }
 
   /** The map id an exact source reports right now, or undefined if silent. */
-  private _vacObservedMapId(d: DevItem, source: string, planHass = this._planHass): string | undefined {
+  public _vacObservedMapId(d: DevItem, source: string, planHass = this._planHass): string | undefined {
     const tele = readVacTelemetry(planHass?.states?.[source]?.attributes);
     return tele ? this._vacMapId(d, tele, planHass) : undefined;
   }
@@ -12539,10 +12539,11 @@ export class HouseplanCard extends LitElement {
   private _vacRouteBadge(d: DevItem): TemplateResult | typeof nothing {
     if (!this._isVacDev(d) || d.hidden) return nothing;
     if (normalizeDeviceDisplay(d.marker?.display) === 'static_icon') return nothing;
-    const fact = this._renderDeviceSnapshot?.facts.get(`vacuum:${d.id}`) as any;
+    const fact = this._renderDeviceSnapshot?.facts.get(`vacuum:${d.id}`) as
+      { resolution?: VacuumRouteResolution } | undefined;
     const reason = routeWarningKey(fact?.resolution, this._vacRt.get(d.id)?.moving ?? false);
     if (!reason) return nothing;
-    const text = this._t((`vac.route_warn_${reason}`) as any);
+    const text = this._t(`vac.route_warn_${reason}` as I18nKey);
     return html`<span class="vacwarn" role="img" aria-label=${text} title=${text}>
       <ha-icon icon="mdi:alert-outline"></ha-icon></span>`;
   }

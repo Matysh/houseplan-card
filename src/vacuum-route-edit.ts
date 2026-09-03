@@ -5,7 +5,11 @@
  * editor, so these helpers live in the lazy editor graph: the View card must
  * not pay for code it can never run (docs/ARCHITECTURE.md, #367).
  */
+import type { Marker } from './types';
 import { FitParams, fitFromMatrix, initialFit, VacRoom } from './vacuum';
+
+/** The marker's vacuum block exactly as the config stores it. */
+export type MarkerVacuumCfg = NonNullable<Marker['vacuum']>;
 import {
   Affine, VacuumMapRoute, VacuumRouteMarkerCfg, effectiveRoutes, normalizeRouteMatrix,
 } from './vacuum-routes';
@@ -87,9 +91,9 @@ export function convertLegacyRoutes(
  * calibration the user just solved would lose real work over bookkeeping.
  */
 export function writeVacuumMatrix(
-  vacuum: VacuumRouteMarkerCfg | null | undefined,
+  vacuum: MarkerVacuumCfg | null | undefined,
   opts: { source: string; mapId: string; routeId?: string; matrix: Affine },
-): VacuumRouteMarkerCfg {
+): MarkerVacuumCfg {
   const rounded = opts.matrix.map((n) => Number(n.toFixed(6))) as Affine;
   const routes = vacuum?.map_routes;
   if (Array.isArray(routes) && routes.length) {
@@ -121,7 +125,7 @@ export interface VacuumFitPlan {
  */
 export function planVacuumFit(
   markerId: string,
-  vacuum: VacuumRouteMarkerCfg | null | undefined,
+  vacuum: MarkerVacuumCfg | null | undefined,
   opts: {
     routeId?: string; source: string; mapId: string; dockSpace: string; rooms: VacRoom[];
     viewBoxOf: (spaceId: string) => [number, number, number, number] | null;
@@ -148,7 +152,7 @@ export function planVacuumFit(
  */
 export function calibrationTarget(
   markerId: string,
-  vacuum: VacuumRouteMarkerCfg | null | undefined,
+  vacuum: MarkerVacuumCfg | null | undefined,
   dockSpace: string,
   source: string,
   mapId: string,

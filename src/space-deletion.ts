@@ -12,11 +12,20 @@ export interface SpaceDeletionDependencyReport {
   routeCount: number;
 }
 
+/** Just enough of a marker to answer "does it route a map into this space?". */
+interface RouteCarrier {
+  id?: unknown;
+  space?: unknown;
+  room_id?: unknown;
+  removed?: unknown;
+  vacuum?: { map_routes?: Array<{ id?: unknown; space?: unknown }> | null } | null;
+}
+
 /** Ids of routes this marker points at the space being deleted. */
-const routesIntoSpace = (marker: any, spaceId: string): string[] =>
+const routesIntoSpace = (marker: RouteCarrier, spaceId: string): string[] =>
   (marker?.vacuum?.map_routes || [])
-    .filter((route: any) => route && route.space === spaceId && typeof route.id === 'string')
-    .map((route: any) => route.id);
+    .filter((route) => route && route.space === spaceId && typeof route.id === 'string')
+    .map((route) => String(route.id));
 
 const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value));
 
@@ -27,20 +36,20 @@ export function collectSpaceMarkerDependencies(
 ): SpaceDeletionDependencyReport {
   const space = (config?.spaces || []).find((item: any) => item?.id === spaceId);
   const roomIds = new Set(
-    (space?.rooms || []).map((room: any) => String(room?.id || '')).filter(Boolean),
+    (space?.rooms || []).map((room: { id?: unknown }) => String(room?.id || '')).filter(Boolean),
   );
   const markerIds = [...new Set<string>((config?.markers || [])
-    .filter((marker: any) => marker?.removed !== true && typeof marker?.id === 'string')
-    .filter((marker: any) => marker.space === spaceId
+    .filter((marker: RouteCarrier) => marker?.removed !== true && typeof marker?.id === 'string')
+    .filter((marker: RouteCarrier) => marker.space === spaceId
       || (typeof marker.room_id === 'string' && roomIds.has(marker.room_id))
-      || layout?.[marker.id]?.s === spaceId)
-    .map((marker: any) => marker.id))]
+      || layout?.[String(marker.id)]?.s === spaceId)
+    .map((marker: RouteCarrier) => String(marker.id)))]
     .sort((a: string, b: string) => a.localeCompare(b));
-  const routeMarkerIds = (config?.markers || [])
-    .filter((marker: any) => marker?.removed !== true && typeof marker?.id === 'string')
-    .filter((marker: any) => !markerIds.includes(marker.id))
-    .filter((marker: any) => routesIntoSpace(marker, spaceId).length > 0)
-    .map((marker: any) => marker.id)
+  const routeMarkerIds = (config?.markers || [] as RouteCarrier[])
+    .filter((marker: RouteCarrier) => marker?.removed !== true && typeof marker?.id === 'string')
+    .filter((marker: RouteCarrier) => !markerIds.includes(String(marker.id)))
+    .filter((marker: RouteCarrier) => routesIntoSpace(marker, spaceId).length > 0)
+    .map((marker: RouteCarrier) => String(marker.id))
     .sort((a: string, b: string) => a.localeCompare(b));
   return {
     markerIds, count: markerIds.length,
@@ -92,14 +101,14 @@ export function createSpaceDeletionCandidate(
     if (typeof marker.room_id === 'string' && roomIds.has(marker.room_id)) delete marker.room_id;
   }
   for (const [key, position] of Object.entries(layout)) {
-    if ((position as any)?.s === spaceId) delete layout[key];
+    if ((position as { s?: unknown } | null)?.s === spaceId) delete layout[key];
   }
   // #162: a robot docked elsewhere keeps its dock and its other maps; only the
   // routes that pointed here go, in the same logical operation as the space.
-  for (const marker of config.markers || []) {
+  for (const marker of (config.markers || []) as RouteCarrier[]) {
     const routes = marker?.vacuum?.map_routes;
-    if (!Array.isArray(routes)) continue;
-    const kept = routes.filter((route: any) => route?.space !== spaceId);
+    if (!Array.isArray(routes) || !marker.vacuum) continue;
+    const kept = routes.filter((route) => route?.space !== spaceId);
     if (kept.length !== routes.length) marker.vacuum.map_routes = kept;
   }
   return { config, layout, dependencies };

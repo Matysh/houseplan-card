@@ -1774,6 +1774,22 @@ MARKER_SCHEMA = vol.Schema(
                     {str: vol.All([_finite], vol.Length(min=6, max=6))}
                 ),
                 vol.Optional("segment_map"): vol.Schema({str: str}),
+                # #162: canonical map -> space routing. The schema checks the
+                # shape only; identity uniqueness and the referential space
+                # check live in validate_marker_vacuum_routes, which is
+                # change-aware and must not reject untouched legacy data.
+                vol.Optional("map_routes"): vol.Any(
+                    None,
+                    vol.All([vol.Schema({
+                        vol.Required("id"): vol.All(str, vol.Length(min=1, max=128)),
+                        vol.Required("source"): vol.All(str, vol.Length(min=1, max=255)),
+                        vol.Required("map_id"): vol.All(str, vol.Length(max=255)),
+                        vol.Required("space"): vol.All(str, vol.Length(min=1, max=64)),
+                        vol.Optional("calibration"): vol.Any(
+                            None, vol.All([_finite], vol.Length(min=6, max=6)),
+                        ),
+                    }, extra=vol.ALLOW_EXTRA)], vol.Length(max=32)),
+                ),
             }),
         ),
         vol.Optional("controls"): vol.Any(None, vol.All([_TEXT], vol.Length(max=MAX_CONTROLS))),

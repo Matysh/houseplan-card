@@ -2524,7 +2524,8 @@ def test_issue_162_full_export_round_trips_every_map_route(tmp_path: Path) -> No
     config["markers"][0]["vacuum"] = {"source": "camera.robot", "map_routes": routes}
     document, _ = create_export(
         SimpleNamespace(instance_id="instance-a"), {"config": config},
-        {"layout": {}}, kind="full", card_version="1.61.0", config_root=tmp_path,
+        {"layout": {}}, kind="full", space_id=None, card_version="1.61.0",
+        config_root=tmp_path,
     )
     assert document["payload"]["config"]["markers"][0]["vacuum"]["map_routes"] == routes
     assert document["transfer"]["dropped_marker_links"] == 0

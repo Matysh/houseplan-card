@@ -377,7 +377,7 @@ const MUTANT_DEFINITIONS = [
       + 'them behind keeps a route nothing can resolve and a robot that never appears (#162, AC16)',
     patches: [{
       file: 'src/space-deletion.ts',
-      find: '    const kept = routes.filter((route: any) => route?.space !== spaceId);',
+      find: '    const kept = routes.filter((route) => route?.space !== spaceId);',
       replace: '    const kept = routes;',
     }],
   },
