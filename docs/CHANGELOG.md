@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- A robot vacuum with several maps can now show each map on its own floor: the
+  dock stays in its own space while the live position and the trail appear in
+  the space the active map is assigned to, and a map that is unassigned,
+  ambiguous or uncalibrated draws nothing instead of guessing a floor
+  ([#162](https://github.com/Matysh/houseplan-card/issues/162)).
 - Custom background assets now reject special filesystem entries without
   blocking Home Assistant, tolerate files disappearing during quota scans and
   report corrupt images separately from exhausted storage; pen/touch movement

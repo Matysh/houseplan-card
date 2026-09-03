@@ -1,15 +1,17 @@
-"""vacuum_routes.py — питоновское зеркало src/vacuum-routes.ts (#162).
-
-Модуль чистый и Home Assistant не тянет, поэтому импортируется напрямую:
-sys.path/sys.modules не трогаются намеренно (класс #389).
-"""
+"""vacuum_routes.py — питоновское зеркало src/vacuum-routes.ts (#162)."""
 import json
 import pathlib
-import sys
+import re
+import types
 
 ROOT = pathlib.Path(__file__).parent.parent
-sys.path.insert(0, str(ROOT / "custom_components" / "houseplan"))
-import vacuum_routes as vr  # noqa: E402
+# Модуль читается текстом и исполняется в собственном пространстве имён: ни
+# sys.path, ни sys.modules не трогаются намеренно (#393, класс #389).
+_source = (ROOT / "custom_components" / "houseplan" / "vacuum_routes.py").read_text(
+    encoding="utf-8")
+vr = types.ModuleType("vacuum_routes_under_test")
+vr.__dict__["re"] = re
+exec(compile(_source, "vacuum_routes.py", "exec"), vr.__dict__)
 
 FIXTURES = ROOT / "test" / "fixtures" / "vacuum-routes"
 IDENTITY = [1, 0, 0, 0, 1, 0]

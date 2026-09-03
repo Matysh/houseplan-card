@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import {
   validateMarkerRoutes, effectiveRoutes, legacyRouteId, resolveRoute, adoptLegacyRun,
   normalizeRouteMatrix, isEntityIdLike, VAC_ROUTE_LIMIT, VAC_ROUTE_ERROR,
+  observedMapIds, runRoute, planVacuumOverlay,
 } from '../test-build/vacuum-routes.js';
 
 const fixture = (name) => JSON.parse(readFileSync(
@@ -134,4 +135,106 @@ test('run без map id усыновлению не подлежит', () => {
   assert.equal(adoptLegacyRun(null, [route()], 'camera.robot').kind, 'orphan_run');
   assert.equal(adoptLegacyRun({}, [route()], 'camera.robot').kind, 'orphan_run');
   assert.equal(adoptLegacyRun({ map_id: 1 }, [route()], 'camera.robot').kind, 'orphan_run');
+});
+
+const M1 = [1, 0, 0, 0, 1, 0];
+const M2 = [2, 0, 0, 0, 2, 0];
+const twoFloors = [
+  { id: 'r1', source: 'camera.robot', map_id: 'm1', space: 'floor1', calibration: M1 },
+  { id: 'r2', source: 'camera.robot', map_id: 'm2', space: 'floor2', calibration: M2 },
+];
+const ready = (mapId) => resolveRoute({
+  routes: twoFloors, observed: { 'camera.robot': mapId }, spaceIds: spaces('floor1', 'floor2'),
+});
+
+test('телеметрия читается по всем источникам маршрутов плюс discovery', () => {
+  const seen = [];
+  const observed = observedMapIds(twoFloors, ['camera.extra', null, ''], (source) => {
+    seen.push(source);
+    return source === 'camera.robot' ? 'm2' : undefined;
+  });
+  assert.deepEqual(seen, ['camera.extra', 'camera.robot']);
+  assert.deepEqual(observed, { 'camera.robot': 'm2' });
+});
+
+test('run опознаётся своим route_id, а без него — усыновлением', () => {
+  assert.equal(runRoute({ route_id: 'r2', map_id: 'm1' }, twoFloors, 'camera.robot').id, 'r2');
+  assert.equal(runRoute({ route_id: 'нет такого' }, twoFloors, 'camera.robot'), null);
+  assert.equal(runRoute({ map_id: 'm1' }, twoFloors, 'camera.robot').id, 'r1');
+  assert.equal(runRoute(null, twoFloors, 'camera.robot'), null);
+});
+
+test('док остаётся на первом этаже, живой оверлей уезжает на второй (AC2)', () => {
+  const resolution = ready('m2');
+  const onFloor2 = planVacuumOverlay({
+    resolution, routes: twoFloors, renderSpace: 'floor2', explicitRoutes: true,
+  });
+  assert.deepEqual(onFloor2.live, M2);
+  const onFloor1 = planVacuumOverlay({
+    resolution, routes: twoFloors, renderSpace: 'floor1', explicitRoutes: true,
+  });
+  assert.equal(onFloor1.live, null, 'на этаже дока живого робота нет');
+});
+
+test('возврат на первую карту возвращает оверлей без правки маршрутов (AC3)', () => {
+  const back = planVacuumOverlay({
+    resolution: ready('m1'), routes: twoFloors, renderSpace: 'floor1', explicitRoutes: true,
+  });
+  assert.deepEqual(back.live, M1);
+  assert.deepEqual(twoFloors[0].calibration, M1, 'маршруты не переписаны');
+});
+
+test('неоднозначность и незакалиброванный маршрут не рисуют ничего', () => {
+  for (const resolution of [
+    { kind: 'ambiguous', routeIds: ['r1', 'r2'] },
+    { kind: 'needs_calibration', route: twoFloors[0] },
+    { kind: 'unmapped', source: 'camera.robot', mapId: 'm9' },
+    { kind: 'missing_space', route: twoFloors[1] },
+    { kind: 'none' },
+  ]) {
+    for (const renderSpace of ['floor1', 'floor2']) {
+      const plan = planVacuumOverlay({ resolution, routes: twoFloors, renderSpace, explicitRoutes: true });
+      assert.equal(plan.live, null, `${resolution.kind} / ${renderSpace}`);
+      assert.equal(plan.currentRunMatches, false, resolution.kind);
+    }
+  }
+});
+
+test('прошлый прогон остаётся в пространстве своего маршрута (AC10)', () => {
+  const plan = planVacuumOverlay({
+    resolution: ready('m2'), routes: twoFloors, renderSpace: 'floor1', explicitRoutes: true,
+    rootSource: 'camera.robot',
+    serverPrevious: { route_id: 'r1', map_id: 'm1', points: [] },
+  });
+  assert.deepEqual(plan.previous, M1, 'прошлый прогон виден на своём этаже');
+  assert.equal(plan.live, null, 'а робот при этом здесь не рисуется');
+});
+
+test('текущий серверный прогон принимается только от активного маршрута', () => {
+  const base = {
+    resolution: ready('m2'), routes: twoFloors, renderSpace: 'floor2',
+    explicitRoutes: true, rootSource: 'camera.robot',
+  };
+  assert.equal(planVacuumOverlay({ ...base, serverCurrent: { route_id: 'r2' } }).currentRunMatches, true);
+  assert.equal(planVacuumOverlay({ ...base, serverCurrent: { route_id: 'r1' } }).currentRunMatches, false);
+  assert.equal(planVacuumOverlay({ ...base, serverCurrent: { map_id: 'm1' } }).currentRunMatches, false);
+  assert.equal(planVacuumOverlay({ ...base, serverCurrent: { map_id: 'm2' } }).currentRunMatches, true);
+});
+
+test('легаси-конфиг сохраняет прежнее правило прошлого прогона (AC13)', () => {
+  const marker = { source: 'camera.robot', calibration: { m1: M1, m2: M2 } };
+  const routes = effectiveRoutes('mk', marker, 'floor1');
+  const resolution = resolveRoute({
+    routes, observed: { 'camera.robot': 'm2' }, spaceIds: spaces('floor1'),
+  });
+  const legacy = planVacuumOverlay({
+    resolution, routes, renderSpace: 'floor1', explicitRoutes: false,
+    rootSource: 'camera.robot', serverPrevious: { map_id: 'm1' },
+  });
+  assert.equal(legacy.previous, null, 'прошлый прогон другой карты по-прежнему скрыт');
+  const same = planVacuumOverlay({
+    resolution, routes, renderSpace: 'floor1', explicitRoutes: false,
+    rootSource: 'camera.robot', serverPrevious: { map_id: 'm2' },
+  });
+  assert.deepEqual(same.previous, M2, 'прогон активной карты виден, как и раньше');
 });

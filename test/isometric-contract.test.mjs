@@ -33,7 +33,8 @@ test('Stage 2 uses inert shared-projection SVG geometry without a second light m
 test('all current floor/live layers remain in the one main scene', () => {
   for (const renderer of [
     '_renderDecorLayer()', '_renderRoomHoverFill(roomHover)', '_renderGlowLayer(space, disp)',
-    '_renderSunRays(space)', '_renderOpenings(disp)', '_renderVacuums(devs, view)',
+    '_renderSunRays(space)', '_renderOpenings(disp)',
+    '_renderVacuums(this._renderDevices, view, space.id)',
   ]) assert.ok(card.includes(renderer), `missing ${renderer}`);
   assert.match(card, /const point = this\._scenePoint\(\[pos\.x, pos\.y\]\)/);
   assert.match(card, /const point = this\._scenePoint\(\[p\.x, p\.y\]\)/);

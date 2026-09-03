@@ -145,8 +145,11 @@ export interface Marker {
     trail_mode?: VacuumTrailMode | null;
     room_highlight?: boolean | null;
     source?: string | null;
+    /** Legacy-read after #162: `map_id -> matrix`, no source, no space. */
     calibration?: Record<string, number[]>;
     segment_map?: Record<string, string>;
+    /** Canonical map->space routing (#162, docs/VACUUM.md). */
+    map_routes?: VacuumMapRoute[] | null;
   } | null;
   /** Manual placement into a House Plan room without an HA Area. Room-aware
    * consumers resolve it together with `space`; visual placement is not its
@@ -192,6 +195,15 @@ export interface Marker {
    * nothing changes without an explicit tick (owner's spec, 2026-08-03).
    */
   use_climate_temp?: boolean | null;
+}
+
+/** One saved answer to "this exact map of this exact source lives here" (#162). */
+export interface VacuumMapRoute {
+  id: string;
+  source: string;
+  map_id: string;
+  space: string;
+  calibration?: [number, number, number, number, number, number] | null;
 }
 
 /** A door, window, gate or open passage: plan geometry (normalized coords). */

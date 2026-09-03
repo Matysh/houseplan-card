@@ -122,6 +122,10 @@ import {
   type VacSourceResolution, type VacSourceStatus,
 } from './vacuum';
 import {
+  effectiveRoutes, observedMapIds, resolveRoute, planVacuumOverlay,
+  type VacuumMapRoute, type VacuumRouteResolution,
+} from './vacuum-routes';
+import {
   buildDevices, deviceFromMarkerDraft, seedHiddenBindings, lqiFor, tempFor, climateTempFor,
   areaTemp, areaHum, effectiveExcludedIntegrations, sourceValue, roomClimateKey, roomClimateMap,
   resolvedLightSources, resolvedLightState, resolvedLightStats,
@@ -4792,9 +4796,19 @@ export class HouseplanCard extends LitElement {
         const source = this._vacSource(device, planHass);
         const telemetry = source ? readVacTelemetry(planHass?.states?.[source]?.attributes) : null;
         const runtime = this._vacRt.get(device.id);
+        // One routing authority per frame: render() must not re-derive which
+        // map the robot is on, or two answers become possible (#162).
+        const routes = effectiveRoutes(device.id, device.marker?.vacuum ?? null, device.space, source);
+        const resolution = resolveRoute({
+          routes,
+          observed: observedMapIds(routes, [source], (src) => this._vacObservedMapId(device, src, planHass)),
+          spaceIds: new Set(this._model.map((space) => space.id)),
+        });
         facts.set(`vacuum:${device.id}`, {
           source,
           telemetry,
+          routes,
+          resolution,
           mapId: telemetry ? this._vacMapId(device, telemetry, planHass) : null,
           runtime: runtime ? {
             trail: runtime.trail,
@@ -11777,7 +11791,7 @@ export class HouseplanCard extends LitElement {
                  kiosk multipliers still feed --dev-size. */}
           <div class="devlayer" style="--icon-size:${iconCqw(iconPct, space, view.w, this._kiosk ? this._kioskScale.icon : 1).toFixed(3)}cqw;--device-base-size:${iconCqw(deviceBasePct, space, view.w, this._kiosk ? this._kioskScale.icon : 1).toFixed(3)}cqw;--rl-icon-size:${iconCqw(iconPct, space, this._roomLabelReferenceViewWidth(view), this._kiosk ? this._kioskScale.icon : 1).toFixed(3)}cqw;--rl-font:${this._kiosk ? this._kioskScale.font : 1}">
             ${devs.map((d) => this._renderDevice(d, view, showLqi))}
-            ${this._renderVacuums(devs, view)}
+            ${this._renderVacuums(this._renderDevices, view, space.id)}
             ${this._renderVacFit(view)}
             ${this._renderOpeningLocks(view)}
             ${disp.showNames || this._markup
@@ -12232,6 +12246,12 @@ export class HouseplanCard extends LitElement {
     return vacMapIdWithFallback(tele.mapId, sel);
   }
 
+  /** The map id an exact source reports right now, or undefined if silent. */
+  private _vacObservedMapId(d: DevItem, source: string, planHass = this._planHass): string | undefined {
+    const tele = readVacTelemetry(planHass?.states?.[source]?.attributes);
+    return tele ? this._vacMapId(d, tele, planHass) : undefined;
+  }
+
   /** Persist a solved matrix into marker.vacuum.calibration[mapId].
    *  Returns whether the write actually landed — callers must not toast
    *  success otherwise (HP-1540-01). */
@@ -12327,7 +12347,14 @@ export class HouseplanCard extends LitElement {
   }
 
   /** Puck + trail for every live vacuum of the space. */
-  private _renderVacuums(devs: DevItem[], view: { x: number; y: number; w: number; h: number }): TemplateResult | typeof nothing {
+  /**
+   * Live overlays for every robot whose ACTIVE map routes into this space.
+   *
+   * The device list is deliberately not the space-filtered one: the dock keeps
+   * living in `marker.space`, but the puck and the trails belong to the space
+   * of the active route, which is the whole point of #162.
+   */
+  private _renderVacuums(devs: readonly DevItem[], view: { x: number; y: number; w: number; h: number }, spaceId: string): TemplateResult | typeof nothing {
     if (this._markup || this._mode === 'decor') return nothing;
     const viewKey = this._space + '|' + view.x + '|' + view.y + '|' + view.w + '|' + view.h;
     const jumpAll = this._vacJumpOnce || viewKey !== this._vacViewKey;
@@ -12343,30 +12370,45 @@ export class HouseplanCard extends LitElement {
       if (!src) continue;
       const tele = fact?.telemetry ?? readVacTelemetry(this._renderPlanHass?.states[src]?.attributes);
       if (!tele) continue;
-      const mapNow = String(fact?.mapId ?? this._vacMapId(d, tele, this._renderPlanHass));
-      const matrix = d.marker?.vacuum?.calibration?.[mapNow] as Affine | undefined;
-      if (!matrix || matrix.length !== 6) continue;
+      const routes: VacuumMapRoute[] = fact?.routes
+        ?? effectiveRoutes(d.id, d.marker?.vacuum ?? null, d.space, src);
+      const resolution: VacuumRouteResolution = fact?.resolution ?? resolveRoute({
+        routes,
+        observed: observedMapIds(routes, [src], (source) => this._vacObservedMapId(d, source)),
+        spaceIds: new Set(this._model.map((space) => space.id)),
+      });
+      const srv0 = fact?.server ?? this._vacSrvTrails[d.id];
+      const plan = planVacuumOverlay({
+        resolution, routes, renderSpace: spaceId,
+        rootSource: d.marker?.vacuum?.source ?? null,
+        serverCurrent: srv0?.current ?? null,
+        serverPrevious: srv0?.previous ?? null,
+        explicitRoutes: Array.isArray(d.marker?.vacuum?.map_routes)
+          && (d.marker?.vacuum?.map_routes?.length ?? 0) > 0,
+      });
+      if (!plan.live && !plan.previous) continue;
+      const matrix = plan.live;
       const rt = fact?.runtime ?? this._vacRt.get(d.id);
       const moving = rt?.moving ?? false;
       const tmode = vacTrailMode(d.marker?.vacuum);
       // owner 2026-07-31: hide when the cleanup is over (default), unless the
       // mode says always; the previous run only ever shows in 'always'
       const showCur = tmode === 'always' || (tmode === 'cleaning' && moving);
-      const srv = fact?.server ?? this._vacSrvTrails[d.id];
-      const srvCur = srv?.current?.map_id === mapNow && Array.isArray(srv.current.points) ? srv.current : null;
-      const srvPrev = srv?.previous?.map_id === mapNow && Array.isArray(srv.previous.points) ? srv.previous : null;
+      const srv = srv0;
+      const srvCur = plan.currentRunMatches && Array.isArray(srv?.current?.points) ? srv.current : null;
+      const srvPrev = plan.previous && Array.isArray(srv?.previous?.points) ? srv.previous : null;
       // the PREVIOUS run stays visible even at rest: users compare where the
       // robot has been against where it has not (owner call 2026-07-31)
-      if (tmode === 'always' && srvPrev) {
+      if (tmode === 'always' && srvPrev && plan.previous) {
         const previous = normalizeVacPath(srvPrev.points);
-        const pathD = this._vacTrailPathD(previous, matrix);
+        const pathD = this._vacTrailPathD(previous, plan.previous);
         if (pathD) {
           trails.push(svg`<g class="prev"><path class="case" d="${pathD}"></path><path class="core" d="${pathD}"></path></g>`);
         }
       }
       // One arbitration authority: integration multi-subpath → server run →
       // local runtime. Only drawable segments participate.
-      if (showCur) {
+      if (showCur && matrix) {
         const current = resolveCurrentVacPath(tele, srvCur, rt?.trail || []);
         // Server/integration paths include the current target. Remove it from
         // the final subpath only while moving so the line cannot outrun puck.
@@ -12386,7 +12428,7 @@ export class HouseplanCard extends LitElement {
           }
         }
       }
-      if (!moving || !tele.pos) continue;
+      if (!moving || !tele.pos || !matrix) continue;
       const [cx, cy] = applyAffine(matrix, tele.pos.x, tele.pos.y);
       const point = this._scenePoint([cx, cy]);
       const left = ((point[0] - view.x) / view.w) * 100;

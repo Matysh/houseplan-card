@@ -292,6 +292,30 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'vacuum-overlay-ignores-the-rendered-space',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/vacuum-routes.test.mjs',
+    because: 'the live puck belongs to the ACTIVE ROUTE space, not to every space that '
+      + 'happens to be on screen: dropping the check draws one robot on both floors (#162)',
+    patches: [{
+      file: 'src/vacuum-routes.ts',
+      find: "  const live = active && active.space === input.renderSpace\n    ? normalizeRouteMatrix(active.calibration) : null;",
+      replace: '  const live = active ? normalizeRouteMatrix(active.calibration) : null;',
+    }],
+  },
+  {
+    id: 'vacuum-previous-run-follows-the-robot',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test test/vacuum-routes.test.mjs',
+    because: 'the previous run belongs to the space of its own route, so it keeps showing '
+      + 'where the robot has been after it moved to another map (#162, AC10)',
+    patches: [{
+      file: 'src/vacuum-routes.ts',
+      find: '  const previousAllowed = !!previousRoute\n    && previousRoute.space === input.renderSpace',
+      replace: '  const previousAllowed = !!previousRoute\n    && !!active && active.space === input.renderSpace',
+    }],
+  },
+  {
     id: 'area-snapshot-cleanup-ignores-authority',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="limited frames and runtime reset" '

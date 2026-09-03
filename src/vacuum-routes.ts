@@ -250,3 +250,82 @@ export function adoptLegacyRun(
   if (candidates.length === 0) return { kind: 'orphan_run' };
   return { kind: 'ambiguous_run', routeIds: candidates.map((route) => route.id).sort() };
 }
+
+/** Every source worth reading telemetry from, routes plus discovery. */
+export function observedMapIds(
+  routes: VacuumMapRoute[],
+  extraSources: Array<string | null | undefined>,
+  read: (source: string) => string | undefined,
+): Record<string, string> {
+  const sources = new Set<string>();
+  for (const route of routes) if (route.source) sources.add(route.source);
+  for (const extra of extraSources) if (extra) sources.add(extra);
+  const observed: Record<string, string> = {};
+  for (const source of [...sources].sort()) {
+    const mapId = read(source);
+    if (mapId !== undefined) observed[source] = mapId;
+  }
+  return observed;
+}
+
+/** The route a stored run belongs to: its own id first, adoption for old data. */
+export function runRoute(
+  run: { map_id?: unknown; route_id?: unknown } | null | undefined,
+  routes: VacuumMapRoute[],
+  rootSource: string | null | undefined,
+): VacuumMapRoute | null {
+  if (!run) return null;
+  const routeId = typeof run.route_id === 'string' ? run.route_id : '';
+  if (routeId) return routes.find((route) => route.id === routeId) || null;
+  const adopted = adoptLegacyRun(run, routes, rootSource);
+  return adopted.kind === 'adopted' ? adopted.route : null;
+}
+
+export interface VacuumOverlayInput {
+  resolution: VacuumRouteResolution;
+  routes: VacuumMapRoute[];
+  /** The space being drawn right now — not the dock's space. */
+  renderSpace: string;
+  rootSource?: string | null;
+  serverCurrent?: { map_id?: unknown; route_id?: unknown } | null;
+  serverPrevious?: { map_id?: unknown; route_id?: unknown } | null;
+  /** False for a config that still has only legacy `calibration` (see below). */
+  explicitRoutes: boolean;
+}
+
+export interface VacuumOverlayPlan {
+  /** Matrix for the live puck and the current trail here, or null. */
+  live: Affine | null;
+  /** Whether the stored current run belongs to the route being drawn. */
+  currentRunMatches: boolean;
+  /** Matrix for the previous run here, or null. */
+  previous: Affine | null;
+}
+
+/**
+ * What, if anything, this robot draws in the space currently on screen.
+ *
+ * The dock never moves: it stays in `marker.space` and is drawn by the
+ * ordinary device path. Everything live belongs to the active route's space
+ * instead, which is what lets floor 2 show the robot while the dock stays on
+ * floor 1.
+ *
+ * The previous run belongs to the space of its own route, so it keeps showing
+ * where the robot has been after it moved to another map. Legacy configs
+ * (`explicitRoutes: false`) keep the older, narrower rule — previous run only
+ * for the map that is active now — because until the user edits routing at
+ * all, #162 promises the picture does not change.
+ */
+export function planVacuumOverlay(input: VacuumOverlayInput): VacuumOverlayPlan {
+  const active = input.resolution.kind === 'ready' ? input.resolution.route : null;
+  const live = active && active.space === input.renderSpace
+    ? normalizeRouteMatrix(active.calibration) : null;
+  const currentRoute = runRoute(input.serverCurrent, input.routes, input.rootSource);
+  const currentRunMatches = !!active && !!currentRoute && currentRoute.id === active.id;
+  const previousRoute = runRoute(input.serverPrevious, input.routes, input.rootSource);
+  const previousAllowed = !!previousRoute
+    && previousRoute.space === input.renderSpace
+    && (input.explicitRoutes || (!!active && previousRoute.id === active.id));
+  const previous = previousAllowed ? normalizeRouteMatrix(previousRoute!.calibration) : null;
+  return { live, currentRunMatches, previous };
+}
