@@ -4998,6 +4998,19 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'initial-view-ceiling-unplugged',
+    guard: 'node --test test/bundle-assets.test.mjs',
+    because: 'the initial-View ceiling must be ENFORCED by the CLI, not merely declared: this '
+      + 'gate has been silently removable twice (#429 took the old ratchet out on the very '
+      + 'release where it would have fired, and the growth of #438 went unnoticed for a beta)',
+    patches: [{
+      file: 'scripts/bundle-budget.mjs',
+      find: '    const ceiling = initialViewCeilingViolation(result.initialViewGzipBytes);\n'
+        + '    if (ceiling) throw new Error(ceiling.text);\n',
+      replace: '',
+    }],
+  },
+  {
     id: 'decor-oversize-hides-the-downscale-action',
     guard: 'node --test test/decor-image-upload.test.mjs',
     because: 'a decor source above the 2 MiB asset limit must still be offered as a reduced '

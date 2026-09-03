@@ -44,24 +44,57 @@ export const INITIAL_VIEW_GZIP_BUDGET = 300_000;
 export const LOW_HEADROOM_WARNING_BYTES = 15_000;
 
 /**
- * Числового храповика здесь больше нет, и это решение, а не упущение (#429).
+ * Потолок графа с полосой — работающий храповик (#438), не разовый (#429).
  *
- * До #429 функция бросала при `initialViewGzipBytes >= 291 046` — «граф не стал
- * больше, чем был на момент закрытия #423». На бете 1.71.0 запас до этого
- * порога составлял пятнадцать байт, на момент правки — сто четыре. Пятнадцать
- * байт gzip меньше одной строки локали: первый же посторонний коммит получил бы
- * красный CI с сообщением про копирайт формы поддержки, к которому не имеет
- * отношения.
+ * История в двух шагах. #429 снял `SUPPORT_LAZY_INITIAL_BASELINE_BYTES = 291046`
+ * — порог, привязанный к критерию приёмки #423, с пятнадцатью байтами запаса и
+ * сообщением про копирайт формы поддержки. Снять было правильно: он обвинял бы
+ * не ту задачу. Но снят он оказался ровно на том релизе, где сработал бы:
  *
- * Гейт, обвиняющий не ту задачу, — худший вид гейта: его выключают, не
- * разбираясь, и вместе с ним выключают проверку владения графом, которая как
- * раз долговечна. Поэтому число снято, а проверка владения осталась.
+ *   v1.71.0-beta.1  291 031      снятый порог  291 046      beta.2  291 069
  *
- * Что именно было снято по существу: «граф не вырос» — это критерий приёмки на
- * момент задачи, а не свойство продукта. Свойство продукта охраняет общий
- * бюджет (`INITIAL_VIEW_GZIP_BUDGET`) и предупреждение о запасе; они судят
- * размер целиком и не привязаны к чужому issue.
+ * То есть рост произошёл внутри той же беты, уже после снятия, и заметить его
+ * стало нечем: единственным оставшимся сигналом был `lowHeadroomWarning`, а он
+ * горит постоянно — третий аудит подряд, и третий раз без реакции.
+ *
+ * Почему полоса, а не точное число. Метрика — gzip, и она не монотонна по
+ * исходнику: на beta.2 initial-чанк стал МЕНЬШЕ на 344 сырых байта и при этом
+ * на 40 байт больше в сжатом виде (переименования минификатора и контекст
+ * сжатия). Точный храповик по gzip краснел бы на коммитах, которые код
+ * сокращают, — та же лотерея, о которой предупреждает комментарий к бюджету
+ * выше: красным станет последний пушнувший, а не тот, кто вырастил граф.
+ *
+ * Поэтому правило двустороннее и с полосой, как у ядер (#425): значение обязано
+ * лежать в `[ceiling - band, ceiling]`. Рост выше потолка — отказ с числом:
+ * поднимайте потолок в том же коммите с объяснением либо выносите код в
+ * ленивый граф (#367). Падение ниже полосы — тоже отказ: незафиксированный
+ * выигрыш отыгрывается обратно молча, и это ровно то, что случилось с запасом
+ * бюджета (26 КБ → 8.3 КБ за сутки).
+ *
+ * Полоса 2 000 Б — примерно одна средняя фича в initial-графе и заметно больше
+ * колебаний метрики от переименований (наблюдаемые единицы-десятки байт). До
+ * стены 300 000 остаётся четыре явных шага вместо двухсот незаметных.
+ *
+ * Потолок поставлен так, чтобы измеренный факт лежал ближе к середине полосы:
+ * 291 069 при потолке 292 000 — это 931 Б до отказа сверху и 1 069 Б снизу.
+ * Иначе одна из сторон срабатывает на десятках байт, то есть на шуме: правило
+ * должно требовать решения от РЕАЛЬНОГО изменения, а не от переименования.
  */
+export const INITIAL_VIEW_GZIP_CEILING = 292_000;
+export const INITIAL_VIEW_CEILING_BAND = 2_000;
+
+/**
+ * До какого потолка предупреждение о запасе погашено владельцем.
+ *
+ * `null` — не погашено, и это текущее состояние: запас 8 931 Б при пороге
+ * 15 000, долг живёт в #367. Предупреждение, которое нельзя погасить, читается
+ * как выключенное, поэтому его можно погасить — одной строкой здесь, со
+ * ссылкой на решение. Признание привязано к ЗНАЧЕНИЮ потолка: как только
+ * потолок поднимут, оно перестаёт покрывать, и вопрос возвращается ровно
+ * тогда, когда граф снова вырос.
+ */
+export const LOW_HEADROOM_ACKNOWLEDGED_CEILING = null;
+
 export const SUPPORT_LAZY_MARKERS = [
   'Contact details (email/tg/WhatsApp), optional.',
   'Контакт для связи (email/tg/WhatsApp), необязательно.',
@@ -95,15 +128,60 @@ export function assertSupportBundleOwnership(
   }
 }
 
-/** Тревога о запасе: `null`, пока его хватает. */
-export function lowHeadroomWarning(headroom, threshold = LOW_HEADROOM_WARNING_BYTES) {
+/**
+ * Потолок графа: `null`, пока значение внутри полосы.
+ *
+ * Возвращает находку, а не бросает: вызывающий решает, что с ней делать, и
+ * тест может проверить обе стороны, не ловя исключение.
+ */
+export function initialViewCeilingViolation(bytes, {
+  ceiling = INITIAL_VIEW_GZIP_CEILING,
+  band = INITIAL_VIEW_CEILING_BAND,
+} = {}) {
+  if (!Number.isFinite(bytes)) {
+    return { kind: 'missing', text: 'initial View graph не измерен — потолок проверить нечем' };
+  }
+  if (bytes > ceiling) {
+    return {
+      kind: 'grew',
+      over: bytes - ceiling,
+      text: `initial View graph ${bytes} B gzip выше потолка ${ceiling} B на ${bytes - ceiling} B.`
+        + ' Поднимите потолок в этом же коммите, объяснив рост, либо вынесите код в ленивый'
+        + ' граф (#367). Молча расти этому графу больше нечем.',
+    };
+  }
+  if (bytes < ceiling - band) {
+    return {
+      kind: 'shrank',
+      under: ceiling - bytes,
+      text: `initial View graph ${bytes} B gzip ниже потолка ${ceiling} B на ${ceiling - bytes} B`
+        + ` — больше полосы ${band} B. Опустите потолок: незафиксированный выигрыш граф`
+        + ' отыграет обратно, и это уже происходило (#367).',
+    };
+  }
+  return null;
+}
+
+/** Тревога о запасе: `null`, пока его хватает или пока долг признан. */
+export function lowHeadroomWarning(headroom, {
+  threshold = LOW_HEADROOM_WARNING_BYTES,
+  ceiling = INITIAL_VIEW_GZIP_CEILING,
+  acknowledgedCeiling = LOW_HEADROOM_ACKNOWLEDGED_CEILING,
+} = {}) {
   if (!Number.isFinite(headroom) || headroom >= threshold) return null;
   if (headroom < 0) {
     return `бюджет превышен на ${-headroom} Б — гейт уже красный`;
   }
+  // Превышение бюджета не гасится признанием: там уже отказ, а не тревога.
+  if (Number.isFinite(acknowledgedCeiling) && ceiling <= acknowledgedCeiling) return null;
+  const stale = Number.isFinite(acknowledgedCeiling)
+    ? ` Признание долга покрывает потолок до ${acknowledgedCeiling} Б, а он уже ${ceiling} Б —`
+      + ' граф вырос с тех пор, вопрос вернулся.'
+    : ' Погасить можно решением владельца: LOW_HEADROOM_ACKNOWLEDGED_CEILING в'
+      + ' scripts/bundle-budget.mjs. Пока не погашено — это долг (#367).';
   return `запас бюджета ${headroom} Б, меньше порога ${threshold} Б:`
     + ' следующая средняя фича упрётся в стену. Рекалибровка это не лечит —'
-    + ' смотрите ленивые графы (#367)';
+    + ' смотрите ленивые графы (#367).' + stale;
 }
 
 export function assertBundleBudget(manifest, budget = INITIAL_VIEW_GZIP_BUDGET) {
@@ -143,10 +221,13 @@ if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
     const manifest = JSON.parse(readFileSync(resolve('dist/houseplan-assets.json'), 'utf8'));
     const result = assertBundleBudget(manifest);
     assertSupportBundleOwnership(manifest);
+    const ceiling = initialViewCeilingViolation(result.initialViewGzipBytes);
+    if (ceiling) throw new Error(ceiling.text);
     const headroom = INITIAL_VIEW_GZIP_BUDGET - result.initialViewGzipBytes;
     const lines = [
       `initial View: ${result.initialViewGzipBytes} B gzip`
-        + ` (budget ${INITIAL_VIEW_GZIP_BUDGET} B, headroom ${headroom} B)`,
+        + ` (потолок ${INITIAL_VIEW_GZIP_CEILING} B ±${INITIAL_VIEW_CEILING_BAND},`
+        + ` budget ${INITIAL_VIEW_GZIP_BUDGET} B, headroom ${headroom} B)`,
       `lazy editor: ${result.lazyEditorGzipBytes} B gzip`,
       `lazy locale: ${result.lazyLocaleGzipBytes} B gzip`,
     ];
@@ -161,6 +242,8 @@ if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
         `| граф | gzip | бюджет | запас |`,
         `|---|---|---|---|`,
         `| initial View | ${result.initialViewGzipBytes} B | ${INITIAL_VIEW_GZIP_BUDGET} B | ${headroom} B |`,
+        `| потолок (#438) | ${INITIAL_VIEW_GZIP_CEILING} B | полоса ${INITIAL_VIEW_CEILING_BAND} B |`
+          + ` ${INITIAL_VIEW_GZIP_CEILING - result.initialViewGzipBytes} B до потолка |`,
         ...(warning ? ['', `> ${warning}`] : []),
         '',
       ].join('\n'));

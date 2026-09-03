@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
@@ -8,8 +10,11 @@ import {
   buildBundleManifest, buildFingerprintPlugin, editorRuntimeRetryUrlPlugin,
 } from '../scripts/bundle-manifest.mjs';
 import {
-  INITIAL_VIEW_GZIP_BUDGET, LOW_HEADROOM_WARNING_BYTES,
-  assertBundleBudget, assertSupportBundleOwnership, lowHeadroomWarning,
+  INITIAL_VIEW_CEILING_BAND, INITIAL_VIEW_GZIP_BUDGET, INITIAL_VIEW_GZIP_CEILING,
+  LOW_HEADROOM_ACKNOWLEDGED_CEILING, LOW_HEADROOM_WARNING_BYTES,
+  SUPPORT_LAZY_MARKERS,
+  assertBundleBudget, assertSupportBundleOwnership, initialViewCeilingViolation,
+  lowHeadroomWarning,
 } from '../scripts/bundle-budget.mjs';
 import { compareBundleTrees, sha256Bytes, verifyBundleTree } from '../scripts/bundle-tree.mjs';
 import {
@@ -290,13 +295,153 @@ test('#429 проверка владения не судит размер гра
         `размер ${initialViewGzipBytes} не должен влиять на проверку владения`,
       );
     }
-    // Размер по-прежнему охраняется — но общим бюджетом, а не чужим номером.
+    // Размер по-прежнему охраняется — но потолком и бюджетом, а не чужим
+    // номером. Число берётся из поставляемого манифеста: захардкоженный запас
+    // в тесте выглядел бы измерением, не будучи им (#438).
+    const shipped = JSON.parse(
+      readFileSync(new URL('../dist/houseplan-assets.json', import.meta.url), 'utf8'),
+    ).initialViewGzipBytes;
     assert.match(
-      lowHeadroomWarning(9058) || '',
-      /запас бюджета 9058 Б/,
-      'предупреждение о запасе остаётся единственным честным сигналом о размере',
+      lowHeadroomWarning(INITIAL_VIEW_GZIP_BUDGET - shipped) || '',
+      new RegExp(`запас бюджета ${INITIAL_VIEW_GZIP_BUDGET - shipped} Б`),
+      'предупреждение о запасе остаётся честным сигналом о размере',
     );
   } finally {
     rmSync(temp, { recursive: true, force: true });
   }
+});
+
+
+// --- #438: потолок графа с полосой ------------------------------------------
+
+test('#438 поставляемый граф лежит внутри полосы потолка', () => {
+  // Гейт живёт и здесь, а не только в `npm run bundle:budget`: манифест
+  // закоммичен, значит проверка стоит ровно там, где её увидит любой прогон
+  // тестов. Рост, который не заметили в бете.2, краснел бы на этом тесте.
+  const manifest = JSON.parse(
+    readFileSync(new URL('../dist/houseplan-assets.json', import.meta.url), 'utf8'),
+  );
+  const violation = initialViewCeilingViolation(manifest.initialViewGzipBytes);
+  assert.equal(violation, null, violation?.text);
+});
+
+test('#438 рост выше потолка — отказ с числом и с указанием, что делать', () => {
+  const grew = initialViewCeilingViolation(292_400, { ceiling: 292_000, band: 2_000 });
+  assert.equal(grew.kind, 'grew');
+  assert.equal(grew.over, 400);
+  assert.match(grew.text, /выше потолка 292000 B на 400 B/);
+  assert.match(grew.text, /Поднимите потолок в этом же коммите/);
+  assert.match(grew.text, /#367/, 'у отказа обязан быть выход, а не только запрет');
+  // Ровно на потолке — ещё не рост: граница включительная, иначе гейт краснеет
+  // на равенстве и разбираться идут не с графом, а с гейтом.
+  assert.equal(initialViewCeilingViolation(292_000, { ceiling: 292_000 }), null);
+});
+
+test('#438 падение ниже полосы требует опустить потолок', () => {
+  // Вторая половина храповика, без которой он не храповик: выигрыш, который не
+  // зафиксировали, отыгрывается обратно молча. Так запас бюджета ушёл с 26 КБ
+  // до 8.3 КБ за сутки — каждая отдельная строка выглядела нормально.
+  const shrank = initialViewCeilingViolation(289_500, { ceiling: 292_000, band: 2_000 });
+  assert.equal(shrank.kind, 'shrank');
+  assert.equal(shrank.under, 2_500);
+  assert.match(shrank.text, /Опустите потолок/);
+  assert.equal(initialViewCeilingViolation(290_000, { ceiling: 292_000, band: 2_000 }), null,
+    'нижняя граница полосы тоже включительная');
+  assert.equal(initialViewCeilingViolation(NaN).kind, 'missing');
+  assert.equal(initialViewCeilingViolation(undefined).kind, 'missing');
+});
+
+test('#438 полоса шире наблюдаемого шума метрики', () => {
+  // gzip не монотонен по исходнику: на beta.2 initial-чанк стал меньше на 344
+  // сырых байта и на 40 байт больше в сжатом виде. Полоса обязана быть заметно
+  // шире таких колебаний, иначе гейт краснеет на коммитах, сокращающих код, —
+  // и красным станет последний пушнувший, а не тот, кто вырастил граф.
+  assert.ok(INITIAL_VIEW_CEILING_BAND >= 1_000,
+    'полоса меньше килобайта превращает потолок в лотерею');
+  // И потолок обязан оставаться под общим бюджетом: иначе он ничего не значит.
+  assert.ok(INITIAL_VIEW_GZIP_CEILING < INITIAL_VIEW_GZIP_BUDGET);
+  // Факт лежит не у края полосы: до отказа есть место в обе стороны.
+  const shipped = JSON.parse(
+    readFileSync(new URL('../dist/houseplan-assets.json', import.meta.url), 'utf8'),
+  ).initialViewGzipBytes;
+  assert.ok(INITIAL_VIEW_GZIP_CEILING - shipped > 500, 'сверху меньше 500 Б — это шум');
+  assert.ok(shipped - (INITIAL_VIEW_GZIP_CEILING - INITIAL_VIEW_CEILING_BAND) > 500,
+    'снизу меньше 500 Б — гейт потребует опустить потолок из-за шума');
+});
+
+test('#438 предупреждение о запасе можно погасить, и повышение потолка его возвращает', () => {
+  const headroom = LOW_HEADROOM_WARNING_BYTES - 1;
+  // Не погашено — горит и говорит, чем гасится. Это текущее состояние.
+  assert.equal(LOW_HEADROOM_ACKNOWLEDGED_CEILING, null,
+    'долг #367 пока не признан — состояние честное, а не забытое');
+  assert.match(lowHeadroomWarning(headroom, { acknowledgedCeiling: null }),
+    /Погасить можно решением владельца/);
+  // Признано ровно для этого потолка — молчит.
+  assert.equal(
+    lowHeadroomWarning(headroom, { ceiling: 292_000, acknowledgedCeiling: 292_000 }), null,
+  );
+  // Потолок подняли — признание перестало покрывать, вопрос вернулся.
+  assert.match(
+    lowHeadroomWarning(headroom, { ceiling: 294_000, acknowledgedCeiling: 292_000 }),
+    /покрывает потолок до 292000 Б, а он уже 294000 Б/,
+  );
+  // Превышение бюджета признанием не гасится: там уже отказ, а не тревога.
+  assert.match(
+    lowHeadroomWarning(-10, { ceiling: 292_000, acknowledgedCeiling: 292_000 }),
+    /бюджет превышен на 10 Б/,
+  );
+});
+
+/**
+ * Прогон настоящего CLI бюджета в подставном дереве (#438).
+ *
+ * Статическая проверка «в main вызывается initialViewCeilingViolation» была бы
+ * тем самым циклическим доказательством, за которое #430 снял циклический тест
+ * гарда benchmark. Поэтому здесь запуск: манифест кладётся на диск, скрипт
+ * исполняется процессом, читается код возврата. Снятый из main вызов потолка
+ * при этом краснеет — проверено (без этого теста мутация проходила молча).
+ */
+const runBudgetCli = (initialViewGzipBytes) => {
+  const dir = mkdtempSync(join(tmpdir(), 'houseplan-budget-cli-'));
+  try {
+    mkdirSync(join(dir, 'dist'));
+    writeFileSync(join(dir, 'dist/initial.js'), 'view graph without support copy');
+    writeFileSync(join(dir, 'dist/editor.js'), SUPPORT_LAZY_MARKERS.join('\n'));
+    writeFileSync(join(dir, 'dist/locale.js'), 'lazy locale dictionary');
+    writeFileSync(join(dir, 'dist/houseplan-assets.json'), JSON.stringify({
+      schema: 1,
+      files: [],
+      initialViewFiles: ['initial.js'],
+      initialViewGzipBytes,
+      lazyEditorFiles: ['editor.js'],
+      lazyEditorGzipBytes: 1000,
+      lazyLocaleFiles: ['locale.js'],
+      lazyLocaleGzipBytes: 100,
+      lazyOnboardingFiles: [],
+    }));
+    const script = fileURLToPath(new URL('../scripts/bundle-budget.mjs', import.meta.url));
+    const run = spawnSync(process.execPath, [script], { cwd: dir, encoding: 'utf8' });
+    return { status: run.status, output: `${run.stdout || ''}${run.stderr || ''}` };
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+};
+
+test('#438 CLI действительно применяет потолок, а не только объявляет его', () => {
+  const inside = runBudgetCli(INITIAL_VIEW_GZIP_CEILING - 500);
+  assert.equal(inside.status, 0, inside.output);
+
+  const grew = runBudgetCli(INITIAL_VIEW_GZIP_CEILING + 1);
+  assert.equal(grew.status, 1, grew.output);
+  assert.match(grew.output, /выше потолка/);
+
+  const shrank = runBudgetCli(INITIAL_VIEW_GZIP_CEILING - INITIAL_VIEW_CEILING_BAND - 1);
+  assert.equal(shrank.status, 1, shrank.output);
+  assert.match(shrank.output, /Опустите потолок/);
+
+  // И общий бюджет остаётся внешней стеной: он выше потолка, значит красным
+  // становится потолок, а не бюджет — но и бюджет обязан уметь падать.
+  const overBudget = runBudgetCli(INITIAL_VIEW_GZIP_BUDGET + 1);
+  assert.equal(overBudget.status, 1, overBudget.output);
+  assert.match(overBudget.output, /exceeds 300000 B budget/);
 });
