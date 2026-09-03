@@ -1070,6 +1070,32 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'danger-confirm-uses-last-rendered-language-gate',
+    guard: 'node demo/smoke_danger_confirm_branches.mjs',
+    because: 'ready -> warm and warm -> ready both have a window before render; consulting the '
+      + 'last painted branch can admit an unrenderable request or reject a renderable one (#434 AC7)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: "  /** Current language branch; never cached from a previous render. */\n"
+        + '  private get _dangerConfirmLocaleGate(): LanguageRenderGate {\n'
+        + "    if (!this._config || !this.hass) return 'ready';\n"
+        + '    return languageRenderGate(\n'
+        + '      this, LANGUAGE_RUNTIME, langOf(this.hass, this._config.language),\n'
+        + '    );\n'
+        + '  }',
+      replace: "  private _dangerConfirmLocaleGate: LanguageRenderGate = 'ready';",
+    }, {
+      file: 'src/houseplan-card.ts',
+      find: '    const localeGate = this._dangerConfirmLocaleGate;\n'
+        + "    if (localeGate === 'cold') return languageLoadingTemplate();",
+      replace: '    const localeGate = languageRenderGate(\n'
+        + '      this, LANGUAGE_RUNTIME, langOf(this.hass, this._config.language),\n'
+        + '    );\n'
+        + '    this._dangerConfirmLocaleGate = localeGate;\n'
+        + "    if (localeGate === 'cold') return languageLoadingTemplate();",
+    }],
+  },
+  {
     id: 'danger-confirm-warm-transition-cancel-removed',
     guard: 'node demo/smoke_danger_confirm_branches.mjs',
     because: 'a dialog opened while ready must settle false and lose its actionable DOM owner '
