@@ -9170,6 +9170,7 @@ private async _buildSupportPreview(draftId: string): Promise<void> {
         || !supportApiCompatible(this.host._haSupportApi)) return;
     const generation = ++this._supportPreviewGeneration;
     this._supportPatch(draftId, { status: 'building', errorCode: '' });
+    let issuedToken = '';
     try {
       const response: unknown = await this.host.hass.callWS({
         type: 'houseplan/support/preview',
@@ -9188,6 +9189,7 @@ private async _buildSupportPreview(draftId: string): Promise<void> {
       const expiresIn = Number(payload.expires_in);
       const spaces = Number(payload.spaces);
       const token = String(payload.token || '');
+      if (/^[0-9a-f]{48}$/.test(token)) issuedToken = token;
       const sha256 = String(payload.sha256 || '');
       const version = Number(payload.version);
       const format = String(payload.format || '');
@@ -9210,6 +9212,7 @@ private async _buildSupportPreview(draftId: string): Promise<void> {
         preparedAt: now,
       };
       if (!this._supportPreviewRequestIsCurrent(draftId, generation)) {
+        issuedToken = '';
         void this._discardSupportPreview(token);
         return;
       }
@@ -9219,11 +9222,21 @@ private async _buildSupportPreview(draftId: string): Promise<void> {
         errorCode: '',
         rawOpen: false,
       })) {
+        issuedToken = '';
         void this._discardSupportPreview(token);
         return;
       }
+      issuedToken = '';
       this._scheduleSupportExpiry(draftId, preview);
     } catch (error: unknown) {
+      // The backend has allocated every syntactically valid token it returns.
+      // Cleanup is independent from UI currentness: invalid, stale or locally
+      // unadoptable responses must not occupy a slot until TTL.
+      if (issuedToken) {
+        const token = issuedToken;
+        issuedToken = '';
+        void this._discardSupportPreview(token);
+      }
       if (!this._supportPreviewRequestIsCurrent(draftId, generation)) return;
       if (!this._supportPatch(draftId, {
         status: 'error',

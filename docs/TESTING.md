@@ -3585,6 +3585,43 @@ require hands on real hardware — they remain for the human pass.
       mismatched backend leaves About/Guide usable but exposes no fake submit
       [pre-beta: success/429/timeout/unknown-command smokes in light/dark].
 
+## v1.71 audit polish (#434)
+
+- [ ] Physical decor inventory counts exact lower-hex allow-listed blob files
+      and their real sizes independently of sidecars; a valid-shaped sidecar
+      without its blob remains absent from catalog/list/resolve
+      [backend: `test_decor_assets.py`; mutations:
+      `decor-physical-inventory-follows-sidecars`,
+      `decor-catalog-accepts-sidecar-without-blob`].
+- [ ] Exact orphan re-upload repairs metadata at a full physical quota with
+      `reused:false`; valid catalog reuse stays `true`, and digest mismatch
+      changes no file. Explicit delete removes all and only exact allow-listed
+      blob names plus the sidecar [HA: `test_ha_websocket.py`; mutations:
+      `decor-orphan-repair-runs-after-quota`,
+      `decor-orphan-repair-claims-reuse`, `decor-delete-skips-orphan-blobs`].
+- [ ] Static cards learn exact `decor_assets_api:1` only from fresh config/get,
+      revoke it on downgrade and never resolve without it. Positive and missing
+      resolve caches share only connection + config revision + sorted id set;
+      failed calls retry [unit: `config-store`, `space-card-audit-lows`,
+      `decor-assets`; smoke: `smoke_space_card_decor_capability`].
+- [ ] Ready→warm cancels an existing dangerous-action promise and removes its
+      dialog while preserving the committed body; a request in warm refuses,
+      and warm→ready allows immediately before another render
+      [smoke: `smoke_danger_confirm_branches`; mutations:
+      `danger-confirm-warm-language-guard-removed`,
+      `danger-confirm-warm-transition-cancel-removed`].
+- [ ] Area absence evidence cannot outlive its current snapshot binding
+      [unit: `device-area-relocation`; mutation:
+      `area-cleanup-keeps-candidate-outside-current-snapshot`].
+- [ ] The smoke job has its own 20-minute bound and each file is wrapped by GNU
+      `timeout --kill-after=10s 180s`; both German route waits have one-second
+      diagnostics [unit: `smoke-exception-guard`; CI: `validate.yml`].
+- [ ] Every well-formed token from an invalid, stale or locally unadoptable
+      support preview response is discarded exactly once; malformed tokens are
+      not echoed and cleanup never hides the original failure
+      [smoke: `smoke_support_feedback`; mutation:
+      `support-invalid-response-leaks-issued-token`].
+
 ## Съёмка документации запускается с флагами детерминизма (#424)
 
 - [ ] `demo/docs/browser-args.mjs` содержит `--disable-partial-raster` и

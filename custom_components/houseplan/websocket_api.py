@@ -51,6 +51,7 @@ from .coordinate_canonicalization import (
     canonicalize_layout_geometry,
 )
 from .decor_assets import (
+    ASSET_EXTENSIONS,
     ASSET_ID_RE,
     asset_meta_path,
     asset_refs,
@@ -1197,15 +1198,23 @@ async def ws_assets_delete(hass: HomeAssistant, connection, msg: dict[str, Any])
             return
 
         def _delete() -> bool:
-            row = next((item for item in read_catalog(root) if item["asset_id"] == aid), None)
             removed = False
-            if row:
+            for extension in ASSET_EXTENSIONS:
+                path = root / f"{aid}{extension}"
+                if not path.is_file():
+                    continue
                 try:
-                    (root / f"{aid}{row['ext']}").unlink()
+                    path.unlink()
                     removed = True
                 except FileNotFoundError:
                     pass
-            asset_meta_path(root, aid).unlink(missing_ok=True)
+            meta = asset_meta_path(root, aid)
+            if meta.is_file():
+                try:
+                    meta.unlink()
+                    removed = True
+                except FileNotFoundError:
+                    pass
             return removed
 
         removed = await hass.async_add_executor_job(_delete)

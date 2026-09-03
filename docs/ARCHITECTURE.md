@@ -398,6 +398,22 @@ signatures for `<image>` elements. Catalog deletion rechecks references across
 every space under the config write lock. Missing or corrupt assets are never
 painted in View.
 
+Physical inventory is separate from the strict catalog projection. Quota
+counts every regular `<sha256><allowed-extension>` blob by actual file size,
+including blobs with absent or malformed sidecars; a sidecar without a blob
+does not count. Re-uploading exact bytes repairs a digest-proven orphan before
+new-file quota checks and reports `reused:false`, while an already valid row
+reports `reused:true`. Explicit delete removes only the exact hash sidecar and
+exact allow-listed blob names under the reference/upload locks—never a prefix,
+temporary file, directory or unknown extension. There is no automatic orphan
+collector.
+
+Both cards treat `decor_assets_api` as fresh runtime authority: localStorage
+cannot grant it, and each successful `config/get` can revoke it. Static cards
+do not call resolve without exact v1 and clear their projection on downgrade.
+Resolve caching is scoped by connection, config revision and sorted unique id
+set (including missing results); failed transport calls are not cached.
+
 `removed:true` is a binding tombstone, not a renderable marker. It claims an
 HA binding against automatic discovery while intentionally exposing that same
 binding to the catalog's re-add flow. A device tombstone excludes all data of that device;
@@ -916,7 +932,7 @@ transmit light is the separate `zero_wall_style` policy.
 | `houseplan/layout/get` | — | `{layout: {device_id: {x,y}}, rev}` |
 | `houseplan/layout/set` | `layout`, `expected_rev?` (omission only at `rev=0` bootstrap) | `{ok, rev}` / err `conflict`; event `houseplan_layout_updated` |
 | `houseplan/layout/update` | `device_id`, `pos` | `{ok, rev}`; event `houseplan_layout_updated` |
-| `houseplan/config/get` | — | `{config, rev, virtual_lights:{rev,config_rev,off[]}}` (`virtual_lights` optional for rolling compatibility) |
+| `houseplan/config/get` | — | `{config, rev, virtual_lights:{rev,config_rev,off[]}, decor_assets_api?}` (runtime capabilities are optional for rolling compatibility) |
 | `houseplan/virtual_light/toggle` | `marker_id` | `{marker_id,on,rev}` / err `not_toggleable`; event `houseplan_virtual_light_updated` |
 | `houseplan/trail/get` | — | `{trails: {marker: {current, previous}}}` — vacuum runs, raw robot coords |
 | `houseplan/trail/delete` | `marker_id` | `{ok, removed}` — erase current/previous runs after marker deletion |
@@ -932,7 +948,7 @@ transmit light is the separate `zero_wall_style` policy.
 | `houseplan/files/cleanup` | `marker_id`, `keep?` | replacement-only collection |
 | `houseplan/assets/list` | — | reusable image metadata plus authoritative `used_by` references |
 | `houseplan/assets/resolve` | `asset_ids[]` (max 200) | verified metadata/content paths plus missing ids; writer: catalog, read-only: saved references only |
-| `houseplan/assets/delete` | `asset_id` | explicit deletion only when no decor record refers to it |
+| `houseplan/assets/delete` | `asset_id` | explicit exact-id deletion of sidecar and allowed-extension blobs, only when no decor record refers to it |
 | `houseplan/content/sign` | `paths[]` | `{urls}` — authSig for `<image>`/`<a>` fetches |
 | `houseplan/export/create` | `kind`, `space_id?`, `plan_only?`, `card_version` | consistent versioned JSON document + safe filename; plan-only is valid only for one space |
 | `houseplan/import/revalidate` | preview `token`, `duplicate_policy?` | refreshed bounded preview and current expected revisions |

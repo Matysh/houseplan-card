@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Custom background images now recover cleanly after interrupted uploads,
+  consume quota consistently, retry after configuration changes and remain
+  compatible with older integrations; language switching and failed support
+  previews also settle safely instead of leaving stuck actions or occupied
+  preview slots ([#434](https://github.com/Matysh/houseplan-card/issues/434)).
 - Saved custom images remain visible to read-only household members while
   arbitrary asset lookup is blocked, and repeated card/HTTP loads now reuse one
   bounded streaming integrity check instead of re-reading every image

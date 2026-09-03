@@ -19,7 +19,7 @@
     "src/resize.ts", "src/resize-labels.ts", "src/resize-controller.ts", "src/wall-record-preservation.ts",
     "src/rules.ts",
     "src/devices.ts", "src/device-inbox.ts",
-    "src/virtual-light-state.ts",
+    "src/virtual-light-state.ts", "src/config-store.ts",
     "src/backdrop-probe.ts",
     "src/types.ts",
     "src/space-geometry.ts", "src/junction-limits.ts",

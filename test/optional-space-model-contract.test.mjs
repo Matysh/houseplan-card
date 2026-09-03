@@ -74,12 +74,14 @@ test('empty render keeps create/import affordances without spatial layers', () =
   assert.ok(emptyAt >= 0 && emptyAt < addAt && addAt < spatialAt);
   assert.match(render, /if \(!space\) return nothing;/);
 
-  // Обёртка: тело + подтверждение, причём «ничего не рисуем» пробрасывается
-  // как есть — `noChange` нельзя оборачивать в шаблон.
+  // Обёртка: настоящий `nothing` пробрасывается как есть. `noChange` вложен в
+  // стабильный shell: так тело остаётся, а соседний confirm можно убрать.
   const wrapper = methodBody('render');
   assert.match(wrapper, /const body = this\._renderBody\(\);/);
-  assert.match(wrapper, /if \(body === noChange \|\| body === nothing\) return body;/);
-  assert.match(wrapper, /return html`\$\{body\}\$\{this\._renderDangerConfirm\(\)\}`;/);
+  assert.match(wrapper, /if \(body === nothing\) return body;/);
+  assert.match(wrapper, /return this\._renderRoot\(body\);/);
+  const shell = methodBody('_renderRoot');
+  assert.match(shell, /return html`\$\{body\}\$\{this\._renderDangerConfirm\(\)\}`;/);
   assert.equal(render.includes('_renderDangerConfirm'), false,
     'подтверждение не должно возвращаться внутрь ветки — это и есть дефект #402');
 });

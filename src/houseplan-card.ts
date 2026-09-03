@@ -2157,8 +2157,13 @@ export class HouseplanCard extends LitElement {
   } | { kind: 'run'; text: string; exec: () => void } | null = null;
   /** One eager confirmation owner shared by View, onboarding and lazy editors. */
   private _dangerConfirm: HpConfirmState | null = null;
-  /** Last language branch painted by `_renderBody`; `warm` cannot accept new dialogs. */
-  private _dangerConfirmLocaleGate: LanguageRenderGate = 'ready';
+  /** Current language branch; never cached from a previous render. */
+  private get _dangerConfirmLocaleGate(): LanguageRenderGate {
+    if (!this._config || !this.hass) return 'ready';
+    return languageRenderGate(
+      this, LANGUAGE_RUNTIME, langOf(this.hass, this._config.language),
+    );
+  }
   private readonly _dangerConfirmController = new HpConfirmController((state) => {
     this._dangerConfirm = state;
   });
@@ -4184,7 +4189,9 @@ export class HouseplanCard extends LitElement {
     this._syncEmptySpaceState();
     // #417: losing the only renderable space while a decision is pending must
     // settle it before render() clears hp-confirm with `nothing`.
-    if (this._dangerConfirm && this._dangerConfirmMissingSpace()) {
+    if (this._dangerConfirm && (
+      this._dangerConfirmMissingSpace() || this._dangerConfirmLocaleGate === 'warm'
+    )) {
       this._cancelDangerConfirm();
     }
     if (changed.has('hass') && this.hass) {
@@ -4309,7 +4316,7 @@ export class HouseplanCard extends LitElement {
       this._decorAssets = new Map();
       return;
     }
-    const resolved = await resolveDecorAssets(this.hass, decorAssetIds(cfg));
+    const resolved = await resolveDecorAssets(this.hass, decorAssetIds(cfg), this._cfgRev);
     if (token !== this._decorAssetSyncToken) return;
     this._decorAssets = resolved;
     this._resign();
@@ -11209,23 +11216,24 @@ export class HouseplanCard extends LitElement {
       </hp-confirm>`;
   }
 
+  /** One stable Lit template site lets a nested `noChange` retain the body
+   * while the independent confirmation child is removed during a warm gate. */
+  private _renderRoot(body: TemplateResult | typeof noChange): TemplateResult {
+    return html`${body}${this._renderDangerConfirm()}`;
+  }
+
   protected render(): TemplateResult | typeof nothing | typeof noChange {
     const body = this._renderBody();
-    // `noChange` is Lit's «do not touch the DOM» signal and `nothing` means the
-    // card is not initialised yet — neither may be wrapped in a template. In
-    // both, the card draws nothing at all, so a confirmation cannot be shown:
-    // `_confirmDanger` refuses such a request outright instead of leaving it
-    // pending (ТЗ §Граница). The user has pressed nothing at that point.
-    if (body === noChange || body === nothing) return body;
-    return html`${body}${this._renderDangerConfirm()}`;
+    // `nothing` is the only root that has no decision surface. `noChange` is
+    // deliberately nested: it preserves the committed body while allowing the
+    // sibling hp-confirm to settle/cancel on a ready -> warm transition.
+    if (body === nothing) return body;
+    return this._renderRoot(body);
   }
 
   private _renderBody(): TemplateResult | typeof nothing | typeof noChange {
     if (!this._config || !this.hass) return nothing;
-    const localeGate = languageRenderGate(
-      this, LANGUAGE_RUNTIME, langOf(this.hass, this._config.language),
-    );
-    this._dangerConfirmLocaleGate = localeGate;
+    const localeGate = this._dangerConfirmLocaleGate;
     if (localeGate === 'cold') return languageLoadingTemplate();
     if (localeGate === 'warm') return noChange;
     const onboardingRuntimeRequested = !!this._importDialog

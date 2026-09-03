@@ -10,6 +10,7 @@ import hashlib
 import json
 import math
 import re
+import stat
 import struct
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
@@ -370,6 +371,27 @@ def asset_refs(config: dict[str, Any] | None) -> dict[str, list[dict[str, str]]]
 
 def asset_meta_path(root: Path, asset_id: str) -> Path:
     return root / f"{asset_id}.json"
+
+
+def physical_asset_blobs(root: Path) -> list[Path]:
+    """Return exact promoted blob files, independently from their sidecars."""
+    if not root.is_dir():
+        return []
+    blobs: list[Path] = []
+    for path in root.iterdir():
+        if (
+            path.suffix in ASSET_EXTENSIONS
+            and ASSET_ID_RE.fullmatch(path.stem)
+            and stat.S_ISREG(path.stat(follow_symlinks=False).st_mode)
+        ):
+            blobs.append(path)
+    return sorted(blobs, key=lambda path: path.name)
+
+
+def physical_asset_usage(root: Path) -> tuple[int, int]:
+    """Return promoted blob count and actual bytes used for quota checks."""
+    blobs = physical_asset_blobs(root)
+    return len(blobs), sum(path.stat().st_size for path in blobs)
 
 
 def _read_catalog_row(root: Path, path: Path) -> dict[str, Any] | None:

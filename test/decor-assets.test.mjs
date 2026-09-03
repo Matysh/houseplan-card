@@ -107,10 +107,10 @@ test('#51 resolve batches and deduplicates ids at the backend cap', async () => 
     })) };
   } };
   const ids = Array.from({ length: 201 }, (_, index) => index.toString(16).padStart(64, '0'));
-  const resolved = await resolveDecorAssets(hass, [ids[0], ...ids]);
+  const resolved = await resolveDecorAssets(hass, [ids[0], ...ids], 7);
   assert.equal(resolved.size, 201);
   assert.deepEqual(calls.map((batch) => batch.length), [200, 1]);
-  assert.equal(await resolveDecorAssets(hass, [...ids].reverse()), resolved);
+  assert.equal(await resolveDecorAssets(hass, [...ids].reverse(), 7), resolved);
   assert.deepEqual(calls.map((batch) => batch.length), [200, 1]);
 });
 
@@ -121,9 +121,46 @@ test('#51 missing asset ids are negative-cached with their complete set', async 
     connection,
     callWS: async () => { calls++; return { assets: [], missing: [id('f')] }; },
   };
-  const first = await resolveDecorAssets(hass, [id('f')]);
-  const second = await resolveDecorAssets({ ...hass }, [id('f')]);
+  const first = await resolveDecorAssets(hass, [id('f')], 10);
+  const second = await resolveDecorAssets({ ...hass }, [id('f')], 10);
   assert.equal(first.size, 0);
   assert.equal(second, first);
   assert.equal(calls, 1);
+});
+
+test('#434 resolve cache is scoped by authoritative config epoch', async () => {
+  let calls = 0;
+  const connection = {};
+  const hass = {
+    connection,
+    callWS: async () => {
+      calls++;
+      return calls === 1 ? { assets: [], missing: [id('e')] } : { assets: [{
+        asset_id: id('e'), name: 'ready.png', mime: 'image/png', width: 1, height: 1,
+        bytes: 1, url: `/api/houseplan/content/assets/_/${id('e')}.png`,
+      }] };
+    },
+  };
+  const missing = await resolveDecorAssets(hass, [id('e')], 20);
+  assert.equal(missing.size, 0);
+  assert.equal(await resolveDecorAssets({ ...hass }, [id('e')], 20), missing);
+  const resolved = await resolveDecorAssets(hass, [id('e')], 21);
+  assert.equal(resolved.has(id('e')), true);
+  assert.equal(calls, 2);
+});
+
+test('#434 failed resolve calls are never cached', async () => {
+  let calls = 0;
+  const connection = {};
+  const hass = {
+    connection,
+    callWS: async () => {
+      calls++;
+      if (calls === 1) throw new Error('transport');
+      return { assets: [], missing: [id('d')] };
+    },
+  };
+  await assert.rejects(resolveDecorAssets(hass, [id('d')], 30));
+  assert.equal((await resolveDecorAssets(hass, [id('d')], 30)).size, 0);
+  assert.equal(calls, 2);
 });

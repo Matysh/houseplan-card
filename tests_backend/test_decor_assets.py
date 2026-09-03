@@ -22,6 +22,8 @@ from custom_components.houseplan.decor_assets import (
     DecorAssetError,
     asset_meta_path,
     asset_refs,
+    physical_asset_blobs,
+    physical_asset_usage,
     public_asset,
     read_asset,
     read_catalog,
@@ -323,6 +325,37 @@ def test_catalog_ignores_missing_or_malformed_sidecars(tmp_path) -> None:
     (tmp_path / "broken.json").write_text("{", encoding="utf-8")
     assert read_catalog(tmp_path) == [row]
     assert public_asset(row)["url"].endswith(f"/assets/_/{aid}.png")
+
+
+def test_catalog_rejects_valid_shaped_sidecar_without_blob(tmp_path) -> None:
+    aid = "b" * 64
+    row = {
+        "asset_id": aid, "ext": ".png", "mime": "image/png",
+        "width": 1, "height": 1, "bytes": len(PNG_1X1),
+    }
+    (tmp_path / f"{aid}.json").write_text(json.dumps(row), encoding="utf-8")
+    assert read_asset(tmp_path, aid) is None
+    assert read_catalog(tmp_path) == []
+
+
+def test_physical_inventory_counts_exact_promoted_blobs_not_sidecars(tmp_path) -> None:
+    first = "1" * 64
+    second = "2" * 64
+    (tmp_path / f"{first}.png").write_bytes(b"one")
+    (tmp_path / f"{second}.svg").write_bytes(b"twelve")
+    (tmp_path / f"{first}.json").write_text("{", encoding="utf-8")
+    (tmp_path / f"{'3' * 64}.json").write_text(json.dumps({
+        "asset_id": "3" * 64, "ext": ".png",
+    }), encoding="utf-8")
+    (tmp_path / f"{first}.gif").write_bytes(b"ignored")
+    (tmp_path / f"{'g' * 64}.png").write_bytes(b"ignored")
+    (tmp_path / f"{first}.png.tmp").write_bytes(b"ignored")
+    (tmp_path / f"{second}.webp").mkdir()
+
+    assert [path.name for path in physical_asset_blobs(tmp_path)] == [
+        f"{first}.png", f"{second}.svg",
+    ]
+    assert physical_asset_usage(tmp_path) == (2, 9)
 
 
 def test_catalog_empty_directory_and_metadata_path(tmp_path) -> None:

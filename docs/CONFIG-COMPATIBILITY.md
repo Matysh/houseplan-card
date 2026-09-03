@@ -272,6 +272,21 @@ memory-only cache. Old and new cards therefore remain rolling-compatible with
 the hardened integration; the cache is discarded on restart and needs no data
 migration or downgrade step.
 
+#434 keeps the same capability version and wire formats while tightening the
+rolling boundary. Embedded `houseplan-space-card` instances call
+`houseplan/assets/resolve` only after a fresh `config/get` returns exact
+`decor_assets_api:1`; cached config from localStorage starts unverified, and a
+later missing or malformed capability revokes a previously learned value even
+when config content is identical. Positive and missing resolve results are
+cached only for the same connection, config revision and id set. No persisted
+field, schema migration, export-version change or downgrade action is added.
+
+Decor quota now follows physical allow-listed hash blobs rather than trusted
+catalog metadata. An exact re-upload may restore a missing or broken sidecar at
+full quota because it adds no blob; the response uses `reused:false` to state
+that the catalog entry was created by this request. Older cards can continue to
+list and resolve valid rows and ignore this response distinction.
+
 ## Independent-wall opening host (#132)
 
 `space.openings[].host` is an optional discriminated object

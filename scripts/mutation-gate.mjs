@@ -1048,8 +1048,14 @@ const MUTANT_DEFINITIONS = [
       + 'its only decision source (#417 AC1)',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: "    if (this._dangerConfirm && this._dangerConfirmMissingSpace()) {\n      this._cancelDangerConfirm();\n    }",
-      replace: "    void this._dangerConfirm;\n    void this._dangerConfirmMissingSpace;",
+      find: '    if (this._dangerConfirm && (\n'
+        + '      this._dangerConfirmMissingSpace() || this._dangerConfirmLocaleGate === \'warm\'\n'
+        + '    )) {\n'
+        + '      this._cancelDangerConfirm();\n'
+        + '    }',
+      replace: '    if (this._dangerConfirm && this._dangerConfirmLocaleGate === \'warm\') {\n'
+        + '      this._cancelDangerConfirm();\n'
+        + '    }',
     }],
   },
   {
@@ -1061,6 +1067,23 @@ const MUTANT_DEFINITIONS = [
       file: 'src/houseplan-card.ts',
       find: "    if (this._dangerConfirmLocaleGate === 'warm') return Promise.resolve(false);",
       replace: "    void this._dangerConfirmLocaleGate;",
+    }],
+  },
+  {
+    id: 'danger-confirm-warm-transition-cancel-removed',
+    guard: 'node demo/smoke_danger_confirm_branches.mjs',
+    because: 'a dialog opened while ready must settle false and lose its actionable DOM owner '
+      + 'when a new language moves the committed card into the warm noChange branch (#434 AC7)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '    if (this._dangerConfirm && (\n'
+        + '      this._dangerConfirmMissingSpace() || this._dangerConfirmLocaleGate === \'warm\'\n'
+        + '    )) {\n'
+        + '      this._cancelDangerConfirm();\n'
+        + '    }',
+      replace: '    if (this._dangerConfirm && this._dangerConfirmMissingSpace()) {\n'
+        + '      this._cancelDangerConfirm();\n'
+        + '    }',
     }],
   },
   {
@@ -4665,6 +4688,19 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'area-cleanup-keeps-candidate-outside-current-snapshot',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="absent from the current snapshot" '
+      + 'test/device-area-relocation.test.mjs',
+    because: 'finite two-frame evidence belongs to one current snapshot binding; retaining a '
+      + 'candidate after that binding was removed can later delete unrelated provenance (#434 AC8)',
+    patches: [{
+      file: 'src/device-area-relocation.ts',
+      find: '    if (validBinding(binding) && Number.isFinite(revision) && snapshotBindings.has(binding)) {',
+      replace: '    if (validBinding(binding) && Number.isFinite(revision)) {',
+    }],
+  },
+  {
     id: 'support-stale-preview-response-revives-consent',
     guard: 'node demo/smoke_support_feedback.mjs',
     because: 'a late preview response must not restore exact plan geometry after attachment '
@@ -4675,6 +4711,22 @@ const MUTANT_DEFINITIONS = [
         + '      && current?.draftId === draftId\n'
         + '      && current.attach;',
       replace: '    return true;',
+    }],
+  },
+  {
+    id: 'support-invalid-response-leaks-issued-token',
+    guard: 'node demo/smoke_support_feedback.mjs',
+    because: 'a syntactically valid token is already an allocated backend slot even when the '
+      + 'rest of the preview response is invalid; it must be discarded independently of UI '
+      + 'currentness instead of lingering until TTL (#434 AC10)',
+    patches: [{
+      file: 'src/houseplan-editor-runtime.ts',
+      find: '      if (issuedToken) {\n'
+        + '        const token = issuedToken;\n'
+        + "        issuedToken = '';\n"
+        + '        void this._discardSupportPreview(token);\n'
+        + '      }',
+      replace: '      void issuedToken;',
     }],
   },
   {
@@ -4724,6 +4776,76 @@ const MUTANT_DEFINITIONS = [
         + '            if getattr(image, "is_animated", False):\n'
         + '                raise DecorAssetError("unsupported_image", "Animated images are unsupported")',
       replace: '        _ = (Image, BytesIO)',
+    }],
+  },
+  {
+    id: 'decor-physical-inventory-follows-sidecars',
+    guard: 'python3 -m pytest tests_backend/test_decor_assets.py -q -p no:cacheprovider '
+      + '-k physical_inventory',
+    because: 'quota is a physical-storage boundary: malformed/missing sidecars cannot make '
+      + 'promoted blobs invisible, while sidecars without blobs consume no blob quota (#434 AC1)',
+    patches: [{
+      file: 'custom_components/houseplan/decor_assets.py',
+      find: '    for path in root.iterdir():\n'
+        + '        if (\n'
+        + '            path.suffix in ASSET_EXTENSIONS',
+      replace: '    for path in root.glob("*.json"):\n'
+        + '        if (\n'
+        + '            path.suffix in ASSET_EXTENSIONS',
+    }],
+  },
+  {
+    id: 'decor-catalog-accepts-sidecar-without-blob',
+    guard: 'python3 -m pytest tests_backend/test_decor_assets.py -q -p no:cacheprovider '
+      + '-k valid_shaped_sidecar_without_blob',
+    because: 'catalog/list/resolve remain strict projections; a valid-looking sidecar must not '
+      + 'materialise an image whose matching blob is absent (#434 AC4)',
+    patches: [{
+      file: 'custom_components/houseplan/decor_assets.py',
+      find: '            or not blob.is_file()\n',
+      replace: '',
+    }],
+  },
+  {
+    id: 'decor-orphan-repair-runs-after-quota',
+    guard: 'python3 -m pytest tests_backend/test_ha_websocket.py -q -p no:cacheprovider '
+      + '-k decor_asset_upload_deduplicates',
+    because: 'an exact digest-proven orphan adds no physical bytes and must repair its sidecar '
+      + 'even when physical count quota is already full (#434 AC2)',
+    patches: [{
+      file: 'custom_components/houseplan/http_api.py',
+      find: '            if blob.exists():\n'
+        + '                if not blob.is_file() or hashlib.sha256(blob.read_bytes()).hexdigest() != aid:',
+      replace: '            if False and blob.exists():\n'
+        + '                if not blob.is_file() or hashlib.sha256(blob.read_bytes()).hexdigest() != aid:',
+    }],
+  },
+  {
+    id: 'decor-orphan-repair-claims-reuse',
+    guard: 'python3 -m pytest tests_backend/test_ha_websocket.py -q -p no:cacheprovider '
+      + '-k decor_asset_upload_deduplicates',
+    because: 'reused:true means a valid catalog entry predated the request; rebuilding a lost or '
+      + 'broken sidecar creates that entry and must report false (#434 AC2)',
+    patches: [{
+      file: 'custom_components/houseplan/http_api.py',
+      find: '                    os.replace(meta_temp, meta)\n'
+        + '                    return row, False\n'
+        + '                finally:',
+      replace: '                    os.replace(meta_temp, meta)\n'
+        + '                    return row, True\n'
+        + '                finally:',
+    }],
+  },
+  {
+    id: 'decor-delete-skips-orphan-blobs',
+    guard: 'python3 -m pytest tests_backend/test_ha_websocket.py -q -p no:cacheprovider '
+      + '-k decor_asset_delete_removes_exact_orphans_only',
+    because: 'explicit delete is the only bounded recovery path for invisible orphan blobs; '
+      + 'depending on catalog metadata leaves quota permanently occupied (#434 AC3)',
+    patches: [{
+      file: 'custom_components/houseplan/websocket_api.py',
+      find: '            for extension in ASSET_EXTENSIONS:\n',
+      replace: '            for extension in ():\n',
     }],
   },
   {
