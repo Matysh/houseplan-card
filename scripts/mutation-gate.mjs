@@ -4772,6 +4772,19 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'pure-backend-test-pulls-home-assistant',
+    guard: 'python3 -m pytest tests_backend/test_backend_quality.py -q -p no:cacheprovider',
+    because: 'a pure test module that imports an HA-dependent backend module must be caught '
+      + 'statically: pytest aborts on collection, so ALL pure tests stop running and the '
+      + 'output looks nothing like a normal failure (#436, the #389 pattern)',
+    patches: [{
+      file: 'tests_backend/test_projection.py',
+      find: 'import copy\nimport importlib.util\nimport os',
+      replace: 'import copy\nimport importlib.util\nimport os\n'
+        + 'from custom_components.houseplan.store import async_save_config_state',
+    }],
+  },
+  {
     id: 'benchmark-page-verdict-unwatched',
     guard: 'node demo/guard/verify-guard.mjs',
     because: 'the page benchmark of #423 must register its page with watchPage, and that must be '

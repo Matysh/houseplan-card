@@ -9,6 +9,26 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 import pytest
+
+# Этот файл требует Home Assistant, но называется не `test_ha_*` (#436).
+#
+# Отсекать HA-тесты по имени файла — конструкция, которая уже стоила #389:
+# корректность харнесса держалась на именах в каталоге. Здесь она стоила
+# меньшего, но обиднее: `collect_ignore_glob` в conftest этот файл не ловил,
+# импорт `store` тянул `homeassistant`, и `python3 -m pytest tests_backend/`
+# без HA падал НА СБОРКЕ. То есть чистое подмножество не выполнялось вовсе —
+# ни один из 310 тестов, — а документация обещала обратное.
+#
+# `importorskip` на уровне модуля превращает это в честный скип: pytest
+# сообщает «1 skipped» вместо «Interrupted», остальные файлы прогоняются. В
+# CI Home Assistant установлен, поэтому там не скипается ничего.
+#
+# Импорты ниже стоят после этой строки намеренно: они и есть то, что без HA
+# не выполнится. Порядок закреплён тестом
+# `test_issue_436_ha_dependent_test_modules_declare_it` — он краснеет, если
+# такой файл появится без объявления.
+pytest.importorskip("homeassistant", reason="модуль тянет HA через store (#436)")
+
 from custom_components.houseplan import virtual_lights
 from custom_components.houseplan.coordinate_canonicalization import (
     COORDINATE_DECIMALS,
