@@ -4,7 +4,7 @@
 - Приоритет: P2
 - Тип: bug
 - Ветка: `issue/162-vacuum-map-space-routing`
-- Статус документа: редакция 2 — ТЗ перебазировано на `dev` d4dd027b (v1.71.0-beta.2) 2026-09-03 и отправлено на spec-review
+- Статус документа: редакция 2, правка по spec-review r1 (Medium §11.3 «compatible source»)
 - Источник: аналитическая проверка [#125](https://github.com/Matysh/houseplan-card/issues/125) и решение владельца от 2026-08-15
 - Первая редакция: 2026-08-15, коммит `d7c34a9`; расхождения зафиксированы в §3.4
 
@@ -529,16 +529,48 @@ Frontend и backend route selection покрываются общей JSON fixtu
 
 ### 11.3 Legacy trails
 
-Run без `route_id`:
+Legacy run — сохранённая запись без `route_id`. Такая запись физически несёт
+только `{"map_id", "started", "ended", "points"}`: поля `source` в ней нет, и
+никакой источник из неё не восстанавливается. Поэтому «совместимость
+источника» определяется не сравнением с содержимым run, а сравнением routes с
+единственным сохранившимся свидетелем прежней подписки — корневым
+`marker.vacuum.source`, по которому recorder эту запись и писал (§7.3 явная
+конверсия его сохраняет).
 
-1. при отсутствии explicit routes работает как сейчас через unique legacy map
-   matrix и marker space;
-2. при explicit routes сопоставляется только если ровно один route имеет тот же
-   `map_id` и compatible source;
-3. при ambiguity не рисуется и не переписывается guessed route;
-4. следующий доказанный point создаёт canonical route-aware current run.
+#### 11.3.1 Правило усыновления
 
-Миграция trail Store целиком не выполняется.
+Чистая функция `adoptLegacyRun(run, routes, rootSource)` (модуль
+`src/vacuum-routes.ts`, побайтово зеркалится в `trails.py`). Вход — только
+сохранённые данные, поэтому результат детерминирован и проверяется unit-тестом
+без HA.
+
+Кандидатами считаются routes **того же marker**, для которых верно:
+
+1. `route.map_id === run.map_id` — строгое строковое равенство по тому же
+   nullish-контракту, что и в §8.2 (`0`, `"0"`, `""` значимы);
+2. отбор по источнику: если `rootSource` — непустая строка, дополнительно
+   требуется `route.source === rootSource`; если корневой source отсутствует
+   (пуст, удалён), условие 2 **не применяется** — второго свидетеля нет, и
+   отбор ведётся только по `map_id`.
+
+Исход:
+
+- ровно один кандидат → run рисуется в `route.space` с калибровкой этого
+  route; `route_id` в хранилище при этом **не** дописывается;
+- ноль кандидатов → `orphan_run`;
+- больше одного кандидата → `ambiguous_run`.
+
+Оба отрицательных исхода fail-closed: run не рисуется ни в одном пространстве,
+guessed route не подставляется, запись не переписывается и не удаляется. В
+Device editor обе причины показываются текстом рядом с соответствующей картой.
+
+При полном отсутствии explicit routes поведение прежнее: unique legacy map
+matrix и `marker.space` (§7.3), то есть до первой правки routing картина не
+меняется байт в байт.
+
+Следующий доказанный point создаёт canonical route-aware current run по §11.1;
+прежний legacy run уезжает в previous как есть. Миграция trail Store целиком
+не выполняется.
 
 ## 12. Lifecycle и перенос
 
@@ -636,7 +668,7 @@ space. Для такого marker:
 | AC11 | Reload и warm remount продолжают active canonical run без bridge/duplicate и сохраняют routing | backend + browser smoke |
 | AC12 | Два робота на разных floors не смешивают sources, routes, runtime, current/previous trails или warnings | unit + smoke |
 | AC13 | Legacy `source + calibration` работает byte-for-byte до routing edit; explicit conversion включает все matrices и не бывает partial | unit/backend compatibility tests |
-| AC14 | Legacy run без route id отображается только при unique match; ambiguity fail-closed | TS/backend unit |
+| AC14 | `adoptLegacyRun(run, routes, rootSource)` (§11.3.1) даёт ровно три исхода: unique → рисуется в `route.space`; `orphan_run` и `ambiguous_run` → не рисуются нигде и не переписывают хранилище. Отбор по `rootSource` отключается, когда корневой source пуст | TS/backend unit на общей фикстуре |
 | AC15 | Full import round-trips routes; space import remap-ит local routes и исключает cross-space routes с preview evidence | backend import/export tests |
 | AC16 | Удаление target space явно сообщает count и атомарно удаляет routes/route-runs, не трогая dock/other routes | frontend + backend test |
 | AC17 | Hidden/removed/HA-disabled/static-icon vacuum не создаёт live overlay/warning; exact restored source возобновляет route | regression unit/smoke |
@@ -724,9 +756,10 @@ Unrelated flat/iso baselines не обновляются. Baseline acceptance в
 | M-E | смена target space сохраняет старую matrix | frontend unit + backend GC test |
 | M-F | recorder пишет run без route id (как сегодня) | backend unit + legacy-read test |
 | M-G | legacy-конверсия переносит только текущую матрицу | compatibility unit |
+| M-H | `adoptLegacyRun` при двух кандидатах берёт первый вместо `ambiguous_run` | unit §11.3.1 + backend read-compat |
 
 Мутант, который не покраснел, означает дефект теста, а не доказательство
-корректности: перед сдачей каждый из семи обязан быть проверен отрицательным
+корректности: перед сдачей каждый из восьми обязан быть проверен отрицательным
 прогоном.
 
 ### 16.6 Команды и момент запуска
@@ -845,4 +878,7 @@ CONFIG-COMPATIBILITY и release notes.
   ленивом редакторском модуле; имена модулей могут уточниться в ревью, но
   запрет на рост ядровых файлов — нормативен;
 - редакция 2: `repairSpaceReferences()` не восстанавливает `space` у routes
-  сам по себе; за это отвечает явный код #162.
+  сам по себе; за это отвечает явный код #162;
+- редакция 2 (правка r1): единственный свидетель источника legacy run —
+  корневой `marker.vacuum.source`; при его отсутствии отбор ведётся только по
+  `map_id`, а неоднозначность закрывается наглухо, а не разрешается эвристикой.
