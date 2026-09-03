@@ -24,12 +24,12 @@
  *   - `y = 0` is the BACK of the object — the side that goes against a wall.
  *     That is what makes the wall magnet meaningful: a sofa's back, a bed's
  *     headboard, a wardrobe's rear panel and a worktop's edge all mean the
- *     same thing to `snapFurnitureToWall`;
+ *     same thing to the furniture wall-placement helper;
  *   - nothing is filled. The card strokes the whole symbol in the decor
  *     colour, so a plan stays a drawing (owner: «символы рисуются линейно»).
  */
 
-import { NORM_W, GRID_PITCH, CANVAS_LIMIT, clampCanvasN } from './space-geometry';
+import { NORM_W, GRID_PITCH, CANVAS_LIMIT } from './space-geometry';
 import { GENERATED_FURNITURE_PLAN } from './furniture-plan-art.generated';
 
 /** Groups the palette shows, in the order it shows them. */
@@ -420,153 +420,6 @@ export function furnitureStrokePx(
   const scale = Number.isFinite(rawScale) && rawScale > 0 ? rawScale : 1;
   const result = stroke * scale;
   return Number.isFinite(result) && result > 0 ? result : stroke;
-}
-
-// ------------------------------ the wall magnet -----------------------------
-
-/** How far from a wall the magnet still reaches, in GRID CELLS. Six cells is
- *  30 cm on a default plan: close enough to be a decision, far enough to be
- *  reachable with a finger. */
-export const FURN_WALL_CELLS = 6;
-
-export interface FurnitureSnap {
-  /** The new CENTRE of the piece. */
-  cx: number;
-  cy: number;
-  /** Its new rotation, degrees, such that the back edge lies on the wall. */
-  angle: number;
-  /** How far the centre was from the wall before snapping (tests, diagnostics). */
-  dist: number;
-}
-
-/** Wall segments (`[x1,y1,x2,y2]`) in whatever units the caller works in. */
-export type WallSeg = number[];
-
-/** Final normalised box shared by the placement ghost and the saved decor
- * record. Keeping this result pure prevents a preview/commit jump when wall
- * magnetism or the canvas guard participates (#359). */
-export interface FurniturePlacement {
-  symbol: string;
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-  angle: number;
-}
-
-export interface FurniturePlacementInput {
-  symbol: string;
-  widthCm: number;
-  depthCm: number;
-  /** Already resolved decor/grid snap point, in render units. */
-  point: readonly [number, number];
-  canvasW: number;
-  canvasH: number;
-  cellCm: number;
-  gridPitch: number;
-  walls: WallSeg[];
-  wallReach: number;
-  free?: boolean;
-}
-
-const norm180 = (a: number): number => {
-  let x = ((a % 360) + 360) % 360;
-  if (x > 180) x -= 360;
-  return x;
-};
-
-/**
- * Press a piece of furniture flat against the nearest wall.
- *
- * `edges` are the DERIVED room walls (`roomEdges`) in the same units as the
- * centre — the card passes render units. The piece is placed so that its BACK
- * (local `y = 0`, the convention every symbol above obeys) lies ON the wall
- * and its body stays on the side the user was dragging it from, and it is
- * turned to the wall's own direction. Returns `null` when no wall is within
- * `maxDist`, so a piece outside the magnet reach stays a grid-bound drag.
- *
- * The offset ALONG the wall is quantised to `step` when one is given: the
- * wall decides two of the three degrees of freedom, the grid still decides
- * the third, so a row of kitchen units lines up instead of drifting.
- */
-export function snapFurnitureToWall(
-  cx: number, cy: number, depth: number, edges: WallSeg[], maxDist: number,
-  step = 0,
-): FurnitureSnap | null {
-  let best: FurnitureSnap | null = null;
-  let bestD = maxDist;
-  for (const e of edges) {
-    const [x1, y1, x2, y2] = e;
-    const dx = x2 - x1, dy = y2 - y1;
-    const len2 = dx * dx + dy * dy;
-    if (!len2) continue;
-    const len = Math.sqrt(len2);
-    let t = ((cx - x1) * dx + (cy - y1) * dy) / len2;
-    t = Math.max(0, Math.min(1, t));
-    let qx = x1 + t * dx, qy = y1 + t * dy;
-    const d = Math.hypot(cx - qx, cy - qy);
-    if (!(d < bestD)) continue;
-    bestD = d;
-    // the outward normal: from the wall TOWARDS where the user is holding the
-    // piece, so a sofa dragged along the inside of a wall does not flip
-    // through it the moment the magnet takes over
-    let nx = cx - qx, ny = cy - qy;
-    const nl = Math.hypot(nx, ny);
-    if (nl < 1e-9) {
-      // dead on the wall: no side to prefer, take the wall's left normal
-      nx = dy / len; ny = -dx / len;
-    } else {
-      nx /= nl; ny /= nl;
-    }
-    if (step > 0) {
-      // quantise the position along the wall, measured from its first corner
-      const along = Math.round((t * len) / step) * step;
-      qx = x1 + (along / len) * dx;
-      qy = y1 + (along / len) * dy;
-    }
-    // rotate(A) maps the local +y (0,1) onto (-sin A, cos A); we want that to
-    // be the outward normal, i.e. the piece looking away from the wall
-    const angle = norm180((Math.atan2(-nx, ny) * 180) / Math.PI);
-    best = { cx: qx + nx * (depth / 2), cy: qy + ny * (depth / 2), angle, dist: d };
-  }
-  return best;
-}
-
-/**
- * Resolve the exact geometry one furniture stamp will own.
- *
- * The caller owns the higher-level decor/room/grid snap because that geometry
- * is editor state. Everything after that point is pure and therefore shared
- * byte-for-byte by hover preview and commit. Unknown symbols fail dark: a
- * newer config or a stale palette cannot create invisible furniture.
- */
-export function resolveFurniturePlacement(input: FurniturePlacementInput): FurniturePlacement | null {
-  const {
-    symbol, widthCm, depthCm, point, canvasW, canvasH, cellCm, gridPitch,
-    walls, wallReach, free = false,
-  } = input;
-  if (!furnitureGraphic(symbol) || !(canvasW > 0) || !(canvasH > 0)
-      || !Number.isFinite(point[0]) || !Number.isFinite(point[1])) return null;
-  const w = clampFurnSize(cmToNorm(widthCm, cellCm, gridPitch, canvasW));
-  const h = clampFurnSize(cmToNorm(depthCm, cellCm, gridPitch, canvasW));
-  let cx = point[0], cy = point[1];
-  let angle = 0;
-  const snap = free ? null : snapFurnitureToWall(
-    cx, cy, h * canvasH, walls, wallReach, gridPitch,
-  );
-  if (snap) {
-    cx = snap.cx;
-    cy = snap.cy;
-    angle = snap.angle;
-  }
-  return {
-    symbol,
-    x: clampCanvasN(cx / canvasW - w / 2),
-    y: clampCanvasN(cy / canvasH - h / 2),
-    w,
-    h,
-    angle: Number(angle.toFixed(2)),
-  };
 }
 
 /**

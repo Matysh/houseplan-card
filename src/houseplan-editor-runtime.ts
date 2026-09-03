@@ -67,13 +67,15 @@ import {
 import { dayCycleStageVars, renderDayCycleEnvironment } from './day-cycle-render';
 import {
   furnitureDefaultCm,
-  furnitureGraphic, furnitureCorners, snapFurnitureToWall,
-  resolveFurniturePlacement, furnitureRenderTransform, furnitureStrokePx,
+  furnitureGraphic, furnitureCorners,
+  furnitureRenderTransform, furnitureStrokePx,
   resizeFurnitureTransform, furnitureRotationAngle,
   furnitureSignedFieldCm, furnitureSignedFieldValue,
-  clampFurnCm, FURN_WALL_CELLS,
-  type FurniturePlacement, type FurnitureResizeResult,
+  clampFurnCm,
+  type FurnitureResizeResult,
 } from './furniture';
+import { FURN_WALL_CELLS, resolveFurniturePlacement, snapFurnitureToWall, type FurniturePlacement } from './furniture-placement';
+import { furnitureWallSurfacesFor, type FurnitureWallSurface } from './furniture-wall-surface';
 import {
   degradeWalls, rekeyWallsAfterMoveChecked, wallRecordCarrierViolations,
   setWallThickness, setWallThicknessForRoom, cmToField, wallCmToUnits,
@@ -4903,14 +4905,9 @@ public _furnPick(symbol: string): void {
     this._furnShiftAttach();
 }
 
-/** Room centrelines plus the faces of independent physical obstacles. */
-private get _furnWalls(): number[][] {
-  const faces = this.host._rawPhysicalBodiesR().flatMap((body) =>
-    body.map((a, index) => {
-      const b = body[(index + 1) % body.length];
-      return [a[0], a[1], b[0], b[1]];
-    }));
-  return [...this.host._segments, ...faces];
+/** Cached room-facing surfaces plus already-physical independent body faces. */
+private get _furnWalls(): readonly FurnitureWallSurface[] {
+  return furnitureWallSurfacesFor(this.host);
 }
 
 public _resolveFurniturePlacement(
@@ -4932,6 +4929,7 @@ public _resolveFurniturePlacement(
       gridPitch: this.host._gridPitch,
       walls: this._furnWalls,
       wallReach: this.host._gridPitch * FURN_WALL_CELLS,
+      intentPoint: [raw[0], raw[1]],
       free,
   });
 }
@@ -5081,9 +5079,11 @@ public _furnMoveUpdate(ev: PointerEvent): void {
     const rawCy = (o.y + o.h / 2) * H + (p[1] - m.start[1]);
     let x: number, y: number;
     let angle = Number(o.angle) || 0;
+    const angleRad = angle * Math.PI / 180, preferredNormal: [number, number] = [-Math.sin(angleRad), Math.cos(angleRad)];
     const snap = ev.shiftKey ? null : snapFurnitureToWall(
       rawCx, rawCy, o.h * H, this._furnWalls,
-      this.host._gridPitch * FURN_WALL_CELLS, this.host._gridPitch);
+      this.host._gridPitch * FURN_WALL_CELLS, this.host._gridPitch,
+      [rawCx, rawCy], preferredNormal);
     if (snap) {
       x = snap.cx / W - o.w / 2;
       y = snap.cy / H - o.h / 2;

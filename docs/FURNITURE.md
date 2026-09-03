@@ -113,10 +113,15 @@ Consequently:
 - an id unknown to an older card remains valid data and simply renders
   nothing instead of breaking the plan.
 
-The top edge of every drawing is BACK (`y = 0`). Placement and dragging use
-the established wall magnet, absolute saved coordinates and the shared
-selection/resize/rotate frame. Furniture is decor: it has no entity, state,
-room aggregation, collision model or automatic binding to later wall edits.
+The top edge of every drawing is BACK (`y = 0`). Placement and dragging put
+BACK on the room-facing **physical surface** of a wall, including the local
+atomic half-thickness; the invisible centreline is not the contact surface.
+On a shared wall the raw pointer side selects the room, while an exact-axis
+drag keeps the piece's current side. The magnet reach is measured from the
+physical surface. `Shift` keeps free placement and bypasses the wall magnet.
+Preview, commit and drag share the same surface resolver. Furniture is decor:
+it has no entity, state, room aggregation, collision model or automatic
+binding to later wall edits, and already saved coordinates are never migrated.
 
 ## Compatibility and performance
 

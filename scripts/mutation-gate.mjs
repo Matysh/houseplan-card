@@ -1648,6 +1648,67 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'furniture-wall-surface-drops-thickness',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="magnet presses|local atomic|out of reach" '
+      + 'test/furniture.test.mjs',
+    because: 'falling back to the room centreline recreates #445: BACK enters thick masonry '
+      + 'and the physical reach threshold moves by half the wall depth',
+    patches: [{
+      file: 'src/furniture-wall-surface.ts',
+      find: '      const half = Number.isFinite(rawHalf) && rawHalf > 0 ? rawHalf : 0;',
+      replace: '      const half = 0;',
+    }],
+  },
+  {
+    id: 'furniture-wall-surface-loses-room-side',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="outer wall always|shared thick wall" '
+      + 'test/furniture.test.mjs',
+    because: 'treating a one-sided room face like an arbitrary body face lets an outside '
+      + 'pointer flip furniture through an exterior wall and loses shared-room intent (#445)',
+    patches: [{
+      file: 'src/furniture-placement.ts',
+      find: '    let normal = unit(surface.normal);',
+      replace: '    let normal = unit(null);',
+    }],
+  },
+  {
+    id: 'furniture-wall-tie-follows-input-order',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="exact-axis placement|corner selection" '
+      + 'test/furniture.test.mjs',
+    because: 'without the final stable identity comparison an exact shared axis or room corner '
+      + 'changes side when room/surface arrays are reordered (#445 AC2/AC10)',
+    patches: [{
+      file: 'src/furniture-placement.ts',
+      find: '              && candidate.stableId.localeCompare(best.stableId) < 0)))) best = candidate;',
+      replace: '              && false)))) best = candidate;',
+    }],
+  },
+  {
+    id: 'furniture-wall-runtime-drops-raw-intent',
+    guard: 'node demo/smoke_furniture.mjs',
+    because: 'using the grid-snapped axis point for shared-wall side selection loses the user\'s '
+      + 'actual room-side intent in the editor integration (#445 AC2/AC5)',
+    patches: [{
+      file: 'src/houseplan-editor-runtime.ts',
+      find: '      intentPoint: [raw[0], raw[1]],',
+      replace: '      intentPoint: [snapped[0], snapped[1]],',
+    }],
+  },
+  {
+    id: 'furniture-wall-runtime-drops-drag-side',
+    guard: 'node demo/smoke_furniture.mjs',
+    because: 'without the current local +y normal an exact-axis drag may flip furniture to the '
+      + 'other face of a shared wall (#445 AC2/AC5)',
+    patches: [{
+      file: 'src/houseplan-editor-runtime.ts',
+      find: '      [rawCx, rawCy], preferredNormal);',
+      replace: '      [rawCx, rawCy]);',
+    }],
+  },
+  {
     id: 'opening-light-quantum-identity',
     guard: 'node --test --test-name-pattern="#366" test/logic.test.mjs',
     because: 'an identity quantum brings back ~100 barrier recomputes per moving-gate cycle — '

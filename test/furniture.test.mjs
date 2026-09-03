@@ -6,14 +6,20 @@ import assert from 'node:assert/strict';
 import {
   FURNITURE, FURNITURE_GROUPS, furnitureSymbol, furnitureOfGroup,
   furnitureDefaultCm, furniturePathD, furnitureGraphic, furnitureCorners, furnitureResize,
-  snapFurnitureToWall, resolveFurniturePlacement, furniturePlanScreenScale, furnitureStrokePx,
+  furniturePlanScreenScale, furnitureStrokePx,
   resizeFurnitureTransform, furnitureRotationAngle, furnitureRenderTransform,
   furnitureSignedFieldCm, furnitureSignedFieldValue,
   cmToNorm, normToCm, clampFurnSize, clampFurnCm,
-  FURN_MIN_N, FURN_MIN_CM, FURN_MAX_CM, FURN_WALL_CELLS,
+  FURN_MIN_N, FURN_MIN_CM, FURN_MAX_CM,
 } from '../test-build/furniture.js';
-import { roomEdges } from '../test-build/logic.js';
-import { NORM_W, GRID_PITCH, GRID_N } from '../test-build/space-geometry.js';
+import {
+  FURN_WALL_CELLS, resolveFurniturePlacement, snapFurnitureToWall,
+} from '../test-build/furniture-placement.js';
+import {
+  furnitureWallSurfacesFor, physicalFurnitureWallSurfaces, roomFurnitureWallSurfaces,
+} from '../test-build/furniture-wall-surface.js';
+import { setWallThickness, wallCmToUnits } from '../test-build/wall-thickness.js';
+import { NORM_W, GRID_PITCH, GRID_N, GRID_STEP_N } from '../test-build/space-geometry.js';
 
 const closeTo = (got, want, tol = 1e-9) =>
   assert.ok(Math.abs(got - want) <= tol, `expected ${want}, got ${got}`);
@@ -169,54 +175,215 @@ test('furniture stroke layout fallbacks are finite and recover on measured layou
 
 // ------------------------------ the wall magnet -----------------------------
 
-// one 400x300 room, normalised like the config stores it, in render units
-const ROOM = { id: 'r', poly: [[0.1, 0.1], [0.5, 0.1], [0.5, 0.4], [0.1, 0.4]] };
-const EDGES = roomEdges([ROOM]).map((e) => [e[0] * 1000, e[1] * 1000, e[2] * 1000, e[3] * 1000]);
-// -> the box (100,100)-(500,400) in render units
+// One 400x300 room in the render-space units used by the card.
+const ROOM = { id: 'r', poly: [[100, 100], [500, 100], [500, 400], [100, 400]] };
+const roomSurfaces = (rooms, walls = [], openCuts = []) => roomFurnitureWallSurfaces(
+  rooms, walls, openCuts, GRID_STEP_N, 5, GRID_PITCH, NORM_W,
+);
+const ZERO_SURFACES = roomSurfaces([ROOM]);
+const thickTopWalls = (cm) => setWallThickness(
+  [], ROOM.poly[0], ROOM.poly[1], cm, GRID_STEP_N, NORM_W,
+);
+const THICK_SURFACES = roomSurfaces([ROOM], thickTopWalls(20));
+const HALF_10 = wallCmToUnits(10, 5, GRID_PITCH) / 2;
+const HALF_20 = wallCmToUnits(20, 5, GRID_PITCH) / 2;
+const TOP_20 = 100 + HALF_20;
 
 test('the magnet presses the BACK edge onto the wall and turns the piece to it', () => {
-  // held just inside the TOP wall (y=100), body below it -> angle 0, back on y=100
-  const s = snapFurnitureToWall(300, 112, 90, EDGES, 30);
-  assert.ok(s, 'a wall 12 units away must be found');
+  const s = snapFurnitureToWall(300, TOP_20, 90, THICK_SURFACES, 30);
+  assert.ok(s, 'the physical face under the pointer must be found');
   closeTo(s.angle, 0);
-  closeTo(s.cy, 100 + 45);          // centre = wall + half the depth
+  closeTo(s.cy, TOP_20 + 45);       // centre = physical face + half the depth
   closeTo(s.cx, 300);
-  closeTo(s.dist, 12);
+  closeTo(s.dist, 0);
 });
 
-test('the same wall from the OTHER side turns the piece round instead of flipping it through', () => {
-  const s = snapFurnitureToWall(300, 88, 90, EDGES, 30);   // above the top wall
-  closeTo(Math.abs(s.angle), 180);
-  closeTo(s.cy, 100 - 45);
+test('an outer wall always keeps furniture on the room-facing surface', () => {
+  const outsideY = 100 - HALF_20;
+  const s = snapFurnitureToWall(300, outsideY, 90, THICK_SURFACES, 30);
+  closeTo(s.angle, 0);
+  closeTo(s.cy, TOP_20 + 45);
+  closeTo(s.dist, HALF_20 * 2);
 });
 
 test('a vertical wall gives a right angle and the depth measured sideways', () => {
-  const left = snapFurnitureToWall(112, 250, 60, EDGES, 30);  // inside the x=100 wall
+  const left = snapFurnitureToWall(112, 250, 60, THICK_SURFACES, 30);
   closeTo(Math.abs(left.angle), 90);
-  closeTo(left.cx, 100 + 30);
+  closeTo(left.cx, 100 + 30); // this unconfigured edge remains zero-thickness
   closeTo(left.cy, 250);
-  const right = snapFurnitureToWall(488, 250, 60, EDGES, 30); // inside the x=500 wall
+  const right = snapFurnitureToWall(488, 250, 60, THICK_SURFACES, 30);
   closeTo(right.cx, 500 - 30);
   // the two are opposite: the back always looks at its own wall
   closeTo(Math.abs(((left.angle - right.angle) % 360 + 360) % 360), 180);
 });
 
 test('out of reach there is no magnet at all', () => {
-  assert.equal(snapFurnitureToWall(300, 250, 90, EDGES, 30), null);  // middle of the room
+  assert.equal(snapFurnitureToWall(300, 250, 90, ZERO_SURFACES, 30), null);
   assert.equal(snapFurnitureToWall(300, 112, 90, [], 30), null);     // no walls
-  // …and the threshold is a threshold: 30.1 away with a reach of 30 is a miss
-  assert.equal(snapFurnitureToWall(300, 130.1, 90, EDGES, 30), null);
-  assert.ok(snapFurnitureToWall(300, 129.9, 90, EDGES, 30));
+  // Reach is measured from the physical y=112 face, not the y=100 axis.
+  assert.equal(snapFurnitureToWall(300, TOP_20 + 30.1, 90, THICK_SURFACES, 30), null);
+  assert.ok(snapFurnitureToWall(300, TOP_20 + 29.9, 90, THICK_SURFACES, 30));
 });
 
 test('the offset ALONG the wall is quantised to the grid when a step is given', () => {
   const step = GRID_PITCH;                     // one cell
-  const free = snapFurnitureToWall(303.3, 112, 90, EDGES, 30);
-  const snapped = snapFurnitureToWall(303.3, 112, 90, EDGES, 30, step);
+  const free = snapFurnitureToWall(303.3, TOP_20, 90, THICK_SURFACES, 30);
+  const snapped = snapFurnitureToWall(303.3, TOP_20, 90, THICK_SURFACES, 30, step);
   closeTo(free.cx, 303.3);
   // the wall starts at x=100, so a snapped centre sits on 100 + k*step
   closeTo(((snapped.cx - 100) / step) % 1, 0, 1e-9);
   assert.ok(Math.abs(snapped.cx - 303.3) <= step);
+});
+
+test('a shared thick wall selects the intent side and exact-axis drag preserves its side', () => {
+  const rooms = [
+    { id: 'a', poly: [[100, 100], [300, 100], [300, 400], [100, 400]] },
+    { id: 'b', poly: [[300, 100], [500, 100], [500, 400], [300, 400]] },
+  ];
+  const walls = setWallThickness(
+    [], [300, 100], [300, 400], 20, GRID_STEP_N, NORM_W,
+  );
+  const surfaces = roomSurfaces(rooms, walls);
+  const left = snapFurnitureToWall(280, 250, 60, surfaces, 30);
+  const right = snapFurnitureToWall(320, 250, 60, surfaces, 30);
+  closeTo(left.cx, 300 - HALF_20 - 30);
+  closeTo(right.cx, 300 + HALF_20 + 30);
+  closeTo(left.dist, 20 - HALF_20);
+  closeTo(right.dist, 20 - HALF_20);
+
+  // The higher-level decor snap may move the placement point onto the axis;
+  // the untouched pointer still owns the requested room side.
+  const snappedPointKeepsIntent = snapFurnitureToWall(
+    300, 250, 60, surfaces, 30, 0, [320, 250],
+  );
+  closeTo(snappedPointKeepsIntent.cx, 300 + HALF_20 + 30);
+
+  const keepRight = snapFurnitureToWall(
+    300, 250, 60, surfaces, 30, 0, [300, 250], [1, 0],
+  );
+  closeTo(keepRight.cx, 300 + HALF_20 + 30);
+  const keepLeft = snapFurnitureToWall(
+    300, 250, 60, [...surfaces].reverse(), 30, 0, [300, 250], [-1, 0],
+  );
+  closeTo(keepLeft.cx, 300 - HALF_20 - 30);
+});
+
+test('new exact-axis placement is stable across room order, winding and surface order', () => {
+  const base = [
+    { id: 'a', poly: [[100, 100], [300, 100], [300, 400], [100, 400]] },
+    { id: 'b', poly: [[300, 100], [500, 100], [500, 400], [300, 400]] },
+  ];
+  const walls = setWallThickness(
+    [], [300, 100], [300, 400], 20, GRID_STEP_N, NORM_W,
+  );
+  const variants = [
+    base,
+    [...base].reverse(),
+    base.map((room) => ({ ...room, poly: [...room.poly].reverse() })),
+  ];
+  const snaps = variants.flatMap((rooms) => {
+    const surfaces = roomSurfaces(rooms, walls);
+    return [surfaces, [...surfaces].reverse()].map((input) =>
+      snapFurnitureToWall(300, 250, 60, input, 30));
+  });
+  for (const snap of snaps.slice(1)) {
+    closeTo(snap.cx, snaps[0].cx);
+    closeTo(snap.cy, snaps[0].cy);
+    closeTo(snap.angle, snaps[0].angle);
+  }
+});
+
+test('local atomic wall thickness owns the surface under the projection', () => {
+  let walls = setWallThickness(
+    [], [100, 100], [300, 100], 10, GRID_STEP_N, NORM_W,
+  );
+  walls = setWallThickness(
+    walls, [300, 100], [500, 100], 20, GRID_STEP_N, NORM_W,
+  );
+  const surfaces = roomSurfaces([ROOM], walls);
+  const thin = snapFurnitureToWall(200, 100 + HALF_10, 20, surfaces, 30);
+  const thick = snapFurnitureToWall(400, 100 + HALF_20, 20, surfaces, 30);
+  closeTo(thin.cy, 100 + HALF_10 + 10);
+  closeTo(thick.cy, 100 + HALF_20 + 10);
+  closeTo(thin.dist, 0);
+  closeTo(thick.dist, 0);
+});
+
+test('zero walls keep the old centreline geometry', () => {
+  const snap = snapFurnitureToWall(300, 112, 90, ZERO_SURFACES, 30);
+  closeTo(snap.cy, 100 + 45);
+  closeTo(snap.dist, 12);
+});
+
+test('independent physical-body faces are not offset twice', () => {
+  const surfaces = physicalFurnitureWallSurfaces([[
+    [200, 200], [400, 200], [400, 220], [200, 220],
+  ]]);
+  const above = snapFurnitureToWall(300, 190, 20, surfaces, 30);
+  closeTo(above.cy, 200 - 10);
+  closeTo(above.dist, 10);
+  const below = snapFurnitureToWall(300, 230, 20, surfaces, 30);
+  closeTo(below.cy, 220 + 10);
+  closeTo(below.dist, 10);
+});
+
+test('corner selection is nearest-first, intent-aware and invariant to input order', () => {
+  const horizontal = {
+    a: [-100, 0], b: [100, 0], axisA: [-100, 0], axisB: [100, 0],
+    normal: [0, 1], owner: 'room', stableId: 'z-horizontal', roomId: 'h',
+  };
+  const vertical = {
+    a: [0, -100], b: [0, 100], axisA: [0, -100], axisB: [0, 100],
+    normal: [1, 0], owner: 'room', stableId: 'a-vertical', roomId: 'v',
+  };
+  const nearest = snapFurnitureToWall(20, 10, 10, [horizontal, vertical], 30);
+  closeTo(nearest.angle, 0); // y=0 is 10 away; x=0 is 20 away
+
+  // Equal distance, but the point is on the allowed side of horizontal and
+  // the forbidden side of vertical. Intent wins even though vertical sorts first.
+  const intended = snapFurnitureToWall(-10, 10, 10, [vertical, horizontal], 30);
+  closeTo(intended.angle, 0);
+
+  const tiedA = snapFurnitureToWall(10, 10, 10, [horizontal, vertical], 30);
+  const tiedB = snapFurnitureToWall(10, 10, 10, [vertical, horizontal], 30);
+  assert.deepEqual(tiedA, tiedB);
+  closeTo(Math.abs(tiedA.angle), 90); // stable id a-vertical wins full equality
+});
+
+test('malformed surfaces are ignored and along-wall quantisation stays inside an atom', () => {
+  const valid = THICK_SURFACES.find((surface) => surface.roomId === 'r'
+    && Math.abs(surface.a[1] - TOP_20) < 1e-9);
+  const broken = {
+    a: [NaN, 0], b: [0, 0], axisA: [0, 0], axisB: [0, 0],
+    normal: [0, 1], owner: 'room', stableId: 'broken', roomId: 'bad',
+  };
+  const snap = snapFurnitureToWall(
+    499.9, TOP_20, 10, [broken, valid], 30, 400, [499.9, TOP_20],
+  );
+  assert.ok(Number.isFinite(snap.cx) && Number.isFinite(snap.cy));
+  closeTo(snap.cx, 500); // rounded along coordinate is clamped to the atom end
+});
+
+test('runtime wall surfaces are built once per geometry epoch', () => {
+  let builds = 0;
+  const source = {
+    _cfgEpoch: 1,
+    _cellCm: 5,
+    _gridPitch: GRID_PITCH,
+    _wallKeyPitch: GRID_STEP_N,
+    _spaceWalls: thickTopWalls(20),
+    _spaceModel: () => ({ id: 'cache-room', rooms: [ROOM] }),
+    _openCuts: () => { builds++; return []; },
+    _rawPhysicalBodiesR: () => [],
+  };
+  const first = furnitureWallSurfacesFor(source);
+  const second = furnitureWallSurfacesFor(source);
+  assert.equal(first, second);
+  assert.equal(builds, 1);
+  source._cfgEpoch++;
+  const afterGeometryChange = furnitureWallSurfacesFor(source);
+  assert.notEqual(afterGeometryChange, first);
+  assert.equal(builds, 2);
 });
 
 test('the default reach is six cells — thirty centimetres on a default plan', () => {
@@ -227,8 +394,9 @@ test('the default reach is six cells — thirty centimetres on a default plan', 
 test('preview and commit share one deterministic furniture placement resolver', () => {
   const input = {
     symbol: 'sofa', widthCm: 180, depthCm: 90,
-    point: [300, 112], canvasW: 1000, canvasH: 1000,
-    cellCm: 5, gridPitch: GRID_PITCH, walls: EDGES,
+    point: [300, TOP_20], canvasW: 1000, canvasH: 1000,
+    intentPoint: [300, TOP_20],
+    cellCm: 5, gridPitch: GRID_PITCH, walls: THICK_SURFACES,
     wallReach: 30,
   };
   const preview = resolveFurniturePlacement(input);
@@ -236,20 +404,21 @@ test('preview and commit share one deterministic furniture placement resolver', 
   assert.deepEqual(preview, commit);
   assert.equal(preview.symbol, 'sofa');
   closeTo((preview.x + preview.w / 2) * 1000, 300, GRID_PITCH);
-  closeTo((preview.y + preview.h / 2) * 1000, 100 + preview.h * 500);
+  closeTo((preview.y + preview.h / 2) * 1000, TOP_20 + preview.h * 500);
   assert.equal(preview.angle, 0);
 });
 
 test('the shared placement resolver supports Shift/free, canvas guards and unknown symbols', () => {
   const base = {
     symbol: 'sofa', widthCm: 180, depthCm: 90,
-    point: [300, 112], canvasW: 1000, canvasH: 1000,
-    cellCm: 5, gridPitch: GRID_PITCH, walls: EDGES,
+    point: [300, TOP_20], canvasW: 1000, canvasH: 1000,
+    intentPoint: [300, TOP_20],
+    cellCm: 5, gridPitch: GRID_PITCH, walls: THICK_SURFACES,
     wallReach: 30,
   };
   const free = resolveFurniturePlacement({ ...base, free: true });
   closeTo((free.x + free.w / 2) * 1000, 300);
-  closeTo((free.y + free.h / 2) * 1000, 112);
+  closeTo((free.y + free.h / 2) * 1000, TOP_20);
   const guarded = resolveFurniturePlacement({ ...base, point: [-1e9, -1e9], free: true });
   assert.equal(guarded.x, -5000);
   assert.equal(guarded.y, -5000);

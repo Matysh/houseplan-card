@@ -249,18 +249,67 @@ const res = await page.evaluate(async () => {
     && near((wc?.h ?? NaN) * 1000, cmToUnits(70), 1e-6);
 
   // ================= 6. магнит к стене =====================================
+  // #445: make the living-room top and shared right wall physically thick.
+  // Exact endpoints are persisted in normalised config coordinates; the
+  // magnet must consume their room-facing render surfaces, not their axes.
+  c._curSpaceCfg.walls = [
+    { key: '0.295833,0.141667@0.0000', cm: 20, a: [0.04, 0.14], b: [0.55, 0.14] },
+    { key: '0.550000,0.358333@1.5706', cm: 20, a: [0.55, 0.14], b: [0.55, 0.58] },
+  ];
+  c._cfgEpoch++; c.requestUpdate(); await c.updateComplete;
+  const wallHalf = cmToUnits(20) / 2;
+  const firstSurfaceSnapshot = c._editorRuntime?._furnWalls;
+  out.wallSurfaceCandidatesAreCached = !!firstSurfaceSnapshot
+    && firstSurfaceSnapshot === c._editorRuntime?._furnWalls;
+
   await openFurniture();
   category('bed')?.click(); await c.updateComplete;
   pick('bed_double'); await c.updateComplete;
-  ev('pointerdown', stageEl(), 300, 150);           // 10 единиц от стены y=140
+  ev('pointermove', stageEl(), 300, 140 + wallHalf, { pointerType: 'mouse' });
+  await c.updateComplete;
+  const thickWallPreview = c._editorRuntime?._furniturePreviewPlacement()
+    ? JSON.parse(JSON.stringify(c._editorRuntime._furniturePreviewPlacement())) : null;
+  ev('pointerdown', stageEl(), 300, 140 + wallHalf);
   await c.updateComplete;
   const bed = c._decorList.find((s) => s.symbol === 'bed_double');
   const depth = cmToUnits(200);
   out.wallMagnetPullsItFlat = !!bed
-    && near((bed.y + bed.h / 2) * 1000, 140 + depth / 2, 1e-6);
+    && near((bed.y + bed.h / 2) * 1000, 140 + wallHalf + depth / 2, 1e-6);
   out.wallMagnetKeepsTheAngle = !!bed && (bed.angle || 0) === 0;   // стена горизонтальна
   out.wallMagnetQuantisesAlongTheWall = !!bed
     && Math.abs((bed.x + bed.w / 2) * 1000 - 300) <= PITCH + 1e-6;
+  out.thickWallPreviewAndCommitAreIdentical = !!bed && !!thickWallPreview
+    && ['x', 'y', 'w', 'h'].every((key) => near(bed[key], thickWallPreview[key], 1e-12))
+    && (bed.angle || 0) === thickWallPreview.angle;
+
+  // The regular decor snap resolves this pointer to the shared wall axis.
+  // Surface-side selection must still use the raw point on the r2 side.
+  await openFurniture();
+  category('chair')?.click(); await c.updateComplete;
+  pick('chair'); await c.updateComplete;
+  const sharedIntentX = 550 + wallHalf / 2;
+  ev('pointermove', stageEl(), sharedIntentX, 300, { pointerType: 'mouse' });
+  await c.updateComplete;
+  ev('pointerdown', stageEl(), sharedIntentX, 300);
+  await c.updateComplete;
+  const sharedChair = c._decorList.find((s) => s.symbol === 'chair');
+  const chairDepth = (sharedChair?.h ?? NaN) * 1000;
+  const rightSurfaceCentre = 550 + wallHalf + chairDepth / 2;
+  out.sharedWallUsesRawPointerSide = !!sharedChair
+    && near((sharedChair.x + sharedChair.w / 2) * 1000, rightSurfaceCentre, 1e-6);
+
+  // Once a piece is on the r2 face, an exact-axis drag preserves that face
+  // instead of resolving an arbitrary room/input-order tie.
+  const sharedChairId = sharedChair?.id ?? null;
+  const sharedChairY = sharedChair ? (sharedChair.y + sharedChair.h / 2) * 1000 : NaN;
+  ev('pointerdown', el(sharedChairId), rightSurfaceCentre, sharedChairY);
+  ev('pointermove', stageEl(), 550, sharedChairY);
+  await c.updateComplete;
+  const axisDraggedChair = c._decorList.find((s) => s.id === sharedChairId);
+  out.exactAxisDragPreservesWallSide = !!axisDraggedChair
+    && near((axisDraggedChair.x + axisDraggedChair.w / 2) * 1000, rightSurfaceCentre, 1e-6);
+  ev('pointerup', stageEl(), 550, sharedChairY);
+  await c.updateComplete;
 
   // Shift обходит магнит, но оставляет обычную привязку декора к сетке.
   await openFurniture();
@@ -294,19 +343,21 @@ const res = await page.evaluate(async () => {
   out.touchCancelMoveAndSecondContactDoNotSave = c._decorList.length === beforeTouch
     && !ghost() && c._furnTouchPending === null;
 
-  // …магнит работает и при ПЕРЕТАСКИВАНИИ: тянем диван к левой стене (x=40)
+  // …магнит работает и при ПЕРЕТАСКИВАНИИ: тянем диван к общей толстой стене
+  // со стороны гостиной. BACK обязан лечь на x=550-half, а не на ось x=550.
   c._editorRuntime._clearFurniturePreview();
   c._decorTool = 'select'; c._furnPalette = null; c._furnCategory = null;
   c._decorSel = sofaId; c.requestUpdate();
   await c.updateComplete; await sleep(40); await c.updateComplete;
   ev('pointerdown', el(sofaId), 300, 300);
   out.dragStarted = !!sofaId && c._decorMove?.id === sofaId;
-  ev('pointermove', stageEl(), 55, 300);            // 15 единиц от стены x=40
+  ev('pointermove', stageEl(), 540, 300);
   await c.updateComplete;
   const pulled = sofaNow();
   out.dragMagnetTurnsItToTheWall = Math.abs(Math.abs(pulled.angle || 0) - 90) < 1e-6;
   out.dragMagnetPressesTheBack =
-    near((pulled.x + pulled.w / 2) * 1000, 40 + cmToUnits(90) / 2, 1e-6);
+    near((pulled.x + pulled.w / 2) * 1000,
+      550 - wallHalf - cmToUnits(90) / 2, 1e-6);
   ev('pointermove', stageEl(), 300, 300, { shiftKey: true });
   await c.updateComplete;
   const shiftDragGridIndex = (sofaNow().x * 1000) / PITCH;
