@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.71.0-beta.2 — 2026-09-03
+
 - Custom background images now recover cleanly after interrupted uploads,
   consume quota consistently, retry after configuration changes and remain
   compatible with older integrations; language switching and failed support
