@@ -110,23 +110,20 @@ const result = await page.evaluate(async () => {
   out.roomHighlightSurvives = card._hoverRoom !== null
     && !!root().querySelector('.room-hover-fill-layer,.room-hover-outline-layer');
 
-  // The card also has a capture-phase gesture safety net. Remove that one
-  // listener briefly so this probe proves the room's tooltip-off early-return
-  // branch owns modality rather than receiving accidental parent coverage.
-  const gestureOwner = root().querySelector('ha-card');
-  gestureOwner.removeEventListener('pointermove', card._touchGestureGuard, { capture: true });
-  room().dispatchEvent(pointer('pointermove', 'pen', 190, 190));
+  // Call the room listener's preflight directly: the card also has a capture-
+  // phase gesture safety net, and letting the event bubble would prove the
+  // parent path rather than this tooltip-off early-return branch.
+  card._roomTipEnabledForPointer(pointer('pointermove', 'pen', 190, 190));
   await card.updateComplete;
   out.disabledPenMoveUpdatesModality = card._pointerModality.modality === 'pen';
   out.disabledPenMoveClearsMouseHover = card._hoverRoom === null && card._tip === null;
   room().dispatchEvent(mouse('pointerenter', 195, 195));
   room().dispatchEvent(mouse('pointermove', 195, 195));
-  room().dispatchEvent(pointer('pointermove', 'touch', 195, 195));
+  card._roomTipEnabledForPointer(pointer('pointermove', 'touch', 195, 195));
   await card.updateComplete;
   out.disabledTouchMoveUpdatesModality = card._pointerModality.modality === 'touch';
   out.disabledTouchMoveClearsMouseHover = card._hoverRoom === null && card._tip === null;
   out.disabledNonMouseMovesStillSkipArea = roomAreaCalls === 0;
-  gestureOwner.addEventListener('pointermove', card._touchGestureGuard, { capture: true });
 
   root().querySelector('.dev').dispatchEvent(mouse('pointermove', 200, 200));
   await card.updateComplete;

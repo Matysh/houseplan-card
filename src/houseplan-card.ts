@@ -7303,6 +7303,15 @@ export class HouseplanCard extends LitElement {
     this._tip = { x: ev.clientX, y: ev.clientY, title, meta, lqi, temp, hum, room };
   }
 
+  /** Room pointer preflight stays authoritative even when its tooltip is off. */
+  private _roomTipEnabledForPointer(ev: PointerEvent): boolean {
+    if (this._mode !== 'view') return false;
+    this._notePointer(ev);
+    if (showRoomTooltipOf(this._settings)) return true;
+    if (this._tip?.room) this._tip = null;
+    return false;
+  }
+
   // ================= ROOM MARKUP EDITOR =================
 
   private get _gridPitch(): number {
@@ -11587,12 +11596,7 @@ export class HouseplanCard extends LitElement {
               }
               let areaText: string | null | undefined;
               const tip = (e: PointerEvent) => {
-                if (this._mode !== 'view') return;
-                this._notePointer(e);
-                if (!showRoomTooltipOf(this._settings)) {
-                  if (this._tip?.room) this._tip = null;
-                  return;
-                }
+                if (!this._roomTipEnabledForPointer(e)) return;
                 if (areaText === undefined) areaText = this._roomArea(r);
                 this._showTip(
                   e,

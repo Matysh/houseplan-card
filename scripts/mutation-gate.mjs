@@ -1133,8 +1133,8 @@ const MUTANT_DEFINITIONS = [
       + 'layout and virtual-light content are unchanged (#440)',
     patches: [{
       file: 'src/space-card.ts',
-      find: '      if (configChanged || layoutChanged || virtualLightsChanged || decorAssetsCapabilityChanged) {',
-      replace: '      if (configChanged || layoutChanged || virtualLightsChanged) {',
+      find: '        this._snap = snap;\n',
+      replace: '        this._snap = { ...snap, decorAssetsApi: this._snap?.decorAssetsApi ?? null };\n',
     }],
   },
   {
@@ -4831,8 +4831,8 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'decor-physical-inventory-follows-sidecars',
-    guard: 'python3 -m pytest tests_backend/test_decor_assets.py -q -p no:cacheprovider '
-      + '-k physical_inventory',
+    guard: 'node scripts/backend-test-guard.mjs physical_inventory '
+      + 'tests_backend/test_decor_assets.py',
     because: 'quota is a physical-storage boundary: malformed/missing sidecars cannot make '
       + 'promoted blobs invisible, while sidecars without blobs consume no blob quota (#434 AC1)',
     patches: [{
@@ -5051,9 +5051,9 @@ const MUTANT_DEFINITIONS = [
       + 'even when the room information tooltip is disabled (#440 AC2)',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: '                this._notePointer(e);\n'
-        + '                if (!showRoomTooltipOf(this._settings)) {',
-      replace: '                if (!showRoomTooltipOf(this._settings)) {',
+      find: '    this._notePointer(ev);\n'
+        + '    if (showRoomTooltipOf(this._settings)) return true;',
+      replace: '    if (showRoomTooltipOf(this._settings)) return true;',
     }],
   },
   {
