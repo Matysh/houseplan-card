@@ -176,6 +176,38 @@ test('the CLI prints the key and writes it to GITHUB_OUTPUT', (t) => {
   }
 });
 
+test('#430 ключ смоков покрывает всё, что эта job исполняет', () => {
+  // Прогон #2371 (ee678352) добавил в verify-guard.mjs пробу гарда benchmark,
+  // и job со смоками была пропущена как переиспользованная: файл исполняется
+  // только там, а в её ключ не входил. Проба уехала в dev, не запустившись ни
+  // разу. Здесь закреплено, что так больше не выйдет.
+  const { dir, put } = makeTree();
+  try {
+    put('demo/serve.mjs', '// harness\n');
+    put('demo/guard/verify-guard.mjs', '// probes\n');
+    put('demo/guard/guard_tail_exception.mjs', '// probe\n');
+    put('demo/benchmark_backdrop_decode.mjs', '// benchmark\n');
+    const files = harnessFiles(dir, 'smoke');
+    for (const rel of [
+      'demo/serve.mjs',
+      'demo/guard/verify-guard.mjs',
+      'demo/guard/guard_tail_exception.mjs',
+      'demo/benchmark_backdrop_decode.mjs',
+    ]) {
+      assert.ok(files.includes(rel), `${rel} вне ключа смоков — его правка будет реюзнута`);
+    }
+    // И ключ обязан меняться от правки каждого из них: список файлов сам по
+    // себе ничего не гарантирует, если хэш их не читает.
+    for (const rel of files) {
+      const before = reuseKey(dir, 'smoke');
+      put(rel, '// changed\n');
+      assert.notEqual(reuseKey(dir, 'smoke'), before, `${rel}: правка не меняет ключ`);
+    }
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test('HARNESS keeps scripts/** out of the keys on purpose', () => {
   // Инфраструктурная работа правит scripts/** постоянно. Если бы каталог
   // целиком попал в ключ, переиспользование не срабатывало бы никогда — ровно
