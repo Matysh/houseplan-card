@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.71.0-beta.4 — 2026-09-04
+
 - Furniture now snaps its back edge to the visible physical wall surface rather
   than the centreline, respecting local thickness and the intended side of a
   shared wall so the object no longer ends up inside the masonry
