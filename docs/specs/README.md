@@ -164,6 +164,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#294](https://github.com/Matysh/houseplan-card/issues/294) Esc завершает текущую цепочку стен без удаления геометрии | [294-wall-esc-detach.md](294-wall-esc-detach.md) |
 | [#419](https://github.com/Matysh/houseplan-card/issues/419) Безопасная уборка Area-снапшота при пустом или усечённом HA-реестре | [419-area-snapshot-roster-guard.md](419-area-snapshot-roster-guard.md) |
 | [#421](https://github.com/Matysh/houseplan-card/issues/421) Отрицательные доказательства для трёх защитных проверок | [421-negative-test-proofs.md](421-negative-test-proofs.md) |
+| [#426](https://github.com/Matysh/houseplan-card/issues/426) Отключение информационного окна комнаты при наведении | [426-room-hover-tooltip-toggle.md](426-room-hover-tooltip-toggle.md) |
 
 ## P3
 
