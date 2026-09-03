@@ -782,6 +782,9 @@ Deleting or replacing a placed image leaves the reusable file in the palette.
 The palette deletes a file only after all placed copies in all spaces are gone.
 If a file is missing or fails its integrity check, View hides it; Background
 shows a crossed placeholder that can be selected and repaired with Replace.
+Exports still keep that image object without embedding the absent file. A later
+import shows the existing missing-content confirmation and, once confirmed,
+keeps the same repairable placeholder instead of rejecting the whole plan.
 
 ![Selected line in the Background editor](images/07-background-editor.png)
 

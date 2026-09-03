@@ -74,6 +74,13 @@ _IMPORT_ID_NAMESPACES = {
 }
 _MAX_IMPORT_LINEAGE_DEPTH = 16
 _REPORT_EXAMPLE_LIMIT = 24
+_DECOR_ASSET_MIME_BY_SUFFIX = {
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".webp": "image/webp",
+    ".svg": "image/svg+xml",
+}
+_DECOR_ASSET_MIME_TYPES = frozenset(_DECOR_ASSET_MIME_BY_SUFFIX.values())
 
 _SPACE_PLAN_FIELDS = (
     "id", "title", "cell_cm", "plan_url", "plan_aspect", "plan_x", "plan_y",
@@ -98,6 +105,7 @@ _DECOR_KIND_FIELDS = {
     "ellipse": ("x", "y", "w", "h", "angle", "fill", "fill_color", "fill_opacity"),
     "text": ("x", "y", "text", "size", "size_cm", "scale", "angle"),
     "furniture": ("symbol", "x", "y", "w", "h", "angle", "flip_h", "flip_v"),
+    "image": ("asset_id", "x", "y", "w", "h", "angle", "flip_h", "flip_v"),
 }
 
 
@@ -470,10 +478,9 @@ def content_manifest(config: dict[str, Any], config_root: Path) -> list[dict[str
                 # Identity is extension-neutral: a missing target must compute
                 # exactly the same expected manifest as the source.
                 "url": aid, "asset_id": aid, "storage": "internal",
-                "mime": metadata.get("mime") or {
-                    ".png": "image/png", ".jpg": "image/jpeg", ".webp": "image/webp",
-                    ".svg": "image/svg+xml",
-                }.get(blob.suffix if blob else ""),
+                "mime": metadata.get("mime") or _DECOR_ASSET_MIME_BY_SUFFIX.get(
+                    blob.suffix if blob else ""
+                ),
                 "hash": aid, "exists_at_export": exists,
             })
     return out
@@ -802,7 +809,11 @@ def _validate_plan_only_document(
         raise ImportFailure("invalid_format", "Plan-only placement manifest is not canonical")
     content = document.get("content_manifest")
     if not isinstance(content, list) or any(
-        not isinstance(item, dict) or item.get("owner") != "space"
+        not isinstance(item, dict)
+        or not (
+            item.get("owner") == "space"
+            or item.get("owner") == "decor" and item.get("kind") == "decor_asset"
+        )
         for item in content
     ):
         raise ImportFailure("invalid_format", "Plan-only export contains private content")
@@ -1639,14 +1650,24 @@ def _content_state(document: dict[str, Any], same_source: bool, config_root: Pat
     for item in expected:
         row = dict(item)
         declared = supplied_by_id[identity(item)]
-        row["exists_at_export"] = declared.get("exists_at_export")
+        declared_exists = declared.get("exists_at_export")
+        row["exists_at_export"] = declared_exists
         if item.get("kind") == "decor_asset":
             aid = str(item.get("asset_id") or item.get("url") or "")
+            declared_mime = declared.get("mime")
+            valid_mime = (
+                isinstance(declared_mime, str)
+                and declared_mime in _DECOR_ASSET_MIME_TYPES
+            )
+            missing_mime = declared_exists is False and declared_mime is None
             if (declared.get("asset_id") != aid or declared.get("hash") != aid
-                    or declared.get("mime") not in {
-                        "image/png", "image/jpeg", "image/webp", "image/svg+xml",
-                    }):
+                    or type(declared_exists) is not bool
+                    or not (valid_mime or missing_mime)):
                 raise ImportFailure("invalid_content", "Invalid decor asset manifest row")
+            # Preserve the source description for preview/digest purposes. It
+            # never selects or serves target bytes; the exact local hash below
+            # remains authoritative for availability.
+            row["mime"] = declared_mime
             candidates = sorted((config_root / ASSETS_DIR).glob(f"{aid}.*"))
             blob = next((path for path in candidates if path.suffix in {".png", ".jpg", ".webp", ".svg"}), None)
             exists = False

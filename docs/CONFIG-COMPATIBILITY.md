@@ -249,6 +249,11 @@ It records content hash and source availability but never embeds file bytes or
 signed URLs. The importer continues to accept v1. A matching verified local
 hash is reused; otherwise import requires confirmation and preserves the image
 record as an editor repair placeholder instead of removing its geometry.
+When the source blob and metadata are already absent, the canonical row has
+`exists_at_export:false` and may have `mime:null`; that exact missing state is
+importable in full, single-space and plan-only documents. Missing MIME is not a
+general validation bypass: the availability flag must be a literal boolean,
+identity/hash remain exact, and every supplied non-null MIME must be supported.
 Before a permanent downgrade, remove all image objects with a current card and
 then explicitly delete their now-unused files from the palette.
 

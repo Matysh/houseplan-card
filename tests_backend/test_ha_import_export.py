@@ -107,6 +107,190 @@ def _config() -> dict:
     return commit_wall_segment_model(legacy)[0]
 
 
+def _config_with_decor_image(asset_id: str) -> tuple[dict, dict]:
+    config = _config()
+    shape = {
+        "id": "custom-picture", "kind": "image", "asset_id": asset_id,
+        "x": 0.12, "y": 0.23, "w": 0.34, "h": 0.45,
+        "angle": 12.5, "opacity": 0.6, "flip_h": True, "flip_v": False,
+    }
+    config["spaces"][0]["decor"] = [shape]
+    return config, shape
+
+
+def _missing_decor_export(
+    source: Path, *, kind: str = "full", plan_only: bool = False,
+    asset_id: str = "a" * 64,
+) -> tuple[dict, dict]:
+    config, shape = _config_with_decor_image(asset_id)
+    document, _filename = create_export(
+        SimpleNamespace(instance_id="source-instance"),
+        {"config": config, "rev": 2},
+        {"layout": {}, "rev": 3},
+        kind=kind,
+        space_id="ground" if kind == "space" else None,
+        plan_only=plan_only,
+        card_version="review",
+        config_root=source,
+    )
+    return document, shape
+
+
+@pytest.mark.parametrize(
+    ("kind", "plan_only"),
+    [("full", False), ("space", False), ("space", True)],
+    ids=["full", "space", "plan-only"],
+)
+def test_issue_428_missing_decor_asset_round_trips_in_every_export_mode(
+    tmp_path: Path, kind: str, plan_only: bool,
+) -> None:
+    document, shape = _missing_decor_export(
+        tmp_path / "source", kind=kind, plan_only=plan_only,
+    )
+    assert document["content_manifest"] == [{
+        "kind": "decor_asset",
+        "owner": "decor",
+        "owner_id": "ground:custom-picture",
+        "field": "asset_id",
+        "url": shape["asset_id"],
+        "asset_id": shape["asset_id"],
+        "storage": "internal",
+        "mime": None,
+        "hash": shape["asset_id"],
+        "exists_at_export": False,
+    }]
+
+    runtime = SimpleNamespace(instance_id="target-instance", import_previews={})
+    response = create_preview(
+        runtime,
+        json.dumps(document).encode(),
+        owner_id="alice",
+        duplicate_policy="skip",
+        current_config_data={"config": {"spaces": [], "markers": []}, "rev": 0},
+        current_layout_data={"layout": {}, "rev": 0},
+        config_root=tmp_path / "target",
+    )
+    assert response["preview"]["confirmation_required"] is True
+    assert response["preview"]["content"][0]["state"] == "missing_preserved"
+    candidate = get_candidate(runtime, response["token"], "alice")
+    with pytest.raises(ImportFailure) as unconfirmed:
+        prepare_apply(
+            candidate, {"spaces": [], "markers": []}, {},
+            confirm_missing_content=False,
+        )
+    assert unconfirmed.value.code == "content_confirmation_required"
+
+    imported, _layout, _details = prepare_apply(
+        candidate, {"spaces": [], "markers": []}, {},
+        confirm_missing_content=True,
+    )
+    imported_images = [
+        item
+        for space in imported["spaces"]
+        for item in space.get("decor") or []
+        if item.get("kind") == "image"
+    ]
+    assert imported_images == [shape]
+
+
+@pytest.mark.parametrize(
+    ("mime", "omit_mime"),
+    [(None, False), (None, True), ("image/png", False)],
+    ids=["null", "omitted", "supported"],
+)
+def test_issue_428_explicitly_missing_asset_accepts_bounded_mime(
+    tmp_path: Path, mime: str | None, omit_mime: bool,
+) -> None:
+    document, _shape = _missing_decor_export(tmp_path / "source")
+    if omit_mime:
+        document["content_manifest"][0].pop("mime")
+    else:
+        document["content_manifest"][0]["mime"] = mime
+    rows, confirmation = import_export_api._content_state(
+        document, False, tmp_path / "target",
+    )
+    assert rows[0]["mime"] == mime
+    assert rows[0]["state"] == "missing_preserved"
+    assert confirmation is True
+
+
+@pytest.mark.parametrize(
+    ("exists_at_export", "mime", "remove_exists"),
+    [
+        (True, None, False),
+        (False, "", False),
+        (False, "text/plain", False),
+        (False, 0, False),
+        (False, [], False),
+        (False, {}, False),
+        (None, "image/png", True),
+        (None, "image/png", False),
+        (0, "image/png", False),
+        (1, "image/png", False),
+        ("false", "image/png", False),
+        ([], "image/png", False),
+        ({}, "image/png", False),
+    ],
+    ids=[
+        "present-null-mime", "empty-mime", "unsupported-mime", "numeric-mime",
+        "list-mime", "object-mime", "missing-flag", "null-flag", "zero-flag",
+        "one-flag", "string-flag", "list-flag", "object-flag",
+    ],
+)
+def test_issue_428_missing_mime_exception_remains_fail_closed(
+    tmp_path: Path, exists_at_export: Any, mime: Any, remove_exists: bool,
+) -> None:
+    document, _shape = _missing_decor_export(tmp_path / "source")
+    row = document["content_manifest"][0]
+    row["exists_at_export"] = exists_at_export
+    row["mime"] = mime
+    if remove_exists:
+        row.pop("exists_at_export")
+    with pytest.raises(ImportFailure) as invalid:
+        import_export_api._content_state(document, False, tmp_path / "target")
+    assert invalid.value.code == "invalid_content"
+
+
+@pytest.mark.parametrize("field", ["asset_id", "hash"])
+def test_issue_428_missing_asset_keeps_hash_identity_strict(
+    tmp_path: Path, field: str,
+) -> None:
+    document, _shape = _missing_decor_export(tmp_path / "source")
+    document["content_manifest"][0][field] = "b" * 64
+    with pytest.raises(ImportFailure) as invalid:
+        import_export_api._content_state(document, False, tmp_path / "target")
+    assert invalid.value.code == "invalid_content"
+
+
+def test_issue_428_missing_source_reuses_only_exact_target_blob(tmp_path: Path) -> None:
+    data = b"target already has the canonical custom image"
+    asset_id = hashlib.sha256(data).hexdigest()
+    document, _shape = _missing_decor_export(
+        tmp_path / "source", asset_id=asset_id,
+    )
+    target_assets = tmp_path / "target" / "houseplan" / "assets"
+    target_assets.mkdir(parents=True)
+    blob = target_assets / f"{asset_id}.png"
+    blob.write_bytes(data)
+
+    rows, confirmation = import_export_api._content_state(
+        document, False, tmp_path / "target",
+    )
+    assert rows[0]["mime"] is None
+    assert rows[0]["exists_at_export"] is False
+    assert rows[0]["exists_on_target"] is True
+    assert rows[0]["state"] == "available"
+    assert confirmation is False
+
+    blob.write_bytes(b"different bytes")
+    rows, confirmation = import_export_api._content_state(
+        document, False, tmp_path / "target",
+    )
+    assert rows[0]["exists_on_target"] is False
+    assert rows[0]["state"] == "missing_preserved"
+    assert confirmation is True
+
+
 def _document(tmp_path: Path, kind: str = "full") -> dict:
     runtime = SimpleNamespace(instance_id="instance-a")
     document, _filename = create_export(

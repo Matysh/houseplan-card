@@ -100,7 +100,7 @@ Exporter не восстанавливает MIME эвристикой и не �
 | literal `true` | отсутствует, `null` или неподдерживаемая строка | `ImportFailure("invalid_content")` |
 | literal `false` | поддерживаемая строка | допустимо |
 | literal `false` | отсутствует или `null` | допустимо: это исправляемый missing asset |
-| literal `false` | неподдерживаемая непустая строка либо значение другого типа | `ImportFailure("invalid_content")` |
+| literal `false` | любая неподдерживаемая строка, включая `""`, либо значение другого типа | `ImportFailure("invalid_content")` |
 | поле отсутствует, `null`, `0`, `1`, строка, объект или массив | любое | `ImportFailure("invalid_content")` |
 
 Во всех допустимых строках остаются обязательными:
@@ -162,7 +162,8 @@ MIME связано одновременно с exact image identity и literal 
 ## Затронутые файлы и модули
 
 - `custom_components/houseplan/import_export.py` — bounded validation
-  `decor_asset` в `_content_state()`;
+  `decor_asset` в `_content_state()`, полная image-проекция plan-only и её
+  ограниченный manifest allowlist;
 - `tests_backend/test_ha_import_export.py` — положительный round-trip и
   отрицательная матрица;
 - `docs/CONFIG-COMPATIBILITY.md` — точное значение missing MIME;

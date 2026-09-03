@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Exports made while a reusable decor-image file is missing can now be imported
+  with the existing confirmation instead of rejecting the whole plan; full,
+  single-space and plan-only exports preserve the repairable image object
+  ([#428](https://github.com/Matysh/houseplan-card/issues/428)).
 - Oversized decor-image sources can now be added through the safe reduced-copy
   action; House Plan hides only the forbidden original instead of hiding both
   choices ([#427](https://github.com/Matysh/houseplan-card/issues/427)).
