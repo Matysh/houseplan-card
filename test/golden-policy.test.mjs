@@ -27,7 +27,9 @@ test('golden capture fails on runtime errors but permits missing baselines', () 
 });
 
 test('golden verification cannot make a partial success claim', () => {
-  assert.doesNotThrow(() => assertGoldenInvocation('capture', 'one-scenario'));
+  // #455: платформа передаётся явно — иначе юнит был бы зелёным на Linux и
+  // красным на машине владельца, то есть тестом про хост, а не про правило.
+  assert.doesNotThrow(() => assertGoldenInvocation('capture', 'one-scenario', { platform: 'linux' }));
   assert.doesNotThrow(() => assertGoldenInvocation('verify', ''));
   assert.throws(() => assertGoldenInvocation('verify', 'one-scenario'), /complete matrix/);
   assert.throws(() => assertGoldenInvocation('unknown', ''), /unknown golden mode/);
@@ -309,3 +311,21 @@ test('размер матрицы обязателен: догадываться
   }
 });
 
+
+test('#455 съёмка golden в чужой среде отказывается заранее, verify — нет', () => {
+  // До этой задачи `golden:capture` на Windows отрабатывал штатно и писал PNG,
+  // а стена появлялась на приёмке. Отказ переехал на первую строку прогона.
+  assert.throws(() => assertGoldenInvocation('capture', '', { platform: 'win32' }),
+    /съёмка отказана/);
+  assert.throws(() => assertGoldenInvocation('capture', '', { platform: 'win32' }),
+    /wsl -d Ubuntu/);
+  // Диагностика законна и остаётся доступной в любой среде.
+  assert.doesNotThrow(() => assertGoldenInvocation('verify', '', { platform: 'win32' }));
+  // Осознанный обход существует и требует причину.
+  assert.doesNotThrow(() => assertGoldenInvocation('capture', '', {
+    platform: 'win32', allowance: 'на этой машине нет WSL',
+  }));
+  assert.throws(() => assertGoldenInvocation('capture', '', {
+    platform: 'win32', allowance: '',
+  }), /съёмка отказана/);
+});

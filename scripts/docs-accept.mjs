@@ -25,6 +25,7 @@
  */
 import { createHash } from 'node:crypto';
 import { copyFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { assertCaptureEnvironment, captureEnvironment } from './capture-environment.mjs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -94,9 +95,13 @@ export function verifyDocsCandidate({
 /** Build the manifest written by the CLI without erasing an earlier review trace. */
 export function acceptedDocsManifest({
   manifest, previousAcceptance, decision, skipWitnesses = false, skipReason = '',
+  platform = null,
 }) {
   return {
     ...manifest,
+    // Провенанс среды приёмки (#455): рядом с версией браузера, чтобы у
+    // следующего разбора «почему кадры разошлись» была не только догадка.
+    ...(platform ? { acceptedOn: platform } : {}),
     acceptance: decision.replace.length
       ? {
         declared: [...decision.replace],
@@ -114,6 +119,13 @@ const list = (argv, name) => argv
   .filter(Boolean);
 
 function main(argv) {
+  // Среда приёмки (#455). Платформу съёмки манифест не несёт и не может:
+  // добавить поле — значит править `demo/docs/capture.mjs`, чей sha записан в
+  // индексе скриншотов, то есть платить пересъёмкой десяти картинок за
+  // проверку. Приёмка идёт там, где лежат артефакты, поэтому её платформа —
+  // достаточный признак среды кадров.
+  const allowed = assertCaptureEnvironment({ kind: 'docs', stage: 'accept' });
+  if (allowed) console.log(`Чужая среда приёмки разрешена осознанно: ${allowed}`);
   if (!argv.includes('--reviewed')) {
     console.error('отказ: замена скриншотов без явного --reviewed');
     return 2;
@@ -166,6 +178,7 @@ function main(argv) {
     manifest,
     previousAcceptance: previous,
     decision,
+    platform: captureEnvironment().platform,
     skipWitnesses,
     skipReason,
   });

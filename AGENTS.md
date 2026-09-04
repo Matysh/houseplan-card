@@ -344,9 +344,27 @@ whole review round that a local run would have caught immediately.
 
 The full smoke set, `golden` and `performance_smoke` still belong to the
 pre-beta run — which is then mandatory and complete. WSL runs of the full HA
-harness (`~/houseplan-card`, venv) and `golden:verify` are advisory; **the canon
-does not move**: the beta gate is CI at the exact SHA, and baselines are accepted
-only via `npm run golden:accept -- --reviewed` on a complete Linux CI artefact.
+harness (`~/houseplan-card`, venv) are advisory; **the canon does not move**:
+the beta gate is CI at the exact SHA.
+
+**Verifying and capturing are different things (#455).** `golden:verify` is
+advisory and legal anywhere, Windows included: it reports differences and
+accepts nothing. **Capturing** frames is refused outside Linux
+before the browser even starts — `golden:capture` through
+`demo/golden/policy.mjs`, documentation screenshots through
+`npm run docs:capture` (use that script, not a bare `node
+demo/docs/capture.mjs`: the gate sits one step earlier because editing the
+capture script invalidates the committed screenshot index). The refusal prints
+the WSL command. The reason is not policy but physics: Windows
+rasterizes text through DirectWrite with different subpixel and DPI behaviour,
+so no frame ever matches an accepted baseline byte for byte, no environment
+witness can exist, and acceptance would refuse anyway (#401 accepts any
+environment that proves itself with byte-identical undeclared frames — Linux is
+simply the only one we have). The deliberate override is
+`HP_ALLOW_FOREIGN_CAPTURE="reason"`; the reason travels into the output and the
+manifest. Baselines are still accepted only via
+`npm run golden:accept -- --reviewed` on a complete artefact, and the accepted
+index records the platform next to the Chromium build.
 
 **Backend.** A full Home Assistant harness cannot run on native Windows at all:
 Home Assistant imports the Unix-only `fcntl` module. Its canon is Linux CI or WSL.

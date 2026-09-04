@@ -192,3 +192,18 @@ test('#421 fingerprint-only refresh preserves the complete previous acceptance t
   });
   assert.deepEqual(firstRefresh.acceptance, { lastWriteWasFingerprintOnly: true });
 });
+
+test('#455 принятый манифест несёт среду приёмки', () => {
+  // Платформу СЪЁМКИ манифест кандидата не несёт и не будет: добавить поле —
+  // значит править demo/docs/capture.mjs, чей sha записан в индексе
+  // скриншотов, то есть заплатить пересъёмкой всех картинок за проверку,
+  // которая ничего не рисует (проверено: гейт документации сразу покраснел).
+  // Поэтому среда фиксируется там, где её знают без правок, — на приёмке.
+  const decision = { replace: ['01-view-desktop'], witnesses: 3, floor: 1 };
+  const accepted = acceptedDocsManifest({
+    manifest: candidate(), decision, platform: 'linux',
+  });
+  assert.equal(accepted.acceptedOn, 'linux');
+  const withoutPlatform = acceptedDocsManifest({ manifest: candidate(), decision });
+  assert.ok(!('acceptedOn' in withoutPlatform), 'без платформы поля быть не должно');
+});

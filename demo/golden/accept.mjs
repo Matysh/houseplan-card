@@ -10,6 +10,9 @@ import {
   goldenAcceptancePlan, goldenAcceptanceRefusal, goldenSilentDeclarations,
   goldenWitnessRefusal,
 } from '../../scripts/golden-acceptance.mjs';
+import {
+  assertCaptureEnvironment, captureEnvironment, environmentNote,
+} from '../../scripts/capture-environment.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const reviewed = process.argv.includes('--reviewed');
@@ -37,6 +40,16 @@ if (report.buildFingerprint !== sourceFingerprint(ROOT))
 if (typeof report.chromium !== 'string' || !report.chromium)
   throw new Error('candidate report does not identify its Chromium build');
 if (!Array.isArray(report.results)) throw new Error('candidate report has no scenario results');
+
+// Среда приёмки (#455). Отчёт съёмки платформу не несёт — `run.mjs` входит в
+// корпус sourceFingerprint, и его правка объявила бы устаревшими бандл,
+// скриншоты документации и сам индекс эталонов. Но приёмка идёт там же, где
+// лежат артефакты, поэтому её платформа — честный признак среды кадров.
+const environment = captureEnvironment();
+const foreignAllowed = assertCaptureEnvironment({ kind: 'golden', stage: 'accept' });
+if (foreignAllowed) {
+  console.log(`Чужая среда приёмки разрешена осознанно: ${foreignAllowed}`);
+}
 
 const refusal = goldenAcceptanceRefusal(report.results, declared, declaredNew);
 if (refusal) throw new Error(refusal);
@@ -72,7 +85,18 @@ const witnessCheck = goldenWitnessRefusal({
   skipWitnesses,
   skipReason,
 });
-if (witnessCheck.refusal) throw new Error(witnessCheck.refusal);
+if (witnessCheck.refusal) {
+  // Приписка про среду — то, чего не хватало отказу: «свидетелей 0 из 10» без
+  // неё читается как «объяви больше сцен», и обход в одну команду выглядит
+  // решением (#455).
+  const note = environmentNote({
+    capturedOn: environment.platform,
+    acceptedOn: existsSync(manifestPath)
+      ? JSON.parse(readFileSync(manifestPath, 'utf8')).platform || null
+      : null,
+  });
+  throw new Error(note ? `${witnessCheck.refusal}\n${note}` : witnessCheck.refusal);
+}
 // Кандидат проверяется целиком, до всякого решения о замене: сломанный отчёт
 // не имеет права оставить каталог эталонов половинным.
 for (const scenario of GOLDEN_SCENARIOS) {
@@ -102,6 +126,9 @@ writeFileSync(resolve(baselineRoot, GOLDEN_BASELINE_MANIFEST), `${JSON.stringify
   acceptedAt: new Date().toISOString(),
   sourceFingerprint: report.buildFingerprint,
   chromium: report.chromium,
+  // Платформа рядом с версией браузера: провенанс среды, по которому следующая
+  // приёмка отличит «объявили не то» от «сняли не там» (#455).
+  platform: environment.platform,
   // #355: след приёмки в артефакте, не только в истории shell.
   witnesses: skipWitnesses
     ? { skipped: true, reason: skipReason }
