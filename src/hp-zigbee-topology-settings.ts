@@ -8,7 +8,7 @@ import { mapTopologyNodes, TOPOLOGY_STALE_MS } from './zigbee-topology';
 import type { DevItem } from './types';
 import type { HaRegistrySnapshot } from './ha-binding-status';
 import type {
-  ZigbeeProviderState, ZigbeeTopologyRuntimeSnapshot,
+  ZigbeeProviderState, ZigbeeTopologyHass, ZigbeeTopologyRuntimeSnapshot,
 } from './zigbee-topology-runtime';
 
 const EMPTY_RUNTIME: ZigbeeTopologyRuntimeSnapshot = { revision: 0, topologies: [], states: {} };
@@ -22,7 +22,7 @@ export class HpZigbeeTopologySettings extends LitElement {
     registry: { attribute: false },
   };
 
-  hass: any;
+  hass!: ZigbeeTopologyHass;
   value: ZigbeeTopologySettings = { enabled: false, z2mBaseTopics: [] };
   savedEnabled = false;
   devices: readonly DevItem[] = [];

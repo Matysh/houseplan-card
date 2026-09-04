@@ -10264,7 +10264,7 @@ public _updateDecorStyle(next: DecorStyle): void {
     try {
       const cfg = this.host._serverCfg!;
       const isDefault = JSON.stringify(d.colors) === JSON.stringify(DEFAULT_FILL_COLORS);
-      let settings: any = { ...cfg.settings };
+      let settings: ServerConfig['settings'] & Record<string, unknown> = { ...cfg.settings };
       if (isDefault) delete settings.fill_colors;
       else settings.fill_colors = d.colors;
       const cm = this.host._imperial ? d.glowRadius * 30.48 : d.glowRadius * 100;

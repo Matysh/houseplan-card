@@ -7,7 +7,7 @@ import {
 } from './zigbee-topology';
 import {
   subscribeZigbeeTopology, zigbeeTopologyRuntimeSnapshot,
-  type ZigbeeTopologyRuntimeSnapshot,
+  type ZigbeeTopologyHass, type ZigbeeTopologyRuntimeSnapshot,
 } from './zigbee-topology-runtime';
 import type { HaRegistrySnapshot } from './ha-binding-status';
 import type { DevItem } from './types';
@@ -24,7 +24,7 @@ export class HpZigbeeTopologyOverlay extends LitElement {
     viewKey: { attribute: false },
   };
 
-  hass: any;
+  hass!: ZigbeeTopologyHass;
   devices: readonly DevItem[] = [];
   registry!: HaRegistrySnapshot;
   currentSpace = '';

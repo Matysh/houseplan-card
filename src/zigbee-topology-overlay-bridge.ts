@@ -2,9 +2,10 @@ import { html, nothing, type TemplateResult } from 'lit';
 import { zigbeeTopologySettingsOf } from './zigbee-topology-settings';
 import type { HaRegistrySnapshot } from './ha-binding-status';
 import type { DevItem } from './types';
+import type { ZigbeeTopologyHass } from './zigbee-topology-runtime';
 
 export function renderZigbeeTopologyOverlay(input: {
-  hass: any;
+  hass: ZigbeeTopologyHass;
   settings: unknown;
   devices: readonly DevItem[];
   registry: HaRegistrySnapshot;

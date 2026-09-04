@@ -65,6 +65,10 @@ export const TOPOLOGY_MAX_PAYLOAD_BYTES = 2 * 1024 * 1024;
 export const TOPOLOGY_MAX_NODES = 1000;
 export const TOPOLOGY_MAX_LINKS = 6000;
 
+function recordOf(value: unknown): Record<string, unknown> | null {
+  return value !== null && typeof value === 'object' ? value as Record<string, unknown> : null;
+}
+
 export function normalizeIeee(value: unknown): string | null {
   if (typeof value !== 'string' && typeof value !== 'number') return null;
   let text = String(value).trim().toLowerCase();
@@ -90,14 +94,15 @@ function lqiOf(value: unknown): number | undefined {
   return Number.isFinite(n) && n >= 0 && n <= 255 ? Math.round(n) : undefined;
 }
 
-function observation(value: any): ZigbeeDirectionalObservation {
-  const lqi = lqiOf(value?.lqi ?? value?.linkquality ?? value?.link_quality);
-  const relationship = typeof value?.relationship === 'string'
-    ? value.relationship.slice(0, 40) : undefined;
+function observation(value: unknown): ZigbeeDirectionalObservation {
+  const record = recordOf(value);
+  const lqi = lqiOf(record?.lqi ?? record?.linkquality ?? record?.link_quality);
+  const relationship = typeof record?.relationship === 'string'
+    ? record.relationship.slice(0, 40) : undefined;
   return { ...(lqi === undefined ? {} : { lqi }), ...(relationship ? { relationship } : {}) };
 }
 
-function boundedArray(value: unknown, max: number): any[] | null {
+function boundedArray(value: unknown, max: number): unknown[] | null {
   return Array.isArray(value) && value.length <= max ? value : null;
 }
 
@@ -108,7 +113,7 @@ function safePayload(value: unknown): boolean {
 
 function pushDirectionalLink(
   links: Map<string, ZigbeeTopologyLink>, warnings: ZigbeeTopologyWarning[],
-  from: string, to: string, value: any,
+  from: string, to: string, value: unknown,
 ): void {
   if (from === to) { warnings.push({ code: 'self_link', nodeKey: from }); return; }
   const forward = from < to;
@@ -129,28 +134,31 @@ export function normalizeZhaTopology(payload: unknown, now = Date.now()): Zigbee
   const nodes = new Map<string, ZigbeeTopologyNode>();
   const links = new Map<string, ZigbeeTopologyLink>();
   for (const row of rows) {
-    const ieee = normalizeIeee(row?.ieee ?? row?.ieee_address);
+    const record = recordOf(row);
+    const ieee = normalizeIeee(record?.ieee ?? record?.ieee_address);
     if (!ieee) { warnings.push({ code: 'invalid_payload' }); continue; }
     const key = nodeKey('zha', 'zha', ieee);
     nodes.set(key, {
       key, ieee,
-      ...(typeof row?.device_reg_id === 'string' ? { deviceId: row.device_reg_id } : {}),
-      role: roleOf(row?.device_type ?? row?.type),
-      ...(typeof row?.available === 'boolean' ? { available: row.available } : {}),
+      ...(typeof record?.device_reg_id === 'string' ? { deviceId: record.device_reg_id } : {}),
+      role: roleOf(record?.device_type ?? record?.type),
+      ...(typeof record?.available === 'boolean' ? { available: record.available } : {}),
     });
   }
   for (const row of rows) {
-    const ieee = normalizeIeee(row?.ieee ?? row?.ieee_address);
+    const record = recordOf(row);
+    const ieee = normalizeIeee(record?.ieee ?? record?.ieee_address);
     if (!ieee) continue;
     const from = nodeKey('zha', 'zha', ieee);
-    const neighbors = boundedArray(row?.neighbors, TOPOLOGY_MAX_LINKS);
-    if (!neighbors) { if (row?.neighbors != null) warnings.push({ code: 'invalid_payload', nodeKey: from }); continue; }
+    const neighbors = boundedArray(record?.neighbors, TOPOLOGY_MAX_LINKS);
+    if (!neighbors) { if (record?.neighbors != null) warnings.push({ code: 'invalid_payload', nodeKey: from }); continue; }
     for (const neighbor of neighbors) {
       if (links.size >= TOPOLOGY_MAX_LINKS) { warnings.push({ code: 'invalid_payload' }); break; }
-      const otherIeee = normalizeIeee(neighbor?.ieee ?? neighbor?.ieee_address);
+      const neighborRecord = recordOf(neighbor);
+      const otherIeee = normalizeIeee(neighborRecord?.ieee ?? neighborRecord?.ieee_address);
       if (!otherIeee) { warnings.push({ code: 'invalid_payload', nodeKey: from }); continue; }
       const to = nodeKey('zha', 'zha', otherIeee);
-      if (!nodes.has(to)) nodes.set(to, { key: to, ieee: otherIeee, role: roleOf(neighbor?.device_type) });
+      if (!nodes.has(to)) nodes.set(to, { key: to, ieee: otherIeee, role: roleOf(neighborRecord?.device_type) });
       pushDirectionalLink(links, warnings, from, to, neighbor);
     }
   }
@@ -158,13 +166,15 @@ export function normalizeZhaTopology(payload: unknown, now = Date.now()): Zigbee
     freshness: 'provider-cache', nodes: [...nodes.values()], links: [...links.values()], warnings };
 }
 
-function z2mValue(payload: any): any {
+function z2mValue(payload: unknown): unknown {
   let value = payload;
   if (typeof value === 'string') {
     if (value.length > TOPOLOGY_MAX_PAYLOAD_BYTES) return null;
     try { value = JSON.parse(value); } catch { return null; }
   }
-  value = value?.data?.value ?? value?.value ?? value?.data ?? value;
+  const envelope = recordOf(value);
+  const data = recordOf(envelope?.data);
+  value = data?.value ?? envelope?.value ?? envelope?.data ?? value;
   if (typeof value === 'string') {
     if (value.length > TOPOLOGY_MAX_PAYLOAD_BYTES) return null;
     try { value = JSON.parse(value); } catch { return null; }
@@ -172,10 +182,11 @@ function z2mValue(payload: any): any {
   return value;
 }
 
-function endpointIeee(value: any, nodeById: Map<string, string>): string | null {
-  const direct = normalizeIeee(value?.ieee_address ?? value?.ieee ?? value);
+function endpointIeee(value: unknown, nodeById: Map<string, string>): string | null {
+  const record = recordOf(value);
+  const direct = normalizeIeee(record?.ieee_address ?? record?.ieee ?? value);
   if (direct) return direct;
-  const id = value?.id ?? value?.network_address ?? value;
+  const id = record?.id ?? record?.network_address ?? value;
   return id == null ? null : nodeById.get(String(id)) || null;
 }
 
@@ -184,24 +195,27 @@ export function normalizeZ2mTopology(payload: unknown, baseTopic: string, now = 
   const warnings: ZigbeeTopologyWarning[] = [];
   const topic = normalizeZ2mBaseTopic(baseTopic) || 'invalid';
   const raw = safePayload(payload) ? z2mValue(payload) : null;
-  const rows = boundedArray(raw?.nodes, TOPOLOGY_MAX_NODES);
-  const rawLinks = boundedArray(raw?.links, TOPOLOGY_MAX_LINKS);
+  const rawRecord = recordOf(raw);
+  const rows = boundedArray(rawRecord?.nodes, TOPOLOGY_MAX_NODES);
+  const rawLinks = boundedArray(rawRecord?.links, TOPOLOGY_MAX_LINKS);
   if (!rows || !rawLinks) return { provider: 'z2m', instanceId: topic, obtainedAt: now,
     freshness: 'fresh-scan', nodes: [], links: [], warnings: [{ code: 'invalid_payload' }] };
   const nodes = new Map<string, ZigbeeTopologyNode>();
   const nodeById = new Map<string, string>();
   for (const row of rows) {
-    const ieee = normalizeIeee(row?.ieee_address ?? row?.ieee);
+    const record = recordOf(row);
+    const ieee = normalizeIeee(record?.ieee_address ?? record?.ieee);
     if (!ieee) { warnings.push({ code: 'invalid_payload' }); continue; }
     const key = nodeKey('z2m', topic, ieee);
-    nodes.set(key, { key, ieee, role: roleOf(row?.type ?? row?.device_type),
-      ...(typeof row?.failed === 'boolean' ? { available: !row.failed } : {}) });
-    for (const id of [row?.id, row?.network_address]) if (id != null) nodeById.set(String(id), ieee);
+    nodes.set(key, { key, ieee, role: roleOf(record?.type ?? record?.device_type),
+      ...(typeof record?.failed === 'boolean' ? { available: !record.failed } : {}) });
+    for (const id of [record?.id, record?.network_address]) if (id != null) nodeById.set(String(id), ieee);
   }
   const links = new Map<string, ZigbeeTopologyLink>();
   for (const row of rawLinks) {
-    const fromIeee = endpointIeee(row?.source, nodeById);
-    const toIeee = endpointIeee(row?.target, nodeById);
+    const record = recordOf(row);
+    const fromIeee = endpointIeee(record?.source, nodeById);
+    const toIeee = endpointIeee(record?.target, nodeById);
     if (!fromIeee || !toIeee) { warnings.push({ code: 'invalid_payload' }); continue; }
     const from = nodeKey('z2m', topic, fromIeee);
     const to = nodeKey('z2m', topic, toIeee);
@@ -224,14 +238,16 @@ function ieeeFromRegistryIdentifier(value: unknown): string | null {
 function deviceIdsForNode(node: ZigbeeTopologyNode, registry: HaRegistrySnapshot): string[] {
   if (node.deviceId && registry.devices[node.deviceId]) return [node.deviceId];
   const ids = new Set<string>();
-  for (const [id, device] of Object.entries<any>(registry.devices)) {
+  for (const [id, rawDevice] of Object.entries(registry.devices as Record<string, unknown>)) {
+    const device = recordOf(rawDevice);
     const identifiers = Array.isArray(device?.identifiers) ? device.identifiers : [];
-    if (identifiers.some((pair: any) => Array.isArray(pair)
+    if (identifiers.some((pair: unknown) => Array.isArray(pair)
       && ieeeFromRegistryIdentifier(pair[1]) === node.ieee)) ids.add(id);
   }
   if (ids.size) return [...ids];
-  for (const entity of Object.values<any>(registry.entities)) {
-    if (!entity?.device_id || typeof entity?.unique_id !== 'string') continue;
+  for (const rawEntity of Object.values(registry.entities as Record<string, unknown>)) {
+    const entity = recordOf(rawEntity);
+    if (typeof entity?.device_id !== 'string' || typeof entity.unique_id !== 'string') continue;
     if (ieeeFromRegistryIdentifier(entity.unique_id) === node.ieee) ids.add(entity.device_id);
   }
   return [...ids];
