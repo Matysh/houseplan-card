@@ -58,7 +58,7 @@ import {
   type SafeResizePlan, type SafeResizeReason, type SafeResizeResolution,
 } from './resize';
 import {
-  ResizeController,
+  ResizeController, resizeLivePreflightAllowed,
   type ResizeProjectionResult,
 } from './resize-controller';
 import {
@@ -3636,9 +3636,8 @@ public _rszProjectPreview(
     // old records as a multiset and prove only newly written/split records.
     // That keeps pointermove bounded by the touched thickness profile instead
     // of comparing every historical record with every carrier twice per frame.
-    const wallSignature = (wall: any): string => JSON.stringify([
-      wall?.key, wall?.cm, wall?.a, wall?.b,
-    ]);
+    const wallSignature = (wall: WallEntry): string =>
+      JSON.stringify([wall?.key, wall?.cm, wall?.a, wall?.b]);
     const oldWallCounts = new Map<string, number>();
     for (const wall of s.walls || []) {
       const key = wallSignature(wall);
@@ -3651,9 +3650,10 @@ public _rszProjectPreview(
       if (remaining) oldWallCounts.set(key, remaining - 1);
       else changedWalls.push(wall);
     }
-    if (wallRecordCarrierViolations(
-      changedWalls, wallCarriers, this.host._wallKeyPitch, NORM_W, s.walls || [],
-    ).length) return { ok: false, reason: 'wall-metadata' };
+    if (wallRecordCarrierViolations(changedWalls, wallCarriers, this.host._wallKeyPitch,
+      NORM_W, s.walls || []).length) return { ok: false, reason: 'wall-metadata' };
+    const preflight = resizeLivePreflightAllowed(sp.rooms) ? this._rszSpaceCandidateGeometry(this.host._space, sp) : null;
+    if (preflight && !preflight.ok) return { ok: false, reason: 'physical-geometry' };
     // #329 AC7a: a step that would ADD a junction-limit violation is never
     // projected, so the drag stops at the last allowed position instead of
     // committing an impossible plan.
@@ -3690,7 +3690,7 @@ public _rszProjectPreview(
         preview: { space: this.host._space, sp },
         beforeWalls: s.walls || [],
         afterWalls: sp.walls || [],
-        artifact: null,
+        artifact: preflight?.wallGeometry || null,
       },
     };
   }

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { ResizeController } from '../test-build/resize-controller.js';
+import { ResizeController, resizeLivePreflightAllowed } from '../test-build/resize-controller.js';
 import { resolveSafeResize } from '../test-build/resize.js';
 
 const room = () => ({
@@ -136,4 +136,11 @@ test('#264 cancel restores retained masonry only for the same snapshot', () => {
   assert.deepEqual(stale.cancel('snapshot-b'), {
     kind: 'cancelled', restoreWallUnion: null, restoreEpoch: null,
   });
+});
+
+test('#451 live resize preflight is bounded by authored contour complexity', () => {
+  const rectangle = { poly: [[0, 0], [1, 0], [1, 1], [0, 1]] };
+  assert.equal(resizeLivePreflightAllowed(Array(16).fill(rectangle)), true);
+  assert.equal(resizeLivePreflightAllowed(Array(17).fill(rectangle)), false);
+  assert.equal(resizeLivePreflightAllowed([{ poly: Array(65).fill([0, 0]) }]), false);
 });
