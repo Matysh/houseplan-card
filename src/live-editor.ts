@@ -6,6 +6,48 @@ interface LiveEditorState {
   hidden: HTMLElement[];
 }
 
+interface LiveEditorHost {
+  isConnected: boolean;
+  renderRoot: ParentNode;
+  requestUpdate: () => void;
+  _mode: 'view' | 'plan' | 'devices' | 'decor';
+  _deviceDrag: { id: string } | null;
+  _physicalDrag?: unknown;
+  _physicalRotate?: unknown;
+  _decorDraft?: unknown;
+  _decorMove?: unknown;
+  _dtDrag?: unknown;
+  _bdDrag?: unknown;
+  _opDrag?: unknown;
+  _resize?: { dragging: boolean };
+  _layout: unknown;
+  _dtBox: { id: string; x: number; y: number; w: number; h: number } | null;
+  _dtSel: { id: string; kind: string } | null;
+  _opMeasureView: { guide: unknown } | null;
+  _devices: { id: string }[];
+  _liveEditorPaintCount: number;
+  _baseVb: () => number[];
+  _viewOr: (viewBox: number[]) => { x: number; y: number; w: number; h: number };
+  _spaceDisplayForRender: () => unknown;
+  _renderWallBodies: (display: unknown) => unknown;
+  _renderResizeMeasurements: () => unknown;
+  _renderOpenings: (display: unknown) => unknown;
+  _renderResizeLayer: (view: unknown) => unknown;
+  _renderMarkupLayer: (viewBox: number[]) => unknown;
+  _renderHiddenWallDiagnosticOverlay: () => unknown;
+  _renderOpeningPlacementPreview: () => unknown;
+  _renderOpeningDimensionGuides: (measure: unknown) => unknown;
+  _renderOpeningCenterTick: (guide: unknown) => unknown;
+  _renderActiveChainInk: () => unknown;
+  _renderPlanSnapOverlay: () => unknown;
+  _renderWallThickUi: () => unknown;
+  _renderDecorLayer: () => unknown;
+  _renderBackdropFrame: (view: unknown) => unknown;
+  _renderTextFrame: (view: unknown) => unknown;
+  _livePos: (device: { id: string }) => { x: number; y: number };
+  _scenePoint: (point: number[]) => number[];
+}
+
 const states = new WeakMap<object, LiveEditorState>();
 
 const liveProperties = new Set<PropertyKey>([
@@ -26,7 +68,7 @@ const stateOf = (host: object): LiveEditorState => {
   return state;
 };
 
-const activeEditorGesture = (host: any): boolean => host._mode !== 'view' && (
+const activeEditorGesture = (host: LiveEditorHost): boolean => host._mode !== 'view' && (
   !!host._deviceDrag || !!host._physicalDrag || !!host._physicalRotate
   || !!host._decorDraft || !!host._decorMove || !!host._dtDrag || !!host._bdDrag
   || !!host._opDrag
@@ -39,16 +81,19 @@ const activeEditorGesture = (host: any): boolean => host._mode !== 'view' && (
  * and terminal null assignments still receive a normal host update.
  */
 export function routeHouseplanEditorUpdate(
-  host: any,
+  value: object,
   name?: PropertyKey,
   oldValue?: unknown,
 ): boolean {
+  const host = value as LiveEditorHost;
   if (!host?.isConnected || host._mode === 'view') return false;
   const namedLive = name !== undefined && liveProperties.has(name);
   if (name === '_layout' && !host._deviceDrag) return false;
   if (name === '_dtBox' && !host._dtDrag) return false;
   if (name !== undefined && gestureProperties.has(name)
-      && oldValue == null && host[name] != null && activeEditorGesture(host)) {
+      && oldValue == null
+      && (host as unknown as Record<PropertyKey, unknown>)[name] != null
+      && activeEditorGesture(host)) {
     // Pointerdown may change selection/chrome once. Subsequent moves stay live.
     return false;
   }
@@ -74,7 +119,7 @@ const restore = (state: LiveEditorState): void => {
   state.hidden.length = 0;
 };
 
-const planTemplate = (host: any): TemplateResult => {
+const planTemplate = (host: LiveEditorHost): TemplateResult => {
   const vb = host._baseVb();
   const view = host._viewOr(vb);
   const measure = host._opMeasureView;
@@ -99,7 +144,7 @@ const planTemplate = (host: any): TemplateResult => {
   </g>`;
 };
 
-const editorTemplate = (host: any): TemplateResult | typeof nothing => {
+const editorTemplate = (host: LiveEditorHost): TemplateResult | typeof nothing => {
   if (host._mode === 'plan') return planTemplate(host);
   if (host._mode === 'decor') {
     const view = host._viewOr(host._baseVb());
@@ -112,10 +157,10 @@ const editorTemplate = (host: any): TemplateResult | typeof nothing => {
   return nothing;
 };
 
-const paintDevice = (host: any, root: ParentNode): void => {
+const paintDevice = (host: LiveEditorHost, root: ParentNode): void => {
   const drag = host._deviceDrag;
   if (!drag) return;
-  const device = host._devices.find((candidate: any) => candidate.id === drag.id);
+  const device = host._devices.find((candidate) => candidate.id === drag.id);
   const element = [...root.querySelectorAll<HTMLElement>('[data-hp="device"]')]
     .find((candidate) => candidate.dataset.id === drag.id);
   if (!device || !element) return;
@@ -127,8 +172,9 @@ const paintDevice = (host: any, root: ParentNode): void => {
 };
 
 /** One editor-only render root per card; the settled scene remains untouched. */
-export function paintHouseplanEditor(host: any): void {
-  const root = host.renderRoot as ParentNode | undefined;
+export function paintHouseplanEditor(value: object): void {
+  const host = value as LiveEditorHost;
+  const root = host.renderRoot;
   if (!root) return;
   const state = stateOf(host);
   restore(state);
@@ -146,17 +192,18 @@ export function paintHouseplanEditor(host: any): void {
   host._liveEditorPaintCount = (host._liveEditorPaintCount || 0) + 1;
 }
 
-export function scheduleHouseplanEditor(host: any): void {
-  const state = stateOf(host);
+export function scheduleHouseplanEditor(value: object): void {
+  const state = stateOf(value);
   if (state.raf || typeof requestAnimationFrame !== 'function') return;
   state.raf = requestAnimationFrame(() => {
     state.raf = 0;
-    paintHouseplanEditor(host);
+    paintHouseplanEditor(value);
   });
 }
 
 /** Only text needs a DOM measurement; every box-like item owns its config box. */
-export function measureHouseplanDecorText(host: any): void {
+export function measureHouseplanDecorText(value: object): void {
+  const host = value as LiveEditorHost;
   const shape = host._dtSel;
   if (!shape) {
     if (host._dtBox) { host._dtBox = null; host.requestUpdate(); }
@@ -182,8 +229,9 @@ export function measureHouseplanDecorText(host: any): void {
   host.requestUpdate();
 }
 
-export function commitHouseplanEditor(host: any): void {
-  const state = stateOf(host);
+export function commitHouseplanEditor(value: object): void {
+  const host = value as LiveEditorHost;
+  const state = stateOf(value);
   if (state.raf && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(state.raf);
   state.raf = 0;
   restore(state);

@@ -17,6 +17,14 @@ interface LiveViewportState {
   raf: number;
 }
 
+interface LiveViewportHost {
+  _viewOr: (viewBox: number[]) => LiveViewBox;
+  _baseVb: () => number[];
+  _floorView: (view: LiveViewBox) => LiveViewBox;
+  _zoom: number;
+  renderRoot: ParentNode;
+}
+
 const states = new WeakMap<object, LiveViewportState>();
 const stateOf = (host: object): LiveViewportState => {
   let state = states.get(host);
@@ -95,14 +103,15 @@ export function paintLiveViewport(
   }
 }
 
-const frameOf = (host: any): LiveViewportFrame => {
+const frameOf = (host: LiveViewportHost): LiveViewportFrame => {
   const view = host._viewOr(host._baseVb());
   return { view: { ...view }, floor: { ...host._floorView(view) }, zoom: host._zoom };
 };
 
 /** Coalesce camera input into one lightweight paint per animation frame. */
-export function scheduleHouseplanViewport(host: any): void {
-  const state = stateOf(host);
+export function scheduleHouseplanViewport(value: object): void {
+  const host = value as LiveViewportHost;
+  const state = stateOf(value);
   state.pending = frameOf(host);
   if (state.raf || typeof requestAnimationFrame !== 'function') return;
   state.raf = requestAnimationFrame(() => {
@@ -117,8 +126,9 @@ export function scheduleHouseplanViewport(host: any): void {
 }
 
 /** Record a complete Lit frame and remove any temporary HTML projection. */
-export function commitHouseplanViewport(host: any): void {
-  const state = stateOf(host);
+export function commitHouseplanViewport(value: object): void {
+  const host = value as LiveViewportHost;
+  const state = stateOf(value);
   if (state.raf && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(state.raf);
   state.raf = 0;
   state.pending = null;

@@ -2,7 +2,7 @@ import {
   haRegistryDiagnostics,
   type HaBindingStatus,
 } from './ha-binding-status';
-import type { HassRenderDependencies } from './render-invalidation';
+import type { HassRenderDependencies, HassRenderSnapshot } from './render-invalidation';
 
 export interface HouseplanDiagnosticsCore {
   registry: ReturnType<typeof haRegistryDiagnostics>;
@@ -13,12 +13,12 @@ type DiagnosticMarker = { removed?: boolean; binding: string };
 
 /** State kept outside the already oversized card element (#34). */
 export class RenderLifecycle {
-  private seen: any = null;
+  private seen: unknown = null;
   private diagnosticsCache: HouseplanDiagnosticsCore | null = null;
 
   observe(
-    before: any,
-    after: any,
+    before: HassRenderSnapshot | null | undefined,
+    after: HassRenderSnapshot | null | undefined,
     dependencies: HassRenderDependencies | null,
     intake: () => void,
   ): void {
@@ -26,7 +26,7 @@ export class RenderLifecycle {
     this.intake(after, intake);
   }
 
-  intake(snapshot: any, run: () => void): void {
+  intake(snapshot: unknown, run: () => void): void {
     if (!snapshot || this.seen === snapshot) return;
     this.seen = snapshot;
     run();
@@ -37,7 +37,9 @@ export class RenderLifecycle {
   }
 
   private invalidateDiagnosticsForHass(
-    before: any, after: any, dependencies: HassRenderDependencies | null,
+    before: HassRenderSnapshot | null | undefined,
+    after: HassRenderSnapshot | null | undefined,
+    dependencies: HassRenderDependencies | null,
   ): void {
     if (!this.diagnosticsCache) return;
     if (before?.entities !== after?.entities || before?.devices !== after?.devices
@@ -48,7 +50,7 @@ export class RenderLifecycle {
   }
 
   diagnostics(
-    hass: any,
+    hass: unknown,
     markers: readonly DiagnosticMarker[],
     resolve: (binding: string) => HaBindingStatus,
   ): HouseplanDiagnosticsCore {
@@ -66,7 +68,24 @@ export class RenderLifecycle {
 }
 
 /** Operational work that must survive a deliberately skipped visual update. */
-export function intakeHass(host: any): void {
+interface HassIntakeHost {
+  _hassSequence: number;
+  _renderSnapshotAt: number;
+  _continuity: { note: (reason: string) => void };
+  _ensureHaRegistryAuthority: () => void;
+  _planHassMemo: unknown;
+  _hookConnection: () => void;
+  _loadOk: boolean;
+  _loading: boolean;
+  _loadTries: number;
+  _loadFromServer: () => unknown;
+  _maybeRebuildDevices: () => void;
+  _vacTick: () => void;
+  _activityTick: () => void;
+}
+
+export function intakeHass(value: object): void {
+  const host = value as HassIntakeHost;
   host._hassSequence++;
   host._renderSnapshotAt = Date.now();
   host._continuity.note('hass-snapshot');

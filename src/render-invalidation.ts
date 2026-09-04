@@ -5,14 +5,22 @@ export interface HassRenderDependencies {
 
 export type HassRenderChange = 'none' | 'state' | 'structural';
 
-const scalarChanged = (before: any, after: any, path: readonly string[]): boolean => {
-  let a = before, b = after;
-  for (const part of path) {
-    a = a?.[part];
-    b = b?.[part];
-  }
-  return a !== b;
-};
+export interface HassRenderSnapshot {
+  readonly states?: Readonly<Record<string, unknown>>;
+  readonly connection?: unknown;
+  readonly entities?: unknown;
+  readonly devices?: unknown;
+  readonly areas?: unknown;
+  readonly themes?: unknown;
+  readonly user?: unknown;
+  readonly config?: unknown;
+  readonly floors?: unknown;
+  readonly services?: unknown;
+  readonly panels?: unknown;
+  readonly language?: unknown;
+  readonly locale?: Readonly<Record<string, unknown>> | null;
+  readonly [key: string]: unknown;
+}
 
 /**
  * Classify one HA assignment without walking the complete `hass.states` map.
@@ -24,8 +32,8 @@ const scalarChanged = (before: any, after: any, path: readonly string[]): boolea
  * rare and can alter formatting, registry resolution, permissions or actions.
  */
 export function classifyHassRenderChange(
-  before: any,
-  after: any,
+  before: HassRenderSnapshot | null | undefined,
+  after: HassRenderSnapshot | null | undefined,
   dependencies: HassRenderDependencies | null,
 ): HassRenderChange {
   if (before === after) return 'none';
@@ -42,10 +50,10 @@ export function classifyHassRenderChange(
       || before.services !== after.services
       || before.panels !== after.panels
       || before.language !== after.language
-      || scalarChanged(before, after, ['locale', 'language'])
-      || scalarChanged(before, after, ['locale', 'number_format'])
-      || scalarChanged(before, after, ['locale', 'time_format'])
-      || scalarChanged(before, after, ['locale', 'date_format'])) {
+      || before.locale?.language !== after.locale?.language
+      || before.locale?.number_format !== after.locale?.number_format
+      || before.locale?.time_format !== after.locale?.time_format
+      || before.locale?.date_format !== after.locale?.date_format) {
     return 'structural';
   }
 

@@ -6,7 +6,7 @@
  *  2) LEGACY fallback — baked-in country-house data (src/data/*), coordinates in a 1489×1053 canvas.
  * The icon layout is stored on the server (houseplan/layout/*), fallback — localStorage.
  */
-import { LitElement, html, svg, nothing, noChange, TemplateResult, PropertyValues } from 'lit';
+import { LitElement, html, svg, nothing, noChange, TemplateResult, PropertyValues, type PropertyDeclaration } from 'lit';
 import { guard } from 'lit/directives/guard.js';
 import { repeat } from 'lit/directives/repeat.js';
 import './hp-dialog';
@@ -306,6 +306,7 @@ import {
   type RenderDeviceSnapshot,
 } from './render-device-snapshot';
 import { RenderLifecycle, intakeHass } from './houseplan-render-lifecycle';
+import type { HassRenderSnapshot } from './render-invalidation';
 import { deviceFaceStyle, deviceThemeClass, renderDeviceFace } from './device-face';
 import { effectiveDeviceBaseSize } from './device-marker-geometry'; import { renderZigbeeTopologyOverlay } from './zigbee-topology-overlay-bridge';
 import {
@@ -657,11 +658,12 @@ type FixedFloorState = FixedFloorSelection | { kind: 'pending'; value: unknown }
 const HANDLE_PAINT_ORDER = ['edges', 'corners'] as const;
 
 export class HouseplanCard extends LitElement {
-  public requestUpdate(name?: PropertyKey, oldValue?: unknown, options?: any): void {
+  public requestUpdate(name?: PropertyKey, oldValue?: unknown, options?: PropertyDeclaration): void {
     if (name === 'hass' && this.hass && this._liveRt) {
       const snapshot = this._visibleDeviceSnapshot || this._candidateDeviceSnapshot;
       const render = this._liveRt.hass(
-        oldValue, this.hass, snapshot ? { entityIds: snapshot.entityIds } : null,
+        oldValue as HassRenderSnapshot | null | undefined, this.hass,
+        snapshot ? { entityIds: snapshot.entityIds } : null,
         () => intakeHass(this),
       );
       if (!render) return;
@@ -4042,7 +4044,7 @@ export class HouseplanCard extends LitElement {
     }
     if (changed.has('hass') && this.hass) {
       const snapshot = this._visibleDeviceSnapshot || this._candidateDeviceSnapshot;
-      this._renderLife.observe(changed.get('hass'), this.hass,
+      this._renderLife.observe(changed.get('hass') as HassRenderSnapshot | null | undefined, this.hass,
         snapshot ? { entityIds: snapshot.entityIds } : null, () => intakeHass(this));
     }
     if (this._continuity.hasCompleteFrame && this._continuity.state === 'steady') {
@@ -4500,7 +4502,7 @@ export class HouseplanCard extends LitElement {
   private _haRegistryConnection: any = null;
   private _haRegistryRev = -1;
   private _haBindingCacheKey = '';
-  private _planHassMemo: { hass: any; sig: string; active: any; full: any } | null = null;
+  private _planHassMemo: { hass: unknown; sig: string; active: unknown; full: unknown } | null = null;
   private _renderLife = new RenderLifecycle();
   private _liveEditorPaintCount = 0;
 

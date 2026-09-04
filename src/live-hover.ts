@@ -16,6 +16,15 @@ interface HoverState {
   space: string;
 }
 
+interface LiveHoverHost {
+  renderRoot: ParentNode;
+  _tip: LiveTip | null;
+  _t: (key: 'tip.temp_avg' | 'tip.hum_avg' | 'tip.lqi') => string;
+  _hoverRoom: { space: string; room: unknown } | null;
+  _spaceModel: () => unknown;
+  _roomHoverPaths: (model: unknown) => { fillD: string; outlineD: string } | null;
+}
+
 const states = new WeakMap<object, HoverState>();
 
 const appendMeta = (tip: HTMLElement, label: string, value?: string, color?: string): void => {
@@ -33,7 +42,7 @@ const appendMeta = (tip: HTMLElement, label: string, value?: string, color?: str
   tip.append(row);
 };
 
-const syncTip = (host: any, root: ParentNode): void => {
+const syncTip = (host: LiveHoverHost, root: ParentNode): void => {
   const element = root.querySelector<HTMLElement>('[data-hp-live-tip]');
   if (!element) return;
   const tip = host._tip as LiveTip | null;
@@ -64,16 +73,17 @@ const setRoomPath = (root: ParentNode, selector: string, d: string): void => {
 };
 
 /** Update the ordinary mouse hover without scheduling a full card render. */
-export function syncHouseplanHover(host: any): void {
-  const root = host.renderRoot as ParentNode | undefined;
+export function syncHouseplanHover(value: object): void {
+  const host = value as LiveHoverHost;
+  const root = host.renderRoot;
   if (!root) return;
   syncTip(host, root);
   const hover = host._hoverRoom;
-  const previous = states.get(host);
+  const previous = states.get(value);
   const space = hover?.space || '';
   const room = hover?.room || null;
   if (previous?.room === room && previous?.space === space) return;
-  states.set(host, { room, space });
+  states.set(value, { room, space });
   const model = hover && host._spaceModel();
   const paths = model ? host._roomHoverPaths(model) : null;
   setRoomPath(root, '[data-hp-live-room-hover="fill"]', paths?.fillD || '');
