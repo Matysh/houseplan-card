@@ -19,6 +19,7 @@ export const LARGE_HOUSE_CARD_CONTRACT = Object.freeze({
     '_baseVb',
     '_bindingStatus',
     '_cancelDecorGesture',
+    '_checkSpacePhysicalGeometry',
     '_decorBoxOf',
     '_dtMeasure',
     '_dtMove',

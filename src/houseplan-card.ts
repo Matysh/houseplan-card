@@ -7801,7 +7801,7 @@ export class HouseplanCard extends LitElement {
 
   /** #329: violations this write would ADD; inherited ones stay untouched. */
   private _junctionLimitsIntroduced(
-    candidate: any, previousConfig: any, spaceId: string,
+    candidate: ServerConfig, previousConfig: ServerConfig, spaceId: string,
   ): JunctionLimitViolation[] {
     return this._editorRuntimeOrThrow()._junctionLimitsIntroduced(candidate, previousConfig, spaceId);
   }
@@ -9194,7 +9194,7 @@ export class HouseplanCard extends LitElement {
     space: SpaceModel,
     roomId: string,
     openCuts: number[][] = this._openCuts(),
-    roomWalls = this._wallUnionGeometry()?.roomGeom,
+    roomWalls: ReturnType<typeof wallBodiesGeometry>['roomGeom'] = this._wallUnionGeometry()?.roomGeom,
     multiWallNodes = this._wallUnionGeometry()?.multiWallNodes,
   ): number[][] | null {
     const cutsKey = openCuts.map((cut) => cut.join(',')).join(';');

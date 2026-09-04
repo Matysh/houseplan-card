@@ -216,12 +216,21 @@ try {
       const loadLongTaskResult = await loadLongTasks.stop();
       let fullRenderCount = 0;
       let diagnosticsScanCount = 0;
+      let physicalPreflightCount = 0;
+      let physicalPreflightMs = 0;
       const fullRenderReasons = [];
       if (interaction) {
         const renderBody = card._renderBody.bind(card);
         card._renderBody = (...args) => { fullRenderCount++; return renderBody(...args); };
         const bindingStatus = card._bindingStatus.bind(card);
         card._bindingStatus = (...args) => { diagnosticsScanCount++; return bindingStatus(...args); };
+        const checkSpacePhysicalGeometry = card._checkSpacePhysicalGeometry.bind(card);
+        card._checkSpacePhysicalGeometry = (...args) => {
+          physicalPreflightCount++;
+          const started = performance.now();
+          try { return checkSpacePhysicalGeometry(...args); }
+          finally { physicalPreflightMs += performance.now() - started; }
+        };
         const willUpdate = card.willUpdate.bind(card);
         card.willUpdate = (changed) => {
           fullRenderReasons.push([...changed.keys()].map(String));
@@ -532,9 +541,15 @@ try {
         card._rszEdgeDown(resizeEvent, resizeRoom.id, 1);
         const resizePlan = card._resize?.plan || card._rszDrag?.plan;
         if (!resizePlan) throw new Error('interaction resize plan was not created');
+        const resizePreflightBefore = physicalPreflightCount;
+        const resizePreflightMsBefore = physicalPreflightMs;
         editorStage = card.renderRoot.querySelector('.stage');
         editorRect = editorStage.getBoundingClientRect();
         editorView = card._viewOr(card._baseVb());
+        // A browser delivers pointerdown and pointermove as separate tasks.
+        // Keep the synthetic harness from attributing both handlers to one
+        // impossible long task while still timing every move-side preflight.
+        await new Promise((done) => setTimeout(done, 0));
         editorPartLongTasks = startLongTaskWindow();
         partStarted = performance.now();
         editorMoveBefore = fullRenderCount;
@@ -552,6 +567,8 @@ try {
         }
         editorTerminalBefore = fullRenderCount;
         editorMoveRenders.push(editorTerminalBefore - editorMoveBefore);
+        deltas.resizeLivePreflightChecks = physicalPreflightCount - resizePreflightBefore;
+        deltas.resizeLivePreflightMs = physicalPreflightMs - resizePreflightMsBefore;
         card._rszCancelDrag();
         await card.updateComplete;
         await frame();
@@ -613,6 +630,7 @@ try {
         deltas.editorLivePaints = (card._liveEditorPaintCount || 0) - editorPaintBefore;
         deltas.editorConfigStable = JSON.stringify(card._serverCfg) === editorConfigBefore;
         deltas.editorWsWrites = wsCalls - editorCallsBefore;
+        deltas.editorLongTaskParts = editorLongTaskWindows;
 
         card._setMode('view', false);
         await card.updateComplete;
@@ -639,6 +657,7 @@ try {
           || deltas.cameraMoveFullRenders !== 0 || deltas.cameraTerminalFullRenders !== 1
           || deltas.editorMoveFullRenders.some((count) => count !== 0)
           || deltas.editorTerminalFullRenders.some((count) => count > 1)
+          || deltas.resizeLivePreflightChecks < 1
           || deltas.editorLivePaints < 3 || !deltas.editorConfigStable || deltas.editorWsWrites !== 0
           || !deltas.viewBoxMoved || deltas.overlayErrorPx > 1 || !deltas.heavyNodeStable
           || deltas.diagnosticsScans !== 0

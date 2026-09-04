@@ -58,9 +58,10 @@ import {
   type SafeResizePlan, type SafeResizeReason, type SafeResizeResolution,
 } from './resize';
 import {
-  ResizeController, resizeLivePreflightAllowed,
+  ResizeController,
   type ResizeProjectionResult,
 } from './resize-controller';
+import { resizeLiveCandidateSpace, resizeLiveJunctionRoomIds } from './resize-live-preflight';
 import {
   placeResizeAreaLabel, resizeMeasuredEdges,
   type ResizeAreaPlacement,
@@ -972,7 +973,7 @@ export interface HouseplanEditorHostPort {
   _importQueue: string[];
   _importTotal: number;
   _infoCard: DevItem | null;
-  _innerRoomContour: (space: SpaceModel, roomId: string, openCuts?: number[][], roomWalls?: any, multiWallNodes?: MultiWallNodeMap | null | undefined) => number[][] | null;
+  _innerRoomContour: (space: SpaceModel, roomId: string, openCuts?: number[][], roomWalls?: ReturnType<typeof wallBodiesGeometry>['roomGeom'], multiWallNodes?: MultiWallNodeMap | null | undefined) => number[][] | null;
   _junctionLimitViolations: (config: unknown, spaceId: string,
     sharedGeometry?: JunctionSharedGeometry | null, roomIds?: ReadonlySet<string>) => JunctionLimitViolation[];
   _isVacDev: (d: DevItem) => boolean;
@@ -2059,13 +2060,13 @@ public _junctionLimitViolations(
 
 public _junctionLimitLabel(violation: JunctionLimitViolation): string {
     const round = (value: number) => String(Math.round(value * 10) / 10);
-    return this.host._t(`junction.limit_${violation.rule}` as any, {
+    return this.host._t(`junction.limit_${violation.rule}` as I18nKey, {
       actual: round(violation.actual), limit: round(violation.limit),
     });
   }
 
 public _junctionLimitsIntroduced(
-    candidate: any, previousConfig: any, spaceId: string,
+    candidate: ServerConfig, previousConfig: ServerConfig, spaceId: string,
     candidateGeometry?: JunctionSharedGeometry | null,
     affectedRoomIds?: readonly string[],
   ): JunctionLimitViolation[] {
@@ -2077,8 +2078,8 @@ public _junctionLimitsIntroduced(
     // materialized, while legacy documents cross that barrier once.
     const affected = affectedRoomIds?.length ? new Set(affectedRoomIds) : undefined;
     let inherited: JunctionLimitViolation[] | undefined;
-    const previousSpace = (previousConfig?.spaces || [])
-      .find((space: any) => space?.id === spaceId);
+    const previousSpace = (previousConfig.spaces || [])
+      .find((space) => space?.id === spaceId);
     let fingerprint = '';
     try { fingerprint = spacePhysicalGeometryFingerprint(previousSpace); }
     catch { fingerprint = ''; }
@@ -3650,8 +3651,9 @@ public _rszProjectPreview(
     }
     if (wallRecordCarrierViolations(changedWalls, wallCarriers, this.host._wallKeyPitch,
       NORM_W, s.walls || []).length) return { ok: false, reason: 'wall-metadata' };
-    const preflight = resizeLivePreflightAllowed(sp.rooms) ? this._rszSpaceCandidateGeometry(this.host._space, sp) : null;
-    if (preflight && !preflight.ok) return { ok: false, reason: 'physical-geometry' };
+    const liveSpace = resizeLiveCandidateSpace(sp, changedRoomIds);
+    if (!liveSpace || !this._rszSpaceCandidateGeometry(this.host._space, liveSpace).ok)
+      return { ok: false, reason: 'physical-geometry' };
     // #329 AC7a: a step that would ADD a junction-limit violation is never
     // projected, so the drag stops at the last allowed position instead of
     // committing an impossible plan.
@@ -3661,9 +3663,9 @@ public _rszProjectPreview(
         (space) => (space?.id === this.host._space ? sp : space),
       ),
     };
-    try {
+    try { const junctionSpace = resizeLiveCandidateSpace(sp, resizeLiveJunctionRoomIds(sp.rooms || [], changedRoomIds));
       this._resizePreviewNodes = multiWallNodesForGeometry(
-        sp.rooms || [], sp.walls || [], [], GRID_STEP_N,
+        junctionSpace?.rooms || [], (junctionSpace?.walls || []) as unknown as WallEntry[], [], GRID_STEP_N,
         this.host._cellCm, this.host._gridPitch, NORM_W,
       );
     } catch { this._resizePreviewNodes = null; }
@@ -3687,12 +3689,10 @@ public _rszProjectPreview(
       value: {
         preview: { space: this.host._space, sp },
         beforeWalls: s.walls || [],
-        afterWalls: sp.walls || [],
-        artifact: preflight?.wallGeometry || null,
+        afterWalls: sp.walls || [], artifact: null,
       },
     };
   }
-
 public _rszAcceptPreview(
     preview: ResizePreview | null, wallGeometry: ResizeWallArtifact | null,
   ): void {

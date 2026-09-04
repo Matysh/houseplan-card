@@ -15,18 +15,6 @@ export interface ResizeControllerRoom {
   wall_ids?: string[];
 }
 
-/**
- * Exact wall union is useful live feedback only while it stays below one-frame
- * work. Large plans keep the cheap fixed-topology preview checks and run the
- * same fail-closed physical preflight unconditionally at pointerup. Authored
- * contour edges are a stable complexity estimate independent of screen size.
- */
-export function resizeLivePreflightAllowed(
-  rooms: readonly { poly?: readonly unknown[] }[], edgeBudget = 64,
-): boolean {
-  return rooms.reduce((total, room) => total + (room.poly?.length || 4), 0) <= edgeBudget;
-}
-
 export interface ResizeProjection<TPreview, TArtifact> {
   preview: TPreview;
   beforeWalls: readonly WallRecordLike[];
