@@ -450,6 +450,47 @@ export function blockingFromDocs(docs) {
 }
 
 /**
+ * Вердикты этапа среди комментариев issue — вторая, страховочная половина
+ * счёта (#454).
+ *
+ * Прежнее правило было двумя тестами подстроки по всему телу: `Вердикт:` и имя
+ * маркера. Оба ловят прозу. Поймано на самой этой задаче: guard кода #454
+ * насчитал заход r3 при первом же код-ревью, потому что маркер `CODE-REVIEW`
+ * случайно встретился в зелёном вердикте СПЕК-ревью и в комментарии-передаче
+ * работы — оба разбирали историю чужих задач и цитировали имена их документов.
+ * Завышение здесь опаснее занижения: попади заражающий вердикт в свой этап
+ * жёлтым, бюджет §4 сгорел бы без единого настоящего цикла — ровно вред
+ * класса #89, от которого этап и отделяли.
+ *
+ * Поэтому два условия вместо двух подстрок:
+ *
+ * - комментарий ОБЪЯВЛЯЕТ вердикт (та же строгая строка, что и в документе), а
+ *   не упоминает слово «вердикт» в разборе;
+ * - он называет документ ЭТОЙ задачи и ЭТОГО этапа: `<MARKER>-<NUM>`. Голое
+ *   имя маркера больше не годится — именно оно и протекало.
+ */
+export function stageVerdictComments(comments, marker, num) {
+  if (!/^[A-Z-]+$/.test(String(marker || '')) || !/^\d+$/.test(String(num || ''))) return [];
+  const own = new RegExp(`${marker}-${num}(?![0-9])`);
+  return (comments || [])
+    .map((item) => (typeof item === 'string' ? { body: item } : (item || {})))
+    .filter((item) => own.test(String(item.body ?? '')))
+    .map((item) => ({ ...item, verdict: verdictDeclaration(item.body) }))
+    .filter((item) => Boolean(item.verdict));
+}
+
+/** Счётчики по комментариям в том же виде, в каком их даёт файловая половина. */
+export function commentCounters(comments, marker, num) {
+  const verdicts = stageVerdictComments(comments, marker, num);
+  const blocking = verdicts.filter((item) => isBlockingVerdict(item.verdict));
+  return {
+    attempt: verdicts.length + 1,
+    spent: blocking.length,
+    list: blocking.map((item) => item.url).filter(Boolean),
+  };
+}
+
+/**
  * Итоговые счётчики: максимум двух независимых источников.
  *
  * Максимум, а не сумма и не выбор одного. Шаг публикации может упасть уже
@@ -516,15 +557,36 @@ if (invokedDirectly) {
           + ` (${error.code || error.message}) — цикл по нему не засчитан`);
       }
     }
-    const counters = reviewCounters({
-      rounds,
-      docs,
-      comments: { attempt: Number(value('comment-attempt', '1')), spent: Number(value('comment-spent', '0')) },
-    });
+    // Комментарии — вторая половина счёта. Разбор их тоже здесь, а не в jq:
+    // прежнее правило «подстрока в теле» протекало на прозе (см.
+    // stageVerdictComments), и чинить его в inline-shell означало бы снова
+    // оставить счёт без единого теста.
+    let fromComments = { attempt: Number(value('comment-attempt', '1')),
+      spent: Number(value('comment-spent', '0')), list: [] };
+    const commentsFile = value('comments');
+    if (commentsFile) {
+      try {
+        const payload = JSON.parse(readFileSync(commentsFile, 'utf8'));
+        fromComments = commentCounters(payload.comments || payload, marker, num);
+      } catch (error) {
+        console.error(`::warning::комментарии не разобраны (${error.code || error.message})`
+          + ' — счёт по комментариям отключён, работает счёт по документам');
+        fromComments = { attempt: 1, spent: 0, list: [] };
+      }
+    }
+    const counters = reviewCounters({ rounds, docs, comments: fromComments });
     if (counters.unread.length) {
       console.error(`::warning::вердикт не объявлен машиночитаемой строкой в:`
         + ` ${counters.unread.join(', ')} — цикл по этим документам считается`
         + ' только по комментариям');
+    }
+    // Расхождение источников — не отказ, но и не рутина: оно означает, что один
+    // из них чего-то не видит. Пусть это будет видно в прогоне, а не только в
+    // арифметике максимума.
+    if (counters.attemptComments !== counters.attemptFiles) {
+      console.error('::warning::источники счёта расходятся: по документам заход'
+        + ` ${counters.attemptFiles}, по комментариям ${counters.attemptComments}.`
+        + ' Взят максимум. Документы надёжнее: их имена собирает конвейер.');
     }
     console.error(`::notice::раунды по файлам ${rounds.length ? rounds.join(',') : '—'};`
       + ` заход: файлы ${counters.attemptFiles}, комментарии ${counters.attemptComments};`
@@ -534,6 +596,14 @@ if (invokedDirectly) {
     // Перечень учтённого по файлам: без него владелец видит число, но не может
     // сверить, из чего оно сложилось, когда комментарии цикла не показывают.
     console.log(`blocking=${counters.blocking.join(', ')}`);
+    const listFile = value('spent-list');
+    if (listFile) {
+      try {
+        writeFileSync(listFile, fromComments.list.map((url) => `- ${url}`).join('\n'), 'utf8');
+      } catch (error) {
+        console.error(`::warning::перечень учтённых вердиктов не записан (${error.code || error.message})`);
+      }
+    }
     process.exit(0);
   }
 

@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs';
 import {
   ANCHOR_MARKER, REVIEW_DOC_ALLOWLIST, anchorLiveness, REVIEW_HEADER_LINES, citedMaterialShas, danglingMaterialRefusal, materialAnchorBlock, materialAnchorsFrom, parseSpecList, pathsOutsideAllowlist, reviewDocPushRefusal, withMaterialAnchors,
   attemptFromRounds, blockingFromDocs, isBlockingVerdict, reviewCounters, reviewRoundsFromFiles, verdictDeclaration,
+  commentCounters, stageVerdictComments,
 } from '../scripts/review-doc-guard.mjs';
 
 // #365. 28.08 шаг публикации ревью-дока запушил в dev коммит bb2919f с тридцатью
@@ -476,4 +477,52 @@ test('описание чужого раунда не объявляет вер�
   assert.ok(verdictDeclaration('**Вердикт: красный** · заход r2'));
   assert.ok(verdictDeclaration('- **Вердикт:** жёлтый'));
   assert.ok(verdictDeclaration('- Вердикт: зелёный'));
+});
+
+// Вторая половина счёта — комментарии. Прежнее правило («в теле есть
+// «Вердикт:» и есть имя маркера») протекало на прозе, и поймано это было на
+// самой #454: разбор чужих задач в комментарии-передаче работы содержал слово
+// CODE-REVIEW, и первый же код-ревью получил заход r3 вместо r1.
+
+const C = (body, url = 'https://x/1') => ({ body, url });
+
+test('вердикт этапа опознаётся по документу ЭТОЙ задачи (#454 AC5, #89)', () => {
+  const comments = [
+    C('Вердикт: жёлтый · заход r1\n\nДокумент: docs/reviews/CODE-REVIEW-454-r1.md'),
+    // Зелёный вердикт СПЕК-этапа, случайно упомянувший чужой документ.
+    C('Вердикт: зелёный · заход r2 — разобрано по аналогии с CODE-REVIEW-441-r1.md'
+      + '\n\nДокумент: docs/reviews/SPEC-REVIEW-454-r2.md'),
+    // Передача работы: слово «Вердикт:» в прозе и имя чужого документа.
+    C('Реализация готова. Строки `Вердикт:` в документе нет; ср. CODE-REVIEW-439-r1.md'),
+  ];
+  const code = commentCounters(comments, 'CODE-REVIEW', '454');
+  assert.equal(code.attempt, 2, 'настоящий код-вердикт ровно один');
+  assert.equal(code.spent, 1);
+  const spec = commentCounters(comments, 'SPEC-REVIEW', '454');
+  assert.equal(spec.attempt, 2);
+  assert.equal(spec.spent, 0, 'зелёный цикла не тратит');
+});
+
+test('чужой номер задачи не засчитывается своим (#454 AC5)', () => {
+  const comments = [C('Вердикт: красный · заход r1\n\nДокумент: docs/reviews/CODE-REVIEW-4540-r1.md')];
+  assert.equal(commentCounters(comments, 'CODE-REVIEW', '454').attempt, 1);
+  assert.equal(commentCounters(comments, 'CODE-REVIEW', '4540').attempt, 2);
+});
+
+test('перечень учтённого сходится с числом циклов (#454)', () => {
+  const comments = [
+    C('Вердикт: жёлтый · заход r1 — CODE-REVIEW-454-r1.md', 'https://x/1'),
+    C('Вердикт: зелёный · заход r2 — CODE-REVIEW-454-r2.md', 'https://x/2'),
+    C('Вердикт: красный · заход r3 — CODE-REVIEW-454-r3.md', 'https://x/3'),
+  ];
+  const counters = commentCounters(comments, 'CODE-REVIEW', '454');
+  assert.equal(counters.spent, 2);
+  assert.deepEqual(counters.list, ['https://x/1', 'https://x/3']);
+});
+
+test('мусор в комментариях не роняет счёт (#454 AC7)', () => {
+  assert.equal(commentCounters(null, 'CODE-REVIEW', '454').attempt, 1);
+  assert.equal(commentCounters([{}, { body: null }, 'строка'], 'CODE-REVIEW', '454').attempt, 1);
+  assert.equal(commentCounters([C('Вердикт: жёлтый CODE-REVIEW-454-r1.md')], '', '454').attempt, 1);
+  assert.deepEqual(stageVerdictComments([C('Вердикт: жёлтый CODE-REVIEW-454-r1.md')], 'CODE-REVIEW', 'x'), []);
 });

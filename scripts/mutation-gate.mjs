@@ -2440,6 +2440,20 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'review-comment-source-ignores-issue-number',
+    guard: 'node --test --test-name-pattern="по документу ЭТОЙ задачи|чужой номер задачи" '
+      + 'test/review-doc-guard.test.mjs',
+    because: 'matching a bare stage marker counts any comment that merely mentions another '
+      + "issue's review document as a verdict of this one — #454 gave its own first code "
+      + 'review round number r3 that way, and a contaminated yellow would burn the §4 budget '
+      + 'without a single real cycle (#89)',
+    patches: [{
+      file: 'scripts/review-doc-guard.mjs',
+      find: '  const own = new RegExp(`${marker}-${num}(?![0-9])`);',
+      replace: '  const own = new RegExp(marker);',
+    }],
+  },
+  {
     id: 'review-round-counts-files-not-max',
     guard: 'node --test --test-name-pattern="от максимума номеров" test/review-doc-guard.test.mjs',
     because: 'counting how many round documents exist instead of taking the highest number '

@@ -97,9 +97,11 @@ jobs:
           #
           # Вердикты считаются ТОЛЬКО своего этапа: иначе вердикт по ТЗ съедал
           # цикл из бюджета код-ревью (#89 получило r2/4). Этап опознаётся по
-          # имени документа в теле комментария; документа нет — вердикт не
-          # посчитается. Недосчёт считался обратимой ошибкой — «даёт лишний
-          # заход» — и в этой оценке была ошибка, см. ниже.
+          # имени документа — раньше по подстроке маркера в теле комментария,
+          # теперь по имени документа ЭТОЙ задачи, `<MARKER>-<NUM>`: голая
+          # подстрока протекала на прозе. #454 поймала это на себе — разбор
+          # чужих задач в комментарии содержал `CODE-REVIEW`, и первый же
+          # код-ревью получил заход r3.
           #
           # Счёт по комментариям остаётся ровно тем же, но он БОЛЬШЕ НЕ
           # ЕДИНСТВЕННЫЙ (#454). Маркер этапа попадает в тело комментария,
@@ -116,14 +118,8 @@ jobs:
           # обоих, перерасчёт невозможен по построению.
           attempt=1; spent=0; spent_list=""
           if [ -n "$stage" ]; then
-            comments=$(gh issue view "$NUM" --repo "$REPO" --json comments)
-            of_stage="[.comments[] | select(.body | test(\"Вердикт:\")) | select(.body | test(\"$marker\"))]"
-            # Блокирующим считается вердикт, у которого в строке вердикта стоит
-            # «жёлтый» или «красный». Регистр и окружение слова не важны.
-            blocking="$of_stage | map(select(.body | test(\"Вердикт:[^\\n]*(жёлт|красн)\"; \"i\")))"
-            attempt=$(( $(printf '%s' "$comments" | jq -r "$of_stage | length") + 1 ))
-            spent=$(printf '%s' "$comments" | jq -r "$blocking | length")
-            spent_list=$(printf '%s' "$comments" | jq -r "$blocking | map(\"- \" + .url) | join(\"\\n\")")
+            comments=$(mktemp)
+            gh issue view "$NUM" --repo "$REPO" --json comments > "$comments"
 
             # Ветка задачи — та же, что выберет шаг ревью: свежая по коммиту.
             # Её нет у задач, размеченных до появления конвейера; тогда счёт по
@@ -153,16 +149,18 @@ jobs:
               gh api "repos/$REPO/contents/docs/reviews/$name?ref=$target" \
                 -H 'Accept: application/vnd.github.raw' > "$docs/$name" 2>/dev/null || rm -f "$docs/$name"
             done
+            list=$(mktemp)
             counters=$(node scripts/review-doc-guard.mjs --counters \
               --marker="$marker" --num="$NUM" --names="$names" --docs="$docs" \
-              --comment-attempt="$attempt" --comment-spent="$spent")
-            # Пустой ответ означает, что скрипт не отработал. Тогда действуют
-            # прежние значения: guard обязан продолжить работу, а не встать —
-            # худшее, что даёт откат к прозе, это сегодняшнее поведение.
+              --comments="$comments" --spent-list="$list")
+            spent_list=$(cat "$list")
+            # Пустой ответ означает, что скрипт не отработал. Тогда остаются
+            # значения по умолчанию (заход 1, циклов 0): guard обязан
+            # продолжить работу, а не встать.
             new_attempt=$(printf '%s\n' "$counters" | sed -n 's/^attempt=//p')
             new_spent=$(printf '%s\n' "$counters" | sed -n 's/^spent=//p')
             new_blocking=$(printf '%s\n' "$counters" | sed -n 's/^blocking=//p')
-            case "$new_attempt" in ''|*[!0-9]*) echo "::warning::счёт по файлам не дал числа — остаётся счёт по комментариям" ;; *) attempt="$new_attempt" ;; esac
+            case "$new_attempt" in ''|*[!0-9]*) echo "::warning::счётчик раундов не дал числа — работают значения по умолчанию" ;; *) attempt="$new_attempt" ;; esac
             case "$new_spent" in ''|*[!0-9]*) : ;; *) spent="$new_spent" ;; esac
             # Перечень учтённого обязан сходиться с числом: если цикл виден
             # только документом, ссылка на комментарий его не объяснит.
