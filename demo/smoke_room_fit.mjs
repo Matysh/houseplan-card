@@ -111,9 +111,9 @@ const out = await page.evaluate(async () => {
   result.keyboardUsesSameCommand = c._roomFocus?.roomId === 'room-a'
     && (root.activeElement === label || document.activeElement === label);
 
-  const areaLink = label.querySelector('.rlgo');
   c._resetZoom(); await waitCamera();
   c._clearRoomFocus(true);
+  const areaLink = root.querySelector('.roomlabel[data-id="room-a"] .rlgo');
   const beforeLink = JSON.stringify(c._view);
   pointer(areaLink, 'pointerdown', 15203);
   pointer(areaLink, 'pointerup', 15203);
