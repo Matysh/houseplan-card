@@ -10,7 +10,7 @@
 
 ## 1. Сценарий
 
-Персона — Enthusiast/Power User из `docs/SCOPE.md`. Поверхность — полная
+Персона — Home admin (HA enthusiast) из `docs/SCOPE.md`. Поверхность — полная
 карточка House Plan в режиме View на устройстве с мышью. Момент — пользователь
 ищет пространственную причину нестабильной работы конкретного Zigbee-устройства
 и хочет увидеть его наблюдаемых соседей относительно комнат и стен, не переходя
@@ -412,7 +412,8 @@ fallback. User-overridden identifiers могут оставить node unmatched
 - **AC14 — Z2M contract.** Только подтверждённая instance публикует raw
   `routes:false` request после явного предупреждения; transaction, 150 s timeout,
   retained/foreign/late response и cleanup соблюдены. Доказательство: adapter
-  unit with fake clock/MQTT + backend/HA contract smoke on Linux CI, Codex/CI.
+  unit with fake clock/MQTT + HA MQTT contract fixture на Linux CI (не House
+  Plan backend), Codex/CI.
 - **AC15 — no implicit work.** HA state ticks, hover, space switch, rebind и
   второй экземпляр карточки не запускают provider fetch/scan; concurrent explicit
   requests дедуплицируются. Доказательство: call-count unit + browser smoke +
@@ -465,7 +466,42 @@ fallback. User-overridden identifiers могут оставить node unmatched
    mutation runs. Golden/performance полным набором — перед бетой, targeted
    witnesses — до код-ревью.
 
-## 15. Риски
+## 15. Затронутые файлы и модули
+
+Ожидаемые продуктовые поверхности:
+
+- `src/types.ts` и нормализация общих настроек — optional topology settings;
+- новый pure topology module — provider-neutral types, validation,
+  normalization, incident-link selection и exact marker mapping;
+- новый lazy topology runtime/provider adapters — shared cache, ZHA WebSocket,
+  Z2M MQTT transaction/lifecycle и permission guards;
+- `src/houseplan-card.ts` и device render seams — lazy lifecycle, mouse-hover
+  ownership, same-space edge projection, cross-space count и cleanup;
+- `src/houseplan-editor-runtime.ts` — переключатель, provider controls и status
+  в «Общих настройках»;
+- device/dialog styles — pointer-transparent edge/highlight/count layer и
+  responsive provider settings;
+- `src/i18n/*.json` и при необходимости тематический lazy i18n chunk — новые
+  строки en/ru/de/fr.
+
+Ожидаемые доказательные и документальные поверхности:
+
+- `test/**` — settings/model/mapping/cache/provider/privacy unit suites и
+  обезличенные fixtures;
+- `demo/smoke_zigbee_topology_hover.mjs`, golden matrix/baselines и topology
+  performance fixture/budget;
+- `scripts/mutation-gate.mjs` и smoke-link registry — negative witnesses и
+  связь нового smoke с изменёнными модулями;
+- `docs/UX-MODES.md`, `docs/SCOPE.md`, пользовательское руководство, оба
+  changelog и при необходимости privacy/config compatibility docs;
+- manifest-driven generated bundle/chunks после `npm run bundle:sync`.
+
+`custom_components/houseplan/**/*.py` не планируется: штатных HA WebSocket/MQTT
+surfaces достаточно. Если реализация докажет обратное, появление House Plan
+backend считается изменением заявленного технического скоупа и требует явной
+фиксации до код-ревью.
+
+## 16. Риски
 
 - ZHA snapshot может быть старым, а completion-aware refresh отсутствует.
 - Z2M scan дорогой и зависит от корректного base topic/MQTT permissions.
@@ -477,7 +513,7 @@ fallback. User-overridden identifiers могут оставить node unmatched
 - Hover-only UX недоступен на touch; это осознанное ограничение диагностической
   функции, а не скрытая попытка переопределить device gestures.
 
-## 16. Откат
+## 17. Откат
 
 Функция fail-closed и выключена по умолчанию. Операционный откат — отключить
 настройку: runtime перестаёт загружаться/рисоваться, provider requests не
@@ -486,7 +522,7 @@ fallback. User-overridden identifiers могут оставить node unmatched
 cleanup пользовательских данных и миграция назад не требуются; сохранённые base
 topics безопасно игнорируются старой версией.
 
-## 17. Release-артефакты
+## 18. Release-артефакты
 
 - запись со ссылкой на #54 в `docs/CHANGELOG.md` и `docs/CHANGELOG.ru.md` в том
   же user-visible implementation commit;
@@ -497,7 +533,7 @@ topics безопасно игнорируются старой версией.
 - release note прямо сообщает ограничения: admin, mouse hover, snapshot, без
   ZHA forced scan и без touch interaction.
 
-## 18. Предположения автора — можно менять на ревью без решения владельца
+## 19. Предположения автора — можно менять на ревью без решения владельца
 
 - Внутреннее поле настроек группируется в `settings.zigbee_topology`; точное имя
   не является продуктовым контрактом.
@@ -511,8 +547,10 @@ topics безопасно игнорируются старой версией.
   хранится, но не требует второго параллельного stroke.
 - Cross-space detail ограничен неинтерактивным count; список и навигация могут
   стать отдельной задачей только после полевого запроса.
+- Точные числовые performance budgets устанавливаются до S7 по измеренному
+  dev-стенду для уже перечисленных fixtures, а не угадываются на этапе ТЗ.
 
-## 19. Источники Stage 0
+## 20. Источники Stage 0
 
 - Home Assistant Core ZHA WebSocket API:
   https://github.com/home-assistant/core/blob/dev/homeassistant/components/zha/websocket_api.py
