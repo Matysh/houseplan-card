@@ -3651,7 +3651,8 @@ public _rszProjectPreview(
     }
     if (wallRecordCarrierViolations(changedWalls, wallCarriers, this.host._wallKeyPitch,
       NORM_W, s.walls || []).length) return { ok: false, reason: 'wall-metadata' };
-    const liveSpace = resizeLiveCandidateSpace(sp, changedRoomIds);
+    const liveRoomIds = resizeLiveJunctionRoomIds(sp.rooms || [], changedRoomIds);
+    const liveSpace = resizeLiveCandidateSpace(sp, liveRoomIds);
     if (!liveSpace || !this._rszSpaceCandidateGeometry(this.host._space, liveSpace).ok)
       return { ok: false, reason: 'physical-geometry' };
     // #329 AC7a: a step that would ADD a junction-limit violation is never
@@ -3663,9 +3664,8 @@ public _rszProjectPreview(
         (space) => (space?.id === this.host._space ? sp : space),
       ),
     };
-    try { const junctionSpace = resizeLiveCandidateSpace(sp, resizeLiveJunctionRoomIds(sp.rooms || [], changedRoomIds));
-      this._resizePreviewNodes = multiWallNodesForGeometry(
-        junctionSpace?.rooms || [], (junctionSpace?.walls || []) as unknown as WallEntry[], [], GRID_STEP_N,
+    try { this._resizePreviewNodes = multiWallNodesForGeometry(
+        liveSpace.rooms, liveSpace.walls as unknown as WallEntry[], [], GRID_STEP_N,
         this.host._cellCm, this.host._gridPitch, NORM_W,
       );
     } catch { this._resizePreviewNodes = null; }

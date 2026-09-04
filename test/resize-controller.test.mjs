@@ -1,10 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 
 import { ResizeController } from '../test-build/resize-controller.js';
 import {
   resizeLiveCandidateSpace, resizeLiveJunctionRoomIds, resizeLiveRoomIds,
 } from '../test-build/resize-live-preflight.js';
+import { checkSpacePhysicalGeometry } from '../test-build/plan-geometry-preflight.js';
 import { resolveSafeResize } from '../test-build/resize.js';
 
 const room = () => ({
@@ -208,4 +210,31 @@ test('#451 live resize candidate keeps nearby physical bodies and excludes remot
   assert.deepEqual(candidate.room_drafts.map((item) => item.id), ['near']);
   assert.deepEqual(candidate.wall_columns.map((item) => item.id), ['near']);
   assert.deepEqual(candidate.openings.map((item) => item.id), ['near']);
+});
+
+test('#451 live resize physical preflight retains the adjacent room of a degraded wall', () => {
+  const fixture = JSON.parse(readFileSync(
+    new URL('./fixtures/278-wall-union-isolation.json', import.meta.url), 'utf8',
+  ));
+  const baseSpace = fixture.config.spaces[0];
+  const remoteRooms = Array.from({ length: 80 }, (_, index) => {
+    const x = 10 + index * 2;
+    return {
+      id: `remote-${index}`,
+      poly: [[x, 10], [x + 1, 10], [x + 1, 11], [x, 11]],
+    };
+  });
+  const largeSpace = { ...baseSpace, rooms: [...baseSpace.rooms, ...remoteRooms] };
+  const full = checkSpacePhysicalGeometry({ spaces: [largeSpace] }, largeSpace.id);
+  assert.equal(full.ok, false);
+  assert.equal(full.reason, 'wall-degraded-extra');
+
+  const liveRoomIds = resizeLiveJunctionRoomIds(largeSpace.rooms, ['r1']);
+  assert.deepEqual(liveRoomIds, ['r1', 'r2']);
+  const liveSpace = resizeLiveCandidateSpace(largeSpace, liveRoomIds);
+  assert.ok(liveSpace);
+  assert.deepEqual(liveSpace.rooms.map((room) => room.id), ['r1', 'r2']);
+  const live = checkSpacePhysicalGeometry({ spaces: [liveSpace] }, liveSpace.id);
+  assert.equal(live.ok, false);
+  assert.equal(live.reason, 'wall-degraded-extra');
 });
