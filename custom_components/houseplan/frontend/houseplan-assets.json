@@ -2,6 +2,7 @@
   "schema": 1,
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   "fingerprint": "ae7c8e5f4037f7411ca44d300e7144531a4d1459ed32af8cb65818605449bfea",
   "entry": "houseplan-card.js",
   "initialViewFiles": [
@@ -36,33 +37,37 @@
 =======
   "fingerprint": "e41a5310d5f3fc04fbdfd0262a5176efe9ef37bfccec822ba8fe61abce72cfb2",
 >>>>>>> 5ef300b8 (fix: satisfy render performance validation gates)
+=======
+  "fingerprint": "c7dfd3e006eea5eee4423a8f33e89f71c11e8f34de9a6e05891f767097d7ff5d",
+>>>>>>> c62e9a7e (fix: clear settled viewport compositing)
   "entry": "houseplan-card.js",
   "initialViewFiles": [
-    "houseplan-assets/houseplan-card-DWJtraIS.js",
+    "houseplan-assets/houseplan-card-Dc6_C1GY.js",
     "houseplan-card.js"
   ],
-  "initialViewGzipBytes": 296475,
+  "initialViewGzipBytes": 296484,
   "lazyFiles": [
-    "houseplan-assets/backdrop-pick-DIgi2Yuh.js",
-    "houseplan-assets/de-arUN8Vx7.js",
-    "houseplan-assets/editor-Dd7--z-1.js",
-    "houseplan-assets/fr-Dzu44WpB.js",
-    "houseplan-assets/houseplan-editor-runtime-COSilger.js",
-    "houseplan-assets/houseplan-onboarding-runtime-GJ38Op_d.js",
-    "houseplan-assets/hp-zigbee-topology-overlay-BEnFTAFp.js",
-    "houseplan-assets/live-interaction-runtime-ChrvWqpG.js",
-    "houseplan-assets/zigbee-topology-CgmzeuiK.js",
-    "houseplan-assets/zigbee-topology-runtime-B7_gFefR.js"
+    "houseplan-assets/backdrop-pick-Z95eZVCu.js",
+    "houseplan-assets/de-DRRWbWgg.js",
+    "houseplan-assets/editor-BiT_NzVH.js",
+    "houseplan-assets/fr-DuHCxf19.js",
+    "houseplan-assets/houseplan-editor-runtime-72wgQp7c.js",
+    "houseplan-assets/houseplan-onboarding-runtime-Cw68F8HP.js",
+    "houseplan-assets/hp-zigbee-topology-overlay-DaDSnbby.js",
+    "houseplan-assets/live-interaction-runtime-CCDE_x-p.js",
+    "houseplan-assets/zigbee-topology-BPD7cM0g.js",
+    "houseplan-assets/zigbee-topology-runtime-BIQaz34m.js"
   ],
-  "lazyGzipBytes": 237656,
+  "lazyGzipBytes": 237727,
   "lazyEditorFiles": [
-    "houseplan-assets/backdrop-pick-DIgi2Yuh.js",
-    "houseplan-assets/editor-Dd7--z-1.js",
-    "houseplan-assets/houseplan-editor-runtime-COSilger.js",
-    "houseplan-assets/zigbee-topology-CgmzeuiK.js"
+    "houseplan-assets/backdrop-pick-Z95eZVCu.js",
+    "houseplan-assets/editor-BiT_NzVH.js",
+    "houseplan-assets/houseplan-editor-runtime-72wgQp7c.js",
+    "houseplan-assets/zigbee-topology-BPD7cM0g.js"
   ],
-  "lazyEditorGzipBytes": 175452,
+  "lazyEditorGzipBytes": 175464,
   "lazyOnboardingFiles": [
+<<<<<<< HEAD
 <<<<<<< HEAD
     "houseplan-assets/backdrop-pick-DTvxUUZe.js",
     "houseplan-assets/houseplan-onboarding-runtime-CIcTVu4w.js"
@@ -71,9 +76,14 @@
     "houseplan-assets/backdrop-pick-DIgi2Yuh.js",
     "houseplan-assets/houseplan-onboarding-runtime-GJ38Op_d.js"
 >>>>>>> 5ef300b8 (fix: satisfy render performance validation gates)
+=======
+    "houseplan-assets/backdrop-pick-Z95eZVCu.js",
+    "houseplan-assets/houseplan-onboarding-runtime-Cw68F8HP.js"
+>>>>>>> c62e9a7e (fix: clear settled viewport compositing)
   ],
-  "lazyOnboardingGzipBytes": 14233,
+  "lazyOnboardingGzipBytes": 14237,
   "lazyLocaleFiles": [
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
     "houseplan-assets/de-BvZPvnYY.js",
@@ -96,26 +106,35 @@
     "houseplan-assets/de-arUN8Vx7.js",
     "houseplan-assets/fr-Dzu44WpB.js"
 >>>>>>> 5ef300b8 (fix: satisfy render performance validation gates)
+=======
+    "houseplan-assets/de-DRRWbWgg.js",
+    "houseplan-assets/fr-DuHCxf19.js"
+>>>>>>> c62e9a7e (fix: clear settled viewport compositing)
   ],
-  "lazyLocaleGzipBytes": 49088,
+  "lazyLocaleGzipBytes": 49102,
   "files": [
     {
-      "path": "houseplan-assets/backdrop-pick-DIgi2Yuh.js",
-      "sha256": "e82310130f17562eb77f93fab2d09f24b3e077bd6247e5b517389a7a460f0755",
+      "path": "houseplan-assets/backdrop-pick-Z95eZVCu.js",
+      "sha256": "dfa8b28dd4d294cbaab52d7078a168bd4f773b005ad7698c38d587b6132569cc",
       "rawBytes": 21417,
       "gzipBytes": 7280,
       "isEntry": false,
       "imports": [
+<<<<<<< HEAD
 <<<<<<< HEAD
         "houseplan-assets/houseplan-card-7FEkn7sJ.js"
 >>>>>>> 3e3192f2 (fix: keep large-plan interactions off the full render path)
 =======
         "houseplan-assets/houseplan-card-DWJtraIS.js"
 >>>>>>> 5ef300b8 (fix: satisfy render performance validation gates)
+=======
+        "houseplan-assets/houseplan-card-Dc6_C1GY.js"
+>>>>>>> c62e9a7e (fix: clear settled viewport compositing)
       ],
       "dynamicImports": []
     },
     {
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
       "path": "houseplan-assets/de-BvZPvnYY.js",
@@ -134,11 +153,18 @@
       "rawBytes": 82182,
       "gzipBytes": 24814,
 >>>>>>> 5ef300b8 (fix: satisfy render performance validation gates)
+=======
+      "path": "houseplan-assets/de-DRRWbWgg.js",
+      "sha256": "67ef76c6c8d2f2a0be7539455b9531fe2535e75b319d209adfc0e85c938dd5a6",
+      "rawBytes": 82182,
+      "gzipBytes": 24821,
+>>>>>>> c62e9a7e (fix: clear settled viewport compositing)
       "isEntry": false,
       "imports": [],
       "dynamicImports": []
     },
     {
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
       "path": "houseplan-assets/editor-BTu1pEFs.js",
@@ -151,10 +177,15 @@
       "path": "houseplan-assets/editor-Dd7--z-1.js",
       "sha256": "98e83f4240701ed81ed0917e6fb60dbce2c9545e7b3b0c045708829824af4af9",
 >>>>>>> 5ef300b8 (fix: satisfy render performance validation gates)
+=======
+      "path": "houseplan-assets/editor-BiT_NzVH.js",
+      "sha256": "7d89c228f20aefdb6e02af53980520dfa24262ca8627be3a0a142460cfdb1fcb",
+>>>>>>> c62e9a7e (fix: clear settled viewport compositing)
       "rawBytes": 3826,
-      "gzipBytes": 1578,
+      "gzipBytes": 1579,
       "isEntry": false,
       "imports": [
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
         "houseplan-assets/houseplan-card-BSrM0Lhk.js"
@@ -164,10 +195,14 @@
 =======
         "houseplan-assets/houseplan-card-DWJtraIS.js"
 >>>>>>> 5ef300b8 (fix: satisfy render performance validation gates)
+=======
+        "houseplan-assets/houseplan-card-Dc6_C1GY.js"
+>>>>>>> c62e9a7e (fix: clear settled viewport compositing)
       ],
       "dynamicImports": []
     },
     {
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
       "path": "houseplan-assets/fr-DjtFhN-Y.js",
@@ -186,11 +221,18 @@
       "rawBytes": 84312,
       "gzipBytes": 24274,
 >>>>>>> 5ef300b8 (fix: satisfy render performance validation gates)
+=======
+      "path": "houseplan-assets/fr-DuHCxf19.js",
+      "sha256": "d1576f6787ba6f2d87a79c8997ad6d5c332c67f76cac505649b93605ffd95af9",
+      "rawBytes": 84312,
+      "gzipBytes": 24281,
+>>>>>>> c62e9a7e (fix: clear settled viewport compositing)
       "isEntry": false,
       "imports": [],
       "dynamicImports": []
     },
     {
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
       "path": "houseplan-assets/houseplan-card-BSrM0Lhk.js",
@@ -237,34 +279,41 @@
       "rawBytes": 1053531,
       "gzipBytes": 295683,
 >>>>>>> 5ef300b8 (fix: satisfy render performance validation gates)
+=======
+      "path": "houseplan-assets/houseplan-card-Dc6_C1GY.js",
+      "sha256": "221274b5a3a89acb22026137275ad1906c2ed6bad3bbfc63fae07f36beef6629",
+      "rawBytes": 1053531,
+      "gzipBytes": 295689,
+>>>>>>> c62e9a7e (fix: clear settled viewport compositing)
       "isEntry": false,
       "imports": [],
       "dynamicImports": [
-        "houseplan-assets/de-arUN8Vx7.js",
-        "houseplan-assets/editor-Dd7--z-1.js",
-        "houseplan-assets/fr-Dzu44WpB.js",
-        "houseplan-assets/houseplan-editor-runtime-COSilger.js",
-        "houseplan-assets/houseplan-onboarding-runtime-GJ38Op_d.js",
-        "houseplan-assets/hp-zigbee-topology-overlay-BEnFTAFp.js",
-        "houseplan-assets/live-interaction-runtime-ChrvWqpG.js"
+        "houseplan-assets/de-DRRWbWgg.js",
+        "houseplan-assets/editor-BiT_NzVH.js",
+        "houseplan-assets/fr-DuHCxf19.js",
+        "houseplan-assets/houseplan-editor-runtime-72wgQp7c.js",
+        "houseplan-assets/houseplan-onboarding-runtime-Cw68F8HP.js",
+        "houseplan-assets/hp-zigbee-topology-overlay-DaDSnbby.js",
+        "houseplan-assets/live-interaction-runtime-CCDE_x-p.js"
       ]
     },
     {
-      "path": "houseplan-assets/houseplan-editor-runtime-COSilger.js",
-      "sha256": "bcea535185179da0fb9bec8a52154235953322887dc7270abe6433df6cf91fce",
+      "path": "houseplan-assets/houseplan-editor-runtime-72wgQp7c.js",
+      "sha256": "eb39590f260fdd5076e4aa0f13bc5b8249c4406ca46fd131e2361bc1ad7cefbd",
       "rawBytes": 613501,
-      "gzipBytes": 161753,
+      "gzipBytes": 161762,
       "isEntry": false,
       "imports": [
-        "houseplan-assets/backdrop-pick-DIgi2Yuh.js",
-        "houseplan-assets/houseplan-card-DWJtraIS.js",
-        "houseplan-assets/zigbee-topology-CgmzeuiK.js"
+        "houseplan-assets/backdrop-pick-Z95eZVCu.js",
+        "houseplan-assets/houseplan-card-Dc6_C1GY.js",
+        "houseplan-assets/zigbee-topology-BPD7cM0g.js"
       ],
       "dynamicImports": [
-        "houseplan-assets/zigbee-topology-runtime-B7_gFefR.js"
+        "houseplan-assets/zigbee-topology-runtime-BIQaz34m.js"
       ]
     },
     {
+<<<<<<< HEAD
 <<<<<<< HEAD
       "path": "houseplan-assets/houseplan-onboarding-runtime-CIcTVu4w.js",
       "sha256": "883b032e9cf54efb7e8e1d950cf50e7d6e9ef30d7ef7170703e3db4213c541e7",
@@ -273,10 +322,15 @@
       "path": "houseplan-assets/houseplan-onboarding-runtime-GJ38Op_d.js",
       "sha256": "1178130eff594c9a86df180ed0f4f9e02fb87f760e3c326ce61c296f5fd301bf",
 >>>>>>> 5ef300b8 (fix: satisfy render performance validation gates)
+=======
+      "path": "houseplan-assets/houseplan-onboarding-runtime-Cw68F8HP.js",
+      "sha256": "d6fccbd0f412377c9db48e0ee3b1be0c1759e41cff1cf00509663bf6d76a4de0",
+>>>>>>> c62e9a7e (fix: clear settled viewport compositing)
       "rawBytes": 28088,
-      "gzipBytes": 6953,
+      "gzipBytes": 6957,
       "isEntry": false,
       "imports": [
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
         "houseplan-assets/backdrop-pick-DZzpEyIT.js",
@@ -289,10 +343,15 @@
         "houseplan-assets/backdrop-pick-DIgi2Yuh.js",
         "houseplan-assets/houseplan-card-DWJtraIS.js"
 >>>>>>> 5ef300b8 (fix: satisfy render performance validation gates)
+=======
+        "houseplan-assets/backdrop-pick-Z95eZVCu.js",
+        "houseplan-assets/houseplan-card-Dc6_C1GY.js"
+>>>>>>> c62e9a7e (fix: clear settled viewport compositing)
       ],
       "dynamicImports": []
     },
     {
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
       "path": "houseplan-assets/hp-zigbee-topology-overlay-ut3HMh-r.js",
@@ -311,10 +370,15 @@
       "path": "houseplan-assets/hp-zigbee-topology-overlay-BEnFTAFp.js",
       "sha256": "0bb4ca492119385d54423374be6306a262170061b82c5dcf37b5ba0ccabb497a",
 >>>>>>> 5ef300b8 (fix: satisfy render performance validation gates)
+=======
+      "path": "houseplan-assets/hp-zigbee-topology-overlay-DaDSnbby.js",
+      "sha256": "fc946472af2a550a9347528a3429e32570ed7d3ae49b6b8f68a2e6fbf1770277",
+>>>>>>> c62e9a7e (fix: clear settled viewport compositing)
       "rawBytes": 6006,
-      "gzipBytes": 2375,
+      "gzipBytes": 2378,
       "isEntry": false,
       "imports": [
+<<<<<<< HEAD
 <<<<<<< HEAD
         "houseplan-assets/houseplan-card-7FEkn7sJ.js",
         "houseplan-assets/zigbee-topology-ChPbHkF3.js",
@@ -325,10 +389,16 @@
         "houseplan-assets/zigbee-topology-CgmzeuiK.js",
         "houseplan-assets/zigbee-topology-runtime-B7_gFefR.js"
 >>>>>>> 5ef300b8 (fix: satisfy render performance validation gates)
+=======
+        "houseplan-assets/houseplan-card-Dc6_C1GY.js",
+        "houseplan-assets/zigbee-topology-BPD7cM0g.js",
+        "houseplan-assets/zigbee-topology-runtime-BIQaz34m.js"
+>>>>>>> c62e9a7e (fix: clear settled viewport compositing)
       ],
       "dynamicImports": []
     },
     {
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
       "path": "houseplan-assets/zigbee-topology-rDtALgJu.js",
@@ -344,13 +414,20 @@
       "rawBytes": 4907,
       "gzipBytes": 2030,
 >>>>>>> 5ef300b8 (fix: satisfy render performance validation gates)
+=======
+      "path": "houseplan-assets/live-interaction-runtime-CCDE_x-p.js",
+      "sha256": "5a4f954c759af7f68d9171bc8aeb135deeb7153df53f060319f3b2aff5c199d1",
+      "rawBytes": 4999,
+      "gzipBytes": 2064,
+>>>>>>> c62e9a7e (fix: clear settled viewport compositing)
       "isEntry": false,
       "imports": [
-        "houseplan-assets/houseplan-card-DWJtraIS.js"
+        "houseplan-assets/houseplan-card-Dc6_C1GY.js"
       ],
       "dynamicImports": []
     },
     {
+<<<<<<< HEAD
 <<<<<<< HEAD
       "path": "houseplan-assets/zigbee-topology-ChPbHkF3.js",
       "sha256": "3e78f044f9e7abb1e20f094cf594639b1614e9fd738485bc7de285d69e85c61a",
@@ -359,10 +436,15 @@
       "path": "houseplan-assets/zigbee-topology-CgmzeuiK.js",
       "sha256": "a51cf6ff507f456e6d4cb07658fa9d00d17e7410b3a5295d15434afee7a9f69f",
 >>>>>>> 5ef300b8 (fix: satisfy render performance validation gates)
+=======
+      "path": "houseplan-assets/zigbee-topology-BPD7cM0g.js",
+      "sha256": "4628296d15a431e034f7de77dec2169a57d2bec69f6725c7b06533ce397c9b02",
+>>>>>>> c62e9a7e (fix: clear settled viewport compositing)
       "rawBytes": 12382,
-      "gzipBytes": 4841,
+      "gzipBytes": 4843,
       "isEntry": false,
       "imports": [
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
         "houseplan-assets/houseplan-card-BSrM0Lhk.js"
@@ -372,10 +454,14 @@
 =======
         "houseplan-assets/houseplan-card-DWJtraIS.js"
 >>>>>>> 5ef300b8 (fix: satisfy render performance validation gates)
+=======
+        "houseplan-assets/houseplan-card-Dc6_C1GY.js"
+>>>>>>> c62e9a7e (fix: clear settled viewport compositing)
       ],
       "dynamicImports": []
     },
     {
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
       "path": "houseplan-assets/zigbee-topology-runtime-DNuifEaQ.js",
@@ -393,10 +479,15 @@
       "path": "houseplan-assets/zigbee-topology-runtime-B7_gFefR.js",
       "sha256": "4ca4d213abbdb285237c64d27fcc8c22d01a5ef2c0ac93c56b1124c031129141",
 >>>>>>> 5ef300b8 (fix: satisfy render performance validation gates)
+=======
+      "path": "houseplan-assets/zigbee-topology-runtime-BIQaz34m.js",
+      "sha256": "8e1efb21ea859a12b1eea8ea53cc3c24b03062d0ac19b166e07f90f87b887934",
+>>>>>>> c62e9a7e (fix: clear settled viewport compositing)
       "rawBytes": 3941,
-      "gzipBytes": 1758,
+      "gzipBytes": 1762,
       "isEntry": false,
       "imports": [
+<<<<<<< HEAD
 <<<<<<< HEAD
         "houseplan-assets/houseplan-card-7FEkn7sJ.js",
         "houseplan-assets/zigbee-topology-ChPbHkF3.js"
@@ -405,11 +496,16 @@
         "houseplan-assets/houseplan-card-DWJtraIS.js",
         "houseplan-assets/zigbee-topology-CgmzeuiK.js"
 >>>>>>> 5ef300b8 (fix: satisfy render performance validation gates)
+=======
+        "houseplan-assets/houseplan-card-Dc6_C1GY.js",
+        "houseplan-assets/zigbee-topology-BPD7cM0g.js"
+>>>>>>> c62e9a7e (fix: clear settled viewport compositing)
       ],
       "dynamicImports": []
     },
     {
       "path": "houseplan-card.js",
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
       "sha256": "72a73dc69ec2b320184a11d0e841df00acb1da3c57555e7b987c4fa63556a0c5",
@@ -419,10 +515,14 @@
 =======
       "sha256": "fefe2a716e43c08df2644ceab0f3286072a17f6d66ffde99af6fde0db5998103",
 >>>>>>> 5ef300b8 (fix: satisfy render performance validation gates)
+=======
+      "sha256": "2a3e7ac72555babadda763dec137f69f65c8590299dd4f81a9a7966f012e62e1",
+>>>>>>> c62e9a7e (fix: clear settled viewport compositing)
       "rawBytes": 1183,
-      "gzipBytes": 792,
+      "gzipBytes": 795,
       "isEntry": true,
       "imports": [
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
         "houseplan-assets/houseplan-card-BSrM0Lhk.js"
@@ -432,6 +532,9 @@
 =======
         "houseplan-assets/houseplan-card-DWJtraIS.js"
 >>>>>>> 5ef300b8 (fix: satisfy render performance validation gates)
+=======
+        "houseplan-assets/houseplan-card-Dc6_C1GY.js"
+>>>>>>> c62e9a7e (fix: clear settled viewport compositing)
       ],
       "dynamicImports": []
     }

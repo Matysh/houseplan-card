@@ -58,6 +58,12 @@ export function liveLayerProjection(
   };
 }
 
+export const isIdentityLiveLayerProjection = (projection: LiveLayerProjection): boolean =>
+  projection.translateXPercent === 0
+  && projection.translateYPercent === 0
+  && projection.scaleX === 1
+  && projection.scaleY === 1;
+
 const finiteView = (view: LiveViewBox): boolean =>
   [view.x, view.y, view.w, view.h].every(Number.isFinite) && view.w > 0 && view.h > 0;
 
@@ -93,7 +99,10 @@ export function paintLiveViewport(
   }
   const projection = liveLayerProjection(painted.view, current.view);
   for (const layer of root.querySelectorAll<HTMLElement>('[data-hp-live-layer="camera"]')) {
-    setLayerProjection(layer, projection);
+    // Keeping an identity transform after terminal reconciliation changes the
+    // browser compositing path and therefore the settled raster by a few colour
+    // levels. The fast path must leave byte-equivalent DOM/CSS when it is idle.
+    setLayerProjection(layer, isIdentityLiveLayerProjection(projection) ? null : projection);
   }
   const badge = root.querySelector<HTMLElement>('[data-hp-live-zoom]');
   if (badge) {
