@@ -7862,15 +7862,15 @@ export class HouseplanCard extends LitElement {
 
   /** Browser/OS cancellation is an aborted transaction, never a commit. */
   private _stagePointerCancel(ev: PointerEvent): void {
-    if (this._roomPointer?.pointerId === ev.pointerId) this._roomPointer = null;
-    this._pointers.delete(ev.pointerId);
+    if (this._roomPointer?.pointerId === ev.pointerId) this._roomPointer = null; if (this._editorRuntime) return this._editorRuntime._stagePointerCancel(ev);
+    const viewportGestureEnded = !!this._pinchStart || !!this._panStart; this._pointers.delete(ev.pointerId);
     if (this._pointers.size < 2) this._pinchStart = null;
     if (this._pointers.size === 0) {
       this._panStart = null;
       this._panLock = null;
       this._swipeStart = null;
     }
-    if (this._editorRuntime) this._editorRuntime._stagePointerCancel(ev);
+    if (viewportGestureEnded && this._pointers.size === 0) this.requestUpdate();
   }
 
   private _applyGeometryState(
