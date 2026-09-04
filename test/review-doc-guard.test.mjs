@@ -461,3 +461,19 @@ test('guard считает раунды скриптом, а не inline-shell (
   // Скрипт лежит в репозитории, значит guard обязан его выкачать.
   assert.match(workflow.slice(0, workflow.indexOf('      - id: decide')), /actions\/checkout/);
 });
+
+test('описание чужого раунда не объявляет вердикт (#454, находка на корпусе)', () => {
+  // CODE-REVIEW-441-r1.md: документ зелёного второго раунда описывает жёлтый
+  // ПЕРВЫЙ раунд строкой-буллитом. Правило, допускавшее слово между «Вердикт»
+  // и двоеточием, добавляло зелёному раунду блокирующий цикл.
+  assert.equal(
+    verdictDeclaration('- Вердикт r1: жёлтый, High 0, Medium 1 в скоупе — красный `check-docs.mjs`'),
+    null,
+  );
+  assert.equal(verdictDeclaration('- Вердикт предыдущего раунда: красный'), null);
+  // Штатные формы объявления при этом обязаны читаться по-прежнему.
+  assert.ok(verdictDeclaration('Вердикт: жёлтый · заход r1'));
+  assert.ok(verdictDeclaration('**Вердикт: красный** · заход r2'));
+  assert.ok(verdictDeclaration('- **Вердикт:** жёлтый'));
+  assert.ok(verdictDeclaration('- Вердикт: зелёный'));
+});
