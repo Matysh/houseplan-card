@@ -105,7 +105,7 @@ import {
 } from './wall-thickness';
 import {
   junctionLimitViolations, increasedViolations,
-  type JunctionLimitViolation, type LimitSegment,
+  type JunctionLimitViolation, type JunctionSharedGeometry, type LimitSegment,
 } from './junction-limits';
 import {
   pointOnOpenCut, sanitizeOpenSpans,
@@ -973,9 +973,8 @@ export interface HouseplanEditorHostPort {
   _importTotal: number;
   _infoCard: DevItem | null;
   _innerRoomContour: (space: SpaceModel, roomId: string, openCuts?: number[][], roomWalls?: any, multiWallNodes?: MultiWallNodeMap | null | undefined) => number[][] | null;
-  _junctionLimitViolations: (
-    config: unknown, spaceId: string, sharedGeometry?: unknown, roomIds?: ReadonlySet<string>,
-  ) => JunctionLimitViolation[];
+  _junctionLimitViolations: (config: unknown, spaceId: string,
+    sharedGeometry?: JunctionSharedGeometry | null, roomIds?: ReadonlySet<string>) => JunctionLimitViolation[];
   _isVacDev: (d: DevItem) => boolean;
   _kiosk: boolean;
   _kioskDialog: boolean;
@@ -2047,13 +2046,14 @@ public _limitSegmentsOf(space: any): LimitSegment[] {
   }
 
 public _junctionLimitViolations(
-    config: any, spaceId: string,
+    config: unknown, spaceId: string,
     /** #330 §4.7: an already computed masonry pass of THIS config (e.g. the
      * resize preflight's artifact) — the union is never paid twice. */
-    sharedGeometry?: any,
+    sharedGeometry?: JunctionSharedGeometry | null,
     roomIds?: ReadonlySet<string>,
   ): JunctionLimitViolation[] {
-    const space = (config?.spaces || []).find((item) => item?.id === spaceId);
+    const space = ((config as { spaces?: Array<{ id?: unknown }> } | null)?.spaces || [])
+      .find((item) => item?.id === spaceId);
     return space ? junctionLimitViolations(
       config, spaceId, this._limitSegmentsOf(space), sharedGeometry, roomIds,
     ) : [];
@@ -2068,7 +2068,7 @@ public _junctionLimitLabel(violation: JunctionLimitViolation): string {
 
 public _junctionLimitsIntroduced(
     candidate: any, previousConfig: any, spaceId: string,
-    candidateGeometry?: unknown,
+    candidateGeometry?: JunctionSharedGeometry | null,
     affectedRoomIds?: readonly string[],
   ): JunctionLimitViolation[] {
     // The baseline must be the previous document AS THE CANDIDATE SEES IT: a

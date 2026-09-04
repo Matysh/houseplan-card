@@ -15,7 +15,21 @@
 import { GRID_STEP_N } from './space-geometry';
 import {
   innerContourForRoom, multiWallNodesForGeometry, wallBodiesGeometry,
+  type MultiWallNodeMap, type WallBodiesGeometryResult, type WallEntry,
 } from './wall-thickness';
+import type { RoomCfg } from './types';
+
+interface JunctionLimitSpace {
+  id?: string;
+  cell_cm?: unknown;
+  rooms?: RoomCfg[];
+  walls?: WallEntry[];
+}
+
+type JunctionLimitConfig = { spaces?: JunctionLimitSpace[] };
+export type JunctionSharedGeometry =
+  | Pick<WallBodiesGeometryResult, 'status' | 'roomGeom' | 'multiWallNodes'>
+  | { status: 'lightweight'; multiWallNodes?: MultiWallNodeMap | null };
 
 export const MIN_JUNCTION_ANGLE_DEG = 15;
 export const MAX_JUNCTION_VALENCE = 6;
@@ -48,13 +62,14 @@ export interface LimitSegment {
 
 /** Shared full/affected-room validation used by editor writes and lightweight resize previews. */
 export function junctionLimitViolations(
-  config: any,
+  config: unknown,
   spaceId: string,
   segments: readonly LimitSegment[],
-  sharedGeometry?: any,
+  sharedGeometry?: JunctionSharedGeometry | null,
   roomIds?: ReadonlySet<string>,
 ): JunctionLimitViolation[] {
-  const space = (config?.spaces || []).find((item: any) => item?.id === spaceId);
+  const spaces = (config as JunctionLimitConfig | null)?.spaces || [];
+  const space = spaces.find((item) => item?.id === spaceId);
   if (!space) return [];
   const cellCm = Number(space.cell_cm) > 0 ? Number(space.cell_cm) : 5;
   const violations = [
@@ -70,8 +85,10 @@ export function junctionLimitViolations(
       );
     } catch { nodes = null; }
   }
-  let roomGeometry: any = sharedGeometry?.status === 'ok'
-    || sharedGeometry?.status === 'degraded-extra' ? sharedGeometry.roomGeom : null;
+  const completeGeometry = sharedGeometry && sharedGeometry.status !== 'lightweight'
+    ? sharedGeometry : null;
+  let roomGeometry: unknown = completeGeometry?.status === 'ok'
+    || completeGeometry?.status === 'degraded-extra' ? completeGeometry.roomGeom : null;
   const lightweight = sharedGeometry === null || sharedGeometry?.status === 'lightweight';
   if (!roomGeometry && !lightweight && nodes?.nodes.length) {
     try {

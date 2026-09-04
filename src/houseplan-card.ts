@@ -92,9 +92,8 @@ import {
   type LinearWallSegment, type WallEntry, type WallInterval,
   innerEdgeSpan, ownEdgeOffsets, thicknessCmAt,
 } from './wall-thickness';
-import {
-  checkNodeDistances, checkNodes, checkRoomClearance, checkSegmentLengths,
-  increasedViolations, type JunctionLimitViolation, type LimitSegment,
+import type {
+  JunctionLimitViolation, JunctionSharedGeometry, LimitSegment,
 } from './junction-limits';
 import {
   pointOnOpenCut, sanitizeOpenSpans,
@@ -7789,7 +7788,8 @@ export class HouseplanCard extends LitElement {
   }
 
   /** #329 П1-П5 over one space. Pure input, no side effects. */
-  private _junctionLimitViolations(config: any, spaceId: string, sharedGeometry?: any,
+  private _junctionLimitViolations(config: unknown, spaceId: string,
+    sharedGeometry?: JunctionSharedGeometry | null,
     roomIds?: ReadonlySet<string>): JunctionLimitViolation[] {
     return this._editorRuntimeOrThrow()._junctionLimitViolations(config, spaceId, sharedGeometry, roomIds);
   }

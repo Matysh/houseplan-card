@@ -1,6 +1,9 @@
 import { nothing, render, svg, type TemplateResult } from 'lit';
 import { cancelHouseplanPointerMove } from './pointer-move-queue';
 import { gridVisualUnits } from './grid-scale';
+import type { RenderOpening } from './interaction-types';
+import type { SpaceDisplay } from './logic';
+import type { SpaceModel, WallEntry } from './types';
 import {
   wallBodyNeedsSolid, wallCmToUnits, wallEdgePathD,
   wallHatchNeedsSolid, wallHatchStepUnits,
@@ -38,7 +41,7 @@ interface LiveEditorHost {
   _liveEditorPaintCount: number;
   _baseVb: () => number[];
   _viewOr: (viewBox: number[]) => { x: number; y: number; w: number; h: number };
-  _spaceDisplayForRender: () => unknown;
+  _spaceDisplayForRender: () => SpaceDisplay;
   _renderWallBodies: (display: unknown) => unknown;
   _renderResizeMeasurements: () => unknown;
   _renderOpenings: (display: unknown, onlyIds?: readonly string[]) => unknown;
@@ -58,11 +61,11 @@ interface LiveEditorHost {
   _livePos: (device: { id: string }) => { x: number; y: number };
   _scenePoint: (point: number[]) => number[];
   _renderProjection: string;
-  _spaceModel: () => any;
-  _spaceWalls: any[];
+  _spaceModel: () => SpaceModel | null;
+  _spaceWalls: WallEntry[];
   _cellCm: number;
   _gridPitch: number;
-  _openingsR: any[];
+  _openingsR: RenderOpening[];
   _stageEl: HTMLElement | null;
   _fillColors: { wall_fill: { c: string; a: number } };
 }
@@ -154,16 +157,19 @@ const restore = (state: LiveEditorState): void => {
 
 /** Resize moves paint individual wall strips; pointerup still validates the canonical union. */
 const resizePreviewWalls = (
-  host: LiveEditorHost, display: any, roomIds: readonly string[] = [],
+  host: LiveEditorHost, display: SpaceDisplay, roomIds: readonly string[] = [],
 ): TemplateResult => {
   if (host._renderProjection === 'iso') return svg``;
   const space = host._spaceModel();
   if (!space) return svg``;
   const affected = new Set(roomIds);
-  const boundary = (space.rooms || []).filter((room: any) => affected.has(room.id))
-    .flatMap((room: any) => (room.poly || []).map((point: number[], index: number) => [
-      point, room.poly[(index + 1) % room.poly.length],
-    ]));
+  const boundary = (space.rooms || []).filter((room) => !!room.id && affected.has(room.id))
+    .flatMap((room) => {
+      const poly = room.poly || [];
+      return poly.map((point: number[], index: number) => [
+        point, poly[(index + 1) % poly.length],
+      ]);
+    });
   const onSegment = (point: number[], segment: number[][]): boolean => {
     const [a, b] = segment;
     const dx = b[0] - a[0], dy = b[1] - a[1];
