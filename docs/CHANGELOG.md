@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Large plans now keep their heavy room, wall, lighting, decor and device scene
+  stable during hover, pan, pinch and editor drags, and unrelated Home Assistant
+  state updates no longer rebuild the full card; interactions remain visually
+  and functionally unchanged while responding much more smoothly
+  ([#451](https://github.com/Matysh/houseplan-card/issues/451)).
 - Double-clicking or double-tapping free plan background in View or kiosk now
   runs the same **Fit all** action as the toolbar button; rooms, devices,
   openings and editor surfaces keep their own gestures

@@ -58,9 +58,11 @@ test('RenderDeviceSnapshot keeps immutable facts and excludes live HA capabiliti
   assert.deepEqual(snapshot.positions.get('one'), { x: 12, y: 34 });
   assert.equal(snapshot.presentations.get(presentationSnapshotKey('one', true)).visual.status, 'working');
   assert.equal(snapshot.facts.get('vacuum:one').moving, true);
+  assert.deepEqual([...snapshot.entityIds], ['light.one']);
   assert.equal('set' in snapshot.positions, false);
   assert.equal('set' in snapshot.presentations, false);
   assert.equal('set' in snapshot.facts, false);
+  assert.equal('add' in snapshot.entityIds, false);
 });
 
 test('RenderDeviceSnapshot exposes one immutable vacuum-only roster subset', () => {

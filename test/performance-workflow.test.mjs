@@ -33,6 +33,7 @@ test('full performance is isolated to stable, scheduled and manual entry points'
     '- large-house',
     '- isometric',
     '- plan-snap',
+    '- interaction',
     '- blend',
     '- overlay',
     '- space-default',
@@ -43,7 +44,7 @@ test('full performance is isolated to stable, scheduled and manual entry points'
   ]) assert.ok(workflow.includes(contract), `missing full-gate contract: ${contract}`);
 
   assert.ok(workflow.includes('if [ -f baseline/scripts/bundle-sync.mjs ]; then'));
-  assert.equal((workflow.match(/--samples=7 --warmups=1/g) || []).length, 14);
+  assert.equal((workflow.match(/--samples=7 --warmups=1/g) || []).length, 16);
 
   const release = readWorkflow('release.yml');
   assert.ok(release.includes('if: ${{ !github.event.release.prerelease }}'));

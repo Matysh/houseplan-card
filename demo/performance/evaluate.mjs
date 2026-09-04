@@ -143,6 +143,20 @@ export const evaluatePerformanceBudget = ({ candidate, baseline, budgets, absolu
     },
   ));
 
+  for (const [windowName, budget] of Object.entries(budgets.longTaskWindows ?? {})) {
+    const windows = candidate.rows.map((row) => row.longTasks?.[windowName]);
+    const available = windows.every((window) => window?.supported === true);
+    checks.push({
+      id: `longTask.${windowName}.available`, actual: available ? 1 : 0, limit: 1, pass: available,
+    });
+    const maxSingle = available ? Math.max(...windows.map((window) => window.maxMs)) : NaN;
+    const countP95 = available ? percentile(windows.map((window) => window.count), 0.95) : NaN;
+    const totalP95 = available ? percentile(windows.map((window) => window.totalMs), 0.95) : NaN;
+    checks.push(makeCheck(`longTask.${windowName}.maxSingleMs`, maxSingle, budget.maxSingleMs));
+    checks.push(makeCheck(`longTask.${windowName}.countP95`, countP95, budget.maxCountP95));
+    checks.push(makeCheck(`longTask.${windowName}.totalP95Ms`, totalP95, budget.maxTotalP95Ms));
+  }
+
   const candidateHeap = candidate.rows
     .map((row) => row.heapGrowthBytes)
     .filter(finite)

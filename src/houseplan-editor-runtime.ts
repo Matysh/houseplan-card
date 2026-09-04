@@ -11,6 +11,13 @@ import { guard } from 'lit/directives/guard.js';
 import { renderVacuumMapsSection } from './editors/vacuum-maps-section';
 import { calibrationTarget, planVacuumFit } from './vacuum-route-edit';
 import { repeat } from 'lit/directives/repeat.js';
+import {
+  cancelHouseplanPointerMove, flushHouseplanPointerMove, queueHouseplanPointerMove,
+} from './pointer-move-queue';
+import {
+  commitHouseplanEditor, disposeHouseplanEditor, measureHouseplanDecorText,
+  routeHouseplanEditorUpdate,
+} from './live-editor';
 import './hp-dialog';
 import type { HpDialog } from './hp-dialog';
 import type { HpConfirmRequest } from './danger-confirm';
@@ -347,12 +354,13 @@ import {
 import {
   openingDefaultLengthCm, openingPlacementPreset, passagePlacementPreviewGeometry,
   resolveOpeningPlacementResult, sameOpeningPlacementInput,
-  type OpeningPlacementCore, type OpeningPlacementPreset, type OpeningPlacementType,
+  type OpeningPlacementPreset, type OpeningPlacementType,
 } from './opening-placement';
 import {
   buildOpeningDimensionContext, resolveOpeningDimensions,
-  type OpeningDimension, type OpeningDimensionContext,
+  type OpeningDimensionContext,
 } from './opening-dimensions';
+import type { OpeningPlacementCandidate, OpMeasure, RenderOpening } from './interaction-types';
 import { safeStoredColor } from './color';
 import {
   gridCellFieldToCm, gridCellFieldValue, gridVisualScale, gridVisualUnits,
@@ -794,32 +802,6 @@ const capturePointer = (ev: PointerEvent): void => {
   }
 };
 
-/** Ruler labels + the centre-magnet tick. Existing-opening DRAG carries its
- *  legacy two labels; a new-opening PLACEMENT may additionally carry physical
- *  line/tick geometry (#238). */
-interface OpMeasureLabel {
-  x: number;
-  y: number;
-  text: string;
-  dimension?: OpeningDimension;
-}
-
-interface OpMeasure {
-  labels: OpMeasureLabel[];
-  guide: { x: number; y: number; angle: number } | null;
-}
-
-type OpeningPlacementCandidate = Omit<OpeningPlacementCore, 'measure'> & {
-  face: OpeningFaceOffset;
-  measure: OpMeasure;
-};
-
-type RenderOpening = OpeningCfg & {
-  rx: number; ry: number; rlen: number;
-  partitionHost?: ResolvedPartitionOpening;
-  orphanReason?: PartitionOpeningOrphanReason;
-};
-
 interface DeviceInboxDialogState {
   tab: DeviceInboxCategory;
   search: string;
@@ -1163,6 +1145,7 @@ export interface HouseplanEditorHostPort {
   _vacSourceResolution: (d: DevItem, includeAllCameras?: boolean, planHass?: any) => VacSourceResolution;
   _vacSrvTrails: Record<string, any>;
   _view: { x: number; y: number; w: number; h: number; } | null;
+  _viewportGestureDirty: boolean;
   _viewModeSnap: { space: string; zoom: number; cx?: number; cy?: number; } | null;
   _viewOr: (vb: number[]) => { x: number; y: number; w: number; h: number; };
   _viewPreference: Record<string, "flat" | "iso">;
@@ -1235,6 +1218,18 @@ export class HouseplanEditorRuntime {
       ResizePreview, ResizeLiveLabel[], SpaceGeometryState, ResizeWallUnion, ResizeWallArtifact
     >();
   }
+
+public _routeLiveEditorUpdate(name?: PropertyKey, oldValue?: unknown): boolean {
+    return routeHouseplanEditorUpdate(this.host, name, oldValue);
+  }
+
+public _commitLiveEditor(): void { commitHouseplanEditor(this.host); }
+
+public _disposeLiveEditor(): void { disposeHouseplanEditor(this.host); }
+
+public _queuePointerMove(key: string, run: () => void): void { queueHouseplanPointerMove(this.host, key, run); }
+public _flushPointerMove(key: string): void { flushHouseplanPointerMove(this.host, key); }
+public _cancelPointerMove(key?: string): void { cancelHouseplanPointerMove(this.host, key); }
 
 public _help(key: Extract<I18nKey, `${string}.help`>): TemplateResult | typeof nothing {
     const ariaKey = `${key}.aria` as I18nKey;
@@ -2336,14 +2331,16 @@ public _stagePointerCancel(ev: PointerEvent): void {
     } else if (this.host._tool === 'draw') {
       this._clearPlanSnapHover();
     }
-    const viewportGestureEnded = !!this.host._pinchStart || !!this.host._panStart;
     this.host._pointers.delete(ev.pointerId);
     if (this.host._pointers.size < 2) this.host._pinchStart = null;
     if (this.host._pointers.size === 0) {
       this.host._panStart = null;
       this.host._panLock = null;
     }
-    if (viewportGestureEnded && this.host._pointers.size === 0) this.host.requestUpdate();
+    if (this.host._viewportGestureDirty && this.host._pointers.size === 0) {
+      this.host._viewportGestureDirty = false;
+      this.host.requestUpdate();
+    }
   }
 
 public _applyGeometryState(
@@ -3296,6 +3293,11 @@ public _clampPhysicalDelta(
   }
 
 public _physicalMove(ev: PointerEvent): void {
+    ev.stopPropagation();
+    queueHouseplanPointerMove(this.host, 'physical', () => this._physicalMoveNow(ev));
+  }
+
+private _physicalMoveNow(ev: PointerEvent): void {
     const drag = this.host._physicalDrag;
     if (!drag || drag.pid !== ev.pointerId) return;
     ev.stopPropagation();
@@ -3317,6 +3319,7 @@ public _physicalMove(ev: PointerEvent): void {
   }
 
 public _physicalUp(ev: PointerEvent): void {
+    flushHouseplanPointerMove(this.host, 'physical');
     const drag = this.host._physicalDrag;
     if (!drag || drag.pid !== ev.pointerId) return;
     ev.stopPropagation();
@@ -3385,6 +3388,8 @@ public _registerPhysicalTap(
   }
 
 public _cancelPhysicalGesture(): void {
+    cancelHouseplanPointerMove(this.host, 'physical');
+    cancelHouseplanPointerMove(this.host, 'physical-rotate');
     this.host._physicalDrag = null;
     this.host._physicalRotate = null;
     this.host.requestUpdate();
@@ -3406,6 +3411,12 @@ public _physicalRotateDown(ev: PointerEvent, c: WallColumnCfg): void {
   }
 
 public _physicalRotateMove(ev: PointerEvent): void {
+    ev.preventDefault();
+    ev.stopPropagation();
+    queueHouseplanPointerMove(this.host, 'physical-rotate', () => this._physicalRotateMoveNow(ev));
+  }
+
+private _physicalRotateMoveNow(ev: PointerEvent): void {
     const drag = this.host._physicalRotate;
     if (!drag || drag.pid !== ev.pointerId) return;
     ev.preventDefault();
@@ -3418,6 +3429,7 @@ public _physicalRotateMove(ev: PointerEvent): void {
   }
 
 public _physicalRotateUp(ev: PointerEvent): void {
+    flushHouseplanPointerMove(this.host, 'physical-rotate');
     const drag = this.host._physicalRotate;
     if (!drag || drag.pid !== ev.pointerId) return;
     ev.preventDefault();
@@ -3801,6 +3813,11 @@ public _rszDisabledKey(ev: KeyboardEvent, reason: SafeResizeReason): void {
   }
 
 public _rszMove(ev: PointerEvent): void {
+    ev.stopPropagation();
+    queueHouseplanPointerMove(this.host, 'resize', () => this._rszMoveNow(ev));
+  }
+
+private _rszMoveNow(ev: PointerEvent): void {
     if (!this.host._resize.ownsPointer(ev.pointerId)) return;
     ev.stopPropagation();
     const p = this._svgPoint(ev);
@@ -3838,6 +3855,7 @@ public _rszMove(ev: PointerEvent): void {
   }
 
 public _rszUp(ev: PointerEvent): void {
+    flushHouseplanPointerMove(this.host, 'resize');
     if (!this.host._resize.ownsPointer(ev.pointerId)) return;
     ev.stopPropagation();
     const result = this.host._resize.finish({
@@ -3878,6 +3896,7 @@ public _rszUp(ev: PointerEvent): void {
   }
 
 public _rszCancelDrag(pointerId?: number): void {
+    cancelHouseplanPointerMove(this.host, 'resize');
     const result = this.host._resize.cancel(this._rszSnapshot(), pointerId);
     if (result.kind === 'no-op') return;
     // HP-1550-01/-03: a cancel just drops the overlay — the real config was
@@ -4158,6 +4177,9 @@ public _replaceDecor(id: string, patch: Partial<DecorShape>): void {
   }
 
 public _cancelDecorGesture(): void {
+    cancelHouseplanPointerMove(this.host, 'decor-transform');
+    cancelHouseplanPointerMove(this.host, 'decor-move');
+    cancelHouseplanPointerMove(this.host, 'backdrop');
     const before = this.host._decorMove?.before || this.host._dtDrag?.before || this.host._bdDrag?.before;
     const sp = before && this.host._serverCfg?.spaces.find((space) => space.id === before.spaceId);
     if (before && sp) {
@@ -4808,39 +4830,7 @@ public _dtUp(): void {
   }
 
 public _dtMeasure(): void {
-    const sh = this.host._dtSel;
-    if (!sh) {
-      if (this.host._dtBox) { this.host._dtBox = null; this.host.requestUpdate(); }
-      return;
-    }
-    let box: { id: string; x: number; y: number; w: number; h: number };
-    if (sh.kind === 'line') {
-      const x1 = sh.x1 * NORM_W, y1 = sh.y1 * this.host._decorH;
-      const x2 = sh.x2 * NORM_W, y2 = sh.y2 * this.host._decorH;
-      box = { id: sh.id, x: Math.min(x1, x2), y: Math.min(y1, y2),
-        w: Math.abs(x2 - x1), h: Math.abs(y2 - y1) };
-    } else if (sh.kind === 'furniture' || sh.kind === 'image'
-        || sh.kind === 'rect' || sh.kind === 'ellipse') {
-      // …and furniture needs no measuring at all: its box IS the config. The
-      // frame therefore appears in the SAME frame as the selection, not one
-      // after it, and a resize can never be a render behind the shape.
-      box = { id: sh.id, x: sh.x * NORM_W, y: sh.y * this.host._decorH,
-        w: sh.w * NORM_W, h: sh.h * this.host._decorH };
-    } else {
-      const el = this.host.renderRoot.querySelector(`text.dtext[data-id="${sh.id}"]`) as SVGGraphicsElement | null;
-      if (!el || typeof (el as any).getBBox !== 'function') return;
-      let b: DOMRect;
-      try { b = el.getBBox(); } catch { return; } // not rendered yet (hidden card)
-      if (!b || (!b.width && !b.height)) return;
-      box = { id: sh.id, x: b.x, y: b.y, w: b.width, h: b.height };
-    }
-    const cur = this.host._dtBox;
-    const same = cur && cur.id === box.id && Math.abs(cur.x - box.x) < 0.01
-      && Math.abs(cur.y - box.y) < 0.01 && Math.abs(cur.w - box.w) < 0.01
-      && Math.abs(cur.h - box.h) < 0.01;
-    if (same) return;
-    this.host._dtBox = box;
-    this.host.requestUpdate();
+    measureHouseplanDecorText(this.host);
   }
 
 public _deleteDecor(id: string): void {
@@ -5273,6 +5263,10 @@ public _bdStart(ev: PointerEvent, corner?: number[], rotate = false): boolean {
   }
 
 public _bdMove(ev: PointerEvent): void {
+    queueHouseplanPointerMove(this.host, 'backdrop', () => this._bdMoveNow(ev));
+  }
+
+private _bdMoveNow(ev: PointerEvent): void {
     const d = this.host._bdDrag;
     if (!d) return;
     const p = this._svgPoint(ev);
@@ -5329,6 +5323,7 @@ public _bdReset(): void {
   }
 
 public _bdUp(): void {
+    flushHouseplanPointerMove(this.host, 'backdrop');
     const d = this.host._bdDrag;
     this.host._bdDrag = null;
     if (d?.moved) {
@@ -6433,6 +6428,10 @@ public _opPointerDown(ev: PointerEvent, o: OpeningCfg): void {
   }
 
 public _opPointerMove(ev: PointerEvent, o: OpeningCfg): void {
+    queueHouseplanPointerMove(this.host, 'opening', () => this._opPointerMoveNow(ev, o));
+  }
+
+private _opPointerMoveNow(ev: PointerEvent, o: OpeningCfg): void {
     if (!this.host._opDrag || this.host._opDrag.id !== o.id) return;
     // audit L4: the other drag pipelines require 3 px before calling it a drag.
     // Without it every tap counted as a drag: the properties dialog never
@@ -6552,6 +6551,7 @@ public _opRuler(
 
 public _opPointerUp(ev: PointerEvent, o: OpeningCfg): void {
     if (!this.host._opDrag || this.host._opDrag.id !== o.id) return;
+    flushHouseplanPointerMove(this.host, 'opening');
     const drag = this.host._opDrag;
     const moved = drag.moved;
     this.host._opMeasure = null; // badges and the center tick live only through the drag

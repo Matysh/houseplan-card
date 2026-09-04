@@ -70,7 +70,7 @@ test('performance contracts reference real production members', () => {
   const source = readHouseplanProductionSource();
   for (const contract of [LARGE_HOUSE_CARD_CONTRACT, GLOW_CARD_CONTRACT]) {
     for (const name of currentProductionMembers(contract)) {
-      assert.match(source, new RegExp(`\\b(?:private\\s+(?:declare\\s+|get\\s+)?|get\\s+)${name}\\b`),
+      assert.match(source, new RegExp(`\\b(?:private\\s+(?:(?:declare|readonly|get)\\s+)*|get\\s+)${name}\\b`),
         `${contract.label} declares missing production member ${name}`);
     }
   }
@@ -90,10 +90,16 @@ test('large-house contract accepts only an explicit current or stable resize own
   );
   Object.assign(fields, {
     _booting: false,
+    _bootSoft: false,
+    _cameraTransition: {},
     _cleanFloorCache: new Map(),
+    _continuity: {},
+    _decorList: [],
+    _decorTool: 'select',
     _devices: [],
     _glowClipCache: new Map(),
     _gridPitch: 1,
+    _hassSequence: 0,
     _loadOk: true,
     _model: [],
     _path: [],

@@ -15,13 +15,15 @@ const warmups = Math.max(0, Math.min(5, Number(valueArg('warmups')) || 1));
 const output = valueArg('output') ? resolve(valueArg('output')) : null;
 const targetRoot = resolve(valueArg('target-root') ?? '.');
 const profile = valueArg('profile') ?? 'large-house-v1';
-if (!['large-house-v1', 'large-house-isometric-v1', 'large-house-plan-snap-v1'].includes(profile))
+if (!['large-house-v1', 'large-house-isometric-v1', 'large-house-plan-snap-v1', 'large-house-interaction-v1'].includes(profile))
   throw new Error(`unknown large-house profile: ${profile}`);
 const isometric = profile === 'large-house-isometric-v1';
 const planSnap = profile === 'large-house-plan-snap-v1';
+const interaction = profile === 'large-house-interaction-v1';
 const requiresIsometric = isometric && existsSync(resolve(targetRoot, 'src/iso-projection.ts'));
 const requiresPlanSnap = planSnap && existsSync(resolve(targetRoot, 'src/plan-snap-overlay.ts'));
 const requiresWallFace = planSnap && existsSync(resolve(targetRoot, 'src/wall-face-graph.ts'));
+const requiresInteraction = interaction && existsSync(resolve(targetRoot, 'src/live-viewport.ts'));
 const fixture = makeLargeHouseFixture();
 if (planSnap) {
   for (const [floor, space] of fixture.config.spaces.entries()) {
@@ -71,7 +73,7 @@ try {
     const measuredSample = iteration - warmups;
     const row = await page.evaluate(async ({
       fixture, sample, cardContract, isometric, requiresIsometric, planSnap, requiresPlanSnap,
-      requiresWallFace,
+      requiresWallFace, interaction, requiresInteraction,
     }) => {
       const frame = () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
       const until = async (predicate, timeout = 10000) => {
@@ -151,10 +153,10 @@ try {
         subscribeEvents: async () => () => undefined,
         subscribeMessage: async () => () => undefined,
       };
-      const hassFor = (states) => ({
+      const hassBase = {
         language: 'en', locale: { language: 'en' },
         user: { id: 'perf', name: 'Performance fixture', is_admin: true },
-        devices: fixture.devices, entities: fixture.entities, areas: fixture.areas, states,
+        devices: fixture.devices, entities: fixture.entities, areas: fixture.areas,
         floors: {
           one: { floor_id: 'one', name: 'One', level: 0 },
           two: { floor_id: 'two', name: 'Two', level: 1 },
@@ -178,7 +180,8 @@ try {
         localize: () => null,
         formatEntityState: (state) => state.state,
         config: { unit_system: { length: 'km' } },
-      });
+      };
+      const hassFor = (states) => ({ ...hassBase, states });
 
       const loadLongTasks = startLongTaskWindow();
       const loadStarted = performance.now();
@@ -207,9 +210,24 @@ try {
       await frame();
       const modelReadyMs = Number((performance.now() - loadStarted).toFixed(2));
       await until(() => card._booting === false);
+      if (interaction && '_bootSoft' in card) await until(() => card._bootSoft === false);
       await frame();
       const firstStableRenderMs = Number((performance.now() - loadStarted).toFixed(2));
       const loadLongTaskResult = await loadLongTasks.stop();
+      let fullRenderCount = 0;
+      let diagnosticsScanCount = 0;
+      const fullRenderReasons = [];
+      if (interaction) {
+        const renderBody = card._renderBody.bind(card);
+        card._renderBody = (...args) => { fullRenderCount++; return renderBody(...args); };
+        const bindingStatus = card._bindingStatus.bind(card);
+        card._bindingStatus = (...args) => { diagnosticsScanCount++; return bindingStatus(...args); };
+        const willUpdate = card.willUpdate.bind(card);
+        card.willUpdate = (changed) => {
+          fullRenderReasons.push([...changed.keys()].map(String));
+          return willUpdate(changed);
+        };
+      }
       const viewToggle = isometric ? await duration(async () => {
         if (typeof card._setProjection === 'function') {
           card._setProjection('flat');
@@ -236,6 +254,385 @@ try {
         card.hass = hassFor(nextStates);
         await card.updateComplete;
       });
+
+      let interactionDiagnostics = null;
+      let interactionTimings = null;
+      let interactionLongTasks = null;
+      const interactionSeries = interaction ? await duration(async () => {
+        const deltas = {};
+        const timings = {};
+        interactionLongTasks = {};
+        const diagnosticsBefore = diagnosticsScanCount;
+        const reasonsBefore = fullRenderReasons.length;
+        const beforeIrrelevant = fullRenderCount;
+        const intakeBefore = card._hassSequence;
+        const irrelevantStarted = performance.now();
+        let currentStates = nextStates;
+        for (let index = 0; index < 30; index++) {
+          currentStates = {
+            ...currentStates,
+            'sensor.performance_unrelated': {
+              entity_id: 'sensor.performance_unrelated', state: `${sample}:${index}`,
+            },
+          };
+          card.hass = hassFor(currentStates);
+        }
+        await card.updateComplete;
+        await frame();
+        timings.irrelevantHaTicksMs = performance.now() - irrelevantStarted;
+        deltas.irrelevantFullRenders = fullRenderCount - beforeIrrelevant;
+        deltas.irrelevantHassIntakes = card._hassSequence - intakeBefore;
+
+        const relevantBefore = fullRenderCount;
+        const relevantStarted = performance.now();
+        currentStates = {
+          ...currentStates,
+          [firstEntity]: {
+            ...currentStates[firstEntity],
+            state: currentStates[firstEntity].state === 'on' ? 'off' : 'on',
+          },
+        };
+        card.hass = hassFor(currentStates);
+        await card.updateComplete;
+        await frame();
+        timings.relevantHaTickMs = performance.now() - relevantStarted;
+        deltas.relevantOutsideGestureFullRenders = fullRenderCount - relevantBefore;
+
+        const stage = card.renderRoot.querySelector('.stage');
+        const device = card.renderRoot.querySelector('[data-hp="device"]');
+        const room = card.renderRoot.querySelector('[data-hp="room"]');
+        const heavy = card.renderRoot.querySelector('.wallbodies');
+        if (!stage || !device || !room || !heavy)
+          throw new Error('interaction profile has no stage/device/room/heavy scene');
+        const rect = stage.getBoundingClientRect();
+        const hoverBefore = fullRenderCount;
+        const hoverLongTasks = startLongTaskWindow();
+        const hoverStarted = performance.now();
+        device.dispatchEvent(new PointerEvent('pointerover', {
+          clientX: rect.left + rect.width / 2, clientY: rect.top + rect.height / 2,
+          bubbles: true, composed: true, pointerId: 991, pointerType: 'mouse', isPrimary: true,
+        }));
+        for (let index = 0; index < 40; index++) {
+          device.dispatchEvent(new PointerEvent('pointermove', {
+            clientX: rect.left + 100 + index, clientY: rect.top + 100 + index / 2,
+            bubbles: true, composed: true, pointerId: 991, pointerType: 'mouse', isPrimary: true,
+          }));
+          if ((index + 1) % 20 === 0) {
+            await card.updateComplete;
+            await frame();
+          }
+        }
+        const liveTip = card.renderRoot.querySelector('[data-hp-live-tip]');
+        deltas.tooltipVisible = !!liveTip && !liveTip.hidden && !!liveTip.textContent?.trim();
+        device.dispatchEvent(new PointerEvent('pointerleave', {
+          bubbles: false, composed: true, pointerId: 991, pointerType: 'mouse', isPrimary: true,
+        }));
+        room.dispatchEvent(new PointerEvent('pointerenter', {
+          clientX: rect.left + 300, clientY: rect.top + 300,
+          bubbles: false, composed: true, pointerId: 991, pointerType: 'mouse', isPrimary: true,
+        }));
+        for (let index = 0; index < 40; index++) {
+          room.dispatchEvent(new PointerEvent('pointermove', {
+            clientX: rect.left + 300 + index, clientY: rect.top + 300 + index / 2,
+            bubbles: true, composed: true, pointerId: 991, pointerType: 'mouse', isPrimary: true,
+          }));
+          if ((index + 1) % 20 === 0) { await card.updateComplete; await frame(); }
+        }
+        room.dispatchEvent(new PointerEvent('pointerleave', {
+          bubbles: false, composed: true, pointerId: 991, pointerType: 'mouse', isPrimary: true,
+        }));
+        for (let index = 0; index < 40; index++) {
+          stage.dispatchEvent(new PointerEvent('pointermove', {
+            clientX: rect.left + 20 + index, clientY: rect.top + 20,
+            bubbles: true, composed: true, pointerId: 991, pointerType: 'mouse', isPrimary: true,
+          }));
+          if ((index + 1) % 20 === 0) { await card.updateComplete; await frame(); }
+        }
+        await card.updateComplete;
+        timings.hoverSeriesMs = performance.now() - hoverStarted;
+        deltas.hoverFullRenders = fullRenderCount - hoverBefore;
+        deltas.hoverTargets = ['device', 'room', 'miss'];
+        interactionLongTasks.hoverSeries = await hoverLongTasks.stop();
+
+        const cameraSvg = card.renderRoot.querySelector('[data-hp-live-viewbox="camera"], [data-hp-live-viewbox="floor"], .zoomwrap > svg');
+        const initialViewBox = cameraSvg?.getAttribute('viewBox') || '';
+        const panLongTasks = startLongTaskWindow();
+        const panStarted = performance.now();
+        const panMoveRenders = [];
+        const panTerminalRenders = [];
+        let relevantDuringGestureFullRenders = 0;
+        let relevantDuringGestureIntakes = 0;
+        for (let dragIndex = 0; dragIndex < 4; dragIndex++) {
+          const pointerId = 992 + dragIndex;
+          stage.dispatchEvent(new PointerEvent('pointerdown', {
+            clientX: rect.left + 200, clientY: rect.top + 200, button: 0, buttons: 1,
+            bubbles: true, composed: true, pointerId, pointerType: 'mouse', isPrimary: true,
+          }));
+          await card.updateComplete;
+          const panMoveBefore = fullRenderCount;
+          for (let index = 0; index < 20; index++) {
+            stage.dispatchEvent(new PointerEvent('pointermove', {
+              clientX: rect.left + 205 + index * 3, clientY: rect.top + 202 + index,
+              button: 0, buttons: 1, bubbles: true, composed: true,
+              pointerId, pointerType: 'mouse', isPrimary: true,
+            }));
+            if (dragIndex === 0 && index === 10) {
+              const deferredBefore = fullRenderCount;
+              const deferredIntakeBefore = card._hassSequence;
+              for (let tick = 0; tick < 3; tick++) {
+                currentStates = {
+                  ...currentStates,
+                  [firstEntity]: { ...currentStates[firstEntity], state: `gesture-${tick}` },
+                };
+                card.hass = hassFor(currentStates);
+              }
+              await card.updateComplete;
+              relevantDuringGestureFullRenders += fullRenderCount - deferredBefore;
+              relevantDuringGestureIntakes += card._hassSequence - deferredIntakeBefore;
+            }
+            if ((index + 1) % 10 === 0) {
+              await card.updateComplete;
+              await frame();
+            }
+          }
+          const beforeTerminal = fullRenderCount;
+          panMoveRenders.push(beforeTerminal - panMoveBefore);
+          stage.dispatchEvent(new PointerEvent('pointerup', {
+            clientX: rect.left + 265, clientY: rect.top + 222, button: 0, buttons: 0,
+            bubbles: true, composed: true, pointerId, pointerType: 'mouse', isPrimary: true,
+          }));
+          await card.updateComplete;
+          await frame();
+          panTerminalRenders.push(fullRenderCount - beforeTerminal);
+        }
+        timings.panSeriesMs = performance.now() - panStarted;
+        interactionLongTasks.panSeries = await panLongTasks.stop();
+        const movedViewBox = cameraSvg?.getAttribute('viewBox') || '';
+        const currentView = card._viewOr(card._baseVb());
+        const currentDevice = card._devices.find((item) => item.id === device.dataset.id);
+        const position = currentDevice ? card._pos(currentDevice) : null;
+        const scene = position ? card._scenePoint([position.x, position.y]) : null;
+        const deviceRect = device.getBoundingClientRect();
+        const expectedX = scene ? rect.left + ((scene[0] - currentView.x) / currentView.w) * rect.width : 0;
+        const expectedY = scene ? rect.top + ((scene[1] - currentView.y) / currentView.h) * rect.height : 0;
+        const overlayErrorPx = scene ? Math.hypot(
+          deviceRect.left + deviceRect.width / 2 - expectedX,
+          deviceRect.top + deviceRect.height / 2 - expectedY,
+        ) : Infinity;
+
+        const cameraLongTasks = startLongTaskWindow();
+        const cameraStarted = performance.now();
+        const cameraBefore = fullRenderCount;
+        const pinchPointerA = 1001, pinchPointerB = 1002;
+        stage.dispatchEvent(new PointerEvent('pointerdown', {
+          clientX: rect.left + 360, clientY: rect.top + 300, button: 0, buttons: 1,
+          bubbles: true, composed: true, pointerId: pinchPointerA,
+          pointerType: 'touch', isPrimary: true,
+        }));
+        stage.dispatchEvent(new PointerEvent('pointerdown', {
+          clientX: rect.left + 460, clientY: rect.top + 300, button: 0, buttons: 1,
+          bubbles: true, composed: true, pointerId: pinchPointerB,
+          pointerType: 'touch', isPrimary: false,
+        }));
+        await card.updateComplete;
+        const pinchMoveBefore = fullRenderCount;
+        for (let index = 0; index < 20; index++) {
+          stage.dispatchEvent(new PointerEvent('pointermove', {
+            clientX: rect.left + 360 - index, clientY: rect.top + 300,
+            button: 0, buttons: 1, bubbles: true, composed: true,
+            pointerId: pinchPointerA, pointerType: 'touch', isPrimary: true,
+          }));
+          stage.dispatchEvent(new PointerEvent('pointermove', {
+            clientX: rect.left + 460 + index, clientY: rect.top + 300,
+            button: 0, buttons: 1, bubbles: true, composed: true,
+            pointerId: pinchPointerB, pointerType: 'touch', isPrimary: false,
+          }));
+          if ((index + 1) % 5 === 0) await frame();
+        }
+        const pinchTerminalBefore = fullRenderCount;
+        for (const pointerId of [pinchPointerA, pinchPointerB]) {
+          stage.dispatchEvent(new PointerEvent('pointerup', {
+            clientX: rect.left + 410, clientY: rect.top + 300,
+            button: 0, buttons: 0, bubbles: true, composed: true,
+            pointerId, pointerType: 'touch', isPrimary: pointerId === pinchPointerA,
+          }));
+        }
+        await card.updateComplete;
+        await frame();
+        const pinchTerminalRenders = fullRenderCount - pinchTerminalBefore;
+        for (let index = 0; index < 4; index++) {
+          stage.dispatchEvent(new WheelEvent('wheel', {
+            deltaY: index % 2 ? 120 : -120,
+            clientX: rect.left + rect.width / 2,
+            clientY: rect.top + rect.height / 2,
+            bubbles: true, cancelable: true,
+          }));
+        }
+        await until(() => !card._cameraTransition.active);
+        await card.updateComplete;
+        await frame();
+        timings.cameraSeriesMs = performance.now() - cameraStarted;
+        interactionLongTasks.cameraSeries = await cameraLongTasks.stop();
+        deltas.cameraMoveFullRenders = pinchTerminalBefore - pinchMoveBefore;
+        deltas.cameraTerminalFullRenders = pinchTerminalRenders;
+        deltas.cameraFullRenders = fullRenderCount - cameraBefore;
+
+        const editorLongTasks = startLongTaskWindow();
+        const editorConfigBefore = JSON.stringify(card._serverCfg);
+        const editorCallsBefore = wsCalls;
+        const editorPaintBefore = card._liveEditorPaintCount || 0;
+        let editorElapsed = 0;
+        const editorMoveRenders = [];
+        const editorTerminalRenders = [];
+
+        card._setMode('plan', false);
+        card._tool = 'draw';
+        card._path = [[100, 100]];
+        card.requestUpdate();
+        await card.updateComplete;
+        await until(() => !card._modeTransitionBusy && card._continuity.state === 'steady');
+        for (let index = 0; index < 5; index++) await frame();
+        let editorStage = card.renderRoot.querySelector('.stage');
+        let editorRect = editorStage.getBoundingClientRect();
+        let editorView = card._viewOr(card._baseVb());
+        const fromScene = (x, y) => ({
+          clientX: editorRect.left + ((x - editorView.x) / editorView.w) * editorRect.width,
+          clientY: editorRect.top + ((y - editorView.y) / editorView.h) * editorRect.height,
+        });
+        let partStarted = performance.now();
+        let editorMoveBefore = fullRenderCount;
+        for (let index = 0; index < 40; index++) {
+          editorStage.dispatchEvent(new PointerEvent('pointermove', {
+            ...fromScene(110 + index * 2, 110 + index),
+            bubbles: true, composed: true, pointerId: 1101,
+            pointerType: 'mouse', isPrimary: true,
+          }));
+          if ((index + 1) % 10 === 0) await frame();
+        }
+        let editorTerminalBefore = fullRenderCount;
+        editorMoveRenders.push(editorTerminalBefore - editorMoveBefore);
+        card._cursorPt = null;
+        card._path = [];
+        card.requestUpdate();
+        await card.updateComplete;
+        await frame();
+        editorTerminalRenders.push(fullRenderCount - editorTerminalBefore);
+        editorElapsed += performance.now() - partStarted;
+
+        card._tool = 'resize';
+        card.requestUpdate();
+        await card.updateComplete;
+        const resizeRoom = card._rszRooms()[0];
+        const resizeEvent = {
+          pointerId: 1102, stopPropagation: () => undefined,
+          preventDefault: () => undefined, target: null,
+        };
+        card._rszEdgeDown(resizeEvent, resizeRoom.id, 1);
+        const resizePlan = card._resize?.plan || card._rszDrag?.plan;
+        if (!resizePlan) throw new Error('interaction resize plan was not created');
+        editorStage = card.renderRoot.querySelector('.stage');
+        editorRect = editorStage.getBoundingClientRect();
+        editorView = card._viewOr(card._baseVb());
+        partStarted = performance.now();
+        editorMoveBefore = fullRenderCount;
+        for (let index = 0; index < 40; index++) {
+          const target = [
+            resizePlan.a[0] + resizePlan.n[0] * card._gridPitch * (1 + index / 40),
+            resizePlan.a[1] + resizePlan.n[1] * card._gridPitch * (1 + index / 40),
+          ];
+          card._rszMove({
+            ...resizeEvent,
+            clientX: editorRect.left + ((target[0] - editorView.x) / editorView.w) * editorRect.width,
+            clientY: editorRect.top + ((target[1] - editorView.y) / editorView.h) * editorRect.height,
+          });
+          if ((index + 1) % 10 === 0) await frame();
+        }
+        editorTerminalBefore = fullRenderCount;
+        editorMoveRenders.push(editorTerminalBefore - editorMoveBefore);
+        card._rszCancelDrag();
+        await card.updateComplete;
+        await frame();
+        editorTerminalRenders.push(fullRenderCount - editorTerminalBefore);
+        editorElapsed += performance.now() - partStarted;
+
+        card._setMode('decor', false);
+        card._decorTool = 'select';
+        const decorShape = card._decorList.find((shape) =>
+          shape.kind === 'furniture' || shape.kind === 'rect' || shape.kind === 'ellipse');
+        if (!decorShape) throw new Error('interaction profile has no transformable decor');
+        card._decorSel = decorShape.id;
+        card.requestUpdate();
+        await card.updateComplete;
+        await until(() => !card._modeTransitionBusy && card._continuity.state === 'steady');
+        for (let index = 0; index < 5; index++) await frame();
+        card._dtMeasure();
+        await card.updateComplete;
+        editorStage = card.renderRoot.querySelector('.stage');
+        editorRect = editorStage.getBoundingClientRect();
+        editorView = card._viewOr(card._baseVb());
+        const box = card._decorBoxOf(decorShape);
+        const cornerX = box.x + box.w, cornerY = box.y + box.h;
+        const decorPointer = (x, y) => ({
+          pointerId: 1103, pointerType: 'mouse', shiftKey: false,
+          clientX: editorRect.left + ((x - editorView.x) / editorView.w) * editorRect.width,
+          clientY: editorRect.top + ((y - editorView.y) / editorView.h) * editorRect.height,
+          stopPropagation: () => undefined, preventDefault: () => undefined,
+          currentTarget: null, target: null,
+        });
+        card._dtStart(decorPointer(cornerX, cornerY), 'scale', [1, 1]);
+        await card.updateComplete;
+        await frame();
+        partStarted = performance.now();
+        editorMoveBefore = fullRenderCount;
+        for (let index = 0; index < 40; index++) {
+          card._dtMove(decorPointer(cornerX + index, cornerY + index / 2));
+          if ((index + 1) % 10 === 0) await frame();
+        }
+        editorTerminalBefore = fullRenderCount;
+        editorMoveRenders.push(editorTerminalBefore - editorMoveBefore);
+        card._cancelDecorGesture();
+        await card.updateComplete;
+        await frame();
+        editorTerminalRenders.push(fullRenderCount - editorTerminalBefore);
+        editorElapsed += performance.now() - partStarted;
+        timings.editorSeriesMs = editorElapsed;
+        interactionLongTasks.editorSeries = await editorLongTasks.stop();
+        deltas.editorMoveFullRenders = editorMoveRenders;
+        deltas.editorTerminalFullRenders = editorTerminalRenders;
+        deltas.editorLivePaints = (card._liveEditorPaintCount || 0) - editorPaintBefore;
+        deltas.editorConfigStable = JSON.stringify(card._serverCfg) === editorConfigBefore;
+        deltas.editorWsWrites = wsCalls - editorCallsBefore;
+
+        card._setMode('view', false);
+        await card.updateComplete;
+        await frame();
+        deltas.panMoveFullRenders = panMoveRenders;
+        deltas.terminalFullRenders = panTerminalRenders;
+        deltas.relevantDuringGestureFullRenders = relevantDuringGestureFullRenders;
+        deltas.relevantDuringGestureIntakes = relevantDuringGestureIntakes;
+        deltas.viewBoxMoved = !!initialViewBox && initialViewBox !== movedViewBox;
+        deltas.overlayErrorPx = Number(overlayErrorPx.toFixed(2));
+        deltas.heavyNodeStable = card.renderRoot.querySelector('.wallbodies') === heavy;
+        deltas.diagnosticsScans = diagnosticsScanCount - diagnosticsBefore;
+        deltas.fullRenderReasons = fullRenderReasons.slice(reasonsBefore);
+        interactionTimings = timings;
+        interactionDiagnostics = { supported: requiresInteraction, ...deltas };
+        if (requiresInteraction && (
+          deltas.irrelevantFullRenders !== 0 || deltas.irrelevantHassIntakes !== 30
+          || deltas.relevantOutsideGestureFullRenders !== 1 || deltas.hoverFullRenders !== 0
+          || deltas.hoverTargets.join(',') !== 'device,room,miss'
+          || deltas.panMoveFullRenders.some((count) => count !== 0)
+          || deltas.terminalFullRenders.some((count) => count !== 1)
+          || deltas.relevantDuringGestureFullRenders !== 0 || !deltas.tooltipVisible
+          || deltas.relevantDuringGestureIntakes !== 3
+          || deltas.cameraMoveFullRenders !== 0 || deltas.cameraTerminalFullRenders !== 1
+          || deltas.editorMoveFullRenders.some((count) => count !== 0)
+          || deltas.editorTerminalFullRenders.some((count) => count > 1)
+          || deltas.editorLivePaints < 3 || !deltas.editorConfigStable || deltas.editorWsWrites !== 0
+          || !deltas.viewBoxMoved || deltas.overlayErrorPx > 1 || !deltas.heavyNodeStable
+          || deltas.diagnosticsScans !== 0
+        )) throw new Error(`interaction structural contract failed: ${JSON.stringify(interactionDiagnostics)}`);
+      }) : null;
 
       let planSnapDiagnostics = null;
       const planSnapPointer = planSnap ? await duration(async () => {
@@ -433,6 +830,11 @@ try {
           planSnapPointerMs: planSnapPointer.ms,
           planSnapDiagnostics,
         } : {}),
+        ...(interactionSeries ? {
+          interactionSeriesMs: interactionSeries.ms,
+          ...interactionTimings,
+          interactionDiagnostics,
+        } : {}),
         spaceSwitchMs: spaceSwitch.ms,
         stateUpdateMs: stateUpdate.ms,
         resizePreviewMs: resizePreview.ms,
@@ -443,6 +845,7 @@ try {
           load: loadLongTaskResult,
           ...(viewToggle ? { viewToggle: viewToggle.longTasks } : {}),
           ...(planSnapPointer ? { planSnapPointer: planSnapPointer.longTasks } : {}),
+          ...(interactionSeries ? interactionLongTasks || {} : {}),
           spaceSwitch: spaceSwitch.longTasks,
           stateUpdate: stateUpdate.longTasks,
           resizePreview: resizePreview.longTasks,
@@ -462,6 +865,7 @@ try {
     }, {
       fixture, sample: measuredSample, cardContract: LARGE_HOUSE_CARD_CONTRACT,
       isometric, requiresIsometric, planSnap, requiresPlanSnap, requiresWallFace,
+      interaction, requiresInteraction,
     });
     if (measuredSample >= 0) rows.push(row);
   }
@@ -475,6 +879,9 @@ const metricNames = [
 ];
 if (isometric) metricNames.splice(2, 0, 'viewToggleMs');
 if (planSnap) metricNames.splice(2, 0, 'planSnapPointerMs');
+if (interaction) metricNames.splice(2, 0,
+  'interactionSeriesMs', 'hoverSeriesMs', 'panSeriesMs', 'cameraSeriesMs',
+  'editorSeriesMs', 'irrelevantHaTicksMs', 'relevantHaTickMs');
 const report = {
   schema: 2,
   profile,

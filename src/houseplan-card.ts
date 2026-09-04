@@ -305,6 +305,7 @@ import {
   createRenderDeviceSnapshot, presentationSnapshotKey, renderDeviceSnapshotPositions,
   type RenderDeviceSnapshot,
 } from './render-device-snapshot';
+import { RenderLifecycle, intakeHass } from './houseplan-render-lifecycle';
 import { deviceFaceStyle, deviceThemeClass, renderDeviceFace } from './device-face';
 import { effectiveDeviceBaseSize } from './device-marker-geometry'; import { renderZigbeeTopologyOverlay } from './zigbee-topology-overlay-bridge';
 import {
@@ -377,12 +378,15 @@ import {
 import {
   openingDefaultLengthCm, openingPlacementPreset, passagePlacementPreviewGeometry,
   resolveOpeningPlacementResult, sameOpeningPlacementInput,
-  type OpeningPlacementCore, type OpeningPlacementPreset, type OpeningPlacementType,
+  type OpeningPlacementPreset, type OpeningPlacementType,
 } from './opening-placement';
 import {
   buildOpeningDimensionContext, resolveOpeningDimensions,
-  type OpeningDimension, type OpeningDimensionContext,
+  type OpeningDimensionContext,
 } from './opening-dimensions';
+import type {
+  DeviceDragState, OpeningPlacementCandidate, OpMeasure, RenderOpening,
+} from './interaction-types';
 import { safeStoredColor } from './color';
 import {
   gridCellFieldToCm, gridCellFieldValue, gridVisualScale, gridVisualUnits,
@@ -626,32 +630,6 @@ const capturePointer = (ev: PointerEvent): void => {
   }
 };
 
-/** Ruler labels + the centre-magnet tick. Existing-opening DRAG carries its
- *  legacy two labels; a new-opening PLACEMENT may additionally carry physical
- *  line/tick geometry (#238). */
-interface OpMeasureLabel {
-  x: number;
-  y: number;
-  text: string;
-  dimension?: OpeningDimension;
-}
-
-interface OpMeasure {
-  labels: OpMeasureLabel[];
-  guide: { x: number; y: number; angle: number } | null;
-}
-
-type OpeningPlacementCandidate = Omit<OpeningPlacementCore, 'measure'> & {
-  face: OpeningFaceOffset;
-  measure: OpMeasure;
-};
-
-type RenderOpening = OpeningCfg & {
-  rx: number; ry: number; rlen: number;
-  partitionHost?: ResolvedPartitionOpening;
-  orphanReason?: PartitionOpeningOrphanReason;
-};
-
 interface DeviceInboxDialogState {
   tab: DeviceInboxCategory;
   search: string;
@@ -678,23 +656,23 @@ type FixedFloorState = FixedFloorSelection | { kind: 'pending'; value: unknown }
  */
 const HANDLE_PAINT_ORDER = ['edges', 'corners'] as const;
 
-interface DeviceDragState {
-  id: string;
-  spaceId: string;
-  displayName: string;
-  pointerId: number;
-  source: Element | null;
-  sx: number;
-  sy: number;
-  ox: number;
-  oy: number;
-  moved: boolean;
-  before: DevicePlacement | null;
-  start: DevicePlacement;
-}
-
 export class HouseplanCard extends LitElement {
+  public requestUpdate(name?: PropertyKey, oldValue?: unknown, options?: any): void {
+    if (name === 'hass' && this.hass && this._liveRt) {
+      const snapshot = this._visibleDeviceSnapshot || this._candidateDeviceSnapshot;
+      const render = this._liveRt.hass(
+        oldValue, this.hass, snapshot ? { entityIds: snapshot.entityIds } : null,
+        () => intakeHass(this),
+      );
+      if (!render) return;
+    }
+    if (this._editorRuntime?._routeLiveEditorUpdate(name, oldValue)) return;
+    this._liveRt?.clear();
+    super.requestUpdate(name, oldValue, options);
+  }
+
   public _editorRuntime: import('./houseplan-editor-runtime').HouseplanEditorRuntime | null = null;
+  private _liveRt: import('./live-interaction-runtime').LiveRuntime | null = null;
   public _onboardingRuntime: import('./houseplan-onboarding-runtime').HouseplanOnboardingRuntime | null = null;
   private _editorRuntimeLoadingVisible = false;
   /** #39: pending large-backdrop decision; set only by the lazy pick flow. */
@@ -1114,7 +1092,7 @@ export class HouseplanCard extends LitElement {
     state.presented = presented;
     this._zoom = presented.zoom;
     this._view = { ...presented.viewBox };
-    this.requestUpdate();
+    this._scheduleLiveViewport();
   }
 
   private _settleCameraTransition(state: CameraTransitionState): void {
@@ -1952,6 +1930,7 @@ export class HouseplanCard extends LitElement {
   private _panLock: 'pan' | 'swipe' | null = null;
   private _pinchStart: { dist: number; zoom: number } | null = null;
   private _suppressClick = false;
+  private _viewportGestureDirty = false;
   /**
    * Pointer events from an interactive child may stop before the stage sees
    * them. Track touch contacts on the card in capture phase, so the second
@@ -2482,8 +2461,6 @@ export class HouseplanCard extends LitElement {
     _space: { state: true },
     _layout: { state: true },
     _devices: { state: true },
-    _tip: { state: true },
-    _hoverRoom: { state: true },
     _selId: { state: true },
     _toast: { state: true },
     _serverCfg: { state: true },
@@ -2554,8 +2531,6 @@ export class HouseplanCard extends LitElement {
     _backupImportDialog: { state: true },
     _importDialog: { state: true },
     _markerDialog: { state: true },
-    _zoom: { state: true },
-    _view: { state: true },
   };
 
   public connectedCallback(): void {
@@ -2580,6 +2555,7 @@ export class HouseplanCard extends LitElement {
       this._showToast(this._t('toast.locale_load_failed'));
     });
     super.connectedCallback();
+    void this._ensureLiveRuntime().catch(() => this.requestUpdate());
     this._pointerModality.connect(this.ownerDocument.defaultView);
     const PointerHoverObserver = this.ownerDocument.defaultView?.MutationObserver;
     if (PointerHoverObserver) {
@@ -2644,6 +2620,8 @@ export class HouseplanCard extends LitElement {
   }
 
   public disconnectedCallback(): void {
+    this._liveRt?.dispose();
+    this._editorRuntime?._disposeLiveEditor();
     this._clearRoomFocus(true);
     this._cancelDangerConfirm();
     // HA normally changes the route before removing the old Lovelace tree.
@@ -4052,6 +4030,7 @@ export class HouseplanCard extends LitElement {
       const preserveGeometry = this._cfgEpochPreservedConfig === this._serverCfg;
       this._cfgEpochPreservedConfig = null;
       if (!preserveGeometry) this._cfgEpoch++;
+      this._renderLife.invalidate();
     }
     this._syncEmptySpaceState();
     // #417: losing the only renderable space while a decision is pending must
@@ -4062,28 +4041,18 @@ export class HouseplanCard extends LitElement {
       this._cancelDangerConfirm();
     }
     if (changed.has('hass') && this.hass) {
-      this._hassSequence++;
-      this._renderSnapshotAt = Date.now();
-      this._continuity.note('hass-snapshot');
-      this._ensureHaRegistryAuthority();
-      this._planHassMemo = null;
-      this._hookConnection();
-      if (!this._loadOk && !this._loading && this._loadTries < 8) {
-        this._loadFromServer();
-      }
-      // Devices must exist before their first state snapshot is classified.
-      // Otherwise the first real off->on edge after mount becomes the baseline.
-      this._maybeRebuildDevices();
-      this._vacTick();
-      this._activityTick();
+      const snapshot = this._visibleDeviceSnapshot || this._candidateDeviceSnapshot;
+      this._renderLife.observe(changed.get('hass'), this.hass,
+        snapshot ? { entityIds: snapshot.entityIds } : null, () => intakeHass(this));
     }
     if (this._continuity.hasCompleteFrame && this._continuity.state === 'steady') {
       this._continuity.refreshCompleteFrame(this._visualFrameFingerprint());
     }
     this._captureRenderDeviceSnapshot();
   }
-
   protected updated(): void {
+    this._liveRt?.commit();
+    this._editorRuntime?._commitLiveEditor();
     this._pruneDevicePressFeedback();
     this._syncDayCycleClock();
     this._warmSnapshot(); // DEV-B703-03: the memo follows what is on screen
@@ -4532,10 +4501,25 @@ export class HouseplanCard extends LitElement {
   private _haRegistryRev = -1;
   private _haBindingCacheKey = '';
   private _planHassMemo: { hass: any; sig: string; active: any; full: any } | null = null;
+  private _renderLife = new RenderLifecycle();
+  private _liveEditorPaintCount = 0;
+
+  private async _ensureLiveRuntime(): Promise<void> {
+    if (this._liveRt) return;
+    const module = await import('./live-interaction-runtime');
+    this._liveRt = new module.LiveRuntime(this);
+    if (this.isConnected) this.requestUpdate();
+  }
+
+  private _scheduleLiveViewport(): void { this._liveRt ? this._liveRt.viewport() : this.requestUpdate(); }
+  private _syncLiveHover(): void { this._liveRt ? this._liveRt.hover() : this.requestUpdate(); }
+  /** Bypass live routing so a gesture terminal publishes the last HA frame. */
+  private _flushHa(): void { if (this._liveRt?.take()) super.requestUpdate(); }
   private _onHaRegistryUpdate = (): void => {
     const snapshot = haRegistrySnapshot(this.hass);
     if (snapshot.revision === this._haRegistryRev && this._devices.length) return;
     this._haRegistryRev = snapshot.revision;
+    this._renderLife.invalidate();
     this._planHassMemo = null;
     this._regSignature = '';
     this._maybeRebuildDevices();
@@ -4549,6 +4533,7 @@ export class HouseplanCard extends LitElement {
     this._haRegistryConnection = connection;
     this._haRegistryRev = -1;
     this._haBindingCacheKey = '';
+    this._renderLife.invalidate();
     this._areaSnapshotCleanupCandidates.clear();
     this._planHassMemo = null;
     this._haRegistryRelease = acquireHaRegistries(this.hass, this._onHaRegistryUpdate);
@@ -4749,17 +4734,9 @@ export class HouseplanCard extends LitElement {
     registry: ReturnType<typeof haRegistryDiagnostics> & { lastSuccessAgeMs: number | null };
     bindings: Record<HaBindingStatus['kind'], number>;
   } {
-    const registry = haRegistryDiagnostics(this.hass);
-    const bindings: Record<HaBindingStatus['kind'], number> = {
-      active: 0,
-      ha_disabled: 0,
-      orphaned: 0,
-      unverified: 0,
-    };
-    for (const marker of this._markers) {
-      if (marker.removed || marker.binding === 'virtual') continue;
-      bindings[this._bindingStatus(marker.binding).kind]++;
-    }
+    const { registry, bindings } = this._renderLife.diagnostics(
+      this.hass, this._markers, (binding) => this._bindingStatus(binding),
+    );
     return {
       registry: {
         ...registry,
@@ -5420,6 +5397,7 @@ export class HouseplanCard extends LitElement {
   private _cancelDeviceDrag(): boolean {
     const drag = this._deviceDrag;
     if (!drag) return false;
+    this._editorRuntime?._cancelPointerMove('device');
     this._deviceDrag = null;
     try {
       if (drag.source?.hasPointerCapture?.(drag.pointerId)) {
@@ -6444,6 +6422,7 @@ export class HouseplanCard extends LitElement {
     }
     this._zoom = z;
     this._view = next;
+    this._scheduleLiveViewport();
     return true;
   }
 
@@ -6489,8 +6468,7 @@ export class HouseplanCard extends LitElement {
 
   private _finishBootSettled(): void {
     if (!this._booting) return;
-    // `_applyView()` is reactive: wait one paint opportunity, refit once more,
-    // and only then remove the veil. This prevents a default-view reveal.
+    // Refit once more before removing the veil. This prevents a default-view reveal.
     this._refitView();
     this._booting = false;
     this._bootSettling = false;
@@ -6639,6 +6617,7 @@ export class HouseplanCard extends LitElement {
     }
     this._zoom = result.target.zoom;
     this._view = { ...result.target.viewBox };
+    this._scheduleLiveViewport();
   }
 
   private _onWheel(ev: WheelEvent): void {
@@ -6883,6 +6862,7 @@ export class HouseplanCard extends LitElement {
       const cx = (pts[0].x + pts[1].x) / 2 - r.left;
       const cy = (pts[0].y + pts[1].y) / 2 - r.top;
       this._zoomAt(cx, cy, this._pinchStart.zoom * scale);
+      this._viewportGestureDirty = true;
       this._suppressClick = true;
       this._saveZoom();
     } else if (this._panStart) {
@@ -6925,11 +6905,14 @@ export class HouseplanCard extends LitElement {
           },
           fit,
         );
+        this._viewportGestureDirty = true;
+        this._scheduleLiveViewport();
       }
     }
   }
 
   private _stagePointerLeave(ev: PointerEvent): void {
+    this._editorRuntime?._cancelPointerMove('markup-hover');
     if (this._mode === 'decor') this._editorRuntime?._furnPointerLeave(ev);
     if (!this._markup) return;
     if (this._tool === 'opening') {
@@ -6941,6 +6924,8 @@ export class HouseplanCard extends LitElement {
   }
 
   private _stagePointerUp(ev: PointerEvent): void {
+    this._flushHa();
+    this._editorRuntime?._cancelPointerMove('markup-hover');
     const acceptedRoom = acceptedRoomFitGesture(
       this._roomPointer,
       ev.pointerId,
@@ -7005,6 +6990,7 @@ export class HouseplanCard extends LitElement {
       return;
     }
     if (this._decorMove?.pid === ev.pointerId) {
+      this._editorRuntimeOrThrow()._flushPointerMove('decor-move');
       if (this._decorMove.moved) {
         this._recordGeometry(this._t('history.decor_move'), this._decorMove.before);
         this._saveConfig();
@@ -7013,7 +6999,6 @@ export class HouseplanCard extends LitElement {
       return;
     }
     if (this._editorRuntime?._furnPointerUp(ev)) return;
-    const viewportGestureEnded = !!this._pinchStart || this._panLock === 'pan';
     this._pointers.delete(ev.pointerId);
     if (this._pointers.size < 2) this._pinchStart = null;
     if (this._pointers.size === 0) {
@@ -7022,7 +7007,10 @@ export class HouseplanCard extends LitElement {
       // reset click suppression on the next tick (so that a click right after a pan does not fire)
       if (this._suppressClick) setTimeout(() => (this._suppressClick = false), 0);
     }
-    if (viewportGestureEnded && this._pointers.size === 0 && !acceptedRoom) this.requestUpdate();
+    if (this._viewportGestureDirty && this._pointers.size === 0 && !acceptedRoom) {
+      this._viewportGestureDirty = false;
+      this.requestUpdate();
+    }
     if (acceptedRoom) this._fitRoom(acceptedRoom);
   }
 
@@ -7082,9 +7070,17 @@ export class HouseplanCard extends LitElement {
     };
     capturePointer(ev);
     this._tip = null;
+    this._syncLiveHover();
   }
 
   private _pointerMove(ev: PointerEvent, d: DevItem): void {
+    if (this._mode !== 'devices') return;
+    const drag = this._deviceDrag;
+    if (!drag || drag.id !== d.id || drag.pointerId !== ev.pointerId) return;
+    this._editorRuntimeOrThrow()._queuePointerMove('device', () => this._pointerMoveNow(ev, d));
+  }
+
+  private _pointerMoveNow(ev: PointerEvent, d: DevItem): void {
     if (this._mode !== 'devices') return;
     const drag = this._deviceDrag;
     if (!drag || drag.id !== d.id || drag.pointerId !== ev.pointerId) return;
@@ -7110,12 +7106,12 @@ export class HouseplanCard extends LitElement {
     const ny = clampCanvasR(drag.oy + dy);
     this._previewDevicePlacement(d.id, this._devicePlacementForCanvas(d, nx, ny));
   }
-
   private _pointerUp(ev: PointerEvent, d: DevItem): void {
     clearTimeout(this._holdTimer);
     if (this._mode !== 'devices') return;
     const drag = this._deviceDrag;
     if (!drag || drag.id !== d.id || drag.pointerId !== ev.pointerId) return;
+    this._editorRuntimeOrThrow()._flushPointerMove('device');
     this._deviceDrag = null;
     const after = devicePlacement(this._layout, d.id);
     if (!drag.moved || after === null || sameDevicePlacement(after, drag.start)) {
@@ -7150,7 +7146,6 @@ export class HouseplanCard extends LitElement {
         this.requestUpdate();
       });
   }
-
   private _pointerCancel(ev: PointerEvent, d: DevItem): void {
     if (this._deviceDrag?.id !== d.id || this._deviceDrag.pointerId !== ev.pointerId) return;
     this._cancelDeviceDrag();
@@ -7198,6 +7193,7 @@ export class HouseplanCard extends LitElement {
     if (suspend) this._pointerModality.suspend();
     if (this._tip) this._tip = null;
     if (this._hoverRoom) this._hoverRoom = null;
+    this._syncLiveHover();
   }
 
   /** The latest real pointer event, not a page-global first-touch latch, owns hover. */
@@ -7321,6 +7317,7 @@ export class HouseplanCard extends LitElement {
     if (!this._pointerModality.hoverEnabled) return;
     if (this._drag || this._deviceDrag) return;
     this._tip = { x: ev.clientX, y: ev.clientY, title, meta, lqi, temp, hum, room };
+    this._syncLiveHover();
   }
 
   /** Room pointer preflight stays authoritative even when its tooltip is off. */
@@ -7328,7 +7325,7 @@ export class HouseplanCard extends LitElement {
     if (this._mode !== 'view') return false;
     this._notePointer(ev);
     if (showRoomTooltipOf(this._settings)) return true;
-    if (this._tip?.room) this._tip = null;
+    if (this._tip?.room) { this._tip = null; this._syncLiveHover(); }
     return false;
   }
 
@@ -7861,16 +7858,21 @@ export class HouseplanCard extends LitElement {
 
   /** Browser/OS cancellation is an aborted transaction, never a commit. */
   private _stagePointerCancel(ev: PointerEvent): void {
+    this._flushHa();
+    this._editorRuntime?._cancelPointerMove('markup-hover');
     if (this._roomPointer?.pointerId === ev.pointerId) this._roomPointer = null; this._doubleFit.clear();
     if (this._editorRuntime) return this._editorRuntime._stagePointerCancel(ev);
-    const viewportGestureEnded = !!this._pinchStart || !!this._panStart; this._pointers.delete(ev.pointerId);
+    this._pointers.delete(ev.pointerId);
     if (this._pointers.size < 2) this._pinchStart = null;
     if (this._pointers.size === 0) {
       this._panStart = null;
       this._panLock = null;
       this._swipeStart = null;
     }
-    if (viewportGestureEnded && this._pointers.size === 0) this.requestUpdate();
+    if (this._viewportGestureDirty && this._pointers.size === 0) {
+      this._viewportGestureDirty = false;
+      this.requestUpdate();
+    }
   }
 
   private _applyGeometryState(
@@ -8448,7 +8450,8 @@ export class HouseplanCard extends LitElement {
   }
 
   private _decorMoveUpdate(ev: PointerEvent): void {
-    return this._editorRuntimeOrThrow()._decorMoveUpdate(ev);
+    this._editorRuntimeOrThrow()._queuePointerMove('decor-move', () =>
+      this._editorRuntimeOrThrow()._decorMoveUpdate(ev));
   }
 
   private _decorNudge(renderDx: number, renderDy: number): boolean {
@@ -8538,10 +8541,12 @@ export class HouseplanCard extends LitElement {
   }
 
   private _dtMove(ev: PointerEvent): void {
-    return this._editorRuntimeOrThrow()._dtMove(ev);
+    this._editorRuntimeOrThrow()._queuePointerMove('decor-transform', () =>
+      this._editorRuntimeOrThrow()._dtMove(ev));
   }
 
   private _dtUp(): void {
+    this._editorRuntimeOrThrow()._flushPointerMove('decor-transform');
     return this._editorRuntimeOrThrow()._dtUp();
   }
 
@@ -8709,8 +8714,10 @@ export class HouseplanCard extends LitElement {
    */
   private _renderTextFrame(view: { x: number; y: number; w: number; h: number }): TemplateResult | typeof nothing {
     const sh = this._dtSel;
-    const b = this._dtBox;
-    if (!sh || !b || b.id !== sh.id) return nothing;
+    if (!sh) return nothing;
+    if (sh.kind === 'text' && this._dtBox?.id !== sh.id) return nothing;
+    const b = sh.kind === 'text' ? this._dtBox : this._decorBoxOf(sh);
+    if (sh.kind !== 'line' && !b) return nothing;
     // Two radii, one gesture (owner 2026-08-05: «уменьшить в 4 раза»). `hr`
     // is the HIT radius — unchanged, still 1.8 % of the visible view, still
     // finger-sized at any zoom — carried by an invisible circle. `kr` is what
@@ -8729,6 +8736,7 @@ export class HouseplanCard extends LitElement {
           <circle class="dtknob" cx="${p[0]}" cy="${p[1]}" r="${kr.toFixed(2)}"></circle>`)}
       </g>` as unknown as TemplateResult;
     }
+    if (!b) return nothing;
     const [ax, ay] = this._dtPivot(sh);
     const ang = Number(sh.angle) || 0;
     const corners: [number, number, string][] = [
@@ -9724,19 +9732,20 @@ export class HouseplanCard extends LitElement {
   private _renderRoomHoverFill(
     paths: { fillD: string; outlineD: string } | null,
   ): TemplateResult {
-    if (!paths) return svg`` as unknown as TemplateResult;
     return svg`<g class="room-hover room-hover-fill-layer" pointer-events="none">
-      <path class="room-hover-fill" d="${paths.fillD}" fill-rule="evenodd"></path>
+      <path class="room-hover-fill" data-hp-live-room-hover="fill"
+        d="${paths?.fillD || ''}" ?hidden=${!paths} fill-rule="evenodd"></path>
     </g>` as unknown as TemplateResult;
   }
 
   private _renderRoomHoverOutline(
     paths: { fillD: string; outlineD: string } | null,
   ): TemplateResult {
-    if (!paths) return svg`` as unknown as TemplateResult;
     return svg`<g class="room-hover room-hover-outline-layer" pointer-events="none">
-      <path class="room-hover-halo" d="${paths.outlineD}"></path>
-      <path class="room-hover-outline" d="${paths.outlineD}"></path>
+      <path class="room-hover-halo" data-hp-live-room-hover="halo"
+        d="${paths?.outlineD || ''}" ?hidden=${!paths}></path>
+      <path class="room-hover-outline" data-hp-live-room-hover="outline"
+        d="${paths?.outlineD || ''}" ?hidden=${!paths}></path>
     </g>` as unknown as TemplateResult;
   }
 
@@ -9883,7 +9892,7 @@ export class HouseplanCard extends LitElement {
 
   private _markupMove(ev: MouseEvent): void {
     if (!this._markup || !this._editorRuntime) return;
-    return this._editorRuntime._markupMove(ev);
+    this._editorRuntimeOrThrow()._queuePointerMove('markup-hover', () => this._editorRuntime!._markupMove(ev));
   }
 
   /** One resolved architectural candidate shared by hover and click. */
@@ -11312,7 +11321,9 @@ export class HouseplanCard extends LitElement {
     }
     if (editorRuntimeRequested && !this._editorRuntime) void this._ensureEditorRuntime();
     const model = this._model;
-    const diagnostics = this.houseplanDiagnostics();
+    const diagnostics = this._renderLife.diagnostics(
+      this.hass, this._markers, (binding) => this._bindingStatus(binding),
+    );
     const fixed = this._fixedFloorState(model);
     if (fixed.kind === 'pending') {
       return html`<ha-card data-fixed-floor-state="pending">
@@ -11560,12 +11571,13 @@ export class HouseplanCard extends LitElement {
           <div class="zoomwrap ${this._slide ? 'slide-' + this._slide : ''}"
             ?inert=${this._continuity.overlayBlocksInteraction || this._modeTransitionBusy}
             style="${transitionBrightness !== 1 ? `filter:brightness(${transitionBrightness.toFixed(3)})` : ''}">
-          ${iso && isoLayers?.structural ? svg`<svg class="iso-underlay-svg"
+          ${iso && isoLayers?.structural ? svg`<svg class="iso-underlay-svg" data-hp-live-viewbox="camera"
               viewBox="${view.x} ${view.y} ${view.w} ${view.h}"
               preserveAspectRatio="xMidYMid meet" aria-hidden="true" pointer-events="none">
               ${this._renderIsoUnderlay(isoLayers)}
             </svg>` : nothing}
           <svg class=${isoLayers?.structural ? 'plan-svg' : nothing}
+            data-hp-live-viewbox=${isoLayers?.structural ? 'camera' : 'floor'}
             viewBox=${isoLayers?.structural
               ? `${view.x} ${view.y} ${view.w} ${view.h}`
               : `${floorView.x} ${floorView.y} ${floorView.w} ${floorView.h}`}
@@ -11662,6 +11674,7 @@ export class HouseplanCard extends LitElement {
                 this._notePointer(event);
                 if (this._pointerModality.hoverEnabled) {
                   this._hoverRoom = { space: space.id, room: r };
+                  this._syncLiveHover();
                 }
               };
               const myPoly = polyOf(r);
@@ -11803,14 +11816,15 @@ export class HouseplanCard extends LitElement {
                    backdrop editor, where rooms and devices are pointer-inert. */}
             ${this._renderBackdropFrame(view)}
             ${this._renderTextFrame(view)}
+            <g data-hp-live-editor></g>
             </g>
           </svg>
-          ${iso && isoLayers?.structural ? svg`<svg class="iso-shadows-svg"
+          ${iso && isoLayers?.structural ? svg`<svg class="iso-shadows-svg" data-hp-live-viewbox="camera"
               viewBox="${view.x} ${view.y} ${view.w} ${view.h}"
               preserveAspectRatio="xMidYMid meet" aria-hidden="true" pointer-events="none">
               ${this._renderIsoShadows(isoLayers, isoPanels)}
             </svg>
-            <svg class="iso-walls-svg" viewBox="${view.x} ${view.y} ${view.w} ${view.h}"
+            <svg class="iso-walls-svg" data-hp-live-viewbox="camera" viewBox="${view.x} ${view.y} ${view.w} ${view.h}"
               preserveAspectRatio="xMidYMid meet" aria-hidden="true" pointer-events="none">
               ${this._renderIsoWalls(isoLayers, isoPanels)}
             </svg>` : nothing}${renderZigbeeTopologyOverlay({ hass: this.hass, settings: this._settings, devices: this._renderDevices, registry: this._haRegistry, currentSpace: space.id, viewKey: view, view: this._mode === 'view', kiosk: this._kiosk })}
@@ -11825,7 +11839,7 @@ export class HouseplanCard extends LitElement {
                  space-card, so the two renderers agree. The compatibility
                  base is resolved before `iconCqw`; only the per-device and
                  kiosk multipliers still feed --dev-size. */}
-          <div class="devlayer" style="--icon-size:${iconCqw(iconPct, space, view.w, this._kiosk ? this._kioskScale.icon : 1).toFixed(3)}cqw;--device-base-size:${iconCqw(deviceBasePct, space, view.w, this._kiosk ? this._kioskScale.icon : 1).toFixed(3)}cqw;--rl-icon-size:${iconCqw(iconPct, space, this._roomLabelReferenceViewWidth(view), this._kiosk ? this._kioskScale.icon : 1).toFixed(3)}cqw;--rl-font:${this._kiosk ? this._kioskScale.font : 1}">
+          <div class="devlayer" data-hp-live-layer="camera" style="--icon-size:${iconCqw(iconPct, space, view.w, this._kiosk ? this._kioskScale.icon : 1).toFixed(3)}cqw;--device-base-size:${iconCqw(deviceBasePct, space, view.w, this._kiosk ? this._kioskScale.icon : 1).toFixed(3)}cqw;--rl-icon-size:${iconCqw(iconPct, space, this._roomLabelReferenceViewWidth(view), this._kiosk ? this._kioskScale.icon : 1).toFixed(3)}cqw;--rl-font:${this._kiosk ? this._kioskScale.font : 1}">
             ${devs.map((d) => this._renderDevice(d, view, showLqi))}
             ${this._renderVacuums(this._renderVacuumDevices, view, space.id)}
             ${this._renderVacFit(view)}
@@ -11836,10 +11850,10 @@ export class HouseplanCard extends LitElement {
             ${this._markup ? space.rooms.map((r) => this._renderRoomGear(r, space, view)) : nothing}
           </div>
           ${this._measureAnchor
-            ? html`<div class="measurelayer">${this._renderMeasureLabel(view)}</div>`
+            ? html`<div class="measurelayer" data-hp-live-layer="camera">${this._renderMeasureLabel(view)}</div>`
             : nothing}
           ${this._resize?.liveLabels
-            ? html`<div class="measurelayer">${this._resize?.liveLabels?.map((l) => html`<div
+            ? html`<div class="measurelayer" data-hp-live-layer="camera">${this._resize?.liveLabels?.map((l) => html`<div
                 class="measurelabel ${l.kind === 'area' ? 'rszarea' : 'rszlength'}"
                 data-hp=${l.kind === 'area' ? 'resize-area-label' : 'resize-length-label'}
                 data-room=${l.kind === 'area' ? l.roomId : nothing}
@@ -11849,7 +11863,7 @@ export class HouseplanCard extends LitElement {
                   : ''}">${l.text}</div>`)}</div>`
             : nothing}
           ${opMeasure
-            ? html`<div class="measurelayer">${opMeasure.labels.map((l) => html`<div
+            ? html`<div class="measurelayer" data-hp-live-layer="camera">${opMeasure.labels.map((l) => html`<div
                 class="measurelabel opshoulder ${l.dimension ? 'opdimension' : ''}"
                 data-dimension-source=${l.dimension?.source || nothing}
                 data-dimension-room=${l.dimension?.roomId || nothing}
@@ -11858,27 +11872,25 @@ export class HouseplanCard extends LitElement {
                   : ''}">${l.text}</div>`)}</div>`
             : nothing}
           ${this._wallDialog
-            ? html`<div class="measurelayer">${this._renderWallThickDialog()}</div>`
+            ? html`<div class="measurelayer" data-hp-live-layer="camera">${this._renderWallThickDialog()}</div>`
             : nothing}
           ${decorMeasure
-            ? html`<div class="measurelayer"><div
+            ? html`<div class="measurelayer" data-hp-live-layer="camera"><div
                 class="measurelabel dmeasure ${decorMeasure.on45 ? 'on45' : ''}"
                 style="left:${(((decorMeasure.x - view.x) / view.w) * 100).toFixed(2)}%;top:${(((decorMeasure.y - view.y) / view.h) * 100).toFixed(2)}%">${decorMeasure.text}</div></div>`
             : nothing}
           ${furnLive
-            ? html`<div class="measurelayer">${furnLive.map((l) => html`<div
+            ? html`<div class="measurelayer" data-hp-live-layer="camera">${furnLive.map((l) => html`<div
                 class="measurelabel furnmeasure"
                 style="left:${(((l.x - view.x) / view.w) * 100).toFixed(2)}%;top:${(((l.y - view.y) / view.h) * 100).toFixed(2)}%">${l.text}</div>`)}</div>`
             : nothing}
           ${bdLive
-            ? html`<div class="measurelayer"><div
+            ? html`<div class="measurelayer" data-hp-live-layer="camera"><div
                 class="measurelabel bdmeasure"
                 style="left:${(((bdLive.x - view.x) / view.w) * 100).toFixed(2)}%;top:${(((bdLive.y - view.y) / view.h) * 100).toFixed(2)}%">${bdLive.text}</div></div>`
             : nothing}
           </div>
-          ${this._zoom > 1
-            ? html`<div class="zoombadge">${Math.round(this._zoom * 100)}%</div>`
-            : nothing}
+          <div class="zoombadge" data-hp-live-zoom hidden><span data-hp-live-zoom-value></span></div>
           ${this._renderFarHint()}
           ${this._renderHomeArrow()}
           ${this._renderEditorRuntimeLoading()}
@@ -11938,21 +11950,7 @@ export class HouseplanCard extends LitElement {
         ${this._backupExportDialog ? this._editorRuntime ? this._renderBackupExportDialog() : nothing : nothing}
         ${this._backupImportDialog ? this._editorRuntime ? this._renderBackupImportDialog() : nothing : nothing}
         ${this._importDialog ? this._onboardingRuntime ? this._renderImportDialog() : nothing : nothing}
-        ${this._tip
-          ? html`<div class="tip" style="left:${this._tip.x + 12}px;top:${this._tip.y + 12}px">
-              <b>${this._tip.title}</b>${this._tip.meta ? html`<span class="m">${this._tip.meta}</span>` : nothing}
-              ${this._tip.temp != null
-                ? html`<span class="m">${this._t('tip.temp_avg')} <b>${this._tip.temp}°</b></span>`
-                : nothing}
-              ${this._tip.hum != null
-                ? html`<span class="m">${this._t('tip.hum_avg')} <b>${this._tip.hum}%</b></span>`
-                : nothing}
-              ${this._tip.lqi != null
-                ? html`<span class="m">${this._t('tip.lqi')}
-                    <b style="color:${lqiColor(this._tip.lqi)}">${this._tip.lqi}</b></span>`
-                : nothing}
-            </div>`
-          : nothing}
+        <div class="tip" data-hp-live-tip hidden></div>
         ${this._kiosk && !this._hasFixedFloor && this._kioskDots && this._model.length > 1
           ? html`<div class="kioskdots">
               ${this._model.map((m) => html`<span class="kdot ${m.id === this._space ? 'on' : ''}"></span>`)}
@@ -12493,7 +12491,7 @@ export class HouseplanCard extends LitElement {
     if (pucks.length && !this._vacRaf) this._vacRafLoop();
     if (!pucks.length && !trails.length) return nothing;
     return html`
-      ${trails.length ? svg`<svg class="vactrail" viewBox="${view.x} ${view.y} ${view.w} ${view.h}" preserveAspectRatio="none">${trails}</svg>` : nothing}
+      ${trails.length ? svg`<svg class="vactrail" data-hp-live-viewbox="camera" viewBox="${view.x} ${view.y} ${view.w} ${view.h}" preserveAspectRatio="none">${trails}</svg>` : nothing}
       ${pucks}`;
   }
 

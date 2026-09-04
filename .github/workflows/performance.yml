@@ -37,6 +37,7 @@ jobs:
           - large-house
           - isometric
           - plan-snap
+          - interaction
           - blend
           - overlay
           - space-default
@@ -190,6 +191,10 @@ jobs:
               npm run benchmark:large-house-plan-snap -- --target-root=../baseline --samples=7 --warmups=1 --output=../artifacts/performance/plan-snap-baseline.json
               npm run benchmark:large-house-plan-snap -- --target-root=. --samples=7 --warmups=1 --output=../artifacts/performance/plan-snap-candidate.json
               ;;
+            interaction)
+              npm run benchmark:large-house-interaction -- --target-root=../baseline --samples=7 --warmups=1 --output=../artifacts/performance/interaction-baseline.json
+              npm run benchmark:large-house-interaction -- --target-root=. --samples=7 --warmups=1 --output=../artifacts/performance/interaction-candidate.json
+              ;;
             blend)
               npm run benchmark:glow -- --profile=large-light-blend-v1 --target-root=../baseline --samples=7 --warmups=1 --output=../artifacts/performance/blend-baseline.json
               npm run benchmark:glow -- --profile=large-light-blend-v1 --target-root=. --samples=7 --warmups=1 --output=../artifacts/performance/blend-candidate.json
@@ -234,6 +239,9 @@ jobs:
               ;;
             plan-snap)
               npm run benchmark:compare -- --budgets=demo/performance/budgets-large-house-plan-snap.json --baseline=../artifacts/performance/plan-snap-baseline.json --candidate=../artifacts/performance/plan-snap-candidate.json --output=../artifacts/performance/plan-snap-comparison.json
+              ;;
+            interaction)
+              npm run benchmark:compare -- --budgets=demo/performance/budgets-large-house-interaction.json --baseline=../artifacts/performance/interaction-baseline.json --candidate=../artifacts/performance/interaction-candidate.json --output=../artifacts/performance/interaction-comparison.json
               ;;
             blend)
               npm run benchmark:compare -- --budgets=demo/performance/budgets-large-light-blend.json --baseline=../artifacts/performance/blend-baseline.json --candidate=../artifacts/performance/blend-candidate.json --output=../artifacts/performance/blend-comparison.json
