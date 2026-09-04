@@ -51,44 +51,27 @@ test('pointer-following editor hover routes while View remains reactive', () => 
   }
 });
 
-test('pointer move queue is RAF-coalesced, last-wins and flushable', () => {
-  const beforeRaf = globalThis.requestAnimationFrame;
-  const beforeCancel = globalThis.cancelAnimationFrame;
-  const callbacks = new Map();
-  const cancelled = [];
-  let nextId = 0;
-  globalThis.requestAnimationFrame = (callback) => {
-    const id = ++nextId;
-    callbacks.set(id, callback);
-    return id;
-  };
-  globalThis.cancelAnimationFrame = (id) => {
-    cancelled.push(id);
-    callbacks.delete(id);
-  };
+test('pointer move queue is event-turn coalesced, last-wins and flushable', async () => {
   const host = {};
   const seen = [];
   try {
     queueHouseplanPointerMove(host, 'drag', () => seen.push(1));
     queueHouseplanPointerMove(host, 'drag', () => seen.push(2));
-    assert.equal(callbacks.size, 1);
-    const [[id, callback]] = callbacks;
-    callbacks.delete(id);
-    callback();
+    assert.deepEqual(seen, []);
+    await Promise.resolve();
     assert.deepEqual(seen, [2]);
 
     queueHouseplanPointerMove(host, 'drag', () => seen.push(3));
     flushHouseplanPointerMove(host, 'drag');
     assert.deepEqual(seen, [2, 3]);
-    assert.equal(cancelled.length, 1);
+    await Promise.resolve();
+    assert.deepEqual(seen, [2, 3]);
 
     queueHouseplanPointerMove(host, 'drag', () => seen.push(4));
     cancelHouseplanPointerMove(host, 'drag');
+    await Promise.resolve();
     assert.deepEqual(seen, [2, 3]);
-    assert.equal(cancelled.length, 2);
   } finally {
     disposeHouseplanEditor(host);
-    globalThis.requestAnimationFrame = beforeRaf;
-    globalThis.cancelAnimationFrame = beforeCancel;
   }
 });

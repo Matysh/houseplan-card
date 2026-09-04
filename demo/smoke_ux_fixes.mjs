@@ -54,7 +54,8 @@ const res = await page.evaluate(async () => {
   const humLine = metricLines.findIndex((line) => line.includes('средняя влажность'));
   const lqiLine = metricLines.findIndex((line) => line.includes(c._t('tip.lqi')));
   out.tipMetricOrder = tempLine >= 0 && humLine === tempLine + 1 && lqiLine === humLine + 1;
-  out.tipPositionUnchanged = sr().querySelector('.tip')?.getAttribute('style') === 'left:212px;top:212px';
+  out.tipPositionUnchanged = sr().querySelector('.tip')?.style.left === '212px'
+    && sr().querySelector('.tip')?.style.top === '212px';
   // _roomArea consumes the rendered room geometry (0..1000), not the stored
   // normalized config polygon (0..1).
   const expectedArea = c._roomArea(c._spaceModel().rooms[0]);

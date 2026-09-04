@@ -131,6 +131,7 @@ const out = await page.evaluate(async () => {
   beginDeviceDrag(dev3, r0, 13);
   c._pointerMove(mk(2.5 * NORM_W + halfStep - r0.x, 2.5 * NORM_W - r0.y,
     400, 400, { shiftKey: true, pointerId: 13 }), dev3);
+  await Promise.resolve();
   o.shiftStillSnapsToTheNodes = onGrid(c._layout[dev3.id].x);
   c._cancelDeviceDrag();
 

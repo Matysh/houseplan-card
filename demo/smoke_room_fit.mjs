@@ -80,11 +80,16 @@ const out = await page.evaluate(async () => {
     const expectedLeft = ((position[0] - activeView.x) / activeView.w) * 100;
     const expectedTop = ((position[1] - activeView.y) / activeView.h) * 100;
     const actualView = activeSvg?.getAttribute('viewBox')?.trim().split(/\s+/).map(Number) || [];
+    const labelRect = activeLabel?.getBoundingClientRect();
+    const stageRect = root.querySelector('.stage')?.getBoundingClientRect();
     syncFrames.push(actualView.length === 4
       && actualView.every((value, index) => Math.abs(value
         - [activeView.x, activeView.y, activeView.w, activeView.h][index]) < 1e-6)
-      && Math.abs(Number.parseFloat(activeLabel.style.left) - expectedLeft) < 1e-3
-      && Math.abs(Number.parseFloat(activeLabel.style.top) - expectedTop) < 1e-3);
+      && !!labelRect && !!stageRect
+      && Math.abs(labelRect.left + labelRect.width / 2
+        - (stageRect.left + stageRect.width * expectedLeft / 100)) < 1
+      && Math.abs(labelRect.top + labelRect.height / 2
+        - (stageRect.top + stageRect.height * expectedTop / 100)) < 1);
   }
   result.svgAndHtmlShareTweenFrames = syncFrames.length > 0 && syncFrames.every(Boolean);
   await waitCamera();

@@ -4095,7 +4095,7 @@ public _renderResizeLayer(view: { x: number; y: number; w: number; h: number }):
         parts.push(svg`<g class="rszicon ${disabled ? 'disabled' : ''}" transform="translate(${mx} ${my}) rotate(${ang})"><path class="rszhalo" d="${iconD}"></path><path class="rszink" d="${iconD}"></path></g>`);
       }
     }
-    return svg`${parts}`;
+    return svg`<g class="resize-layer">${parts}</g>`;
   }
 
 public _partitionOpeningCuts(
@@ -4356,9 +4356,7 @@ public _decorShapeDown(ev: PointerEvent, shape: DecorShape): void {
   }
 
 public _decorMoveUpdate(ev: PointerEvent): void {
-    const m = this.host._decorMove!;
-    // Furniture is dragged by its CENTRE and has a magnet of its own
-    // (docs/FURNITURE.md §5) — a different rule, not a different gesture.
+    const m = this.host._decorMove; if (!m) return;
     if (m.orig?.kind === 'furniture') { this._furnMoveUpdate(ev); return; }
     const p = this._svgPoint(ev);
     const o0: any = m.orig;
@@ -4395,6 +4393,11 @@ public _decorMoveUpdate(ev: PointerEvent): void {
       return { ...x, x: o.x + dx, y: o.y + dy };
     });
     this.host.requestUpdate();
+  }
+public _dmUp(): void {
+    flushHouseplanPointerMove(this.host, 'decor-move'); const move = this.host._decorMove;
+    if (move?.moved) { this._recordGeometry(this.host._t('history.decor_move'), move.before); this._saveConfig(); }
+    this.host._decorMove = null; this.host.requestUpdate();
   }
 
 public _decorShapeDbl(ev: MouseEvent, shape: DecorShape): void {
@@ -5058,7 +5061,7 @@ public _furnPointerUp(ev: PointerEvent): boolean {
   }
 
 public _furnMoveUpdate(ev: PointerEvent): void {
-    const m = this.host._decorMove!;
+    const m = this.host._decorMove; if (!m) return;
     if (m.orig.kind !== 'furniture') return;
     const o: any = m.orig;
     const sp = this.host._curSpaceCfg;
@@ -6560,8 +6563,8 @@ public _opPointerUp(ev: PointerEvent, o: OpeningCfg): void {
       this._commitPhysicalGeometry(this.host._t('history.move_opening'), drag.before);
     }
     // keep the flag until the click event that follows pointerup, then let it go
-    if (moved) window.setTimeout(() => (this.host._opDrag = null), 0);
-    else this.host._opDrag = null;
+    const finish = () => { this.host._opDrag = null; this.host.requestUpdate(); };
+    if (moved) window.setTimeout(finish, 0); else finish();
   }
 
 public _opClick(ev: MouseEvent, o: RenderOpening): void {
@@ -6893,13 +6896,11 @@ public _markupMove(ev: MouseEvent): void {
         conflicts: resolved.conflicts,
       };
       this._syncPlanSnapConflictMarkers(resolved.conflicts);
+      this._syncPlanSnapActiveMarker(resolved.candidate);
       // Before the first click there is no rubber-band to repaint. Updating the
       // dedicated marker avoids walking the complete large-house Lit tree for
       // every mouse move while click still resolves from the event coordinate.
-      if (!this.host._path.length) {
-        this._syncPlanSnapActiveMarker(resolved.candidate);
-        return;
-      }
+      if (!this.host._path.length) return;
       this.host._cursorPt = resolved.point;
       return;
     }

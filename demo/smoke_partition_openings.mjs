@@ -81,6 +81,7 @@ const out = await page.evaluate(async () => {
   card._opPointerMove(new PointerEvent('pointermove', {
     pointerId: 186, clientX: 20, clientY: 0, bubbles: true,
   }), saved);
+  await Promise.resolve();
   runtime._svgPoint = originalSvgPoint;
   card._opPointerUp(new PointerEvent('pointerup', { pointerId: 186, bubbles: true }), saved);
   await update();

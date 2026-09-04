@@ -10,6 +10,11 @@ const res = await page.evaluate(async () => {
     while (c._modeTransitionBusy && performance.now() - started < 1500);
     await c.updateComplete;
   };
+  const settleLive = async () => {
+    await Promise.resolve();
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    await c.updateComplete;
+  };
   const esc = async () => { window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })); await c.updateComplete; };
   // 1) третья вкладка есть
   const tabs = [...sr().querySelectorAll('.modetab')];
@@ -272,10 +277,10 @@ const res = await page.evaluate(async () => {
   const vw = () => c._viewOr(c._baseVb());
   c._decorTool = 'line';
   c._decorDraft = { kind: 'line', a: [g * 4, g * 20], b: [g * 4, g * 20], pid: 3 };
-  await c.updateComplete;
+  await settleLive();
   out.noBadgeBeforeTheDrag = !label();                 // нулевая длина — молчим
   c._decorDraft = { ...c._decorDraft, b: [g * 16, g * 20] };   // 12 клеток вправо
-  await c.updateComplete;
+  await settleLive();
   out.lineBadgeShown = !!label();
   // 12 клеток × 5 см = 0.60 m, угол 0° — ровно то, что пишет плашка стены
   out.lineBadgeText = txt();
@@ -287,12 +292,12 @@ const res = await page.evaluate(async () => {
   out.badgeGreenOnAxis = !!label() && label().classList.contains('on45');
   // косой отрезок 3-4-5: длина 5 клеток, угол 53.1° — не кратен 45°
   c._decorDraft = { kind: 'line', a: [g * 4, g * 20], b: [g * 7, g * 24], pid: 3 };
-  await c.updateComplete;
+  await settleLive();
   out.obliqueBadge = txt() === fmt(g * 5) + ' · 53.1°';
   out.obliqueNotGreen = !!label() && !label().classList.contains('on45');
   // прямоугольник показывает габарит и чистую площадь
   c._decorDraft = { kind: 'rect', a: [g * 4, g * 20], b: [g * 12, g * 26], pid: 3 };
-  await c.updateComplete;
+  await settleLive();
   out.rectBadgeHasSizeAndArea = txt().startsWith(fmt(g * 8) + ' × ' + fmt(g * 6) + ' · ')
     && /(?:m²|ft²)$/.test(txt());
   // отпустили — плашки нет

@@ -4,6 +4,7 @@ import { cancelHouseplanPointerMove } from './pointer-move-queue';
 interface LiveEditorState {
   raf: number;
   hidden: HTMLElement[];
+  transparent: HTMLElement[];
 }
 
 interface LiveEditorHost {
@@ -11,6 +12,7 @@ interface LiveEditorHost {
   renderRoot: ParentNode;
   requestUpdate: () => void;
   _mode: 'view' | 'plan' | 'devices' | 'decor';
+  _tool: string;
   _deviceDrag: { id: string } | null;
   _physicalDrag?: unknown;
   _physicalRotate?: unknown;
@@ -44,6 +46,7 @@ interface LiveEditorHost {
   _renderDecorLayer: () => unknown;
   _renderBackdropFrame: (view: unknown) => unknown;
   _renderTextFrame: (view: unknown) => unknown;
+  _renderLiveEditorMeasurements: (view: unknown) => unknown;
   _livePos: (device: { id: string }) => { x: number; y: number };
   _scenePoint: (point: number[]) => number[];
 }
@@ -62,7 +65,7 @@ const gestureProperties = new Set<PropertyKey>([
 const stateOf = (host: object): LiveEditorState => {
   let state = states.get(host);
   if (!state) {
-    state = { raf: 0, hidden: [] };
+    state = { raf: 0, hidden: [], transparent: [] };
     states.set(host, state);
   }
   return state;
@@ -114,9 +117,21 @@ const hide = (state: LiveEditorState, root: ParentNode, selector: string): void 
   }
 };
 
+/** Keep the captured source hittable while only its live copy stays visible. */
+const makeTransparent = (state: LiveEditorState, root: ParentNode, selector: string): void => {
+  for (const element of root.querySelectorAll<HTMLElement>(selector)) {
+    if (element.closest('[data-hp-live-editor]')) continue;
+    if (element.style.opacity === '0') continue;
+    element.style.opacity = '0';
+    state.transparent.push(element);
+  }
+};
+
 const restore = (state: LiveEditorState): void => {
   for (const element of state.hidden) element.style.removeProperty('visibility');
   state.hidden.length = 0;
+  for (const element of state.transparent) element.style.removeProperty('opacity');
+  state.transparent.length = 0;
 };
 
 const planTemplate = (host: LiveEditorHost): TemplateResult => {
@@ -132,15 +147,18 @@ const planTemplate = (host: LiveEditorHost): TemplateResult => {
       ${host._renderResizeLayer(view)}
     </g>`;
   }
+  const display = host._spaceDisplayForRender();
   return svg`<g class="hp-live-plan" aria-hidden="true" pointer-events="none">
+    ${host._opDrag ? host._renderWallBodies(display) : nothing}
     ${host._renderMarkupLayer(vb)}
     ${host._renderHiddenWallDiagnosticOverlay()}
     ${host._renderOpeningPlacementPreview()}
     ${measure ? host._renderOpeningDimensionGuides(measure) : nothing}
     ${measure?.guide ? host._renderOpeningCenterTick(measure.guide) : nothing}
     ${host._renderActiveChainInk()}
-    ${host._renderPlanSnapOverlay()}
+    ${host._tool === 'draw' ? nothing : host._renderPlanSnapOverlay()}
     ${host._renderWallThickUi()}
+    ${host._opDrag ? host._renderOpenings(display) : nothing}
   </g>`;
 };
 
@@ -182,13 +200,20 @@ export function paintHouseplanEditor(value: object): void {
   const target = root.querySelector<SVGElement>('[data-hp-live-editor]');
   if (!target) return;
   if (host._mode === 'plan') {
-    hide(state, root, '.hp-editor-only-layer');
-    if (host._resize?.dragging) hide(state, root, '.wallbodies');
+    makeTransparent(state, root, '.hp-editor-only-layer:not(.hp-plan-snap-layer)');
+    if (host._resize?.dragging || host._opDrag) hide(state, root, '.wallbodies');
+    if (host._resize?.dragging) makeTransparent(state, root, '.resize-layer');
+    if (host._opDrag) makeTransparent(state, root, '.openinglayer');
   } else if (host._mode === 'decor') {
-    hide(state, root, '.decorlayer');
-    hide(state, root, '.dtframe, .backdropframe');
+    makeTransparent(state, root, '.decorlayer');
+    makeTransparent(state, root, '.dtframe, .backdropframe');
   }
   render(editorTemplate(host), target);
+  const htmlTarget = root.querySelector<HTMLElement>('[data-hp-live-editor-html]');
+  if (htmlTarget) {
+    const view = host._viewOr(host._baseVb());
+    render(host._renderLiveEditorMeasurements(view), htmlTarget);
+  }
   host._liveEditorPaintCount = (host._liveEditorPaintCount || 0) + 1;
 }
 
@@ -238,6 +263,12 @@ export function commitHouseplanEditor(value: object): void {
   const target = (host.renderRoot as ParentNode | undefined)
     ?.querySelector<SVGElement>('[data-hp-live-editor]');
   if (target) render(nothing, target);
+  const htmlTarget = (host.renderRoot as ParentNode | undefined)
+    ?.querySelector<HTMLElement>('[data-hp-live-editor-html]');
+  if (htmlTarget) {
+    const view = host._viewOr(host._baseVb());
+    render(host._renderLiveEditorMeasurements(view), htmlTarget);
+  }
 }
 
 export function disposeHouseplanEditor(host: object): void {

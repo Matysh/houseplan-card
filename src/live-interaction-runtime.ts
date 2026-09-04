@@ -35,8 +35,15 @@ export class LiveRuntime {
     const change = classifyHassRenderChange(before, after, dependencies);
     const defer = change === 'state' && this.active();
     if (defer) this.deferredHass = true;
-    (this.host as LiveRuntimeHost)._renderLife.observe(before, after, dependencies, intake);
-    return change !== 'none' && !defer;
+    const render = change !== 'none' && !defer;
+    // Preserve ReactiveElement's ordering for snapshots which are about to
+    // render: willUpdate owns their intake.  Tests, config editors and HA can
+    // legitimately finish other same-turn mutations after assigning `hass`.
+    // Only a deliberately skipped update needs operational intake here.
+    if (!render) {
+      (this.host as LiveRuntimeHost)._renderLife.observe(before, after, dependencies, intake);
+    }
+    return render;
   }
   public clear(): void { this.deferredHass = false; }
   public take(): boolean {
@@ -44,7 +51,7 @@ export class LiveRuntime {
     this.deferredHass = false;
     return pending;
   }
-  public viewport(): void { scheduleHouseplanViewport(this.host); }
+  public viewport(now = false): void { scheduleHouseplanViewport(this.host, now); }
   public hover(): void { syncHouseplanHover(this.host); }
   public active(): boolean {
     const host = this.host as LiveRuntimeHost;

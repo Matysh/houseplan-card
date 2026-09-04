@@ -1094,7 +1094,7 @@ export class HouseplanCard extends LitElement {
     state.presented = presented;
     this._zoom = presented.zoom;
     this._view = { ...presented.viewBox };
-    this._scheduleLiveViewport();
+    this._liveVp(true);
   }
 
   private _settleCameraTransition(state: CameraTransitionState): void {
@@ -4513,7 +4513,7 @@ export class HouseplanCard extends LitElement {
     if (this.isConnected) this.requestUpdate();
   }
 
-  private _scheduleLiveViewport(): void { this._liveRt ? this._liveRt.viewport() : this.requestUpdate(); }
+  private _liveVp(now = false): void { this._liveRt ? this._liveRt.viewport(now) : this.requestUpdate(); }
   private _syncLiveHover(): void { this._liveRt ? this._liveRt.hover() : this.requestUpdate(); }
   /** Bypass live routing so a gesture terminal publishes the last HA frame. */
   private _flushHa(): void { if (this._liveRt?.take()) super.requestUpdate(); }
@@ -6424,7 +6424,7 @@ export class HouseplanCard extends LitElement {
     }
     this._zoom = z;
     this._view = next;
-    this._scheduleLiveViewport();
+    this._liveVp();
     return true;
   }
 
@@ -6619,7 +6619,7 @@ export class HouseplanCard extends LitElement {
     }
     this._zoom = result.target.zoom;
     this._view = { ...result.target.viewBox };
-    this._scheduleLiveViewport();
+    this._liveVp();
   }
 
   private _onWheel(ev: WheelEvent): void {
@@ -6908,7 +6908,7 @@ export class HouseplanCard extends LitElement {
           fit,
         );
         this._viewportGestureDirty = true;
-        this._scheduleLiveViewport();
+        this._liveVp();
       }
     }
   }
@@ -6992,12 +6992,7 @@ export class HouseplanCard extends LitElement {
       return;
     }
     if (this._decorMove?.pid === ev.pointerId) {
-      this._editorRuntimeOrThrow()._flushPointerMove('decor-move');
-      if (this._decorMove.moved) {
-        this._recordGeometry(this._t('history.decor_move'), this._decorMove.before);
-        this._saveConfig();
-      }
-      this._decorMove = null;
+      this._editorRuntimeOrThrow()._dmUp();
       return;
     }
     if (this._editorRuntime?._furnPointerUp(ev)) return;
@@ -11414,9 +11409,6 @@ export class HouseplanCard extends LitElement {
     const stageBg = this._editing ? '' : this._stageBg(disp);
     // opening rulers: the drag of an existing one OR the placement preview
     const opMeasure = this._opMeasureView;
-    const decorMeasure = this._decorMeasure;
-    const bdLive = this._bdLive;
-    const furnLive = this._editorRuntime?._furnLive() ?? null;
     const editorChromeMode = this._mode === 'view' ? this._editorChromeMode : this._mode;
     const roomHover = this._roomHoverPaths(space);
     const backdropHref = space.bg ? this._display(space.bg.href) : '';
@@ -11803,7 +11795,7 @@ export class HouseplanCard extends LitElement {
                    below the snap overlay so snap highlights keep priority. */}
             ${this._markup ? svg`<g class="hp-editor-only-layer"
               opacity="${modeVisual?.editorWeight ?? 1}">${this._renderActiveChainInk()}</g>` : nothing}
-            ${this._markup ? svg`<g class="hp-editor-only-layer"
+            ${this._markup ? svg`<g class="hp-editor-only-layer hp-plan-snap-layer"
               opacity="${modeVisual?.editorWeight ?? 1}">${this._renderPlanSnapOverlay()}</g>` : nothing}
             ${disp.hideOpenings && !this._markup
               ? nothing
@@ -11851,45 +11843,9 @@ export class HouseplanCard extends LitElement {
               : nothing}
             ${this._markup ? space.rooms.map((r) => this._renderRoomGear(r, space, view)) : nothing}
           </div>
-          ${this._measureAnchor
-            ? html`<div class="measurelayer" data-hp-live-layer="camera">${this._renderMeasureLabel(view)}</div>`
-            : nothing}
-          ${this._resize?.liveLabels
-            ? html`<div class="measurelayer" data-hp-live-layer="camera">${this._resize?.liveLabels?.map((l) => html`<div
-                class="measurelabel ${l.kind === 'area' ? 'rszarea' : 'rszlength'}"
-                data-hp=${l.kind === 'area' ? 'resize-area-label' : 'resize-length-label'}
-                data-room=${l.kind === 'area' ? l.roomId : nothing}
-                data-side=${l.kind === 'area' ? l.placement.side : nothing}
-                style="left:${(((l.x - view.x) / view.w) * 100).toFixed(2)}%;top:${(((l.y - view.y) / view.h) * 100).toFixed(2)}%;${l.kind === 'area'
-                  ? `--rsz-label-x:${l.placement.offsetXPx.toFixed(2)}px;--rsz-label-y:${l.placement.offsetYPx.toFixed(2)}px;--rsz-label-tangent:${l.placement.tangentOffsetPx.toFixed(2)}px`
-                  : ''}">${l.text}</div>`)}</div>`
-            : nothing}
-          ${opMeasure
-            ? html`<div class="measurelayer" data-hp-live-layer="camera">${opMeasure.labels.map((l) => html`<div
-                class="measurelabel opshoulder ${l.dimension ? 'opdimension' : ''}"
-                data-dimension-source=${l.dimension?.source || nothing}
-                data-dimension-room=${l.dimension?.roomId || nothing}
-                style="left:${(((l.x - view.x) / view.w) * 100).toFixed(2)}%;top:${(((l.y - view.y) / view.h) * 100).toFixed(2)}%;${l.dimension
-                  ? `--op-label-shift-x:${(l.dimension.labelNormal[0] * 12).toFixed(2)}px;--op-label-shift-y:${(l.dimension.labelNormal[1] * 12).toFixed(2)}px`
-                  : ''}">${l.text}</div>`)}</div>`
-            : nothing}
+          <div data-hp-live-editor-html></div>
           ${this._wallDialog
             ? html`<div class="measurelayer" data-hp-live-layer="camera">${this._renderWallThickDialog()}</div>`
-            : nothing}
-          ${decorMeasure
-            ? html`<div class="measurelayer" data-hp-live-layer="camera"><div
-                class="measurelabel dmeasure ${decorMeasure.on45 ? 'on45' : ''}"
-                style="left:${(((decorMeasure.x - view.x) / view.w) * 100).toFixed(2)}%;top:${(((decorMeasure.y - view.y) / view.h) * 100).toFixed(2)}%">${decorMeasure.text}</div></div>`
-            : nothing}
-          ${furnLive
-            ? html`<div class="measurelayer" data-hp-live-layer="camera">${furnLive.map((l) => html`<div
-                class="measurelabel furnmeasure"
-                style="left:${(((l.x - view.x) / view.w) * 100).toFixed(2)}%;top:${(((l.y - view.y) / view.h) * 100).toFixed(2)}%">${l.text}</div>`)}</div>`
-            : nothing}
-          ${bdLive
-            ? html`<div class="measurelayer" data-hp-live-layer="camera"><div
-                class="measurelabel bdmeasure"
-                style="left:${(((bdLive.x - view.x) / view.w) * 100).toFixed(2)}%;top:${(((bdLive.y - view.y) / view.h) * 100).toFixed(2)}%">${bdLive.text}</div></div>`
             : nothing}
           </div>
           <div class="zoombadge" data-hp-live-zoom hidden><span data-hp-live-zoom-value></span></div>
@@ -12834,6 +12790,45 @@ export class HouseplanCard extends LitElement {
         : nothing}
     </div>`;
   }
+  /** Pointer-owned HTML painted by the live child renderer, outside the host Lit tree. */
+  public _renderLiveEditorMeasurements(value: unknown): TemplateResult | typeof nothing {
+    const view = value as { x: number; y: number; w: number; h: number };
+    const opMeasure = this._opMeasureView, decorMeasure = this._decorMeasure, bdLive = this._bdLive,
+      furnLive = this._editorRuntime?._furnLive() ?? null;
+    return html`
+      ${this._measureAnchor
+        ? html`<div class="measurelayer" data-hp-live-layer="camera">${this._renderMeasureLabel(view)}</div>`
+        : nothing}
+      ${this._resize?.liveLabels
+        ? html`<div class="measurelayer" data-hp-live-layer="camera">${this._resize.liveLabels.map((l) => html`<div
+            class="measurelabel ${l.kind === 'area' ? 'rszarea' : 'rszlength'}"
+            data-hp=${l.kind === 'area' ? 'resize-area-label' : 'resize-length-label'} data-room=${l.kind === 'area' ? l.roomId : nothing} data-side=${l.kind === 'area' ? l.placement.side : nothing}
+            style="left:${(((l.x - view.x) / view.w) * 100).toFixed(2)}%;top:${(((l.y - view.y) / view.h) * 100).toFixed(2)}%;${l.kind === 'area'
+              ? `--rsz-label-x:${l.placement.offsetXPx.toFixed(2)}px;--rsz-label-y:${l.placement.offsetYPx.toFixed(2)}px;--rsz-label-tangent:${l.placement.tangentOffsetPx.toFixed(2)}px`
+              : ''}">${l.text}</div>`)}</div>`
+        : nothing}
+      ${opMeasure
+        ? html`<div class="measurelayer" data-hp-live-layer="camera">${opMeasure.labels.map((l) => html`<div
+            class="measurelabel opshoulder ${l.dimension ? 'opdimension' : ''}"
+            data-dimension-source=${l.dimension?.source || nothing} data-dimension-room=${l.dimension?.roomId || nothing}
+            style="left:${(((l.x - view.x) / view.w) * 100).toFixed(2)}%;top:${(((l.y - view.y) / view.h) * 100).toFixed(2)}%;${l.dimension
+              ? `--op-label-shift-x:${(l.dimension.labelNormal[0] * 12).toFixed(2)}px;--op-label-shift-y:${(l.dimension.labelNormal[1] * 12).toFixed(2)}px`
+              : ''}">${l.text}</div>`)}</div>`
+        : nothing}
+      ${decorMeasure
+        ? html`<div class="measurelayer" data-hp-live-layer="camera"><div class="measurelabel dmeasure ${decorMeasure.on45 ? 'on45' : ''}"
+            style="left:${(((decorMeasure.x - view.x) / view.w) * 100).toFixed(2)}%;top:${(((decorMeasure.y - view.y) / view.h) * 100).toFixed(2)}%">${decorMeasure.text}</div></div>`
+        : nothing}
+      ${furnLive
+        ? html`<div class="measurelayer" data-hp-live-layer="camera">${furnLive.map((l) => html`<div class="measurelabel furnmeasure"
+            style="left:${(((l.x - view.x) / view.w) * 100).toFixed(2)}%;top:${(((l.y - view.y) / view.h) * 100).toFixed(2)}%">${l.text}</div>`)}</div>`
+        : nothing}
+      ${bdLive
+        ? html`<div class="measurelayer" data-hp-live-layer="camera"><div class="measurelabel bdmeasure"
+            style="left:${(((bdLive.x - view.x) / view.w) * 100).toFixed(2)}%;top:${(((bdLive.y - view.y) / view.h) * 100).toFixed(2)}%">${bdLive.text}</div></div>`
+        : nothing}
+    `;
+  }
 
   /** Where the live measurement starts: the last outline point, or the first split point. */
   private get _measureAnchor(): number[] | null {
@@ -13020,7 +13015,7 @@ export class HouseplanCard extends LitElement {
     const walls = this._spaceWalls;
     const openCuts = this._openCuts();
     const openingWallIndex = this._openingWallIndexFor(space, openCuts).value;
-    return svg`${items.map((o) => {
+    return svg`<g class="openinglayer">${items.map((o) => {
       if (o.orphanReason) return svg`<g class="opening orphan" data-hp="opening-orphan"
         data-id=${o.id} role="button" tabindex="0"
         aria-label=${this._t('opening.partition_orphan')}
@@ -13072,7 +13067,7 @@ export class HouseplanCard extends LitElement {
           @pointerup=${(e: PointerEvent) => this._opPointerUp(e, o)}
           @pointercancel=${(e: PointerEvent) => this._opPointerUp(e, o)}></rect>
       </g>`;
-    })}`;
+    })}</g>`;
   }
 
   /** Padlock badges for door-like openings with a lock entity. */
