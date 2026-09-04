@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 
 import {
   ANCHOR_MARKER, REVIEW_DOC_ALLOWLIST, anchorLiveness, REVIEW_HEADER_LINES, citedMaterialShas, danglingMaterialRefusal, materialAnchorBlock, materialAnchorsFrom, parseSpecList, pathsOutsideAllowlist, reviewDocPushRefusal, withMaterialAnchors,
+  attemptFromRounds, blockingFromDocs, isBlockingVerdict, reviewCounters, reviewRoundsFromFiles, verdictDeclaration,
 } from '../scripts/review-doc-guard.mjs';
 
 // #365. 28.08 шаг публикации ревью-дока запушил в dev коммит bb2919f с тридцатью
@@ -273,4 +274,171 @@ test('недостижимый якорь не смягчает отказ на 
 
   const softened = danglingMaterialRefusal(document, orphaned, REVIEW_HEADER_LINES, alive);
   assert.ok(softened && softened.warning, 'живой якорь по-прежнему смягчает отказ (#414)');
+});
+
+// #454. Счёт раундов по опубликованным артефактам вместо прозы вердикта.
+//
+// Дефект стоил артефакта: на #449 первый спек-вердикт не назвал имени файла,
+// заход r2 получил номер r1, и документ второго раунда лёг поверх документа
+// первого. Жёлтый вердикт первого раунда утрачен безвозвратно — этого не
+// восстановит ни один источник, и фикстуры ниже это честно фиксируют.
+
+const D = (name, verdict) => ({ name, text: `# ${name}\n\n## Вердикт\n\n${verdict}\n` });
+
+test('заход берётся от максимума номеров, а не от количества (#454 AC1)', () => {
+  assert.deepEqual(
+    reviewRoundsFromFiles(['SPEC-REVIEW-449-r1.md', 'SPEC-REVIEW-449-r2.md'], 'SPEC-REVIEW', '449').rounds,
+    [1, 2],
+  );
+  assert.equal(attemptFromRounds([1, 2]), 3);
+  // Дыра в нумерации оставлена прошлой коллизией: счёт по количеству выдал бы
+  // r3 — занятое имя, и следующий документ затёр бы существующий (AC3).
+  assert.equal(attemptFromRounds([1, 3]), 4);
+  assert.equal(attemptFromRounds([]), 1);
+});
+
+test('чужой этап и чужая задача в счёт не идут (#454 AC5, #89)', () => {
+  const names = [
+    'SPEC-REVIEW-449-r1.md', 'SPEC-REVIEW-449-r2.md',
+    'CODE-REVIEW-449-r1.md', 'CODE-REVIEW-449-r2.md',
+    'SPEC-REVIEW-44-r9.md', 'SPEC-REVIEW-4490-r7.md',
+  ];
+  assert.deepEqual(reviewRoundsFromFiles(names, 'SPEC-REVIEW', '449').rounds, [1, 2]);
+  assert.deepEqual(reviewRoundsFromFiles(names, 'CODE-REVIEW', '449').rounds, [1, 2]);
+});
+
+test('нечисловой суффикс не проглатывается молча (#454)', () => {
+  const { rounds, skipped } = reviewRoundsFromFiles(
+    ['SPEC-REVIEW-449-r1.md', 'SPEC-REVIEW-449-rX.md'], 'SPEC-REVIEW', '449',
+  );
+  assert.deepEqual(rounds, [1]);
+  assert.deepEqual(skipped, ['SPEC-REVIEW-449-rX.md']);
+});
+
+test('строка вердикта опознаётся, а упоминание — нет (#454 AC2)', () => {
+  assert.ok(isBlockingVerdict(verdictDeclaration('Вердикт: жёлтый · заход r1')));
+  assert.ok(isBlockingVerdict(verdictDeclaration('**Вердикт: красный** · заход r2')));
+  assert.ok(isBlockingVerdict(verdictDeclaration('- **Вердикт:** жёлтый')));
+  assert.equal(isBlockingVerdict(verdictDeclaration('Вердикт: зелёный · заход r3')), false);
+  // Цитата чужого вердикта внутри прозы — CODE-REVIEW-230-r2.md цитирует
+  // жёлтый вердикт ПРОШЛОГО раунда. Свободный поиск засчитал бы лишний цикл.
+  assert.equal(
+    verdictDeclaration('Комментарий с вердиктом r1 («Вердикт: жёлтый · заход r1») учтён.'),
+    null,
+  );
+  // Блок под заголовком раздела — объявление (CODE-REVIEW-292-r1.md).
+  assert.ok(isBlockingVerdict(verdictDeclaration(
+    '## Вердикт\n\n```\nВердикт: красный · заход r1\n```\n',
+  )));
+  // Тот же блок вне раздела — цитата, а не объявление.
+  assert.equal(verdictDeclaration('## Скоуп\n\n```\nВердикт: красный\n```\n'), null);
+});
+
+test('документ без строки вердикта виден как непрочитанный, а не как зелёный (#454)', () => {
+  const { blocking, unread } = blockingFromDocs([
+    { name: 'SPEC-REVIEW-449-r1.md', text: 'Без High это жёлтый вердикт: ТЗ возвращается автору.' },
+    D('SPEC-REVIEW-449-r2.md', 'Вердикт: зелёный · заход r3'),
+  ]);
+  assert.deepEqual(blocking, []);
+  assert.deepEqual(unread, ['SPEC-REVIEW-449-r1.md']);
+});
+
+test('#449 как есть: заход 3, циклов 1 (#454 AC2)', () => {
+  // Буквальный слепок сегодняшнего состояния: файла два (в r1 лежит тело
+  // ВТОРОГО раунда), комментариев три, но маркер несут только два — первый
+  // вердикт не назвал файла, и это тот самый дефект.
+  const rounds = reviewRoundsFromFiles(
+    ['SPEC-REVIEW-449-r1.md', 'SPEC-REVIEW-449-r2.md'], 'SPEC-REVIEW', '449',
+  ).rounds;
+  const docs = [
+    { name: 'SPEC-REVIEW-449-r1.md', text: '# SPEC-REVIEW — issue #449 · заход r2\n\n## Вердикт\n\nБез High это жёлтый вердикт (PROCESS.md §2.4).\n' },
+    { name: 'SPEC-REVIEW-449-r2.md', text: '# SPEC-REVIEW — issue #449 · заход r3\n\n## Вердикт\n\nHigh: 0 · Medium: 0 — зелёное.\n' },
+  ];
+  const counters = reviewCounters({ rounds, docs, comments: { attempt: 3, spent: 1 } });
+  assert.equal(counters.attempt, 3);
+  assert.equal(counters.spent, 1);
+  // Жёлтый вердикт ПЕРВОГО раунда невосстановим: его файл перезаписан, его
+  // комментарий маркера не содержит. Ни один источник его не воскрешает.
+  assert.equal(counters.spentFiles, 0);
+  assert.equal(counters.spentComments, 1);
+});
+
+test('#449, прожитая уже с исправлением: заход 4, циклов 2 (#454 AC2b)', () => {
+  const names = ['SPEC-REVIEW-449-r1.md', 'SPEC-REVIEW-449-r2.md', 'SPEC-REVIEW-449-r3.md'];
+  const { rounds } = reviewRoundsFromFiles(names, 'SPEC-REVIEW', '449');
+  const docs = [
+    D('SPEC-REVIEW-449-r1.md', 'Вердикт: жёлтый · заход r1'),
+    D('SPEC-REVIEW-449-r2.md', 'Вердикт: жёлтый · заход r2'),
+    D('SPEC-REVIEW-449-r3.md', 'Вердикт: зелёный · заход r3'),
+  ];
+  // Комментарии те же, что в реальности: первый вердикт маркера не несёт.
+  const counters = reviewCounters({ rounds, docs, comments: { attempt: 3, spent: 1 } });
+  assert.equal(counters.attempt, 4);
+  assert.equal(counters.spent, 2);
+});
+
+test('зелёный вердикт цикла не тратит (#454 AC4, #227)', () => {
+  const docs = [
+    D('SPEC-REVIEW-1-r1.md', 'Вердикт: жёлтый · заход r1'),
+    D('SPEC-REVIEW-1-r2.md', 'Вердикт: зелёный · заход r2'),
+    D('SPEC-REVIEW-1-r3.md', 'Вердикт: зелёный · заход r3'),
+  ];
+  const counters = reviewCounters({ rounds: [1, 2, 3], docs, comments: { attempt: 4, spent: 1 } });
+  assert.equal(counters.attempt, 4);
+  assert.equal(counters.spent, 1);
+});
+
+test('отказ публикации не занижает счёт: работает максимум (#454 AC6)', () => {
+  // Вердикт опубликован комментарием, документ не лёг. Файлов меньше, чем
+  // раундов, — и именно поэтому берётся максимум, а не счёт по файлам.
+  const counters = reviewCounters({
+    rounds: [1],
+    docs: [D('SPEC-REVIEW-1-r1.md', 'Вердикт: жёлтый · заход r1')],
+    comments: { attempt: 3, spent: 2 },
+  });
+  assert.equal(counters.attempt, 3);
+  assert.equal(counters.spent, 2);
+});
+
+test('ветки нет: счёт по файлам ноль, поведение прежнее (#454 AC7)', () => {
+  const counters = reviewCounters({ rounds: [], docs: [], comments: { attempt: 2, spent: 1 } });
+  assert.equal(counters.attempt, 2);
+  assert.equal(counters.spent, 1);
+  // И наоборот: недоступны комментарии — счёт живёт на файлах.
+  const onlyFiles = reviewCounters({
+    rounds: [1, 2],
+    docs: [
+      D('SPEC-REVIEW-1-r1.md', 'Вердикт: жёлтый · заход r1'),
+      D('SPEC-REVIEW-1-r2.md', 'Вердикт: красный · заход r2'),
+    ],
+    comments: {},
+  });
+  assert.equal(onlyFiles.attempt, 3);
+  assert.equal(onlyFiles.spent, 2);
+});
+
+test('мусор на входе не роняет счёт (#454 AC7)', () => {
+  assert.deepEqual(reviewRoundsFromFiles(null, 'SPEC-REVIEW', '449').rounds, []);
+  assert.deepEqual(reviewRoundsFromFiles(['x'], '', '449').rounds, []);
+  assert.deepEqual(reviewRoundsFromFiles(['x'], 'SPEC-REVIEW', '').rounds, []);
+  assert.deepEqual(reviewRoundsFromFiles(['SPEC-REVIEW-449-r1.md'], 'SPEC-REVIEW', '4.9').rounds, []);
+  const counters = reviewCounters();
+  assert.equal(counters.attempt, 1);
+  assert.equal(counters.spent, 0);
+});
+
+test('момент коллизии на #449: файлы дали бы свободное имя, проза — занятое (#454)', () => {
+  // Состояние 14:56, когда заход r2 только начинался. Комментарий первого
+  // вердикта маркера не нёс, поэтому прежний счёт видел ноль вердиктов этапа и
+  // выдавал заход r1 — имя, которое уже занято. Документ первого раунда был
+  // перезаписан ровно здесь.
+  const beforeFix = { attempt: 1, spent: 0 };
+  const counters = reviewCounters({
+    rounds: reviewRoundsFromFiles(['SPEC-REVIEW-449-r1.md'], 'SPEC-REVIEW', '449').rounds,
+    docs: [D('SPEC-REVIEW-449-r1.md', 'Вердикт: жёлтый · заход r1')],
+    comments: beforeFix,
+  });
+  assert.equal(counters.attemptComments, 1, 'проза видела ноль вердиктов — это и был дефект');
+  assert.equal(counters.attempt, 2, 'файл раунда r1 существует, значит следующий заход r2');
+  assert.equal(counters.spent, 1, 'жёлтый вердикт цикла израсходован, хотя проза его не назвала');
 });

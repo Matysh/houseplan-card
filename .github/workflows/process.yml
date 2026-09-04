@@ -43,9 +43,19 @@ jobs:
       spent: ${{ steps.decide.outputs.spent }}
       limit: ${{ steps.decide.outputs.limit }}
     steps:
+      # Мелкий checkout: guard остаётся лёгким, но ему нужен
+      # scripts/review-doc-guard.mjs — счёт раундов вынесен туда, потому что
+      # inline-shell не покрывается тестами (#454). Node на раннере
+      # предустановлен, setup-node не нужен.
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+          ref: dev
+          persist-credentials: false
       - id: decide
         env:
           GH_TOKEN: ${{ secrets.HP_PROCESS_TOKEN }}
+          REPO: ${{ github.repository }}
           LABEL: ${{ github.event.label.name }}
           BLOCKED: ${{ contains(github.event.issue.labels.*.name, 'blocked') }}
           EXHAUSTED: ${{ contains(github.event.issue.labels.*.name, 'review-4') }}
@@ -90,9 +100,23 @@ jobs:
           # имени документа в теле комментария; документа нет — вердикт не
           # посчитается. Недосчёт даёт лишний заход, перерасчёт остановил бы
           # работу досрочно: из двух ошибок выбрана обратимая.
+          #
+          # Счёт по комментариям остаётся ровно тем же, но он БОЛЬШЕ НЕ
+          # ЕДИНСТВЕННЫЙ (#454). Маркер этапа попадает в тело комментария,
+          # только если ревьюер сам назвал имя файла, — то есть прежний счёт
+          # зависел от формулировки. На #449 первый спек-вердикт файла не
+          # назвал, заход r2 получил номер r1, и документ второго раунда лёг
+          # ПОВЕРХ документа первого. Оценка «недосчёт обратим» была неверна
+          # ровно здесь: номер захода входит в имя файла, и повтор номера — не
+          # лишний заход, а потеря артефакта.
+          #
+          # Поэтому рядом встаёт второй источник — опубликованные документы:
+          # их имена несёт сам конвейер, и подделать их прозой нельзя. Берётся
+          # МАКСИМУМ двух источников: недосчёт возможен только при отказе
+          # обоих, перерасчёт невозможен по построению.
           attempt=1; spent=0; spent_list=""
           if [ -n "$stage" ]; then
-            comments=$(gh issue view "$NUM" --repo "${{ github.repository }}" --json comments)
+            comments=$(gh issue view "$NUM" --repo "$REPO" --json comments)
             of_stage="[.comments[] | select(.body | test(\"Вердикт:\")) | select(.body | test(\"$marker\"))]"
             # Блокирующим считается вердикт, у которого в строке вердикта стоит
             # «жёлтый» или «красный». Регистр и окружение слова не важны.
@@ -100,6 +124,41 @@ jobs:
             attempt=$(( $(printf '%s' "$comments" | jq -r "$of_stage | length") + 1 ))
             spent=$(printf '%s' "$comments" | jq -r "$blocking | length")
             spent_list=$(printf '%s' "$comments" | jq -r "$blocking | map(\"- \" + .url) | join(\"\\n\")")
+
+            # Ветка задачи — та же, что выберет шаг ревью: свежая по коммиту.
+            # Её нет у задач, размеченных до появления конвейера; тогда счёт по
+            # файлам даёт ноль и работает страховка по комментариям.
+            branch=""; newest=""
+            for ref in $(gh api "repos/$REPO/git/matching-refs/heads/issue/$NUM-" \
+              --jq '.[].ref' 2>/dev/null | sed 's|^refs/heads/||'); do
+              date=$(gh api "repos/$REPO/commits/$ref" --jq '.commit.committer.date' 2>/dev/null || true)
+              if [ -n "$date" ] && { [ -z "$newest" ] || [ "$date" \> "$newest" ]; }; then
+                newest="$date"; branch="$ref"
+              fi
+            done
+            target="${branch:-dev}"
+            names=$(mktemp); docs=$(mktemp -d)
+            if ! gh api "repos/$REPO/contents/docs/reviews?ref=$target" --jq '.[].name' \
+              > "$names" 2>/dev/null; then
+              : > "$names"
+              echo "::warning::список docs/reviews на $target не получен — счёт по файлам отключён"
+            fi
+            # Каталог перечисляется одним ответом до 1000 записей; за этой
+            # границей ответ молча обрежется, и счёт по файлам занизится.
+            if [ "$(grep -c . "$names")" -ge 1000 ]; then
+              echo "::warning::в docs/reviews не меньше 1000 файлов — листинг contents обрезается, счёт по файлам ненадёжен"
+            fi
+            # Тела нужны только своим документам этапа: их единицы.
+            for name in $(grep -E "^${marker}-${NUM}-r[0-9]+\\.md$" "$names" || true); do
+              gh api "repos/$REPO/contents/docs/reviews/$name?ref=$target" \
+                -H 'Accept: application/vnd.github.raw' > "$docs/$name" 2>/dev/null || rm -f "$docs/$name"
+            done
+            counters=$(node scripts/review-doc-guard.mjs --counters \
+              --marker="$marker" --num="$NUM" --names="$names" --docs="$docs" \
+              --comment-attempt="$attempt" --comment-spent="$spent")
+            attempt=$(printf '%s\n' "$counters" | sed -n 's/^attempt=//p')
+            spent=$(printf '%s\n' "$counters" | sed -n 's/^spent=//p')
+            echo "ветка материала: ${branch:-нет, читался dev}"
           fi
 
           # Отказ обязан быть виден в issue, а не только в логе прогона.

@@ -2440,6 +2440,41 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'review-round-counts-files-not-max',
+    guard: 'node --test --test-name-pattern="от максимума номеров" test/review-doc-guard.test.mjs',
+    because: 'counting how many round documents exist instead of taking the highest number '
+      + 'hands out an occupied file name whenever the numbering has a hole — and a hole is '
+      + 'exactly what the collision this fixes leaves behind (#454)',
+    patches: [{
+      file: 'scripts/review-doc-guard.mjs',
+      find: '  return known.length ? Math.max(...known) + 1 : 1;',
+      replace: '  return known.length + 1;',
+    }],
+  },
+  {
+    id: 'review-round-drops-file-source',
+    guard: 'node --test --test-name-pattern="прожитая уже с исправлением|момент коллизии" '
+      + 'test/review-doc-guard.test.mjs',
+    because: 'without the published documents the counter is back to reading prose, and a '
+      + 'verdict that never named its file silently reuses the round number (#454, #449)',
+    patches: [{
+      file: 'scripts/review-doc-guard.mjs',
+      find: '  const attemptFiles = attemptFromRounds(rounds);',
+      replace: '  const attemptFiles = 1;',
+    }],
+  },
+  {
+    id: 'review-round-drops-comment-insurance',
+    guard: 'node --test --test-name-pattern="отказ публикации" test/review-doc-guard.test.mjs',
+    because: 'the publish step can fail after the verdict is already posted; trusting only '
+      + 'the documents then loses a spent cycle and hands out a used round number (#454)',
+    patches: [{
+      file: 'scripts/review-doc-guard.mjs',
+      find: '    attempt: Math.max(attemptFiles, attemptComments),',
+      replace: '    attempt: attemptFiles,',
+    }],
+  },
+  {
     id: 'review-doc-guard-matches-by-substring',
     guard: 'node --test --test-name-pattern="соседний каталог" test/review-doc-guard.test.mjs',
     because: 'сравнение подстрокой пускает docs/reviews-old и docs/reviewsx: allowlist, который '

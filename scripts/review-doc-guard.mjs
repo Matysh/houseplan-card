@@ -306,10 +306,224 @@ export function withMaterialAnchors(text, anchors) {
   return `${head}\n\n---\n\n${materialAnchorBlock(anchors)}`;
 }
 
+/**
+ * Счёт раундов ревью по ОПУБЛИКОВАННЫМ АРТЕФАКТАМ, а не по прозе вердикта (#454).
+ *
+ * Что было. `guard` определял номер захода и расход бюджета §4, считая
+ * комментарии issue, которые содержат и слово «Вердикт:», и буквальную
+ * подстроку маркера этапа (`SPEC-REVIEW`/`CODE-REVIEW`). Маркер попадал в тело
+ * только если ревьюер сам называл имя файла — то есть счёт зависел от
+ * формулировки. На #449 первый спек-вердикт имени файла не назвал, заход r2
+ * получил номер r1, и шаг публикации записал документ второго раунда поверх
+ * документа первого: `SPEC-REVIEW-449-r1.md` имеет две ревизии, и жёлтый
+ * вердикт первого раунда утрачен безвозвратно.
+ *
+ * Почему недосчёт оказался дороже, чем считалось. Комментарий в `process.yml`
+ * называл его обратимой ошибкой: «недосчёт даёт лишний заход». Это верно для
+ * бюджета §4 и неверно для имени документа — номер захода входит в путь
+ * `docs/reviews/<MARKER>-<NUM>-r<N>.md`, поэтому повтор номера не «лишний
+ * заход», а потеря артефакта.
+ *
+ * Источник истины поэтому меняется: раунд существовал, если существует его
+ * документ. Имя файла несёт и этап, и номер, и никем не сочиняется — его
+ * собирает сам конвейер.
+ */
+
+/** Маркер этапа в имени документа. */
+export const REVIEW_STAGE_MARKERS = { spec: 'SPEC-REVIEW', code: 'CODE-REVIEW' };
+
+/**
+ * Номера раундов, для которых на ветке лежит документ.
+ *
+ * Возвращает и `skipped` — имена, похожие на документ этапа, но с нечисловым
+ * суффиксом. Молча их игнорировать нельзя: такое имя означает либо опечатку
+ * ревьюера, либо изменение формата, и в обоих случаях счёт занижается.
+ */
+export function reviewRoundsFromFiles(names, marker, num) {
+  if (!/^[A-Z-]+$/.test(String(marker || '')) || !/^[0-9]+$/.test(String(num || ''))) {
+    return { rounds: [], skipped: [] };
+  }
+  const exact = new RegExp('^(?:.*/)?' + marker + '-' + num + '-r([0-9]+)\\.md$');
+  const loose = new RegExp('^(?:.*/)?' + marker + '-' + num + '-r(.+)\\.md$');
+  const rounds = [];
+  const skipped = [];
+  for (const raw of names || []) {
+    const name = String(raw).trim();
+    if (!name) continue;
+    const hit = exact.exec(name);
+    if (hit) { rounds.push(Number(hit[1])); continue; }
+    if (loose.test(name)) skipped.push(name);
+  }
+  return { rounds: [...new Set(rounds)].sort((a, b) => a - b), skipped };
+}
+
+/**
+ * Номер следующего захода: `max(r) + 1`, а НЕ `count + 1`.
+ *
+ * Разница видна ровно там, где дефект уже сработал. У #449 после коллизии
+ * файлов два, `r1` и `r2`, и оба счёта дали бы `r3`. Но при дыре в нумерации
+ * (`r1`, `r3` — а дыру оставляет как раз коллизия) счёт по количеству выдал бы
+ * `r3`, то есть ЗАНЯТОЕ имя, и следующий документ затёр бы существующий.
+ * Максимум занятого номера — единственная величина, которая гарантирует
+ * свободное имя.
+ */
+export function attemptFromRounds(rounds) {
+  const known = (rounds || []).filter((value) => Number.isFinite(value));
+  return known.length ? Math.max(...known) + 1 : 1;
+}
+
+/** Строка, ОБЪЯВЛЯЮЩАЯ вердикт (а не упоминающая слово). */
+const VERDICT_DECLARATION = /^[>\s]*(?:[-*+]\s*)?\*{0,2}Вердикт[:*\s]/;
+/** Заголовок раздела вердикта: «## Вердикт», «## 6. Вердикт». */
+// `\b` здесь не работает: он ASCII-словесный, а «т» кириллическая, и граница
+// после неё не находится. Хвост ограничивается явно.
+const VERDICT_SECTION = /^#{1,6}[\s\d.)]*Вердикт(?![\wА-Яа-яЁё])/;
+const BLOCKING_COLOUR = /(жёлт|желт|красн)/i;
+const VERDICT_COLOUR = /(жёлт|желт|красн|зелён|зелен)/i;
+
+/**
+ * Строка вердикта документа, либо `null`.
+ *
+ * Правило нарочно СТРОГОЕ и односторонне осторожное: пропустить вердикт не
+ * страшно — страховка максимумом доберёт его по комментариям, — а лишний
+ * блокирующий цикл ошибка необратимая: он останавливает работу по §4.
+ * Поэтому:
+ *
+ * - строка обязана НАЧИНАТЬ объявление, а не содержать слово. Замерено по
+ *   корпусу 629 опубликованных документов: свободное упоминание встречается и
+ *   выглядит опасно — `CODE-REVIEW-230-r2.md` цитирует жёлтый вердикт ПРОШЛОГО
+ *   раунда («Комментарий с вердиктом r1 … «Вердикт: жёлтый …»»), а
+ *   `SPEC-REVIEW-449-r2.md` разбирает подстроку `Вердикт:` как предмет задачи.
+ *   Свободный поиск засчитал бы обоим лишний блокирующий цикл;
+ * - текст внутри тройных кавычек игнорируется — кроме блока, стоящего прямо
+ *   под заголовком раздела «Вердикт»: там конвейер печатает точную копию
+ *   комментария (`CODE-REVIEW-292-r1.md`), и это объявление, а не цитата.
+ */
+export function verdictDeclaration(text) {
+  const lines = String(text ?? '').split('\n');
+  let fenced = false;
+  let inSection = false;
+  let fencedHit = null;
+  for (const line of lines) {
+    if (/^\s*```/.test(line)) { fenced = !fenced; continue; }
+    if (!fenced && VERDICT_SECTION.test(line)) { inSection = true; continue; }
+    if (!fenced && /^#{1,6}\s/.test(line)) inSection = false;
+    if (!VERDICT_DECLARATION.test(line) || !VERDICT_COLOUR.test(line)) continue;
+    if (!fenced) return line;
+    if (inSection && !fencedHit) fencedHit = line;
+  }
+  return fencedHit;
+}
+
+/** Цикл израсходован, если вердикт вернул работу автору (#227). */
+export function isBlockingVerdict(line) {
+  return Boolean(line) && BLOCKING_COLOUR.test(line);
+}
+
+/**
+ * Блокирующие раунды по документам: `{ blocking, unread }`.
+ *
+ * `unread` — документы, в которых объявления вердикта нет. Их около половины
+ * корпуса: формат отчёта исторически свободный. Это не дефект счёта, а его
+ * граница, и она обязана быть видимой в логе прогона — по такому документу
+ * цикл добирается только страховкой.
+ */
+export function blockingFromDocs(docs) {
+  const blocking = [];
+  const unread = [];
+  for (const doc of docs || []) {
+    const line = verdictDeclaration(doc && doc.text);
+    if (!line) { unread.push((doc && doc.name) || '(без имени)'); continue; }
+    if (isBlockingVerdict(line)) blocking.push((doc && doc.name) || '(без имени)');
+  }
+  return { blocking, unread };
+}
+
+/**
+ * Итоговые счётчики: максимум двух независимых источников.
+ *
+ * Максимум, а не сумма и не выбор одного. Шаг публикации может упасть уже
+ * после того, как вердикт опубликован комментарием, — тогда документа нет, а
+ * цикл израсходован. И наоборот, комментарий может не назвать файл — тогда
+ * есть документ, а прозы нет. Недосчёт возможен только при отказе ОБОИХ
+ * источников; перерасчёт невозможен по построению.
+ */
+export function reviewCounters({ rounds = [], docs = [], comments = {} } = {}) {
+  const attemptFiles = attemptFromRounds(rounds);
+  const { blocking, unread } = blockingFromDocs(docs);
+  const spentFiles = blocking.length;
+  const attemptComments = Number.isFinite(Number(comments.attempt)) ? Number(comments.attempt) : 1;
+  const spentComments = Number.isFinite(Number(comments.spent)) ? Number(comments.spent) : 0;
+  return {
+    attempt: Math.max(attemptFiles, attemptComments),
+    spent: Math.max(spentFiles, spentComments),
+    attemptFiles,
+    spentFiles,
+    attemptComments,
+    spentComments,
+    blocking,
+    unread,
+  };
+}
+
 const invokedDirectly = process.argv[1]
   && import.meta.url === new URL(`file://${process.argv[1]}`).href;
 if (invokedDirectly) {
   const argv = process.argv.slice(2);
+  // Режим счёта раундов (#454): на входе список имён и тела документов,
+  // на выходе `attempt`/`spent` в формате GITHUB_OUTPUT.
+  //
+  // Сбор данных остаётся в workflow (там есть `gh` и токен), решение — здесь:
+  // счёт обязан быть покрыт тестами, а inline-shell тестами не покрывается.
+  if (argv.includes('--counters')) {
+    const value = (name, fallback = '') => {
+      const found = argv.find((item) => item.startsWith(`--${name}=`));
+      return found ? found.slice(name.length + 3) : fallback;
+    };
+    const marker = value('marker');
+    const num = value('num');
+    const namesFile = value('names');
+    const docsDir = value('docs');
+    let names = [];
+    try {
+      names = readFileSync(namesFile, 'utf8').split('\n');
+    } catch (error) {
+      console.error(`::warning::список документов не прочитан (${error.code || error.message})`
+        + ' — счёт по файлам отключён, работает страховка по комментариям');
+    }
+    const { rounds, skipped } = reviewRoundsFromFiles(names, marker, num);
+    for (const name of skipped) {
+      console.error(`::warning::документ ${name} не даёт номера раунда:`
+        + ' суффикс -r<N> нечисловой, раунд в счёт не попал');
+    }
+    const docs = [];
+    for (const round of rounds) {
+      const name = `${marker}-${num}-r${round}.md`;
+      try {
+        docs.push({ name, text: readFileSync(`${docsDir}/${name}`, 'utf8') });
+      } catch (error) {
+        console.error(`::warning::документ ${name} не прочитан`
+          + ` (${error.code || error.message}) — цикл по нему не засчитан`);
+      }
+    }
+    const counters = reviewCounters({
+      rounds,
+      docs,
+      comments: { attempt: Number(value('comment-attempt', '1')), spent: Number(value('comment-spent', '0')) },
+    });
+    if (counters.unread.length) {
+      console.error(`::warning::вердикт не объявлен машиночитаемой строкой в:`
+        + ` ${counters.unread.join(', ')} — цикл по этим документам считается`
+        + ' только по комментариям');
+    }
+    console.error(`::notice::раунды по файлам ${rounds.length ? rounds.join(',') : '—'};`
+      + ` заход: файлы ${counters.attemptFiles}, комментарии ${counters.attemptComments};`
+      + ` циклы: файлы ${counters.spentFiles}, комментарии ${counters.spentComments}`);
+    console.log(`attempt=${counters.attempt}`);
+    console.log(`spent=${counters.spent}`);
+    process.exit(0);
+  }
+
   // Режим дописывания якорей (#414): конвейер снял их при чтении материала.
   const anchorArg = argv.find((item) => item.startsWith('--anchor='));
   if (anchorArg) {
