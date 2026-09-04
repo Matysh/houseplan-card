@@ -39,6 +39,10 @@ only when the target source contains the live viewport implementation. Its
 dedicated budget preserves every existing large-house ceiling and adds the
 individual interaction timing gates.
 
+Structural assertions are evaluated independently of timing budgets: a fast
+run still fails when an interaction performs an unexpected full render or
+changes the heavy scene DOM.
+
 The runner records seven measured samples after one discarded warm-up. With
 this intentionally small CI sample, the nearest-rank `p95` is the observed
 maximum; reports keep the conventional field name but should be read as a
