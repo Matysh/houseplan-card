@@ -4,6 +4,11 @@
 
 ## v1.72.0-beta.1 — 2026-09-04
 
+- Hidden experiments now use one indefinite browser-local switch:
+  `hp_alpha=1` enables the complete alpha set and restores the existing 3-D
+  View, while `hp_alpha=0` disables it. Previous `hp-labs=iso` state is not
+  migrated, so testers must enable alpha again
+  ([#448](https://github.com/Matysh/houseplan-card/issues/448)).
 - Administrators can optionally load a ZHA or Zigbee2MQTT topology snapshot and
   see only the observed direct neighbours of the device currently under a real
   mouse pointer. The diagnostic layer is off by default, never scans on hover,

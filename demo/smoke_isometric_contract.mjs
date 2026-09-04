@@ -11,18 +11,15 @@ const out = await page.evaluate(async () => {
     return [rect.left + rect.width / 2, rect.top + rect.height / 2];
   };
   const enable = async () => {
-    history.replaceState(null, '', '#space=f1&hp-labs=iso');
+    history.replaceState(null, '', '#space=f1&hp_alpha=1');
     dispatchEvent(new HashChangeEvent('hashchange'));
-    if (typeof card._onLabsSnapshot !== 'function') throw new Error('missing Labs fixture hook');
-    const active = Object.freeze(['iso']);
-    // The product flag expires at 1.65.0. Keep this renderer/lifecycle smoke
-    // explicit without extending the public Labs registry contract.
-    card._onLabsSnapshot({ active, space: '' });
-    window.__hpLabs = active;
     await card.updateComplete;
     await frame();
   };
   const result = {};
+  result.cleanProfileStartsOff = window.__hpAlpha === false
+    && JSON.stringify(window.__hpLabs) === '[]'
+    && !root().querySelector('[data-hp="projection-toggle"]');
   const configSpace = card._serverCfg.spaces.find((space) => space.id === 'f1');
   configSpace.settings = {
     ...(configSpace.settings || {}), show_borders: true, show_names: true,
@@ -66,8 +63,9 @@ const out = await page.evaluate(async () => {
   result.isoGateFlipReversesTurn = centredGate?.leaves[0]?.turnDeg
     === -flippedGate?.leaves[0]?.turnDeg;
   const toggle = root().querySelector('[data-hp="projection-toggle"]');
-  result.labsSnapshotFrozen = Object.isFrozen(window.__hpLabs)
+  result.alphaSnapshotFrozen = window.__hpAlpha === true && Object.isFrozen(window.__hpLabs)
     && JSON.stringify(window.__hpLabs) === '["iso"]';
+  result.alphaStored = localStorage.getItem('houseplan_card_alpha_v1') === '1';
   result.toggleShown = !!toggle;
   result.toggleMinHitTarget = toggle && toggle.getBoundingClientRect().width >= 44
     && toggle.getBoundingClientRect().height >= 44;
@@ -144,14 +142,20 @@ const out = await page.evaluate(async () => {
   card.requestUpdate();
   await card.updateComplete;
 
-  history.replaceState(null, '', '#space=f1&hp-labs=-iso');
+  history.replaceState(null, '', '#space=f1&hp_alpha=0');
   dispatchEvent(new HashChangeEvent('hashchange'));
   await card.updateComplete;
   await frame();
-  result.removalIsImmediateFlat = JSON.stringify(window.__hpLabs) === '[]'
+  result.removalIsImmediateFlat = window.__hpAlpha === false
+    && localStorage.getItem('houseplan_card_alpha_v1') === '0'
+    && JSON.stringify(window.__hpLabs) === '[]'
     && !root().querySelector('[data-hp="projection-toggle"]')
     && !root().querySelector('[data-hp="iso-walls"]')
     && !root().querySelector('[id^="hp-iso-"]');
+  await enable();
+  result.reenableRestoresPreference = window.__hpAlpha === true
+    && root().querySelector('[data-hp="projection-toggle"]')?.getAttribute('aria-pressed') === 'true'
+    && !!root().querySelector('[data-hp="iso-walls"]');
   return result;
 });
 

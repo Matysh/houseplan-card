@@ -4,6 +4,8 @@
 - Status: accepted for Stage 1 implementation
 - Date: 2026-08-13
 - Normative spec: `docs/specs/089-isometric-view-stage1.md`, revision 3
+- Activation superseded by #448: the renderer remains authoritative, but its
+  historical per-feature URL/storage lifetime is replaced by `hp_alpha`.
 
 ## Context
 
@@ -103,4 +105,3 @@ golden matrix; a browser-specific failure uses the same latched flat fallback.
   are unchanged.
 - Stage 2 may replace material tokens or add vertical opening elements, but it
   must not replace this shared projection contract without a new decision.
-

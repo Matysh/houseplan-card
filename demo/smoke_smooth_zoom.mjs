@@ -141,7 +141,11 @@ const out = await page.evaluate(async () => {
   card._reducedMotion = false;
 
   // Projection owns an atomic structural conversion and cancels the camera.
-  card._labs = { ...card._labs, active: [...new Set([...card._labs.active, 'iso'])] };
+  card._labs = {
+    ...card._labs,
+    alpha: true,
+    active: [...new Set([...card._labs.active, 'iso'])],
+  };
   card._viewPreference = { ...card._viewPreference, [card._space]: 'flat' };
   directBaseline(1);
   card._stepZoom(1);

@@ -110,10 +110,8 @@ const res = await page.evaluate(async () => {
   out.kioskParity = sr().querySelector('.wallbody')?.getAttribute('d') === planD;
   c._config.kiosk = kioskBefore;
 
-  history.replaceState(null, '', `?hp-labs=iso#space=${encodeURIComponent(c._space)}`);
+  history.replaceState(null, '', `?hp_alpha=1#space=${encodeURIComponent(c._space)}`);
   dispatchEvent(new HashChangeEvent('hashchange'));
-  if (typeof c._onLabsSnapshot !== 'function') throw new Error('missing Labs fixture hook');
-  c._onLabsSnapshot({ active: Object.freeze(['iso']), space: '' });
   await c.updateComplete;
   c._setProjection('iso');
   await update();

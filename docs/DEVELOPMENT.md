@@ -119,18 +119,20 @@ git config core.untrackedCache true
 
 Labs is an internal, presentation-only runtime in `src/labs.ts`; it must never
 gate config/schema migrations, persistence writes, HA services or network
-requests. Enable the current experiment with `?hp-labs=iso` (or
-`#hp-labs=iso&space=<id>`), remove it with `-iso`, and clear all flags with
-`hp-labs=off`. Known URL operations persist to
-`houseplan_card_labs_v1` without rewriting the URL. Active flags are exposed for
-diagnostics as the frozen sorted `window.__hpLabs` array.
+requests. `?hp_alpha=1` or `#hp_alpha=1&space=<id>` enables every experimental
+capability in the current build and persists `1` in
+`houseplan_card_alpha_v1`; `hp_alpha=0` disables them and persists `0`. Query is
+applied before hash and the last exact `1`/`0` wins. The URL is not rewritten,
+unknown values fail closed for the current resolution, and the legacy
+`hp-labs`/`houseplan_card_labs_v1` inputs are not read or migrated. Diagnostics
+expose the boolean `window.__hpAlpha` together with the frozen sorted
+`window.__hpLabs` capability array.
 
-To add a flag, add one unique lowercase id plus issue, `since`, `expires` and a
-non-empty summary to `LABS_FLAGS`, then cover URL/storage ordering, runtime
-subscription and expiry. Versions compare the numeric `major.minor.patch` core:
-at `expires` (including its first beta) the flag is dead and every activation
-path fails closed. Remove or graduate a flag before its expiry cycle; do not
-extend an expiry silently. See `docs/ISOMETRIC.md` for the current Stage 1 use.
+To add a capability, add one unique lowercase id plus issue and a non-empty
+summary to `LABS_FLAGS`, then cover registry validation and the alpha-on active
+set. Capabilities have no individual public key or version lifetime: the one
+persisted alpha switch is deliberately indefinite until the owner changes the
+contract. See `docs/ISOMETRIC.md` for the current use.
 
 These commands are read-only diagnostics, not release gates:
 

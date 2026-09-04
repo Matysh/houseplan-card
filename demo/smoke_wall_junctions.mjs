@@ -118,10 +118,8 @@ const out = await page.evaluate(async () => {
   await update();
   result.planViewParity = !!planD && root().querySelector('.wallbody')?.getAttribute('d') === planD;
 
-  history.replaceState(null, '', '?hp-labs=iso#space=junctions');
+  history.replaceState(null, '', '?hp_alpha=1#space=junctions');
   dispatchEvent(new HashChangeEvent('hashchange'));
-  if (typeof card._onLabsSnapshot !== 'function') throw new Error('missing Labs fixture hook');
-  card._onLabsSnapshot({ active: Object.freeze(['iso']), space: '' });
   await card.updateComplete;
   card._setProjection('iso');
   await update();

@@ -5,23 +5,26 @@ hidden, presentation-only volumetric View experiment. The normative contract is
 `docs/specs/089-isometric-view-stage1.md`; the fixed rendering decisions are in
 `docs/adr/089-isometric-stage1-renderer.md`.
 
-## Activation and lifetime
+## Activation
 
-The feature exists only while the `iso` entry in `src/labs.ts` is live. For the
-v1.62 cycle it can be enabled with either `?hp-labs=iso` or
-`#hp-labs=iso&space=<id>`. Query operations are applied first and hash operations
-second. `-iso` removes this flag and `off` clears every Labs flag. A known URL
-operation is persisted in `houseplan_card_labs_v1`; the URL itself is not
-rewritten.
+The feature belongs to the single hidden alpha set in `src/labs.ts`. Enable all
+experiments in the current build with either `?hp_alpha=1` or
+`#hp_alpha=1&space=<id>`; disable them with `hp_alpha=0`. Query operations are
+applied first, hash operations second, and the last exact `1`/`0` wins. A known
+operation is persisted as that exact string in `houseplan_card_alpha_v1`; the
+URL itself is not rewritten. Unknown values fail closed for the current
+resolution and do not overwrite storage.
 
 The selected presentation is stored per space in `houseplan_card_view_v1`. Flat
 is always the initial default. Kiosk has no toggle but reads the saved preference.
 Editors and `houseplan-space-card` are always flat.
 
-The current registry entry is live from numeric core `1.62.0` and expires at
-`1.65.0`. Thus `1.65.0-beta.1` is already expired. Malformed versions, malformed
-entries and duplicate ids fail closed. Labs never gate schemas, migrations,
-stores, service calls or network requests.
+The switch has no version expiry and enables the complete capability set known
+to the installed build. The legacy `hp-labs` URL and
+`houseplan_card_labs_v1` storage are not read or migrated, so former testers
+must enable `hp_alpha` once. Malformed registry entries and duplicate ids fail
+closed. Alpha never gates schemas, migrations, plan stores, service calls or
+network requests.
 
 ## Coordinate systems
 
@@ -107,8 +110,9 @@ the exact Linux CI SHA.
 Stage 2 evolves the same hidden `iso` experiment; it does not add a flag,
 setting or public activation path. The accepted implementation contract is
 `docs/specs/122-isometric-stage2.md` and the fixed composition decisions are in
-`docs/adr/122-isometric-stage2-composition.md`. The Labs `since: 1.62.0` and
-exclusive `expires: 1.65.0` boundary are unchanged.
+`docs/adr/122-isometric-stage2-composition.md`. Its historical per-feature
+lifetime was superseded by the single indefinite `hp_alpha` gate in #448; the
+Stage 2 rendering contract itself is unchanged.
 
 ### One structural scene, live opening leaves
 

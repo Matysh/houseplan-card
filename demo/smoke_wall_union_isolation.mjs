@@ -73,7 +73,8 @@ const result = await page.evaluate(async (fixtureConfig) => {
   staticCard.remove();
 
   const labs = Object.freeze(['iso']);
-  card._onLabsSnapshot({ active: labs, space: '' });
+  card._onLabsSnapshot({ alpha: true, active: labs, space: '' });
+  window.__hpAlpha = true;
   window.__hpLabs = labs;
   card._setProjection('iso');
   card.requestUpdate();

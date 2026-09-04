@@ -5,6 +5,8 @@
 - Date: 2026-08-14
 - Normative spec: `docs/specs/122-isometric-stage2.md`, revision 1
 - Predecessor: `docs/adr/089-isometric-stage1-renderer.md`
+- Activation superseded by #448: Stage 2 remains hidden, now behind the single
+  indefinite `hp_alpha` switch instead of the historical `iso` lifetime.
 
 ## Context
 

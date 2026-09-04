@@ -760,10 +760,9 @@ export async function prepareGoldenScenario(page, scenario) {
     window.__goldenEditor?.remove?.();
     window.__card?.remove?.();
     localStorage.clear();
-    history.replaceState(null, '', scenario.labs?.length
-      ? `?hp-labs=${encodeURIComponent(scenario.labs.join(','))}` : location.pathname);
-    if (scenario.labs?.length) {
-      localStorage.setItem('houseplan_card_labs_v1', JSON.stringify(scenario.labs));
+    history.replaceState(null, '', scenario.alpha ? '?hp_alpha=1' : location.pathname);
+    if (scenario.alpha) {
+      localStorage.setItem('houseplan_card_alpha_v1', '1');
     }
     if (scenario.projection && scenario.space) {
       localStorage.setItem('houseplan_card_view_v1', JSON.stringify({
@@ -818,21 +817,16 @@ export async function prepareGoldenScenario(page, scenario) {
       const card = document.createElement('houseplan-card');
       card.setConfig(cardConfig);
       host.replaceChildren(card);
-      if (scenario.testOnlyLabsSnapshot) {
-        if (!scenario.labs?.length || typeof card._onLabsSnapshot !== 'function') {
-          throw new Error(`invalid test-only Labs contract: ${scenario.id}`);
-        }
-        // connectedCallback has already received the real (expired) registry
-        // snapshot. Inject only the renderer fixture before hass/model boot so
-        // fit and warm-remount follow the former live-Labs lifecycle exactly.
-        card._onLabsSnapshot({ active: Object.freeze([...scenario.labs]), space: '' });
-      }
       card.hass = hassFor();
       await until(() => card._loadOk && card._model?.length === fixture.config.spaces.length);
       await card.updateComplete;
       const expectedDevices = Object.keys(fixture.devices || {}).length;
       if (expectedDevices) await until(() => card._devices?.length >= expectedDevices);
       await until(() => card._booting === false);
+      if (scenario.alpha
+          && (window.__hpAlpha !== true || JSON.stringify(window.__hpLabs) !== '["iso"]')) {
+        throw new Error(`alpha contract did not activate isometric capability: ${scenario.id}`);
+      }
       // Golden scenarios intentionally call internal editor commands directly.
       // Preload the lazy runtime for that legacy harness contract; cold-View
       // loading and retry semantics are covered by smoke_lazy_editor_chunk.
@@ -1066,6 +1060,9 @@ export async function prepareGoldenScenario(page, scenario) {
       card._setProjection('iso');
       await card.updateComplete;
       await frame();
+      if (card._effectiveProjection?.() !== 'iso') {
+        throw new Error(`isometric golden rendered Flat: ${scenario.id}`);
+      }
       await until(() => card._renderProjection === 'iso');
     }
     if (Number.isFinite(scenario.zoom)) {

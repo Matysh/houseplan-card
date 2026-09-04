@@ -25,12 +25,14 @@ test('golden matrix has stable unique ids and bounded comparison thresholds', ()
       assert.equal(Number.isInteger(region.minPixels) && region.minPixels > 0, true, scenario.id);
       assert.equal(region.minRedBlueDelta > 0, true, scenario.id);
     }
-    if (scenario.labs) {
-      assert.deepEqual(scenario.labs, ['iso'], scenario.id);
+    if (scenario.alpha) {
+      assert.equal(scenario.alpha, true, scenario.id);
       assert.equal(scenario.projection, 'iso', scenario.id);
       assert.equal(scenario.mode, 'view', scenario.id);
-      assert.equal(scenario.testOnlyLabsSnapshot, true, scenario.id);
     }
+    if (scenario.projection === 'iso') assert.equal(scenario.alpha, true, scenario.id);
+    assert.equal('labs' in scenario, false, scenario.id);
+    assert.equal('testOnlyLabsSnapshot' in scenario, false, scenario.id);
     if (scenario.sunRayPixels) {
       assert.equal(Number.isInteger(scenario.sunRayPixels.minPixels)
         && scenario.sunRayPixels.minPixels > 0, true, scenario.id);

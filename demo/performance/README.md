@@ -4,11 +4,13 @@
 fixture. The fixture has 60 rooms, 200 devices, 100 openings, 60 partitions,
 40 columns and 500 decor objects on three floors.
 
-Issue #89 adds `large-house-isometric-v1` through the same runner. Because the
-product flag expires at 1.65.0, the runner injects an explicit test-only Labs
-snapshot, selects iso per fixture space, measures the View toggle and records
-the capped `isoGeometry` cache. A comparison SHA predating #89 remains flat
-while reporting the same profile. The dedicated
+Issue #89 adds `large-house-isometric-v1` through the same runner. The runner
+enables the current candidate through the real `hp_alpha=1` URL/storage
+contract, selects iso per fixture space, measures the View toggle and records
+the capped `isoGeometry` cache. A compatibility-only snapshot keeps comparison
+bundles from before #448 measurable without restoring a legacy user-facing
+activation path; a comparison SHA predating #89 remains flat while reporting
+the same profile. The dedicated
 `budgets-large-house-isometric.json` applies the reviewed 20% relative allowance
 plus absolute noise/ceiling checks. Only the exact-SHA Linux workflow is gate
 evidence; a local report is diagnostic.

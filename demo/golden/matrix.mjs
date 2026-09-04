@@ -6,11 +6,6 @@ export const GOLDEN_MATRIX_VERSION = 54;
 const stage = { capture: 'stage', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0005 } };
 const page = { capture: 'page', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0008 } };
 const sunWindow = { capture: 'sun-window', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.001 } };
-// The product flag expires at 1.65.0 by contract. Golden keeps the dormant
-// renderer covered through an explicit card-only snapshot; this never changes
-// URL/storage/registry behaviour and must fail if the rendered view stays flat.
-const expiredIsoFixture = { testOnlyLabsSnapshot: true };
-
 const openingRoomContract = {
   kind: 'room', wallCm: 30, surface: 'flat',
   openings: [
@@ -200,23 +195,23 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     cornerSplitWall: 'zero-taper', mode: 'view', theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'isometric-geometry-view-dark', fixture: 'visual', space: 'golden-geometry', mode: 'view',
     // Stage 2 material/floor-edge plus door, window, gate and nested-room coverage.
-    labs: ['iso'], projection: 'iso', ...expiredIsoFixture,
+    alpha: true, projection: 'iso',
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'isometric-geometry-view-light', fixture: 'visual', space: 'golden-geometry', mode: 'view',
-    labs: ['iso'], projection: 'iso', ...expiredIsoFixture,
+    alpha: true, projection: 'iso',
     theme: 'light', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'isometric-live-layers-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',
-    labs: ['iso'], projection: 'iso', ...expiredIsoFixture,
+    alpha: true, projection: 'iso',
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'isometric-no-borders-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',
-    labs: ['iso'], projection: 'iso', ...expiredIsoFixture, showBorders: false, fillMode: 'custom',
+    alpha: true, projection: 'iso', showBorders: false, fillMode: 'custom',
     customFill: { c: '#486a8f', a: 0.42 }, glowEnabled: true,
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'isometric-touch-kiosk-dark', fixture: 'visual', space: 'golden-geometry', mode: 'view',
-    labs: ['iso'], projection: 'iso', ...expiredIsoFixture, kiosk: true,
+    alpha: true, projection: 'iso', kiosk: true,
     theme: 'dark', viewport: { width: 390, height: 760 }, ...stage },
   { id: 'isometric-large-warm-remount-dark', fixture: 'large', space: 'perf-floor-2', mode: 'view',
-    labs: ['iso'], projection: 'iso', ...expiredIsoFixture, warmRemount: true,
+    alpha: true, projection: 'iso', warmRemount: true,
     theme: 'dark', viewport: { width: 1180, height: 900 }, ...stage },
   { id: 'geometry-view-dark-fit', fixture: 'visual', space: 'golden-geometry', mode: 'view',
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
@@ -348,7 +343,7 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'isometric-wall-junctions-dark', fixture: 'visual',
     space: 'golden-wall-junctions', wallJunctions: true, mode: 'view',
-    labs: ['iso'], projection: 'iso', ...expiredIsoFixture,
+    alpha: true, projection: 'iso',
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'opening-placement-door-thick-wall-dark', fixture: 'visual', space: 'golden-geometry',
     // The shared centre edge is a long 25 cm physical wall. It can contain the
@@ -375,7 +370,7 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     mode: 'view', openingSymbolContract: openingFlipContract,
     theme: 'light', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'isometric-opening-symbol-parity-dark', fixture: 'visual', space: 'golden-opening-symbols',
-    mode: 'view', labs: ['iso'], projection: 'iso', ...expiredIsoFixture,
+    mode: 'view', alpha: true, projection: 'iso',
     openingSymbolContract: openingIsoContract,
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'geometry-devices-editor-dark', fixture: 'visual', space: 'golden-geometry', mode: 'devices',

@@ -135,11 +135,11 @@ try {
       window.__card?.remove?.();
       localStorage.clear();
       if (isometric) {
-        localStorage.setItem('houseplan_card_labs_v1', JSON.stringify(['iso']));
+        localStorage.setItem('houseplan_card_alpha_v1', '1');
         localStorage.setItem('houseplan_card_view_v1', JSON.stringify(Object.fromEntries(
           fixture.config.spaces.map((space) => [space.id, 'iso']),
         )));
-        history.replaceState(null, '', '?hp-labs=iso');
+        history.replaceState(null, '', '?hp_alpha=1');
       } else history.replaceState(null, '', location.pathname);
       const host = document.getElementById('host');
       const card = document.createElement('houseplan-card');
@@ -183,12 +183,13 @@ try {
       const loadLongTasks = startLongTaskWindow();
       const loadStarted = performance.now();
       host.replaceChildren(card);
-      if (requiresIsometric) {
+      if (requiresIsometric && window.__hpAlpha !== true) {
         if (typeof card._onLabsSnapshot !== 'function')
           throw new Error('large-house-isometric-v1 candidate has no Labs fixture hook');
-        // The product flag expires at 1.65.0. Performance keeps exercising
-        // the dormant renderer without changing the public registry contract.
-        card._onLabsSnapshot({ active: Object.freeze(['iso']), space: '' });
+        // Comparison bundles before #448 do not understand hp_alpha. Preserve
+        // the cross-version benchmark only for that base; current candidates
+        // must activate through the real URL/storage contract above.
+        card._onLabsSnapshot({ alpha: true, active: Object.freeze(['iso']), space: '' });
       }
       card.hass = hassFor(fixture.states);
       // launch() warms its own bootstrap card, but each measured sample creates

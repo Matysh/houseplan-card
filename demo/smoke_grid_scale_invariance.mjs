@@ -101,7 +101,11 @@ await page.evaluate(async () => {
     // raster pair and prove the precision ratio separately below.
     runtime._gridLevels = mode === 'view' ? originalGridLevels : () => null;
     card._gridLevels = () => runtime._gridLevels();
-    card._labs = { ...card._labs, active: projection === 'iso' ? ['iso'] : [] };
+    card._labs = {
+      ...card._labs,
+      alpha: projection === 'iso',
+      active: projection === 'iso' ? ['iso'] : [],
+    };
     card._viewPreference = { ...card._viewPreference, f1: projection };
     card._isoFallback.clear();
     card._isoGeometryCache.clear();

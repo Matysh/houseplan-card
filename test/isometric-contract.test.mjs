@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { readAllStylesSource } from './styles-source.mjs';
 
 const card = readFileSync(new URL('../src/houseplan-card.ts', import.meta.url), 'utf8');
+const labs = readFileSync(new URL('../src/labs.ts', import.meta.url), 'utf8');
 const styles = readAllStylesSource();
 const openings = readFileSync(new URL('../src/iso-openings.ts', import.meta.url), 'utf8');
 const packageJson = readFileSync(new URL('../package.json', import.meta.url), 'utf8');
@@ -11,11 +12,14 @@ const spaceCard = readFileSync(new URL('../src/space-card.ts', import.meta.url),
 const spaceRender = readFileSync(new URL('../src/space-render.ts', import.meta.url), 'utf8');
 
 test('Labs iso is presentation-only and absent from the secondary space card', () => {
-  assert.match(card, /subscribeLabs\(CARD_VERSION/);
+  assert.match(card, /subscribeLabs\(this\._onLabsSnapshot\)/);
   assert.match(card, /data-hp="projection-toggle"/);
   assert.match(card, /this\._labsIso && this\._mode === 'view' && !this\._kiosk/);
   assert.doesNotMatch(spaceCard, /hp-labs|iso-walls|projection-toggle|view\.volumetric/);
   assert.doesNotMatch(spaceRender, /hp-labs|iso-walls|projection-toggle|view\.volumetric/);
+  assert.match(labs, /houseplan_card_alpha_v1/);
+  assert.match(labs, /params\.getAll\('hp_alpha'\)/);
+  assert.doesNotMatch(labs, /CARD_VERSION|houseplan_card_labs_v1|params\.getAll\('hp-labs'\)/);
 });
 
 test('Stage 2 uses inert shared-projection SVG geometry without a second light model', () => {

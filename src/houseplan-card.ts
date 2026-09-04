@@ -2247,7 +2247,7 @@ export class HouseplanCard extends LitElement {
   private _warmSlot: WarmEntry | null = null;
   private _hashApplied = false;
   private _navApplied = false; // the saved space was restored (or the user navigated)
-  private _labs: LabsSnapshot = { active: Object.freeze([]), space: '' };
+  private _labs: LabsSnapshot = { alpha: false, active: Object.freeze([]), space: '' };
   private _labsUnsub?: () => void;
   private _viewPreference: Record<string, 'flat' | 'iso'> = {};
   private _renderProjection: 'flat' | 'iso' = 'flat';
@@ -2603,7 +2603,7 @@ export class HouseplanCard extends LitElement {
     this._syncCycleTimer();
     window.addEventListener('hashchange', this._onHashChange);
     this._labsUnsub?.();
-    this._labsUnsub = subscribeLabs(CARD_VERSION, this._onLabsSnapshot);
+    this._labsUnsub = subscribeLabs(this._onLabsSnapshot);
     // AUD-1552-01: the boot-veil timers die in disconnectedCallback, so a
     // disconnect/reconnect while booting (Lovelace rebuilds its DOM, a view
     // switch remounts the card) used to strand _booting=true with no watcher
@@ -3160,7 +3160,7 @@ export class HouseplanCard extends LitElement {
     } catch {
       this._viewPreference = {};
     }
-    this._labs = currentLabs(CARD_VERSION);
+    this._labs = currentLabs();
     try {
       const ks = JSON.parse(localStorage.getItem(LS_KIOSK) || 'null');
       this._kioskScale = { icon: clampScale(ks?.icon), font: clampScale(ks?.font) };
@@ -11375,7 +11375,7 @@ export class HouseplanCard extends LitElement {
     const vb = space.vb;
     const projection = this._effectiveProjection();
     this._renderProjection = projection;
-    if (this._labs.active.length) noteLabsRender(CARD_VERSION);
+    if (this._labs.active.length) noteLabsRender();
     const iso = projection === 'iso';
     // hidden devices render ONLY in the device editor with "show hidden" on
     // (ghosted); everywhere else the flag removes them from sight — but not

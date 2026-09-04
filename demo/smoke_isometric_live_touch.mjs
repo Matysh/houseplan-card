@@ -9,14 +9,8 @@ const out = await page.evaluate(async () => {
   const root = (card) => card.renderRoot;
   const wait = (ms) => new Promise((done) => setTimeout(done, ms));
   const frame = () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
-  history.replaceState(null, '', '?hp-labs=iso#space=f1');
+  history.replaceState(null, '', '?hp_alpha=1#space=f1');
   dispatchEvent(new HashChangeEvent('hashchange'));
-  if (typeof original._onLabsSnapshot !== 'function') throw new Error('missing Labs fixture hook');
-  const testOnlyIso = Object.freeze(['iso']);
-  // The product registry remains expired; this direct snapshot exercises the
-  // dormant Stage 2 renderer and is removed by the real -iso path below.
-  original._onLabsSnapshot({ active: testOnlyIso, space: '' });
-  window.__hpLabs = testOnlyIso;
   await original.updateComplete;
   const configSpace = original._serverCfg.spaces.find((space) => space.id === 'f1');
   configSpace.settings = {
@@ -301,7 +295,6 @@ const out = await page.evaluate(async () => {
     const card = document.createElement('houseplan-card');
     card.setConfig({ type: 'custom:houseplan-card', kiosk });
     host.replaceChildren(card);
-    card._onLabsSnapshot({ active: Object.freeze(['iso']), space: '' });
     card.hass = window.__mkHass();
     const started = performance.now();
     while ((!card._loadOk || card._booting) && performance.now() - started < 9000) await wait(30);
@@ -333,11 +326,13 @@ out.orientationResizeKeepsIso = await page.evaluate(async () => {
 });
 out.kioskEmergencyOffIsFlat = await page.evaluate(async () => {
   const card = document.querySelector('houseplan-card');
-  history.replaceState(null, '', '?hp-labs=-iso#space=f1');
+  history.replaceState(null, '', '?hp_alpha=0#space=f1');
   dispatchEvent(new HashChangeEvent('hashchange'));
   await card.updateComplete;
   await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
-  return !card.renderRoot.querySelector('[data-hp="iso-walls"]')
+  return window.__hpAlpha === false
+    && localStorage.getItem('houseplan_card_alpha_v1') === '0'
+    && !card.renderRoot.querySelector('[data-hp="iso-walls"]')
     && !card.renderRoot.querySelector('[data-hp="projection-toggle"]');
 });
 
