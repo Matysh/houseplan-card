@@ -354,7 +354,7 @@ import {
 import {
   DEFAULT_DECOR_STYLE, boxAnchors, boxCorners, clamp01, decorCmToUnits,
   decorStrokeUnits, decorStyleFromSettings, decorStyleOf, decorStylePatch,
-  decorUnitsToCm, mergeSnapGeometry, normalizeAngle, resizeDecorBox,
+  decorUnitsToCm, mergeSnapGeometry, normalizeAngle, nudgeDecorShape, resizeDecorBox,
   resizedBoxTopLeft, snapDecorPoint, validDecorDraft,
   type DecorBox, type SnapGeometry,
 } from './editors/decor/geometry';
@@ -3019,6 +3019,19 @@ export class HouseplanCard extends LitElement {
           !inField && !inEditorSecondary) {
         e.preventDefault();
         this._decorDeleteSel();
+        return;
+      }
+      const arrow = e.key === 'ArrowLeft' ? [-this._gridPitch, 0]
+        : e.key === 'ArrowRight' ? [this._gridPitch, 0]
+          : e.key === 'ArrowUp' ? [0, -this._gridPitch]
+            : e.key === 'ArrowDown' ? [0, this._gridPitch]
+              : null;
+      if (arrow && !mod && !e.altKey && this._decorTool === 'select' && this._decorSel
+          && this._decorList.some((shape) => shape.id === this._decorSel)
+          && !this._decorDraft && !this._decorMove && !this._dtDrag && !this._bdDrag
+          && !inField && !inEditorSecondary && !this._editorSecondaryDialogBlocked) {
+        e.preventDefault();
+        this._decorNudge(arrow[0], arrow[1]);
         return;
       }
       if (e.key === 'Escape') {
@@ -8437,6 +8450,25 @@ export class HouseplanCard extends LitElement {
 
   private _decorMoveUpdate(ev: PointerEvent): void {
     return this._editorRuntimeOrThrow()._decorMoveUpdate(ev);
+  }
+
+  private _decorNudge(renderDx: number, renderDy: number): boolean {
+    if (this._mode !== 'decor' || this._decorTool !== 'select'
+        || !this._decorSel || this._decorDraft || this._decorMove || this._dtDrag || this._bdDrag)
+      return false;
+    const selected = this._decorList.find((shape) => shape.id === this._decorSel);
+    const sp = this._curSpaceCfg;
+    if (!selected || !sp) return false;
+    const moved = nudgeDecorShape(
+      selected, renderDx, renderDy, NORM_W, this._decorH, CANVAS_LIMIT,
+    );
+    if (!moved) return false;
+    const before = this._geometrySnapshot();
+    sp.decor = this._decorList.map((shape) => shape.id === selected.id ? moved : shape);
+    this._recordGeometry(this._t('history.decor_move'), before);
+    this._saveConfig();
+    this.requestUpdate();
+    return true;
   }
 
   /** Select tool: every decor object has a double-click properties dialog. */

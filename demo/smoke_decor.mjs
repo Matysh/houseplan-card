@@ -493,6 +493,127 @@ const res = await page.evaluate(async () => {
   c._curSpaceCfg.decor = decorBefore;                 // сцена как была до пробы
   c._decorTool = 'select'; await c.updateComplete;
   out.decorRestored = c._decorList.length === decorBefore.length;
+  // #447: Arrow is a separate rigid transaction, not a synthetic pointer
+  // move. It preserves off-grid phase, bypasses both magnets and keeps one
+  // history/save boundary per browser keydown.
+  const keyboardOriginal = JSON.parse(JSON.stringify(c._decorList));
+  const keyboardShapes = [
+    { id: 'key-rect', kind: 'rect', x: 0.1013, y: 0.2017, w: 0.08, h: 0.05,
+      angle: 17, color: '#123456', fill: true },
+    { id: 'key-furniture', kind: 'furniture', x: 0.3013, y: 0.4017, w: 0.08, h: 0.05,
+      symbol: 'chair', angle: 90, flip_h: true },
+    { id: 'key-image', kind: 'image', x: 0.5013, y: 0.6017, w: 0.08, h: 0.05,
+      asset_id: 'smoke-missing-asset', opacity: 0.6 },
+  ];
+  c._curSpaceCfg.decor = keyboardShapes;
+  c._decorTool = 'select'; c._decorSel = 'key-furniture';
+  c._decorDraft = null; c._decorMove = null; c._dtDrag = null; c._bdDrag = null;
+  c.requestUpdate(); await c.updateComplete;
+  c._geometryHistory.clear();
+  c._saveConfigDebounced.cancel();
+  const realDebouncedSave = c._saveConfigDebounced;
+  let keyboardSaves = 0, decorSnapCalls = 0, furnitureMoveCalls = 0;
+  const countedSave = () => { keyboardSaves += 1; };
+  countedSave.pending = () => false; countedSave.cancel = () => {}; countedSave.flush = () => {};
+  c._saveConfigDebounced = countedSave;
+  const realDecorSnap = c._decorSnap;
+  const realFurnitureMove = c._editorRuntime._furnMoveUpdate;
+  c._decorSnap = (...args) => { decorSnapCalls += 1; return realDecorSnap.apply(c, args); };
+  c._editorRuntime._furnMoveUpdate = (...args) => {
+    furnitureMoveCalls += 1;
+    return realFurnitureMove.apply(c._editorRuntime, args);
+  };
+  const arrow = (key, target = window, init = {}) => {
+    const event = new KeyboardEvent('keydown', {
+      key, bubbles: true, composed: true, cancelable: true, ...init,
+    });
+    return target.dispatchEvent(event) === false;
+  };
+  const keyed = (id) => c._decorList.find((shape) => shape.id === id);
+  const keyStep = g / 1000;
+  const furnitureBeforeKey = JSON.parse(JSON.stringify(keyed('key-furniture')));
+  const epochBeforeKey = c._cfgEpoch;
+  const firstArrowPrevented = arrow('ArrowRight');
+  const furnitureAfterRight = JSON.parse(JSON.stringify(keyed('key-furniture')));
+  out.arrowMovesFurnitureOneCellWithoutMagnet = firstArrowPrevented
+    && Math.abs(furnitureAfterRight.x - furnitureBeforeKey.x - keyStep) < 1e-12
+    && furnitureAfterRight.y === furnitureBeforeKey.y
+    && furnitureAfterRight.angle === furnitureBeforeKey.angle
+    && furnitureAfterRight.flip_h === furnitureBeforeKey.flip_h
+    && decorSnapCalls === 0 && furnitureMoveCalls === 0;
+  out.arrowIsOneHistoryAndSaveTransaction = c._geometryHistory.size === 1
+    && c._geometryHistory.undoName === c._t('history.decor_move')
+    && keyboardSaves === 1 && c._cfgEpoch === epochBeforeKey + 1
+    && c._decorSel === 'key-furniture';
+  const shiftArrowPrevented = arrow('ArrowDown', window, { shiftKey: true });
+  const furnitureAfterDown = JSON.parse(JSON.stringify(keyed('key-furniture')));
+  out.shiftArrowKeepsTheSameOneCellStep = shiftArrowPrevented
+    && Math.abs(furnitureAfterDown.y - furnitureAfterRight.y - keyStep) < 1e-12
+    && c._geometryHistory.size === 2 && keyboardSaves === 2;
+  arrow('z', window, { ctrlKey: true });
+  const furnitureAfterUndo = JSON.parse(JSON.stringify(keyed('key-furniture')));
+  arrow('y', window, { ctrlKey: true });
+  const furnitureAfterRedo = JSON.parse(JSON.stringify(keyed('key-furniture')));
+  out.arrowUndoRedoIsExactlyOneStep = Math.abs(furnitureAfterUndo.y - furnitureAfterRight.y) < 1e-8
+    && Math.abs(furnitureAfterRedo.y - furnitureAfterDown.y) < 1e-8
+    && Math.abs(furnitureAfterRedo.x - furnitureAfterRight.x) < 1e-8
+    && c._decorSel === 'key-furniture';
+
+  c._decorSel = 'key-image';
+  const imageX = keyed('key-image').x;
+  arrow('ArrowLeft');
+  c._decorSel = 'key-rect';
+  const rectY = keyed('key-rect').y;
+  arrow('ArrowUp');
+  out.imageAndOrdinaryDecorUseTheSameArrowPath = Math.abs(keyed('key-image').x - imageX + keyStep) < 1e-12
+    && Math.abs(keyed('key-rect').y - rectY + keyStep) < 1e-12
+    && decorSnapCalls === 0 && furnitureMoveCalls === 0;
+
+  const guardX = () => keyed('key-rect').x;
+  const guardStart = guardX();
+  c.requestUpdate(); await c.updateComplete;
+  const controls = ['input', 'textarea', 'select'].map((tag) => document.createElement(tag));
+  const editable = document.createElement('div'); editable.contentEditable = 'true';
+  controls.push(editable);
+  const fieldResults = [];
+  for (const control of controls) {
+    document.body.append(control); control.focus();
+    fieldResults.push(!arrow('ArrowRight', control) && guardX() === guardStart);
+    control.remove();
+  }
+  out.arrowLeavesFormControlsAlone = fieldResults.every(Boolean);
+  const toolbarControl = sr().querySelector('.editor-secondary button');
+  toolbarControl?.focus();
+  const toolbarGuarded = !!toolbarControl && !arrow('ArrowRight', toolbarControl) && guardX() === guardStart;
+  toolbarControl?.blur();
+  c._decorEraseConfirm = { id: 'key-rect', kind: 'rect' };
+  const dialogGuarded = !arrow('ArrowRight') && guardX() === guardStart;
+  c._decorEraseConfirm = null;
+  c._decorMove = { id: 'key-rect', start: [0, 0], orig: JSON.parse(JSON.stringify(keyed('key-rect'))),
+    pid: 447, moved: false, before: c._geometrySnapshot() };
+  const gestureGuarded = !arrow('ArrowRight') && guardX() === guardStart;
+  c._decorMove = null;
+  out.arrowRespectsToolbarDialogAndGestureGuards = toolbarGuarded && dialogGuarded && gestureGuarded;
+  const modifierResults = [
+    { ctrlKey: true }, { metaKey: true }, { altKey: true },
+  ].map((init) => !arrow('ArrowRight', window, init) && guardX() === guardStart);
+  out.modifiedArrowsRemainBrowserCommands = modifierResults.every(Boolean);
+
+  c._curSpaceCfg.decor = [{ id: 'key-limit', kind: 'rect', x: 4999.9, y: 0, w: 0.1, h: 0.1 }];
+  c._decorSel = 'key-limit'; c._geometryHistory.clear();
+  const savesBeforeNoop = keyboardSaves, epochBeforeNoop = c._cfgEpoch;
+  const noopPrevented = arrow('ArrowRight');
+  out.boundaryNoopIsConsumedButNotSaved = noopPrevented
+    && c._curSpaceCfg.decor[0].x === 4999.9
+    && c._geometryHistory.size === 0 && keyboardSaves === savesBeforeNoop
+    && c._cfgEpoch === epochBeforeNoop;
+
+  c._decorSnap = realDecorSnap;
+  c._editorRuntime._furnMoveUpdate = realFurnitureMove;
+  c._saveConfigDebounced = realDebouncedSave;
+  c._curSpaceCfg.decor = keyboardOriginal;
+  c._decorSel = null; c._geometryHistory.clear(); c._cfgEpoch++;
+  c.requestUpdate(); await c.updateComplete;
   // Switching modes during a live move cancels the transaction and restores
   // its start instead of leaving mutated geometry with a forgotten pointer.
   const liveShape = c._decorList[0];

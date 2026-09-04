@@ -24,6 +24,8 @@ export interface FurnitureWallSurface {
   owner: FurnitureWallSurfaceOwner;
   stableId: string;
   roomId?: string;
+  /** Present only for the paired faces of a non-zero exterior room wall. */
+  roomSide?: 'inside' | 'outside';
 }
 
 const finitePoint = (point: unknown): point is readonly [number, number] => (
@@ -47,7 +49,9 @@ export function roomFurnitureWallSurfaces(
   gridPitch: number,
   coordScale = 1,
 ): FurnitureWallSurface[] {
-  const out: FurnitureWallSurface[] = [];
+  type RoomCandidate = FurnitureWallSurface & { atomId: string; half: number };
+  const candidates: RoomCandidate[] = [];
+  const ownersByAtom = new Map<string, Set<string>>();
   for (const room of rooms || []) {
     const roomId = typeof room?.id === 'string' ? room.id : '';
     if (!roomId) continue;
@@ -66,17 +70,42 @@ export function roomFurnitureWallSurfaces(
       const half = Number.isFinite(rawHalf) && rawHalf > 0 ? rawHalf : 0;
       const axisA: [number, number] = [rawA[0], rawA[1]];
       const axisB: [number, number] = [rawB[0], rawB[1]];
-      out.push({
+      const atomId = segmentIdentity(axisA, axisB);
+      const owners = ownersByAtom.get(atomId) || new Set<string>();
+      owners.add(roomId);
+      ownersByAtom.set(atomId, owners);
+      candidates.push({
         a: [axisA[0] + normal[0] * half, axisA[1] + normal[1] * half],
         b: [axisB[0] + normal[0] * half, axisB[1] + normal[1] * half],
         axisA,
         axisB,
         normal,
         owner: 'room',
-        stableId: `room:${roomId}:${segmentIdentity(axisA, axisB)}`,
+        stableId: `room:${roomId}:${atomId}`,
         roomId,
+        atomId,
+        half,
       });
     }
+  }
+  const out: FurnitureWallSurface[] = [];
+  for (const candidate of candidates) {
+    const { atomId, half, ...surface } = candidate;
+    const exterior = ownersByAtom.get(atomId)?.size === 1 && half > 1e-9;
+    if (!exterior) {
+      out.push(surface);
+      continue;
+    }
+    const normal = surface.normal!;
+    out.push({ ...surface, roomSide: 'inside', stableId: `${surface.stableId}:inside` });
+    out.push({
+      ...surface,
+      a: [surface.axisA[0] - normal[0] * half, surface.axisA[1] - normal[1] * half],
+      b: [surface.axisB[0] - normal[0] * half, surface.axisB[1] - normal[1] * half],
+      normal: [-normal[0], -normal[1]],
+      roomSide: 'outside',
+      stableId: `${surface.stableId}:outside`,
+    });
   }
   return out;
 }

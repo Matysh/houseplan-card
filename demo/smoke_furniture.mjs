@@ -282,6 +282,39 @@ const res = await page.evaluate(async () => {
     && ['x', 'y', 'w', 'h'].every((key) => near(bed[key], thickWallPreview[key], 1e-12))
     && (bed.angle || 0) === thickWallPreview.angle;
 
+  // #447: the same finite outer atom also has its exterior physical face.
+  // Raw intent above the wall must never be pulled through to the room side;
+  // preview, commit and exact-axis drag all share that decision.
+  await openFurniture();
+  c._furnPalette = { symbol: 'chair', w: 50, h: 50 };
+  c.requestUpdate(); await c.updateComplete;
+  const exteriorIntentY = 140 - wallHalf;
+  ev('pointermove', stageEl(), 300, exteriorIntentY, { pointerType: 'mouse' });
+  await c.updateComplete;
+  const exteriorPreview = c._editorRuntime?._furniturePreviewPlacement()
+    ? JSON.parse(JSON.stringify(c._editorRuntime._furniturePreviewPlacement())) : null;
+  const exteriorDepth = cmToUnits(50);
+  const exteriorCentreY = 140 - wallHalf - exteriorDepth / 2;
+  out.exteriorPreviewStaysOutside = !!exteriorPreview
+    && near((exteriorPreview.y + exteriorPreview.h / 2) * 1000, exteriorCentreY, 1e-6)
+    && Math.abs(Math.abs(exteriorPreview.angle) - 180) < 1e-6;
+  ev('pointerdown', stageEl(), 300, exteriorIntentY);
+  await c.updateComplete;
+  const exteriorChair = c._decorList.find((shape) => shape.symbol === 'chair');
+  const exteriorChairId = exteriorChair?.id ?? null;
+  out.exteriorCommitMatchesPreview = !!exteriorChair && !!exteriorPreview
+    && ['x', 'y', 'w', 'h'].every((key) => near(exteriorChair[key], exteriorPreview[key], 1e-12))
+    && (exteriorChair.angle || 0) === exteriorPreview.angle;
+  ev('pointerdown', el(exteriorChairId), 300, exteriorCentreY);
+  ev('pointermove', stageEl(), 300, 140);
+  await c.updateComplete;
+  const exteriorAxisDrag = c._decorList.find((shape) => shape.id === exteriorChairId);
+  out.exteriorExactAxisDragPreservesSide = !!exteriorAxisDrag
+    && near((exteriorAxisDrag.y + exteriorAxisDrag.h / 2) * 1000, exteriorCentreY, 1e-6)
+    && Math.abs(Math.abs(exteriorAxisDrag.angle || 0) - 180) < 1e-6;
+  ev('pointerup', stageEl(), 300, 140);
+  await c.updateComplete;
+
   // The regular decor snap resolves this pointer to the shared wall axis.
   // Surface-side selection must still use the raw point on the r2 side.
   await openFurniture();
@@ -292,7 +325,7 @@ const res = await page.evaluate(async () => {
   await c.updateComplete;
   ev('pointerdown', stageEl(), sharedIntentX, 300);
   await c.updateComplete;
-  const sharedChair = c._decorList.find((s) => s.symbol === 'chair');
+  const sharedChair = c._decorList.find((s) => s.symbol === 'chair' && s.id !== exteriorChairId);
   const chairDepth = (sharedChair?.h ?? NaN) * 1000;
   const rightSurfaceCentre = 550 + wallHalf + chairDepth / 2;
   out.sharedWallUsesRawPointerSide = !!sharedChair

@@ -2,8 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   boxCorners, decorStrokeUnits, decorStyleOf, decorStylePatch, normalizeAngle,
-  resizeDecorBox, resizedBoxTopLeft, snapDecorPoint, validDecorDraft,
+  nudgeDecorShape, resizeDecorBox, resizedBoxTopLeft, snapDecorPoint, validDecorDraft,
 } from '../test-build/editors/decor/geometry.js';
+import { CANVAS_LIMIT, GRID_PITCH, GRID_STEP_N, NORM_W } from '../test-build/space-geometry.js';
 
 const close = (actual, expected, epsilon = 1e-9) =>
   assert.ok(Math.abs(actual - expected) <= epsilon, `${actual} != ${expected}`);
@@ -114,4 +115,63 @@ test('flat rectangle and ellipse drafts are rejected while a straight line is va
   assert.equal(validDecorDraft('rect', [0, 0], [20, 0], 5), false);
   assert.equal(validDecorDraft('ellipse', [0, 0], [0, 20], 5), false);
   assert.equal(validDecorDraft('rect', [0, 0], [20, 10], 5), true);
+});
+
+test('keyboard nudge moves every decor kind by one visible cell without changing other fields', () => {
+  const shapes = [
+    { id: 'l', kind: 'line', x1: 0.1013, y1: 0.2, x2: 0.3013, y2: 0.4, color: '#123' },
+    { id: 'r', kind: 'rect', x: 0.1013, y: 0.2, w: 0.2, h: 0.1, angle: 17, fill: true },
+    { id: 'e', kind: 'ellipse', x: 0.1013, y: 0.2, w: 0.2, h: 0.1, angle: -17 },
+    { id: 't', kind: 'text', x: 0.1013, y: 0.2, text: 'Room', size_cm: 12, angle: 45 },
+    { id: 'f', kind: 'furniture', x: 0.1013, y: 0.2, w: 0.2, h: 0.1,
+      symbol: 'sofa', flip_h: true, angle: 90 },
+    { id: 'i', kind: 'image', x: 0.1013, y: 0.2, w: 0.2, h: 0.1,
+      asset_id: 'abc', flip_v: true, opacity: 0.7 },
+  ];
+  for (const original of shapes) {
+    for (const [dx, dy, field, sign] of [
+      [-GRID_PITCH, 0, 'x', -1], [GRID_PITCH, 0, 'x', 1],
+      [0, -GRID_PITCH, 'y', -1], [0, GRID_PITCH, 'y', 1],
+    ]) {
+      const moved = nudgeDecorShape(original, dx, dy, NORM_W, NORM_W, CANVAS_LIMIT);
+      assert.ok(moved, `${original.kind} must move`);
+      const before = original.kind === 'line' ? original[`${field}1`] : original[field];
+      const after = moved.kind === 'line' ? moved[`${field}1`] : moved[field];
+      close(after - before, sign * GRID_STEP_N);
+      const restored = structuredClone(moved);
+      if (restored.kind === 'line') {
+        restored.x1 -= dx / NORM_W; restored.x2 -= dx / NORM_W;
+        restored.y1 -= dy / NORM_W; restored.y2 -= dy / NORM_W;
+      } else {
+        restored.x -= dx / NORM_W; restored.y -= dy / NORM_W;
+      }
+      assert.deepEqual(restored, original, `${original.kind} changed a non-position field`);
+    }
+  }
+});
+
+test('keyboard nudge preserves line geometry and clamps the whole object at canvas bounds', () => {
+  const line = { id: 'l', kind: 'line', x1: CANVAS_LIMIT - GRID_STEP_N / 2, y1: 3,
+    x2: CANVAS_LIMIT - GRID_STEP_N / 4, y2: 4 };
+  const last = nudgeDecorShape(line, GRID_PITCH, 0, NORM_W, NORM_W, CANVAS_LIMIT);
+  close(last.x2, CANVAS_LIMIT);
+  close(last.x1, line.x1 + GRID_STEP_N / 4);
+  close(last.x2 - last.x1, line.x2 - line.x1);
+  close(last.y2 - last.y1, line.y2 - line.y1);
+  assert.equal(nudgeDecorShape(last, GRID_PITCH, 0, NORM_W, NORM_W, CANVAS_LIMIT), null);
+
+  const rotatedHalfExtent = Math.SQRT2 * 0.1;
+  const rotated = { id: 'r', kind: 'rect',
+    x: CANVAS_LIMIT - 0.1 - rotatedHalfExtent - GRID_STEP_N / 2, y: 0,
+    w: 0.2, h: 0.2, angle: 45 };
+  const corners = boxCorners(rotated);
+  const moved = nudgeDecorShape(rotated, GRID_PITCH, 0, NORM_W, NORM_W, CANVAS_LIMIT);
+  assert.ok(moved, 'the last step may be shorter than one cell');
+  const movedCorners = boxCorners(moved);
+  close(Math.max(...movedCorners.map((point) => point[0])), CANVAS_LIMIT);
+  for (let i = 0; i < corners.length; i++) {
+    close(movedCorners[i][0] - corners[i][0], moved.x - rotated.x);
+    close(movedCorners[i][1] - corners[i][1], 0);
+  }
+  assert.equal(nudgeDecorShape(moved, GRID_PITCH, 0, NORM_W, NORM_W, CANVAS_LIMIT), null);
 });

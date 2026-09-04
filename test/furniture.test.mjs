@@ -198,12 +198,31 @@ test('the magnet presses the BACK edge onto the wall and turns the piece to it',
   closeTo(s.dist, 0);
 });
 
-test('an outer wall always keeps furniture on the room-facing surface', () => {
+test('an exterior wall exposes both physical faces and keeps furniture on the intent side', () => {
   const outsideY = 100 - HALF_20;
   const s = snapFurnitureToWall(300, outsideY, 90, THICK_SURFACES, 30);
-  closeTo(s.angle, 0);
-  closeTo(s.cy, TOP_20 + 45);
-  closeTo(s.dist, HALF_20 * 2);
+  closeTo(Math.abs(s.angle), 180);
+  closeTo(s.cy, outsideY - 45);
+  closeTo(s.dist, 0);
+
+  const top = THICK_SURFACES.filter((surface) => Math.abs(surface.axisA[1] - 100) < 1e-9
+    && Math.abs(surface.axisB[1] - 100) < 1e-9);
+  assert.equal(top.length, 2);
+  assert.deepEqual(top.map((surface) => surface.roomSide).sort(), ['inside', 'outside']);
+  const inside = snapFurnitureToWall(300, TOP_20, 90, THICK_SURFACES, 30);
+  closeTo(inside.angle, 0);
+  closeTo(inside.cy, TOP_20 + 45);
+});
+
+test('new exact-axis exterior placement defaults inside while drag preserves either side', () => {
+  const placed = snapFurnitureToWall(300, 100, 90, THICK_SURFACES, 30);
+  closeTo(placed.angle, 0);
+  closeTo(placed.cy, TOP_20 + 45);
+  const keepOutside = snapFurnitureToWall(
+    300, 100, 90, [...THICK_SURFACES].reverse(), 30, 0, [300, 100], [0, -1],
+  );
+  closeTo(Math.abs(keepOutside.angle), 180);
+  closeTo(keepOutside.cy, 100 - HALF_20 - 45);
 });
 
 test('a vertical wall gives a right angle and the depth measured sideways', () => {
@@ -244,6 +263,10 @@ test('a shared thick wall selects the intent side and exact-axis drag preserves 
     [], [300, 100], [300, 400], 20, GRID_STEP_N, NORM_W,
   );
   const surfaces = roomSurfaces(rooms, walls);
+  const shared = surfaces.filter((surface) => Math.abs(surface.axisA[0] - 300) < 1e-9
+    && Math.abs(surface.axisB[0] - 300) < 1e-9);
+  assert.equal(shared.length, 2, 'a shared atom already has one room-facing face per room');
+  assert.ok(shared.every((surface) => surface.roomSide === undefined));
   const left = snapFurnitureToWall(280, 250, 60, surfaces, 30);
   const right = snapFurnitureToWall(320, 250, 60, surfaces, 30);
   closeTo(left.cx, 300 - HALF_20 - 30);
@@ -266,6 +289,34 @@ test('a shared thick wall selects the intent side and exact-axis drag preserves 
     300, 250, 60, [...surfaces].reverse(), 30, 0, [300, 250], [-1, 0],
   );
   closeTo(keepLeft.cx, 300 - HALF_20 - 30);
+});
+
+test('partially shared edges are atomised before exterior ownership is assigned', () => {
+  const rooms = [
+    { id: 'main', poly: [[100, 100], [500, 100], [500, 400], [100, 400]] },
+    { id: 'side', poly: [[500, 200], [700, 200], [700, 300], [500, 300]] },
+  ];
+  const walls = setWallThickness(
+    [], [500, 100], [500, 400], 20, GRID_STEP_N, NORM_W,
+  );
+  const surfaces = roomSurfaces(rooms, walls);
+  const vertical = surfaces.filter((surface) => Math.abs(surface.axisA[0] - 500) < 1e-9
+    && Math.abs(surface.axisB[0] - 500) < 1e-9);
+  const span = (surface) => [surface.axisA[1], surface.axisB[1]].sort((a, b) => a - b);
+  const shared = vertical.filter((surface) => {
+    const [lo, hi] = span(surface);
+    return Math.abs(lo - 200) < 1e-9 && Math.abs(hi - 300) < 1e-9;
+  });
+  assert.equal(shared.length, 2);
+  assert.ok(shared.every((surface) => surface.roomSide === undefined));
+  for (const [lo, hi] of [[100, 200], [300, 400]]) {
+    const outer = vertical.filter((surface) => {
+      const extent = span(surface);
+      return Math.abs(extent[0] - lo) < 1e-9 && Math.abs(extent[1] - hi) < 1e-9;
+    });
+    assert.equal(outer.length, 2, `outer child ${lo}..${hi} needs inside + outside`);
+    assert.deepEqual(outer.map((surface) => surface.roomSide).sort(), ['inside', 'outside']);
+  }
 });
 
 test('new exact-axis placement is stable across room order, winding and surface order', () => {

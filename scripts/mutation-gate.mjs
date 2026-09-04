@@ -1663,7 +1663,7 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'furniture-wall-surface-loses-room-side',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
-      + '&& node --test --test-name-pattern="outer wall always|shared thick wall" '
+      + '&& node --test --test-name-pattern="exterior wall exposes|shared thick wall" '
       + 'test/furniture.test.mjs',
     because: 'treating a one-sided room face like an arbitrary body face lets an outside '
       + 'pointer flip furniture through an exterior wall and loses shared-room intent (#445)',
@@ -1706,6 +1706,44 @@ const MUTANT_DEFINITIONS = [
       file: 'src/houseplan-editor-runtime.ts',
       find: '      [rawCx, rawCy], preferredNormal);',
       replace: '      [rawCx, rawCy]);',
+    }],
+  },
+  {
+    id: 'furniture-exterior-surface-removed',
+    guard: 'node demo/smoke_furniture.mjs',
+    because: 'the production preview/commit/drag path must keep exterior furniture outside; '
+      + 'unit-only candidate counts do not prove the shipped interaction (#447 AC3)',
+    patches: [{
+      file: 'src/furniture-wall-surface.ts',
+      find: '    const exterior = ownersByAtom.get(atomId)?.size === 1 && half > 1e-9;',
+      replace: '    const exterior = false && ownersByAtom.get(atomId)?.size === 1 && half > 1e-9;',
+    }],
+  },
+  {
+    id: 'decor-keyboard-nudge-reruns-magnet',
+    guard: 'node demo/smoke_decor.mjs',
+    because: 'Arrow fine-tuning must apply an exact delta; even a result-preserving call into '
+      + 'the decor magnet violates the no-resnap contract and can later move furniture (#447 AC5)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '    const moved = nudgeDecorShape(\n'
+        + '      selected, renderDx, renderDy, NORM_W, this._decorH, CANVAS_LIMIT,\n'
+        + '    );',
+      replace: "    this._decorSnap([renderDx, renderDy], 'mouse', selected.id);\n"
+        + '    const moved = nudgeDecorShape(\n'
+        + '      selected, renderDx, renderDy, NORM_W, this._decorH, CANVAS_LIMIT,\n'
+        + '    );',
+    }],
+  },
+  {
+    id: 'decor-keyboard-nudge-drops-focus-dialog-guards',
+    guard: 'node demo/smoke_decor.mjs',
+    because: 'the global Arrow listener must not steal navigation from fields or mutate decor '
+      + 'behind an open dialog (#447 AC8)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '          && !inField && !inEditorSecondary && !this._editorSecondaryDialogBlocked) {',
+      replace: '          && !inEditorSecondary) {',
     }],
   },
   {

@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Furniture can now snap to either physical face of an exterior wall without
+  jumping through the masonry, and Arrow keys move any selected Background
+  object by exactly one current grid cell without re-running wall or decor
+  magnets ([#447](https://github.com/Matysh/houseplan-card/issues/447)).
+
 ## v1.71.0 — 2026-09-04
 
 - The Background editor can now upload and reuse private PNG, JPEG, WebP and

@@ -114,12 +114,15 @@ Consequently:
   nothing instead of breaking the plan.
 
 The top edge of every drawing is BACK (`y = 0`). Placement and dragging put
-BACK on the room-facing **physical surface** of a wall, including the local
-atomic half-thickness; the invisible centreline is not the contact surface.
-On a shared wall the raw pointer side selects the room, while an exact-axis
-drag keeps the piece's current side. The magnet reach is measured from the
-physical surface. `Shift` keeps free placement and bypasses the wall magnet.
-Preview, commit and drag share the same surface resolver. Furniture is decor:
+BACK on a **physical surface** of a wall, including the local atomic
+half-thickness; the invisible centreline is not the contact surface. An outer
+wall exposes both its room-facing and exterior surfaces, so raw pointer intent
+keeps furniture inside or outside instead of pulling it through the masonry.
+On a shared wall the raw pointer side selects the room. A new placement exactly
+on an outer-wall axis defaults inside, while an exact-axis drag keeps the
+piece's current side. The magnet reach is measured from the selected physical
+surface. `Shift` keeps free placement and bypasses the wall magnet. Preview,
+commit and drag share the same surface resolver. Furniture is decor:
 it has no entity, state, room aggregation, collision model or automatic
 binding to later wall edits, and already saved coordinates are never migrated.
 

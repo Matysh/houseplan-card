@@ -218,6 +218,51 @@ export function boxAnchors(box: DecorBox): SnapGeometry {
   };
 }
 
+/**
+ * Translate one persisted decor shape by a render-space keyboard delta.
+ *
+ * This deliberately does not know about grid or wall snapping: callers pass
+ * the exact visible step and the helper only converts coordinate systems and
+ * applies one rigid canvas-bound translation. `null` means a boundary no-op.
+ */
+export function nudgeDecorShape(
+  shape: DecorShape,
+  renderDx: number,
+  renderDy: number,
+  canvasW: number,
+  canvasH: number,
+  limit: number,
+): DecorShape | null {
+  if (![renderDx, renderDy, canvasW, canvasH, limit].every(Number.isFinite)
+      || !(canvasW > 0) || !(canvasH > 0) || !(limit > 0)) return null;
+  let points: number[][];
+  if (shape.kind === 'line') {
+    points = [[shape.x1, shape.y1], [shape.x2, shape.y2]];
+  } else if (shape.kind === 'text') {
+    points = [[shape.x, shape.y]];
+  } else {
+    points = boxCorners(shape);
+  }
+  if (!points.length || points.some((point) => !point.slice(0, 2).every(Number.isFinite))) return null;
+  const xs = points.map((point) => point[0]), ys = points.map((point) => point[1]);
+  const minX = Math.min(...xs), maxX = Math.max(...xs);
+  const minY = Math.min(...ys), maxY = Math.max(...ys);
+  const wantedX = renderDx / canvasW, wantedY = renderDy / canvasH;
+  const dx = wantedX > 0
+    ? Math.min(wantedX, Math.max(0, limit - maxX))
+    : Math.max(wantedX, Math.min(0, -limit - minX));
+  const dy = wantedY > 0
+    ? Math.min(wantedY, Math.max(0, limit - maxY))
+    : Math.max(wantedY, Math.min(0, -limit - minY));
+  if (!dx && !dy) return null;
+  if (shape.kind === 'line') return {
+    ...shape,
+    x1: shape.x1 + dx, y1: shape.y1 + dy,
+    x2: shape.x2 + dx, y2: shape.y2 + dy,
+  };
+  return { ...shape, x: shape.x + dx, y: shape.y + dy };
+}
+
 /** Resize an oriented box about the opposite corner. */
 export function resizeDecorBox(
   orig: DecorBox,

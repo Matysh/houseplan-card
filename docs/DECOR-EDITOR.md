@@ -16,7 +16,7 @@ light routing, device state or Home Assistant actions.
 | Physical values | Stroke and text sizes are stored in centimetres; the UI shows cm/in for small values and m/ft for object dimensions. |
 | Undo | Decor and backdrop use the same named 50-command stack as plan geometry. |
 | Cancel | `Esc` restores the state at the start of an active drag/draw/resize/rotate gesture. A completed gesture is reverted with Undo. |
-| Selection | One click selects; drag moves; the selected object has one common transform frame; double click opens all editable properties. |
+| Selection | One click selects; drag moves; Arrow keys move the selected decor by one visible grid cell without re-running magnets; the selected object has one common transform frame; double click opens all editable properties. |
 | Scale | Corner drag preserves aspect ratio. Hold `Shift` for independent axes. Furniture and custom images also have four one-axis middle handles and may cross the fixed edge to mirror. |
 | Rotation | Ordinary decor uses 5° steps by default and `Shift` for free rotation. Furniture and custom images are free by default and `Shift` snaps to 45°. Lines use endpoint handles instead of a rotation handle. |
 | Magnet targets | Only other decor objects and room contours: corners, edge centres, centres and edges. The image, devices and openings are excluded. |
@@ -113,6 +113,13 @@ only to the Plan backdrop tool.
 shared history. `Ctrl+Shift+Z` and `Ctrl+Y` obey the same transaction boundary:
 the first invocation cancels a live gesture, the next redoes. Native text-field
 history wins while focus is inside an input.
+
+With **Select** active, each Arrow key moves any selected line, shape, text,
+furniture or custom image by one current grid cell along the canvas axes.
+`Shift` does not accelerate this command. The move preserves any existing
+off-grid remainder and deliberately bypasses decor and wall magnets, so it can
+fine-tune furniture away from a wall. Each keydown is one named Undo step;
+controls, dialogs and live pointer gestures keep their own Arrow behaviour.
 
 ## Code ownership
 

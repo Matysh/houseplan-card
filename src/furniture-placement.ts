@@ -105,7 +105,13 @@ export function snapFurnitureToWall(
         const side = (intentPoint[0] - axisPoint.x) * normal[0]
           + (intentPoint[1] - axisPoint.y) * normal[1];
         if (side > tieEps) sideScore = 2;
-        else if (side < -tieEps) sideScore = -2;
+        else if (side < -tieEps) {
+          // Paired faces of an exterior wall are strictly one-sided. Without
+          // this eligibility guard the nearer face could still pull furniture
+          // through the masonry; shared/zero walls retain their old resolver.
+          if (surface.roomSide) continue;
+          sideScore = -2;
+        }
         else if (preferred) sideScore = normal[0] * preferred[0] + normal[1] * preferred[1];
       }
     } else {
