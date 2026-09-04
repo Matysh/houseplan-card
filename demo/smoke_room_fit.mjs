@@ -147,6 +147,68 @@ const out = await page.evaluate(async () => {
   result.areaLinkSuppressesRoomFit = JSON.stringify(c._view) === beforeLink
     && c._roomPointer === null && c._roomFocus === null;
 
+  const stage = root.querySelector('.stage');
+  const base = c._baseVb();
+  const moveAway = async () => {
+    c._doubleFit.clear();
+    c._applyView(2, base[0] + base[2] * 0.65, base[1] + base[3] * 0.4);
+    await c.updateComplete;
+  };
+  await moveAway();
+  c._fitAll('fit');
+  await waitCamera();
+  const toolbarTarget = JSON.stringify({ zoom: c._zoom, view: c._view });
+
+  await moveAway();
+  c._showFar = false;
+  c._frame = null;
+  c._roomFocus = { spaceId: 'fit-floor', roomId: 'outer' };
+  const beforeFirstTap = JSON.stringify({ zoom: c._zoom, view: c._view });
+  let firstTapUpdates = 0;
+  const requestUpdate = c.requestUpdate;
+  c.requestUpdate = (...args) => { firstTapUpdates++; return requestUpdate.apply(c, args); };
+  pointer(stage, 'pointerdown', 44901, 400, 500);
+  pointer(stage, 'pointerup', 44901, 401, 500);
+  c.requestUpdate = requestUpdate;
+  result.firstBackgroundTapIsPassive = firstTapUpdates === 0
+    && JSON.stringify({ zoom: c._zoom, view: c._view }) === beforeFirstTap;
+  pointer(stage, 'pointerdown', 44902, 650, 500);
+  pointer(stage, 'pointerup', 44902, 651, 500);
+  result.normalViewUsesDoubleTapReason = c._cameraTransition.state?.reason === 'double-tap';
+  await waitCamera();
+  result.normalViewDoubleClickMatchesFitAll = c._showFar === true && c._roomFocus === null
+    && JSON.stringify({ zoom: c._zoom, view: c._view }) === toolbarTarget;
+
+  await moveAway();
+  pointer(stage, 'pointerdown', 44903, 400, 500, { pointerType: 'touch' });
+  pointer(stage, 'pointerup', 44903, 400, 500, { pointerType: 'touch' });
+  pointer(stage, 'pointerdown', 44904, 500, 500, { pointerType: 'pen' });
+  pointer(stage, 'pointerup', 44904, 500, 500, { pointerType: 'pen' });
+  result.mixedModalitiesDoNotPair = c._zoom === 2 && !c._cameraTransition.active;
+  pointer(stage, 'pointerdown', 44905, 550, 500, { pointerType: 'pen' });
+  pointer(stage, 'pointerup', 44905, 550, 500, { pointerType: 'pen' });
+  await waitCamera();
+  result.penPairUsesSameFitAll = JSON.stringify({ zoom: c._zoom, view: c._view }) === toolbarTarget;
+
+  await moveAway();
+  pointer(stage, 'pointerdown', 44906, 400, 500, { pointerType: 'touch' });
+  pointer(stage, 'pointerup', 44906, 400, 500, { pointerType: 'touch' });
+  pointer(stage, 'pointerdown', 44907, 400, 500, { pointerType: 'touch' });
+  pointer(stage, 'pointercancel', 44907, 400, 500, { pointerType: 'touch' });
+  pointer(stage, 'pointerdown', 44908, 400, 500, { pointerType: 'touch' });
+  pointer(stage, 'pointerup', 44908, 400, 500, { pointerType: 'touch' });
+  result.cancelDisarmsThePreviousTap = c._zoom === 2 && !c._cameraTransition.active;
+
+  c._mode = 'decor';
+  c._doubleFit.clear();
+  pointer(stage, 'pointerdown', 44909, 400, 500);
+  pointer(stage, 'pointerup', 44909, 400, 500);
+  pointer(stage, 'pointerdown', 44910, 400, 500);
+  pointer(stage, 'pointerup', 44910, 400, 500);
+  result.editorBackgroundDoesNotFit = c._zoom === 2 && !c._cameraTransition.active;
+  c._mode = 'view';
+  c._doubleFit.clear();
+
   pointer(roomNode(), 'pointerdown', 15205, 500, 300);
   pointer(roomNode(), 'pointermove', 15205, 520, 300);
   pointer(roomNode(), 'pointerup', 15205, 520, 300);
@@ -195,7 +257,6 @@ const out = await page.evaluate(async () => {
     pointerType: 'touch', isPrimary: true, button: 0,
     buttons: type === 'pointerdown' ? 1 : 0, clientX: 450, clientY: 300,
   }));
-  kiosk._lastTap = 152;
   for (const id of [15208, 15209]) {
     kioskPointer(kioskRoom, 'pointerdown', id);
     kioskPointer(kioskRoom, 'pointerup', id);
@@ -204,13 +265,17 @@ const out = await page.evaluate(async () => {
       await new Promise((resolve) => requestAnimationFrame(resolve));
     }
   }
-  result.kioskRoomTapDoesNotEnterDoubleTap = kiosk._lastTap === 152
-    && kiosk._roomFocus?.roomId === 'room-a';
-  kiosk._clearRoomFocus(true);
-  kiosk._applyView(2);
-  kiosk._lastTap = Date.now() - 100;
+  const beforeKioskBackground = JSON.stringify({ zoom: kiosk._zoom, view: kiosk._view });
   kioskPointer(kiosk._stageEl, 'pointerdown', 15210);
   kioskPointer(kiosk._stageEl, 'pointerup', 15210);
+  result.kioskRoomTapDoesNotEnterDoubleTap = kiosk._roomFocus?.roomId === 'room-a'
+    && JSON.stringify({ zoom: kiosk._zoom, view: kiosk._view }) === beforeKioskBackground;
+  kiosk._clearRoomFocus(true);
+  kiosk._applyView(2);
+  for (const id of [15211, 15212]) {
+    kioskPointer(kiosk._stageEl, 'pointerdown', id);
+    kioskPointer(kiosk._stageEl, 'pointerup', id);
+  }
   const resetStarted = performance.now();
   while (kiosk._cameraTransition.active && performance.now() - resetStarted < 1200) {
     await new Promise((resolve) => requestAnimationFrame(resolve));

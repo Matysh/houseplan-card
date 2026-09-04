@@ -252,7 +252,8 @@ produce a zero-sized SVG `viewBox`.
 * **Zoom out** — `MIN_ZOOM = 1/3`: you can see three times the content
   frame and no further. Empty space beyond that is not information.
 * **Discrete camera motion** (#82) — wheel, `−`/`+`, Fit all, the home arrow
-  and kiosk double-tap interpolate the existing exact camera target for
+  and the free-background double-click/tap in View or kiosk interpolate the
+  existing exact camera target for
   160–220 ms with `cubic-bezier(0.2, 0.7, 0.2, 1)`. Zoom is logarithmic and
   the world centre is linear; the final frame is the same clamped `viewBox`
   the immediate path used before #82. Rapid wheel input retargets one RAF from
@@ -293,6 +294,13 @@ produce a zero-sized SVG `viewBox`.
   camera input, Fit all/home, mode/space/projection changes, structural
   adoption, hidden state or disconnect. In kiosk, room-owned taps never enter
   the free-background double-tap sequence.
+* **Free-background fit (#449).** Two clean primary clicks/taps within 350 ms
+  on the stage background invoke the same Fit all command in View and kiosk.
+  Room, device, vacuum, opening, link and control paths disarm the sequence;
+  so do pan, pinch, swipe, long press, cancellation, editor/mode/space/projection
+  changes and lifecycle adoption. The new recognizer adds no timer or render on
+  the first tap. Mouse, touch and pen sequences are separate; editors do not
+  expose this shortcut.
 * **The lock is final, at the release too** (audit DEV-1DA1-02). The
   release used to ask `swipeTarget()` again from the raw start→end
   vector, ignoring the lock — so a *curved* gesture (a short vertical
@@ -302,7 +310,7 @@ produce a zero-sized SVG `viewBox`.
   'pan'` now means no floor change, whatever the overall vector ends up
   looking like; only a gesture locked as `swipe` may reach
   `swipeTarget()`, and it never pans on the way. A motionless tap locks
-  nothing, so the double-tap zoom reset is untouched.
+  nothing, so a clean free-background double-tap remains available.
 * **"Home is that way" arrow** — when the content frame is entirely
   outside the current view, a small pointer appears at the view edge
   in the frame's direction. Clicking it fits the content. Cheap

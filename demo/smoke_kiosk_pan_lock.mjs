@@ -30,7 +30,8 @@ const out = await page.evaluate(async () => {
   const sr = k.shadowRoot || k.renderRoot;
   const stage = sr.querySelector('.stage');
   const fire = (type, id, x, y) => stage.dispatchEvent(new PointerEvent(type, {
-    bubbles: true, composed: true, cancelable: true, pointerId: id, clientX: x, clientY: y,
+    bubbles: true, composed: true, cancelable: true, pointerId: id,
+    pointerType: 'touch', isPrimary: true, button: 0, clientX: x, clientY: y,
   }));
   o.kioskHasSeveralSpaces = k._model.length > 1;
 
@@ -108,9 +109,10 @@ const out = await page.evaluate(async () => {
   await home();
   k._applyView(2);
   await k.updateComplete;
-  k._lastTap = Date.now() - 100;
-  fire('pointerdown', 58, 500, 300);
-  fire('pointerup', 58, 501, 300);
+  for (const id of [58, 60]) {
+    fire('pointerdown', id, 500, 300);
+    fire('pointerup', id, 501, 300);
+  }
   const resetStarted = performance.now();
   do { await new Promise((resolve) => requestAnimationFrame(resolve)); }
   while (k._cameraTransition.active && performance.now() - resetStarted < 1000);

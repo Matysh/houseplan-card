@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Double-clicking or double-tapping free plan background in View or kiosk now
+  runs the same **Fit all** action as the toolbar button; rooms, devices,
+  openings and editor surfaces keep their own gestures
+  ([#449](https://github.com/Matysh/houseplan-card/issues/449)).
 - Zigbee2MQTT topology refresh now accepts the real camelCase raw network-map
   fields (while retaining snake_case compatibility), so valid maps populate
   devices and links instead of failing as unsupported data

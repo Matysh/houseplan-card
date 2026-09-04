@@ -28,6 +28,8 @@ On phones, tablets, wall panels and HA Companion apps, the ordinary View must:
 
 - render the plan and current states correctly;
 - support convenient pan, pinch zoom and space switching;
+- fit the whole plan after two clean taps on free scene background, while one
+  tap on a room keeps the immediate room-fit action;
 - provide a touch path for essential information that desktop exposes through
   hover;
 - open and close View dialogs without clipping their essential content or

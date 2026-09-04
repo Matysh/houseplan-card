@@ -1476,8 +1476,8 @@ const MUTANT_DEFINITIONS = [
       + 'the room camera command (#152 AC6)',
     patches: [{
       file: 'src/room-fit.ts',
-      find: '    if (node.matches(ROOM_FIT_INTERACTIVE_OWNER)) return null;',
-      replace: '    if (node.matches(ROOM_FIT_INTERACTIVE_OWNER)) continue;',
+      find: "    if (pathMatches(node, ROOM_FIT_INTERACTIVE_OWNER)) return { kind: 'interactive' };",
+      replace: "    if (pathMatches(node, ROOM_FIT_INTERACTIVE_OWNER)) continue;",
     }],
   },
   {
@@ -1487,8 +1487,8 @@ const MUTANT_DEFINITIONS = [
       + 'is released over the original room (#152 AC7)',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: '        this._roomPointer = null;\n        this._suppressClick = true;',
-      replace: '        this._suppressClick = true;',
+      find: '        this._roomPointer = null;\n        this._doubleFit.clear();\n        this._suppressClick = true;',
+      replace: '        this._doubleFit.clear();\n        this._suppressClick = true;',
     }, {
       file: 'src/room-fit.ts',
       find: '  if (!candidate || blocked || candidate.pointerId !== pointerId',
@@ -5671,6 +5671,50 @@ const MUTANT_DEFINITIONS = [
       file: 'src/zigbee-topology-runtime.ts',
       find: '        try { unsubscribe(); } catch { /* cleanup is best effort */ }',
       replace: '        try { void unsubscribe; } catch { /* cleanup is best effort */ }',
+    }],
+  },
+  {
+    id: 'double-fit-free-background-owner-removed',
+    guard: 'node --test --test-name-pattern="#449 only" test/room-fit.test.mjs',
+    because: 'room, device and opening owners must never become a half of the free-background '
+      + 'double-fit sequence (#449 AC4–AC5)',
+    patches: [{
+      file: 'src/room-fit.ts',
+      find: "  if (!modality || input.mode !== 'view' || input.owner.kind !== 'background'",
+      replace: "  if (!modality || input.mode !== 'view' || false",
+    }],
+  },
+  {
+    id: 'double-fit-navigation-block-ignored',
+    guard: 'node --test --test-name-pattern="#449 moved" test/room-fit.test.mjs',
+    because: 'a pan, pinch, swipe, long press or cancelled pointer must disarm the sequence '
+      + 'instead of completing fit-all (#449 AC6)',
+    patches: [{
+      file: 'src/room-fit.ts',
+      find: "      || input.blocked || candidate.pointerId !== input.pointerId",
+      replace: '      || candidate.pointerId !== input.pointerId',
+    }],
+  },
+  {
+    id: 'double-fit-editor-mode-enabled',
+    guard: 'node --test --test-name-pattern="#449 only" test/room-fit.test.mjs',
+    because: 'the shortcut belongs only to View and kiosk; editor double-click contracts must '
+      + 'remain untouched (#449 AC7)',
+    patches: [{
+      file: 'src/room-fit.ts',
+      find: "!modality || input.mode !== 'view' || input.owner.kind !== 'background'",
+      replace: "!modality || input.owner.kind !== 'background'",
+    }],
+  },
+  {
+    id: 'double-fit-bypasses-canonical-fit-all',
+    guard: 'node demo/smoke_room_fit.mjs',
+    because: 'the gesture must share the toolbar command, including far-object framing and '
+      + 'room-focus cleanup, rather than resetting only camera zoom (#449 AC1, AC9)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: "    if (doubleFit) this._fitAll('double-tap');",
+      replace: "    if (doubleFit) this._resetZoom('double-tap');",
     }],
   },
 ];

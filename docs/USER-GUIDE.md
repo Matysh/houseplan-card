@@ -242,7 +242,8 @@ objects; each space keeps its local View viewport.
 
 | Scenario | Mouse | Touch View | Touch editors | Keyboard |
 |---|---|---|---|---|
-| Zoom and pan | Wheel; drag empty space; `−`/`+` | Pinch; drag; double-tap resets kiosk | Available but precision is not guaranteed | — |
+| Zoom and pan | Wheel; drag empty space; `−`/`+`; double-click free background to Fit all | Pinch; drag; double-tap free background to Fit all | Available but precision is not guaranteed; no Fit-all double-tap | — |
+| Room | A clean click fits the room with 10% margins | One tap fits the room; repeated room taps never become Fit all | — | `Enter`/`Space` on a visible room label |
 | Change space | Click a tab | Tap; kiosk swipe at 1:1 | Tap a tab | — |
 | Device | Click/double-click per mode | Tap; safe actions equal desktop | Drag/properties are best effort | `Esc` closes the top surface |
 | Walls drawing or precise drag | Full contract | Not applicable | Best effort; use desktop for Resize and exact nodes | `Shift` changes magnet/angle; `Esc` finishes a Walls chain or cancels the current precise drag |
@@ -252,8 +253,9 @@ objects; each space keeps its local View viewport.
 At zoom above 1:1 a horizontal kiosk gesture pans instead of changing space.
 Any manual kiosk operation pauses auto-cycle for 60 seconds.
 
-Wheel, `−`/`+`, **Fit all**, the return arrow and kiosk double-tap use a short
-smooth camera transition. Rapid wheel input changes the current destination
+Wheel, `−`/`+`, **Fit all**, the return arrow and a free-background
+double-click/tap in View or kiosk use a short smooth camera transition. Rapid
+wheel input changes the current destination
 instead of building a queue. Pinch and pan stay directly under the fingers.
 With the operating system's reduced-motion preference enabled, every zoom
 command is immediate.

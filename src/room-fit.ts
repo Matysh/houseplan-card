@@ -28,6 +28,67 @@ export interface RoomFitGestureCandidate {
   roomId: string;
 }
 
+export type DoubleFitPointerModality = 'mouse' | 'touch' | 'pen';
+
+export interface DoubleFitPointerCandidate {
+  pointerId: number;
+  spaceId: string;
+  modality: DoubleFitPointerModality;
+  x: number;
+  y: number;
+}
+
+export interface DoubleFitTapSequence {
+  at: number;
+  spaceId: string;
+  modality: DoubleFitPointerModality;
+}
+
+export type PlanGestureOwner =
+  | { kind: 'background' }
+  | { kind: 'room'; roomId: string }
+  | { kind: 'interactive' }
+  | { kind: 'outside' };
+
+export interface DoubleFitPointerDownInput {
+  pointerId: number;
+  pointerType: string;
+  isPrimary: boolean;
+  button: number;
+  spaceId: string;
+  mode: string;
+  owner: PlanGestureOwner;
+  blocked: boolean;
+  x: number;
+  y: number;
+}
+
+export interface DoubleFitPointerUpInput {
+  pointerId: number;
+  spaceId: string;
+  mode: string;
+  owner: PlanGestureOwner;
+  blocked: boolean;
+  x: number;
+  y: number;
+  now: number;
+}
+
+export interface DoubleFitResult {
+  sequence: DoubleFitTapSequence | null;
+  trigger: boolean;
+}
+
+interface DoubleFitPointerEventLike {
+  pointerId: number;
+  pointerType: string;
+  isPrimary: boolean;
+  button: number;
+  clientX: number;
+  clientY: number;
+  composedPath: () => readonly unknown[];
+}
+
 interface RoomFitPathNode {
   matches?: (selector: string) => boolean;
   getAttribute?: (name: string) => string | null;
@@ -36,8 +97,43 @@ interface RoomFitPathNode {
 const ROOM_FIT_INTERACTIVE_OWNER = [
   '.dev', '.vacpuck', '.oplock', '.op-hit', '.opening', '.rlgo',
   'a', 'button', 'input', 'select', 'textarea',
-  '[contenteditable="true"]', '[data-room-fit-block]', '[role="link"]', '[role="button"]',
+  '[contenteditable]:not([contenteditable="false"])',
+  '[data-room-fit-block]', '[role="link"]', '[role="button"]',
 ].join(',');
+
+export const DOUBLE_FIT_WINDOW_MS = 350;
+/** Existing kiosk clean-tap / stage pan-lock boundary. */
+export const STAGE_TAP_DISTANCE_PX = 8;
+
+const pathMatches = (node: RoomFitPathNode, selector: string): boolean => {
+  try {
+    return typeof node?.matches === 'function' && node.matches(selector);
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * One browser-path authority for room fit and the free-background shortcut.
+ * The first independently interactive owner wins; only a path which reaches
+ * this card's stage without one is free background.
+ */
+export function planGestureOwnerFromPath(path: readonly unknown[]): PlanGestureOwner {
+  for (const raw of path) {
+    const node = raw as RoomFitPathNode;
+    if (pathMatches(node, '.roomlabel[data-id]')) {
+      const roomId = node.getAttribute?.('data-id');
+      return roomId ? { kind: 'room', roomId } : { kind: 'interactive' };
+    }
+    if (pathMatches(node, ROOM_FIT_INTERACTIVE_OWNER)) return { kind: 'interactive' };
+    if (pathMatches(node, '[data-hp="room"][data-id]')) {
+      const roomId = node.getAttribute?.('data-id');
+      return roomId ? { kind: 'room', roomId } : { kind: 'interactive' };
+    }
+    if (pathMatches(node, '.stage')) return { kind: 'background' };
+  }
+  return { kind: 'outside' };
+}
 
 /**
  * Resolve the browser-painted room owner. The first independently interactive
@@ -45,18 +141,102 @@ const ROOM_FIT_INTERACTIVE_OWNER = [
  * role=button exception because it maps back to the same room command.
  */
 export function roomFitOwnerFromPath(path: readonly unknown[]): string | null {
-  for (const raw of path) {
-    const node = raw as RoomFitPathNode;
-    if (typeof node?.matches !== 'function') continue;
-    if (node.matches('.roomlabel[data-id]')) {
-      return node.getAttribute?.('data-id') || null;
-    }
-    if (node.matches(ROOM_FIT_INTERACTIVE_OWNER)) return null;
-    if (node.matches('[data-hp="room"][data-id]')) {
-      return node.getAttribute?.('data-id') || null;
-    }
+  const owner = planGestureOwnerFromPath(path);
+  return owner.kind === 'room' ? owner.roomId : null;
+}
+
+const pointerModality = (value: string): DoubleFitPointerModality | null =>
+  value === 'mouse' || value === 'touch' || value === 'pen' ? value : null;
+
+export function beginDoubleFitPointer(
+  input: DoubleFitPointerDownInput,
+): DoubleFitPointerCandidate | null {
+  const modality = pointerModality(input.pointerType);
+  if (!modality || input.mode !== 'view' || input.owner.kind !== 'background'
+      || input.blocked || !input.isPrimary || input.button !== 0
+      || !Number.isFinite(input.x) || !Number.isFinite(input.y)) return null;
+  return {
+    pointerId: input.pointerId,
+    spaceId: input.spaceId,
+    modality,
+    x: input.x,
+    y: input.y,
+  };
+}
+
+/** Pure release arbitration. Invalid input always disarms the previous tap. */
+export function completeDoubleFitPointer(
+  sequence: DoubleFitTapSequence | null,
+  candidate: DoubleFitPointerCandidate | null,
+  input: DoubleFitPointerUpInput,
+): DoubleFitResult {
+  if (!candidate || input.mode !== 'view' || input.owner.kind !== 'background'
+      || input.blocked || candidate.pointerId !== input.pointerId
+      || candidate.spaceId !== input.spaceId
+      || !Number.isFinite(input.x) || !Number.isFinite(input.y)
+      || !Number.isFinite(input.now)
+      || Math.abs(input.x - candidate.x) + Math.abs(input.y - candidate.y)
+        >= STAGE_TAP_DISTANCE_PX) {
+    return { sequence: null, trigger: false };
   }
-  return null;
+
+  const elapsed = sequence ? input.now - sequence.at : Number.POSITIVE_INFINITY;
+  if (sequence && sequence.spaceId === input.spaceId
+      && sequence.modality === candidate.modality
+      && elapsed >= 0 && elapsed <= DOUBLE_FIT_WINDOW_MS) {
+    return { sequence: null, trigger: true };
+  }
+  return {
+    sequence: { at: input.now, spaceId: input.spaceId, modality: candidate.modality },
+    trigger: false,
+  };
+}
+
+/** Per-card owner of the two transient halves; no timers, renders or writes. */
+export class DoubleFitGestureRecognizer {
+  private pointer: DoubleFitPointerCandidate | null = null;
+  private sequence: DoubleFitTapSequence | null = null;
+
+  clear(): void {
+    this.pointer = null;
+    this.sequence = null;
+  }
+
+  clearOutside(event: DoubleFitPointerEventLike): void {
+    let owner: PlanGestureOwner = { kind: 'outside' };
+    try { owner = planGestureOwnerFromPath(event.composedPath()); } catch { /* fail closed */ }
+    if (owner.kind === 'outside') this.clear();
+  }
+
+  pointerDown(event: DoubleFitPointerEventLike, spaceId: string, enabled: boolean): void {
+    let owner: PlanGestureOwner = { kind: 'outside' };
+    try { owner = planGestureOwnerFromPath(event.composedPath()); } catch { /* fail closed */ }
+    this.pointer = beginDoubleFitPointer({
+      pointerId: event.pointerId, pointerType: event.pointerType,
+      isPrimary: event.isPrimary, button: event.button, spaceId,
+      mode: enabled ? 'view' : 'blocked', owner, blocked: !enabled,
+      x: event.clientX, y: event.clientY,
+    });
+    if (!this.pointer) this.sequence = null;
+  }
+
+  pointerUp(
+    event: DoubleFitPointerEventLike,
+    spaceId: string,
+    enabled: boolean,
+    blocked: boolean,
+    now = Date.now(),
+  ): boolean {
+    let owner: PlanGestureOwner = { kind: 'outside' };
+    try { owner = planGestureOwnerFromPath(event.composedPath()); } catch { /* fail closed */ }
+    const result = completeDoubleFitPointer(this.sequence, this.pointer, {
+      pointerId: event.pointerId, spaceId, mode: enabled ? 'view' : 'blocked', owner,
+      blocked: blocked || !enabled, x: event.clientX, y: event.clientY, now,
+    });
+    this.pointer = null;
+    this.sequence = result.sequence;
+    return result.trigger;
+  }
 }
 
 export function acceptedRoomFitGesture(

@@ -112,7 +112,7 @@ const out = await page.evaluate(async () => {
     directBaseline(2);
     if (reason === 'home') card._fitAll('home');
     else if (reason === 'fit') card._fitAll('fit');
-    else card._resetZoom('double-tap');
+    else card._fitAll('double-tap');
     reasons[reason] = {
       liveReason: card._cameraTransition.state?.reason,
       samples: (await settle()).map((sample) => sample.zoom),

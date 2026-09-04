@@ -316,8 +316,9 @@ import {
   type CameraState, type CameraTransitionReason, type CameraTransitionState,
 } from './viewport-transition';
 import {
-  acceptedRoomFitGesture, roomFitCameraTarget, roomFitClampFrame,
-  roomFitGeometryBounds, roomFitOwnerFromPath,
+  acceptedRoomFitGesture, DoubleFitGestureRecognizer, roomFitCameraTarget,
+  roomFitClampFrame,
+  roomFitGeometryBounds, roomFitOwnerFromPath, STAGE_TAP_DISTANCE_PX,
   type RoomFitGestureCandidate,
 } from './room-fit';
 import { EditorRuntimeLoader, lazyLoadFailureMessage, type EditorRuntimeLoaderState } from './editor-runtime-loader';
@@ -1091,6 +1092,8 @@ export class HouseplanCard extends LitElement {
   private get _modeTransitionBusy(): boolean {
     return this._modeTransitionPreparing || this._modeTransition.active;
   }
+
+  private get _doubleFitEnabled(): boolean { return this._mode === 'view' && !this._vacFit && !this._modeTransitionBusy && !this._suppressClick && !this._touchSequenceMultitouch && this._continuity.state === 'steady' && !this._continuity.overlayBlocksInteraction; }
 
   private _cameraState(): CameraState {
     const view = this._viewOr(this._baseVb());
@@ -1937,7 +1940,7 @@ export class HouseplanCard extends LitElement {
   /** Session-only View intent. It is deliberately absent from warm/LS/config state. */
   private _roomFocus: { spaceId: string; roomId: string } | null = null;
   /** Pointer owner captured from the actually painted event path. */
-  private _roomPointer: RoomFitGestureCandidate | null = null;
+  private _roomPointer: RoomFitGestureCandidate | null = null; private readonly _doubleFit = new DoubleFitGestureRecognizer();
   private _pointers = new Map<number, { x: number; y: number }>();
   private _panStart: { sx: number; sy: number; vx: number; vy: number } | null = null;
   /**
@@ -2376,7 +2379,6 @@ export class HouseplanCard extends LitElement {
 
   /** The positional-`floor` warning is worth saying once, not on every drop. */
   private _tabOrderWarned = false;
-  private _lastTap = 0;
   private get _labsIso(): boolean {
     return this._labs.active.includes('iso');
   }
@@ -5663,6 +5665,7 @@ export class HouseplanCard extends LitElement {
     this._pinchStart = null;
     this._swipeStart = null;
     this._roomPointer = null;
+    this._doubleFit.clear();
   }
 
   /** Close the device card and make stale long-press state non-observable. */
@@ -6214,14 +6217,9 @@ export class HouseplanCard extends LitElement {
   }
 
   private _clearRoomFocus(pointer = false): void {
+    this._doubleFit.clear();
     this._roomFocus = null;
     if (pointer) this._roomPointer = null;
-  }
-
-  /** The rendered SVG/label event path is the same authority as hover. */
-  private _roomOwner(ev: Event): string | null {
-    if (this._mode !== 'view') return null;
-    return roomFitOwnerFromPath(ev.composedPath());
   }
 
   /** Exact finite room geometry in the current camera coordinate system. */
@@ -6265,6 +6263,7 @@ export class HouseplanCard extends LitElement {
   /** Apply or retarget one room command without introducing a second RAF owner. */
   private _fitRoom(roomId: string, animate = true): boolean {
     if (this._mode !== 'view') return false;
+    this._doubleFit.clear();
     const space = this._spaceModel();
     const room = space?.rooms.find((item) => item.id === roomId);
     if (!space || !room) {
@@ -6315,7 +6314,7 @@ export class HouseplanCard extends LitElement {
   /** «Вписать всё» (docs/CANVAS.md §8) — the toolbar button and the "home is
    *  that way" arrow share it. It fits whatever the frame currently means:
    *  the main mass, or everything once the far-objects hint has been used. */
-  private _fitAll(reason: 'fit' | 'home' = 'fit'): void {
+  private _fitAll(reason: 'fit' | 'home' | 'double-tap' = 'fit'): void {
     this._clearRoomFocus();
     this._showFar = true;
     this._frame = null;
@@ -6740,10 +6739,11 @@ export class HouseplanCard extends LitElement {
   }
 
   private _stagePointerDown(ev: PointerEvent): void {
-    const roomId = ev.isPrimary && ev.button === 0 ? this._roomOwner(ev) : null;
+    const roomId = ev.isPrimary && ev.button === 0 && this._mode === 'view' ? roomFitOwnerFromPath(ev.composedPath()) : null;
     this._roomPointer = roomId
       ? { pointerId: ev.pointerId, spaceId: this._space, roomId }
       : null;
+    this._doubleFit.pointerDown(ev, this._space, this._doubleFitEnabled);
     // The gesture that starts here freezes the animated frame and keeps it on
     // screen — so the shown zoom becomes the saved one (#396 AC1).
     this._cancelCameraTransition(false, true);
@@ -6761,6 +6761,7 @@ export class HouseplanCard extends LitElement {
           clearTimeout(this._kioskHoldTimer);
           this._kioskHoldTimer = window.setTimeout(() => {
             this._roomPointer = null;
+            this._doubleFit.clear();
             this._kioskDialog = true;
             this._swipeStart = null;
           }, 3000);
@@ -6889,6 +6890,7 @@ export class HouseplanCard extends LitElement {
       const ddy = ev.clientY - this._panStart.sy;
       if (Math.abs(ddx) + Math.abs(ddy) > 4) {
         this._roomPointer = null;
+        this._doubleFit.clear();
         this._suppressClick = true;
         clearTimeout(this._holdTimer);
         if (this._tool === 'opening') {
@@ -6905,7 +6907,7 @@ export class HouseplanCard extends LitElement {
       // there is no "the content already covers the scene" state that would
       // make a drag meaningless — `_clampView` alone decides how far you may
       // walk, at 400% and at 33% alike.
-      if (this._panLock === null && Math.abs(ddx) + Math.abs(ddy) > 8) {
+      if (this._panLock === null && Math.abs(ddx) + Math.abs(ddy) > STAGE_TAP_DISTANCE_PX) {
         this._panLock = this._swipeZone && Math.abs(ddx) > Math.abs(ddy) * 1.5 ? 'swipe' : 'pan';
         if (this._panLock === 'pan') this._clearRoomFocus();
       }
@@ -6943,11 +6945,13 @@ export class HouseplanCard extends LitElement {
       this._roomPointer,
       ev.pointerId,
       this._space,
-      this._roomPointer ? this._roomOwner(ev) : null,
+      this._roomPointer && this._mode === 'view' ? roomFitOwnerFromPath(ev.composedPath()) : null,
       this._suppressClick || !!this._pinchStart || this._panLock !== null
         || this._holdFired || this._touchSequenceMultitouch,
     );
     if (this._roomPointer?.pointerId === ev.pointerId) this._roomPointer = null;
+    const doubleFit = this._doubleFit.pointerUp(ev, this._space, this._doubleFitEnabled, !!this._pinchStart || this._panLock !== null || this._holdFired);
+    if (doubleFit) this._fitAll('double-tap');
     if (this._kiosk) {
       clearTimeout(this._kioskHoldTimer);
       const ss = this._swipeStart;
@@ -6955,12 +6959,6 @@ export class HouseplanCard extends LitElement {
       if (!acceptedRoom && ss && ss.id === ev.pointerId) {
         const dx = ev.clientX - ss.x;
         const dy = ev.clientY - ss.y;
-        // double tap (no movement) resets the zoom to 1:1
-        if (Math.abs(dx) + Math.abs(dy) < 8) {
-          const now = Date.now();
-          if (now - this._lastTap < 350) this._resetZoom('double-tap');
-          this._lastTap = now;
-        }
         // The lock is FINAL (audit DEV-1DA1-02). `_stagePointerMove` decided
         // once, on the first movement worth the name, whether this gesture is
         // a swipe or a pan — and the release may not overturn it. Until this
@@ -6969,8 +6967,8 @@ export class HouseplanCard extends LitElement {
         // 'pan', then a long horizontal sweep) dragged the plan under the
         // finger and still landed on another storey when it lifted. A pan is
         // a pan to the end: no floor change, whatever the overall vector
-        // happens to look like. A motionless tap never locks anything, so the
-        // double-tap zoom reset above is untouched.
+        // happens to look like. A motionless tap never locks anything, so it
+        // remains eligible for the shared free-background double-fit recognizer.
         const target = this._panLock === 'pan'
           ? null
           : swipeTarget(dx, dy, this._zoom, this._model.map((m) => m.id), this._space);
@@ -7015,14 +7013,14 @@ export class HouseplanCard extends LitElement {
       return;
     }
     if (this._editorRuntime?._furnPointerUp(ev)) return;
-    const viewportGestureEnded = !!this._pinchStart || !!this._panStart;
+    const viewportGestureEnded = !!this._pinchStart || this._panLock === 'pan';
     this._pointers.delete(ev.pointerId);
     if (this._pointers.size < 2) this._pinchStart = null;
     if (this._pointers.size === 0) {
       this._panStart = null;
       this._panLock = null;
       // reset click suppression on the next tick (so that a click right after a pan does not fire)
-      setTimeout(() => (this._suppressClick = false), 0);
+      if (this._suppressClick) setTimeout(() => (this._suppressClick = false), 0);
     }
     if (viewportGestureEnded && this._pointers.size === 0 && !acceptedRoom) this.requestUpdate();
     if (acceptedRoom) this._fitRoom(acceptedRoom);
@@ -7232,6 +7230,7 @@ export class HouseplanCard extends LitElement {
     }
     const pointer = ev as PointerEvent;
     this._notePointer(pointer);
+    if (ev.type === 'pointercancel' || ev.type === 'lostpointercapture') this._doubleFit.clear(); else if (ev.type === 'pointerdown') this._doubleFit.clearOutside(pointer);
     if (pointer.pointerType !== 'touch') return;
     if (ev.type === 'pointerdown') {
       this._touchContacts.set(pointer.pointerId, {
@@ -7862,7 +7861,8 @@ export class HouseplanCard extends LitElement {
 
   /** Browser/OS cancellation is an aborted transaction, never a commit. */
   private _stagePointerCancel(ev: PointerEvent): void {
-    if (this._roomPointer?.pointerId === ev.pointerId) this._roomPointer = null; if (this._editorRuntime) return this._editorRuntime._stagePointerCancel(ev);
+    if (this._roomPointer?.pointerId === ev.pointerId) this._roomPointer = null; this._doubleFit.clear();
+    if (this._editorRuntime) return this._editorRuntime._stagePointerCancel(ev);
     const viewportGestureEnded = !!this._pinchStart || !!this._panStart; this._pointers.delete(ev.pointerId);
     if (this._pointers.size < 2) this._pinchStart = null;
     if (this._pointers.size === 0) {

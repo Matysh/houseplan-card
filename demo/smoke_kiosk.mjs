@@ -22,21 +22,22 @@ const res = await page.evaluate(async () => {
   // 3) свайп при 1:1 переключает пространство (и точки показываются)
   const s0 = c._space;
   const stage = sr().querySelector('.stage');
-  stage.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, composed: true, pointerId: 1, clientX: 600, clientY: 300 }));
-  stage.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, composed: true, pointerId: 1, clientX: 450, clientY: 305 }));
+  stage.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, composed: true, pointerId: 1, pointerType: 'touch', isPrimary: true, button: 0, clientX: 600, clientY: 300 }));
+  stage.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, composed: true, pointerId: 1, pointerType: 'touch', isPrimary: true, button: 0, clientX: 450, clientY: 305 }));
   await c.updateComplete;
   out.swipeSwitches = c._space !== s0;
   out.dotsShown = !!sr().querySelector('.kioskdots');
   // 4) при зуме свайп не переключает
   c._zoom = 2; const s1 = c._space;
-  stage.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, composed: true, pointerId: 2, clientX: 600, clientY: 300 }));
-  stage.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, composed: true, pointerId: 2, clientX: 450, clientY: 305 }));
+  stage.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, composed: true, pointerId: 2, pointerType: 'touch', isPrimary: true, button: 0, clientX: 600, clientY: 300 }));
+  stage.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, composed: true, pointerId: 2, pointerType: 'touch', isPrimary: true, button: 0, clientX: 450, clientY: 305 }));
   await c.updateComplete;
   out.noSwipeZoomed = c._space === s1;
   // 5) двойной тап сбрасывает зум
-  c._lastTap = Date.now() - 100;
-  stage.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, composed: true, pointerId: 3, clientX: 500, clientY: 300 }));
-  stage.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, composed: true, pointerId: 3, clientX: 501, clientY: 300 }));
+  for (const pointerId of [3, 4]) {
+    stage.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, composed: true, pointerId, pointerType: 'touch', isPrimary: true, button: 0, clientX: 500, clientY: 300 }));
+    stage.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, composed: true, pointerId, pointerType: 'touch', isPrimary: true, button: 0, clientX: 501, clientY: 300 }));
+  }
   const resetStarted = performance.now();
   while (c._cameraTransition?.active) {
     if (performance.now() - resetStarted > 1000) throw new Error('double-tap camera transition did not settle');

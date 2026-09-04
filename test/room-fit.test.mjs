@@ -2,6 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   acceptedRoomFitGesture,
+  beginDoubleFitPointer,
+  completeDoubleFitPointer,
+  DoubleFitGestureRecognizer,
+  DOUBLE_FIT_WINDOW_MS,
+  planGestureOwnerFromPath,
   roomFitCameraTarget,
   roomFitClampFrame,
   roomFitGeometryBounds,
@@ -123,11 +128,23 @@ const pathNode = (selectors, id = null) => ({
 test('#152 browser event path is the room authority and interactive children suppress it', () => {
   const room = pathNode(['[data-hp="room"][data-id]'], 'room-a');
   const label = pathNode(['.roomlabel[data-id]', '[role="button"]'], 'room-a');
+  const stage = pathNode(['.stage']);
   assert.equal(roomFitOwnerFromPath([room]), 'room-a');
   assert.equal(roomFitOwnerFromPath([pathNode(['.rlname']), label]), 'room-a');
   assert.equal(roomFitOwnerFromPath([pathNode(['.rlgo', '[role="link"]']), label]), null);
   assert.equal(roomFitOwnerFromPath([pathNode(['.dev']), room]), null);
   assert.equal(roomFitOwnerFromPath([pathNode(['button']), room]), null);
+  assert.deepEqual(planGestureOwnerFromPath([stage]), { kind: 'background' });
+  assert.deepEqual(planGestureOwnerFromPath([room, stage]), { kind: 'room', roomId: 'room-a' });
+  assert.deepEqual(planGestureOwnerFromPath([pathNode(['.dev']), room, stage]),
+    { kind: 'interactive' });
+  assert.deepEqual(planGestureOwnerFromPath([pathNode(['button']), stage]),
+    { kind: 'interactive' });
+  assert.deepEqual(planGestureOwnerFromPath([pathNode(['.opening']), stage]),
+    { kind: 'interactive' });
+  assert.deepEqual(planGestureOwnerFromPath([pathNode(['[data-room-fit-block]']), stage]),
+    { kind: 'interactive' });
+  assert.deepEqual(planGestureOwnerFromPath([]), { kind: 'outside' });
 });
 
 test('#152 release accepts only the same pointer, space and painted room', () => {
@@ -137,4 +154,118 @@ test('#152 release accepts only the same pointer, space and painted room', () =>
   assert.equal(acceptedRoomFitGesture(candidate, 7, 'floor-b', 'room-a', false), null);
   assert.equal(acceptedRoomFitGesture(candidate, 7, 'floor-a', 'room-b', false), null);
   assert.equal(acceptedRoomFitGesture(candidate, 7, 'floor-a', 'room-a', true), null);
+});
+
+const background = { kind: 'background' };
+const down = (overrides = {}) => beginDoubleFitPointer({
+  pointerId: 1,
+  pointerType: 'mouse',
+  isPrimary: true,
+  button: 0,
+  spaceId: 'floor-a',
+  mode: 'view',
+  owner: background,
+  blocked: false,
+  x: 100,
+  y: 100,
+  ...overrides,
+});
+const up = (sequence, candidate, overrides = {}) => completeDoubleFitPointer(
+  sequence,
+  candidate,
+  {
+    pointerId: 1,
+    spaceId: 'floor-a',
+    mode: 'view',
+    owner: background,
+    blocked: false,
+    x: 101,
+    y: 100,
+    now: 1_000,
+    ...overrides,
+  },
+);
+
+test('#449 only a primary clean View press on free stage background becomes a candidate', () => {
+  assert.deepEqual(down(), {
+    pointerId: 1, spaceId: 'floor-a', modality: 'mouse', x: 100, y: 100,
+  });
+  assert.equal(down({ pointerType: 'touch' }).modality, 'touch');
+  assert.equal(down({ pointerType: 'pen' }).modality, 'pen');
+  for (const rejected of [
+    { pointerType: '' },
+    { isPrimary: false },
+    { button: 2 },
+    { mode: 'plan' },
+    { owner: { kind: 'room', roomId: 'room-a' } },
+    { owner: { kind: 'interactive' } },
+    { owner: { kind: 'outside' } },
+    { blocked: true },
+  ]) assert.equal(down(rejected), null);
+});
+
+test('#449 two clean taps within 350 ms trigger once and clear before the command', () => {
+  const first = up(null, down());
+  assert.equal(first.trigger, false);
+  assert.deepEqual(first.sequence, { at: 1_000, spaceId: 'floor-a', modality: 'mouse' });
+  const secondCandidate = down({ pointerId: 2 });
+  const second = up(first.sequence, secondCandidate, { pointerId: 2, now: 1_350 });
+  assert.deepEqual(second, { sequence: null, trigger: true });
+  assert.deepEqual(up(second.sequence, down({ pointerId: 3 }), { pointerId: 3, now: 1_351 }), {
+    sequence: { at: 1_351, spaceId: 'floor-a', modality: 'mouse' }, trigger: false,
+  });
+});
+
+test('#449 an expired tap becomes the new first tap and modalities never mix', () => {
+  const old = { at: 1_000, spaceId: 'floor-a', modality: 'mouse' };
+  const expired = up(old, down(), { now: 1_000 + DOUBLE_FIT_WINDOW_MS + 1 });
+  assert.equal(expired.trigger, false);
+  assert.equal(expired.sequence.at, 1_000 + DOUBLE_FIT_WINDOW_MS + 1);
+  const touch = up(old, down({ pointerType: 'touch' }), { now: 1_100 });
+  assert.deepEqual(touch, {
+    sequence: { at: 1_100, spaceId: 'floor-a', modality: 'touch' }, trigger: false,
+  });
+  const otherSpace = up(old, down({ spaceId: 'floor-b' }), {
+    spaceId: 'floor-b', now: 1_100,
+  });
+  assert.deepEqual(otherSpace, {
+    sequence: { at: 1_100, spaceId: 'floor-b', modality: 'mouse' }, trigger: false,
+  });
+});
+
+test('#449 moved, cancelled, multitouch, foreign-owner and editor releases disarm the pair', () => {
+  const armed = { at: 900, spaceId: 'floor-a', modality: 'mouse' };
+  const candidate = down();
+  const invalid = [
+    { pointerId: 2 },
+    { spaceId: 'floor-b' },
+    { mode: 'decor' },
+    { owner: { kind: 'room', roomId: 'room-a' } },
+    { owner: { kind: 'interactive' } },
+    { blocked: true },
+    { x: 108, y: 100 },
+  ];
+  for (const input of invalid) {
+    assert.deepEqual(up(armed, candidate, input), { sequence: null, trigger: false });
+  }
+  assert.deepEqual(up(armed, null), { sequence: null, trigger: false });
+});
+
+test('#449 recognizer instances keep independent transient sequences', () => {
+  const stage = pathNode(['.stage']);
+  const event = (pointerId) => ({
+    pointerId, pointerType: 'mouse', isPrimary: true, button: 0,
+    clientX: 10, clientY: 10, composedPath: () => [stage],
+  });
+  const first = new DoubleFitGestureRecognizer();
+  const second = new DoubleFitGestureRecognizer();
+  first.pointerDown(event(1), 'floor-a', true);
+  assert.equal(first.pointerUp(event(1), 'floor-a', true, false, 1_000), false);
+  second.pointerDown(event(2), 'floor-a', true);
+  assert.equal(second.pointerUp(event(2), 'floor-a', true, false, 1_100), false);
+  first.pointerDown(event(3), 'floor-a', true);
+  assert.equal(first.pointerUp(event(3), 'floor-a', true, false, 1_200), true);
+  second.clear();
+  second.pointerDown(event(4), 'floor-a', true);
+  assert.equal(second.pointerUp(event(4), 'floor-a', true, false, 1_250), false);
 });
