@@ -27,6 +27,7 @@ const setup = () => {
     snapshotIdentity: 'snapshot-a',
     before: { id: 'before' },
     wallUnionBefore: { path: 'old' },
+    epochBefore: 42,
   }), true);
   return { controller, beforeWalls };
 };
@@ -128,12 +129,11 @@ test('#264 exact wall profile fails closed on preview and is rechecked on finish
 test('#264 cancel restores retained masonry only for the same snapshot', () => {
   const same = setup().controller;
   assert.deepEqual(same.cancel('snapshot-a'), {
-    kind: 'cancelled', restoreWallUnion: { path: 'old' },
+    kind: 'cancelled', restoreWallUnion: { path: 'old' }, restoreEpoch: 42,
   });
   assert.deepEqual(same.cancel('snapshot-a'), { kind: 'no-op' });
   const stale = setup().controller;
   assert.deepEqual(stale.cancel('snapshot-b'), {
-    kind: 'cancelled', restoreWallUnion: null,
+    kind: 'cancelled', restoreWallUnion: null, restoreEpoch: null,
   });
 });
-

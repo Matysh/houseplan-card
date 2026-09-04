@@ -325,6 +325,7 @@ const drawn = await page.evaluate(async () => {
     },
     options: { minDim: 1, eps: 0.01 }, rooms: resizeRooms, openings: [],
     snapshotIdentity: snapshot, before: JSON.parse(snapshot), wallUnionBefore: null,
+    epochBefore: c._cfgEpoch,
   });
   c._resize.move({
     pointerId: 912, point: [687.5, 250], step: 0.5, snap: (point) => point,

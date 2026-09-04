@@ -477,7 +477,7 @@ try {
         deltas.cameraTerminalFullRenders = pinchTerminalRenders;
         deltas.cameraFullRenders = fullRenderCount - cameraBefore;
 
-        const editorLongTasks = startLongTaskWindow();
+        const editorLongTaskWindows = [];
         const editorConfigBefore = JSON.stringify(card._serverCfg);
         const editorCallsBefore = wsCalls;
         const editorPaintBefore = card._liveEditorPaintCount || 0;
@@ -499,6 +499,7 @@ try {
           clientX: editorRect.left + ((x - editorView.x) / editorView.w) * editorRect.width,
           clientY: editorRect.top + ((y - editorView.y) / editorView.h) * editorRect.height,
         });
+        let editorPartLongTasks = startLongTaskWindow();
         let partStarted = performance.now();
         let editorMoveBefore = fullRenderCount;
         for (let index = 0; index < 40; index++) {
@@ -518,6 +519,7 @@ try {
         await frame();
         editorTerminalRenders.push(fullRenderCount - editorTerminalBefore);
         editorElapsed += performance.now() - partStarted;
+        editorLongTaskWindows.push(await editorPartLongTasks.stop());
 
         card._tool = 'resize';
         card.requestUpdate();
@@ -533,6 +535,7 @@ try {
         editorStage = card.renderRoot.querySelector('.stage');
         editorRect = editorStage.getBoundingClientRect();
         editorView = card._viewOr(card._baseVb());
+        editorPartLongTasks = startLongTaskWindow();
         partStarted = performance.now();
         editorMoveBefore = fullRenderCount;
         for (let index = 0; index < 40; index++) {
@@ -554,6 +557,7 @@ try {
         await frame();
         editorTerminalRenders.push(fullRenderCount - editorTerminalBefore);
         editorElapsed += performance.now() - partStarted;
+        editorLongTaskWindows.push(await editorPartLongTasks.stop());
 
         card._setMode('decor', false);
         card._decorTool = 'select';
@@ -582,6 +586,7 @@ try {
         card._dtStart(decorPointer(cornerX, cornerY), 'scale', [1, 1]);
         await card.updateComplete;
         await frame();
+        editorPartLongTasks = startLongTaskWindow();
         partStarted = performance.now();
         editorMoveBefore = fullRenderCount;
         for (let index = 0; index < 40; index++) {
@@ -595,8 +600,14 @@ try {
         await frame();
         editorTerminalRenders.push(fullRenderCount - editorTerminalBefore);
         editorElapsed += performance.now() - partStarted;
+        editorLongTaskWindows.push(await editorPartLongTasks.stop());
         timings.editorSeriesMs = editorElapsed;
-        interactionLongTasks.editorSeries = await editorLongTasks.stop();
+        interactionLongTasks.editorSeries = {
+          supported: editorLongTaskWindows.every((window) => window.supported),
+          count: editorLongTaskWindows.reduce((sum, window) => sum + window.count, 0),
+          maxMs: Math.max(0, ...editorLongTaskWindows.map((window) => window.maxMs)),
+          totalMs: editorLongTaskWindows.reduce((sum, window) => sum + window.totalMs, 0),
+        };
         deltas.editorMoveFullRenders = editorMoveRenders;
         deltas.editorTerminalFullRenders = editorTerminalRenders;
         deltas.editorLivePaints = (card._liveEditorPaintCount || 0) - editorPaintBefore;

@@ -668,6 +668,7 @@ export class HouseplanCard extends LitElement {
       );
       if (!render) return;
     }
+    if (name !== undefined) this._terminalFrame = 0;
     if (this._editorRuntime?._routeLiveEditorUpdate(name, oldValue)) return;
     this._liveRt?.clear();
     super.requestUpdate(name, oldValue, options);
@@ -3797,6 +3798,7 @@ export class HouseplanCard extends LitElement {
   private _cfgEpoch = 0;
   /** Exact settings-only Area lifecycle replacement which may reuse geometry. */
   private _cfgEpochPreservedConfig: ServerConfig | null = null;
+  private _terminalFrame: 0 | 1 | 2 = 0; // 1=restored cancel, 2=deferred HA
   private _modelCache: { key: string; model: SpaceModel[] } | null = null;
   private _emptySpaceStateActive = false;
   private _decorSnapCache: {
@@ -4516,7 +4518,7 @@ export class HouseplanCard extends LitElement {
   private _liveVp(now = false): void { this._liveRt ? this._liveRt.viewport(now) : this.requestUpdate(); }
   private _syncLiveHover(): void { this._liveRt ? this._liveRt.hover() : this.requestUpdate(); }
   /** Bypass live routing so a gesture terminal publishes the last HA frame. */
-  private _flushHa(): void { if (this._liveRt?.take()) super.requestUpdate(); }
+  private _flushHa(): void { if (this._liveRt?.take()) { this._terminalFrame = 2; super.requestUpdate(); } }
   private _onHaRegistryUpdate = (): void => {
     const snapshot = haRegistrySnapshot(this.hass);
     if (snapshot.revision === this._haRegistryRev && this._devices.length) return;
@@ -7787,10 +7789,9 @@ export class HouseplanCard extends LitElement {
   }
 
   /** #329 П1-П5 over one space. Pure input, no side effects. */
-  private _junctionLimitViolations(
-    config: any, spaceId: string, sharedGeometry?: any,
-  ): JunctionLimitViolation[] {
-    return this._editorRuntimeOrThrow()._junctionLimitViolations(config, spaceId, sharedGeometry);
+  private _junctionLimitViolations(config: any, spaceId: string, sharedGeometry?: any,
+    roomIds?: ReadonlySet<string>): JunctionLimitViolation[] {
+    return this._editorRuntimeOrThrow()._junctionLimitViolations(config, spaceId, sharedGeometry, roomIds);
   }
 
   /** Localised refusal text for the first violation a write introduces. */
@@ -8244,8 +8245,9 @@ export class HouseplanCard extends LitElement {
 
   /** Fixed-topology wall handles. Disabled geometry remains visible and
    * explains why it cannot start a gesture; the old corner scale is gone. */
-  private _renderResizeLayer(view: { x: number; y: number; w: number; h: number }): TemplateResult {
-    return this._editorRuntimeOrThrow()._renderResizeLayer(view);
+  private _renderResizeLayer(view: { x: number; y: number; w: number; h: number },
+    roomIds?: readonly string[]): TemplateResult {
+    return this._editorRuntimeOrThrow()._renderResizeLayer(view, roomIds);
   }
 
   /** Openings of the current space in render units. */
@@ -8766,7 +8768,7 @@ export class HouseplanCard extends LitElement {
     </g>` as unknown as TemplateResult;
   }
 
-  private _renderDecorLayer(): TemplateResult {
+  private _renderDecorLayer(onlyId?: string | null): TemplateResult {
     const W = NORM_W, H = this._decorH;
     const editing = this._mode === 'decor';
     const erasing = editing && this._decorTool === 'erase';
@@ -8784,7 +8786,7 @@ export class HouseplanCard extends LitElement {
     const furnitureScreenScale = this._renderProjection === 'iso' ? 1 : furniturePlanScreenScale(
       stage?.clientWidth, stage?.clientHeight, planView.w, planView.h,
     );
-    const shapes = this._decorList.map((sh) => {
+    const shapes = this._decorList.filter((sh) => onlyId === undefined || sh.id === onlyId).map((sh) => {
       const cls = 'dshape' + (editing && this._decorSel === sh.id ? ' dsel' : '');
       const style = this._decorResolvedStyle(sh);
       const strokeWidth = this._decorWidthUnits(sh);
@@ -11298,6 +11300,9 @@ export class HouseplanCard extends LitElement {
 
   private _renderBody(): TemplateResult | typeof nothing | typeof noChange {
     if (!this._config || !this.hass) return nothing;
+    const terminalFrame = this._terminalFrame;
+    this._terminalFrame = 0;
+    if (terminalFrame === 1) return noChange;
     const localeGate = this._syncDangerConfirmLocaleGate();
     if (localeGate === 'cold') return languageLoadingTemplate();
     if (localeGate === 'warm') return noChange;
@@ -13006,8 +13011,8 @@ export class HouseplanCard extends LitElement {
     return this._editorRuntimeOrThrow()._renderOpeningPlacementPreview();
   }
 
-  private _renderOpenings(disp: SpaceDisplay): TemplateResult {
-    const items = this._openingsR;
+  private _renderOpenings(disp: SpaceDisplay, onlyIds?: readonly string[]): TemplateResult {
+    const items = onlyIds ? this._openingsR.filter((item) => onlyIds.includes(item.id)) : this._openingsR;
     if (!items.length) return svg``;
     const space = this._spaceModel();
     if (!space) return svg``;

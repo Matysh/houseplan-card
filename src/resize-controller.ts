@@ -40,7 +40,7 @@ export type ResizeFinishOutcome<TPreview, TBefore> =
   | { kind: 'no-op' };
 
 export type ResizeCancelOutcome<TWallUnion> =
-  | { kind: 'cancelled'; restoreWallUnion: TWallUnion | null }
+  | { kind: 'cancelled'; restoreWallUnion: TWallUnion | null; restoreEpoch: number | null }
   | { kind: 'no-op' };
 
 export interface ResizeBeginInput<TBefore, TWallUnion> {
@@ -54,6 +54,7 @@ export interface ResizeBeginInput<TBefore, TWallUnion> {
   snapshotIdentity: string;
   before: TBefore;
   wallUnionBefore: TWallUnion | null;
+  epochBefore: number;
 }
 
 interface AcceptedPreview<TPreview, TLabels, TArtifact> {
@@ -79,6 +80,7 @@ interface ResizeSession<TPreview, TLabels, TBefore, TWallUnion, TArtifact> {
   changedRoomIds: string[];
   rejectionNotified: boolean;
   wallUnionBefore: TWallUnion | null;
+  epochBefore: number;
   accepted: AcceptedPreview<TPreview, TLabels, TArtifact> | null;
 }
 
@@ -149,6 +151,7 @@ export class ResizeController<TPreview, TLabels, TBefore, TWallUnion, TArtifact>
       changedRoomIds: [...input.plan.roomIds],
       rejectionNotified: false,
       wallUnionBefore: input.wallUnionBefore,
+      epochBefore: input.epochBefore,
       accepted: null,
     };
     return true;
@@ -273,10 +276,11 @@ export class ResizeController<TPreview, TLabels, TBefore, TWallUnion, TArtifact>
     }
     this._session = null;
     this._eligibility = null;
+    const snapshotMatches = currentSnapshotIdentity === session.snapshotIdentity;
     return {
       kind: 'cancelled',
-      restoreWallUnion: currentSnapshotIdentity === session.snapshotIdentity
-        ? session.wallUnionBefore : null,
+      restoreWallUnion: snapshotMatches ? session.wallUnionBefore : null,
+      restoreEpoch: snapshotMatches ? session.epochBefore : null,
     };
   }
 
