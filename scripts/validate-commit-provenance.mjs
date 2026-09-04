@@ -7,6 +7,23 @@ import { fileURLToPath } from 'node:url';
 const TRAILER = /^([A-Za-z][A-Za-z0-9-]*):\s*(.*?)\s*$/;
 export const ENFORCEMENT_BOUNDARY = '8e2973fa7a7cb1a80204ff95ecf3f2d7c36ed2ce';
 
+// Immutable history can only be repaired with an equally immutable, exact-SHA
+// audit record. This beta candidate changed one version-bearing golden frame
+// before the golden trailer check reached main. The following dev commit was
+// fully validated on Linux with that exact baseline tree, including a green
+// golden job. Keep the exception commit-exact so no later omission is hidden.
+export const REVIEWED_GOLDEN_PROVENANCE_EXCEPTIONS = new Map([
+  [
+    'd4dd027b0a27c3c290195cb0e504b1a44c4c2611',
+    'https://github.com/Matysh/houseplan-card/actions/runs/33760450815',
+  ],
+]);
+
+const GOLDEN_PROVENANCE_ERRORS = new Set([
+  'golden baseline commit requires one Release trailer',
+  'golden baseline commit requires one Baseline-Reviewed trailer',
+]);
+
 /** Git invokes commit-msg before it removes the editor template. Ignore the
  * standard comment/scissors suffix exactly as Git will when it records the
  * commit, while leaving ordinary prose after trailers invalid. */
@@ -61,6 +78,12 @@ export function validateCommitMessage(message, changedFiles = []) {
     }
   }
   return errors;
+}
+
+export function validateHistoricalCommit(commit, message, changedFiles = []) {
+  const errors = validateCommitMessage(message, changedFiles);
+  if (!REVIEWED_GOLDEN_PROVENANCE_EXCEPTIONS.has(commit)) return errors;
+  return errors.filter((error) => !GOLDEN_PROVENANCE_ERRORS.has(error));
 }
 
 function git(args) {
@@ -148,11 +171,11 @@ function main(argv) {
       catch { continue; }
       const parentCount = Number(git(['rev-list', '--parents', '-n', '1', commit]).split(/\s+/).length) - 1;
       if (parentCount > 1) continue;
-      validateOne(
-        commit,
-        git(['show', '-s', '--format=%B', commit]),
-        git(['diff-tree', '--root', '--no-commit-id', '--name-only', '-r', commit]).split('\n').filter(Boolean),
-      );
+      const message = git(['show', '-s', '--format=%B', commit]);
+      const files = git(['diff-tree', '--root', '--no-commit-id', '--name-only', '-r', commit])
+        .split('\n').filter(Boolean);
+      const errors = validateHistoricalCommit(commit, message, files);
+      if (errors.length) throw new Error(`${commit}:\n- ${errors.join('\n- ')}`);
     }
   }
 }

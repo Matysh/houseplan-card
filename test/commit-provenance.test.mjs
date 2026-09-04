@@ -5,6 +5,7 @@ import {
   cleanedCommitMessage,
   resolveValidationRange,
   terminalTrailers,
+  validateHistoricalCommit,
   validateCommitMessage,
 } from '../scripts/validate-commit-provenance.mjs';
 
@@ -76,4 +77,13 @@ test('golden files require exact release-review provenance', () => {
   assert.deepEqual(validateCommitMessage(
     `${base}\nRelease: v1.2.3-beta.1\nBaseline-Reviewed: https://example.test/run`, changed,
   ), []);
+});
+
+test('the audited beta.2 baseline exception is exact and golden-only', () => {
+  const changed = ['demo/golden/baselines/example.png'];
+  const message = 'Update baseline\n\nIssue: #426\nUser-Visible: no';
+  const audited = 'd4dd027b0a27c3c290195cb0e504b1a44c4c2611';
+  assert.deepEqual(validateHistoricalCommit(audited, message, changed), []);
+  assert.equal(validateHistoricalCommit(`${audited.slice(0, -1)}2`, message, changed).length, 2);
+  assert.match(validateHistoricalCommit(audited, 'Update baseline', changed)[0], /Issue/);
 });
