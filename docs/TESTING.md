@@ -3744,3 +3744,12 @@ require hands on real hardware — they remain for the human pass.
 Вторая половина правила (уменьшение ниже потолка на 250 строк тоже краснеет)
 нужна затем, что без неё вынос двух тысяч строк ничего не меняет: потолок
 остаётся прежним, и ядро дорастает до него обратно «в рамках бюджета».
+
+## Реальная raw-карта Zigbee2MQTT (#450)
+
+- [ ] **Обновить карту** на Zigbee2MQTT 1.x/2.x принимает camelCase-поля
+      `ieeeAddr` / `networkAddress` и показывает связи вместо
+      `error_invalid_payload`; сохранена совместимость со snake_case.
+- [ ] Плоские `sourceIeeeAddr` / `targetIeeeAddr` имеют приоритет над
+      вложенными концами связи, а массив `failed` не превращается в ложную
+      недоступность устройства [unit + production-shaped fixture + mutation].

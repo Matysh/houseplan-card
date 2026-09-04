@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Zigbee2MQTT topology refresh now accepts the real camelCase raw network-map
+  fields (while retaining snake_case compatibility), so valid maps populate
+  devices and links instead of failing as unsupported data
+  ([#450](https://github.com/Matysh/houseplan-card/issues/450)).
+
 ## v1.72.0-beta.1 — 2026-09-04
 
 - Hidden experiments now use one indefinite browser-local switch:

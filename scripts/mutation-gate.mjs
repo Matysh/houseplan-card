@@ -5630,6 +5630,17 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'zigbee-topology-z2m-camelcase-node-rejected',
+    guard: 'node --test --test-name-pattern="real anonymized camelCase" test/zigbee-topology.test.mjs',
+    because: 'the Zigbee2MQTT raw network-map contract uses ieeeAddr; accepting only the '
+      + 'bridge/devices snake_case spelling makes every real scan fail as invalid (#450 AC1)',
+    patches: [{
+      file: 'src/zigbee-topology.ts',
+      find: '    const ieee = normalizeIeee(record?.ieeeAddr ?? record?.ieee_address ?? record?.ieee);',
+      replace: '    const ieee = normalizeIeee(record?.ieee_address ?? record?.ieee);',
+    }],
+  },
+  {
     id: 'zigbee-topology-z2m-foreign-response-accepted',
     guard: 'node --test test/zigbee-topology.test.mjs',
     because: 'parallel Zigbee2MQTT requests share one response topic; only the matching '

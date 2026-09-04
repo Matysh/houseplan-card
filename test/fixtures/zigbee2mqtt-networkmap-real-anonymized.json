@@ -1,0 +1,68 @@
+{
+  "data": {
+    "routes": false,
+    "type": "raw",
+    "value": {
+      "links": [
+        {
+          "depth": 15,
+          "deviceType": 1,
+          "linkquality": 182,
+          "lqi": 182,
+          "relationship": 2,
+          "source": {
+            "ieeeAddr": "0xc02cedfffe000001",
+            "networkAddress": 216
+          },
+          "sourceIeeeAddr": "0xc02cedfffe000001",
+          "sourceNwkAddr": 216,
+          "target": {
+            "ieeeAddr": "0x187a3efffe000002",
+            "networkAddress": 0
+          },
+          "targetIeeeAddr": "0x187a3efffe000002"
+        },
+        {
+          "depth": 1,
+          "deviceType": 2,
+          "lqi": 97,
+          "source": {
+            "networkAddress": 43110
+          },
+          "target": {
+            "networkAddress": 216
+          }
+        }
+      ],
+      "nodes": [
+        {
+          "failed": [],
+          "friendlyName": "Coordinator",
+          "ieeeAddr": "0x187a3efffe000002",
+          "lastSeen": 1788531603120,
+          "networkAddress": 0,
+          "type": "Coordinator"
+        },
+        {
+          "failed": [],
+          "friendlyName": "Router",
+          "ieeeAddr": "0xc02cedfffe000001",
+          "lastSeen": 1788531603000,
+          "networkAddress": 216,
+          "type": "Router"
+        },
+        {
+          "failed": [
+            "routingTable"
+          ],
+          "friendlyName": "End device",
+          "ieeeAddr": "0x00158d0000000003",
+          "lastSeen": 1788531602000,
+          "networkAddress": 43110,
+          "type": "EndDevice"
+        }
+      ]
+    }
+  },
+  "status": "ok"
+}

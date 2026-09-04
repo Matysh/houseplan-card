@@ -184,10 +184,17 @@ function z2mValue(payload: unknown): unknown {
 
 function endpointIeee(value: unknown, nodeById: Map<string, string>): string | null {
   const record = recordOf(value);
-  const direct = normalizeIeee(record?.ieee_address ?? record?.ieee ?? value);
+  const direct = normalizeIeee(
+    record?.ieeeAddr ?? record?.ieee_address ?? record?.ieee ?? value,
+  );
   if (direct) return direct;
-  const id = record?.id ?? record?.network_address ?? value;
-  return id == null ? null : nodeById.get(String(id)) || null;
+  for (const id of [record?.id, record?.networkAddress, record?.network_address, value]) {
+    if (id != null) {
+      const ieee = nodeById.get(String(id));
+      if (ieee) return ieee;
+    }
+  }
+  return null;
 }
 
 /** Normalize one explicit Zigbee2MQTT raw network-map response. */
@@ -204,18 +211,22 @@ export function normalizeZ2mTopology(payload: unknown, baseTopic: string, now = 
   const nodeById = new Map<string, string>();
   for (const row of rows) {
     const record = recordOf(row);
-    const ieee = normalizeIeee(record?.ieee_address ?? record?.ieee);
+    const ieee = normalizeIeee(record?.ieeeAddr ?? record?.ieee_address ?? record?.ieee);
     if (!ieee) { warnings.push({ code: 'invalid_payload' }); continue; }
     const key = nodeKey('z2m', topic, ieee);
     nodes.set(key, { key, ieee, role: roleOf(record?.type ?? record?.device_type),
       ...(typeof record?.failed === 'boolean' ? { available: !record.failed } : {}) });
-    for (const id of [record?.id, record?.network_address]) if (id != null) nodeById.set(String(id), ieee);
+    for (const id of [record?.id, record?.networkAddress, record?.network_address]) {
+      if (id != null) nodeById.set(String(id), ieee);
+    }
   }
   const links = new Map<string, ZigbeeTopologyLink>();
   for (const row of rawLinks) {
     const record = recordOf(row);
-    const fromIeee = endpointIeee(record?.source, nodeById);
-    const toIeee = endpointIeee(record?.target, nodeById);
+    const fromIeee = normalizeIeee(record?.sourceIeeeAddr)
+      ?? endpointIeee(record?.source, nodeById);
+    const toIeee = normalizeIeee(record?.targetIeeeAddr)
+      ?? endpointIeee(record?.target, nodeById);
     if (!fromIeee || !toIeee) { warnings.push({ code: 'invalid_payload' }); continue; }
     const from = nodeKey('z2m', topic, fromIeee);
     const to = nodeKey('z2m', topic, toIeee);

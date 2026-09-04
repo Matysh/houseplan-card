@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import {
   mapTopologyNodes, normalizeIeee, normalizeZ2mTopology,
   normalizeZhaTopology, resolveTopologyHover,
@@ -10,6 +11,11 @@ import {
 import {
   readZhaTopology, refreshZ2mTopology, zigbeeTopologyRuntimeSnapshot,
 } from '../test-build/zigbee-topology-runtime.js';
+
+const z2mNetworkmapFixture = JSON.parse(readFileSync(
+  new URL('./fixtures/zigbee2mqtt-networkmap-real-anonymized.json', import.meta.url),
+  'utf8',
+));
 
 const registry = {
   revision: 1, authoritative: true, access: 'full', lastSuccess: 1,
@@ -63,19 +69,42 @@ test('ZHA normalization keeps directional observations and never infers route ed
   assert.equal(topology.obtainedAt, 123);
 });
 
-test('Z2M normalization accepts a nested raw JSON value, drops self links and preserves unknown LQI', () => {
+test('Z2M normalization accepts a real anonymized camelCase raw network map', () => {
+  const topology = normalizeZ2mTopology(z2mNetworkmapFixture, 'zigbee2mqtt', 456);
+  assert.deepEqual(topology.nodes.map(({ ieee, role, available }) => ({ ieee, role, available })), [
+    { ieee: '187a3efffe000002', role: 'coordinator', available: undefined },
+    { ieee: 'c02cedfffe000001', role: 'router', available: undefined },
+    { ieee: '00158d0000000003', role: 'end', available: undefined },
+  ]);
+  assert.ok(topology.nodes.every((node) => !Object.hasOwn(node, 'available')));
+  assert.equal(topology.links.length, 2);
+  assert.deepEqual(
+    topology.links.map((link) => link.aToB?.lqi ?? link.bToA?.lqi).sort((a, b) => a - b),
+    [97, 182],
+  );
+  assert.deepEqual(topology.warnings, []);
+});
+
+test('Z2M normalization keeps snake_case compatibility and prefers flat link IEEE fields', () => {
   const topology = normalizeZ2mTopology({ data: { value: JSON.stringify({
     nodes: [
-      { ieee_address: '00124b0000000001', type: 'Coordinator' },
+      { ieee_address: '00124b0000000001', network_address: 1, type: 'Coordinator', failed: true },
       { ieee_address: '00124b0000000002', type: 'Router' },
+      { ieee_address: '00124b0000000003', type: 'Router' },
     ],
     links: [
-      { source: { ieee_address: '00124b0000000001' }, target: { ieee_address: '00124b0000000002' }, linkquality: 'bad' },
+      { sourceIeeeAddr: '00124b0000000001', targetIeeeAddr: '00124b0000000002',
+        source: { ieee_address: '00124b0000000003' }, target: { ieee_address: '00124b0000000003' }, linkquality: 'bad' },
       { source: { ieee_address: '00124b0000000001' }, target: { ieee_address: '00124b0000000001' }, linkquality: 255 },
     ],
   }) } }, 'zigbee2mqtt', 456);
   assert.equal(topology.links.length, 1);
+  assert.deepEqual([topology.links[0].a, topology.links[0].b], [
+    'z2m:zigbee2mqtt:00124b0000000001',
+    'z2m:zigbee2mqtt:00124b0000000002',
+  ]);
   assert.equal(topology.links[0].aToB.lqi, undefined);
+  assert.equal(topology.nodes.find((node) => node.ieee === '00124b0000000001')?.available, false);
   assert.ok(topology.warnings.some((item) => item.code === 'self_link'));
 });
 
@@ -161,15 +190,19 @@ test('Z2M runtime verifies retained bridge info, correlates transaction and clea
         payload: JSON.stringify({ status: 'ok', transaction: 'foreign' }) });
       queueMicrotask(() => listeners.get('zigbee2mqtt/bridge/response/networkmap')?.({
         retain: false,
-        payload: JSON.stringify({ status: 'ok', transaction: request.transaction, data: { value: {
-          nodes: [{ ieee_address: '00124b0000000001', type: 'Coordinator' }], links: [],
-        } } }),
+        payload: JSON.stringify({
+          ...z2mNetworkmapFixture,
+          transaction: request.transaction,
+        }),
       }));
     },
   };
   await refreshZ2mTopology(hass, 'zigbee2mqtt', 100);
   assert.equal(cleanups, 2);
-  assert.equal(zigbeeTopologyRuntimeSnapshot(hass).states['z2m:zigbee2mqtt'].phase, 'ready');
+  const snapshot = zigbeeTopologyRuntimeSnapshot(hass);
+  assert.equal(snapshot.states['z2m:zigbee2mqtt'].phase, 'ready');
+  assert.equal(snapshot.topologies[0].nodes.length, 3);
+  assert.equal(snapshot.topologies[0].links.length, 2);
 });
 
 test('Z2M runtime rejects a malformed response immediately instead of timing out', async () => {
