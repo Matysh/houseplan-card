@@ -111,6 +111,22 @@ const out = await page.evaluate(async () => {
   result.keyboardUsesSameCommand = c._roomFocus?.roomId === 'room-a'
     && (root.activeElement === label || document.activeElement === label);
 
+  const editorLabelsArePassive = [];
+  for (const mode of ['devices', 'decor']) {
+    c._mode = mode;
+    c.requestUpdate();
+    await c.updateComplete;
+    const editorLabel = root.querySelector('.roomlabel[data-id="room-a"]');
+    editorLabelsArePassive.push(editorLabel
+      && !editorLabel.hasAttribute('role')
+      && !editorLabel.hasAttribute('tabindex')
+      && !editorLabel.hasAttribute('aria-label'));
+  }
+  result.editorsDoNotExposeRoomAction = editorLabelsArePassive.every(Boolean);
+  c._mode = 'view';
+  c.requestUpdate();
+  await c.updateComplete;
+
   c._resetZoom(); await waitCamera();
   c._clearRoomFocus(true);
   const currentLabel = root.querySelector('.roomlabel[data-id="room-a"]');

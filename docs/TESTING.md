@@ -3728,7 +3728,8 @@ require hands on real hardware — they remain for the human pass.
       Скрытая/безымянная подпись не создаёт невидимый tab stop.
 - [ ] Pure proofs: `node --test test/room-fit.test.mjs`; полный cycle:
       `npm run typecheck`, `npm test`, `npm run build`. Browser matrix и
-      мутации room ownership выполняются перед бетой.
+      мутации room ownership и session-only zoom persistence выполняются перед
+      бетой.
 
 ## Ядра фронтенда растут только осознанно (#425, заменяет #34)
 

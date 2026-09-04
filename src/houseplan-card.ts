@@ -6943,7 +6943,7 @@ export class HouseplanCard extends LitElement {
       this._roomPointer,
       ev.pointerId,
       this._space,
-      this._roomOwner(ev),
+      this._roomPointer ? this._roomOwner(ev) : null,
       this._suppressClick || !!this._pinchStart || this._panLock !== null
         || this._holdFired || this._touchSequenceMultitouch,
     );
@@ -12800,11 +12800,11 @@ export class HouseplanCard extends LitElement {
     const areaLinkInteractive = !this._markup;
     return html`<div class="roomlabel ${rows.length ? 'card' : ''}"
       data-hp="room-label" data-id=${r.id || nothing} data-area=${r.area || nothing}
-      role=${!this._markup ? 'button' : nothing}
-      tabindex=${!this._markup ? '0' : nothing}
-      aria-label=${!this._markup ? this._t('room.fit_action', { name: r.name || '' }) : nothing}
+      role=${this._mode === 'view' ? 'button' : nothing}
+      tabindex=${this._mode === 'view' ? '0' : nothing}
+      aria-label=${this._mode === 'view' ? this._t('room.fit_action', { name: r.name || '' }) : nothing}
       style="left:${left}%;top:${top}%;color:${disp.color};opacity:${op};--rl-scale:${k};--rl-space:${disp.cardFontScale};--rl-name:${clampScale(r.settings?.name_scale)};--rl-meta:${clampScale(r.settings?.label_scale)}"
-      @keydown=${!this._markup && r.id
+      @keydown=${this._mode === 'view' && r.id
         ? (e: KeyboardEvent) => this._roomLabelKey(e, r.id!) : nothing}
       @pointerdown=${this._markup
         ? (e: PointerEvent) => this._labelDown(e, r, space.id) : nothing}

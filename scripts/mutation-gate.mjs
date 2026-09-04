@@ -1519,6 +1519,21 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'room-fit-persists-zoom',
+    guard: 'node demo/smoke_room_fit.mjs',
+    because: 'room focus is session-only and must not leak its zoom into LS_ZOOM on '
+      + 'completion or cancellation (#152 AC15)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: "    if (state.reason !== 'room') this._saveZoom();",
+      replace: '    this._saveZoom();',
+    }, {
+      file: 'src/houseplan-card.ts',
+      find: "    if (presentedZoom !== undefined && reason !== 'room') this._saveZoom();",
+      replace: '    if (presentedZoom !== undefined) this._saveZoom();',
+    }],
+  },
+  {
     id: 'camera-anchor-from-presented',
     guard: 'node demo/smoke_smooth_zoom.mjs',
     because: 'reading the anchor from the lagging frame walks the point under '
