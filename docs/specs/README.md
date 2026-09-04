@@ -1,6 +1,6 @@
 # Спецификации задач
 
-Актуально на 2026-09-03.
+Актуально на 2026-09-04.
 
 GitHub Issues и GitHub Projects (v2) остаются единственным каноническим backlog проекта. Этот каталог содержит развёрнутые ТЗ: каждое ТЗ ссылается на issue, а issue — на соответствующий файл. Статус, приоритет и факт завершения меняются только в GitHub.
 
@@ -172,6 +172,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#432](https://github.com/Matysh/houseplan-card/issues/432) Ограниченный resolve и единая проверка целостности изображений | [432-asset-resolve-authorization-cache.md](432-asset-resolve-authorization-cache.md) |
 | [#440](https://github.com/Matysh/houseplan-card/issues/440) Полиш аудита v1.71.0-beta.2 | [440-v171-beta2-polish.md](440-v171-beta2-polish.md) |
 | [#445](https://github.com/Matysh/houseplan-card/issues/445) Магнит мебели к физической поверхности стены | [445-furniture-wall-face-snap.md](445-furniture-wall-face-snap.md) |
+| [#447](https://github.com/Matysh/houseplan-card/issues/447) Наружная грань для мебели и сдвиг декора стрелками | [447-exterior-furniture-snap-keyboard-nudge.md](447-exterior-furniture-snap-keyboard-nudge.md) |
 
 ## P3
 
