@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.72.0-beta.1 — 2026-09-04
+
 - Administrators can optionally load a ZHA or Zigbee2MQTT topology snapshot and
   see only the observed direct neighbours of the device currently under a real
   mouse pointer. The diagnostic layer is off by default, never scans on hover,
