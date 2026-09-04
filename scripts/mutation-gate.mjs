@@ -1470,6 +1470,55 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'room-fit-interactive-owner-leaks-through',
+    guard: 'node demo/smoke_room_fit.mjs',
+    because: 'an HA link or another independently interactive child must never bubble into '
+      + 'the room camera command (#152 AC6)',
+    patches: [{
+      file: 'src/room-fit.ts',
+      find: '    if (node.matches(ROOM_FIT_INTERACTIVE_OWNER)) return null;',
+      replace: '    if (node.matches(ROOM_FIT_INTERACTIVE_OWNER)) continue;',
+    }],
+  },
+  {
+    id: 'room-fit-pan-release-reaccepted',
+    guard: 'node demo/smoke_room_fit.mjs',
+    because: 'movement that became a pan must not survive as a room click when the pointer '
+      + 'is released over the original room (#152 AC7)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '        this._roomPointer = null;\n        this._suppressClick = true;',
+      replace: '        this._suppressClick = true;',
+    }, {
+      file: 'src/room-fit.ts',
+      find: '  if (!candidate || blocked || candidate.pointerId !== pointerId',
+      replace: '  if (!candidate || candidate.pointerId !== pointerId',
+    }],
+  },
+  {
+    id: 'room-fit-enters-kiosk-double-tap-sequence',
+    guard: 'node demo/smoke_room_fit.mjs',
+    because: 'a room-owned tap must not update the kiosk free-background double-tap sequence '
+      + 'or unexpectedly reset the whole plan (#152 AC8)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '      if (!acceptedRoom && ss && ss.id === ev.pointerId) {',
+      replace: '      if (ss && ss.id === ev.pointerId) {',
+    }],
+  },
+  {
+    id: 'room-fit-html-overlay-jumps-ahead',
+    guard: 'node demo/smoke_room_fit.mjs',
+    because: 'HTML room labels and the SVG plan must consume the same presented camera on '
+      + 'every intermediate transition frame (#152 AC10)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: 'space.rooms.map((r) => this._renderRoomLabel(r, space, view, disp))',
+      replace: 'space.rooms.map((r) => this._renderRoomLabel(r, space, '
+        + 'this._cameraTransition.target?.viewBox || view, disp))',
+    }],
+  },
+  {
     id: 'camera-anchor-from-presented',
     guard: 'node demo/smoke_smooth_zoom.mjs',
     because: 'reading the anchor from the lagging frame walks the point under '

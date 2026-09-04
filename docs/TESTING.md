@@ -3706,6 +3706,30 @@ require hands on real hardware — they remain for the human pass.
 Целочисленность обрезки — единственная часть съёмки, которую можно проверить без
 браузера: `node --test test/capture-clip.test.mjs`.
 
+## Вписывание выбранной комнаты (#152)
+
+- [ ] В View чистый mouse click и одиночный touch tap по полу простой,
+      вогнутой и вложенной комнаты центрируют именно browser-target и помещают
+      её видимый пол вместе с ограничивающими стенами в центральные 80% stage.
+- [ ] В Flat и Iso ограничивающая ось даёт поля `10% ± 1 CSS px`; устройства,
+      badges, room label, Glow, солнце, подложка и декор bounds не расширяют.
+- [ ] Device/capsule, opening/lock/action, vacuum и HA Area link выполняют только
+      своё действие; pan выше click threshold, pinch и long press не запускают
+      room fit, а движение ниже threshold остаётся tap.
+- [ ] В kiosk два tap по комнате не запускают Fit all и не меняют background
+      double-tap sequence; два tap по свободному фону сохраняют прежний reset.
+- [ ] Быстрые клики разных комнат retarget-ят один camera controller; повторный
+      fit уже вписанной комнаты не создаёт RAF и не пишет `LS_ZOOM`.
+- [ ] Stable resize атомарно пересчитывает активную комнату. Wheel, zoom buttons,
+      Fit all/home, pan/pinch, mode/space/projection, hidden/disconnect и новая
+      structural snapshot снимают intent.
+- [ ] Видимая подпись имеет один `role=button`/tab stop, локализованное имя и
+      `:focus-visible`; Enter/Space вызывают тот же fit и не двигают focus.
+      Скрытая/безымянная подпись не создаёт невидимый tab stop.
+- [ ] Pure proofs: `node --test test/room-fit.test.mjs`; полный cycle:
+      `npm run typecheck`, `npm test`, `npm run build`. Browser matrix и
+      мутации room ownership выполняются перед бетой.
+
 ## Ядра фронтенда растут только осознанно (#425, заменяет #34)
 
 - [ ] `node --test test/core-file-budget.test.mjs` — потолки на

@@ -622,6 +622,7 @@
   "marker.show_entities_tip": "Fügt nicht nur Geräte zur Liste hinzu, sondern auch alle ihre Entitäten.",
   "marker.pick_ph": "Wählen Sie ein Gerät…",
   "room.open_area": "Öffnen Sie den HA-Bereich.",
+  "room.fit_action": "Raum {name} einpassen",
   "view.volumetric": "Volumetrische Ansicht.",
   "view.flat": "Flache Ansicht.",
   "kiosk.title": "Die Größen dieses Bildschirms.",

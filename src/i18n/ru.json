@@ -622,6 +622,7 @@
   "marker.show_entities_tip": "Добавляет в список не только устройства, но и все их сущности",
   "marker.pick_ph": "Выберите устройство…",
   "room.open_area": "Открыть зону в HA",
+  "room.fit_action": "Вписать комнату {name}",
   "view.volumetric": "Объёмный вид",
   "view.flat": "Плоский вид",
   "kiosk.title": "Размеры на этом экране",

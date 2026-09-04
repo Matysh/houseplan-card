@@ -45,6 +45,12 @@ preserves scalar zoom and converts the view centre through logical floor space.
 `projectedFrame()` includes both floor corners and wall-top corners so fit/home
 cannot clip the volume.
 
+Room fit (#152) projects every final floor vertex at floor and floor-edge depth
+and every selected-room boundary-wall vertex at floor and wall-top height before
+building the AABB. It never projects a plan-space bounding rectangle, so a
+concave room does not gain fictitious corners. The resulting camera still uses
+the shared View controller; changing projection cancels the room-focus intent.
+
 ## Geometry and composition
 
 `src/iso-projection.ts` owns pure projection math. `src/iso-walls.ts` consumes

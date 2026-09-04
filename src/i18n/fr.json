@@ -622,6 +622,7 @@
   "marker.show_entities_tip": "Ajoute à la liste non seulement les appareils, mais aussi toutes leurs entités",
   "marker.pick_ph": "Choisir un appareil…",
   "room.open_area": "Ouvrir la zone HA",
+  "room.fit_action": "Ajuster la pièce {name}",
   "view.volumetric": "Vue volumétrique",
   "view.flat": "Vue plane",
   "kiosk.title": "Tailles pour cet écran",

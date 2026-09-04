@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- In View and kiosk, clicking or tapping a room now centres it and fits its
+  visible floor and boundary walls with 10% screen margins; a visible room
+  label offers the same action from the keyboard
+  ([#152](https://github.com/Matysh/houseplan-card/issues/152)).
 - Furniture can now snap to either physical face of an exterior wall without
   jumping through the masonry, and Arrow keys move any selected Background
   object by exactly one current grid cell without re-running wall or decor

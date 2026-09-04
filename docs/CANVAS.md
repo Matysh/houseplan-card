@@ -283,6 +283,16 @@ produce a zero-sized SVG `viewBox`.
   the gesture is classified once, on the first movement past 8 px, and
   keeps that role until the finger lifts (`_panLock`), so the plan
   never slides under a swipe and a vertical drag still pans.
+* **Room fit (#152).** A clean primary click/tap on the browser-painted room
+  target fits that room's final floor plus its visible boundary wall body into
+  the middle 80% of the stage. Devices, openings/actions and the HA Area link
+  keep their own gesture; the non-interactive room-label surface maps to the
+  same room id. The action uses the existing camera transition controller and
+  does not write the per-space zoom preference. Its session-only room intent
+  is reapplied atomically on a stable stage resize, then cleared by manual
+  camera input, Fit all/home, mode/space/projection changes, structural
+  adoption, hidden state or disconnect. In kiosk, room-owned taps never enter
+  the free-background double-tap sequence.
 * **The lock is final, at the release too** (audit DEV-1DA1-02). The
   release used to ask `swipeTarget()` again from the raw start→end
   vector, ignoring the lock — so a *curved* gesture (a short vertical

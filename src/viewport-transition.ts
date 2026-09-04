@@ -7,7 +7,7 @@ export interface CameraState {
   viewBox: CameraViewBox;
 }
 
-export type CameraTransitionReason = 'button' | 'wheel' | 'fit' | 'home' | 'double-tap';
+export type CameraTransitionReason = 'button' | 'wheel' | 'fit' | 'home' | 'double-tap' | 'room';
 export type CameraTransitionPhase = 'running' | 'settling';
 
 export interface CameraTransitionState {

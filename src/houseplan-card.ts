@@ -192,7 +192,6 @@ import {
   wallChainSegments, chainSegmentCms,
   type WallFaceGraph, type WallGraphFace, type WallGraphSourceSegment,
 } from './wall-face-graph';
-import { normalizeUnifiedWallTool } from './wall-tool-compat';
 import { parameterOnPartition, planRoomDeletion } from './room-deletion';
 import {
   planWallFaceRepair, repairMovesHostedPartition, type WallFaceRepairProposal,
@@ -316,8 +315,19 @@ import {
   CameraTransitionController, cameraTargetAtAnchor, sameCameraState,
   type CameraState, type CameraTransitionReason, type CameraTransitionState,
 } from './viewport-transition';
+import {
+  acceptedRoomFitGesture, roomFitCameraTarget, roomFitClampFrame,
+  roomFitGeometryBounds, roomFitOwnerFromPath,
+  type RoomFitGestureCandidate,
+} from './room-fit';
 import { EditorRuntimeLoader, lazyLoadFailureMessage, type EditorRuntimeLoaderState } from './editor-runtime-loader';
 import type { BackdropGuardState } from './backdrop-pick';
+import {
+  expiredWarmViewport, lruRead, lruWrite, normalizeMarkupTool, strictNumber,
+  warmBootKey, warmMatch,
+  type DecorTool, type MarkupTool, type WarmDialog, type WarmDialogKind,
+  type WarmEntry, type WarmViewport,
+} from './card-runtime';
 
 // Chromium records a FAILED module in the page module map permanently — a
 // retry of the same URL resolves from that map without touching the network.
@@ -436,32 +446,6 @@ const BOOT_SOFT_MS = 1500;
 const CAMERA_BUTTON_MS = 180;
 const CAMERA_WHEEL_MS = 160;
 const CAMERA_FIT_MS = 220;
-/** Numeric editor fields must consume the whole value: `50abc` is invalid,
- * not a surprisingly accepted 50. Decimal comma remains supported. */
-const strictNumber = (value: string): number | null => {
-  const text = String(value ?? '').trim().replace(',', '.');
-  if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(text)) return null;
-  const parsed = Number(text);
-  return Number.isFinite(parsed) ? parsed : null;
-};
-
-type LruRead<V> = { hit: true; value: V } | { hit: false };
-const lruRead = <K, V>(cache: Map<K, V>, key: K): LruRead<V> => {
-  if (!cache.has(key)) return { hit: false };
-  const value = cache.get(key)!;
-  cache.delete(key);
-  cache.set(key, value);
-  return { hit: true, value };
-};
-const lruWrite = <K, V>(cache: Map<K, V>, key: K, value: V, limit: number): void => {
-  cache.delete(key);
-  cache.set(key, value);
-  while (cache.size > limit) {
-    const oldest = cache.keys().next().value as K | undefined;
-    if (oldest === undefined) break;
-    cache.delete(oldest);
-  }
-};
 /** DEV-B703-01: warm re-mount memo — MODULE scope, so it lives with the loaded
  *  PAGE, not with any card instance. Lovelace re-creates card elements when
  *  the websocket reconnects after a long-backgrounded tab; the fresh instance
@@ -476,93 +460,7 @@ const lruWrite = <K, V>(cache: Map<K, V>, key: K, value: V, limit: number): void
  *  the key keeps two DIFFERENT cards on one page from adopting each other's
  *  header height (same config twice on one view is indistinguishable — and
  *  then the heights match anyway). */
-/** DEV-B703-03 — what the dead instance was LOOKING at. The header height
- *  alone was not enough: `_view` (the pan) never left the instance, and the
- *  EDITOR zoom is deliberately not persisted (`_saveZoom` is view-only) while
- *  the editor MODE is (LS_NAV). So a re-mount inside an editor came back at
- *  the view-mode zoom, and a panned view came back re-centred on the plan —
- *  the owner's «чуть-чуть дёргается масштаб». The memo now carries the whole
- *  viewport, so the restore is the same rect, not the same zoom number. */
-type WarmViewport = {
-  space: string;
-  mode: 'view' | 'plan' | 'devices' | 'decor';
-  projection: 'flat' | 'iso';
-  activeLabsIso: boolean;
-  logicalCenter: { x: number; y: number } | null;
-  zoom: number;
-  view: { x: number; y: number; w: number; h: number } | null;
-  /** the view-mode viewport an editor was entered from (_viewModeSnap) */
-  snap: { space: string; zoom: number; cx?: number; cy?: number } | null;
-  tool: MarkupTool;
-  decorTool: DecorTool;
-  showHidden: boolean;
-  /** «показать дальние» changes _baseVb, so the restored view rect is only
-   *  the same rect if the frame it was clamped against is the same one */
-  showFar: boolean;
-  selId: string | null;
-  rszSel: string | null;
-  decorSel: string | null;
-};
-const expiredWarmViewport = (vp: WarmViewport | null): WarmViewport | null => {
-  if (!vp || vp.mode === 'view') return vp;
-  return {
-    ...vp,
-    mode: 'view',
-    zoom: vp.snap?.space === vp.space ? vp.snap.zoom : vp.zoom,
-    view: null,
-    snap: null,
-    tool: 'draw',
-    decorTool: 'select',
-    showHidden: false,
-    selId: null,
-    rszSel: null,
-    decorSel: null,
-  };
-};
-/** Which dialog was open and its draft (docs/WARM-REMOUNT.md §3). `data` is
- *  the live draft OBJECT — the memo is module state, never serialised, so a
- *  half-filled device dialog with its uploaded pdfs survives for free. */
-type WarmDialogKind = 'space' | 'marker' | 'settings' | 'opening' | 'decorText' | 'decorShape' | 'backdrop' | 'rules' | 'room' | 'info' | 'openingInfo';
-type WarmDialog = { kind: WarmDialogKind; space: string; mode: string; data: any };
-/** AUD-159B1-01: one entry per CARD PLACEMENT, not per key. Two cards with an
- *  identical config on one view share the key, so the key alone cannot say
- *  whose viewport this is; `place`/`idx` (the parent element the card was
- *  mounted in, and its position among that parent's children) identify the
- *  DOM slot, and `owner` the live instance sitting in it. A re-mount into the
- *  same slot inherits the entry; a different card never does. */
-type WarmEntry = {
-  /** generation id of the instance that currently owns the slot */
-  owner: number;
-  /** HA route where this placement was captured. */
-  path: string;
-  /** the parent element the owner was mounted in (weak — never keep DOM alive) */
-  place: WeakRef<Node> | null;
-  /** the owner's index among that parent's children */
-  idx: number;
-  /** the owner is attached; a dead slot is a tombstone waiting for a successor */
-  live: boolean;
-  hdrH: number;
-  stageH: number;
-  vp: WarmViewport | null;
-  /** Last complete visual frame for #73; safe only inside the same placement. */
-  frameFingerprint: string;
-  /** Metadata projection is immutable-by-replacement and avoids an empty
-   *  device layer on a same-document warm remount before registry refresh. */
-  devices: readonly DevItem[] | null;
-  dlg: WarmDialog | null;
-  /** when the instance that wrote `dlg` detached; 0 = it is still alive */
-  freed: number;
-  /** the TTL timer that frees `dlg` once it can no longer be revived */
-  evict: number;
-};
-const warmBoot = new Map<string, WarmEntry[]>();
-let warmGen = 0;
-/** `location.pathname` is the dashboard AND the view path: two Lovelace views
- *  never share a key, so a card that comes back on another view boots cold
- *  instead of inheriting a stranger's viewport (AUD-159B1-01). The hash is
- *  deliberately out — `#space=` is OUR deep link, not another placement. */
-const warmBootKey = (config: unknown): string =>
-  `${window.innerWidth}x${window.innerHeight}|${location.pathname}|${JSON.stringify(config ?? {})}`;
+const warmBoot = new Map<string, WarmEntry[]>(); let warmGen = 0;
 /** A dialog is revived only if the instance that owned it died THIS long ago.
  *  A Lovelace rebuild detaches and re-attaches within one task; a user who
  *  walked off to another dashboard view and came back later must not be met
@@ -578,46 +476,6 @@ const WARM_MAX_KEYS = 8;
  *  placement a cold boot. */
 const WARM_MAX_SLOTS = 4;
 
-/** Which slot of `list` belongs to the instance now claiming it, and may we
- *  trust it with the viewport/dialog (`sure`) or only with the settled height?
- *  Ranked, best first (AUD-159B1-01):
- *    4 — same parent, same index: literally the DOM slot we are standing in,
- *        which is how Lovelace replaces a card (the predecessor may still be
- *        attached for another task — that is the case the audit reproduced);
- *    0 — some OTHER placement whose owner is still attached: a neighbouring
- *        card with an identical config, never ours to inherit;
- *    3 — same parent, shifted index, owner gone: still our placement;
- *    2 — a tombstone whose placement is gone with its subtree — the ordinary
- *        Lovelace rebuild, where the container is rebuilt too.
- *  A tie means two candidates are equally plausible: then only the settled
- *  height is adopted, and it is the same for all of them anyway. */
-const warmMatch = (
-  list: WarmEntry[],
-  gen: number,
-  place: Node | null,
-  idx: number,
-): { slot: WarmEntry | null; sure: boolean } => {
-  const score = (s: WarmEntry): number => {
-    const same = !!place && s.place?.deref() === place;
-    if (same && s.idx === idx) return 4;
-    if (s.live) return 0;
-    return same ? 3 : 2;
-  };
-  let best: WarmEntry | null = null;
-  let bestScore = 0;
-  let ties = 0;
-  let newest: WarmEntry | null = null;
-  for (const s of list) {
-    if (s.owner === gen) continue;
-    newest = s;
-    const sc = score(s);
-    if (sc <= 0) continue;
-    if (sc > bestScore) { best = s; bestScore = sc; ties = 1; }
-    else if (sc === bestScore) ties++;
-  }
-  if (!best || ties > 1) return { slot: best || newest, sure: false };
-  return { slot: best, sure: true };
-};
 /** Rotation step of a decor text block — the same 5° a device icon turns in
  *  (marker dialog). Shift affects angle precision only, never position. */
 const DT_ANGLE_STEP = 5;
@@ -649,7 +507,6 @@ type WallThickHit = {
   open: boolean; cm: number; source: WallThickSource;
 };
 
-type MarkupTool = 'select' | 'draw' | 'column' | 'merge' | 'split' | 'resize' | 'opening' | 'wallthick' | 'delroom';
 type RoomFillFrame = {
   byRoom: Map<RoomCfg, ResolvedRoomFill | null>;
   byId: Map<string, ResolvedRoomFill | null>;
@@ -676,22 +533,6 @@ type WallFaceBatch = {
   activeCms: number[];
   activeDraftId: string | null;
 };
-const MARKUP_TOOLS = new Set<MarkupTool>([
-  'select', 'draw', 'column', 'merge', 'split', 'resize',
-  'opening', 'wallthick', 'delroom',
-]);
-/** Warm viewport is page-memory, so it may contain a tool name from the old bundle. */
-const normalizeMarkupTool = (value: unknown): MarkupTool => {
-  // #173 replaces the public one-shot Partition tool with one Walls chain.
-  // A warm page may still carry the old session token; reading it is inert.
-  value = normalizeUnifiedWallTool(value);
-  // Opening placement is valid only together with its explicit session-only
-  // type preset. Warm viewport state does not persist that preset.
-  if (value === 'opening') return 'draw';
-  return typeof value === 'string' && MARKUP_TOOLS.has(value as MarkupTool)
-    ? value as MarkupTool
-    : 'draw';
-};
 const MAX_ROOM_DRAFTS = 200;
 const MAX_DRAFT_POINTS = 500;
 const MAX_DRAFT_SEGMENTS = 2000;
@@ -715,10 +556,6 @@ interface SpaceGeometryState {
     plan_scale_x?: number; plan_scale_y?: number; plan_angle?: number;
   };
 }
-/** Tools of the decor (background) editor. `furniture` is the library
- *  (docs/FURNITURE.md): it opens a palette and places a symbol at real size. */
-type DecorTool = 'select' | 'backdrop' | 'line' | 'rect' | 'ellipse' | 'text' | 'furniture' | 'image' | 'erase';
-
 const fireEvent = (node: EventTarget, type: string, detail?: unknown) => {
   const ev = new Event(type, { bubbles: true, composed: true }) as any;
   ev.detail = detail ?? {};
@@ -1282,7 +1119,7 @@ export class HouseplanCard extends LitElement {
     this._zoom = target.zoom;
     this._view = { ...target.viewBox };
     this._cameraTransitionFit = null;
-    this._saveZoom();
+    if (state.reason !== 'room') this._saveZoom();
     this.requestUpdate();
   }
 
@@ -1296,12 +1133,13 @@ export class HouseplanCard extends LitElement {
    *  before #82 the zoom commands persisted it synchronously. Keeping both on
    *  one branch is what lost the interrupted zoom. */
   private _cancelCameraTransition(commitTarget = false, keepPresented = false): void {
+    const reason = this._cameraTransition.state?.reason;
     const presentedZoom = keepPresented && this._cameraTransition.active
       ? this._cameraTransition.presented?.zoom
       : undefined;
     this._cameraTransition.cancel(commitTarget);
     this._cameraTransitionFit = null;
-    if (presentedZoom !== undefined) this._saveZoom();
+    if (presentedZoom !== undefined && reason !== 'room') this._saveZoom();
   }
 
   /** A discrete camera command may follow a rapid mode click. Finish that
@@ -1475,6 +1313,7 @@ export class HouseplanCard extends LitElement {
   /** Adopt a mode from configuration/recovery without leaving a measured
    * transition alive. User navigation continues to go through `_setMode()`. */
   private _adoptMode(mode: HouseplanMode): void {
+    if (mode !== this._mode) this._clearRoomFocus(true);
     this._cancelModeTransition(false);
     this._mode = mode;
     if (mode !== 'view') this._editorChromeMode = mode;
@@ -1609,6 +1448,7 @@ export class HouseplanCard extends LitElement {
   private _commitSpace(id: string, authority = false): boolean {
     if (!this._canCommitSpace(id, authority)) return false;
     if (id !== this._space) {
+      this._clearRoomFocus(true);
       this._cancelDangerConfirm();
       this._cancelCameraTransition(false);
       this._clearTransientHover(true);
@@ -2094,6 +1934,10 @@ export class HouseplanCard extends LitElement {
    * viewing — leaving any editor brings the view-mode viewport back.
    */
   private _viewModeSnap: { space: string; zoom: number; cx?: number; cy?: number } | null = null;
+  /** Session-only View intent. It is deliberately absent from warm/LS/config state. */
+  private _roomFocus: { spaceId: string; roomId: string } | null = null;
+  /** Pointer owner captured from the actually painted event path. */
+  private _roomPointer: RoomFitGestureCandidate | null = null;
   private _pointers = new Map<number, { x: number; y: number }>();
   private _panStart: { sx: number; sy: number; vx: number; vy: number } | null = null;
   /**
@@ -2465,6 +2309,7 @@ export class HouseplanCard extends LitElement {
     this._continuity.visibility(signal);
     this._dayCycleVisibility(signal);
     if (signal.kind === 'hidden') {
+      this._clearRoomFocus(true);
       this._clearTransientHover(true);
       this._cancelDevicePressFeedback();
       this._cancelCameraTransition(true);
@@ -2555,6 +2400,7 @@ export class HouseplanCard extends LitElement {
 
   private _convertProjectionView(from: 'flat' | 'iso', to: 'flat' | 'iso'): void {
     if (from === to) return;
+    this._clearRoomFocus(true);
     const logical = this._logicalViewCenter(from);
     this._view = null;
     const target = logical
@@ -2796,6 +2642,7 @@ export class HouseplanCard extends LitElement {
   }
 
   public disconnectedCallback(): void {
+    this._clearRoomFocus(true);
     this._cancelDangerConfirm();
     // HA normally changes the route before removing the old Lovelace tree.
     // The explicit event covers routers that keep that tree connected for a
@@ -4054,6 +3901,7 @@ export class HouseplanCard extends LitElement {
     }
     if (this._emptySpaceStateActive) return;
     this._emptySpaceStateActive = true;
+    this._clearRoomFocus(true);
 
     for (const pointerId of this._pointers.keys()) {
       for (const node of this.renderRoot.querySelectorAll<HTMLElement>('*')) {
@@ -4358,6 +4206,7 @@ export class HouseplanCard extends LitElement {
       this._devicePositionHistory.clear();
       this._cancelDeviceDrag();
       this._pendingPhysicalWrites.clear();
+      this._clearRoomFocus(true);
       // #82: a new structural baseline owns the viewport. Freeze the last
       // painted camera frame before replacing geometry so an obsolete target
       // cannot settle against the new content frame.
@@ -5813,6 +5662,7 @@ export class HouseplanCard extends LitElement {
     this._panLock = null;
     this._pinchStart = null;
     this._swipeStart = null;
+    this._roomPointer = null;
   }
 
   /** Close the device card and make stale long-press state non-observable. */
@@ -6354,6 +6204,7 @@ export class HouseplanCard extends LitElement {
 
   /** The outlier hint's action: take the far objects into the frame, then fit. */
   private _fitFar(): void {
+    this._clearRoomFocus();
     this._showFar = true;
     this._frame = null;
     // The camera command may be a no-op at the fitted target. The hint still
@@ -6362,10 +6213,110 @@ export class HouseplanCard extends LitElement {
     this._resetZoom();
   }
 
+  private _clearRoomFocus(pointer = false): void {
+    this._roomFocus = null;
+    if (pointer) this._roomPointer = null;
+  }
+
+  /** The rendered SVG/label event path is the same authority as hover. */
+  private _roomOwner(ev: Event): string | null {
+    if (this._mode !== 'view') return null;
+    return roomFitOwnerFromPath(ev.composedPath());
+  }
+
+  /** Exact finite room geometry in the current camera coordinate system. */
+  private _roomFitBounds(room: RoomCfg, space: SpaceModel) {
+    const own = roomPoly(room);
+    if (!own || !room.id) return null;
+    const walls = this._spaceWalls;
+    const openCuts = this._openCuts();
+    const united = this._wallUnionGeometry();
+    const floor = walls.length
+      ? (this._innerRoomContour(
+          space, room.id, openCuts, united?.roomGeom, united?.multiWallNodes,
+        ) || own)
+      : own;
+    const disp = this._spaceDisplayForRender();
+    let wall: number[][] = [];
+    if (disp.showBorders && walls.length) {
+      const profile = roomWallProfile(
+        space.rooms, room.id, walls, openCuts,
+        this._wallKeyPitch, this._cellCm, this._gridPitch, NORM_W,
+      );
+      if (profile) {
+        wall = outsetContour(profile.poly, profile.offsets, united?.multiWallNodes)
+          || profile.poly;
+      }
+    }
+    const projection = this._effectiveProjection();
+    return roomFitGeometryBounds({
+      floor,
+      wall,
+      projection,
+      wallHeight: projection === 'iso' && disp.showBorders
+        ? gridVisualUnits(ISO_WALL_HEIGHT, this._cellCm) : 0,
+      floorDepth: projection === 'iso' && disp.showBorders
+        ? gridVisualUnits(ISO_FLOOR_EDGE_HEIGHT, this._cellCm) : 0,
+      // Room outlines and wall-body outlines are centred on their primitives.
+      padding: disp.showBorders ? gridVisualUnits(1.25, this._cellCm) : 0,
+    });
+  }
+
+  /** Apply or retarget one room command without introducing a second RAF owner. */
+  private _fitRoom(roomId: string, animate = true): boolean {
+    if (this._mode !== 'view') return false;
+    const space = this._spaceModel();
+    const room = space?.rooms.find((item) => item.id === roomId);
+    if (!space || !room) {
+      this._clearRoomFocus();
+      return false;
+    }
+    const bounds = this._roomFitBounds(room, space);
+    if (!bounds) {
+      this._clearRoomFocus();
+      return false;
+    }
+    // Store only stable ids. A temporarily unmeasurable stage may retry this
+    // intent at the next positive ResizeObserver delivery.
+    this._roomFocus = { spaceId: space.id, roomId };
+    const stage = this._stageEl;
+    if (!stage || stage.clientWidth <= 0 || stage.clientHeight <= 0) return true;
+    const base = this._baseVb();
+    const baseFit = fitView(base, stage.clientWidth / stage.clientHeight);
+    const target = roomFitCameraTarget({
+      bounds,
+      baseFit,
+      stageWidth: stage.clientWidth,
+      stageHeight: stage.clientHeight,
+      minZoom: HouseplanCard.ZOOM_MIN,
+      maxZoom: HouseplanCard.ZOOM_MAX,
+    });
+    if (!target) {
+      this._clearRoomFocus();
+      return false;
+    }
+    const current = this._cameraState();
+    const clamp = roomFitClampFrame(baseFit, current.viewBox, target.viewBox, bounds);
+    target.viewBox = this._clampView(target.viewBox, clamp);
+    if (animate) {
+      this._prepareCameraCommand();
+      this._startCameraTransition(target, clamp, 'room', CAMERA_FIT_MS);
+      return true;
+    }
+    this._cancelCameraTransition(false);
+    if (!sameCameraState(current, target)) {
+      this._zoom = target.zoom;
+      this._view = { ...target.viewBox };
+      this.requestUpdate();
+    }
+    return true;
+  }
+
   /** «Вписать всё» (docs/CANVAS.md §8) — the toolbar button and the "home is
    *  that way" arrow share it. It fits whatever the frame currently means:
    *  the main mass, or everything once the far-objects hint has been used. */
   private _fitAll(reason: 'fit' | 'home' = 'fit'): void {
+    this._clearRoomFocus();
     this._showFar = true;
     this._frame = null;
     this.requestUpdate();
@@ -6607,7 +6558,9 @@ export class HouseplanCard extends LitElement {
     this._viewportInvalidAt = 0;
     if (!previous) {
       this._lastValidStageSize = size;
-      if (!this._view) this._applyView(this._zoom);
+      if (this._roomFocus?.spaceId === this._space) {
+        this._fitRoom(this._roomFocus.roomId, false);
+      } else if (!this._view) this._applyView(this._zoom);
       return;
     }
     // 0x0 -> the same positive size is explicitly a no-op.
@@ -6636,6 +6589,10 @@ export class HouseplanCard extends LitElement {
         this._beginContinuityCandidate('stage-size-restored', true, 'stage-size');
       } else if (this._continuity.hasCompleteFrame) {
         this._beginContinuityCandidate('stage-resize', true, 'stage-size');
+      }
+      if (this._roomFocus?.spaceId === this._space) {
+        this._fitRoom(this._roomFocus.roomId, false);
+        return;
       }
       this._applyView(
         this._zoom,
@@ -6673,6 +6630,7 @@ export class HouseplanCard extends LitElement {
 
   /** Immediate path for direct pinch: keep the point under the fingers. */
   private _zoomAt(sx: number, sy: number, newZoom: number): void {
+    this._clearRoomFocus();
     this._cancelCameraTransition(false);
     const result = this._cameraTargetAt(sx, sy, newZoom);
     if (!result) return;
@@ -6685,6 +6643,7 @@ export class HouseplanCard extends LitElement {
   }
 
   private _onWheel(ev: WheelEvent): void {
+    this._clearRoomFocus();
     this._prepareCameraCommand();
     const stage = this._stageEl;
     if (!stage) return;
@@ -6701,6 +6660,7 @@ export class HouseplanCard extends LitElement {
   }
 
   private _stepZoom(delta: number): void {
+    this._clearRoomFocus();
     this._prepareCameraCommand();
     const stage = this._stageEl;
     if (!stage) return;
@@ -6720,6 +6680,7 @@ export class HouseplanCard extends LitElement {
    *  old "reset zoom" in one: frame the content at zoom 1, centred. With
    *  `all` it also takes in the far strays the opening view leaves out. */
   private _resetZoom(reason: 'fit' | 'home' | 'double-tap' = 'fit'): void {
+    this._clearRoomFocus();
     this._prepareCameraCommand();
     const vb = this._baseVb();
     const fit = fitView(vb, this._stageAspect());
@@ -6751,6 +6712,7 @@ export class HouseplanCard extends LitElement {
 
   /** Restore the saved space zoom and center the plan. */
   private _restoreZoom(): void {
+    this._clearRoomFocus(true);
     this._cancelCameraTransition(false);
     const z = this._zoomBySpace[this._space] || 1;
     this._zoom = z;
@@ -6778,6 +6740,10 @@ export class HouseplanCard extends LitElement {
   }
 
   private _stagePointerDown(ev: PointerEvent): void {
+    const roomId = ev.isPrimary && ev.button === 0 ? this._roomOwner(ev) : null;
+    this._roomPointer = roomId
+      ? { pointerId: ev.pointerId, spaceId: this._space, roomId }
+      : null;
     // The gesture that starts here freezes the animated frame and keeps it on
     // screen — so the shown zoom becomes the saved one (#396 AC1).
     this._cancelCameraTransition(false, true);
@@ -6794,6 +6760,7 @@ export class HouseplanCard extends LitElement {
         if (!(ev.target as HTMLElement).closest?.('.dev, .roomlabel, .oplock')) {
           clearTimeout(this._kioskHoldTimer);
           this._kioskHoldTimer = window.setTimeout(() => {
+            this._roomPointer = null;
             this._kioskDialog = true;
             this._swipeStart = null;
           }, 3000);
@@ -6823,6 +6790,7 @@ export class HouseplanCard extends LitElement {
       this._panLock = null; // undecided until the finger moves
       this._suppressClick = false;
     } else if (this._pointers.size === 2) {
+      this._clearRoomFocus(true);
       // A second pointer turns the gesture into navigation. An Opening hover
       // must never survive underneath that pinch. Keep the selected preset: lifting the
       // fingers returns to the same placement session, just without a stale
@@ -6900,6 +6868,7 @@ export class HouseplanCard extends LitElement {
     // the tool preview (snap dot, measure label) keeps following the finger
     if (this._markup && this._pointers.size === 1) this._markupMove(ev);
     if (this._pinchStart && this._pointers.size >= 2) {
+      this._clearRoomFocus(true);
       if (this._tool === 'opening') {
         this._cursorPt = null;
         this._clearOpeningPlacement(false);
@@ -6919,6 +6888,7 @@ export class HouseplanCard extends LitElement {
       const ddx = ev.clientX - this._panStart.sx;
       const ddy = ev.clientY - this._panStart.sy;
       if (Math.abs(ddx) + Math.abs(ddy) > 4) {
+        this._roomPointer = null;
         this._suppressClick = true;
         clearTimeout(this._holdTimer);
         if (this._tool === 'opening') {
@@ -6937,6 +6907,7 @@ export class HouseplanCard extends LitElement {
       // walk, at 400% and at 33% alike.
       if (this._panLock === null && Math.abs(ddx) + Math.abs(ddy) > 8) {
         this._panLock = this._swipeZone && Math.abs(ddx) > Math.abs(ddy) * 1.5 ? 'swipe' : 'pan';
+        if (this._panLock === 'pan') this._clearRoomFocus();
       }
       const stage = this._stageEl;
       if (this._panLock === 'pan' && stage) {
@@ -6968,11 +6939,20 @@ export class HouseplanCard extends LitElement {
   }
 
   private _stagePointerUp(ev: PointerEvent): void {
+    const acceptedRoom = acceptedRoomFitGesture(
+      this._roomPointer,
+      ev.pointerId,
+      this._space,
+      this._roomOwner(ev),
+      this._suppressClick || !!this._pinchStart || this._panLock !== null
+        || this._holdFired || this._touchSequenceMultitouch,
+    );
+    if (this._roomPointer?.pointerId === ev.pointerId) this._roomPointer = null;
     if (this._kiosk) {
       clearTimeout(this._kioskHoldTimer);
       const ss = this._swipeStart;
       this._swipeStart = null;
-      if (ss && ss.id === ev.pointerId) {
+      if (!acceptedRoom && ss && ss.id === ev.pointerId) {
         const dx = ev.clientX - ss.x;
         const dy = ev.clientY - ss.y;
         // double tap (no movement) resets the zoom to 1:1
@@ -7044,12 +7024,20 @@ export class HouseplanCard extends LitElement {
       // reset click suppression on the next tick (so that a click right after a pan does not fire)
       setTimeout(() => (this._suppressClick = false), 0);
     }
-    if (viewportGestureEnded && this._pointers.size === 0) this.requestUpdate();
+    if (viewportGestureEnded && this._pointers.size === 0 && !acceptedRoom) this.requestUpdate();
+    if (acceptedRoom) this._fitRoom(acceptedRoom);
   }
 
   private _clickRoom(r: RoomCfg): void {
     if (this._suppressClick || !r.area) return;
     navigate('/config/areas/area/' + r.area);
+  }
+
+  private _roomLabelKey(ev: KeyboardEvent, roomId: string): void {
+    if (this._mode !== 'view' || (ev.key !== 'Enter' && ev.key !== ' ')) return;
+    ev.preventDefault();
+    ev.stopPropagation();
+    this._fitRoom(roomId);
   }
 
   private _pointerDown(ev: PointerEvent, d: DevItem): void {
@@ -7252,6 +7240,7 @@ export class HouseplanCard extends LitElement {
         inStage: !!(pointer.target as Element | null)?.closest?.('.stage'),
       });
       if (this._touchContacts.size >= 2) {
+        this._clearRoomFocus(true);
         this._clearTransientHover();
         this._touchSequenceMultitouch = true;
         this._touchClickBlockUntil = Number.POSITIVE_INFINITY;
@@ -7430,7 +7419,7 @@ export class HouseplanCard extends LitElement {
   private _leaveCardRoute(): void {
     if (this._routeDepartureHandled) return;
     this._routeDepartureHandled = true;
-    this._cancelDangerConfirm();
+    this._clearRoomFocus(true); this._cancelDangerConfirm();
     // The destination page cannot display this decorative transition and may
     // disconnect us before its first measured frame. Commit View atomically so
     // the warm tombstone never records an editor camera under `mode: view`.
@@ -7491,7 +7480,10 @@ export class HouseplanCard extends LitElement {
   }
 
   private _setMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate = true): void {
-    if (mode !== this._mode) this._cancelDangerConfirm();
+    if (mode !== this._mode) {
+      this._clearRoomFocus(true);
+      this._cancelDangerConfirm();
+    }
     this._warmModeRequest = 0;
     if (!this._editorRuntime) {
       if (mode === 'view') {
@@ -7870,8 +7862,15 @@ export class HouseplanCard extends LitElement {
 
   /** Browser/OS cancellation is an aborted transaction, never a commit. */
   private _stagePointerCancel(ev: PointerEvent): void {
-    if (!this._editorRuntime) return;
-    return this._editorRuntime._stagePointerCancel(ev);
+    if (this._roomPointer?.pointerId === ev.pointerId) this._roomPointer = null;
+    this._pointers.delete(ev.pointerId);
+    if (this._pointers.size < 2) this._pinchStart = null;
+    if (this._pointers.size === 0) {
+      this._panStart = null;
+      this._panLock = null;
+      this._swipeStart = null;
+    }
+    if (this._editorRuntime) this._editorRuntime._stagePointerCancel(ev);
   }
 
   private _applyGeometryState(
@@ -12801,11 +12800,18 @@ export class HouseplanCard extends LitElement {
     const areaLinkInteractive = !this._markup;
     return html`<div class="roomlabel ${rows.length ? 'card' : ''}"
       data-hp="room-label" data-id=${r.id || nothing} data-area=${r.area || nothing}
+      role=${!this._markup ? 'button' : nothing}
+      tabindex=${!this._markup ? '0' : nothing}
+      aria-label=${!this._markup ? this._t('room.fit_action', { name: r.name || '' }) : nothing}
       style="left:${left}%;top:${top}%;color:${disp.color};opacity:${op};--rl-scale:${k};--rl-space:${disp.cardFontScale};--rl-name:${clampScale(r.settings?.name_scale)};--rl-meta:${clampScale(r.settings?.label_scale)}"
-      @pointerdown=${(e: PointerEvent) => this._labelDown(e, r, space.id)}
-      @pointermove=${(e: PointerEvent) => this._labelMove(e, r, space.id)}
-      @pointerup=${() => this._labelUp(r)}
-      @pointercancel=${() => this._labelUp(r)}
+      @keydown=${!this._markup && r.id
+        ? (e: KeyboardEvent) => this._roomLabelKey(e, r.id!) : nothing}
+      @pointerdown=${this._markup
+        ? (e: PointerEvent) => this._labelDown(e, r, space.id) : nothing}
+      @pointermove=${this._markup
+        ? (e: PointerEvent) => this._labelMove(e, r, space.id) : nothing}
+      @pointerup=${this._markup ? () => this._labelUp(r) : nothing}
+      @pointercancel=${this._markup ? () => this._labelUp(r) : nothing}
     ><span class="rlname">${r.name || (this._markup ? this._t('room.unnamed') : '')}${showAreaLink
         ? html`<ha-icon class="rlgo" icon="mdi:open-in-new"
             title=${areaLinkInteractive ? this._t('room.open_area') : nothing}

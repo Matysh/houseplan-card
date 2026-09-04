@@ -361,10 +361,11 @@ export const planStyles = css`
        open outlines below, but it costs nothing to state it here. */
     .room {
       transition: 0.12s;
-      cursor: default; /* v1.40.1: rooms are not clickable — the label's link icon is */
+      cursor: default;
       stroke-linejoin: round;
       stroke-linecap: round;
     }
+    .stage.mode-view .room { cursor: pointer; }
     .room.overlay {
       fill: transparent;
       stroke: transparent;
@@ -622,6 +623,15 @@ export const planStyles = css`
     .rlhandle.bl { left: -6px; bottom: -6px; cursor: nesw-resize; }
     :host([data-pointer-hover]) .stage.markup .roomlabel:hover .rlhandle { display: block; }
     .stage.markup .roomlabel { pointer-events: auto; }
+    .stage.mode-view .roomlabel {
+      pointer-events: auto;
+      cursor: pointer;
+      border-radius: 0.2em;
+    }
+    .stage.mode-view .roomlabel:focus-visible {
+      outline: 2px solid var(--hp-accent);
+      outline-offset: 4px;
+    }
     .roomlabel:active { cursor: grabbing; }
     .measurelayer {
       position: absolute;
