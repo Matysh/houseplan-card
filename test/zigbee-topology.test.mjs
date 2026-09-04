@@ -144,6 +144,9 @@ test('Z2M runtime verifies retained bridge info, correlates transaction and clea
       async subscribeMessage(callback, message) {
         listeners.set(message.topic, callback);
         if (message.topic.endsWith('/bridge/info')) queueMicrotask(() => callback({ retain: true, payload: '{}' }));
+        if (message.topic.endsWith('/bridge/response/networkmap')) {
+          queueMicrotask(() => callback({ retain: false, payload: 'stale-not-json' }));
+        }
         return () => { cleanups++; listeners.delete(message.topic); };
       },
     },
@@ -167,6 +170,31 @@ test('Z2M runtime verifies retained bridge info, correlates transaction and clea
   await refreshZ2mTopology(hass, 'zigbee2mqtt', 100);
   assert.equal(cleanups, 2);
   assert.equal(zigbeeTopologyRuntimeSnapshot(hass).states['z2m:zigbee2mqtt'].phase, 'ready');
+});
+
+test('Z2M runtime rejects a malformed response immediately instead of timing out', async () => {
+  const listeners = new Map();
+  let cleanups = 0;
+  const hass = {
+    user: { is_admin: true },
+    connection: {
+      async subscribeMessage(callback, message) {
+        listeners.set(message.topic, callback);
+        if (message.topic.endsWith('/bridge/info')) queueMicrotask(() => callback({ retain: true, payload: '{}' }));
+        return () => { cleanups++; listeners.delete(message.topic); };
+      },
+    },
+    async callService() {
+      queueMicrotask(() => listeners.get('zigbee2mqtt/bridge/response/networkmap')?.({
+        retain: false, payload: 'not-json-garbage',
+      }));
+    },
+  };
+  const startedAt = performance.now();
+  await refreshZ2mTopology(hass, 'zigbee2mqtt', 500);
+  assert.ok(performance.now() - startedAt < 250, 'malformed response must not wait for the timeout');
+  assert.equal(cleanups, 2);
+  assert.equal(zigbeeTopologyRuntimeSnapshot(hass).states['z2m:zigbee2mqtt'].error, 'invalid_payload');
 });
 
 test('Z2M runtime refuses an unconfirmed base topic without publishing and still cleans up', async () => {

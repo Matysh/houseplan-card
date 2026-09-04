@@ -198,10 +198,15 @@ export function refreshZ2mTopology(
     if (typeof subscribe !== 'function' || typeof hass?.callService !== 'function') throw fail('unsupported');
     const transaction = randomTransaction();
     const deadline = Date.now() + Math.max(1, timeoutMs);
+    let responseActive = false;
     let infoResolve: (() => void) | null = null;
     let responseResolve: ((value: unknown) => void) | null = null;
+    let responseReject: ((reason?: unknown) => void) | null = null;
     const info = new Promise<void>((resolve) => { infoResolve = resolve; });
-    const response = new Promise<unknown>((resolve) => { responseResolve = resolve; });
+    const response = new Promise<unknown>((resolve, reject) => {
+      responseResolve = resolve;
+      responseReject = reject;
+    });
     const unsubscribers: Array<() => void> = [];
     try {
       const unsubInfo = await subscribe.call(connection, (message: unknown) => {
@@ -211,10 +216,15 @@ export function refreshZ2mTopology(
       const unsubResponse = await subscribe.call(connection, (message: unknown) => {
         if (recordOf(message)?.retain === true) return;
         const value = parseMessage(message);
+        if (value === null) {
+          if (responseActive) responseReject?.(fail('invalid_payload'));
+          return;
+        }
         if (value && transactionOf(value) === transaction) responseResolve?.(value);
       }, { type: 'mqtt/subscribe', topic: `${topic}/bridge/response/networkmap` });
       if (typeof unsubResponse === 'function') unsubscribers.push(unsubResponse);
       await withTimeout(info, Math.min(4000, Math.max(1, deadline - Date.now())));
+      responseActive = true;
       await hass.callService('mqtt', 'publish', {
         topic: `${topic}/bridge/request/networkmap`,
         payload: JSON.stringify({ type: 'raw', routes: false, transaction }),

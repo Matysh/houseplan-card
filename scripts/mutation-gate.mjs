@@ -5641,6 +5641,17 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'zigbee-topology-z2m-malformed-response-waits-for-timeout',
+    guard: 'node --test --test-name-pattern="malformed response immediately" test/zigbee-topology.test.mjs',
+    because: 'a malformed response on the subscribed network-map topic must report invalid payload '
+      + 'immediately instead of leaving the settings dialog loading for the full timeout (#54 AC16)',
+    patches: [{
+      file: 'src/zigbee-topology-runtime.ts',
+      find: "        if (value === null) {\n          if (responseActive) responseReject?.(fail('invalid_payload'));\n          return;\n        }",
+      replace: '        if (value === null) return;',
+    }],
+  },
+  {
     id: 'zigbee-topology-z2m-subscriptions-leak',
     guard: 'node --test test/zigbee-topology.test.mjs',
     because: 'both MQTT subscriptions must be released after success or failure so one manual '
