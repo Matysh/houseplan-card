@@ -2,6 +2,36 @@
 
 ## Unreleased
 
+## v1.71.0 — 2026-09-04
+
+- The Background editor can now upload and reuse private PNG, JPEG, WebP and
+  safe SVG images, then place, resize, mirror, rotate, replace and layer them
+  like furniture without wall magnetism; missing files keep a repairable
+  placeholder and portable exports retain integrity metadata without embedding
+  image bytes ([#51](https://github.com/Matysh/houseplan-card/issues/51)).
+- Robot vacuums with several maps can now assign and calibrate each map against
+  its own floor, route the live position and trail there while leaving the dock
+  in place, and explain unassigned or ambiguous active maps instead of guessing
+  where to draw them
+  ([#162](https://github.com/Matysh/houseplan-card/issues/162)).
+- General settings can hide the room information window without disabling its
+  highlight, furniture snaps to the visible physical wall face, and the HACS
+  catalog now names the integration simply **House Plan**
+  ([#426](https://github.com/Matysh/houseplan-card/issues/426),
+  [#445](https://github.com/Matysh/houseplan-card/issues/445),
+  [#444](https://github.com/Matysh/houseplan-card/issues/444)).
+- Confirmation and **Help & feedback** flows now fail safely across missing
+  spaces, delayed previews, edited retries, mixed compatible versions and
+  malformed nested data; Home Assistant Area tracking and rejected General,
+  device or calibration saves also preserve the last confirmed plan
+  ([#417](https://github.com/Matysh/houseplan-card/issues/417),
+  [#418](https://github.com/Matysh/houseplan-card/issues/418),
+  [#419](https://github.com/Matysh/houseplan-card/issues/419),
+  [#420](https://github.com/Matysh/houseplan-card/issues/420),
+  [#423](https://github.com/Matysh/houseplan-card/issues/423),
+  [#439](https://github.com/Matysh/houseplan-card/issues/439),
+  [#442](https://github.com/Matysh/houseplan-card/issues/442)).
+
 ## v1.71.0-beta.4 — 2026-09-04
 
 - Furniture now snaps its back edge to the visible physical wall surface rather
