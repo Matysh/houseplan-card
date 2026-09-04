@@ -442,3 +442,22 @@ test('момент коллизии на #449: файлы дали бы своб
   assert.equal(counters.attempt, 2, 'файл раунда r1 существует, значит следующий заход r2');
   assert.equal(counters.spent, 1, 'жёлтый вердикт цикла израсходован, хотя проза его не назвала');
 });
+
+test('guard считает раунды скриптом, а не inline-shell (#454 AC9)', () => {
+  const workflow = readFileSync(
+    new URL('../.github/workflows/process.yml', import.meta.url), 'utf8',
+  );
+  const step = workflow.slice(
+    workflow.indexOf('      - id: decide'),
+    workflow.indexOf('  review:'),
+  );
+  assert.ok(step.length > 500, 'шаг decide не найден');
+  // Решение принимает модуль под тестами. Пока счёт жил строкой jq внутри
+  // workflow, у него не было ни одного теста — и дефект #454 прожил месяцы.
+  assert.match(step, /node scripts\/review-doc-guard\.mjs --counters/);
+  // Оба счётчика читаются из вывода скрипта, а не досчитываются в shell.
+  assert.match(step, /attempt=\$\(printf '%s\\n' "\$counters"/);
+  assert.match(step, /spent=\$\(printf '%s\\n' "\$counters"/);
+  // Скрипт лежит в репозитории, значит guard обязан его выкачать.
+  assert.match(workflow.slice(0, workflow.indexOf('      - id: decide')), /actions\/checkout/);
+});
