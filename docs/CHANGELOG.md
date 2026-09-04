@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.72.0-beta.2 — 2026-09-05
+
 - Double-clicking or double-tapping free plan background in View or kiosk now
   runs the same **Fit all** action as the toolbar button; rooms, devices,
   openings and editor surfaces keep their own gestures
