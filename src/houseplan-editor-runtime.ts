@@ -1190,6 +1190,7 @@ export class HouseplanEditorRuntime {
   }>();
   private _resizePreviewNodes: MultiWallNodeMap | null = null;
   private _resizeBaselineLimits: JunctionLimitViolation[] = [];
+  private _resizeBaseFrameStable = true;
   private _supportExpiryTimer?: number;
   private _supportPreviewGeneration = 0;
   private _decorAssetGuardReplace: boolean | null = null;
@@ -1219,19 +1220,16 @@ export class HouseplanEditorRuntime {
       ResizePreview, ResizeLiveLabel[], SpaceGeometryState, ResizeWallUnion, ResizeWallArtifact
     >();
   }
-
 public _routeLiveEditorUpdate(name?: PropertyKey, oldValue?: unknown): boolean {
-    return routeHouseplanEditorUpdate(this.host, name, oldValue);
+    const live = routeHouseplanEditorUpdate(this.host, name, oldValue);
+    if (!live && this.host._resize.preview) this._resizeBaseFrameStable = false;
+    return live;
   }
-
 public _commitLiveEditor(): void { commitHouseplanEditor(this.host); }
-
 public _disposeLiveEditor(): void { disposeHouseplanEditor(this.host); }
-
 public _queuePointerMove(key: string, run: () => void): void { queueHouseplanPointerMove(this.host, key, run); }
 public _flushPointerMove(key: string): void { flushHouseplanPointerMove(this.host, key); }
 public _cancelPointerMove(key?: string): void { cancelHouseplanPointerMove(this.host, key); }
-
 public _help(key: Extract<I18nKey, `${string}.help`>): TemplateResult | typeof nothing {
     const ariaKey = `${key}.aria` as I18nKey;
     const lang = langOf(this.host.hass, this.host._config?.language);
@@ -3756,6 +3754,7 @@ public _rszCandidateRenderable(preview: { space: string; sp: any } | null): bool
 
 public _rszEdgeDown(ev: PointerEvent, roomId: string, edge: number): void {
     if (this.host._tool !== 'resize' || this.host._resize.dragging) return;
+    this._resizeBaseFrameStable = true;
     ev.stopPropagation();
     ev.preventDefault();
     const rooms = this._rszRooms();
@@ -3801,10 +3800,10 @@ public _rszDisabledKey(ev: KeyboardEvent, reason: SafeResizeReason): void {
   }
 
 public _rszMove(ev: PointerEvent): void {
+    if (!this.host._resize.ownsPointer(ev.pointerId)) return;
     ev.stopPropagation();
     queueHouseplanPointerMove(this.host, 'resize', () => this._rszMoveNow(ev));
   }
-
 private _rszMoveNow(ev: PointerEvent): void {
     if (!this.host._resize.ownsPointer(ev.pointerId)) return;
     ev.stopPropagation();
@@ -3905,7 +3904,8 @@ public _rszCancelDrag(pointerId?: number): void {
     // Retain the canonical frame only when the drag was actually painted in
     // the isolated plan-editor layer. Programmatic/non-editor callers still
     // need a full render to replace their preview DOM.
-    if (result.restoreEpoch !== null && this.host._mode === 'plan') this.host._terminalFrame = 1;
+    if (result.restoreEpoch !== null && this.host._mode === 'plan'
+        && this._resizeBaseFrameStable) this.host._terminalFrame = 1;
     this.host.requestUpdate();
   }
 
