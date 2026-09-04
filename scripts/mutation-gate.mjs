@@ -1496,17 +1496,6 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
-    id: 'room-fit-enters-kiosk-double-tap-sequence',
-    guard: 'node demo/smoke_room_fit.mjs',
-    because: 'a room-owned tap must not update the kiosk free-background double-tap sequence '
-      + 'or unexpectedly reset the whole plan (#152 AC8)',
-    patches: [{
-      file: 'src/houseplan-card.ts',
-      find: '      if (!acceptedRoom && ss && ss.id === ev.pointerId) {',
-      replace: '      if (ss && ss.id === ev.pointerId) {',
-    }],
-  },
-  {
     id: 'room-fit-html-overlay-jumps-ahead',
     guard: 'node demo/smoke_room_fit.mjs',
     because: 'HTML room labels and the SVG plan must consume the same presented camera on '

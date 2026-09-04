@@ -1093,7 +1093,7 @@ export class HouseplanCard extends LitElement {
     return this._modeTransitionPreparing || this._modeTransition.active;
   }
 
-  private get _doubleFitEnabled(): boolean { return this._mode === 'view' && !this._vacFit && !this._modeTransitionBusy && !this._suppressClick && !this._touchSequenceMultitouch && this._continuity.state === 'steady' && !this._continuity.overlayBlocksInteraction; }
+  private get _doubleFitEnabled(): boolean { return this._mode === 'view' && !this._vacFit && !this._modeTransitionBusy && !this._touchSequenceMultitouch && this._continuity.state === 'steady' && !this._continuity.overlayBlocksInteraction; }
 
   private _cameraState(): CameraState {
     const view = this._viewOr(this._baseVb());
@@ -6950,7 +6950,7 @@ export class HouseplanCard extends LitElement {
         || this._holdFired || this._touchSequenceMultitouch,
     );
     if (this._roomPointer?.pointerId === ev.pointerId) this._roomPointer = null;
-    const doubleFit = this._doubleFit.pointerUp(ev, this._space, this._doubleFitEnabled, !!this._pinchStart || this._panLock !== null || this._holdFired);
+    const doubleFit = this._doubleFit.pointerUp(ev, this._space, this._doubleFitEnabled, this._suppressClick || !!this._pinchStart || this._panLock !== null || this._holdFired);
     if (doubleFit) this._fitAll('double-tap');
     if (this._kiosk) {
       clearTimeout(this._kioskHoldTimer);
