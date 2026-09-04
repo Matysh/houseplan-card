@@ -10,7 +10,7 @@
   diagnostics, performance harness
 - **Модель данных:** без новых полей, миграции и backend-изменений
 - **Связано:** #34, #82, #137, #156, #380, #396, #449,
-  `docs/PERFORMANCE.md`, `demo/performance/README.md`
+  `demo/performance/README.md`
 
 ## 1. Сценарий
 
@@ -327,9 +327,11 @@ Assertions fail the runner независимо от timing result. RAF paints �
 ### 11.3 Абсолютные цели
 
 Для профиля при тех же CI browser/runtime условиях задаются base-relative
-пределы и следующие bootstrap `hardMaxMs`, полученные как безопасный порядок
-ниже наблюдавшихся 3 432–5 538 мс полного-render времени и согласованные с
-существующим `panZoomMs: 500 ms`:
+пределы и следующие bootstrap `hardMaxMs`. Они намеренно существенно ниже
+опубликованного в issue времени полных updates одного pan-сценария — 3 432 мс —
+и согласованы с существующим `panZoomMs: 500 ms`. Для hover потолок 500 мс на
+120 moves означает в среднем не более 4,2 мс на событие против замеренных в
+issue 98,9 мс на полный update:
 
 | Метрика | Абсолютный потолок |
 |---|---:|
@@ -387,9 +389,9 @@ limits, а не разрешение расходовать весь budget; rel
   import/export, HA API, i18n strings и dependencies не изменены; новые caches
   bounded per card и очищаются при disconnect.
 - **AC13 (`documentation review`; разработчик/ревьюер):**
-  `docs/PERFORMANCE.md` и `demo/performance/README.md` описывают новый профиль,
-  counters, budgets и локальный запуск; оба changelog содержат пользовательский
-  эффект со ссылкой на #451.
+  `demo/performance/README.md` описывает новый профиль, counters, budgets и
+  локальный запуск; оба changelog содержат пользовательский эффект со ссылкой
+  на #451.
 
 ## 13. План автотестов
 
@@ -425,7 +427,8 @@ handler не принимается как доказательство `0` rend
 ### 13.3 Golden, performance и release
 
 - implementation loop: `npm run typecheck`, `npm test`, `npm run build`;
-- после изменения `src/**` — canonical screenshots по `docs/SCREENSHOTS.md`,
+- после изменения `src/**` — canonical screenshots по workflow из `PROCESS.md`
+  §8 (`demo/docs/capture.mjs`, затем только после проверки `npm run docs:accept`),
   inspection и существующие golden; любой diff исследуется;
 - перед beta — полный smoke/golden/performance gate по runbook;
 - full performance сравнивает candidate/base на одном Linux runner и публикует
@@ -449,7 +452,7 @@ handler не принимается как доказательство `0` rend
    matrix; обновление smoke runner/package scripts при необходимости.
 6. `demo/benchmark_large_house.mjs`, `demo/performance/card-contract.mjs`, новый
    budget/profile и evaluator/report plumbing — `large-house-interaction-v1`.
-7. `docs/PERFORMANCE.md`, `demo/performance/README.md`, оба changelog.
+7. `demo/performance/README.md` и оба changelog.
 
 Реализация сначала выделяет pure contracts и diagnostics cache, затем HA
 filter, затем camera/hover live path, затем редакторские consumers. Нельзя
@@ -466,7 +469,6 @@ implementation commit имеет `User-Visible: yes` и в том же комм�
 
 Также обновляются:
 
-- `docs/PERFORMANCE.md`;
 - `demo/performance/README.md`;
 - budget/profile и machine-readable performance report;
 - canonical screenshots/golden evidence без ожидаемого визуального изменения;
