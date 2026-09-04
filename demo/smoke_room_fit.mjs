@@ -113,22 +113,32 @@ const out = await page.evaluate(async () => {
 
   c._resetZoom(); await waitCamera();
   c._clearRoomFocus(true);
-  const areaLink = root.querySelector('.roomlabel[data-id="room-a"] .rlgo');
+  const currentLabel = root.querySelector('.roomlabel[data-id="room-a"]');
+  const ownerProbe = document.createElement('span');
+  ownerProbe.setAttribute('role', 'button');
+  ownerProbe.dataset.roomFitBlock = 'smoke-action';
+  currentLabel.append(ownerProbe);
+  pointer(ownerProbe, 'pointerdown', 15203);
+  pointer(ownerProbe, 'pointerup', 15203);
+  await c.updateComplete;
+  result.commonInteractiveOwnerSuppressesRoomFit = c._roomPointer === null
+    && c._roomFocus === null;
+  const areaLink = currentLabel.querySelector('.rlgo');
   const beforeLink = JSON.stringify(c._view);
-  pointer(areaLink, 'pointerdown', 15203);
-  pointer(areaLink, 'pointerup', 15203);
+  pointer(areaLink, 'pointerdown', 15204);
+  pointer(areaLink, 'pointerup', 15204);
   await c.updateComplete;
   result.areaLinkSuppressesRoomFit = JSON.stringify(c._view) === beforeLink
     && c._roomPointer === null && c._roomFocus === null;
 
-  pointer(roomNode(), 'pointerdown', 15204, 500, 300);
-  pointer(roomNode(), 'pointermove', 15204, 520, 300);
-  pointer(roomNode(), 'pointerup', 15204, 520, 300);
+  pointer(roomNode(), 'pointerdown', 15205, 500, 300);
+  pointer(roomNode(), 'pointermove', 15205, 520, 300);
+  pointer(roomNode(), 'pointerup', 15205, 520, 300);
   await c.updateComplete;
   result.panCancelsRoomIntent = c._roomFocus === null && c._roomPointer === null;
 
-  pointer(roomNode(), 'pointerdown', 15205, 500, 300);
-  pointer(roomNode(), 'pointerup', 15205, 500, 300);
+  pointer(roomNode(), 'pointerdown', 15206, 500, 300);
+  pointer(roomNode(), 'pointerup', 15206, 500, 300);
   await waitCamera();
   c.style.width = '760px';
   c._lastValidStageSize = [1000, c._stageEl.clientHeight];
@@ -146,8 +156,8 @@ const out = await page.evaluate(async () => {
   await c.updateComplete;
   c._setProjection('iso');
   await c.updateComplete;
-  pointer(roomNode(), 'pointerdown', 15206);
-  pointer(roomNode(), 'pointerup', 15206);
+  pointer(roomNode(), 'pointerdown', 15207);
+  pointer(roomNode(), 'pointerup', 15207);
   await waitCamera();
   const isoMargins = margins();
   result.isoUsesProjectedBounds = c._effectiveProjection() === 'iso'
@@ -170,7 +180,7 @@ const out = await page.evaluate(async () => {
     buttons: type === 'pointerdown' ? 1 : 0, clientX: 450, clientY: 300,
   }));
   kiosk._lastTap = 152;
-  for (const id of [15207, 15208]) {
+  for (const id of [15208, 15209]) {
     kioskPointer(kioskRoom, 'pointerdown', id);
     kioskPointer(kioskRoom, 'pointerup', id);
     const started = performance.now();
@@ -183,8 +193,8 @@ const out = await page.evaluate(async () => {
   kiosk._clearRoomFocus(true);
   kiosk._applyView(2);
   kiosk._lastTap = Date.now() - 100;
-  kioskPointer(kiosk._stageEl, 'pointerdown', 15209);
-  kioskPointer(kiosk._stageEl, 'pointerup', 15209);
+  kioskPointer(kiosk._stageEl, 'pointerdown', 15210);
+  kioskPointer(kiosk._stageEl, 'pointerup', 15210);
   const resetStarted = performance.now();
   while (kiosk._cameraTransition.active && performance.now() - resetStarted < 1200) {
     await new Promise((resolve) => requestAnimationFrame(resolve));
