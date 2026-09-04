@@ -118,6 +118,7 @@
       "imageSha256": "cb37f7eefd936f98ef44969b21dfe8e40ee27d1f558abe8d53c0223f6488b8a6"
     }
   },
+  "acceptedOn": "win32",
   "acceptance": {
     "lastWriteWasFingerprintOnly": true
   }
