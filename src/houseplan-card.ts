@@ -306,7 +306,7 @@ import {
   type RenderDeviceSnapshot,
 } from './render-device-snapshot';
 import { deviceFaceStyle, deviceThemeClass, renderDeviceFace } from './device-face';
-import { effectiveDeviceBaseSize } from './device-marker-geometry';
+import { effectiveDeviceBaseSize } from './device-marker-geometry'; import { renderZigbeeTopologyOverlay } from './zigbee-topology-overlay-bridge';
 import {
   ModeTransitionController, viewportFromViewBox,
   type HouseplanMode, type ModeTransitionState, type ModeVisualState, type ModeViewBox,
@@ -2074,7 +2074,7 @@ export class HouseplanCard extends LitElement {
     colors: FillColors; glowRadius: number; bgColor: string | null;
     /** sun on the plan (docs/SUN.md) */
     northDeg: number | null; bgMode: 'static' | 'daynight'; sunRays: boolean;
-    showRoomTooltip: boolean;
+    showRoomTooltip: boolean; zigbeeTopology: import('./zigbee-topology-settings').ZigbeeTopologySettings;
     busy: boolean;
   } | null = null;
   private _supportDialog: SupportDialogState | null = null;
@@ -11813,7 +11813,7 @@ export class HouseplanCard extends LitElement {
             <svg class="iso-walls-svg" viewBox="${view.x} ${view.y} ${view.w} ${view.h}"
               preserveAspectRatio="xMidYMid meet" aria-hidden="true" pointer-events="none">
               ${this._renderIsoWalls(isoLayers, isoPanels)}
-            </svg>` : nothing}
+            </svg>` : nothing}${renderZigbeeTopologyOverlay({ hass: this.hass, settings: this._settings, devices: this._renderDevices, registry: this._haRegistry, currentSpace: space.id, viewKey: view, view: this._mode === 'view', kiosk: this._kiosk })}
           ${''/* docs/CANVAS.md §6: an icon is a percentage of the PLAN and
                  scales with it when you zoom — the behaviour the card always
                  had, restored by the owner. `iconCqw` is `iconPct * iconUnit

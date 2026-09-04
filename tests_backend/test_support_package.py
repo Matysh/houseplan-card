@@ -201,6 +201,10 @@ def test_rich_plan_projection_preserves_safe_structure_and_drops_unknown_values(
         "settings": {
             "north_deg": 30,
             "show_room_tooltip": False,
+            "zigbee_topology": {
+                "enabled": True,
+                "z2m_base_topics": ["private/site/zigbee2mqtt"],
+            },
             "fill_colors": {"warm": {"c": "#ffaa00", "a": 0.5, "secret": "drop"}},
             "decor_default_style": {
                 "color": "#123456", "width_cm": 2, "secret": "drop",
@@ -292,6 +296,8 @@ def test_rich_plan_projection_preserves_safe_structure_and_drops_unknown_values(
     assert package["versions"]["card"] == "unknown"
     assert plan["settings"]["fill_colors"] == {"warm": {"a": 0.5, "c": "#ffaa00"}}
     assert plan["settings"]["show_room_tooltip"] is False
+    assert "zigbee_topology" not in plan["settings"]
+    assert b"private/site/zigbee2mqtt" not in raw
     assert plan["settings"]["decor_default_style"] == {"color": "#123456", "width_cm": 2}
     assert space["rooms"][0]["poly"] == [[0, 0], [2, 0]]
     assert space["rooms"][0]["settings"]["temp_source_kind"] == "entity"

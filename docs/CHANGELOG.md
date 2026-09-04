@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Administrators can optionally load a ZHA or Zigbee2MQTT topology snapshot and
+  see only the observed direct neighbours of the device currently under a real
+  mouse pointer. The diagnostic layer is off by default, never scans on hover,
+  counts rather than draws cross-space links, and stays absent from touch,
+  kiosk, editors and the static card
+  ([#54](https://github.com/Matysh/houseplan-card/issues/54)).
 - In View and kiosk, clicking or tapping a room now centres it and fits its
   visible floor and boundary walls with 10% screen margins; a visible room
   label offers the same action from the keyboard

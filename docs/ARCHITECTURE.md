@@ -1636,6 +1636,30 @@ diffs the real `seedHiddenBindings`/`buildDevices` outputs — there is no
 second copy of the filter logic to drift. The field registry (#33) carries
 their passports; `scripts/config-audit.mjs` treats both as `current`.
 
+## Contextual Zigbee topology (#54, 2026-09-04)
+
+The initial View graph owns only the fail-closed settings reader and a dynamic
+overlay bridge. A saved `settings.zigbee_topology.enabled === true`, an actual
+HA admin, full-card View and non-kiosk surface are all required before the
+topology overlay chunk is requested. Opening the lazy General Settings runtime
+does not load provider transport until an enabled saved setting needs status or
+the admin presses a provider action.
+
+`zigbee-topology.ts` normalizes ZHA and Zigbee2MQTT into unordered edge pairs
+with separate directional observations, maps IEEE nodes through exact HA
+registry ownership and resolves only edges incident to the hovered marker.
+Routes never invent neighbor edges. `zigbee-topology-runtime.ts` owns a
+per-connection memory cache and in-flight dedupe: ZHA reads `zha/devices`
+without requesting a scan; Z2M verifies the retained bridge-info topic, sends
+one correlated raw `routes:false` request through `mqtt.publish`, rejects
+retained/foreign/late replies and always releases subscriptions.
+
+The pointer-transparent overlay is stacked above architectural/isometric
+layers and below device markers. It reads the already projected marker centres,
+so flat/isometric camera and zoom remain single-source. Cache data, IEEE
+addresses and raw payloads are never persisted, logged, exported or admitted
+to support diagnostics.
+
 ## The initial bundle carries English and Russian whole (#400, 2026-08-31)
 
 `en` and `ru` are synchronous dictionaries in the initial chunk; `de` and `fr`

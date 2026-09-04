@@ -17,7 +17,7 @@ import type { HpConfirmRequest } from './danger-confirm';
 import './hp-color-opacity';
 import type { ColorPickerLabels } from './hp-color-opacity';
 import './hp-help';
-import './hp-device-preview';
+import './hp-device-preview'; import './hp-zigbee-topology-settings';
 import {
   EXCLUDED_DOMAINS, DEFAULT_ICON_RULES, compileIconRules, isValidPattern, iconFor,
   type IconRule, type CompiledIconRule,
@@ -250,7 +250,7 @@ import { enqueueSerializedWrite, optimisticAttempt, rollbackOptimistic, type Opt
 import { applyCalibrationProposal, saveAutomaticCalibration, saveManualCalibration, saveVacuumMatrix,
   type CalibrationProposal, type VacuumFit } from './vacuum-calibration-write';
 import { hasTranslation, langOf, t, type I18nKey } from './i18n';
-import { supportT, type SupportI18nKey } from './i18n/support';
+import { supportT, type SupportI18nKey } from './i18n/support'; import { writeZigbeeTopologySettings, zigbeeTopologySettingsOf, type ZigbeeTopologySettings } from './zigbee-topology-settings';
 import {
   newSupportDialogState,
   supportApiCompatible,
@@ -1118,8 +1118,8 @@ export interface HouseplanEditorHostPort {
   _sentPos: Map<string, DeviceLayout[string] | null>;
   _serverCfg: ServerConfig | null;
   _serverStorage: boolean;
-  _settings: { exclude_integrations?: string[]; group_lights?: boolean; show_all?: boolean; filter_seeded?: boolean; icon_rules?: { pattern: string; icon: string; }[]; show_room_tooltip?: boolean; };
-  _settingsDialog: { colors: FillColors; glowRadius: number; bgColor: string | null; northDeg: number | null; bgMode: "static" | "daynight"; sunRays: boolean; showRoomTooltip: boolean; busy: boolean; } | null;
+  _settings: { exclude_integrations?: string[]; group_lights?: boolean; show_all?: boolean; filter_seeded?: boolean; icon_rules?: { pattern: string; icon: string; }[]; show_room_tooltip?: boolean; zigbee_topology?: { enabled?: boolean; z2m_base_topics?: string[] }; };
+  _settingsDialog: { colors: FillColors; glowRadius: number; bgColor: string | null; northDeg: number | null; bgMode: "static" | "daynight"; sunRays: boolean; showRoomTooltip: boolean; zigbeeTopology: ZigbeeTopologySettings; busy: boolean; } | null;
   _supportDialog: SupportDialogState | null;
   _showAll: boolean;
   _showHidden: boolean;
@@ -9067,8 +9067,7 @@ public _openSettingsDialog = (): void => {
       northDeg: northDegOf(this.host._settings, {}),
       bgMode: bgModeOf(this.host._settings, {}),
       sunRays: sunRaysOn(this.host._settings, {}),
-      showRoomTooltip: showRoomTooltipOf(this.host._settings),
-      busy: false,
+      showRoomTooltip: showRoomTooltipOf(this.host._settings), zigbeeTopology: zigbeeTopologySettingsOf(this.host._settings), busy: false,
     };
   };
 
@@ -10265,7 +10264,7 @@ public _updateDecorStyle(next: DecorStyle): void {
     try {
       const cfg = this.host._serverCfg!;
       const isDefault = JSON.stringify(d.colors) === JSON.stringify(DEFAULT_FILL_COLORS);
-      const settings: any = { ...cfg.settings };
+      let settings: any = { ...cfg.settings };
       if (isDefault) delete settings.fill_colors;
       else settings.fill_colors = d.colors;
       const cm = this.host._imperial ? d.glowRadius * 30.48 : d.glowRadius * 100;
@@ -10281,7 +10280,7 @@ public _updateDecorStyle(next: DecorStyle): void {
       if (d.sunRays) settings.sun_rays = true;
       else delete settings.sun_rays;
       if (d.showRoomTooltip) delete settings.show_room_tooltip;
-      else settings.show_room_tooltip = false;
+      else settings.show_room_tooltip = false; settings = writeZigbeeTopologySettings(settings, d.zigbeeTopology);
       // Old configs may still contain this accepted field, but weather no
       // longer affects sunlight; saving general settings cleans it up.
       delete settings.weather_entity;
@@ -10594,7 +10593,7 @@ public _renderSettingsDialog(): TemplateResult {
             <span>${supportT(
               langOf(this.host.hass, this.host._config?.language), 'gs.show_room_tooltip',
             )}</span>
-          </label>
+          </label><hp-zigbee-topology-settings .hass=${this.host.hass} .value=${this.host._settingsDialog!.zigbeeTopology} .savedEnabled=${zigbeeTopologySettingsOf(this.host._settings).enabled} .devices=${this.host._devices} .registry=${this.host._haRegistry} @hp-topology-settings-change=${(event: CustomEvent<ZigbeeTopologySettings>) => (this.host._settingsDialog = { ...this.host._settingsDialog!, zigbeeTopology: event.detail })}></hp-zigbee-topology-settings>
           <label class="dispsection">${this.host._t('gs.light_group')}</label>
           ${this._renderColorRow('light_on', 'gs.light_on')}
           ${this._renderColorRow('light_off', 'gs.light_off')}
@@ -10720,7 +10719,7 @@ public _renderSettingsDialog(): TemplateResult {
         </div>
         <div class="row" slot="footer">
           <button class="btn ghost" @click=${() =>
-            (this.host._settingsDialog = { ...this.host._settingsDialog!, colors: JSON.parse(JSON.stringify(DEFAULT_FILL_COLORS)), glowRadius: this.host._imperial ? 9.8 : 3, bgColor: null, northDeg: null, bgMode: 'daynight', sunRays: false, showRoomTooltip: true })}>
+            (this.host._settingsDialog = { ...this.host._settingsDialog!, colors: JSON.parse(JSON.stringify(DEFAULT_FILL_COLORS)), glowRadius: this.host._imperial ? 9.8 : 3, bgColor: null, northDeg: null, bgMode: 'daynight', sunRays: false, showRoomTooltip: true, zigbeeTopology: { enabled: false, z2mBaseTopics: [] } })}>
             ${this.host._t('gs.reset')}
           </button>
           <span class="spacer"></span>

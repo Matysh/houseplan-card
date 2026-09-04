@@ -261,6 +261,8 @@ export interface ServerConfig {
     icon_rules?: { pattern: string; icon: string }[];
     /** Only an explicit false hides the room hover information window. */
     show_room_tooltip?: boolean;
+    /** Opt-in, admin-only contextual Zigbee diagnostics (#54). */
+    zigbee_topology?: { enabled?: boolean; z2m_base_topics?: string[] };
   };
 }
 

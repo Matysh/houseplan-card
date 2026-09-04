@@ -77,6 +77,21 @@ new frontend restores the disabled behavior after upgrade. Full backup/import
 preserves the setting and the privacy-safe support projection includes only a
 validated boolean.
 
+## Contextual Zigbee topology (#54)
+
+`settings.zigbee_topology` is an optional global object. Only exact
+`enabled: true` activates the admin-only full-card View layer; absence,
+malformed values and older configs are off. `z2m_base_topics` is a bounded list
+of exact MQTT base topics: empty entries, wildcards, duplicates and control
+characters are dropped. Disabling the feature retains valid topics; resetting
+General settings removes the object.
+
+Provider snapshots, IEEE addresses, links, errors and timestamps are runtime
+memory only. They are not config fields, do not enter backup/export or support
+diagnostics, and disappear with the HA connection/page. Older frontends ignore
+the settings object; the backend's unknown-settings policy preserves it. No
+model or store version migration is required.
+
 ## Vacuum map routes (#162)
 
 `marker.vacuum.map_routes` is an optional array of

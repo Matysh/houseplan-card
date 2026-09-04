@@ -29,6 +29,16 @@
 export const SMOKE_LINKS = [
   {
     symbols: [
+      'renderZigbeeTopologyOverlay', 'resolveTopologyHover', 'mapTopologyNodes',
+      'readZhaTopology', 'refreshZ2mTopology', 'zigbeeTopologySettingsOf',
+    ],
+    smokes: ['smoke_zigbee_topology_hover.mjs'],
+    because: 'the #54 production-bundle scenario proves default-off lazy loading, explicit provider '
+      + 'refresh, incident-only mouse hover, cross-space counting, pointer transparency and immediate '
+      + 'cleanup across leave, touch, editor and non-admin boundaries',
+  },
+  {
+    symbols: [
       'beginVacuumRouteDraft', 'chooseVacuumRouteSpace', 'commitVacuumRouteDraft',
       'VacuumRouteDraft', 'VacuumMapsHost', 'VacuumMapsCardHost',
     ],

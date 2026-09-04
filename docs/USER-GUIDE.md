@@ -201,6 +201,20 @@ but hide the floating room summary, turn off **General settings → Show the roo
 information window on hover**. The option is on by default and does not affect
 device tooltips.
 
+For an occasional Zigbee placement check, an administrator can enable
+**General settings → Show Zigbee links when hovering over a device**. The option
+is off by default. Load the provider snapshot there: **Read ZHA data** reads
+ZHA's existing cache, while **Update map** starts an explicit Zigbee2MQTT raw
+network-map scan for each entered base topic (default `zigbee2mqtt`). The latter
+may take 10 seconds to 2 minutes and can temporarily slow the Zigbee network.
+
+After data is loaded, moving a real mouse over a mapped Zigbee marker shows
+only its observed direct neighbours. Links to markers on the current space are
+lines; drawable neighbours on other spaces are summarized as a temporary
+count. This is a snapshot, not the route currently used by every packet. The
+layer does not appear on touch/pen, in kiosk, in editors or in the static card,
+and hovering never starts a scan.
+
 Each editor has a stable primary toolbar. Tool parameters and selected-object
 actions appear in a context tray over the top of the canvas. On a narrow screen
 the tray scrolls horizontally instead of shrinking the plan.

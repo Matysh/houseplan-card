@@ -46,7 +46,7 @@ deliberate degradation is allowed under `TOUCH-SUPPORT.md`.
 | J4 | "From zero to a working plan in one evening, no Inkscape/YAML" — image/PDF/draw, floors-import wizard, room polygons bound to areas, filtered auto-placement, editable icon rules | **Closed**; onboarding polish is *partial* (no registry-driven room suggestions) |
 | J5 | "Room climate at a glance" — per-room temperature/humidity, comfort-range fills, room-card metrics | **Closed** |
 | J6 | "Keep the plan true as the home evolves" — new-device flag, two editors, drag/resize, merge/split, multi-client live sync, optimistic locking | **Closed** |
-| J7 | "Is my Zigbee mesh healthy *here*?" — LQI badges, per-room average, LQI fill | **Closed** (kept deliberately: cheap, spatial by nature, no in-plan competitor) |
+| J7 | "Is my Zigbee mesh healthy *here*?" — LQI badges, per-room average/fill and opt-in direct-neighbour links for one hovered device | **Closed** (spatial diagnostics; no persistent full-mesh graph) |
 
 ## Partially covered — improvement backlog stays inside these
 

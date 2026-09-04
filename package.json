@@ -36,6 +36,7 @@
     "release:notes": "node scripts/release-notes.mjs",
     "prepare": "node scripts/install-hooks.mjs",
     "benchmark:junction-limits": "tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node demo/benchmark_junction_limits.mjs",
+    "benchmark:zigbee-topology": "tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node demo/benchmark_zigbee_topology.mjs",
     "furniture:generate": "node scripts/generate-furniture-assets.mjs",
     "furniture:check": "node scripts/generate-furniture-assets.mjs --check"
   },

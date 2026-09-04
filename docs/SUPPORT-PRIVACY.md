@@ -25,6 +25,11 @@ URLs, paths, filenames, plan/backdrop/manual bytes, vacuum calibration and
 trails, backup history, message and contact. Unknown fields are dropped rather
 than copied and redacted later.
 
+The Zigbee topology snapshot is never offered to this package: raw provider
+payloads, IEEE addresses, neighbor links, base topics, timestamps and provider
+errors stay out of support preview/download/submission and out of browser
+storage and logs.
+
 ## Preview and authorization
 
 Only a Home Assistant user allowed to write House Plan can build or send a

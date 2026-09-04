@@ -83,6 +83,14 @@ The global `settings.show_room_tooltip` preference controls only the floating
 room information window. Missing or invalid values mean enabled; exact `false`
 hides the window while room highlight and every device tooltip remain active.
 
+The admin-only **General settings → Show Zigbee links on device hover** option
+is off by default. Once an admin explicitly reads cached ZHA data or updates a
+configured Zigbee2MQTT map, mouse hover temporarily draws only the observed
+direct links incident to that device. A linked marker in another space is
+counted beside the source without drawing an inter-space line. Hover never
+fetches data; touch, pen, keyboard focus, kiosk, editors and the static card do
+not expose this diagnostic layer.
+
 Removed from this mode (they move, not die):
 - icon dragging ("drag anywhere", v1.9 — consciously reversed),
 - room-label dragging,

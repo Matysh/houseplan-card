@@ -5607,6 +5607,50 @@ const MUTANT_DEFINITIONS = [
         + '        && fingerprint(current) !== attempt.attemptedFingerprint)) return false;',
     }],
   },
+  {
+    id: 'zigbee-topology-zha-read-starts-scan',
+    guard: 'node --test test/zigbee-topology.test.mjs',
+    because: 'hover diagnostics may read the existing ZHA snapshot but must never turn a read '
+      + 'into an implicit radio scan (#54 AC4)',
+    patches: [{
+      file: 'src/zigbee-topology-runtime.ts',
+      find: "    return normalizeZhaTopology(await hass.callWS({ type: 'zha/devices' }));",
+      replace: "    return normalizeZhaTopology(await hass.callWS({ type: 'zha/topology/update' }));",
+    }],
+  },
+  {
+    id: 'zigbee-topology-ambiguous-marker-selected',
+    guard: 'node --test test/zigbee-topology.test.mjs',
+    because: 'a Zigbee node with multiple drawable placements must fail closed instead of '
+      + 'drawing a plausible but false neighbour line (#54 AC8)',
+    patches: [{
+      file: 'src/zigbee-topology.ts',
+      find: '    if (candidates.length === 1) placements.set(node.key, {',
+      replace: '    if (candidates.length >= 1) placements.set(node.key, {',
+    }],
+  },
+  {
+    id: 'zigbee-topology-z2m-foreign-response-accepted',
+    guard: 'node --test test/zigbee-topology.test.mjs',
+    because: 'parallel Zigbee2MQTT requests share one response topic; only the matching '
+      + 'transaction may complete this snapshot (#54 AC6)',
+    patches: [{
+      file: 'src/zigbee-topology-runtime.ts',
+      find: '        if (value && transactionOf(value) === transaction) responseResolve?.(value);',
+      replace: '        if (value) responseResolve?.(value);',
+    }],
+  },
+  {
+    id: 'zigbee-topology-z2m-subscriptions-leak',
+    guard: 'node --test test/zigbee-topology.test.mjs',
+    because: 'both MQTT subscriptions must be released after success or failure so one manual '
+      + 'refresh cannot leave listeners processing later payloads (#54 AC6)',
+    patches: [{
+      file: 'src/zigbee-topology-runtime.ts',
+      find: '        try { unsubscribe(); } catch { /* cleanup is best effort */ }',
+      replace: '        try { void unsubscribe; } catch { /* cleanup is best effort */ }',
+    }],
+  },
 ];
 
 const mutationCardSource = readFileSync(join(repoRoot, 'src/houseplan-card.ts'), 'utf8');

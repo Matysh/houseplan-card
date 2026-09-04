@@ -1,0 +1,316 @@
+import type { DevItem } from './types';
+import type { HaRegistrySnapshot } from './ha-binding-status';
+import { normalizeZ2mBaseTopic } from './zigbee-topology-settings';
+
+export type ZigbeeProvider = 'zha' | 'z2m';
+export type ZigbeeRole = 'coordinator' | 'router' | 'end' | 'unknown';
+
+export interface ZigbeeDirectionalObservation {
+  lqi?: number;
+  relationship?: string;
+  activeRoute?: boolean;
+}
+
+export interface ZigbeeTopologyNode {
+  key: string;
+  ieee: string;
+  deviceId?: string;
+  role: ZigbeeRole;
+  available?: boolean;
+}
+
+export interface ZigbeeTopologyLink {
+  a: string;
+  b: string;
+  aToB?: ZigbeeDirectionalObservation;
+  bToA?: ZigbeeDirectionalObservation;
+}
+
+export type ZigbeeTopologyWarningCode =
+  | 'invalid_payload'
+  | 'duplicate_link'
+  | 'self_link'
+  | 'unmatched_device'
+  | 'ambiguous_placement'
+  | 'provider_scan_failure';
+
+export interface ZigbeeTopologyWarning {
+  code: ZigbeeTopologyWarningCode;
+  nodeKey?: string;
+}
+
+export interface ZigbeeTopology {
+  provider: ZigbeeProvider;
+  instanceId: string;
+  obtainedAt: number;
+  freshness: 'provider-cache' | 'fresh-scan';
+  nodes: ZigbeeTopologyNode[];
+  links: ZigbeeTopologyLink[];
+  warnings: ZigbeeTopologyWarning[];
+}
+
+export interface ZigbeeHoverLine {
+  neighborMarkerId: string;
+  lqi?: number;
+}
+
+export interface ZigbeeHoverResolution {
+  lines: ZigbeeHoverLine[];
+  remoteCount: number;
+  omittedCount: number;
+}
+
+export const TOPOLOGY_STALE_MS = 5 * 60 * 1000;
+export const TOPOLOGY_MAX_PAYLOAD_BYTES = 2 * 1024 * 1024;
+export const TOPOLOGY_MAX_NODES = 1000;
+export const TOPOLOGY_MAX_LINKS = 6000;
+
+export function normalizeIeee(value: unknown): string | null {
+  if (typeof value !== 'string' && typeof value !== 'number') return null;
+  let text = String(value).trim().toLowerCase();
+  if (/^0x[0-9a-f]{16}$/.test(text)) text = text.slice(2);
+  else text = text.replace(/[:-]/g, '');
+  return /^[0-9a-f]{16}$/.test(text) ? text : null;
+}
+
+function nodeKey(provider: ZigbeeProvider, instanceId: string, ieee: string): string {
+  return `${provider}:${instanceId}:${ieee}`;
+}
+
+function roleOf(value: unknown): ZigbeeRole {
+  const role = String(value || '').toLowerCase().replace(/[ _-]/g, '');
+  if (role.includes('coordinator')) return 'coordinator';
+  if (role.includes('router')) return 'router';
+  if (role.includes('enddevice') || role === 'end') return 'end';
+  return 'unknown';
+}
+
+function lqiOf(value: unknown): number | undefined {
+  const n = Number(value);
+  return Number.isFinite(n) && n >= 0 && n <= 255 ? Math.round(n) : undefined;
+}
+
+function observation(value: any): ZigbeeDirectionalObservation {
+  const lqi = lqiOf(value?.lqi ?? value?.linkquality ?? value?.link_quality);
+  const relationship = typeof value?.relationship === 'string'
+    ? value.relationship.slice(0, 40) : undefined;
+  return { ...(lqi === undefined ? {} : { lqi }), ...(relationship ? { relationship } : {}) };
+}
+
+function boundedArray(value: unknown, max: number): any[] | null {
+  return Array.isArray(value) && value.length <= max ? value : null;
+}
+
+function safePayload(value: unknown): boolean {
+  if (typeof value === 'string') return value.length <= TOPOLOGY_MAX_PAYLOAD_BYTES;
+  try { return JSON.stringify(value).length <= TOPOLOGY_MAX_PAYLOAD_BYTES; } catch { return false; }
+}
+
+function pushDirectionalLink(
+  links: Map<string, ZigbeeTopologyLink>, warnings: ZigbeeTopologyWarning[],
+  from: string, to: string, value: any,
+): void {
+  if (from === to) { warnings.push({ code: 'self_link', nodeKey: from }); return; }
+  const forward = from < to;
+  const pair = forward ? `${from}|${to}` : `${to}|${from}`;
+  const current = links.get(pair) || { a: forward ? from : to, b: forward ? to : from };
+  const field = forward ? 'aToB' : 'bToA';
+  if (current[field]) warnings.push({ code: 'duplicate_link', nodeKey: from });
+  else current[field] = observation(value);
+  links.set(pair, current);
+}
+
+/** Normalize cached ZHA neighbors. Route destinations deliberately do not create edges. */
+export function normalizeZhaTopology(payload: unknown, now = Date.now()): ZigbeeTopology {
+  const warnings: ZigbeeTopologyWarning[] = [];
+  const rows = safePayload(payload) ? boundedArray(payload, TOPOLOGY_MAX_NODES) : null;
+  if (!rows) return { provider: 'zha', instanceId: 'zha', obtainedAt: now,
+    freshness: 'provider-cache', nodes: [], links: [], warnings: [{ code: 'invalid_payload' }] };
+  const nodes = new Map<string, ZigbeeTopologyNode>();
+  const links = new Map<string, ZigbeeTopologyLink>();
+  for (const row of rows) {
+    const ieee = normalizeIeee(row?.ieee ?? row?.ieee_address);
+    if (!ieee) { warnings.push({ code: 'invalid_payload' }); continue; }
+    const key = nodeKey('zha', 'zha', ieee);
+    nodes.set(key, {
+      key, ieee,
+      ...(typeof row?.device_reg_id === 'string' ? { deviceId: row.device_reg_id } : {}),
+      role: roleOf(row?.device_type ?? row?.type),
+      ...(typeof row?.available === 'boolean' ? { available: row.available } : {}),
+    });
+  }
+  for (const row of rows) {
+    const ieee = normalizeIeee(row?.ieee ?? row?.ieee_address);
+    if (!ieee) continue;
+    const from = nodeKey('zha', 'zha', ieee);
+    const neighbors = boundedArray(row?.neighbors, TOPOLOGY_MAX_LINKS);
+    if (!neighbors) { if (row?.neighbors != null) warnings.push({ code: 'invalid_payload', nodeKey: from }); continue; }
+    for (const neighbor of neighbors) {
+      if (links.size >= TOPOLOGY_MAX_LINKS) { warnings.push({ code: 'invalid_payload' }); break; }
+      const otherIeee = normalizeIeee(neighbor?.ieee ?? neighbor?.ieee_address);
+      if (!otherIeee) { warnings.push({ code: 'invalid_payload', nodeKey: from }); continue; }
+      const to = nodeKey('zha', 'zha', otherIeee);
+      if (!nodes.has(to)) nodes.set(to, { key: to, ieee: otherIeee, role: roleOf(neighbor?.device_type) });
+      pushDirectionalLink(links, warnings, from, to, neighbor);
+    }
+  }
+  return { provider: 'zha', instanceId: 'zha', obtainedAt: now,
+    freshness: 'provider-cache', nodes: [...nodes.values()], links: [...links.values()], warnings };
+}
+
+function z2mValue(payload: any): any {
+  let value = payload;
+  if (typeof value === 'string') {
+    if (value.length > TOPOLOGY_MAX_PAYLOAD_BYTES) return null;
+    try { value = JSON.parse(value); } catch { return null; }
+  }
+  value = value?.data?.value ?? value?.value ?? value?.data ?? value;
+  if (typeof value === 'string') {
+    if (value.length > TOPOLOGY_MAX_PAYLOAD_BYTES) return null;
+    try { value = JSON.parse(value); } catch { return null; }
+  }
+  return value;
+}
+
+function endpointIeee(value: any, nodeById: Map<string, string>): string | null {
+  const direct = normalizeIeee(value?.ieee_address ?? value?.ieee ?? value);
+  if (direct) return direct;
+  const id = value?.id ?? value?.network_address ?? value;
+  return id == null ? null : nodeById.get(String(id)) || null;
+}
+
+/** Normalize one explicit Zigbee2MQTT raw network-map response. */
+export function normalizeZ2mTopology(payload: unknown, baseTopic: string, now = Date.now()): ZigbeeTopology {
+  const warnings: ZigbeeTopologyWarning[] = [];
+  const topic = normalizeZ2mBaseTopic(baseTopic) || 'invalid';
+  const raw = safePayload(payload) ? z2mValue(payload) : null;
+  const rows = boundedArray(raw?.nodes, TOPOLOGY_MAX_NODES);
+  const rawLinks = boundedArray(raw?.links, TOPOLOGY_MAX_LINKS);
+  if (!rows || !rawLinks) return { provider: 'z2m', instanceId: topic, obtainedAt: now,
+    freshness: 'fresh-scan', nodes: [], links: [], warnings: [{ code: 'invalid_payload' }] };
+  const nodes = new Map<string, ZigbeeTopologyNode>();
+  const nodeById = new Map<string, string>();
+  for (const row of rows) {
+    const ieee = normalizeIeee(row?.ieee_address ?? row?.ieee);
+    if (!ieee) { warnings.push({ code: 'invalid_payload' }); continue; }
+    const key = nodeKey('z2m', topic, ieee);
+    nodes.set(key, { key, ieee, role: roleOf(row?.type ?? row?.device_type),
+      ...(typeof row?.failed === 'boolean' ? { available: !row.failed } : {}) });
+    for (const id of [row?.id, row?.network_address]) if (id != null) nodeById.set(String(id), ieee);
+  }
+  const links = new Map<string, ZigbeeTopologyLink>();
+  for (const row of rawLinks) {
+    const fromIeee = endpointIeee(row?.source, nodeById);
+    const toIeee = endpointIeee(row?.target, nodeById);
+    if (!fromIeee || !toIeee) { warnings.push({ code: 'invalid_payload' }); continue; }
+    const from = nodeKey('z2m', topic, fromIeee);
+    const to = nodeKey('z2m', topic, toIeee);
+    if (!nodes.has(from)) nodes.set(from, { key: from, ieee: fromIeee, role: 'unknown' });
+    if (!nodes.has(to)) nodes.set(to, { key: to, ieee: toIeee, role: 'unknown' });
+    pushDirectionalLink(links, warnings, from, to, row);
+  }
+  return { provider: 'z2m', instanceId: topic, obtainedAt: now,
+    freshness: 'fresh-scan', nodes: [...nodes.values()], links: [...links.values()], warnings };
+}
+
+function ieeeFromRegistryIdentifier(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const direct = normalizeIeee(value);
+  if (direct) return direct;
+  const match = value.toLowerCase().match(/^zigbee2mqtt(?:_bridge)?_(.+)$/);
+  return match ? normalizeIeee(match[1]) : null;
+}
+
+function deviceIdsForNode(node: ZigbeeTopologyNode, registry: HaRegistrySnapshot): string[] {
+  if (node.deviceId && registry.devices[node.deviceId]) return [node.deviceId];
+  const ids = new Set<string>();
+  for (const [id, device] of Object.entries<any>(registry.devices)) {
+    const identifiers = Array.isArray(device?.identifiers) ? device.identifiers : [];
+    if (identifiers.some((pair: any) => Array.isArray(pair)
+      && ieeeFromRegistryIdentifier(pair[1]) === node.ieee)) ids.add(id);
+  }
+  if (ids.size) return [...ids];
+  for (const entity of Object.values<any>(registry.entities)) {
+    if (!entity?.device_id || typeof entity?.unique_id !== 'string') continue;
+    if (ieeeFromRegistryIdentifier(entity.unique_id) === node.ieee) ids.add(entity.device_id);
+  }
+  return [...ids];
+}
+
+function drawable(device: DevItem): boolean {
+  return !device.hidden && !device.virtual && device.bindingStatus?.kind !== 'ha_disabled'
+    && device.bindingStatus?.kind !== 'orphaned' && device.bindingStatus?.kind !== 'unverified';
+}
+
+export type ZigbeeNodePlacement = { markerId: string; space: string };
+export type ZigbeeMappedTopology = { topology: ZigbeeTopology; placements: Map<string, ZigbeeNodePlacement> };
+
+/** Exact registry binding only; names, models and friendly names are never identities. */
+export function mapTopologyNodes(
+  topology: ZigbeeTopology, devices: readonly DevItem[], registry: HaRegistrySnapshot,
+): { placements: Map<string, ZigbeeNodePlacement>; warnings: ZigbeeTopologyWarning[] } {
+  const placements = new Map<string, ZigbeeNodePlacement>();
+  const warnings: ZigbeeTopologyWarning[] = [];
+  for (const node of topology.nodes) {
+    if (node.available === false) { warnings.push({ code: 'provider_scan_failure', nodeKey: node.key }); continue; }
+    const deviceIds = deviceIdsForNode(node, registry);
+    if (deviceIds.length !== 1) { warnings.push({ code: 'unmatched_device', nodeKey: node.key }); continue; }
+    const deviceId = deviceIds[0];
+    let candidates = devices.filter((item) => drawable(item)
+      && item.bindingKind === 'device' && item.bindingRef === deviceId);
+    if (!candidates.length) candidates = devices.filter((item) => drawable(item)
+      && item.bindingKind === 'entity' && !!item.bindingRef
+      && registry.entities[item.bindingRef]?.device_id === deviceId);
+    if (candidates.length === 1) placements.set(node.key, {
+      markerId: candidates[0].id, space: candidates[0].space,
+    });
+    else warnings.push({ code: candidates.length > 1 ? 'ambiguous_placement' : 'unmatched_device', nodeKey: node.key });
+  }
+  return { placements, warnings };
+}
+
+export function mapTopologies(
+  topologies: readonly ZigbeeTopology[], devices: readonly DevItem[], registry: HaRegistrySnapshot,
+): ZigbeeMappedTopology[] {
+  return topologies.map((topology) => ({
+    topology, placements: mapTopologyNodes(topology, devices, registry).placements,
+  }));
+}
+
+export function resolveMappedTopologyHover(
+  mappedTopologies: readonly ZigbeeMappedTopology[], currentSpace: string, hoveredMarkerId: string,
+): ZigbeeHoverResolution {
+  const lines = new Map<string, ZigbeeHoverLine>();
+  const remote = new Set<string>();
+  let omittedCount = 0;
+  for (const { topology, placements } of mappedTopologies) {
+    const hoveredNodes = new Set([...placements]
+      .filter(([, placement]) => placement.markerId === hoveredMarkerId && placement.space === currentSpace)
+      .map(([key]) => key));
+    if (!hoveredNodes.size) continue;
+    for (const link of topology.links) {
+      const fromA = hoveredNodes.has(link.a);
+      const fromB = hoveredNodes.has(link.b);
+      if (!fromA && !fromB) continue;
+      const other = placements.get(fromA ? link.b : link.a);
+      if (!other || other.markerId === hoveredMarkerId) { omittedCount++; continue; }
+      if (other.space !== currentSpace) { remote.add(other.markerId); continue; }
+      const obs = fromA ? link.aToB : link.bToA;
+      const existing = lines.get(other.markerId);
+      if (!existing || (existing.lqi === undefined && obs?.lqi !== undefined)) {
+        lines.set(other.markerId, { neighborMarkerId: other.markerId, lqi: obs?.lqi });
+      }
+    }
+  }
+  return { lines: [...lines.values()], remoteCount: remote.size, omittedCount };
+}
+
+/** Resolve only the edges incident to the marker currently under the mouse. */
+export function resolveTopologyHover(
+  topologies: readonly ZigbeeTopology[], devices: readonly DevItem[],
+  registry: HaRegistrySnapshot, currentSpace: string, hoveredMarkerId: string,
+): ZigbeeHoverResolution {
+  return resolveMappedTopologyHover(
+    mapTopologies(topologies, devices, registry), currentSpace, hoveredMarkerId,
+  );
+}
