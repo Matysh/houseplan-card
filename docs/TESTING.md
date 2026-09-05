@@ -3810,7 +3810,9 @@ require hands on real hardware — they remain for the human pass.
       context: overlay — ребёнок `.devlayer` без собственной live-camera
       проекции; topology выше пересекающихся room label и постороннего marker,
       но ниже полных roots source и каждого реально нарисованного local
-      endpoint. Host и primitives остаются pointer-transparent.
+      endpoint. Для source это проверяется настоящим `page.mouse.move`, чтобы
+      CSS `:hover` участвовал в каскаде; синтетический `pointerover` этого не
+      доказывает. Host и primitives остаются pointer-transparent.
 - [ ] Exact endpoint ownership очищается при pointerleave, touch/pen, потере
       hover gate, смене mode/space/setting, invalidation mapping, замене marker
       DOM и disconnect. Remote/unplaced цели не поднимают marker.

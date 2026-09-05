@@ -330,7 +330,10 @@ forced-colors сохраняет системную палитру.
    endpoint markers выше.
 3. Снять stage screenshot в самом smoke и прочитать pixels через
    `createImageBitmap`/`OffscreenCanvas`: линия видна поверх unrelated marker и
-   room label, но не поверх центров source/neighbor.
+   room label, но не поверх центров source/neighbor. Отдельно навести настоящий
+   Playwright-курсор через `page.mouse.move` на source и проверить, что его
+   вычисленный `z-index` остаётся выше overlay при активном CSS `:hover`;
+   синтетический `dispatchEvent(pointerover)` эту ветку каскада не покрывает.
 4. Для unknown-LQI link проверить два совпадающих strokes и растровую
    последовательность core → dark casing → background/gap при DPR 1; повторить
    screen-space geometry на wide/tall и min/default/max zoom.

@@ -552,6 +552,32 @@ for (const [name, value] of Object.entries(rasterEvidence)) {
   result[`raster_${name}`] = value;
 }
 
+const realHoverPoint = await page.evaluate(() => {
+  const card = window.__card;
+  const root = card.shadowRoot || card.renderRoot;
+  const source = root.querySelector('.dev[data-id="d_light1"]');
+  const rect = source.getBoundingClientRect();
+  return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+});
+await page.mouse.move(realHoverPoint.x, realHoverPoint.y);
+result.realPointerEndpointWins = await page.evaluate(async () => {
+  const card = window.__card;
+  const root = card.shadowRoot || card.renderRoot;
+  const source = root.querySelector('.dev[data-id="d_light1"]');
+  const overlay = root.querySelector('hp-zigbee-topology-overlay');
+  const started = performance.now();
+  while ((!source.matches(':hover')
+      || !source.hasAttribute('data-hp-zigbee-topology-endpoint')
+      || !overlay?.shadowRoot?.querySelector('[data-hp="zigbee-topology-line"]'))
+    && performance.now() - started < 5000) {
+    await new Promise((resolve) => setTimeout(resolve, 20));
+  }
+  return source.matches(':hover')
+    && source.hasAttribute('data-hp-zigbee-topology-endpoint')
+    && Number.parseInt(getComputedStyle(source).zIndex, 10)
+      > Number.parseInt(getComputedStyle(overlay).zIndex, 10);
+});
+
 await page.emulateMedia({ forcedColors: 'active' });
 result.forcedColorsPreserved = await page.evaluate(() => {
   const card = window.__card;

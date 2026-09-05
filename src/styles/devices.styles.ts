@@ -339,6 +339,10 @@ export const devicesStyles = css`
        link rise above the topology overlay. The namespaced attribute is
        transient and owned by hp-zigbee-topology-overlay. */
     .dev[data-hp-zigbee-topology-endpoint] { z-index: 8; }
+    /* A real CSS hover is more specific than the base endpoint selector.
+       Repeat the endpoint contract at a still-higher specificity so the
+       hovered source cannot fall back below the topology overlay. */
+    :host([data-pointer-hover]) .dev[data-hp-zigbee-topology-endpoint]:hover { z-index: 8; }
     .dev.unavail {
       opacity: 0.35;
       --device-face-bg: #B5BAC1;

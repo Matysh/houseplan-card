@@ -6064,6 +6064,17 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'zigbee-topology-hovered-endpoint-elevation-removed',
+    guard: 'node demo/smoke_zigbee_topology_hover.mjs',
+    because: 'a real CSS :hover has higher specificity than the base endpoint rule; the source '
+      + 'must still remain above its active topology line (#464 AC1, code-review r1)',
+    patches: [{
+      file: 'src/styles/devices.styles.ts',
+      find: ':host([data-pointer-hover]) .dev[data-hp-zigbee-topology-endpoint]:hover { z-index: 8; }',
+      replace: ':host([data-pointer-hover]) .dev[data-hp-zigbee-topology-endpoint]:hover { z-index: 1; }',
+    }],
+  },
+  {
     id: 'zigbee-topology-unrelated-markers-raised',
     guard: 'node demo/smoke_zigbee_topology_hover.mjs',
     because: 'endpoint ownership is the exact rendered local link set; promoting every marker '
