@@ -149,6 +149,12 @@ device action и dispatched-action animation не меняются.
 
 ## 6. UX и визуальная семантика
 
+> **Заменено #464:** первоначальный контракт ниже оставлен как исторический
+> контекст. Актуальный порядок слоёв и оформление unknown-LQI пунктира задаёт
+> [ТЗ #464](464-zigbee-topology-layer-order.md): активная топология находится
+> над названиями комнат и посторонними маркерами, но под полными маркерами
+> устройств — концов реально показанных локальных связей.
+
 - В обычном View при включённой функции нет постоянной легенды, badges или
   линий. Визуальный шум равен выключенному состоянию.
 - Связи находятся в отдельном pointer-transparent layer: над архитектурой и
@@ -405,6 +411,9 @@ fallback. User-overridden identifiers могут оставить node unmatched
   continuous LQI colour; unknown — нейтральный пунктир; reverse observation не
   усредняется. Stroke остаётся читаемым в screen space на min/default/max zoom.
   Доказательство: pure resolver unit + golden zoom/theme matrix, Codex.
+
+Порядок слоёв в AC6 и внешний casing unknown-LQI линии в AC12 впоследствии
+уточнены #464; provider/mapping-семантика этих критериев не меняется.
 - **AC13 — ZHA contract.** Явное действие читает admin-only `zha/devices`,
   нормализует fixtures и не вызывает `zha/topology/update`; UI не заявляет
   неизвестную scan freshness. Доказательство: adapter unit/contract fixture +

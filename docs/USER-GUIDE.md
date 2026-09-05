@@ -247,6 +247,13 @@ ordinary device points to its parent, while arrows pointing into a router show
 devices whose path goes through it. Neighbour links outside the derived path
 tree remain plain lines.
 
+The active diagnostic layer is deliberately drawn above room names and devices
+that are not part of the shown link, so a busy plan cannot hide the route. The
+complete source and locally connected device markers remain above the lines.
+An unknown-quality gray dashed link has a thin dark outline for contrast; this
+does not change its meaning. The whole layer is pointer-transparent, so device
+and room actions continue to work normally.
+
 If the next step is in another space, a short bubble names that space. If the
 needed router or coordinator is not placed on the plan, the bubble says so. If
 the snapshot has no coordinator or the graph is disconnected, House Plan does

@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Active Zigbee topology links and route bubbles now stay readable above room
+  names and unrelated device markers, while the complete linked device markers
+  remain on top. Unknown-quality dashed links also have a thin dark contrast
+  outline ([#464](https://github.com/Matysh/houseplan-card/issues/464)).
+
 ## v1.72.0 — 2026-09-05
 
 - Administrators can optionally load a ZHA or Zigbee2MQTT topology snapshot and

@@ -6042,6 +6042,96 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'zigbee-topology-overlay-layer-lowered',
+    guard: 'node demo/smoke_zigbee_topology_hover.mjs',
+    because: 'the active topology must paint above unrelated markers and room labels while '
+      + 'remaining inside the existing plan camera context (#464 AC1)',
+    patches: [{
+      file: 'src/hp-zigbee-topology-overlay.ts',
+      find: ':host { position: absolute; inset: 0; z-index: 7; display: block; pointer-events: none; }',
+      replace: ':host { position: absolute; inset: 0; z-index: 1; display: block; pointer-events: none; }',
+    }],
+  },
+  {
+    id: 'zigbee-topology-endpoint-elevation-removed',
+    guard: 'node demo/smoke_zigbee_topology_hover.mjs',
+    because: 'complete source and drawable-neighbour marker roots must stay above every active '
+      + 'topology primitive rather than being crossed by their own link (#464 AC1)',
+    patches: [{
+      file: 'src/styles/devices.styles.ts',
+      find: '.dev[data-hp-zigbee-topology-endpoint] { z-index: 8; }',
+      replace: '.dev[data-hp-zigbee-topology-endpoint] { z-index: 1; }',
+    }],
+  },
+  {
+    id: 'zigbee-topology-unrelated-markers-raised',
+    guard: 'node demo/smoke_zigbee_topology_hover.mjs',
+    because: 'endpoint ownership is the exact rendered local link set; promoting every marker '
+      + 'would restore the original occlusion behind unrelated devices (#464 AC1, AC2)',
+    patches: [{
+      file: 'src/hp-zigbee-topology-overlay.ts',
+      find: '    this._setDesiredEndpointIds(lines.length || bubbles.length || hover.remoteCount\n'
+        + '      ? [\n'
+        + '        this._hovered,\n'
+        + '        ...lines.map((line) => line.neighborMarkerId),\n'
+        + '      ] : []);',
+      replace: '    this._setDesiredEndpointIds(lines.length || bubbles.length || hover.remoteCount\n'
+        + '      ? this.devices.filter((item) => item.space === this.currentSpace).map((item) => item.id) : []);',
+    }],
+  },
+  {
+    id: 'zigbee-topology-endpoint-cleanup-skipped',
+    guard: 'node demo/smoke_zigbee_topology_hover.mjs',
+    because: 'transient endpoint ownership must not survive leave, modality/mode changes or '
+      + 'overlay disconnect and alter later marker stacking (#464 AC2)',
+    patches: [{
+      file: 'src/hp-zigbee-topology-overlay.ts',
+      find: '  private _clearEndpointOwnership(): void {\n'
+        + '    for (const marker of this._endpointElements) marker.removeAttribute(ENDPOINT_ATTRIBUTE);\n'
+        + '    for (const marker of this._parent?.querySelectorAll<HTMLElement>(`[${ENDPOINT_ATTRIBUTE}]`) || []) {\n'
+        + '      marker.removeAttribute(ENDPOINT_ATTRIBUTE);\n'
+        + '    }\n'
+        + '    this._endpointElements.clear();\n'
+        + '  }',
+      replace: '  private _clearEndpointOwnership(): void {\n'
+        + '    this._endpointElements.clear();\n'
+        + '  }',
+    }],
+  },
+  {
+    id: 'zigbee-topology-overlay-double-live-projection',
+    guard: 'node demo/smoke_zigbee_topology_hover.mjs',
+    because: 'a topology nested under the projected device layer must not receive a second '
+      + 'camera transform and drift away during pan or zoom (#464 AC2)',
+    patches: [{
+      file: 'src/zigbee-topology-overlay-bridge.ts',
+      find: '  return html`<hp-zigbee-topology-overlay aria-hidden="true" .hass=${input.hass} .devices=${input.devices}',
+      replace: '  return html`<hp-zigbee-topology-overlay aria-hidden="true" data-hp-live-layer="camera" .hass=${input.hass} .devices=${input.devices}',
+    }],
+  },
+  {
+    id: 'zigbee-topology-unknown-casing-removed',
+    guard: 'node demo/smoke_zigbee_topology_hover.mjs',
+    because: 'an unknown-LQI dash needs one CSS pixel of dark casing on each side instead of '
+      + 'the old low-contrast gray-only stroke (#464 AC3)',
+    patches: [{
+      file: 'src/hp-zigbee-topology-overlay.ts',
+      find: '          stroke-width="4" stroke-dasharray="5 5" stroke-dashoffset="0" opacity=".9"></line>` : nothing}',
+      replace: '          stroke-width="2" stroke-dasharray="5 5" stroke-dashoffset="0" opacity=".9"></line>` : nothing}',
+    }],
+  },
+  {
+    id: 'zigbee-topology-unknown-casing-gaps-filled',
+    guard: 'node demo/smoke_zigbee_topology_hover.mjs',
+    because: 'the wider casing must share the core dash rhythm; a solid casing would silently '
+      + 'turn the unknown-quality link into a continuous route (#464 AC3)',
+    patches: [{
+      file: 'src/hp-zigbee-topology-overlay.ts',
+      find: '          stroke-width="4" stroke-dasharray="5 5" stroke-dashoffset="0" opacity=".9"></line>` : nothing}',
+      replace: '          stroke-width="4" stroke-dasharray="none" stroke-dashoffset="0" opacity=".9"></line>` : nothing}',
+    }],
+  },
+  {
     id: 'zigbee-topology-zha-read-starts-scan',
     guard: 'node --test test/zigbee-topology.test.mjs',
     because: 'hover diagnostics may read the existing ZHA snapshot but must never turn a read '

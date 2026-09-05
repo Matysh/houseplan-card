@@ -15,6 +15,7 @@ import type { HaRegistrySnapshot } from './ha-binding-status';
 import type { DevItem } from './types';
 
 const EMPTY_RUNTIME: ZigbeeTopologyRuntimeSnapshot = { revision: 0, topologies: [], states: {} };
+const ENDPOINT_ATTRIBUTE = 'data-hp-zigbee-topology-endpoint';
 type MarkerPosition = ZigbeePixelPoint & { width: number; height: number };
 
 export class HpZigbeeTopologyOverlay extends LitElement {
@@ -38,14 +39,19 @@ export class HpZigbeeTopologyOverlay extends LitElement {
   private _release?: () => void;
   private _parent?: HTMLElement;
   private _hoverGateObserver?: MutationObserver;
+  private _markerObserver?: MutationObserver;
+  private _desiredEndpointIds = new Set<string>();
+  private _endpointSetDirty = false;
+  private _endpointElements = new Set<HTMLElement>();
   private _mappedMemo?: { runtime: ZigbeeTopologyRuntimeSnapshot; devices: readonly DevItem[];
     registry: HaRegistrySnapshot; mapped: ZigbeeMappedTopology[] };
 
   static styles = css`
-    :host { position: absolute; inset: 0; z-index: 5; display: block; pointer-events: none; }
+    :host { position: absolute; inset: 0; z-index: 7; display: block; pointer-events: none; }
     svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
     line { vector-effect: non-scaling-stroke; stroke-linecap: round; }
     .route-arrow { vector-effect: non-scaling-stroke; }
+    svg, line, polygon, .halo, .remote, .parent-bubble { pointer-events: none; }
     .halo {
       position: absolute; width: calc(var(--device-base-size, 4cqw) * 1.22);
       height: calc(var(--device-base-size, 4cqw) * 1.22); transform: translate(-50%, -50%);
@@ -88,26 +94,39 @@ export class HpZigbeeTopologyOverlay extends LitElement {
     this._hoverGateObserver?.disconnect();
     this._hoverGateObserver = undefined;
     this._hovered = '';
+    this._desiredEndpointIds.clear();
     super.disconnectedCallback();
   }
 
   protected updated(changed: PropertyValues<this>): void {
     if (changed.has('hass')) {
       this._release?.();
-      this._runtime = zigbeeTopologyRuntimeSnapshot(this.hass);
-      this._mappedMemo = undefined;
+      this._acceptRuntime(zigbeeTopologyRuntimeSnapshot(this.hass));
       this._release = subscribeZigbeeTopology(this.hass, () => {
-        this._runtime = zigbeeTopologyRuntimeSnapshot(this.hass);
-        this._mappedMemo = undefined;
-        this.requestUpdate();
+        this._acceptRuntime(zigbeeTopologyRuntimeSnapshot(this.hass));
       });
     }
-    if (changed.has('currentSpace') || changed.has('devices') || changed.has('registry')) {
+    const markerInputsChanged = changed.has('currentSpace')
+      || changed.has('devices') || changed.has('registry');
+    if (markerInputsChanged) {
       this._mappedMemo = undefined;
       if (!this.devices.some((item) => item.id === this._hovered && item.space === this.currentSpace)) {
-        this._hovered = '';
+        this._clear();
       }
     }
+    this._connectParent();
+    if (this._endpointSetDirty || markerInputsChanged) this._syncEndpointOwnership();
+  }
+
+  private _acceptRuntime(next: ZigbeeTopologyRuntimeSnapshot): void {
+    if (next.revision === this._runtime.revision
+        && next.topologies === this._runtime.topologies && next.states === this._runtime.states) return;
+    this._setDesiredEndpointIds([]);
+    this._clearEndpointOwnership();
+    this._endpointSetDirty = false;
+    this._runtime = next;
+    this._mappedMemo = undefined;
+    this.requestUpdate();
   }
 
   private _connectParent(): void {
@@ -118,12 +137,20 @@ export class HpZigbeeTopologyOverlay extends LitElement {
     parent.addEventListener('pointerover', this._pointerOver);
     parent.addEventListener('pointerout', this._pointerOut);
     parent.addEventListener('pointerdown', this._pointerDown, true);
+    if (typeof MutationObserver !== 'undefined') {
+      this._markerObserver = new MutationObserver(() => this._syncEndpointOwnership());
+      this._markerObserver.observe(parent, { childList: true });
+    }
+    this._syncEndpointOwnership();
   }
 
   private _disconnectParent(): void {
     this._parent?.removeEventListener('pointerover', this._pointerOver);
     this._parent?.removeEventListener('pointerout', this._pointerOut);
     this._parent?.removeEventListener('pointerdown', this._pointerDown, true);
+    this._markerObserver?.disconnect();
+    this._markerObserver = undefined;
+    this._clearEndpointOwnership();
     this._parent = undefined;
   }
 
@@ -160,14 +187,58 @@ export class HpZigbeeTopologyOverlay extends LitElement {
   };
 
   private _clear(): void {
+    this._setDesiredEndpointIds([]);
+    this._clearEndpointOwnership();
+    this._endpointSetDirty = false;
     if (!this._hovered) return;
     this._hovered = '';
     this.requestUpdate();
   }
 
+  private _setDesiredEndpointIds(ids: Iterable<string>): void {
+    const next = new Set(ids);
+    if (next.size === this._desiredEndpointIds.size
+        && [...next].every((id) => this._desiredEndpointIds.has(id))) return;
+    this._desiredEndpointIds = next;
+    this._endpointSetDirty = true;
+  }
+
+  private _marker(id: string): HTMLElement | null {
+    return [...(this._parent?.querySelectorAll<HTMLElement>('.dev[data-hp="device"][data-id]') || [])]
+      .find((item) => item.dataset.id === id) || null;
+  }
+
+  private _clearEndpointOwnership(): void {
+    for (const marker of this._endpointElements) marker.removeAttribute(ENDPOINT_ATTRIBUTE);
+    for (const marker of this._parent?.querySelectorAll<HTMLElement>(`[${ENDPOINT_ATTRIBUTE}]`) || []) {
+      marker.removeAttribute(ENDPOINT_ATTRIBUTE);
+    }
+    this._endpointElements.clear();
+  }
+
+  private _syncEndpointOwnership(): void {
+    const next = new Set<HTMLElement>();
+    for (const id of this._desiredEndpointIds) {
+      const marker = this._marker(id);
+      if (marker) next.add(marker);
+    }
+    for (const marker of this._endpointElements) {
+      if (!next.has(marker)) marker.removeAttribute(ENDPOINT_ATTRIBUTE);
+    }
+    for (const marker of this._parent?.querySelectorAll<HTMLElement>(`[${ENDPOINT_ATTRIBUTE}]`) || []) {
+      if (!next.has(marker)) marker.removeAttribute(ENDPOINT_ATTRIBUTE);
+    }
+    for (const marker of next) {
+      if (!this._endpointElements.has(marker) || !marker.hasAttribute(ENDPOINT_ATTRIBUTE)) {
+        marker.setAttribute(ENDPOINT_ATTRIBUTE, '');
+      }
+    }
+    this._endpointElements = next;
+    this._endpointSetDirty = false;
+  }
+
   private _position(id: string, width: number, height: number): MarkerPosition | null {
-    const marker = [...(this._parent?.querySelectorAll<HTMLElement>('.dev[data-id]') || [])]
-      .find((item) => item.dataset.id === id);
+    const marker = this._marker(id);
     if (!marker) return null;
     const x = Number.parseFloat(marker.style.left);
     const y = Number.parseFloat(marker.style.top);
@@ -195,7 +266,10 @@ export class HpZigbeeTopologyOverlay extends LitElement {
   }
 
   protected render() {
-    if (!this._hovered || !this.registry || !this._runtime.topologies.length) return nothing;
+    if (!this._hovered || !this.registry || !this._runtime.topologies.length) {
+      this._setDesiredEndpointIds([]);
+      return nothing;
+    }
     const memo = this._mappedMemo;
     const mapped = memo && memo.runtime === this._runtime && memo.devices === this.devices
       && memo.registry === this.registry ? memo.mapped : mapTopologies(this._runtime.topologies, this.devices, this.registry);
@@ -204,7 +278,10 @@ export class HpZigbeeTopologyOverlay extends LitElement {
     const width = this.clientWidth || this._parent?.clientWidth || 1;
     const height = this.clientHeight || this._parent?.clientHeight || 1;
     const origin = this._position(this._hovered, width, height);
-    if (!origin) return nothing;
+    if (!origin) {
+      this._setDesiredEndpointIds([]);
+      return nothing;
+    }
     const lines = hover.lines.map((line) => ({
       ...line,
       point: this._position(line.neighborMarkerId, width, height),
@@ -228,14 +305,26 @@ export class HpZigbeeTopologyOverlay extends LitElement {
         origin, point, this._markerClearance(origin), 0, 'toward-neighbor',
       ) };
     });
+    this._setDesiredEndpointIds(lines.length || bubbles.length || hover.remoteCount
+      ? [
+        this._hovered,
+        ...lines.map((line) => line.neighborMarkerId),
+      ] : []);
     return html`
       ${lines.length || bubbles.length ? svg`<svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none"
         aria-hidden="true" data-hp="zigbee-topology-lines">
-        ${lines.map((line) => svg`<line x1=${origin.x} y1=${origin.y}
+        ${lines.map((line) => svg`${line.lqi === undefined ? svg`<line
+          class="link-casing" data-hp="zigbee-topology-line-casing"
+          x1=${origin.x} y1=${origin.y} x2=${line.point!.x} y2=${line.point!.y}
+          stroke="#2e2e2e" data-direction=${line.routeDirection || 'none'}
+          stroke-width="4" stroke-dasharray="5 5" stroke-dashoffset="0" opacity=".9"></line>` : nothing}
+        <line class="link-core" data-hp="zigbee-topology-line"
+          x1=${origin.x} y1=${origin.y}
           x2=${line.point!.x} y2=${line.point!.y}
           stroke=${line.color} data-direction=${line.routeDirection || 'none'}
           stroke-width=${line.lqi === undefined ? 2 : 2.2}
-          stroke-dasharray=${line.lqi === undefined ? '5 5' : nothing} opacity=".9"></line>
+          stroke-dasharray=${line.lqi === undefined ? '5 5' : nothing}
+          stroke-dashoffset=${line.lqi === undefined ? '0' : nothing} opacity=".9"></line>
           ${line.arrow ? svg`<polygon class="route-arrow" data-hp="zigbee-topology-arrow"
             data-direction=${line.routeDirection} points=${this._points(line.arrow.points)}
             fill=${line.color}></polygon>` : nothing}`)}

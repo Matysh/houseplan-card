@@ -18,7 +18,7 @@ export function renderZigbeeTopologyOverlay(input: {
   if (!input.view || input.kiosk || input.hass?.user?.is_admin !== true
       || !zigbeeTopologySettingsOf(input.settings).enabled) return nothing;
   void import('./hp-zigbee-topology-overlay');
-  return html`<hp-zigbee-topology-overlay data-hp-live-layer="camera" .hass=${input.hass} .devices=${input.devices}
+  return html`<hp-zigbee-topology-overlay aria-hidden="true" .hass=${input.hass} .devices=${input.devices}
     .registry=${input.registry} .currentSpace=${input.currentSpace} .spaces=${input.spaces}
     .viewKey=${input.viewKey}></hp-zigbee-topology-overlay>`;
 }

@@ -335,6 +335,10 @@ export const devicesStyles = css`
     :host([data-pointer-hover]) .dev.theme-dark:not(.unavail):hover { --device-face-fg: #252525; }
     :host([data-pointer-hover]) .dev:hover,
     .dev:focus-visible { z-index: 5; }
+    /* #464: only markers that terminate a currently rendered local Zigbee
+       link rise above the topology overlay. The namespaced attribute is
+       transient and owned by hp-zigbee-topology-overlay. */
+    .dev[data-hp-zigbee-topology-endpoint] { z-index: 8; }
     .dev.unavail {
       opacity: 0.35;
       --device-face-bg: #B5BAC1;

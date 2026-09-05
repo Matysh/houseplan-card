@@ -1666,7 +1666,7 @@ diffs the real `seedHiddenBindings`/`buildDevices` outputs — there is no
 second copy of the filter logic to drift. The field registry (#33) carries
 their passports; `scripts/config-audit.mjs` treats both as `current`.
 
-## Contextual Zigbee topology (#54, 2026-09-04)
+## Contextual Zigbee topology (#54, #457, #464; 2026-09-06)
 
 The initial View graph owns only the fail-closed settings reader and a dynamic
 overlay bridge. A saved `settings.zigbee_topology.enabled === true`, an actual
@@ -1684,9 +1684,21 @@ without requesting a scan; Z2M verifies the retained bridge-info topic, sends
 one correlated raw `routes:false` request through `mqtt.publish`, rejects
 retained/foreign/late replies and always releases subscriptions.
 
-The pointer-transparent overlay is stacked above architectural/isometric
-layers and below device markers. It reads the already projected marker centres,
-so flat/isometric camera and zoom remain single-source. Cache data, IEEE
+The pointer-transparent overlay is a child of the same `.devlayer` camera and
+stacking context as device markers and room labels. Ordinary plan HTML is
+below it; only the exact source and drawable local-neighbour marker roots are
+temporarily promoted above it, so complete endpoint markers remain readable
+while unrelated markers and room labels cannot cover the diagnostic lines or
+bubbles. The overlay owns and clears those namespaced transient attributes,
+including after marker DOM replacement; no endpoint state enters config or a
+full-card reactive render.
+
+`live-viewport.ts` projects the `.devlayer` parent exactly once. The nested
+overlay has no independent `data-hp-live-layer="camera"`, then recomputes its
+screen-space geometry from the already projected marker centres on the
+terminal `viewKey` frame. Unknown-LQI local links are two coincident dashed
+non-scaling strokes: a 4 px `#2e2e2e` casing followed by the existing 2 px gray
+core; known-LQI and solid parent routes remain single strokes. Cache data, IEEE
 addresses and raw payloads are never persisted, logged, exported or admitted
 to support diagnostics.
 

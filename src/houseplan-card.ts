@@ -11824,7 +11824,7 @@ export class HouseplanCard extends LitElement {
             <svg class="iso-walls-svg" data-hp-live-viewbox="camera" viewBox="${view.x} ${view.y} ${view.w} ${view.h}"
               preserveAspectRatio="xMidYMid meet" aria-hidden="true" pointer-events="none">
               ${this._renderIsoWalls(isoLayers, isoPanels)}
-            </svg>` : nothing}${renderZigbeeTopologyOverlay({ hass: this.hass, settings: this._settings, devices: this._renderDevices, registry: this._haRegistry, currentSpace: space.id, spaces: this._serverCfg?.spaces, viewKey: view, view: this._mode === 'view', kiosk: this._kiosk })}
+            </svg>` : nothing}
           ${''/* docs/CANVAS.md §6: an icon is a percentage of the PLAN and
                  scales with it when you zoom — the behaviour the card always
                  had, restored by the owner. `iconCqw` is `iconPct * iconUnit
@@ -11845,6 +11845,7 @@ export class HouseplanCard extends LitElement {
               ? space.rooms.map((r) => this._renderRoomLabel(r, space, view, disp))
               : nothing}
             ${this._markup ? space.rooms.map((r) => this._renderRoomGear(r, space, view)) : nothing}
+            ${renderZigbeeTopologyOverlay({ hass: this.hass, settings: this._settings, devices: this._renderDevices, registry: this._haRegistry, currentSpace: space.id, spaces: this._serverCfg?.spaces, viewKey: view, view: this._mode === 'view', kiosk: this._kiosk })}
           </div>
           <div data-hp-live-editor-html></div>
           ${this._wallDialog

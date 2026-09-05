@@ -73,12 +73,14 @@ metadata). Only an explicit owner-approved emergency hotfix may skip this gate.
   subset, stale controls never fall back, secure targets are no-op, and legacy
   `cover`/absent light defaults round-trip losslessly. **Lights toggle by
   default** (v1.39); other devices still default to the House Plan card.
-- **Contextual Zigbee topology** (#54, refined by #457 on current dev): an
+- **Contextual Zigbee topology** (#54, refined by #457 and #464 on current dev): an
   opt-in admin-only mouse hover shows direct neighbours without scanning. A
   deterministic per-provider uplink tree now adds arrows towards the
   coordinator while keeping non-route neighbour lines; a short bubble names a
   remote space or explains that the next device/coordinator is not on the plan.
-  Touch, kiosk, editors and the static card remain unchanged.
+  Active topology is above room names and unrelated markers, exact local
+  endpoints remain above it, and unknown-LQI dashes have a dark contrast
+  casing. Touch, kiosk, editors and the static card remain unchanged.
 - **Plan geometry**: polyline split (v1.32), island rooms w/ evenodd holes
   (v1.34), smart guides + 45° angle badge (v1.40), opening hover preview.
   Openings support doors, windows and compact wide gates; gates retain door

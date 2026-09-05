@@ -3803,3 +3803,22 @@ require hands on real hardware — they remain for the human pass.
 - [ ] Плоские `sourceIeeeAddr` / `targetIeeeAddr` имеют приоритет над
       вложенными концами связи, а массив `failed` не превращается в ложную
       недоступность устройства [unit + production-shaped fixture + mutation].
+
+## Порядок слоя Zigbee-топологии (#464)
+
+- [ ] `smoke_zigbee_topology_hover.mjs` доказывает единый camera/stacking
+      context: overlay — ребёнок `.devlayer` без собственной live-camera
+      проекции; topology выше пересекающихся room label и постороннего marker,
+      но ниже полных roots source и каждого реально нарисованного local
+      endpoint. Host и primitives остаются pointer-transparent.
+- [ ] Exact endpoint ownership очищается при pointerleave, touch/pen, потере
+      hover gate, смене mode/space/setting, invalidation mapping, замене marker
+      DOM и disconnect. Remote/unplaced цели не поднимают marker.
+- [ ] Unknown-LQI local link состоит из совпадающих dashed strokes: casing
+      `#2e2e2e`/4 px и gray core/2 px с одним `5 5`, linecap и
+      non-scaling-stroke. Raster probe видит тёмную кромку и прозрачный gap;
+      known-LQI и solid parent route не получают casing, forced-colors
+      сохраняет системную палитру.
+- [ ] Мутанты слоя/endpoints/cleanup/double projection/casing обязаны краснеть;
+      `npm run benchmark:zigbee-topology`, `bundle:budget`, selected smokes и
+      `golden:verify` сохраняют действующие ceilings.

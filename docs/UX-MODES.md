@@ -90,7 +90,10 @@ configured Zigbee2MQTT map, mouse hover temporarily draws only the observed
 direct links incident to that device. A linked marker in another space is
 counted beside the source without drawing an inter-space line. Hover never
 fetches data; touch, pen, keyboard focus, kiosk, editors and the static card do
-not expose this diagnostic layer.
+not expose this diagnostic layer. While it is visible, topology lines, arrows
+and bubbles are above room names and unrelated device markers; the complete
+source and locally connected marker shells stay above the topology. The layer
+remains pointer-transparent and therefore does not change any existing action.
 
 Removed from this mode (they move, not die):
 - icon dragging ("drag anywhere", v1.9 — consciously reversed),
