@@ -2,6 +2,43 @@
 
 ## Unreleased
 
+## v1.72.0 — 2026-09-05
+
+- Administrators can optionally load a ZHA or Zigbee2MQTT topology snapshot and
+  inspect the selected device's observed direct neighbours on the plan. Link
+  quality, unknown-quality dashes, coordinator-path arrows and honest
+  cross-space or unplaced-node endings share one contextual legend and never
+  trigger a network scan on hover
+  ([#54](https://github.com/Matysh/houseplan-card/issues/54),
+  [#450](https://github.com/Matysh/houseplan-card/issues/450),
+  [#457](https://github.com/Matysh/houseplan-card/issues/457),
+  [#459](https://github.com/Matysh/houseplan-card/issues/459)).
+- Clicking or tapping a room now centres and fits it with 10% margins, while a
+  double-click or double-tap on free background runs **Fit all**. Space settings
+  can also create a room-free copy that preserves architecture, Background and
+  display settings without copying placed devices
+  ([#152](https://github.com/Matysh/houseplan-card/issues/152),
+  [#449](https://github.com/Matysh/houseplan-card/issues/449),
+  [#456](https://github.com/Matysh/houseplan-card/issues/456)).
+- Large plans keep their heavy scene stable through hover, pan, pinch and editor
+  drags, and intermediate wall-chain commits use bounded local validation while
+  retaining the full fail-closed check at completion
+  ([#451](https://github.com/Matysh/houseplan-card/issues/451),
+  [#461](https://github.com/Matysh/houseplan-card/issues/461)).
+- Card installation and updates are now self-diagnosing, recover safely from a
+  frontend/integration version mismatch, and keep native confirmations and
+  fallback dialogs centred and modal across Home Assistant reconnects
+  ([#462](https://github.com/Matysh/houseplan-card/issues/462),
+  [#463](https://github.com/Matysh/houseplan-card/issues/463)).
+- Furniture can snap to both physical faces of an exterior wall, Arrow keys move
+  selected Background objects by one grid cell, and furniture placement previews
+  clear reliably when the pointer leaves the plan
+  ([#447](https://github.com/Matysh/houseplan-card/issues/447),
+  [#460](https://github.com/Matysh/houseplan-card/issues/460)).
+- Hidden presentation experiments now use the single persistent `hp_alpha=1`
+  browser switch; `hp_alpha=0` disables the complete set
+  ([#448](https://github.com/Matysh/houseplan-card/issues/448)).
+
 ## v1.72.0-beta.5 — 2026-09-05
 
 - Native House Plan confirmations and fallback dialogs now remain centred with
