@@ -72,6 +72,26 @@ setup entry. Явный `after_dependencies` документирует наме
 отказ/исключение, но ни один release note не называет гонку установленной
 причиной полевого случая.
 
+Версионная граница YAML resources подтверждена первичными upstream-источниками,
+а не экстраполяцией по HA 2025.x:
+
+- Home Assistant Core PR
+  [#161816](https://github.com/home-assistant/core/pull/161816), merged в milestone
+  2026.2.0 коммитом
+  [`190fe10`](https://github.com/home-assistant/core/commit/190fe10), прямо
+  «introduce a new key: `resource_mode` to replace `mode`» и отделяет загрузку
+  ресурсов от режима dashboard;
+- исходник тега
+  [2026.2.0](https://github.com/home-assistant/core/blob/2026.2.0/homeassistant/components/lovelace/__init__.py)
+  содержит `CONF_RESOURCE_MODE`, отдельное поле `LovelaceData.resource_mode` и
+  fallback на legacy `mode`;
+- [актуальная официальная документация HA](https://www.home-assistant.io/dashboards/dashboards/)
+  требует `resource_mode: yaml` для `lovelace.resources` и описывает его отдельно
+  от `dashboards.*.mode`.
+
+Поэтому HA до 2026.2 и HA 2026.2+ намеренно получают разные snippets; это не
+противоречит исходному репорту, который описывает storage mode старого HA.
+
 ## 4. Решения владельца
 
 1. В обычном режиме автоматической перезагрузки нет.
@@ -378,7 +398,11 @@ Settings → Dashboards → меню ⋮ → Resources → Add resource; URL
 ### YAML resources mode в HA 2026.2+
 
 Современный канонический snippet управляет только источником ресурсов и
-оставляет сами dashboards в выбранном пользователем storage/YAML режиме:
+оставляет сами dashboards в выбранном пользователем storage/YAML режиме. Его
+синтаксис подтверждён Home Assistant Core
+[#161816](https://github.com/home-assistant/core/pull/161816), исходником
+[HA 2026.2.0](https://github.com/home-assistant/core/blob/2026.2.0/homeassistant/components/lovelace/__init__.py)
+и [официальной документацией dashboards](https://www.home-assistant.io/dashboards/dashboards/):
 
 ```yaml
 lovelace:
