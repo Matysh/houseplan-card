@@ -114,6 +114,7 @@ const res = await page.evaluate(async () => {
   dispatchEvent(new HashChangeEvent('hashchange'));
   await c.updateComplete;
   c._setProjection('iso');
+  await window.__hpEnsureHarnessIsoRuntime(c);
   await update();
   out.isoUsesCanonicalBody = !!sr().querySelector('.iso-walls .iso-wall-top')
     && c._isoSource().build().walls.flat(2).length > 0;

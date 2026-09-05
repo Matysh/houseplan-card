@@ -16,6 +16,8 @@ const evaluation = evaluatePerformanceBudget({
   baseline: absoluteOnly ? null : readJson(baselinePath),
   budgets: readJson(budgetsPath),
   absoluteOnly,
+  candidateSha: valueArg('candidate-sha') || null,
+  baselineSha: valueArg('baseline-sha') || null,
 });
 
 mkdirSync(dirname(outputPath), { recursive: true });

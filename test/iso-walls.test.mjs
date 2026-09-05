@@ -15,6 +15,10 @@ test('one top and only O(E) visible sides are built deterministically', () => {
   assert.equal(first.edgeCount, 4);
   assert.ok(first.sides.length > 0 && first.sides.length <= first.edgeCount);
   assert.match(first.topPath, /^M /);
+  assert.equal(first.topFaces.length, 1);
+  assert.equal(first.topFaces[0].d, first.topPath,
+    'single-component compatibility aggregate is byte-identical to its paint face');
+  assert.equal(Number.isFinite(first.topFaces[0].depth), true);
   assert.match(first.contactPath, /^M /);
   assert.equal(first.sides.every((face) => /^M .* Z$/.test(face.d)), true);
 });
@@ -63,6 +67,9 @@ test('holes preserve an evenodd top and add visible inner/jamb edges', () => {
   const geometry = buildIsoWallGeometry([[square, hole]]);
   assert.equal(geometry.edgeCount, 8);
   assert.equal((geometry.topPath.match(/M /g) || []).length, 2);
+  assert.equal(geometry.topFaces.length, 1);
+  assert.equal((geometry.topFaces[0].d.match(/M /g) || []).length, 2,
+    'outer and hole remain one independently sorted evenodd face');
   assert.ok(geometry.sides.some((face) => face.ring === 1));
 });
 
@@ -72,6 +79,7 @@ test('a full-height gap remains split into jamb edges without a bridge', () => {
   const geometry = buildIsoWallGeometry([[left], [right]]);
   assert.equal(geometry.edgeCount, 8);
   assert.equal((geometry.topPath.match(/M /g) || []).length, 2);
+  assert.equal(geometry.topFaces.length, 2);
   assert.equal(geometry.topPath.includes('40 0 L 60 0'), false);
 });
 

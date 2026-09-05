@@ -77,6 +77,7 @@ const result = await page.evaluate(async (fixtureConfig) => {
   window.__hpAlpha = true;
   window.__hpLabs = labs;
   card._setProjection('iso');
+  await window.__hpEnsureHarnessIsoRuntime(card);
   card.requestUpdate();
   await settle();
   const iso = card._isoSource().build();

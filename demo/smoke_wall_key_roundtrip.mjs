@@ -118,6 +118,7 @@ const result = await page.evaluate(async (source) => {
     window.__hpAlpha = true;
     window.__hpLabs = labs;
     card._setProjection('iso');
+    await window.__hpEnsureHarnessIsoRuntime(card);
     await update(false);
     out[`${prefix}hidden_iso_uses_masonry`] = !!root().querySelector('[data-hp="iso-walls"]')
       && card._isoSource().build().walls.flat(2).length > 0;

@@ -151,6 +151,7 @@ const out = await page.evaluate(async () => {
   card._stepZoom(1);
   await frame();
   card._setProjection('iso');
+  await window.__hpEnsureHarnessIsoRuntime(card);
   const projectionCancelled = !card._cameraTransition.active;
   await card.updateComplete;
   await frame();

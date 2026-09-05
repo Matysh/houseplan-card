@@ -87,6 +87,7 @@ const out = await page.evaluate(async () => {
   window.__hpLabs = active;
   await settle();
   card._setProjection('iso');
+  await window.__hpEnsureHarnessIsoRuntime(card);
   await settle();
   const isoFalseHasNoLabels = !!root().querySelector('[data-hp="iso-walls"]')
     && labels().length === 0;

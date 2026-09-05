@@ -138,8 +138,14 @@ export const LOW_HEADROOM_WARNING_BYTES = 15_000;
  * 300 090 Б расположен почти по центру полосы: 910 Б сверху и 1 090 Б снизу.
  * Core adapter вынесен в `src/version-recovery-card.ts`; это изменение
  * фиксирует цену новой границы восстановления, а не разрешает молчаливый рост.
+ *
+ * 2026-09-05, #160: потолок опущен 301 000 → 300 000 без изменения общего
+ * бюджета. Скрытый Stage 3 вынесен в отдельный alpha-runtime: обычный View
+ * больше не загружает renderer/overlay/opening graph. Измеренный initial факт
+ * 299 464 Б оставляет 536 Б сверху и 1 464 Б до нижней границы полосы;
+ * lazy-isometric graph отдельно измеряется манифестом (12 083 Б gzip).
  */
-export const INITIAL_VIEW_GZIP_CEILING = 301_000;
+export const INITIAL_VIEW_GZIP_CEILING = 300_000;
 export const INITIAL_VIEW_CEILING_BAND = 2_000;
 
 /**
@@ -253,11 +259,17 @@ export function assertBundleBudget(manifest, budget = INITIAL_VIEW_GZIP_BUDGET) 
   if (!manifest.lazyLocaleFiles?.length) {
     throw new Error('bundle has no lazy locale graph');
   }
+  if (!manifest.lazyIsometricFiles?.length) {
+    throw new Error('bundle has no lazy isometric graph');
+  }
   if (manifest.initialViewFiles.some((path) => manifest.lazyEditorFiles.includes(path))) {
     throw new Error('initial View graph overlaps lazy editor graph');
   }
   if (manifest.initialViewFiles.some((path) => manifest.lazyLocaleFiles.includes(path))) {
     throw new Error('initial View graph overlaps lazy locale graph');
+  }
+  if (manifest.initialViewFiles.some((path) => manifest.lazyIsometricFiles.includes(path))) {
+    throw new Error('initial View graph overlaps lazy isometric graph');
   }
   if (manifest.lazyLocaleFiles.some((path) => manifest.lazyEditorFiles.includes(path)
       || manifest.lazyOnboardingFiles?.includes(path))) {
@@ -272,6 +284,7 @@ export function assertBundleBudget(manifest, budget = INITIAL_VIEW_GZIP_BUDGET) 
     initialViewGzipBytes: manifest.initialViewGzipBytes,
     lazyEditorGzipBytes: manifest.lazyEditorGzipBytes,
     lazyLocaleGzipBytes: manifest.lazyLocaleGzipBytes,
+    lazyIsometricGzipBytes: manifest.lazyIsometricGzipBytes,
   };
 }
 
@@ -289,6 +302,7 @@ if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
         + ` budget ${INITIAL_VIEW_GZIP_BUDGET} B, headroom ${headroom} B)`,
       `lazy editor: ${result.lazyEditorGzipBytes} B gzip`,
       `lazy locale: ${result.lazyLocaleGzipBytes} B gzip`,
+      `lazy isometric: ${result.lazyIsometricGzipBytes} B gzip`,
     ];
     for (const line of lines) console.log(line);
     const warning = lowHeadroomWarning(headroom);

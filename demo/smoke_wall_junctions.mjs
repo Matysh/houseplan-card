@@ -122,6 +122,7 @@ const out = await page.evaluate(async () => {
   dispatchEvent(new HashChangeEvent('hashchange'));
   await card.updateComplete;
   card._setProjection('iso');
+  await window.__hpEnsureHarnessIsoRuntime(card);
   await update();
   result.isoUsesJoinedFootprint = !!root().querySelector('.iso-walls .iso-wall-top')
     && card._isoSource().build().walls.flat(2).length > 0;

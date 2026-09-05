@@ -15,6 +15,19 @@ the same profile. The dedicated
 plus absolute noise/ceiling checks. Only the exact-SHA Linux workflow is gate
 evidence; a local report is diagnostic.
 
+Issue #160 keeps that historical profile and budget unchanged, then adds the
+separate `isometric-stage3-dense-v1` profile. Its derived performance-only
+fixture puts all 200 devices close to walls or corners and adds deterministic
+value, LQI and new-device badges plus contact/lock-bound door, window and gate
+examples. The base invocation explicitly allows a Stage 2 renderer so an older
+`dev` SHA remains measurable; the candidate invocation fails closed unless it
+reports effective Iso, the Stage 3 revision, all required raised overlay kinds,
+at least one real nudge, a bounded shared material-definition set and zero
+structural rebuilds during HA, opening and hover/focus updates. The two extra
+timing windows use limits no softer than the historical HA-update budget. This
+does not change the fixture, measured windows or budget of
+`large-house-isometric-v1`, which remains the #124 regression witness.
+
 Issue #137 adds `large-house-plan-snap-v1` without changing the meaning or
 budgets of the original profile. The same 60-room/60-partition fixture gains
 six saved open outlines, renders the Plan snap overlay, and sends 120 real
@@ -164,6 +177,8 @@ Build and copy a fresh demo bundle first, then run:
 
 ```bash
 npm run benchmark:large-house -- --samples=7 --warmups=1 --output=artifacts/performance/local.json
+npm run benchmark:large-house-isometric -- --samples=7 --warmups=1 --output=artifacts/performance/isometric-local.json
+npm run benchmark:isometric-stage3-dense -- --samples=7 --warmups=1 --output=artifacts/performance/isometric-stage3-local.json
 npm run benchmark:large-house-plan-snap -- --samples=7 --warmups=1 --output=artifacts/performance/plan-snap-local.json
 npm run benchmark:large-house-interaction -- --samples=7 --warmups=1 --output=artifacts/performance/interaction-local.json
 ```

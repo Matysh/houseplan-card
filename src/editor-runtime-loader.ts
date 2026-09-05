@@ -10,6 +10,23 @@ export interface EditorRuntimeLoaderFailure {
   readonly terminal: boolean;
 }
 
+export type SafeRuntimeDiagnostic = Readonly<{
+  kind: 'runtime-load' | 'structural';
+  fingerprint: string;
+  terminal: boolean;
+}>;
+
+/** Allow only an internal short content hash or a fixed non-secret sentinel. */
+export function safeRuntimeDiagnostic(
+  kind: SafeRuntimeDiagnostic['kind'], fingerprint: unknown, terminal: boolean,
+): SafeRuntimeDiagnostic {
+  const value = typeof fingerprint === 'string' && (
+    fingerprint === 'invalid' || fingerprint === 'no-borders' || fingerprint === 'unverified'
+      || /^[a-z0-9]{1,8}$/i.test(fingerprint)
+  ) ? fingerprint : 'redacted';
+  return Object.freeze({ kind, fingerprint: value, terminal: !!terminal });
+}
+
 export interface EditorRuntimeLoaderOptions<Runtime> {
   readonly expectedFingerprint: string;
   readonly load: (attempt: 0 | 1) => Promise<EditorRuntimeModule<Runtime>>;

@@ -398,7 +398,7 @@ test('sun-ray golden requires browser-painted light from a state-only sun entity
   assert.ok(scenario);
   const fixture = prepareGoldenFixture(scenario);
   const space = fixture.config.spaces.find((item) => item.id === scenario.space);
-  assert.equal(GOLDEN_MATRIX_VERSION, 55);
+  assert.equal(GOLDEN_MATRIX_VERSION, 56);
   assert.equal(space.settings.sun_rays, true);
   assert.equal(scenario.northDeg, 90,
     'the sign-sensitive golden must keep a non-zero north direction');
@@ -765,6 +765,89 @@ test('opening symbol goldens lock room, diagonal, flip-pair and hidden Iso contr
     assert.equal(scenarioIds.has(id), true, id);
     assert.match(testingDoc, new RegExp(`\\b${id}\\b`), id);
   }
+});
+
+test('issue 160 Stage 3 goldens cover raised ownership, openings and solid fallbacks', () => {
+  const scenarios = GOLDEN_SCENARIOS.filter((item) => item.id.startsWith('isometric-stage3-'));
+  assert.deepEqual(scenarios.map((item) => item.id), [
+    'isometric-stage3-overlays-light',
+    'isometric-stage3-overlays-dark',
+    'isometric-stage3-openings-dark',
+    'isometric-stage3-forced-colors-dark',
+    'isometric-stage3-no-filter-dark',
+  ]);
+  assert.equal(scenarios.every((item) => item.alpha && item.projection === 'iso'
+    && item.mode === 'view' && item.capture === 'stage'), true);
+  const overlays = scenarios.filter((item) => item.id.includes('-overlays-'));
+  assert.deepEqual(new Set(overlays.map((item) => item.theme)), new Set(['light', 'dark']));
+  assert.equal(overlays.every((item) => item.stage3Golden.requireNudged
+    && item.stage3Golden.requireDenseFacets
+    && item.stage3Golden.requireSolidCues
+    && item.stage3Golden.requireGrounding
+    && item.stage3Golden.requiredKinds.includes('device')
+    && item.stage3Golden.requiredKinds.includes('room-label')
+    && item.stage3Golden.requiredKinds.includes('opening-lock')), true);
+  assert.equal(overlays.find((item) => item.theme === 'dark')?.stage3Golden.requireVacuumFloor,
+    true);
+  assert.equal(overlays.find((item) => item.theme === 'dark')?.stage3Golden.requireLiveLayers,
+    true);
+  assert.ok(overlays.find((item) => item.theme === 'dark')?.decorOverride?.length);
+  const combinedFixture = prepareGoldenFixture(overlays.find((item) => item.theme === 'dark'));
+  const combinedSpace = combinedFixture.config.spaces.find((item) => item.id === 'golden-lighting');
+  const combinedAreas = new Set(combinedSpace.rooms.map((room) => room.area));
+  assert.ok(combinedAreas.has(combinedFixture.devices['golden-vacuum-trail'].area_id));
+  assert.equal(combinedSpace.settings.north_deg, 90);
+  assert.equal(combinedFixture.states['sun.sun'].attributes.azimuth, 270);
+
+  const openingScenario = scenarios.find((item) => item.id === 'isometric-stage3-openings-dark');
+  const openingFixture = prepareGoldenFixture(openingScenario);
+  const openingSpace = openingFixture.config.spaces.find(
+    (item) => item.id === openingScenario.space,
+  );
+  assert.deepEqual(openingScenario.stage3Golden.openingKinds, ['door', 'window', 'gate']);
+  assert.equal(openingScenario.stage3Golden.requirePassage, true);
+  assert.equal(openingSpace.openings.some((item) => item.type === 'passage'), true);
+  const lockedOpening = openingSpace.openings.find((item) => item.id === 'light-door');
+  assert.equal(openingFixture.states[lockedOpening.lock].state, 'unlocked');
+
+  const denseFixture = prepareGoldenFixture(overlays[0]);
+  const denseSpace = denseFixture.config.spaces.find((item) => item.id === overlays[0].space);
+  assert.equal(denseSpace.settings.label_temp, true);
+  assert.equal(denseSpace.settings.label_lqi, true);
+  assert.deepEqual(denseFixture.config.settings.new_device_ids, ['golden-presence']);
+  assert.equal(denseFixture.config.markers.find((item) => item.id === 'golden-presence')?.display,
+    'icon_ripple');
+  assert.ok(denseFixture.layout['rl_light-left']);
+
+  const forced = scenarios.find((item) => item.forcedColors);
+  const noFilter = scenarios.find((item) => item.disableIsoFilters);
+  assert.equal(forced.stage3Golden.requireNoMaterialDefs, true);
+  assert.equal(noFilter.stage3Golden.requireNoMaterialDefs, true);
+  assert.equal(forced.stage3Golden.requireSolidCues, true);
+  assert.equal(noFilter.stage3Golden.requireSolidCues, true);
+  const noBorders = GOLDEN_SCENARIOS.find((item) => item.id === 'isometric-no-borders-dark');
+  assert.equal(noBorders.stage3Golden.noBorders, true);
+
+  const harness = readFileSync(new URL('../demo/golden/harness.mjs', import.meta.url), 'utf8');
+  assert.match(harness,
+    /\[data-hp-iso-overlay-kind\]\[data-hp-iso-floor\]\[data-hp-iso-visual\]/);
+  assert.match(harness, /forcedColors: scenario\.forcedColors \? 'active' : 'none'/);
+  assert.match(harness, /Stage 3 golden raised a floor-bound vacuum/);
+  assert.match(harness, /Stage 3 no-borders golden retained raised overlays/);
+  assert.match(harness, /!scenario\.stage3Golden\?\.noBorders[\s\S]*?data-hp-iso-stage/,
+    'no-borders remains true Iso without requiring the intentionally absent volume stage');
+  assert.match(harness,
+    /\.\.\.\(scenario\.stage3Golden[\s\S]*?\? \{ themes: \{ darkMode: scenario\.theme === 'dark' \} \}[\s\S]*?: \{\}\)/,
+    'explicit HA darkMode must be scoped to Stage 3 golden scenarios');
+  assert.doesNotMatch(harness,
+    /locale: \{ language: scenario\.language \|\| 'en' \},\s*themes:/,
+    'legacy Flat and Iso golden inputs must not gain an unconditional HA themes field');
+  assert.match(harness, /Stage 3 golden did not use HA darkMode/);
+  assert.match(harness, /Stage 3 dense golden lacks/);
+  assert.match(harness, /Stage 3 combined golden lacks/);
+  assert.ok(harness.lastIndexOf('Stage 3 combined golden lacks')
+    > harness.lastIndexOf("await until(() => !!card.renderRoot.querySelector('.vactrail > path.case'))"),
+  'combined live-layer preflight must run after the async vacuum fixture settles');
 });
 
 test('golden harness applies doorway, state and layout overrides to a cloned fixture', () => {

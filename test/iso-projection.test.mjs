@@ -1,23 +1,26 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  ISO_CAMERA, ISO_WALL_HEIGHT, clientToScenePoint, isoFloorMatrix,
-  projectPlanPoint, projectedFrame, unprojectFloorPoint,
+  ISO_CAMERA, ISO_OVERLAY_VISUAL_OFFSET, ISO_RAISED_OVERLAY_HEIGHT,
+  ISO_WALL_HEIGHT, applyIsoMatrix, clientToScenePoint, isoFloorMatrix,
+  isoPlaneMatrix, isoPlaneMatrixCss, isoRaisedOverlayHeight, projectPlanPoint,
+  projectedFrame, unprojectFloorPoint,
 } from '../test-build/iso-projection.js';
 
 const close = (actual, expected, epsilon = 1e-9) =>
   assert.ok(Math.abs(actual - expected) <= epsilon, `${actual} != ${expected}`);
 
-test('fixed camera is orthographic, unrotated and inside the owner range', () => {
-  assert.equal(ISO_CAMERA.rotDeg, 0);
-  assert.ok(ISO_CAMERA.tiltDeg >= 18 && ISO_CAMERA.tiltDeg <= 22);
+test('Stage 3 camera is the exact fixed +4°/20° orthographic camera', () => {
+  assert.equal(ISO_CAMERA.rotDeg, 4);
+  assert.equal(ISO_CAMERA.tiltDeg, 20);
   const origin = projectPlanPoint([500, 500], 0);
   assert.deepEqual(origin, [500, 500]);
   const x = projectPlanPoint([600, 500], 0);
   const y = projectPlanPoint([500, 600], 0);
-  close(x[1], 500);
-  close(y[0], 500);
-  assert.ok(y[1] > 500, 'plan Y remains a screen-aligned axis');
+  assert.ok(x[0] > 500 && x[1] > 500, 'positive plan X follows the +4° yaw');
+  assert.ok(y[0] < 500 && y[1] > 500, 'positive plan Y follows the +4° yaw');
+  assert.equal(ISO_OVERLAY_VISUAL_OFFSET, 4);
+  assert.equal(ISO_RAISED_OVERLAY_HEIGHT, 68);
 });
 
 test('floor projection round-trips across the infinite canvas contract', () => {
@@ -35,6 +38,21 @@ test('floor matrix is identical to point projection', () => {
     close(a * point[0] + c * point[1] + e, projected[0]);
     close(b * point[0] + d * point[1] + f, projected[1]);
   }
+});
+
+test('one canonical affine helper projects floor and raised planes', () => {
+  for (const z of [0, ISO_WALL_HEIGHT, ISO_RAISED_OVERLAY_HEIGHT]) {
+    const matrix = isoPlaneMatrix(z);
+    for (const point of [[0, 0], [250, 750], [-3000, 4000]]) {
+      const projected = projectPlanPoint(point, z);
+      const affine = applyIsoMatrix(point, matrix);
+      close(affine[0], projected[0]);
+      close(affine[1], projected[1]);
+    }
+    assert.match(isoPlaneMatrixCss(z), /^matrix\([-0-9.e ]+\)$/);
+  }
+  assert.deepEqual(isoPlaneMatrix(0), isoFloorMatrix());
+  assert.equal(isoRaisedOverlayHeight(64, 4), 68);
 });
 
 test('projected frame includes raised wall tops and is view-state independent', () => {
@@ -57,6 +75,25 @@ test('Stage 2 frame includes opening tops and the structural floor edge, not blu
   assert.deepEqual(Object.keys(stage2).sort(), ['h', 'w', 'x', 'y']);
 });
 
+test('Stage 3 frame includes the final raised plane and diagonal camera corners', () => {
+  const rect = { x: 100, y: 200, w: 400, h: 300 };
+  const wallFrame = projectedFrame({ rect, wallHeight: ISO_WALL_HEIGHT });
+  const raisedFrame = projectedFrame({
+    rect,
+    wallHeight: ISO_WALL_HEIGHT,
+    raisedHeight: ISO_RAISED_OVERLAY_HEIGHT,
+  });
+  assert.ok(raisedFrame.y < wallFrame.y, 'raised overlay top is not clipped');
+  assert.ok(raisedFrame.h > wallFrame.h, 'raised overlay height participates in fit bounds');
+  const projectedFloor = [
+    [rect.x, rect.y], [rect.x + rect.w, rect.y],
+    [rect.x + rect.w, rect.y + rect.h], [rect.x, rect.y + rect.h],
+  ].map((point) => projectPlanPoint(point, 0));
+  const projectedWidth = Math.max(...projectedFloor.map((point) => point[0]))
+    - Math.min(...projectedFloor.map((point) => point[0]));
+  assert.ok(projectedWidth > rect.w, 'the +4° camera expands the frame diagonally');
+});
+
 test('client coordinates map through the current scene view', () => {
   const scene = clientToScenePoint([250, 175], { left: 50, top: 25, width: 400, height: 300 },
     { x: 100, y: 200, w: 800, h: 600 });
@@ -68,4 +105,8 @@ test('degenerate cameras and frames throw instead of mixing projections', () => 
   assert.throws(() => unprojectFloorPoint([0, 0], { ...ISO_CAMERA, tiltDeg: 90 }));
   assert.throws(() => clientToScenePoint([0, 0], { left: 0, top: 0, width: 0, height: 1 },
     { x: 0, y: 0, w: 1, h: 1 }));
+  assert.throws(() => isoRaisedOverlayHeight(64, -1));
+  assert.throws(() => projectedFrame({
+    rect: { x: 0, y: 0, w: 1, h: 1 }, wallHeight: 64, raisedHeight: -1,
+  }));
 });

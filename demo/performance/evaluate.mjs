@@ -37,12 +37,36 @@ export const summarizeLongTasks = (rows) => {
 };
 
 const sameJson = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+const exactGitSha = (value) => typeof value === 'string' && /^[0-9a-f]{40}$/i.test(value);
+const isIsometricProfile = (profile) => profile === 'large-house-isometric-v1'
+  || profile === 'isometric-stage3-dense-v1';
 
-const requireReport = (report, budgets, label) => {
+const requireReport = (report, budgets, label, expectedSha = null) => {
   if (!report || report.schema !== 2) throw new Error(`${label}: unsupported report schema`);
   if (report.profile !== budgets.profile) throw new Error(`${label}: unexpected benchmark profile`);
   if (!Array.isArray(report.rows) || report.rows.length < budgets.minimumSamples) {
     throw new Error(`${label}: expected at least ${budgets.minimumSamples} measured samples`);
+  }
+  if (!isIsometricProfile(report.profile)) return;
+  if (!exactGitSha(report.sourceSha)) throw new Error(`${label}: missing exact sourceSha`);
+  if (expectedSha != null && report.sourceSha !== expectedSha) {
+    throw new Error(`${label}: sourceSha does not match requested checkout`);
+  }
+  if (!sameJson(report.effectiveProjection, ['iso'])
+      || report.rows.some((row) => row.effectiveProjection !== 'iso')) {
+    throw new Error(`${label}: effectiveProjection is not exclusively iso`);
+  }
+  if (label === 'candidate' && report.rows.some((row) =>
+    row.isoStructuralBuilds?.supported !== true
+      || row.isoStructuralBuilds?.haUpdateDelta !== 0)) {
+    throw new Error(`${label}: Iso structural build count is missing or changed on HA-only update`);
+  }
+  if (label === 'candidate' && report.profile === 'isometric-stage3-dense-v1') {
+    if (report.stage3Required !== true) throw new Error(`${label}: Stage 3 was not required`);
+    if (!sameJson(report.isoStageRevision, ['3'])
+        || report.rows.some((row) => row.isoStageRevision !== '3')) {
+      throw new Error(`${label}: Stage 3 revision metadata is incomplete`);
+    }
   }
 };
 
@@ -64,10 +88,13 @@ const makeCheck = (id, actual, limit, details = {}) => ({
  * additionally compare a base-SHA report from the same runner; fast smoke
  * captures deliberately enforce only the hard candidate limits.
  */
-export const evaluatePerformanceBudget = ({ candidate, baseline, budgets, absoluteOnly = false }) => {
-  requireReport(candidate, budgets, 'candidate');
+export const evaluatePerformanceBudget = ({
+  candidate, baseline, budgets, absoluteOnly = false,
+  candidateSha = null, baselineSha = null,
+}) => {
+  requireReport(candidate, budgets, 'candidate', candidateSha);
   if (!absoluteOnly) {
-    requireReport(baseline, budgets, 'baseline');
+    requireReport(baseline, budgets, 'baseline', baselineSha);
     if (!sameJson(candidate.fixture, baseline.fixture)) throw new Error('fixture mismatch');
     for (const key of ['node', 'chromium', 'platform', 'arch']) {
       if (candidate.runtime?.[key] !== baseline.runtime?.[key]) {
@@ -214,6 +241,8 @@ export const evaluatePerformanceBudget = ({ candidate, baseline, budgets, absolu
     mode: absoluteOnly ? 'absolute' : 'relative',
     candidateFingerprint: candidate.buildFingerprint,
     baselineFingerprint: baseline?.buildFingerprint ?? null,
+    candidateSha: candidate.sourceSha ?? null,
+    baselineSha: baseline?.sourceSha ?? null,
     checks,
     failures,
   };

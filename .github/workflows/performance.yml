@@ -36,6 +36,7 @@ jobs:
         profile:
           - large-house
           - isometric
+          - isometric-stage3
           - plan-snap
           - interaction
           - blend
@@ -187,6 +188,10 @@ jobs:
               npm run benchmark:large-house-isometric -- --target-root=../baseline --samples=7 --warmups=1 --output=../artifacts/performance/isometric-baseline.json
               npm run benchmark:large-house-isometric -- --target-root=. --samples=7 --warmups=1 --output=../artifacts/performance/isometric-candidate.json
               ;;
+            isometric-stage3)
+              npm run benchmark:isometric-stage3-dense -- --allow-stage2-base --target-root=../baseline --samples=7 --warmups=1 --output=../artifacts/performance/isometric-stage3-baseline.json
+              npm run benchmark:isometric-stage3-dense -- --target-root=. --samples=7 --warmups=1 --output=../artifacts/performance/isometric-stage3-candidate.json
+              ;;
             plan-snap)
               npm run benchmark:large-house-plan-snap -- --target-root=../baseline --samples=7 --warmups=1 --output=../artifacts/performance/plan-snap-baseline.json
               npm run benchmark:large-house-plan-snap -- --target-root=. --samples=7 --warmups=1 --output=../artifacts/performance/plan-snap-candidate.json
@@ -235,7 +240,10 @@ jobs:
               npm run benchmark:compare -- --baseline=../artifacts/performance/baseline.json --candidate=../artifacts/performance/candidate.json --output=../artifacts/performance/comparison.json
               ;;
             isometric)
-              npm run benchmark:compare -- --budgets=demo/performance/budgets-large-house-isometric.json --baseline=../artifacts/performance/isometric-baseline.json --candidate=../artifacts/performance/isometric-candidate.json --output=../artifacts/performance/isometric-comparison.json
+              npm run benchmark:compare -- --budgets=demo/performance/budgets-large-house-isometric.json --baseline=../artifacts/performance/isometric-baseline.json --candidate=../artifacts/performance/isometric-candidate.json --baseline-sha="$(git -C ../baseline rev-parse HEAD)" --candidate-sha="$(git rev-parse HEAD)" --output=../artifacts/performance/isometric-comparison.json
+              ;;
+            isometric-stage3)
+              npm run benchmark:compare -- --budgets=demo/performance/budgets-isometric-stage3-dense.json --baseline=../artifacts/performance/isometric-stage3-baseline.json --candidate=../artifacts/performance/isometric-stage3-candidate.json --baseline-sha="$(git -C ../baseline rev-parse HEAD)" --candidate-sha="$(git rev-parse HEAD)" --output=../artifacts/performance/isometric-stage3-comparison.json
               ;;
             plan-snap)
               npm run benchmark:compare -- --budgets=demo/performance/budgets-large-house-plan-snap.json --baseline=../artifacts/performance/plan-snap-baseline.json --candidate=../artifacts/performance/plan-snap-candidate.json --output=../artifacts/performance/plan-snap-comparison.json

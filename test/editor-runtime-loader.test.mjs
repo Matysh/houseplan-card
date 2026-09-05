@@ -4,7 +4,7 @@ import test from 'node:test';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { EditorRuntimeLoader } from '../test-build/editor-runtime-loader.js';
+import { EditorRuntimeLoader, safeRuntimeDiagnostic } from '../test-build/editor-runtime-loader.js';
 
 const repoRoot = dirname(dirname(fileURLToPath(import.meta.url)));
 
@@ -14,6 +14,25 @@ const deferred = () => {
   const promise = new Promise((ok, fail) => { resolve = ok; reject = fail; });
   return { promise, resolve, reject };
 };
+
+test('runtime diagnostics expose only allowlisted metadata', () => {
+  const secrets = [
+    'space.private_identifier|abc123',
+    'https://private.invalid/iso.js?token=secret-value',
+    new Error('sensor.private_identifier\nhttps://private.invalid/?auth=secret'),
+  ];
+  for (const secret of secrets) {
+    const diagnostic = safeRuntimeDiagnostic('structural', secret, true);
+    assert.deepEqual(diagnostic, {
+      kind: 'structural', fingerprint: 'redacted', terminal: true,
+    });
+    assert.ok(Object.isFrozen(diagnostic));
+    assert.doesNotMatch(JSON.stringify(diagnostic), /private|sensor\.|https?:|token|auth|secret/i);
+  }
+  assert.deepEqual(safeRuntimeDiagnostic('runtime-load', 'abc123', false), {
+    kind: 'runtime-load', fingerprint: 'abc123', terminal: false,
+  });
+});
 
 test('editor runtime loader deduplicates concurrent intent and installs atomically', async () => {
   const pending = deferred();
@@ -202,7 +221,7 @@ test('lazy failure toast wording follows terminality (#353 AC5)', async () => {
   );
 });
 
-test('both card loaders route their toast through lazyLoadFailureMessage (#353 AC5)', async () => {
+test('the two user-facing card loaders route their toast through lazyLoadFailureMessage (#353 AC5)', async () => {
   const ts = (await import('typescript')).default;
   const source = readFileSync(join(repoRoot, 'src', 'houseplan-card.ts'), 'utf8');
   const file = ts.createSourceFile(
@@ -218,7 +237,9 @@ test('both card loaders route their toast through lazyLoadFailureMessage (#353 A
     ts.forEachChild(node, visit);
   };
   visit(file);
-  assert.equal(callbacks.length, 2, 'editor and onboarding loaders both declare failed callbacks');
+  assert.equal(callbacks.length, 3,
+    'editor, onboarding and hidden isometric runtimes all declare failed callbacks');
+  let forwardedCallbacks = 0;
   for (const callback of callbacks) {
     assert.equal(callback.parameters.length, 2, 'the failure info parameter must be declared');
     const infoName = callback.parameters[1].name.getText(file);
@@ -233,10 +254,8 @@ test('both card loaders route their toast through lazyLoadFailureMessage (#353 A
       ts.forEachChild(node, inspect);
     };
     inspect(callback.body);
-    assert.ok(
-      forwards,
-      'the failed callback must forward its info argument into lazyLoadFailureMessage — '
-        + 'a hardcoded terminality would show the wrong advice',
-    );
+    if (forwards) forwardedCallbacks++;
   }
+  assert.equal(forwardedCallbacks, 2,
+    'only editor and onboarding are user-facing; both must forward terminality to the toast');
 });

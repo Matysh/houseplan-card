@@ -248,9 +248,11 @@ export const planStyles = css`
       z-index: 4;
       overflow: visible;
     }
+    .iso-overlays-svg { z-index: 5; overflow: visible; }
     .iso-underlay-svg,
     .iso-shadows-svg,
     .iso-walls-svg,
+    .iso-overlays-svg,
     .iso-underlay,
     .iso-shadows,
     .iso-walls,
@@ -273,6 +275,19 @@ export const planStyles = css`
       stroke-width: 0.8;
       vector-effect: non-scaling-stroke;
     }
+    .iso-material-texture {
+      fill: url(#hp-iso-wall-texture);
+      stroke: none;
+      opacity: 0.12;
+      pointer-events: none;
+    }
+    .iso-floor-texture { fill: url(#hp-iso-floor-texture); opacity: 0.1; }
+    .iso-texture-mark { fill: rgba(36, 43, 47, 0.34); }
+    .iso-texture-line {
+      fill: none;
+      stroke: rgba(36, 43, 47, 0.24);
+      stroke-width: 0.55;
+    }
     .iso-floor-side {
       fill: #858b8d;
       stroke: #71787b;
@@ -290,6 +305,48 @@ export const planStyles = css`
       fill: #dfeff4;
       fill-opacity: 0.72;
       stroke: #8aa7b1;
+    }
+    .iso-opening-panel.iso-material-reveal {
+      fill: #c7cbca;
+      stroke: #8b9294;
+    }
+    .iso-opening-panel.iso-material-matte-leaf {
+      fill: #a6abad;
+      stroke: #737b7f;
+    }
+    .iso-opening-panel.iso-opening-leaf-edge,
+    .iso-opening-panel.iso-opening-leaf-top { fill: #8d9497; }
+    .iso-opening-panel.iso-material-light-window,
+    .iso-opening-panel.iso-material-light-frame,
+    .iso-opening-panel.iso-material-light-sill {
+      fill: #edf7f9;
+      fill-opacity: 0.94;
+      stroke: #94adb4;
+    }
+    .iso-overlay-ground {
+      fill: rgba(20, 26, 29, 0.3);
+      filter: url(#hp-iso-overlay-ground);
+      pointer-events: none;
+    }
+    .iso-overlay-tether {
+      stroke: rgba(54, 65, 71, 0.48);
+      stroke-width: 1;
+      stroke-dasharray: 3 2;
+      vector-effect: non-scaling-stroke;
+      pointer-events: none;
+    }
+    .iso-overlay-plate {
+      fill: rgba(248, 249, 247, 0.9);
+      stroke: rgba(123, 132, 136, 0.58);
+      stroke-width: 0.8;
+      vector-effect: non-scaling-stroke;
+      pointer-events: none;
+    }
+    .iso-overlay-plate-texture {
+      fill: url(#hp-iso-overlay-texture);
+      opacity: 0.11;
+      stroke: none;
+      pointer-events: none;
     }
     .iso-ambient-shadow {
       fill: rgba(15, 21, 25, 0.22);
@@ -309,29 +366,82 @@ export const planStyles = css`
       filter: url(#hp-iso-leaf-shadow);
       vector-effect: non-scaling-stroke;
     }
+    .stage.theme-dark .iso-side-hi { stop-color: #4c555a; }
+    .stage.theme-dark .iso-side-lo { stop-color: #343c40; }
+    .stage.theme-dark .iso-top-hi { stop-color: #687176; }
+    .stage.theme-dark .iso-top-lo { stop-color: #50585d; }
+    .stage.theme-dark .iso-wall-side { stroke: #30373b; }
+    .stage.theme-dark .iso-wall-top { stroke: #7b858a; }
+    .stage.theme-dark .iso-floor-side { fill: #2d3438; stroke: #20272a; }
+    .stage.theme-dark .iso-opening-panel { fill: #626b70; stroke: #899399; }
+    .stage.theme-dark .iso-opening-panel.iso-window { fill: #75919b; stroke: #abc6ce; }
+    .stage.theme-dark .iso-opening-panel.iso-material-reveal { fill: #454e52; stroke: #727d82; }
+    .stage.theme-dark .iso-opening-panel.iso-material-matte-leaf { fill: #626a6e; stroke: #899398; }
+    .stage.theme-dark .iso-opening-panel.iso-opening-leaf-edge,
+    .stage.theme-dark .iso-opening-panel.iso-opening-leaf-top { fill: #4b5458; }
+    .stage.theme-dark .iso-opening-panel.iso-material-light-window,
+    .stage.theme-dark .iso-opening-panel.iso-material-light-frame,
+    .stage.theme-dark .iso-opening-panel.iso-material-light-sill {
+      fill: #d8e8eb;
+      stroke: #9eb8bf;
+    }
+    .stage.theme-dark .iso-ambient-shadow { fill: rgba(0, 0, 0, 0.34); }
+    .stage.theme-dark .iso-contact-shadow,
+    .stage.theme-dark .iso-leaf-shadow { stroke: rgba(0, 0, 0, 0.38); }
+    .stage.theme-dark .iso-texture-mark { fill: rgba(255, 255, 255, 0.24); }
+    .stage.theme-dark .iso-texture-line { stroke: rgba(255, 255, 255, 0.18); }
+    .stage.theme-dark .iso-overlay-ground { fill: rgba(0, 0, 0, 0.42); }
+    .stage.theme-dark .iso-overlay-tether { stroke: rgba(224, 232, 235, 0.5); }
+    .stage.theme-dark .iso-overlay-plate {
+      fill: rgba(68, 77, 81, 0.92);
+      stroke: rgba(183, 195, 200, 0.52);
+    }
     @media (prefers-color-scheme: dark) {
-      .iso-side-hi { stop-color: #4c555a; }
-      .iso-side-lo { stop-color: #343c40; }
-      .iso-top-hi { stop-color: #687176; }
-      .iso-top-lo { stop-color: #50585d; }
-      .iso-wall-side { stroke: #30373b; }
-      .iso-wall-top { stroke: #7b858a; }
-      .iso-floor-side { fill: #2d3438; stroke: #20272a; }
-      .iso-opening-panel { fill: #626b70; stroke: #899399; }
-      .iso-opening-panel.iso-window { fill: #75919b; stroke: #abc6ce; }
-      .iso-ambient-shadow { fill: rgba(0, 0, 0, 0.34); }
-      .iso-contact-shadow, .iso-leaf-shadow { stroke: rgba(0, 0, 0, 0.38); }
+      /* HA's explicit theme wins over the operating-system preference. */
+      .stage:not(.theme-light) .iso-side-hi { stop-color: #4c555a; }
+      .stage:not(.theme-light) .iso-side-lo { stop-color: #343c40; }
+      .stage:not(.theme-light) .iso-top-hi { stop-color: #687176; }
+      .stage:not(.theme-light) .iso-top-lo { stop-color: #50585d; }
+      .stage:not(.theme-light) .iso-wall-side { stroke: #30373b; }
+      .stage:not(.theme-light) .iso-wall-top { stroke: #7b858a; }
+      .stage:not(.theme-light) .iso-floor-side { fill: #2d3438; stroke: #20272a; }
+      .stage:not(.theme-light) .iso-opening-panel { fill: #626b70; stroke: #899399; }
+      .stage:not(.theme-light) .iso-opening-panel.iso-window { fill: #75919b; stroke: #abc6ce; }
+      .stage:not(.theme-light) .iso-opening-panel.iso-material-reveal { fill: #454e52; stroke: #727d82; }
+      .stage:not(.theme-light) .iso-opening-panel.iso-material-matte-leaf { fill: #626a6e; stroke: #899398; }
+      .stage:not(.theme-light) .iso-opening-panel.iso-opening-leaf-edge,
+      .stage:not(.theme-light) .iso-opening-panel.iso-opening-leaf-top { fill: #4b5458; }
+      .stage:not(.theme-light) .iso-opening-panel.iso-material-light-window,
+      .stage:not(.theme-light) .iso-opening-panel.iso-material-light-frame,
+      .stage:not(.theme-light) .iso-opening-panel.iso-material-light-sill { fill: #d8e8eb; stroke: #9eb8bf; }
+      .stage:not(.theme-light) .iso-ambient-shadow { fill: rgba(0, 0, 0, 0.34); }
+      .stage:not(.theme-light) .iso-contact-shadow,
+      .stage:not(.theme-light) .iso-leaf-shadow { stroke: rgba(0, 0, 0, 0.38); }
+      .stage:not(.theme-light) .iso-texture-mark { fill: rgba(255, 255, 255, 0.24); }
+      .stage:not(.theme-light) .iso-texture-line { stroke: rgba(255, 255, 255, 0.18); }
+      .stage:not(.theme-light) .iso-overlay-ground { fill: rgba(0, 0, 0, 0.42); }
+      .stage:not(.theme-light) .iso-overlay-tether { stroke: rgba(224, 232, 235, 0.5); }
+      .stage:not(.theme-light) .iso-overlay-plate {
+        fill: rgba(68, 77, 81, 0.92);
+        stroke: rgba(183, 195, 200, 0.52);
+      }
     }
     @media (forced-colors: active) {
-      .iso-wall-side, .iso-wall-top, .iso-floor-side, .iso-opening-panel {
+      .iso-wall-side, .iso-wall-top, .iso-floor-side, .iso-opening-panel,
+      .iso-overlay-plate {
         fill: Canvas;
         stroke: CanvasText;
         forced-color-adjust: auto;
       }
-      .iso-ambient-shadow, .iso-contact-shadow, .iso-leaf-shadow { display: none; }
+      .iso-ambient-shadow, .iso-contact-shadow, .iso-leaf-shadow,
+      .iso-overlay-ground, .iso-material-texture,
+      .iso-overlay-plate-texture { display: none; }
+      .iso-overlay-tether { stroke: CanvasText; }
     }
     @supports not (filter: blur(1px)) {
-      .iso-ambient-shadow, .iso-contact-shadow, .iso-leaf-shadow { display: none; }
+      .iso-ambient-shadow, .iso-contact-shadow, .iso-leaf-shadow,
+      .iso-overlay-ground, .iso-material-texture,
+      .iso-overlay-plate-texture { display: none; }
     }
     /* Opaque plan paper (owner 2026-08-03): the scene bg_color / daynight sky
        shows ONLY around the plan, never through it. The colour is the
@@ -496,6 +606,17 @@ export const planStyles = css`
       pointer-events: auto;
       cursor: pointer;
     }
+    .stage.projection-iso.mode-view .oplock::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: max(44px, 100%);
+      height: max(44px, 100%);
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      pointer-events: auto;
+    }
     @media (prefers-reduced-motion: reduce) {
       .op-leaf, .op-arc { transition: none; }
     }
@@ -627,6 +748,12 @@ export const planStyles = css`
       pointer-events: auto;
       cursor: pointer;
       border-radius: 0.2em;
+    }
+    .stage.projection-iso.mode-view .roomlabel {
+      box-sizing: border-box;
+      min-width: 44px;
+      min-height: 44px;
+      justify-content: center;
     }
     .stage.mode-view .roomlabel:focus-visible {
       outline: 2px solid var(--hp-accent);

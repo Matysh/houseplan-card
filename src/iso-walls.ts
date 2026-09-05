@@ -5,14 +5,26 @@ import {
 
 export interface IsoWallFace {
   d: string;
+  /** Exact visible quad, reused by Stage 3 overlay collision geometry. */
+  points: readonly ScenePoint[];
   depth: number;
   polygon: number;
   ring: number;
   edge: number;
 }
 
+export interface IsoWallTopFace {
+  /** One physical union component, including its evenodd hole subpaths. */
+  d: string;
+  depth: number;
+  component: number;
+}
+
 export interface IsoWallGeometry {
+  /** Compatibility aggregate used by collision/debug consumers. */
   topPath: string;
+  /** Independently paintable top components for the shared Stage 3 depth queue. */
+  topFaces: readonly IsoWallTopFace[];
   sides: readonly IsoWallFace[];
   contactPath: string;
   edgeCount: number;
@@ -103,15 +115,22 @@ export function buildIsoWallGeometry(
 ): IsoWallGeometry {
   if (!Number.isFinite(height) || height < 0) throw new Error('invalid wall height');
   const tops: string[] = [];
+  const topFaces: IsoWallTopFace[] = [];
   const sides: IsoWallFace[] = [];
   const contacts: string[] = [];
   let edgeCount = 0;
   for (let polygon = 0; polygon < (geometry || []).length; polygon++) {
     const source = geometry[polygon];
+    const componentPaths: string[] = [];
+    let componentDepth = -Infinity;
     for (let ring = 0; ring < (source || []).length; ring++) {
       const points = normalizedRing(source[ring], ring > 0);
       if (points.length < 3 || Math.abs(signedArea(points)) < 1e-9) continue;
-      tops.push(topRingPath(points, camera, height));
+      const topPath = topRingPath(points, camera, height);
+      tops.push(topPath);
+      componentPaths.push(topPath);
+      componentDepth = Math.max(componentDepth,
+        ...points.map((point) => projectPlanPoint(point, height, camera)[1]));
       edgeCount += points.length;
       for (let edge = 0; edge < points.length; edge++) {
         const a = points[edge], b = points[(edge + 1) % points.length];
@@ -121,16 +140,28 @@ export function buildIsoWallGeometry(
         if (visibleNormalY(a, b, camera) <= 1e-9) continue;
         const topB = projectPlanPoint(b, height, camera);
         const topA = projectPlanPoint(a, height, camera);
+        const facePoints = Object.freeze([floorA, floorB, topB, topA]);
         sides.push({
-          d: `M ${pointText(floorA)} L ${pointText(floorB)} L ${pointText(topB)} L ${pointText(topA)} Z`,
+          d: `M ${facePoints.map(pointText).join(' L ')} Z`,
+          points: facePoints,
           depth: Math.max(floorA[1], floorB[1]), polygon, ring, edge,
         });
       }
     }
+    if (componentPaths.length) {
+      topFaces.push({
+        d: componentPaths.join(' '),
+        depth: componentDepth,
+        component: polygon,
+      });
+    }
   }
   sides.sort((a, b) => a.depth - b.depth || a.polygon - b.polygon
     || a.ring - b.ring || a.edge - b.edge);
-  return { topPath: tops.join(' '), sides, contactPath: contacts.join(' '), edgeCount };
+  topFaces.sort((a, b) => a.depth - b.depth || a.component - b.component);
+  return {
+    topPath: tops.join(' '), topFaces, sides, contactPath: contacts.join(' '), edgeCount,
+  };
 }
 
 /**

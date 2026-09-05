@@ -3,6 +3,7 @@
 import { chromium } from 'playwright';
 import { assertFreshDemoBundleUnlessAllowed } from './bundle-freshness.mjs';
 import { ensureHarnessEditorRuntime } from './editor-runtime-compat.mjs';
+import { installHarnessIsoRuntimeHelper } from './iso-runtime-compat.mjs';
 import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname } from 'node:path';
@@ -147,6 +148,7 @@ async function launchInternal(
       : r.fulfill({ status: 404, body: 'nf' });
   });
   await page.goto('http://demo.local/demo.html', { waitUntil: 'domcontentloaded' });
+  await installHarnessIsoRuntimeHelper(page);
   await page.waitForFunction(() => window.__card?._model?.length > 0, { timeout: 9000 });
   // Свежесть бандла проверяется здесь, а не в каждом смоке (#236). Смок читает
   // demo/srv/assets/houseplan-card.js; если туда не скопирован свежий dist,

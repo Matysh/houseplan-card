@@ -215,6 +215,7 @@ const result = await page.evaluate(async (source) => {
     window.__hpAlpha = true;
     window.__hpLabs = labs;
     card._setProjection('iso');
+    await window.__hpEnsureHarnessIsoRuntime(card);
     await update(false);
     const isoWalls = card._isoSource().build().walls;
     out[`${prefix}_hidden_iso_has_all_strips`] = samples.every((point) =>

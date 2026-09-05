@@ -77,6 +77,84 @@ const result = await page.evaluate(async () => {
   card.requestUpdate();
   await card.updateComplete;
 
+  const frame = () => new Promise((resolve) => requestAnimationFrame(() =>
+    requestAnimationFrame(resolve)));
+  const centre = (element) => {
+    const rect = element.getBoundingClientRect();
+    return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+  };
+  const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+  const isoTopologyGeometry = async () => {
+    const sourceMarker = root().querySelector('.dev[data-id="d_light1"]');
+    const neighborMarker = root().querySelector('.dev[data-id="d_lamp"]');
+    sourceMarker.dispatchEvent(mouse('pointerover'));
+    await wait(() => root().querySelector('hp-zigbee-topology-overlay')?.shadowRoot
+      ?.querySelector('line[data-direction="toward-neighbor"]'), 'Iso local route');
+    const topology = root().querySelector('hp-zigbee-topology-overlay');
+    await topology.updateComplete;
+    await frame();
+    const svg = topology.shadowRoot.querySelector('[data-hp="zigbee-topology-lines"]');
+    const line = topology.shadowRoot.querySelector('line[data-direction="toward-neighbor"]');
+    const halo = topology.shadowRoot.querySelector('[data-hp="zigbee-topology-neighbor"]');
+    const matrix = svg?.getScreenCTM();
+    const projected = (x, y) => new DOMPoint(Number(x), Number(y)).matrixTransform(matrix);
+    const lineStart = projected(line?.getAttribute('x1'), line?.getAttribute('y1'));
+    const lineEnd = projected(line?.getAttribute('x2'), line?.getAttribute('y2'));
+    const sourceCentre = centre(sourceMarker);
+    const neighborCentre = centre(neighborMarker);
+    const haloCentre = centre(halo);
+    const raised = [sourceMarker, neighborMarker].every((marker) => {
+      const floor = marker.getAttribute('data-hp-iso-floor')?.split(',').map(Number);
+      const visual = marker.getAttribute('data-hp-iso-visual')?.split(',').map(Number);
+      return marker.getAttribute('data-hp-iso-overlay-kind') === 'device'
+        && floor?.length === 2 && visual?.length === 2
+        && floor.every(Number.isFinite) && visual.every(Number.isFinite)
+        && Math.hypot(floor[0] - visual[0], floor[1] - visual[1]) > 0.1;
+    });
+    return {
+      sourceCentre, neighborCentre, raised,
+      aligned: !!matrix && distance(lineStart, sourceCentre) <= 1
+        && distance(lineEnd, neighborCentre) <= 1
+        && distance(haloCentre, neighborCentre) <= 1,
+    };
+  };
+
+  const isoConfigSpace = card._serverCfg.spaces.find((space) => space.id === 'f1');
+  isoConfigSpace.settings = {
+    ...(isoConfigSpace.settings || {}), show_borders: true, show_names: true,
+  };
+  card._cfgEpoch++;
+  card.requestUpdate();
+  await card.updateComplete;
+  history.replaceState(null, '', '#space=f1&hp_alpha=1');
+  dispatchEvent(new HashChangeEvent('hashchange'));
+  await wait(() => card._labsIso === true, 'alpha enabled');
+  card._setProjection('iso');
+  await window.__hpEnsureHarnessIsoRuntime(card);
+  await wait(() => !!root().querySelector('[data-hp="iso-walls"]'), 'Iso walls');
+  const isoBeforePanZoom = await isoTopologyGeometry();
+  out.isoMarkersRaised = isoBeforePanZoom.raised;
+  out.isoTopologyUsesRaisedDomCentres = isoBeforePanZoom.aligned;
+
+  card._applyView(Math.min(2, Math.max(1.25, card._zoom * 1.45)), 0.24, 0.72);
+  card.requestUpdate();
+  await card.updateComplete;
+  await frame();
+  const currentSource = root().querySelector('.dev[data-id="d_light1"]');
+  currentSource.dispatchEvent(mouse('pointerout', root().querySelector('.stage')));
+  await wait(() => !root().querySelector('hp-zigbee-topology-overlay')?.shadowRoot
+    ?.querySelector('line'), 'Iso route cleared after pan/zoom');
+  const isoAfterPanZoom = await isoTopologyGeometry();
+  out.isoTopologyTracksRaisedDomCentresAfterPanZoom = isoAfterPanZoom.aligned;
+  out.isoPanZoomActuallyMovesMarker = distance(
+    isoBeforePanZoom.sourceCentre, isoAfterPanZoom.sourceCentre,
+  ) > 1;
+
+  currentSource.dispatchEvent(mouse('pointerout', root().querySelector('.stage')));
+  card._setProjection('flat');
+  await card.updateComplete;
+  await frame();
+
   const source = root().querySelector('.dev[data-id="d_light1"]');
   const unknownNeighbor = root().querySelector('.dev[data-id="d_lamp"]');
   const knownNeighbor = root().querySelector('.dev[data-id="d_tv"]');

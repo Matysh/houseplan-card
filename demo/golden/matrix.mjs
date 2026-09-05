@@ -1,7 +1,7 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 55;
+export const GOLDEN_MATRIX_VERSION = 56;
 
 const stage = { capture: 'stage', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0005 } };
 const page = { capture: 'page', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0008 } };
@@ -62,6 +62,50 @@ const openingIsoContract = {
       flipV: true, offset: 'center', turnPair: 'golden-iso-gate-turn' },
   ],
 };
+
+const stage3DenseMarkers = [
+  { id: 'golden-light-one', binding: 'device:golden-light-one', value_badge: {
+    enabled: true,
+    source: { kind: 'entity_state', entity_id: 'light.golden_light_one' },
+    position: 'right',
+  } },
+  { id: 'golden-light-two', binding: 'device:golden-light-two' },
+  { id: 'golden-presence', binding: 'device:golden-presence', display: 'icon_ripple' },
+  { id: 'golden-climate', binding: 'device:golden-climate', value_badge: {
+    enabled: true,
+    source: {
+      kind: 'entity_attribute', entity_id: 'climate.golden_climate',
+      attribute: 'current_temperature',
+    },
+    position: 'top',
+  } },
+  { id: 'golden-left-linkquality', binding: 'device:golden-left-linkquality', value_badge: {
+    enabled: true,
+    source: { kind: 'entity_state', entity_id: 'sensor.golden_left_linkquality' },
+    position: 'bottom',
+  } },
+  { id: 'golden-right-linkquality', binding: 'device:golden-right-linkquality' },
+];
+
+const stage3DenseLayout = {
+  'golden-light-one': { s: 'golden-lighting', x: 0.487, y: 0.22 },
+  'golden-light-two': { s: 'golden-lighting', x: 0.43, y: 0.76 },
+  'golden-presence': { s: 'golden-lighting', x: 0.513, y: 0.22 },
+  'golden-climate': { s: 'golden-lighting', x: 0.56, y: 0.64 },
+  'golden-left-linkquality': { s: 'golden-lighting', x: 0.487, y: 0.43 },
+  'golden-right-linkquality': { s: 'golden-lighting', x: 0.513, y: 0.76 },
+};
+
+const stage3VacuumTrail = {
+  maxDeviationCm: 17.5,
+  current: [
+    [[180, 220], [360, 220], [360, 420], [520, 420]],
+    [[650, 240], [780, 240], [780, 500], [650, 620], [850, 760]],
+  ],
+  previous: [[160, 760], [300, 650], [420, 740], [560, 600]],
+};
+
+const stage3RequiredOverlays = ['device', 'room-label', 'opening-lock'];
 
 /** Exact existing baseline impact measured against origin/dev with the same
  * Chromium build. Keep this list reviewable: shared visual fixtures make an
@@ -219,6 +263,7 @@ export const GOLDEN_SCENARIOS = Object.freeze([
   { id: 'isometric-no-borders-dark', fixture: 'visual', space: 'golden-lighting', mode: 'view',
     alpha: true, projection: 'iso', showBorders: false, fillMode: 'custom',
     customFill: { c: '#486a8f', a: 0.42 }, glowEnabled: true,
+    stage3Golden: { noBorders: true },
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'isometric-touch-kiosk-dark', fixture: 'visual', space: 'golden-geometry', mode: 'view',
     alpha: true, projection: 'iso', kiosk: true,
@@ -226,6 +271,86 @@ export const GOLDEN_SCENARIOS = Object.freeze([
   { id: 'isometric-large-warm-remount-dark', fixture: 'large', space: 'perf-floor-2', mode: 'view',
     alpha: true, projection: 'iso', warmRemount: true,
     theme: 'dark', viewport: { width: 1180, height: 900 }, ...stage },
+  ...['light', 'dark'].map((theme) => ({
+    id: `isometric-stage3-overlays-${theme}`, fixture: 'visual',
+    space: 'golden-lighting', mode: 'view', alpha: true, projection: 'iso',
+    stage3Fixture: {
+      roomMetrics: true, lockOpening: 'light-door', lockState: 'locked',
+      newDevice: 'golden-presence',
+    },
+    stage3Golden: {
+      requiredKinds: stage3RequiredOverlays, requireNudged: true,
+      requireMaterialDefs: true, maxMaterialDefs: 12,
+      requireVacuumFloor: theme === 'dark',
+      requireDenseFacets: true,
+      requireSolidCues: true,
+      requireGrounding: true,
+      requireLiveLayers: theme === 'dark',
+    },
+    markerOverrides: stage3DenseMarkers,
+    markerAreaSnapshot: {
+      'golden-light-one': { binding: 'device:golden-light-one', area: 'golden_light_left' },
+      'golden-light-two': { binding: 'device:golden-light-two', area: 'golden_light_left' },
+      'golden-presence': { binding: 'device:golden-presence', area: 'golden_light_right' },
+      'golden-climate': { binding: 'device:golden-climate', area: 'golden_light_right' },
+      'golden-left-linkquality': {
+        binding: 'device:golden-left-linkquality', area: 'golden_light_left',
+      },
+      'golden-right-linkquality': {
+        binding: 'device:golden-right-linkquality', area: 'golden_light_right',
+      },
+    },
+    stateOverrides: {
+      'light.golden_light_one': { attributes: { lqi: 40 } },
+      'light.golden_light_two': { attributes: { lqi: 120 } },
+      'sensor.golden_right_linkquality': { state: '210' },
+      ...(theme === 'dark' ? {
+        'sun.sun': { attributes: { azimuth: 270, elevation: 24 } },
+      } : {}),
+    },
+    layoutOverrides: stage3DenseLayout,
+    ...(theme === 'dark' ? {
+      vacuumTrail: stage3VacuumTrail,
+      fillMode: 'custom', customFill: { c: '#486a8f', a: 0.42 },
+      hoverRoom: 'light-left', decorOverride: decorLayerFixture,
+      glowEnabled: true, sunRays: true, northDeg: 90,
+    } : {}),
+    theme, viewport: { width: 1000, height: 900 }, ...stage,
+  })),
+  { id: 'isometric-stage3-openings-dark', fixture: 'visual',
+    space: 'golden-lighting', mode: 'view', alpha: true, projection: 'iso',
+    showNames: false, glowEnabled: false, sunRays: false,
+    stage3Fixture: { lockOpening: 'light-door', lockState: 'unlocked' },
+    extraOpenings: [{
+      id: 'stage3-passage', type: 'passage', x: 0.50, y: 0.30,
+      angle: 90, length: 0.12,
+    }],
+    stage3Golden: {
+      requiredKinds: ['device', 'opening-lock'],
+      requireMaterialDefs: true, maxMaterialDefs: 12,
+      openingKinds: ['door', 'window', 'gate'], requirePassage: true,
+    },
+    theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
+  { id: 'isometric-stage3-forced-colors-dark', fixture: 'visual',
+    space: 'golden-lighting', mode: 'view', alpha: true, projection: 'iso',
+    forcedColors: true,
+    stage3Fixture: { roomMetrics: true, lockOpening: 'light-door', lockState: 'locked' },
+    stage3Golden: {
+      requiredKinds: stage3RequiredOverlays, requireNudged: true,
+      requireNoMaterialDefs: true, requireSolidCues: true,
+    },
+    layoutOverrides: stage3DenseLayout,
+    theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
+  { id: 'isometric-stage3-no-filter-dark', fixture: 'visual',
+    space: 'golden-lighting', mode: 'view', alpha: true, projection: 'iso',
+    disableIsoFilters: true,
+    stage3Fixture: { roomMetrics: true, lockOpening: 'light-door', lockState: 'locked' },
+    stage3Golden: {
+      requiredKinds: stage3RequiredOverlays, requireNudged: true,
+      requireNoMaterialDefs: true, requireSolidCues: true,
+    },
+    layoutOverrides: stage3DenseLayout,
+    theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'geometry-view-dark-fit', fixture: 'visual', space: 'golden-geometry', mode: 'view',
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'geometry-view-light-fit', fixture: 'visual', space: 'golden-geometry', mode: 'view',

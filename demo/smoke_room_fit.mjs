@@ -244,6 +244,7 @@ const out = await page.evaluate(async () => {
   c._onLabsSnapshot({ active: Object.freeze(['iso']), space: '' });
   await c.updateComplete;
   c._setProjection('iso');
+  await window.__hpEnsureHarnessIsoRuntime(c);
   await c.updateComplete;
   pointer(roomNode(), 'pointerdown', 15207);
   pointer(roomNode(), 'pointerup', 15207);

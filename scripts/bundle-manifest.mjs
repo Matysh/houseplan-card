@@ -6,6 +6,7 @@ import { gzipSync } from 'node:zlib';
 const BUILD_FINGERPRINT_TOKEN = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
 const EDITOR_RETRY_ASSET_TOKEN = '__HOUSEPLAN_EDITOR_RETRY_ASSET__';
 const ONBOARDING_RETRY_ASSET_TOKEN = '__HOUSEPLAN_ONBOARDING_RETRY_ASSET__';
+const ISO_RETRY_ASSET_TOKEN = '__HOUSEPLAN_ISO_RETRY_ASSET__';
 const DE_RETRY_ASSET_TOKEN = '__HOUSEPLAN_DE_RETRY_ASSET__';
 const FR_RETRY_ASSET_TOKEN = '__HOUSEPLAN_FR_RETRY_ASSET__';
 
@@ -36,7 +37,9 @@ export function buildBundleManifest(bundle, fingerprint) {
           ? 'onboarding'
           : modules.some((id) => id.endsWith('/src/houseplan-editor-runtime.ts'))
             ? 'editor'
-            : undefined;
+            : modules.some((id) => id.endsWith('/src/iso-scene-render.ts'))
+              ? 'isometric'
+              : undefined;
       return {
         path: chunk.fileName.replaceAll('\\', '/'),
         sha256: sha256(contents),
@@ -66,6 +69,8 @@ export function buildBundleManifest(bundle, fingerprint) {
   const editorRoots = dynamicRoots.filter((path) => (byPath.get(path)?._role === 'editor'
     || /(?:^|\/)editor(?:-[^/]+)?\.js$/.test(path))
     && !localeRoots.includes(path) && !onboardingRoots.includes(path));
+  const isometricRoots = dynamicRoots.filter((path) => byPath.get(path)?._role === 'isometric'
+    || path.includes('iso-scene-render-'));
   const graphFrom = (roots) => {
     const graph = new Set();
     for (const root of roots) {
@@ -76,6 +81,7 @@ export function buildBundleManifest(bundle, fingerprint) {
   const lazyEditor = graphFrom(editorRoots);
   const lazyOnboarding = graphFrom(onboardingRoots);
   const lazyLocale = graphFrom(localeRoots);
+  const lazyIsometric = graphFrom(isometricRoots);
   const sum = (paths) => [...paths]
     .reduce((total, path) => total + (byPath.get(path)?.gzipBytes || 0), 0);
   return {
@@ -92,6 +98,8 @@ export function buildBundleManifest(bundle, fingerprint) {
     lazyOnboardingGzipBytes: sum(lazyOnboarding),
     lazyLocaleFiles: [...lazyLocale].sort(),
     lazyLocaleGzipBytes: sum(lazyLocale),
+    lazyIsometricFiles: [...lazyIsometric].sort(),
+    lazyIsometricGzipBytes: sum(lazyIsometric),
     files: files.map(({ _role, ...file }) => file),
   };
 }
@@ -139,16 +147,20 @@ export function editorRuntimeRetryUrlPlugin() {
         .some((id) => id.replaceAll('\\', '/').endsWith('/src/houseplan-editor-runtime.ts')));
       const onboarding = chunks.find((chunk) => Object.keys(chunk.modules)
         .some((id) => id.replaceAll('\\', '/').endsWith('/src/houseplan-onboarding-runtime.ts')));
+      const isometric = chunks.find((chunk) => Object.keys(chunk.modules)
+        .some((id) => id.replaceAll('\\', '/').endsWith('/src/iso-scene-render.ts')));
       const german = chunks.find((chunk) => Object.keys(chunk.modules)
         .some((id) => id.replaceAll('\\', '/').endsWith('/src/i18n/de.ts')));
       const french = chunks.find((chunk) => Object.keys(chunk.modules)
         .some((id) => id.replaceAll('\\', '/').endsWith('/src/i18n/fr.ts')));
       if (!editor) throw new Error('editor runtime chunk was not emitted');
       if (!onboarding) throw new Error('onboarding runtime chunk was not emitted');
+      if (!isometric) throw new Error('isometric runtime chunk was not emitted');
       if (!german) throw new Error('German locale chunk was not emitted');
       if (!french) throw new Error('French locale chunk was not emitted');
       let editorReplacements = 0;
       let onboardingReplacements = 0;
+      let isometricReplacements = 0;
       let germanReplacements = 0;
       let frenchReplacements = 0;
       for (const chunk of chunks) {
@@ -164,6 +176,12 @@ export function editorRuntimeRetryUrlPlugin() {
           onboardingReplacements += chunk.code.split(ONBOARDING_RETRY_ASSET_TOKEN).length - 1;
           chunk.code = chunk.code.replaceAll(ONBOARDING_RETRY_ASSET_TOKEN, asset);
         }
+        if (chunk.code.includes(ISO_RETRY_ASSET_TOKEN)) {
+          let asset = posix.relative(posix.dirname(chunk.fileName), isometric.fileName);
+          if (!asset.startsWith('.')) asset = `./${asset}`;
+          isometricReplacements += chunk.code.split(ISO_RETRY_ASSET_TOKEN).length - 1;
+          chunk.code = chunk.code.replaceAll(ISO_RETRY_ASSET_TOKEN, asset);
+        }
         if (chunk.code.includes(DE_RETRY_ASSET_TOKEN)) {
           let asset = posix.relative(posix.dirname(chunk.fileName), german.fileName);
           if (!asset.startsWith('.')) asset = `./${asset}`;
@@ -177,10 +195,10 @@ export function editorRuntimeRetryUrlPlugin() {
           chunk.code = chunk.code.replaceAll(FR_RETRY_ASSET_TOKEN, asset);
         }
       }
-      if (editorReplacements !== 1 || onboardingReplacements !== 1
+      if (editorReplacements !== 1 || onboardingReplacements !== 1 || isometricReplacements !== 1
           || germanReplacements !== 1 || frenchReplacements !== 1) {
         throw new Error('lazy retry URL placeholder counts are '
-          + `${editorReplacements}/${onboardingReplacements}/${germanReplacements}/${frenchReplacements}, expected 1/1/1/1`);
+          + `${editorReplacements}/${onboardingReplacements}/${isometricReplacements}/${germanReplacements}/${frenchReplacements}, expected 1/1/1/1/1`);
       }
     },
   };

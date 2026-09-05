@@ -56,8 +56,18 @@ const themeVars = {
 
 async function stableEnvironment(page, scenario) {
   await page.setViewportSize(scenario.viewport);
-  await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: scenario.theme });
-  await page.evaluate(({ variables, theme, attemptedTarget, attemptKey }) => {
+  await page.emulateMedia({
+    reducedMotion: 'reduce', colorScheme: scenario.theme,
+    forcedColors: scenario.forcedColors ? 'active' : 'none',
+  });
+  await page.evaluate(({
+    variables, theme, attemptedTarget, attemptKey, disableIsoFilters,
+  }) => {
+    window.__hpGoldenNativeCssSupports ||= CSS.supports.bind(CSS);
+    CSS.supports = disableIsoFilters
+      ? ((property, value) => property === 'filter'
+        ? false : window.__hpGoldenNativeCssSupports(property, value))
+      : window.__hpGoldenNativeCssSupports;
     let style = document.getElementById('hp-golden-stability');
     if (!style) {
       style = document.createElement('style');
@@ -91,6 +101,7 @@ async function stableEnvironment(page, scenario) {
     attemptedTarget: scenario.versionRecoveryAttempted
       ? String(scenario.integrationVersion || '').trim() : null,
     attemptKey: VERSION_RELOAD_ATTEMPT_KEY,
+    disableIsoFilters: scenario.disableIsoFilters === true,
   });
 }
 
@@ -531,6 +542,43 @@ export function prepareGoldenFixture(scenario) {
     if (!space) throw new Error(`golden override references missing space: ${scenario.space}`);
     return space;
   };
+  if (scenario.stage3Fixture) {
+    const contract = scenario.stage3Fixture;
+    const space = requireSpace();
+    if (contract.roomMetrics) {
+      if (space.id !== 'golden-lighting' || space.rooms.length !== 2)
+        throw new Error(`golden Stage 3 metrics require lighting fixture: ${space.id}`);
+      space.settings = {
+        ...(space.settings || {}), show_names: true,
+        label_temp: true, label_hum: true, label_lqi: true, label_light: true,
+      };
+      fixture.layout = {
+        ...(fixture.layout || {}),
+        'rl_light-left': { s: space.id, x: 0.465, y: 0.30 },
+        'rl_light-right': { s: space.id, x: 0.535, y: 0.68 },
+      };
+    }
+    if (contract.newDevice) {
+      if (!fixture.devices?.[contract.newDevice])
+        throw new Error(`golden Stage 3 new marker is missing: ${contract.newDevice}`);
+      fixture.config.settings = {
+        ...(fixture.config.settings || {}), new_device_ids: [contract.newDevice],
+      };
+    }
+    if (contract.lockOpening) {
+      const opening = (space.openings || []).find((item) => item.id === contract.lockOpening);
+      if (!opening || !['door', 'gate'].includes(opening.type))
+        throw new Error(`golden Stage 3 lock opening is missing: ${contract.lockOpening}`);
+      if (!['locked', 'unlocked'].includes(contract.lockState))
+        throw new Error(`golden Stage 3 lock state is invalid: ${contract.lockState}`);
+      const entityId = `lock.golden_stage3_${contract.lockOpening.replaceAll('-', '_')}`;
+      opening.lock = entityId;
+      fixture.states[entityId] = {
+        entity_id: entityId, state: contract.lockState,
+        attributes: { friendly_name: `Golden Stage 3 ${contract.lockOpening} lock` },
+      };
+    }
+  }
   if (scenario.roomLabelParity) {
     const space = requireSpace();
     if (space.id !== 'golden-lighting' || space.rooms.length !== 2)
@@ -577,7 +625,7 @@ export function prepareGoldenFixture(scenario) {
     for (const opening of scenario.extraOpenings) {
       if (!opening?.id || known.has(opening.id))
         throw new Error(`golden extraOpening has missing/duplicate id: ${opening?.id || '<empty>'}`);
-      if (!['door', 'window', 'gate'].includes(opening.type))
+      if (!['door', 'window', 'gate', 'passage'].includes(opening.type))
         throw new Error(`golden extraOpening has unknown type: ${opening.type}`);
       known.add(opening.id);
     }
@@ -699,9 +747,11 @@ export function prepareGoldenFixture(scenario) {
     const deviceId = 'golden-vacuum-trail';
     const vacuumEntity = 'vacuum.golden_vacuum_trail';
     const sourceEntity = 'camera.golden_vacuum_trail_map';
+    const vacuumArea = requireSpace().rooms?.find((room) => room.area)?.area;
+    if (!vacuumArea) throw new Error(`golden vacuum trail target has no HA area: ${scenario.space}`);
     fixture.devices[deviceId] = {
       id: deviceId, name: 'Golden vacuum trail', model: 'GOLDEN-VACUUM-TRAIL',
-      area_id: 'golden_geo_sw', identifiers: [['houseplan_golden', deviceId]],
+      area_id: vacuumArea, identifiers: [['houseplan_golden', deviceId]],
       config_entries: ['golden_entry'], entry_type: null, via_device_id: null, disabled_by: null,
     };
     fixture.entities[vacuumEntity] = {
@@ -726,7 +776,7 @@ export function prepareGoldenFixture(scenario) {
     fixture.layout[deviceId] = { s: scenario.space, x: 0.12, y: 0.84 };
     fixture.config.markers = [...(fixture.config.markers || []), {
       id: deviceId, binding: `device:${deviceId}`, space: scenario.space,
-      area: 'golden_geo_sw',
+      area: vacuumArea,
       vacuum: {
         source: sourceEntity, trail_mode: 'always',
         calibration: { 'golden-trail': [1, 0, 0, 0, 1, 0] },
@@ -765,6 +815,14 @@ export async function prepareGoldenScenario(page, scenario) {
       await card.updateComplete;
       await frame();
     };
+    const ensureIsoRuntime = async (card) => {
+      if (typeof card._ensureIsoSceneRuntime !== 'function'
+          || !(await card._ensureIsoSceneRuntime())) {
+        throw new Error(`golden isometric runtime failed to load: ${scenario.id}`);
+      }
+      await card.updateComplete;
+      await frame();
+    };
     window.__goldenCard?.remove?.();
     window.__goldenEditor?.remove?.();
     window.__card?.remove?.();
@@ -787,6 +845,9 @@ export async function prepareGoldenScenario(page, scenario) {
     };
     const hassFor = () => ({
       language: scenario.language || 'en', locale: { language: scenario.language || 'en' },
+      ...(scenario.stage3Golden
+        ? { themes: { darkMode: scenario.theme === 'dark' } }
+        : {}),
       user: { id: 'golden', name: 'Golden fixture', is_admin: true },
       devices: fixture.devices || {}, entities: fixture.entities || {},
       areas: fixture.areas || {}, states: fixture.states || {},
@@ -838,6 +899,9 @@ export async function prepareGoldenScenario(page, scenario) {
       if (scenario.alpha
           && (window.__hpAlpha !== true || JSON.stringify(window.__hpLabs) !== '["iso"]')) {
         throw new Error(`alpha contract did not activate isometric capability: ${scenario.id}`);
+      }
+      if (scenario.projection === 'iso' || scenario.stage3Golden) {
+        await ensureIsoRuntime(card);
       }
       // Golden scenarios intentionally call internal editor commands directly.
       // Preload the lazy runtime for that legacy harness contract; cold-View
@@ -1085,12 +1149,113 @@ export async function prepareGoldenScenario(page, scenario) {
     }
     if (scenario.projection === 'iso' && typeof card._setProjection === 'function') {
       card._setProjection('iso');
+      await ensureIsoRuntime(card);
       await card.updateComplete;
       await frame();
       if (card._effectiveProjection?.() !== 'iso') {
         throw new Error(`isometric golden rendered Flat: ${scenario.id}`);
       }
       await until(() => card._renderProjection === 'iso');
+      const stage = card.renderRoot.querySelector('.stage');
+      const structuralBuilds = Number(stage?.getAttribute('data-hp-iso-structural-builds'));
+      if (!scenario.stage3Golden?.noBorders
+          && (stage?.getAttribute('data-hp-iso-stage') !== '3'
+            || !Number.isFinite(structuralBuilds) || structuralBuilds < 1)) {
+        throw new Error(`isometric golden did not render the Stage 3 contract: ${scenario.id}`);
+      }
+    }
+    if (scenario.stage3Golden) {
+      const contract = scenario.stage3Golden;
+      const expectedDark = scenario.theme === 'dark';
+      const renderedStage = card.renderRoot.querySelector('.stage');
+      if (card.hass?.themes?.darkMode !== expectedDark
+          || !renderedStage?.classList.contains(expectedDark ? 'theme-dark' : 'theme-light')) {
+        throw new Error(`Stage 3 golden did not use HA darkMode: ${scenario.id}`);
+      }
+      const raisedRoots = [...card.renderRoot.querySelectorAll(
+        '[data-hp-iso-overlay-kind][data-hp-iso-floor][data-hp-iso-visual]',
+      )];
+      const raisedKinds = new Set(raisedRoots.map((root) =>
+        root.getAttribute('data-hp-iso-overlay-kind')).filter(Boolean));
+      const raisedSvg = card.renderRoot.querySelector('[data-hp="iso-raised-overlays"]');
+      if (contract.noBorders) {
+        if (raisedRoots.length || raisedSvg
+            || card.renderRoot.querySelector('[data-hp-iso-raised="true"]')) {
+          throw new Error(`Stage 3 no-borders golden retained raised overlays: ${scenario.id}`);
+        }
+      } else {
+        const missing = (contract.requiredKinds || []).filter((kind) => !raisedKinds.has(kind));
+        if (missing.length) {
+          throw new Error(`Stage 3 golden is missing raised kinds ${missing.join(',')}: ${scenario.id}`);
+        }
+        if (!raisedRoots.length
+            || raisedRoots.some((root) => root.getAttribute('data-hp-iso-raised') !== 'true')) {
+          throw new Error(`Stage 3 golden left an interactive overlay on the floor: ${scenario.id}`);
+        }
+        if (contract.requireNudged
+            && !raisedRoots.some((root) => root.getAttribute('data-hp-iso-nudged') === 'true')) {
+          throw new Error(`Stage 3 golden fixture produced no bounded nudge: ${scenario.id}`);
+        }
+      }
+      const materialDefs = card.renderRoot.querySelectorAll('[data-hp-iso-material-def]').length;
+      if (contract.requireMaterialDefs
+          && (!(materialDefs > 0) || materialDefs > contract.maxMaterialDefs)) {
+        throw new Error(`Stage 3 golden material definitions ${materialDefs} are outside 1..${contract.maxMaterialDefs}: ${scenario.id}`);
+      }
+      if (contract.requireNoMaterialDefs && materialDefs !== 0) {
+        throw new Error(`Stage 3 solid fallback retained material definitions: ${scenario.id}`);
+      }
+      if (contract.requireSolidCues) {
+        const plates = [...card.renderRoot.querySelectorAll('.iso-overlay-plate')];
+        const tethers = [...card.renderRoot.querySelectorAll('.iso-overlay-tether')];
+        if (plates.length < raisedRoots.length || !tethers.length
+            || plates.some((plate) => getComputedStyle(plate).fill === 'none')) {
+          throw new Error(`Stage 3 golden lost solid plate/tether cues: ${scenario.id}`);
+        }
+      }
+      if (contract.requireGrounding
+          && card.renderRoot.querySelectorAll('.iso-overlay-ground').length < raisedRoots.length) {
+        throw new Error(`Stage 3 golden lost persistent grounding cues: ${scenario.id}`);
+      }
+      if (contract.requireDenseFacets) {
+        const facets = {
+          value: card.renderRoot.querySelectorAll('.dev .value-badge').length,
+          lqi: card.renderRoot.querySelectorAll('.dev .lqi').length,
+          new: card.renderRoot.querySelectorAll('.dev .newdot').length,
+          pulse: card.renderRoot.querySelectorAll('.dev .device-pulse, .dev .activity-dot').length,
+          roomMetrics: card.renderRoot.querySelectorAll('.roomlabel .rlmetrics').length,
+        };
+        const missing = Object.entries(facets).filter(([, count]) => !(count > 0));
+        if (missing.length) {
+          throw new Error(`Stage 3 dense golden lacks ${missing.map(([name]) => name).join(',')}: ${scenario.id}`);
+        }
+      }
+      if (contract.openingKinds) {
+        const renderedKinds = new Set([...card.renderRoot.querySelectorAll(
+          '[data-hp="iso-openings"] .iso-opening-panel[data-kind]',
+        )].map((node) => node.getAttribute('data-kind')).filter(Boolean));
+        const missing = contract.openingKinds.filter((kind) => !renderedKinds.has(kind));
+        if (missing.length) {
+          throw new Error(`Stage 3 opening golden is missing ${missing.join(',')}: ${scenario.id}`);
+        }
+      }
+      if (contract.requirePassage) {
+        if (!card._openingsR?.some((opening) => opening.type === 'passage')
+            || card.renderRoot.querySelector(
+              '[data-hp="iso-openings"] .iso-opening-panel[data-kind="passage"]',
+            )) {
+          throw new Error(`Stage 3 passage golden violated negative-volume contract: ${scenario.id}`);
+        }
+      }
+      if (contract.requireVacuumFloor) {
+        await until(() => !!card.renderRoot.querySelector('.vactrail'));
+        const vacuumRoots = [...card.renderRoot.querySelectorAll('.vacpuck, .vactrail')];
+        if (!vacuumRoots.length || vacuumRoots.some((root) =>
+          root.getAttribute('data-hp-iso-raised') === 'true'
+          || root.hasAttribute('data-hp-iso-overlay-kind'))) {
+          throw new Error(`Stage 3 golden raised a floor-bound vacuum: ${scenario.id}`);
+        }
+      }
     }
     if (Number.isFinite(scenario.zoom)) {
       const [zx, zy] = Array.isArray(scenario.zoomCenter) ? scenario.zoomCenter : [500, 500];
@@ -1806,6 +1971,20 @@ export async function prepareGoldenScenario(page, scenario) {
           || currentD !== currentCore?.getAttribute('d')
           || previousD !== previousCore?.getAttribute('d')) {
         throw new Error(`golden vacuum trail contract is incomplete: ${scenario.id}`);
+      }
+    }
+    if (scenario.stage3Golden?.requireLiveLayers) {
+      const live = {
+        glow: card.renderRoot.querySelectorAll('.glowlayer [data-glow-source]').length,
+        sun: card.renderRoot.querySelectorAll('.sunlayer').length,
+        fill: card.renderRoot.querySelectorAll('[data-hp="room"].filled').length,
+        hover: card.renderRoot.querySelectorAll('[data-hp-live-room-hover]').length,
+        decor: card.renderRoot.querySelectorAll('.decorlayer > *').length,
+        vacuum: card.renderRoot.querySelectorAll('.vactrail, .vacpuck').length,
+      };
+      const missing = Object.entries(live).filter(([, count]) => !(count > 0));
+      if (missing.length) {
+        throw new Error(`Stage 3 combined golden lacks ${missing.map(([name]) => name).join(',')}: ${scenario.id}`);
       }
     }
     await document.fonts?.ready;

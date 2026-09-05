@@ -135,6 +135,7 @@ const result = await page.evaluate(async () => {
   card._onLabsSnapshot({ active, space: '' });
   window.__hpLabs = active;
   card._setProjection('iso');
+  await window.__hpEnsureHarnessIsoRuntime(card);
   await settle();
   const isoWalls = card._isoSource().build().walls;
   out.hiddenIsoMatchesCanonical = !!root().querySelector('[data-hp="iso-walls"]')

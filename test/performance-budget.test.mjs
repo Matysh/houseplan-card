@@ -28,6 +28,7 @@ const budgets = {
 const report = ({ timing = 100, heap = 100, cache = 3, growth = 0, long = 20 } = {}) => ({
   schema: 2,
   profile: 'large-house-v1',
+  sourceSha: '1'.repeat(40),
   buildFingerprint: `fixture-${timing}`,
   runtime: { node: 'v22.0.0', chromium: '1.2.3', platform: 'linux', arch: 'x64' },
   fixture: { rooms: 60 },
@@ -95,6 +96,50 @@ test('performance budget refuses incomparable runtime profiles', () => {
     () => evaluatePerformanceBudget({ baseline: report(), candidate, budgets }),
     /runtime mismatch for chromium/,
   );
+});
+
+test('isometric reports fail closed on exact SHA, effective projection and Stage 3 metadata', () => {
+  const isoBudgets = { ...budgets, profile: 'isometric-stage3-dense-v1' };
+  const valid = report();
+  Object.assign(valid, {
+    profile: isoBudgets.profile,
+    effectiveProjection: ['iso'],
+    isoStageRevision: ['3'],
+    stage3Required: true,
+  });
+  valid.rows.forEach((row) => Object.assign(row, {
+    effectiveProjection: 'iso', isoStageRevision: '3',
+    isoStructuralBuilds: {
+      supported: true, initial: 1, beforeHaUpdate: 2, afterHaUpdate: 2, haUpdateDelta: 0,
+    },
+  }));
+  const baseline = structuredClone(valid);
+  baseline.sourceSha = '2'.repeat(40);
+  baseline.stage3Required = false;
+  assert.equal(evaluatePerformanceBudget({
+    baseline, candidate: valid, budgets: isoBudgets,
+    baselineSha: baseline.sourceSha, candidateSha: valid.sourceSha,
+  }).pass, true);
+
+  for (const mutate of [
+    (candidate) => { candidate.sourceSha = null; },
+    (candidate) => { candidate.effectiveProjection = ['flat']; },
+    (candidate) => { candidate.rows[0].effectiveProjection = 'flat'; },
+    (candidate) => { candidate.stage3Required = false; },
+    (candidate) => { candidate.isoStageRevision = ['2']; },
+    (candidate) => { candidate.rows[0].isoStageRevision = '2'; },
+    (candidate) => { candidate.rows[0].isoStructuralBuilds.haUpdateDelta = 1; },
+    (candidate) => { delete candidate.rows[0].isoStructuralBuilds; },
+  ]) {
+    const candidate = structuredClone(valid);
+    mutate(candidate);
+    assert.throws(() => evaluatePerformanceBudget({
+      baseline, candidate, budgets: isoBudgets,
+    }), /sourceSha|effectiveProjection|Stage 3|structural build count/);
+  }
+  assert.throws(() => evaluatePerformanceBudget({
+    baseline, candidate: valid, budgets: isoBudgets, candidateSha: 'f'.repeat(40),
+  }), /sourceSha does not match/);
 });
 
 test('absolute performance smoke needs no baseline and enforces hard ceilings', () => {

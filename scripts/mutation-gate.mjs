@@ -1840,9 +1840,13 @@ const MUTANT_DEFINITIONS = [
       + 'every intermediate transition frame (#152 AC10)',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: 'space.rooms.map((r) => this._renderRoomLabel(r, space, view, disp))',
-      replace: 'space.rooms.map((r) => this._renderRoomLabel(r, space, '
-        + 'this._cameraTransition.target?.viewBox || view, disp))',
+      find: 'space.rooms.map((r) => this._renderRoomLabel(\n'
+        + '                  r, space, view, disp, isoOverlays?.rooms.get(r),\n'
+        + '                ))',
+      replace: 'space.rooms.map((r) => this._renderRoomLabel(\n'
+        + '                  r, space, this._cameraTransition.target?.viewBox || view, disp, '
+        + 'isoOverlays?.rooms.get(r),\n'
+        + '                ))',
     }],
   },
   {
@@ -3816,13 +3820,13 @@ const MUTANT_DEFINITIONS = [
         + '                   live lighting, physical plan geometry and devices. Keep\n'
         + '                   hide_decor visual-only: the decor editor must always paint\n'
         + '                   stored shapes so they remain editable. */}\n'
-        + "            ${disp.hideDecor && this._mode !== 'decor' ? nothing : this._renderDecorLayer()}\n",
+        + "            ${disp.hideDecor && this._mode !== 'decor' ? nothing : this._renderDecorLayer(undefined, view)}\n",
       replace: '',
     }, {
       file: 'src/houseplan-card.ts',
       find: '            ${(() => {\n'
         + '              // audit L1: hoisted out of the per-room map — these depend on the',
-      replace: "            ${disp.hideDecor && this._mode !== 'decor' ? nothing : this._renderDecorLayer()}\n"
+      replace: "            ${disp.hideDecor && this._mode !== 'decor' ? nothing : this._renderDecorLayer(undefined, view)}\n"
         + '            ${(() => {\n'
         + '              // audit L1: hoisted out of the per-room map — these depend on the',
     }],
@@ -4145,13 +4149,13 @@ const MUTANT_DEFINITIONS = [
       + 'the smoke must reject the legacy centred SVG substitute independently of compact and iso',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: '            ${glowLayerVisible ? this._renderGlowLayer(space, disp) : nothing}',
+      find: '            ${glowLayerVisible ? this._renderGlowLayer(space, disp, view) : nothing}',
       replace: '            ${!space.bg && !disp.showNames && !this._markup ? svg`<g class="room-svg-labels" pointer-events="none">${space.rooms.map((room) => {\n'
         + '              const center = this._roomCenter(room);\n'
         + '              return svg`<text class="rlabel" data-hp="room-label" data-id=${room.id || nothing}\n'
         + '                data-area=${room.area || nothing} x=${center[0]} y=${center[1]}>${room.name}</text>`;\n'
         + '            })}</g>` : nothing}\n'
-        + '            ${glowLayerVisible ? this._renderGlowLayer(space, disp) : nothing}',
+        + '            ${glowLayerVisible ? this._renderGlowLayer(space, disp, view) : nothing}',
     }],
   },
   {
@@ -5371,13 +5375,17 @@ const MUTANT_DEFINITIONS = [
     because: 'hidden isometric wall and floor heights are visual geometry and must project to '
       + 'the same raster at 1 and 5 cm per cell (#239)',
     patches: [{
-      file: 'src/houseplan-card.ts',
-      find: '    const structural = source.build();\n'
-        + '    const wallHeight = gridVisualUnits(ISO_WALL_HEIGHT, this._cellCm);\n'
-        + '    const floorEdgeHeight = gridVisualUnits(ISO_FLOOR_EDGE_HEIGHT, this._cellCm);',
-      replace: '    const structural = source.build();\n'
-        + '    const wallHeight = ISO_WALL_HEIGHT;\n'
-        + '    const floorEdgeHeight = ISO_FLOOR_EDGE_HEIGHT;',
+      file: 'src/iso-scene-render.ts',
+      find: '  const wallHeight = gridVisualUnits(ISO_WALL_HEIGHT, input.cellCm);\n'
+        + '  const floorEdgeHeight = gridVisualUnits(ISO_FLOOR_EDGE_HEIGHT, input.cellCm);\n'
+        + '  const raisedHeight = gridVisualUnits(ISO_RAISED_OVERLAY_HEIGHT, input.cellCm);\n'
+        + '  const cached = lruRead(input.cache, input.source.key);\n'
+        + '  let value = cached.hit ? cached.value : undefined;',
+      replace: '  const wallHeight = ISO_WALL_HEIGHT;\n'
+        + '  const floorEdgeHeight = ISO_FLOOR_EDGE_HEIGHT;\n'
+        + '  const raisedHeight = gridVisualUnits(ISO_RAISED_OVERLAY_HEIGHT, input.cellCm);\n'
+        + '  const cached = lruRead(input.cache, input.source.key);\n'
+        + '  let value = cached.hit ? cached.value : undefined;',
     }],
   },
   {
@@ -6452,6 +6460,164 @@ const MUTANT_DEFINITIONS = [
       file: 'src/houseplan-render-lifecycle.ts',
       find: '    if (!this.diagnosticsCache) return;\n',
       replace: '    if (!this.diagnosticsCache) return;\n    if (true) return;\n',
+    }],
+  },
+  {
+    id: 'stage3-w1-camera-rotation-reset',
+    guard: 'node --test --test-name-pattern="exact fixed" test/iso-projection.test.mjs',
+    because: 'W1: the reviewed Stage 3 camera is exactly +4 degrees; a front-on camera must '
+      + 'fail the exact projection contract (#160)',
+    patches: [{
+      file: 'src/iso-projection.ts',
+      find: '  rotDeg: 4,\n',
+      replace: '  rotDeg: 0,\n',
+    }],
+  },
+  {
+    id: 'stage3-w2-room-label-left-on-floor',
+    guard: 'node --test --test-name-pattern="exact D2 overlay matrix" test/iso-overlays.test.mjs',
+    because: 'W2: room labels/cards and value-bearing device roots belong to the raised plane; '
+      + 'the D2 matrix must reject a floor-plane room label (#160)',
+    patches: [{
+      file: 'src/iso-overlays.ts',
+      find: "  return showBorders && (kind === 'device' || kind === 'room-label' || kind === 'opening-lock')\n"
+        + "    ? 'raised' : 'floor';",
+      replace: "  return showBorders && (kind === 'device' || kind === 'opening-lock')\n"
+        + "    ? 'raised' : 'floor';",
+    }],
+  },
+  {
+    id: 'stage3-w3-vacuum-raised-with-devices',
+    guard: 'node --test --test-name-pattern="raises only device" test/isometric-contract.test.mjs',
+    because: 'W3: the live vacuum puck/trail stays on the floor even while device, room and lock '
+      + 'roots are raised (#160)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '      const point = this._scenePoint([cx, cy]);',
+      replace: "      const point = this._renderProjection === 'iso'\n"
+        + '        ? projectPlanPoint([cx, cy], gridVisualUnits(68, this._cellCm))\n'
+        + '        : [cx, cy] as ScenePoint;',
+    }],
+  },
+  {
+    id: 'stage3-w4-device-target-loses-44px-floor',
+    guard: 'node demo/smoke_isometric_contract.mjs',
+    because: 'W4: the raised interactive root must own an actual 44 by 44 CSS-pixel hit target '
+      + 'on both fine and coarse pointers (#160)',
+    patches: [{
+      file: 'src/styles/devices.styles.ts',
+      find: '      width: max(44px, var(--device-shell-size));\n'
+        + '      height: max(44px, var(--device-shell-size));',
+      replace: '      width: var(--device-shell-size);\n'
+        + '      height: var(--device-shell-size);',
+    }],
+  },
+  {
+    id: 'stage3-w5-runtime-nudge-writes-storage',
+    guard: 'node demo/smoke_isometric_live_touch.mjs',
+    because: 'W5: runtime nudge is presentation-only and must never write config, layout or '
+      + 'browser storage (#160)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '    return runtime.buildIsoOverlayRenderScene({',
+      replace: "    localStorage.setItem('houseplan_stage3_nudge_mutant', space.id);\n"
+        + '    return runtime.buildIsoOverlayRenderScene({',
+    }],
+  },
+  {
+    id: 'stage3-w6-no-borders-keeps-raised-plates',
+    guard: 'node demo/smoke_isometric_live_touch.mjs',
+    because: 'W6: show_borders:false is a true affine floor with no volume, raised plate, '
+      + 'ground or tether layers (#160)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '    if (!runtime || !layers?.structural || !structural) return null;',
+      replace: '    if (!runtime || !layers || (!structural && disp.showBorders)) return null;',
+    }, {
+      file: 'src/houseplan-card.ts',
+      find: '      wallSilhouettes: structural.wallSilhouettes,',
+      replace: '      wallSilhouettes: structural?.wallSilhouettes ?? [],',
+    }],
+  },
+  {
+    id: 'stage3-w7-sun-state-enters-structural-key',
+    guard: 'node demo/smoke_isometric_live_touch.mjs',
+    because: 'W7: HA sun state is live paint and must not enter the structural fingerprint or '
+      + 'cause topology rebuilds (#160)',
+    patches: [{
+      file: 'src/iso-scene-render.ts',
+      find: '  onBuild(): void;\n}',
+      replace: '  onBuild(): void;\n  liveFingerprint?: string;\n}',
+    }, {
+      file: 'src/iso-scene-render.ts',
+      find: '    algorithm: 4,\n  })}`;',
+      replace: '    algorithm: 4,\n  })}|${input.liveFingerprint ?? \'\'}`;',
+    }, {
+      file: 'src/houseplan-card.ts',
+      find: '      onBuild: () => { this._isoStructuralBuildCount += 1; },',
+      replace: "      liveFingerprint: JSON.stringify(this.hass?.states?.['sun.sun'] ?? null),\n"
+        + '      onBuild: () => { this._isoStructuralBuildCount += 1; },',
+    }],
+  },
+  {
+    id: 'stage3-w8-material-defs-created-per-face',
+    guard: 'node demo/smoke_isometric_contract.mjs',
+    because: 'W8: Stage 3 material patterns and filters are shared O(1) definitions, never '
+      + 'replicated for every face or marker (#160)',
+    patches: [{
+      file: 'src/iso-scene-render.ts',
+      find: '          return svg`<path class="iso-wall-top" d=${face.d} data-component=${face.component}\n'
+        + '            fill-rule="evenodd"></path>${layers.materialNuance',
+      replace: '          return svg`${renderIsoDefs(layers, \'walls\', cellCm)}<path class="iso-wall-top" d=${face.d} data-component=${face.component}\n'
+        + '            fill-rule="evenodd"></path>${layers.materialNuance',
+    }],
+  },
+  {
+    id: 'stage3-w9-gate-face-flip-reversed',
+    guard: 'node --test --test-name-pattern="gate flips move unhosted structural face" '
+      + 'test/iso-scene-render.test.mjs',
+    because: 'W9: door/gate hinge and face basis must retain the reviewed flip convention '
+      + 'independently of live leaf state (#160)',
+    patches: [{
+      file: 'src/iso-scene-render.ts',
+      find: "        const faceFlipV = opening.type === 'gate' ? !opening.flipV : opening.flipV;",
+      replace: "        const faceFlipV = opening.flipV;",
+    }],
+  },
+  {
+    id: 'stage3-w10-flat-fallback-counted-as-success',
+    guard: 'node --test --test-name-pattern="runner fails closed" test/performance-workflow.test.mjs',
+    because: 'W10: a dense benchmark sample in Flat fallback is invalid evidence and must fail '
+      + 'before timings are accepted (#160)',
+    patches: [{
+      file: 'demo/benchmark_large_house.mjs',
+      find: "        if (snapshot.effectiveProjection !== 'iso') failures.push('effective projection is not iso');",
+      replace: "        if (false && snapshot.effectiveProjection !== 'iso') failures.push('effective projection is not iso');",
+    }],
+  },
+  {
+    id: 'stage3-w11-nudged-overlay-loses-tether',
+    guard: 'node --test --test-name-pattern="wall-aware nudge" test/iso-overlays.test.mjs',
+    because: 'W11: every non-zero nudge keeps a tether back to its immutable floor owner '
+      + 'anchor (#160)',
+    patches: [{
+      file: 'src/iso-overlays.ts',
+      find: '  const tetherVisible = nudged || nearWallBefore || nearWallAfter\n'
+        + '    || !!input.hovered || !!input.focused || !!input.selected;',
+      replace: '  const tetherVisible = !nudged && (nearWallBefore || nearWallAfter\n'
+        + '    || !!input.hovered || !!input.focused || !!input.selected);',
+    }],
+  },
+  {
+    id: 'stage3-w12-separate-alpha-url-key-restored',
+    guard: 'node --test --test-name-pattern="Labs iso is presentation-only" '
+      + 'test/isometric-contract.test.mjs',
+    because: 'W12: Stage 3 shares the one permanent hp_alpha switch; a feature-specific URL '
+      + 'key or expiry must not return (#160)',
+    patches: [{
+      file: 'src/labs.ts',
+      find: "params.getAll('hp_alpha')",
+      replace: "params.getAll('hp_alpha_stage3')",
     }],
   },
 ];

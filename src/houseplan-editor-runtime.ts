@@ -319,19 +319,7 @@ import {
 import {
   currentLabs, hashSpace, noteLabsRender, subscribeLabs, type LabsSnapshot,
 } from './labs';
-import {
-  ISO_CAMERA, ISO_FLOOR_EDGE_HEIGHT, ISO_WALL_HEIGHT, isoFloorMatrixCss,
-  projectPlanPoint, projectedFrame,
-  unprojectFloorPoint, type ScenePoint, type ViewRect,
-} from './iso-projection';
-import {
-  buildIsoFloorGeometry, buildIsoWallGeometry, isoEffectiveView, isoGeometryFingerprint,
-  type IsoFloorGeometry, type IsoWallGeometry,
-} from './iso-walls';
-import {
-  buildIsoOpeningBasis, isoOpeningBounds, projectIsoOpening, resolveIsoDecoration,
-  type IsoDecorationLayers, type IsoOpeningBasis, type IsoOpeningPanel,
-} from './iso-openings';
+import { projectPlanPoint } from './iso-projection';
 import {
   acquireHaRegistries, activeRegistryHass, cacheHaBindingStatuses,
   fullRegistryHass, haRegistryBuildSignature, haRegistryDiagnostics, haRegistrySnapshot,

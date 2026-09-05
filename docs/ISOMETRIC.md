@@ -187,3 +187,74 @@ network request or HA service path. Structural topology/projection exceptions
 still use the Stage 1 latched Flat fallback. The known independent exact-SHA
 view-toggle performance debt remains tracked in #124; #122 neither weakens its
 budget nor treats fallback as benchmark success.
+
+## Stage 3 spatial overlays and materials (#160)
+
+Stage 3 evolves the same hidden `iso` presentation behind `hp_alpha`; it adds
+no public switch, configuration field or separate experiment id. The normative
+contract is `docs/specs/160-isometric-stage3.md` and the fixed implementation
+decisions are in `docs/adr/160-isometric-stage3-overlays.md`.
+
+### Camera, floor plane and raised plane
+
+The current fixed camera is orthographic `rotDeg=4`, `tiltDeg=20`, with the
+same `[500,500]` pivot, scale and scale-aware 64-unit wall height. The four
+degree turn is part of `ISO_CAMERA`; floor SVG, point projection, inverse hit
+mapping, raised plates and fit bounds therefore use one affine authority.
+
+Device markers (including their badges), room labels/cards and opening lock
+badges use a raised plane at the scale-aware wall height plus a nominal four
+visual units. Vacuum puck/trail, Glow/spill, sunlight, room fills/hover,
+decor/furniture/backdrop and every persisted coordinate stay on the floor
+plane. Plates are floor-parallel, while glyphs, values and text remain
+screen-facing on the existing HTML roots and retain their actions and minimum
+touch targets.
+
+Each raised item keeps separate immutable floor and visual anchors. A grounding
+cue stays at the floor anchor. Collision is tested against cached projected wall
+tops and visible sides, expanded by a four CSS-pixel gap. A deterministic inward
+nudge may move only the visual anchor by at most 48 CSS pixels; its straight path
+must stay inside the owning room and outside island holes, and it never writes
+layout/config/storage. The owning-room resolver prefers an explicit valid owner,
+otherwise the smallest strictly containing room with a stable id tie-break;
+opening locks instead inherit the physical host side. Missing or ambiguous
+ownership degrades to a tethered placement rather than guessing or mutating
+data. A tether is always retained after nudge or near a wall and while the item
+is hovered, focused or selected; an idle item in free space may omit it.
+
+### Openings, materials and degradation
+
+The structural cache now also carries jamb/reveal surfaces and deterministic
+window frame/sill geometry. Door and gate leaves are matte finite-thickness
+prisms; windows are light inserts without dark glass; passages remain an empty
+full-depth cut. `openingAmount()` is still applied after a structural-cache hit,
+so contact changes do not rebuild wall/floor booleans. `hide_openings` removes
+panels, reveal decoration and their shadows but preserves the cut and lock
+semantics.
+
+One bounded set of shared gradients, patterns and filters provides low-amplitude
+theme-aware texture and a fixed visual-light direction. Generated walls,
+floor-edge surfaces, opening volume and raised plates may use it. User floor
+content, room fills, Glow, sunlight, decor, glyph/text and vacuum never do.
+Neither theme nor HA Sun state enters the structural fingerprint.
+
+Forced colours and missing filter support remove texture/soft shadow nuance,
+not geometry, raised ownership, tethers or actions. `show_borders: false` is
+the exact no-volume branch: Stage 2/3 structural and raised roots are absent,
+all overlays return to their floor anchors, and the floor still uses the real
+4° affine camera. Only topology/projection failure enters the established
+fingerprint-latched Flat fallback.
+
+The structural LRU remains capped at eight. Its key includes geometry, opening
+flips and fixed ratios, scale, camera, raised/opening heights and the Stage 3
+algorithm revision; it excludes HA state, opening amount, theme, Sun,
+interaction and capability state. Golden references and both exact-SHA
+performance profiles remain Linux-CI evidence and may not accept a Flat
+fallback as a successful Iso sample.
+
+The Stage 3 renderer, opening volumes and overlay resolver form an independent
+`iso-scene-render` lazy graph. With `hp_alpha` off an ordinary View does not
+request that graph. Enabling the alpha loads it atomically through the same
+source-fingerprint handshake and one cache-busted retry used by other lazy
+runtimes; until a matching runtime is installed, the requested view remains
+Flat rather than mixing builds or rendering a partial Iso scene.

@@ -47,6 +47,20 @@ test('every measured large-house card preloads its own lazy editor runtime (#380
   assert.ok(create >= 0 && preload > create && contract > preload);
 });
 
+test('isometric large-house samples await the optional lazy renderer before assertions (#160)', () => {
+  const source = readFileSync(
+    new URL('../demo/benchmark_large_house.mjs', import.meta.url), 'utf8',
+  );
+  const create = source.indexOf("document.createElement('houseplan-card')");
+  const preload = source.indexOf('if (isometric) await ensureIsoRuntime(card)', create);
+  const contract = source.indexOf('window.__hpAssertCardContract(card, cardContract)', create);
+  const firstProjectionAssertion = source.indexOf('const initialProjection =', create);
+  assert.ok(create >= 0 && preload > create && contract > preload
+    && firstProjectionAssertion > contract);
+  assert.match(source, /if \(typeof card\._ensureIsoSceneRuntime !== 'function'\) return;/,
+    'comparison bundles with a monolithic Iso renderer must remain supported');
+});
+
 test('Glow benchmark declares every private card member it consumes', () => {
   const declared = new Set([
     ...declaredMembers(GLOW_CARD_CONTRACT),
@@ -70,7 +84,9 @@ test('performance contracts reference real production members', () => {
   const source = readHouseplanProductionSource();
   for (const contract of [LARGE_HOUSE_CARD_CONTRACT, GLOW_CARD_CONTRACT]) {
     for (const name of currentProductionMembers(contract)) {
-      assert.match(source, new RegExp(`\\b(?:private\\s+(?:(?:declare|readonly|get)\\s+)*|get\\s+)${name}\\b`),
+      assert.match(source, new RegExp(
+        `\\b(?:private\\s+(?:(?:declare|readonly|get)\\s+)*|public\\s+(?:async\\s+)?|get\\s+)${name}\\b`,
+      ),
         `${contract.label} declares missing production member ${name}`);
     }
   }
@@ -104,11 +120,19 @@ test('large-house contract accepts only an explicit current or stable resize own
     _model: [],
     _path: [],
     _serverCfg: {},
+    _space: 'f1',
     _tool: 'view',
   });
 
   assert.doesNotThrow(() => assertCardContract(
     { ...methods, ...fields, _resize: {} }, LARGE_HOUSE_CARD_CONTRACT,
+  ));
+  assert.doesNotThrow(() => assertCardContract(
+    {
+      ...methods, ...fields, _resize: {},
+      _ensureIsoSceneRuntime: async () => true,
+    },
+    LARGE_HOUSE_CARD_CONTRACT,
   ));
   assert.doesNotThrow(() => assertCardContract(
     { ...methods, ...fields, _rszDrag: null }, LARGE_HOUSE_CARD_CONTRACT,
@@ -118,6 +142,13 @@ test('large-house contract accepts only an explicit current or stable resize own
       { ...methods, ...fields, _resize: false }, LARGE_HOUSE_CARD_CONTRACT,
     ),
     /invalid private API types: _resize:object/,
+  );
+  assert.throws(
+    () => assertCardContract(
+      { ...methods, ...fields, _resize: {}, _ensureIsoSceneRuntime: true },
+      LARGE_HOUSE_CARD_CONTRACT,
+    ),
+    /invalid private API types: _ensureIsoSceneRuntime:function/,
   );
   assert.throws(
     () => assertCardContract({ ...methods, ...fields }, LARGE_HOUSE_CARD_CONTRACT),

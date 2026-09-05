@@ -53,7 +53,7 @@ test('bundle manifest separates static initial graph from dynamic editor graph',
       type: 'chunk', fileName: 'houseplan-card.js', code: 'entry', isEntry: true,
       imports: ['shared.js'], dynamicImports: [
         'houseplan-assets/editor.js', 'houseplan-assets/houseplan-onboarding-runtime-HASH.js',
-        'houseplan-assets/de-HASH.js',
+        'houseplan-assets/de-HASH.js', 'houseplan-assets/iso-scene-render-HASH.js',
       ],
     },
     'shared.js': {
@@ -74,6 +74,11 @@ test('bundle manifest separates static initial graph from dynamic editor graph',
       code: 'German locale', isEntry: false, imports: [], dynamicImports: [],
       modules: { '/repo/src/i18n/de.ts': {} },
     },
+    'houseplan-assets/iso-scene-render-HASH.js': {
+      type: 'chunk', fileName: 'houseplan-assets/iso-scene-render-HASH.js',
+      code: 'isometric runtime', isEntry: false, imports: ['shared.js'], dynamicImports: [],
+      modules: { '/repo/src/iso-scene-render.ts': {} },
+    },
   }, 'fingerprint');
   assert.deepEqual(manifest.initialViewFiles, ['houseplan-card.js', 'shared.js']);
   assert.deepEqual(manifest.lazyEditorFiles, ['houseplan-assets/editor.js']);
@@ -81,9 +86,11 @@ test('bundle manifest separates static initial graph from dynamic editor graph',
     'houseplan-assets/houseplan-onboarding-runtime-HASH.js',
   ]);
   assert.deepEqual(manifest.lazyLocaleFiles, ['houseplan-assets/de-HASH.js']);
+  assert.deepEqual(manifest.lazyIsometricFiles, ['houseplan-assets/iso-scene-render-HASH.js']);
   assert.deepEqual(manifest.lazyFiles, [
     'houseplan-assets/de-HASH.js', 'houseplan-assets/editor.js',
     'houseplan-assets/houseplan-onboarding-runtime-HASH.js',
+    'houseplan-assets/iso-scene-render-HASH.js',
   ]);
   assert.doesNotThrow(() => assertBundleBudget(manifest, 1_000_000));
   assert.throws(() => assertBundleBudget(manifest, 1), /exceeds/);
@@ -134,6 +141,7 @@ test('retry URL points at the content-hashed runtime chunk after naming', () => 
       type: 'chunk', fileName: 'houseplan-assets/houseplan-card.js',
       code: 'new URL("__HOUSEPLAN_EDITOR_RETRY_ASSET__", import.meta.url);'
         + 'new URL("__HOUSEPLAN_ONBOARDING_RETRY_ASSET__", import.meta.url);'
+        + 'new URL("__HOUSEPLAN_ISO_RETRY_ASSET__", import.meta.url);'
         + 'new URL("__HOUSEPLAN_DE_RETRY_ASSET__", import.meta.url);'
         + 'new URL("__HOUSEPLAN_FR_RETRY_ASSET__", import.meta.url)', modules: {},
     },
@@ -144,6 +152,10 @@ test('retry URL points at the content-hashed runtime chunk after naming', () => 
     'houseplan-assets/houseplan-onboarding-runtime-HASH.js': {
       type: 'chunk', fileName: 'houseplan-assets/houseplan-onboarding-runtime-HASH.js', code: '',
       modules: { '/repo/src/houseplan-onboarding-runtime.ts': {} },
+    },
+    'houseplan-assets/iso-scene-render-HASH.js': {
+      type: 'chunk', fileName: 'houseplan-assets/iso-scene-render-HASH.js', code: '',
+      modules: { '/repo/src/iso-scene-render.ts': {} },
     },
     'houseplan-assets/de-HASH.js': {
       type: 'chunk', fileName: 'houseplan-assets/de-HASH.js', code: '',
@@ -159,6 +171,7 @@ test('retry URL points at the content-hashed runtime chunk after naming', () => 
     bundle['houseplan-assets/houseplan-card.js'].code,
     'new URL("./houseplan-editor-runtime-HASH.js", import.meta.url);'
       + 'new URL("./houseplan-onboarding-runtime-HASH.js", import.meta.url);'
+      + 'new URL("./iso-scene-render-HASH.js", import.meta.url);'
       + 'new URL("./de-HASH.js", import.meta.url);'
       + 'new URL("./fr-HASH.js", import.meta.url)',
   );
@@ -408,6 +421,7 @@ const runBudgetCli = (initialViewGzipBytes) => {
     writeFileSync(join(dir, 'dist/initial.js'), 'view graph without support copy');
     writeFileSync(join(dir, 'dist/editor.js'), SUPPORT_LAZY_MARKERS.join('\n'));
     writeFileSync(join(dir, 'dist/locale.js'), 'lazy locale dictionary');
+    writeFileSync(join(dir, 'dist/isometric.js'), 'lazy isometric runtime');
     writeFileSync(join(dir, 'dist/houseplan-assets.json'), JSON.stringify({
       schema: 1,
       files: [],
@@ -417,6 +431,8 @@ const runBudgetCli = (initialViewGzipBytes) => {
       lazyEditorGzipBytes: 1000,
       lazyLocaleFiles: ['locale.js'],
       lazyLocaleGzipBytes: 100,
+      lazyIsometricFiles: ['isometric.js'],
+      lazyIsometricGzipBytes: 100,
       lazyOnboardingFiles: [],
     }));
     const script = fileURLToPath(new URL('../scripts/bundle-budget.mjs', import.meta.url));

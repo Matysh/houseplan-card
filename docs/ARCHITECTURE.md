@@ -27,6 +27,8 @@ houseplan-card/
 │  ├─ houseplan-editor-runtime.ts # Plan/Devices/Background composition root
 │  ├─ decor-image-editor.ts      # lazy Background/Furniture image palette, upload and properties controller
 │  ├─ houseplan-onboarding-runtime.ts # first-space/import dialogs, independent of editor
+│  ├─ iso-scene-render.ts        # hidden alpha-only Stage 3 scene/runtime boundary
+│  ├─ iso-overlays.ts            # pure raised-overlay ownership, collision and nudge
 │  ├─ hp-dialog.ts               # shared HA/native modal shell, focus and transient-overlay lifecycle
 │  ├─ hp-confirm.ts              # presentation for shared dangerous-action confirmation
 │  ├─ danger-confirm.ts          # root-owned promise/token confirmation controller
@@ -60,12 +62,16 @@ houseplan-card/
 └─ docs/                         # this documentation
 ```
 
-Rollup embeds one source fingerprint in the eager entry and both lazy runtimes.
+Rollup embeds one source fingerprint in the eager entry and every
+fingerprint-checked lazy runtime.
 `dist/houseplan-assets.json` records the import graph, sizes and SHA-256 of every
 generated asset. View loads only the initial graph; Plan, Devices and Background
 share one editor runtime loaded on first intent. An empty installation loads a
 separate onboarding dialog chunk, so creating the first space does not require
-the editor asset; saving it then continues into Plan as before. The backend keeps the public
+the editor asset; saving it then continues into Plan as before. The hidden
+isometric renderer is a third independent runtime and is not requested while
+`hp_alpha` is off. Its first load and cache-busted retry use the same exact-build
+fingerprint handshake and atomic install contract. The backend keeps the public
 entry URL stable and serves only manifest-listed JS basenames below
 `/houseplan_files/houseplan-assets/`. Performance, golden and smoke tooling
 verify the manifest and every asset before recording results, so a stale or
@@ -705,6 +711,50 @@ gradients/filters serves every face. Unsupported decoration or forced colours
 remove nuance/shadows without changing projection; only structural failure
 uses the Stage 1 latched Flat fallback. Details and fixed ratios are recorded in
 `docs/adr/122-isometric-stage2-composition.md`.
+
+### Hidden Isometric Stage 3 spatial overlays (#160)
+
+Stage 3 keeps the Stage 2 structural scene and moves the fixed camera authority
+to `rotDeg=4`, `tiltDeg=20`. `isoPlaneMatrix()` is shared by floor content,
+raised plate corners, point projection and inverse floor hit mapping. The
+projected frame includes the floor edge, wall/opening tops and the raised
+height; blur/shadow extents never enter camera fit.
+
+`src/iso-overlays.ts` is the pure boundary between floor-bound and raised
+presentation. Device roots, room-label/card roots and opening-lock roots keep
+an immutable floor anchor and receive one computed raised visual anchor. Their
+floor-parallel SVG plate, grounding cue and tether are inert; the existing
+screen-facing HTML root remains the sole hit, focus, tooltip and action target.
+Vacuum, lighting, fills, backdrop and decor continue to consume `z=0`.
+
+Wall collision consumes projected top and visible-side silhouettes produced
+once from canonical physical masonry and stored in the eight-entry structural
+LRU. The pure resolver uses a four CSS-pixel safety gap and a bounded 48
+CSS-pixel inward search toward a proven owning-room point. Every candidate path
+must remain strictly inside that room and outside its island holes. It changes
+only the visual anchor. Ownership failure, invalid wall geometry, an owner
+boundary or an exhausted cap yields a deterministic tethered placement and no
+write. Room labels use their room, device markers prefer a valid explicit room
+and otherwise the smallest strictly containing room, and lock badges inherit
+the physical room side selected by opening-host geometry rather than
+re-inferring ownership from their offset point.
+
+Stage 3 opening bases add state-independent full-depth reveals, matte door/gate
+leaf thickness and light window frame/sill surfaces. Live
+`openingAmount()` still projects leaves after the LRU hit. Passage has no
+decorative volume. A bounded set of shared material definitions textures only
+generated 2.5D surfaces and uses one fixed visual-light vector; theme, HA Sun,
+hover/focus and filter capability remain presentation-only inputs.
+
+The DOM exposes fail-closed evidence without becoming public API:
+`.stage[data-hp-iso-stage="3"]` carries the structural build counter, raised
+interactive roots identify their overlay kind/raised/nudged state, and shared
+material definitions carry `data-hp-iso-material-def`. With borders disabled,
+raised roots and Stage 2/3 volume are absent while the true rotated floor
+matrix remains active. Forced colours or missing filters strip texture and
+soft shadows only; topology/projection exceptions alone enter the established
+Flat fallback latch. Fixed values and the complete decision are recorded in
+`docs/adr/160-isometric-stage3-overlays.md`.
 
 ## Markup editor (v1.4.0+)
 

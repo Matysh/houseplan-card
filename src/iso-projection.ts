@@ -1,5 +1,6 @@
 export type PlanPoint = readonly [number, number];
 export type ScenePoint = readonly [number, number];
+export type IsoAffineMatrix = readonly [number, number, number, number, number, number];
 
 export interface IsoCamera {
   rotDeg: number;
@@ -16,10 +17,11 @@ export interface IsoFrameInput {
   wallHeight: number;
   openingHeight?: number;
   floorDepth?: number;
+  raisedHeight?: number;
 }
 
 export const ISO_CAMERA: Readonly<IsoCamera> = Object.freeze({
-  rotDeg: 0,
+  rotDeg: 4,
   tiltDeg: 20,
   xyScale: 1,
   zScale: 1,
@@ -28,6 +30,9 @@ export const ISO_CAMERA: Readonly<IsoCamera> = Object.freeze({
 
 export const ISO_WALL_HEIGHT = 64;
 export const ISO_FLOOR_EDGE_HEIGHT = 10;
+/** Nominal Stage 3 offset; callers scale it with the same wall-height policy. */
+export const ISO_OVERLAY_VISUAL_OFFSET = 4;
+export const ISO_RAISED_OVERLAY_HEIGHT = ISO_WALL_HEIGHT + ISO_OVERLAY_VISUAL_OFFSET;
 
 function finiteCamera(camera: IsoCamera): boolean {
   return [camera.rotDeg, camera.tiltDeg, camera.xyScale, camera.zScale,
@@ -38,17 +43,9 @@ function finiteCamera(camera: IsoCamera): boolean {
 export function projectPlanPoint(
   point: PlanPoint, zUnits: number, camera: IsoCamera = ISO_CAMERA,
 ): ScenePoint {
-  if (!finiteCamera(camera) || !Number.isFinite(point[0]) || !Number.isFinite(point[1])
-      || !Number.isFinite(zUnits)) throw new Error('invalid isometric projection input');
-  const rot = camera.rotDeg * Math.PI / 180;
-  const tilt = camera.tiltDeg * Math.PI / 180;
-  const dx = point[0] - camera.origin[0], dy = point[1] - camera.origin[1];
-  const rx = (dx * Math.cos(rot) - dy * Math.sin(rot)) * camera.xyScale;
-  const ry = (dx * Math.sin(rot) + dy * Math.cos(rot)) * camera.xyScale;
-  return [
-    camera.origin[0] + rx,
-    camera.origin[1] + ry * Math.cos(tilt) - zUnits * camera.zScale * Math.sin(tilt),
-  ];
+  if (!Number.isFinite(point[0]) || !Number.isFinite(point[1]))
+    throw new Error('invalid isometric projection input');
+  return applyIsoMatrix(point, isoPlaneMatrix(zUnits, camera));
 }
 
 export function unprojectFloorPoint(
@@ -66,8 +63,15 @@ export function unprojectFloorPoint(
   ];
 }
 
-export function isoFloorMatrix(camera: IsoCamera = ISO_CAMERA): readonly [number, number, number, number, number, number] {
-  if (!finiteCamera(camera)) throw new Error('invalid isometric camera');
+/**
+ * Canonical plan-plane affine matrix at one logical height. Floor SVG, raised
+ * plates and individual point projection all use this exact transform.
+ */
+export function isoPlaneMatrix(
+  zUnits = 0, camera: IsoCamera = ISO_CAMERA,
+): IsoAffineMatrix {
+  if (!finiteCamera(camera) || !Number.isFinite(zUnits))
+    throw new Error('invalid isometric camera');
   const rot = camera.rotDeg * Math.PI / 180;
   const tilt = camera.tiltDeg * Math.PI / 180;
   const a = camera.xyScale * Math.cos(rot);
@@ -75,12 +79,38 @@ export function isoFloorMatrix(camera: IsoCamera = ISO_CAMERA): readonly [number
   const b = camera.xyScale * Math.sin(rot) * Math.cos(tilt);
   const d = camera.xyScale * Math.cos(rot) * Math.cos(tilt);
   const e = camera.origin[0] - a * camera.origin[0] - c * camera.origin[1];
-  const f = camera.origin[1] - b * camera.origin[0] - d * camera.origin[1];
+  const f = camera.origin[1] - b * camera.origin[0] - d * camera.origin[1]
+    - zUnits * camera.zScale * Math.sin(tilt);
   return [a, b, c, d, e, f];
 }
 
+export function isoFloorMatrix(camera: IsoCamera = ISO_CAMERA): IsoAffineMatrix {
+  return isoPlaneMatrix(0, camera);
+}
+
+export function applyIsoMatrix(point: PlanPoint, matrix: IsoAffineMatrix): ScenePoint {
+  if (!Number.isFinite(point[0]) || !Number.isFinite(point[1])
+      || !matrix.every(Number.isFinite)) throw new Error('invalid isometric affine input');
+  const [a, b, c, d, e, f] = matrix;
+  return [a * point[0] + c * point[1] + e, b * point[0] + d * point[1] + f];
+}
+
+export function isoPlaneMatrixCss(zUnits = 0, camera: IsoCamera = ISO_CAMERA): string {
+  return `matrix(${isoPlaneMatrix(zUnits, camera)
+    .map((value) => Number(value.toFixed(12))).join(' ')})`;
+}
+
 export function isoFloorMatrixCss(camera: IsoCamera = ISO_CAMERA): string {
-  return `matrix(${isoFloorMatrix(camera).map((value) => Number(value.toFixed(12))).join(' ')})`;
+  return isoPlaneMatrixCss(0, camera);
+}
+
+export function isoRaisedOverlayHeight(
+  wallHeight: number, visualOffset: number,
+): number {
+  if (!Number.isFinite(wallHeight) || !Number.isFinite(visualOffset)
+      || wallHeight < 0 || visualOffset < 0)
+    throw new Error('invalid raised overlay height');
+  return wallHeight + visualOffset;
 }
 
 export function clientToScenePoint(
@@ -102,15 +132,17 @@ export function projectedFrame(
   const { rect, wallHeight } = input;
   const openingHeight = input.openingHeight ?? wallHeight;
   const floorDepth = input.floorDepth ?? 0;
+  const raisedHeight = input.raisedHeight ?? wallHeight;
   if (!(rect.w >= 0) || !(rect.h >= 0) || !Number.isFinite(wallHeight)
       || !Number.isFinite(openingHeight) || !Number.isFinite(floorDepth)
-      || wallHeight < 0 || openingHeight < 0 || floorDepth < 0)
+      || !Number.isFinite(raisedHeight) || wallHeight < 0 || openingHeight < 0
+      || floorDepth < 0 || raisedHeight < 0)
     throw new Error('invalid isometric frame');
   const corners: PlanPoint[] = [
     [rect.x, rect.y], [rect.x + rect.w, rect.y],
     [rect.x + rect.w, rect.y + rect.h], [rect.x, rect.y + rect.h],
   ];
-  const top = Math.max(wallHeight, openingHeight);
+  const top = Math.max(wallHeight, openingHeight, raisedHeight);
   const points = corners.flatMap((point) => [
     projectPlanPoint(point, -floorDepth, camera), projectPlanPoint(point, top, camera),
   ]);

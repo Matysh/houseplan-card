@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /** Reproducible browser benchmark and report producer for HP-PERF-01. */
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { launch } from './serve.mjs';
 import { LARGE_HOUSE_COUNTS, makeLargeHouseFixture } from './fixtures/large-house.mjs';
@@ -8,6 +9,10 @@ import { assertFreshDemoBundle } from './bundle-freshness.mjs';
 import { ensureHarnessEditorRuntime } from './editor-runtime-compat.mjs';
 import { summarizeLongTasks, summarizeTimings } from './performance/evaluate.mjs';
 import { assertCardContract, LARGE_HOUSE_CARD_CONTRACT } from './performance/card-contract.mjs';
+import {
+  ISOMETRIC_STAGE3_DENSE_PROFILE,
+  makeIsometricStage3DenseFixture,
+} from './performance/isometric-stage3-dense-fixture.mjs';
 
 const valueArg = (name) => process.argv.find((arg) => arg.startsWith(`--${name}=`))?.slice(name.length + 3);
 const samples = Math.max(1, Math.min(20, Number(valueArg('samples')) || 7));
@@ -15,16 +20,37 @@ const warmups = Math.max(0, Math.min(5, Number(valueArg('warmups')) || 1));
 const output = valueArg('output') ? resolve(valueArg('output')) : null;
 const targetRoot = resolve(valueArg('target-root') ?? '.');
 const profile = valueArg('profile') ?? 'large-house-v1';
-if (!['large-house-v1', 'large-house-isometric-v1', 'large-house-plan-snap-v1', 'large-house-interaction-v1'].includes(profile))
+if (![
+  'large-house-v1', 'large-house-isometric-v1', ISOMETRIC_STAGE3_DENSE_PROFILE,
+  'large-house-plan-snap-v1', 'large-house-interaction-v1',
+].includes(profile))
   throw new Error(`unknown large-house profile: ${profile}`);
-const isometric = profile === 'large-house-isometric-v1';
+const stage3Dense = profile === ISOMETRIC_STAGE3_DENSE_PROFILE;
+const allowStage2Base = process.argv.includes('--allow-stage2-base');
+if (allowStage2Base && !stage3Dense)
+  throw new Error('--allow-stage2-base is valid only for the Stage 3 dense profile');
+const requireStage3 = stage3Dense && !allowStage2Base;
+const isometric = profile === 'large-house-isometric-v1' || stage3Dense;
 const planSnap = profile === 'large-house-plan-snap-v1';
 const interaction = profile === 'large-house-interaction-v1';
 const requiresIsometric = isometric && existsSync(resolve(targetRoot, 'src/iso-projection.ts'));
+const requiresIsoStructuralBuildCounter = requiresIsometric
+  && readFileSync(resolve(targetRoot, 'src/houseplan-card.ts'), 'utf8')
+    .includes('private _isoStructuralBuildCount');
 const requiresPlanSnap = planSnap && existsSync(resolve(targetRoot, 'src/plan-snap-overlay.ts'));
 const requiresWallFace = planSnap && existsSync(resolve(targetRoot, 'src/wall-face-graph.ts'));
 const requiresInteraction = interaction && existsSync(resolve(targetRoot, 'src/live-viewport.ts'));
-const fixture = makeLargeHouseFixture();
+const fixture = stage3Dense ? makeIsometricStage3DenseFixture() : makeLargeHouseFixture();
+const fixtureCounts = stage3Dense ? fixture.counts : LARGE_HOUSE_COUNTS;
+const sourceSha = (() => {
+  try {
+    return execFileSync('git', ['-C', targetRoot, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+  } catch {
+    return null;
+  }
+})();
+if (isometric && !sourceSha)
+  throw new Error(`${profile} requires an exact git source SHA`);
 if (planSnap) {
   for (const [floor, space] of fixture.config.spaces.entries()) {
     space.room_drafts = [0, 1].map((draft) => {
@@ -73,7 +99,8 @@ try {
     const measuredSample = iteration - warmups;
     const row = await page.evaluate(async ({
       fixture, sample, cardContract, isometric, requiresIsometric, planSnap, requiresPlanSnap,
-      requiresWallFace, interaction, requiresInteraction,
+      requiresWallFace, interaction, requiresInteraction, stage3Dense, requireStage3,
+      requiresIsoStructuralBuildCounter, profile,
     }) => {
       const frame = () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
       const until = async (predicate, timeout = 10000) => {
@@ -115,6 +142,15 @@ try {
           longTasks: await longTasks.stop(),
         };
       };
+      // Current candidates split Stage 3 out of the initial graph. Comparison
+      // bundles remain valid: their older monolithic renderer has no preload
+      // hook and is already available synchronously.
+      const ensureIsoRuntime = async (card) => {
+        if (typeof card._ensureIsoSceneRuntime !== 'function') return;
+        if (!(await card._ensureIsoSceneRuntime()))
+          throw new Error(`${profile} isometric runtime did not load`);
+        await card.updateComplete;
+      };
       const forceGc = async () => {
         if (typeof globalThis.gc !== 'function') return false;
         globalThis.gc();
@@ -133,6 +169,119 @@ try {
         planSnapGeometry: card._planSnapGeometryCache ? 1 : 0,
         wallFaceGraph: card._wallFaceGraphCache?.length ?? 0,
       });
+      const isoStructuralBuildCount = (card) => Number.isFinite(card._isoStructuralBuildCount)
+        ? card._isoStructuralBuildCount : null;
+      const stage3Snapshot = (card) => {
+        const stage = card.renderRoot.querySelector('.stage');
+        // Count the interactive HTML owners, not the diagnostic SVG
+        // ground/tether/plate primitives which deliberately repeat kind/id.
+        const overlayRoots = [...card.renderRoot.querySelectorAll(
+          '[data-hp-iso-overlay-kind][data-hp-iso-floor][data-hp-iso-visual]',
+        )];
+        const overlaySelectors = {
+          device: '[data-hp="device"]',
+          'room-label': '[data-hp="room-label"]',
+          'opening-lock': '.oplock',
+        };
+        const totalRootsByKind = Object.fromEntries(Object.entries(overlaySelectors)
+          .map(([kind, selector]) => [kind, card.renderRoot.querySelectorAll(selector).length]));
+        const stage3RootsByKind = Object.fromEntries(Object.keys(overlaySelectors)
+          .map((kind) => [kind, overlayRoots.filter((root) =>
+            root.getAttribute('data-hp-iso-overlay-kind') === kind).length]));
+        const openingSurfaceCounts = Object.fromEntries(
+          fixture.stage3Dense.expectedOpeningKinds.map((kind) => [kind,
+            card.renderRoot.querySelectorAll(`.iso-opening-panel[data-kind="${kind}"]`).length,
+          ]),
+        );
+        const vacuumRoots = [...card.renderRoot.querySelectorAll('.vacpuck, .vactrail')];
+        const materialDefinitions = card.renderRoot.querySelectorAll('[data-hp-iso-material-def]');
+        const definitionCounts = {
+          total: materialDefinitions.length,
+          patterns: card.renderRoot.querySelectorAll('pattern[data-hp-iso-material-def]').length,
+          filters: card.renderRoot.querySelectorAll('filter[data-hp-iso-material-def]').length,
+        };
+        const pulseDeviceId = fixture.stage3Dense?.pulseDeviceIdsBySpace?.[card._space] || '';
+        const pulseRoot = card.renderRoot.querySelector(
+          `.dev[data-id="${CSS.escape(pulseDeviceId)}"]`,
+        );
+        const facetCounts = {
+          value: card.renderRoot.querySelectorAll('.dev .value-badge').length,
+          lqi: card.renderRoot.querySelectorAll('.dev .lqi').length,
+          new: card.renderRoot.querySelectorAll('.dev .newdot').length,
+          pulse: pulseRoot?.querySelectorAll('.device-pulse, .activity-dot').length ?? 0,
+          roomMetrics: card.renderRoot.querySelectorAll('.roomlabel .rlmetrics').length,
+        };
+        const rawBuilds = stage?.getAttribute('data-hp-iso-structural-builds');
+        const structuralBuilds = rawBuilds == null ? null : Number(rawBuilds);
+        return {
+          effectiveProjection: typeof card._effectiveProjection === 'function'
+            ? card._effectiveProjection() : null,
+          isoStageRevision: stage?.getAttribute('data-hp-iso-stage') ?? null,
+          structuralBuilds: Number.isFinite(structuralBuilds) ? structuralBuilds : null,
+          renderedOverlayCount: overlayRoots.length,
+          raisedOverlayCount: overlayRoots
+            .filter((root) => root.getAttribute('data-hp-iso-raised') === 'true').length,
+          nudgedOverlayCount: overlayRoots
+            .filter((root) => root.getAttribute('data-hp-iso-nudged') === 'true').length,
+          raisedVacuumCount: vacuumRoots.filter((root) =>
+            root.getAttribute('data-hp-iso-raised') === 'true'
+            || root.hasAttribute('data-hp-iso-overlay-kind')).length,
+          overlayKinds: [...new Set(overlayRoots
+            .map((root) => root.getAttribute('data-hp-iso-overlay-kind'))
+            .filter(Boolean))].sort(),
+          totalRootsByKind,
+          stage3RootsByKind,
+          openingSurfaceCounts,
+          materialDefinitionCount: definitionCounts.total,
+          definitionCounts,
+          facetCounts,
+          pulseDiagnostics: pulseRoot ? {
+            id: pulseRoot.getAttribute('data-id'),
+            state: pulseRoot.getAttribute('data-state'),
+            className: pulseRoot.className,
+            ariaLabel: pulseRoot.getAttribute('aria-label'),
+          } : null,
+        };
+      };
+      const assertStage3Snapshot = (snapshot, label) => {
+        if (!requireStage3) return;
+        const expectedKinds = fixture.stage3Dense.expectedOverlayKinds;
+        const missingKinds = expectedKinds.filter((kind) => !snapshot.overlayKinds.includes(kind));
+        const failures = [];
+        if (snapshot.effectiveProjection !== 'iso') failures.push('effective projection is not iso');
+        if (snapshot.isoStageRevision !== '3') failures.push('Stage 3 revision marker is absent');
+        if (snapshot.structuralBuilds == null) failures.push('structural build counter is absent');
+        if (snapshot.renderedOverlayCount < 1) failures.push('no raised overlay roots rendered');
+        if (snapshot.raisedOverlayCount !== snapshot.renderedOverlayCount)
+          failures.push('one or more Stage 3 overlay roots remained on the floor plane');
+        if (snapshot.nudgedOverlayCount < 1) failures.push('dense fixture produced no bounded nudge');
+        if (snapshot.raisedVacuumCount !== 0) failures.push('floor-bound vacuum was marked as raised');
+        if (missingKinds.length) failures.push(`missing overlay kinds: ${missingKinds.join(', ')}`);
+        for (const kind of expectedKinds) {
+          const total = snapshot.totalRootsByKind[kind];
+          const stage3 = snapshot.stage3RootsByKind[kind];
+          if (total < 1) failures.push(`no rendered ${kind} roots`);
+          else if (stage3 !== total)
+            failures.push(`${kind} Stage 3 roots ${stage3}/${total}`);
+        }
+        for (const kind of fixture.stage3Dense.expectedOpeningKinds) {
+          if (!(snapshot.openingSurfaceCounts[kind] > 0))
+            failures.push(`no Stage 3 ${kind} opening surfaces`);
+        }
+        for (const [facet, count] of Object.entries(snapshot.facetCounts)) {
+          if (!(count > 0)) failures.push(`no observable ${facet} facet${facet === 'pulse'
+            ? ` (${JSON.stringify(snapshot.pulseDiagnostics)})` : ''}`);
+        }
+        if (snapshot.materialDefinitionCount < 1
+            || snapshot.materialDefinitionCount > fixture.stage3Dense.materialDefinitionLimit) {
+          failures.push(`material definitions ${snapshot.materialDefinitionCount}`
+            + ` exceed 1..${fixture.stage3Dense.materialDefinitionLimit}`);
+        }
+        if (!(snapshot.definitionCounts.patterns > 0)) failures.push('no shared texture pattern');
+        if (!(snapshot.definitionCounts.filters > 0)) failures.push('no shared shadow filter');
+        if (failures.length)
+          throw new Error(`Stage 3 ${label} contract failed: ${failures.join('; ')}`);
+      };
 
       window.__card?.remove?.();
       localStorage.clear();
@@ -200,6 +349,7 @@ try {
       // construction; monolithic stable bundles remain immediate (#380).
       if (!await window.__hpEnsureHarnessEditorRuntime(card))
         throw new Error('large-house editor runtime did not preload');
+      if (isometric) await ensureIsoRuntime(card);
       window.__hpAssertCardContract(card, cardContract);
       if (requiresIsometric && (typeof card._setProjection !== 'function'
           || !(card._isoGeometryCache instanceof Map))) {
@@ -213,6 +363,19 @@ try {
       if (interaction && '_bootSoft' in card) await until(() => card._bootSoft === false);
       await frame();
       const firstStableRenderMs = Number((performance.now() - loadStarted).toFixed(2));
+      const initialProjection = typeof card._effectiveProjection === 'function'
+        ? card._effectiveProjection() : null;
+      if (requiresIsometric && initialProjection !== 'iso')
+        throw new Error(`${profile} entered Flat fallback instead of effective Iso`);
+      const initialIsoFingerprint = card.renderRoot
+        .querySelector('[data-hp="iso-walls"]')?.getAttribute('data-fingerprint') ?? null;
+      if (requiresIsometric && !initialIsoFingerprint)
+        throw new Error(`${profile} has no rendered Iso geometry fingerprint`);
+      const initialIsoStructuralBuilds = isometric ? isoStructuralBuildCount(card) : null;
+      if (requiresIsoStructuralBuildCounter && initialIsoStructuralBuilds == null)
+        throw new Error(`${profile} has no structural build counter`);
+      const initialStage3 = stage3Dense ? stage3Snapshot(card) : null;
+      if (initialStage3) assertStage3Snapshot(initialStage3, 'initial render');
       const loadLongTaskResult = await loadLongTasks.stop();
       let fullRenderCount = 0;
       let diagnosticsScanCount = 0;
@@ -242,6 +405,7 @@ try {
           card._setProjection('flat');
           await card.updateComplete;
           card._setProjection('iso');
+          await ensureIsoRuntime(card);
           await card.updateComplete;
         } else {
           // Comparison SHAs before #89 intentionally ignore the Labs operation.
@@ -254,7 +418,19 @@ try {
         await card.updateComplete;
       });
 
-      const firstEntity = Object.keys(fixture.states)[0];
+      const steadyStage3 = stage3Dense ? stage3Snapshot(card) : null;
+      if (steadyStage3) assertStage3Snapshot(steadyStage3, 'steady floor');
+      const steadyIsoFingerprint = card.renderRoot
+        .querySelector('[data-hp="iso-walls"]')?.getAttribute('data-fingerprint') ?? null;
+      if (requiresIsometric && !steadyIsoFingerprint)
+        throw new Error(`${profile} lost Iso geometry after the space switch`);
+      const steadyIsoStructuralBuilds = isometric ? isoStructuralBuildCount(card) : null;
+      if (requiresIsoStructuralBuildCounter && steadyIsoStructuralBuilds == null)
+        throw new Error(`${profile} lost its structural build counter after the space switch`);
+
+      const firstEntity = stage3Dense
+        ? fixture.stage3Dense.stateEntityId
+        : Object.keys(fixture.states)[0];
       const nextStates = {
         ...fixture.states,
         [firstEntity]: { ...fixture.states[firstEntity], state: fixture.states[firstEntity].state === 'on' ? 'off' : 'on' },
@@ -263,6 +439,64 @@ try {
         card.hass = hassFor(nextStates);
         await card.updateComplete;
       });
+      const afterStateStage3 = stage3Dense ? stage3Snapshot(card) : null;
+      if (afterStateStage3) assertStage3Snapshot(afterStateStage3, 'HA-only update');
+      const afterStateFingerprint = card.renderRoot
+        .querySelector('[data-hp="iso-walls"]')?.getAttribute('data-fingerprint') ?? null;
+      if (requiresIsometric && afterStateFingerprint !== steadyIsoFingerprint)
+        throw new Error(`${profile} rebuilt Iso geometry for an HA-only state update`);
+      const afterStateIsoStructuralBuilds = isometric ? isoStructuralBuildCount(card) : null;
+      if (requiresIsoStructuralBuildCounter
+          && afterStateIsoStructuralBuilds !== steadyIsoStructuralBuilds) {
+        throw new Error(`${profile} performed a structural rebuild for an HA-only state update`);
+      }
+      if (requireStage3 && afterStateStage3.structuralBuilds !== steadyStage3.structuralBuilds)
+        throw new Error(`${profile} rebuilt Stage 3 structure for an HA-only state update`);
+
+      let stage3States = nextStates;
+      const openingUpdate = stage3Dense ? await duration(async () => {
+        const entityId = fixture.stage3Dense.contactEntityId;
+        const current = stage3States[entityId];
+        stage3States = {
+          ...stage3States,
+          [entityId]: { ...current, state: current.state === 'on' ? 'off' : 'on' },
+        };
+        card.hass = hassFor(stage3States);
+        await card.updateComplete;
+      }) : null;
+      const afterOpeningStage3 = stage3Dense ? stage3Snapshot(card) : null;
+      if (afterOpeningStage3) assertStage3Snapshot(afterOpeningStage3, 'opening update');
+      if (stage3Dense && requiresIsometric && afterOpeningStage3?.effectiveProjection !== 'iso')
+        throw new Error(`${profile} entered Flat fallback during an opening update`);
+      if (requireStage3 && afterOpeningStage3.structuralBuilds !== steadyStage3.structuralBuilds)
+        throw new Error(`${profile} rebuilt Stage 3 structure for an opening update`);
+
+      const overlayInteraction = stage3Dense ? await duration(async () => {
+        const overlay = card.renderRoot.querySelector(requireStage3
+          ? '[data-hp-iso-overlay-kind="device"][data-hp-iso-floor][data-hp-iso-visual]'
+          : '[data-hp="device"]');
+        if (!overlay) throw new Error(`${profile} dense fixture rendered no interactive device`);
+        overlay.dispatchEvent(new PointerEvent('pointerover', {
+          bubbles: true, composed: true, pointerId: 885, pointerType: 'mouse', isPrimary: true,
+        }));
+        overlay.focus?.();
+        await card.updateComplete;
+        await frame();
+        overlay.dispatchEvent(new PointerEvent('pointerout', {
+          bubbles: true, composed: true, pointerId: 885, pointerType: 'mouse', isPrimary: true,
+        }));
+        overlay.blur?.();
+        await card.updateComplete;
+      }) : null;
+      const afterInteractionStage3 = stage3Dense ? stage3Snapshot(card) : null;
+      if (afterInteractionStage3)
+        assertStage3Snapshot(afterInteractionStage3, 'hover/focus update');
+      if (stage3Dense && requiresIsometric && afterInteractionStage3?.effectiveProjection !== 'iso')
+        throw new Error(`${profile} entered Flat fallback during a hover/focus update`);
+      if (requireStage3
+          && afterInteractionStage3.structuralBuilds !== steadyStage3.structuralBuilds) {
+        throw new Error(`${profile} rebuilt Stage 3 structure for a hover/focus update`);
+      }
 
       let interactionDiagnostics = null;
       let interactionTimings = null;
@@ -850,12 +1084,20 @@ try {
       const cacheGrowth = Object.fromEntries(
         Object.keys(cacheEntries).map((key) => [key, cacheEntries[key] - cacheBefore[key]]),
       );
+      const finalProjection = typeof card._effectiveProjection === 'function'
+        ? card._effectiveProjection() : null;
+      if (requiresIsometric && finalProjection !== 'iso')
+        throw new Error(`${profile} ended the sample in Flat fallback`);
+      const finalStage3 = stage3Dense ? stage3Snapshot(card) : null;
+      if (finalStage3) assertStage3Snapshot(finalStage3, 'final warmed state');
 
       const result = {
         sample,
         modelReadyMs,
         firstStableRenderMs,
         ...(viewToggle ? { viewToggleMs: viewToggle.ms } : {}),
+        ...(openingUpdate ? { openingUpdateMs: openingUpdate.ms } : {}),
+        ...(overlayInteraction ? { overlayInteractionMs: overlayInteraction.ms } : {}),
         ...(planSnapPointer ? {
           planSnapPointerMs: planSnapPointer.ms,
           planSnapDiagnostics,
@@ -874,6 +1116,8 @@ try {
         longTasks: {
           load: loadLongTaskResult,
           ...(viewToggle ? { viewToggle: viewToggle.longTasks } : {}),
+          ...(openingUpdate ? { openingUpdate: openingUpdate.longTasks } : {}),
+          ...(overlayInteraction ? { overlayInteraction: overlayInteraction.longTasks } : {}),
           ...(planSnapPointer ? { planSnapPointer: planSnapPointer.longTasks } : {}),
           ...(interactionSeries ? interactionLongTasks || {} : {}),
           spaceSwitch: spaceSwitch.longTasks,
@@ -888,6 +1132,26 @@ try {
         heapGrowthBytes: heapBefore == null || heapAfter == null ? null : heapAfter - heapBefore,
         preciseGc: typeof globalThis.gc === 'function',
         renderedDevices: card._devices?.length ?? 0,
+        effectiveProjection: finalProjection,
+        ...(isometric ? {
+          isoStructuralBuilds: {
+            supported: steadyIsoStructuralBuilds != null && afterStateIsoStructuralBuilds != null,
+            initial: initialIsoStructuralBuilds,
+            beforeHaUpdate: steadyIsoStructuralBuilds,
+            afterHaUpdate: afterStateIsoStructuralBuilds,
+            haUpdateDelta: steadyIsoStructuralBuilds == null || afterStateIsoStructuralBuilds == null
+              ? null : afterStateIsoStructuralBuilds - steadyIsoStructuralBuilds,
+          },
+        } : {}),
+        ...(finalStage3 ? {
+          isoStageRevision: finalStage3.isoStageRevision,
+          stage3Diagnostics: {
+            ...finalStage3,
+            steadyUpdateStructuralBuildDelta: requireStage3
+              ? afterInteractionStage3.structuralBuilds - steadyStage3.structuralBuilds
+              : null,
+          },
+        } : {}),
       };
       card.remove();
       await frame();
@@ -895,7 +1159,8 @@ try {
     }, {
       fixture, sample: measuredSample, cardContract: LARGE_HOUSE_CARD_CONTRACT,
       isometric, requiresIsometric, planSnap, requiresPlanSnap, requiresWallFace,
-      interaction, requiresInteraction,
+      interaction, requiresInteraction, stage3Dense, requireStage3,
+      requiresIsoStructuralBuildCounter, profile,
     });
     if (measuredSample >= 0) rows.push(row);
   }
@@ -908,6 +1173,7 @@ const metricNames = [
   'resizePreviewMs', 'panZoomMs', 'settingsDialogMs', 'switchCycleMs',
 ];
 if (isometric) metricNames.splice(2, 0, 'viewToggleMs');
+if (stage3Dense) metricNames.splice(3, 0, 'openingUpdateMs', 'overlayInteractionMs');
 if (planSnap) metricNames.splice(2, 0, 'planSnapPointerMs');
 if (interaction) metricNames.splice(2, 0,
   'interactionSeriesMs', 'hoverSeriesMs', 'panSeriesMs', 'cameraSeriesMs',
@@ -915,6 +1181,7 @@ if (interaction) metricNames.splice(2, 0,
 const report = {
   schema: 2,
   profile,
+  sourceSha,
   generatedAt: new Date().toISOString(),
   buildFingerprint,
   runtime: {
@@ -926,11 +1193,16 @@ const report = {
     deviceScaleFactor: 1,
     reducedMotion: true,
   },
-  fixture: LARGE_HOUSE_COUNTS,
+  fixture: fixtureCounts,
   samples,
   warmups,
   summary: summarizeTimings(rows, metricNames),
   longTasks: summarizeLongTasks(rows),
+  effectiveProjection: [...new Set(rows.map((row) => row.effectiveProjection))],
+  ...(stage3Dense ? {
+    isoStageRevision: [...new Set(rows.map((row) => row.isoStageRevision))],
+    stage3Required: requireStage3,
+  } : {}),
   rows,
   note: `Compare with a base-SHA report captured by the same runner and evaluate the ${profile} budget.`,
 };

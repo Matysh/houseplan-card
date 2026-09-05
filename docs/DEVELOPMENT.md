@@ -113,6 +113,10 @@ git config core.untrackedCache true
   chunk. Do not fold it into `houseplan-editor-runtime-*`: empty-install
   onboarding is a View prerequisite, while a configured View must request
   neither lazy runtime until the corresponding user intent.
+- Hidden Stage 3 rendering is a separate `iso-scene-render-*` chunk. An
+  alpha-off View must not request it. Its normal import and content-hashed retry
+  must pass the same source-fingerprint handshake before Iso installs atomically;
+  `houseplan-assets.json` records the graph as `lazyIsometricFiles`.
 
 ## Maintenance diagnostics
 
@@ -147,6 +151,9 @@ npm run benchmark:large-house -- --samples=7 --warmups=1 --output=artifacts/perf
 
 # Hidden isometric profile; diagnostic only outside exact-SHA Linux CI.
 npm run benchmark:large-house-isometric -- --samples=7 --warmups=1 --output=artifacts/performance/isometric-local.json
+
+# Dense Stage 3 overlay/opening profile; also diagnostic outside exact-SHA Linux CI.
+npm run benchmark:isometric-stage3-dense -- --samples=7 --warmups=1 --output=artifacts/performance/isometric-stage3-local.json
 
 # Golden candidates never overwrite reviewed references.
 npm run golden:capture

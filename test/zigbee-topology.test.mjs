@@ -17,6 +17,9 @@ const z2mNetworkmapFixture = JSON.parse(readFileSync(
   new URL('./fixtures/zigbee2mqtt-networkmap-real-anonymized.json', import.meta.url),
   'utf8',
 ));
+const topologySmoke = readFileSync(
+  new URL('../demo/smoke_zigbee_topology_hover.mjs', import.meta.url), 'utf8',
+);
 
 const registry = {
   revision: 1, authoritative: true, access: 'full', lastSuccess: 1,
@@ -36,6 +39,22 @@ const devices = [
   { id: 'mb', name: 'B', model: '', area: 'b', space: 'one', icon: '', entities: [], bindingKind: 'entity', bindingRef: 'sensor.b', bindingStatus: active },
   { id: 'mc', name: 'C', model: '', area: 'c', space: 'two', icon: '', entities: [], bindingKind: 'device', bindingRef: 'dc', bindingStatus: active },
 ];
+
+test('Stage 3 topology smoke follows actual raised DOM centres before and after pan/zoom', () => {
+  assert.match(topologySmoke, /#space=f1&hp_alpha=1/);
+  assert.match(topologySmoke,
+    /card\._setProjection\('iso'\);\s*await window\.__hpEnsureHarnessIsoRuntime\(card\)/,
+    'the witness must enter real alpha Iso and await its lazy runtime');
+  assert.match(topologySmoke, /data-hp-iso-overlay-kind/,
+    'the witness must prove both marker roots are raised');
+  assert.match(topologySmoke, /svg\?\.getScreenCTM\(\)/,
+    'SVG route endpoints must be compared in the same CSS-pixel coordinate space as DOM markers');
+  assert.match(topologySmoke, /distance\(lineStart, sourceCentre\) <= 1/);
+  assert.match(topologySmoke, /distance\(lineEnd, neighborCentre\) <= 1/);
+  assert.match(topologySmoke, /distance\(haloCentre, neighborCentre\) <= 1/);
+  assert.match(topologySmoke, /isoTopologyTracksRaisedDomCentresAfterPanZoom/,
+    'the same exact geometry witness must be repeated after a real pan/zoom');
+});
 
 test('topology settings are default-off, bounded, normalized and preserved independently', () => {
   assert.deepEqual(zigbeeTopologySettingsOf(undefined), { enabled: false, z2mBaseTopics: [] });
