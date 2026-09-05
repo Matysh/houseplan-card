@@ -176,17 +176,34 @@ def test_issue_398_pure_imports_leaves_sys_modules_as_it_found_it():
 
     from tests_backend.pure_imports import HOUSEPLAN_ROOT, load_pure
 
-    before = sorted(k for k in sys.modules if k.startswith("custom_components"))
+    before = {
+        key: value for key, value in sys.modules.items()
+        if key == "custom_components" or key.startswith("custom_components.")
+    }
+
+    def assert_registry_unchanged() -> None:
+        after = {
+            key: value for key, value in sys.modules.items()
+            if key == "custom_components" or key.startswith("custom_components.")
+        }
+        assert after.keys() == before.keys(), (
+            "load_pure изменил набор custom_components-модулей: "
+            f"added={sorted(after.keys() - before.keys())}, "
+            f"removed={sorted(before.keys() - after.keys())}"
+        )
+        replaced = [key for key, value in before.items() if after[key] is not value]
+        assert replaced == [], (
+            "load_pure восстановил имена, но подменил объекты: "
+            f"{sorted(replaced)}"
+        )
+
     module = load_pure(
         "custom_components.houseplan.junction_limits",
         HOUSEPLAN_ROOT / "junction_limits.py",
     )
-    assert dir(module), "модуль обязан быть рабочим после очистки"
-    after = sorted(k for k in sys.modules if k.startswith("custom_components"))
-    assert after == before, (
-        f"load_pure оставил в sys.modules: {sorted(set(after) - set(before))} — "
-        "относительные импорты подтягивают соседей, снимать нужно всю разницу"
-    )
+    assert module.JunctionLimitError
+    assert module.validate_junction_limits
+    assert_registry_unchanged()
 
     # Повторный вызов обязан работать так же: очистка не должна ломать
     # следующий заход (тесты вызывают load_pure по нескольку раз за сессию).
@@ -194,8 +211,80 @@ def test_issue_398_pure_imports_leaves_sys_modules_as_it_found_it():
         "custom_components.houseplan.junction_limits",
         HOUSEPLAN_ROOT / "junction_limits.py",
     )
-    assert dir(again)
-    assert sorted(k for k in sys.modules if k.startswith("custom_components")) == before
+    assert again.JunctionLimitError
+    assert_registry_unchanged()
+
+    # Standalone-имя тоже живёт только во время exec_module. Прежняя очистка
+    # следила лишь за custom_components и оставляла такой target в реестре.
+    standalone = "houseplan_quality_const_probe"
+    assert standalone not in sys.modules
+    const = load_pure(standalone, HOUSEPLAN_ROOT / "const.py")
+    assert const.DOMAIN == "houseplan"
+    assert standalone not in sys.modules
+    assert_registry_unchanged()
+
+
+def test_issue_465_pure_imports_is_order_independent():
+    """Чистый процесс без parent package не должен запускать реальный __init__.
+
+    Отдельный процесс делает регрессию независимой от порядка collection:
+    именно общий прогон раньше случайно маскировал #465, заранее импортируя
+    настоящий пакет. Там же проверяется восстановление заранее существующих
+    sentinel-объектов по identity, а не только совпадение имён.
+    """
+    import subprocess
+    import sys
+    import textwrap
+
+    probe = textwrap.dedent(
+        """
+        import sys
+        from types import ModuleType
+        from tests_backend.pure_imports import HOUSEPLAN_ROOT, load_pure
+
+        modules = sys.modules
+        prefix = "custom_components"
+        target = "custom_components.houseplan.junction_limits"
+
+        for key in tuple(modules):
+            if key == prefix or key.startswith(prefix + "."):
+                modules.pop(key, None)
+
+        for _ in range(2):
+            loaded = load_pure(target, HOUSEPLAN_ROOT / "junction_limits.py")
+            assert loaded.JunctionLimitError
+            assert loaded.validate_junction_limits
+            assert not any(
+                key == prefix or key.startswith(prefix + ".")
+                for key in modules
+            )
+
+        sentinels = {
+            prefix: ModuleType(prefix),
+            f"{prefix}.houseplan": ModuleType(f"{prefix}.houseplan"),
+            target: ModuleType(target),
+        }
+        modules.update(sentinels)
+        loaded = load_pure(target, HOUSEPLAN_ROOT / "junction_limits.py")
+        assert loaded is not sentinels[target]
+        assert {
+            key for key in modules
+            if key == prefix or key.startswith(prefix + ".")
+        } == sentinels.keys()
+        assert all(modules[key] is value for key, value in sentinels.items())
+        """
+    )
+    result = subprocess.run(
+        [sys.executable, "-c", probe],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, (
+        "isolated pure import failed:\n"
+        f"stdout:\n{result.stdout}\nstderr:\n{result.stderr}"
+    )
 
 # --- #436: файл, которому нужен Home Assistant, обязан это объявить ---------
 
