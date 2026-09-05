@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.72.0-beta.5 — 2026-09-05
+
 - Native House Plan confirmations and fallback dialogs now remain centred with
   a real dimmed modal backdrop. If Home Assistant temporarily detaches and
   restores the card, an open native dialog recovers the browser top layer
