@@ -368,9 +368,11 @@ Auto-reload разрешён только при одновременном вы
 - ни один принадлежащий карточке first-class dialog/confirm/menu overlay не
   открыт; единый predicate обязан включать как минимум editor-secondary dialogs,
   room/partition delete, import, backdrop guard, danger confirm и незавершённый
-  `_vacFit`. Нативный HA more-info не включается по ненадёжному stale-полю: его
-  открытие уже ставит общую interaction pause, а отдельного достоверного сигнала
-  закрытия у карточки нет;
+  `_vacFit`. Нативный HA more-info не включается по ненадёжному stale-полю:
+  отдельного достоверного сигнала его закрытия у карточки нет. Вместо этого
+  единая точка открытия more-info обязана продлить `_cyclePausedUntil` и для
+  pointer, и для keyboard, и для внутренних программных путей; одной паузы из
+  stage pointerdown недостаточно;
 - `_pendingPhysicalWrites.size === 0`, `_writesPending === 0` и нет
   незавершённой config write chain;
 - нет pending layout debounce/отправки и грязных несохранённых позиций устройств;
@@ -520,7 +522,9 @@ Pure controller покрывает equal, symmetric mismatch, unknown и сме�
 Каждый отдельный unsafe guard из §11.3 блокирует auto-reload; после перехода в
 полностью safe state target записывается до ровно одного reload. Минимум мутанты
 «игнорировать pause», «игнорировать dialog/editor», «игнорировать pending write»
-и «помечать attempt после reload» детерминированно краснеют.
+и «помечать attempt после reload» детерминированно краснеют. Открытие native HA
+more-info мышью/тапом, клавиатурой и внутренней карточкой продлевает ту же pause,
+поэтому ни один из этих путей не допускает немедленный kiosk reload.
 
 ### AC9 — защита от reload-loop (`unit` + browser + mutation)
 
@@ -587,6 +591,8 @@ integration frontend) побайтно совпадают.
 - kiosk mismatch: unsafe→safe без предварительной плашки, one auto;
   remount/reload с той же backend target — banner и zero auto;
 - editor/dialog/pending-write/zoom/recent interaction отдельными probes;
+- native HA more-info через pointer, keyboard и внутренний программный путь
+  одинаково продлевает interaction pause без reliance на stale open-marker;
 - narrow touch + keyboard focus + reduced motion;
 - space card загружается без runtime banner/timer.
 
