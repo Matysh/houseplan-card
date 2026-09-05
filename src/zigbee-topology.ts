@@ -52,12 +52,25 @@ export interface ZigbeeTopology {
 export interface ZigbeeHoverLine {
   neighborMarkerId: string;
   lqi?: number;
+  routeDirection?: 'toward-neighbor' | 'toward-origin';
+}
+
+export type ZigbeeParentTarget =
+  | { kind: 'remote-space'; spaceId: string }
+  | { kind: 'unplaced-device' }
+  | { kind: 'unplaced-coordinator' };
+
+export interface ZigbeeRouteTree {
+  coordinatorKey?: string;
+  distances: Map<string, number>;
+  parents: Map<string, string>;
 }
 
 export interface ZigbeeHoverResolution {
   lines: ZigbeeHoverLine[];
   remoteCount: number;
   omittedCount: number;
+  parentTargets: ZigbeeParentTarget[];
 }
 
 export const TOPOLOGY_STALE_MS = 5 * 60 * 1000;
@@ -94,11 +107,26 @@ function lqiOf(value: unknown): number | undefined {
   return Number.isFinite(n) && n >= 0 && n <= 255 ? Math.round(n) : undefined;
 }
 
+const Z2M_RELATIONSHIPS: Readonly<Record<number, string>> = {
+  0: 'parent', 1: 'child', 2: 'sibling', 3: 'none', 4: 'previous_child',
+};
+
+function relationshipOf(value: unknown): string | undefined {
+  if (typeof value === 'number' && Number.isInteger(value)) return Z2M_RELATIONSHIPS[value];
+  if (typeof value !== 'string') return undefined;
+  const compact = value.trim().toLowerCase().replace(/[\s_-]+/g, '');
+  if (!compact) return undefined;
+  if (compact === 'previouschild') return 'previous_child';
+  if (compact === 'parent' || compact === 'child' || compact === 'sibling' || compact === 'none') {
+    return compact;
+  }
+  return value.trim().toLowerCase().slice(0, 40) || undefined;
+}
+
 function observation(value: unknown): ZigbeeDirectionalObservation {
   const record = recordOf(value);
   const lqi = lqiOf(record?.lqi ?? record?.linkquality ?? record?.link_quality);
-  const relationship = typeof record?.relationship === 'string'
-    ? record.relationship.slice(0, 40) : undefined;
+  const relationship = relationshipOf(record?.relationship);
   return { ...(lqi === undefined ? {} : { lqi }), ...(relationship ? { relationship } : {}) };
 }
 
@@ -270,7 +298,69 @@ function drawable(device: DevItem): boolean {
 }
 
 export type ZigbeeNodePlacement = { markerId: string; space: string };
-export type ZigbeeMappedTopology = { topology: ZigbeeTopology; placements: Map<string, ZigbeeNodePlacement> };
+export type ZigbeeMappedTopology = {
+  topology: ZigbeeTopology;
+  placements: Map<string, ZigbeeNodePlacement>;
+  routes: ZigbeeRouteTree;
+};
+
+type ZigbeeAdjacentLink = { neighborKey: string; observation?: ZigbeeDirectionalObservation };
+
+function adjacencyOf(topology: ZigbeeTopology): Map<string, ZigbeeAdjacentLink[]> {
+  const nodeKeys = new Set(topology.nodes.map((node) => node.key));
+  const adjacency = new Map<string, ZigbeeAdjacentLink[]>();
+  for (const key of [...nodeKeys].sort()) adjacency.set(key, []);
+  for (const link of [...topology.links].sort((left, right) => (
+    `${left.a}\u0000${left.b}`.localeCompare(`${right.a}\u0000${right.b}`)
+  ))) {
+    if (!nodeKeys.has(link.a) || !nodeKeys.has(link.b)) continue;
+    adjacency.get(link.a)!.push({ neighborKey: link.b, observation: link.aToB });
+    adjacency.get(link.b)!.push({ neighborKey: link.a, observation: link.bToA });
+  }
+  for (const neighbors of adjacency.values()) {
+    neighbors.sort((left, right) => left.neighborKey.localeCompare(right.neighborKey));
+  }
+  return adjacency;
+}
+
+/** Build one deterministic shortest-path uplink tree without trusting stale provider direction. */
+export function buildZigbeeRouteTree(topology: ZigbeeTopology): ZigbeeRouteTree {
+  const distances = new Map<string, number>();
+  const parents = new Map<string, string>();
+  const coordinators = topology.nodes.filter((node) => node.role === 'coordinator')
+    .map((node) => node.key).sort();
+  if (coordinators.length !== 1) return { distances, parents };
+  const coordinatorKey = coordinators[0];
+  const adjacency = adjacencyOf(topology);
+  if (!adjacency.has(coordinatorKey)) return { distances, parents };
+  distances.set(coordinatorKey, 0);
+  const queue = [coordinatorKey];
+  for (let index = 0; index < queue.length; index++) {
+    const current = queue[index];
+    const nextDistance = distances.get(current)! + 1;
+    for (const { neighborKey } of adjacency.get(current) || []) {
+      if (distances.has(neighborKey)) continue;
+      distances.set(neighborKey, nextDistance);
+      queue.push(neighborKey);
+    }
+  }
+  for (const nodeKey of [...distances.keys()].sort()) {
+    const distance = distances.get(nodeKey)!;
+    if (distance === 0) continue;
+    const candidates = (adjacency.get(nodeKey) || [])
+      .filter(({ neighborKey }) => distances.get(neighborKey) === distance - 1)
+      .sort((left, right) => {
+        const leftParent = left.observation?.relationship === 'parent' ? 1 : 0;
+        const rightParent = right.observation?.relationship === 'parent' ? 1 : 0;
+        if (leftParent !== rightParent) return rightParent - leftParent;
+        const leftLqi = left.observation?.lqi ?? -1;
+        const rightLqi = right.observation?.lqi ?? -1;
+        return rightLqi - leftLqi || left.neighborKey.localeCompare(right.neighborKey);
+      });
+    if (candidates[0]) parents.set(nodeKey, candidates[0].neighborKey);
+  }
+  return { coordinatorKey, distances, parents };
+}
 
 /** Exact registry binding only; names, models and friendly names are never identities. */
 export function mapTopologyNodes(
@@ -300,36 +390,70 @@ export function mapTopologies(
   topologies: readonly ZigbeeTopology[], devices: readonly DevItem[], registry: HaRegistrySnapshot,
 ): ZigbeeMappedTopology[] {
   return topologies.map((topology) => ({
-    topology, placements: mapTopologyNodes(topology, devices, registry).placements,
+    topology,
+    placements: mapTopologyNodes(topology, devices, registry).placements,
+    routes: buildZigbeeRouteTree(topology),
   }));
 }
 
 export function resolveMappedTopologyHover(
   mappedTopologies: readonly ZigbeeMappedTopology[], currentSpace: string, hoveredMarkerId: string,
 ): ZigbeeHoverResolution {
-  const lines = new Map<string, ZigbeeHoverLine>();
+  const lines = new Map<string, { line: ZigbeeHoverLine;
+    directions: Set<NonNullable<ZigbeeHoverLine['routeDirection']>> }>();
   const remote = new Set<string>();
+  const parentTargets = new Map<string, ZigbeeParentTarget>();
   let omittedCount = 0;
-  for (const { topology, placements } of mappedTopologies) {
+  for (const { topology, placements, routes } of mappedTopologies) {
     const hoveredNodes = new Set([...placements]
       .filter(([, placement]) => placement.markerId === hoveredMarkerId && placement.space === currentSpace)
       .map(([key]) => key));
     if (!hoveredNodes.size) continue;
+    for (const hoveredNode of hoveredNodes) {
+      const parentKey = routes.parents.get(hoveredNode);
+      if (!parentKey) continue;
+      const parentPlacement = placements.get(parentKey);
+      if (parentPlacement?.space === currentSpace) continue;
+      let target: ZigbeeParentTarget;
+      if (parentPlacement) target = { kind: 'remote-space', spaceId: parentPlacement.space };
+      else target = topology.nodes.find((node) => node.key === parentKey)?.role === 'coordinator'
+        ? { kind: 'unplaced-coordinator' } : { kind: 'unplaced-device' };
+      const targetKey = target.kind === 'remote-space' ? `${target.kind}:${target.spaceId}` : target.kind;
+      parentTargets.set(targetKey, target);
+    }
     for (const link of topology.links) {
       const fromA = hoveredNodes.has(link.a);
       const fromB = hoveredNodes.has(link.b);
       if (!fromA && !fromB) continue;
-      const other = placements.get(fromA ? link.b : link.a);
+      const hoveredNode = fromA ? link.a : link.b;
+      const otherKey = fromA ? link.b : link.a;
+      const other = placements.get(otherKey);
       if (!other || other.markerId === hoveredMarkerId) { omittedCount++; continue; }
-      if (other.space !== currentSpace) { remote.add(other.markerId); continue; }
+      const isParent = routes.parents.get(hoveredNode) === otherKey;
+      if (other.space !== currentSpace) {
+        if (!isParent) remote.add(other.markerId);
+        continue;
+      }
       const obs = fromA ? link.aToB : link.bToA;
+      const direction = isParent ? 'toward-neighbor'
+        : routes.parents.get(otherKey) === hoveredNode ? 'toward-origin' : undefined;
       const existing = lines.get(other.markerId);
-      if (!existing || (existing.lqi === undefined && obs?.lqi !== undefined)) {
-        lines.set(other.markerId, { neighborMarkerId: other.markerId, lqi: obs?.lqi });
+      if (!existing) {
+        lines.set(other.markerId, { line: { neighborMarkerId: other.markerId, lqi: obs?.lqi },
+          directions: new Set(direction ? [direction] : []) });
+      } else {
+        if (existing.line.lqi === undefined && obs?.lqi !== undefined) existing.line.lqi = obs.lqi;
+        if (direction) existing.directions.add(direction);
       }
     }
   }
-  return { lines: [...lines.values()], remoteCount: remote.size, omittedCount };
+  return {
+    lines: [...lines.values()].map(({ line, directions }) => directions.size === 1
+      ? { ...line, routeDirection: [...directions][0] } : line),
+    remoteCount: remote.size,
+    omittedCount,
+    parentTargets: [...parentTargets.values()],
+  };
 }
 
 /** Resolve only the edges incident to the marker currently under the mouse. */

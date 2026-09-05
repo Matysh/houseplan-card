@@ -211,9 +211,18 @@ may take 10 seconds to 2 minutes and can temporarily slow the Zigbee network.
 After data is loaded, moving a real mouse over a mapped Zigbee marker shows
 only its observed direct neighbours. Links to markers on the current space are
 lines; drawable neighbours on other spaces are summarized as a temporary
-count. This is a snapshot, not the route currently used by every packet. The
-layer does not appear on touch/pen, in kiosk, in editors or in the static card,
-and hovering never starts a scan.
+count. An arrow on a line shows the next step towards the coordinator: an
+ordinary device points to its parent, while arrows pointing into a router show
+devices whose path goes through it. Neighbour links outside the derived path
+tree remain plain lines.
+
+If the next step is in another space, a short bubble names that space. If the
+needed router or coordinator is not placed on the plan, the bubble says so. If
+the snapshot has no coordinator or the graph is disconnected, House Plan does
+not invent a direction and leaves the link without an arrow. This is a stable
+path approximation derived from the neighbour snapshot, not the route used by
+every current packet. The layer does not appear on touch/pen, in kiosk, in
+editors or in the static card, and hovering never starts a scan.
 
 Each editor has a stable primary toolbar. Tool parameters and selected-object
 actions appear in a context tray over the top of the canvas. On a narrow screen

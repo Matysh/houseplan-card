@@ -23,5 +23,8 @@
   "error_invalid_topic": "Vérifiez le topic de base Zigbee2MQTT.",
   "error_invalid_payload": "Le fournisseur a renvoyé des données de topologie non prises en charge.",
   "error_provider": "Impossible de charger les données de topologie.",
-  "remote_count": "+{n} dans d’autres espaces"
+  "remote_count": "+{n} dans d’autres espaces",
+  "route_device_not_on_plan": "appareil absent du plan",
+  "route_coordinator_not_on_plan": "coordinateur absent du plan",
+  "route_other_space": "autre espace"
 }

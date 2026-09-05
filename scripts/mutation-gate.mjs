@@ -5838,6 +5838,39 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'zigbee-route-parent-keeps-bfs-level',
+    guard: 'node --test --test-name-pattern="uplink tree is deterministic" test/zigbee-topology.test.mjs',
+    because: 'every parent must be one BFS level nearer the coordinator; accepting a same-level '
+      + 'neighbour can create a cycle and break the defining #457 AC1 invariant',
+    patches: [{
+      file: 'src/zigbee-topology.ts',
+      find: '      .filter(({ neighborKey }) => distances.get(neighborKey) === distance - 1)',
+      replace: '      .filter(({ neighborKey }) => distances.get(neighborKey) === distance)',
+    }],
+  },
+  {
+    id: 'zigbee-route-local-arrow-not-inverted',
+    guard: 'node --test --test-name-pattern="hover projects local route directions" test/zigbee-topology.test.mjs',
+    because: 'the arrow on the hovered device uplink must point to its parent rather than away '
+      + 'from the coordinator (#457 AC4)',
+    patches: [{
+      file: 'src/zigbee-topology.ts',
+      find: "      const direction = isParent ? 'toward-neighbor'",
+      replace: "      const direction = isParent ? 'toward-origin'",
+    }],
+  },
+  {
+    id: 'zigbee-route-parent-not-counted-twice',
+    guard: 'node --test --test-name-pattern="hover projects local route directions" test/zigbee-topology.test.mjs',
+    because: 'a remote parent already has a named route bubble and must not also inflate the '
+      + 'legacy cross-space neighbour count (#457 AC6)',
+    patches: [{
+      file: 'src/zigbee-topology.ts',
+      find: '        if (!isParent) remote.add(other.markerId);',
+      replace: '        remote.add(other.markerId);',
+    }],
+  },
+  {
     id: 'double-fit-free-background-owner-removed',
     guard: 'node --test --test-name-pattern="#449 only" test/room-fit.test.mjs',
     because: 'room, device and opening owners must never become a half of the free-background '

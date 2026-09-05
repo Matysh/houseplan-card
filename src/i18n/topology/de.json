@@ -23,5 +23,8 @@
   "error_invalid_topic": "Prüfe das Zigbee2MQTT-Basistopic.",
   "error_invalid_payload": "Der Anbieter hat nicht unterstützte Topologiedaten geliefert.",
   "error_provider": "Topologiedaten konnten nicht geladen werden.",
-  "remote_count": "+{n} in anderen Bereichen"
+  "remote_count": "+{n} in anderen Bereichen",
+  "route_device_not_on_plan": "Gerät ist nicht im Plan",
+  "route_coordinator_not_on_plan": "Koordinator ist nicht im Plan",
+  "route_other_space": "anderer Bereich"
 }

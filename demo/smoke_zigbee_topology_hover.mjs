@@ -4,11 +4,11 @@ const { page, browser } = await launch();
 const result = await page.evaluate(async () => {
   const card = window.__card;
   const root = () => card.shadowRoot || card.renderRoot;
-  const wait = (predicate, timeout = 3000) => new Promise((resolve, reject) => {
+  const wait = (predicate, label, timeout = 3000) => new Promise((resolve, reject) => {
     const started = performance.now();
     const tick = () => {
       if (predicate()) return resolve();
-      if (performance.now() - started > timeout) return reject(new Error('topology smoke timeout'));
+      if (performance.now() - started > timeout) return reject(new Error(`topology smoke timeout: ${label}`));
       setTimeout(tick, 20);
     };
     tick();
@@ -29,37 +29,46 @@ const result = await page.evaluate(async () => {
     if (message.type !== 'zha/devices') return originalHass.callWS(message);
     zhaCalls++;
     return [
-      { ieee: '00124b0000000001', device_reg_id: 'd_light1', neighbors: [
-        { ieee: '00124b0000000002', lqi: 180 },
-        { ieee: '00124b0000000003', lqi: 80 },
+      { ieee: '00124b0000000001', device_reg_id: 'd_light1', device_type: 'Router', neighbors: [
+        { ieee: '00124b0000000002', lqi: 180, relationship: 'Parent' },
+        { ieee: '00124b0000000003', lqi: 80, relationship: 'Child' },
       ] },
-      { ieee: '00124b0000000002', device_reg_id: 'd_lamp', neighbors: [] },
-      { ieee: '00124b0000000003', device_reg_id: 'd_mower', neighbors: [] },
-      { ieee: '00124b0000000004', device_reg_id: 'd_temp', neighbors: [
-        { ieee: '00124b0000000005', lqi: 20 },
+      { ieee: '00124b0000000002', device_reg_id: 'd_lamp', device_type: 'Coordinator', neighbors: [
+        { ieee: '00124b0000000001', lqi: 170, relationship: 'Child' },
+        { ieee: '00124b0000000006', lqi: 140, relationship: 'Child' },
       ] },
-      { ieee: '00124b0000000005', device_reg_id: 'd_tv', neighbors: [] },
+      { ieee: '00124b0000000003', device_reg_id: 'd_mower', device_type: 'EndDevice', neighbors: [
+        { ieee: '00124b0000000001', lqi: 75, relationship: 'Parent' },
+      ] },
+      { ieee: '00124b0000000004', device_reg_id: 'd_temp', device_type: 'EndDevice', neighbors: [
+        { ieee: '00124b0000000006', lqi: 20, relationship: 'Parent' },
+      ] },
+      { ieee: '00124b0000000005', device_reg_id: 'd_tv', device_type: 'EndDevice', neighbors: [] },
+      { ieee: '00124b0000000006', device_reg_id: 'not_on_plan', device_type: 'Router', neighbors: [
+        { ieee: '00124b0000000002', lqi: 130, relationship: 'Parent' },
+        { ieee: '00124b0000000004', lqi: 25, relationship: 'Child' },
+      ] },
     ];
   } };
   await card._ensureEditorRuntime();
   card._openSettingsDialog();
   await card.updateComplete;
   let settings = root().querySelector('hp-zigbee-topology-settings');
-  await wait(() => !!settings?.shadowRoot);
+  await wait(() => !!settings?.shadowRoot, 'settings mounted');
   settings._emit({ enabled: true, z2mBaseTopics: [] });
   await card.updateComplete;
   await card._saveSettingsDialog();
   await card.updateComplete;
-  await wait(() => !!root().querySelector('hp-zigbee-topology-overlay'));
+  await wait(() => !!root().querySelector('hp-zigbee-topology-overlay'), 'overlay mounted');
   out.settingPersists = card._serverCfg.settings.zigbee_topology?.enabled === true;
   out.enableDoesNotFetch = zhaCalls === 0;
 
   card._openSettingsDialog();
   await card.updateComplete;
   settings = root().querySelector('hp-zigbee-topology-settings');
-  await wait(() => !!settings?.shadowRoot?.querySelector('button'));
+  await wait(() => !!settings?.shadowRoot?.querySelector('button'), 'settings button');
   await settings._readZha();
-  await wait(() => settings._snapshot?.states?.zha?.phase === 'ready');
+  await wait(() => settings._snapshot?.states?.zha?.phase === 'ready', 'ZHA ready');
   out.explicitZhaRead = zhaCalls === 1;
   card._settingsDialog = null;
   card.requestUpdate();
@@ -68,25 +77,72 @@ const result = await page.evaluate(async () => {
   const source = root().querySelector('.dev[data-id="d_light1"]');
   source.dispatchEvent(mouse('pointerover'));
   await wait(() => root().querySelector('hp-zigbee-topology-overlay')?.shadowRoot
-    ?.querySelector('[data-hp="zigbee-topology-lines"]'));
+    ?.querySelector('[data-hp="zigbee-topology-lines"]'), 'local route');
   const overlay = root().querySelector('hp-zigbee-topology-overlay');
   out.incidentOnly = overlay.shadowRoot.querySelectorAll('line').length === 1
     && overlay.shadowRoot.querySelectorAll('[data-hp="zigbee-topology-neighbor"]').length === 1;
+  const routeLine = overlay.shadowRoot.querySelector('line[data-direction="toward-neighbor"]');
+  const routeArrow = overlay.shadowRoot.querySelector('[data-hp="zigbee-topology-arrow"]');
+  const lineBox = routeLine?.getBoundingClientRect();
+  const arrowBox = routeArrow?.getBoundingClientRect();
+  out.localRouteArrow = !!routeLine && routeArrow?.getAttribute('data-direction') === 'toward-neighbor'
+    && !!lineBox && !!arrowBox && arrowBox.width > 3 && arrowBox.height > 3;
   out.crossSpaceCount = overlay.shadowRoot.querySelector('[data-hp="zigbee-topology-remote"]')
     ?.textContent.trim() === '+1 in other spaces';
   out.pointerTransparent = getComputedStyle(overlay).pointerEvents === 'none'
     && getComputedStyle(overlay.shadowRoot.querySelector('[data-hp="zigbee-topology-remote"]')).pointerEvents === 'none';
 
-  source.dispatchEvent(mouse('pointerout', root().querySelector('.stage')));
+  card._commitSpace('garden', true);
+  card.requestUpdate();
   await card.updateComplete;
-  out.leaveClears = !overlay.shadowRoot.querySelector('line');
-  source.dispatchEvent(mouse('pointerover'));
-  await wait(() => overlay.shadowRoot.querySelector('line'));
+  await wait(() => root().querySelector('.dev[data-id="d_mower"]'), 'garden marker');
+  const remoteChild = root().querySelector('.dev[data-id="d_mower"]');
+  remoteChild.dispatchEvent(mouse('pointerover'));
+  await wait(() => root().querySelector('hp-zigbee-topology-overlay')?.shadowRoot
+    ?.querySelector('[data-hp="zigbee-topology-parent-bubble"]'), 'remote parent bubble');
+  let activeOverlay = root().querySelector('hp-zigbee-topology-overlay');
+  const firstTitle = card._serverCfg.spaces.find((space) => space.id === 'f1')?.title;
+  out.remoteParentBubble = activeOverlay.shadowRoot
+    .querySelector('[data-hp="zigbee-topology-parent-bubble"]')?.textContent.trim() === firstTitle
+    && activeOverlay.shadowRoot.querySelector('[data-hp="zigbee-topology-parent-bubble"]')
+      ?.getAttribute('data-kind') === 'remote-space'
+    && !!activeOverlay.shadowRoot.querySelector('[data-hp="zigbee-topology-parent-arrow"]')
+    && !activeOverlay.shadowRoot.querySelector('[data-hp="zigbee-topology-remote"]');
+
+  card._commitSpace('f1', true);
+  card.requestUpdate();
+  await card.updateComplete;
+  await wait(() => root().querySelector('.dev[data-id="d_temp"]'), 'temperature marker');
+  const temperature = root().querySelector('.dev[data-id="d_temp"]');
+  temperature.dispatchEvent(mouse('pointerover'));
+  await wait(() => root().querySelector('hp-zigbee-topology-overlay')?.shadowRoot
+    ?.querySelector('[data-kind="unplaced-device"]'), 'unplaced device bubble');
+  activeOverlay = root().querySelector('hp-zigbee-topology-overlay');
+  out.unplacedDeviceBubble = activeOverlay.shadowRoot.querySelector('[data-kind="unplaced-device"]')
+    ?.textContent.trim() === 'device is not on the plan';
+
+  activeOverlay.devices = activeOverlay.devices.map((device) => (
+    device.id === 'd_lamp' ? { ...device, hidden: true } : device
+  ));
+  await activeOverlay.updateComplete;
+  const router = root().querySelector('.dev[data-id="d_light1"]');
+  router.dispatchEvent(mouse('pointerover'));
+  await wait(() => activeOverlay.shadowRoot.querySelector('[data-kind="unplaced-coordinator"]'),
+    'unplaced coordinator bubble');
+  out.unplacedCoordinatorBubble = activeOverlay.shadowRoot
+    .querySelector('[data-kind="unplaced-coordinator"]')?.textContent.trim()
+      === 'coordinator is not on the plan';
+
+  router.dispatchEvent(mouse('pointerout', root().querySelector('.stage')));
+  await activeOverlay.updateComplete;
+  out.leaveClears = !activeOverlay.shadowRoot.querySelector('line');
+  router.dispatchEvent(mouse('pointerover'));
+  await wait(() => activeOverlay.shadowRoot.querySelector('line'), 'route restored');
   root().querySelector('.stage').dispatchEvent(new PointerEvent('pointermove', {
     pointerType: 'touch', bubbles: true, composed: true, pointerId: 7,
   }));
-  await wait(() => !overlay.shadowRoot.querySelector('line'));
-  out.touchClears = !overlay.shadowRoot.querySelector('line');
+  await wait(() => !activeOverlay.shadowRoot.querySelector('line'), 'touch clears');
+  out.touchClears = !activeOverlay.shadowRoot.querySelector('line');
 
   card._setMode('plan');
   await card.updateComplete;

@@ -23,5 +23,8 @@
   "error_invalid_topic": "Проверьте базовый топик Zigbee2MQTT.",
   "error_invalid_payload": "Провайдер вернул неподдерживаемые данные топологии.",
   "error_provider": "Не удалось загрузить данные топологии.",
-  "remote_count": "+{n} в других пространствах"
+  "remote_count": "+{n} в других пространствах",
+  "route_device_not_on_plan": "устройства нет на плане",
+  "route_coordinator_not_on_plan": "координатора нет на плане",
+  "route_other_space": "другое пространство"
 }

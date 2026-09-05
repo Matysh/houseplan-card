@@ -2,9 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  mapTopologyNodes, normalizeIeee, normalizeZ2mTopology,
+  buildZigbeeRouteTree, mapTopologyNodes, normalizeIeee, normalizeZ2mTopology,
   normalizeZhaTopology, resolveTopologyHover,
 } from '../test-build/zigbee-topology.js';
+import { zigbeeArrowGeometry } from '../test-build/zigbee-topology-geometry.js';
 import {
   normalizeZ2mBaseTopic, writeZigbeeTopologySettings, zigbeeTopologySettingsOf,
 } from '../test-build/zigbee-topology-settings.js';
@@ -82,6 +83,9 @@ test('Z2M normalization accepts a real anonymized camelCase raw network map', ()
     topology.links.map((link) => link.aToB?.lqi ?? link.bToA?.lqi).sort((a, b) => a - b),
     [97, 182],
   );
+  assert.ok(topology.links.some((link) => (
+    link.aToB?.relationship === 'sibling' || link.bToA?.relationship === 'sibling'
+  )));
   assert.deepEqual(topology.warnings, []);
 });
 
@@ -123,9 +127,11 @@ test('exact device/entity mapping yields local lines and a deduplicated remote c
   ]);
   assert.deepEqual(resolveTopologyHover([topology], devices, registry, 'one', 'ma'), {
     lines: [{ neighborMarkerId: 'mb', lqi: 180 }], remoteCount: 1, omittedCount: 0,
+    parentTargets: [],
   });
   assert.deepEqual(resolveTopologyHover([topology], devices, registry, 'one', 'mb'), {
     lines: [{ neighborMarkerId: 'ma', lqi: undefined }], remoteCount: 0, omittedCount: 0,
+    parentTargets: [],
   });
 });
 
@@ -138,8 +144,143 @@ test('hidden and ambiguous placements fail closed', () => {
   assert.equal(mapTopologyNodes(topology, ambiguous, registry).placements.has(topology.nodes[0].key), false);
   const hidden = devices.map((item) => item.id === 'mb' ? { ...item, hidden: true } : item);
   assert.deepEqual(resolveTopologyHover([topology], hidden, registry, 'one', 'ma'), {
-    lines: [], remoteCount: 0, omittedCount: 1,
+    lines: [], remoteCount: 0, omittedCount: 1, parentTargets: [],
   });
+});
+
+test('uplink tree is deterministic, acyclic and always reaches the sole coordinator', () => {
+  const topology = {
+    provider: 'zha', instanceId: 'zha', obtainedAt: 1, freshness: 'provider-cache', warnings: [],
+    nodes: [
+      { key: 'c', ieee: '0000000000000001', role: 'coordinator' },
+      { key: 'a', ieee: '0000000000000002', role: 'router' },
+      { key: 'b', ieee: '0000000000000003', role: 'router' },
+      { key: 'd', ieee: '0000000000000004', role: 'end' },
+      { key: 'x', ieee: '0000000000000005', role: 'router' },
+    ],
+    links: [
+      { a: 'c', b: 'a', bToA: { lqi: 90 } },
+      { a: 'c', b: 'b', bToA: { lqi: 220 } },
+      { a: 'a', b: 'b', aToB: { relationship: 'parent', lqi: 255 } },
+      { a: 'a', b: 'd', bToA: { relationship: 'parent', lqi: 40 } },
+      { a: 'b', b: 'd', bToA: { relationship: 'sibling', lqi: 240 } },
+    ],
+  };
+  const tree = buildZigbeeRouteTree(topology);
+  assert.equal(tree.coordinatorKey, 'c');
+  assert.deepEqual(Object.fromEntries(tree.distances), { c: 0, a: 1, b: 1, d: 2 });
+  assert.deepEqual(Object.fromEntries(tree.parents), { a: 'c', b: 'c', d: 'a' });
+  assert.equal(tree.parents.has('x'), false);
+  for (const key of tree.parents.keys()) {
+    const visited = new Set();
+    let current = key;
+    while (current !== tree.coordinatorKey) {
+      assert.equal(visited.has(current), false, `cycle from ${key}`);
+      visited.add(current);
+      const parent = tree.parents.get(current);
+      assert.ok(parent, `missing parent from ${current}`);
+      assert.equal(tree.distances.get(parent), tree.distances.get(current) - 1);
+      current = parent;
+    }
+  }
+  const permuted = buildZigbeeRouteTree({
+    ...topology, nodes: [...topology.nodes].reverse(), links: [...topology.links].reverse(),
+  });
+  assert.deepEqual(Object.fromEntries(permuted.parents), Object.fromEntries(tree.parents));
+});
+
+test('uplink parent tie-break uses direct LQI then stable key and ambiguous roots fail closed', () => {
+  const base = {
+    provider: 'zha', instanceId: 'zha', obtainedAt: 1, freshness: 'provider-cache', warnings: [],
+    nodes: [
+      { key: 'c', ieee: '0000000000000001', role: 'coordinator' },
+      { key: 'a', ieee: '0000000000000002', role: 'router' },
+      { key: 'b', ieee: '0000000000000003', role: 'router' },
+      { key: 'd', ieee: '0000000000000004', role: 'end' },
+    ],
+    links: [
+      { a: 'c', b: 'a' }, { a: 'c', b: 'b' },
+      { a: 'a', b: 'd', bToA: { lqi: 100 } },
+      { a: 'b', b: 'd', bToA: { lqi: 150 } },
+    ],
+  };
+  assert.equal(buildZigbeeRouteTree(base).parents.get('d'), 'b');
+  const tied = { ...base, links: base.links.map((link) => (
+    link.a === 'b' && link.b === 'd' ? { ...link, bToA: { lqi: 100 } } : link
+  )) };
+  assert.equal(buildZigbeeRouteTree(tied).parents.get('d'), 'a');
+  assert.equal(buildZigbeeRouteTree({ ...base, nodes: base.nodes.filter((node) => node.key !== 'c') })
+    .parents.size, 0);
+  assert.equal(buildZigbeeRouteTree({
+    ...base, nodes: [...base.nodes, { key: 'c2', ieee: '0000000000000005', role: 'coordinator' }],
+  }).parents.size, 0);
+});
+
+test('hover projects local route directions and keeps remote children in the old count', () => {
+  const topology = normalizeZhaTopology([
+    { ieee: '00124b0000000001', device_reg_id: 'da', device_type: 'Coordinator',
+      neighbors: [{ ieee: '00124b0000000002', lqi: 180 }] },
+    { ieee: '00124b0000000002', device_reg_id: 'db', device_type: 'Router', neighbors: [
+      { ieee: '00124b0000000001', lqi: 150, relationship: 'Parent' },
+      { ieee: '00124b0000000003', lqi: 70, relationship: 'Child' },
+    ] },
+    { ieee: '00124b0000000003', device_reg_id: 'dc', device_type: 'EndDevice',
+      neighbors: [{ ieee: '00124b0000000002', lqi: 60, relationship: 'Parent' }] },
+  ]);
+  assert.deepEqual(resolveTopologyHover([topology], devices, registry, 'one', 'mb'), {
+    lines: [{ neighborMarkerId: 'ma', lqi: 150, routeDirection: 'toward-neighbor' }],
+    remoteCount: 1, omittedCount: 0, parentTargets: [],
+  });
+  assert.deepEqual(resolveTopologyHover([topology], devices, registry, 'one', 'ma'), {
+    lines: [{ neighborMarkerId: 'mb', lqi: 180, routeDirection: 'toward-origin' }],
+    remoteCount: 0, omittedCount: 0, parentTargets: [],
+  });
+  assert.deepEqual(resolveTopologyHover([topology], devices, registry, 'two', 'mc'), {
+    lines: [], remoteCount: 0, omittedCount: 0,
+    parentTargets: [{ kind: 'remote-space', spaceId: 'one' }],
+  });
+});
+
+test('hover distinguishes an unplaced coordinator from an unplaced router and never bubbles a child', () => {
+  const topology = normalizeZhaTopology([
+    { ieee: '00124b0000000001', device_reg_id: 'missing-coordinator', device_type: 'Coordinator',
+      neighbors: [{ ieee: '00124b0000000002', lqi: 180 }] },
+    { ieee: '00124b0000000002', device_reg_id: 'missing-router', device_type: 'Router', neighbors: [
+      { ieee: '00124b0000000001', lqi: 150, relationship: 'parent' },
+      { ieee: '00124b0000000003', lqi: 70 },
+    ] },
+    { ieee: '00124b0000000003', device_reg_id: 'dc', device_type: 'EndDevice',
+      neighbors: [{ ieee: '00124b0000000002', lqi: 60, relationship: 'parent' }] },
+  ]);
+  const routerDevice = { ...devices[1], bindingKind: 'device', bindingRef: 'missing-router' };
+  const localRegistry = { ...registry, devices: {
+    ...registry.devices,
+    'missing-coordinator': { id: 'missing-coordinator' },
+    'missing-router': { id: 'missing-router' },
+  } };
+  assert.deepEqual(resolveTopologyHover([topology], [routerDevice, devices[2]], localRegistry, 'one', 'mb'), {
+    lines: [], remoteCount: 1, omittedCount: 1,
+    parentTargets: [{ kind: 'unplaced-coordinator' }],
+  });
+  assert.deepEqual(resolveTopologyHover([topology], [devices[2]], localRegistry, 'two', 'mc'), {
+    lines: [], remoteCount: 0, omittedCount: 1,
+    parentTargets: [{ kind: 'unplaced-device' }],
+  });
+});
+
+test('screen-pixel arrow geometry points at the requested endpoint and respects clearance', () => {
+  const origin = { x: 0, y: 20 };
+  const neighbor = { x: 100, y: 20 };
+  const outgoing = zigbeeArrowGeometry(origin, neighbor, 10, 12, 'toward-neighbor');
+  assert.deepEqual(outgoing?.tip, { x: 88, y: 20 });
+  assert.equal(outgoing?.points[1].x, 79);
+  assert.equal(outgoing?.points[2].x, 79);
+  const incoming = zigbeeArrowGeometry(origin, neighbor, 10, 12, 'toward-origin');
+  assert.deepEqual(incoming?.tip, { x: 10, y: 20 });
+  assert.equal(incoming?.points[1].x, 19);
+  const diagonal = zigbeeArrowGeometry({ x: 10, y: 10 }, { x: 70, y: 90 }, 5, 7, 'toward-neighbor');
+  assert.ok(diagonal && diagonal.tip.x < 70 && diagonal.tip.y < 90);
+  assert.equal(zigbeeArrowGeometry(origin, { x: 20, y: 20 }, 10, 8, 'toward-neighbor'), null);
 });
 
 test('ZHA runtime is explicit, admin-only and deduplicates concurrent reads', async () => {

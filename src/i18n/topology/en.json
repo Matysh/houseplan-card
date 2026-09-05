@@ -23,5 +23,8 @@
   "error_invalid_topic": "Check the Zigbee2MQTT base topic.",
   "error_invalid_payload": "The provider returned unsupported topology data.",
   "error_provider": "Topology data could not be loaded.",
-  "remote_count": "+{n} in other spaces"
+  "remote_count": "+{n} in other spaces",
+  "route_device_not_on_plan": "device is not on the plan",
+  "route_coordinator_not_on_plan": "coordinator is not on the plan",
+  "route_other_space": "another space"
 }

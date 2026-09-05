@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Zigbee topology links now show arrows towards the coordinator on hover;
+  incoming arrows identify devices behind a router, while a short bubble
+  truthfully ends the path when the next node is in another space or is not
+  placed ([#457](https://github.com/Matysh/houseplan-card/issues/457)).
 - Space settings can now create a room-free copy of the current space under a
   new name, preserving walls, openings, columns, Background objects, image
   transform, scale and display settings while leaving device placement behind;
