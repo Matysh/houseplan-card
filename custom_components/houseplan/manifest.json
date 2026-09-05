@@ -1,6 +1,9 @@
 {
   "domain": "houseplan",
   "name": "House Plan",
+  "after_dependencies": [
+    "lovelace"
+  ],
   "codeowners": [
     "@Matysh"
   ],
@@ -9,9 +12,6 @@
     "http",
     "frontend",
     "websocket_api"
-  ],
-  "after_dependencies": [
-    "lovelace"
   ],
   "documentation": "https://github.com/Matysh/houseplan-card",
   "integration_type": "service",
