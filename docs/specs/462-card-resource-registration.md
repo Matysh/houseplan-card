@@ -2,8 +2,8 @@
 
 - **Issue:** https://github.com/Matysh/houseplan-card/issues/462
 - **Тип / приоритет:** bug / P1
-- **Трек:** полный; меняются backend lifecycle, websocket-протокол и обязательный
-  View/kiosk UX
+- **Трек:** полный; меняются backend lifecycle, frontend recovery-controller и
+  обязательный View/kiosk UX
 - **Оценка:** пользовательская ценность 10/10; ценность для разработки 8/10;
   сложность 7/10; риск 8/10
 - **Связано:** #2, #295, #353, #412; `docs/SCOPE.md`,
@@ -90,8 +90,14 @@ setup entry. Явный `after_dependencies` документирует наме
 
 - **Storage mode** — ресурсы управляются UI HA. Интеграция может создавать и
   обновлять запись Lovelace resource registry.
-- **YAML mode** — ресурсы объявляются под `lovelace.resources` в
-  `configuration.yaml`; backend не пишет их в registry.
+- **YAML resources mode** — ресурсы объявляются под `lovelace.resources` в
+  `configuration.yaml`; backend не пишет их в registry. В HA 2026.2+ режим
+  выбирается независимым `lovelace.resource_mode: yaml` и не переводит сами
+  dashboards из storage в YAML.
+- **Legacy full-YAML dashboard mode** — совместимый с поддерживаемыми HA
+  2024.6–2026.1 вариант `lovelace.mode: yaml`; он управляет не только ресурсами,
+  но и самим dashboard, поэтому не предлагается пользователю storage dashboard
+  как равнозначная замена современному `resource_mode`.
 - **Fallback** — подключение через `add_extra_js_url` при недоступном для записи
   registry. Это поддерживаемая деградация, но она требует reload документа.
 - **Совпадение версий** — точное равенство непустых строк `CARD_VERSION` и
@@ -289,6 +295,13 @@ Mismatch симметричен. Текст не утверждает, кака�
   navigation и не меняет focus самопроизвольно.
 - В обычном режиме отображается при любом известном mismatch, включая editor и
   открытый dialog; reload остаётся осознанным действием пользователя.
+- Известный mismatch не блокирует вход в редактор. Существующий recovery #353
+  для lazy editor/onboarding runtime остаётся независимой проверкой fingerprint,
+  но его terminal-тост с тем же советом о reload подавляется, пока уже видна
+  version-mismatch плашка. Network/non-terminal toast с советом повторить
+  действие сохраняется; terminal toast также сохраняется, если mismatch
+  неизвестен и плашки нет. Одновременно два сообщения с одной просьбой о reload
+  не показываются.
 - В kiosk плашка до первой разрешённой auto-попытки не показывается: это
   осознанное исключение из обычного mismatch UX ради тихого обновления настенной
   панели. Если safe state долго не наступает, карточка сохраняет текущий кадр;
@@ -344,9 +357,22 @@ Settings → Dashboards → меню ⋮ → Resources → Add resource; URL
 `/houseplan_files/houseplan-card.js`, type JavaScript module. После установки или
 изменения ресурса полностью reload страницы; hard reload shortcuts названы.
 
-### YAML mode
+### YAML resources mode в HA 2026.2+
 
-Показан валидный top-level snippet:
+Современный канонический snippet управляет только источником ресурсов и
+оставляет сами dashboards в выбранном пользователем storage/YAML режиме:
+
+```yaml
+lovelace:
+  resource_mode: yaml
+  resources:
+    - url: /houseplan_files/houseplan-card.js
+      type: module
+```
+
+### Legacy HA 2024.6–2026.1
+
+Для уже YAML-managed dashboard показан отдельно помеченный legacy snippet:
 
 ```yaml
 lovelace:
@@ -356,9 +382,14 @@ lovelace:
       type: module
 ```
 
-Явно сказано, что `lovelace.resources` не подключает resource к storage-managed
-dashboard, а UI Resources не заменяет YAML для YAML-managed dashboard. Путь
-`/custom_components/...` остаётся явно запрещён.
+Документация явно предупреждает, что `mode: yaml` меняет режим самого dashboard.
+Пользователь старого HA со storage dashboard должен применять UI Resources из
+предыдущего раздела, а не переключать dashboard ради карточки. Нельзя утверждать,
+что `lovelace.resources` всегда игнорируется storage-managed dashboard: в HA
+2026.2+ именно `resource_mode: yaml` поддерживает YAML-ресурсы независимо от
+режима dashboard. UI Resources, в свою очередь, не заменяет YAML declaration,
+когда выбран YAML resource mode. Путь `/custom_components/...` остаётся явно
+запрещён.
 
 ## 13. Модель данных, compatibility и миграция
 
@@ -392,9 +423,12 @@ dashboard, а UI Resources не заменяет YAML для YAML-managed dashbo
 
 ### AC1 — документация режима (`unit`/docs contract)
 
-Оба README и оба User Guide содержат `lovelace:` перед YAML `resources:`,
-отдельную storage UI-инструкцию и hard reload shortcuts. Возврат плоского
-top-level `resources:` делает docs contract красным.
+Оба README и оба User Guide содержат отдельную storage UI-инструкцию, современный
+HA 2026.2+ snippet с `lovelace.resource_mode: yaml`, явно помеченный legacy
+2024.6–2026.1 snippet с `lovelace.mode: yaml` только для full-YAML dashboard и
+hard reload shortcuts. Возврат плоского top-level `resources:`, современного
+`mode: yaml` вместо `resource_mode: yaml` или совет переключить storage dashboard
+в legacy YAML ради карточки делает docs contract красным.
 
 ### AC2 — честный outcome регистрации (`backend`)
 
@@ -468,7 +502,9 @@ Runtime banner/auto-reload рендерит только full card. Space card �
 Плашка не меняет stage bounds/fit, доступна клавиатурой и touch, не блокирует
 жесты сцены вне себя, не двигает focus. Desktop, узкий touch viewport и kiosk
 after-failed-attempt имеют принятый screenshot/golden; reduced-motion вариант
-не анимируется.
+не анимируется. При видимой version-mismatch плашке terminal fingerprint failure
+lazy runtime не добавляет второй toast с просьбой reload; non-terminal failure и
+terminal failure без плашки продолжают показывать соответствующий toast.
 
 ### AC13 — сборка и синхронные артефакты (`build` + ревью кода)
 
@@ -499,6 +535,9 @@ Typecheck/unit/backend/build/bundle parity/no-new-any/check-docs и целевы
 
 - full card mismatch в обычном View: banner, стабильный stage bbox, no auto,
   click reload spy;
+- попытка открыть editor при известном mismatch: terminal fingerprint failure
+  не дублирует видимую плашку toast-ом; non-terminal failure остаётся видимым;
+  без version banner terminal toast #353 сохраняется;
 - kiosk mismatch: unsafe→safe без предварительной плашки, one auto;
   remount/reload с той же backend target — banner и zero auto;
 - editor/dialog/pending-write/zoom/recent interaction отдельными probes;
@@ -507,8 +546,9 @@ Typecheck/unit/backend/build/bundle parity/no-new-any/check-docs и целевы
 
 ### Docs/mutation
 
-- статический parser проверяет не просто строку `lovelace:`, а вложенность
-  `resources` в каждом canonical snippet и отдельную storage-инструкцию;
+- статический parser проверяет вложенность `resources`, современный
+  `resource_mode: yaml`, отдельно версионированный legacy `mode: yaml`, запрет
+  рекомендовать legacy mode для storage dashboard и отдельную UI-инструкцию;
 - `scripts/mutation-gate.mjs` хранит дорогие backend/browser mutants из AC3,
   AC4, AC7–AC9 с точными target test commands;
 - в документе code review каждый защитный AC получает строку «чем краснеет» по
@@ -564,6 +604,9 @@ Typecheck/unit/backend/build/bundle parity/no-new-any/check-docs и целевы
    unload cancellation и removal tests.
 10. **Заблуждающий System Health:** отдельные file/static/loader/outcome/error
     поля, без обещания browser state.
+11. **Дублирующиеся просьбы reload:** terminal toast #353 подавляется только при
+    уже видимой version-mismatch плашке; остальные ошибки lazy runtime не
+    скрываются, что проверяет AC12.
 
 ## 20. Rollback
 
@@ -610,3 +653,6 @@ bundles. План и layout не мигрируют. Старый backend игн
    смена frontend при неизменной target не сбрасывает guard.
 7. Проверка всех dialog/gesture состояний может быть выделена в общий pure
    snapshot helper; перечисление §11.3 является обязательным контрактом.
+8. Минимальный touch-target 44×44 CSS px выбран как локальный
+   accessibility-порог для этой плашки; общего числового порога в канонических
+   UX-документах проекта пока нет.
