@@ -459,7 +459,8 @@ Stage 3 не ослабляет
 Перед бетой обязательны два exact-SHA доказательства:
 
 1. существующий <code>large-house-isometric-v1</code> — не менее семи
-   samples, прежние budgets и cache limits;
+   samples, прежние fixture, measured windows, budgets и cache limits без
+   изменения их смысла;
 2. новый профиль <code>isometric-stage3-dense-v1</code> — сцена с плотными
    markers у стен/углов, value/LQI/new badges, room cards и door/window/gate.
    Для общих timing metrics он использует не более мягкие regression ratios,
@@ -468,13 +469,17 @@ Stage 3 не ослабляет
 Оба профиля обязаны:
 
 - реально включить <code>hp_alpha=1</code>;
-- проверить effective projection <code>iso</code> и Stage 3 marker;
+- проверить effective projection <code>iso</code>;
 - отвергнуть sample, который попал в Flat fallback;
-- включать first stable render, Flat↔Iso cycle, HA-only state update,
-  opening update, hover/focus overlay update, space switch и pan/zoom;
+- сохранить общие окна first stable render, Flat↔Iso cycle, HA-only state
+  update, space switch и pan/zoom;
 - подтверждать <code>isoGeometry ≤ 8</code> и growth 0 на steady updates;
-- ограничивать material/shadow/filter definitions O(1);
 - не обнаруживать новый полный boolean rebuild на HA-only update.
+
+Только новый dense-профиль добавляет Stage 3 marker, opening update,
+hover/focus overlay update, material/shadow/filter definition count и
+rendered/raised/nudged overlay counts. Эти дополнительные проверки не меняют
+fixture или смысл исторического <code>large-house-isometric-v1</code>.
 
 Локальный Windows run диагностический. Канонический verdict — Linux CI exact
 candidate SHA.
