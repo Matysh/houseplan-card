@@ -1,6 +1,6 @@
 # Спецификации задач
 
-Актуально на 2026-09-04.
+Актуально на 2026-09-06.
 
 GitHub Issues и GitHub Projects (v2) остаются единственным каноническим backlog проекта. Этот каталог содержит развёрнутые ТЗ: каждое ТЗ ссылается на issue, а issue — на соответствующий файл. Статус, приоритет и факт завершения меняются только в GitHub.
 
@@ -183,6 +183,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#457](https://github.com/Matysh/houseplan-card/issues/457) Направление Zigbee-связей к координатору | [457-zigbee-route-arrows.md](457-zigbee-route-arrows.md) |
 | [#460](https://github.com/Matysh/houseplan-card/issues/460) Детерминированное завершение кадра живого редактора | [460-live-editor-settlement.md](460-live-editor-settlement.md) |
 | [#461](https://github.com/Matysh/houseplan-card/issues/461) Быстрый commit промежуточной точки цепочки стен | [461-wall-draw-click-performance.md](461-wall-draw-click-performance.md) |
+| [#464](https://github.com/Matysh/houseplan-card/issues/464) Верхний контекстный слой Zigbee-топологии | [464-zigbee-topology-layer-order.md](464-zigbee-topology-layer-order.md) |
 
 ## P3
 
