@@ -166,10 +166,15 @@ trace, токены и пути вне config не попадают в System He
 2. При наличии файла выполняется первая попытка registry.
 3. `created/updated/existing` завершают путь без `extra_module_url`.
 4. `registry_pending` или первый `transient_error` включает fallback немедленно
-   и ставит ровно один callback через штатный HA start helper. Helper выполняется
-   после старта либо сразу, если HA уже running.
-5. Callback зарегистрирован через `entry.async_on_unload`; unload/remove до его
-   выполнения делает его no-op и не может воскресить удалённую интеграцию.
+   и ставит ровно одну отложенную попытку: штатный HA start helper дожидается
+   running-state, после чего cancellable lifecycle timer даёт registry ещё одну
+   фиксированную bounded паузу в 1 секунду. Если HA уже running, start helper
+   вызывается сразу, но секундная пауза всё равно сохраняется — retry не должен
+   повторять transient отказ в том же tick.
+5. Отмена start-listener, timer и уже запущенной retry task регистрируется через
+   `entry.async_on_unload`. Дополнительный cancellation/generation guard перед
+   каждым поздним side effect гарантирует, что unload/remove не воскресит
+   удалённую интеграцию даже при гонке с уже начавшейся coroutine.
 6. Успешный retry удаляет через штатный frontend helper только тот exact
    versioned URL, который этот setup сам добавил в `extra_module_url`, и
    фиксирует registry как финальный loader. Чужие URL не затрагиваются.
@@ -215,7 +220,8 @@ backend не пытается определять, какую из вкладо
   доступной регистрации frontend: `created`, `updated`, `existing` или
   поддерживаемый fallback при наличии файла и зарегистрированного static path.
 - Флаг «уведомление уже создано» записывается в служебное поле config entry
-  сразу после успешного `async_create`. Он не зависит от backend `VERSION`.
+  сразу после того, как синхронный callback `persistent_notification.async_create`
+  вернулся без исключения. Он не зависит от backend `VERSION`.
 - Существующая установка без поля получает одно уведомление при первом setup
   версии с #462. После этого update/downgrade/reload entry его не возвращают.
 - Dismiss уведомления не влияет на интеграцию. После restart HA оно может
@@ -231,9 +237,12 @@ backend не пытается определять, какую из вкладо
   (`Ctrl+F5` / `Cmd+Shift+R`); при ручной настройке storage dashboard ресурс
   находится в Settings → Dashboards → Resources.
 
-Текст берётся из backend translation catalog для языка HA с fallback на English;
-EN/RU/DE/FR поставляются одновременно. Это глобальное системное уведомление и
-поэтому использует язык экземпляра HA, а не язык конкретной открытой вкладки.
+Текст берётся через HA `async_get_translations` из совместимой с HA 2024.6
+категории `issues` backend translation catalog для языка HA с fallback на
+English; EN/RU/DE/FR поставляются одновременно. Использование переводов из
+`issues` не превращает сообщение в Repairs issue: показ выполняет только
+`persistent_notification`. Это глобальное системное уведомление и поэтому
+использует язык экземпляра HA, а не язык конкретной открытой вкладки.
 
 ## 10. System Health
 
@@ -265,9 +274,11 @@ translations по контракту HA. Значения остаются ко�
 `CARD_VERSION` и последний корректный `integration_version` из успешного
 `config/get`. Lazy editor runtime не загружается ради проверки.
 
-Каждый успешный `config/get` авторитетен: отсутствующее или malformed
-`integration_version` очищает ранее принятое значение до `unknown`, а не
-оставляет stale mismatch от предыдущего ответа/reconnect.
+Каждый успешный `config/get` авторитетен. Версия считается известной только если
+поле имеет тип string и после `trim()` не пусто; сравнивается нормализованная
+trimmed string без предположений о SemVer. Любой другой тип, пустая/whitespace
+строка или отсутствующее поле очищает ранее принятое значение до `unknown`, а
+не оставляет stale mismatch от предыдущего ответа/reconnect.
 
 Матрица:
 
@@ -283,8 +294,11 @@ Mismatch симметричен. Текст не утверждает, кака�
 
 ### 11.2 Плашка
 
-- Компактная overlay-плашка располагается внутри full card над сценой и не
-  изменяет высоту editor/header или fit viewport.
+- Компактная overlay-плашка располагается в card-level overlay над сценой и не
+  изменяет высоту editor/header или fit viewport. Она остаётся доступна и в
+  ранних full-card состояниях без готовой сцены (fixed-floor pending/invalid,
+  пустая модель), если успешный `config/get` уже подтвердил mismatch; отдельные
+  копии разметки в render-ветках не становятся независимыми состояниями.
 - Содержит понятный direction-neutral текст, версии frontend/backend и кнопку
   «Перезагрузить страницу» / `Reload page`.
 - Кнопка вызывает `window.location.reload()` только из trusted click/tap.
@@ -331,11 +345,15 @@ Auto-reload разрешён только при одновременном вы
 - `config.kiosk === true` и компонент connected;
 - initial server load завершён, есть полный settled frame, нет recovery/loading;
 - режим `view`, `_editing === false`;
-- ни один first-class dialog/confirm/menu overlay не открыт; единый predicate
-  обязан включать как минимум editor-secondary dialogs, room/partition delete,
-  import, backdrop guard, danger confirm и незавершённый `_vacFit`;
+- ни один принадлежащий карточке first-class dialog/confirm/menu overlay не
+  открыт; единый predicate обязан включать как минимум editor-secondary dialogs,
+  room/partition delete, import, backdrop guard, danger confirm и незавершённый
+  `_vacFit`. Нативный HA more-info не включается по ненадёжному stale-полю: его
+  открытие уже ставит общую interaction pause, а отдельного достоверного сигнала
+  закрытия у карточки нет;
 - `_pendingPhysicalWrites.size === 0`, `_writesPending === 0` и нет
   незавершённой config write chain;
+- нет pending layout debounce/отправки и грязных несохранённых позиций устройств;
 - нет активного pointer/pinch/swipe/drag gesture или mode transition;
 - `Date.now() >= _cyclePausedUntil`;
 - `_zoom <= 1.001`.
@@ -438,10 +456,13 @@ Backend различает `created`, `updated`, `existing`, `registry_pending`,
 
 ### AC3 — lifecycle retry без двойного loader (`backend` + mutation)
 
-Registry отсутствует на первой попытке и появляется к HA started: один retry
-регистрирует канонический resource и снимает fallback либо честно маркирует его
-остаток. Unload до event отменяет callback; повторный setup не накапливает
-listeners. Мутанты «удалить retry» и «не привязать callback к unload» краснеют.
+Registry отсутствует на первой попытке и появляется после HA started: один retry
+через фиксированный секундный lifecycle delay регистрирует канонический resource
+и снимает fallback либо честно маркирует его остаток. Уже running HA также не
+делает retry в том же tick. Unload до event, во время delay и во время task
+отменяет callback/side effects; повторный setup не накапливает listeners.
+Мутанты «удалить retry», «убрать delay при already-running» и «не привязать
+callback/task к unload» краснеют.
 
 ### AC4 — одноразовое notification (`backend` + mutation)
 
@@ -510,7 +531,8 @@ terminal failure без плашки продолжают показывать �
 
 Typecheck/unit/backend/build/bundle parity/no-new-any/check-docs и целевые smoke
 зелёные; EN/RU/DE/FR ключи полны; оба changelog и пользовательская документация
-обновлены. Три коммитящихся bundle-копии побайтно совпадают.
+обновлены. Три runtime-копии bundle синхронны; две committed trees (`dist` и
+integration frontend) побайтно совпадают.
 
 ## 16. План тестов и отрицательные доказательства
 
@@ -630,8 +652,10 @@ bundles. План и layout не мигрируют. Старый backend игн
   full-card version controller;
 - `docs/DEVELOPMENT.md` фиксирует backend/frontend version test seam и
   lifecycle retry;
-- принимаются три целевых golden/screenshot из AC12; изменение `src/**` требует
-  актуального Linux `Docs screenshots` artifact и fingerprint acceptance;
+- принимаются три новых product golden из AC12. Отдельно изменение `src/**`
+  требует актуального Linux `Docs screenshots` artifact для всех десяти
+  документационных кадров и fingerprint acceptance; неизменившиеся пиксели не
+  переснимаются вручную;
 - release performance/security отдельных отчётов не требует; штатные gates и
   pre-beta runbook остаются обязательными;
 - generated bundle trees обновляются только через штатный build.
@@ -643,8 +667,9 @@ bundles. План и layout не мигрируют. Старый backend игн
    неисправность Repairs.
 2. Boolean «notification уже создавалось» хранится в `entry.data`, а не в плане
    или layout; точное имя поля внутреннее.
-3. One-shot retry использует `homeassistant.helpers.start.async_at_started` либо
-   эквивалентный lifecycle helper, привязанный к unload.
+3. One-shot retry использует `homeassistant.helpers.start.async_at_started`, а
+   после running-state — cancellable delay через штатный event/loop helper;
+   listener, timer, task и поздние side effects привязаны к unload.
 4. Loader outcome может быть dataclass/enum/typed dict; публичны только значения
    System Health.
 5. Banner в kiosk появляется только после уже предпринятой auto-попытки для этой
