@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.72.0-beta.3 — 2026-09-05
+
 - Large plans now keep their heavy room, wall, lighting, decor and device scene
   stable during hover, pan, pinch and editor drags, and unrelated Home Assistant
   state updates no longer rebuild the full card; interactions remain visually
