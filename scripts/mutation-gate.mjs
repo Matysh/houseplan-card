@@ -1623,8 +1623,8 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'danger-confirm-warm-language-guard-removed',
     guard: 'node demo/smoke_danger_confirm_branches.mjs',
-    because: 'the warm language branch returns Lit noChange, so a newly registered '
-      + 'confirmation has no rendered decision source and hangs (#417 AC2)',
+    because: 'a request made while the language gate is already warm must be rejected '
+      + 'synchronously without ever entering the confirmation controller (#417 AC2/AC3)',
     patches: [{
       file: 'src/houseplan-card.ts',
       find: "    if (this._syncDangerConfirmLocaleGate() === 'warm') return Promise.resolve(false);",

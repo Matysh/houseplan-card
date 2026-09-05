@@ -65,15 +65,20 @@ const warmGate = await page.evaluate(async () => {
     new Promise((resolve) => setTimeout(() => resolve('timeout'), 100)),
   ]);
   await settle();
+  const warmDecision = card._confirmDanger({
+    key: 'warm-language-gate',
+    kind: 'destructive',
+    title: 'Delete?',
+    message: 'The plan and all its rooms will be deleted.',
+    confirmLabel: 'Delete',
+    cancelLabel: 'Cancel',
+  });
+  // Refusal is a synchronous registration barrier, not eventual cleanup by
+  // the next warm render. A briefly pending request has no decision surface.
+  const warmRequestWasNeverRegistered = card._dangerConfirm === null
+    && card._dangerConfirmController.state === null;
   const decision = await Promise.race([
-    card._confirmDanger({
-      key: 'warm-language-gate',
-      kind: 'destructive',
-      title: 'Delete?',
-      message: 'The plan and all its rooms will be deleted.',
-      confirmLabel: 'Delete',
-      cancelLabel: 'Cancel',
-    }),
+    warmDecision,
     new Promise((resolve) => setTimeout(() => resolve('timeout'), 100)),
   ]);
   const result = {
@@ -81,6 +86,7 @@ const warmGate = await page.evaluate(async () => {
     readyConfirmationOpenedBeforeWarm: openedWhileReady,
     readyToWarmCancelsOpenConfirmation: cancelledOnTransition === false,
     readyToWarmKeepsCommittedBody: root().querySelector('ha-card')?.outerHTML === committedBody,
+    warmLanguageGateNeverRegisters: warmRequestWasNeverRegistered,
     warmLanguageGateRefusesImmediately: decision === false,
     warmLanguageGateKeepsControllerEmpty: card._dangerConfirm === null
       && card._dangerConfirmController.state === null,
