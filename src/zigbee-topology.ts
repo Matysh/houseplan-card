@@ -111,8 +111,9 @@ const Z2M_RELATIONSHIPS = ['parent', 'child', 'sibling', 'none', 'previous_child
 
 function relationshipOf(value: unknown): string | undefined {
   if (typeof value === 'number') return Z2M_RELATIONSHIPS[value];
-  return typeof value === 'string'
-    ? value.trim().toLowerCase().slice(0, 40) || undefined : undefined;
+  if (typeof value !== 'string') return undefined;
+  const compact = value.trim().toLowerCase().replace(/[\s_-]+/g, '');
+  return compact === 'previouschild' ? 'previous_child' : compact.slice(0, 40) || undefined;
 }
 
 function observation(value: unknown): ZigbeeDirectionalObservation {

@@ -5838,6 +5838,17 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'zigbee-route-relationship-separators-normalized',
+    guard: 'node --test --test-name-pattern="Z2M relationship strings" test/zigbee-topology.test.mjs',
+    because: 'provider relationship strings must ignore separators before the parent tie-break '
+      + 'uses them (#457 section 6.3 and code-review r1)',
+    patches: [{
+      file: 'src/zigbee-topology.ts',
+      find: "  const compact = value.trim().toLowerCase().replace(/[\\s_-]+/g, '');",
+      replace: "  const compact = value.trim().toLowerCase();",
+    }],
+  },
+  {
     id: 'zigbee-route-parent-keeps-bfs-level',
     guard: 'node --test --test-name-pattern="uplink tree is deterministic" test/zigbee-topology.test.mjs',
     because: 'every parent must be one BFS level nearer the coordinator; accepting a same-level '

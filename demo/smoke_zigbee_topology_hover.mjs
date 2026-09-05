@@ -154,5 +154,67 @@ const result = await page.evaluate(async () => {
   return out;
 });
 
+for (const [aspect, viewport] of Object.entries({
+  wide: { width: 1100, height: 500 },
+  tall: { width: 480, height: 900 },
+})) {
+  await page.setViewportSize(viewport);
+  for (const [zoomName, zoom] of Object.entries({ min: 1 / 3, default: 1, max: 8 })) {
+    result[`geometry_${aspect}_${zoomName}`] = await page.evaluate(async ({ zoom, hostWidth }) => {
+      const card = window.__card;
+      const root = () => card.shadowRoot || card.renderRoot;
+      const wait = (predicate, timeout = 5000) => new Promise((resolve, reject) => {
+        const started = performance.now();
+        const tick = () => {
+          if (predicate()) return resolve();
+          if (performance.now() - started > timeout) return reject(new Error('topology geometry timeout'));
+          setTimeout(tick, 20);
+        };
+        tick();
+      });
+      document.querySelector('#host').style.width = `${hostWidth}px`;
+      card.hass = { ...card.hass, user: { ...card.hass.user, is_admin: true } };
+      card._setMode('view');
+      card._commitSpace('f1', true);
+      card._zoom = 1;
+      card._view = null;
+      card.requestUpdate();
+      await card.updateComplete;
+      card._applyView(zoom, 0.32, 0.36);
+      card.requestUpdate();
+      await card.updateComplete;
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      const source = root().querySelector('.dev[data-id="d_light1"]');
+      source.dispatchEvent(new PointerEvent('pointerover', {
+        pointerType: 'mouse', bubbles: true, composed: true, clientX: 200, clientY: 200,
+      }));
+      await wait(() => root().querySelector('hp-zigbee-topology-overlay')?.shadowRoot
+        ?.querySelector('[data-hp="zigbee-topology-arrow"]'));
+      const overlay = root().querySelector('hp-zigbee-topology-overlay');
+      await overlay.updateComplete;
+      const svg = overlay.shadowRoot.querySelector('svg');
+      const arrow = overlay.shadowRoot.querySelector('[data-hp="zigbee-topology-arrow"]');
+      const line = overlay.shadowRoot.querySelector('line[data-direction="toward-neighbor"]');
+      const points = arrow.getAttribute('points').trim().split(/\s+/).map((pair) => {
+        const [x, y] = pair.split(',').map(Number);
+        return new DOMPoint(x, y).matrixTransform(svg.getScreenCTM());
+      });
+      const tip = points[0];
+      const base = new DOMPoint((points[1].x + points[2].x) / 2, (points[1].y + points[2].y) / 2);
+      const length = Math.hypot(tip.x - base.x, tip.y - base.y);
+      const halfWidth = Math.hypot(points[1].x - points[2].x, points[1].y - points[2].y) / 2;
+      const lineVector = {
+        x: Number(line.getAttribute('x2')) - Number(line.getAttribute('x1')),
+        y: Number(line.getAttribute('y2')) - Number(line.getAttribute('y1')),
+      };
+      const arrowVector = { x: tip.x - base.x, y: tip.y - base.y };
+      const alignment = (lineVector.x * arrowVector.x + lineVector.y * arrowVector.y)
+        / (Math.hypot(lineVector.x, lineVector.y) * Math.hypot(arrowVector.x, arrowVector.y));
+      return length > 8.5 && length < 9.5 && halfWidth > 4 && halfWidth < 5
+        && alignment > 0.999 && getComputedStyle(overlay).pointerEvents === 'none';
+    }, { zoom, hostWidth: Math.max(320, viewport.width - 40) });
+  }
+}
+
 checkAll(result);
 await finish(browser, result);

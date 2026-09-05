@@ -112,6 +112,23 @@ test('Z2M normalization keeps snake_case compatibility and prefers flat link IEE
   assert.ok(topology.warnings.some((item) => item.code === 'self_link'));
 });
 
+test('Z2M relationship strings ignore case and separators', () => {
+  const topology = normalizeZ2mTopology({ data: { value: JSON.stringify({
+    nodes: [
+      { ieeeAddr: '00124b0000000001', type: 'Coordinator' },
+      { ieeeAddr: '00124b0000000002', type: 'Router' },
+      { ieeeAddr: '00124b0000000003', type: 'EndDevice' },
+    ],
+    links: [
+      { sourceIeeeAddr: '00124b0000000001', targetIeeeAddr: '00124b0000000002',
+        relationship: ' PREVIOUS-child ' },
+      { sourceIeeeAddr: '00124b0000000002', targetIeeeAddr: '00124b0000000003',
+        relationship: ' P_a-r ent ' },
+    ],
+  }) } }, 'zigbee2mqtt');
+  assert.deepEqual(topology.links.map((link) => link.aToB.relationship), ['previous_child', 'parent']);
+});
+
 test('exact device/entity mapping yields local lines and a deduplicated remote count', () => {
   const topology = normalizeZhaTopology([
     { ieee: '00124b0000000001', device_reg_id: 'da', neighbors: [
