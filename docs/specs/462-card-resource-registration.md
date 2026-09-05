@@ -33,12 +33,12 @@ storage-пользователь применяет YAML, который его 
 авторегистрации скрыт в логе, а старая вкладка выглядит как актуальная. Иногда
 помогает только угаданный `Ctrl+F5`.
 
-**После:** документация отдельно описывает storage и YAML; HA сообщает, что
-нужно перезагрузить frontend, пока совпадающий bundle действительно не
-подключился; System Health показывает файл, статический путь, способ регистрации
-и URL. Уже загруженная full card при несовпадении версий показывает компактную
+**После:** документация отдельно описывает storage и YAML; после первой
+доступной регистрации HA один раз сообщает, что нужно полностью перезагрузить
+frontend; System Health показывает файл, статический путь, способ регистрации и
+URL. Уже загруженная full card при несовпадении версий показывает компактную
 плашку с перезагрузкой. Kiosk выполняет не более одной тихой перезагрузки для
-конкретной пары версий и при неуспехе показывает ту же плашку.
+конкретной целевой backend-версии и при неуспехе показывает ту же плашку.
 
 ## 3. Подтверждённая причина
 
@@ -79,8 +79,10 @@ setup entry. Явный `after_dependencies` документирует наме
 3. Минимальные обязательные guards переиспользуют смысл `_cycleTick`:
    `Date.now() >= _cyclePausedUntil` и `_zoom <= 1.001`; дополнительно запрещены
    editor, dialog и незавершённые physical writes.
-4. На одну пару несовпадающих версий допустима ровно одна автоматическая
-   перезагрузка в рамках browser-tab session. Отметка записывается до reload.
+4. На одну целевую `integration_version` допустима ровно одна автоматическая
+   перезагрузка в рамках browser-tab session. Отметка записывается до reload;
+   смена/чередование frontend bundle при той же backend-версии не даёт новую
+   попытку.
 5. Если после неё версии всё ещё различаются, повтор запрещён и показывается
    ручная плашка.
 
@@ -98,9 +100,8 @@ setup entry. Явный `after_dependencies` документирует наме
 - **Неизвестная версия** — одна из сторон не предоставила корректную непустую
   строку. Она не считается mismatch и не запускает notice/reload.
 - **Full card** — `custom:houseplan-card`. Runtime-плашка и kiosk auto-reload
-  относятся к ней. `custom:houseplan-space-card` загружается тем же bundle и
-  подтверждает его версию backend, но отдельный runtime banner/kiosk-контроллер
-  в этой задаче не получает.
+  относятся к ней. `custom:houseplan-space-card` загружается тем же bundle, но
+  отдельный runtime banner/kiosk-контроллер в этой задаче не получает.
 
 ## 6. Скоуп
 
@@ -113,15 +114,13 @@ setup entry. Явный `after_dependencies` документирует наме
 4. Взаимоисключающий финальный loader: Lovelace registry либо
    `extra_module_url`; fallback удаляется, если retry успешно перешёл на
    registry.
-5. Локализованная Repairs-подсказка о необходимости загрузить новый frontend;
-   она снимается только после подтверждения совпадающего bundle.
-6. Опциональный `card_version` в `houseplan/config/get`; его передают full и
-   space card. Старые клиенты без поля полностью совместимы.
-7. Состояние frontend-регистрации в System Health.
-8. Runtime version mismatch controller в initial full-card bundle, без импорта
+5. Локализованное одноразовое persistent notification после первой доступной
+   регистрации frontend-ресурса.
+6. Состояние frontend-регистрации в System Health.
+7. Runtime version mismatch controller в initial full-card bundle, без импорта
    lazy editor runtime.
-9. Ручная плашка и безопасная одноразовая kiosk-перезагрузка.
-10. i18n EN/RU/DE/FR, backend/unit/browser/mutation проверки, документация и два
+8. Ручная плашка и безопасная одноразовая kiosk-перезагрузка.
+9. i18n EN/RU/DE/FR, backend/unit/browser/mutation проверки, документация и два
     changelog.
 
 ## 7. Не входит
@@ -149,7 +148,8 @@ setup entry. Явный `after_dependencies` документирует наме
 | `existing` | точный URL уже существовал | `lovelace_resource` |
 | `registry_pending` | registry ещё не появился/не загрузился | временно fallback, затем один retry |
 | `yaml_fallback` | registry сознательно недоступен для записи | `extra_module_url` |
-| `error_fallback` | безопасно перехвачен неожиданный отказ | `extra_module_url` |
+| `transient_error` | первая попытка упала на load/create/update | временно fallback, затем один retry |
+| `error_fallback` | повторная попытка также упала | `extra_module_url` |
 
 Outcome включает безопасный короткий `last_error` только для диагностики; stack
 trace, токены и пути вне config не попадают в System Health.
@@ -159,16 +159,16 @@ trace, токены и пути вне config не попадают в System He
 1. Статический путь регистрируется как сейчас, один раз на HA run.
 2. При наличии файла выполняется первая попытка registry.
 3. `created/updated/existing` завершают путь без `extra_module_url`.
-4. `registry_pending` включает fallback немедленно и ставит ровно один callback
-   через штатный HA start helper. Helper выполняется после старта либо сразу,
-   если HA уже running.
+4. `registry_pending` или первый `transient_error` включает fallback немедленно
+   и ставит ровно один callback через штатный HA start helper. Helper выполняется
+   после старта либо сразу, если HA уже running.
 5. Callback зарегистрирован через `entry.async_on_unload`; unload/remove до его
    выполнения делает его no-op и не может воскресить удалённую интеграцию.
 6. Успешный retry удаляет через штатный frontend helper только тот exact
    versioned URL, который этот setup сам добавил в `extra_module_url`, и
    фиксирует registry как финальный loader. Чужие URL не затрагиваются.
-7. Неуспешный retry превращает состояние в устойчивый fallback. Нового timer,
-   tight loop и накопления listeners нет.
+7. Неуспешный retry превращает состояние в устойчивый `error_fallback`. Нового
+   timer, tight loop и накопления listeners нет.
 8. `yaml_fallback` и `error_fallback` не создают бесконечный retry. Повторный
    setup остаётся идемпотентным.
 9. Несколько найденных legacy resource entries не размножаются: authority —
@@ -198,48 +198,36 @@ registry остаётся authority для будущих документов. 
 честный System Health. Ложное значение `static_path_registered=true` до
 успешного вызова HA API запрещено.
 
-## 9. Уведомление и подтверждение загрузки frontend
+## 9. Одноразовое уведомление после первой регистрации
 
-Используется локализованный Repairs issue с постоянным ID
-`frontend_reload_required`, severity `warning`, `is_fixable=false`. Это
-технический выбор в рамках разрешённого владельцем «Repairs или persistent
-notification»: Repairs даёт клиентскую локализацию и может автоматически
-исчезнуть после доказанного результата.
+Используется локализованное `persistent_notification` со стабильным
+namespaced ID. Это информационный onboarding, а не сохраняемая неисправность:
+backend не пытается определять, какую из вкладок пользователь уже обновил, и не
+создаёт Repairs issue.
 
-### 9.1 Публикация
+- Уведомление создаётся ровно один раз за жизнь config entry после первой
+  доступной регистрации frontend: `created`, `updated`, `existing` или
+  поддерживаемый fallback при наличии файла и зарегистрированного static path.
+- Флаг «уведомление уже создано» записывается в служебное поле config entry
+  сразу после успешного `async_create`. Он не зависит от backend `VERSION`.
+- Существующая установка без поля получает одно уведомление при первом setup
+  версии с #462. После этого update/downgrade/reload entry его не возвращают.
+- Dismiss уведомления не влияет на интеграцию. После restart HA оно может
+  исчезнуть по правилам persistent notification и не создаётся повторно: это
+  намеренно одноразовая инструкция, а не контроль прочтения.
+- Отсутствующий frontend-файл либо неуспешный static path не устанавливает флаг:
+  уведомление появится при первом последующем setup, где frontend доступен.
+- Повторный setup, параллельное завершение retry и несколько entries не создают
+  дубли: стабильный notification ID и persisted flag являются authority.
+- Uninstall dismiss-ит уведомление best effort; служебное поле исчезает вместе
+  с entry.
+- Текст сообщает: карточка подключена; полностью перезагрузите страницу
+  (`Ctrl+F5` / `Cmd+Shift+R`); при ручной настройке storage dashboard ресурс
+  находится в Settings → Dashboards → Resources.
 
-- При доступном frontend-файле backend создаёт/обновляет issue для текущего
-  `VERSION`, если эта версия ещё не подтверждена браузером.
-- Подтверждённая версия хранится в служебном поле config entry, отдельно от
-  плана. Отсутствие поля у старой установки означает «не подтверждено» и не
-  требует миграции данных плана.
-- Повторный setup той же уже подтверждённой версии не создаёт кратковременное
-  ложное issue. Для новой или downgraded версии issue создаётся снова.
-- Текст сообщает: интеграция готова; перезапустите HA после незавершённого
-  обновления, затем полностью перезагрузите страницу (`Ctrl+F5` /
-  `Cmd+Shift+R`); в storage mode при ручной настройке ресурс находится в
-  Settings → Dashboards → Resources.
-
-### 9.2 Подтверждение
-
-`houseplan/config/get` принимает необязательное поле `card_version` — непустую
-строку с разумным пределом длины. Full и space card передают `CARD_VERSION` при
-каждом штатном initial/reconnect запросе.
-
-- `card_version === VERSION`: backend записывает acknowledgement текущей
-  версии и удаляет Repairs issue.
-- поле отсутствует, malformed либо не равно `VERSION`: конфигурация всё равно
-  возвращается как раньше; acknowledgement и issue не меняются.
-- side effect не требует write permission: загрузить совпадающий публичный
-  bundle может любой аутентифицированный пользователь, а изменение касается
-  только служебной подсказки, не плана.
-- одновременные совпадающие запросы идемпотентны и не вызывают reload config
-  entry.
-- uninstall удаляет Repairs issue; служебное поле исчезает вместе с entry.
-
-Первый релиз механизма намеренно покажет issue существующим установкам, пока
-хотя бы один браузер не загрузит новый bundle. Это закрывает переходный случай,
-когда старый frontend ещё не умеет показать runtime-плашку.
+Текст берётся из backend translation catalog для языка HA с fallback на English;
+EN/RU/DE/FR поставляются одновременно. Это глобальное системное уведомление и
+поэтому использует язык экземпляра HA, а не язык конкретной открытой вкладки.
 
 ## 10. System Health
 
@@ -255,12 +243,13 @@ notification»: Repairs даёт клиентскую локализацию и 
 | `resource_url` | точный `FRONTEND_URL?v=VERSION` либо `unavailable` |
 | `resource_retry` | `pending` / `attempted` / `not_needed` |
 | `resource_error` | безопасная причина либо `none` |
+| `first_reload_notice` | `created` / `already_created` / `pending_frontend` |
 
 Ключи `system_health.info.*` добавляются в `strings.json` и EN/RU/DE/FR
 translations по контракту HA. Значения остаются короткими и пригодными для
 копирования в support report. System Health не обещает, что конкретная вкладка
-браузера уже перезагружена: это показывает Repairs acknowledgement и runtime
-сравнение.
+браузера уже перезагружена: одноразовый флаг подтверждает только создание
+инструкции, а фактическое состояние показывает runtime-сравнение.
 
 ## 11. Frontend version controller
 
@@ -280,8 +269,8 @@ translations по контракту HA. Значения остаются ко�
 |---|---|---|---|
 | unknown | любой | ничего | ничего |
 | `A` | `A` | ничего | ничего |
-| `A` | `B`, пара не пыталась | плашка, только ручной reload | без плашки; при safe state одна auto-попытка |
-| `A` | `B`, пара уже пыталась | плашка | плашка, auto запрещён |
+| `A` | `B`, target `B` не пытался | плашка, только ручной reload | без плашки; при safe state одна auto-попытка |
+| `A` | `B`, target `B` уже пытался | плашка | плашка, auto запрещён |
 
 Mismatch симметричен. Текст не утверждает, какая сторона новее, и предлагает
 завершить restart HA, затем reload страницы.
@@ -309,19 +298,20 @@ Mismatch симметричен. Текст не утверждает, кака�
 
 ### 11.3 Ровно одна тихая kiosk-перезагрузка
 
-Attempt хранится в `sessionStorage` под namespaced key и содержит точную пару
-`CARD_VERSION + integration_version`. Один module-level helper разделяет его
-между всеми full card на странице.
+Attempt хранится в `sessionStorage` под namespaced key и содержит целевую
+`integration_version`. Один module-level helper разделяет его между всеми full
+card на странице.
 
-1. Перед `location.reload()` pair синхронно записывается в `sessionStorage`.
-2. Та же pair после reload или в другом card instance не получает вторую
-   auto-попытку.
-3. Новая pair может получить одну новую попытку.
+1. Перед `location.reload()` target синхронно записывается в `sessionStorage`.
+2. Та же target после reload, при другом `CARD_VERSION` или в другом card
+   instance не получает вторую auto-попытку.
+3. Новая backend target может получить одну новую попытку.
 4. Manual button не очищает guard и не обещает auto retry.
 5. Если `sessionStorage` читать или писать нельзя, fail-safe — banner и никакой
    автоматической перезагрузки.
-6. Совпадение версий не требует очищать историю; хранится только одна небольшая
-   pair, без плана, entity ID и других пользовательских данных.
+6. Совпадение версий не очищает сохранённую target: иначе reverse proxy,
+   чередующий старый и новый frontend при том же backend, снова разрешит reload.
+   Хранится одна небольшая строка без плана, entity ID и других данных.
 
 Auto-reload разрешён только при одновременном выполнении:
 
@@ -339,7 +329,7 @@ Auto-reload разрешён только при одновременном вы
 
 Проверка идёт независимым bounded controller/timer: `cycle: 0` не отключает
 механизм. Одновременно существует не более одного timer на card; disconnect,
-совпадение версий и смена pair его отменяют. Проверка не чаще одного раза за
+совпадение версий и смена target его отменяют. Проверка не чаще одного раза за
 animation frame/разумный timer и не добавляется в HA state render hot path.
 
 ## 12. Документация установки
@@ -373,19 +363,16 @@ dashboard, а UI Resources не заменяет YAML для YAML-managed dashbo
 ## 13. Модель данных, compatibility и миграция
 
 - Формат плана, layout, storage schema и card config не меняются.
-- Websocket-поле `card_version` опционально; старые frontend продолжают получать
-  прежний ответ. `integration_version` остаётся ответным compatibility-полем.
-- Служебное acknowledgement в config entry читается как optional string.
-  Отсутствующее/невалидное значение означает «не подтверждено»; schema migration
-  и перепись планов не нужны.
+- Websocket-протокол не меняется: `integration_version` остаётся существующим
+  ответным compatibility-полем, новых request/response полей нет.
+- Служебный boolean-флаг показа первого уведомления в config entry читается как
+  optional; отсутствие/невалидное значение означает «ещё не создавалось».
+  Schema migration и перепись планов не нужны.
 - `sessionStorage` — transient browser-tab metadata, не экспортируется и не
   синхронизируется.
-- Downgrade безопасен: старый backend игнорирует невозможный для него новый
-  request field только если его schema это допускает; поэтому новый frontend
-  должен при `invalid_format` один раз повторить `config/get` без
-  `card_version`, принять ответ и перейти в состояние unknown вместо load-loop.
-  Этот compatibility retry выполняется не чаще одного раза на load.
-- Возврат к backend, где поле уже поддержано, снова включает handshake.
+- Downgrade безопасен: старый backend без `integration_version` даёт `unknown`,
+  backend с иной валидной версией даёт symmetric mismatch. Запрос остаётся тем
+  же и не требует compatibility retry.
 
 ## 14. i18n
 
@@ -393,7 +380,7 @@ dashboard, а UI Resources не заменяет YAML для YAML-managed dashbo
 
 - frontend EN/RU/DE/FR: заголовок/текст version mismatch, подписи обеих версий,
   кнопка reload;
-- backend `strings.json` + EN/RU/DE/FR: Repairs title/description и ключи
+- backend `strings.json` + EN/RU/DE/FR: текст одноразового notification и ключи
   `system_health.info.*`;
 - документация EN/RU синхронна по смыслу.
 
@@ -412,8 +399,8 @@ top-level `resources:` делает docs contract красным.
 ### AC2 — честный outcome регистрации (`backend`)
 
 Backend различает `created`, `updated`, `existing`, `registry_pending`,
-`yaml_fallback`, `error_fallback`; существующая запись обновляется без дубля, а
-отсутствующий файл не сообщает успешный loader.
+`transient_error`, `yaml_fallback`, `error_fallback`; существующая запись
+обновляется без дубля, а отсутствующий файл не сообщает успешный loader.
 
 ### AC3 — lifecycle retry без двойного loader (`backend` + mutation)
 
@@ -422,13 +409,12 @@ Registry отсутствует на первой попытке и появля
 остаток. Unload до event отменяет callback; повторный setup не накапливает
 listeners. Мутанты «удалить retry» и «не привязать callback к unload» краснеют.
 
-### AC4 — Repairs handshake (`backend` + mutation)
+### AC4 — одноразовое notification (`backend` + mutation)
 
-Неподтверждённая текущая версия создаёт локализованный Repairs issue; совпадающий
-`card_version` сохраняет acknowledgement и удаляет issue. Missing/malformed/
-different version не блокирует чтение config и не снимает issue. Повторный setup
-подтверждённой версии не создаёт его снова; uninstall очищает. Мутант
-«подтверждать любую версию» краснеет.
+Первая доступная регистрация frontend создаёт локализованное persistent
+notification и сохраняет boolean-флаг. Повторный setup, retry completion и новая
+версия его не создают; missing file/static failure не расходуют право на показ;
+uninstall dismiss-ит его. Мутант «не сохранять флаг» краснеет повторным setup.
 
 ### AC5 — System Health (`backend`)
 
@@ -438,7 +424,8 @@ exception возвращает правдивые поля §10, точный ve
 
 ### AC6 — точное frontend-сравнение (`unit` + mutation)
 
-Pure controller покрывает equal, symmetric mismatch, unknown и смену pair.
+Pure controller покрывает equal, symmetric mismatch, unknown и смену target.
+Успешный ответ без корректной `integration_version` очищает stale значение.
 В обычном режиме banner существует iff известен mismatch; kiosk-исключение до
 первой auto-попытки соответствует матрице §11.1. Отключение сравнения или
 принятие unknown за mismatch ловится unit/mutation gate.
@@ -452,27 +439,28 @@ Pure controller покрывает equal, symmetric mismatch, unknown и сме�
 ### AC8 — kiosk safety (`unit` + browser + mutation)
 
 Каждый отдельный unsafe guard из §11.3 блокирует auto-reload; после перехода в
-полностью safe state pair записывается до ровно одного reload. Минимум мутанты
+полностью safe state target записывается до ровно одного reload. Минимум мутанты
 «игнорировать pause», «игнорировать dialog/editor», «игнорировать pending write»
 и «помечать attempt после reload» детерминированно краснеют.
 
 ### AC9 — защита от reload-loop (`unit` + browser + mutation)
 
-После simulated reload тот же mismatch показывает banner и не вызывает reload
-повторно; второй card instance той же вкладки также не вызывает. Новая pair
-получает одну попытку. Исключение storage переводит в manual-only. Мутант
-«игнорировать сохранённую pair» краснеет.
+После simulated reload тот же backend target показывает banner и не вызывает
+reload повторно; это сохраняется при чередовании разных frontend-версий и во
+втором card instance той же вкладки. Новая backend target получает одну попытку.
+Исключение storage переводит в manual-only. Мутант «игнорировать сохранённую
+target» краснеет.
 
-### AC10 — full/space handshake и граница UX (`unit`/browser)
+### AC10 — граница full/space UX (`unit`/browser)
 
-Обе карточки посылают `CARD_VERSION` и могут подтвердить загрузку bundle.
-Runtime banner/auto-reload рендерит только full card; space card не падает и не
-теряет config при новом ответном поле.
+Runtime banner/auto-reload рендерит только full card. Space card продолжает
+штатно загружать тот же bundle и config, но не получает скрытого timer или
+нового UI этой задачи.
 
 ### AC11 — downgrade и lifecycle compatibility (`unit` + backend)
 
-Старый backend, отклонивший request с `card_version`, получает один fallback
-request без поля; загрузка завершается без retry storm. Setup/unload/remove и
+Старый backend без `integration_version` даёт `unknown`; валидная отличающаяся
+версия не скрывается. Setup/unload/remove, старый websocket request и
 существующие `test_ha_setup.py` остаются зелёными.
 
 ### AC12 — View/touch/a11y и визуальная стабильность (`browser` + golden)
@@ -495,26 +483,27 @@ Typecheck/unit/backend/build/bundle parity/no-new-any/check-docs и целевы
 - расширить `tests_backend/test_ha_setup.py` матрицей outcomes, delayed registry,
   listener cleanup, idempotent reload, missing bundle и uninstall cleanup;
 - отдельные тесты `system_health_info` для §10;
-- websocket schema/handshake: equal, missing, malformed, mismatch, concurrent
-  equal и старый client;
-- mutation witnesses для retry, unload-bound callback и exact acknowledgement.
+- one-time notification: first available setup, repeated setup/version, missing
+  file/static failure и uninstall;
+- mutation witnesses для retry, unload-bound callback и persisted notice flag.
 
 ### Frontend unit
 
 - pure mismatch/session guard controller без DOM;
-- exact pair, storage exception, multiple instances, mark-before-reload;
+- exact backend target, чередование frontend versions, storage exception,
+  multiple instances и mark-before-reload;
 - каждый safe predicate независимо false/true;
-- compatibility request fallback на old backend.
+- authoritative очистка stale `integration_version` до unknown.
 
 ### Browser smoke/golden
 
 - full card mismatch в обычном View: banner, стабильный stage bbox, no auto,
   click reload spy;
 - kiosk mismatch: unsafe→safe без предварительной плашки, one auto;
-  remount/reload с той же pair — banner и zero auto;
+  remount/reload с той же backend target — banner и zero auto;
 - editor/dialog/pending-write/zoom/recent interaction отдельными probes;
 - narrow touch + keyboard focus + reduced motion;
-- space card успешно отправляет handshake без runtime banner.
+- space card загружается без runtime banner/timer.
 
 ### Docs/mutation
 
@@ -530,10 +519,10 @@ Typecheck/unit/backend/build/bundle parity/no-new-any/check-docs и целевы
 Ожидаемый минимум:
 
 - `custom_components/houseplan/__init__.py`, `manifest.json`,
-  `system_health.py`, `repairs.py`, `websocket_api.py`, runtime/store typing;
+  `system_health.py` и runtime/store typing;
 - `custom_components/houseplan/strings.json` и translations EN/RU/DE/FR;
-- `src/houseplan-card.ts`, shared websocket/config client для обеих cards,
-  небольшой pure version controller, frontend i18n EN/RU/DE/FR и CSS;
+- `src/houseplan-card.ts`, небольшой pure version controller, frontend i18n
+  EN/RU/DE/FR и CSS;
 - `README.md`, `README.ru.md`, `docs/USER-GUIDE.md`,
   `docs/USER-GUIDE.ru.md`, `docs/ARCHITECTURE.md`, `docs/DEVELOPMENT.md`,
   `docs/TESTING.md`, оба changelog;
@@ -552,23 +541,23 @@ Typecheck/unit/backend/build/bundle parity/no-new-any/check-docs и целевы
 - Banner добавляет постоянный DOM только во время mismatch. Geometry/Glow/device
   pipelines не меняются; новый performance capture не нужен, но штатные budget
   gates обязательны.
-- `card_version` — недоверенная bounded строка, не используется как URL/path и
-  не даёт write capability. В System Health не попадают traceback, секреты,
-  внешние filesystem paths или пользовательская конфигурация.
-- Repairs acknowledgement не меняет план и доступен обычному authenticated
-  клиенту; resource registration/removal остаётся серверной операцией.
+- В System Health не попадают traceback, секреты, внешние filesystem paths или
+  пользовательская конфигурация.
+- Одноразовый notice-флаг не меняет план или permission boundary;
+  resource registration/removal остаётся серверной операцией.
 
 ## 19. Риски
 
 1. **Двойное исполнение bundle:** fallback и resource могут сосуществовать после
    retry. Закрывается единым exact URL, удалением fallback и AC3.
-2. **Ложное вечное Repairs issue:** закрывается matching handshake и persistent
-   acknowledgement текущей версии.
-3. **Ложное снятие issue старым frontend:** exact equality и malformed tests.
-4. **Reload-loop kiosk:** sessionStorage pair до reload и AC8/AC9.
+2. **Повторяющееся notification:** закрывается persisted boolean и AC4.
+3. **Потерянное первое notification:** флаг пишется только после доступного
+   frontend/static path и успешного создания.
+4. **Reload-loop kiosk:** sessionStorage backend target до reload и AC8/AC9.
 5. **Потеря правки:** полный safe predicate, обычный режим manual-only.
 6. **Frontend новее backend:** direction-neutral copy и symmetric matrix.
-7. **Old backend rejects new request key:** один compatibility retry без поля.
+7. **Old backend не отдаёт version:** authoritative `unknown`, без ложного
+   banner/reload.
 8. **Несколько cards/tabs:** attempt общий в пределах вкладки, но не между
    вкладками; это намеренная граница `sessionStorage`.
 9. **HA startup race/uninstall:** after dependency, one-shot lifecycle callback,
@@ -579,9 +568,8 @@ Typecheck/unit/backend/build/bundle parity/no-new-any/check-docs и целевы
 ## 20. Rollback
 
 Откат — один revert продуктового коммита и синхронных тестов/документации/
-bundles. План и layout не мигрируют. Старый backend игнорирует служебное поле
-acknowledgement в config entry; при необходимости оно безопасно удаляется
-следующим setup/removal, но не требует ручного вмешательства.
+bundles. План и layout не мигрируют. Старый backend игнорирует служебный boolean
+в config entry; он не требует ручного вмешательства.
 
 После отката вернутся невидимый fallback и необходимость ручного reload;
 зарегистрированный Lovelace resource с прежним корректным URL останется
@@ -595,7 +583,7 @@ acknowledgement в config entry; при необходимости оно без
   на #462;
 - README и User Guide EN/RU меняются по §12; `docs/TESTING.md` больше не
   утверждает старый reload-контракт;
-- `docs/ARCHITECTURE.md` фиксирует authority resource loader, handshake и
+- `docs/ARCHITECTURE.md` фиксирует authority resource loader, notification и
   full-card version controller;
 - `docs/DEVELOPMENT.md` фиксирует backend/frontend version test seam и
   lifecycle retry;
@@ -607,18 +595,18 @@ acknowledgement в config entry; при необходимости оно без
 
 ## 22. Принятые технические предположения — можно менять на ревью
 
-1. Repairs выбран вместо `persistent_notification`, потому что даёт HA-native
-   локализацию и доказанное автоматическое закрытие; пользовательский результат
-   остаётся тем же.
-2. Acknowledgement хранится в `entry.data`, а не в плане или layout; точное имя
-   поля внутреннее.
+1. Выбран `persistent_notification`, потому что контракт владельца — одна
+   информационная подсказка после первой регистрации, а не сохраняемая
+   неисправность Repairs.
+2. Boolean «notification уже создавалось» хранится в `entry.data`, а не в плане
+   или layout; точное имя поля внутреннее.
 3. One-shot retry использует `homeassistant.helpers.start.async_at_started` либо
    эквивалентный lifecycle helper, привязанный к unload.
 4. Loader outcome может быть dataclass/enum/typed dict; публичны только значения
    System Health.
 5. Banner в kiosk появляется только после уже предпринятой auto-попытки для этой
-   pair; до неё сохраняется тихий текущий кадр, как решил владелец.
-6. One-pair `sessionStorage` достаточно: новая target pair заменяет старую, а не
-   создаёт неограниченный список.
+   backend target; до неё сохраняется тихий текущий кадр, как решил владелец.
+6. Одна сохранённая backend target достаточна: новая target заменяет старую, а
+   смена frontend при неизменной target не сбрасывает guard.
 7. Проверка всех dialog/gesture состояний может быть выделена в общий pure
    snapshot helper; перечисление §11.3 является обязательным контрактом.
