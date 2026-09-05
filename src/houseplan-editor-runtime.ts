@@ -119,8 +119,11 @@ import {
 } from './initial-load';
 import { selectActiveSpaceModel, selectSpaceModelById } from './space-model-selection';
 import {
-  createEmptySpaceConfig, initialSpaceDisplayDraft, switchSpacePlanSource, touchSpaceDisplay,
+  createEmptySpaceConfig, initialSpaceDisplayDraft, strictNumber, switchSpacePlanSource,
+  touchSpaceDisplay, type SpaceDialogState,
 } from './space-dialog';
+import { commitPlanOptimization } from './plan-optimize-write';
+import { openSpaceCopyDialog, renderSpaceCopyDialog, saveSpaceCopy } from './space-copy-runtime';
 import { mdiHomeCityOutline } from '@mdi/js';
 import {
   Affine, applyAffine, readVacTelemetry,
@@ -421,15 +424,6 @@ const BOOT_MAX_MS = 1200;
 /** AUD-1552-02: post-reveal grace during which late chrome shifts glide
  *  (CSS height transition on the stage) instead of snapping. */
 const BOOT_SOFT_MS = 1500;
-/** Numeric editor fields must consume the whole value: `50abc` is invalid,
- * not a surprisingly accepted 50. Decimal comma remains supported. */
-const strictNumber = (value: string): number | null => {
-  const text = String(value ?? '').trim().replace(',', '.');
-  if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(text)) return null;
-  const parsed = Number(text);
-  return Number.isFinite(parsed) ? parsed : null;
-};
-
 type LruRead<V> = { hit: true; value: V } | { hit: false };
 const lruRead = <K, V>(cache: Map<K, V>, key: K): LruRead<V> => {
   if (!cache.has(key)) return { hit: false };
@@ -1109,7 +1103,7 @@ export interface HouseplanEditorHostPort {
   _showToast: (msg: string) => void;
   _signer: ContentSigner;
   _space: string;
-  _spaceDialog: { mode: "edit" | "create"; spaceId?: string; title: string; planUrl: string | null; planFile: { ext: string; b64: string; aspect: number; name: string; } | null; pickSaved?: boolean; saved?: { name: string; url: string; size: number; modified: number; used_by: string[]; }[] | null; savedBusy?: boolean; savedAspect?: number; source: "file" | "draw"; showBorders: boolean; showNames: boolean; zeroWallStyle: ZeroWallStyle; displayTouched: boolean; hideDecor: boolean; hideOpenings: boolean; roomColor: string; roomOpacity: number; bgColor: string | null; bgMode: "static" | "daynight" | null; northDeg: number | null; sunRays: boolean | null; fillMode: "none" | "lqi" | "light" | "temp" | "custom"; customFill: FillColorEntry | null; glowEnabled: boolean; tempMin: number; tempMax: number; showLqi: boolean; cardFontScale: number; labelTemp: boolean; labelHum: boolean; labelLqi: boolean; labelLight: boolean; cellCm: number; cellCmInput?: string; cellCmTouched?: boolean; deleteBlockers?: number; busy: boolean; } | null;
+  _spaceDialog: SpaceDialogState | null;
   _spaceH: number;
   _spaceModel: () => SpaceModel | undefined;
   _spaceModelById: (id: string | null | undefined) => SpaceModel | undefined;
@@ -8974,6 +8968,17 @@ public async _saveConfigNow(attempt: OptimisticAttempt<ServerConfig> | null = nu
     }
   }
 
+public _saveSpaceCopy(): Promise<void> {
+    return saveSpaceCopy(this.host, {
+      clearGeometryGesture: () => this._clearGeometryGesture(),
+      optimizeReferenceContext: () => this._optimizeReferenceContext(false),
+      reportPreflightFailure: (result, config) => this._reportPreflightFailure(result, config),
+      saveConfigNow: (attempt) => this._saveConfigNow(attempt),
+      setMode: () => this._setMode('plan'),
+      showWallModelMigrationBlocked: (error) => this._showWallModelMigrationBlocked(error),
+    });
+  }
+
 public _startImport(): void {
     const dlg = this.host._importDialog;
     if (!dlg) return;
@@ -9757,35 +9762,9 @@ public async _runAlignToGrid(): Promise<void> {
     this._clearGeometryGesture();
     this.host._alignDialog = { ...d, busy: true };
     try {
-      if (this.host._saveConfigDebounced.pending()) this.host._saveConfigDebounced.flush();
-      await this.host._writeChain;
-      const resp = await this.host.hass.callWS({
-        type: 'houseplan/plan/optimize',
-        config: d.config,
-        layout: d.layout,
-        expected_config_rev: this.host._cfgRev,
-        expected_layout_rev: this.host._layoutRev,
-      });
-      this.host._serverCfg = d.config;
-      this.host._layout = d.layout;
-      this.host._geometryHistory.clear();
-      this.host._cancelDeviceDrag();
-      this.host._devicePositionHistory.clear();
-      this.host._cfgRev = resp?.config_rev ?? this.host._cfgRev + 1;
-      this.host._layoutRev = resp?.layout_rev ?? this.host._layoutRev + 1;
-      this.host._canOptimizeUndo = !!resp?.can_undo;
-      this.host._undoKind = resp?.can_undo ? 'optimize' : null;
-      this.host._dirtyPos.clear();
-      this.host._sentPos.clear();
-      this.host._cfgEpoch++;
-      this.host._modelCache = null;
-      this.host._frame = null;
-      this.host._regSignature = '';
-      this.host._maybeRebuildDevices();
-      this.host._cacheSnapshot();
+      await commitPlanOptimization(this.host, d.config, d.layout);
       this.host._alignDialog = null;
       this.host._preflightClipboardFallback = null;
-      this.host.requestUpdate();
       this.host._showToast(this.host._t('gs.align_done', {
         n: String(d.report.moved),
         m: String(d.report.migrated + d.report.canonicalized
@@ -13846,6 +13825,7 @@ public _renderMarkerDialog(): TemplateResult {
 
 public _renderSpaceDialog(): TemplateResult {
     const d = this.host._spaceDialog!;
+    if (d.copy) return renderSpaceCopyDialog(this.host, () => { void this._saveSpaceCopy(); });
     const progress = this.host._importTotal > 0 && d.mode === 'create'
       ? this.host._t('import.progress', {
           i: this.host._importTotal - this.host._importQueue.length,
@@ -14111,6 +14091,13 @@ public _renderSpaceDialog(): TemplateResult {
             : nothing}
         </div>
         <div class="row dialog-action-footer" slot="footer">
+          ${d.mode === 'edit'
+            ? html`<div class="dialog-action-group">
+                <button class="btn ghost" @click=${() => openSpaceCopyDialog(this.host)} ?disabled=${d.busy}>
+                  <ha-icon icon="mdi:content-copy"></ha-icon>${this.host._t('btn.copy')}
+                </button>
+              </div>`
+            : nothing}
           ${d.mode === 'edit'
             ? html`<div class="dialog-action-group dialog-action-danger">
                 <button class="btn danger" @click=${() => this._deleteSpace()} ?disabled=${d.busy}>

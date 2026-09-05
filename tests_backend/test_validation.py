@@ -326,6 +326,39 @@ def test_config_schema_defaults_and_extra():
     assert "spaces" in out2
 
 
+def test_issue_456_roomless_copy_with_rehosted_openings_is_valid():
+    """The frontend Copy result is a supported v9 document, not a UI-only shape."""
+    copied = {
+        "model_version": 9,
+        "spaces": [{
+            "id": "copy",
+            "title": "Floor copy",
+            "view_box": [0, 0, 1, 1],
+            "rooms": [],
+            "wall_segments": [],
+            "partitions": [
+                {"id": "wall-copy", "a": [0, 0], "b": [1, 0], "cm": 20},
+                {"id": "partition-copy", "a": [0.5, 0], "b": [0.5, 1], "cm": 10},
+            ],
+            "openings": [
+                {
+                    "id": "door-copy", "type": "door", "x": 0.25, "y": 0,
+                    "angle": 0, "length": 0.2, "invert": True,
+                    "host": {"kind": "partition", "id": "wall-copy", "t": 0.25},
+                },
+                {
+                    "id": "passage-copy", "type": "passage", "x": 0.5, "y": 0.7,
+                    "angle": 90, "length": 0.2,
+                    "host": {"kind": "partition", "id": "partition-copy", "t": 0.7},
+                },
+            ],
+        }],
+        "markers": [],
+        "settings": {},
+    }
+    assert v.CONFIG_SCHEMA(copied)["spaces"][0]["rooms"] == []
+
+
 def test_config_schema_full_roundtrip():
     cfg = {
         "spaces": [{

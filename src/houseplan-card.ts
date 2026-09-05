@@ -107,6 +107,7 @@ import {
 import { selectActiveSpaceModel, selectSpaceModelById } from './space-model-selection';
 import {
   createEmptySpaceConfig, initialSpaceDisplayDraft, switchSpacePlanSource, touchSpaceDisplay,
+  type SpaceDialogState,
 } from './space-dialog';
 import { mdiHomeCityOutline } from '@mdi/js';
 import {
@@ -2166,55 +2167,7 @@ export class HouseplanCard extends LitElement {
     hideFromPlan: boolean;        // 'space#area' for a virtual one
     busy: boolean;
   } | null = null;
-  private _spaceDialog: {
-    mode: 'edit' | 'create';
-    spaceId?: string;
-    title: string;
-    planUrl: string | null;
-    planFile: { ext: string; b64: string; aspect: number; name: string } | null;
-    /**
-     * The "already uploaded" list, its contents, and the aspect of whatever was
-     * picked from it. Plans are never deleted for being unreferenced, which is
-     * only a sane policy if they can be found again (docs/SCOPE.md).
-     */
-    pickSaved?: boolean;
-    saved?: { name: string; url: string; size: number; modified: number; used_by: string[] }[] | null;
-    savedBusy?: boolean;
-    savedAspect?: number;
-    source: 'file' | 'draw';       // draw = no background image, hand-drawn rooms
-    showBorders: boolean;
-    showNames: boolean;
-    zeroWallStyle: ZeroWallStyle;
-    /** Create-only source-default guard; never persisted. Edit starts touched. */
-    displayTouched: boolean;
-    hideDecor: boolean;            // the decorative layer is not drawn outside its editor
-    hideOpenings: boolean;         // opening symbols are not drawn outside the plan editor
-    roomColor: string;
-    roomOpacity: number;           // 0..1
-    bgColor: string | null;        // background around the plan; null = inherit general
-    bgMode: 'static' | 'daynight' | null; // plan background mode; null = inherit (docs/SUN.md)
-    northDeg: number | null;       // per-space compass override; null = inherit
-    sunRays: boolean | null;       // per-space wedges override; null = inherit
-    fillMode: 'none' | 'lqi' | 'light' | 'temp' | 'custom';
-    /** null keeps the optional persisted field absent and uses product default. */
-    customFill: FillColorEntry | null;
-    glowEnabled: boolean;
-    tempMin: number;
-    tempMax: number;
-    showLqi: boolean;
-    cardFontScale: number;
-    labelTemp: boolean;
-    labelHum: boolean;
-    labelLqi: boolean;
-    labelLight: boolean;
-    cellCm: number;                // real-world cm represented by one grid cell
-    /** Projected text is separate so an untouched imperial edit stays lossless. */
-    cellCmInput?: string;
-    cellCmTouched?: boolean;
-    /** Set only after Delete is activated with dependent active markers. */
-    deleteBlockers?: number;
-    busy: boolean;
-  } | null = null;
+  private _spaceDialog: SpaceDialogState | null = null;
   private _keyHandler = (e: KeyboardEvent) => this._onKey(e);
   /** DEV-B703-03 warm re-mount: the dead instance's viewport, and the two
    *  flags that keep the restore from being undone (the server load's centred

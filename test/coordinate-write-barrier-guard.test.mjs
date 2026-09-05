@@ -20,7 +20,7 @@ test('the canonical config writer cannot drop its expected revision (#340)', () 
   try {
     mkdirSync(resolve(fixtureRoot, 'src'), { recursive: true });
     mkdirSync(resolve(fixtureRoot, 'custom_components/houseplan'), { recursive: true });
-    for (const name of ['houseplan-card.ts', 'houseplan-editor-runtime.ts']) {
+    for (const name of ['houseplan-card.ts', 'houseplan-editor-runtime.ts', 'plan-optimize-write.ts']) {
       writeFileSync(
         resolve(fixtureRoot, 'src', name),
         readFileSync(resolve(repoRoot, 'src', name), 'utf8'),

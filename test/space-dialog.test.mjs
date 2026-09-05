@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 
 import {
   createEmptySpaceConfig,
@@ -71,4 +72,13 @@ test('source and display transitions are immutable and preserve unrelated fields
   });
   assert.equal(touched.title, 'Ground');
   assert.equal(touched.cellCm, 7.5);
+});
+
+test('#456 Copy is an edit-settings action and is absent from onboarding', () => {
+  const runtime = readFileSync(new URL('../src/houseplan-editor-runtime.ts', import.meta.url), 'utf8');
+  const onboarding = readFileSync(new URL('../src/houseplan-onboarding-runtime.ts', import.meta.url), 'utf8');
+  assert.match(runtime, /d\.mode === 'edit'[\s\S]*openSpaceCopyDialog\(this\.host\)/);
+  assert.match(runtime, /<div class="dialog-action-group">[\s\S]*btn\.copy/);
+  assert.doesNotMatch(runtime, /dialog-action-danger[\s\S]{0,300}btn\.copy/);
+  assert.doesNotMatch(onboarding, /btn\.copy|openSpaceCopyDialog|space\.copy_/);
 });

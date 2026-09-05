@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Space settings can now create a room-free copy of the current space under a
+  new name, preserving walls, openings, columns, Background objects, image
+  transform, scale and display settings while leaving device placement behind;
+  House Plan asks separately only when the whole plan must first be optimized
+  ([#456](https://github.com/Matysh/houseplan-card/issues/456)).
+
 ## v1.72.0-beta.3 — 2026-09-05
 
 - Large plans now keep their heavy room, wall, lighting, decor and device scene

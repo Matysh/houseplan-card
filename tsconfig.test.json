@@ -32,7 +32,7 @@
     "src/coordinate-canonicalization.ts",
     "src/serialized-write-queue.ts",
     "src/align-grid.ts",
-    "src/plan-optimizer.ts", "src/space-reference-repair.ts", "src/space-deletion.ts",
+    "src/plan-optimizer.ts", "src/plan-optimize-write.ts", "src/space-reference-repair.ts", "src/space-deletion.ts", "src/space-copy.ts", "src/space-copy-runtime.ts",
     "src/plan-geometry-preflight.ts",
     "src/furniture.ts", "src/decor-assets.ts",
     "src/floating-surface.ts", "src/floating-surface-controller.ts", "src/help-behavior.ts", "src/support-feedback.ts",

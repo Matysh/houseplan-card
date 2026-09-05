@@ -30,7 +30,9 @@ export function checkCoordinateWriteBarriers(root = defaultRoot) {
   const card = readFileSync(resolve(root, 'src/houseplan-card.ts'), 'utf8');
   const editor = readFileSync(resolve(root, 'src/houseplan-editor-runtime.ts'), 'utf8')
     .replaceAll('this.host.', 'this.');
-  const frontend = `${card}\n${editor}`;
+  const optimize = readFileSync(resolve(root, 'src/plan-optimize-write.ts'), 'utf8')
+    .replaceAll('host.', 'this.');
+  const frontend = `${card}\n${editor}\n${optimize}`;
 
   const configWrites = occurrences(frontend, "type: 'houseplan/config/set'");
   if (configWrites.length !== 1) errors.push(`frontend config writer inventory: ${configWrites.length}`);
@@ -63,7 +65,7 @@ export function checkCoordinateWriteBarriers(root = defaultRoot) {
   if (optimizeWrites.length !== 1) errors.push(`frontend Optimize writer inventory: ${optimizeWrites.length}`);
   for (const index of optimizeWrites) requireWindow(
     errors, frontend, index,
-    /config: d\.config,[\s\S]*layout: d\.layout/,
+    /config,[\s\S]*layout,[\s\S]*expected_config_rev: this\._cfgRev/,
     'frontend Optimize transaction', 300,
   );
 

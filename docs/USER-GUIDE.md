@@ -334,6 +334,16 @@ scale and which room metrics are visible.
 Room cards are positioned and scaled on the plan. View renders only the metrics
 enabled for that space.
 
+In an existing space's settings, **Copy** creates a new space from its walls,
+openings, columns, Background objects, image transform, scale and display
+settings. The suggested name is the first free numbered copy, but duplicate
+names are allowed. Rooms and device placements are deliberately not copied;
+room walls become ordinary independent walls, ready for a different room
+layout. House Plan opens the accepted copy in Plan with **Walls** selected. If
+the saved plan must first be repaired, a separate warning explains that
+**Optimize plans** will change the whole plan; cancelling that warning writes
+nothing.
+
 Deleting a space is blocked while any active device still points to the space,
 one of its rooms or a saved position on it, provided another space remains.
 Move or delete those devices first; then the confirmed delete removes the

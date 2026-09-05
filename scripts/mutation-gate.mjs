@@ -106,6 +106,121 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'space-copy-title-always-reuses-two',
+    guard: 'node --test --test-name-pattern="first free numbered" test/space-copy.test.mjs',
+    because: 'copy naming must skip occupied suffixes instead of silently proposing a duplicate (#456 AC2)',
+    patches: [{
+      file: 'src/space-copy.ts',
+      find: '  while (names.has(`${base} (${suffix})`)) suffix++;',
+      replace: '  while (false && names.has(`${base} (${suffix})`)) suffix++;',
+    }],
+  },
+  {
+    id: 'space-copy-always-asks-to-optimize',
+    guard: 'node --test --test-name-pattern="no extra confirmation" test/space-copy-runtime.test.mjs',
+    because: 'an already clean plan must use the name submission as its only confirmation (#456 AC3)',
+    patches: [{
+      file: 'src/space-copy-runtime.ts',
+      find: '    if (optimized.changed) {',
+      replace: '    if (true) {',
+    }],
+  },
+  {
+    id: 'space-copy-skips-required-optimize',
+    guard: 'node --test --test-name-pattern="durable before the copy" test/space-copy-runtime.test.mjs',
+    because: 'the accepted whole-plan Optimize must become durable before the copy is derived or written (#456 AC4)',
+    patches: [{
+      file: 'src/space-copy-runtime.ts',
+      find: '      await commitPlanOptimization(host, optimized.config, optimized.layout);',
+      replace: '      await Promise.resolve();',
+    }],
+  },
+  {
+    id: 'space-copy-ignores-unsafe-optimize-preflight',
+    guard: 'node --test --test-name-pattern="unsafe Optimize" test/space-copy-runtime.test.mjs',
+    because: 'a failed whole-plan geometry proof must stop before confirmation or either write (#456 AC5)',
+    patches: [{
+      file: 'src/space-copy-runtime.ts',
+      find: '      if (!preflight.ok) {',
+      replace: '      if (false && !preflight.ok) {',
+    }],
+  },
+  {
+    id: 'space-copy-drops-existing-partitions',
+    guard: 'node --test --test-name-pattern="complete allowed physical surface" test/space-copy.test.mjs',
+    because: 'copying room contours alone loses independent walls already drawn in the source (#456 AC6)',
+    patches: [{
+      file: 'src/space-copy.ts',
+      find: '  const sourcePartitions = geometryList(source.partitions);',
+      replace: '  const sourcePartitions = [];',
+    }],
+  },
+  {
+    id: 'space-copy-keeps-opening-device-binding',
+    guard: 'node --test --test-name-pattern="complete allowed physical surface" test/space-copy.test.mjs',
+    because: 'copied openings are geometry only and must not control the source contact or lock (#456 AC7)',
+    patches: [{
+      file: 'src/space-copy.ts',
+      find: '    delete copied.contact;',
+      replace: '',
+    }],
+  },
+  {
+    id: 'space-copy-shares-settings-object',
+    guard: 'node --test --test-name-pattern="complete allowed physical surface" test/space-copy.test.mjs',
+    because: 'editing one copy must not mutate the source display or backdrop state through an alias (#456 AC8)',
+    patches: [{
+      file: 'src/space-copy.ts',
+      find: "    if (key !== 'view_box' && own(source, key)) copiedSpace[key] = clone(source[key]);",
+      replace: "    if (key !== 'view_box' && own(source, key)) copiedSpace[key] = source[key];",
+    }],
+  },
+  {
+    id: 'space-copy-leaks-room-drafts',
+    guard: 'node --test --test-name-pattern="complete allowed physical surface" test/space-copy.test.mjs',
+    because: 'the new floor must start without room identity or unfinished room chains (#456 AC9)',
+    patches: [{
+      file: 'src/space-copy.ts',
+      find: '  if (copiedPartitions.length) copiedSpace.partitions = copiedPartitions;',
+      replace: "  if (own(source, 'room_drafts')) copiedSpace.room_drafts = clone(source.room_drafts);\n"
+        + '  if (copiedPartitions.length) copiedSpace.partitions = copiedPartitions;',
+    }],
+  },
+  {
+    id: 'space-copy-ignores-wall-limit',
+    guard: 'node --test --test-name-pattern="collection boundaries" test/space-copy.test.mjs',
+    because: 'an oversized copy must fail before it can create an optimistic or server-side partial state (#456 AC10)',
+    patches: [{
+      file: 'src/space-copy.ts',
+      find: "  if (partitionCount > SPACE_COPY_LIMITS.partitions) throw new SpaceCopyError('partitions_limit');",
+      replace: "  if (false) throw new SpaceCopyError('partitions_limit');",
+    }],
+  },
+  {
+    id: 'space-copy-rejection-keeps-local-copy',
+    guard: 'node --test --test-name-pattern="keeps accepted Optimize" test/space-copy-runtime.test.mjs',
+    because: 'a rejected second write must restore server truth without rolling back the accepted Optimize (#456 AC11)',
+    patches: [{
+      file: 'src/space-copy-runtime.ts',
+      find: '      if (rollbackOptimistic(host, attempt, contentFingerprint)) invalidateConfig(host);',
+      replace: '',
+    }, {
+      file: 'src/space-copy-runtime.ts',
+      find: '        await host._reloadConfigOnly(true);',
+      replace: '        await Promise.resolve();',
+    }],
+  },
+  {
+    id: 'space-copy-does-not-select-result',
+    guard: 'node --test --test-name-pattern="one config write" test/space-copy-runtime.test.mjs',
+    because: 'after an accepted write the user must enter the clean copied space, not remain on the source (#456 AC12)',
+    patches: [{
+      file: 'src/space-copy-runtime.ts',
+      find: '    host._commitSpace(result.space.id, true);',
+      replace: '',
+    }],
+  },
+  {
     id: 'render-invalidation-renders-irrelevant-ha',
     guard: 'node demo/smoke_render_invalidation.mjs',
     because: 'an irrelevant HA state row must still enter lifecycle intake without scheduling '
