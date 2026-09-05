@@ -23,11 +23,7 @@ const res = await page.evaluate(async () => {
   const c = window.__card;
   const sr = () => c.shadowRoot || c.renderRoot;
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-  const settleLive = async () => {
-    await Promise.resolve();
-    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-    await c.updateComplete;
-  };
+  const settleLive = () => c._editorRuntime?._whenLiveEditorSettled() ?? c.updateComplete;
   const stageEl = () => sr().querySelector('.stage');
   const el = (id) => (id ? sr().querySelector(`[data-hp-live-editor] .decorlayer [data-id="${id}"]`)
     || sr().querySelector(`.decorlayer [data-id="${id}"]`) : null);
@@ -54,7 +50,23 @@ const res = await page.evaluate(async () => {
   const pe = (id) => { const e = el(id); return e ? getComputedStyle(e).pointerEvents : null; };
   const box = () => c._decorBoxOf(sofaNow());
 
+  const reducedMotion = c._reducedMotion;
+  c._reducedMotion = true;
   sr().querySelectorAll('.modetab')[2].click(); await c.updateComplete;
+  await new Promise((resolve) => {
+    const observer = new ResizeObserver(() => {
+      observer.disconnect();
+      resolve();
+    });
+    observer.observe(stageEl());
+  });
+  while (c._modeTransitionBusy || c._refitRaf || c._pendingRefitSize) {
+    await new Promise(requestAnimationFrame);
+  }
+  c.requestUpdate();
+  await c.updateComplete;
+  c._reducedMotion = reducedMotion;
+  out.initialModeSettled = !c._modeTransitionBusy && !c._refitRaf && !c._pendingRefitSize;
   c._curSpaceCfg.decor = [];
   c._decorTool = 'select'; c._decorSel = null; c._furnPalette = null; c._furnCategory = null;
   c._cfgEpoch++; c.requestUpdate(); await c.updateComplete;
@@ -147,7 +159,8 @@ const res = await page.evaluate(async () => {
   out.selectedItemIsMarked = !!item('sofa')?.classList.contains('on');
 
   // ================= 3. точное превью без мутации ==========================
-  const ghost = () => sr().querySelector('.furniture-placement-preview');
+  const ghost = () => sr().querySelector('[data-hp-live-editor] .furniture-placement-preview')
+    || sr().querySelector('.furniture-placement-preview');
   const beforePreview = {
     decor: c._decorList.length,
     epoch: c._cfgEpoch,

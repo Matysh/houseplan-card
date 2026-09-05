@@ -27,11 +27,7 @@ const res = await page.evaluate(async () => {
     while (c._modeTransitionBusy && performance.now() - started < 1500);
     await c.updateComplete;
   };
-  const settleLive = async () => {
-    await Promise.resolve();
-    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-    await c.updateComplete;
-  };
+  const settleLive = () => c._editorRuntime?._whenLiveEditorSettled() ?? c.updateComplete;
   // null-safe: на сборке ДО этих правок у надписи нет ни data-id, ни tspan —
   // смок должен показать список провалов, а не упасть с исключением
   const el = (id) => sr().querySelector(`[data-hp-live-editor] .decorlayer text.dtext[data-id="${id}"]`)

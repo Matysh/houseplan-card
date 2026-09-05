@@ -13,6 +13,9 @@ import { NORM_W } from './space-geometry';
 
 interface LiveEditorState {
   raf: number;
+  requestedRevision: number;
+  paintedRevision: number;
+  waiters: { revision: number; resolve: () => void }[];
   hidden: HTMLElement[];
   transparent: HTMLElement[];
   dimmed: HTMLElement[];
@@ -84,10 +87,20 @@ const gestureProperties = new Set<PropertyKey>([
 const stateOf = (host: object): LiveEditorState => {
   let state = states.get(host);
   if (!state) {
-    state = { raf: 0, hidden: [], transparent: [], dimmed: [] };
+    state = {
+      raf: 0, requestedRevision: 0, paintedRevision: 0, waiters: [],
+      hidden: [], transparent: [], dimmed: [],
+    };
     states.set(host, state);
   }
   return state;
+};
+
+const finishRevision = (state: LiveEditorState, revision: number): void => {
+  state.paintedRevision = Math.max(state.paintedRevision, revision);
+  const ready = state.waiters.filter((waiter) => waiter.revision <= state.paintedRevision);
+  state.waiters = state.waiters.filter((waiter) => waiter.revision > state.paintedRevision);
+  for (const waiter of ready) waiter.resolve();
 };
 
 const activeEditorGesture = (host: LiveEditorHost): boolean => host._mode !== 'view' && (
@@ -120,6 +133,8 @@ export function routeHouseplanEditorUpdate(
     return false;
   }
   if (name !== undefined && gestureProperties.has(name) && host[name] == null) return false;
+  if (name !== undefined && hoverProperties.has(name)
+      && (host as unknown as Record<PropertyKey, unknown>)[name] == null) return false;
   const route = (namedLive && (hoverProperties.has(name!) || activeEditorGesture(host)))
     || (name === undefined && activeEditorGesture(host));
   if (!route) return false;
@@ -349,11 +364,23 @@ export function paintHouseplanEditor(value: object): void {
 
 export function scheduleHouseplanEditor(value: object): void {
   const state = stateOf(value);
+  state.requestedRevision++;
   if (state.raf || typeof requestAnimationFrame !== 'function') return;
   state.raf = requestAnimationFrame(() => {
     state.raf = 0;
+    const revision = state.requestedRevision;
     paintHouseplanEditor(value);
+    finishRevision(state, revision);
   });
+}
+
+/** Await the latest live-editor frame which was scheduled before this call. */
+export function whenHouseplanEditorSettled(value: object): Promise<void> {
+  const state = states.get(value);
+  if (!state || !state.raf || state.paintedRevision >= state.requestedRevision)
+    return Promise.resolve();
+  const revision = state.requestedRevision;
+  return new Promise((resolve) => state.waiters.push({ revision, resolve }));
 }
 
 /** Only text needs a DOM measurement; every box-like item owns its config box. */
@@ -399,6 +426,7 @@ export function commitHouseplanEditor(value: object): void {
     const view = host._viewOr(host._baseVb());
     render(host._renderLiveEditorMeasurements(view), htmlTarget);
   }
+  finishRevision(state, state.requestedRevision);
 }
 
 export function disposeHouseplanEditor(host: object): void {
@@ -407,5 +435,6 @@ export function disposeHouseplanEditor(host: object): void {
   if (!state) return;
   if (state.raf && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(state.raf);
   restore(state);
+  finishRevision(state, state.requestedRevision);
   states.delete(host);
 }

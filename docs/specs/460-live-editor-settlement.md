@@ -48,6 +48,18 @@ Issue: [#460](https://github.com/Matysh/houseplan-card/issues/460)
 - Новое поведение touch/pen, View или kiosk.
 - Изменение формата конфигурации, сохранённых данных или истории Undo/Redo.
 
+## Затронутые файлы и модули
+
+- `src/live-editor.ts` — ревизии, ожидания и terminal-null routing.
+- `src/houseplan-editor-runtime.ts` — внутренний awaitable-метод для browser
+  harness.
+- `test/live-editor.test.mjs` и `scripts/mutation-gate.mjs` — unit- и
+  mutation-доказательства.
+- `demo/smoke_furniture.mjs`, `demo/smoke_decor.mjs`,
+  `demo/smoke_decor_text.mjs` — потребители контракта.
+- `docs/DEVELOPMENT.md`, оба changelog и сгенерированные bundle-деревья —
+  обязательные сопутствующие артефакты.
+
 ## Контракт поведения
 
 1. Вызов внутренней точки синхронизации сначала дожидается уже ожидавшегося
@@ -139,6 +151,8 @@ Unit-тест доказывает, что terminal-null hover требует п
 - Одновременные записи в `docs/CHANGELOG.md` и `docs/CHANGELOG.ru.md`.
 - `docs/FURNITURE.md` уже содержит правильный пользовательский контракт очистки
   preview и не требует изменения.
+- `docs/DEVELOPMENT.md` фиксирует, что `updateComplete` не является барьером
+  live-editor и browser harness обязан использовать явный settlement contract.
 - Стабильный screenshot/golden не меняется: исправляется transient-состояние,
   которого после завершения жеста не должно существовать.
 - Любое изменение `src/**` требует актуального Linux-артефакта `Docs

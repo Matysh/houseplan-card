@@ -5982,6 +5982,28 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'live-editor-settlement-runs-ahead-of-paint',
+    guard: 'node --test --test-name-pattern="live editor settlement waits" test/live-editor.test.mjs',
+    because: 'the explicit live-editor barrier must resolve only after the scheduled DOM paint; '
+      + 'an eager promise recreates the nondeterministic preview snapshot from #460',
+    patches: [{
+      file: 'src/live-editor.ts',
+      find: '  return new Promise((resolve) => state.waiters.push({ revision, resolve }));',
+      replace: '  return Promise.resolve();',
+    }],
+  },
+  {
+    id: 'live-editor-smoke-falls-back-to-double-raf',
+    guard: 'node --test --test-name-pattern="browser smokes use the explicit" test/live-editor.test.mjs',
+    because: 'a fixed number of animation frames is a timing guess, not evidence that the live '
+      + 'editor applied its latest projection (#460)',
+    patches: [{
+      file: 'demo/smoke_furniture.mjs',
+      find: '  const settleLive = () => c._editorRuntime?._whenLiveEditorSettled() ?? c.updateComplete;',
+      replace: '  const settleLive = () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));',
+    }],
+  },
+  {
     id: 'pointer-move-queue-keeps-first-move',
     guard: 'node --test test/live-editor.test.mjs',
     because: 'the coalescing queue is last-wins: keeping the FIRST callback of an event turn '

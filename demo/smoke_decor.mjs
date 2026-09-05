@@ -10,11 +10,7 @@ const res = await page.evaluate(async () => {
     while (c._modeTransitionBusy && performance.now() - started < 1500);
     await c.updateComplete;
   };
-  const settleLive = async () => {
-    await Promise.resolve();
-    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-    await c.updateComplete;
-  };
+  const settleLive = () => c._editorRuntime?._whenLiveEditorSettled() ?? c.updateComplete;
   const esc = async () => { window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' })); await c.updateComplete; };
   // 1) третья вкладка есть
   const tabs = [...sr().querySelectorAll('.modetab')];

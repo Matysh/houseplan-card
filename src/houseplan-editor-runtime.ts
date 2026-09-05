@@ -16,7 +16,7 @@ import {
 } from './pointer-move-queue';
 import {
   commitHouseplanEditor, disposeHouseplanEditor, measureHouseplanDecorText,
-  routeHouseplanEditorUpdate,
+  routeHouseplanEditorUpdate, whenHouseplanEditorSettled,
 } from './live-editor';
 import './hp-dialog';
 import type { HpDialog } from './hp-dialog';
@@ -1222,6 +1222,13 @@ public _routeLiveEditorUpdate(name?: PropertyKey, oldValue?: unknown): boolean {
   }
 public _commitLiveEditor(): void { commitHouseplanEditor(this.host); }
 public _disposeLiveEditor(): void { disposeHouseplanEditor(this.host); }
+public async _whenLiveEditorSettled(): Promise<void> {
+  // An already queued pointer calculation runs before this continuation.
+  // A complete Lit render may also supersede the lightweight frame, and its
+  // updated() hook commits that same state before updateComplete resolves.
+  await this.host.updateComplete;
+  await whenHouseplanEditorSettled(this.host);
+}
 public _queuePointerMove(key: string, run: () => void): void { queueHouseplanPointerMove(this.host, key, run); }
 public _flushPointerMove(key: string): void { flushHouseplanPointerMove(this.host, key); }
 public _cancelPointerMove(key?: string): void { cancelHouseplanPointerMove(this.host, key); }

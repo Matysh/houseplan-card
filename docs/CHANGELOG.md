@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Furniture placement previews now clear reliably when the pointer leaves the
+  plan, including after a full editor redraw; the live editor also exposes a
+  deterministic paint barrier for browser checks
+  ([#460](https://github.com/Matysh/houseplan-card/issues/460)).
 - Zigbee topology links now show arrows towards the coordinator on hover;
   incoming arrows identify devices behind a router, while a short bubble
   truthfully ends the path when the next node is in another space or is not
