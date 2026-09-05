@@ -68,9 +68,14 @@ const out = await page.evaluate(async () => {
   localStorage.setItem('houseplan_card_zoom_v1', JSON.stringify({ 'fit-floor': 1 }));
   pointer(roomNode(), 'pointerdown', 15201);
   pointer(roomNode(), 'pointerup', 15201);
+  const tweenStarted = c._cameraTransition?.active === true;
   const syncFrames = [];
-  for (let frame = 0; frame < 3 && c._cameraTransition?.active; frame++) {
-    await new Promise((resolve) => requestAnimationFrame(resolve));
+  if (tweenStarted) {
+    // The fast path normally updates the presented camera without a Lit render.
+    // Force reconciliation before the first animation frame, while the tween is
+    // known to be active. Unrelated state may legitimately do the same, and HTML
+    // overlays must still consume the presented viewBox.
+    c.requestUpdate();
     await c.updateComplete;
     const activeView = c._view;
     const activeLabel = root.querySelector('.roomlabel[data-id="room-a"]');
@@ -91,7 +96,8 @@ const out = await page.evaluate(async () => {
       && Math.abs(labelRect.top + labelRect.height / 2
         - (stageRect.top + stageRect.height * expectedTop / 100)) < 1);
   }
-  result.svgAndHtmlShareTweenFrames = syncFrames.length > 0 && syncFrames.every(Boolean);
+  result.svgAndHtmlShareTweenFrames = tweenStarted
+    && syncFrames.length === 1 && syncFrames.every(Boolean);
   await waitCamera();
   const flatMargins = margins();
   result.cleanRoomTapFits = Object.values(flatMargins).every((value) => value >= 0.099);

@@ -1552,6 +1552,15 @@ test('issue #271 keeps finite co-directional ray supports and never rebuilds pas
     rooms, walls, [], [], pitch, 1, GRID_PITCH, 1,
   );
   assert.ok(geometry);
+  const protectedStrips = multiWallProtectedStripGeometry(node, nodeMap);
+  assert.ok(protectedStrips, 'the short orthogonal node lost its protected strips');
+  assert.equal(
+    multiWallProtectedRayIndexes(node).length,
+    node.rays.length,
+    'the fixture must keep every ray orthogonally protected',
+  );
+  closeTo(geometryDifferenceArea(protectedStrips, geometry.roomGeom), 0, 1e-6);
+  closeTo(geometryDifferenceArea(protectedStrips, geometry.geom), 0, 1e-6);
   assertProbeInside(geometry.geom, [0, 10], 'the finite short arm disappeared');
   assertProbeOutside(
     geometry.geom, [0, 100],
@@ -1565,6 +1574,52 @@ test('issue #271 keeps finite co-directional ray supports and never rebuilds pas
   assertProbeInside(
     cleanFloor, [1, 100],
     'the phantom ray still removes usable clean-floor area after its endpoint',
+  );
+});
+
+test('issue #272 keeps a short non-orthogonal trim open to exterior', () => {
+  const scale = NORM_W;
+  const nodePoint = [0.5 * scale, 0.5 * scale];
+  const angles = [0, 60, 210];
+  const lengths = [300, 300, 30];
+  const points = angles.map((degrees, index) => {
+    const radians = degrees * Math.PI / 180;
+    return [
+      nodePoint[0] + Math.cos(radians) * lengths[index],
+      nodePoint[1] + Math.sin(radians) * lengths[index],
+    ];
+  });
+  const rooms = points.map((point, index) => ({
+    id: `short-fan-${index}`,
+    poly: [nodePoint, point, points[(index + 1) % points.length]]
+      .map((value) => [...value]),
+  }));
+  let walls = [];
+  for (const point of points) {
+    walls = setWallThickness(walls, nodePoint, point, 50, pitch, scale);
+  }
+
+  const map = buildMultiWallNodeMap(
+    wallIntervals(rooms, walls, [], pitch, 5, GRID_PITCH, scale),
+    pitch * scale * 0.04 * 4,
+    scale,
+  );
+  assert.equal(map.nodes.length, 1);
+  const [node] = map.nodes;
+  assert.ok(node.rays.some((ray) =>
+    ray.supports.some((support) => support.length < support.halfDepth * 2)));
+  assert.deepEqual(multiWallProtectedRayIndexes(node), []);
+  assert.ok(multiWallBevelTriangles(map).length > 0);
+
+  const geometry = wallBodiesGeometry(
+    rooms, walls, [], [], pitch, 5, GRID_PITCH, scale,
+  );
+  assert.ok(geometry);
+  assert.equal(geometry.status, 'ok');
+  assertNoEnclosedLocalHoles(
+    geometry.geom,
+    node,
+    'short non-orthogonal trim',
   );
 });
 

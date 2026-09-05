@@ -2708,11 +2708,11 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'multi-wall-orthogonal-strip-protection-disabled',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
-      + '&& node --test --test-name-pattern="issue #275 preserves" '
+      + '&& node --test --test-name-pattern="issue #271 keeps finite" '
       + 'test/wall-thickness.test.mjs',
-    because: 'pairwise bevel cuts must exclude every finite strip with an orthogonal partner, '
-      + 'and the post-cut reconstruction is the independent fail-safe; disabling both recreates '
-      + 'the white notches and large missing wall areas from the exact #275 fixtures',
+    because: 'a short-support trim (#271) must still exclude and restore every finite strip '
+      + 'protected by an orthogonal partner (#275); disabling both protections cuts visible '
+      + 'notches from the reachable combined fixture',
     patches: [{
       file: 'src/wall-thickness.ts',
       find: '  return cuts && protectedStrips ? difference(cuts, protectedStrips) : cuts;',
@@ -2761,10 +2761,10 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'multi-wall-exterior-corridor-disabled',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
-      + '&& node --test --test-name-pattern="issue #249 bounds" '
+      + '&& node --test --test-name-pattern="issue #272 keeps a short non-orthogonal trim" '
       + 'test/wall-thickness.test.mjs',
-    because: 'ending every excessive bevel cut at one mathematical point recreates the enclosed '
-      + 'white junction triangles from #272 while the old retained/discarded probes still pass',
+    because: 'a reachable short-support bevel cut must cross the exterior with finite width; '
+      + 'ending it at one mathematical point recreates the enclosed white triangle from #272',
     patches: [{
       file: 'src/wall-thickness.ts',
       find: '    multiWallBevelCutsAt(nodeMap, retainToLimit, connectToExterior),',
@@ -3154,7 +3154,7 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'optimize-storage-boundary-removed',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
-      + '&& node --test --test-name-pattern="issue 248 Optimize stays" '
+      + '&& node --test --test-name-pattern="Optimize canonicalizes the six-room ULP source" '
       + 'test/plan-optimizer.test.mjs',
     because: 'Optimize must remove near-node tails before visible Align so storage-only cleanup '
       + 'is not misreported as a user-visible move and the exact candidate survives reload (#291)',
@@ -4864,7 +4864,7 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'junction-fan-limit-back-to-249',
-    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test --test-name-pattern="issue 302" test/wall-thickness.test.mjs',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node --test --test-name-pattern="issue 309 the 57" test/wall-thickness.test.mjs',
     because: 'лимит веера 1.25·h — это отставка решения №5: узлы снова с '
       + 'вырезами и ступеньками вместо полного mitre',
     patches: [{

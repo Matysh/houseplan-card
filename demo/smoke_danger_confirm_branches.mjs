@@ -194,6 +194,28 @@ const out = await page.evaluate(async () => {
     }));
     await settle();
   };
+  const boundedDangerDecision = async (decision, timeoutMs = 250) => {
+    let timeoutId;
+    const outcome = await Promise.race([
+      decision.then((value) => ({ settled: true, value })),
+      new Promise((resolve) => {
+        timeoutId = setTimeout(() => resolve({ settled: false, value: 'timeout' }), timeoutMs);
+      }),
+    ]);
+    clearTimeout(timeoutId);
+    if (!outcome.settled) {
+      // A missing or dead decision surface must fail the smoke quickly instead
+      // of consuming the whole mutation shard. Cancelling also keeps later
+      // branches independent from the timed-out controller state.
+      card._cancelDangerConfirm();
+      await Promise.race([
+        decision,
+        new Promise((resolve) => setTimeout(resolve, 100)),
+      ]);
+      await settle();
+    }
+    return outcome;
+  };
 
   await settle();
 
@@ -213,7 +235,9 @@ const out = await page.evaluate(async () => {
   await settle();
   result.mainBranchRendersExactlyOneConfirm = dialogs() === 1;
   card._cancelDangerConfirm();
-  result.mainBranchCancelResolvesFalse = (await single) === false;
+  const singleDecision = await boundedDangerDecision(single);
+  result.mainBranchCancelResolvesFalse = singleDecision.settled
+    && singleDecision.value === false;
 
   const savedCfg = card._serverCfg;
   const savedModel = card._model;
@@ -240,7 +264,9 @@ const out = await page.evaluate(async () => {
   await settle();
   result.onboardingBranchShowsConfirm = dialogs() === 1;
   await decide(false);
-  result.onboardingBranchResolves = (await onboarding) === false;
+  const onboardingDecision = await boundedDangerDecision(onboarding);
+  result.onboardingBranchResolves = onboardingDecision.settled
+    && onboardingDecision.value === false;
   await leaveBranch();
 
   // Открытое подтверждение переживает смену ветки: раньше оно исчезало вместе
@@ -251,8 +277,9 @@ const out = await page.evaluate(async () => {
   await enterBranch([]);
   const stillOpenInOnboarding = dialogs() === 1;
   await decide(true);
+  const survivorDecision = await boundedDangerDecision(survivor);
   result.openConfirmSurvivesBranchChange = openedInMainBranch && stillOpenInOnboarding
-    && (await survivor) === true;
+    && survivorDecision.settled && survivorDecision.value === true;
   await leaveBranch();
 
   // The exact missed branch from #417: a non-empty model whose active space
@@ -265,22 +292,17 @@ const out = await page.evaluate(async () => {
   card._spaceModel = () => undefined;
   card.requestUpdate();
   await settle();
-  const spaceLossDecision = await Promise.race([
-    pendingAtSpaceLoss,
-    new Promise((resolve) => setTimeout(() => resolve('timeout'), 100)),
-  ]);
+  const spaceLossDecision = await boundedDangerDecision(pendingAtSpaceLoss);
   result.lostSpaceBranchIsActuallyEntered = root().childElementCount === 0;
-  result.openConfirmCancelsWhenSpaceIsLost = spaceLossDecision === false
+  result.openConfirmCancelsWhenSpaceIsLost = spaceLossDecision.settled
+    && spaceLossDecision.value === false
     && card._dangerConfirm === null && card._dangerConfirmController.state === null;
   const refusedWithoutSpacePromise = card._confirmDanger(request('space-already-lost'));
   const refusedWithoutSpaceWasNeverRegistered = card._dangerConfirm === null
     && card._dangerConfirmController.state === null;
-  const refusedWithoutSpace = await Promise.race([
-    refusedWithoutSpacePromise,
-    new Promise((resolve) => setTimeout(() => resolve('timeout'), 100)),
-  ]);
+  const refusedWithoutSpace = await boundedDangerDecision(refusedWithoutSpacePromise);
   result.lostSpaceRequestRefusesImmediately = refusedWithoutSpaceWasNeverRegistered
-    && refusedWithoutSpace === false
+    && refusedWithoutSpace.settled && refusedWithoutSpace.value === false
     && card._dangerConfirm === null && card._dangerConfirmController.state === null
     && dialogs() === 0;
   card._spaceModel = originalSpaceModel;
@@ -302,7 +324,8 @@ const out = await page.evaluate(async () => {
     await settle();
     const shown = dialogs() === 1;
     await decide(false);
-    return branchEntered && shown && (await pending) === false;
+    const decision = await boundedDangerDecision(pending);
+    return branchEntered && shown && decision.settled && decision.value === false;
   };
   result.fixedFloorPendingStillShowsConfirm = await confirmInFixedBranch(false, 'pending');
   result.fixedFloorInvalidStillShowsConfirm = await confirmInFixedBranch(true, 'invalid');
@@ -334,7 +357,9 @@ const out = await page.evaluate(async () => {
     }
   }
   await settle();
-  result.touchTapOnCancelResolvesFalse = !!cancelButton && (await byTap) === false
+  const tapDecision = await boundedDangerDecision(byTap);
+  result.touchTapOnCancelResolvesFalse = !!cancelButton
+    && tapDecision.settled && tapDecision.value === false
     && dialogs() === 0;
   await leaveBranch();
 
@@ -350,7 +375,9 @@ const out = await page.evaluate(async () => {
   card.hass = savedHass;
   card.requestUpdate();
   await settle();
-  result.notReadyCardRefusesInsteadOfHanging = (await refused) === false;
+  const refusedDecision = await boundedDangerDecision(refused);
+  result.notReadyCardRefusesInsteadOfHanging = refusedDecision.settled
+    && refusedDecision.value === false;
 
   // Match the public surface of HA's pinned ha-dialog closely enough to prove
   // branch selection and ARIA forwarding without depending on private shadow
