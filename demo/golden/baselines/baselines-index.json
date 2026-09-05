@@ -1,11 +1,12 @@
 {
   "schema": 1,
   "matrixVersion": 54,
-  "acceptedAt": "2026-09-04T13:10:56.492Z",
-  "sourceFingerprint": "7acb1b9d3bb384bc1a0c70fb01347386c157ae88b12b00ccd876b7658fc84a1c",
+  "acceptedAt": "2026-09-05T06:21:56.683Z",
+  "sourceFingerprint": "814851e1e157fd126309de061c720fb1203ddd6d63824cd37289542baefca406",
   "chromium": "151.0.7922.34",
+  "platform": "linux",
   "witnesses": {
-    "count": 127,
+    "count": 134,
     "floor": 10
   },
   "scenarios": {
@@ -152,7 +153,7 @@
     "support-relay-error-light-en": "e9a9ad906e106eedfa6e84c592325f1604eb64c89c51135c076ac87a6a0766b2",
     "support-tablet-preview-dark-ru": "1264e005cd764408edb9b285a5dfbe92ceb90cb925f624b8f65cd47edb96c0c9",
     "device-ripple-color-popover-mobile-ru": "d9ebf83ad0d2995b46f6174daf6e21ca5404952afa308ddd3a66ecefcee565d0",
-    "space-room-color-popover-desktop-ru": "9bbbcf9c5ea6ff5490b500be8cb3086af9d368d14ca50c304f42a697e296ece1",
+    "space-room-color-popover-desktop-ru": "04bf325ddb449001f6c0b459761dcb84eda6432dca2fbd10ce5a129484d0756c",
     "backup-full-preview-desktop-en": "0fbd23a92121668001faf5c9ed555a31107704f3074d1791709c8436517d3d1f",
     "backup-plan-only-export-desktop-en": "ce66fb57edbc87d56355b0d73a2d4203a67c275d5927d400ef1758ac0b607b34",
     "backup-space-preview-mobile-ru": "82cd93cb495ad77b92d635b4a3715601b1ae0e5e2974edcbbd461fe872c75bad",
