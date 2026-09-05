@@ -180,6 +180,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#451](https://github.com/Matysh/houseplan-card/issues/451) Фильтрация render и лёгкий live-слой взаимодействий | [451-render-performance.md](451-render-performance.md) |
 | [#456](https://github.com/Matysh/houseplan-card/issues/456) Копирование пространства без комнат и устройств | [456-copy-space.md](456-copy-space.md) |
 | [#457](https://github.com/Matysh/houseplan-card/issues/457) Направление Zigbee-связей к координатору | [457-zigbee-route-arrows.md](457-zigbee-route-arrows.md) |
+| [#460](https://github.com/Matysh/houseplan-card/issues/460) Детерминированное завершение кадра живого редактора | [460-live-editor-settlement.md](460-live-editor-settlement.md) |
 
 ## P3
 
