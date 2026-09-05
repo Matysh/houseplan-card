@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.72.0-beta.4 — 2026-09-05
+
 - Furniture placement previews now clear reliably when the pointer leaves the
   plan, including after a full editor redraw; the live editor also exposes a
   deterministic paint barrier for browser checks
