@@ -11,15 +11,17 @@ const controller = read('src/version-recovery.ts');
 const styles = read('src/styles/base.styles.ts');
 
 const occurrences = (source, fragment) => source.split(fragment).length - 1;
+const matches = (source, pattern) => source.match(pattern)?.length || 0;
 
 test('one host seam owns every full-card config/get request', () => {
-  const direct = "callWS({ type: 'houseplan/config/get'";
-  assert.equal(occurrences(adapter, direct), 1, 'the adapter is the only WS request owner');
-  assert.equal(occurrences(card, direct), 0, 'card flows must use the authoritative seam');
-  assert.equal(occurrences(editor, direct), 0, 'lazy editor flows must use the host seam');
-  assert.equal(occurrences(onboarding, direct), 0, 'onboarding flows must use the host seam');
+  const direct = /callWS(?:<[^>]+>)?\(\{ type: 'houseplan\/config\/get'/g;
+  assert.equal(matches(adapter, direct), 1, 'the adapter is the only WS request owner');
+  assert.equal(matches(card, direct), 0, 'card flows must use the authoritative seam');
+  assert.equal(matches(editor, direct), 0, 'lazy editor flows must use the host seam');
+  assert.equal(matches(onboarding, direct), 0, 'onboarding flows must use the host seam');
 
-  assert.match(card, /private _getAuthoritativeConfig\(\): Promise<any>/);
+  assert.match(card,
+    /private _getAuthoritativeConfig\(\): Promise<AuthoritativeConfigResponse>/);
   assert.equal(occurrences(card, 'this._getAuthoritativeConfig()'), 2,
     'initial load and config-only reload both use the seam');
   assert.equal(occurrences(editor, 'this.host._getAuthoritativeConfig()'), 3,

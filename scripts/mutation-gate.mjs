@@ -203,7 +203,8 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'version-recovery-ignores-editor-state',
-    guard: 'node demo/smoke_version_recovery.mjs',
+    guard: 'node --test --test-name-pattern="card adapter maps editor state" '
+      + 'test/version-recovery-card.test.mjs',
     because: 'a kiosk card in an editor must preserve unsaved work instead of silently reloading '
       + 'when its versions differ (#462 AC8)',
     patches: [{
@@ -214,7 +215,8 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'version-recovery-ignores-dialog-state',
-    guard: 'node demo/smoke_version_recovery.mjs',
+    guard: 'node --test --test-name-pattern="card adapter maps blocking surfaces" '
+      + 'test/version-recovery-card.test.mjs',
     because: 'a first-class dialog or contextual surface must block the kiosk auto-reload '
       + 'rather than disappear underneath it (#462 AC8)',
     patches: [{
@@ -225,7 +227,8 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'version-recovery-ignores-pending-config-write',
-    guard: 'node demo/smoke_version_recovery.mjs',
+    guard: 'node --test --test-name-pattern="card adapter maps config writes" '
+      + 'test/version-recovery-card.test.mjs',
     because: 'a pending configuration write must block kiosk reload so an accepted edit cannot '
       + 'be lost during version recovery (#462 AC8)',
     patches: [{
@@ -236,7 +239,8 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'version-recovery-ignores-interaction-pause',
-    guard: 'node demo/smoke_version_recovery.mjs',
+    guard: 'node --test --test-name-pattern="card adapter maps interaction pause" '
+      + 'test/version-recovery-card.test.mjs',
     because: 'recent pointer, keyboard, touch and native more-info interaction must defer the '
       + 'silent kiosk reload by the same shared pause contract (#462 AC8)',
     patches: [{
