@@ -1,7 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 
 import { ResizeController } from '../test-build/resize-controller.js';
+import {
+  resizeLiveCandidateSpace, resizeLiveJunctionRoomIds, resizeLiveRoomIds,
+} from '../test-build/resize-live-preflight.js';
+import { checkSpacePhysicalGeometry } from '../test-build/plan-geometry-preflight.js';
 import { resolveSafeResize } from '../test-build/resize.js';
 
 const room = () => ({
@@ -27,6 +32,7 @@ const setup = () => {
     snapshotIdentity: 'snapshot-a',
     before: { id: 'before' },
     wallUnionBefore: { path: 'old' },
+    epochBefore: 42,
   }), true);
   return { controller, beforeWalls };
 };
@@ -128,12 +134,107 @@ test('#264 exact wall profile fails closed on preview and is rechecked on finish
 test('#264 cancel restores retained masonry only for the same snapshot', () => {
   const same = setup().controller;
   assert.deepEqual(same.cancel('snapshot-a'), {
-    kind: 'cancelled', restoreWallUnion: { path: 'old' },
+    kind: 'cancelled', restoreWallUnion: { path: 'old' }, restoreEpoch: 42,
   });
   assert.deepEqual(same.cancel('snapshot-a'), { kind: 'no-op' });
   const stale = setup().controller;
   assert.deepEqual(stale.cancel('snapshot-b'), {
-    kind: 'cancelled', restoreWallUnion: null,
+    kind: 'cancelled', restoreWallUnion: null, restoreEpoch: null,
   });
 });
 
+test('#451 live resize preflight keeps only affected rooms at any plan size', () => {
+  const rect = (id, x, y, w = 1, h = 1) => ({
+    id, poly: [[x, y], [x + w, y], [x + w, y + h], [x, y + h]],
+  });
+  const rooms = Array.from({ length: 100 }, (_, index) =>
+    rect(`room-${index}`, index % 10, Math.floor(index / 10)));
+  assert.deepEqual(
+    resizeLiveRoomIds(rooms, ['room-44']),
+    ['room-44'],
+  );
+  assert.deepEqual(resizeLiveRoomIds([
+    rect('changed', 0, 0, 2, 2), rect('nested', 0.5, 0.5, 0.5, 0.5),
+    rect('endpoint', 2, 2), rect('remote', 10, 10),
+  ], ['changed']), ['changed']);
+  assert.deepEqual(resizeLiveJunctionRoomIds([
+    rect('changed', 0, 0, 2, 2), rect('nested', 0.5, 0.5, 0.5, 0.5),
+    rect('endpoint', 2, 2), rect('remote', 10, 10),
+  ], ['changed']), ['changed', 'nested', 'endpoint']);
+});
+
+test('#451 live resize candidate keeps nearby physical bodies and excludes remote work', () => {
+  const rect = (id, x, y) => ({
+    id, poly: [[x, y], [x + 1, y], [x + 1, y + 1], [x, y + 1]],
+  });
+  const rooms = Array.from({ length: 100 }, (_, index) =>
+    rect(`room-${index}`, index % 10, Math.floor(index / 10)));
+  const candidate = resizeLiveCandidateSpace({
+    id: 'large', cell_cm: 5, rooms,
+    walls: [
+      { id: 'near', key: '4.5,4.0@0.0000', a: [4, 4], b: [5, 4] },
+      { id: 'remote', key: '90.5,90.0@0.0000', a: [90, 90], b: [91, 90] },
+      { id: 'unknown-legacy-data', cm: 15 },
+    ],
+    wall_segments: [
+      { id: 'near', a: [4, 4], b: [5, 4] },
+      { id: 'remote', a: [90, 90], b: [91, 90] },
+    ],
+    open_spans: [
+      { id: 'near', a: [4, 4], b: [5, 4] },
+      { id: 'remote', a: [90, 90], b: [91, 90] },
+    ],
+    partitions: [
+      { id: 'near', a: [4.5, 4.5], b: [5, 5] },
+      { id: 'remote', a: [90, 90], b: [91, 91] },
+    ],
+    room_drafts: [
+      { id: 'near', points: [[3, 3], [4, 3], [4, 4]] },
+      { id: 'remote', points: [[90, 90], [91, 90], [91, 91]] },
+    ],
+    wall_columns: [
+      { id: 'near', center: [4, 4.5], cm: 15 },
+      { id: 'remote', center: [90, 90], cm: 15 },
+    ],
+    openings: [
+      { id: 'near', x: 4.5, y: 4, length: 1 },
+      { id: 'remote', x: 90, y: 90, length: 1 },
+    ],
+  }, ['room-44']);
+  assert.ok(candidate);
+  assert.equal(candidate.rooms.length, 1);
+  assert.deepEqual(candidate.walls.map((item) => item.id), ['near', 'unknown-legacy-data']);
+  assert.deepEqual(candidate.wall_segments.map((item) => item.id), ['near']);
+  assert.deepEqual(candidate.open_spans.map((item) => item.id), ['near']);
+  assert.deepEqual(candidate.partitions.map((item) => item.id), ['near']);
+  assert.deepEqual(candidate.room_drafts.map((item) => item.id), ['near']);
+  assert.deepEqual(candidate.wall_columns.map((item) => item.id), ['near']);
+  assert.deepEqual(candidate.openings.map((item) => item.id), ['near']);
+});
+
+test('#451 live resize physical preflight retains the adjacent room of a degraded wall', () => {
+  const fixture = JSON.parse(readFileSync(
+    new URL('./fixtures/278-wall-union-isolation.json', import.meta.url), 'utf8',
+  ));
+  const baseSpace = fixture.config.spaces[0];
+  const remoteRooms = Array.from({ length: 80 }, (_, index) => {
+    const x = 10 + index * 2;
+    return {
+      id: `remote-${index}`,
+      poly: [[x, 10], [x + 1, 10], [x + 1, 11], [x, 11]],
+    };
+  });
+  const largeSpace = { ...baseSpace, rooms: [...baseSpace.rooms, ...remoteRooms] };
+  const full = checkSpacePhysicalGeometry({ spaces: [largeSpace] }, largeSpace.id);
+  assert.equal(full.ok, false);
+  assert.equal(full.reason, 'wall-degraded-extra');
+
+  const liveRoomIds = resizeLiveJunctionRoomIds(largeSpace.rooms, ['r1']);
+  assert.deepEqual(liveRoomIds, ['r1', 'r2']);
+  const liveSpace = resizeLiveCandidateSpace(largeSpace, liveRoomIds);
+  assert.ok(liveSpace);
+  assert.deepEqual(liveSpace.rooms.map((room) => room.id), ['r1', 'r2']);
+  const live = checkSpacePhysicalGeometry({ spaces: [liveSpace] }, liveSpace.id);
+  assert.equal(live.ok, false);
+  assert.equal(live.reason, 'wall-degraded-extra');
+});

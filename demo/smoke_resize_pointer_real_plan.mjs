@@ -114,10 +114,13 @@ const sharedX = () => page.evaluate(() => {
   ))).map((point) => point[0]);
 });
 const domHasSharedX = (x) => page.evaluate((wanted) =>
-  [...window.__card.renderRoot.querySelectorAll('.rszhandle[aria-disabled="false"]')]
+  [...(window.__card.renderRoot.querySelector('[data-hp-live-editor] .hp-live-resize')
+    || window.__card.renderRoot).querySelectorAll('.rszhandle[aria-disabled="false"]')]
     .some((entry) => Math.abs(Number(entry.getAttribute('cx')) - wanted) < 1), x);
 const sharedHandleX = () => page.evaluate(() => {
-  const candidates = [...window.__card.renderRoot.querySelectorAll(
+  const activeRoot = window.__card.renderRoot.querySelector('[data-hp-live-editor] .hp-live-resize')
+    || window.__card.renderRoot;
+  const candidates = [...activeRoot.querySelectorAll(
     '.rszhandle[aria-disabled="false"]',
   )].filter((entry) => Math.abs(Number(entry.getAttribute('cy')) - 529.166667) < 2);
   return candidates

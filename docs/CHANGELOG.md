@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Large plans now keep their heavy room, wall, lighting, decor and device scene
+  stable during hover, pan, pinch and editor drags, and unrelated Home Assistant
+  state updates no longer rebuild the full card; interactions remain visually
+  and functionally unchanged while responding much more smoothly
+  ([#451](https://github.com/Matysh/houseplan-card/issues/451)).
+
 ## v1.72.0-beta.2 — 2026-09-05
 
 - Double-clicking or double-tapping free plan background in View or kiosk now

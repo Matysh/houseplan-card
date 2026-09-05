@@ -177,6 +177,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#447](https://github.com/Matysh/houseplan-card/issues/447) Наружная грань для мебели и сдвиг декора стрелками | [447-exterior-furniture-snap-keyboard-nudge.md](447-exterior-furniture-snap-keyboard-nudge.md) |
 | [#448](https://github.com/Matysh/houseplan-card/issues/448) Единый бессрочный переключатель `hp_alpha` | [448-alpha-switch.md](448-alpha-switch.md) |
 | [#449](https://github.com/Matysh/houseplan-card/issues/449) Двойной клик/тап по свободному фону вписывает весь план | [449-double-fit-all.md](449-double-fit-all.md) |
+| [#451](https://github.com/Matysh/houseplan-card/issues/451) Фильтрация render и лёгкий live-слой взаимодействий | [451-render-performance.md](451-render-performance.md) |
 
 ## P3
 

@@ -271,9 +271,9 @@ const farIcon = await page.evaluate(async () => {
   const o = {};
   c._resetZoom(); await window.__waitForCamera(c);
   const at1 = size();
-  c._applyView(4); await c.updateComplete;
+  c._applyView(4); await new Promise((resolve) => requestAnimationFrame(resolve));
   const at4 = size();
-  c._applyView(1 / 3); await c.updateComplete;
+  c._applyView(1 / 3); await new Promise((resolve) => requestAnimationFrame(resolve));
   const atOut = size();
   c._resetZoom(); await window.__waitForCamera(c);
   o.iconGrowsWithZoomIn = at1 > 4 && Math.abs(at4 / at1 - 4) < 0.05;

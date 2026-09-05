@@ -42,7 +42,10 @@ await page.evaluate(() => {
   return c.updateComplete && true;
 });
 const settle = () => page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
-await page.waitForTimeout(220); // editor chrome transition changes stage coordinates
+await page.waitForFunction(() => {
+  const c = window.__card;
+  return !!c._editorRuntime && !c._modeTransitionBusy && !c._cameraTransition?.active;
+});
 await settle();
 
 const screenPt = (x, y) => page.evaluate(([x, y]) => {
@@ -288,7 +291,7 @@ const previews = () => page.evaluate(() =>
 
 // the click places it AT THE MAGNET and clears every hint
 {
-  const [hx, hy] = await screenPt(293.7, 141);
+  const [hx, hy] = await screenPt(295, 141);
   await page.mouse.move(hx, hy, { steps: 3 });
   await settle();
   await page.mouse.click(hx, hy);

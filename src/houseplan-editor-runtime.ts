@@ -11,6 +11,13 @@ import { guard } from 'lit/directives/guard.js';
 import { renderVacuumMapsSection } from './editors/vacuum-maps-section';
 import { calibrationTarget, planVacuumFit } from './vacuum-route-edit';
 import { repeat } from 'lit/directives/repeat.js';
+import {
+  cancelHouseplanPointerMove, flushHouseplanPointerMove, queueHouseplanPointerMove,
+} from './pointer-move-queue';
+import {
+  commitHouseplanEditor, disposeHouseplanEditor, measureHouseplanDecorText,
+  routeHouseplanEditorUpdate,
+} from './live-editor';
 import './hp-dialog';
 import type { HpDialog } from './hp-dialog';
 import type { HpConfirmRequest } from './danger-confirm';
@@ -54,6 +61,7 @@ import {
   ResizeController,
   type ResizeProjectionResult,
 } from './resize-controller';
+import { resizeLiveCandidateSpace, resizeLiveJunctionRoomIds } from './resize-live-preflight';
 import {
   placeResizeAreaLabel, resizeMeasuredEdges,
   type ResizeAreaPlacement,
@@ -97,8 +105,8 @@ import {
   innerEdgeSpan, ownEdgeOffsets, thicknessCmAt,
 } from './wall-thickness';
 import {
-  checkNodeDistances, checkNodes, checkRoomClearance, checkSegmentLengths,
-  increasedViolations, type JunctionLimitViolation, type LimitSegment,
+  junctionLimitViolations, increasedViolations,
+  type JunctionLimitViolation, type JunctionSharedGeometry, type LimitSegment,
 } from './junction-limits';
 import {
   pointOnOpenCut, sanitizeOpenSpans,
@@ -347,12 +355,13 @@ import {
 import {
   openingDefaultLengthCm, openingPlacementPreset, passagePlacementPreviewGeometry,
   resolveOpeningPlacementResult, sameOpeningPlacementInput,
-  type OpeningPlacementCore, type OpeningPlacementPreset, type OpeningPlacementType,
+  type OpeningPlacementPreset, type OpeningPlacementType,
 } from './opening-placement';
 import {
   buildOpeningDimensionContext, resolveOpeningDimensions,
-  type OpeningDimension, type OpeningDimensionContext,
+  type OpeningDimensionContext,
 } from './opening-dimensions';
+import type { OpeningPlacementCandidate, OpMeasure, RenderOpening } from './interaction-types';
 import { safeStoredColor } from './color';
 import {
   gridCellFieldToCm, gridCellFieldValue, gridVisualScale, gridVisualUnits,
@@ -794,32 +803,6 @@ const capturePointer = (ev: PointerEvent): void => {
   }
 };
 
-/** Ruler labels + the centre-magnet tick. Existing-opening DRAG carries its
- *  legacy two labels; a new-opening PLACEMENT may additionally carry physical
- *  line/tick geometry (#238). */
-interface OpMeasureLabel {
-  x: number;
-  y: number;
-  text: string;
-  dimension?: OpeningDimension;
-}
-
-interface OpMeasure {
-  labels: OpMeasureLabel[];
-  guide: { x: number; y: number; angle: number } | null;
-}
-
-type OpeningPlacementCandidate = Omit<OpeningPlacementCore, 'measure'> & {
-  face: OpeningFaceOffset;
-  measure: OpMeasure;
-};
-
-type RenderOpening = OpeningCfg & {
-  rx: number; ry: number; rlen: number;
-  partitionHost?: ResolvedPartitionOpening;
-  orphanReason?: PartitionOpeningOrphanReason;
-};
-
 interface DeviceInboxDialogState {
   tab: DeviceInboxCategory;
   search: string;
@@ -990,10 +973,9 @@ export interface HouseplanEditorHostPort {
   _importQueue: string[];
   _importTotal: number;
   _infoCard: DevItem | null;
-  _innerRoomContour: (space: SpaceModel, roomId: string, openCuts?: number[][], roomWalls?: any, multiWallNodes?: MultiWallNodeMap | null | undefined) => number[][] | null;
-  _junctionLimitViolations: (
-    config: unknown, spaceId: string, sharedGeometry?: unknown,
-  ) => JunctionLimitViolation[];
+  _innerRoomContour: (space: SpaceModel, roomId: string, openCuts?: number[][], roomWalls?: ReturnType<typeof wallBodiesGeometry>['roomGeom'], multiWallNodes?: MultiWallNodeMap | null | undefined) => number[][] | null;
+  _junctionLimitViolations: (config: unknown, spaceId: string,
+    sharedGeometry?: JunctionSharedGeometry | null, roomIds?: ReadonlySet<string>) => JunctionLimitViolation[];
   _isVacDev: (d: DevItem) => boolean;
   _kiosk: boolean;
   _kioskDialog: boolean;
@@ -1119,6 +1101,7 @@ export interface HouseplanEditorHostPort {
   _serverCfg: ServerConfig | null;
   _serverStorage: boolean;
   _settings: { exclude_integrations?: string[]; group_lights?: boolean; show_all?: boolean; filter_seeded?: boolean; icon_rules?: { pattern: string; icon: string; }[]; show_room_tooltip?: boolean; zigbee_topology?: { enabled?: boolean; z2m_base_topics?: string[] }; };
+  _terminalFrame: 0 | 1 | 2;
   _settingsDialog: { colors: FillColors; glowRadius: number; bgColor: string | null; northDeg: number | null; bgMode: "static" | "daynight"; sunRays: boolean; showRoomTooltip: boolean; zigbeeTopology: ZigbeeTopologySettings; busy: boolean; } | null;
   _supportDialog: SupportDialogState | null;
   _showAll: boolean;
@@ -1163,6 +1146,7 @@ export interface HouseplanEditorHostPort {
   _vacSourceResolution: (d: DevItem, includeAllCameras?: boolean, planHass?: any) => VacSourceResolution;
   _vacSrvTrails: Record<string, any>;
   _view: { x: number; y: number; w: number; h: number; } | null;
+  _viewportGestureDirty: boolean;
   _viewModeSnap: { space: string; zoom: number; cx?: number; cy?: number; } | null;
   _viewOr: (vb: number[]) => { x: number; y: number; w: number; h: number; };
   _viewPreference: Record<string, "flat" | "iso">;
@@ -1202,10 +1186,12 @@ export interface HouseplanEditorHostPort {
 export const EDITOR_RUNTIME_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
 
 export class HouseplanEditorRuntime {
-  /** #330: baseline limits are stable across one resize gesture. */
   private _junctionBaselineCache = new WeakMap<object, {
     spaceId: string; fingerprint: string; violations: JunctionLimitViolation[];
   }>();
+  private _resizePreviewNodes: MultiWallNodeMap | null = null;
+  private _resizeBaselineLimits: JunctionLimitViolation[] = [];
+  private _resizeBaseFrameStable = true;
   private _supportExpiryTimer?: number;
   private _supportPreviewGeneration = 0;
   private _decorAssetGuardReplace: boolean | null = null;
@@ -1235,7 +1221,16 @@ export class HouseplanEditorRuntime {
       ResizePreview, ResizeLiveLabel[], SpaceGeometryState, ResizeWallUnion, ResizeWallArtifact
     >();
   }
-
+public _routeLiveEditorUpdate(name?: PropertyKey, oldValue?: unknown): boolean {
+    const live = routeHouseplanEditorUpdate(this.host, name, oldValue);
+    if (!live && this.host._resize.preview) this._resizeBaseFrameStable = false;
+    return live;
+  }
+public _commitLiveEditor(): void { commitHouseplanEditor(this.host); }
+public _disposeLiveEditor(): void { disposeHouseplanEditor(this.host); }
+public _queuePointerMove(key: string, run: () => void): void { queueHouseplanPointerMove(this.host, key, run); }
+public _flushPointerMove(key: string): void { flushHouseplanPointerMove(this.host, key); }
+public _cancelPointerMove(key?: string): void { cancelHouseplanPointerMove(this.host, key); }
 public _help(key: Extract<I18nKey, `${string}.help`>): TemplateResult | typeof nothing {
     const ariaKey = `${key}.aria` as I18nKey;
     const lang = langOf(this.host.hass, this.host._config?.language);
@@ -2050,67 +2045,30 @@ public _limitSegmentsOf(space: any): LimitSegment[] {
   }
 
 public _junctionLimitViolations(
-    config: any, spaceId: string,
+    config: unknown, spaceId: string,
     /** #330 §4.7: an already computed masonry pass of THIS config (e.g. the
      * resize preflight's artifact) — the union is never paid twice. */
-    sharedGeometry?: any,
+    sharedGeometry?: JunctionSharedGeometry | null,
+    roomIds?: ReadonlySet<string>,
   ): JunctionLimitViolation[] {
-    const space = (config?.spaces || []).find((item) => item?.id === spaceId);
-    if (!space) return [];
-    const cellCm = Number(space.cell_cm) > 0 ? Number(space.cell_cm) : 5;
-    const segments = this._limitSegmentsOf(space);
-    const violations = [
-      ...checkNodes(segments),
-      ...checkSegmentLengths(segments, cellCm, GRID_STEP_N),
-      ...checkNodeDistances(segments, cellCm, GRID_STEP_N),
-    ];
-    // #330 §4.7: without the shared passes every room recomputed the FULL
-    // junction topology and masonry union for itself. Compute both at most
-    // once and hand them to every room clearance check.
-    let sharedNodes: ReturnType<typeof multiWallNodesForGeometry> | null = null;
-    try {
-      sharedNodes = multiWallNodesForGeometry(
-        space.rooms || [], space.walls || [], [], GRID_STEP_N, cellCm, GRID_STEP_N, 1,
-      );
-    } catch { sharedNodes = null; }
-    let sharedRoomGeometry: any = sharedGeometry?.status === 'ok'
-      || sharedGeometry?.status === 'degraded-extra'
-      ? sharedGeometry.roomGeom : null;
-    if (!sharedRoomGeometry && sharedNodes && sharedNodes.nodes.length) {
-      try {
-        const geometry = wallBodiesGeometry(
-          space.rooms || [], space.walls || [], [], [], GRID_STEP_N, cellCm, GRID_STEP_N, 1,
-        );
-        sharedRoomGeometry = geometry?.status === 'ok' || geometry?.status === 'degraded-extra'
-          ? geometry.roomGeom : null;
-      } catch { sharedRoomGeometry = null; }
-    }
-    for (const room of (space.rooms || [])) {
-      const roomId = String(room?.id || '');
-      if (!roomId) continue;
-      let inner: number[][] | null = null;
-      try {
-        inner = innerContourForRoom(
-          space.rooms || [], roomId, space.walls || [], [],
-          GRID_STEP_N, cellCm, GRID_STEP_N, 1,
-          sharedRoomGeometry ?? undefined, sharedNodes,
-        );
-      } catch { inner = null; }
-      violations.push(...checkRoomClearance(roomId, inner, cellCm, GRID_STEP_N));
-    }
-    return violations;
+    const space = ((config as { spaces?: Array<{ id?: unknown }> } | null)?.spaces || [])
+      .find((item) => item?.id === spaceId);
+    return space ? junctionLimitViolations(
+      config, spaceId, this._limitSegmentsOf(space), sharedGeometry, roomIds,
+    ) : [];
   }
 
 public _junctionLimitLabel(violation: JunctionLimitViolation): string {
     const round = (value: number) => String(Math.round(value * 10) / 10);
-    return this.host._t(`junction.limit_${violation.rule}` as any, {
+    return this.host._t(`junction.limit_${violation.rule}` as I18nKey, {
       actual: round(violation.actual), limit: round(violation.limit),
     });
   }
 
 public _junctionLimitsIntroduced(
-    candidate: any, previousConfig: any, spaceId: string,
-    candidateGeometry?: unknown,
+    candidate: ServerConfig, previousConfig: ServerConfig, spaceId: string,
+    candidateGeometry?: JunctionSharedGeometry | null,
+    affectedRoomIds?: readonly string[],
   ): JunctionLimitViolation[] {
     // The baseline must be the previous document AS THE CANDIDATE SEES IT: a
     // legacy space carries no wall catalogue at all, so comparing it raw with
@@ -2118,13 +2076,14 @@ public _junctionLimitsIntroduced(
     // refused legitimate resizes of real plans. Both sides therefore cross
     // the same identity barrier first. Current-version documents are already
     // materialized, while legacy documents cross that barrier once.
+    const affected = affectedRoomIds?.length ? new Set(affectedRoomIds) : undefined;
     let inherited: JunctionLimitViolation[] | undefined;
-    const previousSpace = (previousConfig?.spaces || [])
-      .find((space: any) => space?.id === spaceId);
+    const previousSpace = (previousConfig.spaces || [])
+      .find((space) => space?.id === spaceId);
     let fingerprint = '';
     try { fingerprint = spacePhysicalGeometryFingerprint(previousSpace); }
     catch { fingerprint = ''; }
-    const cached = previousConfig && typeof previousConfig === 'object'
+    const cached = !affected && previousConfig && typeof previousConfig === 'object'
       ? this._junctionBaselineCache.get(previousConfig) : undefined;
     if (cached && fingerprint && cached.fingerprint === fingerprint
         && cached.spaceId === spaceId) {
@@ -2135,26 +2094,34 @@ public _junctionLimitsIntroduced(
         const baseline = Number(previousConfig?.model_version || 0) >= WALL_SEGMENT_MODEL_VERSION
           ? previousConfig
           : commitWallSegmentModel(previousConfig).config;
-        inherited = this.host._junctionLimitViolations(baseline, spaceId);
+        inherited = this.host._junctionLimitViolations(
+          baseline, spaceId, affected ? null : undefined, affected,
+        );
       } catch {
         // An unmigratable baseline proves nothing about inheritance; never
         // refuse the write on that basis.
         return [];
       }
-      if (previousConfig && typeof previousConfig === 'object' && fingerprint) {
+      if (!affected && previousConfig && typeof previousConfig === 'object' && fingerprint) {
         this._junctionBaselineCache.set(previousConfig, {
           spaceId, fingerprint, violations: inherited,
         });
       }
     }
     let next: JunctionLimitViolation[] = [];
-    try { next = this.host._junctionLimitViolations(candidate, spaceId, candidateGeometry); }
+    let comparison = inherited;
+    try {
+      next = this.host._junctionLimitViolations(candidate, spaceId, candidateGeometry, affected);
+      if (affected) comparison = inherited.filter(
+        (item) => item.rule !== 'clearance' || affected.has(item.subject),
+      );
+    }
     catch {
       // #331 §2.5: candidate judgment fails closed; only an unprovable
       // baseline above is allowed to fail open.
       return [{ rule: 'check_failed', subject: spaceId, actual: 0, limit: 0 }];
     }
-    return increasedViolations(next, inherited);
+    return increasedViolations(next, comparison);
   }
 
 public _commitPhysicalGeometry(
@@ -2336,14 +2303,16 @@ public _stagePointerCancel(ev: PointerEvent): void {
     } else if (this.host._tool === 'draw') {
       this._clearPlanSnapHover();
     }
-    const viewportGestureEnded = !!this.host._pinchStart || !!this.host._panStart;
     this.host._pointers.delete(ev.pointerId);
     if (this.host._pointers.size < 2) this.host._pinchStart = null;
     if (this.host._pointers.size === 0) {
       this.host._panStart = null;
       this.host._panLock = null;
     }
-    if (viewportGestureEnded && this.host._pointers.size === 0) this.host.requestUpdate();
+    if (this.host._viewportGestureDirty && this.host._pointers.size === 0) {
+      this.host._viewportGestureDirty = false;
+      this.host.requestUpdate();
+    }
   }
 
 public _applyGeometryState(
@@ -3296,6 +3265,11 @@ public _clampPhysicalDelta(
   }
 
 public _physicalMove(ev: PointerEvent): void {
+    ev.stopPropagation();
+    queueHouseplanPointerMove(this.host, 'physical', () => this._physicalMoveNow(ev));
+  }
+
+private _physicalMoveNow(ev: PointerEvent): void {
     const drag = this.host._physicalDrag;
     if (!drag || drag.pid !== ev.pointerId) return;
     ev.stopPropagation();
@@ -3317,6 +3291,7 @@ public _physicalMove(ev: PointerEvent): void {
   }
 
 public _physicalUp(ev: PointerEvent): void {
+    flushHouseplanPointerMove(this.host, 'physical');
     const drag = this.host._physicalDrag;
     if (!drag || drag.pid !== ev.pointerId) return;
     ev.stopPropagation();
@@ -3385,6 +3360,8 @@ public _registerPhysicalTap(
   }
 
 public _cancelPhysicalGesture(): void {
+    cancelHouseplanPointerMove(this.host, 'physical');
+    cancelHouseplanPointerMove(this.host, 'physical-rotate');
     this.host._physicalDrag = null;
     this.host._physicalRotate = null;
     this.host.requestUpdate();
@@ -3406,6 +3383,12 @@ public _physicalRotateDown(ev: PointerEvent, c: WallColumnCfg): void {
   }
 
 public _physicalRotateMove(ev: PointerEvent): void {
+    ev.preventDefault();
+    ev.stopPropagation();
+    queueHouseplanPointerMove(this.host, 'physical-rotate', () => this._physicalRotateMoveNow(ev));
+  }
+
+private _physicalRotateMoveNow(ev: PointerEvent): void {
     const drag = this.host._physicalRotate;
     if (!drag || drag.pid !== ev.pointerId) return;
     ev.preventDefault();
@@ -3418,6 +3401,7 @@ public _physicalRotateMove(ev: PointerEvent): void {
   }
 
 public _physicalRotateUp(ev: PointerEvent): void {
+    flushHouseplanPointerMove(this.host, 'physical-rotate');
     const drag = this.host._physicalRotate;
     if (!drag || drag.pid !== ev.pointerId) return;
     ev.preventDefault();
@@ -3651,9 +3635,8 @@ public _rszProjectPreview(
     // old records as a multiset and prove only newly written/split records.
     // That keeps pointermove bounded by the touched thickness profile instead
     // of comparing every historical record with every carrier twice per frame.
-    const wallSignature = (wall: any): string => JSON.stringify([
-      wall?.key, wall?.cm, wall?.a, wall?.b,
-    ]);
+    const wallSignature = (wall: WallEntry): string =>
+      JSON.stringify([wall?.key, wall?.cm, wall?.a, wall?.b]);
     const oldWallCounts = new Map<string, number>();
     for (const wall of s.walls || []) {
       const key = wallSignature(wall);
@@ -3666,13 +3649,12 @@ public _rszProjectPreview(
       if (remaining) oldWallCounts.set(key, remaining - 1);
       else changedWalls.push(wall);
     }
-    if (wallRecordCarrierViolations(
-      changedWalls, wallCarriers, this.host._wallKeyPitch, NORM_W, s.walls || [],
-    ).length) return { ok: false, reason: 'wall-metadata' };
-    const preflight = this._rszSpaceCandidateGeometry(this.host._space, sp);
-    if (!preflight.ok) {
+    if (wallRecordCarrierViolations(changedWalls, wallCarriers, this.host._wallKeyPitch,
+      NORM_W, s.walls || []).length) return { ok: false, reason: 'wall-metadata' };
+    const liveRoomIds = resizeLiveJunctionRoomIds(sp.rooms || [], changedRoomIds);
+    const liveSpace = resizeLiveCandidateSpace(sp, liveRoomIds);
+    if (!liveSpace || !this._rszSpaceCandidateGeometry(this.host._space, liveSpace).ok)
       return { ok: false, reason: 'physical-geometry' };
-    }
     // #329 AC7a: a step that would ADD a junction-limit violation is never
     // projected, so the drag stops at the last allowed position instead of
     // committing an impossible plan.
@@ -3682,11 +3664,22 @@ public _rszProjectPreview(
         (space) => (space?.id === this.host._space ? sp : space),
       ),
     };
-    // #330 §4.7: reuse the masonry pass already computed by the resize
-    // preflight instead of rebuilding it while checking room clearance.
-    const limited = this._junctionLimitsIntroduced(
-      limitCandidate, this.host._serverCfg, this.host._space, preflight.wallGeometry,
-    );
+    try { this._resizePreviewNodes = multiWallNodesForGeometry(
+        liveSpace.rooms, liveSpace.walls as unknown as WallEntry[], [], GRID_STEP_N,
+        this.host._cellCm, this.host._gridPitch, NORM_W,
+      );
+    } catch { this._resizePreviewNodes = null; }
+    let limited: JunctionLimitViolation[];
+    try {
+      const affected = new Set(changedRoomIds);
+      const next = this.host._junctionLimitViolations(limitCandidate, this.host._space,
+        { status: 'lightweight', multiWallNodes: this._resizePreviewNodes }, affected);
+      const baseline = this._resizeBaselineLimits.filter(
+        (item) => item.rule !== 'clearance' || affected.has(item.subject));
+      limited = increasedViolations(next, baseline);
+    } catch {
+      limited = [{ rule: 'check_failed', subject: this.host._space, actual: 0, limit: 0 }];
+    }
     if (limited.length) {
       this.host._rszLimitViolation = limited[0];
       return { ok: false, reason: 'junction-limit' };
@@ -3696,16 +3689,16 @@ public _rszProjectPreview(
       value: {
         preview: { space: this.host._space, sp },
         beforeWalls: s.walls || [],
-        afterWalls: sp.walls || [],
-        artifact: preflight.wallGeometry,
+        afterWalls: sp.walls || [], artifact: null,
       },
     };
   }
-
 public _rszAcceptPreview(
     preview: ResizePreview | null, wallGeometry: ResizeWallArtifact | null,
   ): void {
     this.host._cfgEpoch++;
+    if (this.host._physicalBodiesCache) this.host._physicalBodiesCache.key =
+      `${this.host._space}|${this.host._cfgEpoch}|${this.host._cellCm}|${this.host._gridPitch}`;
     if (!preview || !wallGeometry) return;
     const projected = wallBodiesGeometryPath(wallGeometry);
     if (!projected) return;
@@ -3761,6 +3754,7 @@ public _rszCandidateRenderable(preview: { space: string; sp: any } | null): bool
 
 public _rszEdgeDown(ev: PointerEvent, roomId: string, edge: number): void {
     if (this.host._tool !== 'resize' || this.host._resize.dragging) return;
+    this._resizeBaseFrameStable = true;
     ev.stopPropagation();
     ev.preventDefault();
     const rooms = this._rszRooms();
@@ -3771,6 +3765,10 @@ public _rszEdgeDown(ev: PointerEvent, roomId: string, edge: number): void {
     }
     capturePointer(ev);
     const plan = resolution.plan;
+    try {
+      this._resizeBaselineLimits = this.host._junctionLimitViolations(
+        this.host._serverCfg, this.host._space, null, new Set(plan.roomIds));
+    } catch { this._resizeBaselineLimits = []; }
     const start = this._svgPoint(ev);
     const wallUnionKey = `${this.host._space}|${this.host._cfgEpoch}|${rooms.length}`;
     const wallUnionBefore = this.host._wallUnionCache?.key === wallUnionKey
@@ -3782,6 +3780,7 @@ public _rszEdgeDown(ev: PointerEvent, roomId: string, edge: number): void {
       openings: this._rszOpenings(), snapshotIdentity,
       before: JSON.parse(snapshotIdentity) as SpaceGeometryState,
       wallUnionBefore,
+      epochBefore: this.host._cfgEpoch,
     });
   }
 
@@ -3801,6 +3800,11 @@ public _rszDisabledKey(ev: KeyboardEvent, reason: SafeResizeReason): void {
   }
 
 public _rszMove(ev: PointerEvent): void {
+    if (!this.host._resize.ownsPointer(ev.pointerId)) return;
+    ev.stopPropagation();
+    queueHouseplanPointerMove(this.host, 'resize', () => this._rszMoveNow(ev));
+  }
+private _rszMoveNow(ev: PointerEvent): void {
     if (!this.host._resize.ownsPointer(ev.pointerId)) return;
     ev.stopPropagation();
     const p = this._svgPoint(ev);
@@ -3838,6 +3842,7 @@ public _rszMove(ev: PointerEvent): void {
   }
 
 public _rszUp(ev: PointerEvent): void {
+    flushHouseplanPointerMove(this.host, 'resize');
     if (!this.host._resize.ownsPointer(ev.pointerId)) return;
     ev.stopPropagation();
     const result = this.host._resize.finish({
@@ -3878,17 +3883,16 @@ public _rszUp(ev: PointerEvent): void {
   }
 
 public _rszCancelDrag(pointerId?: number): void {
+    cancelHouseplanPointerMove(this.host, 'resize');
     const result = this.host._resize.cancel(this._rszSnapshot(), pointerId);
     if (result.kind === 'no-op') return;
-    // HP-1550-01/-03: a cancel just drops the overlay — the real config was
-    // never touched, so there is nothing to restore, no undo step and no write
-    this.host._cfgEpoch++;
+    // An identical cancel reuses the pre-drag structural caches and writes nothing.
+    if (result.restoreEpoch !== null) this.host._cfgEpoch = result.restoreEpoch;
+    else this.host._cfgEpoch++;
+    if (this.host._physicalBodiesCache) this.host._physicalBodiesCache.key =
+      `${this.host._space}|${this.host._cfgEpoch}|${this.host._cellCm}|${this.host._gridPitch}`;
     if (result.restoreWallUnion) {
-      // The server-backed geometry did not change during the gesture. The
-      // preview advanced the structural epoch and temporarily selected its
-      // candidate union, but Cancel returns to the byte-identical pre-drag
-      // config. Alias that already-proved result under the fresh epoch instead
-      // of paying another O(n log n) polygon union on the next paint.
+      // Alias the already-proved pre-drag union under the restored epoch.
       const space = this.host._spaceModel();
       if (space) {
         const key = `${this.host._space}|${this.host._cfgEpoch}|${space.rooms.length}`;
@@ -3897,6 +3901,11 @@ public _rszCancelDrag(pointerId?: number): void {
         this.host._wallUnionCache = entry;
       }
     }
+    // Retain the canonical frame only when the drag was actually painted in
+    // the isolated plan-editor layer. Programmatic/non-editor callers still
+    // need a full render to replace their preview DOM.
+    if (result.restoreEpoch !== null && this.host._mode === 'plan'
+        && this._resizeBaseFrameStable) this.host._terminalFrame = 1;
     this.host.requestUpdate();
   }
 
@@ -3970,7 +3979,10 @@ public _rszEdgeLabels(
       // masonry union + contour cache that the following render consumes;
       // rebuilding both independently here doubled one Resize frame.
       const floor = walls.length && space
-        ? (this.host._innerRoomContour(space, id) || poly)
+        ? (innerContourForRoom(
+          space.rooms, id, walls, this.host._openCuts(), this.host._wallKeyPitch,
+          this.host._cellCm, this.host._gridPitch, NORM_W, null, this._resizePreviewNodes,
+        ) || poly)
         : poly;
       const m2 = physical.length
         ? geometryArea(floorMinusBodies(floor, physical))
@@ -4033,7 +4045,9 @@ public _renderResizeMeasurements(): TemplateResult | typeof nothing {
     </g>`;
   }
 
-public _renderResizeLayer(view: { x: number; y: number; w: number; h: number }): TemplateResult {
+public _renderResizeLayer(
+    view: { x: number; y: number; w: number; h: number }, roomIds?: readonly string[],
+  ): TemplateResult {
     const hr = Math.max(view.w * 0.013, 5); // finger-sized HIT radius on touch, like .vacfithandle
     // Wall-handle glyph: half the old circle — a wall segment with two arrows
     // pointing perpendicular to it (the directions the wall can be dragged).
@@ -4052,7 +4066,9 @@ public _renderResizeLayer(view: { x: number; y: number; w: number; h: number }):
     // never once per room edge. During a drag the immutable gesture snapshot
     // remains authoritative inside _rszResolution.
     const renderSnapshot = this.host._resize.snapshotIdentity || this._rszSnapshot();
+    const visibleRooms = roomIds?.length ? new Set(roomIds) : null;
     for (const r of rooms) {
+      if (visibleRooms && !visibleRooms.has(r.id)) continue;
       for (let i = 0; i < r.poly.length; i++) {
         const a = r.poly[i], b = r.poly[(i + 1) % r.poly.length];
         if (Math.hypot(b[0] - a[0], b[1] - a[1]) < this.host._gridPitch) continue;
@@ -4076,7 +4092,7 @@ public _renderResizeLayer(view: { x: number; y: number; w: number; h: number }):
         parts.push(svg`<g class="rszicon ${disabled ? 'disabled' : ''}" transform="translate(${mx} ${my}) rotate(${ang})"><path class="rszhalo" d="${iconD}"></path><path class="rszink" d="${iconD}"></path></g>`);
       }
     }
-    return svg`${parts}`;
+    return svg`<g class="resize-layer">${parts}</g>`;
   }
 
 public _partitionOpeningCuts(
@@ -4158,6 +4174,9 @@ public _replaceDecor(id: string, patch: Partial<DecorShape>): void {
   }
 
 public _cancelDecorGesture(): void {
+    cancelHouseplanPointerMove(this.host, 'decor-transform');
+    cancelHouseplanPointerMove(this.host, 'decor-move');
+    cancelHouseplanPointerMove(this.host, 'backdrop');
     const before = this.host._decorMove?.before || this.host._dtDrag?.before || this.host._bdDrag?.before;
     const sp = before && this.host._serverCfg?.spaces.find((space) => space.id === before.spaceId);
     if (before && sp) {
@@ -4167,11 +4186,14 @@ public _cancelDecorGesture(): void {
       for (const key of ['plan_x', 'plan_y', 'plan_scale', 'plan_scale_x', 'plan_scale_y', 'plan_angle'] as const)
         delete sp[key];
       Object.assign(sp, copy(before.plan_transform || {}));
-      this.host._cfgEpoch++;
+      // The restored transform is byte-identical; keep geometry caches.
+      this.host._decorSnapCache = null;
     }
     this.host._decorMove = null;
     this.host._dtDrag = null;
     this.host._bdDrag = null;
+    // Mark after named terminal setters; only the unnamed cancel frame may be retained.
+    if (before && sp && this.host._mode === 'decor') this.host._terminalFrame = 1;
     this.host.requestUpdate();
   }
 
@@ -4334,9 +4356,7 @@ public _decorShapeDown(ev: PointerEvent, shape: DecorShape): void {
   }
 
 public _decorMoveUpdate(ev: PointerEvent): void {
-    const m = this.host._decorMove!;
-    // Furniture is dragged by its CENTRE and has a magnet of its own
-    // (docs/FURNITURE.md §5) — a different rule, not a different gesture.
+    const m = this.host._decorMove; if (!m) return;
     if (m.orig?.kind === 'furniture') { this._furnMoveUpdate(ev); return; }
     const p = this._svgPoint(ev);
     const o0: any = m.orig;
@@ -4373,6 +4393,11 @@ public _decorMoveUpdate(ev: PointerEvent): void {
       return { ...x, x: o.x + dx, y: o.y + dy };
     });
     this.host.requestUpdate();
+  }
+public _dmUp(): void {
+    flushHouseplanPointerMove(this.host, 'decor-move'); const move = this.host._decorMove;
+    if (move?.moved) { this._recordGeometry(this.host._t('history.decor_move'), move.before); this._saveConfig(); }
+    this.host._decorMove = null; this.host.requestUpdate();
   }
 
 public _decorShapeDbl(ev: MouseEvent, shape: DecorShape): void {
@@ -4808,39 +4833,7 @@ public _dtUp(): void {
   }
 
 public _dtMeasure(): void {
-    const sh = this.host._dtSel;
-    if (!sh) {
-      if (this.host._dtBox) { this.host._dtBox = null; this.host.requestUpdate(); }
-      return;
-    }
-    let box: { id: string; x: number; y: number; w: number; h: number };
-    if (sh.kind === 'line') {
-      const x1 = sh.x1 * NORM_W, y1 = sh.y1 * this.host._decorH;
-      const x2 = sh.x2 * NORM_W, y2 = sh.y2 * this.host._decorH;
-      box = { id: sh.id, x: Math.min(x1, x2), y: Math.min(y1, y2),
-        w: Math.abs(x2 - x1), h: Math.abs(y2 - y1) };
-    } else if (sh.kind === 'furniture' || sh.kind === 'image'
-        || sh.kind === 'rect' || sh.kind === 'ellipse') {
-      // …and furniture needs no measuring at all: its box IS the config. The
-      // frame therefore appears in the SAME frame as the selection, not one
-      // after it, and a resize can never be a render behind the shape.
-      box = { id: sh.id, x: sh.x * NORM_W, y: sh.y * this.host._decorH,
-        w: sh.w * NORM_W, h: sh.h * this.host._decorH };
-    } else {
-      const el = this.host.renderRoot.querySelector(`text.dtext[data-id="${sh.id}"]`) as SVGGraphicsElement | null;
-      if (!el || typeof (el as any).getBBox !== 'function') return;
-      let b: DOMRect;
-      try { b = el.getBBox(); } catch { return; } // not rendered yet (hidden card)
-      if (!b || (!b.width && !b.height)) return;
-      box = { id: sh.id, x: b.x, y: b.y, w: b.width, h: b.height };
-    }
-    const cur = this.host._dtBox;
-    const same = cur && cur.id === box.id && Math.abs(cur.x - box.x) < 0.01
-      && Math.abs(cur.y - box.y) < 0.01 && Math.abs(cur.w - box.w) < 0.01
-      && Math.abs(cur.h - box.h) < 0.01;
-    if (same) return;
-    this.host._dtBox = box;
-    this.host.requestUpdate();
+    measureHouseplanDecorText(this.host);
   }
 
 public _deleteDecor(id: string): void {
@@ -5068,7 +5061,7 @@ public _furnPointerUp(ev: PointerEvent): boolean {
   }
 
 public _furnMoveUpdate(ev: PointerEvent): void {
-    const m = this.host._decorMove!;
+    const m = this.host._decorMove; if (!m) return;
     if (m.orig.kind !== 'furniture') return;
     const o: any = m.orig;
     const sp = this.host._curSpaceCfg;
@@ -5273,6 +5266,10 @@ public _bdStart(ev: PointerEvent, corner?: number[], rotate = false): boolean {
   }
 
 public _bdMove(ev: PointerEvent): void {
+    queueHouseplanPointerMove(this.host, 'backdrop', () => this._bdMoveNow(ev));
+  }
+
+private _bdMoveNow(ev: PointerEvent): void {
     const d = this.host._bdDrag;
     if (!d) return;
     const p = this._svgPoint(ev);
@@ -5329,6 +5326,7 @@ public _bdReset(): void {
   }
 
 public _bdUp(): void {
+    flushHouseplanPointerMove(this.host, 'backdrop');
     const d = this.host._bdDrag;
     this.host._bdDrag = null;
     if (d?.moved) {
@@ -6433,6 +6431,10 @@ public _opPointerDown(ev: PointerEvent, o: OpeningCfg): void {
   }
 
 public _opPointerMove(ev: PointerEvent, o: OpeningCfg): void {
+    queueHouseplanPointerMove(this.host, 'opening', () => this._opPointerMoveNow(ev, o));
+  }
+
+private _opPointerMoveNow(ev: PointerEvent, o: OpeningCfg): void {
     if (!this.host._opDrag || this.host._opDrag.id !== o.id) return;
     // audit L4: the other drag pipelines require 3 px before calling it a drag.
     // Without it every tap counted as a drag: the properties dialog never
@@ -6552,6 +6554,7 @@ public _opRuler(
 
 public _opPointerUp(ev: PointerEvent, o: OpeningCfg): void {
     if (!this.host._opDrag || this.host._opDrag.id !== o.id) return;
+    flushHouseplanPointerMove(this.host, 'opening');
     const drag = this.host._opDrag;
     const moved = drag.moved;
     this.host._opMeasure = null; // badges and the center tick live only through the drag
@@ -6560,8 +6563,8 @@ public _opPointerUp(ev: PointerEvent, o: OpeningCfg): void {
       this._commitPhysicalGeometry(this.host._t('history.move_opening'), drag.before);
     }
     // keep the flag until the click event that follows pointerup, then let it go
-    if (moved) window.setTimeout(() => (this.host._opDrag = null), 0);
-    else this.host._opDrag = null;
+    const finish = () => { this.host._opDrag = null; this.host.requestUpdate(); };
+    if (moved) window.setTimeout(finish, 0); else finish();
   }
 
 public _opClick(ev: MouseEvent, o: RenderOpening): void {
@@ -6893,13 +6896,11 @@ public _markupMove(ev: MouseEvent): void {
         conflicts: resolved.conflicts,
       };
       this._syncPlanSnapConflictMarkers(resolved.conflicts);
+      this._syncPlanSnapActiveMarker(resolved.candidate);
       // Before the first click there is no rubber-band to repaint. Updating the
       // dedicated marker avoids walking the complete large-house Lit tree for
       // every mouse move while click still resolves from the event coordinate.
-      if (!this.host._path.length) {
-        this._syncPlanSnapActiveMarker(resolved.candidate);
-        return;
-      }
+      if (!this.host._path.length) return;
       this.host._cursorPt = resolved.point;
       return;
     }

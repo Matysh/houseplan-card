@@ -22,6 +22,8 @@ export interface RenderDeviceSnapshot {
   readonly presentations: ReadonlyMap<string, ResolvedDevicePresentation>;
   /** Extra resolved render facts (for example a vacuum puck/trail frame). */
   readonly facts: ReadonlyMap<string, unknown>;
+  /** Exact state rows whose identity may invalidate the painted frame. */
+  readonly entityIds: readonly string[];
 }
 
 /**
@@ -148,6 +150,7 @@ export function createRenderDeviceSnapshot(options: {
       [key, cloneFact(presentation)] as const)),
     facts: readonlyMap([...(options.facts || [])].map(([key, fact]) =>
       [key, cloneFact(fact)] as const)),
+    entityIds: Object.freeze([...entityIds]),
   });
 }
 

@@ -111,3 +111,28 @@ test('absolute performance smoke needs no baseline and enforces hard ceilings', 
   assert.equal(rejected.pass, false);
   assert.ok(rejected.failures.some((check) => check.id === 'timing.firstStableRenderMs.median'));
 });
+
+test('named interaction windows enforce their own absolute Long Task limits', () => {
+  const windowBudgets = {
+    ...budgets,
+    longTaskWindows: {
+      editorSeries: { maxSingleMs: 150, maxCountP95: 3, maxTotalP95Ms: 300 },
+    },
+  };
+  const candidate = report();
+  candidate.rows[0].longTasks.editorSeries = {
+    supported: true, count: 3, maxMs: 149, totalMs: 299,
+  };
+  candidate.rows[1].longTasks.editorSeries = {
+    supported: true, count: 4, maxMs: 151, totalMs: 301,
+  };
+  const result = evaluatePerformanceBudget({ baseline: report(), candidate, budgets: windowBudgets });
+  assert.deepEqual(
+    new Set(result.failures.map((check) => check.id)),
+    new Set([
+      'longTask.editorSeries.maxSingleMs',
+      'longTask.editorSeries.countP95',
+      'longTask.editorSeries.totalP95Ms',
+    ]),
+  );
+});

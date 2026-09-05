@@ -125,6 +125,7 @@ Object.assign(out, await page.evaluate(async () => {
     fire(h, 'pointerdown', 21, r.left + r.width / 2, r.top + r.height / 2);
     o.resizeHandleTakesThePointer = c._resize?.dragging === true && c._panStart === null;
     fire(h, 'pointermove', 21, r.left + r.width / 2 + 40, r.top + r.height / 2 + 40);
+    await Promise.resolve();
     const v1 = { ...c._viewOr(c._baseVb()) };
     o.resizeHandleDoesNotPan = Math.abs(v1.x - v0.x) < 0.5 && Math.abs(v1.y - v0.y) < 0.5;
     o.resizeHandleResizes = c._resize?.dragging === true && c._resize.moved === true;
@@ -143,6 +144,7 @@ Object.assign(out, await page.evaluate(async () => {
     fire(dev, 'pointerdown', 22, r.left + r.width / 2, r.top + r.height / 2);
     o.deviceTakesThePointer = !!c._deviceDrag && c._panStart === null;
     fire(dev, 'pointermove', 22, r.left + r.width / 2 + 40, r.top + r.height / 2 + 30);
+    await Promise.resolve();
     c._stagePointerMove({ pointerId: 22, clientX: r.left + 60, clientY: r.top + 50 });
     const v1 = { ...c._viewOr(c._baseVb()) };
     o.deviceDragDoesNotPan = Math.abs(v1.x - v0.x) < 0.5 && Math.abs(v1.y - v0.y) < 0.5;

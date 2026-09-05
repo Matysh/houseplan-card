@@ -106,6 +106,17 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'render-invalidation-renders-irrelevant-ha',
+    guard: 'node demo/smoke_render_invalidation.mjs',
+    because: 'an irrelevant HA state row must still enter lifecycle intake without scheduling '
+      + 'a full Lit render; the production smoke owns this card/runtime wiring (#451)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '      if (!render) return;',
+      replace: '      if (false && !render) return;',
+    }],
+  },
+  {
     id: 'draft-delete-drops-the-promise',
     guard: 'node demo/smoke_free_walls.mjs',
     because: 'a delayed confirmation must keep the draft deletion pending all the way to the '

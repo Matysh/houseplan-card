@@ -23,8 +23,14 @@ const res = await page.evaluate(async () => {
   const c = window.__card;
   const sr = () => c.shadowRoot || c.renderRoot;
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const settleLive = async () => {
+    await Promise.resolve();
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    await c.updateComplete;
+  };
   const stageEl = () => sr().querySelector('.stage');
-  const el = (id) => (id ? sr().querySelector(`.decorlayer [data-id="${id}"]`) : null);
+  const el = (id) => (id ? sr().querySelector(`[data-hp-live-editor] .decorlayer [data-id="${id}"]`)
+    || sr().querySelector(`.decorlayer [data-id="${id}"]`) : null);
   const attr = (id, n) => { const e = el(id); return e ? e.getAttribute(n) : null; };
   const toScreen = (x, y) => {
     const r = stageEl().getBoundingClientRect();
@@ -46,6 +52,7 @@ const res = await page.evaluate(async () => {
   const cmToUnits = (cm) => (cm / CELL) * PITCH;
   const near = (a, b, tol) => Number.isFinite(a) && Number.isFinite(b) && Math.abs(a - b) <= tol;
   const pe = (id) => { const e = el(id); return e ? getComputedStyle(e).pointerEvents : null; };
+  const box = () => c._decorBoxOf(sofaNow());
 
   sr().querySelectorAll('.modetab')[2].click(); await c.updateComplete;
   c._curSpaceCfg.decor = [];
@@ -148,7 +155,7 @@ const res = await page.evaluate(async () => {
     redo: c._geometryHistory.redoName,
   };
   ev('pointermove', stageEl(), 300, 300, { pointerType: 'mouse' });
-  await c.updateComplete;
+  await settleLive();
   const firstPreview = c._editorRuntime?._furniturePreviewPlacement()
     ? JSON.parse(JSON.stringify(c._editorRuntime._furniturePreviewPlacement())) : null;
   const firstTransform = ghost()?.getAttribute('transform');
@@ -176,7 +183,7 @@ const res = await page.evaluate(async () => {
   stageEl().dispatchEvent(new PointerEvent('pointerleave', {
     bubbles: true, composed: true, pointerId: 11, pointerType: 'mouse',
   }));
-  await c.updateComplete;
+  await settleLive();
   out.pointerLeaveClearsPreview = !ghost() && c._furnPreviewInput === null;
 
   // Unknown/stale symbols fail dark: neither an invisible ghost nor a decor
@@ -184,7 +191,7 @@ const res = await page.evaluate(async () => {
   c._furnPalette = { symbol: 'future_unknown_symbol', w: 180, h: 90 };
   await c.updateComplete;
   ev('pointermove', stageEl(), 300, 300, { pointerType: 'mouse' });
-  await c.updateComplete;
+  await settleLive();
   const beforeUnknown = c._decorList.length;
   ev('pointerdown', stageEl(), 300, 300, { pointerType: 'mouse' });
   await c.updateComplete;
@@ -196,7 +203,7 @@ const res = await page.evaluate(async () => {
   // ================= 4. размещение в реальном размере ======================
   // середина комнаты r1 (40..550 × 140..580) — до стен дальше порога магнита
   ev('pointermove', stageEl(), 300, 300, { pointerType: 'mouse' });
-  await c.updateComplete;
+  await settleLive();
   const committedPreview = c._editorRuntime?._furniturePreviewPlacement()
     ? JSON.parse(JSON.stringify(c._editorRuntime._furniturePreviewPlacement())) : null;
   const committedPreviewStroke = Number(ghost()?.getAttribute('stroke-width'));
@@ -266,7 +273,7 @@ const res = await page.evaluate(async () => {
   category('bed')?.click(); await c.updateComplete;
   pick('bed_double'); await c.updateComplete;
   ev('pointermove', stageEl(), 300, 140 + wallHalf, { pointerType: 'mouse' });
-  await c.updateComplete;
+  await settleLive();
   const thickWallPreview = c._editorRuntime?._furniturePreviewPlacement()
     ? JSON.parse(JSON.stringify(c._editorRuntime._furniturePreviewPlacement())) : null;
   ev('pointerdown', stageEl(), 300, 140 + wallHalf);
@@ -290,7 +297,7 @@ const res = await page.evaluate(async () => {
   c.requestUpdate(); await c.updateComplete;
   const exteriorIntentY = 140 - wallHalf;
   ev('pointermove', stageEl(), 300, exteriorIntentY, { pointerType: 'mouse' });
-  await c.updateComplete;
+  await settleLive();
   const exteriorPreview = c._editorRuntime?._furniturePreviewPlacement()
     ? JSON.parse(JSON.stringify(c._editorRuntime._furniturePreviewPlacement())) : null;
   const exteriorDepth = cmToUnits(50);
@@ -307,7 +314,7 @@ const res = await page.evaluate(async () => {
     && (exteriorChair.angle || 0) === exteriorPreview.angle;
   ev('pointerdown', el(exteriorChairId), 300, exteriorCentreY);
   ev('pointermove', stageEl(), 300, 140);
-  await c.updateComplete;
+  await settleLive();
   const exteriorAxisDrag = c._decorList.find((shape) => shape.id === exteriorChairId);
   out.exteriorExactAxisDragPreservesSide = !!exteriorAxisDrag
     && near((exteriorAxisDrag.y + exteriorAxisDrag.h / 2) * 1000, exteriorCentreY, 1e-6)
@@ -322,7 +329,7 @@ const res = await page.evaluate(async () => {
   pick('chair'); await c.updateComplete;
   const sharedIntentX = 550 + wallHalf / 2;
   ev('pointermove', stageEl(), sharedIntentX, 300, { pointerType: 'mouse' });
-  await c.updateComplete;
+  await settleLive();
   ev('pointerdown', stageEl(), sharedIntentX, 300);
   await c.updateComplete;
   const sharedChair = c._decorList.find((s) => s.symbol === 'chair' && s.id !== exteriorChairId);
@@ -337,7 +344,7 @@ const res = await page.evaluate(async () => {
   const sharedChairY = sharedChair ? (sharedChair.y + sharedChair.h / 2) * 1000 : NaN;
   ev('pointerdown', el(sharedChairId), rightSurfaceCentre, sharedChairY);
   ev('pointermove', stageEl(), 550, sharedChairY);
-  await c.updateComplete;
+  await settleLive();
   const axisDraggedChair = c._decorList.find((s) => s.id === sharedChairId);
   out.exactAxisDragPreservesWallSide = !!axisDraggedChair
     && near((axisDraggedChair.x + axisDraggedChair.w / 2) * 1000, rightSurfaceCentre, 1e-6);
@@ -385,14 +392,14 @@ const res = await page.evaluate(async () => {
   ev('pointerdown', el(sofaId), 300, 300);
   out.dragStarted = !!sofaId && c._decorMove?.id === sofaId;
   ev('pointermove', stageEl(), 540, 300);
-  await c.updateComplete;
+  await settleLive();
   const pulled = sofaNow();
   out.dragMagnetTurnsItToTheWall = Math.abs(Math.abs(pulled.angle || 0) - 90) < 1e-6;
   out.dragMagnetPressesTheBack =
     near((pulled.x + pulled.w / 2) * 1000,
       550 - wallHalf - cmToUnits(90) / 2, 1e-6);
   ev('pointermove', stageEl(), 300, 300, { shiftKey: true });
-  await c.updateComplete;
+  await settleLive();
   const shiftDragGridIndex = (sofaNow().x * 1000) / PITCH;
   out.shiftDragRemainsGridBound = near(shiftDragGridIndex, Math.round(shiftDragGridIndex), 1e-6);
   ev('pointerup', stageEl(), 300, 300, { shiftKey: true });
@@ -410,7 +417,7 @@ const res = await page.evaluate(async () => {
   c._cfgEpoch++;
   c._decorSel = sofaId; c.requestUpdate();
   await c.updateComplete; await sleep(60); await c.updateComplete;
-  const frame = () => sr().querySelector('.dtframe');
+  const frame = () => sr().querySelector('[data-hp-live-editor] .dtframe') || sr().querySelector('.dtframe');
   out.frameOnSelection = !!frame();
   out.furnitureFrameHasFourSideHandles = !!frame()
     && frame().classList.contains('dtfurnitureframe')
@@ -424,9 +431,10 @@ const res = await page.evaluate(async () => {
   const rOf = (sel) => { const e = frame()?.querySelector(sel); return e ? +e.getAttribute('r') : NaN; };
   out.handleSizeIsTheTaskOneSize = Math.abs(rOf('.dtknob') * 4 - rOf('.dthandle.dtrot'))
     / Math.max(rOf('.dthandle.dtrot'), 1e-9) < 0.05;
-  out.frameBoxIsTheShapeBox = !!c._dtBox
-    && near(c._dtBox.w, sofaNow().w * 1000, 1e-6)
-    && near(c._dtBox.h, sofaNow().h * 1000, 1e-6);
+  const frameBox = frame()?.querySelector('.dtbox');
+  out.frameBoxIsTheShapeBox = !!frameBox
+    && near(+frameBox.getAttribute('width'), sofaNow().w * 1000, 1e-6)
+    && near(+frameBox.getAttribute('height'), sofaNow().h * 1000, 1e-6);
 
   const visiblePath = el(sofaId);
   const hitPath = sr().querySelector(`.dfurniturehit[data-id="${sofaId}"]`);
@@ -439,7 +447,7 @@ const res = await page.evaluate(async () => {
 
   // Shift: independent, continuous width/depth + live plates.
   const before = { w: sofaNow().w, h: sofaNow().h };
-  const b = c._dtBox || { x: 0, y: 0, w: 0, h: 0 };
+  const b = box() || { x: 0, y: 0, w: 0, h: 0 };
   const handles = [...(frame()?.querySelectorAll('.dthandle') || [])];
   // #400: угловая ручка ищется по РОЛИ, а не по индексу в DOM. Индекс держался
   // на порядке отрисовки, а порядок — это решение о приоритете хита (углы
@@ -451,7 +459,7 @@ const res = await page.evaluate(async () => {
   ev('pointerdown', se, b.x + b.w, b.y + b.h);
   out.cornerDragStarted = c._dtDrag?.kind === 'scale' && !!c._dtDrag?.orig;
   ev('pointermove', stageEl(), b.x + b.w + 100, b.y + b.h + 20, { shiftKey: true });
-  await c.updateComplete;
+  await settleLive();
   const grown = sofaNow();
   out.cornerGrowsTheWidth = grown.w > before.w && near(grown.w * 1000, b.w + 100, 1e-6);
   out.cornerGrowsTheDepthINDEPENDENTLY = grown.h > before.h
@@ -466,7 +474,7 @@ const res = await page.evaluate(async () => {
     && plates.some((p) => /m|м|′/.test(p.textContent));
   // Without Shift the original ratio is preserved, still without grid snap.
   ev('pointermove', stageEl(), b.x + b.w + 101.7, b.y + b.h + 21.3);
-  await c.updateComplete;
+  await settleLive();
   const proportional = sofaNow();
   const wCells = (proportional.w * 1000) / PITCH;
   out.defaultResizePreservesRatio = near(proportional.w / proportional.h, before.w / before.h, 1e-5);
@@ -478,12 +486,12 @@ const res = await page.evaluate(async () => {
 
   // A middle handle changes only one axis and keeps the opposite edge fixed.
   const edgeBefore = { ...sofaNow() };
-  const eb = c._dtBox;
+  const eb = box();
   const rightEdge = [...frame().querySelectorAll('.dthandle.dtedge')].find((handle) =>
     near(+handle.getAttribute('cx'), eb.x + eb.w, 1e-6));
   ev('pointerdown', rightEdge, eb.x + eb.w, eb.y + eb.h / 2);
   ev('pointermove', stageEl(), eb.x + eb.w + 13.7, eb.y + eb.h / 2);
-  await c.updateComplete;
+  await settleLive();
   const edgeAfter = sofaNow();
   out.edgeHandleChangesOneAxisContinuously = near(edgeAfter.h, edgeBefore.h, 1e-9)
     && near(edgeAfter.w * 1000, edgeBefore.w * 1000 + 13.7, 1e-6)
@@ -494,13 +502,13 @@ const res = await page.evaluate(async () => {
   // Crossing the fixed corner toggles only the crossed axis. pointercancel
   // must restore the exact pre-gesture object and create no persisted flip.
   const crossBefore = JSON.parse(JSON.stringify(sofaNow()));
-  const cb = c._dtBox;
+  const cb = box();
   const crossHandles = [...frame().querySelectorAll('.dthandle')]
     .filter((el) => !el.classList.contains('dtrot') && !el.classList.contains('dtedge'));
   const crossSe = crossHandles[2];   // #400: по роли, не по позиции в DOM
   ev('pointerdown', crossSe, cb.x + cb.w, cb.y + cb.h);
   ev('pointermove', stageEl(), cb.x - 25, cb.y + cb.h + 10, { shiftKey: true });
-  await c.updateComplete;
+  await settleLive();
   const crossed = sofaNow();
   out.crossingTogglesOnlyHorizontalFlip = crossed.flip_h === true && !crossed.flip_v
     && crossed.w > 0 && crossed.h > 0 && near(crossed.x * 1000 + crossed.w * 1000, cb.x, 1e-6);
@@ -517,17 +525,17 @@ const res = await page.evaluate(async () => {
   ev('pointerdown', frame()?.querySelector('.dthandle.dtrot'), cx + 100, cy);
   out.rotateStarted = c._dtDrag?.kind === 'rotate';
   ev('pointermove', stageEl(), cx + 100, cy + 100);        // ровно 45°
-  await c.updateComplete;
+  await settleLive();
   out.rotates45 = near(sofaNow().angle || 0, 45, 1e-6);
   ev('pointermove', stageEl(), cx + 100, cy + 2);          // ~1.1° → липнет к 0
-  await c.updateComplete;
+  await settleLive();
   const fine = sofaNow().angle;
   out.rotationIsFreeWithoutShift = fine > 0.5 && fine < 5;
   ev('pointermove', stageEl(), cx + 100, cy + 2, { shiftKey: true });
-  await c.updateComplete;
+  await settleLive();
   out.shiftSnapsRotationTo45 = (sofaNow().angle || 0) === 0;
   ev('pointermove', stageEl(), cx + 100, cy + 100);
-  await c.updateComplete;
+  await settleLive();
   ev('pointerup', stageEl(), cx + 100, cy + 100);
   await c.updateComplete;
   out.rotationIsRendered = /rotate\(/.test(attr(sofaId, 'transform') || '');

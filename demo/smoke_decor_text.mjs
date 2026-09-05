@@ -27,9 +27,15 @@ const res = await page.evaluate(async () => {
     while (c._modeTransitionBusy && performance.now() - started < 1500);
     await c.updateComplete;
   };
+  const settleLive = async () => {
+    await Promise.resolve();
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    await c.updateComplete;
+  };
   // null-safe: на сборке ДО этих правок у надписи нет ни data-id, ни tspan —
   // смок должен показать список провалов, а не упасть с исключением
-  const el = (id) => sr().querySelector(`.decorlayer text.dtext[data-id="${id}"]`);
+  const el = (id) => sr().querySelector(`[data-hp-live-editor] .decorlayer text.dtext[data-id="${id}"]`)
+    || sr().querySelector(`.decorlayer text.dtext[data-id="${id}"]`);
   const attr = (id, name) => { const e = el(id); return e ? e.getAttribute(name) : null; };
   const tspans = (id) => { const e = el(id); return e ? [...e.querySelectorAll('tspan')] : []; };
   const stageEl = () => sr().querySelector('.stage');
@@ -101,7 +107,7 @@ const res = await page.evaluate(async () => {
   out.noFrameWithoutSelection = !sr().querySelector('.dtframe');
   c._decorSel = 'dtm'; c.requestUpdate();
   await c.updateComplete; await sleep(60); await c.updateComplete;
-  const frame = () => sr().querySelector('.dtframe');
+  const frame = () => sr().querySelector('[data-hp-live-editor] .dtframe') || sr().querySelector('.dtframe');
   out.frameOnSelection = !!frame();
   out.fourCornersAndRotate = !!frame()
     && frame().querySelectorAll('.dthandle').length === 5
@@ -147,7 +153,7 @@ const res = await page.evaluate(async () => {
   ev('pointerdown', corner, ax + 40, ay2);
   out.dragStarted = !!c._dtDrag && c._dtDrag.kind === 'scale';
   ev('pointermove', stageEl(), ax + 80, ay2);
-  await c.updateComplete;
+  await settleLive();
   const scaled = c._decorList.find((x) => x.id === 'dtm');
   out.cornerStoresPhysicalSize = scaled.scale === undefined && scaled.size === undefined
     && Math.abs((scaled.size_cm || 0) - mediumSizeCm0 * 2) < 0.01;

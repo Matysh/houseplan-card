@@ -25,6 +25,24 @@ websocket traffic change. Its dedicated budget retains every original timing,
 heap and cache ceiling and adds the measured pointer series plus a one-entry
 snap-geometry cache cap. Exact-SHA Linux output is the only gate evidence.
 
+Issue #451 adds `large-house-interaction-v1`. It dispatches 120 real
+device/room/free-background hover moves, four 20-move pans, pinch/wheel camera input, three editor
+drag series and 30 unrelated HA snapshots. It also injects relevant snapshots
+inside and outside a gesture and counts heavy `_renderBody()` passes plus full
+marker-binding diagnostic scans. Current bundles fail inside the runner unless
+hover, editor moves and unrelated ticks perform zero full renders, a relevant
+tick is deferred during pan, each terminal event reconciles at most one full
+frame, the heavy wall DOM remains identical, and the projected HTML device
+layer stays within one CSS pixel of its SVG scene position. Older comparison
+bundles still produce timing baselines; structural assertions become mandatory
+only when the target source contains the live viewport implementation. Its
+dedicated budget preserves every existing large-house ceiling and adds the
+individual interaction timing gates.
+
+Structural assertions are evaluated independently of timing budgets: a fast
+run still fails when an interaction performs an unexpected full render or
+changes the heavy scene DOM.
+
 The runner records seven measured samples after one discarded warm-up. With
 this intentionally small CI sample, the nearest-rank `p95` is the observed
 maximum; reports keep the conventional field name but should be read as a
@@ -126,6 +144,7 @@ Build and copy a fresh demo bundle first, then run:
 ```bash
 npm run benchmark:large-house -- --samples=7 --warmups=1 --output=artifacts/performance/local.json
 npm run benchmark:large-house-plan-snap -- --samples=7 --warmups=1 --output=artifacts/performance/plan-snap-local.json
+npm run benchmark:large-house-interaction -- --samples=7 --warmups=1 --output=artifacts/performance/interaction-local.json
 ```
 
 A local report is diagnostic only; it cannot replace the CI comparison.

@@ -94,7 +94,7 @@ const result = await page.evaluate(async () => {
   await card._saveSettingsDialog();
   await card.updateComplete;
   out.falsePersists = card._serverCfg.settings.show_room_tooltip === false;
-  out.visibleRoomTipCleared = card._tip === null && !root().querySelector('.tip');
+  out.visibleRoomTipCleared = card._tip === null && root().querySelector('.tip')?.hidden === true;
 
   let roomAreaCalls = 0;
   const originalRoomArea = card._roomArea.bind(card);
@@ -105,7 +105,7 @@ const result = await page.evaluate(async () => {
   room().dispatchEvent(mouse('pointerenter', 190, 190));
   room().dispatchEvent(mouse('pointermove', 190, 190));
   await card.updateComplete;
-  out.disabledRoomTip = card._tip === null && !root().querySelector('.tip');
+  out.disabledRoomTip = card._tip === null && root().querySelector('.tip')?.hidden === true;
   out.disabledSkipsArea = roomAreaCalls === 0;
   out.roomHighlightSurvives = card._hoverRoom !== null
     && !!root().querySelector('.room-hover-fill-layer,.room-hover-outline-layer');
