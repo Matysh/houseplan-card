@@ -182,3 +182,38 @@ test('#332: шарды покрывают реестр целиком и не п
   assert.ok(Math.max(...counts) - Math.min(...counts) <= MUTANTS.length / TOTAL / 2,
     `браузерные мутанты скучковались: ${counts.join(', ')}`);
 });
+
+test('#458 у каждого модуля горячего пути отрисовки есть свой мутант', () => {
+  // #451 принёс 1 651 строку в восьми новых модулях, и защита осталась
+  // смотреть на старые ядровые файлы: единственный мутант того релиза патчил
+  // houseplan-card.ts и houseplan-editor-runtime.ts, то есть места, ОТКУДА код
+  // ушёл. Это системный побочный эффект выноса в модули, и он повторяется на
+  // каждой такой задаче — поэтому требование записано гейтом, а не памятью.
+  //
+  // Цена ошибки здесь необычная: обычный дефект рендера виден (экран падает или
+  // мигает), а дефект этой оптимизации даёт устаревший экран без единого
+  // признака поломки — план тихо показывает вчерашнее состояние лампы.
+  const modules = [
+    'src/live-editor.ts',
+    'src/pointer-move-queue.ts',
+    'src/live-interaction-runtime.ts',
+    'src/live-viewport.ts',
+    'src/render-invalidation.ts',
+    'src/resize-live-preflight.ts',
+    'src/houseplan-render-lifecycle.ts',
+  ];
+  // `src/live-hover.ts` сознательно вне списка: его контракты — либо чисто
+  // производительные (мемо по наведённой комнате), либо доменные (подсветка
+  // комнаты, застрявшая после ухода курсора). Первое мутантом не ловится в
+  // принципе, второе ловится только браузерным смоком. Появится смок — модуль
+  // добавляется сюда вместе с мутантом.
+  for (const file of modules) {
+    const covered = MUTANTS.filter((mutant) => mutant.patches.some((patch) => patch.file === file));
+    assert.ok(covered.length, `${file}: ни одного мутанта — защита не там, где код`);
+    for (const mutant of covered) {
+      assert.ok(!mutant.patches.some((patch) => patch.file === 'src/houseplan-card.ts'
+        || patch.file === 'src/houseplan-editor-runtime.ts'),
+      `${mutant.id}: патчит старое ядро вместо ${file} — это и есть исходный дефект #458`);
+    }
+  }
+});

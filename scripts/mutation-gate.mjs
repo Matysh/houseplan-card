@@ -5766,6 +5766,116 @@ const MUTANT_DEFINITIONS = [
       replace: "    if (doubleFit) this._resetZoom('double-tap');",
     }],
   },
+  {
+    id: 'live-editor-view-mode-routes-live',
+    guard: 'node --test test/live-editor.test.mjs',
+    because: 'View is the product for two of three personas: the live editor path must never '
+      + 'take over rendering there, or a plan nobody is editing stops reacting to Home '
+      + 'Assistant (#451, #458)',
+    patches: [{
+      file: 'src/live-editor.ts',
+      find: "  if (!host?.isConnected || host._mode === 'view') return false;",
+      replace: '  if (!host?.isConnected) return false;',
+    }],
+  },
+  {
+    id: 'live-editor-first-gesture-frame-goes-live',
+    guard: 'node --test test/live-editor.test.mjs',
+    because: 'the first frame of a gesture may change selection and chrome, so it must stay '
+      + 'reactive; routing it live leaves the newly selected object drawn in its previous '
+      + 'state until the gesture ends (#451, #458)',
+    patches: [{
+      file: 'src/live-editor.ts',
+      find: '  if (name !== undefined && gestureProperties.has(name)\n'
+        + '      && oldValue == null\n'
+        + '      && (host as unknown as Record<PropertyKey, unknown>)[name] != null\n'
+        + '      && activeEditorGesture(host)) {\n'
+        + '    // Pointerdown may change selection/chrome once. Subsequent moves stay live.\n'
+        + '    return false;\n'
+        + '  }\n',
+      replace: '',
+    }],
+  },
+  {
+    id: 'pointer-move-queue-keeps-first-move',
+    guard: 'node --test test/live-editor.test.mjs',
+    because: 'the coalescing queue is last-wins: keeping the FIRST callback of an event turn '
+      + 'means the pointer moves on and the plan paints where the finger used to be (#451, #458)',
+    patches: [{
+      file: 'src/pointer-move-queue.ts',
+      find: '  if (queued) {\n    queued.run = run;\n    return;\n  }',
+      replace: '  if (queued) {\n    return;\n  }',
+    }],
+  },
+  {
+    id: 'live-hass-tick-never-deferred',
+    guard: 'node --test test/houseplan-render-lifecycle.test.mjs',
+    because: 'a state tick arriving mid-gesture is deferred on purpose; rendering it '
+      + 'immediately drops frames of the gesture the user is performing, and the deferral flag '
+      + 'is what guarantees the skipped tick is replayed afterwards (#451, #458)',
+    patches: [{
+      file: 'src/live-interaction-runtime.ts',
+      find: "    const defer = change === 'state' && this.active();",
+      replace: '    const defer = false;',
+    }],
+  },
+  {
+    id: 'live-viewport-identity-projection-not-recognized',
+    guard: 'node --test test/live-viewport.test.mjs',
+    because: 'a settled viewport must be recognized as identity and leave NO compositor '
+      + 'transform: an identity transform still switches the browser compositing path and '
+      + 'shifts the settled raster by a few colour levels, which is exactly what makes golden '
+      + 'frames flap (#451, #458)',
+    patches: [{
+      file: 'src/live-viewport.ts',
+      // Первая редакция этого мутанта снимала `setLayerProjection(layer, null)`
+      // из `commitHouseplanViewport` (так предлагал issue) — и тест оставался
+      // ЗЕЛЁНЫМ: следом идёт `paintLiveViewport(root, painted, painted)`, а он
+      // на равных аргументах даёт identity и обнуляет проекцию сам. То есть тот
+      // цикл не контракт, а подстраховка. Настоящий контракт — распознавание
+      // identity, и мутируется именно оно.
+      find: '  projection.translateXPercent === 0',
+      replace: '  projection.translateXPercent === 1',
+    }],
+  },
+  {
+    id: 'render-invalidation-unknown-key-ignored',
+    guard: 'node --test test/render-invalidation.test.mjs',
+    because: 'the classifier fails OPEN on Home Assistant keys it does not know: without that '
+      + 'rule a new HA capability silently leaves the plan stale, and a stale plan looks '
+      + 'exactly like a working one (#451, #458)',
+    patches: [{
+      file: 'src/render-invalidation.ts',
+      find: '  for (const key of new Set([...Object.keys(before), ...Object.keys(after)])) {\n'
+        + "    if (!compared.has(key) && before[key] !== after[key]) return 'structural';\n"
+        + '  }\n',
+      replace: '',
+    }],
+  },
+  {
+    id: 'resize-live-preflight-keeps-every-room',
+    guard: 'node --test test/resize-controller.test.mjs',
+    because: 'live resize checks only the rooms the gesture touches; widening that to the whole '
+      + 'plan turns every frame into a full-plan geometry check and the drag stutters on large '
+      + 'plans — the very regression #451 removed (#458)',
+    patches: [{
+      file: 'src/resize-live-preflight.ts',
+      find: '    return id && changed.has(id) ? [id] : [];',
+      replace: '    return id ? [id] : [];',
+    }],
+  },
+  {
+    id: 'render-lifecycle-diagnostics-cache-never-invalidated',
+    guard: 'node --test test/houseplan-render-lifecycle.test.mjs',
+    because: 'the diagnostics cache must drop when the registry or a tracked state appears or '
+      + 'disappears; a cache that never invalidates reports yesterday binding health as todays '
+      + 'and the red dot for a silently added device never lights (#451, #458)',
+    patches: [{
+      file: 'src/houseplan-render-lifecycle.ts',
+      find: '    if (!this.diagnosticsCache) return;\n',
+      replace: '    if (!this.diagnosticsCache) return;\n    if (true) return;\n',
+    }],
+  },
 ];
 
 const mutationCardSource = readFileSync(join(repoRoot, 'src/houseplan-card.ts'), 'utf8');
