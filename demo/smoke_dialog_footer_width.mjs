@@ -205,7 +205,7 @@ for (const metric of desktop.metrics) {
 }
 checks.space_dialog_still_uses_medium_shell = desktop.space.widePreset
   && desktop.space.surfaceWidth >= 499 && desktop.space.surfaceWidth <= 501;
-checks.space_dialog_footer_not_regressed = desktop.space.buttons === 3
+checks.space_dialog_footer_not_regressed = desktop.space.buttons === 4
   && desktop.space.oneRow && desktop.space.noHorizontalOverflow;
 
 for (const kind of ['opening', 'physical', 'opening_de', 'physical_de']) {
@@ -217,10 +217,10 @@ for (const kind of ['opening', 'physical', 'opening_de', 'physical_de']) {
 checks.draft_four_actions_remain_contained = narrow.draft.buttons === 4
   && narrow.draft.insideViewport && narrow.draft.noHorizontalOverflow
   && narrow.draft.buttonsContained;
-checks.space_narrow_not_regressed = narrow.space.buttons === 3
+checks.space_narrow_not_regressed = narrow.space.buttons === 4
   && narrow.space.insideViewport && narrow.space.noHorizontalOverflow
   && narrow.space.buttonsContained;
-checks.space_de_narrow_not_regressed = narrow.space_de.buttons === 3
+checks.space_de_narrow_not_regressed = narrow.space_de.buttons === 4
   && narrow.space_de.insideViewport && narrow.space_de.noHorizontalOverflow
   && narrow.space_de.buttonsContained;
 
