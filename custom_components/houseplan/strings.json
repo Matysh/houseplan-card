@@ -19,6 +19,22 @@
     "broken_plan": {
       "title": "Floor plan image is missing",
       "description": "The plan file `{file}` for space `{space}` was not found in `config/houseplan/plans/`. Open the space settings in the House Plan card and upload the plan again."
+    },
+    "frontend_reload_notice": {
+      "title": "House Plan card connected",
+      "description": "The House Plan card is connected. Fully reload this page to use the latest frontend (`Ctrl+F5` on Windows/Linux or `Cmd+Shift+R` on macOS). If you manage dashboard resources manually in storage mode, open Settings → Dashboards → Resources."
+    }
+  },
+  "system_health": {
+    "info": {
+      "card_file": "House Plan card file",
+      "static_path": "Static frontend path",
+      "resource_status": "Resource registration status",
+      "resource_loader": "Frontend resource loader",
+      "resource_url": "Frontend resource URL",
+      "resource_retry": "Resource registration retry",
+      "resource_error": "Frontend registration error",
+      "first_reload_notice": "First reload notice"
     }
   }
 }

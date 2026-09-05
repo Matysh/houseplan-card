@@ -24,6 +24,7 @@ import type { HpConfirmRequest } from './danger-confirm';
 import './hp-color-opacity';
 import type { ColorPickerLabels } from './hp-color-opacity';
 import './hp-help';
+import type { AuthoritativeConfigResponse } from './version-recovery-card';
 import './hp-device-preview'; import './hp-zigbee-topology-settings';
 import {
   EXCLUDED_DOMAINS, DEFAULT_ICON_RULES, compileIconRules, isValidPattern, iconFor,
@@ -952,6 +953,7 @@ export interface HouseplanEditorHostPort {
   } | null;
   _gearPtCache: WeakMap<number[][], number[]>;
   _geometryHistory: CommandStack<SpaceGeometryState>;
+  _getAuthoritativeConfig: () => Promise<AuthoritativeConfigResponse>;
   _glowRadiusCm: number;
   _glowRadiusPlaceholder: string;
   _gridPitch: number;
@@ -8931,7 +8933,7 @@ public async _deleteSpace(): Promise<void> {
         expected_layout_rev: this.host._layoutRev,
       });
       const [configResponse, layoutResponse] = await Promise.all([
-        this.host.hass.callWS({ type: 'houseplan/config/get' }),
+        this.host._getAuthoritativeConfig(),
         this.host.hass.callWS({ type: 'houseplan/layout/get' }),
       ]);
       this.host._adoptStructuralResponses(configResponse, layoutResponse);
@@ -9811,16 +9813,16 @@ public async _undoPlanOptimization(): Promise<void> {
         expected_layout_rev: this.host._layoutRev,
       });
       const [cfgResp, layResp] = await Promise.all([
-        this.host.hass.callWS({ type: 'houseplan/config/get' }),
+        this.host._getAuthoritativeConfig(),
         this.host.hass.callWS({ type: 'houseplan/layout/get' }),
       ]);
-      this.host._serverCfg = cfgResp?.config || this.host._serverCfg;
-      this.host._cfgRev = cfgResp?.rev ?? this.host._cfgRev;
-      this.host._layout = layResp?.layout || this.host._layout;
+      // config/get is the sole authority for runtime capabilities, including
+      // integration_version. Reuse the full-card adopter instead of leaving
+      // this direct optimization-undo path with stale version state (#462).
+      this.host._adoptStructuralResponses(cfgResp, layResp);
       this.host._geometryHistory.clear();
       this.host._cancelDeviceDrag();
       this.host._devicePositionHistory.clear();
-      this.host._layoutRev = layResp?.rev ?? this.host._layoutRev;
       this.host._canOptimizeUndo = false;
       this.host._undoKind = null;
       this.host._cfgEpoch++;
@@ -9973,7 +9975,7 @@ public async _applyBackupImport(): Promise<void> {
         confirm_missing_content: d.confirmMissing,
       });
       const [configResponse, layoutResponse] = await Promise.all([
-        this.host.hass.callWS({ type: 'houseplan/config/get' }),
+        this.host._getAuthoritativeConfig(),
         this.host.hass.callWS({ type: 'houseplan/layout/get' }),
       ]);
       this.host._adoptStructuralResponses(configResponse, layoutResponse);

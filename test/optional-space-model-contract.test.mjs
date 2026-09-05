@@ -81,7 +81,10 @@ test('empty render keeps create/import affordances without spatial layers', () =
   assert.match(wrapper, /if \(body === nothing\) return body;/);
   assert.match(wrapper, /return this\._renderRoot\(body\);/);
   const shell = methodBody('_renderRoot');
-  assert.match(shell, /return html`\$\{body\}\$\{this\._renderDangerConfirm\(\)\}`;/);
+  assert.match(shell,
+    /return html`\$\{body\}\$\{this\._renderVersionBanner\(\)\}\$\{this\._renderDangerConfirm\(\)\}`;/);
+  assert.equal(render.includes('_renderVersionBanner'), false,
+    'version recovery must remain available beside every non-empty body branch');
   assert.equal(render.includes('_renderDangerConfirm'), false,
     'подтверждение не должно возвращаться внутрь ветки — это и есть дефект #402');
 });

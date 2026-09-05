@@ -22,6 +22,8 @@ const sha256 = (value) => createHash('sha256').update(value).digest('hex');
 const canonicalText = (path) => readFileSync(path, 'utf8').replace(/\r\n?/g, '\n');
 
 const withoutFences = (text) => text.replace(/^```[^\n]*\n[\s\S]*?^```\s*$/gm, '');
+const yamlFences = (text) => [...text.matchAll(/^```yaml[^\S\r\n]*\n([\s\S]*?)^```[^\S\r\n]*$/gm)]
+  .map((match) => match[1].split('\n').map((line) => line.replace(/[\t ]+$/, '')).join('\n').trim());
 const slug = (heading) => heading
   .trim().toLowerCase()
   .replace(/<[^>]+>/g, '')
@@ -91,6 +93,76 @@ for (const relative of PUBLIC_DOCS) {
     if (image && !statSync(target).isFile()) errors.push(`${relative}: image target is not a file (${raw})`);
     if (anchor && extname(target).toLowerCase() === '.md' && !headingsFor(target).has(anchor))
       errors.push(`${relative}: missing heading ${filePart}#${anchor}`);
+  }
+}
+
+// #462: a flat top-level `resources:` block looks plausible but is not a valid
+// configuration.yaml fragment. Keep all four public install paths on the same
+// versioned Storage/current-YAML/legacy-YAML contract.
+const RESOURCE_INSTALL_DOCS = [
+  'README.md', 'README.ru.md', 'docs/USER-GUIDE.md', 'docs/USER-GUIDE.ru.md',
+];
+const RESOURCE_URL = '/houseplan_files/houseplan-card.js';
+const RESOURCE_SNIPPETS = [
+  [
+    'lovelace:',
+    '  resource_mode: yaml',
+    '  resources:',
+    `    - url: ${RESOURCE_URL}`,
+    '      type: module',
+  ].join('\n'),
+  [
+    'lovelace:',
+    '  mode: yaml',
+    '  resources:',
+    `    - url: ${RESOURCE_URL}`,
+    '      type: module',
+  ].join('\n'),
+];
+
+for (const relative of RESOURCE_INSTALL_DOCS) {
+  const text = canonicalText(resolve(ROOT, relative));
+  const blocks = yamlFences(text).filter((block) => block.includes(RESOURCE_URL));
+  if (blocks.length !== RESOURCE_SNIPPETS.length) {
+    errors.push(`${relative}: expected exactly two mode-specific House Plan resource snippets`);
+  }
+  if (blocks.some((block) => /^resources:\s*$/m.test(block))) {
+    errors.push(`${relative}: House Plan resources must be nested under lovelace:`);
+  }
+  for (const expected of RESOURCE_SNIPPETS) {
+    const count = blocks.filter((block) => block === expected).length;
+    if (count !== 1) {
+      const mode = expected.includes('resource_mode') ? 'HA 2026.2+ resource_mode' : 'legacy mode';
+      errors.push(`${relative}: expected one exact ${mode} House Plan snippet, found ${count}`);
+    }
+  }
+  if (blocks.length === RESOURCE_SNIPPETS.length
+      && blocks.some((block, index) => block !== RESOURCE_SNIPPETS[index])) {
+    errors.push(`${relative}: current resource_mode snippet must precede the legacy mode snippet`);
+  }
+
+  const russian = relative.endsWith('.ru.md');
+  const prose = text.replace(/\s+/g, ' ');
+  const proseContracts = russian ? [
+    '#### Режим Storage (по умолчанию в Home Assistant)',
+    '#### YAML-ресурсы в Home Assistant 2026.2+',
+    '#### Home Assistant 2024.6–2026.1: устаревший режим',
+    'полностью управляется через YAML',
+    'Настройки → Панели управления → меню ⋮ → Ресурсы → Добавить ресурс',
+    'Не переключайте storage-панель в устаревший YAML только ради House Plan',
+  ] : [
+    '#### Storage mode (Home Assistant default)',
+    '#### YAML resources mode (Home Assistant 2026.2+)',
+    '#### Legacy Home Assistant 2024.6–2026.1',
+    'full-YAML dashboard',
+    'Settings → Dashboards → menu ⋮ → Resources → Add resource',
+    'Do not switch a storage dashboard to legacy YAML just for House Plan',
+  ];
+  for (const fragment of proseContracts) {
+    if (!prose.includes(fragment)) errors.push(`${relative}: missing resource guidance “${fragment}”`);
+  }
+  for (const shortcut of ['Ctrl+F5', 'Cmd+Shift+R']) {
+    if (!text.includes(shortcut)) errors.push(`${relative}: missing hard reload shortcut ${shortcut}`);
   }
 }
 

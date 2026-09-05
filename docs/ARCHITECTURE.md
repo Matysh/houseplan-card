@@ -87,11 +87,19 @@ the same profiler available between stable promotions.
 
 ## Key decisions
 
-1. **One repository — integration + card.** The integration serves the JS
-   (`async_register_static_paths`) and registers it as a **Lovelace resource** (module) —
-   the frontend waits for resources before rendering, so the card also works on a cold start
-   of the mobile app (unlike `add_extra_js_url`, which remains a fallback for
-   YAML mode). The user does not need to add the resource manually.
+1. **One repository — integration + card.** The integration serves the JS through
+   `async_register_static_paths`; the exact versioned module URL is the shared
+   resource identity. A writable Lovelace resource registry is authoritative.
+   YAML resources mode, an unavailable registry and terminal registration errors
+   use `add_extra_js_url` as a truthful fallback; a pending/transient registry gets
+   at most one lifecycle-bound retry. The typed registration outcome and final
+   loader are exposed through System Health, and the first available frontend
+   registration creates one localized persistent hard-reload notice. The initial
+   `custom:houseplan-card` graph compares `CARD_VERSION` with the authoritative
+   `integration_version` from each successful `houseplan/config/get`: ordinary
+   View offers a manual reload, while kiosk may reload once per backend target and
+   browser-tab session only in a safe idle state. `custom:houseplan-space-card`
+   loads the same bundle but has no independent banner or reload controller.
 2. **Icon layout lives on the server.** `helpers.storage.Store(1, "houseplan.layout")` →
    `.storage/houseplan.layout`. The card reads/writes via `hass.callWS`
    (`houseplan/layout/get|set|update`). Fallback — localStorage (when the integration is absent).

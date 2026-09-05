@@ -35,6 +35,7 @@ const wallUnionIsolationFixture = JSON.parse(readFileSync(
 const cardVersion = JSON.parse(readFileSync(
   new URL('../../package.json', import.meta.url), 'utf8',
 )).version;
+const VERSION_RELOAD_ATTEMPT_KEY = 'houseplan-card:version-reload-target:v1';
 
 const fixtureFor = (scenario) => scenario.fixture === 'large'
   ? makeLargeHouseFixture()
@@ -56,7 +57,7 @@ const themeVars = {
 async function stableEnvironment(page, scenario) {
   await page.setViewportSize(scenario.viewport);
   await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: scenario.theme });
-  await page.evaluate(({ variables, theme }) => {
+  await page.evaluate(({ variables, theme, attemptedTarget, attemptKey }) => {
     let style = document.getElementById('hp-golden-stability');
     if (!style) {
       style = document.createElement('style');
@@ -82,7 +83,15 @@ async function stableEnvironment(page, scenario) {
       '--hp-golden-page-bg', theme === 'light' ? '#eef1f4' : '#11151b',
     );
     document.documentElement.style.colorScheme = theme;
-  }, { variables: themeVars[scenario.theme] || themeVars.dark, theme: scenario.theme });
+    sessionStorage.removeItem(attemptKey);
+    if (attemptedTarget) sessionStorage.setItem(attemptKey, attemptedTarget);
+  }, {
+    variables: themeVars[scenario.theme] || themeVars.dark,
+    theme: scenario.theme,
+    attemptedTarget: scenario.versionRecoveryAttempted
+      ? String(scenario.integrationVersion || '').trim() : null,
+    attemptKey: VERSION_RELOAD_ATTEMPT_KEY,
+  });
 }
 
 /** Apply every data-only scenario override before the fixture crosses into the browser. */
@@ -736,7 +745,7 @@ export async function prepareGoldenScenario(page, scenario) {
   await page.mouse.move(0, 0);
   const fixture = prepareGoldenFixture(scenario);
 
-  const result = await page.evaluate(async ({ fixture, scenario, cardVersion }) => {
+  const result = await page.evaluate(async ({ fixture, scenario, cardVersion, attemptKey }) => {
     const wait = (ms) => new Promise((done) => setTimeout(done, ms));
     const frame = () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
     const until = async (predicate, timeout = 10000) => {
@@ -787,8 +796,11 @@ export async function prepareGoldenScenario(page, scenario) {
         three: { floor_id: 'three', name: 'Three', level: 2 },
       },
       callWS: async (message) => {
-        if (message.type === 'houseplan/config/get')
-          return { config: structuredClone(fixture.config), rev: 1, can_write: true };
+        if (message.type === 'houseplan/config/get') return {
+          config: structuredClone(fixture.config), rev: 1, can_write: true,
+          ...(Object.prototype.hasOwnProperty.call(scenario, 'integrationVersion')
+            ? { integration_version: scenario.integrationVersion } : {}),
+        };
         if (message.type === 'houseplan/layout/get')
           return { layout: structuredClone(fixture.layout || {}), rev: 1 };
         if (message.type === 'houseplan/trail/get') return scenario.vacuumTrail ? {
@@ -852,6 +864,21 @@ export async function prepareGoldenScenario(page, scenario) {
       card._setMode(scenario.mode);
       await card.updateComplete;
       await settleMode(card);
+    }
+    if (Object.prototype.hasOwnProperty.call(scenario, 'integrationVersion')) {
+      const target = String(scenario.integrationVersion || '').trim();
+      await until(() => card._versionRecovery?.relation?.kind === 'mismatch'
+        && card.renderRoot.querySelector('.version-recovery'));
+      const notice = card._versionRecovery.banner;
+      const rendered = card.renderRoot.querySelector('.version-recovery');
+      if (!target || notice?.backend !== target
+          || rendered?.getAttribute('data-version-recovery-target') !== target) {
+        throw new Error(`golden version notice target mismatch: ${scenario.id}`);
+      }
+      if (scenario.versionRecoveryAttempted
+          && sessionStorage.getItem(attemptKey) !== target) {
+        throw new Error(`golden kiosk attempted target missing: ${scenario.id}`);
+      }
     }
     // #304: the two existing hidden-wall golden scenes also guard the static
     // architectural overlay in every Plan tool. Finish in draw so the reviewed
@@ -1806,7 +1833,7 @@ export async function prepareGoldenScenario(page, scenario) {
         cachedRays: card._sunRaysCache?.rays?.length || 0,
       } } : {}),
     };
-  }, { fixture, scenario, cardVersion });
+  }, { fixture, scenario, cardVersion, attemptKey: VERSION_RELOAD_ATTEMPT_KEY });
   if (scenario.tabDrag) {
     const drag = await page.evaluate((placement) => {
       const card = window.__goldenCard;

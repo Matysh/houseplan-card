@@ -87,23 +87,54 @@ or column affects the physical rendering and light but does not create a room.
 3. Open **Settings → Devices & services → Add integration → House Plan**.
 4. Keep “administrators only” enabled unless other users must edit the plan.
 
-The integration registers its Lovelace resource. With YAML-managed resources,
-add:
+The integration registers its Lovelace resource automatically. After installing
+or updating House Plan, restart Home Assistant and fully reload the page:
+`Ctrl+F5` on Windows/Linux or `Cmd+Shift+R` on macOS.
+
+#### Storage mode (Home Assistant default)
+
+No YAML is normally needed. If automatic registration did not make the card
+available, open **Settings → Dashboards → menu ⋮ → Resources → Add
+resource**, enter `/houseplan_files/houseplan-card.js`, and select **JavaScript
+module**.
+
+#### YAML resources mode (Home Assistant 2026.2+)
+
+To manage resources in `configuration.yaml` independently of the dashboard
+mode, use:
 
 ```yaml
-resources:
-  - url: /houseplan_files/houseplan-card.js
-    type: module
+lovelace:
+  resource_mode: yaml
+  resources:
+    - url: /houseplan_files/houseplan-card.js
+      type: module
 ```
 
-Do not use `/custom_components/houseplan/frontend/houseplan-card.js`; it is an
-on-disk path, not the JavaScript URL served by Home Assistant.
+#### Legacy Home Assistant 2024.6–2026.1
+
+Only for a full-YAML dashboard that is already managed in YAML, use:
+
+```yaml
+lovelace:
+  mode: yaml
+  resources:
+    - url: /houseplan_files/houseplan-card.js
+      type: module
+```
+
+`mode: yaml` changes the dashboard itself to YAML mode. Do not switch a storage
+dashboard to legacy YAML just for House Plan; use the Storage mode instructions
+above instead. Do not use
+`/custom_components/houseplan/frontend/houseplan-card.js`; it is an on-disk
+path, not the JavaScript URL served by Home Assistant.
 
 ### Manual installation
 
 Copy the release folder to `config/custom_components/houseplan`, restart Home
-Assistant, add the integration, then add the resource above only if Lovelace
-resources are YAML-managed. Always copy the complete integration folder: the
+Assistant, and add the integration. If the card is still unavailable, follow
+the Storage or YAML resource instructions above for your Home Assistant
+version and resource mode. Always copy the complete integration folder: the
 stable resource URL remains one file, but that entry loads internal
 content-hashed modules. A lone `houseplan-card.js` is not a supported install.
 
@@ -1139,7 +1170,7 @@ per space. The configuration package is limited to 2 MB.
 
 | Symptom | Check |
 |---|---|
-| `Custom element doesn't exist: houseplan-card` | Integration loaded; resource is `/houseplan_files/houseplan-card.js` with type `module`; hard-refresh |
+| `Custom element doesn't exist: houseplan-card` | Integration loaded; resource is `/houseplan_files/houseplan-card.js` with type `module`; restart HA, then hard-refresh with `Ctrl+F5` (Windows/Linux) or `Cmd+Shift+R` (macOS) |
 | MIME `text/plain` | Replace `/custom_components/...` with `/houseplan_files/...` |
 | Integration missing | Folder is exactly `custom_components/houseplan`; restart HA; inspect import errors |
 

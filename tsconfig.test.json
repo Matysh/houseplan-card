@@ -26,7 +26,7 @@
     "src/space-geometry.ts", "src/junction-limits.ts",
     "src/space-order.ts", "src/card-editor-validation.ts",
     "src/signing.ts", "src/initial-load.ts", "src/space-model-selection.ts", "src/space-dialog.ts",
-    "src/visual-continuity.ts", "src/mode-transition.ts", "src/viewport-transition.ts", "src/room-fit.ts", "src/editor-runtime-loader.ts", "src/editor-secondary.ts", "src/pointer-modality.ts",
+    "src/visual-continuity.ts", "src/version-recovery.ts", "src/mode-transition.ts", "src/viewport-transition.ts", "src/room-fit.ts", "src/editor-runtime-loader.ts", "src/editor-secondary.ts", "src/pointer-modality.ts",
     "src/render-device-snapshot.ts", "src/render-invalidation.ts", "src/houseplan-render-lifecycle.ts", "src/live-interaction-runtime.ts", "src/live-viewport.ts", "src/live-hover.ts", "src/live-editor.ts", "src/pointer-move-queue.ts",
     "src/command-stack.ts", "src/device-position-history.ts",
     "src/coordinate-canonicalization.ts",

@@ -6,6 +6,11 @@
   through a bounded local safety check instead of rebuilding the whole floor
   twice, while chain completion still performs the full fail-closed validation
   ([#461](https://github.com/Matysh/houseplan-card/issues/461)).
+- Card installation and updates are now self-diagnosing: House Plan
+  distinguishes Lovelace resource modes, reports registration in System Health,
+  gives one hard-reload notice, and safely recovers an open card whose frontend
+  and integration versions differ; kiosk reloads at most once and only while
+  idle ([#462](https://github.com/Matysh/houseplan-card/issues/462)).
 
 ## v1.72.0-beta.4 — 2026-09-05
 

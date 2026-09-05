@@ -98,17 +98,46 @@ House Plan входит в основной каталог HACS — пользо
 2. Перезапустите Home Assistant.
 3. Откройте **Настройки → Устройства и службы → Добавить интеграцию → House Plan**.
 
-Карточка регистрируется автоматически. Если ресурсы Lovelace управляются вручную,
-добавьте именно URL, который публикует интеграция:
+Карточка регистрируется автоматически. После установки или обновления
+House Plan перезапустите Home Assistant и полностью перезагрузите
+страницу: `Ctrl+F5` в Windows/Linux или `Cmd+Shift+R` в macOS.
+
+#### Режим Storage (по умолчанию в Home Assistant)
+
+Обычно YAML не нужен. Если авторегистрация не сделала карточку доступной,
+откройте **Настройки → Панели управления → меню ⋮ → Ресурсы → Добавить
+ресурс**, укажите `/houseplan_files/houseplan-card.js` и выберите тип
+**JavaScript-модуль**.
+
+#### YAML-ресурсы в Home Assistant 2026.2+
+
+Чтобы управлять ресурсами в `configuration.yaml` независимо от режима
+самой панели, используйте:
 
 ```yaml
-resources:
-  - url: /houseplan_files/houseplan-card.js
-    type: module
+lovelace:
+  resource_mode: yaml
+  resources:
+    - url: /houseplan_files/houseplan-card.js
+      type: module
 ```
 
-Не используйте путь к файлу внутри `custom_components`: Home Assistant не
-публикует его как JavaScript-модуль.
+#### Home Assistant 2024.6–2026.1: устаревший режим
+
+Только для панели, которая уже полностью управляется через YAML:
+
+```yaml
+lovelace:
+  mode: yaml
+  resources:
+    - url: /houseplan_files/houseplan-card.js
+      type: module
+```
+
+`mode: yaml` переводит в YAML-режим саму панель. Не переключайте
+storage-панель в устаревший YAML только ради House Plan; используйте
+инструкцию для Storage выше. Не используйте путь к файлу внутри
+`custom_components`: Home Assistant не публикует его как JavaScript-модуль.
 
 ### Вручную
 

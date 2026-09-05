@@ -41,8 +41,9 @@ the degradation is accepted.
 
 ## Local Windows workstation
 
-The CI contract is **Node.js 22 + Python 3.13**. Do not use Codex's bundled
-Node 24 or the machine's default Python 3.14 as proof that a release will pass.
+The CI contract is **Node.js 22 + Python 3.14**. Do not use Codex's bundled
+Node 24 or an unpinned machine Python environment as proof that a release will
+pass.
 
 Minimal native setup (PowerShell):
 
@@ -51,8 +52,8 @@ winget install --id OpenJS.NodeJS.22 --source winget
 winget install --id GitHub.cli --source winget
 gh auth login
 Set-Location 'C:\Users\Sergey\Downloads\dev\houseplan-dev\houseplan-card-src'
-uv python install 3.13
-uv venv --python 3.13 .venv
+uv python install 3.14
+uv venv --python 3.14 .venv
 uv pip install --python '.venv\Scripts\python.exe' pytest voluptuous pytest-asyncio
 npm ci
 npx playwright install chromium
@@ -223,6 +224,36 @@ node scripts/bundle-tree.mjs dist custom_components/houseplan/frontend
 - After a page reload the HA frontend (with kiosk-mode) sometimes leaves the view empty
   ("InvalidStateError: Transition was aborted", hui-view is not created for 1–2 min).
   Cured by repeating the SPA navigation: pushState + a location-changed event, or just waiting.
+
+## Resource registration and version recovery (#462)
+
+- A writable Lovelace resource registry is the loader authority. Registration
+  returns a typed outcome; a pending or transient first attempt installs the
+  `extra_module_url` fallback immediately and schedules exactly one retry after
+  Home Assistant reaches running state plus a fixed one-second delay. Listener,
+  timer and retry task must all be cancelled through config-entry unload.
+- Runtime registration facts belong in `hass.data[DOMAIN]` and System Health,
+  not in plan/layout storage. The persistent hard-reload notification is
+  localized from the backend `issues` translation category and its config-entry
+  flag is written only after `persistent_notification.async_create` returns
+  without an exception.
+- Every successful `houseplan/config/get` is authoritative for
+  `integration_version`. A missing, non-string or whitespace-only value clears
+  a previously known version. The full-card version controller stays in the
+  initial View graph; do not move it behind the lazy editor runtime or add it to
+  `houseplan-space-card`.
+- Targeted checks while changing this contract are:
+
+  ```text
+  python -m pytest tests_backend/test_ha_frontend_registration.py tests_backend/test_ha_setup.py -q
+  npx tsc -p tsconfig.test.json
+  node scripts/fix-test-build.mjs
+  node --test test/version-recovery.test.mjs
+  node demo/smoke_version_recovery.mjs
+  node scripts/check-docs.mjs
+  ```
+
+  The full HA pytest harness requires Linux/WSL; native Windows lacks `fcntl`.
 
 ## Dependency and cache gotchas
 

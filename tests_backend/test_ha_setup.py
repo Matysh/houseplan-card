@@ -1,4 +1,7 @@
 """Entry setup/unload tests (CI)."""
+from pathlib import Path
+from unittest.mock import AsyncMock
+
 import pytest
 
 
@@ -46,6 +49,37 @@ async def test_setup_tolerates_unreadable_virtual_light_state(
     monkeypatch.setattr(HouseplanStore, "async_load", failing_load)
     entry = await _setup(hass)
     assert entry.state.value == "loaded"
+
+
+async def test_missing_frontend_bundle_does_not_skip_backend_setup(
+    hass: HomeAssistant, monkeypatch
+) -> None:
+    """A packaging fault stays diagnosable without skipping repairs or sweep."""
+    import custom_components.houseplan as integration
+    from custom_components.houseplan.frontend_registration import (
+        FRONTEND_REGISTRATION_KEY,
+    )
+
+    real_is_file = Path.is_file
+    monkeypatch.setattr(
+        Path,
+        "is_file",
+        lambda path: False
+        if path.name == "houseplan-card.js"
+        else real_is_file(path),
+    )
+    check_plan_files = AsyncMock()
+    monkeypatch.setattr(integration, "async_check_plan_files", check_plan_files)
+
+    entry = await _setup(hass)
+
+    assert entry.state.value == "loaded"
+    assert entry.runtime_data.sweep is not None
+    check_plan_files.assert_awaited_once_with(hass, entry)
+    state = hass.data[DOMAIN][FRONTEND_REGISTRATION_KEY]
+    assert state.card_file_present is False
+    assert state.resource_status == "not_attempted"
+    assert state.loader == "none"
 
 
 async def test_unload(hass: HomeAssistant) -> None:

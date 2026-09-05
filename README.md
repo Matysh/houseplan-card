@@ -94,17 +94,46 @@ House Plan is in the HACS default catalog — no custom repository needed.
 2. Restart Home Assistant.
 3. Open **Settings → Devices & services → Add integration → House Plan**.
 
-The card is registered automatically. If you manage Lovelace resources
-manually, use the URL served by the integration:
+The card is registered automatically. After installing or updating House Plan,
+restart Home Assistant and fully reload the page: `Ctrl+F5` on Windows/Linux or
+`Cmd+Shift+R` on macOS.
+
+#### Storage mode (Home Assistant default)
+
+No YAML is normally needed. If automatic registration did not make the card
+available, open **Settings → Dashboards → menu ⋮ → Resources → Add
+resource**, enter `/houseplan_files/houseplan-card.js`, and select **JavaScript
+module**.
+
+#### YAML resources mode (Home Assistant 2026.2+)
+
+To manage resources in `configuration.yaml` independently of the dashboard
+mode, use:
 
 ```yaml
-resources:
-  - url: /houseplan_files/houseplan-card.js
-    type: module
+lovelace:
+  resource_mode: yaml
+  resources:
+    - url: /houseplan_files/houseplan-card.js
+      type: module
 ```
 
-Do not use the on-disk path inside `custom_components`; Home Assistant does not
-serve that path as a JavaScript module.
+#### Legacy Home Assistant 2024.6–2026.1
+
+Only for a full-YAML dashboard that is already managed in YAML, use:
+
+```yaml
+lovelace:
+  mode: yaml
+  resources:
+    - url: /houseplan_files/houseplan-card.js
+      type: module
+```
+
+`mode: yaml` changes the dashboard itself to YAML mode. Do not switch a storage
+dashboard to legacy YAML just for House Plan; use the Storage mode instructions
+above instead. Do not use the on-disk path inside `custom_components`; Home
+Assistant does not serve that path as a JavaScript module.
 
 ### Manual installation
 

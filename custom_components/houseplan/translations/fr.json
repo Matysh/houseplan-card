@@ -25,6 +25,22 @@
     "broken_plan": {
       "title": "L’image du plan est introuvable",
       "description": "Le fichier de plan `{file}` pour l’espace `{space}` est introuvable dans `config/houseplan/plans/`. Ouvrez les paramètres de l’espace dans la carte House Plan et téléversez de nouveau le plan."
+    },
+    "frontend_reload_notice": {
+      "title": "Carte House Plan connectée",
+      "description": "La carte House Plan est connectée. Rechargez complètement cette page pour utiliser l’interface la plus récente (`Ctrl+F5` sous Windows/Linux ou `Cmd+Shift+R` sous macOS). Si vous gérez manuellement les ressources du tableau de bord en mode stockage, ouvrez Paramètres → Tableaux de bord → Ressources."
+    }
+  },
+  "system_health": {
+    "info": {
+      "card_file": "Fichier de la carte House Plan",
+      "static_path": "Chemin statique de l’interface",
+      "resource_status": "État de l’enregistrement de la ressource",
+      "resource_loader": "Mode de chargement de la ressource",
+      "resource_url": "URL de la ressource de l’interface",
+      "resource_retry": "Nouvelle tentative d’enregistrement",
+      "resource_error": "Erreur d’enregistrement de l’interface",
+      "first_reload_notice": "Premier avis de rechargement"
     }
   }
 }

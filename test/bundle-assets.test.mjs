@@ -443,5 +443,6 @@ test('#438 CLI действительно применяет потолок, а 
   // становится потолок, а не бюджет — но и бюджет обязан уметь падать.
   const overBudget = runBudgetCli(INITIAL_VIEW_GZIP_BUDGET + 1);
   assert.equal(overBudget.status, 1, overBudget.output);
-  assert.match(overBudget.output, /exceeds 300000 B budget/);
+  assert.match(overBudget.output,
+    new RegExp(`exceeds ${INITIAL_VIEW_GZIP_BUDGET} B budget`));
 });

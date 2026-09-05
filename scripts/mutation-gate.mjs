@@ -106,6 +106,170 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'resource-docs-flatten-current-yaml',
+    guard: 'node scripts/check-docs.mjs',
+    because: 'the supported HA 2026.2+ resource snippet must stay nested under lovelace; '
+      + 'a plausible-looking top-level resources block is the user-facing defect from #462 AC1',
+    patches: [{
+      file: 'README.md',
+      find: 'lovelace:\n  resource_mode: yaml\n  resources:',
+      replace: 'resource_mode: yaml\nresources:',
+    }],
+  },
+  {
+    id: 'frontend-registration-skips-retry',
+    guard: 'python3 -m pytest tests_backend/test_ha_frontend_registration.py -q -p no:cacheprovider '
+      + '-k "retry_waits_one_second"',
+    because: 'a temporarily unavailable Lovelace registry must receive the one lifecycle-bound '
+      + 'recovery attempt promised by #462 AC3',
+    patches: [{
+      file: 'custom_components/houseplan/frontend_registration.py',
+      find: '            _schedule_retry(hass, entry, state)',
+      replace: '            pass  # mutant: recovery retry removed',
+    }],
+  },
+  {
+    id: 'frontend-registration-retries-without-delay',
+    guard: 'python3 -m pytest tests_backend/test_ha_frontend_registration.py -q -p no:cacheprovider '
+      + '-k "retry_waits_one_second"',
+    because: 'even an already-running HA must retain the fixed cancellable delay instead of '
+      + 'repeating a transient registry failure in the same tick (#462 AC3)',
+    patches: [{
+      file: 'custom_components/houseplan/frontend_registration.py',
+      find: '        state._cancel_timer = async_call_later(\n'
+        + '            hass, FRONTEND_RETRY_DELAY_SECONDS, _after_delay\n'
+        + '        )',
+      replace: '        _after_delay()  # mutant: retry runs without the fixed lifecycle delay',
+    }],
+  },
+  {
+    id: 'frontend-registration-is-not-unload-bound',
+    guard: 'python3 -m pytest tests_backend/test_ha_frontend_registration.py -q -p no:cacheprovider '
+      + '-k "retry_lifecycle_handles_are_cancelled"',
+    because: 'the start listener, delay and running retry belong to the config-entry lifecycle; '
+      + 'otherwise unload can resurrect frontend side effects (#462 AC3)',
+    patches: [{
+      file: 'custom_components/houseplan/frontend_registration.py',
+      find: '    entry.async_on_unload(state.cancel)',
+      replace: '    pass  # mutant: retry lifecycle detached from config-entry unload',
+    }],
+  },
+  {
+    id: 'frontend-reload-notice-forgets-persisted-flag',
+    guard: 'python3 -m pytest tests_backend/test_ha_frontend_registration.py -q -p no:cacheprovider '
+      + '-k "reload_notice_is_localized_and_persisted_once"',
+    because: 'the first-install hard-reload notice must remain one-shot across retry, reload and '
+      + 'future versions rather than reappearing forever (#462 AC4)',
+    patches: [{
+      file: 'custom_components/houseplan/frontend_registration.py',
+      find: '                data={**entry.data, FRONTEND_RELOAD_NOTICE_DATA_KEY: True},',
+      replace: '                data={**entry.data},  # mutant: one-shot flag is not persisted',
+    }],
+  },
+  {
+    id: 'version-recovery-treats-unknown-as-mismatch',
+    guard: 'node --test --test-name-pattern="malformed values stay unknown" '
+      + 'test/version-recovery.test.mjs',
+    because: 'a missing or malformed integration_version must clear stale state and stay unknown, '
+      + 'not manufacture a reload request (#462 AC6)',
+    patches: [{
+      file: 'src/version-recovery.ts',
+      find: "  if (!normalizedFrontend || !normalizedBackend) return { kind: 'unknown' };",
+      replace: "  if (!normalizedFrontend || !normalizedBackend) return { kind: 'mismatch', frontend: normalizedFrontend || 'unknown', backend: normalizedBackend || 'unknown' };",
+    }],
+  },
+  {
+    id: 'version-recovery-delays-config-capability-adoption',
+    guard: 'node demo/smoke_version_recovery.mjs',
+    because: 'a successful config/get must set or clear its runtime capabilities before a sibling '
+      + 'layout request or later asset preparation can reject the structural candidate (#462 AC6)',
+    patches: [{
+      file: 'src/version-recovery-card.ts',
+      find: '    (response) => adoptCardConfigCapabilities(host, response),',
+      replace: '    () => undefined,  // mutant: aggregate consumers own capability adoption',
+    }],
+  },
+  {
+    id: 'version-recovery-auto-reloads-ordinary-view',
+    guard: 'node --test --test-name-pattern="ordinary mode always" '
+      + 'test/version-recovery.test.mjs',
+    because: 'outside kiosk a version mismatch must never reload without the user pressing the '
+      + 'trusted action, even after an arbitrary wait (#462 AC7)',
+    patches: [{
+      file: 'src/version-recovery.ts',
+      find: '    if (!this._input.kiosk) {',
+      replace: '    if (false && !this._input.kiosk) {',
+    }],
+  },
+  {
+    id: 'version-recovery-ignores-editor-state',
+    guard: 'node demo/smoke_version_recovery.mjs',
+    because: 'a kiosk card in an editor must preserve unsaved work instead of silently reloading '
+      + 'when its versions differ (#462 AC8)',
+    patches: [{
+      file: 'src/version-recovery-card.ts',
+      find: "    viewOnly: host._config?.kiosk === true && host._mode === 'view' && !host._editing,",
+      replace: '      viewOnly: true,',
+    }],
+  },
+  {
+    id: 'version-recovery-ignores-dialog-state',
+    guard: 'node demo/smoke_version_recovery.mjs',
+    because: 'a first-class dialog or contextual surface must block the kiosk auto-reload '
+      + 'rather than disappear underneath it (#462 AC8)',
+    patches: [{
+      file: 'src/version-recovery-card.ts',
+      find: '    surfacesIdle,',
+      replace: '    surfacesIdle: true,',
+    }],
+  },
+  {
+    id: 'version-recovery-ignores-pending-config-write',
+    guard: 'node demo/smoke_version_recovery.mjs',
+    because: 'a pending configuration write must block kiosk reload so an accepted edit cannot '
+      + 'be lost during version recovery (#462 AC8)',
+    patches: [{
+      file: 'src/version-recovery-card.ts',
+      find: '    configWritesIdle: host._writesPending === 0 && !host._saveConfigDebounced.pending(),',
+      replace: '    configWritesIdle: true,',
+    }],
+  },
+  {
+    id: 'version-recovery-ignores-interaction-pause',
+    guard: 'node demo/smoke_version_recovery.mjs',
+    because: 'recent pointer, keyboard, touch and native more-info interaction must defer the '
+      + 'silent kiosk reload by the same shared pause contract (#462 AC8)',
+    patches: [{
+      file: 'src/version-recovery-card.ts',
+      find: '    interactionPauseElapsed: Date.now() >= host._cyclePausedUntil,',
+      replace: '    interactionPauseElapsed: true,',
+    }],
+  },
+  {
+    id: 'version-recovery-marks-target-after-reload',
+    guard: 'node --test --test-name-pattern="marks the exact target before one reload" '
+      + 'test/version-recovery.test.mjs',
+    because: 'the backend target must be durably claimed before navigation, otherwise the next '
+      + 'document can enter an infinite kiosk reload loop (#462 AC8)',
+    patches: [{
+      file: 'src/version-recovery.ts',
+      find: '    storage.setItem(VERSION_RELOAD_ATTEMPT_KEY, target);\n    return \'claimed\';',
+      replace: "    return 'claimed';  // mutant: navigation happens before any durable claim",
+    }],
+  },
+  {
+    id: 'version-recovery-ignores-stored-target',
+    guard: 'node --test --test-name-pattern="same target is once per tab" '
+      + 'test/version-recovery.test.mjs',
+    because: 'all full cards in one tab must honour the attempted backend target so a stale '
+      + 'frontend cannot reload repeatedly (#462 AC9)',
+    patches: [{
+      file: 'src/version-recovery.ts',
+      find: "    return storage.getItem(VERSION_RELOAD_ATTEMPT_KEY) === target ? 'attempted' : 'fresh';",
+      replace: "    return 'fresh';  // mutant: forget the tab-wide target guard",
+    }],
+  },
+  {
     id: 'space-copy-title-always-reuses-two',
     guard: 'node --test --test-name-pattern="first free numbered" test/space-copy.test.mjs',
     because: 'copy naming must skip occupied suffixes instead of silently proposing a duplicate (#456 AC2)',
@@ -1376,8 +1540,8 @@ const MUTANT_DEFINITIONS = [
       + 'forever (#402)',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: '    return html`${body}${this._renderDangerConfirm()}`;',
-      replace: '    return html`${body}`;',
+      find: '    return html`${body}${this._renderVersionBanner()}${this._renderDangerConfirm()}`;',
+      replace: '    return html`${body}${this._renderVersionBanner()}`;',
     }],
   },
   {

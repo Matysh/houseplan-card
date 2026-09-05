@@ -25,6 +25,22 @@
     "broken_plan": {
       "title": "Grundrissbild fehlt",
       "description": "Die Plandatei `{file}` für den Bereich `{space}` wurde in `config/houseplan/plans/` nicht gefunden. In den Bereichseinstellungen der House-Plan-Karte den Plan erneut hochladen."
+    },
+    "frontend_reload_notice": {
+      "title": "House-Plan-Karte verbunden",
+      "description": "Die House-Plan-Karte ist verbunden. Laden Sie diese Seite vollständig neu, um die aktuelle Benutzeroberfläche zu verwenden (`Ctrl+F5` unter Windows/Linux oder `Cmd+Shift+R` unter macOS). Wenn Sie Dashboard-Ressourcen im Speichermodus manuell verwalten, öffnen Sie Einstellungen → Dashboards → Ressourcen."
+    }
+  },
+  "system_health": {
+    "info": {
+      "card_file": "Datei der House-Plan-Karte",
+      "static_path": "Statischer Frontend-Pfad",
+      "resource_status": "Status der Ressourcenregistrierung",
+      "resource_loader": "Lademethode der Frontend-Ressource",
+      "resource_url": "URL der Frontend-Ressource",
+      "resource_retry": "Wiederholung der Ressourcenregistrierung",
+      "resource_error": "Fehler der Frontend-Registrierung",
+      "first_reload_notice": "Erster Hinweis zum Neuladen"
     }
   }
 }

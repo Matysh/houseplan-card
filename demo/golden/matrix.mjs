@@ -1,7 +1,7 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 54;
+export const GOLDEN_MATRIX_VERSION = 55;
 
 const stage = { capture: 'stage', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0005 } };
 const page = { capture: 'page', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0008 } };
@@ -160,6 +160,19 @@ const decorLayerProbes = {
 };
 
 export const GOLDEN_SCENARIOS = Object.freeze([
+  // #462 AC12: the card-level version recovery notice must stay compact,
+  // readable and outside layout/fit flow on desktop, narrow touch and the
+  // manual-only kiosk state after this tab already attempted the target.
+  { id: 'version-mismatch-desktop-dark-en', fixture: 'visual', space: 'golden-geometry',
+    mode: 'view', integrationVersion: '0.0.0-golden-backend',
+    language: 'en', theme: 'dark', viewport: { width: 1000, height: 900 }, ...page },
+  { id: 'version-mismatch-touch-light-ru', fixture: 'visual', space: 'golden-geometry',
+    mode: 'view', integrationVersion: '0.0.0-golden-backend', touchViewport: true,
+    language: 'ru', theme: 'light', viewport: { width: 390, height: 760 }, ...page },
+  { id: 'version-mismatch-kiosk-attempted-dark-de', fixture: 'visual', space: 'golden-geometry',
+    mode: 'view', integrationVersion: '0.0.0-golden-backend',
+    versionRecoveryAttempted: true, kiosk: true,
+    language: 'de', theme: 'dark', viewport: { width: 820, height: 760 }, ...page },
   { id: 'hidden-wall-diagnostics-plan-light', fixture: 'visual',
     space: 'golden-coincident-partition', coincidentPartition: 'before',
     hiddenWallDiagnostics: true, mode: 'plan', theme: 'light',

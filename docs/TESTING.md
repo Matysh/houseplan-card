@@ -969,11 +969,58 @@ separately promised workflows:
 
 ## Installation / upgrade / removal
 
-- [ ] Fresh install from the HACS default catalog (plain search) → integration appears, card auto-registers as a Lovelace resource (`?v=` matches manifest); no manual resource setup
+- [ ] README and User Guide in EN/RU each separate Storage mode, HA 2026.2+
+      `resource_mode: yaml` and legacy HA 2024.6–2026.1 full-YAML dashboard
+      setup; both hard-reload shortcuts are present and a flat top-level
+      `resources:` block is rejected [auto: `check-docs`].
+- [ ] Fresh Storage-mode install from the HACS default catalog (plain search)
+      → integration appears; the exact `?v=` URL is created or adopted in the
+      Lovelace resource registry without an `extra_module_url` fallback or a
+      duplicate. An upgrade updates the one canonical entry [auto backend:
+      `tests_backend/test_ha_frontend_registration.py`].
 - [ ] `single_config_entry`: adding a second entry is impossible [manual]
-- [ ] Upgrade via HACS: `?v=` bumps after HA restart, browser picks the new bundle without cache clearing
-- [ ] YAML-mode Lovelace: falls back to `extra_module_url` (card loads)
-- [ ] Removal: delete entry → Lovelace resource entry disappears; `.storage/houseplan.*` survives; reinstall picks the old config up
+- [ ] A pending or transient registry installs the fallback immediately, then
+      retries exactly once after HA started plus the fixed one-second delay.
+      Success removes only this setup's exact fallback when supported; unload
+      before the listener, during the delay or during the task prevents all late
+      side effects, and reloads do not accumulate listeners [auto backend:
+      `tests_backend/test_ha_frontend_registration.py`; mutation gate].
+- [ ] HA 2026.2+ YAML resources and a legacy 2024.6–2026.1 full-YAML dashboard
+      use the truthful `extra_module_url` fallback without a registry write or
+      polling loop. A Storage dashboard is never instructed to switch to legacy
+      `mode: yaml` just for House Plan [auto backend:
+      `tests_backend/test_ha_frontend_registration.py`; auto: `check-docs`].
+- [ ] A missing frontend bundle or failed static-path registration does not fail
+      integration setup, does not report a successful loader and does not consume
+      the one-time notification; System Health reports file/static/loader/outcome
+      honestly [auto backend: `tests_backend/test_ha_frontend_registration.py`,
+      `tests_backend/test_ha_setup.py::test_missing_frontend_bundle_does_not_skip_backend_setup`].
+- [ ] The first available frontend registration creates one localized persistent
+      hard-reload notification. Repeated setup, retry completion and a new House
+      Plan version create no duplicate; uninstall dismisses it best effort [auto
+      backend: `tests_backend/test_ha_frontend_registration.py`; mutation gate].
+- [ ] System Health preserves existing plan statistics and reports card file,
+      static path, typed resource outcome, final loader, exact versioned URL,
+      retry state, safe error and first-notice state without traceback, tokens or
+      external paths [auto backend:
+      `tests_backend/test_ha_frontend_registration.py`].
+- [ ] In a full card, every successful `config/get` authoritatively replaces the
+      backend version. Equal versions and unknown/malformed values show nothing;
+      a known symmetric mismatch shows one direction-neutral manual-reload banner
+      in ordinary View/editor/dialog states and never reloads without a trusted
+      click [unit: `version-recovery`; auto: `smoke_version_recovery`].
+- [ ] In kiosk, an unsafe mismatch preserves the current frame. The first fully
+      safe idle state stores the backend target before exactly one reload; the same
+      target after reload/remount or in a second full card gets no second attempt,
+      a new target gets one, and unavailable `sessionStorage` is manual-only
+      [unit: `version-recovery`; auto: `smoke_version_recovery`; mutation gate].
+- [ ] `custom:houseplan-space-card` loads the shared bundle/config but never owns
+      the version banner, safety timer or automatic reload [unit:
+      `version-recovery`; auto: `smoke_version_recovery`].
+- [ ] Removal deletes every House Plan Lovelace resource entry with the canonical
+      base URL and dismisses the notification; `.storage/houseplan.*` survives and
+      reinstall picks the old config up [auto backend:
+      `tests_backend/test_ha_frontend_registration.py`].
 - [ ] Diagnostics download works; personal fields (name/link/description/pdfs) are `**REDACTED**` [manual]
 
 ## Modes (v1.25.0) ★
@@ -2075,7 +2122,10 @@ separately promised workflows:
 - [ ] Corrupted `.storage/houseplan.config` → entry retries (ConfigEntryNotReady), no crash loop [auto backend]
 - [ ] HA restart while a dialog is open → next save gets a clean error/conflict, no data loss
 - [ ] Legacy layout entries (v1 {x,y} without space) are ignored gracefully
-- [ ] Kiosk cold start on mobile app: card defined before dashboard render (resource registration)
+- [ ] Kiosk cold start on mobile app: the card is defined before dashboard
+      render; a version mismatch follows the one-safe-attempt contract from the
+      installation section instead of flashing or entering a reload loop
+      [auto: `smoke_version_recovery`].
 
 ## Release regression quickies
 

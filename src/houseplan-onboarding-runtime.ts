@@ -470,7 +470,7 @@ export class HouseplanOnboardingRuntime {
         expected_layout_rev: this.host._layoutRev,
       });
       const [configResponse, layoutResponse] = await Promise.all([
-        this.host.hass.callWS({ type: 'houseplan/config/get' }),
+        this.host._getAuthoritativeConfig(),
         this.host.hass.callWS({ type: 'houseplan/layout/get' }),
       ]);
       this.host._adoptStructuralResponses(configResponse, layoutResponse);

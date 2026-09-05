@@ -136,6 +136,29 @@ test('golden matrix has stable unique ids and bounded comparison thresholds', ()
   }
 });
 
+test('issue 462 has reviewed desktop, narrow-touch and attempted-kiosk notices', () => {
+  const scenarios = GOLDEN_SCENARIOS.filter((scenario) =>
+    scenario.id.startsWith('version-mismatch-'));
+  assert.deepEqual(scenarios.map((scenario) => scenario.id), [
+    'version-mismatch-desktop-dark-en',
+    'version-mismatch-touch-light-ru',
+    'version-mismatch-kiosk-attempted-dark-de',
+  ]);
+  assert.deepEqual(new Set(scenarios.map((scenario) => scenario.language)),
+    new Set(['en', 'ru', 'de']));
+  assert.equal(scenarios.every((scenario) => scenario.mode === 'view'
+    && scenario.capture === 'page'
+    && scenario.integrationVersion === '0.0.0-golden-backend'), true);
+  const touch = scenarios.find((scenario) => scenario.touchViewport);
+  assert.deepEqual(touch?.viewport, { width: 390, height: 760 });
+  const kiosk = scenarios.find((scenario) => scenario.versionRecoveryAttempted);
+  assert.equal(kiosk?.kiosk, true);
+  assert.equal(kiosk?.theme, 'dark');
+  const harness = readFileSync(new URL('../demo/golden/harness.mjs', import.meta.url), 'utf8');
+  assert.match(harness, /sessionStorage\.setItem\(attemptKey, attemptedTarget\)/);
+  assert.match(harness, /integration_version: scenario\.integrationVersion/);
+});
+
 test('golden matrix covers required geometry, rendering and adaptive surfaces', () => {
   const ids = GOLDEN_SCENARIOS.map((scenario) => scenario.id).join(' ');
   for (const token of ['geometry', 'diagonal-45-opening', 'openings', 'openings-hidden',
@@ -375,7 +398,7 @@ test('sun-ray golden requires browser-painted light from a state-only sun entity
   assert.ok(scenario);
   const fixture = prepareGoldenFixture(scenario);
   const space = fixture.config.spaces.find((item) => item.id === scenario.space);
-  assert.equal(GOLDEN_MATRIX_VERSION, 54);
+  assert.equal(GOLDEN_MATRIX_VERSION, 55);
   assert.equal(space.settings.sun_rays, true);
   assert.equal(scenario.northDeg, 90,
     'the sign-sensitive golden must keep a non-zero north direction');

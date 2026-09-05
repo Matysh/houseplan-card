@@ -33,6 +33,10 @@ export const baseStyles = css`
       --shadow-2: 0 6px 22px rgba(0, 0, 0, 0.45);
       --shadow-3: 0 8px 30px rgba(0, 0, 0, 0.5);
     }
+    :host(houseplan-card) {
+      display: block;
+      position: relative;
+    }
     ha-card {
       overflow: visible; /* overflow:hidden breaks position:sticky on the header */
     }
@@ -57,6 +61,85 @@ export const baseStyles = css`
     }
     .empty .btn {
       margin-top: var(--sp-4);
+    }
+    .version-recovery {
+      position: absolute;
+      z-index: 72;
+      left: max(var(--sp-5), env(safe-area-inset-left));
+      right: max(var(--sp-5), env(safe-area-inset-right));
+      bottom: max(var(--sp-5), env(safe-area-inset-bottom));
+      width: auto;
+      max-width: 430px;
+      margin-left: auto;
+      box-sizing: border-box;
+      pointer-events: none;
+      color: var(--hp-txt);
+    }
+    .version-recovery.phase-visible {
+      animation: hp-version-recovery-in 160ms ease-out both;
+    }
+    .version-recovery.phase-leaving {
+      animation: hp-version-recovery-out 140ms ease-in both;
+    }
+    .version-recovery-card {
+      pointer-events: auto;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      align-items: center;
+      gap: var(--sp-5);
+      padding: var(--sp-5);
+      border: 1px solid var(--hp-accent);
+      border-radius: var(--rad-l);
+      background: var(--card-background-color, #16212e);
+      box-shadow: var(--shadow-2);
+    }
+    .phase-leaving .version-recovery-card {
+      pointer-events: none;
+    }
+    .version-recovery-card > ha-icon {
+      align-self: start;
+      color: var(--hp-accent);
+    }
+    .version-recovery-copy {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: var(--sp-2);
+      font-size: var(--fs-m);
+      line-height: 1.35;
+    }
+    .version-recovery-copy > span {
+      color: var(--hp-muted);
+    }
+    .version-recovery-versions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--sp-2) var(--sp-5);
+    }
+    .version-recovery-versions span,
+    .version-recovery-versions b {
+      overflow-wrap: anywhere;
+    }
+    .version-recovery-reload {
+      min-height: 44px;
+      white-space: normal;
+    }
+    @keyframes hp-version-recovery-in {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes hp-version-recovery-out {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
+    @media (max-width: 520px) {
+      .version-recovery-card {
+        grid-template-columns: auto minmax(0, 1fr);
+      }
+      .version-recovery-reload {
+        grid-column: 1 / -1;
+        width: 100%;
+      }
     }
     @keyframes fixedfloor-spin {
       to { transform: rotate(360deg); }
@@ -95,6 +178,10 @@ export const baseStyles = css`
       .bootveil .boothouse {
         animation: none;
         opacity: 0.7;
+      }
+      .version-recovery.phase-visible,
+      .version-recovery.phase-leaving {
+        animation: none;
       }
     }
     @keyframes hp-pulse-short {

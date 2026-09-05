@@ -284,6 +284,10 @@ import {
   visualFrameFingerprint,
   type PageVisibilitySignal,
 } from './visual-continuity';
+import { cardVersionReloadSafetySnapshot, createCardVersionRecovery, renderVersionBanner,
+  adoptCardConfigCapabilities, getAuthoritativeCardConfig,
+  type AuthoritativeConfigResponse, type ConfigCapabilitiesCardPort,
+  type VersionRecoveryCardPort } from './version-recovery-card';
 import { PointerModalityController } from './pointer-modality';
 import {
   entityVisualSample, entityVisualSamplesForDevice,
@@ -708,7 +712,11 @@ export class HouseplanCard extends LitElement {
     stateChanged: (state) => this._editorRuntimeStateChanged(state),
     failed: (error, info) => {
       console.error('[houseplan] unable to load editor runtime', error);
-      this._showToast(lazyLoadFailureMessage((key) => this._t(key), info));
+      // A terminal fingerprint failure asks for the same page reload as the
+      // eager version notice. Keep network/non-terminal retry advice intact.
+      if (!(info.terminal && this._versionRecovery.hasCurrentMismatchNotice)) {
+        this._showToast(lazyLoadFailureMessage((key) => this._t(key), info));
+      }
     },
   });
 
@@ -736,7 +744,9 @@ export class HouseplanCard extends LitElement {
     },
     failed: (error, info) => {
       console.error('[houseplan] unable to load onboarding runtime', error);
-      this._showToast(lazyLoadFailureMessage((key) => this._t(key), info));
+      if (!(info.terminal && this._versionRecovery.hasCurrentMismatchNotice)) {
+        this._showToast(lazyLoadFailureMessage((key) => this._t(key), info));
+      }
     },
   });
 
@@ -1031,6 +1041,7 @@ export class HouseplanCard extends LitElement {
     } else if (event.matches && this._modeTransition.active) {
       this._cancelModeTransition(true);
     }
+    this._syncVersionRecovery();
     this.requestUpdate();
   };
   /** Last editor kept in the collapsing chrome so leaving it can animate out. */
@@ -2037,6 +2048,16 @@ export class HouseplanCard extends LitElement {
   private _preflightClipboardFallback: string | null = null;
   /** #295: integration version from houseplan/config/get; null on old backends. */
   private _haIntegrationVersion: string | null = null;
+  /** #462: eager full-card recovery; the static space card never owns one. */
+  private readonly _versionRecovery = createCardVersionRecovery(this as unknown as VersionRecoveryCardPort);
+  private _syncVersionRecovery(): void {
+    this._versionRecovery.update({
+      frontendVersion: CARD_VERSION,
+      backendVersion: this._haIntegrationVersion,
+      kiosk: this._config?.kiosk === true,
+      reducedMotion: this._reducedMotion,
+    });
+  }
   /** #423: support protocol capability from config/get; never persisted. */
   private _haSupportApi: number | null = null;
   /** #51: custom-image protocol capability from config/get; fail closed. */
@@ -2524,6 +2545,8 @@ export class HouseplanCard extends LitElement {
     this._motionMedia = window.matchMedia?.('(prefers-reduced-motion: reduce)');
     this._reducedMotion = !!this._motionMedia?.matches;
     this._motionMedia?.addEventListener?.('change', this._onMotionChange);
+    this._syncVersionRecovery();
+    this._versionRecovery.connect();
     svgScreenBlendSupported(this.ownerDocument).then((supported) => {
       if (supported === this._glowScreenBlend) return;
       this._glowScreenBlend = supported;
@@ -2575,6 +2598,9 @@ export class HouseplanCard extends LitElement {
   }
 
   public disconnectedCallback(): void {
+    // Stop the independent kiosk timer before any teardown flush can mutate
+    // config/layout state or this detached instance can reload the document.
+    this._versionRecovery.disconnect();
     this._liveRt?.dispose();
     this._editorRuntime?._disposeLiveEditor();
     this._clearRoomFocus(true);
@@ -3140,6 +3166,7 @@ export class HouseplanCard extends LitElement {
       if (this._warmLongReturn) this._beginResumeSettle();
       this._warmLongReturn = false;
     }
+    this._syncVersionRecovery();
   }
 
   /**
@@ -3575,6 +3602,10 @@ export class HouseplanCard extends LitElement {
     return !!stage && stage.clientWidth > 0 && stage.clientHeight > 0;
   }
 
+  private _versionReloadSafetySnapshot() {
+    return cardVersionReloadSafetySnapshot(this as unknown as VersionRecoveryCardPort);
+  }
+
   private _continuityAssetsReady(): boolean {
     // An empty/transient model is not a complete plan frame. Returning true
     // here used to let the previous DOM be blessed while the replacement
@@ -3717,6 +3748,15 @@ export class HouseplanCard extends LitElement {
           ? html`<button class="btn on" @click=${this._retryContinuity}>${this._t('continuity.retry')}</button>`
           : nothing}
       </div>`;
+  }
+
+  /** One patchable seam shared by trusted manual and guarded automatic reload. */
+  private _reloadDocument(): void {
+    this.ownerDocument.defaultView?.location.reload();
+  }
+
+  private _renderVersionBanner() {
+    return renderVersionBanner(this as unknown as VersionRecoveryCardPort, this._versionRecovery);
   }
 
   private _renderEditorRuntimeLoading(): TemplateResult | typeof nothing {
@@ -4087,19 +4127,7 @@ export class HouseplanCard extends LitElement {
    * epoch; equal revisions never hide changed content (#73 §9.4).
    */
   private _adoptConfigCapabilities(response: unknown): void {
-    const capabilities = response && typeof response === 'object'
-      ? response as Partial<Record<
-          'integration_version' | 'support_api' | 'decor_assets_api', unknown
-        >> : {};
-    this._haIntegrationVersion = typeof capabilities.integration_version === 'string'
-      ? capabilities.integration_version : this._haIntegrationVersion;
-    const supportApi = capabilities.support_api;
-    // Every successful config/get is authoritative. Missing or malformed data
-    // after a backend downgrade must revoke a capability learned earlier.
-    this._haSupportApi = typeof supportApi === 'number' && Number.isSafeInteger(supportApi)
-      ? supportApi : null;
-    this._haDecorAssetsApi = capabilities.decor_assets_api === DECOR_ASSETS_API_VERSION
-      ? DECOR_ASSETS_API_VERSION : null;
+    adoptCardConfigCapabilities(this as unknown as ConfigCapabilitiesCardPort, response);
   }
 
   private async _syncDecorAssets(cfg: ServerConfig | null): Promise<void> {
@@ -4195,6 +4223,10 @@ export class HouseplanCard extends LitElement {
     return true;
   }
 
+  private _getAuthoritativeConfig(): Promise<AuthoritativeConfigResponse> {
+    return getAuthoritativeCardConfig(this as unknown as ConfigCapabilitiesCardPort);
+  }
+
   private async _loadFromServer(): Promise<void> {
     this._loading = true;
     this._loadTries++;
@@ -4202,7 +4234,7 @@ export class HouseplanCard extends LitElement {
     const hadViewport = !!this._view;
     try {
       const [cfgResp, layResp] = await Promise.all([
-        this.hass.callWS({ type: 'houseplan/config/get' }),
+        this._getAuthoritativeConfig(),
         this.hass.callWS({ type: 'houseplan/layout/get' }),
       ]);
       const candidateConfig = cfgResp?.config && Array.isArray(cfgResp.config.spaces)
@@ -4394,7 +4426,7 @@ export class HouseplanCard extends LitElement {
     }
     this._beginContinuityCandidate('config-reload', false);
     try {
-      const resp = await this.hass.callWS({ type: 'houseplan/config/get' });
+      const resp = await this._getAuthoritativeConfig();
       const candidateConfig = resp?.config && Array.isArray(resp.config.spaces)
         ? resp.config as ServerConfig : null;
       const configChanged = contentFingerprint(candidateConfig)
@@ -4879,8 +4911,6 @@ export class HouseplanCard extends LitElement {
       this._layoutContentFingerprint = fingerprint;
       this._layoutRev = resp?.rev ?? this._layoutRev;
       this._canOptimizeUndo = !!resp?.can_optimize_undo;
-      this._haIntegrationVersion = typeof resp?.integration_version === 'string'
-        ? resp.integration_version : this._haIntegrationVersion;
       this._undoKind = (resp?.undo_kind || null) as any;
       this._cacheSnapshot();
       this.requestUpdate();
@@ -5570,6 +5600,13 @@ export class HouseplanCard extends LitElement {
     if (!this._planEntityAvailable(entityId)) {
       this._showToast(this._t('toast.ha_disabled_action'));
       return;
+    }
+    // The native HA dialog has no reliable close event for this card.  Its
+    // stale entity field cannot be a reload guard, so every successful open —
+    // including keyboard activation — extends the shared kiosk interaction
+    // pause used by the carousel and #462 recovery controller.
+    if (this._kiosk) {
+      this._cyclePausedUntil = Math.max(this._cyclePausedUntil, Date.now() + 60000);
     }
     this._nativeMoreInfoEntity = entityId;
     fireEvent(this, 'hass-more-info', { entityId });
@@ -11239,7 +11276,7 @@ export class HouseplanCard extends LitElement {
   /** One stable Lit template site lets a nested `noChange` retain the body
    * while the independent confirmation child is removed during a warm gate. */
   private _renderRoot(body: TemplateResult | typeof noChange): TemplateResult {
-    return html`${body}${this._renderDangerConfirm()}`;
+    return html`${body}${this._renderVersionBanner()}${this._renderDangerConfirm()}`;
   }
 
   protected render(): TemplateResult | typeof nothing | typeof noChange {

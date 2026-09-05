@@ -470,6 +470,7 @@ test('i18n: German values equal to English are explicitly reviewed', () => {
     'vac.diag_platform',
     'vac.diag_status',
     'vac.diag_position',
+    'version_mismatch.backend',
   ]);
   const equalKeys = Object.keys(en).filter((key) => en[key] === de[key]);
   assert.deepEqual(new Set(equalKeys), allowed);

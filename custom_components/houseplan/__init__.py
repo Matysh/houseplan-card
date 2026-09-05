@@ -6,7 +6,6 @@ import logging
 from datetime import timedelta
 from pathlib import Path
 
-from homeassistant.components.frontend import add_extra_js_url
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.event import async_track_time_interval
@@ -16,9 +15,11 @@ from .const import (
     ASSETS_DIR,
     DOMAIN,
     FILES_DIR,
-    FRONTEND_URL,
     PLANS_DIR,
-    VERSION,
+)
+from .frontend_registration import (
+    async_remove_frontend_registration,
+    async_setup_frontend_registration,
 )
 from .geometry_migration import migrate_config, migrate_layout, pending_from_config
 from .plans import collect_attachments, collect_plans, sweep_upload_temps
@@ -99,49 +100,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: HouseplanConfigEntry) ->
         )
     )
 
-    # Static paths cannot be unregistered — register once per HA run.
-    if not hass.data[DOMAIN].get("static_registered"):
-        hass.data[DOMAIN]["static_registered"] = True
-        static_paths = []
-        try:
-            from homeassistant.components.http import StaticPathConfig
-
-            if card_path.exists():
-                static_paths.append(StaticPathConfig(FRONTEND_URL, str(card_path), cache_headers=False))
-            # NOTE (audit B1): plans and marker files are NO LONGER static.
-            # They are served by HouseplanContentView, which requires auth.
-            # Only the entry and manifest-gated JS chunks stay public —
-            # Lovelace modules must be loadable without an auth header.
-            if static_paths:
-                await hass.http.async_register_static_paths(static_paths)
-        except ImportError:  # very old HA versions
-            if card_path.exists():
-                hass.http.register_static_path(FRONTEND_URL, str(card_path), cache_headers=False)
-
-    if not card_path.exists():
-        _LOGGER.warning("houseplan-card.js not found next to the integration: %s", card_path)
-        return True
-
-    # Register the card. Preferably as a Lovelace resource (the frontend AWAITS
-    # resources before rendering dashboards, so the card is available even on a cold
-    # start of the mobile app). If the resource registry is unavailable (YAML-mode
-    # Lovelace, old versions) — fall back to extra_module_url.
-    module_url = f"{FRONTEND_URL}?v={VERSION}"
-    registered = await _register_lovelace_resource(hass, module_url)
-    if not registered:
-        add_extra_js_url(hass, module_url)
-    # Tell the user exactly where the card lives — the #1 support issue is people adding a
-    # Lovelace resource pointing at the on-disk path (/custom_components/...), which HA does
-    # not serve (wrong MIME → "Custom element doesn't exist"). The correct served URL is below.
-    if registered:
-        _LOGGER.info("House Plan card auto-registered as a Lovelace resource: %s", module_url)
-    else:
-        _LOGGER.info(
-            "House Plan card is served at %s . Lovelace resources look YAML-managed — add it "
-            "manually under `resources:` as { url: %s, type: module }. Do NOT use the on-disk "
-            "path /custom_components/houseplan/frontend/houseplan-card.js (HA does not serve it).",
-            module_url, module_url,
-        )
+    # NOTE (audit B1): plans and marker files are no longer static. They are
+    # served by HouseplanContentView, which requires auth. Only the manifest-
+    # gated frontend bundle stays public so Lovelace can load it. Registration
+    # failures are observable and recoverable, but never skip storage migration,
+    # repairs or housekeeping below.
+    await async_setup_frontend_registration(hass, entry, card_path)
 
     # One-time move to the square canvas (v1.48.0). Coordinates used to be
     # normalised against a per-space aspect ratio; the canvas is now always
@@ -319,61 +283,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: HouseplanConfigEntry) -
     return True
 
 
-async def async_remove_entry(hass: HomeAssistant, entry) -> None:
-    """Clean up on integration removal: drop our Lovelace resource entry."""
-    try:
-        resources = _lovelace_resources(hass)
-        if resources is None or not hasattr(resources, "async_delete_item"):
-            return
-        for item in list(resources.async_items()):
-            if str(item.get("url", "")).split("?", 1)[0] == FRONTEND_URL:
-                await resources.async_delete_item(item["id"])
-                _LOGGER.debug("House Plan Lovelace resource removed: %s", item.get("url"))
-    except Exception as err:  # noqa: BLE001 — best-effort cleanup
-        _LOGGER.debug("Could not remove the Lovelace resource on uninstall: %s", err)
-
-
-def _lovelace_resources(hass: HomeAssistant):
-    lovelace = hass.data.get("lovelace")
-    resources = getattr(lovelace, "resources", None)
-    if resources is None and isinstance(lovelace, dict):
-        resources = lovelace.get("resources")
-    return resources
-
-
-async def _register_lovelace_resource(hass: HomeAssistant, module_url: str) -> bool:
-    """Register (or update) the card in the Lovelace resource registry.
-
-    Returns True on success. Idempotent: if a resource with our path exists —
-    update the URL on version change; otherwise create it. Any exception → False
-    (fall back to extra_module_url).
-    """
-    try:
-        resources = _lovelace_resources(hass)
-        if resources is None:
-            return False
-        # the resource registry must be loaded
-        if hasattr(resources, "loaded") and not resources.loaded:
-            await resources.async_load()
-            resources.loaded = True
-        elif hasattr(resources, "async_get_info"):
-            await resources.async_get_info()
-        # only storage mode allows creating items
-        if not hasattr(resources, "async_create_item"):
-            return False
-        base = FRONTEND_URL
-        existing = [
-            item for item in resources.async_items()
-            if str(item.get("url", "")).split("?", 1)[0] == base
-        ]
-        if existing:
-            item = existing[0]
-            if item.get("url") != module_url and hasattr(resources, "async_update_item"):
-                await resources.async_update_item(item["id"], {"url": module_url})
-            return True
-        await resources.async_create_item({"res_type": "module", "url": module_url})
-        _LOGGER.debug("House Plan card registered as a Lovelace resource: %s", module_url)
-        return True
-    except Exception as err:  # noqa: BLE001 — any failure → fallback
-        _LOGGER.debug("Could not register the Lovelace resource (%s), falling back to extra_module_url", err)
-        return False
+async def async_remove_entry(
+    hass: HomeAssistant, entry: HouseplanConfigEntry
+) -> None:
+    """Clean up frontend registration and notice on integration removal."""
+    await async_remove_frontend_registration(hass, entry)

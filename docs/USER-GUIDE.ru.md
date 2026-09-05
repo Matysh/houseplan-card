@@ -87,22 +87,56 @@ House Plan — локальная интеграция и две Lovelace-кар
 3. Откройте **Настройки → Устройства и службы → Добавить интеграцию** и выберите **House Plan**.
 4. Оставьте включённой опцию «редактировать план только администраторам», если обычным пользователям нужен только просмотр и управление.
 
-Интеграция сама регистрирует Lovelace-ресурс. При YAML-управлении ресурсами добавьте его вручную:
+Интеграция сама регистрирует Lovelace-ресурс. После установки или обновления
+House Plan перезапустите Home Assistant и полностью перезагрузите
+страницу: `Ctrl+F5` в Windows/Linux или `Cmd+Shift+R` в macOS.
+
+#### Режим Storage (по умолчанию в Home Assistant)
+
+Обычно YAML не нужен. Если авторегистрация не сделала карточку доступной,
+откройте **Настройки → Панели управления → меню ⋮ → Ресурсы → Добавить
+ресурс**, укажите `/houseplan_files/houseplan-card.js` и выберите тип
+**JavaScript-модуль**.
+
+#### YAML-ресурсы в Home Assistant 2026.2+
+
+Чтобы управлять ресурсами в `configuration.yaml` независимо от режима
+самой панели, используйте:
 
 ```yaml
-resources:
-  - url: /houseplan_files/houseplan-card.js
-    type: module
+lovelace:
+  resource_mode: yaml
+  resources:
+    - url: /houseplan_files/houseplan-card.js
+      type: module
 ```
 
-Не используйте файловый путь `/custom_components/houseplan/frontend/houseplan-card.js`: Home Assistant не раздаёт его как модуль. Обе карточки находятся в одном файле `/houseplan_files/houseplan-card.js`.
+#### Home Assistant 2024.6–2026.1: устаревший режим
+
+Только для панели, которая уже полностью управляется через YAML:
+
+```yaml
+lovelace:
+  mode: yaml
+  resources:
+    - url: /houseplan_files/houseplan-card.js
+      type: module
+```
+
+`mode: yaml` переводит в YAML-режим саму панель. Не переключайте
+storage-панель в устаревший YAML только ради House Plan; используйте
+инструкцию для Storage выше. Не используйте
+`/custom_components/houseplan/frontend/houseplan-card.js`: Home Assistant не
+раздаёт этот путь как модуль. Обе карточки находятся в одном файле
+`/houseplan_files/houseplan-card.js`.
 
 ### Ручная установка
 
 1. Скопируйте папку `custom_components/houseplan` из релиза в `config/custom_components/houseplan`.
 2. Перезапустите Home Assistant.
 3. Добавьте интеграцию **House Plan**.
-4. Если ресурсы Lovelace управляются YAML, добавьте ресурс из примера выше.
+4. Если карточка всё ещё недоступна, выполните инструкцию для
+   своей версии Home Assistant и режима ресурсов выше.
 
 Копируйте папку интеграции целиком: стабильный URL ресурса по-прежнему один,
 но entry-файл загружает внутренние модули с хешированными именами. Установка
@@ -1971,7 +2005,7 @@ cycle: 0
 
 | Симптом | Проверка |
 |---|---|
-| `Custom element doesn't exist: houseplan-card` | Интеграция добавлена и загружена; ресурс — `/houseplan_files/houseplan-card.js`, тип `module`; очистите кэш фронтенда |
+| `Custom element doesn't exist: houseplan-card` | Интеграция добавлена и загружена; ресурс — `/houseplan_files/houseplan-card.js`, тип `module`; перезапустите HA, затем выполните полную перезагрузку через `Ctrl+F5` (Windows/Linux) или `Cmd+Shift+R` (macOS) |
 | MIME `text/plain` | Использован неверный файловый URL `/custom_components/...`; замените на `/houseplan_files/...` |
 | Интеграция не находится | Папка называется точно `custom_components/houseplan`; HA перезапущен; журнал не содержит ошибки импорта |
 | После обновления старая версия | Перезапустите HA, перезагрузите ресурсы/браузер; URL ресурса содержит версионный query, который интеграция обновляет сама |

@@ -39,6 +39,22 @@ export const SMOKE_LINKS = [
   },
   {
     symbols: [
+      'VersionRecoveryController', 'VersionReloadSafetySnapshot',
+      'isVersionReloadSafe', 'compareRuntimeVersions', 'normalizeRuntimeVersion',
+      'fetchAuthoritativeConfig', 'getAuthoritativeCardConfig', '_getAuthoritativeConfig',
+      'adoptCardConfigCapabilities',
+      'cardVersionReloadSafetySnapshot', '_versionReloadSafetySnapshot',
+      'renderVersionBanner', '_renderVersionBanner',
+    ],
+    smokes: ['smoke_version_recovery.mjs'],
+    because: 'the #462 production-bundle scenario proves the card-level overlay, trusted '
+      + 'keyboard/touch reload seam, exact session target, concrete card dialog/write/gesture '
+      + 'guards, config capability adoption before sibling failures, more-info pause and the '
+      + 'full-card/space-card boundary; pure controller tests '
+      + 'cannot observe those DOM and Home Assistant lifecycle effects',
+  },
+  {
+    symbols: [
       'LiveEditorState', 'finishRevision', 'hoverProperties',
       'routeHouseplanEditorUpdate', 'whenHouseplanEditorSettled',
     ],
