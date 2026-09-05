@@ -53,8 +53,9 @@ Issue: [#460](https://github.com/Matysh/houseplan-card/issues/460)
 - `src/live-editor.ts` — ревизии, ожидания и terminal-null routing.
 - `src/houseplan-editor-runtime.ts` — внутренний awaitable-метод для browser
   harness.
-- `test/live-editor.test.mjs` и `scripts/mutation-gate.mjs` — unit- и
-  mutation-доказательства.
+- `test/live-editor.test.mjs`, `scripts/mutation-gate.mjs` и
+  `scripts/smoke-links.mjs` — unit-, mutation- и smoke-selection
+  доказательства.
 - `demo/smoke_furniture.mjs`, `demo/smoke_decor.mjs`,
   `demo/smoke_decor_text.mjs` — потребители контракта.
 - `docs/DEVELOPMENT.md`, оба changelog и сгенерированные bundle-деревья —
