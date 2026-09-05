@@ -1,8 +1,8 @@
 {
   "schema": 1,
-  "matrixVersion": 54,
-  "acceptedAt": "2026-09-05T07:54:06.456Z",
-  "sourceFingerprint": "a02457b163466b4e4bf0b01b64a926e1cde349edb5acb4cd92648d66eafb1cca",
+  "matrixVersion": 55,
+  "acceptedAt": "2026-09-05T13:40:24.671Z",
+  "sourceFingerprint": "d1cd3ecb18d8a872c7e231ce86e766515a15d278c981181d134e7be3d1076518",
   "chromium": "151.0.7922.34",
   "platform": "linux",
   "witnesses": {
@@ -10,6 +10,9 @@
     "floor": 10
   },
   "scenarios": {
+    "version-mismatch-desktop-dark-en": "8efc4365de5e5f69dc864a36d87144c3a16a2a52f89ec6e5556fc7755f538fb6",
+    "version-mismatch-touch-light-ru": "6fee87758c8373472b57542b8705595113ef07b92014ef6f5b977d4d1aa19808",
+    "version-mismatch-kiosk-attempted-dark-de": "d3d0863fe814d20f5b081de6ac14f8bbf7d559be019808e62cd6dcdc7abcaa70",
     "hidden-wall-diagnostics-plan-light": "4113474796ccb1b7b8c876fcb463e97eb77bb1ec96129195a0dafdcc7ccca334",
     "hidden-wall-diagnostics-plan-dark": "40c48868f0251aec3b1a14c0eef77a78cc7965420fb9b41f46f8190d1fdfd11a",
     "coincident-partition-before-dark": "daacbc763c81ad037b305fc34572729c063ec542d031821660b8d3d096a35d19",
