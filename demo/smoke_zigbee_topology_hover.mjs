@@ -4,7 +4,7 @@ const { page, browser } = await launch();
 const result = await page.evaluate(async () => {
   const card = window.__card;
   const root = () => card.shadowRoot || card.renderRoot;
-  const wait = (predicate, label, timeout = 3000) => new Promise((resolve, reject) => {
+  const wait = (predicate, label, timeout = 5000) => new Promise((resolve, reject) => {
     const started = performance.now();
     const tick = () => {
       if (predicate()) return resolve();

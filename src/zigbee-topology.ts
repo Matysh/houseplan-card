@@ -107,20 +107,12 @@ function lqiOf(value: unknown): number | undefined {
   return Number.isFinite(n) && n >= 0 && n <= 255 ? Math.round(n) : undefined;
 }
 
-const Z2M_RELATIONSHIPS: Readonly<Record<number, string>> = {
-  0: 'parent', 1: 'child', 2: 'sibling', 3: 'none', 4: 'previous_child',
-};
+const Z2M_RELATIONSHIPS = ['parent', 'child', 'sibling', 'none', 'previous_child'] as const;
 
 function relationshipOf(value: unknown): string | undefined {
-  if (typeof value === 'number' && Number.isInteger(value)) return Z2M_RELATIONSHIPS[value];
-  if (typeof value !== 'string') return undefined;
-  const compact = value.trim().toLowerCase().replace(/[\s_-]+/g, '');
-  if (!compact) return undefined;
-  if (compact === 'previouschild') return 'previous_child';
-  if (compact === 'parent' || compact === 'child' || compact === 'sibling' || compact === 'none') {
-    return compact;
-  }
-  return value.trim().toLowerCase().slice(0, 40) || undefined;
+  if (typeof value === 'number') return Z2M_RELATIONSHIPS[value];
+  return typeof value === 'string'
+    ? value.trim().toLowerCase().slice(0, 40) || undefined : undefined;
 }
 
 function observation(value: unknown): ZigbeeDirectionalObservation {

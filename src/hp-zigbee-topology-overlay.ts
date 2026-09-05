@@ -23,7 +23,7 @@ export class HpZigbeeTopologyOverlay extends LitElement {
     devices: { attribute: false },
     registry: { attribute: false },
     currentSpace: { type: String, attribute: 'current-space' },
-    spaceTitles: { attribute: false },
+    spaces: { attribute: false },
     viewKey: { attribute: false },
   };
 
@@ -31,7 +31,7 @@ export class HpZigbeeTopologyOverlay extends LitElement {
   devices: readonly DevItem[] = [];
   registry!: HaRegistrySnapshot;
   currentSpace = '';
-  spaceTitles: Readonly<Record<string, string>> = {};
+  spaces?: readonly { id?: unknown; title?: unknown }[];
   viewKey: unknown;
   private _runtime = EMPTY_RUNTIME;
   private _hovered = '';
@@ -178,7 +178,8 @@ export class HpZigbeeTopologyOverlay extends LitElement {
 
   private _targetText(target: ZigbeeParentTarget): string {
     if (target.kind === 'remote-space') {
-      return this.spaceTitles[target.spaceId]?.trim()
+      const title = this.spaces?.find((space) => space.id === target.spaceId)?.title;
+      return (typeof title === 'string' && title.trim())
         || topologyT(langOf(this.hass), 'route_other_space');
     }
     return topologyT(langOf(this.hass), target.kind === 'unplaced-coordinator'
