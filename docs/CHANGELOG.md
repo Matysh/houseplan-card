@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Drawing a wall chain on a large plan now commits each intermediate segment
+  through a bounded local safety check instead of rebuilding the whole floor
+  twice, while chain completion still performs the full fail-closed validation
+  ([#461](https://github.com/Matysh/houseplan-card/issues/461)).
+
 ## v1.72.0-beta.4 — 2026-09-05
 
 - Furniture placement previews now clear reliably when the pointer leaves the

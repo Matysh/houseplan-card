@@ -29,6 +29,16 @@
 export const SMOKE_LINKS = [
   {
     symbols: [
+      'commitDraftSegmentGeometry', 'draftLiveCandidateSpace', 'draftLiveSeed',
+      'isSingleDraftAppend', 'DraftLiveProjection', 'DraftLiveCommitRuntime',
+    ],
+    smokes: ['smoke_wall_draw_click.mjs'],
+    because: 'the #461 production-bundle scenario proves local rejection rollback and exact '
+      + 'Undo/Redo identity through the real Walls click handler; those browser effects are '
+      + 'outside the pure projector and transaction source contracts',
+  },
+  {
+    symbols: [
       'LiveEditorState', 'finishRevision', 'hoverProperties',
       'routeHouseplanEditorUpdate', 'whenHouseplanEditorSettled',
     ],

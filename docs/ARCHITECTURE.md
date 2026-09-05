@@ -807,6 +807,20 @@ Pan, pinch, pointer cancellation and suppressed clicks never finish a chain or
 append a segment. A finished open chain is ordinary masonry and is not resumed
 as a draft. Reload recovery may resume only a still-active persisted draft.
 
+The intermediate click write has a deliberately narrower proof boundary
+(#461). On an already materialised model-v9 document,
+`commitDraftSegmentGeometry()` first proves an exact one-segment active-draft
+append, then builds matching previous/candidate projections containing the new
+segment, incident junction rays, its collinear run and only physical envelopes
+that can interact with that component. It runs the normal production physical
+check once on that local candidate and passes the resulting wall geometry into
+the junction check instead of rebuilding the union. Unknown or mixed writes and
+pre-v9 documents fall back to `_commitPhysicalGeometry()`. Finishing, merging
+or promoting the chain always uses an independent full-space barrier; the local
+verdict is never a terminal approval. Both routes share the existing history,
+pending-write and backend-rejection rollback contract and still send the full
+configuration.
+
 `src/wall-face-graph.ts` derives an immutable planar graph from solid room edges
 after opening cuts, partitions, inactive drafts and the active chain. A sweep
 broadphase atomizes endpoint, T, X and collinear intersections; deterministic

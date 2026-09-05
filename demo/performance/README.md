@@ -139,6 +139,27 @@ it would make the same runner incompatible with its base bundle.
 
 ## Local diagnostics
 
+### Wall draw terminal clicks
+
+`wall-draw-click-v1` (#461) loads the production bundle with five spaces. The
+edited space contains 12 rooms, 48 positive-thickness wall atoms and four saved
+open drafts, then places seven consecutive Walls segments after warm-up. A
+second variant doubles remote, non-interacting room geometry. The runner fails
+structurally unless every intermediate click performs zero full-space physical
+checks, exactly one local physical check, reuses its wall artifact in the
+junction proof, adds one history entry and queues one full-config write. The
+chain finish must independently return to the full-space barrier.
+
+The canonical Linux ceilings are 150 ms median and 250 ms maximum for the seven
+base clicks; the remote median may not exceed `base × 1.5 + 20 ms`. Counters are
+the primary verdict, so a fast machine cannot hide a route back through the
+generic barrier. Run against a freshly synchronized bundle:
+
+```bash
+npm run benchmark:wall-draw-click -- --output=artifacts/performance-smoke/wall-draw-click.json
+node demo/smoke_wall_draw_click.mjs
+```
+
 Build and copy a fresh demo bundle first, then run:
 
 ```bash

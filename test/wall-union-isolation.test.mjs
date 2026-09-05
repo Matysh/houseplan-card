@@ -101,7 +101,7 @@ test('#278 physical fingerprint ignores decor but covers every strict writer fie
 test('#278 production source routes physical writers through one barrier and decor around it', () => {
   const source = readHouseplanProductionSource();
   for (const historyKey of [
-    'draft_segment', 'wall_chain_finish', 'column_add', 'physical_edit', 'physical_delete',
+    'wall_chain_finish', 'column_add', 'physical_edit', 'physical_delete',
     'physical_move', 'resize_room', 'wall_thickness',
     'move_opening', 'delete_opening', 'merge_rooms', 'contour_to_partitions',
   ]) {
@@ -110,6 +110,12 @@ test('#278 production source routes physical writers through one barrier and dec
     assert.match(source,
       new RegExp(`_commitPhysicalGeometry\\(\\s*this\\._t\\('history\\.${historyKey}'`), historyKey);
   }
+  const runtime = readFileSync(
+    new URL('../src/houseplan-editor-runtime.ts', import.meta.url), 'utf8',
+  );
+  assert.match(runtime,
+    /commitDraftSegmentGeometry\(this, this\.host\._t\('history\.draft_segment'/,
+    'an intermediate draft append uses its dedicated bounded physical barrier');
   // #313 introduced a second thickness commit point (independent masonry).
   // BOTH must go through the barrier: replacing either with _recordGeometry
   // reduces the count and reddens this line.

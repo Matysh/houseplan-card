@@ -671,3 +671,12 @@ Compatibility matrix:
 | old | new | No change: the limits live in the card's write barrier, the backend contract is untouched |
 | new | old | No change: an inherited violation is never re-judged, so an old backend's documents keep loading and editing |
 | new | new | A write that ADDS a violation is refused in the surface where it was made — a toast naming the rule for drawing and Thickness, a stopped wall for Resize |
+
+Intermediate wall-chain clicks in a current model-v9 document use the bounded
+local write proof from #461. This is runtime-only: the accepted
+`room_drafts[].points/segments` and the WebSocket payload remain the same full
+config, including unknown fields. A pre-v9 first structural write, any diff not
+proven to be one active-draft append, and every chain finish/promotion retains
+the full-space migration, physical and junction barrier. Old frontends and old
+backends therefore see no new field or protocol, and a backend rejection still
+rolls the complete pending physical transaction back to its earliest snapshot.

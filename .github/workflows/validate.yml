@@ -761,6 +761,8 @@ jobs:
       # ловит возврат квадратичных путей в оба зеркала прямо на пуше.
       - name: Бюджеты ограничений стыков (#330)
         run: npm run benchmark:junction-limits
+      - name: Быстрый commit точки стены (#461)
+        run: npm run benchmark:wall-draw-click -- --output=artifacts/performance-smoke/wall-draw-click.json
       - name: Upload performance smoke report
         if: always()
         uses: actions/upload-artifact@v7

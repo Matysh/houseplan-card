@@ -62,6 +62,7 @@ import {
   type ResizeProjectionResult,
 } from './resize-controller';
 import { resizeLiveCandidateSpace, resizeLiveJunctionRoomIds } from './resize-live-preflight';
+import { commitDraftSegmentGeometry } from './draft-live-commit';
 import {
   placeResizeAreaLabel, resizeMeasuredEdges,
   type ResizeAreaPlacement,
@@ -2792,7 +2793,7 @@ public _persistActiveDraftSegment(): void {
     };
     if (i >= 0) sp.room_drafts[i] = saved;
     else sp.room_drafts.push(saved);
-    this._commitPhysicalGeometry(this.host._t('history.draft_segment'), before);
+    commitDraftSegmentGeometry(this, this.host._t('history.draft_segment'), before);
   }
 
 public _activeWallSourceKey(index: number): string {

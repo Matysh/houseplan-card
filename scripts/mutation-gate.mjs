@@ -2304,6 +2304,64 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'wall-draw-full-preflight-again',
+    guard: 'node demo/benchmark_wall_draw_click.mjs',
+    because: 'every intermediate Walls click must use the bounded #461 barrier; routing it back '
+      + 'through the generic full-space transaction recreates the measured one-second pause',
+    patches: [{
+      file: 'src/houseplan-editor-runtime.ts',
+      find: "    commitDraftSegmentGeometry(this, this.host._t('history.draft_segment'), before);",
+      replace: "    this._commitPhysicalGeometry(this.host._t('history.draft_segment'), before);",
+    }],
+  },
+  {
+    id: 'wall-draw-local-neighbour-dropped',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="local draft projection" '
+      + 'test/draft-live-preflight.test.mjs',
+    because: 'a bounded proof that drops a room whose masonry envelope meets the new segment '
+      + 'can accept geometry the generic barrier rejects (#461 AC4)',
+    patches: [{
+      file: 'src/draft-live-preflight.ts',
+      find: '    return id && near ? [id] : [];',
+      replace: '    return [];',
+    }],
+  },
+  {
+    id: 'wall-draw-terminal-full-check-skipped',
+    guard: 'node demo/benchmark_wall_draw_click.mjs',
+    because: 'the local click verdict is deliberately non-terminal; finishing a wall chain must '
+      + 'still cross an independent full-space barrier (#461 AC7)',
+    patches: [{
+      file: 'src/houseplan-editor-runtime.ts',
+      find: "    this._commitPhysicalGeometry(this.host._t('history.wall_chain_finish'), before);",
+      replace: "    this._recordGeometry(this.host._t('history.wall_chain_finish'), before);",
+    }],
+  },
+  {
+    id: 'wall-draw-rejection-rollback-skipped',
+    guard: 'node demo/smoke_wall_draw_click.mjs',
+    because: 'a junction-rejected terminal click must restore its config snapshot before the '
+      + 'gesture is cleared, otherwise the invalid point survives without history or a write (#461 AC6)',
+    patches: [{
+      file: 'src/draft-live-commit.ts',
+      find: '  if (introduced.length) {\n    runtime._clearGeometryGesture();\n'
+        + '    runtime._restoreGeometryStateLocal(before);',
+      replace: '  if (introduced.length) {\n    runtime._clearGeometryGesture();',
+    }],
+  },
+  {
+    id: 'wall-draw-wall-artifact-discarded',
+    guard: 'node demo/benchmark_wall_draw_click.mjs',
+    because: 'the exact candidate wall union already computed by physical preflight must feed '
+      + 'the junction pass; discarding it repays the expensive union on every click (#461 AC5)',
+    patches: [{
+      file: 'src/draft-live-commit.ts',
+      find: '    geometry, candidateProjection.roomIds,',
+      replace: '    null, candidateProjection.roomIds,',
+    }],
+  },
+  {
     id: 'degenerate-apex-bevelled-again',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="§4" test/junction-limits.test.mjs',
