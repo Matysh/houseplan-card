@@ -2,6 +2,8 @@
   "title": "Zigbee-Verbindungen",
   "toggle": "Zigbee-Verbindungen beim Darüberfahren über ein Gerät anzeigen",
   "hint": "Es werden nur beobachtete direkte Nachbarn angezeigt. Beim Darüberfahren werden keine Daten abgerufen.",
+  "help": "Zeigt, mit welchen Zigbee-Geräten jedes Gerät direkt verbunden ist. Die Linienfarbe ist die Verbindungsqualität (LQI) auf derselben Skala wie der LQI-Wert des Geräts: rot bei 40 und darunter, grün bei 180 und darüber. Eine gestrichelte Linie bedeutet, dass die Qualität nicht gemeldet wurde. Ein Pfeil zeigt auf das nächste Gerät auf dem Weg zum Koordinator: ein Pfeil führt hinaus, eingehende Pfeile sind die Geräte, die über dieses Gerät routen. Eine Linie ohne Pfeil ist ein Ersatznachbar. Das ist der Routenbaum, den House Plan bildet, nicht der Weg eines Pakets in diesem Moment: eine Beschriftung am Pfeilende bedeutet, dass das Ziel nicht auf diesem Plan liegt, und ein fehlender Pfeil, dass die Route unbekannt ist. Die Daten stammen aus dem letzten Laden und veralten; Verbindungen sind nur mit der Maus sichtbar.",
+  "help_aria": "Hilfe: Zigbee-Verbindungen",
   "admin_only": "Topologiedaten sind nur für Home-Assistant-Administratoren verfügbar.",
   "save_first": "Speichere diese Einstellung, bevor Topologiedaten geladen werden.",
   "zha": "ZHA",

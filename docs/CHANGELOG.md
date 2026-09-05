@@ -6,6 +6,14 @@
   incoming arrows identify devices behind a router, while a short bubble
   truthfully ends the path when the next node is in another space or is not
   placed ([#457](https://github.com/Matysh/houseplan-card/issues/457)).
+
+- The «Zigbee links» setting now carries contextual help: it explains the
+  feature in one breath, spells out the legend — line colour as link quality,
+  a dashed line as unreported quality, arrows as the way to the coordinator —
+  and states the limits: data comes from the last load and goes stale, and
+  links are shown with a mouse only
+  ([#459](https://github.com/Matysh/houseplan-card/issues/459)).
+
 - Space settings can now create a room-free copy of the current space under a
   new name, preserving walls, openings, columns, Background objects, image
   transform, scale and display settings while leaving device placement behind;

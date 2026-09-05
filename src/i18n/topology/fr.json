@@ -2,6 +2,8 @@
   "title": "Liens Zigbee",
   "toggle": "Afficher les liens Zigbee au survol d’un appareil",
   "hint": "Seuls les voisins directs observés sont affichés. Le survol ne lance aucune requête.",
+  "help": "Montre avec quels appareils Zigbee chaque appareil communique directement. La couleur de la ligne est la qualité du lien (LQI) sur la même échelle que l'indicateur LQI de l'appareil : rouge à 40 et en dessous, vert à 180 et au-dessus. Une ligne pointillée signifie que la qualité n'a pas été communiquée. Une flèche pointe vers l'appareil suivant sur le chemin du coordinateur : une flèche part, les flèches entrantes sont les appareils qui passent par celui-ci. Une ligne sans flèche est un voisin de secours. C'est l'arbre de routes que construit House Plan, pas le trajet d'un paquet à cet instant : une étiquette au bout d'une flèche signifie que sa cible n'est pas sur ce plan, et l'absence de flèche que la route est inconnue. Les données proviennent du dernier chargement et vieillissent ; les liens ne sont visibles qu'à la souris.",
+  "help_aria": "Aide : liens Zigbee",
   "admin_only": "Les données de topologie sont réservées aux administrateurs Home Assistant.",
   "save_first": "Enregistrez ce réglage avant de charger les données de topologie.",
   "zha": "ZHA",

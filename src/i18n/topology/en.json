@@ -2,6 +2,8 @@
   "title": "Zigbee links",
   "toggle": "Show Zigbee links when hovering over a device",
   "hint": "Shows observed direct neighbours only. Nothing is fetched while you hover.",
+  "help": "Shows which Zigbee devices each device talks to directly. Line colour is link quality (LQI) on the same scale as the device's LQI reading: red at 40 and below, green at 180 and above. A dashed line means quality was not reported. An arrow points to the next device on the way to the coordinator: one arrow leads out, incoming arrows are the devices that route through this one. A line without an arrow is a spare neighbour. This is the route tree House Plan builds, not the path a packet takes right now: a label at the end of an arrow means its target is not on this plan, and no arrow at all means the route is unknown. Data comes from the last load and goes stale; links are shown with a mouse only.",
+  "help_aria": "Help: Zigbee links",
   "admin_only": "Topology data is available to Home Assistant administrators only.",
   "save_first": "Save this setting before loading topology data.",
   "zha": "ZHA",

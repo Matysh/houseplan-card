@@ -5794,6 +5794,32 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'topology-help-renders-without-aria',
+    guard: 'node --test --test-name-pattern="кружок справки не рисуется|вызывается из блока" '
+      + 'test/zigbee-topology.test.mjs',
+    because: 'a help circle that opens without an accessible name is worse than no circle, and '
+      + 'topologyT answers a missing key with the key itself — so absence has to be asked of the '
+      + 'dictionary, not of the resolved string (#459 AC2)',
+    patches: [{
+      file: 'src/i18n/topology.ts',
+      find: '  const value = DICTIONARIES[lang]?.[key] ?? en[key];',
+      replace: '  const value = DICTIONARIES[lang]?.[key] ?? en[key] ?? key;',
+    }],
+  },
+  {
+    id: 'topology-help-drops-arrow-legend',
+    guard: 'node --test --test-name-pattern="все шесть пунктов легенды|не путь пакета" '
+      + 'test/zigbee-topology.test.mjs',
+    because: 'a hint that names only colour and dashes passes «the help exists» while answering '
+      + 'none of the questions the arrows raise — the very content this task waited for #457 to '
+      + 'write (#459 AC3, AC3b)',
+    patches: [{
+      file: 'src/i18n/topology/ru.json',
+      find: ' Стрелка ведёт к следующему устройству по пути к координатору: исходящая одна, входящие — те, кто ходит через это устройство. Линия без стрелки — запасной сосед. Это дерево маршрутов, которое строит House Plan, а не путь пакета в эту секунду: подпись на конце стрелки значит, что цель не на этом плане, а отсутствие стрелки — что путь неизвестен.',
+      replace: '',
+    }],
+  },
+  {
     id: 'zigbee-topology-z2m-camelcase-node-rejected',
     guard: 'node --test --test-name-pattern="real anonymized camelCase" test/zigbee-topology.test.mjs',
     because: 'the Zigbee2MQTT raw network-map contract uses ieeeAddr; accepting only the '

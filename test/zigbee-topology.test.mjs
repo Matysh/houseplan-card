@@ -401,3 +401,106 @@ test('Z2M runtime refuses an unconfirmed base topic without publishing and still
   assert.equal(cleanups, 2);
   assert.equal(zigbeeTopologyRuntimeSnapshot(hass).states['z2m:zigbee2mqtt'].error, 'timeout');
 });
+
+// #459. Подсказка «Связи Zigbee»: легенда живёт в словаре, и её содержание —
+// защитный контракт. Текст, называющий только цвет и пунктир, формально
+// «подсказка есть», но не отвечает ни на один вопрос про стрелки — ради
+// которых задача и ждала #457. Поэтому проверяется КАЖДЫЙ пункт легенды.
+
+const topologyDict = (code) => JSON.parse(readFileSync(
+  new URL(`../src/i18n/topology/${code}.json`, import.meta.url), 'utf8',
+));
+const TOPOLOGY_LANGS = ['en', 'ru', 'de', 'fr'];
+
+test('подсказка называет все шесть пунктов легенды (#459 AC3)', () => {
+  const help = topologyDict('ru').help;
+  const claims = [
+    // шкала LQI — обе границы, и они не выдуманы, а взяты из lqiColor (AC4)
+    [/\bLQI\b/, 'качество связи названо аббревиатурой LQI'],
+    [/\b40\b/, 'нижняя граница шкалы'],
+    [/\b180\b/, 'верхняя граница шкалы'],
+    [/[Пп]унктир/, 'пунктир как отдельное состояние линии'],
+    [/исходящ/i, 'исходящая стрелка'],
+    [/координатор/i, 'исходящая стрелка ведёт к координатору'],
+    [/входящ/i, 'входящие стрелки'],
+    [/без стрелки/i, 'линия без стрелки — запасной сосед'],
+    [/подпись на конце стрелки/i, 'подпись = цель не на этом плане'],
+    [/отсутствие стрелки/i, 'нет стрелки = путь неизвестен'],
+  ];
+  for (const [pattern, why] of claims) {
+    assert.match(help, pattern, `подсказка не называет: ${why}`);
+  }
+});
+
+test('подсказка предупреждает, что стрелки — не путь пакета (#459 AC3b)', () => {
+  // Оговорка унаследована от §6 ТЗ #457: дерево аплинков строим мы, и между
+  // роутерами это приближение. Без неё администратор примет стрелку за истину.
+  const help = topologyDict('ru').help;
+  // `\w` в JS-регулярке ASCII-словесный: «дерев\w+» на кириллице не совпадёт
+  // никогда. Ловушка та же, что с `\b` в счётчике раундов ревью (#454).
+  assert.match(help, /дерево маршрут/i);
+  assert.match(help, /не путь пакета/i);
+});
+
+test('границы шкалы в подсказке — те же, что у lqiColor (#459 AC4)', async () => {
+  const { lqiColor } = await import('../test-build/logic.js');
+  const hueOf = (value) => Number(/hsl\((\d+)/.exec(lqiColor(value))[1]);
+  // Красный край и зелёный край берутся из функции, а не из константы в тесте:
+  // сдвинется реализация — тест назовёт другие числа и подсказка разойдётся.
+  assert.equal(hueOf(40), 0, 'красный край шкалы');
+  assert.equal(hueOf(180), 120, 'зелёный край шкалы');
+  const help = topologyDict('ru').help;
+  assert.match(help, new RegExp(`\\b40\\b`));
+  assert.match(help, new RegExp(`\\b180\\b`));
+});
+
+test('подсказка не полагается на переносы строк (#459 AC5)', () => {
+  // hp-help кладёт .text текстовым узлом: \n схлопнется в пробел.
+  for (const code of TOPOLOGY_LANGS) {
+    const dict = topologyDict(code);
+    assert.ok(!dict.help.includes('\n'), `${code}: перенос строки в help`);
+    assert.ok(dict.help.trim().length > 0, `${code}: пустая подсказка`);
+    assert.ok(dict.help_aria.trim().length > 0, `${code}: пустая подпись для скринридера`);
+  }
+});
+
+test('словари topology несут один и тот же набор ключей (#459 AC6)', () => {
+  // Гейт, которого не было: i18n-dead-keys и i18n.test знают основной словарь,
+  // бэкендные переводы и support, но не namespace topology.
+  const english = Object.keys(topologyDict('en')).sort();
+  const placeholders = (value) => (String(value).match(/\{\w+\}/gu) || []).sort();
+  const en = topologyDict('en');
+  for (const code of TOPOLOGY_LANGS) {
+    const dict = topologyDict(code);
+    assert.deepEqual(Object.keys(dict).sort(), english, `${code}: набор ключей расходится`);
+    for (const key of english) {
+      assert.deepEqual(placeholders(dict[key]), placeholders(en[key]),
+        `${code}: плейсхолдеры расходятся в ${key}`);
+    }
+  }
+});
+
+test('кружок справки не рисуется без подписи для скринридера (#459 AC2)', async () => {
+  const { hasTopologyTranslation } = await import('../test-build/i18n/topology.js');
+  // Проверка идёт по СЛОВАРЮ, а не по строке: topologyT на отсутствующий ключ
+  // отвечает именем ключа, и «help» — вполне непустая строка.
+  assert.equal(hasTopologyTranslation('ru', 'help'), true);
+  assert.equal(hasTopologyTranslation('ru', 'help_aria'), true);
+  assert.equal(hasTopologyTranslation('ru', 'no_such_key'), false);
+  // Английский — слой фолбэка: ключ, которого нет в локали, но есть в en,
+  // доступен, как и в topologyT.
+  assert.equal(hasTopologyTranslation('de', 'help'), true);
+});
+
+test('подсказка вызывается из блока настройки топологии (#459 AC1)', () => {
+  const source = readFileSync(
+    new URL('../src/hp-zigbee-topology-settings.ts', import.meta.url), 'utf8',
+  );
+  // Кружок стоит у ЗАГОЛОВКА функции, а не у тумблера: он объясняет функцию,
+  // а не то, что делает галочка.
+  assert.match(source, /<div class="section">\$\{this\._t\('title'\)\}\$\{this\._help\(\)\}<\/div>/);
+  assert.match(source, /<hp-help \.text=/);
+  // Fail-closed: оба ключа обязательны, иначе не рисуется ничего.
+  assert.match(source, /hasTopologyTranslation\(lang, 'help'\)/);
+  assert.match(source, /hasTopologyTranslation\(lang, 'help_aria'\)/);
+});

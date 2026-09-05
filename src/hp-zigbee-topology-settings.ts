@@ -1,6 +1,7 @@
-import { LitElement, css, html, nothing, type PropertyValues } from 'lit';
+import { LitElement, css, html, nothing, type PropertyValues, type TemplateResult } from 'lit';
 import { langOf } from './i18n';
-import { topologyT, type TopologyI18nKey } from './i18n/topology';
+import { hasTopologyTranslation, topologyT, type TopologyI18nKey } from './i18n/topology';
+import './hp-help';
 import {
   normalizeZ2mBaseTopic, type ZigbeeTopologySettings,
 } from './zigbee-topology-settings';
@@ -35,7 +36,13 @@ export class HpZigbeeTopologySettings extends LitElement {
 
   static styles = css`
     :host { display: block; color: inherit; font: inherit; }
-    .section { margin-top: 18px; font-weight: 700; }
+    .section {
+      margin-top: 18px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
     .toggle { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
     .hint, .status { color: var(--secondary-text-color, #9aa0aa); font-size: 12px; line-height: 1.45; }
     .hint { margin-top: 6px; }
@@ -84,6 +91,26 @@ export class HpZigbeeTopologySettings extends LitElement {
   private get _admin(): boolean { return this.hass?.user?.is_admin === true; }
   private _t(key: TopologyI18nKey, vars?: Record<string, string | number>): string {
     return topologyT(langOf(this.hass), key, vars);
+  }
+
+  /**
+   * Contextual help for the feature, not for the checkbox (#459).
+   *
+   * `_help()` of the editor runtime is typed against the MAIN dictionary
+   * (`I18nKey`), and this component owns its own `topology` namespace — so the
+   * affordance is rebuilt here rather than imported. The fail-closed rule is
+   * copied deliberately: a missing text or accessible name renders nothing at
+   * all, because a help circle that opens an empty surface is worse than no
+   * circle. Absence is asked of the dictionaries (`hasTopologyTranslation`),
+   * not of the resolved string: `topologyT` answers a missing key with the key
+   * itself, and «help» is a perfectly non-empty string.
+   */
+  private _help(): TemplateResult | typeof nothing {
+    const lang = langOf(this.hass);
+    if (!hasTopologyTranslation(lang, 'help')
+        || !hasTopologyTranslation(lang, 'help_aria')) return nothing;
+    return html`<hp-help .text=${this._t('help')}
+      .ariaLabel=${this._t('help_aria')}></hp-help>`;
   }
 
   private async _ensureRuntime(): Promise<typeof import('./zigbee-topology-runtime')> {
@@ -157,7 +184,7 @@ export class HpZigbeeTopologySettings extends LitElement {
     const mayLoad = admin && this.savedEnabled;
     const topics = this._topics();
     return html`
-      <div class="section">${this._t('title')}</div>
+      <div class="section">${this._t('title')}${this._help()}</div>
       <label class="toggle">
         ${customElements.get('ha-switch')
           ? html`<ha-switch .checked=${enabled} .disabled=${!admin}
