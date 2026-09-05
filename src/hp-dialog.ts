@@ -128,9 +128,11 @@ export class HpDialog extends LitElement {
     }
 
     dialog {
-      width: auto;
+      width: fit-content;
+      height: fit-content;
       max-width: none;
       max-height: none;
+      inset: 0;
       margin: auto;
       padding: 0;
       border: 0;
@@ -228,13 +230,13 @@ export class HpDialog extends LitElement {
 
   private _opener: HTMLElement | null = null;
   private _focusRoot: Node | null = null;
-  private _useHaDialog = false;
+  private _useHaDialog: boolean | null = null;
   private _closing = false;
   private _overlays: OverlayEntry[] = [];
   private readonly _titleId = `hp-dialog-title-${++dialogSequence}`;
 
   private _usesHaDialog(): boolean {
-    return this._useHaDialog && !this.alert;
+    return this._useHaDialog === true && !this.alert;
   }
 
   connectedCallback(): void {
@@ -246,8 +248,19 @@ export class HpDialog extends LitElement {
     const session = current || { dialogs: new Set<HpDialog>(), opener: this._opener };
     session.dialogs.add(this);
     focusSessions.set(root, session);
-    this._useHaDialog = !!customElements.get('ha-dialog');
+    // A native fallback is a complete modal implementation, not a loading
+    // placeholder. Keep the branch stable for this instance so a lazily
+    // registered HA component cannot replace an open dialog mid-session.
+    if (this._useHaDialog === null) {
+      this._useHaDialog = !!customElements.get('ha-dialog');
+    }
     this.addEventListener('keydown', this._onKeyDown, true);
+    queueMicrotask(() => {
+      // Re-entering the top layer lets the UA choose a default focus target.
+      // Restore our deterministic initial target only on a real reconnect
+      // recovery; ordinary updates must never steal focus from a live field.
+      if (this._ensureNativeModal()) this._focusInitial();
+    });
   }
 
   disconnectedCallback(): void {
@@ -283,11 +296,35 @@ export class HpDialog extends LitElement {
 
   protected firstUpdated(changed: PropertyValues): void {
     super.firstUpdated(changed);
-    if (!this._usesHaDialog()) {
-      const dialog = this.renderRoot.querySelector('dialog');
-      if (dialog && !dialog.open) dialog.showModal();
-    }
+    this._ensureNativeModal();
     queueMicrotask(() => this._focusInitial());
+  }
+
+  protected updated(changed: PropertyValues): void {
+    super.updated(changed);
+    this._ensureNativeModal();
+  }
+
+  /**
+   * A modal dialog leaves the browser top layer when its host is detached, but
+   * the native `open` flag can survive. Reconcile against `:modal`, not `open`,
+   * after every lifecycle boundary. Closing an open non-modal dialog before
+   * `showModal()` avoids InvalidStateError; a concurrent disconnect is benign
+   * and a later reconnect/update gets another bounded reconciliation attempt.
+   */
+  private _ensureNativeModal(): boolean {
+    if (this._usesHaDialog() || !this.isConnected) return false;
+    const dialog = this.renderRoot.querySelector<HTMLDialogElement>('dialog');
+    if (!dialog?.isConnected) return false;
+    try {
+      if (dialog.matches(':modal')) return false;
+      if (dialog.open) dialog.close();
+      dialog.showModal();
+      return true;
+    } catch {
+      // No retry loop: a future update/reconnect is the next safe boundary.
+      return false;
+    }
   }
 
   private _deepActiveElement(): HTMLElement | null {

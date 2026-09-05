@@ -28,6 +28,13 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    symbols: ['HpDialog', '_ensureNativeModal', '_useHaDialog', '_usesHaDialog'],
+    smokes: ['smoke_dialog_modal_recovery.mjs'],
+    because: 'the #463 production-bundle scenario observes native top-layer state, geometric '
+      + 'centring, ::backdrop, update/reconnect recovery and late ha-dialog registration; none '
+      + 'of those browser lifecycle effects can be proved from the Lit source alone',
+  },
+  {
     symbols: [
       'commitDraftSegmentGeometry', 'draftLiveCandidateSpace', 'draftLiveSeed',
       'isSingleDraftAppend', 'DraftLiveProjection', 'DraftLiveCommitRuntime',

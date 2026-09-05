@@ -515,6 +515,50 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'dialog-native-surface-stretches-to-viewport',
+    guard: 'node demo/smoke_dialog_modal_recovery.mjs',
+    because: 'the native top-layer shell must shrink-wrap its surface; restoring width:auto '
+      + 'reproduces the left-pinned confirmation from #463 even though :modal remains true',
+    patches: [{
+      file: 'src/hp-dialog.ts',
+      find: '      width: fit-content;\n      height: fit-content;',
+      replace: '      width: auto;\n      height: fit-content;',
+    }],
+  },
+  {
+    id: 'dialog-native-update-recovery-disabled',
+    guard: 'node demo/smoke_dialog_modal_recovery.mjs',
+    because: 'an open-but-nonmodal native shell must be reconciled on a later Lit update without '
+      + 'a duplicate or hp-close event; firstUpdated alone cannot recover that #463 state',
+    patches: [{
+      file: 'src/hp-dialog.ts',
+      find: '  protected updated(changed: PropertyValues): void {\n'
+        + '    super.updated(changed);\n'
+        + '    this._ensureNativeModal();\n'
+        + '  }',
+      replace: '  protected updated(changed: PropertyValues): void {\n'
+        + '    super.updated(changed);\n'
+        + '    // mutant: update reconciliation removed\n'
+        + '  }',
+    }],
+  },
+  {
+    id: 'dialog-native-reconnect-recovery-disabled',
+    guard: 'node demo/smoke_dialog_modal_recovery.mjs',
+    because: 'detaching a modal drops it from the browser top layer while its rendered shell '
+      + 'survives; reconnect must schedule one bounded reconciliation for the same node (#463)',
+    patches: [{
+      file: 'src/hp-dialog.ts',
+      find: '    queueMicrotask(() => {\n'
+        + '      // Re-entering the top layer lets the UA choose a default focus target.\n'
+        + '      // Restore our deterministic initial target only on a real reconnect\n'
+        + '      // recovery; ordinary updates must never steal focus from a live field.\n'
+        + '      if (this._ensureNativeModal()) this._focusInitial();\n'
+        + '    });',
+      replace: '    // mutant: reconnect reconciliation removed',
+    }],
+  },
+  {
     id: 'confirm-dialog-loses-alertdialog',
     guard: 'node demo/smoke_danger_confirm_branches.mjs',
     because: 'delete and unlock confirmations must expose the real dialog as an alertdialog '

@@ -124,9 +124,17 @@ the same profiler available between stable promotions.
    falls back to the existing attention marker. Relocation invalidates only
    Undo/Redo commands owned by the moved device. Limited registry snapshots
    are read-only and never infer movement.
-5. **One modal contract.** Card modals render through `hp-dialog`. In Home
-   Assistant it delegates surface semantics and trapping to `ha-dialog`; the
-   standalone demo falls back to native `<dialog>`. The wrapper owns the title,
+5. **One modal contract.** Card modals render through `hp-dialog`. An ordinary
+   dialog uses `ha-dialog` when that component is registered as the instance is
+   connected; otherwise it keeps the native `<dialog>` fallback for its whole
+   lifetime. Alert confirmations deliberately stay native so the browser owns
+   their real `alertdialog` semantics. The native branch is a first-class modal:
+   its outer dialog shrink-wraps and centres the bounded surface in the browser
+   top layer with a backdrop. The wrapper reconciles the actual `:modal` state
+   after render, update and reconnect; if a retained open flag has outlived the
+   top-layer entry, it closes and reopens the same native dialog once. A late
+   `ha-dialog` registration may affect only newly connected instances and never
+   swaps an already open surface. The wrapper owns the title,
    initial focus, Escape close event and restore-focus session. Focus sessions
    are scoped to a card shadow root so nested dialogs return to their parent
    trigger and dialog replacement still returns to the original outside opener.

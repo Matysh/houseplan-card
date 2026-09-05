@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Native House Plan confirmations and fallback dialogs now remain centred with
+  a real dimmed modal backdrop. If Home Assistant temporarily detaches and
+  restores the card, an open native dialog recovers the browser top layer
+  instead of becoming a non-modal surface pinned to the viewport edge
+  ([#463](https://github.com/Matysh/houseplan-card/issues/463)).
 - Drawing a wall chain on a large plan now commits each intermediate segment
   through a bounded local safety check instead of rebuilding the whole floor
   twice, while chain completion still performs the full fail-closed validation
