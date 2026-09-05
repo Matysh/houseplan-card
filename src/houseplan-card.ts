@@ -3955,7 +3955,10 @@ export class HouseplanCard extends LitElement {
    * device would wait forever.
    */
   private _seedHiddenDevices(): void {
-    if (!this._serverCfg || !this._norm || !this._canEdit) return;
+    // Cached config is paint-only until the authoritative config+layout pair
+    // arrives. Seeding against that stale snapshot could overwrite newer
+    // server filtering state during a slow cold start.
+    if (!this._loadOk || !this._serverCfg || !this._norm || !this._canEdit) return;
     const cfg = this._serverCfg;
     const bindings = seedHiddenBindings({
       hass: this.hass,
@@ -5113,7 +5116,12 @@ export class HouseplanCard extends LitElement {
    * Layout deletion is deliberately completed before provenance advances.
    */
   private _syncAreaRelocations(resolution: AreaRelocationResolution): void {
-    if (!this._serverCfg || !this._norm || !this._canEdit || !this._haRegistry.authoritative) return;
+    // A continuity-cache frame is renderable before the authoritative config
+    // and layout pair has finished loading. Never let that stale frame drive a
+    // destructive lifecycle write: the cached Area snapshot can disagree with
+    // the server layout and delete a valid saved point during cold start.
+    if (!this._loadOk || !this._serverCfg || !this._norm
+        || !this._canEdit || !this._haRegistry.authoritative) return;
     const actionable = resolution.decisions.filter(
       (decision) => decision.updateSnapshot || decision.removeSnapshot,
     );

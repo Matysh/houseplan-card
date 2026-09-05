@@ -250,15 +250,18 @@ const res = await page.evaluate(async () => {
   await wait(100);
   const coldCalls = [];
   let coldRev = 40;
+  let releaseColdConfig;
+  const coldConfigGate = new Promise((resolve) => { releaseColdConfig = resolve; });
   const coldHass = window.__mkHass();
   const coldBaseCallWS = coldHass.callWS;
   coldHass.callWS = async (message) => {
     coldCalls.push(structuredClone(message));
     if (message.type === 'houseplan/config/get') {
+      await coldConfigGate;
       return { config: coldConfig, rev: coldRev, can_write: true };
     }
     if (message.type === 'houseplan/layout/get') {
-      return { layout: coldLayout, rev: coldRev };
+      return { layout: structuredClone(coldLayout), rev: coldRev };
     }
     if (message.type === 'houseplan/layout/delete') {
       delete coldLayout[message.device_id];
@@ -274,6 +277,12 @@ const res = await page.evaluate(async () => {
   coldCard.setConfig({ type: 'custom:houseplan-card', title: 'Cold Area backfill' });
   document.body.append(coldCard);
   coldCard.hass = coldHass;
+  await wait(100);
+  const coldCacheStayedReadOnly = !coldCalls.some((message) =>
+    message.type === 'houseplan/config/set'
+      || ['houseplan/layout/set', 'houseplan/layout/update', 'houseplan/layout/delete']
+        .includes(message.type));
+  releaseColdConfig();
   for (let attempt = 0; attempt < 20 && !coldCard._loadedOnce; attempt += 1) await wait(100);
   await wait(450);
   await paint(coldCard);
@@ -525,6 +534,7 @@ const res = await page.evaluate(async () => {
       && compositeDeletesAfter === compositeDeletesBefore
       && c._newIds.has(compositeId) === compositeAttentionBefore
       && !c._areaRelocationIds.has(compositeId),
+    coldCacheStayedReadOnly,
     coldStartBackfilled,
     staticReadOnlyProjection: staticCard._areaRelocationIds.has('d_leak')
       && staticLeft > 50 && !!staticEl?.querySelector('.newdot'),
