@@ -86,6 +86,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#306](https://github.com/Matysh/houseplan-card/issues/306) Нулевые стены вместо виртуальных границ | [306-zero-thickness-walls.md](306-zero-thickness-walls.md) |
 | [#348](https://github.com/Matysh/houseplan-card/issues/348) Полная немецкая локализация | [348-german-localization.md](348-german-localization.md) |
 | [#428](https://github.com/Matysh/houseplan-card/issues/428) Round-trip экспорта с отсутствующей картинкой декора | [428-missing-decor-asset-roundtrip.md](428-missing-decor-asset-roundtrip.md) |
+| [#462](https://github.com/Matysh/houseplan-card/issues/462) Надёжная регистрация frontend-ресурса и восстановление после обновления | [462-card-resource-registration.md](462-card-resource-registration.md) |
 
 ## P2
 
