@@ -31,8 +31,13 @@ on:
 permissions:
   contents: read
 
+# Группа зависит от события (#472). Прежде она была одна на всё, и ручной
+# запуск перед релизом отменял идущий по расписанию — так 24.08 погиб
+# еженедельный прогон, а отменённый в списке выглядит «не красным». Поймать
+# отмену изнутри нельзя: вместе с прогоном отменяются и не начавшиеся job,
+# включая любой репортёр. Значит отмену надо не ловить, а не допускать.
 concurrency:
-  group: mutation-gate
+  group: mutation-gate-${{ github.event_name }}
   cancel-in-progress: true
 
 jobs:
@@ -88,5 +93,104 @@ jobs:
       - name: Тёплый test-build для инкрементальной компиляции мутантов
         run: npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs
 
+      # Вывод шарда сохраняется артефактом (#472): строки
+      # `FAIL <id>: тест остался зелёным…` — единственное место, где названо,
+      # ЧТО сбежало. Без артефакта отказ безымянный. `PIPESTATUS` — чтобы
+      # `tee` не съел код выхода раннера.
       - name: Каждый тест ловит свою поломку
-        run: node scripts/mutation-gate.mjs --shard=${{ matrix.shard }}/4
+        run: |
+          mkdir -p artifacts
+          set -o pipefail
+          node scripts/mutation-gate.mjs --shard=${{ matrix.shard }}/4 2>&1 | tee artifacts/mutation-shard-${{ matrix.shard }}.log
+      - name: Сохранить лог шарда
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: mutation-shard-${{ matrix.shard }}
+          path: artifacts/mutation-shard-${{ matrix.shard }}.log
+          if-no-files-found: warn
+          retention-days: 30
+
+  # Адресат у отказа (#472). Только по расписанию: ручные прогоны перед
+  # релизом падают по замыслу, их результат владелец смотрит сам — issue на
+  # каждый такой отказ был бы шумом, который снова перестанут читать.
+  #
+  # Права job-уровня ЗАМЕНЯЮТ права workflow, а не дополняют (прецедент —
+  # validate.yml, job с actions: read): перечислены все три.
+  report:
+    name: "Отказ расписания: issue и Telegram"
+    needs: mutants
+    if: always() && github.event_name == 'schedule' && needs.mutants.result != 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: dev
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Забрать логи шардов
+        uses: actions/download-artifact@v7
+        with:
+          pattern: mutation-shard-*
+          path: artifacts/mutation-logs
+      - name: Собрать отчёт
+        id: report
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          # SHA — того дерева, которое чекаутили и гоняли (dev), а не
+          # github.sha: для расписания это вершина default-ветки main, и отчёт
+          # называл бы «dev @ <SHA main>» (ревью r1). Образец — process.yml.
+          SHA=$(git rev-parse HEAD)
+          mkdir -p artifacts
+          node scripts/mutation-gate-report.mjs \
+            --logs=artifacts/mutation-logs --shards=4 \
+            --run-url="$RUN_URL" --ref=dev --sha="$SHA" \
+            --body-out=artifacts/mutation-report.md \
+            --telegram-out=artifacts/mutation-telegram.txt >> "$GITHUB_OUTPUT"
+      # Одно issue, а не одно на неделю: открытое с тем же маркером в заголовке
+      # получает комментарий, новое заводится только если открытого нет.
+      - name: Issue — создать или дописать
+        id: issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          MARKER: ${{ steps.report.outputs.marker }}
+          TITLE: ${{ steps.report.outputs.title }}
+        run: |
+          existing=$(gh issue list --repo "$REPO" --state open --search "\"$MARKER\" in:title" \
+            --json number,title --jq '[.[] | select(.title | startswith(env.MARKER))][0].number // empty')
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --repo "$REPO" --body-file artifacts/mutation-report.md
+            url="${{ github.server_url }}/$REPO/issues/$existing"
+          else
+            url=$(gh issue create --repo "$REPO" --title "$TITLE" \
+              --label infra --label process --label tests \
+              --body-file artifacts/mutation-report.md)
+          fi
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "issue: $url"
+      # Тот же канал, что у релизов (announce.yml). Нет секретов — не отказ:
+      # issue уже заведено, а Telegram — второй адресат, не единственный.
+      - name: Telegram
+        if: always() && steps.issue.outcome == 'success'
+        env:
+          TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
+          ISSUE_URL: ${{ steps.issue.outputs.url }}
+        run: |
+          if [ -z "$TOKEN" ] || [ -z "$CHAT" ]; then
+            echo "::warning::TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID не заданы — оповещение пропущено, issue заведено"
+            exit 0
+          fi
+          TEXT=$(sed "s|(issue)|$ISSUE_URL|" artifacts/mutation-telegram.txt)
+          curl -sS --fail-with-body -X POST \
+            "https://api.telegram.org/bot$TOKEN/sendMessage" \
+            --data-urlencode "chat_id=$CHAT" \
+            --data-urlencode "text=$TEXT" \
+            -d disable_web_page_preview=true
