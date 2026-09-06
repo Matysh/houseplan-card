@@ -196,12 +196,13 @@ ends that session. Accepted segments remain independently selectable walls and
 are not resumed as a chain.
 
 The v9→v10 migration converts every valid draft edge one-for-one into a
-partition. A valid existing segment id is retained; a missing id is generated
-deterministically from the space, draft and edge index. Draft order and each
-edge's `cm` are preserved, existing partitions are not merged, and the carrier
-record is removed atomically. Malformed geometry, invalid thickness or an id
-collision fails closed. A current v10 document containing `room_drafts` is
-rejected instead of silently accepting a stale writer.
+partition. A unique existing segment id is retained; a missing, empty or
+colliding id is replaced deterministically from the space, draft and edge
+index, with a stable numeric suffix when needed. Draft order and each edge's
+`cm` are preserved, existing partitions are not merged, and the carrier record
+is removed atomically. Malformed geometry or invalid thickness fails closed. A
+current v10 document containing `room_drafts` is rejected instead of silently
+accepting a stale writer.
 
 Import preview, full/space backup restore and Optimize materialize this legacy
 shape before current processing, report converted draft/segment counts, and
