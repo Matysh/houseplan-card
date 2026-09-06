@@ -135,7 +135,7 @@ const out = await page.evaluate(async () => {
   const requiredDefs = [
     'hp-iso-wall-side', 'hp-iso-wall-top', 'hp-iso-wall-texture',
     'hp-iso-floor-texture', 'hp-iso-ambient-shadow', 'hp-iso-contact-shadow',
-    'hp-iso-leaf-shadow', 'hp-iso-overlay-ground', 'hp-iso-overlay-texture',
+    'hp-iso-leaf-shadow', 'hp-iso-overlay-ground',
   ];
   result.stage3DefinitionsBounded = materialDefs.length >= requiredDefs.length
     && materialDefs.length <= 16
@@ -178,9 +178,12 @@ const out = await page.evaluate(async () => {
     && raisedRoot(roomLabel, 'room-label')
     && raisedRoot(openingLock, 'opening-lock')
     && ['device', 'room-label', 'opening-lock'].every((kind) => root().querySelector(
-      `[data-hp="iso-raised-overlays"] [data-hp-iso-overlay-kind="${kind}"]`
-      + '[data-hp-iso-raised="true"]',
+      `[data-hp="iso-raised-overlays"] .iso-overlay-tether`
+      + `[data-hp-iso-overlay-kind="${kind}"]`,
     ));
+  result.raisedFootprintsStayInvisible = !root().querySelector(
+    '.iso-overlay-plate, .iso-overlay-plate-texture, #hp-iso-overlay-texture',
+  );
   result.preferenceStored = JSON.parse(localStorage.getItem('houseplan_card_view_v1') || '{}').f1 === 'iso';
   result.anchorsFinite = [device, roomLabel, openingLock].every((node) => node
     && center(node).every((value) => Number.isFinite(value)));
@@ -192,19 +195,9 @@ const out = await page.evaluate(async () => {
     const kind = node.getAttribute('data-hp-iso-overlay-kind');
     const id = node.getAttribute('data-id');
     const suffix = id ? `[data-id="${CSS.escape(id)}"]` : '';
-    const group = root().querySelector(
-      `[data-hp="iso-raised-overlays"] .iso-overlay-plates > [data-hp-iso-overlay-kind="${kind}"]${suffix}`,
-    ) || root().querySelector(
-      `[data-hp="iso-raised-overlays"] .iso-overlay-plates > [data-hp-iso-overlay-kind="${kind}"]`,
-    );
-    const plate = group?.querySelector('.iso-overlay-plate');
-    const points = (plate?.getAttribute('points') || '').trim().split(/\s+/)
-      .map((pair) => pair.split(',').map(Number));
     const visual = (node.getAttribute('data-hp-iso-visual') || '').split(',').map(Number);
     const floorPoint = (node.getAttribute('data-hp-iso-floor') || '').split(',').map(Number);
-    if (!group || points.length !== 4 || visual.length !== 2 || floorPoint.length !== 2) return false;
-    const centroid = [points.reduce((sum, point) => sum + point[0], 0) / 4,
-      points.reduce((sum, point) => sum + point[1], 0) / 4];
+    if (visual.length !== 2 || floorPoint.length !== 2) return false;
     const expected = sceneToClient(visual), actual = center(node);
     const ground = root().querySelector(
       `[data-hp="iso-overlay-grounds"] [data-hp-iso-overlay-kind="${kind}"]${suffix}`,
@@ -217,10 +210,13 @@ const out = await page.evaluate(async () => {
       `[data-hp="iso-raised-overlays"] .iso-overlay-tether[data-hp-iso-overlay-kind="${kind}"]`,
     );
     return Math.hypot(actual[0] - expected[0], actual[1] - expected[1]) <= 1
-      && Math.hypot(centroid[0] - visual[0], centroid[1] - visual[1]) <= 1e-6
       && !!ground && Math.hypot(Number(ground.getAttribute('cx')) - floorPoint[0],
         Number(ground.getAttribute('cy')) - floorPoint[1]) <= 1e-6
-      && (group.getAttribute('data-hp-iso-nudged') !== 'true' || !!tether);
+      && !!tether
+      && Math.hypot(Number(tether.getAttribute('x1')) - floorPoint[0],
+        Number(tether.getAttribute('y1')) - floorPoint[1]) <= 1e-6
+      && Math.hypot(Number(tether.getAttribute('x2')) - visual[0],
+        Number(tether.getAttribute('y2')) - visual[1]) <= 1e-6;
   };
   result.globalFitContainsRaisedFootprints = raisedNodes.length >= 3
     && raisedNodes.every((node) => inside(root().querySelector('.stage'), node));
@@ -387,7 +383,7 @@ const out = await page.evaluate(async () => {
     && card._isoFallback.size === fallbackCountBeforeCapabilityProbe
     && !!root().querySelector('[data-hp="iso-walls"] .iso-wall-top')
     && !!root().querySelector('[data-hp="iso-openings"] .iso-opening-panel')
-    && !!root().querySelector('[data-hp="iso-raised-overlays"] .iso-overlay-plate')
+    && !root().querySelector('.iso-overlay-plate, .iso-overlay-plate-texture')
     && !!root().querySelector('[data-hp="iso-raised-overlays"] .iso-overlay-tether')
     && !root().querySelector('[data-hp-iso-material-def]')
     && !root().querySelector('.iso-ambient-shadow, .iso-contact-shadow,'

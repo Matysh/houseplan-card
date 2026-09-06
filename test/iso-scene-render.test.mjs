@@ -23,7 +23,7 @@ import { ISO_OPENING_GEOMETRY_POLICY } from '../test-build/iso-openings.js';
 import { buildIsoWallGeometry } from '../test-build/iso-walls.js';
 import { wallKey } from '../test-build/wall-thickness.js';
 import {
-  buildIsoPlatePolygon,
+  buildIsoFootprintPolygon,
   resolveIsoOverlayOwner,
   resolveIsoOverlayPlacement,
 } from '../test-build/iso-overlays.js';
@@ -76,7 +76,7 @@ test('device footprint contains value capsule, bottom badge and displaced LQI ro
     + ISO_RAISED_FOOTPRINT.deviceLqiFontSize
     + ISO_RAISED_FOOTPRINT.devicePadding) * core;
   assert.equal(halfSize[1], lqiBottom,
-    'bottom LQI position, line box and conservative plate padding are all included');
+    'bottom LQI position, line box and conservative footprint padding are all included');
   assert.ok(halfSize[0] > core * 1.6,
     'the expanding value core is not reduced to the shell diameter');
 });
@@ -122,7 +122,7 @@ test('overlay bounds use final screen footprint and canonical owner filtering', 
     owner: { id: owner }, floorScene: [center[0] - 5, center[1]],
     raisedScene: [center[0] - 4, center[1]], visualScene: center,
     nudgeScene: [4, 0],
-    plate: [[center[0] - 2, center[1] - 1], [center[0] + 2, center[1] - 1],
+    footprint: [[center[0] - 2, center[1] - 1], [center[0] + 2, center[1] - 1],
       [center[0] + 2, center[1] + 1], [center[0] - 2, center[1] + 1]],
   });
   const scene = { entries: [
@@ -141,7 +141,7 @@ test('stable overlay fit contains a maximum final nudge without zoom feedback', 
     placement: {
       owner: { id: 'room' }, floorScene: [95, 50], raisedScene: [95, 50],
       visualScene: [95, 50], nudgeScene: [0, 0],
-      plate: [[90, 46], [100, 46], [100, 54], [90, 54]],
+      footprint: [[90, 46], [100, 46], [100, 54], [90, 54]],
     },
   };
   const stageSize = { width: 320, height: 180 };
@@ -164,7 +164,7 @@ test('stable overlay fit contains a maximum final nudge without zoom feedback', 
   const dx = 48 * unitsPerPixel;
   const actual = { entries: [{ ...entry, placement: {
     ...entry.placement, visualScene: [95 + dx, 50], nudgeScene: [dx, 0],
-    plate: entry.placement.plate.map((point) => [point[0] + dx, point[1]]),
+    footprint: entry.placement.footprint.map((point) => [point[0] + dx, point[1]]),
   } }] };
   const final = isoOverlaySceneBounds(actual);
   assert.ok(final.x >= fitted.bounds.x - 1e-7
@@ -345,7 +345,7 @@ test('Stage 3 reuses pure overlay placements and fit probes skip collision searc
     rooms: [owner], wall_segments: [], room_drafts: [], partitions: [], wall_columns: [],
   };
   const wallSilhouettes = [{
-    outer: buildIsoPlatePolygon([0, 50], [4, 60], ISO_WALL_HEIGHT),
+    outer: buildIsoFootprintPolygon([0, 50], [4, 60], ISO_WALL_HEIGHT),
   }];
   const input = {
     space,
@@ -439,7 +439,7 @@ test('visible wall side quads participate in overlay collision', () => {
     rooms: [{ id: owner.id, outer: owner.poly, safePoint: owner.safePoint }],
     preferredRoomId: owner.id,
     showBorders: true,
-    plateHalfSize: [0.05, 0.05],
+    footprintHalfSize: [0.05, 0.05],
     wallHeight: ISO_WALL_HEIGHT,
     visualOffset: ISO_OVERLAY_VISUAL_OFFSET,
     sceneUnitsPerCssPixel: 1,
@@ -452,8 +452,10 @@ test('visible wall side quads participate in overlay collision', () => {
   const complete = resolveIsoOverlayPlacement({
     ...collisionInput, wallSilhouettes: scene.wallSilhouettes,
   });
-  assert.equal(topOnly.nearWallBefore, false, 'raised plate does not touch the top footprint');
-  assert.equal(complete.nearWallBefore, true, 'the same plate intersects a rendered vertical side');
+  assert.equal(topOnly.nearWallBefore, false,
+    'raised footprint does not touch the wall-top footprint');
+  assert.equal(complete.nearWallBefore, true,
+    'the same raised footprint intersects a rendered vertical side');
 });
 
 test('orphan hosted openings never become phantom Stage 3 volumes', () => {

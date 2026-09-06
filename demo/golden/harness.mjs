@@ -1205,12 +1205,13 @@ export async function prepareGoldenScenario(page, scenario) {
       if (contract.requireNoMaterialDefs && materialDefs !== 0) {
         throw new Error(`Stage 3 solid fallback retained material definitions: ${scenario.id}`);
       }
-      if (contract.requireSolidCues) {
-        const plates = [...card.renderRoot.querySelectorAll('.iso-overlay-plate')];
+      if (contract.requireTetherCues) {
         const tethers = [...card.renderRoot.querySelectorAll('.iso-overlay-tether')];
-        if (plates.length < raisedRoots.length || !tethers.length
-            || plates.some((plate) => getComputedStyle(plate).fill === 'none')) {
-          throw new Error(`Stage 3 golden lost solid plate/tether cues: ${scenario.id}`);
+        const paintedFootprint = card.renderRoot.querySelector(
+          '.iso-overlay-plate, .iso-overlay-plate-texture, #hp-iso-overlay-texture',
+        );
+        if (paintedFootprint || !tethers.length) {
+          throw new Error(`Stage 3 golden lost invisible-footprint/tether contract: ${scenario.id}`);
         }
       }
       if (contract.requireGrounding

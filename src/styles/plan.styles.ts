@@ -335,19 +335,6 @@ export const planStyles = css`
       vector-effect: non-scaling-stroke;
       pointer-events: none;
     }
-    .iso-overlay-plate {
-      fill: rgba(248, 249, 247, 0.9);
-      stroke: rgba(123, 132, 136, 0.58);
-      stroke-width: 0.8;
-      vector-effect: non-scaling-stroke;
-      pointer-events: none;
-    }
-    .iso-overlay-plate-texture {
-      fill: url(#hp-iso-overlay-texture);
-      opacity: 0.11;
-      stroke: none;
-      pointer-events: none;
-    }
     .iso-ambient-shadow {
       fill: rgba(15, 21, 25, 0.22);
       filter: url(#hp-iso-ambient-shadow);
@@ -392,10 +379,6 @@ export const planStyles = css`
     .stage.theme-dark .iso-texture-line { stroke: rgba(255, 255, 255, 0.18); }
     .stage.theme-dark .iso-overlay-ground { fill: rgba(0, 0, 0, 0.42); }
     .stage.theme-dark .iso-overlay-tether { stroke: rgba(224, 232, 235, 0.5); }
-    .stage.theme-dark .iso-overlay-plate {
-      fill: rgba(68, 77, 81, 0.92);
-      stroke: rgba(183, 195, 200, 0.52);
-    }
     @media (prefers-color-scheme: dark) {
       /* HA's explicit theme wins over the operating-system preference. */
       .stage:not(.theme-light) .iso-side-hi { stop-color: #4c555a; }
@@ -421,27 +404,20 @@ export const planStyles = css`
       .stage:not(.theme-light) .iso-texture-line { stroke: rgba(255, 255, 255, 0.18); }
       .stage:not(.theme-light) .iso-overlay-ground { fill: rgba(0, 0, 0, 0.42); }
       .stage:not(.theme-light) .iso-overlay-tether { stroke: rgba(224, 232, 235, 0.5); }
-      .stage:not(.theme-light) .iso-overlay-plate {
-        fill: rgba(68, 77, 81, 0.92);
-        stroke: rgba(183, 195, 200, 0.52);
-      }
     }
     @media (forced-colors: active) {
-      .iso-wall-side, .iso-wall-top, .iso-floor-side, .iso-opening-panel,
-      .iso-overlay-plate {
+      .iso-wall-side, .iso-wall-top, .iso-floor-side, .iso-opening-panel {
         fill: Canvas;
         stroke: CanvasText;
         forced-color-adjust: auto;
       }
       .iso-ambient-shadow, .iso-contact-shadow, .iso-leaf-shadow,
-      .iso-overlay-ground, .iso-material-texture,
-      .iso-overlay-plate-texture { display: none; }
+      .iso-overlay-ground, .iso-material-texture { display: none; }
       .iso-overlay-tether { stroke: CanvasText; }
     }
     @supports not (filter: blur(1px)) {
       .iso-ambient-shadow, .iso-contact-shadow, .iso-leaf-shadow,
-      .iso-overlay-ground, .iso-material-texture,
-      .iso-overlay-plate-texture { display: none; }
+      .iso-overlay-ground, .iso-material-texture { display: none; }
     }
     /* Opaque plan paper (owner 2026-08-03): the scene bg_color / daynight sky
        shows ONLY around the plan, never through it. The colour is the

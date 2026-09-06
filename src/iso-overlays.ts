@@ -55,8 +55,8 @@ export interface IsoOverlayPlacementInput extends IsoOverlayOwnerInput {
   wallSilhouettes: readonly IsoWallSilhouette[];
   /** Internal fast path for silhouettes produced by the cached structural scene. */
   wallGeometryValidated?: boolean;
-  /** Half-size of the floor-parallel plate in plan units. */
-  plateHalfSize: PlanPoint;
+  /** Half-size of the invisible floor-parallel safety footprint in plan units. */
+  footprintHalfSize: PlanPoint;
   wallHeight?: number;
   visualOffset?: number;
   /** Uniform viewBox units represented by one CSS pixel at the current viewport. */
@@ -91,7 +91,8 @@ export interface IsoOverlayPlacement {
   floorScene: ScenePoint;
   raisedScene: ScenePoint;
   visualScene: ScenePoint;
-  plate: readonly ScenePoint[];
+  /** Invisible collision/fit footprint; never render it as a surface. */
+  footprint: readonly ScenePoint[];
   nudgeScene: ScenePoint;
   nudgeCss: ScenePoint;
   nudgeDistanceCss: number;
@@ -266,7 +267,7 @@ export function isoOverlayPlane(kind: IsoOverlayKind, showBorders: boolean): Iso
     ? 'raised' : 'floor';
 }
 
-export function buildIsoPlatePolygon(
+export function buildIsoFootprintPolygon(
   center: PlanPoint,
   halfSize: PlanPoint,
   zUnits: number,
@@ -275,7 +276,7 @@ export function buildIsoPlatePolygon(
 ): readonly ScenePoint[] {
   if (!finitePoint(center) || !finitePoint(halfSize) || halfSize[0] < 0 || halfSize[1] < 0
       || !Number.isFinite(zUnits) || !finitePoint(sceneOffset))
-    throw new Error('invalid isometric overlay plate');
+    throw new Error('invalid isometric overlay footprint');
   return ([
     [center[0] - halfSize[0], center[1] - halfSize[1]],
     [center[0] + halfSize[0], center[1] - halfSize[1]],
@@ -353,25 +354,25 @@ function segmentBoundsNear(
     && Math.max(a[1], b[1]) >= bounds[1] - gap;
 }
 
-function plateNearSilhouette(
-  plate: readonly ScenePoint[], plateBounds: Bounds,
+function footprintNearSilhouette(
+  footprint: readonly ScenePoint[], footprintBounds: Bounds,
   silhouette: IsoWallSilhouette, gap: number, cacheBounds: boolean,
 ): boolean {
   const wallBounds = silhouetteBounds(silhouette, cacheBounds);
-  if (!wallBounds || !boundsNear(plateBounds, wallBounds, gap)) return false;
-  if (plate.some((point) => pointInSilhouette(point, silhouette))) return true;
+  if (!wallBounds || !boundsNear(footprintBounds, wallBounds, gap)) return false;
+  if (footprint.some((point) => pointInSilhouette(point, silhouette))) return true;
   if (silhouette.outer.some((point) =>
-    point[0] >= plateBounds[0] && point[0] <= plateBounds[2]
-      && point[1] >= plateBounds[1] && point[1] <= plateBounds[3]
-      && pointInRing(point, plate))) return true;
+    point[0] >= footprintBounds[0] && point[0] <= footprintBounds[2]
+      && point[1] >= footprintBounds[1] && point[1] <= footprintBounds[3]
+      && pointInRing(point, footprint))) return true;
   for (const wallRing of [silhouette.outer, ...(silhouette.holes || [])]) {
-    for (let plateIndex = 0; plateIndex < plate.length; plateIndex++) {
-      const plateNext = (plateIndex + 1) % plate.length;
+    for (let footprintIndex = 0; footprintIndex < footprint.length; footprintIndex++) {
+      const footprintNext = (footprintIndex + 1) % footprint.length;
       for (let wallIndex = 0; wallIndex < wallRing.length; wallIndex++) {
         const wallNext = (wallIndex + 1) % wallRing.length;
-        if (!segmentBoundsNear(plateBounds, wallRing[wallIndex], wallRing[wallNext], gap))
+        if (!segmentBoundsNear(footprintBounds, wallRing[wallIndex], wallRing[wallNext], gap))
           continue;
-        if (segmentDistance(plate[plateIndex], plate[plateNext],
+        if (segmentDistance(footprint[footprintIndex], footprint[footprintNext],
           wallRing[wallIndex], wallRing[wallNext]) <= gap + EPS) return true;
       }
     }
@@ -414,8 +415,8 @@ export function resolveIsoOverlayPlacement(input: IsoOverlayPlacementInput): Iso
   const unitsPerPixel = input.sceneUnitsPerCssPixel ?? 1;
   const safetyGap = input.safetyGapCssPx ?? ISO_OVERLAY_SAFETY_GAP_CSS_PX;
   const maxNudge = input.maxNudgeCssPx ?? ISO_OVERLAY_MAX_NUDGE_CSS_PX;
-  if (!finitePoint(input.floorAnchor) || !finitePoint(input.plateHalfSize)
-      || input.plateHalfSize[0] < 0 || input.plateHalfSize[1] < 0
+  if (!finitePoint(input.floorAnchor) || !finitePoint(input.footprintHalfSize)
+      || input.footprintHalfSize[0] < 0 || input.footprintHalfSize[1] < 0
       || !Number.isFinite(wallHeight) || wallHeight < 0
       || !Number.isFinite(visualOffset) || visualOffset < 0
       || !Number.isFinite(unitsPerPixel) || unitsPerPixel <= 0
@@ -430,7 +431,7 @@ export function resolveIsoOverlayPlacement(input: IsoOverlayPlacementInput): Iso
     const tether = tetherGeometry(floorScene, floorScene, false);
     return {
       plane, owner: null, floorAnchor, floorScene, raisedScene: floorScene,
-      visualScene: floorScene, plate: [], nudgeScene: [0, 0], nudgeCss: [0, 0],
+      visualScene: floorScene, footprint: [], nudgeScene: [0, 0], nudgeCss: [0, 0],
       nudgeDistanceCss: 0, nudged: false, nearWallBefore: false, nearWallAfter: false,
       cleared: true, capped: false,
       grounding: { center: floorScene, visible: false }, tether,
@@ -445,14 +446,15 @@ export function resolveIsoOverlayPlacement(input: IsoOverlayPlacementInput): Iso
     : resolveIsoOverlayOwner(input);
   const geometryValid = input.wallGeometryValidated ?? input.wallSilhouettes.every(validSilhouette);
   const gapUnits = safetyGap * unitsPerPixel;
-  const basePlate = buildIsoPlatePolygon(floorAnchor, input.plateHalfSize,
+  const baseFootprint = buildIsoFootprintPolygon(floorAnchor, input.footprintHalfSize,
     raisedHeight, camera);
-  const isNear = (plate: readonly ScenePoint[]): boolean => {
-    const bounds = ringBounds(plate);
+  const isNear = (footprint: readonly ScenePoint[]): boolean => {
+    const bounds = ringBounds(footprint);
     return !!bounds && input.wallSilhouettes.some((wall) =>
-      plateNearSilhouette(plate, bounds, wall, gapUnits, input.wallGeometryValidated === true));
+      footprintNearSilhouette(footprint, bounds, wall, gapUnits,
+        input.wallGeometryValidated === true));
   };
-  const nearWallBefore = geometryValid ? isNear(basePlate) : true;
+  const nearWallBefore = geometryValid ? isNear(baseFootprint) : true;
 
   let distanceCss = 0;
   let nudgeScene: ScenePoint = [0, 0];
@@ -487,7 +489,7 @@ export function resolveIsoOverlayPlacement(input: IsoOverlayPlacementInput): Iso
           floorAnchor[1] + (owner.safePoint[1] - floorAnchor[1]) * searchRatio,
         ];
         // The structural scene may contain hundreds of faces. Only silhouettes
-        // intersecting the complete swept plate envelope can affect this nudge;
+        // intersecting the complete swept footprint envelope can affect this nudge;
         // filter them once instead of repeating the whole-scene scan for every
         // coarse and binary probe.
         const maxOffset: ScenePoint = [
@@ -495,8 +497,8 @@ export function resolveIsoOverlayPlacement(input: IsoOverlayPlacementInput): Iso
           uy * searchLimitCss * unitsPerPixel,
         ];
         const sweptBounds = ringBounds([
-          ...basePlate,
-          ...basePlate.map((point) => [
+          ...baseFootprint,
+          ...baseFootprint.map((point) => [
             point[0] + maxOffset[0], point[1] + maxOffset[1],
           ] as ScenePoint),
         ]);
@@ -511,11 +513,11 @@ export function resolveIsoOverlayPlacement(input: IsoOverlayPlacementInput): Iso
         const collidesAt = (candidateCss: number): boolean => {
           const offset: ScenePoint = [ux * candidateCss * unitsPerPixel,
             uy * candidateCss * unitsPerPixel];
-          const plate = basePlate.map((point) =>
+          const footprint = baseFootprint.map((point) =>
             [point[0] + offset[0], point[1] + offset[1]] as ScenePoint);
-          const bounds = ringBounds(plate);
+          const bounds = ringBounds(footprint);
           return !!bounds && nearbyWalls.some((wall) =>
-            plateNearSilhouette(plate, bounds, wall, gapUnits,
+            footprintNearSilhouette(footprint, bounds, wall, gapUnits,
               input.wallGeometryValidated === true));
         };
         const hint = input.nudgeHintCss;
@@ -576,14 +578,14 @@ export function resolveIsoOverlayPlacement(input: IsoOverlayPlacementInput): Iso
   }
 
   const visualScene: ScenePoint = [raisedScene[0] + nudgeScene[0], raisedScene[1] + nudgeScene[1]];
-  const plate = buildIsoPlatePolygon(floorAnchor, input.plateHalfSize,
+  const footprint = buildIsoFootprintPolygon(floorAnchor, input.footprintHalfSize,
     raisedHeight, camera, nudgeScene);
-  const nearWallAfter = geometryValid ? knownNearWallAfter ?? isNear(plate) : true;
+  const nearWallAfter = geometryValid ? knownNearWallAfter ?? isNear(footprint) : true;
   const nudged = distanceCss > EPS;
   const tetherVisible = nudged || nearWallBefore || nearWallAfter
     || !!input.hovered || !!input.focused || !!input.selected;
   return {
-    plane, owner, floorAnchor, floorScene, raisedScene, visualScene, plate,
+    plane, owner, floorAnchor, floorScene, raisedScene, visualScene, footprint,
     nudgeScene,
     nudgeCss: [nudgeScene[0] / unitsPerPixel, nudgeScene[1] / unitsPerPixel],
     nudgeDistanceCss: distanceCss,

@@ -113,8 +113,8 @@ export type IsoOverlayRenderScene = {
 };
 
 /**
- * CSS-derived, deliberately conservative footprint constants. The raised SVG
- * plate has no DOM measurement loop, so every value is an upper bound in
+ * CSS-derived, deliberately conservative footprint constants. The invisible
+ * footprint has no DOM measurement loop, so every value is an upper bound in
  * multiples of the device core / room base-font rather than a sampled pixel
  * size. Keep these in one place beside the pure footprint resolver whenever
  * the shared face/room-label CSS changes.
@@ -188,7 +188,7 @@ function halfSizeOf(bounds: RelativeBounds, padding: number): PlanPoint {
   ];
 }
 
-/** Conservative raised-plate footprint for every supported HTML overlay. */
+/** Conservative invisible footprint for every supported raised HTML overlay. */
 export function isoRaisedOverlayHalfSize(input: IsoRaisedFootprintInput): PlanPoint {
   if (input.kind === 'opening-lock') {
     const size = Number.isFinite(input.size) && input.size > 0 ? input.size : 0;
@@ -601,12 +601,12 @@ const overlayEntryPoints = (
   const placement = entry.placement;
   const center = final ? placement.visualScene : placement.raisedScene;
   const [halfX, halfY] = entry.screenHalfSize;
-  const plate = final ? placement.plate : placement.plate.map((point) => [
+  const footprint = final ? placement.footprint : placement.footprint.map((point) => [
     point[0] - placement.nudgeScene[0], point[1] - placement.nudgeScene[1],
   ] as ScenePoint);
   return [
     placement.floorScene,
-    ...plate,
+    ...footprint,
     [center[0] - halfX, center[1] - halfY],
     [center[0] + halfX, center[1] - halfY],
     [center[0] + halfX, center[1] + halfY],
@@ -619,7 +619,7 @@ const selectedOverlayEntries = (
 ): readonly IsoOverlayRenderEntry[] => ownerId === undefined ? entries
   : entries.filter((entry) => entry.placement.owner?.id === ownerId);
 
-/** Exact AABB of the final screen-facing roots and their raised plates. */
+/** Exact AABB of the final screen-facing roots and their invisible footprints. */
 export function isoOverlaySceneBounds(
   scene: IsoOverlayRenderScene | null, ownerId?: string,
 ): Rect | null {
@@ -796,13 +796,14 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
     kind: IsoRaisedOverlayKind,
     id: string,
     floorAnchor: PlanPoint,
-    plateHalfSize: PlanPoint,
+    footprintHalfSize: PlanPoint,
     preferredRoomId?: string | null,
     selected = false,
   ): IsoOverlayPlacement => {
     const collisionMode = input.resolveCollisions === false ? 'fit' : 'live';
     const cacheKey = `${collisionMode}\u0000${kind}\u0000${id}`;
-    const shapeSignature = [floorAnchor[0], floorAnchor[1], plateHalfSize[0], plateHalfSize[1],
+    const shapeSignature = [floorAnchor[0], floorAnchor[1],
+      footprintHalfSize[0], footprintHalfSize[1],
       preferredRoomId || '', wallHeight, visualOffset,
       input.layers.shadows ? 1 : 0, selected ? 1 : 0].join('|');
     const signature = `${shapeSignature}|${unitsPerPixel}`;
@@ -814,8 +815,8 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
       const distanceAtNewScale = previous.nudgeDistanceCss
         * cached.value.unitsPerPixel / unitsPerPixel;
       // Zooming in only shrinks the required scene-unit safety gap. An
-      // unchanged plate that was clear therefore stays clear; an unchanged
-      // non-near plate stays non-near. Reuse the immutable scene placement so
+      // unchanged footprint that was clear therefore stays clear; an unchanged
+      // non-near footprint stays non-near. Reuse the immutable scene placement so
       // Lit also keeps the raised SVG subtree. Once its CSS displacement would
       // exceed the public cap, fall through to the exact resolver.
       if (!previous.nearWallBefore
@@ -847,7 +848,7 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
       showBorders: true,
       wallSilhouettes: input.resolveCollisions === false ? [] : input.wallSilhouettes,
       wallGeometryValidated: true,
-      plateHalfSize,
+      footprintHalfSize,
       wallHeight,
       visualOffset,
       sceneUnitsPerCssPixel: unitsPerPixel,
@@ -1066,7 +1067,7 @@ export function resolveIsoFramePresentation(input: {
     shadows: renderIsoShadows(renderLayers, panels, input.scene?.geometry, input.cellCm),
     walls: renderIsoWalls(input.projection, renderLayers, input.scene, panels, input.cellCm),
     grounds: renderIsoOverlayGrounds(overlays, renderLayers, input.cellCm),
-    raised: renderIsoRaisedOverlays(overlays, renderLayers),
+    raised: renderIsoRaisedOverlays(overlays),
   });
   try { return render(layers); } catch (error) {
     // A material/shadow presentation failure loses only decorative nuance.
@@ -1126,12 +1127,6 @@ function renderIsoDefs(
       <filter id="hp-iso-overlay-ground" data-hp-iso-material-def x="-45%" y="-80%" width="190%" height="260%">
         <feGaussianBlur stdDeviation="${3 * visualScale}"></feGaussianBlur>
       </filter>` : nothing}
-    ${root === 'overlays' && layers.materialNuance ? svg`
-      <pattern id="hp-iso-overlay-texture" data-hp-iso-material-def patternUnits="userSpaceOnUse"
-        width="${10 * visualScale}" height="${10 * visualScale}">
-        <circle class="iso-texture-mark" cx="${2.5 * visualScale}" cy="${2.5 * visualScale}"
-          r="${0.45 * visualScale}"></circle>
-      </pattern>` : nothing}
   </defs>` as unknown as TemplateResult;
 }
 
@@ -1146,7 +1141,7 @@ export function renderIsoOverlayGrounds(
     return `${entry.kind}\u0000${entry.id}\u0000${grounding.center[0]}\u0000${grounding.center[1]}`
       + `\u0000${grounding.visible ? 1 : 0}\u0000${entry.groundRadius}`;
   }).join('\u0001');
-  return guard([signature, layers.shadows, layers.materialNuance, cellCm], () => svg`
+  return guard([signature, layers.shadows, cellCm], () => svg`
   ${renderIsoDefs(layers, 'overlays', cellCm)}
   <g class="iso-overlay-grounds" data-hp="iso-overlay-grounds"
     aria-hidden="true" pointer-events="none">${overlays.entries.map((entry) => {
@@ -1161,10 +1156,9 @@ export function renderIsoOverlayGrounds(
 
 export function renderIsoRaisedOverlays(
   overlays: IsoOverlayRenderScene | null,
-  layers: IsoDecorationLayers,
 ): TemplateResult {
   if (!overlays) return emptySvg();
-  return guard([overlays, layers.materialNuance], () => svg`
+  return guard([overlays], () => svg`
   <g class="iso-raised-overlays" data-hp="iso-raised-overlays"
     aria-hidden="true" pointer-events="none">
     <g class="iso-overlay-tethers">${overlays.entries.map((entry) => {
@@ -1173,17 +1167,6 @@ export function renderIsoRaisedOverlays(
         data-hp-iso-overlay-kind=${entry.kind} data-id=${entry.id}
         x1=${tether.from[0]} y1=${tether.from[1]}
         x2=${tether.to[0]} y2=${tether.to[1]}></line>` : nothing;
-    })}</g>
-    <g class="iso-overlay-plates">${overlays.entries.map((entry) => {
-      const points = entry.placement.plate.map((point) => `${point[0]},${point[1]}`).join(' ');
-      if (!points) return nothing;
-      return svg`<g data-hp-iso-overlay-kind=${entry.kind} data-id=${entry.id}
-        data-hp-iso-raised="true" data-hp-iso-nudged=${String(entry.placement.nudged)}>
-        <polygon class="iso-overlay-plate iso-overlay-${entry.kind}" points=${points}></polygon>
-        ${layers.materialNuance
-          ? svg`<polygon class="iso-overlay-plate-texture" points=${points}></polygon>`
-          : nothing}
-      </g>`;
     })}</g>
   </g>`) as unknown as TemplateResult;
 }

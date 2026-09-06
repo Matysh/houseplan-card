@@ -782,7 +782,7 @@ test('issue 160 Stage 3 goldens cover raised ownership, openings and solid fallb
   assert.deepEqual(new Set(overlays.map((item) => item.theme)), new Set(['light', 'dark']));
   assert.equal(overlays.every((item) => item.stage3Golden.requireNudged
     && item.stage3Golden.requireDenseFacets
-    && item.stage3Golden.requireSolidCues
+    && item.stage3Golden.requireTetherCues
     && item.stage3Golden.requireGrounding
     && item.stage3Golden.requiredKinds.includes('device')
     && item.stage3Golden.requiredKinds.includes('room-label')
@@ -823,8 +823,8 @@ test('issue 160 Stage 3 goldens cover raised ownership, openings and solid fallb
   const noFilter = scenarios.find((item) => item.disableIsoFilters);
   assert.equal(forced.stage3Golden.requireNoMaterialDefs, true);
   assert.equal(noFilter.stage3Golden.requireNoMaterialDefs, true);
-  assert.equal(forced.stage3Golden.requireSolidCues, true);
-  assert.equal(noFilter.stage3Golden.requireSolidCues, true);
+  assert.equal(forced.stage3Golden.requireTetherCues, true);
+  assert.equal(noFilter.stage3Golden.requireTetherCues, true);
   const noBorders = GOLDEN_SCENARIOS.find((item) => item.id === 'isometric-no-borders-dark');
   assert.equal(noBorders.stage3Golden.noBorders, true);
 

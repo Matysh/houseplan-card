@@ -1,5 +1,9 @@
 # Issue #160 — Isometric Stage 3: глубина сцены, материалы и пространственные overlays
 
+> **Уточнение #471:** видимая raised plate из исходного контракта удалена.
+> Её геометрия сохранена только как невидимый footprint для collision, nudge и
+> fit. Нормативная дельта: `docs/specs/471-isometric-overlay-white-plates.md`.
+
 - **Issue:** https://github.com/Matysh/houseplan-card/issues/160
 - **Предшественники:** #89 (Stage 1), #122 (Stage 2), #448 (единый
   бессрочный alpha-переключатель)
@@ -228,7 +232,8 @@ Stage 3 развивает существующий Stage 2 wall cut и live ope
 - сгенерированному floor edge/base underlay, не пользовательскому floor
   content;
 - opening panels, jamb/reveal, frame/sill;
-- raised plates device/label/lock.
+- невидимый safety footprint device/label/lock; он не получает texture и не
+  выводится как SVG/HTML-поверхность (#471).
 
 Texture не применяется к:
 
@@ -370,19 +375,19 @@ geometry и могут кэшироваться в structural scene. Запре�
 3. существующий floor SVG со всеми live слоями;
 4. wall contact/opening shadows;
 5. canonical wall sides/top и opening volume;
-6. grounding cues и floor-parallel raised plates;
+6. grounding/tether cues; floor-parallel footprint существует только в расчётах;
 7. screen-facing marker/label/lock content;
 8. tooltip/dialog/system overlays.
 
-Grounding/plate SVG geometry pointer-, focus- и ARIA-inert. Интерактивность
-остаётся на существующих HTML roots.
+Grounding/tether SVG geometry pointer-, focus- и ARIA-inert. Footprint вообще
+не попадает в DOM. Интерактивность остаётся на существующих HTML roots.
 
 ### 7.4 <code>show_borders:false</code>
 
 Это принятый Stage 1 no-volume branch:
 
 - wall/opening/floor-edge Stage 2/3 structural roots отсутствуют;
-- raised plates, grounding shadows, tethers и nudge отсутствуют;
+- raised placement, grounding shadows, tethers, footprint и nudge отсутствуют;
 - весь floor/live слой всё равно использует настоящую каноническую affine-
   матрицу камеры `+4°`; прежняя аппроксимация через два угла `viewBox`
   запрещена, потому что при ненулевом повороте она искажает projection и hit
@@ -721,7 +726,7 @@ Backend не меняется. Отдельных backend tests нет; Linux Va
 | W3 | Поднять vacuum puck/trail | floor-bound unit + combined browser smoke |
 | W4 | Убрать <code>max(44px,...)</code> у raised root | coarse-pointer target smoke |
 | W5 | При nudge изменить layout/config floor coordinate | write-spy unit/smoke |
-| W6 | Показывать raised plates при <code>show_borders:false</code> | capability unit + no-borders golden |
+| W6 | Вернуть painted raised plate либо raised footprint при <code>show_borders:false</code> | capability unit + no-borders golden |
 | W7 | Включить HA Sun state в fingerprint/light vector | fingerprint unit + HA-only rebuild smoke |
 | W8 | Создать pattern/filter на каждую face или marker | definition-count contract/smoke |
 | W9 | Перепутать hinge/flip одной door/gate leaf | exact opening-basis unit + opening golden |

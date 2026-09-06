@@ -365,10 +365,6 @@ const out = await page.evaluate(async () => {
   await original.updateComplete;
   const fallbackNudged = root(original).querySelector('[data-hp-iso-nudged="true"][data-id]');
   const fallbackId = fallbackNudged?.getAttribute('data-id');
-  const fallbackPlate = fallbackId && root(original).querySelector(
-    `.iso-overlay-plate[data-id="${CSS.escape(fallbackId)}"],`
-      + `.iso-overlay-plates [data-id="${CSS.escape(fallbackId)}"] .iso-overlay-plate`,
-  );
   const fallbackTether = fallbackId && root(original).querySelector(
     `.iso-overlay-tether[data-id="${CSS.escape(fallbackId)}"]`,
   );
@@ -378,8 +374,9 @@ const out = await page.evaluate(async () => {
     && !!root(original).querySelector('[data-hp="iso-openings"]');
   result.unsupportedDecorationDropsUnsupportedEffects = !root(original).querySelector('[data-hp="iso-shadows"]')
     && root(original).querySelectorAll('[data-hp-iso-material-def]').length === 0;
-  result.unsupportedDecorationKeepsSolidPlate = !!fallbackPlate
-    && getComputedStyle(fallbackPlate).fill !== 'none';
+  result.unsupportedDecorationKeepsFootprintInvisible = !root(original).querySelector(
+    '.iso-overlay-plate, .iso-overlay-plate-texture, #hp-iso-overlay-texture',
+  );
   result.unsupportedDecorationKeepsTether = !!fallbackTether;
   result.unsupportedDecorationKeepsActions = fallbackCalls.length === 1;
   CSS.supports = supports;

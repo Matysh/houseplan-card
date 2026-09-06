@@ -200,15 +200,17 @@ decisions are in `docs/adr/160-isometric-stage3-overlays.md`.
 The current fixed camera is orthographic `rotDeg=4`, `tiltDeg=20`, with the
 same `[500,500]` pivot, scale and scale-aware 64-unit wall height. The four
 degree turn is part of `ISO_CAMERA`; floor SVG, point projection, inverse hit
-mapping, raised plates and fit bounds therefore use one affine authority.
+mapping, invisible raised footprints and fit bounds therefore use one affine
+authority.
 
 Device markers (including their badges), room labels/cards and opening lock
 badges use a raised plane at the scale-aware wall height plus a nominal four
 visual units. Vacuum puck/trail, Glow/spill, sunlight, room fills/hover,
 decor/furniture/backdrop and every persisted coordinate stay on the floor
-plane. Plates are floor-parallel, while glyphs, values and text remain
-screen-facing on the existing HTML roots and retain their actions and minimum
-touch targets.
+plane. A conservative floor-parallel footprint remains internal calculation
+geometry for collision, nudge and fit, but is never painted. Glyphs, values and
+text remain screen-facing on the existing HTML roots and retain their actions
+and minimum touch targets.
 
 Each raised item keeps separate immutable floor and visual anchors. A grounding
 cue stays at the floor anchor. Collision is tested against cached projected wall
@@ -234,8 +236,9 @@ semantics.
 
 One bounded set of shared gradients, patterns and filters provides low-amplitude
 theme-aware texture and a fixed visual-light direction. Generated walls,
-floor-edge surfaces, opening volume and raised plates may use it. User floor
-content, room fills, Glow, sunlight, decor, glyph/text and vacuum never do.
+floor-edge surfaces and opening volume may use it. The invisible raised
+footprint and user floor content, room fills, Glow, sunlight, decor, glyph/text
+and vacuum never do.
 Neither theme nor HA Sun state enters the structural fingerprint.
 
 Forced colours and missing filter support remove texture/soft shadow nuance,

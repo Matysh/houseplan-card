@@ -5,6 +5,9 @@
 - Date: 2026-09-05
 - Normative spec: `docs/specs/160-isometric-stage3.md`
 - Predecessor: `docs/adr/122-isometric-stage2-composition.md`
+- Amended by: #471 (`docs/specs/471-isometric-overlay-white-plates.md`) removes
+  visible raised plates while retaining their geometry as an invisible safety
+  footprint.
 
 ## Context
 
@@ -47,12 +50,13 @@ Each raised item has four distinct pieces:
 
 1. an immutable logical floor point;
 2. its projected floor grounding point;
-3. a floor-parallel plate and raised visual point;
+3. an invisible floor-parallel safety footprint and raised visual point;
 4. the existing screen-facing HTML root.
 
-The SVG grounding, tether and plate roots are pointer-, focus- and ARIA-inert.
-The HTML root moves to the same visual point and remains the single owner of
-hover, focus, tooltip/dialog and click/context actions. It keeps its existing
+The SVG grounding and tether roots are pointer-, focus- and ARIA-inert. The
+safety footprint is calculation-only and produces no SVG/HTML surface. The HTML
+root moves to the same visual point and remains the single owner of hover,
+focus, tooltip/dialog and click/context actions. It keeps its existing
 axis-aligned minimum 44 CSS-pixel target. Zigbee topology continues reading the
 rendered marker position and gains no second projector.
 
@@ -60,11 +64,11 @@ rendered marker position and gains no second projector.
 
 Wall proximity is tested against canonical physical-wall silhouettes cached in
 the structural scene, including projected top faces and visible side quads. The
-plate is expanded by a four CSS-pixel safety gap. If it intersects, a pure
+footprint is expanded by a four CSS-pixel safety gap. If it intersects, a pure
 resolver searches toward a proven room-safe point for the minimum clearing
 displacement, with a 48 CSS-pixel cap. The complete straight candidate path must
 remain strictly inside the owner and outside island holes. The displacement is
-screen-space stable and applies only to the visual point and plate; the floor
+screen-space stable and applies only to the visual point and footprint; the floor
 point, config, layout, storage and export remain unchanged.
 
 Device ownership first accepts its explicit room only when that room strictly
@@ -98,8 +102,8 @@ semantics.
 
 ### Materials, light and degradation
 
-Generated wall faces, exterior floor edge, opening surfaces and raised plates
-may receive a low-amplitude deterministic texture. User floor/backdrop, room
+Generated wall faces, exterior floor edge and opening surfaces may receive a
+low-amplitude deterministic texture. Invisible raised footprints and user floor/backdrop, room
 fills, live lighting, decor/furniture, glyphs/text and vacuum may not. One
 bounded set of shared gradients, patterns and filters is emitted per card; no
 definition is allocated per face, opening or marker.
@@ -111,7 +115,7 @@ keys.
 
 Forced colours use solid system surfaces and omit material texture and soft
 shadows. A runtime without filter paint does the same while retaining solid
-opening/raised geometry, tether and actions. These are decoration capability
+opening geometry, invisible footprint calculations, tether and actions. These are decoration capability
 paths, not reasons for Flat fallback.
 
 ### Cache, no-borders and evidence
@@ -124,7 +128,7 @@ filter/forced-colors capability. Live opening projection remains O(O); overlay
 placement consumes cached wall silhouettes and does no per-marker union.
 
 `show_borders:false` is an exact no-volume path. It emits no wall/opening/floor
-edge or raised plate/ground/tether roots. Markers, labels and locks return to
+edge or raised ground/tether roots. Markers, labels and locks return to
 their `z=0` anchors but still share the real rotated floor matrix. The frame
 does not include invisible raised bounds.
 
@@ -149,6 +153,8 @@ measures this graph separately from the initial View graph.
 - The fixed 4° camera changes every legitimate Iso baseline; it must not change
   a Flat baseline.
 - Existing live floor effects remain one layer and are not textured or raised.
+- Since #471, the conservative raised footprint remains in collision/nudge/fit
+  calculations but is never painted as a plate or texture surface.
 - Unsupported decoration loses nuance rather than silently changing projection.
 - Stage 3 remains an internal `hp_alpha` capability with Flat as the default and
   immediate rollback; it is not announced in public documentation or changelog.

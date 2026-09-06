@@ -716,15 +716,16 @@ uses the Stage 1 latched Flat fallback. Details and fixed ratios are recorded in
 
 Stage 3 keeps the Stage 2 structural scene and moves the fixed camera authority
 to `rotDeg=4`, `tiltDeg=20`. `isoPlaneMatrix()` is shared by floor content,
-raised plate corners, point projection and inverse floor hit mapping. The
+invisible raised-footprint corners, point projection and inverse floor hit mapping. The
 projected frame includes the floor edge, wall/opening tops and the raised
 height; blur/shadow extents never enter camera fit.
 
 `src/iso-overlays.ts` is the pure boundary between floor-bound and raised
 presentation. Device roots, room-label/card roots and opening-lock roots keep
 an immutable floor anchor and receive one computed raised visual anchor. Their
-floor-parallel SVG plate, grounding cue and tether are inert; the existing
-screen-facing HTML root remains the sole hit, focus, tooltip and action target.
+conservative floor-parallel footprint stays calculation-only for collision and
+fit; only the grounding cue and tether are inert SVG. The existing screen-facing
+HTML root remains the sole hit, focus, tooltip and action target.
 Vacuum, lighting, fills, backdrop and decor continue to consume `z=0`.
 
 Wall collision consumes projected top and visible-side silhouettes produced

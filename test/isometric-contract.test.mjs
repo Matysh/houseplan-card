@@ -101,7 +101,8 @@ test('Stage 3 composes ordered inert SVG surfaces below screen-facing HTML', () 
   assert.match(sceneRender, /class="iso-wall-top"/);
   assert.match(sceneRender, /class="iso-wall-side"/);
   assert.match(sceneRender, /class="iso-opening-panel iso-\$\{surface\.type\} iso-opening-\$\{surface\.kind\} iso-material-\$\{surface\.material\}"/);
-  assert.match(sceneRender, /class="iso-overlay-plate iso-overlay-\$\{entry\.kind\}"/);
+  assert.doesNotMatch(sceneRender, /iso-overlay-plate|hp-iso-overlay-texture/,
+    'the invisible safety footprint must never become painted SVG geometry');
   assert.match(sceneRender, /class="iso-overlay-tether"/);
   assert.match(sceneRender, /class="iso-overlay-ground"/);
   assert.match(sceneRender, /const depthQueue = buildIsoWallDepthQueue\(scene\.geometry, openingSurfaces\)/);
@@ -242,7 +243,7 @@ test('raised footprints participate in global and room fit without entering the 
   assert.match(sceneRender, /export function isoOverlaySceneBounds/);
   assert.match(sceneRender, /export function resolveIsoOverlayFitEnvelope/);
   assert.match(sceneRender, /const center = final \? placement\.visualScene : placement\.raisedScene/);
-  assert.match(sceneRender, /const plate = final \? placement\.plate/);
+  assert.match(sceneRender, /const footprint = final \? placement\.footprint/);
   assert.match(sceneRender, /const \[halfX, halfY\] = entry\.screenHalfSize/);
   const scene = section(card, 'private _isoScene(', 'private _latchIsoFallback');
   assert.match(scene, /resolveIsoScene\([\s\S]*?buildIsoOverlayRenderScene|resolveIsoScene\([\s\S]*?_isoOverlayScene/);
@@ -283,9 +284,9 @@ test('Stage 3 materials and shadows are bounded, theme-aware and capability-safe
     `expected a bounded shared definition set, got ${materialIds.length}`);
   assert.equal(new Set(materialIds).size, materialIds.length, 'material ids must be unique');
   assert.match(styles, /\.stage\.theme-dark \.iso-wall-side/);
-  assert.match(styles, /\.stage\.theme-dark \.iso-overlay-plate/);
   assert.match(styles, /\.stage:not\(\.theme-light\) \.iso-wall-side/);
-  assert.match(styles, /@media \(forced-colors: active\)[\s\S]*?\.iso-overlay-plate[\s\S]*?fill:\s*Canvas/);
+  assert.doesNotMatch(styles, /iso-overlay-plate|hp-iso-overlay-texture/,
+    'themes and forced colors must not recreate a painted footprint');
   assert.match(styles, /@supports not \(filter: blur\(1px\)\)[\s\S]*?\.iso-overlay-ground[\s\S]*?display:\s*none/);
   const rendering = section(sceneRender, 'function renderIsoDefs(', 'export function resolveIsoDecorationLayers');
   assert.match(sceneRender, /return `translate\(\$\{gridVisualUnits\(4, cellCm\)\} \$\{gridVisualUnits\(8, cellCm\)\}\)`/);
