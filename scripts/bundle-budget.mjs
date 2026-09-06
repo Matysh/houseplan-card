@@ -142,8 +142,8 @@ export const LOW_HEADROOM_WARNING_BYTES = 15_000;
  * 2026-09-05, #160: потолок опущен 301 000 → 300 000 без изменения общего
  * бюджета. Скрытый Stage 3 вынесен в отдельный alpha-runtime: обычный View
  * больше не загружает renderer/overlay/opening graph. Измеренный initial факт
- * 299 464 Б оставляет 536 Б сверху и 1 464 Б до нижней границы полосы;
- * lazy-isometric graph отдельно измеряется манифестом (12 083 Б gzip).
+ * 299 495 Б оставляет 505 Б сверху и 1 495 Б до нижней границы полосы;
+ * lazy-isometric graph отдельно измеряется манифестом (12 043 Б gzip).
  */
 export const INITIAL_VIEW_GZIP_CEILING = 300_000;
 export const INITIAL_VIEW_CEILING_BAND = 2_000;

@@ -35,6 +35,7 @@ import {
   type OpeningWallIndex, type WallEntry,
 } from './wall-thickness';
 import { partitionOpeningFace } from './partition-openings';
+import { openingLockFloorPlacement } from './opening-symbol-placement';
 import { physicalBodyParts, type PartitionOpeningCut } from './physical-geometry';
 import { gridVisualScale, gridVisualUnits } from './grid-scale';
 import { iconUnit, type Rect } from './space-geometry';
@@ -855,7 +856,6 @@ export function isoOpeningLockPlacement(
   openingWallIndex: OpeningWallIndex,
   cellCm: number,
 ): { floorAnchor: PlanPoint; preferredRoomId: string | null } {
-  const rad = ((opening.angle + 90) * Math.PI) / 180;
   const faceFlipV = !opening.flip_v;
   const gateFace = opening.type === 'gate'
     ? opening.partitionHost
@@ -868,20 +868,21 @@ export function isoOpeningLockPlacement(
           flip_v: faceFlipV,
         })
     : null;
-  const lockOffset = gridVisualUnits(16, cellCm);
-  const offset = gateFace ? -lockOffset * gateFace.side : lockOffset * (opening.flip_v ? -1 : 1);
-  const floorAnchor: PlanPoint = [
-    opening.rx + Math.cos(rad) * offset,
-    opening.ry + Math.sin(rad) * offset,
-  ];
+  const [floorAnchor, negativeSide] = openingLockFloorPlacement({
+    x: opening.rx,
+    y: opening.ry,
+    angle: opening.angle,
+    flipV: !!opening.flip_v,
+    gateFace,
+  }, cellCm);
   if (opening.partitionHost) return { floorAnchor, preferredRoomId: null };
-  const side = offset < 0 ? 'negative' : 'positive';
   const association = resolveOpeningWallAssociation(openingWallIndex, {
     x: opening.rx,
     y: opening.ry,
     angle: opening.angle,
     length: opening.rlen,
   }, true);
+  const side = negativeSide ? 'negative' : 'positive';
   return { floorAnchor, preferredRoomId: association[side]?.roomId || null };
 }
 

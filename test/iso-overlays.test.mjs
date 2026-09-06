@@ -5,6 +5,7 @@ import {
   ISO_OVERLAY_SAFETY_GAP_CSS_PX,
   buildIsoPlatePolygon,
   isoOverlayPlane,
+  isoRoomSafePoint,
   resolveIsoOverlayOwner,
   resolveIsoOverlayPlacement,
 } from '../test-build/iso-overlays.js';
@@ -90,6 +91,45 @@ test('strict room ownership excludes holes, shared boundaries and outside points
   assert.equal(resolveIsoOverlayOwner({
     kind: 'device', floorAnchor: [150, 50], rooms: [ring],
   }), null, 'an outside saved point stays ownerless');
+});
+
+test('safe-point search is deterministic and stays strictly inside concave rooms and holes', () => {
+  const rooms = [
+    {
+      id: 'donut',
+      outer: [[0, 0], [100, 0], [100, 100], [0, 100]],
+      holes: [[[35, 35], [65, 35], [65, 65], [35, 65]]],
+    },
+    {
+      id: 'concave',
+      outer: [
+        [0, 0], [100, 0], [100, 100], [60, 100],
+        [60, 35], [40, 35], [40, 100], [0, 100],
+      ],
+    },
+  ];
+  for (const room of rooms) {
+    const first = isoRoomSafePoint(room);
+    assert.ok(first, `${room.id}: bounded search finds an inner point`);
+    assert.deepEqual(isoRoomSafePoint(room), first, `${room.id}: repeated search is deterministic`);
+    assert.equal(resolveIsoOverlayOwner({
+      kind: 'device', floorAnchor: first, rooms: [room],
+    })?.id, room.id, `${room.id}: result is strictly inside the room and outside every hole`);
+  }
+});
+
+test('a degenerate room has no safe point and placement degrades without throwing', () => {
+  const degenerate = { id: 'line', outer: [[0, 0], [50, 0], [100, 0]] };
+  assert.equal(isoRoomSafePoint(degenerate), null);
+  const result = placement({
+    rooms: [degenerate],
+    preferredRoomId: degenerate.id,
+    wallSilhouettes: [{ outer: buildIsoPlatePolygon([50, 50], [10, 10], ISO_WALL_HEIGHT) }],
+  });
+  assert.equal(result.owner, null);
+  assert.equal(result.status, 'degraded');
+  assert.equal(result.reason, 'missing-owner');
+  assert.equal(result.nudged, false);
 });
 
 test('plate corners use the same affine camera on the raised plane', () => {

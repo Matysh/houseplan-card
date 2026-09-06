@@ -206,11 +206,36 @@ test('state-independent opening bounds contain closed and open leaf tips', () =>
   assert.equal(isoOpeningBounds([]), null);
 });
 
-test('flips move structural jamb/basis while HA state changes only projected leaves', () => {
+test('flipH and flipV independently mirror their exact structural axes', () => {
   const normal = buildIsoOpeningBasis(opening());
-  const flipped = buildIsoOpeningBasis(opening({ flipH: true, flipV: true }));
-  assert.notDeepEqual(flipped.leaves.map((leaf) => leaf.hinge),
-    normal.leaves.map((leaf) => leaf.hinge));
+  const horizontal = buildIsoOpeningBasis(opening({ flipH: true }));
+  const vertical = buildIsoOpeningBasis(opening({ flipV: true }));
+  const both = buildIsoOpeningBasis(opening({ flipH: true, flipV: true }));
+  const signature = (basis) => {
+    const leaf = basis.leaves[0];
+    const clean = (point) => point.map((value) => Math.abs(value) < 1e-9 ? 0 : value);
+    return {
+      hinge: clean(leaf.hinge),
+      closedVector: clean(leaf.closedVector),
+      quarterVector: clean(leaf.quarterVector),
+    };
+  };
+  assert.deepEqual(signature(normal), {
+    hinge: [70, 80], closedVector: [60, 0], quarterVector: [0, 60],
+  });
+  assert.deepEqual(signature(horizontal), {
+    hinge: [130, 80], closedVector: [-60, 0], quarterVector: [0, 60],
+  });
+  assert.deepEqual(signature(vertical), {
+    hinge: [70, 80], closedVector: [60, 0], quarterVector: [0, -60],
+  });
+  assert.deepEqual(signature(both), {
+    hinge: [130, 80], closedVector: [-60, 0], quarterVector: [0, -60],
+  });
+});
+
+test('HA state changes only projected leaves', () => {
+  const normal = buildIsoOpeningBasis(opening());
   const basisSnapshot = structuredClone(normal);
   const noContact = projectIsoOpening(normal, openingAmount('door', null));
   const unavailable = projectIsoOpening(normal, openingAmount('door', 'unavailable'));

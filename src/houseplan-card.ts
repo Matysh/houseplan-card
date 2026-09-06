@@ -378,6 +378,7 @@ import {
   openingVisibleMetrics, renderOpeningVisibleGeometry,
   type OpeningFaceOffset, type OpeningVisibleSpec,
 } from './render/opening-symbol';
+import { openingLockFloorPlacement } from './opening-symbol-placement';
 import {
   openingDefaultLengthCm, openingPlacementPreset, passagePlacementPreviewGeometry,
   resolveOpeningPlacementResult, sameOpeningPlacementInput,
@@ -6165,18 +6166,6 @@ export class HouseplanCard extends LitElement {
     if (this._renderProjection !== 'iso') return view;
     const start = unprojectFloorPoint([view.x, view.y]), end = unprojectFloorPoint([view.x + view.w, view.y + view.h]);
     return { x: start[0], y: start[1], w: end[0] - start[0], h: end[1] - start[1] };
-  }
-  /** Shared Flat/Iso host-face semantics for raised opening locks. */
-  private _openingLockAnchor(opening: RenderOpening, openingWallIndex: OpeningWallIndex): PlanPoint {
-    const rad = ((opening.angle + 90) * Math.PI) / 180;
-    const gateFace = opening.type === 'gate'
-      ? this._openingFace(opening, openingWallIndex, !opening.flip_v)
-      : null;
-    const lockOffset = gridVisualUnits(16, this._cellCm);
-    const offset = gateFace
-      ? -lockOffset * gateFace.side
-      : lockOffset * (opening.flip_v ? -1 : 1);
-    return [opening.rx + Math.cos(rad) * offset, opening.ry + Math.sin(rad) * offset];
   }
   /** Stage 3 keeps one immutable floor point and one runtime visual point per
    * raised item. This snapshot is presentation-only and never enters config. */
@@ -13094,7 +13083,16 @@ export class HouseplanCard extends LitElement {
       const st = this._renderPlanHass.states[o.lock!]?.state;
       const locked = st === 'locked';
       const known = locked || ['unlocked', 'open', 'opening', 'unlocking', 'locking'].includes(String(st));
-      const floorAnchor = this._openingLockAnchor(o, openingWallIndex);
+      const gateFace = o.type === 'gate'
+        ? this._openingFace(o, openingWallIndex, !o.flip_v)
+        : null;
+      const floorAnchor = openingLockFloorPlacement({
+        x: o.rx,
+        y: o.ry,
+        angle: o.angle,
+        flipV: !!o.flip_v,
+        gateFace,
+      }, this._cellCm)[0];
       const isoPlacement = isoPlacements?.get(String(o.id));
       const point = isoPlacement?.visualScene ?? this._scenePoint(floorAnchor);
       const left = ((point[0] - view.x) / view.w) * 100;
