@@ -5932,7 +5932,7 @@ export class HouseplanCard extends LitElement {
       saturation: this._t('color_picker.saturation'),
       value: this._t('color_picker.value'),
       hex: this._t('color_picker.hex'),
-      invalidHex: this._t('color_picker.invalid_hex'),
+      invalidHex: this._t('color_picker.invalid_hex'), confirm: this._t('color_picker.confirm'),
     };
   }
 

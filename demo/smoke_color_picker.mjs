@@ -41,7 +41,8 @@ const result = await page.evaluate(async () => {
     && !!surface()?.querySelector('input[type="number"]');
   out.englishLabels = surface()?.getAttribute('aria-label') === 'Color picker'
     && ranges().map((input) => input.getAttribute('aria-label')).join('|')
-      === 'Hue|Saturation|Brightness|Opacity';
+      === 'Hue|Saturation|Brightness|Opacity'
+    && surface()?.querySelector('.confirm')?.textContent.trim() === 'OK';
   const rect = surface()?.getBoundingClientRect();
   out.narrowViewportFits = !!rect && rect.left >= 0 && rect.right <= innerWidth
     && rect.top >= 0 && rect.bottom <= innerHeight
@@ -87,15 +88,70 @@ const result = await page.evaluate(async () => {
   out.shortHexNormalizesAndEmits = picker.color === '#00aaff'
     && events.at(-1)?.color === '#00aaff';
 
+  let parentClicks = 0;
+  card.addEventListener('click', () => { parentClicks += 1; });
+  let confirm = surface().querySelector('.confirm');
+  const confirmRect = confirm?.getBoundingClientRect();
+  const surfaceRect = surface()?.getBoundingClientRect();
+  out.confirmIsFullWidthTouchTarget = !!confirmRect && !!surfaceRect
+    && confirmRect.height >= 40
+    && Math.abs(confirmRect.width - (surface().clientWidth - 24)) <= 1
+    && surface()?.lastElementChild === confirm;
+  const eventsBeforeConfirm = events.length;
+  const parentClicksBeforeConfirm = parentClicks;
+  confirm?.click();
+  await picker.updateComplete;
+  await frame();
+  out.confirmClosesWithoutDuplicateOrClickThrough = trigger?.getAttribute('aria-expanded') === 'false'
+    && picker.shadowRoot.activeElement === trigger
+    && events.length === eventsBeforeConfirm
+    && parentClicks === parentClicksBeforeConfirm;
+
+  trigger?.click();
+  await picker.updateComplete;
+  await frame();
+
   const eventCount = events.length;
   hex = surface().querySelector('input[type="text"]');
   hex.value = '#12';
   hex.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+  await picker.updateComplete;
   hex.dispatchEvent(new FocusEvent('blur'));
   await picker.updateComplete;
   hex = surface().querySelector('input[type="text"]');
-  out.invalidHexNeverEmits = events.length === eventCount
-    && hex.value === '#00aaff' && hex.getAttribute('aria-invalid') === 'true';
+  out.invalidHexNeverEmits = events.length === eventCount;
+  out.invalidHexNormalizesDraft = hex.value === '#00aaff';
+  out.invalidHexKeepsVisibleError = hex.getAttribute('aria-invalid') === 'true';
+
+  confirm = surface().querySelector('.confirm');
+  confirm?.click();
+  await picker.updateComplete;
+  await frame();
+  confirm = surface().querySelector('.confirm');
+  confirm?.click();
+  await picker.updateComplete;
+  await frame();
+  hex = surface().querySelector('input[type="text"]');
+  out.repeatedConfirmCannotBypassInvalidHex = trigger?.getAttribute('aria-expanded') === 'true'
+    && events.length === eventCount
+    && hex?.getAttribute('aria-invalid') === 'true'
+    && picker.shadowRoot.activeElement === hex;
+
+  hex.value = '#123456';
+  hex.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+  await picker.updateComplete;
+  const eventsAfterCorrection = events.length;
+  surface().querySelector('.confirm')?.click();
+  await picker.updateComplete;
+  await frame();
+  out.validCorrectionAllowsConfirm = trigger?.getAttribute('aria-expanded') === 'false'
+    && picker.shadowRoot.activeElement === trigger
+    && picker.color === '#123456'
+    && events.length === eventsAfterCorrection;
+
+  trigger?.click();
+  await picker.updateComplete;
+  await frame();
 
   const field = surface().querySelector('.sv-field');
   const fieldRect = field.getBoundingClientRect();
@@ -119,7 +175,8 @@ const result = await page.evaluate(async () => {
   picker.showOpacity = false;
   await picker.updateComplete;
   out.colorOnlyKeepsColorControls = ranges().length === 3
-    && !surface().querySelector('input[type="number"]');
+    && !surface().querySelector('input[type="number"]')
+    && surface()?.lastElementChild?.classList.contains('confirm');
   picker.showOpacity = true;
   await picker.updateComplete;
 
@@ -128,7 +185,8 @@ const result = await page.evaluate(async () => {
   await card.updateComplete;
   await picker.updateComplete;
   out.cardLanguageOwnsCopy = surface()?.getAttribute('aria-label') === 'Выбор цвета'
-    && surface()?.querySelector('input[type="text"]')?.getAttribute('aria-label') === 'Цвет HEX';
+    && surface()?.querySelector('input[type="text"]')?.getAttribute('aria-label') === 'Цвет HEX'
+    && surface()?.querySelector('.confirm')?.textContent.trim() === 'ОК';
 
   const escapeControl = surface()?.querySelector('input[type="range"]');
   escapeControl?.focus();

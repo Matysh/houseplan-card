@@ -21,6 +21,7 @@
   "color_picker.value": "Helligkeit",
   "color_picker.hex": "Hex-Farbe",
   "color_picker.invalid_hex": "Geben Sie eine 3- oder 6-stellige Hex-Farbe ein",
+  "color_picker.confirm": "OK",
   "btn.properties": "Eigenschaften",
   "btn.keep_as_walls": "Als Wände behalten",
   "btn.delete_room_keep_walls": "Raum löschen, Wände behalten",

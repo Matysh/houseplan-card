@@ -445,6 +445,7 @@ test('i18n: German catalog keeps the product glossary and has no translation sen
 
 test('i18n: German values equal to English are explicitly reviewed', () => {
   const allowed = new Set([
+    'color_picker.confirm',
     'editor.palette',
     'confirm.delete_partition_openings_item',
     'marker.name_ph',
@@ -493,6 +494,7 @@ test('i18n: French values equal to English are explicitly reviewed (#371)', () =
   // Every entry here is a legitimate French/English homograph or a unit,
   // template or brand token — reviewed with the contributed dictionary.
   const allowed = new Set([
+    'color_picker.confirm',
     'color_picker.saturation',
     'confirm.delete_partition_openings_item',
     'decor.rect',

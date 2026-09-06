@@ -21,6 +21,7 @@
   "color_picker.value": "Яркость",
   "color_picker.hex": "Цвет HEX",
   "color_picker.invalid_hex": "Введите цвет HEX из 3 или 6 цифр",
+  "color_picker.confirm": "ОК",
   "btn.properties": "Свойства",
   "btn.keep_as_walls": "Оставить стенами",
   "btn.delete_room_keep_walls": "Удалить комнату, оставить стены",
