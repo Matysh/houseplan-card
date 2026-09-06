@@ -71,6 +71,8 @@ export interface IsoOverlayPlacementInput extends IsoOverlayOwnerInput {
   /** Internal scene-builder fast path; arbitrary callers still resolve safely. */
   ownerAlreadyResolved?: boolean;
   resolvedOwner?: IsoOverlayOwner | null;
+  /** Internal zoom fast path. The hint is accepted only after an exact safety check. */
+  nudgeHintCss?: number;
 }
 
 export interface IsoOverlayTetherGeometry {
@@ -440,6 +442,7 @@ export function resolveIsoOverlayPlacement(input: IsoOverlayPlacementInput): Iso
 
   let distanceCss = 0;
   let nudgeScene: ScenePoint = [0, 0];
+  let knownNearWallAfter: boolean | null = null;
   let capped = false;
   let status: IsoOverlayPlacement['status'] = geometryValid ? 'ok' : 'degraded';
   let reason: IsoOverlayPlacement['reason'] = geometryValid ? null : 'invalid-wall-geometry';
@@ -501,38 +504,57 @@ export function resolveIsoOverlayPlacement(input: IsoOverlayPlacementInput): Iso
             plateNearSilhouette(plate, bounds, wall, gapUnits,
               input.wallGeometryValidated === true));
         };
-        let clearAt: number | null = null;
-        let previous = 0;
-        let ownerBoundary = false;
-        const samples = Math.ceil(searchLimitCss);
-        for (let sample = 1; sample <= samples; sample++) {
-          const candidate = Math.min(searchLimitCss, sample);
-          const ratio = candidate * unitsPerPixel / length;
-          const candidatePlan: PlanPoint = [
+        const hint = input.nudgeHintCss;
+        if (Number.isFinite(hint) && hint! >= 0 && hint! <= searchLimitCss) {
+          const ratio = hint! * unitsPerPixel / length;
+          const hintPlan: PlanPoint = [
             floorAnchor[0] + (owner.safePoint[0] - floorAnchor[0]) * ratio,
             floorAnchor[1] + (owner.safePoint[1] - floorAnchor[1]) * ratio,
           ];
-          if (!pathSafeToLimit
-              && (!ownerRoom || !segmentStrictlyInRoom(floorAnchor, candidatePlan, ownerRoom))) {
-            ownerBoundary = true;
-            break;
+          if ((pathSafeToLimit
+              || !!ownerRoom && segmentStrictlyInRoom(floorAnchor, hintPlan, ownerRoom))
+              && !collidesAt(hint!)) {
+            // A wheel step changes only the CSS/scene scale. Reusing the last
+            // distance after proving it still clear avoids another 1 px scan
+            // plus binary search for every raised marker.
+            distanceCss = hint!;
+            knownNearWallAfter = false;
           }
-          if (!collidesAt(candidate)) { clearAt = candidate; break; }
-          previous = candidate;
         }
-        if (clearAt !== null) {
-          let low = previous, high = clearAt;
-          for (let iteration = 0; iteration < ISO_OVERLAY_NUDGE_SEARCH_ITERATIONS; iteration++) {
-            const middle = (low + high) / 2;
-            if (collidesAt(middle)) low = middle;
-            else high = middle;
+        if (knownNearWallAfter === null) {
+          let clearAt: number | null = null;
+          let previous = 0;
+          let ownerBoundary = false;
+          const samples = Math.ceil(searchLimitCss);
+          for (let sample = 1; sample <= samples; sample++) {
+            const candidate = Math.min(searchLimitCss, sample);
+            const ratio = candidate * unitsPerPixel / length;
+            const candidatePlan: PlanPoint = [
+              floorAnchor[0] + (owner.safePoint[0] - floorAnchor[0]) * ratio,
+              floorAnchor[1] + (owner.safePoint[1] - floorAnchor[1]) * ratio,
+            ];
+            if (!pathSafeToLimit
+                && (!ownerRoom || !segmentStrictlyInRoom(floorAnchor, candidatePlan, ownerRoom))) {
+              ownerBoundary = true;
+              break;
+            }
+            if (!collidesAt(candidate)) { clearAt = candidate; break; }
+            previous = candidate;
           }
-          distanceCss = high;
-        } else {
-          distanceCss = previous;
-          capped = true;
-          status = 'degraded';
-          reason = ownerBoundary ? 'owner-boundary' : 'nudge-cap';
+          if (clearAt !== null) {
+            let low = previous, high = clearAt;
+            for (let iteration = 0; iteration < ISO_OVERLAY_NUDGE_SEARCH_ITERATIONS; iteration++) {
+              const middle = (low + high) / 2;
+              if (collidesAt(middle)) low = middle;
+              else high = middle;
+            }
+            distanceCss = high;
+          } else {
+            distanceCss = previous;
+            capped = true;
+            status = 'degraded';
+            reason = ownerBoundary ? 'owner-boundary' : 'nudge-cap';
+          }
         }
         nudgeScene = [ux * distanceCss * unitsPerPixel, uy * distanceCss * unitsPerPixel];
       }
@@ -542,7 +564,7 @@ export function resolveIsoOverlayPlacement(input: IsoOverlayPlacementInput): Iso
   const visualScene: ScenePoint = [raisedScene[0] + nudgeScene[0], raisedScene[1] + nudgeScene[1]];
   const plate = buildIsoPlatePolygon(floorAnchor, input.plateHalfSize,
     raisedHeight, camera, nudgeScene);
-  const nearWallAfter = geometryValid ? isNear(plate) : true;
+  const nearWallAfter = geometryValid ? knownNearWallAfter ?? isNear(plate) : true;
   const nudged = distanceCss > EPS;
   const tetherVisible = nudged || nearWallBefore || nearWallAfter
     || !!input.hovered || !!input.focused || !!input.selected;

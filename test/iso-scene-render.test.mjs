@@ -345,7 +345,7 @@ test('Stage 3 reuses pure overlay placements and fit probes skip collision searc
     rooms: [owner], wall_segments: [], room_drafts: [], partitions: [], wall_columns: [],
   };
   const wallSilhouettes = [{
-    outer: buildIsoPlatePolygon([50, 50], [8, 60], ISO_WALL_HEIGHT),
+    outer: buildIsoPlatePolygon([0, 50], [4, 60], ISO_WALL_HEIGHT),
   }];
   const input = {
     space,
@@ -362,7 +362,7 @@ test('Stage 3 reuses pure overlay placements and fit probes skip collision searc
     kioskIconScale: 1,
     kioskFontScale: 1,
     stageSize: { width: 100, height: 100 },
-    positionOf: () => ({ x: 50, y: 50 }),
+    positionOf: () => ({ x: 5, y: 50 }),
     presentationOf: () => ({
       scale: 1, valueText: null, valueFullText: '', valueBadge: null,
       tempText: null, humText: null, lqiText: null,
@@ -380,6 +380,13 @@ test('Stage 3 reuses pure overlay placements and fit probes skip collision searc
   assert.strictEqual(repeated.devices.get('device'), live.devices.get('device'),
     'unchanged HA/render passes reuse the exact pure placement result');
   assert.equal(live.devices.get('device')?.nearWallBefore, true);
+  assert.equal(live.devices.get('device')?.cleared, true);
+
+  const zoomedIn = buildIsoOverlayRenderScene({
+    ...input, view: { x: 0, y: 0, w: 80, h: 80 },
+  });
+  assert.strictEqual(zoomedIn, live,
+    'zooming in reuses a previously proved-safe immutable scene placement');
 
   const fit = buildIsoOverlayRenderScene({ ...input, resolveCollisions: false });
   assert.equal(fit.devices.get('device')?.nearWallBefore, false,

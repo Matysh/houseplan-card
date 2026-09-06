@@ -173,7 +173,10 @@ test('wall-aware nudge is deterministic, minimal, inward and never changes the f
   };
   const first = placement(input);
   const second = placement(input);
+  const hinted = placement({ ...input, nudgeHintCss: first.nudgeDistanceCss });
   assert.deepEqual(second, first, 'identical structural and viewport inputs are stable');
+  assert.deepEqual(hinted, first,
+    'a cached CSS-distance hint is accepted only when the exact wall test proves it clear');
   assert.deepEqual(first.floorAnchor, [5, 50]);
   assert.deepEqual(first.floorScene, projectPlanPoint([5, 50], 0));
   assert.equal(first.nearWallBefore, true);

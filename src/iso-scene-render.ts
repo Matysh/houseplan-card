@@ -708,7 +708,12 @@ export interface IsoOverlaySceneInput {
 
 type IsoOverlayRoomRow = { room: RoomCfg; overlayRoom: IsoOverlayRoom };
 const isoOverlayRoomCache = new WeakMap<readonly RoomCfg[], readonly IsoOverlayRoomRow[]>();
-type IsoOverlayPlacementCacheEntry = { signature: string; placement: IsoOverlayPlacement };
+type IsoOverlayPlacementCacheEntry = {
+  signature: string;
+  shapeSignature: string;
+  unitsPerPixel: number;
+  placement: IsoOverlayPlacement;
+};
 type IsoOverlayOwnerCacheEntry = { signature: string; owner: IsoOverlayPlacement['owner'] };
 export const ISO_OVERLAY_PLACEMENT_CACHE_LIMIT = 2048;
 const isoOverlayPlacementCache = new WeakMap<
@@ -797,11 +802,26 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
   ): IsoOverlayPlacement => {
     const collisionMode = input.resolveCollisions === false ? 'fit' : 'live';
     const cacheKey = `${collisionMode}\u0000${kind}\u0000${id}`;
-    const signature = [floorAnchor[0], floorAnchor[1], plateHalfSize[0], plateHalfSize[1],
-      preferredRoomId || '', wallHeight, visualOffset, unitsPerPixel,
+    const shapeSignature = [floorAnchor[0], floorAnchor[1], plateHalfSize[0], plateHalfSize[1],
+      preferredRoomId || '', wallHeight, visualOffset,
       input.layers.shadows ? 1 : 0, selected ? 1 : 0].join('|');
+    const signature = `${shapeSignature}|${unitsPerPixel}`;
     const cached = lruRead(placements!, cacheKey);
     if (cached.hit && cached.value.signature === signature) return cached.value.placement;
+    if (cached.hit && cached.value.shapeSignature === shapeSignature
+        && unitsPerPixel <= cached.value.unitsPerPixel) {
+      const previous = cached.value.placement;
+      const distanceAtNewScale = previous.nudgeDistanceCss
+        * cached.value.unitsPerPixel / unitsPerPixel;
+      // Zooming in only shrinks the required scene-unit safety gap. An
+      // unchanged plate that was clear therefore stays clear; an unchanged
+      // non-near plate stays non-near. Reuse the immutable scene placement so
+      // Lit also keeps the raised SVG subtree. Once its CSS displacement would
+      // exceed the public cap, fall through to the exact resolver.
+      if (!previous.nearWallBefore
+          || previous.cleared && distanceAtNewScale <= ISO_OVERLAY_MAX_NUDGE_CSS_PX)
+        return previous;
+    }
     const ownerKey = `${kind}\u0000${id}`;
     const ownerSignature = [floorAnchor[0], floorAnchor[1], preferredRoomId || ''].join('|');
     const cachedOwner = lruRead(owners!, ownerKey);
@@ -821,6 +841,9 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
       preferredRoomId,
       ownerAlreadyResolved: true,
       resolvedOwner: owner,
+      nudgeHintCss: cached.hit && cached.value.shapeSignature === shapeSignature
+        ? cached.value.placement.nudgeDistanceCss * cached.value.unitsPerPixel / unitsPerPixel
+        : undefined,
       showBorders: true,
       wallSilhouettes: input.resolveCollisions === false ? [] : input.wallSilhouettes,
       wallGeometryValidated: true,
@@ -834,7 +857,8 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
       hovered: true,
       selected,
     });
-    lruWrite(placements!, cacheKey, { signature, placement }, ISO_OVERLAY_PLACEMENT_CACHE_LIMIT);
+    lruWrite(placements!, cacheKey, { signature, shapeSignature, unitsPerPixel, placement },
+      ISO_OVERLAY_PLACEMENT_CACHE_LIMIT);
     return placement;
   };
 
