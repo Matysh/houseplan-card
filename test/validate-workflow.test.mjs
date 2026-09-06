@@ -394,3 +394,18 @@ test('ручной/ночной полный прогон не делит concur
   const text = read('validate.yml');
   assert.match(text, /group: validate-\$\{\{ github\.event_name == 'workflow_dispatch' && 'dispatch-' \|\| '' \}\}/);
 });
+
+test('журнал свидетелей changed_mutants: restore по шарду, ledger в команде, save при любом исходе (#481 AC5)', () => {
+  const workflow = read('validate.yml');
+  const start = workflow.indexOf('\n  changed_mutants:\n');
+  const job = workflow.slice(start, workflow.indexOf('\n  frontend:\n', start));
+  const restore = job.slice(job.indexOf('actions/cache/restore@v6'), job.indexOf('name: Затронутые мутанты ловятся'));
+  assert.match(restore, /key: mutation-ledger-\$\{\{ matrix\.shard \}\}-\$\{\{ github\.run_id \}\}/);
+  assert.match(restore, /restore-keys: mutation-ledger-\$\{\{ matrix\.shard \}\}-/, 'без префикса журнал прошлого прогона не найдётся');
+  assert.match(job, /--changed="\$base\.\.\$HEAD_SHA" --shard="\$SHARD\/3" \\\n\s+--ledger="artifacts\/mutation-ledger\/shard-\$SHARD\.json"/);
+  const save = job.slice(job.indexOf('name: Сохранить журнал свидетелей'));
+  assert.match(save, /if: always\(\)/, 'красный или отменённый шард обязан сохранить уже пойманное');
+  assert.match(save, /actions\/cache\/save@v6/);
+  assert.match(save, /key: mutation-ledger-\$\{\{ matrix\.shard \}\}-\$\{\{ github\.run_id \}\}/);
+  assert.ok(job.indexOf('name: Сохранить журнал свидетелей') > job.indexOf('--ledger='), 'save идёт после шага прогона');
+});

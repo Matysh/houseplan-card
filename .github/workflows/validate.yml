@@ -494,6 +494,17 @@ jobs:
       - name: Установить Chromium
         if: steps.pw.outputs.cache-hit != 'true'
         run: npx playwright install --with-deps chromium
+      # Журнал пойманных свидетелей (#481). Отменённый или упавший по таймауту
+      # прогон не пропадает: журнал пишется после каждого пойманного мутанта и
+      # сохраняется при любом исходе шага, а следующий пуш начинает с того
+      # места, где предыдущий остановился. Мутант с тем же отпечатком входов
+      # (файлы патча и гарда, без строки версии) повторно не гоняется.
+      - name: Журнал свидетелей (последний по шарду)
+        uses: actions/cache/restore@v6
+        with:
+          path: artifacts/mutation-ledger
+          key: mutation-ledger-${{ matrix.shard }}-${{ github.run_id }}
+          restore-keys: mutation-ledger-${{ matrix.shard }}-
       - name: Затронутые мутанты ловятся
         env:
           EVENT_NAME: ${{ github.event_name }}
@@ -520,7 +531,18 @@ jobs:
           fi
           echo "диапазон: $base..$HEAD_SHA"
           npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs
-          node scripts/mutation-gate.mjs --changed="$base..$HEAD_SHA" --shard="$SHARD/3"
+          node scripts/mutation-gate.mjs --changed="$base..$HEAD_SHA" --shard="$SHARD/3" \
+            --ledger="artifacts/mutation-ledger/shard-$SHARD.json"
+      # Сохраняется всегда: и после красного шага (пойманные до отказа уже
+      # записаны), и при отмене прогона — post-шаг cache/save исполняется,
+      # пока job не убита целиком. Ключ уникален на прогон: cache не
+      # перезаписывает существующий ключ, а restore-keys берёт самый новый.
+      - name: Сохранить журнал свидетелей
+        if: always()
+        uses: actions/cache/save@v6
+        with:
+          path: artifacts/mutation-ledger
+          key: mutation-ledger-${{ matrix.shard }}-${{ github.run_id }}
 
   frontend:
     name: "Фронтенд: типы, юниты, мутанты, синхрон бандла"

@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import test from 'node:test';
 import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -7,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 
 import {
   MUTANTS, applyPatches, guardNeedsBundle, guardNeedsTestBuild, selectChangedMutants, shardMutants, guardFiles,
+  witnessFingerprint, readLedger, recordCaught, splitByLedger, LEDGER_SCHEMA,
 } from '../scripts/mutation-gate.mjs';
 
 const repoRoot = fileURLToPath(new URL('..', import.meta.url));
@@ -329,4 +331,78 @@ test('#475 AC7: воспроизведение находки ревью — б�
     assert.ok(byGuard.includes(id), `${id} не отобран по гарду`);
     assert.ok(byPatch.includes(id), `${id} не отобран по патчу`);
   }
+});
+
+// #481. Журнал пойманных свидетелей: отобранный по диффу мутант, чьи входы
+// не менялись с последнего пойманного прогона, не гоняется повторно. Так
+// отменённый прогон не пропадает даром, а релизный бамп версии не
+// превращает 131 мутанта в 20 минут на шард.
+
+const LEDGER_MUTANT = { id: 'x', guard: 'node --test test/x.test.mjs', patches: [{ file: 'src/x.ts', find: 'a', replace: 'b' }] };
+const fakeFs = (files) => ({
+  root: '/repo',
+  read: (file) => files[file] ?? '',
+  exists: (file) => file in files,
+  normalize: (text) => text.split('1.2.3').join('0.0.0-product-version'),
+});
+
+test('#481 AC1: отпечаток свидетеля не меняется от бампа версии, но меняется от правки патч-файла, гарда и объявления', () => {
+  const base = fakeFs({ 'src/x.ts': "const CARD_VERSION = '1.2.3';\nlet a = 1;", 'test/x.test.mjs': 'assert(a)' });
+  const fp = witnessFingerprint(LEDGER_MUTANT, base);
+  const bumped = fakeFs({ ...{ 'src/x.ts': "const CARD_VERSION = '1.2.3';\nlet a = 1;", 'test/x.test.mjs': 'assert(a)' } });
+  bumped.read = (file) => (file === 'src/x.ts' ? "const CARD_VERSION = '1.2.4';\nlet a = 1;" : 'assert(a)');
+  bumped.normalize = (text) => text.split('1.2.4').join('0.0.0-product-version');
+  assert.equal(witnessFingerprint(LEDGER_MUTANT, bumped), fp, 'бамп версии — не изменение свидетеля');
+  const crlf = { ...base, read: (file) => base.read(file).replace(/\n/g, '\r\n') };
+  assert.equal(witnessFingerprint(LEDGER_MUTANT, crlf), fp, 'CRLF канонизируется');
+  const patchChanged = { ...base, read: (file) => (file === 'src/x.ts' ? 'let a = 2;' : base.read(file)) };
+  assert.notEqual(witnessFingerprint(LEDGER_MUTANT, patchChanged), fp, 'правка патч-файла меняет отпечаток');
+  const guardChanged = { ...base, read: (file) => (file === 'test/x.test.mjs' ? 'assert(b)' : base.read(file)) };
+  assert.notEqual(witnessFingerprint(LEDGER_MUTANT, guardChanged), fp, 'правка файла гарда меняет отпечаток');
+  assert.notEqual(witnessFingerprint({ ...LEDGER_MUTANT, guard: 'node --test test/y.test.mjs' }, base), fp, 'объявление гарда');
+  assert.notEqual(witnessFingerprint({ ...LEDGER_MUTANT, patches: [{ file: 'src/x.ts', find: 'a', replace: 'c' }] }, base), fp, 'объявление патча');
+});
+
+test('#481 AC2: по журналу пропускается только совпавший отпечаток; чужой или отсутствующий — к прогону', () => {
+  const a = { id: 'a', guard: 'g', patches: [] };
+  const b = { id: 'b', guard: 'g', patches: [] };
+  const c = { id: 'c', guard: 'g', patches: [] };
+  const ledger = { schema: LEDGER_SCHEMA, caught: { a: 'fp-a', b: 'fp-old' } };
+  const split = splitByLedger([a, b, c], ledger, (m) => `fp-${m.id}`);
+  assert.deepEqual(split.skipped.map((m) => m.id), ['a']);
+  assert.deepEqual(split.run.map((entry) => `${entry.mutant.id}:${entry.fingerprint}`), ['b:fp-b', 'c:fp-c']);
+});
+
+test('#481 AC3: журнал пишется сразу при поимке и переживает битый/чужой файл', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'houseplan-ledger-'));
+  try {
+    const file = join(dir, 'nested', 'ledger.json');
+    assert.deepEqual(readLedger(file), { schema: LEDGER_SCHEMA, caught: {} }, 'нет файла — пустой журнал');
+    const ledger = readLedger(file);
+    recordCaught(file, ledger, { id: 'a' }, 'fp-a');
+    assert.deepEqual(JSON.parse(readFileSync(file, 'utf8')), { schema: LEDGER_SCHEMA, caught: { a: 'fp-a' } },
+      'запись появляется в файле немедленно, не в конце прогона');
+    recordCaught(file, ledger, { id: 'b' }, 'fp-b');
+    assert.deepEqual(readLedger(file).caught, { a: 'fp-a', b: 'fp-b' });
+    writeFileSync(file, '{ not json');
+    assert.deepEqual(readLedger(file).caught, {}, 'битый журнал — пустой, не отказ');
+    writeFileSync(file, JSON.stringify({ schema: 99, caught: { a: 'x' } }));
+    assert.deepEqual(readLedger(file).caught, {}, 'чужая схема — пустой');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('#481 AC4: --ledger без --changed — отказ с кодом 2', () => {
+  const script = join(repoRoot, 'scripts/mutation-gate.mjs');
+  const run = spawnSync(process.execPath, [script, '--ledger=/tmp/none.json', '--id=budget-warning-never-fires'], { encoding: 'utf8' });
+  assert.equal(run.status, 2);
+  assert.match(run.stderr, /--ledger работает только вместе с --changed/);
+});
+
+test('#481: отпечатки реестра детерминированы и различают мутантов', () => {
+  const first = witnessFingerprint(MUTANTS[0]);
+  assert.equal(witnessFingerprint(MUTANTS[0]), first);
+  assert.notEqual(witnessFingerprint(MUTANTS[1]), first);
+  assert.match(first, /^[0-9a-f]{64}$/);
 });

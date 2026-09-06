@@ -34,8 +34,11 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createHash } from 'node:crypto';
+import { mkdirSync } from 'node:fs';
+import { withoutProductVersion } from './source-fingerprint.mjs';
 
 const repoRoot = fileURLToPath(new URL('..', import.meta.url));
 
@@ -2871,6 +2874,46 @@ const MUTANT_DEFINITIONS = [
       file: 'scripts/mutation-gate-report.mjs',
       find: "      if (asEscaped && known.has(asEscaped[1])) { escaped.add(asEscaped[1]); continue; }",
       replace: "      if (asEscaped) { escaped.add(asEscaped[1]); continue; }\n      if (/^FAIL (\\S+)/.test(line)) { escaped.add(line.split(' ')[1].replace(/:$/, '')); continue; }",
+    }],
+  },
+  // #481: журнал пойманных свидетелей — каждый защитный контракт под свидетелем.
+  {
+    id: 'ledger-records-escaped',
+    guard: 'node --test --test-name-pattern="#481 AC3|#481 AC2" test/mutation-gate.test.mjs',
+    because: 'the ledger may only remember a CAUGHT witness; recording an escaped one would '
+      + 'skip it on every later push and hide the exact rot the gate exists for (#481)',
+    patches: [{
+      file: 'scripts/mutation-gate.mjs',
+      find: '    if (!runMutant(entry.mutant)) ' + 'continue;\n    caught++;',
+      replace: '    if (!runMutant(entry.mutant)) { if (ledger) recordCaught(ledgerArg, ledger, entry.mutant, entry.fingerprint); continue; }\n    caught++;',
+    }, {
+      // Unit-наблюдаемая половина того же контракта: пустой отпечаток в
+      // записи считался бы «совпавшим» с любым — журнал перестаёт сравнивать.
+      file: 'scripts/mutation-gate.mjs',
+      find: "    if (ledger.caught[mutant.id] === fingerprint) " + "skipped.push(mutant);",
+      replace: "    if (ledger.caught[mutant.id] === fingerprint || mutant.id in ledger.caught) skipped.push(mutant);",
+    }],
+  },
+  {
+    id: 'ledger-version-sensitive',
+    guard: 'node --test --test-name-pattern="#481 AC1" test/mutation-gate.test.mjs',
+    because: 'a release bump touches houseplan-card.ts and houseplan-editor-runtime.ts; without '
+      + 'version normalisation every witness patching them re-runs on every candidate — the #480 timeout (#481)',
+    patches: [{
+      file: 'scripts/mutation-gate.mjs',
+      find: "    hash.update(normalize(String(read(file))" + ".replace(/\\r\\n?/g, '\\n')));",
+      replace: "    hash.update(String(read(file)).replace(/\\r\\n?/g, '\\n'));",
+    }],
+  },
+  {
+    id: 'ledger-written-at-end-only',
+    guard: 'node --test --test-name-pattern="#481 AC3" test/mutation-gate.test.mjs',
+    because: 'the ledger must be written after EACH caught witness: a shard cancelled by the next push '
+      + 'or killed by the timeout must keep what it proved, or the snowball returns (#481)',
+    patches: [{
+      file: 'scripts/mutation-gate.mjs',
+      find: "  ledger.caught[mutant.id] = fingerprint;\n  mkdirSync(dirname(file), " + "{ recursive: true });\n  writeFileSync(file,",
+      replace: "  ledger.caught[mutant.id] = fingerprint;\n  mkdirSync(dirname(file), { recursive: true });\n  if (Object.keys(ledger.caught).length > 1) writeFileSync(file,",
     }],
   },
   {
@@ -7171,6 +7214,82 @@ export function guardFiles(guard, exists = (file) => existsSync(join(repoRoot, f
 }
 
 /**
+ * Отпечаток свидетеля (#481): содержимое файлов патча и гарда плюс само
+ * объявление мутанта. Строка версии продукта нормализуется, как в
+ * `visualFingerprint` (#245): релизный бамп трогает `houseplan-card.ts` и
+ * `houseplan-editor-runtime.ts`, по которым отбираются десятки мутантов, но
+ * ни одного свидетеля не меняет. Приближение то же, что у отбора по диффу:
+ * непрямые зависимости гарда не учитываются — полный прогон остаётся
+ * контрактом, журнал его не заменяет.
+ */
+export function witnessFingerprint(mutant, {
+  root = repoRoot,
+  read = (file) => (existsSync(join(root, file)) ? readFileSync(join(root, file), 'utf8') : ''),
+  exists = (file) => existsSync(join(root, file)),
+  normalize = withoutProductVersion(root),
+} = {}) {
+  const hash = createHash('sha256');
+  hash.update(JSON.stringify({ id: mutant.id, guard: mutant.guard, patches: mutant.patches }));
+  hash.update('\0');
+  const files = new Set([
+    ...mutant.patches.map((patch) => patch.file),
+    ...guardFiles(mutant.guard, exists),
+  ]);
+  for (const file of [...files].sort()) {
+    hash.update(file);
+    hash.update('\0');
+    hash.update(normalize(String(read(file)).replace(/\r\n?/g, '\n')));
+    hash.update('\0');
+  }
+  return hash.digest('hex');
+}
+
+export const LEDGER_SCHEMA = 1;
+
+/** Журнал пойманных свидетелей: `{ schema, caught: { [id]: fingerprint } }`. */
+export function readLedger(file) {
+  if (!file || !existsSync(file)) return { schema: LEDGER_SCHEMA, caught: {} };
+  try {
+    const parsed = JSON.parse(readFileSync(file, 'utf8'));
+    if (parsed?.schema !== LEDGER_SCHEMA || typeof parsed.caught !== 'object' || !parsed.caught) {
+      return { schema: LEDGER_SCHEMA, caught: {} };
+    }
+    return { schema: LEDGER_SCHEMA, caught: { ...parsed.caught } };
+  } catch {
+    // Битый журнал — не отказ гейта: он лишь сужает работу, и пустой журнал
+    // означает «гонять всё отобранное», то есть прежнее поведение.
+    return { schema: LEDGER_SCHEMA, caught: {} };
+  }
+}
+
+/**
+ * Записать пойманного свидетеля — сразу, а не в конце прогона: отменённый
+ * или упавший по таймауту шард обязан сохранить уже сделанное, иначе
+ * следующий пуш начинает с нуля (снежный ком #481).
+ */
+export function recordCaught(file, ledger, mutant, fingerprint) {
+  ledger.caught[mutant.id] = fingerprint;
+  mkdirSync(dirname(file), { recursive: true });
+  writeFileSync(file, `${JSON.stringify({ schema: LEDGER_SCHEMA, caught: ledger.caught }, null, 2)}\n`);
+}
+
+/**
+ * Мутанты, чей отпечаток совпадает с журналом, уже доказали, что ловятся на
+ * этих же входах — их пропуск ничего не ослабляет. Сравнивается ОТПЕЧАТОК,
+ * не факт присутствия id: запись от другого содержимого файлов не считается.
+ */
+export function splitByLedger(mutants, ledger, fingerprintOf = (m) => witnessFingerprint(m)) {
+  const run = [];
+  const skipped = [];
+  for (const mutant of mutants) {
+    const fingerprint = fingerprintOf(mutant);
+    if (ledger.caught[mutant.id] === fingerprint) skipped.push(mutant);
+    else run.push({ mutant, fingerprint });
+  }
+  return { run, skipped };
+}
+
+/**
  * Мутанты, затронутые диффом (#332, расширено в #475).
  *
  * Два способа свидетелю сгнить: изменился файл, который он патчит, — либо
@@ -7205,6 +7324,13 @@ function main(argv) {
   }
 
   const changedArg = argv.find((a) => a === '--changed' || a.startsWith('--changed='));
+  const ledgerArg = argv.find((a) => a.startsWith('--ledger='))?.slice(9);
+  if (ledgerArg && !changedArg) {
+    // Полный прогон журнал не читает — он его пишет по расписанию целиком;
+    // читать журнал в полном прогоне значило бы никогда не перепроверять.
+    console.error('--ledger работает только вместе с --changed: полный прогон журнал не читает');
+    return 2;
+  }
   if (changedArg) {
     const range = changedArg.includes('=') ? changedArg.split('=')[1] : 'origin/dev..HEAD';
     const diff = spawnSync('git', ['-C', repoRoot, 'diff', '--name-only', range],
@@ -7277,11 +7403,31 @@ function main(argv) {
     return 0;
   }
 
-  if (!runCleanGuards(selected)) return 2;
+  // Журнал (#481): отобранные по диффу мутанты, чьи входы не менялись с
+  // последнего пойманного прогона, не гоняются повторно.
+  let plan = selected.map((mutant) => ({ mutant, fingerprint: null }));
+  let ledger = null;
+  if (ledgerArg) {
+    ledger = readLedger(ledgerArg);
+    const split = splitByLedger(selected, ledger);
+    console.log(`журнал ${ledgerArg}: по журналу пропущено ${split.skipped.length} `
+      + `(отпечатки совпали), к прогону ${split.run.length}`);
+    plan = split.run;
+    if (!plan.length) {
+      console.log('все отобранные свидетели уже пойманы на этих же входах — гонять нечего');
+      return 0;
+    }
+  }
+  const toRun = plan.map((entry) => entry.mutant);
+  if (!runCleanGuards(toRun)) return 2;
   let caught = 0;
-  for (const m of selected) if (runMutant(m)) caught++;
-  console.log(`\nпоймано ${caught} из ${selected.length}`);
-  return caught === selected.length ? 0 : 1;
+  for (const entry of plan) {
+    if (!runMutant(entry.mutant)) continue;
+    caught++;
+    if (ledger) recordCaught(ledgerArg, ledger, entry.mutant, entry.fingerprint);
+  }
+  console.log(`\nпоймано ${caught} из ${toRun.length}`);
+  return caught === toRun.length ? 0 : 1;
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {

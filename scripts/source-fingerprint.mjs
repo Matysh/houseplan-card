@@ -125,7 +125,7 @@ const visualPackageProjection = (text) => {
 };
 
 /** Номер версии продукта, как его знает package.json. */
-const productVersion = (root) => {
+export const productVersion = (root) => {
   const path = resolve(root, 'package.json');
   if (!existsSync(path)) return '';
   try {
@@ -153,11 +153,20 @@ const productVersion = (root) => {
  * версия зависимости в `package-lock.json` остаётся частью отпечатка, иначе
  * обновление зависимости перестало бы требовать пересъёмки.
  */
-export const visualFingerprint = (root = process.cwd()) => {
+/**
+ * Та же нормализация версии для чужих корпусов (#481): журнал пойманных
+ * свидетелей считает отпечаток по файлам патча и гарда, и бамп версии
+ * не должен делать ни один свидетель «изменённым».
+ */
+export const withoutProductVersion = (root = process.cwd()) => {
   const version = productVersion(root);
-  const withoutVersion = version
+  return version
     ? (text) => text.split(version).join('0.0.0-product-version')
     : (text) => text;
+};
+
+export const visualFingerprint = (root = process.cwd()) => {
+  const withoutVersion = withoutProductVersion(root);
   return digest(root, fingerprintFiles(root), (text, name) => (
     name === 'package.json'
       ? visualPackageProjection(withoutVersion(text))
