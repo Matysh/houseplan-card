@@ -46,7 +46,8 @@
    **арт** 44 дизайнерских символов уходит в ленивый чанк.
 2. `FurnitureArtRuntime` — page-scoped загрузчик по контракту `LanguageRuntime`
    (§4).
-3. Точка запуска при приёме конфига и ожидание в буте (§4.3).
+3. Три точки готовности арта: приём конфига (View), установка редакторного
+   рантайма (синхронно), обновление конфига после бута — и ожидание в буте (§4.3).
 4. Бюджет бандла: ленивый чанк арта — отдельная роль в манифесте; потолок
    initial View опускается храповиком (§4.5).
 5. Доказательства: unit на рантайм и разрез, мутанты на защитные контракты,
@@ -92,6 +93,7 @@
 |---|---|
 | `state(): 'ready' \| 'pending' \| 'fallback'` | `pending` до первого `ensure()` и во время загрузки; `fallback` — осевший отказ (оба attempt'а или несовпадение отпечатка) |
 | `art(id): FurnitureGraphic \| undefined` | синхронно; `undefined` в `pending`/`fallback` |
+| `adopt(art, fingerprint)` | синхронный переход в `ready` от уже загруженного модуля (редактор, §4.3); чужой отпечаток игнорируется с `console.warn`; повторный `adopt` — no-op |
 | `ensure(): Promise<void>` | идемпотентно; один in-flight промис; attempt 0 — `import('./furniture-plan-art.generated')`, attempt 1 — тот же URL с нонсом `hp_retry` (Chromium кэширует упавший модуль навсегда, #352–#355); несовпадение `FURNITURE_ART_FINGERPRINT` с `ENTRY_BUILD_FINGERPRINT` — терминальный отказ без повторного импорта |
 | `onSettled(cb)` | хук для хоста: `requestUpdate()` и одноразовый тост при `fallback` |
 
@@ -120,10 +122,25 @@ id → `null` (данные, не сбой — контракт сохраняе
   `furnitureArtBootGate(config)`: пока рантайм в `pending` и план нуждается в
   арте — не оседать. Окно ожидания ограничено самим рантаймом: два attempt'а,
   дальше `fallback`, и вуаль снимается. Планы без мебели гейт не замечают.
-- **После бута**: смена конфига (пользователь добавил первый предмет через
-  редактор) → редактор уже импортировал арт статически, чанк в кэше модулей,
-  `ensure()` из приёма конфига разрешается мгновенно; для View без редактора
-  (конфиг обновился с сервера) — `requestUpdate()` из `onSettled`.
+- **Редактор — третья точка, синхронная (ревью r1).** Конфиг без мебели —
+  типичный случай, и `ensure()` по конфигу там не сработает никогда; а
+  палитра (`decor-image-editor.ts` `renderFurniturePalette` → `preview(id)`)
+  и призрак под курсором (`houseplan-editor-runtime.ts`
+  `_renderFurniturePlacementPreview`) читают арт через тот же
+  `furnitureGraphic`. Поэтому редакторный чанк импортирует арт **статически**
+  и при установке рантайма (`install` в `EditorRuntimeLoader` редактора)
+  вызывает `FURNITURE_ART_RUNTIME.adopt(GENERATED_FURNITURE_ART,
+  FURNITURE_ART_FINGERPRINT)`: рантайм переходит в `ready` синхронно, до
+  первого рендера палитры. Отпечаток арта здесь совпадает по построению —
+  редакторный рантайм уже прошёл проверку отпечатка сборки; `adopt` с чужим
+  отпечатком игнорируется (свидетель). Следствие: **в редакторе состояния
+  `pending` не бывает** — превью палитры и призрак рисуются с первого кадра,
+  как сейчас; `smoke_furniture` (`decor = []` → палитра → `prevD.length > 10`)
+  проходит без изменений. Пока редактор грузится, пользователь видит то же,
+  что и сегодня: редактор ещё не открыт.
+- **После бута во View**: конфиг обновился с сервера (мебель добавлена в другой
+  вкладке) → `ensure()` из приёма конфига; `requestUpdate()` из `onSettled`;
+  до `ready` предмет = `nothing`, как для неизвестного символа.
 - **Ядро не растёт**: `houseplan-card.ts` стоит ровно на потолке 13 659
   (`core-file-budget`); вызовы складываются в существующие строки условий, либо
   за каждую новую строку выносится строка. Число в дифе.
@@ -157,7 +174,8 @@ id → `null` (данные, не сбой — контракт сохраняе
 | `furniture-art-no-retry-nonce` | attempt 1 импортирует тот же URL без нонса | unit на loader (как у `de`/`fr`) |
 | `furniture-art-boot-gate-ignored` | гейт бута не ждёт `pending` | unit `furnitureArtBootGate` / смок первого кадра |
 | `furniture-placement-needs-art` | магнит снова через `furnitureGraphic` | unit: размещение в `pending` даёт результат |
-| `furniture-art-fingerprint-unchecked` | рантайм принимает чужой отпечаток | unit |
+| `furniture-art-fingerprint-unchecked` | рантайм принимает чужой отпечаток (`ensure` и `adopt`) | unit |
+| `furniture-art-editor-adopt-skipped` | `install` редактора не вызывает `adopt` | смок `smoke_furniture` на конфиге без мебели: превью палитры пустые |
 
 ## 5. Совместимость и откат
 
@@ -175,7 +193,7 @@ id → `null` (данные, не сбой — контракт сохраняе
 | AC4 | Отказ загрузки: вуаль снимается, план и устройства живы, предметы = `nothing`, тост один раз | смок с перехватом чанка (`route.abort`) — образец `smoke_lazy_*` #352 |
 | AC5 | Чужая сборка (отпечаток): терминальный `fallback`, один импорт, без повторов | unit |
 | AC6 | Магнит к стенам работает в `pending` | unit `furniture-placement` |
-| AC7 | Редактор: палитра и размещение как прежде | смоки `smoke_furniture`, `smoke_furniture_polish`, `smoke_decor` |
+| AC7 | Редактор: палитра и призрак рисуются с первого кадра и на конфиге без мебели (`pending` в редакторе не бывает) | `smoke_furniture` (очищает `decor`, требует превью), `smoke_furniture_polish`, `smoke_decor`; свидетель `furniture-art-editor-adopt-skipped` |
 | AC8 | Golden: 0 расхождений (сцены с мебелью ждут `ready` в harness) | `golden:verify` |
 | AC9 | Шесть свидетелей §4.6 в реестре, каждый «поймано 1 из 1» | отрицательные прогоны `--id=` |
 | AC10 | `houseplan-card.ts` не выше потолка; строки в дифе | `core-file-budget` |
@@ -196,7 +214,7 @@ UX не меняется (AC2). Модель данных не меняется.
 | Chromium кэширует упавший модуль | нонс на attempt 1 (#352–#355), свидетель |
 | Магнит/резайз мебели зависят от арта | аудит вызовов `furnitureGraphic` (S2: только `houseplan-card.ts:8915` рисует; placement — размеры) + AC6 |
 | Ядро на потолке | §4.3 «ядро не растёт», AC10 |
-| Golden-сцены с мебелью станут недетерминированными | harness ждёт `FURNITURE_ART_RUNTIME.state()==='ready'` перед кадром, как ждёт язык |
+| Golden-сцены с мебелью станут недетерминированными | harness не ждёт «как язык» — такого ожидания там нет; рабочий прецедент — `ensureIsoRuntime` (явный вызов метода карточки). Здесь ожидание уже встроено в бут-гейт (§4.3): вуаль `hpboot` не снимается до `ready`/`fallback`, harness ждёт её снятия и дополнительно, по образцу `ensureIsoRuntime`, бросает, если в сцене с мебелью число `.dfurn` меньше числа предметов конфига — `fallback` в golden обязан быть красным, а не пустым кадром |
 
 ## 7. Release-артефакты
 
@@ -209,7 +227,7 @@ UX не меняется (AC2). Модель данных не меняется.
 - `scripts/generate-furniture-assets.mjs`, `src/furniture-plan-catalog.generated.ts` (новый), `src/furniture-plan-art.generated.ts`;
 - `src/furniture-art-runtime.ts` (новый), `src/furniture.ts`, `src/furniture-placement.ts`;
 - `src/houseplan-card.ts` — два вызова, +0 строк;
-- `src/decor-image-editor.ts` — импорт арта для палитры;
+- `src/decor-image-editor.ts`, `src/houseplan-editor-runtime.ts` — статический импорт арта, `adopt` при установке рантайма;
 - `src/i18n/*.json` — тост;
 - `scripts/bundle-manifest.mjs`, `scripts/bundle-budget.mjs`;
 - `demo/golden/harness.mjs`, `demo/smoke_furniture_lazy_art.mjs` (новый);
