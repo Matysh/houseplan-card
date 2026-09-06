@@ -720,6 +720,24 @@ type LegacyRoomDraftSpace = {
   wall_segments?: WallSegmentEntry[];
 };
 
+const LEGACY_DRAFT_POINT_EPSILON = 0.001;
+const LEGACY_NUMBER = /^[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?$/;
+
+const legacyFiniteNumber = (value: unknown): number | null => {
+  if (typeof value !== 'number' && typeof value !== 'string') return null;
+  if (typeof value === 'string' && !LEGACY_NUMBER.test(value.trim())) return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const legacyDraftPoint = (value: unknown): Point | null => {
+  if (!Array.isArray(value) || value.length < 2) return null;
+  const x = legacyFiniteNumber(value[0]), y = legacyFiniteNumber(value[1]);
+  return x == null || y == null ? null : [x, y];
+};
+
+const legacyIdentity = (value: unknown): string => typeof value === 'string' ? value : '';
+
 const migrateRoomDraftsToPartitions = (
   space: LegacyRoomDraftSpace, initialMigration: boolean,
 ): { drafts: number; segments: number } => {
@@ -745,25 +763,24 @@ const migrateRoomDraftsToPartitions = (
   const partitions = Array.isArray(space.partitions) ? [...space.partitions] : [];
   let converted = 0;
   for (const draft of drafts) {
+    const draftIdentity = legacyIdentity(draft?.id);
     const points = Array.isArray(draft?.points) ? draft.points : [];
-    const segments = Array.isArray(draft.segments) ? draft.segments : [];
+    const segments = Array.isArray(draft?.segments) ? draft.segments : [];
     if (points.length < 2 || segments.length !== points.length - 1)
-      throw new WallSegmentModelError('zero-length', String(draft?.id || ''));
+      throw new WallSegmentModelError('zero-length', draftIdentity);
     for (let index = 0; index + 1 < points.length; index++) {
-      const a = points[index], b = points[index + 1];
+      const a = legacyDraftPoint(points[index]), b = legacyDraftPoint(points[index + 1]);
       const segment = segments[index];
-      if (!finitePoint(a) || !finitePoint(b) || samePoint(a, b))
-        throw new WallSegmentModelError('zero-length', String(draft?.id || ''));
-      const cm = Number(segment?.cm);
-      if (!Number.isFinite(cm) || cm < 0 || cm > 100)
-        throw new WallSegmentModelError('thickness-conflict', String(draft?.id || ''));
+      if (!a || !b || samePoint(a, b, LEGACY_DRAFT_POINT_EPSILON))
+        throw new WallSegmentModelError('zero-length', draftIdentity);
+      const cm = legacyFiniteNumber(segment?.cm);
+      if (cm == null || cm < 0 || cm > 100)
+        throw new WallSegmentModelError('thickness-conflict', draftIdentity);
       let id = typeof segment?.id === 'string' && segment.id ? segment.id : '';
-      if (id) {
-        if (used.has(id)) throw new WallSegmentModelError('duplicate-id', id);
-      } else {
+      if (!id || used.has(id)) {
         const base = deterministicWallSegmentId(
-          String(space.id || ''), a, b,
-          [`draft:${String(draft?.id || '')}:${index}`],
+          legacyIdentity(space.id), a, b,
+          [`draft:${draftIdentity}:${index}`],
         );
         id = base;
         for (let suffix = 2; used.has(id); suffix++) id = `${base}-${suffix}`;

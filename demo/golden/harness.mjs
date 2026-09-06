@@ -1284,9 +1284,9 @@ export async function prepareGoldenScenario(page, scenario) {
         throw new Error(`invalid golden wallJunctionPreview contract: ${scenario.id}`);
       }
       card._tool = 'draw';
-      card._activeDraftId = null;
+      card._activeWallChainId = null;
       card._path = path.map((point) => [point[0] * 1000, point[1] * card._spaceH]);
-      card._draftSegmentCms = [...cms];
+      card._wallChainSegmentCms = [...cms];
       card._drawWallField = String(cm);
       card._cursorPt = [pointer[0] * 1000, pointer[1] * card._spaceH];
       card.requestUpdate();
@@ -1305,7 +1305,7 @@ export async function prepareGoldenScenario(page, scenario) {
         throw new Error(`invalid golden planSnap contract: ${scenario.id}`);
       }
       card._tool = tool;
-      card._activeDraftId = null;
+      card._activeWallChainId = null;
       card._path = anchor ? [[anchor[0] * 1000, anchor[1] * card._spaceH]] : [];
       card._clearPlanSnapHover();
       card.requestUpdate();

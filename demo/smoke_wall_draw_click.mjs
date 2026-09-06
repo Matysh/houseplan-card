@@ -23,11 +23,12 @@ const result = await page.evaluate(async () => {
   ).length;
 
   click(152, 144);
+  const chainIdBeforeReject = card._activeWallChainId;
   const beforeReject = JSON.stringify(card._serverCfg);
   click(154, 144); // 10 cm: rejected by the existing 20 cm junction rule.
   const rejected = {
     restored: JSON.stringify(card._serverCfg) === beforeReject,
-    sessionRestored: card._path.length === 1 && !!card._activeWallChainId
+    sessionRestored: card._path.length === 1 && card._activeWallChainId === chainIdBeforeReject
       && card._activeWallChainPartitionIds.length === 0,
     noHistory: card._geometryHistory.size === 0,
     noWrite: window.__wallDrawMetrics.configWrites === 0,

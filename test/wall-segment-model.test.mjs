@@ -88,6 +88,29 @@ test('#478: v9 persisted drafts migrate one-for-one to ordinary partitions', () 
   assert.deepEqual(second.config, first.config);
 });
 
+test('#478: malformed legacy draft vectors have deterministic migration semantics', () => {
+  const fixture = JSON.parse(readFileSync(
+    new URL('./fixtures/478-room-draft-migration-vectors.json', import.meta.url), 'utf8',
+  ));
+  const accepted = commitWallSegmentModel(fixture.accepted.input);
+  assert.deepEqual(accepted.config.spaces[0].partitions, fixture.accepted.expected_partitions);
+  assert.equal(accepted.migratedDrafts, 3);
+  assert.equal(accepted.migratedDraftSegments, 3);
+  assert.equal('room_drafts' in accepted.config.spaces[0], false);
+
+  for (const vector of fixture.rejected) {
+    const input = {
+      model_version: 9, markers: [], settings: {}, spaces: [{
+        id: 'floor', title: 'Floor', rooms: [], wall_segments: [],
+        room_drafts: [vector.draft],
+      }],
+    };
+    assert.throws(() => commitWallSegmentModel(input), (error) => (
+      error instanceof WallSegmentModelError && error.reason === vector.expected_reason
+    ));
+  }
+});
+
 test('#478: current model rejects reintroduced room_drafts', () => {
   assert.throws(() => commitWallSegmentModel({
     model_version: 10, markers: [], settings: {}, spaces: [{

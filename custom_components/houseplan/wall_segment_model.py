@@ -10,6 +10,7 @@ import base64
 import copy
 import hashlib
 import math
+import re
 import uuid
 from typing import Any
 
@@ -18,6 +19,8 @@ from .coordinate_canonicalization import canonicalize_config_geometry
 WALL_SEGMENT_MODEL_VERSION = 10
 GRID_STEP_N = 1 / 240
 EPS = 1e-9
+LEGACY_DRAFT_POINT_EPSILON = 0.001
+_LEGACY_NUMBER = re.compile(r"^[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?$")
 
 
 class WallSegmentMigrationError(ValueError):
@@ -28,6 +31,29 @@ class WallSegmentMigrationError(ValueError):
     def __init__(self, reason: str, detail: str = "") -> None:
         self.reason = reason
         super().__init__(f"{reason}: {detail}" if detail else reason)
+
+
+def _legacy_finite_number(value: Any) -> float | None:
+    if isinstance(value, bool) or not isinstance(value, (int, float, str)):
+        return None
+    if isinstance(value, str) and not _LEGACY_NUMBER.fullmatch(value.strip()):
+        return None
+    try:
+        parsed = float(value)
+    except (TypeError, ValueError):
+        return None
+    return parsed if math.isfinite(parsed) else None
+
+
+def _legacy_draft_point(value: Any) -> list[float] | None:
+    if not isinstance(value, list) or len(value) < 2:
+        return None
+    x, y = _legacy_finite_number(value[0]), _legacy_finite_number(value[1])
+    return None if x is None or y is None else [x, y]
+
+
+def _legacy_identity(value: Any) -> str:
+    return value if isinstance(value, str) else ""
 
 
 def _point_key(point: list[float]) -> str:
@@ -640,29 +666,29 @@ def _migrate_room_drafts_to_partitions(
     partitions = copy.deepcopy(space.get("partitions") or [])
     converted = 0
     for draft in drafts:
+        draft_identity = _legacy_identity(draft.get("id")) if isinstance(draft, dict) else ""
+        if not isinstance(draft, dict):
+            raise WallSegmentMigrationError("zero-length", draft_identity)
         points = draft.get("points") if isinstance(draft.get("points"), list) else []
         segments = draft.get("segments") if isinstance(draft.get("segments"), list) else []
         if len(points) < 2 or len(segments) != len(points) - 1:
-            raise WallSegmentMigrationError("zero-length", str(draft.get("id", "")))
+            raise WallSegmentMigrationError("zero-length", draft_identity)
         for index, segment in enumerate(segments):
-            try:
-                a = [float(points[index][0]), float(points[index][1])]
-                b = [float(points[index + 1][0]), float(points[index + 1][1])]
-                cm = float(segment["cm"])
-            except (KeyError, IndexError, TypeError, ValueError):
-                raise WallSegmentMigrationError("zero-length", str(draft.get("id", ""))) from None
-            if a == b:
-                raise WallSegmentMigrationError("zero-length", str(draft.get("id", "")))
-            if not math.isfinite(cm) or cm < 0 or cm > 100:
-                raise WallSegmentMigrationError("thickness-conflict", str(draft.get("id", "")))
-            segment_id = segment.get("id") if isinstance(segment.get("id"), str) else ""
-            if segment_id:
-                if segment_id in used:
-                    raise WallSegmentMigrationError("duplicate-id", segment_id)
-            else:
+            a = _legacy_draft_point(points[index])
+            b = _legacy_draft_point(points[index + 1])
+            if a is None or b is None or (
+                abs(a[0] - b[0]) < LEGACY_DRAFT_POINT_EPSILON
+                and abs(a[1] - b[1]) < LEGACY_DRAFT_POINT_EPSILON
+            ):
+                raise WallSegmentMigrationError("zero-length", draft_identity)
+            cm = _legacy_finite_number(segment.get("cm") if isinstance(segment, dict) else None)
+            if cm is None or cm < 0 or cm > 100:
+                raise WallSegmentMigrationError("thickness-conflict", draft_identity)
+            segment_id = segment.get("id") if isinstance(segment, dict) and isinstance(segment.get("id"), str) else ""
+            if not segment_id or segment_id in used:
                 base = deterministic_wall_segment_id(
-                    str(space.get("id", "")), a, b,
-                    [f"draft:{draft.get('id', '')}:{index}"],
+                    _legacy_identity(space.get("id")), a, b,
+                    [f"draft:{draft_identity}:{index}"],
                 )
                 segment_id = base
                 suffix = 2

@@ -324,6 +324,24 @@ def test_current_wall_model_independent_geometry_does_not_require_contour_catalo
         CONFIG_SCHEMA(stale)
 
 
+def test_stale_v9_room_draft_write_over_v10_is_rejected_before_schema() -> None:
+    previous, _ = commit_wall_segment_model(_config({
+        "id": "floor", "rooms": [_room("room")],
+    }))
+    stale = copy.deepcopy(previous)
+    stale["model_version"] = 9
+    stale["spaces"][0]["room_drafts"] = [{
+        "id": "cached-draft", "points": [[2, 0], [3, 0]],
+        "segments": [{"cm": 15}],
+    }]
+
+    with pytest.raises(WallModelClientOutdatedError, match="legacy room_drafts"):
+        validate_wall_model_transition(stale, previous)
+
+    assert previous["model_version"] == WALL_SEGMENT_MODEL_VERSION
+    assert all("room_drafts" not in space for space in previous["spaces"])
+
+
 def test_downgraded_independent_partition_round_trip_is_hydrated() -> None:
     previous, _ = commit_wall_segment_model(_config({
         "id": "floor", "rooms": [_room("room")],
@@ -399,6 +417,32 @@ def test_v9_room_drafts_migrate_one_for_one_to_partitions() -> None:
     }
     assert space["partitions"][2]["id"].startswith("wall-")
     assert commit_wall_segment_model(migrated)[0] == migrated
+
+
+def test_malformed_legacy_draft_vectors_match_frontend_semantics() -> None:
+    fixture = json.loads((
+        Path(__file__).parents[1] / "test" / "fixtures"
+        / "478-room-draft-migration-vectors.json"
+    ).read_text(encoding="utf-8"))
+    report: dict[str, int] = {}
+    migrated, _ = commit_wall_segment_model(
+        fixture["accepted"]["input"], migration_report=report,
+    )
+    assert migrated["spaces"][0]["partitions"] == fixture["accepted"]["expected_partitions"]
+    assert report["room_drafts"] == 3
+    assert report["room_draft_segments"] == 3
+    assert "room_drafts" not in migrated["spaces"][0]
+
+    for vector in fixture["rejected"]:
+        source = {
+            "model_version": 9, "markers": [], "settings": {}, "spaces": [{
+                "id": "floor", "title": "Floor", "rooms": [], "wall_segments": [],
+                "room_drafts": [vector["draft"]],
+            }],
+        }
+        with pytest.raises(WallSegmentMigrationError) as error:
+            commit_wall_segment_model(source)
+        assert error.value.reason == vector["expected_reason"]
 
 
 def test_v8_open_span_over_an_opening_spares_the_carrying_atom() -> None:

@@ -180,6 +180,17 @@ def validate_wall_model_transition(config: dict, previous: dict | None) -> None:
     except (TypeError, ValueError):
         return  # CONFIG_SCHEMA owns malformed values.
     previous = previous or {}
+    if old_model >= 10 and new_model < 10 and any(
+        "room_drafts" in space for space in config.get("spaces") or []
+        if isinstance(space, dict)
+    ):
+        # A v9 card can echo a cached draft without changing the contour
+        # projection at all. The old catalogue guard therefore cannot see the
+        # destructive downgrade, but v10 must never persist the removed
+        # carrier again (#478 AC2).
+        raise WallModelClientOutdatedError(
+            f"stored model={old_model}; submitted legacy room_drafts model={new_model}"
+        )
     contour_geometry_changed = (
         _catalog_coupled_wall_geometry_projection(config)
         != _catalog_coupled_wall_geometry_projection(previous)

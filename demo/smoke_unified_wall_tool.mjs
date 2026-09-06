@@ -109,6 +109,56 @@ const result = await page.evaluate(async () => {
   out.cancelKeepsWallsAndRestoresSession = !card._roomDialog && !card._wallFaceBatch
     && JSON.stringify(space().partitions) === beforeCancel
     && card._path.length === 5 && card._activeWallChainPartitionIds.length === 4;
+
+  await reset();
+  await draw([[100, 100], [300, 100], [300, 300], [100, 300], [100, 100]]);
+  const geometryBeforeNullModel = JSON.stringify(space());
+  const originalSpaceModel = card._spaceModel.bind(card);
+  card._spaceModel = () => space().rooms.length ? null : originalSpaceModel();
+  try {
+    card._nameSel = 'Must roll back'; card._saveRoom(); await update();
+  } finally {
+    card._spaceModel = originalSpaceModel;
+  }
+  out.nullModelRollsBackWholeRoomMutation = JSON.stringify(space()) === geometryBeforeNullModel
+    && space().rooms.length === 0 && card._path.length === 5
+    && card._activeWallChainPartitionIds.length === 4;
+
+  await reset();
+  card._path = [[100, 100], [300, 100], [300, 300], [100, 300], [100, 100]];
+  card._wallChainSegmentCms = [15, 15, 15]; card._closingWallCm = 15;
+  const classicBeforeNullModel = JSON.stringify(space());
+  const originalClassicSpaceModel = card._spaceModel.bind(card);
+  card._spaceModel = () => space().rooms.length ? null : originalClassicSpaceModel();
+  try {
+    card._nameSel = 'Classic must roll back'; card._commitRoom(); await update();
+  } finally {
+    card._spaceModel = originalClassicSpaceModel;
+  }
+  out.classicNullModelRollsBackWholeRoomMutation = JSON.stringify(space()) === classicBeforeNullModel
+    && space().rooms.length === 0 && card._path.length === 5;
+
+  await reset();
+  space().partitions = [{
+    id: 'foreign-overlap', a: [0.05, 0.1], b: [0.2, 0.1], cm: 15,
+  }, {
+    id: 'foreign-unrelated', a: [0.6, 0.5], b: [0.7, 0.5], cm: 15,
+  }];
+  card._cfgEpoch++; card._modelCache = null;
+  await draw([[100, 100], [300, 100], [300, 300], [100, 300], [100, 100]]);
+  card._nameSel = 'Partial overlap'; card._saveRoom(); await update();
+  const acceptedPartitions = space().partitions || [];
+  const tail = acceptedPartitions.find((item) => item.id === 'foreign-overlap');
+  const unrelated = acceptedPartitions.find((item) => item.id === 'foreign-unrelated');
+  out.acceptSplitsOnlyCoincidentForeignInterval = acceptedPartitions.length === 2
+    && JSON.stringify(tail?.a) === JSON.stringify([0.05, 0.1])
+    && JSON.stringify(tail?.b) === JSON.stringify([0.1, 0.1])
+    && JSON.stringify(unrelated) === JSON.stringify({
+      id: 'foreign-unrelated', a: [0.6, 0.5], b: [0.7, 0.5], cm: 15,
+    });
+  card._openAlignDialog(); await update();
+  out.acceptedRoomIsOptimizeFixedPoint = card._alignDialog?.report?.partitionsReconciled === 0
+    && card._alignDialog?.changed === false;
   return out;
 });
 

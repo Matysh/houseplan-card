@@ -158,14 +158,23 @@
 - [ ] A rejected in-flight physical write synchronously rolls back its whole
       pending batch: active path, session partition IDs, pending map and command
       history are empty, so no optimistic ghost wall survives.
-- [ ] Frontend/backend model tests cover deterministic missing-ID generation,
-      malformed-draft and collision refusal, parity, idempotence and explicit
-      rejection of `room_drafts` reintroduced into a current document.
+- [ ] Frontend/backend model tests consume the same
+      `478-room-draft-migration-vectors.json`: missing/null IDs, colliding IDs,
+      numeric strings, `null`/boolean thickness and epsilon-length edges must
+      produce the same exact partitions or rejection reason in both runtimes.
+      Backend coverage also rejects a stale v9 `room_drafts` write over v10.
+- [ ] `demo/smoke_unified_wall_tool.mjs` accepts a room over a partially
+      coincident older partition, preserves only its outside tail and an
+      unrelated partition, then proves an immediate Optimize reports zero
+      reconciliation and no config change. A forced missing post-mutation wall
+      model restores the whole room transaction.
 - [ ] Local commands: `npm test`, `npm run bundle:sync`,
       `node demo/smoke_v8_draft_write.mjs`, targeted backend pytest and
       `node scripts/check-docs.mjs --external`.
 - [ ] Mutation `current-rejected-physical-write-keeps-optimistic-wall` proves
       the browser rollback scenario fails when rejection recovery is bypassed.
+- [ ] Mutation `room-accept-leaves-coincident-partitions` proves the real editor
+      smoke fails if accepted room carriers stop being consumed atomically.
 
 ## Resize: реальный pointer pipeline (#293)
 

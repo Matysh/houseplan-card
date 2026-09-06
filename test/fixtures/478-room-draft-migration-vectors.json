@@ -1,0 +1,83 @@
+{
+  "accepted": {
+    "input": {
+      "model_version": 9,
+      "markers": [],
+      "settings": {},
+      "spaces": [{
+        "id": "floor",
+        "title": "Floor",
+        "rooms": [],
+        "wall_segments": [],
+        "partitions": [{
+          "id": "wall-d2ypm2qxakxh3ptdvgvl",
+          "a": [2, 0],
+          "b": [3, 0],
+          "cm": 10
+        }],
+        "room_drafts": [{
+          "id": null,
+          "points": [[0, 0], ["0.25", "0"]],
+          "segments": [{"cm": "15"}]
+        }, {
+          "points": [[0.25, 0], [0.5, 0]],
+          "segments": [{"id": "wall-d2ypm2qxakxh3ptdvgvl", "cm": 0}]
+        }, {
+          "id": "reverse",
+          "points": [[0.5, 0], [0.25, 0]],
+          "segments": [{"cm": 22}]
+        }]
+      }]
+    },
+    "expected_partitions": [{
+      "id": "wall-d2ypm2qxakxh3ptdvgvl",
+      "a": [2, 0],
+      "b": [3, 0],
+      "cm": 10
+    }, {
+      "id": "wall-gsjue66gcixcalb47qwf",
+      "a": [0, 0],
+      "b": [0.25, 0],
+      "cm": 15
+    }, {
+      "id": "wall-d2ypm2qxakxh3ptdvgvl-2",
+      "a": [0.25, 0],
+      "b": [0.5, 0],
+      "cm": 0
+    }, {
+      "id": "wall-xejmlatjgvgeaamf63jw",
+      "a": [0.5, 0],
+      "b": [0.25, 0],
+      "cm": 22
+    }]
+  },
+  "rejected": [{
+    "expected_reason": "thickness-conflict",
+    "draft": {
+      "id": "null-cm",
+      "points": [[0, 0], [1, 0]],
+      "segments": [{"cm": null}]
+    }
+  }, {
+    "expected_reason": "thickness-conflict",
+    "draft": {
+      "id": "boolean-cm",
+      "points": [[0, 0], [1, 0]],
+      "segments": [{"cm": true}]
+    }
+  }, {
+    "expected_reason": "zero-length",
+    "draft": {
+      "id": "null-point",
+      "points": [[null, 0], [1, 0]],
+      "segments": [{"cm": 15}]
+    }
+  }, {
+    "expected_reason": "zero-length",
+    "draft": {
+      "id": "epsilon-point",
+      "points": [[0, 0], [0.0005, 0.0005]],
+      "segments": [{"cm": 15}]
+    }
+  }]
+}

@@ -2520,6 +2520,17 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'room-accept-leaves-coincident-partitions',
+    guard: 'node demo/smoke_unified_wall_tool.mjs',
+    because: 'accepting a face must consume active and older coincident partition intervals in '
+      + 'the same transaction; otherwise the next Optimize repairs the just-created room (#478 AC13)',
+    patches: [{
+      file: 'src/houseplan-editor-runtime.ts',
+      find: '          allowCoincidentPartitions: true, // #478 room acceptance consumes its wall carriers.',
+      replace: '          allowCoincidentPartitions: false, // mutant: accepted carriers survive',
+    }],
+  },
+  {
     id: 'wall-draw-local-neighbour-dropped',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="local projection retains" '

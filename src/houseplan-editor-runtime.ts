@@ -2517,6 +2517,7 @@ public _markupClick(ev: MouseEvent): void {
     const sp = this.host._curSpaceCfg as any;
     if (!sp) return;
     const beforePath = this.host._path.map((point) => [...point]);
+    const beforeChainId = this.host._activeWallChainId;
     const beforeIds = [...this.host._activeWallChainPartitionIds];
     const beforeCms = [...this.host._wallChainSegmentCms];
     const beforeGraphSources = this._wallGraphSources([]);
@@ -2534,7 +2535,7 @@ public _markupClick(ev: MouseEvent): void {
     this.host._activeWallChainPartitionIds = [...beforeIds, id];
     this.host._wallChainRedo = [];
     if (!commitWallChainSegmentGeometry(this, this.host._t('history.wall_segment'), before)) {
-      this.host._activeWallChainId ||= `chain-${Date.now().toString(36)}`;
+      this.host._activeWallChainId = beforeChainId;
       this.host._activeWallChainPartitionIds = beforeIds;
       this.host._path = beforePath;
       this.host._wallChainSegmentCms = beforeCms;
@@ -6764,6 +6765,14 @@ public _applyWallFaceBatch(): void {
       return carriers[0]?.id || '';
     }));
     const before = this._geometrySnapshot();
+    if (!before) {
+      abort('toast.geometry_unsafe');
+      return;
+    }
+    const abortMutation = (): void => {
+      this._restoreGeometryStateLocal(before);
+      abort('toast.geometry_unsafe');
+    };
     if (repairs[0] && !this._applyWallRepair(repairs[0], batch)) {
       abort('toast.wall_repair_changed');
       return;
@@ -6781,7 +6790,7 @@ public _applyWallFaceBatch(): void {
       if (!split) continue;
       const main = sp.rooms.find((room) => room.id === split.roomId);
       if (!main) {
-        abort('toast.contour_cannot_close');
+        abortMutation();
         return;
       }
       main.poly = split.mainPoly.map((point) => [point[0] / NORM_W, point[1] / this.host._spaceH]);
@@ -6817,7 +6826,10 @@ public _applyWallFaceBatch(): void {
       this.host._cfgEpoch++;
       const openCuts = this.host._openCuts();
       const updatedModel = this.host._spaceModel();
-      if (!updatedModel) return;
+      if (!updatedModel) {
+        abortMutation();
+        return;
+      }
       let walls = sp.walls;
       for (const { room, decision } of newRooms) {
         const ring = decision.candidate.ring;
@@ -6853,7 +6865,10 @@ public _applyWallFaceBatch(): void {
       // canonical room-wall representation in this same transaction.
       this.host._cfgEpoch++;
       const reconciledModel = this.host._spaceModel();
-      if (!reconciledModel) return;
+      if (!reconciledModel) {
+        abortMutation();
+        return;
+      }
       const reconciled = reconcileCoincidentPartitions(
         sp, reconciledModel, sp.walls, openCuts,
         {
@@ -6861,7 +6876,7 @@ public _applyWallFaceBatch(): void {
           cellCm: this.host._cellCm,
           gridPitch: this.host._gridPitch,
           coordScale: NORM_W,
-          allowCoincidentPartitions: true,
+          allowCoincidentPartitions: true, // #478 room acceptance consumes its wall carriers.
         },
       );
       if (reconciled.walls.length) sp.walls = reconciled.walls;
@@ -6916,6 +6931,11 @@ public _commitRoom(): void {
     const space = this.host._spaceModel();
     if (!sp || !space) return;
     const before = this._geometrySnapshot();
+    if (!before) return;
+    const abortMutation = (): void => {
+      this._restoreGeometryStateLocal(before);
+      this.host._showToast(this.host._t('toast.geometry_unsafe'));
+    };
     const H = this.host._spaceH;
     const wasSplit = !!this.host._pendingSplit;
     // Split changes the two source-wall edges into shorter children. Preserve
@@ -6979,7 +6999,10 @@ public _commitRoom(): void {
         this.host._cfgEpoch++; // the new room must be in the model before keying
         const openCuts = this.host._openCuts();
         const updatedSpace = this.host._spaceModel();
-        if (!updatedSpace) return;
+        if (!updatedSpace) {
+          abortMutation();
+          return;
+        }
         let next = applyWallThicknessToNewRoom(
           sp.walls, updatedSpace.rooms, newRoom.id, cm,
           this.host._wallKeyPitch, openCuts, NORM_W,
@@ -7007,7 +7030,10 @@ public _commitRoom(): void {
         else delete sp.walls;
 
         const reconciledModel = this.host._spaceModel();
-        if (!reconciledModel) return;
+        if (!reconciledModel) {
+          abortMutation();
+          return;
+        }
         const reconciled = reconcileCoincidentPartitions(
           sp, reconciledModel, sp.walls, openCuts,
           {
