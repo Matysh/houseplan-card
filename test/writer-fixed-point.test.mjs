@@ -154,7 +154,7 @@ test('#477 unsafe coincidence is fail-closed and byte-equivalent', () => {
   }
 });
 
-test('#477 delete/merge rewrites direct and cross-space vacuum room references only', () => {
+test('#477 room reference transaction rewrites direct and cross-space vacuum references only', () => {
   const markers = [
     { id: 'direct', space: 's1', room_id: 'drop', hidden: true, future: { keep: 1 } },
     { id: 'vac', space: 's2', vacuum: {
