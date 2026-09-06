@@ -28,6 +28,17 @@
 /** @type {SmokeLink[]} */
 export const SMOKE_LINKS = [
   {
+    symbols: [
+      'DEFAULT_LABELS', '_closePicker', '_commitHex', '_confirm',
+      '_hexInvalid', '_hexNeedsValidInput', '_surface',
+    ],
+    smokes: ['smoke_color_picker.mjs', 'smoke_help_affordance.mjs'],
+    because: 'the #476 production-bundle scenarios prove the full-width localized confirmation, '
+      + 'live-event count, invalid-HEX latch, focus and click containment in both the native '
+      + 'popover and the dialog portal fallback; those browser lifecycle effects are not visible '
+      + 'to source or pure color conversion tests',
+  },
+  {
     symbols: ['HpDialog', '_ensureNativeModal', '_useHaDialog', '_usesHaDialog'],
     smokes: ['smoke_dialog_modal_recovery.mjs'],
     because: 'the #463 production-bundle scenario observes native top-layer state, geometric '
