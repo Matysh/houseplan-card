@@ -450,6 +450,68 @@ jobs:
       - name: Hassfest validation
         uses: home-assistant/actions/hassfest@master
 
+  # Мутанты по диффу (#475). Свидетель гниёт двумя способами: изменился
+  # файл, который он патчит, либо изменился его гард. `--check` этого не
+  # видит — он проверяет существование якоря, а не достижимость ветки.
+  # Полный прогон раз в неделю ловит гниль с опозданием до релиза (#466,
+  # #467). Здесь гоняются только затронутые мутанты — единицы, минуты —
+  # с той же базы диапазона, что и остальные гейты ветки (#387/#388).
+  changed_mutants:
+    name: "Мутанты по диффу: затронутые свидетели краснеют"
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true' || needs.changes.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.14'
+      - name: Backend test dependencies
+        run: pip install -r tests_backend/requirements.txt
+      - name: Кэш браузеров Playwright
+        id: pw
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+      - name: Установить Chromium
+        if: steps.pw.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+      - name: Затронутые мутанты ловятся
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BEFORE_SHA: ${{ github.event.before }}
+          PROVEN_BASE: ${{ needs.changes.outputs.range_base }}
+          HEAD_SHA: ${{ github.sha }}
+          REF: ${{ github.ref }}
+        run: |
+          set -euo pipefail
+          git fetch -q origin dev
+          zero=$(printf '%040d' 0)
+          base=""
+          if [ "$EVENT_NAME" != "pull_request" ] && [ "$REF" = "refs/heads/dev" ]; then
+            base="${PROVEN_BASE:-$BEFORE_SHA}"
+          fi
+          if [ -z "$base" ] || [ "$base" = "$zero" ] \
+             || ! git cat-file -e "$base" 2>/dev/null; then
+            base=$(git merge-base origin/dev "$HEAD_SHA" || echo "")
+          fi
+          if [ -z "$base" ]; then
+            echo "не нашёл базу диапазона — мутанты по диффу пропущены, это увидит следующий пуш"
+            exit 0
+          fi
+          echo "диапазон: $base..$HEAD_SHA"
+          npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs
+          node scripts/mutation-gate.mjs --changed="$base..$HEAD_SHA"
+
   frontend:
     name: "Фронтенд: типы, юниты, мутанты, синхрон бандла"
     needs: changes

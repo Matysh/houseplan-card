@@ -2863,6 +2863,30 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'changed-selection-ignores-guard-files',
+    guard: 'node --test --test-name-pattern="#475 AC2" test/mutation-gate.test.mjs',
+    because: 'a witness also rots when its guard changes and stops reaching the mutated branch; '
+      + 'selecting by patch file alone lets that class survive until the weekly full run (#475)',
+    patches: [{
+      file: 'scripts/mutation-gate.mjs',
+      // Реестр живёт в том же файле, что и код: якорь собирается из двух
+      // частей, иначе --check найдёт его дважды — в коде и здесь.
+      find: '    || guardFiles(m.guard, exists)' + '.some((file) => changed.has(file)));',
+      replace: '    || false);',
+    }],
+  },
+  {
+    id: 'changed-selection-matches-any-token',
+    guard: 'node --test --test-name-pattern="#475 AC3" test/mutation-gate.test.mjs',
+    because: 'treating every token of the guard command as a file turns pattern fragments '
+      + 'like `b.mjs"` into guard files and selects mutants for unrelated diffs (#475)',
+    patches: [{
+      file: 'scripts/mutation-gate.mjs',
+      find: "    if (!/^[\\w./-]+\\.(mjs|py)$/.test(bare) || bare.startsWith('-')) continue;",
+      replace: "    if (!/\\.(mjs|py)/.test(bare)) continue;",
+    }],
+  },
+  {
     id: 'review-comment-source-ignores-issue-number',
     guard: 'node --test --test-name-pattern="по документу ЭТОЙ задачи|чужой номер задачи" '
       + 'test/review-doc-guard.test.mjs',
@@ -6975,9 +6999,41 @@ function runCleanGuards(mutants) {
  * проверки и ревью-циклов; полный набор остаётся предрелизным контрактом,
  * поэтому пустая выборка — честный успех с явным сообщением, а не ошибка.
  */
-export function selectChangedMutants(mutants, changedFiles) {
+/**
+ * Файлы, на которые ссылается команда гарда (#475).
+ *
+ * Без парсинга команды: берутся токены с суффиксом `.mjs`, `.test.mjs` или
+ * `.py`, которые существуют в репозитории. Флаги (`--test-name-pattern=…`),
+ * шаблоны и произвольные слова файлами не считаются. Фикстуры гардов
+ * (`test/fixtures/*`, `tests_backend/fixtures/*`) по команде вывести нельзя —
+ * это граница: их дрейф остаётся полному прогону.
+ */
+export function guardFiles(guard, exists = (file) => existsSync(join(repoRoot, file))) {
+  const files = new Set();
+  for (const token of String(guard || '').split(/\s+/)) {
+    const bare = token.replace(/^["']|["']$/g, '');
+    // Путь, а не обрывок шаблона: только [A-Za-z0-9_./-], без кавычек,
+    // «|» и флагов. `--test-name-pattern="a|b.mjs"` даёт токен `b.mjs"` —
+    // он не файл, даже если бы такой существовал.
+    if (!/^[\w./-]+\.(mjs|py)$/.test(bare) || bare.startsWith('-')) continue;
+    if (exists(bare)) files.add(bare);
+  }
+  return [...files];
+}
+
+/**
+ * Мутанты, затронутые диффом (#332, расширено в #475).
+ *
+ * Два способа свидетелю сгнить: изменился файл, который он патчит, — либо
+ * изменился его гард (тест, смок, pytest-модуль), и тот перестал ходить по
+ * мутированной ветке. Прежде отбор видел только первый; так после #302/#309
+ * четыре мутанта пережили свои гарды и обнаружились лишь полным прогоном
+ * перед v1.72.0 (#466, #467).
+ */
+export function selectChangedMutants(mutants, changedFiles, exists) {
   const changed = new Set(changedFiles);
-  return mutants.filter((m) => m.patches.some((patch) => changed.has(patch.file)));
+  return mutants.filter((m) => m.patches.some((patch) => changed.has(patch.file))
+    || guardFiles(m.guard, exists).some((file) => changed.has(file)));
 }
 
 /**

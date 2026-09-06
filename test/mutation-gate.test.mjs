@@ -6,8 +6,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
-  MUTANTS, applyPatches, guardNeedsBundle, guardNeedsTestBuild,
-  selectChangedMutants, shardMutants,
+  MUTANTS, applyPatches, guardNeedsBundle, guardNeedsTestBuild, selectChangedMutants, shardMutants, guardFiles,
 } from '../scripts/mutation-gate.mjs';
 
 const repoRoot = fileURLToPath(new URL('..', import.meta.url));
@@ -273,4 +272,57 @@ test('#472 AC7: отсутствие Telegram-секретов не роняет
 
 test('#472 AC8: Validate сверяет mutation-gate.yml между main и dev наравне с process.yml', () => {
   assert.match(validateWorkflowText, /for file in process\.yml mutation-gate\.yml; do/);
+});
+
+// #475. Свидетель гниёт двумя способами: изменился файл, который он патчит,
+// либо изменился его гард — и тот перестал ходить по мутированной ветке.
+// Прежний отбор по диффу видел только первый; четыре мутанта пережили свои
+// гарды после #302/#309 и нашлись лишь полным прогоном перед v1.72.0.
+
+const always = () => true;
+
+test('#475 AC1: мутант отбирается по изменённому файлу патча', () => {
+  const m = { id: 'x', guard: 'node --test test/x.test.mjs', patches: [{ file: 'src/x.ts' }] };
+  assert.equal(selectChangedMutants([m], ['src/x.ts'], always).length, 1);
+  assert.equal(selectChangedMutants([m], ['src/y.ts'], always).length, 0);
+});
+
+test('#475 AC2: мутант отбирается по изменённому файлу гарда — смок, юнит, pytest', () => {
+  const smoke = { id: 's', guard: 'node demo/smoke_x.mjs', patches: [{ file: 'src/a.ts' }] };
+  const unit = { id: 'u', guard: 'node --test --test-name-pattern="p" test/u.test.mjs', patches: [{ file: 'src/a.ts' }] };
+  const py = { id: 'p', guard: 'python3 -m pytest tests_backend/test_x.py -q -p no:cacheprovider', patches: [{ file: 'custom_components/houseplan/x.py' }] };
+  assert.deepEqual(selectChangedMutants([smoke, unit, py], ['demo/smoke_x.mjs'], always).map((m) => m.id), ['s']);
+  assert.deepEqual(selectChangedMutants([smoke, unit, py], ['test/u.test.mjs'], always).map((m) => m.id), ['u']);
+  assert.deepEqual(selectChangedMutants([smoke, unit, py], ['tests_backend/test_x.py'], always).map((m) => m.id), ['p']);
+});
+
+test('#475 AC3: флаги и шаблоны гарда файлами не считаются', () => {
+  const files = guardFiles('node --test --test-name-pattern="magnet presses|x.mjs" test/furniture.test.mjs', always);
+  assert.deepEqual(files, ['test/furniture.test.mjs']);
+  // несуществующий путь — не файл гарда, даже если похож
+  assert.deepEqual(guardFiles('node demo/smoke_nope.mjs', () => false), []);
+  assert.deepEqual(guardFiles('', always), []);
+});
+
+test('#475 AC5: дифф, не задевающий ни патчей, ни гардов, ничего не отбирает', () => {
+  const m = { id: 'x', guard: 'node demo/smoke_x.mjs', patches: [{ file: 'src/x.ts' }] };
+  assert.deepEqual(selectChangedMutants([m], ['docs/README.md', 'src/other.ts'], always), []);
+});
+
+test('#475 AC6: воспроизведение #467 — дифф по src/wall-thickness.ts отбирает multi-wall мутантов', () => {
+  const ids = selectChangedMutants(MUTANTS, ['src/wall-thickness.ts']).map((m) => m.id);
+  for (const id of ['multi-wall-orthogonal-strip-protection-disabled', 'multi-wall-exterior-corridor-disabled', 'junction-fan-limit-back-to-249']) {
+    assert.ok(ids.includes(id), `${id} не отобран`);
+  }
+});
+
+test('#475 AC7: воспроизведение находки ревью — бэкенд-мутанты отбираются по .py гарду и патчу', () => {
+  const byGuard = selectChangedMutants(MUTANTS, ['tests_backend/test_ha_frontend_registration.py']).map((m) => m.id);
+  const byPatch = selectChangedMutants(MUTANTS, ['custom_components/houseplan/frontend_registration.py']).map((m) => m.id);
+  const registration = MUTANTS.filter((m) => m.id.startsWith('frontend-registration-')).map((m) => m.id);
+  assert.ok(registration.length >= 3, 'в реестре есть бэкенд-мутанты регистрации');
+  for (const id of registration) {
+    assert.ok(byGuard.includes(id), `${id} не отобран по гарду`);
+    assert.ok(byPatch.includes(id), `${id} не отобран по патчу`);
+  }
 });

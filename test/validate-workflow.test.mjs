@@ -360,3 +360,21 @@ test('релизные гейты требуют трейлер Release: и св
   assert.match(read('release.yml'), trailer);
   assert.match(read('publish-prerelease.yml'), /check-docs\.mjs --screenshots=strict/);
 });
+
+test('мутанты по диффу гоняются на каждом пуше с базы диапазона (#475 AC4)', () => {
+  const workflow = read('validate.yml');
+  const start = workflow.indexOf('\n  changed_mutants:\n');
+  assert.ok(start > 0, 'нет job changed_mutants');
+  const job = workflow.slice(start, workflow.indexOf('\n  frontend:\n', start));
+  // Триггер — и фронтенд, и бэкенд: бэкенд-мутанты патчат .py и охраняются
+  // pytest, а дифф только по ним даёт backend=true без frontend=true (ревью r1).
+  assert.match(job, /if: needs\.changes\.outputs\.frontend == 'true' \|\| needs\.changes\.outputs\.backend == 'true'/);
+  // База диапазона — та же, что у остальных гейтов ветки (#387/#388).
+  assert.match(job, /PROVEN_BASE: \$\{\{ needs\.changes\.outputs\.range_base \}\}/);
+  assert.match(job, /git merge-base origin\/dev "\$HEAD_SHA"/);
+  assert.match(job, /node scripts\/mutation-gate\.mjs --changed="\$base\.\.\$HEAD_SHA"/);
+  // pytest-гарды исполнимы: Python и зависимости ставятся, как в mutation-gate.yml.
+  assert.match(job, /pip install -r tests_backend\/requirements\.txt/);
+  // Блокирующая job: свидетель, разучившийся краснеть, — отказ, а не предупреждение.
+  assert.ok(!job.includes('continue-on-error'), 'job обязана красить прогон');
+});
