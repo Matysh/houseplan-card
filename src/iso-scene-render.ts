@@ -6,6 +6,7 @@
  * SVG volume layers so the main Lit shell does not also become a renderer.
  */
 import { nothing, svg, type TemplateResult } from 'lit';
+import { guard } from 'lit/directives/guard.js';
 import { clampScale, islandsOf, roomPoly, type SpaceDisplay } from './logic';
 import {
   ISO_CAMERA, ISO_FLOOR_EDGE_HEIGHT, ISO_OVERLAY_VISUAL_OFFSET,
@@ -708,10 +709,37 @@ export interface IsoOverlaySceneInput {
 type IsoOverlayRoomRow = { room: RoomCfg; overlayRoom: IsoOverlayRoom };
 const isoOverlayRoomCache = new WeakMap<readonly RoomCfg[], readonly IsoOverlayRoomRow[]>();
 type IsoOverlayPlacementCacheEntry = { signature: string; placement: IsoOverlayPlacement };
+type IsoOverlayOwnerCacheEntry = { signature: string; owner: IsoOverlayPlacement['owner'] };
 export const ISO_OVERLAY_PLACEMENT_CACHE_LIMIT = 2048;
 const isoOverlayPlacementCache = new WeakMap<
   readonly IsoWallSilhouette[], Map<string, IsoOverlayPlacementCacheEntry>
 >();
+const isoOverlayOwnerCache = new WeakMap<
+  readonly IsoOverlayRoomRow[], Map<string, IsoOverlayOwnerCacheEntry>
+>();
+const isoOverlayRenderSceneCache = new WeakMap<
+  readonly IsoWallSilhouette[], Map<'fit' | 'live', IsoOverlayRenderScene>
+>();
+
+function samePlacementMap<K>(
+  previous: ReadonlyMap<K, IsoOverlayPlacement>, next: ReadonlyMap<K, IsoOverlayPlacement>,
+): boolean {
+  if (previous.size !== next.size) return false;
+  for (const [key, placement] of next) if (previous.get(key) !== placement) return false;
+  return true;
+}
+
+function sameOverlayEntries(
+  previous: readonly IsoOverlayRenderEntry[], next: readonly IsoOverlayRenderEntry[],
+): boolean {
+  return previous.length === next.length && next.every((entry, index) => {
+    const before = previous[index];
+    return before.id === entry.id && before.kind === entry.kind
+      && before.placement === entry.placement && before.groundRadius === entry.groundRadius
+      && before.screenHalfSize[0] === entry.screenHalfSize[0]
+      && before.screenHalfSize[1] === entry.screenHalfSize[1];
+  });
+}
 
 /** Build legal island-room holes once per immutable room snapshot. */
 export function isoOverlayRooms(space: SpaceModel): readonly IsoOverlayRoomRow[] {
@@ -752,6 +780,11 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
     placements = new Map();
     isoOverlayPlacementCache.set(input.wallSilhouettes, placements);
   }
+  let owners = isoOverlayOwnerCache.get(roomRows);
+  if (!owners) {
+    owners = new Map();
+    isoOverlayOwnerCache.set(roomRows, owners);
+  }
   const baseIconUnits = input.iconPct * iconUnit(input.space) * input.kioskIconScale / 100;
   const baseDeviceUnits = input.deviceBasePct * iconUnit(input.space) * input.kioskIconScale / 100;
   const place = (
@@ -769,11 +802,25 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
       input.layers.shadows ? 1 : 0, selected ? 1 : 0].join('|');
     const cached = lruRead(placements!, cacheKey);
     if (cached.hit && cached.value.signature === signature) return cached.value.placement;
+    const ownerKey = `${kind}\u0000${id}`;
+    const ownerSignature = [floorAnchor[0], floorAnchor[1], preferredRoomId || ''].join('|');
+    const cachedOwner = lruRead(owners!, ownerKey);
+    const owner = cachedOwner.hit && cachedOwner.value.signature === ownerSignature
+      ? cachedOwner.value.owner
+      : resolveIsoOverlayOwner({
+        kind, floorAnchor, rooms, roomsValidated: true, preferredRoomId,
+      });
+    if (!cachedOwner.hit || cachedOwner.value.signature !== ownerSignature) {
+      lruWrite(owners!, ownerKey, { signature: ownerSignature, owner },
+        ISO_OVERLAY_PLACEMENT_CACHE_LIMIT);
+    }
     const placement = resolveIsoOverlayPlacement({
       kind,
       floorAnchor,
       rooms, roomsValidated: true,
       preferredRoomId,
+      ownerAlreadyResolved: true,
+      resolvedOwner: owner,
       showBorders: true,
       wallSilhouettes: input.resolveCollisions === false ? [] : input.wallSilhouettes,
       wallGeometryValidated: true,
@@ -864,7 +911,22 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
       });
     }
   }
-  return { devices, rooms: roomPlacements, locks, entries: Object.freeze(entries) };
+  const scene: IsoOverlayRenderScene = {
+    devices, rooms: roomPlacements, locks, entries: Object.freeze(entries),
+  };
+  const mode = input.resolveCollisions === false ? 'fit' : 'live';
+  let renderScenes = isoOverlayRenderSceneCache.get(input.wallSilhouettes);
+  if (!renderScenes) {
+    renderScenes = new Map();
+    isoOverlayRenderSceneCache.set(input.wallSilhouettes, renderScenes);
+  }
+  const previous = renderScenes.get(mode);
+  if (previous && sameOverlayEntries(previous.entries, scene.entries)
+      && samePlacementMap(previous.devices, scene.devices)
+      && samePlacementMap(previous.rooms, scene.rooms)
+      && samePlacementMap(previous.locks, scene.locks)) return previous;
+  renderScenes.set(mode, scene);
+  return scene;
 }
 
 export function isoOpeningLockAnchor(
@@ -1055,7 +1117,13 @@ export function renderIsoOverlayGrounds(
   cellCm: number,
 ): TemplateResult {
   if (!overlays) return emptySvg();
-  return svg`${renderIsoDefs(layers, 'overlays', cellCm)}
+  const signature = overlays.entries.map((entry) => {
+    const grounding = entry.placement.grounding;
+    return `${entry.kind}\u0000${entry.id}\u0000${grounding.center[0]}\u0000${grounding.center[1]}`
+      + `\u0000${grounding.visible ? 1 : 0}\u0000${entry.groundRadius}`;
+  }).join('\u0001');
+  return guard([signature, layers.shadows, layers.materialNuance, cellCm], () => svg`
+  ${renderIsoDefs(layers, 'overlays', cellCm)}
   <g class="iso-overlay-grounds" data-hp="iso-overlay-grounds"
     aria-hidden="true" pointer-events="none">${overlays.entries.map((entry) => {
       if (!layers.shadows || !entry.placement.grounding.visible) return nothing;
@@ -1064,7 +1132,7 @@ export function renderIsoOverlayGrounds(
         data-hp-iso-overlay-kind=${entry.kind} data-id=${entry.id}
         cx=${cx} cy=${cy} rx=${entry.groundRadius} ry=${Math.max(1, entry.groundRadius * 0.32)}
         transform=${isoFixedLightTransform(cellCm)}></ellipse>`;
-    })}</g>` as unknown as TemplateResult;
+    })}</g>`) as unknown as TemplateResult;
 }
 
 export function renderIsoRaisedOverlays(
@@ -1072,7 +1140,8 @@ export function renderIsoRaisedOverlays(
   layers: IsoDecorationLayers,
 ): TemplateResult {
   if (!overlays) return emptySvg();
-  return svg`<g class="iso-raised-overlays" data-hp="iso-raised-overlays"
+  return guard([overlays, layers.materialNuance], () => svg`
+  <g class="iso-raised-overlays" data-hp="iso-raised-overlays"
     aria-hidden="true" pointer-events="none">
     <g class="iso-overlay-tethers">${overlays.entries.map((entry) => {
       const tether = entry.placement.tether;
@@ -1092,7 +1161,7 @@ export function renderIsoRaisedOverlays(
           : nothing}
       </g>`;
     })}</g>
-  </g>` as unknown as TemplateResult;
+  </g>`) as unknown as TemplateResult;
 }
 
 export function renderIsoUnderlay(

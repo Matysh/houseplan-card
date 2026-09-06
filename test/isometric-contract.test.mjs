@@ -191,7 +191,8 @@ test('show_borders:false keeps the exact +4° floor matrix and removes every vol
   assert.match(card, /isoLayers && !isoLayers\.floorSymbols/);
   assert.match(card, /<svg class=\$\{iso \? 'plan-svg' : nothing\}[\s\S]*?data-hp-live-viewbox=\$\{iso \? 'camera' : 'floor'\}/);
   assert.match(card, /transform=\$\{iso \? isoFloorMatrixCss\(\) : nothing\}/);
-  assert.match(card, /\$\{iso && isoLayers\?\.structural \? svg`<svg class="iso-shadows-svg"/);
+  assert.match(card,
+    /\$\{litCache\(iso && isoLayers\?\.structural \? svg`<svg class="iso-shadows-svg"/);
   assert.match(card, /if \(!runtime \|\| !layers\?\.structural \|\| !structural\) return null/);
   const baseView = section(card, 'private _baseVb(', '/** How many objects');
   assert.match(baseView, /if \(!this\._spaceDisplayForRender\(\)\.showBorders\)[\s\S]*?projectedFrame\(\{[\s\S]*?wallHeight:\s*0/);

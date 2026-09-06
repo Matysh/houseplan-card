@@ -10,6 +10,9 @@ import {
 
 export const ISO_OVERLAY_SAFETY_GAP_CSS_PX = 4;
 export const ISO_OVERLAY_MAX_NUDGE_CSS_PX = 48;
+// 48 / 2^14 < 0.003 CSS px: well below raster precision, without paying for
+// the former 28 exact wall tests per raised overlay on every zoom level.
+const ISO_OVERLAY_NUDGE_SEARCH_ITERATIONS = 14;
 
 export type IsoRaisedOverlayKind = 'device' | 'room-label' | 'opening-lock';
 export type IsoFloorOverlayKind = 'vacuum' | 'vacuum-trail' | 'glow' | 'room-fill'
@@ -65,6 +68,9 @@ export interface IsoOverlayPlacementInput extends IsoOverlayOwnerInput {
   focused?: boolean;
   selected?: boolean;
   camera?: IsoCamera;
+  /** Internal scene-builder fast path; arbitrary callers still resolve safely. */
+  ownerAlreadyResolved?: boolean;
+  resolvedOwner?: IsoOverlayOwner | null;
 }
 
 export interface IsoOverlayTetherGeometry {
@@ -418,7 +424,9 @@ export function resolveIsoOverlayPlacement(input: IsoOverlayPlacementInput): Iso
 
   const raisedHeight = wallHeight + visualOffset;
   const raisedScene = projectPlanPoint(floorAnchor, raisedHeight, camera);
-  const owner = resolveIsoOverlayOwner(input);
+  const owner = input.ownerAlreadyResolved
+    ? input.resolvedOwner ?? null
+    : resolveIsoOverlayOwner(input);
   const geometryValid = input.wallGeometryValidated ?? input.wallSilhouettes.every(validSilhouette);
   const gapUnits = safetyGap * unitsPerPixel;
   const basePlate = buildIsoPlatePolygon(floorAnchor, input.plateHalfSize,
@@ -456,11 +464,42 @@ export function resolveIsoOverlayPlacement(input: IsoOverlayPlacementInput): Iso
         // The visual point may approach the proven inner control point but
         // must never run past it and leave the owning-room direction again.
         const searchLimitCss = Math.min(maxNudge, length / unitsPerPixel);
+        const searchRatio = searchLimitCss * unitsPerPixel / length;
+        const searchEndPlan: PlanPoint = [
+          floorAnchor[0] + (owner.safePoint[0] - floorAnchor[0]) * searchRatio,
+          floorAnchor[1] + (owner.safePoint[1] - floorAnchor[1]) * searchRatio,
+        ];
+        // The structural scene may contain hundreds of faces. Only silhouettes
+        // intersecting the complete swept plate envelope can affect this nudge;
+        // filter them once instead of repeating the whole-scene scan for every
+        // coarse and binary probe.
+        const maxOffset: ScenePoint = [
+          ux * searchLimitCss * unitsPerPixel,
+          uy * searchLimitCss * unitsPerPixel,
+        ];
+        const sweptBounds = ringBounds([
+          ...basePlate,
+          ...basePlate.map((point) => [
+            point[0] + maxOffset[0], point[1] + maxOffset[1],
+          ] as ScenePoint),
+        ]);
+        const nearbyWalls = sweptBounds
+          ? input.wallSilhouettes.filter((wall) => {
+            const wallBounds = silhouetteBounds(wall, input.wallGeometryValidated === true);
+            return !!wallBounds && boundsNear(sweptBounds, wallBounds, gapUnits);
+          })
+          : input.wallSilhouettes;
+        const pathSafeToLimit = !!ownerRoom
+          && segmentStrictlyInRoom(floorAnchor, searchEndPlan, ownerRoom);
         const collidesAt = (candidateCss: number): boolean => {
           const offset: ScenePoint = [ux * candidateCss * unitsPerPixel,
             uy * candidateCss * unitsPerPixel];
-          return isNear(basePlate.map((point) =>
-            [point[0] + offset[0], point[1] + offset[1]] as ScenePoint));
+          const plate = basePlate.map((point) =>
+            [point[0] + offset[0], point[1] + offset[1]] as ScenePoint);
+          const bounds = ringBounds(plate);
+          return !!bounds && nearbyWalls.some((wall) =>
+            plateNearSilhouette(plate, bounds, wall, gapUnits,
+              input.wallGeometryValidated === true));
         };
         let clearAt: number | null = null;
         let previous = 0;
@@ -473,7 +512,8 @@ export function resolveIsoOverlayPlacement(input: IsoOverlayPlacementInput): Iso
             floorAnchor[0] + (owner.safePoint[0] - floorAnchor[0]) * ratio,
             floorAnchor[1] + (owner.safePoint[1] - floorAnchor[1]) * ratio,
           ];
-          if (!ownerRoom || !segmentStrictlyInRoom(floorAnchor, candidatePlan, ownerRoom)) {
+          if (!pathSafeToLimit
+              && (!ownerRoom || !segmentStrictlyInRoom(floorAnchor, candidatePlan, ownerRoom))) {
             ownerBoundary = true;
             break;
           }
@@ -482,7 +522,7 @@ export function resolveIsoOverlayPlacement(input: IsoOverlayPlacementInput): Iso
         }
         if (clearAt !== null) {
           let low = previous, high = clearAt;
-          for (let iteration = 0; iteration < 28; iteration++) {
+          for (let iteration = 0; iteration < ISO_OVERLAY_NUDGE_SEARCH_ITERATIONS; iteration++) {
             const middle = (low + high) / 2;
             if (collidesAt(middle)) low = middle;
             else high = middle;

@@ -375,6 +375,8 @@ test('Stage 3 reuses pure overlay placements and fit probes skip collision searc
   };
   const live = buildIsoOverlayRenderScene(input);
   const repeated = buildIsoOverlayRenderScene(input);
+  assert.strictEqual(repeated, live,
+    'an unchanged frame reuses the exact render-scene snapshot for Lit guards');
   assert.strictEqual(repeated.devices.get('device'), live.devices.get('device'),
     'unchanged HA/render passes reuse the exact pure placement result');
   assert.equal(live.devices.get('device')?.nearWallBefore, true);
@@ -386,6 +388,7 @@ test('Stage 3 reuses pure overlay placements and fit probes skip collision searc
     'fit and live placements use separate bounded cache entries');
 
   const zoomed = buildIsoOverlayRenderScene({ ...input, view: { x: 0, y: 0, w: 120, h: 120 } });
+  assert.notStrictEqual(zoomed, live, 'a changed placement produces a new render-scene snapshot');
   assert.notStrictEqual(zoomed.devices.get('device'), live.devices.get('device'),
     'view scale invalidates the placement signature');
 });

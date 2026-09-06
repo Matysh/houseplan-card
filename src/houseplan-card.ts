@@ -7,6 +7,7 @@
  * The icon layout is stored on the server (houseplan/layout/*), fallback — localStorage.
  */
 import { LitElement, html, svg, nothing, noChange, TemplateResult, PropertyValues, type PropertyDeclaration } from 'lit';
+import { cache as litCache } from 'lit/directives/cache.js';
 import { guard } from 'lit/directives/guard.js';
 import { repeat } from 'lit/directives/repeat.js';
 import './hp-dialog';
@@ -406,7 +407,6 @@ const CARD_VERSION = '1.73.0-beta.1';
 const ENTRY_BUILD_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
 const EDITOR_RETRY_ASSET = '__HOUSEPLAN_EDITOR_RETRY_ASSET__';
 const ISO_RETRY_ASSET = '__HOUSEPLAN_ISO_RETRY_ASSET__';
-
 type ResizeLiveLabel = {
   kind: 'length';
   x: number;
@@ -11781,7 +11781,7 @@ export class HouseplanCard extends LitElement {
             <g data-hp-live-editor></g>
             </g>
           </svg>
-          ${iso && isoLayers?.structural ? svg`<svg class="iso-shadows-svg" data-hp-live-viewbox="camera"
+          ${litCache(iso && isoLayers?.structural ? svg`<svg class="iso-shadows-svg" data-hp-live-viewbox="camera"
               viewBox="${view.x} ${view.y} ${view.w} ${view.h}"
               preserveAspectRatio="xMidYMid meet" aria-hidden="true" pointer-events="none">
               ${isoFrame?.shadows ?? nothing}
@@ -11794,7 +11794,7 @@ export class HouseplanCard extends LitElement {
               preserveAspectRatio="xMidYMid meet" aria-hidden="true" pointer-events="none">
               ${isoFrame?.grounds ?? nothing}
               ${isoFrame?.raised ?? nothing}
-            </svg>` : nothing}
+            </svg>` : nothing)}
           ${''/* docs/CANVAS.md §6: an icon is a percentage of the PLAN and
                  scales with it when you zoom — the behaviour the card always
                  had, restored by the owner. `iconCqw` is `iconPct * iconUnit
