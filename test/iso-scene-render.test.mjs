@@ -806,7 +806,9 @@ test('#473 W4: AABB-отсечение учитывает зазор безоп�
   // Плита, чьи границы не пересекают границы стены, но лежат внутри gap,
   // обязана считаться «у стены». Отсечение без зазора отбросило бы силуэт
   // до точного теста, и плита легла бы вплотную к стене.
-  const wall = { outer: buildIsoPlatePolygon([0, 50], [4, 60], ISO_WALL_HEIGHT) };
+  // Стена — компактный силуэт: у длинной стены AABB в изометрии накрывает плиту
+  // при любом сдвиге вдоль оси, и отсечение не участвует в решении.
+  const wall = { outer: buildIsoPlatePolygon([0, 50], [2, 2], ISO_WALL_HEIGHT) };
   const owner = { id: 'owner', outer: [[0, 0], [100, 0], [100, 100], [0, 100]], holes: [], safePoint: [50, 50] };
   const placeAt = (x, safetyGapCssPx) => resolveIsoOverlayPlacement({
     kind: 'device', floorAnchor: [x, 50], plateHalfSize: [2, 2],
@@ -816,9 +818,9 @@ test('#473 W4: AABB-отсечение учитывает зазор безоп�
     unitsPerPixel: 1, safetyGapCssPx, wallHeight: ISO_WALL_HEIGHT, visualOffset: 0,
   });
   // без зазора плита на расстоянии 2 единиц от стены — не у стены
-  const noGap = placeAt(4 + 2 + 2, 0);
+  const noGap = placeAt(2 + 2 + 2, 0);
   assert.equal(noGap.nearWallBefore, false, 'контроль: без зазора не у стены');
   // с зазором 4 — у стены, хотя AABB не пересекаются
-  const withGap = placeAt(4 + 2 + 2, 4);
+  const withGap = placeAt(2 + 2 + 2, 4);
   assert.equal(withGap.nearWallBefore, true, 'в пределах зазора — у стены');
 });
