@@ -188,6 +188,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#464](https://github.com/Matysh/houseplan-card/issues/464) Верхний контекстный слой Zigbee-топологии | [464-zigbee-topology-layer-order.md](464-zigbee-topology-layer-order.md) |
 | [#473](https://github.com/Matysh/houseplan-card/issues/473) Свидетели перф-дельты #160 и диффозависимый перф-смок | [473-iso-perf-witnesses-and-smoke.md](473-iso-perf-witnesses-and-smoke.md) |
 | [#476](https://github.com/Matysh/houseplan-card/issues/476) Явное завершение выбора цвета кнопкой «ОК» | [476-color-picker-ok.md](476-color-picker-ok.md) |
+| [#474](https://github.com/Matysh/houseplan-card/issues/474) Стартовый граф: арт мебели уходит в ленивый чанк | [474-lazy-furniture-art.md](474-lazy-furniture-art.md) |
 
 ## P3
 
@@ -202,7 +203,6 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#423](https://github.com/Matysh/houseplan-card/issues/423) Полиш support pipeline и защитных инструментов v1.70.0 | [423-v170-polish.md](423-v170-polish.md) |
 | [#434](https://github.com/Matysh/houseplan-card/issues/434) Полиш аудита v1.71.0-beta.1 | [434-v171-polish-audit.md](434-v171-polish-audit.md) |
 | [#443](https://github.com/Matysh/houseplan-card/issues/443) Полиш маршрутов карт робота | [443-vacuum-route-polish.md](443-vacuum-route-polish.md) |
-| [#474](https://github.com/Matysh/houseplan-card/issues/474) Стартовый граф: арт мебели уходит в ленивый чанк | [474-lazy-furniture-art.md](474-lazy-furniture-art.md) |
 
 ## P3
 
