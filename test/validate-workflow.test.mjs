@@ -383,3 +383,8 @@ test('мутанты по диффу гоняются на каждом пуше
   // Блокирующая job: свидетель, разучившийся краснеть, — отказ, а не предупреждение.
   assert.ok(!job.includes('continue-on-error'), 'job обязана красить прогон');
 });
+
+test('ручной/ночной полный прогон не делит concurrency с push (#479)', () => {
+  const text = read('validate.yml');
+  assert.match(text, /group: validate-\$\{\{ github\.event_name == 'workflow_dispatch' && 'dispatch-' \|\| '' \}\}/);
+});

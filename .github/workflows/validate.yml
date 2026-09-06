@@ -24,8 +24,11 @@ on:
 
 # A new push supersedes an unfinished validation for the same branch or PR.
 # Exact-SHA release gates never depend on an obsolete commit.
+# Полный прогон по кнопке/ночью (#479) живёт в своей группе: первый ручной
+# запуск отменил очередной push конвейера через полторы минуты — ночной
+# результат обнулялся бы любым коммитом, пришедшим в то же окно.
 concurrency:
-  group: validate-${{ github.event.pull_request.number || github.ref }}
+  group: validate-${{ github.event_name == 'workflow_dispatch' && 'dispatch-' || '' }}${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
