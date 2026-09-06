@@ -28,6 +28,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 
 | Issue | ТЗ |
 |---|---|
+| [#471](https://github.com/Matysh/houseplan-card/issues/471) Убрать белые raised plates вокруг маркеров и названий комнат | [471-isometric-overlay-white-plates.md](471-isometric-overlay-white-plates.md) |
 | [#6](https://github.com/Matysh/houseplan-card/issues/6) Vacuum XCME path segments | [006-vacuum-xcme-path.md](006-vacuum-xcme-path.md) |
 | [#7](https://github.com/Matysh/houseplan-card/issues/7) Valetudo room outlines | [007-vacuum-valetudo-room-outlines.md](007-vacuum-valetudo-room-outlines.md) |
 | [#8](https://github.com/Matysh/houseplan-card/issues/8) Vacuum support docs and XCME hint | [008-vacuum-support-docs-xcme-hint.md](008-vacuum-support-docs-xcme-hint.md) |
