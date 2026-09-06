@@ -32,11 +32,13 @@ export const SMOKE_LINKS = [
       'DEFAULT_LABELS', '_closePicker', '_commitHex', '_confirm',
       '_hexInvalid', '_hexNeedsValidInput', '_surface',
     ],
-    smokes: ['smoke_color_picker.mjs', 'smoke_help_affordance.mjs'],
+    smokes: [
+      'smoke_color_picker.mjs', 'smoke_color_picker_consumers.mjs', 'smoke_help_affordance.mjs',
+    ],
     because: 'the #476 production-bundle scenarios prove the full-width localized confirmation, '
       + 'live-event count, invalid-HEX latch, focus and click containment in both the native '
-      + 'popover and the dialog portal fallback; those browser lifecycle effects are not visible '
-      + 'to source or pure color conversion tests',
+      + 'popover and the picker surface inside a general-settings dialog; those browser '
+      + 'lifecycle effects are not visible to source or pure color conversion tests',
   },
   {
     symbols: ['HpDialog', '_ensureNativeModal', '_useHaDialog', '_usesHaDialog'],

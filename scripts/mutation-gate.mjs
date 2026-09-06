@@ -6713,6 +6713,39 @@ const MUTANT_DEFINITIONS = [
       replace: "params.getAll('hp_alpha_stage3')",
     }],
   },
+  {
+    id: 'color-picker-invalid-confirm-latch-removed',
+    guard: 'node demo/smoke_color_picker.mjs',
+    because: 'after an invalid HEX draft is normalized for display, repeated confirmation must '
+      + 'still wait for a new valid input event; only the real picker lifecycle proves that the '
+      + 'normalized fallback cannot bypass the #476 validation latch',
+    patches: [{
+      file: 'src/hp-color-opacity.ts',
+      find: '    if (this._hexNeedsValidInput) {\n'
+        + '      this._hexInvalid = true;\n'
+        + '      return;\n'
+        + '    }',
+      replace: '    if (false) {\n'
+        + '      this._hexInvalid = true;\n'
+        + '      return;\n'
+        + '    }',
+    }],
+  },
+  {
+    id: 'color-picker-confirm-click-through',
+    guard: 'node demo/smoke_color_picker_consumers.mjs',
+    because: 'the full-width confirmation inside a general-settings dialog must consume its own '
+      + 'click before it reaches the picker surface; observing that direct ancestor keeps outer '
+      + 'toolbar and modal stoppers from hiding removal of the #476 picker-level defense',
+    patches: [{
+      file: 'src/hp-color-opacity.ts',
+      find: '  private _confirm(event: Event): void {\n'
+        + '    event.preventDefault();\n'
+        + '    event.stopPropagation();',
+      replace: '  private _confirm(event: Event): void {\n'
+        + '    event.preventDefault();',
+    }],
+  },
 ];
 
 const mutationCardSource = readFileSync(join(repoRoot, 'src/houseplan-card.ts'), 'utf8');
