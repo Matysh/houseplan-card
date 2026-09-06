@@ -93,6 +93,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 
 | Issue | ТЗ |
 |---|---|
+| [#478](https://github.com/Matysh/houseplan-card/issues/478) Отказ от persisted-сущности `room_drafts` | [478-remove-room-drafts.md](478-remove-room-drafts.md) |
 | [#10](https://github.com/Matysh/houseplan-card/issues/10) Roomba live position | [010-vacuum-roomba-live-position.md](010-vacuum-roomba-live-position.md) |
 | [#442](https://github.com/Matysh/houseplan-card/issues/442) Атомарный откат отклонённых записей маркера | [442-marker-write-rollback.md](442-marker-write-rollback.md) |
 | [#11](https://github.com/Matysh/houseplan-card/issues/11) Vacuum source health | [011-vacuum-source-health.md](011-vacuum-source-health.md) |
