@@ -6552,7 +6552,13 @@ const MUTANT_DEFINITIONS = [
       file: 'src/furniture.ts',
       find: "import { FURNITURE_ART_RUNTIME, type FurnitureArtHost } from './furniture-art-runtime';",
       replace: "import { FURNITURE_ART_RUNTIME, type FurnitureArtHost } from './furniture-art-runtime';\n"
-        + "import './furniture-plan-art.generated';  // mutant: eager artwork",
+        + "import { GENERATED_FURNITURE_ART as EAGER_ART } from './furniture-plan-art.generated';  // mutant",
+    }, {
+      // A well-meaning "fall back to the bundled artwork" is exactly how the
+      // chunk would creep back into the initial graph.
+      file: 'src/furniture.ts',
+      find: '  if (symbol.designer) return FURNITURE_ART_RUNTIME.art(id, host) ?? null;',
+      replace: '  if (symbol.designer) return FURNITURE_ART_RUNTIME.art(id, host) ?? EAGER_ART[id] ?? null;',
     }],
   },
   {
