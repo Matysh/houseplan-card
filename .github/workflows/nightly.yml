@@ -1,0 +1,38 @@
+# Ночной полный прогон (#479).
+#
+# Тяжёлые job Validate — смоки, golden, performance_smoke — на обычном пуше не
+# идут: они ни разу не ловили дефект в момент ревью и стоили ~6 минут
+# критического пути на каждую итерацию. Полный набор идёт на кандидате беты
+# (трейлер `Release:`), по кнопке и здесь — каждую ночь на голове `dev`.
+#
+# Почему не `schedule` прямо в validate.yml: расписание исполняется на ветке
+# по умолчанию (`main`), а проверять надо `dev`. Один dispatch с `--ref dev`
+# делает это без переписывания checkout во всех job. Reuse (#208) сохраняется:
+# при неизменённом дереве ночной прогон обойдётся маркерами.
+#
+# Красный ночной прогон — сигнал автору последних коммитов на dev, не гейт:
+# гейт беты по-прежнему требует зелёный Validate на точном SHA кандидата, и
+# там полный набор идёт заново.
+name: Ночной полный прогон dev
+
+on:
+  schedule:
+    - cron: '30 2 * * *'
+  workflow_dispatch: {}
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  dispatch:
+    name: "Запустить Validate на dev с полным набором"
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          gh workflow run validate.yml --repo "$REPO" --ref dev -f full=true
+          echo "Validate(dev, full=true) поставлен в очередь: $(date -u +%FT%TZ)"
