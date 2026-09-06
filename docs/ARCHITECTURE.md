@@ -28,6 +28,7 @@ houseplan-card/
 │  ├─ decor-image-editor.ts      # lazy Background/Furniture image palette, upload and properties controller
 │  ├─ houseplan-onboarding-runtime.ts # first-space/import dialogs, independent of editor
 │  ├─ iso-scene-render.ts        # hidden alpha-only Stage 3 scene/runtime boundary
+│  ├─ furniture-art-runtime.ts   # page-scoped lazy designer furniture artwork (ready/pending/fallback)
 │  ├─ iso-overlays.ts            # pure raised-overlay ownership, collision and nudge
 │  ├─ hp-dialog.ts               # shared HA/native modal shell, focus and transient-overlay lifecycle
 │  ├─ hp-confirm.ts              # presentation for shared dangerous-action confirmation
@@ -184,6 +185,14 @@ the same profiler available between stable promotions.
    start. Two failed content-hashed attempts settle on English rather than
    leaving an inert surface. The bundle manifest classifies this graph as
    `lazyLocaleFiles`, separate from editor and onboarding graphs.
+   Designer furniture artwork follows the same shape (#474): the catalogue
+   (ids, groups, default sizes) stays eager, the 44 SVG drawings live in
+   `lazyFurnitureArtFiles` behind `FURNITURE_ART_RUNTIME`. Plan intake starts
+   the load only when the plan draws a designer piece, the boot veil holds
+   until the runtime settles (within the veil's hard cap), the editor imports
+   the drawings statically and hands them over synchronously (`adopt`), and
+   two failed content-hashed attempts — or a chunk from another build — settle
+   into `fallback`: pieces render as unknown symbols and one toast is shown.
 8. **One four-phase environment resolver.** `resolveDayCycle()` in `src/sun.ts`
    atomically chooses a strict real `sun.sun` sample or browser-local clock
    fallback and returns only phase/source/light tokens. `src/day-cycle-render.ts`

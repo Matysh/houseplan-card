@@ -49,8 +49,8 @@ const demoHtml = (withFurniture, twoCards) => {
 
 const run = async ({ furniture, twoCards = false, chunk = 'serve', delayMs = 0 }) => {
   const browser = await chromium.launch({ args: ['--no-sandbox'] });
-  const page = await (await browser.newContext({ viewport: { width: 820, height: 760 } })).newPage();
-  watchPage(page);
+  const ctx = await browser.newContext({ viewport: { width: 820, height: 760 } });
+  const page = watchPage(await ctx.newPage());
   const requests = [];
   let artRequests = 0;
   await page.route('**/*', async (route) => {

@@ -35,7 +35,11 @@ npm run furniture:check
 
 The generator validates a deliberately small, inert SVG subset and produces:
 
-- `src/furniture-plan-art.generated.ts` for the initial View graph;
+- `src/furniture-plan-catalog.generated.ts` — ids, groups, categories and
+  default sizes; the only part of the pack in the initial View graph;
+- `src/furniture-plan-art.generated.ts` — the 44 top-view drawings, a lazy
+  chunk (#474) loaded by `src/furniture-art-runtime.ts` when a plan draws a
+  designer piece and imported statically by the editor;
 - `src/furniture-menu-art.generated.ts` for the lazy editor graph only.
 
 Generated files are never edited manually. The 77 drawings were created by
@@ -134,7 +138,12 @@ ids preserve their identity; the remaining old ids remain available. Default
 dimensions change only for a newly picked replacement—an already saved
 object's `w` and `h` are never rewritten.
 
-Plan artwork is available in View and kiosk. Front-view menu art is imported
+Plan artwork is available in View and kiosk: a plan with designer furniture
+requests the artwork chunk once per page before its first frame, and the
+first-open veil waits for it; a plan without furniture never requests it.
+If the chunk cannot be loaded, designer pieces render as unknown symbols —
+nothing — until the page reloads, and a toast says so once; the 12 retained
+primitive symbols draw regardless. Front-view menu art is imported
 only after the editor runtime is requested. Touch View/kiosk support is
 blocking; editor ergonomics on touch remain best effort under
 `docs/TOUCH-SUPPORT.md`.
