@@ -823,16 +823,9 @@ def _plan_only_source() -> tuple[dict[str, Any], dict[str, Any]]:
             "host": {"kind": "partition", "id": "partition", "t": 0.5},
             "future_opening": "sensor.secret",
         }],
-        # The current v8 fixture must retain the catalogue's exact compatibility
-        # projection; legacy key-only walls are covered by the v7 import cases.
+        # Keep this fixture current. Legacy walls and room drafts are covered by
+        # the dedicated migration cases below and must not leak into v10 exports.
         "walls": [],
-        "room_drafts": [{
-            "id": "draft", "points": [[0, 0], [0.2, 0]],
-            "segments": [{
-                "id": "draft-segment", "cm": 10,
-                "future_segment": "sensor.secret",
-            }],
-        }],
         "partitions": [{"id": "partition", "a": [0, 0.5], "b": [1, 0.5], "cm": 12}],
         "wall_columns": [{"id": "column", "shape": "circle", "center": [0.2, 0.2], "cm": 30}],
         "decor": [
@@ -1078,17 +1071,19 @@ def test_full_export_import_round_trip_restores_model_version(tmp_path: Path) ->
 
 
 @pytest.mark.parametrize("kind", ["full", "space"])
-@pytest.mark.parametrize(
-    ("target_current", "expected_model"),
-    [(False, 7), (True, PLAN_MODEL_VERSION)],
-)
-def test_v7_import_materializes_only_when_target_requires_current_model(
-    tmp_path: Path, kind: str, target_current: bool, expected_model: int,
+@pytest.mark.parametrize("target_current", [False, True])
+def test_v7_export_and_import_always_materialize_the_current_model(
+    tmp_path: Path, kind: str, target_current: bool,
 ) -> None:
     legacy = _config()
     legacy["model_version"] = 7
     for space in legacy["spaces"]:
         space.pop("wall_segments", None)
+        space["room_drafts"] = [{
+            "id": "legacy-draft",
+            "points": [[0.1, 0.1], [0.3, 0.1]],
+            "segments": [{"cm": 10}],
+        }]
         for room in space.get("rooms") or []:
             room.pop("wall_ids", None)
         for opening in space.get("openings") or []:
@@ -1115,11 +1110,11 @@ def test_v7_import_materializes_only_when_target_requires_current_model(
     )
     candidate = get_candidate(runtime, response["token"], "alice")
     result = candidate["target_config"]
-    assert result.get("model_version", 0) == expected_model
-    if expected_model == PLAN_MODEL_VERSION:
-        assert all("wall_segments" in space for space in result["spaces"])
-    else:
-        assert all("wall_segments" not in space for space in result["spaces"])
+    assert document["model_version"] == PLAN_MODEL_VERSION
+    assert result.get("model_version", 0) == PLAN_MODEL_VERSION
+    assert all("wall_segments" in space for space in result["spaces"])
+    assert all("room_drafts" not in space for space in result["spaces"])
+    assert all(space.get("partitions") for space in result["spaces"])
 
 
 def test_preview_tokens_are_bounded_owned_expiring_and_single_use(
@@ -1177,9 +1172,9 @@ def test_preview_tokens_are_bounded_owned_expiring_and_single_use(
     assert global_tokens[0] not in global_runtime.import_previews
 
 
-@pytest.mark.parametrize(("stored", "envelope"), [(None, 0), (0, 0), (3, 3), (9, 9)])
-def test_export_preserves_actual_model_only_in_the_envelope(
-    tmp_path: Path, stored: int | None, envelope: int,
+@pytest.mark.parametrize("stored", [None, 0, 3, 9])
+def test_export_materializes_supported_models_into_the_current_envelope(
+    tmp_path: Path, stored: int | None,
 ) -> None:
     config = _config()
     if stored is None:
@@ -1191,12 +1186,12 @@ def test_export_preserves_actual_model_only_in_the_envelope(
         {"config": config}, {"layout": {}}, kind="full", space_id=None,
         card_version="1.61.0", config_root=tmp_path,
     )
-    assert document["model_version"] == envelope
+    assert document["model_version"] == PLAN_MODEL_VERSION
     assert "model_version" not in document["payload"]["config"]
-    if envelope > PLAN_MODEL_VERSION:
-        with pytest.raises(ImportFailure) as future:
-            parse_document(json.dumps(document).encode())
-        assert future.value.code == "future_model"
+    assert all(
+        "room_drafts" not in space
+        for space in document["payload"]["config"].get("spaces") or []
+    )
 
 
 def test_export_rejects_boolean_stored_model_before_schema_coercion(tmp_path: Path) -> None:
@@ -1694,17 +1689,13 @@ def test_space_merge_remaps_every_space_owned_id_and_room_link(tmp_path: Path) -
     space["wall_columns"] = [
         {"id": "column1", "shape": "square", "center": [0.2, 0.2], "cm": 30},
     ]
-    space["room_drafts"] = [{
-        "id": "draft1", "points": [[0, 0], [0.2, 0], [0.2, 0.2]],
-        "segments": [{"cm": 10}, {"cm": 10}],
-    }]
     merged, _layout, details = build_space_merge(
         document, {"spaces": [], "markers": [], "settings": {}}, {}, "skip",
     )
     imported = next(item for item in merged["spaces"] if item["id"] == details["space_id"])
-    old_ids = {"ground", "living", "kitchen", "op1", "dec1", "part1", "column1", "draft1"}
+    old_ids = {"ground", "living", "kitchen", "op1", "dec1", "part1", "column1"}
     imported_ids = {imported["id"]}
-    for collection in ("rooms", "openings", "decor", "partitions", "wall_columns", "room_drafts"):
+    for collection in ("rooms", "openings", "decor", "partitions", "wall_columns"):
         imported_ids.update(str(item["id"]) for item in imported.get(collection) or [])
     assert not old_ids & imported_ids
     room_ids = {room["id"] for room in imported["rooms"]}

@@ -1276,7 +1276,6 @@ async def test_system_health_reports_frontend_registration_matrix(
                     "spaces": [
                         {
                             "rooms": [{}],
-                            "room_drafts": [{}, {}],
                             "partitions": [{}],
                             "wall_columns": [{}, {}],
                         }
@@ -1317,7 +1316,6 @@ async def test_system_health_reports_frontend_registration_matrix(
             "config_rev",
             "spaces",
             "rooms",
-            "room_drafts",
             "partitions",
             "wall_columns",
             "markers",
@@ -1327,7 +1325,6 @@ async def test_system_health_reports_frontend_registration_matrix(
         "config_rev": 4,
         "spaces": 1,
         "rooms": 1,
-        "room_drafts": 2,
         "partitions": 1,
         "wall_columns": 2,
         "markers": 3,
