@@ -14,7 +14,7 @@
  * browser and without a config store. docs/specs/229-merge-collinear-partitions.md
  */
 
-import type { OpeningCfg, PartitionCfg, WallColumnCfg } from './types';
+import type { OpeningCfg, PartitionCfg, RoomCfg, WallColumnCfg } from './types';
 import { materializePartitionOpening, resolvePartitionOpeningCompat } from './partition-openings';
 import { roomPoly } from './logic';
 
@@ -268,7 +268,7 @@ export function applyOpeningMoves(
  *
  */
 export function spaceMergeGeometry(
-  space: any,
+  space: { rooms?: RoomCfg[]; wall_columns?: WallColumnCfg[] },
 ): MergeGeometry {
   return {
     // `roomPoly` hands back the raw config polygon: rooms are stored in the

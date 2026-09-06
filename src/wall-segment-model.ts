@@ -16,7 +16,7 @@ import { GRID_STEP_N } from './space-geometry';
 import {
   atomicPolyForRoom, thicknessCmAt, wallAngleMatches, wallKey, type WallEntry,
 } from './wall-thickness';
-import type { OpeningCfg, WallOpeningHost, WallSegmentEntry } from './types';
+import type { OpeningCfg, PartitionCfg, WallOpeningHost, WallSegmentEntry } from './types';
 
 export const WALL_SEGMENT_MODEL_VERSION = 10;
 const EPS = 1e-9;
@@ -705,8 +705,23 @@ const hostRoomOpenings = (
   }
 };
 
+type LegacyRoomDraftSpace = {
+  id?: unknown;
+  room_drafts?: Array<{
+    id?: unknown;
+    points?: unknown;
+    segments?: unknown;
+  }>;
+  rooms?: Array<{ id?: unknown }>;
+  openings?: OpeningCfg[];
+  decor?: Array<{ id?: unknown }>;
+  partitions?: PartitionCfg[];
+  wall_columns?: Array<{ id?: unknown }>;
+  wall_segments?: WallSegmentEntry[];
+};
+
 const migrateRoomDraftsToPartitions = (
-  space: any, initialMigration: boolean,
+  space: LegacyRoomDraftSpace, initialMigration: boolean,
 ): { drafts: number; segments: number } => {
   if (!Object.prototype.hasOwnProperty.call(space, 'room_drafts')) return { drafts: 0, segments: 0 };
   if (!initialMigration) {
@@ -769,7 +784,7 @@ const migrateRoomDraftsToPartitions = (
  * v10 identity barrier it does not require room contours to be valid yet.
  */
 export const migrateLegacyRoomDraftsToPartitionsInPlace = (
-  space: any,
+  space: LegacyRoomDraftSpace,
 ): { drafts: number; segments: number } => migrateRoomDraftsToPartitions(space, true);
 
 const resolvedThicknessCm = (
