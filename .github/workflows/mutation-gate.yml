@@ -142,8 +142,11 @@ jobs:
         id: report
         env:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          SHA: ${{ github.sha }}
         run: |
+          # SHA — того дерева, которое чекаутили и гоняли (dev), а не
+          # github.sha: для расписания это вершина default-ветки main, и отчёт
+          # называл бы «dev @ <SHA main>» (ревью r1). Образец — process.yml.
+          SHA=$(git rev-parse HEAD)
           mkdir -p artifacts
           node scripts/mutation-gate-report.mjs \
             --logs=artifacts/mutation-logs --shards=4 \

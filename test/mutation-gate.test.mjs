@@ -250,6 +250,14 @@ test('#472 AC5: job report — только по расписанию, толь�
   assert.match(report, /node scripts\/mutation-gate-report\.mjs/);
 });
 
+test('#472 r1: SHA отчёта — от чекаута dev, а не github.sha (вершина main у расписания)', () => {
+  const report = mutationWorkflow.slice(mutationWorkflow.indexOf('\n  report:\n'));
+  assert.match(report, /ref: dev/);
+  assert.match(report, /SHA=\$\(git rev-parse HEAD\)/);
+  assert.ok(!report.includes('${{ github.sha }}'), 'github.sha у schedule указывает на main, не на проверенный dev');
+  assert.match(report, /--ref=dev --sha="\$SHA"/);
+});
+
 test('#472 AC6: повторный отказ дописывает открытое issue, а не создаёт второе', () => {
   const report = mutationWorkflow.slice(mutationWorkflow.indexOf('  report:'));
   const search = report.indexOf('gh issue list');
