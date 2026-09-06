@@ -213,8 +213,14 @@ test('#477 source contract routes every explicit chain finish through one finali
   assert.match(card, /Escape releases the active wall chain[\s\S]{0,250}_finishWallChain\(\)/);
   assert.doesNotMatch(runtime, /_markupClick[\s\S]{0,1200}_finalizeWallChainPartitions/,
     'the latency-critical terminal click must not run the finalizer');
+  assert.match(finishTransaction,
+    /safe = wallModelOffGridValueCount[\s\S]{0,500}host\._checkSpacePhysicalGeometry/,
+    'the finish candidate must be judged by the bounded production physical proof');
   assert.match(finishTransaction, /if \(!safe\) return rejectUnsafe\(runtime, before\);/);
   assert.ok(
+    finishTransaction.indexOf('host._checkSpacePhysicalGeometry')
+      < finishTransaction.indexOf('if (!safe) return rejectUnsafe(runtime, before);')
+      &&
     finishTransaction.indexOf('if (!safe) return rejectUnsafe(runtime, before);')
       < finishTransaction.indexOf('adoptWallSegmentModelCandidateInPlace'),
     'the finish candidate must pass the physical guard before live adoption',
