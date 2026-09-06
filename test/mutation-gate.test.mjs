@@ -406,3 +406,16 @@ test('#481: отпечатки реестра детерминированы и 
   assert.notEqual(witnessFingerprint(MUTANTS[1]), first);
   assert.match(first, /^[0-9a-f]{64}$/);
 });
+
+test('#481 AC6 (реестр): бамп версии продукта не меняет отпечаток ни одного мутанта, патчащего ядра', () => {
+  const version = JSON.parse(readFileSync(join(repoRoot, 'package.json'), 'utf8')).version;
+  const core = MUTANTS.filter((m) => m.patches.some((p) => /houseplan-(card|editor-runtime)\.ts$/.test(p.file)));
+  assert.ok(core.length > 50, `ожидались десятки мутантов на ядра, найдено ${core.length}`);
+  const bumped = (file) => readFileSync(join(repoRoot, file), 'utf8').split(version).join('9.9.9-bumped');
+  const normalize = (text) => text.split('9.9.9-bumped').join('0.0.0-product-version').split(version).join('0.0.0-product-version');
+  for (const m of core) {
+    const before = witnessFingerprint(m, { root: repoRoot, normalize });
+    const after = witnessFingerprint(m, { root: repoRoot, read: bumped, normalize });
+    assert.equal(after, before, `${m.id}: релизный бамп изменил отпечаток`);
+  }
+});
