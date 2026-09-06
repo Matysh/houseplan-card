@@ -144,8 +144,14 @@ export const LOW_HEADROOM_WARNING_BYTES = 15_000;
  * больше не загружает renderer/overlay/opening graph. Измеренный initial факт
  * 299 495 Б оставляет 505 Б сверху и 1 495 Б до нижней границы полосы;
  * lazy-isometric graph отдельно измеряется манифестом (12 043 Б gzip).
+ *
+ * 2026-09-06, v1.73.0-beta.1: потолок перецентрирован 300 000 → 300 500
+ * без изменения общего бюджета. Более длинная prerelease-версия подняла
+ * измеренный initial факт до 299 501 Б и оставила лишь 499 Б сверху — меньше
+ * обязательного шумового запаса. Новый центр оставляет 999 Б сверху и
+ * 1 001 Б снизу; продуктовый граф при этом не расширялся.
  */
-export const INITIAL_VIEW_GZIP_CEILING = 300_000;
+export const INITIAL_VIEW_GZIP_CEILING = 300_500;
 export const INITIAL_VIEW_CEILING_BAND = 2_000;
 
 /**

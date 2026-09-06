@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.73.0-beta.1 — 2026-09-06
+
 - Active Zigbee topology links and route bubbles now stay readable above room
   names and unrelated device markers, while the complete linked device markers
   — including the one under the pointer — remain on top. Unknown-quality dashed

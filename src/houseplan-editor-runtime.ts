@@ -366,7 +366,7 @@ import {
 } from './space-order';
 import { applyOpeningMoves, mergeCollinearPartitions, spaceMergeGeometry } from './wall-merge';
 
-const CARD_VERSION = '1.72.0';
+const CARD_VERSION = '1.73.0-beta.1';
 
 type ResizeLiveLabel = {
   kind: 'length';

@@ -51,7 +51,7 @@ SCHEDULED_GRACE_S = 30 * 24 * 3600
 FILES_DIR = "houseplan/files"
 ASSETS_DIR = "houseplan/assets"
 CONF_ADMIN_ONLY = "admin_only"
-VERSION = "1.72.0"
+VERSION = "1.73.0-beta.1"
 DECOR_ASSETS_API_VERSION = 1
 
 # #43: the support transport is deliberately not configurable.  A user supplied
