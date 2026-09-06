@@ -12,6 +12,7 @@ export type ColorPickerLabels = {
   value: string;
   hex: string;
   invalidHex: string;
+  confirm: string;
 };
 
 const DEFAULT_LABELS: ColorPickerLabels = {
@@ -21,6 +22,7 @@ const DEFAULT_LABELS: ColorPickerLabels = {
   value: 'Brightness',
   hex: 'Hex color',
   invalidHex: 'Enter a 3- or 6-digit hex color',
+  confirm: 'OK',
 };
 
 /**
@@ -49,6 +51,10 @@ export class HpColorOpacity extends LitElement {
   private _value = 0;
   private _hexDraft = '#607d8b';
   private _hexInvalid = false;
+  /** An invalid commit may normalize the visible draft back to a valid value.
+   * Keep the error latched until the user actually types a new valid HEX so a
+   * repeated confirmation cannot mistake that normalization for a correction. */
+  private _hexNeedsValidInput = false;
   private _lastValidColor = '#607d8b';
   private _activePointerId: number | null = null;
 
@@ -303,6 +309,23 @@ export class HpColorOpacity extends LitElement {
       color: var(--secondary-text-color, #9aa4ad);
       font-size: 12px;
     }
+    .confirm {
+      width: 100%;
+      min-height: 40px;
+      box-sizing: border-box;
+      border: 1px solid var(--primary-color, #03a9f4);
+      border-radius: 6px;
+      padding: 8px 12px;
+      color: var(--text-primary-color, #fff);
+      background: var(--primary-color, #03a9f4);
+      cursor: pointer;
+      font: inherit;
+      font-weight: 600;
+    }
+    .confirm:focus-visible {
+      outline: 2px solid var(--primary-text-color, #fff);
+      outline-offset: -4px;
+    }
     :host([disabled]) {
       opacity: .5;
       pointer-events: none;
@@ -324,6 +347,12 @@ export class HpColorOpacity extends LitElement {
       }
       .hue-range::-moz-range-thumb {
         box-shadow: none;
+      }
+      .confirm {
+        border-color: ButtonText;
+        color: HighlightText;
+        background: Highlight;
+        forced-color-adjust: none;
       }
     }
   `;
@@ -415,6 +444,7 @@ export class HpColorOpacity extends LitElement {
     this._forceFallback = false;
     this._syncFromColor(this.color, false);
     this._hexInvalid = false;
+    this._hexNeedsValidInput = false;
     this._activePointerId = null;
     this._open = true;
     await this.updateComplete;
@@ -518,6 +548,7 @@ export class HpColorOpacity extends LitElement {
       value: labels.value || DEFAULT_LABELS.value,
       hex: labels.hex || DEFAULT_LABELS.hex,
       invalidHex: labels.invalidHex || DEFAULT_LABELS.invalidHex,
+      confirm: labels.confirm || DEFAULT_LABELS.confirm,
     };
   }
 
@@ -531,6 +562,7 @@ export class HpColorOpacity extends LitElement {
     this._value = hsv.v;
     this._hexDraft = normalized;
     this._hexInvalid = false;
+    this._hexNeedsValidInput = false;
     this._lastValidColor = normalized;
   }
 
@@ -649,10 +681,14 @@ export class HpColorOpacity extends LitElement {
   private _hexInput(event: Event): void {
     const value = (event.target as HTMLInputElement).value;
     this._hexDraft = value;
-    this._hexInvalid = false;
     const normalized = normalizeHexColor(value);
     const rgb = normalized ? hexToRgb(normalized) : null;
-    if (!normalized || !rgb) return;
+    if (!normalized || !rgb) {
+      this._hexInvalid = this._hexNeedsValidInput;
+      return;
+    }
+    this._hexNeedsValidInput = false;
+    this._hexInvalid = false;
     const hsv = rgbToHsv(rgb);
     if (hsv.s > 0.0001) this._hue = hsv.h;
     this._saturation = hsv.s;
@@ -665,11 +701,29 @@ export class HpColorOpacity extends LitElement {
     if (!normalized) {
       this._hexDraft = this._lastValidColor;
       this._hexInvalid = true;
+      this._hexNeedsValidInput = true;
       return;
     }
     this._hexDraft = normalized;
+    if (this._hexNeedsValidInput) {
+      this._hexInvalid = true;
+      return;
+    }
     this._hexInvalid = false;
     if (normalized !== this._lastValidColor) this._emit(normalized, this.opacity);
+  }
+
+  private _confirm(event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this._commitHex();
+    if (this._hexInvalid || this._hexNeedsValidInput) {
+      this.updateComplete.then(() => {
+        this._surface()?.querySelector<HTMLInputElement>('input[type="text"]')?.focus();
+      });
+      return;
+    }
+    this._closePicker(true);
   }
 
   private _hexKeyDown(event: KeyboardEvent): void {
@@ -689,7 +743,7 @@ export class HpColorOpacity extends LitElement {
     this.opacity = clamped;
     this._lastValidColor = normalized;
     if (!preserveHexDraft) this._hexDraft = normalized;
-    this._hexInvalid = false;
+    this._hexInvalid = this._hexNeedsValidInput;
     this.dispatchEvent(new CustomEvent('hp-color-opacity-change', {
       detail: { color: normalized, opacity: clamped },
       bubbles: true,
@@ -763,6 +817,7 @@ export class HpColorOpacity extends LitElement {
             @change=${(e: Event) => this._setOpacity(Number((e.target as HTMLInputElement).value) / 100)} />
           <span class="pct">%</span>
         </div>` : nothing}
+        <button class="confirm" type="button" @click=${(e: Event) => this._confirm(e)}>${labels.confirm}</button>
       </div>`;
   }
 

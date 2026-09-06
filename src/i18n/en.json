@@ -21,6 +21,7 @@
   "color_picker.value": "Brightness",
   "color_picker.hex": "Hex color",
   "color_picker.invalid_hex": "Enter a 3- or 6-digit hex color",
+  "color_picker.confirm": "OK",
   "btn.properties": "Properties",
   "btn.keep_as_walls": "Keep as walls",
   "btn.delete_room_keep_walls": "Delete room, keep walls",

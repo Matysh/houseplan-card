@@ -21,6 +21,7 @@
   "color_picker.value": "Luminosité",
   "color_picker.hex": "Couleur hexadécimale",
   "color_picker.invalid_hex": "Saisissez une couleur hexadécimale à 3 ou 6 chiffres",
+  "color_picker.confirm": "OK",
   "btn.properties": "Propriétés",
   "btn.keep_as_walls": "Conserver comme murs",
   "btn.delete_room_keep_walls": "Supprimer la pièce, conserver les murs",

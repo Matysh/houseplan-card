@@ -224,9 +224,16 @@ const res = await page.evaluate(async () => {
   await frame();
   const pickerFallback = dialog?.shadowRoot?.querySelector('[data-hp-overlay="color-opacity"]');
   const pickerControl = pickerFallback?.shadowRoot?.querySelector('input');
+  const pickerConfirm = pickerFallback?.shadowRoot?.querySelector('.confirm');
   out.fallbackPickerFocusable = !!pickerControl
     && dialog?._focusableElements?.().includes(pickerControl);
-  pickerButton?.click();
+  out.fallbackPickerHasConfirm = pickerConfirm?.textContent.trim() === 'OK'
+    && pickerFallback?.shadowRoot?.querySelector('.picker')?.lastElementChild === pickerConfirm;
+  pickerConfirm?.click();
+  await frame();
+  out.fallbackPickerConfirmCloses = pickerButton?.getAttribute('aria-expanded') === 'false'
+    && picker?.shadowRoot?.activeElement === pickerButton;
+  if (pickerButton?.getAttribute('aria-expanded') === 'true') pickerButton.click();
   if (show) Object.defineProperty(HTMLElement.prototype, 'showPopover', show);
   else delete HTMLElement.prototype.showPopover;
   if (hide) Object.defineProperty(HTMLElement.prototype, 'hidePopover', hide);

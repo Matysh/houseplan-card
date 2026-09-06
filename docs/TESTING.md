@@ -446,6 +446,15 @@
       labels through the unchanged color/opacity event contract, and the shared
       component contains no native `input[type=color]`
       [unit: `color-picker.test.mjs`].
+- [ ] The localized full-width OK button is the final picker control, remains at
+      least 40 CSS px high in native and fallback surfaces, and closes without a
+      duplicate value event or click-through to the parent card
+      [unit: `color-picker.test.mjs`, auto: `smoke_color_picker.mjs`,
+      `smoke_help_affordance.mjs`].
+- [ ] Invalid HEX keeps the picker open and focused on its error even after a
+      repeated OK; only new valid HEX input unlocks confirmation, while live
+      color/opacity updates and the existing outside/trigger/Escape close paths
+      retain their values [auto: `smoke_color_picker.mjs`].
 - [ ] At 390 px the one surface exposes hue, saturation, brightness, HEX and
       opacity without horizontal overflow; keyboard Shift+Arrow, touch pointer
       cancellation, invalid HEX recovery, Escape focus return and disabled mode

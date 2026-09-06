@@ -53,7 +53,16 @@ test('the shared component keeps its API and contains no nested native color pic
   for (const token of [
     'public color', 'public opacity', 'public disabled', 'public showOpacity',
     'hp-color-opacity-change', 'detail: { color: normalized, opacity: clamped }',
+    'confirm: string', "confirm: 'OK'",
   ]) assert.match(component, new RegExp(token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+  assert.match(component, /<button class="confirm" type="button"[^>]*@click=/);
+  assert.match(component, /\.confirm\s*\{[\s\S]*?width:\s*100%;[\s\S]*?min-height:\s*40px;/);
+  assert.match(component, /@media \(forced-colors:\s*active\)[\s\S]*?\.confirm\s*\{[\s\S]*?background:\s*Highlight;/);
+  assert.ok(component.indexOf('<button class="confirm"') > component.indexOf('this.showOpacity ? html`<div class="row">'),
+    'the confirmation remains the final picker control after the optional opacity row');
+  assert.match(component, /private _hexNeedsValidInput = false/);
+  assert.match(component, /this\._hexInvalid = this\._hexNeedsValidInput/);
+  assert.match(component, /if \(this\._hexInvalid \|\| this\._hexNeedsValidInput\)/);
   const pickerCount = (card.match(/<hp-color-opacity/g) || []).length;
   assert.ok(pickerCount > 0);
   assert.equal((card.match(/\.pickerLabels=\$\{this\._colorPickerLabels\}/g) || []).length, pickerCount,
@@ -70,6 +79,11 @@ test('the shared component keeps its API and contains no nested native color pic
     'Glow, ripple and both background pickers stay color-only');
   assert.equal((card.match(/\.showOpacity=\$\{true\}/g) || []).length, 2,
     'general fill rows and room color explicitly keep their existing opacity');
+  assert.match(card, /confirm:\s*this\._t\('color_picker\.confirm'\)/);
+  for (const locale of ['en', 'ru', 'de', 'fr']) {
+    const messages = JSON.parse(readFileSync(new URL(`../src/i18n/${locale}.json`, import.meta.url), 'utf8'));
+    assert.equal(messages['color_picker.confirm'], locale === 'ru' ? 'ОК' : 'OK');
+  }
 });
 
 test('the hue range exposes one cyclic spectrum without restyling other ranges', () => {
