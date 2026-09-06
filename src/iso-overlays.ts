@@ -344,6 +344,15 @@ function boundsNear(a: Bounds, b: Bounds, gap: number): boolean {
     && a[1] <= b[3] + gap && a[3] >= b[1] - gap;
 }
 
+function segmentBoundsNear(
+  bounds: Bounds, a: readonly number[], b: readonly number[], gap: number,
+): boolean {
+  return Math.min(a[0], b[0]) <= bounds[2] + gap
+    && Math.max(a[0], b[0]) >= bounds[0] - gap
+    && Math.min(a[1], b[1]) <= bounds[3] + gap
+    && Math.max(a[1], b[1]) >= bounds[1] - gap;
+}
+
 function plateNearSilhouette(
   plate: readonly ScenePoint[], plateBounds: Bounds,
   silhouette: IsoWallSilhouette, gap: number, cacheBounds: boolean,
@@ -351,12 +360,17 @@ function plateNearSilhouette(
   const wallBounds = silhouetteBounds(silhouette, cacheBounds);
   if (!wallBounds || !boundsNear(plateBounds, wallBounds, gap)) return false;
   if (plate.some((point) => pointInSilhouette(point, silhouette))) return true;
-  if (silhouette.outer.some((point) => pointInRing(point, plate))) return true;
+  if (silhouette.outer.some((point) =>
+    point[0] >= plateBounds[0] && point[0] <= plateBounds[2]
+      && point[1] >= plateBounds[1] && point[1] <= plateBounds[3]
+      && pointInRing(point, plate))) return true;
   for (const wallRing of [silhouette.outer, ...(silhouette.holes || [])]) {
     for (let plateIndex = 0; plateIndex < plate.length; plateIndex++) {
       const plateNext = (plateIndex + 1) % plate.length;
       for (let wallIndex = 0; wallIndex < wallRing.length; wallIndex++) {
         const wallNext = (wallIndex + 1) % wallRing.length;
+        if (!segmentBoundsNear(plateBounds, wallRing[wallIndex], wallRing[wallNext], gap))
+          continue;
         if (segmentDistance(plate[plateIndex], plate[plateNext],
           wallRing[wallIndex], wallRing[wallNext]) <= gap + EPS) return true;
       }
