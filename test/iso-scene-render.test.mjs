@@ -720,7 +720,7 @@ const perfFixture = () => {
     id: 'floor', title: 'Floor', cellCm: 5, vb: [0, 0, 100, 100], bg: null,
     rooms: [owner], wall_segments: [], room_drafts: [], partitions: [], wall_columns: [],
   };
-  const wallSilhouettes = [{ outer: buildIsoPlatePolygon([0, 50], [4, 60], ISO_WALL_HEIGHT) }];
+  const wallSilhouettes = [{ outer: buildIsoFootprintPolygon([0, 50], [4, 60], ISO_WALL_HEIGHT) }];
   const input = {
     space,
     devices: [{ id: 'device', space: 'floor', marker: { room_id: 'owner' } }],
@@ -808,10 +808,10 @@ test('#473 W4: AABB-отсечение учитывает зазор безоп�
   // до точного теста, и плита легла бы вплотную к стене.
   // Стена — компактный силуэт: у длинной стены AABB в изометрии накрывает плиту
   // при любом сдвиге вдоль оси, и отсечение не участвует в решении.
-  const wall = { outer: buildIsoPlatePolygon([0, 50], [2, 2], ISO_WALL_HEIGHT) };
+  const wall = { outer: buildIsoFootprintPolygon([0, 50], [2, 2], ISO_WALL_HEIGHT) };
   const owner = { id: 'owner', outer: [[0, 0], [100, 0], [100, 100], [0, 100]], holes: [], safePoint: [50, 50] };
   const placeAt = (x, safetyGapCssPx) => resolveIsoOverlayPlacement({
-    kind: 'device', floorAnchor: [x, 50], plateHalfSize: [2, 2],
+    kind: 'device', floorAnchor: [x, 50], footprintHalfSize: [2, 2],
     rooms: [owner], roomsValidated: true, preferredRoomId: 'owner',
     ownerAlreadyResolved: true, resolvedOwner: { room: owner, safePoint: [50, 50] },
     showBorders: true, wallSilhouettes: [wall], wallGeometryValidated: true,
