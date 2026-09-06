@@ -1,12 +1,12 @@
 {
   "schema": 1,
   "matrixVersion": 56,
-  "acceptedAt": "2026-09-06T05:25:43.282Z",
-  "sourceFingerprint": "f5cac791d009713cb86ce941810e43fba4976300e3e5f0310074b65d585e42f2",
+  "acceptedAt": "2026-09-06T07:26:41.441Z",
+  "sourceFingerprint": "d6a3471afc7a85dfa1eb3d7363deca18dabe72bbc653ed884c7fd849259888c2",
   "chromium": "151.0.7922.34",
-  "platform": "win32",
+  "platform": "linux",
   "witnesses": {
-    "count": 135,
+    "count": 142,
     "floor": 10
   },
   "scenarios": {
