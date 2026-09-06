@@ -6463,6 +6463,63 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'iso-placement-cache-ignores-selected',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#473 W1" test/iso-scene-render.test.mjs',
+    because: 'a selected plate must resolve its own placement; a signature without `selected` '
+      + 'hands back the unselected cached one — a stale picture with no failure (#473, perf delta of #160)',
+    patches: [{
+      file: 'src/iso-scene-render.ts',
+      find: "      input.layers.shadows ? 1 : 0, selected ? 1 : 0].join('|');",
+      replace: "      input.layers.shadows ? 1 : 0].join('|');",
+    }],
+  },
+  {
+    id: 'iso-placement-cache-survives-silhouette-change',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#473 W2" test/iso-scene-render.test.mjs',
+    because: 'placements are cached per wall-silhouette array identity; keying the cache by a '
+      + 'constant serves «near the wall» for a plan whose wall is gone (#473)',
+    patches: [{
+      file: 'src/iso-scene-render.ts',
+      find: '  let placements = isoOverlayPlacementCache.get(input.wallSilhouettes);',
+      replace: '  let placements = isoOverlayPlacementCache.get(ISO_PLACEMENT_CACHE_ANY);',
+    }, {
+      file: 'src/iso-scene-render.ts',
+      find: '    isoOverlayPlacementCache.set(input.wallSilhouettes, placements);',
+      replace: '    isoOverlayPlacementCache.set(ISO_PLACEMENT_CACHE_ANY, placements);',
+    }, {
+      file: 'src/iso-scene-render.ts',
+      find: 'export const ISO_OVERLAY_PLACEMENT_CACHE_LIMIT = 2048;',
+      replace: 'export const ISO_OVERLAY_PLACEMENT_CACHE_LIMIT = 2048;\nconst ISO_PLACEMENT_CACHE_ANY: readonly IsoWallSilhouette[] = [];',
+    }],
+  },
+  {
+    id: 'iso-zoom-in-reuses-near-wall-plate',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#473 W3" test/iso-scene-render.test.mjs',
+    because: 'zoom-in may reuse a placement only if the plate was never near a wall or was '
+      + 'cleared within the cap; dropping the first guard reuses a pinned plate at a scale where it '
+      + 'already cuts the wall (#473)',
+    patches: [{
+      file: 'src/iso-scene-render.ts',
+      find: '      if (!previous.nearWallBefore',
+      replace: '      if (true',
+    }],
+  },
+  {
+    id: 'iso-aabb-rejects-touching-wall',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="#473 W4" test/iso-scene-render.test.mjs',
+    because: 'the AABB pre-check must keep every silhouette within the safety gap; a strict '
+      + 'overlap test drops walls the exact test would have caught and lets plates sit flush (#473)',
+    patches: [{
+      file: 'src/iso-overlays.ts',
+      find: '  return a[0] <= b[2] + gap && a[2] >= b[0] - gap',
+      replace: '  return a[0] <= b[2] && a[2] >= b[0]',
+    }],
+  },
+  {
     id: 'stage3-w1-camera-rotation-reset',
     guard: 'node --test --test-name-pattern="exact fixed" test/iso-projection.test.mjs',
     because: 'W1: the reviewed Stage 3 camera is exactly +4 degrees; a front-on camera must '

@@ -707,3 +707,118 @@ test('opening geometry policy is both fingerprinted and consumed by the structur
   const basis = changed.build().openings[0];
   assert.equal(basis.leafThickness, basis.wallHeight * policy.leafThicknessRatio);
 });
+
+// #473. Перф-дельта #160 (f1b9bbf3..b3ca0ca2) ввела кэш размещений, кэш по
+// идентичности силуэтов, повторное использование при зуме внутрь и
+// AABB-отсечение — и ушла в бету по §11.4 без ревью и без единого свидетеля.
+// Двенадцать мутантов stage3-w* защищают картинку, ни один — эти механизмы.
+// Ошибка любого из них даёт УСТАРЕВШЕЕ размещение без единого падения.
+
+const perfFixture = () => {
+  const owner = room('owner', 0, 0, 100, 100);
+  const space = {
+    id: 'floor', title: 'Floor', cellCm: 5, vb: [0, 0, 100, 100], bg: null,
+    rooms: [owner], wall_segments: [], room_drafts: [], partitions: [], wall_columns: [],
+  };
+  const wallSilhouettes = [{ outer: buildIsoPlatePolygon([0, 50], [4, 60], ISO_WALL_HEIGHT) }];
+  const input = {
+    space,
+    devices: [{ id: 'device', space: 'floor', marker: { room_id: 'owner' } }],
+    openings: [],
+    view: { x: 0, y: 0, w: 100, h: 100 },
+    display: { showNames: false, cardFontScale: 1 },
+    layers: { structural: true, shadows: true },
+    wallSilhouettes,
+    iconPct: 3.4, deviceBasePct: 3.4, showLqi: false, cellCm: 5,
+    kioskIconScale: 1, kioskFontScale: 1,
+    stageSize: { width: 100, height: 100 },
+    positionOf: () => ({ x: 5, y: 50 }),
+    presentationOf: () => ({
+      scale: 1, valueText: null, valueFullText: '', valueBadge: null,
+      tempText: null, humText: null, lqiText: null,
+      pulse: { animated: false, diameterScale: 1 },
+    }),
+    labelPositionOf: () => ({ x: 0, y: 0 }),
+    labelScaleOf: () => 1,
+    openingEntityAvailable: () => false,
+    openingWallIndex: () => ({ adjacencyEps: 0.1, edges: [] }),
+  };
+  return { input, wallSilhouettes };
+};
+
+test('#473 W1: выделение входит в подпись кэша размещений', () => {
+  const { input } = perfFixture();
+  const plain = buildIsoOverlayRenderScene(input).devices.get('device');
+  const selected = buildIsoOverlayRenderScene({ ...input, selectedDeviceId: 'device' })
+    .devices.get('device');
+  // Подпись без `selected` вернула бы тот же кэшированный объект — плита
+  // выделенного устройства осталась бы без своего размещения.
+  assert.notStrictEqual(selected, plain, 'выделение обязано дать своё размещение, а не кэш');
+  // Кэш держит одну запись на (режим, вид, id): снятие выделения пересчитывает
+  // заново, и это правильно — подпись изменилась. Тождества с `plain` здесь
+  // быть не должно, проверяется только отсутствие подмены.
+  const again = buildIsoOverlayRenderScene(input).devices.get('device');
+  assert.notStrictEqual(again, selected, 'снятие выделения не отдаёт выделенное размещение');
+});
+
+test('#473 W2: кэш размещений привязан к идентичности массива силуэтов', () => {
+  const { input } = perfFixture();
+  const withWall = buildIsoOverlayRenderScene(input).devices.get('device');
+  assert.equal(withWall.nearWallBefore, true, 'фикстура: стена рядом с плитой');
+  // Новая геометрия — новый массив. Кэш, ключуемый константой, отдал бы
+  // размещение «у стены» для плана, в котором стены больше нет.
+  const noWalls = buildIsoOverlayRenderScene({ ...input, wallSilhouettes: [] }).devices.get('device');
+  assert.equal(noWalls.nearWallBefore, false, 'без стен плита не у стены');
+  assert.notStrictEqual(noWalls, withWall);
+});
+
+test('#473 W3: при зуме внутрь плита у стены не переиспользуется вслепую', () => {
+  const { input } = perfFixture();
+  // Далёкая плита: зум внутрь переиспользует доказанно безопасное размещение.
+  const far = { ...input, positionOf: () => ({ x: 60, y: 20 }) };
+  const farLive = buildIsoOverlayRenderScene(far).devices.get('device');
+  assert.equal(farLive.nearWallBefore, false);
+  const farZoomed = buildIsoOverlayRenderScene({ ...far, view: { x: 0, y: 0, w: 80, h: 80 } })
+    .devices.get('device');
+  assert.strictEqual(farZoomed, farLive, 'не у стены — переиспользуется');
+  // Плита у стены, которую не удалось очистить: зум внутрь обязан идти в
+  // точный резолвер. Гард `!nearWallBefore || cleared && …` без первой
+  // половины переиспользовал бы её на масштабе, где она уже режет стену.
+  const pinned = {
+    ...input,
+    // упор со всех сторон: узкая комната не даёт места для nudge
+    space: { ...input.space, rooms: [room('owner', 0, 44, 12, 56)] },
+    positionOf: () => ({ x: 5, y: 50 }),
+  };
+  const pinnedLive = buildIsoOverlayRenderScene(pinned).devices.get('device');
+  assert.equal(pinnedLive.nearWallBefore, true);
+  if (pinnedLive.cleared) {
+    // Фикстура не смогла создать неочищенную плиту — тест обязан сказать об
+    // этом честно, а не пройти молча (правило после #426).
+    assert.fail('фикстура «у стены, не очищена» не построилась: cleared=true');
+  }
+  const pinnedZoomed = buildIsoOverlayRenderScene({ ...pinned, view: { x: 0, y: 0, w: 80, h: 80 } })
+    .devices.get('device');
+  assert.notStrictEqual(pinnedZoomed, pinnedLive, 'у стены и не очищена — точный резолвер, не кэш');
+});
+
+test('#473 W4: AABB-отсечение учитывает зазор безопасности', () => {
+  // Плита, чьи границы не пересекают границы стены, но лежат внутри gap,
+  // обязана считаться «у стены». Отсечение без зазора отбросило бы силуэт
+  // до точного теста, и плита легла бы вплотную к стене.
+  const wall = { outer: buildIsoPlatePolygon([0, 50], [4, 60], ISO_WALL_HEIGHT) };
+  const owner = { id: 'owner', outer: [[0, 0], [100, 0], [100, 100], [0, 100]], holes: [], safePoint: [50, 50] };
+  const placeAt = (x, safetyGapCssPx) => resolveIsoOverlayPlacement({
+    kind: 'device', floorAnchor: [x, 50], plateHalfSize: [2, 2],
+    rooms: [owner], roomsValidated: true, preferredRoomId: 'owner',
+    ownerAlreadyResolved: true, resolvedOwner: { room: owner, safePoint: [50, 50] },
+    showBorders: true, wallSilhouettes: [wall], wallGeometryValidated: true,
+    unitsPerPixel: 1, safetyGapCssPx, wallHeight: ISO_WALL_HEIGHT, visualOffset: 0,
+  });
+  // без зазора плита на расстоянии 2 единиц от стены — не у стены
+  const noGap = placeAt(4 + 2 + 2, 0);
+  assert.equal(noGap.nearWallBefore, false, 'контроль: без зазора не у стены');
+  // с зазором 4 — у стены, хотя AABB не пересекаются
+  const withGap = placeAt(4 + 2 + 2, 4);
+  assert.equal(withGap.nearWallBefore, true, 'в пределах зазора — у стены');
+});
