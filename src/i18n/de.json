@@ -676,6 +676,7 @@
   "preview.room_name": "Wohnzimmer",
   "toast.cfg_reload_failed": "Der Plan konnte nicht vom Server neu geladen werden: {err}",
   "toast.locale_load_failed": "Das Sprachpaket konnte nicht geladen werden. Bis zum Neuladen der Seite wird Englisch verwendet.",
+  "toast.furniture_art_load_failed": "Die Möbelzeichnungen konnten nicht geladen werden. Laden Sie die Seite neu, um sie anzuzeigen.",
   "room.settings_short": "Raumeinstellungen",
   "room.unnamed": "Unbenannter Raum",
   "marker.use_climate_temp": "Geräte-Temperatur im Raum berücksichtigen",

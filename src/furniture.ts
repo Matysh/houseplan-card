@@ -30,7 +30,8 @@
  */
 
 import { NORM_W, GRID_PITCH, CANVAS_LIMIT } from './space-geometry';
-import { GENERATED_FURNITURE_PLAN } from './furniture-plan-art.generated';
+import { GENERATED_FURNITURE_CATALOG } from './furniture-plan-catalog.generated';
+import { FURNITURE_ART_RUNTIME, type FurnitureArtHost } from './furniture-art-runtime';
 
 /** Groups the palette shows, in the order it shows them. */
 export const FURNITURE_GROUPS = ['furniture', 'appliance', 'sanitary', 'other'] as const;
@@ -64,8 +65,8 @@ export interface FurnitureSymbol {
   h: number;
   /** Legacy drawing retained for symbols absent from the designer pack. */
   g?: Prim[];
-  /** Designer drawing with its native SVG viewBox. */
-  art?: FurnitureGraphic;
+  /** Designer symbol: its drawing lives in the lazy artwork chunk (#474). */
+  designer?: true;
 }
 
 export interface FurnitureGraphic {
@@ -242,13 +243,13 @@ const RETAINED_IDS = new Set([
 /** Complete public library: 44 designer symbols plus the 12 useful existing
  * symbols for which the pack intentionally has no top-view replacement. */
 export const FURNITURE: FurnitureSymbol[] = [
-  ...GENERATED_FURNITURE_PLAN.map((symbol) => ({
+  ...GENERATED_FURNITURE_CATALOG.map((symbol) => ({
     id: symbol.id,
     group: symbol.group as FurnitureGroup,
     category: symbol.category,
     w: symbol.w,
     h: symbol.h,
-    art: symbol.art,
+    designer: true as const,
   })),
   ...LEGACY_FURNITURE.filter((symbol) => RETAINED_IDS.has(symbol.id)),
 ];
@@ -260,6 +261,11 @@ const BY_ID = new Map(FURNITURE.map((s) => [s.id, s]));
  *  nothing in an older one. */
 export function furnitureSymbol(id: string | null | undefined): FurnitureSymbol | null {
   return (id && BY_ID.get(id)) || null;
+}
+
+/** Designer symbol whose drawing is lazy (#474); legacy symbols draw eagerly. */
+export function furnitureArtIsLazy(id: string): boolean {
+  return BY_ID.get(id)?.designer === true;
 }
 
 /** The symbols of one group, in table order. */
@@ -360,10 +366,13 @@ function primitivePathD(s: FurnitureSymbol, w: number, h: number): string {
 /** Native one-path artwork and its coordinate box. The renderer scales this
  * box non-uniformly to the user's stored dimensions; the furniture stroke
  * helpers below separate that local scale from the outer plan camera. */
-export function furnitureGraphic(id: string): FurnitureGraphic | null {
+export function furnitureGraphic(id: string, host?: FurnitureArtHost): FurnitureGraphic | null {
   const symbol = furnitureSymbol(id);
   if (!symbol) return null;
-  if (symbol.art) return symbol.art;
+  // Designer artwork is lazy (#474): `undefined` while the chunk is pending or
+  // settled into fallback renders the piece as an unknown symbol — nothing —
+  // and a host passed here is re-rendered once the runtime settles.
+  if (symbol.designer) return FURNITURE_ART_RUNTIME.art(id, host) ?? null;
   const d = primitivePathD(symbol, 1, 1);
   return d ? { d, viewW: 1, viewH: 1 } : null;
 }
@@ -373,7 +382,8 @@ export function furnitureGraphic(id: string): FurnitureGraphic | null {
 export function furniturePathD(id: string, w: number, h: number): string {
   const symbol = furnitureSymbol(id);
   if (!symbol || !(w > 0) || !(h > 0)) return '';
-  return symbol.art?.d || primitivePathD(symbol, w, h);
+  if (symbol.designer) return FURNITURE_ART_RUNTIME.art(id)?.d || '';
+  return primitivePathD(symbol, w, h);
 }
 
 /**

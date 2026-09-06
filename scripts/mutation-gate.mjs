@@ -1434,10 +1434,10 @@ const MUTANT_DEFINITIONS = [
       + 'a German user on a stale tab silently reading English is the N7 hole (#354 К2)',
     patches: [{
       file: 'src/houseplan-card.ts',
-      find: "    this._languageFailureUnsub = subscribeLanguageLoadFailures(() => {\n"
+      find: "    this._languageFailureUnsub = composeUnsub(subscribeLanguageLoadFailures(() => {\n"
         + "      this._showToast(this._t('toast.locale_load_failed'));\n"
-        + '    });',
-      replace: '    this._languageFailureUnsub = undefined;',
+        + '    }), ',
+      replace: '    this._languageFailureUnsub = composeUnsub(',
     }],
   },
   {
@@ -6539,6 +6539,99 @@ const MUTANT_DEFINITIONS = [
       file: 'src/iso-scene-render.ts',
       find: '      if (!previous.nearWallBefore',
       replace: '      if (true',
+    }],
+  },
+  // #474: designer furniture artwork is a lazy chunk. Each protective contract
+  // of the runtime and its integration gets one witness.
+  {
+    id: 'furniture-art-eager-import',
+    guard: 'npm run build && node scripts/bundle-budget.mjs',
+    because: 'a static import of the artwork anywhere in the View graph silently pulls ~10 KB gzip '
+      + 'back into the initial graph — the exact debt #474 removes; the budget must see the chunk as lazy',
+    patches: [{
+      file: 'src/furniture.ts',
+      find: "import { FURNITURE_ART_RUNTIME, type FurnitureArtHost } from './furniture-art-runtime';",
+      replace: "import { FURNITURE_ART_RUNTIME, type FurnitureArtHost } from './furniture-art-runtime';\n"
+        + "import './furniture-plan-art.generated';  // mutant: eager artwork",
+    }],
+  },
+  {
+    id: 'furniture-art-fallback-never-settles',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="settle into fallback" test/furniture-art-runtime.test.mjs',
+    because: 'fallback must be a SETTLED state: a runtime that stays pending after two failed attempts '
+      + 'keeps the boot gate waiting and re-imports forever (#352–#355 class)',
+    patches: [{
+      file: 'src/furniture-art-runtime.ts',
+      find: '    if (this._art) return;\n    this._failed = true;',
+      replace: '    if (this._art) return;\n    this._failed = false;  // mutant: never settle',
+    }],
+  },
+  {
+    id: 'furniture-art-no-retry-nonce',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="first attempt failing and the second succeeding" test/furniture-art-runtime.test.mjs',
+    because: 'Chromium caches a failed module forever; the second attempt must be a different URL '
+      + 'and must exist at all — a single attempt turns every transient failure into fallback',
+    patches: [{
+      file: 'src/furniture-art-runtime.ts',
+      find: '    for (const attempt of [0, 1] as const) {\n      try {\n        const module = await this.options.load(attempt);',
+      replace: '    for (const attempt of [0] as const) {\n      try {\n        const module = await this.options.load(attempt);',
+    }],
+  },
+  {
+    id: 'furniture-art-boot-gate-ignored',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="boot gate waits only while pending" test/furniture-art-runtime.test.mjs',
+    because: 'the boot veil must hold while a plan with furniture waits for its artwork; a gate that '
+      + 'never reports pending lets the first revealed frame miss every piece (#474 AC2)',
+    patches: [{
+      file: 'src/furniture-art-runtime.ts',
+      find: "  return runtime.state() === 'pending' && configNeedsFurnitureArt(config, isDesigner);",
+      replace: '  return false;  // mutant: veil never waits for artwork',
+    }],
+  },
+  {
+    id: 'furniture-placement-needs-art',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="wall magnet places a designer piece" test/furniture-art-runtime.test.mjs',
+    because: 'the magnet needs the catalogue, not the artwork: checking the artwork refuses every '
+      + 'designer placement while the chunk is pending (#474 AC6)',
+    patches: [{
+      file: 'src/furniture-placement.ts',
+      find: '  if (!furnitureSymbol(symbol) || !(canvasW > 0) || !(canvasH > 0)',
+      replace: "  if (!(furnitureSymbol(symbol) && (furnitureSymbol(symbol)?.g || FURNITURE_ART_RUNTIME.art(symbol))) || !(canvasW > 0) || !(canvasH > 0)",
+    }, {
+      file: 'src/furniture-placement.ts',
+      find: "import { clampFurnSize, cmToNorm, furnitureSymbol } from './furniture';",
+      replace: "import { clampFurnSize, cmToNorm, furnitureSymbol } from './furniture';\nimport { FURNITURE_ART_RUNTIME } from './furniture-art-runtime';",
+    }],
+  },
+  {
+    id: 'furniture-art-fingerprint-unchecked',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="foreign build fingerprint is terminal|adopt is synchronous, rejects" test/furniture-art-runtime.test.mjs',
+    because: 'artwork from another build must be rejected on both paths (load and adopt): a stale '
+      + 'chunk half-applied to a newer card is the #353 failure mode',
+    patches: [{
+      file: 'src/furniture-art-runtime.ts',
+      find: '        if (module.FURNITURE_ART_FINGERPRINT !== this.options.expectedFingerprint) {',
+      replace: '        if (false) {  // mutant: any build will do',
+    }, {
+      file: 'src/furniture-art-runtime.ts',
+      find: '    if (fingerprint !== this.options.expectedFingerprint) {',
+      replace: '    if (false) {  // mutant: any build will do',
+    }],
+  },
+  {
+    id: 'furniture-art-editor-adopt-skipped',
+    guard: 'npm run bundle:sync && node demo/smoke_furniture.mjs',
+    because: 'the editor imports the artwork statically and must hand it over synchronously; without '
+      + 'adopt the palette previews and the placement ghost render empty on a plan without furniture (#474 r1)',
+    patches: [{
+      file: 'src/houseplan-editor-runtime.ts',
+      find: 'FURNITURE_ART_RUNTIME.adopt(GENERATED_FURNITURE_ART, FURNITURE_ART_FINGERPRINT);',
+      replace: 'void [FURNITURE_ART_RUNTIME, GENERATED_FURNITURE_ART, FURNITURE_ART_FINGERPRINT];  // mutant: no handover',
     }],
   },
   {

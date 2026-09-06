@@ -896,6 +896,20 @@ export async function prepareGoldenScenario(page, scenario) {
       const expectedDevices = Object.keys(fixture.devices || {}).length;
       if (expectedDevices) await until(() => card._devices?.length >= expectedDevices);
       await until(() => card._booting === false);
+      // #474: designer furniture artwork is a lazy chunk. The boot gate holds
+      // the veil until it settles, so by now every piece of the active space
+      // must be drawn; a fallback here is red, not a silently empty frame
+      // (the same rule as ensureIsoRuntime: golden never accepts a degraded
+      // surface as the baseline).
+      const activeDecor = fixture.config.spaces.find((space) => space.id === card._space)?.decor || [];
+      const expectedFurniture = activeDecor.filter((shape) => shape.kind === 'furniture').length;
+      if (expectedFurniture) {
+        await card.updateComplete;
+        const drawn = (card.shadowRoot || card.renderRoot).querySelectorAll('[data-kind="furniture"]').length;
+        if (drawn < expectedFurniture) {
+          throw new Error(`golden furniture artwork missing: ${scenario.id} (${drawn}/${expectedFurniture})`);
+        }
+      }
       if (scenario.alpha
           && (window.__hpAlpha !== true || JSON.stringify(window.__hpLabs) !== '["iso"]')) {
         throw new Error(`alpha contract did not activate isometric capability: ${scenario.id}`);

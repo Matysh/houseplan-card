@@ -85,6 +85,8 @@ import {
   type FurnitureResizeResult,
 } from './furniture';
 import { FURN_WALL_CELLS, resolveFurniturePlacement, snapFurnitureToWall, type FurniturePlacement } from './furniture-placement';
+import { FURNITURE_ART_RUNTIME } from './furniture-art-runtime';
+import { FURNITURE_ART_FINGERPRINT, GENERATED_FURNITURE_ART } from './furniture-plan-art.generated';
 import { furnitureWallSurfacesFor, type FurnitureWallSurface } from './furniture-wall-surface';
 import {
   degradeWalls, rekeyWallsAfterMoveChecked, wallRecordCarrierViolations,
@@ -367,6 +369,11 @@ import {
 import { applyOpeningMoves, mergeCollinearPartitions, spaceMergeGeometry } from './wall-merge';
 
 const CARD_VERSION = '1.73.0-beta.1';
+
+// #474: the editor imports the furniture artwork statically and hands it to
+// the page runtime the moment this chunk evaluates — before the loader's
+// `install`, so the palette and the placement ghost never render `pending`.
+FURNITURE_ART_RUNTIME.adopt(GENERATED_FURNITURE_ART, FURNITURE_ART_FINGERPRINT);
 
 type ResizeLiveLabel = {
   kind: 'length';

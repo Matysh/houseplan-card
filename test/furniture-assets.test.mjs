@@ -4,7 +4,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { GENERATED_FURNITURE_PLAN } from '../test-build/furniture-plan-art.generated.js';
+import { GENERATED_FURNITURE_CATALOG } from '../test-build/furniture-plan-catalog.generated.js';
+import { GENERATED_FURNITURE_ART } from '../test-build/furniture-plan-art.generated.js';
 import { FURNITURE } from '../test-build/furniture.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -21,7 +22,9 @@ test('the vendored designer pack and generated modules stay in sync', () => {
 });
 
 test('the designer pack has the reviewed cardinality and operations', () => {
-  assert.equal(GENERATED_FURNITURE_PLAN.length, 44);
+  assert.equal(GENERATED_FURNITURE_CATALOG.length, 44);
+  // #474: catalogue ids and lazy artwork keys are the same set.
+  assert.deepEqual(Object.keys(GENERATED_FURNITURE_ART).sort(), GENERATED_FURNITURE_CATALOG.map((s) => s.id).sort());
   assert.equal(MANIFEST.menu_icons.length, 33);
   assert.equal(MANIFEST.symbols.filter((s) => s.operation === 'replace').length, 18);
   assert.equal(MANIFEST.symbols.filter((s) => s.operation === 'add').length, 26);

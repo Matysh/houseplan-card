@@ -19,6 +19,12 @@ import {
   furnitureWallSurfacesFor, physicalFurnitureWallSurfaces, roomFurnitureWallSurfaces,
 } from '../test-build/furniture-wall-surface.js';
 import { setWallThickness, wallCmToUnits } from '../test-build/wall-thickness.js';
+import { FURNITURE_ART_RUNTIME } from '../test-build/furniture-art-runtime.js';
+import { FURNITURE_ART_FINGERPRINT, GENERATED_FURNITURE_ART } from '../test-build/furniture-plan-art.generated.js';
+
+// #474: designer artwork is lazy; these tests exercise the library with the
+// artwork handed over the way the editor does it (synchronous adopt).
+assert.equal(FURNITURE_ART_RUNTIME.adopt(GENERATED_FURNITURE_ART, FURNITURE_ART_FINGERPRINT), true);
 import { NORM_W, GRID_PITCH, GRID_N, GRID_STEP_N } from '../test-build/space-geometry.js';
 
 const closeTo = (got, want, tol = 1e-9) =>
@@ -43,11 +49,13 @@ test('every symbol is well formed: unique id, a known group, positive default si
         for (const v of nums) assert.ok(v >= -0.001 && v <= 1.001, `${s.id}: ${v} outside the unit box`);
       }
     } else {
-      assert.deepEqual([s.art.viewW, s.art.viewH], [s.w, s.h], `${s.id}: manifest and SVG viewBox differ`);
+      const art = furnitureGraphic(s.id);
+      assert.equal(s.designer, true, `${s.id}: designer symbol without the lazy flag`);
+      assert.deepEqual([art.viewW, art.viewH], [s.w, s.h], `${s.id}: manifest and SVG viewBox differ`);
     }
   }
   assert.equal(FURNITURE.length, 56);
-  assert.equal(FURNITURE.filter((s) => s.art).length, 44);
+  assert.equal(FURNITURE.filter((s) => s.designer).length, 44);
   assert.equal(FURNITURE.filter((s) => s.g).length, 12);
 });
 

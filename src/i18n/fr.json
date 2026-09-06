@@ -676,6 +676,7 @@
   "preview.room_name": "Salon",
   "toast.cfg_reload_failed": "Impossible de recharger le plan depuis le serveur : {err}",
   "toast.locale_load_failed": "Impossible de charger le pack de langue. L'anglais est utilisé jusqu'au rechargement de la page.",
+  "toast.furniture_art_load_failed": "Impossible de charger les dessins de meubles. Rechargez la page pour les afficher.",
   "room.settings_short": "Paramètres de la pièce",
   "room.unnamed": "Pièce sans nom",
   "marker.use_climate_temp": "Inclure la température de l’appareil dans la pièce",

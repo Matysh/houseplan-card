@@ -1,6 +1,6 @@
 /** Editor-only placement geometry for the furniture tool (#359, #445). */
 import { clampCanvasN } from './space-geometry';
-import { clampFurnSize, cmToNorm, furnitureGraphic } from './furniture';
+import { clampFurnSize, cmToNorm, furnitureSymbol } from './furniture';
 import type { FurnitureWallSurface } from './furniture-wall-surface';
 
 /** How far from a wall the magnet still reaches, in grid cells. */
@@ -167,7 +167,9 @@ export function resolveFurniturePlacement(input: FurniturePlacementInput): Furni
     symbol, widthCm, depthCm, point, canvasW, canvasH, cellCm, gridPitch,
     walls, wallReach, free = false, intentPoint = point, preferredNormal,
   } = input;
-  if (!furnitureGraphic(symbol) || !(canvasW > 0) || !(canvasH > 0)
+  // The magnet needs the catalogue (sizes), not the artwork: designer art is
+  // lazy (#474) and must not refuse a placement while the chunk is pending.
+  if (!furnitureSymbol(symbol) || !(canvasW > 0) || !(canvasH > 0)
       || !Number.isFinite(point[0]) || !Number.isFinite(point[1])) return null;
   const safeIntent: readonly [number, number] = Number.isFinite(intentPoint[0])
     && Number.isFinite(intentPoint[1]) ? intentPoint : point;

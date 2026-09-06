@@ -71,7 +71,7 @@ import {
 } from './sun';
 import { dayCycleStageVars, renderDayCycleEnvironment } from './day-cycle-render';
 import {
-  furnitureGraphic,
+  furnitureGraphic, furnitureArtIsLazy,
   furniturePlanScreenScale, furnitureStrokePx,
   furnitureRenderTransform,
 } from './furniture';
@@ -329,6 +329,7 @@ import {
   type RoomFitGestureCandidate,
 } from './room-fit';
 import { EditorRuntimeLoader, lazyLoadFailureMessage, safeRuntimeDiagnostic, type EditorRuntimeLoaderState } from './editor-runtime-loader';
+import { FURNITURE_ART_RUNTIME, composeUnsub, ensureFurnitureArtFor, furnitureArtBootPending, subscribeFurnitureArtLoadFailures } from './furniture-art-runtime';
 import type { BackdropGuardState } from './backdrop-pick';
 import {
   expiredWarmViewport, lruRead, lruWrite, normalizeMarkupTool, strictNumber,
@@ -932,6 +933,7 @@ export class HouseplanCard extends LitElement {
   private _decorStyleSeeded = false;
 
   private _seedDecorStyle(cfg: ServerConfig | null): void {
+    ensureFurnitureArtFor(FURNITURE_ART_RUNTIME, cfg, furnitureArtIsLazy, this); // #474: plan intake starts the lazy artwork before the first frame
     if (this._decorStyleSeeded || !cfg) return;
     this._decorStyleSeeded = true;
     const raw = (cfg.settings as { decor_default_style?: unknown } | undefined)
@@ -2572,9 +2574,9 @@ export class HouseplanCard extends LitElement {
     // locale-load failure into a visible message; other runtime surfaces keep
     // the console warning from the shared LanguageRuntime.
     this._languageFailureUnsub?.();
-    this._languageFailureUnsub = subscribeLanguageLoadFailures(() => {
+    this._languageFailureUnsub = composeUnsub(subscribeLanguageLoadFailures(() => {
       this._showToast(this._t('toast.locale_load_failed'));
-    });
+    }), subscribeFurnitureArtLoadFailures(() => this._showToast(this._t('toast.furniture_art_load_failed')))); // #474
     super.connectedCallback();
     void this._ensureLiveRuntime().catch(() => this.requestUpdate());
     this._pointerModality.connect(this.ownerDocument.defaultView);
@@ -3172,9 +3174,7 @@ export class HouseplanCard extends LitElement {
     try {
       const ks = JSON.parse(localStorage.getItem(LS_KIOSK) || 'null');
       this._kioskScale = { icon: clampScale(ks?.icon), font: clampScale(ks?.font) };
-    } catch {
-      /* defaults */
-    }
+    } catch { /* defaults */ }
     // instant render from cache (stale-while-revalidate): show the plan and icons
     // right away, without waiting for the server response — fresh data will load in the background.
     try {
@@ -3191,9 +3191,7 @@ export class HouseplanCard extends LitElement {
         this._virtualLights = virtualLightSnapshot(c.virtual_lights, this._cfgRev);
         this._serverStorage = true;
       }
-    } catch {
-      /* ignore */
-    }
+    } catch { /* ignore */ }
     this._adoptInitialSpace(this._model, this._loadOk);
     // HP-1551: the saved per-space zoom used to be applied only by
     // _restoreZoom()'s rAF after the server round-trip, so the cached config
@@ -6499,7 +6497,7 @@ export class HouseplanCard extends LitElement {
       const h = this._stageEl ? this._stageEl.clientHeight : 0;
       if (h !== this._bootLastH) { this._bootLastH = h; this._bootLastChange = now; }
       const elapsed = now - this._bootStart;
-      if (elapsed >= BOOT_MAX_MS || (elapsed >= BOOT_MIN_MS && h > 0 && now - this._bootLastChange >= BOOT_QUIET_MS)) {
+      if (elapsed >= BOOT_MAX_MS || (elapsed >= BOOT_MIN_MS && h > 0 && now - this._bootLastChange >= BOOT_QUIET_MS && !furnitureArtBootPending(FURNITURE_ART_RUNTIME, this._serverCfg, furnitureArtIsLazy))) {
         this._bootSettled();
         return;
       }
@@ -8912,7 +8910,7 @@ export class HouseplanCard extends LitElement {
         // physical plan zoom.
         // An unknown symbol renders as nothing: a plan from a newer card must
         // open in an older one, not break it.
-        const art = furnitureGraphic(sh.symbol);
+        const art = furnitureGraphic(sh.symbol, this);
         if (!art) return nothing;
         const tr = furnitureRenderTransform(sh, W, H, art.viewW, art.viewH);
         const visibleStrokePx = furnitureStrokePx(strokeWidth, furnitureScreenScale);

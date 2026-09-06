@@ -150,8 +150,15 @@ export const LOW_HEADROOM_WARNING_BYTES = 15_000;
  * измеренный initial факт до 299 501 Б и оставила лишь 499 Б сверху — меньше
  * обязательного шумового запаса. Новый центр оставляет 999 Б сверху и
  * 1 001 Б снизу; продуктовый граф при этом не расширялся.
+ *
+ * 2026-09-06, #474: потолок опущен 300 500 → 290 500 без изменения общего
+ * бюджета. Арт 44 дизайнерских символов мебели (`furniture-plan-art.generated`)
+ * вынесен в ленивый чанк `lazyFurnitureArtFiles` (10 252 Б gzip): его грузят
+ * только планы с мебелью, редактор отдаёт его рантайму синхронно. Измеренный
+ * initial факт 289 690 Б оставляет 810 Б сверху и 1 190 Б до нижней границы
+ * полосы; запас до стены 301 066 — 11 376 Б.
  */
-export const INITIAL_VIEW_GZIP_CEILING = 300_500;
+export const INITIAL_VIEW_GZIP_CEILING = 290_500;
 export const INITIAL_VIEW_CEILING_BAND = 2_000;
 
 /**
@@ -268,6 +275,14 @@ export function assertBundleBudget(manifest, budget = INITIAL_VIEW_GZIP_BUDGET) 
   if (!manifest.lazyIsometricFiles?.length) {
     throw new Error('bundle has no lazy isometric graph');
   }
+  // #474: designer furniture artwork is lazy; a static import anywhere in the
+  // View graph would pull ~10 KB gzip back into the initial graph silently.
+  if (!manifest.lazyFurnitureArtFiles?.length) {
+    throw new Error('bundle has no lazy furniture artwork graph');
+  }
+  if (manifest.initialViewFiles.some((path) => manifest.lazyFurnitureArtFiles.includes(path))) {
+    throw new Error('initial View graph overlaps lazy furniture artwork graph');
+  }
   if (manifest.initialViewFiles.some((path) => manifest.lazyEditorFiles.includes(path))) {
     throw new Error('initial View graph overlaps lazy editor graph');
   }
@@ -291,6 +306,7 @@ export function assertBundleBudget(manifest, budget = INITIAL_VIEW_GZIP_BUDGET) 
     lazyEditorGzipBytes: manifest.lazyEditorGzipBytes,
     lazyLocaleGzipBytes: manifest.lazyLocaleGzipBytes,
     lazyIsometricGzipBytes: manifest.lazyIsometricGzipBytes,
+    lazyFurnitureArtGzipBytes: manifest.lazyFurnitureArtGzipBytes,
   };
 }
 

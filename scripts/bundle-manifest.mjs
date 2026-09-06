@@ -9,6 +9,7 @@ const ONBOARDING_RETRY_ASSET_TOKEN = '__HOUSEPLAN_ONBOARDING_RETRY_ASSET__';
 const ISO_RETRY_ASSET_TOKEN = '__HOUSEPLAN_ISO_RETRY_ASSET__';
 const DE_RETRY_ASSET_TOKEN = '__HOUSEPLAN_DE_RETRY_ASSET__';
 const FR_RETRY_ASSET_TOKEN = '__HOUSEPLAN_FR_RETRY_ASSET__';
+const FURNITURE_ART_RETRY_ASSET_TOKEN = '__HOUSEPLAN_FURNITURE_ART_RETRY_ASSET__';
 
 const sha256 = (value) => createHash('sha256').update(value).digest('hex');
 
@@ -39,7 +40,11 @@ export function buildBundleManifest(bundle, fingerprint) {
             ? 'editor'
             : modules.some((id) => id.endsWith('/src/iso-scene-render.ts'))
               ? 'isometric'
-              : undefined;
+              // #474: designer furniture artwork — its own lazy chunk, shared by
+              // the editor (static import) and the View runtime (dynamic).
+              : modules.some((id) => id.endsWith('/src/furniture-plan-art.generated.ts'))
+                ? 'furniture-art'
+                : undefined;
       return {
         path: chunk.fileName.replaceAll('\\', '/'),
         sha256: sha256(contents),
@@ -71,6 +76,7 @@ export function buildBundleManifest(bundle, fingerprint) {
     && !localeRoots.includes(path) && !onboardingRoots.includes(path));
   const isometricRoots = dynamicRoots.filter((path) => byPath.get(path)?._role === 'isometric'
     || path.includes('iso-scene-render-'));
+  const furnitureArtRoots = dynamicRoots.filter((path) => byPath.get(path)?._role === 'furniture-art');
   const graphFrom = (roots) => {
     const graph = new Set();
     for (const root of roots) {
@@ -82,6 +88,7 @@ export function buildBundleManifest(bundle, fingerprint) {
   const lazyOnboarding = graphFrom(onboardingRoots);
   const lazyLocale = graphFrom(localeRoots);
   const lazyIsometric = graphFrom(isometricRoots);
+  const lazyFurnitureArt = graphFrom(furnitureArtRoots);
   const sum = (paths) => [...paths]
     .reduce((total, path) => total + (byPath.get(path)?.gzipBytes || 0), 0);
   return {
@@ -100,6 +107,8 @@ export function buildBundleManifest(bundle, fingerprint) {
     lazyLocaleGzipBytes: sum(lazyLocale),
     lazyIsometricFiles: [...lazyIsometric].sort(),
     lazyIsometricGzipBytes: sum(lazyIsometric),
+    lazyFurnitureArtFiles: [...lazyFurnitureArt].sort(),
+    lazyFurnitureArtGzipBytes: sum(lazyFurnitureArt),
     files: files.map(({ _role, ...file }) => file),
   };
 }
@@ -153,11 +162,15 @@ export function editorRuntimeRetryUrlPlugin() {
         .some((id) => id.replaceAll('\\', '/').endsWith('/src/i18n/de.ts')));
       const french = chunks.find((chunk) => Object.keys(chunk.modules)
         .some((id) => id.replaceAll('\\', '/').endsWith('/src/i18n/fr.ts')));
+      const furnitureArt = chunks.find((chunk) => Object.keys(chunk.modules)
+        .some((id) => id.replaceAll('\\', '/').endsWith('/src/furniture-plan-art.generated.ts')));
       if (!editor) throw new Error('editor runtime chunk was not emitted');
       if (!onboarding) throw new Error('onboarding runtime chunk was not emitted');
       if (!isometric) throw new Error('isometric runtime chunk was not emitted');
       if (!german) throw new Error('German locale chunk was not emitted');
       if (!french) throw new Error('French locale chunk was not emitted');
+      if (!furnitureArt) throw new Error('furniture artwork chunk was not emitted');
+      let furnitureArtReplacements = 0;
       let editorReplacements = 0;
       let onboardingReplacements = 0;
       let isometricReplacements = 0;
@@ -194,11 +207,17 @@ export function editorRuntimeRetryUrlPlugin() {
           frenchReplacements += chunk.code.split(FR_RETRY_ASSET_TOKEN).length - 1;
           chunk.code = chunk.code.replaceAll(FR_RETRY_ASSET_TOKEN, asset);
         }
+        if (chunk.code.includes(FURNITURE_ART_RETRY_ASSET_TOKEN)) {
+          let asset = posix.relative(posix.dirname(chunk.fileName), furnitureArt.fileName);
+          if (!asset.startsWith('.')) asset = `./${asset}`;
+          furnitureArtReplacements += chunk.code.split(FURNITURE_ART_RETRY_ASSET_TOKEN).length - 1;
+          chunk.code = chunk.code.replaceAll(FURNITURE_ART_RETRY_ASSET_TOKEN, asset);
+        }
       }
       if (editorReplacements !== 1 || onboardingReplacements !== 1 || isometricReplacements !== 1
-          || germanReplacements !== 1 || frenchReplacements !== 1) {
+          || germanReplacements !== 1 || frenchReplacements !== 1 || furnitureArtReplacements !== 1) {
         throw new Error('lazy retry URL placeholder counts are '
-          + `${editorReplacements}/${onboardingReplacements}/${isometricReplacements}/${germanReplacements}/${frenchReplacements}, expected 1/1/1/1/1`);
+          + `${editorReplacements}/${onboardingReplacements}/${isometricReplacements}/${germanReplacements}/${frenchReplacements}/${furnitureArtReplacements}, expected 1/1/1/1/1/1`);
       }
     },
   };
