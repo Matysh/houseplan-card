@@ -13,14 +13,6 @@ on:
     paths-ignore:
       - 'docs/reviews/**'
   pull_request:
-  # Полный набор тяжёлых job по кнопке и по ночам (#479): nightly.yml делает
-  # `gh workflow run validate.yml --ref dev -f full=true`.
-  workflow_dispatch:
-    inputs:
-      full:
-        description: 'Полный набор: смоки, golden, performance_smoke'
-        type: boolean
-        default: true
 
 # A new push supersedes an unfinished validation for the same branch or PR.
 # Exact-SHA release gates never depend on an obsolete commit.
@@ -61,47 +53,28 @@ jobs:
       - uses: actions/setup-node@v7
         with: { node-version: 22 }
 
-      # Свежесть скриншотов на обычном пуше — предупреждение, на кандидате беты
-      # (трейлер `Release:`), по кнопке и на PR — ошибка (#479). Остальные
-      # проверки документации красят всегда. Режим считает тот же скрипт, что и
-      # выход `heavy` job `changes`, чтобы два места не разошлись.
       - name: "Документация: гайды, ченджлоги, скриншот-индекс"
         id: docs
         continue-on-error: true
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          HEAD_MESSAGE: ${{ github.event.head_commit.message }}
-          FULL_INPUT: ${{ inputs.full }}
-        run: |
-          heavy=$(node scripts/classify-changes.mjs --heavy)
-          mode=warn
-          [ "$heavy" = "heavy=true" ] && mode=strict
-          echo "скриншоты документации: режим $mode ($heavy)"
-          node scripts/check-docs.mjs --external --screenshots=$mode
+        run: node scripts/check-docs.mjs --external
 
       # Конвейер читает `process.yml` из ветки по умолчанию, поэтому файл обязан
       # совпадать в `main` и `dev`. До этой проверки совпадение держалось на
       # дисциплине: каждая правка требовала двух пушей и ручной сверки.
-      - name: "Процесс: process.yml и mutation-gate.yml идентичны в main и dev"
+      - name: "Процесс: process.yml идентичен в main и dev"
         id: workflow_sync
         continue-on-error: true
         run: |
           git fetch --quiet origin main dev
-          # #472: расписание mutation-gate.yml тоже исполняется из ветки по
-          # умолчанию — та же ловушка, что у process.yml. Сверяются оба.
-          status=0
-          for file in process.yml mutation-gate.yml; do
-            if diff <(git show "origin/main:.github/workflows/$file") \
-                    <(git show "origin/dev:.github/workflows/$file"); then
-              echo "$file: main и dev идентичны"
-            else
-              echo "РАСХОЖДЕНИЕ: $file в main и dev различаются."
-              echo "Файл исполняется из ветки по умолчанию, поэтому"
-              echo "правку нужно отправить в обе ветки."
-              status=1
-            fi
-          done
-          exit $status
+          if diff <(git show origin/main:.github/workflows/process.yml) \
+                  <(git show origin/dev:.github/workflows/process.yml); then
+            echo "main и dev идентичны"
+          else
+            echo "РАСХОЖДЕНИЕ: process.yml в main и dev различаются."
+            echo "Конвейер исполняет версию из ветки по умолчанию, поэтому"
+            echo "правку нужно отправить в обе ветки."
+            exit 1
+          fi
 
       # Оба гейта ниже судят САМ диапазон коммитов, а не объём проверок, и до
       # #388 брали его от головы предыдущего пуша. Прогон предыдущего пуша
@@ -185,7 +158,7 @@ jobs:
           }
           echo "### Предполётные проверки" >> "$GITHUB_STEP_SUMMARY"
           check "документация" "$DOCS"
-          check "process.yml и mutation-gate.yml в main и dev" "$WORKFLOW_SYNC"
+          check "process.yml в main и dev" "$WORKFLOW_SYNC"
           check "провенанс коммитов" "$PROVENANCE"
           check "процессный гейт" "$PROCESS_GATE"
           exit $fail
@@ -209,11 +182,6 @@ jobs:
       frontend: ${{ steps.classify.outputs.frontend }}
       backend: ${{ steps.classify.outputs.backend }}
       integration: ${{ steps.classify.outputs.integration }}
-      # Диффозависимые профили перф-смока (#473 §5).
-      perf_iso: ${{ steps.classify.outputs.perf_iso }}
-      perf_interaction: ${{ steps.classify.outputs.perf_interaction }}
-      # Тяжёлые job только на кандидате/по кнопке/на PR (#479), см. шаг heavy.
-      heavy: ${{ steps.heavy.outputs.heavy }}
       base: ${{ steps.base.outputs.base }}
       # Разные вещи под разными именами намеренно: `base` — до какого коммита
       # классифицировать файлы ветки (#387), `range_base` — от какого коммита
@@ -230,15 +198,6 @@ jobs:
       # то есть допущение «до этого всё проверено». Concurrency отменяет прогон
       # предыдущего пуша штатно, и на #86 (r5) это дало зелёный статус ветки
       # без единого исполненного тяжёлого гейта.
-      # Смоки, golden, performance_smoke — на кандидате беты (трейлер
-      # `Release:`), по `workflow_dispatch full=true`, на PR (#479). Логика и
-      # её тест — scripts/classify-changes.mjs.
-      - id: heavy
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          HEAD_MESSAGE: ${{ github.event.head_commit.message }}
-          FULL_INPUT: ${{ inputs.full }}
-        run: node scripts/classify-changes.mjs --heavy | tee -a "$GITHUB_OUTPUT"
       - id: base
         if: github.event_name != 'pull_request'
         env:
@@ -278,7 +237,7 @@ jobs:
         run: |
           if [ "$REF" = "refs/heads/dev" ]; then
             echo "dev: без фильтров, всё true"
-            node scripts/classify-changes.mjs --all >> "$GITHUB_OUTPUT"
+            printf 'frontend=true\nbackend=true\nintegration=true\n' >> "$GITHUB_OUTPUT"
             exit 0
           fi
           zero=$(printf '%040d' 0)
@@ -302,7 +261,7 @@ jobs:
               echo "\`before\` (=$BEFORE_SHA) переписан force-push'ем: диапазон недоказуем,"
               echo "все тяжёлые job запускаются без фильтра путей (#347)."
             } >> "$GITHUB_STEP_SUMMARY"
-            node scripts/classify-changes.mjs --all >> "$GITHUB_OUTPUT"
+            printf 'frontend=true\nbackend=true\nintegration=true\n' >> "$GITHUB_OUTPUT"
             exit 0
           fi
           # Диапазон считается от последнего ДОКАЗАННО зелёного предка (#387),
@@ -312,14 +271,17 @@ jobs:
           if [ "$EVENT_NAME" = "pull_request" ]; then base="$BASE_SHA"; fi
           if [ -z "$base" ]; then
             echo "база не определена — полный прогон без классификации"
-            node scripts/classify-changes.mjs --all >> "$GITHUB_OUTPUT"
+            printf 'frontend=true\nbackend=true\nintegration=true\n' >> "$GITHUB_OUTPUT"
             exit 0
           fi
           files=$(git diff --name-only "$base" "$HEAD_SHA")
           printf '%s\n' "$files" | head -50
-          # Шаблоны — в scripts/classify-changes.mjs: там они проверяемы
-          # unit-тестом, здесь — только переписываются в выходы (#473 AC8).
-          printf '%s\n' "$files" | node scripts/classify-changes.mjs | tee -a "$GITHUB_OUTPUT"
+          has() { printf '%s\n' "$files" | grep -qE "$1" && echo true || echo false; }
+          {
+            echo "frontend=$(has '^(src/|demo/|test/|dist/|custom_components/houseplan/frontend/|package(-lock)?\.json$|rollup\.config\.mjs$|tsconfig)')"
+            echo "backend=$(has '^(custom_components/.*\.py$|tests_backend/|scripts/support-relay/|pytest\.ini$)')"
+            echo "integration=$(has '^(custom_components/houseplan/manifest\.json$|hacs\.json$|custom_components/.*\.py$|custom_components/.*/translations/)')"
+          } >> "$GITHUB_OUTPUT"
 
   # Переиспользование результата тяжёлой job (#208). Ключ = входы поведения
   # (sourceFingerprint: src/**, demo/fixtures, demo/golden/*.mjs, манифесты
@@ -336,10 +298,6 @@ jobs:
   # заведомо новые и полный набор гейтов перед бетой и релизом идёт всегда.
   reuse:
     name: "Переиспользование: это дерево уже проверено"
-    # `changes` нужна ради набора профилей перф-смока (#473): ключ
-    # performance_smoke включает набор, иначе glow-only результат засчитался бы
-    # прогону, которому нужен изометрический профиль.
-    needs: changes
     runs-on: ubuntu-latest
     outputs:
       smoke: ${{ steps.probe.outputs.smoke }}
@@ -349,7 +307,6 @@ jobs:
       smoke_key: ${{ steps.keys.outputs.smoke }}
       golden_key: ${{ steps.keys.outputs.golden }}
       performance_smoke_key: ${{ steps.keys.outputs.performance_smoke }}
-      performance_smoke_set: ${{ steps.keys.outputs.performance_smoke_set }}
       backend_key: ${{ steps.keys.outputs.backend }}
     steps:
       - uses: actions/checkout@v7
@@ -357,21 +314,12 @@ jobs:
         with: { node-version: 22 }
       - name: Ключи переиспользования
         id: keys
-        env:
-          PERF_ISO: ${{ needs.changes.outputs.perf_iso }}
-          PERF_INTERACTION: ${{ needs.changes.outputs.perf_interaction }}
         run: |
           for job in smoke golden performance_smoke backend; do
             key=$(node scripts/gate-reuse.mjs --job="$job")
             echo "$job=$key" >> "$GITHUB_OUTPUT"
             echo "$job: $key"
           done
-          # Набор профилей перф-смока — часть ключа (#473 AC5).
-          set=glow
-          [ "$PERF_ISO" = "true" ] && set="$set-iso"
-          [ "$PERF_INTERACTION" = "true" ] && set="$set-interaction"
-          echo "performance_smoke_set=$set" >> "$GITHUB_OUTPUT"
-          echo "performance_smoke set: $set"
       # lookup-only: маркер только проверяется, но не восстанавливается —
       # сохранять его в этой job нечего, она ничего не прогоняла.
       - name: Маркер smoke
@@ -393,7 +341,7 @@ jobs:
         uses: actions/cache/restore@v6
         with:
           path: .reuse-marker
-          key: reuse-performance_smoke-${{ steps.keys.outputs.performance_smoke }}-${{ steps.keys.outputs.performance_smoke_set }}
+          key: reuse-performance_smoke-${{ steps.keys.outputs.performance_smoke }}
           lookup-only: true
       - name: Маркер backend
         id: m_backend
@@ -538,8 +486,8 @@ jobs:
   smoke:
     name: Смоки в браузере (шард ${{ matrix.shard }} из 3)
     # Gated on `frontend` so a typecheck failure does not burn browser minutes.
-    needs: [changes, frontend, reuse]
-    if: needs.changes.outputs.heavy == 'true' && needs.reuse.outputs.smoke != 'true'
+    needs: [frontend, reuse]
+    if: needs.reuse.outputs.smoke != 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     # Смоки шардируются: последовательный прогон занимал ~7.5 минут и был
@@ -642,8 +590,8 @@ jobs:
   # частично прогнанная матрица не имеет права выглядеть как выполненная работа.
   smoke_done:
     name: "Смоки: все шарды зелёные"
-    needs: [changes, smoke, reuse]
-    if: needs.changes.outputs.heavy == 'true' && needs.reuse.outputs.smoke != 'true'
+    needs: [smoke, reuse]
+    if: needs.reuse.outputs.smoke != 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Записать маркер успеха
@@ -665,8 +613,8 @@ jobs:
     name: Golden-кадры против принятых эталонов
     # Deterministic visual correctness stays in every prerelease gate: it is
     # inexpensive and catches a different class of regressions than timings.
-    needs: [changes, frontend, reuse]
-    if: needs.changes.outputs.heavy == 'true' && needs.reuse.outputs.golden != 'true'
+    needs: [frontend, reuse]
+    if: needs.reuse.outputs.golden != 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -763,14 +711,13 @@ jobs:
     name: "Перф-смок: бюджет времени кадра"
     # Candidate-only catastrophic-regression guard for ordinary pushes and
     # prereleases. The expensive same-runner comparison lives in performance.yml.
-    needs: [changes, frontend, reuse]
-    if: needs.changes.outputs.heavy == 'true' && needs.reuse.outputs.performance_smoke != 'true'
+    needs: [frontend, reuse]
+    if: needs.reuse.outputs.performance_smoke != 'true'
     runs-on: ubuntu-latest
     # 15 минут не хватало, когда установка браузера шла через apt: замер
     # начинался на исходе окна (#206). Запас на холодный кэш — при попадании
-    # job укладывается в те же минуты, что и раньше. Диффозависимые профили
-    # (#473) добавляют до двух замеров по 3 образца — окно расширено под них.
-    timeout-minutes: 30
+    # job укладывается в те же минуты, что и раньше.
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -810,20 +757,6 @@ jobs:
         run: |
           npm run benchmark:compare -- --absolute-only --budgets=demo/performance/budgets-glow-smoke.json --candidate=artifacts/performance-smoke/candidate.json --output=artifacts/performance-smoke/comparison.json
           npm run benchmark:compare -- --absolute-only --budgets=demo/performance/budgets-space-glow-smoke.json --candidate=artifacts/performance-smoke/space-candidate.json --output=artifacts/performance-smoke/space-comparison.json
-      # Диффозависимые профили (#473 §5): изометрия — когда дифф задел
-      # `src/iso-*`, взаимодействие — когда живой путь или оркестраторы кадра.
-      # Абсолютные потолки — `hardMaxMs` полных профилей: регрессия #160
-      # (9 870 мс против 3 500) ловится с одного образца, шум — нет.
-      - name: Изометрический профиль по диффу (#473)
-        if: needs.changes.outputs.perf_iso == 'true'
-        run: |
-          npm run benchmark:large-house -- --profile=large-house-isometric-v1 --samples=3 --warmups=1 --output=artifacts/performance-smoke/isometric-candidate.json
-          npm run benchmark:compare -- --absolute-only --budgets=demo/performance/budgets-isometric-smoke.json --candidate=artifacts/performance-smoke/isometric-candidate.json --output=artifacts/performance-smoke/isometric-comparison.json
-      - name: Профиль взаимодействия по диффу (#473)
-        if: needs.changes.outputs.perf_interaction == 'true'
-        run: |
-          npm run benchmark:large-house -- --profile=large-house-interaction-v1 --samples=3 --warmups=1 --output=artifacts/performance-smoke/interaction-candidate.json
-          npm run benchmark:compare -- --absolute-only --budgets=demo/performance/budgets-interaction-smoke.json --candidate=artifacts/performance-smoke/interaction-candidate.json --output=artifacts/performance-smoke/interaction-comparison.json
       # #330 AC7: перф-контракт ограничений стыков — быстрый (без браузера),
       # ловит возврат квадратичных путей в оба зеркала прямо на пуше.
       - name: Бюджеты ограничений стыков (#330)
@@ -851,7 +784,7 @@ jobs:
         continue-on-error: true
         with:
           path: .reuse-marker
-          key: reuse-performance_smoke-${{ needs.reuse.outputs.performance_smoke_key }}-${{ needs.reuse.outputs.performance_smoke_set }}
+          key: reuse-performance_smoke-${{ needs.reuse.outputs.performance_smoke_key }}
 
   backend:
     name: "Бэкенд: pytest в Home Assistant"
