@@ -368,7 +368,12 @@ test('мутанты по диффу гоняются на каждом пуше
   const job = workflow.slice(start, workflow.indexOf('\n  frontend:\n', start));
   // Триггер — и фронтенд, и бэкенд: бэкенд-мутанты патчат .py и охраняются
   // pytest, а дифф только по ним даёт backend=true без frontend=true (ревью r1).
-  assert.match(job, /if: needs\.changes\.outputs\.frontend == 'true' \|\| needs\.changes\.outputs\.backend == 'true'/);
+  assert.match(job, /if: needs\.changes\.outputs\.frontend == 'true' \|\| needs\.changes\.outputs\.backend == 'true' \|\| needs\.changes\.outputs\.mutants == 'true'/);
+  // Третий дизъюнкт (ТЗ §2, ревью r1): правка одного реестра мутантов — тоже
+  // вход гейта, классификатор обязан выдавать `mutants` по этому файлу.
+  assert.match(workflow, /mutants: \$\{\{ steps\.classify\.outputs\.mutants \}\}/);
+  // Сам шаблон и fallback `--all` проверяет test/classify-changes.test.mjs
+  // (после #473 классификация живёт в scripts/classify-changes.mjs).
   // База диапазона — та же, что у остальных гейтов ветки (#387/#388).
   assert.match(job, /PROVEN_BASE: \$\{\{ needs\.changes\.outputs\.range_base \}\}/);
   assert.match(job, /git merge-base origin\/dev "\$HEAD_SHA"/);

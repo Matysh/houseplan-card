@@ -35,13 +35,21 @@ test('тесты и демо перф-профили не включают: ка
   assert.equal(out.perf_interaction, 'false');
 });
 
+test('правка реестра мутантов даёт mutants=true и только его (#475 r1)', () => {
+  const out = classifyChanges(['scripts/mutation-gate.mjs']);
+  assert.equal(out.mutants, 'true');
+  assert.equal(out.frontend, 'false');
+  assert.equal(classifyChanges(['scripts/mutation-gate-report.mjs']).mutants, 'false');
+  assert.equal(classifyChanges(['src/x.ts']).mutants, 'false');
+});
+
 test('прежние три выхода классифицируются как в inline-shell до выноса', () => {
   assert.deepEqual(classifyChanges(['custom_components/houseplan/frontend_registration.py']),
-    { frontend: 'false', backend: 'true', integration: 'true', perf_iso: 'false', perf_interaction: 'false' });
+    { frontend: 'false', backend: 'true', integration: 'true', perf_iso: 'false', perf_interaction: 'false', mutants: 'false' });
   assert.deepEqual(classifyChanges(['custom_components/houseplan/frontend/houseplan-card.js']),
-    { frontend: 'true', backend: 'false', integration: 'false', perf_iso: 'false', perf_interaction: 'false' });
+    { frontend: 'true', backend: 'false', integration: 'false', perf_iso: 'false', perf_interaction: 'false', mutants: 'false' });
   assert.deepEqual(classifyChanges(['hacs.json', 'tsconfig.json']),
-    { frontend: 'true', backend: 'false', integration: 'true', perf_iso: 'false', perf_interaction: 'false' });
+    { frontend: 'true', backend: 'false', integration: 'true', perf_iso: 'false', perf_interaction: 'false', mutants: 'false' });
   assert.equal(classifyChanges(['scripts/support-relay/x.py']).backend, 'true');
   assert.equal(classifyChanges(['']).frontend, 'false');
 });

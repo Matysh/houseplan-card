@@ -209,9 +209,9 @@ jobs:
       frontend: ${{ steps.classify.outputs.frontend }}
       backend: ${{ steps.classify.outputs.backend }}
       integration: ${{ steps.classify.outputs.integration }}
-      # Диффозависимые профили перф-смока (#473 §5).
-      perf_iso: ${{ steps.classify.outputs.perf_iso }}
+      perf_iso: ${{ steps.classify.outputs.perf_iso }} # #473 §5
       perf_interaction: ${{ steps.classify.outputs.perf_interaction }}
+      mutants: ${{ steps.classify.outputs.mutants }}
       # Тяжёлые job только на кандидате/по кнопке/на PR (#479), см. шаг heavy.
       heavy: ${{ steps.heavy.outputs.heavy }}
       base: ${{ steps.base.outputs.base }}
@@ -459,7 +459,7 @@ jobs:
   changed_mutants:
     name: "Мутанты по диффу: затронутые свидетели краснеют"
     needs: changes
-    if: needs.changes.outputs.frontend == 'true' || needs.changes.outputs.backend == 'true'
+    if: needs.changes.outputs.frontend == 'true' || needs.changes.outputs.backend == 'true' || needs.changes.outputs.mutants == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:

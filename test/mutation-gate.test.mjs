@@ -319,8 +319,12 @@ test('#475 AC6: воспроизведение #467 — дифф по src/wall-t
 test('#475 AC7: воспроизведение находки ревью — бэкенд-мутанты отбираются по .py гарду и патчу', () => {
   const byGuard = selectChangedMutants(MUTANTS, ['tests_backend/test_ha_frontend_registration.py']).map((m) => m.id);
   const byPatch = selectChangedMutants(MUTANTS, ['custom_components/houseplan/frontend_registration.py']).map((m) => m.id);
-  const registration = MUTANTS.filter((m) => m.id.startsWith('frontend-registration-')).map((m) => m.id);
-  assert.ok(registration.length >= 3, 'в реестре есть бэкенд-мутанты регистрации');
+  // Отбор по патчу, а не по префиксу id (ревью r1: `frontend-reload-notice-*`
+  // патчит тот же файл и обязан попасть в набор).
+  const registration = MUTANTS
+    .filter((m) => m.patches.some((patch) => patch.file === 'custom_components/houseplan/frontend_registration.py'))
+    .map((m) => m.id);
+  assert.ok(registration.length >= 4, 'в реестре есть бэкенд-мутанты регистрации');
   for (const id of registration) {
     assert.ok(byGuard.includes(id), `${id} не отобран по гарду`);
     assert.ok(byPatch.includes(id), `${id} не отобран по патчу`);

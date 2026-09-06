@@ -25,6 +25,9 @@ export const CLASSIFIERS = {
   // Только `src/**`: тесты и демо кадр не замедляют.
   perf_iso: /^src\/iso-[^/]+\.ts$/,
   perf_interaction: /^src\/(live-[^/]+|render-[^/]+|houseplan-render-lifecycle|houseplan-card)\.ts$/,
+  // Реестр мутантов сам по себе — вход гейта по диффу (#475 ревью r1): новый
+  // свидетель без правки в src/test иначе не проверялся бы до понедельника.
+  mutants: /^scripts\/mutation-gate\.mjs$/,
 };
 
 export const OUTPUTS = Object.keys(CLASSIFIERS);
