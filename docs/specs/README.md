@@ -187,6 +187,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#461](https://github.com/Matysh/houseplan-card/issues/461) Быстрый commit промежуточной точки цепочки стен | [461-wall-draw-click-performance.md](461-wall-draw-click-performance.md) |
 | [#464](https://github.com/Matysh/houseplan-card/issues/464) Верхний контекстный слой Zigbee-топологии | [464-zigbee-topology-layer-order.md](464-zigbee-topology-layer-order.md) |
 | [#473](https://github.com/Matysh/houseplan-card/issues/473) Свидетели перф-дельты #160 и диффозависимый перф-смок | [473-iso-perf-witnesses-and-smoke.md](473-iso-perf-witnesses-and-smoke.md) |
+| [#476](https://github.com/Matysh/houseplan-card/issues/476) Явное завершение выбора цвета кнопкой «ОК» | [476-color-picker-ok.md](476-color-picker-ok.md) |
 
 ## P3
 
