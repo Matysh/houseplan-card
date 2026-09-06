@@ -46,6 +46,23 @@ const result = await page.evaluate(async () => {
   tempCold.renderRoot.querySelector('.trigger').click();
   await tempCold.updateComplete;
 
+  lightOn.renderRoot.querySelector('.trigger').click();
+  await lightOn.updateComplete;
+  await frame();
+  const pickerSurface = lightOn._surface();
+  const confirmButton = pickerSurface?.querySelector('.confirm');
+  let pickerSurfaceClicks = 0;
+  pickerSurface?.addEventListener('click', () => { pickerSurfaceClicks += 1; });
+  confirmButton?.dispatchEvent(new MouseEvent('click', {
+    bubbles: true, composed: true, cancelable: true,
+  }));
+  await lightOn.updateComplete;
+  await frame();
+  out.generalConfirmDoesNotClickThrough = !!pickerSurface && !!confirmButton
+    && lightOn.renderRoot.querySelector('.trigger')
+    ?.getAttribute('aria-expanded') === 'false'
+    && pickerSurfaceClicks === 0;
+
   const originalGlobalBg = card._settingsDialog.bgColor;
   globalBg.renderRoot.querySelector('.trigger').click();
   await globalBg.updateComplete;
