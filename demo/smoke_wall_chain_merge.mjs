@@ -1,9 +1,9 @@
-// Issue #478 supersedes #229's deferred chain merge: every accepted click is
-// immediately stored as one ordinary partition and finishing only clears the
-// session state.
+// Issue #478 persists every accepted click as one crash-safe ordinary
+// partition. Issue #477 adds the complementary finish boundary: once the
+// chain ends, its compatible collinear click records collapse to fixed point.
 //
 // The unit tests own the rules; this smoke owns the wiring — that finishing a
-// chain in the real editor never rewrites already accepted wall records.
+// chain in the real editor rewrites only the completed compatible run.
 import { launch, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch({ width: 1000, height: 900 }, 1);
 const res = await page.evaluate(async () => {
@@ -38,10 +38,10 @@ const res = await page.evaluate(async () => {
   await settle();
 
   const straight = (space().partitions || []).slice(before);
-  out.straightRunKeepsClickRecords = straight.length === 3
-    && straight.map((item) => item.id).join(',') === straightIds.join(',');
+  out.straightRunMergedAtFinish = straight.length === 1
+    && straight[0].id === straightIds[0];
   out.straightRunSpansTheChain = Math.abs(straight[0].a[0] * 1000 - 200) < 0.01
-    && Math.abs(straight[2].b[0] * 1000 - 560) < 0.01;
+    && Math.abs(straight[0].b[0] * 1000 - 560) < 0.01;
   out.straightRunKeepsThickness = straight.every((item) => item.cm === 15);
 
   // A corner is not a straight run: two records, one node between them.
@@ -59,8 +59,8 @@ const res = await page.evaluate(async () => {
   await settle();
   out.cornerKeepsBothRecords = partitionCount() - beforeCorner === 2;
 
-  // A just-accepted extension already exists before Finish. Finishing keeps
-  // both records; collinear normalization is explicitly outside #478.
+  // A just-accepted extension already exists before Finish. It joins the
+  // compatible saved run it touches; unrelated partitions remain untouched.
   const beforeTouch = partitionCount();
   const extensionId = 'extension-wall';
   space().partitions.push({ id: extensionId, a: [.56, .5], b: [.7, .5], cm: 15 });
@@ -72,9 +72,12 @@ const res = await page.evaluate(async () => {
     && c._activeWallChainPartitionIds.length === 1;
   c._finishWallChain();
   await settle();
-  out.finishDoesNotRewriteWalls = partitionCount() === beforeTouch + 1;
+  out.finishMergesOnlyTheExtension = partitionCount() === beforeTouch;
   const extended = (space().partitions || []).find((p) => p.id === extensionId);
-  out.extensionKeptOwnIdentity = !!extended;
+  const joined = (space().partitions || []).find((p) => p.id === straightIds[0]);
+  out.extensionJoinedExistingRun = !extended && !!joined
+    && Math.abs(joined.a[0] * 1000 - 200) < 0.01
+    && Math.abs(joined.b[0] * 1000 - 700) < 0.01;
   out.sessionCleared = !c._activeWallChainId
     && c._activeWallChainPartitionIds.length === 0 && c._path.length === 0;
 
