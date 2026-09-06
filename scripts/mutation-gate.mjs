@@ -6956,7 +6956,7 @@ const MUTANT_DEFINITIONS = [
     patches: [{
       file: 'src/writer-fixed-point.ts',
       find: '    seedIds: seeds,',
-      replace: '    seedIds: [], // mutant: finished chain never enters merge scope',
+      replace: "    seedIds: ['writer-seed-never-present'], // mutant: chain never enters merge scope",
     }],
   },
   {
