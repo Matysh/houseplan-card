@@ -104,6 +104,14 @@ the file — and if a future version wants to reclaim that space, it asks.
   [#89](https://github.com/Matysh/houseplan-card/issues/89) is a deterministic
   2.5D presentation of the existing canonical plan: the same J1/J2/J3 state,
   actions and geometry, with no second model and no free camera.
+- General CAD, architectural drafting and construction-document tooling →
+  specialised applications. A narrow read-only exception approved on
+  2026-08-15 and scoped on 2026-09-07 for
+  [#53](https://github.com/Matysh/houseplan-card/issues/53) exports the current
+  canonical space as a single print-ready PDF. It introduces no second geometry
+  model, drawing tools or all-spaces document workflow; its purpose is to hand
+  the already maintained House Plan geometry to an installer, insurer or
+  renovation contractor.
 - A general dashboard framework (menus, popups, theming engine) → Bubble Card,
   Dwains and friends.
 
