@@ -176,6 +176,29 @@
 - [ ] Mutation `room-accept-leaves-coincident-partitions` proves the real editor
       smoke fails if accepted room carriers stop being consumed atomically.
 
+## Current-writer fixed point (#477)
+
+- [ ] `test/writer-fixed-point.test.mjs` proves seed-bounded repeated collinear
+      merge, safe positive coincident reconciliation/opening rehost, identical
+      fail-closed cases, exact room-reference rewrite/restore and the executable
+      writer-owner manifest.
+- [ ] `demo/smoke_writer_fixed_point.mjs` finishes a real straight Walls chain
+      through the production bundle, then proves the immediate, post-Undo and
+      post-Redo Optimize previews are no-ops. The same smoke deletes a room and
+      restores/reapplies direct and cross-space vacuum references without
+      overwriting unrelated marker fields.
+- [ ] `demo/benchmark_wall_draw_click.mjs` keeps the #461 terminal-click budgets
+      and structural counters, then separately proves finish uses one bounded
+      physical/junction transaction, one write, no extra history and sublinear
+      scaling when unrelated rooms are added.
+- [ ] `test/align-grid.test.mjs` proves Optimize leaves complete furniture/image
+      transforms byte-equivalent while an ordinary decor rectangle remains
+      grid-bound.
+- [ ] The `writer-*` mutations in `scripts/mutation-gate.mjs` remove one finish
+      owner, pre-adoption safety, history normalization, direct/vacuum reference
+      rewrite, free-transform exclusion, terminal-click separation, seed merge
+      and seed reconciliation; each named witness must turn red.
+
 ## Resize: реальный pointer pipeline (#293)
 
 - [ ] `demo/smoke_resize_pointer_real_plan.mjs` загружает tracked fixture

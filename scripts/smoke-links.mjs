@@ -59,6 +59,17 @@ export const SMOKE_LINKS = [
   },
   {
     symbols: [
+      'commitWallChainFinishGeometry', 'finalizeWallChainSpace',
+      '_finalizeWallChainPartitions', '_canonicalWallChainHistoryState',
+      'rewriteMarkerRoomReferences', 'restoreMarkerRoomReferences',
+    ],
+    smokes: ['smoke_writer_fixed_point.mjs'],
+    because: 'the #477 production-bundle scenario proves that a finished chain and its later '
+      + 'Undo/Redo states remain Optimize no-ops, and that Delete room updates and restores '
+      + 'direct and cross-space vacuum references through the real editor history transaction',
+  },
+  {
+    symbols: [
       'VersionRecoveryController', 'VersionReloadSafetySnapshot',
       'isVersionReloadSafe', 'compareRuntimeVersions', 'normalizeRuntimeVersion',
       'fetchAuthoritativeConfig', 'getAuthoritativeCardConfig', '_getAuthoritativeConfig',

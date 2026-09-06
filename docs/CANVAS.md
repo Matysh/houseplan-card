@@ -585,6 +585,13 @@ either store changes, commits both revisions, and retains one snapshot.
 has changed since the optimization. A crash between store writes is
 completed from the intent on the next integration setup.
 
+The grid pass deliberately excludes the complete transform of `furniture` and
+uploaded `image` decor. Their position, size and rotation are continuously
+authored values (#383), so changing even one of those fields would make
+Optimize create debt from a normal editor operation. Other decor kinds and
+storage-level numeric canonicalization keep their existing grid contract
+(#477).
+
 The pair returned by `optimizePlans` passes the same lattice-aware boundary as
 the storage writers **before** visible Align and before `changed` is computed.
 This boundary is required because the normalized grid step `1 / 240` has no

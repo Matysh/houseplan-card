@@ -1281,12 +1281,14 @@ const MUTANT_DEFINITIONS = [
       find: '      try { valid = input.validatePreview(accepted.preview); } catch { valid = false; }',
       replace: '      try { valid = true; } catch { valid = false; }',
     }, {
-      file: 'src/houseplan-card.ts',
+      file: 'src/houseplan-editor-runtime.ts',
       find: '    if (!legacySafe) {',
       replace: '    if (false && !legacySafe) {',
     }, {
-      file: 'src/houseplan-card.ts',
-      find: '        && this._checkSpacePhysicalGeometry(committedCandidate, before.spaceId).ok;',
+      file: 'src/houseplan-editor-runtime.ts',
+      find: '        && this.host._checkSpacePhysicalGeometry(\n'
+        + '          physicalCandidateFor(committedCandidate), before.spaceId,\n'
+        + '        ).ok;',
       replace: '        && true;',
     }],
   },
@@ -1296,32 +1298,7 @@ const MUTANT_DEFINITIONS = [
     because: 'write-time wall degradation must not erase the one Resize Undo command; '
       + 'the strict outbound barrier remains authoritative after the local restore (#293)',
     patches: [{
-      file: 'src/houseplan-card.ts',
-      find: '    const physicalChanged = spacePhysicalGeometryFingerprint(before)\n'
-        + '      !== spacePhysicalGeometryFingerprint(state);\n'
-        + '    if (physicalChanged) {\n'
-        + '      let safe = false;\n'
-        + '      try {\n'
-        + '        const check = restoredCandidate\n'
-        + '          ? this._checkSpacePhysicalGeometry(restoredCandidate, state.spaceId)\n'
-        + '          : null;\n'
-        + "        safe = !!check?.ok || !!(allowHistoryBoundaryRepair\n"
-        + "          && check?.reason === 'wall-degraded-extra');\n"
-        + '      } catch { safe = false; }\n'
-        + '      if (!safe) {',
-      replace: '    const physicalChanged = spacePhysicalGeometryFingerprint(before)\n'
-        + '      !== spacePhysicalGeometryFingerprint(state);\n'
-        + '    if (physicalChanged) {\n'
-        + '      let safe = false;\n'
-        + '      try {\n'
-        + '        const check = restoredCandidate\n'
-        + '          ? this._checkSpacePhysicalGeometry(restoredCandidate, state.spaceId)\n'
-        + '          : null;\n'
-        + '        safe = !!check?.ok;\n'
-        + '      } catch { safe = false; }\n'
-        + '      if (!safe) {',
-    }, {
-      file: 'src/houseplan-card.ts',
+      file: 'src/houseplan-editor-runtime.ts',
       find: "        // A history snapshot can predate the write-time wall degradation that\n"
         + "        // canonicalized its command. Restore that one repairable baseline so\n"
         + "        // Undo remains byte-exact immediately; _writeConfig still degrades and\n"
@@ -2550,9 +2527,23 @@ const MUTANT_DEFINITIONS = [
       + 'gesture is cleared, otherwise the invalid point survives without history or a write (#461 AC6)',
     patches: [{
       file: 'src/draft-live-commit.ts',
-      find: '  if (introduced.length) {\n    runtime._clearGeometryGesture();\n'
-        + '    runtime._restoreGeometryStateLocal(before);',
-      replace: '  if (introduced.length) {\n    runtime._clearGeometryGesture();',
+      find: '  if (introduced.length) {\n'
+        + '    runtime._clearGeometryGesture();\n'
+        + '    runtime._restoreGeometryStateLocal(before);\n'
+        + '    host._showToast(runtime._junctionLimitLabel(introduced[0]));\n'
+        + '    return false;\n'
+        + '  }\n\n'
+        + '  adoptWallSegmentModelCandidateInPlace(liveCandidate, committedCandidate);\n'
+        + '  const acceptedSpace = liveCandidate.spaces.find((space) => space.id === before.spaceId);\n'
+        + '  const accepted = acceptedSpace?.partitions?.find((partition) => partition.id === partitionId);',
+      replace: '  if (introduced.length) {\n'
+        + '    runtime._clearGeometryGesture();\n'
+        + '    host._showToast(runtime._junctionLimitLabel(introduced[0]));\n'
+        + '    return false; // mutant: rejected segment survives\n'
+        + '  }\n\n'
+        + '  adoptWallSegmentModelCandidateInPlace(liveCandidate, committedCandidate);\n'
+        + '  const acceptedSpace = liveCandidate.spaces.find((space) => space.id === before.spaceId);\n'
+        + '  const accepted = acceptedSpace?.partitions?.find((partition) => partition.id === partitionId);',
     }],
   },
   {
@@ -2562,8 +2553,28 @@ const MUTANT_DEFINITIONS = [
       + 'the junction pass; discarding it repays the expensive union on every click (#461 AC5)',
     patches: [{
       file: 'src/draft-live-commit.ts',
-      find: '    localCandidate, localPrevious, before.spaceId, geometry, candidateProjection.roomIds,',
-      replace: '    localCandidate, localPrevious, before.spaceId, null, candidateProjection.roomIds,',
+      find: '    localCandidate, localPrevious, before.spaceId, geometry, candidateProjection.roomIds,\n'
+        + '  );\n'
+        + '  if (introduced.length) {\n'
+        + '    runtime._clearGeometryGesture();\n'
+        + '    runtime._restoreGeometryStateLocal(before);\n'
+        + '    host._showToast(runtime._junctionLimitLabel(introduced[0]));\n'
+        + '    return false;\n'
+        + '  }\n\n'
+        + '  adoptWallSegmentModelCandidateInPlace(liveCandidate, committedCandidate);\n'
+        + '  const acceptedSpace = liveCandidate.spaces.find((space) => space.id === before.spaceId);\n'
+        + '  const accepted = acceptedSpace?.partitions?.find((partition) => partition.id === partitionId);',
+      replace: '    localCandidate, localPrevious, before.spaceId, null, candidateProjection.roomIds,\n'
+        + '  );\n'
+        + '  if (introduced.length) {\n'
+        + '    runtime._clearGeometryGesture();\n'
+        + '    runtime._restoreGeometryStateLocal(before);\n'
+        + '    host._showToast(runtime._junctionLimitLabel(introduced[0]));\n'
+        + '    return false;\n'
+        + '  }\n\n'
+        + '  adoptWallSegmentModelCandidateInPlace(liveCandidate, committedCandidate);\n'
+        + '  const acceptedSpace = liveCandidate.spaces.find((space) => space.id === before.spaceId);\n'
+        + '  const accepted = acceptedSpace?.partitions?.find((partition) => partition.id === partitionId);',
     }],
   },
   {
@@ -6820,6 +6831,144 @@ const MUTANT_DEFINITIONS = [
         + '    event.stopPropagation();',
       replace: '  private _confirm(event: Event): void {\n'
         + '    event.preventDefault();',
+    }],
+  },
+  // #477: current writers must leave Optimize at a fixed point.  These
+  // mutants cover every newly owned boundary rather than merely exercising
+  // the happy-path pure helper.
+  {
+    id: 'writer-finish-reset-bypasses-finalizer',
+    guard: 'node --test --test-name-pattern="source contract routes" test/writer-fixed-point.test.mjs',
+    because: 'Reset is a real wall-chain finish owner; clearing its session directly would leave '
+      + 'the just-authored collinear seams for Optimize to find (#477)',
+    patches: [{
+      file: 'src/houseplan-editor-runtime.ts',
+      find: 'if (this._finishWallChain()) this.host.requestUpdate();',
+      replace: 'this._cancelPath(); this.host.requestUpdate(); // mutant: Reset skips finish',
+    }],
+  },
+  {
+    id: 'writer-finish-adopts-unsafe-candidate',
+    guard: 'node --test --test-name-pattern="source contract routes" test/writer-fixed-point.test.mjs',
+    because: 'the completed-chain candidate must pass the bounded physical proof before it can '
+      + 'replace live config; moving adoption across that boundary defeats atomic fail-closed save (#477)',
+    patches: [{
+      file: 'src/draft-live-commit.ts',
+      find: '  const localPrevious = {\n'
+        + '    ...previousConfig, spaces: [previousProjection.space],\n'
+        + '  } as unknown as ServerConfig;\n\n'
+        + '  let geometry: Geometry | null = null;\n'
+        + '  let safe = false;\n'
+        + '  try {\n'
+        + '    const authoredPoints = host._path.length >= 2\n'
+        + '      ? host._path.map((point) => [point[0] / NORM_W, point[1] / NORM_W]) : [];\n'
+        + '    safe = wallModelOffGridValueCount(committedSpace)\n'
+        + '      <= wallModelOffGridValueCount(before, authoredPoints)\n'
+        + '      && host._checkSpacePhysicalGeometry(\n'
+        + '        localCandidate, before.spaceId, (value) => { geometry = value; },\n'
+        + '      ).ok;\n'
+        + '  } catch {\n'
+        + '    safe = false;\n'
+        + '  }\n'
+        + '  if (!safe) return rejectUnsafe(runtime, before);',
+      replace: '  const localPrevious = {\n'
+        + '    ...previousConfig, spaces: [previousProjection.space],\n'
+        + '  } as unknown as ServerConfig;\n\n'
+        + '  let geometry: Geometry | null = null;\n'
+        + '  let safe = true; // mutant: physical proof bypassed\n'
+        + '  if (!safe) return rejectUnsafe(runtime, before);',
+    }],
+  },
+  {
+    id: 'writer-history-skips-finished-chain-normalization',
+    guard: 'npm run bundle:sync && node demo/smoke_writer_fixed_point.mjs',
+    because: 'Undo/Redo after a chain has finished must restore canonical snapshots rather than '
+      + 'bringing the hidden collinear seams back into durable config (#477)',
+    patches: [{
+      file: 'src/houseplan-editor-runtime.ts',
+      find: '    const target = this._canonicalWallChainHistoryState(state);',
+      replace: '    const target = state; // mutant: finished-chain history is restored literally',
+    }],
+  },
+  {
+    id: 'writer-room-delete-keeps-direct-reference',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="room reference transaction" test/writer-fixed-point.test.mjs',
+    because: 'Delete room owns exact direct marker.room_id cleanup in the same undoable transaction (#477)',
+    patches: [{
+      file: 'src/room-reference-transaction.ts',
+      find: '      if (marker.room_id === operation.roomId) {\n'
+        + '        delete marker.room_id;\n'
+        + '        changed = true;\n'
+        + '      }',
+      replace: '      if (marker.room_id === operation.roomId) {\n'
+        + '        changed = true; // mutant: stale direct room reference retained\n'
+        + '      }',
+    }],
+  },
+  {
+    id: 'writer-room-delete-keeps-vacuum-reference',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="room reference transaction" test/writer-fixed-point.test.mjs',
+    because: 'vacuum segment maps may point across spaces and must lose exactly the deleted room '
+      + 'entry while retaining every unrelated map and wrapper field (#477)',
+    patches: [{
+      file: 'src/room-reference-transaction.ts',
+      find: '        if (operation.kind === \'delete\' && segmentMap[key] === operation.roomId) {\n'
+        + '          delete segmentMap[key];\n'
+        + '          changed = true;\n'
+        + '        }',
+      replace: '        if (operation.kind === \'delete\' && segmentMap[key] === operation.roomId) {\n'
+        + '          changed = true; // mutant: stale vacuum room reference retained\n'
+        + '        }',
+    }],
+  },
+  {
+    id: 'writer-align-snaps-free-decor-transform',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="continuous furniture/image transforms" test/align-grid.test.mjs',
+    because: 'furniture and image transforms are intentionally continuous; counting them as '
+      + 'legacy grid debt makes Optimize alter a normal resize or rotation (#383/#477)',
+    patches: [{
+      file: 'src/align-grid.ts',
+      find: "      if (sh.kind === 'furniture' || sh.kind === 'image') continue;",
+      replace: "      if (false && (sh.kind === 'furniture' || sh.kind === 'image')) continue;",
+    }],
+  },
+  {
+    id: 'writer-terminal-click-runs-finish-reconciliation',
+    guard: 'node --test --test-name-pattern="source contract routes" test/writer-fixed-point.test.mjs',
+    because: 'the latency-critical terminal click persists one crash-safe segment only; global '
+      + 'merge/reconciliation belongs to explicit chain finish and must not return to every click (#461/#477)',
+    patches: [{
+      file: 'src/houseplan-editor-runtime.ts',
+      find: 'public _markupClick(ev: MouseEvent): void {',
+      replace: 'public _markupClick(ev: MouseEvent): void {\n'
+        + '    void this._finalizeWallChainPartitions(this.host._activeWallChainPartitionIds); // mutant',
+    }],
+  },
+  {
+    id: 'writer-finish-skips-seed-merge',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="collinear chain" test/writer-fixed-point.test.mjs',
+    because: 'a finished current-writer chain must collapse its own compatible collinear seams '
+      + 'to fixed point without touching unrelated partitions (#477)',
+    patches: [{
+      file: 'src/writer-fixed-point.ts',
+      find: '    seedIds: seeds,',
+      replace: '    seedIds: [], // mutant: finished chain never enters merge scope',
+    }],
+  },
+  {
+    id: 'writer-finish-skips-coincident-reconciliation',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="coincident" test/writer-fixed-point.test.mjs',
+    because: 'a positive wall authored over room masonry must be reconciled by its finish owner, '
+      + 'including deterministic opening rehost, rather than left for Optimize (#477)',
+    patches: [{
+      file: 'src/writer-fixed-point.ts',
+      find: '      partitionIds: surviving,',
+      replace: '      partitionIds: [], // mutant: finish skips coincident seed scope',
     }],
   },
 ];

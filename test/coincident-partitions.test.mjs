@@ -135,7 +135,7 @@ test('issue 276 fails closed when two hosted openings would overlap after rehost
   assert.ok(result.config.spaces[0].openings.every((opening) => opening.host?.id === 'redundant'));
 });
 
-test('issue 276 reconciliation is owned by Optimize and room finalization only', () => {
+test('issue 276 reconciliation is owned only by explicit maintenance/finalization boundaries', () => {
   const input = clone(fixture);
   const secondSpace = clone(input.spaces[0]);
   secondSpace.id = 'offset-shared-wall-second';
@@ -167,6 +167,7 @@ test('issue 276 reconciliation is owned by Optimize and room finalization only',
     .sort();
   assert.deepEqual(owners, [
     'coincident-partitions.ts', 'houseplan-editor-runtime.ts', 'plan-optimizer.ts',
+    'writer-fixed-point.ts',
   ],
     'render/pointer modules must not import or invoke either maintenance owner');
 });

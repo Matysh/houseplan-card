@@ -9,12 +9,19 @@ export async function installWallDrawClickHarness(page) {
         junction: card._junctionLimitViolations.bind(card),
         save: card._saveConfigDebounced,
         genericCommit: card._editorRuntime._commitPhysicalGeometry.bind(card._editorRuntime),
+        finalize: card._editorRuntime._finalizeWallChainPartitions.bind(card._editorRuntime),
+      };
+      card._editorRuntime._finalizeWallChainPartitions = (...args) => {
+        if (window.__wallDrawMetrics) window.__wallDrawMetrics.wallFinishBarriers += 1;
+        return window.__wallDrawOriginals.finalize(...args);
       };
       card._editorRuntime._commitPhysicalGeometry = (name, before, ...rest) => {
         const metrics = window.__wallDrawMetrics;
         if (metrics && name === card._t('history.wall_segment')) {
-          metrics.wallGenericFallbacks += 1;
-          if (!metrics.fallbackSample) {
+          const finishCommit = rest[1] === false;
+          if (finishCommit) metrics.wallFinishCommits += 1;
+          else metrics.wallGenericFallbacks += 1;
+          if (!finishCommit && !metrics.fallbackSample) {
             const space = card._serverCfg?.spaces?.find((item) => item.id === before?.spaceId);
             const stable = (value) => JSON.stringify(value ?? null);
             const arrays = [
@@ -88,6 +95,8 @@ export async function resetWallDrawClickHarness(page, remoteVariant = false) {
       junctionPasses: 0, junctionArtifactPasses: 0,
       configWrites: 0, localProofMaxObjects: 0,
       wallGenericFallbacks: 0, fallbackSample: null,
+      wallFinishCommits: 0,
+      wallFinishBarriers: 0,
     };
     card.requestUpdate(); await card.updateComplete;
     return {
@@ -149,4 +158,62 @@ export async function runWallDrawClickChain(page) {
       metrics: { ...metrics },
     };
   }, WALL_DRAW_CLICK_POINTS);
+}
+
+/** A separate completed straight chain: unlike terminal clicks, finish owns
+ * the bounded lossless merge/reconcile barrier introduced by #477. */
+export async function runWallDrawFinishProfile(page) {
+  return page.evaluate(async (normalizedPoints) => {
+    const card = window.__card;
+    const metrics = window.__wallDrawMetrics;
+    const stage = (card.shadowRoot || card.renderRoot).querySelector('.stage');
+    const eventAt = (normalized) => {
+      const point = normalized.map((value) => value * 1000);
+      const rect = stage.getBoundingClientRect();
+      const view = card._viewOr(card._baseVb());
+      return new MouseEvent('click', {
+        clientX: rect.left + ((point[0] - view.x) / view.w) * rect.width,
+        clientY: rect.top + ((point[1] - view.y) / view.h) * rect.height,
+        bubbles: true,
+      });
+    };
+    const snapshots = () => ({
+      fullSpacePhysicalChecks: metrics.fullSpacePhysicalChecks,
+      localPhysicalChecks: metrics.localPhysicalChecks,
+      junctionPasses: metrics.junctionPasses,
+      junctionArtifactPasses: metrics.junctionArtifactPasses,
+      configWrites: metrics.configWrites,
+      wallGenericFallbacks: metrics.wallGenericFallbacks,
+      wallFinishCommits: metrics.wallFinishCommits,
+      wallFinishBarriers: metrics.wallFinishBarriers,
+      history: card._geometryHistory.size,
+    });
+    const delta = (after, before) => Object.fromEntries(
+      Object.keys(after).map((key) => [key, after[key] - before[key]]),
+    );
+
+    for (const point of normalizedPoints) card._markupClick(eventAt(point));
+    const chainIds = [...card._activeWallChainPartitionIds];
+    const before = snapshots();
+    const started = performance.now();
+    card._activateMarkupTool('select');
+    const finishMs = performance.now() - started;
+    const terminal = delta(snapshots(), before);
+    card._previewAlignDialog(false);
+    const optimizeChanged = card._alignDialog?.changed;
+    card._alignDialog = null;
+    await card.updateComplete;
+    const surviving = (card._curSpaceCfg.partitions || []).filter(
+      (partition) => chainIds.includes(partition.id),
+    );
+    return {
+      finishMs, terminal, optimizeChanged,
+      chainIds, surviving,
+      terminalPartitionCount: card._curSpaceCfg.partitions?.length || 0,
+      activeCleared: !card._activeWallChainId
+        && card._activeWallChainPartitionIds.length === 0 && card._path.length === 0,
+      metrics: { ...metrics },
+    };
+  }, [[152, 200], [176, 200], [200, 200], [224, 200]]
+    .map(([x, y]) => [x / 240, y / 240]));
 }

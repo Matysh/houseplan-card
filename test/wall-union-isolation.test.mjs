@@ -128,7 +128,8 @@ test('#278 production source routes physical writers through one barrier and dec
   assert.doesNotMatch(source, /_commitPhysicalGeometry\(this\._t\('history\.decor_/);
   assert.match(source, /this\._rszSpaceCandidateRenderable\(preview\.space, preview\.sp\)/);
   assert.match(source, /this\._checkSpacePhysicalGeometry\(candidate, spaceId\)\.ok/);
-  assert.match(source, /if \(physicalChanged\)[\s\S]{0,1500}_pendingPhysicalWrites\.set\(state\.spaceId/,
+  assert.match(source,
+    /if \(physicalChanged\)[\s\S]{0,2500}_pendingPhysicalWrites\.set\((?:state|target)\.spaceId/,
     'physical Undo/Redo must retain the deferred-write barrier');
   assert.match(source, /if \(configChanged\)[\s\S]{0,300}_pendingPhysicalWrites\.clear\(\)/,
     'an external baseline must invalidate pending local approvals');

@@ -568,6 +568,10 @@ writer entrance.
 
 Active-chain Undo preserves the complete record of every surviving partition,
 including its stable ID; only a genuinely new edge receives a new identity.
+Each segment history snapshot carries session-only chain seed IDs. While the
+chain is active the snapshot is literal and Undo removes one point; after
+finish, Undo/Redo passes that seed scope through the same lossless finalizer so
+hidden collinear seams cannot return as durable Optimize debt (#477).
 The backend stale-client guard compares only room/compatibility contour geometry
 with `wall_segments[]`. Partitions, columns and
 explicitly hosted openings own their identity and may be written without a
@@ -850,8 +854,10 @@ boundary so a stale success cannot approve a newer candidate. Marker, title,
 colour and other presentation edits bypass this structural check, allowing an
 old degraded plan to be exported or corrected without a background migration.
 
-`reconcileCoincidentPartitions()` is an explicit-Optimize-only structural
-canonicalizer (#276/#296). It consumes canonical room-wall intervals and the
+`reconcileCoincidentPartitions()` is the shared structural canonicalizer
+(#276/#296/#477). Full-space use remains an explicit Optimize operation; the
+current wall-chain writer invokes it only at finish and only for the surviving
+seed component it just authored. It consumes canonical room-wall intervals and the
 partition-opening compatibility resolver; it does not implement a second
 nearest-wall model. A source axis is atomized at solid interval and opening
 boundaries. Exact one-owner outer or two-owner shared spans may be absorbed;
@@ -860,8 +866,9 @@ their hosted openings. Converted openings are materialised onto ordinary room
 walls, and `max(roomCm, partitionCm)` keeps the original centred physical union
 envelope. Unknown partition semantics, gaps, overlapping openings and adjacent
 independent bodies fail closed. The candidate then crosses the existing whole-plan
-geometry preflight and one atomic Optimize write/Undo boundary. No render or
-ordinary save path invokes this pass, so `PLAN_MODEL_VERSION` remains unchanged.
+geometry preflight and one atomic Optimize write/Undo boundary. Render and
+unrelated ordinary save paths never invoke this pass, so `PLAN_MODEL_VERSION`
+remains unchanged.
 `OptimizeDependencies` is a narrow test/benchmark seam: production uses the
 real helper, while the committed large-house benchmark substitutes a no-op to
 measure only this pass and the unit contract instruments its exact per-space
@@ -878,9 +885,15 @@ viewBox, so the editable target does not collapse to the visual one-pixel line.
 Every completed Walls segment is persisted immediately as an ordinary
 `partition`, including the thickness selected when that segment was placed.
 The ordered path, chain id and participating partition ids are session-only.
-Changing Plan tool, editor or floor finishes an open chain by clearing that
-session state; the already accepted walls stay unchanged and re-selecting Walls
-is a no-op.
+Changing Plan tool, editor or floor finishes an open chain through one bounded
+lossless finalizer before clearing that session state. The finalizer repeatedly
+merges only the seed-connected compatible collinear run, rehosts its openings,
+and reconciles only surviving positive seed partitions proven coincident with
+room masonry. Its cloned candidate crosses the current-model identity barrier,
+one local physical/junction proof and storage canonicalization before atomic
+adoption; rejection keeps the visible chain and original config. It adds no
+history command and never sweeps unrelated legacy debt. Esc, Reset, route/hash
+departure and a rejected-all room-face batch share this owner (#477).
 Pan, pinch, pointer cancellation and suppressed clicks never finish a chain or
 append a segment. A finished open chain is ordinary masonry and is not resumed
 after reload or remount.
@@ -935,6 +948,11 @@ openings. Delete-walls cascades only those exclusive openings. Shared walls,
 explicit partitions and partition-hosted openings survive. The selected room,
 wall profile/open spans, partitions and openings commit in one named geometry
 transaction through an accessible `hp-dialog`, never native `confirm()`.
+The same command rewrites room references in every marker: direct `room_id` is
+deleted (or remapped to the survivor for Merge), and exact values in cross-space
+`vacuum.segment_map` are deleted/remapped. History snapshots only these room
+fields, so Undo/Redo and write rollback are atomic with geometry while unrelated
+marker and vacuum fields remain live (#477).
 
 While drawing, the length of the current segment follows the cursor (`_fmtLen` → `segmentCm`/
 `formatLength`): metres, or feet+inches when `hass.config.unit_system` is imperial. The scale is

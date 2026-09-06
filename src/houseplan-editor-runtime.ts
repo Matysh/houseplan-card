@@ -63,7 +63,10 @@ import {
   type ResizeProjectionResult,
 } from './resize-controller';
 import { resizeLiveCandidateSpace, resizeLiveJunctionRoomIds } from './resize-live-preflight';
-import { commitWallChainSegmentGeometry } from './draft-live-commit';
+import {
+  commitWallChainFinishGeometry, commitWallChainSegmentGeometry,
+} from './draft-live-commit';
+import { wallChainLiveSeed } from './draft-live-preflight';
 import {
   placeResizeAreaLabel, resizeMeasuredEdges,
   type ResizeAreaPlacement,
@@ -368,6 +371,11 @@ import {
 } from './space-order';
 import { applyOpeningMoves, mergeCollinearPartitions, spaceMergeGeometry } from './wall-merge';
 import { reconcileCoincidentPartitions } from './coincident-partitions';
+import { finalizeWallChainSpace } from './writer-fixed-point';
+import {
+  captureMarkerRoomReferences, restoreMarkerRoomReferences,
+  rewriteMarkerRoomReferences, type MarkerRoomReferenceSnapshot,
+} from './room-reference-transaction';
 
 const CARD_VERSION = '1.73.0-beta.1';
 
@@ -717,6 +725,10 @@ interface SpaceGeometryState {
     plan_x?: number; plan_y?: number; plan_scale?: number;
     plan_scale_x?: number; plan_scale_y?: number; plan_angle?: number;
   };
+  /** Session-only: current-writer normalisation scope for wall-chain history. */
+  wallChainSeedIds?: string[];
+  /** Session-only: exact room fields touched by Delete/Merge room. */
+  roomReferences?: MarkerRoomReferenceSnapshot[];
 }
 /** Tools of the decor (background) editor. `furniture` is the library
  *  (docs/FURNITURE.md): it opens a palette and places a symbol at real size. */
@@ -1469,10 +1481,64 @@ public _mergeSpacePartitions(sp: any, seedIds?: string[]): number {
       coordScale: NORM_W, cellCm: this.host._cellCm, gridPitch: this.host._gridPitch,
     });
     return result.merged;
+}
+
+public _finalizeWallChainPartitions(seedIds: readonly string[]): boolean {
+    if (!seedIds.length) return true;
+    const sp = this.host._curSpaceCfg;
+    const model = this.host._spaceModel();
+    const before = this._geometrySnapshot();
+    if (!sp || !model || !before) return false;
+    const seed = seedIds.map((id) => wallChainLiveSeed(sp, id)).find(Boolean) || null;
+    const session = {
+      path: this.host._path.map((point) => [...point]),
+      chainId: this.host._activeWallChainId,
+      ids: [...this.host._activeWallChainPartitionIds],
+      cms: [...this.host._wallChainSegmentCms],
+      redo: this.host._wallChainRedo.map((item) => ({
+        ...item, point: [...item.point],
+      })),
+      closingCm: this.host._closingWallCm,
+    };
+    let result;
+    try {
+      result = finalizeWallChainSpace(
+        sp, model, this.host._openCuts(), seedIds,
+        {
+          pitch: this.host._wallKeyPitch,
+          cellCm: this.host._cellCm,
+          gridPitch: this.host._gridPitch,
+          coordScale: NORM_W,
+        },
+      );
+    } catch {
+      this.host._showToast(this.host._t('toast.geometry_unsafe'));
+      return false;
+    }
+    if (!result.report.changed) return true;
+    const config = this.host._serverCfg;
+    const index = config?.spaces?.findIndex((space) => space.id === before.spaceId) ?? -1;
+    if (index < 0) return false;
+    config!.spaces[index] = result.space;
+    const committed = commitWallChainFinishGeometry(
+      this, this.host._t('history.wall_segment'), before, seed,
+    );
+    if (committed) return true;
+    // The common transaction clears gestures on refusal.  A finish failure is
+    // fail-closed: keep the visible chain so the requested navigation can be
+    // retried after the underlying geometry is fixed.
+    this.host._path = session.path;
+    this.host._activeWallChainId = session.chainId;
+    this.host._activeWallChainPartitionIds = session.ids;
+    this.host._wallChainSegmentCms = session.cms;
+    this.host._wallChainRedo = session.redo;
+    this.host._closingWallCm = session.closingCm;
+    return false;
   }
 
 public _finishWallChain(): boolean {
     if (this.host._tool !== 'draw' || this.host._wallFaceBatch || this.host._roomDialog) return true;
+    if (!this._finalizeWallChainPartitions(this.host._activeWallChainPartitionIds)) return false;
     this.host._path = [];
     this.host._activeWallChainId = null;
     this.host._activeWallChainPartitionIds = [];
@@ -1852,6 +1918,15 @@ public _recordGeometry(name: string, before: SpaceGeometryState | null): void {
     if (!before) return;
     const after = this._geometrySnapshot(before.spaceId);
     if (!after || JSON.stringify(before) === JSON.stringify(after)) return;
+    if (before.wallChainSeedIds) {
+      after.wallChainSeedIds = [...this.host._activeWallChainPartitionIds];
+    }
+    if (before.roomReferences) {
+      after.roomReferences = captureMarkerRoomReferences(
+        this.host._serverCfg?.markers || [],
+        before.roomReferences.map((reference) => reference.markerId),
+      );
+    }
     this.host._geometryHistory.push({ name, before, after });
     this.host.requestUpdate();
   }
@@ -1893,7 +1968,51 @@ public _restoreGeometryStateInConfig(
     for (const key of ['plan_x', 'plan_y', 'plan_scale', 'plan_scale_x', 'plan_scale_y', 'plan_angle'] as const)
       delete (sp as any)[key];
     Object.assign(sp, copy(state.plan_transform || {}));
+    if (state.roomReferences) {
+      config.markers ||= [];
+      restoreMarkerRoomReferences(config.markers, state.roomReferences);
+    }
     return true;
+  }
+
+public _canonicalWallChainHistoryState(state: SpaceGeometryState): SpaceGeometryState | null {
+    if (this.host._activeWallChainId || !state.wallChainSeedIds?.length) return state;
+    if (!this.host._serverCfg) return null;
+    const candidate = JSON.parse(JSON.stringify(this.host._serverCfg));
+    if (!this._restoreGeometryStateInConfig(candidate, state)) return null;
+    let committed: ServerConfig;
+    try { committed = commitWallSegmentModel(candidate).config; }
+    catch { return null; }
+    const raw = committed.spaces?.find((space) => space.id === state.spaceId);
+    const model = selectSpaceModelById(spaceModels(committed), state.spaceId);
+    if (!raw || !model) return null;
+    const result = finalizeWallChainSpace(
+      raw,
+      model,
+      geometryOpenCuts(raw, model, GRID_PITCH, NORM_W),
+      state.wallChainSeedIds,
+      {
+        pitch: GRID_STEP_N,
+        cellCm: Number(raw.cell_cm) > 0 ? Number(raw.cell_cm) : 5,
+        gridPitch: GRID_PITCH,
+        coordScale: NORM_W,
+      },
+    );
+    const index = committed.spaces.findIndex((space) => space.id === state.spaceId);
+    committed.spaces[index] = result.space;
+    // The finalizer can replace partitions with authoritative wall segments.
+    // Cross that model boundary once more before recording the history state,
+    // exactly as the production finish transaction does.  Otherwise a Redo
+    // could restore the pre-commit carrier representation and Optimize would
+    // find work immediately afterwards.
+    let finalized: ServerConfig;
+    try { finalized = commitWallSegmentModel(committed).config; }
+    catch { return null; }
+    const normalized = this._geometrySnapshotFromConfig(finalized, state.spaceId);
+    if (!normalized) return null;
+    normalized.wallChainSeedIds = [...state.wallChainSeedIds];
+    if (state.roomReferences) normalized.roomReferences = JSON.parse(JSON.stringify(state.roomReferences));
+    return normalized;
   }
 
 public _restoreGeometryStateLocal(state: SpaceGeometryState): boolean {
@@ -2031,9 +2150,17 @@ public _commitPhysicalGeometry(
     name: string,
     before: SpaceGeometryState | null,
     additionalAuthoredPoints: readonly (readonly number[])[] = [],
+    recordHistory = true,
   ): boolean {
     if (!before || !this.host._serverCfg) return false;
     const liveCandidate = this.host._serverCfg;
+    // The public guard already selects one space internally.  Give it the
+    // bounded carrier as well so a writer finish cannot accidentally make a
+    // future preflight implementation inspect unrelated floors (#477/#461).
+    const physicalCandidateFor = (config: ServerConfig): ServerConfig => {
+      const space = config?.spaces?.find((item) => item.id === before.spaceId);
+      return space ? { ...config, spaces: [space] } : config;
+    };
     const editedState = this._geometrySnapshotFromConfig(liveCandidate, before.spaceId);
     const liveSpace = liveCandidate.spaces.find((space) => space.id === before.spaceId);
     if (!liveSpace || spacePhysicalGeometryFingerprint(before)
@@ -2042,7 +2169,11 @@ public _commitPhysicalGeometry(
     // repair/atomise a degraded legacy projection, but it must never be used to
     // make an otherwise rejected user edit look safe.
     let legacySafe = false;
-    try { legacySafe = this.host._checkSpacePhysicalGeometry(liveCandidate, before.spaceId).ok; }
+    try {
+      legacySafe = this.host._checkSpacePhysicalGeometry(
+        physicalCandidateFor(liveCandidate), before.spaceId,
+      ).ok;
+    }
     catch { legacySafe = false; }
     if (!legacySafe) {
       this._clearGeometryGesture();
@@ -2068,6 +2199,8 @@ public _commitPhysicalGeometry(
           throw new WallSegmentModelError('invalid-room', before.spaceId);
         const baseline = commitWallSegmentModel(baselineSource).config;
         historyBefore = this._geometrySnapshotFromConfig(baseline, before.spaceId) || before;
+        historyBefore.wallChainSeedIds = before.wallChainSeedIds;
+        historyBefore.roomReferences = before.roomReferences;
         const editedWithIdentity = JSON.parse(JSON.stringify(baseline));
         if (!editedState || !this._restoreGeometryStateInConfig(
           editedWithIdentity, editedState, true,
@@ -2112,7 +2245,9 @@ public _commitPhysicalGeometry(
       authoredPoints.push(...additionalAuthoredPoints.map((point) => [point[0], point[1]]));
       safe = wallModelOffGridValueCount(afterSpace)
         <= wallModelOffGridValueCount(historyBefore, authoredPoints)
-        && this.host._checkSpacePhysicalGeometry(committedCandidate, before.spaceId).ok;
+        && this.host._checkSpacePhysicalGeometry(
+          physicalCandidateFor(committedCandidate), before.spaceId,
+        ).ok;
     } catch {
       safe = false;
     }
@@ -2137,7 +2272,7 @@ public _commitPhysicalGeometry(
       return false;
     }
     adoptWallSegmentModelCandidateInPlace(liveCandidate, committedCandidate);
-    this._recordGeometry(name, historyBefore);
+    if (recordHistory) this._recordGeometry(name, historyBefore);
     const afterSpace = liveCandidate.spaces.find((space) => space.id === before.spaceId);
     const pending = this.host._pendingPhysicalWrites.get(before.spaceId);
     this.host._pendingPhysicalWrites.set(before.spaceId, {
@@ -2222,17 +2357,18 @@ public _stagePointerCancel(ev: PointerEvent): void {
 public _applyGeometryState(
     state: SpaceGeometryState, allowHistoryBoundaryRepair = false,
   ): boolean {
-    if (!this.host._canCommitSpace(state.spaceId)) return false;
-    const before = this._geometrySnapshot(state.spaceId);
-    if (!before || !this._restoreGeometryStateLocal(state)) return false;
+    const target = this._canonicalWallChainHistoryState(state);
+    if (!target || !this.host._canCommitSpace(target.spaceId)) return false;
+    const before = this._geometrySnapshot(target.spaceId);
+    if (!before || !this._restoreGeometryStateLocal(target)) return false;
     const restoredCandidate = this.host._serverCfg;
     const physicalChanged = spacePhysicalGeometryFingerprint(before)
-      !== spacePhysicalGeometryFingerprint(state);
+      !== spacePhysicalGeometryFingerprint(target);
     if (physicalChanged) {
       let safe = false;
       try {
         const check = restoredCandidate
-          ? this.host._checkSpacePhysicalGeometry(restoredCandidate, state.spaceId)
+          ? this.host._checkSpacePhysicalGeometry(restoredCandidate, target.spaceId)
           : null;
         safe = !!check?.ok || !!(allowHistoryBoundaryRepair
           && check?.reason === 'wall-degraded-extra');
@@ -2255,7 +2391,7 @@ public _applyGeometryState(
       let safe = false;
       try {
         const check = committedCandidate
-          ? this.host._checkSpacePhysicalGeometry(committedCandidate, state.spaceId)
+          ? this.host._checkSpacePhysicalGeometry(committedCandidate, target.spaceId)
           : null;
         // A history snapshot can predate the write-time wall degradation that
         // canonicalized its command. Restore that one repairable baseline so
@@ -2271,16 +2407,16 @@ public _applyGeometryState(
         return false;
       }
       adoptWallSegmentModelCandidateInPlace(restoredCandidate, committedCandidate);
-      const afterSpace = restoredCandidate?.spaces.find((space) => space.id === state.spaceId);
-      const pending = this.host._pendingPhysicalWrites.get(state.spaceId);
-      this.host._pendingPhysicalWrites.set(state.spaceId, {
+      const afterSpace = restoredCandidate?.spaces.find((space) => space.id === target.spaceId);
+      const pending = this.host._pendingPhysicalWrites.get(target.spaceId);
+      this.host._pendingPhysicalWrites.set(target.spaceId, {
         before: pending?.before || before,
         fingerprint: spacePhysicalGeometryFingerprint(afterSpace),
       });
     } else adoptWallSegmentModelCandidateInPlace(restoredCandidate, committedCandidate);
     this._clearGeometryGesture();
-    if (this.host._space !== state.spaceId) {
-      this.host._commitSpace(state.spaceId);
+    if (this.host._space !== target.spaceId) {
+      this.host._commitSpace(target.spaceId);
       this.host._saveNav();
       this.host._restoreZoom();
     }
@@ -2522,6 +2658,7 @@ public _markupClick(ev: MouseEvent): void {
     const beforeCms = [...this.host._wallChainSegmentCms];
     const beforeGraphSources = this._wallGraphSources([]);
     const before = this._geometrySnapshot();
+    if (before) before.wallChainSeedIds = [...beforeIds];
     const id = `partition-${crypto.randomUUID?.() || `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`}`;
     sp.partitions ||= [];
     sp.partitions.push({
@@ -5122,7 +5259,9 @@ public _renderPlanSecondary(): EditorSecondaryModel | null {
         ${drawHint ? html`<span class="hint">${drawHint}</span>` : nothing}
         ${hintKey ? html`<span class="hint">${this.host._t(hintKey as any)}</span>` : nothing}
         ${this.host._tool === 'draw' && this.host._path.length
-          ? html`<button class="btn ghost" @click=${() => this._runEditorContext(contextId, () => this._cancelPath())}>
+          ? html`<button class="btn ghost" @click=${() => this._runEditorContext(contextId, () => {
+              if (this._finishWallChain()) this.host.requestUpdate();
+            })}>
               ${this.host._t('btn.reset')}
             </button>` : nothing}`,
     };
@@ -5511,6 +5650,10 @@ public _confirmRoomDelete = (keepWalls: boolean): void => {
       return;
     }
     const before = this._geometrySnapshot();
+    const referenceRewrite = rewriteMarkerRoomReferences(
+      this.host._serverCfg?.markers || [], { kind: 'delete', roomId: dialog.roomId },
+    );
+    if (before && referenceRewrite.changed) before.roomReferences = referenceRewrite.before;
     const materializedWalls = materializeWallIntervals(
       space.rooms, this.host._spaceWalls, openCuts,
       this.host._wallKeyPitch, this.host._cellCm, this.host._gridPitch, NORM_W,
@@ -5565,6 +5708,9 @@ public _confirmRoomDelete = (keepWalls: boolean): void => {
       if (!sp.openings.length) delete sp.openings;
     }
     sp.rooms = sp.rooms.filter((r: any) => r.id !== room.id);
+    if (referenceRewrite.changed && this.host._serverCfg) {
+      this.host._serverCfg.markers = referenceRewrite.markers;
+    }
     this.host._cfgEpoch++;
     const normalized = this.host._normalizeWalls(materializedWalls, this.host._openCuts());
     if (normalized.length) sp.walls = normalized;
@@ -6413,6 +6559,10 @@ public _commitMerge(): void {
     const H = this.host._spaceH;
     const keepId = d.pick === 'a' ? d.aId : d.bId;
     const dropId = d.pick === 'a' ? d.bId : d.aId;
+    const referenceRewrite = rewriteMarkerRoomReferences(
+      this.host._serverCfg?.markers || [], { kind: 'merge', dropId, keepId },
+    );
+    if (before && referenceRewrite.changed) before.roomReferences = referenceRewrite.before;
     const keep = sp.rooms.find((r: any) => r.id === keepId);
     if (!keep) {
       this.host._mergeDialog = null;
@@ -6422,6 +6572,9 @@ public _commitMerge(): void {
     keep.poly = d.poly.map((p) => [p[0] / NORM_W, p[1] / H]);
     delete keep.x; delete keep.y; delete keep.w; delete keep.h; // a merged room is never a rect
     sp.rooms = sp.rooms.filter((r: any) => r.id !== dropId);
+    if (referenceRewrite.changed && this.host._serverCfg) {
+      this.host._serverCfg.markers = referenceRewrite.markers;
+    }
     const committed = this._commitPhysicalGeometry(this.host._t('history.merge_rooms'), before);
     this.host._mergeDialog = null;
     this.host._regSignature = '';
@@ -6725,6 +6878,7 @@ public _applyWallFaceBatch(): void {
     const effectiveActivePath = this._activePathWithRepair(batch.activePath, repairs[0]);
 
     if (!accepted.length) {
+      if (!this._finalizeWallChainPartitions(batch.activePartitionIds)) return;
       this.host._path = [];
       this.host._activeWallChainId = null;
       this.host._activeWallChainPartitionIds = [];
@@ -7562,6 +7716,7 @@ public _keepClosedAsPartitions = (): void => {
     if (!this.host._contourClosed || this.host._pendingSplit || !this.host._curSpaceCfg) return;
     // Every accepted edge is already an ordinary partition. Rejecting all
     // detected faces only ends the session; it must not duplicate the chain.
+    if (!this._finalizeWallChainPartitions(this.host._activeWallChainPartitionIds)) return;
     this.host._roomDialog = false;
     this.host._path = [];
     this.host._activeWallChainId = null;

@@ -11,6 +11,11 @@
   specially resumed after a reload; legacy saved outlines migrate safely to
   the new model, and walls consumed by a newly created room no longer remain as
   duplicate masonry ([#478](https://github.com/Matysh/houseplan-card/issues/478)).
+- Finished wall chains now merge their own compatible straight sections and
+  reconcile proven duplicate masonry immediately. Room Delete/Merge keeps
+  device and cross-floor vacuum room references consistent through Undo/Redo,
+  while Optimize preserves smooth furniture and image transforms
+  ([#477](https://github.com/Matysh/houseplan-card/issues/477)).
 
 ## v1.73.0-beta.1 — 2026-09-06
 

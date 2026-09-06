@@ -403,6 +403,7 @@ import {
   reorderSpaceIds,
 } from './space-order';
 import { applyOpeningMoves, mergeCollinearPartitions, spaceMergeGeometry } from './wall-merge';
+import type { MarkerRoomReferenceSnapshot } from './room-reference-transaction';
 
 const CARD_VERSION = '1.73.0-beta.1';
 const ENTRY_BUILD_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
@@ -562,6 +563,10 @@ interface SpaceGeometryState {
     plan_x?: number; plan_y?: number; plan_scale?: number;
     plan_scale_x?: number; plan_scale_y?: number; plan_angle?: number;
   };
+  /** Session-only: current-writer normalisation scope for wall-chain history. */
+  wallChainSeedIds?: string[];
+  /** Session-only: exact room fields touched by Delete/Merge room. */
+  roomReferences?: MarkerRoomReferenceSnapshot[];
 }
 const fireEvent = (node: EventTarget, type: string, detail?: unknown) => {
   const ev = new Event(type, { bubbles: true, composed: true }) as any;

@@ -408,7 +408,12 @@ but become unplaced. Plan images and attachments are not deleted automatically.
 
 Select **Walls** and draw one continuous chain. Every completed segment is
 saved immediately as an ordinary independent wall. Changing tool, editor,
-floor, leaving the card or reloading only ends the session-local chain. When the
+floor or leaving the card finishes the session-local chain: compatible straight
+sections become one wall and a proven duplicate over room masonry is absorbed
+immediately. Undo/Redo remains segment-by-segment but restores a canonical
+result, so a normal current-version chain leaves no work for **Optimize plans**.
+Reloading preserves the accepted walls but cannot finish the interrupted
+session. When the
 latest segment creates bounded endpoint/T/X faces, House Plan offers them from
 smallest to largest. Save creates that room and consumes exactly coincident
 chain walls, Keep as walls rejects only that candidate, and Cancel leaves all
@@ -448,6 +453,12 @@ Other operations edit existing geometry:
 | Delete room | Deletes the room after choosing whether its exclusive physical walls remain; shared walls always remain |
 
 ![Selected partition and its Plan context tray](images/05-plan-context-tray.png)
+
+Deleting a room also clears that exact room from direct device assignments and
+vacuum segment maps, including maps owned by a vacuum on another floor.
+Merging rooms redirects the same references to the surviving room. The change
+is part of the room command: Undo and Redo restore or reapply geometry and
+references together without changing unrelated marker settings.
 
 Wall thickness is stored in real units. A room may have different thicknesses
 on different spans. Open wall branches and T-junctions are allowed; shared
@@ -834,6 +845,8 @@ item. Rotation is smooth and `Shift` snaps it to 45°; signed size fields and
 the two mirror checkboxes provide the same result numerically. Furniture is
 selected within 10 physical centimetres of its drawn strokes, not throughout
 its empty bounding box.
+**Optimize plans** preserves the complete smooth position, size and rotation of
+furniture and uploaded images; these authored transforms are not grid debt.
 The plan image is interactive only with Backdrop selected. Undo/Redo shares the
 50-command editor history.
 

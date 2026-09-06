@@ -256,6 +256,11 @@ export function alignAllToGrid(
 
     // ---- decor ---------------------------------------------------------
     for (const sh of sp.decor || []) {
+      // #383 deliberately made these transforms continuous.  Their saved
+      // provenance no longer tells placement from resize, so Optimize must
+      // preserve the whole authored transform instead of moving a corner or
+      // changing the size behind the user's back (#477).
+      if (sh.kind === 'furniture' || sh.kind === 'image') continue;
       total++;
       let d = 0;
       if (sh.kind === 'line') {

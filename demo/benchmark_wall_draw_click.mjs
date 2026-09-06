@@ -4,6 +4,7 @@ import { dirname, resolve } from 'node:path';
 import { launch, finish } from './serve.mjs';
 import {
   installWallDrawClickHarness, resetWallDrawClickHarness, runWallDrawClickChain,
+  runWallDrawFinishProfile,
 } from './wall-draw-click-harness.mjs';
 
 const outputArg = process.argv.find((arg) => arg.startsWith('--output='));
@@ -20,6 +21,15 @@ const run = async (remote) => {
 };
 const base = await run(false);
 const remote = await run(true);
+const runFinish = async (remoteVariant) => {
+  await resetWallDrawClickHarness(page, remoteVariant);
+  // Warm the distinct finalizer path, then measure it from the same fixture.
+  await runWallDrawFinishProfile(page);
+  await resetWallDrawClickHarness(page, remoteVariant);
+  return runWallDrawFinishProfile(page);
+};
+const baseFinish = await runFinish(false);
+const remoteFinish = await runFinish(true);
 const sorted = [...base.result.times].sort((a, b) => a - b);
 const medianMs = sorted[Math.floor(sorted.length / 2)];
 const maxMs = Math.max(...base.result.times);
@@ -48,13 +58,33 @@ const structural = fixtureShape && remoteFixtureShape
   && base.result.terminal.configWrites === 0 && base.result.terminal.history === 0
   && base.result.terminalPartitionCount === base.fixture.savedPartitions + 7
   && base.result.activeCleared;
+const finishStructural = baseFinish.terminal.fullSpacePhysicalChecks === 0
+  && baseFinish.terminal.localPhysicalChecks === 1
+  && baseFinish.terminal.configWrites === 1
+  && baseFinish.terminal.history === 0
+  && baseFinish.terminal.wallFinishBarriers === 1
+  && baseFinish.terminal.wallGenericFallbacks === 0
+  && baseFinish.surviving.length === 1
+  && baseFinish.terminalPartitionCount === base.fixture.savedPartitions + 1
+  && baseFinish.optimizeChanged === false
+  && baseFinish.activeCleared
+  && remoteFinish.terminal.fullSpacePhysicalChecks === 0
+  && remoteFinish.terminal.localPhysicalChecks === 1
+  && remoteFinish.terminal.configWrites === 1
+  && remoteFinish.terminal.wallFinishBarriers === 1
+  && remoteFinish.surviving.length === 1
+  && remoteFinish.optimizeChanged === false;
 const budgets = {
   medianMs: 150,
   maxMs: 250,
   remoteMedianMs: medianMs * 1.5 + 20,
+  finishMs: 250,
+  remoteFinishMs: baseFinish.finishMs * 1.5 + 20,
 };
 const timing = medianMs <= budgets.medianMs && maxMs <= budgets.maxMs
-  && remoteMedianMs <= budgets.remoteMedianMs;
+  && remoteMedianMs <= budgets.remoteMedianMs
+  && baseFinish.finishMs <= budgets.finishMs
+  && remoteFinish.finishMs <= budgets.remoteFinishMs;
 const report = {
   issue: 461, profile: 'wall-draw-click-v1',
   fixture: base.fixture, remoteFixture: remote.fixture,
@@ -63,13 +93,16 @@ const report = {
     medianMs: Math.round(medianMs * 10) / 10,
     maxMs: Math.round(maxMs * 10) / 10,
     remoteMedianMs: Math.round(remoteMedianMs * 10) / 10,
+    finishMs: Math.round(baseFinish.finishMs * 10) / 10,
+    remoteFinishMs: Math.round(remoteFinish.finishMs * 10) / 10,
   },
   budgets: Object.fromEntries(Object.entries(budgets)
     .map(([key, value]) => [key, Math.round(value * 10) / 10])),
   counters: base.result.metrics,
-  structural,
+  finishCounters: baseFinish.terminal,
+  structural: structural && finishStructural,
   timingPass: timing,
-  pass: structural && timing,
+  pass: structural && finishStructural && timing,
 };
 if (output) {
   mkdirSync(dirname(output), { recursive: true });

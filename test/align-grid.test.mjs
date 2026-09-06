@@ -93,6 +93,34 @@ test('ordinary off-grid movement is not duplicated in the near-node counter', ()
   assert.equal(result.report.coordsCanonicalized, 0);
 });
 
+test('#477 Optimize preserves complete furniture/image transforms and excludes them from its report', () => {
+  const furniture = {
+    id: 'furniture', kind: 'furniture', asset: 'sofa',
+    x: 0.10123456789, y: 0.20345678901, w: 0.3123456789, h: 0.08765432109,
+    angle: 17.123456789, flip_h: true, future_field: { keep: true },
+  };
+  const image = {
+    id: 'image', kind: 'image', href: '/local/custom.png',
+    x: 0.40123456789, y: 0.50345678901, w: 0.1123456789, h: 0.18765432109,
+    angle: -12.987654321, flip_v: true, future_field: ['keep'],
+  };
+  const ordinary = {
+    id: 'ordinary', kind: 'rect',
+    x: 0.7 + S / 3, y: 0.7, w: 0.1, h: 0.1,
+  };
+  const spaces = [{ id: 'free-transform', rooms: [], decor: [
+    structuredClone(furniture), structuredClone(image), structuredClone(ordinary),
+  ] }];
+  const result = alignAllToGrid(spaces, {});
+  assert.deepEqual(result.spaces[0].decor[0], furniture);
+  assert.deepEqual(result.spaces[0].decor[1], image);
+  assert.notDeepEqual(result.spaces[0].decor[2], ordinary,
+    'ordinary decor stays governed by the grid contract');
+  assert.equal(result.report.total, 1);
+  assert.equal(result.report.moved, 1);
+  assert.equal(result.report.maxSpace, 'free-transform');
+});
+
 test('alignAllToGrid puts every grid-bound element on a node', () => {
   const { spaces, layout, report } = alignAllToGrid(detuned().spaces, detunedLayout());
   const sp = spaces[0];

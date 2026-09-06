@@ -39,6 +39,13 @@ export interface CoincidentPartitionOptions {
   coordScale: number;
   /** Room creation consumes every coincident carrier, including duplicates. */
   allowCoincidentPartitions?: boolean;
+  /**
+   * Optional writer-owned scope.  Optimize and room acceptance omit it and
+   * retain their full-space behaviour; a completed wall chain supplies the
+   * surviving ids which came from that chain so unrelated partitions are not
+   * rewritten as a side effect of finishing the gesture (#477).
+   */
+  partitionIds?: readonly string[];
 }
 
 interface AxisRange { lo: number; hi: number }
@@ -222,9 +229,16 @@ export function reconcileCoincidentPartitions(
   let openings = openings0;
   let partitionsReconciled = 0;
   let openingsRehosted = 0;
+  // `undefined` means the full-space Optimize/room-acceptance sweep.  An
+  // explicitly supplied empty list is still a bounded writer scope: none of
+  // its seeds survived, so it must not adopt unrelated historical debt.
+  const partitionIds = options.partitionIds
+    ? new Set(options.partitionIds)
+    : null;
 
   const modelById = new Map(model.partitions.map((partition) => [partition.id, partition]));
   for (const rawPartition of [...partitions0].sort((a, b) => a.id.localeCompare(b.id))) {
+    if (partitionIds && !partitionIds.has(rawPartition.id)) continue;
     if (!partitions.some((item) => item.id === rawPartition.id)) continue;
     if (!rawPartitionKnown(rawPartition)) continue;
     const source = modelById.get(rawPartition.id);
