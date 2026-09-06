@@ -114,6 +114,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#44](https://github.com/Matysh/houseplan-card/issues/44) Filtering/grouping policy | [044-filter-grouping-policy.md](044-filter-grouping-policy.md) |
 | [#51](https://github.com/Matysh/houseplan-card/issues/51) Custom decor images | [051-custom-decor-images.md](051-custom-decor-images.md) |
 | [#52](https://github.com/Matysh/houseplan-card/issues/52) Dimensions in View — закрыт, объединён с [#53](https://github.com/Matysh/houseplan-card/issues/53); файл остаётся контрактом измерений для экспорта PDF | [052-view-dimensions.md](052-view-dimensions.md) |
+| [#53](https://github.com/Matysh/houseplan-card/issues/53) Экспорт пространства в PDF: чистый архитектурный план | [053-pdf-export.md](053-pdf-export.md) |
 | [#54](https://github.com/Matysh/houseplan-card/issues/54) Zigbee topology overlay | [054-zigbee-topology-overlay.md](054-zigbee-topology-overlay.md) |
 | [#55](https://github.com/Matysh/houseplan-card/issues/55) Independent Glow overlay | [055-independent-glow-overlay.md](055-independent-glow-overlay.md) |
 | [#56](https://github.com/Matysh/houseplan-card/issues/56) Static room color | [056-static-room-color.md](056-static-room-color.md) |
