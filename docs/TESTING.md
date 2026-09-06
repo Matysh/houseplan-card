@@ -2264,10 +2264,12 @@ fixture with 60 rooms, 200 devices, 100 openings, 60 partitions, 40 columns and
 switch, HA state update, shared-wall resize preview, pan/zoom, settings-dialog render, repeated navigation,
 Long Tasks, warmed hot-cache growth and post-GC heap growth.
 
-Every blocking `Validate` uses a candidate-only `performance_smoke`: one
-warm-up and three measured samples of the heaviest 60-source Glow state. It
-enforces absolute timing, Long Task, heap, cache and 200-device ceilings, but
-does not claim to detect small relative regressions.
+`Validate` carries a `performance_smoke`: one warm-up and three measured
+samples of the heaviest 60-source Glow state. It enforces absolute timing, Long
+Task, heap, cache and 200-device ceilings, but does not claim to detect small
+relative regressions. Together with the browser smokes and `golden` it runs on
+the beta candidate (a head commit with a `Release:` trailer), on the nightly
+`full=true` dispatch of `dev` and on pull requests — not on every push (#479).
 
 The dedicated `Full Performance` workflow builds the candidate and base SHA,
 then captures seven measured samples for each sequentially on the same Node 22,

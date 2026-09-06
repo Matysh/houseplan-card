@@ -153,8 +153,12 @@ in between.
 
 If the rebase conflicts the pipeline says so in the issue and sends the task back
 to `S6-in-progress`. The verdict still stands: nothing needs reviewing again, the
-remaining work is the rebase. Resolve it, push the branch, re-apply
-`S7-code-review`. The second review run is not a formality — after a rebase onto a
+remaining work is the rebase. When the conflict is only in the committed bundle
+(`dist/**`, `custom_components/houseplan/frontend/**` — the usual case when two
+tasks built it in parallel), run `node scripts/rebase-on-dev.mjs` (#479): it takes
+`dev`'s copy through the rebase, rebuilds with `npm run bundle:sync` and amends
+the result into your last commit; a conflict anywhere else aborts and leaves the
+tree as it was. Then push the branch and re-apply `S7-code-review`. The second review run is not a formality — after a rebase onto a
 moved `dev` this is different code, and accepting it unchecked is how regressions
 arrive. Cycles are counted per stage, so a code review spends its own budget.
 
@@ -333,6 +337,23 @@ verifies every listed file byte-for-byte:
 npm run bundle:sync   # dist → custom_components + demo/srv/assets (#255)
 npm run bundle:budget # initial View graph <= 256000 B gzip (#337)
 ```
+
+`npm run gate:small` runs the mandatory part of PROCESS §8 in one go (#479):
+unit tests, build with typecheck, `no-new-any` and `smoke-select` in parallel,
+then the bundle-tree comparison and the bundle budget. It prints the smokes the
+diff selects but does not run them — those, `golden`, `pytest` and `check-docs
+--screenshots=strict` remain the author's call by diff and AC.
+
+**Heavy CI gates run on the beta candidate, nightly and on demand — not on every
+push (#479).** `smoke`, `golden` and `performance_smoke` in Validate are gated
+on the `heavy` output: true for a head commit carrying a `Release:` trailer, for
+`workflow_dispatch full=true` (which `nightly.yml` issues on `dev` every night)
+and for pull requests. A plain push to `dev` runs preflight, frontend (types,
+units, build, bundle sync, no-new-any), backend, hacs and hassfest. Screenshot
+freshness in `check-docs` is likewise a warning on a plain push and an error on
+the candidate; `publish-prerelease.yml` and `release.yml` refuse a candidate
+without the `Release:` trailer, so a green Validate without the heavy jobs can
+never pass for a release.
 
 During the implementation cycle the fast gates always run. Since 2026-08-14 the
 owner's machine also carries Playwright with Chromium (Windows) and a full WSL

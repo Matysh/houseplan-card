@@ -45,6 +45,29 @@ export function classifyAll() {
   return Object.fromEntries(OUTPUTS.map((name) => [name, 'true']));
 }
 
+/**
+ * Нужен ли полный набор тяжёлых job — смоки, golden, performance_smoke (#479).
+ *
+ * На обычном пуше они не идут: за всё время они не ловили дефект в момент
+ * ревью, ловили при подготовке беты, а стоили ~6 минут критического пути на
+ * каждую итерацию. Полный набор идёт там, где он и нужен:
+ *  - кандидат беты/релиза — head-коммит несёт трейлер `Release:` (класс D
+ *    без него и так невалиден, а publish-prerelease требует трейлер явно);
+ *  - `workflow_dispatch` с `full=true` — ночной прогон (nightly.yml) и ручной;
+ *  - pull_request — там Validate единственный сигнал.
+ */
+export function heavyGatesRequested({ eventName, headMessage, fullInput } = {}) {
+  if (eventName === 'pull_request') return true;
+  if (eventName === 'workflow_dispatch') return String(fullInput) === 'true';
+  if (eventName === 'schedule') return true;
+  return hasReleaseTrailer(headMessage);
+}
+
+/** Трейлер `Release: vX.Y.Z` в конце сообщения коммита — признак кандидата. */
+export function hasReleaseTrailer(message) {
+  return /^Release:\s*v?\d+\.\d+\.\d+\S*\s*$/m.test(String(message || ''));
+}
+
 /** Формат `$GITHUB_OUTPUT`. */
 export function formatOutputs(outputs) {
   return OUTPUTS.map((name) => `${name}=${outputs[name]}`).join('\n') + '\n';
@@ -53,7 +76,18 @@ export function formatOutputs(outputs) {
 const invokedDirectly = process.argv[1]
   && import.meta.url === new URL(`file://${process.argv[1]}`).href;
 if (invokedDirectly) {
-  const all = process.argv.includes('--all');
-  const outputs = all ? classifyAll() : classifyChanges(readFileSync(0, 'utf8'));
-  process.stdout.write(formatOutputs(outputs));
+  if (process.argv.includes('--heavy')) {
+    // Отдельный вызов: у `heavy` другие входы (событие, сообщение head-коммита),
+    // и на dev он нужен даже там, где классификация путей выключена.
+    const heavy = heavyGatesRequested({
+      eventName: process.env.EVENT_NAME,
+      headMessage: process.env.HEAD_MESSAGE,
+      fullInput: process.env.FULL_INPUT,
+    });
+    process.stdout.write(`heavy=${heavy ? 'true' : 'false'}\n`);
+  } else {
+    const all = process.argv.includes('--all');
+    const outputs = all ? classifyAll() : classifyChanges(readFileSync(0, 'utf8'));
+    process.stdout.write(formatOutputs(outputs));
+  }
 }

@@ -54,6 +54,23 @@ jobs:
         env:
           TAG: ${{ inputs.tag }}
         run: node scripts/release-contract.mjs "$TAG" --repo="$GITHUB_REPOSITORY"
+      # #479: тяжёлые job Validate идут только на коммите с трейлером `Release:`.
+      # Зелёный Validate без трейлера означал бы прогон без смоков и golden —
+      # класс тихого пропуска #171/#207, поэтому трейлер проверяется здесь явно.
+      - name: Require the Release trailer on the candidate commit
+        env:
+          SHA: ${{ steps.candidate.outputs.sha }}
+        run: |
+          set -euo pipefail
+          git log -1 --format=%B "$SHA" > /tmp/head-message.txt
+          if ! grep -Eq '^Release:[[:space:]]*v?[0-9]+\.[0-9]+\.[0-9]+' /tmp/head-message.txt; then
+            echo "::error::Candidate $SHA has no Release: trailer — Validate ran without the heavy gates (#479)"
+            exit 1
+          fi
+      # #479: свежесть скриншотов на обычном пуше — предупреждение; на
+      # кандидате она обязана быть доказана строгим режимом.
+      - name: Documentation screenshots are fresh for the candidate
+        run: node scripts/check-docs.mjs --screenshots=strict
       - name: Require green Validate for this exact SHA
         env:
           GH_TOKEN: ${{ github.token }}

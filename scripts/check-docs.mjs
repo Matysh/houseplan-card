@@ -5,6 +5,7 @@ import { dirname, extname, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DOC_SCREENSHOTS } from '../demo/docs/screenshots.mjs';
 import { visualFingerprint } from './source-fingerprint.mjs';
+import { freshnessSink, screenshotsMode } from './docs-freshness.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const EXTERNAL = process.argv.includes('--external');
@@ -17,6 +18,8 @@ const PUBLIC_DOCS = [
 const EXPECTED_SCREENSHOTS = DOC_SCREENSHOTS.map((scenario) => scenario.id);
 const errors = [];
 const warnings = [];
+// Свежесть скриншотов: `--screenshots=warn|strict`, см. docs-freshness.mjs (#479).
+const freshness = freshnessSink(screenshotsMode(process.argv), { errors, warnings });
 const externalUrls = new Set();
 const sha256 = (value) => createHash('sha256').update(value).digest('hex');
 const canonicalText = (path) => readFileSync(path, 'utf8').replace(/\r\n?/g, '\n');
@@ -204,10 +207,10 @@ if (!existsSync(manifestPath)) {
   // пикселя, поэтому не обязан требовать пересъёмки — иначе каждый релизный
   // коммит оставляет этот гейт красным.
   if (manifest.sourceFingerprint !== visualFingerprint(ROOT))
-    errors.push('screenshot source fingerprint is stale; run npm run build && node demo/docs/capture.mjs');
+    freshness.push('screenshot source fingerprint is stale; run npm run docs:capture and accept before the beta candidate (#479)');
   const scriptPath = resolve(ROOT, 'demo/docs/capture.mjs');
   if (manifest.captureScriptSha256 !== sha256(readFileSync(scriptPath)))
-    errors.push('screenshot capture script changed; run npm run build && node demo/docs/capture.mjs');
+    freshness.push('screenshot capture script changed; run npm run docs:capture and accept before the beta candidate (#479)');
   const ids = Object.keys(manifest.scenarios || {});
   if (JSON.stringify(ids.sort()) !== JSON.stringify([...EXPECTED_SCREENSHOTS].sort()))
     errors.push('screenshot manifest scenario set is incomplete');

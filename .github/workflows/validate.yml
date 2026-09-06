@@ -13,6 +13,14 @@ on:
     paths-ignore:
       - 'docs/reviews/**'
   pull_request:
+  # Полный набор тяжёлых job по кнопке и по ночам (#479): nightly.yml делает
+  # `gh workflow run validate.yml --ref dev -f full=true`.
+  workflow_dispatch:
+    inputs:
+      full:
+        description: 'Полный набор: смоки, golden, performance_smoke'
+        type: boolean
+        default: true
 
 # A new push supersedes an unfinished validation for the same branch or PR.
 # Exact-SHA release gates never depend on an obsolete commit.
@@ -53,10 +61,23 @@ jobs:
       - uses: actions/setup-node@v7
         with: { node-version: 22 }
 
+      # Свежесть скриншотов на обычном пуше — предупреждение, на кандидате беты
+      # (трейлер `Release:`), по кнопке и на PR — ошибка (#479). Остальные
+      # проверки документации красят всегда. Режим считает тот же скрипт, что и
+      # выход `heavy` job `changes`, чтобы два места не разошлись.
       - name: "Документация: гайды, ченджлоги, скриншот-индекс"
         id: docs
         continue-on-error: true
-        run: node scripts/check-docs.mjs --external
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          HEAD_MESSAGE: ${{ github.event.head_commit.message }}
+          FULL_INPUT: ${{ inputs.full }}
+        run: |
+          heavy=$(node scripts/classify-changes.mjs --heavy)
+          mode=warn
+          [ "$heavy" = "heavy=true" ] && mode=strict
+          echo "скриншоты документации: режим $mode ($heavy)"
+          node scripts/check-docs.mjs --external --screenshots=$mode
 
       # Конвейер читает `process.yml` из ветки по умолчанию, поэтому файл обязан
       # совпадать в `main` и `dev`. До этой проверки совпадение держалось на
@@ -191,6 +212,8 @@ jobs:
       # Диффозависимые профили перф-смока (#473 §5).
       perf_iso: ${{ steps.classify.outputs.perf_iso }}
       perf_interaction: ${{ steps.classify.outputs.perf_interaction }}
+      # Тяжёлые job только на кандидате/по кнопке/на PR (#479), см. шаг heavy.
+      heavy: ${{ steps.heavy.outputs.heavy }}
       base: ${{ steps.base.outputs.base }}
       # Разные вещи под разными именами намеренно: `base` — до какого коммита
       # классифицировать файлы ветки (#387), `range_base` — от какого коммита
@@ -207,6 +230,15 @@ jobs:
       # то есть допущение «до этого всё проверено». Concurrency отменяет прогон
       # предыдущего пуша штатно, и на #86 (r5) это дало зелёный статус ветки
       # без единого исполненного тяжёлого гейта.
+      # Смоки, golden, performance_smoke — на кандидате беты (трейлер
+      # `Release:`), по `workflow_dispatch full=true`, на PR (#479). Логика и
+      # её тест — scripts/classify-changes.mjs.
+      - id: heavy
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          HEAD_MESSAGE: ${{ github.event.head_commit.message }}
+          FULL_INPUT: ${{ inputs.full }}
+        run: node scripts/classify-changes.mjs --heavy | tee -a "$GITHUB_OUTPUT"
       - id: base
         if: github.event_name != 'pull_request'
         env:
@@ -506,8 +538,8 @@ jobs:
   smoke:
     name: Смоки в браузере (шард ${{ matrix.shard }} из 3)
     # Gated on `frontend` so a typecheck failure does not burn browser minutes.
-    needs: [frontend, reuse]
-    if: needs.reuse.outputs.smoke != 'true'
+    needs: [changes, frontend, reuse]
+    if: needs.changes.outputs.heavy == 'true' && needs.reuse.outputs.smoke != 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     # Смоки шардируются: последовательный прогон занимал ~7.5 минут и был
@@ -610,8 +642,8 @@ jobs:
   # частично прогнанная матрица не имеет права выглядеть как выполненная работа.
   smoke_done:
     name: "Смоки: все шарды зелёные"
-    needs: [smoke, reuse]
-    if: needs.reuse.outputs.smoke != 'true'
+    needs: [changes, smoke, reuse]
+    if: needs.changes.outputs.heavy == 'true' && needs.reuse.outputs.smoke != 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Записать маркер успеха
@@ -633,8 +665,8 @@ jobs:
     name: Golden-кадры против принятых эталонов
     # Deterministic visual correctness stays in every prerelease gate: it is
     # inexpensive and catches a different class of regressions than timings.
-    needs: [frontend, reuse]
-    if: needs.reuse.outputs.golden != 'true'
+    needs: [changes, frontend, reuse]
+    if: needs.changes.outputs.heavy == 'true' && needs.reuse.outputs.golden != 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -732,7 +764,7 @@ jobs:
     # Candidate-only catastrophic-regression guard for ordinary pushes and
     # prereleases. The expensive same-runner comparison lives in performance.yml.
     needs: [changes, frontend, reuse]
-    if: needs.reuse.outputs.performance_smoke != 'true'
+    if: needs.changes.outputs.heavy == 'true' && needs.reuse.outputs.performance_smoke != 'true'
     runs-on: ubuntu-latest
     # 15 минут не хватало, когда установка браузера шла через apt: замер
     # начинался на исходе окна (#206). Запас на холодный кэш — при попадании

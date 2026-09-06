@@ -34,6 +34,12 @@ jobs:
           # target_commitish (it may be a branch name) or an event-context SHA.
           SHA=$(git rev-parse HEAD)
           echo "release tag: $TAG; exact commit: $SHA"
+          # #479: тяжёлые job Validate идут только на коммите с трейлером
+          # `Release:`; без него зелёный Validate прогона без смоков не доказывает.
+          if ! git log -1 --format=%B "$SHA" | grep -Eq '^Release:[[:space:]]*v?[0-9]+\.[0-9]+\.[0-9]+'; then
+            echo "::error::$SHA has no Release: trailer — Validate ran without the heavy gates (#479)"
+            exit 1
+          fi
           node scripts/release-gate.mjs "$SHA"
       - name: Require full performance for a stable release
         if: ${{ !github.event.release.prerelease }}

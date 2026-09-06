@@ -328,3 +328,35 @@ test('#399 AC5: тот же код ловит третий workflow в подс�
     rmSync(directory, { recursive: true, force: true });
   }
 });
+
+// #479: тяжёлые job идут только по выходу `heavy`, а релизные гейты требуют
+// трейлер `Release:` — иначе зелёный Validate мог означать прогон без них.
+test('смоки, golden и performance_smoke условны по heavy (#479)', () => {
+  const text = read('validate.yml');
+  for (const job of ['smoke', 'smoke_done', 'golden', 'performance_smoke']) {
+    const start = text.indexOf(`\n  ${job}:\n`);
+    assert.ok(start > 0, `job ${job} есть`);
+    const chunk = text.slice(start, start + 600);
+    assert.match(chunk, /needs: \[changes,/, `${job}: зависит от changes`);
+    assert.match(chunk, /if: needs\.changes\.outputs\.heavy == 'true' &&/, `${job}: условие heavy`);
+  }
+  assert.match(text, /heavy: \$\{\{ steps\.heavy\.outputs\.heavy \}\}/);
+  assert.match(text, /classify-changes\.mjs --heavy/);
+  assert.match(text, /workflow_dispatch:\n\s+inputs:\n\s+full:/);
+  // preflight: режим скриншотов считает тот же скрипт.
+  assert.match(text, /check-docs\.mjs --external --screenshots=\$mode/);
+});
+
+test('ночной прогон — dispatch Validate на dev с full=true (#479)', () => {
+  const text = read('nightly.yml');
+  assert.match(text, /schedule:\n\s+- cron:/);
+  assert.match(text, /gh workflow run validate\.yml --repo "\$REPO" --ref dev -f full=true/);
+  assert.match(text, /actions: write/);
+});
+
+test('релизные гейты требуют трейлер Release: и свежие скриншоты (#479)', () => {
+  const trailer = /grep -Eq '\^Release:\[\[:space:\]\]\*v\?\[0-9\]\+\\\.\[0-9\]\+\\\.\[0-9\]\+'/;
+  assert.match(read('publish-prerelease.yml'), trailer);
+  assert.match(read('release.yml'), trailer);
+  assert.match(read('publish-prerelease.yml'), /check-docs\.mjs --screenshots=strict/);
+});

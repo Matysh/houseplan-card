@@ -62,3 +62,49 @@ test('CLI пишет формат $GITHUB_OUTPUT: stdin — список фай�
   const all = execFileSync('node', [script, '--all'], { input: '', encoding: 'utf8' });
   assert.equal(all, OUTPUTS.map((name) => `${name}=true`).join('\n') + '\n');
 });
+
+// #479: тяжёлые job идут на кандидате беты, по кнопке, на PR и по расписанию —
+// и НЕ идут на обычном пуше. Обе стороны доказаны на самой функции, которую
+// исполняет шаг `heavy` job `changes`.
+import { heavyGatesRequested, hasReleaseTrailer } from '../scripts/classify-changes.mjs';
+
+test('обычный push в dev не запрашивает тяжёлые job (#479)', () => {
+  assert.equal(heavyGatesRequested({
+    eventName: 'push',
+    headMessage: 'fix: speed up wall-chain commits\n\nIssue: #461\nUser-Visible: yes\n',
+  }), false);
+  assert.equal(heavyGatesRequested({ eventName: 'push', headMessage: '' }), false);
+  assert.equal(heavyGatesRequested({}), false);
+});
+
+test('кандидат беты и релиза — трейлер Release: — запрашивает тяжёлые job (#479)', () => {
+  assert.equal(heavyGatesRequested({
+    eventName: 'push',
+    headMessage: 'build: prepare v1.73.0-beta.1 candidate\n\nIssue: #160\nUser-Visible: yes\nRelease: v1.73.0-beta.1\n',
+  }), true);
+  assert.equal(hasReleaseTrailer('Release v1.72.0\n\nRelease: v1.72.0'), true);
+  // Слово в теле — не трейлер: строка должна начинаться с `Release:`.
+  assert.equal(hasReleaseTrailer('docs: mention the Release: process in AGENTS'), false);
+  assert.equal(hasReleaseTrailer('Release: soon'), false);
+});
+
+test('workflow_dispatch запрашивает тяжёлые job только с full=true (#479)', () => {
+  assert.equal(heavyGatesRequested({ eventName: 'workflow_dispatch', fullInput: 'true' }), true);
+  assert.equal(heavyGatesRequested({ eventName: 'workflow_dispatch', fullInput: true }), true);
+  assert.equal(heavyGatesRequested({ eventName: 'workflow_dispatch', fullInput: 'false' }), false);
+  assert.equal(heavyGatesRequested({ eventName: 'workflow_dispatch', fullInput: '' }), false);
+});
+
+test('pull_request и schedule всегда запрашивают тяжёлые job (#479)', () => {
+  assert.equal(heavyGatesRequested({ eventName: 'pull_request', headMessage: 'x' }), true);
+  assert.equal(heavyGatesRequested({ eventName: 'schedule' }), true);
+});
+
+test('CLI --heavy читает событие и сообщение из окружения (#479)', () => {
+  const run = (env) => execFileSync(process.execPath, ['scripts/classify-changes.mjs', '--heavy'], {
+    encoding: 'utf8', env: { ...process.env, ...env },
+  }).trim();
+  assert.equal(run({ EVENT_NAME: 'push', HEAD_MESSAGE: 'fix: x\n\nIssue: #1\nUser-Visible: no' }), 'heavy=false');
+  assert.equal(run({ EVENT_NAME: 'push', HEAD_MESSAGE: 'x\n\nRelease: v1.2.3' }), 'heavy=true');
+  assert.equal(run({ EVENT_NAME: 'workflow_dispatch', FULL_INPUT: 'true', HEAD_MESSAGE: '' }), 'heavy=true');
+});
