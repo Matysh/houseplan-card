@@ -195,7 +195,7 @@ id → `null` (данные, не сбой — контракт сохраняе
 | AC6 | Магнит к стенам работает в `pending` | unit `furniture-placement` |
 | AC7 | Редактор: палитра и призрак рисуются с первого кадра и на конфиге без мебели (`pending` в редакторе не бывает) | `smoke_furniture` (очищает `decor`, требует превью), `smoke_furniture_polish`, `smoke_decor`; свидетель `furniture-art-editor-adopt-skipped` |
 | AC8 | Golden: 0 расхождений (сцены с мебелью ждут `ready` в harness) | `golden:verify` |
-| AC9 | Шесть свидетелей §4.6 в реестре, каждый «поймано 1 из 1» | отрицательные прогоны `--id=` |
+| AC9 | Все свидетели таблицы §4.6 (семь) в реестре, каждый «поймано 1 из 1» | отрицательные прогоны `--id=` |
 | AC10 | `houseplan-card.ts` не выше потолка; строки в дифе | `core-file-budget` |
 | AC11 | Несколько карточек на странице — один запрос чанка | смок AC2 с двумя карточками |
 
@@ -232,7 +232,7 @@ UX не меняется (AC2). Модель данных не меняется.
 - `scripts/bundle-manifest.mjs`, `scripts/bundle-budget.mjs`;
 - `demo/golden/harness.mjs`, `demo/smoke_furniture_lazy_art.mjs` (новый);
 - `test/furniture-art-runtime.test.mjs` (новый), `test/furniture*.test.mjs`, `test/bundle-budget.test.mjs`;
-- `scripts/mutation-gate.mjs` — шесть мутантов;
+- `scripts/mutation-gate.mjs` — семь мутантов (таблица §4.6);
 - `docs/ARCHITECTURE.md`, `docs/FURNITURE.md`.
 
 ## 9. Принятые предположения
