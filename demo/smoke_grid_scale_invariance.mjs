@@ -106,6 +106,7 @@ await page.evaluate(async () => {
       alpha: projection === 'iso',
       active: projection === 'iso' ? ['iso'] : [],
     };
+    if (projection === 'iso') await card._ensureIsoSceneRuntime();
     card._viewPreference = { ...card._viewPreference, f1: projection };
     card._isoFallback.clear();
     card._isoGeometryCache.clear();
@@ -355,20 +356,29 @@ const openingEdgeAction = async (cellCm) => {
   await setTheme('light');
   await page.evaluate((cell) => window.__applyGridScaleFixture(cell, 'plan', 'flat'), cellCm);
   const point = await page.evaluate(() => {
-    const hit = window.__card.renderRoot.querySelector('[data-id="grid-door"] .op-hit');
+    const card = window.__card;
+    const hit = card.renderRoot.querySelector('[data-id="grid-door"] .op-hit');
     const box = hit.getBoundingClientRect();
-    return { x: box.right - 0.75, y: box.top + box.height / 2 };
+    const x = box.right - 0.75;
+    const y = box.top + box.height / 2;
+    const stack = card.renderRoot.elementsFromPoint(x, y).slice(0, 5).map((node) => ({
+      tag: node.tagName.toLowerCase(),
+      class: node.getAttribute('class') || '',
+      id: node.closest?.('[data-id]')?.getAttribute('data-id') || '',
+    }));
+    return { x, y, stack };
   });
   const before = await page.evaluate(() => JSON.stringify(window.__card._serverCfg));
   await page.mouse.click(point.x, point.y);
   await page.evaluate(() => window.__card.updateComplete);
-  return page.evaluate((snapshot) => {
+  const ok = await page.evaluate((snapshot) => {
     const card = window.__card;
     const opened = card._openingDialog?.id === 'grid-door';
     card._openingDialog = null;
     card.requestUpdate();
     return opened && JSON.stringify(card._serverCfg) === snapshot;
   }, before);
+  return { ok, cellCm, stack: point.stack };
 };
 
 const backgroundCancel = async (cellCm) => {
@@ -447,7 +457,7 @@ const out = {
     === referencePlan.metrics.snapIntervalsPerMeter * 5,
   screenFixedPlanSnapStrokeIsNotDoubleScaled: referencePlan.metrics.planSnapLineStroke === 1
     && detailedPlan.metrics.planSnapLineStroke === 1,
-  openingEdgeHitAndActionMatch: referenceOpeningEdgeActs && detailedOpeningEdgeActs,
+  openingEdgeHitAndActionMatch: referenceOpeningEdgeActs.ok && detailedOpeningEdgeActs.ok,
   darkViewCriticalMetricsMatch: metricPairsNear(darkView.reference.metrics, darkView.detailed.metrics),
   darkViewPixelsMatch: pixelEquivalent(darkViewDiff),
   devicesCriticalMetricsMatch: metricPairsNear(devices.reference.metrics, devices.detailed.metrics),
@@ -478,6 +488,7 @@ if (Object.values(out).some((value) => !value)) {
     flatDiff, staticDiff, planDiff, darkViewDiff, devicesDiff, backgroundDiff,
     isoLightDiff, isoDarkDiff,
     referenceBackgroundCancel, detailedBackgroundCancel,
+    referenceOpeningEdgeActs, detailedOpeningEdgeActs,
   }, null, 2));
 }
 

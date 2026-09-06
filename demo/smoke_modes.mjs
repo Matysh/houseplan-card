@@ -16,7 +16,8 @@ const st = () => page.evaluate(() => {
     // is an active/visible editor bar.
     markupBar: !!sr.querySelector('.editorchrome.open .editbar'),
     // hpsettle is the transient post-boot grace (AUD-1552-02), not a mode class
-    stageClass: sr.querySelector('.stage').className.replace(/ ?\bhpsettle\b/, ''),
+    stageClass: sr.querySelector('.stage').className.replace(/ ?\bhpsettle\b/, '')
+      .trim().split(/\s+/).join(' '),
   };
 });
 // 1) старт: view, чистая шапка
@@ -84,10 +85,10 @@ await page.waitForFunction(() => window.__card._modeTransitionBusy === false);
 out.backToView = (await st()).mode;
 // значения зафиксированы прогоном на v1.43.1 и сверены с кодом (audit T1)
 checkAll(out, {
-  "start": {"mode": "view", "modeTabs": 3, "editBtns": 2, "gears": 2, "markupBar": false, "stageClass": "stage    mode-view"},
+  "start": {"mode": "view", "modeTabs": 3, "editBtns": 2, "gears": 2, "markupBar": false, "stageClass": "stage mode-view"},
   "viewDragMoved": false,
-  "plan": {"mode": "plan", "modeTabs": 3, "active": "Plan editor", "editBtns": 2, "gears": 2, "markupBar": true, "stageClass": "stage markup tool-draw   mode-plan"},
-  "devices": {"mode": "devices", "modeTabs": 3, "active": "Device editor", "editBtns": 2, "gears": 2, "markupBar": true, "stageClass": "stage    mode-devices"},
+  "plan": {"mode": "plan", "modeTabs": 3, "active": "Plan editor", "editBtns": 2, "gears": 2, "markupBar": true, "stageClass": "stage markup tool-draw mode-plan"},
+  "devices": {"mode": "devices", "modeTabs": 3, "active": "Device editor", "editBtns": 2, "gears": 2, "markupBar": true, "stageClass": "stage mode-devices"},
   "backToView": "view",
 });
 await finish(browser, out);
