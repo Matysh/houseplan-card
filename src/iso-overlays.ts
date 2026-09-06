@@ -43,11 +43,15 @@ export interface IsoOverlayOwnerInput {
   rooms: readonly IsoOverlayRoom[];
   /** Device binding, room label owner, or the room selected by opening-host geometry. */
   preferredRoomId?: string | null;
+  /** Internal fast path for room rows already normalised by isoOverlayRooms(). */
+  roomsValidated?: boolean;
 }
 
 export interface IsoOverlayPlacementInput extends IsoOverlayOwnerInput {
   showBorders: boolean;
   wallSilhouettes: readonly IsoWallSilhouette[];
+  /** Internal fast path for silhouettes produced by the cached structural scene. */
+  wallGeometryValidated?: boolean;
   /** Half-size of the floor-parallel plate in plan units. */
   plateHalfSize: PlanPoint;
   wallHeight?: number;
@@ -225,7 +229,7 @@ const stableIdCompare = (a: string, b: string): number => a < b ? -1 : a > b ? 1
 
 export function resolveIsoOverlayOwner(input: IsoOverlayOwnerInput): IsoOverlayOwner | null {
   if (!finitePoint(input.floorAnchor)) return null;
-  const rooms = input.rooms.filter(validRoom);
+  const rooms = input.roomsValidated ? input.rooms : input.rooms.filter(validRoom);
   const preferred = input.preferredRoomId
     ? rooms.find((room) => room.id === input.preferredRoomId) || null
     : null;
@@ -241,7 +245,12 @@ export function resolveIsoOverlayOwner(input: IsoOverlayOwnerInput): IsoOverlayO
     // a saved label may legitimately lie outside that room.
     room = preferred;
   }
-  return room ? { id: room.id, area: roomArea(room), safePoint: isoRoomSafePoint(room) } : null;
+  return room ? {
+    id: room.id,
+    area: roomArea(room),
+    safePoint: input.roomsValidated && room.safePoint
+      ? [room.safePoint[0], room.safePoint[1]] : isoRoomSafePoint(room),
+  } : null;
 }
 
 export function isoOverlayPlane(kind: IsoOverlayKind, showBorders: boolean): IsoOverlayPlane {
@@ -300,9 +309,39 @@ function pointInSilhouette(point: ScenePoint, silhouette: IsoWallSilhouette): bo
   return !(silhouette.holes || []).some((hole) => pointInRing(point, hole));
 }
 
+type Bounds = readonly [minX: number, minY: number, maxX: number, maxY: number];
+const silhouetteBoundsCache = new WeakMap<IsoWallSilhouette, Bounds | null>();
+
+function ringBounds(ring: readonly (readonly number[])[]): Bounds | null {
+  if (!ring.length) return null;
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const point of ring) {
+    if (!finitePoint(point)) return null;
+    minX = Math.min(minX, point[0]); minY = Math.min(minY, point[1]);
+    maxX = Math.max(maxX, point[0]); maxY = Math.max(maxY, point[1]);
+  }
+  return [minX, minY, maxX, maxY];
+}
+
+function silhouetteBounds(silhouette: IsoWallSilhouette, cache: boolean): Bounds | null {
+  if (!cache) return ringBounds(silhouette.outer);
+  if (silhouetteBoundsCache.has(silhouette)) return silhouetteBoundsCache.get(silhouette) ?? null;
+  const bounds = ringBounds(silhouette.outer);
+  silhouetteBoundsCache.set(silhouette, bounds);
+  return bounds;
+}
+
+function boundsNear(a: Bounds, b: Bounds, gap: number): boolean {
+  return a[0] <= b[2] + gap && a[2] >= b[0] - gap
+    && a[1] <= b[3] + gap && a[3] >= b[1] - gap;
+}
+
 function plateNearSilhouette(
-  plate: readonly ScenePoint[], silhouette: IsoWallSilhouette, gap: number,
+  plate: readonly ScenePoint[], plateBounds: Bounds,
+  silhouette: IsoWallSilhouette, gap: number, cacheBounds: boolean,
 ): boolean {
+  const wallBounds = silhouetteBounds(silhouette, cacheBounds);
+  if (!wallBounds || !boundsNear(plateBounds, wallBounds, gap)) return false;
   if (plate.some((point) => pointInSilhouette(point, silhouette))) return true;
   if (silhouette.outer.some((point) => pointInRing(point, plate))) return true;
   for (const wallRing of [silhouette.outer, ...(silhouette.holes || [])]) {
@@ -380,12 +419,15 @@ export function resolveIsoOverlayPlacement(input: IsoOverlayPlacementInput): Iso
   const raisedHeight = wallHeight + visualOffset;
   const raisedScene = projectPlanPoint(floorAnchor, raisedHeight, camera);
   const owner = resolveIsoOverlayOwner(input);
-  const geometryValid = input.wallSilhouettes.every(validSilhouette);
+  const geometryValid = input.wallGeometryValidated ?? input.wallSilhouettes.every(validSilhouette);
   const gapUnits = safetyGap * unitsPerPixel;
   const basePlate = buildIsoPlatePolygon(floorAnchor, input.plateHalfSize,
     raisedHeight, camera);
-  const isNear = (plate: readonly ScenePoint[]): boolean =>
-    input.wallSilhouettes.some((wall) => plateNearSilhouette(plate, wall, gapUnits));
+  const isNear = (plate: readonly ScenePoint[]): boolean => {
+    const bounds = ringBounds(plate);
+    return !!bounds && input.wallSilhouettes.some((wall) =>
+      plateNearSilhouette(plate, bounds, wall, gapUnits, input.wallGeometryValidated === true));
+  };
   const nearWallBefore = geometryValid ? isNear(basePlate) : true;
 
   let distanceCss = 0;

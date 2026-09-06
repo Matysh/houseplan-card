@@ -685,6 +685,8 @@ export interface IsoOverlaySceneInput {
   display: SpaceDisplay;
   layers: IsoDecorationLayers;
   wallSilhouettes: readonly IsoWallSilhouette[];
+  /** Fit-envelope probes need unnudged bounds only, not wall collision search. */
+  resolveCollisions?: boolean;
   iconPct: number;
   deviceBasePct: number;
   showLqi: boolean;
@@ -705,6 +707,11 @@ export interface IsoOverlaySceneInput {
 
 type IsoOverlayRoomRow = { room: RoomCfg; overlayRoom: IsoOverlayRoom };
 const isoOverlayRoomCache = new WeakMap<readonly RoomCfg[], readonly IsoOverlayRoomRow[]>();
+type IsoOverlayPlacementCacheEntry = { signature: string; placement: IsoOverlayPlacement };
+export const ISO_OVERLAY_PLACEMENT_CACHE_LIMIT = 2048;
+const isoOverlayPlacementCache = new WeakMap<
+  readonly IsoWallSilhouette[], Map<string, IsoOverlayPlacementCacheEntry>
+>();
 
 /** Build legal island-room holes once per immutable room snapshot. */
 export function isoOverlayRooms(space: SpaceModel): readonly IsoOverlayRoomRow[] {
@@ -740,6 +747,11 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
   const roomPlacements = new Map<RoomCfg, IsoOverlayPlacement>();
   const locks = new Map<string, IsoOverlayPlacement>();
   const entries: IsoOverlayRenderEntry[] = [];
+  let placements = isoOverlayPlacementCache.get(input.wallSilhouettes);
+  if (!placements) {
+    placements = new Map();
+    isoOverlayPlacementCache.set(input.wallSilhouettes, placements);
+  }
   const baseIconUnits = input.iconPct * iconUnit(input.space) * input.kioskIconScale / 100;
   const baseDeviceUnits = input.deviceBasePct * iconUnit(input.space) * input.kioskIconScale / 100;
   const place = (
@@ -749,23 +761,35 @@ export function buildIsoOverlayRenderScene(input: IsoOverlaySceneInput): IsoOver
     plateHalfSize: PlanPoint,
     preferredRoomId?: string | null,
     selected = false,
-  ): IsoOverlayPlacement => resolveIsoOverlayPlacement({
-    kind,
-    floorAnchor,
-    rooms,
-    preferredRoomId,
-    showBorders: true,
-    wallSilhouettes: input.wallSilhouettes,
-    plateHalfSize,
-    wallHeight,
-    visualOffset,
-    sceneUnitsPerCssPixel: unitsPerPixel,
-    filtersSupported: input.layers.shadows,
-    // A persistent tether keeps ownership explicit without a second hover-only
-    // render pipeline for the inert raised geometry.
-    hovered: true,
-    selected,
-  });
+  ): IsoOverlayPlacement => {
+    const collisionMode = input.resolveCollisions === false ? 'fit' : 'live';
+    const cacheKey = `${collisionMode}\u0000${kind}\u0000${id}`;
+    const signature = [floorAnchor[0], floorAnchor[1], plateHalfSize[0], plateHalfSize[1],
+      preferredRoomId || '', wallHeight, visualOffset, unitsPerPixel,
+      input.layers.shadows ? 1 : 0, selected ? 1 : 0].join('|');
+    const cached = lruRead(placements!, cacheKey);
+    if (cached.hit && cached.value.signature === signature) return cached.value.placement;
+    const placement = resolveIsoOverlayPlacement({
+      kind,
+      floorAnchor,
+      rooms, roomsValidated: true,
+      preferredRoomId,
+      showBorders: true,
+      wallSilhouettes: input.resolveCollisions === false ? [] : input.wallSilhouettes,
+      wallGeometryValidated: true,
+      plateHalfSize,
+      wallHeight,
+      visualOffset,
+      sceneUnitsPerCssPixel: unitsPerPixel,
+      filtersSupported: input.layers.shadows,
+      // A persistent tether keeps ownership explicit without a second hover-only
+      // render pipeline for the inert raised geometry.
+      hovered: true,
+      selected,
+    });
+    lruWrite(placements!, cacheKey, { signature, placement }, ISO_OVERLAY_PLACEMENT_CACHE_LIMIT);
+    return placement;
+  };
 
   for (const device of input.devices) {
     const pos = input.positionOf(device);

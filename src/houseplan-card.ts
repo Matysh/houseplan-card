@@ -6119,7 +6119,7 @@ export class HouseplanCard extends LitElement {
     const overlays = this._isoOverlayScene(
       space, this._renderDevices.filter((device) => device.space === space.id && !device.hidden),
       baseView, disp, runtime.resolveIsoDecorationLayers(disp), scene, iconPct, effectiveDeviceBaseSize(iconPct),
-      disp.showLqi ?? this._config?.show_signal ?? true);
+      disp.showLqi ?? this._config?.show_signal ?? true, false);
     const envelope = overlays && runtime.resolveIsoOverlayFitEnvelope({
       baseBounds: scene.frame, entries: overlays.entries, stageSize, targetView: (bounds) =>
         fitView([bounds.x, bounds.y, bounds.w, bounds.h], aspect) });
@@ -6179,12 +6179,14 @@ export class HouseplanCard extends LitElement {
     iconPct: number,
     deviceBasePct: number,
     showLqi: boolean,
+    resolveCollisions = true,
   ): IsoOverlayRenderScene | null {
     const runtime = this._isoSceneRuntime;
     if (!runtime || !layers?.structural || !structural) return null;
     return runtime.buildIsoOverlayRenderScene({
       space, devices: devs, openings: this._openingsR, view, display: disp, layers,
       wallSilhouettes: structural.wallSilhouettes,
+      resolveCollisions,
       iconPct, deviceBasePct, showLqi, cellCm: this._cellCm,
       kioskIconScale: this._kiosk ? this._kioskScale.icon : 1,
       kioskFontScale: this._kiosk ? this._kioskScale.font : 1,

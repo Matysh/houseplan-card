@@ -23,6 +23,7 @@ import { ISO_OPENING_GEOMETRY_POLICY } from '../test-build/iso-openings.js';
 import { buildIsoWallGeometry } from '../test-build/iso-walls.js';
 import { wallKey } from '../test-build/wall-thickness.js';
 import {
+  buildIsoPlatePolygon,
   resolveIsoOverlayOwner,
   resolveIsoOverlayPlacement,
 } from '../test-build/iso-overlays.js';
@@ -335,6 +336,58 @@ test('opening lock without a canonical host owner never guesses from point conta
   assert.equal(placement?.nudged, false);
   assert.equal(placement?.reason, 'missing-owner');
   assert.equal(placement?.tether.visible, true);
+});
+
+test('Stage 3 reuses pure overlay placements and fit probes skip collision search', () => {
+  const owner = room('owner', 0, 0, 100, 100);
+  const space = {
+    id: 'floor', title: 'Floor', cellCm: 5, vb: [0, 0, 100, 100], bg: null,
+    rooms: [owner], wall_segments: [], room_drafts: [], partitions: [], wall_columns: [],
+  };
+  const wallSilhouettes = [{
+    outer: buildIsoPlatePolygon([50, 50], [8, 60], ISO_WALL_HEIGHT),
+  }];
+  const input = {
+    space,
+    devices: [{ id: 'device', space: 'floor', marker: { room_id: 'owner' } }],
+    openings: [],
+    view: { x: 0, y: 0, w: 100, h: 100 },
+    display: { showNames: false, cardFontScale: 1 },
+    layers: { structural: true, shadows: true },
+    wallSilhouettes,
+    iconPct: 3.4,
+    deviceBasePct: 3.4,
+    showLqi: false,
+    cellCm: 5,
+    kioskIconScale: 1,
+    kioskFontScale: 1,
+    stageSize: { width: 100, height: 100 },
+    positionOf: () => ({ x: 50, y: 50 }),
+    presentationOf: () => ({
+      scale: 1, valueText: null, valueFullText: '', valueBadge: null,
+      tempText: null, humText: null, lqiText: null,
+      pulse: { animated: false, diameterScale: 1 },
+    }),
+    labelPositionOf: () => ({ x: 0, y: 0 }),
+    labelScaleOf: () => 1,
+    openingEntityAvailable: () => false,
+    openingWallIndex: () => ({ adjacencyEps: 0.1, edges: [] }),
+  };
+  const live = buildIsoOverlayRenderScene(input);
+  const repeated = buildIsoOverlayRenderScene(input);
+  assert.strictEqual(repeated.devices.get('device'), live.devices.get('device'),
+    'unchanged HA/render passes reuse the exact pure placement result');
+  assert.equal(live.devices.get('device')?.nearWallBefore, true);
+
+  const fit = buildIsoOverlayRenderScene({ ...input, resolveCollisions: false });
+  assert.equal(fit.devices.get('device')?.nearWallBefore, false,
+    'fit envelope uses unnudged bounds without running wall collision search');
+  assert.notStrictEqual(fit.devices.get('device'), live.devices.get('device'),
+    'fit and live placements use separate bounded cache entries');
+
+  const zoomed = buildIsoOverlayRenderScene({ ...input, view: { x: 0, y: 0, w: 120, h: 120 } });
+  assert.notStrictEqual(zoomed.devices.get('device'), live.devices.get('device'),
+    'view scale invalidates the placement signature');
 });
 
 test('visible wall side quads participate in overlay collision', () => {
