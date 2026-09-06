@@ -457,12 +457,18 @@ jobs:
   # файл, который он патчит, либо изменился его гард. `--check` этого не
   # видит — он проверяет существование якоря, а не достижимость ветки.
   # Полный прогон раз в неделю ловит гниль с опозданием до релиза (#466,
-  # #467). Здесь гоняются только затронутые мутанты — единицы, минуты —
-  # с той же базы диапазона, что и остальные гейты ветки (#387/#388).
+  # #467). Здесь гоняются только затронутые мутанты с той же базы диапазона,
+  # что и остальные гейты ветки (#387/#388). Релизный диапазон всё же может
+  # задеть сотню свидетелей, поэтому #480 делит тот же набор на три
+  # детерминированных непересекающихся шарда вместо ослабления проверки.
   changed_mutants:
-    name: "Мутанты по диффу: затронутые свидетели краснеют"
+    name: "Мутанты по диффу (${{ matrix.shard }}/3): затронутые свидетели краснеют"
     needs: changes
     if: needs.changes.outputs.frontend == 'true' || needs.changes.outputs.backend == 'true' || needs.changes.outputs.mutants == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -495,6 +501,7 @@ jobs:
           PROVEN_BASE: ${{ needs.changes.outputs.range_base }}
           HEAD_SHA: ${{ github.sha }}
           REF: ${{ github.ref }}
+          SHARD: ${{ matrix.shard }}
         run: |
           set -euo pipefail
           git fetch -q origin dev
@@ -513,7 +520,7 @@ jobs:
           fi
           echo "диапазон: $base..$HEAD_SHA"
           npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs
-          node scripts/mutation-gate.mjs --changed="$base..$HEAD_SHA"
+          node scripts/mutation-gate.mjs --changed="$base..$HEAD_SHA" --shard="$SHARD/3"
 
   frontend:
     name: "Фронтенд: типы, юниты, мутанты, синхрон бандла"

@@ -377,7 +377,13 @@ test('мутанты по диффу гоняются на каждом пуше
   // База диапазона — та же, что у остальных гейтов ветки (#387/#388).
   assert.match(job, /PROVEN_BASE: \$\{\{ needs\.changes\.outputs\.range_base \}\}/);
   assert.match(job, /git merge-base origin\/dev "\$HEAD_SHA"/);
-  assert.match(job, /node scripts\/mutation-gate\.mjs --changed="\$base\.\.\$HEAD_SHA"/);
+  // #480: один широкий релизный диапазон отобрал 129 свидетелей и упёрся в
+  // 30-минутный timeout. Тот же набор теперь делится существующим
+  // детерминированным shardMutants без пропусков и пересечений.
+  assert.match(job, /fail-fast: false/);
+  assert.match(job, /shard: \[1, 2, 3\]/);
+  assert.match(job, /SHARD: \$\{\{ matrix\.shard \}\}/);
+  assert.match(job, /node scripts\/mutation-gate\.mjs --changed="\$base\.\.\$HEAD_SHA" --shard="\$SHARD\/3"/);
   // pytest-гарды исполнимы: Python и зависимости ставятся, как в mutation-gate.yml.
   assert.match(job, /pip install -r tests_backend\/requirements\.txt/);
   // Блокирующая job: свидетель, разучившийся краснеть, — отказ, а не предупреждение.
