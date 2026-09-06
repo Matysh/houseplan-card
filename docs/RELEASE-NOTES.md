@@ -1,20 +1,26 @@
-<!-- release: v1.73.0-beta.1 -->
+<!-- release: v1.73.0-beta.2 -->
 
 ## Основное
 
-- Активная Zigbee-топология теперь остаётся читаемой поверх названий комнат и
-  посторонних маркеров, не перекрывая маркеры связанных устройств; пунктирные
-  связи с неизвестным качеством получили контрастную обводку
-  ([#464](https://github.com/Matysh/houseplan-card/issues/464)).
+- Рисование стен стало надёжнее: каждый отрезок сохраняется сразу, незавершённая
+  цепочка остаётся обычными стенами, а завершённый результат автоматически
+  приводится к тому же состоянию, что и после оптимизации плана
+  ([#478](https://github.com/Matysh/houseplan-card/issues/478),
+  [#477](https://github.com/Matysh/houseplan-card/issues/477)).
+- Во всех окнах выбора цвета появилась понятная кнопка «ОК»
+  ([#476](https://github.com/Matysh/houseplan-card/issues/476)).
 - Мелкие исправления и улучшения.
 
 ## Highlights
 
-- Active Zigbee topology now stays readable above room names and unrelated
-  markers without covering linked-device markers; unknown-quality dashed links
-  gained a contrasting outline
-  ([#464](https://github.com/Matysh/houseplan-card/issues/464)).
+- Wall drawing is more reliable: every segment is saved immediately,
+  unfinished chains remain ordinary walls, and completed results automatically
+  reach the same state as after plan optimization
+  ([#478](https://github.com/Matysh/houseplan-card/issues/478),
+  [#477](https://github.com/Matysh/houseplan-card/issues/477)).
+- Every color picker now has a clear **OK** button
+  ([#476](https://github.com/Matysh/houseplan-card/issues/476)).
 - Small fixes and improvements.
 
-[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.73.0-beta.1/docs/CHANGELOG.ru.md)
-· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.73.0-beta.1/docs/CHANGELOG.md)
+[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.73.0-beta.2/docs/CHANGELOG.ru.md)
+· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.73.0-beta.2/docs/CHANGELOG.md)

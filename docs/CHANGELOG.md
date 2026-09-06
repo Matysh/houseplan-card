@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.73.0-beta.2 — 2026-09-06
+
 - Every color picker now has a clear full-width **OK** button. Colors and
   opacity still apply live, while invalid HEX input stays open for correction
   instead of being accepted accidentally

@@ -405,7 +405,7 @@ import {
 import { applyOpeningMoves, mergeCollinearPartitions, spaceMergeGeometry } from './wall-merge';
 import type { MarkerRoomReferenceSnapshot } from './room-reference-transaction';
 
-const CARD_VERSION = '1.73.0-beta.1';
+const CARD_VERSION = '1.73.0-beta.2';
 const ENTRY_BUILD_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
 const EDITOR_RETRY_ASSET = '__HOUSEPLAN_EDITOR_RETRY_ASSET__';
 const ISO_RETRY_ASSET = '__HOUSEPLAN_ISO_RETRY_ASSET__';
