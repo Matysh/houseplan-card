@@ -6515,8 +6515,10 @@ const MUTANT_DEFINITIONS = [
       + 'overlap test drops walls the exact test would have caught and lets plates sit flush (#473)',
     patches: [{
       file: 'src/iso-overlays.ts',
-      find: '  return a[0] <= b[2] + gap && a[2] >= b[0] - gap',
-      replace: '  return a[0] <= b[2] && a[2] >= b[0]',
+      find: '  return a[0] <= b[2] + gap && a[2] >= b[0] - gap\n'
+        + '    && a[1] <= b[3] + gap && a[3] >= b[1] - gap;',
+      replace: '  return a[0] <= b[2] && a[2] >= b[0]\n'
+        + '    && a[1] <= b[3] && a[3] >= b[1];',
     }],
   },
   {
