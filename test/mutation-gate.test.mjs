@@ -217,3 +217,52 @@ test('#458 у каждого модуля горячего пути отрисо
     }
   }
 });
+
+// #472. У отказа еженедельного прогона не было адресата: права workflow не
+// позволяли завести issue, шага на отказ не было, а одна concurrency-группа на
+// всё позволяла ручному запуску молча отменить расписание.
+import { readFileSync as readWorkflowFile } from 'node:fs';
+const mutationWorkflow = readWorkflowFile(
+  new URL('../.github/workflows/mutation-gate.yml', import.meta.url), 'utf8',
+);
+const validateWorkflowText = readWorkflowFile(
+  new URL('../.github/workflows/validate.yml', import.meta.url), 'utf8',
+);
+
+test('#472 AC1: у расписания и ручного запуска разные concurrency-группы', () => {
+  assert.match(mutationWorkflow, /group: mutation-gate-\$\{\{ github\.event_name \}\}/);
+});
+
+test('#472 AC2: каждый шард сохраняет свой лог артефактом при любом исходе', () => {
+  assert.match(mutationWorkflow, /set -o pipefail\n\s+node scripts\/mutation-gate\.mjs --shard=[^\n]*\| tee artifacts\/mutation-shard-/);
+  const upload = mutationWorkflow.slice(mutationWorkflow.indexOf('- name: Сохранить лог шарда'));
+  assert.match(upload.slice(0, 400), /if: always\(\)/);
+  assert.match(upload.slice(0, 400), /name: mutation-shard-\$\{\{ matrix\.shard \}\}/);
+});
+
+test('#472 AC5: job report — только по расписанию, только при не-успехе, с полными правами', () => {
+  const report = mutationWorkflow.slice(mutationWorkflow.indexOf('  report:'));
+  assert.match(report, /if: always\(\) && github\.event_name == 'schedule' && needs\.mutants\.result != 'success'/);
+  const permissions = report.slice(report.indexOf('permissions:'), report.indexOf('steps:'));
+  for (const grant of ['contents: read', 'actions: read', 'issues: write']) {
+    assert.ok(permissions.includes(grant), `нет права ${grant} у job report`);
+  }
+  assert.match(report, /node scripts\/mutation-gate-report\.mjs/);
+});
+
+test('#472 AC6: повторный отказ дописывает открытое issue, а не создаёт второе', () => {
+  const report = mutationWorkflow.slice(mutationWorkflow.indexOf('  report:'));
+  const search = report.indexOf('gh issue list');
+  const create = report.indexOf('gh issue create');
+  const comment = report.indexOf('gh issue comment');
+  assert.ok(search > 0 && comment > search && create > search, 'поиск открытого issue идёт до create/comment');
+});
+
+test('#472 AC7: отсутствие Telegram-секретов не роняет job', () => {
+  const telegram = mutationWorkflow.slice(mutationWorkflow.indexOf('- name: Telegram'));
+  assert.match(telegram, /if \[ -z "\$TOKEN" \] \|\| \[ -z "\$CHAT" \]; then\n\s+echo "::warning::[^\n]*"\n\s+exit 0/);
+});
+
+test('#472 AC8: Validate сверяет mutation-gate.yml между main и dev наравне с process.yml', () => {
+  assert.match(validateWorkflowText, /for file in process\.yml mutation-gate\.yml; do/);
+});

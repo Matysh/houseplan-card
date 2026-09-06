@@ -61,20 +61,26 @@ jobs:
       # Конвейер читает `process.yml` из ветки по умолчанию, поэтому файл обязан
       # совпадать в `main` и `dev`. До этой проверки совпадение держалось на
       # дисциплине: каждая правка требовала двух пушей и ручной сверки.
-      - name: "Процесс: process.yml идентичен в main и dev"
+      - name: "Процесс: process.yml и mutation-gate.yml идентичны в main и dev"
         id: workflow_sync
         continue-on-error: true
         run: |
           git fetch --quiet origin main dev
-          if diff <(git show origin/main:.github/workflows/process.yml) \
-                  <(git show origin/dev:.github/workflows/process.yml); then
-            echo "main и dev идентичны"
-          else
-            echo "РАСХОЖДЕНИЕ: process.yml в main и dev различаются."
-            echo "Конвейер исполняет версию из ветки по умолчанию, поэтому"
-            echo "правку нужно отправить в обе ветки."
-            exit 1
-          fi
+          # #472: расписание mutation-gate.yml тоже исполняется из ветки по
+          # умолчанию — та же ловушка, что у process.yml. Сверяются оба.
+          status=0
+          for file in process.yml mutation-gate.yml; do
+            if diff <(git show "origin/main:.github/workflows/$file") \
+                    <(git show "origin/dev:.github/workflows/$file"); then
+              echo "$file: main и dev идентичны"
+            else
+              echo "РАСХОЖДЕНИЕ: $file в main и dev различаются."
+              echo "Файл исполняется из ветки по умолчанию, поэтому"
+              echo "правку нужно отправить в обе ветки."
+              status=1
+            fi
+          done
+          exit $status
 
       # Оба гейта ниже судят САМ диапазон коммитов, а не объём проверок, и до
       # #388 брали его от головы предыдущего пуша. Прогон предыдущего пуша
@@ -158,7 +164,7 @@ jobs:
           }
           echo "### Предполётные проверки" >> "$GITHUB_STEP_SUMMARY"
           check "документация" "$DOCS"
-          check "process.yml в main и dev" "$WORKFLOW_SYNC"
+          check "process.yml и mutation-gate.yml в main и dev" "$WORKFLOW_SYNC"
           check "провенанс коммитов" "$PROVENANCE"
           check "процессный гейт" "$PROCESS_GATE"
           exit $fail

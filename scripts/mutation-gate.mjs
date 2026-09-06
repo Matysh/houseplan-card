@@ -2840,6 +2840,40 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'mutation-report-drops-missing-shard',
+    guard: 'node --test --test-name-pattern="отсутствующий лог шарда" test/mutation-gate-report.test.mjs',
+    because: 'a shard whose artifact never arrived is an unknown, not a clean shard — '
+      + 'treating it as ok would let a whole quarter of the registry escape silently (#472)',
+    patches: [{
+      file: 'scripts/mutation-gate-report.mjs',
+      find: "    if (text == null) { shards.push({ shard, status: 'missing' }); continue; }",
+      replace: "    if (text == null) { shards.push({ shard, status: 'ok' }); continue; }",
+    }],
+  },
+  {
+    id: 'mutation-report-duplicates-escaped',
+    guard: 'node --test --test-name-pattern="без дублей и по порядку" test/mutation-gate-report.test.mjs',
+    because: 'the same mutant reported by two shards must be one line with one command, '
+      + 'otherwise the report double-counts and the owner chases a phantom (#472)',
+    patches: [{
+      file: 'scripts/mutation-gate-report.mjs',
+      find: "    escaped: [...escaped].sort(),",
+      replace: "    escaped: logs.flatMap(() => [...escaped]).sort(),",
+    }],
+  },
+  {
+    id: 'mutation-report-red-guard-as-mutant',
+    guard: 'node --test --test-name-pattern="красный гард без мутанта" test/mutation-gate-report.test.mjs',
+    because: 'runCleanGuards prints `FAIL чистый прогон: …` into the same log; a parser that '
+      + 'takes the word after FAIL invents a mutant named «чистый» whose --id command does '
+      + 'not exist (#472, spec review r1)',
+    patches: [{
+      file: 'scripts/mutation-gate-report.mjs',
+      find: "      if (asEscaped && known.has(asEscaped[1])) { escaped.add(asEscaped[1]); continue; }",
+      replace: "      if (asEscaped) { escaped.add(asEscaped[1]); continue; }\n      if (/^FAIL (\\S+)/.test(line)) { escaped.add(line.split(' ')[1].replace(/:$/, '')); continue; }",
+    }],
+  },
+  {
     id: 'review-comment-source-ignores-issue-number',
     guard: 'node --test --test-name-pattern="по документу ЭТОЙ задачи|чужой номер задачи" '
       + 'test/review-doc-guard.test.mjs',
