@@ -1,0 +1,117 @@
+{
+  "schema": 1,
+  "profile": "large-house-interaction-v1",
+  "minimumSamples": 3,
+  "timings": {
+    "modelReadyMs": {
+      "stat": "median",
+      "hardMaxMs": 2500
+    },
+    "firstStableRenderMs": {
+      "stat": "median",
+      "hardMaxMs": 3000
+    },
+    "interactionSeriesMs": {
+      "stat": "median",
+      "hardMaxMs": 3000
+    },
+    "hoverSeriesMs": {
+      "stat": "median",
+      "hardMaxMs": 500
+    },
+    "panSeriesMs": {
+      "stat": "median",
+      "hardMaxMs": 500
+    },
+    "cameraSeriesMs": {
+      "stat": "median",
+      "hardMaxMs": 500
+    },
+    "editorSeriesMs": {
+      "stat": "median",
+      "hardMaxMs": 750
+    },
+    "irrelevantHaTicksMs": {
+      "stat": "median",
+      "hardMaxMs": 250
+    },
+    "relevantHaTickMs": {
+      "stat": "median",
+      "hardMaxMs": 250
+    },
+    "spaceSwitchMs": {
+      "stat": "median",
+      "hardMaxMs": 1500
+    },
+    "stateUpdateMs": {
+      "stat": "median",
+      "hardMaxMs": 1000
+    },
+    "resizePreviewMs": {
+      "stat": "median",
+      "hardMaxMs": 2000
+    },
+    "panZoomMs": {
+      "stat": "median",
+      "hardMaxMs": 500
+    },
+    "settingsDialogMs": {
+      "stat": "median",
+      "hardMaxMs": 1000
+    },
+    "switchCycleMs": {
+      "stat": "median",
+      "hardMaxMs": 7000
+    }
+  },
+  "longTasks": {
+    "maxSingleMs": 3000,
+    "maxCountP95": 30,
+    "maxTotalP95Ms": 12000
+  },
+  "longTaskWindows": {
+    "hoverSeries": {
+      "maxSingleMs": 150,
+      "maxCountP95": 3,
+      "maxTotalP95Ms": 300
+    },
+    "panSeries": {
+      "maxSingleMs": 150,
+      "maxCountP95": 3,
+      "maxTotalP95Ms": 300
+    },
+    "cameraSeries": {
+      "maxSingleMs": 150,
+      "maxCountP95": 3,
+      "maxTotalP95Ms": 300
+    },
+    "editorSeries": {
+      "maxSingleMs": 150,
+      "maxCountP95": 3,
+      "maxTotalP95Ms": 300
+    }
+  },
+  "heap": {
+    "required": true,
+    "hardMaxGrowthBytes": 67108864
+  },
+  "cacheEntries": {
+    "cleanFloor": 100,
+    "glowClip": 200,
+    "wallUnion": 1,
+    "openingTunnel": 1,
+    "openingWallIndex": 1,
+    "planSnapGeometry": 1,
+    "wallFaceGraph": 4
+  },
+  "cacheGrowth": {
+    "cleanFloor": 0,
+    "glowClip": 0,
+    "wallUnion": 0,
+    "openingTunnel": 0,
+    "openingWallIndex": 0,
+    "planSnapGeometry": 0,
+    "wallFaceGraph": 0
+  },
+  "renderedDevices": 200
+}

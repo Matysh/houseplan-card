@@ -182,6 +182,9 @@ jobs:
       frontend: ${{ steps.classify.outputs.frontend }}
       backend: ${{ steps.classify.outputs.backend }}
       integration: ${{ steps.classify.outputs.integration }}
+      # Диффозависимые профили перф-смока (#473 §5).
+      perf_iso: ${{ steps.classify.outputs.perf_iso }}
+      perf_interaction: ${{ steps.classify.outputs.perf_interaction }}
       base: ${{ steps.base.outputs.base }}
       # Разные вещи под разными именами намеренно: `base` — до какого коммита
       # классифицировать файлы ветки (#387), `range_base` — от какого коммита
@@ -237,7 +240,7 @@ jobs:
         run: |
           if [ "$REF" = "refs/heads/dev" ]; then
             echo "dev: без фильтров, всё true"
-            printf 'frontend=true\nbackend=true\nintegration=true\n' >> "$GITHUB_OUTPUT"
+            node scripts/classify-changes.mjs --all >> "$GITHUB_OUTPUT"
             exit 0
           fi
           zero=$(printf '%040d' 0)
@@ -261,7 +264,7 @@ jobs:
               echo "\`before\` (=$BEFORE_SHA) переписан force-push'ем: диапазон недоказуем,"
               echo "все тяжёлые job запускаются без фильтра путей (#347)."
             } >> "$GITHUB_STEP_SUMMARY"
-            printf 'frontend=true\nbackend=true\nintegration=true\n' >> "$GITHUB_OUTPUT"
+            node scripts/classify-changes.mjs --all >> "$GITHUB_OUTPUT"
             exit 0
           fi
           # Диапазон считается от последнего ДОКАЗАННО зелёного предка (#387),
@@ -271,17 +274,14 @@ jobs:
           if [ "$EVENT_NAME" = "pull_request" ]; then base="$BASE_SHA"; fi
           if [ -z "$base" ]; then
             echo "база не определена — полный прогон без классификации"
-            printf 'frontend=true\nbackend=true\nintegration=true\n' >> "$GITHUB_OUTPUT"
+            node scripts/classify-changes.mjs --all >> "$GITHUB_OUTPUT"
             exit 0
           fi
           files=$(git diff --name-only "$base" "$HEAD_SHA")
           printf '%s\n' "$files" | head -50
-          has() { printf '%s\n' "$files" | grep -qE "$1" && echo true || echo false; }
-          {
-            echo "frontend=$(has '^(src/|demo/|test/|dist/|custom_components/houseplan/frontend/|package(-lock)?\.json$|rollup\.config\.mjs$|tsconfig)')"
-            echo "backend=$(has '^(custom_components/.*\.py$|tests_backend/|scripts/support-relay/|pytest\.ini$)')"
-            echo "integration=$(has '^(custom_components/houseplan/manifest\.json$|hacs\.json$|custom_components/.*\.py$|custom_components/.*/translations/)')"
-          } >> "$GITHUB_OUTPUT"
+          # Шаблоны — в scripts/classify-changes.mjs: там они проверяемы
+          # unit-тестом, здесь — только переписываются в выходы (#473 AC8).
+          printf '%s\n' "$files" | node scripts/classify-changes.mjs | tee -a "$GITHUB_OUTPUT"
 
   # Переиспользование результата тяжёлой job (#208). Ключ = входы поведения
   # (sourceFingerprint: src/**, demo/fixtures, demo/golden/*.mjs, манифесты
@@ -298,6 +298,10 @@ jobs:
   # заведомо новые и полный набор гейтов перед бетой и релизом идёт всегда.
   reuse:
     name: "Переиспользование: это дерево уже проверено"
+    # `changes` нужна ради набора профилей перф-смока (#473): ключ
+    # performance_smoke включает набор, иначе glow-only результат засчитался бы
+    # прогону, которому нужен изометрический профиль.
+    needs: changes
     runs-on: ubuntu-latest
     outputs:
       smoke: ${{ steps.probe.outputs.smoke }}
@@ -307,6 +311,7 @@ jobs:
       smoke_key: ${{ steps.keys.outputs.smoke }}
       golden_key: ${{ steps.keys.outputs.golden }}
       performance_smoke_key: ${{ steps.keys.outputs.performance_smoke }}
+      performance_smoke_set: ${{ steps.keys.outputs.performance_smoke_set }}
       backend_key: ${{ steps.keys.outputs.backend }}
     steps:
       - uses: actions/checkout@v7
@@ -314,12 +319,21 @@ jobs:
         with: { node-version: 22 }
       - name: Ключи переиспользования
         id: keys
+        env:
+          PERF_ISO: ${{ needs.changes.outputs.perf_iso }}
+          PERF_INTERACTION: ${{ needs.changes.outputs.perf_interaction }}
         run: |
           for job in smoke golden performance_smoke backend; do
             key=$(node scripts/gate-reuse.mjs --job="$job")
             echo "$job=$key" >> "$GITHUB_OUTPUT"
             echo "$job: $key"
           done
+          # Набор профилей перф-смока — часть ключа (#473 AC5).
+          set=glow
+          [ "$PERF_ISO" = "true" ] && set="$set-iso"
+          [ "$PERF_INTERACTION" = "true" ] && set="$set-interaction"
+          echo "performance_smoke_set=$set" >> "$GITHUB_OUTPUT"
+          echo "performance_smoke set: $set"
       # lookup-only: маркер только проверяется, но не восстанавливается —
       # сохранять его в этой job нечего, она ничего не прогоняла.
       - name: Маркер smoke
@@ -341,7 +355,7 @@ jobs:
         uses: actions/cache/restore@v6
         with:
           path: .reuse-marker
-          key: reuse-performance_smoke-${{ steps.keys.outputs.performance_smoke }}
+          key: reuse-performance_smoke-${{ steps.keys.outputs.performance_smoke }}-${{ steps.keys.outputs.performance_smoke_set }}
           lookup-only: true
       - name: Маркер backend
         id: m_backend
@@ -711,13 +725,14 @@ jobs:
     name: "Перф-смок: бюджет времени кадра"
     # Candidate-only catastrophic-regression guard for ordinary pushes and
     # prereleases. The expensive same-runner comparison lives in performance.yml.
-    needs: [frontend, reuse]
+    needs: [changes, frontend, reuse]
     if: needs.reuse.outputs.performance_smoke != 'true'
     runs-on: ubuntu-latest
     # 15 минут не хватало, когда установка браузера шла через apt: замер
     # начинался на исходе окна (#206). Запас на холодный кэш — при попадании
-    # job укладывается в те же минуты, что и раньше.
-    timeout-minutes: 20
+    # job укладывается в те же минуты, что и раньше. Диффозависимые профили
+    # (#473) добавляют до двух замеров по 3 образца — окно расширено под них.
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -757,6 +772,20 @@ jobs:
         run: |
           npm run benchmark:compare -- --absolute-only --budgets=demo/performance/budgets-glow-smoke.json --candidate=artifacts/performance-smoke/candidate.json --output=artifacts/performance-smoke/comparison.json
           npm run benchmark:compare -- --absolute-only --budgets=demo/performance/budgets-space-glow-smoke.json --candidate=artifacts/performance-smoke/space-candidate.json --output=artifacts/performance-smoke/space-comparison.json
+      # Диффозависимые профили (#473 §5): изометрия — когда дифф задел
+      # `src/iso-*`, взаимодействие — когда живой путь или оркестраторы кадра.
+      # Абсолютные потолки — `hardMaxMs` полных профилей: регрессия #160
+      # (9 870 мс против 3 500) ловится с одного образца, шум — нет.
+      - name: Изометрический профиль по диффу (#473)
+        if: needs.changes.outputs.perf_iso == 'true'
+        run: |
+          npm run benchmark:large-house -- --profile=large-house-isometric-v1 --samples=3 --warmups=1 --output=artifacts/performance-smoke/isometric-candidate.json
+          npm run benchmark:compare -- --absolute-only --budgets=demo/performance/budgets-isometric-smoke.json --candidate=artifacts/performance-smoke/isometric-candidate.json --output=artifacts/performance-smoke/isometric-comparison.json
+      - name: Профиль взаимодействия по диффу (#473)
+        if: needs.changes.outputs.perf_interaction == 'true'
+        run: |
+          npm run benchmark:large-house -- --profile=large-house-interaction-v1 --samples=3 --warmups=1 --output=artifacts/performance-smoke/interaction-candidate.json
+          npm run benchmark:compare -- --absolute-only --budgets=demo/performance/budgets-interaction-smoke.json --candidate=artifacts/performance-smoke/interaction-candidate.json --output=artifacts/performance-smoke/interaction-comparison.json
       # #330 AC7: перф-контракт ограничений стыков — быстрый (без браузера),
       # ловит возврат квадратичных путей в оба зеркала прямо на пуше.
       - name: Бюджеты ограничений стыков (#330)
@@ -784,7 +813,7 @@ jobs:
         continue-on-error: true
         with:
           path: .reuse-marker
-          key: reuse-performance_smoke-${{ needs.reuse.outputs.performance_smoke_key }}
+          key: reuse-performance_smoke-${{ needs.reuse.outputs.performance_smoke_key }}-${{ needs.reuse.outputs.performance_smoke_set }}
 
   backend:
     name: "Бэкенд: pytest в Home Assistant"

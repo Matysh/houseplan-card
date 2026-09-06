@@ -1,0 +1,69 @@
+{
+  "schema": 1,
+  "profile": "large-house-isometric-v1",
+  "minimumSamples": 3,
+  "timings": {
+    "modelReadyMs": {
+      "stat": "median",
+      "hardMaxMs": 3000
+    },
+    "firstStableRenderMs": {
+      "stat": "median",
+      "hardMaxMs": 3500
+    },
+    "viewToggleMs": {
+      "stat": "median",
+      "hardMaxMs": 1500
+    },
+    "spaceSwitchMs": {
+      "stat": "median",
+      "hardMaxMs": 1800
+    },
+    "stateUpdateMs": {
+      "stat": "median",
+      "hardMaxMs": 1000
+    },
+    "resizePreviewMs": {
+      "stat": "median",
+      "hardMaxMs": 2200
+    },
+    "panZoomMs": {
+      "stat": "median",
+      "hardMaxMs": 600
+    },
+    "settingsDialogMs": {
+      "stat": "median",
+      "hardMaxMs": 1200
+    },
+    "switchCycleMs": {
+      "stat": "median",
+      "hardMaxMs": 8000
+    }
+  },
+  "longTasks": {
+    "maxSingleMs": 3000,
+    "maxCountP95": 30,
+    "maxTotalP95Ms": 12000
+  },
+  "heap": {
+    "required": true,
+    "hardMaxGrowthBytes": 67108864
+  },
+  "cacheEntries": {
+    "cleanFloor": 100,
+    "glowClip": 200,
+    "wallUnion": 1,
+    "openingTunnel": 1,
+    "openingWallIndex": 1,
+    "isoGeometry": 8
+  },
+  "cacheGrowth": {
+    "cleanFloor": 0,
+    "glowClip": 0,
+    "wallUnion": 0,
+    "openingTunnel": 0,
+    "openingWallIndex": 0,
+    "isoGeometry": 0
+  },
+  "renderedDevices": 200
+}

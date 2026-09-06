@@ -170,8 +170,56 @@ test('классификация опирается на завершённый 
   // Пустая база означает «доказательства нет» и обязана вести к полному
   // прогону, а не к пустому диффу, который выглядел бы как «ничего не менялось».
   const empty = changes.slice(changes.indexOf('if [ -z "$base" ]'));
-  assert.match(empty, /frontend=true\\nbackend=true\\nintegration=true/,
+  assert.match(empty, /node scripts\/classify-changes\.mjs --all >> "\$GITHUB_OUTPUT"/,
     'без базы классификация обязана раскрываться в полный прогон');
+});
+
+test('перф-смок добавляет профиль ровно при своём выходе changes (#473 AC3)', () => {
+  const workflow = read('validate.yml');
+  const changes = workflow.slice(workflow.indexOf('\n  changes:\n'), workflow.indexOf('\n  reuse:\n'));
+  assert.match(changes, /perf_iso: \$\{\{ steps\.classify\.outputs\.perf_iso \}\}/);
+  assert.match(changes, /perf_interaction: \$\{\{ steps\.classify\.outputs\.perf_interaction \}\}/);
+  // Выходы пишет скрипт, а не inline-shell: шаблоны проверяются unit-тестом (AC8).
+  assert.match(changes, /printf '%s\\n' "\$files" \| node scripts\/classify-changes\.mjs \| tee -a "\$GITHUB_OUTPUT"/);
+  // Все три fallback-а «без классификации» идут через тот же скрипт с --all:
+  // новый выход не может выпасть из fallback-а.
+  const fallbacks = changes.split('node scripts/classify-changes.mjs --all >> "$GITHUB_OUTPUT"').length - 1;
+  assert.equal(fallbacks, 3, 'fallback-и классификатора раскрываются через --all');
+  assert.ok(!changes.includes("printf 'frontend=true"), 'ручной список выходов в fallback-е запрещён');
+
+  const start = workflow.indexOf('\n  performance_smoke:\n');
+  const job = workflow.slice(start, workflow.indexOf('\n  backend:\n', start));
+  assert.match(job, /needs: \[changes, frontend, reuse\]/);
+  const iso = job.slice(job.indexOf('Изометрический профиль по диффу'), job.indexOf('Профиль взаимодействия по диффу'));
+  assert.match(iso, /if: needs\.changes\.outputs\.perf_iso == 'true'/);
+  assert.match(iso, /--profile=large-house-isometric-v1 --samples=3 --warmups=1/);
+  assert.match(iso, /--absolute-only --budgets=demo\/performance\/budgets-isometric-smoke\.json/);
+  const interaction = job.slice(job.indexOf('Профиль взаимодействия по диффу'), job.indexOf('#330 AC7'));
+  assert.match(interaction, /if: needs\.changes\.outputs\.perf_interaction == 'true'/);
+  assert.match(interaction, /--profile=large-house-interaction-v1 --samples=3 --warmups=1/);
+  assert.match(interaction, /--absolute-only --budgets=demo\/performance\/budgets-interaction-smoke\.json/);
+  // Glow-профили остаются безусловными.
+  const glow = job.slice(job.indexOf('Capture the heaviest Glow state'), job.indexOf('Enforce absolute smoke ceilings'));
+  assert.ok(!/\n\s+if:/.test(glow), 'glow-профили гоняются всегда');
+});
+
+test('ключ reuse перф-смока различает наборы профилей (#473 AC5)', () => {
+  const workflow = read('validate.yml');
+  const reuse = workflow.slice(workflow.indexOf('\n  reuse:\n'), workflow.indexOf('\n  hacs:\n'));
+  assert.match(reuse, /needs: changes/);
+  assert.match(reuse, /PERF_ISO: \$\{\{ needs\.changes\.outputs\.perf_iso \}\}/);
+  assert.match(reuse, /PERF_INTERACTION: \$\{\{ needs\.changes\.outputs\.perf_interaction \}\}/);
+  assert.match(reuse, /\[ "\$PERF_ISO" = "true" \] && set="\$set-iso"/);
+  assert.match(reuse, /\[ "\$PERF_INTERACTION" = "true" \] && set="\$set-interaction"/);
+  assert.match(reuse, /performance_smoke_set: \$\{\{ steps\.keys\.outputs\.performance_smoke_set \}\}/);
+  // Набор входит и в маркер-lookup, и в маркер-save: расхождение ключей
+  // означало бы, что маркер пишется под именем, которого никто не ищет.
+  const lookup = 'reuse-performance_smoke-${{ steps.keys.outputs.performance_smoke }}-${{ steps.keys.outputs.performance_smoke_set }}';
+  const save = 'reuse-performance_smoke-${{ needs.reuse.outputs.performance_smoke_key }}-${{ needs.reuse.outputs.performance_smoke_set }}';
+  assert.ok(reuse.includes(lookup), 'lookup-ключ без набора профилей');
+  assert.ok(workflow.includes(save), 'save-ключ без набора профилей');
+  assert.ok(!workflow.includes('reuse-performance_smoke-${{ needs.reuse.outputs.performance_smoke_key }}\n'),
+    'старый save-ключ без набора остался');
 });
 
 test('гейты диапазона судят от доказанного предка, а не от предыдущего пуша (#388)', () => {

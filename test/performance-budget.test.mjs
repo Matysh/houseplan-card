@@ -181,3 +181,67 @@ test('named interaction windows enforce their own absolute Long Task limits', ()
     ]),
   );
 });
+
+// #473 AC4: smoke-бюджеты диффозависимых профилей повторяют абсолютные потолки
+// полных профилей и пригодны для `compare --absolute-only` на трёх образцах.
+import { readFileSync } from 'node:fs';
+
+const readBudget = (name) => JSON.parse(readFileSync(new URL(`../demo/performance/${name}`, import.meta.url), 'utf8'));
+
+for (const [smokeName, fullName] of [
+  ['budgets-isometric-smoke.json', 'budgets-large-house-isometric.json'],
+  ['budgets-interaction-smoke.json', 'budgets-large-house-interaction.json'],
+]) {
+  test(`${smokeName} повторяет hardMaxMs полного профиля и держит 3 образца (#473 AC4)`, () => {
+    const smoke = readBudget(smokeName);
+    const full = readBudget(fullName);
+    assert.equal(smoke.profile, full.profile);
+    assert.equal(smoke.minimumSamples, 3);
+    assert.deepEqual(Object.keys(smoke.timings), Object.keys(full.timings), 'набор метрик тот же');
+    for (const [metric, budget] of Object.entries(smoke.timings)) {
+      assert.equal(budget.hardMaxMs, full.timings[metric].hardMaxMs, `${metric}: потолок отличается от полного`);
+      assert.equal(budget.stat, full.timings[metric].stat);
+      // Регрессионных коэффициентов в смоке нет: сравнивать не с чем (§5).
+      assert.equal(budget.maxRegressionRatio, undefined, `${metric}: в смоке нет относительных лимитов`);
+    }
+    assert.equal(smoke.longTasks.maxSingleMs, full.longTasks.maxSingleMs);
+    assert.equal(smoke.longTasks.maxCountP95, full.longTasks.maxCountP95);
+    assert.equal(smoke.longTasks.maxTotalP95Ms, full.longTasks.maxTotalP95Ms);
+    assert.deepEqual(smoke.longTaskWindows, full.longTaskWindows);
+    assert.equal(smoke.heap.hardMaxGrowthBytes, full.heap.hardMaxGrowthBytes);
+    assert.deepEqual(smoke.cacheEntries, full.cacheEntries);
+    assert.deepEqual(smoke.renderedDevices, full.renderedDevices);
+
+    // Пригодность для --absolute-only: синтетический отчёт под потолками
+    // проходит, первый кадр как у de215578 (9 870 мс) — красный.
+    const build = (firstFrame) => ({
+      schema: 2, profile: smoke.profile, sourceSha: '1'.repeat(40), buildFingerprint: 'fixture',
+      runtime: { node: 'v22.0.0', chromium: '1.2.3', platform: 'linux', arch: 'x64' },
+      fixture: { rooms: 60 },
+      summary: Object.fromEntries(Object.keys(smoke.timings).map((metric) => {
+        const value = metric === 'firstStableRenderMs' ? firstFrame : 1;
+        return [metric, { median: value, p95: value, min: value, max: value }];
+      })),
+      longTasks: { maxSingleMs: 1, countP95: 1, totalP95Ms: 1 },
+      ...(smoke.profile === 'large-house-isometric-v1' ? { effectiveProjection: ['iso'] } : {}),
+      rows: [0, 1, 2].map(() => ({
+        heapGrowthBytes: 1, preciseGc: true,
+        longTasks: Object.fromEntries(['load', ...Object.keys(smoke.longTaskWindows ?? {})]
+          .map((name) => [name, { supported: true, count: 1, maxMs: 1, totalMs: 1 }])),
+        cacheEntries: { ...smoke.cacheEntries },
+        cacheGrowth: Object.fromEntries(Object.keys(smoke.cacheGrowth).map((key) => [key, 0])),
+        renderedDevices: smoke.renderedDevices,
+        ...(smoke.profile === 'large-house-isometric-v1'
+          ? {
+            effectiveProjection: 'iso',
+            isoStructuralBuilds: { supported: true, initial: 1, beforeHaUpdate: 2, afterHaUpdate: 2, haUpdateDelta: 0 },
+          } : {}),
+      })),
+    });
+    const ok = evaluatePerformanceBudget({ candidate: build(1), budgets: smoke, absoluteOnly: true });
+    assert.deepEqual(ok.failures, [], 'отчёт под потолками обязан проходить');
+    const regressed = evaluatePerformanceBudget({ candidate: build(9870), budgets: smoke, absoluteOnly: true });
+    assert.ok(regressed.failures.some((check) => check.id === 'timing.firstStableRenderMs.median'),
+      'первый кадр 9 870 мс обязан краснеть');
+  });
+}

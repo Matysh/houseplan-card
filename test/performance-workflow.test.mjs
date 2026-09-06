@@ -178,8 +178,10 @@ test('#347: a rewritten before forces the full run instead of guessing the range
     workflow.indexOf('Классификация изменённых файлов'),
     workflow.indexOf('reuse:'),
   );
+  // Полный прогон — `classify-changes.mjs --all`: все выходы true (#473 вынес
+  // список выходов из inline-shell, ветка force-push идёт тем же путём).
   assert.ok(
-    /force-push[\s\S]*?frontend=true[\s\S]*?backend=true[\s\S]*?integration=true/.test(classify),
+    /force-push[\s\S]*?node scripts\/classify-changes\.mjs --all >> "\$GITHUB_OUTPUT"/.test(classify),
     'мёртвый before обязан включать полный прогон, не merge-base-угадывание');
   assert.ok(classify.includes('GITHUB_STEP_SUMMARY'),
     'пропуск классификации обязан быть громким в summary');

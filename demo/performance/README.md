@@ -82,6 +82,16 @@ reviewed hard timing, Long Task, heap, cache and rendered-device ceilings from
 `budgets-glow-smoke.json`; it deliberately makes no noisy base-relative claim.
 This is a catastrophic-regression guard, not a performance trend detector.
 
+Two more profiles join the smoke only when the diff touches their code path
+(#473, classified by `scripts/classify-changes.mjs`): `large-house-isometric-v1`
+for `src/iso-*` and `large-house-interaction-v1` for `src/live-*`,
+`src/render-*`, `houseplan-render-lifecycle.ts` and `houseplan-card.ts`. Both
+run `--samples=3 --warmups=1` against `budgets-isometric-smoke.json` and
+`budgets-interaction-smoke.json`, whose ceilings are the `hardMaxMs` values of
+the full profiles. The set of profiles is part of the `performance_smoke`
+reuse key, so a glow-only success never stands in for a run that needed the
+isometric profile.
+
 The dedicated `performance.yml` workflow is the full comparison. It runs on
 every `main` promotion, weekly and on manual dispatch for an important beta or
 performance-sensitive change. It checks out the candidate and its base SHA,
