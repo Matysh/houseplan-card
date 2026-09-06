@@ -68,7 +68,7 @@ const res = await page.evaluate(async () => {
   out.wallsApplied = (space.walls || []).length >= 4
     && (space.walls || []).every((w) => w.cm === 15);
   const firstRoom = (space.rooms || []).find((r) => r.name === 'ThickDraw');
-  out.wallIdentityMaterialized = c._serverCfg.model_version === 9
+  out.wallIdentityMaterialized = c._serverCfg.model_version === 10
     && firstRoom?.wall_ids?.length === 4
     && new Set(firstRoom.wall_ids).size === 4
     && (space.wall_segments || []).length === 4;

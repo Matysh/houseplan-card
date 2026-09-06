@@ -131,7 +131,6 @@ export function spacePhysicalGeometryFingerprint(spaceConfig: any): string {
     open_spans: spaceConfig?.open_spans || [],
     openings: spaceConfig?.openings || [],
     partitions: spaceConfig?.partitions || [],
-    room_drafts: spaceConfig?.room_drafts || [],
     wall_columns: spaceConfig?.wall_columns || [],
   });
 }

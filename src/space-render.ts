@@ -355,7 +355,6 @@ export function renderSpaceStatic(o: StaticRenderOpts): TemplateResult | null {
   });
   const physicalFingerprint = contentFingerprint({
     partitions: space.partitions,
-    roomDrafts: space.room_drafts,
     columns: space.wall_columns,
     cellCm,
     hostedOpenings: resolvedHosted.map((resolved) => ({

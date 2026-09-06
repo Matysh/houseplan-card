@@ -3,16 +3,14 @@ import { GRID_STEP_N } from './space-geometry';
 type DataRecord = Record<string, unknown>;
 type Point = [number, number];
 
-export interface DraftLiveSeed {
-  draftId: string;
-  segmentId: string;
-  index: number;
+export interface WallChainLiveSeed {
+  partitionId: string;
   a: Point;
   b: Point;
   cm: number;
 }
 
-export interface DraftLiveProjection {
+export interface WallChainLiveProjection {
   space: DataRecord & {
     rooms: DataRecord[];
     walls: DataRecord[];
@@ -20,7 +18,6 @@ export interface DraftLiveProjection {
     open_spans: DataRecord[];
     openings: DataRecord[];
     partitions: DataRecord[];
-    room_drafts: DataRecord[];
     wall_columns: DataRecord[];
   };
   roomIds: string[];
@@ -29,10 +26,7 @@ export interface DraftLiveProjection {
 
 interface LocalSegment {
   key: string;
-  kind: 'partition' | 'draft';
   source: DataRecord;
-  draft?: DataRecord;
-  index?: number;
   a: Point;
   b: Point;
   cm: number;
@@ -129,11 +123,9 @@ const collinear = (left: LocalSegment, right: LocalSegment): boolean => {
 function localSegments(space: DataRecord): {
   segments: LocalSegment[];
   malformedPartitions: DataRecord[];
-  malformedDrafts: DataRecord[];
 } {
   const segments: LocalSegment[] = [];
   const malformedPartitions: DataRecord[] = [];
-  const malformedDrafts: DataRecord[] = [];
   for (const partition of recordsOf(space.partitions)) {
     const a = pointOf(partition.a), b = pointOf(partition.b);
     if (!a || !b) {
@@ -142,88 +134,33 @@ function localSegments(space: DataRecord): {
     }
     segments.push({
       key: `partition:${String(partition.id || stable(partition))}`,
-      kind: 'partition', source: partition, a, b, cm: segmentCm(partition, 0),
+      source: partition, a, b, cm: segmentCm(partition, 0),
     });
   }
-  for (const draft of recordsOf(space.room_drafts)) {
-    const points = pointsOf(draft.points);
-    const rawPoints = Array.isArray(draft.points) ? draft.points : [];
-    const rawSegments = recordsOf(draft.segments);
-    if (points.length !== rawPoints.length || points.length < 2
-        || rawSegments.length < points.length - 1) {
-      malformedDrafts.push(draft);
-      continue;
-    }
-    for (let index = 0; index + 1 < points.length; index++) {
-      const source = rawSegments[index];
-      segments.push({
-        key: `draft:${String(draft.id || '')}:${index}:${String(source.id || '')}`,
-        kind: 'draft', source, draft, index,
-        a: points[index], b: points[index + 1], cm: segmentCm(source),
-      });
-    }
-  }
-  return { segments, malformedPartitions, malformedDrafts };
+  return { segments, malformedPartitions };
 }
 
-function dedupe(records: readonly DataRecord[]): DataRecord[] {
-  const seen = new Set<string>();
-  return records.filter((record) => {
-    const identity = `${String(record.id || '')}|${stable(record)}`;
-    if (seen.has(identity)) return false;
-    seen.add(identity);
-    return true;
-  });
-}
-
-function draftSlices(selected: readonly LocalSegment[], malformed: readonly DataRecord[]): DataRecord[] {
-  const slices = selected.filter((segment) => segment.kind === 'draft').map((segment) => {
-    const draft = segment.draft as DataRecord;
-    const index = segment.index as number;
-    return {
-      ...draft,
-      id: `${String(draft.id || 'draft')}@local:${index}`,
-      points: [[...segment.a], [...segment.b]],
-      segments: [{ ...segment.source }],
-    };
-  });
-  return dedupe([...slices, ...malformed]);
-}
-
-/** The one segment appended by the current active draft click. */
-export function draftLiveSeed(spaceInput: unknown, draftId: string): DraftLiveSeed | null {
+/** The ordinary independent wall appended by the current chain click. */
+export function wallChainLiveSeed(
+  spaceInput: unknown, partitionId: string,
+): WallChainLiveSeed | null {
   const space = asRecord(spaceInput);
-  const draft = recordsOf(space?.room_drafts).find((item) => item.id === draftId);
-  if (!draft) return null;
-  const points = pointsOf(draft.points);
-  const segments = recordsOf(draft.segments);
-  const index = points.length - 2;
-  if (index < 0 || segments.length !== points.length - 1) return null;
-  const segment = segments[index];
-  const cm = Number(segment.cm);
-  if (!Number.isFinite(cm) || cm < 0 || samePoint(points[index], points[index + 1])) return null;
-  return {
-    draftId,
-    segmentId: String(segment.id || `${draftId}-${index}`),
-    index,
-    a: points[index],
-    b: points[index + 1],
-    cm,
-  };
+  const partition = recordsOf(space?.partitions).find((item) => item.id === partitionId);
+  if (!partition) return null;
+  const a = pointOf(partition.a), b = pointOf(partition.b);
+  const cm = Number(partition.cm);
+  if (!a || !b || !Number.isFinite(cm) || cm < 0 || samePoint(a, b)) return null;
+  return { partitionId, a, b, cm };
 }
 
-/**
- * Prove that the editor changed exactly one active draft by appending one
- * point/segment. Unknown or mixed geometry falls back to the generic barrier.
- */
-export function isSingleDraftAppend(
-  beforeInput: unknown, afterSpaceInput: unknown, draftId: string,
+/** Prove that the editor appended exactly one partition and changed nothing else. */
+export function isSinglePartitionAppend(
+  beforeInput: unknown, afterSpaceInput: unknown, partitionId: string,
 ): boolean {
   const before = asRecord(beforeInput), after = asRecord(afterSpaceInput);
   if (!before || !after || String(before.spaceId || '') !== String(after.id || '')) return false;
   const arrays = [
-    'rooms', 'openings', 'walls', 'wall_segments', 'open_spans',
-    'partitions', 'wall_columns', 'decor',
+    'rooms', 'openings', 'walls', 'wall_segments', 'open_spans', 'wall_columns', 'decor',
   ];
   if (arrays.some((key) => stable(before[key] ?? []) !== stable(after[key] ?? []))) return false;
   const transform = asRecord(before.plan_transform) || {};
@@ -233,41 +170,20 @@ export function isSingleDraftAppend(
   ]) if (after[key] !== undefined) transformAfter[key] = after[key];
   if (stable(transform) !== stable(transformAfter)) return false;
 
-  const beforeDrafts = recordsOf(before.room_drafts);
-  const afterDrafts = recordsOf(after.room_drafts);
-  const previous = beforeDrafts.find((draft) => draft.id === draftId);
-  const next = afterDrafts.find((draft) => draft.id === draftId);
-  if (!next) return false;
-  const otherBefore = beforeDrafts.filter((draft) => draft.id !== draftId);
-  const otherAfter = afterDrafts.filter((draft) => draft.id !== draftId);
-  if (stable(otherBefore) !== stable(otherAfter)) return false;
-  const previousPoints = pointsOf(previous?.points);
-  const nextPoints = pointsOf(next.points);
-  const previousSegments = recordsOf(previous?.segments);
-  const nextSegments = recordsOf(next.segments);
-  // The first point is transient by contract and has no config record. Thus
-  // the first accepted segment creates a two-point draft from an absent
-  // baseline; later clicks append one point and one segment to that record.
-  if (previous) {
-    if (nextPoints.length !== previousPoints.length + 1
-        || nextSegments.length !== previousSegments.length + 1
-        || stable(nextPoints.slice(0, -1)) !== stable(previousPoints)
-        || stable(nextSegments.slice(0, -1)) !== stable(previousSegments)) return false;
-  } else if (nextPoints.length !== 2 || nextSegments.length !== 1) return false;
-  if (nextSegments.length !== nextPoints.length - 1) return false;
-  const last = nextSegments[nextSegments.length - 1];
-  return Number.isFinite(Number(last.cm))
-    && !samePoint(nextPoints[nextPoints.length - 2], nextPoints[nextPoints.length - 1]);
+  const previous = recordsOf(before.partitions);
+  const next = recordsOf(after.partitions);
+  if (next.length !== previous.length + 1
+      || stable(next.slice(0, -1)) !== stable(previous)) return false;
+  const appended = next[next.length - 1];
+  const a = pointOf(appended.a), b = pointOf(appended.b);
+  return appended.id === partitionId && !!a && !!b && !samePoint(a, b)
+    && Number.isFinite(Number(appended.cm)) && Number(appended.cm) >= 0;
 }
 
-/**
- * Build a bounded runtime-only proof around the newly appended draft segment.
- * Stored geometry is never mutated; generic/full validation remains the
- * terminal authority.
- */
-export function draftLiveCandidateSpace(
-  spaceInput: unknown, seed: DraftLiveSeed,
-): DraftLiveProjection | null {
+/** Build the same bounded physical/junction proof as #461 around one partition. */
+export function wallChainLiveCandidateSpace(
+  spaceInput: unknown, seed: WallChainLiveSeed,
+): WallChainLiveProjection | null {
   const space = asRecord(spaceInput);
   if (!space) return null;
   const cellCmRaw = Number(space.cell_cm);
@@ -327,19 +243,15 @@ export function draftLiveCandidateSpace(
     const center = pointOf(midpoint?.split(',').map(Number));
     if (center) return selectedEdges.some(([c, d]) =>
       distanceToSegment(center, c, d) <= GRID_STEP_N * 0.02);
-    // Unlocatable legacy data stays in the proof: malformed records must not
-    // become safe merely because the bounded projector cannot position them.
     return true;
   });
 
-  const { segments, malformedPartitions, malformedDrafts } = localSegments(space);
+  const { segments, malformedPartitions } = localSegments(space);
   const selectedKeys = new Set(segments.flatMap((segment) => {
     const near = segmentDistance(seed.a, seed.b, segment.a, segment.b)
       <= seedHalf + cmUnits(segment.cm, cellCm) / 2 + clearance;
     return near ? [segment.key] : [];
   }));
-
-  // Complete collinear runs so the 20 cm rule measures a wall, not one atom.
   let grew = true;
   while (grew) {
     grew = false;
@@ -354,8 +266,6 @@ export function draftLiveCandidateSpace(
       }
     }
   }
-  // Retain every ray at the selected junctions, but do not recurse through
-  // the newly added rays' far endpoints into the whole connected floor.
   const junctions = new Set(segments.filter((segment) => selectedKeys.has(segment.key))
     .flatMap((segment) => [pointKey(segment.a), pointKey(segment.b)]));
   for (const candidate of segments) {
@@ -363,9 +273,7 @@ export function draftLiveCandidateSpace(
       selectedKeys.add(candidate.key);
   }
   const selectedSegments = segments.filter((segment) => selectedKeys.has(segment.key));
-  const partitions = selectedSegments.filter((segment) => segment.kind === 'partition')
-    .map((segment) => segment.source).concat(malformedPartitions);
-  const roomDrafts = draftSlices(selectedSegments, malformedDrafts);
+  const partitions = selectedSegments.map((segment) => segment.source).concat(malformedPartitions);
 
   const wallColumns = recordsOf(space.wall_columns).filter((column) => {
     const center = pointOf(column.center);
@@ -397,7 +305,6 @@ export function draftLiveCandidateSpace(
       open_spans: openSpans,
       openings,
       partitions,
-      room_drafts: roomDrafts,
       wall_columns: wallColumns,
     },
     roomIds,

@@ -232,44 +232,6 @@ export function repairNearAxisRoomWalls(spaceIn: any): NearAxisRepairResult {
   }
   space.rooms = rooms;
 
-  // Saved wall chains are independent authoring records. Preserve their point
-  // and segment counts; only an equivalence-class endpoint coordinate moves.
-  for (const draft of space.room_drafts || []) {
-    if (!Array.isArray(draft?.points) || draft.points.length < 2) continue;
-    const source = draft.points.map((point: number[]) => [...point]);
-    const draftCandidates = source.slice(0, -1).flatMap((a: number[], index: number) => {
-      const b = source[index + 1];
-      const classified = classifyNearAxisSegment(a, b);
-      return classified ? [{
-        key: `${String(draft.id || '')}:${index}`,
-        a: [...a], b: [...b], axis: classified.axis,
-      } as RepairCandidate] : [];
-    });
-    let points = source;
-    for (const candidate of draftCandidates) {
-      let accepted: EndpointMove | null = null;
-      for (const move of candidateMoves(candidate, [{ poly: points }])) {
-        const next = points.map((point: number[]) => replacePoint(point, move));
-        const closed = next.length >= 4 && samePoint(next[0], next[next.length - 1]);
-        const ring = closed ? next.slice(0, -1) : next;
-        if (closed ? !simplePolygon(ring) : !simpleOpenPath(ring)) continue;
-        accepted = move;
-        points = next;
-        break;
-      }
-      if (!accepted) {
-        wallsStraightenSkipped++;
-        continue;
-      }
-      wallsStraightened++;
-      maxStraightenShift = Math.max(
-        maxStraightenShift,
-        Math.hypot(accepted.to[0] - accepted.from[0], accepted.to[1] - accepted.from[1]),
-      );
-    }
-    draft.points = points;
-  }
-
   // Independent partitions have one owner. Hosted openings are retained only
   // when their along-wall interval still fits the exact-axis candidate.
   for (const partition of space.partitions || []) {

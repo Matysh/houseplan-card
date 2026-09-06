@@ -400,17 +400,6 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
-    id: 'draft-delete-drops-the-promise',
-    guard: 'node demo/smoke_free_walls.mjs',
-    because: 'a delayed confirmation must keep the draft deletion pending all the way to the '
-      + 'card facade; dropping the runtime promise makes the smoke inspect stale geometry (#405)',
-    patches: [{
-      file: 'src/houseplan-editor-runtime.ts',
-      find: "    if (sel.kind === 'draft') { await this._deleteDraftWhole(); return; }",
-      replace: "    if (sel.kind === 'draft') { void this._deleteDraftWhole(); return; }",
-    }],
-  },
-  {
     id: 'smoke-guard-blind-to-tail',
     guard: 'node demo/guard/verify-guard.mjs',
     because: 'the uncaught-exception guard must read its counter AFTER the page delivered '
@@ -2526,14 +2515,14 @@ const MUTANT_DEFINITIONS = [
       + 'through the generic full-space transaction recreates the measured one-second pause',
     patches: [{
       file: 'src/houseplan-editor-runtime.ts',
-      find: "    commitDraftSegmentGeometry(this, this.host._t('history.draft_segment'), before);",
-      replace: "    this._commitPhysicalGeometry(this.host._t('history.draft_segment'), before);",
+      find: "    if (!commitWallChainSegmentGeometry(this, this.host._t('history.wall_segment'), before)) {",
+      replace: "    if (!this._commitPhysicalGeometry(this.host._t('history.wall_segment'), before)) {",
     }],
   },
   {
     id: 'wall-draw-local-neighbour-dropped',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
-      + '&& node --test --test-name-pattern="local draft projection" '
+      + '&& node --test --test-name-pattern="local projection retains" '
       + 'test/draft-live-preflight.test.mjs',
     because: 'a bounded proof that drops a room whose masonry envelope meets the new segment '
       + 'can accept geometry the generic barrier rejects (#461 AC4)',
@@ -2541,17 +2530,6 @@ const MUTANT_DEFINITIONS = [
       file: 'src/draft-live-preflight.ts',
       find: '    return id && near ? [id] : [];',
       replace: '    return [];',
-    }],
-  },
-  {
-    id: 'wall-draw-terminal-full-check-skipped',
-    guard: 'node demo/benchmark_wall_draw_click.mjs',
-    because: 'the local click verdict is deliberately non-terminal; finishing a wall chain must '
-      + 'still cross an independent full-space barrier (#461 AC7)',
-    patches: [{
-      file: 'src/houseplan-editor-runtime.ts',
-      find: "    this._commitPhysicalGeometry(this.host._t('history.wall_chain_finish'), before);",
-      replace: "    this._recordGeometry(this.host._t('history.wall_chain_finish'), before);",
     }],
   },
   {
@@ -2573,8 +2551,8 @@ const MUTANT_DEFINITIONS = [
       + 'the junction pass; discarding it repays the expensive union on every click (#461 AC5)',
     patches: [{
       file: 'src/draft-live-commit.ts',
-      find: '    geometry, candidateProjection.roomIds,',
-      replace: '    null, candidateProjection.roomIds,',
+      find: '    localCandidate, localPrevious, before.spaceId, geometry, candidateProjection.roomIds,',
+      replace: '    localCandidate, localPrevious, before.spaceId, null, candidateProjection.roomIds,',
     }],
   },
   {
@@ -3129,7 +3107,7 @@ const MUTANT_DEFINITIONS = [
       + '#234 потерял регресс (#241)',
     patches: [{
       file: 'scripts/smoke-links.mjs',
-      find: "    symbols: ['chainSegmentCms', 'wallChainSegments', '_draftSegmentCms', '_closingWallCm'],",
+      find: "    symbols: ['chainSegmentCms', 'wallChainSegments', '_wallChainSegmentCms', '_closingWallCm'],",
       replace: '    symbols: [],',
     }],
   },
@@ -5030,29 +5008,6 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
-    id: 'chain-merge-sees-own-draft',
-    guard: 'node --test --test-name-pattern="issue 229" test/wall-merge.test.mjs',
-    because: 'завершаемая цепочка ещё лежит в room_drafts, и её собственные концы '
-      + 'нельзя принимать за чужое примыкание — иначе стык с существующей стеной '
-      + 'никогда не срастается (CODE-REVIEW-229-r1, High-2)',
-    patches: [{
-      file: 'src/wall-merge.ts',
-      find: '      if (exclude && draft?.id === exclude) return [];',
-      replace: '      void exclude;',
-    }],
-  },
-  {
-    id: 'partition-merge-disabled',
-    guard: 'node demo/smoke_wall_chain_merge.mjs',
-    because: 'без вызова слияния прямая, нарисованная в несколько кликов, снова хранится '
-      + 'набором отрезков со швами на каждом стыке (#229)',
-    patches: [{
-      file: 'src/houseplan-card.ts',
-      find: '    this._mergeSpacePartitions(sp, drawnIds);',
-      replace: '    void drawnIds;',
-    }],
-  },
-  {
     id: 'partition-merge-ignores-thickness',
     guard: 'node --test --test-name-pattern="issue 229" test/wall-merge.test.mjs',
     because: 'сращивание отрезков разной толщины стирает намеренный переход толщины стены',
@@ -5549,28 +5504,15 @@ const MUTANT_DEFINITIONS = [
       + 'barrier would leave the authoritative catalogue behind the repaired projections (#282)',
     patches: [{
       file: 'src/plan-optimizer.ts',
-      find: '    wallSegmentsMigrated = commitWallSegmentModelInPlace(config).migratedSegments;',
-      replace: '    wallSegmentsMigrated = 0;',
+      find: '    const wallCommit = commitWallSegmentModelInPlace(config);',
+      replace: '    const wallCommit = { migratedSegments: 0, migratedDrafts: 0, migratedDraftSegments: 0 };',
     }],
   },
   {
-    id: 'v8-draft-sanitation-shifts-segment-identity',
-    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
-      + '&& node --test --test-name-pattern="draft sanitation drops only" '
-      + 'test/wall-segment-model.test.mjs',
-    because: 'skipping a duplicate adjacent point must drop its own zero edge instead of '
-      + 'shifting the following model-v8 segment id onto the wrong carrier (#314)',
-    patches: [{
-      file: 'src/wall-segment-model.ts',
-      find: '    const source = draft.segments?.[index - 1];',
-      replace: '    const source = draft.segments?.[segments.length];',
-    }],
-  },
-  {
-    id: 'v8-rejected-physical-write-keeps-optimistic-draft',
+    id: 'current-rejected-physical-write-keeps-optimistic-wall',
     guard: 'npm run bundle:sync && node demo/smoke_v8_draft_write.mjs',
     because: 'a rejected config/set must synchronously discard its whole pending physical batch '
-      + 'before the active draft can be promoted into a ghost partition (#314)',
+      + 'before an optimistic active-chain partition survives as a ghost wall (#314/#478)',
     patches: [{
       file: 'src/houseplan-card.ts',
       find: '        const rolledBack = this._rollbackRejectedPhysicalWrites(strictEntries);',

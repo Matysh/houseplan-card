@@ -63,7 +63,7 @@ import {
   type ResizeProjectionResult,
 } from './resize-controller';
 import { resizeLiveCandidateSpace, resizeLiveJunctionRoomIds } from './resize-live-preflight';
-import { commitDraftSegmentGeometry } from './draft-live-commit';
+import { commitWallChainSegmentGeometry } from './draft-live-commit';
 import {
   placeResizeAreaLabel, resizeMeasuredEdges,
   type ResizeAreaPlacement,
@@ -177,7 +177,7 @@ import {
 } from './virtual-light-state';
 import type {
   OpeningCfg, PartitionOpeningHost,
-  RoomCfg, RoomDraftCfg, PartitionCfg, WallColumnCfg,
+  RoomCfg, PartitionCfg, WallColumnCfg,
   SpaceModel, PdfRef, Marker, ServerConfig, DevItem, CardConfig,
   MarkerValueBadge, ValueBadgePosition, ValueBadgeSource, ZeroWallStyle,
 } from './types';
@@ -234,7 +234,7 @@ import { optimizePlans, type OptimizeReport } from './plan-optimizer';
 import {
   WALL_SEGMENT_MODEL_VERSION,
   adoptWallSegmentModelCandidateInPlace, commitWallSegmentModel,
-  fixedTopologyWallLineageHints, sanitizeRoomDraftPath,
+  fixedTopologyWallLineageHints,
   resolveRoomOpeningHost, wallModelOffGridValueCount, WallSegmentModelError,
 } from './wall-segment-model';
 import {
@@ -367,6 +367,7 @@ import {
   reorderSpaceIds,
 } from './space-order';
 import { applyOpeningMoves, mergeCollinearPartitions, spaceMergeGeometry } from './wall-merge';
+import { reconcileCoincidentPartitions } from './coincident-partitions';
 
 const CARD_VERSION = '1.73.0-beta.1';
 
@@ -642,8 +643,7 @@ const unionRect = (a: Rect, b: Rect): Rect => {
 
 /** #313: one Thickness-tool hit — a room interval or independent masonry. */
 type WallThickSource = { kind: 'room' }
-  | { kind: 'partition'; id: string }
-  | { kind: 'draft'; id: string; segment: number };
+  | { kind: 'partition'; id: string };
 type WallThickHit = {
   a: number[]; b: number[]; roomId: string; segs: number[][];
   open: boolean; cm: number; source: WallThickSource;
@@ -674,7 +674,7 @@ type WallFaceBatch = {
   decisions: WallFaceDecision[];
   activePath: number[][];
   activeCms: number[];
-  activeDraftId: string | null;
+  activePartitionIds: string[];
 };
 /**
  * The floor a source can see, and nothing else. One region means one clip:
@@ -698,9 +698,7 @@ const normalizeMarkupTool = (value: unknown): MarkupTool => {
     ? value as MarkupTool
     : 'draw';
 };
-const MAX_ROOM_DRAFTS = 200;
-const MAX_DRAFT_POINTS = 500;
-const MAX_DRAFT_SEGMENTS = 2000;
+const MAX_WALL_CHAIN_POINTS = 500;
 const MAX_PARTITIONS = 2000;
 const MAX_ROOMS = 400;
 const MAX_WALL_COLUMNS = 500;
@@ -712,7 +710,6 @@ interface SpaceGeometryState {
   walls?: WallEntry[];
   wall_segments?: any[];
   open_spans?: OpenSpanEntry[];
-  room_drafts?: RoomDraftCfg[];
   partitions?: PartitionCfg[];
   wall_columns?: WallColumnCfg[];
   decor?: DecorShape[];
@@ -815,7 +812,8 @@ type FixedFloorState = FixedFloorSelection | { kind: 'pending'; value: unknown }
 
 export interface HouseplanEditorHostPort {
   _ackNewDevice: (id: string) => void;
-  _activeDraftId: string | null;
+  _activeWallChainId: string | null;
+  _activeWallChainPartitionIds: string[];
   _activePlanSnapCandidate: PlanSnapCandidate | null;
   _activePlanSnapConflicts: PlanSnapEndpoint[];
   _activityRt: Map<string, FiniteActivityRuntime>;
@@ -909,7 +907,8 @@ export interface HouseplanEditorHostPort {
   _devices: DevItem[];
   _dirtyPos: Set<string>;
   _display: (url: string | null | undefined) => string;
-  _draftSegmentCms: number[];
+  _wallChainSegmentCms: number[];
+  _wallChainRedo: Array<{ id: string; point: number[]; cm: number }>;
   _drag: { id: string; sx: number; sy: number; ox: number; oy: number; moved: boolean; } | null;
   /** #400: device dragging has its own state since #74; `_drag` is null in
    *  the devices mode, so anything excluding "the thing being dragged" there
@@ -1034,12 +1033,12 @@ export interface HouseplanEditorHostPort {
   _persistLayout: Debounced<() => void>;
   _physicalBodiesCache: { key: string; drafts: number[][][]; partitions: number[][][]; columns: number[][][]; patches: number[][][]; all: number[][][]; } | null;
   _physicalBodiesR: (space?: SpaceModel | undefined) => number[][][];
-  _physicalDialog: { kind: "partition" | "column" | "draft"; id: string; cm: string; segment?: number; shape?: "square" | "circle"; angle?: string; length?: string; } | null;
+  _physicalDialog: { kind: "partition" | "column"; id: string; cm: string; shape?: "square" | "circle"; angle?: string; length?: string; } | null;
   _physicalDrag: { pid: number; kind: "partition" | "column"; id: string; start: number[]; startClient: number[]; before: SpaceGeometryState | null; moved: boolean; base: PartitionCfg | WallColumnCfg; delta: number[]; } | null;
-  _physicalLastTap: { kind: "partition" | "column" | "draft"; id: string; segment?: number; at: number; } | null;
+  _physicalLastTap: { kind: "partition" | "column"; id: string; at: number; } | null;
   _physicalPickCycle: { signature: string; index: number; x: number; y: number; at: number; } | null;
   _physicalRotate: { pid: number; id: string; center: number[]; startAngle: number; baseAngle: number; angle: number; before: SpaceGeometryState | null; moved: boolean; } | null;
-  _physicalSel: { kind: "partition" | "column" | "draft"; id: string; segment?: number; } | null;
+  _physicalSel: { kind: "partition" | "column"; id: string; } | null;
   _pinchStart: { dist: number; zoom: number; } | null;
   _planEntityAvailable: (eid: string | null | undefined) => boolean;
   _planHass: any;
@@ -1066,7 +1065,6 @@ export interface HouseplanEditorHostPort {
   >;
   _restoreZoom: () => void;
   _redoDevicePosition: () => void;
-  _resumeDraftBySpace: Record<string, string>;
   _rlResize: { id: string; space: string; k0: number; cx: number; cy: number; d0: number; } | null;
   _roomCenter: (r: RoomCfg) => number[];
   _roomCustomFill: FillColorEntry | null;
@@ -1332,8 +1330,6 @@ public _setMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate = true): vo
         targetCenterY = undefined;
       }
     }
-    if (previousMode === 'plan' && this.host._activeDraftId)
-      this.host._resumeDraftBySpace[this.host._space] = this.host._activeDraftId;
     this.host._mode = mode;
     if (previousMode === 'devices' && mode !== 'devices') {
       this.host._showHidden = false;
@@ -1441,10 +1437,7 @@ public _setMode(mode: 'view' | 'plan' | 'devices' | 'decor', animate = true): vo
     this.host._bdDrag = null;
     this.host._dtDrag = null;
     this.host._dtBox = null;
-    if (mode === 'plan') {
-      this._primeDrawWallField();
-      this._resumeLastDraft();
-    }
+    if (mode === 'plan') this._primeDrawWallField();
     this.host._saveNav();
   }
 
@@ -1462,19 +1455,13 @@ public _showPhysicalRange(max = this.host._drawWallMaxCm, min = 0): void {
     }));
   }
 
-public _draftSegmentCount(sp = this.host._curSpaceCfg as any): number {
-    return (sp?.room_drafts || []).reduce(
-      (sum: number, d: any) => sum + (Array.isArray(d.segments) ? d.segments.length : 0), 0,
-    );
-  }
-
 public _mergeSpacePartitions(sp: any, seedIds?: string[]): number {
     const partitions = (sp?.partitions || []) as PartitionCfg[];
     if (partitions.length < 2) return 0;
     const result = mergeCollinearPartitions(partitions, {
       pitch: GRID_STEP_N,
       seedIds,
-      geometry: spaceMergeGeometry(sp, { excludeDraftId: this.host._activeDraftId }),
+      geometry: spaceMergeGeometry(sp),
     });
     if (!result.merged) return 0;
     sp.partitions = result.partitions;
@@ -1486,61 +1473,11 @@ public _mergeSpacePartitions(sp: any, seedIds?: string[]): number {
 
 public _finishWallChain(): boolean {
     if (this.host._tool !== 'draw' || this.host._wallFaceBatch || this.host._roomDialog) return true;
-    const sp = this.host._curSpaceCfg as any;
-    if (!sp || this.host._path.length < 2) {
-      this.host._path = [];
-      this.host._activeDraftId = null;
-      this.host._draftSegmentCms = [];
-      this.host._closingWallCm = null;
-      this._clearPlanSnapHover();
-      return true;
-    }
-    const segments = wallChainSegments(
-      this.host._path,
-      chainSegmentCms(
-        this.host._path.length - 1, this.host._draftSegmentCms,
-        this.host._drawWallCm, DRAW_WALL_DEFAULT_CM,
-      ),
-    );
-    const segmentCount = segments.length;
-    if ((sp.partitions || []).length + segmentCount > MAX_PARTITIONS) {
-      this.host._showToast(this.host._t('toast.physical_limit'));
-      return false;
-    }
-    const before = this._geometrySnapshot();
-    sp.partitions ||= [];
-    const seed = Date.now().toString(36);
-    const drawnIds: string[] = [];
-    const activeDraft = this.host._activeDraftId
-      ? (sp.room_drafts || []).find((draft) => draft.id === this.host._activeDraftId)
-      : null;
-    const lineage = this._draftSegmentsForPath(
-      this.host._path, activeDraft, segments.map((segment) => segment.cm),
-    );
-    for (let i = 0; i < segmentCount; i++) {
-      const segment = segments[i];
-      const id = lineage[i]?.id || `partition-${seed}-${i}`;
-      drawnIds.push(id);
-      sp.partitions.push({
-        id,
-        a: [segment.a[0] / NORM_W, segment.a[1] / NORM_W],
-        b: [segment.b[0] / NORM_W, segment.b[1] / NORM_W],
-        cm: segment.cm,
-      });
-    }
-    // A straight run drawn in several clicks is one wall, not five (#229).
-    // Only what this chain touches is merged: what has piled up earlier waits
-    // for «Optimise plans», where the sweep is explicit and undoable.
-    this._mergeSpacePartitions(sp, drawnIds);
-    if (this.host._activeDraftId && Array.isArray(sp.room_drafts)) {
-      sp.room_drafts = sp.room_drafts.filter((draft) => draft.id !== this.host._activeDraftId);
-      if (!sp.room_drafts.length) delete sp.room_drafts;
-    }
-    this._commitPhysicalGeometry(this.host._t('history.wall_chain_finish'), before);
-    delete this.host._resumeDraftBySpace[this.host._space];
     this.host._path = [];
-    this.host._activeDraftId = null;
-    this.host._draftSegmentCms = [];
+    this.host._activeWallChainId = null;
+    this.host._activeWallChainPartitionIds = [];
+    this.host._wallChainSegmentCms = [];
+    this.host._wallChainRedo = [];
     this.host._closingWallCm = null;
     this._clearPlanSnapHover();
     return true;
@@ -1556,19 +1493,16 @@ public _activateMarkupTool(tool: MarkupTool): void {
       else this.host._resize.reset();
     }
     this.host._tool = tool;
-    if (tool === 'draw') this._resumeLastDraft();
     if (tool === 'resize') this.host._resize.selectRoom(null);
     if (tool === 'wallthick') this.host._wallDialog = null;
   }
 
-public _limitReached(kind: 'draft' | 'partition' | 'column'): boolean {
+public _limitReached(kind: 'partition' | 'column'): boolean {
     const sp = this.host._curSpaceCfg as any;
     if (!sp) return true;
-    const reached = kind === 'draft'
-      ? (sp.room_drafts || []).length >= MAX_ROOM_DRAFTS
-      : kind === 'partition'
-        ? (sp.partitions || []).length >= MAX_PARTITIONS
-        : (sp.wall_columns || []).length >= MAX_WALL_COLUMNS;
+    const reached = kind === 'partition'
+      ? (sp.partitions || []).length >= MAX_PARTITIONS
+      : (sp.wall_columns || []).length >= MAX_WALL_COLUMNS;
     if (reached) this.host._showToast(this.host._t('toast.physical_limit'));
     return reached;
   }
@@ -1613,14 +1547,12 @@ public _planSnapGeometrySnapshot(): { key: string; value: PlanSnapGeometry } {
       return { key: `${this.host._space}|empty`, value: { segments: [], endpoints: [] } };
     }
     const key = [
-      this.host._space, this.host._cfgEpoch, this.host._activeDraftId || '',
-      space.rooms.length, space.room_drafts.length, space.partitions.length,
+      this.host._space, this.host._cfgEpoch, space.rooms.length, space.partitions.length,
     ].join('|');
     if (this.host._planSnapGeometryCache?.key === key) return this.host._planSnapGeometryCache;
     const zeroCuts = this.host._openCuts();
     const value = buildPlanSnapGeometry({
       space,
-      activeDraftId: this.host._activeDraftId,
       // A zero-thickness wall is still a canonical wall axis and snap target.
       // Only an actual opening removes the presentation interval (#306).
       roomCuts: this._planSnapOpeningCuts(space, zeroCuts),
@@ -1639,15 +1571,14 @@ public _hiddenWallDiagnosticSnapshot(): {
       return { key: `${this.host._space}|hidden-empty`, value: { segments: [], endpoints: [] } };
     }
     const key = [
-      'hidden', this.host._space, this.host._cfgEpoch, this.host._activeDraftId || '',
-      space.rooms.length, space.room_drafts.length, space.partitions.length,
+      'hidden', this.host._space, this.host._cfgEpoch,
+      space.rooms.length, space.partitions.length,
     ].join('|');
     if (this.host._hiddenWallDiagnosticCache?.key === key) {
       return this.host._hiddenWallDiagnosticCache;
     }
     const value = buildHiddenWallDiagnosticGeometry({
       space,
-      activeDraftId: this.host._activeDraftId,
       epsilon: this.host._gridPitch * 0.0002,
     });
     this.host._hiddenWallDiagnosticCache = { key, value };
@@ -1660,15 +1591,14 @@ public _planStructuralGeometrySnapshot(): { key: string; value: PlanSnapGeometry
       return { key: `${this.host._space}|structural-empty`, value: { segments: [], endpoints: [] } };
     }
     const key = [
-      'structural', this.host._space, this.host._cfgEpoch, this.host._activeDraftId || '',
-      space.rooms.length, space.room_drafts.length, space.partitions.length,
+      'structural', this.host._space, this.host._cfgEpoch,
+      space.rooms.length, space.partitions.length,
     ].join('|');
     if (this.host._planStructuralGeometryCache?.key === key) {
       return this.host._planStructuralGeometryCache;
     }
     const value = buildPlanSnapGeometry({
       space,
-      activeDraftId: this.host._activeDraftId,
       epsilon: this.host._gridPitch * 0.0002,
     });
     this.host._planStructuralGeometryCache = { key, value };
@@ -1696,11 +1626,18 @@ public _resolvePlanDrawPoint(
     const closure = this.host._tool === 'draw' && this.host._path.length >= 3
       ? [{ point: this.host._path[0], key: 'closure:first-point' }]
       : [];
+    // Accepted segments are immediately part of the canonical partition graph.
+    // Keep their intermediate vertices out of ordinary snapping so the active
+    // chain cannot snap onto itself. The first vertex is deliberately omitted:
+    // once three points exist it remains the explicit contour-closure target.
+    const excludedActivePoints = this.host._path.length > 1
+      ? this.host._path.slice(1)
+      : anchor ? [anchor] : [];
     const options = {
       tolerance: this._cssPxToRender(12),
       distinguishTolerance: this._cssPxToRender(8),
       gridStep: this.host._gridPitch,
-      excludePoints: anchor ? [anchor] : [],
+      excludePoints: excludedActivePoints,
       extraEndpoints: closure,
       epsilon: this.host._gridPitch * 0.0002,
     };
@@ -1769,17 +1706,6 @@ public _dropLegacySegments(config = this.host._serverCfg): void {
             ...(c.shape === 'circle' ? {} : { angle: canonicalColumnAngle(c.angle) }),
           }));
         if (!(sp as any).wall_columns.length) delete (sp as any).wall_columns;
-      }
-      if (Array.isArray((sp as any).room_drafts)) {
-        (sp as any).room_drafts = (sp as any).room_drafts.filter((d: any) =>
-          d && validId(d.id) && Array.isArray(d.points)
-          && d.points.length >= 2 && d.points.every(point) && keepId(d.id))
-          .map((d: any) => {
-            const sanitized = sanitizeRoomDraftPath(d);
-            return { id: d.id, ...sanitized };
-          })
-          .filter((d: any) => d.points.length >= 2);
-        if (!(sp as any).room_drafts.length) delete (sp as any).room_drafts;
       }
       if (Array.isArray(sp.walls)) {
         const model = selectSpaceModelById(spaceModels({ spaces: [sp] } as any), sp.id);
@@ -1907,9 +1833,6 @@ public _geometrySnapshotFromConfig(config: any, spaceId: string): SpaceGeometryS
       ...(Array.isArray((sp as any).open_spans)
         ? { open_spans: copy((sp as any).open_spans) }
         : {}),
-      ...(Array.isArray((sp as any).room_drafts)
-        ? { room_drafts: copy((sp as any).room_drafts) }
-        : {}),
       ...(Array.isArray((sp as any).partitions)
         ? { partitions: copy((sp as any).partitions) }
         : {}),
@@ -1948,18 +1871,16 @@ public _restoreGeometryStateInConfig(
             && old.wall_ids.length === room.poly?.length) room.wall_ids = copy(old.wall_ids);
       }
     }
-    const assign = (key: 'openings' | 'walls' | 'wall_segments' | 'open_spans' | 'room_drafts'
+    const assign = (key: 'openings' | 'walls' | 'wall_segments' | 'open_spans'
       | 'partitions' | 'wall_columns' | 'decor', value: unknown): void => {
       if (value !== undefined) (sp as any)[key] = copy(value);
       else if (!(preserveIdentityHints && key === 'wall_segments')) delete (sp as any)[key];
     };
     const oldOpenings = new Map((sp.openings || []).map((opening: any) => [opening.id, opening]));
-    const oldDrafts = new Map((sp.room_drafts || []).map((draft) => [draft.id, draft]));
     assign('openings', state.openings);
     assign('walls', state.walls);
     assign('wall_segments', state.wall_segments);
     assign('open_spans', state.open_spans);
-    assign('room_drafts', state.room_drafts);
     assign('partitions', state.partitions);
     assign('wall_columns', state.wall_columns);
     assign('decor', state.decor);
@@ -1967,13 +1888,6 @@ public _restoreGeometryStateInConfig(
       for (const opening of sp.openings || []) {
         const old: any = oldOpenings.get(opening.id);
         if (!opening.host && old?.host?.kind === 'wall') opening.host = copy(old.host);
-      }
-      for (const draft of sp.room_drafts || []) {
-        const old: any = oldDrafts.get(draft.id);
-        for (let index = 0; index < (draft.segments || []).length; index++) {
-          if (!draft.segments[index]?.id && old?.segments?.[index]?.id)
-            draft.segments[index].id = old.segments[index].id;
-        }
       }
     }
     for (const key of ['plan_x', 'plan_y', 'plan_scale', 'plan_scale_x', 'plan_scale_y', 'plan_angle'] as const)
@@ -2027,16 +1941,6 @@ public _limitSegmentsOf(space: any): LimitSegment[] {
       if (partition?.a && partition?.b) {
         segments.push({
           id: String(partition.id || ''), a: partition.a, b: partition.b, cm: Number(partition.cm),
-        });
-      }
-    }
-    for (const draft of (space?.room_drafts || [])) {
-      const points = Array.isArray(draft?.points) ? draft.points : [];
-      const drafted = Array.isArray(draft?.segments) ? draft.segments : [];
-      for (let index = 0; index + 1 < points.length; index++) {
-        segments.push({
-          id: String(drafted[index]?.id || `${draft?.id || 'draft'}-${index}`),
-          a: points[index], b: points[index + 1], cm: Number(drafted[index]?.cm),
         });
       }
     }
@@ -2199,10 +2103,9 @@ public _commitPhysicalGeometry(
     let safe = false;
     try {
       const afterSpace = committedCandidate.spaces.find((space) => space.id === before.spaceId);
-      // A completed point of the active, grid-snapped chain is authored input,
-      // even before its first draft record exists in `before`. Include that
-      // transient carrier in the growth baseline; later conversion from draft
-      // to room/partition must not count the same coordinate as newly derived.
+      // A completed point of the active, grid-snapped chain is authored input.
+      // Include the session carrier in the growth baseline so later conversion
+      // from partitions to room masonry does not count it as newly derived.
       const authoredPoints = this.host._path.length >= 2
         ? this.host._path.map((point) => [point[0] / NORM_W, point[1] / NORM_W])
         : [];
@@ -2262,8 +2165,10 @@ public _clearGeometryGesture(): void {
     this.host._physicalSel = null;
     this.host._physicalDrag = null;
     this.host._physicalRotate = null;
-    this.host._activeDraftId = null;
-    this.host._draftSegmentCms = [];
+    this.host._activeWallChainId = null;
+    this.host._activeWallChainPartitionIds = [];
+    this.host._wallChainSegmentCms = [];
+    this.host._wallChainRedo = [];
     this.host._closingWallCm = null;
     this.host._openingDialog = null;
     this._rszResetController();
@@ -2421,6 +2326,28 @@ public _redoGeometry = (): void => {
       return;
     }
     if (this.host._resize.dragging) { this._rszCancelDrag(); return; }
+    if (this.host._activeWallChainId && this.host._wallChainRedo.length) {
+      const chainId = this.host._activeWallChainId;
+      const path = this.host._path.map((point) => [...point]);
+      const ids = [...this.host._activeWallChainPartitionIds];
+      const cms = [...this.host._wallChainSegmentCms];
+      const redo = [...this.host._wallChainRedo];
+      const terminal = redo[redo.length - 1];
+      const command = this.host._geometryHistory.redo();
+      if (!command) return;
+      if (!this._applyGeometryState(command.after, true)) {
+        this.host._geometryHistory.clear();
+        return;
+      }
+      this.host._activeWallChainId = chainId;
+      this.host._path = [...path, [...terminal.point]];
+      this.host._activeWallChainPartitionIds = [...ids, terminal.id];
+      this.host._wallChainSegmentCms = [...cms, terminal.cm];
+      this.host._wallChainRedo = redo.slice(0, -1);
+      this._clearPlanSnapHover();
+      this.host._showToast(this.host._t('history.redone', { name: command.name }));
+      return;
+    }
     const command = this.host._geometryHistory.redo();
     if (!command) return;
     if (!this._applyGeometryState(command.after, true)) {
@@ -2472,19 +2399,14 @@ public _contourSelfIntersects(poly: number[][]): boolean {
     return false;
   }
 
-public _canAppendRoomDraftPoint(): boolean {
+public _canAppendWallPoint(): boolean {
     if (this.host._drawWallCm == null) { this._showPhysicalRange(100); return false; }
-    if (this.host._path.length >= MAX_DRAFT_POINTS) {
+    if (this.host._path.length >= MAX_WALL_CHAIN_POINTS) {
       this.host._showToast(this.host._t('toast.physical_limit'));
       return false;
     }
     const spCfg = this.host._curSpaceCfg as any;
-    const newDraft = !this.host._activeDraftId;
-    if ((newDraft && (spCfg?.room_drafts || []).length >= MAX_ROOM_DRAFTS)
-        || this._draftSegmentCount(spCfg) >= MAX_DRAFT_SEGMENTS
-        // Every accepted segment must be finishable later without trapping
-        // the user at the partition limit.
-        || (spCfg?.partitions || []).length + this.host._path.length > MAX_PARTITIONS) {
+    if ((spCfg?.partitions || []).length >= MAX_PARTITIONS) {
       this.host._showToast(this.host._t('toast.physical_limit'));
       return false;
     }
@@ -2546,8 +2468,7 @@ public _markupClick(ev: MouseEvent): void {
       this._columnClick(raw);
       return;
     }
-    // Walls: every completed segment is crash-safe in room_drafts until an
-    // explicit finish converts the chain or a confirmed face batch consumes it.
+    // Walls: every completed segment is immediately an ordinary independent wall.
     this.host._wallRepairDiagnostic = null;
     const resolved = this._resolvePlanDrawPoint(raw, ev.shiftKey);
     if (resolved.ambiguous) {
@@ -2581,231 +2502,63 @@ public _markupClick(ev: MouseEvent): void {
       // an earlier session. Shift and architectural snap hits retain the Walls
       // gesture, so this offer never steals an intentional new chain.
       if (!ev.shiftKey && !resolved.candidate && this._offerExistingWallFace(raw)) return;
-      // After reload a saved open contour is resumed explicitly by clicking
-      // either free end. Mid-segment branching is deliberately unsupported.
-      const endHit = this._draftEndAt(pt);
-      if (endHit) {
-        this.host._activeDraftId = endHit.draft.id;
-        this.host._resumeDraftBySpace[this.host._space] = endHit.draft.id;
-        this.host._path = endHit.reverse
-          ? [...endHit.draft.points].reverse().map((p) => [...p])
-          : endHit.draft.points.map((p) => [...p]);
-        this.host._draftSegmentCms = this._adoptDraftCms(
-          this.host._path,
-          endHit.reverse
-            ? [...endHit.draft.segments].reverse().map((s) => s.cm)
-            : endHit.draft.segments.map((s) => s.cm),
-          endHit.draft.id,
-        );
-        return;
-      }
-      this.host._activeDraftId = null;
-      this.host._draftSegmentCms = [];
+      this.host._activeWallChainId = `chain-${Date.now().toString(36)}`;
+      this.host._activeWallChainPartitionIds = [];
+      this.host._wallChainSegmentCms = [];
+      this.host._wallChainRedo = [];
       this.host._path = [pt];
       return;
     }
     const last = this.host._path[this.host._path.length - 1];
     if (this._samePt(pt, last)) return; // repeated click on the same point
-    // A saved outline may be continued into another saved outline, but only
-    // endpoint-to-endpoint. The two records become one atomic history step;
-    // mid-segment branching remains deliberately unsupported.
-    const join = this._draftEndAt(pt, this.host._activeDraftId || undefined);
-    if (join) {
-      this._mergeDraftEndpoint(join);
-      return;
-    }
-    if (!this._canAppendRoomDraftPoint()) return;
-    // Точка и толщина её отрезка пишутся вместе (#234). Раньше запись жила в
-    // отдельном методе, который молча выходил при невалидном поле толщины, и
-    // тогда `_draftSegmentCms` становился короче числа отрезков: превью
-    // показывало текущее поле, а запись — 15 см. Инвариант читается прямо
-    // здесь, а не выводится из двух проверок в разных местах.
+    if (!this._canAppendWallPoint()) return;
     const cm = this.host._drawWallCm;
     if (cm == null) { this._showPhysicalRange(100); return; }
-    const beforePath = this.host._path.map((point) => [...point]);
-    this.host._path = [...this.host._path, pt];
-    this.host._draftSegmentCms = [...this.host._draftSegmentCms, cm];
-    this._persistActiveDraftSegment();
-    this._offerWallFaces(beforePath);
-  }
-
-public _draftEndAt(
-    pt: number[], excludeId?: string,
-  ): { draft: RoomDraftCfg; reverse: boolean } | null {
-    const space = this.host._spaceModel();
-    if (!space) return null;
-    const view = this.host._viewOr(this.host._baseVb());
-    const eps = Math.max(this.host._gridPitch * 0.15,
-      this.host._stageEl?.clientWidth ? (view.w / this.host._stageEl.clientWidth) * 12 : 0);
-    for (const draft of space.room_drafts || []) {
-      if (draft.id === excludeId) continue;
-      if (draft.points.length < 2) continue;
-      const first = draft.points[0], last = draft.points[draft.points.length - 1];
-      if (Math.hypot(pt[0] - last[0], pt[1] - last[1]) <= eps) return { draft, reverse: false };
-      if (Math.hypot(pt[0] - first[0], pt[1] - first[1]) <= eps) return { draft, reverse: true };
-    }
-    return null;
-  }
-
-public _mergeDraftEndpoint(
-    hit: { draft: RoomDraftCfg; reverse: boolean },
-  ): void {
     const sp = this.host._curSpaceCfg as any;
-    if (!sp || !this.host._path.length) return;
+    if (!sp) return;
     const beforePath = this.host._path.map((point) => [...point]);
-    // Capture topology before the records are merged: the other draft is a
-    // static pre-existing source, not geometry introduced by this click.
-    const beforeGraphSources = this._wallGraphSources(beforePath);
-    const drafts = Array.isArray(sp.room_drafts) ? sp.room_drafts : [];
-    const activeRaw = this.host._activeDraftId
-      ? drafts.find((d: any) => d.id === this.host._activeDraftId) : null;
-    const otherRaw = drafts.find((d: any) => d.id === hit.draft.id);
-    if (!otherRaw) return;
-
-    // `_draftEndAt.reverse` describes how to resume WITH the clicked end at
-    // the tail. A merge needs that end at the head, hence the opposite order.
-    const otherPoints = hit.reverse
-      ? hit.draft.points.map((p) => [...p])
-      : [...hit.draft.points].reverse().map((p) => [...p]);
-    const otherSegments = hit.reverse
-      ? (otherRaw.segments || []).map((s: any) => ({ ...s }))
-      : [...(otherRaw.segments || [])].reverse().map((s: any) => ({ ...s }));
-    const last = this.host._path[this.host._path.length - 1];
-    const touching = this._samePt(last, otherPoints[0]);
-    const connectorCm = touching ? null : this.host._drawWallCm;
-    if (!touching && connectorCm == null) { this._showPhysicalRange(100); return; }
-
-    const activeSegments = this._draftSegmentsForPath(
-      this.host._path, activeRaw, this.host._draftSegmentCms,
-    );
-    const mergedPoints = [
-      ...this.host._path.map((p) => [...p]),
-      ...(touching ? otherPoints.slice(1) : otherPoints),
-    ];
-    const mergedSegments = [
-      ...activeSegments,
-      ...(connectorCm == null ? [] : [{ cm: connectorCm }]),
-      ...otherSegments,
-    ];
-    const closed = mergedPoints.length >= 4
-      && this._samePt(mergedPoints[0], mergedPoints[mergedPoints.length - 1]);
-    const persistedPoints = mergedPoints;
-    const persistedSegments = mergedSegments;
-    if (persistedPoints.length > MAX_DRAFT_POINTS) {
-      this.host._showToast(this.host._t('toast.physical_limit'));
-      return;
-    }
-    const oldSegments = (activeRaw?.segments?.length || 0) + (otherRaw.segments?.length || 0);
-    if (this._draftSegmentCount(sp) - oldSegments + persistedSegments.length > MAX_DRAFT_SEGMENTS) {
-      this.host._showToast(this.host._t('toast.physical_limit'));
-      return;
-    }
-    if (closed) {
-      const ring = persistedPoints.slice(0, -1);
-      if (this._contourSelfIntersects(ring) || polygonArea(ring) <= 1e-6) {
-        this.host._showToast(this.host._t('toast.contour_cannot_close'));
-        return;
-      }
-      const clash = this._overlapRoom(ring);
-      if (clash) {
-        this.host._showToast(this.host._t('toast.room_overlap', { name: clash.name || '' }));
-        return;
-      }
-    }
-
+    const beforeIds = [...this.host._activeWallChainPartitionIds];
+    const beforeCms = [...this.host._wallChainSegmentCms];
+    const beforeGraphSources = this._wallGraphSources([]);
     const before = this._geometrySnapshot();
-    const id = this.host._activeDraftId || hit.draft.id;
-    const base = activeRaw || otherRaw;
-    const saved = {
-      ...base, id,
-      points: persistedPoints.map((p) => [p[0] / NORM_W, p[1] / NORM_W]),
-      segments: persistedSegments,
-    };
-    sp.room_drafts = drafts.filter((d: any) => d.id !== hit.draft.id
-      && (!this.host._activeDraftId || d.id !== this.host._activeDraftId));
-    sp.room_drafts.push(saved);
-    this.host._activeDraftId = id;
-    this.host._resumeDraftBySpace[this.host._space] = id;
-    this.host._path = persistedPoints;
-    this.host._draftSegmentCms = this._adoptDraftCms(
-      persistedPoints, persistedSegments.map((s: any) => Number(s.cm)), id,
-    );
-    this.host._physicalSel = null;
-    this._commitPhysicalGeometry(this.host._t('history.draft_merge'), before);
-
-    if (connectorCm != null) {
-      this._offerWallFaces(beforePath, beforePath.length - 1, beforeGraphSources);
-    }
-  }
-
-public _adoptDraftCms(path: readonly (readonly number[])[], recorded: readonly (number | null | undefined)[], id?: string): number[] {
-    const count = Math.max(0, path.length - 1);
-    const resolved = chainSegmentCms(count, recorded, this.host._drawWallCm, DRAW_WALL_DEFAULT_CM);
-    if (recorded.length !== count) {
-      console.debug(
-        `[houseplan] draft ${id ?? '?'}: восстановлено толщин ${count - recorded.length} (#234)`,
-      );
-    }
-    return resolved;
-  }
-
-public _draftSegmentsForPath(
-    path: readonly (readonly number[])[], draft: any,
-    cms: readonly (number | null | undefined)[],
-  ): Array<{ id?: string; cm: number; [key: string]: any }> {
-    const points = Array.isArray(draft?.points)
-      ? draft.points.map((p: any) => [Number(p?.[0]) * NORM_W, Number(p?.[1]) * NORM_W])
-      : [];
-    const stored = Array.isArray(draft?.segments) ? draft.segments : [];
-    const resolved = chainSegmentCms(
-      Math.max(0, path.length - 1), cms, this.host._drawWallCm, DRAW_WALL_DEFAULT_CM,
-    );
-    return resolved.map((cm, index) => {
-      const a = path[index], b = path[index + 1];
-      const oldIndex = points.findIndex((oldA: number[], candidate: number) => {
-        if (candidate + 1 >= points.length) return false;
-        const oldB = points[candidate + 1];
-        return (this._samePt(a, oldA) && this._samePt(b, oldB))
-          || (this._samePt(a, oldB) && this._samePt(b, oldA));
-      });
-      return { ...(oldIndex >= 0 ? stored[oldIndex] : {}), cm };
+    const id = `partition-${crypto.randomUUID?.() || `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`}`;
+    sp.partitions ||= [];
+    sp.partitions.push({
+      id,
+      a: [last[0] / NORM_W, last[1] / NORM_W],
+      b: [pt[0] / NORM_W, pt[1] / NORM_W],
+      cm,
     });
+    this.host._path = [...this.host._path, pt];
+    this.host._wallChainSegmentCms = [...this.host._wallChainSegmentCms, cm];
+    this.host._activeWallChainPartitionIds = [...beforeIds, id];
+    this.host._wallChainRedo = [];
+    if (!commitWallChainSegmentGeometry(this, this.host._t('history.wall_segment'), before)) {
+      this.host._activeWallChainId ||= `chain-${Date.now().toString(36)}`;
+      this.host._activeWallChainPartitionIds = beforeIds;
+      this.host._path = beforePath;
+      this.host._wallChainSegmentCms = beforeCms;
+      return;
+    }
+    this._offerWallFaces(beforePath, beforePath.length - 1, beforeGraphSources);
   }
 
-public _persistActiveDraftSegment(): void {
-    if (this.host._path.length < 2 || !this.host._curSpaceCfg) return;
-    const before = this._geometrySnapshot();
-    const sp = this.host._curSpaceCfg as any;
-    sp.room_drafts ||= [];
-    if (!this.host._activeDraftId) this.host._activeDraftId = 'draft-' + Date.now().toString(36);
-    this.host._resumeDraftBySpace[this.host._space] = this.host._activeDraftId;
-    const i = sp.room_drafts.findIndex((d: any) => d.id === this.host._activeDraftId);
-    const saved = {
-      ...(i >= 0 ? sp.room_drafts[i] : {}),
-      id: this.host._activeDraftId,
-      points: this.host._path.map((p) => [p[0] / NORM_W, p[1] / NORM_W]),
-      segments: this._draftSegmentsForPath(
-        this.host._path, i >= 0 ? sp.room_drafts[i] : null, this.host._draftSegmentCms,
-      ),
-    };
-    if (i >= 0) sp.room_drafts[i] = saved;
-    else sp.room_drafts.push(saved);
-    commitDraftSegmentGeometry(this, this.host._t('history.draft_segment'), before);
-  }
 
 public _activeWallSourceKey(index: number): string {
-    return `active:${this.host._activeDraftId || 'session'}:${index}`;
+    const id = this.host._activeWallChainPartitionIds[index];
+    const segment = id
+      ? this._planStructuralGeometrySnapshot().value.segments.find((item) => (
+        item.sourceKind === 'partition' && item.sourceId === id
+      ))
+      : null;
+    return segment ? `static:${segment.key}` : `active:${this.host._activeWallChainId || 'session'}:${index}`;
   }
 
-public _wallGraphSources(path: readonly (readonly number[])[]): WallGraphSourceSegment[] {
+public _wallGraphSources(_path: readonly (readonly number[])[]): WallGraphSourceSegment[] {
     const staticGeometry = this._planStructuralGeometrySnapshot().value;
-    const sources: WallGraphSourceSegment[] = staticGeometry.segments.map((segment) => ({
+    return staticGeometry.segments.map((segment) => ({
       a: segment.a, b: segment.b, key: `static:${segment.key}`,
     }));
-    for (let i = 0; i + 1 < path.length; i++) {
-      sources.push({ a: path[i], b: path[i + 1], key: this._activeWallSourceKey(i) });
-    }
-    return sources;
   }
 
 public _wallFaceGraph(
@@ -2911,8 +2664,8 @@ public _beginWallFaceBatch(candidates: WallFaceCandidate[]): void {
       index: 0,
       decisions: [],
       activePath: this.host._path.map((point) => [...point]),
-      activeCms: [...this.host._draftSegmentCms],
-      activeDraftId: this.host._activeDraftId,
+      activeCms: [...this.host._wallChainSegmentCms],
+      activePartitionIds: [...this.host._activeWallChainPartitionIds],
     };
     this._clearPlanSnapHover();
     this.host._nameSel = '';
@@ -2997,7 +2750,7 @@ public _columnClick(raw: number[]): void {
   }
 
 public _openPhysicalDialog(
-    kind: 'partition' | 'column' | 'draft', id: string, segment?: number,
+    kind: 'partition' | 'column', id: string,
   ): void {
     const model = this.host._spaceModel();
     if (!model) return;
@@ -3011,13 +2764,6 @@ public _openPhysicalDialog(
       if (c) this.host._physicalDialog = {
         kind, id, cm: cmToField(c.cm, this.host._imperial), shape: c.shape,
         angle: this.host._angleField(c.shape === 'square' ? canonicalColumnAngle(c.angle) : 0),
-      };
-    } else {
-      const d = model.room_drafts.find((x) => x.id === id);
-      const i = Math.max(0, Math.min(d?.segments.length ? d.segments.length - 1 : 0, segment || 0));
-      if (d?.segments[i]) this.host._physicalDialog = {
-        kind, id, segment: i, cm: cmToField(d.segments[i].cm, this.host._imperial),
-        length: this.host._fmtLen(d.points[i], d.points[i + 1]),
       };
     }
   }
@@ -3078,9 +2824,6 @@ public _savePhysicalDialog = (): void => {
         if (c.shape === 'square') c.angle = strictNumber(d.angle || '0')!;
         else delete c.angle;
       }
-    } else {
-      const draft = (sp.room_drafts || []).find((x: any) => x.id === d.id);
-      if (draft?.segments?.[d.segment || 0]) draft.segments[d.segment || 0].cm = cmRaw;
     }
     const committed = this._commitPhysicalGeometry(this.host._t('history.physical_edit'), before);
     this.host._physicalDialog = null;
@@ -3091,7 +2834,6 @@ public _deletePhysicalSelection = async (): Promise<void> => {
     const sel = this.host._physicalSel;
     const sp = this.host._curSpaceCfg as any;
     if (!sel || !sp) return;
-    if (sel.kind === 'draft') { await this._deleteDraftWhole(); return; }
     const before = this._geometrySnapshot();
     if (sel.kind === 'partition') {
       const hosted = (sp.openings || [])
@@ -3106,11 +2848,10 @@ public _deletePhysicalSelection = async (): Promise<void> => {
         return;
       }
     }
-    const key = sel.kind === 'partition' ? 'partitions'
-      : sel.kind === 'column' ? 'wall_columns' : 'room_drafts';
+    const key = sel.kind === 'partition' ? 'partitions' : 'wall_columns';
     sp[key] = (sp[key] || []).filter((x: any) => x.id !== sel.id);
     if (!sp[key].length) delete sp[key];
-    if (this.host._activeDraftId === sel.id) this._cancelPath();
+    if (this.host._activeWallChainPartitionIds.includes(sel.id)) this._cancelPath();
     this.host._physicalSel = null;
     this.host._physicalDialog = null;
     this._commitPhysicalGeometry(this.host._t('history.physical_delete'), before);
@@ -3133,80 +2874,6 @@ public _confirmPartitionDelete = (): void => {
     this._commitPhysicalGeometry(this.host._t('history.physical_delete'), before);
   };
 
-public _deleteDraftWhole = async (): Promise<void> => {
-    const id = this.host._physicalDialog?.kind === 'draft'
-      ? this.host._physicalDialog.id
-      : this.host._physicalSel?.kind === 'draft' ? this.host._physicalSel.id : null;
-    const spaceId = this.host._space;
-    if (!id || !this.host._curSpaceCfg) return;
-    const accepted = await this.host._confirmDanger({
-      key: 'delete-draft',
-      kind: 'destructive',
-      title: this.host._t('confirm.delete_draft_title'),
-      message: this.host._t('confirm.delete_draft_body'),
-      confirmLabel: this.host._t('btn.delete'),
-      cancelLabel: this.host._t('btn.cancel'),
-    });
-    if (!accepted || this.host._space !== spaceId) return;
-    const sp = this.host._curSpaceCfg as any;
-    if (!sp || !(sp.room_drafts || []).some((draft: { id?: string }) => draft.id === id)) return;
-    const before = this._geometrySnapshot();
-    sp.room_drafts = (sp.room_drafts || []).filter((x: any) => x.id !== id);
-    if (!sp.room_drafts.length) delete sp.room_drafts;
-    if (this.host._activeDraftId === id) this._cancelPath();
-    this.host._physicalSel = null;
-    this.host._physicalDialog = null;
-    this._commitPhysicalGeometry(this.host._t('history.physical_delete'), before);
-  };
-
-public _deleteDraftSegment = async (): Promise<void> => {
-    const dlg = this.host._physicalDialog;
-    const spaceId = this.host._space;
-    if (!dlg || dlg.kind !== 'draft' || !this.host._curSpaceCfg) return;
-    const draftId = dlg.id;
-    const segment = dlg.segment || 0;
-    const accepted = await this.host._confirmDanger({
-      key: 'delete-draft-segment',
-      kind: 'destructive',
-      title: this.host._t('confirm.delete_draft_segment_title'),
-      message: this.host._t('confirm.delete_draft_segment_body'),
-      confirmLabel: this.host._t('btn.delete'),
-      cancelLabel: this.host._t('btn.cancel'),
-    });
-    const currentDialog = this.host._physicalDialog;
-    if (!accepted || this.host._space !== spaceId
-      || currentDialog?.kind !== 'draft' || currentDialog.id !== draftId
-      || (currentDialog.segment || 0) !== segment) return;
-    const sp = this.host._curSpaceCfg as any;
-    if (!sp) return;
-    const index = (sp.room_drafts || []).findIndex((item: { id?: string }) => item.id === draftId);
-    if (index < 0) return;
-    const draft = sp.room_drafts[index];
-    if (!Array.isArray(draft.segments) || !Number.isInteger(segment)
-      || segment < 0 || segment >= draft.segments.length) return;
-    const cut = segment;
-    const pieces: any[] = [];
-    const leftPoints = draft.points.slice(0, cut + 1);
-    const rightPoints = draft.points.slice(cut + 1);
-    if (leftPoints.length >= 2) pieces.push({
-      id: draft.id, points: leftPoints, segments: draft.segments.slice(0, cut),
-    });
-    if (rightPoints.length >= 2) pieces.push({
-      id: pieces.length ? `${draft.id}-${Date.now().toString(36)}` : draft.id,
-      points: rightPoints, segments: draft.segments.slice(cut + 1),
-    });
-    if (pieces.length === 2 && sp.room_drafts.length >= MAX_ROOM_DRAFTS) {
-      this.host._showToast(this.host._t('toast.physical_limit'));
-      return;
-    }
-    const before = this._geometrySnapshot();
-    sp.room_drafts.splice(index, 1, ...pieces);
-    if (!sp.room_drafts.length) delete sp.room_drafts;
-    if (this.host._activeDraftId === draft.id) this._cancelPath();
-    this.host._physicalDialog = null;
-    this.host._physicalSel = pieces.length ? { kind: 'draft', id: pieces[0].id } : null;
-    this._commitPhysicalGeometry(this.host._t('history.draft_segment_delete'), before);
-  };
 
 public _physicalDown(ev: PointerEvent, kind: 'partition' | 'column', id: string): void {
     const model = this.host._spaceModel();
@@ -3344,17 +3011,16 @@ public _physicalUp(ev: PointerEvent): void {
   }
 
 public _registerPhysicalTap(
-    kind: 'partition' | 'column' | 'draft', id: string, segment?: number,
+    kind: 'partition' | 'column', id: string,
   ): void {
     const now = performance.now();
     const twice = this.host._physicalLastTap?.kind === kind
       && this.host._physicalLastTap.id === id
-      && this.host._physicalLastTap.segment === segment
       && now - this.host._physicalLastTap.at <= 360;
-    this.host._physicalLastTap = { kind, id, segment, at: now };
+    this.host._physicalLastTap = { kind, id, at: now };
     if (twice) {
       this.host._physicalLastTap = null;
-      this._openPhysicalDialog(kind, id, segment);
+      this._openPhysicalDialog(kind, id);
     }
   }
 
@@ -3453,18 +3119,6 @@ public _rszObstacles(): SafeResizeObstacle[] {
         half: wallCmToUnits(partition.cm, this.host._cellCm, this.host._gridPitch) / 2,
       });
     }
-    for (const draft of space.room_drafts || []) {
-      for (let i = 0; i + 1 < draft.points.length; i++) {
-        obstacles.push({
-          kind: 'segment', a: [...draft.points[i]], b: [...draft.points[i + 1]],
-          half: wallCmToUnits(
-            Number.isFinite(Number(draft.segments?.[i]?.cm))
-              ? Number(draft.segments[i].cm) : DRAW_WALL_DEFAULT_CM,
-            this.host._cellCm, this.host._gridPitch,
-          ) / 2,
-        });
-      }
-    }
     for (const column of space.wall_columns || []) {
       const half = wallCmToUnits(column.cm, this.host._cellCm, this.host._gridPitch) / 2;
       obstacles.push({
@@ -3557,7 +3211,7 @@ public _rszProjectPreview(
       rooms: s.rooms,
       openings: s.openings || [],
     };
-    for (const key of ['walls', 'wall_segments', 'open_spans', 'room_drafts', 'partitions', 'wall_columns', 'decor'] as const) {
+    for (const key of ['walls', 'wall_segments', 'open_spans', 'partitions', 'wall_columns', 'decor'] as const) {
       if (s[key] !== undefined) (sp as any)[key] = s[key];
       else delete (sp as any)[key];
     }
@@ -5422,9 +5076,7 @@ public _renderPlanSecondary(): EditorSecondaryModel | null {
     if (sel) {
       const exists = sel.kind === 'partition'
         ? !!this.host._curSpaceCfg.partitions?.some((item: PartitionCfg) => item.id === sel.id)
-        : sel.kind === 'column'
-          ? !!this.host._curSpaceCfg.wall_columns?.some((item: WallColumnCfg) => item.id === sel.id)
-          : !!this.host._curSpaceCfg.room_drafts?.some((item: RoomDraftCfg) => item.id === sel.id);
+        : !!this.host._curSpaceCfg.wall_columns?.some((item: WallColumnCfg) => item.id === sel.id);
       if (!exists) return null;
       const label = sel.kind === 'partition' ? this.host._t('markup.partition')
         : sel.kind === 'column' ? this.host._t('markup.column') : this.host._t('markup.add');
@@ -5436,7 +5088,7 @@ public _renderPlanSecondary(): EditorSecondaryModel | null {
         content: html`
           <button class="btn ghost" @click=${() => this._runEditorContext(contextId, () => {
             const current = this.host._physicalSel;
-            if (current) this._openPhysicalDialog(current.kind, current.id, current.segment);
+            if (current) this._openPhysicalDialog(current.kind, current.id);
           })}><ha-icon icon="mdi:tune"></ha-icon>${this.host._t('btn.properties')}</button>
           <button class="btn danger" @click=${() => this._runEditorContext(contextId, () => this._deletePhysicalSelection())}>
             <ha-icon icon="mdi:delete-outline"></ha-icon>${this.host._t('btn.delete')}
@@ -5962,25 +5614,6 @@ public _wallThickHit(raw: number[]): WallThickHit | null {
         source: { kind: 'partition', id: partition.id },
       }, distToSegment(raw, [a[0], a[1], b[0], b[1]]), true);
     }
-    for (const draft of space.room_drafts || []) {
-      // The active chain belongs to the draw tool; like the snap geometry,
-      // Thickness only sees saved drafts.
-      if (draft.id === this.host._activeDraftId) continue;
-      for (let i = 0; i + 1 < draft.points.length; i++) {
-        const a = [draft.points[i][0], draft.points[i][1]];
-        const b = [draft.points[i + 1][0], draft.points[i + 1][1]];
-        // Zero is a legitimate stored value («Empty / 0 leaves the new wall
-        // thin», docs/WALL-THICKNESS.md §6) — only a MISSING record falls
-        // back to the drawing default. `|| 15` would silently turn a stored
-        // 0 into 15 on Apply (CODE-REVIEW-313-r1 High).
-        const rawCm = Number(draft.segments[i]?.cm);
-        offer({
-          a, b, roomId: '', segs: [[a[0], a[1], b[0], b[1]]],
-          open: false, cm: Number.isFinite(rawCm) ? rawCm : 15,
-          source: { kind: 'draft', id: draft.id, segment: i },
-        }, distToSegment(raw, [a[0], a[1], b[0], b[1]]), true);
-      }
-    }
     return best ? (best as { hit: Hit }).hit : null;
   }
 
@@ -6017,28 +5650,20 @@ public _wallThickApply(allRoom: boolean): void {
       this._showPhysicalRange(100);
       return;
     }
-    // Independent walls and saved drafts own their records. Zero is the same
+    // Independent walls own their records. Zero is the same
     // canonical bodyless state here as it is for a contour atom (#306).
     if (d.source.kind !== 'room') {
       const before = this._geometrySnapshot();
-      if (d.source.kind === 'partition') {
-        const partition = (sp.partitions || [])
-          .find((item: PartitionCfg) => item.id === (d.source as { id: string }).id);
-        if (!partition) return;
-        if (cmRaw === 0 && zeroWallHasOpening(sp.openings, {
-          kind: 'partition', id: partition.id,
-        })) {
-          this.host._showToast(this.host._t('toast.zero_wall_opening_conflict'));
-          return;
-        }
-        partition.cm = cmRaw;
-      } else {
-        const draft = (sp.room_drafts || [])
-          .find((item) => item.id === (d.source as { id: string }).id);
-        const segment = draft?.segments?.[(d.source as { segment: number }).segment];
-        if (!segment) return;
-        segment.cm = cmRaw;
+      const partition = (sp.partitions || [])
+        .find((item: PartitionCfg) => item.id === (d.source as { id: string }).id);
+      if (!partition) return;
+      if (cmRaw === 0 && zeroWallHasOpening(sp.openings, {
+        kind: 'partition', id: partition.id,
+      })) {
+        this.host._showToast(this.host._t('toast.zero_wall_opening_conflict'));
+        return;
       }
+      partition.cm = cmRaw;
       this.host._wallDialog = null;
       const committed = this._commitPhysicalGeometry(
         this.host._t('history.wall_thickness'), before,
@@ -6967,11 +6592,6 @@ public _wallSourceCmAt(
         return validCm(model.partitions.find((item) => item.id === segment.sourceId)?.cm)
           ?? DRAW_WALL_DEFAULT_CM;
       }
-      const separator = segment.sourceId.lastIndexOf(':');
-      const draftId = separator >= 0 ? segment.sourceId.slice(0, separator) : segment.sourceId;
-      const index = separator >= 0 ? Number(segment.sourceId.slice(separator + 1)) : -1;
-      return validCm(model.room_drafts.find((item) => item.id === draftId)?.segments[index]?.cm)
-        ?? DRAW_WALL_DEFAULT_CM;
     }
     // Толщина отрезка активной цепочки решается тем же резолвером (#234):
     // именно это значение подсвечивает инструмент «Толщина», и расхождение с
@@ -6993,9 +6613,11 @@ public _activePathWithRepair(
     path: number[][], proposal: WallFaceRepairProposal | undefined,
   ): number[][] {
     const result = path.map((point) => [...point]);
-    if (!proposal?.sourceKey.startsWith('active:')) return result;
-    const match = /:(\d+)$/.exec(proposal.sourceKey);
-    const index = match ? Number(match[1]) + (proposal.endpoint === 'b' ? 1 : 0) : -1;
+    if (!proposal) return result;
+    const source = this.host._activeWallChainPartitionIds.findIndex((_, index) => (
+      this._activeWallSourceKey(index) === proposal.sourceKey
+    ));
+    const index = source >= 0 ? source + (proposal.endpoint === 'b' ? 1 : 0) : -1;
     if (index >= 0 && index < result.length) result[index] = [...proposal.to];
     return result;
   }
@@ -7028,15 +6650,6 @@ public _applyWallRepair(
       point[0] = proposal.to[0] / NORM_W;
       point[1] = proposal.to[1] / NORM_W;
     };
-    if (proposal.sourceKey.startsWith('active:')) {
-      const match = /:(\d+)$/.exec(proposal.sourceKey);
-      const index = match ? Number(match[1]) + (proposal.endpoint === 'b' ? 1 : 0) : -1;
-      if (index < 0 || index >= batch.activePath.length) return false;
-      batch.activePath[index] = [...proposal.to];
-      const draft = (sp.room_drafts || []).find((item) => item.id === batch.activeDraftId);
-      if (draft?.points?.[index]) write(draft.points[index]);
-      return true;
-    }
     if (!proposal.sourceKey.startsWith('static:')) return false;
     const [kind, sourceId] = proposal.sourceKey.slice('static:'.length).split('|');
     if (kind === 'partition') {
@@ -7050,21 +6663,11 @@ public _applyWallRepair(
           <= this.host._gridPitch * 0.0002 ? partition.b : null;
       if (!point) return false;
       write(point);
-      return true;
-    }
-    if (kind === 'draft') {
-      const separator = sourceId.lastIndexOf(':');
-      const draftId = separator >= 0 ? sourceId.slice(0, separator) : '';
-      const segment = separator >= 0 ? Number(sourceId.slice(separator + 1)) : -1;
-      const draft = (sp.room_drafts || []).find((item) => item.id === draftId);
-      if (!draft?.points?.[segment] || !draft?.points?.[segment + 1]) return false;
-      const candidates = [segment, segment + 1];
-      const index = candidates.find((candidate) => Math.hypot(
-        draft.points[candidate][0] * NORM_W - proposal.from[0],
-        draft.points[candidate][1] * NORM_W - proposal.from[1],
-      ) <= this.host._gridPitch * 0.0002);
-      if (index == null) return false;
-      write(draft.points[index]);
+      const activeIndex = batch.activePartitionIds.indexOf(sourceId);
+      if (activeIndex >= 0) {
+        const pathIndex = activeIndex + (proposal.endpoint === 'b' ? 1 : 0);
+        if (batch.activePath[pathIndex]) batch.activePath[pathIndex] = [...proposal.to];
+      }
       return true;
     }
     return false;
@@ -7120,88 +6723,46 @@ public _applyWallFaceBatch(): void {
     }
     const effectiveActivePath = this._activePathWithRepair(batch.activePath, repairs[0]);
 
-    const epsilon = this.host._gridPitch * 0.0002;
-    const activeSourceCms = new Map<string, number>();
-    for (let i = 0; i < batch.activeCms.length; i++)
-      activeSourceCms.set(this._activeWallSourceKey(i), batch.activeCms[i]);
-    const partitions: Array<{ id?: string; a: number[]; b: number[]; cm: number }> = [];
     if (!accepted.length) {
-      partitions.push(...wallChainSegments(
-        effectiveActivePath,
-        chainSegmentCms(
-          effectiveActivePath.length - 1, batch.activeCms,
-          this.host._drawWallCm, DRAW_WALL_DEFAULT_CM,
-        ),
-      ));
-    } else {
-      const consumed = new Set(accepted.flatMap((decision) => decision.candidate.atomKeys));
-      const consumeAll = accepted.some((decision) => decision.candidate.consumeAllActive);
-      for (const atom of atomizeWallSegments(this._wallGraphSources(effectiveActivePath), epsilon)) {
-        const activeKey = atom.sourceKeys.find((key) => activeSourceCms.has(key));
-        if (!activeKey || consumeAll || consumed.has(atom.key)) continue;
-        partitions.push({ a: atom.a, b: atom.b, cm: activeSourceCms.get(activeKey)! });
-      }
-    }
-    if ((sp.partitions || []).length + partitions.length > MAX_PARTITIONS) {
-      abort('toast.physical_limit');
+      this.host._path = [];
+      this.host._activeWallChainId = null;
+      this.host._activeWallChainPartitionIds = [];
+      this.host._wallChainSegmentCms = [];
+      this.host._wallChainRedo = [];
+      this.host._closingWallCm = null;
+      this.host._wallFaceBatch = null;
+      this.host._roomDialog = false;
+      this.host._nameSel = '';
+      this.host._areaSel = '';
+      this.host.requestUpdate();
+      this.host._showToast(this.host._t('toast.wall_chain_saved'));
       return;
     }
-
-    // A face decision may split one persisted draft segment between a room
-    // contour and leftover partitions. Pick the single physical child that
-    // inherits the old ID by the same midpoint/old-a rule as the catalogue.
-    const roomLineage = accepted.map((decision) =>
-      decision.candidate.ring.map(() => ''));
-    const activeDraft = batch.activeDraftId
-      ? (sp.room_drafts || []).find((draft) => draft.id === batch.activeDraftId)
-      : null;
-    const draftLineage = this._draftSegmentsForPath(
-      batch.activePath, activeDraft, batch.activeCms,
-    );
-    const geometryKey = (a: readonly number[], b: readonly number[]): string => {
-      const ka = `${a[0].toFixed(9)},${a[1].toFixed(9)}`;
-      const kb = `${b[0].toFixed(9)},${b[1].toFixed(9)}`;
-      return ka <= kb ? `${ka}|${kb}` : `${kb}|${ka}`;
-    };
-    for (let sourceIndex = 0; sourceIndex < draftLineage.length; sourceIndex++) {
-      const id = draftLineage[sourceIndex]?.id;
-      if (!id) continue;
-      const sourceA = batch.activePath[sourceIndex];
-      const sourceB = batch.activePath[sourceIndex + 1];
-      const sourceSpan = [sourceA[0], sourceA[1], sourceB[0], sourceB[1]];
-      const candidates: Array<{
-        kind: 'room' | 'partition'; owner: number; edge: number; a: number[]; b: number[];
-      }> = [];
-      accepted.forEach((decision, owner) => decision.candidate.ring.forEach((a, edge) => {
-        const b = decision.candidate.ring[(edge + 1) % decision.candidate.ring.length];
-        if (distToSegment(a, sourceSpan) <= epsilon && distToSegment(b, sourceSpan) <= epsilon)
-          candidates.push({ kind: 'room', owner, edge, a, b });
-      }));
-      partitions.forEach((partition, owner) => {
-        if (distToSegment(partition.a, sourceSpan) <= epsilon
-            && distToSegment(partition.b, sourceSpan) <= epsilon)
-          candidates.push({ kind: 'partition', owner, edge: 0, a: partition.a, b: partition.b });
+    const activePartitionIds = new Set(batch.activePartitionIds);
+    const epsilon = this.host._gridPitch * 0.0002;
+    const roomLineage = accepted.map((decision) => decision.candidate.ring.map((a, index, ring) => {
+      const b = ring[(index + 1) % ring.length];
+      const carriers = model.partitions.filter((partition) => {
+        const length = Math.hypot(partition.b[0] - partition.a[0], partition.b[1] - partition.a[1]);
+        if (!(length > epsilon)) return false;
+        const ux = (partition.b[0] - partition.a[0]) / length;
+        const uy = (partition.b[1] - partition.a[1]) / length;
+        const along = (point: number[]) => (
+          (point[0] - partition.a[0]) * ux + (point[1] - partition.a[1]) * uy
+        );
+        return distToSegment(a, [partition.a[0], partition.a[1], partition.b[0], partition.b[1]]) <= epsilon
+          && distToSegment(b, [partition.a[0], partition.a[1], partition.b[0], partition.b[1]]) <= epsilon
+          && along(a) >= -epsilon && along(a) <= length + epsilon
+          && along(b) >= -epsilon && along(b) <= length + epsilon;
       });
-      const midpoint = [(sourceA[0] + sourceB[0]) / 2, (sourceA[1] + sourceB[1]) / 2];
-      candidates.sort((left, right) => {
-        const leftSpan = [left.a[0], left.a[1], left.b[0], left.b[1]];
-        const rightSpan = [right.a[0], right.a[1], right.b[0], right.b[1]];
-        return (distToSegment(midpoint, leftSpan) <= epsilon ? 0 : 1)
-          - (distToSegment(midpoint, rightSpan) <= epsilon ? 0 : 1)
-          || (distToSegment(sourceA, leftSpan) <= epsilon ? 0 : 1)
-          - (distToSegment(sourceA, rightSpan) <= epsilon ? 0 : 1)
-          || geometryKey(left.a, left.b).localeCompare(geometryKey(right.a, right.b));
-      });
-      const winner = candidates[0];
-      if (!winner) continue;
-      const winnerKey = geometryKey(winner.a, winner.b);
-      for (const candidate of candidates) {
-        if (geometryKey(candidate.a, candidate.b) !== winnerKey) continue;
-        if (candidate.kind === 'room') roomLineage[candidate.owner][candidate.edge] = id;
-        else partitions[candidate.owner].id = id;
-      }
-    }
-
+      carriers.sort((left, right) => (
+        Number(activePartitionIds.has(right.id)) - Number(activePartitionIds.has(left.id))
+        || Math.hypot(left.b[0] - left.a[0], left.b[1] - left.a[1])
+          - Math.hypot(right.b[0] - right.a[0], right.b[1] - right.a[1])
+        || left.id.localeCompare(right.id)
+      ));
+      return carriers[0]?.id || '';
+    }));
     const before = this._geometrySnapshot();
     if (repairs[0] && !this._applyWallRepair(repairs[0], batch)) {
       abort('toast.wall_repair_changed');
@@ -7243,20 +6804,6 @@ public _applyWallFaceBatch(): void {
       sp.rooms.push(room);
       newRooms.push({ room, decision });
     });
-
-    if (batch.activeDraftId && Array.isArray(sp.room_drafts)) {
-      sp.room_drafts = sp.room_drafts.filter((draft) => draft.id !== batch.activeDraftId);
-      if (!sp.room_drafts.length) delete sp.room_drafts;
-    }
-    if (partitions.length) {
-      sp.partitions ||= [];
-      partitions.forEach((partition, index) => sp.partitions.push({
-        id: partition.id || `partition-${seed}-${index}`,
-        a: [partition.a[0] / NORM_W, partition.a[1] / NORM_W],
-        b: [partition.b[0] / NORM_W, partition.b[1] / NORM_W],
-        cm: partition.cm,
-      }));
-    }
 
     if (hasSplit) {
       const next = this.host._normalizeWalls(splitWalls, this.host._openCuts());
@@ -7300,13 +6847,37 @@ public _applyWallFaceBatch(): void {
       const normalized = this.host._normalizeWalls(walls, openCuts);
       if (normalized.length) sp.walls = normalized;
       else delete sp.walls;
+
+      // Every accepted click already wrote an ordinary partition. Once the
+      // chain creates room faces, consume the coincident carriers into the
+      // canonical room-wall representation in this same transaction.
+      this.host._cfgEpoch++;
+      const reconciledModel = this.host._spaceModel();
+      if (!reconciledModel) return;
+      const reconciled = reconcileCoincidentPartitions(
+        sp, reconciledModel, sp.walls, openCuts,
+        {
+          pitch: this.host._wallKeyPitch,
+          cellCm: this.host._cellCm,
+          gridPitch: this.host._gridPitch,
+          coordScale: NORM_W,
+          allowCoincidentPartitions: true,
+        },
+      );
+      if (reconciled.walls.length) sp.walls = reconciled.walls;
+      else delete sp.walls;
+      if (reconciled.partitions.length) sp.partitions = reconciled.partitions;
+      else delete sp.partitions;
+      if (reconciled.openings.length) sp.openings = reconciled.openings;
+      else delete sp.openings;
     }
 
     if (!this._commitPhysicalGeometry(this.host._t('history.wall_face_batch'), before)) return;
-    delete this.host._resumeDraftBySpace[this.host._space];
     this.host._path = [];
-    this.host._activeDraftId = null;
-    this.host._draftSegmentCms = [];
+    this.host._activeWallChainId = null;
+    this.host._activeWallChainPartitionIds = [];
+    this.host._wallChainSegmentCms = [];
+    this.host._wallChainRedo = [];
     this.host._closingWallCm = null;
     this.host._wallFaceBatch = null;
     this.host._roomDialog = false;
@@ -7383,26 +6954,7 @@ public _commitRoom(): void {
       poly: verts.map((p) => [p[0] / NORM_W, p[1] / H]),
       ...(this._roomSettingsFromDialog() ? { settings: this._roomSettingsFromDialog() } : {}),
     };
-    if (!wasSplit && this.host._activeDraftId) {
-      const activeDraft = Array.isArray((sp as any).room_drafts)
-        ? (sp as any).room_drafts.find((draft) => draft.id === this.host._activeDraftId)
-        : null;
-      const cms = chainSegmentCms(
-        verts.length,
-        [...this.host._draftSegmentCms, this.host._closingWallCm ?? undefined],
-        this.host._drawWallCm, DRAW_WALL_DEFAULT_CM,
-      );
-      const lineage = this._draftSegmentsForPath(this.host._path, activeDraft, cms);
-      if (lineage.length === verts.length && lineage.every((segment) => !!segment.id)) {
-        newRoom.wall_ids = lineage.map((segment) => segment.id!);
-      }
-    }
     sp.rooms.push(newRoom);
-    // Closing a saved draft promotes it into a room in the same transaction.
-    if (!wasSplit && this.host._activeDraftId && Array.isArray((sp as any).room_drafts)) {
-      (sp as any).room_drafts = (sp as any).room_drafts.filter((d: any) => d.id !== this.host._activeDraftId);
-      if (!(sp as any).room_drafts.length) delete (sp as any).room_drafts;
-    }
     // A Split rewrites the parent outline and adds a child, so a span that used
     // to sit between the parent and a neighbour may now belong to the child.
     // Geometry first, then spans and the derived open_to — otherwise border
@@ -7419,7 +6971,7 @@ public _commitRoom(): void {
     if (!wasSplit) {
       const edgeCms = chainSegmentCms(
         verts.length,
-        [...this.host._draftSegmentCms, this.host._closingWallCm ?? undefined],
+        [...this.host._wallChainSegmentCms, this.host._closingWallCm ?? undefined],
         this.host._drawWallCm, DRAW_WALL_DEFAULT_CM,
       );
       const cm = edgeCms[0];
@@ -7453,15 +7005,35 @@ public _commitRoom(): void {
         next = this.host._normalizeWalls(next, openCuts);
         if (next.length) sp.walls = next;
         else delete sp.walls;
+
+        const reconciledModel = this.host._spaceModel();
+        if (!reconciledModel) return;
+        const reconciled = reconcileCoincidentPartitions(
+          sp, reconciledModel, sp.walls, openCuts,
+          {
+            pitch: this.host._wallKeyPitch,
+            cellCm: this.host._cellCm,
+            gridPitch: this.host._gridPitch,
+            coordScale: NORM_W,
+            allowCoincidentPartitions: true,
+          },
+        );
+        if (reconciled.walls.length) sp.walls = reconciled.walls;
+        else delete sp.walls;
+        if (reconciled.partitions.length) sp.partitions = reconciled.partitions;
+        else delete sp.partitions;
+        if (reconciled.openings.length) sp.openings = reconciled.openings;
+        else delete sp.openings;
       }
     }
     const committed = this._commitPhysicalGeometry(
       this.host._t(wasSplit ? 'history.split_room' : 'history.add_room'), before,
     );
     this.host._path = [];
-    delete this.host._resumeDraftBySpace[this.host._space];
-    this.host._activeDraftId = null;
-    this.host._draftSegmentCms = [];
+    this.host._activeWallChainId = null;
+    this.host._activeWallChainPartitionIds = [];
+    this.host._wallChainSegmentCms = [];
+    this.host._wallChainRedo = [];
     this.host._closingWallCm = null;
     this.host._pendingSplit = null;
     this.host._splitSel = null;
@@ -7500,10 +7072,11 @@ public _commitRoom(): void {
 
 public _cancelPath(): void {
     this.host._wallRepairDiagnostic = null;
-    if (this.host._activeDraftId) this.host._resumeDraftBySpace[this.host._space] = this.host._activeDraftId;
     this.host._path = [];
-    this.host._activeDraftId = null;
-    this.host._draftSegmentCms = [];
+    this.host._activeWallChainId = null;
+    this.host._activeWallChainPartitionIds = [];
+    this.host._wallChainSegmentCms = [];
+    this.host._wallChainRedo = [];
     this.host._closingWallCm = null;
     this._clearPlanSnapHover();
     this.host._roomDialog = false;
@@ -7518,19 +7091,6 @@ public _cancelPath(): void {
     this._clearOpeningPlacement(true);
   }
 
-public _resumeLastDraft(): void {
-    const id = this.host._resumeDraftBySpace[this.host._space];
-    if (!id) return;
-    const draft = this.host._spaceModel()?.room_drafts.find((d) => d.id === id);
-    if (!draft) { delete this.host._resumeDraftBySpace[this.host._space]; return; }
-    this.host._activeDraftId = id;
-    this.host._path = draft.points.map((p) => [...p]);
-    this.host._draftSegmentCms = this._adoptDraftCms(
-      this.host._path, draft.segments.map((s: any) => s.cm), draft.id,
-    );
-    this._clearPlanSnapHover();
-  }
-
 public _roomDialogCancel(): void {
     this.host._roomDialog = false;
     if (this.host._roomEditId) {
@@ -7543,8 +7103,9 @@ public _roomDialogCancel(): void {
       const batch = this.host._wallFaceBatch;
       this.host._wallFaceBatch = null;
       this.host._path = batch.activePath.map((point) => [...point]);
-      this.host._draftSegmentCms = [...batch.activeCms];
-      this.host._activeDraftId = batch.activeDraftId;
+      this.host._wallChainSegmentCms = [...batch.activeCms];
+      this.host._activeWallChainPartitionIds = [...batch.activePartitionIds];
+      this.host._activeWallChainId ||= `chain-${Date.now().toString(36)}`;
       this.host._nameSel = '';
       this.host._areaSel = '';
       this.host.requestUpdate();
@@ -7973,47 +7534,16 @@ public _keepClosedAsPartitions = (): void => {
       return;
     }
     if (!this.host._contourClosed || this.host._pendingSplit || !this.host._curSpaceCfg) return;
-    const sp = this.host._curSpaceCfg as any;
-    const verts = this.host._path.slice(0, -1);
-    if ((sp.partitions || []).length + verts.length > MAX_PARTITIONS) {
-      this.host._showToast(this.host._t('toast.physical_limit'));
-      return;
-    }
-    const before = this._geometrySnapshot();
-    // Замкнутый контур: отрезков столько же, сколько вершин, и последний —
-    // закрывающий. Его известное значение подаётся резолверу как запись, всё
-    // остальное решает единое правило (#234).
-    const cms = chainSegmentCms(
-      verts.length,
-      [...this.host._draftSegmentCms, this.host._closingWallCm ?? undefined],
-      this.host._drawWallCm, DRAW_WALL_DEFAULT_CM,
-    );
-    sp.partitions ||= [];
-    const seed = Date.now().toString(36);
-    const activeDraft = this.host._activeDraftId
-      ? (sp.room_drafts || []).find((draft) => draft.id === this.host._activeDraftId)
-      : null;
-    const lineage = this._draftSegmentsForPath(this.host._path, activeDraft, cms);
-    for (let i = 0; i < verts.length; i++) {
-      const a = verts[i], b = verts[(i + 1) % verts.length];
-      sp.partitions.push({
-        id: lineage[i]?.id || `partition-${seed}-${i}`,
-        a: [a[0] / NORM_W, a[1] / NORM_W],
-        b: [b[0] / NORM_W, b[1] / NORM_W],
-        cm: cms[i],
-      });
-    }
-    if (this.host._activeDraftId && Array.isArray(sp.room_drafts)) {
-      sp.room_drafts = sp.room_drafts.filter((d: any) => d.id !== this.host._activeDraftId);
-      if (!sp.room_drafts.length) delete sp.room_drafts;
-    }
-    this._commitPhysicalGeometry(this.host._t('history.contour_to_partitions'), before);
+    // Every accepted edge is already an ordinary partition. Rejecting all
+    // detected faces only ends the session; it must not duplicate the chain.
     this.host._roomDialog = false;
     this.host._path = [];
-    delete this.host._resumeDraftBySpace[this.host._space];
-    this.host._activeDraftId = null;
-    this.host._draftSegmentCms = [];
+    this.host._activeWallChainId = null;
+    this.host._activeWallChainPartitionIds = [];
+    this.host._wallChainSegmentCms = [];
+    this.host._wallChainRedo = [];
     this.host._closingWallCm = null;
+    this.host.requestUpdate();
   };
 
 public _backupErrorText(e: any): string {
@@ -10081,6 +9611,7 @@ public _renderBackupImportDialog(): TemplateResult {
     const missingDecor = decorContent.filter((item) => item.state === 'missing_preserved');
     const missingDecorAssetCount = new Set(missingDecor.map((item) => item.url)).size;
     const counts = p?.counts || {};
+    const draftMigration = p?.migration || {};
     const report = p?.reference_report || {};
     const sum = (values: any): number => Object.values(values || {}).reduce(
       (total: number, value: any) => total + (Number(value) || 0), 0,
@@ -10144,6 +9675,11 @@ public _renderBackupImportDialog(): TemplateResult {
           ${p.dropped_marker_links ? html`<div class="backupwarn">${this.host._t('backup.dropped_marker_links', {
             n: String(p.dropped_marker_links),
           })}</div>` : nothing}
+          ${draftMigration.room_drafts || draftMigration.room_draft_segments ? html`
+            <div class="rhint">${this.host._t('backup.room_drafts_migrated', {
+              drafts: String(draftMigration.room_drafts || 0),
+              segments: String(draftMigration.room_draft_segments || 0),
+            })}</div>` : nothing}
           ${p.repaired_target_refs ? html`<div class="rhint">${this.host._t('backup.repaired_target_refs', {
             n: String(p.repaired_target_refs),
           })}</div>` : nothing}
@@ -10340,10 +9876,10 @@ public _renderAlignDialog(): TemplateResult {
       + r.positionsRemapped + r.markersDetached;
     const modelMaintenance = r.migrated + r.canonicalized + r.coordsCanonicalized
       + r.wallSegmentsMigrated
+      + r.roomDraftsMigrated + r.roomDraftSegmentsMigrated
       + r.wallsMerged + r.spansMerged + r.partitionsMerged
-      + r.partitionsReconciled + r.openingsRehosted + r.redundantDraftsRemoved;
-    const gridWarning = r.moved + r.rotated + r.removedDrafts
-      + r.coordsCanonicalized + r.wallsStraightened;
+      + r.partitionsReconciled + r.openingsRehosted;
+    const gridWarning = r.moved + r.rotated + r.coordsCanonicalized + r.wallsStraightened;
     const straightenCm = Math.ceil(r.maxStraightenShiftCm * 10) / 10;
     const straightenSpace = (this.host._serverCfg?.spaces || []).find(
       (space) => String(space?.id || '') === r.maxStraightenSpace,
@@ -10443,19 +9979,14 @@ public _renderAlignDialog(): TemplateResult {
               ${r.rotated
                 ? html`<p class="alignmsg">${this.host._t('gs.align_turned', { n: String(r.rotated) })}</p>`
                 : nothing}
-              ${r.removedDrafts
-                ? html`<p class="alignmsg">${this.host._t('gs.align_removed_drafts', {
-                    n: String(r.removedDrafts),
-                  })}</p>`
-                : nothing}
-              ${r.redundantDraftsRemoved
-                ? html`<p class="alignmsg">${this.host._t('gs.optimize_redundant_drafts', {
-                    n: String(r.redundantDraftsRemoved),
-                  })}</p>`
-                : nothing}
               ${r.wallSegmentsMigrated ? html`<p class="alignmsg">${this.host._t(
                   'gs.wall_segments_migrated', { n: String(r.wallSegmentsMigrated) },
                 )}</p>` : nothing}
+              ${r.roomDraftsMigrated || r.roomDraftSegmentsMigrated ? html`
+                <p class="alignmsg">${this.host._t('gs.room_drafts_migrated', {
+                  drafts: String(r.roomDraftsMigrated),
+                  segments: String(r.roomDraftSegmentsMigrated),
+                })}</p>` : nothing}
               ${r.legacyZeroWallsMigrated ? html`<p class="alignmsg">${this.host._t(
                   'gs.zero_walls_migrated', { n: String(r.legacyZeroWallsMigrated) },
                 )}</p>` : nothing}
@@ -11819,22 +11350,6 @@ public _renderPhysicalEditorLayer(): TemplateResult {
     const selected = (kind: string, id: string) =>
       (this.host._physicalSel?.kind === kind && this.host._physicalSel.id === id)
       || (kind === 'column' && this.host._duplicateColumnId === id);
-    const draftSegs = (space.room_drafts || []).flatMap((d) => d.points.slice(0, -1).map((a, i) => {
-      const b = d.points[i + 1];
-      const storedCm = Number(d.segments[i]?.cm);
-      const depth = wallCmToUnits(
-        Number.isFinite(storedCm) ? storedCm : 15, this.host._cellCm, this.host._gridPitch,
-      );
-      return svg`<line class="physical-hit ${selected('draft', d.id) ? 'selected' : ''}"
-        data-hp="room-draft" data-kind="segment" data-id=${d.id} data-segment=${i}
-        x1=${a[0]} y1=${a[1]} x2=${b[0]} y2=${b[1]}
-        stroke-width=${Math.max(touchStroke, depth / Math.max(unitsPerPx, 1e-9))}
-        vector-effect="non-scaling-stroke"
-        @pointerdown=${(e: PointerEvent) => {
-          this.host._physicalSel = { kind: 'draft', id: d.id, segment: i };
-          this._registerPhysicalTap('draft', d.id, i);
-        }}></line>`;
-    }));
     const partitions = (space.partitions || []).map((p) => {
       const body = partitionBody(p.a, p.b, p.cm, this.host._cellCm, this.host._gridPitch);
       return body
@@ -11883,14 +11398,6 @@ public _renderPhysicalEditorLayer(): TemplateResult {
     const chrome = (() => {
       const sel = this.host._physicalSel;
       if (!sel) return nothing;
-      if (sel.kind === 'draft') {
-        const d = space.room_drafts.find((x) => x.id === sel.id);
-        if (!d) return nothing;
-        return svg`<g class="physical-chrome" data-kind="draft-selection">
-          <polyline class="frame" points=${d.points.map((p) => p.join(',')).join(' ')}></polyline>
-          ${d.points.map((p) => svg`<circle class="move-dot" cx=${p[0]} cy=${p[1]} r=${handleR * 0.55}></circle>`)}
-        </g>`;
-      }
       if (sel.kind === 'partition') {
         const p = space.partitions.find((x) => x.id === sel.id);
         if (!p) return nothing;
@@ -11931,7 +11438,7 @@ public _renderPhysicalEditorLayer(): TemplateResult {
           @pointerup=${(e: PointerEvent) => this._physicalRotateUp(e)}></circle>
       </g>`;
     })();
-    return svg`<g class="physical-editor">${draftSegs}${partitions}${columns}${ghost}${chrome}</g>`;
+    return svg`<g class="physical-editor">${partitions}${columns}${ghost}${chrome}</g>`;
   }
 
 public _renderHiddenWallDiagnosticOverlay(): TemplateResult {
@@ -12025,10 +11532,6 @@ public _planSnapPhysicalSegment(segment: PlanSnapSegment): LinearWallSegment | n
     if (!space) return null;
     if (segment.sourceKind === 'partition') {
       cm = Number(space.partitions.find((item) => item.id === segment.sourceId)?.cm) || 0;
-    } else if (segment.sourceKind === 'draft') {
-      const match = /^(.*):(\d+)$/.exec(segment.sourceId);
-      const draft = match ? space.room_drafts.find((item) => item.id === match[1]) : null;
-      cm = draft && match ? Number(draft.segments[Number(match[2])]?.cm) || 0 : 0;
     } else {
       cm = intervalCmAt(
         space.rooms, this.host._spaceWalls, this.host._openCuts(),
@@ -12091,8 +11594,8 @@ public _renderMarkupLayer(vb: number[]): TemplateResult {
       ? chainSegmentCms(
           previewPts.length - 1,
           this.host._contourClosed
-            ? [...this.host._draftSegmentCms, this.host._closingWallCm ?? undefined]
-            : this.host._draftSegmentCms,
+            ? [...this.host._wallChainSegmentCms, this.host._closingWallCm ?? undefined]
+            : this.host._wallChainSegmentCms,
           drawCm, DRAW_WALL_DEFAULT_CM,
         ).map((cm) => wallCmToUnits(cm, this.host._cellCm, this.host._gridPitch) / 2)
       : [];
@@ -12234,8 +11737,7 @@ public _renderPhysicalDialog(): TemplateResult {
     const d = this.host._physicalDialog!;
     const column = d.kind === 'column';
     return html`<hp-dialog .hass=${this.host.hass} wide
-      .title=${this.host._t(column ? 'physical.column_properties' : d.kind === 'partition'
-        ? 'physical.partition_properties' : 'physical.draft_properties')}
+      .title=${this.host._t(column ? 'physical.column_properties' : 'physical.partition_properties')}
       icon=${column ? 'mdi:vector-square' : 'mdi:wall'}
       @hp-close=${() => (this.host._physicalDialog = null)}>
         <div class="body">
@@ -12268,16 +11770,9 @@ public _renderPhysicalDialog(): TemplateResult {
         </div>
         <div class="row dialog-action-footer physicalfooter" slot="footer">
           <div class="dialog-action-group dialog-action-danger">
-            ${d.kind === 'draft' ? html`
-              <button class="btn danger" @click=${() => this._deleteDraftSegment()}>
-                <ha-icon icon="mdi:vector-line"></ha-icon>${this.host._t('physical.delete_segment')}
-              </button>
-              <button class="btn danger" @click=${() => this._deleteDraftWhole()}>
-                <ha-icon icon="mdi:delete-outline"></ha-icon>${this.host._t('physical.delete_draft')}
-              </button>` : html`
-              <button class="btn danger" @click=${() => this._deletePhysicalSelection()}>
-                <ha-icon icon="mdi:delete-outline"></ha-icon>${this.host._t('btn.delete')}
-              </button>`}
+            <button class="btn danger" @click=${() => this._deletePhysicalSelection()}>
+              <ha-icon icon="mdi:delete-outline"></ha-icon>${this.host._t('btn.delete')}
+            </button>
           </div>
           <div class="dialog-action-group dialog-action-commit">
             <button class="btn ghost" @click=${() => (this.host._physicalDialog = null)}>${this.host._t('btn.cancel')}</button>

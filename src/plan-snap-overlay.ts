@@ -1,7 +1,7 @@
 import { cutSegments, distToSegment, roomEdges } from './logic';
 import type { SpaceModel } from './types';
 
-export type PlanSnapSourceKind = 'room' | 'draft' | 'partition';
+export type PlanSnapSourceKind = 'room' | 'partition';
 
 export interface PlanSnapSegment {
   a: [number, number];
@@ -22,7 +22,7 @@ export interface PlanSnapGeometry {
 }
 
 export interface HiddenWallDiagnosticEndpoint extends PlanSnapEndpoint {
-  sourceKind: 'draft' | 'partition';
+  sourceKind: 'partition';
   sourceId: string;
 }
 
@@ -58,8 +58,7 @@ export type PlanSnapCandidate =
     };
 
 export interface BuildPlanSnapGeometryOptions {
-  space: Pick<SpaceModel, 'rooms' | 'room_drafts' | 'partitions'>;
-  activeDraftId?: string | null;
+  space: Pick<SpaceModel, 'rooms' | 'partitions'>;
   roomCuts?: readonly number[][];
   partitionCuts?: readonly PlanSnapPartitionCut[];
   epsilon?: number;
@@ -130,7 +129,7 @@ function segmentKey(source: SourceSegment, a: readonly number[], b: readonly num
 }
 
 function sourceRank(kind: PlanSnapSourceKind): number {
-  return kind === 'room' ? 0 : kind === 'draft' ? 1 : 2;
+  return kind === 'room' ? 0 : 1;
 }
 
 function touches(point: readonly number[], segment: readonly number[], epsilon: number): boolean {
@@ -161,11 +160,10 @@ function positiveCollinearOverlap(
 /**
  * Preserve the identity of an independent source which is visually hidden by
  * another wall. Unlike buildPlanSnapGeometry this projection deliberately does
- * not deduplicate a room-owned axis over a partition/draft-owned one.
+ * not deduplicate a room-owned axis over a partition-owned one.
  */
 export function buildHiddenWallDiagnosticGeometry(options: {
-  space: Pick<SpaceModel, 'rooms' | 'room_drafts' | 'partitions'>;
-  activeDraftId?: string | null;
+  space: Pick<SpaceModel, 'rooms' | 'partitions'>;
   epsilon?: number;
 }): HiddenWallDiagnosticGeometry {
   const epsilon = options.epsilon ?? DEFAULT_EPSILON;
@@ -176,17 +174,6 @@ export function buildHiddenWallDiagnosticGeometry(options: {
       a: [segment[0], segment[1]], b: [segment[2], segment[3]],
       kind: 'room', id: `room-edge-${index}`, cuts: [],
     });
-  }
-  for (const draft of options.space.room_drafts || []) {
-    if (draft.id === options.activeDraftId) continue;
-    for (let index = 0; index + 1 < draft.points.length; index++) {
-      const a = draft.points[index], b = draft.points[index + 1];
-      if (!finitePoint(a) || !finitePoint(b) || pointsEqual(a, b, epsilon)) continue;
-      sources.push({
-        a: [a[0], a[1]], b: [b[0], b[1]],
-        kind: 'draft', id: `${draft.id}:${index}`, cuts: [],
-      });
-    }
   }
   for (const partition of options.space.partitions || []) {
     if (!finitePoint(partition.a) || !finitePoint(partition.b)
@@ -212,7 +199,7 @@ export function buildHiddenWallDiagnosticGeometry(options: {
     [source.a, source.b].map((point, index) => ({
       point: [point[0], point[1]],
       key: `hidden|${sourceKey(source)}|endpoint-${index}`,
-      sourceKind: source.kind as 'draft' | 'partition',
+      sourceKind: 'partition',
       sourceId: source.id,
     }))
   )).sort((a, b) => a.key.localeCompare(b.key));
@@ -222,8 +209,8 @@ export function buildHiddenWallDiagnosticGeometry(options: {
 /**
  * Build the immutable architectural axes used by both the overlay and snap resolver.
  * Opening cuts apply to room-owned walls, while hosted opening cuts apply only to
- * their explicit partition source. Zero-thickness walls and saved drafts keep
- * complete axes. Cut boundaries never become static nodes.
+ * their explicit partition source. Zero-thickness walls keep complete axes.
+ * Cut boundaries never become static nodes.
  */
 export function buildPlanSnapGeometry(options: BuildPlanSnapGeometryOptions): PlanSnapGeometry {
   const epsilon = options.epsilon ?? DEFAULT_EPSILON;
@@ -247,19 +234,6 @@ export function buildPlanSnapGeometry(options: BuildPlanSnapGeometryOptions): Pl
       id: `room-edge-${index}`,
       cuts: roomCuts,
     });
-  }
-
-  for (const draft of options.space.room_drafts || []) {
-    if (draft.id === options.activeDraftId) continue;
-    for (let index = 0; index + 1 < draft.points.length; index++) {
-      const a = draft.points[index];
-      const b = draft.points[index + 1];
-      if (!finitePoint(a) || !finitePoint(b)) continue;
-      sources.push({
-        a: [a[0], a[1]], b: [b[0], b[1]], kind: 'draft',
-        id: `${draft.id}:${index}`, cuts: [],
-      });
-    }
   }
 
   for (const partition of options.space.partitions || []) {

@@ -325,21 +325,6 @@ def _project_space(ids: _Pseudonyms, space: dict[str, Any], index: int) -> dict[
         }
         for item in space.get("walls") or [] if isinstance(item, dict)
     ]
-    out["room_drafts"] = []
-    for draft in space.get("room_drafts") or []:
-        if not isinstance(draft, dict):
-            continue
-        out["room_drafts"].append({
-            "id": ids.get("draft", draft.get("id")),
-            "points": _points(draft.get("points")),
-            "segments": [
-                {
-                    **({"id": ids.get("wall", segment.get("id"))} if segment.get("id") else {}),
-                    "cm": segment.get("cm"),
-                }
-                for segment in draft.get("segments") or [] if isinstance(segment, dict)
-            ],
-        })
     out["partitions"] = [
         {"id": ids.get("partition", item.get("id")), "a": _point(item.get("a")),
          "b": _point(item.get("b")), "cm": item.get("cm")}
@@ -429,7 +414,6 @@ def _summary(config: object, layout: object) -> dict[str, Any]:
     return {
         "spaces": len(spaces),
         "rooms": sum(len(space.get("rooms") or []) for space in spaces if isinstance(space, dict)),
-        "room_drafts": sum(len(space.get("room_drafts") or []) for space in spaces if isinstance(space, dict)),
         "walls": sum(len(space.get("wall_segments") or space.get("walls") or []) for space in spaces if isinstance(space, dict)),
         "partitions": sum(len(space.get("partitions") or []) for space in spaces if isinstance(space, dict)),
         "columns": sum(len(space.get("wall_columns") or []) for space in spaces if isinstance(space, dict)),

@@ -230,14 +230,14 @@ export async function saveSpaceCopy(
     services.clearGeometryGesture();
     host._selId = null;
     host._physicalSel = null;
-    delete host._resumeDraftBySpace[result.space.id];
     host._spaceDialog = null;
     host._commitSpace(result.space.id, true);
     services.setMode('plan');
     host._tool = 'draw';
     host._path = [];
     host._cursorPt = null;
-    host._activeDraftId = null;
+    host._activeWallChainId = null;
+    host._activeWallChainPartitionIds = [];
     host._primeDrawWallField();
     host._saveNav();
     host.requestUpdate();

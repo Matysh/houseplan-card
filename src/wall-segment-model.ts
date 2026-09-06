@@ -18,7 +18,7 @@ import {
 } from './wall-thickness';
 import type { OpeningCfg, WallOpeningHost, WallSegmentEntry } from './types';
 
-export const WALL_SEGMENT_MODEL_VERSION = 9;
+export const WALL_SEGMENT_MODEL_VERSION = 10;
 const EPS = 1e-9;
 
 export type WallSegmentModelBlocker =
@@ -40,6 +40,10 @@ export interface WallSegmentCommitResult<T = any> {
   config: T;
   changed: boolean;
   migratedSegments: number;
+  /** Legacy persisted contour records converted to ordinary partitions. */
+  migratedDrafts: number;
+  /** Legacy draft edges converted one-for-one to ordinary partitions. */
+  migratedDraftSegments: number;
 }
 
 export interface WallSegmentCommitOptions {
@@ -79,32 +83,6 @@ const canonicalSpan = (a: number[], b: number[]): [Point, Point] => (
   pointKey(a) <= pointKey(b) ? [point(a), point(b)] : [point(b), point(a)]
 );
 const lengthOf = (a: number[], b: number[]): number => Math.hypot(b[0] - a[0], b[1] - a[1]);
-
-/**
- * Remove zero-length adjacent draft edges without moving identity to a
- * neighbouring carrier.  The caller owns whole-record validation; this pure
- * write-boundary helper owns the index relationship between points and
- * segments (#314).
- */
-export const sanitizeRoomDraftPath = (draft: any): {
-  points: number[][];
-  segments: Array<{ id?: string; cm: number; [key: string]: any }>;
-} => {
-  const points: number[][] = [[Number(draft.points[0][0]), Number(draft.points[0][1])]];
-  const segments: Array<{ id?: string; cm: number; [key: string]: any }> = [];
-  for (let index = 1; index < draft.points.length; index++) {
-    const next = [Number(draft.points[index][0]), Number(draft.points[index][1])];
-    if (samePoint(points[points.length - 1], next)) continue;
-    points.push(next);
-    const source = draft.segments?.[index - 1];
-    segments.push({
-      ...(source && typeof source === 'object' ? source : {}),
-      cm: Number.isFinite(Number(source?.cm))
-        ? Math.max(0, Math.min(100, Number(source.cm))) : 15,
-    });
-  }
-  return { points, segments };
-};
 
 /** Unique authored/derived contour coordinates that are materially off-grid. */
 export const wallModelOffGridValueCount = (
@@ -727,39 +705,72 @@ const hostRoomOpenings = (
   }
 };
 
-const migrateDraftSegments = (space: any, initialMigration: boolean): void => {
+const migrateRoomDraftsToPartitions = (
+  space: any, initialMigration: boolean,
+): { drafts: number; segments: number } => {
+  if (!Object.prototype.hasOwnProperty.call(space, 'room_drafts')) return { drafts: 0, segments: 0 };
+  if (!initialMigration) {
+    throw new WallSegmentModelError('duplicate-id', 'model v10 must not contain room_drafts');
+  }
+  const drafts = Array.isArray(space.room_drafts) ? space.room_drafts : [];
   const used = new Set<string>();
   for (const collection of [
-    space.rooms, space.openings, space.decor, space.room_drafts, space.partitions,
+    space.rooms, space.openings, space.decor, space.partitions,
     space.wall_columns, space.wall_segments,
   ]) {
     for (const item of Array.isArray(collection) ? collection : []) {
       if (typeof item?.id === 'string' && item.id) used.add(item.id);
     }
   }
-  for (const draft of Array.isArray(space.room_drafts) ? space.room_drafts : []) {
+  // A draft id was globally reserved in v9 too. Keep it out of the generated
+  // partition namespace even though the carrier itself disappears in v10.
+  for (const draft of drafts) {
+    if (typeof draft?.id === 'string' && draft.id) used.add(draft.id);
+  }
+  const partitions = Array.isArray(space.partitions) ? [...space.partitions] : [];
+  let converted = 0;
+  for (const draft of drafts) {
+    const points = Array.isArray(draft?.points) ? draft.points : [];
     const segments = Array.isArray(draft.segments) ? draft.segments : [];
-    for (let index = 0; index < segments.length; index++) {
+    if (points.length < 2 || segments.length !== points.length - 1)
+      throw new WallSegmentModelError('zero-length', String(draft?.id || ''));
+    for (let index = 0; index + 1 < points.length; index++) {
+      const a = points[index], b = points[index + 1];
       const segment = segments[index];
-      if (typeof segment.id === 'string' && segment.id) {
-        if (used.has(segment.id)) throw new WallSegmentModelError('duplicate-id', segment.id);
-        used.add(segment.id);
-        continue;
-      }
-      const a = draft.points?.[index], b = draft.points?.[index + 1];
-      if (!finitePoint(a) || !finitePoint(b)) throw new WallSegmentModelError('zero-length', draft.id);
-      if (initialMigration) {
+      if (!finitePoint(a) || !finitePoint(b) || samePoint(a, b))
+        throw new WallSegmentModelError('zero-length', String(draft?.id || ''));
+      const cm = Number(segment?.cm);
+      if (!Number.isFinite(cm) || cm < 0 || cm > 100)
+        throw new WallSegmentModelError('thickness-conflict', String(draft?.id || ''));
+      let id = typeof segment?.id === 'string' && segment.id ? segment.id : '';
+      if (id) {
+        if (used.has(id)) throw new WallSegmentModelError('duplicate-id', id);
+      } else {
         const base = deterministicWallSegmentId(
-          String(space.id || ''), a, b, [`draft:${String(draft.id || '')}`],
+          String(space.id || ''), a, b,
+          [`draft:${String(draft?.id || '')}:${index}`],
         );
-        let suffix = 1;
-        segment.id = base;
-        while (used.has(segment.id)) segment.id = `${base}-${++suffix}`;
-      } else segment.id = freshWallSegmentId(used);
-      used.add(segment.id);
+        id = base;
+        for (let suffix = 2; used.has(id); suffix++) id = `${base}-${suffix}`;
+      }
+      used.add(id);
+      partitions.push({ id, a: point(a), b: point(b), cm });
+      converted++;
     }
   }
+  if (partitions.length) space.partitions = partitions;
+  else delete space.partitions;
+  delete space.room_drafts;
+  return { drafts: drafts.length, segments: converted };
 };
+
+/**
+ * Narrow legacy adapter used before Optimize geometry repair. Unlike the full
+ * v10 identity barrier it does not require room contours to be valid yet.
+ */
+export const migrateLegacyRoomDraftsToPartitionsInPlace = (
+  space: any,
+): { drafts: number; segments: number } => migrateRoomDraftsToPartitions(space, true);
 
 const resolvedThicknessCm = (
   space: any, atom: Atom, previous: WallSegmentEntry | undefined,
@@ -783,7 +794,8 @@ const resolvedThicknessCm = (
 
 const migrateSpace = (
   space: any, initialMigration: boolean, lineageHints?: ReadonlyMap<string, string>,
-): number => {
+): { wallSegments: number; drafts: number; draftSegments: number } => {
+  const draftMigration = migrateRoomDraftsToPartitions(space, initialMigration);
   const old = oldSegmentMap(space);
   const { atoms, rooms } = buildAtoms(space, old);
   assignLineage(space, atoms, old, initialMigration, lineageHints);
@@ -805,9 +817,12 @@ const migrateSpace = (
   if (!space.walls.length) delete space.walls;
   delete space.open_spans;
   for (const room of space.rooms) delete room.open_to;
-  migrateDraftSegments(space, initialMigration);
   hostRoomOpenings(space, segments, initialMigration);
-  return segments.reduce((count, segment) => count + (old.has(segment.id) ? 0 : 1), 0);
+  return {
+    wallSegments: segments.reduce((count, segment) => count + (old.has(segment.id) ? 0 : 1), 0),
+    drafts: draftMigration.drafts,
+    draftSegments: draftMigration.segments,
+  };
 };
 
 /** Pure, atomic structural candidate. Read paths must never call this helper. */
@@ -818,15 +833,23 @@ export function commitWallSegmentModel<T>(
   const config: any = clone(input);
   canonicalizeConfigGeometryInPlace(config);
   let migratedSegments = 0;
+  let migratedDrafts = 0;
+  let migratedDraftSegments = 0;
   const initialMigration = Number(config?.model_version || 0) < WALL_SEGMENT_MODEL_VERSION;
   for (const space of Array.isArray(config?.spaces) ? config.spaces : []) {
     const hints = options.lineageSpaceId === String(space?.id || '')
       ? options.lineageHints : undefined;
-    migratedSegments += migrateSpace(space, initialMigration, hints);
+    const migrated = migrateSpace(space, initialMigration, hints);
+    migratedSegments += migrated.wallSegments;
+    migratedDrafts += migrated.drafts;
+    migratedDraftSegments += migrated.draftSegments;
   }
   config.model_version = WALL_SEGMENT_MODEL_VERSION;
   canonicalizeConfigGeometryInPlace(config);
-  return { config, changed: before !== JSON.stringify(config), migratedSegments };
+  return {
+    config, changed: before !== JSON.stringify(config), migratedSegments,
+    migratedDrafts, migratedDraftSegments,
+  };
 }
 
 const isRecord = (value: unknown): value is Record<string, any> => (

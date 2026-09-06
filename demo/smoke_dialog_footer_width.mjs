@@ -135,10 +135,6 @@ const narrow = await page.evaluate(async () => {
       card._physicalDialog = {
         kind: 'partition', id: 'partition-1', cm: '12', length: '1 m',
       };
-    } else if (kind === 'draft') {
-      card._physicalDialog = {
-        kind: 'draft', id: 'draft-1', segment: 0, cm: '12', length: '1 m',
-      };
     } else {
       card._openSpaceDialog('edit', 'dialog-layout');
     }
@@ -186,7 +182,6 @@ const narrow = await page.evaluate(async () => {
   return {
     opening: await measure('opening'),
     physical: await measure('physical'),
-    draft: await measure('draft'),
     space: await measure('space'),
     opening_de: await measure('opening', 'de'),
     physical_de: await measure('physical', 'de'),
@@ -214,9 +209,6 @@ for (const kind of ['opening', 'physical', 'opening_de', 'physical_de']) {
     && metric.insideViewport && metric.noHorizontalOverflow && metric.buttonsContained;
   checks[`${kind}_narrow_keeps_responsive_wrap`] = metric.buttons === 3 && metric.wrapped;
 }
-checks.draft_four_actions_remain_contained = narrow.draft.buttons === 4
-  && narrow.draft.insideViewport && narrow.draft.noHorizontalOverflow
-  && narrow.draft.buttonsContained;
 checks.space_narrow_not_regressed = narrow.space.buttons === 4
   && narrow.space.insideViewport && narrow.space.noHorizontalOverflow
   && narrow.space.buttonsContained;

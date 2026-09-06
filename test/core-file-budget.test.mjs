@@ -20,7 +20,8 @@ const SLACK = 250;
 // потолок, который вычисляется от текущего размера, потолком не является.
 const CAPS = {
   'src/houseplan-card.ts': 13659,
-  'src/houseplan-editor-runtime.ts': 14323,
+  // #478 removed the persisted room-draft editor branch. Keep that reduction.
+  'src/houseplan-editor-runtime.ts': 14000,
 };
 
 /**

@@ -53,16 +53,16 @@ if (isometric && !sourceSha)
   throw new Error(`${profile} requires an exact git source SHA`);
 if (planSnap) {
   for (const [floor, space] of fixture.config.spaces.entries()) {
-    space.room_drafts = [0, 1].map((draft) => {
-      const y = 0.985 + draft * 0.025;
-      return {
-        id: `perf-draft-${floor}-${draft}`,
-        points: [[0.10, y], [0.38, y], [0.46, y + 0.035]],
-        segments: [{ cm: 15 }, { cm: 20 }],
-      };
-    });
+    space.partitions ||= [];
+    for (const chain of [0, 1]) {
+      const y = 0.985 + chain * 0.025;
+      space.partitions.push(
+        { id: `perf-chain-${floor}-${chain}-0`, a: [0.10, y], b: [0.38, y], cm: 15 },
+        { id: `perf-chain-${floor}-${chain}-1`, a: [0.38, y], b: [0.46, y + 0.035], cm: 20 },
+      );
+    }
   }
-  fixture.counts = { ...fixture.counts, drafts: 6, pointerMoves: 120 };
+  fixture.counts = { ...fixture.counts, chainSegments: 12, pointerMoves: 120 };
 }
 const viewport = { width: 1440, height: 1000 };
 
@@ -979,12 +979,14 @@ try {
         )) throw new Error(`plan-snap structural contract failed: ${JSON.stringify(planSnapDiagnostics)}`);
         if (requiresWallFace) {
           const oldPath = card._path;
-          const oldDraftId = card._activeDraftId;
-          const oldCms = card._draftSegmentCms;
+          const oldChainId = card._activeWallChainId;
+          const oldPartitionIds = card._activeWallChainPartitionIds;
+          const oldCms = card._wallChainSegmentCms;
           const beforePath = [[10, 10]];
           card._path = [[10, 10], [20, 10]];
-          card._activeDraftId = 'perf-face-draft';
-          card._draftSegmentCms = [15];
+          card._activeWallChainId = 'perf-face-chain';
+          card._activeWallChainPartitionIds = ['perf-face-segment'];
+          card._wallChainSegmentCms = [15];
           const acceptedStarted = performance.now();
           card._offerWallFaces(beforePath);
           planSnapDiagnostics.wallFaceAcceptedClickMs = performance.now() - acceptedStarted;
@@ -992,8 +994,9 @@ try {
           card._wallFaceBatch = null;
           card._roomDialog = false;
           card._path = oldPath;
-          card._activeDraftId = oldDraftId;
-          card._draftSegmentCms = oldCms;
+          card._activeWallChainId = oldChainId;
+          card._activeWallChainPartitionIds = oldPartitionIds;
+          card._wallChainSegmentCms = oldCms;
           if (planSnapDiagnostics.wallFaceAcceptedClickMs > 1000
               || planSnapDiagnostics.wallFaceCacheEntries < 1
               || planSnapDiagnostics.wallFaceCacheEntries > 4) {

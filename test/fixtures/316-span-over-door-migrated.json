@@ -87,7 +87,7 @@
     "settings": {}
   },
   "migrated": {
-    "model_version": 9,
+    "model_version": 10,
     "spaces": [
       {
         "id": "golden-span-over-door",

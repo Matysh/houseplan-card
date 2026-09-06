@@ -97,7 +97,7 @@ def cm_to_units(cm: float, cell_cm: float, grid_pitch: float = GRID_STEP_N) -> f
 
 
 def limit_segments(space: dict[str, Any]) -> list[dict[str, Any]]:
-    """Every wall the limits judge: contour atoms, partitions, draft segments."""
+    """Every current wall the limits judge: contour atoms and partitions."""
     segments: list[dict[str, Any]] = []
     for segment in space.get("wall_segments") or []:
         if _finite_point(segment.get("a")) and _finite_point(segment.get("b")):
@@ -112,19 +112,6 @@ def limit_segments(space: dict[str, Any]) -> list[dict[str, Any]]:
                 "id": str(partition.get("id") or ""),
                 "a": partition["a"], "b": partition["b"],
                 "cm": float(partition.get("cm") or 0),
-            })
-    for draft in space.get("room_drafts") or []:
-        points = draft.get("points") or []
-        drafted = draft.get("segments") or []
-        for index in range(max(len(points) - 1, 0)):
-            if not (_finite_point(points[index]) and _finite_point(points[index + 1])):
-                continue
-            piece = drafted[index] if index < len(drafted) else {}
-            segments.append({
-                "id": str((piece or {}).get("id")
-                          or f"{draft.get('id') or 'draft'}-{index}"),
-                "a": points[index], "b": points[index + 1],
-                "cm": float((piece or {}).get("cm") or 0),
             })
     return [segment for segment in segments
             if _length(segment["a"], segment["b"]) > _EPS]

@@ -23,15 +23,15 @@ fixture.space.room_drafts = [{
 
 const configOf = (space) => ({ model_version: 7, spaces: [space], markers: [], settings: {} });
 
-test('issue 296 real second floor removes all three hidden blockers in one Optimize', () => {
+test('#478 real second floor migrates legacy work and reconciles ordinary walls in one Optimize', () => {
   const input = configOf(clone(fixture.space));
   const before = clone(input);
   const result = optimizePlans(input, {});
   assert.deepEqual(input, before, 'preview must stay immutable');
   assert.equal(result.changed, true);
   assert.ok(result.report.partitionsReconciled >= 2);
-  assert.equal(result.report.removedDrafts, 0);
-  assert.equal(result.report.redundantDraftsRemoved, 1);
+  assert.equal(result.report.roomDraftsMigrated, 1);
+  assert.equal(result.report.roomDraftSegmentsMigrated, 1);
   const space = result.config.spaces[0];
   assert.equal(space.partitions, undefined);
   assert.equal(space.room_drafts, undefined);
@@ -48,8 +48,8 @@ test('issue 296 real second floor removes all three hidden blockers in one Optim
   const second = optimizePlans(result.config, result.layout);
   assert.equal(second.changed, false);
   assert.equal(second.report.partitionsReconciled, 0);
-  assert.equal(second.report.removedDrafts, 0);
-  assert.equal(second.report.redundantDraftsRemoved, 0);
+  assert.equal(second.report.roomDraftsMigrated, 0);
+  assert.equal(second.report.roomDraftSegmentsMigrated, 0);
   assert.deepEqual(second.config, result.config);
 });
 
@@ -78,7 +78,7 @@ test('issue 296 reconciles the covered middle and keeps deterministic disjoint r
   assert.deepEqual(second.config.spaces[0].partitions.map((partition) => partition.id), ids);
 });
 
-test('issue 296 draft cleanup is all-or-nothing and preserves legal unfinished work', () => {
+test('#478 legacy unfinished work is preserved losslessly as ordinary partitions', () => {
   const space = {
     id: 'drafts', title: 'Drafts', view_box: [-0.2, -0.2, 1.4, 1.4], cell_cm: 5,
     rooms: [{
@@ -96,20 +96,15 @@ test('issue 296 draft cleanup is all-or-nothing and preserves legal unfinished w
     ],
   };
   const result = optimizePlans(configOf(space), {});
-  assert.equal(result.report.removedDrafts, 0);
-  assert.equal(result.report.redundantDraftsRemoved, 1);
-  assert.deepEqual(result.config.spaces[0].room_drafts.map((draft) => draft.id), [
-    'free', 'partial', 'thicker',
-  ]);
-  assert.deepEqual(
-    result.config.spaces[0].room_drafts.map((draft) => ({
-      ...draft, segments: draft.segments.map(({ id: _id, ...segment }) => segment),
-    })),
-    space.room_drafts.filter((draft) => draft.id !== 'hidden'),
-  );
-  assert.ok(result.config.spaces[0].room_drafts.every((draft) => (
-    draft.segments.every((segment) => typeof segment.id === 'string' && segment.id.startsWith('wall-'))
-  )));
+  assert.equal(result.report.roomDraftsMigrated, 4);
+  assert.equal(result.report.roomDraftSegmentsMigrated, 4);
+  assert.equal(result.config.spaces[0].room_drafts, undefined);
+  assert.deepEqual(result.config.spaces[0].partitions.map((partition) => [
+    partition.a, partition.b, partition.cm,
+  ]), space.room_drafts.filter((draft) => draft.id !== 'thicker').map((draft) => [
+    draft.points[0], draft.points[1], draft.segments[0].cm,
+  ]));
+  assert.ok(result.config.spaces[0].partitions.every((partition) => partition.id.startsWith('wall-')));
 });
 
 test('issue 296 an opening across a structural breakpoint keeps the source partition intact', () => {
@@ -184,7 +179,7 @@ test('issue 296 computes max thickness independently for disjoint safe pieces', 
   assert.equal(bottom.find((item) => Math.min(item.a[0], item.b[0]) === 2)?.cm, 25);
 });
 
-test('issue 296 applies column and unfinished-draft blockers to each piece and preserves work', () => {
+test('#478 applies column blockers and treats migrated legacy work as ordinary walls', () => {
   const base = {
     id: 'piece-blockers', title: 'Piece blockers', view_box: [-0.2, -0.2, 3.4, 1.4], cell_cm: 5,
     rooms: [
@@ -207,14 +202,15 @@ test('issue 296 applies column and unfinished-draft blockers to each piece and p
     id: 'unfinished', points: [[0, 0], [0.5, 0]], segments: [{ cm: 30 }],
   }];
   const draftResult = optimizePlans(configOf(draftSpace), {});
+  assert.equal(draftResult.report.roomDraftsMigrated, 1);
   assert.equal(draftResult.report.partitionsReconciled, 0);
-  assert.equal(draftResult.report.redundantDraftsRemoved, 0);
-  assert.deepEqual(
-    draftResult.config.spaces[0].room_drafts.map((draft) => ({
-      ...draft, segments: draft.segments.map(({ id: _id, ...segment }) => segment),
-    })),
-    draftSpace.room_drafts,
-  );
+  assert.equal(draftResult.config.spaces[0].room_drafts, undefined);
+  assert.deepEqual(draftResult.config.spaces[0].partitions.map((partition) => [
+    partition.a, partition.b, partition.cm,
+  ]), [
+    [[0, 0], [1, 0], 15],
+    [[0, 0], [0.5, 0], 30],
+  ]);
 });
 
 test('issue 296 fails closed at MAX_PARTITIONS and MAX_WALLS', () => {

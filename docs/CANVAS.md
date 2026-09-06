@@ -230,7 +230,7 @@ use the canonical content frame above. A static card may explicitly select
 `fit: house`. That second frame is structural and static-card-only:
 
 * every sane room and (when visible) complete door/window/gate symbol
-  envelope participates; positive/zero walls, independent walls, drafts and
+  envelope participates; positive/zero walls, independent walls and
   columns participate only while `show_borders` renders them (#384 — hidden
   architecture must not widen the tight frame, mirroring the `hide_openings`
   guard for symbols);
@@ -636,7 +636,7 @@ crash-recovery checks and is not a security attestation from an untrusted
 client.
 
 The same projection has a one-space transaction entry point for ordinary
-physical edits (#278). Room/wall/open-span/opening/partition/draft/column
+physical edits (#278). Room/wall/open-span/opening/partition/column
 candidates are validated before entering Undo or the save queue. A physical
 fingerprint is rechecked immediately before the deferred config write; failure
 restores the saved geometry and produces no WebSocket call. Presentation-only
@@ -716,7 +716,7 @@ undo because a grid projection is not invertible.
 
 ## Independent wall geometry
 
-`room_drafts[].points`, `partitions[].a/b` and `wall_columns[].center` use the
+`partitions[].a/b` and `wall_columns[].center` use the
 same normalized-X coordinate convention as `room.poly`; both axes are divided
 by `NORM_W`. Every interactive write passes through the global grid snap and
 the ±`CANVAS_LIMIT` guard. Rigid partition drag clamps one shared delta against
@@ -727,8 +727,8 @@ pixels, therefore selection remains usable at every zoom.
 ## Architectural connection overlay
 
 When **Walls** is active in the Plan editor, a derived
-pointer-transparent SVG layer exposes the centre axes of completed room walls,
-saved inactive outlines and independent partitions. It is painted after their
+pointer-transparent SVG layer exposes the centre axes of completed room walls
+and independent partitions. It is painted after their
 physical wall bodies, but before interactive editor chrome. Columns, decor,
 devices, the active wall chain and its live preview are not candidates. Door,
 window, gate and intentionally open-span intervals are cut from presentation
@@ -751,7 +751,7 @@ is cached by structural editor state; pointer movement changes at most the
 single active candidate and never writes config, layout or storage.
 
 A separate diagnostic projection is present throughout the Plan editor (#296),
-including tools other than **Walls**. For every saved draft or independent wall
+including tools other than **Walls**. For every independent wall
 segment with a positive exact collinear overlap against another wall, it keeps
 that source segment's complete axis and original endpoints visible. It is
 painted after every wall body and zero-thickness axis and before openings, selection
@@ -763,10 +763,11 @@ diagnose an otherwise invisible Resize blocker without changing any hit target.
 
 ## Planar wall faces
 
-Every completed Walls segment is first persisted in the active `room_drafts`
-chain. On the click path only, an immutable planar graph is built from structural
-room edges, independent partitions, inactive drafts and the active chain both
-before and after the latest segment. Unlike the presentation/snap snapshot, this
+Every completed Walls segment is persisted immediately as an ordinary
+`partition`; only its ordered chain membership remains in memory. On the click
+path only, an immutable planar graph is built from structural room edges and
+partitions both before and after the latest segment. Unlike the
+presentation/snap snapshot, this
 face graph ignores door/window/gate/passage cuts; zero-thickness wall axes remain
 structural graph edges even though they have no masonry body.
 Endpoint, T, X and
@@ -782,9 +783,10 @@ window, gate or passage is a property of a wall and preserves connectivity. A cl
 one room reuses the Split contract: the larger side keeps the room identity,
 metadata and device binding, and only the smaller side is offered.
 
-The active draft remains persisted while the resulting room dialogs are open.
-Create/Keep-as-walls answers are buffered; Cancel/Esc discards all answers and
-restores the terminal draft. The final answer revalidates the whole batch and
-applies accepted rooms plus every unconsumed active atom as one history/config
-transaction. Graph construction never runs on pointermove, Home Assistant state
-updates or ordinary rendering.
+The terminal active path remains session-local while the resulting room dialogs
+are open. Create/Keep-as-walls answers are buffered; Cancel/Esc discards all
+answers and leaves the already persisted partitions unchanged. The final answer
+revalidates the whole batch and applies accepted rooms while consuming only the
+coincident partitions used by those rooms in one history/config transaction.
+Graph construction never runs on pointermove, Home Assistant state updates or
+ordinary rendering.

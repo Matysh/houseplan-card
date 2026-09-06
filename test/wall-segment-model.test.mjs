@@ -9,7 +9,6 @@ import {
   deterministicWallSegmentId,
   fixedTopologyWallLineageHints,
   resolveRoomOpeningHost,
-  sanitizeRoomDraftPath,
   wallModelOffGridValueCount,
   WallSegmentModelError,
   WALL_SEGMENT_MODEL_VERSION,
@@ -52,9 +51,50 @@ test('frontend migration matches the shared backend parity fixture', () => {
   assert.deepEqual(space.rooms[0].wall_ids, fixture.expected.large_wall_ids);
   assert.deepEqual(space.rooms[1].wall_ids, fixture.expected.small_wall_ids);
   assert.deepEqual(space.openings[0].host, fixture.expected.opening_host);
+  assert.deepEqual(space.partitions.map((segment) => segment.id), fixture.expected.draft_ids);
+  assert.equal('room_drafts' in space, false);
+});
+
+test('#478: v9 persisted drafts migrate one-for-one to ordinary partitions', () => {
+  const input = {
+    model_version: 9, markers: [], settings: {}, spaces: [{
+      id: 'floor', title: 'Floor', rooms: [], wall_segments: [],
+      room_drafts: [{
+        id: 'draft-a', points: [[0, 0], [0.25, 0], [0.25, 0.5]],
+        segments: [{ id: 'draft-wall-a', cm: 0 }, { cm: 22 }],
+      }],
+      partitions: [{ id: 'partition-old', a: [1, 0], b: [1, 1], cm: 15 }],
+    }],
+  };
+  const first = commitWallSegmentModel(input);
+  const space = first.config.spaces[0];
+  assert.equal(first.config.model_version, 10);
+  assert.equal(first.migratedDrafts, 1);
+  assert.equal(first.migratedDraftSegments, 2);
+  assert.equal('room_drafts' in space, false);
+  assert.deepEqual(space.partitions[0], input.spaces[0].partitions[0]);
+  assert.deepEqual(space.partitions[1], {
+    id: 'draft-wall-a', a: [0, 0], b: [0.25, 0], cm: 0,
+  });
+  assert.match(space.partitions[2].id, /^wall-/);
   assert.deepEqual(
-    space.room_drafts[0].segments.map((segment) => segment.id), fixture.expected.draft_ids,
+    { a: space.partitions[2].a, b: space.partitions[2].b, cm: space.partitions[2].cm },
+    { a: [0.25, 0], b: [0.25, 0.5], cm: 22 },
   );
+  const second = commitWallSegmentModel(first.config);
+  assert.equal(second.changed, false);
+  assert.equal(second.migratedDrafts, 0);
+  assert.equal(second.migratedDraftSegments, 0);
+  assert.deepEqual(second.config, first.config);
+});
+
+test('#478: current model rejects reintroduced room_drafts', () => {
+  assert.throws(() => commitWallSegmentModel({
+    model_version: 10, markers: [], settings: {}, spaces: [{
+      id: 'floor', title: 'Floor', rooms: [], wall_segments: [], room_drafts: [],
+    }],
+  }), (error) => error instanceof WallSegmentModelError
+    && error.message.includes('model v10 must not contain room_drafts'));
 });
 
 test('wall ids use the specified SHA-256/base32 seed and ignore endpoint order', () => {
@@ -280,36 +320,6 @@ test('a corner opening on bodyless walls migrates unhosted instead of blocking (
   assert.equal('host' in out.spaces[0].openings[0], false);
   const again = commitWallSegmentModel(structuredClone(out)).config;
   assert.equal(JSON.stringify(again), JSON.stringify(out), 'the outcome is stable');
-});
-
-test('draft segment ids materialise once and remain stable', () => {
-  const first = commitWallSegmentModel(configOf({
-    id: 'floor', title: 'Floor', rooms: [],
-    room_drafts: [{
-      id: 'draft', points: [[0, 0], [0.5, 0], [1, 0]],
-      segments: [{ cm: 10 }, { cm: 20 }],
-    }],
-  })).config;
-  const ids = first.spaces[0].room_drafts[0].segments.map((segment) => segment.id);
-  assert.ok(ids.every(Boolean));
-  assert.deepEqual(
-    commitWallSegmentModel(first).config.spaces[0].room_drafts[0].segments.map((segment) => segment.id),
-    ids,
-  );
-});
-
-test('draft sanitation drops only the segment carried by a duplicate point', () => {
-  const draft = sanitizeRoomDraftPath({
-    points: [[0, 0], [0, 0], [1, 0], [1, 0], [1, 1]],
-    segments: [
-      { id: 'zero-a', cm: 11 }, { id: 'edge-a', cm: 21 },
-      { id: 'zero-b', cm: 12 }, { id: 'edge-b', cm: 22 },
-    ],
-  });
-  assert.deepEqual(draft.points, [[0, 0], [1, 0], [1, 1]]);
-  assert.deepEqual(draft.segments, [
-    { id: 'edge-a', cm: 21 }, { id: 'edge-b', cm: 22 },
-  ]);
 });
 
 test('post-v8 atoms use fresh identity while promoted draft carriers keep theirs', () => {

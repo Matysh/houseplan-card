@@ -18,8 +18,8 @@ const result = await page.evaluate(async () => {
       bubbles: true,
     }));
   };
-  const savedDrafts = () => card._curSpaceCfg.room_drafts.filter(
-    (item) => item.id.startsWith('saved-draft-'),
+  const savedPartitions = () => card._curSpaceCfg.partitions.filter(
+    (item) => item.id.startsWith('saved-partition-'),
   ).length;
 
   click(152, 144);
@@ -27,31 +27,31 @@ const result = await page.evaluate(async () => {
   click(154, 144); // 10 cm: rejected by the existing 20 cm junction rule.
   const rejected = {
     restored: JSON.stringify(card._serverCfg) === beforeReject,
-    noGesture: card._path.length === 0 && !card._activeDraftId,
+    sessionRestored: card._path.length === 1 && !!card._activeWallChainId
+      && card._activeWallChainPartitionIds.length === 0,
     noHistory: card._geometryHistory.size === 0,
     noWrite: window.__wallDrawMetrics.configWrites === 0,
-    existingDraftsIntact: savedDrafts() === 4,
+    existingPartitionsIntact: savedPartitions() === 8,
     namesRule: String(card._toast).includes('20'),
   };
 
   click(152, 144); click(176, 144); click(176, 168);
-  const active = card._activeDraftId;
-  const complete = card._curSpaceCfg.room_drafts.find((item) => item.id === active);
-  const completeIds = complete.segments.map((item) => item.id);
-  card._undoGeometry(); await card.updateComplete;
-  const undone = card._curSpaceCfg.room_drafts.find((item) => item.id === active);
+  const completeIds = [...card._activeWallChainPartitionIds];
+  card._undoPoint(); await card.updateComplete;
+  const undoneIds = [...card._activeWallChainPartitionIds];
+  const undonePathLength = card._path.length;
   card._redoGeometry(); await card.updateComplete;
-  const redone = card._curSpaceCfg.room_drafts.find((item) => item.id === active);
+  const redoneIds = [...card._activeWallChainPartitionIds];
   return {
     rejectedStateRestored: rejected.restored,
-    rejectedGestureCleared: rejected.noGesture,
+    rejectedSessionRestored: rejected.sessionRestored,
     rejectedAddsNoHistory: rejected.noHistory,
     rejectedQueuesNoWrite: rejected.noWrite,
-    rejectedPreservesOldDrafts: rejected.existingDraftsIntact,
+    rejectedPreservesOldPartitions: rejected.existingPartitionsIntact,
     rejectedToastNamesRule: rejected.namesRule,
-    undoRemovesOnlyLastPoint: undone?.points?.length === 2 && undone?.segments?.length === 1,
-    redoRestoresStableIds: JSON.stringify(redone?.segments?.map((item) => item.id))
-      === JSON.stringify(completeIds),
+    undoRemovesOnlyLastPoint: undoneIds.length === completeIds.length - 1
+      && undonePathLength === undoneIds.length + 1,
+    redoRestoresStableIds: JSON.stringify(redoneIds) === JSON.stringify(completeIds),
   };
 });
 

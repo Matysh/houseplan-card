@@ -171,14 +171,6 @@ export function spaceModels(cfg: ServerConfig | null): SpaceModel[] {
         b: [Number(wall.b?.[0]) * NORM_W, Number(wall.b?.[1]) * H],
         cm: Number(wall.cm),
       })),
-      room_drafts: (s.room_drafts || []).map((d: any) => ({
-        id: d.id,
-        points: (d.points || []).map((p: number[]) => [p[0] * NORM_W, p[1] * H]),
-        segments: (d.segments || []).map((sg: any) => ({
-          ...(typeof sg.id === 'string' && sg.id ? { id: sg.id } : {}),
-          cm: Number(sg.cm),
-        })),
-      })),
       partitions: (s.partitions || []).map((p: any) => ({
         id: p.id,
         a: [p.a[0] * NORM_W, p.a[1] * H],

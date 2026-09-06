@@ -243,8 +243,8 @@ test('wall junction goldens cover live L/T previews plus saved flat and isometri
   for (const scenario of scenarios) {
     const fixture = prepareGoldenFixture(scenario);
     const space = fixture.config.spaces.find((item) => item.id === scenario.space);
-    assert.equal(space.partitions.length, 7);
-    assert.equal(space.room_drafts[0].segments.length, 2);
+    assert.equal(space.partitions.length, 9);
+    assert.equal('room_drafts' in space, false);
     assert.ok(space.partitions.some((item) => item.b[1] === 0.94), 'room-wall T fixture');
   }
 });
@@ -314,16 +314,17 @@ test('issue 276 golden captures 5 cm offsets and hosted door before/after 10/30/
   }
 });
 
-test('issue 296 golden shows hidden partition and saved-chain diagnostics in both themes', () => {
+test('issue 296 golden shows hidden independent-wall diagnostics in both themes', () => {
   const scenarios = GOLDEN_SCENARIOS.filter((scenario) => scenario.hiddenWallDiagnostics);
   assert.deepEqual(scenarios.map((scenario) => scenario.theme).sort(), ['dark', 'light']);
   for (const scenario of scenarios) {
     assert.equal(scenario.mode, 'plan');
     const fixture = prepareGoldenFixture(scenario);
     const space = fixture.config.spaces.find((item) => item.id === scenario.space);
-    assert.equal(space.partitions.length, 1);
-    assert.equal(space.room_drafts.length, 1);
-    assert.deepEqual(space.room_drafts[0].points, [[0, 0], [0, 1]]);
+    assert.equal(space.partitions.length, 2);
+    assert.equal('room_drafts' in space, false);
+    assert.ok(space.partitions.some((item) => item.id === 'hidden-saved-chain-edge'
+      && item.a[0] === 0 && item.a[1] === 0 && item.b[0] === 0 && item.b[1] === 1));
   }
 });
 

@@ -55,12 +55,11 @@ test('issue 229 a room side keeps the node, corner or not', () => {
   assert.equal(withRoom.merged, 0, 'the joint sits on a room side, not on a corner');
 });
 
-test('issue 229 a column or a draft end keeps the node', () => {
+test('issue 229 a column keeps the node', () => {
   const chain = [seg('a', 0, 0, 100, 0), seg('b', 100, 0, 200, 0)];
   assert.equal(merge(chain, {
     geometry: { columns: [{ id: 'c', shape: 'circle', center: [100, 0], cm: 30 }] },
   }).merged, 0);
-  assert.equal(merge(chain, { geometry: { draftEnds: [[100, 0]] } }).merged, 0);
 });
 
 // --- AC4: разная толщина ------------------------------------------------------
@@ -229,26 +228,6 @@ test('issue 229 space geometry keeps rooms in the coordinates partitions use', (
   assert.deepEqual(geometry.roomPolygons[1][0], [0.6, 0.1], 'x/y/w/h rooms come through too');
   assert.equal(geometry.roomPolygons.length, 2, 'a room without geometry is skipped');
   assert.deepEqual(geometry.columns, space.wall_columns);
-});
-
-test('issue 229 the chain being finished is not its own junction', () => {
-  const space = {
-    rooms: [],
-    room_drafts: [
-      { id: 'active', points: [[0.1, 0.1], [0.3, 0.1]] },
-      { id: 'other', points: [[0.6, 0.6], [0.8, 0.6]] },
-    ],
-  };
-  assert.deepEqual(
-    spaceMergeGeometry(space).draftEnds,
-    [[0.1, 0.1], [0.3, 0.1], [0.6, 0.6], [0.8, 0.6]],
-    'without an active chain every draft anchors a node',
-  );
-  assert.deepEqual(
-    spaceMergeGeometry(space, { excludeDraftId: 'active' }).draftEnds,
-    [[0.6, 0.6], [0.8, 0.6]],
-    'the chain about to disappear does not hold a node',
-  );
 });
 
 test('issue 229 a junction on a room side survives, through the shared geometry', () => {

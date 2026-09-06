@@ -12,8 +12,8 @@ export async function installWallDrawClickHarness(page) {
       };
       card._editorRuntime._commitPhysicalGeometry = (name, before, ...rest) => {
         const metrics = window.__wallDrawMetrics;
-        if (metrics && name === card._t('history.draft_segment')) {
-          metrics.draftGenericFallbacks += 1;
+        if (metrics && name === card._t('history.wall_segment')) {
+          metrics.wallGenericFallbacks += 1;
           if (!metrics.fallbackSample) {
             const space = card._serverCfg?.spaces?.find((item) => item.id === before?.spaceId);
             const stable = (value) => JSON.stringify(value ?? null);
@@ -23,9 +23,10 @@ export async function installWallDrawClickHarness(page) {
             ];
             metrics.fallbackSample = JSON.parse(JSON.stringify({
               modelVersion: card._serverCfg?.model_version,
-              draftId: card._activeDraftId,
-              beforeDrafts: before?.room_drafts,
-              afterDrafts: space?.room_drafts,
+              chainId: card._activeWallChainId,
+              activePartitionIds: card._activeWallChainPartitionIds,
+              beforePartitions: before?.partitions,
+              afterPartitions: space?.partitions,
               beforeTransform: before?.plan_transform,
               afterTransform: Object.fromEntries([
                 'plan_x', 'plan_y', 'plan_scale', 'plan_scale_x', 'plan_scale_y', 'plan_angle',
@@ -44,7 +45,7 @@ export async function installWallDrawClickHarness(page) {
           metrics[local ? 'localPhysicalChecks' : 'fullSpacePhysicalChecks'] += 1;
           if (local) {
             const space = config.spaces[0] || {};
-            const count = ['wall_segments', 'partitions', 'room_drafts', 'wall_columns']
+            const count = ['wall_segments', 'partitions', 'wall_columns']
               .reduce((sum, key) => sum + (space[key]?.length || 0), space.rooms?.length || 0);
             metrics.localProofMaxObjects = Math.max(metrics.localProofMaxObjects, count);
           }
@@ -79,20 +80,23 @@ export async function resetWallDrawClickHarness(page, remoteVariant = false) {
     card._cfgEpoch += 1; card._modelCache = null; card._wallUnionCache = null;
     card._physicalBodiesCache = null; card._frame = null;
     card._pendingPhysicalWrites.clear(); card._geometryHistory.clear();
-    card._activeDraftId = null; card._path = []; card._draftSegmentCms = [];
+    card._activeWallChainId = null; card._activeWallChainPartitionIds = [];
+    card._path = []; card._wallChainSegmentCms = []; card._wallChainRedo = [];
     card._toast = ''; card._mode = 'plan'; card._tool = 'draw'; card._drawWallField = '15';
     window.__wallDrawMetrics = {
       fullSpacePhysicalChecks: 0, localPhysicalChecks: 0,
       junctionPasses: 0, junctionArtifactPasses: 0,
       configWrites: 0, localProofMaxObjects: 0,
-      draftGenericFallbacks: 0, fallbackSample: null,
+      wallGenericFallbacks: 0, fallbackSample: null,
     };
     card.requestUpdate(); await card.updateComplete;
     return {
       spaces: card._serverCfg.spaces.length,
       rooms: card._curSpaceCfg.rooms.length,
       positiveSegments: card._curSpaceCfg.wall_segments.filter((item) => item.cm > 0).length,
-      savedDrafts: card._curSpaceCfg.room_drafts.length,
+      savedPartitions: card._curSpaceCfg.partitions.filter(
+        (item) => item.id.startsWith('saved-partition-'),
+      ).length,
     };
   }, fixture);
 }
@@ -131,9 +135,7 @@ export async function runWallDrawClickChain(page) {
       times.push(performance.now() - started);
       clicks.push(delta(snapshots(), before));
     }
-    const active = card._curSpaceCfg.room_drafts
-      .find((item) => item.id === card._activeDraftId);
-    const ids = active?.segments?.map((segment) => segment.id) || [];
+    const ids = [...card._activeWallChainPartitionIds];
     const terminalBefore = snapshots();
     card._activateMarkupTool('select');
     const terminal = delta(snapshots(), terminalBefore);
@@ -142,7 +144,8 @@ export async function runWallDrawClickChain(page) {
       first, clicks, times, ids,
       terminal,
       terminalPartitionCount: card._curSpaceCfg.partitions?.length || 0,
-      activeCleared: !card._activeDraftId && card._path.length === 0,
+      activeCleared: !card._activeWallChainId
+        && card._activeWallChainPartitionIds.length === 0 && card._path.length === 0,
       metrics: { ...metrics },
     };
   }, WALL_DRAW_CLICK_POINTS);

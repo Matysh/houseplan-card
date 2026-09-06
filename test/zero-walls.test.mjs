@@ -15,19 +15,15 @@ const model = {
     { id: 'positive', a: [0, 0], b: [500, 0], cm: 15 },
   ],
   partitions: [{ id: 'free-zero', a: [100, 200], b: [400, 200], cm: 0 }],
-  room_drafts: [{
-    id: 'draft', points: [[100, 300], [400, 300]],
-    segments: [{ id: 'draft-zero', cm: 0 }],
-  }],
 };
 
-test('missing/unknown style is dashed and every cm:0 source shares the policy', () => {
+test('missing/unknown style is dashed and every current cm:0 source shares the policy', () => {
   assert.equal(zeroWallStyleOf({}), 'dashed');
   assert.equal(zeroWallStyleOf({ zero_wall_style: 'future' }), 'dashed');
   const result = resolveZeroWalls({}, model, 1000, 0.1);
   assert.equal(result.style, 'dashed');
   assert.equal(result.contour.length, 1);
-  assert.equal(result.lines.length, 3);
+  assert.equal(result.lines.length, 2);
   assert.equal(result.barriers.length, 0);
   assert.deepEqual(result.transmissive, result.contour);
 });

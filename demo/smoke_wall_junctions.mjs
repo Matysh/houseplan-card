@@ -23,6 +23,7 @@ const out = await page.evaluate(async () => {
   });
   const a = [0.05, 0.05], tr = [0.95, 0.05], br = [0.95, 0.95], bl = [0.05, 0.95];
   const cfg = {
+    model_version: 10,
     spaces: [{
       id: 'junctions', title: 'Junctions', cell_cm: 5, view_box: [0, 0, 1, 1],
       rooms: [{ id: 'room', name: 'Room', area: null, poly: [a, tr, br, bl] }],
@@ -35,11 +36,9 @@ const out = await page.evaluate(async () => {
         { id: 't-through', a: [0.18, 0.70], b: [0.78, 0.70], cm: 24 },
         { id: 't-branch', a: [0.50, 0.54], b: [0.50, 0.70], cm: 16 },
         { id: 'room-branch', a: [0.30, 0.82], b: [0.30, 0.95], cm: 18 },
+        { id: 'saved-chain-0', a: [0.12, 0.56], b: [0.28, 0.56], cm: 12 },
+        { id: 'saved-chain-1', a: [0.28, 0.56], b: [0.28, 0.64], cm: 18 },
       ],
-      room_drafts: [{
-        id: 'saved-draft', points: [[0.12, 0.56], [0.28, 0.56], [0.28, 0.64]],
-        segments: [{ cm: 12 }, { cm: 18 }],
-      }],
       wall_columns: [],
     }],
     markers: [], settings: {},
@@ -58,8 +57,7 @@ const out = await page.evaluate(async () => {
   const frame = card._physicalBodiesCache;
   result.computedPatchesExist = frame?.patches.length >= 4 && bodies.length > raw.length;
   result.rawIdentityCountStaysPerSegment = raw.length === 9
-    && card._curSpaceCfg.partitions.length === 7
-    && card._curSpaceCfg.room_drafts[0].segments.length === 2;
+    && card._curSpaceCfg.partitions.length === 9;
 
   const wallBody = root().querySelector('.wallbody');
   const missingCorner = new DOMPoint(404, 298);
@@ -89,22 +87,23 @@ const out = await page.evaluate(async () => {
   result.lightUsesJoinedCorner = insideGeometry([404, 298], light.masonryGeometry);
 
   card._tool = 'draw';
-  card._activeDraftId = null;
+  card._activeWallChainId = null;
+  card._activeWallChainPartitionIds = [];
   card._path = [[120, 780], [380, 780]];
-  card._draftSegmentCms = [12];
+  card._wallChainSegmentCms = [12];
   card._drawWallField = '24';
   card._cursorPt = [380, 600];
   await update();
   const liveD = root().querySelector('.drawwall-preview')?.getAttribute('d') || '';
   card._path = [[120, 780], [380, 780], [380, 600]];
-  card._draftSegmentCms = [12, 24];
+  card._wallChainSegmentCms = [12, 24];
   card._cursorPt = null;
   await update();
   const committedPreviewD = root().querySelector('.drawwall-preview')?.getAttribute('d') || '';
   result.rubberBandAndCommittedPreviewMatch = !!liveD && committedPreviewD === liveD;
 
   card._path = [[500, 540]];
-  card._draftSegmentCms = [];
+  card._wallChainSegmentCms = [];
   card._drawWallField = '20';
   card._cursorPt = [500, 700];
   await update();

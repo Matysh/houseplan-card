@@ -407,11 +407,12 @@ but become unplaced. Plan images and attachments are not deleted automatically.
 ### Create a room
 
 Select **Walls** and draw one continuous chain. Every completed segment is
-crash-safe. Changing tool, editor or floor finishes an open chain as ordinary
-independent walls. When the latest segment creates bounded endpoint/T/X faces,
-House Plan offers them from smallest to largest. Save creates that room, Keep
-as walls rejects only that candidate, and Cancel restores the whole draft with
-no partial rooms.
+saved immediately as an ordinary independent wall. Changing tool, editor,
+floor, leaving the card or reloading only ends the session-local chain. When the
+latest segment creates bounded endpoint/T/X faces, House Plan offers them from
+smallest to largest. Save creates that room and consumes exactly coincident
+chain walls, Keep as walls rejects only that candidate, and Cancel leaves all
+accepted walls in place with no partial rooms.
 
 While drawing an open chain, `Esc` finishes all accepted segments as ordinary
 independent walls and keeps **Walls** selected; the next click starts a new
@@ -475,7 +476,7 @@ Resize also preserves every unrelated wall exactly: changing the length of a
 neighbouring wall cannot shift a thickness boundary to an invented off-grid
 point. An ambiguous candidate is rejected instead of damaging another wall.
 Partial shared walls, diagonal walls and walls overlapped by an independent
-partition/draft/column keep a dimmed handle with an explanatory tooltip and
+partition/column keep a dimmed handle with an explanatory tooltip and
 cannot start a drag. The former corner scale frame was removed. An ordinary
 opening on the moving wall follows it once; a side-wall opening stops the
 moving masonry at its physical jamb. Release creates one Undo step, while Esc
@@ -988,7 +989,7 @@ boundary is preserved. Ordinary opening, rendering, Save and editing never
 perform this cleanup without explicit Optimize confirmation.
 
 Before an editor stores a change to rooms, walls, boundaries, openings,
-partitions, drafts or columns, House Plan builds the exact candidate with the
+partitions or columns, House Plan builds the exact candidate with the
 same physical-geometry engine used for display. If the result is unsafe, the
 change is canceled before Undo history or server storage is touched and the
 card reports that the wall geometry could not be built safely. Titles, colours,
@@ -1000,14 +1001,13 @@ room-wall intervals form the cover. Free or ambiguous residual sections remain
 independent walls with stable identities. Doors, windows and gates stay in
 place: each is reattached to the room wall or to the retained residual that
 still hosts it. The resulting thickness is the wider original thickness, so
-visible masonry does not shrink. A saved unfinished wall chain is removed only
-when every one of its segments is fully redundant; a free, partly covered or
-thicker chain remains byte-for-byte unchanged. The report counts absorbed
-independent-wall sections and removed whole chains, not source records.
+visible masonry does not shrink. Each independently stored section is absorbed
+only when it is fully redundant; a free, partly covered or thicker partition
+remains unchanged. The report counts absorbed independent-wall sections.
 
-Every Plan editor tool draws room, independent-wall and saved-chain centre axes
-and endpoint nodes through the same layer above wall bodies. An independent
-wall or saved chain hidden under other masonry additionally retains its source
+Every Plan editor tool draws room and independent-wall centre axes and endpoint
+nodes through the same layer above wall bodies. An independent wall hidden
+under other masonry additionally retains its source
 diagnostic axis and nodes. These pointer-transparent layers do not change
 snapping or selection and are absent outside the Plan editor. The diagnostic
 disappears after Apply only when the corresponding independent geometry was

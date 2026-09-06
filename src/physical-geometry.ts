@@ -1,13 +1,11 @@
-/** Geometry shared by independent partitions, saved room drafts and columns. */
+/** Geometry shared by independent walls and columns. */
 import { difference, intersection, union } from 'polyclip-ts';
 import { polygonArea } from './logic';
 import {
   linearWallBody, linearWallJoinPatches, pairButtEndTrimWedges, wallCmToUnits,
   type LinearWallSegment,
 } from './wall-thickness';
-import type {
-  PartitionCfg, RoomDraftCfg, SpaceModel, WallColumnCfg,
-} from './types';
+import type { PartitionCfg, SpaceModel, WallColumnCfg } from './types';
 
 export const COLUMN_MIN_CM = 1;
 export const COLUMN_MAX_CM = 150;
@@ -104,23 +102,8 @@ export function columnBody(
     [cx + x * c - y * s, cy + x * s + y * c]);
 }
 
-export function draftBodies(
-  draft: RoomDraftCfg, cellCm: number, gridPitch: number,
-): number[][][] {
-  const out: number[][][] = [];
-  for (let i = 0; i + 1 < draft.points.length; i++) {
-    const rawCm = Number(draft.segments[i]?.cm);
-    const body = partitionBody(
-      draft.points[i], draft.points[i + 1], Number.isFinite(rawCm) ? rawCm : 15,
-      cellCm, gridPitch,
-    );
-    if (body) out.push(body);
-  }
-  return out;
-}
-
 export function physicalBodies(
-  space: Pick<SpaceModel, 'partitions' | 'room_drafts' | 'wall_columns'>,
+  space: Pick<SpaceModel, 'partitions' | 'wall_columns'>,
   cellCm: number,
   gridPitch: number,
 ): number[][][] {
@@ -128,7 +111,6 @@ export function physicalBodies(
 }
 
 export interface PhysicalBodyParts {
-  drafts: number[][][];
   partitions: number[][][];
   columns: number[][][];
   /** Bounded mitre/bevel volumes; never persisted or independently editable. */
@@ -237,13 +219,12 @@ function subtractWedgeFromBody(
 }
 
 export function physicalBodyParts(
-  space: Pick<SpaceModel, 'partitions' | 'room_drafts' | 'wall_columns'>,
+  space: Pick<SpaceModel, 'partitions' | 'wall_columns'>,
   cellCm: number,
   gridPitch: number,
   epsilon = Math.max(gridPitch * 0.0002, 1e-9),
   partitionCuts: readonly PartitionOpeningCut[] = [],
 ): PhysicalBodyParts {
-  const draftSegments: LinearWallSegment[] = [];
   const partitionSegments: LinearWallSegment[] = [];
   const cutsByPartition = new Map<string, PartitionOpeningCut[]>();
   for (const cut of partitionCuts) {
@@ -251,23 +232,8 @@ export function physicalBodyParts(
     list.push(cut);
     cutsByPartition.set(cut.hostId, list);
   }
-  const drafts: number[][][] = [];
   const partitions: number[][][] = [];
   const presentedPartitions: number[][][] = [];
-  for (const draft of space.room_drafts || []) {
-    for (let i = 0; i + 1 < draft.points.length; i++) {
-      const rawCm = Number(draft.segments[i]?.cm);
-      const halfDepth = wallCmToUnits(
-        Number.isFinite(rawCm) ? rawCm : 15, cellCm, gridPitch,
-      ) / 2;
-      if (!(halfDepth > 0)) continue;
-      const segment = { a: draft.points[i], b: draft.points[i + 1], halfDepth };
-      const body = linearWallBody(segment);
-      if (!body) continue;
-      draftSegments.push(segment);
-      drafts.push(body);
-    }
-  }
   const partitionMeta: { id: string; body: number[][] }[] = [];
   for (const partition of space.partitions || []) {
     const segment = {
@@ -285,17 +251,13 @@ export function physicalBodyParts(
   // #310: at a two-ray node the deeper wall's rectangular butt end may poke
   // past its thin partner's outer face; subtract the addressed wedge from the
   // owning body BEFORE opening cuts, so jambs inherit the clean silhouette.
-  const allSegments = [...draftSegments, ...partitionSegments];
+  const allSegments = partitionSegments;
   for (const { segmentIndex, wedge } of pairButtEndTrimWedges(allSegments, epsilon)) {
-    const target = segmentIndex < draftSegments.length
-      ? { list: drafts, at: segmentIndex }
-      : { list: partitions, at: segmentIndex - draftSegments.length };
+    const target = { list: partitions, at: segmentIndex };
     const trimmed = subtractWedgeFromBody(target.list[target.at], wedge);
     if (trimmed) {
       target.list[target.at] = trimmed;
-      if (segmentIndex >= draftSegments.length) {
-        partitionMeta[target.at].body = trimmed;
-      }
+      partitionMeta[target.at].body = trimmed;
     }
   }
   for (const meta of partitionMeta) {
@@ -310,15 +272,15 @@ export function physicalBodyParts(
   // correctly split. Other crossing walls remain opaque through their own raw
   // bodies; only the extra shared mitre/bevel volume is trimmed here.
   const patches = linearWallJoinPatches(
-    [...draftSegments, ...partitionSegments], epsilon,
+    partitionSegments, epsilon,
   ).flatMap((body) => cutPartitionBody(body, partitionCuts, epsilon));
-  const all = [...drafts, ...presentedPartitions, ...patches, ...columns];
-  return { drafts, partitions, columns, patches, all };
+  const all = [...presentedPartitions, ...patches, ...columns];
+  return { partitions, columns, patches, all };
 }
 
 /** Explicit union consumer retained for geometry queries and pure tests. */
 export function physicalBodySet(
-  space: Pick<SpaceModel, 'partitions' | 'room_drafts' | 'wall_columns'>,
+  space: Pick<SpaceModel, 'partitions' | 'wall_columns'>,
   cellCm: number,
   gridPitch: number,
   epsilon = Math.max(gridPitch * 0.0002, 1e-9),

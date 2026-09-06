@@ -53,7 +53,7 @@ the same pure function before conversion to percentages.
 
 - Source geometry is `wallBodiesGeometry(...).geom`, including canonical room
   wall rings, joined junctions, full-height opening cuts, independent
-  partitions, room drafts and columns.
+  partitions and columns.
 - Rings are normalized by signed area. Every ring edge is visited once, so the
   side-face count is O(E).
 - With the fixed camera, a side is visible when its outward plan normal faces

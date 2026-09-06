@@ -66,20 +66,12 @@ export function zeroContourLines(
   return unique([result]);
 }
 
-/** Bodyless independent walls and unfinished contour segments. */
+/** Bodyless independent walls. */
 export function zeroIndependentLines(space: any, scale = 1): number[][] {
   const result: number[][] = [];
   for (const wall of Array.isArray(space?.partitions) ? space.partitions : []) {
     if (Number(wall?.cm) !== 0 || !finitePoint(wall?.a) || !finitePoint(wall?.b)) continue;
     result.push(segment(wall.a, wall.b, scale));
-  }
-  for (const draft of Array.isArray(space?.room_drafts) ? space.room_drafts : []) {
-    const points = Array.isArray(draft?.points) ? draft.points : [];
-    for (let index = 0; index + 1 < points.length; index++) {
-      if (Number(draft?.segments?.[index]?.cm) !== 0
-          || !finitePoint(points[index]) || !finitePoint(points[index + 1])) continue;
-      result.push(segment(points[index], points[index + 1], scale));
-    }
   }
   return unique([result]);
 }
@@ -106,7 +98,7 @@ export function legacyZeroContourLines(
 /** One answer consumed by flat/isometric rendering, Glow and sun. */
 export function resolveZeroWalls(
   spaceConfig: any,
-  spaceModel: Pick<SpaceModel, 'rooms' | 'wall_segments' | 'partitions' | 'room_drafts'>,
+  spaceModel: Pick<SpaceModel, 'rooms' | 'wall_segments' | 'partitions'>,
   coordScale: number,
   epsilon: number,
 ): ZeroWallResolution {

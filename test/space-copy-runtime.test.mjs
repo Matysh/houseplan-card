@@ -63,13 +63,13 @@ function runtimeHarness(overrides = {}) {
     _errText: (error) => error instanceof Error ? error.message : String(error),
     _selId: 'selected-device',
     _physicalSel: { kind: 'partition', id: 'selected-wall' },
-    _resumeDraftBySpace: { source: 'old-draft', sseed: 'must-be-cleared' },
     _space: 'source',
     _commitSpace: (id) => { events.push(`space:${id}`); host._space = id; return true; },
     _tool: 'select',
     _path: [[0, 0]],
     _cursorPt: [0.5, 0.5],
-    _activeDraftId: 'draft',
+    _activeWallChainId: 'chain',
+    _activeWallChainPartitionIds: ['partition'],
     _primeDrawWallField: () => events.push('prime-draw'),
     _saveNav: () => events.push('save-nav'),
     ...overrides,
@@ -77,7 +77,8 @@ function runtimeHarness(overrides = {}) {
   const services = {
     clearGeometryGesture: () => {
       events.push('clear-gesture');
-      host._activeDraftId = null;
+      host._activeWallChainId = null;
+      host._activeWallChainPartitionIds = [];
       host._path = [];
     },
     optimizeReferenceContext: () => ({}),
@@ -123,7 +124,8 @@ test('#456 clean input performs one config write with no extra confirmation', as
   assert.equal(host._spaceDialog, null);
   assert.equal(host._tool, 'draw');
   assert.deepEqual(host._path, []);
-  assert.equal(host._activeDraftId, null);
+  assert.equal(host._activeWallChainId, null);
+  assert.deepEqual(host._activeWallChainPartitionIds, []);
   assert.equal(host._selId, null);
   assert.equal(host._physicalSel, null);
   assert.equal(toasts.at(-1), 'toast.space_copied:Floor (2)');

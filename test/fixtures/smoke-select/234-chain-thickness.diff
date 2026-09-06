@@ -25,7 +25,7 @@ index a3d21d6..48e3e87 100755
        this._activeDraftId = draft.id;
        this._path = draft.points.map((point) => [...point]);
 -      this._draftSegmentCms = draft.segments.map((segment) => segment.cm);
-+      this._draftSegmentCms = this._adoptDraftCms(
++      this._wallChainSegmentCms = this._adoptDraftCms(
 +        this._path, draft.segments.map((segment: any) => segment.cm), draft.id,
 +      );
        this._resumeDraftBySpace[this._space] = draft.id;

@@ -1,8 +1,9 @@
-// Issue #229: a straight wall drawn in several clicks is stored as one record.
+// Issue #478 supersedes #229's deferred chain merge: every accepted click is
+// immediately stored as one ordinary partition and finishing only clears the
+// session state.
 //
 // The unit tests own the rules; this smoke owns the wiring — that finishing a
-// chain in the real editor actually calls the merge, that the seam disappears
-// from the saved config, and that a chain drawn round a corner keeps its node.
+// chain in the real editor never rewrites already accepted wall records.
 import { launch, checkAll, finish } from './serve.mjs';
 const { page, browser } = await launch({ width: 1000, height: 900 }, 1);
 const res = await page.evaluate(async () => {
@@ -21,57 +22,61 @@ const res = await page.evaluate(async () => {
 
   const before = partitionCount();
 
-  // Four clicks along one straight line, then finish the chain.
+  // Four clicks along one straight line, already persisted as three walls,
+  // then finish the session.
   c._path = [[200, 500], [300, 500], [420, 500], [560, 500]];
-  c._draftSegmentCms = [];
+  const straightIds = ['straight-a', 'straight-b', 'straight-c'];
+  space().partitions = [...(space().partitions || []),
+    { id: straightIds[0], a: [.2, .5], b: [.3, .5], cm: 15 },
+    { id: straightIds[1], a: [.3, .5], b: [.42, .5], cm: 15 },
+    { id: straightIds[2], a: [.42, .5], b: [.56, .5], cm: 15 }];
+  c._activeWallChainId = 'straight-chain';
+  c._activeWallChainPartitionIds = straightIds;
+  c._wallChainSegmentCms = [15, 15, 15];
   out.chainHasThreeSegments = c._path.length - 1 === 3;
   c._finishWallChain();
   await settle();
 
   const straight = (space().partitions || []).slice(before);
-  out.straightRunIsOneRecord = straight.length === 1;
-  out.straightRunSpansTheChain = !!straight[0]
-    && Math.abs(straight[0].a[0] * 1000 - 200) < 0.01
-    && Math.abs(straight[0].b[0] * 1000 - 560) < 0.01;
-  out.straightRunKeepsThickness = !!straight[0] && straight[0].cm === 15;
+  out.straightRunKeepsClickRecords = straight.length === 3
+    && straight.map((item) => item.id).join(',') === straightIds.join(',');
+  out.straightRunSpansTheChain = Math.abs(straight[0].a[0] * 1000 - 200) < 0.01
+    && Math.abs(straight[2].b[0] * 1000 - 560) < 0.01;
+  out.straightRunKeepsThickness = straight.every((item) => item.cm === 15);
 
   // A corner is not a straight run: two records, one node between them.
   const beforeCorner = partitionCount();
   c._path = [[200, 700], [400, 700], [400, 820]];
-  c._draftSegmentCms = [];
+  const cornerIds = ['corner-a', 'corner-b'];
+  space().partitions.push(
+    { id: cornerIds[0], a: [.2, .7], b: [.4, .7], cm: 15 },
+    { id: cornerIds[1], a: [.4, .7], b: [.4, .82], cm: 15 },
+  );
+  c._activeWallChainId = 'corner-chain';
+  c._activeWallChainPartitionIds = cornerIds;
+  c._wallChainSegmentCms = [15, 15];
   c._finishWallChain();
   await settle();
   out.cornerKeepsBothRecords = partitionCount() - beforeCorner === 2;
 
-  // Drawing onto an existing wall merges with it — the seam belongs to the chain.
-  // Real clicks, not an assigned `_path`: each click persists the chain into
-  // `room_drafts`, and the merge used to mistake the chain's own ends for a
-  // foreign junction (review CODE-REVIEW-229-r1, High-2).
-  const stage = c.shadowRoot.querySelector('svg');
-  // Clicks are given in plan coordinates and converted through the live view
-  // box, so the smoke aims at the wall it just drew and not at a screen guess.
-  const click = async (px, py) => {
-    const rect = stage.getBoundingClientRect();
-    const view = c._viewOr(c._baseVb());
-    stage.dispatchEvent(new MouseEvent('click', {
-      clientX: rect.left + ((px - view.x) / view.w) * rect.width,
-      clientY: rect.top + ((py - view.y) / view.h) * rect.height,
-      bubbles: true, composed: true,
-    }));
-    await settle();
-  };
+  // A just-accepted extension already exists before Finish. Finishing keeps
+  // both records; collinear normalization is explicitly outside #478.
   const beforeTouch = partitionCount();
-  await click(560, 500);
-  await click(700, 500);
-  out.clicksPersistTheDraft = ((space().room_drafts || []).length) === 1;
+  const extensionId = 'extension-wall';
+  space().partitions.push({ id: extensionId, a: [.56, .5], b: [.7, .5], cm: 15 });
+  c._activeWallChainId = 'extension-chain';
+  c._activeWallChainPartitionIds = [extensionId];
+  c._wallChainSegmentCms = [15];
+  c._path = [[560, 500], [700, 500]];
+  out.clickPersistsOrdinaryWall = partitionCount() === beforeTouch + 1
+    && c._activeWallChainPartitionIds.length === 1;
   c._finishWallChain();
   await settle();
-  out.chainMergesIntoTheWallItTouches = partitionCount() === beforeTouch;
-  const extended = (space().partitions || []).find(
-    (p) => Math.abs(p.a[1] * 1000 - 500) < 0.01 && Math.abs(p.b[1] * 1000 - 500) < 0.01,
-  );
-  out.touchedWallGrew = !!extended && Math.abs(extended.b[0] * 1000 - 700) < 0.01;
-  out.draftIsGone = !(space().room_drafts || []).length;
+  out.finishDoesNotRewriteWalls = partitionCount() === beforeTouch + 1;
+  const extended = (space().partitions || []).find((p) => p.id === extensionId);
+  out.extensionKeptOwnIdentity = !!extended;
+  out.sessionCleared = !c._activeWallChainId
+    && c._activeWallChainPartitionIds.length === 0 && c._path.length === 0;
 
 
   return out;

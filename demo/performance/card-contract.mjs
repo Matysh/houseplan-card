@@ -61,7 +61,8 @@ export const LARGE_HOUSE_CARD_CONTRACT = Object.freeze({
   // A comparison SHA before #89 is intentionally flat; the isometric runner
   // checks these members only when the target source tree supports Stage 1.
   optionalFields: Object.freeze([
-    '_activeDraftId', '_draftSegmentCms', '_effectiveProjection', '_ensureIsoSceneRuntime',
+    '_activeWallChainId', '_activeWallChainPartitionIds', '_wallChainSegmentCms',
+    '_effectiveProjection', '_ensureIsoSceneRuntime',
     '_isoGeometryCache', '_isoStructuralBuildCount', '_offerWallFaces',
     '_liveEditorPaintCount', '_onLabsSnapshot',
     '_planSnapGeometryCache', '_roomDialog', '_setProjection', '_wallFaceBatch',
@@ -83,7 +84,8 @@ export const LARGE_HOUSE_CARD_CONTRACT = Object.freeze({
     _continuity: 'object',
     _decorList: 'array',
     _decorTool: 'string',
-    _draftSegmentCms: 'array',
+    _activeWallChainPartitionIds: 'array',
+    _wallChainSegmentCms: 'array',
     _effectiveProjection: 'function',
     _ensureIsoSceneRuntime: 'function',
     _glowClipCache: 'map',

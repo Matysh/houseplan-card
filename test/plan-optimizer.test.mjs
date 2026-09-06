@@ -45,11 +45,11 @@ const realFirstFloorFixture = JSON.parse(readFileSync(
 const assertNoPersistedChanges = (result) => {
   assert.equal(result.changed, false);
   for (const field of [
-    'moved', 'coordsCanonicalized', 'rotated', 'removedDrafts', 'migrated',
+    'moved', 'coordsCanonicalized', 'rotated', 'migrated',
     'glowSpacesMigrated', 'glowRoomsMigrated', 'canonicalized', 'wallsMerged',
     'legacyZeroWallsMigrated', 'spansMerged', 'partitionsMerged',
     'partitionsReconciled', 'openingsRehosted',
-    'redundantDraftsRemoved',
+    'roomDraftsMigrated', 'roomDraftSegmentsMigrated',
     'wallsStraightened',
     'spaceRefsRemapped', 'roomRefsRemapped',
     'positionsRemapped', 'markersDetached', 'orphanRoomLabelsRemoved',

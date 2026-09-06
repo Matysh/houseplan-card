@@ -11,18 +11,21 @@ const out = await page.evaluate(async () => {
   const update = async () => { card.requestUpdate(); await card.updateComplete; };
   const base = {
     id: 'repairs', title: 'Repairs', cell_cm: 5, view_box: [0, 0, 1, 0.7],
-    rooms: [], openings: [], room_drafts: [], partitions: [], wall_columns: [],
+    rooms: [], wall_segments: [], openings: [], partitions: [], wall_columns: [],
   };
   const reset = async (patch = {}) => {
-    card._serverCfg = { spaces: [{ ...clone(base), ...clone(patch) }], markers: [], settings: {} };
+    card._serverCfg = { model_version: 10,
+      spaces: [{ ...clone(base), ...clone(patch) }], markers: [], settings: {} };
     card._space = 'repairs';
     card._layout = {};
     card._cfgEpoch++;
     card._modelCache = null;
     card._frame = null;
     card._path = [];
-    card._activeDraftId = null;
-    card._draftSegmentCms = [];
+    card._activeWallChainId = null;
+    card._activeWallChainPartitionIds = [];
+    card._wallChainSegmentCms = [];
+    card._wallChainRedo = [];
     card._wallFaceBatch = null;
     card._roomDialog = false;
     card._roomDeleteDialog = null;
@@ -79,9 +82,9 @@ const out = await page.evaluate(async () => {
     && +previewLine?.getAttribute('y1') === +previewLine?.getAttribute('y2');
   card._markupClick(clickAt(...nearRaw));
   await update();
-  result.nearAxisClickPersistsStraightDraft = card._path.length === 2
+  result.nearAxisClickPersistsStraightWall = card._path.length === 2
     && card._path[1][1] === 100
-    && card._curSpaceCfg.room_drafts?.[0]?.points?.[1]?.[1] === 0.1;
+    && card._curSpaceCfg.partitions?.some((item) => item.b?.[1] === 0.1);
 
   await reset({ partitions: [{
     id: 'near-target', a: [nearRaw[0] / 1000, nearRaw[1] / 1000],
@@ -144,8 +147,8 @@ const out = await page.evaluate(async () => {
   card._nameSel = 'Existing face';
   card._saveRoom();
   await update();
-  result.createExistingFaceKeepsPartitions = card._curSpaceCfg.rooms.length === 1
-    && card._curSpaceCfg.partitions.length === 4;
+  result.createExistingFaceConsumesPartitions = card._curSpaceCfg.rooms.length === 1
+    && !card._curSpaceCfg.partitions?.length;
   const createdWalls = clone(card._curSpaceCfg.walls || []);
 
   await reset({ partitions: ring(card._cmToUnits(1.2) / 1000) });
@@ -158,9 +161,10 @@ const out = await page.evaluate(async () => {
   card._nameSel = 'Repaired';
   card._saveRoom();
   await update();
-  const repairedLeft = card._curSpaceCfg.partitions.find((item) => item.id === 'left');
-  result.repairCommitsOnlyWithRoom = leftBefore.b[1] !== repairedLeft.b[1]
-    && repairedLeft.b[1] === 0.1 && card._curSpaceCfg.rooms.length === 1;
+  result.repairCommitsOnlyWithRoom = leftBefore.b[1] !== 0.1
+    && card._curSpaceCfg.rooms.length === 1
+    && !card._curSpaceCfg.partitions?.length
+    && card._curSpaceCfg.wall_segments?.length === 4;
 
   const room = { id: 'delete-me', name: 'Delete me', area: null,
     poly: [[0.1, 0.1], [0.5, 0.1], [0.5, 0.5], [0.1, 0.5]] };

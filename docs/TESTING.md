@@ -147,32 +147,25 @@
       `tests_backend/test_validation.py`. HA import/export coverage runs in the
       normal Linux/CI Home Assistant harness when unavailable natively.
 
-## Atomic model-v8 draft writes (#314)
+## Legacy draft migration and atomic wall-chain writes (#314, #478)
 
-- [ ] `demo/smoke_v8_draft_write.mjs` proves that write sanitation preserves
-      the carrier ID after duplicate adjacent points, Undo keeps all surviving
-      IDs, and two successful queued physical writes retain the newer edge.
-- [ ] The same fake-WS smoke rejects the first in-flight physical write and
-      observes synchronous rollback of its whole pending batch: active path,
-      pending map and command history are empty, and finishing the tool cannot
-      create a ghost partition.
-- [ ] The smoke also loads the anonymised
-      `demo/fixtures/v8-draft-regression.mjs` population (13 rooms, 44 wall
-      catalogue segments, 24 intentional partitions, one known unusable
-      draft), closes and reloads a new room through the real editor path, then
-      runs the `model-invariants.mjs` CLI before and after. The exact existing
-      `unusable_draft` finding must remain the only violation; no independent
-      object may disappear and no new hidden obstacle may appear.
-- [ ] `tests_backend/test_wall_segment_model.py` accepts valid independent v8
-      draft/partition/column/hosted-opening changes with an unchanged contour
-      catalog, while the existing current/downgraded stale-contour negatives
-      and complete `CONFIG_SCHEMA` checks remain fail-closed.
-- [ ] Local commands: `npm run typecheck`, `npm run bundle:sync`,
+- [ ] `demo/smoke_v8_draft_write.mjs` (compatibility filename) proves that a
+      model-v9 draft migrates once to ordinary partitions, preserves existing
+      edge IDs/thicknesses and leaves no `room_drafts` in model v10.
+- [ ] The same fake-WS smoke proves each accepted current wall reaches storage,
+      a later edge preserves earlier identities, Undo removes only the terminal
+      wall, and a closed chain creates a durable room without carrier debris.
+- [ ] A rejected in-flight physical write synchronously rolls back its whole
+      pending batch: active path, session partition IDs, pending map and command
+      history are empty, so no optimistic ghost wall survives.
+- [ ] Frontend/backend model tests cover deterministic missing-ID generation,
+      malformed-draft and collision refusal, parity, idempotence and explicit
+      rejection of `room_drafts` reintroduced into a current document.
+- [ ] Local commands: `npm test`, `npm run bundle:sync`,
       `node demo/smoke_v8_draft_write.mjs`, targeted backend pytest and
       `node scripts/check-docs.mjs --external`.
-- [ ] Mutations `v8-draft-sanitation-shifts-segment-identity` and
-      `v8-rejected-physical-write-keeps-optimistic-draft` prove that the pure
-      ID fixture and browser rollback scenario fail on the original defects.
+- [ ] Mutation `current-rejected-physical-write-keeps-optimistic-wall` proves
+      the browser rollback scenario fails when rejection recovery is bypassed.
 
 ## Resize: реальный pointer pipeline (#293)
 
@@ -1170,9 +1163,9 @@ separately promised workflows:
 - [ ] Ruler: while drawing, the length of the current segment follows the cursor
       (metres, or feet+inches on an imperial HA); scale = canonical per-space
       `cell_cm` (new-space default 1 cm or 1 inch; missing legacy fallback 5 cm)
-- [ ] Every completed segment is crash-safe in `room_drafts`. Changing tool,
-      editor or floor finishes an open chain as ordinary partitions in one
-      history/config transaction; the finished chain is not resumed as a draft
+- [ ] Every completed segment is saved immediately as one ordinary partition.
+      Changing tool, editor or floor clears only the session-local chain state;
+      accepted walls stay unchanged and are not resumed after reload/remount
       [auto: smoke_unified_wall_tool + smoke_free_walls +
       smoke_plan_snap_overlay]
 - [ ] A legacy warm-viewport token `partition` still opens the unified Walls
@@ -1727,7 +1720,7 @@ separately promised workflows:
       entities only with the checkbox; editing pre-selects everything [auto: smoke_binding_ui]
 - [ ] Canonical zero walls (#306): the Plan toolbar has no Boundary, Virtual
       wall or Physical wall tool. Walls and Thickness accept exact `0..100`;
-      zero works for room atoms, drafts and partitions, while columns remain
+      zero works for room atoms and partitions, while columns remain
       `1..150`. Empty/invalid input writes nothing [auto: unit +
       `smoke_zero_walls`].
 - [ ] Decor line style: a newly drawn or legacy line is solid and the drawing
@@ -1746,7 +1739,7 @@ separately promised workflows:
       not its light semantics or editor axis [auto: `smoke_zero_walls`, golden].
 - [ ] v8 migration: explicit `open_spans` wins over `open_to`; otherwise full
       proven shared boundaries are atomized. Stable IDs survive, all existing
-      `cm:0` is treated identically, canonical v9 removes both legacy fields,
+      `cm:0` is treated identically, the canonical current model removes both legacy fields,
       repeat migration is a no-op, and a zero/opening conflict fails atomically
       [auto: frontend/backend wall-segment model parity tests].
 - [ ] Light transport (#71, model: `docs/LIGHT.md`): a source paints exactly
@@ -2492,7 +2485,7 @@ require hands on real hardware — they remain for the human pass.
       adjacent walls, and the m² area at the room centre; dragging a shared
       wall shows BOTH areas; all numbers update continuously
 - [ ] Stops are contiguous from zero: 30 cm room clearance, first topology
-      corner, foreign room/island, partition/draft/column and every side-wall
+      corner, foreign room/island, partition/column and every side-wall
       opening. The opening jamb includes half the moving wall thickness, and a
       wall cannot jump through an invalid interval to a later valid position
 - [ ] An ordinary door/window/gate ON the moving wall travels exactly once;
@@ -3359,8 +3352,8 @@ require hands on real hardware — they remain for the human pass.
       endpoint. Optimize deduplicates the tracked shared wall across two room
       owners, reports one wall and an exact physical maximum, rekeys thickness,
       passes production preflight, applies one atomic write, reloads as a no-op
-      and restores the original through one Undo. Saved drafts and independent
-      walls use the same classifier; unsafe candidates are counted as skipped
+      and restores the original through one Undo. Independent walls use the
+      same classifier; unsafe candidates are counted as skipped
       [unit: test/near-axis.test.mjs; auto: smoke_plan_drawing_repairs +
       smoke_near_axis_optimize; mutations: `near-axis-threshold-weakened`,
       `near-axis-inclusive-boundary-disabled`,
@@ -3390,7 +3383,7 @@ require hands on real hardware — they remain for the human pass.
       and the wider centred thickness survives. Direction and room order do
       not matter; three non-overlapping hosted door/window/gate records are
       rehosted atomically, while a hosted-hosted overlap and all other
-      partial/extra/unknown/draft/column/opening conflicts fail closed. Preview
+      partial/extra/unknown/column/opening conflicts fail closed. Preview
       writes nothing, Apply uses one WS transaction,
       reload is idempotent, Undo restores the hosted form, and Boundary plus
       Thickness target the resulting shared wall. Four targeted golden scenes
@@ -3498,37 +3491,35 @@ require hands on real hardware — they remain for the human pass.
       the toilets [auto: smoke_furniture checks the attributes; manual for the
       rule itself]
 
-## Unfinished outlines, partitions and columns (dev, unreleased)
+## Wall chains, partitions and columns
 
-- [ ] **Persistence and joining**: draw two unfinished outlines, switch tools,
-      reload and resume each from either end. Continue one into the free end of
-      the other: one draft id remains, segment thicknesses keep their order,
-      and an endpoint-to-endpoint loop opens the room dialog. A click in the
-      middle never creates a branch [auto: smoke_free_walls; backend schema].
+- [ ] **Persistence and joining**: every accepted wall-chain edge is immediately
+      one ordinary partition with its selected thickness and one history/save
+      boundary. Switching tools or reloading leaves those walls intact but does
+      not resume their chain. A current config never stores `room_drafts`; a v9
+      draft migrates edge-for-edge to partitions [auto: smoke_free_walls +
+      smoke_unified_wall_tool + frontend/backend wall-segment-model tests].
 - [ ] **Creation limits and validation**: 1/100 cm partitions and 1/150 cm
       columns save exactly. Zero, NaN and 101/151 cm block the final click with
       a range toast and create no history entry. Client caps match backend:
-      200 drafts, 500 points per draft, 2000 total draft segments, 2000
-      partitions and 500 columns [auto: backend validation + smoke_free_walls].
+      2000 partitions and 500 columns [auto: backend validation +
+      smoke_free_walls].
 - [ ] **Select gestures**: creation tools click through existing physical
       bodies. Select gives at least a 24 px target, cycles overlaps on repeated
       clicks and moves a partition rigidly on the grid. Escape/pointercancel
       restores the pre-drag state. A square column rotates in 5° steps (Shift
       free); a circle has no rotation handle [auto: smoke_free_walls; manual].
-- [ ] **Delete contract**: Delete on a selected draft asks once and removes the
-      whole outline. Its properties dialog has distinct “Delete segment” and
-      “Delete entire outline” actions; a middle-segment split respects the
-      draft-count cap. A localized two-line title is fully contained by the HA
-      header, and the three/four footer actions remain inside their padding:
-      destructive actions left, Cancel/Save right or together on a second row
-      when they do not fit [auto: smoke_free_walls; manual dialog labels].
+- [ ] **Delete contract**: every accepted open-chain edge is an ordinary
+      independently selectable partition. Delete and properties therefore use
+      the standard partition confirmation/dialog; there is no whole-outline or
+      segment-of-draft action [auto: smoke_free_walls].
 - [ ] **Area and light**: overlapping bodies are subtracted once from clean
       area; closed partition rings keep the enclosed floor; bodies outside all
       rooms create no paper. Glow does not cross a long nearby partition and a
       source inside masonry lights nothing. Window rays are blocked by the same
       bodies. `show_borders: false` changes paint only [auto:
       physical-geometry.test; manual visual].
-- [ ] **Seamless junctions**: saved draft/partition L corners (right, acute and
+- [ ] **Seamless junctions**: partition L corners (right, acute and
       obtuse), unequal thickness, endpoint-on-line T and a branch touching a
       room wall use one bounded joined body; near-miss, X crossing, malformed
       segments and flat free caps keep their documented semantics. The active

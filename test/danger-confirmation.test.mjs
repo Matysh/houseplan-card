@@ -65,10 +65,9 @@ test('all dangerous-action call sites use the shared confirmation contract', () 
   const sharedCalls = source.match(/await this(?:\.host)?\._confirmDanger\s*\(\{/g) || [];
 
   assert.equal(nativeCalls.length, 0, 'native browser confirmation must not return');
-  assert.equal(sharedCalls.length, 10, 'the reviewed inventory stays on the shared surface');
+  assert.equal(sharedCalls.length, 8, 'the reviewed inventory stays on the shared surface');
   for (const key of [
-    'delete-draft', 'delete-draft-segment', 'remove-marker',
-    'delete-plan', 'delete-space', 'unlock', 'close-support-busy',
+    'remove-marker', 'delete-plan', 'delete-space', 'unlock', 'close-support-busy',
   ]) {
     assert.match(source, new RegExp(`key: '${key}'`));
   }

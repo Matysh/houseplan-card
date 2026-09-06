@@ -163,7 +163,7 @@ import {
 } from './virtual-light-state';
 import type {
   OpeningCfg, PartitionOpeningHost,
-  RoomCfg, RoomDraftCfg, PartitionCfg, WallColumnCfg,
+  RoomCfg, PartitionCfg, WallColumnCfg,
   SpaceModel, PdfRef, Marker, ServerConfig, DevItem, CardConfig,
   MarkerValueBadge, ValueBadgePosition, ValueBadgeSource, ZeroWallStyle,
 } from './types';
@@ -218,7 +218,7 @@ import {
 import { optimizePlans, type OptimizeReport } from './plan-optimizer';
 import {
   adoptWallSegmentModelCandidateInPlace, commitWallSegmentModel,
-  fixedTopologyWallLineageHints, sanitizeRoomDraftPath,
+  fixedTopologyWallLineageHints,
   resolveRoomOpeningHost, wallModelOffGridValueCount, WallSegmentModelError,
 } from './wall-segment-model';
 import {
@@ -511,8 +511,7 @@ const unionRect = (a: Rect, b: Rect): Rect => {
 
 /** #313: one Thickness-tool hit — a room interval or independent masonry. */
 type WallThickSource = { kind: 'room' }
-  | { kind: 'partition'; id: string }
-  | { kind: 'draft'; id: string; segment: number };
+  | { kind: 'partition'; id: string };
 type WallThickHit = {
   a: number[]; b: number[]; roomId: string; segs: number[][];
   open: boolean; cm: number; source: WallThickSource;
@@ -542,11 +541,9 @@ type WallFaceBatch = {
   decisions: WallFaceDecision[];
   activePath: number[][];
   activeCms: number[];
-  activeDraftId: string | null;
+  activePartitionIds: string[];
 };
-const MAX_ROOM_DRAFTS = 200;
-const MAX_DRAFT_POINTS = 500;
-const MAX_DRAFT_SEGMENTS = 2000;
+const MAX_WALL_CHAIN_POINTS = 500;
 const MAX_PARTITIONS = 2000;
 const MAX_ROOMS = 400;
 const MAX_WALL_COLUMNS = 500;
@@ -558,7 +555,6 @@ interface SpaceGeometryState {
   walls?: WallEntry[];
   wall_segments?: any[];
   open_spans?: OpenSpanEntry[];
-  room_drafts?: RoomDraftCfg[];
   partitions?: PartitionCfg[];
   wall_columns?: WallColumnCfg[];
   decor?: DecorShape[];
@@ -1504,21 +1500,20 @@ export class HouseplanCard extends LitElement {
     if (this._mode === 'plan' && this._tool === 'draw' && !this._finishWallChain()) return false;
     this._cancelModeTransition(true);
     const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
-    if (this._activeDraftId) this._resumeDraftBySpace[this._space] = this._activeDraftId;
     this._commitSpace(id);
     this._path = [];
     this._clearPlanSnapHover();
     this._clearOpeningPlacement(true);
     this._tool = 'draw';
-    this._activeDraftId = null;
-    this._draftSegmentCms = [];
+    this._activeWallChainId = null;
+    this._activeWallChainPartitionIds = [];
+    this._wallChainSegmentCms = [];
     this._closingWallCm = null;
     this._selId = null;
     this._physicalSel = null;
     this._editorSecondary?.closeForNavigation();
     this._physicalDialog = null;
     this._physicalDrag = null;
-    if (this._mode === 'plan' && this._tool === 'draw') this._resumeLastDraft();
     this._restoreZoom();
     if (reduce) return true;
     this._slide = dir;
@@ -1766,16 +1761,17 @@ export class HouseplanCard extends LitElement {
    * then primed to DRAW_WALL_DEFAULT_CM. Empty string = no thickness on commit.
    */
   private _drawWallField: string | null = null;
-  /** The saved draft currently continued by the Draw tool. */
-  private _activeDraftId: string | null = null;
-  private _resumeDraftBySpace: Record<string, string> = {};
+  /** Session-only identity and persisted partition IDs of the active wall chain. */
+  private _activeWallChainId: string | null = null;
+  private _activeWallChainPartitionIds: string[] = [];
+  private _wallChainRedo: Array<{ id: string; point: number[]; cm: number }> = [];
   /** One-click/two-click physical-object selection in the Plan editor. */
   private _physicalSel: {
-    kind: 'partition' | 'column' | 'draft'; id: string; segment?: number;
+    kind: 'partition' | 'column'; id: string;
   } | null = null;
   private _physicalDialog: {
-    kind: 'partition' | 'column' | 'draft'; id: string; cm: string;
-    segment?: number; shape?: 'square' | 'circle'; angle?: string; length?: string;
+    kind: 'partition' | 'column'; id: string; cm: string;
+    shape?: 'square' | 'circle'; angle?: string; length?: string;
   } | null = null;
   private _partitionDeleteDialog: { id: string; openings: OpeningCfg[] } | null = null;
   private _roomDeleteDialog: { roomId: string; name: string } | null = null;
@@ -1790,7 +1786,7 @@ export class HouseplanCard extends LitElement {
     baseAngle: number; angle: number; before: SpaceGeometryState | null; moved: boolean;
   } | null = null;
   private _physicalLastTap: {
-    kind: 'partition' | 'column' | 'draft'; id: string; segment?: number; at: number;
+    kind: 'partition' | 'column'; id: string; at: number;
   } | null = null;
   private _physicalPickCycle: {
     signature: string; index: number; x: number; y: number; at: number;
@@ -1846,7 +1842,7 @@ export class HouseplanCard extends LitElement {
     key: string; value: HiddenWallDiagnosticGeometry;
   } | null = null;
   private _physicalBodiesCache: {
-    key: string; drafts: number[][][]; partitions: number[][][];
+    key: string; partitions: number[][][];
     columns: number[][][]; patches: number[][][]; all: number[][][];
   } | null = null;
   /** Light cuts are type/floor-specific and differ from drawn masonry, but HA
@@ -2446,17 +2442,16 @@ export class HouseplanCard extends LitElement {
     if (id && this._model.find((sp) => sp.id === id) && id !== this._space) {
       if (this._wallFaceBatch) this._roomDialogCancel();
       if (this._mode === 'plan' && this._tool === 'draw' && !this._finishWallChain()) return;
-      if (this._activeDraftId) this._resumeDraftBySpace[this._space] = this._activeDraftId;
       this._commitSpace(id);
       this._selId = null;
       this._path = [];
       this._clearPlanSnapHover();
       this._clearOpeningPlacement(true);
       this._tool = 'draw';
-      this._activeDraftId = null;
-      this._draftSegmentCms = [];
+      this._activeWallChainId = null;
+      this._activeWallChainPartitionIds = [];
+      this._wallChainSegmentCms = [];
       this._closingWallCm = null;
-      if (this._mode === 'plan' && this._tool === 'draw') this._resumeLastDraft();
       this._restoreZoom();
       this.requestUpdate();
     }
@@ -2491,7 +2486,7 @@ export class HouseplanCard extends LitElement {
     _tool: { state: true },
     _wallDialog: { state: true },
     _drawWallField: { state: true },
-    _activeDraftId: { state: true },
+    _activeWallChainId: { state: true },
     _physicalSel: { state: true },
     _physicalDialog: { state: true },
     _partitionDeleteDialog: { state: true },
@@ -2950,14 +2945,14 @@ export class HouseplanCard extends LitElement {
         // The queue has not committed anything. Restore its terminal draft,
         // then make Ctrl/Cmd+Z visibly remove that last accepted point.
         this._roomDialogCancel();
-        if (this._activeDraftId && this._path.length > 1) this._undoActiveDraftPoint();
+        if (this._activeWallChainId && this._path.length > 1) this._undoActiveWallPoint();
         else this._undoPoint();
         return;
       }
       // A crash-safe segment is a real geometry command, but Undo keeps the
       // surviving draft active so the visible contract remains “one point back”.
       if (this._tool === 'draw' && this._path.length) {
-        if (this._activeDraftId && this._path.length > 1) this._undoActiveDraftPoint();
+        if (this._activeWallChainId && this._path.length > 1) this._undoActiveWallPoint();
         else this._undoPoint();
         return;
       }
@@ -3037,7 +3032,7 @@ export class HouseplanCard extends LitElement {
     }
   }
 
-  /** Remove the last placed point; saved drafts stay structurally valid. */
+  /** Remove the last transient point or undo the terminal persisted wall. */
   private _undoPoint(): void {
     if (!this._path.length) return;
     if (this._contourClosed) {
@@ -3045,68 +3040,40 @@ export class HouseplanCard extends LitElement {
       this._closingWallCm = null;
       return;
     }
-    if (this._activeDraftId && this._path.length > 1 && this._curSpaceCfg) {
-      const before = this._geometrySnapshot();
-      this._path = this._path.slice(0, -1);
-      this._draftSegmentCms = this._draftSegmentCms.slice(0, -1);
-      const sp = this._curSpaceCfg as any;
-      const i = (sp.room_drafts || []).findIndex((d: any) => d.id === this._activeDraftId);
-      if (i >= 0) {
-        const previousSegments = Array.isArray(sp.room_drafts[i]?.segments)
-          ? sp.room_drafts[i].segments : [];
-        if (this._path.length < 2) {
-          sp.room_drafts.splice(i, 1);
-          if (!sp.room_drafts.length) delete sp.room_drafts;
-          this._activeDraftId = null;
-        } else {
-          sp.room_drafts[i] = {
-            id: this._activeDraftId,
-            points: this._path.map((p) => [p[0] / NORM_W, p[1] / NORM_W]),
-            // Undo removes the terminal edge; it must not rename every edge
-            // that survived it. The v8 identity barrier only creates an id
-            // for a genuinely new segment (#314).
-            segments: this._draftSegmentCms.map((cm, index) => ({
-              ...(previousSegments[index] || {}), cm,
-            })),
-          };
-        }
-        this._commitPhysicalGeometry(this._t('history.draft_segment_delete'), before);
-      }
+    if (this._activeWallChainPartitionIds.length && this._path.length > 1) {
+      this._undoActiveWallPoint();
       return;
     }
     this._path = this._path.slice(0, -1);
   }
 
-  /** Undo the persisted segment command while keeping its surviving draft active. */
-  private _undoActiveDraftPoint(): void {
-    const activeId = this._activeDraftId;
+  /** Undo one persisted wall while keeping the session-only chain coherent. */
+  private _undoActiveWallPoint(): void {
+    const ids = [...this._activeWallChainPartitionIds];
+    const terminalId = ids[ids.length - 1];
+    const terminal = this._spaceModel()?.partitions.find((item) => item.id === terminalId);
     const start = this._path[0] ? [...this._path[0]] : null;
+    const nextPath = this._path.slice(0, -1).map((point) => [...point]);
+    const nextCms = this._wallChainSegmentCms.slice(0, -1);
     const command = this._geometryHistory.undo();
     if (!command) {
-      this._undoPoint();
+      this._activeWallChainPartitionIds = [];
+      this._wallChainSegmentCms = [];
+      this._wallChainRedo = [];
+      this._path = start ? [start] : [];
       return;
     }
     if (!this._applyGeometryState(command.before, true)) {
       this._geometryHistory.clear();
       return;
     }
-    const draft = activeId
-      ? this._spaceModel()?.room_drafts.find((item) => item.id === activeId)
-      : null;
-    if (draft) {
-      this._activeDraftId = draft.id;
-      this._path = draft.points.map((point) => [...point]);
-      this._draftSegmentCms = this._adoptDraftCms(
-        this._path, draft.segments.map((segment: any) => segment.cm), draft.id,
-      );
-      this._resumeDraftBySpace[this._space] = draft.id;
-    } else {
-      this._activeDraftId = null;
-      this._path = start ? [start] : [];
-      this._draftSegmentCms = [];
-      if (activeId && this._resumeDraftBySpace[this._space] === activeId)
-        delete this._resumeDraftBySpace[this._space];
-    }
+    this._activeWallChainId ||= `chain-${Date.now().toString(36)}`;
+    this._activeWallChainPartitionIds = ids.slice(0, -1);
+    this._path = nextPath.length ? nextPath : start ? [start] : [];
+    this._wallChainSegmentCms = nextCms;
+    if (terminal) this._wallChainRedo.push({
+      id: terminal.id, point: [...terminal.b], cm: terminal.cm,
+    });
     this._clearPlanSnapHover();
     this._showToast(this._t('history.undone', { name: command.name }));
   }
@@ -3580,8 +3547,9 @@ export class HouseplanCard extends LitElement {
         this._pendingSplit = r.pendingSplit; this._wallFaceBatch = r.wallFaceBatch || null;
         this._path = r.path;
         if (this._wallFaceBatch) {
-          this._activeDraftId = this._wallFaceBatch.activeDraftId;
-          this._draftSegmentCms = [...this._wallFaceBatch.activeCms];
+          this._activeWallChainId = `chain-${Date.now().toString(36)}`;
+          this._activeWallChainPartitionIds = [...this._wallFaceBatch.activePartitionIds];
+          this._wallChainSegmentCms = [...this._wallFaceBatch.activeCms];
         }
         this._roomDialog = true;
         break;
@@ -3948,7 +3916,6 @@ export class HouseplanCard extends LitElement {
     this._clearGeometryGesture();
     this._geometryHistory.clear();
     this._devicePositionHistory.clear();
-    this._resumeDraftBySpace = {};
     this._tip = null;
     this._hoverRoom = null;
     this._openingInfo = null;
@@ -7467,9 +7434,8 @@ export class HouseplanCard extends LitElement {
     if (this._mode !== 'view') this._setMode('view', false);
     this._pendingNavMode = null;
     this._geometryHistory.clear();
-    this._activeDraftId = null;
-    this._resumeDraftBySpace = {};
-    this._draftSegmentCms = [];
+    this._activeWallChainId = null;
+    this._wallChainSegmentCms = [];
     this._closingWallCm = null;
     this._drawWallField = null;
     this._showHidden = false;
@@ -7567,14 +7533,10 @@ export class HouseplanCard extends LitElement {
     return this._editorRuntimeOrThrow()._showPhysicalRange(max, min);
   }
 
-  private _draftSegmentCount(sp = this._curSpaceCfg as any): number {
-    return this._editorRuntimeOrThrow()._draftSegmentCount(sp);
-  }
-
   /**
    * Finish the active Walls chain because the user changed tool/mode/space.
-   * A saved draft is crash safety only; once explicitly finished, its segments
-   * become ordinary selectable partitions and can never auto-resume.
+   * Every finished segment is already an ordinary selectable partition;
+   * finishing only clears the session-only chain state.
    */
   /**
    * Collapse collinear partitions of one thickness (issue #229).
@@ -7598,7 +7560,7 @@ export class HouseplanCard extends LitElement {
     return this._editorRuntimeOrThrow()._activateMarkupTool(tool);
   }
 
-  private _limitReached(kind: 'draft' | 'partition' | 'column'): boolean {
+  private _limitReached(kind: 'partition' | 'column'): boolean {
     return this._editorRuntimeOrThrow()._limitReached(kind);
   }
 
@@ -7887,8 +7849,8 @@ export class HouseplanCard extends LitElement {
       this._physicalSel = null;
       this._physicalDrag = null;
       this._physicalRotate = null;
-      this._activeDraftId = null;
-      this._draftSegmentCms = [];
+      this._activeWallChainId = null;
+      this._wallChainSegmentCms = [];
       this._closingWallCm = null;
       this._openingDialog = null;
       this._resize?.reset();
@@ -7981,8 +7943,8 @@ export class HouseplanCard extends LitElement {
   }
 
   /** The same append limits guard both an ordinary point and an auto-close terminal point. */
-  private _canAppendRoomDraftPoint(): boolean {
-    return this._editorRuntimeOrThrow()._canAppendRoomDraftPoint();
+  private _canAppendWallPoint(): boolean {
+    return this._editorRuntimeOrThrow()._canAppendWallPoint();
   }
 
   private _markupClick(ev: MouseEvent): void {
@@ -7990,56 +7952,8 @@ export class HouseplanCard extends LitElement {
     return this._editorRuntime._markupClick(ev);
   }
 
-  private _draftSegmentCms: number[] = [];
+  private _wallChainSegmentCms: number[] = [];
   private _closingWallCm: number | null = null;
-
-  private _draftEndAt(
-    pt: number[], excludeId?: string,
-  ): { draft: RoomDraftCfg; reverse: boolean } | null {
-    return this._editorRuntimeOrThrow()._draftEndAt(pt, excludeId);
-  }
-
-  private _mergeDraftEndpoint(
-    hit: { draft: RoomDraftCfg; reverse: boolean },
-  ): void {
-    return this._editorRuntimeOrThrow()._mergeDraftEndpoint(hit);
-  }
-
-  /**
-   * Thickness array adopted from storage, brought to the length of the path.
-   *
-   * A record written before #234 may be shorter than the path: the resolver
-   * fills the gaps by the same rule the preview and the writers use, so a
-   * resumed draft cannot carry a hidden 15 cm into the next save. Reported to
-   * the console rather than to the user: the person did not cause it and cannot
-   * fix it.
-   */
-  private _adoptDraftCms(path: readonly (readonly number[])[], recorded: readonly (number | null | undefined)[], id?: string): number[] {
-    return this._editorRuntimeOrThrow()._adoptDraftCms(path, recorded, id);
-  }
-
-  /**
-   * Carry persisted draft identity by its physical carrier, not by array index.
-   * Resuming a chain from its opposite end reverses the path, and positional
-   * copying used to silently attach every ID to the neighbouring segment.
-   */
-  private _draftSegmentsForPath(
-    path: readonly (readonly number[])[], draft: any,
-    cms: readonly (number | null | undefined)[],
-  ): Array<{ id?: string; cm: number; [key: string]: any }> {
-    return this._editorRuntimeOrThrow()._draftSegmentsForPath(path, draft, cms);
-  }
-
-  /**
-   * Persist every completed draft segment immediately.
-   *
-   * The thickness of the new segment is already recorded by the caller (#234):
-   * this method must not decide whether to record it, or the array and the path
-   * drift apart the moment the toolbar field is mid-edit.
-   */
-  private _persistActiveDraftSegment(): void {
-    return this._editorRuntimeOrThrow()._persistActiveDraftSegment();
-  }
 
   private _activeWallSourceKey(index: number): string {
     return this._editorRuntimeOrThrow()._activeWallSourceKey(index);
@@ -8079,9 +7993,9 @@ export class HouseplanCard extends LitElement {
   }
 
   private _openPhysicalDialog(
-    kind: 'partition' | 'column' | 'draft', id: string, segment?: number,
+    kind: 'partition' | 'column', id: string,
   ): void {
-    return this._editorRuntimeOrThrow()._openPhysicalDialog(kind, id, segment);
+    return this._editorRuntimeOrThrow()._openPhysicalDialog(kind, id);
   }
 
   private _savePhysicalDialog = (): void => {
@@ -8094,14 +8008,6 @@ export class HouseplanCard extends LitElement {
 
   private _confirmPartitionDelete = (): void => {
     return this._editorRuntimeOrThrow()._confirmPartitionDelete();
-  }
-
-  private _deleteDraftWhole = (): Promise<void> => {
-    return this._editorRuntimeOrThrow()._deleteDraftWhole();
-  }
-
-  private _deleteDraftSegment = (): Promise<void> => {
-    return this._editorRuntimeOrThrow()._deleteDraftSegment();
   }
 
   private _physicalDown(ev: PointerEvent, kind: 'partition' | 'column', id: string): void {
@@ -8123,9 +8029,9 @@ export class HouseplanCard extends LitElement {
   }
 
   private _registerPhysicalTap(
-    kind: 'partition' | 'column' | 'draft', id: string, segment?: number,
+    kind: 'partition' | 'column', id: string,
   ): void {
-    return this._editorRuntimeOrThrow()._registerPhysicalTap(kind, id, segment);
+    return this._editorRuntimeOrThrow()._registerPhysicalTap(kind, id);
   }
 
   private _cancelPhysicalGesture(): void {
@@ -9023,7 +8929,7 @@ export class HouseplanCard extends LitElement {
     if (group) return `${base}:group:${group.id}:${this._editorSecondary?.groupGeneration}`;
     if (this._mode === 'plan') {
       const sel = this._physicalSel;
-      if (sel) return `${base}:selection:${sel.kind}:${sel.id}:${sel.segment ?? ''}`;
+      if (sel) return `${base}:selection:${sel.kind}:${sel.id}`;
       return `${base}:tool:${this._tool}:${this._path.length}`;
     }
     if (this._mode === 'decor') {
@@ -9831,7 +9737,7 @@ export class HouseplanCard extends LitElement {
     // in the draft, so it must stay editable after Cancel.
     return this._path.length >= 4
       && this._samePt(this._path[0], this._path[this._path.length - 1])
-      && (this._closingWallCm != null || !this._activeDraftId);
+      && (this._closingWallCm != null || !this._activeWallChainId);
   }
 
   private _markupMove(ev: MouseEvent): void {
@@ -9910,10 +9816,6 @@ export class HouseplanCard extends LitElement {
 
   private _cancelPath(): void {
     return this._editorRuntimeOrThrow()._cancelPath();
-  }
-
-  private _resumeLastDraft(): void {
-    return this._editorRuntimeOrThrow()._resumeLastDraft();
   }
 
   /** Cancel a room flow without applying geometry; graph batches keep their terminal draft. */
@@ -10015,7 +9917,7 @@ export class HouseplanCard extends LitElement {
     if (!space) return [];
     this._physicalBodiesR(space);
     const frame = this._physicalBodiesCache;
-    return frame ? [...frame.drafts, ...frame.partitions, ...frame.columns] : [];
+    return frame ? [...frame.partitions, ...frame.columns] : [];
   }
 
   /** Cached clean floor. A cheap bbox pass is the spatial index needed for
@@ -13273,7 +13175,7 @@ export class HouseplanCard extends LitElement {
 
   /**
    * Axis and node ink of the active wall/room chain. Every click persists the
-   * segment into `room_drafts`, whose opaque masonry paints ABOVE the markup
+   * segment into `partitions`, whose opaque masonry paints ABOVE the markup
    * layer, so drawing this ink inside `_renderMarkupLayer` left already-placed
    * segments looking like bare walls (#307). The chain ink therefore paints in
    * its own layer after the wall bodies and before the snap overlay: yellow

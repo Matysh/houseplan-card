@@ -448,7 +448,6 @@ export function createIsoStructuralSource(
     openingHosts,
     openingGeometryPolicy,
     partitions: input.space.partitions,
-    roomDrafts: input.space.room_drafts,
     columns: input.space.wall_columns,
     cellCm: input.cellCm,
     gridPitch: input.gridPitch,

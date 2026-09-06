@@ -120,43 +120,10 @@ const out = await page.evaluate(async () => {
   const originalConfirm = card._confirmDanger;
   let decision = false;
   card._confirmDanger = async () => decision;
-  let geometryCommits = 0;
-  editor._geometrySnapshot = () => ({ spaceId: 'danger-space' });
-  editor._commitPhysicalGeometry = () => { geometryCommits++; return true; };
-
   const baseSpace = () => ({
     id: 'danger-space', title: 'Danger space', cell_cm: 5,
     view_box: [0, 0, 1, 1], rooms: [], settings: {},
   });
-  const setDraft = (draft) => {
-    card._space = 'danger-space';
-    card._serverCfg = { spaces: [{ ...baseSpace(), room_drafts: [draft] }], markers: [], settings: {} };
-  };
-
-  setDraft({ id: 'draft-whole', points: [[0, 0], [1, 0]], segments: [{ cm: 10 }] });
-  card._physicalDialog = { kind: 'draft', id: 'draft-whole', segment: 0, cm: '10', length: '1 m' };
-  await editor._deleteDraftWhole();
-  const wholeCancel = card._serverCfg.spaces[0].room_drafts.length === 1 && geometryCommits === 0;
-  decision = true;
-  await editor._deleteDraftWhole();
-  result.draftWholeCancelAccept = wholeCancel
-    && !card._serverCfg.spaces[0].room_drafts && geometryCommits === 1;
-
-  decision = false;
-  setDraft({
-    id: 'draft-segment', points: [[0, 0], [0.5, 0], [1, 0]],
-    segments: [{ cm: 10 }, { cm: 10 }],
-  });
-  card._physicalDialog = { kind: 'draft', id: 'draft-segment', segment: 0, cm: '10', length: '1 m' };
-  await editor._deleteDraftSegment();
-  const segmentCancel = card._serverCfg.spaces[0].room_drafts[0].segments.length === 2
-    && geometryCommits === 1;
-  decision = true;
-  await editor._deleteDraftSegment();
-  result.draftSegmentCancelAccept = segmentCancel
-    && card._serverCfg.spaces[0].room_drafts[0].segments.length === 1
-    && geometryCommits === 2;
-
   let configSaves = 0;
   editor._saveConfigNow = async () => { configSaves++; };
   card._serverCfg = {
@@ -265,16 +232,6 @@ const out = await page.evaluate(async () => {
   result.unlockCancelAccept = unlockCancel && services.length === 1
     && services[0][0] === 'lock' && services[0][1] === 'unlock';
 
-  let resolveRace;
-  card._confirmDanger = () => new Promise((resolve) => { resolveRace = resolve; });
-  setDraft({ id: 'race-draft', points: [[0, 0], [1, 0]], segments: [{ cm: 10 }] });
-  card._physicalDialog = { kind: 'draft', id: 'race-draft', segment: 0, cm: '10', length: '1 m' };
-  const raced = editor._deleteDraftWhole();
-  card._space = 'changed-space';
-  resolveRace(true);
-  await raced;
-  result.staleContextCannotMutate = card._serverCfg.spaces[0].room_drafts.length === 1
-    && geometryCommits === 2;
   card._confirmDanger = originalConfirm;
   return result;
 });

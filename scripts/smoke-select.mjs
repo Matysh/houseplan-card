@@ -180,7 +180,7 @@ export function selectSmokes(diffText, { root = repoRoot, table, corpus } = {}) 
 
   // Одно распространённое имя — повод посмотреть, а не вывод. Сильной связь
   // считается либо по двум и более совпадениям, либо по одному редкому символу:
-  // `_draftSegmentCms` есть в восьми смоках и сам по себе адресует контракт,
+  // `_wallChainSegmentCms` есть в нескольких смоках и сам адресует контракт,
   // `_path` — в восемнадцати и адресует «здесь рисуют».
   const rareLimit = Math.max(1, Math.floor(smokes.size * 0.05));
   const direct = [];

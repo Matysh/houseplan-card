@@ -1,6 +1,7 @@
 /**
  * Issue #307: the active wall-chain axis and nodes must stay visible on
- * already-placed segments. Every click persists the segment into room_drafts,
+ * already-placed segments. Every click persists the segment as an ordinary
+ * partition,
  * whose opaque masonry paints above the markup layer; the chain ink therefore
  * lives in its own layer between the wall bodies and the snap overlay.
  */
@@ -15,13 +16,17 @@ const out = await page.evaluate(async () => {
   const update = async () => { card.requestUpdate(); await card.updateComplete; };
   const NORM_W = 1000;
   const chain = [[0.2, 0.3], [0.5, 0.3], [0.5, 0.55]];
+  const partitionIds = ['partition-307-a', 'partition-307-b'];
   const cfg = {
+    model_version: 10,
     spaces: [{
       id: 'ink', title: 'Ink', cell_cm: 5, view_box: [0, 0, 1, 0.7],
       rooms: [{ id: 'room', name: 'Room', area: null,
         poly: [[0.1, 0.1], [0.9, 0.1], [0.9, 0.25], [0.1, 0.25]] }],
-      room_drafts: [{ id: 'draft-307', points: chain,
-        segments: [{ cm: 20 }, { cm: 20 }] }],
+      wall_segments: [],
+      partitions: chain.slice(1).map((b, index) => ({
+        id: partitionIds[index], a: chain[index], b, cm: 20,
+      })),
     }],
     markers: [], settings: {},
   };
@@ -34,8 +39,9 @@ const out = await page.evaluate(async () => {
   card._setMode('plan');
   card._tool = 'draw';
   card._path = chain.map((p) => [p[0] * NORM_W, p[1] * NORM_W]);
-  card._activeDraftId = 'draft-307';
-  card._draftSegmentCms = [20, 20];
+  card._activeWallChainId = 'chain-307';
+  card._activeWallChainPartitionIds = partitionIds;
+  card._wallChainSegmentCms = [20, 20];
   card._clearPlanSnapHover();
   await update();
 
@@ -60,7 +66,7 @@ const out = await page.evaluate(async () => {
   // AC2: document order — wall bodies → chain ink → snap overlay.
   const after = (a, b) => !!(a && b
     && (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING));
-  result.draftHasBody = bodies.length > 0;
+  result.chainHasBody = bodies.length > 0;
   result.inkAboveBodies = bodies.every((body) => after(body, pathline));
   result.inkBelowSnapOverlay = after(pathline, overlay);
   // Pixel probes read the composited stage: the persisted segment's midpoint
@@ -110,14 +116,23 @@ const pixels = await page.evaluate(async ([bytes, info]) => {
     const d = ctx.getImageData(Math.round(cx * scaleX), Math.round(cy * scaleY), 1, 1).data;
     return [d[0], d[1], d[2]];
   };
+  const around = ([cx, cy], predicate, radius = 4) => {
+    const px = Math.round(cx * scaleX);
+    const py = Math.round(cy * scaleY);
+    for (let dy = -radius; dy <= radius; dy++) for (let dx = -radius; dx <= radius; dx++) {
+      const d = ctx.getImageData(px + dx, py + dy, 1, 1).data;
+      if (predicate([d[0], d[1], d[2]])) return true;
+    }
+    return false;
+  };
   const yellowish = ([r, g, b]) => r > 200 && g > 130 && g < 220 && b < 120;
   // The node dot is tiny at this zoom: its centre may land on the dark rim
   // (#4a2800) instead of the yellow fill. Warm ink of either kind passes;
   // masonry (cold white) and the background (blue-tinted) do not.
   const warmInk = ([r, g, b]) => r > 110 && r > g && g > b && b < 130;
   return {
-    axisMidYellow: yellowish(at(info.probes.axisMid)),
-    nodeYellow: warmInk(at(info.probes.node)),
+    axisMidYellow: around(info.probes.axisMid, yellowish),
+    nodeYellow: around(info.probes.node, warmInk, 12),
     axisMidRgb: at(info.probes.axisMid),
     nodeRgb: at(info.probes.node),
   };

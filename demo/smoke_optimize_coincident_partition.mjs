@@ -70,7 +70,7 @@ const out = await page.evaluate(async () => {
   result.previewIsExact = !!preview?.changed && preview.preflight?.ok === true
     && preview.report.partitionsReconciled === 1
     && preview.report.openingsRehosted === 1
-    && preview.config.model_version === 9
+    && preview.config.model_version === 10
     && previewSpace.partitions == null
     && wallHostResolves(previewSpace, previewSpace.openings[0]);
   result.previewDoesNotWrite = sent.length === 0

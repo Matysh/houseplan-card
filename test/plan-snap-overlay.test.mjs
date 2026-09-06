@@ -9,27 +9,23 @@ import {
   resolveStrictPlanSnap,
 } from '../test-build/plan-snap-overlay.js';
 
-const space = (patch = {}) => ({ rooms: [], room_drafts: [], partitions: [], ...patch });
+const space = (patch = {}) => ({ rooms: [], partitions: [], ...patch });
 const closePoint = (actual, expected, epsilon = 1e-6) => {
   assert.ok(Math.abs(actual[0] - expected[0]) <= epsilon, `${actual[0]} != ${expected[0]}`);
   assert.ok(Math.abs(actual[1] - expected[1]) <= epsilon, `${actual[1]} != ${expected[1]}`);
 };
 
-test('collector includes room rectangles, polygons, saved drafts and partitions', () => {
+test('collector includes room rectangles, polygons and ordinary partitions', () => {
   const geometry = buildPlanSnapGeometry({
     space: space({
       rooms: [
         { id: 'rect', x: 0, y: 0, w: 100, h: 50 },
         { id: 'poly', poly: [[200, 0], [250, 0], [225, 50]] },
       ],
-      room_drafts: [{
-        id: 'saved', points: [[0, 100], [50, 100], [50, 150]], segments: [{ cm: 15 }, { cm: 15 }],
-      }],
       partitions: [{ id: 'partition', a: [100, 100], b: [150, 100], cm: 10 }],
     }),
   });
-  assert.equal(geometry.segments.length, 10);
-  assert.ok(geometry.endpoints.some((entry) => entry.point[0] === 0 && entry.point[1] === 100));
+  assert.equal(geometry.segments.length, 8);
   assert.ok(geometry.endpoints.some((entry) => entry.point[0] === 150 && entry.point[1] === 100));
 });
 
@@ -72,19 +68,17 @@ test('coincident endpoints and axes are deduplicated independently of direction'
   assert.equal(geometry.endpoints.length, 3);
 });
 
-test('active draft and degenerate inputs are excluded', () => {
+test('degenerate partitions are excluded while ordinary walls remain snap targets', () => {
   const geometry = buildPlanSnapGeometry({
     space: space({
-      room_drafts: [
-        { id: 'active', points: [[0, 0], [100, 0]], segments: [{ cm: 15 }] },
-        { id: 'saved', points: [[0, 10], [100, 10]], segments: [{ cm: 15 }] },
+      partitions: [
+        { id: 'saved', a: [0, 10], b: [100, 10], cm: 15 },
+        { id: 'zero', a: [20, 20], b: [20, 20], cm: 10 },
       ],
-      partitions: [{ id: 'zero', a: [20, 20], b: [20, 20], cm: 10 }],
     }),
-    activeDraftId: 'active',
   });
   assert.equal(geometry.segments.length, 1);
-  assert.equal(geometry.segments[0].sourceId, 'saved:0');
+  assert.equal(geometry.segments[0].sourceId, 'saved');
 });
 
 test('room cuts leave solid intervals but do not create cut-boundary endpoints', () => {
@@ -150,7 +144,7 @@ test('shared-room interval contains endpoints and interior wall-bound points onl
     'collinearity outside the closed segment is insufficient');
 });
 
-test('shared-room interval respects cuts and rejects draft or partition-only axes', () => {
+test('shared-room interval respects cuts and rejects partition-only axes', () => {
   const cut = buildPlanSnapGeometry({
     space: space({ rooms: [{ id: 'room', x: 0, y: 0, w: 100, h: 100 }] }),
     roomCuts: [[40, 0, 60, 0]],
@@ -161,11 +155,9 @@ test('shared-room interval respects cuts and rejects draft or partition-only axe
 
   const independent = buildPlanSnapGeometry({
     space: space({
-      room_drafts: [{ id: 'draft', points: [[0, 10], [100, 10]], segments: [{ cm: 15 }] }],
       partitions: [{ id: 'partition', a: [0, 20], b: [100, 20], cm: 15 }],
     }),
   });
-  assert.equal(findSharedRoomSnapSegment(independent, [0, 10], [100, 10]), null);
   assert.equal(findSharedRoomSnapSegment(independent, [0, 20], [100, 20]), null);
 });
 
@@ -183,22 +175,17 @@ test('a completed room remains the authority for a coincident deduplicated axis'
 test('issue 296 diagnostic projection preserves hidden independent source identity', () => {
   const input = space({
     rooms: [{ id: 'room', x: 0, y: 0, w: 100, h: 100 }],
-    room_drafts: [{
-      id: 'draft', points: [[25, 0], [75, 0]], segments: [{ cm: 15 }],
-    }],
     partitions: [
       { id: 'hidden', a: [0, 0], b: [100, 0], cm: 15 },
       { id: 'free', a: [0, 50], b: [100, 50], cm: 15 },
     ],
   });
   const diagnostic = buildHiddenWallDiagnosticGeometry({ space: input });
-  assert.deepEqual(diagnostic.segments.map((segment) => segment.sourceId), [
-    'draft:0', 'hidden',
-  ]);
-  assert.equal(diagnostic.endpoints.length, 4,
+  assert.deepEqual(diagnostic.segments.map((segment) => segment.sourceId), ['hidden']);
+  assert.equal(diagnostic.endpoints.length, 2,
     'source endpoints must not be deduplicated into room authority');
   assert.deepEqual(new Set(diagnostic.endpoints.map((endpoint) => endpoint.sourceId)),
-    new Set(['draft:0', 'hidden']));
+    new Set(['hidden']));
   assert.equal(diagnostic.segments.some((segment) => segment.sourceId === 'free'), false);
 
   const snap = buildPlanSnapGeometry({ space: input });
@@ -206,16 +193,12 @@ test('issue 296 diagnostic projection preserves hidden independent source identi
     'diagnostics must not change the established snap authority');
 });
 
-test('issue 296 active drafts and point-only contacts are not diagnostic walls', () => {
+test('issue 296 point-only contacts are not diagnostic walls', () => {
   const diagnostic = buildHiddenWallDiagnosticGeometry({
     space: space({
       rooms: [{ id: 'room', x: 0, y: 0, w: 100, h: 100 }],
-      room_drafts: [{
-        id: 'active', points: [[0, 0], [100, 0]], segments: [{ cm: 15 }],
-      }],
       partitions: [{ id: 'touch', a: [100, 0], b: [150, 0], cm: 15 }],
     }),
-    activeDraftId: 'active',
   });
   assert.deepEqual(diagnostic, { segments: [], endpoints: [] });
 });

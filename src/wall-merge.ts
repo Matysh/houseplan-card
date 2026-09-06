@@ -27,8 +27,6 @@ export interface MergeGeometry {
   /** Every room outline, in the same coordinates as the partitions. */
   roomPolygons?: readonly (readonly (readonly number[])[])[];
   columns?: readonly WallColumnCfg[];
-  /** Saved unfinished contours: only their endpoints anchor a junction. */
-  draftEnds?: readonly (readonly number[])[];
 }
 
 export interface MergeOptions {
@@ -93,9 +91,9 @@ function distToSegment(p: readonly number[], a: readonly number[], b: readonly n
 /**
  * Does anything else meet this point, so the node has a reason to stay?
  *
- * The four reasons of spec §8.2, all measured with the same EPS_JOIN: a third
- * partition, a room edge, a column, the end of a saved draft. A room counts by
- * its SIDE, not only by its corners — a partition meeting the middle of a room
+ * The three reasons of spec §8.2, all measured with the same EPS_JOIN: a third
+ * partition, a room edge, or a column. A room counts by its SIDE, not only by
+ * its corners — a partition meeting the middle of a room
  * wall is an ordinary T-junction (docs/specs/141-wall-junctions.md).
  */
 export function junctionAt(
@@ -117,9 +115,6 @@ export function junctionAt(
   }
   for (const column of geometry?.columns || []) {
     if (finite(column?.center) && dist(point, column.center) <= join) return true;
-  }
-  for (const end of geometry?.draftEnds || []) {
-    if (finite(end) && dist(point, end) <= join) return true;
   }
   return false;
 }
@@ -271,14 +266,10 @@ export function applyOpeningMoves(
  * ever found (review CODE-REVIEW-229-r1/r2). One function, one set of
  * coordinates, one place to get it wrong.
  *
- * `excludeDraftId` is the chain being finished right now: it is already
- * persisted in `room_drafts`, and its own ends are not a foreign junction —
- * the same exclusion `plan-snap-overlay` makes.
  */
 export function spaceMergeGeometry(
-  space: any, options?: { excludeDraftId?: string | null },
+  space: any,
 ): MergeGeometry {
-  const exclude = options?.excludeDraftId || null;
   return {
     // `roomPoly` hands back the raw config polygon: rooms are stored in the
     // same normalised coordinates as partitions, so nothing is rescaled here.
@@ -286,10 +277,5 @@ export function spaceMergeGeometry(
       .map((room: any) => roomPoly(room))
       .filter((poly: number[][] | null): poly is number[][] => !!poly),
     columns: space?.wall_columns || [],
-    draftEnds: (space?.room_drafts || []).flatMap((draft: any) => {
-      if (exclude && draft?.id === exclude) return [];
-      const points = draft?.points || [];
-      return points.length ? [points[0], points[points.length - 1]] : [];
-    }),
   };
 }

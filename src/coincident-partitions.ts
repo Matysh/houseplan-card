@@ -1,6 +1,6 @@
 /**
- * Lossless explicit-Optimize reconciliation for independent walls and saved
- * wall chains which are physically hidden by canonical room masonry.
+ * Lossless reconciliation for independent walls which are physically hidden
+ * by canonical room masonry.
  * Runtime renderers never call this module and it never mutates its inputs.
  */
 import {
@@ -22,16 +22,14 @@ import {
   type WallEntry,
   type WallInterval,
 } from './wall-thickness';
-import type { OpeningCfg, PartitionCfg, RoomDraftCfg, SpaceModel } from './types';
+import type { OpeningCfg, PartitionCfg, SpaceModel } from './types';
 
 export interface CoincidentPartitionResult {
   walls: WallEntry[];
   partitions: PartitionCfg[];
   openings: OpeningCfg[];
-  roomDrafts: RoomDraftCfg[];
   partitionsReconciled: number;
   openingsRehosted: number;
-  removedDrafts: number;
 }
 
 export interface CoincidentPartitionOptions {
@@ -39,6 +37,8 @@ export interface CoincidentPartitionOptions {
   cellCm: number;
   gridPitch: number;
   coordScale: number;
+  /** Room creation consumes every coincident carrier, including duplicates. */
+  allowCoincidentPartitions?: boolean;
 }
 
 interface AxisRange { lo: number; hi: number }
@@ -200,47 +200,9 @@ const mergePieces = (pieces: AtomicPiece[], eps: number): PieceRun[] => {
   return runs;
 };
 
-/** Point count and closure are deliberately irrelevant. */
-const redundantDraftIds = (
-  rawDrafts: readonly RoomDraftCfg[], modelDrafts: readonly RoomDraftCfg[],
-  intervals: readonly WallInterval[], eps: number,
-): Set<string> => {
-  const rawById = new Map(rawDrafts.map((draft) => [draft.id, draft]));
-  const out = new Set<string>();
-  for (const draft of modelDrafts) {
-    const raw = rawById.get(draft.id);
-    if (!raw || !Array.isArray(draft.points) || draft.points.length < 2
-        || draft.segments.length !== draft.points.length - 1) continue;
-    let safe = true;
-    for (let index = 0; index + 1 < draft.points.length && safe; index++) {
-      const a = draft.points[index], b = draft.points[index + 1];
-      const cm = Number(draft.segments[index]?.cm);
-      if (!finitePoint(a) || !finitePoint(b) || !(cm > 0)) { safe = false; break; }
-      const length = Math.hypot(b[0] - a[0], b[1] - a[1]);
-      if (!(length > eps)) { safe = false; break; }
-      const coverage = intervals.flatMap((interval) => {
-        const effectiveCm = interval.cm > 0 ? interval.cm : DRAW_WALL_DEFAULT_CM;
-        if (interval.open || (interval.kind !== 'outer' && interval.kind !== 'shared')
-            || effectiveCm + eps < cm) return [];
-        const range = collinearRange(a, b, interval.a, interval.b, eps);
-        return range ? [range] : [];
-      }).sort((first, second) => first.lo - second.lo || first.hi - second.hi);
-      let reached = 0;
-      for (const range of coverage) {
-        if (range.lo > reached + eps) break;
-        reached = Math.max(reached, range.hi);
-        if (reached >= length - eps) break;
-      }
-      if (reached < length - eps) safe = false;
-    }
-    if (safe) out.add(draft.id);
-  }
-  return out;
-};
-
 export function reconcileCoincidentPartitions(
   rawSpace: any,
-  model: Pick<SpaceModel, 'rooms' | 'partitions' | 'room_drafts' | 'wall_columns'>,
+  model: Pick<SpaceModel, 'rooms' | 'partitions' | 'wall_columns'>,
   wallsInput: WallEntry[] | null | undefined,
   openCuts: number[][],
   options: CoincidentPartitionOptions,
@@ -248,26 +210,16 @@ export function reconcileCoincidentPartitions(
   const walls0 = wallsInput || [];
   const partitions0 = (Array.isArray(rawSpace?.partitions) ? rawSpace.partitions : []) as PartitionCfg[];
   const openings0 = (Array.isArray(rawSpace?.openings) ? rawSpace.openings : []) as OpeningCfg[];
-  const roomDrafts0 = (Array.isArray(rawSpace?.room_drafts)
-    ? rawSpace.room_drafts : []) as RoomDraftCfg[];
   const empty = {
-    walls: walls0, partitions: partitions0, openings: openings0, roomDrafts: roomDrafts0,
-    partitionsReconciled: 0, openingsRehosted: 0, removedDrafts: 0,
+    walls: walls0, partitions: partitions0, openings: openings0,
+    partitionsReconciled: 0, openingsRehosted: 0,
   };
-  if (!partitions0.length && !roomDrafts0.length) return empty;
+  if (!partitions0.length) return empty;
 
   const eps = Math.max(options.gridPitch * 0.0002, 1e-9);
   let walls = walls0;
   let partitions = partitions0;
   let openings = openings0;
-  const initialIntervals = wallIntervals(
-    model.rooms, walls, openCuts,
-    options.pitch, options.cellCm, options.gridPitch, options.coordScale,
-  );
-  const removedDraftIds = redundantDraftIds(
-    roomDrafts0, model.room_drafts, initialIntervals, eps,
-  );
-  const roomDrafts = roomDrafts0.filter((draft) => !removedDraftIds.has(draft.id));
   let partitionsReconciled = 0;
   let openingsRehosted = 0;
 
@@ -277,7 +229,8 @@ export function reconcileCoincidentPartitions(
     if (!rawPartitionKnown(rawPartition)) continue;
     const source = modelById.get(rawPartition.id);
     if (!source || !finitePoint(source.a) || !finitePoint(source.b)
-        || !Number.isFinite(source.cm) || !(source.cm > 0)) continue;
+        || !Number.isFinite(source.cm)
+        || (options.allowCoincidentPartitions ? source.cm < 0 : !(source.cm > 0))) continue;
 
     const [origin, end] = comparePoint(source.a, source.b) <= 0
       ? [[source.a[0], source.a[1]], [source.b[0], source.b[1]]]
@@ -328,7 +281,6 @@ export function reconcileCoincidentPartitions(
       partition, options.coordScale,
     ));
     const otherPartitions = currentModelPartitions.filter((item) => item.id !== source.id);
-    const activeDrafts = model.room_drafts.filter((draft) => !removedDraftIds.has(draft.id));
     const pieces: AtomicPiece[] = [];
     for (let index = 0; index + 1 < sortedBreakpoints.length; index++) {
       const lo = sortedBreakpoints[index], hi = sortedBreakpoints[index + 1];
@@ -342,7 +294,9 @@ export function reconcileCoincidentPartitions(
       const solid = [...byRoom.values()];
       const kinds = new Set(solid.map((owner) => owner.kind));
       const cms = new Set(solid.map((owner) => (
-        owner.cm > 0 ? owner.cm : DRAW_WALL_DEFAULT_CM
+        options.allowCoincidentPartitions
+          ? owner.cm
+          : owner.cm > 0 ? owner.cm : DRAW_WALL_DEFAULT_CM
       )));
       const kind = solid[0]?.kind;
       const roomIds = [...byRoom.keys()].sort();
@@ -353,14 +307,12 @@ export function reconcileCoincidentPartitions(
       const blockedByPartition = otherPartitions.some((other) => (
         !!collinearRange(a, b, other.a, other.b, eps)
       ));
-      const blockedByDraft = activeDrafts.some((draft) => draft.points.some((point, at) => (
-        at + 1 < draft.points.length
-        && !!collinearRange(a, b, point, draft.points[at + 1], eps)
-      )));
-      const safe = proofOk && !blockedByPartition && !blockedByDraft
+      const safe = proofOk && (options.allowCoincidentPartitions || !blockedByPartition)
         && !columnBlocks(piecePartition, model.wall_columns, options, eps);
       const roomCm = proofOk
-        ? (solid[0].cm > 0 ? solid[0].cm : DRAW_WALL_DEFAULT_CM)
+        ? (options.allowCoincidentPartitions
+            ? solid[0].cm
+            : solid[0].cm > 0 ? solid[0].cm : DRAW_WALL_DEFAULT_CM)
         : 0;
       const finalCm = proofOk ? Math.max(roomCm, source.cm) : source.cm;
       pieces.push({
@@ -545,7 +497,6 @@ export function reconcileCoincidentPartitions(
   }
 
   return {
-    walls, partitions, openings, roomDrafts,
-    partitionsReconciled, openingsRehosted, removedDrafts: removedDraftIds.size,
+    walls, partitions, openings, partitionsReconciled, openingsRehosted,
   };
 }

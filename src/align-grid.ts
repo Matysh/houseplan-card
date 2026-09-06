@@ -88,8 +88,6 @@ export interface AlignReport {
   maxSpace: string;
   /** Openings whose stored `angle` is corrected — possibly without moving. */
   rotated: number;
-  /** Drafts which collapse below two distinct grid points and cannot remain valid. */
-  removedDrafts: number;
 }
 
 export interface AlignResult {
@@ -151,7 +149,6 @@ export function alignAllToGrid(
   const layout: Record<string, any> = JSON.parse(JSON.stringify(layoutIn || {}));
   let moved = 0, total = 0, maxShift = 0, maxShiftCm = 0, maxSpace = '', rotated = 0;
   let coordsCanonicalized = 0;
-  let removedDrafts = 0;
 
   /** Count only a near-node value which was actually written to the candidate. */
   const noteCanonicalCoordinate = (before: number, after: number): void => {
@@ -217,47 +214,6 @@ export function alignAllToGrid(
         noteCanonicalCoordinate(y0 + h0, ny + nh);
       }
       note(d, cell, sid);
-    }
-
-    // ---- saved open room contours ------------------------------------
-    for (const draft of sp.room_drafts || []) {
-      total++;
-      let d = 0;
-      const sourcePoints: number[][] = draft.points || [];
-      const snapped = sourcePoints.map((p: number[]) => {
-        const q = [snapN(p[0]), snapN(p[1])];
-        d = Math.max(d, dist(p[0], p[1], q[0], q[1]));
-        return q;
-      });
-      const points: number[][] = snapped.length ? [snapped[0]] : [];
-      const written: Array<[number[], number[]]> = snapped.length
-        ? [[sourcePoints[0], snapped[0]]]
-        : [];
-      const segments: any[] = [];
-      for (let i = 0; i + 1 < snapped.length; i++) {
-        const next = snapped[i + 1], last = points[points.length - 1];
-        if (last && dist(last[0], last[1], next[0], next[1]) <= EPS) continue;
-        points.push(next);
-        written.push([sourcePoints[i + 1], next]);
-        segments.push({
-          ...(draft.segments?.[i] || {}),
-          cm: Number.isFinite(Number(draft.segments?.[i]?.cm))
-            ? Math.max(0, Math.min(100, Number(draft.segments[i].cm)))
-            : 15,
-        });
-      }
-      draft.points = points;
-      draft.segments = segments;
-      if (points.length >= 2) {
-        for (const [before, after] of written) noteCanonicalPoint(before, after);
-      }
-      note(d, cell, sid);
-    }
-    if (Array.isArray(sp.room_drafts)) {
-      const before = sp.room_drafts.length;
-      sp.room_drafts = sp.room_drafts.filter((d: any) => d.points?.length >= 2);
-      removedDrafts += before - sp.room_drafts.length;
-      if (!sp.room_drafts.length) delete sp.room_drafts;
     }
 
     // ---- independent partitions and columns --------------------------
@@ -395,7 +351,7 @@ export function alignAllToGrid(
     spaces, layout,
     report: {
       moved, coordsCanonicalized, total, maxShift, maxShiftCm, maxSpace,
-      rotated, removedDrafts,
+      rotated,
     },
     changed: moved > 0 || coordsCanonicalized > 0,
   };

@@ -517,7 +517,7 @@ not be added to an individual sink.
                "view_box":[4],
                "rooms":[{"id","name","area","poly|x/y/w/h","wall_ids":[…],"settings"}],
                "wall_segments":[{"id","a","b","cm","owners":[…]}],
-               "room_drafts":[…], "partitions":[…], "wall_columns":[…],
+               "partitions":[…], "wall_columns":[…],
                "openings":[…], "decor":[…], "settings":{…} }],
   "markers": [{ "id","binding":"device:<id>|entity:<eid>|virtual","hidden","removed",
                 "name","icon","display","controls","is_light","glow_color","tap_action",
@@ -545,8 +545,9 @@ quotas, nothing is ever deleted for being old (docs/SCOPE.md).
 
 ## Room and independent wall geometry
 
-Model v9 separates a wall's durable identity from its current geometric lookup
-and gives zero thickness one canonical meaning (#282, #306).
+Model v10 separates a wall's durable identity from its current geometric lookup,
+gives zero thickness one canonical meaning and stores every accepted open-chain
+edge as an ordinary partition (#282, #306, #478).
 `wall_segments[]` is the authoritative catalog of atomic room-wall
 intervals; `rooms[].wall_ids[]` owns their ordered contour references. The
 historical polygon and positive-only `walls[]` list remain render/read compatibility
@@ -561,29 +562,28 @@ a local candidate, canonicalizes coordinates, materialises/updates the wall
 catalog, validates references and only then commits one config transaction.
 Initial legacy IDs are deterministic so frontend/backend and repeated migrations
 converge; genuinely new segments use UUIDs. Split lineage assigns the old ID
-to one deterministic child, and draft promotion carries the draft ID into the
-resulting wall or partition. Ambiguity fails closed with no partial config,
+to one deterministic child. Ambiguity fails closed with no partial config,
 history or revision update. `scripts/mutation-gate.mjs` guards every structural
 writer entrance.
 
-Draft sanitation and Undo preserve the complete record of every surviving
-segment, including its stable ID; only a genuinely new edge receives a new
-identity. The backend stale-client guard compares only room/compatibility
-contour geometry with `wall_segments[]`. Drafts, partitions, columns and
+Active-chain Undo preserves the complete record of every surviving partition,
+including its stable ID; only a genuinely new edge receives a new identity.
+The backend stale-client guard compares only room/compatibility contour geometry
+with `wall_segments[]`. Partitions, columns and
 explicitly hosted openings own their identity and may be written without a
 contour-catalog change, subject to the full schema (#314).
 
 Room-boundary walls remain *derived* from room outlines (`roomEdges`, deduped by
 `segKey`), so deleting a room keeps the boundaries its neighbours still
-contribute. Three explicitly typed exceptions are stored per space:
-`room_drafts` for crash-safe unfinished Walls chains, `partitions` for finished
-independent wall segments and `wall_columns` for square/circular columns.
+contribute. Two explicitly typed exceptions are stored per space: `partitions`
+for independent wall segments (including accepted edges of the active Walls
+chain) and `wall_columns` for square/circular columns.
 They do not create a room or HA area and never split a room implicitly. Their
 physical bodies are unioned with room walls for rendering and light occlusion,
 and subtracted from clean room floor area. A finished partition may explicitly
-host a door, window, gate or passage; unfinished drafts and columns may not.
+host a door, window, gate or passage; columns may not.
 
-`cm:0` is valid for contour atoms, drafts and partitions. It preserves the
+`cm:0` is valid for contour atoms and partitions. It preserves the
 structural axis and stable identity but contributes no masonry body, floor
 subtraction, paper, opening tunnel or opening host. `space.zero_wall_style`
 selects one policy for all of them: missing/unknown and `dashed` paint a dash
@@ -591,9 +591,10 @@ and omit the segment from Glow/sun barriers; `solid` paints one line and adds
 the exact axis as a zero-area visibility barrier. The resolver in
 `src/zero-walls.ts` is shared by flat/static/isometric presentation and light.
 Legacy `open_spans` (or `rooms[].open_to` only when spans are absent) are
-read-projected and atomized into `wall_segments[].cm=0` on the v8→v9 structural
-write. Canonical v9 writes remove both deprecated fields; existing `cm:0`
-receives the same policy regardless of its provenance.
+read-projected and atomized into `wall_segments[].cm=0` by the structural
+migration introduced in v9. Canonical v10 writes remove both deprecated fields
+and `room_drafts`; existing `cm:0` receives the same policy regardless of its
+provenance.
 
 Independent linear objects have two deliberate projections. Raw flat-capped
 quads preserve source identity for hit/selection/drag/properties/delete/history
@@ -857,8 +858,7 @@ boundaries. Exact one-owner outer or two-owner shared spans may be absorbed;
 ambiguous spans are recombined into deterministic residual partitions and keep
 their hosted openings. Converted openings are materialised onto ordinary room
 walls, and `max(roomCm, partitionCm)` keeps the original centred physical union
-envelope. Saved drafts use a separate all-or-nothing full-coverage proof.
-Unknown partition semantics, gaps, overlapping openings and adjacent
+envelope. Unknown partition semantics, gaps, overlapping openings and adjacent
 independent bodies fail closed. The candidate then crosses the existing whole-plan
 geometry preflight and one atomic Optimize write/Undo boundary. No render or
 ordinary save path invokes this pass, so `PLAN_MODEL_VERSION` remains unchanged.
@@ -875,30 +875,32 @@ rejected atomically while any opening uses that target. Hit widths and junction
 ambiguity are still measured in CSS pixels and converted through the live
 viewBox, so the editable target does not collapse to the visual one-pixel line.
 
-Every completed Walls segment is persisted in `room_drafts`, including the
-thickness selected when that segment was placed. Changing Plan tool, editor or
-floor explicitly finishes an open chain by converting it to ordinary
-`partitions` in one history/save transaction; re-selecting Walls is a no-op.
+Every completed Walls segment is persisted immediately as an ordinary
+`partition`, including the thickness selected when that segment was placed.
+The ordered path, chain id and participating partition ids are session-only.
+Changing Plan tool, editor or floor finishes an open chain by clearing that
+session state; the already accepted walls stay unchanged and re-selecting Walls
+is a no-op.
 Pan, pinch, pointer cancellation and suppressed clicks never finish a chain or
 append a segment. A finished open chain is ordinary masonry and is not resumed
-as a draft. Reload recovery may resume only a still-active persisted draft.
+after reload or remount.
 
 The intermediate click write has a deliberately narrower proof boundary
-(#461). On an already materialised model-v9 document,
-`commitDraftSegmentGeometry()` first proves an exact one-segment active-draft
-append, then builds matching previous/candidate projections containing the new
+(#461). On an already materialised model-v10 document,
+`commitWallChainSegmentGeometry()` first proves an exact one-partition append,
+then builds matching previous/candidate projections containing the new
 segment, incident junction rays, its collinear run and only physical envelopes
 that can interact with that component. It runs the normal production physical
 check once on that local candidate and passes the resulting wall geometry into
 the junction check instead of rebuilding the union. Unknown or mixed writes and
-pre-v9 documents fall back to `_commitPhysicalGeometry()`. Finishing, merging
-or promoting the chain always uses an independent full-space barrier; the local
+pre-v10 documents fall back to `_commitPhysicalGeometry()`. Room creation from
+a closed chain always uses an independent full-space barrier; the local
 verdict is never a terminal approval. Both routes share the existing history,
 pending-write and backend-rejection rollback contract and still send the full
 configuration.
 
 `src/wall-face-graph.ts` derives an immutable planar graph from solid room edges
-after opening cuts, partitions, inactive drafts and the active chain. A sweep
+and partitions, including the active chain. A sweep
 broadphase atomizes endpoint, T, X and collinear intersections; deterministic
 half-edge traversal extracts bounded canonical faces. The click handler diffs
 the graph before/after the latest segment and offers only newly created faces
@@ -1021,7 +1023,7 @@ The batch helper removes already-painted intervals from later overlapping
 openings, preventing double alpha. A base patch beneath Glow/sun repeats the
 same frame-local effective fill as the room shape. Outer openings give the one
 room both halves; shared openings use a local-coordinate hard stop at `y=0`.
-Virtual spans, unfinished drafts and zero-thickness walls are ignored; legacy
+Virtual spans and zero-thickness walls are ignored; legacy
 spans are clipped per atomic body.
 
 The same resolved host drives placement, symbol face, full-depth partition cut,
@@ -1528,13 +1530,13 @@ its configured space.
   touching translucent rectangles. The negative and positive halves use the
   same nonzero winding across their tiny centre overlap, so fractional SVG
   rasterisation cannot cancel the fill into a seam or stack its opacity.
-- **Zero-thickness walls** (#306): canonical v9 stores them only as
-  `wall_segments[]`, `partitions[]` or draft segments with `cm:0`.
+- **Zero-thickness walls** (#306): canonical v10 stores them only as
+  `wall_segments[]` or `partitions[]` with `cm:0`.
   `resolveZeroWalls()` supplies their exact line geometry and the space-level
   solid/dashed light policy to every renderer, Glow and sun. In View a line is
   painted before thick bodies so adjoining masonry masks its centreline ends;
   editors paint it after the bodies. `open_spans` and `room.open_to` are
-  compatibility reads only and disappear together after a successful v9
+  compatibility reads only and disappear together after a successful current
   structural migration.
 - **Marker controls** (v1.36): persisted `marker.controls[]` is a lossless,
   ordered external-target list. Opening and saving the dialog preserves

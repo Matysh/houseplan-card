@@ -14,16 +14,9 @@ const res = await page.evaluate(async () => {
   // размера, 5 клеток = 25 см.
   const side = g * 5;
   const pts = [[cx, cy], [cx + side, cy], [cx + side, cy + side], [cx, cy + side]];
-  // 1) клики внутри комнаты больше не отклоняются
-  for (const p of pts) c._markupClick({ clientX: 0, clientY: 0, composedPath: () => [], ...{} , __pt: p });
-  // _markupClick берёт координаты из _svgPoint(ev) — подменим напрямую через _path:
-  c._path = [];
-  for (const p of pts) {
-    const before = c._path.length;
-    // эмулируем клик готовой точкой: повторим логику через прямой вызов невозможен — построим путь вручную и замкнём
-    c._path = [...c._path, p];
-    if (c._path.length === before) break;
-  }
+  // 1) цепочка внутри комнаты больше не отклоняется. Каждый завершённый
+  // отрезок в текущей модели уже является ordinary partition.
+  c._path = [...pts];
   out.pointsAccepted = c._path.length === 4;
   // замыкание: проверка пересечений должна пройти (вложенность легальна)
   const clash = c._overlapRoom([...c._path]);
@@ -36,7 +29,19 @@ const res = await page.evaluate(async () => {
   const cross = [[minX - g * 2, cy], [cx, cy], [cx, cy + side], [minX - g * 2, cy + side]];
   out.partialStillRejected = !!c._overlapRoom(cross);
   // 2) сохранить остров как комнату без зоны (замкнуть контур)
+  const islandIds = pts.map((_, index) => `island-wall-${index}`);
+  const space = c._curSpaceCfg;
+  space.partitions = [...(space.partitions || []), ...pts.map((a, index) => ({
+    id: islandIds[index], a: [a[0] / 1000, a[1] / 1000],
+    b: [pts[(index + 1) % pts.length][0] / 1000, pts[(index + 1) % pts.length][1] / 1000],
+    cm: 15,
+  }))];
+  c._activeWallChainId = 'island-chain';
+  c._activeWallChainPartitionIds = islandIds;
+  c._wallChainSegmentCms = [15, 15, 15];
+  c._closingWallCm = 15;
   c._path = [...pts, pts[0]];
+  c._cfgEpoch++; c._modelCache = null;
   c._nameSel = 'Колонна'; c._areaSel = '';
   c._commitRoom();
   await c.updateComplete;

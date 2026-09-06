@@ -70,8 +70,7 @@ _LIVE_TEXT_ENTITY = re.compile(r"^[a-z0-9_]+\.[a-z0-9_]+$")
 _LIVE_TEXT_ATTRIBUTE = re.compile(r"^[a-zA-Z0-9_.-]+$")
 _PLAN_ONLY_DASH = "—"
 _IMPORT_ID_NAMESPACES = {
-    "space", "room", "marker", "partition", "wall", "opening", "decor", "draft",
-    "draft_segment", "column",
+    "space", "room", "marker", "partition", "wall", "opening", "decor", "column",
 }
 _MAX_IMPORT_LINEAGE_DEPTH = 16
 _REPORT_EXAMPLE_LIMIT = 24
@@ -266,7 +265,6 @@ def _project_plan_only_space(space: dict[str, Any]) -> dict[str, Any]:
     collections: tuple[tuple[str, tuple[str, ...]], ...] = (
         ("walls", ("key", "cm", "a", "b")),
         ("wall_segments", ("id", "a", "b", "cm")),
-        ("room_drafts", ("id", "points", "segments")),
         ("partitions", ("id", "a", "b", "cm")),
         ("wall_columns", ("id", "shape", "center", "cm", "angle")),
         ("open_spans", ("a", "b")),
@@ -277,11 +275,6 @@ def _project_plan_only_space(space: dict[str, Any]) -> dict[str, Any]:
         values = []
         for item in space.get(name) or []:
             selected = _pick_fields(item, fields)
-            if name == "room_drafts" and "segments" in selected:
-                selected["segments"] = [
-                    _pick_fields(segment, ("id", "cm"))
-                    for segment in selected.get("segments") or []
-                ]
             values.append(selected)
         projected[name] = values
     if "openings" in space:
@@ -511,7 +504,16 @@ def create_export(
     # Read before voluptuous coercions: bool is an int subclass and must not
     # become a plausible model 1 in an otherwise valid export.
     model_version = _stored_model_version(raw_config)
-    config = CONFIG_SCHEMA(raw_config)
+    if model_version > PLAN_MODEL_VERSION:
+        raise ImportFailure("future_model", "The stored plan uses a newer data model")
+    try:
+        raw_config["model_version"] = model_version
+        config, _ = commit_wall_segment_model(raw_config)
+        config = CONFIG_SCHEMA(config)
+    except (WallSegmentMigrationError, vol.Invalid) as err:
+        code = err.code if isinstance(err, WallSegmentMigrationError) else "invalid_config"
+        raise ImportFailure(code, str(err)) from err
+    model_version = PLAN_MODEL_VERSION
     # Compatibility belongs to the envelope.  Keeping this field inside the
     # payload would either duplicate it or tempt an exporter to silently stamp
     # the current version over an older/future stored model.
@@ -1278,7 +1280,7 @@ def build_space_merge(
         str(value)
         for sp in current_config.get("spaces") or []
         for collection in (
-            (sp,), sp.get("rooms") or [], sp.get("room_drafts") or [],
+            (sp,), sp.get("rooms") or [],
             sp.get("partitions") or [], sp.get("wall_segments") or [],
             sp.get("wall_columns") or [],
             sp.get("openings") or [], sp.get("decor") or [],
@@ -1291,17 +1293,10 @@ def build_space_merge(
         str(m.get("id")) for m in current_config.get("markers") or []
         if m.get("id") is not None
     } | {
-        str(segment.get("id"))
-        for sp in current_config.get("spaces") or []
-        for draft in sp.get("room_drafts") or []
-        for segment in draft.get("segments") or []
-        if isinstance(segment, dict) and segment.get("id") is not None
-    } | {
         str(value)
         for incoming_space in spaces
         for collection in (
             (incoming_space,), incoming_space.get("rooms") or [],
-            incoming_space.get("room_drafts") or [],
             incoming_space.get("partitions") or [], incoming_space.get("wall_segments") or [],
             incoming_space.get("wall_columns") or [],
             incoming_space.get("openings") or [], incoming_space.get("decor") or [],
@@ -1313,12 +1308,6 @@ def build_space_merge(
     } | {
         str(m.get("id")) for m in incoming.get("markers") or []
         if m.get("id") is not None
-    } | {
-        str(segment.get("id"))
-        for incoming_space in spaces
-        for draft in incoming_space.get("room_drafts") or []
-        for segment in draft.get("segments") or []
-        if isinstance(segment, dict) and segment.get("id") is not None
     }
     old_space_id = str(space.get("id"))
     _record_bounded_lineage(
@@ -1331,7 +1320,7 @@ def build_space_merge(
     }
     id_maps["space"][old_space_id] = new_space_id
     for collection, prefix in (
-        ("rooms", "room"), ("room_drafts", "draft"), ("partitions", "partition"),
+        ("rooms", "room"), ("partitions", "partition"),
         ("wall_segments", "wall"),
         ("wall_columns", "column"), ("openings", "opening"), ("decor", "decor"),
     ):
@@ -1344,18 +1333,6 @@ def build_space_merge(
                 id_map[old] = _fresh(prefix, old, used)
                 id_maps[prefix][old] = id_map[old]
                 item["id"] = id_map[old]
-    for draft in space.get("room_drafts") or []:
-        for segment in draft.get("segments") or []:
-            if not isinstance(segment, dict) or segment.get("id") is None:
-                continue
-            old = str(segment["id"])
-            _record_bounded_lineage(
-                reference_report, bounded_seen, "draft_segment", old,
-            )
-            new = _fresh("draft_segment", old, used)
-            id_map[old] = new
-            id_maps["draft_segment"][old] = new
-            segment["id"] = new
     old_room_ids = id_maps["room"]
     for room in space.get("rooms") or []:
         if room.get("open_to"):
@@ -1798,21 +1775,20 @@ def _materialize_import_candidate(
     if confirmation_required:
         _detach_missing(imported_config, content)
     incoming_model = int(prepared.get("model_version", 0) or 0)
-    target_model = int(current_config.get("model_version", 0) or 0)
-    requires_v8 = incoming_model >= 8 or target_model >= 8
-    if requires_v8:
-        try:
-            # A v8 target cannot be downgraded by a v7 backup, while an
-            # incoming v8 graph must retain its already-persisted IDs. When
-            # both sides are v7 the accepted compatibility contract keeps the
-            # import v7 until a later structural write or explicit Optimize.
-            imported_config["model_version"] = incoming_model
-            imported_config, _ = commit_wall_segment_model(imported_config)
-            prepared["payload"]["config"] = imported_config
-            if prepared["kind"] == "space":
-                current_config, _ = commit_wall_segment_model(current_config)
-        except WallSegmentMigrationError as err:
-            raise ImportFailure(err.code, str(err)) from err
+    migration: dict[str, int] = {}
+    try:
+        # Import preview and apply operate only on the current materialized
+        # wall model. Legacy drafts are converted before copy/remap, so no
+        # current merge path can recreate their carrier.
+        imported_config["model_version"] = incoming_model
+        imported_config, _ = commit_wall_segment_model(
+            imported_config, migration_report=migration,
+        )
+        prepared["payload"]["config"] = imported_config
+        if prepared["kind"] == "space":
+            current_config, _ = commit_wall_segment_model(current_config)
+    except WallSegmentMigrationError as err:
+        raise ImportFailure(err.code, str(err)) from err
     if prepared["kind"] == "space":
         config, layout, details = build_space_merge(
             prepared, current_config, current_layout, duplicate_policy,
@@ -1820,8 +1796,6 @@ def _materialize_import_candidate(
         )
     else:
         config = imported_config
-        if not requires_v8 and incoming_model > 0:
-            config["model_version"] = incoming_model
         _materialize_global_background(config)
         layout = _json_copy(prepared["payload"]["layout"])
         if not same_source:
@@ -1841,6 +1815,7 @@ def _materialize_import_candidate(
     except vol.Invalid as err:
         raise ImportFailure("invalid_layout", str(err)) from err
     details = _json_copy(details)
+    details["migration"] = migration
     details["counts"] = _counts(config, layout)
     return config, layout, details
 

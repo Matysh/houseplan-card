@@ -9,16 +9,16 @@ import {
 } from './wall-segment-model';
 import { spacePhysicalGeometryFingerprint } from './plan-geometry-preflight';
 import {
-  draftLiveCandidateSpace, draftLiveSeed, isSingleDraftAppend,
+  isSinglePartitionAppend, wallChainLiveCandidateSpace, wallChainLiveSeed,
 } from './draft-live-preflight';
 
 const NORM_W = 1000;
 
-interface DraftLiveHost<State, Geometry> {
+interface WallChainLiveHost<State, Geometry> {
   _serverCfg: ServerConfig | null;
-  _activeDraftId: string | null;
+  _activeWallChainPartitionIds: string[];
   _path: number[][];
-  _draftSegmentCms: number[];
+  _wallChainSegmentCms: number[];
   _pendingPhysicalWrites: Map<string, { fingerprint: string; before: State }>;
   _checkSpacePhysicalGeometry: (
     config: ServerConfig, spaceId: string,
@@ -28,12 +28,12 @@ interface DraftLiveHost<State, Geometry> {
   _t: (key: I18nKey, vars?: Record<string, string | number>) => string;
 }
 
-export interface DraftLiveCommitRuntime<
+export interface WallChainLiveCommitRuntime<
   State extends { spaceId: string },
   Geometry extends JunctionSharedGeometry,
   Violation,
 > {
-  host: DraftLiveHost<State, Geometry>;
+  host: WallChainLiveHost<State, Geometry>;
   _commitPhysicalGeometry: (name: string, before: State | null) => boolean;
   _clearGeometryGesture: () => void;
   _restoreGeometryStateInConfig: (config: ServerConfig, state: State) => boolean;
@@ -49,35 +49,33 @@ export interface DraftLiveCommitRuntime<
 }
 
 const rejectUnsafe = <State extends { spaceId: string }, Geometry extends JunctionSharedGeometry,
-  Violation>(runtime: DraftLiveCommitRuntime<State, Geometry, Violation>, before: State): false => {
+  Violation>(runtime: WallChainLiveCommitRuntime<State, Geometry, Violation>, before: State): false => {
   runtime._clearGeometryGesture();
   runtime._restoreGeometryStateLocal(before);
   runtime.host._showToast(runtime.host._t('toast.geometry_unsafe'));
   return false;
 };
 
-/**
- * #461 current-model intermediate draft append transaction. Only this exact
- * writer receives a bounded proof; every uncertain shape falls back to the
- * generic full-space barrier owned by the runtime.
- */
-export function commitDraftSegmentGeometry<
+/** #461 bounded transaction for one ordinary wall appended by the active chain. */
+export function commitWallChainSegmentGeometry<
   State extends { spaceId: string },
   Geometry extends JunctionSharedGeometry,
   Violation,
 >(
-  runtime: DraftLiveCommitRuntime<State, Geometry, Violation>,
+  runtime: WallChainLiveCommitRuntime<State, Geometry, Violation>,
   name: string,
   before: State | null,
 ): boolean {
   const { host } = runtime;
   const liveCandidate = host._serverCfg;
-  const draftId = host._activeDraftId;
+  const partitionId = host._activeWallChainPartitionIds[
+    host._activeWallChainPartitionIds.length - 1
+  ] || null;
   const fallback = () => runtime._commitPhysicalGeometry(name, before);
-  if (!before || !liveCandidate || !draftId
+  if (!before || !liveCandidate || !partitionId
       || Number(liveCandidate.model_version || 0) !== WALL_SEGMENT_MODEL_VERSION) return fallback();
   const liveSpace = liveCandidate.spaces.find((space) => space.id === before.spaceId);
-  if (!liveSpace || !isSingleDraftAppend(before, liveSpace, draftId)) return fallback();
+  if (!liveSpace || !isSinglePartitionAppend(before, liveSpace, partitionId)) return fallback();
 
   let committedCandidate: ServerConfig;
   try {
@@ -89,21 +87,17 @@ export function commitDraftSegmentGeometry<
     return false;
   }
   const committedSpace = committedCandidate.spaces.find((space) => space.id === before.spaceId);
-  const seed = draftLiveSeed(committedSpace, draftId);
+  const seed = wallChainLiveSeed(committedSpace, partitionId);
   if (!committedSpace || !seed) return fallback();
 
   const previousConfig = JSON.parse(JSON.stringify(liveCandidate)) as ServerConfig;
   if (!runtime._restoreGeometryStateInConfig(previousConfig, before)) return fallback();
   const previousSpace = previousConfig.spaces.find((space) => space.id === before.spaceId);
-  const candidateProjection = draftLiveCandidateSpace(committedSpace, seed);
-  const previousProjection = draftLiveCandidateSpace(previousSpace, seed);
+  const candidateProjection = wallChainLiveCandidateSpace(committedSpace, seed);
+  const previousProjection = wallChainLiveCandidateSpace(previousSpace, seed);
   if (!candidateProjection || !previousProjection) return fallback();
-  const localCandidate = {
-    ...committedCandidate, spaces: [candidateProjection.space],
-  } as unknown as ServerConfig;
-  const localPrevious = {
-    ...previousConfig, spaces: [previousProjection.space],
-  } as unknown as ServerConfig;
+  const localCandidate = { ...committedCandidate, spaces: [candidateProjection.space] } as unknown as ServerConfig;
+  const localPrevious = { ...previousConfig, spaces: [previousProjection.space] } as unknown as ServerConfig;
 
   let geometry: Geometry | null = null;
   let safe = false;
@@ -120,8 +114,7 @@ export function commitDraftSegmentGeometry<
   }
   if (!safe) return rejectUnsafe(runtime, before);
   const introduced = runtime._junctionLimitsIntroduced(
-    localCandidate, localPrevious, before.spaceId,
-    geometry, candidateProjection.roomIds,
+    localCandidate, localPrevious, before.spaceId, geometry, candidateProjection.roomIds,
   );
   if (introduced.length) {
     runtime._clearGeometryGesture();
@@ -132,14 +125,12 @@ export function commitDraftSegmentGeometry<
 
   adoptWallSegmentModelCandidateInPlace(liveCandidate, committedCandidate);
   const acceptedSpace = liveCandidate.spaces.find((space) => space.id === before.spaceId);
-  const acceptedDraft = acceptedSpace?.room_drafts?.find((draft) => draft.id === draftId);
-  if (acceptedDraft?.points?.length === host._path.length
-      && acceptedDraft?.segments?.length === host._draftSegmentCms.length) {
-    // Keep the transient chain on the exact canonical coordinates just
-    // adopted into config. Otherwise an IEEE last-bit difference is replayed
-    // by the next click and the draft-only diff can no longer be proven.
-    host._path = acceptedDraft.points.map((point) => [point[0] * NORM_W, point[1] * NORM_W]);
-    host._draftSegmentCms = acceptedDraft.segments.map((segment) => Number(segment.cm));
+  const accepted = acceptedSpace?.partitions?.find((partition) => partition.id === partitionId);
+  const edgeIndex = host._activeWallChainPartitionIds.length - 1;
+  if (accepted && edgeIndex >= 0 && host._path.length === host._wallChainSegmentCms.length + 1) {
+    host._path[edgeIndex] = [accepted.a[0] * NORM_W, accepted.a[1] * NORM_W];
+    host._path[edgeIndex + 1] = [accepted.b[0] * NORM_W, accepted.b[1] * NORM_W];
+    host._wallChainSegmentCms[edgeIndex] = Number(accepted.cm);
   }
   runtime._recordGeometry(name, before);
   const pending = host._pendingPhysicalWrites.get(before.spaceId);

@@ -357,11 +357,11 @@ export const SMOKE_LINKS = [
   },
   {
     // #234: единый резолвер толщины отрезка цепочки. Смок перехода между
-    // толщинами не называет ни `chainSegmentCms`, ни `_draftSegmentCms` — он
+    // толщинами не называет ни `chainSegmentCms`, ни `_wallChainSegmentCms` — он
     // рисует стены инструментом и проверяет, что кладка на стыке толщин
     // остаётся связной. Общих с диффом символов у него ровно два, `_cellCm` и
     // `_gridPitch`, и оба слишком широкие, чтобы что-то доказывать.
-    symbols: ['chainSegmentCms', 'wallChainSegments', '_draftSegmentCms', '_closingWallCm'],
+    symbols: ['chainSegmentCms', 'wallChainSegments', '_wallChainSegmentCms', '_closingWallCm'],
     smokes: ['smoke_wall_thickness_transition.mjs'],
     because: 'переход между двумя толщинами в одной цепочке: резолвер толщины '
       + 'отрезка решает, где кладка меняет глубину, а смок проверяет кладку, '

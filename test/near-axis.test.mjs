@@ -69,25 +69,22 @@ test('#290 repairs a duplicated 316x1 physical wall once without mutating input'
   assert.equal(north.poly[1][1], north.poly[2][1]);
 });
 
-test('#290 repairs saved drafts and independent partitions but preserves true diagonals', () => {
+test('#290 repairs ordinary independent walls but preserves true diagonals', () => {
   const input = {
     rooms: [],
-    room_drafts: [{
-      id: 'draft', points: [[0, 0], [316, 1], [316, 20]],
-      segments: [{ cm: 15 }, { cm: 15 }],
-    }],
     partitions: [
+      { id: 'former-draft-a', a: [0, 0], b: [316, 1], cm: 15 },
+      { id: 'former-draft-b', a: [316, 1], b: [316, 20], cm: 15 },
       { id: 'near', a: [0, 100], b: [316, 101], cm: 15 },
       { id: 'diagonal', a: [0, 200], b: [100, 300], cm: 15 },
     ],
   };
   const result = repairNearAxisRoomWalls(input);
   assert.equal(result.report.wallsStraightened, 2);
-  assert.equal(result.space.room_drafts[0].points.length, 3);
-  assert.equal(result.space.room_drafts[0].segments.length, 2);
-  assert.equal(result.space.room_drafts[0].points[0][1], result.space.room_drafts[0].points[1][1]);
   assert.equal(result.space.partitions[0].a[1], result.space.partitions[0].b[1]);
   assert.deepEqual(result.space.partitions[1], input.partitions[1]);
+  assert.equal(result.space.partitions[2].a[1], result.space.partitions[2].b[1]);
+  assert.deepEqual(result.space.partitions[3], input.partitions[3]);
 });
 
 test('#290 skips a repair that would no longer fit a hosted opening', () => {

@@ -91,7 +91,7 @@ test('#278 physical fingerprint ignores decor but covers every strict writer fie
   const baseline = spacePhysicalGeometryFingerprint(raw);
   assert.equal(spacePhysicalGeometryFingerprint({ ...raw, title: 'Else', decor: [{ id: 'd' }] }), baseline);
   for (const field of [
-    'rooms', 'walls', 'open_spans', 'openings', 'partitions', 'room_drafts', 'wall_columns',
+    'rooms', 'walls', 'open_spans', 'openings', 'partitions', 'wall_columns',
   ]) {
     const changed = { ...raw, [field]: [...(raw[field] || []), { id: `changed-${field}` }] };
     assert.notEqual(spacePhysicalGeometryFingerprint(changed), baseline, field);
@@ -101,9 +101,9 @@ test('#278 physical fingerprint ignores decor but covers every strict writer fie
 test('#278 production source routes physical writers through one barrier and decor around it', () => {
   const source = readHouseplanProductionSource();
   for (const historyKey of [
-    'wall_chain_finish', 'column_add', 'physical_edit', 'physical_delete',
+    'column_add', 'physical_edit', 'physical_delete',
     'physical_move', 'resize_room', 'wall_thickness',
-    'move_opening', 'delete_opening', 'merge_rooms', 'contour_to_partitions',
+    'move_opening', 'delete_opening', 'merge_rooms',
   ]) {
     // The pattern tolerates a line break after the opening parenthesis: a
     // wrapped call must not slip past the barrier check (CODE-REVIEW-313-r1).
@@ -114,8 +114,8 @@ test('#278 production source routes physical writers through one barrier and dec
     new URL('../src/houseplan-editor-runtime.ts', import.meta.url), 'utf8',
   );
   assert.match(runtime,
-    /commitDraftSegmentGeometry\(this, this\.host\._t\('history\.draft_segment'/,
-    'an intermediate draft append uses its dedicated bounded physical barrier');
+    /commitWallChainSegmentGeometry\(this, this\.host\._t\('history\.wall_segment'/,
+    'an intermediate wall append uses its dedicated bounded physical barrier');
   // #313 introduced a second thickness commit point (independent masonry).
   // BOTH must go through the barrier: replacing either with _recordGeometry
   // reduces the count and reddens this line.

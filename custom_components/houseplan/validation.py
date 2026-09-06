@@ -1114,8 +1114,8 @@ MAX_DECOR = 1000
 # later constant declaration.
 MAX_WALLS = 200_000
 MAX_WALL_SEGMENTS = 200_000
-MAX_ROOM_DRAFTS = 200
-MAX_DRAFT_SEGMENTS = 2000
+_LEGACY_MAX_ROOM_DRAFTS = 200
+_LEGACY_MAX_DRAFT_SEGMENTS = 2000
 MAX_PARTITIONS = 2000
 MAX_WALL_COLUMNS = 500
 # Open (virtual) wall stretches, docs/superpowers/specs/2026-08-05-open-spans-delete-design.md.
@@ -1484,7 +1484,7 @@ WALL_SEGMENT_SCHEMA = vol.All(
 )
 
 
-def _room_draft_segments(value: dict) -> dict:
+def _legacy_room_draft_segments(value: dict) -> dict:
     """An open draft has exactly one thickness per consecutive edge."""
     if len(value.get("segments", [])) != max(0, len(value.get("points", [])) - 1):
         raise vol.Invalid("room draft segments must match consecutive point pairs")
@@ -1493,7 +1493,7 @@ def _room_draft_segments(value: dict) -> dict:
     return value
 
 
-ROOM_DRAFT_SCHEMA = vol.All(
+_LEGACY_ROOM_DRAFT_SCHEMA = vol.All(
     vol.Schema(
         {
             vol.Required("id"): vol.All(str, vol.Length(min=1, max=64)),
@@ -1509,7 +1509,7 @@ ROOM_DRAFT_SCHEMA = vol.All(
         },
         extra=vol.ALLOW_EXTRA,
     ),
-    _room_draft_segments,
+    _legacy_room_draft_segments,
 )
 
 def _partition_nonzero(value: dict) -> dict:
@@ -1592,7 +1592,7 @@ def _space_geometry_invariants(value: dict) -> dict:
     draft_segments = sum(
         len(item.get("segments", [])) for item in value.get("room_drafts", [])
     )
-    if draft_segments > MAX_DRAFT_SEGMENTS:
+    if draft_segments > _LEGACY_MAX_DRAFT_SEGMENTS:
         raise vol.Invalid("too many saved room-draft segments")
     for draft in value.get("room_drafts", []):
         for segment in draft.get("segments", []):
@@ -1706,7 +1706,7 @@ SPACE_SCHEMA = vol.All(vol.Schema(
         ),
         vol.Optional("zero_wall_style"): vol.In(["dashed", "solid"]),
         vol.Optional("room_drafts"): vol.All(
-            [ROOM_DRAFT_SCHEMA], vol.Length(max=MAX_ROOM_DRAFTS)
+            [_LEGACY_ROOM_DRAFT_SCHEMA], vol.Length(max=_LEGACY_MAX_ROOM_DRAFTS)
         ),
         vol.Optional("partitions"): vol.All(
             [PARTITION_SCHEMA], vol.Length(max=MAX_PARTITIONS)
@@ -1877,6 +1877,8 @@ def _config_wall_segment_invariants(value: dict) -> dict:
         if model >= 9:
             if "open_spans" in space or any("open_to" in room for room in space.get("rooms", [])):
                 raise vol.Invalid("v9 config must not contain legacy open boundaries")
+        if model >= 10 and "room_drafts" in space:
+            raise vol.Invalid("v10 config must not contain room_drafts")
         segments = space.get("wall_segments")
         if segments is None:
             raise vol.Invalid("v8+ space requires wall_segments")
@@ -1917,9 +1919,10 @@ def _config_wall_segment_invariants(value: dict) -> dict:
         if actual_walls != expected_walls:
             raise vol.Invalid("wall compatibility projection must match wall_segments")
 
-        for draft in space.get("room_drafts", []):
-            if any(not segment.get("id") for segment in draft.get("segments", [])):
-                raise vol.Invalid("v8+ draft wall segments require ids")
+        if model < 10:
+            for draft in space.get("room_drafts", []):
+                if any(not segment.get("id") for segment in draft.get("segments", [])):
+                    raise vol.Invalid("v8+ draft wall segments require ids")
 
         partitions = {item["id"]: item for item in space.get("partitions", [])}
         wall_opening_intervals: dict[str, list[tuple[float, float]]] = {}

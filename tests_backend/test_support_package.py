@@ -304,7 +304,8 @@ def test_rich_plan_projection_preserves_safe_structure_and_drops_unknown_values(
     assert space["rooms"][0]["settings"]["hum_source_kind"] == "unknown"
     assert len(space["walls"]) == 2
     assert space["walls"][1] == {"cm": 12, "key": "wall-rich-2"}
-    assert space["room_drafts"][0]["segments"][1] == {"cm": 12}
+    assert "room_drafts" not in space
+    assert space["partitions"][0]["cm"] == 8
     assert space["openings"][0]["host"]["kind"] == "partition"
     assert "host" not in space["openings"][1]
     assert space["decor"][1]["text"] == "[redacted text]"

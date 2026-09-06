@@ -106,7 +106,6 @@ test('runtime physical parts preserve joined bodies without materializing union 
   assert.equal(Object.hasOwn(parts, 'geometry'), false,
     'the production parts API must not hide an eager polygon union');
   assert.deepEqual(parts, {
-    drafts: set.drafts,
     partitions: set.partitions,
     columns: set.columns,
     patches: set.patches,
@@ -117,18 +116,16 @@ test('runtime physical parts preserve joined bodies without materializing union 
 
 test('endpoint-on-line T join is computed without splitting or mutating source records', () => {
   const space = {
-    room_drafts: [{
-      id: 'draft-branch', points: [[1, -2], [1, 0]], segments: [{ cm: 15 }],
-    }],
     wall_columns: [],
     partitions: [
       { id: 'through', a: [-2, 0], b: [2, 0], cm: 20 },
       { id: 'branch', a: [0, -2], b: [0, 0], cm: 10 },
+      { id: 'second-branch', a: [1, -2], b: [1, 0], cm: 15 },
     ],
   };
   const before = JSON.stringify(space);
   const frame = physicalBodySet(space, 5, 0.25);
-  assert.ok(frame.patches.length >= 2, 'partition and saved-draft branches share the T primitive');
+  assert.ok(frame.patches.length >= 2, 'independent-wall branches share the T primitive');
   assert.equal(pointInPhysicalGeometry([0.2, -0.1], frame.geometry), true);
   assert.equal(pointInPhysicalGeometry([1.2, -0.1], frame.geometry), true);
   assert.equal(JSON.stringify(space), before, 'computed node topology is render-only');

@@ -158,6 +158,8 @@ def canonicalize_config_geometry(config: Any) -> Any:
                 _lattice_fields(decor, ("x", "y"))
                 _scalar_fields(decor, ("scale", "angle"))
 
+        # Legacy-only read boundary: v9 drafts are canonicalized before the
+        # wall-model migration turns their edges into current partitions.
         for draft in _records(space.get("room_drafts")):
             _lattice_points(draft.get("points"))
 

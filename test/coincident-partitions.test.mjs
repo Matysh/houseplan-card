@@ -135,7 +135,7 @@ test('issue 276 fails closed when two hosted openings would overlap after rehost
   assert.ok(result.config.spaces[0].openings.every((opening) => opening.host?.id === 'redundant'));
 });
 
-test('issue 276 reconciliation is owned by explicit Optimize and called once per valid space', () => {
+test('issue 276 reconciliation is owned by Optimize and room finalization only', () => {
   const input = clone(fixture);
   const secondSpace = clone(input.spaces[0]);
   secondSpace.id = 'offset-shared-wall-second';
@@ -165,8 +165,10 @@ test('issue 276 reconciliation is owned by explicit Optimize and called once per
     .filter((path) => readFileSync(path, 'utf8').includes('reconcileCoincidentPartitions'))
     .map((path) => relative(sourceRoot, path).replaceAll('\\', '/'))
     .sort();
-  assert.deepEqual(owners, ['coincident-partitions.ts', 'plan-optimizer.ts'],
-    'render/pointer modules must not import or invoke the Optimize-only pass');
+  assert.deepEqual(owners, [
+    'coincident-partitions.ts', 'houseplan-editor-runtime.ts', 'plan-optimizer.ts',
+  ],
+    'render/pointer modules must not import or invoke either maintenance owner');
 });
 
 test('issue 276 fails closed for an orphan host, overlap, column and unknown partition data', () => {
@@ -201,7 +203,7 @@ test('issue 276 fails closed for an orphan host, overlap, column and unknown par
   }
 });
 
-test('issue 296 removes a fully hidden saved chain before reconciling its partition', () => {
+test('#478 migrates a legacy saved chain and preserves ambiguous overlapping walls', () => {
   const input = clone(fixture);
   input.spaces[0].room_drafts = [{
     id: 'hidden-draft',
@@ -209,9 +211,10 @@ test('issue 296 removes a fully hidden saved chain before reconciling its partit
     segments: [{ cm: 15 }],
   }];
   const result = optimize(input);
-  assert.equal(result.report.removedDrafts, 0);
-  assert.equal(result.report.redundantDraftsRemoved, 1);
-  assert.equal(result.report.partitionsReconciled, 1);
+  assert.equal(result.report.roomDraftsMigrated, 1);
+  assert.equal(result.report.roomDraftSegmentsMigrated, 1);
+  assert.equal(result.report.partitionsReconciled, 0);
   assert.equal(result.config.spaces[0].room_drafts, undefined);
-  assert.equal(result.config.spaces[0].partitions, undefined);
+  assert.equal(result.config.spaces[0].partitions.length, 2);
+  assert.match(result.config.spaces[0].partitions[1].id, /^wall-/);
 });

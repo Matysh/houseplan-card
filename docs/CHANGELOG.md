@@ -6,6 +6,11 @@
   opacity still apply live, while invalid HEX input stays open for correction
   instead of being accepted accidentally
   ([#476](https://github.com/Matysh/houseplan-card/issues/476)).
+- Wall chains now save every accepted segment immediately as an ordinary
+  independent wall. Unfinished chains stay on the plan but are no longer
+  specially resumed after a reload; legacy saved outlines migrate safely to
+  the new model, and walls consumed by a newly created room no longer remain as
+  duplicate masonry ([#478](https://github.com/Matysh/houseplan-card/issues/478)).
 
 ## v1.73.0-beta.1 — 2026-09-06
 

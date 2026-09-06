@@ -15,7 +15,7 @@ Code: `src/wall-thickness.ts`, render in `src/houseplan-card.ts` /
 
 ## 1. Model
 
-### Stable stored identity and zero walls (model v9, #282/#306)
+### Stable stored identity and zero walls (model v10, #282/#306/#478)
 
 From model v8 every atomic room-wall interval has a stable record in
 `space.wall_segments[]`. Its `id`, endpoints and `cm` are authoritative;
@@ -23,15 +23,17 @@ From model v8 every atomic room-wall interval has a stable record in
 `space.walls[]` remains a generated compatibility projection for older readers
 and must not be used as the identity of a wall. A door, window, gate or passage
 on a room wall stores a tagged `{kind:'wall', id, t}` host. Independent
-partitions keep their existing stable IDs, and unfinished draft segments receive
-IDs which survive promotion to a room wall or partition.
+partitions keep their existing stable IDs. Each accepted segment of an active
+Walls chain is already an ordinary partition; only the chain ordering is
+session-local.
 
 Existing legacy plans are not rewritten on read. The model is materialised
 atomically before the first structural edit, by **Optimize plans**, or when a
 legacy plan is imported into a current target. Ambiguous or conflicting geometry blocks
 the operation and leaves the stored plan unchanged. Ordinary settings and
-presentation writes do not trigger the migration. Model v9 makes `cm:0` a
-public, canonical wall value for contour atoms, drafts and independent walls.
+presentation writes do not trigger the migration. Model v9 made `cm:0` a
+public, canonical wall value; model v10 removes persisted room drafts and keeps
+that value for contour atoms and independent walls.
 There is no separate virtual-boundary entity or editor tool.
 
 Every structural writer passes through the same wall-model barrier. A split
@@ -72,7 +74,7 @@ merges consecutive pieces only inside a maximal run of equal thickness
 with the same physical ownership: one outer room or the same sorted pair of
 shared rooms. A different thickness, outer/shared transition or change of
 shared-room pair remains a real break. Adjacent zero atoms follow the same
-role-aware compaction; canonical model v9 never writes compatibility
+role-aware compaction; the canonical current model never writes compatibility
 `open_spans` or `open_to`.
 When a maximal wall run crosses a collinear vertex belonging to another room,
 its exact endpoints cover that room's shorter child side too; lookup does not
@@ -277,7 +279,7 @@ masonry even when it meets a thick wall at a slightly non-collinear angle;
 the cap cannot stretch into a taper along the divider. Joins between two
 positive depths keep the bounded mitre/bevel contract above.
 
-Independent draft/partition segments keep flat raw quads for editor identity,
+Independent partition segments keep flat raw quads for editor identity,
 but exact endpoint↔endpoint and endpoint↔line nodes add computed join patches
 before the presentation union. Each incident ray keeps its own half-depth;
 ordinary corners use the same bounded `MITRE_LIMIT = 4` rule and excessive
@@ -355,8 +357,7 @@ invoke it.
   shared wall each room owns its half, with a hard colour change exactly on the
   wall centreline. This is a base-fill layer only: Glow and sun remain above it
   with their existing aperture, clipping, colour and opacity.
-- A zero-thickness wall, orphan opening or opening associated only
-  with an unfinished room draft has no coloured tunnel. Mixed-thickness legacy
+- A zero-thickness wall or orphan opening has no coloured tunnel. Mixed-thickness legacy
   spans are clipped to their actual atomic wall bodies.
 - Glow leaving through a door uses the clear rectangular opening tunnel: its
   sector is the intersection of the doorway spans at the near and far inner
@@ -377,14 +378,14 @@ centreline/full-span wedge. `hide_openings` hides the symbol only.
 ## 6. Tool / hooks / i18n
 
 Plan-editor tool «Thickness»; hover whole wall; cm/in from HA; exact `0..100`
-is valid for room walls, drafts and partitions, while empty/invalid input is
+is valid for room walls and partitions, while empty/invalid input is
 rejected; apply-to-room. Hooks: `data-hp="wall"`. i18n en/ru.
 
 **Draw with thickness.** The Plan toolbar's **Walls** button carries its session
 thickness field immediately on the right (default **15 cm**, or inches when HA
-is imperial). Every persisted draft segment remembers the value used when it
-was placed. Finishing an open chain transfers those values to the resulting
-independent walls. If a segment creates rooms, consumed boundary atoms receive
+is imperial). Every accepted segment is immediately persisted as an ordinary
+partition with the value used when it was placed. If a segment creates rooms,
+consumed boundary atoms receive
 their source value and unconsumed atoms become independent walls with the same
 value; existing shared masonry remains authoritative. Empty / 0 leaves the new
 wall at zero thickness. Live preview follows the rubber-band while drawing.
@@ -477,10 +478,10 @@ verifies the same contract against the rendered `d` path, sixteen close-up
 golden scenes (`junction-*`) plus the owner's repro scene, and the
 `junction-*` mutants in `scripts/mutation-gate.mjs`.
 
-## 9. Independent partitions, drafts and columns
+## 9. Independent partitions and columns
 
-Their thickness is stored directly in centimetres: 0–100 cm for draft and
-partition segments, 1–150 cm for a column's outer side/diameter. Invalid input
+Their thickness is stored directly in centimetres: 0–100 cm for partition
+segments, 1–150 cm for a column's outer side/diameter. Invalid input
 blocks the commit and reports the valid range; no editor path silently clamps
 it. These bodies are unioned with room-wall bodies only after door/window/gate cuts,
 so an opening cannot punch a coincident independent wall. They are subtracted
@@ -511,19 +512,18 @@ room-face detection (#185).
 Explicit Optimize has one stricter reconciliation pass (#276/#281/#296). It
 atomizes an independent wall at consecutive solid room-wall and hosted-opening
 boundaries. Every positive section is proved independently: one outer owner or
-exactly two shared owners with one effective thickness, and no draft, column,
+exactly two shared owners with one effective thickness, and no column,
 second partition or conflicting opening. Proven sections are absorbed even
 when several consecutive room intervals cover the source; unproven sections
 are recombined into deterministic residual partitions. Hosted openings are
 materialised at the same centre/angle on a proven room wall or rebound to the
 single residual that contains them. The canonical thickness is
 `max(roomCm, partitionCm)`, exactly the union envelope of centred coincident
-bodies. A saved draft is removed only all-or-nothing when every segment has the
-same complete solid proof. The pass is immutable, idempotent and followed by
+bodies. The pass is immutable, idempotent and followed by
 the common whole-plan geometry preflight; rendering, Resize and ordinary Save
 never perform it implicitly.
 
-`physicalBodySet()` separates raw draft/partition/column bodies from computed
+`physicalBodySet()` separates raw partition/column bodies from computed
 junction patches and their joined geometry. Raw bodies remain authoritative for
 hit testing, selection, drag, properties, deletion, history and furniture
 magnet semantics. Flat full/static render, hidden isometric, clean floor, Glow,

@@ -188,10 +188,6 @@ test('#451 live resize candidate keeps nearby physical bodies and excludes remot
       { id: 'near', a: [4.5, 4.5], b: [5, 5] },
       { id: 'remote', a: [90, 90], b: [91, 91] },
     ],
-    room_drafts: [
-      { id: 'near', points: [[3, 3], [4, 3], [4, 4]] },
-      { id: 'remote', points: [[90, 90], [91, 90], [91, 91]] },
-    ],
     wall_columns: [
       { id: 'near', center: [4, 4.5], cm: 15 },
       { id: 'remote', center: [90, 90], cm: 15 },
@@ -207,7 +203,6 @@ test('#451 live resize candidate keeps nearby physical bodies and excludes remot
   assert.deepEqual(candidate.wall_segments.map((item) => item.id), ['near']);
   assert.deepEqual(candidate.open_spans.map((item) => item.id), ['near']);
   assert.deepEqual(candidate.partitions.map((item) => item.id), ['near']);
-  assert.deepEqual(candidate.room_drafts.map((item) => item.id), ['near']);
   assert.deepEqual(candidate.wall_columns.map((item) => item.id), ['near']);
   assert.deepEqual(candidate.openings.map((item) => item.id), ['near']);
 });

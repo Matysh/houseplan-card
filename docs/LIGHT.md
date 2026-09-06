@@ -27,8 +27,8 @@ every lamp in the space.
 
 - the wall bodies exactly as the plan draws them (`wallBodiesGeometry`), with
   their real thickness and mitred junctions;
-- independent bodies: partitions, columns and room drafts. Exact connected
-  draft/partition segments enter as one joined volume, not as raw rectangles
+- independent bodies: partitions and columns. Exact connected partition
+  segments enter as one joined volume, not as raw rectangles
   whose former butt faces could become false barriers;
 - every zero-thickness wall when its space uses the **Solid** style. It enters
   the sweep as its exact axis, a zero-area barrier rather than fake masonry.
@@ -44,8 +44,8 @@ every lamp in the space.
 
 The setting is intentionally one semantic switch, not just paint. Missing or
 unknown `zero_wall_style` means `dashed`; `solid` blocks Glow and sunlight.
-It applies equally to room-contour atoms, independent partitions and saved
-draft segments. `resolveZeroWalls()` supplies both the lines and barrier set,
+It applies equally to room-contour atoms and independent partitions.
+`resolveZeroWalls()` supplies both the lines and barrier set,
 so renderers and light cannot disagree. The deprecated `open_spans/open_to`
 input is only a v8 read projection and migrates to ordinary `cm:0` atoms.
 

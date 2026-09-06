@@ -27,29 +27,29 @@ export function makeWallDrawClickFixture(remoteVariant = false) {
   const primary = roomGrid('base');
   const remote = remoteVariant ? roomGrid('remote', 300) : [];
   const all = [...primary, ...remote];
-  const roomDrafts = Array.from({ length: 4 }, (_, index) => ({
-    id: `saved-draft-${index}`,
-    points: [point(8 + index * 28, 112), point(20 + index * 28, 112), point(20 + index * 28, 124)],
-    segments: [
-      { id: `saved-draft-${index}-0`, cm: 15 },
-      { id: `saved-draft-${index}-1`, cm: 15 },
-    ],
-  }));
+  const savedPartitions = Array.from({ length: 4 }, (_, index) => {
+    const points = [
+      point(8 + index * 28, 112), point(20 + index * 28, 112),
+      point(20 + index * 28, 124),
+    ];
+    return points.slice(1).map((b, edge) => ({
+      id: `saved-partition-${index}-${edge}`, a: points[edge], b, cm: 15,
+    }));
+  }).flat();
   const edited = {
     id: 'edited', title: 'Wall draw click', cell_cm: CELL_CM,
     view_box: [0, 0, 1, 1],
     rooms: all.map((item) => item.room),
     wall_segments: all.flatMap((item) => item.segments),
     walls: all.flatMap((item) => item.walls),
-    room_drafts: roomDrafts,
-    partitions: [], wall_columns: [], openings: [], open_spans: [],
+    partitions: savedPartitions, wall_columns: [], openings: [], open_spans: [],
   };
   return {
-    model_version: 9,
+    model_version: 10,
     spaces: [edited, ...Array.from({ length: 4 }, (_, index) => ({
       id: `other-${index}`, title: `Other ${index}`, cell_cm: CELL_CM,
       view_box: [0, 0, 1, 1], rooms: [], wall_segments: [], walls: [],
-      room_drafts: [], partitions: [], wall_columns: [], openings: [], open_spans: [],
+      partitions: [], wall_columns: [], openings: [], open_spans: [],
     }))],
     markers: [], settings: {},
   };

@@ -44,8 +44,9 @@ def test_backend_migration_matches_shared_frontend_parity_fixture() -> None:
     assert space["rooms"][0]["wall_ids"] == fixture["expected"]["large_wall_ids"]
     assert space["rooms"][1]["wall_ids"] == fixture["expected"]["small_wall_ids"]
     assert space["openings"][0]["host"] == fixture["expected"]["opening_host"]
-    assert [segment["id"] for segment in space["room_drafts"][0]["segments"]] \
+    assert [segment["id"] for segment in space["partitions"]] \
         == fixture["expected"]["draft_ids"]
+    assert "room_drafts" not in space
 
 
 def test_hash_and_endpoint_order_match_frontend_vector() -> None:
@@ -245,8 +246,9 @@ def test_first_write_of_a_newer_model_is_not_outdated_even_without_catalog_chang
         Path(__file__).parents[1] / "test" / "fixtures"
         / "319-orphan-span-migration.json"
     ).read_text(encoding="utf-8"))
-    stored, sent = fixture["stored"], fixture["sent"]
-    assert stored["model_version"] == 8 and sent["model_version"] == 9
+    stored = fixture["stored"]
+    sent, _ = commit_wall_segment_model(fixture["sent"])
+    assert stored["model_version"] == 8 and sent["model_version"] == 10
     assert stored["spaces"][0]["wall_segments"] == sent["spaces"][0]["wall_segments"]
     assert "open_spans" in stored["spaces"][0]
     assert "open_spans" not in sent["spaces"][0]
@@ -254,14 +256,12 @@ def test_first_write_of_a_newer_model_is_not_outdated_even_without_catalog_chang
     # AC1: the pure migration write passes.
     validate_wall_model_transition(copy.deepcopy(sent), stored)
 
-    # AC2: the same write with the user's first draft (the first click of the
-    # Walls tool, independent geometry per #314) passes too.
-    with_draft = copy.deepcopy(sent)
-    with_draft["spaces"][0].setdefault("room_drafts", []).append({
-        "id": "d-319", "points": [[0.7, 0.7], [0.8, 0.7]],
-        "segments": [{"id": "seg-d-319", "cm": 20}],
+    # AC2: the same write with the user's first ordinary wall passes too.
+    with_partition = copy.deepcopy(sent)
+    with_partition["spaces"][0].setdefault("partitions", []).append({
+        "id": "seg-d-319", "a": [0.7, 0.7], "b": [0.8, 0.7], "cm": 20,
     })
-    validate_wall_model_transition(with_draft, stored)
+    validate_wall_model_transition(with_partition, stored)
 
     # AC3: the same-version echo (9 → 9) with changed contours and an
     # unchanged catalogue keeps the named refusal.
@@ -272,7 +272,7 @@ def test_first_write_of_a_newer_model_is_not_outdated_even_without_catalog_chang
 
 
 def test_current_wall_model_independent_geometry_does_not_require_contour_catalog_change() -> None:
-    """Drafts, partitions, columns and hosted openings own their identity (#314)."""
+    """Partitions, columns and hosted openings own their identity (#314/#478)."""
     previous, _ = commit_wall_segment_model(_config({
         "id": "floor", "rooms": [_room("room")],
         # #306 makes every unconfigured contour atom explicitly bodyless.
@@ -283,13 +283,6 @@ def test_current_wall_model_independent_geometry_does_not_require_contour_catalo
     previous_catalog = copy.deepcopy(previous["spaces"][0]["wall_segments"])
 
     candidates = []
-
-    draft = copy.deepcopy(previous)
-    draft["spaces"][0]["room_drafts"] = [{
-        "id": "draft-new", "points": [[2, 0], [3, 0]],
-        "segments": [{"id": "draft-segment-new", "cm": 15}],
-    }]
-    candidates.append(draft)
 
     partition = copy.deepcopy(previous)
     partition["spaces"][0]["partitions"] = [{
@@ -324,6 +317,11 @@ def test_current_wall_model_independent_geometry_does_not_require_contour_catalo
         assert candidate["spaces"][0]["wall_segments"] == previous_catalog
         validate_wall_model_transition(candidate, previous)
         assert CONFIG_SCHEMA(candidate) == candidate
+
+    stale = copy.deepcopy(previous)
+    stale["spaces"][0]["room_drafts"] = []
+    with pytest.raises(Exception, match="v10 config must not contain room_drafts"):
+        CONFIG_SCHEMA(stale)
 
 
 def test_downgraded_independent_partition_round_trip_is_hydrated() -> None:
@@ -371,10 +369,35 @@ def test_v8_open_span_migrates_to_zero_atoms_and_removes_legacy_fields() -> None
     shared = [segment for segment in migrated_space["wall_segments"]
               if segment["id"] in shared_ids]
 
-    assert migrated["model_version"] == 9
+    assert migrated["model_version"] == 10
     assert "open_spans" not in migrated_space
     assert all("open_to" not in room for room in migrated_space["rooms"])
     assert sorted(segment["cm"] for segment in shared) == [0.0, 15.0, 15.0]
+    assert commit_wall_segment_model(migrated)[0] == migrated
+
+
+def test_v9_room_drafts_migrate_one_for_one_to_partitions() -> None:
+    source = {
+        "model_version": 9, "markers": [], "settings": {}, "spaces": [{
+            "id": "floor", "title": "Floor", "rooms": [], "wall_segments": [],
+            "room_drafts": [{
+                "id": "draft-a", "points": [[0, 0], [0.25, 0], [0.25, 0.5]],
+                "segments": [{"id": "draft-wall-a", "cm": 0}, {"cm": 22}],
+            }],
+            "partitions": [{
+                "id": "partition-old", "a": [1, 0], "b": [1, 1], "cm": 15,
+            }],
+        }],
+    }
+    migrated, _ = commit_wall_segment_model(source)
+    space = migrated["spaces"][0]
+    assert migrated["model_version"] == 10
+    assert "room_drafts" not in space
+    assert space["partitions"][0] == source["spaces"][0]["partitions"][0]
+    assert space["partitions"][1] == {
+        "id": "draft-wall-a", "a": [0.0, 0.0], "b": [0.25, 0.0], "cm": 0.0,
+    }
+    assert space["partitions"][2]["id"].startswith("wall-")
     assert commit_wall_segment_model(migrated)[0] == migrated
 
 

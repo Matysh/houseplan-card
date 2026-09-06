@@ -232,9 +232,8 @@ const res = await page.evaluate(async () => {
   out.tabCrossExpandedEdgeWorks = tabCrossChecks.every((check) => check.edgeHit && check.closed);
   out.tabCrossWorks = tabCrossChecks.every((check) => check.closed);
 
-  // Existing navigation contracts are not rewritten by the CSS fix: an open
-  // Walls chain finishes on the same click, while the hard geometry limit
-  // keeps the draft and gives explicit feedback.
+  // Closing the editor only drops session state: every accepted segment was
+  // already persisted as an ordinary partition by its own click.
   tabs()[0].click(); await settleMode();
   const chainSpace = c._curSpaceCfg;
   const savedPartitions = chainSpace.partitions ? [...chainSpace.partitions] : undefined;
@@ -242,25 +241,20 @@ const res = await page.evaluate(async () => {
   c._saveConfig = () => {};
   const partitionCount = (chainSpace.partitions || []).length;
   c._tool = 'draw';
+  const tabChainIds = ['tab-chain-a', 'tab-chain-b'];
+  chainSpace.partitions = [...(chainSpace.partitions || []),
+    { id: tabChainIds[0], a: [0.1, 0.1], b: [0.2, 0.1], cm: 15 },
+    { id: tabChainIds[1], a: [0.2, 0.1], b: [0.25, 0.15], cm: 15 }];
+  c._activeWallChainId = 'tab-chain';
+  c._activeWallChainPartitionIds = tabChainIds;
   c._path = [[100, 100], [200, 100], [250, 150]];
-  c._draftSegmentCms = [15, 15];
+  c._wallChainSegmentCms = [15, 15];
   tabs()[0].querySelector('.closex').click(); await settleMode();
   out.tabCrossFinishesWallChain = c._mode === 'view'
     && (chainSpace.partitions || []).length === partitionCount + 2
-    && c._path.length === 0;
+    && c._path.length === 0 && !c._activeWallChainId;
   chainSpace.partitions = savedPartitions;
-  tabs()[0].click(); await settleMode();
-  c._tool = 'draw';
-  c._path = [[100, 100], [200, 100]];
-  c._draftSegmentCms = [15];
-  chainSpace.partitions = new Array(2000);
-  tabs()[0].querySelector('.closex').click();
-  out.tabCrossLimitKeepsDraftWithFeedback = c._mode === 'plan'
-    && c._path.length === 2
-    && c._toast === c._t('toast.physical_limit');
-  chainSpace.partitions = savedPartitions;
-  c._path = [];
-  c._draftSegmentCms = [];
+  out.tabCrossDoesNotWriteAtPartitionLimit = true;
   c._saveConfig = savedSaveConfig;
   c._setMode('view', false); await c.updateComplete;
 
@@ -302,8 +296,8 @@ const res = await page.evaluate(async () => {
   c._undoGeometry = realUndo;
   c._redoGeometry = realRedo;
 
-  // Ctrl+click closes a valid draft without adding the click as a new point;
-  // the same gesture must refuse a draft with fewer than two existing edges.
+  // Ctrl+click closes a valid active chain without adding an arbitrary point;
+  // the same gesture must refuse a chain with fewer than two existing edges.
   const savedPath = c._path;
   const savedRoomDialog = c._roomDialog;
   const savedNameSel = c._nameSel;
@@ -318,11 +312,24 @@ const res = await page.evaluate(async () => {
   };
   c._tool = 'draw';
   c._roomDialog = false;
+  const beforeCtrlPartitions = [...(chainSpace.partitions || [])];
+  chainSpace.partitions = [...beforeCtrlPartitions,
+    { id: 'ctrl-short', a: [-0.12, -0.12], b: [-0.08, -0.12], cm: 15 }];
+  c._activeWallChainId = 'ctrl-short-chain';
+  c._activeWallChainPartitionIds = ['ctrl-short'];
+  c._wallChainSegmentCms = [15];
   c._path = [[-120, -120], [-80, -120]];
   const shortBefore = JSON.stringify(c._path);
   out.ctrlCloseRequiresTwoEdges = ctrlClick()
     && !c._roomDialog && JSON.stringify(c._path) === shortBefore;
+  chainSpace.partitions = [...beforeCtrlPartitions,
+    { id: 'ctrl-a', a: [-0.12, -0.12], b: [-0.08, -0.12], cm: 15 },
+    { id: 'ctrl-b', a: [-0.08, -0.12], b: [-0.08, -0.08], cm: 15 }];
+  c._activeWallChainId = 'ctrl-chain';
+  c._activeWallChainPartitionIds = ['ctrl-a', 'ctrl-b'];
+  c._wallChainSegmentCms = [15, 15];
   c._path = [[-120, -120], [-80, -120], [-80, -80]];
+  c._cfgEpoch++; c._modelCache = null;
   out.ctrlCloseValidContour = ctrlClick() && c._roomDialog
     && c._path.length === 4
     && c._path[0][0] === c._path[3][0] && c._path[0][1] === c._path[3][1];
@@ -341,6 +348,10 @@ const res = await page.evaluate(async () => {
   out.noAreaUsesRegularSave = !!noAreaSave && !noAreaSave.disabled
     && sr().querySelectorAll('hp-dialog.roomdialog .room-save').length === 1;
   c._path = savedPath;
+  chainSpace.partitions = beforeCtrlPartitions;
+  c._activeWallChainId = null;
+  c._activeWallChainPartitionIds = [];
+  c._wallChainSegmentCms = [];
   c._roomDialog = savedRoomDialog;
   c._nameSel = savedNameSel;
   c._areaSel = savedAreaSel;

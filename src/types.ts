@@ -56,15 +56,6 @@ export interface WallSegmentEntry {
 export const ZERO_WALL_STYLES = ['dashed', 'solid'] as const;
 export type ZeroWallStyle = (typeof ZERO_WALL_STYLES)[number];
 
-/** Persisted open room contour. Coordinates are normalised in config and
- * render units in SpaceModel, exactly like rooms. */
-export interface RoomDraftCfg {
-  id: string;
-  points: number[][];
-  /** One thickness entry for every consecutive pair of points. */
-  segments: Array<{ id?: string; cm: number }>;
-}
-
 /** A single independent physical wall which never owns or splits a room. */
 export interface PartitionCfg {
   id: string;
@@ -88,7 +79,6 @@ export interface SpaceModel {
   rooms: RoomCfg[]; // render units
   /** Canonical contour-wall atoms in render units. */
   wall_segments: WallSegmentEntry[];
-  room_drafts: RoomDraftCfg[];
   partitions: PartitionCfg[];
   wall_columns: WallColumnCfg[];
 }

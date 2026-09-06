@@ -128,11 +128,10 @@ export function prepareGoldenFixture(scenario) {
       fill_mode: 'none', show_borders: true, show_names: true,
     };
     if (scenario.hiddenWallDiagnostics) {
-      space.room_drafts = [{
-        id: 'hidden-saved-chain',
-        points: [[0, 0], [0, 1]],
-        segments: [{ cm: 15 }],
-      }];
+      space.partitions ||= [];
+      space.partitions.push({
+        id: 'hidden-saved-chain-edge', a: [0, 0], b: [0, 1], cm: 15,
+      });
     }
     if (state !== 'before') {
       delete space.partitions;
@@ -229,11 +228,9 @@ export function prepareGoldenFixture(scenario) {
         { id: 'junction-t-through', a: [0.18, 0.70], b: [0.78, 0.70], cm: 24 },
         { id: 'junction-t-branch', a: [0.50, 0.54], b: [0.50, 0.70], cm: 16 },
         { id: 'junction-room-branch', a: [0.30, 0.82], b: [0.30, 0.94], cm: 18 },
+        { id: 'junction-former-draft-a', a: [0.16, 0.54], b: [0.30, 0.54], cm: 12 },
+        { id: 'junction-former-draft-b', a: [0.30, 0.54], b: [0.30, 0.64], cm: 20 },
       ],
-      room_drafts: [{
-        id: 'junction-draft', points: [[0.16, 0.54], [0.30, 0.54], [0.30, 0.64]],
-        segments: [{ cm: 12 }, { cm: 20 }],
-      }],
       wall_columns: [],
     });
   }
@@ -265,7 +262,7 @@ export function prepareGoldenFixture(scenario) {
         id: 'resize-side-door', type: 'door', x: 0.38, y: 0.12,
         angle: 0, length: 0.08,
       }],
-      partitions: [], room_drafts: [], wall_columns: [], decor: [],
+      partitions: [], wall_columns: [], decor: [],
     });
   }
   if (scenario.junctionNode) {
@@ -320,11 +317,10 @@ export function prepareGoldenFixture(scenario) {
       }];
     }
     if (spec.draft) {
-      space.room_drafts = [{
-        id: 'junction-draft',
-        points: [[0.5, 0.5], [0.75, 0.62]],
-        segments: [{ cm: 15 }],
-      }];
+      space.partitions ||= [];
+      space.partitions.push({
+        id: 'junction-former-draft', a: [0.5, 0.5], b: [0.75, 0.62], cm: 15,
+      });
     }
     fixture.config.spaces.push(space);
   }
@@ -349,7 +345,7 @@ export function prepareGoldenFixture(scenario) {
       rooms: structuredClone(sharpApexFixture.rooms),
       walls: structuredClone(sharpApexFixture.walls),
       wall_segments: structuredClone(sharpApexFixture.wall_segments),
-      openings: [], room_drafts: [], partitions: [], wall_columns: [],
+      openings: [], partitions: [], wall_columns: [],
       view_box: [3.58, 0.20, 0.40, 0.40],
       settings: { fill_mode: 'none', show_borders: true, show_names: false },
     });

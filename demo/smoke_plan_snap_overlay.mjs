@@ -9,13 +9,25 @@ const out = await page.evaluate(async () => {
   const root = () => card.shadowRoot || card.renderRoot;
   const update = async () => { card.requestUpdate(); await card.updateComplete; };
   const cfg = {
+    model_version: 10,
     spaces: [{
       id: 'snap', title: 'Snap', cell_cm: 5, view_box: [0, 0, 1, 0.7],
       rooms: [
         { id: 'left', name: 'Left', area: null,
-          poly: [[0.1, 0.1], [0.5, 0.1], [0.5, 0.5], [0.1, 0.5]] },
+          poly: [[0.1, 0.1], [0.5, 0.1], [0.5, 0.5], [0.1, 0.5]],
+          wall_ids: ['left-top', 'shared', 'left-bottom', 'left-side'] },
         { id: 'right', name: 'Right', area: null,
-          poly: [[0.5, 0.1], [0.9, 0.1], [0.9, 0.5], [0.5, 0.5]] },
+          poly: [[0.5, 0.1], [0.9, 0.1], [0.9, 0.5], [0.5, 0.5]],
+          wall_ids: ['right-top', 'right-side', 'right-bottom', 'shared'] },
+      ],
+      wall_segments: [
+        { id: 'left-top', a: [0.1, 0.1], b: [0.5, 0.1], cm: 15 },
+        { id: 'shared', a: [0.5, 0.1], b: [0.5, 0.5], cm: 0 },
+        { id: 'left-bottom', a: [0.5, 0.5], b: [0.1, 0.5], cm: 15 },
+        { id: 'left-side', a: [0.1, 0.5], b: [0.1, 0.1], cm: 15 },
+        { id: 'right-top', a: [0.5, 0.1], b: [0.9, 0.1], cm: 15 },
+        { id: 'right-side', a: [0.9, 0.1], b: [0.9, 0.5], cm: 15 },
+        { id: 'right-bottom', a: [0.9, 0.5], b: [0.5, 0.5], cm: 15 },
       ],
       openings: [
         { id: 'door', type: 'door', x: 0.3, y: 0.1, angle: 0, length: 0.1 },
@@ -23,9 +35,11 @@ const out = await page.evaluate(async () => {
           host: { kind: 'partition', id: 'base-partition', t: 0.8 } },
       ],
       open_spans: [{ a: [0.5, 0.2], b: [0.5, 0.3] }],
-      room_drafts: [{ id: 'saved', points: [[0.1, 0.6], [0.3, 0.6], [0.3, 0.7]],
-        segments: [{ cm: 15 }, { cm: 15 }] }],
-      partitions: [{ id: 'base-partition', a: [0.6, 0.6], b: [0.9, 0.6], cm: 15 }],
+      partitions: [
+        { id: 'saved-a', a: [0.1, 0.6], b: [0.3, 0.6], cm: 15 },
+        { id: 'saved-b', a: [0.3, 0.6], b: [0.3, 0.7], cm: 15 },
+        { id: 'base-partition', a: [0.6, 0.6], b: [0.9, 0.6], cm: 15 },
+      ],
       wall_columns: [{ id: 'ignored-column', shape: 'square', center: [0.8, 0.35], cm: 25 }],
     }],
     markers: [], settings: {},
@@ -39,7 +53,8 @@ const out = await page.evaluate(async () => {
   card._setMode('plan');
   card._tool = 'draw';
   card._path = [];
-  card._activeDraftId = null;
+  card._activeWallChainId = null;
+  card._activeWallChainPartitionIds = [];
   card._clearPlanSnapHover();
   await update();
 
@@ -168,29 +183,32 @@ const out = await page.evaluate(async () => {
     Math.round((linePoint[0] - 600) / card._gridPitch));
   result.hoverKeepsStaticGeometryCache = !!cachedGeometry
     && card._planSnapGeometryCache?.value === cachedGeometry;
-  const originalPartition = JSON.stringify(card._curSpaceCfg.partitions[0]);
+  const originalPartition = JSON.stringify(card._curSpaceCfg.partitions
+    .find((item) => item.id === 'base-partition'));
   card._markupClick(eventAt(735, 606, 'click'));
   await card.updateComplete;
   result.drawPathLength = card._path.length;
   result.drawCommitUsesExactLineNode = card._path.length === 2
     && close(card._path[1][0], linePoint[0]) && close(card._path[1][1], linePoint[1]);
-  result.existingPartitionWasNotSplit = card._curSpaceCfg.partitions.length === 1
-    && JSON.stringify(card._curSpaceCfg.partitions[0]) === originalPartition;
+  result.existingPartitionWasNotSplit = card._curSpaceCfg.partitions.length === 4
+    && JSON.stringify(card._curSpaceCfg.partitions.find((item) => item.id === 'base-partition'))
+      === originalPartition;
 
-  // The line-snap append above intentionally remains an unfinished draft.
-  // Remove that synthetic record before the independent finish-on-tool-change
-  // scenario below; the fixture's original `saved` draft remains untouched.
-  card._curSpaceCfg.room_drafts = (card._curSpaceCfg.room_drafts || [])
-    .filter((draft) => draft.id === 'saved');
-  delete card._resumeDraftBySpace[card._space];
+  // Remove the first synthetic active wall before the independent scenario;
+  // accepted walls otherwise correctly survive session cancellation.
+  const firstActiveIds = new Set(card._activeWallChainPartitionIds);
+  card._curSpaceCfg.partitions = card._curSpaceCfg.partitions
+    .filter((partition) => !firstActiveIds.has(partition.id));
   card._modelCache = null;
   card._cfgEpoch++;
 
   card._cancelPath();
-  card._activeDraftId = 'saved';
+  card._activeWallChainId = 'saved-chain';
+  card._activeWallChainPartitionIds = ['saved-a', 'saved-b'];
+  card._wallChainSegmentCms = [15, 15];
   card._path = [[100, 600], [300, 600], [300, 700]];
   await update();
-  result.activeDraftExcluded = !lines().some((line) => (
+  result.activeChainUsesStaticOverlay = lines().some((line) => (
     close(line[1], 600) && close(line[3], 600)
       && Math.min(line[0], line[2]) < 300 && Math.max(line[0], line[2]) > 100
   ) || (
@@ -222,25 +240,24 @@ const out = await page.evaluate(async () => {
   await card.updateComplete;
   result.secondPathLengthBeforeSelect = card._path.length;
   result.secondNoRoomDialog = card._roomDialog !== true;
-  result.secondDraftCountBeforeSelect = (card._curSpaceCfg.room_drafts || []).length;
+  const secondDrawnIds = [...card._activeWallChainPartitionIds];
+  result.secondActiveWallCountBeforeSelect = secondDrawnIds.length;
   result.secondToast = String(card._toast || '');
   card._activateMarkupTool('select');
   await update();
   result.partitionCountAfterDraw = card._curSpaceCfg.partitions.length;
   const drawnPartition = card._curSpaceCfg.partitions.find(
-    (partition) => partition.id !== 'base-partition',
+    (partition) => secondDrawnIds.includes(partition.id),
   );
   result.secondWallsClickFinishesSnappedPartition = card._path.length === 0
-    && card._curSpaceCfg.partitions.length === 2
+    && card._curSpaceCfg.partitions.length === 4
     && !!drawnPartition
     && [drawnPartition.a, drawnPartition.b].some((point) =>
       close(point[0] * 1000, 900) && close(point[1] * 1000, 500));
-  result.originalSegmentStillUnchanged = JSON.stringify(card._curSpaceCfg.partitions[0]) === originalPartition;
+  result.originalSegmentStillUnchanged = JSON.stringify(card._curSpaceCfg.partitions
+    .find((item) => item.id === 'base-partition')) === originalPartition;
 
-  const gestureGeometry = JSON.stringify({
-    drafts: card._curSpaceCfg.room_drafts,
-    partitions: card._curSpaceCfg.partitions,
-  });
+  const gestureGeometry = JSON.stringify({ partitions: card._curSpaceCfg.partitions });
   card._activateMarkupTool('draw');
   await update();
   card._suppressClick = true;
@@ -258,10 +275,7 @@ const out = await page.evaluate(async () => {
   stage.dispatchEvent(eventAt(830, 670, 'pointerup', { pointerId: 62 }));
   await card.updateComplete;
   result.panPinchCancelDoNotCommit = card._path.length === 0
-    && JSON.stringify({
-      drafts: card._curSpaceCfg.room_drafts,
-      partitions: card._curSpaceCfg.partitions,
-    }) === gestureGeometry;
+    && JSON.stringify({ partitions: card._curSpaceCfg.partitions }) === gestureGeometry;
 
   card._curSpaceCfg.partitions.push({
     id: 'hidden-partition', a: [0.1, 0.1], b: [0.5, 0.1], cm: 15,
@@ -296,14 +310,21 @@ const out = await page.evaluate(async () => {
   // its left/bottom axes and continue beyond them. The six source endpoints are
   // the exact topology from the field report, reduced to deterministic data.
   const parityCfg = {
-    model_version: 7,
+    model_version: 10,
     spaces: [{
       id: 'axis-parity', title: 'Axis parity', cell_cm: 5, view_box: [0, 0, 1, 0.75],
       rooms: [{
         id: 'room', name: 'Room', area: null,
         poly: [[0.2, 0.2], [0.6, 0.2], [0.6, 0.6], [0.2, 0.6]],
+        wall_ids: ['axis-top', 'axis-right', 'axis-bottom', 'axis-left'],
       }],
-      room_drafts: [], openings: [], open_spans: [],
+      wall_segments: [
+        { id: 'axis-top', a: [0.2, 0.2], b: [0.6, 0.2], cm: 20 },
+        { id: 'axis-right', a: [0.6, 0.2], b: [0.6, 0.6], cm: 20 },
+        { id: 'axis-bottom', a: [0.6, 0.6], b: [0.2, 0.6], cm: 20 },
+        { id: 'axis-left', a: [0.2, 0.6], b: [0.2, 0.2], cm: 20 },
+      ],
+      openings: [], open_spans: [],
       partitions: [
         { id: 'vertical', a: [0.2, 0.05], b: [0.2, 0.6], cm: 20 },
         { id: 'horizontal', a: [0.2, 0.6], b: [0.9, 0.6], cm: 20 },
@@ -317,7 +338,8 @@ const out = await page.evaluate(async () => {
   card._space = 'axis-parity';
   card._modelCache = null;
   card._frame = null;
-  card._activeDraftId = null;
+  card._activeWallChainId = null;
+  card._activeWallChainPartitionIds = [];
   card._path = [];
   card._cfgEpoch++;
   card._setMode('plan');
@@ -407,7 +429,7 @@ out.forcedColorsStayReadable = await page.evaluate(async () => {
 await finish(browser, checkAll(out, {
   drawPathLength: 2,
   secondPathLengthBeforeSelect: 2,
-  secondDraftCountBeforeSelect: 2,
+  secondActiveWallCountBeforeSelect: 1,
   secondToast: '',
-  partitionCountAfterDraw: 2,
+  partitionCountAfterDraw: 4,
 }));

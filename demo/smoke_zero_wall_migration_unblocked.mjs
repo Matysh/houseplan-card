@@ -37,11 +37,10 @@ const out = await page.evaluate(async () => {
   card._setMode('plan'); card._tool = 'draw'; card._drawWallField = '20';
   card._path = []; await update();
 
-  // The two clicks of the Walls tool: a first draft segment is committed.
+  // The two clicks of the Walls tool: its first canonical partition is committed.
   const before = card._geometrySnapshotFromConfig(card._serverCfg, 'A');
   const fresh = card._serverCfg.spaces.find((space) => space.id === 'A');
-  fresh.room_drafts = [{ id: 'd1', points: [[0.24, 0.24], [0.48, 0.24]],
-    segments: [{ cm: 20 }] }];
+  fresh.partitions = [{ id: 'drawn-wall', a: [0.24, 0.24], b: [0.48, 0.24], cm: 20 }];
   result.commitSucceeds = card._commitPhysicalGeometry('draw', before) === true;
   result.noMigrationToast = !toasts.some((text) => /не преобразовано|not converted/i.test(text));
 
@@ -56,8 +55,10 @@ const out = await page.evaluate(async () => {
     && migratedB.openings[0]?.host?.id === top[1].id;
   result.legacyFieldsGone = !('open_spans' in migratedB)
     && (migratedB.rooms || []).every((room) => !('open_to' in room));
-  result.draftSurvives = (card._serverCfg.spaces.find((s) => s.id === 'A')
-    .room_drafts || []).length === 1;
+  const migratedA = card._serverCfg.spaces.find((s) => s.id === 'A');
+  result.currentPartitionSurvives = !('room_drafts' in migratedA)
+    && migratedA.partitions?.length === 1
+    && migratedA.partitions[0].cm === 20;
 
   card._showToast = origToast;
   return result;

@@ -158,8 +158,8 @@ reload; rejected draft geometry cannot be promoted by a later gesture (#314).
 
 ## Canonical zero-thickness walls — model v9 (#306)
 
-Model v9 removes the separate virtual-boundary representation. A contour atom,
-independent partition or draft segment with `cm:0` is the only current form of
+Model v9 removed the separate virtual-boundary representation. A contour atom,
+independent partition or then-current draft segment with `cm:0` became the only form of
 a wall axis without masonry. `space.zero_wall_style` is optional and accepts
 `dashed | solid`; missing or unknown values read as `dashed`. Dashed zero walls
 transmit Glow and sunlight, while solid zero walls are exact line barriers.
@@ -185,6 +185,31 @@ from legacy virtual spans are identical. Consequently some old plans may change
 line style or light transmission after upgrade; this is the accepted migration
 trade-off. Canonical v9 export/import never recreates `open_spans/open_to`, and
 downgrade after the first v9 structural write is unsupported.
+
+## Ordinary wall chains — model v10 (#478)
+
+Model v10 removes persisted `space.room_drafts`. Each accepted segment of the
+Walls tool is written immediately as one ordinary `space.partitions[]` record;
+the active chain id, ordered partition ids, path and per-edge thickness list are
+session-only. Switching tool/editor/space, leaving the card or reloading only
+ends that session. Accepted segments remain independently selectable walls and
+are not resumed as a chain.
+
+The v9→v10 migration converts every valid draft edge one-for-one into a
+partition. A valid existing segment id is retained; a missing id is generated
+deterministically from the space, draft and edge index. Draft order and each
+edge's `cm` are preserved, existing partitions are not merged, and the carrier
+record is removed atomically. Malformed geometry, invalid thickness or an id
+collision fails closed. A current v10 document containing `room_drafts` is
+rejected instead of silently accepting a stale writer.
+
+Import preview, full/space backup restore and Optimize materialize this legacy
+shape before current processing, report converted draft/segment counts, and
+never export `room_drafts` from a current configuration. A room accepted from a
+closed active chain consumes only exactly coincident chain partitions in the
+same room transaction. Cancel/Keep-as-walls leaves all accepted partitions
+unchanged. Downgrade after the first v10 structural write cannot restore the
+old resumable-chain behaviour.
 
 ## Canonical geometry on write (#224, #291)
 
@@ -646,7 +671,7 @@ six walls per node, a wall at least 20 cm long and never shorter than its own
 thickness, 5 cm between non-incident nodes and node to foreign wall, at least
 25 cm² of room interior left after the masonry) are a WRITE contract, not a
 document contract. An existing plan that violates them stays valid and stays
-readable: migration to model v9, JSON import, backup restore and full/space
+readable: migration to the current model, JSON import, backup restore and full/space
 transfer never run the check, and an edit that does not touch the offending
 element still saves.
 
@@ -672,11 +697,12 @@ Compatibility matrix:
 | new | old | No change: an inherited violation is never re-judged, so an old backend's documents keep loading and editing |
 | new | new | A write that ADDS a violation is refused in the surface where it was made — a toast naming the rule for drawing and Thickness, a stopped wall for Resize |
 
-Intermediate wall-chain clicks in a current model-v9 document use the bounded
-local write proof from #461. This is runtime-only: the accepted
-`room_drafts[].points/segments` and the WebSocket payload remain the same full
-config, including unknown fields. A pre-v9 first structural write, any diff not
-proven to be one active-draft append, and every chain finish/promotion retains
-the full-space migration, physical and junction barrier. Old frontends and old
-backends therefore see no new field or protocol, and a backend rejection still
-rolls the complete pending physical transaction back to its earliest snapshot.
+Intermediate wall-chain clicks in a current model-v10 document use the bounded
+local write proof from #461. This is runtime-only: each accepted
+`partitions[]` record and the WebSocket payload remain the same full config,
+including unknown fields. A pre-v10 first structural write, any diff not proven
+to be one active-chain partition append, and room creation from a closed chain
+retain the full-space migration, physical and junction barrier. Old frontends
+and old backends therefore see no new field or protocol, and a backend rejection
+still rolls the complete pending physical transaction back to its earliest
+snapshot.

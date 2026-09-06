@@ -31,7 +31,7 @@ const clickShape = (click) => click.fullSpacePhysicalChecks === 0
   && click.junctionArtifactPasses === 1
   && click.configWrites === 1 && click.history === 1 && click.pathPoints === 1;
 const fixtureShape = base.fixture.spaces === 5 && base.fixture.rooms === 12
-  && base.fixture.positiveSegments >= 36 && base.fixture.savedDrafts === 4;
+  && base.fixture.positiveSegments >= 36 && base.fixture.savedPartitions === 8;
 const remoteFixtureShape = remote.fixture.positiveSegments === base.fixture.positiveSegments * 2;
 const structural = fixtureShape && remoteFixtureShape
   && base.result.first.fullSpacePhysicalChecks === 0
@@ -42,8 +42,12 @@ const structural = fixtureShape && remoteFixtureShape
   && base.result.metrics.localProofMaxObjects < base.fixture.positiveSegments
   && remote.result.metrics.localProofMaxObjects === base.result.metrics.localProofMaxObjects
   && base.result.ids.length === 7 && new Set(base.result.ids).size === 7
-  && base.result.terminal.fullSpacePhysicalChecks >= 1
-  && base.result.terminalPartitionCount >= 1 && base.result.activeCleared;
+  && base.result.metrics.wallGenericFallbacks === 0
+  && base.result.terminal.fullSpacePhysicalChecks === 0
+  && base.result.terminal.localPhysicalChecks === 0
+  && base.result.terminal.configWrites === 0 && base.result.terminal.history === 0
+  && base.result.terminalPartitionCount === base.fixture.savedPartitions + 7
+  && base.result.activeCleared;
 const budgets = {
   medianMs: 150,
   maxMs: 250,

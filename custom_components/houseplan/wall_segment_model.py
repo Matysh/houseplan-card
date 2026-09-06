@@ -1,4 +1,4 @@
-"""Deterministic persisted contour-wall identity (model v9, issues #282/#306).
+"""Deterministic persisted contour-wall identity (model v10, issues #282/#478).
 
 This is the backend twin of ``src/wall-segment-model.ts``.  Import preview is
 a server-side structural writer, so it cannot depend on a browser being open
@@ -15,7 +15,7 @@ from typing import Any
 
 from .coordinate_canonicalization import canonicalize_config_geometry
 
-WALL_SEGMENT_MODEL_VERSION = 9
+WALL_SEGMENT_MODEL_VERSION = 10
 GRID_STEP_N = 1 / 240
 EPS = 1e-9
 
@@ -618,7 +618,74 @@ def _host_openings(
             opening.pop("host", None)
 
 
-def _migrate_space(space: dict[str, Any], initial_migration: bool) -> int:
+def _migrate_room_drafts_to_partitions(
+    space: dict[str, Any], initial_migration: bool,
+) -> tuple[int, int]:
+    if "room_drafts" not in space:
+        return 0, 0
+    if not initial_migration:
+        raise WallSegmentMigrationError("duplicate-id", "model v10 must not contain room_drafts")
+    drafts = space.get("room_drafts") or []
+    used = {
+        str(item["id"])
+        for name in ("rooms", "openings", "decor", "partitions",
+                     "wall_columns", "wall_segments")
+        for item in space.get(name) or []
+        if isinstance(item, dict) and isinstance(item.get("id"), str) and item["id"]
+    }
+    used.update(
+        str(draft["id"]) for draft in drafts
+        if isinstance(draft, dict) and isinstance(draft.get("id"), str) and draft["id"]
+    )
+    partitions = copy.deepcopy(space.get("partitions") or [])
+    converted = 0
+    for draft in drafts:
+        points = draft.get("points") if isinstance(draft.get("points"), list) else []
+        segments = draft.get("segments") if isinstance(draft.get("segments"), list) else []
+        if len(points) < 2 or len(segments) != len(points) - 1:
+            raise WallSegmentMigrationError("zero-length", str(draft.get("id", "")))
+        for index, segment in enumerate(segments):
+            try:
+                a = [float(points[index][0]), float(points[index][1])]
+                b = [float(points[index + 1][0]), float(points[index + 1][1])]
+                cm = float(segment["cm"])
+            except (KeyError, IndexError, TypeError, ValueError):
+                raise WallSegmentMigrationError("zero-length", str(draft.get("id", ""))) from None
+            if a == b:
+                raise WallSegmentMigrationError("zero-length", str(draft.get("id", "")))
+            if not math.isfinite(cm) or cm < 0 or cm > 100:
+                raise WallSegmentMigrationError("thickness-conflict", str(draft.get("id", "")))
+            segment_id = segment.get("id") if isinstance(segment.get("id"), str) else ""
+            if segment_id:
+                if segment_id in used:
+                    raise WallSegmentMigrationError("duplicate-id", segment_id)
+            else:
+                base = deterministic_wall_segment_id(
+                    str(space.get("id", "")), a, b,
+                    [f"draft:{draft.get('id', '')}:{index}"],
+                )
+                segment_id = base
+                suffix = 2
+                while segment_id in used:
+                    segment_id = f"{base}-{suffix}"
+                    suffix += 1
+            used.add(segment_id)
+            partitions.append({"id": segment_id, "a": a, "b": b, "cm": cm})
+            converted += 1
+    if partitions:
+        space["partitions"] = partitions
+    else:
+        space.pop("partitions", None)
+    space.pop("room_drafts", None)
+    return len(drafts), converted
+
+
+def _migrate_space(
+    space: dict[str, Any], initial_migration: bool,
+) -> tuple[int, int, int]:
+    migrated_drafts, migrated_draft_segments = _migrate_room_drafts_to_partitions(
+        space, initial_migration,
+    )
     old: dict[str, dict[str, Any]] = {}
     for segment in space.get("wall_segments") or []:
         segment_id = str(segment.get("id", ""))
@@ -652,47 +719,35 @@ def _migrate_space(space: dict[str, Any], initial_migration: bool) -> int:
     space.pop("open_spans", None)
     for room in space.get("rooms") or []:
         room.pop("open_to", None)
-    draft_used = {
-        str(item["id"])
-        for name in ("rooms", "openings", "decor", "room_drafts", "partitions",
-                     "wall_columns", "wall_segments")
-        for item in space.get(name) or []
-        if isinstance(item, dict) and isinstance(item.get("id"), str) and item["id"]
-    }
-    for draft in space.get("room_drafts") or []:
-        for index, segment in enumerate(draft.get("segments") or []):
-            if isinstance(segment.get("id"), str) and segment["id"]:
-                if segment["id"] in draft_used:
-                    raise WallSegmentMigrationError("duplicate-id", segment["id"])
-                draft_used.add(segment["id"])
-                continue
-            try:
-                a, b = draft["points"][index], draft["points"][index + 1]
-            except (KeyError, IndexError, TypeError):
-                raise WallSegmentMigrationError("zero-length", str(draft.get("id", ""))) from None
-            if initial_migration:
-                base = deterministic_wall_segment_id(
-                    str(space.get("id", "")), a, b, [f"draft:{draft.get('id', '')}"],
-                )
-                suffix, segment["id"] = 1, base
-                while segment["id"] in draft_used:
-                    suffix += 1
-                    segment["id"] = f"{base}-{suffix}"
-            else:
-                segment["id"] = _fresh_wall_segment_id(draft_used)
-            draft_used.add(segment["id"])
     _host_openings(space, segments, initial_migration)
-    return sum(1 for segment in segments if segment["id"] not in old)
+    return (
+        sum(1 for segment in segments if segment["id"] not in old),
+        migrated_drafts,
+        migrated_draft_segments,
+    )
 
 
-def commit_wall_segment_model(config: Any) -> tuple[Any, int]:
+def commit_wall_segment_model(
+    config: Any, *, migration_report: dict[str, int] | None = None,
+) -> tuple[Any, int]:
     """Return one migrated deep copy and the count of newly assigned wall ids."""
     candidate = canonicalize_config_geometry(copy.deepcopy(config))
     if not isinstance(candidate, dict):
         raise WallSegmentMigrationError("invalid-room")
     migrated = 0
+    migrated_drafts = 0
+    migrated_draft_segments = 0
     initial_migration = int(candidate.get("model_version", 0) or 0) < WALL_SEGMENT_MODEL_VERSION
     for space in candidate.get("spaces") or []:
-        migrated += _migrate_space(space, initial_migration)
+        wall_segments, drafts, draft_segments = _migrate_space(space, initial_migration)
+        migrated += wall_segments
+        migrated_drafts += drafts
+        migrated_draft_segments += draft_segments
     candidate["model_version"] = WALL_SEGMENT_MODEL_VERSION
+    if migration_report is not None:
+        migration_report.clear()
+        migration_report.update({
+            "room_drafts": migrated_drafts,
+            "room_draft_segments": migrated_draft_segments,
+        })
     return canonicalize_config_geometry(candidate), migrated

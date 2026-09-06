@@ -30,12 +30,12 @@ import {
 } from './space-reference-repair';
 import { repairNearAxisRoomWalls } from './near-axis';
 import {
-  commitWallSegmentModelInPlace,
+  commitWallSegmentModelInPlace, migrateLegacyRoomDraftsToPartitionsInPlace,
 } from './wall-segment-model';
 import { legacyZeroContourLines } from './zero-walls';
 
 /** Bump when a new lossless maintenance pass is added. */
-export const PLAN_MODEL_VERSION = 9;
+export const PLAN_MODEL_VERSION = 10;
 const DEFAULT_CELL_CM = 5;
 const CELL_CM_MIN = 0.1;
 const CELL_CM_MAX = 1000;
@@ -57,6 +57,10 @@ export interface OptimizeReport extends AlignReport, SpaceReferenceReport {
   canonicalized: number;
   /** Contour-wall atoms materialised into the stable v8 catalogue. */
   wallSegmentsMigrated: number;
+  /** Legacy persisted unfinished room chains converted into partitions. */
+  roomDraftsMigrated: number;
+  /** Individual legacy draft edges converted into partitions. */
+  roomDraftSegmentsMigrated: number;
   /** Read-compatible legacy virtual spans converted into zero-wall atoms. */
   legacyZeroWallsMigrated: number;
   /** Redundant equal-thickness wall entries removed by canonicalisation. */
@@ -69,8 +73,6 @@ export interface OptimizeReport extends AlignReport, SpaceReferenceReport {
   partitionsReconciled: number;
   /** Hosted openings materialised onto the coincident shared room wall. */
   openingsRehosted: number;
-  /** Saved wall chains removed because solid room masonry covers every segment. */
-  redundantDraftsRemoved: number;
   /** Unique physical near-axis walls accepted for explicit straightening. */
   wallsStraightened: number;
   /** Near-axis walls found but rejected by structural safety checks. */
@@ -443,6 +445,21 @@ export function optimizePlans(
   const migration = migrateLosslessly(config);
   let migrated = migration.total;
 
+  // #478: legacy unfinished contours must become ordinary partitions before
+  // every geometry pass. Migrating them only at the final identity barrier
+  // made the first Optimize leave a newly materialized coincident wall for a
+  // second Optimize, violating the documented idempotence contract.
+  let wallSegmentsMigrated = 0;
+  let roomDraftsMigrated = 0;
+  let roomDraftSegmentsMigrated = 0;
+  if (modelFrom < PLAN_MODEL_VERSION) {
+    for (const space of Array.isArray(config.spaces) ? config.spaces : []) {
+      const draftMigration = migrateLegacyRoomDraftsToPartitionsInPlace(space);
+      roomDraftsMigrated += draftMigration.drafts;
+      roomDraftSegmentsMigrated += draftMigration.segments;
+    }
+  }
+
   const beforeSpaces = clone(config.spaces || []);
   const aligned = alignAllToGrid(config.spaces || [], references.layout);
   let wallsStraightened = 0;
@@ -478,7 +495,6 @@ export function optimizePlans(
     maxSpace: finalAligned.report.maxShiftCm > aligned.report.maxShiftCm
       ? finalAligned.report.maxSpace : aligned.report.maxSpace,
     rotated: aligned.report.rotated + finalAligned.report.rotated,
-    removedDrafts: aligned.report.removedDrafts + finalAligned.report.removedDrafts,
   } : { ...aligned.report };
 
   let wallsMerged = 0;
@@ -487,7 +503,6 @@ export function optimizePlans(
   let partitionsMerged = 0;
   let partitionsReconciled = 0;
   let openingsRehosted = 0;
-  let redundantDraftsRemoved = 0;
   let canonicalized = 0;
   for (let i = 0; i < config.spaces.length; i++) {
     const before = beforeSpaces[i];
@@ -618,11 +633,6 @@ export function optimizePlans(
         if (reconciled.walls.length) space.walls = reconciled.walls;
         else delete space.walls;
       }
-      if (reconciled.removedDrafts) {
-        redundantDraftsRemoved += reconciled.removedDrafts;
-        if (reconciled.roomDrafts.length) space.room_drafts = reconciled.roomDrafts;
-        else delete space.room_drafts;
-      }
     }
     const canonicalAfter = JSON.stringify({
       zero: (space.wall_segments || []).filter((wall: any) => Number(wall.cm) === 0),
@@ -634,9 +644,12 @@ export function optimizePlans(
   // Stage 1 of ADR 282 is itself a lossless maintenance pass.  Run it after
   // every geometry repair so its catalogue describes the final candidate, not
   // the pre-Optimize shape. Future model versions remain opaque/fail-soft.
-  let wallSegmentsMigrated = 0;
-  if (modelFrom <= PLAN_MODEL_VERSION)
-    wallSegmentsMigrated = commitWallSegmentModelInPlace(config).migratedSegments;
+  if (modelFrom <= PLAN_MODEL_VERSION) {
+    const wallCommit = commitWallSegmentModelInPlace(config);
+    wallSegmentsMigrated += wallCommit.migratedSegments;
+    roomDraftsMigrated += wallCommit.migratedDrafts;
+    roomDraftSegmentsMigrated += wallCommit.migratedDraftSegments;
+  }
 
   // The storage barrier (#224) is part of Optimize's idempotence contract.
   // A 1/240 grid node has no finite decimal representation: comparing or
@@ -673,7 +686,6 @@ export function optimizePlans(
     maxShiftCm: 0,
     maxSpace: '',
     rotated: 0,
-    removedDrafts: 0,
   };
   const persistedReferences: SpaceReferenceReport = changed ? references.report : {
     ...references.report,
@@ -698,13 +710,14 @@ export function optimizePlans(
       glowRoomsMigrated: changed ? migration.glowRooms : 0,
       canonicalized: changed ? canonicalized : 0,
       wallSegmentsMigrated: changed ? wallSegmentsMigrated : 0,
+      roomDraftsMigrated: changed ? roomDraftsMigrated : 0,
+      roomDraftSegmentsMigrated: changed ? roomDraftSegmentsMigrated : 0,
       legacyZeroWallsMigrated: changed ? legacyZeroWallsMigrated : 0,
       wallsMerged: changed ? wallsMerged : 0,
       spansMerged: changed ? spansMerged : 0,
       partitionsMerged: changed ? partitionsMerged : 0,
       partitionsReconciled: changed ? partitionsReconciled : 0,
       openingsRehosted: changed ? openingsRehosted : 0,
-      redundantDraftsRemoved: changed ? redundantDraftsRemoved : 0,
       wallsStraightened: changed ? wallsStraightened : 0,
       wallsStraightenSkipped,
       maxStraightenShiftCm: changed ? maxStraightenShiftCm : 0,

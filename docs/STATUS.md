@@ -85,11 +85,14 @@ metadata). Only an explicit owner-approved emergency hotfix may skip this gate.
   (v1.34), smart guides + 45° angle badge (v1.40), opening hover preview.
   Openings support doors, windows and compact wide gates; gates retain door
   contact/lock/Glow semantics but use two leaves opening only 10° outwards.
-- **Canonical zero-thickness walls** (#306, current dev): Walls and Thickness
-  accept `0..100 cm` for contour, draft and independent segments. Model v9
+- **Canonical wall model** (#282, #306, #478, current dev): Walls and Thickness
+  accept `0..100 cm` for contour and independent segments. Model v10
   migrates legacy virtual spans into stable `cm:0` atoms; a per-space
   dashed/solid selector controls both line style and Glow/sun transmission.
-  Zero walls have no body, area or opening host, and there is no Boundary tool.
+  It also converts persisted unfinished contours to ordinary partitions; new
+  wall-chain segments are partitions from the first accepted click and chain
+  state is session-only. Zero walls have no body, area or opening host, and
+  there is no Boundary tool.
 - **Rooms**: room cards with metrics (temp/hum/lqi/light "1 of 3") and
   proportional resize (v1.31); link icon to the HA area (v1.40.1, room taps
   removed). **New-device red dot** (v1.29), lock action button (v1.30).

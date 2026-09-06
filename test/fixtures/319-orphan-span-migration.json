@@ -357,33 +357,30 @@
             }
           }
         ],
-        "room_drafts": [
+        "partitions": [
           {
-            "id": "draft",
-            "points": [
-              [
-                2,
-                0
-              ],
-              [
-                2.5,
-                0
-              ],
-              [
-                3,
-                0
-              ]
+            "id": "wall-ulziozdfsjzlriamibvg",
+            "a": [
+              2,
+              0
             ],
-            "segments": [
-              {
-                "cm": 10,
-                "id": "wall-ulziozdfsjzlriamibvg"
-              },
-              {
-                "cm": 20,
-                "id": "wall-bvlpyhrsy6xjgox3g6e6"
-              }
-            ]
+            "b": [
+              2.5,
+              0
+            ],
+            "cm": 10
+          },
+          {
+            "id": "wall-bvlpyhrsy6xjgox3g6e6",
+            "a": [
+              2.5,
+              0
+            ],
+            "b": [
+              3,
+              0
+            ],
+            "cm": 20
           }
         ],
         "wall_segments": [
@@ -500,6 +497,6 @@
     ],
     "markers": [],
     "settings": {},
-    "model_version": 9
+    "model_version": 10
   }
 }

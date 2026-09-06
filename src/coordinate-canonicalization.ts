@@ -171,6 +171,8 @@ function visitLatticeCoordinates(
           fieldValues(decor, ['x', 'y', 'w', 'h']);
         } else if (decor.kind === 'text') fieldValues(decor, ['x', 'y']);
       }
+      // Legacy-only read boundary: v9 drafts are canonicalized before the
+      // wall-model migration turns their edges into current partitions.
       for (const draft of records(space.room_drafts)) pointsValues(draft.points);
       for (const partition of records(space.partitions)) {
         pointValues(partition.a);
@@ -356,6 +358,7 @@ export function canonicalizeConfigGeometryInPlace<T>(config: T): T {
       }
     }
 
+    // Legacy-only read boundary; current v10 documents reject this field.
     for (const draft of records(space.room_drafts)) latticePoints(draft.points);
 
     for (const partition of records(space.partitions)) {

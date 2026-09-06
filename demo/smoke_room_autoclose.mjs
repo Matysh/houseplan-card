@@ -29,8 +29,10 @@ const out = await page.evaluate(async () => {
     card._cfgEpoch++;
     card._planSnapGeometryCache = null;
     card._path = [];
-    card._activeDraftId = null;
-    card._draftSegmentCms = [];
+    card._activeWallChainId = null;
+    card._activeWallChainPartitionIds = [];
+    card._wallChainSegmentCms = [];
+    card._wallChainRedo = [];
     card._closingWallCm = null;
     card._roomDialog = false;
     card._wallFaceBatch = null;
@@ -61,16 +63,16 @@ const out = await page.evaluate(async () => {
     await update();
   };
   const close = (a, b, epsilon = 1e-5) => Math.abs(a - b) <= epsilon;
-  const currentDraft = () => card._curSpaceCfg.room_drafts?.find((draft) =>
-    draft.id === card._activeDraftId);
+  const currentChain = () => card._activeWallChainPartitionIds
+    .map((id) => card._curSpaceCfg.partitions?.find((partition) => partition.id === id))
+    .filter(Boolean);
 
   // r1 regression guard: two points on the common wall are still only an open line.
   await click(500, 100);
   await click(500, 500);
   result.secondCommonWallPointStaysOpen = card._path.length === 2
     && !card._roomDialog && !card._toast
-    && currentDraft()?.points.length === 2
-    && currentDraft()?.segments.length === 1;
+    && currentChain().length === 1;
 
   // Endpoint-to-endpoint auto-close after the new room has enough vertices.
   await reset();
@@ -78,25 +80,24 @@ const out = await page.evaluate(async () => {
   await click(800, 100);
   await click(800, 500);
   await click(500, 500);
-  const successfulDraft = clone(currentDraft());
+  const successfulChain = clone(currentChain());
   result.endpointAutoCloseOpensDialog = card._roomDialog
     && card._wallFaceBatch?.candidates.length === 1
     && card._path.length === 4
     && close(card._path.at(-1)[0], 500)
     && close(card._path.at(-1)[1], 500);
-  result.terminalSegmentPersistsBeforeDialog = successfulDraft?.points.length === 4
-    && successfulDraft?.segments.length === 3
-    && close(successfulDraft.points.at(-1)[0], 0.5)
-    && close(successfulDraft.points.at(-1)[1], 0.5)
-    && successfulDraft.segments.every((segment) => close(segment.cm, 15));
+  result.terminalSegmentPersistsBeforeDialog = successfulChain.length === 3
+    && close(successfulChain.at(-1).b[0], 0.5)
+    && close(successfulChain.at(-1).b[1], 0.5)
+    && successfulChain.every((segment) => close(segment.cm, 15));
   result.roomIsNotCommittedBeforeSave = card._curSpaceCfg.rooms.length === 1;
 
   card._roomDialogCancel();
   await update();
-  result.cancelKeepsTerminalOpenDraft = !card._roomDialog
+  result.cancelKeepsTerminalOpenChain = !card._roomDialog
     && card._path.length === 4
     && !card._contourClosed
-    && JSON.stringify(currentDraft()) === JSON.stringify(successfulDraft)
+    && JSON.stringify(currentChain()) === JSON.stringify(successfulChain)
     && close(card._path.at(-1)[0], 500) && close(card._path.at(-1)[1], 500);
 
   // Save promotes the same draft, keeps the existing shared thickness and creates no partition.
@@ -113,9 +114,9 @@ const out = await page.evaluate(async () => {
     && close(wall.a[0], 0.5) && close(wall.b[0], 0.5)
     && close(Math.min(wall.a[1], wall.b[1]), 0.1)
     && close(Math.max(wall.a[1], wall.b[1]), 0.5));
-  result.savePromotesDraftWithoutPartition = card._curSpaceCfg.rooms.length === 2
+  result.savePromotesChainWithoutPartition = card._curSpaceCfg.rooms.length === 2
     && card._curSpaceCfg.rooms.some((room) => room.name === 'Adjacent')
-    && !card._curSpaceCfg.room_drafts?.length
+    && !('room_drafts' in card._curSpaceCfg)
     && !card._curSpaceCfg.partitions?.length
     && card._path.length === 0;
   result.sharedWallKeepsNeighbourThickness = !!sharedWall
@@ -132,7 +133,7 @@ const out = await page.evaluate(async () => {
   result.openingKeepsStructuralAutoClose = card._roomDialog
     && card._wallFaceBatch?.candidates.length === 1
     && card._path.length === 4
-    && currentDraft()?.points.length === 4;
+    && currentChain().length === 3;
 
   // #173: a proper X is a derived graph node. The two bounded faces are
   // offered, while the terminal draft remains the only persisted mutation.
@@ -144,7 +145,7 @@ const out = await page.evaluate(async () => {
   result.xIntersectionOffersFacesWithoutPartialRooms = card._roomDialog
     && card._wallFaceBatch?.candidates.length === 2
     && card._path.length === 4
-    && currentDraft()?.segments.length === 3
+    && currentChain().length === 3
     && card._curSpaceCfg.rooms.length === 1;
 
   return result;

@@ -35,7 +35,7 @@ test('#234: выборка находит все четыре смока кон�
   // Именно тот смок, на котором #234 потерял регресс, и именно по имени поля:
   // если связь начнёт находиться «вообще как-нибудь», проверка обесценится.
   const junctions = selection.direct.find((e) => e.smoke === 'smoke_wall_junctions.mjs');
-  assert.ok(junctions.symbols.includes('_draftSegmentCms'));
+  assert.ok(junctions.symbols.includes('_wallChainSegmentCms'));
   // И не превращается в полный прогон: смысл выборки в том, что она меньше матрицы.
   assert.ok(recommended.size < selection.smokeCount / 4,
     `выборка ${recommended.size} из ${selection.smokeCount} — это уже полная матрица`);
@@ -80,7 +80,7 @@ test('таблица символов не берёт одиночные анг�
   for (const noise of ['floor', 'value', 'index', 'return', 'length', 'edit']) {
     assert.ok(!table.has(noise), `«${noise}» попал в таблицу символов и вернёт шум`);
   }
-  for (const real of ['chainSegmentCms', '_draftSegmentCms', 'innerEdgeSpan']) {
+  for (const real of ['chainSegmentCms', '_wallChainSegmentCms', 'innerEdgeSpan']) {
     assert.ok(table.has(real), `${real} не распознан как символ проекта`);
   }
 });

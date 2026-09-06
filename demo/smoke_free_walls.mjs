@@ -1,4 +1,4 @@
-// Browser contract for saved room drafts, independent partitions and columns.
+// Browser contract for active wall chains, independent partitions and columns.
 // This deliberately exercises the card's editor transactions rather than
 // injecting finished records: create, drag, edit and Delete must all pass
 // through the same paths a pointer/keyboard gesture uses.
@@ -13,10 +13,6 @@ const out = await page.evaluate(async () => {
   // The product owns dangerous confirmations through hp-confirm now.  This
   // smoke covers geometry transactions, while smoke_danger_confirmation
   // exercises the real dialog; keep the decision deterministic here.
-  let confirmDecision = true;
-  c._confirmDanger = () => new Promise((resolve) => {
-    setTimeout(() => resolve(confirmDecision), 0);
-  });
   // Exercise hp-dialog's HA branch without depending on the Home Assistant
   // frontend in the standalone demo.  The fixed one-line fallback below
   // reproduces ha-dialog-header's public custom-property contract: Houseplan
@@ -48,8 +44,9 @@ const out = await page.evaluate(async () => {
   }
   c.hass = { ...c.hass, locale: { ...(c.hass.locale || {}), language: 'ru' } };
   c._serverCfg = {
+    model_version: 10,
     spaces: [{ id: 'physical', title: 'Physical', cell_cm: 5,
-      view_box: [0, 0, 1, 1], rooms: [] }],
+      view_box: [0, 0, 1, 1], rooms: [], wall_segments: [] }],
     markers: [], settings: {},
   };
   c._space = 'physical';
@@ -90,38 +87,23 @@ const out = await page.evaluate(async () => {
   o.columnCreatedSquare = sp.wall_columns?.length === 1
     && sp.wall_columns[0].shape === 'square' && sp.wall_columns[0].cm === 30;
 
-  // Незавершённая цепочка сохраняется сразу, вместе с толщиной отрезка.
+  // Незавершённая цепочка сохраняется сразу обычной partition, вместе с
+  // толщиной отрезка.
   // Путь набирается кликами, а не присваиванием `_path`: с #234 толщина
   // пишется в тот же момент, что и точка, и подстановка пути в обход клика
   // опирается на снятый там fallback — тест проверял бы поведение, которого
   // в продукте больше нет.
   c._activateMarkupTool('draw');
   c._drawWallField = '12';
-  c._activeDraftId = null;
+  c._activeWallChainId = null;
+  c._activeWallChainPartitionIds = [];
   c._markupClick(clickAt(100, 300));
   c._markupClick(clickAt(200, 300));
-  o.draftChainRecordedThickness = c._draftSegmentCms.length === c._path.length - 1;
-  c._persistActiveDraftSegment();
+  o.wallChainRecordedThickness = c._wallChainSegmentCms.length === c._path.length - 1;
   sp = c._serverCfg.spaces[0];
-  o.draftPersistedImmediately = sp.room_drafts?.length === 1
-    && sp.room_drafts[0].segments[0].cm === 12;
-
-  // Endpoint-to-endpoint join is one atomic record: the active id survives
-  // and segment thickness follows geometric order.
-  sp.room_drafts = [
-    { id: 'join-a', points: [[0.1, 0.4], [0.3, 0.4]], segments: [{ cm: 10 }] },
-    { id: 'join-b', points: [[0.3, 0.4], [0.5, 0.4]], segments: [{ cm: 20 }] },
-  ];
-  c._modelCache = null;
-  c._activeDraftId = 'join-a';
-  c._path = [[100, 400], [300, 400]];
-  c._draftSegmentCms = [10];
-  const join = c._draftEndAt([300, 400], 'join-a');
-  if (join) c._mergeDraftEndpoint(join);
-  sp = c._serverCfg.spaces[0];
-  o.draftEndpointJoinIsAtomic = sp.room_drafts?.length === 1
-    && sp.room_drafts[0].id === 'join-a'
-    && JSON.stringify(sp.room_drafts[0].segments.map((segment) => segment.cm)) === '[10,20]';
+  const activeWallId = c._activeWallChainPartitionIds[0];
+  o.wallPersistedImmediately = !!activeWallId
+    && sp.partitions?.some((item) => item.id === activeWallId && item.cm === 12);
 
   const part = c._spaceModel().partitions[0];
   c._physicalDrag = {
@@ -181,18 +163,6 @@ const out = await page.evaluate(async () => {
   o.partitionFooterTouchTargets = partitionLayout.buttons.every((button) =>
     button.getBoundingClientRect().height >= 44);
 
-  c._physicalDialog = {
-    kind: 'draft', id: 'join-a', segment: 0, cm: '10', length: '1 m',
-  };
-  await c.updateComplete;
-  await new Promise((resolve) => requestAnimationFrame(resolve));
-  const draftLayout = actionLayout();
-  o.draftFooterFourActionsContained = draftLayout.contained
-    && draftLayout.buttons.length === 4
-    && draftLayout.buttons.every((button) => button.scrollWidth <= button.clientWidth + 1);
-  c._physicalDialog = null;
-  await c.updateComplete;
-
   const partitionId = sp.partitions[0].id;
   sp.openings = [{
     id: 'hosted-opening', type: 'door', width_cm: 90,
@@ -211,24 +181,9 @@ const out = await page.evaluate(async () => {
   const partitionDelete = c._deletePhysicalSelection();
   o.partitionDeleteReturnsPromise = typeof partitionDelete?.then === 'function';
   await partitionDelete;
-  o.deleteRemovesPartition = !c._serverCfg.spaces[0].partitions;
-
-  const draftId = c._serverCfg.spaces[0].room_drafts[0].id;
-  const historyBeforeCancel = c._geometryHistory.size;
-  confirmDecision = false;
-  c._physicalSel = { kind: 'draft', id: draftId, segment: 0 };
-  const cancelledDelete = c._deletePhysicalSelection();
-  o.cancelledDraftDeleteReturnsPromise = typeof cancelledDelete?.then === 'function';
-  await cancelledDelete;
-  o.cancelledDraftDeleteKeepsOutlineAndHistory = c._serverCfg.spaces[0].room_drafts?.[0]?.id === draftId
-    && c._geometryHistory.size === historyBeforeCancel;
-
-  confirmDecision = true;
-  c._physicalSel = { kind: 'draft', id: draftId, segment: 0 };
-  const draftDelete = c._deletePhysicalSelection();
-  o.draftDeleteReturnsPromise = typeof draftDelete?.then === 'function';
-  await draftDelete;
-  o.deleteOnDraftRemovesWholeOutline = !c._serverCfg.spaces[0].room_drafts;
+  o.deleteRemovesOnlySelectedPartition = !c._serverCfg.spaces[0].partitions
+    ?.some((partition) => partition.id === partitionId)
+    && c._serverCfg.spaces[0].partitions?.some((partition) => partition.id === activeWallId);
 
   const columnId = c._serverCfg.spaces[0].wall_columns[0].id;
   c._physicalSel = { kind: 'column', id: columnId };
@@ -242,8 +197,10 @@ const out = await page.evaluate(async () => {
   o.emptyDeleteReturnsPromise = typeof emptyDelete?.then === 'function';
   await emptyDelete;
 
+  const beforeInvalid = c._serverCfg.spaces[0].partitions?.length || 0;
   drawAndFinish([400, 100], [500, 100], 120);
-  o.invalidThicknessCreatesNothing = !c._serverCfg.spaces[0].partitions;
+  o.invalidThicknessCreatesNothing = (c._serverCfg.spaces[0].partitions?.length || 0)
+    === beforeInvalid;
 
   return o;
 });

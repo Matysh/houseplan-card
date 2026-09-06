@@ -168,18 +168,6 @@ export function resizeLiveCandidateSpace(
     const half = Math.max(0, Number(item.cm) || 0) / cellCm * GRID_STEP_N / 2;
     return boundaryDistance(a, b) <= roomWallHalf + half + edgeEpsilon;
   });
-  const roomDrafts = recordsOf(space.room_drafts).filter((item) => {
-    const draftPoints = pointsOf(item.points);
-    if (draftPoints.length < 2) return true;
-    const segments = recordsOf(item.segments);
-    return draftPoints.some((point, index) => {
-      if (index + 1 >= draftPoints.length) return false;
-      const half = Math.max(0, Number(segments[index]?.cm) || 0)
-        / cellCm * GRID_STEP_N / 2;
-      return boundaryDistance(point, draftPoints[index + 1])
-        <= roomWallHalf + half + edgeEpsilon;
-    });
-  });
   const wallColumns = recordsOf(space.wall_columns).filter((item) => {
     const center = pointOf(item.center);
     if (!center) return true;
@@ -203,7 +191,6 @@ export function resizeLiveCandidateSpace(
     wall_segments: wallSegments,
     open_spans: recordsOf(space.open_spans).filter(wallOverlaps),
     partitions,
-    room_drafts: roomDrafts,
     wall_columns: wallColumns,
     openings,
   };

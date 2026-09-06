@@ -83,7 +83,9 @@ const result = await page.evaluate(async () => {
   card._openSpaceDialog('edit', first.id);
   card._mode = 'plan';
   card._path = [[100, 100], [200, 100]];
-  card._resumeDraftBySpace = { [first.id]: 'stale-draft' };
+  card._activeWallChainId = 'stale-chain';
+  card._activeWallChainPartitionIds = ['stale-wall'];
+  card._wallChainSegmentCms = [15];
   card._pointers.set(113, { x: 10, y: 10 });
   card._drag = { id: 'stale-device', sx: 0, sy: 0, ox: 0, oy: 0, moved: true };
   card._saveConfigDebounced();
@@ -100,7 +102,8 @@ const result = await page.evaluate(async () => {
   out.deleteLastClearsSelection = card._space === '' && card._spaceModel() === undefined;
   out.deleteLastAbortsEditorState = card._mode === 'view'
     && card._path.length === 0 && card._pointers.size === 0 && card._drag === null
-    && Object.keys(card._resumeDraftBySpace).length === 0;
+    && !card._activeWallChainId && card._activeWallChainPartitionIds.length === 0
+    && card._wallChainSegmentCms.length === 0;
   out.deleteLastClosesEditDialog = card._spaceDialog === null;
   out.deleteLastCancelsPendingWrite = card._saveConfigDebounced.pending() === false;
   out.deleteLastUsesAuthoritativeEndpoint = deleteCalls === 1;
