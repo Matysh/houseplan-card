@@ -186,6 +186,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 | [#460](https://github.com/Matysh/houseplan-card/issues/460) Детерминированное завершение кадра живого редактора | [460-live-editor-settlement.md](460-live-editor-settlement.md) |
 | [#461](https://github.com/Matysh/houseplan-card/issues/461) Быстрый commit промежуточной точки цепочки стен | [461-wall-draw-click-performance.md](461-wall-draw-click-performance.md) |
 | [#464](https://github.com/Matysh/houseplan-card/issues/464) Верхний контекстный слой Zigbee-топологии | [464-zigbee-topology-layer-order.md](464-zigbee-topology-layer-order.md) |
+| [#473](https://github.com/Matysh/houseplan-card/issues/473) Свидетели перф-дельты #160 и диффозависимый перф-смок | [473-iso-perf-witnesses-and-smoke.md](473-iso-perf-witnesses-and-smoke.md) |
 
 ## P3
 
