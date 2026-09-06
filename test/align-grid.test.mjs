@@ -93,7 +93,7 @@ test('ordinary off-grid movement is not duplicated in the near-node counter', ()
   assert.equal(result.report.coordsCanonicalized, 0);
 });
 
-test('#477 Optimize preserves complete furniture/image transforms and excludes them from its report', () => {
+test('#477 Optimize preserves continuous furniture/image transforms and excludes them from its report', () => {
   const furniture = {
     id: 'furniture', kind: 'furniture', asset: 'sofa',
     x: 0.10123456789, y: 0.20345678901, w: 0.3123456789, h: 0.08765432109,
