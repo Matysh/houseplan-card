@@ -612,9 +612,10 @@ test('current 20-room large-house space builds from the visible geometry cache u
     return [room.id, area];
   }));
   // The full suite runs test files concurrently on CI. Wall time counts periods when
-  // this worker is descheduled, while process.cpuUsage() also counts sibling test
-  // workers. Measure only this worker thread so the agreed 200 ms product budget is
-  // neither weakened nor made dependent on unrelated parallel tests.
+  // this worker is descheduled, while process.cpuUsage() also includes background
+  // V8 threads in this test-file process. Measure only the current JS worker thread
+  // so the agreed 200 ms product budget is neither weakened nor made dependent on
+  // unrelated parallel work.
   const started = process.threadCpuUsage();
   let contourCacheReads = 0;
   let areaCacheReads = 0;
