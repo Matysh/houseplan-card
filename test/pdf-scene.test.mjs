@@ -208,7 +208,10 @@ test('current 20-room large-house space builds from the visible geometry cache u
     largeSpace.rooms, largeRaw.walls, zero.contour, roomOpenings,
     GRID_STEP_N, cellCm, GRID_PITCH, NORM_W, extras,
   );
-  const started = performance.now();
+  // The full suite runs test files concurrently on CI. Measuring wall time here would
+  // count periods when this worker is descheduled, so use the CPU consumed by the
+  // scene build itself while keeping the agreed 200 ms product budget unchanged.
+  const started = process.cpuUsage();
   buildPdfPage({
     config: largeConfig, rawSpace: largeRaw, space: largeSpace, layout: fixture.layout,
     sharedWallGeometry,
@@ -216,5 +219,7 @@ test('current 20-room large-house space builds from the visible geometry cache u
     imperial: false, cardTitle: 'House', version: 'test',
     now: new Date('2026-09-07T00:00:00Z'), t,
   });
-  assert.ok(performance.now() - started < 200);
+  const elapsed = process.cpuUsage(started);
+  const elapsedMs = (elapsed.user + elapsed.system) / 1000;
+  assert.ok(elapsedMs < 200, `PDF scene build used ${elapsedMs.toFixed(1)} ms of CPU`);
 });
