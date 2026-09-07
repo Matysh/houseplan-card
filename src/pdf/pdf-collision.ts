@@ -182,7 +182,7 @@ export function pdfSegmentTouchesGeometry(
       .sort((left, right) => left - right)
       .filter((value, index, values) => index === 0
         || value - values[index - 1] > parameterEpsilon);
-    const pointAt = (t: number): PdfCollisionPoint => [
+    const segmentPointAt = (t: number): PdfCollisionPoint => [
       start[0] + (end[0] - start[0]) * t,
       start[1] + (end[1] - start[1]) * t,
     ];
@@ -194,7 +194,7 @@ export function pdfSegmentTouchesGeometry(
       const from = breakpoints[index], to = breakpoints[index + 1];
       if (to - from <= parameterEpsilon) continue;
       const middleT = (from + to) / 2;
-      const blocked = overlapAt(middleT) || isSolid(pointAt(middleT));
+      const blocked = overlapAt(middleT) || isSolid(segmentPointAt(middleT));
       if (exitT === null) {
         if (!blocked) exitT = from;
       } else if (blocked) {
