@@ -722,6 +722,17 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'panel-readonly-empty-bypasses-write-capability',
+    guard: 'node demo/smoke_houseplan_panel.mjs',
+    because: 'an empty read-only panel must stay passive and lazy; bypassing the server write '
+      + 'capability would expose Add space and load onboarding for a household viewer (#486 AC10)',
+    patches: [{
+      file: 'src/houseplan-card.ts',
+      find: '    if (this._serverCanWrite !== null) return this._serverCanWrite;',
+      replace: '    if (this._serverCanWrite !== null) return true; // mutant: read-only becomes writer',
+    }],
+  },
+  {
     id: 'version-recovery-treats-unknown-as-mismatch',
     guard: 'node --test --test-name-pattern="malformed values stay unknown" '
       + 'test/version-recovery.test.mjs',

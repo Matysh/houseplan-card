@@ -85,6 +85,13 @@ export class HouseplanPanel extends HTMLElement {
         border-bottom: 1px solid var(--divider-color);
         z-index: 1;
       }
+      .toolbar {
+        min-width: 0;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
       .menu {
         box-sizing: border-box;
         width: 44px;
@@ -140,7 +147,9 @@ export class HouseplanPanel extends HTMLElement {
     page.className = 'page';
     const appbar = document.createElement('header');
     appbar.className = 'appbar';
-    appbar.setAttribute('role', 'toolbar');
+    const toolbar = document.createElement('div');
+    toolbar.className = 'toolbar';
+    toolbar.setAttribute('role', 'toolbar');
 
     const menu = document.createElement('button');
     menu.className = 'menu';
@@ -159,7 +168,8 @@ export class HouseplanPanel extends HTMLElement {
     title.setAttribute('role', 'heading');
     title.setAttribute('aria-level', '1');
     title.innerHTML = '<ha-icon icon="mdi:floor-plan"></ha-icon><span>House Plan</span>';
-    appbar.append(menu, title);
+    toolbar.append(menu, title);
+    appbar.append(toolbar);
 
     const content = document.createElement('main');
     content.className = 'content';

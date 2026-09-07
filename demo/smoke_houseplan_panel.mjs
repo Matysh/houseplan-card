@@ -1,7 +1,12 @@
 // #486: the custom sidebar panel is a thin, stable host around the existing card.
-import { launchColdView, checkAll, finish } from './serve.mjs';
+import { launchPanelCold, checkAll, finish } from './serve.mjs';
+import { assertFreshDemoBundleUnlessAllowed } from './bundle-freshness.mjs';
 
-const { page, browser } = await launchColdView({ width: 1280, height: 800 });
+const { page, browser } = await launchPanelCold({ width: 1280, height: 800 });
+const coldBefore = await page.evaluate(() => ({
+  coldStartsWithoutPanelDefinition: !customElements.get('houseplan-panel'),
+  coldStartsWithoutCardDefinition: !customElements.get('houseplan-card'),
+}));
 const result = await page.evaluate(async () => {
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
   const frame = () => new Promise((resolve) => requestAnimationFrame(resolve));
@@ -18,7 +23,13 @@ const result = await page.evaluate(async () => {
   await import('/assets/houseplan-panel.js');
   await customElements.whenDefined('houseplan-panel');
   const Card = customElements.get('houseplan-card');
-  window.__card.remove();
+  const originalSetConfig = Card.prototype.setConfig;
+  const panelSetConfigCalls = new WeakMap();
+  Card.prototype.setConfig = function setConfig(config) {
+    if (this.panelHost) panelSetConfigCalls.set(this, (panelSetConfigCalls.get(this) || 0) + 1);
+    return originalSetConfig.call(this, config);
+  };
+  window.__hpPanelSetConfigCalls = (card) => panelSetConfigCalls.get(card) || 0;
   Card._warmBootReset?.();
   for (const key of Object.keys(localStorage)) {
     if (key.startsWith('houseplan_card_')) localStorage.removeItem(key);
@@ -60,7 +71,16 @@ const result = await page.evaluate(async () => {
   await emptyCard.updateComplete;
   const emptyRoot = emptyCard.shadowRoot || emptyCard.renderRoot;
   const emptyText = emptyRoot.querySelector('.empty')?.textContent || '';
+  const coldFrontendResources = performance.getEntriesByType('resource')
+    .map((entry) => new URL(entry.name).pathname)
+    .filter((path) => path.includes('/assets/houseplan-'));
   const readOnlyResult = {
+    coldPanelEntryLoadsFirst: coldFrontendResources[0] === '/assets/houseplan-panel.js',
+    coldPanelDefinesCardThroughItsOwnGraph: !!customElements.get('houseplan-card'),
+    coldReadOnlyKeepsEditorAndOnboardingLazy: !coldFrontendResources.some(
+      (path) => /houseplan-(?:editor|onboarding)-runtime/.test(path),
+    ),
+    readOnlyConfiguresChildOnce: window.__hpPanelSetConfigCalls(emptyCard) === 1,
     readOnlyHasNoCreateAction: !emptyRoot.querySelector('.empty button'),
     readOnlyExplainsRestriction: emptyText.includes('administrator'),
     readOnlyDoesNotOpenDialog: !emptyCard._spaceDialog && !emptyCard._importDialog,
@@ -69,16 +89,61 @@ const result = await page.evaluate(async () => {
   emptyPanel.remove();
   await frame();
 
+  // Server write capability, not HA administrator status, owns onboarding.
+  // Use an empty non-admin writer and prove one lazy dialog/runtime only.
+  const emptyWriterHass = {
+    ...emptyHass,
+    floors: {},
+    user: { id: 'writer', name: 'Writer', is_admin: false },
+    callWS: async (message) => {
+      if (message.type === 'houseplan/config/get') {
+        return { config: { spaces: [], markers: [], settings: {} }, rev: 1, can_write: true };
+      }
+      return emptyHass.callWS(message);
+    },
+  };
+  const writerPanel = document.createElement('houseplan-panel');
+  writerPanel.route = { path: '/houseplan' };
+  host.replaceChildren(writerPanel);
+  writerPanel.hass = emptyWriterHass;
+  const writerCard = await waitFor(
+    () => writerPanel.shadowRoot?.querySelector('houseplan-card'), 'writer empty child',
+  );
+  await waitFor(
+    () => writerCard._loadOk && writerCard._serverCanWrite === true
+      && writerCard._onboardingRuntime && writerCard._spaceDialog,
+    'writer onboarding',
+  );
+  await writerCard.updateComplete;
+  const writerRoot = writerCard.shadowRoot || writerCard.renderRoot;
+  writerPanel.hass = { ...emptyWriterHass, themes: { darkMode: true } };
+  await writerCard.updateComplete;
+  const onboardingImports = performance.getEntriesByType('resource')
+    .map((entry) => new URL(entry.name).pathname)
+    .filter((path) => path.includes('houseplan-onboarding-runtime')).length;
+  const writerResult = {
+    emptyNonAdminWriterCanCreate: !!writerRoot.querySelector('.empty button'),
+    emptyWriterOpensOneOnboarding: writerRoot.querySelectorAll('hp-dialog').length === 1,
+    emptyWriterLoadsOnboardingOnce: onboardingImports === 1,
+    emptyWriterConfiguresChildOnce: window.__hpPanelSetConfigCalls(writerCard) === 1,
+  };
+  writerPanel.remove();
+  await frame();
+
   Card._warmBootReset?.();
   for (const key of Object.keys(localStorage)) {
     if (key.startsWith('houseplan_card_')) localStorage.removeItem(key);
   }
+  localStorage.setItem('houseplan_card_nav_v1', JSON.stringify({ space: 'missing-space' }));
   const panel = document.createElement('houseplan-panel');
   panel.narrow = false;
   panel.route = { path: '/houseplan' };
   panel.panel = { component_name: 'houseplan-panel' };
   host.append(panel);
-  const baseHass = window.__mkHass();
+  const baseHass = {
+    ...window.__mkHass(),
+    user: { id: 'writer', name: 'Writer', is_admin: false },
+  };
   panel.hass = baseHass;
   const card = await waitFor(() => panel.shadowRoot?.querySelector('houseplan-card'), 'populated child');
   await waitFor(() => card._loadOk && card._model?.length && card._booting === false, 'populated view');
@@ -91,6 +156,7 @@ const result = await page.evaluate(async () => {
   const updatedHass = { ...baseHass, themes: { ...(baseHass.themes || {}), darkMode: true } };
   panel.hass = updatedHass;
   panel.narrow = true;
+  panel.narrow = false;
   panel.route = { path: '/houseplan', prefix: '/houseplan' };
   panel.panel = { component_name: 'houseplan-panel', config: { ignored: true } };
   await card.updateComplete;
@@ -109,9 +175,15 @@ const result = await page.evaluate(async () => {
   const headerRect = cardRoot.querySelector('.hdr').getBoundingClientRect();
   const viewStageRect = cardRoot.querySelector('.stage').getBoundingClientRect();
   const viewSpace = card._space;
+  const viewBox = card._view;
+  const fitEnvelope = card._baseVb();
   const layoutResult = {
     exactlyOneChild: shellRoot.querySelectorAll('houseplan-card').length === 1,
     propertiesDoNotRemount: shellRoot.querySelector('houseplan-card') === childBefore,
+    populatedNonAdminWriterHasEditors: !!cardRoot.querySelector('[data-editor-navigation="plan"]'),
+    missingLastSpaceFallsBackDeterministically: card._space !== 'missing-space'
+      && card._model.some((space) => space.id === card._space),
+    populatedWriterConfiguresChildOnce: window.__hpPanelSetConfigCalls(card) === 1,
     hassForwarded: card.hass === updatedHass,
     panelHostWithoutKiosk: card.panelHost === true && card._config?.kiosk !== true,
     noDuplicateProductTitle: !cardRoot.querySelector('.head > .title')
@@ -121,35 +193,46 @@ const result = await page.evaluate(async () => {
     menuContract: menuEvents === 1 && menuDetail?.bubbles === true && menuDetail?.composed === true,
     menuAccessible: shellRoot.querySelector('.menu').getAttribute('aria-label') === 'Menu'
       && shellRoot.querySelector('.menu').getBoundingClientRect().width >= 44,
+    appbarKeepsHeaderAndToolbarSemantics: shellRoot.querySelector('.appbar')?.tagName === 'HEADER'
+      && !shellRoot.querySelector('.appbar').hasAttribute('role')
+      && shellRoot.querySelector('.toolbar')?.getAttribute('role') === 'toolbar',
     noHorizontalOverflow: panel.scrollWidth - panel.clientWidth <= 1
       && shellRoot.querySelector('.page').scrollWidth - shellRoot.querySelector('.page').clientWidth <= 1,
     cardOwnsContentSlot: Math.abs(cardRect.height - contentRect.height) <= 1
       && Math.abs(haCardRect.height - contentRect.height) <= 1,
     viewStageUsesRemainingHeight: viewStageRect.height > 0
       && Math.abs(viewStageRect.height + headerRect.height - contentRect.height) <= 1,
+    fitEnvelopeIsInsideOpeningView: !!viewBox
+      && fitEnvelope[0] >= viewBox.x - 0.01
+      && fitEnvelope[1] >= viewBox.y - 0.01
+      && fitEnvelope[0] + fitEnvelope[2] <= viewBox.x + viewBox.w + 0.01
+      && fitEnvelope[1] + fitEnvelope[3] <= viewBox.y + viewBox.h + 0.01,
     sectionsDefaultIsFull: JSON.stringify(card.getGridOptions()) === JSON.stringify({ columns: 'full' })
       && card.getCardSize() === 12,
   };
 
   const runtimeReady = await card._ensureEditorRuntime();
-  await card._requestMode('plan', false);
-  await card.updateComplete;
-  await frame();
-  await frame();
+  cardRoot.querySelector('[data-editor-navigation="plan"]').click();
+  await waitFor(() => card._mode === 'plan' && !card._modeTransitionBusy, 'animated editor enter');
+  await card.updateComplete; await frame(); await frame();
   const editorStage = cardRoot.querySelector('.stage').getBoundingClientRect();
   const editorHeader = cardRoot.querySelector('.hdr').getBoundingClientRect();
+  cardRoot.querySelector('[data-editor-navigation="view"]').click();
+  await waitFor(() => card._mode === 'view' && !card._modeTransitionBusy, 'animated editor exit');
+  await card.updateComplete; await frame(); await frame();
+  const returnedViewStage = cardRoot.querySelector('.stage').getBoundingClientRect();
+  cardRoot.querySelector('[data-editor-navigation="plan"]').click();
+  await waitFor(() => card._mode === 'plan' && !card._modeTransitionBusy, 'second editor enter');
   const editorResult = {
-    editorRuntimeLoads: runtimeReady && card._mode === 'plan',
+    editorRuntimeLoads: runtimeReady && !!card._editorRuntime,
     editorKeepsPositiveStableStage: editorStage.width > 0 && editorStage.height > 0,
     editorStillFillsContent: Math.abs(editorStage.height + editorHeader.height - contentRect.height) <= 1,
+    editorSwapReturnsToPositiveView: returnedViewStage.width > 0 && returnedViewStage.height > 0,
   };
 
   history.pushState(null, '', '/config/dashboard');
   window.dispatchEvent(new Event('location-changed'));
-  await card.updateComplete;
-  history.pushState(null, '', '/houseplan');
-  window.dispatchEvent(new Event('location-changed'));
-  await card.updateComplete;
+  await waitFor(() => card._mode === 'view', 'route departure reset');
   const routeResult = {
     routeDepartureReturnsToView: card._mode === 'view',
     routeDepartureKeepsSpace: card._space === viewSpace,
@@ -157,24 +240,57 @@ const result = await page.evaluate(async () => {
 
   panel.remove();
   await frame();
-  host.append(panel);
-  await card.updateComplete;
-  const reconnectResult = {
-    reconnectKeepsSingleChild: panel.shadowRoot.querySelectorAll('houseplan-card').length === 1,
-    reconnectKeepsChildIdentity: panel.shadowRoot.querySelector('houseplan-card') === childBefore,
+  history.pushState(null, '', '/houseplan');
+  const returnPanel = document.createElement('houseplan-panel');
+  returnPanel.narrow = false;
+  returnPanel.route = { path: '/houseplan' };
+  returnPanel.panel = { component_name: 'houseplan-panel' };
+  host.replaceChildren(returnPanel);
+  returnPanel.hass = updatedHass;
+  const returnCard = await waitFor(
+    () => returnPanel.shadowRoot?.querySelector('houseplan-card'), 'route return child',
+  );
+  await waitFor(
+    () => returnCard._loadOk && returnCard._model?.length && returnCard._booting === false,
+    'route return view',
+  );
+  await waitFor(() => returnCard._devices?.length, 'route return devices');
+  await returnCard.updateComplete;
+  const returnResult = {
+    routeReturnCreatesFreshPanelCard: returnCard !== childBefore,
+    routeReturnRestoresSpaceInView: returnCard._space === viewSpace && returnCard._mode === 'view',
+    routeReturnConfiguresFreshChildOnce: window.__hpPanelSetConfigCalls(returnCard) === 1,
   };
 
-  window.__hpPanel = panel;
-  window.__hpPanelCard = card;
+  returnPanel.remove();
+  await frame();
+  host.append(returnPanel);
+  await returnCard.updateComplete;
+  await frame();
+  await waitFor(
+    () => returnCard.renderRoot.querySelector('[data-hp="device"][data-id="d_temp"][tabindex="0"]'),
+    'route return stage interactive',
+  );
+  const reconnectResult = {
+    reconnectKeepsSingleChild: returnPanel.shadowRoot.querySelectorAll('houseplan-card').length === 1,
+    reconnectKeepsChildIdentity: returnPanel.shadowRoot.querySelector('houseplan-card') === returnCard,
+    reconnectDoesNotRepeatSetConfig: window.__hpPanelSetConfigCalls(returnCard) === 1,
+  };
+
+  window.__hpPanel = returnPanel;
+  window.__hpPanelCard = returnCard;
 
   return {
     ...readOnlyResult,
+    ...writerResult,
     ...layoutResult,
     ...editorResult,
     ...routeResult,
+    ...returnResult,
     ...reconnectResult,
   };
 });
+await assertFreshDemoBundleUnlessAllowed(page);
 
 // The panel contract is about real user activation, not HTMLElement.click().
 // Exercise both pointer and keyboard paths through the open shadow root.
@@ -191,10 +307,22 @@ await page.evaluate(() => {
       composed: event.composed,
     });
   });
+  const card = window.__hpPanelCard;
+  const stageInteractive = card.renderRoot.querySelector(
+    '.stage [data-hp="device"][data-id="d_temp"][tabindex="0"]',
+  );
+  window.__hpStageInteractive = stageInteractive;
+  window.__hpStageEvidence = { moreInfo: 0 };
+  panel.addEventListener('hass-more-info', () => { window.__hpStageEvidence.moreInfo += 1; });
 });
 const wideMenu = page.locator('houseplan-panel').locator('.menu');
 await wideMenu.click();
 await wideMenu.focus();
+await page.keyboard.press('Enter');
+await page.evaluate(() => window.__hpStageInteractive?.focus());
+const stageFocused = await page.evaluate(() => (
+  window.__hpPanelCard.renderRoot.activeElement === window.__hpStageInteractive
+));
 await page.keyboard.press('Enter');
 const wideUserActivation = await page.evaluate(() => ({
   realSources: window.__hpPanelMenuEvidence.sources.every(Boolean),
@@ -202,10 +330,17 @@ const wideUserActivation = await page.evaluate(() => ({
   validEvents: window.__hpPanelMenuEvidence.events.every(
     (event) => event.bubbles && event.composed,
   ),
-  retainedStageInteractive: !!window.__hpPanelCard.renderRoot.querySelector(
-    '.stage [tabindex="0"], .stage button:not([disabled]), .stage [role="button"]',
+  retainedStageInteractiveFocuses: !!window.__hpStageInteractive,
+  retainedStageInteractiveActivates: !!window.__hpStageInteractive
+    && (window.__hpPanelCard._infoCard?.id === window.__hpStageInteractive.dataset.id
+      || window.__hpStageEvidence.moreInfo === 1),
+  retainedStageInteractiveNamed: !!(
+    window.__hpStageInteractive?.getAttribute('aria-label')
+    || window.__hpStageInteractive?.getAttribute('title')
+    || window.__hpStageInteractive?.textContent?.trim()
   ),
 }));
+wideUserActivation.retainedStageInteractiveFocuses &&= stageFocused;
 
 // A real viewport resize must settle without a feedback loop or a page-wide
 // horizontal scrollbar. Keep the populated panel mounted for this check.
@@ -295,13 +430,16 @@ const narrowUserActivation = await page.evaluate(() => ({
 }));
 
 const finalResult = {
+  ...coldBefore,
   ...result,
   ...resized,
   ...narrowReadOnly,
   wideMenuRealSources: wideUserActivation.realSources,
   wideMenuEventCount: wideUserActivation.eventCount,
   wideMenuValidEvents: wideUserActivation.validEvents,
-  retainedStageInteractive: wideUserActivation.retainedStageInteractive,
+  retainedStageInteractiveFocuses: wideUserActivation.retainedStageInteractiveFocuses,
+  retainedStageInteractiveActivates: wideUserActivation.retainedStageInteractiveActivates,
+  retainedStageInteractiveNamed: wideUserActivation.retainedStageInteractiveNamed,
   ...narrowUserActivation,
 };
 checkAll(finalResult, {

@@ -21,6 +21,10 @@ test('#486 menu and container-owned panel layout have explicit accessibility and
   assert.match(panel, /new CustomEvent\('hass-toggle-menu', \{[\s\S]*bubbles: true,[\s\S]*composed: true/);
   assert.match(panel, /width: 44px;[\s\S]*height: 44px;/);
   assert.match(panel, /setAttribute\('aria-label', label\)/);
+  assert.match(panel, /document\.createElement\('header'\)/);
+  assert.match(panel, /toolbar\.setAttribute\('role', 'toolbar'\)/);
+  assert.doesNotMatch(panel, /appbar\.setAttribute\('role', 'toolbar'\)/,
+    'the toolbar may not replace the app bar header landmark');
   assert.match(panel, /grid-template-rows: auto minmax\(0, 1fr\)/);
   assert.match(panel, /\.content \{[\s\S]*min-width: 0;[\s\S]*min-height: 0;[\s\S]*overflow: hidden;/);
   assert.doesNotMatch(panel, /100dvh|100vh|safe-area-inset/,

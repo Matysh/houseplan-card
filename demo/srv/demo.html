@@ -190,13 +190,16 @@ function mkHass(){
     formatEntityState:(st)=>st.state,
   };
 }
-await import('/assets/houseplan-card.js');
-const card=document.createElement('houseplan-card');
-card.setConfig({type:'custom:houseplan-card', title:'House Plan', icon_size:3.4});
-document.getElementById('host').appendChild(card);
-card.hass=mkHass();
-window.__card=card;
 window.__mkHass=mkHass;
+let card=null;
+if(!new URLSearchParams(location.search).has('panel-cold')){
+  await import('/assets/houseplan-card.js');
+  card=document.createElement('houseplan-card');
+  card.setConfig({type:'custom:houseplan-card', title:'House Plan', icon_size:3.4});
+  document.getElementById('host').appendChild(card);
+  card.hass=mkHass();
+  window.__card=card;
+}
 window.__setRegistryAccess=(mode)=>{REGISTRY_ACCESS=mode==='full'?'full':'limited';};
 window.__setRegistryDisabled=(kind,id,disabledBy='user')=>{
   const row=(kind==='device'?DEVICES:ENTITIES)[id];

@@ -56,7 +56,7 @@ test('every mutant explains itself', () => {
   assert.ok(MUTANTS.length >= 6, 'стартовый набор — шесть мутантов по дырам из #85');
 });
 
-test('#486 panel registration and cleanup protections have mutation witnesses', () => {
+test('#486 panel registration, cleanup and read-only protections have mutation witnesses', () => {
   const ids = new Set(MUTANTS.map(({ id }) => id));
   for (const id of [
     'panel-registers-wrong-route',
@@ -69,6 +69,7 @@ test('#486 panel registration and cleanup protections have mutation witnesses', 
     'panel-cleanup-drops-identity-guard',
     'panel-cleanup-uses-new-remove-keyword',
     'panel-accepts-unverifiable-ownership',
+    'panel-readonly-empty-bypasses-write-capability',
   ]) {
     assert.ok(ids.has(id), `${id}: отсутствует защитный свидетель #486`);
   }

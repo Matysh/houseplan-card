@@ -129,6 +129,8 @@ async function launchInternal(
   contextOptions = {},
   serveRoot = ROOT,
   repoRoot = REPO_ROOT,
+  entry = '/demo.html',
+  waitForCard = true,
 ) {
   const browser = await chromium.launch({ args: ['--no-sandbox', ...browserArgs] });
   const page = await (await browser.newContext({
@@ -147,8 +149,9 @@ async function launchInternal(
       ? r.fulfill({ status: 200, headers: { 'content-type': CT[p.slice(p.lastIndexOf('.'))] || 'application/octet-stream' }, body: readFileSync(f) })
       : r.fulfill({ status: 404, body: 'nf' });
   });
-  await page.goto('http://demo.local/demo.html', { waitUntil: 'domcontentloaded' });
+  await page.goto(`http://demo.local${entry}`, { waitUntil: 'domcontentloaded' });
   await installHarnessIsoRuntimeHelper(page);
+  if (!waitForCard) return { page, browser };
   await page.waitForFunction(() => window.__card?._model?.length > 0, { timeout: 9000 });
   // Свежесть бандла проверяется здесь, а не в каждом смоке (#236). Смок читает
   // demo/srv/assets/houseplan-card.js; если туда не скопирован свежий dist,
@@ -180,3 +183,7 @@ async function launchInternal(
 
 export const launch = (...args) => launchInternal(true, ...args);
 export const launchColdView = (...args) => launchInternal(false, ...args);
+/** A true cold panel document: fixture APIs exist, but neither frontend entry is loaded. */
+export const launchPanelCold = (viewport = { width: 1280, height: 800 }) => launchInternal(
+  false, viewport, 1, [], {}, ROOT, REPO_ROOT, '/demo.html?panel-cold=1', false,
+);
