@@ -102,11 +102,13 @@ const result = await page.evaluate(async ({ version, previewText, previewSha }) 
       selectedDecor: card._decorSel,
     };
     const button = root().querySelector('.support-button');
-    const settings = button?.previousElementSibling;
+    const pdf = button?.previousElementSibling;
+    const settings = pdf?.previousElementSibling;
     await open();
     modeResults.push({
       mode,
       afterSettings: settings?.querySelector('ha-icon')?.getAttribute('icon') === 'mdi:cog-outline',
+      pdfBetween: pdf?.querySelector('ha-icon')?.getAttribute('icon') === 'mdi:printer-outline',
       unchanged: JSON.stringify(before) === JSON.stringify({
         mode: card._mode,
         zoom: card._zoom,
@@ -116,7 +118,7 @@ const result = await page.evaluate(async ({ version, previewText, previewSha }) 
     });
     await close();
   }
-  out.modeAndOrder = modeResults.every((item) => item.afterSettings && item.unchanged)
+  out.modeAndOrder = modeResults.every((item) => item.afterSettings && item.pdfBetween && item.unchanged)
     && new Set(modeResults.map((item) => item.mode)).size === 4;
 
   const originalConfig = card._config;
@@ -139,8 +141,10 @@ const result = await page.evaluate(async ({ version, previewText, previewSha }) 
   await open();
   const dialog = root().querySelector('#support-dialog');
   const supportButton = root().querySelector('.support-button');
-  const settingsButton = supportButton?.previousElementSibling;
+  const pdfButton = supportButton?.previousElementSibling;
+  const settingsButton = pdfButton?.previousElementSibling;
   const touchRect = supportButton.getBoundingClientRect();
+  const pdfRect = pdfButton?.getBoundingClientRect();
   const settingsRect = settingsButton?.getBoundingClientRect();
   const message = dialog?.querySelector('#support-message');
   const contact = dialog?.querySelector('#support-contact');
@@ -153,9 +157,11 @@ const result = await page.evaluate(async ({ version, previewText, previewSha }) 
     && dialog?.querySelector('#support-message')?.value === ''
     && dialog?.querySelector('.supportattach input')?.checked === false;
   out.touchTarget = touchRect.width >= 44 && touchRect.height >= 44;
-  out.headerActionsMatch = !!settingsRect
+  out.headerActionsMatch = !!settingsRect && !!pdfRect
     && Math.abs(touchRect.width - settingsRect.width) < 0.01
-    && Math.abs(touchRect.height - settingsRect.height) < 0.01;
+    && Math.abs(touchRect.height - settingsRect.height) < 0.01
+    && Math.abs(touchRect.width - pdfRect.width) < 0.01
+    && Math.abs(touchRect.height - pdfRect.height) < 0.01;
   out.messageSurfaceMatchesContact = !!message && !!contact
     && getComputedStyle(message).backgroundColor === getComputedStyle(contact).backgroundColor;
   out.noHorizontalOverflow = dialog.scrollWidth <= dialog.clientWidth + 1

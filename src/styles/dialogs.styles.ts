@@ -22,9 +22,11 @@ export const dialogsStyles = css`
       color: var(--hp-accent);
       --mdc-icon-size: 18px;
     }
+    @media (max-width: 900px) {
+      .head .count { display: none; }
+    }
     @media (max-width: 620px) {
       .head { gap: var(--sp-3); padding: var(--sp-4) 10px; }
-      .head .count { display: none; }
       .head .title { font-size: var(--fs-m); }
     }
     .count {

@@ -11476,10 +11476,10 @@ export class HouseplanCard extends LitElement {
             <button class="btn zb" @click=${() => this._stepZoom(1)} title=${this._t('title.zoom_in')}><ha-icon icon="mdi:plus"></ha-icon></button>
           </div>
           ${this._norm && this._canEdit
-            ? html`<button class="btn header-action" @click=${this._openSettingsDialog} title=${this._t('title.general_settings')}>
+            ? html`<button class="btn header-action settings-button" @click=${this._openSettingsDialog} title=${this._t('title.general_settings')}>
                 <ha-icon icon="mdi:cog-outline"></ha-icon>
               </button>
-              <button class="btn header-action" @click=${this._openPdfDialog}
+              <button class="btn header-action pdf-button" @click=${this._openPdfDialog}
                 title=${this._t('title.export_pdf')} aria-label=${this._t('title.export_pdf')}>
                 <ha-icon icon="mdi:printer-outline"></ha-icon>
               </button>
