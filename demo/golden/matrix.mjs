@@ -1,7 +1,7 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 57;
+export const GOLDEN_MATRIX_VERSION = 58;
 
 const stage = { capture: 'stage', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0005 } };
 const page = { capture: 'page', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0008 } };
@@ -357,6 +357,48 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     theme: 'light', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'pdf-export-geometry-light', fixture: 'visual', space: 'golden-geometry', mode: 'view',
     pdfExport: true, theme: 'light', viewport: { width: 1000, height: 900 }, ...page },
+  { id: 'pdf-export-polish-light', fixture: 'visual', space: 'golden-geometry', mode: 'view',
+    pdfExport: true, northDeg: 90,
+    // One almost-zero seam exercises duplicate collapse in the complete PDF
+    // pipeline; the zero-thickness bottom edge keeps that material contract in
+    // the reviewed frame without growing a second fixture family.
+    wallReplacements: [
+      {
+        match: { a: [0.06, 0.08], b: [0.48, 0.08] },
+        segments: [
+          { key: fixtureWallKey([0.06, 0.08], [0.479999, 0.08]),
+            a: [0.06, 0.08], b: [0.479999, 0.08], cm: 10 },
+          { key: fixtureWallKey([0.479999, 0.08], [0.48, 0.08]),
+            a: [0.479999, 0.08], b: [0.48, 0.08], cm: 10 },
+        ],
+      },
+      {
+        match: { a: [0.06, 0.92], b: [0.48, 0.92] },
+        segments: [{ key: fixtureWallKey([0.06, 0.92], [0.48, 0.92]),
+          a: [0.06, 0.92], b: [0.48, 0.92], cm: 0 }],
+      },
+    ],
+    pdfSemantic: {
+      minSceneInkPixels: 2_000,
+      minSceneCoverage: 0.20,
+      maxCenterOffsetMm: 3,
+      minSceneClearanceMm: 0.1,
+      minWallGrayPixels: 600,
+      maxWallGrayOutsideFieldRatio: 0.02,
+      minInteriorHatchPixels: 30,
+      opening: {
+        xFraction: (0.26 - 0.06) / (0.94 - 0.06),
+        controlOffsetFraction: 0.16,
+        halfWidthFraction: 0.025,
+        maxGrayRatio: 0.65,
+        minWhiteFraction: 0.40,
+      },
+      minCompassInkPixels: 60,
+      maxDimensionAxisErrorDeg: 0.5,
+      minRepeatedDimensionLabels: 1,
+      forbiddenText: ['wall', 'partition', 'door', 'window', 'gate'],
+    },
+    theme: 'light', viewport: { width: 1000, height: 900 }, ...page },
   { id: 'vacuum-trail-smoothing-dark', fixture: 'visual', space: 'golden-geometry', mode: 'view',
     vacuumTrail: {
       maxDeviationCm: 17.5,

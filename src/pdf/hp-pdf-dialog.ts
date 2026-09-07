@@ -52,16 +52,62 @@ export class HpPdfDialog extends LitElement {
   static properties = { context: { attribute: false } };
   static styles = css`
     :host { display: contents; }
-    .body { display:grid; gap:12px; padding:16px 20px; min-width:min(310px,82vw); }
-    label { display:flex; min-height:44px; align-items:center; gap:12px; cursor:pointer; }
-    input { width:20px; height:20px; accent-color:var(--hp-accent,#d89300); }
-    .row { display:flex; align-items:center; gap:8px; padding:12px 16px; width:100%; box-sizing:border-box; }
+    .body {
+      display:grid;
+      gap:12px;
+      width:100%;
+      max-width:100%;
+      min-width:0;
+      padding:16px 20px;
+      box-sizing:border-box;
+    }
+    label {
+      display:flex;
+      min-width:0;
+      min-height:44px;
+      align-items:center;
+      gap:12px;
+      cursor:pointer;
+    }
+    label span { min-width:0; overflow-wrap:anywhere; }
+    input { width:20px; height:20px; flex:none; accent-color:var(--hp-accent,#d89300); }
+    .row {
+      display:flex;
+      align-items:center;
+      gap:8px;
+      width:100%;
+      max-width:100%;
+      min-width:0;
+      padding:12px 16px;
+      box-sizing:border-box;
+    }
     .spacer { flex:1; }
-    button { min-height:44px; border:1px solid var(--hp-line,rgb(127 127 127/.3)); border-radius:12px;
-      padding:0 18px; background:transparent; color:inherit; font:inherit; cursor:pointer; }
+    button {
+      min-width:0;
+      min-height:44px;
+      max-width:100%;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      border:1px solid var(--hp-line,rgb(127 127 127/.3));
+      border-radius:12px;
+      padding:0 18px;
+      box-sizing:border-box;
+      overflow-wrap:anywhere;
+      white-space:normal;
+      background:transparent;
+      color:inherit;
+      font:inherit;
+      cursor:pointer;
+    }
     button.primary { background:var(--hp-accent,#d89300); color:var(--hp-on-accent,#111); border-color:transparent; }
     button:disabled { opacity:.55; cursor:default; }
-    ha-icon { margin-right:6px; }
+    ha-icon { flex:none; margin-right:6px; }
+    @media (max-width:360px) {
+      .row { display:grid; grid-template-columns:minmax(0,1fr); }
+      .spacer { display:none; }
+      button { width:100%; }
+    }
   `;
   context!: PdfDialogContext;
   private options: PdfExportOptions | null = null;

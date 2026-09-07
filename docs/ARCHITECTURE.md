@@ -85,8 +85,20 @@ contract; the writer, print-scene geometry, dialog implementation, raster
 conversion and embedded Roboto subset stay in `lazyPdfFiles`. The runtime reads
 the already normalized current space and the same physical-geometry resolvers
 used by View, produces one deterministic A4 document in the browser and never
-writes config or layout. The manifest and bundle gate require a non-empty PDF
-graph and reject any overlap with the initial View graph.
+writes config or layout. Dimension input is normalized before collinear
+compaction, accepts only canonical horizontal/vertical edges and deduplicates
+opposite pairs only inside one room contour or connected outer ring. Physical
+text bounds reuse the writer's actual font metrics and transform; dimension
+lanes use exact box/segment intersections against wall rings instead of sampled
+points, and parallel facade steps are kept in independent collinear groups.
+Physical
+wall components are emitted as even-odd clipped `#7f7f7f` paths with a
+page-anchored hatch, so openings cut both material layers cleanly. Page choice
+is made after the complete optional scene exists: actual command bounds select
+orientation and standard scale, then centre that whole scene. The footer uses
+a filled vector compass and deliberately has no symbol legend. The manifest
+and bundle gate require a non-empty PDF graph and reject any overlap with the
+initial View graph.
 
 Prerelease publication has one fail-closed contract shared by the local command
 and the manual GitHub workflow. The tag version must match all six shipped

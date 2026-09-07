@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- PDF export now fits its complete scene more efficiently on the page, uses
+  hatched grey walls and a proper vector compass, and presents cleaner
+  horizontal/vertical dimensions without locally duplicated opposite sides.
+  The symbol legend is removed, and the export dialog no longer needs
+  horizontal scrolling on narrow screens
+  ([#482](https://github.com/Matysh/houseplan-card/issues/482)).
+
 ## v1.73.0-beta.3 — 2026-09-07
 
 - Administrators can now save the current space as a clean one-page A4 PDF

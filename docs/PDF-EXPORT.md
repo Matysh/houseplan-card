@@ -22,18 +22,41 @@ The dialog can additionally include:
 The selected options are remembered in this browser. The export reads the
 current plan but never changes it.
 
+The dialog is designed to remain usable down to a 320 CSS px-wide View area.
+It does not require horizontal scrolling; on narrow screens its actions stack
+vertically while retaining touch-sized controls.
+
 ## Sheet and measurement rules
 
-The output is a single A4 sheet. House Plan chooses portrait or landscape and
-the first standard scale that fits the current space. The footer shows the
-scale, a 1 m or 5 ft scale bar, north when configured, the date, House Plan
-version and a legend containing only symbols present on the sheet.
+The output is a single A4 sheet. House Plan builds the complete print scene
+first — architecture, enabled dimensions and callouts, names, decor and
+backdrop — and then chooses portrait or landscape and the smallest standard
+scale that fits all of it. The complete scene is centred on the usable sheet,
+so optional content is not pushed into a fixed reserve or left outside the
+centred area. The footer shows the scale, a 1 m or 5 ft scale bar, a vector
+compass when north is configured, the date and the House Plan version. There
+is no architectural symbol legend.
+
+For unusually large plans, House Plan continues the scale series in steps of
+50 until the complete scene fits. If a fixed annotation itself cannot fit on
+one A4 sheet, export stops with an error instead of producing a clipped file.
+
+Physical walls, partitions and columns use a `#7f7f7f` base with a consistent
+45-degree hatch. Openings remain clean cut-outs through both the base and the
+hatch. Zero-thickness walls keep the existing dashed print convention and are
+not hatched.
 
 Areas use the same clean-floor geometry as the room information card. Internal
 dimensions follow the inner wall faces; external dimensions follow the outer
-physical outline. Units follow Home Assistant. Very short internal edges use a
-tick instead of unreadable text, while required values that cannot fit beside
-an edge use numbered callouts.
+physical outline. Only horizontal and vertical measurements are printed;
+genuinely diagonal edges are omitted rather than projected into misleading
+dimensions. Within one room contour or one connected outer ring, equivalent
+opposite measurements are shown once on the side with more free space. Equal
+lengths in different rooms, disconnected rings or unrelated walls are never
+deduplicated globally. Labels are centred on their measured wall and arranged
+in consistent lanes clear of the wall body. Units follow Home Assistant. Very
+short internal edges use a tick instead of unreadable text, while required
+values that cannot fit beside an edge use numbered callouts.
 
 ## Images, fonts and limits
 

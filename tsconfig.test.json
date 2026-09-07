@@ -47,6 +47,6 @@
     "src/zero-walls.ts",
     "src/editors/decor/geometry.ts",
     "src/backdrop-pick.ts", "src/decor-image-editor.ts",
-    "src/pdf/pdf-font.generated.ts", "src/pdf/pdf-date.ts", "src/pdf/svg-path.ts", "src/pdf/pdf-writer.ts", "src/pdf/pdf-dimensions.ts", "src/pdf/pdf-raster.ts", "src/pdf/pdf-scene.ts"
+    "src/pdf/pdf-font.generated.ts", "src/pdf/pdf-date.ts", "src/pdf/svg-path.ts", "src/pdf/pdf-writer.ts", "src/pdf/pdf-compass.ts", "src/pdf/pdf-collision.ts", "src/pdf/pdf-dimensions.ts", "src/pdf/pdf-layout.ts", "src/pdf/pdf-raster.ts", "src/pdf/pdf-scene.ts"
   ]
 }

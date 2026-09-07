@@ -118,10 +118,12 @@ const MUTANT_DEFINITIONS = [
       find: "  for (const component of built.geometry.components) commands.push({\n"
         + "    kind: 'path', rings: geometryAllRings(component.geom).map((ring) => ring.map(pt)),\n"
         + '    fill: WALL, stroke: INK, width: 0.25 * MM,\n'
+        + '    hatch: { lines: hatchLines, stroke: INK, width: 0.18 * MM },\n'
         + '  });',
       replace: "  for (const component of [...built.geometry.components, ...built.geometry.components]) commands.push({\n"
         + "    kind: 'path', rings: geometryAllRings(component.geom).map((ring) => ring.map(pt)),\n"
         + '    fill: WALL, stroke: INK, width: 0.25 * MM,\n'
+        + '    hatch: { lines: hatchLines, stroke: INK, width: 0.18 * MM },\n'
         + '  });',
     }],
   },
@@ -143,19 +145,44 @@ const MUTANT_DEFINITIONS = [
     because: 'every non-short edge must retain a direct value or a numbered callout',
     patches: [{
       file: 'src/pdf/pdf-scene.ts',
-      find: '      for (const edge of edges) {',
-      replace: '      for (const edge of edges.slice(0, -1)) {',
+      find: '      const edges = dedupeOppositeDimensionEdges(rawEdges,\n'
+        + '        { ring: contour, epsilon, score: placementScore });',
+      replace: '      const edges = dedupeOppositeDimensionEdges(rawEdges,\n'
+        + '        { ring: contour, epsilon, score: placementScore }).slice(0, -1);',
     }],
   },
   {
-    id: 'pdf-outer-face-inside',
+    id: 'pdf-duplicate-normalization-too-late',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
-      + '&& node --test --test-name-pattern="external dimension normal" test/pdf-dimensions.test.mjs',
-    because: 'external dimensions belong outside the layout, never toward the room centroid',
+      + '&& node --test --test-name-pattern="1 mm physical duplicate" test/pdf-dimensions.test.mjs',
+    because: '1 mm duplicate normalization must run before every collinearity pass or a tiny seam can become a false chord',
     patches: [{
       file: 'src/pdf/pdf-dimensions.ts',
-      find: '  return [-inward[0], -inward[1]];',
-      replace: '  return [inward[0], inward[1]];',
+      find: '    const duplicatesChanged = collapseAdjacentDuplicates(ring, epsilon);',
+      replace: '    const duplicatesChanged = false;',
+    }],
+  },
+  {
+    id: 'pdf-diagonal-dimension-restored',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="canonical 0.25 degree" test/pdf-dimensions.test.mjs',
+    because: 'true diagonal room edges must not be projected into plausible-looking horizontal or vertical dimensions',
+    patches: [{
+      file: 'src/pdf/pdf-dimensions.ts',
+      find: '  if (!(major > 0) || minor / major > NEAR_AXIS_MAX_SLOPE) return null;',
+      replace: '  if (!(major > 0)) return null;',
+    }],
+  },
+  {
+    id: 'pdf-equal-text-deduped',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="opposite dedupe preserves" test/pdf-dimensions.test.mjs',
+    because: 'formatted text is not geometric identity: equal spans on another axis or contour must survive',
+    patches: [{
+      file: 'src/pdf/pdf-dimensions.ts',
+      find: '  return edges.filter((edge) => !removed.has(edge));',
+      replace: '  return edges.filter((edge, index) => !removed.has(edge) '
+        + '&& edges.findIndex((candidate) => candidate.text === edge.text) === index);',
     }],
   },
   {
@@ -167,6 +194,50 @@ const MUTANT_DEFINITIONS = [
       file: 'src/pdf/pdf-scene.ts',
       find: '    stroke: INK, width: 0.35 * MM, dash: [3 * MM, 2 * MM],',
       replace: '    stroke: INK, width: 0.35 * MM,',
+    }],
+  },
+  {
+    id: 'pdf-zero-wall-gets-solid-fallback',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="includes architecture" test/pdf-scene.test.mjs',
+    because: 'a valid zero-wall-only space must remain dashed instead of receiving a solid room outline',
+    patches: [{
+      file: 'src/pdf/pdf-scene.ts',
+      find: "  if (built.geometry.status === 'failed-core') for (const room of input.space.rooms) {",
+      replace: '  if (!built.geometry.components.length) for (const room of input.space.rooms) {',
+    }],
+  },
+  {
+    id: 'pdf-wall-material-not-grey',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="physical bodies use exact grey" test/pdf-scene.test.mjs',
+    because: 'every physical wall, partition and column must keep the exact reviewed #7f7f7f print fill',
+    patches: [{
+      file: 'src/pdf/pdf-scene.ts',
+      find: 'const WALL: readonly [number, number, number] = [127 / 255, 127 / 255, 127 / 255];',
+      replace: 'const WALL: readonly [number, number, number] = [0.72, 0.72, 0.72];',
+    }],
+  },
+  {
+    id: 'pdf-wall-hatch-removed',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="physical bodies use exact grey" test/pdf-scene.test.mjs',
+    because: 'wall hatch is part of the exported architectural material, not an optional writer decoration',
+    patches: [{
+      file: 'src/pdf/pdf-scene.ts',
+      find: '    hatch: { lines: hatchLines, stroke: INK, width: 0.18 * MM },\n',
+      replace: '',
+    }],
+  },
+  {
+    id: 'pdf-hatch-loses-evenodd-hole',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="hatched paths use an even-odd clip" test/pdf-writer.test.mjs',
+    because: 'non-even-odd hatch clipping paints through compound opening holes',
+    patches: [{
+      file: 'src/pdf/pdf-writer.ts',
+      find: "          out.push('W*', 'n', `${color(command.hatch.stroke)} RG ${fmt(command.hatch.width)} w`);",
+      replace: "          out.push('W', 'n', `${color(command.hatch.stroke)} RG ${fmt(command.hatch.width)} w`);",
     }],
   },
   {
@@ -199,10 +270,12 @@ const MUTANT_DEFINITIONS = [
       find: "  for (const component of built.geometry.components) commands.push({\n"
         + "    kind: 'path', rings: geometryAllRings(component.geom).map((ring) => ring.map(pt)),\n"
         + '    fill: WALL, stroke: INK, width: 0.25 * MM,\n'
+        + '    hatch: { lines: hatchLines, stroke: INK, width: 0.18 * MM },\n'
         + '  });',
       replace: "  for (const component of built.geometry.components) commands.push({\n"
         + "    kind: 'path', rings: geometryAllRings(component.geom).map((ring) => ring.map(pt)),\n"
         + '    fill: WALL, stroke: INK, width: 0.25 * MM,\n'
+        + '    hatch: { lines: hatchLines, stroke: INK, width: 0.18 * MM },\n'
         + '  });\n'
         + '  for (const raster of input.rasters || []) commands.push({\n'
         + "    kind: 'image', imageId: raster.id, ...pt([raster.x, raster.y]).reduce((o, value, index) =>\n"
@@ -232,10 +305,210 @@ const MUTANT_DEFINITIONS = [
     because: 'the printed scale must always come from the approved architectural series',
     patches: [{
       file: 'src/pdf/pdf-scene.ts',
-      find: '  const scale = choosePdfScale(physicalWidth, physicalHeight,\n'
-        + '    fieldWidthMm - calloutWidthMm - dimensionReserveMm,\n'
-        + '    fieldHeightMm - dimensionReserveMm);',
-      replace: '  const scale = 42;',
+      find: '  for (const scale of PDF_SCALE_SERIES) {',
+      replace: '  for (const scale of [42]) {',
+    }],
+  },
+  {
+    id: 'pdf-layout-uses-raw-aspect',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="actual annotated scene bbox" test/pdf-scene.test.mjs',
+    because: 'orientation must compare the complete annotated scene, not pick one page from the raw architecture aspect ratio',
+    patches: [{
+      file: 'src/pdf/pdf-scene.ts',
+      find: '    const candidates = [false, true]\n'
+        + '      .filter((landscape) => rawArchitectureCanFit(prepared, scale, landscape))',
+      replace: '    const candidates = [pdfBoundsWidth(prepared.bounds) > pdfBoundsHeight(prepared.bounds)]\n'
+        + '      .filter((landscape) => rawArchitectureCanFit(prepared, scale, landscape))',
+    }],
+  },
+  {
+    id: 'pdf-compass-reverts-to-line-arrow',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="integrates the vector compass" test/pdf-scene.test.mjs',
+    because: 'the licensed two-path compass must stay in the PDF scene instead of regressing to the old line arrow',
+    patches: [{
+      file: 'src/pdf/pdf-scene.ts',
+      find: "    commands.push({ kind: 'vector',\n"
+        + '      ops: pdfCompassOps({ centerX: nx, centerY: ny, size: 11 * MM, northDeg: north }),\n'
+        + "      fill: INK, width: 0, fillRule: 'evenodd' });",
+      replace: "    commands.push({ kind: 'line', points: [[nx, ny], [nx, ny - 11 * MM]],\n"
+        + '      stroke: INK, width: 0.5 * MM });',
+    }],
+  },
+  {
+    id: 'pdf-architectural-legend-restored',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="never restores the architectural legend" test/pdf-scene.test.mjs',
+    because: 'the removed wall-door-window legend must not consume PDF footer space again',
+    patches: [{
+      file: 'src/pdf/pdf-scene.ts',
+      find: "  commands.push({ kind: 'text', x: margin, y: footerY,\n"
+        + "    text: input.t('pdf.scale', { n: scale }), size: 8 });",
+      replace: "  commands.push({ kind: 'text', x: margin, y: footerY,\n"
+        + "    text: input.t('pdf.scale', { n: scale }), size: 8 });\n"
+        + "  commands.push({ kind: 'text', x: pageWidth / 2, y: footerY,\n"
+        + "    text: 'wall · door · window', size: 7, align: 'center' });",
+    }],
+  },
+  {
+    id: 'pdf-heavy-scene-prepared-twice',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="current 20-room large-house" test/pdf-scene.test.mjs',
+    because: 'orientation and scale candidates must reuse one prepared geometry/cache snapshot',
+    patches: [{
+      file: 'src/pdf/pdf-scene.ts',
+      find: '  const prepared = preparePdfScene(input);',
+      replace: '  preparePdfScene(input);\n  const prepared = preparePdfScene(input);',
+    }],
+  },
+  {
+    id: 'pdf-dimension-lane-splits-group',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="whole dimension lane" test/pdf-scene.test.mjs',
+    because: 'one collision must move the complete same-normal dimension group without per-edge tangent jitter',
+    patches: [{
+      file: 'src/pdf/pdf-scene.ts',
+      find: '              provisional, base[0], base[1], edge.inwardNormal, (1 + lane) * MM,',
+      replace: '              provisional, base[0], base[1], edge.inwardNormal, '
+        + '(1 + (edge === group[0] ? lane : 0)) * MM,',
+    }],
+  },
+  {
+    id: 'pdf-parallel-facade-shares-lane',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="parallel steps" test/pdf-dimensions.test.mjs',
+    because: 'parallel facade steps at different normal coordinates need independent collision lanes',
+    patches: [{
+      file: 'src/pdf/pdf-dimensions.ts',
+      find: '    const group = groups.find((candidate) => candidate.axis === edge.axis\n'
+        + '      && candidate.normalSign === edge.normalSign\n'
+        + '      && Math.abs(candidate.normalCoordinate - edge.normalCoordinate) <= epsilon);',
+      replace: '    const group = groups.find((candidate) => candidate.axis === edge.axis\n'
+        + '      && candidate.normalSign === edge.normalSign);',
+    }],
+  },
+  {
+    id: 'pdf-raster-prefilter-ignores-rotation',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="rotated raster bounds" test/pdf-scene.test.mjs',
+    because: 'the cheap scale prefilter must use the same rotated raster extent as the real scene',
+    patches: [{
+      file: 'src/pdf/pdf-scene.ts',
+      find: '  for (const raster of input.rasters || []) allBounds.push(rotatedRectRing(\n'
+        + '    raster.x, raster.y, raster.drawWidth, raster.drawHeight, raster.angle,\n'
+        + '  ));',
+      replace: '  for (const raster of input.rasters || []) allBounds.push([\n'
+        + '    [raster.x, raster.y], [raster.x + raster.drawWidth, raster.y + raster.drawHeight],\n'
+        + '  ]);',
+    }],
+  },
+  {
+    id: 'pdf-text-box-misses-thin-diagonal',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="thin diagonal" test/pdf-collision.test.mjs',
+    because: 'dimension labels need exact edge intersection, not a sparse point sample',
+    patches: [{
+      file: 'src/pdf/pdf-collision.ts',
+      find: '  if (rings.some((ring) => ring.some((point) => finitePoint(point) && pointInBox(point, box)))) return true;\n'
+        + '  return forEachRingSegment(rings, (a, b) => corners.some((corner, index) =>\n'
+        + '    segmentIntersection(a, b, corner, corners[(index + 1) % corners.length]) !== null));',
+      replace: '  if (rings.some((ring) => ring.some((point) => finitePoint(point) && pointInBox(point, box)))) return true;\n'
+        + '  return false;',
+    }],
+  },
+  {
+    id: 'pdf-label-clearance-is-not-inflated',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="collision boxes expand" test/pdf-collision.test.mjs',
+    because: 'dimension labels need the specified paper-space clearance from every neighbouring wall',
+    patches: [{
+      file: 'src/pdf/pdf-collision.ts',
+      find: '  const amount = Number.isFinite(clearance) && clearance >= 0 ? clearance : 0;',
+      replace: '  const amount = 0;',
+    }],
+  },
+  {
+    id: 'pdf-extension-start-boundary-asymmetric',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="allowed extension start" test/pdf-collision.test.mjs',
+    because: 'an allowed extension must leave every outer or opening face independent of winding',
+    patches: [{
+      file: 'src/pdf/pdf-collision.ts',
+      find: '  if ((isSolid(start) && !(options.allowStartBoundary && startOnBoundary))\n'
+        + '      || isSolid(midpoint) || isSolid(end)) return true;',
+      replace: '  if (isSolid(start) || isSolid(midpoint) || isSolid(end)) return true;',
+    }],
+  },
+  {
+    id: 'pdf-near-axis-extension-starts-at-projection',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="thick near-axis outer face" test/pdf-scene.test.mjs',
+    because: 'near-axis dimension extensions must start on the real thick-wall face, not inside it',
+    patches: [{
+      file: 'src/pdf/pdf-scene.ts',
+      find: '        const a = pt(edge.sourceA), b = pt(edge.sourceB);',
+      replace: '        const a = pt(edge.a), b = pt(edge.b);',
+    }],
+  },
+  {
+    id: 'pdf-opposite-dedupe-ignores-safe-side',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="opposite dedupe keeps" test/pdf-scene.test.mjs',
+    because: 'a paired outer dimension must retain the side with a collision-free lane',
+    patches: [{
+      file: 'src/pdf/pdf-scene.ts',
+      find: '            const hasSafeLane = Array.from({ length: 21 }, (_, index) => index * 4)\n'
+        + '              .some((lane) => !externalPlacementTouchesArchitecture(\n'
+        + '                externalPlacement(edge, outward, lane),\n'
+        + '              ));',
+      replace: '            const hasSafeLane = true;',
+    }],
+  },
+  {
+    id: 'pdf-rectangle-restores-unsafe-label',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="blocked rectangular" test/pdf-scene.test.mjs',
+    because: 'a rectangular dimension with no valid lane must not be printed through the room',
+    patches: [{
+      file: 'src/pdf/pdf-scene.ts',
+      find: '          // Rectangular rooms have no unambiguous numbered callout fallback.\n'
+        + '          // If every internal lane is blocked, omit the unsafe label rather\n'
+        + '          // than knowingly printing it through a wall, room title or area.',
+      replace: "          if (!nonRect) commands.push({ kind: 'text', x: base[0], y: base[1],\n"
+        + "            text: edge.text, size: 6, angle: edge.angle, align: 'center' });",
+    }],
+  },
+  {
+    id: 'pdf-overflow-returns-clipped-page',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="unprintable fixed callouts" test/pdf-scene.test.mjs',
+    because: 'mathematically unprintable fixed annotations must fail instead of returning a clipped A4 page',
+    patches: [{
+      file: 'src/pdf/pdf-scene.ts',
+      find: "  if (!fittingScale) throw new Error('pdf.failed');",
+      replace: '  if (!fittingScale) return lastCandidates[0].page;',
+    }],
+  },
+  {
+    id: 'pdf-page-hatch-phase-translated',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="page-anchored hatch phase" test/pdf-layout.test.mjs',
+    because: 'scene centering must move physical rings while leaving all components on one page-origin hatch phase',
+    patches: [{
+      file: 'src/pdf/pdf-layout.ts',
+      find: "    if (command.kind === 'path') return {\n"
+        + '      ...command,\n'
+        + '      rings: command.rings.map((ring) => ring.map(([x, y]) => [x + dx, y + dy] as const)),\n'
+        + '    };',
+      replace: "    if (command.kind === 'path') return {\n"
+        + '      ...command,\n'
+        + '      rings: command.rings.map((ring) => ring.map(([x, y]) => [x + dx, y + dy] as const)),\n'
+        + '      hatch: command.hatch ? { ...command.hatch,\n'
+        + '        lines: command.hatch.lines.map((line) =>\n'
+        + '          line.map(([x, y]) => [x + dx, y + dy] as const)),\n'
+        + '      } : undefined,\n'
+        + '    };',
     }],
   },
   {

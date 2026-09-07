@@ -9,6 +9,7 @@ const runtimePath = manifest.lazyPdfFiles?.find((path) => /pdf-export-[^/]+\.js$
 if (!runtimePath) throw new Error('PDF export chunk is absent from the bundle manifest');
 const runtimeName = runtimePath.split('/').at(-1);
 const runtimePattern = `**/${runtimeName}*`;
+const NARROW_VIEWPORT = { width: 320, height: 760 };
 
 const clickPrinter = (page) => page.locator('houseplan-card').evaluate((card) => {
   const root = card.shadowRoot || card.renderRoot;
@@ -16,7 +17,17 @@ const clickPrinter = (page) => page.locator('houseplan-card').evaluate((card) =>
     .find((button) => button.getAttribute('aria-label') === card._t('title.export_pdf'))?.click();
 });
 
-const { page, browser } = await launchColdView();
+const { page, browser } = await launchColdView(NARROW_VIEWPORT);
+// The generic demo fixture deliberately has a fixed 780 px host so desktop
+// geometry smokes do not inherit the viewport width. This smoke owns the phone
+// contract, therefore make only its harness host behave like a real dashboard
+// column before attributing document overflow to the PDF dialog.
+await page.locator('#host').evaluate((host) => {
+  host.style.width = '100%';
+  host.style.maxWidth = '100%';
+  host.style.boxSizing = 'border-box';
+  host.style.margin = '0';
+});
 const requests = [];
 page.on('request', (request) => requests.push(new URL(request.url()).pathname));
 const initialResources = await page.evaluate(() => performance.getEntriesByType('resource')
@@ -80,6 +91,7 @@ const download = await downloadPromise;
 const path = await download.path();
 if (!path) throw new Error('PDF download has no temporary file');
 const bytes = new Uint8Array(readFileSync(path));
+const downloadedByteLength = bytes.byteLength;
 const task = getDocument({ data: bytes, useWorkerFetch: false, isEvalSupported: false });
 const document = await task.promise;
 const pdfPage = await document.getPage(1);
@@ -100,6 +112,12 @@ const firstPagePdfRequests = requests.filter((requestPath) => requestPath.endsWi
 // the same element instance.
 await page.reload();
 await page.waitForFunction(() => window.__card?.renderRoot);
+await page.locator('#host').evaluate((host) => {
+  host.style.width = '100%';
+  host.style.maxWidth = '100%';
+  host.style.boxSizing = 'border-box';
+  host.style.margin = '0';
+});
 
 await clickPrinter(page);
 await page.waitForFunction(() => window.__card.renderRoot.querySelector('hp-pdf-dialog'));
@@ -108,6 +126,102 @@ const rememberedNames = await page.evaluate(() => {
   const inputs = (pdf.shadowRoot || pdf.renderRoot).querySelectorAll('input[type="checkbox"]');
   return inputs[2]?.checked === false;
 });
+
+const narrowLocales = await page.evaluate(async () => {
+  const card = window.__card;
+  const expected = {
+    en: { cancel: 'Cancel', save: 'Save' },
+    ru: { cancel: 'Отмена', save: 'Сохранить' },
+    de: { cancel: 'Abbrechen', save: 'Speichern' },
+    fr: { cancel: 'Annuler', save: 'Enregistrer' },
+  };
+  const settle = async () => {
+    await card.updateComplete;
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  };
+  const closeDialog = async () => {
+    card._pdfDialog = false;
+    card.requestUpdate();
+    await settle();
+  };
+  const loadLanguage = async (language) => {
+    card._config = { ...(card._config || {}), language };
+    card.requestUpdate();
+    for (let attempt = 0; attempt < 100
+      && card._t('btn.cancel') !== expected[language].cancel; attempt++) {
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      await settle();
+    }
+  };
+  const metrics = [];
+  for (const language of Object.keys(expected)) {
+    await closeDialog();
+    await loadLanguage(language);
+    card._pdfDialog = true;
+    card.requestUpdate();
+    await settle();
+
+    const pdf = card.renderRoot.querySelector('hp-pdf-dialog');
+    await pdf?.updateComplete;
+    const root = pdf?.shadowRoot || pdf?.renderRoot;
+    const shell = root?.querySelector('hp-dialog');
+    await shell?.updateComplete;
+    await settle();
+    const surface = shell?.shadowRoot?.querySelector('.surface');
+    const body = root?.querySelector('.body');
+    const footer = root?.querySelector('.row');
+    const buttons = [...(footer?.querySelectorAll('button') || [])];
+    const surfaceRect = surface?.getBoundingClientRect();
+    const footerRect = footer?.getBoundingClientRect();
+    const footerStyle = footer ? getComputedStyle(footer) : null;
+    const innerLeft = footerRect && footerStyle
+      ? footerRect.left + parseFloat(footerStyle.paddingLeft) : 0;
+    const innerRight = footerRect && footerStyle
+      ? footerRect.right - parseFloat(footerStyle.paddingRight) : 0;
+    const buttonRects = buttons.map((button) => button.getBoundingClientRect());
+    const firstBeforeSecond = buttons.length === 2
+      && !!(buttons[0].compareDocumentPosition(buttons[1]) & Node.DOCUMENT_POSITION_FOLLOWING);
+    const metric = {
+      language,
+      copy: buttons.map((button) => button.textContent.trim()),
+      localized: buttons[0]?.textContent.trim() === expected[language].cancel
+        && buttons[1]?.textContent.trim() === expected[language].save,
+      documentWidths: {
+        viewport: innerWidth,
+        rootClient: document.documentElement.clientWidth,
+        rootScroll: document.documentElement.scrollWidth,
+        bodyClient: document.body.clientWidth,
+        bodyScroll: document.body.scrollWidth,
+      },
+      documentFits: document.documentElement.scrollWidth
+          <= document.documentElement.clientWidth + 1
+        && document.body.scrollWidth <= document.body.clientWidth + 1,
+      surfaceFits: !!surface && !!surfaceRect
+        && surfaceRect.left >= -1 && surfaceRect.right <= innerWidth + 1
+        && surface.scrollWidth <= surface.clientWidth + 1,
+      bodyFits: !!body && body.scrollWidth <= body.clientWidth + 1,
+      footerFits: !!footer && footer.scrollWidth <= footer.clientWidth + 1,
+      buttonsContained: !!footerRect && buttonRects.length === 2
+        && buttonRects.every((rect) => rect.left >= innerLeft - 1
+          && rect.right <= innerRight + 1
+          && rect.top >= footerRect.top - 1 && rect.bottom <= footerRect.bottom + 1),
+      targetsAtLeast44: buttonRects.length === 2
+        && buttonRects.every((rect) => rect.width >= 44 && rect.height >= 44),
+      stacked: buttonRects.length === 2 && buttonRects[1].top >= buttonRects[0].bottom - 1,
+      domAndFocusOrderPreserved: firstBeforeSecond
+        && buttons.every((button) => button.tabIndex === 0),
+      cancelCloses: false,
+    };
+    buttons[0]?.click();
+    await settle();
+    metric.cancelCloses = !card.renderRoot.querySelector('hp-pdf-dialog');
+    metrics.push(metric);
+  }
+  await closeDialog();
+  return metrics;
+});
+
+const everyNarrowLocale = (key) => narrowLocales.every((metric) => metric[key] === true);
 
 const out = {
   pdfChunkAbsentBeforeIntent: !initialResources.some((path) => path.endsWith(`/${runtimeName}`)),
@@ -125,6 +239,15 @@ const out = {
   ),
   exportedTextIsExtractable: /Scale|Maßstab|Масштаб|Échelle/.test(text),
   optionsPersistAcrossReload: rememberedNames,
+  narrowDialogLocalizesAllLocales: everyNarrowLocale('localized'),
+  narrowDialogHasNoHorizontalOverflow: everyNarrowLocale('documentFits')
+    && everyNarrowLocale('surfaceFits') && everyNarrowLocale('bodyFits')
+    && everyNarrowLocale('footerFits'),
+  narrowDialogButtonsAreContainedTargets: everyNarrowLocale('buttonsContained')
+    && everyNarrowLocale('targetsAtLeast44'),
+  narrowDialogFooterStacksWithoutReordering: everyNarrowLocale('stacked')
+    && everyNarrowLocale('domAndFocusOrderPreserved') && everyNarrowLocale('cancelCloses'),
+  narrowViewportExportStillWorks: downloadedByteLength > 0 && document.numPages === 1,
   rasterLimitRejectsBeforePdfWrite: rasterLimitError === 'pdf.too_large',
 };
 await task.destroy();
@@ -145,4 +268,4 @@ out.failedChunkRetriesOnceAndKeepsView = failedRequests === 2
 
 await failed.browser.close();
 checkAll(out);
-await finish(browser, out);
+await finish(browser, { ...out, narrowLocales });

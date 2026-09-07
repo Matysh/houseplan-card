@@ -32,7 +32,7 @@ mkdirSync(diffRoot, { recursive: true });
 
 const sha256 = (buffer) => createHash('sha256').update(buffer).digest('hex');
 
-async function renderPdfGoldenPage(page) {
+async function renderPdfGoldenPage(page, semanticContract = null) {
   const downloadPromise = page.waitForEvent('download');
   await page.evaluate(async () => {
     const card = window.__goldenCard;
@@ -55,7 +55,7 @@ async function renderPdfGoldenPage(page) {
   const path = await download.path();
   if (!path) throw new Error('golden PDF download has no local path');
   const pdfBase64 = readFileSync(path).toString('base64');
-  const rendered = await page.evaluate(async (base64) => {
+  const rendered = await page.evaluate(async ({ base64, semanticContract }) => {
     const pdfjs = await import('/__pdfjs/pdf.mjs');
     pdfjs.GlobalWorkerOptions.workerSrc = '/__pdfjs/pdf.worker.mjs';
     const bytes = Uint8Array.from(atob(base64), (character) => character.charCodeAt(0));
@@ -83,11 +83,239 @@ async function renderPdfGoldenPage(page) {
     const context = canvas.getContext('2d');
     if (!context) throw new Error('golden PDF canvas is unavailable');
     await sheet.render({ canvasContext: context, viewport }).promise;
-    return { pages: pdfDocument.numPages, width: natural.width, height: natural.height };
-  }, pdfBase64);
+    const textContent = await sheet.getTextContent();
+    const textItems = textContent.items
+      .filter((item) => typeof item.str === 'string' && item.str.trim())
+      .map((item) => ({ str: item.str.trim(), transform: [...item.transform] }));
+
+    let semantic = null;
+    if (semanticContract) {
+      const image = context.getImageData(0, 0, canvas.width, canvas.height);
+      const pixels = image.data;
+      const pointPerMm = 72 / 25.4;
+      const pxPerPointX = canvas.width / natural.width;
+      const pxPerPointY = canvas.height / natural.height;
+      const pxPerMmX = pxPerPointX * pointPerMm;
+      const pxPerMmY = pxPerPointY * pointPerMm;
+      const field = {
+        left: Math.floor(12 * pxPerMmX),
+        top: Math.floor(30 * pxPerMmY),
+        right: Math.ceil(canvas.width - 12 * pxPerMmX),
+        bottom: Math.ceil(canvas.height - 36 * pxPerMmY),
+      };
+      const clampX = (value) => Math.max(0, Math.min(canvas.width - 1, value));
+      const clampY = (value) => Math.max(0, Math.min(canvas.height - 1, value));
+      const at = (x, y) => {
+        const offset = (clampY(y) * canvas.width + clampX(x)) * 4;
+        return [pixels[offset], pixels[offset + 1], pixels[offset + 2], pixels[offset + 3]];
+      };
+      const wallGray = ([red, green, blue, alpha]) => alpha > 0
+        && red >= 126 && red <= 128
+        && Math.max(Math.abs(red - green), Math.abs(red - blue), Math.abs(green - blue)) <= 1;
+      const wallGrayAt = (x, y) => x >= 0 && x < canvas.width && y >= 0 && y < canvas.height
+        && wallGray(at(x, y));
+      // Anti-aliased black text also crosses 127 on isolated edge pixels. A
+      // two-sided same-colour neighbour distinguishes actual wall fill from
+      // those glyph fringes before we reason about the plan-field boundary.
+      const wallGrayCoreAt = (x, y) => wallGrayAt(x, y) && (
+        (wallGrayAt(x - 1, y) && wallGrayAt(x + 1, y))
+        || (wallGrayAt(x, y - 1) && wallGrayAt(x, y + 1))
+      );
+      const darkInk = ([red, green, blue, alpha]) => alpha > 0
+        && red < 100 && green < 100 && blue < 100;
+      const sceneInk = ([red, green, blue, alpha]) => alpha > 0
+        && (red < 242 || green < 242 || blue < 242);
+      const white = ([red, green, blue, alpha]) => alpha > 0
+        && red >= 245 && green >= 245 && blue >= 245;
+      const emptyBounds = () => ({ minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity });
+      const include = (bounds, x, y) => {
+        bounds.minX = Math.min(bounds.minX, x);
+        bounds.minY = Math.min(bounds.minY, y);
+        bounds.maxX = Math.max(bounds.maxX, x);
+        bounds.maxY = Math.max(bounds.maxY, y);
+      };
+      const validBounds = (bounds) => Number.isFinite(bounds.minX)
+        && Number.isFinite(bounds.minY) && bounds.maxX >= bounds.minX && bounds.maxY >= bounds.minY;
+
+      let sceneInkPixels = 0;
+      let wallGrayPixels = 0;
+      let wallGrayOutsideFieldPixels = 0;
+      const sceneBounds = emptyBounds();
+      const grayBounds = emptyBounds();
+      for (let y = 0; y < canvas.height; y++) for (let x = 0; x < canvas.width; x++) {
+        const sample = at(x, y);
+        const insideField = x >= field.left && x < field.right && y >= field.top && y < field.bottom;
+        if (insideField && sceneInk(sample)) {
+          sceneInkPixels++;
+          include(sceneBounds, x, y);
+        }
+        if (wallGrayCoreAt(x, y)) {
+          if (insideField) {
+            wallGrayPixels++;
+            include(grayBounds, x, y);
+          } else wallGrayOutsideFieldPixels++;
+        }
+      }
+
+      let interiorHatchPixels = 0;
+      if (validBounds(grayBounds)) {
+        const oppositeOffsets = [[2, 0], [0, 2], [2, 2], [2, -2]];
+        for (let y = grayBounds.minY; y <= grayBounds.maxY; y++) {
+          for (let x = grayBounds.minX; x <= grayBounds.maxX; x++) {
+            if (!darkInk(at(x, y))) continue;
+            if (oppositeOffsets.some(([dx, dy]) =>
+              wallGrayAt(x - dx, y - dy) && wallGrayAt(x + dx, y + dy))) {
+              interiorHatchPixels++;
+            }
+          }
+        }
+      }
+
+      let opening = null;
+      if (validBounds(grayBounds) && semanticContract.opening) {
+        const width = grayBounds.maxX - grayBounds.minX + 1;
+        const height = grayBounds.maxY - grayBounds.minY + 1;
+        const bandBottom = Math.min(grayBounds.maxY,
+          grayBounds.minY + Math.max(5, Math.round(height * 0.08)));
+        let wallRow = grayBounds.minY;
+        let rowGray = -1;
+        for (let y = grayBounds.minY; y <= bandBottom; y++) {
+          let count = 0;
+          for (let x = grayBounds.minX; x <= grayBounds.maxX; x++) {
+            if (wallGrayAt(x, y)) count++;
+          }
+          if (count > rowGray) { rowGray = count; wallRow = y; }
+        }
+        const halfWidth = Math.max(2,
+          Math.round(width * semanticContract.opening.halfWidthFraction));
+        const samplePatch = (centerX) => {
+          let gray = 0, pale = 0, total = 0;
+          for (let y = wallRow - 2; y <= wallRow + 2; y++) {
+            for (let x = Math.round(centerX) - halfWidth;
+              x <= Math.round(centerX) + halfWidth; x++) {
+              const sample = at(x, y);
+              if (wallGray(sample)) gray++;
+              if (white(sample)) pale++;
+              total++;
+            }
+          }
+          return { grayFraction: gray / total, whiteFraction: pale / total };
+        };
+        const centerX = grayBounds.minX + width * semanticContract.opening.xFraction;
+        const offset = width * semanticContract.opening.controlOffsetFraction;
+        const openingPatch = samplePatch(centerX);
+        const leftControl = samplePatch(centerX - offset);
+        const rightControl = samplePatch(centerX + offset);
+        const controlGrayFraction = (leftControl.grayFraction + rightControl.grayFraction) / 2;
+        opening = {
+          wallRow, centerX, ...openingPatch, controlGrayFraction,
+          grayRatio: controlGrayFraction > 0
+            ? openingPatch.grayFraction / controlGrayFraction : Infinity,
+        };
+      }
+
+      const footerY = natural.height - 25 * pointPerMm;
+      const compassRegion = {
+        left: Math.floor((natural.width / 2 - 8 * pointPerMm) * pxPerPointX),
+        right: Math.ceil((natural.width / 2 + 8 * pointPerMm) * pxPerPointX),
+        top: Math.floor((footerY + pointPerMm) * pxPerPointY),
+        bottom: Math.ceil((footerY + 14 * pointPerMm) * pxPerPointY),
+      };
+      let compassInkPixels = 0;
+      for (let y = compassRegion.top; y < compassRegion.bottom; y++) {
+        for (let x = compassRegion.left; x < compassRegion.right; x++) {
+          if (darkInk(at(x, y))) compassInkPixels++;
+        }
+      }
+
+      const dimensionPattern = /^\d+(?:[.,]\d+)?\s*(?:m|cm|ft|in)$/i;
+      const dimensions = textItems.filter((item) => dimensionPattern.test(item.str));
+      const axisError = (transform) => {
+        const degrees = Math.atan2(Number(transform[1]), Number(transform[0])) * 180 / Math.PI;
+        const remainder = ((degrees % 90) + 90) % 90;
+        return Math.min(remainder, 90 - remainder);
+      };
+      const dimensionCounts = new Map();
+      for (const item of dimensions) {
+        dimensionCounts.set(item.str, (dimensionCounts.get(item.str) || 0) + 1);
+      }
+      const sceneWidth = validBounds(sceneBounds) ? sceneBounds.maxX - sceneBounds.minX + 1 : 0;
+      const sceneHeight = validBounds(sceneBounds) ? sceneBounds.maxY - sceneBounds.minY + 1 : 0;
+      const fieldWidth = field.right - field.left;
+      const fieldHeight = field.bottom - field.top;
+      semantic = {
+        text: textItems.map((item) => item.str).join(' '),
+        fieldPixels: field,
+        sceneBoundsPixels: sceneBounds,
+        wallBoundsPixels: grayBounds,
+        compassRegionPixels: compassRegion,
+        sceneInkPixels,
+        sceneCoverage: fieldWidth > 0 && fieldHeight > 0
+          ? sceneWidth * sceneHeight / (fieldWidth * fieldHeight) : 0,
+        centerOffsetMm: validBounds(sceneBounds) ? Math.max(
+          Math.abs((sceneBounds.minX + sceneBounds.maxX - field.left - field.right) / 2 / pxPerMmX),
+          Math.abs((sceneBounds.minY + sceneBounds.maxY - field.top - field.bottom) / 2 / pxPerMmY),
+        ) : Infinity,
+        sceneClearanceMm: validBounds(sceneBounds) ? Math.min(
+          (sceneBounds.minX - field.left) / pxPerMmX,
+          (field.right - 1 - sceneBounds.maxX) / pxPerMmX,
+          (sceneBounds.minY - field.top) / pxPerMmY,
+          (field.bottom - 1 - sceneBounds.maxY) / pxPerMmY,
+        ) : -Infinity,
+        wallGrayPixels,
+        wallGrayOutsideFieldPixels,
+        wallGrayOutsideFieldRatio: wallGrayPixels > 0
+          ? wallGrayOutsideFieldPixels / wallGrayPixels : Infinity,
+        interiorHatchPixels,
+        opening,
+        compassInkPixels,
+        dimensionLabels: dimensions.map((item) => item.str),
+        maxDimensionAxisErrorDeg: dimensions.length
+          ? Math.max(...dimensions.map((item) => axisError(item.transform))) : Infinity,
+        repeatedDimensionLabels: [...dimensionCounts.values()].filter((count) => count >= 2).length,
+      };
+    }
+    return {
+      pages: pdfDocument.numPages, width: natural.width, height: natural.height, semantic,
+    };
+  }, { base64: pdfBase64, semanticContract });
   const a4 = [rendered.width, rendered.height].sort((a, b) => a - b);
   if (Math.abs(a4[0] - 595.28) > 0.2 || Math.abs(a4[1] - 841.89) > 0.2)
     throw new Error(`golden PDF is not A4: ${rendered.width}x${rendered.height}`);
+  if (semanticContract) {
+    const semantic = rendered.semantic;
+    const fail = (message) => {
+      throw new Error(`semantic golden PDF assertion failed: ${message}; ${JSON.stringify(semantic)}`);
+    };
+    if (!semantic || semantic.sceneInkPixels < semanticContract.minSceneInkPixels)
+      fail(`architectural ink is below ${semanticContract.minSceneInkPixels} pixels`);
+    if (semantic.sceneCoverage < semanticContract.minSceneCoverage)
+      fail(`scene coverage is below ${semanticContract.minSceneCoverage}`);
+    if (semantic.centerOffsetMm > semanticContract.maxCenterOffsetMm)
+      fail(`scene centre is offset by more than ${semanticContract.maxCenterOffsetMm} mm`);
+    if (semantic.sceneClearanceMm < semanticContract.minSceneClearanceMm)
+      fail(`scene clearance is below ${semanticContract.minSceneClearanceMm} mm`);
+    if (semantic.wallGrayPixels < semanticContract.minWallGrayPixels)
+      fail(`wall-grey area is below ${semanticContract.minWallGrayPixels} pixels`);
+    if (semantic.wallGrayOutsideFieldRatio > semanticContract.maxWallGrayOutsideFieldRatio)
+      fail('wall material escaped the plan field');
+    if (semantic.interiorHatchPixels < semanticContract.minInteriorHatchPixels)
+      fail(`interior hatch is below ${semanticContract.minInteriorHatchPixels} pixels`);
+    if (!semantic.opening
+        || semantic.opening.grayRatio > semanticContract.opening.maxGrayRatio
+        || semantic.opening.whiteFraction < semanticContract.opening.minWhiteFraction)
+      fail('the exterior opening is not clean against its wall controls');
+    if (semantic.compassInkPixels < semanticContract.minCompassInkPixels)
+      fail(`compass ink is below ${semanticContract.minCompassInkPixels} pixels`);
+    if (semantic.maxDimensionAxisErrorDeg > semanticContract.maxDimensionAxisErrorDeg)
+      fail(`a dimension label is not horizontal or vertical`);
+    if (semantic.repeatedDimensionLabels < semanticContract.minRepeatedDimensionLabels)
+      fail('equal dimensions from distinct local contexts were globally deduplicated');
+    const normalizedText = semantic.text.toLowerCase();
+    const forbidden = semanticContract.forbiddenText.find((token) =>
+      normalizedText.includes(String(token).toLowerCase()));
+    if (forbidden) fail(`forbidden text is present: ${forbidden}`);
+  }
   return rendered;
 }
 
@@ -711,7 +939,9 @@ try {
     try {
       activePageErrors.length = 0;
       result.runtime = await prepareGoldenScenario(page, scenario);
-      if (scenario.pdfExport) result.pdfExport = await renderPdfGoldenPage(page);
+      if (scenario.pdfExport) {
+        result.pdfExport = await renderPdfGoldenPage(page, scenario.pdfSemantic || null);
+      }
       const actualScale = await page.evaluate(() => devicePixelRatio);
       result.deviceScaleFactor = actualScale;
       if (Math.abs(actualScale - expectedScale) > 0.001)

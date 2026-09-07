@@ -292,6 +292,10 @@ Material состоит из:
 наиболее крупного к мелкому. Кандидат валиден, только если полный scene bbox с
 допуском 0.5 mm находится внутри печатного поля.
 
+Для экстремального плана после 1:500 denominator продолжается с шагом 50 через
+конечный bracket/refinement. Заведомо невместимая фиксированная аннотация
+завершает экспорт `pdf.failed`; обрезанный best-effort PDF не возвращается.
+
 ### 12.2 Выбор и центрирование
 
 Побеждает:
@@ -460,6 +464,7 @@ changelog.
 ## 20. Ожидаемая карта изменений
 
 - `src/pdf/pdf-dimensions.ts` — нормализация, axis filter, кандидаты и пары;
+- `src/pdf/pdf-collision.ts` — точные box/segment collision-предикаты для полос;
 - `src/pdf/pdf-scene.ts` — dimension lanes, material, full-scene candidates;
 - `src/pdf/pdf-writer.ts` — clipping, filled vector и точный цвет;
 - `src/pdf/pdf-compass.ts` и лицензионный notice — канонический compass asset;

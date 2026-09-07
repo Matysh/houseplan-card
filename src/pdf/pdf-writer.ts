@@ -6,12 +6,24 @@ import type { PdfVectorOp } from './svg-path';
 
 export type PdfColor = readonly [number, number, number];
 
+export type PdfFillRule = 'nonzero' | 'evenodd';
+
+export interface PdfHatch {
+  /** Page-coordinate polylines; callers keep their phase anchored to the page origin. */
+  lines: readonly (readonly (readonly [number, number])[])[];
+  stroke: PdfColor;
+  width: number;
+  dash?: readonly number[];
+}
+
 export type PdfCommand =
   | { kind: 'path'; rings: readonly (readonly (readonly [number, number])[])[];
-      fill?: PdfColor; stroke?: PdfColor; width?: number; dash?: readonly number[] }
+      fill?: PdfColor; stroke?: PdfColor; width?: number; dash?: readonly number[];
+      hatch?: PdfHatch }
   | { kind: 'line'; points: readonly (readonly [number, number])[];
       stroke: PdfColor; width: number; dash?: readonly number[] }
-  | { kind: 'vector'; ops: readonly PdfVectorOp[]; stroke: PdfColor; width: number }
+  | { kind: 'vector'; ops: readonly PdfVectorOp[]; fill?: PdfColor; stroke?: PdfColor;
+      width: number; fillRule?: PdfFillRule }
   | { kind: 'text'; x: number; y: number; text: string; size: number;
       color?: PdfColor; angle?: number; align?: 'left' | 'center' | 'right' }
   | { kind: 'image'; imageId: string; x: number; y: number; width: number; height: number;
@@ -32,12 +44,25 @@ export interface PdfPage {
   now: Date;
 }
 
+export type PdfTextCommand = Extract<PdfCommand, { kind: 'text' }>;
+
+export interface PdfTextBounds {
+  minX: number;
+  minY: number;
+  maxX: number;
+  maxY: number;
+}
+
 const encoder = new TextEncoder();
 const fmt = (value: number): string => {
   const rounded = Math.round(value * 100) / 100;
   return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(2).replace(/0+$/, '');
 };
-const color = (value: PdfColor): string => value.map(fmt).join(' ');
+const fmtColor = (value: number): string => {
+  const rounded = Math.round(value * 1_000_000) / 1_000_000;
+  return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(6).replace(/0+$/, '');
+};
+const color = (value: PdfColor): string => value.map(fmtColor).join(' ');
 
 function base64Bytes(value: string): Uint8Array {
   const binary = atob(value);
@@ -62,6 +87,60 @@ function glyphsFor(text: string): { hex: string; width: number; unicode: Map<num
 
 export function measurePdfText(text: string, size: number): number {
   return glyphsFor(text).width * size / PDF_FONT_UNITS_PER_EM;
+}
+
+interface PdfTextGeometry {
+  width: number;
+  /** Top-down paper coordinates of the start of the aligned baseline. */
+  baselineX: number;
+  baselineY: number;
+  cos: number;
+  sin: number;
+}
+
+/**
+ * The writer rotates text around the command anchor, after moving the baseline
+ * start by the requested alignment. Keep that transform in one place so scene
+ * fitting and collision checks describe the same glyph run as the emitted Tm.
+ */
+function pdfTextGeometry(command: PdfTextCommand, width = measurePdfText(
+  command.text, command.size,
+)): PdfTextGeometry {
+  const align = command.align || 'left';
+  const shift = align === 'center' ? width / 2 : align === 'right' ? width : 0;
+  const angle = (command.angle || 0) * Math.PI / 180;
+  const cos = Math.cos(angle), sin = Math.sin(angle);
+  return {
+    width,
+    baselineX: command.x - cos * shift,
+    baselineY: command.y + sin * shift,
+    cos,
+    sin,
+  };
+}
+
+/**
+ * Conservative top-down paper-coordinate bounds for the exact text transform.
+ *
+ * Per-glyph outlines are intentionally not decoded on the export hot path. The
+ * embedded font's ascent/descent line box encloses the run vertically, while
+ * the measured advances enclose it along the baseline. All four corners are
+ * transformed about the real aligned baseline anchor used by the PDF `Tm`.
+ */
+export function pdfTextBounds(command: PdfTextCommand): PdfTextBounds {
+  const geometry = pdfTextGeometry(command);
+  const descent = PDF_FONT_DESCENT * command.size / PDF_FONT_UNITS_PER_EM;
+  const ascent = PDF_FONT_ASCENT * command.size / PDF_FONT_UNITS_PER_EM;
+  const points = [0, geometry.width].flatMap((along) => [descent, ascent].map((vertical) => ({
+    x: geometry.baselineX + geometry.cos * along - geometry.sin * vertical,
+    y: geometry.baselineY - geometry.sin * along - geometry.cos * vertical,
+  })));
+  return {
+    minX: Math.min(...points.map((point) => point.x)),
+    minY: Math.min(...points.map((point) => point.y)),
+    maxX: Math.max(...points.map((point) => point.x)),
+    maxY: Math.max(...points.map((point) => point.y)),
+  };
 }
 
 function toUnicodeCMap(map: ReadonlyMap<number, number>): string {
@@ -102,14 +181,51 @@ function contentStream(
       out.push('h');
     }
   };
+  const emitLines = (lines: readonly (readonly (readonly [number, number])[])[]): boolean => {
+    let emitted = false;
+    for (const points of lines) {
+      if (points.length < 2) continue;
+      emitted = true;
+      out.push(numericOperator('m', points[0][0], y(points[0][1])));
+      for (let i = 1; i < points.length; i++) {
+        out.push(`${fmt(points[i][0])} ${fmt(y(points[i][1]))} l`);
+      }
+    }
+    return emitted;
+  };
   for (const command of page.commands) {
     if (command.kind === 'path') {
       out.push('q');
-      if (command.fill) out.push(`${color(command.fill)} rg`);
-      if (command.stroke) out.push(`${color(command.stroke)} RG ${fmt(command.width || 0.5)} w`);
-      if (command.dash) out.push(`[${command.dash.map(fmt).join(' ')}] 0 d`);
-      emitPath(command.rings);
-      out.push(command.fill && command.stroke ? 'B*' : command.fill ? 'f*' : 'S', 'Q');
+      if (!command.hatch) {
+        if (command.fill) out.push(`${color(command.fill)} rg`);
+        if (command.stroke) out.push(`${color(command.stroke)} RG ${fmt(command.width || 0.5)} w`);
+        if (command.dash) out.push(`[${command.dash.map(fmt).join(' ')}] 0 d`);
+        emitPath(command.rings);
+        out.push(command.fill && command.stroke ? 'B*' : command.fill ? 'f*' : 'S');
+      } else {
+        if (command.fill) {
+          out.push(`${color(command.fill)} rg`);
+          emitPath(command.rings);
+          out.push('f*');
+        }
+        if (command.hatch.lines.length) {
+          out.push('q');
+          emitPath(command.rings);
+          out.push('W*', 'n', `${color(command.hatch.stroke)} RG ${fmt(command.hatch.width)} w`);
+          if (command.hatch.dash) {
+            out.push(`[${command.hatch.dash.map(fmt).join(' ')}] 0 d`);
+          }
+          if (emitLines(command.hatch.lines)) out.push('S');
+          out.push('Q');
+        }
+        if (command.stroke) {
+          out.push(`${color(command.stroke)} RG ${fmt(command.width || 0.5)} w`);
+          if (command.dash) out.push(`[${command.dash.map(fmt).join(' ')}] 0 d`);
+          emitPath(command.rings);
+          out.push('S');
+        }
+      }
+      out.push('Q');
     } else if (command.kind === 'line') {
       if (command.points.length < 2) continue;
       out.push('q', `${color(command.stroke)} RG ${fmt(command.width)} w`);
@@ -120,7 +236,9 @@ function contentStream(
       }
       out.push('S', 'Q');
     } else if (command.kind === 'vector') {
-      out.push('q', `${color(command.stroke)} RG ${fmt(command.width)} w`, '1 J 1 j');
+      out.push('q');
+      if (command.fill) out.push(`${color(command.fill)} rg`);
+      if (command.stroke) out.push(`${color(command.stroke)} RG ${fmt(command.width)} w`, '1 J 1 j');
       for (const entry of command.ops) {
         if (entry.op === 'M' || entry.op === 'L') {
           out.push(`${fmt(entry.x)} ${fmt(y(entry.y))} ${entry.op === 'M' ? 'm' : 'l'}`);
@@ -128,19 +246,18 @@ function contentStream(
           out.push(`${fmt(entry.x1)} ${fmt(y(entry.y1))} ${fmt(entry.x2)} ${fmt(y(entry.y2))} ${fmt(entry.x)} ${fmt(y(entry.y))} c`);
         } else out.push('h');
       }
-      out.push('S', 'Q');
+      const evenOdd = command.fillRule === 'evenodd';
+      out.push(command.fill && command.stroke ? (evenOdd ? 'B*' : 'B')
+        : command.fill ? (evenOdd ? 'f*' : 'f') : command.stroke ? 'S' : 'n', 'Q');
     } else if (command.kind === 'text') {
       const encoded = glyphsFor(command.text);
       for (const [glyph, code] of encoded.unicode) if (!unicode.has(glyph)) unicode.set(glyph, code);
-      const align = command.align || 'left';
-      const shift = align === 'center' ? encoded.width * command.size / PDF_FONT_UNITS_PER_EM / 2
-        : align === 'right' ? encoded.width * command.size / PDF_FONT_UNITS_PER_EM : 0;
-      const angle = (command.angle || 0) * Math.PI / 180;
-      const c = Math.cos(angle), s = Math.sin(angle);
-      const tx = command.x - c * shift;
-      const ty = y(command.y) + s * shift;
+      const geometry = pdfTextGeometry(
+        command, encoded.width * command.size / PDF_FONT_UNITS_PER_EM,
+      );
       out.push('BT', `${color(command.color || [0, 0, 0])} rg`, `/F1 ${fmt(command.size)} Tf`,
-        `${fmt(c)} ${fmt(s)} ${fmt(-s)} ${fmt(c)} ${fmt(tx)} ${fmt(ty)} Tm`,
+        `${fmt(geometry.cos)} ${fmt(geometry.sin)} ${fmt(-geometry.sin)} ${fmt(geometry.cos)} `
+          + `${fmt(geometry.baselineX)} ${fmt(y(geometry.baselineY))} Tm`,
         `<${encoded.hex}> Tj`, 'ET');
     } else {
       const angle = (command.angle || 0) * Math.PI / 180;

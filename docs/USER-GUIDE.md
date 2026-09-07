@@ -974,10 +974,16 @@ topology. The dialog can add dimensions and clean floor areas, room names,
 Background-editor decor and the space backdrop. Its choices are remembered in
 this browser.
 
-House Plan automatically selects portrait or landscape and a standard scale;
-the footer includes a scale bar, north when configured, date, version and a
-legend. The export is read-only and always uses the flat plan, including while
-the card is in isometric view. See [PDF export](PDF-EXPORT.md) for measurement,
+House Plan lays out the complete selected content before choosing portrait or
+landscape and a standard scale, then centres that complete scene on the sheet.
+Physical walls use a grey base and architectural hatch. Measurements are
+limited to horizontal and vertical walls, and a matching opposite pair is
+printed once within its own room or connected outer contour. The footer
+includes a scale bar, a vector compass when north is configured, the date and
+version; the old architectural-symbol legend is no longer printed. The export
+is read-only and always uses the flat plan, including while the card is in
+isometric view. Its dialog remains usable without horizontal scrolling down to
+a 320 px-wide View area. See [PDF export](PDF-EXPORT.md) for measurement,
 image-limit and font details.
 
 Current plans give every stored wall segment a stable internal identity. This
