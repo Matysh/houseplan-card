@@ -103,6 +103,15 @@ test('shared wall architecture is emitted once and devices never enter the PDF s
     && command.text.includes('secret-device-marker')));
 });
 
+test('dimensions switch removes the external chain from physical walls', () => {
+  const texts = (dimensions) => sharedPage({
+    dimensions, roomNames: false, decor: false, backdrop: false,
+  }).commands.filter((command) => command.kind === 'text').map((command) => command.text)
+    .filter((value) => value !== '1 m' && /^[-+]?\d+(?:[.,]\d+)?\s(?:m|cm|ft|in)$/.test(value));
+  assert.ok(texts(true).length > 0, 'the thick outer wall has a dimension chain');
+  assert.deepEqual(texts(false), [], 'the option removes every dimension value');
+});
+
 test('backdrop is below physical architecture and disappears with its option', () => {
   const raster = {
     id: 'backdrop', bytes: new Uint8Array([0xff, 0xd8, 0xff, 0xd9]),

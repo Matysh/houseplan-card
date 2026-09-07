@@ -128,7 +128,7 @@ const MUTANT_DEFINITIONS = [
   {
     id: 'pdf-dimensions-ignore-toggle',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
-      + '&& node --test --test-name-pattern="respects names/dimensions" test/pdf-scene.test.mjs',
+      + '&& node --test --test-name-pattern="dimensions switch removes" test/pdf-scene.test.mjs',
     because: 'turning dimensions off must remove the external dimension chain as well as room labels',
     patches: [{
       file: 'src/pdf/pdf-scene.ts',

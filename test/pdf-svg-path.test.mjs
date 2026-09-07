@@ -15,7 +15,6 @@ test('every designer furniture path converts to finite PDF vector operations', (
     }
   }
 });
-
 test('arc and affine transforms become deterministic cubic paths', () => {
   const first = transformSvgPath('M0 5A5 5 0 1 1 10 5Z', {
     a: 2, b: 0, c: 0, d: 3, e: 7, f: 11,
@@ -27,4 +26,3 @@ test('arc and affine transforms become deterministic cubic paths', () => {
   assert.ok(first.some((operation) => operation.op === 'C'));
   assert.deepEqual(first.at(-1), { op: 'Z' });
 });
-
