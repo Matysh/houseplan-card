@@ -99,7 +99,7 @@ test('external dimension extension may leave its own stepped corner but never re
   ), true, 'a second wall after the first free interval remains a collision');
   const tangentWall = [[13, 3], [15, 4], [15, 5], [13, 4]];
   assert.equal(pdfSegmentTouchesGeometry(
-    [10, 3], [16, 3], [step, tangentWall], combinedSolid, ownExit,
+    [10, 3], [16, 3], [step, tangentWall], stepSolid, ownExit,
   ), true, 'a later point contact remains a collision even without a solid interval');
   assert.equal(pdfSegmentTouchesGeometry(
     [11, 4], [14, 4], [step], stepSolid, ownExit,
