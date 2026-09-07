@@ -3,6 +3,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { relative, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { sourceFingerprint } from '../scripts/source-fingerprint.mjs';
+import { assertBundleManifest, verifyBundleTree } from '../scripts/bundle-tree.mjs';
 
 const fingerprintForTree = async (root) => {
   const modulePath = resolve(root, 'scripts/source-fingerprint.mjs');
@@ -24,6 +25,14 @@ const verifyManifestTree = (root, expected) => {
   if (manifest?.schema !== 1 || manifest.fingerprint !== expected
       || !Array.isArray(manifest.files)) {
     throw new Error('demo bundle manifest is stale or malformed; run npm run bundle:sync');
+  }
+  // Comparative performance runs intentionally build older trees. Require the
+  // two-entry contract exactly when that target contains the panel source; a
+  // pre-#486 baseline remains measurable under its own fingerprint contract.
+  if (existsSync(resolve(root, 'src/houseplan-panel.ts'))) {
+    assertBundleManifest(manifest, manifestPath);
+    verifyBundleTree(assetRoot);
+    return;
   }
   for (const file of manifest.files) {
     const path = resolve(assetRoot, String(file?.path || ''));

@@ -1,9 +1,11 @@
 # House Plan — complete user guide
 
-Current for **v1.64.0**. This guide describes the interface implemented by the
+Current for **v1.73.0**. This guide describes the interface implemented by the
 current source. [Русская версия](USER-GUIDE.ru.md).
 
-House Plan installs two Lovelace cards together:
+House Plan adds a dedicated **House Plan** page to the Home Assistant sidebar.
+That full-page panel is the primary way to view and edit the shared plan. The
+integration also installs two optional Lovelace cards:
 
 - `custom:houseplan-card` — the live plan, editors, state and actions;
 - `custom:houseplan-space-card` — an inert rendering of one space with a link
@@ -54,7 +56,7 @@ override them; a room may override its space; a marker may override its room.
 
 | Level | Meaning | Stored data |
 |---|---|---|
-| Card | One dashboard instance | Initial space, language, icon size, value/LQI display, live state, kiosk and cycle |
+| Panel/card | Primary sidebar page or one optional dashboard instance | Last/initial space; dashboard cards may additionally set language, icon size, value/LQI display, kiosk and cycle |
 | Global settings | Defaults for all spaces | Fill palette, background, Glow radius, north, sun, room-hover information and icon rules |
 | Space | Floor, yard, garage or building | Plan image, scale, rooms, walls, openings, decor and display settings |
 | Room | A closed outline | Name, optional HA area, temperature/humidity source and local fill |
@@ -87,8 +89,9 @@ or column affects the physical rendering and light but does not create a room.
 3. Open **Settings → Devices & services → Add integration → House Plan**.
 4. Keep “administrators only” enabled unless other users must edit the plan.
 
-The integration registers its Lovelace resource automatically. After installing
-or updating House Plan, restart Home Assistant and fully reload the page:
+The integration registers both the sidebar panel and its Lovelace resource
+automatically. After installing or updating House Plan, restart Home Assistant
+and fully reload the page:
 `Ctrl+F5` on Windows/Linux or `Cmd+Shift+R` on macOS.
 
 #### Storage mode (Home Assistant default)
@@ -154,7 +157,21 @@ device service calls. With the default integration option, only administrators
 can edit configuration or upload files. Plan optimization and its undo always
 require an administrator.
 
+The **House Plan** sidebar item is visible to every signed-in user. A user who
+cannot edit gets the complete View experience without editor controls. On an
+empty installation that user sees a read-only explanation, not an Add space
+button or an automatically opened setup dialog.
+
 ## 3. Adding a card
+
+Normally there is nothing to add: open **House Plan** in the HA sidebar. It
+occupies the available page area, keeps the existing space/editor controls, and
+does not duplicate the product title inside the plan. Leaving the page ends an
+editor session; returning keeps the last space and opens View.
+
+The dashboard card remains available for layouts that intentionally embed the
+plan. In a Sections view it requests full width by default; a size explicitly
+chosen in Home Assistant remains authoritative.
 
 Minimal configuration:
 

@@ -12,7 +12,50 @@ const FR_RETRY_ASSET_TOKEN = '__HOUSEPLAN_FR_RETRY_ASSET__';
 const FURNITURE_ART_RETRY_ASSET_TOKEN = '__HOUSEPLAN_FURNITURE_ART_RETRY_ASSET__';
 const PDF_RETRY_ASSET_TOKEN = '__HOUSEPLAN_PDF_RETRY_ASSET__';
 
+export const CARD_ENTRY_FILE = 'houseplan-card.js';
+export const PANEL_ENTRY_FILE = 'houseplan-panel.js';
+
+const ENTRY_CONTRACTS = [
+  {
+    fileName: CARD_ENTRY_FILE,
+    facade: 'src/houseplan-card.ts',
+    element: 'houseplan-card',
+    cardFallback: true,
+  },
+  {
+    fileName: PANEL_ENTRY_FILE,
+    facade: 'src/houseplan-panel.ts',
+    element: 'houseplan-panel',
+    cardFallback: false,
+  },
+];
+
 const sha256 = (value) => createHash('sha256').update(value).digest('hex');
+
+const normalizedId = (value) => String(value || '').replaceAll('\\', '/');
+
+const hasExactFacade = (chunk, facade) => {
+  const id = normalizedId(chunk.facadeModuleId);
+  return id === facade || id.endsWith(`/${facade}`);
+};
+
+const exactEntryChunk = (bundle, contract) => {
+  const matches = Object.values(bundle).filter((item) => item.type === 'chunk'
+    && item.isEntry
+    && normalizedId(item.fileName) === contract.fileName);
+  if (matches.length !== 1) {
+    throw new Error(
+      `${contract.fileName} entry count is ${matches.length}, expected exactly 1`,
+    );
+  }
+  if (!hasExactFacade(matches[0], contract.facade)) {
+    throw new Error(
+      `${contract.fileName} facade is ${normalizedId(matches[0].facadeModuleId) || 'missing'},`
+        + ` expected ${contract.facade}`,
+    );
+  }
+  return matches[0];
+};
 
 const reachable = (entry, byPath, edge) => {
   const seen = new Set();
@@ -28,8 +71,14 @@ const reachable = (entry, byPath, edge) => {
 };
 
 export function buildBundleManifest(bundle, fingerprint) {
-  const files = Object.values(bundle)
-    .filter((item) => item.type === 'chunk')
+  const chunks = Object.values(bundle).filter((item) => item.type === 'chunk');
+  const entries = chunks.filter((item) => item.isEntry);
+  if (entries.length !== ENTRY_CONTRACTS.length) {
+    throw new Error(`bundle entry count is ${entries.length}, expected ${ENTRY_CONTRACTS.length}`);
+  }
+  const cardEntry = exactEntryChunk(bundle, ENTRY_CONTRACTS[0]);
+  const panelEntry = exactEntryChunk(bundle, ENTRY_CONTRACTS[1]);
+  const files = chunks
     .map((chunk) => {
       const contents = Buffer.from(chunk.code, 'utf8');
       const modules = Object.keys(chunk.modules || {}).map((id) => id.replaceAll('\\', '/'));
@@ -60,10 +109,14 @@ export function buildBundleManifest(bundle, fingerprint) {
       };
     })
     .sort((left, right) => left.path.localeCompare(right.path));
-  const entry = files.find((file) => file.isEntry)?.path;
-  if (!entry) throw new Error('bundle manifest has no entry chunk');
+  const entry = normalizedId(cardEntry.fileName);
+  const panelEntryPath = normalizedId(panelEntry.fileName);
   const byPath = new Map(files.map((file) => [file.path, file]));
   const initial = reachable(entry, byPath, 'imports');
+  const initialPanel = reachable(panelEntryPath, byPath, 'imports');
+  const initialPanelOnly = new Set(
+    [...initialPanel].filter((path) => !initial.has(path)),
+  );
   const dynamicRoots = [...initial]
     .flatMap((path) => byPath.get(path)?.dynamicImports || []);
   const lazy = new Set();
@@ -101,8 +154,13 @@ export function buildBundleManifest(bundle, fingerprint) {
     schema: 1,
     fingerprint,
     entry,
+    panelEntry: panelEntryPath,
     initialViewFiles: [...initial].sort(),
     initialViewGzipBytes: sum(initial),
+    initialPanelFiles: [...initialPanel].sort(),
+    initialPanelGzipBytes: sum(initialPanel),
+    initialPanelOnlyFiles: [...initialPanelOnly].sort(),
+    initialPanelOnlyGzipBytes: sum(initialPanelOnly),
     lazyFiles: [...lazy].sort(),
     lazyGzipBytes: sum(lazy),
     lazyEditorFiles: [...lazyEditor].sort(),
@@ -243,11 +301,13 @@ export function editorRuntimeRetryUrlPlugin() {
 }
 
 /**
- * Rewrite the entry facade so a stale cached `houseplan-card.js` fails loudly
- * instead of killing the card silently (#353 К3). Rollup emits the facade as a
- * STATIC re-export of the content-hashed main chunk; after an update a proxy-
- * cached facade points at a chunk the manifest-gated server no longer serves,
- * and a static import failure aborts the whole module before any code runs.
+ * Rewrite both stable entry facades so a stale cached entry fails loudly
+ * instead of killing the card or panel silently (#353 K3, #486). Rollup emits
+ * the card facade as a STATIC re-export of a content-hashed implementation
+ * chunk, while the panel entry statically imports that same shared chunk.
+ * After an update a proxy-cached entry can point at a chunk the manifest-gated
+ * server no longer serves, and a static import failure would abort the whole
+ * module before any code runs.
  *
  * The rewrite keeps the happy path intact via top-level await: an importer's
  * `await import(entry)` does not resolve until the inner import settles, so
@@ -258,37 +318,69 @@ export function editorRuntimeRetryUrlPlugin() {
  * Must run BEFORE bundleManifestPlugin so the manifest hashes the final code.
  */
 export function entryFallbackPlugin() {
+  const fallbackDefinition = (contract) => `if(!customElements.get("${contract.element}")){`
+    + 'const l=String(navigator.language||"en").toLowerCase();'
+    + 'const m=l.startsWith("ru")'
+    + '?"House Plan обновился — перезагрузите страницу (Ctrl+F5)."'
+    + ':l.startsWith("de")'
+    + '?"House Plan wurde aktualisiert — bitte laden Sie die Seite neu (Strg+F5)."'
+    + ':l.startsWith("fr")'
+    + '?"House Plan a été mis à jour — veuillez recharger la page (Ctrl+F5)."'
+    + ':"House Plan was updated — please reload the page (Ctrl+F5).";'
+    + `customElements.define("${contract.element}",class extends HTMLElement{`
+    + (contract.cardFallback ? 'setConfig(){}getCardSize(){return 1}' : '')
+    + 'connectedCallback(){'
+    + 'this.style.cssText="display:block;box-sizing:border-box;padding:16px;'
+    + (contract.cardFallback
+      ? 'border:1px solid var(--divider-color,#e0e0e0);border-radius:var(--ha-card-border-radius,12px);'
+      : 'min-height:100%;')
+    + 'background:var(--card-background-color,#fff);color:var(--primary-text-color,#212121);'
+    + 'font:14px/1.4 var(--paper-font-body1_-_font-family,sans-serif)";'
+    + 'this.textContent=m}})}';
   return {
     name: 'houseplan-entry-fallback',
     generateBundle(_options, bundle) {
-      const entry = Object.values(bundle)
-        .find((item) => item.type === 'chunk' && item.isEntry);
-      if (!entry) throw new Error('entry chunk was not emitted');
-      const pattern = /export\{[^}]*\}from(["'])(\.\/houseplan-assets\/[^"']+\.js)\1;?/g;
-      const matches = [...entry.code.matchAll(pattern)];
-      if (matches.length !== 1) {
-        throw new Error(`entry facade re-export count is ${matches.length}, expected 1`);
+      const cardContract = ENTRY_CONTRACTS[0];
+      const cardEntry = exactEntryChunk(bundle, cardContract);
+      const cardPattern = /export\{[^}]*\}from(["'])(\.\/houseplan-assets\/[^"']+\.js)\1;?/g;
+      const cardMatches = [...cardEntry.code.matchAll(cardPattern)];
+      if (cardMatches.length !== 1) {
+        throw new Error(
+          `${cardContract.fileName} facade re-export count is ${cardMatches.length}, expected 1`,
+        );
       }
-      const asset = matches[0][2];
-      const fallback = 'try{await import("' + asset + '")}'
-        + 'catch(e){if(!customElements.get("houseplan-card")){'
-        + 'const l=String(navigator.language||"en").toLowerCase();'
-        + 'const m=l.startsWith("ru")'
-        + '?"House Plan обновился — перезагрузите страницу (Ctrl+F5)."'
-        + ':l.startsWith("de")'
-        + '?"House Plan wurde aktualisiert — bitte laden Sie die Seite neu (Strg+F5)."'
-        + ':l.startsWith("fr")'
-        + '?"House Plan a été mis à jour — veuillez recharger la page (Ctrl+F5)."'
-        + ':"House Plan was updated — please reload the page (Ctrl+F5).";'
-        + 'customElements.define("houseplan-card",class extends HTMLElement{'
-        + 'setConfig(){}getCardSize(){return 1}connectedCallback(){'
-        + 'this.style.cssText="display:block;box-sizing:border-box;padding:16px;'
-        + 'border:1px solid var(--divider-color,#e0e0e0);border-radius:var(--ha-card-border-radius,12px);'
-        + 'background:var(--card-background-color,#fff);color:var(--primary-text-color,#212121);'
-        + 'font:14px/1.4 var(--paper-font-body1_-_font-family,sans-serif)";'
-        + 'this.textContent=m}})}'
-        + 'console.error("[houseplan] stale entry: the main chunk is unavailable",e)}';
-      entry.code = entry.code.replace(pattern, fallback);
+      const cardAsset = cardMatches[0][2];
+      cardEntry.code = cardEntry.code.replace(
+        cardPattern,
+        `try{await import("${cardAsset}")}`
+          + `catch(e){${fallbackDefinition(cardContract)}`
+          + 'console.error("[houseplan] stale houseplan-card.js: the implementation chunk is unavailable",e)}',
+      );
+
+      // Rollup folds the small panel shell into its stable entry and points its
+      // side-effect import directly at the shared card implementation. Route it
+      // through the stable card facade instead: the real startup closure then
+      // contains the exact card graph (not a second copy), and a stale card
+      // implementation renders the existing card fallback inside the panel.
+      const panelContract = ENTRY_CONTRACTS[1];
+      const panelEntry = exactEntryChunk(bundle, panelContract);
+      const panelPattern = new RegExp(
+        `import(["'])${cardAsset.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\1;?`,
+        'g',
+      );
+      const panelMatches = [...panelEntry.code.matchAll(panelPattern)];
+      if (panelMatches.length !== 1) {
+        throw new Error(
+          `${panelContract.fileName} card import count is ${panelMatches.length}, expected 1`,
+        );
+      }
+      panelEntry.code = panelEntry.code.replace(
+        panelPattern,
+        `try{await import("./${CARD_ENTRY_FILE}")}`
+          + `catch(e){${fallbackDefinition(panelContract)}`
+          + 'console.error("[houseplan] stale houseplan-panel.js: the card entry is unavailable",e)}',
+      );
+      panelEntry.imports = [CARD_ENTRY_FILE];
     },
   };
 }

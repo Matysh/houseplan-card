@@ -8,6 +8,9 @@
         }
       }
     },
+    "create_entry": {
+      "panel_ready": "Ouvrez House Plan depuis la barre latérale lorsque l’entrée est disponible. Un navigateur sur ordinateur est recommandé pour la modification. Si l’entrée est absente, utilisez la carte House Plan du tableau de bord et consultez les informations système."
+    },
     "abort": {
       "single_instance_allowed": "Déjà configuré — une seule entrée est autorisée."
     }
@@ -27,8 +30,8 @@
       "description": "Le fichier de plan `{file}` pour l’espace `{space}` est introuvable dans `config/houseplan/plans/`. Ouvrez les paramètres de l’espace dans la carte House Plan et téléversez de nouveau le plan."
     },
     "frontend_reload_notice": {
-      "title": "Carte House Plan connectée",
-      "description": "La carte House Plan est connectée. Rechargez complètement cette page pour utiliser l’interface la plus récente (`Ctrl+F5` sous Windows/Linux ou `Cmd+Shift+R` sous macOS). Si vous gérez manuellement les ressources du tableau de bord en mode stockage, ouvrez Paramètres → Tableaux de bord → Ressources."
+      "title": "House Plan est prêt",
+      "description": "Ouvrez House Plan depuis la barre latérale. Après une mise à jour, rechargez complètement la page pour utiliser l’interface la plus récente (`Ctrl+F5` sous Windows/Linux ou `Cmd+Shift+R` sous macOS). La carte de tableau de bord reste disponible ; si vous gérez manuellement sa ressource en mode stockage, ouvrez Paramètres → Tableaux de bord → Ressources. Si l’entrée de la barre latérale est absente, consultez House Plan dans les informations système."
     }
   },
   "system_health": {
@@ -40,7 +43,13 @@
       "resource_url": "URL de la ressource de l’interface",
       "resource_retry": "Nouvelle tentative d’enregistrement",
       "resource_error": "Erreur d’enregistrement de l’interface",
-      "first_reload_notice": "Premier avis de rechargement"
+      "first_reload_notice": "Premier avis de rechargement",
+      "panel_file": "Fichier du panneau House Plan",
+      "panel_static_path": "Chemin statique du panneau",
+      "panel_status": "État de l’enregistrement du panneau",
+      "panel_url": "URL du panneau House Plan",
+      "panel_module_url": "URL du module du panneau",
+      "panel_error": "Erreur d’enregistrement du panneau"
     }
   }
 }

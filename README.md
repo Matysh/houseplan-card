@@ -12,8 +12,9 @@
 
 ## Your whole home at a glance
 
-House Plan turns Home Assistant into a live map of your home. Upload a plan or
-draw rooms directly on the dashboard, bind them to Home Assistant areas, and
+House Plan turns Home Assistant into a live map of your home. Open the dedicated
+**House Plan** item in the Home Assistant sidebar, upload a plan or draw rooms,
+bind them to Home Assistant areas, and
 the area's devices appear automatically. You can immediately see where a light
 is on, a door is open, a room is too cold, Zigbee signal is weak, or a leak
 sensor has fired.
@@ -54,7 +55,7 @@ sync across screens.
 
 ## Your first working room
 
-1. Install the integration and add the card to a dashboard.
+1. Install the integration and open **House Plan** in the Home Assistant sidebar.
 2. Create the first **space**: upload SVG/PNG/JPG/WebP, reuse an uploaded image,
    or choose no image and draw the plan by hand.
 3. In Plan, select **Room outline**, place vertices, and click the first point to
@@ -94,7 +95,8 @@ House Plan is in the HACS default catalog — no custom repository needed.
 2. Restart Home Assistant.
 3. Open **Settings → Devices & services → Add integration → House Plan**.
 
-The card is registered automatically. After installing or updating House Plan,
+The sidebar page and optional dashboard cards are registered automatically.
+After installing or updating House Plan,
 restart Home Assistant and fully reload the page: `Ctrl+F5` on Windows/Linux or
 `Cmd+Shift+R` on macOS.
 
@@ -142,9 +144,23 @@ Copy the complete `custom_components/houseplan` release folder to
 integration. Do not copy only `houseplan-card.js`: the card also uses an
 internal manifest and content-hashed modules from the same release.
 
-### Add the card
+### Open House Plan
 
-Create a dashboard view (Panel works best) and add the card in the UI or as:
+After the integration is added, open **House Plan** in the Home Assistant
+sidebar. This full-page view is the primary entry point and needs no dashboard
+or YAML setup. It remembers the last space but always returns from another HA
+page in View rather than reopening an editor. Users without editing permission
+see the same live plan without editor controls.
+
+If the sidebar entry cannot be registered, the integration and existing
+dashboard cards continue to work; check **Settings → System → Repairs → System
+information → House Plan** after restarting and hard-refreshing HA.
+
+### Optional dashboard card
+
+Add the card only when House Plan must be embedded in a dashboard. In a Sections
+view it requests full width by default, while a manual size chosen in HA remains
+authoritative. Add it in the UI or as:
 
 ```yaml
 type: custom:houseplan-card

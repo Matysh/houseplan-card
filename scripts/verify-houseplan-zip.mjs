@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { readZipEntries } from './release-prerelease.mjs';
+import { listZipEntries, readZipEntries } from './release-prerelease.mjs';
 import { readBundleManifest, sha256Bytes } from './bundle-tree.mjs';
 
 export function verifyHouseplanZip(zipPath, bundleRoot, expectedVersion = '') {
@@ -17,6 +17,13 @@ export function verifyHouseplanZip(zipPath, bundleRoot, expectedVersion = '') {
   if (JSON.stringify(bundled) !== JSON.stringify(expected)) {
     throw new Error('houseplan.zip frontend manifest differs from source tree');
   }
+  const listed = new Set(expected.files.map((file) => `frontend/${file.path}`));
+  const orphan = listZipEntries(zipPath)
+    .find((name) => (
+      /^frontend\/houseplan-.*\.js$/.test(name)
+        || /^frontend\/houseplan-assets\/.*\.js$/.test(name)
+    ) && !listed.has(name));
+  if (orphan) throw new Error(`houseplan.zip contains orphan bundle asset: ${orphan}`);
   const entries = readZipEntries(zipPath, expected.files.map((file) => `frontend/${file.path}`));
   for (const file of expected.files) {
     if (sha256Bytes(entries.get(`frontend/${file.path}`)) !== file.sha256) {

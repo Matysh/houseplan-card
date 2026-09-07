@@ -25,6 +25,7 @@ async def test_user_flow_creates_entry(hass: HomeAssistant) -> None:
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert result["title"] == "House Plan"
     assert result["options"] == {CONF_ADMIN_ONLY: True}
+    assert result["description"] == "panel_ready"
 
 
 async def test_single_instance(hass: HomeAssistant) -> None:

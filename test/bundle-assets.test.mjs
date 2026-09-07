@@ -8,18 +8,60 @@ import test from 'node:test';
 
 import {
   buildBundleManifest, buildFingerprintPlugin, editorRuntimeRetryUrlPlugin,
+  entryFallbackPlugin,
 } from '../scripts/bundle-manifest.mjs';
 import {
-  INITIAL_VIEW_CEILING_BAND, INITIAL_VIEW_GZIP_BUDGET, INITIAL_VIEW_GZIP_CEILING,
+  INITIAL_PANEL_ONLY_GZIP_BUDGET, INITIAL_VIEW_CEILING_BAND,
+  INITIAL_VIEW_GZIP_BUDGET, INITIAL_VIEW_GZIP_CEILING,
   LOW_HEADROOM_ACKNOWLEDGED_CEILING, LOW_HEADROOM_WARNING_BYTES,
   SUPPORT_LAZY_MARKERS,
   assertBundleBudget, assertSupportBundleOwnership, initialViewCeilingViolation,
   lowHeadroomWarning,
 } from '../scripts/bundle-budget.mjs';
-import { compareBundleTrees, sha256Bytes, verifyBundleTree } from '../scripts/bundle-tree.mjs';
+import {
+  assertBundleManifest, compareBundleTrees, orderedBundlePayload, sha256Bytes,
+  verifyBundleTree,
+} from '../scripts/bundle-tree.mjs';
 import {
   minifyCssText, minifyStaticCssTemplates,
 } from '../scripts/css-template-minifier.mjs';
+
+const minimalTwoEntryBundle = () => ({
+  'houseplan-panel.js': {
+    type: 'chunk', fileName: 'houseplan-panel.js', code: 'panel', isEntry: true,
+    facadeModuleId: '/repo/src/houseplan-panel.ts', imports: ['houseplan-card.js'],
+    dynamicImports: [], modules: { '/repo/src/houseplan-panel.ts': {} },
+  },
+  'houseplan-card.js': {
+    type: 'chunk', fileName: 'houseplan-card.js', code: 'card', isEntry: true,
+    facadeModuleId: '/repo/src/houseplan-card.ts', imports: ['houseplan-assets/card-HASH.js'],
+    dynamicImports: [], modules: { '/repo/src/houseplan-card.ts': {} },
+  },
+  'houseplan-assets/card-HASH.js': {
+    type: 'chunk', fileName: 'houseplan-assets/card-HASH.js', code: 'implementation',
+    isEntry: false, imports: [], dynamicImports: [], modules: {},
+  },
+});
+
+const minimalTwoEntryManifest = () => ({
+  schema: 1,
+  fingerprint: 'f'.repeat(64),
+  entry: 'houseplan-card.js',
+  panelEntry: 'houseplan-panel.js',
+  initialViewFiles: ['houseplan-assets/card-HASH.js', 'houseplan-card.js'],
+  initialViewGzipBytes: 11,
+  initialPanelFiles: [
+    'houseplan-assets/card-HASH.js', 'houseplan-card.js', 'houseplan-panel.js',
+  ],
+  initialPanelGzipBytes: 14,
+  initialPanelOnlyFiles: ['houseplan-panel.js'],
+  initialPanelOnlyGzipBytes: 3,
+  files: [
+    { path: 'houseplan-assets/card-HASH.js', gzipBytes: 6, isEntry: false },
+    { path: 'houseplan-card.js', gzipBytes: 5, isEntry: true },
+    { path: 'houseplan-panel.js', gzipBytes: 3, isEntry: true },
+  ],
+});
 
 test('CSS template minifier preserves semantic whitespace, strings and functions', () => {
   const css = `
@@ -49,8 +91,14 @@ test('CSS template minifier fails closed on interpolation and malformed input', 
 
 test('bundle manifest separates static initial graph from dynamic editor graph', () => {
   const manifest = buildBundleManifest({
+    'houseplan-panel.js': {
+      type: 'chunk', fileName: 'houseplan-panel.js', code: 'panel', isEntry: true,
+      facadeModuleId: '/repo/src/houseplan-panel.ts',
+      imports: ['houseplan-card.js'], dynamicImports: [],
+    },
     'houseplan-card.js': {
       type: 'chunk', fileName: 'houseplan-card.js', code: 'entry', isEntry: true,
+      facadeModuleId: '/repo/src/houseplan-card.ts',
       imports: ['shared.js'], dynamicImports: [
         'houseplan-assets/editor.js', 'houseplan-assets/houseplan-onboarding-runtime-HASH.js',
         'houseplan-assets/de-HASH.js', 'houseplan-assets/iso-scene-render-HASH.js',
@@ -94,7 +142,18 @@ test('bundle manifest separates static initial graph from dynamic editor graph',
       modules: { '/repo/src/pdf/pdf-export.ts': {} },
     },
   }, 'fingerprint');
+  assert.equal(manifest.entry, 'houseplan-card.js');
+  assert.equal(manifest.panelEntry, 'houseplan-panel.js');
   assert.deepEqual(manifest.initialViewFiles, ['houseplan-card.js', 'shared.js']);
+  assert.deepEqual(
+    manifest.initialPanelFiles,
+    ['houseplan-card.js', 'houseplan-panel.js', 'shared.js'],
+  );
+  assert.deepEqual(manifest.initialPanelOnlyFiles, ['houseplan-panel.js']);
+  assert.equal(
+    manifest.initialPanelOnlyGzipBytes,
+    manifest.files.find((file) => file.path === 'houseplan-panel.js').gzipBytes,
+  );
   assert.deepEqual(manifest.lazyOnboardingFiles, [
     'houseplan-assets/houseplan-onboarding-runtime-HASH.js',
   ]);
@@ -112,6 +171,141 @@ test('bundle manifest separates static initial graph from dynamic editor graph',
   ]);
   assert.doesNotThrow(() => assertBundleBudget(manifest, 1_000_000));
   assert.throws(() => assertBundleBudget(manifest, 1), /exceeds/);
+  assert.throws(
+    () => assertBundleBudget(manifest, 1_000_000, manifest.initialPanelOnlyGzipBytes - 1),
+    /panel-only graph.*exceeds/,
+  );
+});
+
+test('#486 Rollup names both stable entries explicitly', async () => {
+  const { default: config } = await import('../rollup.config.mjs');
+  assert.deepEqual(config.input, {
+    'houseplan-card': 'src/houseplan-card.ts',
+    'houseplan-panel': 'src/houseplan-panel.ts',
+  });
+  assert.equal(config.output.entryFileNames, '[name].js');
+});
+
+test('#486 manifest root selection is exact and independent of entry enumeration order', () => {
+  const bundle = minimalTwoEntryBundle();
+  const reversed = Object.fromEntries(Object.entries(bundle).reverse());
+  const manifest = buildBundleManifest(reversed, 'fingerprint');
+  assert.equal(manifest.entry, 'houseplan-card.js');
+  assert.equal(manifest.panelEntry, 'houseplan-panel.js');
+  assert.deepEqual(manifest.initialViewFiles, [
+    'houseplan-assets/card-HASH.js', 'houseplan-card.js',
+  ]);
+  assert.deepEqual(manifest.initialPanelFiles, [
+    'houseplan-assets/card-HASH.js', 'houseplan-card.js', 'houseplan-panel.js',
+  ]);
+
+  const wrongFacade = minimalTwoEntryBundle();
+  wrongFacade['houseplan-panel.js'].facadeModuleId = '/repo/src/not-the-panel.ts';
+  assert.throws(
+    () => buildBundleManifest(wrongFacade, 'fingerprint'),
+    /houseplan-panel\.js facade.*expected src\/houseplan-panel\.ts/,
+  );
+  const extraEntry = minimalTwoEntryBundle();
+  extraEntry['unexpected.js'] = {
+    type: 'chunk', fileName: 'unexpected.js', code: '', isEntry: true,
+    facadeModuleId: '/repo/src/unexpected.ts', imports: [], dynamicImports: [], modules: {},
+  };
+  assert.throws(() => buildBundleManifest(extraEntry, 'fingerprint'), /entry count is 3/);
+});
+
+test('#486 manifest graph validator rejects missing panel roots and duplicated card graphs', () => {
+  const valid = minimalTwoEntryManifest();
+  assert.equal(assertBundleManifest(valid), valid);
+
+  const missingPanel = structuredClone(valid);
+  delete missingPanel.panelEntry;
+  assert.throws(() => assertBundleManifest(missingPanel), /expected entries/);
+
+  const wrongEntryFlags = structuredClone(valid);
+  wrongEntryFlags.files.find((file) => file.path === 'houseplan-panel.js').isEntry = false;
+  assert.throws(() => assertBundleManifest(wrongEntryFlags), /isEntry inventory/);
+
+  const duplicateGraph = structuredClone(valid);
+  duplicateGraph.files.push({
+    path: 'houseplan-assets/card-copy-HASH.js', gzipBytes: 6, isEntry: false,
+  });
+  duplicateGraph.initialPanelFiles = [
+    'houseplan-assets/card-copy-HASH.js', 'houseplan-panel.js',
+  ];
+  duplicateGraph.initialPanelGzipBytes = 9;
+  duplicateGraph.initialPanelOnlyFiles = [
+    'houseplan-assets/card-copy-HASH.js', 'houseplan-panel.js',
+  ];
+  duplicateGraph.initialPanelOnlyGzipBytes = 9;
+  assert.throws(
+    () => assertBundleManifest(duplicateGraph),
+    /initial panel graph must contain both stable entries|not a subset/,
+  );
+});
+
+test('#486 sync payload orders dependencies before both stable entries', () => {
+  assert.deepEqual(orderedBundlePayload(minimalTwoEntryManifest()), [
+    'houseplan-assets/card-HASH.js', 'houseplan-card.js', 'houseplan-panel.js',
+  ]);
+});
+
+test('#486 both stable entries install a visible stale-load fallback', async () => {
+  const bundle = minimalTwoEntryBundle();
+  bundle['houseplan-card.js'].code =
+    'export{x}from"./houseplan-assets/card-HASH.js";';
+  bundle['houseplan-panel.js'].code =
+    'import"./houseplan-assets/card-HASH.js";customElements.define("real-panel",class{});';
+  entryFallbackPlugin().generateBundle({}, bundle);
+
+  const card = bundle['houseplan-card.js'].code;
+  const panel = bundle['houseplan-panel.js'].code;
+  assert.match(card, /try\{await import\("\.\/houseplan-assets\/card-HASH\.js"\)\}catch/);
+  assert.match(card, /customElements\.define\("houseplan-card"/);
+  assert.doesNotMatch(card, /export\{/);
+  assert.match(panel, /try\{await import\("\.\/houseplan-card\.js"\)\}catch/);
+  assert.match(panel, /customElements\.define\("houseplan-panel"/);
+  assert.doesNotMatch(panel, /(?:^|;)import["']/);
+  assert.deepEqual(bundle['houseplan-panel.js'].imports, ['houseplan-card.js']);
+
+  const priorCustomElements = Object.getOwnPropertyDescriptor(globalThis, 'customElements');
+  const priorHTMLElement = Object.getOwnPropertyDescriptor(globalThis, 'HTMLElement');
+  const priorNavigator = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+  const priorConsoleError = console.error;
+  const registry = new Map();
+  Object.defineProperty(globalThis, 'customElements', {
+    configurable: true,
+    value: { get: (name) => registry.get(name), define: (name, ctor) => registry.set(name, ctor) },
+  });
+  Object.defineProperty(globalThis, 'HTMLElement', {
+    configurable: true,
+    value: class { constructor() { this.style = {}; } },
+  });
+  Object.defineProperty(globalThis, 'navigator', {
+    configurable: true, value: { language: 'en' },
+  });
+  console.error = () => {};
+  try {
+    await import(`data:text/javascript;base64,${Buffer.from(card).toString('base64')}`);
+    assert.ok(registry.has('houseplan-card'));
+    const staleCard = new (registry.get('houseplan-card'))();
+    staleCard.connectedCallback();
+    assert.match(staleCard.textContent, /reload the page/);
+    await import(`data:text/javascript;base64,${Buffer.from(panel).toString('base64')}`);
+    assert.ok(registry.has('houseplan-panel'));
+    const stalePanel = new (registry.get('houseplan-panel'))();
+    stalePanel.connectedCallback();
+    assert.match(stalePanel.textContent, /reload the page/);
+  } finally {
+    console.error = priorConsoleError;
+    for (const [name, descriptor] of [
+      ['customElements', priorCustomElements],
+      ['HTMLElement', priorHTMLElement],
+      ['navigator', priorNavigator],
+    ]) {
+      if (descriptor) Object.defineProperty(globalThis, name, descriptor);
+      else delete globalThis[name];
+    }
+  }
 });
 
 test('#423 support form copy belongs only to the lazy editor graph', () => {
@@ -215,12 +409,30 @@ test('bundle tree verification fails for a missing or tampered manifest asset', 
     for (const root of [source, target]) {
       mkdirSync(join(root, 'houseplan-assets'), { recursive: true });
       writeFileSync(join(root, 'houseplan-card.js'), 'entry');
+      writeFileSync(join(root, 'houseplan-panel.js'), 'panel');
       writeFileSync(join(root, 'houseplan-assets', 'editor-hash.js'), 'editor');
-      const files = ['houseplan-card.js', 'houseplan-assets/editor-hash.js'].map((path) => ({
-        path, sha256: sha256Bytes(readFileSync(join(root, path))),
+      const files = [
+        'houseplan-card.js', 'houseplan-panel.js', 'houseplan-assets/editor-hash.js',
+      ].map((path) => ({
+        path,
+        sha256: sha256Bytes(readFileSync(join(root, path))),
+        gzipBytes: path === 'houseplan-panel.js' ? 2 : 3,
+        isEntry: path === 'houseplan-card.js' || path === 'houseplan-panel.js',
       }));
       writeFileSync(join(root, 'houseplan-assets.json'), `${JSON.stringify({
-        schema: 1, fingerprint: 'fixture', entry: 'houseplan-card.js', files,
+        schema: 1,
+        fingerprint: 'fixture',
+        entry: 'houseplan-card.js',
+        panelEntry: 'houseplan-panel.js',
+        initialViewFiles: ['houseplan-assets/editor-hash.js', 'houseplan-card.js'],
+        initialViewGzipBytes: 6,
+        initialPanelFiles: [
+          'houseplan-assets/editor-hash.js', 'houseplan-card.js', 'houseplan-panel.js',
+        ],
+        initialPanelGzipBytes: 8,
+        initialPanelOnlyFiles: ['houseplan-panel.js'],
+        initialPanelOnlyGzipBytes: 2,
+        files,
       })}\n`);
     }
     assert.doesNotThrow(() => compareBundleTrees(source, target));
@@ -254,6 +466,32 @@ test('entry facade fails loudly when the main chunk is unavailable (#353 AC3a)',
   );
 });
 
+test('#486 panel entry routes through the card facade and fails loudly too', () => {
+  const panel = readFileSync(new URL('../dist/houseplan-panel.js', import.meta.url), 'utf8');
+  assert.match(
+    panel,
+    /^globalThis\.__HOUSEPLAN_BUILD_FINGERPRINT__="[0-9a-f]{64}";/,
+  );
+  assert.match(panel, /try\{await import\("\.\/houseplan-card\.js"\)\}catch\(/);
+  assert.match(panel, /customElements\.define\("houseplan-panel",/);
+  assert.match(panel, /reload the page/);
+  assert.doesNotMatch(
+    panel,
+    /(?:^|;)import[\s{"']/m,
+    'the panel must not keep a static edge that can abort before its fallback runs',
+  );
+
+  const manifest = JSON.parse(
+    readFileSync(new URL('../dist/houseplan-assets.json', import.meta.url), 'utf8'),
+  );
+  assert.ok(!manifest.initialViewFiles.includes(manifest.panelEntry));
+  assert.ok(
+    manifest.initialViewFiles.every((path) => manifest.initialPanelFiles.includes(path)),
+    'the panel must reuse the exact card graph',
+  );
+  assert.ok(manifest.initialPanelOnlyGzipBytes <= INITIAL_PANEL_ONLY_GZIP_BUDGET);
+});
+
 test('bundle tree verification rejects orphan chunks (#353 AC4)', async () => {
   const { mkdtempSync, writeFileSync, mkdirSync } = await import('node:fs');
   const { tmpdir } = await import('node:os');
@@ -262,23 +500,50 @@ test('bundle tree verification rejects orphan chunks (#353 AC4)', async () => {
   const root = mkdtempSync(join(tmpdir(), 'hp-tree-'));
   mkdirSync(join(root, 'houseplan-assets'));
   const entryCode = 'try{await import("./houseplan-assets/main-abc.js")}catch(e){}';
+  const panelCode = 'try{await import("./houseplan-card.js")}catch(e){}';
   const chunkCode = 'export const x = 1;';
   writeFileSync(join(root, 'houseplan-card.js'), entryCode);
+  writeFileSync(join(root, 'houseplan-panel.js'), panelCode);
   writeFileSync(join(root, 'houseplan-assets', 'main-abc.js'), chunkCode);
   writeFileSync(join(root, 'houseplan-assets.json'), JSON.stringify({
     schema: 1,
     fingerprint: 'f'.repeat(64),
     entry: 'houseplan-card.js',
+    panelEntry: 'houseplan-panel.js',
+    initialViewFiles: ['houseplan-assets/main-abc.js', 'houseplan-card.js'],
+    initialViewGzipBytes: 12,
+    initialPanelFiles: [
+      'houseplan-assets/main-abc.js', 'houseplan-card.js', 'houseplan-panel.js',
+    ],
+    initialPanelGzipBytes: 14,
+    initialPanelOnlyFiles: ['houseplan-panel.js'],
+    initialPanelOnlyGzipBytes: 2,
     files: [
-      { path: 'houseplan-card.js', sha256: sha256Bytes(Buffer.from(entryCode)) },
-      { path: 'houseplan-assets/main-abc.js', sha256: sha256Bytes(Buffer.from(chunkCode)) },
+      {
+        path: 'houseplan-card.js', sha256: sha256Bytes(Buffer.from(entryCode)),
+        gzipBytes: 5, isEntry: true,
+      },
+      {
+        path: 'houseplan-panel.js', sha256: sha256Bytes(Buffer.from(panelCode)),
+        gzipBytes: 2, isEntry: true,
+      },
+      {
+        path: 'houseplan-assets/main-abc.js', sha256: sha256Bytes(Buffer.from(chunkCode)),
+        gzipBytes: 7, isEntry: false,
+      },
     ],
   }));
-  assert.equal(verifyBundleTree(root).files.length, 2, 'a clean tree verifies');
+  assert.equal(verifyBundleTree(root).files.length, 3, 'a clean tree verifies');
   writeFileSync(join(root, 'houseplan-assets', 'junk-old.js'), 'stale');
   assert.throws(
     () => verifyBundleTree(root),
     /orphan bundle asset: houseplan-assets\/junk-old\.js/,
+  );
+  rmSync(join(root, 'houseplan-assets', 'junk-old.js'));
+  writeFileSync(join(root, 'houseplan-obsolete.js'), 'stale root entry');
+  assert.throws(
+    () => verifyBundleTree(root),
+    /orphan bundle asset: houseplan-obsolete\.js/,
   );
 });
 
@@ -448,7 +713,8 @@ const runBudgetCli = (initialViewGzipBytes) => {
   const dir = mkdtempSync(join(tmpdir(), 'houseplan-budget-cli-'));
   try {
     mkdirSync(join(dir, 'dist'));
-    writeFileSync(join(dir, 'dist/initial.js'), 'view graph without support copy');
+    writeFileSync(join(dir, 'dist/houseplan-card.js'), 'view graph without support copy');
+    writeFileSync(join(dir, 'dist/houseplan-panel.js'), 'panel shell');
     writeFileSync(join(dir, 'dist/editor.js'), SUPPORT_LAZY_MARKERS.join('\n'));
     writeFileSync(join(dir, 'dist/locale.js'), 'lazy locale dictionary');
     writeFileSync(join(dir, 'dist/isometric.js'), 'lazy isometric runtime');
@@ -456,9 +722,21 @@ const runBudgetCli = (initialViewGzipBytes) => {
     writeFileSync(join(dir, 'dist/pdf.js'), 'lazy pdf writer');
     writeFileSync(join(dir, 'dist/houseplan-assets.json'), JSON.stringify({
       schema: 1,
-      files: [],
-      initialViewFiles: ['initial.js'],
+      fingerprint: 'f'.repeat(64),
+      entry: 'houseplan-card.js',
+      panelEntry: 'houseplan-panel.js',
+      files: [
+        {
+          path: 'houseplan-card.js', gzipBytes: initialViewGzipBytes, isEntry: true,
+        },
+        { path: 'houseplan-panel.js', gzipBytes: 1, isEntry: true },
+      ],
+      initialViewFiles: ['houseplan-card.js'],
       initialViewGzipBytes,
+      initialPanelFiles: ['houseplan-card.js', 'houseplan-panel.js'],
+      initialPanelGzipBytes: initialViewGzipBytes + 1,
+      initialPanelOnlyFiles: ['houseplan-panel.js'],
+      initialPanelOnlyGzipBytes: 1,
       lazyEditorFiles: ['editor.js'],
       lazyEditorGzipBytes: 1000,
       lazyLocaleFiles: ['locale.js'],

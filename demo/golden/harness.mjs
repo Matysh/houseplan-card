@@ -54,6 +54,23 @@ const themeVars = {
   },
 };
 
+const panelThemeVars = {
+  dark: {
+    '--primary-background-color': '#11151b',
+    '--secondary-background-color': '#2b2d33',
+    '--app-header-background-color': '#202126',
+    '--app-header-text-color': '#e6e7eb',
+    '--header-height': '56px',
+  },
+  light: {
+    '--primary-background-color': '#eef1f4',
+    '--secondary-background-color': '#e7eaee',
+    '--app-header-background-color': '#ffffff',
+    '--app-header-text-color': '#202124',
+    '--header-height': '56px',
+  },
+};
+
 async function stableEnvironment(page, scenario) {
   await page.setViewportSize(scenario.viewport);
   await page.emulateMedia({
@@ -61,7 +78,7 @@ async function stableEnvironment(page, scenario) {
     forcedColors: scenario.forcedColors ? 'active' : 'none',
   });
   await page.evaluate(({
-    variables, theme, attemptedTarget, attemptKey, disableIsoFilters,
+    variables, panelVariableNames, theme, panelHost, attemptedTarget, attemptKey, disableIsoFilters,
   }) => {
     window.__hpGoldenNativeCssSupports ||= CSS.supports.bind(CSS);
     CSS.supports = disableIsoFilters
@@ -84,9 +101,19 @@ async function stableEnvironment(page, scenario) {
           font-family: Arial, sans-serif !important; }
         #host { width: min(100%, 1120px) !important; margin: 0 auto !important;
           padding: 8px !important; box-sizing: border-box !important; }
+        html[data-hp-golden-panel], html[data-hp-golden-panel] body {
+          height: 100%; min-height: 0;
+        }
+        html[data-hp-golden-panel] body #host {
+          width: 100% !important; height: 100% !important;
+          min-width: 0 !important; min-height: 0 !important;
+          margin: 0 !important; padding: 0 !important;
+        }
       `;
       document.head.appendChild(style);
     }
+    document.documentElement.toggleAttribute('data-hp-golden-panel', panelHost);
+    for (const name of panelVariableNames) document.documentElement.style.removeProperty(name);
     for (const [name, value] of Object.entries(variables))
       document.documentElement.style.setProperty(name, value);
     document.documentElement.style.setProperty(
@@ -96,8 +123,13 @@ async function stableEnvironment(page, scenario) {
     sessionStorage.removeItem(attemptKey);
     if (attemptedTarget) sessionStorage.setItem(attemptKey, attemptedTarget);
   }, {
-    variables: themeVars[scenario.theme] || themeVars.dark,
+    variables: {
+      ...(themeVars[scenario.theme] || themeVars.dark),
+      ...(scenario.panelHost ? (panelThemeVars[scenario.theme] || panelThemeVars.dark) : {}),
+    },
+    panelVariableNames: Object.keys(panelThemeVars.dark),
     theme: scenario.theme,
+    panelHost: scenario.panelHost === true,
     attemptedTarget: scenario.versionRecoveryAttempted
       ? String(scenario.integrationVersion || '').trim() : null,
     attemptKey: VERSION_RELOAD_ATTEMPT_KEY,
@@ -108,6 +140,12 @@ async function stableEnvironment(page, scenario) {
 /** Apply every data-only scenario override before the fixture crosses into the browser. */
 export function prepareGoldenFixture(scenario) {
   const fixture = fixtureFor(scenario);
+  if (scenario.emptyPlan) {
+    fixture.config.spaces = [];
+    fixture.config.markers = [];
+    fixture.layout = {};
+    return fixture;
+  }
   if (scenario.pdfSteppedExterior) {
     const poly = [
       [0.1, 0.1], [0.7, 0.1], [0.7, 0.3], [0.8, 0.3],
@@ -846,12 +884,15 @@ export async function prepareGoldenScenario(page, scenario) {
       await card.updateComplete;
       await frame();
     };
+    window.__goldenPanel?.remove?.();
     window.__goldenCard?.remove?.();
     window.__goldenEditor?.remove?.();
     window.__card?.remove?.();
+    window.__goldenPanel = null;
     document.getElementById('golden-pdf-page')?.remove();
     localStorage.clear();
-    history.replaceState(null, '', scenario.alpha ? '?hp_alpha=1' : location.pathname);
+    const scenarioPath = scenario.panelHost ? '/houseplan' : '/demo.html';
+    history.replaceState(null, '', `${scenarioPath}${scenario.alpha ? '?hp_alpha=1' : ''}`);
     if (scenario.alpha) {
       localStorage.setItem('houseplan_card_alpha_v1', '1');
     }
@@ -872,7 +913,10 @@ export async function prepareGoldenScenario(page, scenario) {
       ...(scenario.stage3Golden
         ? { themes: { darkMode: scenario.theme === 'dark' } }
         : {}),
-      user: { id: 'golden', name: 'Golden fixture', is_admin: true },
+      user: {
+        id: 'golden', name: 'Golden fixture',
+        is_admin: scenario.userIsAdmin ?? scenario.canWrite !== false,
+      },
       devices: fixture.devices || {}, entities: fixture.entities || {},
       areas: fixture.areas || {}, states: fixture.states || {},
       floors: {
@@ -882,7 +926,8 @@ export async function prepareGoldenScenario(page, scenario) {
       },
       callWS: async (message) => {
         if (message.type === 'houseplan/config/get') return {
-          config: structuredClone(fixture.config), rev: 1, can_write: true,
+          config: structuredClone(fixture.config), rev: 1,
+          can_write: scenario.canWrite !== false,
           ...(Object.prototype.hasOwnProperty.call(scenario, 'integrationVersion')
             ? { integration_version: scenario.integrationVersion } : {}),
         };
@@ -911,14 +956,30 @@ export async function prepareGoldenScenario(page, scenario) {
       config: { unit_system: { length: 'km' } },
     });
     const mount = async () => {
-      const card = document.createElement('houseplan-card');
-      card.setConfig(cardConfig);
-      host.replaceChildren(card);
-      card.hass = hassFor();
+      let card;
+      if (scenario.panelHost) {
+        await import('/assets/houseplan-panel.js');
+        await customElements.whenDefined('houseplan-panel');
+        const panel = document.createElement('houseplan-panel');
+        panel.narrow = scenario.narrow ?? scenario.viewport.width <= 600;
+        panel.route = { path: '/houseplan' };
+        panel.panel = { component_name: 'houseplan-panel' };
+        host.replaceChildren(panel);
+        panel.hass = hassFor();
+        await until(() => !!panel.shadowRoot?.querySelector('houseplan-card'));
+        card = panel.shadowRoot.querySelector('houseplan-card');
+        window.__goldenPanel = panel;
+      } else {
+        card = document.createElement('houseplan-card');
+        card.setConfig(cardConfig);
+        host.replaceChildren(card);
+        card.hass = hassFor();
+      }
       await until(() => card._loadOk && card._model?.length === fixture.config.spaces.length);
       await card.updateComplete;
       const expectedDevices = Object.keys(fixture.devices || {}).length;
-      if (expectedDevices) await until(() => card._devices?.length >= expectedDevices);
+      if (expectedDevices && !scenario.emptyPlan)
+        await until(() => card._devices?.length >= expectedDevices);
       await until(() => card._booting === false);
       // #474: designer furniture artwork is a lazy chunk. The boot gate holds
       // the veil until it settles, so by now every piece of the active space
@@ -944,7 +1005,7 @@ export async function prepareGoldenScenario(page, scenario) {
       // Golden scenarios intentionally call internal editor commands directly.
       // Preload the lazy runtime for that legacy harness contract; cold-View
       // loading and retry semantics are covered by smoke_lazy_editor_chunk.
-      if (!(await card._ensureEditorRuntime())) {
+      if (scenario.preloadEditorRuntime !== false && !(await card._ensureEditorRuntime())) {
         throw new Error(`golden editor runtime failed to load: ${scenario.id}`);
       }
       await frame();
@@ -2026,6 +2087,66 @@ export async function prepareGoldenScenario(page, scenario) {
         throw new Error(`Stage 3 combined golden lacks ${missing.map(([name]) => name).join(',')}: ${scenario.id}`);
       }
     }
+    let panelHost = null;
+    if (scenario.panelHost) {
+      const panel = window.__goldenPanel;
+      const panelRoot = panel?.shadowRoot;
+      const shellPage = panelRoot?.querySelector('.page');
+      const appbar = panelRoot?.querySelector('.appbar');
+      const content = panelRoot?.querySelector('.content');
+      const menu = panelRoot?.querySelector('.menu');
+      const stage = card.renderRoot.querySelector('.stage');
+      const empty = card.renderRoot.querySelector('.empty');
+      const panelRect = panel?.getBoundingClientRect();
+      const contentRect = content?.getBoundingClientRect();
+      const cardRect = card.getBoundingClientRect();
+      const stageRect = stage?.getBoundingClientRect();
+      const horizontalOverflow = Math.max(
+        0,
+        document.documentElement.scrollWidth - document.documentElement.clientWidth,
+        document.body.scrollWidth - document.body.clientWidth,
+        shellPage ? shellPage.scrollWidth - shellPage.clientWidth : 0,
+        content ? content.scrollWidth - content.clientWidth : 0,
+      );
+      if (!panel || !panelRoot || !shellPage || !appbar || !content || !menu
+          || panel.shadowRoot.querySelectorAll('houseplan-card').length !== 1
+          || card.panelHost !== true || card._config?.kiosk === true
+          || card.renderRoot.querySelector('.head > .title')
+          || menu.getBoundingClientRect().width < 44
+          || menu.getBoundingClientRect().height < 44
+          || horizontalOverflow > 1
+          || !panelRect || panelRect.width <= 0 || panelRect.height <= 0
+          || !contentRect || !cardRect
+          || Math.abs(contentRect.width - cardRect.width) > 1
+          || Math.abs(contentRect.height - cardRect.height) > 1) {
+        throw new Error(`golden panel-host shell contract failed: ${scenario.id}`);
+      }
+      if (scenario.emptyPlan) {
+        if (!empty || card._model?.length !== 0 || card._canEdit
+            || empty.querySelector('button') || card.renderRoot.querySelector('[data-editor-navigation]')
+            || card.renderRoot.querySelector('hp-dialog')
+            || card._editorRuntime || card._onboardingRuntime) {
+          throw new Error(`golden panel read-only empty contract failed: ${scenario.id}`);
+        }
+      } else if (!stageRect || stageRect.width <= 0 || stageRect.height <= 0
+          || stageRect.left < contentRect.left - 1 || stageRect.right > contentRect.right + 1
+          || stageRect.top < contentRect.top - 1 || stageRect.bottom > contentRect.bottom + 1) {
+        throw new Error(`golden panel stage contract failed: ${scenario.id}`);
+      }
+      if (scenario.mode === 'plan'
+          && !card.renderRoot.querySelector('.editorchrome.open')) {
+        throw new Error(`golden panel editor chrome did not open: ${scenario.id}`);
+      }
+      panelHost = {
+        narrow: panel.hasAttribute('narrow'),
+        panel: [panelRect.width, panelRect.height],
+        content: [contentRect.width, contentRect.height],
+        card: [cardRect.width, cardRect.height],
+        stage: stageRect ? [stageRect.width, stageRect.height] : null,
+        horizontalOverflow,
+        emptyReadOnly: !!scenario.emptyPlan,
+      };
+    }
     await document.fonts?.ready;
     // Camera motion is intentionally visible in production, but reviewed
     // goldens own the settled UI. Never capture a timing-dependent RAF frame.
@@ -2039,6 +2160,7 @@ export async function prepareGoldenScenario(page, scenario) {
         .some((help) => help.renderRoot?.querySelector('.trigger')?.getAttribute('aria-expanded') === 'true'),
       editorTray: card.renderRoot.querySelector('.editor-secondary-host.open .editor-secondary')
         ?.className || '',
+      ...(panelHost ? { panelHost } : {}),
       defaultFloorWarning: window.__goldenEditor?.renderRoot
         ?.querySelector('[role="alert"]')?.textContent?.trim() || '',
       ...(scenario.sunRayPixels ? { sun: {

@@ -53,6 +53,7 @@
   "count.devices": "{n} dev.",
   "empty.no_spaces": "No spaces yet.",
   "empty.add_first": "Add the first space and upload a floor plan.",
+  "empty.read_only": "No spaces are configured. Ask an administrator to add one.",
   "empty.install": "Install the House Plan integration and add it in \"Devices & services\".",
   "btn.add_space": "Add space",
   "btn.cancel": "Cancel",

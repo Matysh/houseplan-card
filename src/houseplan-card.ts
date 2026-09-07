@@ -894,6 +894,7 @@ export class HouseplanCard extends LitElement {
     this._setMode(mode, animate);
   }
   public hass?: any;
+  public panelHost = false;
   private _config?: CardConfig;
 
   private _space = 'f1';
@@ -1083,12 +1084,11 @@ export class HouseplanCard extends LitElement {
    * Until the server answers, fail CLOSED: missing `hass.user` must never
    * open the editors (`=== true`, not `!== false`).
    */
-  private get _canEdit(): boolean {
-    if (!this._norm) return false;
-    if (this._serverCanWrite === true) return true;
-    if (this._serverCanWrite === false) return false;
+  private get _canManageConfiguration(): boolean {
+    if (this._serverCanWrite !== null) return this._serverCanWrite;
     return this.hass?.user?.is_admin === true;
   }
+  private get _canEdit(): boolean { return this._norm && this._canManageConfiguration; }
 
   /** Legacy alias: markup machinery is active exactly in plan mode. */
   private get _kiosk(): boolean {
@@ -2516,6 +2516,7 @@ export class HouseplanCard extends LitElement {
     _tapConfirm: { state: true },
     _dangerConfirm: { state: true },
     hass: { attribute: false },
+    panelHost: { type: Boolean, attribute: 'panel-host', reflect: true },
     _config: { state: true },
     _space: { state: true },
     _layout: { state: true },
@@ -3834,6 +3835,8 @@ export class HouseplanCard extends LitElement {
     return 12;
   }
 
+  public getGridOptions(): { columns: 'full' } { return { columns: 'full' }; }
+
   // ================= MODEL RESOLUTION (server configuration) =================
 
   /** Whether a server configuration with spaces exists (otherwise — onboarding). */
@@ -4134,7 +4137,8 @@ export class HouseplanCard extends LitElement {
         const card = this.renderRoot.querySelector('ha-card');
         if (!card) return;
         const own = stage.getBoundingClientRect().top - card.getBoundingClientRect().top;
-        const above = Math.min(Math.max(card.getBoundingClientRect().top, 0), 120);
+        const above = this.panelHost ? 0
+          : Math.min(Math.max(card.getBoundingClientRect().top, 0), 120);
         const t = Math.round(own + above);
         // `t` is already an integer. Ignoring a one-pixel delta left the View
         // stage one pixel shorter after an editor collapse and made the fitted
@@ -4163,6 +4167,7 @@ export class HouseplanCard extends LitElement {
     if (
       this._serverStorage &&
       this._loadOk &&
+      this._canManageConfiguration &&
       this._model.length === 0 &&
       !this._spaceDialog &&
       !this._importDialog &&
@@ -11268,9 +11273,9 @@ export class HouseplanCard extends LitElement {
     const fixed = this._fixedFloorState(model);
     if (fixed.kind === 'pending') {
       return html`<ha-card data-fixed-floor-state="pending">
-        <div class="head">
+        ${this.panelHost ? nothing : html`<div class="head">
           <div class="title"><ha-icon icon="mdi:home-city"></ha-icon>${this._config.title || this._t('card.title')}</div>
-        </div>
+        </div>`}
         <div class="empty" role="status" aria-live="polite">
           <ha-icon icon="mdi:loading" class="big fixedfloor-loading"></ha-icon>
           <p>${this._t('fixed_floor.loading')}</p>
@@ -11281,9 +11286,9 @@ export class HouseplanCard extends LitElement {
       return html`<ha-card
         data-fixed-floor-state="invalid"
         data-fixed-floor-reason=${fixed.reason}>
-        <div class="head">
+        ${this.panelHost ? nothing : html`<div class="head">
           <div class="title"><ha-icon icon="mdi:home-city"></ha-icon>${this._config.title || this._t('card.title')}</div>
-        </div>
+        </div>`}
         <div class="empty fixedfloor-error" role="alert" aria-live="assertive">
           <ha-icon icon="mdi:alert-circle-outline" class="big"></ha-icon>
           <p><b>${this._t('fixed_floor.invalid_title')}</b></p>
@@ -11301,18 +11306,18 @@ export class HouseplanCard extends LitElement {
         data-ha-registry-access=${diagnostics.registry.access}
         data-ha-disabled-bindings=${diagnostics.bindings.ha_disabled}
         data-ha-unverified-bindings=${diagnostics.bindings.unverified}>
-        <div class="head">
+        ${this.panelHost ? nothing : html`<div class="head">
           <div class="title"><ha-icon icon="mdi:home-city"></ha-icon>${this._config.title || this._t('card.title')}</div>
-        </div>
+        </div>`}
         <div class="empty">
           <ha-icon icon="mdi:floor-plan" class="big"></ha-icon>
           <p>${this._t('empty.no_spaces')}</p>
-          ${this._serverStorage
+          ${this._serverStorage && this._canManageConfiguration
             ? html`<p class="muted">${this._t('empty.add_first')}</p>
                 <button class="btn on" @click=${() => this._openSpaceDialog('create')}>
                   <ha-icon icon="mdi:plus"></ha-icon>${this._t('btn.add_space')}
                 </button>`
-            : html`<p class="muted">${this._t('empty.install')}</p>`}
+            : html`<p class="muted">${this._t(this._serverStorage ? 'empty.read_only' : 'empty.install')}</p>`}
         </div>
         ${this._spaceDialog
           ? (this._onboardingRuntime || this._editorRuntime) ? this._renderSpaceDialog() : nothing
@@ -11403,10 +11408,10 @@ export class HouseplanCard extends LitElement {
         @click=${this._touchGestureGuard}>
         <div class="hdr ${this._kiosk ? 'kioskhide' : ''}">
         <div class="head">
-          <div class="title">
+          ${this.panelHost ? nothing : html`<div class="title">
             <ha-icon icon="mdi:home-city"></ha-icon>
             ${this._config.title || this._t('card.title')}
-          </div>
+          </div>`}
           <div class="tabs" @pointermove=${(e: PointerEvent) => this._tabPointerMove(e)}>
             ${navigationSpaces.map(
               (s) => html`<button
@@ -11516,7 +11521,7 @@ export class HouseplanCard extends LitElement {
         <div class="stage ${iso ? `projection-iso ${deviceThemeClass(this._renderPlanHass)}` : ''} ${this._markup ? 'markup tool-' + this._tool + (this._tool === 'split' && !this._splitSel ? ' pickstage' : '') + (this._tool === 'wallthick' && this._wallThickHover ? ' wallhot' : '') : ''} ${this._mode === 'decor' ? 'dtool-' + this._decorTool : ''} ${space.bg ? '' : 'noplan'} mode-${this._mode}${this._bdMovable ? ' bdgrab' : ''}${this._bdDrag ? ' bdgrabbing' : ''}${dayCycle ? ` daycycle phase-${dayCycle.phase}` : ''}${this._booting ? ' hpboot' : ''}${this._bootSoft ? ' hpsettle' : ''}${this._modeTransitionBusy ? ' mode-transition' : ''}"
           data-hp-iso-stage=${iso ? '3' : nothing} data-hp-iso-structural-builds=${iso ? this._isoStructuralBuildCount : nothing}
           ?inert=${this._modeTransitionBusy}
-          style="height:${modeVisual ? `${modeVisual.stageHeight}px` : this._kiosk ? '100dvh' : `calc(100dvh - ${this._hdrH}px)`}${transitionStageBg ? `;background:${transitionStageBg}` : ''};--hp-cell-visual-scale:${gridVisualScale(this._cellCm)};--wall-fill:${this._fillColors.wall_fill.c};--wall-fill-op:${this._fillColors.wall_fill.a};--hp-mode-architecture-opacity:${modeVisual ? modeVisual.architectureOpacity : this._mode === 'decor' ? 0.35 : 1};--hp-mode-view-weight:${modeVisual?.viewWeight ?? (this._mode === 'view' ? 1 : 0)};--hp-mode-editor-weight:${modeVisual?.editorWeight ?? (this._mode === 'view' ? 0 : 1)}${modeVisual ? `;--hp-mode-paper:${modeVisual.paperColor}` : ''}${dayCycle ? `;${dayCycleStageVars(dayCycle)}` : ''}"
+          style="height:${modeVisual ? `${modeVisual.stageHeight}px` : this.panelHost ? 'auto' : this._kiosk ? '100dvh' : `calc(100dvh - ${this._hdrH}px)`}${transitionStageBg ? `;background:${transitionStageBg}` : ''};--hp-cell-visual-scale:${gridVisualScale(this._cellCm)};--wall-fill:${this._fillColors.wall_fill.c};--wall-fill-op:${this._fillColors.wall_fill.a};--hp-mode-architecture-opacity:${modeVisual ? modeVisual.architectureOpacity : this._mode === 'decor' ? 0.35 : 1};--hp-mode-view-weight:${modeVisual?.viewWeight ?? (this._mode === 'view' ? 1 : 0)};--hp-mode-editor-weight:${modeVisual?.editorWeight ?? (this._mode === 'view' ? 0 : 1)}${modeVisual ? `;--hp-mode-paper:${modeVisual.paperColor}` : ''}${dayCycle ? `;${dayCycleStageVars(dayCycle)}` : ''}"
           @click=${(e: MouseEvent) => this._markupClick(e)}
           @wheel=${(e: WheelEvent) => this._onWheel(e)}
           @pointerdown=${(e: PointerEvent) => { this._notePointer(e); this._stagePointerDown(e); }}

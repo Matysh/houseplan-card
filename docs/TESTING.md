@@ -1048,6 +1048,25 @@ separately promised workflows:
 
 ## Installation / upgrade / removal
 
+- [ ] A successful entry setup registers `/houseplan` as `houseplan-panel` only
+      after store migrations/repairs complete. The panel is visible to admin and
+      read-only users; actual editor/write access still follows `can_write` and
+      `admin_only` [auto backend: panel registration/permission tests].
+- [ ] Missing `houseplan-panel.js`, static registration failure, foreign path
+      collision or panel API exception leaves the integration, WS API and
+      dashboard card usable. Unload removes only the exact panel object owned by
+      this setup generation; reload/reconnect cannot duplicate or delete a
+      replacement [auto backend: panel lifecycle + mutation tests].
+- [ ] Wide View/editor and 320 px read-only/empty `/houseplan` have no horizontal
+      overflow or duplicate product title. Menu activation emits bubbling and
+      composed `hass-toggle-menu`; `hass`, `narrow`, `route` and `panel` updates
+      preserve one child card; leaving the route keeps only the space and returns
+      in View [auto: `smoke_houseplan_panel`; golden: panel matrix].
+- [ ] The dashboard full card advertises `{columns:"full"}` to Sections while
+      retaining `getCardSize`; the compact space card has no grid default. Both
+      stable JS entries and their exact graphs/hashes are verified, the card graph
+      excludes the panel root, and panel-only gzip stays within 8 KiB [unit:
+      `houseplan-panel`, bundle manifest/budget/tree/freshness].
 - [ ] README and User Guide in EN/RU each separate Storage mode, HA 2026.2+
       `resource_mode: yaml` and legacy HA 2024.6–2026.1 full-YAML dashboard
       setup; both hard-reload shortcuts are present and a flat top-level

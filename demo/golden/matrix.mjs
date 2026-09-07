@@ -1,7 +1,7 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 59;
+export const GOLDEN_MATRIX_VERSION = 60;
 
 const stage = { capture: 'stage', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0005 } };
 const page = { capture: 'page', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0008 } };
@@ -204,6 +204,19 @@ const decorLayerProbes = {
 };
 
 export const GOLDEN_SCENARIOS = Object.freeze([
+  // #486 AC7: the custom HA panel owns the full viewport. These three focused
+  // frames pin its populated View, its Plan-editor chrome and the deliberately
+  // inert read-only first-run state without duplicating the card matrix below.
+  { id: 'panel-wide-view-light-en', fixture: 'visual', space: 'golden-geometry',
+    panelHost: true, mode: 'view', language: 'en', theme: 'light',
+    viewport: { width: 1280, height: 800 }, ...page },
+  { id: 'panel-wide-plan-editor-dark-en', fixture: 'visual', space: 'golden-geometry',
+    panelHost: true, mode: 'plan', language: 'en', theme: 'dark',
+    viewport: { width: 1280, height: 800 }, ...page },
+  { id: 'panel-narrow-read-only-empty-light-en', fixture: 'visual',
+    panelHost: true, narrow: true, emptyPlan: true, canWrite: false, userIsAdmin: false,
+    preloadEditorRuntime: false, mode: 'view', language: 'en', theme: 'light',
+    viewport: { width: 320, height: 720 }, ...page },
   // #462 AC12: the card-level version recovery notice must stay compact,
   // readable and outside layout/fit flow on desktop, narrow touch and the
   // manual-only kiosk state after this tab already attempted the target.

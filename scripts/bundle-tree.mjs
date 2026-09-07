@@ -5,6 +5,8 @@ import { dirname, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 export const BUNDLE_MANIFEST = 'houseplan-assets.json';
+export const CARD_ENTRY = 'houseplan-card.js';
+export const PANEL_ENTRY = 'houseplan-panel.js';
 
 export const sha256Bytes = (contents) => createHash('sha256').update(contents).digest('hex');
 
@@ -20,19 +22,92 @@ export function containedBundlePath(root, name) {
   return path;
 }
 
+const assertUniqueGraph = (manifest, field, listed, label) => {
+  const graph = manifest[field];
+  if (!Array.isArray(graph) || graph.some((path) => typeof path !== 'string')) {
+    throw new Error(`${label}: ${field} must be an array of bundle paths`);
+  }
+  if (new Set(graph).size !== graph.length) {
+    throw new Error(`${label}: ${field} contains duplicate assets`);
+  }
+  const missing = graph.filter((path) => !listed.has(path));
+  if (missing.length) throw new Error(`${label}: ${field} references missing asset ${missing[0]}`);
+  return graph;
+};
+
+/** Validate the additive two-entry manifest contract independently of disk I/O. */
+export function assertBundleManifest(manifest, label = BUNDLE_MANIFEST) {
+  if (manifest?.schema !== 1 || typeof manifest.fingerprint !== 'string'
+      || !Array.isArray(manifest.files)) {
+    throw new Error(`${label}: invalid House Plan bundle manifest`);
+  }
+  if (manifest.entry !== CARD_ENTRY || manifest.panelEntry !== PANEL_ENTRY) {
+    throw new Error(`${label}: expected entries ${CARD_ENTRY} and ${PANEL_ENTRY}`);
+  }
+  const names = manifest.files.map((file) => file?.path);
+  const listed = new Set(names);
+  if (listed.size !== names.length || !listed.has(CARD_ENTRY) || !listed.has(PANEL_ENTRY)) {
+    throw new Error(`${label}: duplicate assets or missing stable entry`);
+  }
+  const declaredEntries = manifest.files
+    .filter((file) => file?.isEntry === true)
+    .map((file) => file.path)
+    .sort();
+  if (JSON.stringify(declaredEntries) !== JSON.stringify([CARD_ENTRY, PANEL_ENTRY].sort())) {
+    throw new Error(`${label}: isEntry inventory must contain exactly both stable entries`);
+  }
+
+  const initialView = assertUniqueGraph(manifest, 'initialViewFiles', listed, label);
+  const initialPanel = assertUniqueGraph(manifest, 'initialPanelFiles', listed, label);
+  const initialPanelOnly = assertUniqueGraph(manifest, 'initialPanelOnlyFiles', listed, label);
+  if (!initialView.includes(CARD_ENTRY) || initialView.includes(PANEL_ENTRY)) {
+    throw new Error(`${label}: initial View graph must contain only the card stable entry`);
+  }
+  if (!initialPanel.includes(CARD_ENTRY) || !initialPanel.includes(PANEL_ENTRY)) {
+    throw new Error(`${label}: initial panel graph must contain both stable entries`);
+  }
+  if (initialView.some((path) => !initialPanel.includes(path))) {
+    throw new Error(`${label}: initial View graph is not a subset of initial panel graph`);
+  }
+  const expectedPanelOnly = initialPanel
+    .filter((path) => !initialView.includes(path))
+    .sort();
+  if (JSON.stringify([...initialPanelOnly].sort()) !== JSON.stringify(expectedPanelOnly)) {
+    throw new Error(`${label}: initialPanelOnlyFiles is not panel minus View`);
+  }
+  const gzip = (paths) => paths.reduce((total, path) => {
+    const value = manifest.files.find((file) => file.path === path)?.gzipBytes;
+    if (!Number.isSafeInteger(value) || value < 0) {
+      throw new Error(`${label}: missing gzip size for ${path}`);
+    }
+    return total + value;
+  }, 0);
+  for (const [field, graph] of [
+    ['initialViewGzipBytes', initialView],
+    ['initialPanelGzipBytes', initialPanel],
+    ['initialPanelOnlyGzipBytes', initialPanelOnly],
+  ]) {
+    if (manifest[field] !== gzip(graph)) {
+      throw new Error(`${label}: ${field} does not match its graph inventory`);
+    }
+  }
+  return manifest;
+}
+
+/** Copy immutable dependencies first, then both replaceable stable entries. */
+export function orderedBundlePayload(manifest) {
+  const stableEntries = new Set([manifest.entry, manifest.panelEntry]);
+  return manifest.files
+    .map((file) => file.path)
+    .sort((left, right) => (stableEntries.has(left) ? 1 : 0)
+      - (stableEntries.has(right) ? 1 : 0) || left.localeCompare(right));
+}
+
 export function readBundleManifest(root) {
   const path = resolve(root, BUNDLE_MANIFEST);
   if (!existsSync(path)) throw new Error(`${path}: bundle manifest is missing`);
   const manifest = JSON.parse(readFileSync(path, 'utf8'));
-  if (manifest?.schema !== 1 || typeof manifest.entry !== 'string'
-      || typeof manifest.fingerprint !== 'string' || !Array.isArray(manifest.files)) {
-    throw new Error(`${path}: invalid House Plan bundle manifest`);
-  }
-  const names = manifest.files.map((file) => file?.path);
-  if (new Set(names).size !== names.length || !names.includes(manifest.entry)) {
-    throw new Error(`${path}: duplicate assets or missing entry`);
-  }
-  return manifest;
+  return assertBundleManifest(manifest, path);
 }
 
 export function verifyBundleTree(root) {
@@ -49,11 +124,17 @@ export function verifyBundleTree(root) {
       throw new Error(`manifest hash mismatch: ${file.path} (${actual} != ${file.sha256})`);
     }
   }
-  // #353 К5: a chunk on disk that the manifest does not name is dead weight —
-  // it would ride into the release zip and mask sync bugs. Fail loudly.
+  // #353 K5 / #486: a managed chunk on disk that the manifest does not name is
+  // dead weight. Stable-looking root entries are just as dangerous as old
+  // hashed chunks: both ride into the HACS zip and can mask a stale sync.
+  const listed = new Set(manifest.files.map((file) => file.path));
+  for (const name of readdirSync(root)) {
+    if (/^houseplan-.*\.js$/.test(name) && !listed.has(name)) {
+      throw new Error(`orphan bundle asset: ${name}`);
+    }
+  }
   const assetDir = resolve(root, 'houseplan-assets');
   if (existsSync(assetDir)) {
-    const listed = new Set(manifest.files.map((file) => file.path));
     for (const name of readdirSync(assetDir)) {
       if (name.endsWith('.js') && !listed.has(`houseplan-assets/${name}`)) {
         throw new Error(`orphan bundle asset: houseplan-assets/${name}`);

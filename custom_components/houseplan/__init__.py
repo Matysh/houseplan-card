@@ -22,6 +22,10 @@ from .frontend_registration import (
     async_setup_frontend_registration,
 )
 from .geometry_migration import migrate_config, migrate_layout, pending_from_config
+from .panel_registration import (
+    async_setup_panel_registration,
+    remove_panel_registration,
+)
 from .plans import collect_attachments, collect_plans, sweep_upload_temps
 from .repairs import async_check_plan_files
 from .store import (
@@ -267,19 +271,27 @@ async def async_setup_entry(hass: HomeAssistant, entry: HouseplanConfigEntry) ->
     entry.async_on_unload(
         async_track_time_interval(hass, _sweep, timedelta(hours=24))
     )
+
+    # The application panel is intentionally the final setup step.  It is a
+    # discoverability surface over the already-working stores and APIs, so a
+    # missing/colliding/broken panel remains fail-soft and cannot strand a
+    # sidebar entry after a migration, repair or initial housekeeping failure.
+    panel_path = Path(__file__).parent / "frontend" / "houseplan-panel.js"
+    await async_setup_panel_registration(hass, entry, panel_path)
     return True
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: HouseplanConfigEntry) -> bool:
-    rec = hass.data.get(DOMAIN, {}).pop("trail_recorder", None)
-    if rec:
-        rec.teardown()
     """Unload the entry.
 
     WS commands and the HTTP view are global (async_setup) and stay registered —
     their handlers resolve runtime data per call and answer `not_ready` while no
     entry is loaded. Static paths cannot be unregistered by design.
     """
+    remove_panel_registration(hass)
+    rec = hass.data.get(DOMAIN, {}).pop("trail_recorder", None)
+    if rec:
+        rec.teardown()
     return True
 
 
@@ -287,4 +299,5 @@ async def async_remove_entry(
     hass: HomeAssistant, entry: HouseplanConfigEntry
 ) -> None:
     """Clean up frontend registration and notice on integration removal."""
+    remove_panel_registration(hass)
     await async_remove_frontend_registration(hass, entry)

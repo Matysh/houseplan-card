@@ -6,6 +6,9 @@
         "data": { "admin_only": "Only administrators may edit the layout" }
       }
     },
+    "create_entry": {
+      "panel_ready": "Open House Plan from the sidebar when the item is available. A desktop browser is recommended for editing. If the item is missing, use the House Plan dashboard card and check System Health."
+    },
     "abort": { "single_instance_allowed": "Already configured — only one entry is allowed." }
   },
   "options": {
@@ -21,8 +24,8 @@
       "description": "The plan file `{file}` for space `{space}` was not found in `config/houseplan/plans/`. Open the space settings in the House Plan card and upload the plan again."
     },
     "frontend_reload_notice": {
-      "title": "House Plan card connected",
-      "description": "The House Plan card is connected. Fully reload this page to use the latest frontend (`Ctrl+F5` on Windows/Linux or `Cmd+Shift+R` on macOS). If you manage dashboard resources manually in storage mode, open Settings → Dashboards → Resources."
+      "title": "House Plan is ready",
+      "description": "Open House Plan from the sidebar. After an update, fully reload the page to use the latest frontend (`Ctrl+F5` on Windows/Linux or `Cmd+Shift+R` on macOS). The dashboard card remains available; if you manage its resource manually in storage mode, open Settings → Dashboards → Resources. If the sidebar item is missing, check House Plan in System Health."
     }
   },
   "system_health": {
@@ -34,7 +37,13 @@
       "resource_url": "Frontend resource URL",
       "resource_retry": "Resource registration retry",
       "resource_error": "Frontend registration error",
-      "first_reload_notice": "First reload notice"
+      "first_reload_notice": "First reload notice",
+      "panel_file": "House Plan panel file",
+      "panel_static_path": "Panel static frontend path",
+      "panel_status": "Panel registration status",
+      "panel_url": "House Plan panel URL",
+      "panel_module_url": "Panel module URL",
+      "panel_error": "Panel registration error"
     }
   }
 }

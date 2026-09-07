@@ -8,6 +8,12 @@
 
 ## Principle
 
+The dedicated **House Plan** sidebar panel is the primary host for this mode
+system. It contributes the HA app bar and drawer button, then embeds the same
+full card used on dashboards. In panel-host mode only the duplicated product
+title disappears; space tabs, editor navigation, device count, zoom and actions
+remain. Dashboard and kiosk behaviour is unchanged.
+
 A segmented control in the card header with three tabs; the active one is visually
 highlighted, and edit modes add a colored frame around the stage so the mode is
 obvious at a glance:
@@ -19,7 +25,8 @@ inert everywhere outside its editor).
 
 - **View** is the implicit default state: no editor tab is active. Navigation
   persistence remembers only the last space. Reloading the page or leaving
-  House Plan for another Home Assistant route and returning always opens View
+  `/houseplan` (or a dashboard hosting the card) for another Home Assistant
+  route and returning always opens View
   for that space; editor mode, selection and open editor dialogs are session
   state. A purely technical same-route Lovelace remount may preserve an
   unfinished editor session so an internal DOM rebuild does not destroy work.

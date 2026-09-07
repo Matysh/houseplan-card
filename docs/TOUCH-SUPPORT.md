@@ -9,9 +9,15 @@ acceptance on touch devices.
 House Plan is a **touch-first product in View and kiosk**, but its editors are
 **desktop-first administration tools**.
 
+This contract applies equally to the primary `/houseplan` sidebar panel and to
+optional dashboard cards. The panel menu button remains available on every
+width with a 44 × 44 px target; Home Assistant kiosk state does not silently
+enable House Plan's separate card kiosk mode.
+
 | Surface | Desktop browser with mouse/keyboard | Touch/coarse-pointer device |
 |---|---|---|
 | View | Fully supported | **Fully supported; must be convenient and reliable** |
+| Sidebar panel shell and drawer access | Fully supported | **Fully supported** |
 | Kiosk | Supported | **Primary supported environment** |
 | View dialogs and safe device actions | Fully supported | **Fully supported** |
 | Plan editor | **Reference editing environment** | Best effort; partial, awkward or missing operations are allowed |

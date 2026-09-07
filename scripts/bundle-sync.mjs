@@ -15,6 +15,9 @@ import {
 } from 'node:fs';
 import { dirname, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+  assertBundleManifest, orderedBundlePayload, verifyBundleTree,
+} from './bundle-tree.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const SOURCE_ROOT = resolve(ROOT, 'dist');
@@ -30,14 +33,11 @@ if (!existsSync(manifestPath)) {
   process.exit(1);
 }
 
-const readManifest = (path) => {
+const parseManifest = (path) => {
   const parsed = JSON.parse(readFileSync(path, 'utf8'));
-  if (parsed?.schema !== 1 || !Array.isArray(parsed.files) || !parsed.entry) {
-    throw new Error(`${path}: invalid House Plan bundle manifest`);
-  }
   return parsed;
 };
-const sourceManifest = readManifest(manifestPath);
+const sourceManifest = assertBundleManifest(parseManifest(manifestPath), manifestPath);
 const managedFiles = [MANIFEST_NAME, ...sourceManifest.files.map((file) => file.path)];
 const sha256 = (path) => createHash('sha256').update(readFileSync(path)).digest('hex');
 const contained = (root, name) => {
@@ -54,21 +54,27 @@ for (const file of sourceManifest.files) {
   if (!existsSync(path)) throw new Error(`manifest asset is missing: ${file.path}`);
   if (sha256(path) !== file.sha256) throw new Error(`manifest hash mismatch: ${file.path}`);
 }
+verifyBundleTree(SOURCE_ROOT);
 
 for (const target of TARGETS) {
   const targetRoot = resolve(ROOT, target);
   const oldManifestPath = resolve(targetRoot, MANIFEST_NAME);
   let old = null;
   if (existsSync(oldManifestPath)) {
-    old = readManifest(oldManifestPath);
+    // The first two-entry sync necessarily replaces a valid legacy one-entry
+    // manifest. Read only its old inventory here; the copied result below is
+    // validated against the complete current contract.
+    old = parseManifest(oldManifestPath);
+    if (old?.schema !== 1 || !Array.isArray(old.files)) {
+      throw new Error(`${oldManifestPath}: invalid previous House Plan bundle manifest`);
+    }
   }
-  // Content-hashed dependencies first, stable entry second, manifest last.
-  // At every observable point the current manifest therefore names a complete
-  // tree; an interrupted copy cannot publish an allowlist for absent chunks.
-  const payload = sourceManifest.files
-    .map((file) => file.path)
-    .sort((left, right) => (left === sourceManifest.entry ? 1 : 0)
-      - (right === sourceManifest.entry ? 1 : 0) || left.localeCompare(right));
+  // Content-hashed dependencies first, both stable entries second, manifest
+  // last. This is offline materialization, not a promise of live atomicity;
+  // either stale entry has its own visible reload fallback for the copy window.
+  // The new manifest is never published before its complete payload, while an
+  // interrupted pre-manifest copy can still expose a cross-generation entry.
+  const payload = orderedBundlePayload(sourceManifest);
   for (const name of payload) {
     const source = contained(SOURCE_ROOT, name);
     const destination = contained(targetRoot, name);
@@ -79,7 +85,7 @@ for (const target of TARGETS) {
   for (const file of old?.files || []) {
     if (!managedFiles.includes(file.path)) rmSync(contained(targetRoot, file.path), { force: true });
   }
-  const copied = readManifest(resolve(targetRoot, MANIFEST_NAME));
+  const copied = verifyBundleTree(targetRoot);
   for (const file of copied.files) {
     if (sha256(contained(targetRoot, file.path)) !== file.sha256) {
       throw new Error(`${target}/${file.path}: copied hash mismatch`);

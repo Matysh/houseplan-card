@@ -7,6 +7,7 @@ from homeassistant.components import system_health
 from homeassistant.core import HomeAssistant, callback
 
 from .frontend_registration import get_frontend_registration_state
+from .panel_registration import get_panel_registration_state
 from .store import get_data
 
 
@@ -33,6 +34,36 @@ async def system_health_info(hass: HomeAssistant) -> dict[str, Any]:
         "markers": len(config.get("markers", [])),
         "layout_entries": len(layout_raw.get("layout", {})),
     }
+    panel = get_panel_registration_state(hass)
+    if panel is None:
+        result.update(
+            {
+                "panel_file": "missing",
+                "panel_static_path": "not_registered",
+                "panel_status": "not_attempted",
+                "panel_url": "unavailable",
+                "panel_module_url": "unavailable",
+                "panel_error": "none",
+            }
+        )
+    else:
+        result.update(
+            {
+                "panel_file": (
+                    "present" if panel.panel_file_present else "missing"
+                ),
+                "panel_static_path": (
+                    "registered"
+                    if panel.panel_static_path_registered
+                    else "not_registered"
+                ),
+                "panel_status": panel.panel_status,
+                "panel_url": panel.panel_url or "unavailable",
+                "panel_module_url": panel.panel_module_url or "unavailable",
+                "panel_error": panel.panel_error or "none",
+            }
+        )
+
     frontend = get_frontend_registration_state(hass)
     if frontend is None:
         result.update(
@@ -47,28 +78,29 @@ async def system_health_info(hass: HomeAssistant) -> dict[str, Any]:
                 "first_reload_notice": "pending_frontend",
             }
         )
-        return result
-
-    result.update(
-        {
-            "card_file": "present" if frontend.card_file_present else "missing",
-            "static_path": (
-                "registered"
-                if frontend.static_path_registered
-                else "not_registered"
-            ),
-            "resource_status": frontend.resource_status,
-            "resource_loader": frontend.loader,
-            "resource_url": frontend.module_url or "unavailable",
-            "resource_retry": (
-                "pending"
-                if frontend.retry_pending
-                else "attempted"
-                if frontend.retry_attempted
-                else "not_needed"
-            ),
-            "resource_error": frontend.last_error or "none",
-            "first_reload_notice": frontend.first_reload_notice,
-        }
-    )
+    else:
+        result.update(
+            {
+                "card_file": (
+                    "present" if frontend.card_file_present else "missing"
+                ),
+                "static_path": (
+                    "registered"
+                    if frontend.static_path_registered
+                    else "not_registered"
+                ),
+                "resource_status": frontend.resource_status,
+                "resource_loader": frontend.loader,
+                "resource_url": frontend.module_url or "unavailable",
+                "resource_retry": (
+                    "pending"
+                    if frontend.retry_pending
+                    else "attempted"
+                    if frontend.retry_attempted
+                    else "not_needed"
+                ),
+                "resource_error": frontend.last_error or "none",
+                "first_reload_notice": frontend.first_reload_notice,
+            }
+        )
     return result

@@ -56,6 +56,35 @@ test('every mutant explains itself', () => {
   assert.ok(MUTANTS.length >= 6, 'стартовый набор — шесть мутантов по дырам из #85');
 });
 
+test('#486 panel registration and cleanup protections have mutation witnesses', () => {
+  const ids = new Set(MUTANTS.map(({ id }) => id));
+  for (const id of [
+    'panel-registers-wrong-route',
+    'panel-registers-card-static-url',
+    'panel-module-url-loses-version',
+    'panel-becomes-admin-only',
+    'panel-bypasses-panel-custom-api',
+    'panel-static-legacy-boolean-claims-both-urls',
+    'panel-cleanup-drops-generation-guard',
+    'panel-cleanup-drops-identity-guard',
+    'panel-cleanup-uses-new-remove-keyword',
+    'panel-accepts-unverifiable-ownership',
+  ]) {
+    assert.ok(ids.has(id), `${id}: отсутствует защитный свидетель #486`);
+  }
+});
+
+test('#486 bundle topology and both stale entries have mutation witnesses', () => {
+  const ids = new Set(MUTANTS.map(({ id }) => id));
+  for (const id of [
+    'entry-fallback-rewrite-skipped',
+    'panel-entry-fallback-rewrite-skipped',
+    'panel-entry-bypasses-card-graph',
+  ]) {
+    assert.ok(ids.has(id), `${id}: отсутствует защитный свидетель bundle-контракта #486`);
+  }
+});
+
 test('applyPatches rewrites the anchor and refuses a stale one', () => {
   const dir = mkdtempSync(join(tmpdir(), 'hp-mg-'));
   try {

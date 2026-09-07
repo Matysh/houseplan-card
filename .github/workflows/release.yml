@@ -74,7 +74,10 @@ jobs:
           name: continuity-screencast
           path: artifacts/continuity-screencast
       - name: Verify the complete committed frontend tree
-        run: node scripts/bundle-tree.mjs dist custom_components/houseplan/frontend
+        run: |
+          node scripts/bundle-tree.mjs dist custom_components/houseplan/frontend
+          test -s dist/houseplan-card.js
+          test -s dist/houseplan-panel.js
       - name: Attach card to release
         uses: softprops/action-gh-release@v3
         with:

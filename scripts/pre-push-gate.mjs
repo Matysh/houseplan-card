@@ -131,10 +131,12 @@ if (flag('no-smokes')) {
   }
   if (picked.length) {
     // Стенд читает свою копию бандла; без раскладки смок врёт согласованно (#236).
-    if (existsSync(resolve(ROOT, 'dist/houseplan-card.js'))) {
+    const missingEntries = ['houseplan-card.js', 'houseplan-panel.js']
+      .filter((name) => !existsSync(resolve(ROOT, 'dist', name)));
+    if (!missingEntries.length) {
       steps.push(run('Раскладка бандла', 'node', ['scripts/bundle-sync.mjs']));
     } else {
-      skipped.push('смоки — нет dist/houseplan-card.js, нужен `npm run build`');
+      skipped.push(`смоки — нет dist/${missingEntries.join(', dist/')}, нужен \`npm run build\``);
       picked = [];
     }
   }

@@ -53,6 +53,7 @@
   "count.devices": "{n} app.",
   "empty.no_spaces": "Aucun espace pour le moment.",
   "empty.add_first": "Ajoutez le premier espace et importez un plan.",
+  "empty.read_only": "Aucun espace n’est configuré. Demandez à un administrateur d’en ajouter un.",
   "empty.install": "Installez l’intégration House Plan et ajoutez-la dans « Appareils et services ».",
   "btn.add_space": "Ajouter un espace",
   "btn.cancel": "Annuler",

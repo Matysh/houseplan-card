@@ -8,6 +8,9 @@
         }
       }
     },
+    "create_entry": {
+      "panel_ready": "Öffnen Sie House Plan über die Seitenleiste, wenn der Eintrag verfügbar ist. Für die Bearbeitung wird ein Desktop-Browser empfohlen. Fehlt der Eintrag, verwenden Sie die House-Plan-Dashboard-Karte und prüfen Sie die Systeminformationen."
+    },
     "abort": {
       "single_instance_allowed": "Bereits konfiguriert – es ist nur eine Instanz zulässig."
     }
@@ -27,8 +30,8 @@
       "description": "Die Plandatei `{file}` für den Bereich `{space}` wurde in `config/houseplan/plans/` nicht gefunden. In den Bereichseinstellungen der House-Plan-Karte den Plan erneut hochladen."
     },
     "frontend_reload_notice": {
-      "title": "House-Plan-Karte verbunden",
-      "description": "Die House-Plan-Karte ist verbunden. Laden Sie diese Seite vollständig neu, um die aktuelle Benutzeroberfläche zu verwenden (`Ctrl+F5` unter Windows/Linux oder `Cmd+Shift+R` unter macOS). Wenn Sie Dashboard-Ressourcen im Speichermodus manuell verwalten, öffnen Sie Einstellungen → Dashboards → Ressourcen."
+      "title": "House Plan ist bereit",
+      "description": "Öffnen Sie House Plan über die Seitenleiste. Laden Sie die Seite nach einem Update vollständig neu, um die aktuelle Benutzeroberfläche zu verwenden (`Ctrl+F5` unter Windows/Linux oder `Cmd+Shift+R` unter macOS). Die Dashboard-Karte bleibt verfügbar; wenn Sie deren Ressource im Speichermodus manuell verwalten, öffnen Sie Einstellungen → Dashboards → Ressourcen. Fehlt der Seitenleisteneintrag, prüfen Sie House Plan in den Systeminformationen."
     }
   },
   "system_health": {
@@ -40,7 +43,13 @@
       "resource_url": "URL der Frontend-Ressource",
       "resource_retry": "Wiederholung der Ressourcenregistrierung",
       "resource_error": "Fehler der Frontend-Registrierung",
-      "first_reload_notice": "Erster Hinweis zum Neuladen"
+      "first_reload_notice": "Erster Hinweis zum Neuladen",
+      "panel_file": "Datei des House-Plan-Panels",
+      "panel_static_path": "Statischer Frontend-Pfad des Panels",
+      "panel_status": "Status der Panel-Registrierung",
+      "panel_url": "URL des House-Plan-Panels",
+      "panel_module_url": "Modul-URL des Panels",
+      "panel_error": "Fehler der Panel-Registrierung"
     }
   }
 }

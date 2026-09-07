@@ -37,6 +37,46 @@ export const baseStyles = css`
       display: block;
       position: relative;
     }
+    :host([panel-host]) {
+      width: 100%;
+      height: 100%;
+      min-width: 0;
+      min-height: 0;
+      overflow: hidden;
+    }
+    :host([panel-host]) ha-card {
+      box-sizing: border-box;
+      width: 100%;
+      height: 100%;
+      min-width: 0;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+      --ha-card-border-radius: 0;
+      --ha-card-box-shadow: none;
+    }
+    :host([panel-host]) .hdr {
+      position: relative;
+      top: auto;
+      flex: 0 0 auto;
+      border-radius: 0;
+    }
+    :host([panel-host]) .stage,
+    :host([panel-host]) .empty {
+      flex: 1 1 auto;
+      min-height: 0;
+    }
+    :host([panel-host]) .stage.mode-transition {
+      flex: 0 0 auto;
+    }
+    :host([panel-host]) .empty {
+      box-sizing: border-box;
+      overflow: auto;
+    }
     ha-card {
       overflow: visible; /* overflow:hidden breaks position:sticky on the header */
     }

@@ -13,6 +13,7 @@ import { createInterface } from 'node:readline/promises';
 import { stdin, stdout } from 'node:process';
 import { assertReleaseContract } from './release-contract.mjs';
 import { classifyValidateRuns } from './release-gate.mjs';
+import { assertBundleManifest } from './bundle-tree.mjs';
 
 const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
 const SUBPROCESS_MAX_BUFFER = 64 * 1024 * 1024;
@@ -99,11 +100,12 @@ export function prereleaseWorkflowSucceeded(label, conclusion) {
  * compression methods are rejected deliberately: release archives are small
  * and are produced by either `git archive` or Info-ZIP.
  */
-export function readZipEntries(zipPath, requiredNames) {
+const inspectZip = (zipPath, requiredNames) => {
   const archive = readFileSync(zipPath);
   if (!archive.length) throw new Error('houseplan.zip is empty');
   const required = new Set(requiredNames);
   const found = new Map();
+  const names = [];
   const eocdSignature = 0x06054b50;
   const centralSignature = 0x02014b50;
   const localSignature = 0x04034b50;
@@ -147,6 +149,7 @@ export function readZipEntries(zipPath, requiredNames) {
     if (next > archive.length) throw new Error('houseplan.zip has a truncated central entry');
     const name = archive.subarray(cursor + 46, cursor + 46 + nameLength)
       .toString('utf8').replace(/^\.\//, '');
+    names.push(name);
     cursor = next;
     if (!required.has(name)) continue;
     if (found.has(name)) throw new Error(`houseplan.zip contains duplicate ${name}`);
@@ -175,7 +178,15 @@ export function readZipEntries(zipPath, requiredNames) {
     throw new Error('houseplan.zip central directory size is inconsistent');
   const missing = [...required].filter((name) => !found.has(name));
   if (missing.length) throw new Error(`houseplan.zip is missing ${missing.join(', ')}`);
-  return found;
+  return { found, names };
+};
+
+export function readZipEntries(zipPath, requiredNames) {
+  return inspectZip(zipPath, requiredNames).found;
+}
+
+export function listZipEntries(zipPath) {
+  return inspectZip(zipPath, []).names;
 }
 
 const invokedDirectly = process.argv[1]
@@ -259,10 +270,18 @@ if (invokedDirectly) {
     if (!distManifestBytes.equals(frontendManifestBytes)) {
       throw new Error('Committed bundle manifests differ');
     }
-    const manifest = JSON.parse(distManifestBytes.toString('utf8'));
-    if (manifest?.schema !== 1 || !Array.isArray(manifest.files)
-        || manifest.entry !== 'houseplan-card.js') {
-      throw new Error('Committed bundle manifest is invalid');
+    const manifest = assertBundleManifest(
+      JSON.parse(distManifestBytes.toString('utf8')),
+      'committed bundle manifest',
+    );
+    const listed = new Set(manifest.files.map((file) => file.path));
+    for (const tree of ['dist', 'custom_components/houseplan/frontend']) {
+      const rootNames = run('git', ['ls-tree', '-r', '--name-only', `${sha}:${tree}`]).stdout
+        .split(/\r?\n/).filter(Boolean);
+      const orphan = rootNames.find((name) => (
+        /^houseplan-.*\.js$/.test(name) || /^houseplan-assets\/.*\.js$/.test(name)
+      ) && !listed.has(name));
+      if (orphan) throw new Error(`Committed bundle has orphan asset: ${tree}/${orphan}`);
     }
     for (const file of manifest.files) {
       if (typeof file?.path !== 'string' || !file.path.endsWith('.js')
@@ -303,6 +322,13 @@ if (invokedDirectly) {
       'manifest.json', 'frontend/houseplan-assets.json',
       ...bundleSnapshot.manifest.files.map((file) => `frontend/${file.path}`),
     ];
+    const requiredSet = new Set(required);
+    const orphan = listZipEntries(zipPath)
+      .find((name) => (
+        /^frontend\/houseplan-.*\.js$/.test(name)
+          || /^frontend\/houseplan-assets\/.*\.js$/.test(name)
+      ) && !requiredSet.has(name));
+    if (orphan) throw new Error(`houseplan.zip contains orphan bundle asset: ${orphan}`);
     const entries = readZipEntries(zipPath, required);
     const manifest = JSON.parse(entries.get('manifest.json').toString('utf8'));
     if (manifest.version !== version)

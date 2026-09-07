@@ -61,6 +61,9 @@ test('full performance is isolated to stable, scheduled and manual entry points'
   const release = readWorkflow('release.yml');
   assert.ok(release.includes('if: ${{ !github.event.release.prerelease }}'));
   assert.ok(release.includes('--workflow=performance.yml --label="Полные бенчмарки производительности"'));
+  assert.ok(release.includes('test -s dist/houseplan-panel.js'));
+  assert.ok(release.includes('files: dist/houseplan-card.js'),
+    'the standalone release asset remains card-only; the panel ships through HACS zip');
 });
 
 test('#160 Stage 3 dense fixture extends rather than mutates the historical witness', () => {

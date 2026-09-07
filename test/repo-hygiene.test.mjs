@@ -29,9 +29,20 @@ test('the tree carries exactly one *manifest.json: HACS rejects a repository wit
 test('копия бандла для стенда не коммитится (#255)', () => {
   const tracked = execFileSync('git', ['ls-files', '-z', 'demo/srv/assets'], { cwd: ROOT })
     .toString('utf8').split('\0').filter(Boolean);
-  assert.ok(!tracked.includes('demo/srv/assets/houseplan-card.js'),
-    'demo/srv/assets/houseplan-card.js снова в индексе: соберите его `npm run bundle:sync`, '
-    + 'а из коммита уберите');
+  const ignored = execFileSync('git', [
+    'check-ignore',
+    'demo/srv/assets/houseplan-card.js',
+    'demo/srv/assets/houseplan-panel.js',
+  ], { cwd: ROOT }).toString('utf8').split(/\r?\n/).filter(Boolean);
+  assert.deepEqual(ignored, [
+    'demo/srv/assets/houseplan-card.js',
+    'demo/srv/assets/houseplan-panel.js',
+  ], 'оба стабильных demo entry должны оставаться локальными build-артефактами');
+  for (const entry of ['houseplan-card.js', 'houseplan-panel.js']) {
+    assert.ok(!tracked.includes(`demo/srv/assets/${entry}`),
+      `demo/srv/assets/${entry} снова в индексе: соберите его \`npm run bundle:sync\`, `
+      + 'а из коммита уберите');
+  }
   // Остальное содержимое стенда (иконки, страницы) коммитится и должно остаться.
   assert.ok(tracked.length > 0, 'каталог стенда пуст: проверьте, что убрали только бандл');
 });

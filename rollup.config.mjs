@@ -15,10 +15,13 @@ import {
 const SOURCE_FINGERPRINT = sourceFingerprint();
 
 export default {
-  input: 'src/houseplan-card.ts',
+  input: {
+    'houseplan-card': 'src/houseplan-card.ts',
+    'houseplan-panel': 'src/houseplan-panel.ts',
+  },
   output: {
     dir: 'dist',
-    entryFileNames: 'houseplan-card.js',
+    entryFileNames: '[name].js',
     chunkFileNames: 'houseplan-assets/[name]-[hash].js',
     format: 'es',
     sourcemap: false,

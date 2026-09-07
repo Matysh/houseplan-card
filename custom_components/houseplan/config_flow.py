@@ -14,7 +14,12 @@ class HouseplanConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_user(self, user_input=None):
         if user_input is not None:
-            return self.async_create_entry(title="House Plan", data={}, options=user_input)
+            return self.async_create_entry(
+                title="House Plan",
+                data={},
+                options=user_input,
+                description="panel_ready",
+            )
         return self.async_show_form(
             step_id="user",
             data_schema=vol.Schema({vol.Optional(CONF_ADMIN_ONLY, default=True): bool}),

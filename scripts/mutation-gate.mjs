@@ -596,6 +596,132 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'panel-registers-wrong-route',
+    guard: 'python3 -m pytest tests_backend/test_ha_panel_registration.py -q -p no:cacheprovider '
+      + '-k "registers_exact_public_panel_contract"',
+    because: 'the application must own exactly /houseplan; registering another route breaks the '
+      + 'stable entry point while a superficially valid panel still exists (#486 AC1)',
+    patches: [{
+      file: 'custom_components/houseplan/panel_registration.py',
+      find: '            frontend_url_path=PANEL_URL_PATH,',
+      replace: '            frontend_url_path="houseplan-mutant",',
+    }],
+  },
+  {
+    id: 'panel-registers-card-static-url',
+    guard: 'python3 -m pytest tests_backend/test_ha_panel_registration.py -q -p no:cacheprovider '
+      + '-k "registers_exact_public_panel_contract"',
+    because: 'the panel has a separate stable entry and static route; silently reusing the card URL '
+      + 'would load no houseplan-panel custom element (#486 AC1)',
+    patches: [{
+      file: 'custom_components/houseplan/panel_registration.py',
+      find: '        hass, PANEL_FRONTEND_URL, panel_path\n',
+      replace: '        hass, "/houseplan_files/houseplan-card.js", panel_path\n',
+    }],
+  },
+  {
+    id: 'panel-module-url-loses-version',
+    guard: 'python3 -m pytest tests_backend/test_ha_panel_registration.py -q -p no:cacheprovider '
+      + '-k "registers_exact_public_panel_contract"',
+    because: 'the panel module must share the integration version cache boundary; an unversioned '
+      + 'entry can retain an obsolete shell after update (#486 AC1)',
+    patches: [{
+      file: 'custom_components/houseplan/panel_registration.py',
+      find: '            module_url=module_url,',
+      replace: '            module_url=PANEL_FRONTEND_URL,',
+    }],
+  },
+  {
+    id: 'panel-becomes-admin-only',
+    guard: 'python3 -m pytest tests_backend/test_ha_panel_registration.py -q -p no:cacheprovider '
+      + '-k "registers_exact_public_panel_contract or visible_to_admin_and_read_only"',
+    because: 'sidebar visibility is not write authorization; require_admin=True would hide the '
+      + 'read-only View from household members promised by #486 AC1/AC9',
+    patches: [{
+      file: 'custom_components/houseplan/panel_registration.py',
+      find: '            require_admin=False,',
+      replace: '            require_admin=True,',
+    }],
+  },
+  {
+    id: 'panel-bypasses-panel-custom-api',
+    guard: 'python3 -m pytest tests_backend/test_ha_panel_registration.py -q -p no:cacheprovider '
+      + '-k "registers_exact_public_panel_contract"',
+    because: 'only panel_custom.async_register_panel supplies the supported custom-element/module '
+      + 'contract across the minimum HA version (#486 AC1/AC14)',
+    patches: [{
+      file: 'custom_components/houseplan/panel_registration.py',
+      find: '        await panel_custom.async_register_panel(',
+      replace: '        await frontend.async_register_built_in_panel(',
+    }],
+  },
+  {
+    id: 'panel-static-legacy-boolean-claims-both-urls',
+    guard: 'python3 -m pytest tests_backend/test_ha_frontend_registration.py '
+      + 'tests_backend/test_ha_panel_registration.py -q -p no:cacheprovider '
+      + '-k "legacy_card_boolean_becomes_per_url"',
+    because: 'the pre-panel boolean proves only the card route; treating it as both routes leaves '
+      + 'the panel registry pointing at an unserved module after reload (#486 AC1/AC3)',
+    patches: [{
+      file: 'custom_components/houseplan/frontend_registration.py',
+      find: '        urls = {FRONTEND_URL}\n'
+        + '        domain_data[FRONTEND_STATIC_REGISTERED_KEY] = urls',
+      replace: '        urls = {FRONTEND_URL, "/houseplan_files/houseplan-panel.js"}\n'
+        + '        domain_data[FRONTEND_STATIC_REGISTERED_KEY] = urls',
+    }],
+  },
+  {
+    id: 'panel-cleanup-drops-generation-guard',
+    guard: 'python3 -m pytest tests_backend/test_ha_panel_registration.py -q -p no:cacheprovider '
+      + '-k "generation_and_identity_guards"',
+    because: 'a callback from an obsolete setup generation must not remove the current generation '
+      + 'even when it still retains an owned object reference (#486 AC2)',
+    patches: [{
+      file: 'custom_components/houseplan/panel_registration.py',
+      find: '        and domain_data.get(PANEL_GENERATION_KEY) == state.generation\n',
+      replace: '        and True  # mutant: setup generation is ignored\n',
+    }],
+  },
+  {
+    id: 'panel-cleanup-drops-identity-guard',
+    guard: 'python3 -m pytest tests_backend/test_ha_panel_registration.py -q -p no:cacheprovider '
+      + '-k "generation_and_identity_guards"',
+    because: 'route ownership is the exact registry object, not the route name; otherwise an '
+      + 'external replacement is deleted during unload (#486 AC2)',
+    patches: [{
+      file: 'custom_components/houseplan/panel_registration.py',
+      find: '    if panels.get(PANEL_URL_PATH) is not state._owned_panel:',
+      replace: '    if PANEL_URL_PATH not in panels:  # mutant: foreign identity accepted',
+    }],
+  },
+  {
+    id: 'panel-cleanup-uses-new-remove-keyword',
+    guard: 'python3 -m pytest tests_backend/test_ha_panel_registration.py -q -p no:cacheprovider '
+      + '-k "generation_and_identity_guards"',
+    because: 'the supported minimum exposes only the two-argument remove call; adding a newer '
+      + 'keyword makes unload leave the owned sidebar panel behind (#486 AC2/AC14)',
+    patches: [{
+      file: 'custom_components/houseplan/panel_registration.py',
+      find: '        # Keep the HA 2024.6-compatible two-argument call.  In particular, do\n'
+        + '        # not pass the newer warn_if_unknown keyword.\n'
+        + '        frontend.async_remove_panel(hass, PANEL_URL_PATH)',
+      replace: '        # mutant: use an API shape unavailable on minimum HA\n'
+        + '        frontend.async_remove_panel(hass, PANEL_URL_PATH, warn_if_unknown=False)',
+    }],
+  },
+  {
+    id: 'panel-accepts-unverifiable-ownership',
+    guard: 'python3 -m pytest tests_backend/test_ha_panel_registration.py -q -p no:cacheprovider '
+      + '-k "unreadable_registry_removes_just_registered"',
+    because: 'a successful public registration without a captured registry identity must be '
+      + 'removed immediately, never left for a later blind route cleanup (#486 AC2)',
+    patches: [{
+      file: 'custom_components/houseplan/panel_registration.py',
+      find: '    if owned_panel is None:',
+      replace: '    if False:  # mutant: unverifiable ownership is accepted',
+    }],
+  },
+  {
     id: 'version-recovery-treats-unknown-as-mismatch',
     guard: 'node --test --test-name-pattern="malformed values stay unknown" '
       + 'test/version-recovery.test.mjs',
@@ -2772,13 +2898,48 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'entry-fallback-rewrite-skipped',
-    guard: 'node demo/smoke_entry_stale.mjs',
+    guard: 'node --test --test-name-pattern="#486 both stable entries" '
+      + 'test/bundle-assets.test.mjs',
     because: 'without the rewrite the entry keeps a STATIC re-export: after an update a cached '
       + 'entry aborts before any code runs and the card dies silently (#353 К3)',
     patches: [{
       file: 'scripts/bundle-manifest.mjs',
-      find: '      entry.code = entry.code.replace(pattern, fallback);',
-      replace: '      void fallback;',
+      find: '      cardEntry.code = cardEntry.code.replace(\n'
+        + '        cardPattern,\n'
+        + '        `try{await import("${cardAsset}")}`\n'
+        + '          + `catch(e){${fallbackDefinition(cardContract)}`\n'
+        + "          + 'console.error(\"[houseplan] stale houseplan-card.js: the implementation chunk is unavailable\",e)}',\n"
+        + '      );',
+      replace: '      void cardEntry; // mutant: cached card facade keeps its static re-export',
+    }],
+  },
+  {
+    id: 'panel-entry-fallback-rewrite-skipped',
+    guard: 'node --test --test-name-pattern="#486 both stable entries" '
+      + 'test/bundle-assets.test.mjs',
+    because: 'without its rewrite a stale panel entry aborts on the shared implementation '
+      + 'before either a card or panel fallback can render (#486 AC4)',
+    patches: [{
+      file: 'scripts/bundle-manifest.mjs',
+      find: '      panelEntry.code = panelEntry.code.replace(\n'
+        + '        panelPattern,\n'
+        + '        `try{await import("./${CARD_ENTRY_FILE}")}`\n'
+        + '          + `catch(e){${fallbackDefinition(panelContract)}`\n'
+        + "          + 'console.error(\"[houseplan] stale houseplan-panel.js: the card entry is unavailable\",e)}',\n"
+        + '      );',
+      replace: '      void panelEntry; // mutant: cached panel keeps its static shared-chunk import',
+    }],
+  },
+  {
+    id: 'panel-entry-bypasses-card-graph',
+    guard: 'node --test --test-name-pattern="#486 both stable entries" '
+      + 'test/bundle-assets.test.mjs',
+    because: 'routing panel startup straight to a hashed implementation bypasses the stable '
+      + 'card root and breaks the required exact card-graph subset (#486 AC5)',
+    patches: [{
+      file: 'scripts/bundle-manifest.mjs',
+      find: '      panelEntry.imports = [CARD_ENTRY_FILE];',
+      replace: '      panelEntry.imports = [cardAsset.slice(2)]; // mutant: direct hashed edge',
     }],
   },
   {

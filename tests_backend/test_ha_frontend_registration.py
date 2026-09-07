@@ -776,10 +776,12 @@ async def test_reload_notice_translation_is_available_from_issues_catalog(
     translations = await registration.async_get_translations(
         hass, "ru", "issues", integrations={DOMAIN}
     )
-    assert translations[registration._NOTICE_TITLE_KEY] == (
-        "Карточка House Plan подключена"
-    )
-    assert "Ctrl+F5" in translations[registration._NOTICE_DESCRIPTION_KEY]
+    assert translations[registration._NOTICE_TITLE_KEY] == "House Plan готов к работе"
+    description = translations[registration._NOTICE_DESCRIPTION_KEY]
+    assert "боковом меню" in description
+    assert "Ctrl+F5" in description
+    assert "Карточка" in description
+    assert "информации о системе" in description
 
 
 async def test_reload_notice_uses_english_fallback_when_translation_fails(

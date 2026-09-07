@@ -48,27 +48,58 @@ test('bundle freshness rejects a missing or stale fingerprint', async () => {
 test('bundle freshness verifies every manifest-listed demo asset', async () => {
   const root = fixtureRoot();
   try {
+    writeFileSync(
+      resolve(root, 'src/houseplan-panel.ts'),
+      "import './card'; export const panel = true;\n",
+      'utf8',
+    );
     const expected = sourceFingerprint(root);
     const assets = resolve(root, 'demo/srv/assets');
     mkdirSync(resolve(assets, 'houseplan-assets'), { recursive: true });
     const files = [
       ['houseplan-card.js', 'entry'],
+      ['houseplan-panel.js', 'panel'],
       ['houseplan-assets/editor-HASH.js', 'editor'],
     ];
     for (const [name, contents] of files) writeFileSync(resolve(assets, name), contents, 'utf8');
-    writeFileSync(resolve(assets, 'houseplan-assets.json'), JSON.stringify({
+    const manifest = {
       schema: 1,
       fingerprint: expected,
-      files: files.map(([path, contents]) => ({
+      entry: 'houseplan-card.js',
+      panelEntry: 'houseplan-panel.js',
+      initialViewFiles: ['houseplan-assets/editor-HASH.js', 'houseplan-card.js'],
+      initialViewGzipBytes: 11,
+      initialPanelFiles: [
+        'houseplan-assets/editor-HASH.js', 'houseplan-card.js', 'houseplan-panel.js',
+      ],
+      initialPanelGzipBytes: 16,
+      initialPanelOnlyFiles: ['houseplan-panel.js'],
+      initialPanelOnlyGzipBytes: 5,
+      files: files.map(([path, contents], index) => ({
         path,
         sha256: createHash('sha256').update(contents).digest('hex'),
+        gzipBytes: [6, 5, 5][index],
+        isEntry: path === 'houseplan-card.js' || path === 'houseplan-panel.js',
       })),
-    }), 'utf8');
+    };
+    writeFileSync(resolve(assets, 'houseplan-assets.json'), JSON.stringify(manifest), 'utf8');
     const page = { evaluate: async () => expected };
     assert.equal(await assertFreshDemoBundle(page, root), expected);
 
     writeFileSync(resolve(assets, 'houseplan-assets/editor-HASH.js'), 'tampered', 'utf8');
     await assert.rejects(assertFreshDemoBundle(page, root), /hash mismatch/);
+
+    writeFileSync(resolve(assets, 'houseplan-assets/editor-HASH.js'), 'editor', 'utf8');
+    rmSync(resolve(assets, 'houseplan-panel.js'));
+    await assert.rejects(
+      assertFreshDemoBundle(page, root),
+      /manifest asset is missing: houseplan-panel\.js/,
+    );
+
+    writeFileSync(resolve(assets, 'houseplan-panel.js'), 'panel', 'utf8');
+    delete manifest.panelEntry;
+    writeFileSync(resolve(assets, 'houseplan-assets.json'), JSON.stringify(manifest), 'utf8');
+    await assert.rejects(assertFreshDemoBundle(page, root), /expected entries/);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

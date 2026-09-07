@@ -136,6 +136,32 @@ test('golden matrix has stable unique ids and bounded comparison thresholds', ()
   }
 });
 
+test('issue 486 golden matrix has exactly the three focused panel-host surfaces', () => {
+  const scenarios = GOLDEN_SCENARIOS.filter((scenario) => scenario.panelHost);
+  assert.deepEqual(scenarios.map((scenario) => scenario.id), [
+    'panel-wide-view-light-en',
+    'panel-wide-plan-editor-dark-en',
+    'panel-narrow-read-only-empty-light-en',
+  ]);
+  assert.deepEqual(scenarios.map((scenario) => scenario.viewport), [
+    { width: 1280, height: 800 },
+    { width: 1280, height: 800 },
+    { width: 320, height: 720 },
+  ]);
+  assert.equal(scenarios.every((scenario) => scenario.capture === 'page'), true);
+  assert.deepEqual(scenarios.map((scenario) => scenario.mode), ['view', 'plan', 'view']);
+
+  const readOnly = scenarios.at(-1);
+  assert.equal(readOnly.emptyPlan, true);
+  assert.equal(readOnly.canWrite, false);
+  assert.equal(readOnly.userIsAdmin, false);
+  assert.equal(readOnly.preloadEditorRuntime, false);
+  const fixture = prepareGoldenFixture(readOnly);
+  assert.deepEqual(fixture.config.spaces, []);
+  assert.deepEqual(fixture.config.markers, []);
+  assert.deepEqual(fixture.layout, {});
+});
+
 test('issue 462 has reviewed desktop, narrow-touch and attempted-kiosk notices', () => {
   const scenarios = GOLDEN_SCENARIOS.filter((scenario) =>
     scenario.id.startsWith('version-mismatch-'));
@@ -415,7 +441,7 @@ test('sun-ray golden requires browser-painted light from a state-only sun entity
   assert.ok(scenario);
   const fixture = prepareGoldenFixture(scenario);
   const space = fixture.config.spaces.find((item) => item.id === scenario.space);
-  assert.equal(GOLDEN_MATRIX_VERSION, 59);
+  assert.equal(GOLDEN_MATRIX_VERSION, 60);
   assert.equal(space.settings.sun_rays, true);
   assert.equal(scenario.northDeg, 90,
     'the sign-sensitive golden must keep a non-zero north direction');

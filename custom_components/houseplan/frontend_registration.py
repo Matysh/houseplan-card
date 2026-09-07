@@ -30,12 +30,13 @@ _NOTICE_TITLE_KEY = "component.houseplan.issues.frontend_reload_notice.title"
 _NOTICE_DESCRIPTION_KEY = (
     "component.houseplan.issues.frontend_reload_notice.description"
 )
-_NOTICE_TITLE_FALLBACK = "House Plan card connected"
+_NOTICE_TITLE_FALLBACK = "House Plan is ready"
 _NOTICE_DESCRIPTION_FALLBACK = (
-    "The House Plan card is connected. Fully reload this page to use the latest "
-    "frontend (`Ctrl+F5` on Windows/Linux or `Cmd+Shift+R` on macOS). If you "
-    "manage dashboard resources manually in storage mode, open Settings → "
-    "Dashboards → Resources."
+    "Open House Plan from the sidebar. After an update, fully reload the page "
+    "to use the latest frontend (`Ctrl+F5` on Windows/Linux or `Cmd+Shift+R` "
+    "on macOS). The dashboard card remains available; if you manage its "
+    "resource manually in storage mode, open Settings → Dashboards → "
+    "Resources. If the sidebar item is missing, check House Plan in System Health."
 )
 
 RegistrationStatus = Literal[
@@ -66,6 +67,14 @@ class RegistrationOutcome:
     """Result of one Lovelace resource registry attempt."""
 
     status: RegistrationStatus
+    last_error: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class StaticPathRegistrationOutcome:
+    """Result of registering one exact public frontend URL."""
+
+    registered: bool
     last_error: str | None = None
 
 
@@ -108,6 +117,64 @@ class FrontendRegistrationState:
 def _safe_error(phase: str, err: BaseException) -> str:
     """Return a support-safe failure fingerprint without message or path data."""
     return f"{phase}:{type(err).__name__}"
+
+
+def _static_registered_urls(hass: HomeAssistant) -> set[str]:
+    """Return the exact static URLs registered for this Core process.
+
+    Before the panel entry existed this state was a boolean.  A legacy ``True``
+    proves only that the card URL was registered; treating it as a generic
+    truthy flag would incorrectly skip the panel route after an integration
+    reload.
+    """
+    domain_data = hass.data.setdefault(DOMAIN, {})
+    value = domain_data.get(FRONTEND_STATIC_REGISTERED_KEY)
+    if value is True:
+        urls = {FRONTEND_URL}
+        domain_data[FRONTEND_STATIC_REGISTERED_KEY] = urls
+        return urls
+    if isinstance(value, set):
+        return value
+    if isinstance(value, dict):
+        urls = {url for url, registered in value.items() if registered is True}
+        domain_data[FRONTEND_STATIC_REGISTERED_KEY] = urls
+        return urls
+    return set()
+
+
+async def async_register_frontend_static_path(
+    hass: HomeAssistant,
+    frontend_url: str,
+    file_path: Path,
+) -> StaticPathRegistrationOutcome:
+    """Register one exact bundle entry across supported Home Assistant APIs."""
+    registered_urls = _static_registered_urls(hass)
+    if frontend_url in registered_urls:
+        return StaticPathRegistrationOutcome(True)
+
+    try:
+        try:
+            from homeassistant.components.http import StaticPathConfig
+        except ImportError:  # Home Assistant versions before the async API
+            hass.http.register_static_path(
+                frontend_url, str(file_path), cache_headers=False
+            )
+        else:
+            await hass.http.async_register_static_paths(
+                [StaticPathConfig(frontend_url, str(file_path), cache_headers=False)]
+            )
+    except asyncio.CancelledError:
+        raise
+    except Exception as err:  # noqa: BLE001 - callers intentionally fail soft
+        return StaticPathRegistrationOutcome(
+            False, _safe_error("static_path", err)
+        )
+
+    registered_urls.add(frontend_url)
+    hass.data.setdefault(DOMAIN, {})[
+        FRONTEND_STATIC_REGISTERED_KEY
+    ] = registered_urls
+    return StaticPathRegistrationOutcome(True)
 
 
 def _lovelace_resources(hass: HomeAssistant):
@@ -536,28 +603,17 @@ async def async_setup_frontend_registration(
     domain_data[FRONTEND_REGISTRATION_KEY] = state
     entry.async_on_unload(state.cancel)
 
-    if domain_data.get(FRONTEND_STATIC_REGISTERED_KEY):
-        state.static_path_registered = True
-    elif card_file_present:
-        try:
-            try:
-                from homeassistant.components.http import StaticPathConfig
-            except ImportError:  # Home Assistant versions before the async API
-                hass.http.register_static_path(
-                    FRONTEND_URL, str(card_path), cache_headers=False
-                )
-            else:
-                await hass.http.async_register_static_paths(
-                    [StaticPathConfig(FRONTEND_URL, str(card_path), cache_headers=False)]
-                )
-        except asyncio.CancelledError:
-            raise
-        except Exception as err:  # noqa: BLE001 - setup continues without frontend
-            state.last_error = _safe_error("static_path", err)
-            _LOGGER.warning("Could not register the House Plan static path", exc_info=True)
-        else:
-            domain_data[FRONTEND_STATIC_REGISTERED_KEY] = True
-            state.static_path_registered = True
+    if card_file_present:
+        static_outcome = await async_register_frontend_static_path(
+            hass, FRONTEND_URL, card_path
+        )
+        state.static_path_registered = static_outcome.registered
+        if not static_outcome.registered:
+            state.last_error = static_outcome.last_error
+            _LOGGER.warning(
+                "Could not register the House Plan card static path (%s)",
+                static_outcome.last_error or "static_path:UnknownError",
+            )
 
     if not card_file_present:
         _LOGGER.warning("houseplan-card.js was not found next to the integration")

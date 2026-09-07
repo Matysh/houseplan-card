@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- House Plan now opens directly from its own Home Assistant sidebar page, with
+  the same spaces, live controls and editors as the full dashboard card. The
+  optional dashboard card remains available and now defaults to full width in
+  Sections layouts; users without editing permission get a safe read-only empty
+  state ([#486](https://github.com/Matysh/houseplan-card/issues/486)).
 - PDF export now keeps the complete horizontal/vertical dimension chain around
   rectangular facade steps instead of dropping the return depth or one of the
   adjacent exterior lengths ([#484](https://github.com/Matysh/houseplan-card/issues/484)).

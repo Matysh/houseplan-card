@@ -1,6 +1,6 @@
 # House Plan architecture
 
-Updated: 2026-09-02 (#43 private support reports). The repository = a HACS integration (category **Integration**)
+Updated: 2026-09-07 (#486 sidebar panel). The repository = a HACS integration (category **Integration**)
 that contains both the backend (`custom_components/houseplan`) and the Lovelace card (`src/` → `dist/`).
 
 ## Styles (#266)
@@ -23,6 +23,7 @@ media-wrapper survival) are pinned by `test/styles-split.test.mjs`, and
 houseplan-card/
 ├─ src/                          # card sources (TypeScript + Lit 3)
 │  ├─ houseplan-card.ts          # eager View shell, HA lifecycle and projection
+│  ├─ houseplan-panel.ts         # HA sidebar/app-bar host for the same full card
 │  ├─ editor-runtime-loader.ts   # lazy loader: dedupe, retry and build handshake
 │  ├─ houseplan-editor-runtime.ts # Plan/Devices/Background composition root
 │  ├─ decor-image-editor.ts      # lazy Background/Furniture image palette, upload and properties controller
@@ -54,7 +55,8 @@ houseplan-card/
 ├─ .github/workflows/
 │  └─ publish-prerelease.yml     # draft-first one-button prerelease publication
 ├─ custom_components/houseplan/  # the HA integration
-│  ├─ __init__.py                # setup: Store, WS commands, JS serving (add_extra_js_url)
+│  ├─ __init__.py                # setup: Store, WS commands, JS/card/panel lifecycle
+│  ├─ panel_registration.py      # fail-soft owned /houseplan custom-panel lifecycle
 │  ├─ trails.py                  # server-side vacuum trail recorder (state-change driven)
 │  ├─ websocket_api.py           # houseplan/layout/get|set|update
 │  ├─ config_flow.py             # single entry; admin_only option (editing restricted to admins)
@@ -64,8 +66,12 @@ houseplan-card/
 └─ docs/                         # this documentation
 ```
 
-Rollup embeds one source fingerprint in the eager entry and every
-fingerprint-checked lazy runtime.
+Rollup emits two stable roots: `houseplan-card.js` for optional Lovelace cards
+and `houseplan-panel.js` for the primary HA sidebar page. The panel root imports
+the card graph rather than duplicating it; the card initial graph never imports
+the panel shell. Both stable roots keep the fail-loud stale-load wrapper. Rollup
+embeds one source fingerprint in the eager entry and every fingerprint-checked
+lazy runtime.
 `dist/houseplan-assets.json` records the import graph, sizes and SHA-256 of every
 generated asset. View loads only the initial graph; Plan, Devices and Background
 share one editor runtime loaded on first intent. An empty installation loads a
@@ -121,7 +127,7 @@ the same profiler available between stable promotions.
 
 ## Key decisions
 
-1. **One repository — integration + card.** The integration serves the JS through
+1. **One repository — integration + panel + cards.** The integration serves the JS through
    `async_register_static_paths`; the exact versioned module URL is the shared
    resource identity. A writable Lovelace resource registry is authoritative.
    YAML resources mode, an unavailable registry and terminal registration errors
@@ -134,6 +140,16 @@ the same profiler available between stable promotions.
    View offers a manual reload, while kiosk may reload once per backend target and
    browser-tab session only in a safe idle state. `custom:houseplan-space-card`
    loads the same bundle but has no independent banner or reload controller.
+   After storage migrations/repairs succeed, setup also registers a public HA
+   custom panel at `/houseplan` with `require_admin=False`. The panel is a thin
+   app-bar and container-size host around one ordinary `houseplan-card`; it does
+   not introduce another configuration model or map HA kiosk state to card
+   kiosk. Registration is fail-soft: a missing panel asset, foreign path
+   collision or frontend API failure leaves the backend and Lovelace cards
+   usable. Ownership is proven by the exact HA panel-registry object plus setup
+   generation before unload removes `/houseplan`; foreign or newer panels are
+   never overwritten or removed. System Health exposes bounded status codes and
+   public URLs without exception text or private filesystem data.
 2. **Icon layout lives on the server.** `helpers.storage.Store(1, "houseplan.layout")` →
    `.storage/houseplan.layout`. The card reads/writes via `hass.callWS`
    (`houseplan/layout/get|set|update`). Fallback — localStorage (when the integration is absent).

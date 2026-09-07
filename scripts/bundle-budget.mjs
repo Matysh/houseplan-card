@@ -2,6 +2,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { assertBundleManifest } from './bundle-tree.mjs';
 
 // #352: the budget guards the CLASS of regression — tens of kilobytes from
 // an accidentally imported dependency or an eagerly bundled dictionary —
@@ -40,6 +41,7 @@ import { pathToFileURL } from 'node:url';
 // отдельный adapter. Новый бюджет — целая часть прежней верхней границы 10%
 // над фактом #367 и оставляет 976 Б запаса; следующий рост обязан решать #367.
 export const INITIAL_VIEW_GZIP_BUDGET = 301_066;
+export const INITIAL_PANEL_ONLY_GZIP_BUDGET = 8 * 1024;
 
 /**
  * Порог, ниже которого запас перестаёт быть запасом (#367).
@@ -273,10 +275,12 @@ export function lowHeadroomWarning(headroom, {
     + ' смотрите ленивые графы (#367).' + stale;
 }
 
-export function assertBundleBudget(manifest, budget = INITIAL_VIEW_GZIP_BUDGET) {
-  if (manifest?.schema !== 1 || !Array.isArray(manifest.files)) {
-    throw new Error('invalid houseplan-assets.json');
-  }
+export function assertBundleBudget(
+  manifest,
+  budget = INITIAL_VIEW_GZIP_BUDGET,
+  panelOnlyBudget = INITIAL_PANEL_ONLY_GZIP_BUDGET,
+) {
+  assertBundleManifest(manifest);
   if (!manifest.lazyEditorFiles?.length) {
     throw new Error('bundle has no lazy editor graph');
   }
@@ -318,8 +322,16 @@ export function assertBundleBudget(manifest, budget = INITIAL_VIEW_GZIP_BUDGET) 
       `initial View graph ${manifest.initialViewGzipBytes} B gzip exceeds ${budget} B budget`,
     );
   }
+  if (manifest.initialPanelOnlyGzipBytes > panelOnlyBudget) {
+    throw new Error(
+      `initial panel-only graph ${manifest.initialPanelOnlyGzipBytes} B gzip exceeds`
+        + ` ${panelOnlyBudget} B budget`,
+    );
+  }
   return {
     initialViewGzipBytes: manifest.initialViewGzipBytes,
+    initialPanelGzipBytes: manifest.initialPanelGzipBytes,
+    initialPanelOnlyGzipBytes: manifest.initialPanelOnlyGzipBytes,
     lazyEditorGzipBytes: manifest.lazyEditorGzipBytes,
     lazyLocaleGzipBytes: manifest.lazyLocaleGzipBytes,
     lazyIsometricGzipBytes: manifest.lazyIsometricGzipBytes,
@@ -340,6 +352,10 @@ if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
       `initial View: ${result.initialViewGzipBytes} B gzip`
         + ` (потолок ${INITIAL_VIEW_GZIP_CEILING} B ±${INITIAL_VIEW_CEILING_BAND},`
         + ` budget ${INITIAL_VIEW_GZIP_BUDGET} B, headroom ${headroom} B)`,
+      `initial panel: ${result.initialPanelGzipBytes} B gzip`,
+      `initial panel-only: ${result.initialPanelOnlyGzipBytes} B gzip`
+        + ` (budget ${INITIAL_PANEL_ONLY_GZIP_BUDGET} B,`
+        + ` headroom ${INITIAL_PANEL_ONLY_GZIP_BUDGET - result.initialPanelOnlyGzipBytes} B)`,
       `lazy editor: ${result.lazyEditorGzipBytes} B gzip`,
       `lazy locale: ${result.lazyLocaleGzipBytes} B gzip`,
       `lazy isometric: ${result.lazyIsometricGzipBytes} B gzip`,
@@ -356,6 +372,9 @@ if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
         `| граф | gzip | бюджет | запас |`,
         `|---|---|---|---|`,
         `| initial View | ${result.initialViewGzipBytes} B | ${INITIAL_VIEW_GZIP_BUDGET} B | ${headroom} B |`,
+        `| initial panel-only | ${result.initialPanelOnlyGzipBytes} B |`
+          + ` ${INITIAL_PANEL_ONLY_GZIP_BUDGET} B |`
+          + ` ${INITIAL_PANEL_ONLY_GZIP_BUDGET - result.initialPanelOnlyGzipBytes} B |`,
         `| потолок (#438) | ${INITIAL_VIEW_GZIP_CEILING} B | полоса ${INITIAL_VIEW_CEILING_BAND} B |`
           + ` ${INITIAL_VIEW_GZIP_CEILING - result.initialViewGzipBytes} B до потолка |`,
         ...(warning ? ['', `> ${warning}`] : []),

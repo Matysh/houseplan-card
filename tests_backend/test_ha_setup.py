@@ -82,6 +82,75 @@ async def test_missing_frontend_bundle_does_not_skip_backend_setup(
     assert state.loader == "none"
 
 
+async def test_panel_registration_runs_after_repair_and_initial_housekeeping(
+    hass: HomeAssistant, monkeypatch
+) -> None:
+    """The optional sidebar surface must be the final entry setup operation."""
+    import custom_components.houseplan as integration
+
+    order: list[str] = []
+
+    async def check_plan_files(_hass, _entry) -> None:
+        order.append("repair")
+
+    def sweep_uploads(_path) -> int:
+        order.append("sweep")
+        return 0
+
+    async def setup_panel(_hass, entry, path) -> None:
+        assert entry.runtime_data.sweep is not None
+        assert path.name == "houseplan-panel.js"
+        order.append("panel")
+
+    monkeypatch.setattr(integration, "async_check_plan_files", check_plan_files)
+    monkeypatch.setattr(integration, "sweep_upload_temps", sweep_uploads)
+    monkeypatch.setattr(integration, "collect_attachments", lambda *_: 0)
+    monkeypatch.setattr(integration, "collect_plans", lambda *_: 0)
+    monkeypatch.setattr(integration, "async_setup_panel_registration", setup_panel)
+
+    entry = await _setup(hass)
+
+    assert entry.state.value == "loaded"
+    assert order == ["repair", "sweep", "panel"]
+
+
+async def test_panel_api_failure_does_not_abort_entry_setup(
+    hass: HomeAssistant, monkeypatch
+) -> None:
+    """Panel registration is fail-soft after the backend has become usable."""
+    from custom_components.houseplan import panel_registration
+    from custom_components.houseplan.frontend_registration import (
+        StaticPathRegistrationOutcome,
+    )
+
+    real_is_file = Path.is_file
+    monkeypatch.setattr(
+        Path,
+        "is_file",
+        lambda path: True
+        if path.name == "houseplan-panel.js"
+        else real_is_file(path),
+    )
+    monkeypatch.setattr(
+        panel_registration,
+        "async_register_frontend_static_path",
+        AsyncMock(return_value=StaticPathRegistrationOutcome(True)),
+    )
+    monkeypatch.setattr(
+        panel_registration.panel_custom,
+        "async_register_panel",
+        AsyncMock(side_effect=RuntimeError("private failure details")),
+    )
+
+    entry = await _setup(hass)
+
+    assert entry.state.value == "loaded"
+    state = panel_registration.get_panel_registration_state(hass)
+    assert state is not None
+    assert state.panel_status == "registration_error"
+    assert state.panel_error == "registration:RuntimeError"
+
+
 async def test_unload(hass: HomeAssistant) -> None:
     entry = await _setup(hass)
     assert await hass.config_entries.async_unload(entry.entry_id)

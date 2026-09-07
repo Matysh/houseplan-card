@@ -107,6 +107,7 @@ jobs:
           node scripts/verify-houseplan-zip.mjs houseplan.zip \
             custom_components/houseplan/frontend "$VERSION"
           test -s dist/houseplan-card.js
+          test -s dist/houseplan-panel.js
           test -s houseplan.zip
       - name: Create or verify the annotated tag
         env:

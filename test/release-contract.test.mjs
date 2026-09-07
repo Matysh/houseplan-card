@@ -226,6 +226,7 @@ test('manual publish workflow is draft-first, exact-SHA gated and self-contained
     'node scripts/release-gate.mjs',
     '--draft --prerelease',
     "'houseplan-card.js', 'houseplan.zip'",
+    'test -s dist/houseplan-panel.js',
     '--draft=false --prerelease',
     'Verify HACS prerelease discovery order',
     'group: publish-prerelease-${{ inputs.tag }}',

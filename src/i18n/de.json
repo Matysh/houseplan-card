@@ -53,6 +53,7 @@
   "count.devices": "{n} Entwicklung",
   "empty.no_spaces": "Noch keine Bereiche.",
   "empty.add_first": "Ersten Bereich hinzufügen und einen Grundriss hochladen.",
+  "empty.read_only": "Es sind keine Bereiche eingerichtet. Bitten Sie einen Administrator, einen hinzuzufügen.",
   "empty.install": "Installieren Sie die House Plan-Integration und fügen Sie sie unter „Geräte & Dienste“ hinzu.",
   "btn.add_space": "Bereich hinzufügen",
   "btn.cancel": "Abbrechen",
