@@ -28,6 +28,7 @@ GitHub Issues и GitHub Projects (v2) остаются единственным 
 
 | Issue | ТЗ |
 |---|---|
+| [#482](https://github.com/Matysh/houseplan-card/issues/482) Доводка экспорта пространства в PDF | [482-pdf-export-polish.md](482-pdf-export-polish.md) |
 | [#471](https://github.com/Matysh/houseplan-card/issues/471) Убрать белые raised plates вокруг маркеров и названий комнат | [471-isometric-overlay-white-plates.md](471-isometric-overlay-white-plates.md) |
 | [#6](https://github.com/Matysh/houseplan-card/issues/6) Vacuum XCME path segments | [006-vacuum-xcme-path.md](006-vacuum-xcme-path.md) |
 | [#7](https://github.com/Matysh/houseplan-card/issues/7) Valetudo room outlines | [007-vacuum-valetudo-room-outlines.md](007-vacuum-valetudo-room-outlines.md) |
