@@ -18,6 +18,7 @@ export interface PdfDialogContext {
   backdropUrl: string;
   decorAssets: ReadonlyMap<string, PdfAssetReference>;
   sharedWallGeometry?: PdfSharedWallGeometry | null;
+  resolveInnerContour?: (roomId: string) => number[][] | null | undefined;
   t: (key: string, vars?: Record<string, string | number>) => string;
   toast: (message: string) => void;
   close: () => void;

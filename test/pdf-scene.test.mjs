@@ -1,6 +1,5 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { performance } from 'node:perf_hooks';
 import { buildPdfPage } from '../test-build/pdf/pdf-scene.js';
 import { stableDimensionEdges } from '../test-build/pdf/pdf-dimensions.js';
 import { makeLargeHouseFixture } from '../demo/fixtures/large-house.mjs';
@@ -10,7 +9,7 @@ import {
   geometryOpenings, geometryPartitionOpeningCuts, geometryRoomOpeningInputs,
 } from '../test-build/plan-geometry-preflight.js';
 import { spaceModels, GRID_PITCH, GRID_STEP_N, NORM_W } from '../test-build/space-geometry.js';
-import { wallBodiesGeometry } from '../test-build/wall-thickness.js';
+import { innerContourForRoom, wallBodiesGeometry } from '../test-build/wall-thickness.js';
 import { resolveZeroWalls } from '../test-build/zero-walls.js';
 
 const rawSpace = {
@@ -208,18 +207,28 @@ test('current 20-room large-house space builds from the visible geometry cache u
     largeSpace.rooms, largeRaw.walls, zero.contour, roomOpenings,
     GRID_STEP_N, cellCm, GRID_PITCH, NORM_W, extras,
   );
+  const innerContours = new Map(largeSpace.rooms.map((room) => [room.id, innerContourForRoom(
+    largeSpace.rooms, room.id, largeRaw.walls, zero.contour, GRID_STEP_N,
+    cellCm, GRID_PITCH, NORM_W, sharedWallGeometry.roomGeom, sharedWallGeometry.multiWallNodes,
+  )]));
   // The full suite runs test files concurrently on CI. Measuring wall time here would
   // count periods when this worker is descheduled, so use the CPU consumed by the
   // scene build itself while keeping the agreed 200 ms product budget unchanged.
   const started = process.cpuUsage();
+  let contourCacheReads = 0;
   buildPdfPage({
     config: largeConfig, rawSpace: largeRaw, space: largeSpace, layout: fixture.layout,
     sharedWallGeometry,
+    resolveInnerContour: (roomId) => {
+      contourCacheReads++;
+      return innerContours.get(roomId);
+    },
     options: { dimensions: true, roomNames: true, decor: true, backdrop: false },
     imperial: false, cardTitle: 'House', version: 'test',
     now: new Date('2026-09-07T00:00:00Z'), t,
   });
   const elapsed = process.cpuUsage(started);
   const elapsedMs = (elapsed.user + elapsed.system) / 1000;
+  assert.equal(contourCacheReads, largeSpace.rooms.length);
   assert.ok(elapsedMs < 200, `PDF scene build used ${elapsedMs.toFixed(1)} ms of CPU`);
 });

@@ -10688,6 +10688,8 @@ export class HouseplanCard extends LitElement {
     for (const [id, asset] of this._decorAssets) {
       decorAssets.set(id, { url: this._display(asset.url), mime: asset.mime });
     }
+    const sharedWallGeometry = this._wallUnionGeometry();
+    const openCuts = this._openCuts();
     return runtime.render({
       config: this._serverCfg,
       rawSpace,
@@ -10699,7 +10701,10 @@ export class HouseplanCard extends LitElement {
       hass: this.hass,
       backdropUrl: space.bg ? this._display(space.bg.href) : '',
       decorAssets,
-      sharedWallGeometry: this._wallUnionGeometry(),
+      sharedWallGeometry,
+      resolveInnerContour: (roomId) => this._innerRoomContour(
+        space, roomId, openCuts, sharedWallGeometry?.roomGeom, sharedWallGeometry?.multiWallNodes,
+      ),
       t: (key, vars) => this._t(key as I18nKey, vars),
       toast: (message) => this._showToast(message),
       close: () => { this._pdfDialog = false; this.requestUpdate(); },

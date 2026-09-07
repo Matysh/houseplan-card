@@ -68,6 +68,8 @@ export interface PdfSceneInput {
   rasters?: readonly PdfRasterPlacement[];
   /** The exact structural pass already used by the visible card. */
   sharedWallGeometry?: PdfSharedWallGeometry | null;
+  /** The visible card's per-room clean-floor cache, resolved only when dimensions are requested. */
+  resolveInnerContour?: (roomId: string) => number[][] | null | undefined;
 }
 
 const MM = 72 / 25.4;
@@ -210,10 +212,11 @@ export function buildPdfPage(input: PdfSceneInput): PdfPage & { scale: number } 
   if (input.options.dimensions) for (const room of input.space.rooms) {
     const original = roomPoly(room);
     if (!original) continue;
-    dimensionContours.set(room, room.id ? innerContourForRoom(
+    const shared = room.id ? input.resolveInnerContour?.(room.id) : undefined;
+    dimensionContours.set(room, room.id ? (shared === undefined ? innerContourForRoom(
       input.space.rooms, room.id, built.walls, built.zero.contour, GRID_STEP_N,
       built.cellCm, GRID_PITCH, NORM_W, built.geometry.roomGeom, built.geometry.multiWallNodes,
-    ) || original : original);
+    ) : shared) || original : original);
   }
   const architectureRings = built.geometry.status === 'failed-core'
     ? input.space.rooms.map((room) => roomPoly(room) || []).filter((ring) => ring.length)
