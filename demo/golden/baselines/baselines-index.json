@@ -1,12 +1,12 @@
 {
   "schema": 1,
-  "matrixVersion": 57,
-  "acceptedAt": "2026-09-07T02:12:07.024Z",
-  "sourceFingerprint": "be1f77110b0cecb8df31bb3975762395858023520ad1bbdb0a4840f2ea028077",
+  "matrixVersion": 58,
+  "acceptedAt": "2026-09-07T08:45:31.221Z",
+  "sourceFingerprint": "219d306c8803bbfba431837fafe6e6352c405971c4e6fed12893aa5d23d62577",
   "chromium": "151.0.7922.34",
-  "platform": "win32",
+  "platform": "linux",
   "witnesses": {
-    "count": 100,
+    "count": 138,
     "floor": 10
   },
   "scenarios": {
@@ -37,7 +37,8 @@
     "isometric-stage3-no-filter-dark": "277e79c005736ed81135f70517902ccea4d4300ee886e0cf05eb027e7b46d687",
     "geometry-view-dark-fit": "1ea111a2f68d71c2d2269ee65ac70b586b7d8a3a76f550bb1caf8d154bf42b26",
     "geometry-view-light-fit": "80bbb618619731dcb9dbd5e872785f32f1e52ff71ce989a2154c5f1218812eda",
-    "pdf-export-geometry-light": "34db73d337876dd4461dd4431c4909c85ea3a4a95fa5849e72839c8d18ff1e03",
+    "pdf-export-geometry-light": "e4ec34560b1cda4312ea3acb7116fbfcc31c67f90279b379efb2ca9de56f8b66",
+    "pdf-export-polish-light": "92382536b8300a813b842e729d9ff2454c579936069b4f88ec3afce19946f413",
     "vacuum-trail-smoothing-dark": "b33ddbfaed72f51e601576bbf87664a08578fbce5c22c69a11d83cc2644ff312",
     "room-label-parity-view-dark": "eea967d733bea8c08242d9265e572dc13ee90894e0df71a4ca93cee7631f7fef",
     "room-label-parity-plan-dark": "dfc804fa1aa5bc0222759463195bae0751513e0e428c8eae0bbc9d49fbc5a1b9",
