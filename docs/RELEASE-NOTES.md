@@ -1,20 +1,18 @@
-<!-- release: v1.73.0-beta.3 -->
+<!-- release: v1.73.0-beta.4 -->
 
 ## Основное
 
-- Текущее пространство теперь можно сохранить как чистый одностраничный PDF A4
-  с архитектурой, названиями комнат, площадями и размерами. Мебель, декор и
-  подложка добавляются по желанию
-  ([#53](https://github.com/Matysh/houseplan-card/issues/53)).
+- PDF-экспорт стал аккуратнее и удобнее для печати: размеры больше не
+  дублируются и не пересекают план, стены получили штриховку, а сам план лучше
+  заполняет страницу ([#482](https://github.com/Matysh/houseplan-card/issues/482)).
 - Мелкие исправления и улучшения.
 
 ## Highlights
 
-- The current space can now be saved as a clean one-page A4 PDF with
-  architectural geometry, room names, areas and dimensions. Furniture, decor
-  and the backdrop are optional
-  ([#53](https://github.com/Matysh/houseplan-card/issues/53)).
+- PDF export is now cleaner and more print-ready: dimensions no longer repeat
+  or cross the plan, walls are hatched, and the plan uses the page more
+  effectively ([#482](https://github.com/Matysh/houseplan-card/issues/482)).
 - Small fixes and improvements.
 
-[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.73.0-beta.3/docs/CHANGELOG.ru.md)
-· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.73.0-beta.3/docs/CHANGELOG.md)
+[Полный список изменений на русском](https://github.com/Matysh/houseplan-card/blob/v1.73.0-beta.4/docs/CHANGELOG.ru.md)
+· [Full changelog in English](https://github.com/Matysh/houseplan-card/blob/v1.73.0-beta.4/docs/CHANGELOG.md)

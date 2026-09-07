@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.73.0-beta.4 — 2026-09-07
+
 - PDF export now fits its complete scene more efficiently on the page, uses
   hatched grey walls and a proper vector compass, and presents cleaner
   horizontal/vertical dimensions without locally duplicated opposite sides or
