@@ -4,7 +4,7 @@ import { buildPdfPage } from '../test-build/pdf/pdf-scene.js';
 import { stableDimensionEdges } from '../test-build/pdf/pdf-dimensions.js';
 import { makeLargeHouseFixture } from '../demo/fixtures/large-house.mjs';
 import { fixtureWallKey } from '../demo/fixtures/wall-key.mjs';
-import { physicalBodyParts } from '../test-build/physical-geometry.js';
+import { floorMinusBodies, geometryArea, physicalBodyParts } from '../test-build/physical-geometry.js';
 import {
   geometryOpenings, geometryPartitionOpeningCuts, geometryRoomOpeningInputs,
 } from '../test-build/plan-geometry-preflight.js';
@@ -211,17 +211,31 @@ test('current 20-room large-house space builds from the visible geometry cache u
     largeSpace.rooms, room.id, largeRaw.walls, zero.contour, GRID_STEP_N,
     cellCm, GRID_PITCH, NORM_W, sharedWallGeometry.roomGeom, sharedWallGeometry.multiWallNodes,
   )]));
+  const roomAreas = new Map(largeSpace.rooms.map((room) => {
+    const contour = innerContours.get(room.id);
+    const cleaned = extras.length ? floorMinusBodies(contour, extras) : null;
+    const area = cleaned ? geometryArea(cleaned) : Math.abs(contour.reduce((sum, point, index) => {
+      const next = contour[(index + 1) % contour.length];
+      return sum + point[0] * next[1] - next[0] * point[1];
+    }, 0) / 2);
+    return [room.id, area];
+  }));
   // The full suite runs test files concurrently on CI. Measuring wall time here would
   // count periods when this worker is descheduled, so use the CPU consumed by the
   // scene build itself while keeping the agreed 200 ms product budget unchanged.
   const started = process.cpuUsage();
   let contourCacheReads = 0;
+  let areaCacheReads = 0;
   buildPdfPage({
     config: largeConfig, rawSpace: largeRaw, space: largeSpace, layout: fixture.layout,
     sharedWallGeometry,
     resolveInnerContour: (roomId) => {
       contourCacheReads++;
       return innerContours.get(roomId);
+    },
+    resolveRoomArea: (roomId) => {
+      areaCacheReads++;
+      return roomAreas.get(roomId);
     },
     options: { dimensions: true, roomNames: true, decor: true, backdrop: false },
     imperial: false, cardTitle: 'House', version: 'test',
@@ -230,5 +244,6 @@ test('current 20-room large-house space builds from the visible geometry cache u
   const elapsed = process.cpuUsage(started);
   const elapsedMs = (elapsed.user + elapsed.system) / 1000;
   assert.equal(contourCacheReads, largeSpace.rooms.length);
+  assert.equal(areaCacheReads, largeSpace.rooms.length);
   assert.ok(elapsedMs < 200, `PDF scene build used ${elapsedMs.toFixed(1)} ms of CPU`);
 });

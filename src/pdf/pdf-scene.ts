@@ -70,6 +70,8 @@ export interface PdfSceneInput {
   sharedWallGeometry?: PdfSharedWallGeometry | null;
   /** The visible card's per-room clean-floor cache, resolved only when dimensions are requested. */
   resolveInnerContour?: (roomId: string) => number[][] | null | undefined;
+  /** Area in render units from the same clean-floor cache used by the visible card. */
+  resolveRoomArea?: (roomId: string, contour: number[][]) => number | undefined;
 }
 
 const MM = 72 / 25.4;
@@ -383,11 +385,15 @@ export function buildPdfPage(input: PdfSceneInput): PdfPage & { scale: number } 
     const original = roomPoly(room);
     if (!original) continue;
     const contour = dimensionContours.get(room) || original;
-    const localBodies = input.options.dimensions
+    const cachedArea = input.options.dimensions && room.id
+      ? input.resolveRoomArea?.(room.id, contour) : undefined;
+    const localBodies = input.options.dimensions && !Number.isFinite(cachedArea)
       ? bodiesOverlappingRing(contour, built.extras) : [];
     const candidates = localBodies.length ? floorMinusBodies(contour, localBodies) : null;
-    const areaUnits = candidates ? geometryArea(candidates) : Math.abs(
-      contour.reduce((sum, p, i) => { const q = contour[(i + 1) % contour.length]; return sum + p[0] * q[1] - q[0] * p[1]; }, 0) / 2);
+    const areaUnits = Number.isFinite(cachedArea) && (cachedArea as number) >= 0
+      ? cachedArea as number
+      : candidates ? geometryArea(candidates) : Math.abs(
+        contour.reduce((sum, p, i) => { const q = contour[(i + 1) % contour.length]; return sum + p[0] * q[1] - q[0] * p[1]; }, 0) / 2);
     const label = labelPos(room, input.space.id, input.layout, input.config);
     const [labelX, labelY] = pt([label.x, label.y]);
     const pageContour = contour.map(pt);

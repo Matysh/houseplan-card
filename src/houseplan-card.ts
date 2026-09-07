@@ -10690,6 +10690,7 @@ export class HouseplanCard extends LitElement {
     }
     const sharedWallGeometry = this._wallUnionGeometry();
     const openCuts = this._openCuts();
+    const roomsById = new Map(space.rooms.flatMap((room) => room.id ? [[room.id, room]] : []));
     return runtime.render({
       config: this._serverCfg,
       rawSpace,
@@ -10705,6 +10706,10 @@ export class HouseplanCard extends LitElement {
       resolveInnerContour: (roomId) => this._innerRoomContour(
         space, roomId, openCuts, sharedWallGeometry?.roomGeom, sharedWallGeometry?.multiWallNodes,
       ),
+      resolveRoomArea: (roomId, contour) => {
+        const room = roomsById.get(roomId);
+        return room ? this._cleanFloor(room, contour, space).area : undefined;
+      },
       t: (key, vars) => this._t(key as I18nKey, vars),
       toast: (message) => this._showToast(message),
       close: () => { this._pdfDialog = false; this.requestUpdate(); },
