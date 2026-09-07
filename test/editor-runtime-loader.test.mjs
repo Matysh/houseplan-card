@@ -221,7 +221,7 @@ test('lazy failure toast wording follows terminality (#353 AC5)', async () => {
   );
 });
 
-test('the two user-facing card loaders route their toast through lazyLoadFailureMessage (#353 AC5)', async () => {
+test('user-facing card loaders route their toast through lazyLoadFailureMessage (#353 AC5)', async () => {
   const ts = (await import('typescript')).default;
   const source = readFileSync(join(repoRoot, 'src', 'houseplan-card.ts'), 'utf8');
   const file = ts.createSourceFile(
@@ -237,8 +237,8 @@ test('the two user-facing card loaders route their toast through lazyLoadFailure
     ts.forEachChild(node, visit);
   };
   visit(file);
-  assert.equal(callbacks.length, 3,
-    'editor, onboarding and hidden isometric runtimes all declare failed callbacks');
+  assert.equal(callbacks.length, 4,
+    'editor, onboarding, PDF and hidden isometric runtimes all declare failed callbacks');
   let forwardedCallbacks = 0;
   for (const callback of callbacks) {
     assert.equal(callback.parameters.length, 2, 'the failure info parameter must be declared');
@@ -256,6 +256,6 @@ test('the two user-facing card loaders route their toast through lazyLoadFailure
     inspect(callback.body);
     if (forwards) forwardedCallbacks++;
   }
-  assert.equal(forwardedCallbacks, 2,
-    'only editor and onboarding are user-facing; both must forward terminality to the toast');
+  assert.equal(forwardedCallbacks, 3,
+    'editor, onboarding and PDF are user-facing; all must forward terminality to the toast');
 });

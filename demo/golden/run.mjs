@@ -32,6 +32,65 @@ mkdirSync(diffRoot, { recursive: true });
 
 const sha256 = (buffer) => createHash('sha256').update(buffer).digest('hex');
 
+async function renderPdfGoldenPage(page) {
+  const downloadPromise = page.waitForEvent('download');
+  await page.evaluate(async () => {
+    const card = window.__goldenCard;
+    if (!card || !(await card._pdfRuntimeLoader.ensure()))
+      throw new Error('golden PDF runtime did not load');
+    card._pdfDialog = true;
+    card.requestUpdate();
+    await card.updateComplete;
+    const dialog = card.renderRoot.querySelector('hp-pdf-dialog');
+    if (!dialog) throw new Error('golden PDF dialog did not open');
+    await dialog.updateComplete;
+    dialog.context.now = new Date('2026-09-07T00:00:00Z');
+    await dialog.context.save({
+      dimensions: true, roomNames: true, decor: false, backdrop: false,
+    });
+    dialog.context.close();
+    await card.updateComplete;
+  });
+  const download = await downloadPromise;
+  const path = await download.path();
+  if (!path) throw new Error('golden PDF download has no local path');
+  const pdfBase64 = readFileSync(path).toString('base64');
+  const rendered = await page.evaluate(async (base64) => {
+    const pdfjs = await import('/__pdfjs/pdf.mjs');
+    pdfjs.GlobalWorkerOptions.workerSrc = '/__pdfjs/pdf.worker.mjs';
+    const bytes = Uint8Array.from(atob(base64), (character) => character.charCodeAt(0));
+    const pdfDocument = await pdfjs.getDocument({ data: bytes }).promise;
+    if (pdfDocument.numPages !== 1) throw new Error(`golden PDF has ${pdfDocument.numPages} pages`);
+    const sheet = await pdfDocument.getPage(1);
+    const natural = sheet.getViewport({ scale: 1 });
+    const scale = Math.min((innerWidth - 48) / natural.width, (innerHeight - 48) / natural.height);
+    const viewport = sheet.getViewport({ scale });
+    const overlay = document.createElement('div');
+    overlay.id = 'golden-pdf-page';
+    Object.assign(overlay.style, {
+      position: 'fixed', inset: '0', zIndex: '2147483647', display: 'grid', placeItems: 'center',
+      background: '#d9dde2',
+    });
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.ceil(viewport.width);
+    canvas.height = Math.ceil(viewport.height);
+    Object.assign(canvas.style, {
+      width: `${canvas.width}px`, height: `${canvas.height}px`, background: '#fff',
+      boxShadow: '0 8px 28px rgb(0 0 0 / 24%)',
+    });
+    overlay.append(canvas);
+    document.body.append(overlay);
+    const context = canvas.getContext('2d');
+    if (!context) throw new Error('golden PDF canvas is unavailable');
+    await sheet.render({ canvasContext: context, viewport }).promise;
+    return { pages: pdfDocument.numPages, width: natural.width, height: natural.height };
+  }, pdfBase64);
+  const a4 = [rendered.width, rendered.height].sort((a, b) => a - b);
+  if (Math.abs(a4[0] - 595.28) > 0.2 || Math.abs(a4[1] - 841.89) > 0.2)
+    throw new Error(`golden PDF is not A4: ${rendered.width}x${rendered.height}`);
+  return rendered;
+}
+
 async function comparePng(page, actual, baseline, threshold) {
   return page.evaluate(async ({ actual64, baseline64, threshold }) => {
     const decode = async (base64) => {
@@ -628,6 +687,12 @@ for (const page of pagesByScale.values()) {
   const errors = [];
   pageErrors.set(page, errors);
   page.on('pageerror', (error) => errors.push(error.message));
+  for (const name of ['pdf.mjs', 'pdf.worker.mjs']) {
+    await page.route(`http://demo.local/__pdfjs/${name}`, (route) => route.fulfill({
+      contentType: 'text/javascript',
+      body: readFileSync(resolve(ROOT, 'node_modules', 'pdfjs-dist', 'build', name)),
+    }));
+  }
 }
 let buildFingerprint = null;
 try {
@@ -646,6 +711,7 @@ try {
     try {
       activePageErrors.length = 0;
       result.runtime = await prepareGoldenScenario(page, scenario);
+      if (scenario.pdfExport) result.pdfExport = await renderPdfGoldenPage(page);
       const actualScale = await page.evaluate(() => devicePixelRatio);
       result.deviceScaleFactor = actualScale;
       if (Math.abs(actualScale - expectedScale) > 0.001)

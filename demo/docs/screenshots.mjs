@@ -4,7 +4,7 @@
  * `scripts/docs-accept.mjs` (#246). Импортировать его из `capture.mjs` нельзя —
  * тот скрипт при импорте поднимает браузер и снимает картинки.
  */
-export const DOC_SCREENSHOT_VERSION = 1;
+export const DOC_SCREENSHOT_VERSION = 2;
 export const DOC_SCREENSHOTS = Object.freeze([
   {
     id: 'view-desktop', file: '01-view-desktop.png', fixture: 'visual',
@@ -71,5 +71,11 @@ export const DOC_SCREENSHOTS = Object.freeze([
     deviceId: 'golden-light-two', deviceName: 'Living-room ceiling light',
     title: 'House Plan — synthetic home', language: 'en', theme: 'dark',
     viewport: { width: 1000, height: 900 }, capture: 'page', expectDialog: true,
+  },
+  {
+    id: 'pdf-export', file: '10-pdf-export.png', fixture: 'visual',
+    space: 'golden-geometry', mode: 'view', dialog: 'pdf',
+    title: 'House Plan — synthetic home', language: 'en', theme: 'light',
+    viewport: { width: 900, height: 760 }, capture: 'page', expectDialog: true,
   },
 ]);

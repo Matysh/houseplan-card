@@ -1,7 +1,7 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 56;
+export const GOLDEN_MATRIX_VERSION = 57;
 
 const stage = { capture: 'stage', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0005 } };
 const page = { capture: 'page', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0008 } };
@@ -355,6 +355,8 @@ export const GOLDEN_SCENARIOS = Object.freeze([
     theme: 'dark', viewport: { width: 1000, height: 900 }, ...stage },
   { id: 'geometry-view-light-fit', fixture: 'visual', space: 'golden-geometry', mode: 'view',
     theme: 'light', viewport: { width: 1000, height: 900 }, ...stage },
+  { id: 'pdf-export-geometry-light', fixture: 'visual', space: 'golden-geometry', mode: 'view',
+    pdfExport: true, theme: 'light', viewport: { width: 1000, height: 900 }, ...page },
   { id: 'vacuum-trail-smoothing-dark', fixture: 'visual', space: 'golden-geometry', mode: 'view',
     vacuumTrail: {
       maxDeviationCm: 17.5,

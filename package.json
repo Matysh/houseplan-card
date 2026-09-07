@@ -43,7 +43,9 @@
     "benchmark:wall-draw-click": "node demo/benchmark_wall_draw_click.mjs",
     "benchmark:zigbee-topology": "tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs && node demo/benchmark_zigbee_topology.mjs",
     "furniture:generate": "node scripts/generate-furniture-assets.mjs",
-    "furniture:check": "node scripts/generate-furniture-assets.mjs --check"
+    "furniture:check": "node scripts/generate-furniture-assets.mjs --check",
+    "pdf-font:generate": "node scripts/generate-pdf-font.mjs",
+    "pdf-font:check": "node scripts/generate-pdf-font.mjs --check"
   },
   "devDependencies": {
     "@mdi/js": "^7.4.47",
@@ -51,8 +53,11 @@
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-terser": "^0.4.4",
     "@rollup/plugin-typescript": "^11.1.6",
+    "opentype.js": "^1.3.4",
+    "pdfjs-dist": "^6.3.289",
     "playwright": "^1.62.0",
     "rollup": "^4.18.0",
+    "subset-font": "^2.7.0",
     "tslib": "^2.6.2",
     "typescript": "^5.4.5"
   },

@@ -29,6 +29,7 @@ houseplan-card/
 │  ├─ houseplan-onboarding-runtime.ts # first-space/import dialogs, independent of editor
 │  ├─ iso-scene-render.ts        # hidden alpha-only Stage 3 scene/runtime boundary
 │  ├─ furniture-art-runtime.ts   # page-scoped lazy designer furniture artwork (ready/pending/fallback)
+│  ├─ pdf/                       # lazy read-only A4 scene, writer, dialog and embedded font
 │  ├─ iso-overlays.ts            # pure raised-overlay ownership, collision and nudge
 │  ├─ hp-dialog.ts               # shared HA/native modal shell, focus and transient-overlay lifecycle
 │  ├─ hp-confirm.ts              # presentation for shared dangerous-action confirmation
@@ -77,6 +78,15 @@ entry URL stable and serves only manifest-listed JS basenames below
 `/houseplan_files/houseplan-assets/`. Performance, golden and smoke tooling
 verify the manifest and every asset before recording results, so a stale or
 partially copied tree cannot produce a false baseline.
+
+PDF export is a fourth independent, read-only runtime. Ordinary View contains
+only the administrator printer trigger and the same exact-build loader
+contract; the writer, print-scene geometry, dialog implementation, raster
+conversion and embedded Roboto subset stay in `lazyPdfFiles`. The runtime reads
+the already normalized current space and the same physical-geometry resolvers
+used by View, produces one deterministic A4 document in the browser and never
+writes config or layout. The manifest and bundle gate require a non-empty PDF
+graph and reject any overlap with the initial View graph.
 
 Prerelease publication has one fail-closed contract shared by the local command
 and the manual GitHub workflow. The tag version must match all six shipped

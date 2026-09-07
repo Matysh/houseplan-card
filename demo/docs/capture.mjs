@@ -132,6 +132,12 @@ const applyDocumentationState = (page, scenario) => page.evaluate(async (current
     card._infoCard = device;
   }
 
+  if (current.dialog === 'pdf') {
+    if (!(await card._pdfRuntimeLoader.ensure()))
+      throw new Error('documentation PDF runtime did not load');
+    card._pdfDialog = true;
+  }
+
   card.requestUpdate();
   await card.updateComplete;
   await frame();

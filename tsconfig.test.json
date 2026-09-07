@@ -34,7 +34,7 @@
     "src/align-grid.ts",
     "src/plan-optimizer.ts", "src/plan-optimize-write.ts", "src/space-reference-repair.ts", "src/space-deletion.ts", "src/space-copy.ts", "src/space-copy-runtime.ts",
     "src/plan-geometry-preflight.ts", "src/draft-live-preflight.ts", "src/draft-live-commit.ts",
-    "src/furniture.ts", "src/decor-assets.ts",
+    "src/furniture.ts", "src/furniture-plan-art.generated.ts", "src/decor-assets.ts",
     "src/floating-surface.ts", "src/floating-surface-controller.ts", "src/help-behavior.ts", "src/support-feedback.ts",
     "src/hp-help.ts", "src/hp-dialog.ts", "src/hp-color-opacity.ts", "src/danger-confirm.ts",
     "src/opening-placement.ts", "src/opening-dimensions.ts", "src/partition-openings.ts", "src/plan-snap-overlay.ts", "src/wall-face-graph.ts", "src/wall-face-repair.ts", "src/room-deletion.ts", "src/render/opening-symbol.ts",
@@ -46,6 +46,7 @@
     "src/open-spans.ts",
     "src/zero-walls.ts",
     "src/editors/decor/geometry.ts",
-    "src/backdrop-pick.ts", "src/decor-image-editor.ts"
+    "src/backdrop-pick.ts", "src/decor-image-editor.ts",
+    "src/pdf/pdf-font.generated.ts", "src/pdf/pdf-date.ts", "src/pdf/svg-path.ts", "src/pdf/pdf-writer.ts", "src/pdf/pdf-dimensions.ts", "src/pdf/pdf-raster.ts", "src/pdf/pdf-scene.ts"
   ]
 }

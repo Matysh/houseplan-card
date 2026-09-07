@@ -162,8 +162,14 @@ export const LOW_HEADROOM_WARNING_BYTES = 15_000;
  * бюджета. Удаление persisted room-draft веток снизило initial факт до
  * 288 571 Б: 929 Б сверху и 1 071 Б до нижней границы полосы. Экономия
  * закреплена и не превращается в разрешение для незаметного роста.
+ *
+ * 2026-09-07, #53: потолок перецентрирован 289 500 → 290 500 без изменения
+ * общего бюджета. Кнопка PDF и exact-build loader подняли initial факт до
+ * 289 556 Б; writer, шрифт, печатная сцена и общий дизайнерский арт мебели
+ * остались в `lazyPdfFiles` (114 486 Б gzip). Новый центр даёт 944 Б сверху и 1 056 Б
+ * снизу; PDF-граф не пересекается с initial View.
  */
-export const INITIAL_VIEW_GZIP_CEILING = 289_500;
+export const INITIAL_VIEW_GZIP_CEILING = 290_500;
 export const INITIAL_VIEW_CEILING_BAND = 2_000;
 
 /**
@@ -280,6 +286,9 @@ export function assertBundleBudget(manifest, budget = INITIAL_VIEW_GZIP_BUDGET) 
   if (!manifest.lazyIsometricFiles?.length) {
     throw new Error('bundle has no lazy isometric graph');
   }
+  if (!manifest.lazyPdfFiles?.length) {
+    throw new Error('bundle has no lazy PDF graph');
+  }
   // #474: designer furniture artwork is lazy; a static import anywhere in the
   // View graph would pull ~10 KB gzip back into the initial graph silently.
   if (!manifest.lazyFurnitureArtFiles?.length) {
@@ -297,6 +306,9 @@ export function assertBundleBudget(manifest, budget = INITIAL_VIEW_GZIP_BUDGET) 
   if (manifest.initialViewFiles.some((path) => manifest.lazyIsometricFiles.includes(path))) {
     throw new Error('initial View graph overlaps lazy isometric graph');
   }
+  if (manifest.initialViewFiles.some((path) => manifest.lazyPdfFiles.includes(path))) {
+    throw new Error('initial View graph overlaps lazy PDF graph');
+  }
   if (manifest.lazyLocaleFiles.some((path) => manifest.lazyEditorFiles.includes(path)
       || manifest.lazyOnboardingFiles?.includes(path))) {
     throw new Error('lazy locale graph overlaps an editor graph');
@@ -312,6 +324,7 @@ export function assertBundleBudget(manifest, budget = INITIAL_VIEW_GZIP_BUDGET) 
     lazyLocaleGzipBytes: manifest.lazyLocaleGzipBytes,
     lazyIsometricGzipBytes: manifest.lazyIsometricGzipBytes,
     lazyFurnitureArtGzipBytes: manifest.lazyFurnitureArtGzipBytes,
+    lazyPdfGzipBytes: manifest.lazyPdfGzipBytes,
   };
 }
 
@@ -330,6 +343,7 @@ if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
       `lazy editor: ${result.lazyEditorGzipBytes} B gzip`,
       `lazy locale: ${result.lazyLocaleGzipBytes} B gzip`,
       `lazy isometric: ${result.lazyIsometricGzipBytes} B gzip`,
+      `lazy PDF: ${result.lazyPdfGzipBytes} B gzip`,
     ];
     for (const line of lines) console.log(line);
     const warning = lowHeadroomWarning(headroom);

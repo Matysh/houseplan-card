@@ -29,6 +29,16 @@
 export const SMOKE_LINKS = [
   {
     symbols: [
+      'PdfExportRuntime', 'buildPdfPage', 'writePdf', 'stableDimensionEdges',
+      '_openPdfDialog', '_renderPdfDialog',
+    ],
+    smokes: ['smoke_pdf_export.mjs'],
+    because: 'the #53 production-bundle scenario proves the administrator button, cold-View '
+      + 'lazy boundary, real modal, remembered options, browser download and parseable A4 output; '
+      + 'those browser and network effects are outside the pure PDF scene and writer tests',
+  },
+  {
+    symbols: [
       'DEFAULT_LABELS', '_closePicker', '_commitHex', '_confirm',
       '_hexInvalid', '_hexNeedsValidInput', '_surface',
     ],

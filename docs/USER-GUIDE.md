@@ -964,6 +964,22 @@ With `fit: house` all four intentional paddings are already zero, so
 
 ## 19. Plan maintenance
 
+### Save the current space as PDF
+
+Administrators can press the printer button between **General settings** and
+**Help & feedback** to download the current space as a clean one-page A4 plan.
+The sheet always includes walls, partitions, columns and openings, but excludes
+devices, live states, Glow, sunlight, room colours, vacuum trails and Zigbee
+topology. The dialog can add dimensions and clean floor areas, room names,
+Background-editor decor and the space backdrop. Its choices are remembered in
+this browser.
+
+House Plan automatically selects portrait or landscape and a standard scale;
+the footer includes a scale bar, north when configured, date, version and a
+legend. The export is read-only and always uses the flat plan, including while
+the card is in isometric view. See [PDF export](PDF-EXPORT.md) for measurement,
+image-limit and font details.
+
 Current plans give every stored wall segment a stable internal identity. This
 keeps the wall's thickness and its door, window, gate or passage attached while
 Resize, Split, Merge and other structural tools change surrounding geometry.

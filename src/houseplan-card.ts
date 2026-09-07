@@ -409,6 +409,7 @@ const CARD_VERSION = '1.73.0-beta.2';
 const ENTRY_BUILD_FINGERPRINT = '__HOUSEPLAN_SOURCE_FINGERPRINT__';
 const EDITOR_RETRY_ASSET = '__HOUSEPLAN_EDITOR_RETRY_ASSET__';
 const ISO_RETRY_ASSET = '__HOUSEPLAN_ISO_RETRY_ASSET__';
+const PDF_RETRY_ASSET = '__HOUSEPLAN_PDF_RETRY_ASSET__';
 type ResizeLiveLabel = {
   kind: 'length';
   x: number;
@@ -786,6 +787,40 @@ export class HouseplanCard extends LitElement {
     failed: (_ignored, info) => {
       console.warn('[houseplan] hidden isometric runtime diagnostic', safeRuntimeDiagnostic('runtime-load', 'unverified', info.terminal));
       if (this.isConnected) this.requestUpdate();
+    },
+  });
+
+  /** #53: the PDF writer, font and print geometry never enter ordinary View. */
+  private _pdfRuntime: import('./pdf/pdf-export').PdfExportRuntime | null = null;
+  private readonly _pdfRuntimeLoader = new EditorRuntimeLoader<
+    import('./pdf/pdf-export').PdfExportRuntime
+  >({
+    expectedFingerprint: ENTRY_BUILD_FINGERPRINT,
+    load: async (attempt) => {
+      const module = attempt === 0
+        ? await import('./pdf/pdf-export')
+        : await import(/* @vite-ignore */ (() => {
+            const url = new URL(PDF_RETRY_ASSET, import.meta.url);
+            url.searchParams.set('hp_retry', `${CARD_VERSION}-${++hpLazyRetrySeq}`);
+            return url.href;
+          })()) as typeof import('./pdf/pdf-export');
+      return {
+        fingerprint: module.PDF_EXPORT_FINGERPRINT,
+        create: () => new module.PdfExportRuntime(),
+      };
+    },
+    install: (runtime) => {
+      this._pdfRuntime = runtime;
+      if (this.isConnected) this.requestUpdate();
+    },
+    failed: (error, info) => {
+      console.error('[houseplan] unable to load PDF export runtime', error);
+      if (!(info.terminal && this._versionRecovery.hasCurrentMismatchNotice)) {
+        const common = lazyLoadFailureMessage((key) => this._t(key), info);
+        const generic = this._t('editor.load_failed');
+        const advice = common.startsWith(generic) ? common.slice(generic.length).trim() : common;
+        this._showToast(`${this._t('pdf.failed')} ${advice}`.trim());
+      }
     },
   });
 
@@ -2126,6 +2161,7 @@ export class HouseplanCard extends LitElement {
     showRoomTooltip: boolean; zigbeeTopology: import('./zigbee-topology-settings').ZigbeeTopologySettings;
     busy: boolean;
   } | null = null;
+  private _pdfDialog = false;
   private _supportDialog: SupportDialogState | null = null;
   private _backupExportDialog: {
     kind: 'full' | 'space'; planOnly: boolean; busy: boolean; error: string;
@@ -2547,6 +2583,7 @@ export class HouseplanCard extends LitElement {
     _deviceInbox: { state: true },
     _rulesDialog: { state: true },
     _settingsDialog: { state: true },
+    _pdfDialog: { state: true },
     _supportDialog: { state: true },
     _alignDialog: { state: true },
     _preflightClipboardFallback: { state: true },
@@ -2815,6 +2852,7 @@ export class HouseplanCard extends LitElement {
       if (this._alignDialog) { this._alignDialog = null; this._preflightClipboardFallback = null; return; }
       if (this._backupImportDialog) { this._backupImportDialog = null; return; }
       if (this._backupExportDialog) { this._backupExportDialog = null; return; }
+      if (this._pdfDialog) { this._pdfDialog = false; return; }
       if (this._supportDialog) { void this._editorRuntime?._closeSupportDialog(); return; }
       if (this._settingsDialog) { this._settingsDialog = null; return; }
       if (this._markerDialog) { this._closeMarkerDialog(); return; }
@@ -7456,6 +7494,7 @@ export class HouseplanCard extends LitElement {
     this._preflightClipboardFallback = null;
     this._backupImportDialog = null;
     this._backupExportDialog = null;
+    this._pdfDialog = false;
     if (this._supportDialog?.preview?.token) {
       void this._editorRuntime?._discardSupportPreview(this._supportDialog.preview.token);
     }
@@ -10631,6 +10670,42 @@ export class HouseplanCard extends LitElement {
     this._editorRuntime._openSupportDialog();
   };
 
+  private _openPdfDialog = (): void => {
+    void this._pdfRuntimeLoader.ensure().then((ready) => {
+      if (ready) {
+        this._pdfDialog = true;
+        this.requestUpdate();
+      }
+    });
+  };
+
+  private _renderPdfDialog(): TemplateResult | typeof nothing {
+    const runtime = this._pdfRuntime;
+    const space = this._spaceModel();
+    const rawSpace = this._curSpaceCfg;
+    if (!runtime || !space || !rawSpace || !this._serverCfg) return nothing;
+    const decorAssets = new Map<string, { url: string; mime: string }>();
+    for (const [id, asset] of this._decorAssets) {
+      decorAssets.set(id, { url: this._display(asset.url), mime: asset.mime });
+    }
+    return runtime.render({
+      config: this._serverCfg,
+      rawSpace,
+      space,
+      layout: this._layout,
+      imperial: this._imperial,
+      cardTitle: this._config?.title || this._t('card.title'),
+      version: CARD_VERSION,
+      hass: this.hass,
+      backdropUrl: space.bg ? this._display(space.bg.href) : '',
+      decorAssets,
+      sharedWallGeometry: this._wallUnionGeometry(),
+      t: (key, vars) => this._t(key as I18nKey, vars),
+      toast: (message) => this._showToast(message),
+      close: () => { this._pdfDialog = false; this.requestUpdate(); },
+    });
+  }
+
   /**
    * Preview whole-plan maintenance. Nothing is written here: the pure run
    * produces both the report and the exact config/layout pair to commit.
@@ -11399,6 +11474,10 @@ export class HouseplanCard extends LitElement {
             ? html`<button class="btn header-action" @click=${this._openSettingsDialog} title=${this._t('title.general_settings')}>
                 <ha-icon icon="mdi:cog-outline"></ha-icon>
               </button>
+              <button class="btn header-action" @click=${this._openPdfDialog}
+                title=${this._t('title.export_pdf')} aria-label=${this._t('title.export_pdf')}>
+                <ha-icon icon="mdi:printer-outline"></ha-icon>
+              </button>
               <button class="btn header-action support-button" @click=${this._openSupportDialog}
                 title=${this._t('support.title')} aria-label=${this._t('support.title')}>
                 <ha-icon icon="mdi:help-circle-outline"></ha-icon>
@@ -11787,6 +11866,7 @@ export class HouseplanCard extends LitElement {
         ${this._rulesDialog ? this._editorRuntime ? this._renderRulesDialog() : nothing : nothing}
         ${this._settingsDialog ? this._editorRuntime ? this._renderSettingsDialog() : nothing : nothing}
         ${this._supportDialog ? this._editorRuntime ? this._renderSupportDialog() : nothing : nothing}
+        ${this._pdfDialog ? this._renderPdfDialog() : nothing}
         ${this._alignDialog ? this._editorRuntime ? this._renderAlignDialog() : nothing : nothing}
         ${this._backupExportDialog ? this._editorRuntime ? this._renderBackupExportDialog() : nothing : nothing}
         ${this._backupImportDialog ? this._editorRuntime ? this._renderBackupImportDialog() : nothing : nothing}

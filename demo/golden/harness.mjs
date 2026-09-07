@@ -822,6 +822,7 @@ export async function prepareGoldenScenario(page, scenario) {
     window.__goldenCard?.remove?.();
     window.__goldenEditor?.remove?.();
     window.__card?.remove?.();
+    document.getElementById('golden-pdf-page')?.remove();
     localStorage.clear();
     history.replaceState(null, '', scenario.alpha ? '?hp_alpha=1' : location.pathname);
     if (scenario.alpha) {

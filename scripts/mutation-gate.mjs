@@ -109,6 +109,136 @@ function relocateEditorPatch(patch, cardSource, editorSource) {
 // попало», проверяет не то, что объявлен проверять. Это контролирует --check.
 const MUTANT_DEFINITIONS = [
   {
+    id: 'pdf-shared-wall-twice',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="shared wall architecture" test/pdf-scene.test.mjs',
+    because: 'a shared wall must be one canonical physical component on the printed sheet',
+    patches: [{
+      file: 'src/pdf/pdf-scene.ts',
+      find: "  for (const component of built.geometry.components) commands.push({\n"
+        + "    kind: 'path', rings: geometryAllRings(component.geom).map((ring) => ring.map(pt)),\n"
+        + '    fill: WALL, stroke: INK, width: 0.25 * MM,\n'
+        + '  });',
+      replace: "  for (const component of [...built.geometry.components, ...built.geometry.components]) commands.push({\n"
+        + "    kind: 'path', rings: geometryAllRings(component.geom).map((ring) => ring.map(pt)),\n"
+        + '    fill: WALL, stroke: INK, width: 0.25 * MM,\n'
+        + '  });',
+    }],
+  },
+  {
+    id: 'pdf-dimensions-ignore-toggle',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="respects names/dimensions" test/pdf-scene.test.mjs',
+    because: 'turning dimensions off must remove the external dimension chain as well as room labels',
+    patches: [{
+      file: 'src/pdf/pdf-scene.ts',
+      find: '  if (input.options.dimensions && built.geometry.roomGeom) {',
+      replace: '  if (built.geometry.roomGeom) {',
+    }],
+  },
+  {
+    id: 'pdf-room-edge-dropped',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="dense non-rectangular" test/pdf-scene.test.mjs',
+    because: 'every non-short edge must retain a direct value or a numbered callout',
+    patches: [{
+      file: 'src/pdf/pdf-scene.ts',
+      find: '      for (const edge of edges) {',
+      replace: '      for (const edge of edges.slice(0, -1)) {',
+    }],
+  },
+  {
+    id: 'pdf-outer-face-inside',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="external dimension normal" test/pdf-dimensions.test.mjs',
+    because: 'external dimensions belong outside the layout, never toward the room centroid',
+    patches: [{
+      file: 'src/pdf/pdf-dimensions.ts',
+      find: '  return [-inward[0], -inward[1]];',
+      replace: '  return [inward[0], inward[1]];',
+    }],
+  },
+  {
+    id: 'pdf-virtual-wall-solid',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="includes architecture" test/pdf-scene.test.mjs',
+    because: 'zero-thickness walls are identified by the dashed print convention',
+    patches: [{
+      file: 'src/pdf/pdf-scene.ts',
+      find: '    stroke: INK, width: 0.35 * MM, dash: [3 * MM, 2 * MM],',
+      replace: '    stroke: INK, width: 0.35 * MM,',
+    }],
+  },
+  {
+    id: 'pdf-font-no-tounicode',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="extractable Cyrillic" test/pdf-writer.test.mjs',
+    because: 'embedded Cyrillic text must remain extractable Unicode, not only visible glyph ids',
+    patches: [{
+      file: 'src/pdf/pdf-writer.ts',
+      find: ' /ToUnicode ${toUnicode} 0 R',
+      replace: '',
+    }],
+  },
+  {
+    id: 'pdf-backdrop-over-geometry',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="backdrop is below" test/pdf-scene.test.mjs',
+    because: 'a raster backdrop must be emitted before physical architecture in the PDF content stream',
+    patches: [{
+      file: 'src/pdf/pdf-scene.ts',
+      find: '  for (const raster of input.rasters || []) commands.push({\n'
+        + "    kind: 'image', imageId: raster.id, ...pt([raster.x, raster.y]).reduce((o, value, index) =>\n"
+        + "      ({ ...o, [index ? 'y' : 'x']: value }), {} as { x: number; y: number }),\n"
+        + '    width: raster.drawWidth * pointPerUnit, height: raster.drawHeight * pointPerUnit,\n'
+        + '    angle: raster.angle, opacity: raster.opacity,\n'
+        + '  });\n',
+      replace: '',
+    }, {
+      file: 'src/pdf/pdf-scene.ts',
+      find: "  for (const component of built.geometry.components) commands.push({\n"
+        + "    kind: 'path', rings: geometryAllRings(component.geom).map((ring) => ring.map(pt)),\n"
+        + '    fill: WALL, stroke: INK, width: 0.25 * MM,\n'
+        + '  });',
+      replace: "  for (const component of built.geometry.components) commands.push({\n"
+        + "    kind: 'path', rings: geometryAllRings(component.geom).map((ring) => ring.map(pt)),\n"
+        + '    fill: WALL, stroke: INK, width: 0.25 * MM,\n'
+        + '  });\n'
+        + '  for (const raster of input.rasters || []) commands.push({\n'
+        + "    kind: 'image', imageId: raster.id, ...pt([raster.x, raster.y]).reduce((o, value, index) =>\n"
+        + "      ({ ...o, [index ? 'y' : 'x']: value }), {} as { x: number; y: number }),\n"
+        + '    width: raster.drawWidth * pointPerUnit, height: raster.drawHeight * pointPerUnit,\n'
+        + '    angle: raster.angle, opacity: raster.opacity,\n'
+        + '  });',
+    }],
+  },
+  {
+    id: 'pdf-devices-leak',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="devices never enter" test/pdf-scene.test.mjs',
+    because: 'the architectural PDF must not serialize HA markers or live device identity',
+    patches: [{
+      file: 'src/pdf/pdf-scene.ts',
+      find: '  // Architectural export deliberately has no marker/device projection pass.',
+      replace: "  for (const marker of input.config.markers || []) commands.push({\n"
+        + "    kind: 'text', x: margin, y: fieldTop, text: marker.id, size: 6,\n"
+        + '  });',
+    }],
+  },
+  {
+    id: 'pdf-scale-not-standard',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="standard scale" test/pdf-scene.test.mjs',
+    because: 'the printed scale must always come from the approved architectural series',
+    patches: [{
+      file: 'src/pdf/pdf-scene.ts',
+      find: '  const scale = choosePdfScale(physicalWidth, physicalHeight,\n'
+        + '    fieldWidthMm - calloutWidthMm - dimensionReserveMm,\n'
+        + '    fieldHeightMm - dimensionReserveMm);',
+      replace: '  const scale = 42;',
+    }],
+  },
+  {
     id: 'resource-docs-flatten-current-yaml',
     guard: 'node scripts/check-docs.mjs',
     because: 'the supported HA 2026.2+ resource snippet must stay nested under lovelace; '

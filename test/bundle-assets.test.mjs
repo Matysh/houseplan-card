@@ -55,6 +55,7 @@ test('bundle manifest separates static initial graph from dynamic editor graph',
         'houseplan-assets/editor.js', 'houseplan-assets/houseplan-onboarding-runtime-HASH.js',
         'houseplan-assets/de-HASH.js', 'houseplan-assets/iso-scene-render-HASH.js',
         'houseplan-assets/furniture-plan-art.generated-HASH.js',
+        'houseplan-assets/pdf-export-HASH.js',
       ],
     },
     'shared.js': {
@@ -87,6 +88,11 @@ test('bundle manifest separates static initial graph from dynamic editor graph',
       code: 'isometric runtime', isEntry: false, imports: ['shared.js'], dynamicImports: [],
       modules: { '/repo/src/iso-scene-render.ts': {} },
     },
+    'houseplan-assets/pdf-export-HASH.js': {
+      type: 'chunk', fileName: 'houseplan-assets/pdf-export-HASH.js',
+      code: 'PDF export runtime', isEntry: false, imports: ['shared.js'], dynamicImports: [],
+      modules: { '/repo/src/pdf/pdf-export.ts': {} },
+    },
   }, 'fingerprint');
   assert.deepEqual(manifest.initialViewFiles, ['houseplan-card.js', 'shared.js']);
   assert.deepEqual(manifest.lazyOnboardingFiles, [
@@ -95,12 +101,14 @@ test('bundle manifest separates static initial graph from dynamic editor graph',
   assert.deepEqual(manifest.lazyLocaleFiles, ['houseplan-assets/de-HASH.js']);
   assert.deepEqual(manifest.lazyIsometricFiles, ['houseplan-assets/iso-scene-render-HASH.js']);
   assert.deepEqual(manifest.lazyFurnitureArtFiles, ['houseplan-assets/furniture-plan-art.generated-HASH.js']);
+  assert.deepEqual(manifest.lazyPdfFiles, ['houseplan-assets/pdf-export-HASH.js']);
   assert.deepEqual(manifest.lazyEditorFiles, ['houseplan-assets/editor.js', 'houseplan-assets/furniture-plan-art.generated-HASH.js']);
   assert.deepEqual(manifest.lazyFiles, [
     'houseplan-assets/de-HASH.js', 'houseplan-assets/editor.js',
     'houseplan-assets/furniture-plan-art.generated-HASH.js',
     'houseplan-assets/houseplan-onboarding-runtime-HASH.js',
     'houseplan-assets/iso-scene-render-HASH.js',
+    'houseplan-assets/pdf-export-HASH.js',
   ]);
   assert.doesNotThrow(() => assertBundleBudget(manifest, 1_000_000));
   assert.throws(() => assertBundleBudget(manifest, 1), /exceeds/);
@@ -154,7 +162,8 @@ test('retry URL points at the content-hashed runtime chunk after naming', () => 
         + 'new URL("__HOUSEPLAN_ISO_RETRY_ASSET__", import.meta.url);'
         + 'new URL("__HOUSEPLAN_DE_RETRY_ASSET__", import.meta.url);'
         + 'new URL("__HOUSEPLAN_FR_RETRY_ASSET__", import.meta.url);'
-        + 'new URL("__HOUSEPLAN_FURNITURE_ART_RETRY_ASSET__", import.meta.url)', modules: {},
+        + 'new URL("__HOUSEPLAN_FURNITURE_ART_RETRY_ASSET__", import.meta.url);'
+        + 'new URL("__HOUSEPLAN_PDF_RETRY_ASSET__", import.meta.url)', modules: {},
     },
     'houseplan-assets/houseplan-editor-runtime-HASH.js': {
       type: 'chunk', fileName: 'houseplan-assets/houseplan-editor-runtime-HASH.js', code: '',
@@ -180,6 +189,10 @@ test('retry URL points at the content-hashed runtime chunk after naming', () => 
       type: 'chunk', fileName: 'houseplan-assets/furniture-plan-art.generated-HASH.js', code: '',
       modules: { '/repo/src/furniture-plan-art.generated.ts': {} },
     },
+    'houseplan-assets/pdf-export-HASH.js': {
+      type: 'chunk', fileName: 'houseplan-assets/pdf-export-HASH.js', code: '',
+      modules: { '/repo/src/pdf/pdf-export.ts': {} },
+    },
   };
   plugin.generateBundle({}, bundle);
   assert.equal(
@@ -189,7 +202,8 @@ test('retry URL points at the content-hashed runtime chunk after naming', () => 
       + 'new URL("./iso-scene-render-HASH.js", import.meta.url);'
       + 'new URL("./de-HASH.js", import.meta.url);'
       + 'new URL("./fr-HASH.js", import.meta.url);'
-      + 'new URL("./furniture-plan-art.generated-HASH.js", import.meta.url)',
+      + 'new URL("./furniture-plan-art.generated-HASH.js", import.meta.url);'
+      + 'new URL("./pdf-export-HASH.js", import.meta.url)',
   );
 });
 
@@ -439,6 +453,7 @@ const runBudgetCli = (initialViewGzipBytes) => {
     writeFileSync(join(dir, 'dist/locale.js'), 'lazy locale dictionary');
     writeFileSync(join(dir, 'dist/isometric.js'), 'lazy isometric runtime');
     writeFileSync(join(dir, 'dist/furniture-art.js'), 'lazy furniture artwork');
+    writeFileSync(join(dir, 'dist/pdf.js'), 'lazy pdf writer');
     writeFileSync(join(dir, 'dist/houseplan-assets.json'), JSON.stringify({
       schema: 1,
       files: [],
@@ -452,6 +467,8 @@ const runBudgetCli = (initialViewGzipBytes) => {
       lazyIsometricGzipBytes: 100,
       lazyFurnitureArtFiles: ['furniture-art.js'],
       lazyFurnitureArtGzipBytes: 100,
+      lazyPdfFiles: ['pdf.js'],
+      lazyPdfGzipBytes: 100,
       lazyOnboardingFiles: [],
     }));
     const script = fileURLToPath(new URL('../scripts/bundle-budget.mjs', import.meta.url));

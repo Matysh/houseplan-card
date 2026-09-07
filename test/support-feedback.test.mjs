@@ -117,11 +117,13 @@ test('Help is lazy, ordered after settings, and owns the single About/Guide surf
   const dialogStyles = readFileSync(new URL('../src/styles/dialogs.styles.ts', import.meta.url), 'utf8');
   const header = card.slice(card.indexOf('<div class="zoomctl">'), card.indexOf('</div>\n        ${this._canEdit'));
   assert.ok(header.indexOf('_openSettingsDialog') < header.indexOf('_openSupportDialog'));
+  assert.ok(header.indexOf('_openSettingsDialog') < header.indexOf('_openPdfDialog'));
+  assert.ok(header.indexOf('_openPdfDialog') < header.indexOf('_openSupportDialog'));
   assert.match(card, /if \(!this\._editorRuntime\)[\s\S]*?_ensureEditorRuntime\(\)[\s\S]*?_openSupportDialog/);
   assert.equal((runtime.match(/_t\('gs\.about_version'/g) || []).length, 1);
   assert.match(runtime, /docs\/USER-GUIDE\.ru\.md/);
   assert.match(runtime, /docs\/USER-GUIDE\.md/);
-  assert.equal((header.match(/header-action/g) || []).length, 2);
+  assert.equal((header.match(/header-action/g) || []).length, 3);
   assert.match(styles, /\.header-action\s*\{[\s\S]*?min-width:\s*44px;[\s\S]*?min-height:\s*44px;/);
   assert.match(dialogStyles, /\.supportmessage\s*\{[\s\S]*?background:\s*var\(--hp-bg\);/);
 });

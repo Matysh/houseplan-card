@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Administrators can now save the current space as a clean one-page A4 PDF
+  with architectural geometry, room names, clean-floor areas and dimensions;
+  furniture, decor and the backdrop are optional. Devices and live states are
+  intentionally excluded ([#53](https://github.com/Matysh/houseplan-card/issues/53)).
+
 ## v1.73.0-beta.2 — 2026-09-06
 
 - Every color picker now has a clear full-width **OK** button. Colors and
