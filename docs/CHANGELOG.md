@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.73.0-beta.3 — 2026-09-07
+
 - Administrators can now save the current space as a clean one-page A4 PDF
   with architectural geometry, room names, clean-floor areas and dimensions;
   furniture, decor and the backdrop are optional. Devices and live states are
