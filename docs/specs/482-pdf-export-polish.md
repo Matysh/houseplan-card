@@ -312,13 +312,24 @@ Material состоит из:
 
 Если у пространства задан `north_deg`, существующее место северного указателя
 занимает `compass-line` из VMware Clarity Assets (`viewBox 0 0 36 36`) — обе
-канонические filled path, без растрирования и без внешних ссылок. Источник:
-https://github.com/vmware-archive/clarity-assets/blob/master/icons/travel/compass-line.svg.
+канонические filled path, без растрирования и без внешних ссылок.
+
+Provenance проверен перед реализацией по неизменяемым первичным материалам:
+
+- точный upstream commit —
+  https://github.com/vmware-archive/clarity-assets/commit/bf6bdd0dd3f247f1a320d44d13fecdeda18c071c;
+- SVG в этом commit —
+  https://github.com/vmware-archive/clarity-assets/blob/bf6bdd0dd3f247f1a320d44d13fecdeda18c071c/icons/travel/compass-line.svg;
+- MIT license и copyright VMware 2018 в том же commit —
+  https://github.com/vmware-archive/clarity-assets/blob/bf6bdd0dd3f247f1a320d44d13fecdeda18c071c/LICENSE.
 
 Переданный владельцем файл имеет SHA-256
-`461EBD20E65DF8F017CADCCFEF4F58E7A7E5CB3A8877B4797E6C81C011E41F0B` и
-совпадает по path с каноническим ассетом. В репозитории сохраняются MIT license
-и copyright VMware 2018 рядом с ассетом либо в third-party notices.
+`461EBD20E65DF8F017CADCCFEF4F58E7A7E5CB3A8877B4797E6C81C011E41F0B`.
+Он не совпадает с upstream побайтово: SVG Repo добавил XML/comment и заменил
+display size `36×36` на `800×800`. При этом `viewBox` и значения обеих `d`
+path совпадают с точным upstream blob. Реализация вендорит path из указанного
+upstream commit, а не оболочку SVG Repo, и сохраняет полный MIT license и
+copyright рядом с ассетом либо в third-party notices.
 
 Компас:
 
