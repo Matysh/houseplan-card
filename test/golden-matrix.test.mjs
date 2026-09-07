@@ -394,12 +394,28 @@ test('doorway spill golden exposes the opaque-fill failure mode from issue 71', 
   assert.equal(scenario.warmPixelRegion?.x >= 0.5, true);
 });
 
+test('stepped exterior PDF golden pins the complete reconstructable dimension chain', () => {
+  const scenario = GOLDEN_SCENARIOS.find((item) =>
+    item.id === 'pdf-export-stepped-dimensions-light');
+  assert.ok(scenario);
+  assert.equal(scenario.pdfExport, true);
+  assert.equal(scenario.pdfSteppedExterior, true);
+  assert.deepEqual(scenario.pdfSemantic.requiredDimensionLabels,
+    ['1.20 m', '2.40 m', '3.60 m', '3.75 m', '7.35 m', '9.75 m']);
+  assert.equal(scenario.pdfSemantic.maxDimensionAxisErrorDeg, 0.5);
+  const fixture = prepareGoldenFixture(scenario);
+  const space = fixture.config.spaces.find((item) => item.id === scenario.space);
+  assert.equal(space.rooms[0].poly.length, 8);
+  assert.equal(space.wall_segments.length, 8);
+  assert.equal(space.wall_segments.every((wall) => wall.cm === 15), true);
+});
+
 test('sun-ray golden requires browser-painted light from a state-only sun entity', () => {
   const scenario = GOLDEN_SCENARIOS.find((item) => item.id === 'lighting-sun-window-state-only-dark');
   assert.ok(scenario);
   const fixture = prepareGoldenFixture(scenario);
   const space = fixture.config.spaces.find((item) => item.id === scenario.space);
-  assert.equal(GOLDEN_MATRIX_VERSION, 58);
+  assert.equal(GOLDEN_MATRIX_VERSION, 59);
   assert.equal(space.settings.sun_rays, true);
   assert.equal(scenario.northDeg, 90,
     'the sign-sensitive golden must keep a non-zero north direction');

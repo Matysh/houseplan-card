@@ -441,6 +441,29 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'pdf-own-exit-prefix-disabled',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="external dimension extension" test/pdf-collision.test.mjs',
+    because: 'a stepped-facade extension must be allowed to leave the contiguous solid prefix at its own source corner',
+    patches: [{
+      file: 'src/pdf/pdf-collision.ts',
+      find: '  if (options.allowStartExit) {',
+      replace: '  if (false && options.allowStartExit) {',
+    }],
+  },
+  {
+    id: 'pdf-post-exit-collision-ignored',
+    guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
+      + '&& node --test --test-name-pattern="external dimension extension" test/pdf-collision.test.mjs',
+    because: 'after an extension reaches free space every later wall crossing or tangent contact must still reject that lane',
+    patches: [{
+      file: 'src/pdf/pdf-collision.ts',
+      find: '    return hits.some((hit) => hit.t > exitT! + parameterEpsilon\n'
+        + '      || hit.endT > exitT! + parameterEpsilon);',
+      replace: '    return false;',
+    }],
+  },
+  {
     id: 'pdf-near-axis-extension-starts-at-projection',
     guard: 'npx tsc -p tsconfig.test.json && node scripts/fix-test-build.mjs '
       + '&& node --test --test-name-pattern="thick near-axis outer face" test/pdf-scene.test.mjs',

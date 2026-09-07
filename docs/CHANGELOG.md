@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- PDF export now keeps the complete horizontal/vertical dimension chain around
+  rectangular facade steps instead of dropping the return depth or one of the
+  adjacent exterior lengths ([#484](https://github.com/Matysh/houseplan-card/issues/484)).
+
 ## v1.73.0-beta.4 — 2026-09-07
 
 - PDF export now fits its complete scene more efficiently on the page, uses

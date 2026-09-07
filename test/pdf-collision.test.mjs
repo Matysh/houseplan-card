@@ -74,6 +74,38 @@ test('allowed extension start is symmetric on every outer and hole boundary', ()
   }
 });
 
+test('external dimension extension may leave its own stepped corner but never re-enter', () => {
+  const step = [[0, 0], [10, 0], [10, 3], [12, 3], [12, 6], [10, 6], [10, 10], [0, 10]];
+  const stepSolid = (point) => pointInRing(point, step);
+  const ownExit = { allowStartExit: true };
+
+  assert.equal(pdfSegmentTouchesGeometry(
+    [10, 3], [14, 3], [step], stepSolid, ownExit,
+  ), false, 'the source prefix may follow the incident facade step before reaching free space');
+  assert.equal(pdfSegmentTouchesGeometry(
+    [10, 3], [14, 3], [step], stepSolid, { allowStartBoundary: true },
+  ), true, 'the ordinary strict start-boundary mode still rejects collinear overlap');
+  assert.equal(pdfSegmentTouchesGeometry(
+    [0, 5], [12, 5], [square], squareSolid, ownExit,
+  ), false, 'the source prefix may cross its contiguous wall body once before exiting');
+  assert.equal(pdfSegmentTouchesGeometry(
+    [0, 5], [10, 5], [square], squareSolid, ownExit,
+  ), true, 'a segment ending on the exit boundary never reaches a free interval');
+
+  const foreignWall = [[13, 2], [15, 2], [15, 4], [13, 4]];
+  const combinedSolid = (point) => stepSolid(point) || pointInRing(point, foreignWall);
+  assert.equal(pdfSegmentTouchesGeometry(
+    [10, 3], [16, 3], [step, foreignWall], combinedSolid, ownExit,
+  ), true, 'a second wall after the first free interval remains a collision');
+  const tangentWall = [[13, 3], [15, 4], [15, 5], [13, 4]];
+  assert.equal(pdfSegmentTouchesGeometry(
+    [10, 3], [16, 3], [step, tangentWall], combinedSolid, ownExit,
+  ), true, 'a later point contact remains a collision even without a solid interval');
+  assert.equal(pdfSegmentTouchesGeometry(
+    [11, 4], [14, 4], [step], stepSolid, ownExit,
+  ), true, 'only a segment starting at its source boundary receives the exception');
+});
+
 test('degenerate and invalid collision inputs fail deterministically', () => {
   const box = { minX: 0, minY: 0, maxX: 10, maxY: 10 };
   assert.equal(pdfSegmentTouchesBox([20, 20], [20, 20], box), false);

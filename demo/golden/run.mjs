@@ -301,9 +301,9 @@ async function renderPdfGoldenPage(page, semanticContract = null) {
       fail('wall material escaped the plan field');
     if (semantic.interiorHatchPixels < semanticContract.minInteriorHatchPixels)
       fail(`interior hatch is below ${semanticContract.minInteriorHatchPixels} pixels`);
-    if (!semantic.opening
+    if (semanticContract.opening && (!semantic.opening
         || semantic.opening.grayRatio > semanticContract.opening.maxGrayRatio
-        || semantic.opening.whiteFraction < semanticContract.opening.minWhiteFraction)
+        || semantic.opening.whiteFraction < semanticContract.opening.minWhiteFraction))
       fail('the exterior opening is not clean against its wall controls');
     if (semantic.compassInkPixels < semanticContract.minCompassInkPixels)
       fail(`compass ink is below ${semanticContract.minCompassInkPixels} pixels`);
@@ -311,6 +311,12 @@ async function renderPdfGoldenPage(page, semanticContract = null) {
       fail(`a dimension label is not horizontal or vertical`);
     if (semantic.repeatedDimensionLabels < semanticContract.minRepeatedDimensionLabels)
       fail('equal dimensions from distinct local contexts were globally deduplicated');
+    if (semanticContract.requiredDimensionLabels
+        && semanticContract.requiredDimensionLabels.some((value) =>
+          !semantic.dimensionLabels.includes(value))) {
+      fail(`dimension labels omit the required reconstructable chain: `
+        + semanticContract.requiredDimensionLabels.join(', '));
+    }
     const normalizedText = semantic.text.toLowerCase();
     const forbidden = semanticContract.forbiddenText.find((token) =>
       normalizedText.includes(String(token).toLowerCase()));

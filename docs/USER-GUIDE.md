@@ -986,6 +986,10 @@ isometric view. Its dialog remains usable without horizontal scrolling down to
 a 320 px-wide View area. See [PDF export](PDF-EXPORT.md) for measurement,
 image-limit and font details.
 
+Rectangular facade steps keep a complete reconstructable dimension chain:
+both adjacent exterior sections, the height of the step and one copy of its
+depth remain visible without adding diagonal measurements.
+
 Current plans give every stored wall segment a stable internal identity. This
 keeps the wall's thickness and its door, window, gate or passage attached while
 Resize, Split, Merge and other structural tools change surrounding geometry.

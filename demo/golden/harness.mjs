@@ -108,6 +108,33 @@ async function stableEnvironment(page, scenario) {
 /** Apply every data-only scenario override before the fixture crosses into the browser. */
 export function prepareGoldenFixture(scenario) {
   const fixture = fixtureFor(scenario);
+  if (scenario.pdfSteppedExterior) {
+    const poly = [
+      [0.1, 0.1], [0.7, 0.1], [0.7, 0.3], [0.8, 0.3],
+      [0.8, 0.6], [0.7, 0.6], [0.7, 0.9], [0.1, 0.9],
+    ];
+    const wallSegments = poly.map((a, index) => ({
+      id: `pdf-step-wall-${index}`,
+      a: [...a], b: [...poly[(index + 1) % poly.length]], cm: 15,
+    }));
+    fixture.config.spaces.push({
+      id: scenario.space,
+      title: 'Stepped exterior PDF',
+      plan_url: null,
+      view_box: [0, 0, 2, 2],
+      cell_cm: 5,
+      settings: { fill_mode: 'none', show_borders: true, show_names: false },
+      rooms: [{
+        id: 'pdf-step-room', name: '', area: null, poly: structuredClone(poly),
+        wall_ids: wallSegments.map((wall) => wall.id),
+      }],
+      walls: wallSegments.map((wall) => ({
+        key: fixtureWallKey(wall.a, wall.b), a: [...wall.a], b: [...wall.b], cm: wall.cm,
+      })),
+      wall_segments: wallSegments,
+      openings: [], partitions: [], wall_columns: [], decor: [],
+    });
+  }
   if (scenario.spanOverDoor) {
     // #316 §3.1: the scene renders the MIGRATED document — the door keeps its
     // carrying atom while the former span is zero (dashed) on both sides. The

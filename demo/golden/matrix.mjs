@@ -1,7 +1,7 @@
 import { fixtureWallKey } from '../fixtures/visual-matrix.mjs';
 
 /** Data-only HP-QA-01 capture matrix. Bump when framing or scenarios change. */
-export const GOLDEN_MATRIX_VERSION = 58;
+export const GOLDEN_MATRIX_VERSION = 59;
 
 const stage = { capture: 'stage', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0005 } };
 const page = { capture: 'page', threshold: { maxChannelDelta: 10, maxDiffRatio: 0.0008 } };
@@ -396,6 +396,23 @@ export const GOLDEN_SCENARIOS = Object.freeze([
       minCompassInkPixels: 60,
       maxDimensionAxisErrorDeg: 0.5,
       minRepeatedDimensionLabels: 1,
+      forbiddenText: ['wall', 'partition', 'door', 'window', 'gate'],
+    },
+    theme: 'light', viewport: { width: 1000, height: 900 }, ...page },
+  { id: 'pdf-export-stepped-dimensions-light', fixture: 'visual',
+    space: 'golden-pdf-stepped', mode: 'view', pdfExport: true, pdfSteppedExterior: true,
+    pdfSemantic: {
+      minSceneInkPixels: 1_000,
+      minSceneCoverage: 0.15,
+      maxCenterOffsetMm: 3,
+      minSceneClearanceMm: 0.1,
+      minWallGrayPixels: 400,
+      maxWallGrayOutsideFieldRatio: 0.02,
+      minInteriorHatchPixels: 20,
+      minCompassInkPixels: 60,
+      maxDimensionAxisErrorDeg: 0.5,
+      minRepeatedDimensionLabels: 0,
+      requiredDimensionLabels: ['1.20 m', '2.40 m', '3.60 m', '3.75 m', '7.35 m', '9.75 m'],
       forbiddenText: ['wall', 'partition', 'door', 'window', 'gate'],
     },
     theme: 'light', viewport: { width: 1000, height: 900 }, ...page },

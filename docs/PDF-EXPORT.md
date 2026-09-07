@@ -58,6 +58,14 @@ in consistent lanes clear of the wall body. Units follow Home Assistant. Very
 short internal edges use a tick instead of unreadable text, while required
 values that cannot fit beside an edge use numbered callouts.
 
+For a rectangular step in an exterior facade, the chain retains enough
+horizontal and vertical values to reconstruct the outline: both neighbouring
+facade sections, the step height and one copy of its depth. An extension line
+may leave the physical corner to which it belongs, including a short
+collinear/solid prefix, but it is rejected if it touches architecture again
+after reaching free space. This narrow source-corner rule prevents both lost
+step dimensions and dimension lines drawn through another wall.
+
 ## Images, fonts and limits
 
 Backdrop and decor images are embedded locally in the browser. They are not

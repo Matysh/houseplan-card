@@ -91,6 +91,11 @@ opposite pairs only inside one room contour or connected outer ring. Physical
 text bounds reuse the writer's actual font metrics and transform; dimension
 lanes use exact box/segment intersections against wall rings instead of sampled
 points, and parallel facade steps are kept in independent collinear groups.
+Exterior extension lines alone use a source-aware collision state machine: one
+continuous boundary/solid prefix connected to the measured corner may exit the
+wall, but every intersection, tangent contact or overlap after the first free
+interval rejects that lane. Dimension lines, shelves, labels and internal
+dimensions remain on the strict collision path.
 Physical
 wall components are emitted as even-odd clipped `#7f7f7f` paths with a
 page-anchored hatch, so openings cut both material layers cleanly. Page choice

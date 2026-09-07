@@ -65,6 +65,8 @@ function pointOnSegment(
 interface SegmentIntersection {
   /** Parameter on the first segment. */
   t: number;
+  /** Inclusive end parameter on the first segment (equal to `t` for a point hit). */
+  endT: number;
   /** Collinear overlap has no single harmless endpoint. */
   overlap: boolean;
 }
@@ -77,11 +79,12 @@ function segmentIntersection(
   const cdx = d[0] - c[0], cdy = d[1] - c[1];
   const abLength = Math.hypot(abx, aby), cdLength = Math.hypot(cdx, cdy);
   if (abLength <= COORDINATE_EPSILON) {
-    return pointOnSegment(a, c, d) ? { t: 0, overlap: false } : null;
+    return pointOnSegment(a, c, d) ? { t: 0, endT: 0, overlap: false } : null;
   }
   if (cdLength <= COORDINATE_EPSILON) {
-    return pointOnSegment(c, a, b)
-      ? { t: Math.max(0, Math.min(1, segmentParameter(c, a, b))), overlap: false } : null;
+    if (!pointOnSegment(c, a, b)) return null;
+    const t = Math.max(0, Math.min(1, segmentParameter(c, a, b)));
+    return { t, endT: t, overlap: false };
   }
   const denominator = abx * cdy - aby * cdx;
   const acx = c[0] - a[0], acy = c[1] - a[1];
@@ -95,6 +98,7 @@ function segmentIntersection(
     const parameterEpsilon = COORDINATE_EPSILON / abLength;
     if (overlapEnd < overlapStart - parameterEpsilon) return null;
     return { t: Math.max(0, Math.min(1, overlapStart)),
+      endT: Math.max(0, Math.min(1, overlapEnd)),
       overlap: (overlapEnd - overlapStart) * abLength > COORDINATE_EPSILON };
   }
   const t = (acx * cdy - acy * cdx) / denominator;
@@ -102,7 +106,8 @@ function segmentIntersection(
   const tEpsilon = COORDINATE_EPSILON / abLength;
   const uEpsilon = COORDINATE_EPSILON / cdLength;
   if (t < -tEpsilon || t > 1 + tEpsilon || u < -uEpsilon || u > 1 + uEpsilon) return null;
-  return { t: Math.max(0, Math.min(1, t)), overlap: false };
+  const clampedT = Math.max(0, Math.min(1, t));
+  return { t: clampedT, endT: clampedT, overlap: false };
 }
 
 const validRings = (rings: readonly (readonly (readonly number[])[])[]): boolean =>
@@ -157,9 +162,51 @@ export function pdfSegmentTouchesGeometry(
   end: PdfCollisionPoint,
   rings: readonly (readonly (readonly number[])[])[],
   isSolid: (point: PdfCollisionPoint) => boolean,
-  options: { allowStartBoundary?: boolean } = {},
+  options: { allowStartBoundary?: boolean; allowStartExit?: boolean } = {},
 ): boolean {
   if (!finitePoint(start) || !finitePoint(end) || !validRings(rings)) return true;
+  if (options.allowStartExit) {
+    const length = distance(start, end);
+    if (length <= COORDINATE_EPSILON) return true;
+    const startOnBoundary = forEachRingSegment(rings, (a, b) => pointOnSegment(start, a, b));
+    if (!startOnBoundary) return true;
+
+    const hits: SegmentIntersection[] = [];
+    forEachRingSegment(rings, (a, b) => {
+      const hit = segmentIntersection(start, end, a, b);
+      if (hit) hits.push(hit);
+      return false;
+    });
+    const parameterEpsilon = COORDINATE_EPSILON / length;
+    const breakpoints = [0, 1, ...hits.flatMap((hit) => [hit.t, hit.endT])]
+      .sort((left, right) => left - right)
+      .filter((value, index, values) => index === 0
+        || value - values[index - 1] > parameterEpsilon);
+    const pointAt = (t: number): PdfCollisionPoint => [
+      start[0] + (end[0] - start[0]) * t,
+      start[1] + (end[1] - start[1]) * t,
+    ];
+    const overlapAt = (t: number): boolean => hits.some((hit) => hit.overlap
+      && t > hit.t + parameterEpsilon && t < hit.endT - parameterEpsilon);
+
+    let exitT: number | null = null;
+    for (let index = 0; index + 1 < breakpoints.length; index++) {
+      const from = breakpoints[index], to = breakpoints[index + 1];
+      if (to - from <= parameterEpsilon) continue;
+      const middleT = (from + to) / 2;
+      const blocked = overlapAt(middleT) || isSolid(pointAt(middleT));
+      if (exitT === null) {
+        if (!blocked) exitT = from;
+      } else if (blocked) {
+        return true;
+      }
+    }
+    // The extension must actually reach free space. Once it has, every later
+    // boundary contact is a re-entry/tangent collision, not part of its source exit.
+    if (exitT === null) return true;
+    return hits.some((hit) => hit.t > exitT! + parameterEpsilon
+      || hit.endT > exitT! + parameterEpsilon);
+  }
   const midpoint: PdfCollisionPoint = [(start[0] + end[0]) / 2, (start[1] + end[1]) / 2];
   const startOnBoundary = forEachRingSegment(rings, (a, b) => pointOnSegment(start, a, b));
   if ((isSolid(start) && !(options.allowStartBoundary && startOnBoundary))

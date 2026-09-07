@@ -3,6 +3,7 @@
 import { readFileSync } from 'node:fs';
 import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs';
 import { launchColdView, checkAll, finish } from './serve.mjs';
+import { fixtureWallKey } from './fixtures/wall-key.mjs';
 
 const manifest = JSON.parse(readFileSync('dist/houseplan-assets.json', 'utf8'));
 const runtimePath = manifest.lazyPdfFiles?.find((path) => /pdf-export-[^/]+\.js$/.test(path));
@@ -10,6 +11,23 @@ if (!runtimePath) throw new Error('PDF export chunk is absent from the bundle ma
 const runtimeName = runtimePath.split('/').at(-1);
 const runtimePattern = `**/${runtimeName}*`;
 const NARROW_VIEWPORT = { width: 320, height: 760 };
+const steppedPoly = [
+  [0.1, 0.1], [0.7, 0.1], [0.7, 0.3], [0.8, 0.3],
+  [0.8, 0.6], [0.7, 0.6], [0.7, 0.9], [0.1, 0.9],
+];
+const steppedSegments = steppedPoly.map((a, index) => ({
+  id: `pdf-step-wall-${index}`, a, b: steppedPoly[(index + 1) % steppedPoly.length], cm: 15,
+}));
+const steppedSpace = {
+  id: 'pdf-stepped-exterior', title: 'Stepped exterior', cell_cm: 5, view_box: [0, 0, 2, 2],
+  rooms: [{ id: 'pdf-step-room', name: '', area: null, poly: steppedPoly,
+    wall_ids: steppedSegments.map((wall) => wall.id) }],
+  walls: steppedSegments.map((wall) => ({
+    key: fixtureWallKey(wall.a, wall.b), a: wall.a, b: wall.b, cm: wall.cm,
+  })),
+  wall_segments: steppedSegments,
+  openings: [], partitions: [], wall_columns: [], decor: [], settings: {},
+};
 
 const clickPrinter = (page) => page.locator('houseplan-card').evaluate((card) => {
   const root = card.shadowRoot || card.renderRoot;
@@ -107,6 +125,42 @@ const rasterLimitError = await page.evaluate(() => {
   }
 });
 const firstPagePdfRequests = requests.filter((requestPath) => requestPath.endsWith(`/${runtimeName}`)).length;
+
+// #484: exercise the complete browser dialog/download/writer path with the
+// stepped exterior that used to lose its right-hand chain. Unit scene tests
+// protect placement internals; this smoke proves that the shipped lazy chunk
+// still exports the six reconstructable axis-aligned dimensions.
+await page.evaluate((rawSpace) => {
+  const card = window.__card;
+  card._pdfDialog = false;
+  card._serverCfg = { model_version: 10, spaces: [rawSpace], markers: [], settings: {} };
+  card._space = rawSpace.id;
+  card._layout = {};
+  card.requestUpdate();
+}, steppedSpace);
+await page.waitForFunction(() => window.__card?._spaceModel?.()?.id === 'pdf-stepped-exterior');
+await clickPrinter(page);
+await page.waitForFunction(() => window.__card.renderRoot.querySelector('hp-pdf-dialog'));
+const steppedDownloadPromise = page.waitForEvent('download');
+await page.locator('houseplan-card').evaluate(() => {
+  const pdf = window.__card.renderRoot.querySelector('hp-pdf-dialog');
+  (pdf.shadowRoot || pdf.renderRoot).querySelector('button.primary')?.click();
+});
+const steppedDownload = await steppedDownloadPromise;
+const steppedPath = await steppedDownload.path();
+if (!steppedPath) throw new Error('stepped PDF download has no temporary file');
+const steppedTask = getDocument({
+  data: new Uint8Array(readFileSync(steppedPath)), useWorkerFetch: false, isEvalSupported: false,
+});
+const steppedDocument = await steppedTask.promise;
+const steppedTextItems = (await (await steppedDocument.getPage(1)).getTextContent()).items
+  .map((item) => String(item.str || '').trim()).filter(Boolean);
+const steppedDimensionLabels = steppedTextItems.filter((value) =>
+  /^\d+(?:[.,]\d+)?\s*(?:m|cm|ft|in)$/i.test(value));
+const steppedExpectedLabels = ['1.20 m', '2.40 m', '3.60 m', '3.75 m', '7.35 m', '9.75 m'];
+const steppedChainComplete = steppedDocument.numPages === 1
+  && steppedExpectedLabels.every((value) => steppedDimensionLabels.includes(value));
+await steppedTask.destroy();
 
 // The contract is persistence across a real page load, not merely reopening
 // the same element instance.
@@ -249,6 +303,7 @@ const out = {
     && everyNarrowLocale('domAndFocusOrderPreserved') && everyNarrowLocale('cancelCloses'),
   narrowViewportExportStillWorks: downloadedByteLength > 0 && document.numPages === 1,
   rasterLimitRejectsBeforePdfWrite: rasterLimitError === 'pdf.too_large',
+  steppedExteriorKeepsCompleteDimensionChain: steppedChainComplete,
 };
 await task.destroy();
 

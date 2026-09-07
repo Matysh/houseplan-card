@@ -354,10 +354,11 @@ function buildPdfCandidate(
   const boxInsideRing = (box: TextBox, ring: readonly (readonly number[])[]): boolean =>
     pdfBoxInsideRing(planBox(box), ring, (point) => pointInSimpleRing([...point], ring));
   const segmentTouchesArchitecture = (
-    start: readonly [number, number], end: readonly [number, number], allowStartBoundary = false,
+    start: readonly [number, number], end: readonly [number, number],
+    options: { allowStartBoundary?: boolean; allowStartExit?: boolean } = {},
   ): boolean => pdfSegmentTouchesGeometry(
     planPoint(start[0], start[1]), planPoint(end[0], end[1]),
-    architectureRings, pointInArchitecture, { allowStartBoundary },
+    architectureRings, pointInArchitecture, options,
   );
   const furnitureMatrix = (shape: Extract<DecorShape, { kind: 'furniture' }>, artW: number, artH: number) => {
     const x = shape.x * NORM_W, y = shape.y * NORM_W;
@@ -458,7 +459,7 @@ function buildPdfCandidate(
       };
       type ExternalDimensionSegment = {
         start: [number, number]; end: [number, number];
-        allowStartBoundary?: boolean; mayEnterOwnLabel?: boolean;
+        allowStartBoundary?: boolean; allowStartExit?: boolean; mayEnterOwnLabel?: boolean;
       };
       const externalPlacement = (
         edge: DimensionEdge, outward: readonly [number, number], lane: number,
@@ -486,8 +487,8 @@ function buildPdfCandidate(
       const externalSegments = (entry: ExternalDimensionPlacement): ExternalDimensionSegment[] => {
         const segments: ExternalDimensionSegment[] = [
           { start: entry.oa, end: entry.ob },
-          { start: entry.a, end: entry.oa, allowStartBoundary: true },
-          { start: entry.b, end: entry.ob, allowStartBoundary: true },
+          { start: entry.a, end: entry.oa, allowStartExit: true },
+          { start: entry.b, end: entry.ob, allowStartExit: true },
         ];
         if (entry.needsShelf) segments.push({
           start: entry.middle, end: entry.label, mayEnterOwnLabel: true,
@@ -496,7 +497,10 @@ function buildPdfCandidate(
       };
       const externalPlacementTouchesArchitecture = (entry: ExternalDimensionPlacement): boolean =>
         boxTouchesArchitecture(entry.box) || externalSegments(entry).some((segment) =>
-          segmentTouchesArchitecture(segment.start, segment.end, segment.allowStartBoundary));
+          segmentTouchesArchitecture(segment.start, segment.end, {
+            allowStartBoundary: segment.allowStartBoundary,
+            allowStartExit: segment.allowStartExit,
+          }));
       const edges = dedupeOppositeDimensionEdges(
         dimensionEdges(ring, cmPerUnit, input.imperial, { ringIndex, epsilon }),
         {

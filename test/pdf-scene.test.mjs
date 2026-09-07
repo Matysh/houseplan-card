@@ -187,6 +187,44 @@ test('dimensions switch removes the external chain from physical walls', () => {
   assert.deepEqual(texts(false), [], 'the option removes every dimension value');
 });
 
+test('stepped exterior keeps the complete reconstructable dimension chain', () => {
+  const step = [
+    [0.1, 0.1], [0.7, 0.1], [0.7, 0.3], [0.8, 0.3],
+    [0.8, 0.6], [0.7, 0.6], [0.7, 0.9], [0.1, 0.9],
+  ];
+  const externalLabels = (poly) => {
+    const raw = polygonRaw('stepped', poly, { cellCm: 5, wallCm: 15, name: '' });
+    const output = buildRawPage(raw,
+      { dimensions: true, roomNames: false, decor: false, backdrop: false });
+    const architecture = output.commands.find((command) => command.kind === 'path' && command.fill);
+    assert.ok(architecture, 'the stepped physical wall body reaches the PDF scene');
+    const box = commandBox(architecture);
+    const inPlanField = (command) => command.x >= output.planField.minX
+      && command.x <= output.planField.maxX && command.y >= output.planField.minY
+      && command.y <= output.planField.maxY;
+    const outsideWallBox = (command) => command.x < box.minX || command.x > box.maxX
+      || command.y < box.minY || command.y > box.maxY;
+    return output.commands.filter((command) => command.kind === 'text'
+      && /^\d+(?:[.,]\d+)?\s*(?:m|cm)$/.test(command.text)
+      && inPlanField(command) && outsideWallBox(command));
+  };
+
+  for (const poly of [step, [...step].reverse()]) {
+    const labels = externalLabels(poly);
+    const values = labels.map((command) => command.text);
+    for (const required of ['1.20 m', '2.40 m', '3.60 m', '3.75 m']) {
+      assert.ok(values.includes(required),
+        `${required} remains in the reconstructable protrusion chain`);
+    }
+    assert.equal(values.filter((value) => value === '1.20 m').length, 1,
+      'the equal upper/lower protrusion depths are locally deduplicated');
+    assert.equal(values.length, 6,
+      'the four protrusion dimensions coexist with the overall width and height');
+    assert.ok(labels.every((command) => Math.abs(command.angle % 90) < 1e-8),
+      'the exterior chain contains no diagonal labels');
+  }
+});
+
 test('backdrop is below physical architecture and disappears with its option', () => {
   const raster = {
     id: 'backdrop', bytes: new Uint8Array([0xff, 0xd8, 0xff, 0xd9]),
