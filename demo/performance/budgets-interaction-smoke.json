@@ -13,7 +13,7 @@
     },
     "interactionSeriesMs": {
       "stat": "median",
-      "hardMaxMs": 3000
+      "hardMaxMs": 3300
     },
     "hoverSeriesMs": {
       "stat": "median",

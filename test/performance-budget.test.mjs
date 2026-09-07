@@ -245,3 +245,14 @@ for (const [smokeName, fullName] of [
       'первый кадр 9 870 мс обязан краснеть');
   });
 }
+
+test('interaction aggregate keeps hosted-runner headroom without weakening component gates (#483)', () => {
+  const smoke = readBudget('budgets-interaction-smoke.json');
+  const full = readBudget('budgets-large-house-interaction.json');
+  assert.equal(smoke.timings.interactionSeriesMs.hardMaxMs, 3300);
+  assert.equal(full.timings.interactionSeriesMs.hardMaxMs, 3300);
+  assert.equal(smoke.timings.hoverSeriesMs.hardMaxMs, 500);
+  assert.equal(smoke.timings.panSeriesMs.hardMaxMs, 500);
+  assert.equal(smoke.timings.cameraSeriesMs.hardMaxMs, 500);
+  assert.equal(smoke.timings.editorSeriesMs.hardMaxMs, 750);
+});

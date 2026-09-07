@@ -19,7 +19,7 @@
       "stat": "median",
       "maxRegressionRatio": 0.5,
       "noiseAllowanceMs": 150,
-      "hardMaxMs": 3000
+      "hardMaxMs": 3300
     },
     "hoverSeriesMs": {
       "stat": "median",

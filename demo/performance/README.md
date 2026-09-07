@@ -92,6 +92,13 @@ the full profiles. The set of profiles is part of the `performance_smoke`
 reuse key, so a glow-only success never stands in for a run that needed the
 isometric profile.
 
+The interaction profile keeps strict per-series, Long Task, heap, cache and
+structural limits. Its aggregate `interactionSeriesMs` ceiling is 3300 ms:
+enough headroom for the observed hosted-runner baseline (up to 3122.6 ms), but
+still below the known failed pre-optimization result (3501.5 ms). This aggregate
+is a catastrophic guard; the full workflow's base-relative comparison remains
+the detector for smaller regressions.
+
 The dedicated `performance.yml` workflow is the full comparison. It runs on
 every `main` promotion, weekly and on manual dispatch for an important beta or
 performance-sensitive change. It checks out the candidate and its base SHA,
