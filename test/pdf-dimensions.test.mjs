@@ -25,6 +25,10 @@ test('1 mm physical duplicate normalization precedes fixed-point collinear clean
   assert.deepEqual(compactRing([
     [0, 0], [10, 0], [10, 10], [0, 10], [0.02, 0.01],
   ], epsilon), [[0, 0], [10, 0], [10, 10], [0, 10]], 'the ring seam is normalized too');
+  assert.deepEqual(compactRing([
+    [0, 0], [10, 0], [10, 0.04], [20, 0], [20, 10], [0, 10],
+  ], epsilon), [[0, 0], [20, 0], [20, 10], [0, 10]],
+  'a tiny spur is collapsed before the newly exposed straight edge is compacted');
   assert.equal(compactRing([
     [0, 0], [5, 0], [10, 0], [10, 5], [10, 10], [0, 10], [0, 5],
   ], epsilon).length, 4, 'collinear cleanup reaches a fixed point');
