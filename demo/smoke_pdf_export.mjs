@@ -25,12 +25,32 @@ await clickPrinter(page);
 await page.waitForFunction(() => window.__card.renderRoot.querySelector('hp-pdf-dialog'));
 
 const dialog = await page.evaluate(async () => {
+  const frame = () => new Promise((resolve) => requestAnimationFrame(resolve));
   const card = window.__card;
   const pdf = card.renderRoot.querySelector('hp-pdf-dialog');
   const root = pdf.shadowRoot || pdf.renderRoot;
   const shell = root.querySelector('hp-dialog');
   await shell?.updateComplete;
   const native = shell?.shadowRoot?.querySelector('dialog');
+  const parent = pdf.parentNode;
+  const surface = shell?.shadowRoot?.querySelector('.surface');
+  const centred = () => {
+    const rect = surface?.getBoundingClientRect();
+    return !!rect
+      && Math.abs((rect.left + rect.right) / 2 - innerWidth / 2) <= 1
+      && Math.abs((rect.top + rect.bottom) / 2 - innerHeight / 2) <= 1;
+  };
+  const shellBeforeReconnect = native || shell?.shadowRoot?.querySelector('ha-dialog');
+  pdf.remove();
+  parent?.append(pdf);
+  await pdf.updateComplete;
+  await shell?.updateComplete;
+  await frame();
+  await frame();
+  const shellAfterReconnect = native || shell?.shadowRoot?.querySelector('ha-dialog');
+  const reconnectKeepsModalCentered = shellBeforeReconnect === shellAfterReconnect
+    && (native ? native.open && native.matches(':modal') : !!shellAfterReconnect)
+    && centred();
   const inputs = [...root.querySelectorAll('input[type="checkbox"]')];
   const defaults = {
     dimensions: inputs[0]?.checked,
@@ -46,6 +66,7 @@ const dialog = await page.evaluate(async () => {
     expectedCount: card._spaceModel().bg ? 4 : 3,
     defaults,
     modal: native ? native.open && native.matches(':modal') : true,
+    reconnectKeepsModalCentered,
     editorStillAbsent: !card._editorRuntime,
   };
 });
@@ -95,6 +116,7 @@ const out = {
   defaultsAndTouchModalWork: dialog.defaults.dimensions && dialog.defaults.names
     && !dialog.defaults.decor && (dialog.expectedCount === 3 || dialog.defaults.backdrop)
     && dialog.modal,
+  dialogRecoversAfterReconnect: dialog.reconnectKeepsModalCentered,
   printerDoesNotLoadEditor: dialog.editorStillAbsent,
   downloadNameIsStable: /^houseplan-.+-\d{4}-\d{2}-\d{2}\.pdf$/.test(download.suggestedFilename()),
   oneA4Page: document.numPages === 1 && (
