@@ -1,15 +1,18 @@
 {
   "schema": 1,
-  "matrixVersion": 59,
-  "acceptedAt": "2026-09-07T18:29:59.788Z",
-  "sourceFingerprint": "b0d09c9516d591f6cbedc31941c27ca6d60536efbfe6d6a581d652f892af314c",
+  "matrixVersion": 60,
+  "acceptedAt": "2026-09-07T22:36:44.292Z",
+  "sourceFingerprint": "8e7650990368dac8b2651e684ac8ae9c578ba2a166396aa678bc3bf1ad9519ea",
   "chromium": "151.0.7922.34",
   "platform": "linux",
   "witnesses": {
-    "count": 136,
+    "count": 139,
     "floor": 10
   },
   "scenarios": {
+    "panel-wide-view-light-en": "5d81a6c410c4289f82b994e7b6c9af729b56ceea59bf5823e35f638f54b5bc30",
+    "panel-wide-plan-editor-dark-en": "9404d7e3aa84b4b40a8cfeed27eea8831e55e9e6236abbb7cb092c709ca0dfcd",
+    "panel-narrow-read-only-empty-light-en": "99b8f1af82b1ad13f237125aab8f7e7da0563c138e9da2ddf06e54c2d56138c4",
     "version-mismatch-desktop-dark-en": "ad08f293c728913549b0a71a1a514a60e3030d885acfb0c9951f1d9a1125a1d3",
     "version-mismatch-touch-light-ru": "bf511c2e7e8714e30a12126c0c0b7f7ea7f5885e8c8ee0c475b364f6510c8702",
     "version-mismatch-kiosk-attempted-dark-de": "d3d0863fe814d20f5b081de6ac14f8bbf7d559be019808e62cd6dcdc7abcaa70",
