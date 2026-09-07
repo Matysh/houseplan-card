@@ -160,7 +160,11 @@ const applyDocumentationState = (page, scenario) => page.evaluate(async (current
   }
 
   await settleCamera();
-  return { dialog: !!card.renderRoot.querySelector('hp-dialog') };
+  // Most dialogs render hp-dialog directly into the card, while the lazy PDF
+  // surface owns that shell inside hp-pdf-dialog's shadow root.  The host is
+  // the stable public capture boundary; reaching through its shadow root here
+  // would couple documentation capture to the dialog implementation.
+  return { dialog: !!card.renderRoot.querySelector('hp-dialog, hp-pdf-dialog') };
 }, scenario);
 
 mkdirSync(OUTPUT, { recursive: true });
