@@ -4,7 +4,8 @@
 
 - PDF export now fits its complete scene more efficiently on the page, uses
   hatched grey walls and a proper vector compass, and presents cleaner
-  horizontal/vertical dimensions without locally duplicated opposite sides.
+  horizontal/vertical dimensions without locally duplicated opposite sides or
+  labels crossing the plan geometry.
   The symbol legend is removed, and the export dialog no longer needs
   horizontal scrolling on narrow screens
   ([#482](https://github.com/Matysh/houseplan-card/issues/482)).

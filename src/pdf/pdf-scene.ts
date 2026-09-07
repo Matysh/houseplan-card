@@ -507,8 +507,8 @@ function buildPdfCandidate(
               -edge.inwardNormal[0], -edge.inwardNormal[1],
             ];
             const base = pt(edge.mid);
-            const hasSafeLane = Array.from({ length: 21 }, (_, index) => index * 4)
-              .some((lane) => !externalPlacementTouchesArchitecture(
+            const firstSafeLane = Array.from({ length: 21 }, (_, index) => index * 4)
+              .find((lane) => !externalPlacementTouchesArchitecture(
                 externalPlacement(edge, outward, lane),
               ));
             const centeredX = base[0] + (planFieldWidth - drawingWidth) / 2;
@@ -516,7 +516,10 @@ function buildPdfCandidate(
             const normalClearance = Math.abs(outward[0]) > 0.5
               ? (outward[0] > 0 ? planFieldWidth - centeredX : centeredX)
               : (outward[1] > 0 ? fieldHeight - centeredY : centeredY);
-            return { hardCollisions: Number(!hasSafeLane), normalClearance };
+            return {
+              hardCollisions: firstSafeLane === undefined ? 21 : firstSafeLane / 4,
+              normalClearance,
+            };
           },
         },
       );

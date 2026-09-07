@@ -374,7 +374,7 @@ test('blocked rectangular dimension is omitted instead of using an unsafe text f
   const dimensionValues = output.commands.filter((command) => command.kind === 'text')
     .map((command) => command.text)
     .filter((value) => /^[-+]?\d+(?:[.,]\d+)?\s(?:m|cm|ft|in)$/.test(value));
-  assert.ok(!dimensionValues.includes('9.6 m'),
+  assert.ok(!dimensionValues.includes('9.60 m'),
     'a label that cannot fit between the two walls is never printed through them');
   assert.ok(!output.commands.some((command) => command.kind === 'text' && /^R\d+$/.test(command.text)),
     'a rectangle does not invent an ambiguous numbered callout');
@@ -411,12 +411,17 @@ test('opposite dedupe keeps the thick near-axis side with a safe external lane',
   const pairedNearAxis = polygonRaw('paired-near-axis', [
     [0.1, 0.1], [0.9, 0.103], [0.9, 0.8], [0.1, 0.8],
   ], { wallCm: 15, name: '' });
+  pairedNearAxis.view_box = [0, -0.1, 1, 1];
+  pairedNearAxis.wall_columns = [{
+    id: 'near-top-obstacle', shape: 'square', center: [0.5, 0.05], cm: 100, angle: 0,
+  }];
   const output = buildRawPage(pairedNearAxis,
     { dimensions: true, roomNames: false, decor: false, backdrop: false });
-  const values = output.commands.filter((command) => command.kind === 'text')
-    .map((command) => command.text);
-  assert.ok(values.includes('9.75 m'),
-    'the opposite near-axis pair selects the side that has a collision-free external lane');
+  const external = output.commands.find((command) => command.kind === 'text'
+    && command.text === '9.75 m');
+  assert.ok(external, 'the paired physical outer face keeps one external dimension');
+  assert.ok(external.y > (output.planField.minY + output.planField.maxY) / 2,
+    'the side with a clear base lane wins instead of pushing the blocked side far away');
 });
 
 test('actual annotated scene bbox selects portrait/landscape, fits and centers at standard scale', () => {
@@ -606,10 +611,11 @@ test('current 20-room large-house space builds from the visible geometry cache u
     }, 0) / 2);
     return [room.id, area];
   }));
-  // The full suite runs test files concurrently on CI. Measuring wall time here would
-  // count periods when this worker is descheduled, so use the CPU consumed by the
-  // scene build itself while keeping the agreed 200 ms product budget unchanged.
-  const started = process.cpuUsage();
+  // The full suite runs test files concurrently on CI. Wall time counts periods when
+  // this worker is descheduled, while process.cpuUsage() also counts sibling test
+  // workers. Measure only this worker thread so the agreed 200 ms product budget is
+  // neither weakened nor made dependent on unrelated parallel tests.
+  const started = process.threadCpuUsage();
   let contourCacheReads = 0;
   let areaCacheReads = 0;
   buildPdfPage({
@@ -627,7 +633,7 @@ test('current 20-room large-house space builds from the visible geometry cache u
     imperial: false, cardTitle: 'House', version: 'test',
     now: new Date('2026-09-07T00:00:00Z'), t,
   });
-  const elapsed = process.cpuUsage(started);
+  const elapsed = process.threadCpuUsage(started);
   const elapsedMs = (elapsed.user + elapsed.system) / 1000;
   assert.equal(contourCacheReads, largeSpace.rooms.length);
   assert.equal(areaCacheReads, largeSpace.rooms.length);

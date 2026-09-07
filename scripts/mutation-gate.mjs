@@ -458,11 +458,11 @@ const MUTANT_DEFINITIONS = [
     because: 'a paired outer dimension must retain the side with a collision-free lane',
     patches: [{
       file: 'src/pdf/pdf-scene.ts',
-      find: '            const hasSafeLane = Array.from({ length: 21 }, (_, index) => index * 4)\n'
-        + '              .some((lane) => !externalPlacementTouchesArchitecture(\n'
+      find: '            const firstSafeLane = Array.from({ length: 21 }, (_, index) => index * 4)\n'
+        + '              .find((lane) => !externalPlacementTouchesArchitecture(\n'
         + '                externalPlacement(edge, outward, lane),\n'
         + '              ));',
-      replace: '            const hasSafeLane = true;',
+      replace: '            const firstSafeLane = 0;',
     }],
   },
   {
