@@ -25,6 +25,7 @@
  */
 import { spawnSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
+import { isMainModule } from './spawn-portable.mjs';
 
 export const REVIEW_DOC_ALLOWLIST = ['docs/reviews/'];
 
@@ -581,8 +582,9 @@ export function reviewCounters({ rounds = [], docs = [], comments = {} } = {}) {
   };
 }
 
-const invokedDirectly = process.argv[1]
-  && import.meta.url === new URL(`file://${process.argv[1]}`).href;
+// #496: pathToFileURL, не `file://${argv}` — на Windows последнее давало
+// `file:///C:/C:/...`, CLI считал себя импортированным и молчал.
+const invokedDirectly = isMainModule(import.meta.url);
 if (invokedDirectly) {
   const argv = process.argv.slice(2);
   // Режим счёта раундов (#454): на входе список имён и тела документов,

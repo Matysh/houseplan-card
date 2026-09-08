@@ -9,9 +9,16 @@ import { rebaseOnDev, splitConflicts } from '../scripts/rebase-on-dev.mjs';
 // #479 AC5: конфликт только в бандле решается пересборкой, конфликт в src/**
 // останавливает ребейз, не тронув дерево. Сценарий — настоящий git в temp.
 
-// Личность коммитера нужна и скрипту (rebase, amend), не только тесту.
+// Личность коммитера нужна и скрипту (rebase, amend), не только тесту. Заодно
+// временный репозиторий изолируется от пользовательского git config (#496): на
+// Windows с глобальным `core.autocrlf=true` checkout давал `dev\r\n` вместо
+// `dev\n`, и тест краснел на переводе строки, а не на ребейзе. Менять глобальный
+// конфиг владельца ради теста нельзя — конфиг передаётся окружением.
 Object.assign(process.env, {
   GIT_AUTHOR_NAME: 't', GIT_AUTHOR_EMAIL: 't@t', GIT_COMMITTER_NAME: 't', GIT_COMMITTER_EMAIL: 't@t',
+  GIT_CONFIG_COUNT: '2',
+  GIT_CONFIG_KEY_0: 'core.autocrlf', GIT_CONFIG_VALUE_0: 'false',
+  GIT_CONFIG_KEY_1: 'core.eol', GIT_CONFIG_VALUE_1: 'lf',
 });
 const git = (cwd, ...args) => execFileSync('git', args, {
   cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'],

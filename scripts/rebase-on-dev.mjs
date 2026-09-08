@@ -19,6 +19,7 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, rmSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { portableCommand } from './spawn-portable.mjs';
 
 export const GENERATED_ROOTS = ['dist/', 'custom_components/houseplan/frontend/'];
 export const isGenerated = (path) => GENERATED_ROOTS.some((root) => path.startsWith(root));
@@ -114,7 +115,10 @@ export function rebaseOnDev({
   // Пересборка: версия dev в бандле — не версия этой ветки. Собираем и, если
   // бандл отличается, амендим последний коммит ветки.
   const [cmd, ...args] = syncCommand;
-  const sync = spawnSync(cmd, args, { cwd, stdio: 'inherit', shell: process.platform === 'win32' });
+  // Оболочка только для npm.cmd на Windows (#496): `node -e "…"` из теста и
+  // любая команда с кавычками через shell разваливаются.
+  const portable = portableCommand(cmd);
+  const sync = spawnSync(portable.cmd, args, { cwd, stdio: 'inherit', shell: portable.shell });
   if (sync.status !== 0) throw new Error(`${syncCommand.join(' ')} завершился с кодом ${sync.status}; ребейз сделан, бандл не закоммичен`);
   git(['add', '-A', '--', ...GENERATED_ROOTS.filter((root) => existsSync(resolve(cwd, root)))]);
   const staged = git(['diff', '--cached', '--name-only']).stdout;

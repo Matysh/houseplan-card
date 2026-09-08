@@ -24,6 +24,7 @@
  * но и выдумывать из неё сущность тоже.
  */
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { isMainModule } from './spawn-portable.mjs';
 
 export const REPORT_TITLE_MARKER = '[mutation-gate] отказ прогона по расписанию';
 
@@ -143,8 +144,9 @@ export function telegramSummary(report, issueUrl) {
   return `${head}\n${escaped}\nшарды: ${shards || '—'}\n${issueUrl}`;
 }
 
-const invokedDirectly = process.argv[1]
-  && import.meta.url === new URL(`file://${process.argv[1]}`).href;
+// #496: pathToFileURL, не `file://${argv}` — на Windows последнее давало
+// `file:///C:/C:/...`, CLI считал себя импортированным и молчал.
+const invokedDirectly = isMainModule(import.meta.url);
 if (invokedDirectly) {
   const argv = process.argv.slice(2);
   const value = (name, fallback = '') => {

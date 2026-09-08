@@ -24,6 +24,7 @@
 import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { dirname, join, posix, relative, resolve } from 'node:path';
+import { isMainModule } from './spawn-portable.mjs';
 
 /** Корни, внутри которых файл считается исполняемым входом (§5.2). */
 export const EXECUTABLE_ROOTS = ['scripts', 'demo', 'test', 'tests_backend', '.github', 'custom_components', 'src'];
@@ -56,6 +57,7 @@ export const NOT_AN_INPUT = [
   ['scripts/sh3d-convert/cli.mjs', 'CLI конвертера для человека'],
   ['scripts/sh3d-convert/make-fixtures.mjs', 'генератор фикстур конвертера, ручной'],
   ['scripts/support-relay/deploy/**', 'деплой relay на стенд'],
+  ['scripts/wsl-setup.sh', 'установка локального Linux/WSL-контура с пинами CI (#496), ручной запуск'],
   ['.github/workflows/*.yml', 'другие workflow: у каждого свой запуск; validate.yml — вход toolchain всех проверок, объявлен явно'],
   ['.github/ISSUE_TEMPLATE/**', 'шаблоны issue GitHub, не исполняются'],
   ['.githooks/**', 'локальные хуки'],
@@ -378,7 +380,7 @@ export function coverage(root = process.cwd(), options = {}) {
 // ---------------------------------------------------------------------------
 // CLI: `node scripts/check-inputs.mjs --check=backend` печатает входы;
 //      `--coverage` — лист покрытия; `--affected` читает список файлов из stdin.
-const invokedDirectly = process.argv[1] && import.meta.url === new URL(`file://${process.argv[1]}`).href;
+const invokedDirectly = isMainModule(import.meta.url); // #496: переносимо для Windows
 if (invokedDirectly) {
   const argv = process.argv.slice(2);
   const root = process.cwd();

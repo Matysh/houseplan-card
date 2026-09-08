@@ -15,6 +15,7 @@
 // недоказуема и проверять надо всё.
 
 import { readFileSync } from 'node:fs';
+import { isMainModule } from './spawn-portable.mjs';
 
 import { checksAffectedBy } from './check-inputs.mjs';
 
@@ -105,8 +106,9 @@ export function formatOutputs(outputs) {
   return lines.join('\n') + '\n';
 }
 
-const invokedDirectly = process.argv[1]
-  && import.meta.url === new URL(`file://${process.argv[1]}`).href;
+// #496: pathToFileURL, не `file://${argv}` — на Windows последнее давало
+// `file:///C:/C:/...`, CLI считал себя импортированным и молчал.
+const invokedDirectly = isMainModule(import.meta.url);
 if (invokedDirectly) {
   if (process.argv.includes('--heavy')) {
     // Отдельный вызов: у `heavy` другие входы (событие, сообщение head-коммита),

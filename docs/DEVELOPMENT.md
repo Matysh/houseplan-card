@@ -43,7 +43,10 @@ the degradation is accepted.
 
 The CI contract is **Node.js 22 + Python 3.14**. Do not use Codex's bundled
 Node 24 or an unpinned machine Python environment as proof that a release will
-pass.
+pass. The pins are not declared twice: `node scripts/toolchain-pins.mjs` reads
+them from `validate.yml`, `tests_backend/requirements.txt` and the lockfile, and
+`npm run toolchain:check` compares the machine with them (#496). `.nvmrc` and
+`.python-version` carry the same values for nvm/uv/pyenv; a test keeps them equal.
 
 Minimal native setup (PowerShell):
 
@@ -63,8 +66,12 @@ Open a new Windows Terminal after installing Node/GitHub CLI so their PATH
 changes are visible. Keep the Playwright browser in its normal shared Windows
 cache; downloading it inside every repository wastes time and disk space.
 
-WSL2 is optional for the ordinary frontend and pure-backend loop. It is required
-only when running the full HA harness locally: current Home Assistant imports
+WSL2 is optional for the ordinary frontend and pure-backend loop. `bash
+scripts/wsl-setup.sh` provisions it with the CI pins (nvm → Node, uv → Python and
+the HA test stack from `tests_backend/requirements.txt`, Playwright Chromium from
+the lockfile) and ends with the same `toolchain:check`; it is idempotent. The
+canonical proof still lives in Linux CI at the exact SHA — WSL is early feedback.
+It is required only when running the full HA harness locally: current Home Assistant imports
 the Unix-only `fcntl` module and cannot start its pytest plugin on native
 Windows. Keep a WSL clone inside the Linux ext4 filesystem rather than under
 `/mnt/c`, otherwise dependency installs become slower. The release CI always

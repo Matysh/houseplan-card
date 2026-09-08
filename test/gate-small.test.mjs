@@ -33,3 +33,37 @@ test('сводка: информационный шаг не падение, у�
   assert.match(lines[1], /^info/);
   assert.match(lines[2], /^FAIL.*→ npm run bundle:sync/);
 });
+
+// #496: browser-consumers отделены от подготовки артефактов и идут после неё.
+import { runLimited, smokesToRun } from '../scripts/gate-small.mjs';
+
+test('smokesToRun берёт прямые и зарегистрированные смоки, не «широкие»; без диффа — пусто (#496)', () => {
+  assert.deepEqual(smokesToRun({ noExecutableDiff: true, direct: [{ smoke: 'smoke_x.mjs' }] }), []);
+  assert.deepEqual(smokesToRun({
+    direct: [{ smoke: 'smoke_b.mjs', strong: true }, { smoke: 'smoke_a.mjs', strong: false }],
+    registered: [{ smoke: 'smoke_b.mjs' }, { smoke: 'smoke_c.mjs' }],
+    broad: [{ smoke: 'smoke_everything.mjs' }],
+  }), ['smoke_a.mjs', 'smoke_b.mjs', 'smoke_c.mjs']);
+  assert.deepEqual(smokesToRun(null), []);
+  assert.deepEqual(parseArgs(['--smokes', '--jobs=3']), { base: 'origin/dev', smokes: true, jobs: 3 });
+  assert.deepEqual(parseArgs(['--jobs=abc']).jobs, 2);
+});
+
+test('runLimited держит не больше N одновременных consumers и сохраняет порядок (#496)', async () => {
+  let active = 0; let peak = 0;
+  const out = await runLimited([1, 2, 3, 4, 5], 2, async (n) => {
+    active++; peak = Math.max(peak, active);
+    await new Promise((r) => setTimeout(r, 5));
+    active--; return n * 10;
+  });
+  assert.deepEqual(out, [10, 20, 30, 40, 50]);
+  assert.equal(peak, 2);
+});
+
+test('gate-small: смоки идут только после bundle-sync и только с --smokes (#496)', () => {
+  const source = readFileSync(new URL('../scripts/gate-small.mjs', import.meta.url), 'utf8');
+  const smokesAt = source.indexOf("args: [`demo/${smoke}`]");
+  const syncAt = source.indexOf("args: ['scripts/bundle-sync.mjs']");
+  assert.ok(syncAt > 0 && smokesAt > syncAt, 'bundle-sync предшествует запуску смоков');
+  assert.match(source, /if \(smokes && buildOk\)/);
+});

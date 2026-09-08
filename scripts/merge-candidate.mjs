@@ -21,6 +21,7 @@
 
 import { spawnSync } from 'node:child_process';
 import { appendFileSync } from 'node:fs';
+import { isMainModule } from './spawn-portable.mjs';
 
 export const MAX_ATTEMPTS = 3;
 export const VALIDATE_APPEAR_MS = 3 * 60 * 1000;
@@ -216,7 +217,7 @@ const safe = (fn) => { try { return fn(); } catch { return null; } };
 
 const arg = (name) => process.argv.find((a) => a.startsWith(`--${name}=`))?.slice(name.length + 3);
 
-if (process.argv[1] && import.meta.url === new URL(`file://${process.argv[1]}`).href) {
+if (isMainModule(import.meta.url)) { // #496: переносимо для Windows
   const branch = arg('branch');
   const material = arg('material');
   const issue = arg('issue');

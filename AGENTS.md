@@ -230,7 +230,12 @@ pipeline, which reviews without anyone asking and takes ten to forty-five minute
 session.** Reporting "handed over for review" stops a conveyor that could have kept
 moving on its own. An agent has no clock — it exists only during its own turn — so
 waiting means polling: every 90 seconds, at most 30 times. A single long sleep hits
-the command timeout. Watch the **label**, not the comment: the label is the state,
+the command timeout. Do the polling with `node scripts/wait-verdict.mjs --issue NN
+[--sha <tip>]` (#496): it watches the label, the pipeline's own comments (conflict,
+cancelled merge, failed run) and optionally Validate on the SHA, prints only when
+the state changes and exits 0 on a new label, 3 on an event that needs a hand,
+4 on timeout — the same 90 s × 30 without a model turn per tick. It writes
+nothing. Watch the **label**, not the comment: the label is the state,
 the comment only explains it. Do not wait at all while `blocked` is set — the task
 is waiting on the owner, not on the reviewer. On exhausting the attempts, stop and
 tell the owner: a failed run leaves the label where it was, forever.
@@ -350,8 +355,18 @@ npm run bundle:budget # initial View graph <= 256000 B gzip (#337)
 `npm run gate:small` runs the mandatory part of PROCESS §8 in one go (#479):
 unit tests, build with typecheck, `no-new-any` and `smoke-select` in parallel,
 then the bundle-tree comparison and the bundle budget. It prints the smokes the
-diff selects but does not run them — those, `golden`, `pytest` and `check-docs
---screenshots=strict` remain the author's call by diff and AC.
+diff selects but does not run them by default — `npm run gate:small -- --smokes`
+(#496) adds the browser phase after the artefact preparation: `bundle-sync`, then
+the directly matched and registered smokes two at a time; "broad" matches stay
+the reviewer's call. `golden`, `pytest` and `check-docs --screenshots=strict`
+remain the author's call by diff and AC.
+
+**Start a task from its packet** (#496): `node scripts/task-packet.mjs --issue NN`
+prints one derived view — status and track, what the status permits, the owner's
+recent decisions, the branch against `dev` and Validate on its tip, the previous
+verdict with its recorded tree, AC → evidence from the last review document and
+what is still unwitnessed. It reads GitHub and git and writes nothing; the labels
+remain the only source of status.
 
 **Heavy CI gates run on the beta candidate, nightly and on demand — not on every
 push (#479).** `smoke`, `golden` and `performance_smoke` in Validate are gated
@@ -436,8 +451,10 @@ went red after the #113 merge.
 
 ## Environments
 
-**Local Windows checkout** is the day-to-day environment: Node 22 as in CI, Python
-3.13 in a venv, `gh` authenticated. `.venv-backend` does **not** exist there — it is
+**Local Windows checkout** is the day-to-day environment: Node 22 and Python 3.14
+as in CI (`npm run toolchain:check` compares the machine with the pins CI actually
+uses — `.nvmrc` and `.python-version` are derived from the same sources, #496),
+`gh` authenticated. `.venv-backend` does **not** exist there — it is
 provisioned only by cloud agent startup scripts, which also run `npm ci` and install
 Playwright Chromium.
 
