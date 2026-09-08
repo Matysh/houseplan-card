@@ -392,11 +392,25 @@ sidebar в kiosk, это не включает card kiosk и не открыва
 
 Shell — grid/flex из `appbar auto` и `content minmax(0, 1fr)`:
 
-- занимает доступные `width:100%` и `height:100%` HA panel viewport;
+- занимает `width:100%` и высоту **viewport**: `100vh`, затем
+  `calc(100dvh − safe-area-inset-top − safe-area-inset-bottom)` (уточнение
+  #488: `<ha-panel-custom>` — блок с safe-area-паддингами и без высоты, поэтому
+  `height:100%` резолвится в `auto`, и стейдж схлопывается в 0 px; HA для
+  iframe-панелей по той же причине берёт `100dvh`);
 - не создаёт page/horizontal scroll;
 - content и child имеют `min-width:0`, `min-height:0`, `overflow:hidden`;
-- HA-owned safe-area не вычитается вручную второй раз;
+- паддинги safe-area, которые ставит сам `ha-panel-custom`, вычитаются из
+  высоты `:host` ровно один раз — сверху и снизу; боковые уже учтены шириной;
 - outer card border/radius/shadow убираются только в panel-host mode.
+
+Порядок монтирования у HA (#488): `ha-panel-custom` создаёт элемент и
+присваивает `panel`/`hass`/`narrow`/`route` сразу после `load` module-скрипта,
+а entry панели определяет класс после top-level `await import('./houseplan-card.js')`.
+Значения ложатся собственными свойствами инстанса и затеняют accessors;
+`houseplan-panel` в конструкторе и `connectedCallback` переприсваивает их через
+accessors (`_adoptPreUpgradeProperties`). Смок `smoke_houseplan_panel.mjs`
+воспроизводит именно этот порядок и контейнер без высоты; два мутанта держат
+оба контракта.
 
 Panel-host mode считает stage от **измеренного контейнера**, вычитая только
 собственный card header/editor chrome. Он не использует `100dvh − HA chrome`.
