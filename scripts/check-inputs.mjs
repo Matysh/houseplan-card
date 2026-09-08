@@ -85,7 +85,10 @@ const matchesAny = (file, globs) => globs.some((glob) => globToRegExp(glob).test
 /** Отслеживаемые файлы (git), либо обход дерева там, где git недоступен. */
 export function trackedFiles(root) {
   try {
-    const out = execFileSync('git', ['-C', root, 'ls-files', '-z'], { encoding: 'utf8' });
+    // stderr глушится (#496): на синтетических деревьях тестов git отвечает
+    // «fatal: not a git repository», и без этого каждый вызов печатал его в лог,
+    // хотя отказ штатно ловится ниже и дерево обходится вручную.
+    const out = execFileSync('git', ['-C', root, 'ls-files', '-z'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
     const files = out.split('\0').filter(Boolean);
     if (files.length) return files.sort();
   } catch { /* не git — обходим дерево */ }
