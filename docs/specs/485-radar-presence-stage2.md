@@ -668,6 +668,9 @@ Implementation release must include both `docs/CHANGELOG.md` and
 recommendation, permissions, hardware warnings, retention/backups), English
 user-facing documentation, `docs/ARCHITECTURE.md`, `docs/CONFIG-COMPATIBILITY.md`,
 field registry and `docs/DEVELOPMENT.md` for HA harness/device proof caveats.
+`docs/SCOPE.md` records the narrow #485 exception in this specification revision;
+verify at implementation/release that local recording and its limits stay within
+that approved boundary, without silently broadening it.
 Golden/screenshots: selected local/device zones, rotated LD2450 rectangle,
 FP2 mapping, cloud/score, partial/unverified outcome, ordinary unchanged
 View/kiosk in light/dark en/ru. Capture/accept only through the repository's

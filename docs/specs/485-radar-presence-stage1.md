@@ -225,6 +225,26 @@ conversion, non-origin mount and 1/5 cm spaces representing the same room.
 
 ### 5.2 Wizard, no premature persistence
 
+**Touch editor: best effort / intentionally degraded.** The calibration wizard,
+including mount/reference placement, uses the desktop Device editor as its
+reference environment. This is deliberate, not a missing mobile implementation
+promise: mark the reference on the computer first, start the 10-second countdown,
+walk to the marked physical position without carrying the computer, remain still
+during capture, then return to inspect the result. The existing countdown makes
+that single-person desktop workflow possible; a phone/second controller is not
+required. If the user cannot complete the timed exercise comfortably, Retry or
+manual direction/mirror setup remains available rather than accepting a bad fit.
+
+A phone/tablet may run the same wizard best-effort, but precise point placement
+and full mobile parity are not promised. Show the desktop recommendation before
+setup and describe the limitation in both guides and release notes. Cancel/Back,
+lost permission, page hide, pinch, a second pointer or `pointercancel` must never
+commit a reference, complete a capture or save configuration accidentally. Page
+hide interrupts capture and clears transient samples; returning offers Retry,
+not a fabricated successful measurement. Essential safe exit/confirmation
+controls remain reachable. View/kiosk retain full touch support; S1-10/S1-18
+and touch safety smoke cover this floor, not unsupported precision parity.
+
 **Step 1: Installation.** Select the existing room; place the real sensor mount
 on the plan and drag its direction arrow. If decorative marker placement is
 available, offer it as a starting suggestion only, with text distinguishing it
@@ -508,6 +528,11 @@ both changelogs, guide/setup/data-quality caveat, architecture, compatibility,
 field registry, reviewed full-scene screenshots light/dark/2D/isometry/mobile,
 permission and mutation evidence. Current docs-only work runs no implementation
 gates and claims no shipped changes.
+
+`docs/SCOPE.md` already records the owner-approved narrow #485 exception as part
+of this spec revision. Verify the implementation/release against that boundary;
+do not silently broaden it. The guides and release notes explicitly carry the
+desktop-first/best-effort-touch calibration limitation from §5.2.
 
 Rollback: hide live to remove visuals; disable radar to detach sources; restore
 saved config if needed. No Stage1 external write or raw store to reverse. Older

@@ -764,7 +764,10 @@ Release artifacts for actual implementation: `docs/CHANGELOG.md` and
 `docs/CHANGELOG.ru.md`; `docs/USER-GUIDE.md` and `docs/USER-GUIDE.ru.md`;
 update `docs/ARCHITECTURE.md`,
 `docs/CONFIG-COMPATIBILITY.md`, field registry and privacy/support projection
-documentation. Capture representative actual coverage, ambiguous overlap,
+documentation. `docs/SCOPE.md` records the narrow #485 exception in this spec
+revision; verify that aggregates and owned HA outputs stay within that approved
+boundary at implementation/release, without silently broadening it.
+Capture representative actual coverage, ambiguous overlap,
 unknown native output and incomplete heatmap, light/dark
 and narrow/touch View. Use approved complete Linux CI documentation/golden
 artifacts and reviewed acceptance, not the conceptual UX sketch as a screenshot.

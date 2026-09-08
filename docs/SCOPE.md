@@ -95,7 +95,23 @@ the file — and if a future version wants to reclaim that space, it asks.
 - Automations, scenes, scripts, notifications → HA core.
 - Device/entity administration (rename, reassign area, disable) → HA registry
   UIs. We *read* the registry, we never manage it.
+  A narrow owner-approved exception for
+  [#485](https://github.com/Matysh/houseplan-card/issues/485) allows explicit
+  HA-admin-confirmed creation/removal of House Plan's own derived room presence
+  and estimated-count entities only; it does not create automations or rename,
+  reassign or disable source entities. Ordinary radar setup has no implicit
+  provisioning side effect.
 - History, graphs, statistics → recorder/history cards. We show now, not then.
+  A narrow exception approved for
+  [#485](https://github.com/Matysh/houseplan-card/issues/485), with defaults
+  confirmed on 2026-09-08, permits local spatial radar setup/occupancy analysis:
+  explicitly started observation runs of at most 24 hours with raw points
+  expiring after 24 hours, and a separately enabled day/week heatmap containing
+  coarse aggregate cells for at most seven days. Each aggregate collection run
+  also lasts at most 24 hours. History/collection controls require House Plan
+  editing permission; no automatic start, renewal or restart, continuous
+  multi-day collection, cloud upload or personal identity tracking. Ordinary
+  View remains current-only. This does not authorize a general history dashboard.
 - Camera streams, media controls → their own cards; our more-info opens HA's.
 - Energy monitoring/analytics → HA Energy.
 - Photorealistic rendering, a free 3D camera, a separate 3D model and 3D
