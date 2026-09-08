@@ -37,6 +37,29 @@ async def _setup(hass: HomeAssistant) -> MockConfigEntry:
     return entry
 
 
+async def test_config_get_advertises_radar_only_while_coordinator_is_ready(
+    hass: HomeAssistant, hass_ws_client: WebSocketGenerator,
+) -> None:
+    await _setup(hass)
+    client = await hass_ws_client(hass)
+    await client.send_json_auto_id({"type": "houseplan/config/get"})
+    ready = (await client.receive_json())["result"]
+    assert ready["radar_stage1_api"] == 1
+
+    from custom_components.houseplan.store import get_data
+
+    runtime = get_data(hass)
+    assert runtime is not None and runtime.radar_coordinator is not None
+    coordinator = runtime.radar_coordinator
+    runtime.radar_coordinator = None
+    try:
+        await client.send_json_auto_id({"type": "houseplan/config/get"})
+        unavailable = (await client.receive_json())["result"]
+        assert "radar_stage1_api" not in unavailable
+    finally:
+        runtime.radar_coordinator = coordinator
+
+
 def _space(space_id: str, room_id: str) -> dict:
     return {
         "id": space_id, "title": space_id, "view_box": [0, 0, 1, 1],

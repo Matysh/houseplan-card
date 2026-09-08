@@ -11,8 +11,8 @@ from custom_components.houseplan.radar_geometry import (
     clipped_arc_segments,
     length_cm,
     point_in_polygon,
-    polygon_is_convex,
     polar_to_cartesian,
+    polygon_is_convex,
     project_local,
     solve_two_point,
 )
@@ -80,6 +80,29 @@ def test_two_point_fit_is_rigid_and_rejects_collinear_references():
     with pytest.raises(ValueError, match="invalid_selection"):
         solve_two_point((.5, .5), [(100, 0), (200, 0)],
                         [(.5, .4), (.5, .3)], 5)
+
+
+def test_two_point_fit_enforces_reference_distance_and_rms_guards():
+    mount = (.5, .5)
+
+    def plan(x, y):
+        return .5 + x / 1200, .5 - y / 1200
+
+    with pytest.raises(ValueError, match="invalid_selection"):
+        solve_two_point(mount, [(49, 0), (0, 100)],
+                        [plan(49, 0), plan(0, 100)], 5)
+    with pytest.raises(ValueError, match="invalid_selection"):
+        solve_two_point(mount, [(100, 0), (0, 100)],
+                        [plan(100, 0), plan(-50, 86.603)], 5)
+
+
+def test_two_point_fit_rejects_ambiguous_mirror_candidates():
+    def plan(x, y):
+        return .5 + x / 1200, .5 - y / 1200
+
+    with pytest.raises(ValueError, match="ambiguous_sources"):
+        solve_two_point((.5, .5), [(-20, 80), (20, 80)],
+                        [plan(0, 80), plan(0, 80)], 5)
 
 
 def test_projection_rejects_nonfinite_and_over_100m():

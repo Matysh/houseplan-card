@@ -48,7 +48,8 @@
   observations and the short diagnostic trail remain session-only. LD2450
   auto-detection now requires an exact ESPHome, same-device registry match;
   changing a saved binding keeps its radar setup available for repair, while
-  setup cancellation and source-health states are reported consistently
+  setup cancellation, source-health states and invalid reference placement
+  receive distinct, actionable feedback
   ([#485](https://github.com/Matysh/houseplan-card/issues/485)).
 
 ## v1.73.0-beta.6 — 2026-09-08

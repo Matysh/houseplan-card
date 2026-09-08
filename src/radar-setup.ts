@@ -330,7 +330,8 @@ export class RadarSetupController {
       state.error = undefined;
     } catch (error: unknown) {
       const message = String((error as Error)?.message);
-      state.error = message === 'ambiguous_sources' ? 'radar.ambiguous_sources' : 'radar.bad_fit';
+      state.error = message === 'ambiguous_sources' ? 'radar.ambiguous_sources'
+        : message === 'bad_references' ? 'radar.bad_references' : 'radar.bad_fit';
       state.refs = [];
       state.phase = 'reference_1';
     }

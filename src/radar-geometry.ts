@@ -43,14 +43,15 @@ export function solveRadarTwoPoint(
   cellCm: number,
 ): RadarFitResult {
   if (![...mount, cellCm, ...localPoints.flat(), ...planPoints.flat()].every(Number.isFinite)
-      || cellCm <= 0 || localPoints.some((point) => Math.hypot(...point) < 50)) {
+      || cellCm <= 0) {
     throw new Error('invalid_selection');
   }
+  if (localPoints.some((point) => Math.hypot(...point) < 50)) throw new Error('bad_references');
   const denominator = Math.hypot(...localPoints[0]) * Math.hypot(...localPoints[1]);
   const cosine = (localPoints[0][0] * localPoints[1][0]
     + localPoints[0][1] * localPoints[1][1]) / denominator;
   const angle = Math.acos(Math.max(-1, Math.min(1, cosine))) * 180 / Math.PI;
-  if (angle < 20 || angle > 160) throw new Error('invalid_selection');
+  if (angle < 20 || angle > 160) throw new Error('bad_references');
   const scale = 240 * cellCm;
   const targets = planPoints.map((point) => [
     (point[0] - mount[0]) * scale,

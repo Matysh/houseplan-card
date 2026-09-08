@@ -78,3 +78,28 @@ test('dirty calibration stays open when discard confirmation is rejected', async
   assert.equal(cleanups, 0);
   assert.ok(controller.active);
 });
+
+test('calibration reports bad reference placement separately from a measurement mismatch', () => {
+  const controller = new RadarSetupController({
+    hass: () => ({}), requestUpdate() {}, t: (key) => key,
+    configFromDraft: radarConfigFromDraft, apply() {}, confirmDiscard: async () => true,
+  });
+  assert.equal(controller.begin('radar', draft(), {
+    id: 'living', name: 'Living', poly: [[0, 0], [1, 0], [1, 1]],
+  }, 5, 7), true);
+  const plan = (x, y) => [.5 + x / 1200, .5 - y / 1200];
+  controller.active.mount = [.5, .5];
+  controller.active.refs = [
+    { local: [100, 0], plan: plan(100, 0) },
+    { local: [200, 0], plan: plan(200, 0) },
+  ];
+  controller.solve();
+  assert.equal(controller.active.error, 'radar.bad_references');
+
+  controller.active.refs = [
+    { local: [100, 0], plan: plan(100, 0) },
+    { local: [0, 100], plan: plan(-50, 86.603) },
+  ];
+  controller.solve();
+  assert.equal(controller.active.error, 'radar.bad_fit');
+});

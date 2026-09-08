@@ -34,7 +34,7 @@ test('two reference solve keeps physical scale rigid', () => {
   assert.ok(fit.rmsCm < 1e-9);
   assert.throws(() => solveRadarTwoPoint([.5, .5], [[100, 0], [200, 0]], [
     [.6, .5], [.7, .5],
-  ], 5), /invalid_selection/);
+  ], 5), /bad_references/);
 });
 
 test('two-point calibration keeps every distance and fit guard distinct', () => {
@@ -42,7 +42,7 @@ test('two-point calibration keeps every distance and fit guard distinct', () => 
   const plan = (x, y) => [.5 + x / 1200, .5 - y / 1200];
   assert.throws(() => solveRadarTwoPoint(mount, [[49, 0], [0, 100]], [
     plan(49, 0), plan(0, 100),
-  ], 5), /invalid_selection/, 'references under 50 cm are rejected');
+  ], 5), /bad_references/, 'references under 50 cm are rejected with actionable guidance');
   assert.throws(() => solveRadarTwoPoint(mount, [[100, 0], [0, 100]], [
     plan(100, 0), plan(-50, 86.603),
   ], 5), /invalid_selection/, 'RMS over 20 cm is rejected');
