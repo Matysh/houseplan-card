@@ -733,6 +733,29 @@ const MUTANT_DEFINITIONS = [
     }],
   },
   {
+    id: 'panel-ignores-pre-upgrade-properties',
+    guard: 'node demo/smoke_houseplan_panel.mjs',
+    because: 'HA assigns hass/narrow/route/panel before the top-level-await entry defines the '
+      + 'element; values left as own data properties shadow the accessors and the card never '
+      + 'receives hass, so /houseplan stays blank on first open (#488)',
+    patches: [{
+      file: 'src/houseplan-panel.ts',
+      find: '      if (!Object.prototype.hasOwnProperty.call(this, key)) continue;',
+      replace: '      continue;  // mutant: pre-upgrade properties are left shadowing the accessors',
+    }],
+  },
+  {
+    id: 'panel-host-height-from-parent',
+    guard: 'node demo/smoke_houseplan_panel.mjs',
+    because: '<ha-panel-custom> has no height, so a percentage host height resolves to auto and '
+      + 'the stage collapses to 0 px; the panel must size itself from the viewport (#488)',
+    patches: [{
+      file: 'src/houseplan-panel.ts',
+      find: '        height: calc(100dvh - var(--safe-area-inset-top, 0px) - var(--safe-area-inset-bottom, 0px));',
+      replace: '        height: 100%;  /* mutant: back to the parent-relative height */',
+    }],
+  },
+  {
     id: 'version-recovery-treats-unknown-as-mismatch',
     guard: 'node --test --test-name-pattern="malformed values stay unknown" '
       + 'test/version-recovery.test.mjs',

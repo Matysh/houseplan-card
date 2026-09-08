@@ -10,6 +10,9 @@ interface HomeAssistantPanelHost {
   localize?: (key: string) => string | undefined;
 }
 
+/** Properties Home Assistant assigns to a custom panel element, in its order. */
+const PRE_UPGRADE_PROPERTIES = ['panel', 'hass', 'narrow', 'route'] as const;
+
 /** Home Assistant custom-panel shell; the existing card owns all product state. */
 export class HouseplanPanel extends HTMLElement {
   private _hass?: HomeAssistantPanelHost;
@@ -22,10 +25,27 @@ export class HouseplanPanel extends HTMLElement {
   public constructor() {
     super();
     this.attachShadow({ mode: 'open' });
+    this._adoptPreUpgradeProperties();
   }
 
   public connectedCallback(): void {
+    this._adoptPreUpgradeProperties();
     this._ensureShell();
+  }
+
+  /** Home Assistant creates the panel element and assigns `hass`/`narrow`/
+   *  `route`/`panel` as soon as the module script fires `load`; with the
+   *  top-level `await import('./houseplan-card.js')` in this entry the class is
+   *  defined a moment later, so those values land as OWN data properties that
+   *  shadow the accessors below for the life of the element (#488). Re-route
+   *  them through the accessors once, in HA's own assignment order. */
+  private _adoptPreUpgradeProperties(): void {
+    for (const key of PRE_UPGRADE_PROPERTIES) {
+      if (!Object.prototype.hasOwnProperty.call(this, key)) continue;
+      const value = (this as unknown as Record<string, unknown>)[key];
+      delete (this as unknown as Record<string, unknown>)[key];
+      (this as unknown as Record<string, unknown>)[key] = value;
+    }
   }
 
   public get hass(): HomeAssistantPanelHost | undefined { return this._hass; }
@@ -56,7 +76,12 @@ export class HouseplanPanel extends HTMLElement {
       :host {
         display: block;
         width: 100%;
-        height: 100%;
+        /* HA mounts a custom panel inside <ha-panel-custom>, a block with
+         * safe-area padding and NO height, so a percentage here resolves to
+         * auto and the stage collapses to 0 px (#488). Take the viewport
+         * like HA's own iframe panels do, minus the insets HA pads with. */
+        height: 100vh;
+        height: calc(100dvh - var(--safe-area-inset-top, 0px) - var(--safe-area-inset-bottom, 0px));
         min-width: 0;
         min-height: 0;
         overflow: hidden;

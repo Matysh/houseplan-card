@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- The House Plan sidebar page now shows the plan on the first open in a real
+  Home Assistant install: the panel adopts the properties Home Assistant assigns
+  before the element is defined and sizes itself from the viewport instead of
+  its height-less container, so the page is no longer blank with a 0 px stage
+  ([#488](https://github.com/Matysh/houseplan-card/issues/488)).
+
 ## v1.73.0-beta.5 — 2026-09-08
 
 - House Plan now opens directly from its own Home Assistant sidebar page, with

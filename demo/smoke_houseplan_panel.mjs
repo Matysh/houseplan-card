@@ -7,6 +7,95 @@ const coldBefore = await page.evaluate(() => ({
   coldStartsWithoutPanelDefinition: !customElements.get('houseplan-panel'),
   coldStartsWithoutCardDefinition: !customElements.get('houseplan-card'),
 }));
+
+// #488: reproduce Home Assistant's real mount, not the harness' convenient one.
+// <ha-panel-custom> is a display:block element with safe-area padding and NO
+// height, and HA assigns panel/hass/narrow/route to the element as soon as the
+// module script fires `load` — before the top-level `await import()` in the
+// entry has let the class define itself. Both facts left /houseplan empty.
+const haSequence = await page.evaluate(async () => {
+  const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  const frame = () => new Promise((resolve) => requestAnimationFrame(resolve));
+  const waitFor = async (probe, label, timeout = 9000) => {
+    const end = performance.now() + timeout;
+    while (performance.now() < end) {
+      const value = probe();
+      if (value) return value;
+      await sleep(25);
+    }
+    throw new Error(`panel smoke timed out: ${label}`);
+  };
+  history.replaceState(null, '', '/houseplan');
+  const root = document.documentElement;
+  root.style.setProperty('--safe-area-inset-top', '10px');
+  root.style.setProperty('--safe-area-inset-bottom', '6px');
+  const host = document.getElementById('host');
+  host.replaceChildren();
+  host.style.cssText = 'width:100%;margin:0;padding:0;';
+  // ha-panel-custom twin: exactly the inline styles HA's _createPanel sets.
+  const wrapper = document.createElement('div');
+  wrapper.style.cssText = 'display:block;box-sizing:border-box;'
+    + 'padding-top:var(--safe-area-inset-top);padding-bottom:var(--safe-area-inset-bottom);';
+  host.append(wrapper);
+
+  const hass = { ...window.__mkHass(), user: { id: 'writer', name: 'Writer', is_admin: false } };
+  const panel = document.createElement('houseplan-panel');
+  const assignedBeforeDefinition = !customElements.get('houseplan-panel');
+  // HA's setCustomPanelProperties order.
+  panel.panel = { component_name: 'houseplan-panel' };
+  panel.hass = hass;
+  panel.narrow = true;
+  panel.route = { path: '/houseplan' };
+  wrapper.append(panel);
+
+  await new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.type = 'module';
+    script.async = true;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error('panel module failed to load'));
+    script.src = '/assets/houseplan-panel.js';
+    document.body.append(script);
+  });
+  await customElements.whenDefined('houseplan-panel');
+  const card = await waitFor(() => panel.shadowRoot?.querySelector('houseplan-card'), 'HA-sequence child');
+  await waitFor(() => card.hass === hass, 'HA-sequence hass reaches the card');
+  await waitFor(() => card._loadOk && card._model?.length && card._booting === false, 'HA-sequence view');
+  await card.updateComplete;
+  await frame(); await frame();
+
+  const shadowing = ['panel', 'hass', 'narrow', 'route']
+    .filter((key) => Object.prototype.hasOwnProperty.call(panel, key));
+  const laterHass = { ...hass, themes: { darkMode: true } };
+  panel.hass = laterHass;
+  panel.narrow = false;
+  await card.updateComplete;
+  const cardRoot = card.shadowRoot || card.renderRoot;
+  const panelRect = panel.getBoundingClientRect();
+  const wrapperRect = wrapper.getBoundingClientRect();
+  const appbarRect = panel.shadowRoot.querySelector('.appbar').getBoundingClientRect();
+  const headerRect = cardRoot.querySelector('.hdr').getBoundingClientRect();
+  const stageRect = cardRoot.querySelector('.stage').getBoundingClientRect();
+  const result = {
+    haSequenceAssignsBeforeDefinition: assignedBeforeDefinition,
+    haSequenceLeavesNoShadowingOwnProperties: shadowing.length === 0,
+    haSequenceForwardsInitialHass: !!card.hass,
+    haSequenceForwardsLaterHass: card.hass === laterHass,
+    haSequenceAdoptsNarrowThroughAccessor: panel.narrow === false && !panel.hasAttribute('narrow'),
+    haSequenceAdoptsRouteAndPanel: panel.route?.path === '/houseplan'
+      && panel.panel?.component_name === 'houseplan-panel',
+    autoHeightHostFillsViewportMinusInsets: Math.abs(panelRect.height - (innerHeight - 16)) <= 1
+      && Math.abs(wrapperRect.height - innerHeight) <= 1,
+    autoHeightHostKeepsPositiveStage: stageRect.height > 0 && stageRect.width > 0
+      && Math.abs(stageRect.height + headerRect.height + appbarRect.height - panelRect.height) <= 1,
+  };
+  panel.remove();
+  wrapper.remove();
+  root.style.removeProperty('--safe-area-inset-top');
+  root.style.removeProperty('--safe-area-inset-bottom');
+  await frame();
+  return result;
+});
 const result = await page.evaluate(async () => {
   const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
   const frame = () => new Promise((resolve) => requestAnimationFrame(resolve));
@@ -431,6 +520,7 @@ const narrowUserActivation = await page.evaluate(() => ({
 
 const finalResult = {
   ...coldBefore,
+  ...haSequence,
   ...result,
   ...resized,
   ...narrowReadOnly,
