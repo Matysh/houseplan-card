@@ -81,7 +81,7 @@ from .plans import (
     reserve_filename,
 )
 from .projection import project_config, project_layout
-from .radar_validation import RadarValidationError
+from .radar_validation import RadarValidationError, validate_marker_radars
 from .registry_snapshot import import_registry_snapshot
 from .store import (
     LAYOUT_STORE_CORE_KEYS,
@@ -119,7 +119,6 @@ from .validation import (
     valid_space_id,
     validate_marker_controls,
     validate_marker_light_entities,
-    validate_marker_radars,
     validate_marker_vacuum_routes,
     validate_marker_value_badges,
     validate_opening_passages,

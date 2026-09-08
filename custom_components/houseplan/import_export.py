@@ -35,6 +35,7 @@ from .const import (
     PLANS_URL,
     VERSION,
 )
+from .radar_validation import validate_marker_radars
 from .store import HouseplanData
 from .validation import (
     CONFIG_SCHEMA,
@@ -52,7 +53,6 @@ from .validation import (
     sanitize_marker_id,
     validate_marker_controls,
     validate_marker_light_entities,
-    validate_marker_radars,
     validate_marker_vacuum_routes,
     validate_marker_value_badges,
     validate_opening_passages,

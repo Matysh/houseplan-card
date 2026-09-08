@@ -123,3 +123,131 @@ async def test_smoothing_is_bounded_and_does_not_bridge_a_gap(
     coordinator._annotate_smoothing("radar", coordinator.radars["radar"], after_gap)
     assert "smooth" not in after_gap["targets"][0]
     coordinator.teardown()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("availability", "health"),
+    [("off", "off"), ("unavailable", "unavailable")],
+)
+async def test_availability_blocks_radar_geometry(
+    hass: HomeAssistant, availability: str, health: str,
+) -> None:
+    document = _stored()
+    sources = document["config"]["markers"][0]["radar"]["sources"]
+    sources["availability_entity"] = "binary_sensor.radar_available"
+    hass.states.async_set("binary_sensor.radar_available", availability)
+    hass.states.async_set("binary_sensor.radar_presence", "on")
+    hass.states.async_set("sensor.radar_target_1_x", "100")
+    hass.states.async_set("sensor.radar_target_1_y", "1000")
+
+    coordinator = await _coordinator(hass, document)
+    frame = coordinator.frames_for_space("floor")[0]
+    assert frame["health"] == health
+    assert frame["targets"] == []
+    coordinator.teardown()
+
+
+@pytest.mark.asyncio
+async def test_occupancy_off_clears_geometry_without_waiting_for_coordinates(
+    hass: HomeAssistant,
+) -> None:
+    hass.states.async_set("binary_sensor.radar_presence", "off")
+    coordinator = await _coordinator(hass, _stored())
+    frame = coordinator.frames_for_space("floor")[0]
+
+    assert frame["reported_presence"] is False
+    assert frame["health"] == "off"
+    assert frame["complete"] is True
+    assert frame["targets"] == []
+    assert frame["expires_at"] > frame["reported_at"]
+    coordinator.teardown()
+
+
+@pytest.mark.asyncio
+async def test_outside_room_target_is_retained_privately_but_not_published(
+    hass: HomeAssistant,
+) -> None:
+    hass.states.async_set("binary_sensor.radar_presence", "on")
+    hass.states.async_set("sensor.radar_target_1_x", "5000")
+    hass.states.async_set("sensor.radar_target_1_y", "0")
+    coordinator = await _coordinator(hass, _stored())
+
+    private = coordinator.frame("radar")
+    assert private is not None
+    assert private["targets"][0]["included"] is False
+    assert private["targets"][0]["reason"] == "outside_room"
+    assert coordinator.public_frame(private)["targets"] == []
+    coordinator.teardown()
+
+
+@pytest.mark.asyncio
+async def test_count_zero_marks_reported_target_inconsistent(
+    hass: HomeAssistant,
+) -> None:
+    document = _stored()
+    document["config"]["markers"][0]["radar"]["sources"]["count_entity"] = \
+        "sensor.radar_target_count"
+    hass.states.async_set("binary_sensor.radar_presence", "on")
+    hass.states.async_set("sensor.radar_target_count", "0")
+    hass.states.async_set("sensor.radar_target_1_x", "100")
+    hass.states.async_set("sensor.radar_target_1_y", "1000")
+
+    coordinator = await _coordinator(hass, document)
+    frame = coordinator.frames_for_space("floor")[0]
+    assert frame["health"] == "inconsistent"
+    assert frame["complete"] is False
+    assert len(frame["targets"]) == 1
+    coordinator.teardown()
+
+
+@pytest.mark.asyncio
+async def test_count_zero_confirms_empty_scene(
+    hass: HomeAssistant,
+) -> None:
+    document = _stored()
+    document["config"]["markers"][0]["radar"]["sources"]["count_entity"] = \
+        "sensor.radar_target_count"
+    hass.states.async_set("binary_sensor.radar_presence", "on")
+    hass.states.async_set("sensor.radar_target_count", "0")
+    hass.states.async_set("sensor.radar_target_1_x", "0")
+    hass.states.async_set("sensor.radar_target_1_y", "0")
+
+    coordinator = await _coordinator(hass, document)
+    frame = coordinator.frames_for_space("floor")[0]
+    assert frame["health"] == "off"
+    assert frame["complete"] is True
+    assert frame["targets"] == []
+    coordinator.teardown()
+
+
+@pytest.mark.asyncio
+async def test_invalid_coordinate_state_reports_position_unavailable(
+    hass: HomeAssistant,
+) -> None:
+    hass.states.async_set("binary_sensor.radar_presence", "on")
+    hass.states.async_set("sensor.radar_target_1_x", "unknown")
+    hass.states.async_set("sensor.radar_target_1_y", "1000")
+    coordinator = await _coordinator(hass, _stored())
+    frame = coordinator.frames_for_space("floor")[0]
+
+    assert frame["health"] == "position_unavailable"
+    assert frame["complete"] is False
+    assert frame["targets"] == []
+    coordinator.teardown()
+
+
+@pytest.mark.asyncio
+async def test_teardown_releases_frames_and_subscriptions(
+    hass: HomeAssistant,
+) -> None:
+    hass.states.async_set("binary_sensor.radar_presence", "off")
+    coordinator = await _coordinator(hass, _stored())
+    assert coordinator.frames_for_space("floor")
+    assert coordinator._unsub_sources
+
+    coordinator.teardown()
+
+    assert coordinator.closed is True
+    assert coordinator.frames_for_space("floor") == []
+    assert coordinator._unsub_sources == []
