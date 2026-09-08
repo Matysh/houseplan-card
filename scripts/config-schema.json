@@ -149,6 +149,11 @@
       "required": true,
       "type": "str"
     },
+    "config.markers[].radar": {
+      "allowExtra": true,
+      "nullable": true,
+      "required": false
+    },
     "config.markers[].removed": {
       "required": false,
       "type": "bool"
@@ -414,6 +419,10 @@
     },
     "config.settings.north_deg": {
       "opaque": "<function _north_deg>",
+      "required": false
+    },
+    "config.settings.radar": {
+      "allowExtra": true,
       "required": false
     },
     "config.settings.show_room_tooltip": {
