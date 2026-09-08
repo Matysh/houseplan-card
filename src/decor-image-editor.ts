@@ -423,7 +423,7 @@ export class DecorImageEditor<Snapshot> {
       ? this.host._decorAssetCatalog.find((asset) => asset.asset_id === dialog.assetId)
         || this.host._decorAssets.get(dialog.assetId || '')
       : null;
-    return html`<hp-dialog .hass=${this.host.hass}
+    return html`<hp-dialog .hass=${this.host.hass} data-kind="decor"
       .title=${this.host._t('decor.object_title', { kind: kindLabel })} icon="mdi:pencil-outline"
       dismiss-on-scrim @hp-close=${() => (this.host._decorShapeDialog = null)}>
         <div class="body">
@@ -567,8 +567,9 @@ export class DecorImageEditor<Snapshot> {
         </div>
         <div class="row" slot="footer">
           <span class="spacer"></span>
-          <button class="btn ghost" @click=${() => (this.host._decorShapeDialog = null)}>${this.host._t('btn.cancel')}</button>
-          <button class="btn primary" ?disabled=${invalidFurnitureSize}
+          <button class="btn ghost" data-hp="dialog-cancel"
+            @click=${() => (this.host._decorShapeDialog = null)}>${this.host._t('btn.cancel')}</button>
+          <button class="btn primary" data-hp="dialog-confirm" ?disabled=${invalidFurnitureSize}
             @click=${this.hooks.saveShape}>${this.host._t('btn.save')}</button>
         </div>
     </hp-dialog>`;

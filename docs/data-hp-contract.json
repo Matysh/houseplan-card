@@ -1,0 +1,254 @@
+{
+  "schemaVersion": 1,
+  "attribute": "data-hp",
+  "stability": {
+    "removalPolicy": "changelog-and-one-stable-version-transition",
+    "additionsAreCompatible": true
+  },
+  "hooks": {
+    "create-space": {
+      "elements": ["button"],
+      "since": "1.73.0-beta.7",
+      "audience": ["test"]
+    },
+    "decor": {
+      "elements": ["ellipse", "image", "line", "path", "rect", "text"],
+      "since": "1.59.0-beta.3",
+      "audience": ["styling", "test"]
+    },
+    "device": {
+      "elements": ["div"],
+      "since": "1.59.0-beta.3",
+      "audience": ["styling", "test"]
+    },
+    "dialog": {
+      "elements": ["hp-dialog"],
+      "since": "1.73.0-beta.7",
+      "audience": ["test"],
+      "attributes": {
+        "data-kind": [
+          "backup",
+          "confirm",
+          "decor",
+          "device-inbox",
+          "import",
+          "info",
+          "kiosk",
+          "marker",
+          "onboarding",
+          "opening",
+          "pdf",
+          "physical",
+          "room",
+          "rules",
+          "settings",
+          "space",
+          "summary",
+          "support",
+          "vacuum"
+        ]
+      }
+    },
+    "dialog-cancel": {
+      "elements": ["button"],
+      "since": "1.73.0-beta.7",
+      "audience": ["test"]
+    },
+    "dialog-confirm": {
+      "elements": ["button"],
+      "since": "1.73.0-beta.7",
+      "audience": ["test"]
+    },
+    "editor-close": {
+      "elements": ["button", "ha-icon"],
+      "since": "1.73.0-beta.7",
+      "audience": ["test"]
+    },
+    "empty": {
+      "elements": ["div"],
+      "since": "1.73.0-beta.7",
+      "audience": ["test"]
+    },
+    "opening": {
+      "elements": ["g"],
+      "since": "1.59.0-beta.3",
+      "audience": ["styling", "test"]
+    },
+    "opening-tunnel": {
+      "elements": ["g", "path"],
+      "since": "1.60.2",
+      "audience": ["styling", "test"]
+    },
+    "panel-menu": {
+      "elements": ["button"],
+      "since": "1.73.0-beta.7",
+      "audience": ["test"]
+    },
+    "panel-title": {
+      "elements": ["div"],
+      "since": "1.73.0-beta.7",
+      "audience": ["test"]
+    },
+    "partition": {
+      "elements": ["path"],
+      "since": "1.60.2-beta.1",
+      "audience": ["styling", "test"]
+    },
+    "pdf": {
+      "elements": ["button"],
+      "since": "1.73.0-beta.7",
+      "audience": ["test"]
+    },
+    "projection-toggle": {
+      "elements": ["button"],
+      "since": "1.63.0",
+      "audience": ["styling", "test"]
+    },
+    "room": {
+      "elements": ["path", "polygon", "rect"],
+      "since": "1.59.0-beta.3",
+      "audience": ["styling", "test"]
+    },
+    "room-label": {
+      "elements": ["div"],
+      "since": "1.59.0-beta.3",
+      "audience": ["styling", "test"]
+    },
+    "room-settings": {
+      "elements": ["button"],
+      "since": "1.67.0-rc.2",
+      "audience": ["styling", "test"]
+    },
+    "settings": {
+      "elements": ["button"],
+      "since": "1.73.0-beta.7",
+      "audience": ["test"]
+    },
+    "space-add": {
+      "elements": ["button"],
+      "since": "1.73.0-beta.7",
+      "audience": ["test"]
+    },
+    "space-settings": {
+      "elements": ["ha-icon"],
+      "since": "1.73.0-beta.7",
+      "audience": ["test"]
+    },
+    "space-tab": {
+      "elements": ["button"],
+      "since": "1.59.0-beta.3",
+      "audience": ["styling", "test"]
+    },
+    "support": {
+      "elements": ["button"],
+      "since": "1.73.0-beta.7",
+      "audience": ["test"]
+    },
+    "toast": {
+      "elements": ["div"],
+      "since": "1.73.0-beta.7",
+      "audience": ["test"],
+      "attributes": {
+        "data-kind": ["message"]
+      }
+    },
+    "tool": {
+      "elements": ["button"],
+      "since": "1.73.0-beta.7",
+      "audience": ["test"],
+      "attributes": {
+        "data-tool": [
+          "add-device",
+          "backdrop",
+          "column",
+          "delete-room",
+          "device-inbox",
+          "draw",
+          "ellipse",
+          "erase",
+          "furniture",
+          "icon-rules",
+          "image",
+          "line",
+          "merge",
+          "opening",
+          "rect",
+          "resize",
+          "select",
+          "split",
+          "text",
+          "wall-thickness"
+        ]
+      }
+    },
+    "toolbar": {
+      "elements": ["div"],
+      "since": "1.73.0-beta.7",
+      "audience": ["test"],
+      "attributes": {
+        "data-kind": ["decor", "device", "plan"]
+      }
+    },
+    "tray": {
+      "elements": ["div"],
+      "since": "1.73.0-beta.7",
+      "audience": ["test"]
+    },
+    "wall": {
+      "elements": ["path"],
+      "since": "1.59.0-beta.4",
+      "audience": ["styling", "test"]
+    },
+    "wall-column": {
+      "elements": ["path"],
+      "since": "1.60.2-beta.1",
+      "audience": ["styling", "test"]
+    },
+    "zoom-fit": {
+      "elements": ["button"],
+      "since": "1.73.0-beta.7",
+      "audience": ["test"]
+    },
+    "zoom-in": {
+      "elements": ["button"],
+      "since": "1.73.0-beta.7",
+      "audience": ["test"]
+    },
+    "zoom-out": {
+      "elements": ["button"],
+      "since": "1.73.0-beta.7",
+      "audience": ["test"]
+    }
+  },
+  "rootAttributes": {
+    "data-hp-mode": {
+      "element": "ha-card",
+      "values": ["view", "plan", "devices", "decor"],
+      "since": "1.73.0-beta.7"
+    },
+    "data-hp-state": {
+      "element": "ha-card",
+      "values": ["booting", "ready"],
+      "since": "1.73.0-beta.7"
+    }
+  },
+  "retiredHooks": {
+    "room-draft": {
+      "elements": ["line"],
+      "since": "1.60.2-beta.1",
+      "retired": "1.73.0-beta.1",
+      "reason": "Unfinished room contours were replaced by ordinary partitions in issue #478."
+    }
+  },
+  "internalPrefixes": [
+    "hidden-wall-",
+    "iso-",
+    "plan-snap-",
+    "resize-",
+    "zigbee-topology-"
+  ],
+  "internalExactValues": [
+    "opening-orphan",
+    "vacuum-route-missing-group"
+  ]
+}

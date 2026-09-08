@@ -39,7 +39,7 @@ userstyle to any web page.
 
 Consequences, stated plainly:
 
-- We promise the names in §3 are **stable**. If we ever have to change one, it
+- We promise the names in §3 and the test hooks in §7 are **stable**. If we ever have to change one, it
   is a breaking change and it goes in the changelog.
 - We promise nothing about **anything not in §3** — internal classes, DOM
   nesting, element order, the presence of a wrapper `<div>`, the internals of
@@ -98,7 +98,6 @@ Everything in this table is **public API**.
 | Wall body (thickness) | `path` (SVG) | `wall` | `data-id` = segment key, `data-kind` = `shared` \| `outer` | `.wallbody` |
 | Independent partition | `path` (SVG editor hit target) | `partition` | `data-id` = partition id, `data-kind` = `partition` | `.physical-hit` |
 | Wall column | `path` / `circle` (SVG editor hit target) | `wall-column` | `data-id` = column id, `data-kind` = `square` \| `circle` | `.physical-hit` |
-| Unfinished room contour | `line` (one editor hit target per segment) | `room-draft` | `data-id` = draft id, `data-kind` = `segment`, `data-segment` = zero-based segment index | `.physical-hit` |
 | Decor shape | `line` / `rect` / `ellipse` / `text` (SVG) | `decor` | `data-id` = shape id, `data-kind` = `line` \| `rect` \| `ellipse` \| `text` | `.dshape` (`.dtext` on text); persisted colour/alpha are inline SVG attributes and therefore win over weak CSS selectors |
 | Furniture | `path` (SVG) | `decor` | `data-id` = shape id, `data-kind` = `furniture`, `data-symbol` = the symbol id (`sofa`, `toilet`, …) | `.dshape .dfurn` |
 | Floor / space tab | `button` (HTML, header) | `space-tab` | `data-id` = space id | `.tab` |
@@ -181,8 +180,9 @@ them:
 - **Layout wrappers** — `.stage`, `.zoomwrap`, `.devlayer`, `.decorlayer`,
   `.measurelayer` and their nesting. The layers are how we composite; they
   are not where the objects live.
-- **Dialogs** — `.dialog`, `.menuwrap`, `.entrow`, `.inforow` and friends.
-  Dialog markup follows the dialog's design, and the design changes.
+- **Dialog classes and nesting** — `.dialog`, `.menuwrap`, `.entrow`,
+  `.inforow` and friends. Dialog markup follows the dialog's design, and the
+  design changes. Only the sparse semantic test hooks in §7 are stable.
 - **Everything generated** — CSS custom properties starting with `--hp-`,
   `--room-*`, `--dev-*`, `--ripple-*`, `--rl-*` are set inline by the
   renderer. Reading them is fine; overriding them may fight the renderer,
@@ -276,9 +276,11 @@ block. It carries the same `data-hp` attributes for the objects it draws
 (rooms, room labels, device markers); it draws no openings and no decor
 layer, so those simply are not there.
 
-**The kiosk header does not exist.** In kiosk mode the whole header is not
-rendered, so `[data-hp="space-tab"]` matches nothing — that is not a
-regression, there are no tabs to style.
+**The kiosk header is visually absent.** The full header is hidden by CSS in
+kiosk mode, but most of its existing children remain in the DOM. A selector
+can therefore still match hidden `space-tab` and zoom elements. Actions which
+the renderer already omits, such as `space-add`, remain absent; test code must
+not confuse a DOM match with visibility or permission.
 
 **One rule, both modes.** Editors add classes to the same elements rather than
 re-rendering different ones, so a rule written against the View mode also
@@ -333,3 +335,112 @@ device's `current_temperature` attribute — rendered as a fixed compact glyph
 is no single entity whose `display_precision` applies to an average, and a
 formatter would put `°C` into a badge the size of a fingernail. They stay
 ours, deliberately (owner's call, 2026-08-05).
+
+---
+
+## §7 Test hooks — stable selectors for external E2E
+
+The object hooks in §3 are also suitable for tests, but a real Home Assistant
+browser test needs a few controls and state boundaries which are not objects on
+the plan. Those selectors are declared here. They are deliberately sparse:
+their purpose is to let a test express user intent without reading private
+fields or depending on layout classes.
+
+The machine-readable authority is
+[`data-hp-contract.json`](data-hp-contract.json). It records each value, the
+element types on which it can occur, its first version and whether its audience
+is styling, testing or both. An external test suite should validate its
+selectors against that file before driving the UI.
+
+### 7.1 Compatibility promise
+
+- A public `data-hp` value, `data-hp-state`/`data-hp-mode` value, documented
+  `data-kind`, or documented `data-tool` is not renamed or removed silently.
+- A necessary incompatible change is announced in both changelogs and keeps a
+  compatible transition for one following **stable** release.
+- Adding a new value is compatible and does not change `schemaVersion`.
+- The JSON `schemaVersion` changes only when the JSON structure itself becomes
+  incompatible.
+- Presence follows the product. If permission, mode or state means that an
+  existing control is not rendered, its hook is absent too. No hidden testing
+  duplicate is created.
+- These attributes do not grant permission and are not product logic. Removing
+  one in DevTools or card-mod must not change how the card behaves.
+
+### 7.2 Root state
+
+On every rendered `houseplan-card` root `ha-card`:
+
+| Attribute | Values | Meaning |
+| --- | --- | --- |
+| `data-hp-state` | `booting` \| `ready` | The existing visual boot barrier is active, or the card has crossed it. An empty configured plan can be ready. |
+| `data-hp-mode` | `view` \| `plan` \| `devices` \| `decor` | The current public mode. `devices` intentionally matches the existing `mode-devices` and `data-editor-navigation="devices"` contracts. |
+
+The compact `houseplan-space-card` has its own lifecycle and does not expose
+these full-card attributes.
+
+### 7.3 Header and empty state
+
+| Selector | Existing element |
+| --- | --- |
+| `[data-hp="settings"]` | General settings button |
+| `[data-hp="pdf"]` | PDF export button |
+| `[data-hp="support"]` | Help and feedback button |
+| `[data-hp="zoom-in"]`, `[data-hp="zoom-out"]`, `[data-hp="zoom-fit"]` | Existing camera buttons |
+| `[data-hp="space-add"]` | Add-space button, when permitted |
+| `[data-hp="space-settings"][data-id="…"]` | Settings gear for one space |
+| `[data-hp="empty"]` | Existing empty, fixed-floor loading or fixed-floor error surface |
+| `[data-hp="create-space"]` | First-space action, only for a user already allowed to see it |
+| `[data-hp="toast"][data-kind="message"]` | Current transient message |
+
+Zoom controls remain in the DOM inside the CSS-hidden kiosk header, exactly as
+before. `space-add` keeps its stricter existing rule and is not rendered in
+kiosk mode.
+
+### 7.4 Editors
+
+Each active editor exposes one primary
+`[data-hp="toolbar"][data-kind="plan|device|decor"]`. Tool and command launchers
+use `[data-hp="tool"][data-tool="…"]`; the complete `data-tool` vocabulary is
+in the JSON inventory. The toolbar X and the X on the active mode tab use
+`[data-hp="editor-close"]` while retaining `data-editor-navigation="view"`.
+
+The one visible secondary/context surface uses `[data-hp="tray"]`. Its
+`data-kind` is the stable launcher id when a grouped launcher owns it and the
+broad secondary kind otherwise. A closed placeholder does not carry the hook.
+
+Undo/Redo, colour pickers and Save/Cancel controls inside a tray are not tools
+and are not assigned `data-tool`.
+
+### 7.5 Dialogs
+
+Every `hp-dialog` host is `[data-hp="dialog"][data-kind="…"]`. `data-kind` is a
+broad user workflow rather than a private method name; the complete initial
+vocabulary is in the JSON inventory. A workflow may reuse the same kind across
+several steps.
+
+An existing principal action which accepts the current dialog result uses
+`[data-hp="dialog-confirm"]`. An existing Cancel/Close action which dismisses
+without accepting uses `[data-hp="dialog-cancel"]`. Alternate accepted outcomes
+may produce more than one confirm button. A step which has no such visible
+button does not gain a synthetic one. The native fallback X is a cancel hook;
+Home Assistant's own close control stays inside HA's private shadow root.
+
+### 7.6 Sidebar panel
+
+Inside `houseplan-panel`'s own shadow root, `[data-hp="panel-menu"]` opens the HA
+menu and `[data-hp="panel-title"]` identifies the visible House Plan title.
+The rest of the panel shell remains private.
+
+### 7.7 Internal diagnostics are not public API
+
+The repository also uses `data-hp` for screenshot and diagnostic probes. The
+JSON `internalPrefixes` and `internalExactValues` fields allow the source gate
+to distinguish them from omissions, but do **not** make them stable. Current
+families include `iso-*`, `zigbee-topology-*`, `resize-*`, `plan-snap-*` and
+`hidden-wall-*`. Do not use them from card-mod or an external E2E repository.
+
+`room-draft` is listed separately as retired metadata: #478 removed the object
+type itself by making every unfinished chain ordinary partitions. There is no
+current DOM state in which that legacy hook can appear; new tests use
+`partition`.

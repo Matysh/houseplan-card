@@ -83,7 +83,8 @@ export function renderSpaceCopyDialog(
   const dialog = host._spaceDialog!;
   const copy = dialog.copy!;
   const close = () => closeSpaceCopyDialog(host);
-  return html`<hp-dialog .hass=${host.hass} .title=${host._t('space.copy_title')}
+  return html`<hp-dialog .hass=${host.hass} data-kind="space"
+    .title=${host._t('space.copy_title')}
     icon="mdi:content-copy" @hp-close=${close}>
       <div class="body">
         <label for="space-copy-name">${host._t('space.copy_name')}</label>
@@ -108,10 +109,12 @@ export function renderSpaceCopyDialog(
       </div>
       <div class="row dialog-action-footer" slot="footer">
         <span class="spacer"></span>
-        <button class="btn ghost" @click=${close} ?disabled=${copy.busy}>
+        <button class="btn ghost" data-hp="dialog-cancel"
+          @click=${close} ?disabled=${copy.busy}>
           ${host._t('btn.cancel')}
         </button>
-        <button class="btn on" @click=${submit} ?disabled=${!copy.title.trim() || copy.busy}>
+        <button class="btn on" data-hp="dialog-confirm"
+          @click=${submit} ?disabled=${!copy.title.trim() || copy.busy}>
           <ha-icon icon="mdi:content-copy"></ha-icon>${copy.busy ? '…' : host._t('space.copy_create')}
         </button>
       </div>

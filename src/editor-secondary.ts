@@ -170,6 +170,7 @@ export class EditorSecondaryController {
     const activeItem = group.items.find((item) =>
       item.id === group.activeItemId && !item.disabled);
     return html`<button class="btn editor-group-launcher ${open || activeItem ? 'on' : ''}"
+      data-hp="tool" data-tool=${group.id}
       data-editor-group=${group.id} aria-expanded=${open ? 'true' : 'false'}
       aria-pressed=${activeItem ? 'true' : 'false'}
       aria-controls="hp-editor-secondary" @click=${() => this.toggleGroup(groups, group.id)}
@@ -198,6 +199,7 @@ export class EditorSecondaryController {
     return {
       contextId,
       kind: 'group',
+      launcherId: group.id,
       ariaLabel: copy.openGroup(group.label),
       visibleLabel: group.label,
       content: html`<div class="editor-group-items"
@@ -231,6 +233,8 @@ export class EditorSecondaryController {
       class="editor-secondary-host kind-${kind} ${model ? 'open' : 'closed'} ${blocked ? 'blocked' : ''}"
       aria-hidden=${model ? 'false' : 'true'}>
       <div id="hp-editor-secondary" class="editor-secondary kind-${kind}"
+        data-hp=${model ? 'tray' : nothing}
+        data-kind=${model?.launcherId || (model?.kind === 'group' ? model.contextId : model?.kind) || nothing}
         data-context-id=${model?.contextId || ''} role="toolbar"
         aria-label=${model?.ariaLabel || ''} ?inert=${!model || blocked}
         @focusin=${() => (this._focusOwned = true)}

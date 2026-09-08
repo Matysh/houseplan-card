@@ -226,7 +226,7 @@ export function renderBackdropGuard(
       host._showToast(host._t('backdrop.downscale_failed'));
     }
   };
-  return html`<hp-dialog .hass=${hass}
+  return html`<hp-dialog .hass=${hass} data-kind="decor"
       .title=${host._t(hard ? 'backdrop.too_large_title' : 'backdrop.large_title')}
       icon="mdi:image-size-select-large" dismiss-on-scrim @hp-close=${() => dismiss()}>
     <div class="body"><p>${body}</p>
@@ -235,14 +235,17 @@ export function renderBackdropGuard(
       })}</p>` : null}
     </div>
     <div class="row" slot="footer">
-      <button class="btn ghost" ?disabled=${guard.busy} @click=${() => dismiss()}>
+      <button class="btn ghost" data-hp="dialog-cancel"
+        ?disabled=${guard.busy} @click=${() => dismiss()}>
         ${host._t('btn.cancel')}</button>
       <span class="spacer"></span>
       ${hard ? null : html`
         ${allowOriginal ? html`
-          <button class="btn ghost" ?disabled=${guard.busy} @click=${() => original()}>
+          <button class="btn ghost" data-hp="dialog-confirm"
+            ?disabled=${guard.busy} @click=${() => original()}>
             ${host._t('backdrop.keep_original')}</button>` : null}
-        <button class="btn on" ?disabled=${guard.busy} @click=${() => reduced()}>
+        <button class="btn on" data-hp="dialog-confirm"
+          ?disabled=${guard.busy} @click=${() => reduced()}>
           ${guard.busy ? host._t('backdrop.reducing') : host._t('backdrop.use_downscaled')}
         </button>`}
     </div>

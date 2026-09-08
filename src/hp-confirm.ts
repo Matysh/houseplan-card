@@ -34,7 +34,7 @@ export class HpConfirm extends LitElement {
     if (!request) return null;
     const destructive = request.kind === 'destructive';
     const descriptionId = `hp-confirm-description-${this.token}`;
-    return html`<hp-dialog class="danger-confirm-dialog"
+    return html`<hp-dialog class="danger-confirm-dialog" data-kind="confirm"
       .hass=${this.hass}
       .title=${request.title}
       .alert=${true}
@@ -51,9 +51,10 @@ export class HpConfirm extends LitElement {
         </div>
         <div class="row dialog-action-footer danger-confirm-footer" slot="footer">
           <span class="dialog-action-group dialog-action-commit">
-            <button class="btn ghost" type="button" autofocus
+            <button class="btn ghost" type="button" autofocus data-hp="dialog-cancel"
               @click=${() => this._decide(false)}>${request.cancelLabel}</button>
             <button class="btn ${destructive ? 'danger' : 'on'}" type="button"
+              data-hp="dialog-confirm"
               @click=${() => this._decide(true)}>
               <ha-icon icon=${destructive
                 ? 'mdi:trash-can-outline' : 'mdi:lock-open-variant'}></ha-icon>

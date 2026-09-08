@@ -180,6 +180,7 @@ export class HouseplanPanel extends HTMLElement {
 
     const menu = document.createElement('button');
     menu.className = 'menu';
+    menu.dataset.hp = 'panel-menu';
     menu.type = 'button';
     menu.innerHTML = '<ha-icon icon="mdi:menu"></ha-icon>';
     menu.addEventListener('click', () => {
@@ -192,6 +193,7 @@ export class HouseplanPanel extends HTMLElement {
 
     const title = document.createElement('div');
     title.className = 'title';
+    title.dataset.hp = 'panel-title';
     title.setAttribute('role', 'heading');
     title.setAttribute('aria-level', '1');
     title.innerHTML = '<ha-icon icon="mdi:floor-plan"></ha-icon><span>House Plan</span>';

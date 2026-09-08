@@ -78,7 +78,8 @@ export const renderSummaryPanelEditor: SummaryPanelEditorRenderer = (context) =>
     </div>
     ${context.storageUnavailable
       ? html`<div class="summary-problem warning">${t('summary.storage_unavailable')}</div>` : nothing}`;
-  return html`<hp-dialog .hass=${host.hass} .title=${t('summary.settings')}
+  return html`<hp-dialog .hass=${host.hass} data-kind="summary"
+      .title=${t('summary.settings')}
       icon="mdi:view-dashboard-outline" dismiss-on-scrim aria-busy=${String(dialog.busy)}
       @hp-close=${close}>
     <div class="body summary-editor">
@@ -253,9 +254,11 @@ export const renderSummaryPanelEditor: SummaryPanelEditorRenderer = (context) =>
       `}
     </div>
     <div class="row" slot="footer">
-      <button class="btn ghost" ?disabled=${dialog.busy} @click=${close}>${t('btn.cancel')}</button>
+      <button class="btn ghost" data-hp="dialog-cancel"
+        ?disabled=${dialog.busy} @click=${close}>${t('btn.cancel')}</button>
       <span class="spacer"></span>
-      <button class="btn on" ?disabled=${dialog.localOnly ? !changed || dialog.busy : !canSave}
+      <button class="btn on" data-hp="dialog-confirm"
+        ?disabled=${dialog.localOnly ? !changed || dialog.busy : !canSave}
         @click=${() => context.save()}><ha-icon icon="mdi:check"></ha-icon>${t('btn.save')}</button>
     </div>
   </hp-dialog>`;

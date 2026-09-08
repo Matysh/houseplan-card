@@ -11170,7 +11170,7 @@ export class HouseplanCard extends LitElement {
           <span class="opv">${value}%</span>
         </div>`;
     };
-    return html`<hp-dialog .hass=${this.hass} .title=${this._t('kiosk.title')} icon="mdi:tablet"
+    return html`<hp-dialog .hass=${this.hass} data-kind="kiosk" .title=${this._t('kiosk.title')} icon="mdi:tablet"
       dismiss-on-scrim @hp-close=${() => (this._kioskDialog = false)}>
         <div class="body">
           <div class="rhint">${this._t('kiosk.hint')}</div>
@@ -11180,7 +11180,7 @@ export class HouseplanCard extends LitElement {
         <div class="row" slot="footer">
           <button class="btn ghost" @click=${() => this._saveKioskScale({ icon: 1, font: 1 })}>${this._t('gs.reset')}</button>
           <span class="spacer"></span>
-          <button class="btn on" @click=${() => (this._kioskDialog = false)}>${this._t('btn.close')}</button>
+          <button class="btn on" data-hp="dialog-cancel" @click=${() => (this._kioskDialog = false)}>${this._t('btn.close')}</button>
         </div>
     </hp-dialog>`;
   }
@@ -11263,11 +11263,11 @@ export class HouseplanCard extends LitElement {
     );
     const fixed = this._fixedFloorState(model);
     if (fixed.kind === 'pending') {
-      return html`<ha-card data-fixed-floor-state="pending">
+      return html`<ha-card data-fixed-floor-state="pending" data-hp-state=${this._booting ? 'booting' : 'ready'} data-hp-mode=${this._mode}>
         ${this.panelHost ? nothing : html`<div class="head">
           <div class="title"><ha-icon icon="mdi:home-city"></ha-icon>${this._config.title || this._t('card.title')}</div>
         </div>`}
-        <div class="empty" role="status" aria-live="polite">
+        <div class="empty" data-hp="empty" role="status" aria-live="polite">
           <ha-icon icon="mdi:loading" class="big fixedfloor-loading"></ha-icon>
           <p>${this._t('fixed_floor.loading')}</p>
         </div>
@@ -11275,12 +11275,13 @@ export class HouseplanCard extends LitElement {
     }
     if (fixed.kind === 'invalid') {
       return html`<ha-card
+        data-hp-state=${this._booting ? 'booting' : 'ready'} data-hp-mode=${this._mode}
         data-fixed-floor-state="invalid"
         data-fixed-floor-reason=${fixed.reason}>
         ${this.panelHost ? nothing : html`<div class="head">
           <div class="title"><ha-icon icon="mdi:home-city"></ha-icon>${this._config.title || this._t('card.title')}</div>
         </div>`}
-        <div class="empty fixedfloor-error" role="alert" aria-live="assertive">
+        <div class="empty fixedfloor-error" data-hp="empty" role="alert" aria-live="assertive">
           <ha-icon icon="mdi:alert-circle-outline" class="big"></ha-icon>
           <p><b>${this._t('fixed_floor.invalid_title')}</b></p>
           <p>${this._t('fixed_floor.invalid_body', { value: this._fixedFloorValue(fixed.value) })}</p>
@@ -11289,6 +11290,7 @@ export class HouseplanCard extends LitElement {
     }
     if (!model.length) {
       return html`<ha-card
+        data-hp-state=${this._booting ? 'booting' : 'ready'} data-hp-mode=${this._mode}
         data-continuity-state=${this._continuity.state}
         data-continuity-token=${this._continuity.token}
         data-frame-fingerprint=${this._continuity.frameFingerprint || nothing}
@@ -11300,12 +11302,12 @@ export class HouseplanCard extends LitElement {
         ${this.panelHost ? nothing : html`<div class="head">
           <div class="title"><ha-icon icon="mdi:home-city"></ha-icon>${this._config.title || this._t('card.title')}</div>
         </div>`}
-        <div class="empty">
+        <div class="empty" data-hp="empty">
           <ha-icon icon="mdi:floor-plan" class="big"></ha-icon>
           <p>${this._t('empty.no_spaces')}</p>
           ${this._serverStorage && this._canManageConfiguration
             ? html`<p class="muted">${this._t('empty.add_first')}</p>
-                <button class="btn on" @click=${() => this._openSpaceDialog('create')}>
+                <button class="btn on" data-hp="create-space" @click=${() => this._openSpaceDialog('create')}>
                   <ha-icon icon="mdi:plus"></ha-icon>${this._t('btn.add_space')}
                 </button>`
             : html`<p class="muted">${this._t(this._serverStorage ? 'empty.read_only' : 'empty.install')}</p>`}
@@ -11314,7 +11316,7 @@ export class HouseplanCard extends LitElement {
           ? (this._onboardingRuntime || this._editorRuntime) ? this._renderSpaceDialog() : nothing
           : nothing}
         ${this._importDialog ? this._onboardingRuntime ? this._renderImportDialog() : nothing : nothing}
-        ${this._toast ? html`<div class="toast" role="alert" aria-live="assertive">${this._toast}</div>` : nothing}
+        ${this._toast ? html`<div class="toast" data-hp="toast" data-kind="message" role="alert" aria-live="assertive">${this._toast}</div>` : nothing}
       </ha-card>`;
     }
     const space = this._spaceModel();
@@ -11379,9 +11381,9 @@ export class HouseplanCard extends LitElement {
     );
     const transitionStageBg = modeVisual?.stageColor || stageBg;
     const transitionBrightness = modeVisual?.sceneBrightness ?? 1;
-
     return html`
       <ha-card
+        data-hp-state=${this._booting ? 'booting' : 'ready'} data-hp-mode=${this._mode}
         data-continuity-state=${this._continuity.state}
         data-continuity-token=${this._continuity.token}
         data-frame-fingerprint=${this._continuity.frameFingerprint || nothing}
@@ -11419,6 +11421,7 @@ export class HouseplanCard extends LitElement {
               >
                 ${s.title}${this._norm && this._canEdit
                   ? html`<ha-icon class="tabedit" icon="mdi:cog-outline"
+                      data-hp="space-settings" data-id=${s.id}
                       title=${this._t('title.configure_space')}
                       @click=${(e: Event) => {
                         e.stopPropagation();
@@ -11433,7 +11436,8 @@ export class HouseplanCard extends LitElement {
                    window — the whole .hdr is display:none there, but the button is
                    also not RENDERED, so nothing invisible is clickable. */}
             ${this._canEdit && !this._kiosk && !this._hasFixedFloor
-              ? html`<button class="tab tabadd" title=${this._t('title.add_space')}
+              ? html`<button class="tab tabadd" data-hp="space-add"
+                  title=${this._t('title.add_space')}
                   @click=${() => this._openSpaceDialog('create')}>
                   <ha-icon icon="mdi:plus"></ha-icon>
                 </button>`
@@ -11449,6 +11453,7 @@ export class HouseplanCard extends LitElement {
                     <ha-icon icon=${ic}></ha-icon><span class="ml">${this._t(('mode.' + m) as any)}</span>
                     ${this._mode === m
                       ? html`<ha-icon class="closex" icon="mdi:close" title=${this._t('title.close_editor')}
+                          data-hp="editor-close"
                           data-editor-navigation="view"
                           @click=${(e: Event) => { e.stopPropagation(); this._setMode('view'); }}></ha-icon>`
                       : nothing}
@@ -11469,23 +11474,23 @@ export class HouseplanCard extends LitElement {
             : nothing}
           ${!this._kiosk ? this._summary?.renderControls(false) : nothing}
           <div class="zoomctl">
-            <button class="btn zb" @click=${() => this._stepZoom(-1)} title=${this._t('title.zoom_out')}><ha-icon icon="mdi:minus"></ha-icon></button>
+            <button class="btn zb" data-hp="zoom-out" @click=${() => this._stepZoom(-1)} title=${this._t('title.zoom_out')}><ha-icon icon="mdi:minus"></ha-icon></button>
             ${''/* docs/CANVAS.md §8: this IS «вписать всё» — the old "reset
                    zoom" renamed rather than duplicated. No longer disabled at
                    zoom 1: at zoom 1 panned off to the side it still has work. */}
-            <button class="btn zb" @click=${() => this._fitAll()}
+            <button class="btn zb" data-hp="zoom-fit" @click=${() => this._fitAll()}
               title=${this._t('title.zoom_fit')}><ha-icon icon="mdi:fit-to-page-outline"></ha-icon></button>
-            <button class="btn zb" @click=${() => this._stepZoom(1)} title=${this._t('title.zoom_in')}><ha-icon icon="mdi:plus"></ha-icon></button>
+            <button class="btn zb" data-hp="zoom-in" @click=${() => this._stepZoom(1)} title=${this._t('title.zoom_in')}><ha-icon icon="mdi:plus"></ha-icon></button>
           </div>
           ${this._norm && this._canEdit
-            ? html`<button class="btn header-action settings-button" @click=${this._openSettingsDialog} title=${this._t('title.general_settings')}>
+            ? html`<button class="btn header-action settings-button" data-hp="settings" @click=${this._openSettingsDialog} title=${this._t('title.general_settings')}>
                 <ha-icon icon="mdi:cog-outline"></ha-icon>
               </button>
-              <button class="btn header-action pdf-button" @click=${this._openPdfDialog}
+              <button class="btn header-action pdf-button" data-hp="pdf" @click=${this._openPdfDialog}
                 title=${this._t('title.export_pdf')} aria-label=${this._t('title.export_pdf')}>
                 <ha-icon icon="mdi:printer-outline"></ha-icon>
               </button>
-              <button class="btn header-action support-button" @click=${this._openSupportDialog}
+              <button class="btn header-action support-button" data-hp="support" @click=${this._openSupportDialog}
                 title=${this._t('support.title')} aria-label=${this._t('support.title')}>
                 <ha-icon icon="mdi:help-circle-outline"></ha-icon>
               </button>`
@@ -11853,7 +11858,7 @@ export class HouseplanCard extends LitElement {
             ? this._editorRuntime._renderBackdropGuard()
             : this._onboardingRuntime?._renderBackdropGuard() ?? nothing)
           : nothing}
-        ${this._vacCalConfirm ? this._editorRuntime ? html`<hp-dialog .hass=${this.hass}
+        ${this._vacCalConfirm ? this._editorRuntime ? html`<hp-dialog .hass=${this.hass} data-kind="vacuum"
           .title=${this._t('vac.residual_title')} icon="mdi:map-marker-alert-outline"
           dismiss-on-scrim aria-busy=${String(!!this._vacCalConfirm.busy)}
           @hp-close=${() => { if (!this._vacCalConfirm?.busy) this._vacCalConfirm = null; }}>
@@ -11861,12 +11866,12 @@ export class HouseplanCard extends LitElement {
               <p>${this._t('vac.residual_message', { error: this._vacCalConfirm.error })}</p>
             </div>
             <div class="row" slot="footer">
-              <button class="btn ghost" ?disabled=${this._vacCalConfirm.busy}
+              <button class="btn ghost" data-hp="dialog-cancel" ?disabled=${this._vacCalConfirm.busy}
                 @click=${() => (this._vacCalConfirm = null)}>${this._t('btn.cancel')}</button>
               <span class="spacer"></span>
-              <button class="btn ghost" ?disabled=${this._vacCalConfirm.busy}
+              <button class="btn ghost" data-hp="dialog-confirm" ?disabled=${this._vacCalConfirm.busy}
                 @click=${() => this._vacApplyCalibrationProposal(true)}>${this._t('vac.fit')}</button>
-              <button class="btn on" ?disabled=${this._vacCalConfirm.busy}
+              <button class="btn on" data-hp="dialog-confirm" ?disabled=${this._vacCalConfirm.busy}
                 @click=${() => this._vacApplyCalibrationProposal(false)}>
                 <ha-icon icon="mdi:check"></ha-icon>${this._t('vac.apply_proposal')}
               </button>
@@ -11901,7 +11906,7 @@ export class HouseplanCard extends LitElement {
             @click=${() => { this._vacFit = null; }}>${this._t('btn.cancel')}</button>
         </div>` : nothing}
         ${this._tapConfirm
-          ? html`<hp-dialog .hass=${this.hass}
+          ? html`<hp-dialog .hass=${this.hass} data-kind="confirm"
               .title=${this._tapConfirm.kind === 'toggle' ? this._tapConfirm.text : this._t('btn.run')}
               icon="mdi:alert-outline"
               dismiss-on-scrim @hp-close=${() => (this._tapConfirm = null)}>
@@ -11913,14 +11918,14 @@ export class HouseplanCard extends LitElement {
                 </div>
                 <div class="row" slot="footer">
                   <span class="spacer"></span>
-                  <button class="btn ghost" @click=${() => (this._tapConfirm = null)}>${this._t('btn.cancel')}</button>
-                  <button class="btn on" @click=${() => { const c = this._tapConfirm!; this._tapConfirm = null; c.exec(); }}>
+                  <button class="btn ghost" data-hp="dialog-cancel" @click=${() => (this._tapConfirm = null)}>${this._t('btn.cancel')}</button>
+                  <button class="btn on" data-hp="dialog-confirm" @click=${() => { const c = this._tapConfirm!; this._tapConfirm = null; c.exec(); }}>
                     <ha-icon icon="mdi:check"></ha-icon>${this._t('btn.run')}
                   </button>
                 </div>
             </hp-dialog>`
           : nothing}
-        ${this._toast ? html`<div class="toast" role="alert" aria-live="assertive">${this._toast}</div>` : nothing}
+        ${this._toast ? html`<div class="toast" data-hp="toast" data-kind="message" role="alert" aria-live="assertive">${this._toast}</div>` : nothing}
       </ha-card>
     `;
   }
@@ -13167,7 +13172,7 @@ export class HouseplanCard extends LitElement {
       : (amt > 0 ? 'mdi:door-open' : 'mdi:door-closed');
     const row = (icon: string, label: string, value: string, cls = '') =>
       html`<div class="oprow ${cls}"><ha-icon icon=${icon}></ha-icon><span>${label}</span><b>${value}</b></div>`;
-    return html`<hp-dialog .hass=${this.hass}
+    return html`<hp-dialog .hass=${this.hass} data-kind="opening"
       .title=${this._t(titleKey)} icon=${openingIcon} dismiss-on-scrim
       @hp-close=${() => (this._openingInfo = null)}>
         <div class="body">
@@ -13203,7 +13208,8 @@ export class HouseplanCard extends LitElement {
         </div>
         <div class="row" slot="footer">
           <span class="spacer"></span>
-          <button class="btn ghost" @click=${() => (this._openingInfo = null)}>${this._t('btn.close')}</button>
+          <button class="btn ghost" data-hp="dialog-cancel"
+            @click=${() => (this._openingInfo = null)}>${this._t('btn.close')}</button>
         </div>
     </hp-dialog>`;
   }
@@ -13344,7 +13350,8 @@ export class HouseplanCard extends LitElement {
     const stateTxt = st ? hassValue(this.hass, d.primary)?.text ?? st.state : null;
     const controls = (d.controls ?? d.marker?.controls ?? [])
       .filter(isControllable).filter((eid) => this._planEntityAvailable(eid));
-    return html`<hp-dialog .hass=${this.hass} .title=${d.name} .icon=${d.icon} wide
+    return html`<hp-dialog .hass=${this.hass} data-kind="info"
+      .title=${d.name} .icon=${d.icon} wide
       dismiss-on-scrim @hp-close=${this._closeInfoCard}>
         <div class="body">
           ${(() => {
@@ -13416,7 +13423,8 @@ export class HouseplanCard extends LitElement {
                 <ha-icon icon="mdi:open-in-new"></ha-icon>${this._t('btn.open_in_ha')}
               </button>`
             : nothing}
-          <button class="btn ghost infofooter-close" @click=${this._closeInfoCard}>${this._t('btn.close')}</button>
+          <button class="btn ghost infofooter-close" data-hp="dialog-cancel"
+            @click=${this._closeInfoCard}>${this._t('btn.close')}</button>
         </div>
     </hp-dialog>`;
   }

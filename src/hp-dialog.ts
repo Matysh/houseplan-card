@@ -240,6 +240,10 @@ export class HpDialog extends LitElement {
   }
 
   connectedCallback(): void {
+    // #489: the host itself is the stable cross-dialog selector.  Keep this
+    // outside the rendered HA/native branch so consumers never have to pierce
+    // a second shadow root or care which dialog implementation is active.
+    this.setAttribute('data-hp', 'dialog');
     super.connectedCallback();
     this._opener = this._deepActiveElement();
     const root = this.getRootNode();
@@ -539,6 +543,7 @@ export class HpDialog extends LitElement {
         <header class="header">
           ${title}
           <button class="close" type="button"
+            data-hp="dialog-cancel"
             aria-label=${this.hass?.localize?.('ui.common.close') || 'Close'}
             @click=${this._requestClose}>
             <ha-icon icon="mdi:close"></ha-icon>

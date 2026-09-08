@@ -148,7 +148,8 @@ export class HpPdfDialog extends LitElement {
         @change=${(event: Event) => this.setOption(key, (event.target as HTMLInputElement).checked)}>
       <span>${label}</span>
     </label>`;
-    return html`<hp-dialog .hass=${this.context.hass} title=${this.context.t('pdf.title')}
+    return html`<hp-dialog .hass=${this.context.hass} data-kind="pdf"
+      title=${this.context.t('pdf.title')}
       icon="mdi:printer-outline" dismiss-on-scrim @hp-close=${this.context.close}>
       <div class="body">
         ${option('dimensions', this.context.t('pdf.dimensions'))}
@@ -157,9 +158,11 @@ export class HpPdfDialog extends LitElement {
         ${this.context.space.bg ? option('backdrop', this.context.t('pdf.backdrop')) : nothing}
       </div>
       <div class="row" slot="footer">
-        <button ?disabled=${this.busy} @click=${this.context.close}>${this.context.t('btn.cancel')}</button>
+        <button data-hp="dialog-cancel" ?disabled=${this.busy}
+          @click=${this.context.close}>${this.context.t('btn.cancel')}</button>
         <span class="spacer"></span>
-        <button class="primary" ?disabled=${this.busy} @click=${() => void this.save()}>
+        <button class="primary" data-hp="dialog-confirm"
+          ?disabled=${this.busy} @click=${() => void this.save()}>
           <ha-icon icon=${this.busy ? 'mdi:progress-clock' : 'mdi:download'}></ha-icon>
           ${this.context.t(this.busy ? 'pdf.saving' : 'pdf.save')}
         </button>

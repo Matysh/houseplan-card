@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- House Plan now publishes a documented, machine-readable set of stable UI
+  hooks for external end-to-end tests and advanced card-mod rules. Tests can
+  detect card readiness and editor mode, address header actions, toolbars,
+  dialogs, messages and sidebar-panel controls without relying on private CSS
+  classes or implementation details
+  ([#489](https://github.com/Matysh/houseplan-card/issues/489)).
 - A configurable read-only summary panel can now show Home Assistant entity
   states, the number of represented devices, total clean room area, and the
   current date and time over the plan. Administrators define shared blocks and

@@ -5416,10 +5416,10 @@ public _renderDecorBar(): TemplateResult {
     ] as const;
     const undoName = this.host._geometryHistory.undoName;
     const redoName = this.host._geometryHistory.redoName;
-    return html`<div class="editbar decorbar">
+    return html`<div class="editbar decorbar" data-hp="toolbar" data-kind="decor">
       <div class="editbar-tools" tabindex="-1" ?inert=${this.host._modeTransitionBusy}>
       ${tools.map(
-        ([t, ic, k]) => html`<button class="btn dtool ${this.host._decorTool === t ? 'on' : ''}"
+        ([t, ic, k]) => html`<button class="btn dtool ${this.host._decorTool === t ? 'on' : ''}" data-hp="tool" data-tool=${t}
           data-editor-palette=${t === 'furniture' || t === 'image' ? t : nothing}
           @click=${() => {
             if ((t === 'furniture' || t === 'image') && this.host._decorTool === t) {
@@ -5472,7 +5472,7 @@ public _renderDecorBar(): TemplateResult {
       </button>
       </div>
       <div class="editbar-end">
-        <button class="btn barclose" title=${this.host._t('title.close_editor')}
+        <button class="btn barclose" title=${this.host._t('title.close_editor')} data-hp="editor-close"
           data-editor-navigation="view"
           @click=${() => this._setMode('view')}>
           <ha-icon icon="mdi:close"></ha-icon>
@@ -5480,19 +5480,18 @@ public _renderDecorBar(): TemplateResult {
       </div>
     </div>`;
   }
-
 public _renderDecorEraseConfirm(): TemplateResult {
     const pending = this.host._decorEraseConfirm!;
     const kind = this.host._t(`decor.${pending.kind}` as any);
-    return html`<hp-dialog .hass=${this.host.hass} .title=${this.host._t('decor.erase_confirm_title')}
+    return html`<hp-dialog .hass=${this.host.hass} data-kind="confirm" .title=${this.host._t('decor.erase_confirm_title')}
       icon="mdi:eraser" dismiss-on-scrim @hp-close=${() => (this.host._decorEraseConfirm = null)}>
         <div class="body"><p>${this.host._t('confirm.erase_decor', { kind })}</p></div>
         <div class="row" slot="footer">
           <span class="spacer"></span>
-          <button class="btn ghost" @click=${() => (this.host._decorEraseConfirm = null)}>
+          <button class="btn ghost" data-hp="dialog-cancel" @click=${() => (this.host._decorEraseConfirm = null)}>
             ${this.host._t('btn.cancel')}
           </button>
-          <button class="btn danger" @click=${() => this._confirmDecorErase()}>
+          <button class="btn danger" data-hp="dialog-confirm" @click=${() => this._confirmDecorErase()}>
             <ha-icon icon="mdi:eraser"></ha-icon>${this.host._t('decor.erase')}
           </button>
         </div>
@@ -5503,7 +5502,7 @@ public _renderDecorTextDialog(): TemplateResult {
     const d = this.host._decorTextDialog!;
     const ent = (d.pickerEntity || '').trim();
     const st = ent ? this.host.hass?.states?.[ent] : null;
-    return html`<hp-dialog .hass=${this.host.hass} .title=${this.host._t('decor.text_title')}
+    return html`<hp-dialog .hass=${this.host.hass} data-kind="decor" .title=${this.host._t('decor.text_title')}
       icon="mdi:format-text" dismiss-on-scrim @hp-close=${() => (this.host._decorTextDialog = null)}>
         <div class="body">
           <label>${this.host._t('decor.text_label')}</label>
@@ -5566,8 +5565,8 @@ public _renderDecorTextDialog(): TemplateResult {
         </div>
         <div class="row" slot="footer">
           <span class="spacer"></span>
-          <button class="btn ghost" @click=${() => (this.host._decorTextDialog = null)}>${this.host._t('btn.cancel')}</button>
-          <button class="btn primary" ?disabled=${!d.text.trim()} @click=${() => this._decorSaveText()}>${this.host._t('btn.save')}</button>
+          <button class="btn ghost" data-hp="dialog-cancel" @click=${() => (this.host._decorTextDialog = null)}>${this.host._t('btn.cancel')}</button>
+          <button class="btn primary" data-hp="dialog-confirm" ?disabled=${!d.text.trim()} @click=${() => this._decorSaveText()}>${this.host._t('btn.save')}</button>
         </div>
     </hp-dialog>`;
   }
@@ -5579,7 +5578,7 @@ public _renderDecorShapeDialog(): TemplateResult {
 public _renderBackdropDialog(): TemplateResult {
     const d = this.host._backdropDialog!;
     const unit = this.host._t(this.host._imperial ? 'gs.unit_ft' : 'gs.unit_m');
-    return html`<hp-dialog .hass=${this.host.hass} .title=${this.host._t('decor.backdrop_properties')}
+    return html`<hp-dialog .hass=${this.host.hass} data-kind="decor" .title=${this.host._t('decor.backdrop_properties')}
       icon="mdi:image-edit-outline" dismiss-on-scrim @hp-close=${() => (this.host._backdropDialog = null)}>
       <div class="body">
         <label>${this.host._t('decor.size')}</label>
@@ -5598,8 +5597,8 @@ public _renderBackdropDialog(): TemplateResult {
             angle: (e.target as HTMLInputElement).value })} />
       </div>
       <div class="row" slot="footer"><span class="spacer"></span>
-        <button class="btn ghost" @click=${() => (this.host._backdropDialog = null)}>${this.host._t('btn.cancel')}</button>
-        <button class="btn primary" @click=${() => this._saveBackdropDialog()}>${this.host._t('btn.save')}</button>
+        <button class="btn ghost" data-hp="dialog-cancel" @click=${() => (this.host._backdropDialog = null)}>${this.host._t('btn.cancel')}</button>
+        <button class="btn primary" data-hp="dialog-confirm" @click=${() => this._saveBackdropDialog()}>${this.host._t('btn.save')}</button>
       </div>
     </hp-dialog>`;
   }
@@ -8749,7 +8748,7 @@ public _skipImport(): void {
 public _renderImportDialog(): TemplateResult {
     const d = this.host._importDialog!;
     const n = d.floors.filter((f) => f.checked).length;
-    return html`<hp-dialog .hass=${this.host.hass} .title=${this.host._t('import.title')} icon="mdi:home-floor-1"
+    return html`<hp-dialog .hass=${this.host.hass} data-kind="import" .title=${this.host._t('import.title')} icon="mdi:home-floor-1"
       @hp-close=${() => (this.host._importDialog = null)}>
         <div class="body">
           <div class="rhint">${this.host._t('import.hint')}</div>
@@ -8771,7 +8770,7 @@ public _renderImportDialog(): TemplateResult {
             ${this.host._t('import.manual')}
           </button>
           <span class="spacer"></span>
-          <button class="btn on" @click=${() => this._startImport()} ?disabled=${!n}>
+          <button class="btn on" data-hp="dialog-confirm" @click=${() => this._startImport()} ?disabled=${!n}>
             <ha-icon icon="mdi:import"></ha-icon>${this.host._t('import.start', { n })}
           </button>
         </div>
@@ -9143,7 +9142,7 @@ public _renderSupportDialog(): TemplateResult {
     const contactInvalid = state.errorCode === 'validation.contact_too_long';
     const messageInvalid = state.errorCode === 'validation.message_required'
       || state.errorCode === 'validation.message_too_long';
-    return html`<hp-dialog id="support-dialog" .hass=${this.host.hass}
+    return html`<hp-dialog id="support-dialog" .hass=${this.host.hass} data-kind="support"
       .title=${this.host._t('support.title')} icon="mdi:help-circle-outline" wide dismiss-on-scrim
       @hp-close=${() => void this._closeSupportDialog()}>
         <div class="body supportbody">
@@ -9265,12 +9264,12 @@ public _renderSupportDialog(): TemplateResult {
             </div>`}
         </div>
         <div class="row supportfooter" slot="footer">
-          <button type="button" class="btn ghost" @click=${() => void this._closeSupportDialog()}>
+          <button type="button" class="btn ghost" data-hp="dialog-cancel" @click=${() => void this._closeSupportDialog()}>
             ${this.host._t('btn.close')}
           </button>
           <span class="spacer"></span>
           ${compatible && state.status !== 'success' ? html`
-            <button type="button" class="btn on" @click=${() => void this._submitSupport()}
+            <button type="button" class="btn on" data-hp="dialog-confirm" @click=${() => void this._submitSupport()}
               ?disabled=${!supportCanSubmit(state)}>
               <ha-icon icon="mdi:send"></ha-icon>${state.status === 'sending'
                 ? st('support.sending')
@@ -9750,7 +9749,7 @@ public async _applyBackupImport(): Promise<void> {
 public _renderBackupExportDialog(): TemplateResult {
     const d = this.host._backupExportDialog!;
     const currentSpace = (this.host._serverCfg?.spaces || []).find((space) => space.id === this.host._space);
-    return html`<hp-dialog .hass=${this.host.hass} .title=${this.host._t('backup.export_title')}
+    return html`<hp-dialog .hass=${this.host.hass} data-kind="backup" .title=${this.host._t('backup.export_title')}
       icon="mdi:download" dismiss-on-scrim @hp-close=${() => (this.host._backupExportDialog = null)}>
       <div class="body backupbody">
         <div class="rhint">${this.host._t('backup.export_hint')}</div>
@@ -9775,9 +9774,9 @@ public _renderBackupExportDialog(): TemplateResult {
         ${d.error ? html`<div class="backuperror" role="alert">${d.error}</div>` : nothing}
       </div>
       <div class="row" slot="footer">
-        <button class="btn ghost" autofocus @click=${() => (this.host._backupExportDialog = null)}>${this.host._t('btn.cancel')}</button>
+        <button class="btn ghost" autofocus data-hp="dialog-cancel" @click=${() => (this.host._backupExportDialog = null)}>${this.host._t('btn.cancel')}</button>
         <span class="spacer"></span>
-        <button class="btn on" ?disabled=${d.busy || (d.kind === 'space' && !currentSpace)}
+        <button class="btn on" data-hp="dialog-confirm" ?disabled=${d.busy || (d.kind === 'space' && !currentSpace)}
           @click=${() => this._runBackupExport()}>
           <ha-icon icon="mdi:download"></ha-icon>${d.busy ? '…' : this.host._t('backup.download')}
         </button>
@@ -9813,7 +9812,7 @@ public _renderBackupImportDialog(): TemplateResult {
       ['bounded_lineages', Number(report.boundedLineages) || 0],
     ];
     const reportRows = allReportRows.filter(([, value]) => value > 0);
-    return html`<hp-dialog .hass=${this.host.hass} .title=${this.host._t('backup.import_title')}
+    return html`<hp-dialog .hass=${this.host.hass} data-kind="backup" .title=${this.host._t('backup.import_title')}
       icon="mdi:upload" wide dismiss-on-scrim @hp-close=${() => (this.host._backupImportDialog = null)}>
       <div class="body backupbody" aria-busy=${d.busy ? 'true' : 'false'}>
         <div class="backupfile"><b>${d.filename}</b><span>${(d.size / 1024).toFixed(1)} KB</span></div>
@@ -9915,9 +9914,9 @@ public _renderBackupImportDialog(): TemplateResult {
         ` : nothing}
       </div>
       <div class="row" slot="footer">
-        <button class="btn ghost" autofocus @click=${() => (this.host._backupImportDialog = null)}>${this.host._t('btn.cancel')}</button>
+        <button class="btn ghost" autofocus data-hp="dialog-cancel" @click=${() => (this.host._backupImportDialog = null)}>${this.host._t('btn.cancel')}</button>
         <span class="spacer"></span>
-        ${p ? html`<button class="btn ${p.kind === 'full' ? 'danger' : 'on'}"
+        ${p ? html`<button class="btn ${p.kind === 'full' ? 'danger' : 'on'}" data-hp="dialog-confirm"
           ?disabled=${d.busy || (p.confirmation_required && !d.confirmMissing)} @click=${() => this._applyBackupImport()}>
           <ha-icon icon=${p.kind === 'full' ? 'mdi:database-import' : 'mdi:plus'}></ha-icon>
           ${d.busy ? '…' : this.host._t(p.kind === 'full' ? 'backup.replace' : 'backup.add')}
@@ -10109,7 +10108,7 @@ public _renderAlignDialog(): TemplateResult {
     ];
     const visibleDetails = referenceDetails.slice(0, 10);
     const remainingDetails = Math.max(0, referenceDetails.length - visibleDetails.length);
-    return html`<hp-dialog .hass=${this.host.hass} .title=${this.host._t('gs.align_title')} icon="mdi:broom"
+    return html`<hp-dialog .hass=${this.host.hass} data-kind="settings" .title=${this.host._t('gs.align_title')} icon="mdi:broom"
       dismiss-on-scrim @hp-close=${() => { this.host._alignDialog = null; this.host._preflightClipboardFallback = null; }}>
         <div class="body">
           ${failed
@@ -10271,9 +10270,9 @@ public _renderAlignDialog(): TemplateResult {
         </div>
         <div class="row" slot="footer">
           <span class="spacer"></span>
-          <button class="btn ghost" @click=${() => { this.host._alignDialog = null; this.host._preflightClipboardFallback = null; }}>${this.host._t('btn.cancel')}</button>
+          <button class="btn ghost" data-hp="dialog-cancel" @click=${() => { this.host._alignDialog = null; this.host._preflightClipboardFallback = null; }}>${this.host._t('btn.cancel')}</button>
           ${!d.changed || !d.preflight?.ok ? nothing : html`
-            <button class="btn on" @click=${() => this._runAlignToGrid()} ?disabled=${d.busy}>
+            <button class="btn on" data-hp="dialog-confirm" @click=${() => this._runAlignToGrid()} ?disabled=${d.busy}>
               <ha-icon icon="mdi:check"></ha-icon>${d.busy ? '…' : this.host._t('gs.align_run')}
             </button>`}
         </div>
@@ -10281,7 +10280,7 @@ public _renderAlignDialog(): TemplateResult {
   }
 
 public _renderSettingsDialog(): TemplateResult {
-    return html`<hp-dialog .hass=${this.host.hass} .title=${this.host._t('gs.title')} icon="mdi:cog-outline" wide
+    return html`<hp-dialog .hass=${this.host.hass} data-kind="settings" .title=${this.host._t('gs.title')} icon="mdi:cog-outline" wide
       @hp-close=${() => (this.host._settingsDialog = null)}>
         <div class="body">
           <div class="rhint">${supportT(
@@ -10423,8 +10422,8 @@ public _renderSettingsDialog(): TemplateResult {
             ${this.host._t('gs.reset')}
           </button>
           <span class="spacer"></span>
-          <button class="btn ghost" @click=${() => (this.host._settingsDialog = null)}>${this.host._t('btn.cancel')}</button>
-          <button class="btn on" @click=${() => this._saveSettingsDialog()} ?disabled=${this.host._settingsDialog!.busy}>
+          <button class="btn ghost" data-hp="dialog-cancel" @click=${() => (this.host._settingsDialog = null)}>${this.host._t('btn.cancel')}</button>
+          <button class="btn on" data-hp="dialog-confirm" @click=${() => this._saveSettingsDialog()} ?disabled=${this.host._settingsDialog!.busy}>
             <ha-icon icon="mdi:check"></ha-icon>${this.host._settingsDialog!.busy ? '…' : this.host._t('btn.save')}
           </button>
         </div>
@@ -10480,7 +10479,7 @@ public _renderRulesDialog(): TemplateResult {
       [r[i], r[j]] = [r[j], r[i]];
       this._rulesSet(r);
     };
-    return html`<hp-dialog .hass=${this.host.hass} .title=${this.host._t('rules.title')}
+    return html`<hp-dialog .hass=${this.host.hass} data-kind="rules" .title=${this.host._t('rules.title')}
       icon="mdi:shape-plus-outline" wide @hp-close=${() => (this.host._rulesDialog = null)}>
         <div class="body">
           <div class="rhint">${this.host._t('rules.hint')}</div>
@@ -10527,8 +10526,8 @@ public _renderRulesDialog(): TemplateResult {
             ${this.host._t('rules.reset')}
           </button>
           <span class="spacer"></span>
-          <button class="btn ghost" @click=${() => (this.host._rulesDialog = null)}>${this.host._t('btn.cancel')}</button>
-          <button class="btn on" @click=${() => this._saveRules()} ?disabled=${d.busy}>
+          <button class="btn ghost" data-hp="dialog-cancel" @click=${() => (this.host._rulesDialog = null)}>${this.host._t('btn.cancel')}</button>
+          <button class="btn on" data-hp="dialog-confirm" @click=${() => this._saveRules()} ?disabled=${d.busy}>
             <ha-icon icon="mdi:check"></ha-icon>${d.busy ? '…' : this.host._t('btn.save')}
           </button>
         </div>
@@ -10552,7 +10551,7 @@ public _renderKioskDialog(): TemplateResult {
         ${this._rangeInput(50, 300, 5, Math.round(k[key] * 100), (n) => this._saveKioskScale({ [key]: n / 100 }))}
         <span class="opv">${Math.round(k[key] * 100)}%</span>
       </div>`;
-    return html`<hp-dialog .hass=${this.host.hass} .title=${this.host._t('kiosk.title')} icon="mdi:tablet"
+    return html`<hp-dialog .hass=${this.host.hass} data-kind="kiosk" .title=${this.host._t('kiosk.title')} icon="mdi:tablet"
       dismiss-on-scrim @hp-close=${() => (this.host._kioskDialog = false)}>
         <div class="body">
           <div class="rhint">${this.host._t('kiosk.hint')}</div>
@@ -10562,7 +10561,7 @@ public _renderKioskDialog(): TemplateResult {
         <div class="row" slot="footer">
           <button class="btn ghost" @click=${() => this._saveKioskScale({ icon: 1, font: 1 })}>${this.host._t('gs.reset')}</button>
           <span class="spacer"></span>
-          <button class="btn on" @click=${() => (this.host._kioskDialog = false)}>${this.host._t('btn.close')}</button>
+          <button class="btn on" data-hp="dialog-cancel" @click=${() => (this.host._kioskDialog = false)}>${this.host._t('btn.close')}</button>
         </div>
     </hp-dialog>`;
   }
@@ -11390,7 +11389,7 @@ public _renderOpeningDialog(): TemplateResult {
             </div>`
           : nothing}`;
     };
-    return html`<hp-dialog .hass=${this.host.hass} wide
+    return html`<hp-dialog .hass=${this.host.hass} data-kind="opening" wide
       .title=${d.id ? this.host._t('opening.edit') : this.host._t('opening.new')} icon=${icon}
       @hp-close=${() => (this.host._openingDialog = null)}>
         <div class="body">
@@ -11482,8 +11481,8 @@ public _renderOpeningDialog(): TemplateResult {
               </button>`
             : nothing}
           <div class="dialog-action-group dialog-action-commit">
-            <button class="btn ghost" @click=${() => (this.host._openingDialog = null)}>${this.host._t('btn.cancel')}</button>
-            <button class="btn on" @click=${() => this._saveOpening()}>
+            <button class="btn ghost" data-hp="dialog-cancel" @click=${() => (this.host._openingDialog = null)}>${this.host._t('btn.cancel')}</button>
+            <button class="btn on" data-hp="dialog-confirm" @click=${() => this._saveOpening()}>
               <ha-icon icon="mdi:check"></ha-icon>${this.host._t('btn.save')}
             </button>
           </div>
@@ -11865,7 +11864,7 @@ public _renderActiveChainInk(): TemplateResult {
 public _renderPartitionDeleteDialog(): TemplateResult {
     const dialog = this.host._partitionDeleteDialog!;
     const imperial = this.host.hass?.config?.unit_system?.length === 'mi';
-    return html`<hp-dialog .hass=${this.host.hass}
+    return html`<hp-dialog .hass=${this.host.hass} data-kind="confirm"
       .title=${this.host._t('confirm.delete_partition_openings_title')}
       icon="mdi:wall" dismiss-on-scrim
       @hp-close=${() => (this.host._partitionDeleteDialog = null)}>
@@ -11886,11 +11885,11 @@ public _renderPartitionDeleteDialog(): TemplateResult {
         </ul>
       </div>
       <div class="row" slot="footer">
-        <button class="btn ghost" @click=${() => (this.host._partitionDeleteDialog = null)}>
+        <button class="btn ghost" data-hp="dialog-cancel" @click=${() => (this.host._partitionDeleteDialog = null)}>
           ${this.host._t('btn.cancel')}
         </button>
         <span class="spacer"></span>
-        <button class="btn danger" @click=${() => this._confirmPartitionDelete()}>
+        <button class="btn danger" data-hp="dialog-confirm" @click=${() => this._confirmPartitionDelete()}>
           <ha-icon icon="mdi:delete-outline"></ha-icon>${this.host._t('btn.delete')}
         </button>
       </div>
@@ -11899,7 +11898,7 @@ public _renderPartitionDeleteDialog(): TemplateResult {
 
 public _renderRoomDeleteDialog(): TemplateResult {
     const dialog = this.host._roomDeleteDialog!;
-    return html`<hp-dialog .hass=${this.host.hass}
+    return html`<hp-dialog .hass=${this.host.hass} data-kind="confirm"
       .title=${this.host._t('confirm.delete_room_title', { name: dialog.name })}
       icon="mdi:floor-plan" dismiss-on-scrim
       @hp-close=${() => (this.host._roomDeleteDialog = null)}>
@@ -11907,14 +11906,14 @@ public _renderRoomDeleteDialog(): TemplateResult {
         <p>${this.host._t('confirm.delete_room_body')}</p>
       </div>
       <div class="row" slot="footer">
-        <button class="btn ghost" @click=${() => (this.host._roomDeleteDialog = null)}>
+        <button class="btn ghost" data-hp="dialog-cancel" @click=${() => (this.host._roomDeleteDialog = null)}>
           ${this.host._t('btn.cancel')}
         </button>
         <span class="spacer"></span>
-        <button class="btn" @click=${() => this._confirmRoomDelete(true)}>
+        <button class="btn" data-hp="dialog-confirm" @click=${() => this._confirmRoomDelete(true)}>
           <ha-icon icon="mdi:wall"></ha-icon>${this.host._t('btn.delete_room_keep_walls')}
         </button>
-        <button class="btn danger" @click=${() => this._confirmRoomDelete(false)}>
+        <button class="btn danger" data-hp="dialog-confirm" @click=${() => this._confirmRoomDelete(false)}>
           <ha-icon icon="mdi:delete-outline"></ha-icon>${this.host._t('btn.delete_room_with_walls')}
         </button>
       </div>
@@ -11924,7 +11923,7 @@ public _renderRoomDeleteDialog(): TemplateResult {
 public _renderPhysicalDialog(): TemplateResult {
     const d = this.host._physicalDialog!;
     const column = d.kind === 'column';
-    return html`<hp-dialog .hass=${this.host.hass} wide
+    return html`<hp-dialog .hass=${this.host.hass} data-kind="physical" wide
       .title=${this.host._t(column ? 'physical.column_properties' : 'physical.partition_properties')}
       icon=${column ? 'mdi:vector-square' : 'mdi:wall'}
       @hp-close=${() => (this.host._physicalDialog = null)}>
@@ -11963,8 +11962,8 @@ public _renderPhysicalDialog(): TemplateResult {
             </button>
           </div>
           <div class="dialog-action-group dialog-action-commit">
-            <button class="btn ghost" @click=${() => (this.host._physicalDialog = null)}>${this.host._t('btn.cancel')}</button>
-            <button class="btn on" @click=${() => this._savePhysicalDialog()}>
+            <button class="btn ghost" data-hp="dialog-cancel" @click=${() => (this.host._physicalDialog = null)}>${this.host._t('btn.cancel')}</button>
+            <button class="btn on" data-hp="dialog-confirm" @click=${() => this._savePhysicalDialog()}>
               <ha-icon icon="mdi:check"></ha-icon>${this.host._t('btn.save')}
             </button>
           </div>
@@ -11981,49 +11980,49 @@ public _renderMarkupBar(): TemplateResult {
     const redoTitle = redoName
       ? this.host._t('history.redo_named', { name: redoName })
       : this.host._t('history.redo_empty');
-    return html`<div class="editbar planbar">
+    return html`<div class="editbar planbar" data-hp="toolbar" data-kind="plan">
       <div class="editbar-tools" tabindex="-1" ?inert=${this.host._modeTransitionBusy}>
         <ha-icon icon="mdi:vector-square-edit" class="warn"></ha-icon>
         <span class="wallsgroup">
-        <button class="btn ${this.host._tool === 'select' ? 'on' : ''}"
+        <button class="btn ${this.host._tool === 'select' ? 'on' : ''}" data-hp="tool" data-tool="select"
           @click=${() => this._activateMarkupTool('select')}
           title=${this.host._t('title.markup_select')}>
           <ha-icon icon="mdi:cursor-default-outline"></ha-icon>${this.host._t('markup.select')}
         </button>
-        <button class="btn ${this.host._tool === 'draw' ? 'on' : ''}"
+        <button class="btn ${this.host._tool === 'draw' ? 'on' : ''}" data-hp="tool" data-tool="draw"
           aria-pressed=${this.host._tool === 'draw' ? 'true' : 'false'}
           @click=${() => this._activateMarkupTool('draw')}
           title=${this.host._t('title.markup_add')}>
           <ha-icon icon="mdi:vector-polyline-plus"></ha-icon>${this.host._t('markup.add')}
         </button>
-        <button class="btn ${this.host._tool === 'column' ? 'on' : ''}"
+        <button class="btn ${this.host._tool === 'column' ? 'on' : ''}" data-hp="tool" data-tool="column"
           @click=${() => this._activateMarkupTool('column')}
           title=${this.host._t('title.markup_column')}>
           <ha-icon icon="mdi:vector-square"></ha-icon>${this.host._t('markup.column')}
         </button>
       </span>
-      <button class="btn ${this.host._tool === 'merge' ? 'on' : ''}"
+      <button class="btn ${this.host._tool === 'merge' ? 'on' : ''}" data-hp="tool" data-tool="merge"
         @click=${() => this._activateMarkupTool('merge')}
         title=${this.host._t('title.markup_merge')}>
         <ha-icon icon="mdi:vector-union"></ha-icon>${this.host._t('markup.merge')}
       </button>
-      <button class="btn ${this.host._tool === 'split' ? 'on' : ''}"
+      <button class="btn ${this.host._tool === 'split' ? 'on' : ''}" data-hp="tool" data-tool="split"
         @click=${() => this._activateMarkupTool('split')}
         title=${this.host._t('title.markup_split')}>
         <ha-icon icon="mdi:vector-polyline-remove"></ha-icon>${this.host._t('markup.split')}
       </button>
-      <button class="btn ${this.host._tool === 'resize' ? 'on' : ''}"
+      <button class="btn ${this.host._tool === 'resize' ? 'on' : ''}" data-hp="tool" data-tool="resize"
         @click=${() => this._activateMarkupTool('resize')}
         title=${this.host._t('title.markup_resize')}>
         <ha-icon icon="mdi:arrow-expand-all"></ha-icon>${this.host._t('markup.resize')}
       </button>
       ${this.host._editorToolbarGroups.map((group) => this._renderEditorGroupLauncher(group))}
-      <button class="btn ${this.host._tool === 'wallthick' ? 'on' : ''}"
+      <button class="btn ${this.host._tool === 'wallthick' ? 'on' : ''}" data-hp="tool" data-tool="wall-thickness"
         @click=${() => this._activateMarkupTool('wallthick')}
         title=${this.host._t('title.markup_wallthick')}>
         <ha-icon icon="mdi:wall"></ha-icon>${this.host._t('markup.wallthick')}
       </button>
-      <button class="btn ${this.host._tool === 'delroom' ? 'on' : ''}"
+      <button class="btn ${this.host._tool === 'delroom' ? 'on' : ''}" data-hp="tool" data-tool="delete-room"
         @click=${() => this._activateMarkupTool('delroom')}
         title=${this.host._t('title.markup_delroom')}>
         <ha-icon icon="mdi:delete-outline"></ha-icon>${this.host._t('markup.delete_room')}
@@ -12040,7 +12039,7 @@ public _renderMarkupBar(): TemplateResult {
       </button>
       </div>
       <div class="editbar-end">
-        <button class="btn barclose" title=${this.host._t('title.close_editor')}
+        <button class="btn barclose" title=${this.host._t('title.close_editor')} data-hp="editor-close"
           data-editor-navigation="view"
           @click=${() => this._setMode('view')}>
           <ha-icon icon="mdi:close"></ha-icon>
@@ -12058,18 +12057,18 @@ public _renderDevicesBar(): TemplateResult {
     const redoTitle = redoName
       ? this.host._t('history.redo_named', { name: redoName })
       : this.host._t('history.redo_empty');
-    return html`<div class="editbar devbar">
+    return html`<div class="editbar devbar" data-hp="toolbar" data-kind="device">
       <div class="editbar-tools" tabindex="-1" ?inert=${this.host._modeTransitionBusy}>
         <ha-icon icon="mdi:tune-variant" class="warn"></ha-icon>
-        <button class="btn" @click=${() => this._openMarkerDialog()}
+        <button class="btn" data-hp="tool" data-tool="add-device" @click=${() => this._openMarkerDialog()}
           title=${this.host._t('title.add_device')}>
           <ha-icon icon="mdi:plus-box-outline"></ha-icon>${this.host._t('devbar.add')}
         </button>
-        <button class="btn ${this.host._showAll ? 'on' : ''}" @click=${() => this._openDeviceInbox()}
+        <button class="btn ${this.host._showAll ? 'on' : ''}" data-hp="tool" data-tool="device-inbox" @click=${() => this._openDeviceInbox()}
           title=${this.host._t('device_inbox.title')}>
           <ha-icon icon="mdi:devices"></ha-icon>${this.host._t('device_inbox.button')}
         </button>
-        <button class="btn" @click=${() => this._openRulesDialog()} title=${this.host._t('title.icon_rules')}>
+        <button class="btn" data-hp="tool" data-tool="icon-rules" @click=${() => this._openRulesDialog()} title=${this.host._t('title.icon_rules')}>
           <ha-icon icon="mdi:shape-plus-outline"></ha-icon>${this.host._t('devbar.rules')}
         </button>
         ${this.host._editorToolbarGroups.map((group) => this._renderEditorGroupLauncher(group))}
@@ -12087,7 +12086,7 @@ public _renderDevicesBar(): TemplateResult {
           title=${redoTitle} aria-label=${redoTitle}>
           <ha-icon icon="mdi:redo-variant" aria-hidden="true"></ha-icon>
         </button>
-        <button class="btn barclose" title=${this.host._t('title.close_editor')}
+        <button class="btn barclose" title=${this.host._t('title.close_editor')} data-hp="editor-close"
           data-editor-navigation="view"
           @click=${() => this._setMode('view')}>
           <ha-icon icon="mdi:close"></ha-icon>
@@ -12282,6 +12281,7 @@ public _renderDeviceInbox(): TemplateResult {
       if (!this.host._markerDialog) this._closeMarkerDialog();
     };
     return html`<hp-dialog class="device-inbox-dialog" .hass=${this.host.hass}
+      data-kind="device-inbox"
       .title=${this.host._t('device_inbox.title')} icon="mdi:devices" wide
       @hp-close=${() => (this.host._deviceInbox = null)}>
       <div class="device-inbox" ?inert=${!!dialog.busy}>
@@ -12403,7 +12403,7 @@ public _renderDeviceInbox(): TemplateResult {
         </button>` : nothing}
       </div>
       <div slot="footer" class="row">
-        <button type="button" class="btn ghost" @click=${() => (this.host._deviceInbox = null)}>
+        <button type="button" class="btn ghost" data-hp="dialog-cancel" @click=${() => (this.host._deviceInbox = null)}>
           ${this.host._t('btn.close')}</button>
       </div>
     </hp-dialog>`;
@@ -12891,7 +12891,7 @@ public _renderMarkerDialog(): TemplateResult {
       if (k === 'device') return this.host._fullRegistryHass.devices[ref]?.name_by_user || this.host._fullRegistryHass.devices[ref]?.name || ref;
       return this.host._fullRegistryHass.entities[ref]?.name || this.host.hass.states[ref]?.attributes?.friendly_name || ref;
     })();
-    return html`<hp-dialog .hass=${this.host.hass}
+    return html`<hp-dialog .hass=${this.host.hass} data-kind="marker"
       .title=${d.devId ? this.host._t('info.device_header') : this.host._t('marker.new_device')}
       icon="mdi:shape-plus" wide @hp-close=${() => this._closeMarkerDialog()}>
         <div class="body">
@@ -13498,9 +13498,9 @@ public _renderMarkerDialog(): TemplateResult {
               : nothing}
           </div>
           <div class="markersaveactions">
-            <button class="btn ghost" ?disabled=${d.busy}
+            <button class="btn ghost" data-hp="dialog-cancel" ?disabled=${d.busy}
               @click=${() => this._closeMarkerDialog()}>${this.host._t('btn.cancel')}</button>
-            <button class="btn on" @click=${() => this._saveMarker()}
+            <button class="btn on" data-hp="dialog-confirm" @click=${() => this._saveMarker()}
               ?disabled=${d.busy || (d.bindingMode === 'ha' && (!d.binding || d.binding === 'virtual'
                 || (!d.devId && bindingStatus?.kind !== 'active')))}
               title=${d.bindingMode === 'ha' && (!d.binding || d.binding === 'virtual') ? this.host._t('marker.pick_ph') : ''}>
@@ -13525,7 +13525,7 @@ public _renderSpaceDialog(): TemplateResult {
       this.host._importQueue = [];
       this.host._importTotal = 0;
     };
-    return html`<hp-dialog .hass=${this.host.hass}
+    return html`<hp-dialog .hass=${this.host.hass} data-kind="space"
       .title=${`${d.mode === 'create' ? this.host._t('space.new') : this.host._t('space.header')}${progress ? ` · ${progress}` : ''}`}
       icon="mdi:floor-plan" wide @hp-close=${close}>
         <div class="body">
@@ -13797,8 +13797,8 @@ public _renderSpaceDialog(): TemplateResult {
             ${this.host._importTotal > 0 && d.mode === 'create'
               ? html`<button class="btn ghost" @click=${() => this._skipImport()}>${this.host._t('btn.skip')}</button>`
               : nothing}
-            <button class="btn ghost" @click=${close}>${this.host._t('btn.cancel')}</button>
-            <button class="btn on" @click=${() => this._saveSpaceDialog()}
+            <button class="btn ghost" data-hp="dialog-cancel" @click=${close}>${this.host._t('btn.cancel')}</button>
+            <button class="btn on" data-hp="dialog-confirm" @click=${() => this._saveSpaceDialog()}
               ?disabled=${!d.title.trim() || (d.source === 'file' && !(d.planFile || d.planUrl)) || d.busy}
               title=${d.source === 'file' && !(d.planFile || d.planUrl) ? this.host._t('title.need_plan') : ''}>
               <ha-icon icon="mdi:check"></ha-icon>${d.busy ? '…' : this.host._t('btn.save')}
@@ -13820,7 +13820,7 @@ public _renderMergeDialog(): TemplateResult {
         <span>${r?.name || ''} <span class="muted">· ${area || this.host._t('merge.no_area')}</span></span>
       </label>`;
     };
-    return html`<hp-dialog .hass=${this.host.hass} .title=${this.host._t('merge.header')} icon="mdi:vector-union"
+    return html`<hp-dialog .hass=${this.host.hass} data-kind="room" .title=${this.host._t('merge.header')} icon="mdi:vector-union"
       @hp-close=${() => (this.host._mergeDialog = null)}>
         <div class="body">
           <p class="muted">${this.host._t('merge.hint')}</p>
@@ -13830,8 +13830,8 @@ public _renderMergeDialog(): TemplateResult {
         </div>
         <div class="row" slot="footer">
           <span class="spacer"></span>
-          <button class="btn ghost" @click=${() => (this.host._mergeDialog = null)}>${this.host._t('btn.cancel')}</button>
-          <button class="btn on" @click=${() => this._commitMerge()}>
+          <button class="btn ghost" data-hp="dialog-cancel" @click=${() => (this.host._mergeDialog = null)}>${this.host._t('btn.cancel')}</button>
+          <button class="btn on" data-hp="dialog-confirm" @click=${() => this._commitMerge()}>
             <ha-icon icon="mdi:check"></ha-icon>${this.host._t('btn.save')}
           </button>
         </div>
@@ -13903,7 +13903,7 @@ public _renderRoomDialog(): TemplateResult {
       const cur = this.host.hass.areas[this.host._areaSel];
       if (cur) areas.unshift(cur);
     }
-    return html`<hp-dialog class="roomdialog" .hass=${this.host.hass} wide
+    return html`<hp-dialog class="roomdialog" .hass=${this.host.hass} data-kind="room" wide
       .title=${edit ? this.host._t('room.settings_title')
         : batchProgress || this.host._t('room.new')}
       icon=${edit ? 'mdi:cog-outline' : 'mdi:floor-plan'} @hp-close=${() => this._roomDialogCancel()}>
@@ -13980,16 +13980,17 @@ public _renderRoomDialog(): TemplateResult {
           )}
         </div>
         <div class="row roomfooter" slot="footer">
-          <button class="btn ghost" @click=${() => this._roomDialogCancel()}>${this.host._t('btn.cancel')}</button>
+          <button class="btn ghost" data-hp="dialog-cancel" @click=${() => this._roomDialogCancel()}>${this.host._t('btn.cancel')}</button>
           <span class="spacer"></span>
           ${edit
-            ? html`<button class="btn on" @click=${() => this._saveRoomEdit()} ?disabled=${!this.host._nameSel.trim() || !tempValid}>
+            ? html`<button class="btn on" data-hp="dialog-confirm" @click=${() => this._saveRoomEdit()} ?disabled=${!this.host._nameSel.trim() || !tempValid}>
                 <ha-icon icon="mdi:check"></ha-icon>${this.host._t('btn.save')}
               </button>`
-            : html`${!this.host._pendingSplit ? html`<button class="btn ghost" @click=${() => this._keepClosedAsPartitions()}>
+            : html`${!this.host._pendingSplit ? html`<button class="btn ghost" data-hp="dialog-confirm"
+                @click=${() => this._keepClosedAsPartitions()}>
                 <ha-icon icon="mdi:wall"></ha-icon>${this.host._t('btn.keep_as_walls')}
               </button>` : nothing}
-              <button class="btn on room-save" @click=${() => this._saveRoom()} ?disabled=${!canSaveNew}>
+              <button class="btn on room-save" data-hp="dialog-confirm" @click=${() => this._saveRoom()} ?disabled=${!canSaveNew}>
                 <ha-icon icon="mdi:check"></ha-icon>${this.host._t('btn.save')}
               </button>`}
         </div>

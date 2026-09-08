@@ -562,7 +562,8 @@ export class HouseplanOnboardingRuntime {
   public _renderImportDialog(): TemplateResult {
     const dialog = this.host._importDialog!;
     const selected = dialog.floors.filter((floor) => floor.checked).length;
-    return html`<hp-dialog .hass=${this.host.hass} .title=${this.host._t('import.title')}
+    return html`<hp-dialog .hass=${this.host.hass} data-kind="import"
+      .title=${this.host._t('import.title')}
       icon="mdi:home-floor-1" @hp-close=${() => (this.host._importDialog = null)}>
         <div class="body">
           <div class="rhint">${this.host._t('import.hint')}</div>
@@ -585,7 +586,8 @@ export class HouseplanOnboardingRuntime {
             this._openSpaceDialog('create');
           }}>${this.host._t('import.manual')}</button>
           <span class="spacer"></span>
-          <button class="btn on" @click=${() => this._startImport()} ?disabled=${!selected}>
+          <button class="btn on" data-hp="dialog-confirm"
+            @click=${() => this._startImport()} ?disabled=${!selected}>
             <ha-icon icon="mdi:import"></ha-icon>${this.host._t('import.start', { n: selected })}
           </button>
         </div>
@@ -621,7 +623,7 @@ export class HouseplanOnboardingRuntime {
       this.host._importQueue = [];
       this.host._importTotal = 0;
     };
-    return html`<hp-dialog .hass=${this.host.hass}
+    return html`<hp-dialog .hass=${this.host.hass} data-kind="onboarding"
       .title=${`${dialog.mode === 'create'
         ? this.host._t('space.new') : this.host._t('space.header')}${progress ? ` · ${progress}` : ''}`}
       icon="mdi:floor-plan" wide @hp-close=${close}>
@@ -898,8 +900,10 @@ export class HouseplanOnboardingRuntime {
             ${this.host._importTotal > 0 && dialog.mode === 'create'
               ? html`<button class="btn ghost" @click=${() => this._skipImport()}>
                   ${this.host._t('btn.skip')}</button>` : nothing}
-            <button class="btn ghost" @click=${close}>${this.host._t('btn.cancel')}</button>
-            <button class="btn on" @click=${() => this._saveSpaceDialog()}
+            <button class="btn ghost" data-hp="dialog-cancel"
+              @click=${close}>${this.host._t('btn.cancel')}</button>
+            <button class="btn on" data-hp="dialog-confirm"
+              @click=${() => this._saveSpaceDialog()}
               ?disabled=${!dialog.title.trim()
                 || (dialog.source === 'file' && !(dialog.planFile || dialog.planUrl)) || dialog.busy}
               title=${dialog.source === 'file' && !(dialog.planFile || dialog.planUrl)

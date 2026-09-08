@@ -18,6 +18,8 @@ test('#486 panel shell keeps one full card and forwards HA properties without in
 
 test('#486 menu and container-owned panel layout have explicit accessibility and overflow contracts', () => {
   const panel = source('src/houseplan-panel.ts');
+  assert.match(panel, /menu\.dataset\.hp = 'panel-menu';/);
+  assert.match(panel, /title\.dataset\.hp = 'panel-title';/);
   assert.match(panel, /new CustomEvent\('hass-toggle-menu', \{[\s\S]*bubbles: true,[\s\S]*composed: true/);
   assert.match(panel, /width: 44px;[\s\S]*height: 44px;/);
   assert.match(panel, /setAttribute\('aria-label', label\)/);

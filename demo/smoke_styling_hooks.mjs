@@ -22,6 +22,54 @@ const res = await page.evaluate(async () => {
   const qa = (sel) => [...sr().querySelectorAll(sel)];
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+  // ============ 0. public test contract (#489) ============
+  const rootCard = q('ha-card');
+  out.rootPublishesReadyView = rootCard?.getAttribute('data-hp-state') === 'ready'
+    && rootCard?.getAttribute('data-hp-mode') === 'view';
+  out.headerActionsHaveStableHooks = ['settings', 'pdf', 'support', 'zoom-in', 'zoom-out', 'zoom-fit']
+    .every((hook) => !!q(`[data-hp="${hook}"]`));
+  out.spaceActionsHaveStableHooks = !!q('[data-hp="space-add"]')
+    && qa('[data-hp="space-settings"]').length === c._model.length;
+
+  q('[data-hp="settings"]')?.click();
+  await c.updateComplete; await sleep(30); await c.updateComplete;
+  const settingsDialog = q('hp-dialog[data-hp="dialog"][data-kind="settings"]');
+  out.dialogHostAndActionsAreHooked = !!settingsDialog
+    && !!settingsDialog.querySelector('[data-hp="dialog-confirm"]')
+    && !!settingsDialog.querySelector('[data-hp="dialog-cancel"]');
+  settingsDialog?.querySelector('[data-hp="dialog-cancel"]')?.click();
+  await c.updateComplete;
+
+  c._showToast('contract smoke');
+  await c.updateComplete;
+  out.toastHasStableKind = q('[data-hp="toast"][data-kind="message"]')?.textContent === 'contract smoke';
+  c._toast = null;
+  await c.updateComplete;
+
+  const modeTools = {
+    plan: ['select', 'draw', 'column', 'merge', 'split', 'resize', 'opening', 'wall-thickness', 'delete-room'],
+    devices: ['add-device', 'device-inbox', 'icon-rules'],
+    decor: ['select', 'backdrop', 'line', 'rect', 'ellipse', 'text', 'furniture', 'erase'],
+  };
+  for (const [mode, tools] of Object.entries(modeTools)) {
+    c._setMode(mode, false);
+    await c.updateComplete; await sleep(30); await c.updateComplete;
+    const card = q('ha-card');
+    const toolbar = q(`[data-hp="toolbar"][data-kind="${mode === 'devices' ? 'device' : mode}"]`);
+    out[`mode_${mode}_isPublished`] = card?.getAttribute('data-hp-mode') === mode;
+    out[`toolbar_${mode}_isPublished`] = !!toolbar && !!toolbar.querySelector('[data-hp="editor-close"]');
+    out[`tools_${mode}_arePublished`] = tools.every((tool) =>
+      !!toolbar?.querySelector(`[data-hp="tool"][data-tool="${tool}"]`));
+    if (mode === 'plan') {
+      toolbar?.querySelector('[data-hp="tool"][data-tool="opening"]')?.click();
+      await c.updateComplete; await sleep(30); await c.updateComplete;
+      out.planGroupOpensPublishedTray = !!q('[data-hp="tray"][data-kind="opening"]');
+    }
+  }
+  c._setMode('view', false);
+  await c.updateComplete; await sleep(30); await c.updateComplete;
+  out.returnToViewIsPublished = q('ha-card')?.getAttribute('data-hp-mode') === 'view';
+
   // ============ 1. устройства ============
   const devs = qa('[data-hp="device"]');
   out.deviceHookFindsEveryMarker = devs.length > 0 && devs.length === qa('.dev').length;
@@ -115,8 +163,9 @@ const res = await page.evaluate(async () => {
   out.spaceTabHookFindsEveryFloor = tabs.length === c._model.length;
   out.spaceTabHasId = tabs.map((e) => e.getAttribute('data-id')).join(',') === c._model.map((s) => s.id).join(',');
   out.spaceTabKeepsItsClass = tabs.every((e) => e.classList.contains('tab'));
-  // кнопка «＋» вкладкой пространства не является
-  out.addButtonIsNotASpaceTab = !q('.tabadd[data-hp]');
+  // кнопка «＋» имеет собственный контракт и вкладкой пространства не является
+  out.addButtonIsNotASpaceTab = !!q('.tabadd[data-hp="space-add"]')
+    && !q('.tabadd[data-hp="space-tab"]');
 
   // ============ 7. «нет значения — нет атрибута» ============
   c._serverCfg = { ...c._serverCfg, markers: [
@@ -149,7 +198,45 @@ const res = await page.evaluate(async () => {
 });
 checkAll(res, { iconInternalsAreBehindItsOwnRoot: !!res.iconInternalsAreBehindItsOwnRoot });
 
-// ============ 9. те же хуки в статичной карточке ============
+// ============ 9. writable/read-only empty state ============
+const empty = await page.evaluate(async () => {
+  const make = async (canWrite) => {
+    const el = document.createElement('houseplan-card');
+    el.setConfig({ type: 'custom:houseplan-card', title: 'Empty contract fixture' });
+    document.body.appendChild(el);
+    const base = window.__mkHass();
+    const emptyConfig = { ...window.__card._serverCfg, spaces: [] };
+    el.hass = { ...base, callWS: async (message) => {
+      if (message.type === 'houseplan/config/get')
+        return { config: emptyConfig, rev: 1, can_write: canWrite };
+      if (message.type === 'houseplan/layout/get') return { layout: {}, rev: 1 };
+      return base.callWS(message);
+    } };
+    const started = Date.now();
+    while ((!el.renderRoot?.querySelector('[data-hp="empty"]')
+      || el.renderRoot.querySelector('ha-card')?.getAttribute('data-hp-state') !== 'ready')
+      && Date.now() - started < 6000) await new Promise((resolve) => setTimeout(resolve, 40));
+    const root = el.renderRoot;
+    const result = {
+      ready: root?.querySelector('ha-card')?.getAttribute('data-hp-state') === 'ready',
+      empty: !!root?.querySelector('[data-hp="empty"]'),
+      create: !!root?.querySelector('[data-hp="create-space"]'),
+    };
+    el.remove();
+    return result;
+  };
+  const writable = await make(true);
+  const readOnly = await make(false);
+  return {
+    writableEmptyIsReady: writable.ready && writable.empty,
+    writableEmptyHasCreateAction: writable.create,
+    readOnlyEmptyIsReady: readOnly.ready && readOnly.empty,
+    readOnlyEmptyHasNoCreateAction: !readOnly.create,
+  };
+});
+checkAll(empty);
+
+// ============ 10. те же хуки в статичной карточке ============
 const stat = await page.evaluate(async () => {
   const out = {};
   await customElements.whenDefined('houseplan-space-card');
@@ -185,4 +272,4 @@ const stat = await page.evaluate(async () => {
   return out;
 });
 checkAll(stat);
-await finish(browser, { ...res, ...stat });
+await finish(browser, { ...res, ...empty, ...stat });
