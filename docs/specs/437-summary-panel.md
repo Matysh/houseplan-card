@@ -227,9 +227,9 @@ border boxes + 12 px; в киоске это плавающая панель у�
 и не чередует hidden/visible при постоянных размерах.
 
 Примеры без дополнительных safe area/контролов и с baseline 162:
-360×640 → снизу, ширина336, fits; 303×640 → не fits, 304×640 → fits;
-800×185 → высота161, не fits; 800×186 → fits.
-Для киоска с измеренным верхним пределом72: 800×245 → не fits,
+360×640 → снизу, ширина 336, fits; 303×640 → не fits, 304×640 → fits;
+800×185 → высота 161, не fits; 800×186 → fits.
+Для киоска с измеренным верхним пределом 72: 800×245 → не fits,
 800×246 → fits. Проверки также используют реальную, а не заданную заранее
 высоту контролов. 1 и 200 строк имеют одинаковый gate, но разный scroll.
 
@@ -248,6 +248,8 @@ HA minimum 2024.6 остаётся поддержанным.
 мешает показу; при mobile=false скрывает до получения достоверного narrow.
 Ни user-agent, ни новый пользовательский breakpoint не добавляются.
 
+`viewAllowed` — full card находится в режиме View (обычном или kiosk),
+не в редакторе плана, устройств или подложки (§4.1).
 `effectiveVisible = viewAllowed && localShow && mobileAllowed && fits`;
 mobileAllowed = sharedMobile || nativeNarrow === false.
 Отсутствующая конфигурация использует defaults; неподдерживаемая версия
@@ -280,7 +282,7 @@ Keyboard focus виден, modal focus trap/возврат в opener через 
 
 ## 6. Модель конфигурации и defaults
 
-Общая конфигурация: `ServerConfig.settings.summary_panel`, версия1.
+Общая конфигурация: `ServerConfig.settings.summary_panel`, версия 1.
 Wire naming — snake_case как остальная серверная конфигурация; camelCase
 прототипа не копируется вслепую. Минимальный пример (значения label локализованы
 при первом явном сохранении, пользовательский текст затем не переводится):
@@ -313,7 +315,7 @@ Defaults ids детерминированы до первого сохранен
 
 Отсутствие namespace даёт read-only derived default model: первое включение
 даже у read-only не пишет сервер. При первом явном Save авторизованным
-пользователем сохраняется версия1. Это один начальный набор, не автоматический
+пользователем сохраняется версия 1. Это один начальный набор, не автоматический
 создатель после каждого reload: присутствующее `blocks: []` и пустые values
 никогда не reseed. Настоящий ноль площади/устройств допустим.
 
@@ -332,7 +334,7 @@ precision. При недоступном helper — существующий б�
 не кастомный список переводов state. Не извлекать произвольные attributes.
 `unknown`, `unavailable`, отсутствующий id, отсутствие доступа/связи дают
 различимое нейтральное состояние (где источник позволяет отличить причину),
-не выдуманный0/green; не показывать прежнее значение как свежее после потери
+не выдуманный 0/green; не показывать прежнее значение как свежее после потери
 соединения. Значение появляется вновь при восстановлении.
 Не обещать различить удаление и запрет доступа, если HA их не различает.
 
@@ -355,7 +357,7 @@ precision. При недоступном helper — существующий б�
 не `list_for_display`/`hass.entities`/сохранённый binding-status cache.
 Эти штатные list API доступны также read-only пользователям; сам read-only
 не причина отказа. При загрузке/ошибке одной команды/reconnect —
-loading/unavailable, а не уверенный частичный total, прежний snapshot или0.
+loading/unavailable, а не уверенный частичный total, прежний snapshot или 0.
 Новый endpoint счётчика не нужен. Не обходить HA permissions и не переносить
 snapshot между connections/пользователями. Backend `import_registry_snapshot`
 для editor import не публиковать в View: это другой, неполный для этой цели
@@ -374,7 +376,7 @@ snapshot между connections/пользователями. Backend `import_re
 `cmPerUnit = cell_cm / gridPitch` этого пространства, площадь в m² =
 `geometryArea * cmPerUnit² / 10000`; не смешивать cm и render units.
 Суммировать физическую площадь всех пространств. Копии этажей
-независимы. Этаж без комнат даёт0. Сломанная геометрия/сбой union не подменяются
+независимы. Этаж без комнат даёт 0. Сломанная геометрия/сбой union не подменяются
 нулём, суммой с double count или исчезновением остальных элементов плана:
 показатель unavailable, диагностический код без пользовательской геометрии.
 
@@ -443,7 +445,7 @@ dashboard или нового обязательного `card_id` пользо�
 ### 8.3 Размеры на этом экране (#149)
 
 Явный click/tap вход, не только long hold: «Размер значков устройств» и
-«Размер текста карточек комнат». Сохранить диапазон 50…300%, шаг5%, Reset100%.
+«Размер текста карточек комнат». Сохранить диапазон 50…300%, шаг 5%, Reset 100%.
 Локальное немедленное применение как в существующем size dialog;
 закрытие завершает настройку, отдельный Cancel для размеров не вводится.
 Это отличается от draft локального show в полной форме; названия действий
@@ -457,7 +459,7 @@ dashboard или нового обязательного `card_id` пользо�
 любом hidden-поводе панели и без прав редактирования установки.
 
 При отсутствии новой local записи один раз прочитать валидные legacy
-`houseplan_card_kiosk_v1` icon/font как начальные значения, иначе100%.
+`houseplan_card_kiosk_v1` icon/font как начальные значения, иначе 100%.
 Старый ключ не удалять и не переписывать. Дальнейшие записи per-instance;
 повреждённый/вне диапазона input нормализовать без NaN/exception.
 localStorage disabled/quota не ломают UI; значение действует в текущей
@@ -508,9 +510,9 @@ references проверяются как diff к текущему серверн
 | Вход | Политика |
 |---|---|
 | Старый config без namespace | Derived defaults; никаких обязательных записей при открытии. |
-| Настроенная version1 | Round-trip всех известных и неизвестных расширяющих полей; mutate только выбранные поля, не rebuild объекта с потерями. |
+| Настроенная version 1 | Round-trip всех известных и неизвестных расширяющих полей; mutate только выбранные поля, не rebuild объекта с потерями. |
 | Старый клиент не прислал существующий namespace в обычном config/set | Сервер сохраняет прежний namespace. Удаление всех блоков выражается `blocks: []`, не omission. |
-| Незнакомая будущая version | Сохранить lossless при посторонних операциях, не исполнять и не редактировать как version1; нейтральная недоступность панели, не сброс defaults. |
+| Незнакомая будущая version | Сохранить lossless при посторонних операциях, не исполнять и не редактировать как version 1; нейтральная недоступность панели, не сброс defaults. |
 | Установка новой версии/rollback frontend | Не выполнять destructive миграцию store; старое поле остаётся расширением settings. |
 
 Не менять глобальную версию геометрии/хранилища ради UI namespace.
@@ -541,29 +543,32 @@ HTML. House Plan read/write policy и secure-device invariant не ослабл�
 
 ## 10. i18n и визуальное соответствие
 
-Все новые runtime строки в **RU, EN и DE** (существующая немецкая локализация
-сохраняется), ошибки frontend/backend — через текущий локализационный путь.
+Все новые runtime строки в **RU, EN, DE и FR** — всех четырёх существующих
+поддерживаемых локалях. Ошибки frontend/backend — через текущий
+локализационный путь. Паритет ключей, непустые значения и неизменные
+placeholders проверяются штатными parity-тестами `npm test` по всем локалям
+из `src/i18n/registry.ts`, согласно `CONTRIBUTING.md`.
 Ключи и формулировки общих Save/Cancel/Close/Up/Down брать из существующего UI,
 не дублировать. Пользовательские label/title не переводить после сохранения.
 
-| RU | EN | DE |
-|---|---|---|
-| Сводная информация | Summary | Übersicht |
-| Настройки панели | Panel settings | Panel-Einstellungen |
-| Показывать панель | Show panel | Panel anzeigen |
-| Название панели | Panel title | Panel-Titel |
-| Отображать на мобильных устройствах | Show on mobile devices | Auf Mobilgeräten anzeigen |
-| Общее | General | Allgemein |
-| Все пространства | All spaces | Alle Bereiche |
-| Определённое пространство | Specific space | Bestimmter Bereich |
-| Добавить блок / Добавить значение | Add block / Add value | Block hinzufügen / Wert hinzufügen |
-| Количество устройств | Device count | Anzahl der Geräte |
-| Общая площадь комнат | Total room area | Gesamte Raumfläche |
-| Текущие дата и время | Current date and time | Aktuelles Datum und Uhrzeit |
-| Размеры на этом экране | Sizes on this screen | Größen auf diesem Bildschirm |
-| Нет показателей для этого пространства | No values for this space | Keine Werte für diesen Bereich |
-| Недостаточно места для панели | Not enough space for the panel | Nicht genügend Platz für das Panel |
-| Источник недоступен | Source unavailable | Quelle nicht verfügbar |
+| RU | EN | DE | FR |
+|---|---|---|---|
+| Сводная информация | Summary | Übersicht | Synthèse |
+| Настройки панели | Panel settings | Panel-Einstellungen | Paramètres du panneau |
+| Показывать панель | Show panel | Panel anzeigen | Afficher le panneau |
+| Название панели | Panel title | Panel-Titel | Titre du panneau |
+| Отображать на мобильных устройствах | Show on mobile devices | Auf Mobilgeräten anzeigen | Afficher sur les appareils mobiles |
+| Общее | General | Allgemein | Général |
+| Все пространства | All spaces | Alle Bereiche | Tous les espaces |
+| Определённое пространство | Specific space | Bestimmter Bereich | Espace spécifique |
+| Добавить блок / Добавить значение | Add block / Add value | Block hinzufügen / Wert hinzufügen | Ajouter un bloc / Ajouter une valeur |
+| Количество устройств | Device count | Anzahl der Geräte | Nombre d’appareils |
+| Общая площадь комнат | Total room area | Gesamte Raumfläche | Surface totale des pièces |
+| Текущие дата и время | Current date and time | Aktuelles Datum und Uhrzeit | Date et heure actuelles |
+| Размеры на этом экране | Sizes on this screen | Größen auf diesem Bildschirm | Tailles pour cet écran |
+| Нет показателей для этого пространства | No values for this space | Keine Werte für diesen Bereich | Aucune valeur pour cet espace |
+| Недостаточно места для панели | Not enough space for the panel | Nicht genügend Platz für das Panel | Espace insuffisant pour le panneau |
+| Источник недоступен | Source unavailable | Quelle nicht verfügbar | Source indisponible |
 
 Также локализовать загрузку, no search results, удалённое пространство,
 пустое обязательное поле, каждый лимит, conflict/reload, mobile-hidden,
@@ -572,12 +577,12 @@ HA state names/units/date/time — HA locale, не переводы этой т�
 
 Матрица макетов: light/dark × right/bottom; ordinary/kiosk; панель hidden;
 форма normal/narrow; пустой состав/старые broken refs/максимум строк;
-длинные RU/DE подписи, safe-area, крупный шрифт и 200% browser zoom.
+длинные RU/DE/FR подписи, safe-area, крупный шрифт и 200% browser zoom.
 Минимум ширины/высоты адаптируется без уменьшения шрифта.
 Dashboard 5 определяет отступы, заголовки, порядок controls, палитру и иконки;
-его `orientation: portrait`, `100vw/100vh`, demo states50/156m² и whole-config
-localStorage заменяются соответствующими контрактами выше. Hit areas27px
-прототипа не копируются: min44 является продуктовым touch-контрактом.
+его `orientation: portrait`, `100vw/100vh`, demo states 50/156 m² и whole-config
+localStorage заменяются соответствующими контрактами выше. Hit areas 27 px
+прототипа не копируются: min 44 является продуктовым touch-контрактом.
 
 ## 11. Критерии приёмки и доказательства
 
@@ -597,21 +602,21 @@ AC1…AC20 соответствуют общей постановке issue; с�
 | AC8 | Row CRUD/reorder только в форме, pointer и кнопки дают один порядок. | Unit + мышь/клавиатура/touch; drag в View не меняет config. |
 | AC9 | Пустой label/source запрещён, system source полноценен. | Negative tests raw WS и UI, trim/Unicode boundaries. |
 | AC10 | Полный readable hass.states picker, friendly name/entity_id, новая Template entity. | Fixture entity вне плана, дубли friendly name и hot-add; plan-filter mutation → красный. |
-| AC11 | Broken entity сохраняется при других правках; unknown/unavailable не0; HA форматирование. | UI+server change-aware cases, потеря/восстановление связи, RU/EN/DE/units. |
-| AC12 | Первое включение даёт три defaults, реальные0, intentional-empty не reseed. | Unit absent vs empty; read-only first show без WS, second reload/toggle. |
+| AC11 | Broken entity сохраняется при других правках; unknown/unavailable не 0; HA форматирование. | UI+server change-aware cases, потеря/восстановление связи, RU/EN/DE/FR/units. |
+| AC12 | Первое включение даёт три defaults, реальные 0, intentional-empty не reseed. | Unit absent vs empty; read-only first show без WS, second reload/toggle. |
 | AC13 | Лимиты 10/20/48/64 с hidden blocks, disabled Add и ошибки. | Both sides N−1/N/N+1, Unicode code points; прямой WS не обходит. |
-| AC14 | Native narrow, localShow и fits независимы; W/H выбирает сторону. | Полная boolean/unknown unit matrix + custom panel/Lovelace native narrow smoke; fake768px mutation красный. |
-| AC15 | View/kiosk controls и local sizes доступны, нет editor/service/pan leakage. | Touch pointercancel/pan/pinch/scroll/doubletap и admin-kiosk/read-only route guards; service spy0. |
+| AC14 | Native narrow, localShow и fits независимы; W/H выбирает сторону. | Полная boolean/unknown unit matrix + custom panel/Lovelace native narrow smoke; fake 768 px mutation красный. |
+| AC15 | View/kiosk controls и local sizes доступны, нет editor/service/pan leakage. | Touch pointercancel/pan/pinch/scroll/doubletap и admin-kiosk/read-only route guards; service spy 0. |
 | AC16 | Общая persistence/export не меняет geometry/layout. | Backend round-trip/full/space/plan-only/copy + hashes geometry до/после. |
 | AC17 | Макеты/темы/overflow/safe area без скачков камеры или перекрытия controls. | Fresh named screenshots + bounding boxes, zoom/pan matrix до/после show/hide; layout-column mutation красный. |
 | AC18 | Q2 unique HA ids и Q3 union clean floor всех пространств. | Exact numeric fixtures §12, scope/activefloor не меняют total; visible-roster/sum-room-areas mutations красные. |
 | AC19 | Общие правки приходят другому клиенту, local нет; права/конфликты сохранены. | Two-client revision test, read-only direct write refusal, admin_only=false writer и kiosk guard. |
-| AC20 | Малый контейнер auto-hide, enlargement условно restore; длинный список scroll. | Границы303/304 и185/186, control-reserve/safe-area/largefonts, wide dashboard tiny card; remove-gate/reset-local/unconditional-show mutations красные. |
+| AC20 | Малый контейнер auto-hide, enlargement условно restore; длинный список scroll. | Границы 303/304 и 185/186, control-reserve/safe-area/largefonts, wide dashboard tiny card; remove-gate/reset-local/unconditional-show mutations красные. |
 | AC21 | Identity стабильна без смешения identical cards/resize/HA users. | Native Sections/Masonry/nested fixtures, reload/remount/reflow, preview isolation, unknown-wrapper safe fallback. |
 | AC22 | Новая/старая frontend/backend, unknown-version, omission сохраняют данные согласно §9. | Backend compatibility matrix, full restore exception; unrelated-save не уничтожает namespace/extension fields. |
-| AC23 | В View 2D/iso local scales50/100/300%, редакторы неизменны, old key не удалён. | Scale geometry/hit bounds и UI smoke; двойное умножение/только-kiosk mutation красные. |
-| AC24 | Partial registry не total0; read-only с полным snapshot получает правильный total. | Одна list-команда failed/reconnect, полный disabled-inclusive snapshot; no privileged API assertion. |
-| AC25 | Без постоянного RAF/дублирующих timers/area recalculation от states. | Counters/timers/connection cleanup и performance fixture §12; unrelated state →0 unions. |
+| AC23 | В View 2D/iso local scales 50/100/300%, редакторы неизменны, old key не удалён. | Scale geometry/hit bounds и UI smoke; двойное умножение/только-kiosk mutation красные. |
+| AC24 | Partial registry не total 0; read-only с полным snapshot получает правильный total. | Одна list-команда failed/reconnect, полный disabled-inclusive snapshot; no privileged API assertion. |
+| AC25 | Без постоянного RAF/дублирующих timers/area recalculation от states. | Counters/timers/connection cleanup и performance fixture §12; unrelated state → 0 unions. |
 | AC26 | User strings inert, выбранные states только из user hass, support без raw data. | XSS payload text-only, ACL/reconnect/user-switch, support allowlist test; never service calls. |
 
 ## 12. План реализации и автотестов (после отдельной команды)
@@ -629,11 +634,11 @@ Frontend unit: `test/summary-panel-model.test.ts`, `summary-panel-layout.test.ts
 write guards, conflicts, change-aware semantics и import/export/support.
 Полный HA harness — Linux CI, не фиктивный Windows-pass (`fcntl`).
 
-Численные fixtures: один HA device с2children на2этажах →1; другой hidden
-и disabled → ещё1; virtual и no-parent →0 дополнительных; removed binding
-исключён, explicit restored child возвращает ровно1. Ошибка registry отлична
-от valid empty registry. Площадь: два перекрывающихся clean floor 4m² и4m²
-с overlap1m² →7m²; копия пространства →14m². Hole1m² сохраняется вычитанием,
+Численные fixtures: один HA device с 2 children на 2 этажах → 1; другой hidden
+и disabled → ещё1; virtual и no-parent → 0 дополнительных; removed binding
+исключён, explicit restored child возвращает ровно 1. Ошибка registry отлична
+от valid empty registry. Площадь: два перекрывающихся clean floor 4 m² и 4 m²
+с overlap 1 m² → 7 m²; копия пространства → 14 m². Hole 1 m² сохраняется вычитанием,
 не заполняется union. Разные cell_cm с одинаковой физической геометрией,
 ft², колонны/partition bodies и failure union обязательны. Использовать
 реальную canonical pipeline с отдельно известной ожидаемой площадью.
@@ -645,20 +650,20 @@ config/layout до/после, service calls, stage bounding rect, camera transf
 pointer hit boxes. Не ограничиваться DOM class/screenshot-only assertion.
 
 Visual evidence: полный scene и close-up right/bottom в light/dark,
-360×640 и640×360, маленькая карточка в широком dashboard, fits boundaries,
-kiosk safe area, длинный текст/empty/unavailable, форма и200строк. Сопоставить
+360×640 и 640×360, маленькая карточка в широком dashboard, fits boundaries,
+kiosk safe area, длинный текст/empty/unavailable, форма и 200 строк. Сопоставить
 Dashboard 5 и фактические скриншоты с отмеченными согласованными отличиями;
 не объявлять визуальное соответствие по одному успешному screenshot capture.
 
-Performance witness: до/после на одном baseline hardware,200rows/10blocks,
-10k HA states,3cards. После прогрева один unrelated state update →0 geometry
+Performance witness: до/после на одном baseline hardware, 200 rows/10 blocks,
+10k HA states, 3 cards. После прогрева один unrelated state update → 0 geometry
 unions,0 roster rebuild,0 picker index rebuild; matching state изменяет
 нужные строки. Idle panel не запускает RAF, minute timers≤visible panels
-с datetime; hidden0. Cached metric overhead p95≤2ms/update в demo runner;
+с datetime; hidden 0. Cached metric overhead p95≤2 ms/update в demo runner;
 threshold failure расследуется, не удаляется. Новая закрытая форма не
-подгружает весь editor graph; initial View bundle≤256000B gzip по repo budget.
+подгружает весь editor graph; initial View bundle≤256000 B gzip по repo budget.
 Снять median/p95/render counters до/после через действующий perf harness;
-state burst не добавляет long task>50ms из-за summary.
+state burst не добавляет long task>50 ms из-за summary.
 
 Негативные свидетели из AC фиксировать в будущем code handoff конкретно:
 какой assert падает при временном отключении guard/подмене resolver; не
@@ -670,7 +675,7 @@ state burst не добавляет long task>50ms из-за summary.
 из visual roster, дырки lost при union, data loss из старого config writer,
 UI leakage в kiosk, scrolling через overlay и импорт из другого HA.
 Для каждого есть отдельный boundary/negative witness выше.
-HA compatibility прогнать на minimum2024.6 и актуальном поддерживаемом HA;
+HA compatibility прогнать на minimum 2024.6 и актуальном поддерживаемом HA;
 адаптеры изолированы, не делают публичные assumptions из частных методов.
 
 Rollback: пользователю доступно local hide без удаления состава. Кодовый
@@ -703,13 +708,13 @@ repair — отдельное решение. Публикация только 
 
 ## 14. Принято предположительно — техническое, менять свободно на ревью
 
-1. Namespace/version1, snake_case, UUID/id limits, capability и diff-validation
+1. Namespace/version 1, snake_case, UUID/id limits, capability и diff-validation
    — способ реализации утверждённого shared/local поведения, не новый продукт.
 2. Per-card key по logical host path с сохранением на reload; dashboard
    restructuring не получает миграцию identity. Fallback не использует общий
    preference. Legacy sizes seed новой записи без удаления старой.
-3. Exact fit baseline280×162,12px insets, side max420/bottom preferred360,
-   height cap60%, probe/ResizeObserver — вывод из Dashboard5. Можно изменить
+3. Exact fit baseline 280×162, 12 px insets, side max 420/bottom preferred 360,
+   height cap 60%, probe/ResizeObserver — вывод из Dashboard 5. Можно изменить
    механику, сохранив читаемость, small-card hide и все граничные AC.
 4. Native narrow bridge для старых HA/unknown, caches/timer, lazy modules и
    perf fixtures — инженерная адаптация, не новые настройки пользователю.
