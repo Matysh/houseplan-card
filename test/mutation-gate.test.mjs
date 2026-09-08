@@ -551,3 +551,12 @@ test('#492 §6.4: реестр базы читается из git без поб�
   const leftovers = (await import('node:fs')).readdirSync(join(repoRoot, 'scripts')).filter((f) => f.startsWith('.mutation-gate.base-'));
   assert.deepEqual(leftovers, [], 'временный модуль удалён');
 });
+
+// #496 (run 2793): гвард на check-docs в строгом режиме красил ЧИСТЫЙ прогон на
+// любом src-диффе без пересъёмки скриншотов — свежесть кадров с #479 судится на
+// кандидате, а мутант проверяет содержимое документации.
+test('#496: гварды check-docs не требуют свежих скриншотов', () => {
+  const strict = MUTANTS.filter((m) => /check-docs\.mjs/.test(m.guard) && !/--screenshots=warn/.test(m.guard));
+  assert.deepEqual(strict.map((m) => m.id), []);
+  assert.ok(MUTANTS.some((m) => /check-docs\.mjs --screenshots=warn/.test(m.guard)), 'хотя бы один гвард check-docs есть');
+});

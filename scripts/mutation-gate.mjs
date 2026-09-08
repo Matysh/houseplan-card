@@ -559,7 +559,10 @@ const MUTANT_DEFINITIONS = [
   },
   {
     id: 'resource-docs-flatten-current-yaml',
-    guard: 'node scripts/check-docs.mjs',
+    // Свежесть скриншотов — предупреждение (#479): мутант проверяет YAML-сниппет
+    // README, а не отпечаток кадров; строгий режим красил чистый прогон на любом
+    // src-диффе без пересъёмки (run 2793, #496).
+    guard: 'node scripts/check-docs.mjs --screenshots=warn',
     because: 'the supported HA 2026.2+ resource snippet must stay nested under lovelace; '
       + 'a plausible-looking top-level resources block is the user-facing defect from #462 AC1',
     patches: [{
